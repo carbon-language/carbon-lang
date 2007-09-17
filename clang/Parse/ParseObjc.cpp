@@ -375,7 +375,7 @@ Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *IDecl,
   tok::TokenKind methodType = Tok.getKind();  
   SourceLocation methodLoc = ConsumeToken();
   
-  DeclTy *MDecl = ParseObjCMethodDecl(IDecl, pi, methodType, methodLoc);
+  DeclTy *MDecl = ParseObjCMethodDecl(pi, methodType, methodLoc);
   // Since this rule is used for both method declarations and definitions,
   // the caller is (optionally) responsible for consuming the ';'.
   return MDecl;
@@ -484,8 +484,7 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
 ///   objc-keyword-attributes:         [OBJC2]
 ///     __attribute__((unused))
 ///
-Parser::DeclTy *Parser::ParseObjCMethodDecl(DeclTy *IDecl,
-                          tok::ObjCKeywordKind& pi, 
+Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::ObjCKeywordKind& pi, 
 			  tok::TokenKind mType, SourceLocation mLoc) {
 
   TypeTy *ReturnType = 0;
@@ -552,7 +551,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(DeclTy *IDecl,
     // If attributes exist after the method, parse them.
     if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
       methodAttrs = ParseAttributes();
-    return Actions.ObjcBuildMethodDeclaration(IDecl, pi, mLoc, mType, 
+    return Actions.ObjcBuildMethodDeclaration(pi, mLoc, mType, 
                                               ReturnType, 
                                               &KeyInfo[0], KeyInfo.size(), 
 					      methodAttrs);
@@ -563,7 +562,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(DeclTy *IDecl,
   if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
     methodAttrs = ParseAttributes();
 
-  return Actions.ObjcBuildMethodDeclaration(IDecl, pi,
+  return Actions.ObjcBuildMethodDeclaration(pi,
                                             mLoc, mType, ReturnType, 
                                             selIdent, methodAttrs);
 }

@@ -453,15 +453,13 @@ public:
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
     return 0;
   }
-  virtual DeclTy *ObjcBuildMethodDeclaration(DeclTy *IDecl,
-    tok::ObjCKeywordKind& pi, 
+  virtual DeclTy *ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi, 
     SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
     ObjcKeywordDecl *Keywords, unsigned NumKeywords, 
     AttributeList *AttrList) {
     return 0;
   }
-  virtual DeclTy *ObjcBuildMethodDeclaration(DeclTy *IDecl,
-    tok::ObjCKeywordKind& pi, 
+  virtual DeclTy *ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi, 
     SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
     IdentifierInfo *SelectorName, AttributeList *AttrList) {
     return 0;

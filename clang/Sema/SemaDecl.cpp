@@ -1264,8 +1264,7 @@ void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl,
   return;
 }
 
-Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(DeclTy *IDecl,
-		      tok::ObjCKeywordKind& pi,
+Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi,
 		      SourceLocation MethodLoc, 
                       tok::TokenKind MethodType, TypeTy *ReturnType,
                       ObjcKeywordDecl *Keywords, unsigned NumKeywords,
@@ -1303,31 +1302,18 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(DeclTy *IDecl,
     Params.push_back(Param);
   }
   QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
-  ObjcMethodDecl* ObjcMethod;
-// FIXME: Added !IDecl for now to handle @implementation
-  if (!IDecl || isa<ObjcInterfaceDecl>(static_cast<Decl *>(IDecl))) {
-    ObjcMethod =  new ObjcMethodDecl(MethodLoc, SelName, resultDeclType,
-                        0, -1, AttrList, MethodType == tok::minus);
-    ObjcMethod->setMethodParams(&Params[0], NumKeywords);
-  }
-  else if (isa<ObjcProtocolDecl>(static_cast<Decl *>(IDecl))) {
-    ObjcMethod =  new ObjcProtoMethodDecl(MethodLoc, SelName, resultDeclType,
-                        0, -1, AttrList, MethodType == tok::minus);
-    ObjcMethod->setMethodParams(&Params[0], NumKeywords);
-    if (pi == tok::objc_optional)
-      dyn_cast<ObjcProtoMethodDecl>(ObjcMethod)->
-                 setDeclImplementation(ObjcProtoMethodDecl::Optional);
-    else
-      dyn_cast<ObjcProtoMethodDecl>(ObjcMethod)->
-                 setDeclImplementation(ObjcProtoMethodDecl::Required);
-  }
+  ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, 
+				      SelName, resultDeclType,
+		      		      0, -1, AttrList, MethodType == tok::minus);
+  ObjcMethod->setMethodParams(&Params[0], NumKeywords);
+  if (pi == tok::objc_optional)
+      ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
   else
-    assert(0 && "Sema::ObjcBuildMethodDeclaration(): Unknown DeclTy");
+       ObjcMethod->setDeclImplementation(ObjcMethodDecl::Required);
   return ObjcMethod;
 }
 
-Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(DeclTy *IDecl,
-		      tok::ObjCKeywordKind& pi,
+Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi,
 		      SourceLocation MethodLoc,  
                       tok::TokenKind MethodType, TypeTy *ReturnType,
                       IdentifierInfo *SelectorName, AttributeList *AttrList) {
@@ -1335,25 +1321,13 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(DeclTy *IDecl,
   SelectorInfo &SelName = Context.getSelectorInfo(methodName, 
                                                   methodName+strlen(methodName));
   QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
-  ObjcMethodDecl* ObjcMethod;
-// FIXME: Remove after IDecl is always non-null
-  if (!IDecl || isa<ObjcInterfaceDecl>(static_cast<Decl *>(IDecl))) {
-    ObjcMethod = new ObjcMethodDecl(MethodLoc, SelName, resultDeclType, 0, -1,
-                                    AttrList, MethodType == tok::minus);
-  }
-  else if (isa<ObjcProtocolDecl>(static_cast<Decl *>(IDecl))) {
-    ObjcMethod = new ObjcProtoMethodDecl(MethodLoc, SelName, resultDeclType,
-                                         0, -1,
-                                         AttrList, MethodType == tok::minus);
-    if (pi == tok::objc_optional)
-      dyn_cast<ObjcProtoMethodDecl>(ObjcMethod)->
-                 setDeclImplementation(ObjcProtoMethodDecl::Optional);
-    else
-      dyn_cast<ObjcProtoMethodDecl>(ObjcMethod)->
-                 setDeclImplementation(ObjcProtoMethodDecl::Required);
-  }
+  ObjcMethodDecl* ObjcMethod = new ObjcMethodDecl(MethodLoc, 
+			             SelName, resultDeclType, 0, -1,
+                                     AttrList, MethodType == tok::minus);
+  if (pi == tok::objc_optional)
+      ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
   else
-    assert(0 && "Sema::ObjcBuildMethodDeclaration(): Unknown DeclTy");
+       ObjcMethod->setDeclImplementation(ObjcMethodDecl::Required);
   return ObjcMethod;
 }
 

@@ -298,12 +298,12 @@ void ObjcProtocolDecl::ObjcAddProtoMethods(ObjcMethodDecl **insMethods,
 					   unsigned numClsMembers) {
   NumProtoInsMethods = numInsMembers;
   if (numInsMembers) {
-    ProtoInsMethods = new ObjcProtoMethodDecl*[numInsMembers];
+    ProtoInsMethods = new ObjcMethodDecl*[numInsMembers];
     memcpy(ProtoInsMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
   }
   NumProtoClsMethods = numClsMembers;
   if (numClsMembers) {
-    ProtoClsMethods = new ObjcProtoMethodDecl*[numClsMembers];
+    ProtoClsMethods = new ObjcMethodDecl*[numClsMembers];
     memcpy(ProtoClsMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
   }
 }

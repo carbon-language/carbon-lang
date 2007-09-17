@@ -291,7 +291,7 @@ private:
   void ParseObjCMethodRequirement();
   DeclTy *ParseObjCMethodPrototype(DeclTy *classOrCat,
 				   tok::ObjCKeywordKind& pi);
-  DeclTy *ParseObjCMethodDecl(DeclTy *CDecl, tok::ObjCKeywordKind& pi,
+  DeclTy *ParseObjCMethodDecl(tok::ObjCKeywordKind& pi,
 			      tok::TokenKind mType, 
 			      SourceLocation mLoc);
   void ParseObjCPropertyAttribute(DeclTy *interfaceDecl);

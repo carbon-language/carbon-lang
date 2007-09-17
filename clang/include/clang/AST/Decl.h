@@ -26,7 +26,6 @@ class FunctionDecl;
 class AttributeList;
 class ObjcIvarDecl;
 class ObjcMethodDecl;
-class ObjcProtoMethodDecl;
 class SelectorInfo;
 
 
@@ -615,6 +614,9 @@ public:
 /// ObjcMethodDecl - An instance of this class is created to represent an instance
 /// or class method declaration.
 class ObjcMethodDecl : public Decl {
+public:
+  enum ImplementationControl { None, Required, Optional };
+private:
   // A unigue name for this method.
   SelectorInfo &Selector;
   
@@ -630,6 +632,9 @@ class ObjcMethodDecl : public Decl {
 
   /// instance (true) or class (false) method.
   bool IsInstance : 1;
+  /// @required/@optional
+  ImplementationControl DeclImplementation : 2;
+
 public:
   ObjcMethodDecl(SourceLocation L, SelectorInfo &SelId, QualType T,
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
@@ -658,6 +663,11 @@ public:
 
   AttributeList *getMethodAttrs() const {return MethodAttrs;}
   bool isInstance() const { return IsInstance; }
+  // Related to protocols declared in  @protocol
+  void setDeclImplementation(ImplementationControl ic)
+         { DeclImplementation = ic; }
+  ImplementationControl  getImplementationControl() const
+                           { return DeclImplementation; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 
@@ -667,39 +677,13 @@ public:
   static bool classof(const ObjcMethodDecl *D) { return true; }
 };
 
-/// ObjcProtoMethodDecl - Each instance represents a method declared
-/// in a protocol. 
-///
-class ObjcProtoMethodDecl : public ObjcMethodDecl {
-public:
-  ObjcProtoMethodDecl(SourceLocation L, SelectorInfo &Id, QualType T,
-                      ParmVarDecl **paramInfo = 0, int numParams=-1,
-                      AttributeList *M = 0, bool isInstance = true,
-                      Decl *PrevDecl = 0) :
-  ObjcMethodDecl(ObjcProtoMethod, L, Id, T, paramInfo, numParams, 
-		 M, isInstance, PrevDecl) {}
-
-  enum ImplementationControl { None, Required, Optional };
-
-  void setDeclImplementation(ImplementationControl ic) 
-         { DeclImplementation = ic; }
-  ImplementationControl  getImplementationControl() const 
-			   { return DeclImplementation; }
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == ObjcProtoMethod; }
-  static bool classof(const ObjcMethodDecl *D) { return true; }
-
-private:
-  ImplementationControl DeclImplementation : 2;
-};
-
 class ObjcProtocolDecl : public TypeDecl {
   /// protocol instance methods
-  ObjcProtoMethodDecl **ProtoInsMethods;  // Null if not defined
+  ObjcMethodDecl **ProtoInsMethods;  // Null if not defined
   int NumProtoInsMethods;  // -1 if not defined
 
   /// protocol class methods
-  ObjcProtoMethodDecl **ProtoClsMethods;  // Null if not defined
+  ObjcMethodDecl **ProtoClsMethods;  // Null if not defined
   int NumProtoClsMethods;  // -1 if not defined
 
   bool isForwardProtoDecl; // declared with @protocol.
