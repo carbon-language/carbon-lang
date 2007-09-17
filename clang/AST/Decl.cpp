@@ -33,7 +33,7 @@ static unsigned nIvarDecls = 0;
 
 static bool StatSwitch = false;
 
-const char *Decl::getDeclKindName() {
+const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
   default: assert(0 && "Unknown decl kind!");
   case Typedef:

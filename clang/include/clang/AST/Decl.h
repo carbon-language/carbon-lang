@@ -69,7 +69,7 @@ protected:
 public:
   
   Kind getKind() const { return DeclKind; }
-  const char *getDeclKindName();
+  const char *getDeclKindName() const;
   
   /// setInvalidDecl - Indicates the Decl had a semantic error. This
   /// allows for graceful error recovery.
