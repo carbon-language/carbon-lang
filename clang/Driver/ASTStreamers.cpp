@@ -210,7 +210,7 @@ ASTConsumer *clang::CreateLiveVarAnalyzer() {
 }
 
 //===----------------------------------------------------------------------===//
-// RunDeadStores - run checker to locate dead stores in a function
+// DeadStores - run checker to locate dead stores in a function
 
 namespace {
   class DeadStoreVisitor : public CFGVisitor {
@@ -229,6 +229,29 @@ namespace {
 
 ASTConsumer *clang::CreateDeadStoreChecker(Diagnostic &Diags) {
   return new DeadStoreVisitor(Diags);
+}
+
+//===----------------------------------------------------------------------===//
+// Unitialized Values - run checker to flag potential uses of uninitalized
+//  variables.
+
+namespace {
+  class UninitValsVisitor : public CFGVisitor {
+    Diagnostic &Diags;
+    ASTContext *Ctx;
+  public:
+    UninitValsVisitor(Diagnostic &diags) : Diags(diags) {}
+    virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
+      Ctx = &Context;
+    }
+    
+    virtual void VisitCFG(CFG& C) { CheckUninitializedValues(C, *Ctx, Diags); }
+    virtual bool printFuncDeclStart() { return false; }
+  }; 
+} // end anonymous namespace
+
+ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
+  return new UninitValsVisitor(Diags);
 }
 
 //===----------------------------------------------------------------------===//

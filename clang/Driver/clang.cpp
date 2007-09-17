@@ -58,6 +58,7 @@ enum ProgActions {
   ParseCFGView,                 // Parse ASTS. Build CFGs. View CFGs.
   AnalysisLiveVariables,        // Print results of live-variable analysis.
   WarnDeadStores,               // Run DeadStores checker on parsed ASTs.
+  WarnUninitVals,               // Run UnitializedVariables checker.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
   ParseNoop,                    // Parse with noop callbacks.
@@ -98,6 +99,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Print results of live variable analysis."),
              clEnumValN(WarnDeadStores, "check-dead-stores",
                         "Flag warnings of stores to dead variables."),
+             clEnumValN(WarnUninitVals, "check-unit-vals",
+                        "Flag warnings of uses of unitialized variables."),
              clEnumValN(EmitLLVM, "emit-llvm",
                         "Build ASTs then convert to LLVM, emit .ll file"),
              clEnumValEnd));
@@ -870,6 +873,11 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     ParseAST(PP, MainFileID, *C.get(), Stats);
     break;
   }
+  case WarnUninitVals: {
+    std::auto_ptr<ASTConsumer> C(CreateUnitValsChecker(PP.getDiagnostics()));
+    ParseAST(PP, MainFileID, *C.get(), Stats);
+    break;
+  }    
   case EmitLLVM: {
     std::auto_ptr<ASTConsumer> C(CreateLLVMEmitter(PP.getDiagnostics()));
     ParseAST(PP, MainFileID, *C.get(), Stats);

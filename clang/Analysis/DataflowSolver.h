@@ -117,7 +117,15 @@ private:
         for (CFGBlock::const_succ_iterator I=B->succ_begin(), E=B->succ_end();
              I != E; ++I)
           WorkList.enqueue(*I);    
-    }                     
+    }
+    
+    // For blocks that have no associated dataflow value, instantiate a
+    // default value.
+    BlockDataMapTy& M = D.getBlockDataMap();
+    
+    for (CFG::const_iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
+      if (M.find(&*I) == M.end())
+        M[&*I].resetValues(D.getAnalysisData());
   }       
   
   /// SolveDataflowEquations (BACKWARD ANALYSIS) - Perform the actual
@@ -153,7 +161,7 @@ private:
     ValTy& V = TF.getVal();
 
     // Merge dataflow values from all predecessors of this block.
-    V.resetValues();
+    V.resetValues(D.getAnalysisData());
     MergeOperatorTy Merge;
   
     for (CFGBlock::const_pred_iterator I=B->pred_begin(), 
@@ -175,7 +183,7 @@ private:
     ValTy& V = TF.getVal();
     
     // Merge dataflow values from all predecessors of this block.
-    V.resetValues();
+    V.resetValues(D.getAnalysisData());
     MergeOperatorTy Merge;
     
     for (CFGBlock::const_succ_iterator I=B->succ_begin(), 

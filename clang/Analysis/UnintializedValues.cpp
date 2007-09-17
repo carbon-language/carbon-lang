@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/UninitializedValues.h"
-#include "clang/Analysis/CFGVarDeclVisitor.h"
 #include "clang/Analysis/CFGStmtVisitor.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Basic/Diagnostic.h"
@@ -29,32 +28,55 @@ using namespace clang;
 
 namespace {
 
-class RegisterDeclsAndExprs : public CFGVarDeclVisitor<RegisterDeclsAndExprs> {
+class RegisterDeclsAndExprs : public CFGStmtVisitor<RegisterDeclsAndExprs> {
   UninitializedValues::AnalysisDataTy& AD;
 public:
-  RegisterDeclsAndExprs(const CFG& cfg, UninitializedValues::AnalysisDataTy& ad)
-                        : CFGVarDeclVisitor<RegisterDeclsAndExprs>(cfg), AD(ad)
-  {}
+  RegisterDeclsAndExprs(UninitializedValues::AnalysisDataTy& ad) :  AD(ad) {}
   
-  void VisitVarDecl(VarDecl* D) {
-    if (AD.VMap.find(D) == AD.VMap.end())
-      AD.VMap[D] = AD.NumDecls++;
+  void VisitBlockVarDecl(BlockVarDecl* VD) {
+    if (AD.VMap.find(VD) == AD.VMap.end())
+      AD.VMap[VD] = AD.NumDecls++;
+  }
+      
+  void VisitDeclChain(ScopedDecl* D) {
+    for (; D != NULL; D = D->getNextDeclarator())
+      if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(D))
+        VisitBlockVarDecl(VD);
   }
   
   void BlockStmt_VisitExpr(Expr* E) {
     if (AD.EMap.find(E) == AD.EMap.end())
       AD.EMap[E] = AD.NumBlockExprs++;
-  }        
+      
+    Visit(E);
+  }
+  
+  void VisitDeclRefExpr(DeclRefExpr* DR) {
+    VisitDeclChain(DR->getDecl());
+  }
+  
+  void VisitDeclStmt(DeclStmt* S) {
+    VisitDeclChain(S->getDecl());
+  }
+  
+  void VisitStmt(Stmt* S) {
+    VisitChildren(S);
+  }
+  
 };
   
 } // end anonymous namespace
 
 void UninitializedValues::InitializeValues(const CFG& cfg) {
-  RegisterDeclsAndExprs R(cfg,this->getAnalysisData());
-  R.VisitAllDecls();    
+  RegisterDeclsAndExprs R(this->getAnalysisData());
+  
+  for (CFG::const_iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
+    for (CFGBlock::const_iterator BI=I->begin(), BE=I->end(); BI!=BE; ++BI)
+      R.BlockStmt_Visit(*BI);
+  
+  // Initialize the values of the last block.
   UninitializedValues::ValTy& V = getBlockDataMap()[&cfg.getEntry()];
-  V.DeclBV.resize(getAnalysisData().NumDecls);
-  V.ExprBV.resize(getAnalysisData().NumBlockExprs);
+  V.resetValues(getAnalysisData());
 }
 
 //===----------------------------------------------------------------------===//
@@ -68,8 +90,7 @@ class TransferFuncs : public CFGStmtVisitor<TransferFuncs,bool> {
   UninitializedValues::AnalysisDataTy& AD;
 public:
   TransferFuncs(UninitializedValues::AnalysisDataTy& ad) : AD(ad) {
-    V.DeclBV.resize(AD.NumDecls);
-    V.ExprBV.resize(AD.NumBlockExprs);
+    V.resetValues(AD);
   }
   
   UninitializedValues::ValTy& getVal() { return V; }
@@ -88,7 +109,7 @@ public:
 
 
 bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
-  if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {
+  if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl())) {
     assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
     if (AD.Observer)
       AD.Observer->ObserveDeclRefExpr(V,AD,DR,VD);
@@ -111,7 +132,7 @@ bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
       if (ParenExpr* P = dyn_cast<ParenExpr>(S))
         S = P->getSubExpr();
       else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
-        if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {
+        if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl())) {
           assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
           return V.DeclBV[ AD.VMap[VD] ] = Visit(B->getRHS());
         }
@@ -127,10 +148,13 @@ bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
   bool x = Initialized();
   
   for (ScopedDecl* D = S->getDecl(); D != NULL; D = D->getNextDeclarator())
-    if (VarDecl* VD = dyn_cast<VarDecl>(D))
+    if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(D))
       if (Stmt* I = VD->getInit()) {
+        assert ( AD.EMap.find(cast<Expr>(I)) != 
+                 AD.EMap.end() && "Unknown Expr.");
+                 
         assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
-        x = V.DeclBV[ AD.VMap[VD] ] = Visit(I);
+        x = V.DeclBV[ AD.VMap[VD] ] = V.ExprBV[ AD.EMap[cast<Expr>(I)] ];
       }
       
   return x;
@@ -150,7 +174,7 @@ bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
         if (ParenExpr* P = dyn_cast<ParenExpr>(S))
           S = P->getSubExpr();
         else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S)) {
-          if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {
+          if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl())) {
             assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
             V.DeclBV[ AD.VMap[VD] ] = Initialized();
           }
@@ -222,7 +246,7 @@ struct Merge {
     assert (Dst.ExprBV.size() == Src.ExprBV.size()
             && "Bitvector sizes do not match.");
 
-    Dst.ExprBV &= Src.ExprBV;
+    Dst.ExprBV |= Src.ExprBV;
   }
 };
 } // end anonymous namespace
@@ -238,7 +262,7 @@ namespace {
 class UninitializedValuesChecker : public UninitializedValues::ObserverTy {
   ASTContext &Ctx;
   Diagnostic &Diags;
-  llvm::SmallPtrSet<VarDecl*,10> AlreadyWarned;
+  llvm::SmallPtrSet<BlockVarDecl*,10> AlreadyWarned;
   
 public:
   UninitializedValuesChecker(ASTContext &ctx, Diagnostic &diags)
@@ -246,7 +270,7 @@ public:
     
   virtual void ObserveDeclRefExpr(UninitializedValues::ValTy& V,
                                   UninitializedValues::AnalysisDataTy& AD,
-                                  DeclRefExpr* DR, VarDecl* VD) {
+                                  DeclRefExpr* DR, BlockVarDecl* VD) {
 
     assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
     if (V.DeclBV[ AD.VMap[VD] ] == TransferFuncs::Uninitialized())
@@ -257,6 +281,7 @@ public:
 
 } // end anonymous namespace
 
+namespace clang {
 
 void CheckUninitializedValues(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
 
@@ -273,4 +298,6 @@ void CheckUninitializedValues(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
 
   for (CFG::iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
     S.runOnBlock(&*I);
+}
+
 }

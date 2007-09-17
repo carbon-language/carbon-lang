@@ -20,7 +20,7 @@
 
 namespace clang {
 
-  class VarDecl;
+  class BlockVarDecl;
   class Expr;
   class DeclRefExpr;
 
@@ -31,6 +31,23 @@ class UninitializedValues_ValueTypes {
 public:
 
   //===--------------------------------------------------------------------===//
+  // AnalysisDataTy - Whole-function meta data used by the transfer function
+  //  logic.
+  //===--------------------------------------------------------------------===//
+  
+  struct ObserverTy;
+  
+  struct AnalysisDataTy {
+    llvm::DenseMap<const BlockVarDecl*, unsigned > VMap;
+    llvm::DenseMap<const Expr*, unsigned > EMap;
+    unsigned NumDecls;
+    unsigned NumBlockExprs;
+    ObserverTy* Observer;
+    
+    AnalysisDataTy() : NumDecls(0), NumBlockExprs(0), Observer(NULL) {}
+  };
+
+  //===--------------------------------------------------------------------===//
   // ValTy - Dataflow value.
   //===--------------------------------------------------------------------===//
   
@@ -38,9 +55,10 @@ public:
     llvm::BitVector DeclBV;
     llvm::BitVector ExprBV;
 
-    // Used by the solver.
-    void resetValues() {
+    void resetValues(AnalysisDataTy& AD) {
+      DeclBV.resize(AD.NumDecls);
       DeclBV.reset();
+      ExprBV.resize(AD.NumBlockExprs);
       ExprBV.reset();
     }
     
@@ -52,24 +70,7 @@ public:
       DeclBV = RHS.DeclBV;
       ExprBV = RHS.ExprBV;
     }    
-  };
-  
-  //===--------------------------------------------------------------------===//
-  // AnalysisDataTy - Whole-function meta data used by the transfer function
-  //  logic.
-  //===--------------------------------------------------------------------===//
-  
-  struct ObserverTy;
-  
-  struct AnalysisDataTy {
-    llvm::DenseMap<const VarDecl*, unsigned > VMap;
-    llvm::DenseMap<const Expr*, unsigned > EMap;
-    unsigned NumDecls;
-    unsigned NumBlockExprs;
-    ObserverTy* Observer;
-    
-    AnalysisDataTy() : NumDecls(0), NumBlockExprs(0), Observer(NULL) {}
-  };
+  };  
   
   //===--------------------------------------------------------------------===//
   // ObserverTy - Observer for querying DeclRefExprs that use an uninitalized
@@ -79,7 +80,7 @@ public:
   struct ObserverTy {
     virtual ~ObserverTy();
     virtual void ObserveDeclRefExpr(ValTy& Val, AnalysisDataTy& AD, 
-                                    DeclRefExpr* DR, VarDecl* VD) = 0;
+                                    DeclRefExpr* DR, BlockVarDecl* VD) = 0;
   };  
 };
 

@@ -29,8 +29,7 @@ public:
   CFGVarDeclVisitor(const CFG& c) : cfg(c) {}
   
   void VisitStmt(Stmt* S) {
-    for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
-      static_cast<ImplClass*>(this)->Visit(*I);
+    static_cast<ImplClass*>(this)->VisitChildren(S);
   }
   
   void VisitDeclRefExpr(DeclRefExpr* DR) {
@@ -56,7 +55,7 @@ public:
   void VisitAllDecls() {
     for (CFG::const_iterator BI = cfg.begin(), BE = cfg.end(); BI != BE; ++BI)
       for (CFGBlock::const_iterator SI=BI->begin(),SE = BI->end();SI != SE;++SI)
-        static_cast<ImplClass*>(this)->Visit(const_cast<Stmt*>(*SI));    
+        static_cast<ImplClass*>(this)->BlockStmt_Visit(const_cast<Stmt*>(*SI));    
   }
 };
 

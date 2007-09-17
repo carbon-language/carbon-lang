@@ -24,6 +24,7 @@ ASTConsumer *CreateASTDumper();
 ASTConsumer *CreateCFGDumper(bool ViewGraphs = false);
 ASTConsumer *CreateLiveVarAnalyzer();
 ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
+ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
 ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags);
 
 } // end clang namespace
