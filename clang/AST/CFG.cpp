@@ -1281,7 +1281,7 @@ void CFG::viewCFG() const {
   GraphHelper = NULL;
 #else
   std::cerr << "CFG::viewCFG is only available in debug builds on "
-            << "systems with Graphviz or gv!\";
+            << "systems with Graphviz or gv!\n";
 #endif
 }
 
