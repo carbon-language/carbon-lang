@@ -106,6 +106,10 @@ E: greened@obbligato.org
 D: Miscellaneous bug fixes
 D: Register allocation refactoring
 
+N: Gordon Henriksen
+E: gordonhenriksen@mac.com
+D: C interface
+
 N: Raul Fernandes Herbster
 E: raul@dsc.ufcg.edu.br
 D: JIT support for ARM
