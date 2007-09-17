@@ -45,9 +45,8 @@ public:
   IdentifierInfo();
   ~IdentifierInfo();
 
-  /// getName - Return the actual string for this identifier.  The length of
-  /// this string is stored in NameLen, and the returned string is properly null
-  /// terminated.
+  /// getName - Return the actual string for this identifier.  The returned 
+  /// string is properly null terminated.
   ///
   const char *getName() const {
     // String data is stored immediately after the IdentifierInfo object.
@@ -165,6 +164,54 @@ public:
   void PrintStats() const;
 private:
   void AddKeywords(const LangOptions &LangOpts);
+};
+
+/// SelectorInfo - One of these records is kept for each selector. Selectors
+/// are created as a by-product of parsing a method declaration/definition, 
+/// message expression, or @selector expression.
+class SelectorInfo {
+  void *ObjcMethodDecl;  // FIXME: add setter/getter.
+  
+  SelectorInfo(const SelectorInfo&);  // NONCOPYABLE.
+public:
+  SelectorInfo() : ObjcMethodDecl(0) {}
+
+  /// getName - Return the actual string for this selector.  The returned 
+  /// string is properly null terminated.
+  ///
+  const char *getName() const {
+    // String data is stored immediately after the IdentifierInfo object.
+    return (const char*)(this+1);
+  }
+};
+
+/// SelectorTable - This table implements an efficient mapping from strings to
+/// SelectorInfo nodes.  
+class SelectorTable {
+  // Shark shows that using MallocAllocator is *much* slower than using this
+  // BumpPtrAllocator!
+  typedef llvm::StringMap<SelectorInfo, llvm::BumpPtrAllocator> HashTableTy;
+  HashTableTy HashTable;
+public:
+  SelectorTable() : HashTable(4096) { }
+  
+  /// get - Return the selector info for the specified name.
+  ///
+  SelectorInfo &get(const char *NameStart, const char *NameEnd) {
+    return HashTable.GetOrCreateValue(NameStart, NameEnd).getValue();
+  }
+  SelectorInfo &get(const char *Name) {
+    return get(Name, Name+strlen(Name));
+  }
+  typedef HashTableTy::const_iterator iterator;
+  typedef HashTableTy::const_iterator const_iterator;
+  
+  iterator begin() const { return HashTable.begin(); }
+  iterator end() const   { return HashTable.end(); }
+  
+  /// PrintStats - Print some statistics to stderr that indicate how well the
+  /// hashing is doing.
+  void PrintStats() const;
 };
 
 }  // end namespace clang

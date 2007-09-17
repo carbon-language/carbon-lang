@@ -1239,13 +1239,37 @@ void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl,
   return;
 }
 
+/// Build objective-c style method name.
+static SelectorInfo &
+  ObjcGetSelectorInfo(ObjcKeywordInfo* KeyInfo, unsigned numKeyInfo,
+                      ASTContext &Context)
+{
+  int len=0;
+  char *methodName;
+  for (unsigned int i = 0; i < numKeyInfo; i++) {
+    IdentifierInfo *selectorName = KeyInfo[i].SelectorName;
+    if (selectorName)
+      len += strlen(selectorName->getName());
+    len++;
+  }
+  methodName = (char *) alloca (len + 1);
+  methodName[0] = '\0';
+  for (unsigned int i = 0; i < numKeyInfo; i++) {
+    IdentifierInfo *selectorName = KeyInfo[i].SelectorName;
+    if (selectorName)
+      strcat(methodName, selectorName->getName());
+    strcat(methodName, ":");
+  }
+  return Context.getSelectorInfo(methodName, methodName+len);
+}
+
+
 Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
                       tok::TokenKind MethodType, TypeTy *ReturnType,
                       ObjcKeywordInfo *Keywords, unsigned NumKeywords,
                       AttributeList *AttrList) {
   assert(NumKeywords && "Selector must be specified");
-  // FIXME: SelectorName to be changed to comform to objc's abi for method names
-  IdentifierInfo *SelectorName = Keywords[0].SelectorName;
+  SelectorInfo &SelName = ObjcGetSelectorInfo(Keywords, NumKeywords, Context);
   llvm::SmallVector<ParmVarDecl*, 16> Params;
 
   for (unsigned i = 0; i < NumKeywords; i++) {
@@ -1261,7 +1285,7 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
   }
   QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
   ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, 
-				      SelectorName, resultDeclType, 
+				      SelName, resultDeclType, 
 				      0, -1, AttrList, MethodType == tok::minus);
   ObjcMethod->setMethodParams(&Params[0], NumKeywords);
   return ObjcMethod;
@@ -1270,9 +1294,11 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
 Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,  
                       tok::TokenKind MethodType, TypeTy *ReturnType,
                       IdentifierInfo *SelectorName, AttributeList *AttrList) {
-  // FIXME: SelectorName to be changed to comform to objc's abi for method names
+  const char *methodName = SelectorName->getName();
+  SelectorInfo &SelName = Context.getSelectorInfo(methodName, 
+                                                  methodName+strlen(methodName));
   QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
-  return new ObjcMethodDecl(MethodLoc, SelectorName, resultDeclType, 0, -1,
+  return new ObjcMethodDecl(MethodLoc, SelName, resultDeclType, 0, -1,
 			    AttrList, MethodType == tok::minus);
 }
 

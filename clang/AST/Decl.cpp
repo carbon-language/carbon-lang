@@ -26,6 +26,11 @@ static unsigned nEnumDecls = 0;
 static unsigned nTypedef = 0;
 static unsigned nFieldDecls = 0;
 static unsigned nInterfaceDecls = 0;
+static unsigned nClassDecls = 0;
+static unsigned nMethodDecls = 0;
+static unsigned nProtocolDecls = 0;
+static unsigned nIvarDecls = 0;
+
 static bool StatSwitch = false;
 
 const char *Decl::getDeclKindName() {
@@ -73,7 +78,8 @@ void Decl::PrintStats() {
   fprintf(stderr, "*** Decl Stats:\n");
   fprintf(stderr, "  %d decls total.\n", 
 	  int(nFuncs+nBlockVars+nFileVars+nParmVars+nFieldDecls+nSUC+
-	      nEnumDecls+nEnumConst+nTypedef));
+	      nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
+	      nMethodDecls+nProtocolDecls+nIvarDecls));
   fprintf(stderr, "    %d function decls, %d each (%d bytes)\n", 
 	  nFuncs, (int)sizeof(FunctionDecl), int(nFuncs*sizeof(FunctionDecl)));
   fprintf(stderr, "    %d block variable decls, %d each (%d bytes)\n", 
@@ -99,12 +105,29 @@ void Decl::PrintStats() {
 	  int(nEnumConst*sizeof(EnumConstantDecl)));
   fprintf(stderr, "    %d typedef decls, %d each (%d bytes)\n", 
 	  nTypedef, (int)sizeof(TypedefDecl),int(nTypedef*sizeof(TypedefDecl)));
+  // Objective-C decls...
+  fprintf(stderr, "    %d interface decls, %d each (%d bytes)\n", 
+	  nInterfaceDecls, (int)sizeof(ObjcInterfaceDecl),
+	  int(nInterfaceDecls*sizeof(ObjcInterfaceDecl)));
+  fprintf(stderr, "    %d instance variable decls, %d each (%d bytes)\n", 
+	  nIvarDecls, (int)sizeof(ObjcIvarDecl),
+	  int(nIvarDecls*sizeof(ObjcIvarDecl)));
+  fprintf(stderr, "    %d class decls, %d each (%d bytes)\n", 
+	  nClassDecls, (int)sizeof(ObjcClassDecl),
+	  int(nClassDecls*sizeof(ObjcClassDecl)));
+  fprintf(stderr, "    %d method decls, %d each (%d bytes)\n", 
+	  nMethodDecls, (int)sizeof(ObjcMethodDecl),
+	  int(nMethodDecls*sizeof(ObjcMethodDecl)));
+  fprintf(stderr, "    %d protocol decls, %d each (%d bytes)\n", 
+	  nProtocolDecls, (int)sizeof(ObjcProtocolDecl),
+	  int(nProtocolDecls*sizeof(ObjcProtocolDecl)));
+
   fprintf(stderr, "Total bytes = %d\n", 
 	  int(nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
 	      nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
 	      nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
 	      nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
-	      nTypedef*sizeof(TypedefDecl)));
+	      nTypedef*sizeof(TypedefDecl)) /* FIXME: add Objc decls */);
 }
 
 void Decl::addDeclKind(const Kind k) {
@@ -142,11 +165,17 @@ void Decl::addDeclKind(const Kind k) {
       nInterfaceDecls++;
       break;
     case ObjcClass:
+      nClassDecls++;
+      break;
     case ObjcMethod:
     case ObjcProtoMethod:
+      nMethodDecls++;
+      break;
     case ObjcProtocol:
+      nProtocolDecls++;
+      break;
     case ObjcIvar:
-      assert(0 && "FIXME: Count these decls!");
+      nIvarDecls++;
       break;
   }
 }

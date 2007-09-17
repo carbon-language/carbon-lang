@@ -23,10 +23,11 @@ class IdentifierInfo;
 class Expr;
 class Stmt;
 class FunctionDecl;
+class AttributeList;
 class ObjcIvarDecl;
 class ObjcMethodDecl;
-class AttributeList;
 class ObjcProtoMethodDecl;
+class SelectorInfo;
 
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
@@ -614,20 +615,35 @@ public:
 /// ObjcMethodDecl - An instance of this class is created to represent an instance
 /// or class method declaration.
 class ObjcMethodDecl : public Decl {
+  // A unigue name for this method.
+  SelectorInfo &Selector;
+  
+  // Type of this method.
+  QualType MethodDeclType;
+  /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
+  /// parameters of this Method.  This is null if there are no formals.  
+  ParmVarDecl **ParamInfo;
+  int NumMethodParams;  // -1 if no parameters
+  
+  /// List of attributes for this method declaration.
+  AttributeList *MethodAttrs;
+
+  /// instance (true) or class (false) method.
+  bool IsInstance : 1;
 public:
-  ObjcMethodDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
+  ObjcMethodDecl(SourceLocation L, SelectorInfo &SelId, QualType T,
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
 		 AttributeList *M = 0, bool isInstance = true, 
 		 Decl *PrevDecl = 0)
-    : Decl(ObjcMethod), MethodDeclType(T), 
+    : Decl(ObjcMethod), Selector(SelId), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), IsInstance(isInstance) {}
 
-  ObjcMethodDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
+  ObjcMethodDecl(Kind DK, SourceLocation L, SelectorInfo &SelId, QualType T,
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
 		 AttributeList *M = 0, bool isInstance = true, 
 		 Decl *PrevDecl = 0)
-    : Decl(DK), MethodDeclType(T), 
+    : Decl(DK), Selector(SelId), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), IsInstance(isInstance) {}
 
@@ -649,20 +665,6 @@ public:
 	   || D->getKind() == ObjcProtoMethod; 
   }
   static bool classof(const ObjcMethodDecl *D) { return true; }
-
-private:
-  // Type of this method.
-  QualType MethodDeclType;
-  /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
-  /// parameters of this Method.  This is null if there are no formals.  
-  ParmVarDecl **ParamInfo;
-  int NumMethodParams;  // -1 if no parameters
-  
-  /// List of attributes for this method declaration.
-  AttributeList *MethodAttrs;
-
-  /// instance (true) or class (false) method.
-  bool IsInstance : 1;
 };
 
 /// ObjcProtoMethodDecl - Each instance represents a method declared
@@ -670,7 +672,7 @@ private:
 ///
 class ObjcProtoMethodDecl : ObjcMethodDecl {
 public:
-  ObjcProtoMethodDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
+  ObjcProtoMethodDecl(SourceLocation L, SelectorInfo &Id, QualType T,
                       ParmVarDecl **paramInfo = 0, int numParams=-1,
                       AttributeList *M = 0, bool isInstance = true,
                       Decl *PrevDecl = 0) :

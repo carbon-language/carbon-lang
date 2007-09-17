@@ -16,6 +16,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
+#include "clang/Lex/IdentifierTable.h"
 using namespace clang;
 
 enum FloatingRank {
@@ -44,6 +45,7 @@ void ASTContext::PrintStats() const {
   unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0, NumReference = 0;
   
   unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
+  unsigned NumObjcInterfaces = 0;
   
   for (unsigned i = 0, e = Types.size(); i != e; ++i) {
     Type *T = Types[i];
@@ -74,7 +76,9 @@ void ASTContext::PrintStats() const {
       case Decl::Class:  ++NumTagClass; break; 
       case Decl::Enum:   ++NumTagEnum; break;
       }
-    } else {
+    } else if (isa<ObjcInterfaceType>(T))
+      ++NumObjcInterfaces;
+    else {
       assert(0 && "Unknown type!");
     }
   }
@@ -93,12 +97,16 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "      %d union types\n", NumTagUnion);
   fprintf(stderr, "      %d class types\n", NumTagClass);
   fprintf(stderr, "      %d enum types\n", NumTagEnum);
+  fprintf(stderr, "    %d interface types\n", NumObjcInterfaces);
   fprintf(stderr, "Total bytes = %d\n", int(NumBuiltin*sizeof(BuiltinType)+
     NumPointer*sizeof(PointerType)+NumArray*sizeof(ArrayType)+
     NumComplex*sizeof(ComplexType)+NumVector*sizeof(VectorType)+
     NumFunctionP*sizeof(FunctionTypeProto)+
     NumFunctionNP*sizeof(FunctionTypeNoProto)+
     NumTypeName*sizeof(TypedefType)+NumTagged*sizeof(TagType)));
+  
+  if (Selectors)
+    Selectors->PrintStats();
 }
 
 
@@ -801,3 +809,11 @@ QualType ASTContext::getCFConstantStringType() {
   
   return getTagDeclType(CFConstantStringTypeDecl);
 }
+
+SelectorInfo &ASTContext::getSelectorInfo(const char *NameStart, 
+                                          const char *NameEnd) {
+  if (!Selectors) // create the table lazily
+    Selectors = new SelectorTable();
+  return Selectors->get(NameStart, NameEnd);
+}
+
