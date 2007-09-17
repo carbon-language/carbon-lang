@@ -158,11 +158,9 @@ void CFGVisitor::HandleTopLevelDecl(Decl *D) {
     fprintf(stderr,"\n");
   }
     
-  if (CFG *C = CFG::buildCFG(FD->getBody())) {
-    VisitCFG(*C);
-    delete C;
-  } else
-    fprintf(stderr, " Error processing CFG.\n");          
+  CFG *C = CFG::buildCFG(FD->getBody());
+  VisitCFG(*C);
+  delete C;
 }
 
 //===----------------------------------------------------------------------===//
