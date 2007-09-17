@@ -1072,6 +1072,18 @@ void Verifier::visitInstruction(Instruction &I) {
   InstsInThisBlock.insert(&I);
 }
 
+static bool HasPtrPtrType(Value *Val) {
+  if (const PointerType *PtrTy = dyn_cast<PointerType>(Val->getType()))
+    return isa<PointerType>(PtrTy->getElementType());
+  return false;
+}
+
+static Value *StripBitCasts(Value *Val) {
+  if (BitCastInst *CI = dyn_cast<BitCastInst>(Val))
+    return StripBitCasts(CI->getOperand(0));
+  return Val;
+}
+
 /// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
 ///
 void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
@@ -1082,6 +1094,30 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
 #define GET_INTRINSIC_VERIFIER
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_VERIFIER
+  
+  switch (ID) {
+  default:
+    break;
+  case Intrinsic::gcroot:
+    Assert1(HasPtrPtrType(CI.getOperand(1)),
+            "llvm.gcroot parameter #1 must be a pointer to a pointer.", &CI);
+    Assert1(isa<AllocaInst>(StripBitCasts(CI.getOperand(1))),
+            "llvm.gcroot parameter #1 must be an alloca (or a bitcast).", &CI);
+    Assert1(isa<Constant>(CI.getOperand(2)),
+            "llvm.gcroot parameter #2 must be a constant or global.", &CI);
+    break;
+  case Intrinsic::gcwrite:
+    Assert1(CI.getOperand(3)->getType()
+              == PointerType::get(CI.getOperand(1)->getType()),
+          "Call to llvm.gcwrite must be with type 'void (%ty*, %ty2*, %ty**)'.",
+            &CI);
+    break;
+  case Intrinsic::gcread:
+    Assert1(CI.getOperand(2)->getType() == PointerType::get(CI.getType()),
+            "Call to llvm.gcread must be with type '%ty* (%ty2*, %ty**).'",
+            &CI);
+    break;
+  }
 }
 
 /// VerifyIntrinsicPrototype - TableGen emits calls to this function into
