@@ -25,6 +25,10 @@ void CheckDeadStores(CFG& cfg, LiveVariables& L,
                      ASTContext &Ctx, Diagnostic &Diags);
 void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags);  
 
+  
+void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags);
+
+
 } // end namespace clang
 
 #endif

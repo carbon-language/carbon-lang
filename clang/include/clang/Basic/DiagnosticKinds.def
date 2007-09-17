@@ -753,6 +753,9 @@ DIAG(warn_floatingpoint_eq, WARNING,
 // CHECK: stores to variables that are no longer live (dead stores)
 DIAG(warn_dead_store, WARNING, "value stored to variable is never used")
 
+// CHECK: use of uninitialized values
+DIAG(warn_uninit_val, WARNING, "use of potentially uninitialized variable")
+
 // CFString checking
 DIAG(err_cfstring_literal_not_string_constant, ERROR,
   "CFString literal is not a string constant")

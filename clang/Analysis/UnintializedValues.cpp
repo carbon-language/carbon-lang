@@ -14,13 +14,18 @@
 #include "clang/Analysis/UninitializedValues.h"
 #include "clang/Analysis/CFGVarDeclVisitor.h"
 #include "clang/Analysis/CFGStmtVisitor.h"
+#include "clang/Analysis/LocalCheckers.h"
+#include "clang/Basic/Diagnostic.h"
+#include "clang/AST/ASTContext.h"
 #include "DataflowSolver.h"
+
+#include "llvm/ADT/SmallPtrSet.h"
 
 using namespace clang;
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Dataflow initialization logic.
-//===--------------------------------------------------------------------===//      
+//===----------------------------------------------------------------------===//      
 
 namespace {
 
@@ -52,9 +57,9 @@ void UninitializedValues::InitializeValues(const CFG& cfg) {
   V.ExprBV.resize(getAnalysisData().NumBlockExprs);
 }
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Transfer functions.
-//===--------------------------------------------------------------------===//      
+//===----------------------------------------------------------------------===//      
 
 namespace {
 
@@ -75,15 +80,19 @@ public:
   bool VisitStmt(Stmt* S);
   bool VisitCallExpr(CallExpr* C);
   bool BlockStmt_VisitExpr(Expr* E);
+  bool VisitDeclStmt(DeclStmt* D);
   
   static inline bool Initialized() { return true; }
-  static inline bool Unintialized() { return false; }
+  static inline bool Uninitialized() { return false; }
 };
 
 
 bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
   if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {
     assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
+    if (AD.Observer)
+      AD.Observer->ObserveDeclRefExpr(V,AD,DR,VD);
+      
     return V.DeclBV[ AD.VMap[VD] ];    
   }
   else
@@ -95,8 +104,36 @@ bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
     assert ( AD.EMap.find(B) != AD.EMap.end() && "Unknown block-level expr.");
     return V.ExprBV[ AD.EMap[B] ];
   }
-
+  
+  if (B->isAssignmentOp()) {
+    // Get the Decl for the LHS, if any
+    for (Stmt* S  = B->getLHS() ;; ) {
+      if (ParenExpr* P = dyn_cast<ParenExpr>(S))
+        S = P->getSubExpr();
+      else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
+        if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl())) {
+          assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
+          return V.DeclBV[ AD.VMap[VD] ] = Visit(B->getRHS());
+        }
+  
+      break;
+    }
+  }
+  
   return VisitStmt(B);
+}
+
+bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
+  bool x = Initialized();
+  
+  for (ScopedDecl* D = S->getDecl(); D != NULL; D = D->getNextDeclarator())
+    if (VarDecl* VD = dyn_cast<VarDecl>(D))
+      if (Stmt* I = VD->getInit()) {
+        assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
+        x = V.DeclBV[ AD.VMap[VD] ] = Visit(I);
+      }
+      
+  return x;
 }
 
 bool TransferFuncs::VisitCallExpr(CallExpr* C) {
@@ -140,8 +177,8 @@ bool TransferFuncs::VisitStmt(Stmt* S) {
   // evaluating some subexpressions may result in propogating "Uninitialized"
   // or "Initialized" to variables referenced in the other subexpressions.
   for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
-    if (Visit(*I) == Unintialized())
-      x = Unintialized();
+    if (Visit(*I) == Uninitialized())
+      x = Uninitialized();
   
   return x;
 }
@@ -153,7 +190,7 @@ bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
   
 } // end anonymous namespace
 
-//===--------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 // Merge operator.
 //
 //  In our transfer functions we take the approach that any
@@ -171,7 +208,7 @@ bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
 //  in a predecessor we treat it as uninitalized at the confluence point.
 //  The reason we do this is because dataflow values for tracked Exprs are
 //  not as control-dependent as dataflow values for tracked Decls.
-//===--------------------------------------------------------------------===//      
+//===----------------------------------------------------------------------===//      
 
 namespace {
 struct Merge {
@@ -190,24 +227,50 @@ struct Merge {
 };
 } // end anonymous namespace
 
-//===--------------------------------------------------------------------===//
-// External interface (driver logic).
-//===--------------------------------------------------------------------===//      
+//===----------------------------------------------------------------------===//
+// Unitialized values checker.   Scan an AST and flag variable uses
+//===----------------------------------------------------------------------===//      
 
-void UninitializedValues::CheckUninitializedValues(const CFG& cfg) {
+UninitializedValues_ValueTypes::ObserverTy::~ObserverTy() {}
+
+namespace {
+
+class UninitializedValuesChecker : public UninitializedValues::ObserverTy {
+  ASTContext &Ctx;
+  Diagnostic &Diags;
+  llvm::SmallPtrSet<VarDecl*,10> AlreadyWarned;
+  
+public:
+  UninitializedValuesChecker(ASTContext &ctx, Diagnostic &diags)
+    : Ctx(ctx), Diags(diags) {}
+    
+  virtual void ObserveDeclRefExpr(UninitializedValues::ValTy& V,
+                                  UninitializedValues::AnalysisDataTy& AD,
+                                  DeclRefExpr* DR, VarDecl* VD) {
+
+    assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
+    if (V.DeclBV[ AD.VMap[VD] ] == TransferFuncs::Uninitialized())
+      if (AlreadyWarned.insert(VD))
+        Diags.Report(DR->getSourceRange().Begin(), diag::warn_uninit_val);
+  }
+};
+
+} // end anonymous namespace
+
+
+void CheckUninitializedValues(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
 
   typedef DataflowSolver<UninitializedValues,TransferFuncs,Merge> Solver;
-
-  UninitializedValues U;
   
-  { // Compute the unitialized values information.
-    Solver S(U);
-    S.runOnCFG(cfg);
-  }
-
-//  WarnObserver O;
+  // Compute the unitialized values information.
+  UninitializedValues U;
   Solver S(U);
-    
-  for (CFG::const_iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
+  S.runOnCFG(cfg);
+  
+  // Scan for DeclRefExprs that use uninitialized values.
+  UninitializedValuesChecker Observer(Ctx,Diags);
+  U.getAnalysisData().Observer = &Observer;
+
+  for (CFG::iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
     S.runOnBlock(&*I);
 }
