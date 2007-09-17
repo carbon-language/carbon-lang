@@ -21,10 +21,12 @@
 namespace clang {
 
   class VarDecl;
+  class Expr;
 
-/// UninitializedValuesTypes - Utility class to wrap type declarations
-///   used for defining the UninitializedValues class.
-class UninitializedValuesTypes {
+/// UninitializedValues_ValueTypes - Utility class to wrap type declarations
+///   for dataflow values and dataflow analysis state for the
+///   Unitialized Values analysis.
+class UninitializedValues_ValueTypes {
 public:
   class ValTy {
     llvm::BitVector BV;
@@ -41,26 +43,21 @@ public:
     void copyValues(ValTy& RHS) { BV = RHS.BV; }    
   };
   
-  struct MetaDataTy {
-    llvm::DenseMap<const VarDecl*, unsigned > Map;
-    unsigned NumDecls;
+  struct AnalysisDataTy {
+    llvm::DenseMap<const VarDecl*, unsigned > VMap;
+    llvm::DenseMap<const Expr*, unsigned > EMap;
+    unsigned Counter;
     
-    MetaDataTy() : NumDecls(0) {}
-  };
-
-  class ObserverTy {
-    virtual ~ObserverTy();
-    virtual void ObserveStmt(Stmt* S, MetaDataTy& M, ValTy& V) {}
-    virtual void ObserveBlockExit(const CFGBlock* B, MetaDataTy& M, ValTy& V) {}
+    AnalysisDataTy() : Counter(0) {}
   };
 };
-
 
 /// UninitializedValues - Objects of this class encapsulate dataflow analysis
 ///  information regarding what variable declarations in a function are
 ///  potentially unintialized.
-class UninitializedValues : public DataflowValues<UninitializedValuesTypes> {
-
+class UninitializedValues : 
+  public DataflowValues<UninitializedValues_ValueTypes> {
+  
   //===--------------------------------------------------------------------===//
   // Public interface.
   //===--------------------------------------------------------------------===//      

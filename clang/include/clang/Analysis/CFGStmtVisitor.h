@@ -28,7 +28,8 @@ static_cast<ImplClass*>(this)->BlockStmt_Visit ## CLASS(static_cast<CLASS*>(S));
 
 #define DEFAULT_BLOCKSTMT_VISIT(CLASS) RetTy BlockStmt_Visit ## CLASS(CLASS *S)\
 { return\
-  static_cast<ImplClass*>(this)->BlockStmt_VisitImplicitControlFlowStmt(S); }  
+  static_cast<ImplClass*>(this)->BlockStmt_VisitImplicitControlFlowExpr(\
+  cast<Expr>(S)); }
 
 template <typename ImplClass, typename RetTy=void>
 class CFGStmtVisitor : public StmtVisitor<ImplClass,RetTy> {
@@ -54,7 +55,11 @@ public:
       }
       
       default:
-        return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(S);                             
+        if (isa<Expr>(S))
+          return 
+            static_cast<ImplClass*>(this)->BlockStmt_VisitExpr(cast<Expr>(S));
+        else
+          return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(S);                             
     }
   }
 
@@ -62,8 +67,12 @@ public:
   DEFAULT_BLOCKSTMT_VISIT(StmtExpr)
   DEFAULT_BLOCKSTMT_VISIT(ConditionalOperator)
   
-  RetTy BlockStmt_VisitImplicitControlFlowStmt(Stmt* S) {
-    return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(S);
+  RetTy BlockStmt_VisitImplicitControlFlowExpr(Expr* E) {
+    return static_cast<ImplClass*>(this)->BlockStmt_VisitExpr(E);
+  }
+  
+  RetTy BlockStmt_VisitExpr(Expr* E) {
+    return static_cast<ImplClass*>(this)->BlockStmt_VisitStmt(E);
   }
   
   RetTy BlockStmt_VisitStmt(Stmt* S) {
@@ -72,12 +81,12 @@ public:
 
   RetTy BlockStmt_VisitLogicalOp(BinaryOperator* B) {
     return 
-     static_cast<ImplClass*>(this)->BlockStmt_VisitImplicitControlFlowStmt(B);
+     static_cast<ImplClass*>(this)->BlockStmt_VisitImplicitControlFlowExpr(B);
   }
   
   RetTy BlockStmt_VisitComma(BinaryOperator* B) {
     return
-     static_cast<ImplClass*>(this)->BlockStmt_VisitImplicitControlFlowStmt(B);
+     static_cast<ImplClass*>(this)->BlockStmt_VisitImplicitControlFlowExpr(B);
   }
 
   //===--------------------------------------------------------------------===//

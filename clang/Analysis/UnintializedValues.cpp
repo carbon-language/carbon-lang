@@ -24,26 +24,30 @@ using namespace clang;
 
 namespace {
 
-class RegisterDecls : public CFGVarDeclVisitor<RegisterDecls> {
-  UninitializedValues::MetaDataTy& M;
+class RegisterDeclsAndExprs : public CFGVarDeclVisitor<RegisterDeclsAndExprs> {
+  UninitializedValues::AnalysisDataTy& AD;
 public:
-  RegisterDecls(const CFG& cfg, UninitializedValues::MetaDataTy& m) :
-    CFGVarDeclVisitor<RegisterDecls>(cfg), M(m) {}
+  RegisterDeclsAndExprs(const CFG& cfg, UninitializedValues::AnalysisDataTy& ad)
+                        : CFGVarDeclVisitor<RegisterDeclsAndExprs>(cfg), AD(ad)
+  {}
   
   void VisitVarDecl(VarDecl* D) {
-    if (M.Map.find(D) == M.Map.end()) {
-      M.Map[D] = M.NumDecls++;
-    }
-  }  
+    if (AD.VMap.find(D) == AD.VMap.end())
+      AD.VMap[D] = AD.Counter++;
+  }
+  
+  void BlockStmt_VisitExpr(Expr* E) {
+    if (AD.EMap.find(E) == AD.EMap.end())
+      AD.EMap[E] = AD.Counter++;
+  }        
 };
   
 } // end anonymous namespace
 
 void UninitializedValues::InitializeValues(const CFG& cfg) {
-  RegisterDecls R(cfg,this->getMetaData());
-  R.VisitAllDecls();
-    
-  getBlockDataMap()[ &cfg.getEntry() ].resize( getMetaData().NumDecls );
+  RegisterDeclsAndExprs R(cfg,this->getAnalysisData());
+  R.VisitAllDecls();    
+  getBlockDataMap()[ &cfg.getEntry() ].resize( getAnalysisData().Counter );
 }
 
 //===--------------------------------------------------------------------===//
@@ -53,15 +57,17 @@ void UninitializedValues::InitializeValues(const CFG& cfg) {
 namespace {
 class TransferFuncs : public CFGStmtVisitor<TransferFuncs,bool> {
   UninitializedValues::ValTy V;
-  UninitializedValues::MetaDataTy& M;
-  UninitializedValues::ObserverTy* O;
+  UninitializedValues::AnalysisDataTy& AD;
 public:
-  TransferFuncs(UninitializedValues::MetaDataTy& m,
-                UninitializedValues::ObserverTy* o) : M(m), O(o) {
-    V.resize(M.NumDecls);
+  TransferFuncs(UninitializedValues::AnalysisDataTy& ad) : AD(ad) {
+    V.resize(AD.Counter);
   }
   
   UninitializedValues::ValTy& getVal() { return V; }
+  
+//  bool VisitDeclRefExpr(DeclRefExpr* DR);
+//  bool VisitBinaryOperator(BinaryOperator* B);
+//  bool VisitUnaryOperator(UnaryOperator* U);    
 };
 } // end anonymous namespace
 

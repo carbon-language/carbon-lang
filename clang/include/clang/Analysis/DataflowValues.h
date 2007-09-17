@@ -35,7 +35,7 @@ namespace dataflow {
 } // end namespace dataflow
     
 
-template <typename TypeClass,
+template <typename ValueTypes,
           typename _AnalysisDirTag = dataflow::forward_analysis_tag >
 class DataflowValues {
 
@@ -44,10 +44,8 @@ class DataflowValues {
   //===--------------------------------------------------------------------===//    
 
 public:
-  typedef typename TypeClass::ValTy                ValTy;
-  typedef typename TypeClass::MetaDataTy           MetaDataTy;
-  typedef typename TypeClass::ObserverTy           ObserverTy;
-  
+  typedef typename ValueTypes::ValTy               ValTy;
+  typedef typename ValueTypes::AnalysisDataTy      AnalysisDataTy;  
   typedef _AnalysisDirTag                          AnalysisDirTag;  
   typedef llvm::DenseMap<const CFGBlock*, ValTy>   BlockDataMapTy;
 
@@ -101,19 +99,20 @@ public:
   BlockDataMapTy& getBlockDataMap() { return BlockDataMap; }
   const BlockDataMapTy& getBlockDataMap() const { return BlockDataMap; }
 
-  /// getMetaData - Retrieves the meta data associated with a dataflow analysis.
+  /// getAnalysisData - Retrieves the meta data associated with a 
+  ///  dataflow analysis for analyzing a particular CFG.  
   ///  This is typically consumed by transfer function code (via the solver).
   ///  This can also be used by subclasses to interpret the dataflow values.
-  MetaDataTy& getMetaData() { return Meta; }
-  const MetaDataTy& getMetaData() const { return Meta; }
+  AnalysisDataTy& getAnalysisData() { return AnalysisData; }
+  const AnalysisDataTy& getAnalysisData() const { return AnalysisData; }
   
   //===--------------------------------------------------------------------===//
   // Internal data.
   //===--------------------------------------------------------------------===//
   
 protected:
-  BlockDataMapTy                     BlockDataMap;
-  MetaDataTy     Meta;
+  BlockDataMapTy     BlockDataMap;
+  AnalysisDataTy     AnalysisData;
 };          
 
 } // end namespace clang

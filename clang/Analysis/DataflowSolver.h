@@ -62,14 +62,13 @@ public:
   typedef typename _DFValuesTy::AnalysisDirTag   AnalysisDirTag;
   typedef typename _DFValuesTy::ValTy            ValTy;
   typedef typename _DFValuesTy::BlockDataMapTy   BlockDataMapTy;
-  typedef typename _DFValuesTy::ObserverTy       ObserverTy;
 
   //===--------------------------------------------------------------------===//
   // External interface: constructing and running the solver.
   //===--------------------------------------------------------------------===//
   
 public:
-  DataflowSolver(DFValuesTy& d, ObserverTy* o = NULL) : D(d), O(o) {}
+  DataflowSolver(DFValuesTy& d) : D(d) {}
   ~DataflowSolver() {}  
   
   /// runOnCFG - Computes dataflow values for all blocks in a CFG.
@@ -86,7 +85,7 @@ public:
   ///  only be used for querying the dataflow values within a block with
   ///  and Observer object.
   void runOnBlock(const CFGBlock* B) {
-    TransferFuncsTy TF (D.getMetaData(),O);
+    TransferFuncsTy TF (D.getAnalysisData());
     ProcessBlock(B,TF,AnalysisDirTag());
   }
   
@@ -106,7 +105,7 @@ private:
     WorkList.enqueue(&cfg.getEntry());
     
     // Create the state for transfer functions.
-    TransferFuncsTy TF(D.getMetaData(),O);
+    TransferFuncsTy TF(D.getAnalysisData());
     
     // Process the worklist until it is empty.    
     while (!WorkList.isEmpty()) {
@@ -131,7 +130,7 @@ private:
     WorkList.enqueue(&cfg.getExit());
     
     // Create the state for transfer functions.
-    TransferFuncsTy TF(D.getMetaData(),O);
+    TransferFuncsTy TF(D.getAnalysisData());
     
     // Process the worklist until it is empty.    
     while (!WorkList.isEmpty()) {
@@ -213,7 +212,6 @@ private:
 
 private:
   DFValuesTy& D;
-  ObserverTy* O;
 };  
   
 

@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_CFG_VARDECL_VISITOR_H
 #define LLVM_CLANG_ANALYSIS_CFG_VARDECL_VISITOR_H
 
-#include "clang/AST/StmtVisitor.h"
+#include "clang/Analysis/CFGStmtVisitor.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/CFG.h"
@@ -23,7 +23,7 @@
 namespace clang {
 
 template <typename ImplClass>
-class CFGVarDeclVisitor : public StmtVisitor<ImplClass> {
+class CFGVarDeclVisitor : public CFGStmtVisitor<ImplClass> {
   const CFG& cfg;
 public:  
   CFGVarDeclVisitor(const CFG& c) : cfg(c) {}
