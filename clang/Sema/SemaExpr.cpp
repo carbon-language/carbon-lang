@@ -1855,3 +1855,29 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
   QualType t = Context.getPointerType(Context.CharTy);
   return new ObjCEncodeExpr(t, EncodedType, AtLoc, RParenLoc);
 }
+
+// This actions handles keyword message to classes.
+Sema::ExprResult Sema::ActOnKeywordMessage(IdentifierInfo *receivingClassName, 
+    ObjcKeywordMessage *Keywords, unsigned NumKeywords)
+{
+  return 0;
+}
+
+// This action handles keyword messages to instances.
+Sema::ExprResult Sema::ActOnKeywordMessage(ExprTy *receiver, 
+    ObjcKeywordMessage *Keywords, unsigned NumKeywords) {
+  return 0;
+}
+    
+// This actions handles keyword message to classes.
+Sema::ExprResult Sema::ActOnUnaryMessage(IdentifierInfo *receivingClassName, 
+                                         IdentifierInfo *selName) {
+  return 0;
+}
+
+// This action handles keyword messages to instances.
+Sema::ExprResult Sema::ActOnUnaryMessage(ExprTy *receiver, 
+                                         IdentifierInfo *selName) {
+  return 0;
+}
+

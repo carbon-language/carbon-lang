@@ -1051,11 +1051,18 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   }
   ConsumeBracket(); // consume ']'
   
+  if (KeyInfo.size()) {
+    // We've just parsed a keyword message.
+    if (ReceiverName) 
+      return Actions.ActOnKeywordMessage(ReceiverName, 
+                                            &KeyInfo[0], KeyInfo.size());
+    return Actions.ActOnKeywordMessage(ReceiverExpr, 
+                                            &KeyInfo[0], KeyInfo.size());
+  }
+  // We've just parsed a unary message (a message with no arguments).
   if (ReceiverName) 
-    return Actions.ActOnMessageExpression(ReceiverName, 
-                                          &KeyInfo[0], KeyInfo.size());
-  return Actions.ActOnMessageExpression(ReceiverExpr, 
-                                          &KeyInfo[0], KeyInfo.size());
+    return Actions.ActOnUnaryMessage(ReceiverName, selIdent);
+  return Actions.ActOnUnaryMessage(ReceiverExpr, selIdent);
 }
 
 Parser::ExprResult Parser::ParseObjCStringLiteral() {

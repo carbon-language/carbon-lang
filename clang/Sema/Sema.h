@@ -371,6 +371,19 @@ public:
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
  	     	    tok::TokenKind MethodType, TypeTy *ReturnType,
      		    IdentifierInfo *SelectorName, AttributeList *AttrList);
+                    
+  // This actions handles keyword message to classes.
+  virtual ExprResult ActOnKeywordMessage(IdentifierInfo *receivingClassName, 
+    ObjcKeywordMessage *Keywords, unsigned NumKeywords);
+  // This action handles keyword messages to instances.
+  virtual ExprResult ActOnKeywordMessage(ExprTy *receiver, 
+    ObjcKeywordMessage *Keywords, unsigned NumKeywords);
+    
+  // This actions handles keyword message to classes.
+  virtual ExprResult ActOnUnaryMessage(IdentifierInfo *receivingClassName, 
+                                    IdentifierInfo *selName);
+  // This action handles keyword messages to instances.
+  virtual ExprResult ActOnUnaryMessage(ExprTy *receiver, IdentifierInfo *sName);
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1). 

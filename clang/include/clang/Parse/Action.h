@@ -460,13 +460,22 @@ public:
     return 0;
   }
   // This actions handles keyword message to classes.
-  virtual DeclTy *ActOnMessageExpression(IdentifierInfo *receivingClassName, 
+  virtual ExprResult ActOnKeywordMessage(IdentifierInfo *receivingClassName, 
     ObjcKeywordMessage *Keywords, unsigned NumKeywords) {
     return 0;
   }
   // This action handles keyword messages to instances.
-  virtual DeclTy *ActOnMessageExpression(ExprTy *receiver, 
+  virtual ExprResult ActOnKeywordMessage(ExprTy *receiver, 
     ObjcKeywordMessage *Keywords, unsigned NumKeywords) {
+    return 0;
+  }
+  // This actions handles keyword message to classes.
+  virtual ExprResult ActOnUnaryMessage(IdentifierInfo *receivingClassName, 
+                                    IdentifierInfo *selName) {
+    return 0;
+  }
+  // This action handles keyword messages to instances.
+  virtual ExprResult ActOnUnaryMessage(ExprTy *receiver,IdentifierInfo *sName) {
     return 0;
   }
   virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
