@@ -111,7 +111,14 @@ namespace {
     /// instruction then loop body is executed only for one iteration. In
     /// such case eliminate loop structure surrounding this loop body. For
     bool processOneIterationLoop(SplitInfo &SD);
-    
+
+    void updateLoopBounds(ICmpInst *CI);
+    /// updateLoopIterationSpace - Current loop body is covered by an AND
+    /// instruction whose operands compares induction variables with loop
+    /// invariants. If possible, hoist this check outside the loop by
+    /// updating appropriate start and end values for induction variable.
+    bool updateLoopIterationSpace(SplitInfo &SD);
+
     /// If loop header includes loop variant instruction operands then
     /// this loop may not be eliminated.
     bool safeHeader(SplitInfo &SD,  BasicBlock *BB);
@@ -229,7 +236,19 @@ bool LoopIndexSplit::runOnLoop(Loop *IncomingLoop, LPPassManager &LPM_Ref) {
          E = SplitData.end(); SI != E;) {
     SplitInfo &SD = *SI;
     ICmpInst *CI = dyn_cast<ICmpInst>(SD.SplitCondition);
-    if (CI && CI->getPredicate() == ICmpInst::ICMP_EQ) {
+    if (SD.SplitCondition->getOpcode() == Instruction::And) {
+      Changed = updateLoopIterationSpace(SD);
+      if (Changed) {
+        ++NumIndexSplit;
+        // If is loop is eliminated then nothing else to do here.
+        return Changed;
+      } else {
+        SmallVector<SplitInfo, 4>::iterator Delete_SI = SI;
+        ++SI;
+        SplitData.erase(Delete_SI);
+      }
+    }
+    else if (CI && CI->getPredicate() == ICmpInst::ICMP_EQ) {
       Changed = processOneIterationLoop(SD);
       if (Changed) {
         ++NumIndexSplit;
@@ -391,6 +410,25 @@ void LoopIndexSplit::findSplitCondition() {
     if (BR->isUnconditional())
       continue;
 
+    if (Instruction *AndI = dyn_cast<Instruction>(BR->getCondition())) {
+      if (AndI->getOpcode() == Instruction::And) {
+        ICmpInst *Op0 = dyn_cast<ICmpInst>(AndI->getOperand(0));
+        ICmpInst *Op1 = dyn_cast<ICmpInst>(AndI->getOperand(1));
+
+        if (!Op0 || !Op1)
+          continue;
+
+        if (!safeICmpInst(Op0, SD))
+          continue;
+        SD.clear();
+        if (!safeICmpInst(Op1, SD))
+          continue;
+        SD.clear();
+        SD.SplitCondition = AndI;
+        SplitData.push_back(SD);
+        continue;
+      }
+    }
     ICmpInst *CI = dyn_cast<ICmpInst>(BR->getCondition());
     if (!CI || CI == ExitCondition)
       continue;
@@ -661,6 +699,164 @@ bool LoopIndexSplit::safeExitingBlock(SplitInfo &SD,
   // We could not find any reason to consider ExitingBlock unsafe.
   return true;
 }
+
+void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
+
+  Value *V0 = CI->getOperand(0);
+  Value *V1 = CI->getOperand(1);
+  Value *NV = NULL;
+
+  SCEVHandle SH0 = SE->getSCEV(V0);
+  
+  if (SH0->isLoopInvariant(L))
+    NV = V0;
+  else
+    NV = V1;
+
+  switch (CI->getPredicate()) {
+  case ICmpInst::ICMP_ULE:
+  case ICmpInst::ICMP_SLE:
+    // for (i = LB; i < UB; ++i)
+    //   if (i <= NV && ...)
+    //      LOOP_BODY
+    // 
+    // is transformed into
+    // NUB = min (NV+1, UB)
+    // for (i = LB; i < NUB ; ++i)
+    //   LOOP_BODY
+    //
+
+
+
+    // for (i = LB; i <= UB; ++i)
+    //   if (i <= NV && ...)
+    //      LOOP_BODY
+    // 
+    // is transformed into
+    // NUB = min (NV, UB)
+    // for (i = LB; i <= NUB ; ++i)
+    //   LOOP_BODY
+    //
+    break;
+  case ICmpInst::ICMP_ULT:
+  case ICmpInst::ICMP_SLT:
+    // for (i = LB; i < UB; ++i)
+    //   if (i < NV && ...)
+    //      LOOP_BODY
+    // 
+    // is transformed into
+    // NUB = min (NV, UB)
+    // for (i = LB; i < NUB ; ++i)
+    //   LOOP_BODY
+    //
+
+
+
+    // for (i = LB; i <= UB; ++i)
+    //   if (i < NV && ...)
+    //      LOOP_BODY
+    // 
+    // is transformed into
+    // NUB = min (NV -1 , UB)
+    // for (i = LB; i <= NUB ; ++i)
+    //   LOOP_BODY
+    //
+    break;
+  case ICmpInst::ICMP_UGE:
+  case ICmpInst::ICMP_SGE:
+    // for (i = LB; i (< or <=) UB; ++i)
+    //   if (i >= NV && ...)
+    //      LOOP_BODY
+    // 
+    // is transformed into
+    // NLB = max (NV, LB)
+    // for (i = NLB; i (< or <=) UB ; ++i)
+    //   LOOP_BODY
+    //
+    break;
+  case ICmpInst::ICMP_UGT:
+  case ICmpInst::ICMP_SGT:
+    // for (i = LB; i (< or <=) UB; ++i)
+    //   if (i > NV && ...)
+    //      LOOP_BODY
+    // 
+    // is transformed into
+    // NLB = max (NV+1, LB)
+    // for (i = NLB; i (< or <=) UB ; ++i)
+    //   LOOP_BODY
+    //
+    break;
+  default:
+    assert ( 0 && "Unexpected split condition predicate");
+  }
+}
+/// updateLoopIterationSpace - Current loop body is covered by an AND
+/// instruction whose operands compares induction variables with loop
+/// invariants. If possible, hoist this check outside the loop by
+/// updating appropriate start and end values for induction variable.
+bool LoopIndexSplit::updateLoopIterationSpace(SplitInfo &SD) {
+  BasicBlock *Header = L->getHeader();
+  ICmpInst *Op0 = cast<ICmpInst>(SD.SplitCondition->getOperand(0));
+  ICmpInst *Op1 = cast<ICmpInst>(SD.SplitCondition->getOperand(1));
+
+  if (Op0->getPredicate() == ICmpInst::ICMP_EQ 
+      || Op0->getPredicate() == ICmpInst::ICMP_NE
+      || Op0->getPredicate() == ICmpInst::ICMP_EQ 
+      || Op0->getPredicate() == ICmpInst::ICMP_NE)
+    return false;
+
+  // Check if SplitCondition dominates entire loop body
+  // or not.
+  
+  // If SplitCondition is not in loop header then this loop is not suitable
+  // for this transformation.
+  if (SD.SplitCondition->getParent() != Header)
+    return false;
+  
+  // If loop header includes loop variant instruction operands then
+  // this loop may not be eliminated.
+  Instruction *Terminator = Header->getTerminator();
+  for(BasicBlock::iterator BI = Header->begin(), BE = Header->end(); 
+      BI != BE; ++BI) {
+    Instruction *I = BI;
+
+    // PHI Nodes are OK.
+    if (isa<PHINode>(I))
+      continue;
+
+    // SplitCondition itself is OK.
+    if (I == SD.SplitCondition)
+      continue;
+    if (I == Op0 || I == Op1)
+      continue;
+
+    // Induction variable is OK.
+    if (I == IndVar)
+      continue;
+
+    // Induction variable increment is OK.
+    if (I == IndVarIncrement)
+      continue;
+
+    // Terminator is also harmless.
+    if (I == Terminator)
+      continue;
+
+    // Otherwise we have a instruction that may not be safe.
+    return false;
+  }
+
+  // If Exiting block includes loop variant instructions then this
+  // loop may not be eliminated.
+  if (!safeExitingBlock(SD, ExitCondition->getParent())) 
+    return false;
+
+  updateLoopBounds(Op0);
+  updateLoopBounds(Op1);
+  // Update CFG
+  return true;
+}
+
 
 /// removeBlocks - Remove basic block DeadBB and all blocks dominated by DeadBB.
 /// This routine is used to remove split condition's dead branch, dominated by
