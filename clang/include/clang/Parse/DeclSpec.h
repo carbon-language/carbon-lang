@@ -562,15 +562,13 @@ public:
   bool getInvalidType() { return InvalidType; }
 };
 
+/// ObjCKeyword* - The following 3 small value structures capture keyword
+/// information passed from the parser to the actions. Like Declarator above,
+/// instances of these structures are transient objects that live on the stack.
 struct ObjcKeywordInfo {
   IdentifierInfo *SelectorName; // optional
   SourceLocation SelectorLoc;
   SourceLocation ColonLoc;
-
-  ObjcKeywordInfo() {}
-  ObjcKeywordInfo(IdentifierInfo *selName, SourceLocation sLoc, 
-                  SourceLocation cLoc)
-    : SelectorName(selName), SelectorLoc(sLoc), ColonLoc(cLoc) {} 
 };
 
 struct ObjcKeywordDecl : ObjcKeywordInfo {
@@ -578,23 +576,10 @@ struct ObjcKeywordDecl : ObjcKeywordInfo {
   IdentifierInfo *ArgumentName;
   AttributeList *AttrList;
   bool InvalidType;  // FIXME: is this used?
-  
-  ObjcKeywordDecl() {}
-  ObjcKeywordDecl(IdentifierInfo *selName, SourceLocation sLoc, 
-                  SourceLocation cLoc, Action::TypeTy *tInfo,
-                  IdentifierInfo *argName, AttributeList *aList)
-    : ObjcKeywordInfo(selName, sLoc, cLoc), 
-      TypeInfo(tInfo), ArgumentName(argName), AttrList(aList) {
-  }
 };
   
 struct ObjcKeywordMessage : ObjcKeywordInfo {
   Action::ExprTy *KeywordExpr;
-
-  ObjcKeywordMessage() {}
-  ObjcKeywordMessage(IdentifierInfo *selName, SourceLocation sLoc, 
-                     SourceLocation cLoc, Action::ExprTy *expr)
-    : ObjcKeywordInfo(selName, sLoc, cLoc), KeywordExpr(expr) {}
 };
 
 } // end namespace clang
