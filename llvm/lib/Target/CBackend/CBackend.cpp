@@ -406,6 +406,11 @@ CWriter::printSimpleType(std::ostream &Out, const Type *Ty, bool isSigned,
   }
   case Type::FloatTyID:  return Out << "float "   << NameSoFar;
   case Type::DoubleTyID: return Out << "double "  << NameSoFar;
+  // Lacking emulation of FP80 on PPC, etc., we assume whichever of these is
+  // present matches host 'long double'.
+  case Type::X86_FP80TyID:
+  case Type::PPC_FP128TyID:
+  case Type::FP128TyID:  return Out << "long double " << NameSoFar;
   default :
     cerr << "Unknown primitive type: " << *Ty << "\n";
     abort();
@@ -604,7 +609,7 @@ void CWriter::printConstantVector(ConstantVector *CP) {
 // only deal in IEEE FP).
 //
 static bool isFPCSafeToPrint(const ConstantFP *CFP) {
-  // Do long doubles the hard way for now.
+  // Do long doubles in hex for now.
   if (CFP->getType()!=Type::FloatTy && CFP->getType()!=Type::DoubleTy)
     return false;
   APFloat APF = APFloat(CFP->getValueAPF());  // copy
@@ -878,15 +883,22 @@ void CWriter::printConstant(Constant *CPV) {
 
   switch (CPV->getType()->getTypeID()) {
   case Type::FloatTyID:
-  case Type::DoubleTyID: {
+  case Type::DoubleTyID: 
+  case Type::X86_FP80TyID:
+  case Type::PPC_FP128TyID:
+  case Type::FP128TyID: {
     ConstantFP *FPC = cast<ConstantFP>(CPV);
     std::map<const ConstantFP*, unsigned>::iterator I = FPConstantMap.find(FPC);
     if (I != FPConstantMap.end()) {
       // Because of FP precision problems we must load from a stack allocated
       // value that holds the value in hex.
-      Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : "double")
+      Out << "(*(" << (FPC->getType() == Type::FloatTy ? "float" : 
+                       FPC->getType() == Type::DoubleTy ? "double" :
+                       "long double")
           << "*)&FPConstant" << I->second << ')';
     } else {
+      assert(FPC->getType() == Type::FloatTy || 
+             FPC->getType() == Type::DoubleTy);
       double V = FPC->getType() == Type::FloatTy ? 
                  FPC->getValueAPF().convertToFloat() : 
                  FPC->getValueAPF().convertToDouble();
@@ -1490,7 +1502,10 @@ bool CWriter::doInitialization(Module &M) {
       << "\n\n/* Support for floating point constants */\n"
       << "typedef unsigned long long ConstantDoubleTy;\n"
       << "typedef unsigned int        ConstantFloatTy;\n"
-
+      << "typedef struct { unsigned long long f1; unsigned short f2; "
+         "unsigned short pad[3]; } ConstantFP80Ty;\n"
+      << "typedef struct { unsigned long long f1; unsigned long long f2; }"
+         " ConstantFP128Ty;\n"
       << "\n\n/* Global Declarations */\n";
 
   // First output all the declarations for the program, because C requires
@@ -1529,6 +1544,7 @@ bool CWriter::doInitialization(Module &M) {
   Out << "\n/* Function Declarations */\n";
   Out << "double fmod(double, double);\n";   // Support for FP rem
   Out << "float fmodf(float, float);\n";
+  Out << "long double fmodl(long double, long double);\n";
   
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     // Don't print declarations for intrinsic functions.
@@ -1711,6 +1727,13 @@ void CWriter::printFloatingPointConstants(Function &F) {
           Out << "static const ConstantFloatTy FPConstant" << FPCounter++
               << " = 0x" << std::hex << i << std::dec
               << "U;    /* " << Val << " */\n";
+        } else if (FPC->getType() == Type::X86_FP80Ty) {
+          const uint64_t *p = FPC->getValueAPF().convertToAPInt().getRawData();
+          Out << "static const ConstantFP80Ty FPConstant" << FPCounter++
+              << " = { 0x" << std::hex
+              << ((uint16_t)p[1] | (p[0] & 0xffffffffffffLL)<<16)
+              << ", 0x" << (uint16_t)(p[0] >> 48) << ",0,0,0"
+              << "}; /* Long double constant */\n" << std::dec;
         } else
           assert(0 && "Unknown float type!");
       }
@@ -2190,8 +2213,10 @@ void CWriter::visitBinaryOperator(Instruction &I) {
     // Output a call to fmod/fmodf instead of emitting a%b
     if (I.getType() == Type::FloatTy)
       Out << "fmodf(";
-    else
+    else if (I.getType() == Type::DoubleTy)
       Out << "fmod(";
+    else  // all 3 flavors of long double
+      Out << "fmodl(";
     writeOperand(I.getOperand(0));
     Out << ", ";
     writeOperand(I.getOperand(1));
