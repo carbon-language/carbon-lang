@@ -43,11 +43,6 @@ namespace llvm {
     ///
     unsigned FunctionNumber;
 
-    /// Cache of mangled exception handling name for current function. This is
-    /// recalculated at the beginning of each call to runOnMachineFunction().
-    ///
-    std::string CurrentFnEHName;
-
   protected:
     // Necessary for external weak linkage support
     std::set<const GlobalValue*> ExtWeakSymbols;
