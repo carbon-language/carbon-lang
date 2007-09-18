@@ -173,23 +173,39 @@ public:
 ///  CFGBlocks which are simply containers of Stmt*'s in the AST the CFG
 ///  was constructed from.
 class CFG {
-  typedef std::list<CFGBlock> CFGBlockListTy;
-  CFGBlock* Entry;
-  CFGBlock* Exit;
-  CFGBlock* IndirectGotoBlock;  // Special block to contain collective dispatch
-                                // for indirect gotos
-  CFGBlockListTy Blocks;
-  unsigned NumBlockIDs;
-  
 public:
-  CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0) {};
-  ~CFG() {};
+  //===--------------------------------------------------------------------===//
+  // CFG Construction & Manipulation.
+  //===--------------------------------------------------------------------===//
+
+  /// buildCFG - Builds a CFG from an AST.  The responsibility to free the
+  ///   constructed CFG belongs to the caller.  
+  static CFG* buildCFG(Stmt* AST);  
   
-  // Block iterators
-  typedef CFGBlockListTy::iterator                                    iterator;
-  typedef CFGBlockListTy::const_iterator                        const_iterator;
-  typedef std::reverse_iterator<iterator>                     reverse_iterator;
-  typedef std::reverse_iterator<const_iterator>         const_reverse_iterator;
+  /// createBlock - Create a new block in the CFG.  The CFG owns the block;
+  ///  the caller should not directly free it.
+  CFGBlock* createBlock();
+  
+  /// setEntry - Set the entry block of the CFG.  This is typically used
+  ///  only during CFG construction.  Most CFG clients expect that the
+  ///  entry block has no predecessors and contains no statements.
+  void setEntry(CFGBlock *B) { Entry = B; }
+  
+  /// setExit - Set the exit block of the CFG.  This is typically used
+  ///  only during CFG construction.  Most CFG clients expect that the
+  ///  exit block has no successors and contains no statements.
+  void setIndirectGotoBlock(CFGBlock* B) { IndirectGotoBlock = B; }
+  
+  //===--------------------------------------------------------------------===//
+  // Block Iterators
+  //===--------------------------------------------------------------------===//
+
+  typedef std::list<CFGBlock>                      CFGBlockListTy;
+  
+  typedef CFGBlockListTy::iterator                 iterator;
+  typedef CFGBlockListTy::const_iterator           const_iterator;
+  typedef std::reverse_iterator<iterator>          reverse_iterator;
+  typedef std::reverse_iterator<const_iterator>    const_reverse_iterator;
 
   CFGBlock&                 front()                { return Blocks.front(); }
   CFGBlock&                 back()                 { return Blocks.back(); }
@@ -212,46 +228,43 @@ public:
   CFGBlock*        getIndirectGotoBlock() { return IndirectGotoBlock; }
   const CFGBlock*  getIndirectGotoBlock() const { return IndirectGotoBlock; }
   
-  // Edges
-  
+  //===--------------------------------------------------------------------===//
+  // CFG Edges (Source Block, Destination Block)
+  //===--------------------------------------------------------------------===//
+
   class Edge {
-    const CFGBlock* Src;
-    const CFGBlock* Dst;
+    const CFGBlock* S;
+    const CFGBlock* D;
   public:
-    Edge(const CFGBlock* src, const CFGBlock* dst) : Src(src), Dst(dst) {}
-    Edge(const Edge& RHS) : Src(RHS.Src), Dst(RHS.Dst) {}
+    Edge(const CFGBlock* src, const CFGBlock* dst) : S(src), D(dst) {}
+    Edge(const Edge& RHS) : S(RHS.S), D(RHS.D) {}
     
-    Edge& operator=(const Edge& RHS) { 
-      Src = RHS.Src;
-      Dst = RHS.Dst;
-      return *this; 
-    }
+    Edge& operator=(const Edge& RHS) { S = RHS.S; D = RHS.D; return *this; }
     
-    const CFGBlock* getSrc() const { return Src; }
-    const CFGBlock* getDst() const { return Dst; }
+    const CFGBlock* getSrc() const { return S; }
+    const CFGBlock* getDst() const { return D; }
         
-    bool operator==(const Edge& RHS) const {
-      return Src == RHS.Src && Dst == RHS.Dst;
-    }
-    
-    bool operator!=(const Edge& RHS) const {
-      return !(*this == RHS);
-    }
+    bool operator==(const Edge& RHS) const { return S == RHS.S && D == RHS.D; }    
+    bool operator!=(const Edge& RHS) const { return !(*this == RHS); }
   };
   
-  // Utility
-  
-  CFGBlock* createBlock();
+  //===--------------------------------------------------------------------===//
+  // CFG Introspection.
+  //===--------------------------------------------------------------------===//
+
   unsigned getNumBlockIDs() const { return NumBlockIDs; }
-  
-  static CFG* buildCFG(Stmt* AST);
+
+  //===--------------------------------------------------------------------===//
+  // CFG Debugging: Pretty-Printing and Visualization.
+  //===--------------------------------------------------------------------===//
+
   void viewCFG() const;
   void print(std::ostream& OS) const;
   void dump() const;
-  void setEntry(CFGBlock *B) { Entry = B; }
-  void setIndirectGotoBlock(CFGBlock* B) { IndirectGotoBlock = B; }
-  
-  // Useful Predicates
+
+  //===--------------------------------------------------------------------===//
+  // Static Predicates pertaining to CFG-related properties.
+  //===--------------------------------------------------------------------===//
   
   /// hasImplicitControlFlow - Returns true if a given expression is
   ///  is represented within a CFG as having a designated "statement slot"
@@ -287,7 +300,21 @@ public:
   ///  statements will dominate the Decl.
   ///
   static bool hasImplicitControlFlow(const Stmt* S);  
-  
+
+  //===--------------------------------------------------------------------===//
+  // Internal: constructors and data.
+  //===--------------------------------------------------------------------===//
+
+  CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0) {};
+  ~CFG() {};
+    
+private:
+  CFGBlock* Entry;
+  CFGBlock* Exit;
+  CFGBlock* IndirectGotoBlock;  // Special block to contain collective dispatch
+  // for indirect gotos
+  CFGBlockListTy Blocks;
+  unsigned NumBlockIDs;
 };
 } // end namespace clang
 
