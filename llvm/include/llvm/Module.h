@@ -215,11 +215,9 @@ public:
 /// @{
 public:
   /// getGlobalVariable - Look up the specified global variable in the module
-  /// symbol table.  If it does not exist, return null.  The type argument
-  /// should be the underlying type of the global, i.e., it should not have
-  /// the top-level PointerType, which represents the address of the global.
-  /// If AllowInternal is set to true, this function will return types that
-  /// have InternalLinkage. By default, these types are not returned.
+  /// symbol table.  If it does not exist, return null. If AllowInternal is set
+  /// to true, this function will return types that have InternalLinkage. By
+  /// default, these types are not returned.
   GlobalVariable *getGlobalVariable(const std::string &Name, 
                                     bool AllowInternal = false) const;
 
