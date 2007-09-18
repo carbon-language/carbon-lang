@@ -159,7 +159,7 @@ bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
 }
 
 bool TransferFuncs::VisitCallExpr(CallExpr* C) {
-  VisitStmt(C);
+  VisitChildren(C);
   return Initialized();
 }
 
