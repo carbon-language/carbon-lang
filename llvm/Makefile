@@ -20,7 +20,7 @@ LEVEL := .
 DIRS := lib/System lib/Support utils lib/VMCore lib tools/llvm-config \
         tools runtime docs
 
-OPTIONAL_DIRS := examples projects
+OPTIONAL_DIRS := examples projects bindings
 EXTRA_DIST := test llvm.spec include win32 Xcode
 
 include $(LEVEL)/Makefile.config 
@@ -46,7 +46,7 @@ endif
 # build LLVM.
 ifeq ($(MAKECMDGOALS),install)
   DIRS := $(filter-out utils, $(DIRS))
-  OPTIONAL_DIRS :=
+  OPTIONAL_DIRS := $(filter bindings, $(OPTIONAL_DIRS))
 endif
 
 # Include the main makefile machinery.
