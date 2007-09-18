@@ -532,6 +532,8 @@ AC_PATH_PROG(POD2MAN,[pod2man],[echo "Skipped: pod2man not found"])
 AC_PATH_PROG(RUNTEST,[runtest],[echo "Skipped: runtest not found"])
 DJ_AC_PATH_TCLSH
 AC_PATH_PROG(ZIP,[zip],[echo "Skipped: zip not found"])
+AC_PATH_PROG(OCAMLC,[ocamlc],[echo "Skipped: ocamlc not found"])
+AC_PATH_PROG(OCAMLOPT,[ocamlopt],[echo "Skipped: ocamlopt not found"])
 
 dnl Determine if the linker supports the -R option.
 AC_LINK_USE_R
