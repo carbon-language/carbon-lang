@@ -71,7 +71,7 @@ public:
       ExprBV.reset();
     }
     
-    bool equal(ValTy& RHS) const { 
+    bool operator==(ValTy& RHS) const { 
       return DeclBV == RHS.DeclBV && ExprBV == RHS.ExprBV; 
     }
     
@@ -89,7 +89,7 @@ public:
     llvm::BitVector::reference getBitRef(const Expr* E,
                                          AnalysisDataTy& AD) {
       assert (AD.isTracked(E) && "Expr not tracked.");                                                                                   
-      return DeclBV[AD.EMap[E]];
+      return ExprBV[AD.EMap[E]];
     }
     
     bool sizesEqual(ValTy& RHS) {
