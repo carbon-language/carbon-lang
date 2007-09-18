@@ -228,7 +228,7 @@ private:
       M[E].copyValues(V);
       WorkList.enqueue(TargetBlock);
     }
-    else if (!V.equal(I->second)) {
+    else if (!(V==I->second)) {
       I->second.copyValues(V);
       WorkList.enqueue(TargetBlock);
     }
