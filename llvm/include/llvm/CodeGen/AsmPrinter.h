@@ -115,7 +115,7 @@ namespace llvm {
     /// getCurrentFunctionEHName - Called to return (and cache) the
     /// CurrentFnEHName.
     /// 
-    const std::string &getCurrentFunctionEHName(const MachineFunction *MF);
+    std::string getCurrentFunctionEHName(const MachineFunction *MF);
 
   protected:
     /// doInitialization - Set up the AsmPrinter when we are working on a new

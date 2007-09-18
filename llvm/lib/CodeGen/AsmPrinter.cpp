@@ -160,8 +160,7 @@ bool AsmPrinter::doFinalization(Module &M) {
   return false;
 }
 
-const std::string &
-AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF) {
+std::string AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF) {
   assert(MF && "No machine function?");
   return Mang->makeNameProper(MF->getFunction()->getName() + ".eh",
                               TAI->getGlobalPrefix());
