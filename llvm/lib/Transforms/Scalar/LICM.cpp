@@ -791,6 +791,14 @@ void LICM::FindPromotableValuesInLoop(
           break;
         }
 
+      // If GEP base is NULL then the calculated address  used by Store or
+      // Load instruction is invalid. Do not promote this value because
+      // it may expose load and store instruction that are covered by
+      // condition which may not yet folded.
+      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V))
+        if (isa<ConstantPointerNull>(GEP->getOperand(0)))
+          PointerOk = false;
+
       if (PointerOk) {
         const Type *Ty = cast<PointerType>(V->getType())->getElementType();
         AllocaInst *AI = new AllocaInst(Ty, 0, V->getName()+".tmp", FnStart);
