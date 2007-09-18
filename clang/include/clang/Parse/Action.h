@@ -473,22 +473,28 @@ public:
     return 0;
   }
   // This actions handles keyword message to classes.
-  virtual ExprResult ActOnKeywordMessage(IdentifierInfo *receivingClassName, 
-    ObjcKeywordMessage *Keywords, unsigned NumKeywords) {
+  virtual ExprResult ActOnKeywordMessage(
+    IdentifierInfo *receivingClassName, 
+    ObjcKeywordMessage *Keywords, unsigned NumKeywords,
+    SourceLocation lbrac, SourceLocation rbrac) {
     return 0;
   }
   // This action handles keyword messages to instances.
   virtual ExprResult ActOnKeywordMessage(ExprTy *receiver, 
-    ObjcKeywordMessage *Keywords, unsigned NumKeywords) {
+    ObjcKeywordMessage *Keywords, unsigned NumKeywords,
+    SourceLocation lbrac, SourceLocation rbrac) {
     return 0;
   }
-  // This actions handles keyword message to classes.
-  virtual ExprResult ActOnUnaryMessage(IdentifierInfo *receivingClassName, 
-                                    IdentifierInfo *selName) {
+  // This actions handles unary message to classes.
+  virtual ExprResult ActOnUnaryMessage(
+    IdentifierInfo *receivingClassName, IdentifierInfo *selName,
+    SourceLocation lbrac, SourceLocation rbrac) {
     return 0;
   }
-  // This action handles keyword messages to instances.
-  virtual ExprResult ActOnUnaryMessage(ExprTy *receiver,IdentifierInfo *sName) {
+  // This action handles unary messages to instances.
+  virtual ExprResult ActOnUnaryMessage(
+    ExprTy *receiver, IdentifierInfo *sName,
+    SourceLocation lbrac, SourceLocation rbrac) {
     return 0;
   }
   virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,

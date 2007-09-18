@@ -15,6 +15,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/IdentifierTable.h"
+// is this bad layering? I (snaroff) don't think so. Want Chris to weigh in.
+#include "clang/Parse/DeclSpec.h" 
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -854,6 +856,52 @@ unsigned OCUVectorElementExpr::getEncodedElementAccess() const {
   return Result;
 }
 
+// constructor for unary messages.
+ObjCMessageExpr::ObjCMessageExpr(
+  IdentifierInfo *clsName, SelectorInfo &methName, QualType retType, 
+  SourceLocation LBrac, SourceLocation RBrac)
+  : Expr(ObjCMessageExprClass, retType), Selector(methName) {
+  ClassName = clsName;
+  LBracloc = LBrac;
+  RBracloc = RBrac;
+}
+
+ObjCMessageExpr::ObjCMessageExpr(
+  Expr *fn, SelectorInfo &methName, QualType retType, 
+  SourceLocation LBrac, SourceLocation RBrac)
+  : Expr(ObjCMessageExprClass, retType), Selector(methName), ClassName(0) {
+  SubExprs = new Expr*[1];
+  SubExprs[RECEIVER] = fn;
+  LBracloc = LBrac;
+  RBracloc = RBrac;
+}
+
+// constructor for keyword messages.
+ObjCMessageExpr::ObjCMessageExpr(
+  Expr *fn, SelectorInfo &selInfo, ObjcKeywordMessage *keys, unsigned numargs, 
+  QualType retType, SourceLocation LBrac, SourceLocation RBrac)
+  : Expr(ObjCMessageExprClass, retType), Selector(selInfo), ClassName(0) {
+  SubExprs = new Expr*[numargs+1];
+  SubExprs[RECEIVER] = fn;
+  for (unsigned i = 0; i != numargs; ++i)
+    SubExprs[i+ARGS_START] = static_cast<Expr *>(keys[i].KeywordExpr);
+  LBracloc = LBrac;
+  RBracloc = RBrac;
+}
+
+ObjCMessageExpr::ObjCMessageExpr(
+  IdentifierInfo *clsName, SelectorInfo &selInfo, ObjcKeywordMessage *keys, 
+  unsigned numargs, QualType retType, SourceLocation LBrac, SourceLocation RBrac)
+  : Expr(ObjCMessageExprClass, retType), Selector(selInfo), ClassName(clsName) {
+  SubExprs = new Expr*[numargs+1];
+  SubExprs[RECEIVER] = 0;
+  for (unsigned i = 0; i != numargs; ++i)
+    SubExprs[i+ARGS_START] = static_cast<Expr *>(keys[i].KeywordExpr);
+  LBracloc = LBrac;
+  RBracloc = RBrac;
+}
+
+
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//
@@ -1022,4 +1070,12 @@ Stmt::child_iterator ObjCStringLiteral::child_end() { return NULL; }
 // ObjCEncodeExpr
 Stmt::child_iterator ObjCEncodeExpr::child_begin() { return NULL; }
 Stmt::child_iterator ObjCEncodeExpr::child_end() { return NULL; }
+
+// ObjCMessageExpr
+Stmt::child_iterator ObjCMessageExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(&SubExprs[0]);
+}
+Stmt::child_iterator ObjCMessageExpr::child_end() {
+  return reinterpret_cast<Stmt**>(&SubExprs[NumArgs+ARGS_START]);
+}
 

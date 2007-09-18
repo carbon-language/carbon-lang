@@ -23,6 +23,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Config/config.h" 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallSet.h"
 #if !defined(LLVM_ON_WIN32)
 #include <alloca.h>
@@ -1298,21 +1299,21 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
 
   // Derive the selector name from the keyword declarations.
   int len=0;
-  char *methodName;
   for (unsigned int i = 0; i < NumKeywords; i++) {
     if (Keywords[i].SelectorName)
       len += strlen(Keywords[i].SelectorName->getName());
     len++;
   }
-  methodName = (char *) alloca (len + 1);
+  llvm::SmallString<128> methodName;
   methodName[0] = '\0';
   for (unsigned int i = 0; i < NumKeywords; i++) {
     if (Keywords[i].SelectorName)
-      strcat(methodName, Keywords[i].SelectorName->getName());
-    strcat(methodName, ":");
+      methodName += Keywords[i].SelectorName->getName();
+    methodName += ":";
   }
-  SelectorInfo &SelName = Context.getSelectorInfo(methodName, methodName+len);
-
+  methodName[len] = '\0';
+  SelectorInfo &SelName = Context.getSelectorInfo(&methodName[0], 
+                                                  &methodName[0]+len);
   llvm::SmallVector<ParmVarDecl*, 16> Params;
 
   for (unsigned i = 0; i < NumKeywords; i++) {
@@ -1332,9 +1333,9 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
 		      		      0, -1, AttrList, MethodType == tok::minus);
   ObjcMethod->setMethodParams(&Params[0], NumKeywords);
   if (MethodDeclKind == tok::objc_optional)
-      ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
+    ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
   else
-       ObjcMethod->setDeclImplementation(ObjcMethodDecl::Required);
+    ObjcMethod->setDeclImplementation(ObjcMethodDecl::Required);
   return ObjcMethod;
 }
 
@@ -1350,9 +1351,9 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
 			             SelName, resultDeclType, 0, -1,
                                      AttrList, MethodType == tok::minus);
   if (MethodDeclKind == tok::objc_optional)
-      ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
+    ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
   else
-       ObjcMethod->setDeclImplementation(ObjcMethodDecl::Required);
+    ObjcMethod->setDeclImplementation(ObjcMethodDecl::Required);
   return ObjcMethod;
 }
 

@@ -80,8 +80,9 @@ STMT(61, CXXBoolLiteralExpr   , Expr)
 // Obj-C Expressions.
 STMT(70, ObjCStringLiteral    , Expr)
 STMT(71, ObjCEncodeExpr       , Expr)
+STMT(72, ObjCMessageExpr      , Expr)
 
-LAST_EXPR(71)
+LAST_EXPR(72)
 
 #undef STMT
 #undef FIRST_STMT

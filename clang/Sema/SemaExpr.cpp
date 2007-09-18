@@ -15,6 +15,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Expr.h"
+#include "clang/Parse/DeclSpec.h" 
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/LiteralSupport.h"
 #include "clang/Basic/SourceManager.h"
@@ -1856,28 +1857,76 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
   return new ObjCEncodeExpr(t, EncodedType, AtLoc, RParenLoc);
 }
 
+static SelectorInfo &DeriveSelector(ObjcKeywordMessage *Keywords, 
+                                    unsigned NumKeywords,
+                                    ASTContext &Context) {
+  // Derive the selector name from the keyword declarations.
+  int len=0;
+  for (unsigned int i = 0; i < NumKeywords; i++) {
+    if (Keywords[i].SelectorName)
+      len += strlen(Keywords[i].SelectorName->getName());
+    len++;
+  }
+  llvm::SmallString<128> methodName;
+  methodName[0] = '\0';
+  for (unsigned int i = 0; i < NumKeywords; i++) {
+    if (Keywords[i].SelectorName)
+      methodName += Keywords[i].SelectorName->getName();
+    methodName += ":";
+  }
+  methodName[len] = '\0';
+  return Context.getSelectorInfo(&methodName[0], &methodName[0]+len);
+}
+
 // This actions handles keyword message to classes.
-Sema::ExprResult Sema::ActOnKeywordMessage(IdentifierInfo *receivingClassName, 
-    ObjcKeywordMessage *Keywords, unsigned NumKeywords)
+Sema::ExprResult Sema::ActOnKeywordMessage(
+  IdentifierInfo *receivingClassName, 
+  ObjcKeywordMessage *Keywords, unsigned NumKeywords,
+  SourceLocation lbrac, SourceLocation rbrac)
 {
-  return 0;
+  SelectorInfo &SelName = DeriveSelector(Keywords, NumKeywords, Context);
+  assert(receivingClassName && "missing receiver class name");
+
+  return new ObjCMessageExpr(receivingClassName, SelName, Keywords, NumKeywords, 
+                             Context.IntTy/*FIXME*/, lbrac, rbrac);
 }
 
 // This action handles keyword messages to instances.
-Sema::ExprResult Sema::ActOnKeywordMessage(ExprTy *receiver, 
-    ObjcKeywordMessage *Keywords, unsigned NumKeywords) {
-  return 0;
+Sema::ExprResult Sema::ActOnKeywordMessage(
+  ExprTy *receiver, ObjcKeywordMessage *Keywords, unsigned NumKeywords,
+  SourceLocation lbrac, SourceLocation rbrac) {
+  SelectorInfo &SelName = DeriveSelector(Keywords, NumKeywords, Context);
+  assert(receiver && "missing receiver expression");
+  
+  Expr *RExpr = static_cast<Expr *>(receiver);
+  return new ObjCMessageExpr(RExpr, SelName, Keywords, NumKeywords, 
+                             Context.IntTy/*FIXME*/, lbrac, rbrac);
 }
     
-// This actions handles keyword message to classes.
-Sema::ExprResult Sema::ActOnUnaryMessage(IdentifierInfo *receivingClassName, 
-                                         IdentifierInfo *selName) {
-  return 0;
+// This actions handles unary message to classes.
+Sema::ExprResult Sema::ActOnUnaryMessage(
+  IdentifierInfo *receivingClassName, IdentifierInfo *selName,
+  SourceLocation lbrac, SourceLocation rbrac) {
+  assert(receivingClassName && "missing receiver class name");
+  
+  // FIXME: this should be passed in...
+  SelectorInfo &SName = Context.getSelectorInfo(
+           selName->getName(), selName->getName()+strlen(selName->getName()));
+  return new ObjCMessageExpr(receivingClassName, SName,
+                             Context.IntTy/*FIXME*/, lbrac, rbrac);
 }
 
-// This action handles keyword messages to instances.
-Sema::ExprResult Sema::ActOnUnaryMessage(ExprTy *receiver, 
-                                         IdentifierInfo *selName) {
-  return 0;
+// This action handles unary messages to instances.
+Sema::ExprResult Sema::ActOnUnaryMessage(
+  ExprTy *receiver, IdentifierInfo *selName,
+  SourceLocation lbrac, SourceLocation rbrac) {
+  assert(receiver && "missing receiver expression");
+  
+  Expr *RExpr = static_cast<Expr *>(receiver);
+  // FIXME: this should be passed in...
+  SelectorInfo &SName = Context.getSelectorInfo(
+           selName->getName(), selName->getName()+strlen(selName->getName()));
+  return new ObjCMessageExpr(RExpr, SName,
+                             Context.IntTy/*FIXME*/, lbrac, rbrac);
 }
 

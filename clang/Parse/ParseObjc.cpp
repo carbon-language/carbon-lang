@@ -1007,7 +1007,7 @@ Parser::ExprResult Parser::ParseObjCExpression() {
 ///   
 Parser::ExprResult Parser::ParseObjCMessageExpression() {
   assert(Tok.getKind() == tok::l_square && "'[' expected");
-  SourceLocation Loc = ConsumeBracket(); // consume '['
+  SourceLocation LBracloc = ConsumeBracket(); // consume '['
   IdentifierInfo *ReceiverName = 0;
   ExprTy *ReceiverExpr = 0;
   // Parse receiver
@@ -1073,20 +1073,22 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
     SkipUntil(tok::semi);
     return 0;
   }
-  ConsumeBracket(); // consume ']'
+  SourceLocation RBracloc = ConsumeBracket(); // consume ']'
   
   if (KeyInfo.size()) {
     // We've just parsed a keyword message.
     if (ReceiverName) 
       return Actions.ActOnKeywordMessage(ReceiverName, 
-                                            &KeyInfo[0], KeyInfo.size());
+                                         &KeyInfo[0], KeyInfo.size(),
+                                         LBracloc, RBracloc);
     return Actions.ActOnKeywordMessage(ReceiverExpr, 
-                                            &KeyInfo[0], KeyInfo.size());
+                                       &KeyInfo[0], KeyInfo.size(),
+                                       LBracloc, RBracloc);
   }
   // We've just parsed a unary message (a message with no arguments).
   if (ReceiverName) 
-    return Actions.ActOnUnaryMessage(ReceiverName, selIdent);
-  return Actions.ActOnUnaryMessage(ReceiverExpr, selIdent);
+    return Actions.ActOnUnaryMessage(ReceiverName, selIdent, LBracloc,RBracloc);
+  return Actions.ActOnUnaryMessage(ReceiverExpr, selIdent, LBracloc,RBracloc);
 }
 
 Parser::ExprResult Parser::ParseObjCStringLiteral() {

@@ -23,6 +23,7 @@ namespace clang {
   class IdentifierInfo;
   class Decl;
   class ASTContext;
+  struct ObjcKeywordMessage;
   
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -1052,6 +1053,70 @@ public:
     return T->getStmtClass() == ObjCEncodeExprClass;
   }
   static bool classof(const ObjCEncodeExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
+class ObjCMessageExpr : public Expr {
+  enum { RECEIVER=0, ARGS_START=1 };
+  
+  // The following 3 slots are only used for keyword messages.
+  // Adding a subclass could save us some space. For now, we keep it simple.
+  Expr **SubExprs;
+  unsigned NumArgs;
+  
+  // A unigue name for this message.
+  SelectorInfo &Selector;
+  
+  IdentifierInfo **KeyIdents;
+  
+  IdentifierInfo *ClassName;
+  
+  SourceLocation LBracloc, RBracloc;
+public:
+  // constructor for unary messages. 
+  // FIXME: clsName should be typed to ObjCInterfaceType
+  ObjCMessageExpr(IdentifierInfo *clsName, SelectorInfo &selInfo,
+                  QualType retType, SourceLocation LBrac, SourceLocation RBrac);
+  ObjCMessageExpr(Expr *receiver, SelectorInfo &selInfo,
+                  QualType retType, SourceLocation LBrac, SourceLocation RBrac);
+                  
+  // constructor for keyword messages.
+  // FIXME: clsName should be typed to ObjCInterfaceType
+  ObjCMessageExpr(IdentifierInfo *clsName, SelectorInfo &selInfo,
+                  ObjcKeywordMessage *keys, unsigned numargs, QualType retType, 
+                  SourceLocation LBrac, SourceLocation RBrac);
+  ObjCMessageExpr(Expr *receiver, SelectorInfo &selInfo,
+                  ObjcKeywordMessage *keys, unsigned numargs, QualType retType, 
+                  SourceLocation LBrac, SourceLocation RBrac);
+  ~ObjCMessageExpr() {
+    delete [] SubExprs;
+  }
+  
+  const Expr *getReceiver() const { return SubExprs[RECEIVER]; }
+  Expr *getReceiver() { return SubExprs[RECEIVER]; }
+  
+  /// getNumArgs - Return the number of actual arguments to this call.
+  ///
+  unsigned getNumArgs() const { return NumArgs; }
+  
+  /// getArg - Return the specified argument.
+  Expr *getArg(unsigned Arg) {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    return SubExprs[Arg+ARGS_START];
+  }
+  const Expr *getArg(unsigned Arg) const {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    return SubExprs[Arg+ARGS_START];
+  }
+  SourceRange getSourceRange() const { return SourceRange(LBracloc, RBracloc); }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjCMessageExprClass;
+  }
+  static bool classof(const ObjCMessageExpr *) { return true; }
   
   // Iterators
   virtual child_iterator child_begin();

@@ -612,6 +612,17 @@ void StmtPrinter::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
   OS << Node->getEncodedType().getAsString() << ")";
 }
 
+void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
+  OS << "[";
+  PrintExpr(Mess->getReceiver());
+  for (unsigned i = 0, e = Mess->getNumArgs(); i != e; ++i) {
+    // FIXME: get/print keyword...
+    PrintExpr(Mess->getArg(i));
+  }
+  OS << "]";
+}
+
+
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//
