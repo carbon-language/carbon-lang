@@ -68,7 +68,7 @@ public:
   //===--------------------------------------------------------------------===//
   
 public:
-  DataflowSolver(DFValuesTy& d) : D(d) {}
+  DataflowSolver(DFValuesTy& d) : D(d), TF(d.getAnalysisData()) {}
   ~DataflowSolver() {}  
   
   /// runOnCFG - Computes dataflow values for all blocks in a CFG.
@@ -86,11 +86,8 @@ public:
   ///  only be used for querying the dataflow values within a block with
   ///  and Observer object.
   void runOnBlock(const CFGBlock* B) {
-    if (!hasData(B,AnalysisDirTag()))
-      return;
-      
-    TransferFuncsTy TF (D.getAnalysisData());
-    ProcessBlock(B,TF,AnalysisDirTag());
+    if (hasData(B,AnalysisDirTag()))
+      ProcessBlock(B,AnalysisDirTag());
   }
   
   //===--------------------------------------------------------------------===//
@@ -105,16 +102,13 @@ private:
 
     EnqueueFirstBlock(cfg,AnalysisDirTag());
     
-    // Create the state for transfer functions.
-    TransferFuncsTy TF(D.getAnalysisData());
-    
     // Process the worklist until it is empty.    
     while (!WorkList.isEmpty()) {
       const CFGBlock* B = WorkList.dequeue();
       // If the dataflow values at the block's entry have changed,
       // enqueue all predecessor blocks onto the worklist to have
       // their values updated.
-      ProcessBlock(B,TF,AnalysisDirTag());
+      ProcessBlock(B,AnalysisDirTag());
       UpdateEdges(B,TF.getVal(),AnalysisDirTag());
     }
   }
@@ -129,12 +123,10 @@ private:
   
   /// ProcessBlock (FORWARD ANALYSIS) - Process the transfer functions
   ///  for a given block based on a forward analysis.
-  void ProcessBlock(const CFGBlock* B, TransferFuncsTy& TF,
-                    dataflow::forward_analysis_tag) {
-    
-    ValTy& V = TF.getVal();
-
+  void ProcessBlock(const CFGBlock* B, dataflow::forward_analysis_tag) {
+      
     // Merge dataflow values from all predecessors of this block.
+    ValTy& V = TF.getVal();
     V.resetValues(D.getAnalysisData());
     MergeOperatorTy Merge;
   
@@ -163,10 +155,9 @@ private:
   ///  for a given block based on a forward analysis.
   void ProcessBlock(const CFGBlock* B, TransferFuncsTy& TF,
                     dataflow::backward_analysis_tag) {
-    
-    ValTy& V = TF.getVal();
-    
+        
     // Merge dataflow values from all predecessors of this block.
+    ValTy& V = TF.getVal();
     V.resetValues(D.getAnalysisData());
     MergeOperatorTy Merge;
     
@@ -263,6 +254,7 @@ private:
 private:
   DFValuesTy& D;
   DataflowWorkListTy WorkList;
+  TransferFuncsTy TF;
 };  
   
 
