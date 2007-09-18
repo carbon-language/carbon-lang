@@ -51,28 +51,17 @@ public:
     Visit(E);
   }
   
-  void VisitDeclRefExpr(DeclRefExpr* DR) {
-    VisitDeclChain(DR->getDecl());
-  }
-  
-  void VisitDeclStmt(DeclStmt* S) {
-    VisitDeclChain(S->getDecl());
-  }
-  
-  void VisitStmt(Stmt* S) {
-    VisitChildren(S);
-  }
-  
+  void VisitDeclRefExpr(DeclRefExpr* DR) { VisitDeclChain(DR->getDecl()); }
+  void VisitDeclStmt(DeclStmt* S) { VisitDeclChain(S->getDecl()); }
+  void VisitStmt(Stmt* S) { VisitChildren(S); }
+  void operator()(Stmt* S) { BlockStmt_Visit(S); }
 };
   
 } // end anonymous namespace
 
 void UninitializedValues::InitializeValues(const CFG& cfg) {
   RegisterDeclsAndExprs R(this->getAnalysisData());
-  
-  for (CFG::const_iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
-    for (CFGBlock::const_iterator BI=I->begin(), BE=I->end(); BI!=BE; ++BI)
-      R.BlockStmt_Visit(*BI);
+  cfg.VisitBlockStmts(R);
 }
 
 //===----------------------------------------------------------------------===//
@@ -234,31 +223,22 @@ bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
 //
 //  Merges take the opposite approach.
 //
-//  In the merge of dataflow values (for Decls) we prefer unsoundness, and
+//  In the merge of dataflow values we prefer unsoundness, and
 //  prefer false negatives to false positives.  At merges, if a value for a
 //  tracked Decl is EVER initialized in any of the predecessors we treat it as
 //  initialized at the confluence point.
-//
-//  For tracked CFGBlock-level expressions (such as the result of
-//  short-circuit), we do the opposite merge: if a value is EVER uninitialized
-//  in a predecessor we treat it as uninitalized at the confluence point.
-//  The reason we do this is because dataflow values for tracked Exprs are
-//  not as control-dependent as dataflow values for tracked Decls.
 //===----------------------------------------------------------------------===//      
 
 namespace {
 struct Merge {
   void operator()(UninitializedValues::ValTy& Dst,
                   UninitializedValues::ValTy& Src) {
-    assert (Dst.DeclBV.size() == Src.DeclBV.size() 
-            && "Bitvector sizes do not match.");
-            
-    Dst.DeclBV |= Src.DeclBV;
+    assert (Dst.DeclBV.size() == Src.DeclBV.size() && "BV sizes do not match.");
+    assert (Dst.ExprBV.size() == Src.ExprBV.size() && "BV sizes do not match.");
     
-    assert (Dst.ExprBV.size() == Src.ExprBV.size()
-            && "Bitvector sizes do not match.");
+    Dst.DeclBV |= Src.DeclBV;
+    Dst.ExprBV |= Src.ExprBV;
 
-    Dst.ExprBV &= Src.ExprBV;
   }
 };
 } // end anonymous namespace
