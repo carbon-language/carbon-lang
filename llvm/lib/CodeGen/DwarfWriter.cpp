@@ -2833,13 +2833,13 @@ private:
 
     // Externally visible entry into the functions eh frame info.
     if (const char *GlobalDirective = TAI->getGlobalDirective())
-      O << GlobalDirective << EHFrameInfo.FnName << ".eh\n";
+      O << GlobalDirective << EHFrameInfo.FnName << "\n";
     
     // If there are no calls then you can't unwind.
     if (!EHFrameInfo.hasCalls) { 
-      O << EHFrameInfo.FnName << ".eh = 0\n";
+      O << EHFrameInfo.FnName << " = 0\n";
     } else {
-      O << EHFrameInfo.FnName << ".eh:\n";
+      O << EHFrameInfo.FnName << ":\n";
       
       // EH frame header.
       EmitDifference("eh_frame_end", EHFrameInfo.Number,
@@ -2887,7 +2887,7 @@ private:
     }
     
     if (const char *UsedDirective = TAI->getUsedDirective())
-      O << UsedDirective << EHFrameInfo.FnName << ".eh\n\n";
+      O << UsedDirective << EHFrameInfo.FnName << "\n\n";
   }
 
   /// EmitExceptionTable - Emit landing pads and actions.
@@ -3321,12 +3321,13 @@ public:
     EmitExceptionTable();
 
     // Save EH frame information
-    EHFrames.push_back(FunctionEHFrameInfo(getAsm()->CurrentFnName,
-                                           SubprogramCount,
-                                           MMI->getPersonalityIndex(),
-                                           MF->getFrameInfo()->hasCalls(),
-                                           !MMI->getLandingPads().empty(),
-                                           MMI->getFrameMoves()));
+    EHFrames.
+      push_back(FunctionEHFrameInfo(getAsm()->getCurrentFunctionEHName(MF),
+                                    SubprogramCount,
+                                    MMI->getPersonalityIndex(),
+                                    MF->getFrameInfo()->hasCalls(),
+                                    !MMI->getLandingPads().empty(),
+                                    MMI->getFrameMoves()));
   }
 };
 

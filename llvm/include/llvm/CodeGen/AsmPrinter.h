@@ -43,6 +43,11 @@ namespace llvm {
     ///
     unsigned FunctionNumber;
 
+    /// Cache of mangled exception handling name for current function. This is
+    /// recalculated at the beginning of each call to runOnMachineFunction().
+    ///
+    std::string CurrentFnEHName;
+
   protected:
     // Necessary for external weak linkage support
     std::set<const GlobalValue*> ExtWeakSymbols;
@@ -111,6 +116,11 @@ namespace llvm {
     /// EmitExternalGlobal - Emit the external reference to a global variable.
     /// Should be overridden if an indirect reference should be used.
     virtual void EmitExternalGlobal(const GlobalVariable *GV);
+
+    /// getCurrentFunctionEHName - Called to return (and cache) the
+    /// CurrentFnEHName.
+    /// 
+    const std::string &getCurrentFunctionEHName(const MachineFunction *MF);
 
   protected:
     /// doInitialization - Set up the AsmPrinter when we are working on a new
