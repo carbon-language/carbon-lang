@@ -71,7 +71,7 @@ public:
       ExprBV.reset();
     }
     
-    bool operator==(ValTy& RHS) const { 
+    bool operator==(const ValTy& RHS) const { 
       return DeclBV == RHS.DeclBV && ExprBV == RHS.ExprBV; 
     }
     

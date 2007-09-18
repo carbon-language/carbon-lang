@@ -16,6 +16,7 @@
 
 #include "clang/AST/CFG.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "functional" // STL
 
 namespace clang {
 
@@ -47,7 +48,8 @@ public:
 /// DataflowSolverTy - Generic dataflow solver.
 template <typename _DFValuesTy,      // Usually a subclass of DataflowValues
           typename _TransferFuncsTy,
-          typename _MergeOperatorTy >
+          typename _MergeOperatorTy,
+          typename _Equal = std::equal_to<typename _DFValuesTy::ValTy> >
 class DataflowSolver {
 
   //===--------------------------------------------------------------------===//
@@ -228,7 +230,7 @@ private:
       M[E].copyValues(V);
       WorkList.enqueue(TargetBlock);
     }
-    else if (!(V==I->second)) {
+    else if (!_Equal()(V,I->second)) {
       I->second.copyValues(V);
       WorkList.enqueue(TargetBlock);
     }
