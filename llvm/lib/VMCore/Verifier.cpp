@@ -49,8 +49,7 @@
 #include "llvm/ParameterAttributes.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/InlineAsm.h"
-#include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/CodeGen/ValueTypes.h"
@@ -1078,12 +1077,6 @@ static bool HasPtrPtrType(Value *Val) {
   return false;
 }
 
-static Value *StripBitCasts(Value *Val) {
-  if (BitCastInst *CI = dyn_cast<BitCastInst>(Val))
-    return StripBitCasts(CI->getOperand(0));
-  return Val;
-}
-
 /// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
 ///
 void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
@@ -1101,10 +1094,11 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::gcroot:
     Assert1(HasPtrPtrType(CI.getOperand(1)),
             "llvm.gcroot parameter #1 must be a pointer to a pointer.", &CI);
-    Assert1(isa<AllocaInst>(StripBitCasts(CI.getOperand(1))),
-            "llvm.gcroot parameter #1 must be an alloca (or a bitcast).", &CI);
+    Assert1(isa<AllocaInst>(IntrinsicInst::StripPointerCasts(CI.getOperand(1))),
+            "llvm.gcroot parameter #1 must be an alloca (or a bitcast of one).",
+            &CI);
     Assert1(isa<Constant>(CI.getOperand(2)),
-            "llvm.gcroot parameter #2 must be a constant or global.", &CI);
+            "llvm.gcroot parameter #2 must be a constant.", &CI);
     break;
   case Intrinsic::gcwrite:
     Assert1(CI.getOperand(3)->getType()
