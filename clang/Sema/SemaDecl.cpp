@@ -22,8 +22,11 @@
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/Config/config.h" 
 #include "llvm/ADT/SmallSet.h"
+#if !defined(LLVM_ON_WIN32)
 #include <alloca.h>
+#endif
 using namespace clang;
 
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
