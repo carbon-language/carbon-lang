@@ -73,10 +73,6 @@ void UninitializedValues::InitializeValues(const CFG& cfg) {
   for (CFG::const_iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
     for (CFGBlock::const_iterator BI=I->begin(), BE=I->end(); BI!=BE; ++BI)
       R.BlockStmt_Visit(*BI);
-  
-  // Initialize the values of the last block.
-//  UninitializedValues::ValTy& V = getBlockDataMap()[&cfg.getEntry()];
-//  V.resetValues(getAnalysisData());
 }
 
 //===----------------------------------------------------------------------===//

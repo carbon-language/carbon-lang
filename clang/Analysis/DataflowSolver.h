@@ -61,7 +61,7 @@ public:
 
   typedef typename _DFValuesTy::AnalysisDirTag   AnalysisDirTag;
   typedef typename _DFValuesTy::ValTy            ValTy;
-  typedef typename _DFValuesTy::BlockDataMapTy   BlockDataMapTy;
+  typedef typename _DFValuesTy::EdgeDataMapTy    EdgeDataMapTy;
 
   //===--------------------------------------------------------------------===//
   // External interface: constructing and running the solver.
@@ -75,8 +75,9 @@ public:
   void runOnCFG(const CFG& cfg) {
     // Set initial dataflow values and boundary conditions.
     D.InitializeValues(cfg);     
-    // Tag dispatch to the kind of analysis we do: forward or backwards.
-    SolveDataflowEquations(cfg,typename _DFValuesTy::AnalysisDirTag());    
+    // Solve the dataflow equations.  This will populate D.EdgeDataMap
+    // with dataflow values.
+    SolveDataflowEquations(cfg);    
   }
   
   /// runOnBlock - Computes dataflow values for a given block.
@@ -85,7 +86,7 @@ public:
   ///  only be used for querying the dataflow values within a block with
   ///  and Observer object.
   void runOnBlock(const CFGBlock* B) {
-    if (D.getBlockDataMap().find(B) == D.getBlockDataMap().end())
+    if (!hasData(B,AnalysisDirTag()))
       return;
       
     TransferFuncsTy TF (D.getAnalysisData());
@@ -98,39 +99,11 @@ public:
   
 private:
  
-  /// SolveDataflowEquations (FORWARD ANALYSIS) - Perform the actual
-  ///  worklist algorithm to compute dataflow values.
-  void SolveDataflowEquations(const CFG& cfg, dataflow::forward_analysis_tag) {
-    // Create the worklist.
-    DataflowWorkListTy WorkList;
-    
-    // Enqueue the ENTRY block.
-    WorkList.enqueue(&cfg.getEntry());
-    
-    // Create the state for transfer functions.
-    TransferFuncsTy TF(D.getAnalysisData());
-    
-    // Process the worklist until it is empty.    
-    while (!WorkList.isEmpty()) {
-      const CFGBlock* B = WorkList.dequeue();
-      // If the dataflow values at the block's exit have changed,
-      // enqueue all successor blocks onto the worklist to have
-      // their values updated.
-      if (ProcessBlock(B,TF,AnalysisDirTag()))
-        for (CFGBlock::const_succ_iterator I=B->succ_begin(), E=B->succ_end();
-             I != E; ++I)
-          WorkList.enqueue(*I);    
-    }
-  }       
-  
-  /// SolveDataflowEquations (BACKWARD ANALYSIS) - Perform the actual
+  /// SolveDataflowEquations - Perform the actual
   ///  worklist algorithm to compute dataflow values.  
-  void SolveDataflowEquations(const CFG& cfg, dataflow::backward_analysis_tag) {
-    // Create the worklist.
-    DataflowWorkListTy WorkList;
-    
-    // Enqueue the EXIT block.
-    WorkList.enqueue(&cfg.getExit());
+  void SolveDataflowEquations(const CFG& cfg) {
+
+    EnqueueFirstBlock(cfg,AnalysisDirTag());
     
     // Create the state for transfer functions.
     TransferFuncsTy TF(D.getAnalysisData());
@@ -141,16 +114,22 @@ private:
       // If the dataflow values at the block's entry have changed,
       // enqueue all predecessor blocks onto the worklist to have
       // their values updated.
-      if (ProcessBlock(B,TF,AnalysisDirTag()))
-        for (CFGBlock::const_pred_iterator I=B->pred_begin(), E=B->pred_end();
-             I != E; ++I)
-          WorkList.enqueue(*I);    
+      ProcessBlock(B,TF,AnalysisDirTag());
+      UpdateEdges(B,TF.getVal(),AnalysisDirTag());
     }
   }
   
+  void EnqueueFirstBlock(const CFG& cfg, dataflow::forward_analysis_tag) {
+    WorkList.enqueue(&cfg.getEntry());
+  }
+  
+  void EnqueueFirstBlock(const CFG& cfg, dataflow::backward_analysis_tag) {
+    WorkList.enqueue(&cfg.getExit());
+  }  
+  
   /// ProcessBlock (FORWARD ANALYSIS) - Process the transfer functions
   ///  for a given block based on a forward analysis.
-  bool ProcessBlock(const CFGBlock* B, TransferFuncsTy& TF,
+  void ProcessBlock(const CFGBlock* B, TransferFuncsTy& TF,
                     dataflow::forward_analysis_tag) {
     
     ValTy& V = TF.getVal();
@@ -159,12 +138,12 @@ private:
     V.resetValues(D.getAnalysisData());
     MergeOperatorTy Merge;
   
-    BlockDataMapTy& M = D.getBlockDataMap();
+    EdgeDataMapTy& M = D.getEdgeDataMap();
     bool firstMerge = true;
   
     for (CFGBlock::const_pred_iterator I=B->pred_begin(), 
                                       E=B->pred_end(); I!=E; ++I) {
-      typename BlockDataMapTy::iterator BI = M.find(*I);
+      typename EdgeDataMapTy::iterator BI = M.find(CFG::Edge(*I,B));
       if (BI != M.end()) {
         if (firstMerge) {
           firstMerge = false;
@@ -177,14 +156,12 @@ private:
 
     // Process the statements in the block in the forward direction.
     for (CFGBlock::const_iterator I=B->begin(), E=B->end(); I!=E; ++I)
-      TF.BlockStmt_Visit(const_cast<Stmt*>(*I));
-      
-    return UpdateBlockValue(B,V);
+      TF.BlockStmt_Visit(const_cast<Stmt*>(*I));      
   }
   
   /// ProcessBlock (BACKWARD ANALYSIS) - Process the transfer functions
   ///  for a given block based on a forward analysis.
-  bool ProcessBlock(const CFGBlock* B, TransferFuncsTy& TF,
+  void ProcessBlock(const CFGBlock* B, TransferFuncsTy& TF,
                     dataflow::backward_analysis_tag) {
     
     ValTy& V = TF.getVal();
@@ -193,12 +170,12 @@ private:
     V.resetValues(D.getAnalysisData());
     MergeOperatorTy Merge;
     
-    BlockDataMapTy& M = D.getBlockDataMap();
+    EdgeDataMapTy& M = D.getEdgeDataMap();
     bool firstMerge = true;
 
     for (CFGBlock::const_succ_iterator I=B->succ_begin(), 
                                        E=B->succ_end(); I!=E; ++I) {
-      typename BlockDataMapTy::iterator BI = M.find(*I);
+      typename EdgeDataMapTy::iterator BI = M.find(CFG::Edge(B,*I));
       if (BI != M.end()) {
         if (firstMerge) {
           firstMerge = false;
@@ -211,34 +188,81 @@ private:
     
     // Process the statements in the block in the forward direction.
     for (CFGBlock::const_reverse_iterator I=B->begin(), E=B->end(); I!=E; ++I)
-      TF.BlockStmt_Visit(const_cast<Stmt*>(*I));
-    
-    return UpdateBlockValue(B,V);                        
+      TF.BlockStmt_Visit(const_cast<Stmt*>(*I));    
+  }
+
+  /// UpdateEdges (FORWARD ANALYSIS) - After processing the transfer
+  ///   functions for a block, update the dataflow value associated with the
+  ///   block's outgoing edges.  Enqueue any successor blocks for an
+  ///   outgoing edge whose value has changed.  
+  void UpdateEdges(const CFGBlock* B, ValTy& V,dataflow::forward_analysis_tag) {    
+    for (CFGBlock::const_succ_iterator I=B->succ_begin(), E=B->succ_end();
+          I!=E; ++I) {
+                    
+      CFG::Edge E(B,*I);
+      UpdateEdgeValue(E,V,*I);
+    }
   }
   
-  /// UpdateBlockValue - After processing the transfer functions for a block,
-  ///  update the dataflow value associated with the block.  Return true
-  ///  if the block's value has changed.  We do lazy instantiation of block
-  ///  values, so if the block value has not been previously computed we
-  ///  obviously return true.
-  bool UpdateBlockValue(const CFGBlock* B, ValTy& V) {
-    BlockDataMapTy& M = D.getBlockDataMap();
-    typename BlockDataMapTy::iterator I = M.find(B);
-    
+  /// UpdateEdges (BACKWARD ANALYSIS) - After processing the transfer
+  ///   functions for a block, update the dataflow value associated with the
+  ///   block's incoming edges.  Enqueue any predecessor blocks for an
+  ///   outgoing edge whose value has changed.  
+  void UpdateEdges(const CFGBlock* B, ValTy& V,dataflow::backward_analysis_tag){      
+    for (CFGBlock::const_pred_iterator I=B->succ_begin(), E=B->succ_end();
+         I!=E; ++I) {
+      
+      CFG::Edge E(*I,B);
+      UpdateEdgeValue(E,V,*I);
+    }
+  }
+  
+  /// UpdateEdgeValue - Update the value associated with a given edge.
+  void UpdateEdgeValue(CFG::Edge& E, ValTy& V, const CFGBlock* TargetBlock) {
+  
+    EdgeDataMapTy& M = D.getEdgeDataMap();
+    typename EdgeDataMapTy::iterator I = M.find(E);
+      
     if (I == M.end()) {
-      M[B].copyValues(V);
-      return true;
+      // First value for this edge.
+      M[E].copyValues(V);
+      WorkList.enqueue(TargetBlock);
     }
     else if (!V.equal(I->second)) {
       I->second.copyValues(V);
-      return true;
+      WorkList.enqueue(TargetBlock);
     }
+  }
+  
+  /// hasData (FORWARD ANALYSIS) - Is there any dataflow values associated
+  ///  with the incoming edges of a block?
+  bool hasData(const CFGBlock* B, dataflow::forward_analysis_tag) {  
+    EdgeDataMapTy& M = D.getEdgeDataMap();
+
+    for (CFGBlock::const_pred_iterator I=B->pred_begin(), E=B->pred_end();
+         I!=E; ++I)
+      if (M.find(CFG::Edge(*I,B)) != M.end())
+        return true;
+        
+    return false;
+  }
+  
+  /// hasData (BACKWARD ANALYSIS) - Is there any dataflow values associated
+  ///  with the outgoing edges of a block?
+  bool hasData(const CFGBlock* B, dataflow::backward_analysis_tag) {  
+    EdgeDataMapTy& M = D.getEdgeDataMap();
+    
+    for (CFGBlock::const_succ_iterator I=B->succ_begin(), E=B->succ_end();
+         I!=E; ++I)
+      if (M.find(CFG::Edge(B,*I)) != M.end())
+        return true;
     
     return false;
   }
 
 private:
   DFValuesTy& D;
+  DataflowWorkListTy WorkList;
 };  
   
 
