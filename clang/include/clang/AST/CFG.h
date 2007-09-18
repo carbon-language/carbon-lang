@@ -212,6 +212,33 @@ public:
   CFGBlock*        getIndirectGotoBlock() { return IndirectGotoBlock; }
   const CFGBlock*  getIndirectGotoBlock() const { return IndirectGotoBlock; }
   
+  // Edges
+  
+  class Edge {
+    const CFGBlock* Src;
+    const CFGBlock* Dst;
+  public:
+    Edge(const CFGBlock* src, const CFGBlock* dst) : Src(src), Dst(dst) {}
+    Edge(const Edge& RHS) : Src(RHS.Src), Dst(RHS.Dst) {}
+    
+    Edge& operator=(const Edge& RHS) { 
+      Src = RHS.Src;
+      Dst = RHS.Dst;
+      return *this; 
+    }
+    
+    const CFGBlock* getSrc() const { return Src; }
+    const CFGBlock* getDst() const { return Dst; }
+        
+    bool operator==(const Edge& RHS) const {
+      return Src == RHS.Src && Dst == RHS.Dst;
+    }
+    
+    bool operator!=(const Edge& RHS) const {
+      return !(*this == RHS);
+    }
+  };
+  
   // Utility
   
   CFGBlock* createBlock();
