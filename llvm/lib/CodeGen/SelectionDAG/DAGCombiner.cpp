@@ -3798,6 +3798,10 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       SDOperand Tmp;
       switch (CFP->getValueType(0)) {
       default: assert(0 && "Unknown FP type");
+      case MVT::f80:    // We don't do this for these yet.
+      case MVT::f128:
+      case MVT::ppcf128:
+        break;
       case MVT::f32:
         if (!AfterLegalize || TLI.isTypeLegal(MVT::i32)) {
           Tmp = DAG.getConstant((uint32_t)CFP->getValueAPF().
