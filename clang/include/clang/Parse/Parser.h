@@ -290,10 +290,9 @@ private:
   TypeTy *ParseObjCTypeName();
   void ParseObjCMethodRequirement();
   DeclTy *ParseObjCMethodPrototype(DeclTy *classOrCat,
-				   tok::ObjCKeywordKind& pi);
-  DeclTy *ParseObjCMethodDecl(tok::ObjCKeywordKind& pi,
-			      tok::TokenKind mType, 
-			      SourceLocation mLoc);
+   	    tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
+  DeclTy *ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc,
+            tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
   void ParseObjCPropertyAttribute(DeclTy *interfaceDecl);
   void ParseObjCPropertyDecl(DeclTy *interfaceDecl);
   

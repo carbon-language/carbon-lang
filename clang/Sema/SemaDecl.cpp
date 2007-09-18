@@ -1264,11 +1264,11 @@ void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl,
   return;
 }
 
-Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi,
-		      SourceLocation MethodLoc, 
+Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
                       tok::TokenKind MethodType, TypeTy *ReturnType,
                       ObjcKeywordDecl *Keywords, unsigned NumKeywords,
-                      AttributeList *AttrList) {
+                      AttributeList *AttrList,
+		      tok::ObjCKeywordKind MethodDeclKind) {
   assert(NumKeywords && "Selector must be specified");
 
   // Derive the selector name from the keyword declarations.
@@ -1306,17 +1306,17 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi,
 				      SelName, resultDeclType,
 		      		      0, -1, AttrList, MethodType == tok::minus);
   ObjcMethod->setMethodParams(&Params[0], NumKeywords);
-  if (pi == tok::objc_optional)
+  if (MethodDeclKind == tok::objc_optional)
       ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
   else
        ObjcMethod->setDeclImplementation(ObjcMethodDecl::Required);
   return ObjcMethod;
 }
 
-Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi,
-		      SourceLocation MethodLoc,  
+Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,  
                       tok::TokenKind MethodType, TypeTy *ReturnType,
-                      IdentifierInfo *SelectorName, AttributeList *AttrList) {
+                      IdentifierInfo *SelectorName, AttributeList *AttrList,
+		      tok::ObjCKeywordKind MethodDeclKind) {
   const char *methodName = SelectorName->getName();
   SelectorInfo &SelName = Context.getSelectorInfo(methodName, 
                                                   methodName+strlen(methodName));
@@ -1324,7 +1324,7 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi,
   ObjcMethodDecl* ObjcMethod = new ObjcMethodDecl(MethodLoc, 
 			             SelName, resultDeclType, 0, -1,
                                      AttrList, MethodType == tok::minus);
-  if (pi == tok::objc_optional)
+  if (MethodDeclKind == tok::objc_optional)
       ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
   else
        ObjcMethod->setDeclImplementation(ObjcMethodDecl::Required);

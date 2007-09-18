@@ -453,15 +453,17 @@ public:
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
     return 0;
   }
-  virtual DeclTy *ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi, 
-    SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
+  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+    tok::TokenKind MethodType, TypeTy *ReturnType,
     ObjcKeywordDecl *Keywords, unsigned NumKeywords, 
-    AttributeList *AttrList) {
+    AttributeList *AttrList,
+    tok::ObjCKeywordKind MethodImplKind) {
     return 0;
   }
-  virtual DeclTy *ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi, 
-    SourceLocation MethodLoc, tok::TokenKind MethodType, TypeTy *ReturnType,
-    IdentifierInfo *SelectorName, AttributeList *AttrList) {
+  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+    tok::TokenKind MethodType, TypeTy *ReturnType,
+    IdentifierInfo *SelectorName, AttributeList *AttrList,
+    tok::ObjCKeywordKind MethodImplKind) {
     return 0;
   }
   // This actions handles keyword message to classes.

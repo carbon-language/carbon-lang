@@ -216,7 +216,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
 void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
 					tok::ObjCKeywordKind contextKey) {
   llvm::SmallVector<DeclTy*, 32>  allMethods;
-  tok::ObjCKeywordKind pi = tok::objc_not_keyword;
+  tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
   while (1) {
     if (Tok.getKind() == tok::at) {
       SourceLocation AtLoc = ConsumeToken(); // the "@"
@@ -226,12 +226,12 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
         break;
       } else if (ocKind == tok::objc_required) { // protocols only
         ConsumeToken();
-	pi = ocKind;
+	MethodImplKind = ocKind;
 	if (contextKey != tok::objc_protocol)
 	  Diag(AtLoc, diag::err_objc_protocol_required);
       } else if (ocKind == tok::objc_optional) { // protocols only
         ConsumeToken();
-	pi = ocKind;
+	MethodImplKind = ocKind;
 	if (contextKey != tok::objc_protocol)
 	  Diag(AtLoc, diag::err_objc_protocol_optional);
       } else if (ocKind == tok::objc_property) {
@@ -243,7 +243,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       }
     }
     if (Tok.getKind() == tok::minus || Tok.getKind() == tok::plus) {
-      DeclTy *methodPrototype = ParseObjCMethodPrototype(interfaceDecl, pi);
+      DeclTy *methodPrototype = ParseObjCMethodPrototype(interfaceDecl, MethodImplKind);
       allMethods.push_back(methodPrototype);
       // Consume the ';' here, since ParseObjCMethodPrototype() is re-used for
       // method definitions.
@@ -367,15 +367,15 @@ void Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl) {
 ///   objc-method-attributes:         [OBJC2]
 ///     __attribute__((deprecated))
 ///
-Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *IDecl,
-                          tok::ObjCKeywordKind& pi) {
+Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *IDecl, 
+			  tok::ObjCKeywordKind MethodImplKind) {
   assert((Tok.getKind() == tok::minus || Tok.getKind() == tok::plus) && 
          "expected +/-");
 
   tok::TokenKind methodType = Tok.getKind();  
   SourceLocation methodLoc = ConsumeToken();
   
-  DeclTy *MDecl = ParseObjCMethodDecl(pi, methodType, methodLoc);
+  DeclTy *MDecl = ParseObjCMethodDecl(methodType, methodLoc, MethodImplKind);
   // Since this rule is used for both method declarations and definitions,
   // the caller is (optionally) responsible for consuming the ';'.
   return MDecl;
@@ -484,8 +484,8 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
 ///   objc-keyword-attributes:         [OBJC2]
 ///     __attribute__((unused))
 ///
-Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::ObjCKeywordKind& pi, 
-			  tok::TokenKind mType, SourceLocation mLoc) {
+Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc,
+					    tok::ObjCKeywordKind MethodImplKind) {
 
   TypeTy *ReturnType = 0;
   AttributeList *methodAttrs = 0;
@@ -551,10 +551,10 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::ObjCKeywordKind& pi,
     // If attributes exist after the method, parse them.
     if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
       methodAttrs = ParseAttributes();
-    return Actions.ObjcBuildMethodDeclaration(pi, mLoc, mType, 
+    return Actions.ObjcBuildMethodDeclaration(mLoc, mType, 
                                               ReturnType, 
                                               &KeyInfo[0], KeyInfo.size(), 
-					      methodAttrs);
+					      methodAttrs, MethodImplKind);
   } else if (!selIdent) {
     Diag(Tok, diag::err_expected_ident); // missing selector name.
   }
@@ -562,9 +562,9 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::ObjCKeywordKind& pi,
   if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
     methodAttrs = ParseAttributes();
 
-  return Actions.ObjcBuildMethodDeclaration(pi,
-                                            mLoc, mType, ReturnType, 
-                                            selIdent, methodAttrs);
+  return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, 
+                                            selIdent, methodAttrs,
+					    MethodImplKind);
 }
 
 ///   objc-protocol-refs:
@@ -917,8 +917,7 @@ void Parser::ParseObjCInstanceMethodDefinition() {
   assert(Tok.getKind() == tok::minus &&
          "ParseObjCInstanceMethodDefinition(): Expected '-'");
   // FIXME: @optional/@protocol??
-  tok::ObjCKeywordKind pi = tok::objc_not_keyword;
-  ParseObjCMethodPrototype(ObjcImpDecl, pi);
+  ParseObjCMethodPrototype(ObjcImpDecl);
   // parse optional ';'
   if (Tok.getKind() == tok::semi)
     ConsumeToken();
@@ -937,8 +936,7 @@ void Parser::ParseObjCClassMethodDefinition() {
   assert(Tok.getKind() == tok::plus &&
          "ParseObjCClassMethodDefinition(): Expected '+'");
   // FIXME: @optional/@protocol??
-  tok::ObjCKeywordKind pi = tok::objc_not_keyword;
-  ParseObjCMethodPrototype(ObjcImpDecl, pi);
+  ParseObjCMethodPrototype(ObjcImpDecl);
   // parse optional ';'
   if (Tok.getKind() == tok::semi)
     ConsumeToken();

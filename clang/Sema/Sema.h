@@ -368,15 +368,15 @@ public:
 
   virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl, 
 				     DeclTy **allMethods, unsigned allNum);
-  virtual DeclTy *ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi, 
-		    SourceLocation MethodLoc, 
+  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
 	            tok::TokenKind MethodType, TypeTy *ReturnType,
      		    ObjcKeywordDecl *Keywords, unsigned NumKeywords, 
-     		    AttributeList *AttrList);
-  virtual DeclTy *ObjcBuildMethodDeclaration(tok::ObjCKeywordKind& pi, 
-		    SourceLocation MethodLoc, 
+     		    AttributeList *AttrList,
+		    tok::ObjCKeywordKind MethodImplKind);
+  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
  	     	    tok::TokenKind MethodType, TypeTy *ReturnType,
-     		    IdentifierInfo *SelectorName, AttributeList *AttrList);
+     		    IdentifierInfo *SelectorName, AttributeList *AttrList,
+		    tok::ObjCKeywordKind MethodImplKind);
                     
   // This actions handles keyword message to classes.
   virtual ExprResult ActOnKeywordMessage(IdentifierInfo *receivingClassName, 
