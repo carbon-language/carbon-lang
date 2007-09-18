@@ -90,6 +90,15 @@ public:
       ProcessBlock(B,AnalysisDirTag());
   }
   
+  void runOnBlock(const CFGBlock& B) { runOnBlock(&B); }
+  void runOnBlock(CFG::iterator &I) { runOnBlock(*I); }
+  void runOnBlock(CFG::const_iterator &I) { runOnBlock(*I); }
+
+  void runOnAllBlocks(const CFG& cfg) {
+    for (CFG::const_iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
+      runOnBlock(I);
+  }
+  
   //===--------------------------------------------------------------------===//
   // Internal solver logic.
   //===--------------------------------------------------------------------===//

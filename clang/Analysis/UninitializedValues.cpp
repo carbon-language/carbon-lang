@@ -238,7 +238,6 @@ struct Merge {
     
     Dst.DeclBV |= Src.DeclBV;
     Dst.ExprBV |= Src.ExprBV;
-
   }
 };
 } // end anonymous namespace
@@ -250,7 +249,6 @@ struct Merge {
 UninitializedValues_ValueTypes::ObserverTy::~ObserverTy() {}
 
 namespace {
-
 class UninitializedValuesChecker : public UninitializedValues::ObserverTy {
   ASTContext &Ctx;
   Diagnostic &Diags;
@@ -270,11 +268,9 @@ public:
         Diags.Report(DR->getSourceRange().Begin(), diag::warn_uninit_val);
   }
 };
-
 } // end anonymous namespace
 
 namespace clang {
-
 void CheckUninitializedValues(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
 
   typedef DataflowSolver<UninitializedValues,TransferFuncs,Merge> Solver;
@@ -287,9 +283,6 @@ void CheckUninitializedValues(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
   // Scan for DeclRefExprs that use uninitialized values.
   UninitializedValuesChecker Observer(Ctx,Diags);
   U.getAnalysisData().Observer = &Observer;
-
-  for (CFG::iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
-    S.runOnBlock(&*I);
+  S.runOnAllBlocks(cfg);
 }
-
-}
+} // end namespace clang
