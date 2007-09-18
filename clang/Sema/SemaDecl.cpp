@@ -32,8 +32,7 @@ using namespace clang;
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   Decl *IIDecl = II.getFETokenInfo<Decl>();
   if (dyn_cast_or_null<TypedefDecl>(IIDecl) || 
-      dyn_cast_or_null<ObjcInterfaceDecl>(IIDecl) ||
-      dyn_cast_or_null<ObjcProtocolDecl>(IIDecl))
+      dyn_cast_or_null<ObjcInterfaceDecl>(IIDecl))
     return IIDecl;
   return 0;
 }
@@ -896,6 +895,22 @@ Sema::DeclTy *Sema::ObjcStartProtoInterface(SourceLocation AtProtoInterfaceLoc,
   return PDecl;
 }
 
+Sema::DeclTy *Sema::ObjcStartCatInterface(SourceLocation AtInterfaceLoc,
+                      IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                      IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
+                      IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
+  ObjcCategoryDecl *CDecl;
+  CDecl = new ObjcCategoryDecl(AtInterfaceLoc, ClassName);
+  assert (ClassName->getFETokenInfo<ScopedDecl>() && "Missing @interface decl");
+  Decl *D = static_cast<Decl *>(ClassName->getFETokenInfo<ScopedDecl>());
+  assert(isa<ObjcInterfaceDecl>(D) && "Missing @interface decl");
+    
+  // Chain & install the category decl into the identifier.
+  // Note that head of the chain is the @interface class type and follow up
+  // nodes in the chain are the protocol decl nodes.
+  cast<ObjcInterfaceDecl>(D)->setNext(CDecl);
+  return CDecl;
+}
 /// ObjcClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
@@ -1263,6 +1278,12 @@ void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl,
     Protocol->ObjcAddProtoMethods(&insMethods[0], insMethods.size(),
                                   &clsMethods[0], clsMethods.size());
   }
+  else if (isa<ObjcCategoryDecl>(static_cast<Decl *>(ClassDecl))) {
+    ObjcCategoryDecl *Category = cast<ObjcCategoryDecl>(
+                                        static_cast<Decl*>(ClassDecl));
+    Category->ObjcAddCatMethods(&insMethods[0], insMethods.size(),
+                                &clsMethods[0], clsMethods.size());
+  }  
   else
     assert(0 && "Sema::ObjcAddMethodsToClass(): Unknown DeclTy");
   return;

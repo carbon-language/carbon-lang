@@ -39,7 +39,7 @@ public:
     Function, BlockVariable, FileVariable, ParmVariable, EnumConstant,
     // Concrete sub-classes of TypeDecl
     Typedef, Struct, Union, Class, Enum, ObjcInterface, ObjcClass, ObjcMethod,
-    ObjcProtoMethod, ObjcProtocol,
+    ObjcProtoMethod, ObjcProtocol, ObjcCategory,
     // Concrete sub-class of Decl
     Field, ObjcIvar
   };
@@ -701,6 +701,37 @@ public:
     return D->getKind() == ObjcProtocol;
   }
   static bool classof(const ObjcProtocolDecl *D) { return true; }
+};
+
+class ObjcCategoryDecl : public ScopedDecl {
+  /// category instance methods
+  ObjcMethodDecl **CatInsMethods;  // Null if not defined
+  int NumCatInsMethods;  // -1 if not defined
+
+  /// category class methods
+  ObjcMethodDecl **CatClsMethods;  // Null if not defined
+  int NumCatClsMethods;  // -1 if not defined
+  
+  /// Category name
+  IdentifierInfo *ObjcCatName;
+
+public:
+  ObjcCategoryDecl(SourceLocation L, IdentifierInfo *Id)
+    : ScopedDecl(ObjcCategory, L, Id, 0),
+      CatInsMethods(0), NumCatInsMethods(-1),
+      CatClsMethods(0), NumCatClsMethods(-1),
+      ObjcCatName(0) {}
+
+  void ObjcAddCatMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
+                         ObjcMethodDecl **clsMethods, unsigned numClsMembers);
+  
+  IdentifierInfo *getCatName() const { return ObjcCatName; }
+  void setCatName(IdentifierInfo *catName) { ObjcCatName = catName; }
+
+  static bool classof(const Decl *D) {
+    return D->getKind() == ObjcCategory;
+  }
+  static bool classof(const ObjcCategoryDecl *D) { return true; }
 };
 
 }  // end namespace clang

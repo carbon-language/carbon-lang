@@ -130,6 +130,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     SourceLocation lparenLoc = ConsumeParen();
     SourceLocation categoryLoc, rparenLoc;
     IdentifierInfo *categoryId = 0;
+    llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
     
     // For ObjC2, the category name is optional (not an error).
     if (Tok.getKind() == tok::identifier) {
@@ -147,14 +148,19 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     rparenLoc = ConsumeParen();
     // Next, we need to check for any protocol references.
     if (Tok.getKind() == tok::less) {
-      llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
       if (ParseObjCProtocolReferences(ProtocolRefs))
         return 0;
     }
     if (attrList) // categories don't support attributes.
       Diag(Tok, diag::err_objc_no_attributes_on_category);
     
-    ParseObjCInterfaceDeclList(0, tok::objc_not_keyword/*FIXME*/);
+    DeclTy *CategoryType = Actions.ObjcStartCatInterface(atLoc, 
+                                     nameId, nameLoc,
+                                     categoryId, categoryLoc,
+                                     &ProtocolRefs[0],
+                                      ProtocolRefs.size());
+    
+    ParseObjCInterfaceDeclList(CategoryType, tok::objc_not_keyword);
 
     // The @ sign was already consumed by ParseObjCInterfaceDeclList().
     if (Tok.isObjCAtKeyword(tok::objc_end)) {

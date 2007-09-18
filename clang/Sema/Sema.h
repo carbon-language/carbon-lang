@@ -362,6 +362,11 @@ public:
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
   
+  virtual DeclTy *ObjcStartCatInterface(SourceLocation AtInterfaceLoc,
+                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                    IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
+                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
+  
   virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
                                        IdentifierInfo **IdentList,
                                        unsigned NumElts);

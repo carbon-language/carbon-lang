@@ -29,6 +29,7 @@ static unsigned nInterfaceDecls = 0;
 static unsigned nClassDecls = 0;
 static unsigned nMethodDecls = 0;
 static unsigned nProtocolDecls = 0;
+static unsigned nCategoryDecls = 0;
 static unsigned nIvarDecls = 0;
 
 static bool StatSwitch = false;
@@ -79,7 +80,7 @@ void Decl::PrintStats() {
   fprintf(stderr, "  %d decls total.\n", 
 	  int(nFuncs+nBlockVars+nFileVars+nParmVars+nFieldDecls+nSUC+
 	      nEnumDecls+nEnumConst+nTypedef+nInterfaceDecls+nClassDecls+
-	      nMethodDecls+nProtocolDecls+nIvarDecls));
+	      nMethodDecls+nProtocolDecls+nCategoryDecls+nIvarDecls));
   fprintf(stderr, "    %d function decls, %d each (%d bytes)\n", 
 	  nFuncs, (int)sizeof(FunctionDecl), int(nFuncs*sizeof(FunctionDecl)));
   fprintf(stderr, "    %d block variable decls, %d each (%d bytes)\n", 
@@ -121,6 +122,9 @@ void Decl::PrintStats() {
   fprintf(stderr, "    %d protocol decls, %d each (%d bytes)\n", 
 	  nProtocolDecls, (int)sizeof(ObjcProtocolDecl),
 	  int(nProtocolDecls*sizeof(ObjcProtocolDecl)));
+  fprintf(stderr, "    %d category decls, %d each (%d bytes)\n", 
+	  nCategoryDecls, (int)sizeof(ObjcCategoryDecl),
+	  int(nCategoryDecls*sizeof(ObjcCategoryDecl)));
 
   fprintf(stderr, "Total bytes = %d\n", 
 	  int(nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
@@ -174,6 +178,9 @@ void Decl::addDeclKind(const Kind k) {
     case ObjcProtocol:
       nProtocolDecls++;
       break;
+    case ObjcCategory:
+     nCategoryDecls++;
+     break;
     case ObjcIvar:
       nIvarDecls++;
       break;
@@ -305,6 +312,25 @@ void ObjcProtocolDecl::ObjcAddProtoMethods(ObjcMethodDecl **insMethods,
   if (numClsMembers) {
     ProtoClsMethods = new ObjcMethodDecl*[numClsMembers];
     memcpy(ProtoClsMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+  }
+}
+
+/// ObjcAddCat - Insert instance and methods declarations into
+/// ObjcProtocolDecl's CatInsMethods and CatClsMethods fields.
+///
+void ObjcCategoryDecl::ObjcAddCatMethods(ObjcMethodDecl **insMethods, 
+					 unsigned numInsMembers,
+					 ObjcMethodDecl **clsMethods,
+					 unsigned numClsMembers) {
+  NumCatInsMethods = numInsMembers;
+  if (numInsMembers) {
+    CatInsMethods = new ObjcMethodDecl*[numInsMembers];
+    memcpy(CatInsMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+  }
+  NumCatClsMethods = numClsMembers;
+  if (numClsMembers) {
+    CatClsMethods = new ObjcMethodDecl*[numClsMembers];
+    memcpy(CatClsMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
   }
 }
 

@@ -453,6 +453,12 @@ public:
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
     return 0;
   }
+  virtual DeclTy *ObjcStartCatInterface(SourceLocation AtInterfaceLoc,
+                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                    IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
+                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
+    return 0;
+  }
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
     tok::TokenKind MethodType, TypeTy *ReturnType,
     ObjcKeywordDecl *Keywords, unsigned NumKeywords, 
@@ -544,7 +550,6 @@ public:
   virtual DeclTy *ObjcStartProtoInterface(SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
-
 };
 
 }  // end namespace clang
