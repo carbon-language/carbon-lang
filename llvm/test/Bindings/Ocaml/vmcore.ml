@@ -11,27 +11,21 @@ open Llvm
 open Llvm_bitwriter
 
 
-(* Tiny unit test framework *)
+(* Tiny unit test framework - really just to help find which line is busted *)
 let exit_status = ref 0
 let case_num = ref 0
 
-let all_done () =
-  prerr_endline "";
-  exit !exit_status
-
 let group name =
-  prerr_endline "";
   case_num := 0;
-  prerr_string ("  " ^ name ^ "... ")
+  prerr_endline ("  " ^ name ^ "...")
 
 let insist cond =
   incr case_num;
-  prerr_char ' ';
-  if not cond then begin
-     exit_status := 10;
-     prerr_char '!'
-  end;
-  prerr_int !case_num
+  let msg = if cond then "    pass " else begin
+    exit_status := 10;
+    "    FAIL "
+  end in
+  prerr_endline (msg ^ (string_of_int !case_num))
 
 let suite name f =
   prerr_endline (name ^ ":");
@@ -133,6 +127,102 @@ let test_types () =
   insist (ty <> make_opaque_type ())
 
 
+(*===-- Constants ---------------------------------------------------------===*)
+
+let test_constants () =
+  (* RUN: grep {Const01.*i32.*-1} < %t.ll
+   *)
+  group "int";
+  let c = make_int_constant i32_type (-1) true in
+  ignore (define_global "Const01" c m);
+  insist (i32_type = type_of c);
+  insist (is_constant c);
+
+  (* RUN: grep {Const02.*i64.*-1} < %t.ll
+   *)
+  group "sext int";
+  let c = make_int_constant i64_type (-1) true in
+  ignore (define_global "Const02" c m);
+  insist (i64_type = type_of c);
+
+  (* RUN: grep {Const03.*i64.*4294967295} < %t.ll
+   *)
+  group "zext int64";
+  let c = make_int64_constant i64_type (Int64.of_string "4294967295") false in
+  ignore (define_global "Const03" c m);
+  insist (i64_type = type_of c);
+
+  (* RUN: grep {Const04.*"cruel\\\\00world"} < %t.ll
+   *)
+  group "string";
+  let c = make_string_constant "cruel\x00world" false in
+  ignore (define_global "Const04" c m);
+  insist ((make_array_type i8_type 11) = type_of c);
+
+  (* RUN: grep {Const05.*"hi\\\\00again\\\\00"} < %t.ll
+   *)
+  group "string w/ null";
+  let c = make_string_constant "hi\x00again" true in
+  ignore (define_global "Const05" c m);
+  insist ((make_array_type i8_type 9) = type_of c);
+
+  (* RUN: grep {Const06.*3.1459} < %t.ll
+   *)
+  group "real";
+  let c = make_real_constant double_type 3.1459 in
+  ignore (define_global "Const06" c m);
+  insist (double_type = type_of c);
+  
+  let one = make_int_constant i16_type 1 true in
+  let two = make_int_constant i16_type 2 true in
+  let three = make_int_constant i32_type 3 true in
+  let four = make_int_constant i32_type 4 true in
+  
+  (* RUN: grep {Const07.*\\\[ i32 3, i32 4 \\\]} < %t.ll
+   *)
+  group "array";
+  let c = make_array_constant i32_type [| three; four |] in
+  ignore (define_global "Const07" c m);
+  insist ((make_array_type i32_type 2) = (type_of c));
+  
+  (* RUN: grep {Const08.*< i16 1, i16 2.* >} < %t.ll
+   *)
+  group "vector";
+  let c = make_vector_constant [| one; two; one; two;
+                                  one; two; one; two |] in
+  ignore (define_global "Const08" c m);
+  insist ((make_vector_type i16_type 8) = (type_of c));
+  
+  (* RUN: grep {Const09.*\{ i16, i16, i32, i32 \} \{} < %t.ll
+   *)
+  group "structure";
+  let c = make_struct_constant [| one; two; three; four |] false in
+  ignore (define_global "Const09" c m);
+  insist ((make_struct_type [| i16_type; i16_type; i32_type; i32_type |] false)
+        = (type_of c));
+  
+  (* RUN: grep {Const10.*zeroinit} < %t.ll
+   *)
+  group "null";
+  let c = make_null (make_struct_type [| i1_type; i8_type;
+                                         i64_type; double_type |] true) in
+  ignore (define_global "Const10" c m);
+  
+  (* RUN: grep {Const11.*-1} < %t.ll
+   *)
+  group "all ones";
+  let c = make_all_ones i64_type in
+  ignore (define_global "Const11" c m);
+  
+  (* RUN: grep {Const12.*undef} < %t.ll
+   *)
+  group "undef";
+  let c = make_undef i1_type in
+  ignore (define_global "Const12" c m);
+  insist (i1_type = type_of c);
+  insist (is_undef c)
+
+
 (*===-- Global Values -----------------------------------------------------===*)
 
 let test_global_values () =
@@ -143,8 +233,6 @@ let test_global_values () =
    *)
   group "naming";
   let g = define_global "TEMPORARY" zero32 m in
-  prerr_endline "";
-  prerr_endline (value_name g);
   insist ("TEMPORARY" = value_name g);
   set_value_name "GVal01" g;
   insist ("GVal01" = value_name g);
@@ -210,6 +298,7 @@ let test_global_variables () =
 
   (* RUN: grep -v {GVar05} < %t.ll
    *)
+  group "delete";
   let g = define_global "GVar05" fourty_two32 m in
   delete_global g
 
@@ -227,7 +316,8 @@ let test_writer () =
 
 let _ =
   suite "types"            test_types;
+  suite "constants"        test_constants;
   suite "global values"    test_global_values;
   suite "global variables" test_global_variables;
   suite "writer"           test_writer;
-  all_done ()
+  exit !exit_status

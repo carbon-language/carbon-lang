@@ -248,8 +248,18 @@ CAMLprim value llvm_make_undef(value Ty) {
 }
 
 /* llvalue -> bool */
+CAMLprim value llvm_is_constant(value Ty) {
+  return Val_bool(LLVMIsConstant((LLVMValueRef) Ty));
+}
+
+/* llvalue -> bool */
 CAMLprim value llvm_is_null(value Val) {
   return Val_bool(LLVMIsNull((LLVMValueRef) Val));
+}
+
+/* llvalue -> bool */
+CAMLprim value llvm_is_undef(value Ty) {
+  return Val_bool(LLVMIsUndef((LLVMValueRef) Ty));
 }
 
 /*--... Operations on scalar constants .....................................--*/
@@ -266,6 +276,12 @@ CAMLprim value llvm_make_int_constant(value IntTy, value N, value SExt) {
   return (value) LLVMGetIntConstant((LLVMTypeRef) IntTy, N2, Bool_val(SExt));
 }
 
+/* lltype -> Int64.t -> bool -> llvalue */
+CAMLprim value llvm_make_int64_constant(value IntTy, value N, value SExt) {
+  return (value) LLVMGetIntConstant((LLVMTypeRef) IntTy, Int64_val(N),
+                                    Bool_val(SExt));
+}
+
 /* lltype -> float -> llvalue */
 CAMLprim value llvm_make_real_constant(value RealTy, value N) {
   return (value) LLVMGetRealConstant((LLVMTypeRef) RealTy, Double_val(N));
@@ -276,7 +292,7 @@ CAMLprim value llvm_make_real_constant(value RealTy, value N) {
 /* string -> bool -> llvalue */
 CAMLprim value llvm_make_string_constant(value Str, value NullTerminate) {
   return (value) LLVMGetStringConstant(String_val(Str),
-                                       Wosize_val(Str),
+                                       caml_string_length(Str),
                                        Bool_val(NullTerminate) == 0);
 }
 

@@ -141,14 +141,18 @@ external value_name : llvalue -> string = "llvm_value_name"
 external set_value_name : string -> llvalue -> unit = "llvm_set_value_name"
 
 (*--... Operations on constants of (mostly) any type .......................--*)
+external is_constant : llvalue -> bool = "llvm_is_constant"
 external make_null : lltype -> llvalue = "llvm_make_null"
-external make_all_ones : lltype -> llvalue = "llvm_make_all_ones"
+external make_all_ones : (*int|vec*)lltype -> llvalue = "llvm_make_all_ones"
 external make_undef : lltype -> llvalue = "llvm_make_undef"
 external is_null : llvalue -> bool = "llvm_is_null"
+external is_undef : llvalue -> bool = "llvm_is_undef"
 
 (*--... Operations on scalar constants .....................................--*)
 external make_int_constant : lltype -> int -> bool -> llvalue
                            = "llvm_make_int_constant"
+external make_int64_constant : lltype -> Int64.t -> bool -> llvalue
+                             = "llvm_make_int64_constant"
 external make_real_constant : lltype -> float -> llvalue
                             = "llvm_make_real_constant"
 

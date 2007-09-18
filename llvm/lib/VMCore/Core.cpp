@@ -201,10 +201,18 @@ LLVMValueRef LLVMGetUndef(LLVMTypeRef Ty) {
   return wrap(UndefValue::get(unwrap(Ty)));
 }
 
+int LLVMIsConstant(LLVMValueRef Ty) {
+  return isa<Constant>(unwrap(Ty));
+}
+
 int LLVMIsNull(LLVMValueRef Val) {
   if (Constant *C = dyn_cast<Constant>(unwrap(Val)))
     return C->isNullValue();
   return false;
+}
+
+int LLVMIsUndef(LLVMValueRef Val) {
+  return isa<UndefValue>(unwrap(Val));
 }
 
 /*--.. Operations on scalar constants ......................................--*/

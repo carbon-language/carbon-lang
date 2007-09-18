@@ -176,7 +176,9 @@ void LLVMSetValueName(LLVMValueRef Val, const char *Name);
 LLVMValueRef LLVMGetNull(LLVMTypeRef Ty); /* all zeroes */
 LLVMValueRef LLVMGetAllOnes(LLVMTypeRef Ty); /* only for int/vector */
 LLVMValueRef LLVMGetUndef(LLVMTypeRef Ty);
+int LLVMIsConstant(LLVMValueRef Val);
 int LLVMIsNull(LLVMValueRef Val);
+int LLVMIsUndef(LLVMValueRef Val);
 
 /* Operations on scalar constants */
 LLVMValueRef LLVMGetIntConstant(LLVMTypeRef IntTy, unsigned long long N,
