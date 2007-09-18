@@ -4093,8 +4093,7 @@ SDOperand DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
         if (!Base.Val)
           return N0;
         for (unsigned i = 0; i != NumElems; ++i) {
-          if (V->getOperand(i).getOpcode() != ISD::UNDEF &&
-              V->getOperand(i) != Base) {
+          if (V->getOperand(i) != Base) {
             AllSame = false;
             break;
           }
