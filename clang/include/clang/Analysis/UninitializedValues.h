@@ -23,7 +23,8 @@ namespace clang {
   class BlockVarDecl;
   class Expr;
   class DeclRefExpr;
-
+  class VarDecl;
+  
 /// UninitializedValues_ValueTypes - Utility class to wrap type declarations
 ///   for dataflow values and dataflow analysis state for the
 ///   Unitialized Values analysis.
@@ -45,6 +46,14 @@ public:
     ObserverTy* Observer;
     
     AnalysisDataTy() : NumDecls(0), NumBlockExprs(0), Observer(NULL) {}
+    
+    bool isTracked(const BlockVarDecl* VD) { 
+      return VMap.find(VD) != VMap.end();
+    }
+    
+    bool isTracked(const Expr* E) {
+      return EMap.find(E) != EMap.end();
+    }
   };
 
   //===--------------------------------------------------------------------===//
@@ -69,7 +78,24 @@ public:
     void copyValues(ValTy& RHS) {
       DeclBV = RHS.DeclBV;
       ExprBV = RHS.ExprBV;
-    }    
+    }
+
+    llvm::BitVector::reference getBitRef(const BlockVarDecl* VD,
+                                         AnalysisDataTy& AD) {
+      assert (AD.isTracked(VD) && "BlockVarDecl not tracked.");
+      return DeclBV[AD.VMap[VD]];
+    }
+    
+    llvm::BitVector::reference getBitRef(const Expr* E,
+                                         AnalysisDataTy& AD) {
+      assert (AD.isTracked(E) && "Expr not tracked.");                                                                                   
+      return DeclBV[AD.EMap[E]];
+    }
+    
+    bool sizesEqual(ValTy& RHS) {
+      return DeclBV.size() == RHS.DeclBV.size() &&
+             ExprBV.size() == RHS.ExprBV.size();
+    }
   };  
   
   //===--------------------------------------------------------------------===//

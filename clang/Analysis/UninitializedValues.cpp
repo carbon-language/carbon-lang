@@ -91,6 +91,8 @@ public:
   bool BlockStmt_VisitExpr(Expr* E);
   bool VisitDeclStmt(DeclStmt* D);
   
+  BlockVarDecl* FindBlockVarDecl(Stmt* S);
+  
   static inline bool Initialized() { return true; }
   static inline bool Uninitialized() { return false; }
 };
@@ -98,48 +100,47 @@ public:
 
 bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
   if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl())) {
-    assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
-    if (AD.Observer)
-      AD.Observer->ObserveDeclRefExpr(V,AD,DR,VD);
+    if (AD.Observer) AD.Observer->ObserveDeclRefExpr(V,AD,DR,VD);
       
-    return V.DeclBV[ AD.VMap[VD] ];    
+    return V.getBitRef(VD,AD);
   }
-  else
-    return Initialized();
+  else return Initialized();
+}
+
+BlockVarDecl* TransferFuncs::FindBlockVarDecl(Stmt *S) {
+  for (;;) {
+    if (ParenExpr* P = dyn_cast<ParenExpr>(S)) {
+      S = P->getSubExpr();
+      continue;
+    }
+    else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
+      if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl()))
+        return VD;
+
+    return NULL;
+  }          
 }
 
 bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
-  if (CFG::hasImplicitControlFlow(B)) {
-    assert ( AD.EMap.find(B) != AD.EMap.end() && "Unknown block-level expr.");
-    return V.ExprBV[ AD.EMap[B] ];
-  }
-  
-  if (B->isAssignmentOp()) {
-    // Get the Decl for the LHS, if any
-    for (Stmt* S  = B->getLHS() ;; ) {
-      if (ParenExpr* P = dyn_cast<ParenExpr>(S))
-        S = P->getSubExpr();
-      else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
-        if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl())) {
-          assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
-          
-          if(InitWithAssigns) {
-            // Pseudo-hack to prevent cascade of warnings.  If the RHS uses
-            // an uninitialized value, then we are already going to flag a warning
-            // related to the "cause".  Thus, propogating uninitialized doesn't
-            // make sense, since we are just adding extra messages that don't
-            // contribute to diagnosing the bug.  In InitWithAssigns mode
-            // we unconditionally set the assigned variable to Initialized to
-            // prevent Uninitialized propogation.
-            return V.DeclBV[AD.VMap[VD]] = Initialized();
-          }
-          else 
-            return V.DeclBV[ AD.VMap[VD] ] = Visit(B->getRHS());
-        }
 
-      break;
-    }
-  }
+  if (CFG::hasImplicitControlFlow(B))
+    return V.getBitRef(B,AD);
+  
+  if (B->isAssignmentOp())
+    // Get the Decl for the LHS (if any).
+    if (BlockVarDecl* VD = FindBlockVarDecl(B->getLHS()))
+      if(InitWithAssigns) {
+        // Pseudo-hack to prevent cascade of warnings.  If the RHS uses
+        // an uninitialized value, then we are already going to flag a warning
+        // for the RHS, or for the root "source" of the unintialized values.  
+        // Thus, propogating uninitialized doesn't make sense, since we are
+        // just adding extra messages that don't
+        // contribute to diagnosing the bug.  In InitWithAssigns mode
+        // we unconditionally set the assigned variable to Initialized to
+        // prevent Uninitialized propogation.
+        return V.getBitRef(VD,AD) = Initialized();
+      }
+      else return V.getBitRef(VD,AD) = Visit(B->getRHS());
   
   return VisitStmt(B);
 }
@@ -150,12 +151,8 @@ bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
   for (ScopedDecl* D = S->getDecl(); D != NULL; D = D->getNextDeclarator())
     if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(D))
       if (Stmt* I = VD->getInit()) {
-        assert ( AD.EMap.find(cast<Expr>(I)) != 
-                 AD.EMap.end() && "Unknown Expr.");
-                 
-        assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
-        x = V.ExprBV[ AD.EMap[cast<Expr>(I)] ];
-        V.DeclBV[ AD.VMap[VD] ] = x;
+        x = V.getBitRef(cast<Expr>(I),AD);
+        V.getBitRef(VD,AD) = x;
       }
       
   return x;
@@ -168,27 +165,12 @@ bool TransferFuncs::VisitCallExpr(CallExpr* C) {
 
 bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   switch (U->getOpcode()) {
-    case UnaryOperator::AddrOf: {
-      // Blast through parentheses and find the decl (if any).  Treat it
-      // as initialized from this point forward.
-      for (Stmt* S = U->getSubExpr() ;; )
-        if (ParenExpr* P = dyn_cast<ParenExpr>(S))
-          S = P->getSubExpr();
-        else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S)) {
-          if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl())) {
-            assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
-            V.DeclBV[ AD.VMap[VD] ] = Initialized();
-          }
-          break;
-        }
-        else {
-          // Evaluate the transfer function for subexpressions, even
-          // if we cannot reason more deeply about the &-expression.
-          return Visit(U->getSubExpr());
-        }
-
-      return Initialized();
-    }
+    case UnaryOperator::AddrOf:
+      // For "&x", treat "x" as now being initialized.
+      if (BlockVarDecl* VD = FindBlockVarDecl(U->getSubExpr()))
+        V.getBitRef(VD,AD) = Initialized();
+      else 
+        return Visit(U->getSubExpr());
 
     default:
       return Visit(U->getSubExpr());
@@ -202,15 +184,14 @@ bool TransferFuncs::VisitStmt(Stmt* S) {
   // evaluating some subexpressions may result in propogating "Uninitialized"
   // or "Initialized" to variables referenced in the other subexpressions.
   for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
-    if (Visit(*I) == Uninitialized())
-      x = Uninitialized();
+    if (Visit(*I) == Uninitialized()) x = Uninitialized();
   
   return x;
 }
 
 bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
-  assert ( AD.EMap.find(E) != AD.EMap.end() );
-  return V.ExprBV[ AD.EMap[E] ] = Visit(E);
+  assert (AD.isTracked(E));
+  return V.getBitRef(E,AD) = Visit(E);
 }
   
 } // end anonymous namespace
@@ -233,9 +214,7 @@ namespace {
 struct Merge {
   void operator()(UninitializedValues::ValTy& Dst,
                   UninitializedValues::ValTy& Src) {
-    assert (Dst.DeclBV.size() == Src.DeclBV.size() && "BV sizes do not match.");
-    assert (Dst.ExprBV.size() == Src.ExprBV.size() && "BV sizes do not match.");
-    
+    assert (Src.sizesEqual(Dst) && "BV sizes do not match.");
     Dst.DeclBV |= Src.DeclBV;
     Dst.ExprBV |= Src.ExprBV;
   }
@@ -262,8 +241,9 @@ public:
                                   UninitializedValues::AnalysisDataTy& AD,
                                   DeclRefExpr* DR, BlockVarDecl* VD) {
 
-    assert ( AD.VMap.find(VD) != AD.VMap.end() && "Unknown VarDecl.");
-    if (V.DeclBV[ AD.VMap[VD] ] == TransferFuncs::Uninitialized())
+    assert ( AD.isTracked(VD) && "Unknown VarDecl.");
+    
+    if (V.getBitRef(VD,AD) == TransferFuncs::Uninitialized())
       if (AlreadyWarned.insert(VD))
         Diags.Report(DR->getSourceRange().Begin(), diag::warn_uninit_val);
   }
