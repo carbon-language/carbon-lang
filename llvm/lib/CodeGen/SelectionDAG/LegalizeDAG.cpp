@@ -3212,8 +3212,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           MVT::ValueType VT =  Node->getOperand(0).getValueType();
           MVT::ValueType NVT = Node->getValueType(0);
           unsigned ShiftAmt = MVT::getSizeInBits(NVT)-1;
-          Tmp2 = DAG.getConstantFP(APFloat(APInt(MVT::getSizeInBits(VT),
-                                                 1ULL << ShiftAmt)), VT);
+          const uint64_t zero[] = {0, 0};
+          APFloat apf = APFloat(APInt(MVT::getSizeInBits(VT), 2, zero));
+          uint64_t x = 1ULL << ShiftAmt;
+          (void)apf.convertFromInteger(&x, 1, false, APFloat::rmTowardZero);
+          Tmp2 = DAG.getConstantFP(apf, VT);
           Tmp3 = DAG.getSetCC(TLI.getSetCCResultTy(),
                             Node->getOperand(0), Tmp2, ISD::SETLT);
           True = DAG.getNode(ISD::FP_TO_SINT, NVT, Node->getOperand(0));
@@ -3235,22 +3238,34 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       MVT::ValueType VT = Op.getValueType();
       RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
       switch (Node->getOpcode()) {
-      case ISD::FP_TO_SINT:
-        if (Node->getOperand(0).getValueType() == MVT::f32)
+      case ISD::FP_TO_SINT: {
+        MVT::ValueType OVT = Node->getOperand(0).getValueType();
+        if (OVT == MVT::f32)
           LC = (VT == MVT::i32)
             ? RTLIB::FPTOSINT_F32_I32 : RTLIB::FPTOSINT_F32_I64;
-        else
+        else if (OVT == MVT::f64)
           LC = (VT == MVT::i32)
             ? RTLIB::FPTOSINT_F64_I32 : RTLIB::FPTOSINT_F64_I64;
+        else if (OVT == MVT::f80 || OVT == MVT::f128 || OVT == MVT::ppcf128) {
+          assert(VT == MVT::i64);
+          LC = RTLIB::FPTOSINT_LD_I64;
+        }
         break;
-      case ISD::FP_TO_UINT:
-        if (Node->getOperand(0).getValueType() == MVT::f32)
+      }
+      case ISD::FP_TO_UINT: {
+        MVT::ValueType OVT = Node->getOperand(0).getValueType();
+        if (OVT == MVT::f32)
           LC = (VT == MVT::i32)
             ? RTLIB::FPTOUINT_F32_I32 : RTLIB::FPTOSINT_F32_I64;
-        else
+        else if (OVT == MVT::f64)
           LC = (VT == MVT::i32)
             ? RTLIB::FPTOUINT_F64_I32 : RTLIB::FPTOSINT_F64_I64;
+        else if (OVT == MVT::f80 || OVT == MVT::f128 || OVT == MVT::ppcf128) {
+          LC = (VT == MVT::i32)
+            ? RTLIB::FPTOUINT_LD_I32 : RTLIB::FPTOUINT_LD_I64;
+        }
         break;
+      }
       default: assert(0 && "Unreachable!");
       }
       SDOperand Dummy;
@@ -4767,8 +4782,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   if (DestVT == MVT::f32)
     FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx, NULL, 0);
   else {
-    assert(DestVT == MVT::f64 && "Unexpected conversion");
-    FudgeInReg = LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, MVT::f64,
+    FudgeInReg = LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, DestVT,
                                            DAG.getEntryNode(), CPIdx,
                                            NULL, 0, MVT::f32));
   }
@@ -5350,8 +5364,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     RTLIB::Libcall LC;
     if (Node->getOperand(0).getValueType() == MVT::f32)
       LC = RTLIB::FPTOSINT_F32_I64;
-    else
+    else if (Node->getOperand(0).getValueType() == MVT::f64)
       LC = RTLIB::FPTOSINT_F64_I64;
+    else
+      LC = RTLIB::FPTOSINT_LD_I64;
     Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
                        false/*sign irrelevant*/, Hi);
     break;
@@ -5730,8 +5746,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     if (Node->getOperand(0).getValueType() == MVT::i64) {
       if (VT == MVT::f32)
         LC = isSigned ? RTLIB::SINTTOFP_I64_F32 : RTLIB::UINTTOFP_I64_F32;
-      else
+      else if (VT == MVT::f64)
         LC = isSigned ? RTLIB::SINTTOFP_I64_F64 : RTLIB::UINTTOFP_I64_F64;
+      else if (VT == MVT::f80 || VT == MVT::f128 || VT == MVT::ppcf128) {
+        assert(isSigned);
+        LC = RTLIB::SINTTOFP_I64_LD;
+      }
     } else {
       if (VT == MVT::f32)
         LC = isSigned ? RTLIB::SINTTOFP_I32_F32 : RTLIB::UINTTOFP_I32_F32;

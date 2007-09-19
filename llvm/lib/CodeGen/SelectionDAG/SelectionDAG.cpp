@@ -1591,8 +1591,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::ANY_EXTEND:
     case ISD::ZERO_EXTEND: return getConstant(Val, VT);
     case ISD::TRUNCATE:    return getConstant(Val, VT);
-    case ISD::SINT_TO_FP:  return getConstantFP(C->getSignExtended(), VT);
-    case ISD::UINT_TO_FP:  return getConstantFP(C->getValue(), VT);
+    case ISD::UINT_TO_FP:
+    case ISD::SINT_TO_FP: {
+      const uint64_t zero[] = {0, 0};
+      APFloat apf = APFloat(APInt(MVT::getSizeInBits(VT), 2, zero));
+      (void)apf.convertFromInteger(&Val, 1, Opcode==ISD::SINT_TO_FP,
+                                  APFloat::rmTowardZero);
+      return getConstantFP(apf, VT);
+    }
     case ISD::BIT_CONVERT:
       if (VT == MVT::f32 && C->getValueType(0) == MVT::i32)
         return getConstantFP(BitsToFloat(Val), VT);
@@ -1669,8 +1675,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::FP_EXTEND:
       // This can return overflow, underflow, or inexact; we don't care.
       // FIXME need to be more flexible about rounding mode.
+      // FIXME need to be more flexible about rounding mode.
       (void) V.convert(VT==MVT::f32 ? APFloat::IEEEsingle : 
-                                      APFloat::IEEEdouble,
+                       VT==MVT::f64 ? APFloat::IEEEdouble :
+                       VT==MVT::f80 ? APFloat::x87DoubleExtended :
+                       VT==MVT::f128 ? APFloat::IEEEquad :
+                       APFloat::Bogus,
                        APFloat::rmNearestTiesToEven);
       return getConstantFP(V, VT);
     case ISD::FP_TO_SINT:

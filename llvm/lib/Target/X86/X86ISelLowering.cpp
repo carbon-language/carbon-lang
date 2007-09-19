@@ -108,11 +108,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
   }
 
-  if (!Subtarget->is64Bit()) {
-    // Custom lower SINT_TO_FP and FP_TO_SINT from/to i64 in 32-bit mode.
-    setOperationAction(ISD::SINT_TO_FP     , MVT::i64  , Custom);
-    setOperationAction(ISD::FP_TO_SINT     , MVT::i64  , Custom);
-  }
+  // In 32-bit mode these are custom lowered.  In 64-bit mode F32 and F64
+  // are Legal, f80 is custom lowered.
+  setOperationAction(ISD::FP_TO_SINT     , MVT::i64  , Custom);
+  setOperationAction(ISD::SINT_TO_FP     , MVT::i64  , Custom);
 
   // Promote i1/i8 FP_TO_SINT to larger FP_TO_SINTS's, as X86 doesn't have
   // this operation.
@@ -3343,6 +3342,9 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   // These are really Legal; caller falls through into that case.
   if (SrcVT==MVT::i32 && Op.getValueType() != MVT::f80 && X86ScalarSSE)
     return Result;
+  if (SrcVT==MVT::i64 && Op.getValueType() != MVT::f80 && 
+      Subtarget->is64Bit())
+    return Result;
 
   // Build the FILD
   SDVTList Tys;
@@ -3395,6 +3397,10 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
 
   // These are really Legal.
   if (Op.getValueType() == MVT::i32 && X86ScalarSSE && 
+      Op.getOperand(0).getValueType() != MVT::f80)
+    return Result;
+  if (Subtarget->is64Bit() &&
+      Op.getValueType() == MVT::i64 &&
       Op.getOperand(0).getValueType() != MVT::f80)
     return Result;
 
