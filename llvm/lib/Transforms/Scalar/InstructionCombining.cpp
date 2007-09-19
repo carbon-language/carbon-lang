@@ -8936,8 +8936,12 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
 /// specified pointer, we do a quick local scan of the basic block containing
 /// ScanFrom, to determine if the address is already accessed.
 static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
-  // If it is an alloca or global variable, it is always safe to load from.
-  if (isa<AllocaInst>(V) || isa<GlobalVariable>(V)) return true;
+  // If it is an alloca it is always safe to load from.
+  if (isa<AllocaInst>(V)) return true;
+
+  // Don't try to evaluate aliases.  External weak GV can be null.
+  if (const GlobalValue *GV = dyn_cast<GlobalVariable>(V))
+    return !isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage();
 
   // Otherwise, be a little bit agressive by scanning the local block where we
   // want to check to see if the pointer is already being loaded or stored
