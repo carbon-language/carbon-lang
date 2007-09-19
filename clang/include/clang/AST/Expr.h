@@ -1068,7 +1068,7 @@ class ObjCMessageExpr : public Expr {
   unsigned NumArgs;
   
   // A unigue name for this message.
-  SelectorInfo &Selector;
+  IdentifierInfo &Selector;
   
   IdentifierInfo **KeyIdents;
   
@@ -1078,17 +1078,17 @@ class ObjCMessageExpr : public Expr {
 public:
   // constructor for unary messages. 
   // FIXME: clsName should be typed to ObjCInterfaceType
-  ObjCMessageExpr(IdentifierInfo *clsName, SelectorInfo &selInfo,
+  ObjCMessageExpr(IdentifierInfo *clsName, IdentifierInfo &selInfo,
                   QualType retType, SourceLocation LBrac, SourceLocation RBrac);
-  ObjCMessageExpr(Expr *receiver, SelectorInfo &selInfo,
+  ObjCMessageExpr(Expr *receiver, IdentifierInfo &selInfo,
                   QualType retType, SourceLocation LBrac, SourceLocation RBrac);
                   
   // constructor for keyword messages.
   // FIXME: clsName should be typed to ObjCInterfaceType
-  ObjCMessageExpr(IdentifierInfo *clsName, SelectorInfo &selInfo,
+  ObjCMessageExpr(IdentifierInfo *clsName, IdentifierInfo &selInfo,
                   ObjcKeywordMessage *keys, unsigned numargs, QualType retType, 
                   SourceLocation LBrac, SourceLocation RBrac);
-  ObjCMessageExpr(Expr *receiver, SelectorInfo &selInfo,
+  ObjCMessageExpr(Expr *receiver, IdentifierInfo &selInfo,
                   ObjcKeywordMessage *keys, unsigned numargs, QualType retType, 
                   SourceLocation LBrac, SourceLocation RBrac);
   ~ObjCMessageExpr() {

@@ -26,7 +26,6 @@ class FunctionDecl;
 class AttributeList;
 class ObjcIvarDecl;
 class ObjcMethodDecl;
-class SelectorInfo;
 
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
@@ -618,7 +617,7 @@ public:
   enum ImplementationControl { None, Required, Optional };
 private:
   // A unigue name for this method.
-  SelectorInfo &Selector;
+  IdentifierInfo &Selector;
   
   // Type of this method.
   QualType MethodDeclType;
@@ -636,7 +635,7 @@ private:
   ImplementationControl DeclImplementation : 2;
 
 public:
-  ObjcMethodDecl(SourceLocation L, SelectorInfo &SelId, QualType T,
+  ObjcMethodDecl(SourceLocation L, IdentifierInfo &SelId, QualType T,
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
 		 AttributeList *M = 0, bool isInstance = true, 
 		 Decl *PrevDecl = 0)
@@ -644,7 +643,7 @@ public:
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), IsInstance(isInstance) {}
 
-  ObjcMethodDecl(Kind DK, SourceLocation L, SelectorInfo &SelId, QualType T,
+  ObjcMethodDecl(Kind DK, SourceLocation L, IdentifierInfo &SelId, QualType T,
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
 		 AttributeList *M = 0, bool isInstance = true, 
 		 Decl *PrevDecl = 0)

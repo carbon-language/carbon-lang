@@ -1308,8 +1308,8 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
     methodName += ":";
   }
   methodName[len] = '\0';
-  SelectorInfo &SelName = Context.getSelectorInfo(&methodName[0], 
-                                                  &methodName[0]+len);
+  IdentifierInfo &SelName = Context.Idents.get(&methodName[0], 
+                                               &methodName[0]+len);
   llvm::SmallVector<ParmVarDecl*, 16> Params;
 
   for (unsigned i = 0; i < NumKeywords; i++) {
@@ -1340,8 +1340,8 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
                       IdentifierInfo *SelectorName, AttributeList *AttrList,
 		      tok::ObjCKeywordKind MethodDeclKind) {
   const char *methodName = SelectorName->getName();
-  SelectorInfo &SelName = Context.getSelectorInfo(methodName, 
-                                                  methodName+strlen(methodName));
+  IdentifierInfo &SelName = Context.Idents.get(methodName, 
+                                              methodName+strlen(methodName));
   QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
   ObjcMethodDecl* ObjcMethod = new ObjcMethodDecl(MethodLoc, 
 			             SelName, resultDeclType, 0, -1,

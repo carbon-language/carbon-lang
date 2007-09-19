@@ -858,7 +858,7 @@ unsigned OCUVectorElementExpr::getEncodedElementAccess() const {
 
 // constructor for unary messages.
 ObjCMessageExpr::ObjCMessageExpr(
-  IdentifierInfo *clsName, SelectorInfo &methName, QualType retType, 
+  IdentifierInfo *clsName, IdentifierInfo &methName, QualType retType, 
   SourceLocation LBrac, SourceLocation RBrac)
   : Expr(ObjCMessageExprClass, retType), Selector(methName) {
   ClassName = clsName;
@@ -867,7 +867,7 @@ ObjCMessageExpr::ObjCMessageExpr(
 }
 
 ObjCMessageExpr::ObjCMessageExpr(
-  Expr *fn, SelectorInfo &methName, QualType retType, 
+  Expr *fn, IdentifierInfo &methName, QualType retType, 
   SourceLocation LBrac, SourceLocation RBrac)
   : Expr(ObjCMessageExprClass, retType), Selector(methName), ClassName(0) {
   SubExprs = new Expr*[1];
@@ -878,7 +878,7 @@ ObjCMessageExpr::ObjCMessageExpr(
 
 // constructor for keyword messages.
 ObjCMessageExpr::ObjCMessageExpr(
-  Expr *fn, SelectorInfo &selInfo, ObjcKeywordMessage *keys, unsigned numargs, 
+  Expr *fn, IdentifierInfo &selInfo, ObjcKeywordMessage *keys, unsigned numargs, 
   QualType retType, SourceLocation LBrac, SourceLocation RBrac)
   : Expr(ObjCMessageExprClass, retType), Selector(selInfo), ClassName(0) {
   SubExprs = new Expr*[numargs+1];
@@ -890,7 +890,7 @@ ObjCMessageExpr::ObjCMessageExpr(
 }
 
 ObjCMessageExpr::ObjCMessageExpr(
-  IdentifierInfo *clsName, SelectorInfo &selInfo, ObjcKeywordMessage *keys, 
+  IdentifierInfo *clsName, IdentifierInfo &selInfo, ObjcKeywordMessage *keys, 
   unsigned numargs, QualType retType, SourceLocation LBrac, SourceLocation RBrac)
   : Expr(ObjCMessageExprClass, retType), Selector(selInfo), ClassName(clsName) {
   SubExprs = new Expr*[numargs+1];

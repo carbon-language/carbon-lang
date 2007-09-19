@@ -1857,7 +1857,7 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
   return new ObjCEncodeExpr(t, EncodedType, AtLoc, RParenLoc);
 }
 
-static SelectorInfo &DeriveSelector(ObjcKeywordMessage *Keywords, 
+static IdentifierInfo &DeriveSelector(ObjcKeywordMessage *Keywords, 
                                     unsigned NumKeywords,
                                     ASTContext &Context) {
   // Derive the selector name from the keyword declarations.
@@ -1875,7 +1875,7 @@ static SelectorInfo &DeriveSelector(ObjcKeywordMessage *Keywords,
     methodName += ":";
   }
   methodName[len] = '\0';
-  return Context.getSelectorInfo(&methodName[0], &methodName[0]+len);
+  return Context.Idents.get(&methodName[0], &methodName[0]+len);
 }
 
 // This actions handles keyword message to classes.
@@ -1884,7 +1884,7 @@ Sema::ExprResult Sema::ActOnKeywordMessage(
   ObjcKeywordMessage *Keywords, unsigned NumKeywords,
   SourceLocation lbrac, SourceLocation rbrac)
 {
-  SelectorInfo &SelName = DeriveSelector(Keywords, NumKeywords, Context);
+  IdentifierInfo &SelName = DeriveSelector(Keywords, NumKeywords, Context);
   assert(receivingClassName && "missing receiver class name");
 
   return new ObjCMessageExpr(receivingClassName, SelName, Keywords, NumKeywords, 
@@ -1895,7 +1895,7 @@ Sema::ExprResult Sema::ActOnKeywordMessage(
 Sema::ExprResult Sema::ActOnKeywordMessage(
   ExprTy *receiver, ObjcKeywordMessage *Keywords, unsigned NumKeywords,
   SourceLocation lbrac, SourceLocation rbrac) {
-  SelectorInfo &SelName = DeriveSelector(Keywords, NumKeywords, Context);
+  IdentifierInfo &SelName = DeriveSelector(Keywords, NumKeywords, Context);
   assert(receiver && "missing receiver expression");
   
   Expr *RExpr = static_cast<Expr *>(receiver);
@@ -1910,7 +1910,7 @@ Sema::ExprResult Sema::ActOnUnaryMessage(
   assert(receivingClassName && "missing receiver class name");
   
   // FIXME: this should be passed in...
-  SelectorInfo &SName = Context.getSelectorInfo(
+  IdentifierInfo &SName = Context.Idents.get(
            selName->getName(), selName->getName()+strlen(selName->getName()));
   return new ObjCMessageExpr(receivingClassName, SName,
                              Context.IntTy/*FIXME*/, lbrac, rbrac);
@@ -1924,7 +1924,7 @@ Sema::ExprResult Sema::ActOnUnaryMessage(
   
   Expr *RExpr = static_cast<Expr *>(receiver);
   // FIXME: this should be passed in...
-  SelectorInfo &SName = Context.getSelectorInfo(
+  IdentifierInfo &SName = Context.Idents.get(
            selName->getName(), selName->getName()+strlen(selName->getName()));
   return new ObjCMessageExpr(RExpr, SName,
                              Context.IntTy/*FIXME*/, lbrac, rbrac);

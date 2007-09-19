@@ -104,9 +104,6 @@ void ASTContext::PrintStats() const {
     NumFunctionP*sizeof(FunctionTypeProto)+
     NumFunctionNP*sizeof(FunctionTypeNoProto)+
     NumTypeName*sizeof(TypedefType)+NumTagged*sizeof(TagType)));
-  
-  if (Selectors)
-    Selectors->PrintStats();
 }
 
 
@@ -809,11 +806,3 @@ QualType ASTContext::getCFConstantStringType() {
   
   return getTagDeclType(CFConstantStringTypeDecl);
 }
-
-SelectorInfo &ASTContext::getSelectorInfo(const char *NameStart, 
-                                          const char *NameEnd) {
-  if (!Selectors) // create the table lazily
-    Selectors = new SelectorTable();
-  return Selectors->get(NameStart, NameEnd);
-}
-

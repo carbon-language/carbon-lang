@@ -24,7 +24,6 @@
 
 namespace clang {
   class TargetInfo;
-  class SelectorTable;
   
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
@@ -39,7 +38,6 @@ class ASTContext {
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
   RecordDecl *CFConstantStringTypeDecl;
-  SelectorTable *Selectors;
 public:
   SourceManager &SourceMgr;
   TargetInfo &Target;
@@ -57,8 +55,7 @@ public:
   QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   
   ASTContext(SourceManager &SM, TargetInfo &t, IdentifierTable &idents) : 
-    CFConstantStringTypeDecl(0), Selectors(0), 
-    SourceMgr(SM), Target(t), Idents(idents) {
+    CFConstantStringTypeDecl(0), SourceMgr(SM), Target(t), Idents(idents) {
     InitBuiltinTypes();
     BuiltinInfo.InitializeBuiltins(idents, Target);
   }    
@@ -179,14 +176,6 @@ public:
   /// 'typeSize' is a real floating point or complex type.
   QualType getFloatingTypeOfSizeWithinDomain(QualType typeSize, 
                                              QualType typeDomain) const;
-
-  //===--------------------------------------------------------------------===//
-  //                            Objective-C
-  //===--------------------------------------------------------------------===//
-  
-  /// getSelectorInfo - Return a uniqued character string for the selector.
-  SelectorInfo &getSelectorInfo(const char *NameStart, const char *NameEnd);
-
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
   void operator=(const ASTContext&); // DO NOT IMPLEMENT

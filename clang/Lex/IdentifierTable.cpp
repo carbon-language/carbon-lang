@@ -209,34 +209,3 @@ void IdentifierTable::PrintStats() const {
   // Compute statistics about the memory allocated for identifiers.
   HashTable.getAllocator().PrintStats();
 }
-
-/// PrintStats - Print statistics about how well the identifier table is doing
-/// at hashing identifiers.
-void SelectorTable::PrintStats() const {
-  unsigned NumBuckets = HashTable.getNumBuckets();
-  unsigned NumIdentifiers = HashTable.getNumItems();
-  unsigned NumEmptyBuckets = NumBuckets-NumIdentifiers;
-  unsigned AverageIdentifierSize = 0;
-  unsigned MaxIdentifierLength = 0;
-  
-  // TODO: Figure out maximum times an identifier had to probe for -stats.
-  for (llvm::StringMap<SelectorInfo, llvm::BumpPtrAllocator>::const_iterator
-       I = HashTable.begin(), E = HashTable.end(); I != E; ++I) {
-    unsigned IdLen = I->getKeyLength();
-    AverageIdentifierSize += IdLen;
-    if (MaxIdentifierLength < IdLen)
-      MaxIdentifierLength = IdLen;
-  }
-  
-  fprintf(stderr, "\n*** Selector Table Stats:\n");
-  fprintf(stderr, "# Selectors:   %d\n", NumIdentifiers);
-  fprintf(stderr, "# Empty Buckets: %d\n", NumEmptyBuckets);
-  fprintf(stderr, "Hash density (#selectors per bucket): %f\n",
-          NumIdentifiers/(double)NumBuckets);
-  fprintf(stderr, "Ave selector length: %f\n",
-          (AverageIdentifierSize/(double)NumIdentifiers));
-  fprintf(stderr, "Max selector length: %d\n", MaxIdentifierLength);
-  
-  // Compute statistics about the memory allocated for identifiers.
-  HashTable.getAllocator().PrintStats();
-}
