@@ -528,6 +528,10 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
   if (!safeExitingBlock(SD, ExitCondition->getParent())) 
     return false;
 
+  // Filter loops where split condition's false branch is not empty.
+  if (ExitCondition->getParent() != Header->getTerminator()->getSuccessor(1))
+    return false;
+
   // If split condition is not safe then do not process this loop.
   // For example,
   // for(int i = 0; i < N; i++) {
