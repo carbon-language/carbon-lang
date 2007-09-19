@@ -17,6 +17,7 @@
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator"
+#include "llvm/ADT/GraphTraits.h"
 #include <iosfwd>
 
 namespace clang {
@@ -634,4 +635,41 @@ public:
 
 }  // end namespace clang
 
+//===----------------------------------------------------------------------===//
+// GraphTraits specialization to treat ASTs (Stmt*) as graphs
+//===----------------------------------------------------------------------===//
+
+namespace llvm {
+
+template <> struct GraphTraits<clang::Stmt*> {
+  typedef clang::Stmt                  NodeType;
+  typedef clang::Stmt::child_iterator  ChildIteratorType;
+  
+  static NodeType* getEntryNode(clang::Stmt* S) { return S; }
+
+  static inline ChildIteratorType child_begin(NodeType* N) {
+    return N->child_begin();
+  }
+  
+  static inline ChildIteratorType child_end(NodeType* N) {
+    return N->child_end();
+  }
+};
+
+template <> struct GraphTraits<const clang::Stmt*> {
+  typedef const clang::Stmt                  NodeType;
+  typedef clang::Stmt::const_child_iterator  ChildIteratorType;
+  
+  static NodeType* getEntryNode(const clang::Stmt* S) { return S; }
+  
+  static inline ChildIteratorType child_begin(NodeType* N) {
+    return N->child_begin();
+  }
+  
+  static inline ChildIteratorType child_end(NodeType* N) {
+    return N->child_end();
+  }
+};
+
+} // end namespace llvm
 #endif
