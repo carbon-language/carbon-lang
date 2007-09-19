@@ -21,6 +21,7 @@ class Diagnostic;
 
 ASTConsumer *CreateASTPrinter();
 ASTConsumer *CreateASTDumper();
+ASTConsumer *CreateASTViewer();
 ASTConsumer *CreateCFGDumper(bool ViewGraphs = false);
 ASTConsumer *CreateLiveVarAnalyzer();
 ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);

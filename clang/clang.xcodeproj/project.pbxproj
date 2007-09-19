@@ -16,6 +16,7 @@
 		35260CA50C7F75C000D66CE9 /* ExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */; };
 		355CF6840C90A8D400A08AA3 /* DeadStores.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 355CF6830C90A8D400A08AA3 /* DeadStores.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
+		35CFFE000CA1CBCB00E6F2BE /* StmtViz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */; };
 		84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */; };
 		84D9A88C0C1A581300AC7ABC /* AttributeList.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84D9A88B0C1A581300AC7ABC /* AttributeList.h */; };
 		DE01DA490B12ADA300AC22CE /* PPCallbacks.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE01DA480B12ADA300AC22CE /* PPCallbacks.h */; };
@@ -226,6 +227,8 @@
 		35AE0F660C9B4CA300CC1279 /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/UninitializedValues.h; sourceTree = "<group>"; };
 		35AE0F670C9B4CC200CC1279 /* DataflowSolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowSolver.h; path = Analysis/DataflowSolver.h; sourceTree = "<group>"; };
 		35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTConsumer.h; path = clang/AST/ASTConsumer.h; sourceTree = "<group>"; };
+		35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtViz.cpp; path = AST/StmtViz.cpp; sourceTree = "<group>"; };
+		35CFFE010CA1CBDD00E6F2BE /* StmtGraphTraits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StmtGraphTraits.h; path = clang/AST/StmtGraphTraits.h; sourceTree = "<group>"; };
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = Parse/AttributeList.cpp; sourceTree = "<group>"; };
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -561,6 +564,7 @@
 				DE3452800AEF1B1800DBC861 /* Stmt.h */,
 				DE345F210AFD347900DBC861 /* StmtNodes.def */,
 				DE345C190AFC658B00DBC861 /* StmtVisitor.h */,
+				35CFFE010CA1CBDD00E6F2BE /* StmtGraphTraits.h */,
 				DE3464210B03040900DBC861 /* Type.h */,
 			);
 			name = AST;
@@ -579,6 +583,7 @@
 				DE75EDF00B06880E0020CF81 /* Type.cpp */,
 				DEF2EDA60C6A4252000C4259 /* StmtDumper.cpp */,
 				DE34621C0AFEB19B00DBC861 /* StmtPrinter.cpp */,
+				35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */,
 			);
 			name = AST;
 			sourceTree = "<group>";
@@ -708,6 +713,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
 			projectDirPath = "";
@@ -792,6 +798,7 @@
 				355CF6840C90A8D400A08AA3 /* DeadStores.cpp in Sources */,
 				DEF7D9F90C9C8B1D0001F598 /* Rewriter.cpp in Sources */,
 				3513BD550C9F207900FA56C6 /* UninitializedValues.cpp in Sources */,
+				35CFFE000CA1CBCB00E6F2BE /* StmtViz.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

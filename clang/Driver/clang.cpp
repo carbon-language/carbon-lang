@@ -52,8 +52,9 @@ enum ProgActions {
   EmitLLVM,                     // Emit a .ll file.
   ParseASTPrint,                // Parse ASTs and print them.
   ParseASTDump,                 // Parse ASTs and dump them.
+  ParseASTView,                 // Parse ASTs and view them in Graphviz.
   ParseASTCheck,                // Parse ASTs and check diagnostics.
-  BuildAST,                     // Parse ASTs.
+  BuildAST,                     // Parse ASTs.  
   ParseCFGDump,                 // Parse ASTS. Build CFGs. Print CFGs.
   ParseCFGView,                 // Parse ASTS. Build CFGs. View CFGs.
   AnalysisLiveVariables,        // Print results of live-variable analysis.
@@ -89,6 +90,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run parser, build ASTs, then print ASTs"),
              clEnumValN(ParseASTDump, "parse-ast-dump",
                         "Run parser, build ASTs, then dump them"),
+             clEnumValN(ParseASTView, "parse-ast-view",
+                        "Run parser, build ASTs, and view them with GraphViz."),
              clEnumValN(ParseASTCheck, "parse-ast-check",
                         "Run parser, build ASTs, then check diagnostics"),
              clEnumValN(ParseCFGDump, "dump-cfg",
@@ -854,6 +857,11 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   }
   case ParseASTDump: {
     std::auto_ptr<ASTConsumer> C(CreateASTDumper());
+    ParseAST(PP, MainFileID, *C.get(), Stats);
+    break;
+  }
+  case ParseASTView: {
+    std::auto_ptr<ASTConsumer> C(CreateASTViewer());
     ParseAST(PP, MainFileID, *C.get(), Stats);
     break;
   }

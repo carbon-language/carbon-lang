@@ -131,6 +131,31 @@ namespace {
 
 ASTConsumer *clang::CreateASTDumper() { return new ASTDumper(); }
 
+namespace {
+  class ASTViewer : public ASTConsumer {
+    SourceManager *SM;
+  public:
+    void Initialize(ASTContext &Context, unsigned MainFileID) {
+      SM = &Context.SourceMgr;
+    }
+    
+    virtual void HandleTopLevelDecl(Decl *D) {
+      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+        PrintFunctionDeclStart(FD);
+        
+        if (FD->getBody()) {
+          fprintf(stderr, "\n");
+          FD->getBody()->viewAST();
+          fprintf(stderr, "\n");
+        }
+      }
+    }
+  };
+}
+
+ASTConsumer *clang::CreateASTViewer() { return new ASTViewer(); }
+
+
 //===----------------------------------------------------------------------===//
 // CFGVisitor & VisitCFGs - Boilerplate interface and logic to visit
 //   the CFGs for all function definitions.
