@@ -868,7 +868,7 @@ bool LoopIndexSplit::updateLoopIterationSpace(SplitInfo &SD) {
   updateLoopBounds(Op0);
   updateLoopBounds(Op1);
   // Update CFG
-  return true;
+  return false;
 }
 
 
