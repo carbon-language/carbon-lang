@@ -19,7 +19,11 @@
 #include "caml/alloc.h"
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
-#include "stdio.h"
+#include "llvm/Config/config.h" 
+#include <stdio.h>
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 
 /*===-- Modules -----------------------------------------------------------===*/
