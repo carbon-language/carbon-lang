@@ -759,14 +759,23 @@ void LICM::PromoteValuesInLoop() {
 }
 
 /// FindPromotableValuesInLoop - Check the current loop for stores to definite
-/// pointers, which are not loaded and stored through may aliases.  If these are
-/// found, create an alloca for the value, add it to the PromotedValues list,
-/// and keep track of the mapping from value to alloca.
-///
+/// pointers, which are not loaded and stored through may aliases and are safe
+/// for promotion.  If these are found, create an alloca for the value, add it 
+/// to the PromotedValues list, and keep track of the mapping from value to 
+/// alloca. 
 void LICM::FindPromotableValuesInLoop(
                    std::vector<std::pair<AllocaInst*, Value*> > &PromotedValues,
                              std::map<Value*, AllocaInst*> &ValueToAllocaMap) {
   Instruction *FnStart = CurLoop->getHeader()->getParent()->begin()->begin();
+
+  SmallVector<Instruction *, 4> LoopExits;
+  SmallVector<BasicBlock *, 4> Blocks;
+  CurLoop->getExitingBlocks(Blocks);
+  for (SmallVector<BasicBlock *, 4>::iterator BI = Blocks.begin(),
+         BE = Blocks.end(); BI != BE; ++BI) {
+    BasicBlock *BB = *BI;
+    LoopExits.push_back(BB->getTerminator());
+  }
 
   // Loop over all of the alias sets in the tracker object.
   for (AliasSetTracker::iterator I = CurAST->begin(), E = CurAST->end();
@@ -791,13 +800,36 @@ void LICM::FindPromotableValuesInLoop(
           break;
         }
 
-      // If GEP base is NULL then the calculated address  used by Store or
-      // Load instruction is invalid. Do not promote this value because
-      // it may expose load and store instruction that are covered by
-      // condition which may not yet folded.
-      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V))
+      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V)) {
+        // If GEP base is NULL then the calculated address used by Store or
+        // Load instruction is invalid. Do not promote this value because
+        // it may expose load and store instruction that are covered by
+        // condition which may not yet folded.
         if (isa<ConstantPointerNull>(GEP->getOperand(0)))
           PointerOk = false;
+
+        // If GEP is use is not dominating loop exit then promoting
+        // GEP may expose unsafe load and store instructions unconditinally.
+        if (PointerOk)
+          for(Value::use_iterator UI = V->use_begin(), UE = V->use_end();
+              UI != UE && PointerOk; ++UI) {
+            Instruction *Use = dyn_cast<Instruction>(*UI);
+            if (!Use)
+              continue;
+            for (SmallVector<Instruction *, 4>::iterator 
+                   ExitI = LoopExits.begin(), ExitE = LoopExits.end();
+                 ExitI != ExitE; ++ExitI) {
+              Instruction *Ex = *ExitI;
+              if (!DT->dominates(Use, Ex)){
+                PointerOk = false;
+                break;
+              }
+            }
+
+            if (!PointerOk)
+              break;
+          }
+      }
 
       if (PointerOk) {
         const Type *Ty = cast<PointerType>(V->getType())->getElementType();
