@@ -8939,8 +8939,9 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
   // If it is an alloca it is always safe to load from.
   if (isa<AllocaInst>(V)) return true;
 
-  // Don't try to evaluate aliases.  External weak GV can be null.
+  // If it is a global variable it is mostly safe to load from.
   if (const GlobalValue *GV = dyn_cast<GlobalVariable>(V))
+    // Don't try to evaluate aliases.  External weak GV can be null.
     return !isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage();
 
   // Otherwise, be a little bit agressive by scanning the local block where we
