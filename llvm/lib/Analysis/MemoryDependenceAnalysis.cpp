@@ -34,6 +34,7 @@ char MemoryDependenceAnalysis::ID = 0;
   
 Instruction* const MemoryDependenceAnalysis::NonLocal = (Instruction*)-3;
 Instruction* const MemoryDependenceAnalysis::None = (Instruction*)-4;
+Instruction* const MemoryDependenceAnalysis::Dirty = (Instruction*)-5;
   
 // Register this pass...
 static RegisterPass<MemoryDependenceAnalysis> X("memdep",

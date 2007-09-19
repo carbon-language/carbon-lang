@@ -59,6 +59,10 @@ class MemoryDependenceAnalysis : public FunctionPass {
     // Special marker indicating that the query has no dependency at all
     static Instruction* const None;
     
+    
+    // Special marker indicating a dirty cache entry
+    static Instruction* const Dirty;
+    
     static char ID; // Class identification, replacement for typeinfo
     MemoryDependenceAnalysis() : FunctionPass((intptr_t)&ID) {}
 
