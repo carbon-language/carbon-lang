@@ -310,10 +310,15 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
 }
 
 void Verifier::visitGlobalVariable(GlobalVariable &GV) {
-  if (GV.hasInitializer())
+  if (GV.hasInitializer()) {
     Assert1(GV.getInitializer()->getType() == GV.getType()->getElementType(),
             "Global variable initializer type does not match global "
             "variable type!", &GV);
+  } else {
+    Assert1(GV.hasExternalLinkage() || GV.hasDLLImportLinkage() ||
+            GV.hasExternalWeakLinkage(),
+            "invalid linkage type for global declaration", &GV);
+  }
 
   visitGlobalValue(GV);
 }
@@ -467,7 +472,11 @@ void Verifier::visitFunction(Function &F) {
             "Functions cannot take aggregates as arguments by value!", I);
    }
 
-  if (!F.isDeclaration()) {
+  if (F.isDeclaration()) {
+    Assert1(F.hasExternalLinkage() || F.hasDLLImportLinkage() ||
+            F.hasExternalWeakLinkage(),
+            "invalid linkage type for function declaration", &F);
+  } else {
     // Verify that this function (which has a body) is not named "llvm.*".  It
     // is not legal to define intrinsics.
     if (F.getName().size() >= 5)
