@@ -521,4 +521,6 @@ def VR128 : RegisterClass<"X86", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],128,
 }
 
 // Status flags registers.
-def CCR : RegisterClass<"X86", [i32], 32, [EFLAGS]>;
+def CCR : RegisterClass<"X86", [i32], 32, [EFLAGS]> {
+  let CopyCost = -1;  // Don't allow copying of status registers.
+}
