@@ -3211,8 +3211,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           SDOperand True, False;
           MVT::ValueType VT =  Node->getOperand(0).getValueType();
           MVT::ValueType NVT = Node->getValueType(0);
-          unsigned ShiftAmt = MVT::getSizeInBits(Node->getValueType(0))-1;
-          Tmp2 = DAG.getConstantFP((double)(1ULL << ShiftAmt), VT);
+          unsigned ShiftAmt = MVT::getSizeInBits(NVT)-1;
+          Tmp2 = DAG.getConstantFP(APFloat(APInt(MVT::getSizeInBits(VT),
+                                                 1ULL << ShiftAmt)), VT);
           Tmp3 = DAG.getSetCC(TLI.getSetCCResultTy(),
                             Node->getOperand(0), Tmp2, ISD::SETLT);
           True = DAG.getNode(ISD::FP_TO_SINT, NVT, Node->getOperand(0));
