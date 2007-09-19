@@ -1124,7 +1124,8 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
   // icmp eq/ne(null,GV) -> false/true
   if (C1->isNullValue()) {
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(C2))
-      if (!GV->hasExternalWeakLinkage()) // External weak GV can be null
+      // Don't try to evaluate aliases.  External weak GV can be null.
+      if (!isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage())
         if (pred == ICmpInst::ICMP_EQ)
           return ConstantInt::getFalse();
         else if (pred == ICmpInst::ICMP_NE)
@@ -1132,7 +1133,8 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
   // icmp eq/ne(GV,null) -> false/true
   } else if (C2->isNullValue()) {
     if (const GlobalValue *GV = dyn_cast<GlobalValue>(C1))
-      if (!GV->hasExternalWeakLinkage()) // External weak GV can be null
+      // Don't try to evaluate aliases.  External weak GV can be null.
+      if (!isa<GlobalAlias>(GV) && !GV->hasExternalWeakLinkage())
         if (pred == ICmpInst::ICMP_EQ)
           return ConstantInt::getFalse();
         else if (pred == ICmpInst::ICMP_NE)
