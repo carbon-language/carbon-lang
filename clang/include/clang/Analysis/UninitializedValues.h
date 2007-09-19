@@ -54,6 +54,9 @@ public:
     bool isTracked(const Expr* E) {
       return EMap.find(E) != EMap.end();
     }
+    
+    unsigned& operator[](const BlockVarDecl *VD) { return VMap[VD]; }
+    unsigned& operator[](const Expr* E) { return EMap[E]; }
   };
 
   //===--------------------------------------------------------------------===//

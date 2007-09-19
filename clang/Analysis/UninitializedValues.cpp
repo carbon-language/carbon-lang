@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/UninitializedValues.h"
-#include "clang/Analysis/CFGStmtVisitor.h"
+#include "clang/Analysis/CFGRecStmtDeclVisitor.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
@@ -28,39 +28,24 @@ using namespace clang;
 
 namespace {
 
-class RegisterDeclsAndExprs : public CFGStmtVisitor<RegisterDeclsAndExprs> {
+class RegisterDeclsExprs : public CFGRecStmtDeclVisitor<RegisterDeclsExprs> {  
   UninitializedValues::AnalysisDataTy& AD;
 public:
-  RegisterDeclsAndExprs(UninitializedValues::AnalysisDataTy& ad) :  AD(ad) {}
+  RegisterDeclsExprs(UninitializedValues::AnalysisDataTy& ad) :  AD(ad) {}
   
   void VisitBlockVarDecl(BlockVarDecl* VD) {
-    if (AD.VMap.find(VD) == AD.VMap.end())
-      AD.VMap[VD] = AD.NumDecls++;
-  }
-      
-  void VisitDeclChain(ScopedDecl* D) {
-    for (; D != NULL; D = D->getNextDeclarator())
-      if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(D))
-        VisitBlockVarDecl(VD);
+    if (!AD.isTracked(VD)) AD[VD] = AD.NumDecls++;
   }
   
-  void BlockStmt_VisitExpr(Expr* E) {
-    if (AD.EMap.find(E) == AD.EMap.end())
-      AD.EMap[E] = AD.NumBlockExprs++;
-      
-    Visit(E);
+  void BlockStmt_VisitExpr(Expr* E) { 
+    if (!AD.isTracked(E)) AD[E] = AD.NumBlockExprs++;
   }
-  
-  void VisitDeclRefExpr(DeclRefExpr* DR) { VisitDeclChain(DR->getDecl()); }
-  void VisitDeclStmt(DeclStmt* S) { VisitDeclChain(S->getDecl()); }
-  void VisitStmt(Stmt* S) { VisitChildren(S); }
-  void operator()(Stmt* S) { BlockStmt_Visit(S); }
 };
   
 } // end anonymous namespace
 
 void UninitializedValues::InitializeValues(const CFG& cfg) {
-  RegisterDeclsAndExprs R(this->getAnalysisData());
+  RegisterDeclsExprs R(this->getAnalysisData());
   cfg.VisitBlockStmts(R);
 }
 
