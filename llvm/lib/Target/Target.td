@@ -104,6 +104,12 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
   //
   int Alignment = alignment;
 
+  // CopyCost - This value is used to specify the cost of copying a value
+  // between two registers in this register class. The default value is one
+  // meaning it takes a single instruction to perform the copying. A negative
+  // value means copying is extremely expensive or impossible.
+  int CopyCost = 1;
+
   // MemberList - Specify which registers are in this class.  If the
   // allocation_order_* method are not specified, this also defines the order of
   // allocation used by the register allocator.

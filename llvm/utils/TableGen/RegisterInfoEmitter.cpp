@@ -384,8 +384,10 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
          << RC.getName() + "SubRegClasses" << ", "
          << RC.getName() + "SuperRegClasses" << ", "
          << RC.SpillSize/8 << ", "
-         << RC.SpillAlignment/8 << ", " << RC.getName() << ", "
-         << RC.getName() << " + " << RC.Elements.size() << ") {}\n";
+         << RC.SpillAlignment/8 << ", "
+         << RC.CopyCost << ", "
+         << RC.getName() << ", " << RC.getName() << " + " << RC.Elements.size()
+         << ") {}\n";
     }
   
     OS << "}\n";

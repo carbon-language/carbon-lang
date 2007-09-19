@@ -221,6 +221,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   Namespace = R->getValueAsString("Namespace");
   SpillSize = Size ? Size : MVT::getSizeInBits(VTs[0]);
   SpillAlignment = R->getValueAsInt("Alignment");
+  CopyCost = R->getValueAsInt("CopyCost");
   MethodBodies = R->getValueAsCode("MethodBodies");
   MethodProtos = R->getValueAsCode("MethodProtos");
 }

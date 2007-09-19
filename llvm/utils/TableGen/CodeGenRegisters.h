@@ -38,6 +38,7 @@ namespace llvm {
     std::vector<MVT::ValueType> VTs;
     unsigned SpillSize;
     unsigned SpillAlignment;
+    int CopyCost;
     std::vector<Record*> SubRegClasses;
     std::string MethodProtos, MethodBodies;
 

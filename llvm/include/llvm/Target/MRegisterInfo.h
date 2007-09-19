@@ -70,6 +70,7 @@ private:
   const sc_iterator SubRegClasses;
   const sc_iterator SuperRegClasses;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
+  const int CopyCost;
   const iterator RegsBegin, RegsEnd;
 public:
   TargetRegisterClass(unsigned id,
@@ -78,10 +79,11 @@ public:
                       const TargetRegisterClass * const *supcs,
                       const TargetRegisterClass * const *subregcs,
                       const TargetRegisterClass * const *superregcs,
-                      unsigned RS, unsigned Al, iterator RB, iterator RE)
+                      unsigned RS, unsigned Al, int CC,
+                      iterator RB, iterator RE)
     : ID(id), VTs(vts), SubClasses(subcs), SuperClasses(supcs),
     SubRegClasses(subregcs), SuperRegClasses(superregcs),
-    RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
+    RegSize(RS), Alignment(Al), CopyCost(CC), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
   
   /// getID() - Return the register class ID number.
@@ -258,6 +260,10 @@ public:
   /// getAlignment - Return the minimum required alignment for a register of
   /// this class.
   unsigned getAlignment() const { return Alignment; }
+
+  /// getCopyCost - Return the cost of copying a value between two registers in
+  /// this class.
+  int getCopyCost() const { return CopyCost; }
 };
 
 
