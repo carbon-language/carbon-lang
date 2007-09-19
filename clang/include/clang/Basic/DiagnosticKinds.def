@@ -406,6 +406,8 @@ DIAG(err_objc_protocol_required, ERROR,
      "@required may be specified in protocols only")
 DIAG(err_objc_protocol_optional, ERROR,
      "@optional may be specified in protocols only")
+DIAG(err_missing_catch_finally, ERROR,
+     "@try statment without a @catch and @finally clause")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis

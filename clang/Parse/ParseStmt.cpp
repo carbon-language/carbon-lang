@@ -75,22 +75,35 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   // Cases in this switch statement should fall through if the parser expects
   // the token to end in a semicolon (in which case SemiError should be set),
   // or they directly 'return;' if not.
-  switch (Tok.getKind()) {
+  tok::TokenKind Kind  = Tok.getKind();
+  SourceLocation AtLoc;
+  switch (Kind) {
   case tok::identifier:             // C99 6.8.1: labeled-statement
     // identifier ':' statement
     // declaration                  (if !OnlyStatement)
     // expression[opt] ';'
     return ParseIdentifierStatement(OnlyStatement);
 
+  case tok::at: // May be a @try or @throw statement
+    {
+      AtLoc = ConsumeToken();  // consume @
+      if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_try)
+        return ParseObjCTryStmt(AtLoc);
+      else if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_throw)
+        return ParseObjCThrowStmt(AtLoc);
+    }
+    // Fall thru.
+
   default:
-    if (!OnlyStatement && isDeclarationSpecifier()) {
+    if (Kind != tok::at && !OnlyStatement && isDeclarationSpecifier()) {
       return Actions.ActOnDeclStmt(ParseDeclaration(Declarator::BlockContext));
     } else if (Tok.getKind() == tok::r_brace) {
       Diag(Tok, diag::err_expected_statement);
       return true;
     } else {
       // expression[opt] ';'
-      ExprResult Res = ParseExpression();
+      ExprResult Res = (Kind == tok::at) ? ParseExpressionWithLeadingAt(AtLoc) 
+				         : ParseExpression();
       if (Res.isInvalid) {
         // If the expression is invalid, skip ahead to the next semicolon.  Not
         // doing this opens us up to the possibility of infinite loops if

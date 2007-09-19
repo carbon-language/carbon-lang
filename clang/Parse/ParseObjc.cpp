@@ -916,6 +916,77 @@ Parser::DeclTy *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
     Diag(Tok, diag::err_expected_semi_after, "@dynamic");
   return 0;
 }
+ 
+///  objc-throw-statement:
+///    throw expression[opt];
+///
+Parser::DeclTy *Parser::ParseObjCThrowStmt(SourceLocation &atLoc) {
+  ConsumeToken(); // consume throw
+  if (Tok.getKind() != tok::semi) {
+    ExprResult Res = ParseAssignmentExpression();
+    if (Res.isInvalid) {
+      SkipUntil(tok::semi);
+      return 0;
+    }
+  }
+  return 0;
+}
+
+///  objc-try-catch-statement:
+///    @try compound-statement objc-catch-list[opt]
+///    @try compound-statement objc-catch-list[opt] @finally compound-statement
+///
+///  objc-catch-list:
+///    @catch ( parameter-declaration ) compound-statement
+///    objc-catch-list @catch ( catch-parameter-declaration ) compound-statement
+///  catch-parameter-declaration:
+///     parameter-declaration
+///     '...' [OBJC2]
+///
+Parser::DeclTy *Parser::ParseObjCTryStmt(SourceLocation &atLoc) {
+  bool catch_or_finally_seen = false;
+  ConsumeToken(); // consume try
+  if (Tok.getKind() != tok::l_brace) {
+    Diag (Tok, diag::err_expected_lbrace);
+    return 0;
+  }
+  StmtResult TryBody = ParseCompoundStatementBody();
+  while (Tok.getKind() == tok::at) {
+    ConsumeToken();
+    if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_catch) {
+      SourceLocation catchLoc = ConsumeToken(); // consume catch
+      if (Tok.getKind() == tok::l_paren) {
+        ConsumeParen();
+        if (Tok.getKind() != tok::ellipsis) {
+          DeclSpec DS;
+          ParseDeclarationSpecifiers(DS);
+          // Parse the parameter-declaration. 
+          // FIXME: BlockContext may not be the right context!
+          Declarator ParmDecl(DS, Declarator::BlockContext);
+          ParseDeclarator(ParmDecl);
+        }
+        else
+          ConsumeToken(); // consume '...'
+        ConsumeParen();
+        StmtResult CatchMody = ParseCompoundStatementBody();
+      }
+      else {
+        Diag(catchLoc, diag::err_expected_lparen_after, "@catch clause");
+        return 0;
+      }
+      catch_or_finally_seen = true;
+    }
+    else if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_finally) {
+       ConsumeToken(); // consume finally
+      StmtResult FinallyBody = ParseCompoundStatementBody();
+      catch_or_finally_seen = true;
+      break;
+    }
+  }
+  if (!catch_or_finally_seen)
+    Diag(atLoc, diag::err_missing_catch_finally);
+  return 0;
+}
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
 ///
@@ -954,8 +1025,7 @@ void Parser::ParseObjCClassMethodDefinition() {
   StmtResult FnBody = ParseCompoundStatementBody();
 }
 
-Parser::ExprResult Parser::ParseObjCExpression() {
-  SourceLocation AtLoc = ConsumeToken(); // the "@"
+Parser::ExprResult Parser::ParseObjCExpression(SourceLocation &AtLoc) {
 
   switch (Tok.getKind()) {
     case tok::string_literal:    // primary-expression: string-literal

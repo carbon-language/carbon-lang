@@ -172,6 +172,18 @@ Parser::ExprResult Parser::ParseExpression() {
   return ParseRHSOfBinaryExpression(LHS, prec::Comma);
 }
 
+/// This routine is called when the '@' is seen and consumed. 
+/// Current token is an Identifier and is not a 'try'. This
+/// routine is necessary to disambiguate @try-statement from
+/// ,for example, @encode-expression.
+///
+Parser::ExprResult Parser::ParseExpressionWithLeadingAt(SourceLocation &AtLoc) {
+  ExprResult LHS = ParseObjCExpression(AtLoc);
+  if (LHS.isInvalid) return LHS;
+ 
+  return ParseRHSOfBinaryExpression(LHS, prec::Comma);
+}
+
 /// ParseAssignmentExpression - Parse an expr that doesn't include commas.
 ///
 Parser::ExprResult Parser::ParseAssignmentExpression() {
@@ -589,7 +601,10 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_static_cast:
     return ParseCXXCasts();
   case tok::at:
-    return ParseObjCExpression();
+    {
+      SourceLocation AtLoc = ConsumeToken();
+      return ParseObjCExpression(AtLoc);
+    }
   case tok::l_square:
     return ParseObjCMessageExpression ();
   default:
