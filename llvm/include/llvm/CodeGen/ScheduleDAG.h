@@ -22,6 +22,7 @@
 
 namespace llvm {
   struct InstrStage;
+  struct SUnit;
   class MachineConstantPool;
   class MachineModuleInfo;
   class MachineInstr;
@@ -74,7 +75,18 @@ namespace llvm {
     virtual void EmitNoop() {
     }
   };
-  
+
+  /// SDep - Scheduling dependency. It keeps track of dependent nodes,
+  /// cost of the depdenency, etc.
+  struct SDep {
+    SUnit    *Dep;      // Dependent - either a predecessor or a successor.
+    bool      isCtrl;   // True iff it's a control dependency.
+    unsigned  PhyReg;   // If non-zero, this dep is a phy register dependency.
+    int       Cost;     // Cost of the dependency.
+    SDep(SUnit *d, bool c, unsigned r, int t)
+      : Dep(d), isCtrl(c), PhyReg(r), Cost(t) {}
+  };
+
   /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
   /// a group of nodes flagged together.
   struct SUnit {
@@ -83,15 +95,13 @@ namespace llvm {
     
     // Preds/Succs - The SUnits before/after us in the graph.  The boolean value
     // is true if the edge is a token chain edge, false if it is a value edge. 
-    SmallVector<std::pair<SUnit*,bool>, 4> Preds;  // All sunit predecessors.
-    SmallVector<std::pair<SUnit*,bool>, 4> Succs;  // All sunit successors.
+    SmallVector<SDep, 4> Preds;  // All sunit predecessors.
+    SmallVector<SDep, 4> Succs;  // All sunit successors.
 
-    typedef SmallVector<std::pair<SUnit*,bool>, 4>::iterator pred_iterator;
-    typedef SmallVector<std::pair<SUnit*,bool>, 4>::iterator succ_iterator;
-    typedef SmallVector<std::pair<SUnit*,bool>, 4>::const_iterator 
-      const_pred_iterator;
-    typedef SmallVector<std::pair<SUnit*,bool>, 4>::const_iterator 
-      const_succ_iterator;
+    typedef SmallVector<SDep, 4>::iterator pred_iterator;
+    typedef SmallVector<SDep, 4>::iterator succ_iterator;
+    typedef SmallVector<SDep, 4>::const_iterator const_pred_iterator;
+    typedef SmallVector<SDep, 4>::const_iterator const_succ_iterator;
     
     short NumPreds;                     // # of preds.
     short NumSuccs;                     // # of sucss.
@@ -121,21 +131,21 @@ namespace llvm {
     
     /// addPred - This adds the specified node as a pred of the current node if
     /// not already.  This returns true if this is a new pred.
-    bool addPred(SUnit *N, bool isChain) {
+    bool addPred(SUnit *N, bool isCtrl, unsigned PhyReg = 0, int Cost = 1) {
       for (unsigned i = 0, e = Preds.size(); i != e; ++i)
-        if (Preds[i].first == N && Preds[i].second == isChain)
+        if (Preds[i].Dep == N && Preds[i].isCtrl == isCtrl)
           return false;
-      Preds.push_back(std::make_pair(N, isChain));
+      Preds.push_back(SDep(N, isCtrl, PhyReg, Cost));
       return true;
     }
 
     /// addSucc - This adds the specified node as a succ of the current node if
     /// not already.  This returns true if this is a new succ.
-    bool addSucc(SUnit *N, bool isChain) {
+    bool addSucc(SUnit *N, bool isCtrl, unsigned PhyReg = 0, int Cost = 1) {
       for (unsigned i = 0, e = Succs.size(); i != e; ++i)
-        if (Succs[i].first == N && Succs[i].second == isChain)
+        if (Succs[i].Dep == N && Succs[i].isCtrl == isCtrl)
           return false;
-      Succs.push_back(std::make_pair(N, isChain));
+      Succs.push_back(SDep(N, isCtrl, PhyReg, Cost));
       return true;
     }
     
@@ -340,7 +350,7 @@ namespace llvm {
     }
 
     pointer operator*() const {
-      return Node->Preds[Operand].first;
+      return Node->Preds[Operand].Dep;
     }
     pointer operator->() const { return operator*(); }
 
@@ -359,7 +369,7 @@ namespace llvm {
 
     unsigned getOperand() const { return Operand; }
     const SUnit *getNode() const { return Node; }
-    bool isChain() const { return Node->Preds[Operand].second; }
+    bool isCtrlDep() const { return Node->Preds[Operand].isCtrl; }
   };
 
   template <> struct GraphTraits<SUnit*> {

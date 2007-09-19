@@ -193,7 +193,7 @@ void ScheduleDAG::CalculateDepths() {
       SU->Depth = Depth;
       for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
            I != E; ++I)
-        WorkList.push_back(std::make_pair(I->first, Depth+1));
+        WorkList.push_back(std::make_pair(I->Dep, Depth+1));
     }
   }
 }
@@ -211,7 +211,7 @@ void ScheduleDAG::CalculateHeights() {
       SU->Height = Height;
       for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
            I != E; ++I)
-        WorkList.push_back(std::make_pair(I->first, Height+1));
+        WorkList.push_back(std::make_pair(I->Dep, Height+1));
     }
   }
 }
@@ -865,22 +865,22 @@ void SUnit::dumpAll(const SelectionDAG *G) const {
     cerr << "  Predecessors:\n";
     for (SUnit::const_succ_iterator I = Preds.begin(), E = Preds.end();
          I != E; ++I) {
-      if (I->second)
+      if (I->isCtrl)
         cerr << "   ch  #";
       else
         cerr << "   val #";
-      cerr << I->first << " - SU(" << I->first->NodeNum << ")\n";
+      cerr << I->Dep << " - SU(" << I->Dep->NodeNum << ")\n";
     }
   }
   if (Succs.size() != 0) {
     cerr << "  Successors:\n";
     for (SUnit::const_succ_iterator I = Succs.begin(), E = Succs.end();
          I != E; ++I) {
-      if (I->second)
+      if (I->isCtrl)
         cerr << "   ch  #";
       else
         cerr << "   val #";
-      cerr << I->first << " - SU(" << I->first->NodeNum << ")\n";
+      cerr << I->Dep << " - SU(" << I->Dep->NodeNum << ")\n";
     }
   }
   cerr << "\n";

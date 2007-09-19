@@ -157,8 +157,8 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
 
     for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
-      if (!I->second)
-        OperandSeen.insert(I->first);
+      if (!I->isCtrl)
+        OperandSeen.insert(I->Dep);
     }
   }
 }
@@ -214,7 +214,7 @@ void ScheduleDAGRRList::ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle) {
   // Bottom up: release predecessors
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I)
-    ReleasePred(I->first, I->second, CurCycle);
+    ReleasePred(I->Dep, I->isCtrl, CurCycle);
   SU->isScheduled = true;
 }
 
@@ -325,7 +325,7 @@ void ScheduleDAGRRList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   // Top down: release successors
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
-    ReleaseSucc(I->first, I->second, CurCycle);
+    ReleaseSucc(I->Dep, I->isCtrl, CurCycle);
   SU->isScheduled = true;
 }
 
@@ -584,11 +584,11 @@ static unsigned closestSucc(const SUnit *SU) {
   unsigned MaxCycle = 0;
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    unsigned Cycle = I->first->Cycle;
+    unsigned Cycle = I->Dep->Cycle;
     // If there are bunch of CopyToRegs stacked up, they should be considered
     // to be at the same position.
-    if (I->first->Node->getOpcode() == ISD::CopyToReg)
-      Cycle = closestSucc(I->first)+1;
+    if (I->Dep->Node->getOpcode() == ISD::CopyToReg)
+      Cycle = closestSucc(I->Dep)+1;
     if (Cycle > MaxCycle)
       MaxCycle = Cycle;
   }
@@ -602,14 +602,14 @@ static unsigned calcMaxScratches(const SUnit *SU) {
   unsigned Scratches = 0;
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
-    if (I->second) continue;  // ignore chain preds
-    if (I->first->Node->getOpcode() != ISD::CopyFromReg)
+    if (I->isCtrl) continue;  // ignore chain preds
+    if (I->Dep->Node->getOpcode() != ISD::CopyFromReg)
       Scratches++;
   }
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    if (I->second) continue;  // ignore chain succs
-    if (I->first->Node->getOpcode() != ISD::CopyToReg)
+    if (I->isCtrl) continue;  // ignore chain succs
+    if (I->Dep->Node->getOpcode() != ISD::CopyToReg)
       Scratches += 10;
   }
   return Scratches;
@@ -691,7 +691,7 @@ static void isReachable(SUnit *SU, SUnit *TargetSU,
 
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end(); I != E;
        ++I)
-    isReachable(I->first, TargetSU, Visited, Reached);
+    isReachable(I->Dep, TargetSU, Visited, Reached);
 }
 
 static bool isReachable(SUnit *SU, SUnit *TargetSU) {
@@ -744,8 +744,8 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
         if (!DUSU) continue;
         for (SUnit::succ_iterator I = DUSU->Succs.begin(),E = DUSU->Succs.end();
              I != E; ++I) {
-          if (I->second) continue;
-          SUnit *SuccSU = I->first;
+          if (I->isCtrl) continue;
+          SUnit *SuccSU = I->Dep;
           if (SuccSU != SU &&
               (!canClobber(SuccSU, DUSU) ||
                (!SU->isCommutable && SuccSU->isCommutable))){
@@ -776,13 +776,13 @@ CalcNodeSethiUllmanNumber(const SUnit *SU) {
   unsigned Extra = 0;
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
-    if (I->second) continue;  // ignore chain preds
-    SUnit *PredSU = I->first;
+    if (I->isCtrl) continue;  // ignore chain preds
+    SUnit *PredSU = I->Dep;
     unsigned PredSethiUllman = CalcNodeSethiUllmanNumber(PredSU);
     if (PredSethiUllman > SethiUllmanNumber) {
       SethiUllmanNumber = PredSethiUllman;
       Extra = 0;
-    } else if (PredSethiUllman == SethiUllmanNumber && !I->second)
+    } else if (PredSethiUllman == SethiUllmanNumber && !I->isCtrl)
       Extra++;
   }
 
@@ -808,10 +808,10 @@ static unsigned SumOfUnscheduledPredsOfSuccs(const SUnit *SU) {
   unsigned Sum = 0;
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
-    SUnit *SuccSU = I->first;
+    SUnit *SuccSU = I->Dep;
     for (SUnit::const_pred_iterator II = SuccSU->Preds.begin(),
          EE = SuccSU->Preds.end(); II != EE; ++II) {
-      SUnit *PredSU = II->first;
+      SUnit *PredSU = II->Dep;
       if (!PredSU->isScheduled)
         Sum++;
     }
@@ -899,13 +899,13 @@ CalcNodeSethiUllmanNumber(const SUnit *SU) {
     int Extra = 0;
     for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
          I != E; ++I) {
-      if (I->second) continue;  // ignore chain preds
-      SUnit *PredSU = I->first;
+      if (I->isCtrl) continue;  // ignore chain preds
+      SUnit *PredSU = I->Dep;
       unsigned PredSethiUllman = CalcNodeSethiUllmanNumber(PredSU);
       if (PredSethiUllman > SethiUllmanNumber) {
         SethiUllmanNumber = PredSethiUllman;
         Extra = 0;
-      } else if (PredSethiUllman == SethiUllmanNumber && !I->second)
+      } else if (PredSethiUllman == SethiUllmanNumber && !I->isCtrl)
         Extra++;
     }
 

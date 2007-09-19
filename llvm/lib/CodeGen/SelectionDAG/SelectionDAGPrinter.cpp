@@ -264,7 +264,7 @@ namespace llvm {
     /// edge, override this method.
     template<typename EdgeIter>
     static std::string getEdgeAttributes(const void *Node, EdgeIter EI) {
-      if (EI.isChain())
+      if (EI.isCtrlDep())
         return "color=blue,style=dashed";
       return "";
     }

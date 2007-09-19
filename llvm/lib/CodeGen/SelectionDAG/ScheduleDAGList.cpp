@@ -134,9 +134,9 @@ void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
       // If this is a token edge, we don't need to wait for the latency of the
       // preceeding instruction (e.g. a long-latency load) unless there is also
       // some other data dependence.
-      SUnit &Pred = *I->first;
+      SUnit &Pred = *I->Dep;
       unsigned PredDoneCycle = Pred.Cycle;
-      if (!I->second)
+      if (!I->isCtrl)
         PredDoneCycle += Pred.Latency;
       else if (Pred.Latency)
         PredDoneCycle += 1;
@@ -161,7 +161,7 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
   // Bottom up: release successors.
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
-    ReleaseSucc(I->first, I->second);
+    ReleaseSucc(I->Dep, I->isCtrl);
 }
 
 /// ListScheduleTopDown - The main loop of list scheduling for top-down
@@ -436,7 +436,7 @@ int LatencyPriorityQueue::CalcLatency(const SUnit &SU) {
   int MaxSuccLatency = 0;
   for (SUnit::const_succ_iterator I = SU.Succs.begin(), E = SU.Succs.end();
        I != E; ++I)
-    MaxSuccLatency = std::max(MaxSuccLatency, CalcLatency(*I->first));
+    MaxSuccLatency = std::max(MaxSuccLatency, CalcLatency(*I->Dep));
 
   return Latency = MaxSuccLatency + SU.Latency;
 }
@@ -456,7 +456,7 @@ SUnit *LatencyPriorityQueue::getSingleUnscheduledPred(SUnit *SU) {
   SUnit *OnlyAvailablePred = 0;
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
-    SUnit &Pred = *I->first;
+    SUnit &Pred = *I->Dep;
     if (!Pred.isScheduled) {
       // We found an available, but not scheduled, predecessor.  If it's the
       // only one we have found, keep track of it... otherwise give up.
@@ -475,7 +475,7 @@ void LatencyPriorityQueue::push_impl(SUnit *SU) {
   unsigned NumNodesBlocking = 0;
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
-    if (getSingleUnscheduledPred(I->first) == SU)
+    if (getSingleUnscheduledPred(I->Dep) == SU)
       ++NumNodesBlocking;
   NumNodesSolelyBlocking[SU->NodeNum] = NumNodesBlocking;
   
@@ -490,7 +490,7 @@ void LatencyPriorityQueue::push_impl(SUnit *SU) {
 void LatencyPriorityQueue::ScheduledNode(SUnit *SU) {
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I)
-    AdjustPriorityOfUnscheduledPreds(I->first);
+    AdjustPriorityOfUnscheduledPreds(I->Dep);
 }
 
 /// AdjustPriorityOfUnscheduledPreds - One of the predecessors of SU was just
