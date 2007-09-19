@@ -542,6 +542,11 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
   if (!safeSplitCondition(SD))
     return false;
 
+  BasicBlock *Latch = L->getLoopLatch();
+  BranchInst *BR = dyn_cast<BranchInst>(Latch->getTerminator());
+  if (!BR)
+    return false;
+
   // Update CFG.
 
   // Replace index variable with split value in loop body. Loop body is executed
@@ -549,11 +554,7 @@ bool LoopIndexSplit::processOneIterationLoop(SplitInfo &SD) {
   IndVar->replaceAllUsesWith(SD.SplitValue);
 
   // Remove Latch to Header edge.
-  BasicBlock *Latch = L->getLoopLatch();
   BasicBlock *LatchSucc = NULL;
-  BranchInst *BR = dyn_cast<BranchInst>(Latch->getTerminator());
-  if (!BR)
-    return false;
   Header->removePredecessor(Latch);
   for (succ_iterator SI = succ_begin(Latch), E = succ_end(Latch);
        SI != E; ++SI) {
