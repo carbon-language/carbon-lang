@@ -101,7 +101,11 @@ public:
     // Loop over the graph, printing it out...
     for (node_iterator I = GTraits::nodes_begin(G), E = GTraits::nodes_end(G);
          I != E; ++I)
-      writeNode(&*I);
+      writeNode(*I);
+  }
+  
+  void writeNode(NodeType& Node) {
+    writeNode(&Node);
   }
 
   void writeNode(NodeType *const *Node) {
