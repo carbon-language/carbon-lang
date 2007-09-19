@@ -356,11 +356,7 @@ void LoopIndexSplit::findLoopConditionals() {
     return;
 
   // FIXME 
-  if (CI->getPredicate() == ICmpInst::ICMP_SGT
-      || CI->getPredicate() == ICmpInst::ICMP_UGT
-      || CI->getPredicate() == ICmpInst::ICMP_SGE
-      || CI->getPredicate() == ICmpInst::ICMP_UGE
-      || CI->getPredicate() == ICmpInst::ICMP_EQ
+  if (CI->getPredicate() == ICmpInst::ICMP_EQ
       || CI->getPredicate() == ICmpInst::ICMP_NE)
     return;
 
@@ -1014,6 +1010,12 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
   // bound for second loop.
   Value *AEV = SD.SplitValue;
   Value *BSV = SD.SplitValue;
+
+  if (ExitCondition->getPredicate() == ICmpInst::ICMP_SGT
+      || ExitCondition->getPredicate() == ICmpInst::ICMP_UGT
+      || ExitCondition->getPredicate() == ICmpInst::ICMP_SGE
+      || ExitCondition->getPredicate() == ICmpInst::ICMP_UGE)
+    ExitCondition->swapOperands();
 
   switch (ExitCondition->getPredicate()) {
   case ICmpInst::ICMP_SGT:
