@@ -22,7 +22,6 @@
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
-#include "llvm/Config/config.h" 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallSet.h"
 using namespace clang;
