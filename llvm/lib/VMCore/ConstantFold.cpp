@@ -213,7 +213,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     return 0;                   // Other pointer types cannot be casted
   case Instruction::UIToFP:
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      double d = CI->getValue().signedRoundToDouble();
+      double d = CI->getValue().roundToDouble();
       if (DestTy==Type::FloatTy) 
         return ConstantFP::get(DestTy, APFloat((float)d));
       else if (DestTy==Type::DoubleTy)
