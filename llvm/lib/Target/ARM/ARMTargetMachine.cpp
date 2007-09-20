@@ -25,8 +25,8 @@ using namespace llvm;
 
 static cl::opt<bool> DisableLdStOpti("disable-arm-loadstore-opti", cl::Hidden,
                               cl::desc("Disable load store optimization pass"));
-static cl::opt<bool> EnableIfConversion("enable-arm-if-conversion", cl::Hidden,
-                              cl::desc("Enable if-conversion pass"));
+static cl::opt<bool> DisableIfConversion("disable-arm-if-conversion",cl::Hidden,
+                              cl::desc("Disable if-conversion pass"));
 
 namespace {
   // Register the target.
@@ -127,7 +127,7 @@ bool ARMTargetMachine::addPreEmitPass(FunctionPassManager &PM, bool Fast) {
   if (!Fast && !DisableLdStOpti && !Subtarget.isThumb())
     PM.add(createARMLoadStoreOptimizationPass());
   
-  if (!Fast && EnableIfConversion && !Subtarget.isThumb())
+  if (!Fast && !DisableIfConversion && !Subtarget.isThumb())
     PM.add(createIfConverterPass());
 
   PM.add(createARMConstantIslandPass());
