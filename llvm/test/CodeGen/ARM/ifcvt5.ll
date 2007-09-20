@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep blge | count 1
+; RUN: llvm-as < %s | llc -march=arm
+; RUN: llvm-as < %s | llc -march=arm | grep blge | count 1
 
 @x = external global i32*		; <i32**> [#uses=1]
 

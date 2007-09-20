@@ -1,13 +1,13 @@
 ; RUN: llvm-as < %s | \
-; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion
+; RUN:   llc -march=arm -mtriple=arm-apple-darwin
 ; RUN: llvm-as < %s | \
-; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion | \
+; RUN:   llc -march=arm -mtriple=arm-apple-darwin | \
 ; RUN:   grep cmpeq | count 1
 ; RUN: llvm-as < %s | \
-; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion | \
+; RUN:   llc -march=arm -mtriple=arm-apple-darwin | \
 ; RUN:   grep moveq | count 1
 ; RUN: llvm-as < %s | \
-; RUN:   llc -march=arm -mtriple=arm-apple-darwin -enable-arm-if-conversion | \
+; RUN:   llc -march=arm -mtriple=arm-apple-darwin | \
 ; RUN:   grep ldmeq | count 1
 ; FIXME: Need post-ifcvt branch folding to get rid of the extra br at end of BB1.
 

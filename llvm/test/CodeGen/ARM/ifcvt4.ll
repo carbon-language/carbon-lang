@@ -1,6 +1,6 @@
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep subgt | count 1
-; RUN: llvm-as < %s | llc -march=arm -enable-arm-if-conversion | grep suble | count 1
+; RUN: llvm-as < %s | llc -march=arm
+; RUN: llvm-as < %s | llc -march=arm | grep subgt | count 1
+; RUN: llvm-as < %s | llc -march=arm | grep suble | count 1
 ; FIXME: Check for # of unconditional branch after adding branch folding post ifcvt.
 
 define i32 @t(i32 %a, i32 %b) {
