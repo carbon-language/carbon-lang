@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_CFG_VARDECL_VISITOR_H
 #define LLVM_CLANG_ANALYSIS_CFG_VARDECL_VISITOR_H
 
-#include "clang/Analysis/CFGStmtVisitor.h"
+#include "clang/Analysis/Visitors/CFGStmtVisitor.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/Stmt.h"
 #include "clang/AST/CFG.h"

@@ -17,7 +17,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_DATAFLOW_STMTVISITOR_H
 #define LLVM_CLANG_ANALYSIS_DATAFLOW_STMTVISITOR_H
 
-#include "clang/Analysis/CFGStmtVisitor.h"
+#include "clang/Analysis/Visitors/CFGStmtVisitor.h"
 
 namespace clang {
 

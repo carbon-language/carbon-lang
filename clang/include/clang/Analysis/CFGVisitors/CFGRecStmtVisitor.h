@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_CFG_REC_STMT_VISITOR_H
 #define LLVM_CLANG_ANALYSIS_CFG_REC_STMT_VISITOR_H
 
-#include "clang/Analysis/CFGStmtVisitor.h"
+#include "clang/Analysis/Visitors/CFGStmtVisitor.h"
 
 namespace clang {
 template <typename ImplClass>

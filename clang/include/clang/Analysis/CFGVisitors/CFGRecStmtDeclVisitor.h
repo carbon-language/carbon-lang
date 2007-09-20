@@ -17,7 +17,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_CFG_REC_STMT_DECL_VISITOR_H
 #define LLVM_CLANG_ANALYSIS_CFG_REC_STMT_DECL_VISITOR_H
 
-#include "clang/Analysis/CFGRecStmtVisitor.h"
+#include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/AST/Decl.h"
 
 #define DISPATCH_CASE(CASE,CLASS) \
