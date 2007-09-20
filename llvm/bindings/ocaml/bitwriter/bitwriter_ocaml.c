@@ -25,7 +25,6 @@
 
 /* Llvm.llmodule -> string -> bool */
 CAMLprim value llvm_write_bitcode_file(value M, value Path) {
-  CAMLparam1(Path);
   int res = LLVMWriteBitcodeToFile((LLVMModuleRef) M, String_val(Path));
-  CAMLreturn(Val_bool(res == 0));
+  return Val_bool(res == 0);
 }

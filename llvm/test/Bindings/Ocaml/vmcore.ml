@@ -155,14 +155,17 @@ let test_constants () =
   (* RUN: grep {Const04.*"cruel\\\\00world"} < %t.ll
    *)
   group "string";
-  let c = make_string_constant "cruel\x00world" false in
+  let c = make_string_constant "cruel\000world" false in
   ignore (define_global "Const04" c m);
   insist ((make_array_type i8_type 11) = type_of c);
 
   (* RUN: grep {Const05.*"hi\\\\00again\\\\00"} < %t.ll
    *)
   group "string w/ null";
-  let c = make_string_constant "hi\x00again" true in
+  let c = make_string_constant "hi\000again" true in
+  prerr_string "====> ";
+  prerr_int (array_length (type_of c));
+  prerr_endline " <====";
   ignore (define_global "Const05" c m);
   insist ((make_array_type i8_type 9) = type_of c);
 

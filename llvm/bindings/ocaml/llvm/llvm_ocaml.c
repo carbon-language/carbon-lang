@@ -134,7 +134,7 @@ CAMLprim value llvm_param_types(value FunTy) {
   
   /* copy into an ocaml array */
   unsigned i;
-  value ParamTys = caml_alloc(Count, 0);
+  value ParamTys = alloc(Count, 0);
   
   LLVMGetFunctionParamTypes((LLVMTypeRef) FunTy, FunTys);
   for (i = 0; i != Count; ++i)
@@ -159,7 +159,7 @@ CAMLprim value llvm_element_types(value StructTy) {
   
   /* copy into an ocaml array */
   unsigned i;
-  value ElementTys = caml_alloc(Count, 0);
+  value ElementTys = alloc(Count, 0);
   
   LLVMGetStructElementTypes((LLVMTypeRef) StructTy, Tys);
   for (i = 0; i != Count; ++i)
@@ -225,7 +225,7 @@ CAMLprim value llvm_type_of(value Val) {
 
 /* llvalue -> string */
 CAMLprim value llvm_value_name(value Val) {
-  return caml_copy_string(LLVMGetValueName((LLVMValueRef) Val));
+  return copy_string(LLVMGetValueName((LLVMValueRef) Val));
 }
 
 /* string -> llvalue -> unit */
@@ -296,7 +296,7 @@ CAMLprim value llvm_make_real_constant(value RealTy, value N) {
 /* string -> bool -> llvalue */
 CAMLprim value llvm_make_string_constant(value Str, value NullTerminate) {
   return (value) LLVMGetStringConstant(String_val(Str),
-                                       caml_string_length(Str),
+                                       string_length(Str),
                                        Bool_val(NullTerminate) == 0);
 }
 
@@ -340,7 +340,7 @@ CAMLprim value llvm_set_linkage(value Linkage, value Global) {
 
 /* llvalue -> string */
 CAMLprim value llvm_section(value Global) {
-  return caml_copy_string(LLVMGetSection((LLVMValueRef) Global));
+  return copy_string(LLVMGetSection((LLVMValueRef) Global));
 }
 
 /* string -> llvalue -> unit */
