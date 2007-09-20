@@ -47,7 +47,7 @@ namespace llvm {
   const fltSemantics APFloat::IEEEdouble = { 1023, -1022, 53, true };
   const fltSemantics APFloat::IEEEquad = { 16383, -16382, 113, true };
   const fltSemantics APFloat::x87DoubleExtended = { 16383, -16382, 64, false };
-  const fltSemantics APFloat::Bogus = { 0, 0, 0, true };
+  const fltSemantics APFloat::Bogus = { 0, 0, 0, false };
 }
 
 /* Put a bunch of private, handy routines in an anonymous namespace.  */
@@ -339,8 +339,7 @@ APFloat::~APFloat()
 unsigned int
 APFloat::partCount() const
 {
-  return partCountForBits(semantics->precision + 
-                          semantics->implicitIntegerBit ? 1 : 0);
+  return partCountForBits(semantics->precision + 1);
 }
 
 unsigned int
@@ -1324,7 +1323,11 @@ APFloat::convert(const fltSemantics &toSemantics,
   newPartCount = partCountForBits(toSemantics.precision + 1);
 
   /* If our new form is wider, re-allocate our bit pattern into wider
-     storage.  */
+     storage.
+     If we're narrowing from multiple words to 1 words, copy to the single
+     word.  If we are losing information by doing this, we would have to
+     worry about rounding; right now the only case is f80 -> shorter
+     conversion, and we are keeping all 64 significant bits, so it's OK. */
   if(newPartCount > partCount()) {
     integerPart *newParts;
 
@@ -1333,6 +1336,13 @@ APFloat::convert(const fltSemantics &toSemantics,
     APInt::tcAssign(newParts, significandParts(), partCount());
     freeSignificand();
     significand.parts = newParts;
+  } else if (newPartCount==1 && newPartCount < partCount()) {
+    integerPart newPart;
+
+    APInt::tcSet(&newPart, 0, newPartCount);
+    APInt::tcAssign(&newPart, significandParts(), partCount());
+    freeSignificand();
+    significand.part = newPart;
   }
 
   if(category == fcNormal) {
@@ -1588,22 +1598,22 @@ APFloat::getHashValue() const {
 // Conversion from APFloat to/from host float/double.  It may eventually be
 // possible to eliminate these and have everybody deal with APFloats, but that
 // will take a while.  This approach will not easily extend to long double.
-// Current implementation requires partCount()==1, which is correct at the
-// moment but could be made more general.
+// Current implementation requires integerPartWidth==64, which is correct at
+// the moment but could be made more general.
 
 // Denormals have exponent minExponent in APFloat, but minExponent-1 in
-// the actual IEEE respresentation.  We compensate for that here.
+// the actual IEEE respresentations.  We compensate for that here.
 
 APInt
 APFloat::convertF80LongDoubleAPFloatToAPInt() const {
   assert(semantics == (const llvm::fltSemantics* const)&x87DoubleExtended);
-  assert (partCount()==1);
+  assert (partCount()==2);
 
   uint64_t myexponent, mysignificand;
 
   if (category==fcNormal) {
     myexponent = exponent+16383; //bias
-    mysignificand = *significandParts();
+    mysignificand = significandParts()[0];
     if (myexponent==1 && !(mysignificand & 0x8000000000000000ULL))
       myexponent = 0;   // denormal
   } else if (category==fcZero) {
@@ -1614,7 +1624,7 @@ APFloat::convertF80LongDoubleAPFloatToAPInt() const {
     mysignificand = 0x8000000000000000ULL;
   } else if (category==fcNaN) {
     myexponent = 0x7fff;
-    mysignificand = *significandParts();
+    mysignificand = significandParts()[0];
   } else
     assert(0);
 
@@ -1727,7 +1737,7 @@ APFloat::initFromF80LongDoubleAPInt(const APInt &api) {
                           (i2 & 0xffff);
 
   initialize(&APFloat::x87DoubleExtended);
-  assert(partCount()==1);
+  assert(partCount()==2);
 
   sign = i1>>63;
   if (myexponent==0 && mysignificand==0) {
@@ -1739,11 +1749,13 @@ APFloat::initFromF80LongDoubleAPInt(const APInt &api) {
   } else if (myexponent==0x7fff && mysignificand!=0x8000000000000000ULL) {
     // exponent meaningless
     category = fcNaN;
-    *significandParts() = mysignificand;
+    significandParts()[0] = mysignificand;
+    significandParts()[1] = 0;
   } else {
     category = fcNormal;
     exponent = myexponent - 16383;
-    *significandParts() = mysignificand;
+    significandParts()[0] = mysignificand;
+    significandParts()[1] = 0;
     if (myexponent==0)          // denormal
       exponent = -16382;
  }
