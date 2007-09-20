@@ -564,6 +564,9 @@ public:
   void ObjcAddMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                       ObjcMethodDecl **clsMethods, unsigned numClsMembers);
   
+  bool getIsForwardDecl() const { return isForwardDecl; }
+  void setIsForwardDecl(bool val) { isForwardDecl = val; }
+  
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcInterface;
   }

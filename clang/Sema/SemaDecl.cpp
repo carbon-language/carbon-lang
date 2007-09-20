@@ -869,22 +869,28 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
                     AttributeList *AttrList) {
   assert(ClassName && "Missing class identifier");
    
-  ObjcInterfaceDecl* IDecl;
+  ObjcInterfaceDecl* IDecl = Context.getObjCInterfaceDecl(ClassName);
   
-  if (Context.getObjCInterfaceDecl(ClassName))
-    Diag(AtInterfaceLoc, diag::err_duplicate_class_def, ClassName->getName());
+  if (IDecl) {
+    // Class already seen. Is it a forward declaration?
+    if (!IDecl->getIsForwardDecl())
+      Diag(AtInterfaceLoc, diag::err_duplicate_class_def, ClassName->getName());
+    else
+      IDecl->setIsForwardDecl(false);
+  }
+  else {
+    IDecl = new ObjcInterfaceDecl(AtInterfaceLoc, ClassName);
   
-  IDecl = new ObjcInterfaceDecl(AtInterfaceLoc, ClassName);
-  
-  // Chain & install the interface decl into the identifier.
-  IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
-  ClassName->setFETokenInfo(IDecl);
+    // Chain & install the interface decl into the identifier.
+    IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
+    ClassName->setFETokenInfo(IDecl);
+  }
   
   if (SuperName) {
     const ObjcInterfaceDecl* SuperClassEntry = 
                                Context.getObjCInterfaceDecl(SuperName);
                               
-    if (!SuperClassEntry) {
+    if (!SuperClassEntry || SuperClassEntry->getIsForwardDecl()) {
       Diag(AtInterfaceLoc, diag::err_undef_superclass, SuperName->getName(),
            ClassName->getName());  
     }
@@ -925,6 +931,7 @@ Sema::DeclTy *Sema::ObjcStartCatInterface(SourceLocation AtInterfaceLoc,
   cast<ObjcInterfaceDecl>(D)->setNext(CDecl);
   return CDecl;
 }
+
 /// ObjcClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
@@ -934,13 +941,14 @@ Sema::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
 
   for (unsigned i = 0; i != NumElts; ++i) {
     ObjcInterfaceDecl *IDecl;
-      
-    // FIXME: before we create one, look up the interface decl in a hash table.
-    IDecl = new ObjcInterfaceDecl(SourceLocation(), IdentList[i], true);
-    // Chain & install the interface decl into the identifier.
-    IDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
-    IdentList[i]->setFETokenInfo(IDecl);
-    
+    IDecl = Context.getObjCInterfaceDecl(IdentList[i]);
+    if (!IDecl)  {// Already seen?
+      IDecl = new ObjcInterfaceDecl(SourceLocation(), IdentList[i], true);
+      // Chain & install the interface decl into the identifier.
+      IDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
+      IdentList[i]->setFETokenInfo(IDecl);
+      Context.setObjCInterfaceDecl(IdentList[i], IDecl);
+    }
     // Remember that this needs to be removed when the scope is popped.
     S->AddDecl(IdentList[i]);
     

@@ -37,7 +37,7 @@ class ASTContext {
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
-  llvm::DenseMap<const IdentifierInfo*, const ObjcInterfaceDecl*> ClassNameInfo;
+  llvm::DenseMap<const IdentifierInfo*, ObjcInterfaceDecl*> ClassNameInfo;
   RecordDecl *CFConstantStringTypeDecl;
 public:
   
@@ -159,10 +159,10 @@ public:
   /// position information.
   const RecordLayout &getRecordLayout(const RecordDecl *D, SourceLocation L);
   
-  const ObjcInterfaceDecl* getObjCInterfaceDecl(const IdentifierInfo* ClassName) 
-                             { return ClassNameInfo[ClassName]; }
+  ObjcInterfaceDecl* getObjCInterfaceDecl(const IdentifierInfo* ClassName) 
+                       { return ClassNameInfo[ClassName]; }
   void setObjCInterfaceDecl(const IdentifierInfo* ClassName,
-                            const ObjcInterfaceDecl* InterfaceDecl)
+                            ObjcInterfaceDecl* InterfaceDecl)
   { ClassNameInfo[ClassName] = InterfaceDecl; }
   
   //===--------------------------------------------------------------------===//
