@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm > %t 
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=arm -disable-arm-if-conversion > %t 
 ; RUN: grep bne %t
 ; RUN: grep bge %t
 ; RUN: grep bhs %t
