@@ -273,9 +273,9 @@ CAMLprim value llvm_make_int_constant(value IntTy, value N, value SExt) {
   /* GCC warns if we use the ternary operator. */
   unsigned long long N2;
   if (Bool_val(SExt))
-    N2 = (intnat) Int_val(N);
+    N2 = (value) Int_val(N);
   else
-    N2 = (uintnat) Int_val(N);
+    N2 = (mlsize_t) Int_val(N);
   
   return (value) LLVMGetIntConstant((LLVMTypeRef) IntTy, N2, Bool_val(SExt));
 }
