@@ -2001,7 +2001,7 @@ namespace {
               if (!isRelatedBy(Known, Zero, ICmpInst::ICMP_NE)) break;
               // otherwise, fall-through.
             case Instruction::Sub:
-              if (Unknown == Op1) break;
+              if (Unknown == Op0) break;
               // otherwise, fall-through.
             case Instruction::Xor:
             case Instruction::Add:
