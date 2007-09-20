@@ -171,27 +171,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\include\clang\Analysis\CFGRecStmtDeclVisitor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Analysis\CFGRecStmtVisitor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Analysis\CFGStmtVisitor.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Analysis\CFGVarDeclVisitor.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Analysis\DataflowSolver.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Analysis\DataflowStmtVisitor.h"
 				>
 			</File>
 			<File
@@ -210,6 +190,30 @@
 				RelativePath="..\..\include\clang\Analysis\UninitializedValues.h"
 				>
 			</File>
+			<Filter
+				Name="Visitors"
+				>
+				<File
+					RelativePath="..\..\include\clang\Analysis\Visitors\CFGRecStmtDeclVisitor.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\clang\Analysis\Visitors\CFGRecStmtVisitor.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\clang\Analysis\Visitors\CFGStmtVisitor.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\clang\Analysis\Visitors\CFGVarDeclVisitor.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\clang\Analysis\Visitors\DataflowStmtVisitor.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>
