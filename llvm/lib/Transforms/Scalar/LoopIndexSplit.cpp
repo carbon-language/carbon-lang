@@ -928,8 +928,9 @@ void LoopIndexSplit::removeBlocks(BasicBlock *DeadBB, Loop *LP,
   while (!WorkList.empty()) {
     BasicBlock *BB = WorkList.back(); WorkList.pop_back();
     for(BasicBlock::iterator BBI = BB->begin(), BBE = BB->end(); 
-        BBI != BBE; ++BBI) {
+        BBI != BBE; ) {
       Instruction *I = BBI;
+      ++BBI;
       I->replaceAllUsesWith(UndefValue::get(I->getType()));
       I->eraseFromParent();
     }
