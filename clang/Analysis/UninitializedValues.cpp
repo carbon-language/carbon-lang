@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/UninitializedValues.h"
-#include "clang/Analysis/CFGRecStmtDeclVisitor.h"
+#include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"

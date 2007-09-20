@@ -1,4 +1,4 @@
-//==- LiveVariables.cpp - Live Variable Analysis for Source CFGs -*- C++ --*-==//
+//=- LiveVariables.cpp - Live Variable Analysis for Source CFGs -*- C++ --*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,7 +15,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/CFG.h"
-#include "clang/Analysis/DataflowStmtVisitor.h"
+#include "clang/Analysis/Visitors/DataflowStmtVisitor.h"
 #include "clang/Lex/IdentifierTable.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
