@@ -619,6 +619,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
        MI->getOpcode() == X86::ISTT_Fp16m64 ||
        MI->getOpcode() == X86::ISTT_Fp32m64 ||
        MI->getOpcode() == X86::ISTT_Fp64m64 ||
+       MI->getOpcode() == X86::IST_Fp64m80 ||
        MI->getOpcode() == X86::ISTT_Fp16m80 ||
        MI->getOpcode() == X86::ISTT_Fp32m80 ||
        MI->getOpcode() == X86::ISTT_Fp64m80 ||
