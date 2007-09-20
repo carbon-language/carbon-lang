@@ -201,8 +201,8 @@ private:
     for (CFGBlock::const_succ_iterator I=B->succ_begin(), E=B->succ_end();
           I!=E; ++I) {
                     
-      CFG::Edge E(B,*I);
-      UpdateEdgeValue(E,V,*I);
+      CFG::Edge Edg(B,*I);
+      UpdateEdgeValue(Edg,V,*I);
     }
   }
   
@@ -214,8 +214,8 @@ private:
     for (CFGBlock::const_pred_iterator I=B->succ_begin(), E=B->succ_end();
          I!=E; ++I) {
       
-      CFG::Edge E(*I,B);
-      UpdateEdgeValue(E,V,*I);
+      CFG::Edge Edg(*I,B);
+      UpdateEdgeValue(Edg,V,*I);
     }
   }
   

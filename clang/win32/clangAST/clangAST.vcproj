@@ -189,6 +189,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\AST\StmtViz.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\AST\Type.cpp"
 				>
 			</File>
@@ -240,6 +244,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\clang\AST\Stmt.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\clang\AST\StmtGraphTraits.h"
 				>
 			</File>
 			<File
