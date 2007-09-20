@@ -214,15 +214,17 @@
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; };
 		3513BD540C9F207900FA56C6 /* UninitializedValues.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UninitializedValues.cpp; path = Analysis/UninitializedValues.cpp; sourceTree = "<group>"; };
-		3523B4D30C985C53001D6CC3 /* CFGStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGStmtVisitor.h; path = clang/Analysis/CFGStmtVisitor.h; sourceTree = "<group>"; };
-		3523B4D50C985DAE001D6CC3 /* DataflowStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowStmtVisitor.h; path = clang/Analysis/DataflowStmtVisitor.h; sourceTree = "<group>"; };
 		35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ExprCXX.cpp; path = AST/ExprCXX.cpp; sourceTree = "<group>"; };
+		352C19DC0CA321C80045DB98 /* CFGRecStmtDeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGRecStmtDeclVisitor.h; path = clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h; sourceTree = "<group>"; };
+		352C19DD0CA321C80045DB98 /* CFGRecStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGRecStmtVisitor.h; path = clang/Analysis/Visitors/CFGRecStmtVisitor.h; sourceTree = "<group>"; };
+		352C19DE0CA321C80045DB98 /* CFGStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGStmtVisitor.h; path = clang/Analysis/Visitors/CFGStmtVisitor.h; sourceTree = "<group>"; };
+		352C19DF0CA321C80045DB98 /* CFGVarDeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGVarDeclVisitor.h; path = clang/Analysis/Visitors/CFGVarDeclVisitor.h; sourceTree = "<group>"; };
+		352C19E00CA321C80045DB98 /* DataflowStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowStmtVisitor.h; path = clang/Analysis/Visitors/DataflowStmtVisitor.h; sourceTree = "<group>"; };
 		3547129D0C88881300B3E1D5 /* PrettyPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PrettyPrinter.h; path = clang/AST/PrettyPrinter.h; sourceTree = "<group>"; };
 		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
 		355CF6830C90A8D400A08AA3 /* DeadStores.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeadStores.cpp; path = Analysis/DeadStores.cpp; sourceTree = "<group>"; };
 		356EF9B20C8F7DBA006650F5 /* LiveVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LiveVariables.h; path = clang/Analysis/LiveVariables.h; sourceTree = "<group>"; };
 		356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LiveVariables.cpp; path = Analysis/LiveVariables.cpp; sourceTree = "<group>"; };
-		35AE0F640C9B4C8500CC1279 /* CFGVarDeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGVarDeclVisitor.h; path = clang/Analysis/CFGVarDeclVisitor.h; sourceTree = "<group>"; };
 		35AE0F650C9B4CA300CC1279 /* DataflowValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowValues.h; path = clang/Analysis/DataflowValues.h; sourceTree = "<group>"; };
 		35AE0F660C9B4CA300CC1279 /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/UninitializedValues.h; sourceTree = "<group>"; };
 		35AE0F670C9B4CC200CC1279 /* DataflowSolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowSolver.h; path = Analysis/DataflowSolver.h; sourceTree = "<group>"; };
@@ -396,6 +398,18 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		352C19DB0CA321AC0045DB98 /* Visitors */ = {
+			isa = PBXGroup;
+			children = (
+				352C19DC0CA321C80045DB98 /* CFGRecStmtDeclVisitor.h */,
+				352C19DD0CA321C80045DB98 /* CFGRecStmtVisitor.h */,
+				352C19DE0CA321C80045DB98 /* CFGStmtVisitor.h */,
+				352C19DF0CA321C80045DB98 /* CFGVarDeclVisitor.h */,
+				352C19E00CA321C80045DB98 /* DataflowStmtVisitor.h */,
+			);
+			name = Visitors;
+			sourceTree = "<group>";
+		};
 		355CF6850C90A8D600A08AA3 /* LocalCheckers */ = {
 			isa = PBXGroup;
 			children = (
@@ -409,12 +423,10 @@
 			isa = PBXGroup;
 			children = (
 				35AE0F650C9B4CA300CC1279 /* DataflowValues.h */,
-				3523B4D30C985C53001D6CC3 /* CFGStmtVisitor.h */,
-				3523B4D50C985DAE001D6CC3 /* DataflowStmtVisitor.h */,
-				35AE0F640C9B4C8500CC1279 /* CFGVarDeclVisitor.h */,
 				356EF9B20C8F7DBA006650F5 /* LiveVariables.h */,
 				35AE0F660C9B4CA300CC1279 /* UninitializedValues.h */,
 				355CF6820C90A8B600A08AA3 /* LocalCheckers.h */,
+				352C19DB0CA321AC0045DB98 /* Visitors */,
 			);
 			name = Analysis;
 			sourceTree = "<group>";
