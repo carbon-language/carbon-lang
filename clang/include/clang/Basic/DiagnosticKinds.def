@@ -408,6 +408,11 @@ DIAG(err_objc_protocol_optional, ERROR,
      "@optional may be specified in protocols only")
 DIAG(err_missing_catch_finally, ERROR,
      "@try statment without a @catch and @finally clause")
+DIAG(err_undef_superclass, ERROR,
+     "cannot find interface declaration for '%0', superclass of '%1'")
+DIAG(err_duplicate_class_def, ERROR,
+     "duplicate interface declaration for class '%0'")
+
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis

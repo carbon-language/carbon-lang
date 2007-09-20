@@ -868,13 +868,30 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
                     AttributeList *AttrList) {
   assert(ClassName && "Missing class identifier");
-  ObjcInterfaceDecl *IDecl;
-    
+   
+  ObjcInterfaceDecl* IDecl;
+  
+  if (Context.getObjCInterfaceDecl(ClassName))
+    Diag(AtInterfaceLoc, diag::err_duplicate_class_def, ClassName->getName());
+  
   IDecl = new ObjcInterfaceDecl(AtInterfaceLoc, ClassName);
   
   // Chain & install the interface decl into the identifier.
   IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
   ClassName->setFETokenInfo(IDecl);
+  
+  if (SuperName) {
+    const ObjcInterfaceDecl* SuperClassEntry = 
+                               Context.getObjCInterfaceDecl(SuperName);
+                              
+    if (!SuperClassEntry) {
+      Diag(AtInterfaceLoc, diag::err_undef_superclass, SuperName->getName(),
+           ClassName->getName());  
+    }
+  }
+  
+  Context.setObjCInterfaceDecl(ClassName, IDecl);
+    
   return IDecl;
 }
 
