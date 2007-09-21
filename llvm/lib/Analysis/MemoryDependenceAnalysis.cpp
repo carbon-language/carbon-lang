@@ -135,6 +135,13 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
                                          DenseMap<BasicBlock*, Value*>& resp) {
   // Set of blocks that we've already visited in our DFS
   SmallPtrSet<BasicBlock*, 4> visited;
+  // If we're updating a dirtied cache entry, we don't need to reprocess
+  // already computed entries.
+  for (DenseMap<BasicBlock*, Value*>::iterator I = resp.begin(), 
+       E = resp.end(); I != E; ++I)
+    if (I->second != Dirty)
+      visited.insert(I->first);
+  
   // Current stack of the DFS
   SmallVector<BasicBlock*, 4> stack;
   stack.push_back(block);
@@ -211,8 +218,28 @@ void MemoryDependenceAnalysis::nonLocalHelper(Instruction* query,
 void MemoryDependenceAnalysis::getNonLocalDependency(Instruction* query,
                                          DenseMap<BasicBlock*, Value*>& resp) {
   if (depGraphNonLocal.count(query)) {
-    resp = depGraphNonLocal[query];
+    DenseMap<BasicBlock*, Value*>& cached = depGraphNonLocal[query];
     NumCacheNonlocal++;
+    
+    SmallVector<BasicBlock*, 4> dirtied;
+    for (DenseMap<BasicBlock*, Value*>::iterator I = cached.begin(),
+         E = cached.end(); I != E; ++I)
+      if (I->second == Dirty)
+        dirtied.push_back(I->first);
+    
+    for (SmallVector<BasicBlock*, 4>::iterator I = dirtied.begin(),
+         E = dirtied.end(); I != E; ++I) {
+      Instruction* localDep = getDependency(query, 0, *I);
+      if (localDep != NonLocal)
+        cached[*I] = localDep;
+      else {
+        cached.erase(*I);
+        nonLocalHelper(query, *I, cached);
+      }
+    }
+    
+    resp = cached;
+    
     return;
   } else
     NumUncacheNonlocal++;
@@ -430,7 +457,11 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
     SmallPtrSet<Instruction*, 4>& set = reverseDepNonLocal[rem];
     for (SmallPtrSet<Instruction*, 4>::iterator I = set.begin(), E = set.end();
          I != E; ++I)
-      depGraphNonLocal.erase(*I);
+      for (DenseMap<BasicBlock*, Value*>::iterator DI =
+           depGraphNonLocal[*I].begin(), DE = depGraphNonLocal[*I].end();
+           DI != DE; ++DI)
+        if (DI->second == rem)
+          DI->second = Dirty;
     
     reverseDepNonLocal.erase(rem);
   }
