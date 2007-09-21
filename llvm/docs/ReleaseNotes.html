@@ -129,7 +129,7 @@ cases.</li>
 significantly simplifying the SelectionDAG representation for these and making
 the code generator faster for vector code.</li>
 
-<li>Evan remat rewrite (coallesced intervals + folding of remat'd loads) and
+<li>Evan remat rewrite (coalesced intervals + folding of remat'd loads) and
 live intervals improvements.</li>
 
 <li>Dan Gohman contributed support for better alignment and volatility handling
@@ -144,8 +144,8 @@ Levenstein contributed several big improvements.  BigBlock is optimized for code
 that uses very large basic blocks.  It is slightly slower than the "local"
 allocator, but produces much better code.</li>
 
-<li>David Greene refactored the register allocator to split coallescing out from
-allocation, making coallescers pluggable.</li>
+<li>David Greene refactored the register allocator to split coalescing out from
+allocation, making coalescers pluggable.</li>
 
 </ul>
 
