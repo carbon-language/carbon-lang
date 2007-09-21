@@ -210,6 +210,10 @@
           <li><a href="#int_var_annotation">
             <tt>llvm.var.annotation</tt>' Intrinsic</a></li>
         </ol>
+        <ol>
+          <li><a href="#int_annotation">
+            <tt>llvm.annotation</tt>' Intrinsic</a></li>
+        </ol>
       </li>
     </ol>
   </li>
@@ -5263,6 +5267,39 @@ This can be useful for special purpose optimizations that want to look for these
  generation and optimization.
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_annotation">'<tt>llvm.annotation</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare i32 @llvm.annotation(i32 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
+</pre>
+
+<h5>Overview:</h5>
+<p>This is an overloaded intrinsic. You can use '<tt>llvm.annotation</tt>' on 
+any integer bit width. Not all targets support all bit widths however.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The first argument is an integer value (result of some expression), 
+the second is a pointer to a global string, the third is a pointer to a global 
+string which is the source file name, and the last argument is the line number.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This intrinsic allows annotations to be put on arbitrary expressions
+with arbitrary strings.  This can be useful for special purpose optimizations 
+that want to look for these annotations.  These have no other defined use, they 
+are ignored by code generation and optimization.
+</div>
 
 <!-- *********************************************************************** -->
 <hr>
