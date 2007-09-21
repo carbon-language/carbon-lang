@@ -5279,9 +5279,8 @@ This can be useful for special purpose optimizations that want to look for these
 any integer bit width. 
 </p>
 <pre>
-  declare i32 @llvm.annotation(i32 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
-  declare i8 llvm.annotation(i8 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
-  declare i16 llvm.annotation(i16 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
+  declare i8 @llvm.annotation(i8 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
+  declare i16 @llvm.annotation(i16 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
   declare i32 @llvm.annotation(i32 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
   declare i64 @llvm.annotation(i64 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
   declare i256 @llvm.annotation(i256 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
