@@ -210,7 +210,7 @@ private:
         new (Buckets[i].first) KeyT(other.Buckets[i].first);
         if (Buckets[i].first != getEmptyKey() &&
             Buckets[i].first != getTombstoneKey())
-          new (Buckets[i].second) ValueT(other.Buckets[i].second);
+          new (&Buckets[i].second) ValueT(other.Buckets[i].second);
       }
     NumBuckets = other.NumBuckets;
   }
