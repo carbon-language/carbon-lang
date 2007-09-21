@@ -71,7 +71,7 @@ It includes many features and refinements from LLVM 2.0.</p>
 <div class="doc_text">
 
 <p>LLVM 2.1 brings two new beta C front-ends.  First, Duncan, Anton and Devang
-start syncing up llvm-gcc with GCC 4.2, yielding "llvm-gcc 4.2" (creative,
+has started syncing up llvm-gcc with GCC 4.2, yielding "llvm-gcc 4.2" (creative,
 huh?).  llvm-gcc 4.2 has the promise to bring much better FORTRAN and Ada
 support to LLVM as well as features like atomic builtins, OpenMP, and many other
 things.  Check it out!</p>
@@ -116,8 +116,6 @@ cases.</li>
 </div>
 
 <div class="doc_text">
-
-<p>foo</p>
 
 <ul>
 
@@ -198,6 +196,8 @@ LLVM IR, e.g. "<tt>int X __attribute__((annotate("myproperty")));</tt>".</li>
 <li>Duncan contributed support for trampolines (pointers to nested functions),
 currently only supported on x86 target.</li>
 
+<li> Lauro Ramos Venancio contributed support to encode alignment info in 
+load and store instructions.</li>
 </ul>
   
 </div>
