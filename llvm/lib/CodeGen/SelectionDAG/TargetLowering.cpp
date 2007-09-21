@@ -161,6 +161,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   StackPointerRegisterToSaveRestore = 0;
   ExceptionPointerRegister = 0;
   ExceptionSelectorRegister = 0;
+  SetCCResultContents = UndefinedSetCCResult;
   SchedPreferenceInfo = SchedulingForLatency;
   JumpBufSize = 0;
   JumpBufAlignment = 0;
