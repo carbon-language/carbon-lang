@@ -258,6 +258,8 @@ public:
     CaseLoc = caseLoc;
   }
   
+  SourceLocation getCaseLoc() const { return CaseLoc; }
+  
   Expr *getLHS() { return reinterpret_cast<Expr*>(SubExprs[LHS]); }
   Expr *getRHS() { return reinterpret_cast<Expr*>(SubExprs[RHS]); }
   Stmt *getSubStmt() { return SubExprs[SUBSTMT]; }

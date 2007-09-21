@@ -259,8 +259,23 @@ namespace {
   };
 }
 
+/// CmpCaseVals - Comparison predicate for sorting case values.
+///
+static bool CmpCaseVals(const std::pair<llvm::APSInt, CaseStmt*>& lhs,
+                        const std::pair<llvm::APSInt, CaseStmt*>& rhs) {
+  if (lhs.first < rhs.first)
+    return true;
+
+  if (lhs.first == rhs.first &&
+      lhs.second->getCaseLoc().getRawEncoding()
+       < rhs.second->getCaseLoc().getRawEncoding())
+    return true;
+  return false;
+}
+
 Action::StmtResult
-Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Body) {
+Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch,
+                            ExprTy *Body) {
   Stmt *BodyStmt = (Stmt*)Body;
   
   SwitchStmt *SS = SwitchStack.back();
@@ -335,7 +350,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, ExprTy *Bo
   }
   
   // Sort all the scalar case values so we can easily detect duplicates.
-  std::stable_sort(CaseVals.begin(), CaseVals.end());
+  std::stable_sort(CaseVals.begin(), CaseVals.end(), CmpCaseVals);
   
   if (!CaseVals.empty()) {
     for (unsigned i = 0, e = CaseVals.size()-1; i != e; ++i) {
