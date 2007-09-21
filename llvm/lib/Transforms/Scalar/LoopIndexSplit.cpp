@@ -1181,15 +1181,17 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
   // values in original loop's preheader.
   //      A_ExitValue = min(SplitValue, OrignalLoopExitValue)
   //      B_StartValue = max(SplitValue, OriginalLoopStartValue)
+  Instruction *InsertPt = L->getHeader()->getFirstNonPHI();
   Value *C1 = new ICmpInst(Sign ?
                            ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                            AEV,
                            ExitCondition->getOperand(ExitValueNum), 
-                           "lsplit.ev", PHTerminator);
+                           "lsplit.ev", InsertPt);
+
   SD.A_ExitValue = new SelectInst(C1, AEV,
                                   ExitCondition->getOperand(ExitValueNum), 
-                                  "lsplit.ev", PHTerminator);
-  
+                                  "lsplit.ev", InsertPt);
+
   Value *C2 = new ICmpInst(Sign ?
                            ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                            BSV, StartValue, "lsplit.sv",
