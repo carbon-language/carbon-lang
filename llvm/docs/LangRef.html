@@ -3923,7 +3923,7 @@ href="GarbageCollection.html">Accurate Garbage Collection with LLVM</a>.
 <h5>Syntax:</h5>
 
 <pre>
-  declare void @llvm.gcroot(&lt;ty&gt;** %ptrloc, &lt;ty2&gt;* %metadata)
+  declare void @llvm.gcroot(i8** %ptrloc, i8* %metadata)
 </pre>
 
 <h5>Overview:</h5>
@@ -3957,7 +3957,7 @@ the runtime to find the pointer at GC safe points.
 <h5>Syntax:</h5>
 
 <pre>
-  declare i8 * @llvm.gcread(i8 * %ObjPtr, i8 ** %Ptr)
+  declare i8* @llvm.gcread(i8* %ObjPtr, i8** %Ptr)
 </pre>
 
 <h5>Overview:</h5>
@@ -3992,7 +3992,7 @@ garbage collector runtime, as needed.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  declare void @llvm.gcwrite(i8 * %P1, i8 * %Obj, i8 ** %P2)
+  declare void @llvm.gcwrite(i8* %P1, i8* %Obj, i8** %P2)
 </pre>
 
 <h5>Overview:</h5>
@@ -4085,7 +4085,7 @@ source-language caller.
 
 <h5>Syntax:</h5>
 <pre>
-  declare i8  *@llvm.frameaddress(i32 &lt;level&gt;)
+  declare i8 *@llvm.frameaddress(i32 &lt;level&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -4128,7 +4128,7 @@ source-language caller.
 
 <h5>Syntax:</h5>
 <pre>
-  declare i8  *@llvm.stacksave()
+  declare i8 *@llvm.stacksave()
 </pre>
 
 <h5>Overview:</h5>
@@ -4194,8 +4194,7 @@ See the description for <a href="#int_stacksave"><tt>llvm.stacksave</tt></a>.
 
 <h5>Syntax:</h5>
 <pre>
-  declare void @llvm.prefetch(i8  * &lt;address&gt;,
-                                i32 &lt;rw&gt;, i32 &lt;locality&gt;)
+  declare void @llvm.prefetch(i8* &lt;address&gt;, i32 &lt;rw&gt;, i32 &lt;locality&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -4239,7 +4238,7 @@ performance.
 
 <h5>Syntax:</h5>
 <pre>
-  declare void @llvm.pcmarker( i32 &lt;id&gt; )
+  declare void @llvm.pcmarker(i32 &lt;id&gt;)
 </pre>
 
 <h5>Overview:</h5>

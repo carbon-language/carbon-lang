@@ -159,7 +159,7 @@ interface that front-end authors should generate code for.
 <div class="doc_text">
 
 <div class="doc_code"><tt>
-  void %llvm.gcroot(&lt;ty&gt;** %ptrloc, &lt;ty2&gt;* %metadata)
+  void %llvm.gcroot(i8** %ptrloc, i8* %metadata)
 </tt></div>
 
 <p>
@@ -200,7 +200,8 @@ CodeBlock:
    ;; Initialize the object, telling LLVM that it is now live.
    ;; Java has type-tags on objects, so it doesn't need any
    ;; metadata.
-   call void %llvm.gcroot(%Object** %X, sbyte* null)
+   %tmp = bitcast %Object** %X to i8**
+   call void %llvm.gcroot(i8** %tmp, i8* null)
    ...
 
    ;; As the pointer goes out of scope, store a null value into
@@ -219,7 +220,7 @@ CodeBlock:
 <div class="doc_text">
 
 <div class="doc_code"><tt>
-  sbyte *%llvm_gc_allocate(unsigned %Size)
+  void *%llvm_gc_allocate(unsigned %Size)
 </tt></div>
 
 <p>The <tt>llvm_gc_allocate</tt> function is a global function defined by the
@@ -236,8 +237,8 @@ zeroed-out block of memory of the appropriate size.</p>
 <div class="doc_text">
 
 <div class="doc_code"><tt>
-  sbyte *%llvm.gcread(sbyte *, sbyte **)<br>
-  void %llvm.gcwrite(sbyte*, sbyte*, sbyte**)
+  i8 *%llvm.gcread(i8 *, i8 **)<br>
+  void %llvm.gcwrite(i8*, i8*, i8**)
 </tt></div>
 
 <p>Several of the more interesting garbage collectors (e.g., generational
