@@ -661,9 +661,9 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
     if (C->isNullValue() && /* FIXME: Verify correct */
+        !I->hasSection() &&
         (I->hasInternalLinkage() || I->hasWeakLinkage() ||
-         I->hasLinkOnceLinkage() ||
-         (I->hasExternalLinkage() && !I->hasSection()))) {
+         I->hasLinkOnceLinkage() || I->hasExternalLinkage())) {
       if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
       if (I->hasExternalLinkage()) {
         O << "\t.global " << name << '\n';

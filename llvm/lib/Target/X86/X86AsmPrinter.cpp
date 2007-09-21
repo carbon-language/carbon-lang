@@ -170,7 +170,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     if (Subtarget->isTargetELF())
       O << "\t.type\t" << name << ",@object\n";
     
-    if (C->isNullValue()) {
+    if (C->isNullValue() && !I->hasSection()) {
       if (I->hasExternalLinkage()) {
         if (const char *Directive = TAI->getZeroFillDirective()) {
           O << "\t.globl\t" << name << "\n";
@@ -180,7 +180,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         }
       }
       
-      if (!I->hasSection() && !I->isThreadLocal() &&
+      if (!I->isThreadLocal() &&
           (I->hasInternalLinkage() || I->hasWeakLinkage() ||
            I->hasLinkOnceLinkage())) {
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
