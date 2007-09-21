@@ -1301,7 +1301,9 @@ public:
       ValuesSet.InsertNode(Value, Where);
       Values.push_back(Value);
     } else {
+      // Already exists, reuse the previous one.
       delete Block;
+      Block = cast<DIEBlock>(Value);
     }
   
     Die->AddValue(Attribute, Block->BestForm(), Value);
