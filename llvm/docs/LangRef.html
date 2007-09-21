@@ -208,7 +208,7 @@
       <li><a href="#int_general">General intrinsics</a>
         <ol>
           <li><a href="#int_var_annotation">
-            <tt>llvm.var.annotation</tt>' Intrinsic</a></li>
+            <tt>llvm.var.annotation.*</tt>' Intrinsic</a></li>
         </ol>
         <ol>
           <li><a href="#int_annotation">
@@ -5275,13 +5275,22 @@ This can be useful for special purpose optimizations that want to look for these
 <div class="doc_text">
 
 <h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use '<tt>llvm.annotation</tt>' on 
+any integer bit width. 
+</p>
 <pre>
   declare i32 @llvm.annotation(i32 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
+  declare i8 llvm.annotation(i8 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
+  declare i16 llvm.annotation(i16 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
+  declare i32 @llvm.annotation(i32 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
+  declare i64 @llvm.annotation(i64 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
+  declare i256 @llvm.annotation(i256 &lt;val&gt;, i8* &lt;str&gt;, i8* &lt;str&gt;, i32  &lt;int&gt; )
 </pre>
 
 <h5>Overview:</h5>
-<p>This is an overloaded intrinsic. You can use '<tt>llvm.annotation</tt>' on 
-any integer bit width. Not all targets support all bit widths however.
+
+<p>
+The '<tt>llvm.annotation</tt>' intrinsic.
 </p>
 
 <h5>Arguments:</h5>
@@ -5290,6 +5299,7 @@ any integer bit width. Not all targets support all bit widths however.
 The first argument is an integer value (result of some expression), 
 the second is a pointer to a global string, the third is a pointer to a global 
 string which is the source file name, and the last argument is the line number.
+It returns the value of the first argument.
 </p>
 
 <h5>Semantics:</h5>
