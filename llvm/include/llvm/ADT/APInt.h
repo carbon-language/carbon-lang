@@ -172,7 +172,7 @@ public:
   /// @param numWords the number of words in bigVal
   /// @param bigVal a sequence of words to form the initial value of the APInt
   /// @brief Construct an APInt of numBits width, initialized as bigVal[].
-  APInt(uint32_t numBits, uint32_t numWords, uint64_t bigVal[]);
+  APInt(uint32_t numBits, uint32_t numWords, const uint64_t bigVal[]);
 
   /// This constructor interprets Val as a string in the given radix. The 
   /// interpretation stops when the first charater that is not suitable for the

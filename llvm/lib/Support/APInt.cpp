@@ -58,7 +58,7 @@ APInt::APInt(uint32_t numBits, uint64_t val, bool isSigned)
   clearUnusedBits();
 }
 
-APInt::APInt(uint32_t numBits, uint32_t numWords, uint64_t bigVal[])
+APInt::APInt(uint32_t numBits, uint32_t numWords, const uint64_t bigVal[])
   : BitWidth(numBits), VAL(0)  {
   assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
   assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");

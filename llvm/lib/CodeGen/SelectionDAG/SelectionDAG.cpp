@@ -1595,8 +1595,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::SINT_TO_FP: {
       const uint64_t zero[] = {0, 0};
       APFloat apf = APFloat(APInt(MVT::getSizeInBits(VT), 2, zero));
-      (void)apf.convertFromInteger(&Val, 1, Opcode==ISD::SINT_TO_FP,
-                                  APFloat::rmTowardZero);
+      (void)apf.convertFromInteger(&Val, 
+                               MVT::getSizeInBits(Operand.getValueType()), 
+                               Opcode==ISD::SINT_TO_FP,
+                               APFloat::rmTowardZero);
       return getConstantFP(apf, VT);
     }
     case ISD::BIT_CONVERT:

@@ -1180,7 +1180,8 @@ APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
   if (fs==opInvalidOp)
     return fs;
 
-  fs = V.convertFromInteger(x, parts, true, rmNearestTiesToEven);
+  fs = V.convertFromInteger(x, parts * integerPartWidth, true, 
+                            rmNearestTiesToEven);
   assert(fs==opOK);   // should always work
 
   fs = V.multiply(rhs, rounding_mode);
@@ -1459,28 +1460,30 @@ APFloat::convertFromUnsignedInteger(integerPart *parts,
 }
 
 APFloat::opStatus
-APFloat::convertFromInteger(const integerPart *parts,
-			    unsigned int partCount, bool isSigned,
-			    roundingMode rounding_mode)
+APFloat::convertFromInteger(const integerPart *parts, unsigned int width, 
+			    bool isSigned, roundingMode rounding_mode)
 {
-  unsigned int width;
+  unsigned int partCount = partCountForBits(width);
   opStatus status;
-  integerPart *copy;
-
-  copy = new integerPart[partCount];
-  APInt::tcAssign(copy, parts, partCount);
-
-  width = partCount * integerPartWidth;
+  APInt api = APInt(width, partCount, parts);
+  integerPart *copy = new integerPart[partCount];
 
   sign = false;
-  if(isSigned && APInt::tcExtractBit(parts, width - 1)) {
-    sign = true;
-    APInt::tcNegate(copy, partCount);
+  if(isSigned) {
+    if (APInt::tcExtractBit(parts, width - 1)) {
+      sign = true;
+      if (width < partCount * integerPartWidth)
+        api = api.sext(partCount * integerPartWidth);
+    }
+    else if (width < partCount * integerPartWidth)
+      api = api.zext(partCount * integerPartWidth);
+  } else {
+    if (width < partCount * integerPartWidth)
+      api = api.zext(partCount * integerPartWidth);
   }
 
+  APInt::tcAssign(copy, api.getRawData(), partCount);
   status = convertFromUnsignedInteger(copy, partCount, rounding_mode);
-  delete [] copy;
-
   return status;
 }
 

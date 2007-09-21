@@ -393,10 +393,11 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         GV.FloatVal = float(GV.IntVal.roundToDouble());
       else if (CE->getType() == Type::DoubleTy)
         GV.DoubleVal = GV.IntVal.roundToDouble();
-       else if (CE->getType() == Type::X86_FP80Ty) {
+      else if (CE->getType() == Type::X86_FP80Ty) {
         const uint64_t zero[] = {0, 0};
         APFloat apf = APFloat(APInt(80, 2, zero));
-        (void)apf.convertFromInteger(GV.IntVal.getRawData(), 2, false, 
+        (void)apf.convertFromInteger(GV.IntVal.getRawData(), 
+                               GV.IntVal.getBitWidth(), false,
                                APFloat::rmTowardZero);
         GV.IntVal = apf.convertToAPInt();
       }
@@ -411,7 +412,8 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       else if (CE->getType() == Type::X86_FP80Ty) {
         const uint64_t zero[] = { 0, 0};
         APFloat apf = APFloat(APInt(80, 2, zero));
-        (void)apf.convertFromInteger(GV.IntVal.getRawData(), 2, true,
+        (void)apf.convertFromInteger(GV.IntVal.getRawData(), 
+                               GV.IntVal.getBitWidth(), true,
                                APFloat::rmTowardZero);
         GV.IntVal = apf.convertToAPInt();
       }
