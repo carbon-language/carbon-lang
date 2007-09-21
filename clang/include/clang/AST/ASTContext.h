@@ -38,6 +38,7 @@ class ASTContext {
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
   llvm::DenseMap<const IdentifierInfo*, ObjcInterfaceDecl*> ClassNameInfo;
+  llvm::DenseMap<const IdentifierInfo*, ObjcProtocolDecl*> ProtocolNameInfo;
   RecordDecl *CFConstantStringTypeDecl;
 public:
   
@@ -164,6 +165,12 @@ public:
   void setObjCInterfaceDecl(const IdentifierInfo* ClassName,
                             ObjcInterfaceDecl* InterfaceDecl)
   { ClassNameInfo[ClassName] = InterfaceDecl; }
+  
+  ObjcProtocolDecl* getObjCProtocolDecl(const IdentifierInfo* ProtocolName) 
+  { return ProtocolNameInfo[ProtocolName]; }
+  void setObjCProtocolDecl(const IdentifierInfo* ProtocolName,
+                            ObjcProtocolDecl* ProtocolDecl)
+  { ProtocolNameInfo[ProtocolName] = ProtocolDecl; }
   
   //===--------------------------------------------------------------------===//
   //                            Type Operators

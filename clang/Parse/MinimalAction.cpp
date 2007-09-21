@@ -109,6 +109,23 @@ MinimalAction::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
   return 0;
 }
 
+/// ObjcForwardProtocolDeclaration - 
+/// Scope will always be top level file scope. 
+Action::DeclTy *
+MinimalAction::ObjcForwardProtocolDeclaration(Scope *S, SourceLocation AtClassLoc,
+                 IdentifierInfo **IdentList, unsigned NumElts) {
+  for (unsigned i = 0; i != NumElts; ++i) {
+    TypeNameInfo *TI =
+    new TypeNameInfo(1, IdentList[i]->getFETokenInfo<TypeNameInfo>());
+    
+    IdentList[i]->setFETokenInfo(TI);
+    
+    // Remember that this needs to be removed when the scope is popped.
+    S->AddDecl(IdentList[i]);
+  }
+  return 0;
+}
+
 /// PopScope - When a scope is popped, if any typedefs are now out-of-scope,
 /// they are removed from the IdentifierInfo::FETokenInfo field.
 void MinimalAction::PopScope(SourceLocation Loc, Scope *S) {

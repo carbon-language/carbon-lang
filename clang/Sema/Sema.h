@@ -370,6 +370,11 @@ public:
   virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
                                        IdentifierInfo **IdentList,
                                        unsigned NumElts);
+  
+  virtual DeclTy *ObjcForwardProtocolDeclaration(Scope *S, 
+                                                 SourceLocation AtProtocolLoc,
+                                                 IdentifierInfo **IdentList,
+                                                 unsigned NumElts);
 
   virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl, 
 				     DeclTy **allMethods, unsigned allNum);

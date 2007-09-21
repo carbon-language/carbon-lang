@@ -38,7 +38,7 @@ public:
     Function, BlockVariable, FileVariable, ParmVariable, EnumConstant,
     // Concrete sub-classes of TypeDecl
     Typedef, Struct, Union, Class, Enum, ObjcInterface, ObjcClass, ObjcMethod,
-    ObjcProtoMethod, ObjcProtocol, ObjcCategory,
+    ObjcProtoMethod, ObjcProtocol, ObjcForwardProtocol, ObjcCategory,
     // Concrete sub-class of Decl
     Field, ObjcIvar
   };
@@ -680,6 +680,10 @@ public:
 };
 
 class ObjcProtocolDecl : public TypeDecl {
+  /// referenced protocols
+  ObjcProtocolDecl **ReferencedProtocols;  // Null if none
+  int NumReferencedProtocols;  // -1 if none
+  
   /// protocol instance methods
   ObjcMethodDecl **ProtoInsMethods;  // Null if not defined
   int NumProtoInsMethods;  // -1 if not defined
@@ -690,19 +694,61 @@ class ObjcProtocolDecl : public TypeDecl {
 
   bool isForwardProtoDecl; // declared with @protocol.
 public:
-  ObjcProtocolDecl(SourceLocation L, IdentifierInfo *Id, bool FD = false)
+  ObjcProtocolDecl(SourceLocation L, unsigned numRefProtos,
+                   IdentifierInfo *Id, bool FD = false)
     : TypeDecl(ObjcProtocol, L, Id, 0), 
+      ReferencedProtocols(0), NumReferencedProtocols(-1),
       ProtoInsMethods(0), NumProtoInsMethods(-1), 
       ProtoClsMethods(0), NumProtoClsMethods(-1),
-      isForwardProtoDecl(FD) { }
-
+      isForwardProtoDecl(FD) {
+        AllocReferencedProtocols(numRefProtos);
+      }
+  void AllocReferencedProtocols(unsigned numRefProtos) {
+    if (numRefProtos) {
+      ReferencedProtocols = new ObjcProtocolDecl*[numRefProtos];
+      memset(ReferencedProtocols, '\0', 
+             numRefProtos*sizeof(ObjcProtocolDecl*));
+      NumReferencedProtocols = numRefProtos;
+    }    
+  }
   void ObjcAddProtoMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                            ObjcMethodDecl **clsMethods, unsigned numClsMembers);
+  
+  void setReferencedProtocols(int idx, ObjcProtocolDecl *OID) {
+    assert((idx < NumReferencedProtocols) && "index out of range");
+    ReferencedProtocols[idx] = OID;
+  }
+  
+  
+  bool getIsForwardProtoDecl() const { return isForwardProtoDecl; }
+  void setIsForwardProtoDecl(bool val) { isForwardProtoDecl = val; }
 
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcProtocol;
   }
   static bool classof(const ObjcProtocolDecl *D) { return true; }
+};
+  
+class ObjcForwardProtocolDecl : public TypeDecl {
+    ObjcProtocolDecl **ForwardProtocolDecls;   // Null if not defined.
+    int NumForwardProtocolDecls;               // -1 if not defined.
+  public:
+    ObjcForwardProtocolDecl(SourceLocation L, unsigned nElts)
+    : TypeDecl(ObjcForwardProtocol, L, 0, 0) { 
+      if (nElts) {
+        ForwardProtocolDecls = new ObjcProtocolDecl*[nElts];
+        memset(ForwardProtocolDecls, '\0', nElts*sizeof(ObjcProtocolDecl*));
+        NumForwardProtocolDecls = nElts;
+      }
+    }
+    void setForwardProtocolDecl(int idx, ObjcProtocolDecl *OID) {
+      assert((idx < NumForwardProtocolDecls) && "index out of range");
+      ForwardProtocolDecls[idx] = OID;
+    }
+    static bool classof(const Decl *D) {
+      return D->getKind() == ObjcForwardProtocol;
+    }
+    static bool classof(const ObjcForwardProtocolDecl *D) { return true; }
 };
 
 class ObjcCategoryDecl : public ScopedDecl {

@@ -29,6 +29,7 @@ static unsigned nInterfaceDecls = 0;
 static unsigned nClassDecls = 0;
 static unsigned nMethodDecls = 0;
 static unsigned nProtocolDecls = 0;
+static unsigned nForwardProtocolDecls = 0;
 static unsigned nCategoryDecls = 0;
 static unsigned nIvarDecls = 0;
 
@@ -59,6 +60,8 @@ const char *Decl::getDeclKindName() const {
     return "ObjcProtoMethod";
   case ObjcProtocol:
     return "ObjcProtocol";
+  case ObjcForwardProtocol:
+    return "ObjcForwardProtocol"; 
   case Struct:
     return "Struct";
   case Union:
@@ -122,6 +125,9 @@ void Decl::PrintStats() {
   fprintf(stderr, "    %d protocol decls, %d each (%d bytes)\n", 
 	  nProtocolDecls, (int)sizeof(ObjcProtocolDecl),
 	  int(nProtocolDecls*sizeof(ObjcProtocolDecl)));
+  fprintf(stderr, "    %d forward protocol decls, %d each (%d bytes)\n", 
+	  nForwardProtocolDecls, (int)sizeof(ObjcForwardProtocolDecl),
+	  int(nForwardProtocolDecls*sizeof(ObjcForwardProtocolDecl)));
   fprintf(stderr, "    %d category decls, %d each (%d bytes)\n", 
 	  nCategoryDecls, (int)sizeof(ObjcCategoryDecl),
 	  int(nCategoryDecls*sizeof(ObjcCategoryDecl)));
@@ -177,6 +183,9 @@ void Decl::addDeclKind(const Kind k) {
       break;
     case ObjcProtocol:
       nProtocolDecls++;
+      break;
+    case ObjcForwardProtocol:
+      nForwardProtocolDecls++;
       break;
     case ObjcCategory:
      nCategoryDecls++;

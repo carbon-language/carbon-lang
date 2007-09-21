@@ -905,14 +905,64 @@ Sema::DeclTy *Sema::ObjcStartProtoInterface(SourceLocation AtProtoInterfaceLoc,
                 IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                 IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
   assert(ProtocolName && "Missing protocol identifier");
-  ObjcProtocolDecl *PDecl;
+  ObjcProtocolDecl *PDecl = Context.getObjCProtocolDecl(ProtocolName);
+  if (PDecl) {
+    // Protocol already seen. Better be a forward protocol declaration
+    if (!PDecl->getIsForwardProtoDecl())
+      Diag(ProtocolLoc, diag::err_duplicate_protocol_def, 
+           ProtocolName->getName());
+    else {
+      PDecl->setIsForwardProtoDecl(false);
+      PDecl->AllocReferencedProtocols(NumProtoRefs);
+    }
+  }
+  else {
+    PDecl = new ObjcProtocolDecl(AtProtoInterfaceLoc, NumProtoRefs, 
+                                 ProtocolName);
+    PDecl->setIsForwardProtoDecl(false);
+    // Chain & install the protocol decl into the identifier.
+    PDecl->setNext(ProtocolName->getFETokenInfo<ScopedDecl>());
+    ProtocolName->setFETokenInfo(PDecl);
+    Context.setObjCProtocolDecl(ProtocolName, PDecl);
+  }    
+  
+  /// Check then save referenced protocols
+  for (unsigned int i = 0; i != NumProtoRefs; i++) {
+    ObjcProtocolDecl* RefPDecl = Context.getObjCProtocolDecl(ProtoRefNames[i]);
+    if (!RefPDecl || RefPDecl->getIsForwardProtoDecl())
+      Diag(ProtocolLoc, diag::err_undef_protocolref,
+	   ProtoRefNames[i]->getName(),
+           ProtocolName->getName());
+    PDecl->setReferencedProtocols((int)i, RefPDecl);
+  }
 
-  PDecl = new ObjcProtocolDecl(AtProtoInterfaceLoc, ProtocolName);
-
-  // Chain & install the protocol decl into the identifier.
-  PDecl->setNext(ProtocolName->getFETokenInfo<ScopedDecl>());
-  ProtocolName->setFETokenInfo(PDecl);
   return PDecl;
+}
+
+/// ObjcForwardProtocolDeclaration - 
+/// Scope will always be top level file scope. 
+Action::DeclTy *
+Sema::ObjcForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
+        IdentifierInfo **IdentList, unsigned NumElts) {
+  ObjcForwardProtocolDecl *FDecl = new ObjcForwardProtocolDecl(AtProtocolLoc, 
+                                                               NumElts);
+  
+  for (unsigned i = 0; i != NumElts; ++i) {
+    ObjcProtocolDecl *PDecl;
+    PDecl = Context.getObjCProtocolDecl(IdentList[i]);
+    if (!PDecl)  {// Already seen?
+      PDecl = new ObjcProtocolDecl(SourceLocation(), 0, IdentList[i], true);
+      // Chain & install the protocol decl into the identifier.
+      PDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
+      IdentList[i]->setFETokenInfo(PDecl);
+      Context.setObjCProtocolDecl(IdentList[i], PDecl);
+    }
+    // Remember that this needs to be removed when the scope is popped.
+    S->AddDecl(IdentList[i]);
+    
+    FDecl->setForwardProtocolDecl((int)i, PDecl);
+  }
+  return FDecl;
 }
 
 Sema::DeclTy *Sema::ObjcStartCatInterface(SourceLocation AtInterfaceLoc,

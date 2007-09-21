@@ -502,6 +502,14 @@ public:
                                        unsigned NumElts) {
     return 0;
   }
+  
+  virtual DeclTy *ObjcForwardProtocolDeclaration(Scope *S, 
+                                                 SourceLocation AtProtocolLoc,
+                                                 IdentifierInfo **IdentList,
+                                                 unsigned NumElts) {
+    return 0;
+  }
+  
   virtual void ObjCStartCategoryInterface() { // FIXME
     return;
   }
@@ -548,6 +556,11 @@ public:
                                        IdentifierInfo **IdentList,
                                        unsigned NumElts);
   
+  virtual DeclTy *ObjcForwardProtocolDeclaration(Scope *S, 
+                                                 SourceLocation AtProtocolLoc,
+                                                 IdentifierInfo **IdentList,
+                                                 unsigned NumElts);
+   
   virtual DeclTy *ObjcStartClassInterface(SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,

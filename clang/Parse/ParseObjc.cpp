@@ -713,13 +713,13 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
   IdentifierInfo *protocolName = Tok.getIdentifierInfo();
   SourceLocation nameLoc = ConsumeToken();
   
-  if (Tok.getKind() == tok::semi) { // forward declaration.
+  llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
+  if (Tok.getKind() == tok::semi) { // forward declaration of one protocol.
     ConsumeToken();
-    return 0; // FIXME: add protocolName
+    ProtocolRefs.push_back(protocolName);
   }
   if (Tok.getKind() == tok::comma) { // list of forward declarations.
     // Parse the list of forward declarations.
-    llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
     ProtocolRefs.push_back(protocolName);
     
     while (1) {
@@ -738,10 +738,12 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
     // Consume the ';'.
     if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@protocol"))
       return 0;
-    return 0; // FIXME
   }
+  if (ProtocolRefs.size() > 0)
+    return Actions.ObjcForwardProtocolDeclaration(CurScope, AtLoc,
+                                                  &ProtocolRefs[0], 
+                                                  ProtocolRefs.size());
   // Last, and definitely not least, parse a protocol declaration.
-  llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
   if (Tok.getKind() == tok::less) {
     if (ParseObjCProtocolReferences(ProtocolRefs))
       return 0;
