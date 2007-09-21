@@ -1022,12 +1022,7 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
       ArgValues.push_back(ArgValue);
     } else {
       assert(VA.isMemLoc());
-      
-      // Create the nodes corresponding to a load from this parameter slot.
-      int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
-                                      VA.getLocMemOffset());
-      SDOperand FIN = DAG.getFrameIndex(FI, getPointerTy());
-      ArgValues.push_back(DAG.getLoad(VA.getValVT(), Root, FIN, NULL, 0));
+      ArgValues.push_back(LowerMemArgument(Op, DAG, VA, MFI, Root, i));
     }
   }
   
