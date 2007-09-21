@@ -859,9 +859,9 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
       assert(VA.isMemLoc());
       if (StackPtr.Val == 0)
         StackPtr = DAG.getRegister(getStackPtrReg(), getPointerTy());
-      SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
-      PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
-      MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
+
+      MemOpChains.push_back(LowerMemOpCallTo(Op, DAG, StackPtr, VA, Chain,
+                                             Arg));
     }
   }
 
@@ -1064,7 +1064,6 @@ X86TargetLowering::LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
     unsigned Align = 1 << ((Flags & ISD::ParamFlags::ByValAlign) >>
                            ISD::ParamFlags::ByValAlignOffs);
 
-    assert (Align >= 8);
     unsigned  Size = (Flags & ISD::ParamFlags::ByValSize) >>
         ISD::ParamFlags::ByValSizeOffs;
 
@@ -1133,9 +1132,9 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
       assert(VA.isMemLoc());
       if (StackPtr.Val == 0)
         StackPtr = DAG.getRegister(getStackPtrReg(), getPointerTy());
-      SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
-      PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
-      MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
+
+      MemOpChains.push_back(LowerMemOpCallTo(Op, DAG, StackPtr, VA, Chain,
+                                             Arg));
     }
   }
 

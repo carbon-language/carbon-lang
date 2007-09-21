@@ -182,7 +182,6 @@ void TargetData::init(const std::string &TargetDescription) {
   setAlignment(VECTOR_ALIGN,    8,  8, 64);  // v2i32
   setAlignment(VECTOR_ALIGN,   16, 16, 128); // v16i8, v8i16, v4i32, ...
   setAlignment(AGGREGATE_ALIGN, 0,  8,  0);  // struct, union, class, ...
-  setAlignment(STACK_ALIGN,     0,  8,  0);  // objects on the stack
 
   while (!temp.empty()) {
     std::string token = getToken(temp, "-");
