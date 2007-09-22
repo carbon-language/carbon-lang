@@ -72,21 +72,20 @@ C/C++.</p>
 <p>Exception handling for most programming languages is designed to recover from
 conditions that rarely occur during general use of an application.  To that end,
 exception handling should not interfere with the main flow of an
-application&apos;s algorithm by performing checkpointing tasks such as saving
+application's algorithm by performing checkpointing tasks such as saving
 the current pc or register state.</p>
 
 <p>The Itanium ABI Exception Handling Specification defines a methodology for
 providing outlying data in the form of exception tables without inlining
-speculative exception handling code in the flow of an application&apos;s main
+speculative exception handling code in the flow of an application's main
 algorithm.  Thus, the specification is said to add "zero-cost" to the normal
 execution of an application.</p>
 
 <p>A more complete description of the Itanium ABI exception handling runtime
 support of can be found at <a
 href="http://www.codesourcery.com/cxx-abi/abi-eh.html">Itanium C++ ABI:
-Exception Handling.</a>  A description of the exception frame format can be
-found at <a
-href="http://refspecs.freestandards.org/LSB_3.0.0/LSB-Core-generic/LSB-
+Exception Handling.</a> A description of the exception frame format can be found
+at <a href="http://refspecs.freestandards.org/LSB_3.0.0/LSB-Core-generic/LSB-
 Core-generic/ehframechpt.html">Exception Frames</a>, with details of the Dwarf
 specification at <a href="http://www.eagercon.com/dwarf/dwarf3std.htm">Dwarf 3
 Standard.</a> A description for the C++ exception table formats can be found at
@@ -243,7 +242,7 @@ selector.</p>
 <p>Finally, the entry and exit of catch code is bracketed with calls to
 <tt>__cxa_begin_catch</tt> and <tt>__cxa_end_catch</tt>.
 <tt>__cxa_begin_catch</tt> takes a exception structure reference as an argument
-and returns the value of the exception object.</tt>  <tt>__cxa_end_catch</tt>
+and returns the value of the exception object. <tt>__cxa_end_catch</tt>
 takes a exception structure reference as an argument. This function clears the
 exception from the exception space.  Note: a rethrow from within the catch may
 replace this call with a <tt>__cxa_rethrow</tt>.</p>
@@ -438,7 +437,7 @@ all functions in the unit.</p>
 <div class="doc_text">
 
 <p>An exception table contains information about what actions to take when an
-exception is thrown in a particular part of a function&apos;s code.  There is
+exception is thrown in a particular part of a function's code.  There is
 one exception table per function except leaf routines and functions that have
 only calls to non-throwing functions will not need an exception table.</p>
 
@@ -455,7 +454,7 @@ only calls to non-throwing functions will not need an exception table.</p>
 
 <ol>
 
-<li><p>Testing/Testing/Testing.</li></p>
+<li><p>Testing/Testing/Testing.</p></li>
 
 </ol>
 
