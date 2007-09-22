@@ -116,20 +116,30 @@ the <tt>llvm-test</tt> directory will be automatically configured.
 Alternatively, you can configure the <tt>test-suite</tt> module manually.</p>
 <p>To run all of the simple tests in LLVM using DejaGNU, use the master Makefile
  in the <tt>llvm/test</tt> directory:</p>
+
+<div class="doc_code">
 <pre>
 % gmake -C llvm/test
 </pre>
-or<br>
+</div>
+
+<p>or</p>
+
+<div class="doc_code">
 <pre>
 % gmake check
 </pre>
+</div>
 
 <p>To run only a subdirectory of tests in llvm/test using DejaGNU (ie.
 Regression/Transforms), just set the TESTSUITE variable to the path of the
 subdirectory (relative to <tt>llvm/test</tt>):</p>
+
+<div class="doc_code">
 <pre>
 % gmake -C llvm/test TESTSUITE=Regression/Transforms
 </pre>
+</div>
 
 <p><b>Note: If you are running the tests with <tt>objdir != subdir</tt>, you
 must have run the complete testsuite before you can specify a
@@ -138,6 +148,7 @@ subdirectory.</b></p>
 <p>To run the comprehensive test suite (tests that compile and execute whole 
 programs), run the <tt>llvm-test</tt> tests:</p>
 
+<div class="doc_code">
 <pre>
 % cd llvm/projects
 % svn co http://llvm.org/svn/llvm-project/test-suite/trunk llvm-test
@@ -145,6 +156,7 @@ programs), run the <tt>llvm-test</tt> tests:</p>
 % ./configure --with-llvmsrc=$LLVM_SRC_ROOT --with-llvmobj=$LLVM_OBJ_ROOT
 % gmake
 </pre>
+</div>
 
 </div>
 
@@ -324,11 +336,14 @@ location of these external programs is configured by the llvm-test
   </p>
 
   <p> Below is an example of legal RUN lines in a <tt>.ll</tt> file:</p>
-  <pre>
-  ; RUN: llvm-as &lt; %s | llvm-dis &gt; %t1
-  ; RUN: llvm-dis &lt; %s.bc-13 &gt; %t2
-  ; RUN: diff %t1 %t2
-  </pre>
+
+<div class="doc_code">
+<pre>
+; RUN: llvm-as &lt; %s | llvm-dis &gt; %t1
+; RUN: llvm-dis &lt; %s.bc-13 &gt; %t2
+; RUN: diff %t1 %t2
+</pre>
+</div>
 
   <p>As with a Unix shell, the RUN: lines permit pipelines and I/O redirection
   to be used. However, the usage is slightly different than for Bash. To check
@@ -351,43 +366,66 @@ location of these external programs is configured by the llvm-test
   <p>There are some quoting rules that you must pay attention to when writing
   your RUN lines. In general nothing needs to be quoted. Tcl won't strip off any
   ' or " so they will get passed to the invoked program. For example:</p>
-  <pre>
-     ... | grep 'find this string'
-  </pre>
+
+<div class="doc_code">
+<pre>
+... | grep 'find this string'
+</pre>
+</div>
+
   <p>This will fail because the ' characters are passed to grep. This would
   instruction grep to look for <tt>'find</tt> in the files <tt>this</tt> and
   <tt>string'</tt>. To avoid this use curly braces to tell Tcl that it should
   treat everything enclosed as one value. So our example would become:</p>
-  <pre>
-     ... | grep {find this string}
-  </pre>
+
+<div class="doc_code">
+<pre>
+... | grep {find this string}
+</pre>
+</div>
+
   <p>Additionally, the characters <tt>[</tt> and <tt>]</tt> are treated 
   specially by Tcl. They tell Tcl to interpret the content as a command to
   execute. Since these characters are often used in regular expressions this can
   have disastrous results and cause the entire test run in a directory to fail.
   For example, a common idiom is to look for some basicblock number:</p>
-  <pre>
-     ... | grep bb[2-8]
-  </pre>
+
+<div class="doc_code">
+<pre>
+... | grep bb[2-8]
+</pre>
+</div>
+
   <p>This, however, will cause Tcl to fail because its going to try to execute
   a program named "2-8". Instead, what you want is this:</p>
-  <pre>
-     ... | grep {bb\[2-8\]}
-  </pre>
+
+<div class="doc_code">
+<pre>
+... | grep {bb\[2-8\]}
+</pre>
+</div>
+
   <p>Finally, if you need to pass the <tt>\</tt> character down to a program,
   then it must be doubled. This is another Tcl special character. So, suppose
   you had:
-  <pre>
-     ... | grep 'i32\*'
-  </pre>
+
+<div class="doc_code">
+<pre>
+... | grep 'i32\*'
+</pre>
+</div>
+
   <p>This will fail to match what you want (a pointer to i32). First, the
   <tt>'</tt> do not get stripped off. Second, the <tt>\</tt> gets stripped off
   by Tcl so what grep sees is: <tt>'i32*'</tt>. That's not likely to match
   anything. To resolve this you must use <tt>\\</tt> and the <tt>{}</tt>, like
   this:</p>
-  <pre>
-     ... | grep {i32\\*}
-  </pre>
+
+<div class="doc_code">
+<pre>
+... | grep {i32\\*}
+</pre>
+</div>
 
 </div>
 
@@ -404,36 +442,47 @@ location of these external programs is configured by the llvm-test
   </p>
   Here are the available variable names. The alternate syntax is listed in
   parentheses.</p>
+
   <dl style="margin-left: 25px">
     <dt><b>$test</b> (%s)</dt>
     <dd>The full path to the test case's source. This is suitable for passing
     on the command line as the input to an llvm tool.</dd>
+
     <dt><b>$srcdir</b></dt>
     <dd>The source directory from where the "<tt>make check</tt>" was run.</dd>
+
     <dt><b>objdir</b></dt>
     <dd>The object directory that corresponds to the </tt>$srcdir</tt>.</dd>
+
     <dt><b>subdir</b></dt>
     <dd>A partial path from the <tt>test</tt> directory that contains the 
     sub-directory that contains the test source being executed.</dd>
+
     <dt><b>srcroot</b></dt>
     <dd>The root directory of the LLVM src tree.</dd>
+
     <dt><b>objroot</b></dt>
     <dd>The root directory of the LLVM object tree. This could be the same
     as the srcroot.</dd>
+
     <dt><b>path</b><dt>
     <dd>The path to the directory that contains the test case source.  This is 
     for locating any supporting files that are not generated by the test, but 
     used by the test.</dd>
+
     <dt><b>tmp</b></dt>
     <dd>The path to a temporary file name that could be used for this test case.
     The file name won't conflict with other test cases. You can append to it if
     you need multiple temporaries. This is useful as the destination of some
     redirected output.</dd>
+
     <dt><b>llvmlibsdir</b> (%llvmlibsdir)</dt>
     <dd>The directory where the LLVM libraries are located.</dd>
+
     <dt><b>target_triplet</b> (%target_triplet)</dt>
     <dd>The target triplet that corresponds to the current host machine (the one
     running the test cases). This should probably be called "host".<dd>
+
     <dt><b>prcontext</b> (%prcontext)</dt>
     <dd>Path to the prcontext tcl script that prints some context around a 
     line that matches a pattern. This isn't strictly necessary as the test suite
@@ -441,31 +490,41 @@ location of these external programs is configured by the llvm-test
     the prcontext script is located. Note that this script is similar to 
     <tt>grep -C</tt> but you should use the <tt>prcontext</tt> script because
     not all platforms support <tt>grep -C</tt>.</dd>
+
     <dt><b>llvmgcc</b> (%llvmgcc)</dt>
     <dd>The full path to the <tt>llvm-gcc</tt> executable as specified in the
     configured LLVM environment</dd>
+
     <dt><b>llvmgxx</b> (%llvmgxx)</dt>
     <dd>The full path to the <tt>llvm-gxx</tt> executable as specified in the
     configured LLVM environment</dd>
+
     <dt><b>llvmgcc_version</b> (%llvmgcc_version)</dt>
     <dd>The full version number of the <tt>llvm-gcc</tt> executable.</dd>
+
     <dt><b>llvmgccmajvers</b> (%llvmgccmajvers)</dt>
     <dd>The major version number of the <tt>llvm-gcc</tt> executable.</dd>
+
     <dt><b>gccpath</b></dt>
     <dd>The full path to the C compiler used to <i>build </i> LLVM. Note that 
     this might not be gcc.</dd>
+
     <dt><b>gxxpath</b></dt>
     <dd>The full path to the C++ compiler used to <i>build </i> LLVM. Note that 
     this might not be g++.</dd>
+
     <dt><b>compile_c</b> (%compile_c)</dt>
     <dd>The full command line used to compile LLVM C source  code. This has all 
     the configured -I, -D and optimization options.</dd>
+
     <dt><b>compile_cxx</b> (%compile_cxx)</dt>
     <dd>The full command used to compile LLVM C++ source  code. This has 
     all the configured -I, -D and optimization options.</dd>
+
     <dt><b>link</b> (%link)</dt> 
     <dd>This full link command used to link LLVM executables. This has all the
     configured -I, -L and -l options.</dd>
+
     <dt><b>shlibext</b> (%shlibext)</dt>
     <dd>The suffix for the host platforms share library (dll) files. This
     includes the period as the first character.</dd>
@@ -491,6 +550,7 @@ location of these external programs is configured by the llvm-test
     non-zero result will cause the test to fail. This script overcomes that 
     issue and nicely documents that the test case is purposefully ignoring the
     result code of the tool</dd>
+
     <dt><b>not</b></dt>
     <dd>This script runs its arguments and then inverts the result code from 
     it. Zero result codes become 1. Non-zero result codes become 0. This is
@@ -511,9 +571,12 @@ location of these external programs is configured by the llvm-test
   succeed. To XFAIL everywhere just specify <tt>XFAIL: *</tt>. When matching
   the llvm-gcc version, you can specify the major (e.g. 3) or full version 
   (i.e. 3.4) number. Here is an example of an <tt>XFAIL</tt> line:</p>
-  <pre>
-   ; XFAIL: darwin,sun,llvmgcc4
-  </pre>
+
+<div class="doc_code">
+<pre>
+; XFAIL: darwin,sun,llvmgcc4
+</pre>
+</div>
 
   <p>To make the output more useful, the <tt>llvm_runtest</tt> function wil
   scan the lines of the test case for ones that contain a pattern that matches
@@ -573,12 +636,14 @@ specify the following configuration options:</p>
     uses the default value
     <tt>/home/vadve/shared/benchmarks/speccpu2000/benchspec</tt>.
     <p>
+
   <dt><i>--enable-spec95</i>
   <dt><i>--enable-spec95=&lt;<tt>directory</tt>&gt;</i>
   <dd>
     Enable the use of SPEC95 when testing LLVM.  It is similar to the
     <i>--enable-spec2000</i> option.
     <p>
+
   <dt><i>--enable-povray</i>
   <dt><i>--enable-povray=&lt;<tt>directory</tt>&gt;</i>
   <dd>
@@ -598,12 +663,12 @@ specify the following configuration options:</p>
 <i>are not</i> executed inside of the LLVM source tree. This is because the
 test suite creates temporary files during execution.</p>
 
-<p>The master Makefile in llvm/test is capable of running only the DejaGNU
-driven tests. By default, it will run all of these tests.</p>
+<p>The master Makefile in <tt>llvm/test</tt> is capable of running only the
+DejaGNU driven tests. By default, it will run all of these tests.</p>
 
 <p>To run only the DejaGNU driven tests, run <tt>gmake</tt> at the
 command line in <tt>llvm/test</tt>.  To run a specific directory of tests, use
-the TESTSUITE variable.
+the <tt>TESTSUITE</tt> variable.
 </p>
 
 <p>For example, to run the Regression tests, type 
@@ -613,40 +678,71 @@ the TESTSUITE variable.
 <tt>llvm/test/Regression</tt>. You must use DejaGNU from the <tt>llvm/test</tt>
 directory to run them.</p>
 
-<p>To run the <tt>llvm-test</tt> suite, you need to use the following steps:
-</p>
+<p>To run the <tt>llvm-test</tt> suite, you need to use the following steps:</p>
+
 <ol>
-  <li>cd into the llvm/projects directory</li>
-  <li>check out the <tt>test-suite</tt> module with:<br/>
-  <tt>svn co http://llvm.org/svn/llvm-project/test-suite/trunk llvm-test<br/>
-  This will get the test suite into <tt>llvm/projects/llvm-test</tt></li>
-  <li>configure the test suite. You can do this one of two ways:
+  <li><tt>cd</tt> into the <tt>llvm/projects</tt> directory</li>
+
+  <li><p>Check out the <tt>test-suite</tt> module with:</p>
+
+<div class="doc_code">
+<pre>
+% svn co http://llvm.org/svn/llvm-project/test-suite/trunk llvm-test
+</pre>
+</div>
+
+      <p>This will get the test suite into <tt>llvm/projects/llvm-test</tt></p>
+
+  <li><p>Configure the test suite. You can do this one of two ways:</p>
+
   <ol>
-    <li>Use the regular llvm configure:<br/>
-    <tt>cd $LLVM_OBJ_ROOT ; $LLVM_SRC_ROOT/configure</tt><br/>
-    This will ensure that the <tt>projects/llvm-test</tt> directory is also
-    properly configured.</li>
-    <li>Use the <tt>configure</tt> script found in the <tt>llvm-test</tt> source
-    directory:<br/>
-    <tt>$LLVM_SRC_ROOT/projects/llvm-test/configure
-     --with-llvmsrc=$LLVM_SRC_ROOT --with-llvmobj=$LLVM_OBJ_ROOT</tt>
+    <li>Use the regular llvm configure:<br/><br/>
+
+<div class="doc_code">
+<pre>
+% cd $LLVM_OBJ_ROOT ; $LLVM_SRC_ROOT/configure
+</pre>
+</div>
+
+        <p>This will ensure that the <tt>projects/llvm-test</tt> directory is
+           also properly configured.</p></li>
+
+    <li><p>Use the <tt>configure</tt> script found in the <tt>llvm-test</tt>
+        source directory:</p>
+
+<div class="doc_code">
+<pre>
+% $LLVM_SRC_ROOT/projects/llvm-test/configure \
+  --with-llvmsrc=$LLVM_SRC_ROOT               \
+  --with-llvmobj=$LLVM_OBJ_ROOT
+</pre>
+</div>
     </li>
   </ol>
-  <li>gmake</li>
+  <li><tt>gmake</tt></li>
 </ol>
 <p>Note that the second and third steps only need to be done once. After you
 have the suite checked out and configured, you don't need to do it again (unless
 the test code or configure script changes).</p>
 
 <p>To make a specialized test (use one of the
-<tt>llvm-test/TEST.&lt;type&gt;.Makefile</tt>s), just run:<br/>
-<tt>gmake TEST=&lt;type&gt; test</tt><br/>For example, you could run the
-nightly tester tests using the following commands:</p>
+<tt>llvm-test/TEST.&lt;type&gt;.Makefile</tt>s), just run:</p>
 
+<div class="doc_code">
 <pre>
- % cd llvm/projects/llvm-test
- % gmake TEST=nightly test
+% gmake TEST=&lt;type&gt; test
 </pre>
+</div>
+
+<p>For example, you could run the nightly tester tests using the following
+commands:</p>
+
+<div class="doc_code">
+<pre>
+% cd llvm/projects/llvm-test
+% gmake TEST=nightly test
+</pre>
+</div>
 
 <p>Regardless of which test you're running, the results are printed on standard
 output and standard error.  You can redirect these results to a file if you
