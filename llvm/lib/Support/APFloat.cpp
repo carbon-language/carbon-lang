@@ -1318,39 +1318,44 @@ APFloat::opStatus
 APFloat::convert(const fltSemantics &toSemantics,
 		 roundingMode rounding_mode)
 {
-  unsigned int newPartCount;
+  lostFraction lostFraction;
+  unsigned int newPartCount, oldPartCount;
   opStatus fs;
-
+  
+  lostFraction = lfExactlyZero;
   newPartCount = partCountForBits(toSemantics.precision + 1);
+  oldPartCount = partCount();
 
-  /* If our new form is wider, re-allocate our bit pattern into wider
-     storage.
-     If we're narrowing from multiple words to 1 words, copy to the single
-     word.  If we are losing information by doing this, we would have to
-     worry about rounding; right now the only case is f80 -> shorter
-     conversion, and we are keeping all 64 significant bits, so it's OK. */
-  if(newPartCount > partCount()) {
+  /* Handle storage complications.  If our new form is wider,
+     re-allocate our bit pattern into wider storage.  If it is
+     narrower, we ignore the excess parts, but if narrowing to a
+     single part we need to free the old storage.  */
+  if (newPartCount > oldPartCount) {
     integerPart *newParts;
 
     newParts = new integerPart[newPartCount];
     APInt::tcSet(newParts, 0, newPartCount);
-    APInt::tcAssign(newParts, significandParts(), partCount());
+    APInt::tcAssign(newParts, significandParts(), oldPartCount);
     freeSignificand();
     significand.parts = newParts;
-  } else if (newPartCount==1 && newPartCount < partCount()) {
-    integerPart newPart;
-
-    APInt::tcSet(&newPart, 0, newPartCount);
-    APInt::tcAssign(&newPart, significandParts(), partCount());
-    freeSignificand();
-    significand.part = newPart;
+  } else if (newPartCount < oldPartCount) {
+    /* Capture any lost fraction through truncation of parts so we get
+       correct rounding whilst normalizing.  */
+    lostFraction = lostFractionThroughTruncation
+      (significandParts(), oldPartCount, toSemantics.precision);
+    if (newPartCount == 1)
+      {
+	integerPart newPart = significandParts()[0];
+	freeSignificand();
+	significand.part = newPart;
+      }
   }
 
   if(category == fcNormal) {
     /* Re-interpret our bit-pattern.  */
     exponent += toSemantics.precision - semantics->precision;
     semantics = &toSemantics;
-    fs = normalize(rounding_mode, lfExactlyZero);
+    fs = normalize(rounding_mode, lostFraction);
   } else {
     semantics = &toSemantics;
     fs = opOK;
