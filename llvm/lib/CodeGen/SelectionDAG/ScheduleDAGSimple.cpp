@@ -125,6 +125,8 @@ public:
     , StageEnd(NULL)
     , Latency(0)
     , IsCall(false)
+    , IsLoad(false)
+    , IsStore(false)
     , Slot(0)
     , Group(NULL)
 #ifndef NDEBUG
