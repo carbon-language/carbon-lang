@@ -232,7 +232,8 @@ subtrees of the test suite directory tree are as follows:</p>
   <p>This directory contains a large array of small tests
   that exercise various features of LLVM and to ensure that regressions do not
   occur. The directory is broken into several sub-directories, each focused on
-  a particular area of LLVM. A few of the important ones are:<ul>
+  a particular area of LLVM. A few of the important ones are:</p>
+  <ul>
     <li><tt>Analysis</tt>: checks Analysis passes.</li>
     <li><tt>Archive</tt>: checks the Archive library.</li>
     <li><tt>Assembler</tt>: checks Assembly reader/writer functionality.</li>
@@ -243,7 +244,7 @@ subtrees of the test suite directory tree are as follows:</p>
     <li><tt>Transforms</tt>: tests each of the scalar, IPO, and utility
     transforms to ensure they make the right transformations.</li>
     <li><tt>Verifier</tt>: tests the IR verifier.</li>
-  </ul></p>
+  </ul>
   <p>Typically when a bug is found in LLVM, a regression test containing 
   just enough code to reproduce the problem should be written and placed 
   somewhere underneath this directory.  In most cases, this will be a small 
@@ -440,7 +441,7 @@ location of these external programs is configured by the llvm-test
   library, certain names can be accessed with an alternate syntax: a % prefix.
   These alternates are deprecated and may go away in a future version.
   </p>
-  Here are the available variable names. The alternate syntax is listed in
+  <p>Here are the available variable names. The alternate syntax is listed in
   parentheses.</p>
 
   <dl style="margin-left: 25px">
@@ -452,7 +453,7 @@ location of these external programs is configured by the llvm-test
     <dd>The source directory from where the "<tt>make check</tt>" was run.</dd>
 
     <dt><b>objdir</b></dt>
-    <dd>The object directory that corresponds to the </tt>$srcdir</tt>.</dd>
+    <dd>The object directory that corresponds to the <tt>$srcdir</tt>.</dd>
 
     <dt><b>subdir</b></dt>
     <dd>A partial path from the <tt>test</tt> directory that contains the 
