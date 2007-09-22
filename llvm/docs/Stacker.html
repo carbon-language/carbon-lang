@@ -1296,19 +1296,26 @@ remainder of the story.
 </div>
 <!-- ======================================================================= -->
 <div class="doc_subsection"> <a name="directory">Directory Structure</a></div>
+
 <div class="doc_text">
 <p>The source code, test programs, and sample programs can all be found
 in the LLVM repository named <tt>llvm-stacker</tt> This should be checked out to
 the <tt>projects</tt> directory so that it will auto-configure. To do that, make
 sure you have the llvm sources in <tt><i>llvm</i></tt> 
 (see <a href="GettingStarted.html">Getting Started</a>) and then use these 
-commands:<pre>
-    svn co http://llvm.org/svn/llvm-project/llvm-top/trunk llvm-top
-    cd llvm-top
-    make build MODULE=stacker
-</p>
+commands:</p>
+
+<div class="doc_code">
+<pre>
+% svn co http://llvm.org/svn/llvm-project/llvm-top/trunk llvm-top
+% cd llvm-top
+% make build MODULE=stacker
+</pre>
+</div>
+
 <p>Under the <tt>projects/llvm-stacker</tt> directory you will find the
 implementation of the Stacker compiler, as follows:</p>
+
 <ul>
     <li><em>lib</em> - contains most of the source code
     <ul>
@@ -1323,11 +1330,14 @@ implementation of the Stacker compiler, as follows:</p>
     <li><em>sample</em> - contains the sample programs</li>
 </ul>
 </div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="lexer"></a>The Lexer</div>
+
 <div class="doc_text">
 <p>See projects/llvm-stacker/lib/compiler/Lexer.l</p>
 </div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection"><a name="parser"></a>The Parser</div>
 <div class="doc_text">
