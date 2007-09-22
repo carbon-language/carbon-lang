@@ -34181,6 +34181,12 @@ ac_config_commands="$ac_config_commands utils/Makefile"
 ac_config_commands="$ac_config_commands projects/Makefile"
 
 
+ac_config_commands="$ac_config_commands bindings/Makefile"
+
+
+ac_config_commands="$ac_config_commands bindings/ocaml/Makefile.ocaml"
+
+
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -34765,6 +34771,8 @@ do
     "tools/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS tools/Makefile" ;;
     "utils/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS utils/Makefile" ;;
     "projects/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS projects/Makefile" ;;
+    "bindings/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS bindings/Makefile" ;;
+    "bindings/ocaml/Makefile.ocaml") CONFIG_COMMANDS="$CONFIG_COMMANDS bindings/ocaml/Makefile.ocaml" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
@@ -35464,6 +35472,10 @@ echo "$as_me: executing $ac_file commands" >&6;}
    ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/utils/Makefile utils/Makefile ;;
     "projects/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname projects/Makefile`
    ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/projects/Makefile projects/Makefile ;;
+    "bindings/Makefile":C) ${llvm_src}/autoconf/mkinstalldirs `dirname bindings/Makefile`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/bindings/Makefile bindings/Makefile ;;
+    "bindings/ocaml/Makefile.ocaml":C) ${llvm_src}/autoconf/mkinstalldirs `dirname bindings/ocaml/Makefile.ocaml`
+   ${SHELL} ${llvm_src}/autoconf/install-sh -c ${srcdir}/bindings/ocaml/Makefile.ocaml bindings/ocaml/Makefile.ocaml ;;
 
   esac
 done # for ac_tag
