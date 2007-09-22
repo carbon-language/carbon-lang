@@ -5160,16 +5160,15 @@ declare void @llvm.memory.barrier( i1 &lt;ll&gt;, i1 &lt;ls&gt;, i1 &lt;sl&gt;, 
 <p>
   For example, if the function is
   <tt>i32 f(i8* nest  %c, i32 %x, i32 %y)</tt> then the resulting function
-  pointer has signature <tt>i32 (i32, i32)*</tt>.  It can be created as follows:
+  pointer has signature <tt>i32 (i32, i32)*</tt>.  It can be created as follows:</p>
 <pre>
   %tramp = alloca [10 x i8], align 4 ; size and alignment only correct for X86
   %tramp1 = getelementptr [10 x i8]* %tramp, i32 0, i32 0
   %p = call i8* @llvm.init.trampoline( i8* %tramp1, i8* bitcast (i32 (i8* nest , i32, i32)* @f to i8*), i8* %nval )
   %fp = bitcast i8* %p to i32 (i32, i32)*
 </pre>
-  The call <tt>%val = call i32 %fp( i32 %x, i32 %y )</tt> is then equivalent to
-  <tt>%val = call i32 %f( i8* %nval, i32 %x, i32 %y )</tt>.
-</p>
+  <p>The call <tt>%val = call i32 %fp( i32 %x, i32 %y )</tt> is then equivalent
+  to <tt>%val = call i32 %f( i8* %nval, i32 %x, i32 %y )</tt>.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
