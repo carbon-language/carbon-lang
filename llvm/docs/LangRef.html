@@ -3122,14 +3122,10 @@ must be an <a href="#t_integer">integer</a> type.</p>
 towards zero) unsigned integer value. If the value cannot fit in <tt>ty2</tt>,
 the results are undefined.</p>
 
-<p>When converting to i1, the conversion is done as a comparison against 
-zero. If the <tt>value</tt> was zero, the i1 result will be <tt>false</tt>. 
-If the <tt>value</tt> was non-zero, the i1 result will be <tt>true</tt>.</p>
-
 <h5>Example:</h5>
 <pre>
   %X = fptoui double 123.0 to i32      <i>; yields i32:123</i>
-  %Y = fptoui float 1.0E+300 to i1     <i>; yields i1:true</i>
+  %Y = fptoui float 1.0E+300 to i1     <i>; yields undefined:1</i>
   %X = fptoui float 1.04E+17 to i8     <i>; yields undefined:1</i>
 </pre>
 </div>
@@ -3162,14 +3158,10 @@ must also be an <a href="#t_integer">integer</a> type.</p>
 towards zero) signed integer value. If the value cannot fit in <tt>ty2</tt>,
 the results are undefined.</p>
 
-<p>When converting to i1, the conversion is done as a comparison against 
-zero. If the <tt>value</tt> was zero, the i1 result will be <tt>false</tt>. 
-If the <tt>value</tt> was non-zero, the i1 result will be <tt>true</tt>.</p>
-
 <h5>Example:</h5>
 <pre>
   %X = fptosi double -123.0 to i32      <i>; yields i32:-123</i>
-  %Y = fptosi float 1.0E-247 to i1      <i>; yields i1:true</i>
+  %Y = fptosi float 1.0E-247 to i1      <i>; yields undefined:1</i>
   %X = fptosi float 1.04E+17 to i8      <i>; yields undefined:1</i>
 </pre>
 </div>
