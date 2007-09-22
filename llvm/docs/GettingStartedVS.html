@@ -86,7 +86,7 @@
 
 <ol>
   <li>Read the documentation.</li>
-  <li>Read the documentation.</li>
+  <li>Seriously, read the documentation.</li>
   <li>Remember that you were warned twice about reading the documentation.</li>
 
   <li>Get the Source Code
@@ -203,17 +203,13 @@ each of these names with the appropriate pathname on your local system.
 All these paths are absolute:</p>
 
 <dl>
-    <dt>SRC_ROOT
-    <dd>
-    This is the top level directory of the LLVM source tree.
-    <p>
+    <dt>SRC_ROOT</dt>
+    <dd><p>This is the top level directory of the LLVM source tree.</p></dd>
 
-    <dt>OBJ_ROOT
-    <dd>
-    This is the top level directory of the LLVM object tree (i.e. the
-    tree where object files and compiled programs will be placed.  It
-    is fixed at SRC_ROOT/win32).
-    <p>
+    <dt>OBJ_ROOT</dt>
+    <dd><p>This is the top level directory of the LLVM object tree (i.e. the
+        tree where object files and compiled programs will be placed.  It is
+        fixed at SRC_ROOT/win32).</p></dd>
 </dl>
 
 </div>
@@ -227,12 +223,12 @@ All these paths are absolute:</p>
 
   <p>The object files are placed under <tt>OBJ_ROOT/Debug</tt> for debug builds
   and <tt>OBJ_ROOT/Release</tt> for release (optimized) builds.  These include
-  both executables and libararies that your application can link against.
+  both executables and libararies that your application can link against.</p>
 
   <p>The files that <tt>configure</tt> would create when building on Unix are
   created by the <tt>Configure</tt> project and placed in
   <tt>OBJ_ROOT/llvm</tt>.  You application must have OBJ_ROOT in its include
-  search path just before <tt>SRC_ROOT/include</tt>.
+  search path just before <tt>SRC_ROOT/include</tt>.</p>
 
 </div>
 
@@ -245,57 +241,83 @@ All these paths are absolute:</p>
 <div class="doc_text">
 
 <ol>
-  <li>First, create a simple C file, name it 'hello.c':
-       <pre>
-   #include &lt;stdio.h&gt;
-   int main() {
-     printf("hello world\n");
-     return 0;
-   }
-       </pre></li>
+  <li><p>First, create a simple C file, name it 'hello.c':</p>
+
+<div class="doc_code">
+<pre>
+#include &lt;stdio.h&gt;
+int main() {
+  printf("hello world\n");
+  return 0;
+}
+</pre></div></li>
 
   <li><p>Next, compile the C file into a LLVM bitcode file:</p>
-      <p><tt>% llvm-gcc -c hello.c -emit-llvm -o hello.bc</tt></p>
 
-      <p>This will create the result file <tt>hello.bc</tt> which is the LLVM 
-      bitcode that corresponds the the compiled program and the library 
-      facilities that it required.  You can execute this file directly using
-      <tt>lli</tt> tool, compile it to native assembly with the <tt>llc</tt>, 
-      optimize or analyze it further with the <tt>opt</tt> tool, etc.</p> 
+<div class="doc_code">
+<pre>
+% llvm-gcc -c hello.c -emit-llvm -o hello.bc
+</pre>
+</div>
+
+      <p>This will create the result file <tt>hello.bc</tt> which is the LLVM
+         bitcode that corresponds the the compiled program and the library
+         facilities that it required.  You can execute this file directly using
+         <tt>lli</tt> tool, compile it to native assembly with the <tt>llc</tt>,
+         optimize or analyze it further with the <tt>opt</tt> tool, etc.</p>
       
       <p><b>Note: while you cannot do this step on Windows, you can do it on a
-        Unix system and transfer <tt>hello.bc</tt> to Windows.  Important:
-        transfer as a binary file!</b></p></li>
+         Unix system and transfer <tt>hello.bc</tt> to Windows.  Important:
+         transfer as a binary file!</b></p></li>
 
   <li><p>Run the program using the just-in-time compiler:</p>
       
-      <p><tt>% lli hello.bc</tt></p></li>
+<div class="doc_code">
+<pre>
+% lli hello.bc
+</pre>
+</div>
 
       <p>Note: this will only work for trivial C programs.  Non-trivial programs
-        (and any C++ program) will have dependencies on the GCC runtime that
-        won't be satisfied by the Microsoft runtime libraries.</p>
+         (and any C++ program) will have dependencies on the GCC runtime that
+         won't be satisfied by the Microsoft runtime libraries.</p></li>
 
   <li><p>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
       code:</p>
 
-      <p><tt>% llvm-dis &lt; hello.bc | more</tt><p></li>
+<div class="doc_code">
+<pre>
+% llvm-dis &lt; hello.bc | more
+</pre>
+</div></li>
 
   <li><p>Compile the program to C using the LLC code generator:</p>
 
-      <p><tt>% llc -march=c hello.bc</tt></p></li>
+<div class="doc_code">
+<pre>
+% llc -march=c hello.bc
+</pre>
+</div></li>
 
   <li><p>Compile to binary using Microsoft C:</p>
 
-      <p><tt>% cl hello.cbe.c</tt></p></li>
+<div class="doc_code">
+<pre>
+% cl hello.cbe.c
+</pre>
+</div>
 
       <p>Note: this will only work for trivial C programs.  Non-trivial programs
         (and any C++ program) will have dependencies on the GCC runtime that
-        won't be satisfied by the Microsoft runtime libraries.</p>
+        won't be satisfied by the Microsoft runtime libraries.</p></li>
 
   <li><p>Execute the native code program:</p>
 
-      <p><tt>% hello.cbe.exe</tt></p></li>
-
+<div class="doc_code">
+<pre>
+% hello.cbe.exe
+</pre>
+</div></li>
 </ol>
 
 </div>
@@ -332,7 +354,7 @@ out:</p>
   <li><a href="http://llvm.org/">LLVM homepage</a></li>
   <li><a href="http://llvm.org/doxygen/">LLVM doxygen tree</a></li>
   <li><a href="http://llvm.org/docs/Projects.html">Starting a Project
-  that Uses LLVM</a></li>
+      that Uses LLVM</a></li>
 </ul>
 
 </div>
