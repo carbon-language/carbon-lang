@@ -741,7 +741,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     
     if (const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(Operand)) {
       // FIXME: Evaluate this correctly!
-      Result = (int)FL->getValue();
+      Result = (int)FL->getValueAsDouble();
       break;
     }
     if (Loc) *Loc = Operand->getLocStart();

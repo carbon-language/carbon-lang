@@ -307,7 +307,7 @@ void StmtDumper::VisitIntegerLiteral(IntegerLiteral *Node) {
 }
 void StmtDumper::VisitFloatingLiteral(FloatingLiteral *Node) {
   DumpExpr(Node);
-  fprintf(F, " %f", Node->getValue());
+  fprintf(F, " %f", Node->getValueAsDouble());
 }
 
 void StmtDumper::VisitStringLiteral(StringLiteral *Str) {

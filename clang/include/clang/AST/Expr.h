@@ -223,7 +223,9 @@ public:
   FloatingLiteral(const llvm::APFloat &V, QualType Type, SourceLocation L)
     : Expr(FloatingLiteralClass, Type), Value(V), Loc(L) {} 
 
-  float getValue() const { 
+  const llvm::APFloat &getValue() const { return Value; }
+
+  double getValueAsDouble() const { 
     if (cast<BuiltinType>(getType())->getKind() == BuiltinType::Float)
       return Value.convertToFloat();
     else
