@@ -1238,6 +1238,7 @@ void CWriter::writeOperandWithCast(Value* Operand, unsigned Opcode) {
       shouldCast = true;
       castIsSigned = false;
       break;
+    case Instruction::GetElementPtr:
     case Instruction::AShr:
     case Instruction::SDiv:
     case Instruction::SRem: // Cast to signed first
@@ -2859,7 +2860,7 @@ void CWriter::printIndexingExpression(Value *Ptr, gep_type_iterator I,
       Out << ".field" << cast<ConstantInt>(I.getOperand())->getZExtValue();
     } else {
       Out << '[';
-      writeOperand(I.getOperand());
+      writeOperandWithCast(I.getOperand(), Instruction::GetElementPtr);
       Out << ']';
     }
 }
