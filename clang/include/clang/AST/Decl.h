@@ -26,6 +26,8 @@ class FunctionDecl;
 class AttributeList;
 class ObjcIvarDecl;
 class ObjcMethodDecl;
+class ObjcProtocolDecl;
+class ObjcCategoryDecl;
 
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
@@ -539,6 +541,14 @@ public:
 };
 
 class ObjcInterfaceDecl : public TypeDecl {
+  
+  /// Class's super class.
+  ObjcInterfaceDecl *SuperClass;
+  
+  /// Protocols referenced in interface header declaration
+  ObjcProtocolDecl **IntfRefProtocols;  // Null if none
+  int NumIntfRefProtocols;  // -1 if none
+  
   /// Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
   ObjcIvarDecl **Ivars;   // Null if not defined.
   int NumIvars;   // -1 if not defined.
@@ -551,13 +561,31 @@ class ObjcInterfaceDecl : public TypeDecl {
   ObjcMethodDecl **ClsMethods;  // Null if not defined
   int NumClsMethods;  // -1 if not defined
   
+  /// List of categories defined for this class.
+  ObjcCategoryDecl *ListCategories;
+  
   bool isForwardDecl; // declared with @class.
 public:
-  ObjcInterfaceDecl(SourceLocation L, IdentifierInfo *Id, bool FD = false)
-    : TypeDecl(ObjcInterface, L, Id, 0), Ivars(0), NumIvars(-1),
+  ObjcInterfaceDecl(SourceLocation L, unsigned numRefProtos,
+                    IdentifierInfo *Id, bool FD = false)
+    : TypeDecl(ObjcInterface, L, Id, 0),
+      SuperClass(0),
+      IntfRefProtocols(0), NumIntfRefProtocols(-1),
+      Ivars(0), NumIvars(-1),
       InsMethods(0), NumInsMethods(-1), ClsMethods(0), NumClsMethods(-1),
-      isForwardDecl(FD) { }
-     
+      ListCategories(0),
+      isForwardDecl(FD) {
+        AllocIntfRefProtocols(numRefProtos);
+      }
+    
+  void AllocIntfRefProtocols(unsigned numRefProtos) {
+    if (numRefProtos) {
+      IntfRefProtocols = new ObjcProtocolDecl*[numRefProtos];
+      memset(IntfRefProtocols, '\0',
+             numRefProtos*sizeof(ObjcProtocolDecl*));
+      NumIntfRefProtocols = numRefProtos;
+    }
+  }
   void ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars, 
 				       unsigned numIvars);
 
@@ -566,6 +594,19 @@ public:
   
   bool getIsForwardDecl() const { return isForwardDecl; }
   void setIsForwardDecl(bool val) { isForwardDecl = val; }
+  
+  void setIntfRefProtocols(int idx, ObjcProtocolDecl *OID) {
+    assert((idx < NumIntfRefProtocols) && "index out of range");
+    IntfRefProtocols[idx] = OID;
+  }
+  
+  ObjcInterfaceDecl *getSuperClass() const { return SuperClass; }
+  void setSuperClass(ObjcInterfaceDecl * superCls) { SuperClass = superCls; }
+  
+  ObjcCategoryDecl* getListCategories() const { return ListCategories; }
+  void setListCategories(ObjcCategoryDecl *category) { 
+         ListCategories = category; 
+  }
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcInterface;
@@ -752,6 +793,16 @@ class ObjcForwardProtocolDecl : public TypeDecl {
 };
 
 class ObjcCategoryDecl : public ScopedDecl {
+  /// Interface belonging to this category
+  ObjcInterfaceDecl *ClassInterface;
+  
+  /// Category name
+  IdentifierInfo *ObjcCatName;
+  
+  /// referenced protocols in this category
+  ObjcProtocolDecl **CatReferencedProtocols;  // Null if none
+  int NumCatReferencedProtocols;  // -1 if none
+  
   /// category instance methods
   ObjcMethodDecl **CatInsMethods;  // Null if not defined
   int NumCatInsMethods;  // -1 if not defined
@@ -760,21 +811,45 @@ class ObjcCategoryDecl : public ScopedDecl {
   ObjcMethodDecl **CatClsMethods;  // Null if not defined
   int NumCatClsMethods;  // -1 if not defined
   
-  /// Category name
-  IdentifierInfo *ObjcCatName;
+  /// Next category belonging to this class
+  ObjcCategoryDecl *NextClassCategory;
 
 public:
-  ObjcCategoryDecl(SourceLocation L, IdentifierInfo *Id)
+  ObjcCategoryDecl(SourceLocation L, unsigned numRefProtocol, 
+                   IdentifierInfo *Id)
     : ScopedDecl(ObjcCategory, L, Id, 0),
+      ClassInterface(0), ObjcCatName(0),
+      CatReferencedProtocols(0), NumCatReferencedProtocols(-1),
       CatInsMethods(0), NumCatInsMethods(-1),
       CatClsMethods(0), NumCatClsMethods(-1),
-      ObjcCatName(0) {}
+      NextClassCategory(0) {
+        if (numRefProtocol) {
+          CatReferencedProtocols = new ObjcProtocolDecl*[numRefProtocol];
+          memset(CatReferencedProtocols, '\0', 
+                 numRefProtocol*sizeof(ObjcProtocolDecl*));
+          NumCatReferencedProtocols = numRefProtocol;
+        }
+      }
 
+  ObjcInterfaceDecl *getClassInterface() const { return ClassInterface; }
+  void setClassInterface(ObjcInterfaceDecl *IDecl) { ClassInterface = IDecl; }
+  
+  void setCatReferencedProtocols(int idx, ObjcProtocolDecl *OID) {
+    assert((idx < NumCatReferencedProtocols) && "index out of range");
+    CatReferencedProtocols[idx] = OID;
+  }
+  
   void ObjcAddCatMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                          ObjcMethodDecl **clsMethods, unsigned numClsMembers);
   
   IdentifierInfo *getCatName() const { return ObjcCatName; }
   void setCatName(IdentifierInfo *catName) { ObjcCatName = catName; }
+  
+  ObjcCategoryDecl *getNextClassCategory() const { return NextClassCategory; }
+  void insertNextClassCategory() {
+    NextClassCategory = ClassInterface->getListCategories();
+    ClassInterface->setListCategories(this);
+  }
 
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcCategory;

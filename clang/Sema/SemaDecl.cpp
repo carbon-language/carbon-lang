@@ -875,11 +875,13 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
     // Class already seen. Is it a forward declaration?
     if (!IDecl->getIsForwardDecl())
       Diag(AtInterfaceLoc, diag::err_duplicate_class_def, ClassName->getName());
-    else
+    else {
       IDecl->setIsForwardDecl(false);
+      IDecl->AllocIntfRefProtocols(NumProtocols);
+    }
   }
   else {
-    IDecl = new ObjcInterfaceDecl(AtInterfaceLoc, ClassName);
+    IDecl = new ObjcInterfaceDecl(AtInterfaceLoc, NumProtocols, ClassName);
   
     // Chain & install the interface decl into the identifier.
     IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
@@ -887,14 +889,27 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
   }
   
   if (SuperName) {
-    const ObjcInterfaceDecl* SuperClassEntry = 
-                               Context.getObjCInterfaceDecl(SuperName);
+    ObjcInterfaceDecl* SuperClassEntry = 
+                         Context.getObjCInterfaceDecl(SuperName);
                               
     if (!SuperClassEntry || SuperClassEntry->getIsForwardDecl()) {
       Diag(AtInterfaceLoc, diag::err_undef_superclass, SuperName->getName(),
            ClassName->getName());  
     }
+    else
+      IDecl->setSuperClass(SuperClassEntry);
   }
+  
+  /// Check then save referenced protocols
+  for (unsigned int i = 0; i != NumProtocols; i++) {
+    ObjcProtocolDecl* RefPDecl = Context.getObjCProtocolDecl(ProtocolNames[i]);
+    if (!RefPDecl || RefPDecl->getIsForwardProtoDecl())
+      Diag(ClassLoc, diag::err_undef_protocolref,
+           ProtocolNames[i]->getName(),
+           ClassName->getName());
+    IDecl->setIntfRefProtocols((int)i, RefPDecl);
+  }
+  
   
   Context.setObjCInterfaceDecl(ClassName, IDecl);
     
@@ -970,15 +985,50 @@ Sema::DeclTy *Sema::ObjcStartCatInterface(SourceLocation AtInterfaceLoc,
                       IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                       IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
   ObjcCategoryDecl *CDecl;
-  CDecl = new ObjcCategoryDecl(AtInterfaceLoc, ClassName);
-  assert (ClassName->getFETokenInfo<ScopedDecl>() && "Missing @interface decl");
-  Decl *D = static_cast<Decl *>(ClassName->getFETokenInfo<ScopedDecl>());
-  assert(isa<ObjcInterfaceDecl>(D) && "Missing @interface decl");
+  ObjcInterfaceDecl* IDecl = Context.getObjCInterfaceDecl(ClassName);
+  CDecl = new ObjcCategoryDecl(AtInterfaceLoc, NumProtoRefs, ClassName);
+  if (IDecl) {
+    assert (ClassName->getFETokenInfo<ScopedDecl>() && "Missing @interface decl");
+    Decl *D = static_cast<Decl *>(ClassName->getFETokenInfo<ScopedDecl>());
+    assert(isa<ObjcInterfaceDecl>(D) && "Missing @interface decl");
     
-  // Chain & install the category decl into the identifier.
-  // Note that head of the chain is the @interface class type and follow up
-  // nodes in the chain are the protocol decl nodes.
-  cast<ObjcInterfaceDecl>(D)->setNext(CDecl);
+    // Chain & install the category decl into the identifier.
+    // Note that head of the chain is the @interface class type and follow up
+    // nodes in the chain are the protocol decl nodes.
+    cast<ObjcInterfaceDecl>(D)->setNext(CDecl);
+  }
+  
+  CDecl->setClassInterface(IDecl);
+  /// Check that class of this category is already completely declared.
+  if (!IDecl || IDecl->getIsForwardDecl())
+    Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
+  else {
+    /// Check for duplicate interface declaration for this category
+    ObjcCategoryDecl *CDeclChain;
+    for (CDeclChain = IDecl->getListCategories(); CDeclChain;
+         CDeclChain = CDeclChain->getNextClassCategory()) {
+      if (CDeclChain->getCatName() == CategoryName) {
+        Diag(CategoryLoc, diag::err_dup_category_def, ClassName->getName(),
+             CategoryName->getName());
+        break;
+      }
+    }
+    if (!CDeclChain) {
+      CDecl->setCatName(CategoryName);
+      CDecl->insertNextClassCategory();
+    }
+  }
+  
+  /// Check then save referenced protocols
+  for (unsigned int i = 0; i != NumProtoRefs; i++) {
+    ObjcProtocolDecl* RefPDecl = Context.getObjCProtocolDecl(ProtoRefNames[i]);
+    if (!RefPDecl || RefPDecl->getIsForwardProtoDecl())
+      Diag(CategoryLoc, diag::err_undef_protocolref,
+	   ProtoRefNames[i]->getName(),
+           CategoryName->getName());
+    CDecl->setCatReferencedProtocols((int)i, RefPDecl);
+  }
+  
   return CDecl;
 }
 
@@ -993,7 +1043,7 @@ Sema::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
     ObjcInterfaceDecl *IDecl;
     IDecl = Context.getObjCInterfaceDecl(IdentList[i]);
     if (!IDecl)  {// Already seen?
-      IDecl = new ObjcInterfaceDecl(SourceLocation(), IdentList[i], true);
+      IDecl = new ObjcInterfaceDecl(SourceLocation(), 0, IdentList[i], true);
       // Chain & install the interface decl into the identifier.
       IDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
       IdentList[i]->setFETokenInfo(IDecl);
