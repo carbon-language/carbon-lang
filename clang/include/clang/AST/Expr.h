@@ -223,7 +223,12 @@ public:
   FloatingLiteral(const llvm::APFloat &V, QualType Type, SourceLocation L)
     : Expr(FloatingLiteralClass, Type), Value(V), Loc(L) {} 
 
-  float getValue() const { return Value.convertToDouble(); }
+  float getValue() const { 
+    if (cast<BuiltinType>(getType())->getKind() == BuiltinType::Float)
+      return Value.convertToFloat();
+    else
+      return Value.convertToDouble();
+  }
   
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 

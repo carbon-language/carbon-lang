@@ -42,8 +42,10 @@ void TargetInfo::getDoubleInfo(uint64_t &Size, unsigned &Align,
 void TargetInfo::getLongDoubleInfo(uint64_t &Size, unsigned &Align,
                                    const llvm::fltSemantics *&Format,
                                    SourceLocation Loc) {
-  Size = 80; Align = 32;  // FIXME: implement correctly.
-  Format = &llvm::APFloat::x87DoubleExtended;
+  Size = Align = 64;  // FIXME: implement correctly.
+  Format = &llvm::APFloat::IEEEdouble;
+  //Size = 80; Align = 32;  // FIXME: implement correctly.
+  //Format = &llvm::APFloat::x87DoubleExtended;
 }
 
 

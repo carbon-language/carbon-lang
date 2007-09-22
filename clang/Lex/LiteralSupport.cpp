@@ -409,13 +409,20 @@ bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
   return OverflowOccurred;
 }
 
-// GetFloatValue - Poor man's floatvalue (FIXME).
 llvm::APFloat NumericLiteralParser::
 GetFloatValue(const llvm::fltSemantics &Format) {
   char floatChars[256];
   strncpy(floatChars, ThisTokBegin, ThisTokEnd-ThisTokBegin);
   floatChars[ThisTokEnd-ThisTokBegin] = '\0';
+#if 0
+  // This doesn't work yet.
   return llvm::APFloat(Format, floatChars);
+#else
+  // FIXME: this is horrible!
+  llvm::APFloat V(strtod(floatChars, 0));
+  V.convert(Format, llvm::APFloat::rmTowardZero);
+  return V;
+#endif
 }
 
 void NumericLiteralParser::Diag(SourceLocation Loc, unsigned DiagID, 
