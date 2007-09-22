@@ -512,7 +512,8 @@ library. There are two problems with this:</p>
       more pressure on the VM system on low-memory machines.</li>
 </ol>
 
-<table align="center">
+<div style="align: center">
+<table>
   <tbody>
     <tr>
       <th>Old Way</th>
@@ -553,19 +554,21 @@ dump(DOUT);</pre></td>
       <td align="left"><pre>llvm::StringStream</pre></td>
     </tr>
     <tr>
-      <td align="left"><pre>void print(std::ostream &Out);
+      <td align="left"><pre>void print(std::ostream &amp;Out);
 // ...
 print(std::cerr);</pre></td>
-      <td align="left"><pre>void print(std::ostream &Out);
+      <td align="left"><pre>void print(std::ostream &amp;Out);
 void print(std::ostream *Out) { if (Out) print(*Out) }
 // ...
 print(llvm::cerr);</pre>
 
-<ul><i>N.B.</i> The second <tt>print</tt> method is called by the <tt>print</tt>
+<div class="doc_text">
+<i>N.B.</i> The second <tt>print</tt> method is called by the <tt>print</tt>
 expression. It prevents the execution of the first <tt>print</tt> method if the
-stream is <tt>cnull</tt>.</ul></td>
+stream is <tt>cnull</tt>.</div></td>
    </tbody>
 </table>
+</div>
 
 </div>
 
