@@ -715,16 +715,16 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       if (Loc) *Loc = SubExpr->getLocStart();
       return false;
     }
-      
+
+    uint32_t DestWidth = 
+      static_cast<uint32_t>(Ctx.getTypeSize(getType(), CastLoc));
+    
     // Handle simple integer->integer casts.
     if (SubExpr->getType()->isIntegerType()) {
       if (!SubExpr->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
         return false;
       
       // Figure out if this is a truncate, extend or noop cast.
-      unsigned DestWidth = 
-        static_cast<uint32_t>(Ctx.getTypeSize(getType(), CastLoc));
-      
       // If the input is signed, do a sign extend, noop, or truncate.
       if (SubExpr->getType()->isSignedIntegerType())
         Result.sextOrTrunc(DestWidth);
@@ -738,14 +738,29 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     const Expr *Operand = SubExpr;
     while (const ParenExpr *PE = dyn_cast<ParenExpr>(Operand))
       Operand = PE->getSubExpr();
-    
-    if (const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(Operand)) {
-      // FIXME: Evaluate this correctly!
-      Result = (int)FL->getValueAsDouble();
-      break;
+
+    // If this isn't a floating literal, we can't handle it.
+    const FloatingLiteral *FL = dyn_cast<FloatingLiteral>(Operand);
+    if (!FL) {
+      if (Loc) *Loc = Operand->getLocStart();
+      return false;
     }
-    if (Loc) *Loc = Operand->getLocStart();
-    return false;
+    
+    // Determine whether we are converting to unsigned or signed.
+    bool DestSigned = getType()->isSignedIntegerType();
+    
+    uint64_t Space[4]; 
+    
+    llvm::APFloat::opStatus Status =
+      FL->getValue().convertToInteger(Space, DestWidth, DestSigned,
+                                      llvm::APFloat::rmNearestTiesToEven);
+    if (Status != llvm::APFloat::opOK && Status != llvm::APFloat::opInexact) {
+      if (Loc) *Loc = Operand->getLocStart();
+      return false; // FIXME: need to accept this as an extension.
+    }
+    
+    Result = llvm::APInt(DestWidth, 4, Space);
+    break;
   }
   case ConditionalOperatorClass: {
     const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
