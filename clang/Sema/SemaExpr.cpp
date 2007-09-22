@@ -150,9 +150,23 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   Expr *Res;
   
   if (Literal.isFloatingLiteral()) {
-    // FIXME: handle float values > 32 (including compute the real type...).
-    QualType Ty = Literal.isFloat ? Context.FloatTy : Context.DoubleTy;
-    Res = new FloatingLiteral(Literal.GetFloatValue(), Ty, Tok.getLocation());
+    QualType Ty;
+    const llvm::fltSemantics *Format;
+    uint64_t Size; unsigned Align;
+
+    if (Literal.isFloat) {
+      Ty = Context.FloatTy;
+      Context.Target.getFloatInfo(Size, Align, Format, Tok.getLocation());
+    } else if (Literal.isLong) {
+      Ty = Context.LongDoubleTy;
+      Context.Target.getLongDoubleInfo(Size, Align, Format, Tok.getLocation());
+    } else {
+      Ty = Context.DoubleTy;
+      Context.Target.getDoubleInfo(Size, Align, Format, Tok.getLocation());
+    }
+    
+    Res = new FloatingLiteral(Literal.GetFloatValue(*Format), Ty,
+                              Tok.getLocation());
   } else if (!Literal.isIntegerLiteral()) {
     return ExprResult(true);
   } else {

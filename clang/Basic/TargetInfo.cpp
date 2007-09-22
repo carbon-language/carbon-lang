@@ -15,11 +15,39 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/Builtins.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/APFloat.h"
 #include <set>
 using namespace clang;
 
 void TargetInfoImpl::ANCHOR() {} // out-of-line virtual method for class.
 
+
+//===----------------------------------------------------------------------===//
+// FIXME: These are temporary hacks, they should revector into the
+// TargetInfoImpl.
+
+void TargetInfo::getFloatInfo(uint64_t &Size, unsigned &Align,
+                              const llvm::fltSemantics *&Format,
+                              SourceLocation Loc) {
+  Align = 32;  // FIXME: implement correctly.
+  Size = 32;
+  Format = &llvm::APFloat::IEEEsingle;
+}
+void TargetInfo::getDoubleInfo(uint64_t &Size, unsigned &Align,
+                               const llvm::fltSemantics *&Format,
+                               SourceLocation Loc) {
+  Size = Align = 64;  // FIXME: implement correctly.
+  Format = &llvm::APFloat::IEEEdouble;
+}
+void TargetInfo::getLongDoubleInfo(uint64_t &Size, unsigned &Align,
+                                   const llvm::fltSemantics *&Format,
+                                   SourceLocation Loc) {
+  Size = 80; Align = 32;  // FIXME: implement correctly.
+  Format = &llvm::APFloat::x87DoubleExtended;
+}
+
+
+//===----------------------------------------------------------------------===//
 
 /// DiagnoseNonPortability - When a use of a non-portable target feature is
 /// used, this method emits the diagnostic and marks the translation unit as

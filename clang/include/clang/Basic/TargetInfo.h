@@ -19,6 +19,8 @@
 #include <vector>
 #include <string>
 
+namespace llvm { struct fltSemantics; }
+
 namespace clang {
 
 class TargetInfoImpl;
@@ -148,23 +150,17 @@ public:
     Size = Align = 64; // FIXME: implement correctly.
   }
   
-  /// getFloatInfo - Return the size of 'float' for this target, in bits.  
-  void getFloatInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
-    Align = 32;  // FIXME: implement correctly.
-    Size = 32;
-  }
+  /// getFloatInfo - Characterize 'float' for this target.  
+  void getFloatInfo(uint64_t &Size, unsigned &Align,
+                    const llvm::fltSemantics *&Format, SourceLocation Loc);
 
-  /// getDoubleInfo - Return the size of 'double' for this target, in bits.  
-  void getDoubleInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
-    Size = Align = 64;  // FIXME: implement correctly.
-  }
+  /// getDoubleInfo - Characterize 'double' for this target.
+  void getDoubleInfo(uint64_t &Size, unsigned &Align,
+                     const llvm::fltSemantics *&Format,  SourceLocation Loc);
 
-  /// getLongDoubleInfo - Return the size of 'long double' for this target, in
-  /// bits.  
+  /// getLongDoubleInfo - Characterize 'long double' for this target.
   void getLongDoubleInfo(uint64_t &Size, unsigned &Align,
-                             SourceLocation Loc) {
-    Size = Align = 64;  // FIXME: implement correctly.
-  }
+                         const llvm::fltSemantics *&Format, SourceLocation Loc);
   
   /// getWCharInfo - Return the size of wchar_t in bits.
   ///

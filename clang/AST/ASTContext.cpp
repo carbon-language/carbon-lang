@@ -190,6 +190,7 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
   case Type::Builtin: {
     // FIXME: need to use TargetInfo to derive the target specific sizes. This
     // implementation will suffice for play with vector support.
+    const llvm::fltSemantics *F;
     switch (cast<BuiltinType>(T)->getKind()) {
     default: assert(0 && "Unknown builtin type!");
     case BuiltinType::Void:
@@ -207,9 +208,9 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     case BuiltinType::Long:       Target.getLongInfo(Size, Align, L); break;
     case BuiltinType::ULongLong:
     case BuiltinType::LongLong:   Target.getLongLongInfo(Size, Align, L); break;
-    case BuiltinType::Float:      Target.getFloatInfo(Size, Align, L); break;
-    case BuiltinType::Double:     Target.getDoubleInfo(Size, Align, L); break;
-    case BuiltinType::LongDouble: Target.getLongDoubleInfo(Size, Align,L);break;
+    case BuiltinType::Float:      Target.getFloatInfo(Size, Align, F, L); break;
+    case BuiltinType::Double:     Target.getDoubleInfo(Size, Align, F, L);break;
+    case BuiltinType::LongDouble:Target.getLongDoubleInfo(Size,Align,F,L);break;
     }
     break;
   }

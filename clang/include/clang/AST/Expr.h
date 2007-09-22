@@ -18,6 +18,7 @@
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/ADT/APFloat.h"
 
 namespace clang {
   class IdentifierInfo;
@@ -216,13 +217,13 @@ public:
 };
 
 class FloatingLiteral : public Expr {
-  float Value; // FIXME: Change to APFloat
+  llvm::APFloat Value;
   SourceLocation Loc;
 public:
-  FloatingLiteral(float value, QualType type, SourceLocation l)
-    : Expr(FloatingLiteralClass, type), Value(value), Loc(l) {} 
+  FloatingLiteral(const llvm::APFloat &V, QualType Type, SourceLocation L)
+    : Expr(FloatingLiteralClass, Type), Value(V), Loc(L) {} 
 
-  float getValue() const { return Value; }
+  float getValue() const { return Value.convertToDouble(); }
   
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
 

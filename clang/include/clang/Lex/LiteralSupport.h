@@ -20,6 +20,8 @@
 
 namespace llvm {
   class APInt;
+  class APFloat;
+  struct fltSemantics;
 }
 
 namespace clang {
@@ -73,9 +75,10 @@ public:
   /// bits of the result and return true.  Otherwise, return false.
   bool GetIntegerValue(llvm::APInt &Val);
   
-  /// GetFloatValue - Convert this numeric literal to a float.
-  /// FIXME: the return value is fixed size - make more general.
-  float GetFloatValue();
+  /// GetFloatValue - Convert this numeric literal to a floating value, using
+  /// the specified APFloat fltSemantics (specifying float, double, etc).
+  ///
+  llvm::APFloat GetFloatValue(const llvm::fltSemantics &Format);
 
 private:  
   void Diag(SourceLocation Loc, unsigned DiagID, 

@@ -17,7 +17,6 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
-#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 
@@ -411,11 +410,12 @@ bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
 }
 
 // GetFloatValue - Poor man's floatvalue (FIXME).
-float NumericLiteralParser::GetFloatValue() {
+llvm::APFloat NumericLiteralParser::
+GetFloatValue(const llvm::fltSemantics &Format) {
   char floatChars[256];
   strncpy(floatChars, ThisTokBegin, ThisTokEnd-ThisTokBegin);
   floatChars[ThisTokEnd-ThisTokBegin] = '\0';
-  return (float)strtod(floatChars, 0);
+  return llvm::APFloat(Format, floatChars);
 }
 
 void NumericLiteralParser::Diag(SourceLocation Loc, unsigned DiagID, 
