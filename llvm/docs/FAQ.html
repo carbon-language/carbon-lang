@@ -53,7 +53,7 @@
   <li>After Subversion update, rebuilding gives the error "No rule to make
       target".</li>
   <li><a href="#llvmc">The <tt>llvmc</tt> program gives me errors/doesn't
-      work.</li></a>
+      work.</a></li>
   </ol></li>
 
   <li><a href="#felangs">Source Languages</a>
@@ -182,14 +182,12 @@ LLVM have been ported to a plethora of platforms.</p>
 <p>Some porting problems may exist in the following areas:</p>
 
 <ul>
-
   <li>The GCC front end code is not as portable as the LLVM suite, so it may not
-  compile as well on unsupported platforms.</li>
+      compile as well on unsupported platforms.</li>
 
   <li>The LLVM build system relies heavily on UNIX shell tools, like the Bourne
-  Shell and sed.  Porting to systems without these tools (MacOS 9, Plan 9) will
-  require more effort.</li>
-
+      Shell and sed.  Porting to systems without these tools (MacOS 9, Plan 9)
+      will require more effort.</li>
 </ul>
 
 </div>
@@ -227,21 +225,23 @@ if it's grabbing the wrong linker/assembler/etc, there are two ways to fix
 it:</p>
 
 <ol>
-		
   <li><p>Adjust your <tt>PATH</tt> environment variable so that the correct
-  program appears first in the <tt>PATH</tt>.  This may work, but may not be
-  convenient when you want them <i>first</i> in your path for other
-  work.</p></li>
+      program appears first in the <tt>PATH</tt>.  This may work, but may not be
+      convenient when you want them <i>first</i> in your path for other
+      work.</p></li>
 
   <li><p>Run <tt>configure</tt> with an alternative <tt>PATH</tt> that is
-  correct. In a Borne compatible shell, the syntax would be:</p>
-		
-      <p><tt>PATH=[the path without the bad program] ./configure ...</tt></p>
+      correct. In a Borne compatible shell, the syntax would be:</p>
+
+<div class="doc_code">
+<pre>
+% PATH=[the path without the bad program] ./configure ...
+</pre>
+</div>
 
       <p>This is still somewhat inconvenient, but it allows <tt>configure</tt>
-      to do its work without having to adjust your <tt>PATH</tt>
-      permanently.</p></li>
-	
+         to do its work without having to adjust your <tt>PATH</tt>
+         permanently.</p></li>
 </ol>
 
 </div>
@@ -257,8 +257,8 @@ your own version of GCC that has shared libraries enabled by default.</p>
 </div>
 
 <div class="question">
-  <p>I've updated my source tree from Subversion, and now my build is trying to 
-  use a file/directory that doesn't exist.</p>
+<p>I've updated my source tree from Subversion, and now my build is trying to 
+use a file/directory that doesn't exist.</p>
 </div>
 
 <div class="answer">
@@ -273,12 +273,13 @@ old version.  What do I do?</p>
 </div>
 
 <div class="answer">
-
 <p>If the Makefile already exists in your object tree, you
 can just run the following command in the top level directory of your object
 tree:</p>
 
-<p><tt>./config.status &lt;relative path to Makefile&gt;</tt><p>
+<div class="doc_code">
+<pre>% ./config.status &lt;relative path to Makefile&gt;</pre>
+</div>
 
 <p>If the Makefile is new, you will have to modify the configure script to copy
 it over.</p>
@@ -314,9 +315,7 @@ clean</tt> and then <tt>make</tt> in the directory that fails to build.</p>
 <p>For example, if you built LLVM with the command:</p>
 
 <div class="doc_code">
-<pre>
-% gmake ENABLE_PROFILING=1
-</pre>
+<pre>% gmake ENABLE_PROFILING=1</pre>
 </div>
 
 <p>...then you must run the tests with the following commands:</p>
@@ -354,12 +353,12 @@ build.</p>
 
 <div class="answer">
 <p>This is <a href="http://gcc.gnu.org/PR?13392">a bug in GCC</a>, and 
-   affects projects other than LLVM.  Try upgrading or downgrading your GCC.</p>
+affects projects other than LLVM.  Try upgrading or downgrading your GCC.</p>
 </div>
 
 <div class="question">
-  <p>After Subversion update, rebuilding gives the error 
-  "No rule to make target".</p>
+<p>After Subversion update, rebuilding gives the error "No rule to make
+target".</p>
 </div>
 
 <div class="answer">
@@ -389,14 +388,13 @@ removed entirely.  In this case, the best solution is to erase all
 rebuilding.</p>
 </div>
 
-<div class="question">
-  <a name="llvmc"<p>The <tt>llvmc</tt> program gives me errors/doesn't
-  work.</p></a>
+<div class="question"><p><a name="llvmc">
+The <tt>llvmc</tt> program gives me errors/doesn't work.</a></p>
 </div>
 
 <div class="answer">
-  <p><tt>llvmc</tt> is experimental and isn't really supported. We suggest
-  using <tt>llvm-gcc</tt> instead.</p>
+<p><tt>llvmc</tt> is experimental and isn't really supported. We suggest
+using <tt>llvm-gcc</tt> instead.</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -417,8 +415,8 @@ rebuilding.</p>
   <p>The PyPy developers are working on integrating LLVM into the PyPy backend
   so that PyPy language can translate to LLVM.</p>
 </div>
-<div class="question"><a name="langhlsupp">
-  <p>What support is there for a higher level source language constructs for 
+<div class="question"><p><a name="langhlsupp">
+  What support is there for a higher level source language constructs for 
   building a compiler?</a></p>
 </div>
 <div class="answer">
@@ -431,13 +429,12 @@ rebuilding.</p>
   of running optimizations, linking, and executable generation.</p>
 </div>
 
-<div class="question"><a name="langhlsupp">
-  <p>I don't understand the GetElementPtr
-      instruction. Help!</a></p>
+<div class="question"><p><a name="langhlsupp">
+  I don't understand the GetElementPtr instruction. Help!</a></p>
 </div>
 <div class="answer">
   <p>See <a href="GetElementPtr.html">The Often Misunderstood GEP
-   Instruction</a>.</li>
+   Instruction</a>.</p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -533,7 +530,7 @@ C++ support for a processor that does not otherwise have a C++ compiler.
 <p>Use commands like this:</p>
 
 <ol>
-<li><p>Compile your program as normal with llvm-g++:</p></li>
+  <li><p>Compile your program as normal with llvm-g++:</p>
 
 <div class="doc_code">
 <pre>
@@ -541,7 +538,7 @@ C++ support for a processor that does not otherwise have a C++ compiler.
 </pre>
 </div>
 
-<p>or:</p>
+  <p>or:</p>
 
 <div class="doc_code">
 <pre>
@@ -551,46 +548,43 @@ C++ support for a processor that does not otherwise have a C++ compiler.
 </pre>
 </div>
 
-<p>With llvm-gcc3, this will generate program and program.bc.  The .bc file is 
-the LLVM version of the program all linked together.</p>
+      <p>With llvm-gcc3, this will generate program and program.bc.  The .bc
+         file is the LLVM version of the program all linked together.</p></li>
 
-<li><p>Convert the LLVM code to C code, using the LLC tool with the C
-backend:</p></li>
+  <li><p>Convert the LLVM code to C code, using the LLC tool with the C
+      backend:</p>
 
 <div class="doc_code">
 <pre>
 % llc -march=c program.bc -o program.c
 </pre>
-</div>
+</div></li>
 
-<li><p>Finally, compile the c file:</p></li>
+<li><p>Finally, compile the C file:</p>
 
 <div class="doc_code">
 <pre>
 % cc x.c
 </pre>
-</div>
+</div></li>
 
 </ol>
 
-<p>Note that, by default, the C backend does not support exception handling.
-If you want/need it for a certain program, you can enable it by passing
-"-enable-correct-eh-support" to the llc program.  The resultant code will
-use setjmp/longjmp to implement exception support that is correct but
-relatively slow.
-</p>
+<p>Note that, by default, the C backend does not support exception handling.  If
+you want/need it for a certain program, you can enable it by passing
+"-enable-correct-eh-support" to the llc program.  The resultant code will use
+setjmp/longjmp to implement exception support that is correct but relatively
+slow.</p>
 
-<p>Also note: this specific sequence of commands won't work if you use a 
-function defined in the C++ runtime library (or any other C++ library).  To 
-access an external C++ library, you must manually 
-compile libstdc++ to LLVM bitcode, statically link it into your program, then
-use the commands above to convert the whole result into C code.  Alternatively,
-you can compile the libraries and your application into two different chunks
-of C code and link them.</p>
+<p>Also note: this specific sequence of commands won't work if you use a
+function defined in the C++ runtime library (or any other C++ library).  To
+access an external C++ library, you must manually compile libstdc++ to LLVM
+bitcode, statically link it into your program, then use the commands above to
+convert the whole result into C code.  Alternatively, you can compile the
+libraries and your application into two different chunks of C code and link
+them.</p>
 
 </div>
-
-
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
