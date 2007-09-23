@@ -1,8 +1,8 @@
 ; Make sure this testcase codegens to the fabs instruction, not a call to fabsf
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=-sse2,-sse3 | \
+; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=-sse2,-sse3,-sse | \
 ; RUN:   grep fabs\$ | count 1
 ; RUN: llvm-upgrade < %s | llvm-as | \
-; RUN:   llc -march=x86 -mattr=-sse2,-sse3 -enable-unsafe-fp-math  | \
+; RUN:   llc -march=x86 -mattr=-sse,-sse2,-sse3 -enable-unsafe-fp-math  | \
 ; RUN:   grep fabs\$ | count 2
 
 target endian = little
