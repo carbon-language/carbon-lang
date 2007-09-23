@@ -213,7 +213,7 @@ private:
   /// TypeClass bitfield - Enum that specifies what subclass this belongs to.
   /// Note that this should stay at the end of the ivars for Type so that
   /// subclasses can pack their bitfields into the same word.
-  TypeClass TC : 4;
+  unsigned TC : 4;
 protected:
   // silence VC++ warning C4355: 'this' : used in base member initializer list
   Type *this_() { return this; }
@@ -222,10 +222,7 @@ protected:
   virtual ~Type();
   friend class ASTContext;
 public:
-  // Masking the 4 bits from the bitfield above is necessary, since at least
-  // VC++ fills the unused bits of the word the bitfield is stored in with
-  // '1' resulting in invalid values returned from this function otherwise.
-  TypeClass getTypeClass() const { return static_cast<TypeClass>(TC & 0xf); }
+  TypeClass getTypeClass() const { return static_cast<TypeClass>(TC); }
   
   bool isCanonical() const { return CanonicalType.getTypePtr() == this; }
 
