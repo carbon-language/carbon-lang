@@ -23,6 +23,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/Streams.h"
+#include "DominatorCalculation.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -43,26 +44,76 @@ static std::ostream &operator<<(std::ostream &o,
 //  DominatorTree Implementation
 //===----------------------------------------------------------------------===//
 //
-// DominatorTree construction - This pass constructs immediate dominator
-// information for a flow-graph based on the algorithm described in this
-// document:
-//
-//   A Fast Algorithm for Finding Dominators in a Flowgraph
-//   T. Lengauer & R. Tarjan, ACM TOPLAS July 1979, pgs 121-141.
-//
-// This implements both the O(n*ack(n)) and the O(n*log(n)) versions of EVAL and
-// LINK, but it turns out that the theoretically slower O(n*log(n))
-// implementation is actually faster than the "efficient" algorithm (even for
-// large CFGs) because the constant overheads are substantially smaller.  The
-// lower-complexity version can be enabled with the following #define:
-//
-#define BALANCE_IDOM_TREE 0
+// Provide public access to DominatorTree information.  Implementation details
+// can be found in DominatorCalculation.h.
 //
 //===----------------------------------------------------------------------===//
 
 char DominatorTree::ID = 0;
 static RegisterPass<DominatorTree>
 E("domtree", "Dominator Tree Construction", true);
+
+unsigned DominatorTreeBase::DFSPass(BasicBlock *V, unsigned N) {
+  // This is more understandable as a recursive algorithm, but we can't use the
+  // recursive algorithm due to stack depth issues.  Keep it here for
+  // documentation purposes.
+#if 0
+  InfoRec &VInfo = Info[Roots[i]];
+  VInfo.Semi = ++N;
+  VInfo.Label = V;
+
+  Vertex.push_back(V);        // Vertex[n] = V;
+  //Info[V].Ancestor = 0;     // Ancestor[n] = 0
+  //Info[V].Child = 0;        // Child[v] = 0
+  VInfo.Size = 1;             // Size[v] = 1
+
+  for (succ_iterator SI = succ_begin(V), E = succ_end(V); SI != E; ++SI) {
+    InfoRec &SuccVInfo = Info[*SI];
+    if (SuccVInfo.Semi == 0) {
+      SuccVInfo.Parent = V;
+      N = DFSPass(*SI, N);
+    }
+  }
+#else
+  std::vector<std::pair<BasicBlock*, unsigned> > Worklist;
+  Worklist.push_back(std::make_pair(V, 0U));
+  while (!Worklist.empty()) {
+    BasicBlock *BB = Worklist.back().first;
+    unsigned NextSucc = Worklist.back().second;
+    
+    // First time we visited this BB?
+    if (NextSucc == 0) {
+      InfoRec &BBInfo = Info[BB];
+      BBInfo.Semi = ++N;
+      BBInfo.Label = BB;
+      
+      Vertex.push_back(BB);       // Vertex[n] = V;
+      //BBInfo[V].Ancestor = 0;   // Ancestor[n] = 0
+      //BBInfo[V].Child = 0;      // Child[v] = 0
+      BBInfo.Size = 1;            // Size[v] = 1
+    }
+    
+    // If we are done with this block, remove it from the worklist.
+    if (NextSucc == BB->getTerminator()->getNumSuccessors()) {
+      Worklist.pop_back();
+      continue;
+    }
+    
+    // Otherwise, increment the successor number for the next time we get to it.
+    ++Worklist.back().second;
+    
+    // Visit the successor next, if it isn't already visited.
+    BasicBlock *Succ = BB->getTerminator()->getSuccessor(NextSucc);
+    
+    InfoRec &SuccVInfo = Info[Succ];
+    if (SuccVInfo.Semi == 0) {
+      SuccVInfo.Parent = BB;
+      Worklist.push_back(std::make_pair(Succ, 0U));
+    }
+  }
+#endif
+  return N;
+}
 
 // NewBB is split and now it has one successor. Update dominator tree to
 // reflect this change.
@@ -146,243 +197,6 @@ void DominatorTree::splitBlock(BasicBlock *NewBB) {
   }
 }
 
-unsigned DominatorTree::DFSPass(BasicBlock *V, unsigned N) {
-  // This is more understandable as a recursive algorithm, but we can't use the
-  // recursive algorithm due to stack depth issues.  Keep it here for
-  // documentation purposes.
-#if 0
-  InfoRec &VInfo = Info[Roots[i]];
-  VInfo.Semi = ++N;
-  VInfo.Label = V;
-
-  Vertex.push_back(V);        // Vertex[n] = V;
-  //Info[V].Ancestor = 0;     // Ancestor[n] = 0
-  //Info[V].Child = 0;        // Child[v] = 0
-  VInfo.Size = 1;             // Size[v] = 1
-
-  for (succ_iterator SI = succ_begin(V), E = succ_end(V); SI != E; ++SI) {
-    InfoRec &SuccVInfo = Info[*SI];
-    if (SuccVInfo.Semi == 0) {
-      SuccVInfo.Parent = V;
-      N = DFSPass(*SI, N);
-    }
-  }
-#else
-  std::vector<std::pair<BasicBlock*, unsigned> > Worklist;
-  Worklist.push_back(std::make_pair(V, 0U));
-  while (!Worklist.empty()) {
-    BasicBlock *BB = Worklist.back().first;
-    unsigned NextSucc = Worklist.back().second;
-    
-    // First time we visited this BB?
-    if (NextSucc == 0) {
-      InfoRec &BBInfo = Info[BB];
-      BBInfo.Semi = ++N;
-      BBInfo.Label = BB;
-      
-      Vertex.push_back(BB);       // Vertex[n] = V;
-      //BBInfo[V].Ancestor = 0;   // Ancestor[n] = 0
-      //BBInfo[V].Child = 0;      // Child[v] = 0
-      BBInfo.Size = 1;            // Size[v] = 1
-    }
-    
-    // If we are done with this block, remove it from the worklist.
-    if (NextSucc == BB->getTerminator()->getNumSuccessors()) {
-      Worklist.pop_back();
-      continue;
-    }
-    
-    // Otherwise, increment the successor number for the next time we get to it.
-    ++Worklist.back().second;
-    
-    // Visit the successor next, if it isn't already visited.
-    BasicBlock *Succ = BB->getTerminator()->getSuccessor(NextSucc);
-    
-    InfoRec &SuccVInfo = Info[Succ];
-    if (SuccVInfo.Semi == 0) {
-      SuccVInfo.Parent = BB;
-      Worklist.push_back(std::make_pair(Succ, 0U));
-    }
-  }
-#endif
-  return N;
-}
-
-void DominatorTree::Compress(BasicBlock *VIn) {
-
-  std::vector<BasicBlock *> Work;
-  SmallPtrSet<BasicBlock *, 32> Visited;
-  BasicBlock *VInAncestor = Info[VIn].Ancestor;
-  InfoRec &VInVAInfo = Info[VInAncestor];
-
-  if (VInVAInfo.Ancestor != 0)
-    Work.push_back(VIn);
-  
-  while (!Work.empty()) {
-    BasicBlock *V = Work.back();
-    InfoRec &VInfo = Info[V];
-    BasicBlock *VAncestor = VInfo.Ancestor;
-    InfoRec &VAInfo = Info[VAncestor];
-
-    // Process Ancestor first
-    if (Visited.insert(VAncestor) &&
-        VAInfo.Ancestor != 0) {
-      Work.push_back(VAncestor);
-      continue;
-    } 
-    Work.pop_back(); 
-
-    // Update VInfo based on Ancestor info
-    if (VAInfo.Ancestor == 0)
-      continue;
-    BasicBlock *VAncestorLabel = VAInfo.Label;
-    BasicBlock *VLabel = VInfo.Label;
-    if (Info[VAncestorLabel].Semi < Info[VLabel].Semi)
-      VInfo.Label = VAncestorLabel;
-    VInfo.Ancestor = VAInfo.Ancestor;
-  }
-}
-
-BasicBlock *DominatorTree::Eval(BasicBlock *V) {
-  InfoRec &VInfo = Info[V];
-#if !BALANCE_IDOM_TREE
-  // Higher-complexity but faster implementation
-  if (VInfo.Ancestor == 0)
-    return V;
-  Compress(V);
-  return VInfo.Label;
-#else
-  // Lower-complexity but slower implementation
-  if (VInfo.Ancestor == 0)
-    return VInfo.Label;
-  Compress(V);
-  BasicBlock *VLabel = VInfo.Label;
-
-  BasicBlock *VAncestorLabel = Info[VInfo.Ancestor].Label;
-  if (Info[VAncestorLabel].Semi >= Info[VLabel].Semi)
-    return VLabel;
-  else
-    return VAncestorLabel;
-#endif
-}
-
-void DominatorTree::Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo){
-#if !BALANCE_IDOM_TREE
-  // Higher-complexity but faster implementation
-  WInfo.Ancestor = V;
-#else
-  // Lower-complexity but slower implementation
-  BasicBlock *WLabel = WInfo.Label;
-  unsigned WLabelSemi = Info[WLabel].Semi;
-  BasicBlock *S = W;
-  InfoRec *SInfo = &Info[S];
-
-  BasicBlock *SChild = SInfo->Child;
-  InfoRec *SChildInfo = &Info[SChild];
-
-  while (WLabelSemi < Info[SChildInfo->Label].Semi) {
-    BasicBlock *SChildChild = SChildInfo->Child;
-    if (SInfo->Size+Info[SChildChild].Size >= 2*SChildInfo->Size) {
-      SChildInfo->Ancestor = S;
-      SInfo->Child = SChild = SChildChild;
-      SChildInfo = &Info[SChild];
-    } else {
-      SChildInfo->Size = SInfo->Size;
-      S = SInfo->Ancestor = SChild;
-      SInfo = SChildInfo;
-      SChild = SChildChild;
-      SChildInfo = &Info[SChild];
-    }
-  }
-
-  InfoRec &VInfo = Info[V];
-  SInfo->Label = WLabel;
-
-  assert(V != W && "The optimization here will not work in this case!");
-  unsigned WSize = WInfo.Size;
-  unsigned VSize = (VInfo.Size += WSize);
-
-  if (VSize < 2*WSize)
-    std::swap(S, VInfo.Child);
-
-  while (S) {
-    SInfo = &Info[S];
-    SInfo->Ancestor = V;
-    S = SInfo->Child;
-  }
-#endif
-}
-
-void DominatorTree::calculate(Function &F) {
-  BasicBlock* Root = Roots[0];
-
-  // Add a node for the root...
-  DomTreeNodes[Root] = RootNode = new DomTreeNode(Root, 0);
-
-  Vertex.push_back(0);
-
-  // Step #1: Number blocks in depth-first order and initialize variables used
-  // in later stages of the algorithm.
-  unsigned N = DFSPass(Root, 0);
-
-  for (unsigned i = N; i >= 2; --i) {
-    BasicBlock *W = Vertex[i];
-    InfoRec &WInfo = Info[W];
-
-    // Step #2: Calculate the semidominators of all vertices
-    for (pred_iterator PI = pred_begin(W), E = pred_end(W); PI != E; ++PI)
-      if (Info.count(*PI)) {  // Only if this predecessor is reachable!
-        unsigned SemiU = Info[Eval(*PI)].Semi;
-        if (SemiU < WInfo.Semi)
-          WInfo.Semi = SemiU;
-      }
-
-    Info[Vertex[WInfo.Semi]].Bucket.push_back(W);
-
-    BasicBlock *WParent = WInfo.Parent;
-    Link(WParent, W, WInfo);
-
-    // Step #3: Implicitly define the immediate dominator of vertices
-    std::vector<BasicBlock*> &WParentBucket = Info[WParent].Bucket;
-    while (!WParentBucket.empty()) {
-      BasicBlock *V = WParentBucket.back();
-      WParentBucket.pop_back();
-      BasicBlock *U = Eval(V);
-      IDoms[V] = Info[U].Semi < Info[V].Semi ? U : WParent;
-    }
-  }
-
-  // Step #4: Explicitly define the immediate dominator of each vertex
-  for (unsigned i = 2; i <= N; ++i) {
-    BasicBlock *W = Vertex[i];
-    BasicBlock *&WIDom = IDoms[W];
-    if (WIDom != Vertex[Info[W].Semi])
-      WIDom = IDoms[WIDom];
-  }
-
-  // Loop over all of the reachable blocks in the function...
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    if (BasicBlock *ImmDom = getIDom(I)) {  // Reachable block.
-      DomTreeNode *BBNode = DomTreeNodes[I];
-      if (BBNode) continue;  // Haven't calculated this node yet?
-
-      // Get or calculate the node for the immediate dominator
-      DomTreeNode *IDomNode = getNodeForBlock(ImmDom);
-
-      // Add a new tree node for this BasicBlock, and link it as a child of
-      // IDomNode
-      DomTreeNode *C = new DomTreeNode(I, IDomNode);
-      DomTreeNodes[I] = IDomNode->addChild(C);
-    }
-
-  // Free temporary memory used to construct idom's
-  Info.clear();
-  IDoms.clear();
-  std::vector<BasicBlock*>().swap(Vertex);
-
-  updateDFSNumbers();
-}
-
 void DominatorTreeBase::updateDFSNumbers() {
   unsigned DFSNum = 0;
 
@@ -462,6 +276,21 @@ void DominatorTreeBase::reset() {
   RootNode = 0;
 }
 
+DomTreeNode *DominatorTreeBase::getNodeForBlock(BasicBlock *BB) {
+  if (DomTreeNode *BBNode = DomTreeNodes[BB])
+    return BBNode;
+
+  // Haven't calculated this node yet?  Get or calculate the node for the
+  // immediate dominator.
+  BasicBlock *IDom = getIDom(BB);
+  DomTreeNode *IDomNode = getNodeForBlock(IDom);
+
+  // Add a new tree node for this BasicBlock, and link it as a child of
+  // IDomNode
+  DomTreeNode *C = new DomTreeNode(BB, IDomNode);
+  return DomTreeNodes[BB] = IDomNode->addChild(C);
+}
+
 /// findNearestCommonDominator - Find nearest common dominator basic block
 /// for basic block A and B. If there is no such block then return NULL.
 BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A, 
@@ -525,21 +354,6 @@ void DomTreeNode::setIDom(DomTreeNode *NewIDom) {
   }
 }
 
-DomTreeNode *DominatorTree::getNodeForBlock(BasicBlock *BB) {
-  if (DomTreeNode *BBNode = DomTreeNodes[BB])
-    return BBNode;
-
-  // Haven't calculated this node yet?  Get or calculate the node for the
-  // immediate dominator.
-  BasicBlock *IDom = getIDom(BB);
-  DomTreeNode *IDomNode = getNodeForBlock(IDom);
-
-  // Add a new tree node for this BasicBlock, and link it as a child of
-  // IDomNode
-  DomTreeNode *C = new DomTreeNode(BB, IDomNode);
-  return DomTreeNodes[BB] = IDomNode->addChild(C);
-}
-
 static std::ostream &operator<<(std::ostream &o, const DomTreeNode *Node) {
   if (Node->getBlock())
     WriteAsOperand(o, Node->getBlock(), false);
@@ -599,7 +413,7 @@ void DominatorTreeBase::dump() {
 bool DominatorTree::runOnFunction(Function &F) {
   reset();     // Reset from the last time we were run...
   Roots.push_back(&F.getEntryBlock());
-  calculate(F);
+  DTcalculate(*this, F);
   return false;
 }
 
