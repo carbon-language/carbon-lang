@@ -40,7 +40,8 @@ using namespace llvm;
 X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
   Subtarget = &TM.getSubtarget<X86Subtarget>();
-  X86ScalarSSE = Subtarget->hasSSE2();
+  X86ScalarSSEf64 = Subtarget->hasSSE2();
+  X86ScalarSSEf32 = Subtarget->hasSSE1();
   X86StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
 
   RegInfo = TM.getRegisterInfo();
@@ -87,7 +88,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::UINT_TO_FP     , MVT::i64  , Expand);
     setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Promote);
   } else {
-    if (X86ScalarSSE)
+    if (X86ScalarSSEf64)
       // If SSE i64 SINT_TO_FP is not available, expand i32 UINT_TO_FP.
       setOperationAction(ISD::UINT_TO_FP   , MVT::i32  , Expand);
     else
@@ -99,7 +100,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
   setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
   // SSE has no i16 to fp conversion, only i32
-  if (X86ScalarSSE) {
+  if (X86ScalarSSEf32) {
     setOperationAction(ISD::SINT_TO_FP     , MVT::i16  , Promote);
     // f32 and f64 cases are Legal, f80 case is not
     setOperationAction(ISD::SINT_TO_FP     , MVT::i32  , Custom);
@@ -118,7 +119,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_SINT       , MVT::i1   , Promote);
   setOperationAction(ISD::FP_TO_SINT       , MVT::i8   , Promote);
 
-  if (X86ScalarSSE) {
+  if (X86ScalarSSEf32) {
     setOperationAction(ISD::FP_TO_SINT     , MVT::i16  , Promote);
     // f32 and f64 cases are Legal, f80 case is not
     setOperationAction(ISD::FP_TO_SINT     , MVT::i32  , Custom);
@@ -137,7 +138,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FP_TO_UINT     , MVT::i64  , Expand);
     setOperationAction(ISD::FP_TO_UINT     , MVT::i32  , Promote);
   } else {
-    if (X86ScalarSSE && !Subtarget->hasSSE3())
+    if (X86ScalarSSEf32 && !Subtarget->hasSSE3())
       // Expand FP_TO_UINT into a select.
       // FIXME: We would like to use a Custom expander here eventually to do
       // the optimal thing for SSE vs. the default expansion in the legalizer.
@@ -148,7 +149,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   }
 
   // TODO: when we have SSE, these could be more efficient, by using movd/movq.
-  if (!X86ScalarSSE) {
+  if (!X86ScalarSSEf64) {
     setOperationAction(ISD::BIT_CONVERT      , MVT::f32  , Expand);
     setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
   }
@@ -271,7 +272,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   else
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
 
-  if (X86ScalarSSE) {
+  if (X86ScalarSSEf64) {
+    // f32 and f64 use SSE.
     // Set up the FP register classes.
     addRegisterClass(MVT::f32, X86::FR32RegisterClass);
     addRegisterClass(MVT::f64, X86::FR64RegisterClass);
@@ -300,7 +302,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     // cases we handle.
     setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
     setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
-    addLegalFPImmediate(APFloat(+0.0)); // xorps / xorpd
+    addLegalFPImmediate(APFloat(+0.0)); // xorpd
+    addLegalFPImmediate(APFloat(+0.0f)); // xorps
 
     // Conversions to long double (in X87) go through memory.
     setConvertAction(MVT::f32, MVT::f80, Expand);
@@ -309,7 +312,55 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     // Conversions from long double (in X87) go through memory.
     setConvertAction(MVT::f80, MVT::f32, Expand);
     setConvertAction(MVT::f80, MVT::f64, Expand);
+  } else if (X86ScalarSSEf32) {
+    // Use SSE for f32, x87 for f64.
+    // Set up the FP register classes.
+    addRegisterClass(MVT::f32, X86::FR32RegisterClass);
+    addRegisterClass(MVT::f64, X86::RFP64RegisterClass);
+
+    // Use ANDPS to simulate FABS.
+    setOperationAction(ISD::FABS , MVT::f32, Custom);
+
+    // Use XORP to simulate FNEG.
+    setOperationAction(ISD::FNEG , MVT::f32, Custom);
+
+    setOperationAction(ISD::UNDEF,     MVT::f64, Expand);
+
+    // Use ANDPS and ORPS to simulate FCOPYSIGN.
+    setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);
+    setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
+
+    // We don't support sin/cos/fmod
+    setOperationAction(ISD::FSIN , MVT::f32, Expand);
+    setOperationAction(ISD::FCOS , MVT::f32, Expand);
+    setOperationAction(ISD::FREM , MVT::f32, Expand);
+
+    // Expand FP immediates into loads from the stack, except for the special
+    // cases we handle.
+    setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
+    setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
+    addLegalFPImmediate(APFloat(+0.0f)); // xorps
+    addLegalFPImmediate(APFloat(+0.0)); // FLD0
+    addLegalFPImmediate(APFloat(+1.0)); // FLD1
+    addLegalFPImmediate(APFloat(-0.0)); // FLD0/FCHS
+    addLegalFPImmediate(APFloat(-1.0)); // FLD1/FCHS
+
+    // SSE->x87 conversions go through memory.
+    setConvertAction(MVT::f32, MVT::f64, Expand);
+    setConvertAction(MVT::f32, MVT::f80, Expand);
+
+    // x87->SSE truncations need to go through memory.
+    setConvertAction(MVT::f80, MVT::f32, Expand);    
+    setConvertAction(MVT::f64, MVT::f32, Expand);
+    // And x87->x87 truncations also.
+    setConvertAction(MVT::f80, MVT::f64, Expand);
+
+    if (!UnsafeFPMath) {
+      setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
+      setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
+    }
   } else {
+    // f32 and f64 in x87.
     // Set up the FP register classes.
     addRegisterClass(MVT::f64, X86::RFP64RegisterClass);
     addRegisterClass(MVT::f32, X86::RFP32RegisterClass);
@@ -335,6 +386,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     addLegalFPImmediate(APFloat(+1.0)); // FLD1
     addLegalFPImmediate(APFloat(-0.0)); // FLD0/FCHS
     addLegalFPImmediate(APFloat(-1.0)); // FLD1/FCHS
+    addLegalFPImmediate(APFloat(+0.0f)); // FLD0
+    addLegalFPImmediate(APFloat(+1.0f)); // FLD1
+    addLegalFPImmediate(APFloat(-0.0f)); // FLD0/FCHS
+    addLegalFPImmediate(APFloat(-1.0f)); // FLD1/FCHS
   }
 
   // Long double always uses X87.
@@ -583,7 +638,8 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     
     // If this is an FP return with ScalarSSE, we need to move the value from
     // an XMM register onto the fp-stack.
-    if (X86ScalarSSE) {
+    if ((X86ScalarSSEf32 && RVLocs[0].getValVT()==MVT::f32) ||
+        (X86ScalarSSEf64 && RVLocs[0].getValVT()==MVT::f64)) {
       SDOperand MemLoc;
       
       // If this is a load into a scalarsse value, don't store the loaded value
@@ -659,7 +715,8 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
     
     // If we are using ScalarSSE, store ST(0) to the stack and reload it into
     // an XMM register.
-    if (X86ScalarSSE) {
+    if ((X86ScalarSSEf32 && RVLocs[0].getValVT() == MVT::f32) ||
+        (X86ScalarSSEf64 && RVLocs[0].getValVT() == MVT::f64)) {
       // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
       // shouldn't be necessary except that RFP cannot be live across
       // multiple blocks. When stackifier is fixed, they can be uncoupled.
@@ -3334,7 +3391,9 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
                                  StackSlot, NULL, 0);
 
   // These are really Legal; caller falls through into that case.
-  if (SrcVT==MVT::i32 && Op.getValueType() != MVT::f80 && X86ScalarSSE)
+  if (SrcVT==MVT::i32 && Op.getValueType() == MVT::f32 && X86ScalarSSEf32)
+    return Result;
+  if (SrcVT==MVT::i32 && Op.getValueType() == MVT::f64 && X86ScalarSSEf64)
     return Result;
   if (SrcVT==MVT::i64 && Op.getValueType() != MVT::f80 && 
       Subtarget->is64Bit())
@@ -3342,7 +3401,8 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
 
   // Build the FILD
   SDVTList Tys;
-  bool useSSE = X86ScalarSSE && Op.getValueType() != MVT::f80;
+  bool useSSE = (X86ScalarSSEf32 && Op.getValueType() == MVT::f32) ||
+                (X86ScalarSSEf64 && Op.getValueType() == MVT::f64);
   if (useSSE)
     Tys = DAG.getVTList(MVT::f64, MVT::Other, MVT::Flag);
   else
@@ -3390,8 +3450,11 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
 
   // These are really Legal.
-  if (Op.getValueType() == MVT::i32 && X86ScalarSSE && 
-      Op.getOperand(0).getValueType() != MVT::f80)
+  if (Op.getValueType() == MVT::i32 && 
+      X86ScalarSSEf32 && Op.getOperand(0).getValueType() == MVT::f32)
+    return Result;
+  if (Op.getValueType() == MVT::i32 && 
+      X86ScalarSSEf64 && Op.getOperand(0).getValueType() == MVT::f64)
     return Result;
   if (Subtarget->is64Bit() &&
       Op.getValueType() == MVT::i64 &&
@@ -3408,7 +3471,8 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
 
   SDOperand Chain = DAG.getEntryNode();
   SDOperand Value = Op.getOperand(0);
-  if (X86ScalarSSE && Op.getOperand(0).getValueType() != MVT::f80) {
+  if ((X86ScalarSSEf32 && Op.getOperand(0).getValueType() == MVT::f32) ||
+      (X86ScalarSSEf64 && Op.getOperand(0).getValueType() == MVT::f64)) {
     assert(Op.getValueType() == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, Value, StackSlot, NULL, 0);
     SDVTList Tys = DAG.getVTList(Op.getOperand(0).getValueType(), MVT::Other);
@@ -3620,8 +3684,9 @@ SDOperand X86TargetLowering::LowerSELECT(SDOperand Op, SelectionDAG &DAG) {
     // pressure reason)?
     SDOperand Cmp = Cond.getOperand(1);
     unsigned Opc = Cmp.getOpcode();
-    bool IllegalFPCMov = !X86ScalarSSE &&
-      MVT::isFloatingPoint(Op.getValueType()) &&
+    bool IllegalFPCMov = 
+      ! ((X86ScalarSSEf32 && Op.getValueType()==MVT::f32) ||
+         (X86ScalarSSEf64 && Op.getValueType()==MVT::f64)) &&
       !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
     if ((Opc == X86ISD::CMP || Opc == X86ISD::COMI || Opc == X86ISD::UCOMI) &&
         !IllegalFPCMov) {

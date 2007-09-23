@@ -120,7 +120,9 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
 
       setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
       addLegalFPImmediate(APFloat(+0.0));
+      addLegalFPImmediate(APFloat(+0.0f));
       addLegalFPImmediate(APFloat(+1.0));
+      addLegalFPImmediate(APFloat(+1.0f));
 }
 
 const char *IA64TargetLowering::getTargetNodeName(unsigned Opcode) const {

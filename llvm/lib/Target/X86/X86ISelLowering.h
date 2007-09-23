@@ -373,8 +373,12 @@ namespace llvm {
     /// X86StackPtr - X86 physical register used as stack ptr.
     unsigned X86StackPtr;
 
-    /// X86ScalarSSE - Select between SSE2 or x87 floating point ops.
-    bool X86ScalarSSE;
+    /// X86ScalarSSEf32, X86ScalarSSEf64 - Select between SSE or x87 
+    /// floating point ops.
+    /// When SSE is available, use it for f32 operations.
+    /// When SSE2 is available, use it for f64 operations.
+    bool X86ScalarSSEf32;
+    bool X86ScalarSSEf64;
 
     SDNode *LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode*TheCall,
                             unsigned CallingConv, SelectionDAG &DAG);

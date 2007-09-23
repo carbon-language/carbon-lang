@@ -50,7 +50,7 @@ def IMPLICIT_DEF_VR128 : I<0, Pseudo, (outs VR128:$dst), (ins),
                          Requires<[HasSSE1]>;
 def IMPLICIT_DEF_FR32  : I<0, Pseudo, (outs FR32:$dst), (ins),
                            "#IMPLICIT_DEF $dst",
-                           [(set FR32:$dst, (undef))]>, Requires<[HasSSE2]>;
+                           [(set FR32:$dst, (undef))]>, Requires<[HasSSE1]>;
 def IMPLICIT_DEF_FR64  : I<0, Pseudo, (outs FR64:$dst), (ins),
                            "#IMPLICIT_DEF $dst",
                            [(set FR64:$dst, (undef))]>, Requires<[HasSSE2]>;

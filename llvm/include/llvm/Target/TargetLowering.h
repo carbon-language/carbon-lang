@@ -783,17 +783,7 @@ protected:
   /// addLegalFPImmediate - Indicate that this target can instruction select
   /// the specified FP immediate natively.
   void addLegalFPImmediate(const APFloat& Imm) {
-    // Incoming constants are expected to be double.  We also add
-    // the float version.  It is expected that all constants are exactly
-    // representable as floats.
-    assert(&Imm.getSemantics() == &APFloat::IEEEdouble);
-    APFloat Immf = APFloat(Imm);
-    // Rounding mode is not supposed to matter here...
-    if (Immf.convert(APFloat::IEEEsingle, APFloat::rmNearestTiesToEven) != 
-        APFloat::opOK)
-      assert(0);
     LegalFPImmediates.push_back(Imm);
-    LegalFPImmediates.push_back(Immf);
   }
 
   /// setTargetDAGCombine - Targets should invoke this method for each target
