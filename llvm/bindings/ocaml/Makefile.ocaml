@@ -88,7 +88,8 @@ $(ObjDir)/%.mli: $(PROJ_SRC_DIR)/%.mli $(ObjDir)/.dir
 $(ObjDir)/%.ml: $(PROJ_SRC_DIR)/%.ml $(ObjDir)/.dir
 	$(Verb) $(CP) -f $< $@
 
-$(ObjDir)/$(LIBRARYNAME).ocamldep: $(OcamlSources) $(OcamlHeaders)
+$(ObjDir)/$(LIBRARYNAME).ocamldep: $(OcamlSources) $(OcamlHeaders) \
+                                   $(OcamlDir)/.dir $(ObjDir)/.dir
 	$(Verb) $(OCAMLDEP) $(OCAMLCFLAGS) $(OcamlSources) $(OcamlHeader) > $@
 
 -include $(ObjDir)/$(LIBRARYNAME).ocamldep
