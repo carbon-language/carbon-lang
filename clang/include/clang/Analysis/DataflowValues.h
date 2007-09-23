@@ -37,10 +37,10 @@ namespace llvm {
     static unsigned getHashValue(const clang::CFG::Edge& E) {
       const clang::CFGBlock* P1 = E.getSrc();
       const clang::CFGBlock* P2 = E.getDst();  
-      return (reinterpret_cast<unsigned>(P1) >> 4) ^
-      (reinterpret_cast<unsigned>(P1) >> 9) ^
-      (reinterpret_cast<unsigned>(P2) >> 5) ^
-      (reinterpret_cast<unsigned>(P2) >> 10);
+      return static_cast<unsigned>((reinterpret_cast<uintptr_t>(P1) >> 4) ^
+                                   (reinterpret_cast<uintptr_t>(P1) >> 9) ^
+                                   (reinterpret_cast<uintptr_t>(P2) >> 5) ^
+                                   (reinterpret_cast<uintptr_t>(P2) >> 10));
     }
     
     static bool isEqual(const clang::CFG::Edge& LHS,
