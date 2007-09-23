@@ -1,4 +1,4 @@
-//==- llvm/VMCore/DominatorCalculation.h - Dominator Calculation -*- C++ -*-==//
+//==- DominatorCalculation.h - Dominator Calculation -------------*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
