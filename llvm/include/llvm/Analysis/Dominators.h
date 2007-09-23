@@ -129,7 +129,6 @@ protected:
 
   // Info - Collection of information used during the computation of idoms.
   DenseMap<BasicBlock*, InfoRec> Info;
-  unsigned DFSPass(BasicBlock *V, unsigned N);
 
 public:
   DominatorTreeBase(intptr_t ID, bool isPostDom) 
@@ -319,6 +318,8 @@ private:
   friend BasicBlock *DTEval(DominatorTree& DT, BasicBlock *v);
   friend void DTLink(DominatorTree& DT, BasicBlock *V,
                      BasicBlock *W, InfoRec &WInfo);
+  
+  unsigned DFSPass(BasicBlock *V, unsigned N);
 };
 
 //===-------------------------------------

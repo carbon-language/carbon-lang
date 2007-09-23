@@ -53,7 +53,7 @@ char DominatorTree::ID = 0;
 static RegisterPass<DominatorTree>
 E("domtree", "Dominator Tree Construction", true);
 
-unsigned DominatorTreeBase::DFSPass(BasicBlock *V, unsigned N) {
+unsigned DominatorTree::DFSPass(BasicBlock *V, unsigned N) {
   // This is more understandable as a recursive algorithm, but we can't use the
   // recursive algorithm due to stack depth issues.  Keep it here for
   // documentation purposes.
