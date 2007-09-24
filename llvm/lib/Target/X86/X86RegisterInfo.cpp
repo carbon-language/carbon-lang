@@ -1278,17 +1278,11 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   
   // Prepare for frame info.
-  unsigned FrameLabelId = 0, StartLabelId = 0;
+  unsigned FrameLabelId = 0;
   
   // Get the number of bytes to allocate from the FrameInfo
   uint64_t StackSize = MFI->getStackSize();
   uint64_t NumBytes = StackSize - X86FI->getCalleeSavedFrameSize();
-
-  if (MMI && MMI->needsFrameInfo()) {
-    // Mark function start
-    StartLabelId = MMI->NextLabelID();
-    BuildMI(MBB, MBBI, TII.get(X86::LABEL)).addImm(StartLabelId);
-  }
 
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is
