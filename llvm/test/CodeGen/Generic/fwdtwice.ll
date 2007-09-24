@@ -4,7 +4,7 @@
 ;; Test the sequence:
 ;;	cast -> setle 0, %cast -> br %cond
 ;; This sequence should cause the cast value to be forwarded twice,
-;; i.e., cast is forwarded to the setle and teh setle is forwarded
+;; i.e., cast is forwarded to the setle and the setle is forwarded
 ;; to the branch.
 ;; register argument of the "branch-on-register" instruction, i.e.,
 ;; 
