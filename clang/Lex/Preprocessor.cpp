@@ -2121,8 +2121,13 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   ReadMacroName(MacroNameTok);
   
   // Error reading macro name?  If so, diagnostic already issued.
-  if (MacroNameTok.getKind() == tok::eom)
+  if (MacroNameTok.getKind() == tok::eom) {
+    // Skip code until we get to #endif.  This helps with recovery by not
+    // emitting an error when the #endif is reached.
+    SkipExcludedConditionalBlock(DirectiveTok.getLocation(),
+                                 /*Foundnonskip*/false, /*FoundElse*/false);
     return;
+  }
   
   // Check to see if this is the last token on the #if[n]def line.
   CheckEndOfDirective(isIfndef ? "#ifndef" : "#ifdef");
