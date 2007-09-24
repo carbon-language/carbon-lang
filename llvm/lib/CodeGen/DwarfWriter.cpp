@@ -2525,9 +2525,9 @@ private:
 
     Asm->EmitInt32(0); Asm->EOL("EOM (1)");
     Asm->EmitInt32(0); Asm->EOL("EOM (2)");
+  #endif
     
     Asm->EOL();
-  #endif
   }
 
   /// EmitDebugRanges - Emit visible names into a debug ranges section.
