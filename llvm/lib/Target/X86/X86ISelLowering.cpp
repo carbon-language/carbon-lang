@@ -32,6 +32,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ParameterAttributes.h"
@@ -229,9 +230,13 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::MEMSET          , MVT::Other, Custom);
   setOperationAction(ISD::MEMCPY          , MVT::Other, Custom);
 
-  // We don't have line number support yet.
+  // Use the default ISD::LOCATION expansion, and tell Legalize it's
+  // ok to use DEBUG_LOC if we have an assembler that supports it.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
-  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
+  if (TM.getTargetAsmInfo()->hasDotLocAndDotFile())
+    setOperationAction(ISD::DEBUG_LOC, MVT::Other, Legal);
+  else
+    setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   // FIXME - use subtarget debug flags
   if (!Subtarget->isTargetDarwin() &&
       !Subtarget->isTargetELF() &&
