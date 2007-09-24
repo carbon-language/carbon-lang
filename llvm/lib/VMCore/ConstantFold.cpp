@@ -699,23 +699,6 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         (void)C3V.multiply(C2V, APFloat::rmNearestTiesToEven);
         return ConstantFP::get(CFP1->getType(), C3V);
       case Instruction::FDiv:
-        // FIXME better to look at the return code
-        if (C2V.isZero())
-          if (C1V.isZero())
-            // IEEE 754, Section 7.1, #4
-            return ConstantFP::get(CFP1->getType(), isDouble ?
-                            APFloat(std::numeric_limits<double>::quiet_NaN()) :
-                            APFloat(std::numeric_limits<float>::quiet_NaN()));
-          else if (C2V.isNegZero() || C1V.isNegative())
-            // IEEE 754, Section 7.2, negative infinity case
-            return ConstantFP::get(CFP1->getType(), isDouble ?
-                            APFloat(-std::numeric_limits<double>::infinity()) :
-                            APFloat(-std::numeric_limits<float>::infinity()));
-          else
-            // IEEE 754, Section 7.2, positive infinity case
-            return ConstantFP::get(CFP1->getType(), isDouble ?
-                            APFloat(std::numeric_limits<double>::infinity()) :
-                            APFloat(std::numeric_limits<float>::infinity()));
         (void)C3V.divide(C2V, APFloat::rmNearestTiesToEven);
         return ConstantFP::get(CFP1->getType(), C3V);
       case Instruction::FRem:
