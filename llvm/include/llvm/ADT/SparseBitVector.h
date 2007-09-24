@@ -75,7 +75,6 @@ private:
   }
 
   friend struct ilist_traits<SparseBitVectorElement<ElementSize> >;
-
 public:
   explicit SparseBitVectorElement(unsigned Idx) {
     ElementIndex = Idx;
@@ -286,6 +285,14 @@ public:
         allzero = false;
     }
     BecameZero = allzero;
+  }
+  // Get a hash value for this element;
+  uint64_t getHashValue() const {
+    uint64_t HashVal = 0;
+    for (unsigned i = 0; i < BITWORDS_PER_ELEMENT; ++i) {
+      HashVal ^= Bits[i];
+    }
+    return HashVal;
   }
 };
 
@@ -544,22 +551,20 @@ public:
     return false;
   }
 
-  bool operator!=(const SparseBitVector &RHS) {
+  bool operator!=(const SparseBitVector &RHS) const {
     return !(*this == RHS);
   }
 
-  bool operator==(const SparseBitVector &RHS) {
+  bool operator==(const SparseBitVector &RHS) const {
     ElementListConstIter Iter1 = Elements.begin();
     ElementListConstIter Iter2 = RHS.Elements.begin();
 
-    while (Iter2 != RHS.Elements.end()) {
-      if (Iter1->index() != Iter2->index()
-          || *Iter1 != *Iter2)
+    for (; Iter1 != Elements.end() && Iter2 != RHS.Elements.end();
+         ++Iter1, ++Iter2) {
+      if (*Iter1 != *Iter2)
         return false;
-      ++Iter1;
-      ++Iter2;
     }
-    return Iter1 == Elements.end();
+    return Iter1 == Elements.end() && Iter2 == RHS.Elements.end();
   }
 
   // Union our bitmap with the RHS and return true if we changed.
@@ -789,6 +794,17 @@ public:
     return iterator(this, ~0);
   }
 
+  // Get a hash value for this bitmap.
+  uint64_t getHashValue() const {
+    uint64_t HashVal = 0;
+    for (ElementListConstIter Iter = Elements.begin();
+         Iter != Elements.end();
+         ++Iter) {
+      HashVal ^= Iter->index();
+      HashVal ^= Iter->getHashValue();
+    }
+    return HashVal;
+  }
 };
 
 // Convenience functions to allow Or and And without dereferencing in the user
@@ -828,9 +844,10 @@ void dump(const SparseBitVector<ElementSize> &LHS, llvm::OStream &out) {
   for (bi = LHS.begin(); bi != LHS.end(); ++bi) {
     out << *bi << " ";
   }
-    out << "\n";
+    out << " ]\n";
+}
 }
 
-}
+
 
 #endif

@@ -16,7 +16,8 @@
 // This algorithm is implemented as three stages:
 //   1. Object identification.
 //   2. Inclusion constraint identification.
-//   3. Inclusion constraint solving.
+//   3. Offline constraint graph optimization
+//   4. Inclusion constraint solving.
 //
 // The object identification stage identifies all of the memory objects in the
 // program, which includes globals, heap allocated objects, and stack allocated
@@ -29,20 +30,25 @@
 // B can point to.  Constraints can handle copies, loads, and stores, and
 // address taking.
 //
+// The Offline constraint graph optimization portion includes offline variable
+// substitution algorithms intended to pointer and location equivalences.
+// Pointer equivalences are those pointers that will have the same points-to
+// sets, and location equivalences are those variables that always appear
+// together in points-to sets.
+//
 // The inclusion constraint solving phase iteratively propagates the inclusion
 // constraints until a fixed point is reached.  This is an O(N^3) algorithm.
 //
 // Function constraints are handled as if they were structs with X fields.
 // Thus, an access to argument X of function Y is an access to node index
 // getNode(Y) + X.  This representation allows handling of indirect calls
-// without any issues.  To wit, an indirect call Y(a,b) is equivalence to
+// without any issues.  To wit, an indirect call Y(a,b) is equivalent to
 // *(Y + 1) = a, *(Y + 2) = b.
 // The return node for a function is always located at getNode(F) +
 // CallReturnPos. The arguments start at getNode(F) + CallArgPos.
 //
 // Future Improvements:
-//   Offline variable substitution, offline detection of online
-//   cycles.  Use of BDD's.
+//   Offline detection of online cycles.  Use of BDD's.
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "anders-aa"
@@ -59,6 +65,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SparseBitVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include <algorithm>
 #include <set>
 #include <list>
@@ -66,18 +73,42 @@
 #include <vector>
 
 using namespace llvm;
-STATISTIC(NumIters            , "Number of iterations to reach convergence");
-STATISTIC(NumConstraints      , "Number of constraints");
-STATISTIC(NumNodes            , "Number of nodes");
-STATISTIC(NumUnified          , "Number of variables unified");
+STATISTIC(NumIters      , "Number of iterations to reach convergence");
+STATISTIC(NumConstraints, "Number of constraints");
+STATISTIC(NumNodes      , "Number of nodes");
+STATISTIC(NumUnified    , "Number of variables unified");
 
 namespace {
   const unsigned SelfRep = (unsigned)-1;
   const unsigned Unvisited = (unsigned)-1;
   // Position of the function return node relative to the function node.
-  const unsigned CallReturnPos = 2;
+  const unsigned CallReturnPos = 1;
   // Position of the function call node relative to the function node.
-  const unsigned CallFirstArgPos = 3;
+  const unsigned CallFirstArgPos = 2;
+
+  struct BitmapKeyInfo {
+    static inline SparseBitVector<> *getEmptyKey() {
+      return reinterpret_cast<SparseBitVector<> *>(-1);
+    }
+    static inline SparseBitVector<> *getTombstoneKey() {
+      return reinterpret_cast<SparseBitVector<> *>(-2);
+    }
+    static unsigned getHashValue(const SparseBitVector<> *bitmap) {
+      return bitmap->getHashValue();
+    }
+    static bool isEqual(const SparseBitVector<> *LHS,
+                        const SparseBitVector<> *RHS) {
+      if (LHS == RHS)
+        return true;
+      else if (LHS == getEmptyKey() || RHS == getEmptyKey()
+               || LHS == getTombstoneKey() || RHS == getTombstoneKey())
+        return false;
+
+      return *LHS == *RHS;
+    }
+
+    static bool isPod() { return true; }
+  };
 
   class VISIBILITY_HIDDEN Andersens : public ModulePass, public AliasAnalysis,
                                       private InstVisitor<Andersens> {
@@ -89,7 +120,7 @@ namespace {
     /// 'store' for statements like "*A = B", and AddressOf for statements like
     /// A = alloca;  The Offset is applied as *(A + K) = B for stores,
     /// A = *(B + K) for loads, and A = B + K for copies.  It is
-    /// illegal on addressof constraints (Because it is statically
+    /// illegal on addressof constraints (because it is statically
     /// resolvable to A = &C where C = B + K)
 
     struct Constraint {
@@ -105,29 +136,53 @@ namespace {
       }
     };
 
-    // Node class - This class is used to represent a node
-    // in the constraint graph.  Due to various optimizations,
-    // not always the case that there is a mapping from a Node to a
-    // Value.  In particular, we add artificial
-    // Node's that represent the set of pointed-to variables
-    // shared for each location equivalent Node.
+    // Node class - This class is used to represent a node in the constraint
+    // graph.  Due to various optimizations, not always the case that there is a
+    // mapping from a Node to a Value.  In particular, we add artificial Node's
+    // that represent the set of pointed-to variables shared for each location
+    // equivalent Node.
     struct Node {
-       Value *Val;
+      Value *Val;
       SparseBitVector<> *Edges;
       SparseBitVector<> *PointsTo;
       SparseBitVector<> *OldPointsTo;
       bool Changed;
       std::list<Constraint> Constraints;
 
-      // Nodes in cycles (or in equivalence classes) are united
-      // together using a standard union-find representation with path
-      // compression.  NodeRep gives the index into GraphNodes
-      // representative for this one.
-      unsigned NodeRep;    public:
+      // Pointer and location equivalence labels
+      unsigned PointerEquivLabel;
+      unsigned LocationEquivLabel;
+      // Predecessor edges, both real and implicit
+      SparseBitVector<> *PredEdges;
+      SparseBitVector<> *ImplicitPredEdges;
+      // Set of nodes that point to us, only use for location equivalence.
+      SparseBitVector<> *PointedToBy;
+      // Number of incoming edges, used during variable substitution to early
+      // free the points-to sets
+      unsigned NumInEdges;
+      // True if our ponits-to set is in the Set2PEClass map
+      bool StoredInHash;
+      // True if our node has no indirect constraints (Complex or otherwise)
+      bool Direct;
+      // True if the node is address taken, *or* it is part of a group of nodes
+      // that must be kept together.  This is set to true for functions and
+      // their arg nodes, which must be kept at the same position relative to
+      // their base function node.
+      // kept at the same position relative to their base function node.
+      bool AddressTaken;
 
-      Node() : Val(0), Edges(0), PointsTo(0), OldPointsTo(0), Changed(false),
-               NodeRep(SelfRep) {
-      }
+      // Nodes in cycles (or in equivalence classes) are united together using a
+      // standard union-find representation with path compression.  NodeRep
+      // gives the index into GraphNodes for the representative Node.
+      unsigned NodeRep;
+    public:
+
+      Node(bool direct = true) :
+        Val(0), Edges(0), PointsTo(0), OldPointsTo(0), Changed(false),
+        PointerEquivLabel(0), LocationEquivLabel(0), PredEdges(0),
+        ImplicitPredEdges(0), PointedToBy(0), NumInEdges(0),
+        StoredInHash(false), Direct(direct), AddressTaken(false),
+        NodeRep(SelfRep) { }
 
       Node *setValue(Value *V) {
         assert(Val == 0 && "Value already set for this node!");
@@ -163,28 +218,28 @@ namespace {
 
     /// ValueNodes - This map indicates the Node that a particular Value* is
     /// represented by.  This contains entries for all pointers.
-    std::map<Value*, unsigned> ValueNodes;
+    DenseMap<Value*, unsigned> ValueNodes;
 
     /// ObjectNodes - This map contains entries for each memory object in the
     /// program: globals, alloca's and mallocs.
-    std::map<Value*, unsigned> ObjectNodes;
+    DenseMap<Value*, unsigned> ObjectNodes;
 
     /// ReturnNodes - This map contains an entry for each function in the
     /// program that returns a value.
-    std::map<Function*, unsigned> ReturnNodes;
+    DenseMap<Function*, unsigned> ReturnNodes;
 
     /// VarargNodes - This map contains the entry used to represent all pointers
     /// passed through the varargs portion of a function call for a particular
     /// function.  An entry is not present in this map for functions that do not
     /// take variable arguments.
-    std::map<Function*, unsigned> VarargNodes;
+    DenseMap<Function*, unsigned> VarargNodes;
 
 
     /// Constraints - This vector contains a list of all of the constraints
     /// identified by the program.
     std::vector<Constraint> Constraints;
 
-    // Map from graph node to maximum K value that is allowed (For functions,
+    // Map from graph node to maximum K value that is allowed (for functions,
     // this is equivalent to the number of arguments + CallFirstArgPos)
     std::map<unsigned, unsigned> MaxK;
 
@@ -193,9 +248,10 @@ namespace {
     enum {
       UniversalSet = 0,
       NullPtr      = 1,
-      NullObject   = 2
+      NullObject   = 2,
+      NumberSpecialNodes
     };
-    // Stack for Tarjans
+    // Stack for Tarjan's
     std::stack<unsigned> SCCStack;
     // Topological Index -> Graph node
     std::vector<unsigned> Topo2Node;
@@ -209,6 +265,34 @@ namespace {
     unsigned DFSNumber;
     unsigned RPONumber;
 
+    // Offline variable substitution related things
+
+    // Temporary rep storage, used because we can't collapse SCC's in the
+    // predecessor graph by uniting the variables permanently, we can only do so
+    // for the successor graph.
+    std::vector<unsigned> VSSCCRep;
+    // Mapping from node to whether we have visited it during SCC finding yet.
+    std::vector<bool> Node2Visited;
+    // During variable substitution, we create unknowns to represent the unknown
+    // value that is a dereference of a variable.  These nodes are known as
+    // "ref" nodes (since they represent the value of dereferences).
+    unsigned FirstRefNode;
+    // During HVN, we create represent address taken nodes as if they were
+    // unknown (since HVN, unlike HU, does not evaluate unions).
+    unsigned FirstAdrNode;
+    // Current pointer equivalence class number
+    unsigned PEClass;
+    // Mapping from points-to sets to equivalence classes
+    typedef DenseMap<SparseBitVector<> *, unsigned, BitmapKeyInfo> BitVectorMap;
+    BitVectorMap Set2PEClass;
+    // Mapping from pointer equivalences to the representative node.  -1 if we
+    // have no representative node for this pointer equivalence class yet.
+    std::vector<int> PEClass2Node;
+    // Mapping from pointer equivalences to representative node.  This includes
+    // pointer equivalent but not location equivalent variables. -1 if we have
+    // no representative node for this pointer equivalence class yet.
+    std::vector<int> PENLEClass2Node;
+
   public:
     static char ID;
     Andersens() : ModulePass((intptr_t)&ID) {}
@@ -217,7 +301,11 @@ namespace {
       InitializeAliasAnalysis(this);
       IdentifyObjects(M);
       CollectConstraints(M);
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "anders-aa-constraints"
       DEBUG(PrintConstraints());
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "anders-aa"
       SolveConstraints();
       DEBUG(PrintPointsToGraph());
 
@@ -275,7 +363,7 @@ namespace {
         if (!isa<GlobalValue>(C))
           return getNodeForConstantPointer(C);
 
-      std::map<Value*, unsigned>::iterator I = ValueNodes.find(V);
+      DenseMap<Value*, unsigned>::iterator I = ValueNodes.find(V);
       if (I == ValueNodes.end()) {
 #ifndef NDEBUG
         V->dump();
@@ -288,7 +376,7 @@ namespace {
     /// getObject - Return the node corresponding to the memory object for the
     /// specified global or allocation instruction.
     unsigned getObject(Value *V) {
-      std::map<Value*, unsigned>::iterator I = ObjectNodes.find(V);
+      DenseMap<Value*, unsigned>::iterator I = ObjectNodes.find(V);
       assert(I != ObjectNodes.end() &&
              "Value does not have an object in the points-to graph!");
       return I->second;
@@ -297,7 +385,7 @@ namespace {
     /// getReturnNode - Return the node representing the return value for the
     /// specified function.
     unsigned getReturnNode(Function *F) {
-      std::map<Function*, unsigned>::iterator I = ReturnNodes.find(F);
+      DenseMap<Function*, unsigned>::iterator I = ReturnNodes.find(F);
       assert(I != ReturnNodes.end() && "Function does not return a value!");
       return I->second;
     }
@@ -305,7 +393,7 @@ namespace {
     /// getVarargNode - Return the node representing the variable arguments
     /// formal for the specified function.
     unsigned getVarargNode(Function *F) {
-      std::map<Function*, unsigned>::iterator I = VarargNodes.find(F);
+      DenseMap<Function*, unsigned>::iterator I = VarargNodes.find(F);
       assert(I != VarargNodes.end() && "Function does not take var args!");
       return I->second;
     }
@@ -325,9 +413,18 @@ namespace {
     void CollectConstraints(Module &M);
     bool AnalyzeUsesOfFunction(Value *);
     void CreateConstraintGraph();
+    void OptimizeConstraints();
+    unsigned FindEquivalentNode(unsigned, unsigned);
+    void ClumpAddressTaken();
+    void RewriteConstraints();
+    void HU();
+    void HVN();
+    void UnitePointerEquivalences();
     void SolveConstraints();
     void QueryNode(unsigned Node);
-
+    void Condense(unsigned Node);
+    void HUValNum(unsigned Node);
+    void HVNValNum(unsigned Node);
     unsigned getNodeForConstantPointer(Constant *C);
     unsigned getNodeForConstantPointerTarget(Constant *C);
     void AddGlobalInitializerConstraints(unsigned, Constant *C);
@@ -339,6 +436,8 @@ namespace {
 
     void PrintNode(Node *N);
     void PrintConstraints();
+    void PrintConstraint(const Constraint &);
+    void PrintLabels();
     void PrintPointsToGraph();
 
     //===------------------------------------------------------------------===//
@@ -506,7 +605,6 @@ void Andersens::IdentifyObjects(Module &M) {
     // The function itself is a memory object.
     unsigned First = NumObjects;
     ValueNodes[F] = NumObjects++;
-    ObjectNodes[F] = NumObjects++;
     if (isa<PointerType>(F->getFunctionType()->getReturnType()))
       ReturnNodes[F] = NumObjects++;
     if (F->getFunctionType()->isVarArg())
@@ -516,10 +614,11 @@ void Andersens::IdentifyObjects(Module &M) {
     // Add nodes for all of the incoming pointer arguments.
     for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
          I != E; ++I)
-      if (isa<PointerType>(I->getType()))
-        ValueNodes[I] = NumObjects++;
+      {
+        if (isa<PointerType>(I->getType()))
+          ValueNodes[I] = NumObjects++;
+      }
     MaxK[First] = NumObjects - First;
-    MaxK[First + 1] = NumObjects - First - 1;
 
     // Scan the function body, creating a memory object for each heap/stack
     // allocation in the body of the function and a node to represent all
@@ -796,11 +895,6 @@ void Andersens::CollectConstraints(Module &M) {
   }
 
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
-    // Make the function address point to the function object.
-    unsigned ObjectIndex = getObject(F);
-    GraphNodes[ObjectIndex].setValue(F);
-    Constraints.push_back(Constraint(Constraint::AddressOf, getNodeValue(*F),
-                                     ObjectIndex));
     // Set up the return value node.
     if (isa<PointerType>(F->getFunctionType()->getReturnType()))
       GraphNodes[getReturnNode(F)].setValue(F);
@@ -1091,8 +1185,736 @@ bool Andersens::Node::intersectsIgnoring(Node *N, unsigned Ignoring) const {
   return Result;
 }
 
-// Create the constraint graph used for solving points-to analysis.
-//
+void dumpToDOUT(SparseBitVector<> *bitmap) {
+  dump(*bitmap, DOUT);
+}
+
+
+/// Clump together address taken variables so that the points-to sets use up
+/// less space and can be operated on faster.
+
+void Andersens::ClumpAddressTaken() {
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "anders-aa-renumber"
+  std::vector<unsigned> Translate;
+  std::vector<Node> NewGraphNodes;
+
+  Translate.resize(GraphNodes.size());
+  unsigned NewPos = 0;
+
+  for (unsigned i = 0; i < Constraints.size(); ++i) {
+    Constraint &C = Constraints[i];
+    if (C.Type == Constraint::AddressOf) {
+      GraphNodes[C.Src].AddressTaken = true;
+    }
+  }
+  for (unsigned i = 0; i < NumberSpecialNodes; ++i) {
+    unsigned Pos = NewPos++;
+    Translate[i] = Pos;
+    NewGraphNodes.push_back(GraphNodes[i]);
+    DOUT << "Renumbering node " << i << " to node " << Pos << "\n";
+  }
+
+  // I believe this ends up being faster than making two vectors and splicing
+  // them.
+  for (unsigned i = NumberSpecialNodes; i < GraphNodes.size(); ++i) {
+    if (GraphNodes[i].AddressTaken) {
+      unsigned Pos = NewPos++;
+      Translate[i] = Pos;
+      NewGraphNodes.push_back(GraphNodes[i]);
+      DOUT << "Renumbering node " << i << " to node " << Pos << "\n";
+    }
+  }
+
+  for (unsigned i = NumberSpecialNodes; i < GraphNodes.size(); ++i) {
+    if (!GraphNodes[i].AddressTaken) {
+      unsigned Pos = NewPos++;
+      Translate[i] = Pos;
+      NewGraphNodes.push_back(GraphNodes[i]);
+      DOUT << "Renumbering node " << i << " to node " << Pos << "\n";
+    }
+  }
+
+  for (DenseMap<Value*, unsigned>::iterator Iter = ValueNodes.begin();
+       Iter != ValueNodes.end();
+       ++Iter)
+    Iter->second = Translate[Iter->second];
+
+  for (DenseMap<Value*, unsigned>::iterator Iter = ObjectNodes.begin();
+       Iter != ObjectNodes.end();
+       ++Iter)
+    Iter->second = Translate[Iter->second];
+
+  for (DenseMap<Function*, unsigned>::iterator Iter = ReturnNodes.begin();
+       Iter != ReturnNodes.end();
+       ++Iter)
+    Iter->second = Translate[Iter->second];
+
+  for (DenseMap<Function*, unsigned>::iterator Iter = VarargNodes.begin();
+       Iter != VarargNodes.end();
+       ++Iter)
+    Iter->second = Translate[Iter->second];
+
+  for (unsigned i = 0; i < Constraints.size(); ++i) {
+    Constraint &C = Constraints[i];
+    C.Src = Translate[C.Src];
+    C.Dest = Translate[C.Dest];
+  }
+
+  GraphNodes.swap(NewGraphNodes);
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "anders-aa"
+}
+
+/// The technique used here is described in "Exploiting Pointer and Location
+/// Equivalence to Optimize Pointer Analysis. In the 14th International Static
+/// Analysis Symposium (SAS), August 2007."  It is known as the "HVN" algorithm,
+/// and is equivalent to value numbering the collapsed constraint graph without
+/// evaluating unions.  This is used as a pre-pass to HU in order to resolve
+/// first order pointer dereferences and speed up/reduce memory usage of HU.
+/// Running both is equivalent to HRU without the iteration
+/// HVN in more detail:
+/// Imagine the set of constraints was simply straight line code with no loops
+/// (we eliminate cycles, so there are no loops), such as:
+/// E = &D
+/// E = &C
+/// E = F
+/// F = G
+/// G = F
+/// Applying value numbering to this code tells us:
+/// G == F == E
+///
+/// For HVN, this is as far as it goes.  We assign new value numbers to every
+/// "address node", and every "reference node".
+/// To get the optimal result for this, we use a DFS + SCC (since all nodes in a
+/// cycle must have the same value number since the = operation is really
+/// inclusion, not overwrite), and value number nodes we receive points-to sets
+/// before we value our own node.
+/// The advantage of HU over HVN is that HU considers the inclusion property, so
+/// that if you have
+/// E = &D
+/// E = &C
+/// E = F
+/// F = G
+/// F = &D
+/// G = F
+/// HU will determine that G == F == E.  HVN will not, because it cannot prove
+/// that the points to information ends up being the same because they all
+/// receive &D from E anyway.
+
+void Andersens::HVN() {
+  DOUT << "Beginning HVN\n";
+  // Build a predecessor graph.  This is like our constraint graph with the
+  // edges going in the opposite direction, and there are edges for all the
+  // constraints, instead of just copy constraints.  We also build implicit
+  // edges for constraints are implied but not explicit.  I.E for the constraint
+  // a = &b, we add implicit edges *a = b.  This helps us capture more cycles
+  for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
+    Constraint &C = Constraints[i];
+    if (C.Type == Constraint::AddressOf) {
+      GraphNodes[C.Src].AddressTaken = true;
+      GraphNodes[C.Src].Direct = false;
+
+      // Dest = &src edge
+      unsigned AdrNode = C.Src + FirstAdrNode;
+      if (!GraphNodes[C.Dest].PredEdges)
+        GraphNodes[C.Dest].PredEdges = new SparseBitVector<>;
+      GraphNodes[C.Dest].PredEdges->set(AdrNode);
+
+      // *Dest = src edge
+      unsigned RefNode = C.Dest + FirstRefNode;
+      if (!GraphNodes[RefNode].ImplicitPredEdges)
+        GraphNodes[RefNode].ImplicitPredEdges = new SparseBitVector<>;
+      GraphNodes[RefNode].ImplicitPredEdges->set(C.Src);
+    } else if (C.Type == Constraint::Load) {
+      if (C.Offset == 0) {
+        // dest = *src edge
+        if (!GraphNodes[C.Dest].PredEdges)
+          GraphNodes[C.Dest].PredEdges = new SparseBitVector<>;
+        GraphNodes[C.Dest].PredEdges->set(C.Src + FirstRefNode);
+      } else {
+        GraphNodes[C.Dest].Direct = false;
+      }
+    } else if (C.Type == Constraint::Store) {
+      if (C.Offset == 0) {
+        // *dest = src edge
+        unsigned RefNode = C.Dest + FirstRefNode;
+        if (!GraphNodes[RefNode].PredEdges)
+          GraphNodes[RefNode].PredEdges = new SparseBitVector<>;
+        GraphNodes[RefNode].PredEdges->set(C.Src);
+      }
+    } else {
+      // Dest = Src edge and *Dest = *Src edge
+      if (!GraphNodes[C.Dest].PredEdges)
+        GraphNodes[C.Dest].PredEdges = new SparseBitVector<>;
+      GraphNodes[C.Dest].PredEdges->set(C.Src);
+      unsigned RefNode = C.Dest + FirstRefNode;
+      if (!GraphNodes[RefNode].ImplicitPredEdges)
+        GraphNodes[RefNode].ImplicitPredEdges = new SparseBitVector<>;
+      GraphNodes[RefNode].ImplicitPredEdges->set(C.Src + FirstRefNode);
+    }
+  }
+  PEClass = 1;
+  // Do SCC finding first to condense our predecessor graph
+  DFSNumber = 0;
+  Node2DFS.insert(Node2DFS.begin(), GraphNodes.size(), 0);
+  Node2Deleted.insert(Node2Deleted.begin(), GraphNodes.size(), false);
+  Node2Visited.insert(Node2Visited.begin(), GraphNodes.size(), false);
+
+  for (unsigned i = 0; i < FirstRefNode; ++i) {
+    unsigned Node = VSSCCRep[i];
+    if (!Node2Visited[Node])
+      HVNValNum(Node);
+  }
+  for (BitVectorMap::iterator Iter = Set2PEClass.begin();
+       Iter != Set2PEClass.end();
+       ++Iter)
+    delete Iter->first;
+  Set2PEClass.clear();
+  Node2DFS.clear();
+  Node2Deleted.clear();
+  Node2Visited.clear();
+  DOUT << "Finished HVN\n";
+
+}
+
+/// This is the workhorse of HVN value numbering. We combine SCC finding at the
+/// same time because it's easy.
+void Andersens::HVNValNum(unsigned NodeIndex) {
+  unsigned MyDFS = DFSNumber++;
+  Node *N = &GraphNodes[NodeIndex];
+  Node2Visited[NodeIndex] = true;
+  Node2DFS[NodeIndex] = MyDFS;
+
+  // First process all our explicit edges
+  if (N->PredEdges)
+    for (SparseBitVector<>::iterator Iter = N->PredEdges->begin();
+         Iter != N->PredEdges->end();
+         ++Iter) {
+      unsigned j = VSSCCRep[*Iter];
+      if (!Node2Deleted[j]) {
+        if (!Node2Visited[j])
+          HVNValNum(j);
+        if (Node2DFS[NodeIndex] > Node2DFS[j])
+          Node2DFS[NodeIndex] = Node2DFS[j];
+      }
+    }
+
+  // Now process all the implicit edges
+  if (N->ImplicitPredEdges)
+    for (SparseBitVector<>::iterator Iter = N->ImplicitPredEdges->begin();
+         Iter != N->ImplicitPredEdges->end();
+         ++Iter) {
+      unsigned j = VSSCCRep[*Iter];
+      if (!Node2Deleted[j]) {
+        if (!Node2Visited[j])
+          HVNValNum(j);
+        if (Node2DFS[NodeIndex] > Node2DFS[j])
+          Node2DFS[NodeIndex] = Node2DFS[j];
+      }
+    }
+
+  // See if we found any cycles
+  if (MyDFS == Node2DFS[NodeIndex]) {
+    while (!SCCStack.empty() && Node2DFS[SCCStack.top()] >= MyDFS) {
+      unsigned CycleNodeIndex = SCCStack.top();
+      Node *CycleNode = &GraphNodes[CycleNodeIndex];
+      VSSCCRep[CycleNodeIndex] = NodeIndex;
+      // Unify the nodes
+      N->Direct &= CycleNode->Direct;
+
+      if (CycleNode->PredEdges) {
+        if (!N->PredEdges)
+          N->PredEdges = new SparseBitVector<>;
+        *(N->PredEdges) |= CycleNode->PredEdges;
+        delete CycleNode->PredEdges;
+        CycleNode->PredEdges = NULL;
+      }
+      if (CycleNode->ImplicitPredEdges) {
+        if (!N->ImplicitPredEdges)
+          N->ImplicitPredEdges = new SparseBitVector<>;
+        *(N->ImplicitPredEdges) |= CycleNode->ImplicitPredEdges;
+        delete CycleNode->ImplicitPredEdges;
+        CycleNode->ImplicitPredEdges = NULL;
+      }
+
+      SCCStack.pop();
+    }
+
+    Node2Deleted[NodeIndex] = true;
+
+    if (!N->Direct) {
+      GraphNodes[NodeIndex].PointerEquivLabel = PEClass++;
+      return;
+    }
+
+    // Collect labels of successor nodes
+    bool AllSame = true;
+    unsigned First = ~0;
+    SparseBitVector<> *Labels = new SparseBitVector<>;
+    bool Used = false;
+
+    if (N->PredEdges)
+      for (SparseBitVector<>::iterator Iter = N->PredEdges->begin();
+           Iter != N->PredEdges->end();
+         ++Iter) {
+        unsigned j = VSSCCRep[*Iter];
+        unsigned Label = GraphNodes[j].PointerEquivLabel;
+        // Ignore labels that are equal to us or non-pointers
+        if (j == NodeIndex || Label == 0)
+          continue;
+        if (First == (unsigned)~0)
+          First = Label;
+        else if (First != Label)
+          AllSame = false;
+        Labels->set(Label);
+    }
+
+    // We either have a non-pointer, a copy of an existing node, or a new node.
+    // Assign the appropriate pointer equivalence label.
+    if (Labels->empty()) {
+      GraphNodes[NodeIndex].PointerEquivLabel = 0;
+    } else if (AllSame) {
+      GraphNodes[NodeIndex].PointerEquivLabel = First;
+    } else {
+      GraphNodes[NodeIndex].PointerEquivLabel = Set2PEClass[Labels];
+      if (GraphNodes[NodeIndex].PointerEquivLabel == 0) {
+        unsigned EquivClass = PEClass++;
+        Set2PEClass[Labels] = EquivClass;
+        GraphNodes[NodeIndex].PointerEquivLabel = EquivClass;
+        Used = true;
+      }
+    }
+    if (!Used)
+      delete Labels;
+  } else {
+    SCCStack.push(NodeIndex);
+  }
+}
+
+/// The technique used here is described in "Exploiting Pointer and Location
+/// Equivalence to Optimize Pointer Analysis. In the 14th International Static
+/// Analysis Symposium (SAS), August 2007."  It is known as the "HU" algorithm,
+/// and is equivalent to value numbering the collapsed constraint graph
+/// including evaluating unions.
+void Andersens::HU() {
+  DOUT << "Beginning HU\n";
+  // Build a predecessor graph.  This is like our constraint graph with the
+  // edges going in the opposite direction, and there are edges for all the
+  // constraints, instead of just copy constraints.  We also build implicit
+  // edges for constraints are implied but not explicit.  I.E for the constraint
+  // a = &b, we add implicit edges *a = b.  This helps us capture more cycles
+  for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
+    Constraint &C = Constraints[i];
+    if (C.Type == Constraint::AddressOf) {
+      GraphNodes[C.Src].AddressTaken = true;
+      GraphNodes[C.Src].Direct = false;
+
+      GraphNodes[C.Dest].PointsTo->set(C.Src);
+      // *Dest = src edge
+      unsigned RefNode = C.Dest + FirstRefNode;
+      if (!GraphNodes[RefNode].ImplicitPredEdges)
+        GraphNodes[RefNode].ImplicitPredEdges = new SparseBitVector<>;
+      GraphNodes[RefNode].ImplicitPredEdges->set(C.Src);
+      GraphNodes[C.Src].PointedToBy->set(C.Dest);
+    } else if (C.Type == Constraint::Load) {
+      if (C.Offset == 0) {
+        // dest = *src edge
+        if (!GraphNodes[C.Dest].PredEdges)
+          GraphNodes[C.Dest].PredEdges = new SparseBitVector<>;
+        GraphNodes[C.Dest].PredEdges->set(C.Src + FirstRefNode);
+      } else {
+        GraphNodes[C.Dest].Direct = false;
+      }
+    } else if (C.Type == Constraint::Store) {
+      if (C.Offset == 0) {
+        // *dest = src edge
+        unsigned RefNode = C.Dest + FirstRefNode;
+        if (!GraphNodes[RefNode].PredEdges)
+          GraphNodes[RefNode].PredEdges = new SparseBitVector<>;
+        GraphNodes[RefNode].PredEdges->set(C.Src);
+      }
+    } else {
+      // Dest = Src edge and *Dest = *Src edg
+      if (!GraphNodes[C.Dest].PredEdges)
+        GraphNodes[C.Dest].PredEdges = new SparseBitVector<>;
+      GraphNodes[C.Dest].PredEdges->set(C.Src);
+      unsigned RefNode = C.Dest + FirstRefNode;
+      if (!GraphNodes[RefNode].ImplicitPredEdges)
+        GraphNodes[RefNode].ImplicitPredEdges = new SparseBitVector<>;
+      GraphNodes[RefNode].ImplicitPredEdges->set(C.Src + FirstRefNode);
+    }
+  }
+  PEClass = 1;
+  // Do SCC finding first to condense our predecessor graph
+  DFSNumber = 0;
+  Node2DFS.insert(Node2DFS.begin(), GraphNodes.size(), 0);
+  Node2Deleted.insert(Node2Deleted.begin(), GraphNodes.size(), false);
+  Node2Visited.insert(Node2Visited.begin(), GraphNodes.size(), false);
+
+  for (unsigned i = 0; i < FirstRefNode; ++i) {
+    if (FindNode(i) == i) {
+      unsigned Node = VSSCCRep[i];
+      if (!Node2Visited[Node])
+        Condense(Node);
+    }
+  }
+
+  // Reset tables for actual labeling
+  Node2DFS.clear();
+  Node2Visited.clear();
+  Node2Deleted.clear();
+  // Pre-grow our densemap so that we don't get really bad behavior
+  Set2PEClass.resize(GraphNodes.size());
+
+  // Visit the condensed graph and generate pointer equivalence labels.
+  Node2Visited.insert(Node2Visited.begin(), GraphNodes.size(), false);
+  for (unsigned i = 0; i < FirstRefNode; ++i) {
+    if (FindNode(i) == i) {
+      unsigned Node = VSSCCRep[i];
+      if (!Node2Visited[Node])
+        HUValNum(Node);
+    }
+  }
+  // PEClass nodes will be deleted by the deleting of N->PointsTo in our caller.
+  Set2PEClass.clear();
+  DOUT << "Finished HU\n";
+}
+
+
+/// Implementation of standard Tarjan SCC algorithm as modified by Nuutilla.
+void Andersens::Condense(unsigned NodeIndex) {
+  unsigned MyDFS = DFSNumber++;
+  Node *N = &GraphNodes[NodeIndex];
+  Node2Visited[NodeIndex] = true;
+  Node2DFS[NodeIndex] = MyDFS;
+
+  // First process all our explicit edges
+  if (N->PredEdges)
+    for (SparseBitVector<>::iterator Iter = N->PredEdges->begin();
+         Iter != N->PredEdges->end();
+         ++Iter) {
+      unsigned j = VSSCCRep[*Iter];
+      if (!Node2Deleted[j]) {
+        if (!Node2Visited[j])
+          Condense(j);
+        if (Node2DFS[NodeIndex] > Node2DFS[j])
+          Node2DFS[NodeIndex] = Node2DFS[j];
+      }
+    }
+
+  // Now process all the implicit edges
+  if (N->ImplicitPredEdges)
+    for (SparseBitVector<>::iterator Iter = N->ImplicitPredEdges->begin();
+         Iter != N->ImplicitPredEdges->end();
+         ++Iter) {
+      unsigned j = VSSCCRep[*Iter];
+      if (!Node2Deleted[j]) {
+        if (!Node2Visited[j])
+          Condense(j);
+        if (Node2DFS[NodeIndex] > Node2DFS[j])
+          Node2DFS[NodeIndex] = Node2DFS[j];
+      }
+    }
+
+  // See if we found any cycles
+  if (MyDFS == Node2DFS[NodeIndex]) {
+    while (!SCCStack.empty() && Node2DFS[SCCStack.top()] >= MyDFS) {
+      unsigned CycleNodeIndex = SCCStack.top();
+      Node *CycleNode = &GraphNodes[CycleNodeIndex];
+      VSSCCRep[CycleNodeIndex] = NodeIndex;
+      // Unify the nodes
+      N->Direct &= CycleNode->Direct;
+
+      *(N->PointsTo) |= CycleNode->PointsTo;
+      delete CycleNode->PointsTo;
+      CycleNode->PointsTo = NULL;
+      if (CycleNode->PredEdges) {
+        if (!N->PredEdges)
+          N->PredEdges = new SparseBitVector<>;
+        *(N->PredEdges) |= CycleNode->PredEdges;
+        delete CycleNode->PredEdges;
+        CycleNode->PredEdges = NULL;
+      }
+      if (CycleNode->ImplicitPredEdges) {
+        if (!N->ImplicitPredEdges)
+          N->ImplicitPredEdges = new SparseBitVector<>;
+        *(N->ImplicitPredEdges) |= CycleNode->ImplicitPredEdges;
+        delete CycleNode->ImplicitPredEdges;
+        CycleNode->ImplicitPredEdges = NULL;
+      }
+      SCCStack.pop();
+    }
+
+    Node2Deleted[NodeIndex] = true;
+
+    // Set up number of incoming edges for other nodes
+    if (N->PredEdges)
+      for (SparseBitVector<>::iterator Iter = N->PredEdges->begin();
+           Iter != N->PredEdges->end();
+           ++Iter)
+        ++GraphNodes[VSSCCRep[*Iter]].NumInEdges;
+  } else {
+    SCCStack.push(NodeIndex);
+  }
+}
+
+void Andersens::HUValNum(unsigned NodeIndex) {
+  Node *N = &GraphNodes[NodeIndex];
+  Node2Visited[NodeIndex] = true;
+
+  // Eliminate dereferences of non-pointers for those non-pointers we have
+  // already identified.  These are ref nodes whose non-ref node:
+  // 1. Has already been visited determined to point to nothing (and thus, a
+  // dereference of it must point to nothing)
+  // 2. Any direct node with no predecessor edges in our graph and with no
+  // points-to set (since it can't point to anything either, being that it
+  // receives no points-to sets and has none).
+  if (NodeIndex >= FirstRefNode) {
+    unsigned j = VSSCCRep[FindNode(NodeIndex - FirstRefNode)];
+    if ((Node2Visited[j] && !GraphNodes[j].PointerEquivLabel)
+        || (GraphNodes[j].Direct && !GraphNodes[j].PredEdges
+            && GraphNodes[j].PointsTo->empty())){
+      return;
+    }
+  }
+    // Process all our explicit edges
+  if (N->PredEdges)
+    for (SparseBitVector<>::iterator Iter = N->PredEdges->begin();
+         Iter != N->PredEdges->end();
+         ++Iter) {
+      unsigned j = VSSCCRep[*Iter];
+      if (!Node2Visited[j])
+        HUValNum(j);
+
+      // If this edge turned out to be the same as us, or got no pointer
+      // equivalence label (and thus points to nothing) , just decrement our
+      // incoming edges and continue.
+      if (j == NodeIndex || GraphNodes[j].PointerEquivLabel == 0) {
+        --GraphNodes[j].NumInEdges;
+        continue;
+      }
+
+      *(N->PointsTo) |= GraphNodes[j].PointsTo;
+
+      // If we didn't end up storing this in the hash, and we're done with all
+      // the edges, we don't need the points-to set anymore.
+      --GraphNodes[j].NumInEdges;
+      if (!GraphNodes[j].NumInEdges && !GraphNodes[j].StoredInHash) {
+        delete GraphNodes[j].PointsTo;
+        GraphNodes[j].PointsTo = NULL;
+      }
+    }
+  // If this isn't a direct node, generate a fresh variable.
+  if (!N->Direct) {
+    N->PointsTo->set(FirstRefNode + NodeIndex);
+  }
+
+  // See If we have something equivalent to us, if not, generate a new
+  // equivalence class.
+  if (N->PointsTo->empty()) {
+    delete N->PointsTo;
+    N->PointsTo = NULL;
+  } else {
+    if (N->Direct) {
+      N->PointerEquivLabel = Set2PEClass[N->PointsTo];
+      if (N->PointerEquivLabel == 0) {
+        unsigned EquivClass = PEClass++;
+        N->StoredInHash = true;
+        Set2PEClass[N->PointsTo] = EquivClass;
+        N->PointerEquivLabel = EquivClass;
+      }
+    } else {
+      N->PointerEquivLabel = PEClass++;
+    }
+  }
+}
+
+/// Rewrite our list of constraints so that pointer equivalent nodes are
+/// replaced by their the pointer equivalence class representative.
+void Andersens::RewriteConstraints() {
+  std::vector<Constraint> NewConstraints;
+
+  PEClass2Node.clear();
+  PENLEClass2Node.clear();
+
+  // We may have from 1 to Graphnodes + 1 equivalence classes.
+  PEClass2Node.insert(PEClass2Node.begin(), GraphNodes.size() + 1, -1);
+  PENLEClass2Node.insert(PENLEClass2Node.begin(), GraphNodes.size() + 1, -1);
+
+  // Rewrite constraints, ignoring non-pointer constraints, uniting equivalent
+  // nodes, and rewriting constraints to use the representative nodes.
+  for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
+    Constraint &C = Constraints[i];
+    unsigned RHSNode = FindNode(C.Src);
+    unsigned LHSNode = FindNode(C.Dest);
+    unsigned RHSLabel = GraphNodes[VSSCCRep[RHSNode]].PointerEquivLabel;
+    unsigned LHSLabel = GraphNodes[VSSCCRep[LHSNode]].PointerEquivLabel;
+
+    // First we try to eliminate constraints for things we can prove don't point
+    // to anything.
+    if (LHSLabel == 0) {
+      DEBUG(PrintNode(&GraphNodes[LHSNode]));
+      DOUT << " is a non-pointer, ignoring constraint.\n";
+      continue;
+    }
+    if (RHSLabel == 0) {
+      DEBUG(PrintNode(&GraphNodes[RHSNode]));
+      DOUT << " is a non-pointer, ignoring constraint.\n";
+      continue;
+    }
+    // This constraint may be useless, and it may become useless as we translate
+    // it.
+    if (C.Src == C.Dest && C.Type == Constraint::Copy)
+      continue;
+    
+    C.Src = FindEquivalentNode(RHSNode, RHSLabel);
+    C.Dest = FindEquivalentNode(FindNode(LHSNode), LHSLabel);
+    if (C.Src == C.Dest && C.Type == Constraint::Copy)
+      continue;
+
+    NewConstraints.push_back(C);
+  }
+  Constraints.swap(NewConstraints);
+  PEClass2Node.clear();
+}
+
+/// See if we have a node that is pointer equivalent to the one being asked
+/// about, and if so, unite them and return the equivalent node.  Otherwise,
+/// return the original node.
+unsigned Andersens::FindEquivalentNode(unsigned NodeIndex,
+                                       unsigned NodeLabel) {
+  if (!GraphNodes[NodeIndex].AddressTaken) {
+    if (PEClass2Node[NodeLabel] != -1) {
+      // We found an existing node with the same pointer label, so unify them.
+      return UniteNodes(PEClass2Node[NodeLabel], NodeIndex);
+    } else {
+      PEClass2Node[NodeLabel] = NodeIndex;
+      PENLEClass2Node[NodeLabel] = NodeIndex;
+    }
+  } else if (PENLEClass2Node[NodeLabel] == -1) {
+    PENLEClass2Node[NodeLabel] = NodeIndex;
+  }
+
+  return NodeIndex;
+}
+
+void Andersens::PrintLabels() {
+  for (unsigned i = 0; i < GraphNodes.size(); ++i) {
+    if (i < FirstRefNode) {
+      PrintNode(&GraphNodes[i]);
+    } else if (i < FirstAdrNode) {
+      DOUT << "REF(";
+      PrintNode(&GraphNodes[i-FirstRefNode]);
+      DOUT <<")";
+    } else {
+      DOUT << "ADR(";
+      PrintNode(&GraphNodes[i-FirstAdrNode]);
+      DOUT <<")";
+    }
+
+    DOUT << " has pointer label " << GraphNodes[i].PointerEquivLabel
+         << " and SCC rep " << VSSCCRep[i]
+         << " and is " << (GraphNodes[i].Direct ? "Direct" : "Not direct")
+         << "\n";
+  }
+}
+
+/// Optimize the constraints by performing offline variable substitution and
+/// other optimizations.
+void Andersens::OptimizeConstraints() {
+  DOUT << "Beginning constraint optimization\n";
+
+  // Function related nodes need to stay in the same relative position and can't
+  // be location equivalent.
+  for (std::map<unsigned, unsigned>::iterator Iter = MaxK.begin();
+       Iter != MaxK.end();
+       ++Iter) {
+    for (unsigned i = Iter->first;
+         i != Iter->first + Iter->second;
+         ++i) {
+      GraphNodes[i].AddressTaken = true;
+      GraphNodes[i].Direct = false;
+    }
+  }
+
+  ClumpAddressTaken();
+  FirstRefNode = GraphNodes.size();
+  FirstAdrNode = FirstRefNode + GraphNodes.size();
+  GraphNodes.insert(GraphNodes.end(), 2 * GraphNodes.size(),
+                    Node(false));
+  VSSCCRep.resize(GraphNodes.size());
+  for (unsigned i = 0; i < GraphNodes.size(); ++i) {
+    VSSCCRep[i] = i;
+  }
+  HVN();
+  for (unsigned i = 0; i < GraphNodes.size(); ++i) {
+    Node *N = &GraphNodes[i];
+    delete N->PredEdges;
+    N->PredEdges = NULL;
+    delete N->ImplicitPredEdges;
+    N->ImplicitPredEdges = NULL;
+  }
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "anders-aa-labels"
+  DEBUG(PrintLabels());
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "anders-aa"
+  RewriteConstraints();
+  // Delete the adr nodes.
+  GraphNodes.resize(FirstRefNode * 2);
+
+  // Now perform HU
+  for (unsigned i = 0; i < GraphNodes.size(); ++i) {
+    Node *N = &GraphNodes[i];
+    if (FindNode(i) == i) {
+      N->PointsTo = new SparseBitVector<>;
+      N->PointedToBy = new SparseBitVector<>;
+      // Reset our labels
+    }
+    VSSCCRep[i] = i;
+    N->PointerEquivLabel = 0;
+  }
+  HU();
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "anders-aa-labels"
+  DEBUG(PrintLabels());
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "anders-aa"
+  RewriteConstraints();
+  for (unsigned i = 0; i < GraphNodes.size(); ++i) {
+    if (FindNode(i) == i) {
+      Node *N = &GraphNodes[i];
+      delete N->PointsTo;
+      delete N->PredEdges;
+      delete N->ImplicitPredEdges;
+      delete N->PointedToBy;
+    }
+  }
+  GraphNodes.erase(GraphNodes.begin() + FirstRefNode, GraphNodes.end());
+  DOUT << "Finished constraint optimization\n";
+  FirstRefNode = 0;
+  FirstAdrNode = 0;
+}
+
+/// Unite pointer but not location equivalent variables, now that the constraint
+/// graph is built.
+void Andersens::UnitePointerEquivalences() {
+  DOUT << "Uniting remaining pointer equivalences\n";
+  for (unsigned i = 0; i < GraphNodes.size(); ++i) {
+    if (GraphNodes[i].AddressTaken && GraphNodes[i].NodeRep == SelfRep) {
+      unsigned Label = GraphNodes[i].PointerEquivLabel;
+
+      if (Label && PENLEClass2Node[Label] != -1)
+        UniteNodes(i, PENLEClass2Node[Label]);
+    }
+  }
+  DOUT << "Finished remaining pointer equivalences\n";
+  PENLEClass2Node.clear();
+}
+
+/// Create the constraint graph used for solving points-to analysis.
+///
 void Andersens::CreateConstraintGraph() {
   for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
     Constraint &C = Constraints[i];
@@ -1181,8 +2003,13 @@ void Andersens::SolveConstraints() {
   bool Changed = true;
   unsigned Iteration = 0;
 
-  // We create the bitmaps here to avoid getting jerked around by the compiler
-  // creating objects behind our back and wasting lots of memory.
+  OptimizeConstraints();
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "anders-aa-constraints"
+      DEBUG(PrintConstraints());
+#undef DEBUG_TYPE
+#define DEBUG_TYPE "anders-aa"
+
   for (unsigned i = 0; i < GraphNodes.size(); ++i) {
     Node *N = &GraphNodes[i];
     N->PointsTo = new SparseBitVector<>;
@@ -1190,9 +2017,12 @@ void Andersens::SolveConstraints() {
     N->Edges = new SparseBitVector<>;
   }
   CreateConstraintGraph();
-
+  UnitePointerEquivalences();
+  assert(SCCStack.empty() && "SCC Stack should be empty by now!");
   Topo2Node.insert(Topo2Node.begin(), GraphNodes.size(), Unvisited);
   Node2Topo.insert(Node2Topo.begin(), GraphNodes.size(), Unvisited);
+  Node2DFS.clear();
+  Node2Deleted.clear();
   Node2DFS.insert(Node2DFS.begin(), GraphNodes.size(), 0);
   Node2Deleted.insert(Node2Deleted.begin(), GraphNodes.size(), false);
   DFSNumber = 0;
@@ -1214,7 +2044,7 @@ void Andersens::SolveConstraints() {
   do {
     Changed = false;
     ++NumIters;
-    DOUT << "Starting iteration #" << Iteration++;
+    DOUT << "Starting iteration #" << Iteration++ << "\n";
     // TODO: In the microoptimization category, we could just make Topo2Node
     // a fast map and thus only contain the visited nodes.
     for (unsigned i = 0; i < GraphNodes.size(); ++i) {
@@ -1248,7 +2078,7 @@ void Andersens::SolveConstraints() {
         // TODO: We could delete redundant constraints here.
         // Src and Dest will be the vars we are going to process.
         // This may look a bit ugly, but what it does is allow us to process
-        // both store and load constraints with the same function.
+        // both store and load constraints with the same code.
         // Load constraints say that every member of our RHS solution has K
         // added to it, and that variable gets an edge to LHS. We also union
         // RHS+K's solution into the LHS solution.
@@ -1282,11 +2112,10 @@ void Andersens::SolveConstraints() {
           CurrMember = *bi;
 
           // Need to increment the member by K since that is where we are
-          // supposed to copy to/from
-          // Node that in positive weight cycles, which occur in address taking
-          // of fields,  K can go past
-          // MaxK[CurrMember] elements, even though that is all it could
-          // point to.
+          // supposed to copy to/from.  Note that in positive weight cycles,
+          // which occur in address taking of fields, K can go past
+          // MaxK[CurrMember] elements, even though that is all it could point
+          // to.
           if (K > 0 && K > MaxK[CurrMember])
             continue;
           else
@@ -1393,12 +2222,17 @@ unsigned Andersens::UniteNodes(unsigned First, unsigned Second) {
 
   SecondNode->NodeRep = First;
   FirstNode->Changed |= SecondNode->Changed;
-  FirstNode->PointsTo |= *(SecondNode->PointsTo);
-  FirstNode->Edges |= *(SecondNode->Edges);
-  FirstNode->Constraints.splice(FirstNode->Constraints.begin(),
-                                SecondNode->Constraints);
-  delete FirstNode->OldPointsTo;
-  FirstNode->OldPointsTo = new SparseBitVector<>;
+  if (FirstNode->PointsTo && SecondNode->PointsTo)
+    FirstNode->PointsTo |= *(SecondNode->PointsTo);
+  if (FirstNode->Edges && SecondNode->Edges)
+    FirstNode->Edges |= *(SecondNode->Edges);
+  if (!FirstNode->Constraints.empty() && !SecondNode->Constraints.empty())
+    FirstNode->Constraints.splice(FirstNode->Constraints.begin(),
+                                  SecondNode->Constraints);
+  if (FirstNode->OldPointsTo) {
+    delete FirstNode->OldPointsTo;
+    FirstNode->OldPointsTo = new SparseBitVector<>;
+  }
 
   // Destroy interesting parts of the merged-from node.
   delete SecondNode->OldPointsTo;
@@ -1479,35 +2313,36 @@ void Andersens::PrintNode(Node *N) {
     if (N == &GraphNodes[getObject(V)])
       cerr << "<mem>";
 }
+void Andersens::PrintConstraint(const Constraint &C) {
+  if (C.Type == Constraint::Store) {
+    cerr << "*";
+    if (C.Offset != 0)
+      cerr << "(";
+  }
+  PrintNode(&GraphNodes[C.Dest]);
+  if (C.Type == Constraint::Store && C.Offset != 0)
+    cerr << " + " << C.Offset << ")";
+  cerr << " = ";
+  if (C.Type == Constraint::Load) {
+    cerr << "*";
+    if (C.Offset != 0)
+      cerr << "(";
+  }
+  else if (C.Type == Constraint::AddressOf)
+    cerr << "&";
+  PrintNode(&GraphNodes[C.Src]);
+  if (C.Offset != 0 && C.Type != Constraint::Store)
+    cerr << " + " << C.Offset;
+  if (C.Type == Constraint::Load && C.Offset != 0)
+    cerr << ")";
+  cerr << "\n";
+}
 
 void Andersens::PrintConstraints() {
   cerr << "Constraints:\n";
 
-  for (unsigned i = 0, e = Constraints.size(); i != e; ++i) {
-    const Constraint &C = Constraints[i];
-    if (C.Type == Constraint::Store) {
-      cerr << "*";
-      if (C.Offset != 0)
-        cerr << "(";
-    }
-    PrintNode(&GraphNodes[C.Dest]);
-    if (C.Type == Constraint::Store && C.Offset != 0)
-      cerr << " + " << C.Offset << ")";
-    cerr << " = ";
-    if (C.Type == Constraint::Load) {
-      cerr << "*";
-      if (C.Offset != 0)
-        cerr << "(";
-    }
-    else if (C.Type == Constraint::AddressOf)
-      cerr << "&";
-    PrintNode(&GraphNodes[C.Src]);
-    if (C.Offset != 0 && C.Type != Constraint::Store)
-      cerr << " + " << C.Offset;
-    if (C.Type == Constraint::Load && C.Offset != 0)
-      cerr << ")";
-    cerr << "\n";
-  }
+  for (unsigned i = 0, e = Constraints.size(); i != e; ++i)
+    PrintConstraint(Constraints[i]);
 }
 
 void Andersens::PrintPointsToGraph() {

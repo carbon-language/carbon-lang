@@ -99,6 +99,9 @@ public:
   
   bool empty() const { return NumEntries == 0; }
   unsigned size() const { return NumEntries; }
+
+  /// Grow the densemap so that it has at least Size buckets. Does not shrink
+  void resize(size_t Size) { grow(Size); }
   
   void clear() {
     // If the capacity of the array is huge, and the # elements used is small,
@@ -228,7 +231,7 @@ private:
     // causing infinite loops in lookup.
     if (NumEntries*4 >= NumBuckets*3 ||
         NumBuckets-(NumEntries+NumTombstones) < NumBuckets/8) {        
-      this->grow();
+      this->grow(NumBuckets * 2);
       LookupBucketFor(Key, TheBucket);
     }
     ++NumEntries;
@@ -310,12 +313,13 @@ private:
       new (&Buckets[i].first) KeyT(EmptyKey);
   }
   
-  void grow() {
+  void grow(unsigned AtLeast) {
     unsigned OldNumBuckets = NumBuckets;
     BucketT *OldBuckets = Buckets;
     
     // Double the number of buckets.
-    NumBuckets <<= 1;
+    while (NumBuckets <= AtLeast)
+      NumBuckets <<= 1;
     NumTombstones = 0;
     Buckets = reinterpret_cast<BucketT*>(new char[sizeof(BucketT)*NumBuckets]);
 
