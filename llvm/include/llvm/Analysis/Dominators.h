@@ -275,6 +275,11 @@ public:
   virtual void dump();
   
 protected:
+  friend void Compress(DominatorTreeBase& DT, BasicBlock *VIn);
+  friend BasicBlock *Eval(DominatorTreeBase& DT, BasicBlock *V);
+  friend void Link(DominatorTreeBase& DT, BasicBlock *V,
+                   BasicBlock *W, InfoRec &WInfo);
+  
   /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking
   /// dominator tree in dfs order.
   void updateDFSNumbers();
@@ -314,10 +319,6 @@ public:
 
 private:
   friend void DTcalculate(DominatorTree& DT, Function& F);
-  friend void DTCompress(DominatorTree& DT, BasicBlock *VIn);
-  friend BasicBlock *DTEval(DominatorTree& DT, BasicBlock *v);
-  friend void DTLink(DominatorTree& DT, BasicBlock *V,
-                     BasicBlock *W, InfoRec &WInfo);
   
   unsigned DFSPass(BasicBlock *V, unsigned N);
 };

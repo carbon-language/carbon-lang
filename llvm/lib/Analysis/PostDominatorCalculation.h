@@ -17,39 +17,6 @@
 
 namespace llvm {
 
-void PDTCompress(PostDominatorTree& PDT, BasicBlock *V,
-                 PostDominatorTree::InfoRec &VInfo) {
-  BasicBlock *VAncestor = VInfo.Ancestor;
-  PostDominatorTree::InfoRec &VAInfo = PDT.Info[VAncestor];
-  if (VAInfo.Ancestor == 0)
-    return;
-  
-  PDTCompress(PDT, VAncestor, VAInfo);
-  
-  BasicBlock *VAncestorLabel = VAInfo.Label;
-  BasicBlock *VLabel = VInfo.Label;
-  if (PDT.Info[VAncestorLabel].Semi < PDT.Info[VLabel].Semi)
-    VInfo.Label = VAncestorLabel;
-  
-  VInfo.Ancestor = VAInfo.Ancestor;
-}
-
-BasicBlock *PDTEval(PostDominatorTree& PDT, BasicBlock *V) {
-  PostDominatorTree::InfoRec &VInfo = PDT.Info[V];
-
-  // Higher-complexity but faster implementation
-  if (VInfo.Ancestor == 0)
-    return V;
-  PDTCompress(PDT, V, VInfo);
-  return VInfo.Label;
-}
-
-void PDTLink(PostDominatorTree& PDT, BasicBlock *V, BasicBlock *W, 
-             PostDominatorTree::InfoRec &WInfo) {
-  // Higher-complexity but faster implementation
-  WInfo.Ancestor = V;
-}
-
 void PDTcalculate(PostDominatorTree& PDT, Function &F) {
   // Step #0: Scan the function looking for the root nodes of the post-dominance
   // relationships.  These blocks, which have no successors, end with return and
@@ -82,7 +49,7 @@ void PDTcalculate(PostDominatorTree& PDT, Function &F) {
     // Step #2: Calculate the semidominators of all vertices
     for (succ_iterator SI = succ_begin(W), SE = succ_end(W); SI != SE; ++SI)
       if (PDT.Info.count(*SI)) {  // Only if this predecessor is reachable!
-        unsigned SemiU = PDT.Info[PDTEval(PDT, *SI)].Semi;
+        unsigned SemiU = PDT.Info[Eval(PDT, *SI)].Semi;
         if (SemiU < WInfo.Semi)
           WInfo.Semi = SemiU;
       }
@@ -90,14 +57,14 @@ void PDTcalculate(PostDominatorTree& PDT, Function &F) {
     PDT.Info[PDT.Vertex[WInfo.Semi]].Bucket.push_back(W);
     
     BasicBlock *WParent = WInfo.Parent;
-    PDTLink(PDT, WParent, W, WInfo);
+    Link(PDT, WParent, W, WInfo);
     
     // Step #3: Implicitly define the immediate dominator of vertices
     std::vector<BasicBlock*> &WParentBucket = PDT.Info[WParent].Bucket;
     while (!WParentBucket.empty()) {
       BasicBlock *V = WParentBucket.back();
       WParentBucket.pop_back();
-      BasicBlock *U = PDTEval(PDT, V);
+      BasicBlock *U = Eval(PDT, V);
       PDT.IDoms[V] = PDT.Info[U].Semi < PDT.Info[V].Semi ? U : WParent;
     }
   }

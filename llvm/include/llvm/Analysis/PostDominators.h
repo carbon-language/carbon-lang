@@ -39,9 +39,6 @@ struct PostDominatorTree : public DominatorTreeBase {
 private:
   unsigned DFSPass(BasicBlock *V, unsigned N);
   friend void PDTcalculate(PostDominatorTree& PDT, Function &F);
-  friend void PDTCompress(PostDominatorTree& PDT, BasicBlock *V,
-                          InfoRec &VInfo);
-  friend BasicBlock *PDTEval(PostDominatorTree& PDT, BasicBlock *V);
   friend void PDTLink(PostDominatorTree& PDT,BasicBlock *V,
                       BasicBlock *W, InfoRec &WInfo);
 };
