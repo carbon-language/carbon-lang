@@ -618,6 +618,17 @@ void AsmPrinter::EmitString(const std::string &String) const {
 }
 
 
+/// EmitFile - Emit a .file directive.
+void AsmPrinter::EmitFile(unsigned Number, const std::string &Name) const {
+  O << "\t.file\t" << Number << " \"";
+  for (unsigned i = 0, N = Name.size(); i < N; ++i) {
+    unsigned char C = Name[i];
+    printStringChar(O, C);
+  }
+  O << "\"";
+}
+
+
 //===----------------------------------------------------------------------===//
 
 // EmitAlignment - Emit an alignment directive to the specified power of
