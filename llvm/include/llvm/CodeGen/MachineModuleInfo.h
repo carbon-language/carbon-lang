@@ -161,7 +161,7 @@ private:
   
 public:
   AnchorDesc();
-  AnchorDesc(AnchoredDesc *D);
+  explicit AnchorDesc(AnchoredDesc *D);
   
   // Accessors
   unsigned getAnchorTag() const { return AnchorTag; }
@@ -201,7 +201,7 @@ private:
 
 protected:
 
-  AnchoredDesc(unsigned T);
+  explicit AnchoredDesc(unsigned T);
 
 public:  
   // Accessors.
@@ -291,7 +291,7 @@ private:
   unsigned Flags;                       // Miscellaneous flags.
 
 public:
-  TypeDesc(unsigned T);
+  explicit TypeDesc(unsigned T);
 
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
@@ -382,7 +382,7 @@ private:
   DebugInfoDesc *FromType;              // Type derived from.
 
 public:
-  DerivedTypeDesc(unsigned T);
+  explicit DerivedTypeDesc(unsigned T);
   
   // Accessors
   TypeDesc *getFromType() const {
@@ -421,7 +421,7 @@ private:
   std::vector<DebugInfoDesc *> Elements;// Information used to compose type.
 
 public:
-  CompositeTypeDesc(unsigned T);
+  explicit CompositeTypeDesc(unsigned T);
   
   // Accessors
   std::vector<DebugInfoDesc *> &getElements() { return Elements; }
@@ -536,7 +536,7 @@ private:
   DebugInfoDesc *TyDesc;                // Type of variable.
 
 public:
-  VariableDesc(unsigned T);
+  explicit VariableDesc(unsigned T);
 
   // Accessors
   DebugInfoDesc *getContext()                const { return Context; }
@@ -595,7 +595,7 @@ private:
   bool IsDefinition;                    // Is the global defined in context.
   
 protected:
-  GlobalDesc(unsigned T);
+  explicit GlobalDesc(unsigned T);
 
 public:
   // Accessors
@@ -962,7 +962,7 @@ struct LandingPadInfo {
   Function *Personality;                // Personality function.
   std::vector<int> TypeIds;             // List of type ids (filters negative)
 
-  LandingPadInfo(MachineBasicBlock *MBB)
+  explicit LandingPadInfo(MachineBasicBlock *MBB)
   : LandingPadBlock(MBB)
   , LandingPadLabel(0)
   , Personality(NULL)  

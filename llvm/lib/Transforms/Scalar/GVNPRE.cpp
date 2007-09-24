@@ -70,7 +70,7 @@ struct Expression {
   SmallVector<uint32_t, 4> varargs;
   
   Expression() { }
-  Expression(ExpressionOpcode o) : opcode(o) { }
+  explicit Expression(ExpressionOpcode o) : opcode(o) { }
   
   bool operator==(const Expression &other) const {
     if (opcode != other.opcode)
