@@ -482,14 +482,17 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   // block defines any FP values.  If so, put an FP_REG_KILL instruction before
   // the terminator of the block.
 
-  // Note that FP stack instructions *are* used in SSE code for long double,
-  // so we do need this check.
-  bool ContainsFPCode = false;
+  // Note that FP stack instructions are used in all modes for long double,
+  // so we always need to do this check.
+  // Also note that it's possible for an FP stack register to be live across
+  // an instruction that produces multiple basic blocks (SSE CMOV) so we
+  // must check all the generated basic blocks.
 
   // Scan all of the machine instructions in these MBBs, checking for FP
   // stores.  (RFP32 and RFP64 will not exist in SSE mode, but RFP80 might.)
   MachineFunction::iterator MBBI = FirstMBB;
   do {
+    bool ContainsFPCode = false;
     for (MachineBasicBlock::iterator I = MBBI->begin(), E = MBBI->end();
          !ContainsFPCode && I != E; ++I) {
       if (I->getNumOperands() != 0 && I->getOperand(0).isRegister()) {
@@ -507,35 +510,34 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
         }
       }
     }
-  } while (!ContainsFPCode && &*(MBBI++) != BB);
-
-  // Check PHI nodes in successor blocks.  These PHI's will be lowered to have
-  // a copy of the input value in this block.  In SSE mode, we only care about
-  // 80-bit values.
-  if (!ContainsFPCode) {
-    // Final check, check LLVM BB's that are successors to the LLVM BB
-    // corresponding to BB for FP PHI nodes.
-    const BasicBlock *LLVMBB = BB->getBasicBlock();
-    const PHINode *PN;
-    for (succ_const_iterator SI = succ_begin(LLVMBB), E = succ_end(LLVMBB);
-         !ContainsFPCode && SI != E; ++SI) {
-      for (BasicBlock::const_iterator II = SI->begin();
-           (PN = dyn_cast<PHINode>(II)); ++II) {
-        if (PN->getType()==Type::X86_FP80Ty ||
-            (!Subtarget->hasSSE2() && PN->getType()->isFloatingPoint())) {
-          ContainsFPCode = true;
-          break;
+    // Check PHI nodes in successor blocks.  These PHI's will be lowered to have
+    // a copy of the input value in this block.  In SSE mode, we only care about
+    // 80-bit values.
+    if (!ContainsFPCode) {
+      // Final check, check LLVM BB's that are successors to the LLVM BB
+      // corresponding to BB for FP PHI nodes.
+      const BasicBlock *LLVMBB = BB->getBasicBlock();
+      const PHINode *PN;
+      for (succ_const_iterator SI = succ_begin(LLVMBB), E = succ_end(LLVMBB);
+           !ContainsFPCode && SI != E; ++SI) {
+        for (BasicBlock::const_iterator II = SI->begin();
+             (PN = dyn_cast<PHINode>(II)); ++II) {
+          if (PN->getType()==Type::X86_FP80Ty ||
+              (!Subtarget->hasSSE1() && PN->getType()->isFloatingPoint()) ||
+              (!Subtarget->hasSSE2() && PN->getType()==Type::DoubleTy)) {
+            ContainsFPCode = true;
+            break;
+          }
         }
       }
     }
-  }
-
-  // Finally, if we found any FP code, emit the FP_REG_KILL instruction.
-  if (ContainsFPCode) {
-    BuildMI(*BB, BB->getFirstTerminator(),
-            TM.getInstrInfo()->get(X86::FP_REG_KILL));
-    ++NumFPKill;
-  }
+    // Finally, if we found any FP code, emit the FP_REG_KILL instruction.
+    if (ContainsFPCode) {
+      BuildMI(*MBBI, MBBI->getFirstTerminator(),
+              TM.getInstrInfo()->get(X86::FP_REG_KILL));
+      ++NumFPKill;
+    }
+  } while (&*(MBBI++) != BB);
 }
 
 /// MatchAddress - Add the specified node to the specified addressing mode,
