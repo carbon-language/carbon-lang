@@ -798,9 +798,14 @@ protected:
   /// SubprogramCount - The running count of functions being compiled.
   ///
   unsigned SubprogramCount;
+  
+  /// Flavor - A unique string indicating what dwarf producer this is, used to
+  /// unique labels.
+  const char * const Flavor;
 
   unsigned SetCounter;
-  Dwarf(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
+  Dwarf(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T,
+        const char *flavor)
   : O(OS)
   , Asm(A)
   , TAI(T)
@@ -810,6 +815,7 @@ protected:
   , MF(NULL)
   , MMI(NULL)
   , SubprogramCount(0)
+  , Flavor(flavor)
   , SetCounter(1)
   {
   }
@@ -839,9 +845,15 @@ public:
     PrintLabelName(Label.Tag, Label.Number);
   }
   void PrintLabelName(const char *Tag, unsigned Number) const {
-    
     O << TAI->getPrivateGlobalPrefix() << Tag;
     if (Number) O << Number;
+  }
+  
+  void PrintLabelName(const char *Tag, unsigned Number,
+                      const char *Suffix) const {
+    O << TAI->getPrivateGlobalPrefix() << Tag;
+    if (Number) O << Number;
+    O << Suffix;
   }
   
   /// EmitLabel - Emit location label for internal use by Dwarf.
@@ -888,7 +900,7 @@ public:
                       bool IsSmall = false) {
     if (TAI->needsSet()) {
       O << "\t.set\t";
-      PrintLabelName("set", SetCounter);
+      PrintLabelName("set", SetCounter, Flavor);
       O << ",";
       PrintLabelName(TagHi, NumberHi);
       O << "-";
@@ -896,9 +908,7 @@ public:
       O << "\n";
 
       PrintRelDirective(IsSmall);
-        
-      PrintLabelName("set", SetCounter);
-      
+      PrintLabelName("set", SetCounter, Flavor);
       ++SetCounter;
     } else {
       PrintRelDirective(IsSmall);
@@ -915,7 +925,7 @@ public:
     bool printAbsolute = false;
     if (TAI->needsSet()) {
       O << "\t.set\t";
-      PrintLabelName("set", SetCounter);
+      PrintLabelName("set", SetCounter, Flavor);
       O << ",";
       PrintLabelName(Label, LabelNumber);
 
@@ -932,7 +942,7 @@ public:
 
       PrintRelDirective(IsSmall);
         
-      PrintLabelName("set", SetCounter);
+      PrintLabelName("set", SetCounter, Flavor);
       ++SetCounter;
     } else {
       PrintRelDirective(IsSmall, true);
@@ -2565,7 +2575,7 @@ public:
   // Main entry points.
   //
   DwarfDebug(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
-  : Dwarf(OS, A, T)
+  : Dwarf(OS, A, T, "dbg")
   , CompileUnits()
   , AbbreviationsSet(InitAbbreviationsSetSize)
   , Abbreviations()
@@ -3268,7 +3278,7 @@ public:
   // Main entry points.
   //
   DwarfException(std::ostream &OS, AsmPrinter *A, const TargetAsmInfo *T)
-  : Dwarf(OS, A, T)
+  : Dwarf(OS, A, T, "eh")
   , shouldEmit(false)
   {}
   
