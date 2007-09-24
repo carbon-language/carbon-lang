@@ -147,7 +147,7 @@ po_ext_iterator<T, SetType> po_ext_end(T G, SetType &S) {
 
 // Provide global definitions of inverse post order iterators...
 template <class T, 
-          class SetType = std::set<typename GraphTraits<T>::NoddeType*>,  
+          class SetType = std::set<typename GraphTraits<T>::NodeType*>,  
           bool External = false> 
 struct ipo_iterator : public po_iterator<Inverse<T>, SetType, External > { 
   ipo_iterator(const po_iterator<Inverse<T>, SetType, External> &V) : 
