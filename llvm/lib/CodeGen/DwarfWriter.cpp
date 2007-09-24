@@ -28,6 +28,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/System/Path.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -1967,6 +1968,19 @@ private:
     if (didInitial) return;
     didInitial = true;
     
+    // Print out .file directives to specify files for .loc directives.
+    if (TAI->hasDotLocAndDotFile()) {
+      const UniqueVector<SourceFileInfo> &SourceFiles = MMI->getSourceFiles();
+      const UniqueVector<std::string> &Directories = MMI->getDirectories();
+      for (unsigned i = 1, e = SourceFiles.size(); i <= e; ++i) {
+        sys::Path FullPath(Directories[SourceFiles[i].getDirectoryID()]);
+        bool AppendOk = FullPath.appendComponent(SourceFiles[i].getName());
+        assert(AppendOk && "Could not append filename to directory!");
+        Asm->EmitFile(i, FullPath.toString());
+        Asm->EOL();
+      }
+    }
+
     // Dwarf sections base addresses.
     if (TAI->doesDwarfRequireFrameSection()) {
       Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
