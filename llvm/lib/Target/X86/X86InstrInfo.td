@@ -2434,7 +2434,7 @@ def TLS_tp : I<0, Pseudo, (outs GR32:$dst), (ins),
 
 def DWARF_LOC   : I<0, Pseudo, (outs),
                     (ins i32imm:$line, i32imm:$col, i32imm:$file),
-                    "; .loc ${file:debug}, ${line:debug}, ${col:debug}",
+                    ".loc\t${file:debug} ${line:debug} ${col:debug}",
                     [(dwarf_loc (i32 imm:$line), (i32 imm:$col),
                       (i32 imm:$file))]>;
 
