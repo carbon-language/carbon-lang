@@ -286,14 +286,11 @@ namespace llvm {
     ///
     bool HasLEB128; // Defaults to false.
     
-    /// hasDotLoc - True if target asm supports .loc directives.
+    /// hasDotLocAndDotFile - True if target asm supports .loc and .file
+    /// directives for emitting debugging information.
     ///
-    bool HasDotLoc; // Defaults to false.
+    bool HasDotLocAndDotFile; // Defaults to false.
     
-    /// HasDotFile - True if target asm supports .file directives.
-    ///
-    bool HasDotFile; // Defaults to false.
-
     /// SupportsDebugInformation - True if target supports emission of debugging
     /// information.
     bool SupportsDebugInformation;
@@ -568,11 +565,8 @@ namespace llvm {
     bool hasLEB128() const {
       return HasLEB128;
     }
-    bool hasDotLoc() const {
-      return HasDotLoc;
-    }
-    bool hasDotFile() const {
-      return HasDotFile;
+    bool hasDotLocAndDotFile() const {
+      return HasDotLocAndDotFile;
     }
     bool doesSupportDebugInformation() const {
       return SupportsDebugInformation;
