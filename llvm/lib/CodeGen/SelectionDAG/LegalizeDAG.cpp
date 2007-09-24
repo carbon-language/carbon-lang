@@ -3870,8 +3870,7 @@ SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
   SDOperand Vec = Op.getOperand(0);
   SDOperand Idx = Op.getOperand(1);
   
-  SDNode *InVal = Vec.Val;
-  MVT::ValueType TVT = InVal->getValueType(0);
+  MVT::ValueType TVT = Vec.getValueType();
   unsigned NumElems = MVT::getVectorNumElements(TVT);
   
   switch (TLI.getOperationAction(ISD::EXTRACT_VECTOR_ELT, TVT)) {
@@ -5803,10 +5802,10 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
                                          SDOperand &Hi) {
   assert(MVT::isVector(Op.getValueType()) && "Cannot split non-vector type!");
   SDNode *Node = Op.Val;
-  unsigned NumElements = MVT::getVectorNumElements(Node->getValueType(0));
+  unsigned NumElements = MVT::getVectorNumElements(Op.getValueType());
   assert(NumElements > 1 && "Cannot split a single element vector!");
   unsigned NewNumElts = NumElements/2;
-  MVT::ValueType NewEltVT = MVT::getVectorElementType(Node->getValueType(0));
+  MVT::ValueType NewEltVT = MVT::getVectorElementType(Op.getValueType());
   MVT::ValueType NewVT = MVT::getVectorType(NewEltVT, NewNumElts);
   
   // See if we already split it.
