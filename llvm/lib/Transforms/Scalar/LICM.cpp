@@ -800,6 +800,10 @@ void LICM::FindPromotableValuesInLoop(
           break;
         }
 
+      // Do not promote null values because it may be unsafe to do so.
+      if (isa<ConstantPointerNull>(V))
+        PointerOk = false;
+
       if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V)) {
         // If GEP base is NULL then the calculated address used by Store or
         // Load instruction is invalid. Do not promote this value because
