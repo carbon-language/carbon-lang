@@ -2196,6 +2196,11 @@ private:
   /// EmitDebugLines - Emit source line information.
   ///
   void EmitDebugLines() {
+    // If there are no lines to emit (such as when we're using .loc directives
+    // to emit .debug_line information) don't emit a .debug_line header.
+    if (SectionSourceLines.empty())
+      return;
+
     // Minimum line delta, thus ranging from -10..(255-10).
     const int MinLineDelta = -(DW_LNS_fixed_advance_pc + 1);
     // Maximum line delta, thus ranging from -10..(255-10).
