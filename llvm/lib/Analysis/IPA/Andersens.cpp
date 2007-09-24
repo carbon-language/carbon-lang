@@ -30,11 +30,11 @@
 // B can point to.  Constraints can handle copies, loads, and stores, and
 // address taking.
 //
-// The Offline constraint graph optimization portion includes offline variable
-// substitution algorithms intended to pointer and location equivalences.
-// Pointer equivalences are those pointers that will have the same points-to
-// sets, and location equivalences are those variables that always appear
-// together in points-to sets.
+// The offline constraint graph optimization portion includes offline variable
+// substitution algorithms intended to computer pointer and location
+// equivalences.  Pointer equivalences are those pointers that will have the
+// same points-to sets, and location equivalences are those variables that
+// always appear together in points-to sets.
 //
 // The inclusion constraint solving phase iteratively propagates the inclusion
 // constraints until a fixed point is reached.  This is an O(N^3) algorithm.
@@ -137,10 +137,10 @@ namespace {
     };
 
     // Node class - This class is used to represent a node in the constraint
-    // graph.  Due to various optimizations, not always the case that there is a
-    // mapping from a Node to a Value.  In particular, we add artificial Node's
-    // that represent the set of pointed-to variables shared for each location
-    // equivalent Node.
+    // graph.  Due to various optimizations, it is not always the case that
+    // there is a mapping from a Node to a Value.  In particular, we add
+    // artificial Node's that represent the set of pointed-to variables shared
+    // for each location equivalent Node.
     struct Node {
       Value *Val;
       SparseBitVector<> *Edges;
@@ -160,15 +160,14 @@ namespace {
       // Number of incoming edges, used during variable substitution to early
       // free the points-to sets
       unsigned NumInEdges;
-      // True if our ponits-to set is in the Set2PEClass map
+      // True if our points-to set is in the Set2PEClass map
       bool StoredInHash;
-      // True if our node has no indirect constraints (Complex or otherwise)
+      // True if our node has no indirect constraints (complex or otherwise)
       bool Direct;
       // True if the node is address taken, *or* it is part of a group of nodes
       // that must be kept together.  This is set to true for functions and
       // their arg nodes, which must be kept at the same position relative to
       // their base function node.
-      // kept at the same position relative to their base function node.
       bool AddressTaken;
 
       // Nodes in cycles (or in equivalence classes) are united together using a

@@ -286,6 +286,7 @@ public:
     }
     BecameZero = allzero;
   }
+
   // Get a hash value for this element;
   uint64_t getHashValue() const {
     uint64_t HashVal = 0;
