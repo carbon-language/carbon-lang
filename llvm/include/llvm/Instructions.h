@@ -917,7 +917,7 @@ public:
   /// if it is a direct call.  If it is a call through a function pointer,
   /// return null.
   Function *getCalledFunction() const {
-    return static_cast<Function*>(dyn_cast<Function>(getOperand(0)));
+    return dyn_cast<Function>(getOperand(0));
   }
 
   /// getCalledValue - Get a pointer to the function that is invoked by this 
