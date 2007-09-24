@@ -5279,7 +5279,7 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
     // GCC calls "st(0)" just plain "st".
     if (StringsEqualNoCase("{st}", Constraint)) {
       Res.first = X86::ST0;
-      Res.second = X86::RSTRegisterClass;
+      Res.second = X86::RFP80RegisterClass;
     }
 
     return Res;
