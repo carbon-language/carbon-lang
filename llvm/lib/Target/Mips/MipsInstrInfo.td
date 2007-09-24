@@ -332,6 +332,12 @@ class CountLeading<bits<6> func, string instr_asm>:
       !strconcat(instr_asm, " $dst, $src"), 
       [], IIAlu>;
 
+class EffectiveAddress<string instr_asm> : 
+  FI<0x09, 
+     (outs CPURegs:$dst), 
+     (ins mem:$addr),
+     instr_asm,
+     [(set CPURegs:$dst, addr:$addr)], IIAlu>;
 
 //===----------------------------------------------------------------------===//
 // Pseudo instructions
@@ -467,6 +473,12 @@ let isReturn=1, isTerminator=1, hasDelaySlot=1,
   def RET : FR <0x00, 0x02, (outs), (ins CPURegs:$target),
                 "jr $target", [(MipsRet CPURegs:$target)], IIBranch>;
 }
+
+// FrameIndexes are legalized when they are operands from load/store 
+// instructions. The same not happens for stack address copies, so an
+// add op with mem ComplexPattern is used and the stack address copy
+// can be matched. It's similar to Sparc LEA_ADDRi
+def LEA_ADDiu : EffectiveAddress<"addiu $dst, ${addr:stackloc}">;
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions

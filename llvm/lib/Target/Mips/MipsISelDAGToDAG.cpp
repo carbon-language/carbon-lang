@@ -196,8 +196,8 @@ Select(SDOperand N)
   }
 
   ///
-  // Instruction Selection not handled by custom or by the 
-  // auto-generated tablegen selection should be handled here
+  // Instruction Selection not handled by the auto-generated 
+  // tablegen selection should be handled here.
   /// 
   switch(Opcode) {
 
