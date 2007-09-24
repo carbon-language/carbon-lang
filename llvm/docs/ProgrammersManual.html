@@ -77,6 +77,11 @@ option</a></li>
       <li><a href="#dss_map">&lt;map&gt;</a></li>
       <li><a href="#dss_othermap">Other Map-Like Container Options</a></li>
     </ul></li>
+    <li><a href="#ds_bit">BitVector-like containers</a>
+    <ul>
+      <li><a href="#dss_bitvector">A dense bitvector</a></li>
+      <li><a href="#dss_sparsebitvector">A sparse bitvector</a></li>
+    </ul></li>
   </ul>
   </li>
   <li><a href="#common">Helpful Hints for Common Operations</a>
@@ -705,6 +710,11 @@ access the container.  Based on that, you should use:</p>
     iteration, but do not support efficient look-up based on a key.
 </li>
 
+<li>a <a href="#ds_bit">bit</a> container provides an efficient way to store and
+    perform set operations on sets of numeric id's, while automatically
+    eliminating duplicates.  Bit containers require a maximum of 1 bit for each
+    identifier you want to store.
+</li>
 </ul>
 
 <p>
@@ -1276,6 +1286,45 @@ expensive.  Element iteration does not visit elements in a useful order.</p>
 
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ds_bit">Bit storage containers (BitVector, SparseBitVector)</a>
+</div>
+
+<div class="doc_text">
+Unlike the other containers, there are only two bit storage containers, and when
+to use each is relatively straightforward.
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_bitvector">BitVector</a>
+</div>
+
+<div class="doc_text">
+<p> The BitVector container provides a fixed size set of bits for manipulation.
+It supports individual bit setting/testing, as well as set operations.  The set
+operations take time O(size of bitvector), but operations are performed one word
+at a time, instead of one bit at a time.  This makes the BitVector very fast for
+set operations compared to other containers.  Use the BitVector when you expect
+the number of set bits to be high (IE a dense set).
+</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_sparsebitvector">SparseBitVector</a>
+</div>
+
+<div class="doc_text">
+<p> The SparseBitVector container is much like BitVector, with one major
+difference: Only the bits that are set, are stored.  This makes the
+SparseBitVector much more space efficient than BitVector when the set is sparse,
+as well as making set operations O(number of set bits) instead of O(size of
+universe).  The downside to the SparseBitVector is that setting and testing of random bits is O(N), and on large SparseBitVectors, this can be slower than BitVector. In our implementation, setting or testing bits in sorted order
+(either forwards or reverse) is O(1) worst case.  Testing and setting bits within 128 bits (depends on size) of the current bit is also O(1).  As a general statement, testing/setting bits in a SparseBitVector is O(distance away from last set bit).
+</p>
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
