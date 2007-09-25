@@ -1010,7 +1010,7 @@ bool LoopIndexSplit::updateLoopIterationSpace(SplitInfo &SD) {
     }
   }
 
-  return return;
+  return true;
 }
 
 
