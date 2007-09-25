@@ -39,6 +39,7 @@ class ASTContext {
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
   llvm::DenseMap<const IdentifierInfo*, ObjcInterfaceDecl*> ClassNameInfo;
   llvm::DenseMap<const IdentifierInfo*, ObjcProtocolDecl*> ProtocolNameInfo;
+  llvm::SmallVector<ObjcImplementationDecl*, 8> ImplementationClassInfo;
   RecordDecl *CFConstantStringTypeDecl;
 public:
   
@@ -171,6 +172,16 @@ public:
   void setObjCProtocolDecl(const IdentifierInfo* ProtocolName,
                             ObjcProtocolDecl* ProtocolDecl)
   { ProtocolNameInfo[ProtocolName] = ProtocolDecl; }
+  
+  ObjcImplementationDecl* getObjcImplementationClass(unsigned ix) {
+    return ImplementationClassInfo[ix];
+  }
+  void setObjcImplementationClass(ObjcImplementationDecl* ImplDecl) {
+    ImplementationClassInfo.push_back(ImplDecl);
+  }
+  unsigned sizeObjcImplementationClass() const {
+    return ImplementationClassInfo.size();
+  }
   
   //===--------------------------------------------------------------------===//
   //                            Type Operators

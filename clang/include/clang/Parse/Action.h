@@ -437,7 +437,7 @@ public:
   }
   //===----------------------- Obj-C Declarations -------------------------===//
   
-  virtual DeclTy *ObjcStartClassInterface(SourceLocation AtInterafceLoc,
+  virtual DeclTy *ObjcStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
@@ -448,7 +448,8 @@ public:
 				     DeclTy **allMethods, unsigned allNum) {
     return;
   }
-  virtual DeclTy *ObjcStartProtoInterface(SourceLocation AtProtoInterfaceLoc,
+  virtual DeclTy *ObjcStartProtoInterface(Scope* S,
+		    SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
     return 0;
@@ -457,6 +458,13 @@ public:
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
+    return 0;
+  }
+  virtual DeclTy *ObjcStartClassImplementation(Scope* S,
+		    SourceLocation AtClassImplLoc,
+                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                    IdentifierInfo *SuperClassname, 
+                    SourceLocation SuperClassLoc) {
     return 0;
   }
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
@@ -561,12 +569,13 @@ public:
                                                  IdentifierInfo **IdentList,
                                                  unsigned NumElts);
    
-  virtual DeclTy *ObjcStartClassInterface(SourceLocation AtInterafceLoc,
+  virtual DeclTy *ObjcStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
                     AttributeList *AttrList);
-  virtual DeclTy *ObjcStartProtoInterface(SourceLocation AtProtoInterfaceLoc,
+  virtual DeclTy *ObjcStartProtoInterface(Scope *S,
+		    SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
 };

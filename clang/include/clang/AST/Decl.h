@@ -29,7 +29,6 @@ class ObjcMethodDecl;
 class ObjcProtocolDecl;
 class ObjcCategoryDecl;
 
-
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
 /// typedef, function, struct, etc.  
 ///
@@ -41,6 +40,7 @@ public:
     // Concrete sub-classes of TypeDecl
     Typedef, Struct, Union, Class, Enum, ObjcInterface, ObjcClass, ObjcMethod,
     ObjcProtoMethod, ObjcProtocol, ObjcForwardProtocol, ObjcCategory,
+    ObjcImplementation,
     // Concrete sub-class of Decl
     Field, ObjcIvar
   };
@@ -86,6 +86,7 @@ public:
     case ParmVariable:
     case EnumConstant:
     case ObjcInterface:
+    case ObjcProtocol:
       return IDNS_Ordinary;
     case Struct:
     case Union:
@@ -856,6 +857,49 @@ public:
   }
   static bool classof(const ObjcCategoryDecl *D) { return true; }
 };
+  
+class ObjcImplementationDecl : public ScopedDecl {
+    
+  /// Implementation Class's super class.
+  ObjcInterfaceDecl *SuperClass;
+    
+  /// Optional Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
+  ObjcIvarDecl **Ivars;   // Null if not specified
+  int NumIvars;   // -1 if not defined.
+    
+  /// implemented instance methods
+  ObjcMethodDecl **InsMethods;  // Null if not defined
+  int NumInsMethods;  // -1 if not defined
+    
+  /// implemented class methods
+  ObjcMethodDecl **ClsMethods;  // Null if not defined
+  int NumClsMethods;  // -1 if not defined
+    
+  public:
+  ObjcImplementationDecl(SourceLocation L, IdentifierInfo *Id,
+                         ObjcInterfaceDecl* superDecl)
+    : ScopedDecl(ObjcImplementation, L, Id, 0),
+      SuperClass(superDecl),
+      Ivars(0), NumIvars(-1),
+      InsMethods(0), NumInsMethods(-1), ClsMethods(0), NumClsMethods(-1) {}
+  
+  void ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars, 
+                                       unsigned numIvars);
+    
+  void ObjcAddMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
+                        ObjcMethodDecl **clsMethods, unsigned numClsMembers);
+    
+  ObjcInterfaceDecl *getImplSuperClass() const { return SuperClass; }
+  
+  void setImplSuperClass(ObjcInterfaceDecl * superCls) 
+         { SuperClass = superCls; }
+    
+  static bool classof(const Decl *D) {
+    return D->getKind() == ObjcImplementation;
+  }
+  static bool classof(const ObjcImplementationDecl *D) { return true; }
+};
+  
 
 }  // end namespace clang
 #endif

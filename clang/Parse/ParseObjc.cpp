@@ -189,7 +189,8 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     if (ParseObjCProtocolReferences(ProtocolRefs))
       return 0;
   }
-  DeclTy *ClsType = Actions.ObjcStartClassInterface(atLoc, nameId, nameLoc, 
+  DeclTy *ClsType = Actions.ObjcStartClassInterface(CurScope,
+		      atLoc, nameId, nameLoc, 
                       superClassId, superClassLoc, &ProtocolRefs[0], 
                       ProtocolRefs.size(), attrList);
             
@@ -749,7 +750,7 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
       return 0;
   }
   
-  DeclTy *ProtoType = Actions.ObjcStartProtoInterface(AtLoc, 
+  DeclTy *ProtoType = Actions.ObjcStartProtoInterface(CurScope, AtLoc, 
                                 protocolName, nameLoc,
                                 &ProtocolRefs[0],
                                 ProtocolRefs.size());
@@ -786,6 +787,7 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
     return 0;
   }
   // We have a class or category name - consume it.
+  IdentifierInfo *nameId = Tok.getIdentifierInfo();
   SourceLocation nameLoc = ConsumeToken(); // consume class or category name
   
   if (Tok.getKind() == tok::l_paren) { 
@@ -810,6 +812,8 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
     return 0;
   }
   // We have a class implementation
+  SourceLocation superClassLoc;
+  IdentifierInfo *superClassId = 0;
   if (Tok.getKind() == tok::colon) {
     // We have a super class
     ConsumeToken();
@@ -817,10 +821,16 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
       Diag(Tok, diag::err_expected_ident); // missing super class name.
       return 0;
     }
-    ConsumeToken(); // Consume super class name
+    superClassId = Tok.getIdentifierInfo();
+    superClassLoc = ConsumeToken(); // Consume super class name
   }
+  DeclTy *ImplClsType = Actions.ObjcStartClassImplementation(CurScope,
+				  atLoc, 
+                                  nameId, nameLoc,
+                                  superClassId, superClassLoc);
+  
   if (Tok.getKind() == tok::l_brace)
-    ParseObjCClassInstanceVariables(0/*FIXME*/); // we have ivars
+    ParseObjCClassInstanceVariables(ImplClsType/*FIXME*/); // we have ivars
   
   return 0;
 }

@@ -420,6 +420,12 @@ DIAG(err_undef_interface, ERROR,
      "cannot find interface declaration for '%0'")
 DIAG(err_dup_category_def, ERROR,
      "duplicate interface declaration for category '%0(%1)'")
+DIAG(warn_undef_interface, WARNING,
+     "cannot find interface declaration for '%0'")
+DIAG(err_dup_implementation_class, ERROR,
+     "reimplementation of class '%0'")
+DIAG(err_conflicting_super_class, ERROR,
+     "conflicting super class name '%0'")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis

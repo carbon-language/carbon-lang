@@ -32,6 +32,7 @@ static unsigned nProtocolDecls = 0;
 static unsigned nForwardProtocolDecls = 0;
 static unsigned nCategoryDecls = 0;
 static unsigned nIvarDecls = 0;
+static unsigned nObjcImplementationDecls = 0;
 
 static bool StatSwitch = false;
 
@@ -132,6 +133,10 @@ void Decl::PrintStats() {
 	  nCategoryDecls, (int)sizeof(ObjcCategoryDecl),
 	  int(nCategoryDecls*sizeof(ObjcCategoryDecl)));
 
+  fprintf(stderr, "    %d class implementation decls, %d each (%d bytes)\n", 
+	  nObjcImplementationDecls, (int)sizeof(ObjcImplementationDecl),
+	  int(nObjcImplementationDecls*sizeof(ObjcImplementationDecl)));
+
   fprintf(stderr, "Total bytes = %d\n", 
 	  int(nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
 	      nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
@@ -192,6 +197,9 @@ void Decl::addDeclKind(const Kind k) {
      break;
     case ObjcIvar:
       nIvarDecls++;
+      break;
+    case ObjcImplementation: 
+      nObjcImplementationDecls++;
       break;
   }
 }

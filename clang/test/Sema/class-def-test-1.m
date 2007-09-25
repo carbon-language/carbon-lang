@@ -1,0 +1,23 @@
+@protocol SUPER;
+
+@interface SUPER <SUPER> @end // expected-error {{cannot find protocol definition for 'SUPER', referenced by 'SUPER'}}
+
+typedef int INTF; //  expected-error {{previou sdefinition is here}}
+
+@interface INTF @end // expected-error {{redefinition of 'INTF' as different kind of symbol}}
+
+@interface OBJECT @end
+
+@interface INTF1 : OBJECT @end
+
+@interface INTF1 : OBJECT @end // expected-error {{duplicate interface declaration for class 'INTF1'}
+
+typedef int OBJECT; // expected-error {{previous definition is here}}
+
+@interface INTF2 : OBJECT @end // expected-error {{redefinition of 'OBJECT' as different kind of symbol}}
+
+
+@protocol PROTO;
+
+@interface INTF3 : PROTO @end // expected-error {{cannot find interface declaration for 'PROTO', superclass of 'INTF3'}}
+

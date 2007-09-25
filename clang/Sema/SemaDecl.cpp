@@ -862,13 +862,24 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D,
   return NewTD;
 }
 
-Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
+Sema::DeclTy *Sema::ObjcStartClassInterface(Scope* S,
+                    SourceLocation AtInterfaceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
                     AttributeList *AttrList) {
   assert(ClassName && "Missing class identifier");
-   
+  
+  // Check for another declaration kind with the same name.
+  ScopedDecl *PrevDecl = LookupScopedDecl(ClassName, Decl::IDNS_Ordinary,
+                                          ClassLoc, S);
+  if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)
+      && !isa<ObjcProtocolDecl>(PrevDecl)) {
+    Diag(ClassLoc, diag::err_redefinition_different_kind,
+         ClassName->getName());
+    Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+  }
+  
   ObjcInterfaceDecl* IDecl = Context.getObjCInterfaceDecl(ClassName);
   
   if (IDecl) {
@@ -889,15 +900,26 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
   }
   
   if (SuperName) {
-    ObjcInterfaceDecl* SuperClassEntry = 
-                         Context.getObjCInterfaceDecl(SuperName);
-                              
-    if (!SuperClassEntry || SuperClassEntry->getIsForwardDecl()) {
-      Diag(AtInterfaceLoc, diag::err_undef_superclass, SuperName->getName(),
-           ClassName->getName());  
+    ObjcInterfaceDecl* SuperClassEntry = 0;
+    // Check if a different kind of symbol declared in this scope.
+    PrevDecl = LookupScopedDecl(SuperName, Decl::IDNS_Ordinary,
+                                SuperLoc, S);
+    if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)
+        && !isa<ObjcProtocolDecl>(PrevDecl)) {
+      Diag(SuperLoc, diag::err_redefinition_different_kind,
+           SuperName->getName());
+      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
     }
-    else
-      IDecl->setSuperClass(SuperClassEntry);
+    else {
+      // Check that super class is previously defined
+      SuperClassEntry = Context.getObjCInterfaceDecl(SuperName);
+                              
+      if (!SuperClassEntry || SuperClassEntry->getIsForwardDecl()) {
+        Diag(AtInterfaceLoc, diag::err_undef_superclass, SuperName->getName(),
+             ClassName->getName()); 
+      }
+    }
+    IDecl->setSuperClass(SuperClassEntry);
   }
   
   /// Check then save referenced protocols
@@ -916,7 +938,8 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(SourceLocation AtInterfaceLoc,
   return IDecl;
 }
 
-Sema::DeclTy *Sema::ObjcStartProtoInterface(SourceLocation AtProtoInterfaceLoc,
+Sema::DeclTy *Sema::ObjcStartProtoInterface(Scope* S,
+		SourceLocation AtProtoInterfaceLoc,
                 IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                 IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
   assert(ProtocolName && "Missing protocol identifier");
@@ -1030,6 +1053,72 @@ Sema::DeclTy *Sema::ObjcStartCatInterface(SourceLocation AtInterfaceLoc,
   }
   
   return CDecl;
+}
+
+Sema::DeclTy *Sema::ObjcStartClassImplementation(Scope *S,
+                      SourceLocation AtClassImplLoc,
+                      IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                      IdentifierInfo *SuperClassname, 
+                      SourceLocation SuperClassLoc) {
+  ObjcInterfaceDecl* IDecl = 0;
+  // Check for another declaration kind with the same name.
+  ScopedDecl *PrevDecl = LookupScopedDecl(ClassName, Decl::IDNS_Ordinary,
+                                          ClassLoc, S);
+  if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
+    Diag(ClassLoc, diag::err_redefinition_different_kind,
+         ClassName->getName());
+    Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+  }
+  else {
+    // Is there an interface declaration of this class; if not, warn!
+    IDecl = Context.getObjCInterfaceDecl(ClassName);
+    if (!IDecl)
+      Diag(ClassLoc, diag::warn_undef_interface, ClassName->getName());
+  }
+  
+  // Check that super class name is valid class name
+  ObjcInterfaceDecl* SDecl = 0;
+  if (SuperClassname) {
+    // Check if a different kind of symbol declared in this scope.
+    PrevDecl = LookupScopedDecl(SuperClassname, Decl::IDNS_Ordinary,
+                                SuperClassLoc, S);
+    if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)
+        && !isa<ObjcProtocolDecl>(PrevDecl)) {
+      Diag(SuperClassLoc, diag::err_redefinition_different_kind,
+           SuperClassname->getName());
+      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+    }
+    else {
+      SDecl = Context.getObjCInterfaceDecl(SuperClassname);
+      if (!SDecl)
+        Diag(SuperClassLoc, diag::err_undef_superclass, 
+             SuperClassname->getName(), ClassName->getName());
+      else if (IDecl && IDecl->getSuperClass() != SDecl) {
+        // This implementation and its interface do not have the same
+        // super class.
+        Diag(SuperClassLoc, diag::err_conflicting_super_class, 
+             SuperClassname->getName());
+        Diag(SDecl->getLocation(), diag::err_previous_definition);
+      }
+    }
+  }
+  
+  ObjcImplementationDecl* IMPDecl = 
+    new ObjcImplementationDecl(AtClassImplLoc, ClassName, SDecl);
+  
+  // Check that there is no duplicate implementation of this class.
+  bool err = false;
+  for (unsigned i = 0; i != Context.sizeObjcImplementationClass(); i++) {
+    if (Context.getObjcImplementationClass(i)->getIdentifier() == ClassName) {
+      Diag(ClassLoc, diag::err_dup_implementation_class, ClassName->getName());
+      err = true;
+      break;
+    }
+  }
+  if (!err)     
+    Context.setObjcImplementationClass(IMPDecl);
+      
+  return IMPDecl;
 }
 
 /// ObjcClassDeclaration - 
@@ -1204,7 +1293,8 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
   
   if (isa<RecordDecl>(static_cast<Decl *>(TagDecl)))
     NewFD = new FieldDecl(Loc, II, T);
-  else if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(TagDecl)))
+  else if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(TagDecl))
+	   || isa<ObjcImplementationDecl>(static_cast<Decl *>(TagDecl)))
     NewFD = new ObjcIvarDecl(Loc, II, T);
   else
     assert(0 && "Sema::ActOnField(): Unknown TagDecl");
