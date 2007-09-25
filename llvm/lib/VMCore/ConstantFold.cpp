@@ -194,9 +194,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       APFloat V = FPC->getValueAPF();
       uint64_t x[2]; 
       uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
-      APFloat::opStatus status = V.convertToInteger(x, DestBitWidth, 
-                             opc==Instruction::FPToSI,
-                             APFloat::rmTowardZero);
+      (void) V.convertToInteger(x, DestBitWidth, opc==Instruction::FPToSI,
+                                APFloat::rmTowardZero);
       APInt Val(DestBitWidth, 2, x);
       return ConstantInt::get(Val);
     }
