@@ -676,7 +676,7 @@ bool LoopIndexSplit::safeExitingBlock(SplitInfo &SD,
       continue;
 
     // Check if I is induction variable increment instruction.
-    if (!IndVarIncrement && I->getOpcode() == Instruction::Add) {
+    if (I->getOpcode() == Instruction::Add) {
 
       Value *Op0 = I->getOperand(0);
       Value *Op1 = I->getOperand(1);
@@ -685,16 +685,23 @@ bool LoopIndexSplit::safeExitingBlock(SplitInfo &SD,
 
       if ((PN = dyn_cast<PHINode>(Op0))) {
         if ((CI = dyn_cast<ConstantInt>(Op1)))
-          IndVarIncrement = I;
+          if (CI->isOne()) {
+            if (!IndVarIncrement && PN == IndVar)
+              IndVarIncrement = I;
+            // else this is another loop induction variable
+            continue;
+          }
       } else 
         if ((PN = dyn_cast<PHINode>(Op1))) {
           if ((CI = dyn_cast<ConstantInt>(Op0)))
-            IndVarIncrement = I;
+            if (CI->isOne()) {
+              if (!IndVarIncrement && PN == IndVar)
+                IndVarIncrement = I;
+              // else this is another loop induction variable
+              continue;
+            }
       }
-          
-      if (IndVarIncrement && PN == IndVar && CI->isOne())
-        continue;
-    }
+    } 
 
     // I is an Exit condition if next instruction is block terminator.
     // Exit condition is OK if it compares loop invariant exit value,
