@@ -697,9 +697,9 @@ void ScheduleDAGSimple::EmitAll() {
     NodeInfo *NI = Ordering[i];
     if (NI->isInGroup()) {
       NodeGroupIterator NGI(Ordering[i]);
-      while (NodeInfo *NI = NGI.next()) EmitNode(NI->Node, VRBaseMap);
+      while (NodeInfo *NI = NGI.next()) EmitNode(NI->Node, 0, VRBaseMap);
     } else {
-      EmitNode(NI->Node, VRBaseMap);
+      EmitNode(NI->Node, 0, VRBaseMap);
     }
   }
 }

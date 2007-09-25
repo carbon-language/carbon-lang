@@ -168,7 +168,7 @@ void ScheduleDAGList::ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle) {
 /// schedulers.
 void ScheduleDAGList::ListScheduleTopDown() {
   unsigned CurCycle = 0;
-  SUnit *Entry = SUnitMap[DAG.getEntryNode().Val];
+  SUnit *Entry = SUnitMap[DAG.getEntryNode().Val].front();
 
   // All leaves to Available queue.
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
@@ -328,12 +328,24 @@ public:
     LatencyPriorityQueue() : Queue(latency_sort(this)) {
     }
     
-    void initNodes(DenseMap<SDNode*, SUnit*> &sumap,
+    void initNodes(DenseMap<SDNode*, std::vector<SUnit*> > &sumap,
                    std::vector<SUnit> &sunits) {
       SUnits = &sunits;
       // Calculate node priorities.
       CalculatePriorities();
     }
+
+    void addNode(const SUnit *SU) {
+      Latencies.resize(SUnits->size(), -1);
+      NumNodesSolelyBlocking.resize(SUnits->size(), 0);
+      CalcLatency(*SU);
+    }
+
+    void updateNode(const SUnit *SU) {
+      Latencies[SU->NodeNum] = -1;
+      CalcLatency(*SU);
+    }
+
     void releaseState() {
       SUnits = 0;
       Latencies.clear();
@@ -349,6 +361,8 @@ public:
       return NumNodesSolelyBlocking[NodeNum];
     }
     
+    unsigned size() const { return Queue.size(); }
+
     bool empty() const { return Queue.empty(); }
     
     virtual void push(SUnit *U) {
@@ -368,22 +382,10 @@ public:
       return V;
     }
 
-    // ScheduledNode - As nodes are scheduled, we look to see if there are any
-    // successor nodes that have a single unscheduled predecessor.  If so, that
-    // single predecessor has a higher priority, since scheduling it will make
-    // the node available.
-    void ScheduledNode(SUnit *Node);
-
-private:
-    void CalculatePriorities();
-    int CalcLatency(const SUnit &SU);
-    void AdjustPriorityOfUnscheduledPreds(SUnit *SU);
-    SUnit *getSingleUnscheduledPred(SUnit *SU);
-
-    /// RemoveFromPriorityQueue - This is a really inefficient way to remove a
-    /// node from a priority queue.  We should roll our own heap to make this
-    /// better or something.
-    void RemoveFromPriorityQueue(SUnit *SU) {
+    /// remove - This is a really inefficient way to remove a node from a
+    /// priority queue.  We should roll our own heap to make this better or
+    /// something.
+    void remove(SUnit *SU) {
       std::vector<SUnit*> Temp;
       
       assert(!Queue.empty() && "Not in queue!");
@@ -400,6 +402,18 @@ private:
       for (unsigned i = 0, e = Temp.size(); i != e; ++i)
         Queue.push(Temp[i]);
     }
+
+    // ScheduledNode - As nodes are scheduled, we look to see if there are any
+    // successor nodes that have a single unscheduled predecessor.  If so, that
+    // single predecessor has a higher priority, since scheduling it will make
+    // the node available.
+    void ScheduledNode(SUnit *Node);
+
+private:
+    void CalculatePriorities();
+    int CalcLatency(const SUnit &SU);
+    void AdjustPriorityOfUnscheduledPreds(SUnit *SU);
+    SUnit *getSingleUnscheduledPred(SUnit *SU);
   };
 }
 
@@ -507,7 +521,7 @@ void LatencyPriorityQueue::AdjustPriorityOfUnscheduledPreds(SUnit *SU) {
   
   // Okay, we found a single predecessor that is available, but not scheduled.
   // Since it is available, it must be in the priority queue.  First remove it.
-  RemoveFromPriorityQueue(OnlyAvailablePred);
+  remove(OnlyAvailablePred);
 
   // Reinsert the node into the priority queue, which recomputes its
   // NumNodesSolelyBlocking value.
