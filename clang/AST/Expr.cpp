@@ -753,7 +753,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     
     llvm::APFloat::opStatus Status =
       FL->getValue().convertToInteger(Space, DestWidth, DestSigned,
-                                      llvm::APFloat::rmNearestTiesToEven);
+                                      llvm::APFloat::rmTowardZero);
     if (Status != llvm::APFloat::opOK && Status != llvm::APFloat::opInexact) {
       if (Loc) *Loc = Operand->getLocStart();
       return false; // FIXME: need to accept this as an extension.
