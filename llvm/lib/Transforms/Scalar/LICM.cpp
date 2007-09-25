@@ -811,30 +811,31 @@ void LICM::FindPromotableValuesInLoop(
         // condition which may not yet folded.
         if (isa<ConstantPointerNull>(GEP->getOperand(0)))
           PointerOk = false;
-
-        // If GEP is use is not dominating loop exit then promoting
-        // GEP may expose unsafe load and store instructions unconditinally.
-        if (PointerOk)
-          for(Value::use_iterator UI = V->use_begin(), UE = V->use_end();
-              UI != UE && PointerOk; ++UI) {
-            Instruction *Use = dyn_cast<Instruction>(*UI);
-            if (!Use)
-              continue;
-            for (SmallVector<Instruction *, 4>::iterator 
-                   ExitI = LoopExits.begin(), ExitE = LoopExits.end();
-                 ExitI != ExitE; ++ExitI) {
-              Instruction *Ex = *ExitI;
-              if (!DT->dominates(Use, Ex)){
-                PointerOk = false;
-                break;
-              }
-            }
-
-            if (!PointerOk)
-              break;
-          }
       }
 
+      // If value V use is not dominating loop exit then promoting
+      // it may expose unsafe load and store instructions unconditinally.
+      if (PointerOk)
+        for(Value::use_iterator UI = V->use_begin(), UE = V->use_end();
+            UI != UE && PointerOk; ++UI) {
+          Instruction *Use = dyn_cast<Instruction>(*UI);
+          if (!Use || !CurLoop->contains(Use->getParent()))
+            continue;
+          for (SmallVector<Instruction *, 4>::iterator 
+                 ExitI = LoopExits.begin(), ExitE = LoopExits.end();
+               ExitI != ExitE; ++ExitI) {
+            Instruction *Ex = *ExitI;
+            if (!DT->dominates(Use, Ex)){
+              PointerOk = false;
+              break;
+            }
+          }
+          
+          if (!PointerOk)
+            break;
+        }
+      
+      
       if (PointerOk) {
         const Type *Ty = cast<PointerType>(V->getType())->getElementType();
         AllocaInst *AI = new AllocaInst(Ty, 0, V->getName()+".tmp", FnStart);
