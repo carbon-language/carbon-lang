@@ -78,7 +78,7 @@ public:
       return DeclBV == RHS.DeclBV && ExprBV == RHS.ExprBV; 
     }
     
-    void copyValues(ValTy& RHS) {
+    void copyValues(const ValTy& RHS) {
       DeclBV = RHS.DeclBV;
       ExprBV = RHS.ExprBV;
     }
