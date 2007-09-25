@@ -15,7 +15,7 @@
 #define LLVM_CLANG_LIVEVARIABLES_H
 
 #include "clang/AST/Decl.h"
-#include "clang/Analysis/DataflowValues.h"
+#include "clang/Analysis/FlowSensitive/DataflowValues.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 

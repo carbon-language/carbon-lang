@@ -16,7 +16,7 @@
 #define LLVM_CLANG_UNITVALS_H
 
 #include "llvm/ADT/BitVector.h"
-#include "clang/Analysis/DataflowValues.h"
+#include "clang/Analysis/FlowSensitive/DataflowValues.h"
 
 namespace clang {
 

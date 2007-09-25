@@ -16,7 +16,7 @@
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
-#include "DataflowSolver.h"
+#include "clang/Analysis/FlowSensitive/DataflowSolver.h"
 
 #include "llvm/ADT/SmallPtrSet.h"
 
