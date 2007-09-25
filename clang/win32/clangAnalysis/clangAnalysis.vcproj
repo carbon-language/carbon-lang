@@ -171,14 +171,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\Analysis\DataflowSolver.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Analysis\DataflowValues.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\include\clang\Analysis\LiveVariables.h"
 				>
 			</File>
@@ -227,6 +219,18 @@
 				>
 				<File
 					RelativePath="..\..\include\clang\Analysis\Support\IntrusiveSPtr.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="FlowSensitive"
+				>
+				<File
+					RelativePath="..\..\include\clang\Analysis\FlowSensitive\DataflowSolver.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\include\clang\Analysis\FlowSensitive\DataflowValues.h"
 					>
 				</File>
 			</Filter>
