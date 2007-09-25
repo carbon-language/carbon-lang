@@ -235,7 +235,7 @@ bool clang::CheckDiagnostics(Preprocessor &PP, unsigned MainFileID) {
 bool clang::CheckASTConsumer(Preprocessor &PP, unsigned MainFileID,
                              std::auto_ptr<ASTConsumer> C) {
 
-  // Local scope for ASTConsumer to auto release the consumer ...
+  // Local scope to auto release the consumer ...
   { std::auto_ptr<ASTConsumer> Consumer(C);
     ParseAST(PP, MainFileID, *Consumer.get()); }
   
