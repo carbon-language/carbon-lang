@@ -503,6 +503,7 @@ def LD_F1 : FPI<0xE8, RawFrm, (outs), (ins), "fld1">, D9;
 
 
 // Floating point compares.
+let Defs = [EFLAGS] in {
 def UCOM_Fpr32 : FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
                   []>;  // FPSW = cmp ST(0) with ST(i)
 def UCOM_FpIr32: FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
@@ -515,6 +516,23 @@ def UCOM_Fpr80 : FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
                   []>;  // FPSW = cmp ST(0) with ST(i)
 def UCOM_FpIr80: FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
                   [(X86cmp RFP80:$lhs, RFP80:$rhs)]>; // CC = ST(0) cmp ST(i)
+
+def NEW_UCOM_Fpr32 : FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
+                  []>;  // FPSW = cmp ST(0) with ST(i)
+def NEW_UCOM_FpIr32: FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
+                  [(X86cmp_new RFP32:$lhs, RFP32:$rhs),
+                   (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
+def NEW_UCOM_Fpr64 : FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
+                  []>;  // FPSW = cmp ST(0) with ST(i)
+def NEW_UCOM_FpIr64: FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
+                  [(X86cmp_new RFP64:$lhs, RFP64:$rhs),
+                   (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
+def NEW_UCOM_Fpr80 : FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
+                  []>;  // FPSW = cmp ST(0) with ST(i)
+def NEW_UCOM_FpIr80: FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
+                  [(X86cmp_new RFP80:$lhs, RFP80:$rhs),
+                   (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
+}
 
 let Defs = [EFLAGS], Uses = [ST0] in {
 def UCOM_Fr    : FPI<0xE0, AddRegFrm,    // FPSW = cmp ST(0) with ST(i)

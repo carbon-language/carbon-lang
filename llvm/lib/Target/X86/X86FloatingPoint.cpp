@@ -463,6 +463,12 @@ static const TableEntry OpcodeTable[] = {
   { X86::NEW_CMOVP_Fp32   , X86::CMOVP_F   },
   { X86::NEW_CMOVP_Fp64   , X86::CMOVP_F   },
   { X86::NEW_CMOVP_Fp80   , X86::CMOVP_F   },
+  { X86::NEW_UCOM_FpIr32  , X86::UCOM_FIr  },
+  { X86::NEW_UCOM_FpIr64  , X86::UCOM_FIr  },
+  { X86::NEW_UCOM_FpIr80  , X86::UCOM_FIr  },
+  { X86::NEW_UCOM_Fpr32   , X86::UCOM_Fr   },
+  { X86::NEW_UCOM_Fpr64   , X86::UCOM_Fr   },
+  { X86::NEW_UCOM_Fpr80   , X86::UCOM_Fr   },
 
   { X86::SIN_Fp32     , X86::SIN_F     },
   { X86::SIN_Fp64     , X86::SIN_F     },
