@@ -117,22 +117,26 @@ namespace llvm {
 
       /// X86 compare and logical compare instructions.
       CMP, COMI, UCOMI,
+      CMP_NEW, COMI_NEW, UCOMI_NEW,
 
       /// X86 SetCC. Operand 1 is condition code, and operand 2 is the flag
       /// operand produced by a CMP instruction.
       SETCC,
+      SETCC_NEW,
 
       /// X86 conditional moves. Operand 1 and operand 2 are the two values
       /// to select from (operand 1 is a R/W operand). Operand 3 is the
       /// condition code, and operand 4 is the flag operand produced by a CMP
       /// or TEST instruction. It also writes a flag result.
       CMOV,
+      CMOV_NEW,
 
       /// X86 conditional branches. Operand 1 is the chain operand, operand 2
       /// is the block to branch if condition is true, operand 3 is the
       /// condition code, and operand 4 is the flag operand produced by a CMP
       /// or TEST instruction.
       BRCOND,
+      BRCOND_NEW,
 
       /// Return with a flag operand. Operand 1 is the chain operand, operand
       /// 2 is the number of bytes of stack to pop.
@@ -422,8 +426,11 @@ namespace llvm {
     SDOperand LowerFNEG(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSETCC(SDOperand Op, SelectionDAG &DAG, SDOperand Chain);
+    SDOperand LowerSETCC_New(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSELECT(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerSELECT_New(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerBRCOND(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerBRCOND_New(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerMEMSET(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);

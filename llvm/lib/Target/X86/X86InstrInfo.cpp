@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
@@ -385,28 +386,68 @@ static X86::CondCode GetCondFromBranchOpc(unsigned BrOpc) {
   case X86::JNP: return X86::COND_NP;
   case X86::JO:  return X86::COND_O;
   case X86::JNO: return X86::COND_NO;
+  // TEMPORARY
+  case X86::NEW_JE:  return X86::COND_E;
+  case X86::NEW_JNE: return X86::COND_NE;
+  case X86::NEW_JL:  return X86::COND_L;
+  case X86::NEW_JLE: return X86::COND_LE;
+  case X86::NEW_JG:  return X86::COND_G;
+  case X86::NEW_JGE: return X86::COND_GE;
+  case X86::NEW_JB:  return X86::COND_B;
+  case X86::NEW_JBE: return X86::COND_BE;
+  case X86::NEW_JA:  return X86::COND_A;
+  case X86::NEW_JAE: return X86::COND_AE;
+  case X86::NEW_JS:  return X86::COND_S;
+  case X86::NEW_JNS: return X86::COND_NS;
+  case X86::NEW_JP:  return X86::COND_P;
+  case X86::NEW_JNP: return X86::COND_NP;
+  case X86::NEW_JO:  return X86::COND_O;
+  case X86::NEW_JNO: return X86::COND_NO;
+
   }
 }
 
 unsigned X86::GetCondBranchFromCond(X86::CondCode CC) {
+  if (!NewCCModeling) {
+    switch (CC) {
+    default: assert(0 && "Illegal condition code!");
+    case X86::COND_E:  return X86::JE;
+    case X86::COND_NE: return X86::JNE;
+    case X86::COND_L:  return X86::JL;
+    case X86::COND_LE: return X86::JLE;
+    case X86::COND_G:  return X86::JG;
+    case X86::COND_GE: return X86::JGE;
+    case X86::COND_B:  return X86::JB;
+    case X86::COND_BE: return X86::JBE;
+    case X86::COND_A:  return X86::JA;
+    case X86::COND_AE: return X86::JAE;
+    case X86::COND_S:  return X86::JS;
+    case X86::COND_NS: return X86::JNS;
+    case X86::COND_P:  return X86::JP;
+    case X86::COND_NP: return X86::JNP;
+    case X86::COND_O:  return X86::JO;
+    case X86::COND_NO: return X86::JNO;
+    }
+  }
+
   switch (CC) {
   default: assert(0 && "Illegal condition code!");
-  case X86::COND_E:  return X86::JE;
-  case X86::COND_NE: return X86::JNE;
-  case X86::COND_L:  return X86::JL;
-  case X86::COND_LE: return X86::JLE;
-  case X86::COND_G:  return X86::JG;
-  case X86::COND_GE: return X86::JGE;
-  case X86::COND_B:  return X86::JB;
-  case X86::COND_BE: return X86::JBE;
-  case X86::COND_A:  return X86::JA;
-  case X86::COND_AE: return X86::JAE;
-  case X86::COND_S:  return X86::JS;
-  case X86::COND_NS: return X86::JNS;
-  case X86::COND_P:  return X86::JP;
-  case X86::COND_NP: return X86::JNP;
-  case X86::COND_O:  return X86::JO;
-  case X86::COND_NO: return X86::JNO;
+  case X86::COND_E:  return X86::NEW_JE;
+  case X86::COND_NE: return X86::NEW_JNE;
+  case X86::COND_L:  return X86::NEW_JL;
+  case X86::COND_LE: return X86::NEW_JLE;
+  case X86::COND_G:  return X86::NEW_JG;
+  case X86::COND_GE: return X86::NEW_JGE;
+  case X86::COND_B:  return X86::NEW_JB;
+  case X86::COND_BE: return X86::NEW_JBE;
+  case X86::COND_A:  return X86::NEW_JA;
+  case X86::COND_AE: return X86::NEW_JAE;
+  case X86::COND_S:  return X86::NEW_JS;
+  case X86::COND_NS: return X86::NEW_JNS;
+  case X86::COND_P:  return X86::NEW_JP;
+  case X86::COND_NP: return X86::NEW_JNP;
+  case X86::COND_O:  return X86::NEW_JO;
+  case X86::COND_NO: return X86::NEW_JNO;
   }
 }
 

@@ -320,6 +320,31 @@ defm CMOVNE : FPCMov<X86_COND_NE>;
 defm CMOVNP : FPCMov<X86_COND_NP>;
 }
 
+multiclass NEW_FPCMov<PatLeaf cc> {
+  def _Fp32  : FpIf32<(outs RFP32:$dst), (ins RFP32:$src1, RFP32:$src2),
+                       CondMovFP,
+                     [(set RFP32:$dst, (X86cmov_new RFP32:$src1, RFP32:$src2,
+                                        cc, EFLAGS))]>;
+  def _Fp64  : FpIf64<(outs RFP64:$dst), (ins RFP64:$src1, RFP64:$src2),
+                       CondMovFP,
+                     [(set RFP64:$dst, (X86cmov_new RFP64:$src1, RFP64:$src2,
+                                        cc, EFLAGS))]>;
+  def _Fp80  : FpI_<(outs RFP80:$dst), (ins RFP80:$src1, RFP80:$src2),
+                     CondMovFP,
+                     [(set RFP80:$dst, (X86cmov_new RFP80:$src1, RFP80:$src2,
+                                        cc, EFLAGS))]>;
+}
+let Uses = [EFLAGS], isTwoAddress = 1 in {
+defm NEW_CMOVB  : NEW_FPCMov<X86_COND_B>;
+defm NEW_CMOVBE : NEW_FPCMov<X86_COND_BE>;
+defm NEW_CMOVE  : NEW_FPCMov<X86_COND_E>;
+defm NEW_CMOVP  : NEW_FPCMov<X86_COND_P>;
+defm NEW_CMOVNB : NEW_FPCMov<X86_COND_AE>;
+defm NEW_CMOVNBE: NEW_FPCMov<X86_COND_A>;
+defm NEW_CMOVNE : NEW_FPCMov<X86_COND_NE>;
+defm NEW_CMOVNP : NEW_FPCMov<X86_COND_NP>;
+}
+
 // These are not factored because there's no clean way to pass DA/DB.
 def CMOVB_F  : FPI<0xC0, AddRegFrm, (outs RST:$op), (ins),
                   "fcmovb\t{$op, %st(0)|%ST(0), $op}">, DA;
