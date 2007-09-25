@@ -691,7 +691,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange |= UpdateNodeType(MVT::isVoid, TP);
     }
     return MadeChange;
-  } else if (getOperator()->getName() == "modify" ||
+  } else if (getOperator()->getName() == "implicit" ||
              getOperator()->getName() == "parallel") {
     bool MadeChange = false;
     for (unsigned i = 0; i < getNumChildren(); ++i)
@@ -976,7 +976,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
       !Operator->isSubClassOf("SDNodeXForm") &&
       !Operator->isSubClassOf("Intrinsic") &&
       Operator->getName() != "set" &&
-      Operator->getName() != "modify" &&
+      Operator->getName() != "implicit" &&
       Operator->getName() != "parallel")
     error("Unrecognized node '" + Operator->getName() + "'!");
   
@@ -1385,15 +1385,15 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
     if (!isUse && Pat->getTransformFn())
       I->error("Cannot specify a transform function for a non-input value!");
     return;
-  } else if (Pat->getOperator()->getName() == "modify") {
+  } else if (Pat->getOperator()->getName() == "implicit") {
     for (unsigned i = 0, e = Pat->getNumChildren(); i != e; ++i) {
       TreePatternNode *Dest = Pat->getChild(i);
       if (!Dest->isLeaf())
-        I->error("modify value should be a register!");
+        I->error("implicitly defined value should be a register!");
     
       DefInit *Val = dynamic_cast<DefInit*>(Dest->getLeafValue());
       if (!Val || !Val->getDef()->isSubClassOf("Register"))
-        I->error("modify value should be a register!");
+        I->error("implicitly defined value should be a register!");
       InstImpResults.push_back(Val->getDef());
     }
     return;
@@ -2789,7 +2789,7 @@ public:
       CodeGenInstruction &II = CGT.getInstruction(Op->getName());
       const DAGInstruction &Inst = ISE.getInstruction(Op);
       TreePattern *InstPat = Inst.getPattern();
-      // FIXME: Assume actual pattern comes before "modify".
+      // FIXME: Assume actual pattern comes before "implicit".
       TreePatternNode *InstPatNode =
         isRoot ? (InstPat ? InstPat->getTree(0) : Pattern)
                : (InstPat ? InstPat->getTree(0) : NULL);
