@@ -29,8 +29,8 @@ class DataflowWorkListTy {
   typedef llvm::SmallPtrSet<const CFGBlock*,20> BlockSet;
   BlockSet wlist;
 public:
-  /// enqueue - Add a block to the worklist.  Blocks already on the worklist
-  ///  are not added a second time.  
+  /// enqueue - Add a block to the worklist.  Blocks already on the
+  ///  worklist are not added a second time.
   void enqueue(const CFGBlock* B) { wlist.insert(B); }
   
   /// dequeue - Remove a block from the worklist.
@@ -46,9 +46,9 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// BlockItrTraits - Traits classes that allow transparent iteration over
-//  successors/predecessors of a block depending on the direction of our
-//  dataflow analysis.
+// BlockItrTraits - Traits classes that allow transparent iteration
+//  over successors/predecessors of a block depending on the direction
+//  of our dataflow analysis.
 //===----------------------------------------------------------------------===//
 
 namespace dataflow {
@@ -147,11 +147,11 @@ public:
     SolveDataflowEquations(cfg);    
   }
   
-  /// runOnBlock - Computes dataflow values for a given block.
-  ///  This should usually be invoked only after previously computing
+  /// runOnBlock - Computes dataflow values for a given block.  This
+  ///  should usually be invoked only after previously computing
   ///  dataflow values using runOnCFG, as runOnBlock is intended to
-  ///  only be used for querying the dataflow values within a block with
-  ///  and Observer object.
+  ///  only be used for querying the dataflow values within a block
+  ///  with and Observer object.
   void runOnBlock(const CFGBlock* B) {
     BlockDataMapTy& M = D.getBlockDataMap();
     typename BlockDataMapTy::iterator I = M.find(B);
@@ -177,8 +177,8 @@ public:
   
 private:
  
-  /// SolveDataflowEquations - Perform the actual
-  ///  worklist algorithm to compute dataflow values.  
+  /// SolveDataflowEquations - Perform the actual worklist algorithm
+  ///  to compute dataflow values.
   void SolveDataflowEquations(const CFG& cfg) {
     EnqueueFirstBlock(cfg,AnalysisDirTag());
     
@@ -231,9 +231,9 @@ private:
       TF.BlockStmt_Visit(const_cast<Stmt*>(*I));
   }
 
-  /// UpdateEdges - After processing the transfer
-  ///   functions for a block, update the dataflow value associated with the
-  ///   block's outgoing/incoming edges (depending on whether we do a 
+  /// UpdateEdges - After processing the transfer functions for a
+  ///   block, update the dataflow value associated with the block's
+  ///   outgoing/incoming edges (depending on whether we do a
   //    forward/backward analysis respectively)
   void UpdateEdges(const CFGBlock* B, ValTy& V) {
     for (NextBItr I=ItrTraits::NextBegin(B), E=ItrTraits::NextEnd(B); I!=E; ++I)
