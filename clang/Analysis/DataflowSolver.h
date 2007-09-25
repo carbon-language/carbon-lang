@@ -23,6 +23,7 @@ namespace clang {
 //===----------------------------------------------------------------------===//
 /// DataflowWorkListTy - Data structure representing the worklist used for
 ///  dataflow algorithms.
+//===----------------------------------------------------------------------===//  
 
 class DataflowWorkListTy {
   typedef llvm::SmallPtrSet<const CFGBlock*,20> BlockSet;
@@ -48,6 +49,7 @@ public:
 // BlockItrTraits - Traits classes that allow transparent iteration over
 //  successors/predecessors of a block depending on the direction of our
 //  dataflow analysis.
+//===----------------------------------------------------------------------===//
 
 namespace dataflow {
 template<typename Tag> struct ItrTraits {};
@@ -101,15 +103,17 @@ template <> struct ItrTraits<backward_analysis_tag> {
 
 //===----------------------------------------------------------------------===//
 /// DataflowSolverTy - Generic dataflow solver.
+//===----------------------------------------------------------------------===//
+  
 template <typename _DFValuesTy,      // Usually a subclass of DataflowValues
           typename _TransferFuncsTy,
           typename _MergeOperatorTy,
           typename _Equal = std::equal_to<typename _DFValuesTy::ValTy> >
 class DataflowSolver {
 
-  //===--------------------------------------------------------------------===//
+  //===----------------------------------------------------===//
   // Type declarations.
-  //===--------------------------------------------------------------------===//
+  //===----------------------------------------------------===//
 
 public:
   typedef _DFValuesTy                              DFValuesTy;
@@ -126,9 +130,9 @@ public:
   typedef typename ItrTraits::PrevBItr             PrevBItr;
   typedef typename ItrTraits::StmtItr              StmtItr;
   
-  //===--------------------------------------------------------------------===//
+  //===----------------------------------------------------===//
   // External interface: constructing and running the solver.
-  //===--------------------------------------------------------------------===//
+  //===----------------------------------------------------===//
   
 public:
   DataflowSolver(DFValuesTy& d) : D(d), TF(d.getAnalysisData()) {}
@@ -167,9 +171,9 @@ public:
       runOnBlock(I);
   }
   
-  //===--------------------------------------------------------------------===//
+  //===----------------------------------------------------===//
   // Internal solver logic.
-  //===--------------------------------------------------------------------===//
+  //===----------------------------------------------------===//
   
 private:
  
