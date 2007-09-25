@@ -224,8 +224,7 @@ namespace {
     virtual void VisitCFG(CFG& C) {
       LiveVariables L;
       L.runOnCFG(C);
-      L.dumpBlockLiveness(*SM);    
-      L.dumpVarLiveness(*SM);
+      L.dumpBlockLiveness(*SM);
     }
   };
 } // end anonymous namespace

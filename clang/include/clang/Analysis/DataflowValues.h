@@ -64,7 +64,6 @@ namespace dataflow {
   struct forward_analysis_tag {};
   struct backward_analysis_tag {};
 } // end namespace dataflow
-    
 
 //===----------------------------------------------------------------------===//
 /// DataflowValues.  Container class to store dataflow values for a CFG.
@@ -83,6 +82,7 @@ public:
   typedef typename ValueTypes::AnalysisDataTy      AnalysisDataTy;  
   typedef _AnalysisDirTag                          AnalysisDirTag;
   typedef llvm::DenseMap<CFG::Edge, ValTy>         EdgeDataMapTy;
+  typedef llvm::DenseMap<const CFGBlock*, ValTy>   BlockDataMapTy;
 
   //===--------------------------------------------------------------------===//
   // Predicates.
@@ -110,10 +110,9 @@ public:
   ///  dataflow analysis.  This method is usually specialized by subclasses.
   void InitializeValues(const CFG& cfg) {};  
 
-  /// getEdgeData - Retrieves the dataflow values associated with a 
-  ///  specified CFGBlock.  If the dataflow analysis is a forward analysis,
-  ///  this data is associated with the END of the block.  If the analysis
-  ///  is a backwards analysis, it is associated with the ENTRY of the block.
+
+  /// getEdgeData - Retrieves the dataflow values associated with a
+  ///  CFG edge.
   ValTy& getEdgeData(const CFG::Edge& E) {
     typename EdgeDataMapTy::iterator I = EdgeDataMap.find(E);
     assert (I != EdgeDataMap.end() && "No data associated with Edge.");
@@ -123,12 +122,34 @@ public:
   const ValTy& getEdgeData(const CFG::Edge& E) const {
     return reinterpret_cast<DataflowValues*>(this)->getEdgeData(E);
   }  
+
+  /// getBlockData - Retrieves the dataflow values associated with a 
+  ///  specified CFGBlock.  If the dataflow analysis is a forward analysis,
+  ///  this data is associated with the END of the block.  If the analysis
+  ///  is a backwards analysis, it is associated with the ENTRY of the block.  
+  ValTy& getBlockData(const CFGBlock* B) {
+    typename BlockDataMapTy::iterator I = BlockDataMap.find(B);
+    assert (I != BlockDataMap.end() && "No data associated with block.");
+    return I->second;
+  }
   
-  /// getEdgeDataMap - Retrieves the internal map between CFGBlocks and
+  const ValTy& getBlockData(const CFGBlock* B) const {
+    return const_cast<DataflowValues*>(this)->getBlockData(B);
+  }  
+  
+  /// getEdgeDataMap - Retrieves the internal map between CFG edges and
   ///  dataflow values.  Usually used by a dataflow solver to compute
   ///  values for blocks.
   EdgeDataMapTy& getEdgeDataMap() { return EdgeDataMap; }
   const EdgeDataMapTy& getEdgeDataMap() const { return EdgeDataMap; }
+
+  /// getBlockDataMap - Retrieves the internal map between CFGBlocks and
+  /// dataflow values.  If the dataflow analysis operates in the forward
+  /// direction, the values correspond to the dataflow values at the start
+  /// of the block.  Otherwise, for a backward analysis, the values correpsond
+  /// to the dataflow values at the end of the block.
+  BlockDataMapTy& getBlockDataMap() { return BlockDataMap; }
+  const BlockDataMapTy& getBlockDataMap() const { return BlockDataMap; }
 
   /// getAnalysisData - Retrieves the meta data associated with a 
   ///  dataflow analysis for analyzing a particular CFG.  
@@ -143,6 +164,7 @@ public:
   
 protected:
   EdgeDataMapTy      EdgeDataMap;
+  BlockDataMapTy     BlockDataMap;
   AnalysisDataTy     AnalysisData;
 };          
 

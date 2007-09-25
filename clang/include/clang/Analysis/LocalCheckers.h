@@ -18,14 +18,10 @@
 namespace clang {
 
 class CFG;
-class LiveVariables;
 class Diagnostic;
-  
-void CheckDeadStores(CFG& cfg, LiveVariables& L,
-                     ASTContext &Ctx, Diagnostic &Diags);
-void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags);  
+class ASTContext;
 
-  
+void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags);  
 void CheckUninitializedValues(CFG& cfg, ASTContext& Ctx, Diagnostic& Diags);
 
 

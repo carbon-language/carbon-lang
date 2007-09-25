@@ -45,6 +45,61 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+// BlockItrTraits - Traits classes that allow transparent iteration over
+//  successors/predecessors of a block depending on the direction of our
+//  dataflow analysis.
+
+namespace dataflow {
+template<typename Tag> struct ItrTraits {};
+
+template <> struct ItrTraits<forward_analysis_tag> {
+  typedef CFGBlock::const_pred_iterator PrevBItr;
+  typedef CFGBlock::const_succ_iterator NextBItr;
+  typedef CFGBlock::const_iterator      StmtItr;
+  
+  static PrevBItr PrevBegin(const CFGBlock* B) { return B->pred_begin(); }
+  static PrevBItr PrevEnd(const CFGBlock* B) { return B->pred_end(); }
+  
+  static NextBItr NextBegin(const CFGBlock* B) { return B->succ_begin(); }    
+  static NextBItr NextEnd(const CFGBlock* B) { return B->succ_end(); }
+  
+  static StmtItr StmtBegin(const CFGBlock* B) { return B->begin(); }
+  static StmtItr StmtEnd(const CFGBlock* B) { return B->end(); }
+  
+  static CFG::Edge PrevEdge(const CFGBlock* B, const CFGBlock* PrevBlk) {
+    return CFG::Edge(PrevBlk,B);
+  }
+  
+  static CFG::Edge NextEdge(const CFGBlock* B, const CFGBlock* NextBlk) {
+    return CFG::Edge(B,NextBlk);
+  }
+};
+
+template <> struct ItrTraits<backward_analysis_tag> {
+  typedef CFGBlock::const_succ_iterator    PrevBItr;
+  typedef CFGBlock::const_pred_iterator    NextBItr;
+  typedef CFGBlock::const_reverse_iterator StmtItr;
+  
+  static PrevBItr PrevBegin(const CFGBlock* B) { return B->succ_begin(); }    
+  static PrevBItr PrevEnd(const CFGBlock* B) { return B->succ_end(); }
+  
+  static NextBItr NextBegin(const CFGBlock* B) { return B->pred_begin(); }    
+  static NextBItr NextEnd(const CFGBlock* B) { return B->pred_end(); }
+  
+  static StmtItr StmtBegin(const CFGBlock* B) { return B->rbegin(); }
+  static StmtItr StmtEnd(const CFGBlock* B) { return B->rend(); }    
+  
+  static CFG::Edge PrevEdge(const CFGBlock* B, const CFGBlock* PrevBlk) {
+    return CFG::Edge(B,PrevBlk);
+  }
+  
+  static CFG::Edge NextEdge(const CFGBlock* B, const CFGBlock* NextBlk) {
+    return CFG::Edge(NextBlk,B);
+  }
+};
+} // end namespace dataflow
+
+//===----------------------------------------------------------------------===//
 /// DataflowSolverTy - Generic dataflow solver.
 template <typename _DFValuesTy,      // Usually a subclass of DataflowValues
           typename _TransferFuncsTy,
@@ -57,14 +112,20 @@ class DataflowSolver {
   //===--------------------------------------------------------------------===//
 
 public:
-  typedef _DFValuesTy                            DFValuesTy;
-  typedef _TransferFuncsTy                       TransferFuncsTy;
-  typedef _MergeOperatorTy                       MergeOperatorTy;
+  typedef _DFValuesTy                              DFValuesTy;
+  typedef _TransferFuncsTy                         TransferFuncsTy;
+  typedef _MergeOperatorTy                         MergeOperatorTy;
+  
+  typedef typename _DFValuesTy::AnalysisDirTag     AnalysisDirTag;
+  typedef typename _DFValuesTy::ValTy              ValTy;
+  typedef typename _DFValuesTy::EdgeDataMapTy      EdgeDataMapTy;
+  typedef typename _DFValuesTy::BlockDataMapTy     BlockDataMapTy;
 
-  typedef typename _DFValuesTy::AnalysisDirTag   AnalysisDirTag;
-  typedef typename _DFValuesTy::ValTy            ValTy;
-  typedef typename _DFValuesTy::EdgeDataMapTy    EdgeDataMapTy;
-
+  typedef dataflow::ItrTraits<AnalysisDirTag>      ItrTraits;
+  typedef typename ItrTraits::NextBItr             NextBItr;
+  typedef typename ItrTraits::PrevBItr             PrevBItr;
+  typedef typename ItrTraits::StmtItr              StmtItr;
+  
   //===--------------------------------------------------------------------===//
   // External interface: constructing and running the solver.
   //===--------------------------------------------------------------------===//
@@ -88,13 +149,18 @@ public:
   ///  only be used for querying the dataflow values within a block with
   ///  and Observer object.
   void runOnBlock(const CFGBlock* B) {
-    if (hasData(B,AnalysisDirTag()))
-      ProcessBlock(B,AnalysisDirTag());
+    BlockDataMapTy& M = D.getBlockDataMap();
+    typename BlockDataMapTy::iterator I = M.find(B);
+
+    if (I != M.end()) {
+      TF.getVal().copyValues(I->second);
+      ProcessBlock(B);
+    }
   }
   
   void runOnBlock(const CFGBlock& B) { runOnBlock(&B); }
-  void runOnBlock(CFG::iterator &I) { runOnBlock(*I); }
-  void runOnBlock(CFG::const_iterator &I) { runOnBlock(*I); }
+  void runOnBlock(CFG::iterator& I) { runOnBlock(*I); }
+  void runOnBlock(CFG::const_iterator& I) { runOnBlock(*I); }
 
   void runOnAllBlocks(const CFG& cfg) {
     for (CFG::const_iterator I=cfg.begin(), E=cfg.end(); I!=E; ++I)
@@ -110,17 +176,13 @@ private:
   /// SolveDataflowEquations - Perform the actual
   ///  worklist algorithm to compute dataflow values.  
   void SolveDataflowEquations(const CFG& cfg) {
-
     EnqueueFirstBlock(cfg,AnalysisDirTag());
     
-    // Process the worklist until it is empty.    
     while (!WorkList.isEmpty()) {
       const CFGBlock* B = WorkList.dequeue();
-      // If the dataflow values at the block's entry have changed,
-      // enqueue all predecessor blocks onto the worklist to have
-      // their values updated.
-      ProcessBlock(B,AnalysisDirTag());
-      UpdateEdges(B,TF.getVal(),AnalysisDirTag());
+      ProcessMerge(B);
+      ProcessBlock(B);
+      UpdateEdges(B,TF.getVal());
     }
   }
   
@@ -131,42 +193,8 @@ private:
   void EnqueueFirstBlock(const CFG& cfg, dataflow::backward_analysis_tag) {
     WorkList.enqueue(&cfg.getExit());
   }  
-  
-  /// ProcessBlock (FORWARD ANALYSIS) - Process the transfer functions
-  ///  for a given block based on a forward analysis.
-  void ProcessBlock(const CFGBlock* B, dataflow::forward_analysis_tag) {
-      
-    // Merge dataflow values from all predecessors of this block.
-    ValTy& V = TF.getVal();
-    V.resetValues(D.getAnalysisData());
-    MergeOperatorTy Merge;
-  
-    EdgeDataMapTy& M = D.getEdgeDataMap();
-    bool firstMerge = true;
-  
-    for (CFGBlock::const_pred_iterator I=B->pred_begin(), 
-                                      E=B->pred_end(); I!=E; ++I) {
-      typename EdgeDataMapTy::iterator BI = M.find(CFG::Edge(*I,B));
-      if (BI != M.end()) {
-        if (firstMerge) {
-          firstMerge = false;
-          V.copyValues(BI->second);
-        }
-        else
-          Merge(V,BI->second);
-      }
-    }
 
-    // Process the statements in the block in the forward direction.
-    for (CFGBlock::const_iterator I=B->begin(), E=B->end(); I!=E; ++I)
-      TF.BlockStmt_Visit(const_cast<Stmt*>(*I));      
-  }
-  
-  /// ProcessBlock (BACKWARD ANALYSIS) - Process the transfer functions
-  ///  for a given block based on a forward analysis.
-  void ProcessBlock(const CFGBlock* B, TransferFuncsTy& TF,
-                    dataflow::backward_analysis_tag) {
-        
+  void ProcessMerge(const CFGBlock* B) {
     // Merge dataflow values from all predecessors of this block.
     ValTy& V = TF.getVal();
     V.resetValues(D.getAnalysisData());
@@ -174,59 +202,47 @@ private:
     
     EdgeDataMapTy& M = D.getEdgeDataMap();
     bool firstMerge = true;
+    
+    for (PrevBItr I=ItrTraits::PrevBegin(B),E=ItrTraits::PrevEnd(B); I!=E; ++I){
 
-    for (CFGBlock::const_succ_iterator I=B->succ_begin(), 
-                                       E=B->succ_end(); I!=E; ++I) {
-      typename EdgeDataMapTy::iterator BI = M.find(CFG::Edge(B,*I));
-      if (BI != M.end()) {
+      typename EdgeDataMapTy::iterator EI = M.find(ItrTraits::PrevEdge(B,*I));
+
+      if (EI != M.end()) {
         if (firstMerge) {
           firstMerge = false;
-          V.copyValues(BI->second);
+          V.copyValues(EI->second);
         }
-        else
-          Merge(V,BI->second);
+        else Merge(V,EI->second);
       }
     }
     
-    // Process the statements in the block in the forward direction.
-    for (CFGBlock::const_reverse_iterator I=B->begin(), E=B->end(); I!=E; ++I)
-      TF.BlockStmt_Visit(const_cast<Stmt*>(*I));    
+    // Set the data for the block.
+    D.getBlockDataMap()[B].copyValues(V);
+  }
+  
+
+  /// ProcessBlock - Process the transfer functions for a given block.
+  void ProcessBlock(const CFGBlock* B) {
+    for (StmtItr I=ItrTraits::StmtBegin(B), E=ItrTraits::StmtEnd(B); I!=E; ++I)
+      TF.BlockStmt_Visit(const_cast<Stmt*>(*I));
   }
 
-  /// UpdateEdges (FORWARD ANALYSIS) - After processing the transfer
+  /// UpdateEdges - After processing the transfer
   ///   functions for a block, update the dataflow value associated with the
-  ///   block's outgoing edges.  Enqueue any successor blocks for an
-  ///   outgoing edge whose value has changed.  
-  void UpdateEdges(const CFGBlock* B, ValTy& V,dataflow::forward_analysis_tag) {    
-    for (CFGBlock::const_succ_iterator I=B->succ_begin(), E=B->succ_end();
-          I!=E; ++I) {
-                    
-      CFG::Edge Edg(B,*I);
-      UpdateEdgeValue(Edg,V,*I);
-    }
+  ///   block's outgoing/incoming edges (depending on whether we do a 
+  //    forward/backward analysis respectively)
+  void UpdateEdges(const CFGBlock* B, ValTy& V) {
+    for (NextBItr I=ItrTraits::NextBegin(B), E=ItrTraits::NextEnd(B); I!=E; ++I)
+      UpdateEdgeValue(ItrTraits::NextEdge(B,*I),V,*I);
   }
-  
-  /// UpdateEdges (BACKWARD ANALYSIS) - After processing the transfer
-  ///   functions for a block, update the dataflow value associated with the
-  ///   block's incoming edges.  Enqueue any predecessor blocks for an
-  ///   outgoing edge whose value has changed.  
-  void UpdateEdges(const CFGBlock* B, ValTy& V,dataflow::backward_analysis_tag){      
-    for (CFGBlock::const_pred_iterator I=B->succ_begin(), E=B->succ_end();
-         I!=E; ++I) {
-      
-      CFG::Edge Edg(*I,B);
-      UpdateEdgeValue(Edg,V,*I);
-    }
-  }
-  
+    
   /// UpdateEdgeValue - Update the value associated with a given edge.
-  void UpdateEdgeValue(CFG::Edge& E, ValTy& V, const CFGBlock* TargetBlock) {
+  void UpdateEdgeValue(CFG::Edge E, ValTy& V, const CFGBlock* TargetBlock) {
   
     EdgeDataMapTy& M = D.getEdgeDataMap();
     typename EdgeDataMapTy::iterator I = M.find(E);
       
-    if (I == M.end()) {
-      // First value for this edge.
+    if (I == M.end()) {  // First computed value for this edge?
       M[E].copyValues(V);
       WorkList.enqueue(TargetBlock);
     }
@@ -235,33 +251,7 @@ private:
       WorkList.enqueue(TargetBlock);
     }
   }
-  
-  /// hasData (FORWARD ANALYSIS) - Is there any dataflow values associated
-  ///  with the incoming edges of a block?
-  bool hasData(const CFGBlock* B, dataflow::forward_analysis_tag) {  
-    EdgeDataMapTy& M = D.getEdgeDataMap();
-
-    for (CFGBlock::const_pred_iterator I=B->pred_begin(), E=B->pred_end();
-         I!=E; ++I)
-      if (M.find(CFG::Edge(*I,B)) != M.end())
-        return true;
-        
-    return false;
-  }
-  
-  /// hasData (BACKWARD ANALYSIS) - Is there any dataflow values associated
-  ///  with the outgoing edges of a block?
-  bool hasData(const CFGBlock* B, dataflow::backward_analysis_tag) {  
-    EdgeDataMapTy& M = D.getEdgeDataMap();
     
-    for (CFGBlock::const_succ_iterator I=B->succ_begin(), E=B->succ_end();
-         I!=E; ++I)
-      if (M.find(CFG::Edge(B,*I)) != M.end())
-        return true;
-    
-    return false;
-  }
-
 private:
   DFValuesTy& D;
   DataflowWorkListTy WorkList;

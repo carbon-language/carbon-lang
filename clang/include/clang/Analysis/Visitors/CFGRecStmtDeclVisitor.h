@@ -26,7 +26,10 @@ static_cast<ImplClass*>(this)->Visit##CLASS(static_cast<CLASS*>(D));\
 break;
 
 #define DEFAULT_DISPATCH(CLASS) void Visit##CLASS(CLASS* D) {}
+#define DEFAULT_DISPATCH_VARDECL(CLASS) void Visit##CLASS(CLASS* D)\
+  { static_cast<ImplClass*>(this)->Visit##VarDecl(D); }
 
+  
 namespace clang {
 template <typename ImplClass>
 class CFGRecStmtDeclVisitor : public CFGRecStmtVisitor<ImplClass> {
@@ -66,10 +69,11 @@ public:
     }
   }
   
+  DEFAULT_DISPATCH(VarDecl)
   DEFAULT_DISPATCH(FunctionDecl)
-  DEFAULT_DISPATCH(BlockVarDecl)
-  DEFAULT_DISPATCH(FileVarDecl)
-  DEFAULT_DISPATCH(ParmVarDecl)
+  DEFAULT_DISPATCH_VARDECL(BlockVarDecl)
+  DEFAULT_DISPATCH_VARDECL(FileVarDecl)
+  DEFAULT_DISPATCH_VARDECL(ParmVarDecl)
   DEFAULT_DISPATCH(EnumConstantDecl)
   DEFAULT_DISPATCH(TypedefDecl)
   DEFAULT_DISPATCH(RecordDecl)

@@ -12,50 +12,57 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/Expr.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "clang/Analysis/LiveVariables.h"
-#include "clang/AST/CFG.h"
+#include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
+#include "llvm/ADT/SmallPtrSet.h"
 
 using namespace clang;
 
 namespace {
 
-class DeadStoreObserver : public LiveVariablesObserver {
+class EverKilled : public LiveVariables::ObserverTy {
+  llvm::SmallPtrSet<const VarDecl*, 10> Killed;
+public:
+  virtual void ObserveKill(DeclRefExpr* DR) {
+    Killed.insert(cast<VarDecl>(DR->getDecl()));
+  }    
+  
+  bool hasKill(const VarDecl* V) { return Killed.count(V) != 0; }
+};
+  
+class DeadStoreObs : public LiveVariables::ObserverTy {
   ASTContext &Ctx;
   Diagnostic &Diags;
+  EverKilled EK;
 public:
-  DeadStoreObserver(ASTContext &ctx, Diagnostic &diags)
-    : Ctx(ctx), Diags(diags) {
-  }
+  DeadStoreObs(ASTContext &ctx,Diagnostic &diags) : Ctx(ctx), Diags(diags){}    
+  virtual ~DeadStoreObs() {}
+  
+  virtual void ObserveStmt(Stmt* S,
+                           const LiveVariables::AnalysisDataTy& AD,
+                           const LiveVariables::ValTy& Live) {
     
-  virtual ~DeadStoreObserver() {}
-
-  virtual void ObserveStmt(Stmt* S, LiveVariables& L, llvm::BitVector& Live) {                                 
     if (BinaryOperator* B = dyn_cast<BinaryOperator>(S)) {    
-      // Is this an assignment?
-      if (!B->isAssignmentOp())
-        return;
+      if (!B->isAssignmentOp()) return; // Skip non-assignments.
       
-      // Is this an assignment to a variable?
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()))
-        // Is the variable live?
-        if (!L.isLive(Live,cast<VarDecl>(DR->getDecl()))) {
+        // Is the variable NOT live?  If so, flag a dead store.
+        if (!Live(AD,DR->getDecl())) {
           SourceRange R = B->getRHS()->getSourceRange();
           Diags.Report(DR->getSourceRange().Begin(), diag::warn_dead_store,
-                       0, 0, &R, 1);
-                                                                        
+                       0, 0, &R, 1);                                                                        
         }
     }
-    else if(DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
-      // Iterate through the decls.  Warn if any of them (which have
-      // initializers) are not live.
+    else if(DeclStmt* DS = dyn_cast<DeclStmt>(S))
+      // Iterate through the decls.  Warn if any initializers are complex
+      // expressions that are not live (never used).
       for (VarDecl* V = cast<VarDecl>(DS->getDecl()); V != NULL ; 
-                    V = cast_or_null<VarDecl>(V->getNextDeclarator()))
-        if (Expr* E = V->getInit())
-          if (!L.isLive(Live,V))
+                    V = cast_or_null<VarDecl>(V->getNextDeclarator())) {
+        if (Expr* E = V->getInit()) {
+          if (!Live(AD,DS->getDecl())) {
             // Special case: check for initializations with constants.
             //
             //  e.g. : int x = 0;
@@ -63,14 +70,15 @@ public:
             // If x is EVER assigned a new value later, don't issue
             // a warning.  This is because such initialization can be
             // due to defensive programming.
-            if (!E->isConstantExpr(Ctx,NULL) || 
-                L.getVarInfo(V).Kills.size() == 0) {
+            if (!E->isConstantExpr(Ctx,NULL)) {
               // Flag a warning.
               SourceRange R = E->getSourceRange();
               Diags.Report(V->getLocation(), diag::warn_dead_store, 0, 0,
                            &R,1);
             }
-    }
+          }
+        }
+      }
   }
 };
   
@@ -78,18 +86,11 @@ public:
 
 namespace clang {
 
-void CheckDeadStores(CFG& cfg, LiveVariables& L,
-                     ASTContext &Ctx, Diagnostic &Diags) {
-  DeadStoreObserver A(Ctx, Diags);
-  
-  for (CFG::iterator I = cfg.begin(), E = cfg.end(); I != E; ++I)
-    L.runOnBlock(&(*I),&A);
-}
-
 void CheckDeadStores(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
   LiveVariables L;
   L.runOnCFG(cfg);
-  CheckDeadStores(cfg,L, Ctx, Diags);
+  DeadStoreObs A(Ctx, Diags);
+  L.runOnAllBlocks(cfg,A);
 }
 
 } // end namespace clang
