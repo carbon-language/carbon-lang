@@ -1292,8 +1292,15 @@ expensive.  Element iteration does not visit elements in a useful order.</p>
 </div>
 
 <div class="doc_text">
-Unlike the other containers, there are only two bit storage containers, and when
-to use each is relatively straightforward.
+<p>Unlike the other containers, there are only two bit storage containers, and 
+choosing when to use each is relatively straightforward.</p>
+
+<p>One additional option is 
+<tt>std::vector&lt;bool&gt;</tt>: we discourage its use for two reasons 1) the
+implementation in many common compilers (e.g. commonly available versions of 
+GCC) is extremely inefficient and 2) the C++ standards committee is likely to
+deprecate this container and/or change it significantly somehow.  In any case,
+please don't use it.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
