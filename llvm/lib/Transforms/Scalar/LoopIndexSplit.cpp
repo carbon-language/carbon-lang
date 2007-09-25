@@ -728,6 +728,27 @@ void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
   else
     NV = V1;
 
+  if (ExitCondition->getPredicate() == ICmpInst::ICMP_SGT
+      || ExitCondition->getPredicate() == ICmpInst::ICMP_UGT
+      || ExitCondition->getPredicate() == ICmpInst::ICMP_SGE
+      || ExitCondition->getPredicate() == ICmpInst::ICMP_UGE)  {
+    ExitCondition->swapOperands();
+    if (ExitValueNum)
+      ExitValueNum = 0;
+    else
+      ExitValueNum = 1;
+  }
+
+  Value *NUB = NULL;
+  Value *NLB = NULL;
+  Value *UB = ExitCondition->getOperand(ExitValueNum);
+  const Type *Ty = NV->getType();
+  bool Sign = ExitCondition->isSignedPredicate();
+  BasicBlock *Preheader = L->getLoopPreheader();
+  Instruction *PHTerminator = Preheader->getTerminator();
+
+  assert (NV && "Unexpected value");
+
   switch (CI->getPredicate()) {
   case ICmpInst::ICMP_ULE:
   case ICmpInst::ICMP_SLE:
@@ -740,9 +761,15 @@ void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
     // for (i = LB; i < NUB ; ++i)
     //   LOOP_BODY
     //
-
-
-
+    if (ExitCondition->getPredicate() == ICmpInst::ICMP_SLT
+        || ExitCondition->getPredicate() == ICmpInst::ICMP_ULT) {
+      Value *A = BinaryOperator::createAdd(NV, ConstantInt::get(Ty, 1, Sign),
+                                           "lsplit.add", PHTerminator);
+      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                              A, UB,"lsplit,c", PHTerminator);
+      NUB = new SelectInst (C, A, UB, "lsplit.nub", PHTerminator);
+    }
+    
     // for (i = LB; i <= UB; ++i)
     //   if (i <= NV && ...)
     //      LOOP_BODY
@@ -752,6 +779,12 @@ void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
     // for (i = LB; i <= NUB ; ++i)
     //   LOOP_BODY
     //
+    else if (ExitCondition->getPredicate() == ICmpInst::ICMP_SLE
+             || ExitCondition->getPredicate() == ICmpInst::ICMP_ULE) {
+      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                              NV, UB, "lsplit.c", PHTerminator);
+      NUB = new SelectInst (C, NV, UB, "lsplit.nub", PHTerminator);
+    }
     break;
   case ICmpInst::ICMP_ULT:
   case ICmpInst::ICMP_SLT:
@@ -764,8 +797,12 @@ void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
     // for (i = LB; i < NUB ; ++i)
     //   LOOP_BODY
     //
-
-
+    if (ExitCondition->getPredicate() == ICmpInst::ICMP_SLT
+        || ExitCondition->getPredicate() == ICmpInst::ICMP_ULT) {
+      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                              NV, UB, "lsplit.c", PHTerminator);
+      NUB = new SelectInst (C, NV, UB, "lsplit.nub", PHTerminator);
+    }
 
     // for (i = LB; i <= UB; ++i)
     //   if (i < NV && ...)
@@ -776,6 +813,14 @@ void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
     // for (i = LB; i <= NUB ; ++i)
     //   LOOP_BODY
     //
+    else if (ExitCondition->getPredicate() == ICmpInst::ICMP_SLE
+             || ExitCondition->getPredicate() == ICmpInst::ICMP_ULE) {
+      Value *S = BinaryOperator::createSub(NV, ConstantInt::get(Ty, 1, Sign),
+                                           "lsplit.add", PHTerminator);
+      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                              S, UB, "lsplit.c", PHTerminator);
+      NUB = new SelectInst (C, S, UB, "lsplit.nub", PHTerminator);
+    }
     break;
   case ICmpInst::ICMP_UGE:
   case ICmpInst::ICMP_SGE:
@@ -788,6 +833,11 @@ void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
     // for (i = NLB; i (< or <=) UB ; ++i)
     //   LOOP_BODY
     //
+    {
+      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                              NV, StartValue, "lsplit.c", PHTerminator);
+      NLB = new SelectInst (C, StartValue, NV, "lsplit.nlb", PHTerminator);
+    }
     break;
   case ICmpInst::ICMP_UGT:
   case ICmpInst::ICMP_SGT:
@@ -800,9 +850,25 @@ void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
     // for (i = NLB; i (< or <=) UB ; ++i)
     //   LOOP_BODY
     //
+    {
+      Value *A = BinaryOperator::createAdd(NV, ConstantInt::get(Ty, 1, Sign),
+                                           "lsplit.add", PHTerminator);
+      Value *C = new ICmpInst(Sign ? ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
+                              A, StartValue, "lsplit.c", PHTerminator);
+      NLB = new SelectInst (C, StartValue, A, "lsplit.nlb", PHTerminator);
+    }
     break;
   default:
     assert ( 0 && "Unexpected split condition predicate");
+  }
+
+  if (NLB) {
+    unsigned i = IndVar->getBasicBlockIndex(Preheader);
+    IndVar->setIncomingValue(i, NLB);
+  }
+
+  if (NUB) {
+    ExitCondition->setOperand(ExitValueNum, NUB);
   }
 }
 /// updateLoopIterationSpace - Current loop body is covered by an AND
@@ -811,6 +877,9 @@ void LoopIndexSplit::updateLoopBounds(ICmpInst *CI) {
 /// updating appropriate start and end values for induction variable.
 bool LoopIndexSplit::updateLoopIterationSpace(SplitInfo &SD) {
   BasicBlock *Header = L->getHeader();
+  BasicBlock *ExitingBlock = ExitCondition->getParent();
+  BasicBlock *SplitCondBlock = SD.SplitCondition->getParent();
+
   ICmpInst *Op0 = cast<ICmpInst>(SD.SplitCondition->getOperand(0));
   ICmpInst *Op1 = cast<ICmpInst>(SD.SplitCondition->getOperand(1));
 
@@ -865,11 +934,83 @@ bool LoopIndexSplit::updateLoopIterationSpace(SplitInfo &SD) {
   // loop may not be eliminated.
   if (!safeExitingBlock(SD, ExitCondition->getParent())) 
     return false;
-
+  
+  // Verify that loop exiting block has only two predecessor, where one predecessor
+  // is split condition block. The other predecessor will become exiting block's
+  // dominator after CFG is updated. TODO : Handle CFG's where exiting block has
+  // more then two predecessors. This requires extra work in updating dominator
+  // information.
+  BasicBlock *ExitingBBPred = NULL;
+  for (pred_iterator PI = pred_begin(ExitingBlock), PE = pred_end(ExitingBlock);
+       PI != PE; ++PI) {
+    BasicBlock *BB = *PI;
+    if (SplitCondBlock == BB) 
+      continue;
+    if (ExitingBBPred)
+      return false;
+    else
+      ExitingBBPred = BB;
+  }
+  
+  // Update loop bounds to absorb Op0 check.
   updateLoopBounds(Op0);
+  // Update loop bounds to absorb Op1 check.
   updateLoopBounds(Op1);
+
   // Update CFG
-  return false;
+
+  // Unconditionally connect split block to its remaining successor. 
+  BranchInst *SplitTerminator = 
+    cast<BranchInst>(SplitCondBlock->getTerminator());
+  BasicBlock *Succ0 = SplitTerminator->getSuccessor(0);
+  BasicBlock *Succ1 = SplitTerminator->getSuccessor(1);
+  if (Succ0 == ExitCondition->getParent())
+    SplitTerminator->setUnconditionalDest(Succ1);
+  else
+    SplitTerminator->setUnconditionalDest(Succ0);
+
+  // Remove split condition.
+  SD.SplitCondition->eraseFromParent();
+  if (Op0->use_begin() == Op0->use_end())
+    Op0->eraseFromParent();
+  if (Op1->use_begin() == Op1->use_end())
+    Op1->eraseFromParent();
+      
+  BranchInst *ExitInsn =
+    dyn_cast<BranchInst>(ExitingBlock->getTerminator());
+  assert (ExitInsn && "Unable to find suitable loop exit branch");
+  BasicBlock *ExitBlock = ExitInsn->getSuccessor(1);
+  if (L->contains(ExitBlock))
+    ExitBlock = ExitInsn->getSuccessor(0);
+
+  // Update domiantor info. Now, ExitingBlock has only one predecessor, 
+  // ExitingBBPred, and it is ExitingBlock's immediate domiantor.
+  DT->changeImmediateDominator(ExitingBlock, ExitingBBPred);
+  
+  // If ExitingBlock is a member of loop BB's DF list then replace it with
+  // loop header and exit block.
+  for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
+    if (BB == Header || BB == ExitingBlock)
+      continue;
+    DominanceFrontier::iterator BBDF = DF->find(BB);
+    DominanceFrontier::DomSetType::iterator DomSetI = BBDF->second.begin();
+    DominanceFrontier::DomSetType::iterator DomSetE = BBDF->second.end();
+    while (DomSetI != DomSetE) {
+      DominanceFrontier::DomSetType::iterator CurrentItr = DomSetI;
+      ++DomSetI;
+      BasicBlock *DFBB = *CurrentItr;
+      if (DFBB == ExitingBlock) {
+        BBDF->second.erase(DFBB);
+        BBDF->second.insert(Header);
+        if (Header != ExitingBlock)
+          BBDF->second.insert(ExitBlock);
+      }
+    }
+  }
+
+  return return;
 }
 
 
