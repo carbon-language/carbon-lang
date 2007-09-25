@@ -20,6 +20,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Target/TargetAsmInfo.h"
 using namespace llvm;
 
 /// InitLibcallNames - Set default libcall names.
@@ -169,6 +170,10 @@ TargetLowering::TargetLowering(TargetMachine &tm)
 
   InitLibcallNames(LibcallRoutineNames);
   InitCmpLibcallCCs(CmpLibcallCCs);
+
+  // Tell Legalize whether the assembler supports DEBUG_LOC.
+  if (!TM.getTargetAsmInfo()->hasDotLocAndDotFile())
+    setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
 }
 
 TargetLowering::~TargetLowering() {}
