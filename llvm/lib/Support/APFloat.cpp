@@ -1399,13 +1399,28 @@ APFloat::convertToInteger(integerPart *parts, unsigned int width,
   unsigned int msb, partsCount;
   int bits;
 
-  /* Handle the three special cases first.  */
-  if(category == fcInfinity || category == fcNaN)
-    return opInvalidOp;
-
   partsCount = partCountForBits(width);
 
-  if(category == fcZero) {
+  /* Handle the three special cases first.  We produce
+     a deterministic result even for the Invalid cases. */
+  if (category == fcNaN) {
+    // Neither sign nor isSigned affects this.
+    APInt::tcSet(parts, 0, partsCount);
+    return opInvalidOp;
+  }
+  if (category == fcInfinity) {
+    if (!sign && isSigned)
+      APInt::tcSetLeastSignificantBits(parts, partsCount, width-1);
+    else if (!sign && !isSigned)
+      APInt::tcSetLeastSignificantBits(parts, partsCount, width);
+    else if (sign && isSigned) {
+      APInt::tcSetLeastSignificantBits(parts, partsCount, 1);
+      APInt::tcShiftLeft(parts, partsCount, width-1);
+    } else // sign && !isSigned
+      APInt::tcSet(parts, 0, partsCount);
+    return opInvalidOp;
+  }
+  if (category == fcZero) {
     APInt::tcSet(parts, 0, partsCount);
     return opOK;
   }
@@ -1418,6 +1433,19 @@ APFloat::convertToInteger(integerPart *parts, unsigned int width,
   if(bits > 0) {
     lost_fraction = tmp.shiftSignificandRight(bits);
   } else {
+    if (-bits >= semantics->precision) {
+      // Unrepresentably large.
+      if (!sign && isSigned)
+        APInt::tcSetLeastSignificantBits(parts, partsCount, width-1);
+      else if (!sign && !isSigned)
+        APInt::tcSetLeastSignificantBits(parts, partsCount, width);
+      else if (sign && isSigned) {
+        APInt::tcSetLeastSignificantBits(parts, partsCount, 1);
+        APInt::tcShiftLeft(parts, partsCount, width-1);
+      } else // sign && !isSigned
+        APInt::tcSet(parts, 0, partsCount);
+      return (opStatus)(opOverflow | opInexact);
+    }
     tmp.shiftSignificandLeft(-bits);
     lost_fraction = lfExactlyZero;
   }

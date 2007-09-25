@@ -197,8 +197,6 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       APFloat::opStatus status = V.convertToInteger(x, DestBitWidth, 
                              opc==Instruction::FPToSI,
                              APFloat::rmTowardZero);
-      if (status!=APFloat::opOK && status!=APFloat::opInexact)
-        return 0; // give up
       APInt Val(DestBitWidth, 2, x);
       return ConstantInt::get(Val);
     }
