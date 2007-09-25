@@ -858,7 +858,7 @@ public:
   static bool classof(const ObjcCategoryDecl *D) { return true; }
 };
   
-class ObjcImplementationDecl : public ScopedDecl {
+class ObjcImplementationDecl : public TypeDecl {
     
   /// Implementation Class's super class.
   ObjcInterfaceDecl *SuperClass;
@@ -878,7 +878,7 @@ class ObjcImplementationDecl : public ScopedDecl {
   public:
   ObjcImplementationDecl(SourceLocation L, IdentifierInfo *Id,
                          ObjcInterfaceDecl* superDecl)
-    : ScopedDecl(ObjcImplementation, L, Id, 0),
+    : TypeDecl(ObjcImplementation, L, Id, 0),
       SuperClass(superDecl),
       Ivars(0), NumIvars(-1),
       InsMethods(0), NumInsMethods(-1), ClsMethods(0), NumClsMethods(-1) {}

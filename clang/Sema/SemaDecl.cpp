@@ -1105,6 +1105,14 @@ Sema::DeclTy *Sema::ObjcStartClassImplementation(Scope *S,
   
   ObjcImplementationDecl* IMPDecl = 
     new ObjcImplementationDecl(AtClassImplLoc, ClassName, SDecl);
+  if (!IDecl) {
+    // Legacy case of @implementation with no corresponding @interface.
+    // Build, chain & install the interface decl into the identifier.
+    IDecl = new ObjcInterfaceDecl(AtClassImplLoc, 0, ClassName);
+    IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
+    ClassName->setFETokenInfo(IDecl);
+    
+  }
   
   // Check that there is no duplicate implementation of this class.
   bool err = false;
