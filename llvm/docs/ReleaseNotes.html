@@ -98,9 +98,17 @@ optimizer, speeding it up and making it more aggressive</p>
 
 <ul>
 
-<li>Owen DSE and MemDep analysis</li>
-<li>Owen GVN</li>
-<li>Owen GVN-PRE, not in llvm-gcc</li>
+<li>Owen Anderson wrote the new MemoryDependenceAnalysis pass, which provides 
+    a lazy, caching layer on top of alias analysis.  He then used it to rewrite
+    DeadStoreElimination which resulted in significantly better compile time in 
+    common cases, </li>
+<li>Owen implemented the new GVN pass, which is also based on 
+    MemoryDependenceAnalysis.  This pass replaces GCSE/LoadVN in the standard
+    set of passes, providing more aggressive optimization at a some-what 
+    improved compile-time cost.</li>
+<li>Owen implemented GVN-PRE, a partial redundancy elimination algorithm that
+    shares some details with the new GVN pass.  It is still in need of compile
+    time tuning, and is not turned on by default.</li>
 <li>Devang merged ETForest and DomTree into a single easier to use data
 structure.</li>
 <li>Nick Lewycky improved loop trip count analysis to handle many more common
