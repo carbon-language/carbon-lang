@@ -23,7 +23,7 @@ namespace llvm {
   class ARMTargetMachine;
 
   struct ARMTargetAsmInfo : public TargetAsmInfo {
-    ARMTargetAsmInfo(const ARMTargetMachine &TM);
+    explicit ARMTargetAsmInfo(const ARMTargetMachine &TM);
 
     const ARMSubtarget *Subtarget;
 

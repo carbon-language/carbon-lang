@@ -22,7 +22,7 @@ namespace llvm {
   class MipsTargetMachine;
 
   struct MipsTargetAsmInfo : public TargetAsmInfo {
-    MipsTargetAsmInfo(const MipsTargetMachine &TM);
+    explicit MipsTargetAsmInfo(const MipsTargetMachine &TM);
   };
 
 } // namespace llvm
