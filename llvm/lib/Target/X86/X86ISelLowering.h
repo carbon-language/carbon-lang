@@ -181,7 +181,7 @@ namespace llvm {
       /// in order to obtain suitable precision.
       FRSQRT, FRCP,
 
-      /// DIV, IDIV - Unsigned and signed integer division and reciprocal.
+      /// DIV, IDIV - Unsigned and signed integer division and remainder.
       ///
       DIV, IDIV,
 
