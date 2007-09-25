@@ -17,26 +17,14 @@
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"
-#include "llvm/ADT/SmallPtrSet.h"
 
 using namespace clang;
 
 namespace {
-
-class EverKilled : public LiveVariables::ObserverTy {
-  llvm::SmallPtrSet<const VarDecl*, 10> Killed;
-public:
-  virtual void ObserveKill(DeclRefExpr* DR) {
-    Killed.insert(cast<VarDecl>(DR->getDecl()));
-  }    
-  
-  bool hasKill(const VarDecl* V) { return Killed.count(V) != 0; }
-};
   
 class DeadStoreObs : public LiveVariables::ObserverTy {
   ASTContext &Ctx;
   Diagnostic &Diags;
-  EverKilled EK;
 public:
   DeadStoreObs(ASTContext &ctx,Diagnostic &diags) : Ctx(ctx), Diags(diags){}    
   virtual ~DeadStoreObs() {}
