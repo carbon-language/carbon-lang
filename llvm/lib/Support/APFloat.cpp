@@ -1329,26 +1329,30 @@ APFloat::convert(const fltSemantics &toSemantics,
   /* Handle storage complications.  If our new form is wider,
      re-allocate our bit pattern into wider storage.  If it is
      narrower, we ignore the excess parts, but if narrowing to a
-     single part we need to free the old storage.  */
+     single part we need to free the old storage.
+     Be careful not to reference significandParts for zeroes
+     and infinities, since it aborts.  */
   if (newPartCount > oldPartCount) {
     integerPart *newParts;
-
     newParts = new integerPart[newPartCount];
     APInt::tcSet(newParts, 0, newPartCount);
-    APInt::tcAssign(newParts, significandParts(), oldPartCount);
+    if (category==fcNormal || category==fcNaN)
+      APInt::tcAssign(newParts, significandParts(), oldPartCount);
     freeSignificand();
     significand.parts = newParts;
   } else if (newPartCount < oldPartCount) {
     /* Capture any lost fraction through truncation of parts so we get
        correct rounding whilst normalizing.  */
-    lostFraction = lostFractionThroughTruncation
-      (significandParts(), oldPartCount, toSemantics.precision);
-    if (newPartCount == 1)
-      {
-	integerPart newPart = significandParts()[0];
-	freeSignificand();
-	significand.part = newPart;
-      }
+    if (category==fcNormal)
+      lostFraction = lostFractionThroughTruncation
+        (significandParts(), oldPartCount, toSemantics.precision);
+    if (newPartCount == 1) {
+        integerPart newPart = 0;
+        if (category==fcNormal || category==fcNaN) 
+          newPart = significandParts()[0];
+        freeSignificand();
+        significand.part = newPart;
+    }
   }
 
   if(category == fcNormal) {
@@ -1356,6 +1360,19 @@ APFloat::convert(const fltSemantics &toSemantics,
     exponent += toSemantics.precision - semantics->precision;
     semantics = &toSemantics;
     fs = normalize(rounding_mode, lostFraction);
+  } else if (category == fcNaN) {
+    int shift = toSemantics.precision - semantics->precision;
+    // No normalization here, just truncate
+    if (shift>0)
+      APInt::tcShiftLeft(significandParts(), newPartCount, shift);
+    else if (shift < 0)
+      APInt::tcShiftRight(significandParts(), newPartCount, -shift);
+    // gcc forces the Quiet bit on, which means (float)(double)(float_sNan)
+    // does not give you back the same bits.  This is dubious, and we
+    // don't currently do it.  You're really supposed to get
+    // an invalid operation signal at runtime, but nobody does that.
+    semantics = &toSemantics;
+    fs = opOK;
   } else {
     semantics = &toSemantics;
     fs = opOK;
@@ -1818,7 +1835,7 @@ APFloat::initFromFloatAPInt(const APInt & api) {
   } else if (myexponent==0xff && mysignificand==0) {
     // exponent, significand meaningless
     category = fcInfinity;
-  } else if (myexponent==0xff && (mysignificand & 0x400000)) {
+  } else if (myexponent==0xff && mysignificand!=0) {
     // sign, exponent, significand meaningless
     category = fcNaN;
     *significandParts() = mysignificand;
