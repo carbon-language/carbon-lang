@@ -214,6 +214,22 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="ADT"
+				>
+				<File
+					RelativePath="..\..\include\clang\Analysis\ADT\PersistentMap.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Support"
+				>
+				<File
+					RelativePath="..\..\include\clang\Analysis\Support\IntrusiveSPtr.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>
