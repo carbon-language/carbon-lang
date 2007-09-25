@@ -155,6 +155,27 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::BIT_CONVERT      , MVT::i32  , Expand);
   }
 
+  // Divide and remainder are lowered to use div or idiv in legalize in
+  // order to expose the intermediate computations to trivial CSE. This is
+  // most noticeable when both x/y and x%y are being computed; they can be
+  // done with a single div or idiv.
+  setOperationAction(ISD::SDIV            , MVT::i8    , Custom);
+  setOperationAction(ISD::UDIV            , MVT::i8    , Custom);
+  setOperationAction(ISD::SREM            , MVT::i8    , Custom);
+  setOperationAction(ISD::UREM            , MVT::i8    , Custom);
+  setOperationAction(ISD::SDIV            , MVT::i16   , Custom);
+  setOperationAction(ISD::UDIV            , MVT::i16   , Custom);
+  setOperationAction(ISD::SREM            , MVT::i16   , Custom);
+  setOperationAction(ISD::UREM            , MVT::i16   , Custom);
+  setOperationAction(ISD::SDIV            , MVT::i32   , Custom);
+  setOperationAction(ISD::UDIV            , MVT::i32   , Custom);
+  setOperationAction(ISD::SREM            , MVT::i32   , Custom);
+  setOperationAction(ISD::UREM            , MVT::i32   , Custom);
+  setOperationAction(ISD::SDIV            , MVT::i64   , Custom);
+  setOperationAction(ISD::UDIV            , MVT::i64   , Custom);
+  setOperationAction(ISD::SREM            , MVT::i64   , Custom);
+  setOperationAction(ISD::UREM            , MVT::i64   , Custom);
+
   setOperationAction(ISD::BR_JT            , MVT::Other, Expand);
   setOperationAction(ISD::BRCOND           , MVT::Other, Custom);
   setOperationAction(ISD::BR_CC            , MVT::Other, Expand);
@@ -3393,6 +3414,22 @@ SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::MERGE_VALUES, VTs, 2, &Ops[0], Ops.size());
 }
 
+SDOperand X86TargetLowering::LowerIntegerDivOrRem(SDOperand Op, SelectionDAG &DAG) {
+  unsigned Opcode = Op.getOpcode();
+  MVT::ValueType NVT = Op.getValueType();
+  bool isSigned = Opcode == ISD::SDIV || Opcode == ISD::SREM;
+  bool isDiv    = Opcode == ISD::SDIV || Opcode == ISD::UDIV;
+  unsigned Opc = isSigned ? X86ISD::IDIV : X86ISD::DIV;
+
+  SDOperand Ops[] = { Op.getOperand(0), Op.getOperand(1) };
+  SDOperand DR = DAG.getNode(Opc, DAG.getVTList(NVT, NVT), Ops, 2);
+
+  if (isDiv)
+    return DR;
+
+  return SDOperand(DR.Val, 1);
+}
+
 SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   assert(Op.getOperand(0).getValueType() <= MVT::i64 &&
          Op.getOperand(0).getValueType() >= MVT::i16 &&
@@ -4668,6 +4705,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::SHL_PARTS:
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS:          return LowerShift(Op, DAG);
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::SREM:
+  case ISD::UREM:               return LowerIntegerDivOrRem(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::FABS:               return LowerFABS(Op, DAG);
@@ -4751,6 +4792,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
   case X86ISD::THREAD_POINTER:     return "X86ISD::THREAD_POINTER";
   case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
+  case X86ISD::DIV:                return "X86ISD::DIV";
+  case X86ISD::IDIV:               return "X86ISD::IDIV";
   }
 }
 

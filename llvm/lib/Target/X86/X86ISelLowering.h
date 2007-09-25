@@ -181,6 +181,10 @@ namespace llvm {
       /// in order to obtain suitable precision.
       FRSQRT, FRCP,
 
+      /// DIV, IDIV - Unsigned and signed integer division and reciprocal.
+      ///
+      DIV, IDIV,
+
       // Thread Local Storage
       TLSADDR, THREAD_POINTER,
 
@@ -420,6 +424,7 @@ namespace llvm {
     SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerExternalSymbol(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerShift(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerIntegerDivOrRem(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFABS(SDOperand Op, SelectionDAG &DAG);
