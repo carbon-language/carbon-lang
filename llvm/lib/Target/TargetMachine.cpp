@@ -31,6 +31,7 @@ namespace llvm {
   bool UseSoftFloat;
   bool NoZerosInBSS;
   bool ExceptionHandling;
+  bool NewCCModeling;
   Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
 }
@@ -116,6 +117,11 @@ namespace {
       clEnumValN(CodeModel::Large, "large",
                  "  Large code model"),
       clEnumValEnd));
+  cl::opt<bool, true>
+  EnableNewCCModeling("new-cc-modeling-scheme",
+                      cl::desc("New CC modeling scheme."),
+                      cl::location(NewCCModeling),
+                      cl::init(false));
 }
 
 //---------------------------------------------------------------------------
