@@ -225,12 +225,12 @@
 		355CF6830C90A8D400A08AA3 /* DeadStores.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeadStores.cpp; path = Analysis/DeadStores.cpp; sourceTree = "<group>"; };
 		356EF9B20C8F7DBA006650F5 /* LiveVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LiveVariables.h; path = clang/Analysis/LiveVariables.h; sourceTree = "<group>"; };
 		356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LiveVariables.cpp; path = Analysis/LiveVariables.cpp; sourceTree = "<group>"; };
-		35AE0F650C9B4CA300CC1279 /* DataflowValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowValues.h; path = clang/Analysis/DataflowValues.h; sourceTree = "<group>"; };
 		35AE0F660C9B4CA300CC1279 /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/UninitializedValues.h; sourceTree = "<group>"; };
-		35AE0F670C9B4CC200CC1279 /* DataflowSolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowSolver.h; path = Analysis/DataflowSolver.h; sourceTree = "<group>"; };
 		35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTConsumer.h; path = clang/AST/ASTConsumer.h; sourceTree = "<group>"; };
 		35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtViz.cpp; path = AST/StmtViz.cpp; sourceTree = "<group>"; };
 		35CFFE010CA1CBDD00E6F2BE /* StmtGraphTraits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StmtGraphTraits.h; path = clang/AST/StmtGraphTraits.h; sourceTree = "<group>"; };
+		35D1DDD10CA9C6D50096E967 /* DataflowSolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowSolver.h; path = clang/Analysis/FlowSensitive/DataflowSolver.h; sourceTree = "<group>"; };
+		35D1DDD20CA9C6D50096E967 /* DataflowValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowValues.h; path = clang/Analysis/FlowSensitive/DataflowValues.h; sourceTree = "<group>"; };
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = Parse/AttributeList.cpp; sourceTree = "<group>"; };
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; };
 		8DD76F6C0486A84900D96B5E /* clang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = clang; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -422,11 +422,11 @@
 		356EF9AF0C8F7DA4006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
-				35AE0F650C9B4CA300CC1279 /* DataflowValues.h */,
+				35D1DDCF0CA9C6BE0096E967 /* FlowSensitive */,
+				352C19DB0CA321AC0045DB98 /* Visitors */,
 				356EF9B20C8F7DBA006650F5 /* LiveVariables.h */,
 				35AE0F660C9B4CA300CC1279 /* UninitializedValues.h */,
 				355CF6820C90A8B600A08AA3 /* LocalCheckers.h */,
-				352C19DB0CA321AC0045DB98 /* Visitors */,
 			);
 			name = Analysis;
 			sourceTree = "<group>";
@@ -434,11 +434,19 @@
 		356EF9B30C8F7DCA006650F5 /* Analysis */ = {
 			isa = PBXGroup;
 			children = (
-				35AE0F670C9B4CC200CC1279 /* DataflowSolver.h */,
 				356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */,
 				355CF6850C90A8D600A08AA3 /* LocalCheckers */,
 			);
 			name = Analysis;
+			sourceTree = "<group>";
+		};
+		35D1DDCF0CA9C6BE0096E967 /* FlowSensitive */ = {
+			isa = PBXGroup;
+			children = (
+				35D1DDD10CA9C6D50096E967 /* DataflowSolver.h */,
+				35D1DDD20CA9C6D50096E967 /* DataflowValues.h */,
+			);
+			name = FlowSensitive;
 			sourceTree = "<group>";
 		};
 		C6859E8C029090F304C91782 /* Documentation */ = {
