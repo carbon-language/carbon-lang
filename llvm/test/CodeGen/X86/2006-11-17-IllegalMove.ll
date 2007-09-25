@@ -1,7 +1,7 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 | \
-; RUN:   not grep {movb	%sil, %ah}
+; RUN:   grep movb | count 2
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86-64 | \
-; RUN:   grep {movzbw	%al, %ax}
+; RUN:   grep movzbw
 
 void %handle_vector_size_attribute() {
 entry:
