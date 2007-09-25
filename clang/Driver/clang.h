@@ -14,12 +14,15 @@
 #ifndef LLVM_CLANG_CLANG_H
 #define LLVM_CLANG_CLANG_H
 
+#include <memory>
+
 namespace clang {
 class Preprocessor;
 struct LangOptions;
 class MinimalAction;
 class TargetInfo;
 class Diagnostic;
+class ASTConsumer;
 
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
@@ -39,6 +42,10 @@ void EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
   
 /// CheckDiagnostics - Implement the -parse-ast-check diagnostic verifier.
 bool CheckDiagnostics(Preprocessor &PP, unsigned MainFileID);
+  
+/// CheckASTConsumer - Implement diagnostic checking for AST consumers.
+bool CheckASTConsumer(Preprocessor &PP, unsigned MainFileID,
+                      std::auto_ptr<ASTConsumer> C);
 
 }  // end namespace clang
 

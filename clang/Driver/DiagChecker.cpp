@@ -227,17 +227,22 @@ static bool CheckResults(Preprocessor &PP,
 bool clang::CheckDiagnostics(Preprocessor &PP, unsigned MainFileID) {
   // Parse the specified input file, building ASTs and performing sema, but
   // doing nothing else.
-{
-  ASTConsumer NullConsumer;
-  ParseAST(PP, MainFileID, NullConsumer);
+  return CheckASTConsumer(PP,MainFileID, 
+                          std::auto_ptr<ASTConsumer>(new ASTConsumer()));
 }
 
+/// CheckASTConsumer - Implement diagnostic checking for AST consumers.
+bool clang::CheckASTConsumer(Preprocessor &PP, unsigned MainFileID,
+                             std::auto_ptr<ASTConsumer> C) {
+
+  // Local scope for ASTConsumer to auto release the consumer ...
+  { std::auto_ptr<ASTConsumer> Consumer(C);
+    ParseAST(PP, MainFileID, *Consumer.get()); }
+  
   // Gather the set of expected diagnostics.
   DiagList ExpectedErrors, ExpectedWarnings;
   FindExpectedDiags(PP, MainFileID, ExpectedErrors, ExpectedWarnings);
-  
+
   // Check that the expected diagnostics occurred.
   return CheckResults(PP, ExpectedErrors, ExpectedWarnings);
 }
-
-
