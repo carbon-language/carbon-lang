@@ -243,7 +243,7 @@ public:
   ///
   unsigned getPrimitiveSizeInBits() const;
 
-  /// getForwaredType - Return the type that this type has been resolved to if
+  /// getForwardedType - Return the type that this type has been resolved to if
   /// it has been resolved to anything.  This is used to implement the
   /// union-find algorithm for type resolution, and shouldn't be used by general
   /// purpose clients.
