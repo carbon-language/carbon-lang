@@ -124,9 +124,9 @@ def PUSH64r  : I<0x50, AddRegFrm,
 }
 
 let Defs = [RSP, EFLAGS], Uses = [RSP] in
-def POPFQ    : I<0x9D, RawFrm, (outs), (ins), "popfq", []>, REX_W;
+def POPFQ    : I<0x9D, RawFrm, (outs), (ins), "popf", []>, REX_W;
 let Defs = [RSP], Uses = [RSP, EFLAGS] in
-def PUSHFQ   : I<0x9C, RawFrm, (outs), (ins), "pushfq", []>;
+def PUSHFQ   : I<0x9C, RawFrm, (outs), (ins), "pushf", []>;
 
 def LEA64_32r : I<0x8D, MRMSrcMem,
                   (outs GR32:$dst), (ins lea64_32mem:$src),
