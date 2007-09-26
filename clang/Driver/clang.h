@@ -14,8 +14,6 @@
 #ifndef LLVM_CLANG_CLANG_H
 #define LLVM_CLANG_CLANG_H
 
-#include <memory>
-
 namespace clang {
 class Preprocessor;
 struct LangOptions;
