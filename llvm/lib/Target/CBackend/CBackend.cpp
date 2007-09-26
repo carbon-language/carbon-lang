@@ -1729,7 +1729,9 @@ void CWriter::printFloatingPointConstants(Function &F) {
               << " = 0x" << std::hex << i << std::dec
               << "U;    /* " << Val << " */\n";
         } else if (FPC->getType() == Type::X86_FP80Ty) {
-          const uint64_t *p = FPC->getValueAPF().convertToAPInt().getRawData();
+          // api needed to prevent premature destruction
+          APInt api = FPC->getValueAPF().convertToAPInt();
+          const uint64_t *p = api.getRawData();
           Out << "static const ConstantFP80Ty FPConstant" << FPCounter++
               << " = { 0x" << std::hex
               << ((uint16_t)p[1] | (p[0] & 0xffffffffffffLL)<<16)

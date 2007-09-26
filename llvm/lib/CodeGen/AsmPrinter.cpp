@@ -876,7 +876,9 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
       return;
     } else if (CFP->getType() == Type::X86_FP80Ty) {
       // all long double variants are printed as hex
-      const uint64_t *p = CFP->getValueAPF().convertToAPInt().getRawData();
+      // api needed to prevent premature destruction
+      APInt api = CFP->getValueAPF().convertToAPInt();
+      const uint64_t *p = api.getRawData();
       if (TD->isBigEndian()) {
         O << TAI->getData16bitsDirective() << uint16_t(p[0] >> 48)
           << "\t" << TAI->getCommentString()
