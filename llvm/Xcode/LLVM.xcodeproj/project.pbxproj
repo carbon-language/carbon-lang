@@ -153,6 +153,16 @@
 		9FA638EA0C77B252007F12AE /* InlinerPass.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = InlinerPass.h; sourceTree = "<group>"; };
 		9FA638EB0C77B26B007F12AE /* BasicInliner.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = BasicInliner.h; sourceTree = "<group>"; };
 		9FA638EC0C77B26B007F12AE /* InlineCost.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = InlineCost.h; sourceTree = "<group>"; };
+		9FD3E5710CA0116100E54D15 /* bitwriter_ocaml.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = bitwriter_ocaml.c; sourceTree = "<group>"; };
+		9FD3E5720CA0116100E54D15 /* llvm_bitwriter.ml */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = llvm_bitwriter.ml; sourceTree = "<group>"; };
+		9FD3E5730CA0116100E54D15 /* llvm_bitwriter.mli */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = llvm_bitwriter.mli; sourceTree = "<group>"; };
+		9FD3E57B0CA0116100E54D15 /* llvm.ml */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = llvm.ml; sourceTree = "<group>"; };
+		9FD3E57C0CA0116100E54D15 /* llvm.mli */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = llvm.mli; sourceTree = "<group>"; };
+		9FD3E57D0CA0116100E54D15 /* llvm_ocaml.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; path = llvm_ocaml.c; sourceTree = "<group>"; };
+		9FD3E58D0CA0125F00E54D15 /* BitWriter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = BitWriter.h; sourceTree = "<group>"; };
+		9FD3E58E0CA0125F00E54D15 /* Core.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Core.h; sourceTree = "<group>"; };
+		9FD3E5900CA0129D00E54D15 /* Core.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Core.cpp; path = ../lib/VMCore/Core.cpp; sourceTree = SOURCE_ROOT; };
+		9FD3E5920CA012B300E54D15 /* BitWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = BitWriter.cpp; sourceTree = "<group>"; };
 		9FE4508B0C77A77000C4FEA4 /* ARMCodeEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ARMCodeEmitter.cpp; sourceTree = "<group>"; };
 		9FE4508C0C77A77000C4FEA4 /* ARMGenAsmWriter.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.pascal; path = ARMGenAsmWriter.inc; sourceTree = "<group>"; };
 		9FE4508D0C77A77000C4FEA4 /* ARMGenDAGISel.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.pascal; path = ARMGenDAGISel.inc; sourceTree = "<group>"; };
@@ -1049,6 +1059,7 @@
 				DE66F2BD08ABF14400323D32 /* tools */,
 				DE816FAC08CFB44C0093BDEF /* utils */,
 				DE66F38D08ABF35C00323D32 /* docs */,
+				9FD3E56D0CA0116100E54D15 /* bindings */,
 				DE66F3FD08ABF37000323D32 /* examples */,
 				DE66F38C08ABF35300323D32 /* CREDITS.TXT */,
 				CFD99AA80AFE827B0068D19C /* LICENSE.TXT */,
@@ -1079,6 +1090,7 @@
 		9F68EB110C77AD2C004AA152 /* Writer */ = {
 			isa = PBXGroup;
 			children = (
+				9FD3E5920CA012B300E54D15 /* BitWriter.cpp */,
 				9F68EB120C77AD2C004AA152 /* BitcodeWriter.cpp */,
 				9F68EB130C77AD2C004AA152 /* BitcodeWriterPass.cpp */,
 				9F68EB250C77AD2C004AA152 /* ValueEnumerator.cpp */,
@@ -1145,6 +1157,44 @@
 			path = IPO;
 			sourceTree = "<group>";
 		};
+		9FD3E56D0CA0116100E54D15 /* bindings */ = {
+			isa = PBXGroup;
+			children = (
+				9FD3E56F0CA0116100E54D15 /* ocaml */,
+			);
+			name = bindings;
+			path = ../bindings;
+			sourceTree = SOURCE_ROOT;
+		};
+		9FD3E56F0CA0116100E54D15 /* ocaml */ = {
+			isa = PBXGroup;
+			children = (
+				9FD3E5700CA0116100E54D15 /* bitwriter */,
+				9FD3E57A0CA0116100E54D15 /* llvm */,
+			);
+			path = ocaml;
+			sourceTree = "<group>";
+		};
+		9FD3E5700CA0116100E54D15 /* bitwriter */ = {
+			isa = PBXGroup;
+			children = (
+				9FD3E5710CA0116100E54D15 /* bitwriter_ocaml.c */,
+				9FD3E5720CA0116100E54D15 /* llvm_bitwriter.ml */,
+				9FD3E5730CA0116100E54D15 /* llvm_bitwriter.mli */,
+			);
+			path = bitwriter;
+			sourceTree = "<group>";
+		};
+		9FD3E57A0CA0116100E54D15 /* llvm */ = {
+			isa = PBXGroup;
+			children = (
+				9FD3E57B0CA0116100E54D15 /* llvm.ml */,
+				9FD3E57C0CA0116100E54D15 /* llvm.mli */,
+				9FD3E57D0CA0116100E54D15 /* llvm_ocaml.c */,
+			);
+			path = llvm;
+			sourceTree = "<group>";
+		};
 		9FE450DE0C77ABE400C4FEA4 /* lib/Archive */ = {
 			isa = PBXGroup;
 			children = (
@@ -1160,6 +1210,8 @@
 		CF8F1B480B64F7AB00BB4199 /* llvm-c */ = {
 			isa = PBXGroup;
 			children = (
+				9FD3E58D0CA0125F00E54D15 /* BitWriter.h */,
+				9FD3E58E0CA0125F00E54D15 /* Core.h */,
 				CF8F1B490B64F7AB00BB4199 /* LinkTimeOptimizer.h */,
 			);
 			name = "llvm-c";
@@ -1283,6 +1335,7 @@
 				9F77937C0C73C4F400551F9C /* ConstantFold.cpp */,
 				9F77937D0C73C4F400551F9C /* ConstantFold.h */,
 				DE66EC6008ABE86A00323D32 /* Constants.cpp */,
+				9FD3E5900CA0129D00E54D15 /* Core.cpp */,
 				DE66EC6108ABE86A00323D32 /* Dominators.cpp */,
 				DE66EC6208ABE86A00323D32 /* Function.cpp */,
 				DE66EC6308ABE86A00323D32 /* Globals.cpp */,

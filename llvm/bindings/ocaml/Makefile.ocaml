@@ -92,6 +92,8 @@ $(ObjDir)/$(LIBRARYNAME).ocamldep: $(OcamlSources) $(OcamlHeaders) \
                                    $(OcamlDir)/.dir $(ObjDir)/.dir
 	$(Verb) $(OCAMLDEP) $(OCAMLCFLAGS) $(OcamlSources) $(OcamlHeader) > $@
 
+$(ObjectsCMI): $(UsedOcamlInterfaces:%=$(OcamlDir)/%.cmi)
+
 -include $(ObjDir)/$(LIBRARYNAME).ocamldep
 
 

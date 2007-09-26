@@ -89,6 +89,16 @@ namespace llvm {
   inline LLVMValueRef *wrap(const Value **Vals) {
     return reinterpret_cast<LLVMValueRef*>(const_cast<Value**>(Vals));
   }
+  
+  /// Basic block conversions
+  /// 
+  inline BasicBlock *unwrap(LLVMBasicBlockRef BBRef) {
+    return reinterpret_cast<BasicBlock*>(BBRef);
+  }
+  
+  inline LLVMBasicBlockRef wrap(const BasicBlock *BB) {
+    return reinterpret_cast<LLVMBasicBlockRef>(const_cast<BasicBlock*>(BB));
+  }
 }
 
 #endif
