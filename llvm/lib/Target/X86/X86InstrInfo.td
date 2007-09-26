@@ -430,7 +430,7 @@ def PUSH32r  : I<0x50, AddRegFrm, (outs), (ins GR32:$reg), "push{l}\t$reg",[]>;
 }
 
 let Defs = [ESP, EFLAGS], Uses = [ESP] in
-def POPD     : I<0x9D, RawFrm, (outs), (ins), "popfd", []>;
+def POPFD    : I<0x9D, RawFrm, (outs), (ins), "popfd", []>;
 let Defs = [ESP], Uses = [ESP, EFLAGS] in
 def PUSHFD   : I<0x9C, RawFrm, (outs), (ins), "pushfd", []>;
 
