@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast-check %s
+// RUN: clang -parse-ast -verify %s
 
 #define offsetof(TYPE, MEMBER) __builtin_offsetof (TYPE, MEMBER)
 

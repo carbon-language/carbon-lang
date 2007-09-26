@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast-check %s
+// RUN: clang -parse-ast -verify %s
 
 int test(char *C) { // nothing here should warn.
   return C != ((void*)0);

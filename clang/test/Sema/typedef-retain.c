@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast-check %s
+// RUN: clang -parse-ast -verify %s
 
 typedef float float4 __attribute__((vector_size(16)));
 typedef int int4 __attribute__((vector_size(16)));

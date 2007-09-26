@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast-check -pedantic %s
+// RUN: clang -parse-ast -verify -pedantic %s
 
 struct s; 
 struct s* t (struct s z[]) {   // expected-error {{array has incomplete element type}}

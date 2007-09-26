@@ -1,4 +1,4 @@
-/* RUN: clang -parse-ast-check %s
+/* RUN: clang -parse-ast -verify %s
 */
 
 int foo(int A) { /* expected-error {{previous definition is here}} */

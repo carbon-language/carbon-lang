@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast-check %s
+// RUN: clang -parse-ast -verify %s
 
 #include <stdio.h>
 #include <stdarg.h>

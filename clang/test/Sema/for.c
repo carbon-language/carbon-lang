@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast-check %s
+// RUN: clang -parse-ast -verify %s
 
 // Check C99 6.8.5p3
 void b1 (void) { for (void (*f) (void);;); }

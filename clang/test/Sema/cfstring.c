@@ -1,6 +1,6 @@
 #define CFSTR __builtin___CFStringMakeConstantString
 
-// RUN: clang %s -parse-ast-check
+// RUN: clang %s -parse-ast -verify
 void f() {
   CFSTR("\242"); // expected-warning { CFString literal contains non-ASCII character }
   CFSTR("\0"); // expected-warning { CFString literal contains NUL character }

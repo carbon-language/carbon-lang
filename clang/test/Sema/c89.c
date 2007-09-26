@@ -1,4 +1,4 @@
-/* RUN: clang %s -std=c89 -pedantic -parse-ast-check
+/* RUN: clang %s -std=c89 -pedantic -parse-ast -verify
  */
 void test1() {
   {

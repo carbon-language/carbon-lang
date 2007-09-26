@@ -1,4 +1,4 @@
-/* RUN: clang -parse-ast-check %s
+/* RUN: clang -parse-ast -verify %s
  */
 
 int x = 000000080;  /* expected-error {{invalid digit}} */

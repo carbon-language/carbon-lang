@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast-check %s
+// RUN: clang -parse-ast -verify %s
 
 int *test1(int *a)         { return a + 1; }
 int *test2(int *a)         { return 1 + a; }

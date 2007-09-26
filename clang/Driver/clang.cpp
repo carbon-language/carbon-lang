@@ -53,7 +53,6 @@ enum ProgActions {
   ParseASTPrint,                // Parse ASTs and print them.
   ParseASTDump,                 // Parse ASTs and dump them.
   ParseASTView,                 // Parse ASTs and view them in Graphviz.
-  ParseASTCheck,                // Parse ASTs and check diagnostics.
   BuildAST,                     // Parse ASTs.  
   ParseCFGDump,                 // Parse ASTS. Build CFGs. Print CFGs.
   ParseCFGView,                 // Parse ASTS. Build CFGs. View CFGs.
@@ -93,8 +92,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run parser, build ASTs, then dump them"),
              clEnumValN(ParseASTView, "parse-ast-view",
                         "Run parser, build ASTs, and view them with GraphViz."),
-             clEnumValN(ParseASTCheck, "parse-ast-check",
-                        "Run parser, build ASTs, then check diagnostics"),
              clEnumValN(ParseCFGDump, "dump-cfg",
                         "Run parser, then build and print CFGs."),
              clEnumValN(ParseCFGView, "view-cfg",
@@ -809,7 +806,6 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
 
   ASTConsumer* Consumer = NULL;
   bool ClearSourceMgr = false;
-  bool PerformDiagnosticsCheck = VerifyDiagnostics;
   
   switch (ProgAction) {
   default:
@@ -853,8 +849,6 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     ClearSourceMgr = true;
     break;
       
-  case ParseASTCheck:
-    PerformDiagnosticsCheck = true;
   case ParseSyntaxOnly:              // -fsyntax-only
   case BuildAST:
     Consumer = new ASTConsumer();
@@ -895,7 +889,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   }
   
   if (Consumer) {
-    if (PerformDiagnosticsCheck)
+    if (VerifyDiagnostics)
       exit (CheckASTConsumer(PP, MainFileID, Consumer));
     else
       ParseAST(PP, MainFileID, *Consumer, Stats);
@@ -948,7 +942,7 @@ int main(int argc, char **argv) {
   InitializeLanguageStandard(LangInfo);
 
   std::auto_ptr<TextDiagnostics> DiagClient;
-  if (ProgAction != ParseASTCheck) {
+  if (!VerifyDiagnostics) {
     // Print diagnostics to stderr by default.
     DiagClient.reset(new TextDiagnosticPrinter(SourceMgr));
   } else {
@@ -957,7 +951,7 @@ int main(int argc, char **argv) {
    
     if (InputFilenames.size() != 1) {
       fprintf(stderr,
-              "parse-ast-check only works on single input files for now.\n");
+              "-verify only works on single input files for now.\n");
       return 1;
     }
   }
