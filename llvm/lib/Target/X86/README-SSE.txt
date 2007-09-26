@@ -631,7 +631,7 @@ _bar:
 
 //===---------------------------------------------------------------------===//
 
-We should materialize vecetor constants like "all ones" and "signbit" with 
+We should materialize vector constants like "all ones" and "signbit" with 
 code like:
 
      cmpeqps xmm1, xmm1   ; xmm1 = all-ones
@@ -644,3 +644,30 @@ instead of using a load from the constant pool.  The later is important for
 ABS/NEG/copysign etc.
 
 //===---------------------------------------------------------------------===//
+
+"converting 64-bit constant pool entry to 32-bit not necessarily beneficial"
+http://llvm.org/PR1264
+
+For this test case:
+
+define double @foo(double %x) {
+        %y = mul double %x, 5.000000e-01
+        ret double %y
+}
+
+llc -march=x86-64 currently produces a 32-bit constant pool entry and this code:
+
+        cvtss2sd .LCPI1_0(%rip), %xmm1
+        mulsd %xmm1, %xmm0
+
+instead of just using a 64-bit constant pool entry with this:
+
+        mulsd .LCPI1_0(%rip), %xmm0
+
+This is due to the code in ExpandConstantFP in LegalizeDAG.cpp. It notices that
+x86-64 indeed has an instruction to load a 32-bit float from memory and convert
+it into a 64-bit float in a register, however it doesn't notice that this isn't
+beneficial because it prevents the load from being folded into the multiply.
+
+//===---------------------------------------------------------------------===//
+
