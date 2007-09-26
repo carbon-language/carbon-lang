@@ -1545,7 +1545,9 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
+  const Function* Fn = MF.getFunction();
   X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+  const X86Subtarget* Subtarget = &MF.getTarget().getSubtarget<X86Subtarget>();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   unsigned RetOpcode = MBBI->getOpcode();
 
@@ -1602,7 +1604,12 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
 
   // If dynamic alloca is used, then reset esp to point to the last
   // callee-saved slot before popping them off!
-  if (MFI->hasVarSizedObjects()) {
+  // Also, if it's main() on Cygwin/Mingw32 we aligned stack in the prologue, - revert
+  // stack changes back. Note: we're assuming, that frame pointer was forced
+  // for main()
+  if (MFI->hasVarSizedObjects() ||
+      (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
+       Subtarget->isTargetCygMing())) {
     unsigned Opc = Is64Bit ? X86::LEA64r : X86::LEA32r;
     if (CSSize) {
       MachineInstr *MI = addRegOffset(BuildMI(TII.get(Opc), StackPtr),
