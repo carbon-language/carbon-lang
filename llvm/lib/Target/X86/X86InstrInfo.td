@@ -424,12 +424,15 @@ def LEAVE    : I<0xC9, RawFrm,
                  (outs), (ins), "leave", []>;
 
 let Defs = [ESP], Uses = [ESP] in {
-def POP32r   : I<0x58, AddRegFrm,
-                 (outs GR32:$reg), (ins), "pop{l}\t$reg", []>;
+def POP32r   : I<0x58, AddRegFrm, (outs GR32:$reg), (ins), "pop{l}\t$reg", []>;
 
-def PUSH32r  : I<0x50, AddRegFrm,
-                 (outs), (ins GR32:$reg), "push{l}\t$reg", []>;
+def PUSH32r  : I<0x50, AddRegFrm, (outs), (ins GR32:$reg), "push{l}\t$reg",[]>;
 }
+
+let Defs = [ESP, EFLAGS], Uses = [ESP] in
+def POPD     : I<0x9D, RawFrm, (outs), (ins), "popfd", []>;
+let Defs = [ESP], Uses = [ESP, EFLAGS] in
+def PUSHFD   : I<0x9C, RawFrm, (outs), (ins), "pushfd", []>;
 
 def MovePCtoStack : I<0, Pseudo, (outs), (ins piclabel:$label),
                       "call\t$label", []>;
