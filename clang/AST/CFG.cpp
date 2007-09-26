@@ -173,21 +173,18 @@ CFG* CFGBuilder::buildCFG(Stmt* Statement) {
         
         B->addSuccessor(LI->second);           
       }
-                                                        
-    // Create an empty entry block that has no predecessors.    
+                                                          
     Succ = B;
-    cfg->setEntry(createBlock());
+  }
+  
+  // Create an empty entry block that has no predecessors.    
+  cfg->setEntry(createBlock());
     
-    // NULL out cfg so that repeated calls to the builder will fail and that
-    // the ownership of the constructed CFG is passed to the caller.
-    CFG* t = cfg;
-    cfg = NULL;
-    return t;
-  }
-  else {
-    assert (false && "CFG construction failed.");
-    return NULL;
-  }
+  // NULL out cfg so that repeated calls to the builder will fail and that
+  // the ownership of the constructed CFG is passed to the caller.
+  CFG* t = cfg;
+  cfg = NULL;
+  return t;
 }
   
 /// createBlock - Used to lazily create blocks that are connected
@@ -354,7 +351,7 @@ CFGBlock* CFGBuilder::WalkAST_VisitChildren(Stmt* S) {
   CFGBlock* B = Block;
   for (Stmt::child_iterator I = S->child_begin(), E = S->child_end() ;
        I != E; ++I)
-    B = WalkAST(*I);
+    if (*I) B = WalkAST(*I);
   
   return B;
 }
