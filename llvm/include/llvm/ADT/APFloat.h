@@ -63,12 +63,12 @@
     right so that the exponent is maintained at the format's minimum,
     so that the smallest denormal has just the least significant bit
     of the significand set.  The sign of zeroes and infinities is
-    significant; the exponent and significand of such numbers is
-    not stored, but has a known implicit (deterministic) value:
-    0 for the significands, 0 for zero exponent, all 1 bits for 
-    infinity exponent.  For NaNs the sign and significand are 
-    deterministic, although not really meaningful; the exponent is
-    implicitly all 1 bits.
+    significant; the exponent and significand of such numbers is not
+    stored, but has a known implicit (deterministic) value: 0 for the
+    significands, 0 for zero exponent, all 1 bits for infinity
+    exponent.  For NaNs the sign and significand are deterministic,
+    although not really meaningful, and preserved in non-conversion
+    operations.  The exponent is implicitly all 1 bits.
 
     TODO
     ====
@@ -87,7 +87,7 @@
     from extended exponent range) and IBM two-double extended
     precision (hard).
 
-    New operations: sqrt, copysign, nextafter, nexttoward.
+    New operations: sqrt, nextafter, nexttoward.
 */
 
 #ifndef LLVM_FLOAT_H
@@ -200,7 +200,7 @@ namespace llvm {
        so we won't use operator==.  Use one of the following, or write
        whatever it is you really mean. */
     // bool operator==(const APFloat &) const;     // DO NOT IMPLEMENT
-    
+
     /* IEEE comparison with another floating point number (NaNs
        compare unordered, 0==-0). */
     cmpResult compare(const APFloat &) const;
@@ -285,7 +285,7 @@ namespace llvm {
     exponent_t exponent;
 
     /* What kind of floating point number this is.  */
-    /* Only 2 bits are required, but VisualStudio incorrectly sign extends 
+    /* Only 2 bits are required, but VisualStudio incorrectly sign extends
        it.  Using the extra bit keeps it from failing under VisualStudio */
     fltCategory category: 3;
 
