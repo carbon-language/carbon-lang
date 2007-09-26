@@ -70,11 +70,11 @@ It includes many features and refinements from LLVM 2.0.</p>
 
 <div class="doc_text">
 
-<p>LLVM 2.1 brings two new beta C front-ends.  First, Duncan, Anton and Devang
-has started syncing up llvm-gcc with GCC 4.2, yielding "llvm-gcc 4.2" (creative,
-huh?).  llvm-gcc 4.2 has the promise to bring much better FORTRAN and Ada
-support to LLVM as well as features like atomic builtins, OpenMP, and many other
-things.  Check it out!</p>
+<p>LLVM 2.1 brings two new beta C front-ends.  First, a new version of llvm-gcc
+based on GCC 4.2, innovatively called "llvm-gcc-4.2".  This promises to bring
+FORTRAN and Ada support to LLVM as well as features like atomic builtins and
+OpenMP.  None of these actually work yet, but don't let that stop you checking
+it out!</p>
 
 <p>Second, LLVM now includes its own native C and Objective-C front-end (C++ is
 in progress, but is not very far along) code named "<a
@@ -211,7 +211,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 <ul>
 <li>Duncan and Anton made significant progress chasing down a number of problems
     with C++ Zero-Cost exception handling in llvm-gcc 4.0 and 4.2.  It is now at
-    the point where it "just works" on linux/x86-32 and has partial support on
+    the point where it "just works" on linux/X86-32 and has partial support on
     other targets.</li>
 
 <li>Devang and Duncan fixed a huge number of bugs relating to bitfields, pragma
@@ -226,7 +226,7 @@ optimizer, speeding it up and making it more aggressive.  For example:</p>
 "restrict" pointer arguments to functions.</li>
 
 <li>Duncan contributed support for trampolines (taking the address of a nested
-    functions), currently this is only supported in the x86 target.</li>
+    function).  Currently this is only supported on the X86 target.</li>
 
 <li>Lauro Ramos Venancio contributed support to encode alignment info in 
     load and store instructions, the foundation for other alignment-related
@@ -350,7 +350,6 @@ components, please contact us on the <a href="http://lists.cs.uiuc.edu/mailman/l
 <ul>
 <li>The <tt>-cee</tt> pass is known to be buggy, and may be removed in a 
     future release.</li>
-<li>C++ EH support is disabled for this release.</li>
 <li>The MSIL backend is experimental.</li>
 <li>The IA64 code generator is experimental.</li>
 <li>The Alpha backend is experimental.</li>
@@ -402,7 +401,7 @@ compilation, and lacks support for debug information.</li>
 
 <ul>
 <li>Thumb mode works only on ARMv6 or higher processors. On sub-ARMv6
-processors, thumb program can crash or produces wrong
+processors, thumb programs can crash or produce wrong
 results (<a href="http://llvm.org/PR1388">PR1388</a>).</li>
 <li>Compilation for ARM Linux OABI (old ABI) is supported, but not fully tested.
 </li>
@@ -526,9 +525,12 @@ bits.</p></li>
 
 <li><p>llvm-gcc <b>partially</b> supports these GCC extensions:</p>
   <ol>
-  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html#Nested%20Functions">Nested Functions</a>: As in Algol and Pascal, lexical scoping of functions.<br>
-      Nested functions are supported, but llvm-gcc does not support non-local
-      gotos or taking the address of a nested function.</li>
+  <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Nested-Functions.html#Nested%20Functions">Nested Functions</a>:
+
+      As in Algol and Pascal, lexical scoping of functions.
+      Nested functions are supported, but llvm-gcc does not support
+      taking the address of a nested function (except on the X86 target)
+      or non-local gotos.</li>
 
   <li><a href="http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html#Function%20Attributes">Function Attributes</a>:
 
@@ -620,8 +622,9 @@ tested and works for a number of non-trivial programs, including LLVM
 itself, Qt, Mozilla, etc.</p>
 
 <ul>
-<li>llvm-gcc4 only has partial support for <a href="http://llvm.org/PR870">C++ 
-Exception Handling</a>, and it is not enabled by default.</li>
+<li>Exception handling only works well on the linux/x86-32 target.
+In some cases, illegally throwing an exception does not result
+in a call to terminate.</li>
 
 <!-- NO EH Support!
 
