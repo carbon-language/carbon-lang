@@ -78,15 +78,18 @@ public:
   void Schedule();
 
 private:
-  void ReleasePred(SUnit *PredSU, bool isChain, unsigned CurCycle);
-  void ReleaseSucc(SUnit *SuccSU, bool isChain, unsigned CurCycle);
-  void CapturePred(SUnit *PredSU, SUnit *SU, bool isChain);
-  void ScheduleNodeBottomUp(SUnit *SU, unsigned CurCycle);
-  void ScheduleNodeTopDown(SUnit *SU, unsigned CurCycle);
-  void UnscheduleNodeBottomUp(SUnit *SU);
-  SUnit *BackTrackBottomUp(SUnit*, unsigned, unsigned&, bool&);
-  SUnit *CopyAndMoveSuccessors(SUnit *SU);
-  bool DelayForLiveRegsBottomUp(SUnit *SU, unsigned &CurCycle);
+  void ReleasePred(SUnit*, bool, unsigned);
+  void ReleaseSucc(SUnit*, bool isChain, unsigned);
+  void CapturePred(SUnit*, SUnit*, bool);
+  void ScheduleNodeBottomUp(SUnit*, unsigned);
+  void ScheduleNodeTopDown(SUnit*, unsigned);
+  void UnscheduleNodeBottomUp(SUnit*);
+  void BacktrackBottomUp(SUnit*, unsigned, unsigned&);
+  SUnit *CopyAndMoveSuccessors(SUnit*);
+  SUnit *InsertCopiesAndMoveSuccs(SUnit*, unsigned,
+                                  const TargetRegisterClass*,
+                                  const TargetRegisterClass*);
+  bool DelayForLiveRegsBottomUp(SUnit*, unsigned&);
   void ListScheduleTopDown();
   void ListScheduleBottomUp();
   void CommuteNodesToReducePressure();
@@ -136,7 +139,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
   SmallPtrSet<SUnit*, 4> OperandSeen;
   for (unsigned i = Sequence.size()-1; i != 0; --i) {  // Ignore first node.
     SUnit *SU = Sequence[i];
-    if (!SU) continue;
+    if (!SU || !SU->Node) continue;
     if (SU->isCommutable) {
       unsigned Opc = SU->Node->getTargetOpcode();
       unsigned NumRes = TII->getNumDefs(Opc);
@@ -209,7 +212,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain,
   
   if ((PredSU->NumSuccsLeft + PredSU->NumChainSuccsLeft) == 0) {
     // EntryToken has to go last!  Special case it here.
-    if (PredSU->Node->getOpcode() != ISD::EntryToken) {
+    if (!PredSU->Node || PredSU->Node->getOpcode() != ISD::EntryToken) {
       PredSU->isAvailable = true;
       AvailableQueue->push(PredSU);
     }
@@ -323,18 +326,18 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   AvailableQueue->push(SU);
 }
 
-/// BackTrackBottomUp - Back track scheduling to a previous cycle specified in
+/// BacktrackBottomUp - Backtrack scheduling to a previous cycle specified in
 /// BTCycle in order to schedule a specific node. Returns the last unscheduled
 /// SUnit. Also returns if a successor is unscheduled in the process.
-SUnit *ScheduleDAGRRList::BackTrackBottomUp(SUnit *SU, unsigned BTCycle,
-                                        unsigned &CurCycle, bool &SuccUnsched) {
-  SuccUnsched = false;
+void ScheduleDAGRRList::BacktrackBottomUp(SUnit *SU, unsigned BtCycle,
+                                          unsigned &CurCycle) {
   SUnit *OldSU = NULL;
-  while (CurCycle > BTCycle) {
+  while (CurCycle > BtCycle) {
     OldSU = Sequence.back();
     Sequence.pop_back();
     if (SU->isSucc(OldSU))
-      SuccUnsched = true;
+      // Don't try to remove SU from AvailableQueue.
+      SU->isAvailable = false;
     UnscheduleNodeBottomUp(OldSU);
     --CurCycle;
   }
@@ -344,14 +347,15 @@ SUnit *ScheduleDAGRRList::BackTrackBottomUp(SUnit *SU, unsigned BTCycle,
     assert(false && "Something is wrong!");
     abort();
   }
-
-  return OldSU;
 }
 
 /// isSafeToCopy - True if the SUnit for the given SDNode can safely cloned,
 /// i.e. the node does not produce a flag, it does not read a flag and it does
 /// not have an incoming chain.
 static bool isSafeToCopy(SDNode *N) {
+  if (!N)
+    return true;
+
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i)
     if (N->getValueType(i) == MVT::Flag)
       return false;
@@ -368,6 +372,8 @@ static bool isSafeToCopy(SDNode *N) {
 /// CopyAndMoveSuccessors - Clone the specified node and move its scheduled
 /// successors to the newly created node.
 SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
+  DOUT << "Duplicating SU # " << SU->NodeNum << "\n";
+
   SUnit *NewSU = Clone(SU);
 
   // New SUnit has the exact same predecessors.
@@ -403,6 +409,88 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
   return NewSU;
 }
 
+/// InsertCopiesAndMoveSuccs - Insert expensive cross register class copies and
+/// move all scheduled successors of the given SUnit to the last copy.
+SUnit *ScheduleDAGRRList::InsertCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
+                                             const TargetRegisterClass *DestRC,
+                                             const TargetRegisterClass *SrcRC) {
+  SUnit *CopyFromSU = NewSUnit(NULL);
+  CopyFromSU->CopySrcRC = SrcRC;
+  CopyFromSU->CopyDstRC = DestRC;
+  CopyFromSU->Depth = SU->Depth;
+  CopyFromSU->Height = SU->Height;
+
+  SUnit *CopyToSU = NewSUnit(NULL);
+  CopyToSU->CopySrcRC = DestRC;
+  CopyToSU->CopyDstRC = SrcRC;
+
+  // Only copy scheduled successors. Cut them from old node's successor
+  // list and move them over.
+  SmallVector<SDep*, 2> DelDeps;
+  for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I) {
+    if (I->isSpecial)
+      continue;
+    CopyToSU->Height = std::max(CopyToSU->Height, I->Dep->Height+1);
+    if (I->Dep->isScheduled) {
+      I->Dep->addPred(CopyToSU, I->isCtrl, false, I->Reg, I->Cost);
+      DelDeps.push_back(I);
+    }
+  }
+  for (unsigned i = 0, e = DelDeps.size(); i != e; ++i) {
+    SUnit *Succ = DelDeps[i]->Dep;
+    bool isCtrl = DelDeps[i]->isCtrl;
+    Succ->removePred(SU, isCtrl, false);
+  }
+
+  CopyFromSU->addPred(SU, false, false, Reg, -1);
+  CopyToSU->addPred(CopyFromSU, false, false, Reg, 1);
+
+  AvailableQueue->updateNode(SU);
+  AvailableQueue->addNode(CopyFromSU);
+  AvailableQueue->addNode(CopyToSU);
+
+  return CopyToSU;
+}
+
+/// getPhysicalRegisterVT - Returns the ValueType of the physical register
+/// definition of the specified node.
+/// FIXME: Move to SelectionDAG?
+static MVT::ValueType getPhysicalRegisterVT(SDNode *N, unsigned Reg,
+                                            const TargetInstrInfo *TII) {
+  const TargetInstrDescriptor &TID = TII->get(N->getTargetOpcode());
+  assert(TID.ImplicitDefs && "Physical reg def must be in implicit def list!");
+  unsigned NumRes = TID.numDefs;
+  for (const unsigned *ImpDef = TID.ImplicitDefs; *ImpDef; ++ImpDef) {
+    if (Reg == *ImpDef)
+      break;
+    ++NumRes;
+  }
+  return N->getValueType(NumRes);
+}
+
+// FIXME: This is probably too slow!
+static void isReachable(SUnit *SU, SUnit *TargetSU,
+                        SmallPtrSet<SUnit*, 32> &Visited, bool &Reached) {
+  if (Reached) return;
+  if (SU == TargetSU) {
+    Reached = true;
+    return;
+  }
+  if (!Visited.insert(SU)) return;
+
+  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end(); I != E;
+       ++I)
+    isReachable(I->Dep, TargetSU, Visited, Reached);
+}
+
+static bool isReachable(SUnit *SU, SUnit *TargetSU) {
+  SmallPtrSet<SUnit*, 32> Visited;
+  bool Reached = false;
+  isReachable(SU, TargetSU, Visited, Reached);
+  return Reached;
+}
+
 /// DelayForLiveRegsBottomUp - Returns true if it is necessary to delay
 /// scheduling of the given node to satisfy live physical register dependencies.
 /// If the specific node is the last one that's available to schedule, do
@@ -431,7 +519,7 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU, unsigned &CurCycle){
 
   for (unsigned i = 0, e = SU->FlaggedNodes.size()+1; i != e; ++i) {
     SDNode *Node = (i == 0) ? SU->Node : SU->FlaggedNodes[i-1];
-    if (!Node->isTargetOpcode())
+    if (!Node || !Node->isTargetOpcode())
       continue;
     const TargetInstrDescriptor &TID = TII->get(Node->getTargetOpcode());
     if (!TID.ImplicitDefs)
@@ -458,9 +546,12 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU, unsigned &CurCycle){
       LiveCycle = std::min(LiveCycle, LCycle);
     }
 
-    if (SU->CycleBound < LiveCycle)  {
-      bool SuccUnsched = false;
-      SUnit *OldSU = BackTrackBottomUp(SU, LiveCycle, CurCycle, SuccUnsched);
+    SUnit *OldSU = Sequence[LiveCycle];
+    if (!isReachable(Sequence[LiveCycle], SU))  {
+      // If CycleBound is greater than backtrack cycle, then some of SU
+      // successors are going to be unscheduled.
+      bool SuccUnsched = SU->CycleBound > LiveCycle;
+      BacktrackBottomUp(SU, LiveCycle, CurCycle);
       // Force the current node to be scheduled before the node that
       // requires the physical reg dep.
       if (OldSU->isAvailable) {
@@ -474,20 +565,31 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU, unsigned &CurCycle){
     } else {
       // Try duplicating the nodes that produces these "expensive to copy"
       // values to break the dependency.
-      for (unsigned i = 0, e = LRegs.size(); i != e; ++i) {
-        unsigned Reg = LRegs[i];
-        SUnit *LRDef = LiveRegDefs[Reg];
-        if (isSafeToCopy(LRDef->Node)) {
-          SUnit *NewDef = CopyAndMoveSuccessors(LRDef);
-          LiveRegDefs[Reg] = NewDef;
-          NewDef->addPred(SU, true, true);
-          SU->isAvailable = false;
-          AvailableQueue->push(NewDef);
-        } else {
-          assert(false && "Expensive copying is required?");
+      assert(LRegs.size() == 1 && "Can't handle this yet!");
+      unsigned Reg = LRegs[0];
+      SUnit *LRDef = LiveRegDefs[Reg];
+      SUnit *NewDef;
+      if (isSafeToCopy(LRDef->Node))
+        NewDef = CopyAndMoveSuccessors(LRDef);
+      else {
+        // Issue expensive cross register class copies.
+        MVT::ValueType VT = getPhysicalRegisterVT(LRDef->Node, Reg, TII);
+        const TargetRegisterClass *RC =
+          MRI->getPhysicalRegisterRegClass(VT, Reg);
+        const TargetRegisterClass *DestRC = MRI->getCrossCopyRegClass(RC);
+        if (!DestRC) {
+          assert(false && "Don't know how to copy this physical register!");
           abort();
         }
+        NewDef = InsertCopiesAndMoveSuccs(LRDef,Reg,DestRC,RC);
       }
+
+      DOUT << "Adding an edge from SU # " << SU->NodeNum
+           << " to SU #" << NewDef->NodeNum << "\n";
+      LiveRegDefs[Reg] = NewDef;
+      NewDef->addPred(SU, true, true);
+      SU->isAvailable = false;
+      AvailableQueue->push(NewDef);
       return true;
     }
   }
@@ -710,7 +812,7 @@ namespace {
 
 static inline bool isCopyFromLiveIn(const SUnit *SU) {
   SDNode *N = SU->Node;
-  return N->getOpcode() == ISD::CopyFromReg &&
+  return N && N->getOpcode() == ISD::CopyFromReg &&
     N->getOperand(N->getNumOperands()-1).getValueType() != MVT::Flag;
 }
 
@@ -822,7 +924,7 @@ namespace {
 
     unsigned getNodePriority(const SUnit *SU) const {
       assert(SU->NodeNum < SethiUllmanNumbers.size());
-      unsigned Opc = SU->Node->getOpcode();
+      unsigned Opc = SU->Node ? SU->Node->getOpcode() : 0;
       if (Opc == ISD::CopyFromReg && !isCopyFromLiveIn(SU))
         // CopyFromReg should be close to its def because it restricts
         // allocation choices. But if it is a livein then perhaps we want it
@@ -912,7 +1014,7 @@ static unsigned closestSucc(const SUnit *SU) {
     unsigned Cycle = I->Dep->Cycle;
     // If there are bunch of CopyToRegs stacked up, they should be considered
     // to be at the same position.
-    if (I->Dep->Node->getOpcode() == ISD::CopyToReg)
+    if (I->Dep->Node && I->Dep->Node->getOpcode() == ISD::CopyToReg)
       Cycle = closestSucc(I->Dep)+1;
     if (Cycle > MaxCycle)
       MaxCycle = Cycle;
@@ -928,13 +1030,13 @@ static unsigned calcMaxScratches(const SUnit *SU) {
   for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     if (I->isCtrl) continue;  // ignore chain preds
-    if (I->Dep->Node->getOpcode() != ISD::CopyFromReg)
+    if (!I->Dep->Node || I->Dep->Node->getOpcode() != ISD::CopyFromReg)
       Scratches++;
   }
   for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     if (I->isCtrl) continue;  // ignore chain succs
-    if (I->Dep->Node->getOpcode() != ISD::CopyToReg)
+    if (!I->Dep->Node || I->Dep->Node->getOpcode() != ISD::CopyToReg)
       Scratches += 10;
   }
   return Scratches;
@@ -1004,28 +1106,6 @@ bool bu_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   return false;
 }
 
-// FIXME: This is probably too slow!
-static void isReachable(SUnit *SU, SUnit *TargetSU,
-                        SmallPtrSet<SUnit*, 32> &Visited, bool &Reached) {
-  if (Reached) return;
-  if (SU == TargetSU) {
-    Reached = true;
-    return;
-  }
-  if (!Visited.insert(SU)) return;
-
-  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end(); I != E;
-       ++I)
-    isReachable(I->Dep, TargetSU, Visited, Reached);
-}
-
-static bool isReachable(SUnit *SU, SUnit *TargetSU) {
-  SmallPtrSet<SUnit*, 32> Visited;
-  bool Reached = false;
-  isReachable(SU, TargetSU, Visited, Reached);
-  return Reached;
-}
-
 template<class SF>
 bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
   if (SU->isTwoAddress) {
@@ -1056,7 +1136,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       continue;
 
     SDNode *Node = SU->Node;
-    if (!Node->isTargetOpcode())
+    if (!Node || !Node->isTargetOpcode())
       continue;
 
     unsigned Opc = Node->getTargetOpcode();
@@ -1152,8 +1232,8 @@ static unsigned SumOfUnscheduledPredsOfSuccs(const SUnit *SU) {
 bool td_ls_rr_sort::operator()(const SUnit *left, const SUnit *right) const {
   unsigned LPriority = SPQ->getNodePriority(left);
   unsigned RPriority = SPQ->getNodePriority(right);
-  bool LIsTarget = left->Node->isTargetOpcode();
-  bool RIsTarget = right->Node->isTargetOpcode();
+  bool LIsTarget = left->Node && left->Node->isTargetOpcode();
+  bool RIsTarget = right->Node && right->Node->isTargetOpcode();
   bool LIsFloater = LIsTarget && left->NumPreds == 0;
   bool RIsFloater = RIsTarget && right->NumPreds == 0;
   unsigned LBonus = (SumOfUnscheduledPredsOfSuccs(left) == 1) ? 2 : 0;
@@ -1210,7 +1290,7 @@ CalcNodeSethiUllmanNumber(const SUnit *SU) {
   if (SethiUllmanNumber != 0)
     return SethiUllmanNumber;
 
-  unsigned Opc = SU->Node->getOpcode();
+  unsigned Opc = SU->Node ? SU->Node->getOpcode() : 0;
   if (Opc == ISD::TokenFactor || Opc == ISD::CopyToReg)
     SethiUllmanNumber = 0xffff;
   else if (SU->NumSuccsLeft == 0)

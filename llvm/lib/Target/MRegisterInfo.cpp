@@ -34,6 +34,21 @@ MRegisterInfo::MRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
 
 MRegisterInfo::~MRegisterInfo() {}
 
+/// getPhysicalRegisterRegClass - Returns the Register Class of a physical
+/// register.
+const TargetRegisterClass *
+MRegisterInfo::getPhysicalRegisterRegClass(MVT::ValueType VT,
+                                           unsigned reg) const {
+  assert(isPhysicalRegister(reg) && "reg must be a physical register");
+  // Pick the register class of the right type that contains this physreg.
+  for (regclass_iterator I = regclass_begin(), E = regclass_end(); I != E; ++I)
+    if ((*I)->hasType(VT) && (*I)->contains(reg))
+      return *I;
+  assert(false && "Couldn't find the register class");
+  return 0;
+}
+
+
 /// getAllocatableSetForRC - Toggle the bits that represent allocatable
 /// registers for the specific register class.
 static void getAllocatableSetForRC(MachineFunction &MF,

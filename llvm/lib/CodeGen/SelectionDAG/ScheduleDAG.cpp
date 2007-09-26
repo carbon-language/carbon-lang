@@ -28,24 +28,6 @@
 using namespace llvm;
 
 
-/// getPhysicalRegisterRegClass - Returns the Register Class of a physical
-/// register.
-static const TargetRegisterClass *getPhysicalRegisterRegClass(
-        const MRegisterInfo *MRI,
-        MVT::ValueType VT,
-        unsigned reg) {
-  assert(MRegisterInfo::isPhysicalRegister(reg) &&
-         "reg must be a physical register");
-  // Pick the register class of the right type that contains this physreg.
-  for (MRegisterInfo::regclass_iterator I = MRI->regclass_begin(),
-         E = MRI->regclass_end(); I != E; ++I)
-    if ((*I)->hasType(VT) && (*I)->contains(reg))
-      return *I;
-  assert(false && "Couldn't find the register class");
-  return 0;
-}
-
-
 /// CheckForPhysRegDependency - Check if the dependency between def and use of
 /// a specified operand is a physical register dependency. If so, returns the
 /// register and the cost of copying the register.
@@ -67,7 +49,7 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *Use, unsigned Op,
         II.ImplicitDefs[ResNo - II.numDefs] == Reg) {
       PhysReg = Reg;
       const TargetRegisterClass *RC =
-        getPhysicalRegisterRegClass(MRI, Def->getValueType(ResNo), Reg);
+        MRI->getPhysicalRegisterRegClass(Def->getValueType(ResNo), Reg);
       Cost = RC->getCopyCost();
     }
   }
@@ -356,7 +338,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   if (VRBase)
     TRC = RegMap->getRegClass(VRBase);
   else
-    TRC = getPhysicalRegisterRegClass(MRI, Node->getValueType(ResNo), SrcReg);
+    TRC = MRI->getPhysicalRegisterRegClass(Node->getValueType(ResNo), SrcReg);
     
   // If all uses are reading from the src physical register and copying the
   // register is either impossible or very expensive, then don't create a copy.
@@ -766,8 +748,8 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
         if (MRegisterInfo::isVirtualRegister(InReg))
           TRC = RegMap->getRegClass(InReg);
         else
-          TRC = getPhysicalRegisterRegClass(MRI,
-                                            Node->getOperand(2).getValueType(),
+          TRC =
+            MRI->getPhysicalRegisterRegClass(Node->getOperand(2).getValueType(),
                                             InReg);
         MRI->copyRegToReg(*BB, BB->end(), DestReg, InReg, TRC, TRC);
       }
@@ -845,6 +827,39 @@ void ScheduleDAG::EmitNoop() {
   TII->insertNoop(*BB, BB->end());
 }
 
+void ScheduleDAG::EmitCrossRCCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap) {
+  for (SUnit::const_pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I) {
+    if (I->isCtrl) continue;  // ignore chain preds
+    if (!I->Dep->Node) {
+      // Copy to physical register.
+      DenseMap<SUnit*, unsigned>::iterator VRI = VRBaseMap.find(I->Dep);
+      assert(VRI != VRBaseMap.end() && "Node emitted out of order - late");
+      // Find the destination physical register.
+      unsigned Reg = 0;
+      for (SUnit::const_succ_iterator II = SU->Succs.begin(),
+             EE = SU->Succs.end(); II != EE; ++II) {
+        if (I->Reg) {
+          Reg = I->Reg;
+          break;
+        }
+      }
+      assert(I->Reg && "Unknown physical register!");
+      MRI->copyRegToReg(*BB, BB->end(), Reg, VRI->second,
+                        SU->CopyDstRC, SU->CopySrcRC);
+    } else {
+      // Copy from physical register.
+      assert(I->Reg && "Unknown physical register!");
+      unsigned VRBase = RegMap->createVirtualRegister(SU->CopyDstRC);
+      bool isNew = VRBaseMap.insert(std::make_pair(SU, VRBase));
+      assert(isNew && "Node emitted out of order - early");
+      MRI->copyRegToReg(*BB, BB->end(), VRBase, I->Reg,
+                        SU->CopyDstRC, SU->CopySrcRC);
+    }
+    break;
+  }
+}
+
 /// EmitSchedule - Emit the machine code in scheduled order.
 void ScheduleDAG::EmitSchedule() {
   // If this is the first basic block in the function, and if it has live ins
@@ -864,11 +879,15 @@ void ScheduleDAG::EmitSchedule() {
   
   // Finally, emit the code for all of the scheduled instructions.
   DenseMap<SDOperand, unsigned> VRBaseMap;
+  DenseMap<SUnit*, unsigned> CopyVRBaseMap;
   for (unsigned i = 0, e = Sequence.size(); i != e; i++) {
     if (SUnit *SU = Sequence[i]) {
       for (unsigned j = 0, ee = SU->FlaggedNodes.size(); j != ee; ++j)
         EmitNode(SU->FlaggedNodes[j], SU->InstanceNo, VRBaseMap);
-      EmitNode(SU->Node, SU->InstanceNo, VRBaseMap);
+      if (SU->Node)
+        EmitNode(SU->Node, SU->InstanceNo, VRBaseMap);
+      else
+        EmitCrossRCCopy(SU, CopyVRBaseMap);
     } else {
       // Null SUnit* is a noop.
       EmitNoop();
@@ -903,7 +922,10 @@ MachineBasicBlock *ScheduleDAG::Run() {
 /// a group of nodes flagged together.
 void SUnit::dump(const SelectionDAG *G) const {
   cerr << "SU(" << NodeNum << "): ";
-  Node->dump(G);
+  if (Node)
+    Node->dump(G);
+  else
+    cerr << "CROSS RC COPY ";
   cerr << "\n";
   if (FlaggedNodes.size() != 0) {
     for (unsigned i = 0, e = FlaggedNodes.size(); i != e; i++) {
