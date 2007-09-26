@@ -33,6 +33,7 @@ namespace llvm {
   class TargetInstrInfo;
   class TargetInstrDescriptor;
   class TargetMachine;
+  class TargetRegisterClass;
 
   /// HazardRecognizer - This determines whether or not an instruction can be
   /// issued this cycle, and whether or not a noop needs to be inserted to handle
@@ -124,6 +125,8 @@ namespace llvm {
     unsigned Cycle;                     // Once scheduled, the cycle of the op.
     unsigned Depth;                     // Node depth;
     unsigned Height;                    // Node height;
+    const TargetRegisterClass *CopyDstRC; // Is a special copy node if not null.
+    const TargetRegisterClass *CopySrcRC;
     
     SUnit(SDNode *node, unsigned nodenum)
       : Node(node), InstanceNo(0), NodeNum(nodenum), Latency(0),
@@ -131,7 +134,8 @@ namespace llvm {
         NumChainPredsLeft(0), NumChainSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasImplicitDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
-        CycleBound(0), Cycle(0), Depth(0), Height(0) {}
+        CycleBound(0), Cycle(0), Depth(0), Height(0),
+        CopyDstRC(NULL), CopySrcRC(NULL) {}
 
     /// addPred - This adds the specified node as a pred of the current node if
     /// not already.  This returns true if this is a new pred.
@@ -331,6 +335,8 @@ namespace llvm {
     /// EmitNoop - Emit a noop instruction.
     ///
     void EmitNoop();
+
+    void EmitCrossRCCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseMap);
 
     /// EmitCopyFromReg - Generate machine code for an CopyFromReg node or an
     /// implicit physical register output.
