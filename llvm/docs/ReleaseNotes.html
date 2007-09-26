@@ -353,7 +353,7 @@ components, please contact us on the <a href="http://lists.cs.uiuc.edu/mailman/l
 <li>C++ EH support is disabled for this release.</li>
 <li>The MSIL backend is experimental.</li>
 <li>The IA64 code generator is experimental.</li>
-<li>The Alpha JIT is experimental.</li>
+<li>The Alpha backend is experimental.</li>
 <li>"<tt>-filetype=asm</tt>" (the default) is the only supported value for the 
     <tt>-filetype</tt> llc option.</li>
 </ul>
@@ -370,6 +370,9 @@ components, please contact us on the <a href="http://lists.cs.uiuc.edu/mailman/l
 <ul>
 <li>The X86 backend does not yet support <a href="http://llvm.org/PR879">inline
     assembly that uses the X86 floating point stack</a>.</li>
+<li>The X86 backend occasionally has <a href="http://llvm.org/PR1649">alignment
+    problems</a> on operating systems that don't require 16-byte stack alignment
+    (including most non-darwin OS's like linux).</li>
 </ul>
 
 </div>
@@ -479,6 +482,13 @@ programs.</li>
 <ul>
 <li><a href="http://llvm.org/PR802">The C backend does not support inline
     assembly code</a>.</li>
+<li><a href="http://llvm.org/PR1126">The C backend does not support vectors
+    yet</a>.</li>
+<li><a href="http://llvm.org/PR1126">The C backend does not support vectors
+    yet</a>.</li>
+<li><a href="http://llvm.org/PR1658">The C backend violates the ABI of common
+    C++ programs</a>, preventing intermixing between C++ compiled by the CBE and
+    C++ code compiled with LLC or native compilers.</li>
 </ul>
 
 </div>
