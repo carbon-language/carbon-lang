@@ -163,6 +163,15 @@
 		9FD3E58E0CA0125F00E54D15 /* Core.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Core.h; sourceTree = "<group>"; };
 		9FD3E5900CA0129D00E54D15 /* Core.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Core.cpp; path = ../lib/VMCore/Core.cpp; sourceTree = SOURCE_ROOT; };
 		9FD3E5920CA012B300E54D15 /* BitWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = BitWriter.cpp; sourceTree = "<group>"; };
+		9FE25D900CAB166D005383FC /* APFloat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APFloat.h; sourceTree = "<group>"; };
+		9FE25D910CAB166D005383FC /* SparseBitVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SparseBitVector.h; sourceTree = "<group>"; };
+		9FE25D920CAB169F005383FC /* RegisterCoalescer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterCoalescer.h; sourceTree = "<group>"; };
+		9FE25D930CAB16D8005383FC /* PostDominatorCalculation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PostDominatorCalculation.h; sourceTree = "<group>"; };
+		9FE25D940CAB16FB005383FC /* RegisterCoalescer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterCoalescer.cpp; sourceTree = "<group>"; };
+		9FE25D950CAB1724005383FC /* APFloat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = APFloat.cpp; sourceTree = "<group>"; };
+		9FE25D960CAB1759005383FC /* TargetCallingConv.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = TargetCallingConv.td; sourceTree = "<group>"; };
+		9FE25D970CAB17F9005383FC /* DominatorCalculation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DominatorCalculation.h; path = ../lib/VMCore/DominatorCalculation.h; sourceTree = SOURCE_ROOT; };
+		9FE25D980CAB17F9005383FC /* DominatorInternals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DominatorInternals.cpp; path = ../lib/VMCore/DominatorInternals.cpp; sourceTree = SOURCE_ROOT; };
 		9FE4508B0C77A77000C4FEA4 /* ARMCodeEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ARMCodeEmitter.cpp; sourceTree = "<group>"; };
 		9FE4508C0C77A77000C4FEA4 /* ARMGenAsmWriter.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.pascal; path = ARMGenAsmWriter.inc; sourceTree = "<group>"; };
 		9FE4508D0C77A77000C4FEA4 /* ARMGenDAGISel.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.pascal; path = ARMGenDAGISel.inc; sourceTree = "<group>"; };
@@ -1042,7 +1051,7 @@
 			isa = PBXGroup;
 			children = (
 				DE66F1E908ABF03100323D32 /* include/llvm */,
-				CF8F1B480B64F7AB00BB4199 /* llvm-c */,
+				CF8F1B480B64F7AB00BB4199 /* include/llvm-c */,
 				DE66ECBD08ABEC0700323D32 /* lib/Analysis */,
 				9FE450DE0C77ABE400C4FEA4 /* lib/Archive */,
 				DE66EC8808ABEAC900323D32 /* lib/AsmParser */,
@@ -1207,14 +1216,14 @@
 			path = ../lib/Archive;
 			sourceTree = SOURCE_ROOT;
 		};
-		CF8F1B480B64F7AB00BB4199 /* llvm-c */ = {
+		CF8F1B480B64F7AB00BB4199 /* include/llvm-c */ = {
 			isa = PBXGroup;
 			children = (
 				9FD3E58D0CA0125F00E54D15 /* BitWriter.h */,
 				9FD3E58E0CA0125F00E54D15 /* Core.h */,
 				CF8F1B490B64F7AB00BB4199 /* LinkTimeOptimizer.h */,
 			);
-			name = "llvm-c";
+			name = "include/llvm-c";
 			path = "../include/llvm-c";
 			sourceTree = SOURCE_ROOT;
 		};
@@ -1336,6 +1345,8 @@
 				9F77937D0C73C4F400551F9C /* ConstantFold.h */,
 				DE66EC6008ABE86A00323D32 /* Constants.cpp */,
 				9FD3E5900CA0129D00E54D15 /* Core.cpp */,
+				9FE25D970CAB17F9005383FC /* DominatorCalculation.h */,
+				9FE25D980CAB17F9005383FC /* DominatorInternals.cpp */,
 				DE66EC6108ABE86A00323D32 /* Dominators.cpp */,
 				DE66EC6208ABE86A00323D32 /* Function.cpp */,
 				DE66EC6308ABE86A00323D32 /* Globals.cpp */,
@@ -1374,6 +1385,7 @@
 		DE66ECBD08ABEC0700323D32 /* lib/Analysis */ = {
 			isa = PBXGroup;
 			children = (
+				9FE25D930CAB16D8005383FC /* PostDominatorCalculation.h */,
 				9F68EB010C77AD02004AA152 /* LoopPass.cpp */,
 				9F68EB020C77AD02004AA152 /* MemoryDependenceAnalysis.cpp */,
 				DE66ED1A08ABEC0800323D32 /* IPA */,
@@ -1447,6 +1459,7 @@
 				9F7793550C73BD1500551F9C /* RegAllocBigBlock.cpp */,
 				DE66ED8008ABEC2B00323D32 /* RegAllocLinearScan.cpp */,
 				DE66ED8108ABEC2B00323D32 /* RegAllocLocal.cpp */,
+				9FE25D940CAB16FB005383FC /* RegisterCoalescer.cpp */,
 				9F7793560C73BD1500551F9C /* RegisterScavenging.cpp */,
 				DE66ED8208ABEC2B00323D32 /* RegAllocSimple.cpp */,
 				9F7793570C73BD1500551F9C /* SimpleRegisterCoalescing.cpp */,
@@ -1543,6 +1556,7 @@
 		DE66EDFB08ABEDE600323D32 /* lib/Support */ = {
 			isa = PBXGroup;
 			children = (
+				9FE25D950CAB1724005383FC /* APFloat.cpp */,
 				9FE450A60C77AB3200C4FEA4 /* APInt.cpp */,
 				9FE450A70C77AB3200C4FEA4 /* ConstantRange.cpp */,
 				9FE450A80C77AB3200C4FEA4 /* MemoryBuffer.cpp */,
@@ -1659,6 +1673,7 @@
 				CF9BCD1508C75070001E7011 /* SubtargetFeature.cpp */,
 				DE66F08A08ABEE6000323D32 /* Target.td */,
 				CF47BD860AAF487E00A8B13E /* TargetAsmInfo.cpp */,
+				9FE25D960CAB1759005383FC /* TargetCallingConv.td */,
 				DE66F08B08ABEE6000323D32 /* TargetData.cpp */,
 				DE66F08C08ABEE6000323D32 /* TargetFrameInfo.cpp */,
 				DE66F08D08ABEE6000323D32 /* TargetInstrInfo.cpp */,
@@ -2116,6 +2131,7 @@
 				DE66F1F608ABF03100323D32 /* HashExtras.h */,
 				DE66F1F708ABF03100323D32 /* ilist */,
 				9FA638E00C77B1AB007F12AE /* IndexedMap.h */,
+				9FE25D900CAB166D005383FC /* APFloat.h */,
 				9FA638DB0C77B1AB007F12AE /* APInt.h */,
 				9FA638DC0C77B1AB007F12AE /* APSInt.h */,
 				DE66F1F908ABF03100323D32 /* iterator.in */,
@@ -2127,6 +2143,7 @@
 				9FA638E30C77B1AB007F12AE /* SmallSet.h */,
 				CF33BE160AF62B4200E93805 /* SmallString.h */,
 				CF71B60F0AC45EDA0007F57C /* SmallVector.h */,
+				9FE25D910CAB166D005383FC /* SparseBitVector.h */,
 				9FA638E40C77B1AB007F12AE /* StringMap.h */,
 				DE66F1FE08ABF03100323D32 /* Statistic.h */,
 				DE66F1FF08ABF03100323D32 /* STLExtras.h */,
@@ -2211,6 +2228,7 @@
 				9F7793890C73C57100551F9C /* MachORelocation.h */,
 				DE66F24408ABF03100323D32 /* Passes.h */,
 				CFE21C780A80CC0600D3E908 /* RegAllocRegistry.h */,
+				9FE25D920CAB169F005383FC /* RegisterCoalescer.h */,
 				9F77938A0C73C57100551F9C /* RegisterScavenging.h */,
 				CF8F1B410B64F6D100BB4199 /* RuntimeLibcalls.h */,
 				DE66F24508ABF03100323D32 /* SchedGraphCommon.h */,
