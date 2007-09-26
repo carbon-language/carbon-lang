@@ -93,13 +93,14 @@ analysis tools or source-to-source translators.</p>
 
 <div class="doc_text">
 
-<p>Some of the most noticable improvements this release have been in the
-optimizer, speeding it up and making it more aggressive</p>
+<p>Some of the most noticable feature improvements this release have been in the
+optimizer, speeding it up and making it more aggressive.  For example:</p>
 
 <ul>
 
 <li>Owen Anderson wrote the new MemoryDependenceAnalysis pass, which provides 
-    a lazy, caching layer on top of alias analysis.  He then used it to rewrite
+    a lazy, caching layer on top of <a href="AliasAnalysis.html">
+    AliasAnalysis</a>.  He then used it to rewrite
     DeadStoreElimination which resulted in significantly better compile time in 
     common cases, </li>
 <li>Owen implemented the new GVN pass, which is also based on 
@@ -110,9 +111,11 @@ optimizer, speeding it up and making it more aggressive</p>
     shares some details with the new GVN pass.  It is still in need of compile
     time tuning, and is not turned on by default.</li>
 <li>Devang merged ETForest and DomTree into a single easier to use data
-structure.</li>
+    structure.  This makes it more obvious which datastructure to choose
+    (because there is only one) and makes the compiler more memory and time
+    efficient (less stuff to keep up-to-date).</li>
 <li>Nick Lewycky improved loop trip count analysis to handle many more common
-cases.</li>
+    cases.</li>
 
 </ul>
 
@@ -125,33 +128,43 @@ cases.</li>
 
 <div class="doc_text">
 
+<p>One of the main focuses of this release was performance tuning and bug
+   fixing.  In addition to these, several new major changes occurred:</p>
+
 <ul>
 
-<li>Dale finished up the Tail Merging optimization in the code generator,
-enabling it by default.  This produces smaller code that is also faster in some
-cases.</li>
+<li>Dale finished up the Tail Merging optimization in the code generator, and
+    enabled it by default.  This produces smaller code that is also faster in
+    some cases.</li>
+
+<li>Christopher Lamb implemented support for virtual register sub-registers,
+    which can be used to better model many forms of subregisters.  As an example
+    use, he modified the X86 backend to use this to model truncates and
+    extends more accurately (leading to better code).</li>
 
 <li>Dan Gohman changed the way we represent vectors before legalization,
-significantly simplifying the SelectionDAG representation for these and making
-the code generator faster for vector code.</li>
+    significantly simplifying the SelectionDAG representation for these and
+    making the code generator faster for vector code.</li>
 
-<li>Evan remat rewrite (coalesced intervals + folding of remat'd loads) and
-live intervals improvements.</li>
+<li>Evan contributed a new target independent if-converter.  While it is 
+    target independent, at this point only the ARM backend uses it so far.</li>
+
+<li>Evan rewrite the way the register allocator handles rematerialization,
+    allowing it to be much more effective on two-address targets like X86,
+    and taught it to fold loads away when possible (also a big win on X86).</li>
 
 <li>Dan Gohman contributed support for better alignment and volatility handling
-in the code generator, and significantly enhanced alignment analysis for SSE
-load/store instructions.</li>
-
-<li>Christopher Lamb virtual register sub-register support, better truncates and
-extends on X86.</li>
+    in the code generator, and significantly enhanced alignment analysis for SSE
+    load/store instructions.  With his changes, an insufficiently-aligned SSE
+    load instruction turns into <tt>movups</tt>, for example.</li>
 
 <li>Duraid Madina contributed a new "bigblock" register allocator, and Roman
-Levenstein contributed several big improvements.  BigBlock is optimized for code
-that uses very large basic blocks.  It is slightly slower than the "local"
-allocator, but produces much better code.</li>
+    Levenstein contributed several big improvements.  BigBlock is optimized for
+    code that uses very large basic blocks.  It is slightly slower than the
+    "local" allocator, but produces much better code.</li>
 
 <li>David Greene refactored the register allocator to split coalescing out from
-allocation, making coalescers pluggable.</li>
+    allocation, making coalescers pluggable.</li>
 
 </ul>
 
@@ -168,13 +181,19 @@ allocation, making coalescers pluggable.</li>
 </p>
 
 <ul>
-<li>Bruno Cardoso Lopes contributed initial MIPS support.</li>
-<li>Bill Wendling added SSSE3 support.</li>
-<li>New Target independent if converter, ARM uses it so far</li>
+<li>Bruno Cardoso Lopes contributed initial MIPS support.  It is sufficient to
+    run many small programs, but is still incomplete and is not yet
+    fully performant.</li>
+    
+<li>Bill Wendling added SSSE3 support to the X86 backend.</li>
+
 <li>Nicholas Geoffray contributed improved linux/ppc ABI and JIT support.</li>
+
 <li>Dale Johannesen rewrote handling of 32-bit float values in the X86 backend
-when using the floating point stack, fixing several nasty bugs.</li>
-<li>Dan contributed rematerialization support for the X86 backend.</li>
+    when using the floating point stack, fixing several nasty bugs.</li>
+
+<li>Dan contributed rematerialization support for the X86 backend, in addition
+    to several X86-specific micro optimizations.</li>
 </ul>
   
 </div>
@@ -190,22 +209,28 @@ when using the floating point stack, fixing several nasty bugs.</li>
 </p>
 
 <ul>
-<li>Duncan and Anton exception handling in llvm-gcc 4.0/4.2</li>
+<li>Duncan and Anton made significant progress chasing down a number of problems
+    with C++ Zero-Cost exception handling in llvm-gcc 4.0 and 4.2.  It is now at
+    the point where it "just works" on linux/x86-32 and has partial support on
+    other targets.</li>
 
-<li>Devang and Duncan: Bitfields, pragma pack</li>
+<li>Devang and Duncan fixed a huge number of bugs relating to bitfields, pragma
+    pack, and variable sized fields in structures.</li>
 
-<li>Tanya implemented support for __attribute__((noinline)) in llvm-gcc, and
-added support for generic variable annotations which are propagated into the
-LLVM IR, e.g. "<tt>int X __attribute__((annotate("myproperty")));</tt>".</li>
+<li>Tanya implemented support for <tt>__attribute__((noinline))</tt> in
+    llvm-gcc, and added support for generic variable annotations which are
+    propagated into the LLVM IR, e.g.
+    "<tt>int X __attribute__((annotate("myproperty")));</tt>".</li>
 
 <li>Sheng Zhou and Christopher Lamb implemented alias analysis support for
-'restrict' arguments to functions.</li>
+"restrict" pointer arguments to functions.</li>
 
-<li>Duncan contributed support for trampolines (pointers to nested functions),
-currently only supported on x86 target.</li>
+<li>Duncan contributed support for trampolines (taking the address of a nested
+    functions), currently this is only supported in the x86 target.</li>
 
-<li> Lauro Ramos Venancio contributed support to encode alignment info in 
-load and store instructions.</li>
+<li>Lauro Ramos Venancio contributed support to encode alignment info in 
+    load and store instructions, the foundation for other alignment-related
+    work.</li>
 </ul>
   
 </div>
@@ -221,15 +246,22 @@ load and store instructions.</li>
 </p>
 
 <ul>
-<li>Neil Booth APFloat, foundation for long double support that will be wrapped
-up in 2.2.  Dale contributed most of long double support, will be enabled in
-2.2.</li>
+<li>Neil Booth contributed a new "APFloat" class, which ensures that floating
+    point representation and constant folding is not dependent on the host 
+    architecture that builds the application.  This support is the foundation
+    for "long double" support that will be wrapped up in LLVM 2.2.</li>
+    
+<li>Based on the APFloat class, Dale redesigned the internals of the ConstantFP
+    class and has been working on extending the core and optimizer components to
+    support various target-specific 'long double's.  We expect this work to be
+    completed in LLVM 2.2.</li>
 
-<li>LLVM now provides an LLVMBuilder class which makes it significantly easier
-to create LLVM IR instructions.</li>
+<li>LLVM now provides an LLVMBuilder class, which makes it significantly easier
+    to create LLVM IR instructions.</li>
 
 <li>Reid contributed support for intrinsics that take arbitrary integer typed
-arguments, Dan Gohman and Chandler extended it to support FP and vectors.</li>
+    arguments.  Dan Gohman and Chandler extended it to support arbitrary
+    floating point arguments and vectors.</li>
 </ul>
   
 </div>
@@ -244,10 +276,13 @@ arguments, Dan Gohman and Chandler extended it to support FP and vectors.</li>
 </p>
 
 <ul>
-<li>BrainF frontend by Sterling Stein.</li>
+<li>Sterling Stein contributed a new BrainF frontend, located in llvm/examples.
+    This shows a some of the more modern APIs for building a front-end, and
+    demonstrates JIT compiler support.</li>
 
-<li>David Green contributed a new --enable-expensive-checks configure option
-which enables STL checking, and fixed several bugs exposed by it.</li>
+<li>David Green contributed a new <tt>--enable-expensive-checks</tt> configure
+    option which enables STL checking, and fixed several bugs exposed by
+    it.</li>
 </ul>
   
 </div>
