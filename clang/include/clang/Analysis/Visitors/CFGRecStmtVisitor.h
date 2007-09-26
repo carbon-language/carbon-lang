@@ -28,6 +28,8 @@ public:
   }
   
   void BlockStmt_Visit(Stmt* S) {
+    assert (S);
+    
     static_cast< CFGStmtVisitor<ImplClass>* >(this)->BlockStmt_Visit(S);
     static_cast< ImplClass* >(this)->VisitChildren(S);
   }

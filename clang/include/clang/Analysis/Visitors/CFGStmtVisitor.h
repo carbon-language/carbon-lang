@@ -96,7 +96,7 @@ public:
   /// VisitChildren: Call "Visit" on each child of S.
   void VisitChildren(Stmt* S) {
     for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I != E;++I)
-      static_cast<ImplClass*>(this)->Visit(*I);    
+      if (*I) static_cast<ImplClass*>(this)->Visit(*I);    
   }
 };  
       
