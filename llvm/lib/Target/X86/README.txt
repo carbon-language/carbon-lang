@@ -1208,3 +1208,34 @@ __Z11no_overflowjj:
 
 Re-materialize MOV32r0 etc. with xor instead of changing them to moves if the
 condition register is dead. xor reg reg is shorter than mov reg, #0.
+
+//===---------------------------------------------------------------------===//
+
+We aren't matching RMW instructions aggressively
+enough.  Here's a reduced testcase (more in PR1160):
+
+define void @test(i32* %huge_ptr, i32* %target_ptr) {
+        %A = load i32* %huge_ptr                ; <i32> [#uses=1]
+        %B = load i32* %target_ptr              ; <i32> [#uses=1]
+        %C = or i32 %A, %B              ; <i32> [#uses=1]
+        store i32 %C, i32* %target_ptr
+        ret void
+}
+
+$ llvm-as < t.ll | llc -march=x86-64
+
+_test:
+        movl (%rdi), %eax
+        orl (%rsi), %eax
+        movl %eax, (%rsi)
+        ret
+
+That should be something like:
+
+_test:
+        movl (%rdi), %eax
+        orl %eax, (%rsi)
+        ret
+
+//===---------------------------------------------------------------------===//
+
