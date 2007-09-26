@@ -109,6 +109,10 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Build ASTs then convert to LLVM, emit .ll file"),
              clEnumValEnd));
 
+static llvm::cl::opt<bool>
+VerifyDiagnostics("verify",
+                  llvm::cl::desc("Verify emitted diagnostics and warnings."));
+
 //===----------------------------------------------------------------------===//
 // Language Options
 //===----------------------------------------------------------------------===//
@@ -345,10 +349,6 @@ ErrorOnExtensions("pedantic-errors",
 static llvm::cl::opt<bool>
 WarnUnusedMacros("Wunused_macros",
          llvm::cl::desc("Warn for unused macros in the main translation unit"));
-
-static llvm::cl::opt<bool>
-VerifyDiagnostics("verify",
-                  llvm::cl::desc("Verify emitted diagnostics and warnings."));
 
 /// InitializeDiagnostics - Initialize the diagnostic object, based on the
 /// current command line option settings.
