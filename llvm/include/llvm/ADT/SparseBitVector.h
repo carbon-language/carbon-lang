@@ -441,7 +441,7 @@ class SparseBitVector {
 
     bool operator==(const SparseBitVectorIterator &RHS) const {
       // If they are both at the end, ignore the rest of the fields.
-      if (AtEnd == RHS.AtEnd)
+      if (AtEnd && RHS.AtEnd)
         return true;
       // Otherwise they are the same if they have the same bit number and
       // bitmap.
