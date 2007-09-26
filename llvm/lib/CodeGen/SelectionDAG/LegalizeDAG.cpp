@@ -893,7 +893,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (MVT::isInteger(VT))
         Result = DAG.getConstant(0, VT);
       else if (MVT::isFloatingPoint(VT))
-        Result = DAG.getConstantFP(0, VT);
+        Result = DAG.getConstantFP(APFloat(APInt(MVT::getSizeInBits(VT), 0)),
+                                   VT);
       else
         assert(0 && "Unknown value type!");
       break;
