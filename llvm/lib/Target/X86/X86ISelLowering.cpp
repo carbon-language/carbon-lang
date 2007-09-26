@@ -3719,6 +3719,7 @@ SDOperand X86TargetLowering::LowerSETCC(SDOperand Op, SelectionDAG &DAG,
 
 SDOperand X86TargetLowering::LowerSETCC_New(SDOperand Op, SelectionDAG &DAG) {
   assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
+  SDOperand Cond;
   SDOperand Op0 = Op.getOperand(0);
   SDOperand Op1 = Op.getOperand(1);
   SDOperand CC = Op.getOperand(2);
@@ -3726,14 +3727,16 @@ SDOperand X86TargetLowering::LowerSETCC_New(SDOperand Op, SelectionDAG &DAG) {
   bool isFP = MVT::isFloatingPoint(Op.getOperand(1).getValueType());
   unsigned X86CC;
 
-  SDOperand Cond = DAG.getNode(X86ISD::CMP_NEW, MVT::i32, Op0, Op1);
   if (translateX86CC(cast<CondCodeSDNode>(CC)->get(), isFP, X86CC,
-                     Op0, Op1, DAG))
+                     Op0, Op1, DAG)) {
+    Cond = DAG.getNode(X86ISD::CMP_NEW, MVT::i32, Op0, Op1);
     return DAG.getNode(X86ISD::SETCC_NEW, MVT::i8,
                        DAG.getConstant(X86CC, MVT::i8), Cond);
+  }
 
   assert(isFP && "Illegal integer SetCC!");
 
+  Cond = DAG.getNode(X86ISD::CMP_NEW, MVT::i32, Op0, Op1);
   switch (SetCCOpcode) {
   default: assert(false && "Illegal floating point SetCC!");
   case ISD::SETOEQ: {  // !PF & ZF
