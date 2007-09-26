@@ -439,10 +439,10 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
 /// [GNU]   '__builtin_choose_expr' '(' assign-expr ',' assign-expr ','
 ///                                     assign-expr ')'
 /// [GNU]   '__builtin_types_compatible_p' '(' type-name ',' type-name ')'
-/// [OBJC]  '[' objc-message-expr ']'    [TODO]
+/// [OBJC]  '[' objc-message-expr ']'    
 /// [OBJC]  '@selector' '(' objc-selector-arg ')'      [TODO]
-/// [OBJC]  '@protocol' '(' identifier ')'             [TODO]
-/// [OBJC]  '@encode' '(' type-name ')'                [TODO]
+/// [OBJC]  '@protocol' '(' identifier ')'             
+/// [OBJC]  '@encode' '(' type-name ')'                
 /// [OBJC]  objc-string-literal
 /// [C++]   'const_cast' '<' type-name '>' '(' expression ')'       [C++ 5.2p1]
 /// [C++]   'dynamic_cast' '<' type-name '>' '(' expression ')'     [C++ 5.2p1]
