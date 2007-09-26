@@ -418,6 +418,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::UNDEF,     MVT::f80, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f80, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f80, Expand);
+  if (!UnsafeFPMath) {
+    setOperationAction(ISD::FSIN           , MVT::f80  , Expand);
+    setOperationAction(ISD::FCOS           , MVT::f80  , Expand);
+  }
 
   // First set operation action for all vector types to expand. Then we
   // will selectively turn on ones that can be effectively codegen'd.

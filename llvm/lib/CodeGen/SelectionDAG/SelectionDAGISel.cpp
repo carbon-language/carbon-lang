@@ -2996,7 +2996,8 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
         }
       } else if (NameStr[0] == 'f' &&
                  ((NameLen == 4 && !strcmp(NameStr, "fabs")) ||
-                  (NameLen == 5 && !strcmp(NameStr, "fabsf")))) {
+                  (NameLen == 5 && !strcmp(NameStr, "fabsf")) ||
+                  (NameLen == 5 && !strcmp(NameStr, "fabsl")))) {
         if (I.getNumOperands() == 2 &&   // Basic sanity checks.
             I.getOperand(1)->getType()->isFloatingPoint() &&
             I.getType() == I.getOperand(1)->getType()) {
@@ -3006,7 +3007,8 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
         }
       } else if (NameStr[0] == 's' && 
                  ((NameLen == 3 && !strcmp(NameStr, "sin")) ||
-                  (NameLen == 4 && !strcmp(NameStr, "sinf")))) {
+                  (NameLen == 4 && !strcmp(NameStr, "sinf")) ||
+                  (NameLen == 4 && !strcmp(NameStr, "sinl")))) {
         if (I.getNumOperands() == 2 &&   // Basic sanity checks.
             I.getOperand(1)->getType()->isFloatingPoint() &&
             I.getType() == I.getOperand(1)->getType()) {
@@ -3016,7 +3018,8 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
         }
       } else if (NameStr[0] == 'c' &&
                  ((NameLen == 3 && !strcmp(NameStr, "cos")) ||
-                  (NameLen == 4 && !strcmp(NameStr, "cosf")))) {
+                  (NameLen == 4 && !strcmp(NameStr, "cosf")) ||
+                  (NameLen == 4 && !strcmp(NameStr, "cosl")))) {
         if (I.getNumOperands() == 2 &&   // Basic sanity checks.
             I.getOperand(1)->getType()->isFloatingPoint() &&
             I.getType() == I.getOperand(1)->getType()) {
