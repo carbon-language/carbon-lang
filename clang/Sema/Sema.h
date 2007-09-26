@@ -386,6 +386,10 @@ public:
 
   virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl, 
 				     DeclTy **allMethods, unsigned allNum);
+  
+  virtual void ActOnImpleIvarVsClassIvars(DeclTy *ClassDecl,
+                                          DeclTy **Fields, unsigned NumFields);
+  
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
 	            tok::TokenKind MethodType, TypeTy *ReturnType,
      		    ObjcKeywordDecl *Keywords, unsigned NumKeywords, 

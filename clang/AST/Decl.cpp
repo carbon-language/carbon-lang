@@ -294,6 +294,19 @@ void ObjcInterfaceDecl::ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars,
   }
 }
 
+/// ObjcAddInstanceVariablesToClassImpl - Checks for correctness of Instance 
+/// Variables (Ivars) relative to what declared in @implementation;s class. 
+/// Ivars into ObjcImplementationDecl's fields.
+///
+void ObjcImplementationDecl::ObjcAddInstanceVariablesToClassImpl(
+			       ObjcIvarDecl **ivars, unsigned numIvars) {
+  NumIvars = numIvars;
+  if (numIvars) {
+    Ivars = new ObjcIvarDecl*[numIvars];
+    memcpy(Ivars, ivars, numIvars*sizeof(ObjcIvarDecl*));
+  }
+}
+
 /// addObjcMethods - Insert instance and methods declarations into
 /// ObjcInterfaceDecl's InsMethods and ClsMethods fields.
 ///

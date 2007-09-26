@@ -1129,6 +1129,51 @@ Sema::DeclTy *Sema::ObjcStartClassImplementation(Scope *S,
   return IMPDecl;
 }
 
+void Sema::ActOnImpleIvarVsClassIvars(DeclTy *ClassDecl,
+                                      DeclTy **Fields, unsigned numIvars) {
+  ObjcInterfaceDecl* IDecl = 
+    cast<ObjcInterfaceDecl>(static_cast<Decl*>(ClassDecl));
+  assert(IDecl && "missing named interface class decl");
+  ObjcIvarDecl** ivars = reinterpret_cast<ObjcIvarDecl**>(Fields);
+  assert(ivars && "missing @implementation ivars");
+  
+    // Check interface's Ivar list against those in the implementation.
+    // names and types must match.
+    //
+  ObjcIvarDecl** IntfIvars = IDecl->getIntfDeclIvars();
+  int IntfNumIvars = IDecl->getIntfDeclNumIvars();
+  unsigned j = 0;
+  bool err = false;
+  while (numIvars > 0 && IntfNumIvars > 0) {
+    ObjcIvarDecl* ImplIvar = ivars[j];
+    ObjcIvarDecl* ClsIvar = IntfIvars[j++];
+    assert (ImplIvar && "missing implementation ivar");
+    assert (ClsIvar && "missing class ivar");
+    if (ImplIvar->getCanonicalType() != ClsIvar->getCanonicalType()) {
+      Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_type,
+           ImplIvar->getIdentifier()->getName());
+      Diag(ClsIvar->getLocation(), diag::err_previous_definition,
+           ClsIvar->getIdentifier()->getName());
+    }
+    // TODO: Two mismatched (unequal width) Ivar bitfields should be diagnosed 
+    // as error.
+    else if (ImplIvar->getIdentifier() != ClsIvar->getIdentifier()) {
+      Diag(ImplIvar->getLocation(), diag::err_conflicting_ivar_name,
+           ImplIvar->getIdentifier()->getName());
+      Diag(ClsIvar->getLocation(), diag::err_previous_definition,
+           ClsIvar->getIdentifier()->getName());
+      err = true;
+      break;
+    }
+    --numIvars;
+    --IntfNumIvars;
+  }
+  if (!err && (numIvars > 0 || IntfNumIvars > 0))
+    Diag(numIvars > 0 ? ivars[j]->getLocation() : IntfIvars[j]->getLocation(), 
+         diag::err_inconsistant_ivar);
+      
+}
+
 /// ObjcClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
@@ -1463,8 +1508,20 @@ void Sema::ActOnFields(SourceLocation RecLoc, DeclTy *RecDecl,
   else {
     ObjcIvarDecl **ClsFields = 
                     reinterpret_cast<ObjcIvarDecl**>(&RecFields[0]);
-    cast<ObjcInterfaceDecl>(static_cast<Decl*>(RecDecl))->
-      ObjcAddInstanceVariablesToClass(ClsFields, RecFields.size());
+    if (isa<ObjcInterfaceDecl>(static_cast<Decl*>(RecDecl)))
+      cast<ObjcInterfaceDecl>(static_cast<Decl*>(RecDecl))->
+        ObjcAddInstanceVariablesToClass(ClsFields, RecFields.size());
+    else if (isa<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl))) {
+      ObjcImplementationDecl* IMPDecl = 
+	cast<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl));
+      assert(IMPDecl && "ActOnFields - missing ObjcImplementationDecl");
+      IMPDecl->ObjcAddInstanceVariablesToClassImpl(ClsFields, RecFields.size());
+      ObjcInterfaceDecl* IDecl = 
+        Context.getObjCInterfaceDecl(IMPDecl->getIdentifier());
+      if (IDecl)
+        ActOnImpleIvarVsClassIvars(static_cast<DeclTy*>(IDecl), 
+          reinterpret_cast<DeclTy**>(&RecFields[0]), RecFields.size());
+    }
   }
 }
 

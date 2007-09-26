@@ -587,6 +587,9 @@ public:
       NumIntfRefProtocols = numRefProtos;
     }
   }
+  ObjcIvarDecl **getIntfDeclIvars() const { return Ivars; }
+  int getIntfDeclNumIvars() const { return NumIvars; }
+  
   void ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars, 
 				       unsigned numIvars);
 
@@ -883,8 +886,8 @@ class ObjcImplementationDecl : public TypeDecl {
       Ivars(0), NumIvars(-1),
       InsMethods(0), NumInsMethods(-1), ClsMethods(0), NumClsMethods(-1) {}
   
-  void ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars, 
-                                       unsigned numIvars);
+  void ObjcAddInstanceVariablesToClassImpl(ObjcIvarDecl **ivars, 
+                                           unsigned numIvars);
     
   void ObjcAddMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                         ObjcMethodDecl **clsMethods, unsigned numClsMembers);

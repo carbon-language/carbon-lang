@@ -448,6 +448,10 @@ public:
 				     DeclTy **allMethods, unsigned allNum) {
     return;
   }
+  virtual void ActOnImpleIvarVsClassIvars(DeclTy *ClassDecl,
+                                          DeclTy **Fields, unsigned NumFields) {
+    return;
+  }
   virtual DeclTy *ObjcStartProtoInterface(Scope* S,
 		    SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,

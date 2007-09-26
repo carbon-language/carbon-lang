@@ -426,6 +426,13 @@ DIAG(err_dup_implementation_class, ERROR,
      "reimplementation of class '%0'")
 DIAG(err_conflicting_super_class, ERROR,
      "conflicting super class name '%0'")
+DIAG(err_conflicting_ivar_name, ERROR,
+     "conflicting instance variable name '%0'")
+DIAG(err_inconsistant_ivar, ERROR,
+     "inconsistent instance variable specification")
+DIAG(err_conflicting_ivar_type, ERROR,
+     "conflicting instance variable type")
+
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
