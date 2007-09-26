@@ -192,7 +192,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         InstructionRearranged:
           const TargetRegisterClass* rc = MF.getSSARegMap()->getRegClass(regA);
-          MRI.copyRegToReg(*mbbi, mi, regA, regB, rc);
+          MRI.copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
 
           MachineBasicBlock::iterator prevMi = prior(mi);
           DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(*cerr.stream(), &TM));

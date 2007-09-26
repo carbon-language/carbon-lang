@@ -88,7 +88,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
      assert(TRC == getPhysicalRegisterRegClass(MRI, SrcReg) &&
              "Extract subreg and Dst must be of same register class");
 
-     MRI.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRC);
+     MRI.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRC, TRC);
      MachineBasicBlock::iterator dMI = MI;
      DOUT << "subreg: " << *(--dMI);
    }
@@ -157,7 +157,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
       } else {
         TRC1 = MF.getSSARegMap()->getRegClass(InsReg);
       }
-      MRI.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC1);
+      MRI.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC1, TRC1);
 
 #ifndef NDEBUG
       MachineBasicBlock::iterator dMI = MI;
@@ -184,7 +184,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     assert(TRC0 == getPhysicalRegisterRegClass(MRI, SrcReg) &&
             "Insert superreg and Dst must be of same register class");
 
-    MRI.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRC0);
+    MRI.copyRegToReg(*MBB, MI, DstReg, SrcReg, TRC0, TRC0);
 
 #ifndef NDEBUG
     MachineBasicBlock::iterator dMI = MI;
@@ -206,7 +206,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     } else {
       TRC1 = MF.getSSARegMap()->getRegClass(InsReg);
     }
-    MRI.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC1);
+    MRI.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC1, TRC1);
 
 #ifndef NDEBUG
     MachineBasicBlock::iterator dMI = MI;

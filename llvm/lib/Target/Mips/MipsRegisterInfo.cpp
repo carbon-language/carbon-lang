@@ -109,9 +109,15 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 void MipsRegisterInfo::
 copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
              unsigned DestReg, unsigned SrcReg,
-             const TargetRegisterClass *RC) const 
+             const TargetRegisterClass *DestRC,
+             const TargetRegisterClass *SrcRC) const
 {
-  if (RC == Mips::CPURegsRegisterClass)
+  if (DestRC != SrcRC) {
+    cerr << "Not yet supported!";
+    abort();
+  }
+
+  if (DestRC == Mips::CPURegsRegisterClass)
     BuildMI(MBB, I, TII.get(Mips::ADDu), DestReg).addReg(Mips::ZERO)
       .addReg(SrcReg);
   else

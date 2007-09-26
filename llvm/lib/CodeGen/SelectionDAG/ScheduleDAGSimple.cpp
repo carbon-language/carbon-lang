@@ -684,9 +684,11 @@ void ScheduleDAGSimple::EmitAll() {
   if (&MF.front() == BB && MF.livein_begin() != MF.livein_end()) {
     for (MachineFunction::livein_iterator LI = MF.livein_begin(),
          E = MF.livein_end(); LI != E; ++LI)
-      if (LI->second)
+      if (LI->second) {
+        const TargetRegisterClass *RC = RegMap->getRegClass(LI->second);
         MRI->copyRegToReg(*MF.begin(), MF.begin()->end(), LI->second,
-                          LI->first, RegMap->getRegClass(LI->second));
+                          LI->first, RC, RC);
+      }
   }
   
   DenseMap<SDOperand, unsigned> VRBaseMap;

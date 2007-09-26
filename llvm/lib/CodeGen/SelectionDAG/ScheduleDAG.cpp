@@ -365,7 +365,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   } else {
     // Create the reg, emit the copy.
     VRBase = RegMap->createVirtualRegister(TRC);
-    MRI->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, TRC);
+    MRI->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, TRC, TRC);
   }
 
   if (InstanceNo > 0)
@@ -769,7 +769,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
           TRC = getPhysicalRegisterRegClass(MRI,
                                             Node->getOperand(2).getValueType(),
                                             InReg);
-        MRI->copyRegToReg(*BB, BB->end(), DestReg, InReg, TRC);
+        MRI->copyRegToReg(*BB, BB->end(), DestReg, InReg, TRC, TRC);
       }
       break;
     }
@@ -854,9 +854,11 @@ void ScheduleDAG::EmitSchedule() {
   if (&MF.front() == BB && MF.livein_begin() != MF.livein_end()) {
     for (MachineFunction::livein_iterator LI = MF.livein_begin(),
          E = MF.livein_end(); LI != E; ++LI)
-      if (LI->second)
+      if (LI->second) {
+        const TargetRegisterClass *RC = RegMap->getRegClass(LI->second);
         MRI->copyRegToReg(*MF.begin(), MF.begin()->end(), LI->second,
-                          LI->first, RegMap->getRegClass(LI->second));
+                          LI->first, RC, RC);
+      }
   }
   
   

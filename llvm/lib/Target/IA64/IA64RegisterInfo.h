@@ -42,7 +42,8 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
   void copyRegToReg(MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator MI,
                     unsigned DestReg, unsigned SrcReg,
-                    const TargetRegisterClass *RC) const;
+                    const TargetRegisterClass *DestRC,
+                    const TargetRegisterClass *SrcRC) const;
 
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;

@@ -48,7 +48,8 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
 
   void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                     unsigned DestReg, unsigned SrcReg,
-                    const TargetRegisterClass *RC) const;
+                    const TargetRegisterClass *DestRC,
+                    const TargetRegisterClass *SrcRC) const;
 
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;

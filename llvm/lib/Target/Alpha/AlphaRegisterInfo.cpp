@@ -141,13 +141,19 @@ MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,
 void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI,
                                      unsigned DestReg, unsigned SrcReg,
-                                     const TargetRegisterClass *RC) const {
+                                     const TargetRegisterClass *DestRC,
+                                     const TargetRegisterClass *SrcRC) const {
   //cerr << "copyRegToReg " << DestReg << " <- " << SrcReg << "\n";
-  if (RC == Alpha::GPRCRegisterClass) {
+  if (DestRC != SrcRC) {
+    cerr << "Not yet supported!";
+    abort();
+  }
+
+  if (DestRC == Alpha::GPRCRegisterClass) {
     BuildMI(MBB, MI, TII.get(Alpha::BISr), DestReg).addReg(SrcReg).addReg(SrcReg);
-  } else if (RC == Alpha::F4RCRegisterClass) {
+  } else if (DestRC == Alpha::F4RCRegisterClass) {
     BuildMI(MBB, MI, TII.get(Alpha::CPYSS), DestReg).addReg(SrcReg).addReg(SrcReg);
-  } else if (RC == Alpha::F8RCRegisterClass) {
+  } else if (DestRC == Alpha::F8RCRegisterClass) {
     BuildMI(MBB, MI, TII.get(Alpha::CPYST), DestReg).addReg(SrcReg).addReg(SrcReg);
   } else {
     cerr << "Attempt to copy register that is not GPR or FPR";

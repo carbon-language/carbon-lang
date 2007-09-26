@@ -506,7 +506,8 @@ public:
   virtual void copyRegToReg(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             unsigned DestReg, unsigned SrcReg,
-                            const TargetRegisterClass *RC) const = 0;
+                            const TargetRegisterClass *DestRC,
+                            const TargetRegisterClass *SrcRC) const = 0;
 
   /// reMaterialize - Re-issue the specified 'original' instruction at the
   /// specific location targeting a new destination register.

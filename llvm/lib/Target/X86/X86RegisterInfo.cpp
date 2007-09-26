@@ -231,33 +231,39 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
                                    unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *RC) const {
+                                   const TargetRegisterClass *DestRC,
+                                   const TargetRegisterClass *SrcRC) const {
+  if (DestRC != SrcRC) {
+    cerr << "Not yet supported!";
+    abort();
+  }
+
   unsigned Opc;
-  if (RC == &X86::GR64RegClass) {
+  if (DestRC == &X86::GR64RegClass) {
     Opc = X86::MOV64rr;
-  } else if (RC == &X86::GR32RegClass) {
+  } else if (DestRC == &X86::GR32RegClass) {
     Opc = X86::MOV32rr;
-  } else if (RC == &X86::GR16RegClass) {
+  } else if (DestRC == &X86::GR16RegClass) {
     Opc = X86::MOV16rr;
-  } else if (RC == &X86::GR8RegClass) {
+  } else if (DestRC == &X86::GR8RegClass) {
     Opc = X86::MOV8rr;
-  } else if (RC == &X86::GR32_RegClass) {
+  } else if (DestRC == &X86::GR32_RegClass) {
     Opc = X86::MOV32_rr;
-  } else if (RC == &X86::GR16_RegClass) {
+  } else if (DestRC == &X86::GR16_RegClass) {
     Opc = X86::MOV16_rr;
-  } else if (RC == &X86::RFP32RegClass) {
+  } else if (DestRC == &X86::RFP32RegClass) {
     Opc = X86::MOV_Fp3232;
-  } else if (RC == &X86::RFP64RegClass || RC == &X86::RSTRegClass) {
+  } else if (DestRC == &X86::RFP64RegClass || DestRC == &X86::RSTRegClass) {
     Opc = X86::MOV_Fp6464;
-  } else if (RC == &X86::RFP80RegClass) {
+  } else if (DestRC == &X86::RFP80RegClass) {
     Opc = X86::MOV_Fp8080;
-  } else if (RC == &X86::FR32RegClass) {
+  } else if (DestRC == &X86::FR32RegClass) {
     Opc = X86::FsMOVAPSrr;
-  } else if (RC == &X86::FR64RegClass) {
+  } else if (DestRC == &X86::FR64RegClass) {
     Opc = X86::FsMOVAPDrr;
-  } else if (RC == &X86::VR128RegClass) {
+  } else if (DestRC == &X86::VR128RegClass) {
     Opc = X86::MOVAPSrr;
-  } else if (RC == &X86::VR64RegClass) {
+  } else if (DestRC == &X86::VR64RegClass) {
     Opc = X86::MMX_MOVQ64rr;
   } else {
     assert(0 && "Unknown regclass");

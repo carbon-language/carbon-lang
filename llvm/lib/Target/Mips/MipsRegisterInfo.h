@@ -55,7 +55,8 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
 
   void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
           unsigned DestReg, unsigned SrcReg,
-          const TargetRegisterClass *RC) const;
+          const TargetRegisterClass *DestRC,
+          const TargetRegisterClass *SrcRC) const;
   
 
   const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;

@@ -135,7 +135,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   // into the phi node destination.
   //
   const MRegisterInfo *RegInfo = MF.getTarget().getRegisterInfo();
-  RegInfo->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC);
+  RegInfo->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC, RC);
 
   // Update live variable information if there is any...
   LiveVariables *LV = getAnalysisToUpdate<LiveVariables>();
@@ -200,7 +200,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     MachineBasicBlock::iterator I = opBlock.getFirstTerminator();
     
     // Insert the copy.
-    RegInfo->copyRegToReg(opBlock, I, IncomingReg, SrcReg, RC);
+    RegInfo->copyRegToReg(opBlock, I, IncomingReg, SrcReg, RC, RC);
 
     // Now update live variable information if we have it.  Otherwise we're done
     if (!LV) continue;

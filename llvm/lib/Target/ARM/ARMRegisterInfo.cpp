@@ -183,8 +183,14 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator I,
                                    unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *RC) const {
-  if (RC == ARM::GPRRegisterClass) {
+                                   const TargetRegisterClass *DestRC,
+                                   const TargetRegisterClass *SrcRC) const {
+  if (DestRC != SrcRC) {
+    cerr << "Not yet supported!";
+    abort();
+  }
+
+  if (DestRC == ARM::GPRRegisterClass) {
     MachineFunction &MF = *MBB.getParent();
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     if (AFI->isThumbFunction())
@@ -192,10 +198,10 @@ void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     else
       BuildMI(MBB, I, TII.get(ARM::MOVr), DestReg).addReg(SrcReg)
         .addImm((int64_t)ARMCC::AL).addReg(0).addReg(0);
-  } else if (RC == ARM::SPRRegisterClass)
+  } else if (DestRC == ARM::SPRRegisterClass)
     BuildMI(MBB, I, TII.get(ARM::FCPYS), DestReg).addReg(SrcReg)
       .addImm((int64_t)ARMCC::AL).addReg(0);
-  else if (RC == ARM::DPRRegisterClass)
+  else if (DestRC == ARM::DPRRegisterClass)
     BuildMI(MBB, I, TII.get(ARM::FCPYD), DestReg).addReg(SrcReg)
       .addImm((int64_t)ARMCC::AL).addReg(0);
   else
