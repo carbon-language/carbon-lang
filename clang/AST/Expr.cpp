@@ -259,6 +259,8 @@ bool Expr::hasLocalSideEffect() const {
     // TODO: check attributes for pure/const.   "void foo() { strlen("bar"); }"
     // should warn.
     return true;
+  case ObjCMessageExprClass:
+    return true;
     
   case CastExprClass:
     // If this is a cast to void, check the operand.  Otherwise, the result of
