@@ -483,7 +483,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
 /// comma, etc
 ///
 /// FIXME: This should ext-warn on overflow during evaluation!  ISO C does not
-/// permit this.
+/// permit this.  This includes things like (int)1e1000
 ///
 /// FIXME: Handle offsetof.  Two things to do:  Handle GCC's __builtin_offsetof
 /// to support gcc 4.0+  and handle the idiom GCC recognizes with a null pointer
@@ -557,7 +557,8 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       
       // Return the result in the right width.
       Result.zextOrTrunc(
-        static_cast<uint32_t>(Ctx.getTypeSize(getType(), Exp->getOperatorLoc())));
+        static_cast<uint32_t>(Ctx.getTypeSize(getType(),
+                                              Exp->getOperatorLoc())));
 
       // Get information about the size or align.
       if (Exp->getOpcode() == UnaryOperator::SizeOf)
@@ -570,7 +571,8 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     case UnaryOperator::LNot: {
       bool Val = Result != 0;
       Result.zextOrTrunc(
-        static_cast<uint32_t>(Ctx.getTypeSize(getType(), Exp->getOperatorLoc())));
+        static_cast<uint32_t>(Ctx.getTypeSize(getType(),
+                                              Exp->getOperatorLoc())));
       Result = Val;
       break;
     }
@@ -748,17 +750,12 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     
     // Determine whether we are converting to unsigned or signed.
     bool DestSigned = getType()->isSignedIntegerType();
-    
+
+    // TODO: Warn on overflow, but probably not here: isIntegerConstantExpr can
+    // be called multiple times per AST.
     uint64_t Space[4]; 
-    
-    llvm::APFloat::opStatus Status =
-      FL->getValue().convertToInteger(Space, DestWidth, DestSigned,
-                                      llvm::APFloat::rmTowardZero);
-    if (Status != llvm::APFloat::opOK && Status != llvm::APFloat::opInexact) {
-      if (Loc) *Loc = Operand->getLocStart();
-      return false; // FIXME: need to accept this as an extension.
-    }
-    
+    (void)FL->getValue().convertToInteger(Space, DestWidth, DestSigned,
+                                          llvm::APFloat::rmTowardZero);
     Result = llvm::APInt(DestWidth, 4, Space);
     break;
   }
