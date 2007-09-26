@@ -234,6 +234,30 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    const TargetRegisterClass *DestRC,
                                    const TargetRegisterClass *SrcRC) const {
   if (DestRC != SrcRC) {
+    // Moving EFLAGS to / from another register requires a push and a pop.
+    if (SrcRC == &X86::CCRRegClass) {
+      assert(SrcReg == X86::EFLAGS);
+      if (DestRC == &X86::GR64RegClass) {
+        BuildMI(MBB, MI, TII.get(X86::PUSHFQ));
+        BuildMI(MBB, MI, TII.get(X86::POP64r), DestReg);
+        return;
+      } else if (DestRC == &X86::GR32RegClass) {
+        BuildMI(MBB, MI, TII.get(X86::PUSHFD));
+        BuildMI(MBB, MI, TII.get(X86::POP32r), DestReg);
+        return;
+      }
+    } else if (DestRC == &X86::CCRRegClass) {
+      assert(DestReg == X86::EFLAGS);
+      if (SrcRC == &X86::GR64RegClass) {
+        BuildMI(MBB, MI, TII.get(X86::PUSH64r)).addReg(SrcReg);
+        BuildMI(MBB, MI, TII.get(X86::POPFQ));
+        return;
+      } else if (SrcRC == &X86::GR32RegClass) {
+        BuildMI(MBB, MI, TII.get(X86::PUSH32r)).addReg(SrcReg);
+        BuildMI(MBB, MI, TII.get(X86::POPFD));
+        return;
+      }
+    }
     cerr << "Not yet supported!";
     abort();
   }
@@ -272,6 +296,12 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   BuildMI(MBB, MI, TII.get(Opc), DestReg).addReg(SrcReg);
 }
 
+const TargetRegisterClass *
+X86RegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
+  if (RC == &X86::CCRRegClass)
+    return &X86::GR32RegClass;
+  return NULL;
+}
 
 void X86RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator I,

@@ -81,6 +81,9 @@ public:
                     const TargetRegisterClass *DestRC,
                     const TargetRegisterClass *SrcRC) const;
  
+  const TargetRegisterClass *
+  getCrossCopyRegClass(const TargetRegisterClass *RC) const;
+
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;
 

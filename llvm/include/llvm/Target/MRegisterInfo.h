@@ -315,6 +315,11 @@ public:
     return Reg >= FirstVirtualRegister;
   }
 
+  /// getPhysicalRegisterRegClass - Returns the Register Class of a physical
+  /// register of the given type.
+  const TargetRegisterClass *getPhysicalRegisterRegClass(MVT::ValueType VT,
+                                                         unsigned Reg) const;
+
   /// getAllocatableSet - Returns a bitset indexed by register number
   /// indicating if a register is allocatable or not. If a register class is
   /// specified, returns the subset for the class.
@@ -508,6 +513,14 @@ public:
                             unsigned DestReg, unsigned SrcReg,
                             const TargetRegisterClass *DestRC,
                             const TargetRegisterClass *SrcRC) const = 0;
+
+  /// getCrossCopyRegClass - Returns a legal register class to copy a register
+  /// in the specified class to or from. Returns NULL if it is possible to copy
+  /// between a two registers of the specified class.
+  virtual const TargetRegisterClass *
+  getCrossCopyRegClass(const TargetRegisterClass *RC) const {
+    return NULL;
+  }
 
   /// reMaterialize - Re-issue the specified 'original' instruction at the
   /// specific location targeting a new destination register.
