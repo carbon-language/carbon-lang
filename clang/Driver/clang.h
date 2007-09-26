@@ -40,12 +40,9 @@ TargetInfo *CreateTargetInfo(Diagnostic &Diags);
 void EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
                       bool PrintStats);
   
-/// CheckDiagnostics - Implement the -parse-ast-check diagnostic verifier.
-bool CheckDiagnostics(Preprocessor &PP, unsigned MainFileID);
-  
 /// CheckASTConsumer - Implement diagnostic checking for AST consumers.
-bool CheckASTConsumer(Preprocessor &PP, unsigned MainFileID,
-                      std::auto_ptr<ASTConsumer> C);
+bool CheckASTConsumer(Preprocessor &PP, unsigned MainFileID, ASTConsumer* C);
+
 
 }  // end namespace clang
 

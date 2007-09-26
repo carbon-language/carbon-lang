@@ -103,8 +103,6 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Print results of live variable analysis."),
              clEnumValN(WarnDeadStores, "warn-dead-stores",
                         "Flag warnings of stores to dead variables."),
-             clEnumValN(WarnDeadStoresCheck, "warn-dead-stores-check",
-                        "Check diagnostics emitted by --warn-dead-stores."),
              clEnumValN(WarnUninitVals, "warn-uninit-values",
                         "Flag warnings of uses of unitialized variables."),
              clEnumValN(EmitLLVM, "emit-llvm",
@@ -348,6 +346,9 @@ static llvm::cl::opt<bool>
 WarnUnusedMacros("Wunused_macros",
          llvm::cl::desc("Warn for unused macros in the main translation unit"));
 
+static llvm::cl::opt<bool>
+VerifyDiagnostics("verify",
+                  llvm::cl::desc("Verify emitted diagnostics and warnings."));
 
 /// InitializeDiagnostics - Initialize the diagnostic object, based on the
 /// current command line option settings.
@@ -805,7 +806,11 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
                              TextDiagnostics &OurDiagnosticClient,
                              HeaderSearch &HeaderInfo,
                              const LangOptions &LangInfo) {
+
+  ASTConsumer* Consumer = NULL;
   bool ClearSourceMgr = false;
+  bool PerformDiagnosticsCheck = VerifyDiagnostics;
+  
   switch (ProgAction) {
   default:
     fprintf(stderr, "Unexpected program action!\n");
@@ -847,62 +852,55 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     ParseFile(PP, CreatePrintParserActionsAction(), MainFileID);
     ClearSourceMgr = true;
     break;
-  case ParseSyntaxOnly:              // -fsyntax-only
-  case BuildAST: {
-    ASTConsumer NullConsumer;
-    ParseAST(PP, MainFileID, NullConsumer, Stats);
-    break;
-  }
-  case ParseASTPrint: {
-    std::auto_ptr<ASTConsumer> C(CreateASTPrinter());
-    ParseAST(PP, MainFileID, *C.get(), Stats);
-    break;
-  }
-  case ParseASTDump: {
-    std::auto_ptr<ASTConsumer> C(CreateASTDumper());
-    ParseAST(PP, MainFileID, *C.get(), Stats);
-    break;
-  }
-  case ParseASTView: {
-    std::auto_ptr<ASTConsumer> C(CreateASTViewer());
-    ParseAST(PP, MainFileID, *C.get(), Stats);
-    break;
-  }
-  case ParseCFGDump:
-  case ParseCFGView: {
-    std::auto_ptr<ASTConsumer> C(CreateCFGDumper(ProgAction == ParseCFGView));
-    ParseAST(PP, MainFileID, *C.get(), Stats);
-    break;
-  }
-  case AnalysisLiveVariables: {
-    std::auto_ptr<ASTConsumer> C(CreateLiveVarAnalyzer());
-    ParseAST(PP, MainFileID, *C.get(), Stats);
-    break;
-  }
-  case WarnDeadStores: {
-    std::auto_ptr<ASTConsumer> C(CreateDeadStoreChecker(PP.getDiagnostics()));
-    ParseAST(PP, MainFileID, *C.get(), Stats);
-    break;
-  }
-  case WarnDeadStoresCheck: {
-    std::auto_ptr<ASTConsumer> C(CreateDeadStoreChecker(PP.getDiagnostics()));
-    exit (CheckASTConsumer(PP, MainFileID, C));
-    break;
-  }
       
-  case WarnUninitVals: {
-    std::auto_ptr<ASTConsumer> C(CreateUnitValsChecker(PP.getDiagnostics()));
-    ParseAST(PP, MainFileID, *C.get(), Stats);
+  case ParseASTCheck:
+    PerformDiagnosticsCheck = true;
+  case ParseSyntaxOnly:              // -fsyntax-only
+  case BuildAST:
+    Consumer = new ASTConsumer();
     break;
-  }    
-  case EmitLLVM: {
-    std::auto_ptr<ASTConsumer> C(CreateLLVMEmitter(PP.getDiagnostics()));
-    ParseAST(PP, MainFileID, *C.get(), Stats);
+
+  case ParseASTPrint:
+    Consumer = CreateASTPrinter();
+    break;
+
+  case ParseASTDump:
+    Consumer = CreateASTDumper();
+    break;
+
+  case ParseASTView:
+    Consumer = CreateASTViewer();      
+    break;
+
+  case ParseCFGDump:
+  case ParseCFGView:
+    Consumer = CreateCFGDumper(ProgAction == ParseCFGView);
+    break;
+      
+  case AnalysisLiveVariables:
+    Consumer = CreateLiveVarAnalyzer();
+    break;
+
+  case WarnDeadStores:    
+    Consumer = CreateDeadStoreChecker(PP.getDiagnostics());
+    break;
+      
+  case WarnUninitVals:
+    Consumer = CreateUnitValsChecker(PP.getDiagnostics());
+    break;
+
+  case EmitLLVM:
+    Consumer = CreateLLVMEmitter(PP.getDiagnostics());
     break;
   }
-  case ParseASTCheck:
-    exit(CheckDiagnostics(PP, MainFileID));
-    break;
+  
+  if (Consumer) {
+    if (PerformDiagnosticsCheck)
+      exit (CheckASTConsumer(PP, MainFileID, Consumer));
+    else
+      ParseAST(PP, MainFileID, *Consumer, Stats);
+
+    delete Consumer;
   }
   
   if (Stats) {
