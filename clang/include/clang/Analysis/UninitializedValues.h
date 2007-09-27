@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_UNITVALS_H
 #define LLVM_CLANG_UNITVALS_H
 
-#include "llvm/ADT/BitVector.h"
+#include "clang/Analysis/ExprDeclBitVector.h"
 #include "clang/Analysis/FlowSensitive/DataflowValues.h"
 
 namespace clang {
@@ -31,75 +31,16 @@ namespace clang {
 class UninitializedValues_ValueTypes {
 public:
 
-  //===--------------------------------------------------------------------===//
-  // AnalysisDataTy - Whole-function meta data used by the transfer function
-  //  logic.
-  //===--------------------------------------------------------------------===//
-  
   struct ObserverTy;
   
-  struct AnalysisDataTy {
-    llvm::DenseMap<const BlockVarDecl*, unsigned > VMap;
-    llvm::DenseMap<const Expr*, unsigned > EMap;
-    unsigned NumDecls;
-    unsigned NumBlockExprs;
+  struct AnalysisDataTy : public ExprDeclBitVector_Types::AnalysisDataTy {    
+    AnalysisDataTy() : Observer(NULL) {}
+    virtual ~AnalysisDataTy() {};
+    
     ObserverTy* Observer;
-    
-    AnalysisDataTy() : NumDecls(0), NumBlockExprs(0), Observer(NULL) {}
-    
-    bool isTracked(const BlockVarDecl* VD) { 
-      return VMap.find(VD) != VMap.end();
-    }
-    
-    bool isTracked(const Expr* E) {
-      return EMap.find(E) != EMap.end();
-    }
-    
-    unsigned& operator[](const BlockVarDecl *VD) { return VMap[VD]; }
-    unsigned& operator[](const Expr* E) { return EMap[E]; }
   };
-
-  //===--------------------------------------------------------------------===//
-  // ValTy - Dataflow value.
-  //===--------------------------------------------------------------------===//
   
-  struct ValTy {
-    llvm::BitVector DeclBV;
-    llvm::BitVector ExprBV;
-
-    void resetValues(AnalysisDataTy& AD) {
-      DeclBV.resize(AD.NumDecls);
-      DeclBV.reset();
-      ExprBV.resize(AD.NumBlockExprs);
-      ExprBV.reset();
-    }
-    
-    bool operator==(const ValTy& RHS) const { 
-      return DeclBV == RHS.DeclBV && ExprBV == RHS.ExprBV; 
-    }
-    
-    void copyValues(const ValTy& RHS) {
-      DeclBV = RHS.DeclBV;
-      ExprBV = RHS.ExprBV;
-    }
-
-    llvm::BitVector::reference getBitRef(const BlockVarDecl* VD,
-                                         AnalysisDataTy& AD) {
-      assert (AD.isTracked(VD) && "BlockVarDecl not tracked.");
-      return DeclBV[AD.VMap[VD]];
-    }
-    
-    llvm::BitVector::reference getBitRef(const Expr* E,
-                                         AnalysisDataTy& AD) {
-      assert (AD.isTracked(E) && "Expr not tracked.");                                                                                   
-      return ExprBV[AD.EMap[E]];
-    }
-    
-    bool sizesEqual(ValTy& RHS) {
-      return DeclBV.size() == RHS.DeclBV.size() &&
-             ExprBV.size() == RHS.ExprBV.size();
-    }
-  };  
+  typedef ExprDeclBitVector_Types::ValTy ValTy;
   
   //===--------------------------------------------------------------------===//
   // ObserverTy - Observer for querying DeclRefExprs that use an uninitalized

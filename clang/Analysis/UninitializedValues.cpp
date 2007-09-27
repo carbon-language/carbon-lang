@@ -33,13 +33,8 @@ class RegisterDeclsExprs : public CFGRecStmtDeclVisitor<RegisterDeclsExprs> {
 public:
   RegisterDeclsExprs(UninitializedValues::AnalysisDataTy& ad) :  AD(ad) {}
   
-  void VisitBlockVarDecl(BlockVarDecl* VD) {
-    if (!AD.isTracked(VD)) AD[VD] = AD.NumDecls++;
-  }
-  
-  void BlockStmt_VisitExpr(Expr* E) { 
-    if (!AD.isTracked(E)) AD[E] = AD.NumBlockExprs++;
-  }
+  void VisitBlockVarDecl(BlockVarDecl* VD) { AD.Register(VD); }
+  void BlockStmt_VisitExpr(Expr* E) { AD.Register(E); }
 };
   
 } // end anonymous namespace
@@ -77,19 +72,19 @@ public:
   bool VisitDeclStmt(DeclStmt* D);
   
   BlockVarDecl* FindBlockVarDecl(Stmt* S);
-  
-  static inline bool Initialized() { return true; }
-  static inline bool Uninitialized() { return false; }
 };
+  
+static const bool Initialized = true;
+static const bool Uninitialized = false;  
 
 
 bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
   if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl())) {
     if (AD.Observer) AD.Observer->ObserveDeclRefExpr(V,AD,DR,VD);
       
-    return V.getBitRef(VD,AD);
+    return V(VD,AD);
   }
-  else return Initialized();
+  else return Initialized;
 }
 
 BlockVarDecl* TransferFuncs::FindBlockVarDecl(Stmt *S) {
@@ -109,7 +104,7 @@ BlockVarDecl* TransferFuncs::FindBlockVarDecl(Stmt *S) {
 bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
 
   if (CFG::hasImplicitControlFlow(B))
-    return V.getBitRef(B,AD);
+    return V(B,AD);
   
   if (B->isAssignmentOp())
     // Get the Decl for the LHS (if any).
@@ -122,30 +117,33 @@ bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
         // just adding extra messages that don't
         // contribute to diagnosing the bug.  In InitWithAssigns mode
         // we unconditionally set the assigned variable to Initialized to
-        // prevent Uninitialized propogation.
-        return V.getBitRef(VD,AD) = Initialized();
+        // prevent Uninitialized propagation.
+        return V(VD,AD) = Initialized;
       }
-      else return V.getBitRef(VD,AD) = Visit(B->getRHS());
+      else return V(VD,AD) = Visit(B->getRHS());
   
   return VisitStmt(B);
 }
 
 bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
-  bool x = Initialized();
+  bool x = Initialized;
   
   for (ScopedDecl* D = S->getDecl(); D != NULL; D = D->getNextDeclarator())
-    if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(D))
-      if (Stmt* I = VD->getInit()) {
-        x = V.getBitRef(cast<Expr>(I),AD);
-        V.getBitRef(VD,AD) = x;
-      }
+    if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(D)) {
+      if (Stmt* I = VD->getInit())
+        x = InitWithAssigns ? Initialized : V(cast<Expr>(I),AD);
+      else
+        x = Uninitialized;
+      
+      V(VD,AD) = x;
+    }
       
   return x;
 }
 
 bool TransferFuncs::VisitCallExpr(CallExpr* C) {
   VisitChildren(C);
-  return Initialized();
+  return Initialized;
 }
 
 bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
@@ -153,7 +151,7 @@ bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
     case UnaryOperator::AddrOf:
       // For "&x", treat "x" as now being initialized.
       if (BlockVarDecl* VD = FindBlockVarDecl(U->getSubExpr()))
-        V.getBitRef(VD,AD) = Initialized();
+        V(VD,AD) = Initialized;
       else 
         return Visit(U->getSubExpr());
 
@@ -163,20 +161,20 @@ bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
 }
 
 bool TransferFuncs::VisitStmt(Stmt* S) {
-  bool x = Initialized();
+  bool x = Initialized;
 
   // We don't stop at the first subexpression that is Uninitialized because
   // evaluating some subexpressions may result in propogating "Uninitialized"
   // or "Initialized" to variables referenced in the other subexpressions.
   for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
-    if (Visit(*I) == Uninitialized()) x = Uninitialized();
+    if (Visit(*I) == Uninitialized) x = Uninitialized;
   
   return x;
 }
 
 bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
   assert (AD.isTracked(E));
-  return V.getBitRef(E,AD) = Visit(E);
+  return V(E,AD) = Visit(E);
 }
   
 } // end anonymous namespace
@@ -196,15 +194,9 @@ bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
 //===----------------------------------------------------------------------===//      
 
 namespace {
-struct Merge {
-  void operator()(UninitializedValues::ValTy& Dst,
-                  UninitializedValues::ValTy& Src) {
-    assert (Src.sizesEqual(Dst) && "BV sizes do not match.");
-    Dst.DeclBV |= Src.DeclBV;
-    Dst.ExprBV |= Src.ExprBV;
-  }
-};
-} // end anonymous namespace
+  typedef ExprDeclBitVector_Types::Union Merge;
+  typedef DataflowSolver<UninitializedValues,TransferFuncs,Merge> Solver;
+}
 
 //===----------------------------------------------------------------------===//
 // Unitialized values checker.   Scan an AST and flag variable uses
@@ -228,7 +220,7 @@ public:
 
     assert ( AD.isTracked(VD) && "Unknown VarDecl.");
     
-    if (V.getBitRef(VD,AD) == TransferFuncs::Uninitialized())
+    if (V(VD,AD) == Uninitialized)
       if (AlreadyWarned.insert(VD))
         Diags.Report(DR->getSourceRange().Begin(), diag::warn_uninit_val);
   }
@@ -237,8 +229,6 @@ public:
 
 namespace clang {
 void CheckUninitializedValues(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
-
-  typedef DataflowSolver<UninitializedValues,TransferFuncs,Merge> Solver;
   
   // Compute the unitialized values information.
   UninitializedValues U;
