@@ -1174,6 +1174,49 @@ void Sema::ActOnImpleIvarVsClassIvars(DeclTy *ClassDecl,
       
 }
 
+void Sema::ActOnImplMethodsVsClassMethods(DeclTy* ImplClassDecl, 
+                                          DeclTy* ClassDecl) {
+  ObjcImplementationDecl* IMPDecl = 
+    cast<ObjcImplementationDecl>(static_cast<Decl*>(ImplClassDecl));
+  assert(IMPDecl && "missing implmentation class decl");
+  
+  ObjcInterfaceDecl* IDecl = 
+    cast<ObjcInterfaceDecl>(static_cast<Decl*>(ClassDecl));
+  assert(IDecl && "missing interface class decl");
+  
+  llvm::DenseMap<const SelectorInfo*, char> Map;
+  // Check and see if instance methods in class interface have been
+  // implemented in the implementation class.
+  ObjcMethodDecl **methods = IMPDecl->getInsMethods();
+  for (int i=0; i < IMPDecl->getNumInsMethods(); i++) {
+    Map[methods[i]->getSelector()] = 'a';
+  }
+  
+  methods = IDecl->getInsMethods();
+  for (int j = 0; j < IDecl->getNumInsMethods(); j++)
+    if (!Map.count(methods[j]->getSelector())) {
+      llvm::SmallString<128> buf;
+      Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
+           methods[j]->getSelector()->getName(buf));
+    }
+  Map.clear();
+  // Check and see if class methods in class interface have been
+  // implemented in the implementation class.
+  methods = IMPDecl->getClsMethods();
+  for (int i=0; i < IMPDecl->getNumClsMethods(); i++) {
+    Map[methods[i]->getSelector()] = 'a';
+  }
+  
+  methods = IDecl->getClsMethods();
+  for (int j = 0; j < IDecl->getNumClsMethods(); j++)
+    if (!Map.count(methods[j]->getSelector())) {
+      llvm::SmallString<128> buf;
+      Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
+           methods[j]->getSelector()->getName(buf));
+    }
+  return;
+}
+
 /// ObjcClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
@@ -1560,7 +1603,17 @@ void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl,
                                         static_cast<Decl*>(ClassDecl));
     Category->ObjcAddCatMethods(&insMethods[0], insMethods.size(),
                                 &clsMethods[0], clsMethods.size());
-  }  
+  }
+  else if (isa<ObjcImplementationDecl>(static_cast<Decl *>(ClassDecl))) {
+    ObjcImplementationDecl* ImplClass = cast<ObjcImplementationDecl>(
+                                               static_cast<Decl*>(ClassDecl));
+    ImplClass->ObjcAddImplMethods(&insMethods[0], insMethods.size(),
+                                 &clsMethods[0], clsMethods.size());
+    ObjcInterfaceDecl* IDecl = 
+       Context.getObjCInterfaceDecl(ImplClass->getIdentifier());
+    if (IDecl)
+      ActOnImplMethodsVsClassMethods(ImplClass, IDecl);
+  }
   else
     assert(0 && "Sema::ObjcAddMethodsToClass(): Unknown DeclTy");
   return;

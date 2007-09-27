@@ -591,6 +591,12 @@ public:
   ObjcIvarDecl **getIntfDeclIvars() const { return Ivars; }
   int getIntfDeclNumIvars() const { return NumIvars; }
   
+  ObjcMethodDecl** getInsMethods() const { return InsMethods; }
+  int getNumInsMethods() const { return NumInsMethods; }
+  
+  ObjcMethodDecl** getClsMethods() const { return ClsMethods; }
+  int getNumClsMethods() const { return NumClsMethods; }
+  
   void ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars, 
 				       unsigned numIvars);
 
@@ -677,6 +683,9 @@ private:
   
   /// List of attributes for this method declaration.
   AttributeList *MethodAttrs;
+  
+  /// Loc - location of this declaration.
+  SourceLocation Loc;
 
   /// instance (true) or class (false) method.
   bool IsInstance : 1;
@@ -690,7 +699,7 @@ public:
 		 Decl *PrevDecl = 0)
     : Decl(ObjcMethod), Selector(SelInfo), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
-      MethodAttrs(M), IsInstance(isInstance) {}
+      MethodAttrs(M), Loc(L), IsInstance(isInstance) {}
 #if 0
   ObjcMethodDecl(Kind DK, SourceLocation L, IdentifierInfo &SelId, QualType T,
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
@@ -701,6 +710,7 @@ public:
       MethodAttrs(M), IsInstance(isInstance) {}
 #endif
   virtual ~ObjcMethodDecl();
+  SelectorInfo *getSelector() const { return Selector; }
   QualType getMethodType() const { return MethodDeclType; }
   unsigned getNumMethodParams() const { return NumMethodParams; }
   ParmVarDecl *getMethodParamDecl(unsigned i) {
@@ -710,6 +720,7 @@ public:
   void setMethodParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
 
   AttributeList *getMethodAttrs() const {return MethodAttrs;}
+  SourceLocation getLocation() const { return Loc; }
   bool isInstance() const { return IsInstance; }
   // Related to protocols declared in  @protocol
   void setDeclImplementation(ImplementationControl ic)
@@ -890,13 +901,19 @@ class ObjcImplementationDecl : public TypeDecl {
   void ObjcAddInstanceVariablesToClassImpl(ObjcIvarDecl **ivars, 
                                            unsigned numIvars);
     
-  void ObjcAddMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
-                        ObjcMethodDecl **clsMethods, unsigned numClsMembers);
+  void ObjcAddImplMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
+                          ObjcMethodDecl **clsMethods, unsigned numClsMembers);
     
   ObjcInterfaceDecl *getImplSuperClass() const { return SuperClass; }
   
   void setImplSuperClass(ObjcInterfaceDecl * superCls) 
          { SuperClass = superCls; }
+  
+  ObjcMethodDecl **getInsMethods() const { return InsMethods; }
+  int getNumInsMethods() const { return NumInsMethods; }
+  
+  ObjcMethodDecl **getClsMethods() const { return ClsMethods; }
+  int getNumClsMethods() const { return NumClsMethods; }
     
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcImplementation;

@@ -432,7 +432,8 @@ DIAG(err_inconsistant_ivar, ERROR,
      "inconsistent instance variable specification")
 DIAG(err_conflicting_ivar_type, ERROR,
      "conflicting instance variable type")
-
+DIAG(warn_undef_method_impl, WARNING,
+     "method definition for '%0' not found")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis

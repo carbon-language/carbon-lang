@@ -882,12 +882,22 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
   if (Tok.getKind() == tok::l_brace)
     ParseObjCClassInstanceVariables(ImplClsType/*FIXME*/); // we have ivars
   
-  return 0;
+  return ImplClsType;
 }
 Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_end) &&
          "ParseObjCAtEndDeclaration(): Expected @end");
   ConsumeToken(); // the "end" identifier
+  if (ObjcImpDecl) {
+    // Checking is not necessary except that a parse error might have caused
+    // @implementation not to have been parsed to completion and ObjcImpDecl 
+    // could be 0.
+    /// Insert collected methods declarations into the @interface object.
+    Actions.ObjcAddMethodsToClass(ObjcImpDecl,
+                                  &AllImplMethods[0],AllImplMethods.size());
+    ObjcImpDecl = 0;
+    AllImplMethods.clear();
+  }
 
   return 0;
 }
@@ -1056,7 +1066,7 @@ void Parser::ParseObjCInstanceMethodDefinition() {
   assert(Tok.getKind() == tok::minus &&
          "ParseObjCInstanceMethodDefinition(): Expected '-'");
   // FIXME: @optional/@protocol??
-  ParseObjCMethodPrototype(ObjcImpDecl);
+  AllImplMethods.push_back(ParseObjCMethodPrototype(ObjcImpDecl));
   // parse optional ';'
   if (Tok.getKind() == tok::semi)
     ConsumeToken();
@@ -1075,7 +1085,7 @@ void Parser::ParseObjCClassMethodDefinition() {
   assert(Tok.getKind() == tok::plus &&
          "ParseObjCClassMethodDefinition(): Expected '+'");
   // FIXME: @optional/@protocol??
-  ParseObjCMethodPrototype(ObjcImpDecl);
+  AllImplMethods.push_back(ParseObjCMethodPrototype(ObjcImpDecl));
   // parse optional ';'
   if (Tok.getKind() == tok::semi)
     ConsumeToken();

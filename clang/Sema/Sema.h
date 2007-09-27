@@ -390,6 +390,8 @@ public:
   virtual void ActOnImpleIvarVsClassIvars(DeclTy *ClassDecl,
                                           DeclTy **Fields, unsigned NumFields);
   
+  virtual void ActOnImplMethodsVsClassMethods(DeclTy *ImplClass, DeclTy *Class);
+
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
     tok::TokenKind MethodType, TypeTy *ReturnType, SelectorInfo *Sel,
     // optional arguments. The number of types/arguments is obtained

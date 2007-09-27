@@ -265,6 +265,8 @@ private:
   DeclTy *ParseObjCAtProtocolDeclaration(SourceLocation atLoc);
   
   DeclTy *ObjcImpDecl;
+  /// Vector is used to collect method decls for each @implementation
+  llvm::SmallVector<DeclTy*, 32>  AllImplMethods;
   DeclTy *ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtEndDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtAliasDeclaration(SourceLocation atLoc);
