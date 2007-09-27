@@ -25,6 +25,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include <climits>
@@ -523,17 +524,22 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
   if (LiveRegs.empty())
     return false;
 
+  SmallSet<unsigned, 4> RegAdded;
   // If this node would clobber any "live" register, then it's not ready.
   for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
        I != E; ++I) {
     if (I->Cost < 0)  {
       unsigned Reg = I->Reg;
-      if (LiveRegs.count(Reg) && LiveRegDefs[Reg] != I->Dep)
-        LRegs.push_back(Reg);
+      if (LiveRegs.count(Reg) && LiveRegDefs[Reg] != I->Dep) {
+        if (RegAdded.insert(Reg))
+          LRegs.push_back(Reg);
+      }
       for (const unsigned *Alias = MRI->getAliasSet(Reg);
            *Alias; ++Alias)
-        if (LiveRegs.count(*Alias) && LiveRegDefs[*Alias] != I->Dep)
-          LRegs.push_back(*Alias);
+        if (LiveRegs.count(*Alias) && LiveRegDefs[*Alias] != I->Dep) {
+          if (RegAdded.insert(*Alias))
+            LRegs.push_back(*Alias);
+        }
     }
   }
 
@@ -545,12 +551,16 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
     if (!TID.ImplicitDefs)
       continue;
     for (const unsigned *Reg = TID.ImplicitDefs; *Reg; ++Reg) {
-      if (LiveRegs.count(*Reg) && LiveRegDefs[*Reg] != SU)
-        LRegs.push_back(*Reg);
+      if (LiveRegs.count(*Reg) && LiveRegDefs[*Reg] != SU) {
+        if (RegAdded.insert(*Reg))
+          LRegs.push_back(*Reg);
+      }
       for (const unsigned *Alias = MRI->getAliasSet(*Reg);
            *Alias; ++Alias)
-        if (LiveRegs.count(*Alias) && LiveRegDefs[*Alias] != SU)
-          LRegs.push_back(*Alias);
+        if (LiveRegs.count(*Alias) && LiveRegDefs[*Alias] != SU) {
+          if (RegAdded.insert(*Alias))
+            LRegs.push_back(*Alias);
+        }
     }
   }
   return !LRegs.empty();
