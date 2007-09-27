@@ -2470,7 +2470,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
     APInt End = A.sge(One) ? (Range.getUpper() - One) : Range.getLower();
 
     // The exit value should be (End+A)/A.
-    APInt ExitVal = (End + A).sdiv(A);
+    APInt ExitVal = (End + A).udiv(A);
     ConstantInt *ExitValue = ConstantInt::get(ExitVal);
 
     // Evaluate at the exit value.  If we really did fall out of the valid
