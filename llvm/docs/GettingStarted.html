@@ -114,13 +114,13 @@ and performance.
   <li>Read the documentation.</li>
   <li>Read the documentation.</li>
   <li>Remember that you were warned twice about reading the documentation.</li>
-  <li>Install the GCC front end if you intend to compile C or C++:
+  <li>Install the llvm-gcc4.0 (or llvm-gcc4.2) front end if you intend to compile C or C++:
     <ol>
       <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt></li>
       <li><tt>gunzip --stdout llvm-gcc.<i>platform</i>.tar.gz | tar -xvf -</tt>
       </li>
-      <li><tt>cd llvm-gcc3.4/<i>platform</i> (llvm-gcc3.4 only)<br>
-        ./fixheaders</tt></li>
+      <ul><li>If the binary extension is ".bz" use bunzip2 instead of gunzip.</li>
+      </ul>
       <li>Add llvm-gcc's "bin" directory to your PATH variable.</li>
     </ol></li>
 
