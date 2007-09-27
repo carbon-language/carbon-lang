@@ -206,7 +206,7 @@ N: Devang Patel
 E: dpatel@apple.com
 D: LTO tool, PassManager rewrite, Loop Pass Manager, Loop Rotate
 D: GCC PCH Integration (llvm-gcc), llvm-gcc improvements
-D: Optimizer improvements
+D: Optimizer improvements, Loop Index Split
 
 N: Vladimir Prus
 W: http://vladimir_prus.blogspot.com
