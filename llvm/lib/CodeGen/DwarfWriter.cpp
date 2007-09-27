@@ -829,12 +829,13 @@ public:
   AsmPrinter *getAsm() const { return Asm; }
   MachineModuleInfo *getMMI() const { return MMI; }
   const TargetAsmInfo *getTargetAsmInfo() const { return TAI; }
+  const TargetData *getTargetData() const { return TD; }
 
   void PrintRelDirective(bool Force32Bit = false, bool isInSection = false)
                                                                          const {
     if (isInSection && TAI->getDwarfSectionOffsetDirective())
       O << TAI->getDwarfSectionOffsetDirective();
-    else if (Force32Bit || TAI->getAddressSize() == sizeof(int32_t))
+    else if (Force32Bit || TD->getPointerSize() == sizeof(int32_t))
       O << TAI->getData32bitsDirective();
     else
       O << TAI->getData64bitsDirective();
@@ -969,7 +970,7 @@ public:
     int stackGrowth =
         Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
           TargetFrameInfo::StackGrowsUp ?
-            TAI->getAddressSize() : -TAI->getAddressSize();
+            TD->getPointerSize() : -TD->getPointerSize();
     bool IsLocal = BaseLabel && strcmp(BaseLabel, "label") == 0;
 
     for (unsigned i = 0, N = Moves.size(); i < N; ++i) {
@@ -1392,7 +1393,7 @@ private:
   ///
   DIE *ConstructPointerType(CompileUnit *Unit, const std::string &Name) {
     DIE Buffer(DW_TAG_pointer_type);
-    AddUInt(&Buffer, DW_AT_byte_size, 0, TAI->getAddressSize());
+    AddUInt(&Buffer, DW_AT_byte_size, 0, TD->getPointerSize());
     if (!Name.empty()) AddString(&Buffer, DW_AT_name, DW_FORM_string, Name);
     return Unit->AddDie(Buffer);
   }
@@ -2146,7 +2147,7 @@ private:
     Asm->EmitInt16(DWARF_VERSION); Asm->EOL("DWARF version number");
     EmitSectionOffset("abbrev_begin", "section_abbrev", 0, 0, true, false);
     Asm->EOL("Offset Into Abbrev. Section");
-    Asm->EmitInt8(TAI->getAddressSize()); Asm->EOL("Address Size (in bytes)");
+    Asm->EmitInt8(TD->getPointerSize()); Asm->EOL("Address Size (in bytes)");
   
     EmitDIE(Die);
     // FIXME - extra padding for gdb bug.
@@ -2297,7 +2298,7 @@ private:
 
         // Define the line address.
         Asm->EmitInt8(0); Asm->EOL("Extended Op");
-        Asm->EmitInt8(TAI->getAddressSize() + 1); Asm->EOL("Op size");
+        Asm->EmitInt8(TD->getPointerSize() + 1); Asm->EOL("Op size");
         Asm->EmitInt8(DW_LNE_set_address); Asm->EOL("DW_LNE_set_address");
         EmitReference("label",  LabelID); Asm->EOL("Location label");
         
@@ -2335,7 +2336,7 @@ private:
 
       // Define last address of section.
       Asm->EmitInt8(0); Asm->EOL("Extended Op");
-      Asm->EmitInt8(TAI->getAddressSize() + 1); Asm->EOL("Op size");
+      Asm->EmitInt8(TD->getPointerSize() + 1); Asm->EOL("Op size");
       Asm->EmitInt8(DW_LNE_set_address); Asm->EOL("DW_LNE_set_address");
       EmitReference("section_end", j + 1); Asm->EOL("Section end label");
 
@@ -2359,7 +2360,7 @@ private:
     int stackGrowth =
         Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
           TargetFrameInfo::StackGrowsUp ?
-        TAI->getAddressSize() : -TAI->getAddressSize();
+        TD->getPointerSize() : -TD->getPointerSize();
 
     // Start the dwarf frame section.
     Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
@@ -2517,7 +2518,7 @@ private:
     EmitReference("info_begin", Unit->getID());
     Asm->EOL("Offset of Compilation Unit Info");
 
-    Asm->EmitInt8(TAI->getAddressSize()); Asm->EOL("Size of Address");
+    Asm->EmitInt8(TD->getPointerSize()); Asm->EOL("Size of Address");
 
     Asm->EmitInt8(0); Asm->EOL("Size of Segment Descriptor");
 
@@ -2781,7 +2782,7 @@ private:
     int stackGrowth =
         Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
           TargetFrameInfo::StackGrowsUp ?
-        TAI->getAddressSize() : -TAI->getAddressSize();
+        TD->getPointerSize() : -TD->getPointerSize();
 
     // Begin eh frame section.
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
@@ -2898,7 +2899,7 @@ private:
         
         if (EHFrameInfo.hasLandingPads) {
           EmitReference("exception", EHFrameInfo.Number, true);
-        } else if(TAI->getAddressSize() == 8) {
+        } else if (TD->getPointerSize() == 8) {
           Asm->EmitInt64((int)0);
         } else {
           Asm->EmitInt32((int)0);
@@ -3183,7 +3184,7 @@ private:
     for (unsigned i = 0, e = CallSites.size(); i < e; ++i)
       SizeSites += Asm->SizeULEB128(CallSites[i].Action);
 
-    unsigned SizeTypes = TypeInfos.size() * TAI->getAddressSize();
+    unsigned SizeTypes = TypeInfos.size() * TD->getPointerSize();
 
     unsigned TypeOffset = sizeof(int8_t) + // Call site format
                           Asm->SizeULEB128(SizeSites) + // Call-site table length
@@ -3244,7 +3245,7 @@ private:
       Asm->EOL("Region length");
 
       if (!S.PadLabel) {
-        if (TAI->getAddressSize() == sizeof(int32_t))
+        if (TD->getPointerSize() == sizeof(int32_t))
           Asm->EmitInt32(0);
         else
           Asm->EmitInt64(0);
@@ -3484,7 +3485,7 @@ void DIEDwarfLabel::EmitValue(DwarfDebug &DD, unsigned Form) {
 /// SizeOf - Determine size of label value in bytes.
 ///
 unsigned DIEDwarfLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
-  return DD.getTargetAsmInfo()->getAddressSize();
+  return DD.getTargetData()->getPointerSize();
 }
 
 //===----------------------------------------------------------------------===//
@@ -3498,7 +3499,7 @@ void DIEObjectLabel::EmitValue(DwarfDebug &DD, unsigned Form) {
 /// SizeOf - Determine size of label value in bytes.
 ///
 unsigned DIEObjectLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
-  return DD.getTargetAsmInfo()->getAddressSize();
+  return DD.getTargetData()->getPointerSize();
 }
     
 //===----------------------------------------------------------------------===//
@@ -3514,7 +3515,7 @@ void DIEDelta::EmitValue(DwarfDebug &DD, unsigned Form) {
 ///
 unsigned DIEDelta::SizeOf(const DwarfDebug &DD, unsigned Form) const {
   if (Form == DW_FORM_data4) return 4;
-  return DD.getTargetAsmInfo()->getAddressSize();
+  return DD.getTargetData()->getPointerSize();
 }
 
 //===----------------------------------------------------------------------===//

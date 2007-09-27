@@ -1508,13 +1508,13 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   if (MMI && MMI->needsFrameInfo()) {
     std::vector<MachineMove> &Moves = MMI->getFrameMoves();
-    const TargetAsmInfo *TAI = MF.getTarget().getTargetAsmInfo();
+    const TargetData *TD = MF.getTarget().getTargetData();
 
     // Calculate amount of bytes used for return address storing
     int stackGrowth =
       (MF.getTarget().getFrameInfo()->getStackGrowthDirection() ==
        TargetFrameInfo::StackGrowsUp ?
-       TAI->getAddressSize() : -TAI->getAddressSize());
+       TD->getPointerSize() : -TD->getPointerSize());
 
     if (StackSize) {
       // Show update of SP.

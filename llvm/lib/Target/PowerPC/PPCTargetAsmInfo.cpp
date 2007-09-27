@@ -29,7 +29,6 @@ PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   AssemblerDialect = TM.getSubtargetImpl()->getAsmFlavor();
   
   NeedsSet = true;
-  AddressSize = isPPC64 ? 8 : 4;
   DwarfEHFrameSection =
   ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
   DwarfExceptionSection = ".section __DATA,__gcc_except_tab";

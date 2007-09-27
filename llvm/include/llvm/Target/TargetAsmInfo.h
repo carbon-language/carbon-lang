@@ -56,10 +56,6 @@ namespace llvm {
     /// section on this target.  Null if this target doesn't support zerofill.
     const char *ZeroFillDirective;        // Default is null.
     
-    /// AddressSize - Size of addresses used in file.
-    ///
-    unsigned AddressSize;                 // Defaults to 4.
-    
     /// NeedsSet - True if target asm can't compute addresses on data
     /// directives.
     bool NeedsSet;                        // Defaults to false.
@@ -399,9 +395,6 @@ namespace llvm {
     }
     const char *getZeroFillDirective() const {
       return ZeroFillDirective;
-    }
-    unsigned getAddressSize() const {
-      return AddressSize;
     }
     bool needsSet() const {
       return NeedsSet;

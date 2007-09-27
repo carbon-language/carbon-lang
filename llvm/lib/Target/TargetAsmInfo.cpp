@@ -25,7 +25,6 @@ TargetAsmInfo::TargetAsmInfo() :
   TLSDataSection("\t.section .tdata,\"awT\",@progbits"),
   TLSBSSSection("\t.section .tbss,\"awT\",@nobits"),
   ZeroFillDirective(0),
-  AddressSize(4),
   NeedsSet(false),
   MaxInstLength(4),
   PCSymbol("$"),
