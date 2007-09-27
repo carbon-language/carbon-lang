@@ -299,7 +299,10 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 const TargetRegisterClass *
 X86RegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
   if (RC == &X86::CCRRegClass)
-    return &X86::GR32RegClass;
+    if (Is64Bit)
+      return &X86::GR64RegClass;
+    else
+      return &X86::GR32RegClass;
   return NULL;
 }
 
