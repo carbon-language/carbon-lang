@@ -21,8 +21,6 @@
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
 #include "llvm/Config/config.h" 
-#include <stdio.h>
-#include <string.h>
 
 
 /*===-- Modules -----------------------------------------------------------===*/
@@ -477,7 +475,6 @@ CAMLprim value llvm_value_is_block(LLVMValueRef Val) {
 #define Builder_val(v)  (*(LLVMBuilderRef *)(Data_custom_val(v)))
 
 void llvm_finalize_builder(value B) {
-  fprintf(stderr, "disposing builder = 0x%08x\n", (int) Builder_val(B));
   LLVMDisposeBuilder(Builder_val(B));
 }
 
@@ -505,7 +502,6 @@ CAMLprim value llvm_builder_at_end(LLVMBasicBlockRef BB) {
   value V;
   LLVMBuilderRef B = LLVMCreateBuilder();
   LLVMPositionBuilderAtEnd(B, BB);
-  fprintf(stderr, "returning builder = 0x%08x\n", (int) B);
   V = alloc_custom(&builder_ops, sizeof(LLVMBuilderRef), 0, 1);
   Builder_val(V) = B;
   return V;
