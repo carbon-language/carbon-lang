@@ -134,6 +134,21 @@ namespace {
         assert(Offset == 0 || Ty != AddressOf &&
                "Offset is illegal on addressof constraints");
       }
+      bool operator==(const Constraint &RHS) const {
+        return RHS.Type == Type
+          && RHS.Dest == Dest
+          && RHS.Src == Src
+          && RHS.Offset == Offset;
+      }
+      bool operator<(const Constraint &RHS) const {
+        if (RHS.Type != Type)
+          return RHS.Type < Type;
+        else if (RHS.Dest != Dest)
+          return RHS.Dest < Dest;
+        else if (RHS.Src != Src)
+          return RHS.Src < Src;
+        return RHS.Offset < Offset;
+      }
     };
 
     // Node class - This class is used to represent a node in the constraint
@@ -1735,6 +1750,7 @@ void Andersens::HUValNum(unsigned NodeIndex) {
 /// replaced by their the pointer equivalence class representative.
 void Andersens::RewriteConstraints() {
   std::vector<Constraint> NewConstraints;
+  std::set<Constraint> Seen;
 
   PEClass2Node.clear();
   PENLEClass2Node.clear();
@@ -1768,12 +1784,14 @@ void Andersens::RewriteConstraints() {
     // it.
     if (C.Src == C.Dest && C.Type == Constraint::Copy)
       continue;
-    
+
     C.Src = FindEquivalentNode(RHSNode, RHSLabel);
     C.Dest = FindEquivalentNode(FindNode(LHSNode), LHSLabel);
-    if (C.Src == C.Dest && C.Type == Constraint::Copy)
+    if (C.Src == C.Dest && C.Type == Constraint::Copy
+        || Seen.count(C) != 0)
       continue;
 
+    Seen.insert(C);
     NewConstraints.push_back(C);
   }
   Constraints.swap(NewConstraints);
