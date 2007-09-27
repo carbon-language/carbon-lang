@@ -445,7 +445,7 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
   assert(Tok.getKind() == tok::l_paren && "expected (");
   
   SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
-  TypeTy *Ty;
+  TypeTy *Ty = 0;
   
   while (isObjCTypeQualifier())
     ConsumeToken();

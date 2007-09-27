@@ -485,7 +485,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     QualType R = GetTypeForDeclarator(D, S);
     assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
 
-    FunctionDecl::StorageClass SC;
+    FunctionDecl::StorageClass SC = FunctionDecl::None;
     switch (D.getDeclSpec().getStorageClassSpec()) {
       default: assert(0 && "Unknown storage class!");
       case DeclSpec::SCS_auto:        
