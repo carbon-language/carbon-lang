@@ -326,6 +326,40 @@ void ScheduleDAGRRList::UnscheduleNodeBottomUp(SUnit *SU) {
   AvailableQueue->push(SU);
 }
 
+// FIXME: This is probably too slow!
+static void isReachable(SUnit *SU, SUnit *TargetSU,
+                        SmallPtrSet<SUnit*, 32> &Visited, bool &Reached) {
+  if (Reached) return;
+  if (SU == TargetSU) {
+    Reached = true;
+    return;
+  }
+  if (!Visited.insert(SU)) return;
+
+  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end(); I != E;
+       ++I)
+    isReachable(I->Dep, TargetSU, Visited, Reached);
+}
+
+static bool isReachable(SUnit *SU, SUnit *TargetSU) {
+  SmallPtrSet<SUnit*, 32> Visited;
+  bool Reached = false;
+  isReachable(SU, TargetSU, Visited, Reached);
+  return Reached;
+}
+
+/// willCreateCycle - Returns true if adding an edge from SU to TargetSU will
+/// create a cycle.
+static bool willCreateCycle(SUnit *SU, SUnit *TargetSU) {
+  if (isReachable(TargetSU, SU))
+    return true;
+  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end();
+       I != E; ++I)
+    if (I->Cost < 0 && isReachable(TargetSU, I->Dep))
+      return true;
+  return false;
+}
+
 /// BacktrackBottomUp - Backtrack scheduling to a previous cycle specified in
 /// BTCycle in order to schedule a specific node. Returns the last unscheduled
 /// SUnit. Also returns if a successor is unscheduled in the process.
@@ -469,28 +503,6 @@ static MVT::ValueType getPhysicalRegisterVT(SDNode *N, unsigned Reg,
   return N->getValueType(NumRes);
 }
 
-// FIXME: This is probably too slow!
-static void isReachable(SUnit *SU, SUnit *TargetSU,
-                        SmallPtrSet<SUnit*, 32> &Visited, bool &Reached) {
-  if (Reached) return;
-  if (SU == TargetSU) {
-    Reached = true;
-    return;
-  }
-  if (!Visited.insert(SU)) return;
-
-  for (SUnit::pred_iterator I = SU->Preds.begin(), E = SU->Preds.end(); I != E;
-       ++I)
-    isReachable(I->Dep, TargetSU, Visited, Reached);
-}
-
-static bool isReachable(SUnit *SU, SUnit *TargetSU) {
-  SmallPtrSet<SUnit*, 32> Visited;
-  bool Reached = false;
-  isReachable(SU, TargetSU, Visited, Reached);
-  return Reached;
-}
-
 /// DelayForLiveRegsBottomUp - Returns true if it is necessary to delay
 /// scheduling of the given node to satisfy live physical register dependencies.
 /// If the specific node is the last one that's available to schedule, do
@@ -547,7 +559,7 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU, unsigned &CurCycle){
     }
 
     SUnit *OldSU = Sequence[LiveCycle];
-    if (!isReachable(Sequence[LiveCycle], SU))  {
+    if (!willCreateCycle(SU, OldSU))  {
       // If CycleBound is greater than backtrack cycle, then some of SU
       // successors are going to be unscheduled.
       bool SuccUnsched = SU->CycleBound > LiveCycle;
