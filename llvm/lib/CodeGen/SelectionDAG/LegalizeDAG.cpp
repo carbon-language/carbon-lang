@@ -5743,7 +5743,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::UINT_TO_FP: {
     bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
     MVT::ValueType SrcVT = Node->getOperand(0).getValueType();
-    RTLIB::Libcall LC;
+    RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
     if (Node->getOperand(0).getValueType() == MVT::i64) {
       if (VT == MVT::f32)
         LC = isSigned ? RTLIB::SINTTOFP_I64_F32 : RTLIB::UINTTOFP_I64_F32;
