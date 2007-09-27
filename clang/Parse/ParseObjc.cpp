@@ -463,6 +463,52 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
   return Ty;
 }
 
+static SelectorInfo *ObjcGetUnarySelectorInfo(
+  IdentifierInfo *unarySel,
+  llvm::FoldingSet<SelectorInfo> &SelTab) 
+{
+  // Unique selector, to guarantee there is one per name.
+  llvm::SmallVector<IdentifierInfo *, 1> IIV;
+  llvm::FoldingSetNodeID ID;
+  
+  IIV.push_back(unarySel);
+  SelectorInfo::Profile(ID, &IIV[0], 0);
+
+  void *InsertPos = 0;
+  if (SelectorInfo *SI = SelTab.FindNodeOrInsertPos(ID, InsertPos))
+    return SI;
+
+  // SelectorInfo objects are not allocated with new because they have a
+  // variable size array (for parameter types) at the end of them.
+  SelectorInfo *SI = 
+    (SelectorInfo*)malloc(sizeof(SelectorInfo) + sizeof(IdentifierInfo *));
+  new (SI) SelectorInfo(IIV[0]);
+  SelTab.InsertNode(SI, InsertPos);
+  return SI;
+}
+
+static SelectorInfo *ObjcGetKeywordSelectorInfo(
+  llvm::SmallVectorImpl<IdentifierInfo *> &IIV,
+  llvm::FoldingSet<SelectorInfo> &SelTab) 
+{  
+  // Unique selector, to guarantee there is one per name.
+  llvm::FoldingSetNodeID ID;
+  SelectorInfo::Profile(ID, &IIV[0], IIV.size());
+
+  void *InsertPos = 0;
+  if (SelectorInfo *SI = SelTab.FindNodeOrInsertPos(ID, InsertPos))
+    return SI;
+
+  // SelectorInfo objects are not allocated with new because they have a
+  // variable size array (for parameter types) at the end of them.
+  SelectorInfo *SI = 
+    (SelectorInfo*)malloc(sizeof(SelectorInfo) + 
+                          IIV.size()*sizeof(IdentifierInfo *));
+  new (SI) SelectorInfo(IIV.size(), &IIV[0]);
+  SelTab.InsertNode(SI, InsertPos);
+  return SI;
+}
+
 ///   objc-method-decl:
 ///     objc-selector
 ///     objc-keyword-selector objc-parmlist[opt]
@@ -491,9 +537,10 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
 ///   objc-keyword-attributes:         [OBJC2]
 ///     __attribute__((unused))
 ///
-Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation mLoc,
-					    tok::ObjCKeywordKind MethodImplKind) {
-
+Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType, 
+                                            SourceLocation mLoc,
+					    tok::ObjCKeywordKind MethodImplKind)
+{
   TypeTy *ReturnType = 0;
   AttributeList *methodAttrs = 0;
   
@@ -502,37 +549,38 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation
     ReturnType = ParseObjCTypeName();
   IdentifierInfo *selIdent = ParseObjCSelector();
 
-  llvm::SmallVector<ObjcKeywordDecl, 12> KeyInfo;
-  
+  llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
+  llvm::SmallVector<Action::TypeTy *, 12> KeyTypes;
+  llvm::SmallVector<IdentifierInfo *, 12> ArgNames;
+    
   if (Tok.getKind() == tok::colon) {
+    Action::TypeTy *TypeInfo;
     
     while (1) {
-      ObjcKeywordDecl KeyInfoDecl;
-      KeyInfoDecl.SelectorName = selIdent;
+      KeyIdents.push_back(selIdent);
       
       // Each iteration parses a single keyword argument.
       if (Tok.getKind() != tok::colon) {
         Diag(Tok, diag::err_expected_colon);
         break;
       }
-      KeyInfoDecl.ColonLoc = ConsumeToken(); // Eat the ':'.
+      ConsumeToken(); // Eat the ':'.
       if (Tok.getKind() == tok::l_paren) // Parse the argument type.
-        KeyInfoDecl.TypeInfo = ParseObjCTypeName();
-
+        TypeInfo = ParseObjCTypeName();
+      else
+        TypeInfo = 0;
+      KeyTypes.push_back(TypeInfo);
+      
       // If attributes exist before the argument name, parse them.
       if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute)
-        KeyInfoDecl.AttrList = ParseAttributes();
+        ParseAttributes(); // FIXME: pass attributes through.
 
       if (Tok.getKind() != tok::identifier) {
         Diag(Tok, diag::err_expected_ident); // missing argument name.
         break;
       }
-      KeyInfoDecl.ArgumentName = Tok.getIdentifierInfo();
+      ArgNames.push_back(Tok.getIdentifierInfo());
       ConsumeToken(); // Eat the identifier.
-      
-      // Rather than call out to the actions, package up the info locally, 
-      // like we do for Declarator.      
-      KeyInfo.push_back(KeyInfoDecl);
       
       // Check for another keyword selector.
       selIdent = ParseObjCSelector();
@@ -558,9 +606,11 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation
     // If attributes exist after the method, parse them.
     if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
       methodAttrs = ParseAttributes();
-    return Actions.ObjcBuildMethodDeclaration(mLoc, mType, 
-                                              ReturnType, 
-                                              &KeyInfo[0], KeyInfo.size(), 
+      
+    SelectorInfo *SI = ObjcGetKeywordSelectorInfo(KeyIdents, 
+                                                  PP.getSelectorTable());
+    return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, SI, 
+                                              &KeyTypes[0], &ArgNames[0],
 					      methodAttrs, MethodImplKind);
   } else if (!selIdent) {
     Diag(Tok, diag::err_expected_ident); // missing selector name.
@@ -569,9 +619,9 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType, SourceLocation
   if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
     methodAttrs = ParseAttributes();
 
-  return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, 
-                                            selIdent, methodAttrs,
-					    MethodImplKind);
+  SelectorInfo *SI = ObjcGetUnarySelectorInfo(selIdent, PP.getSelectorTable());
+  return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, SI, 
+                                            0, 0, methodAttrs, MethodImplKind);
 }
 
 ///   objc-protocol-refs:
@@ -1107,19 +1157,21 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   }
   // Parse objc-selector
   IdentifierInfo *selIdent = ParseObjCSelector();
-  llvm::SmallVector<ObjcKeywordMessage, 12> KeyInfo;
+
+  llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
+  llvm::SmallVector<Action::ExprTy *, 12> KeyExprs;
+
   if (Tok.getKind() == tok::colon) {
     while (1) {
       // Each iteration parses a single keyword argument.
-      ObjcKeywordMessage KeyInfoMess;
-      KeyInfoMess.SelectorName = selIdent;
+      KeyIdents.push_back(selIdent);
 
       if (Tok.getKind() != tok::colon) {
         Diag(Tok, diag::err_expected_colon);
         SkipUntil(tok::semi);
         return true;
       }
-      KeyInfoMess.ColonLoc = ConsumeToken(); // Eat the ':'.
+      ConsumeToken(); // Eat the ':'.
       ///  Parse the expression after ':' 
       ExprResult Res = ParseAssignmentExpression();
       if (Res.isInvalid) {
@@ -1127,11 +1179,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
         return Res;
       }
       // We have a valid expression.
-      KeyInfoMess.KeywordExpr = Res.Val;
-      
-      // Rather than call out to the actions, package up the info locally, 
-      // like we do for Declarator.      
-      KeyInfo.push_back(KeyInfoMess);
+      KeyExprs.push_back(Res.Val);
       
       // Check for another keyword selector.
       selIdent = ParseObjCSelector();
@@ -1157,20 +1205,22 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   }
   SourceLocation RBracloc = ConsumeBracket(); // consume ']'
   
-  if (KeyInfo.size()) {
+  if (KeyIdents.size()) {
+    SelectorInfo *SI = ObjcGetKeywordSelectorInfo(KeyIdents, 
+                                                  PP.getSelectorTable());
     // We've just parsed a keyword message.
     if (ReceiverName) 
-      return Actions.ActOnKeywordMessage(ReceiverName, 
-                                         &KeyInfo[0], KeyInfo.size(),
-                                         LBracloc, RBracloc);
-    return Actions.ActOnKeywordMessage(ReceiverExpr, 
-                                       &KeyInfo[0], KeyInfo.size(),
-                                       LBracloc, RBracloc);
+      return Actions.ActOnClassMessage(ReceiverName, SI, LBracloc, RBracloc,
+                                       &KeyExprs[0]);
+    return Actions.ActOnInstanceMessage(ReceiverExpr, SI, LBracloc, RBracloc,
+                                        &KeyExprs[0]);
   }
+  SelectorInfo *SI = ObjcGetUnarySelectorInfo(selIdent, PP.getSelectorTable());
+
   // We've just parsed a unary message (a message with no arguments).
   if (ReceiverName) 
-    return Actions.ActOnUnaryMessage(ReceiverName, selIdent, LBracloc,RBracloc);
-  return Actions.ActOnUnaryMessage(ReceiverExpr, selIdent, LBracloc,RBracloc);
+    return Actions.ActOnClassMessage(ReceiverName, SI, LBracloc, RBracloc, 0);
+  return Actions.ActOnInstanceMessage(ReceiverExpr, SI, LBracloc, RBracloc, 0);
 }
 
 Parser::ExprResult Parser::ParseObjCStringLiteral() {

@@ -1871,76 +1871,31 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
   return new ObjCEncodeExpr(t, EncodedType, AtLoc, RParenLoc);
 }
 
-static IdentifierInfo &DeriveSelector(ObjcKeywordMessage *Keywords, 
-                                    unsigned NumKeywords,
-                                    ASTContext &Context) {
-  // Derive the selector name from the keyword declarations.
-  int len=0;
-  for (unsigned int i = 0; i < NumKeywords; i++) {
-    if (Keywords[i].SelectorName)
-      len += strlen(Keywords[i].SelectorName->getName());
-    len++;
-  }
-  llvm::SmallString<128> methodName;
-  methodName[0] = '\0';
-  for (unsigned int i = 0; i < NumKeywords; i++) {
-    if (Keywords[i].SelectorName)
-      methodName += Keywords[i].SelectorName->getName();
-    methodName += ":";
-  }
-  methodName[len] = '\0';
-  return Context.Idents.get(&methodName[0], &methodName[0]+len);
-}
-
-// This actions handles keyword message to classes.
-Sema::ExprResult Sema::ActOnKeywordMessage(
-  IdentifierInfo *receivingClassName, 
-  ObjcKeywordMessage *Keywords, unsigned NumKeywords,
-  SourceLocation lbrac, SourceLocation rbrac)
+// ActOnClassMessage - used for both unary and keyword messages.
+// ArgExprs is optional - if it is present, the number of expressions
+// is obtained from Sel.getNumArgs().
+Sema::ExprResult Sema::ActOnClassMessage(
+  IdentifierInfo *receivingClassName, SelectorInfo *Sel,
+  SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args)
 {
-  IdentifierInfo &SelName = DeriveSelector(Keywords, NumKeywords, Context);
   assert(receivingClassName && "missing receiver class name");
 
-  return new ObjCMessageExpr(receivingClassName, SelName, Keywords, NumKeywords, 
-                             Context.IntTy/*FIXME*/, lbrac, rbrac);
+  Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
+  return new ObjCMessageExpr(receivingClassName, Sel, 
+                             Context.IntTy/*FIXME*/, lbrac, rbrac, ArgExprs);
 }
 
-// This action handles keyword messages to instances.
-Sema::ExprResult Sema::ActOnKeywordMessage(
-  ExprTy *receiver, ObjcKeywordMessage *Keywords, unsigned NumKeywords,
-  SourceLocation lbrac, SourceLocation rbrac) {
-  IdentifierInfo &SelName = DeriveSelector(Keywords, NumKeywords, Context);
+// ActOnInstanceMessage - used for both unary and keyword messages.
+// ArgExprs is optional - if it is present, the number of expressions
+// is obtained from Sel.getNumArgs().
+Sema::ExprResult Sema::ActOnInstanceMessage(
+  ExprTy *receiver, SelectorInfo *Sel,
+  SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args) 
+{
   assert(receiver && "missing receiver expression");
   
   Expr *RExpr = static_cast<Expr *>(receiver);
-  return new ObjCMessageExpr(RExpr, SelName, Keywords, NumKeywords, 
-                             Context.IntTy/*FIXME*/, lbrac, rbrac);
+  Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
+  return new ObjCMessageExpr(RExpr, Sel,
+                             Context.IntTy/*FIXME*/, lbrac, rbrac, ArgExprs);
 }
-    
-// This actions handles unary message to classes.
-Sema::ExprResult Sema::ActOnUnaryMessage(
-  IdentifierInfo *receivingClassName, IdentifierInfo *selName,
-  SourceLocation lbrac, SourceLocation rbrac) {
-  assert(receivingClassName && "missing receiver class name");
-  
-  // FIXME: this should be passed in...
-  IdentifierInfo &SName = Context.Idents.get(
-           selName->getName(), selName->getName()+strlen(selName->getName()));
-  return new ObjCMessageExpr(receivingClassName, SName,
-                             Context.IntTy/*FIXME*/, lbrac, rbrac);
-}
-
-// This action handles unary messages to instances.
-Sema::ExprResult Sema::ActOnUnaryMessage(
-  ExprTy *receiver, IdentifierInfo *selName,
-  SourceLocation lbrac, SourceLocation rbrac) {
-  assert(receiver && "missing receiver expression");
-  
-  Expr *RExpr = static_cast<Expr *>(receiver);
-  // FIXME: this should be passed in...
-  IdentifierInfo &SName = Context.Idents.get(
-           selName->getName(), selName->getName()+strlen(selName->getName()));
-  return new ObjCMessageExpr(RExpr, SName,
-                             Context.IntTy/*FIXME*/, lbrac, rbrac);
-}
-

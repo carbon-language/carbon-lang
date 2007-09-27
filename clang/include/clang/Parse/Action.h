@@ -21,14 +21,13 @@ namespace clang {
   // Semantic.
   class DeclSpec;
   class Declarator;
-  struct ObjcKeywordDecl;
-  struct ObjcKeywordMessage;
   class AttributeList;
   // Parse.
   class Scope;
   class Action;
+  class SelectorInfo;
   // Lex.
-  class IdentifierInfo;
+  class IdentifierInfo; // FIXME: should be in Basic, not Lex.
   class Token;
 
 /// Action - As the parser reads the input file and recognizes the productions
@@ -472,41 +471,27 @@ public:
     return 0;
   }
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
-    tok::TokenKind MethodType, TypeTy *ReturnType,
-    ObjcKeywordDecl *Keywords, unsigned NumKeywords, 
-    AttributeList *AttrList,
-    tok::ObjCKeywordKind MethodImplKind) {
+    tok::TokenKind MethodType, TypeTy *ReturnType, SelectorInfo *Sel,
+    // optional arguments. The number of types/arguments is obtained
+    // from the Sel.getNumArgs().
+    TypeTy **ArgTypes, IdentifierInfo **ArgNames,
+    AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind) {
     return 0;
   }
-  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
-    tok::TokenKind MethodType, TypeTy *ReturnType,
-    IdentifierInfo *SelectorName, AttributeList *AttrList,
-    tok::ObjCKeywordKind MethodImplKind) {
+  // ActOnClassMessage - used for both unary and keyword messages.
+  // ArgExprs is optional - if it is present, the number of expressions
+  // is obtained from Sel.getNumArgs().
+  virtual ExprResult ActOnClassMessage(
+    IdentifierInfo *receivingClassName, SelectorInfo *Sel,
+    SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs) {
     return 0;
   }
-  // This actions handles keyword message to classes.
-  virtual ExprResult ActOnKeywordMessage(
-    IdentifierInfo *receivingClassName, 
-    ObjcKeywordMessage *Keywords, unsigned NumKeywords,
-    SourceLocation lbrac, SourceLocation rbrac) {
-    return 0;
-  }
-  // This action handles keyword messages to instances.
-  virtual ExprResult ActOnKeywordMessage(ExprTy *receiver, 
-    ObjcKeywordMessage *Keywords, unsigned NumKeywords,
-    SourceLocation lbrac, SourceLocation rbrac) {
-    return 0;
-  }
-  // This actions handles unary message to classes.
-  virtual ExprResult ActOnUnaryMessage(
-    IdentifierInfo *receivingClassName, IdentifierInfo *selName,
-    SourceLocation lbrac, SourceLocation rbrac) {
-    return 0;
-  }
-  // This action handles unary messages to instances.
-  virtual ExprResult ActOnUnaryMessage(
-    ExprTy *receiver, IdentifierInfo *sName,
-    SourceLocation lbrac, SourceLocation rbrac) {
+  // ActOnInstanceMessage - used for both unary and keyword messages.
+  // ArgExprs is optional - if it is present, the number of expressions
+  // is obtained from Sel.getNumArgs().
+  virtual ExprResult ActOnInstanceMessage(
+    ExprTy *receiver, SelectorInfo *Sel,
+    SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs) {
     return 0;
   }
   virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,

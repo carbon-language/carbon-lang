@@ -391,32 +391,25 @@ public:
                                           DeclTy **Fields, unsigned NumFields);
   
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
-	            tok::TokenKind MethodType, TypeTy *ReturnType,
-     		    ObjcKeywordDecl *Keywords, unsigned NumKeywords, 
-     		    AttributeList *AttrList,
-		    tok::ObjCKeywordKind MethodImplKind);
-  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
- 	     	    tok::TokenKind MethodType, TypeTy *ReturnType,
-     		    IdentifierInfo *SelectorName, AttributeList *AttrList,
-		    tok::ObjCKeywordKind MethodImplKind);
+    tok::TokenKind MethodType, TypeTy *ReturnType, SelectorInfo *Sel,
+    // optional arguments. The number of types/arguments is obtained
+    // from the Sel.getNumArgs().
+    TypeTy **ArgTypes, IdentifierInfo **ArgNames,
+    AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind);
                     
-  // This actions handles keyword message to classes.
-  virtual ExprResult ActOnKeywordMessage(
-    IdentifierInfo *receivingClassName, 
-    ObjcKeywordMessage *Keywords, unsigned NumKeywords,
-    SourceLocation lbrac, SourceLocation rbrac);
-  // This action handles keyword messages to instances.
-  virtual ExprResult ActOnKeywordMessage(ExprTy *receiver, 
-    ObjcKeywordMessage *Keywords, unsigned NumKeywords,
-    SourceLocation lbrac, SourceLocation rbrac);
-  // This actions handles unary message to classes.
-  virtual ExprResult ActOnUnaryMessage(
-    IdentifierInfo *receivingClassName, IdentifierInfo *selName,
-    SourceLocation lbrac, SourceLocation rbrac);
-  // This action handles unary messages to instances.
-  virtual ExprResult ActOnUnaryMessage(
-    ExprTy *receiver, IdentifierInfo *sName,
-    SourceLocation lbrac, SourceLocation rbrac);
+  // ActOnClassMessage - used for both unary and keyword messages.
+  // ArgExprs is optional - if it is present, the number of expressions
+  // is obtained from Sel.getNumArgs().
+  virtual ExprResult ActOnClassMessage(
+    IdentifierInfo *receivingClassName, SelectorInfo *Sel,
+    SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs);
+
+  // ActOnInstanceMessage - used for both unary and keyword messages.
+  // ArgExprs is optional - if it is present, the number of expressions
+  // is obtained from Sel.getNumArgs().
+  virtual ExprResult ActOnInstanceMessage(
+    ExprTy *receiver, SelectorInfo *Sel,
+    SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs);
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
   // functions and arrays to their respective pointers (C99 6.3.2.1). 

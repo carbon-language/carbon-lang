@@ -18,6 +18,7 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/MacroExpander.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/FoldingSet.h"
 
 namespace clang {
   
@@ -72,6 +73,15 @@ class Preprocessor {
   /// Identifiers - This is mapping/lookup information for all identifiers in
   /// the program, including program keywords.
   IdentifierTable Identifiers;
+  
+  /// Selectors - This table contains all the selectors in the program. Unlike
+  /// IdentifierTable above, this table *isn't* populated by the preprocessor.
+  /// It is declared/instantiated here because it's role/lifetime is 
+  /// conceptually similar the IdentifierTable. In addition, the current control
+  /// flow (in clang::ParseAST()), make it convenient to put here. 
+  /// FIXME: Make sure the lifetime of Identifiers/Selectors *isn't* tied to
+  /// the lifetime fo the preprocessor.
+  llvm::FoldingSet<SelectorInfo> Selectors;
   
   /// PragmaHandlers - This tracks all of the pragmas that the client registered
   /// with this preprocessor.
@@ -132,7 +142,8 @@ public:
   HeaderSearch &getHeaderSearchInfo() const { return HeaderInfo; }
 
   IdentifierTable &getIdentifierTable() { return Identifiers; }
-
+  llvm::FoldingSet<SelectorInfo> &getSelectorTable() { return Selectors; }
+  
   /// SetCommentRetentionState - Control whether or not the preprocessor retains
   /// comments in output.
   void SetCommentRetentionState(bool KeepComments, bool KeepMacroComments) {

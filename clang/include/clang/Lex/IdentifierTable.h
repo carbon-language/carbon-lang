@@ -14,8 +14,12 @@
 #ifndef LLVM_CLANG_LEX_IDENTIFIERTABLE_H
 #define LLVM_CLANG_LEX_IDENTIFIERTABLE_H
 
+// FIXME: Move this header header/module to the "Basic" library. Unlike Lex,
+// this data is long-lived.
 #include "clang/Basic/TokenKinds.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/SmallString.h"
 #include <string> 
 #include <cassert> 
 
@@ -164,6 +168,65 @@ public:
   void PrintStats() const;
 private:
   void AddKeywords(const LangOptions &LangOpts);
+};
+
+/// SelectorInfo - One of these variable length records is kept for each parsed
+/// selector (similar in spirit to IdentifierInfo). We use a folding set to
+/// unique aggregate names (keyword selectors in ObjC parlance). 
+class SelectorInfo : public llvm::FoldingSetNode {
+  unsigned NumArgs;
+  void *ActionInfo;   // Managed by the ObjC actions module.
+public:
+  // Constructor for keyword selectors.
+  SelectorInfo(unsigned nKeys, IdentifierInfo **IIV) {
+    assert(nKeys && "SelectorInfo(): not a keyword selector");
+    NumArgs = nKeys;
+    // Fill in the trailing keyword array.
+    IdentifierInfo **KeyInfo = reinterpret_cast<IdentifierInfo **>(this+1);
+    for (unsigned i = 0; i != nKeys; ++i)
+      KeyInfo[i] = IIV[i];
+  }
+  // Constructor for unary selectors (no colons/arguments).
+  SelectorInfo(IdentifierInfo *unarySelector) {
+    NumArgs = 0;
+    IdentifierInfo **UnaryInfo = reinterpret_cast<IdentifierInfo **>(this+1);
+    UnaryInfo[0] = unarySelector;
+  }
+  // Derive the full selector name, placing the result into methodBuffer.
+  // As a convenience, a pointer to the first character is returned.
+  char *getName(llvm::SmallString<128> methodBuffer);
+
+  unsigned getNumArgs() const { return NumArgs; }
+  
+  // Predicates to identify the selector type.
+  bool isKeywordSelector() const { return NumArgs > 0; }
+  bool isUnarySelector() const { return NumArgs == 0; }
+  
+  /// getActionInfo/setActionInfo - The actions module is allowed to
+  /// associate arbitrary metadata with this selector.
+  template<typename T>
+  T *getActionInfo() const { return static_cast<T*>(ActionInfo); }
+  void setActionInfo(void *T) { ActionInfo = T; }
+  
+  typedef const IdentifierInfo *const *keyword_iterator;
+  keyword_iterator keyword_begin() const {
+    return reinterpret_cast<keyword_iterator>(this+1);
+  }
+  keyword_iterator keyword_end() const { 
+    return keyword_begin()+NumArgs; 
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, 
+                      keyword_iterator ArgTys, unsigned NumArgs) {
+    ID.AddInteger(NumArgs);
+    if (NumArgs) { // handle keyword selector.
+      for (unsigned i = 0; i != NumArgs; ++i)
+        ID.AddPointer(ArgTys[i]);
+    } else // handle unary selector.
+      ID.AddPointer(ArgTys[0]);
+  }
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, keyword_begin(), NumArgs);
+  }
 };
 
 }  // end namespace clang

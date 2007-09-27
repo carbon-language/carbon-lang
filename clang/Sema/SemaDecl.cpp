@@ -1567,65 +1567,25 @@ void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl,
 }
 
 Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
-                      tok::TokenKind MethodType, TypeTy *ReturnType,
-                      ObjcKeywordDecl *Keywords, unsigned NumKeywords,
-                      AttributeList *AttrList,
-		      tok::ObjCKeywordKind MethodDeclKind) {
-  assert(NumKeywords && "Selector must be specified");
-
-  // Derive the selector name from the keyword declarations.
-  int len=0;
-  for (unsigned int i = 0; i < NumKeywords; i++) {
-    if (Keywords[i].SelectorName)
-      len += strlen(Keywords[i].SelectorName->getName());
-    len++;
-  }
-  llvm::SmallString<128> methodName;
-  methodName[0] = '\0';
-  for (unsigned int i = 0; i < NumKeywords; i++) {
-    if (Keywords[i].SelectorName)
-      methodName += Keywords[i].SelectorName->getName();
-    methodName += ":";
-  }
-  methodName[len] = '\0';
-  IdentifierInfo &SelName = Context.Idents.get(&methodName[0], 
-                                               &methodName[0]+len);
+    tok::TokenKind MethodType, TypeTy *ReturnType, SelectorInfo *Sel,
+    // optional arguments. The number of types/arguments is obtained
+    // from the Sel.getNumArgs().
+    TypeTy **ArgTypes, IdentifierInfo **ArgNames,
+    AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind) {
   llvm::SmallVector<ParmVarDecl*, 16> Params;
 
-  for (unsigned i = 0; i < NumKeywords; i++) {
-    ObjcKeywordDecl *arg = &Keywords[i];
+  for (unsigned i = 0; i < Sel->getNumArgs(); i++) {
     // FIXME: arg->AttrList must be stored too!
-    ParmVarDecl* Param = new ParmVarDecl(arg->ColonLoc, arg->ArgumentName, 
-					 QualType::getFromOpaquePtr(arg->TypeInfo), 
+    ParmVarDecl* Param = new ParmVarDecl(SourceLocation(/*FIXME*/), ArgNames[i], 
+					 QualType::getFromOpaquePtr(ArgTypes[i]), 
 					 VarDecl::None, 0);
-    // FIXME: 'InvalidType' does not get set by caller yet.
-    if (arg->InvalidType)
-      Param->setInvalidDecl();
     Params.push_back(Param);
   }
   QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
-  ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, 
-				      SelName, resultDeclType,
-		      		      0, -1, AttrList, MethodType == tok::minus);
-  ObjcMethod->setMethodParams(&Params[0], NumKeywords);
-  if (MethodDeclKind == tok::objc_optional)
-    ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
-  else
-    ObjcMethod->setDeclImplementation(ObjcMethodDecl::Required);
-  return ObjcMethod;
-}
-
-Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,  
-                      tok::TokenKind MethodType, TypeTy *ReturnType,
-                      IdentifierInfo *SelectorName, AttributeList *AttrList,
-		      tok::ObjCKeywordKind MethodDeclKind) {
-  const char *methodName = SelectorName->getName();
-  IdentifierInfo &SelName = Context.Idents.get(methodName, 
-                                              methodName+strlen(methodName));
-  QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
-  ObjcMethodDecl* ObjcMethod = new ObjcMethodDecl(MethodLoc, 
-			             SelName, resultDeclType, 0, -1,
-                                     AttrList, MethodType == tok::minus);
+  ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, Sel,
+                                      resultDeclType, 0, -1, AttrList, 
+                                      MethodType == tok::minus);
+  ObjcMethod->setMethodParams(&Params[0], Sel->getNumArgs());
   if (MethodDeclKind == tok::objc_optional)
     ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
   else

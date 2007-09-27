@@ -33,6 +33,28 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
   return specId ? specId->getObjCKeywordID() : tok::objc_not_keyword;
 }
 
+char *SelectorInfo::getName(llvm::SmallString<128> methodName) {
+  int len=0;
+  methodName[0] = '\0';
+  if (NumArgs) {
+    keyword_iterator KeyIter = keyword_begin();
+    for (unsigned int i = 0; i < NumArgs; i++) {
+      if (KeyIter[i]) {
+        methodName += KeyIter[i]->getName();
+        len += strlen(KeyIter[i]->getName());
+      }
+      methodName += ":";
+      len++;
+    }
+  } else {
+    IdentifierInfo **UnaryInfo = reinterpret_cast<IdentifierInfo **>(this+1);
+    methodName += UnaryInfo[0]->getName();
+    len += strlen(UnaryInfo[0]->getName());
+  }
+  methodName[len] = '\0';
+  return &methodName[0];
+}
+
 //===----------------------------------------------------------------------===//
 // IdentifierInfo Implementation
 //===----------------------------------------------------------------------===//
@@ -209,3 +231,4 @@ void IdentifierTable::PrintStats() const {
   // Compute statistics about the memory allocated for identifiers.
   HashTable.getAllocator().PrintStats();
 }
+

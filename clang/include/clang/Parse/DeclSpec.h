@@ -562,26 +562,6 @@ public:
   bool getInvalidType() { return InvalidType; }
 };
 
-/// ObjCKeyword* - The following 3 small value structures capture keyword
-/// information passed from the parser to the actions. Like Declarator above,
-/// instances of these structures are transient objects that live on the stack.
-struct ObjcKeywordInfo {
-  IdentifierInfo *SelectorName; // optional
-  SourceLocation SelectorLoc;
-  SourceLocation ColonLoc;
-};
-
-struct ObjcKeywordDecl : ObjcKeywordInfo {
-  Action::TypeTy *TypeInfo; // optional
-  IdentifierInfo *ArgumentName;
-  AttributeList *AttrList;
-  bool InvalidType;  // FIXME: is this used?
-};
-  
-struct ObjcKeywordMessage : ObjcKeywordInfo {
-  Action::ExprTy *KeywordExpr;
-};
-
 } // end namespace clang
 
 #endif

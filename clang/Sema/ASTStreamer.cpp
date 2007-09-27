@@ -98,7 +98,7 @@ void clang::ParseAST(Preprocessor &PP, unsigned MainFileID,
   }
   
   ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
-                     PP.getIdentifierTable());
+                     PP.getIdentifierTable(), PP.getSelectorTable());
   
   ASTStreamer Streamer(PP, Context, MainFileID);
   

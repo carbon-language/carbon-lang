@@ -14,17 +14,19 @@
 #ifndef LLVM_CLANG_AST_ASTCONTEXT_H
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
+#include "clang/Lex/IdentifierTable.h" // FIXME: Move IdentifierTable to Basic
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/FoldingSet.h"
 #include <vector>
 
 namespace clang {
   class TargetInfo;
-  
+
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {
@@ -46,6 +48,7 @@ public:
   SourceManager &SourceMgr;
   TargetInfo &Target;
   IdentifierTable &Idents;
+  llvm::FoldingSet<SelectorInfo> &Selectors;
   Builtin::Context BuiltinInfo;
 
   // Builtin Types.
@@ -58,8 +61,10 @@ public:
   QualType FloatTy, DoubleTy, LongDoubleTy;
   QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   
-  ASTContext(SourceManager &SM, TargetInfo &t, IdentifierTable &idents) : 
-    CFConstantStringTypeDecl(0), SourceMgr(SM), Target(t), Idents(idents) {
+  ASTContext(SourceManager &SM, TargetInfo &t, IdentifierTable &idents,
+             llvm::FoldingSet<SelectorInfo> &sels) : 
+    CFConstantStringTypeDecl(0), SourceMgr(SM), Target(t), 
+    Idents(idents), Selectors(sels) {
     InitBuiltinTypes();
     BuiltinInfo.InitializeBuiltins(idents, Target);
   }    

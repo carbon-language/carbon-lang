@@ -15,8 +15,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/IdentifierTable.h"
-// is this bad layering? I (snaroff) don't think so. Want Chris to weigh in.
-#include "clang/Parse/DeclSpec.h" 
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -870,49 +868,51 @@ unsigned OCUVectorElementExpr::getEncodedElementAccess() const {
   return Result;
 }
 
-// constructor for unary messages.
-ObjCMessageExpr::ObjCMessageExpr(
-  IdentifierInfo *clsName, IdentifierInfo &methName, QualType retType, 
-  SourceLocation LBrac, SourceLocation RBrac)
-  : Expr(ObjCMessageExprClass, retType), Selector(methName) {
-  ClassName = clsName;
-  LBracloc = LBrac;
-  RBracloc = RBrac;
-}
-
-ObjCMessageExpr::ObjCMessageExpr(
-  Expr *fn, IdentifierInfo &methName, QualType retType, 
-  SourceLocation LBrac, SourceLocation RBrac)
-  : Expr(ObjCMessageExprClass, retType), Selector(methName), ClassName(0) {
-  SubExprs = new Expr*[1];
-  SubExprs[RECEIVER] = fn;
-  LBracloc = LBrac;
-  RBracloc = RBrac;
-}
-
-// constructor for keyword messages.
-ObjCMessageExpr::ObjCMessageExpr(
-  Expr *fn, IdentifierInfo &selInfo, ObjcKeywordMessage *keys, unsigned numargs, 
-  QualType retType, SourceLocation LBrac, SourceLocation RBrac)
+// constructor for instance messages.
+ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, SelectorInfo *selInfo,
+                QualType retType, SourceLocation LBrac, SourceLocation RBrac,
+                Expr **ArgExprs)
   : Expr(ObjCMessageExprClass, retType), Selector(selInfo), ClassName(0) {
-  SubExprs = new Expr*[numargs+1];
-  SubExprs[RECEIVER] = fn;
-  for (unsigned i = 0; i != numargs; ++i)
-    SubExprs[i+ARGS_START] = static_cast<Expr *>(keys[i].KeywordExpr);
+  unsigned numArgs = selInfo->getNumArgs();
+  SubExprs = new Expr*[numArgs+1];
+  SubExprs[RECEIVER] = receiver;
+  if (numArgs) {
+    for (unsigned i = 0; i != numArgs; ++i)
+      SubExprs[i+ARGS_START] = static_cast<Expr *>(ArgExprs[i]);
+  }
   LBracloc = LBrac;
   RBracloc = RBrac;
 }
 
-ObjCMessageExpr::ObjCMessageExpr(
-  IdentifierInfo *clsName, IdentifierInfo &selInfo, ObjcKeywordMessage *keys, 
-  unsigned numargs, QualType retType, SourceLocation LBrac, SourceLocation RBrac)
+// constructor for class messages. 
+// FIXME: clsName should be typed to ObjCInterfaceType
+ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, SelectorInfo *selInfo,
+                QualType retType, SourceLocation LBrac, SourceLocation RBrac,
+                Expr **ArgExprs)
   : Expr(ObjCMessageExprClass, retType), Selector(selInfo), ClassName(clsName) {
-  SubExprs = new Expr*[numargs+1];
+  unsigned numArgs = selInfo->getNumArgs();
+  SubExprs = new Expr*[numArgs+1];
   SubExprs[RECEIVER] = 0;
-  for (unsigned i = 0; i != numargs; ++i)
-    SubExprs[i+ARGS_START] = static_cast<Expr *>(keys[i].KeywordExpr);
+  if (numArgs) {
+    for (unsigned i = 0; i != numArgs; ++i)
+      SubExprs[i+ARGS_START] = static_cast<Expr *>(ArgExprs[i]);
+  }
   LBracloc = LBrac;
   RBracloc = RBrac;
+}
+
+// The following 3 methods are defined here (instead of Epxr.h) to avoid
+// importing "IdentifierTable.h" into the header.
+unsigned ObjCMessageExpr::getNumArgs() const { return Selector->getNumArgs(); }
+
+/// getArg - Return the specified argument.
+Expr *ObjCMessageExpr::getArg(unsigned Arg) {
+  assert(Arg < Selector->getNumArgs() && "Arg access out of range!");
+  return SubExprs[Arg+ARGS_START];
+}
+const Expr *ObjCMessageExpr::getArg(unsigned Arg) const {
+  assert(Arg < Selector->getNumArgs() && "Arg access out of range!");
+  return SubExprs[Arg+ARGS_START];
 }
 
 
@@ -1090,6 +1090,6 @@ Stmt::child_iterator ObjCMessageExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&SubExprs[0]);
 }
 Stmt::child_iterator ObjCMessageExpr::child_end() {
-  return reinterpret_cast<Stmt**>(&SubExprs[NumArgs+ARGS_START]);
+  return reinterpret_cast<Stmt**>(&SubExprs[getNumArgs()+ARGS_START]);
 }
 

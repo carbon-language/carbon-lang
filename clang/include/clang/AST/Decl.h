@@ -20,6 +20,7 @@
 
 namespace clang {
 class IdentifierInfo;
+class SelectorInfo;
 class Expr;
 class Stmt;
 class FunctionDecl;
@@ -665,7 +666,7 @@ public:
   enum ImplementationControl { None, Required, Optional };
 private:
   // A unigue name for this method.
-  IdentifierInfo &Selector;
+  SelectorInfo *Selector;
   
   // Type of this method.
   QualType MethodDeclType;
@@ -683,14 +684,14 @@ private:
   ImplementationControl DeclImplementation : 2;
 
 public:
-  ObjcMethodDecl(SourceLocation L, IdentifierInfo &SelId, QualType T,
+  ObjcMethodDecl(SourceLocation L, SelectorInfo *SelInfo, QualType T,
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
 		 AttributeList *M = 0, bool isInstance = true, 
 		 Decl *PrevDecl = 0)
-    : Decl(ObjcMethod), Selector(SelId), MethodDeclType(T), 
+    : Decl(ObjcMethod), Selector(SelInfo), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), IsInstance(isInstance) {}
-
+#if 0
   ObjcMethodDecl(Kind DK, SourceLocation L, IdentifierInfo &SelId, QualType T,
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
 		 AttributeList *M = 0, bool isInstance = true, 
@@ -698,7 +699,7 @@ public:
     : Decl(DK), Selector(SelId), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), IsInstance(isInstance) {}
-
+#endif
   virtual ~ObjcMethodDecl();
   QualType getMethodType() const { return MethodDeclType; }
   unsigned getNumMethodParams() const { return NumMethodParams; }

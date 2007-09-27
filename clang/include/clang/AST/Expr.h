@@ -22,9 +22,9 @@
 
 namespace clang {
   class IdentifierInfo;
+  class SelectorInfo;
   class Decl;
   class ASTContext;
-  struct ObjcKeywordMessage;
   
 /// Expr - This represents one expression.  Note that Expr's are subclasses of
 /// Stmt.  This allows an expression to be transparently used any place a Stmt
@@ -1073,36 +1073,25 @@ public:
 
 class ObjCMessageExpr : public Expr {
   enum { RECEIVER=0, ARGS_START=1 };
-  
-  // The following 3 slots are only used for keyword messages.
-  // Adding a subclass could save us some space. For now, we keep it simple.
+
   Expr **SubExprs;
-  unsigned NumArgs;
   
   // A unigue name for this message.
-  IdentifierInfo &Selector;
+  SelectorInfo *Selector;
   
-  IdentifierInfo **KeyIdents;
-  
-  IdentifierInfo *ClassName;
+  IdentifierInfo *ClassName; // optional - 0 for instance messages.
   
   SourceLocation LBracloc, RBracloc;
 public:
-  // constructor for unary messages. 
+  // constructor for class messages. 
   // FIXME: clsName should be typed to ObjCInterfaceType
-  ObjCMessageExpr(IdentifierInfo *clsName, IdentifierInfo &selInfo,
-                  QualType retType, SourceLocation LBrac, SourceLocation RBrac);
-  ObjCMessageExpr(Expr *receiver, IdentifierInfo &selInfo,
-                  QualType retType, SourceLocation LBrac, SourceLocation RBrac);
-                  
-  // constructor for keyword messages.
-  // FIXME: clsName should be typed to ObjCInterfaceType
-  ObjCMessageExpr(IdentifierInfo *clsName, IdentifierInfo &selInfo,
-                  ObjcKeywordMessage *keys, unsigned numargs, QualType retType, 
-                  SourceLocation LBrac, SourceLocation RBrac);
-  ObjCMessageExpr(Expr *receiver, IdentifierInfo &selInfo,
-                  ObjcKeywordMessage *keys, unsigned numargs, QualType retType, 
-                  SourceLocation LBrac, SourceLocation RBrac);
+  ObjCMessageExpr(IdentifierInfo *clsName, SelectorInfo *selInfo,
+                  QualType retType, SourceLocation LBrac, SourceLocation RBrac,
+                  Expr **ArgExprs);
+  // constructor for instance messages.
+  ObjCMessageExpr(Expr *receiver, SelectorInfo *selInfo,
+                  QualType retType, SourceLocation LBrac, SourceLocation RBrac,
+                  Expr **ArgExprs);
   ~ObjCMessageExpr() {
     delete [] SubExprs;
   }
@@ -1112,17 +1101,12 @@ public:
   
   /// getNumArgs - Return the number of actual arguments to this call.
   ///
-  unsigned getNumArgs() const { return NumArgs; }
+  unsigned getNumArgs() const;
   
   /// getArg - Return the specified argument.
-  Expr *getArg(unsigned Arg) {
-    assert(Arg < NumArgs && "Arg access out of range!");
-    return SubExprs[Arg+ARGS_START];
-  }
-  const Expr *getArg(unsigned Arg) const {
-    assert(Arg < NumArgs && "Arg access out of range!");
-    return SubExprs[Arg+ARGS_START];
-  }
+  Expr *getArg(unsigned Arg);
+  const Expr *getArg(unsigned Arg) const;
+
   SourceRange getSourceRange() const { return SourceRange(LBracloc, RBracloc); }
 
   static bool classof(const Stmt *T) {
