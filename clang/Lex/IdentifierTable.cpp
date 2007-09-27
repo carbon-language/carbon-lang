@@ -33,23 +33,25 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
   return specId ? specId->getObjCKeywordID() : tok::objc_not_keyword;
 }
 
-char *SelectorInfo::getName(llvm::SmallString<128> methodName) {
+char *SelectorInfo::getName(llvm::SmallVectorImpl<char> &methodName) {
   int len=0;
   methodName[0] = '\0';
   if (NumArgs) {
     keyword_iterator KeyIter = keyword_begin();
     for (unsigned int i = 0; i < NumArgs; i++) {
       if (KeyIter[i]) {
-        methodName += KeyIter[i]->getName();
-        len += strlen(KeyIter[i]->getName());
+        unsigned KeyLen = strlen(KeyIter[i]->getName());
+        methodName.append(KeyIter[i]->getName(), KeyIter[i]->getName()+KeyLen);
+        len += KeyLen;
       }
-      methodName += ":";
+      methodName.push_back(':');
       len++;
     }
   } else {
     IdentifierInfo **UnaryInfo = reinterpret_cast<IdentifierInfo **>(this+1);
-    methodName += UnaryInfo[0]->getName();
-    len += strlen(UnaryInfo[0]->getName());
+    unsigned NameLen = strlen(UnaryInfo[0]->getName());
+    methodName.append(UnaryInfo[0]->getName(), UnaryInfo[0]->getName()+NameLen);
+    len += NameLen;
   }
   methodName[len] = '\0';
   return &methodName[0];

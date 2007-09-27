@@ -194,7 +194,8 @@ public:
   }
   // Derive the full selector name, placing the result into methodBuffer.
   // As a convenience, a pointer to the first character is returned.
-  char *getName(llvm::SmallString<128> methodBuffer);
+  // Example usage: llvm::SmallString<128> mbuf; Selector->getName(mbuf);
+  char *getName(llvm::SmallVectorImpl<char> &methodBuffer);
 
   unsigned getNumArgs() const { return NumArgs; }
   
