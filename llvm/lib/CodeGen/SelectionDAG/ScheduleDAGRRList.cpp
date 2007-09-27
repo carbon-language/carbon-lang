@@ -427,20 +427,20 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
 
   // Only copy scheduled successors. Cut them from old node's successor
   // list and move them over.
-  SmallVector<SDep*, 2> DelDeps;
+  SmallVector<std::pair<SUnit*, bool>, 4> DelDeps;
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     if (I->isSpecial)
       continue;
-    NewSU->Height = std::max(NewSU->Height, I->Dep->Height+1);
     if (I->Dep->isScheduled) {
+      NewSU->Height = std::max(NewSU->Height, I->Dep->Height+1);
       I->Dep->addPred(NewSU, I->isCtrl, false, I->Reg, I->Cost);
-      DelDeps.push_back(I);
+      DelDeps.push_back(std::make_pair(I->Dep, I->isCtrl));
     }
   }
   for (unsigned i = 0, e = DelDeps.size(); i != e; ++i) {
-    SUnit *Succ = DelDeps[i]->Dep;
-    bool isCtrl = DelDeps[i]->isCtrl;
+    SUnit *Succ = DelDeps[i].first;
+    bool isCtrl = DelDeps[i].second;
     Succ->removePred(SU, isCtrl, false);
   }
 
@@ -469,20 +469,20 @@ void ScheduleDAGRRList::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
 
   // Only copy scheduled successors. Cut them from old node's successor
   // list and move them over.
-  SmallVector<SDep*, 2> DelDeps;
+  SmallVector<std::pair<SUnit*, bool>, 4> DelDeps;
   for (SUnit::succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
        I != E; ++I) {
     if (I->isSpecial)
       continue;
-    CopyToSU->Height = std::max(CopyToSU->Height, I->Dep->Height+1);
     if (I->Dep->isScheduled) {
+      CopyToSU->Height = std::max(CopyToSU->Height, I->Dep->Height+1);
       I->Dep->addPred(CopyToSU, I->isCtrl, false, I->Reg, I->Cost);
-      DelDeps.push_back(I);
+      DelDeps.push_back(std::make_pair(I->Dep, I->isCtrl));
     }
   }
   for (unsigned i = 0, e = DelDeps.size(); i != e; ++i) {
-    SUnit *Succ = DelDeps[i]->Dep;
-    bool isCtrl = DelDeps[i]->isCtrl;
+    SUnit *Succ = DelDeps[i].first;
+    bool isCtrl = DelDeps[i].second;
     Succ->removePred(SU, isCtrl, false);
   }
 
