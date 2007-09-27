@@ -399,13 +399,52 @@ Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *IDecl,
 IdentifierInfo *Parser::ParseObjCSelector() {
   tok::TokenKind tKind = Tok.getKind();
   IdentifierInfo *II = 0;
+  switch (tKind) {
+    case tok::identifier:
+    case tok::kw_typeof:
+    case tok::kw___alignof:
+    case tok::kw_auto:
+    case tok::kw_break:                    
+    case tok::kw_case:                        
+    case tok::kw_char:                        
+    case tok::kw_const:                       
+    case tok::kw_continue:                    
+    case tok::kw_default:                     
+    case tok::kw_do:                          
+    case tok::kw_double:                      
+    case tok::kw_else:                        
+    case tok::kw_enum:                        
+    case tok::kw_extern:                      
+    case tok::kw_float:                       
+    case tok::kw_for:                         
+    case tok::kw_goto:                        
+    case tok::kw_if:                       
+    case tok::kw_inline:                     
+    case tok::kw_int:                         
+    case tok::kw_long:                        
+    case tok::kw_register:                    
+    case tok::kw_restrict:
+    case tok::kw_return:                      
+    case tok::kw_short:                       
+    case tok::kw_signed:                      
+    case tok::kw_sizeof:                      
+    case tok::kw_static:                      
+    case tok::kw_struct:                      
+    case tok::kw_switch:                      
+    case tok::kw_typedef:                     
+    case tok::kw_union:                       
+    case tok::kw_unsigned:                    
+    case tok::kw_void:                        
+    case tok::kw_volatile:                    
+    case tok::kw_while:                       
+    case tok::kw__Bool:
+    case tok::kw__Complex:
+      II = Tok.getIdentifierInfo();
+      ConsumeToken();
+    default:
+      break;
+  }
   
-  if (tKind == tok::identifier   || tKind == tok::kw_typeof ||
-      tKind == tok::kw___alignof ||
-      (tKind >= tok::kw_auto && tKind <= tok::kw__Complex)) {
-    II = Tok.getIdentifierInfo();
-    ConsumeToken();
-  } 
   return II;
 }
 
