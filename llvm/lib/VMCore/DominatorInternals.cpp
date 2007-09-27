@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_DOMINATOR_INTERNALS_H
-#define LLVM_ANALYSIS_DOMINATOR_INTERNALS_H
+#ifndef LIB_LLVM_ANALYSIS_DOMINATOR_INTERNALS_H
+#define LIB_LLVM_ANALYSIS_DOMINATOR_INTERNALS_H
 
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/ADT/DenseMap.h"

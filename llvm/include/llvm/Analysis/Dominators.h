@@ -320,7 +320,8 @@ public:
 private:
   friend void DTcalculate(DominatorTree& DT, Function& F);
   
-  unsigned DFSPass(BasicBlock *V, unsigned N);
+  template<class GraphT> friend
+  unsigned DFSPass(DominatorTree& DT, typename GraphT::NodeType* V, unsigned N);
 };
 
 //===-------------------------------------

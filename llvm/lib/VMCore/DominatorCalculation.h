@@ -11,6 +11,7 @@
 #define LLVM_VMCORE_DOMINATOR_CALCULATION_H
 
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/DominatorInternals.h"
 
 //===----------------------------------------------------------------------===//
 //
@@ -32,7 +33,7 @@
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
-
+  
 void DTcalculate(DominatorTree& DT, Function &F) {
   BasicBlock* Root = DT.Roots[0];
 
@@ -43,7 +44,7 @@ void DTcalculate(DominatorTree& DT, Function &F) {
 
   // Step #1: Number blocks in depth-first order and initialize variables used
   // in later stages of the algorithm.
-  unsigned N = DT.DFSPass(Root, 0);
+  unsigned N = DFSPass<GraphTraits<BasicBlock*> >(DT, Root, 0);
 
   for (unsigned i = N; i >= 2; --i) {
     BasicBlock *W = DT.Vertex[i];

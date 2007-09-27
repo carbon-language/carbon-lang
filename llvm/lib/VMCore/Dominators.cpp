@@ -53,68 +53,6 @@ char DominatorTree::ID = 0;
 static RegisterPass<DominatorTree>
 E("domtree", "Dominator Tree Construction", true);
 
-unsigned DominatorTree::DFSPass(BasicBlock *V, unsigned N) {
-  // This is more understandable as a recursive algorithm, but we can't use the
-  // recursive algorithm due to stack depth issues.  Keep it here for
-  // documentation purposes.
-#if 0
-  InfoRec &VInfo = Info[Roots[i]];
-  VInfo.Semi = ++N;
-  VInfo.Label = V;
-
-  Vertex.push_back(V);        // Vertex[n] = V;
-  //Info[V].Ancestor = 0;     // Ancestor[n] = 0
-  //Info[V].Child = 0;        // Child[v] = 0
-  VInfo.Size = 1;             // Size[v] = 1
-
-  for (succ_iterator SI = succ_begin(V), E = succ_end(V); SI != E; ++SI) {
-    InfoRec &SuccVInfo = Info[*SI];
-    if (SuccVInfo.Semi == 0) {
-      SuccVInfo.Parent = V;
-      N = DFSPass(*SI, N);
-    }
-  }
-#else
-  std::vector<std::pair<BasicBlock*, unsigned> > Worklist;
-  Worklist.push_back(std::make_pair(V, 0U));
-  while (!Worklist.empty()) {
-    BasicBlock *BB = Worklist.back().first;
-    unsigned NextSucc = Worklist.back().second;
-    
-    // First time we visited this BB?
-    if (NextSucc == 0) {
-      InfoRec &BBInfo = Info[BB];
-      BBInfo.Semi = ++N;
-      BBInfo.Label = BB;
-      
-      Vertex.push_back(BB);       // Vertex[n] = V;
-      //BBInfo[V].Ancestor = 0;   // Ancestor[n] = 0
-      //BBInfo[V].Child = 0;      // Child[v] = 0
-      BBInfo.Size = 1;            // Size[v] = 1
-    }
-    
-    // If we are done with this block, remove it from the worklist.
-    if (NextSucc == BB->getTerminator()->getNumSuccessors()) {
-      Worklist.pop_back();
-      continue;
-    }
-    
-    // Otherwise, increment the successor number for the next time we get to it.
-    ++Worklist.back().second;
-    
-    // Visit the successor next, if it isn't already visited.
-    BasicBlock *Succ = BB->getTerminator()->getSuccessor(NextSucc);
-    
-    InfoRec &SuccVInfo = Info[Succ];
-    if (SuccVInfo.Semi == 0) {
-      SuccVInfo.Parent = BB;
-      Worklist.push_back(std::make_pair(Succ, 0U));
-    }
-  }
-#endif
-  return N;
-}
-
 // NewBB is split and now it has one successor. Update dominator tree to
 // reflect this change.
 void DominatorTree::splitBlock(BasicBlock *NewBB) {
