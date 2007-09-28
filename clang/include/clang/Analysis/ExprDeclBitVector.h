@@ -32,9 +32,13 @@ struct ExprDeclBitVector_Types {
   //===--------------------------------------------------------------------===//
 
   class AnalysisDataTy {
+  public:
     typedef llvm::DenseMap<const ScopedDecl*, unsigned > DMapTy;
-    typedef llvm::DenseMap<const Expr*, unsigned > EMapTy;
+    typedef llvm::DenseMap<const Expr*, unsigned > EMapTy;    
+    typedef DMapTy::const_iterator decl_iterator;
+    typedef EMapTy::const_iterator expr_iterator;
 
+  protected:
     EMapTy EMap;
     DMapTy DMap;    
     unsigned NDecls;
@@ -70,6 +74,11 @@ struct ExprDeclBitVector_Types {
     void Register(const Expr* E) {
       if (!isTracked(E)) EMap[E] = NExprs++;
     }
+    
+    decl_iterator begin_decl() const { return DMap.begin(); }
+    decl_iterator end_decl() const { return DMap.end(); }
+    expr_iterator begin_expr() const { return EMap.begin(); }
+    expr_iterator end_expr() const { return EMap.end(); }
   };
 
   //===--------------------------------------------------------------------===//
@@ -114,6 +123,16 @@ struct ExprDeclBitVector_Types {
     const llvm::BitVector::reference
     operator()(const Expr* E, const AnalysisDataTy& AD) const {
       return const_cast<ValTy&>(*this)(E,AD);
+    }
+    
+    llvm::BitVector::reference getDeclBit(unsigned i) { return DeclBV[i]; }    
+    const llvm::BitVector::reference getDeclBit(unsigned i) const {
+      return const_cast<llvm::BitVector&>(DeclBV)[i];
+    }
+    
+    llvm::BitVector::reference getExprBit(unsigned i) { return ExprBV[i]; }    
+    const llvm::BitVector::reference getExprBit(unsigned i) const {
+      return const_cast<llvm::BitVector&>(ExprBV)[i];
     }
     
     ValTy& operator|=(const ValTy& RHS) {
