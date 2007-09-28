@@ -13,7 +13,9 @@
 #ifndef LLVM_ANALYSIS_POST_DOMINATOR_CALCULATION_H
 #define LLVM_ANALYSIS_POST_DOMINATOR_CALCULATION_H
 
+#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/PostDominators.h"
+#include "llvm/Analysis/DominatorInternals.h"
 
 namespace llvm {
 
@@ -40,7 +42,7 @@ void PDTcalculate(PostDominatorTree& PDT, Function &F) {
   // in later stages of the algorithm.
   unsigned N = 0;
   for (unsigned i = 0, e = PDT.Roots.size(); i != e; ++i)
-    N = PDT.DFSPass(PDT.Roots[i], N);
+    N = DFSPass<GraphTraits<Inverse<BasicBlock*> > >(PDT, PDT.Roots[i], N);
   
   for (unsigned i = N; i >= 2; --i) {
     BasicBlock *W = PDT.Vertex[i];

@@ -37,10 +37,7 @@ struct PostDominatorTree : public DominatorTreeBase {
     AU.setPreservesAll();
   }
 private:
-  unsigned DFSPass(BasicBlock *V, unsigned N);
   friend void PDTcalculate(PostDominatorTree& PDT, Function &F);
-  friend void PDTLink(PostDominatorTree& PDT,BasicBlock *V,
-                      BasicBlock *W, InfoRec &WInfo);
 };
 
 

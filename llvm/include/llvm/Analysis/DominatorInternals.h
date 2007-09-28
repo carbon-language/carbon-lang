@@ -21,7 +21,8 @@
 namespace llvm {
 
 template<class GraphT>
-unsigned DFSPass(DominatorTree& DT, typename GraphT::NodeType* V, unsigned N) {
+unsigned DFSPass(DominatorTreeBase& DT, typename GraphT::NodeType* V,
+                 unsigned N) {
   // This is more understandable as a recursive algorithm, but we can't use the
   // recursive algorithm due to stack depth issues.  Keep it here for
   // documentation purposes.

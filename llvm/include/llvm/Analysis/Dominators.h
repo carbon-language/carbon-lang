@@ -280,6 +280,10 @@ protected:
   friend void Link(DominatorTreeBase& DT, BasicBlock *V,
                    BasicBlock *W, InfoRec &WInfo);
   
+  template<class GraphT> friend unsigned DFSPass(DominatorTreeBase& DT,
+                                                 typename GraphT::NodeType* V,
+                                                 unsigned N);
+  
   /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking
   /// dominator tree in dfs order.
   void updateDFSNumbers();
@@ -319,9 +323,6 @@ public:
 
 private:
   friend void DTcalculate(DominatorTree& DT, Function& F);
-  
-  template<class GraphT> friend
-  unsigned DFSPass(DominatorTree& DT, typename GraphT::NodeType* V, unsigned N);
 };
 
 //===-------------------------------------

@@ -28,51 +28,6 @@ char PostDominanceFrontier::ID = 0;
 static RegisterPass<PostDominatorTree>
 F("postdomtree", "Post-Dominator Tree Construction", true);
 
-unsigned PostDominatorTree::DFSPass(BasicBlock *V, unsigned N) {
-  std::vector<BasicBlock *> workStack;
-  SmallPtrSet<BasicBlock *, 32> Visited;
-  workStack.push_back(V);
-
-  do {
-    BasicBlock *currentBB = workStack.back();
-    InfoRec &CurVInfo = Info[currentBB];
-
-    // Visit each block only once.
-    if (Visited.insert(currentBB)) {
-      CurVInfo.Semi = ++N;
-      CurVInfo.Label = currentBB;
-      
-      Vertex.push_back(currentBB);  // Vertex[n] = current;
-      // Info[currentBB].Ancestor = 0;     
-      // Ancestor[n] = 0
-      // Child[currentBB] = 0;
-      CurVInfo.Size = 1;       // Size[currentBB] = 1
-    }
-
-    // Visit children
-    bool visitChild = false;
-    for (pred_iterator PI = pred_begin(currentBB), PE = pred_end(currentBB); 
-         PI != PE && !visitChild; ++PI) {
-      InfoRec &SuccVInfo = Info[*PI];
-      if (SuccVInfo.Semi == 0) {
-        SuccVInfo.Parent = currentBB;
-        if (!Visited.count(*PI)) {
-          workStack.push_back(*PI);   
-          visitChild = true;
-        }
-      }
-    }
-
-    // If all children are visited or if this block has no child then pop this
-    // block out of workStack.
-    if (!visitChild)
-      workStack.pop_back();
-
-  } while (!workStack.empty());
-
-  return N;
-}
-
 //===----------------------------------------------------------------------===//
 //  PostDominanceFrontier Implementation
 //===----------------------------------------------------------------------===//

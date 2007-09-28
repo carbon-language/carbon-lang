@@ -7,9 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LIB_LLVM_ANALYSIS_DOMINATOR_INTERNALS_H
-#define LIB_LLVM_ANALYSIS_DOMINATOR_INTERNALS_H
-
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -141,5 +138,3 @@ void Link(DominatorTreeBase& DT, BasicBlock *V, BasicBlock *W,
 }
 
 }
-
-#endif
