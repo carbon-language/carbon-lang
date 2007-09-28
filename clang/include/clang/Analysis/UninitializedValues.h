@@ -34,10 +34,11 @@ public:
   struct ObserverTy;
   
   struct AnalysisDataTy : public ExprDeclBitVector_Types::AnalysisDataTy {    
-    AnalysisDataTy() : Observer(NULL) {}
+    AnalysisDataTy() : Observer(NULL), FullUninitTaint(true) {}
     virtual ~AnalysisDataTy() {};
     
     ObserverTy* Observer;
+    bool FullUninitTaint;
   };
   
   typedef ExprDeclBitVector_Types::ValTy ValTy;

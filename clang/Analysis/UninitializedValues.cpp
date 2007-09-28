@@ -53,11 +53,8 @@ namespace {
 class TransferFuncs : public CFGStmtVisitor<TransferFuncs,bool> {
   UninitializedValues::ValTy V;
   UninitializedValues::AnalysisDataTy& AD;
-  bool InitWithAssigns;
 public:
-  TransferFuncs(UninitializedValues::AnalysisDataTy& ad, 
-                bool init_with_assigns=true) : 
-    AD(ad), InitWithAssigns(init_with_assigns) {
+  TransferFuncs(UninitializedValues::AnalysisDataTy& ad) : AD(ad) {
     V.resetValues(AD);
   }
   
@@ -68,8 +65,11 @@ public:
   bool VisitUnaryOperator(UnaryOperator* U);
   bool VisitStmt(Stmt* S);
   bool VisitCallExpr(CallExpr* C);
-  bool BlockStmt_VisitExpr(Expr* E);
   bool VisitDeclStmt(DeclStmt* D);
+  bool VisitConditionalOperator(ConditionalOperator* C);
+  
+  bool Visit(Stmt *S);
+  bool BlockStmt_VisitExpr(Expr* E);
   
   BlockVarDecl* FindBlockVarDecl(Stmt* S);
 };
@@ -81,64 +81,47 @@ static const bool Uninitialized = false;
 bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
   if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl())) {
     if (AD.Observer) AD.Observer->ObserveDeclRefExpr(V,AD,DR,VD);
-      
-    return V(VD,AD);
+     
+    // Pseudo-hack to prevent cascade of warnings.  If an accessed variable
+    // is uninitialized, then we are already going to flag a warning for
+    // this variable, which a "source" of uninitialized values.
+    // We can otherwise do a full "taint" of uninitialized values.  The
+    // client has both options by toggling AD.FullUninitTaint.
+
+    return AD.FullUninitTaint ? V(VD,AD) : Initialized;
   }
   else return Initialized;
 }
 
 BlockVarDecl* TransferFuncs::FindBlockVarDecl(Stmt *S) {
-  for (;;) {
+  for (;;)
     if (ParenExpr* P = dyn_cast<ParenExpr>(S)) {
-      S = P->getSubExpr();
-      continue;
+      S = P->getSubExpr(); continue;
     }
-    else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
+    else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S)) {
       if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl()))
         return VD;
-
-    return NULL;
-  }          
+    }
+    else return NULL;
 }
 
 bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
-
-  if (CFG::hasImplicitControlFlow(B))
-    return V(B,AD);
-  
   if (B->isAssignmentOp())
-    // Get the Decl for the LHS (if any).
     if (BlockVarDecl* VD = FindBlockVarDecl(B->getLHS()))
-      if(InitWithAssigns) {
-        // Pseudo-hack to prevent cascade of warnings.  If the RHS uses
-        // an uninitialized value, then we are already going to flag a warning
-        // for the RHS, or for the root "source" of the unintialized values.  
-        // Thus, propogating uninitialized doesn't make sense, since we are
-        // just adding extra messages that don't
-        // contribute to diagnosing the bug.  In InitWithAssigns mode
-        // we unconditionally set the assigned variable to Initialized to
-        // prevent Uninitialized propagation.
-        return V(VD,AD) = Initialized;
-      }
-      else return V(VD,AD) = Visit(B->getRHS());
+      return V(VD,AD) = AD.FullUninitTaint ? Visit(B->getRHS()) : Initialized;
   
   return VisitStmt(B);
 }
 
 bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
-  bool x = Initialized;
-  
   for (ScopedDecl* D = S->getDecl(); D != NULL; D = D->getNextDeclarator())
     if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(D)) {
-      if (Stmt* I = VD->getInit())
-        x = InitWithAssigns ? Initialized : V(cast<Expr>(I),AD);
-      else
-        x = Uninitialized;
-      
-      V(VD,AD) = x;
+      if (Stmt* I = VD->getInit()) 
+        V(VD,AD) = AD.FullUninitTaint ? V(cast<Expr>(I),AD) : Initialized;
+      else V(VD,AD) = Uninitialized;
     }
       
-  return x;
+  return Uninitialized; // Value is never consumed.
 }
 
 bool TransferFuncs::VisitCallExpr(CallExpr* C) {
@@ -147,17 +130,16 @@ bool TransferFuncs::VisitCallExpr(CallExpr* C) {
 }
 
 bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
-  switch (U->getOpcode()) {
-    case UnaryOperator::AddrOf:
-      // For "&x", treat "x" as now being initialized.
-      if (BlockVarDecl* VD = FindBlockVarDecl(U->getSubExpr()))
-        V(VD,AD) = Initialized;
-      else 
-        return Visit(U->getSubExpr());
+  if (U->getOpcode() == UnaryOperator::AddrOf)
+    if (BlockVarDecl* VD = FindBlockVarDecl(U->getSubExpr()))
+      return V(VD,AD) = Initialized;
 
-    default:
-      return Visit(U->getSubExpr());
-  }      
+  return Visit(U->getSubExpr());
+}
+  
+bool TransferFuncs::VisitConditionalOperator(ConditionalOperator* C) {
+  Visit(C->getCond());
+  return Visit(C->getLHS()) & Visit(C->getRHS());  // Yes: we want &, not &&.
 }
 
 bool TransferFuncs::VisitStmt(Stmt* S) {
@@ -167,14 +149,20 @@ bool TransferFuncs::VisitStmt(Stmt* S) {
   // evaluating some subexpressions may result in propogating "Uninitialized"
   // or "Initialized" to variables referenced in the other subexpressions.
   for (Stmt::child_iterator I=S->child_begin(), E=S->child_end(); I!=E; ++I)
-    if (Visit(*I) == Uninitialized) x = Uninitialized;
+    if (*I && Visit(*I) == Uninitialized) x = Uninitialized;
   
   return x;
+}
+  
+bool TransferFuncs::Visit(Stmt *S) {
+  if (AD.isTracked(static_cast<Expr*>(S))) return V(static_cast<Expr*>(S),AD);
+  else return static_cast<CFGStmtVisitor<TransferFuncs,bool>*>(this)->Visit(S);
 }
 
 bool TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
   assert (AD.isTracked(E));
-  return V(E,AD) = Visit(E);
+  return V(E,AD) = 
+    static_cast<CFGStmtVisitor<TransferFuncs,bool>*>(this)->Visit(E);
 }
   
 } // end anonymous namespace
@@ -228,10 +216,12 @@ public:
 } // end anonymous namespace
 
 namespace clang {
-void CheckUninitializedValues(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags) {
+void CheckUninitializedValues(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags,
+                              bool FullUninitTaint) {
   
   // Compute the unitialized values information.
   UninitializedValues U;
+  U.getAnalysisData().FullUninitTaint = FullUninitTaint;
   Solver S(U);
   S.runOnCFG(cfg);
   
