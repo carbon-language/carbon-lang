@@ -131,6 +131,8 @@ E: dalej@apple.com
 D: ARM constant islands improvements
 D: Tail merging improvements
 D: Rewrite X87 back end
+D: Use APFloat for floating point constants widely throughout compiler
+D: Implement X87 long double
 
 N: Eric Kidd
 W: http://randomhacks.net/
