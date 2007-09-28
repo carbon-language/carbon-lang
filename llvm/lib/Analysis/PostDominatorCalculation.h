@@ -13,7 +13,6 @@
 #ifndef LLVM_ANALYSIS_POST_DOMINATOR_CALCULATION_H
 #define LLVM_ANALYSIS_POST_DOMINATOR_CALCULATION_H
 
-#include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/DominatorInternals.h"
 
