@@ -5837,6 +5837,18 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     Lo = Node->getOperand(0);
     Hi = Node->getOperand(1);
     break;
+  case ISD::INSERT_VECTOR_ELT: {
+    SplitVectorOp(Node->getOperand(0), Lo, Hi);
+    unsigned Index = cast<ConstantSDNode>(Node->getOperand(2))->getValue();
+    SDOperand ScalarOp = Node->getOperand(1);
+    if (Index < NewNumElts)
+      Lo = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT, Lo, ScalarOp,
+                       DAG.getConstant(Index, TLI.getPointerTy()));
+    else
+      Hi = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT, Hi, ScalarOp,
+                       DAG.getConstant(Index - NewNumElts, TLI.getPointerTy()));
+    break;
+  }
   case ISD::BUILD_VECTOR: {
     SmallVector<SDOperand, 8> LoOps(Node->op_begin(), 
                                     Node->op_begin()+NewNumElts);
