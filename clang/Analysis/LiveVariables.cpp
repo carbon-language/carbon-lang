@@ -73,6 +73,8 @@ public:
   void VisitStmt(Stmt* S);
   void BlockStmt_VisitExpr(Expr *E);
   
+  DeclRefExpr* FindDeclRef(Stmt *S);
+  
   void Visit(Stmt *S) {
     if (AD.Observer) AD.Observer->ObserveStmt(S,AD,LiveState);
     static_cast<CFGStmtVisitor<TransferFuncs>*>(this)->Visit(S);
@@ -91,6 +93,8 @@ void TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
 }
 
 void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
+  Stmt *S = U->getSubExpr();
+  
   switch (U->getOpcode()) {
   case UnaryOperator::PostInc:
   case UnaryOperator::PostDec:
@@ -100,34 +104,43 @@ void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
     // Walk through the subexpressions, blasting through ParenExprs
     // until we either find a DeclRefExpr or some non-DeclRefExpr
     // expression.
-    for (Stmt* S = U->getSubExpr() ;;) {
-      if (ParenExpr* P = dyn_cast<ParenExpr>(S)) { S=P->getSubExpr(); continue;} 
-      else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S)) {
-        // Treat the --/++/& operator as a kill.
-        LiveState(DR->getDecl(),AD) = Dead;
-        if (AD.Observer) { AD.Observer->ObserverKill(DR); }
-        return VisitDeclRefExpr(DR);
-      }
-      else return Visit(S);
+    if (DeclRefExpr* DR = FindDeclRef(S)) {
+      // Treat the --/++/& operator as a kill.
+      LiveState(DR->getDecl(),AD) = Dead;
+      if (AD.Observer) { AD.Observer->ObserverKill(DR); }
+      return VisitDeclRefExpr(DR);
     }
-      
-    assert (false && "Unreachable.");
+
+    // Fall-through.
   
   default:
-    return Visit(U->getSubExpr());
+    return Visit(S);
   }
 }
 
+DeclRefExpr* TransferFuncs::FindDeclRef(Stmt *S) {
+  for (;;)
+    if (ParenExpr* P = dyn_cast<ParenExpr>(S)) {
+      S = P->getSubExpr(); continue;
+    }
+    else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S))
+      return DR;
+    else
+      return NULL;
+}
+  
 void TransferFuncs::VisitAssign(BinaryOperator* B) {    
   Stmt* LHS = B->getLHS();
 
-  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS)) { // Assigning to a var?
+  // Assigning to a variable?
+  if (DeclRefExpr* DR = FindDeclRef(LHS)) {
     LiveState(DR->getDecl(),AD) = Dead;
     if (AD.Observer) { AD.Observer->ObserverKill(DR); }
     
     // Handle things like +=, etc., which also generate "uses"
     // of a variable.  Do this just by visiting the subexpression.
-    if (B->getOpcode() != BinaryOperator::Assign) Visit(LHS);
+    if (B->getOpcode() != BinaryOperator::Assign)
+      VisitDeclRefExpr(DR);
   }
   else // Not assigning to a variable.  Process LHS as usual.
     Visit(LHS);
