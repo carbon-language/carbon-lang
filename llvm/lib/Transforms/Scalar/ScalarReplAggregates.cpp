@@ -905,6 +905,9 @@ static bool MergeInType(const Type *In, const Type *&Accum,
     case Type::PointerTyID: Accum = TD.getIntPtrType(); break;
     case Type::FloatTyID:   Accum = Type::Int32Ty; break;
     case Type::DoubleTyID:  Accum = Type::Int64Ty; break;
+    case Type::X86_FP80TyID:  return true;
+    case Type::FP128TyID: return true;
+    case Type::PPC_FP128TyID: return true;
     default:
       assert(Accum->isInteger() && "Unknown FP type!");
       break;
@@ -914,6 +917,9 @@ static bool MergeInType(const Type *In, const Type *&Accum,
     case Type::PointerTyID: In = TD.getIntPtrType(); break;
     case Type::FloatTyID:   In = Type::Int32Ty; break;
     case Type::DoubleTyID:  In = Type::Int64Ty; break;
+    case Type::X86_FP80TyID:  return true;
+    case Type::FP128TyID: return true;
+    case Type::PPC_FP128TyID: return true;
     default:
       assert(In->isInteger() && "Unknown FP type!");
       break;
