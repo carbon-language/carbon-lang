@@ -588,6 +588,10 @@ public:
       NumIntfRefProtocols = numRefProtos;
     }
   }
+  
+  ObjcProtocolDecl **getIntfRefProtocols() const { return IntfRefProtocols; }
+  int getNumIntfRefProtocols() const { return NumIntfRefProtocols; }
+  
   ObjcIvarDecl **getIntfDeclIvars() const { return Ivars; }
   int getIntfDeclNumIvars() const { return NumIvars; }
   
@@ -776,6 +780,16 @@ public:
     ReferencedProtocols[idx] = OID;
   }
   
+  ObjcProtocolDecl** getReferencedProtocols() const { 
+    return ReferencedProtocols; 
+  }
+  int getNumReferencedProtocols() const { return NumReferencedProtocols; }
+  
+  ObjcMethodDecl** getInsMethods() const { return ProtoInsMethods; }
+  int getNumInsMethods() const { return NumProtoInsMethods; }
+  
+  ObjcMethodDecl** getClsMethods() const { return ProtoClsMethods; }
+  int getNumClsMethods() const { return NumProtoClsMethods; }
   
   bool getIsForwardProtoDecl() const { return isForwardProtoDecl; }
   void setIsForwardProtoDecl(bool val) { isForwardProtoDecl = val; }

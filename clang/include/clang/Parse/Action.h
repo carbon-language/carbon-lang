@@ -451,10 +451,6 @@ public:
                                           DeclTy **Fields, unsigned NumFields) {
     return;
   }
-  virtual void ActOnImplMethodsVsClassMethods(DeclTy *ImplClassDecl, 
-					      DeclTy *ClassDecl) {
-    return;
-  }
   virtual DeclTy *ObjcStartProtoInterface(Scope* S,
 		    SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
