@@ -37,11 +37,11 @@ public:
       if (!B->isAssignmentOp()) return; // Skip non-assignments.
       
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()))
-        // Is the variable NOT live?  If so, flag a dead store.
-        if (!Live(DR->getDecl(),AD)) {
-          SourceRange R = B->getRHS()->getSourceRange();
-          Diags.Report(DR->getSourceRange().Begin(), diag::warn_dead_store,
-                       0, 0, &R, 1);                                                                        
+        if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
+          if (VD->hasLocalStorage() && !Live(VD,AD)) {
+            SourceRange R = B->getRHS()->getSourceRange();
+            Diags.Report(DR->getSourceRange().Begin(), diag::warn_dead_store,
+                         0, 0, &R, 1);                                                                        
         }
     }
     else if(DeclStmt* DS = dyn_cast<DeclStmt>(S))
@@ -49,23 +49,24 @@ public:
       // expressions that are not live (never used).
       for (VarDecl* V = cast<VarDecl>(DS->getDecl()); V != NULL ; 
                     V = cast_or_null<VarDecl>(V->getNextDeclarator())) {
-        if (Expr* E = V->getInit()) {
-          if (!Live(DS->getDecl(),AD)) {
-            // Special case: check for initializations with constants.
-            //
-            //  e.g. : int x = 0;
-            //
-            // If x is EVER assigned a new value later, don't issue
-            // a warning.  This is because such initialization can be
-            // due to defensive programming.
-            if (!E->isConstantExpr(Ctx,NULL)) {
-              // Flag a warning.
-              SourceRange R = E->getSourceRange();
-              Diags.Report(V->getLocation(), diag::warn_dead_store, 0, 0,
-                           &R,1);
+        if (V->hasLocalStorage())
+          if (Expr* E = V->getInit()) {
+            if (!Live(DS->getDecl(),AD)) {
+              // Special case: check for initializations with constants.
+              //
+              //  e.g. : int x = 0;
+              //
+              // If x is EVER assigned a new value later, don't issue
+              // a warning.  This is because such initialization can be
+              // due to defensive programming.
+              if (!E->isConstantExpr(Ctx,NULL)) {
+                // Flag a warning.
+                SourceRange R = E->getSourceRange();
+                Diags.Report(V->getLocation(), diag::warn_dead_store, 0, 0,
+                             &R,1);
+              }
             }
           }
-        }
       }
   }
 };
