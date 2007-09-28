@@ -502,6 +502,58 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
   return Ty;
 }
 
+unsigned Selector::getNumArgs() const {
+  unsigned IIF = getIdentifierInfoFlag();
+  if (IIF == ZeroArg)
+    return 0;
+  if (IIF == OneArg)
+    return 1;
+  // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
+  MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+  return SI->getNumArgs(); 
+}
+
+IdentifierInfo *Selector::getIdentifierInfoForSlot(unsigned argIndex) {
+  IdentifierInfo *II = getAsIdentifierInfo();
+  if (II) {
+    assert(((argIndex == 0) || (argIndex == 1)) && "illegal keyword index");
+    return II;
+  }
+  // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
+  MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+  return SI->getIdentifierInfoForSlot(argIndex);
+}
+
+char *MultiKeywordSelector::getName(llvm::SmallVectorImpl<char> &methodName) {
+  methodName[0] = '\0';
+  keyword_iterator KeyIter = keyword_begin();
+  for (unsigned int i = 0; i < NumArgs; i++) {
+    if (KeyIter[i]) {
+      unsigned KeyLen = strlen(KeyIter[i]->getName());
+      methodName.append(KeyIter[i]->getName(), KeyIter[i]->getName()+KeyLen);
+    }
+    methodName.push_back(':');
+  }
+  methodName.push_back('\0');
+  return &methodName[0];
+}
+
+char *Selector::getName(llvm::SmallVectorImpl<char> &methodName) {
+  methodName[0] = '\0';
+  IdentifierInfo *II = getAsIdentifierInfo();
+  if (II) {
+    unsigned NameLen = strlen(II->getName());
+    methodName.append(II->getName(), II->getName()+NameLen);
+    if (getNumArgs() == 1)
+      methodName.push_back(':');
+    methodName.push_back('\0');
+  } else { // We have a multiple keyword selector (no embedded flags).
+    MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+    SI->getName(methodName);
+  }
+  return &methodName[0];
+}
+
 Selector Parser::ObjcGetUnarySelector(IdentifierInfo *unarySel)
 {
   return Selector(unarySel, 0);

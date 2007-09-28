@@ -171,8 +171,10 @@ private:
 };
 
 /// MultiKeywordSelector - One of these variable length records is kept for each
-/// parsed selector (similar in spirit to IdentifierInfo). We use a folding set
-/// to unique aggregate names (keyword selectors in ObjC parlance). 
+/// selector containing more than one keyword. We use a folding set
+/// to unique aggregate names (keyword selectors in ObjC parlance). Access to 
+/// this class is provided strictly through Selector. All methods are private.
+/// The only reason it appears in this header is FoldingSet needs to see it:-(
 class MultiKeywordSelector : public llvm::FoldingSetNode {
   friend class Selector; // Only Selector can access me.
   friend class Parser;   // Only Parser can instantiate me.
@@ -206,7 +208,7 @@ class MultiKeywordSelector : public llvm::FoldingSetNode {
     assert((i < NumArgs) && "getIdentifierInfoForSlot(): illegal index");
     return keyword_begin()[i];
   }
-public:
+  friend class llvm::FoldingSet<MultiKeywordSelector>;
   static void Profile(llvm::FoldingSetNodeID &ID, 
                       keyword_iterator ArgTys, unsigned NumArgs) {
     ID.AddInteger(NumArgs);
@@ -248,11 +250,6 @@ class Selector {
       return reinterpret_cast<IdentifierInfo *>(InfoPtr & ~ArgFlags);
     return 0;
   }
-  MultiKeywordSelector *getAsMultiKeywordSelector() const {
-    if (InfoPtr & ArgFlags)
-      return 0;
-    return reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
-  }
 public:
   unsigned getIdentifierInfoFlag() const {
     return InfoPtr & ArgFlags;
@@ -274,26 +271,9 @@ public:
   bool isUnarySelector() const { 
     return getIdentifierInfoFlag() == ZeroArg;
   }
-  unsigned getNumArgs() const {
-    unsigned IIF = getIdentifierInfoFlag();
-    if (IIF == ZeroArg)
-      return 0;
-    if (IIF == OneArg)
-      return 1;
-    // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
-    MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
-    return SI->getNumArgs(); 
-  }
-  IdentifierInfo *getIdentifierInfoForSlot(unsigned argIndex) {
-    IdentifierInfo *II = getAsIdentifierInfo();
-    if (II) {
-      assert(((argIndex == 0) || (argIndex == 1)) && "illegal keyword index");
-      return II;
-    }
-    // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
-    MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
-    return SI->getIdentifierInfoForSlot(argIndex);
-  }
+  unsigned getNumArgs() const;
+  IdentifierInfo *getIdentifierInfoForSlot(unsigned argIndex);
+  
   // Derive the full selector name, placing the result into methodBuffer.
   // As a convenience, a pointer to the first character is returned.
   // Example usage: llvm::SmallString<128> mbuf; Selector->getName(mbuf);
