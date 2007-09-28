@@ -5398,8 +5398,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     RTLIB::Libcall LC;
     if (Node->getOperand(0).getValueType() == MVT::f32)
       LC = RTLIB::FPTOUINT_F32_I64;
-    else
+    else if (Node->getOperand(0).getValueType() == MVT::f64)
       LC = RTLIB::FPTOUINT_F64_I64;
+    else if (Node->getOperand(0).getValueType() == MVT::f80 ||
+             Node->getOperand(0).getValueType() == MVT::f128 ||
+             Node->getOperand(0).getValueType() == MVT::ppcf128)
+      LC = RTLIB::FPTOUINT_LD_I64;
     Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
                        false/*sign irrelevant*/, Hi);
     break;
