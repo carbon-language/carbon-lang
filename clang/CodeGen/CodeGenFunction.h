@@ -276,7 +276,11 @@ public:
   /// the result should be returned.
   RValue EmitAnyExpr(const Expr *E, llvm::Value *AggLoc = 0, 
                      bool isAggLocVolatile = false);
-  
+
+  /// isDummyBlock - Return true if BB is an empty basic block
+  /// with no predecessors.
+  static bool isDummyBlock(const llvm::BasicBlock *BB);
+
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//

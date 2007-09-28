@@ -131,13 +131,25 @@ void CodeGenFunction::EmitIfStmt(const IfStmt &S) {
   // Emit the 'then' code.
   EmitBlock(ThenBlock);
   EmitStmt(S.getThen());
-  Builder.CreateBr(ContBlock);
+  llvm::BasicBlock *BB = Builder.GetInsertBlock();
+  if (isDummyBlock(BB)) {
+    BB->eraseFromParent();
+    Builder.SetInsertPoint(ThenBlock);
+  }
+  else
+    Builder.CreateBr(ContBlock);
   
   // Emit the 'else' code if present.
   if (const Stmt *Else = S.getElse()) {
     EmitBlock(ElseBlock);
     EmitStmt(Else);
-    Builder.CreateBr(ContBlock);
+    llvm::BasicBlock *BB = Builder.GetInsertBlock();
+    if (isDummyBlock(BB)) {
+      BB->eraseFromParent();
+      Builder.SetInsertPoint(ElseBlock);
+    }
+    else
+      Builder.CreateBr(ContBlock);
   }
   
   // Emit the continuation block for code after the if.

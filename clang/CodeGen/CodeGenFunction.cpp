@@ -19,6 +19,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Support/CFG.h"
 using namespace clang;
 using namespace CodeGen;
 
@@ -87,17 +88,30 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   // Emit the function body.
   EmitStmt(FD->getBody());
   
-  // Emit a return for code that falls off the end.
-  // FIXME: if this is C++ main, this should return 0.
-  if (CurFn->getReturnType() == llvm::Type::VoidTy)
-    Builder.CreateRetVoid();
-  else
-    Builder.CreateRet(llvm::UndefValue::get(CurFn->getReturnType()));
-  
+  // Emit a return for code that falls off the end. If insert point
+  // is a dummy block with no predecessors then remove the block itself.
+  llvm::BasicBlock *BB = Builder.GetInsertBlock();
+  if (isDummyBlock(BB))
+    BB->eraseFromParent();
+  else {
+    // FIXME: if this is C++ main, this should return 0.
+    if (CurFn->getReturnType() == llvm::Type::VoidTy)
+      Builder.CreateRetVoid();
+    else
+      Builder.CreateRet(llvm::UndefValue::get(CurFn->getReturnType()));
+  }
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
   
   // Verify that the function is well formed.
   assert(!verifyFunction(*CurFn));
+}
+
+/// isDummyBlock - Return true if BB is an empty basic block
+/// with no predecessors.
+bool CodeGenFunction::isDummyBlock(const llvm::BasicBlock *BB) {
+  if (BB->empty() && pred_begin(BB) == pred_end(BB)) 
+    return true;
+  return false;
 }
 
