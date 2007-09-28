@@ -3481,12 +3481,14 @@ void DIEString::EmitValue(DwarfDebug &DD, unsigned Form) {
 /// EmitValue - Emit label value.
 ///
 void DIEDwarfLabel::EmitValue(DwarfDebug &DD, unsigned Form) {
-  DD.EmitReference(Label, false, Form == DW_FORM_data4);
+  bool IsSmall = Form == DW_FORM_data4;
+  DD.EmitReference(Label, false, IsSmall);
 }
 
 /// SizeOf - Determine size of label value in bytes.
 ///
 unsigned DIEDwarfLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
+  if (Form == DW_FORM_data4) return 4;
   return DD.getTargetData()->getPointerSize();
 }
 
@@ -3495,12 +3497,14 @@ unsigned DIEDwarfLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
 /// EmitValue - Emit label value.
 ///
 void DIEObjectLabel::EmitValue(DwarfDebug &DD, unsigned Form) {
-  DD.EmitReference(Label, false, Form == DW_FORM_data4);
+  bool IsSmall = Form == DW_FORM_data4;
+  DD.EmitReference(Label, false, IsSmall);
 }
 
 /// SizeOf - Determine size of label value in bytes.
 ///
 unsigned DIEObjectLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
+  if (Form == DW_FORM_data4) return 4;
   return DD.getTargetData()->getPointerSize();
 }
     
