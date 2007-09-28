@@ -63,7 +63,7 @@ SUnit *ScheduleDAG::Clone(SUnit *Old) {
   SU->Latency = Old->Latency;
   SU->isTwoAddress = Old->isTwoAddress;
   SU->isCommutable = Old->isCommutable;
-  SU->hasImplicitDefs = Old->hasImplicitDefs;
+  SU->hasPhysRegDefs = Old->hasPhysRegDefs;
   SUnitMap[Old->Node].push_back(SU);
   return SU;
 }
@@ -167,8 +167,6 @@ void ScheduleDAG::BuildSchedUnits() {
     if (MainNode->isTargetOpcode()) {
       unsigned Opc = MainNode->getTargetOpcode();
       const TargetInstrDescriptor &TID = TII->get(Opc);
-      if (TID.ImplicitDefs)
-        SU->hasImplicitDefs = true;
       for (unsigned i = 0; i != TID.numOperands; ++i) {
         if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
           SU->isTwoAddress = true;
@@ -185,8 +183,10 @@ void ScheduleDAG::BuildSchedUnits() {
     
     for (unsigned n = 0, e = SU->FlaggedNodes.size(); n != e; ++n) {
       SDNode *N = SU->FlaggedNodes[n];
-      if (N->isTargetOpcode() && TII->getImplicitDefs(N->getTargetOpcode()))
-        SU->hasImplicitDefs = true;
+      if (N->isTargetOpcode() &&
+          TII->getImplicitDefs(N->getTargetOpcode()) &&
+          CountResults(N) > (unsigned)TII->getNumDefs(N->getTargetOpcode()))
+        SU->hasPhysRegDefs = true;
       
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
         SDNode *OpN = N->getOperand(i).Val;

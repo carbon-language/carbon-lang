@@ -115,7 +115,7 @@ namespace llvm {
     short NumSuccsLeft;                 // # of succs not scheduled.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
     bool isCommutable     : 1;          // Is a commutable instruction.
-    bool hasImplicitDefs  : 1;          // Has implicit physical reg defs.
+    bool hasPhysRegDefs  : 1;           // Has physreg defs that are being used.
     bool isPending        : 1;          // True once pending.
     bool isAvailable      : 1;          // True once available.
     bool isScheduled      : 1;          // True once scheduled.
@@ -129,7 +129,7 @@ namespace llvm {
     SUnit(SDNode *node, unsigned nodenum)
       : Node(node), InstanceNo(0), NodeNum(nodenum), Latency(0),
         NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
-        isTwoAddress(false), isCommutable(false), hasImplicitDefs(false),
+        isTwoAddress(false), isCommutable(false), hasPhysRegDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
         CycleBound(0), Cycle(0), Depth(0), Height(0),
         CopyDstRC(NULL), CopySrcRC(NULL) {}

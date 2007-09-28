@@ -1144,10 +1144,26 @@ bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
 }
 
 
+/// hasCopyToRegUse - Return true if SU has a value successor that is a
+/// CopyToReg node.
+static bool hasCopyToRegUse(SUnit *SU) {
+  for (SUnit::const_succ_iterator I = SU->Succs.begin(), E = SU->Succs.end();
+       I != E; ++I) {
+    if (I->isCtrl) continue;
+    SUnit *SuccSU = I->Dep;
+    if (SuccSU->Node && SuccSU->Node->getOpcode() == ISD::CopyToReg)
+      return true;
+  }
+  return false;
+}
+
 /// AddPseudoTwoAddrDeps - If two nodes share an operand and one of them uses
 /// it as a def&use operand. Add a pseudo control edge from it to the other
 /// node (if it won't create a cycle) so the two-address one will be scheduled
-/// first (lower in the schedule).
+/// first (lower in the schedule). If both nodes are two-address, favor the
+/// one that has a CopyToReg use (more likely to be a loop induction update).
+/// If both are two-address, but one is commutable while the other is not
+/// commutable, favor the one that's not commutable.
 template<class SF>
 void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
   for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
@@ -1156,7 +1172,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       continue;
 
     SDNode *Node = SU->Node;
-    if (!Node || !Node->isTargetOpcode())
+    if (!Node || !Node->isTargetOpcode() || SU->FlaggedNodes.size() > 0)
       continue;
 
     unsigned Opc = Node->getTargetOpcode();
@@ -1173,12 +1189,13 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
           SUnit *SuccSU = I->Dep;
           // Don't constraint nodes with implicit defs. It can create cycles
           // plus it may increase register pressures.
-          if (SuccSU == SU || SuccSU->hasImplicitDefs)
+          if (SuccSU == SU || SuccSU->hasPhysRegDefs)
             continue;
           // Be conservative. Ignore if nodes aren't at the same depth.
           if (SuccSU->Depth != SU->Depth)
             continue;
           if ((!canClobber(SuccSU, DUSU) ||
+               (hasCopyToRegUse(SU) && !hasCopyToRegUse(SuccSU)) ||
                (!SU->isCommutable && SuccSU->isCommutable)) &&
               !isReachable(SuccSU, SU)) {
             DOUT << "Adding an edge from SU # " << SU->NodeNum
