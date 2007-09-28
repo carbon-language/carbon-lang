@@ -3044,7 +3044,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
         switch(Node->getOpcode()) {
         case ISD::FSQRT:
-          LC = VT == MVT::f32 ? RTLIB::SQRT_F32 : RTLIB::SQRT_F64;
+          LC = VT == MVT::f32 ? RTLIB::SQRT_F32 : 
+               VT == MVT::f64 ? RTLIB::SQRT_F64 : RTLIB::SQRT_LD;
           break;
         case ISD::FSIN:
           LC = VT == MVT::f32 ? RTLIB::SIN_F32 : RTLIB::SIN_F64;
@@ -3065,8 +3066,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::FPOWI: {
     // We always lower FPOWI into a libcall.  No target support it yet.
-    RTLIB::Libcall LC = Node->getValueType(0) == MVT::f32
-      ? RTLIB::POWI_F32 : RTLIB::POWI_F64;
+    RTLIB::Libcall LC = 
+      Node->getValueType(0) == MVT::f32 ? RTLIB::POWI_F32 : 
+      Node->getValueType(0) == MVT::f64 ? RTLIB::POWI_F64 : 
+      RTLIB::POWI_LD;
     SDOperand Dummy;
     Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
                            false/*sign irrelevant*/, Dummy);
@@ -5688,8 +5691,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::FPROUND_F64_F32),Node,true,Hi);
     break;
   case ISD::FPOWI:
-    Lo = ExpandLibCall(TLI.getLibcallName((VT == MVT::f32)
-                                          ? RTLIB::POWI_F32 : RTLIB::POWI_F64),
+    Lo = ExpandLibCall(TLI.getLibcallName((VT == MVT::f32) ? RTLIB::POWI_F32 : 
+                                          (VT == MVT::f64) ? RTLIB::POWI_F64 :
+                                          RTLIB::POWI_LD),
                        Node, false, Hi);
     break;
   case ISD::FSQRT:
@@ -5698,7 +5702,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
     switch(Node->getOpcode()) {
     case ISD::FSQRT:
-      LC = (VT == MVT::f32) ? RTLIB::SQRT_F32 : RTLIB::SQRT_F64;
+      LC = (VT == MVT::f32) ? RTLIB::SQRT_F32 : 
+           (VT == MVT::f64) ? RTLIB::SQRT_F64 : RTLIB::SQRT_LD;
       break;
     case ISD::FSIN:
       LC = (VT == MVT::f32) ? RTLIB::SIN_F32 : RTLIB::SIN_F64;

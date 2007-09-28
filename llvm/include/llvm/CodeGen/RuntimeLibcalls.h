@@ -18,7 +18,9 @@
 namespace llvm {
 namespace RTLIB {
   /// RTLIB::Libcall enum - This enum defines all of the runtime library calls
-  /// the backend can emit.
+  /// the backend can emit.  "LD" is used for all long double types, since
+  /// these functions will have the same interface on different targets even 
+  /// though the data is not in the same format.
   ///
   enum Libcall {
     // Integer
@@ -56,8 +58,10 @@ namespace RTLIB {
     NEG_F64,
     POWI_F32,
     POWI_F64,
+    POWI_LD,
     SQRT_F32,
     SQRT_F64,
+    SQRT_LD,
     SIN_F32,
     SIN_F64,
     COS_F32,

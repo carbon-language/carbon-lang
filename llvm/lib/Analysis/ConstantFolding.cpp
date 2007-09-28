@@ -331,8 +331,14 @@ llvm::canConstantFoldCallTo(Function *F) {
   switch (F->getIntrinsicID()) {
   case Intrinsic::sqrt_f32:
   case Intrinsic::sqrt_f64:
+  case Intrinsic::sqrt_f80:
+  case Intrinsic::sqrt_f128:
+  case Intrinsic::sqrt_ppcf128:
   case Intrinsic::powi_f32:
   case Intrinsic::powi_f64:
+  case Intrinsic::powi_f80:
+  case Intrinsic::powi_f128:
+  case Intrinsic::powi_ppcf128:
   case Intrinsic::bswap:
   case Intrinsic::ctpop:
   case Intrinsic::ctlz:

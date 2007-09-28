@@ -131,6 +131,12 @@ static void EmitTypeForValueType(std::ostream &OS, MVT::ValueType VT) {
     OS << "Type::FloatTy";
   } else if (VT == MVT::f64) {
     OS << "Type::DoubleTy";
+  } else if (VT == MVT::f80) {
+    OS << "Type::X86_FP80Ty";
+  } else if (VT == MVT::f128) {
+    OS << "Type::FP128Ty";
+  } else if (VT == MVT::ppcf128) {
+    OS << "Type::PPC_FP128Ty";
   } else if (VT == MVT::isVoid) {
     OS << "Type::VoidTy";
   } else {

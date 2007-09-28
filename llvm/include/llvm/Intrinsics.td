@@ -76,6 +76,9 @@ def llvm_i32_ty        : LLVMType<i32>;
 def llvm_i64_ty        : LLVMType<i64>;
 def llvm_float_ty      : LLVMType<f32>;
 def llvm_double_ty     : LLVMType<f64>;
+def llvm_f80_ty        : LLVMType<f80>;
+def llvm_f128_ty       : LLVMType<f128>;
+def llvm_ppcf128_ty    : LLVMType<ppcf128>;
 def llvm_ptr_ty        : LLVMPointerType<llvm_i8_ty>;             // i8*
 def llvm_ptrptr_ty     : LLVMPointerType<llvm_ptr_ty>;            // i8**
 def llvm_empty_ty      : LLVMType<OtherVT>;                       // { }
@@ -177,9 +180,16 @@ let Properties = [IntrWriteArgMem] in {
 let Properties = [IntrNoMem] in {
   def int_sqrt_f32 : Intrinsic<[llvm_float_ty, llvm_float_ty]>;
   def int_sqrt_f64 : Intrinsic<[llvm_double_ty, llvm_double_ty]>;
+  def int_sqrt_f80 : Intrinsic<[llvm_f80_ty, llvm_f80_ty]>;
+  def int_sqrt_f128 : Intrinsic<[llvm_f128_ty, llvm_f128_ty]>;
+  def int_sqrt_ppcf128 : Intrinsic<[llvm_ppcf128_ty, llvm_ppcf128_ty]>;
 
   def int_powi_f32 : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_i32_ty]>;
   def int_powi_f64 : Intrinsic<[llvm_double_ty, llvm_double_ty, llvm_i32_ty]>;
+  def int_powi_f80 : Intrinsic<[llvm_f80_ty, llvm_f80_ty, llvm_i32_ty]>;
+  def int_powi_f128 : Intrinsic<[llvm_f128_ty, llvm_f128_ty, llvm_i32_ty]>;
+  def int_powi_ppcf128 : Intrinsic<[llvm_ppcf128_ty, llvm_ppcf128_ty, 
+                                    llvm_i32_ty]>;
 }
 
 // NOTE: these are internal interfaces.

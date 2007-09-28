@@ -58,8 +58,10 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::NEG_F64] = "__negdf2";
   Names[RTLIB::POWI_F32] = "__powisf2";
   Names[RTLIB::POWI_F64] = "__powidf2";
+  Names[RTLIB::POWI_LD] = "__powixf2";
   Names[RTLIB::SQRT_F32] = "sqrtf";
   Names[RTLIB::SQRT_F64] = "sqrt";
+  Names[RTLIB::SQRT_LD] = "sqrtl";
   Names[RTLIB::SIN_F32] = "sinf";
   Names[RTLIB::SIN_F64] = "sin";
   Names[RTLIB::COS_F32] = "cosf";
