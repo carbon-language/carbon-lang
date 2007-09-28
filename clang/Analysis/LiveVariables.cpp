@@ -31,16 +31,18 @@ using namespace clang;
 //===----------------------------------------------------------------------===//      
 
 namespace {
-struct RegisterDecls : public CFGRecStmtDeclVisitor<RegisterDecls> {
+class RegisterDeclsExprs : public CFGRecStmtDeclVisitor<RegisterDeclsExprs> {  
   LiveVariables::AnalysisDataTy& AD;
-  void VisitVarDecl(VarDecl* VD) { AD.RegisterDecl(VD); }
-
-  RegisterDecls(LiveVariables::AnalysisDataTy& ad) : AD(ad) {}
+public:
+  RegisterDeclsExprs(LiveVariables::AnalysisDataTy& ad) : AD(ad) {}
+  
+  void VisitVarDecl(VarDecl* VD) { AD.Register(VD); }
+  void BlockStmt_VisitExpr(Expr* E) { AD.Register(E); }
 };  
 } // end anonymous namespace
 
 void LiveVariables::InitializeValues(const CFG& cfg) {
-  RegisterDecls R(getAnalysisData());
+  RegisterDeclsExprs R(getAnalysisData());
   cfg.VisitBlockStmts(R);
 }
 
@@ -49,29 +51,38 @@ void LiveVariables::InitializeValues(const CFG& cfg) {
 //===----------------------------------------------------------------------===//      
 
 namespace {
+  
+static const bool Alive = true;
+static const bool Dead = false;  
+
 class TransferFuncs : public CFGStmtVisitor<TransferFuncs> {
   LiveVariables::AnalysisDataTy& AD;
-  LiveVariables::ValTy Live;
+  LiveVariables::ValTy LiveState;
+  bool ExprLiveness;
 public:
-  TransferFuncs(LiveVariables::AnalysisDataTy& ad) : AD(ad) {}
+  TransferFuncs(LiveVariables::AnalysisDataTy& ad) : AD(ad), 
+                                                     ExprLiveness(Dead) {}
 
-  LiveVariables::ValTy& getVal() { return Live; }
+  LiveVariables::ValTy& getVal() { return LiveState; }
   
   void VisitDeclRefExpr(DeclRefExpr* DR);
   void VisitBinaryOperator(BinaryOperator* B);
   void VisitAssign(BinaryOperator* B);
   void VisitDeclStmt(DeclStmt* DS);
   void VisitUnaryOperator(UnaryOperator* U);
-  void VisitStmt(Stmt* S) { VisitChildren(S); }
+  void VisitStmt(Stmt* S);
+  void BlockStmt_VisitExpr(Expr *E);
+  
   void Visit(Stmt *S) {
-    if (AD.Observer) AD.Observer->ObserveStmt(S,AD,Live);
+    if (AD.Observer) AD.Observer->ObserveStmt(S,AD,LiveState);
     static_cast<CFGStmtVisitor<TransferFuncs>*>(this)->Visit(S);
   }
 };
+  
 
 void TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
   if (VarDecl* V = dyn_cast<VarDecl>(DR->getDecl())) 
-    Live.set(AD[V]);   // Register a use of the variable.
+    LiveState(V,AD) = Alive;
 }
   
 void TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {     
@@ -93,28 +104,27 @@ void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
       if (ParenExpr* P = dyn_cast<ParenExpr>(S)) { S=P->getSubExpr(); continue;} 
       else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S)) {
         // Treat the --/++/& operator as a kill.
-        Live.reset(AD[DR->getDecl()]);
-        if (AD.Observer) AD.Observer->ObserverKill(DR);
-        VisitDeclRefExpr(DR);          
+        LiveState(DR->getDecl(),AD) = Dead;
+        if (AD.Observer) { AD.Observer->ObserverKill(DR); }
+        return VisitDeclRefExpr(DR);
       }
-      else Visit(S);
-
-      break;   
-    }        
-    break;
+      else return Visit(S);
+    }
+      
+    assert (false && "Unreachable.");
   
   default:
-    Visit(U->getSubExpr());
-    break;
+    return Visit(U->getSubExpr());
   }
 }
 
 void TransferFuncs::VisitAssign(BinaryOperator* B) {    
   Stmt* LHS = B->getLHS();
 
-  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS)) { // Assigning to a var?    
-    Live.reset(AD[DR->getDecl()]);
-    if (AD.Observer) AD.Observer->ObserverKill(DR);
+  if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(LHS)) { // Assigning to a var?
+    LiveState(DR->getDecl(),AD) = Dead;
+    if (AD.Observer) { AD.Observer->ObserverKill(DR); }
+    
     // Handle things like +=, etc., which also generate "uses"
     // of a variable.  Do this just by visiting the subexpression.
     if (B->getOpcode() != BinaryOperator::Assign) Visit(LHS);
@@ -129,21 +139,34 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
   // Declarations effectively "kill" a variable since they cannot
   // possibly be live before they are declared.
   for (ScopedDecl* D = DS->getDecl(); D != NULL ; D = D->getNextDeclarator())
-    Live.reset(AD[D]);
+    LiveState(D,AD) = Dead;
 }
+  
+void TransferFuncs::VisitStmt(Stmt* S) {
+  if (AD.isTracked(static_cast<Expr*>(S))) return;
+  else VisitChildren(S); 
+}
+  
+void TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
+  assert (AD.isTracked(E));
+  static_cast<CFGStmtVisitor<TransferFuncs>*>(this)->Visit(E);
+}
+  
 } // end anonymous namespace
 
-namespace {
-struct Merge {
-  void operator()(LiveVariables::ValTy& Dst, LiveVariables::ValTy& Src) {
-    Src |= Dst;
-  }
-};
-} // end anonymous namespace
+//===----------------------------------------------------------------------===//
+// Merge operator: if something is live on any successor block, it is live
+//  in the current block (a set union).
+//===----------------------------------------------------------------------===//      
 
 namespace {
+typedef DeclBitVector_Types::Union Merge;
 typedef DataflowSolver<LiveVariables,TransferFuncs,Merge> Solver;
-}
+} // end anonymous namespace
+
+//===----------------------------------------------------------------------===//
+// External interface to run Liveness analysis.
+//===----------------------------------------------------------------------===//      
 
 void LiveVariables::runOnCFG(const CFG& cfg) {
   Solver S(*this);
@@ -164,11 +187,11 @@ void LiveVariables::runOnAllBlocks(const CFG& cfg,
 //
 
 bool LiveVariables::isLive(const CFGBlock* B, const VarDecl* D) const {
-  return getBlockData(B)[ getAnalysisData()[D] ];
+  return getBlockData(B)(D,getAnalysisData());
 }
 
 bool LiveVariables::isLive(const ValTy& Live, const VarDecl* D) const {
-  return Live[ getAnalysisData()[D] ];
+  return Live(D,getAnalysisData());
 }
 
 //===----------------------------------------------------------------------===//
@@ -178,8 +201,9 @@ bool LiveVariables::isLive(const ValTy& Live, const VarDecl* D) const {
 void LiveVariables::dumpLiveness(const ValTy& V, SourceManager& SM) const {
   const AnalysisDataTy& AD = getAnalysisData();
   
-  for (AnalysisDataTy::iterator I = AD.begin(), E = AD.end(); I!=E; ++I)
-    if (V[I->second]) {      
+  for (AnalysisDataTy::decl_iterator I = AD.begin_decl(),
+                                     E = AD.end_decl(); I!=E; ++I)
+    if (V.getDeclBit(I->second)) {      
       SourceLocation PhysLoc = SM.getPhysicalLoc(I->first->getLocation());
     
       fprintf(stderr, "  %s <%s:%u:%u>\n", 

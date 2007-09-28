@@ -38,7 +38,7 @@ public:
       
       if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(B->getLHS()))
         // Is the variable NOT live?  If so, flag a dead store.
-        if (!Live(AD,DR->getDecl())) {
+        if (!Live(DR->getDecl(),AD)) {
           SourceRange R = B->getRHS()->getSourceRange();
           Diags.Report(DR->getSourceRange().Begin(), diag::warn_dead_store,
                        0, 0, &R, 1);                                                                        
@@ -50,7 +50,7 @@ public:
       for (VarDecl* V = cast<VarDecl>(DS->getDecl()); V != NULL ; 
                     V = cast_or_null<VarDecl>(V->getNextDeclarator())) {
         if (Expr* E = V->getInit()) {
-          if (!Live(AD,DS->getDecl())) {
+          if (!Live(DS->getDecl(),AD)) {
             // Special case: check for initializations with constants.
             //
             //  e.g. : int x = 0;

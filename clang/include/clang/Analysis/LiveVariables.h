@@ -15,9 +15,8 @@
 #define LLVM_CLANG_LIVEVARIABLES_H
 
 #include "clang/AST/Decl.h"
+#include "clang/Analysis/ExprDeclBitVector.h"
 #include "clang/Analysis/FlowSensitive/DataflowValues.h"
-#include "llvm/ADT/BitVector.h"
-#include "llvm/ADT/DenseMap.h"
 
 namespace clang {
 
@@ -26,80 +25,30 @@ class DeclRefExpr;
 class SourceManager;
   
 struct LiveVariables_ValueTypes {
-  //===-----------------------------------------------------===//
-  // AnalysisDataTy - Whole-function analysis meta data.
-  //===-----------------------------------------------------===//
 
-  class ObserverTy;
-  
-  class AnalysisDataTy {
-    typedef llvm::DenseMap<const VarDecl*, unsigned> VMapTy;
-    VMapTy M;
-    unsigned NDecls;
-   public:
+  struct ObserverTy;
+
+
+  // We need to keep track of both declarations and CFGBlock-level expressions,
+  // (so that we don't explore such expressions twice), but we only need
+  // liveness information for declarations (hence 
+  // ValTy = DeclBitVector_Types::ValTy instead of 
+  // ValTy = ExprDeclBitVector_Types::ValTy).
+
+  struct AnalysisDataTy : public ExprDeclBitVector_Types::AnalysisDataTy {
     ObserverTy* Observer;
     
-    AnalysisDataTy() : NDecls(0), Observer(NULL) {}
-    
-    bool Tracked(const VarDecl* VD) const { return M.find(VD) != M.end(); }
-    void RegisterDecl(const VarDecl* VD) { if (!Tracked(VD)) M[VD] = NDecls++; }
-
-    unsigned operator[](const VarDecl* VD) const {
-      VMapTy::const_iterator I = M.find(VD);
-      assert (I != M.end());
-      return I->second;
-    }
-    
-    unsigned operator[](const ScopedDecl* S) const {
-      return (*this)[cast<VarDecl>(S)];
-    }
-
-    unsigned getNumDecls() const { return NDecls; }
-    
-    typedef VMapTy::const_iterator iterator;
-    iterator begin() const { return M.begin(); }
-    iterator end() const { return M.end(); }
+    AnalysisDataTy() : Observer(NULL) {}
   };
-  
-  //===-----------------------------------------------------===//
-  // ValTy - Dataflow value.
-  //===-----------------------------------------------------===//
-  class ValTy {
-    llvm::BitVector V;
-  public:
-    void copyValues(const ValTy& RHS) { V = RHS.V; }
 
-    bool operator==(const ValTy& RHS) const { return V == RHS.V; }
-    
-    void resetValues(const AnalysisDataTy& AD) {
-      V.resize(AD.getNumDecls());
-      V.reset();
-    }
-          
-    llvm::BitVector::reference operator[](unsigned i) {
-      assert (i < V.size() && "Liveness bitvector access is out-of-bounds.");
-      return V[i];
-    }
-    
-    const llvm::BitVector::reference operator[](unsigned i) const {
-      return const_cast<ValTy&>(*this)[i];
-    }
-    
-    bool operator()(const AnalysisDataTy& AD, const ScopedDecl* D) const {
-      return (*this)[AD[D]];
-    }
-    
-    ValTy& operator|=(ValTy& RHS) { V |= RHS.V; return *this; }
-    
-    void set(unsigned i) { V.set(i); }
-    void reset(unsigned i) { V.reset(i); }
-  };
+    // We only keep actual dataflow state for declarations.
+  typedef DeclBitVector_Types::ValTy ValTy;
   
   //===-----------------------------------------------------===//
   // ObserverTy - Observer for uninitialized values queries.
   //===-----------------------------------------------------===//
-  class ObserverTy {
-  public:
+
+  struct ObserverTy {
     virtual ~ObserverTy() {}
     
     /// ObserveStmt - A callback invoked right before invoking the
