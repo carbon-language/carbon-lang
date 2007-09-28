@@ -1115,17 +1115,15 @@ public:
   /// @brief Perform the pow optimization.
   virtual bool OptimizeCall(CallInst *ci, SimplifyLibCalls &SLC) {
     const Type *Ty = cast<Function>(ci->getOperand(0))->getReturnType();
+    if (Ty!=Type::FloatTy && Ty!=Type::DoubleTy)
+      return false;   // FIXME long double not yet supported
     Value* base = ci->getOperand(1);
     Value* expn = ci->getOperand(2);
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(base)) {
-      if (Ty!=Type::FloatTy && Ty!=Type::DoubleTy)
-        return false;   // FIXME long double not yet supported
       if (Op1->isExactlyValue(1.0)) // pow(1.0,x) -> 1.0
         return ReplaceCallWith(ci, ConstantFP::get(Ty, 
           Ty==Type::FloatTy ? APFloat(1.0f) : APFloat(1.0)));
     }  else if (ConstantFP* Op2 = dyn_cast<ConstantFP>(expn)) {
-      if (Ty!=Type::FloatTy && Ty!=Type::DoubleTy)
-        return false;   // FIXME long double not yet supported
       if (Op2->getValueAPF().isZero()) {
         // pow(x,0.0) -> 1.0
         return ReplaceCallWith(ci, ConstantFP::get(Ty,

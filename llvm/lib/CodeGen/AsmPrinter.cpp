@@ -1271,6 +1271,7 @@ void AsmPrinter::printDataDirective(const Type *type) {
     }
     break;
   case Type::FloatTyID: case Type::DoubleTyID:
+  case Type::X86_FP80TyID: case Type::FP128TyID: case Type::PPC_FP128TyID:
     assert (0 && "Should have already output floating point constant.");
   default:
     assert (0 && "Can't handle printing this type of thing");

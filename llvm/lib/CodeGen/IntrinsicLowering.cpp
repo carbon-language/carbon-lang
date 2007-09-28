@@ -794,6 +794,24 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     Type::DoubleTy, sqrtFCache);
     break;
   }
+  case Intrinsic::sqrt_f80: {
+    static Constant *sqrtF80Cache = 0;
+    ReplaceCallWith("sqrtl", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::X86_FP80Ty, sqrtF80Cache);
+    break;
+  }
+  case Intrinsic::sqrt_f128: {
+    static Constant *sqrtF128Cache = 0;
+    ReplaceCallWith("sqrtl", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::FP128Ty, sqrtF128Cache);
+    break;
+  }
+  case Intrinsic::sqrt_ppcf128: {
+    static Constant *sqrtppcF128Cache = 0;
+    ReplaceCallWith("sqrtl", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::PPC_FP128Ty, sqrtppcF128Cache);
+    break;
+  }
   }
 
   assert(CI->use_empty() &&

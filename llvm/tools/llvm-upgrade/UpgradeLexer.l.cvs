@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file implements the flex scanner for LLVM 1.9 assembly languages files.
+//  This doesn't handle long double constants, since LLVM 1.9 did not have them.
 //
 //===----------------------------------------------------------------------===*/
 
