@@ -62,7 +62,7 @@ DynamicLibrary::DynamicLibrary() : handle(0) {
 
   lt_dlhandle a_handle = lt_dlopen(0);
 
-  assert(a_handle == 0 && "Can't open program as dynamic library");
+  assert(a_handle && "Can't open program as dynamic library");
 
   handle = a_handle;
   OpenedHandles.push_back(a_handle);
