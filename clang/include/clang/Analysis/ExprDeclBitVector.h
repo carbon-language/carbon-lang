@@ -24,6 +24,104 @@ namespace clang {
   
   class Expr;
   class ScopedDecl;
+  
+struct DeclBitVector_Types {
+  
+  //===--------------------------------------------------------------------===//
+  // AnalysisDataTy - Whole-function meta data.
+  //===--------------------------------------------------------------------===//
+  
+  class AnalysisDataTy {
+  public:
+    typedef llvm::DenseMap<const ScopedDecl*, unsigned > DMapTy;
+    typedef DMapTy::const_iterator decl_iterator;
+    
+  protected:
+    DMapTy DMap;    
+    unsigned NDecls;
+    
+  public:
+    
+    AnalysisDataTy() : NDecls(0) {}
+    virtual ~AnalysisDataTy() {}
+    
+    bool isTracked(const ScopedDecl* SD) { return DMap.find(SD) != DMap.end(); }
+    
+    unsigned getIdx(const ScopedDecl* SD) const {
+      DMapTy::const_iterator I = DMap.find(SD);
+      assert (I != DMap.end());
+      return I->second;
+    }
+
+    unsigned getNumDecls() const { return NDecls; }
+    
+    void Register(const ScopedDecl* SD) {
+      if (!isTracked(SD)) DMap[SD] = NDecls++;
+    }
+
+    decl_iterator begin_decl() const { return DMap.begin(); }
+    decl_iterator end_decl() const { return DMap.end(); }
+  };
+  
+  //===--------------------------------------------------------------------===//
+  // ValTy - Dataflow value.
+  //===--------------------------------------------------------------------===//
+  
+  class ValTy {
+    llvm::BitVector DeclBV;
+  public:
+    
+    void resetValues(AnalysisDataTy& AD) {
+      DeclBV.resize(AD.getNumDecls()); 
+      DeclBV.reset();
+    }
+    
+    bool operator==(const ValTy& RHS) const { 
+      assert (sizesEqual(RHS));
+      return DeclBV == RHS.DeclBV;
+    }
+    
+    void copyValues(const ValTy& RHS) { DeclBV = RHS.DeclBV; }
+    
+    llvm::BitVector::reference
+    operator()(const ScopedDecl* SD, const AnalysisDataTy& AD) {
+      return DeclBV[AD.getIdx(SD)];      
+    }
+    const llvm::BitVector::reference
+    operator()(const ScopedDecl* SD, const AnalysisDataTy& AD) const {
+      return const_cast<ValTy&>(*this)(SD,AD);
+    }
+    
+    llvm::BitVector::reference getDeclBit(unsigned i) { return DeclBV[i]; }    
+    const llvm::BitVector::reference getDeclBit(unsigned i) const {
+      return const_cast<llvm::BitVector&>(DeclBV)[i];
+    }
+    
+    ValTy& operator|=(const ValTy& RHS) {
+      assert (sizesEqual(RHS));
+      DeclBV |= RHS.DeclBV;
+      return *this;
+    }
+    
+    ValTy& operator&=(const ValTy& RHS) {
+      assert (sizesEqual(RHS));
+      DeclBV &= RHS.DeclBV;
+      return *this;
+    }
+    
+    bool sizesEqual(const ValTy& RHS) const {
+      return DeclBV.size() == RHS.DeclBV.size();
+    }
+  };
+  
+  //===--------------------------------------------------------------------===//
+  // Some useful merge operations.
+  //===--------------------------------------------------------------------===//
+    
+  struct Union { void operator()(ValTy& Dst, ValTy& Src) { Dst |= Src; } };
+  struct Intersect { void operator()(ValTy& Dst, ValTy& Src) { Dst &= Src; } };
+};
+
 
 struct ExprDeclBitVector_Types {
   
@@ -31,52 +129,35 @@ struct ExprDeclBitVector_Types {
   // AnalysisDataTy - Whole-function meta data.
   //===--------------------------------------------------------------------===//
 
-  class AnalysisDataTy {
+  class AnalysisDataTy : public DeclBitVector_Types::AnalysisDataTy {
   public:
-    typedef llvm::DenseMap<const ScopedDecl*, unsigned > DMapTy;
     typedef llvm::DenseMap<const Expr*, unsigned > EMapTy;    
-    typedef DMapTy::const_iterator decl_iterator;
     typedef EMapTy::const_iterator expr_iterator;
 
   protected:
     EMapTy EMap;
-    DMapTy DMap;    
-    unsigned NDecls;
     unsigned NExprs;
 
   public:
     
-    AnalysisDataTy() : NDecls(0), NExprs(0) {}
+    AnalysisDataTy() : NExprs(0) {}
     virtual ~AnalysisDataTy() {}
     
-    bool isTracked(const ScopedDecl* SD) { return DMap.find(SD) != DMap.end(); }
     bool isTracked(const Expr* E) { return EMap.find(E) != EMap.end(); }
+    using DeclBitVector_Types::AnalysisDataTy::isTracked;
 
-    unsigned operator[](const ScopedDecl* SD) const {
-      DMapTy::const_iterator I = DMap.find(SD);
-      assert (I != DMap.end());
-      return I->second;
-    }
-    
-    unsigned operator[](const Expr* E) const {
+    unsigned getIdx(const Expr* E) const {
       EMapTy::const_iterator I = EMap.find(E);
       assert (I != EMap.end());
       return I->second;
-    }
+    }    
+    using DeclBitVector_Types::AnalysisDataTy::getIdx;
     
-    unsigned getNumDecls() const { return NDecls; }
     unsigned getNumExprs() const { return NExprs; }
     
-    void Register(const ScopedDecl* SD) {
-      if (!isTracked(SD)) DMap[SD] = NDecls++;
-    }
+    void Register(const Expr* E) { if (!isTracked(E)) EMap[E] = NExprs++; }    
+    using DeclBitVector_Types::AnalysisDataTy::Register;
     
-    void Register(const Expr* E) {
-      if (!isTracked(E)) EMap[E] = NExprs++;
-    }
-    
-    decl_iterator begin_decl() const { return DMap.begin(); }
-    decl_iterator end_decl() const { return DMap.end(); }
     expr_iterator begin_expr() const { return EMap.begin(); }
     expr_iterator end_expr() const { return EMap.end(); }
   };
@@ -85,50 +166,47 @@ struct ExprDeclBitVector_Types {
   // ValTy - Dataflow value.
   //===--------------------------------------------------------------------===//
 
-  class ValTy {
-    llvm::BitVector DeclBV;
+  class ValTy : public DeclBitVector_Types::ValTy {
     llvm::BitVector ExprBV;
+    typedef DeclBitVector_Types::ValTy ParentTy;
+    
+    static inline ParentTy& ParentRef(ValTy& X) {
+      return static_cast<ParentTy&>(X);
+    }
+    
+    static inline const ParentTy& ParentRef(const ValTy& X) {
+      return static_cast<const ParentTy&>(X);
+    }
+    
   public:
     
     void resetValues(AnalysisDataTy& AD) {
-      DeclBV.resize(AD.getNumDecls()); 
-      DeclBV.reset();
+      ParentRef(*this).resetValues(AD);
       ExprBV.resize(AD.getNumExprs());
       ExprBV.reset();
     }
     
     bool operator==(const ValTy& RHS) const { 
-      assert (sizesEqual(RHS));
-      return DeclBV == RHS.DeclBV && ExprBV == RHS.ExprBV; 
+      return ParentRef(*this) == ParentRef(RHS) 
+          && ExprBV == RHS.ExprBV;
     }
     
     void copyValues(const ValTy& RHS) {
-      DeclBV = RHS.DeclBV;
+      ParentRef(*this).copyValues(ParentRef(RHS));
       ExprBV = RHS.ExprBV;
     }
-    
-    llvm::BitVector::reference
-    operator()(const ScopedDecl* SD, const AnalysisDataTy& AD) {
-      return DeclBV[AD[SD]];      
-    }
-    const llvm::BitVector::reference
-    operator()(const ScopedDecl* SD, const AnalysisDataTy& AD) const {
-      return const_cast<ValTy&>(*this)(SD,AD);
-    }
-    
+        
     llvm::BitVector::reference
     operator()(const Expr* E, const AnalysisDataTy& AD) {
-      return ExprBV[AD[E]];      
+      return ExprBV[AD.getIdx(E)];      
     }    
     const llvm::BitVector::reference
     operator()(const Expr* E, const AnalysisDataTy& AD) const {
       return const_cast<ValTy&>(*this)(E,AD);
     }
     
-    llvm::BitVector::reference getDeclBit(unsigned i) { return DeclBV[i]; }    
-    const llvm::BitVector::reference getDeclBit(unsigned i) const {
-      return const_cast<llvm::BitVector&>(DeclBV)[i];
-    }
+    using DeclBitVector_Types::ValTy::operator();
+
     
     llvm::BitVector::reference getExprBit(unsigned i) { return ExprBV[i]; }    
     const llvm::BitVector::reference getExprBit(unsigned i) const {
@@ -137,20 +215,20 @@ struct ExprDeclBitVector_Types {
     
     ValTy& operator|=(const ValTy& RHS) {
       assert (sizesEqual(RHS));
-      DeclBV |= RHS.DeclBV;
+      ParentRef(*this) |= ParentRef(RHS);
       ExprBV |= RHS.ExprBV;
       return *this;
     }
     
     ValTy& operator&=(const ValTy& RHS) {
       assert (sizesEqual(RHS));
-      DeclBV &= RHS.DeclBV;
+      ParentRef(*this) &= ParentRef(RHS);
       ExprBV &= RHS.ExprBV;
       return *this;
     }
     
     bool sizesEqual(const ValTy& RHS) const {
-      return DeclBV.size() == RHS.DeclBV.size()
+      return ParentRef(*this).sizesEqual(ParentRef(RHS))
           && ExprBV.size() == RHS.ExprBV.size();
     }
   };
