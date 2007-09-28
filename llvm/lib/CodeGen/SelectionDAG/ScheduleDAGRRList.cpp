@@ -202,13 +202,10 @@ void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain,
   // interrupt model (drain vs. freeze).
   PredSU->CycleBound = std::max(PredSU->CycleBound, CurCycle + PredSU->Latency);
 
-  if (!isChain)
-    --PredSU->NumSuccsLeft;
-  else
-    --PredSU->NumChainSuccsLeft;
+  --PredSU->NumSuccsLeft;
   
 #ifndef NDEBUG
-  if (PredSU->NumSuccsLeft < 0 || PredSU->NumChainSuccsLeft < 0) {
+  if (PredSU->NumSuccsLeft < 0) {
     cerr << "*** List scheduling failed! ***\n";
     PredSU->dump(&DAG);
     cerr << " has been released too many times!\n";
@@ -216,7 +213,7 @@ void ScheduleDAGRRList::ReleasePred(SUnit *PredSU, bool isChain,
   }
 #endif
   
-  if ((PredSU->NumSuccsLeft + PredSU->NumChainSuccsLeft) == 0) {
+  if (PredSU->NumSuccsLeft == 0) {
     // EntryToken has to go last!  Special case it here.
     if (!PredSU->Node || PredSU->Node->getOpcode() != ISD::EntryToken) {
       PredSU->isAvailable = true;
@@ -287,10 +284,7 @@ void ScheduleDAGRRList::CapturePred(SUnit *PredSU, SUnit *SU, bool isChain) {
       AvailableQueue->remove(PredSU);
   }
 
-  if (!isChain)
-    ++PredSU->NumSuccsLeft;
-  else
-    ++PredSU->NumChainSuccsLeft;
+  ++PredSU->NumSuccsLeft;
 }
 
 /// UnscheduleNodeBottomUp - Remove the node from the schedule, update its and
@@ -713,7 +707,7 @@ void ScheduleDAGRRList::ListScheduleBottomUp() {
   // Verify that all SUnits were scheduled.
   bool AnyNotSched = false;
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
-    if (SUnits[i].NumSuccsLeft != 0 || SUnits[i].NumChainSuccsLeft != 0) {
+    if (SUnits[i].NumSuccsLeft != 0) {
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
       SUnits[i].dump(&DAG);
@@ -739,13 +733,10 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SuccSU, bool isChain,
   // interrupt model (drain vs. freeze).
   SuccSU->CycleBound = std::max(SuccSU->CycleBound, CurCycle + SuccSU->Latency);
 
-  if (!isChain)
-    --SuccSU->NumPredsLeft;
-  else
-    --SuccSU->NumChainPredsLeft;
+  --SuccSU->NumPredsLeft;
   
 #ifndef NDEBUG
-  if (SuccSU->NumPredsLeft < 0 || SuccSU->NumChainPredsLeft < 0) {
+  if (SuccSU->NumPredsLeft < 0) {
     cerr << "*** List scheduling failed! ***\n";
     SuccSU->dump(&DAG);
     cerr << " has been released too many times!\n";
@@ -753,7 +744,7 @@ void ScheduleDAGRRList::ReleaseSucc(SUnit *SuccSU, bool isChain,
   }
 #endif
   
-  if ((SuccSU->NumPredsLeft + SuccSU->NumChainPredsLeft) == 0) {
+  if (SuccSU->NumPredsLeft == 0) {
     SuccSU->isAvailable = true;
     AvailableQueue->push(SuccSU);
   }

@@ -116,15 +116,12 @@ void ScheduleDAGList::Schedule() {
 /// ReleaseSucc - Decrement the NumPredsLeft count of a successor. Add it to
 /// the PendingQueue if the count reaches zero.
 void ScheduleDAGList::ReleaseSucc(SUnit *SuccSU, bool isChain) {
-  if (!isChain)
-    SuccSU->NumPredsLeft--;
-  else
-    SuccSU->NumChainPredsLeft--;
+  SuccSU->NumPredsLeft--;
   
-  assert(SuccSU->NumPredsLeft >= 0 && SuccSU->NumChainPredsLeft >= 0 &&
+  assert(SuccSU->NumPredsLeft >= 0 &&
          "List scheduling internal error");
   
-  if ((SuccSU->NumPredsLeft + SuccSU->NumChainPredsLeft) == 0) {
+  if (SuccSU->NumPredsLeft == 0) {
     // Compute how many cycles it will be before this actually becomes
     // available.  This is the max of the start time of all predecessors plus
     // their latencies.
@@ -276,7 +273,7 @@ void ScheduleDAGList::ListScheduleTopDown() {
   // Verify that all SUnits were scheduled.
   bool AnyNotSched = false;
   for (unsigned i = 0, e = SUnits.size(); i != e; ++i) {
-    if (SUnits[i].NumPredsLeft != 0 || SUnits[i].NumChainPredsLeft != 0) {
+    if (SUnits[i].NumPredsLeft != 0) {
       if (!AnyNotSched)
         cerr << "*** List scheduling failed! ***\n";
       SUnits[i].dump(&DAG);

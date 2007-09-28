@@ -941,8 +941,6 @@ void SUnit::dumpAll(const SelectionDAG *G) const {
 
   cerr << "  # preds left       : " << NumPredsLeft << "\n";
   cerr << "  # succs left       : " << NumSuccsLeft << "\n";
-  cerr << "  # chain preds left : " << NumChainPredsLeft << "\n";
-  cerr << "  # chain succs left : " << NumChainSuccsLeft << "\n";
   cerr << "  Latency            : " << Latency << "\n";
   cerr << "  Depth              : " << Depth << "\n";
   cerr << "  Height             : " << Height << "\n";

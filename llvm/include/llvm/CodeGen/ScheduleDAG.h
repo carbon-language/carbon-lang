@@ -113,8 +113,6 @@ namespace llvm {
     short NumSuccs;                     // # of sucss.
     short NumPredsLeft;                 // # of preds not scheduled.
     short NumSuccsLeft;                 // # of succs not scheduled.
-    short NumChainPredsLeft;            // # of chain preds not scheduled.
-    short NumChainSuccsLeft;            // # of chain succs not scheduled.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
     bool isCommutable     : 1;          // Is a commutable instruction.
     bool hasImplicitDefs  : 1;          // Has implicit physical reg defs.
@@ -131,7 +129,6 @@ namespace llvm {
     SUnit(SDNode *node, unsigned nodenum)
       : Node(node), InstanceNo(0), NodeNum(nodenum), Latency(0),
         NumPreds(0), NumSuccs(0), NumPredsLeft(0), NumSuccsLeft(0),
-        NumChainPredsLeft(0), NumChainSuccsLeft(0),
         isTwoAddress(false), isCommutable(false), hasImplicitDefs(false),
         isPending(false), isAvailable(false), isScheduled(false),
         CycleBound(0), Cycle(0), Depth(0), Height(0),
@@ -147,19 +144,14 @@ namespace llvm {
           return false;
       Preds.push_back(SDep(N, PhyReg, Cost, isCtrl, isSpecial));
       N->Succs.push_back(SDep(this, PhyReg, Cost, isCtrl, isSpecial));
-      if (isCtrl) {
-        if (!N->isScheduled)
-          ++NumChainPredsLeft;
-        if (!isScheduled)
-          ++N->NumChainSuccsLeft;
-      } else {
+      if (!isCtrl) {
         ++NumPreds;
         ++N->NumSuccs;
-        if (!N->isScheduled)
-          ++NumPredsLeft;
-        if (!isScheduled)
-          ++N->NumSuccsLeft;
       }
+      if (!N->isScheduled)
+        ++NumPredsLeft;
+      if (!isScheduled)
+        ++N->NumSuccsLeft;
       return true;
     }
 
@@ -178,19 +170,14 @@ namespace llvm {
             }
           assert(FoundSucc && "Mismatching preds / succs lists!");
           Preds.erase(I);
-          if (isCtrl) {
-            if (!N->isScheduled)
-              --NumChainPredsLeft;
-            if (!isScheduled)
-              --NumChainSuccsLeft;
-          } else {
+          if (!isCtrl) {
             --NumPreds;
             --N->NumSuccs;
-            if (!N->isScheduled)
-              --NumPredsLeft;
-            if (!isScheduled)
-              --N->NumSuccsLeft;
           }
+          if (!N->isScheduled)
+            --NumPredsLeft;
+          if (!isScheduled)
+            --N->NumSuccsLeft;
           return true;
         }
       return false;
