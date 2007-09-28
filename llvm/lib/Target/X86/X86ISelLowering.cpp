@@ -4188,35 +4188,61 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
-  SDOperand Chain = Op.getOperand(0);
-  unsigned Align =
-    (unsigned)cast<ConstantSDNode>(Op.getOperand(4))->getValue();
+  SDOperand ChainOp = Op.getOperand(0);
+  SDOperand DestOp = Op.getOperand(1);
+  SDOperand SourceOp = Op.getOperand(2);
+  SDOperand CountOp = Op.getOperand(3);
+  SDOperand AlignOp = Op.getOperand(4);
+  unsigned Align = (unsigned)cast<ConstantSDNode>(AlignOp)->getValue();
   if (Align == 0) Align = 1;
 
-  ConstantSDNode *I = dyn_cast<ConstantSDNode>(Op.getOperand(3));
-  // If not DWORD aligned or size is more than the threshold, call memcpy.
-  // The libc version is likely to be faster for these cases. It can use the
-  // address value and run time information about the CPU.
+  // The libc version is likely to be faster for the following cases. It can
+  // use the address value and run time information about the CPU.
   // With glibc 2.6.1 on a core 2, coping an array of 100M longs was 30% faster
-  if ((Align & 3) != 0 ||
-      (I && I->getValue() > Subtarget->getMinRepStrSizeThreshold())) {
-    MVT::ValueType IntPtr = getPointerTy();
-    TargetLowering::ArgListTy Args;
-    TargetLowering::ArgListEntry Entry;
-    Entry.Ty = getTargetData()->getIntPtrType();
-    Entry.Node = Op.getOperand(1); Args.push_back(Entry);
-    Entry.Node = Op.getOperand(2); Args.push_back(Entry);
-    Entry.Node = Op.getOperand(3); Args.push_back(Entry);
-    std::pair<SDOperand,SDOperand> CallResult =
+
+  // If not DWORD aligned, call memcpy.
+  if ((Align & 3) != 0)
+    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
+
+  // If size is unknown, call memcpy.
+  ConstantSDNode *I = dyn_cast<ConstantSDNode>(CountOp);
+  if (!I)
+    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
+
+  // If size is more than the threshold, call memcpy.
+  unsigned Size = I->getValue();
+  if (Size > Subtarget->getMinRepStrSizeThreshold())
+    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
+
+  return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
+}
+
+SDOperand X86TargetLowering::LowerMEMCPYCall(SDOperand Chain,
+                                             SDOperand Dest,
+                                             SDOperand Source,
+                                             SDOperand Count,
+                                             SelectionDAG &DAG) {
+  MVT::ValueType IntPtr = getPointerTy();
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  Entry.Ty = getTargetData()->getIntPtrType();
+  Entry.Node = Dest; Args.push_back(Entry);
+  Entry.Node = Source; Args.push_back(Entry);
+  Entry.Node = Count; Args.push_back(Entry);
+  std::pair<SDOperand,SDOperand> CallResult =
       LowerCallTo(Chain, Type::VoidTy, false, false, CallingConv::C, false,
                   DAG.getExternalSymbol("memcpy", IntPtr), Args, DAG);
-    return CallResult.second;
-  }
+  return CallResult.second;
+}
 
+SDOperand X86TargetLowering::LowerMEMCPYInline(SDOperand Chain,
+                                               SDOperand Dest,
+                                               SDOperand Source,
+                                               unsigned Size,
+                                               unsigned Align,
+                                               SelectionDAG &DAG) {
   MVT::ValueType AVT;
-  SDOperand Count;
   unsigned BytesLeft = 0;
-  bool TwoRepMovs = false;
   switch (Align & 3) {
     case 2:   // WORD aligned
       AVT = MVT::i16;
@@ -4228,33 +4254,22 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
       break;
     default:  // Byte aligned
       AVT = MVT::i8;
-      Count = Op.getOperand(3);
       break;
   }
 
-  if (AVT > MVT::i8) {
-    if (I) {
-      unsigned UBytes = MVT::getSizeInBits(AVT) / 8;
-      Count = DAG.getConstant(I->getValue() / UBytes, getPointerTy());
-      BytesLeft = I->getValue() % UBytes;
-    } else {
-      assert(AVT >= MVT::i32 &&
-             "Do not use rep;movs if not at least DWORD aligned");
-      Count = DAG.getNode(ISD::SRL, Op.getOperand(3).getValueType(),
-                          Op.getOperand(3), DAG.getConstant(2, MVT::i8));
-      TwoRepMovs = true;
-    }
-  }
+  unsigned UBytes = MVT::getSizeInBits(AVT) / 8;
+  SDOperand Count = DAG.getConstant(Size / UBytes, getPointerTy());
+  BytesLeft = Size % UBytes;
 
   SDOperand InFlag(0, 0);
   Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RCX : X86::ECX,
                             Count, InFlag);
   InFlag = Chain.getValue(1);
   Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RDI : X86::EDI,
-                            Op.getOperand(1), InFlag);
+                            Dest, InFlag);
   InFlag = Chain.getValue(1);
   Chain  = DAG.getCopyToReg(Chain, Subtarget->is64Bit() ? X86::RSI : X86::ESI,
-                            Op.getOperand(2), InFlag);
+                            Source, InFlag);
   InFlag = Chain.getValue(1);
 
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
@@ -4264,27 +4279,12 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   Ops.push_back(InFlag);
   Chain = DAG.getNode(X86ISD::REP_MOVS, Tys, &Ops[0], Ops.size());
 
-  if (TwoRepMovs) {
-    InFlag = Chain.getValue(1);
-    Count = Op.getOperand(3);
-    MVT::ValueType CVT = Count.getValueType();
-    SDOperand Left = DAG.getNode(ISD::AND, CVT, Count,
-                               DAG.getConstant((AVT == MVT::i64) ? 7 : 3, CVT));
-    Chain  = DAG.getCopyToReg(Chain, (CVT == MVT::i64) ? X86::RCX : X86::ECX,
-                              Left, InFlag);
-    InFlag = Chain.getValue(1);
-    Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-    Ops.clear();
-    Ops.push_back(Chain);
-    Ops.push_back(DAG.getValueType(MVT::i8));
-    Ops.push_back(InFlag);
-    Chain = DAG.getNode(X86ISD::REP_MOVS, Tys, &Ops[0], Ops.size());
-  } else if (BytesLeft) {
+  if (BytesLeft) {
     // Issue loads and stores for the last 1 - 7 bytes.
-    unsigned Offset = I->getValue() - BytesLeft;
-    SDOperand DstAddr = Op.getOperand(1);
+    unsigned Offset = Size - BytesLeft;
+    SDOperand DstAddr = Dest;
     MVT::ValueType DstVT = DstAddr.getValueType();
-    SDOperand SrcAddr = Op.getOperand(2);
+    SDOperand SrcAddr = Source;
     MVT::ValueType SrcVT = SrcAddr.getValueType();
     SDOperand Value;
     if (BytesLeft >= 4) {

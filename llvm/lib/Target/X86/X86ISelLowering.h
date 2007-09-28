@@ -437,6 +437,12 @@ namespace llvm {
     SDOperand LowerBRCOND(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerBRCOND_New(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerMEMSET(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerMEMCPYInline(SDOperand Dest, SDOperand Source,
+                                SDOperand Chain, unsigned Size, unsigned Align,
+                                SelectionDAG &DAG);
+    SDOperand LowerMEMCPYCall(SDOperand ChainOp, SDOperand DestOp,
+                              SDOperand SourceOp, SDOperand CountOp,
+                              SelectionDAG &DAG);
     SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG);
