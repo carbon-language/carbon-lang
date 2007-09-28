@@ -33,27 +33,33 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
   return specId ? specId->getObjCKeywordID() : tok::objc_not_keyword;
 }
 
-char *SelectorInfo::getName(llvm::SmallVectorImpl<char> &methodName) {
-  int len=0;
+char *MultiKeywordSelector::getName(llvm::SmallVectorImpl<char> &methodName) {
   methodName[0] = '\0';
-  if (NumArgs) {
-    keyword_iterator KeyIter = keyword_begin();
-    for (unsigned int i = 0; i < NumArgs; i++) {
-      if (KeyIter[i]) {
-        unsigned KeyLen = strlen(KeyIter[i]->getName());
-        methodName.append(KeyIter[i]->getName(), KeyIter[i]->getName()+KeyLen);
-        len += KeyLen;
-      }
-      methodName.push_back(':');
-      len++;
+  keyword_iterator KeyIter = keyword_begin();
+  for (unsigned int i = 0; i < NumArgs; i++) {
+    if (KeyIter[i]) {
+      unsigned KeyLen = strlen(KeyIter[i]->getName());
+      methodName.append(KeyIter[i]->getName(), KeyIter[i]->getName()+KeyLen);
     }
-  } else {
-    IdentifierInfo **UnaryInfo = reinterpret_cast<IdentifierInfo **>(this+1);
-    unsigned NameLen = strlen(UnaryInfo[0]->getName());
-    methodName.append(UnaryInfo[0]->getName(), UnaryInfo[0]->getName()+NameLen);
-    len += NameLen;
+    methodName.push_back(':');
   }
-  methodName[len] = '\0';
+  methodName.push_back('\0');
+  return &methodName[0];
+}
+
+char *Selector::getName(llvm::SmallVectorImpl<char> &methodName) {
+  methodName[0] = '\0';
+  IdentifierInfo *II = getAsIdentifierInfo();
+  if (II) {
+    unsigned NameLen = strlen(II->getName());
+    methodName.append(II->getName(), II->getName()+NameLen);
+    if (getNumArgs() == 1)
+      methodName.push_back(':');
+    methodName.push_back('\0');
+  } else { // We have a multiple keyword selector (no embedded flags).
+    MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+    SI->getName(methodName);
+  }
   return &methodName[0];
 }
 

@@ -869,11 +869,11 @@ unsigned OCUVectorElementExpr::getEncodedElementAccess() const {
 }
 
 // constructor for instance messages.
-ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, SelectorInfo *selInfo,
+ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
                 QualType retType, SourceLocation LBrac, SourceLocation RBrac,
                 Expr **ArgExprs)
-  : Expr(ObjCMessageExprClass, retType), Selector(selInfo), ClassName(0) {
-  unsigned numArgs = selInfo->getNumArgs();
+  : Expr(ObjCMessageExprClass, retType), SelName(selInfo), ClassName(0) {
+  unsigned numArgs = selInfo.getNumArgs();
   SubExprs = new Expr*[numArgs+1];
   SubExprs[RECEIVER] = receiver;
   if (numArgs) {
@@ -886,11 +886,11 @@ ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, SelectorInfo *selInfo,
 
 // constructor for class messages. 
 // FIXME: clsName should be typed to ObjCInterfaceType
-ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, SelectorInfo *selInfo,
+ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
                 QualType retType, SourceLocation LBrac, SourceLocation RBrac,
                 Expr **ArgExprs)
-  : Expr(ObjCMessageExprClass, retType), Selector(selInfo), ClassName(clsName) {
-  unsigned numArgs = selInfo->getNumArgs();
+  : Expr(ObjCMessageExprClass, retType), SelName(selInfo), ClassName(clsName) {
+  unsigned numArgs = selInfo.getNumArgs();
   SubExprs = new Expr*[numArgs+1];
   SubExprs[RECEIVER] = 0;
   if (numArgs) {
@@ -900,21 +900,6 @@ ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, SelectorInfo *selInfo,
   LBracloc = LBrac;
   RBracloc = RBrac;
 }
-
-// The following 3 methods are defined here (instead of Epxr.h) to avoid
-// importing "IdentifierTable.h" into the header.
-unsigned ObjCMessageExpr::getNumArgs() const { return Selector->getNumArgs(); }
-
-/// getArg - Return the specified argument.
-Expr *ObjCMessageExpr::getArg(unsigned Arg) {
-  assert(Arg < Selector->getNumArgs() && "Arg access out of range!");
-  return SubExprs[Arg+ARGS_START];
-}
-const Expr *ObjCMessageExpr::getArg(unsigned Arg) const {
-  assert(Arg < Selector->getNumArgs() && "Arg access out of range!");
-  return SubExprs[Arg+ARGS_START];
-}
-
 
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements

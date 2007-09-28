@@ -170,27 +170,23 @@ private:
   void AddKeywords(const LangOptions &LangOpts);
 };
 
-/// SelectorInfo - One of these variable length records is kept for each parsed
-/// selector (similar in spirit to IdentifierInfo). We use a folding set to
-/// unique aggregate names (keyword selectors in ObjC parlance). 
-class SelectorInfo : public llvm::FoldingSetNode {
+/// MultiKeywordSelector - One of these variable length records is kept for each
+/// parsed selector (similar in spirit to IdentifierInfo). We use a folding set
+/// to unique aggregate names (keyword selectors in ObjC parlance). 
+class MultiKeywordSelector : public llvm::FoldingSetNode {
+  friend class Selector; // Only Selector can access me.
+  friend class Parser;   // Only Parser can instantiate me.
+  
   unsigned NumArgs;
-  void *ActionInfo;   // Managed by the ObjC actions module.
-public:
+
   // Constructor for keyword selectors.
-  SelectorInfo(unsigned nKeys, IdentifierInfo **IIV) {
-    assert(nKeys && "SelectorInfo(): not a keyword selector");
+  MultiKeywordSelector(unsigned nKeys, IdentifierInfo **IIV) {
+    assert((nKeys > 1) && "not a multi-keyword selector");
     NumArgs = nKeys;
     // Fill in the trailing keyword array.
     IdentifierInfo **KeyInfo = reinterpret_cast<IdentifierInfo **>(this+1);
     for (unsigned i = 0; i != nKeys; ++i)
       KeyInfo[i] = IIV[i];
-  }
-  // Constructor for unary selectors (no colons/arguments).
-  SelectorInfo(IdentifierInfo *unarySelector) {
-    NumArgs = 0;
-    IdentifierInfo **UnaryInfo = reinterpret_cast<IdentifierInfo **>(this+1);
-    UnaryInfo[0] = unarySelector;
   }
   // Derive the full selector name, placing the result into methodBuffer.
   // As a convenience, a pointer to the first character is returned.
@@ -199,23 +195,18 @@ public:
 
   unsigned getNumArgs() const { return NumArgs; }
   
-  // Predicates to identify the selector type.
-  bool isKeywordSelector() const { return NumArgs > 0; }
-  bool isUnarySelector() const { return NumArgs == 0; }
-  
-  /// getActionInfo/setActionInfo - The actions module is allowed to
-  /// associate arbitrary metadata with this selector.
-  template<typename T>
-  T *getActionInfo() const { return static_cast<T*>(ActionInfo); }
-  void setActionInfo(void *T) { ActionInfo = T; }
-  
-  typedef const IdentifierInfo *const *keyword_iterator;
+  typedef IdentifierInfo *const *keyword_iterator;
   keyword_iterator keyword_begin() const {
     return reinterpret_cast<keyword_iterator>(this+1);
   }
   keyword_iterator keyword_end() const { 
     return keyword_begin()+NumArgs; 
   }
+  IdentifierInfo *getIdentifierInfoForSlot(unsigned i) {
+    assert((i < NumArgs) && "getIdentifierInfoForSlot(): illegal index");
+    return keyword_begin()[i];
+  }
+public:
   static void Profile(llvm::FoldingSetNodeID &ID, 
                       keyword_iterator ArgTys, unsigned NumArgs) {
     ID.AddInteger(NumArgs);
@@ -228,6 +219,85 @@ public:
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, keyword_begin(), NumArgs);
   }
+};
+
+class Selector {
+  enum IdentifierInfoFlag {
+    ZeroArg  = 0x1,
+    OneArg   = 0x2,
+    ArgFlags = ZeroArg|OneArg
+  };
+  uintptr_t InfoPtr; // a pointer to the MultiKeywordSelector or IdentifierInfo.
+  
+  Selector(IdentifierInfo *II, unsigned nArgs) {
+    InfoPtr = reinterpret_cast<uintptr_t>(II);
+    if (nArgs == 0)
+      InfoPtr |= ZeroArg;
+    else if (nArgs == 1)
+      InfoPtr |= OneArg;
+    else
+      assert(1 && "nArgs not equal to 0/1");
+  }
+  Selector(MultiKeywordSelector *SI) {
+    InfoPtr = reinterpret_cast<uintptr_t>(SI);
+  }
+  friend class Parser; // only the Parser can create these.
+  
+  IdentifierInfo *getAsIdentifierInfo() const {
+    if (InfoPtr & ArgFlags)
+      return reinterpret_cast<IdentifierInfo *>(InfoPtr & ~ArgFlags);
+    return 0;
+  }
+  MultiKeywordSelector *getAsMultiKeywordSelector() const {
+    if (InfoPtr & ArgFlags)
+      return 0;
+    return reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+  }
+public:
+  unsigned getIdentifierInfoFlag() const {
+    return InfoPtr & ArgFlags;
+  }
+  /// operator==/!= - Indicate whether the specified selectors are identical.
+  bool operator==(const Selector &RHS) const {
+    return InfoPtr == RHS.InfoPtr;
+  }
+  bool operator!=(const Selector &RHS) const {
+    return InfoPtr != RHS.InfoPtr;
+  }
+  void *getAsOpaquePtr() const {
+    return reinterpret_cast<void*>(InfoPtr);
+  }
+  // Predicates to identify the selector type.
+  bool isKeywordSelector() const { 
+    return getIdentifierInfoFlag() != ZeroArg; 
+  }
+  bool isUnarySelector() const { 
+    return getIdentifierInfoFlag() == ZeroArg;
+  }
+  unsigned getNumArgs() const {
+    unsigned IIF = getIdentifierInfoFlag();
+    if (IIF == ZeroArg)
+      return 0;
+    if (IIF == OneArg)
+      return 1;
+    // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
+    MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+    return SI->getNumArgs(); 
+  }
+  IdentifierInfo *getIdentifierInfoForSlot(unsigned argIndex) {
+    IdentifierInfo *II = getAsIdentifierInfo();
+    if (II) {
+      assert(((argIndex == 0) || (argIndex == 1)) && "illegal keyword index");
+      return II;
+    }
+    // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
+    MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+    return SI->getIdentifierInfoForSlot(argIndex);
+  }
+  // Derive the full selector name, placing the result into methodBuffer.
+  // As a convenience, a pointer to the first character is returned.
+  // Example usage: llvm::SmallString<128> mbuf; Selector->getName(mbuf);
+  char *getName(llvm::SmallVectorImpl<char> &methodBuffer);
 };
 
 }  // end namespace clang

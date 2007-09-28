@@ -19,10 +19,11 @@
 #include "clang/AST/Decl.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
+#include "clang/Lex/IdentifierTable.h" // FIXME: should be in Basic, not Lex.
 
 namespace clang {
   class IdentifierInfo;
-  class SelectorInfo;
+  class Selector;
   class Decl;
   class ASTContext;
   
@@ -1077,7 +1078,7 @@ class ObjCMessageExpr : public Expr {
   Expr **SubExprs;
   
   // A unigue name for this message.
-  SelectorInfo *Selector;
+  Selector SelName;
   
   IdentifierInfo *ClassName; // optional - 0 for instance messages.
   
@@ -1085,11 +1086,11 @@ class ObjCMessageExpr : public Expr {
 public:
   // constructor for class messages. 
   // FIXME: clsName should be typed to ObjCInterfaceType
-  ObjCMessageExpr(IdentifierInfo *clsName, SelectorInfo *selInfo,
+  ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
                   QualType retType, SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs);
   // constructor for instance messages.
-  ObjCMessageExpr(Expr *receiver, SelectorInfo *selInfo,
+  ObjCMessageExpr(Expr *receiver, Selector selInfo,
                   QualType retType, SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs);
   ~ObjCMessageExpr() {
@@ -1100,12 +1101,17 @@ public:
   Expr *getReceiver() { return SubExprs[RECEIVER]; }
   
   /// getNumArgs - Return the number of actual arguments to this call.
-  ///
-  unsigned getNumArgs() const;
-  
-  /// getArg - Return the specified argument.
-  Expr *getArg(unsigned Arg);
-  const Expr *getArg(unsigned Arg) const;
+  unsigned getNumArgs() const { return SelName.getNumArgs(); }
+
+/// getArg - Return the specified argument.
+  Expr *getArg(unsigned Arg) {
+    assert(Arg < SelName.getNumArgs() && "Arg access out of range!");
+    return SubExprs[Arg+ARGS_START];
+  }
+  const Expr *getArg(unsigned Arg) const {
+    assert(Arg < SelName.getNumArgs() && "Arg access out of range!");
+    return SubExprs[Arg+ARGS_START];
+  }
 
   SourceRange getSourceRange() const { return SourceRange(LBracloc, RBracloc); }
 

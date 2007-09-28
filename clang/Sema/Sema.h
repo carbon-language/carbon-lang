@@ -391,7 +391,7 @@ public:
                                           DeclTy **Fields, unsigned NumFields);
   
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
-    tok::TokenKind MethodType, TypeTy *ReturnType, SelectorInfo *Sel,
+    tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
     TypeTy **ArgTypes, IdentifierInfo **ArgNames,
@@ -401,14 +401,14 @@ public:
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from Sel.getNumArgs().
   virtual ExprResult ActOnClassMessage(
-    IdentifierInfo *receivingClassName, SelectorInfo *Sel,
+    IdentifierInfo *receivingClassName, Selector Sel,
     SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs);
 
   // ActOnInstanceMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from Sel.getNumArgs().
   virtual ExprResult ActOnInstanceMessage(
-    ExprTy *receiver, SelectorInfo *Sel,
+    ExprTy *receiver, Selector Sel,
     SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs);
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts

@@ -17,10 +17,9 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/APSInt.h"
+#include "clang/Lex/IdentifierTable.h" // FIXME: should be in Basic, not Lex.
 
 namespace clang {
-class IdentifierInfo;
-class SelectorInfo;
 class Expr;
 class Stmt;
 class FunctionDecl;
@@ -676,7 +675,7 @@ public:
   enum ImplementationControl { None, Required, Optional };
 private:
   // A unigue name for this method.
-  SelectorInfo *Selector;
+  Selector SelName;
   
   // Type of this method.
   QualType MethodDeclType;
@@ -697,11 +696,11 @@ private:
   ImplementationControl DeclImplementation : 2;
 
 public:
-  ObjcMethodDecl(SourceLocation L, SelectorInfo *SelInfo, QualType T,
+  ObjcMethodDecl(SourceLocation L, Selector SelInfo, QualType T,
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
 		 AttributeList *M = 0, bool isInstance = true, 
 		 Decl *PrevDecl = 0)
-    : Decl(ObjcMethod), Selector(SelInfo), MethodDeclType(T), 
+    : Decl(ObjcMethod), SelName(SelInfo), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), Loc(L), IsInstance(isInstance) {}
 #if 0
@@ -714,7 +713,7 @@ public:
       MethodAttrs(M), IsInstance(isInstance) {}
 #endif
   virtual ~ObjcMethodDecl();
-  SelectorInfo *getSelector() const { return Selector; }
+  Selector getSelector() const { return SelName; }
   QualType getMethodType() const { return MethodDeclType; }
   unsigned getNumMethodParams() const { return NumMethodParams; }
   ParmVarDecl *getMethodParamDecl(unsigned i) {

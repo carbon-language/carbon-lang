@@ -1875,7 +1875,7 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
 Sema::ExprResult Sema::ActOnClassMessage(
-  IdentifierInfo *receivingClassName, SelectorInfo *Sel,
+  IdentifierInfo *receivingClassName, Selector Sel,
   SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args)
 {
   assert(receivingClassName && "missing receiver class name");
@@ -1889,7 +1889,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
 Sema::ExprResult Sema::ActOnInstanceMessage(
-  ExprTy *receiver, SelectorInfo *Sel,
+  ExprTy *receiver, Selector Sel,
   SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args) 
 {
   assert(receiver && "missing receiver expression");

@@ -502,50 +502,35 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
   return Ty;
 }
 
-static SelectorInfo *ObjcGetUnarySelectorInfo(
-  IdentifierInfo *unarySel,
-  llvm::FoldingSet<SelectorInfo> &SelTab) 
+Selector Parser::ObjcGetUnarySelector(IdentifierInfo *unarySel)
 {
-  // Unique selector, to guarantee there is one per name.
-  llvm::SmallVector<IdentifierInfo *, 1> IIV;
-  llvm::FoldingSetNodeID ID;
-  
-  IIV.push_back(unarySel);
-  SelectorInfo::Profile(ID, &IIV[0], 0);
-
-  void *InsertPos = 0;
-  if (SelectorInfo *SI = SelTab.FindNodeOrInsertPos(ID, InsertPos))
-    return SI;
-
-  // SelectorInfo objects are not allocated with new because they have a
-  // variable size array (for parameter types) at the end of them.
-  SelectorInfo *SI = 
-    (SelectorInfo*)malloc(sizeof(SelectorInfo) + sizeof(IdentifierInfo *));
-  new (SI) SelectorInfo(IIV[0]);
-  SelTab.InsertNode(SI, InsertPos);
-  return SI;
+  return Selector(unarySel, 0);
 }
 
-static SelectorInfo *ObjcGetKeywordSelectorInfo(
-  llvm::SmallVectorImpl<IdentifierInfo *> &IIV,
-  llvm::FoldingSet<SelectorInfo> &SelTab) 
-{  
+Selector Parser::ObjcGetKeywordSelector(
+  llvm::SmallVectorImpl<IdentifierInfo *> &IIV) 
+{
+  if (IIV.size() == 1)
+    return Selector(IIV[0], 1);
+
+  llvm::FoldingSet<MultiKeywordSelector> &SelTab = PP.getSelectorTable();
+  
   // Unique selector, to guarantee there is one per name.
   llvm::FoldingSetNodeID ID;
-  SelectorInfo::Profile(ID, &IIV[0], IIV.size());
+  MultiKeywordSelector::Profile(ID, &IIV[0], IIV.size());
 
   void *InsertPos = 0;
-  if (SelectorInfo *SI = SelTab.FindNodeOrInsertPos(ID, InsertPos))
-    return SI;
-
-  // SelectorInfo objects are not allocated with new because they have a
+  if (MultiKeywordSelector *SI = SelTab.FindNodeOrInsertPos(ID, InsertPos)) {
+    return Selector(SI);
+  }
+  // MultiKeywordSelector objects are not allocated with new because they have a
   // variable size array (for parameter types) at the end of them.
-  SelectorInfo *SI = 
-    (SelectorInfo*)malloc(sizeof(SelectorInfo) + 
-                          IIV.size()*sizeof(IdentifierInfo *));
-  new (SI) SelectorInfo(IIV.size(), &IIV[0]);
+  MultiKeywordSelector *SI = 
+    (MultiKeywordSelector*)malloc(sizeof(MultiKeywordSelector) + 
+                                  IIV.size()*sizeof(IdentifierInfo *));
+  new (SI) MultiKeywordSelector(IIV.size(), &IIV[0]);
   SelTab.InsertNode(SI, InsertPos);
-  return SI;
+  return Selector(SI);
 }
 
 ///   objc-method-decl:
@@ -646,9 +631,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
     if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
       methodAttrs = ParseAttributes();
       
-    SelectorInfo *SI = ObjcGetKeywordSelectorInfo(KeyIdents, 
-                                                  PP.getSelectorTable());
-    return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, SI, 
+    Selector Sel = ObjcGetKeywordSelector(KeyIdents);
+    return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, Sel, 
                                               &KeyTypes[0], &ArgNames[0],
 					      methodAttrs, MethodImplKind);
   } else if (!selIdent) {
@@ -658,8 +642,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
   if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
     methodAttrs = ParseAttributes();
 
-  SelectorInfo *SI = ObjcGetUnarySelectorInfo(selIdent, PP.getSelectorTable());
-  return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, SI, 
+  Selector Sel = ObjcGetUnarySelector(selIdent);
+  return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, Sel, 
                                             0, 0, methodAttrs, MethodImplKind);
 }
 
@@ -1255,21 +1239,20 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   SourceLocation RBracloc = ConsumeBracket(); // consume ']'
   
   if (KeyIdents.size()) {
-    SelectorInfo *SI = ObjcGetKeywordSelectorInfo(KeyIdents, 
-                                                  PP.getSelectorTable());
+    Selector sel = ObjcGetKeywordSelector(KeyIdents);
     // We've just parsed a keyword message.
     if (ReceiverName) 
-      return Actions.ActOnClassMessage(ReceiverName, SI, LBracloc, RBracloc,
+      return Actions.ActOnClassMessage(ReceiverName, sel, LBracloc, RBracloc,
                                        &KeyExprs[0]);
-    return Actions.ActOnInstanceMessage(ReceiverExpr, SI, LBracloc, RBracloc,
+    return Actions.ActOnInstanceMessage(ReceiverExpr, sel, LBracloc, RBracloc,
                                         &KeyExprs[0]);
   }
-  SelectorInfo *SI = ObjcGetUnarySelectorInfo(selIdent, PP.getSelectorTable());
+  Selector sel = ObjcGetUnarySelector(selIdent);
 
   // We've just parsed a unary message (a message with no arguments).
   if (ReceiverName) 
-    return Actions.ActOnClassMessage(ReceiverName, SI, LBracloc, RBracloc, 0);
-  return Actions.ActOnInstanceMessage(ReceiverExpr, SI, LBracloc, RBracloc, 0);
+    return Actions.ActOnClassMessage(ReceiverName, sel, LBracloc, RBracloc, 0);
+  return Actions.ActOnInstanceMessage(ReceiverExpr, sel, LBracloc, RBracloc, 0);
 }
 
 Parser::ExprResult Parser::ParseObjCStringLiteral() {

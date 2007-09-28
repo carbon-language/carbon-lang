@@ -1178,23 +1178,23 @@ void Sema::ActOnImpleIvarVsClassIvars(DeclTy *ClassDecl,
 /// Declared in protocol, and those referenced by it.
 ///
 static void CheckProtocolMethodDefs(Sema* objSema, ObjcProtocolDecl *PDecl,
-             const llvm::DenseMap<const SelectorInfo*, char>& InsMap,
-             const llvm::DenseMap<const SelectorInfo*, char>& ClsMap) {
+             const llvm::DenseMap<void *, char>& InsMap,
+             const llvm::DenseMap<void *, char>& ClsMap) {
   // check unimplemented instance methods.
   ObjcMethodDecl** methods = PDecl->getInsMethods();
   for (int j = 0; j < PDecl->getNumInsMethods(); j++)
-    if (!InsMap.count(methods[j]->getSelector())) {
+    if (!InsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
       llvm::SmallString<128> buf;
       objSema->Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-                    methods[j]->getSelector()->getName(buf));
+                    methods[j]->getSelector().getName(buf));
     }
   // check unimplemented class methods
   methods = PDecl->getClsMethods();
   for (int j = 0; j < PDecl->getNumClsMethods(); j++)
-    if (!ClsMap.count(methods[j]->getSelector())) {
+    if (!ClsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
       llvm::SmallString<128> buf;
       objSema->Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-                    methods[j]->getSelector()->getName(buf));
+                    methods[j]->getSelector().getName(buf));
     }
   
   // Check on this protocols's referenced protocols, recursively
@@ -1206,35 +1206,35 @@ static void CheckProtocolMethodDefs(Sema* objSema, ObjcProtocolDecl *PDecl,
 static void ImplMethodsVsClassMethods(Sema* objSema, 
 				      ObjcImplementationDecl* IMPDecl, 
                                       ObjcInterfaceDecl* IDecl) {
-  llvm::DenseMap<const SelectorInfo*, char> InsMap;
+  llvm::DenseMap<void *, char> InsMap;
   // Check and see if instance methods in class interface have been
   // implemented in the implementation class.
   ObjcMethodDecl **methods = IMPDecl->getInsMethods();
   for (int i=0; i < IMPDecl->getNumInsMethods(); i++) {
-    InsMap[methods[i]->getSelector()] = 'a';
+    InsMap[methods[i]->getSelector().getAsOpaquePtr()] = 'a';
   }
   
   methods = IDecl->getInsMethods();
   for (int j = 0; j < IDecl->getNumInsMethods(); j++)
-    if (!InsMap.count(methods[j]->getSelector())) {
+    if (!InsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
       llvm::SmallString<128> buf;
       objSema->Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           	    methods[j]->getSelector()->getName(buf));
+           	    methods[j]->getSelector().getName(buf));
     }
-  llvm::DenseMap<const SelectorInfo*, char> ClsMap;
+  llvm::DenseMap<void *, char> ClsMap;
   // Check and see if class methods in class interface have been
   // implemented in the implementation class.
   methods = IMPDecl->getClsMethods();
   for (int i=0; i < IMPDecl->getNumClsMethods(); i++) {
-    ClsMap[methods[i]->getSelector()] = 'a';
+    ClsMap[methods[i]->getSelector().getAsOpaquePtr()] = 'a';
   }
   
   methods = IDecl->getClsMethods();
   for (int j = 0; j < IDecl->getNumClsMethods(); j++)
-    if (!ClsMap.count(methods[j]->getSelector())) {
+    if (!ClsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
       llvm::SmallString<128> buf;
       objSema->Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           	    methods[j]->getSelector()->getName(buf));
+           	    methods[j]->getSelector().getName(buf));
     }
   
   // Check the protocol list for unimplemented methods in the @implementation
@@ -1650,14 +1650,14 @@ void Sema::ObjcAddMethodsToClass(DeclTy *ClassDecl,
 }
 
 Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
-    tok::TokenKind MethodType, TypeTy *ReturnType, SelectorInfo *Sel,
+    tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
     TypeTy **ArgTypes, IdentifierInfo **ArgNames,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind) {
   llvm::SmallVector<ParmVarDecl*, 16> Params;
 
-  for (unsigned i = 0; i < Sel->getNumArgs(); i++) {
+  for (unsigned i = 0; i < Sel.getNumArgs(); i++) {
     // FIXME: arg->AttrList must be stored too!
     ParmVarDecl* Param = new ParmVarDecl(SourceLocation(/*FIXME*/), ArgNames[i], 
 					 QualType::getFromOpaquePtr(ArgTypes[i]), 
@@ -1668,7 +1668,7 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
   ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, Sel,
                                       resultDeclType, 0, -1, AttrList, 
                                       MethodType == tok::minus);
-  ObjcMethod->setMethodParams(&Params[0], Sel->getNumArgs());
+  ObjcMethod->setMethodParams(&Params[0], Sel.getNumArgs());
   if (MethodDeclKind == tok::objc_optional)
     ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
   else

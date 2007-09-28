@@ -16,6 +16,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/TokenKinds.h"
+#include "clang/Lex/IdentifierTable.h" // FIXME: should be in Basic, not Lex.
 
 namespace clang {
   // Semantic.
@@ -25,9 +26,8 @@ namespace clang {
   // Parse.
   class Scope;
   class Action;
-  class SelectorInfo;
+  class Selector;
   // Lex.
-  class IdentifierInfo; // FIXME: should be in Basic, not Lex.
   class Token;
 
 /// Action - As the parser reads the input file and recognizes the productions
@@ -471,7 +471,7 @@ public:
     return 0;
   }
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
-    tok::TokenKind MethodType, TypeTy *ReturnType, SelectorInfo *Sel,
+    tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
     TypeTy **ArgTypes, IdentifierInfo **ArgNames,
@@ -482,7 +482,7 @@ public:
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from Sel.getNumArgs().
   virtual ExprResult ActOnClassMessage(
-    IdentifierInfo *receivingClassName, SelectorInfo *Sel,
+    IdentifierInfo *receivingClassName, Selector Sel,
     SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs) {
     return 0;
   }
@@ -490,7 +490,7 @@ public:
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from Sel.getNumArgs().
   virtual ExprResult ActOnInstanceMessage(
-    ExprTy *receiver, SelectorInfo *Sel,
+    ExprTy *receiver, Selector Sel,
     SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs) {
     return 0;
   }
