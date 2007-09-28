@@ -128,7 +128,7 @@ const char *Value::getNameStart() const {
 /// getNameLen - Return the length of the string, correctly handling nul
 /// characters embedded into them.
 unsigned Value::getNameLen() const {
-  return Name->getKeyLength();
+  return Name ? Name->getKeyLength() : 0;
 }
 
 
