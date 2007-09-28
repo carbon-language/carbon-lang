@@ -870,18 +870,20 @@ public:
   
   /// EmitReference - Emit a reference to a label.
   ///
-  void EmitReference(DWLabel Label, bool IsPCRelative = false) const {
-    EmitReference(Label.Tag, Label.Number, IsPCRelative);
+  void EmitReference(DWLabel Label, bool IsPCRelative = false,
+                     bool Force32Bit = false) const {
+    EmitReference(Label.Tag, Label.Number, IsPCRelative, Force32Bit);
   }
   void EmitReference(const char *Tag, unsigned Number,
-                     bool IsPCRelative = false) const {
-    PrintRelDirective();
+                     bool IsPCRelative = false, bool Force32Bit = false) const {
+    PrintRelDirective(Force32Bit);
     PrintLabelName(Tag, Number);
     
     if (IsPCRelative) O << "-" << TAI->getPCSymbol();
   }
-  void EmitReference(const std::string &Name, bool IsPCRelative = false) const {
-    PrintRelDirective();
+  void EmitReference(const std::string &Name, bool IsPCRelative = false,
+                     bool Force32Bit = false) const {
+    PrintRelDirective(Force32Bit);
     
     O << Name;
     
@@ -3479,7 +3481,7 @@ void DIEString::EmitValue(DwarfDebug &DD, unsigned Form) {
 /// EmitValue - Emit label value.
 ///
 void DIEDwarfLabel::EmitValue(DwarfDebug &DD, unsigned Form) {
-  DD.EmitReference(Label);
+  DD.EmitReference(Label, false, Form == DW_FORM_data4);
 }
 
 /// SizeOf - Determine size of label value in bytes.
@@ -3493,7 +3495,7 @@ unsigned DIEDwarfLabel::SizeOf(const DwarfDebug &DD, unsigned Form) const {
 /// EmitValue - Emit label value.
 ///
 void DIEObjectLabel::EmitValue(DwarfDebug &DD, unsigned Form) {
-  DD.EmitReference(Label);
+  DD.EmitReference(Label, false, Form == DW_FORM_data4);
 }
 
 /// SizeOf - Determine size of label value in bytes.
