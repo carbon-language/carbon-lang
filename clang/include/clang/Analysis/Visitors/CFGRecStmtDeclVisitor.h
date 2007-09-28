@@ -27,7 +27,7 @@ break;
 
 #define DEFAULT_DISPATCH(CLASS) void Visit##CLASS(CLASS* D) {}
 #define DEFAULT_DISPATCH_VARDECL(CLASS) void Visit##CLASS(CLASS* D)\
-  { static_cast<ImplClass*>(this)->Visit##VarDecl(D); }
+  { static_cast<ImplClass*>(this)->VisitVarDecl(D); }
 
   
 namespace clang {
@@ -36,18 +36,20 @@ class CFGRecStmtDeclVisitor : public CFGRecStmtVisitor<ImplClass> {
 public:  
 
   void VisitDeclRefExpr(DeclRefExpr* DR) {
-    static_cast<ImplClass*>(this)->VisitDeclChain(DR->getDecl());
+    for (ScopedDecl* D = DR->getDecl(); D != NULL; D = D->getNextDeclarator())
+      static_cast<ImplClass*>(this)->VisitScopedDecl(D); 
   }
   
-  void VisitDeclStmt(DeclStmt* DS) { 
-    static_cast<ImplClass*>(this)->VisitDeclChain(DS->getDecl()); 
+  void VisitDeclStmt(DeclStmt* DS) {
+    for (ScopedDecl* D = DS->getDecl(); D != NULL; D = D->getNextDeclarator()) {
+      static_cast<ImplClass*>(this)->VisitScopedDecl(D); 
+      // Visit the initializer.
+      if (VarDecl* VD = dyn_cast<VarDecl>(D))
+        if (Expr* I = VD->getInit())
+          static_cast<ImplClass*>(this)->Visit(I);
+    }
   }
-  
-  void VisitDeclChain(ScopedDecl* D) {
-    for (; D != NULL; D = D->getNextDeclarator())
-      static_cast<ImplClass*>(this)->VisitScopedDecl(D);
-  }
-  
+    
   void VisitScopedDecl(ScopedDecl* D) {
     switch (D->getKind()) {
         DISPATCH_CASE(Function,FunctionDecl)
