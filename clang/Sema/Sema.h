@@ -48,6 +48,7 @@ namespace clang {
   class TypedefDecl;
   class ObjcInterfaceDecl;
   class ObjcProtocolDecl;
+  class ObjcImplementationDecl;
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -206,6 +207,17 @@ private:
   // formed, this routine will return a new vector type.
   QualType HandleVectorTypeAttribute(QualType curType, AttributeList *rawAttr);
   void HandleOCUVectorTypeAttribute(TypedefDecl *d, AttributeList *rawAttr);
+  
+  /// CheckProtocolMethodDefs - This routine checks unimpletented methods
+  /// Declared in protocol, and those referenced by it.
+  void CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
+                               const llvm::DenseMap<void *, char>& InsMap,
+                               const llvm::DenseMap<void *, char>& ClsMap);
+  
+  /// ImplMethodsVsClassMethods - This is main routine to warn if any method
+  /// remains unimplemented in the @implementation class.
+  void ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl, 
+                                 ObjcInterfaceDecl* IDecl);
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.

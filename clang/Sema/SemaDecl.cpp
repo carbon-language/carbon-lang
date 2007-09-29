@@ -1189,8 +1189,7 @@ void Sema::ActOnImpleIvarVsClassIvars(DeclTy *ClassDecl,
 
 /// CheckProtocolMethodDefs - This routine checks unimpletented methods
 /// Declared in protocol, and those referenced by it.
-///
-static void CheckProtocolMethodDefs(Sema* objSema, ObjcProtocolDecl *PDecl,
+void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
              const llvm::DenseMap<void *, char>& InsMap,
              const llvm::DenseMap<void *, char>& ClsMap) {
   // check unimplemented instance methods.
@@ -1198,27 +1197,26 @@ static void CheckProtocolMethodDefs(Sema* objSema, ObjcProtocolDecl *PDecl,
   for (int j = 0; j < PDecl->getNumInsMethods(); j++)
     if (!InsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
       llvm::SmallString<128> buf;
-      objSema->Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-                    methods[j]->getSelector().getName(buf));
+      Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
+           methods[j]->getSelector().getName(buf));
     }
   // check unimplemented class methods
   methods = PDecl->getClsMethods();
   for (int j = 0; j < PDecl->getNumClsMethods(); j++)
     if (!ClsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
       llvm::SmallString<128> buf;
-      objSema->Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-                    methods[j]->getSelector().getName(buf));
+      Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
+           methods[j]->getSelector().getName(buf));
     }
   
   // Check on this protocols's referenced protocols, recursively
   ObjcProtocolDecl** RefPDecl = PDecl->getReferencedProtocols();
   for (int i = 0; i < PDecl->getNumReferencedProtocols(); i++)
-    CheckProtocolMethodDefs(objSema, RefPDecl[i], InsMap, ClsMap);
+    CheckProtocolMethodDefs(RefPDecl[i], InsMap, ClsMap);
 }
 
-static void ImplMethodsVsClassMethods(Sema* objSema, 
-				      ObjcImplementationDecl* IMPDecl, 
-                                      ObjcInterfaceDecl* IDecl) {
+void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl, 
+                                     ObjcInterfaceDecl* IDecl) {
   llvm::DenseMap<void *, char> InsMap;
   // Check and see if instance methods in class interface have been
   // implemented in the implementation class.
@@ -1231,8 +1229,8 @@ static void ImplMethodsVsClassMethods(Sema* objSema,
   for (int j = 0; j < IDecl->getNumInsMethods(); j++)
     if (!InsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
       llvm::SmallString<128> buf;
-      objSema->Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           	    methods[j]->getSelector().getName(buf));
+      Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
+           methods[j]->getSelector().getName(buf));
     }
   llvm::DenseMap<void *, char> ClsMap;
   // Check and see if class methods in class interface have been
@@ -1246,8 +1244,8 @@ static void ImplMethodsVsClassMethods(Sema* objSema,
   for (int j = 0; j < IDecl->getNumClsMethods(); j++)
     if (!ClsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
       llvm::SmallString<128> buf;
-      objSema->Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           	    methods[j]->getSelector().getName(buf));
+      Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
+           methods[j]->getSelector().getName(buf));
     }
   
   // Check the protocol list for unimplemented methods in the @implementation
@@ -1255,7 +1253,7 @@ static void ImplMethodsVsClassMethods(Sema* objSema,
   ObjcProtocolDecl** protocols = IDecl->getIntfRefProtocols();
   for (int i = 0; i < IDecl->getNumIntfRefProtocols(); i++) {
     ObjcProtocolDecl* PDecl = protocols[i];
-    CheckProtocolMethodDefs(objSema, PDecl, InsMap, ClsMap);
+    CheckProtocolMethodDefs(PDecl, InsMap, ClsMap);
   }
   return;
 }
@@ -1655,7 +1653,7 @@ void Sema::ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl,
     ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(S, 
 				 ImplClass->getIdentifier(), SourceLocation());
     if (IDecl)
-      ImplMethodsVsClassMethods(this, ImplClass, IDecl);
+      ImplMethodsVsClassMethods(ImplClass, IDecl);
   }
   else
     assert(0 && "Sema::ObjcAddMethodsToClass(): Unknown DeclTy");
