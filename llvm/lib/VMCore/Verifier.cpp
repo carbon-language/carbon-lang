@@ -1111,8 +1111,8 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     break;
   case Intrinsic::gcwrite:
     Assert1(CI.getOperand(3)->getType()
-              == PointerType::get(CI.getOperand(1)->getType()),
-          "Call to llvm.gcwrite must be with type 'void (%ty*, %ty2*, %ty**)'.",
+            == PointerType::get(CI.getOperand(1)->getType()),
+            "Call to llvm.gcwrite must be with type 'void (%ty*, %ty2*, %ty**)'.",
             &CI);
     break;
   case Intrinsic::gcread:
@@ -1120,6 +1120,10 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
             "Call to llvm.gcread must be with type '%ty* (%ty2*, %ty**).'",
             &CI);
     break;
+  case Intrinsic::init_trampoline:
+    Assert1(isa<Function>(IntrinsicInst::StripPointerCasts(CI.getOperand(2))),
+            "llvm.init_trampoline parameter #2 must resolve to a function.",
+            &CI);
   }
 }
 
