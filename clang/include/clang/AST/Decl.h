@@ -47,10 +47,13 @@ public:
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
   /// labels, tags, members and ordinary identifiers.
+  /// Objective-c protocols have their own namespace, so a protocol can have 
+  /// the same name as category, class, struct, typedef, etc.
   enum IdentifierNamespace {
     IDNS_Label,
     IDNS_Tag,
     IDNS_Member,
+    IDNS_Protocol,
     IDNS_Ordinary
   };
 private:
@@ -86,13 +89,14 @@ public:
     case ParmVariable:
     case EnumConstant:
     case ObjcInterface:
-    case ObjcProtocol:
       return IDNS_Ordinary;
     case Struct:
     case Union:
     case Class:
     case Enum:
       return IDNS_Tag;
+    case ObjcProtocol:
+      return IDNS_Protocol;
     }
   }
   // global temp stats (until we have a per-module visitor)

@@ -47,6 +47,7 @@ namespace clang {
   class OCUVectorType;
   class TypedefDecl;
   class ObjcInterfaceDecl;
+  class ObjcProtocolDecl;
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -184,6 +185,8 @@ private:
   ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
                                SourceLocation IdLoc, Scope *S);  
   ObjcInterfaceDecl *getObjCInterfaceDecl(Scope *S, 
+		       IdentifierInfo *Id, SourceLocation IdLoc);
+  ObjcProtocolDecl *getObjCProtocolDecl(Scope *S, 
 		       IdentifierInfo *Id, SourceLocation IdLoc);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,

@@ -39,7 +39,6 @@ class ASTContext {
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
-  llvm::DenseMap<const IdentifierInfo*, ObjcProtocolDecl*> ProtocolNameInfo;
   llvm::SmallVector<ObjcImplementationDecl*, 8> ImplementationClassInfo;
   RecordDecl *CFConstantStringTypeDecl;
 public:
@@ -164,12 +163,6 @@ public:
   /// specified record (struct/union/class), which indicates its size and field
   /// position information.
   const RecordLayout &getRecordLayout(const RecordDecl *D, SourceLocation L);
-  
-  ObjcProtocolDecl* getObjCProtocolDecl(const IdentifierInfo* ProtocolName) 
-  { return ProtocolNameInfo[ProtocolName]; }
-  void setObjCProtocolDecl(const IdentifierInfo* ProtocolName,
-                            ObjcProtocolDecl* ProtocolDecl)
-  { ProtocolNameInfo[ProtocolName] = ProtocolDecl; }
   
   ObjcImplementationDecl* getObjcImplementationClass(unsigned ix) {
     return ImplementationClassInfo[ix];

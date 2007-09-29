@@ -78,7 +78,7 @@ void Sema::PopScope(SourceLocation Loc, Scope *S) {
   }
 }
 
-/// ObjcInterfaceDecl - Look up a for a class declaration in the scope.
+/// getObjcInterfaceDecl - Look up a for a class declaration in the scope.
 /// return 0 if one not found.
 ObjcInterfaceDecl *Sema::getObjCInterfaceDecl(Scope *S,
                        			      IdentifierInfo *Id, 
@@ -88,6 +88,19 @@ ObjcInterfaceDecl *Sema::getObjCInterfaceDecl(Scope *S,
   if (IdDecl && !isa<ObjcInterfaceDecl>(IdDecl))
     IdDecl = 0;
   return cast_or_null<ObjcInterfaceDecl>(static_cast<Decl*>(IdDecl));
+}
+
+/// getObjcProtocolDecl - Look up a for a protocol declaration in the scope.
+/// return 0 if one not found.
+ObjcProtocolDecl *Sema::getObjCProtocolDecl(Scope *S,
+                       			    IdentifierInfo *Id, 
+				            SourceLocation IdLoc) {
+  // Note that Protocols have their own namespace.
+  ScopedDecl *PrDecl = LookupScopedDecl(Id, Decl::IDNS_Protocol, 
+				        IdLoc, S);
+  if (PrDecl && !isa<ObjcProtocolDecl>(PrDecl))
+    PrDecl = 0;
+  return cast_or_null<ObjcProtocolDecl>(static_cast<Decl*>(PrDecl));
 }
 
 /// LookupScopedDecl - Look up the inner-most declaration in the specified
@@ -935,7 +948,8 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(Scope* S,
   
   /// Check then save referenced protocols
   for (unsigned int i = 0; i != NumProtocols; i++) {
-    ObjcProtocolDecl* RefPDecl = Context.getObjCProtocolDecl(ProtocolNames[i]);
+    ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtocolNames[i], 
+						     ClassLoc);
     if (!RefPDecl || RefPDecl->getIsForwardProtoDecl())
       Diag(ClassLoc, diag::err_undef_protocolref,
            ProtocolNames[i]->getName(),
@@ -951,7 +965,7 @@ Sema::DeclTy *Sema::ObjcStartProtoInterface(Scope* S,
                 IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                 IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
   assert(ProtocolName && "Missing protocol identifier");
-  ObjcProtocolDecl *PDecl = Context.getObjCProtocolDecl(ProtocolName);
+  ObjcProtocolDecl *PDecl = getObjCProtocolDecl(S, ProtocolName, ProtocolLoc);
   if (PDecl) {
     // Protocol already seen. Better be a forward protocol declaration
     if (!PDecl->getIsForwardProtoDecl())
@@ -969,12 +983,12 @@ Sema::DeclTy *Sema::ObjcStartProtoInterface(Scope* S,
     // Chain & install the protocol decl into the identifier.
     PDecl->setNext(ProtocolName->getFETokenInfo<ScopedDecl>());
     ProtocolName->setFETokenInfo(PDecl);
-    Context.setObjCProtocolDecl(ProtocolName, PDecl);
   }    
   
   /// Check then save referenced protocols
   for (unsigned int i = 0; i != NumProtoRefs; i++) {
-    ObjcProtocolDecl* RefPDecl = Context.getObjCProtocolDecl(ProtoRefNames[i]);
+    ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtoRefNames[i], 
+						     ProtocolLoc);
     if (!RefPDecl || RefPDecl->getIsForwardProtoDecl())
       Diag(ProtocolLoc, diag::err_undef_protocolref,
 	   ProtoRefNames[i]->getName(),
@@ -995,13 +1009,12 @@ Sema::ObjcForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
   
   for (unsigned i = 0; i != NumElts; ++i) {
     ObjcProtocolDecl *PDecl;
-    PDecl = Context.getObjCProtocolDecl(IdentList[i]);
+    PDecl = getObjCProtocolDecl(S, IdentList[i], AtProtocolLoc);
     if (!PDecl)  {// Already seen?
       PDecl = new ObjcProtocolDecl(SourceLocation(), 0, IdentList[i], true);
       // Chain & install the protocol decl into the identifier.
       PDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
       IdentList[i]->setFETokenInfo(PDecl);
-      Context.setObjCProtocolDecl(IdentList[i], PDecl);
     }
     // Remember that this needs to be removed when the scope is popped.
     S->AddDecl(IdentList[i]);
@@ -1019,18 +1032,8 @@ Sema::DeclTy *Sema::ObjcStartCatInterface(Scope* S,
   ObjcCategoryDecl *CDecl;
   ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(S, ClassName, ClassLoc);
   CDecl = new ObjcCategoryDecl(AtInterfaceLoc, NumProtoRefs, ClassName);
-  if (IDecl) {
-    assert (ClassName->getFETokenInfo<ScopedDecl>() && "Missing @interface decl");
-    Decl *D = static_cast<Decl *>(ClassName->getFETokenInfo<ScopedDecl>());
-    assert(isa<ObjcInterfaceDecl>(D) && "Missing @interface decl");
-    
-    // Chain & install the category decl into the identifier.
-    // Note that head of the chain is the @interface class type and follow up
-    // nodes in the chain are the protocol decl nodes.
-    cast<ObjcInterfaceDecl>(D)->setNext(CDecl);
-  }
-  
   CDecl->setClassInterface(IDecl);
+
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->getIsForwardDecl())
     Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
@@ -1053,7 +1056,8 @@ Sema::DeclTy *Sema::ObjcStartCatInterface(Scope* S,
   
   /// Check then save referenced protocols
   for (unsigned int i = 0; i != NumProtoRefs; i++) {
-    ObjcProtocolDecl* RefPDecl = Context.getObjCProtocolDecl(ProtoRefNames[i]);
+    ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtoRefNames[i], 
+						     CategoryLoc);
     if (!RefPDecl || RefPDecl->getIsForwardProtoDecl())
       Diag(CategoryLoc, diag::err_undef_protocolref,
 	   ProtoRefNames[i]->getName(),
