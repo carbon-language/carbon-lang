@@ -151,13 +151,6 @@ an example.
 
 //===---------------------------------------------------------------------===//
 
-Instead of unconditionally inserting a null initializer for every GC root when
-Collector::InitRoots is set, the collector infrastructure should get a little
-bit smarter and perform a trivial DSE of the initial basic block up to the
-first safe point.
-
-//===---------------------------------------------------------------------===//
-
 With a copying garbage collector, derived pointers must not be retained across
 collector safe points; the collector could move the objects and invalidate the
 derived pointer. This is bad enough in the first place, but safe points can
