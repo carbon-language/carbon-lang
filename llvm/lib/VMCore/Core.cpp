@@ -14,10 +14,10 @@
 
 #include "llvm-c/Core.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/CHelpers.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Support/CHelpers.h"
 #include "llvm/Support/LLVMBuilder.h"
 #include "llvm/TypeSymbolTable.h"
 #include <cassert>
