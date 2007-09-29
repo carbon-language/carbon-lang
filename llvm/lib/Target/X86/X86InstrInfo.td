@@ -23,22 +23,15 @@ def SDTIntShiftDOp: SDTypeProfile<1, 3,
 
 def SDTX86CmpTest : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 
-def SDTX86Cmov    : SDTypeProfile<1, 3,
-                                  [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
-                                   SDTCisVT<3, i8>]>;
-def SDTX86Cmov_NEW : SDTypeProfile<1, 4,
+def SDTX86Cmov    : SDTypeProfile<1, 4,
                                   [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
                                    SDTCisVT<3, i8>, SDTCisVT<4, i32>]>;
 
-def SDTX86BrCond  : SDTypeProfile<0, 2,
-                                  [SDTCisVT<0, OtherVT>, SDTCisVT<1, i8>]>;
-def SDTX86BrCond_NEW  : SDTypeProfile<0, 3,
+def SDTX86BrCond  : SDTypeProfile<0, 3,
                                   [SDTCisVT<0, OtherVT>,
                                    SDTCisVT<1, i8>, SDTCisVT<2, i32>]>;
 
-def SDTX86SetCC   : SDTypeProfile<1, 1,
-                                  [SDTCisVT<0, i8>, SDTCisVT<1, i8>]>;
-def SDTX86SetCC_NEW   : SDTypeProfile<1, 2,
+def SDTX86SetCC   : SDTypeProfile<1, 2,
                                   [SDTCisVT<0, i8>,
                                    SDTCisVT<1, i8>, SDTCisVT<2, i32>]>;
 
@@ -65,20 +58,12 @@ def SDT_X86EHRET : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
 def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
 
-def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest,
-                        [SDNPHasChain, SDNPOutFlag]>;
-def X86cmp_new : SDNode<"X86ISD::CMP_NEW" ,     SDTX86CmpTest>;
+def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest>;
 
-def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov,
-                        [SDNPInFlag, SDNPOutFlag]>;
-def X86cmov_new: SDNode<"X86ISD::CMOV_NEW",     SDTX86Cmov_NEW>;
+def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov>;
 def X86brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,
-                        [SDNPHasChain, SDNPInFlag]>;
-def X86brcond_new  : SDNode<"X86ISD::BRCOND_NEW",   SDTX86BrCond_NEW,
                         [SDNPHasChain]>;
-def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC,
-                        [SDNPInFlag, SDNPOutFlag]>;
-def X86setcc_new : SDNode<"X86ISD::SETCC_NEW",    SDTX86SetCC_NEW>;
+def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC>;
 
 def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86Ret,
                         [SDNPHasChain, SDNPOptInFlag]>;
@@ -319,76 +304,39 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
 // Conditional branches
 let Uses = [EFLAGS] in {
 def JE  : IBr<0x84, (ins brtarget:$dst), "je\t$dst",
-              [(X86brcond bb:$dst, X86_COND_E)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_E, EFLAGS)]>, TB;
 def JNE : IBr<0x85, (ins brtarget:$dst), "jne\t$dst",
-              [(X86brcond bb:$dst, X86_COND_NE)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_NE, EFLAGS)]>, TB;
 def JL  : IBr<0x8C, (ins brtarget:$dst), "jl\t$dst",
-              [(X86brcond bb:$dst, X86_COND_L)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_L, EFLAGS)]>, TB;
 def JLE : IBr<0x8E, (ins brtarget:$dst), "jle\t$dst",
-              [(X86brcond bb:$dst, X86_COND_LE)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_LE, EFLAGS)]>, TB;
 def JG  : IBr<0x8F, (ins brtarget:$dst), "jg\t$dst",
-              [(X86brcond bb:$dst, X86_COND_G)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_G, EFLAGS)]>, TB;
 def JGE : IBr<0x8D, (ins brtarget:$dst), "jge\t$dst",
-              [(X86brcond bb:$dst, X86_COND_GE)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_GE, EFLAGS)]>, TB;
 
 def JB  : IBr<0x82, (ins brtarget:$dst), "jb\t$dst",
-              [(X86brcond bb:$dst, X86_COND_B)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_B, EFLAGS)]>, TB;
 def JBE : IBr<0x86, (ins brtarget:$dst), "jbe\t$dst",
-              [(X86brcond bb:$dst, X86_COND_BE)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_BE, EFLAGS)]>, TB;
 def JA  : IBr<0x87, (ins brtarget:$dst), "ja\t$dst",
-              [(X86brcond bb:$dst, X86_COND_A)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_A, EFLAGS)]>, TB;
 def JAE : IBr<0x83, (ins brtarget:$dst), "jae\t$dst",
-              [(X86brcond bb:$dst, X86_COND_AE)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_AE, EFLAGS)]>, TB;
 
 def JS  : IBr<0x88, (ins brtarget:$dst), "js\t$dst",
-              [(X86brcond bb:$dst, X86_COND_S)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_S, EFLAGS)]>, TB;
 def JNS : IBr<0x89, (ins brtarget:$dst), "jns\t$dst",
-              [(X86brcond bb:$dst, X86_COND_NS)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_NS, EFLAGS)]>, TB;
 def JP  : IBr<0x8A, (ins brtarget:$dst), "jp\t$dst",
-              [(X86brcond bb:$dst, X86_COND_P)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_P, EFLAGS)]>, TB;
 def JNP : IBr<0x8B, (ins brtarget:$dst), "jnp\t$dst",
-              [(X86brcond bb:$dst, X86_COND_NP)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_NP, EFLAGS)]>, TB;
 def JO  : IBr<0x80, (ins brtarget:$dst), "jo\t$dst",
-              [(X86brcond bb:$dst, X86_COND_O)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_O, EFLAGS)]>, TB;
 def JNO : IBr<0x81, (ins brtarget:$dst), "jno\t$dst",
-              [(X86brcond bb:$dst, X86_COND_NO)]>, TB;
-} // Uses = [EFLAGS]
-
-let Uses = [EFLAGS] in {
-def NEW_JE  : IBr<0x84, (ins brtarget:$dst), "je\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_E, EFLAGS)]>, TB;
-def NEW_JNE : IBr<0x85, (ins brtarget:$dst), "jne\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_NE, EFLAGS)]>, TB;
-def NEW_JL  : IBr<0x8C, (ins brtarget:$dst), "jl\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_L, EFLAGS)]>, TB;
-def NEW_JLE : IBr<0x8E, (ins brtarget:$dst), "jle\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_LE, EFLAGS)]>, TB;
-def NEW_JG  : IBr<0x8F, (ins brtarget:$dst), "jg\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_G, EFLAGS)]>, TB;
-def NEW_JGE : IBr<0x8D, (ins brtarget:$dst), "jge\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_GE, EFLAGS)]>, TB;
-
-def NEW_JB  : IBr<0x82, (ins brtarget:$dst), "jb\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_B, EFLAGS)]>, TB;
-def NEW_JBE : IBr<0x86, (ins brtarget:$dst), "jbe\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_BE, EFLAGS)]>, TB;
-def NEW_JA  : IBr<0x87, (ins brtarget:$dst), "ja\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_A, EFLAGS)]>, TB;
-def NEW_JAE : IBr<0x83, (ins brtarget:$dst), "jae\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_AE, EFLAGS)]>, TB;
-
-def NEW_JS  : IBr<0x88, (ins brtarget:$dst), "js\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_S, EFLAGS)]>, TB;
-def NEW_JNS : IBr<0x89, (ins brtarget:$dst), "jns\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_NS, EFLAGS)]>, TB;
-def NEW_JP  : IBr<0x8A, (ins brtarget:$dst), "jp\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_P, EFLAGS)]>, TB;
-def NEW_JNP : IBr<0x8B, (ins brtarget:$dst), "jnp\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_NP, EFLAGS)]>, TB;
-def NEW_JO  : IBr<0x80, (ins brtarget:$dst), "jo\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_O, EFLAGS)]>, TB;
-def NEW_JNO : IBr<0x81, (ins brtarget:$dst), "jno\t$dst",
-              [(X86brcond_new bb:$dst, X86_COND_NO, EFLAGS)]>, TB;
+              [(X86brcond bb:$dst, X86_COND_NO, EFLAGS)]>, TB;
 } // Uses = [EFLAGS]
 
 //===----------------------------------------------------------------------===//
@@ -703,700 +651,349 @@ def CMOVB16rr : I<0x42, MRMSrcReg,       // if <u, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovb\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_B))]>,
+                                   X86_COND_B, EFLAGS))]>,
                   TB, OpSize;
 def CMOVB16rm : I<0x42, MRMSrcMem,       // if <u, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovb\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_B))]>,
+                                   X86_COND_B, EFLAGS))]>,
                   TB, OpSize;
 def CMOVB32rr : I<0x42, MRMSrcReg,       // if <u, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovb\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_B))]>,
+                                   X86_COND_B, EFLAGS))]>,
                    TB;
 def CMOVB32rm : I<0x42, MRMSrcMem,       // if <u, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovb\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_B))]>,
+                                   X86_COND_B, EFLAGS))]>,
                    TB;
 
 def CMOVAE16rr: I<0x43, MRMSrcReg,       // if >=u, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovae\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_AE))]>,
+                                   X86_COND_AE, EFLAGS))]>,
                    TB, OpSize;
 def CMOVAE16rm: I<0x43, MRMSrcMem,       // if >=u, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovae\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_AE))]>,
+                                   X86_COND_AE, EFLAGS))]>,
                    TB, OpSize;
 def CMOVAE32rr: I<0x43, MRMSrcReg,       // if >=u, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovae\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_AE))]>,
+                                   X86_COND_AE, EFLAGS))]>,
                    TB;
 def CMOVAE32rm: I<0x43, MRMSrcMem,       // if >=u, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovae\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_AE))]>,
+                                   X86_COND_AE, EFLAGS))]>,
                    TB;
 
 def CMOVE16rr : I<0x44, MRMSrcReg,       // if ==, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmove\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_E))]>,
+                                   X86_COND_E, EFLAGS))]>,
                    TB, OpSize;
 def CMOVE16rm : I<0x44, MRMSrcMem,       // if ==, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmove\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_E))]>,
+                                   X86_COND_E, EFLAGS))]>,
                    TB, OpSize;
 def CMOVE32rr : I<0x44, MRMSrcReg,       // if ==, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmove\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_E))]>,
+                                   X86_COND_E, EFLAGS))]>,
                    TB;
 def CMOVE32rm : I<0x44, MRMSrcMem,       // if ==, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmove\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_E))]>,
+                                   X86_COND_E, EFLAGS))]>,
                    TB;
 
 def CMOVNE16rr: I<0x45, MRMSrcReg,       // if !=, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovne\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_NE))]>,
+                                   X86_COND_NE, EFLAGS))]>,
                    TB, OpSize;
 def CMOVNE16rm: I<0x45, MRMSrcMem,       // if !=, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovne\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_NE))]>,
+                                   X86_COND_NE, EFLAGS))]>,
                    TB, OpSize;
 def CMOVNE32rr: I<0x45, MRMSrcReg,       // if !=, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovne\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_NE))]>,
+                                   X86_COND_NE, EFLAGS))]>,
                    TB;
 def CMOVNE32rm: I<0x45, MRMSrcMem,       // if !=, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovne\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_NE))]>,
+                                   X86_COND_NE, EFLAGS))]>,
                    TB;
 
 def CMOVBE16rr: I<0x46, MRMSrcReg,       // if <=u, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovbe\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_BE))]>,
+                                   X86_COND_BE, EFLAGS))]>,
                    TB, OpSize;
 def CMOVBE16rm: I<0x46, MRMSrcMem,       // if <=u, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovbe\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_BE))]>,
+                                   X86_COND_BE, EFLAGS))]>,
                    TB, OpSize;
 def CMOVBE32rr: I<0x46, MRMSrcReg,       // if <=u, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovbe\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_BE))]>,
+                                   X86_COND_BE, EFLAGS))]>,
                    TB;
 def CMOVBE32rm: I<0x46, MRMSrcMem,       // if <=u, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovbe\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_BE))]>,
+                                   X86_COND_BE, EFLAGS))]>,
                    TB;
 
 def CMOVA16rr : I<0x47, MRMSrcReg,       // if >u, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmova\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_A))]>,
+                                   X86_COND_A, EFLAGS))]>,
                    TB, OpSize;
 def CMOVA16rm : I<0x47, MRMSrcMem,       // if >u, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmova\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_A))]>,
+                                   X86_COND_A, EFLAGS))]>,
                    TB, OpSize;
 def CMOVA32rr : I<0x47, MRMSrcReg,       // if >u, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmova\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_A))]>,
+                                   X86_COND_A, EFLAGS))]>,
                    TB;
 def CMOVA32rm : I<0x47, MRMSrcMem,       // if >u, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmova\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_A))]>,
+                                   X86_COND_A, EFLAGS))]>,
                    TB;
 
 def CMOVL16rr : I<0x4C, MRMSrcReg,       // if <s, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovl\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_L))]>,
+                                   X86_COND_L, EFLAGS))]>,
                    TB, OpSize;
 def CMOVL16rm : I<0x4C, MRMSrcMem,       // if <s, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovl\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_L))]>,
+                                   X86_COND_L, EFLAGS))]>,
                    TB, OpSize;
 def CMOVL32rr : I<0x4C, MRMSrcReg,       // if <s, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovl\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_L))]>,
+                                   X86_COND_L, EFLAGS))]>,
                    TB;
 def CMOVL32rm : I<0x4C, MRMSrcMem,       // if <s, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovl\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_L))]>,
+                                   X86_COND_L, EFLAGS))]>,
                    TB;
 
 def CMOVGE16rr: I<0x4D, MRMSrcReg,       // if >=s, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovge\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_GE))]>,
+                                   X86_COND_GE, EFLAGS))]>,
                    TB, OpSize;
 def CMOVGE16rm: I<0x4D, MRMSrcMem,       // if >=s, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovge\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_GE))]>,
+                                   X86_COND_GE, EFLAGS))]>,
                    TB, OpSize;
 def CMOVGE32rr: I<0x4D, MRMSrcReg,       // if >=s, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovge\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_GE))]>,
+                                   X86_COND_GE, EFLAGS))]>,
                    TB;
 def CMOVGE32rm: I<0x4D, MRMSrcMem,       // if >=s, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovge\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_GE))]>,
+                                   X86_COND_GE, EFLAGS))]>,
                    TB;
 
 def CMOVLE16rr: I<0x4E, MRMSrcReg,       // if <=s, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovle\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_LE))]>,
+                                   X86_COND_LE, EFLAGS))]>,
                    TB, OpSize;
 def CMOVLE16rm: I<0x4E, MRMSrcMem,       // if <=s, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovle\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_LE))]>,
+                                   X86_COND_LE, EFLAGS))]>,
                    TB, OpSize;
 def CMOVLE32rr: I<0x4E, MRMSrcReg,       // if <=s, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovle\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_LE))]>,
+                                   X86_COND_LE, EFLAGS))]>,
                    TB;
 def CMOVLE32rm: I<0x4E, MRMSrcMem,       // if <=s, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovle\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_LE))]>,
+                                   X86_COND_LE, EFLAGS))]>,
                    TB;
 
 def CMOVG16rr : I<0x4F, MRMSrcReg,       // if >s, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovg\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_G))]>,
+                                   X86_COND_G, EFLAGS))]>,
                    TB, OpSize;
 def CMOVG16rm : I<0x4F, MRMSrcMem,       // if >s, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovg\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_G))]>,
+                                   X86_COND_G, EFLAGS))]>,
                    TB, OpSize;
 def CMOVG32rr : I<0x4F, MRMSrcReg,       // if >s, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovg\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_G))]>,
+                                   X86_COND_G, EFLAGS))]>,
                    TB;
 def CMOVG32rm : I<0x4F, MRMSrcMem,       // if >s, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovg\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_G))]>,
+                                   X86_COND_G, EFLAGS))]>,
                    TB;
 
 def CMOVS16rr : I<0x48, MRMSrcReg,       // if signed, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovs\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_S))]>,
+                                   X86_COND_S, EFLAGS))]>,
                   TB, OpSize;
 def CMOVS16rm : I<0x48, MRMSrcMem,       // if signed, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovs\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_S))]>,
+                                   X86_COND_S, EFLAGS))]>,
                   TB, OpSize;
 def CMOVS32rr : I<0x48, MRMSrcReg,       // if signed, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovs\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_S))]>,
+                                   X86_COND_S, EFLAGS))]>,
                   TB;
 def CMOVS32rm : I<0x48, MRMSrcMem,       // if signed, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovs\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_S))]>,
+                                   X86_COND_S, EFLAGS))]>,
                   TB;
 
 def CMOVNS16rr: I<0x49, MRMSrcReg,       // if !signed, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovns\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_NS))]>,
+                                   X86_COND_NS, EFLAGS))]>,
                   TB, OpSize;
 def CMOVNS16rm: I<0x49, MRMSrcMem,       // if !signed, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovns\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_NS))]>,
+                                   X86_COND_NS, EFLAGS))]>,
                   TB, OpSize;
 def CMOVNS32rr: I<0x49, MRMSrcReg,       // if !signed, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovns\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_NS))]>,
+                                   X86_COND_NS, EFLAGS))]>,
                   TB;
 def CMOVNS32rm: I<0x49, MRMSrcMem,       // if !signed, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovns\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_NS))]>,
+                                   X86_COND_NS, EFLAGS))]>,
                   TB;
 
 def CMOVP16rr : I<0x4A, MRMSrcReg,       // if parity, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovp\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                   X86_COND_P))]>,
+                                   X86_COND_P, EFLAGS))]>,
                   TB, OpSize;
 def CMOVP16rm : I<0x4A, MRMSrcMem,       // if parity, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovp\t{$src2, $dst|$dst, $src2}",
                   [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_P))]>,
+                                   X86_COND_P, EFLAGS))]>,
                   TB, OpSize;
 def CMOVP32rr : I<0x4A, MRMSrcReg,       // if parity, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovp\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                   X86_COND_P))]>,
+                                   X86_COND_P, EFLAGS))]>,
                   TB;
 def CMOVP32rm : I<0x4A, MRMSrcMem,       // if parity, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovp\t{$src2, $dst|$dst, $src2}",
                   [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_P))]>,
+                                   X86_COND_P, EFLAGS))]>,
                   TB;
 
 def CMOVNP16rr : I<0x4B, MRMSrcReg,       // if !parity, GR16 = GR16
                   (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
                   "cmovnp\t{$src2, $dst|$dst, $src2}",
                    [(set GR16:$dst, (X86cmov GR16:$src1, GR16:$src2,
-                                    X86_COND_NP))]>,
+                                    X86_COND_NP, EFLAGS))]>,
                   TB, OpSize;
 def CMOVNP16rm : I<0x4B, MRMSrcMem,       // if !parity, GR16 = [mem16]
                   (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
                   "cmovnp\t{$src2, $dst|$dst, $src2}",
                    [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                    X86_COND_NP))]>,
+                                    X86_COND_NP, EFLAGS))]>,
                   TB, OpSize;
 def CMOVNP32rr : I<0x4B, MRMSrcReg,       // if !parity, GR32 = GR32
                   (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "cmovnp\t{$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (X86cmov GR32:$src1, GR32:$src2,
-                                    X86_COND_NP))]>,
+                                    X86_COND_NP, EFLAGS))]>,
                   TB;
 def CMOVNP32rm : I<0x4B, MRMSrcMem,       // if !parity, GR32 = [mem32]
                   (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
                   "cmovnp\t{$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                    X86_COND_NP))]>,
-                  TB;
-
-
-def NEW_CMOVB16rr : I<0x42, MRMSrcReg,       // if <u, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovb\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_B, EFLAGS))]>,
-                  TB, OpSize;
-def NEW_CMOVB16rm : I<0x42, MRMSrcMem,       // if <u, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovb\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_B, EFLAGS))]>,
-                  TB, OpSize;
-def NEW_CMOVB32rr : I<0x42, MRMSrcReg,       // if <u, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovb\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_B, EFLAGS))]>,
-                   TB;
-def NEW_CMOVB32rm : I<0x42, MRMSrcMem,       // if <u, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovb\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_B, EFLAGS))]>,
-                   TB;
-
-def NEW_CMOVAE16rr: I<0x43, MRMSrcReg,       // if >=u, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovae\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_AE, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVAE16rm: I<0x43, MRMSrcMem,       // if >=u, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovae\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_AE, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVAE32rr: I<0x43, MRMSrcReg,       // if >=u, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovae\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_AE, EFLAGS))]>,
-                   TB;
-def NEW_CMOVAE32rm: I<0x43, MRMSrcMem,       // if >=u, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovae\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_AE, EFLAGS))]>,
-                   TB;
-
-def NEW_CMOVE16rr : I<0x44, MRMSrcReg,       // if ==, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmove\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_E, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVE16rm : I<0x44, MRMSrcMem,       // if ==, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmove\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_E, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVE32rr : I<0x44, MRMSrcReg,       // if ==, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmove\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_E, EFLAGS))]>,
-                   TB;
-def NEW_CMOVE32rm : I<0x44, MRMSrcMem,       // if ==, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmove\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_E, EFLAGS))]>,
-                   TB;
-
-def NEW_CMOVNE16rr: I<0x45, MRMSrcReg,       // if !=, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovne\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_NE, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVNE16rm: I<0x45, MRMSrcMem,       // if !=, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovne\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_NE, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVNE32rr: I<0x45, MRMSrcReg,       // if !=, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovne\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_NE, EFLAGS))]>,
-                   TB;
-def NEW_CMOVNE32rm: I<0x45, MRMSrcMem,       // if !=, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovne\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_NE, EFLAGS))]>,
-                   TB;
-
-def NEW_CMOVBE16rr: I<0x46, MRMSrcReg,       // if <=u, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovbe\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_BE, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVBE16rm: I<0x46, MRMSrcMem,       // if <=u, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovbe\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_BE, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVBE32rr: I<0x46, MRMSrcReg,       // if <=u, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovbe\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_BE, EFLAGS))]>,
-                   TB;
-def NEW_CMOVBE32rm: I<0x46, MRMSrcMem,       // if <=u, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovbe\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_BE, EFLAGS))]>,
-                   TB;
-
-def NEW_CMOVA16rr : I<0x47, MRMSrcReg,       // if >u, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmova\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_A, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVA16rm : I<0x47, MRMSrcMem,       // if >u, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmova\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_A, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVA32rr : I<0x47, MRMSrcReg,       // if >u, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmova\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_A, EFLAGS))]>,
-                   TB;
-def NEW_CMOVA32rm : I<0x47, MRMSrcMem,       // if >u, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmova\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_A, EFLAGS))]>,
-                   TB;
-
-def NEW_CMOVL16rr : I<0x4C, MRMSrcReg,       // if <s, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovl\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_L, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVL16rm : I<0x4C, MRMSrcMem,       // if <s, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovl\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_L, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVL32rr : I<0x4C, MRMSrcReg,       // if <s, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovl\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_L, EFLAGS))]>,
-                   TB;
-def NEW_CMOVL32rm : I<0x4C, MRMSrcMem,       // if <s, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovl\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_L, EFLAGS))]>,
-                   TB;
-
-def NEW_CMOVGE16rr: I<0x4D, MRMSrcReg,       // if >=s, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovge\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_GE, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVGE16rm: I<0x4D, MRMSrcMem,       // if >=s, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovge\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_GE, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVGE32rr: I<0x4D, MRMSrcReg,       // if >=s, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovge\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_GE, EFLAGS))]>,
-                   TB;
-def NEW_CMOVGE32rm: I<0x4D, MRMSrcMem,       // if >=s, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovge\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_GE, EFLAGS))]>,
-                   TB;
-
-def NEW_CMOVLE16rr: I<0x4E, MRMSrcReg,       // if <=s, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovle\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_LE, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVLE16rm: I<0x4E, MRMSrcMem,       // if <=s, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovle\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_LE, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVLE32rr: I<0x4E, MRMSrcReg,       // if <=s, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovle\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_LE, EFLAGS))]>,
-                   TB;
-def NEW_CMOVLE32rm: I<0x4E, MRMSrcMem,       // if <=s, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovle\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_LE, EFLAGS))]>,
-                   TB;
-
-def NEW_CMOVG16rr : I<0x4F, MRMSrcReg,       // if >s, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovg\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_G, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVG16rm : I<0x4F, MRMSrcMem,       // if >s, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovg\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_G, EFLAGS))]>,
-                   TB, OpSize;
-def NEW_CMOVG32rr : I<0x4F, MRMSrcReg,       // if >s, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovg\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_G, EFLAGS))]>,
-                   TB;
-def NEW_CMOVG32rm : I<0x4F, MRMSrcMem,       // if >s, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovg\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_G, EFLAGS))]>,
-                   TB;
-
-def NEW_CMOVS16rr : I<0x48, MRMSrcReg,       // if signed, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovs\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_S, EFLAGS))]>,
-                  TB, OpSize;
-def NEW_CMOVS16rm : I<0x48, MRMSrcMem,       // if signed, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovs\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_S, EFLAGS))]>,
-                  TB, OpSize;
-def NEW_CMOVS32rr : I<0x48, MRMSrcReg,       // if signed, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovs\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_S, EFLAGS))]>,
-                  TB;
-def NEW_CMOVS32rm : I<0x48, MRMSrcMem,       // if signed, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovs\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_S, EFLAGS))]>,
-                  TB;
-
-def NEW_CMOVNS16rr: I<0x49, MRMSrcReg,       // if !signed, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovns\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_NS, EFLAGS))]>,
-                  TB, OpSize;
-def NEW_CMOVNS16rm: I<0x49, MRMSrcMem,       // if !signed, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovns\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_NS, EFLAGS))]>,
-                  TB, OpSize;
-def NEW_CMOVNS32rr: I<0x49, MRMSrcReg,       // if !signed, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovns\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_NS, EFLAGS))]>,
-                  TB;
-def NEW_CMOVNS32rm: I<0x49, MRMSrcMem,       // if !signed, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovns\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_NS, EFLAGS))]>,
-                  TB;
-
-def NEW_CMOVP16rr : I<0x4A, MRMSrcReg,       // if parity, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovp\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                   X86_COND_P, EFLAGS))]>,
-                  TB, OpSize;
-def NEW_CMOVP16rm : I<0x4A, MRMSrcMem,       // if parity, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovp\t{$src2, $dst|$dst, $src2}",
-                  [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                   X86_COND_P, EFLAGS))]>,
-                  TB, OpSize;
-def NEW_CMOVP32rr : I<0x4A, MRMSrcReg,       // if parity, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovp\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                   X86_COND_P, EFLAGS))]>,
-                  TB;
-def NEW_CMOVP32rm : I<0x4A, MRMSrcMem,       // if parity, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovp\t{$src2, $dst|$dst, $src2}",
-                  [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
-                                   X86_COND_P, EFLAGS))]>,
-                  TB;
-
-def NEW_CMOVNP16rr : I<0x4B, MRMSrcReg,       // if !parity, GR16 = GR16
-                  (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
-                  "cmovnp\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (X86cmov_new GR16:$src1, GR16:$src2,
-                                    X86_COND_NP, EFLAGS))]>,
-                  TB, OpSize;
-def NEW_CMOVNP16rm : I<0x4B, MRMSrcMem,       // if !parity, GR16 = [mem16]
-                  (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
-                  "cmovnp\t{$src2, $dst|$dst, $src2}",
-                   [(set GR16:$dst, (X86cmov_new GR16:$src1, (loadi16 addr:$src2),
-                                    X86_COND_NP, EFLAGS))]>,
-                  TB, OpSize;
-def NEW_CMOVNP32rr : I<0x4B, MRMSrcReg,       // if !parity, GR32 = GR32
-                  (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
-                  "cmovnp\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (X86cmov_new GR32:$src1, GR32:$src2,
-                                    X86_COND_NP, EFLAGS))]>,
-                  TB;
-def NEW_CMOVNP32rm : I<0x4B, MRMSrcMem,       // if !parity, GR32 = [mem32]
-                  (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
-                  "cmovnp\t{$src2, $dst|$dst, $src2}",
-                   [(set GR32:$dst, (X86cmov_new GR32:$src1, (loadi32 addr:$src2),
                                     X86_COND_NP, EFLAGS))]>,
                   TB;
 } // Uses = [EFLAGS]
@@ -2442,116 +2039,63 @@ def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // GR32 = [mem32]*I8
 let Defs = [EFLAGS] in {
 let isCommutable = 1 in {   // TEST X, Y   --> TEST Y, X
 def TEST8rr  : I<0x84, MRMDestReg, (outs),  (ins GR8:$src1, GR8:$src2),
-                 "test{b}\t{$src2, $src1|$src1, $src2}",
-                 [(X86cmp (and GR8:$src1, GR8:$src2), 0)]>;
+                     "test{b}\t{$src2, $src1|$src1, $src2}",
+                     [(X86cmp (and GR8:$src1, GR8:$src2), 0),
+                      (implicit EFLAGS)]>;
 def TEST16rr : I<0x85, MRMDestReg, (outs),  (ins GR16:$src1, GR16:$src2),
-                 "test{w}\t{$src2, $src1|$src1, $src2}",
-                 [(X86cmp (and GR16:$src1, GR16:$src2), 0)]>, OpSize;
+                     "test{w}\t{$src2, $src1|$src1, $src2}",
+                     [(X86cmp (and GR16:$src1, GR16:$src2), 0),
+                      (implicit EFLAGS)]>,
+                 OpSize;
 def TEST32rr : I<0x85, MRMDestReg, (outs),  (ins GR32:$src1, GR32:$src2),
-                 "test{l}\t{$src2, $src1|$src1, $src2}",
-                 [(X86cmp (and GR32:$src1, GR32:$src2), 0)]>;
+                     "test{l}\t{$src2, $src1|$src1, $src2}",
+                     [(X86cmp (and GR32:$src1, GR32:$src2), 0),
+                      (implicit EFLAGS)]>;
 }
 
 def TEST8rm  : I<0x84, MRMSrcMem, (outs),  (ins GR8 :$src1, i8mem :$src2),
-                 "test{b}\t{$src2, $src1|$src1, $src2}",
-                 [(X86cmp (and GR8:$src1, (loadi8 addr:$src2)), 0)]>;
+                     "test{b}\t{$src2, $src1|$src1, $src2}",
+                     [(X86cmp (and GR8:$src1, (loadi8 addr:$src2)), 0),
+                      (implicit EFLAGS)]>;
 def TEST16rm : I<0x85, MRMSrcMem, (outs),  (ins GR16:$src1, i16mem:$src2),
-                 "test{w}\t{$src2, $src1|$src1, $src2}",
-                 [(X86cmp (and GR16:$src1, (loadi16 addr:$src2)), 0)]>,
-               OpSize;
+                     "test{w}\t{$src2, $src1|$src1, $src2}",
+                     [(X86cmp (and GR16:$src1, (loadi16 addr:$src2)), 0),
+                      (implicit EFLAGS)]>, OpSize;
 def TEST32rm : I<0x85, MRMSrcMem, (outs),  (ins GR32:$src1, i32mem:$src2),
-                 "test{l}\t{$src2, $src1|$src1, $src2}",
-                 [(X86cmp (and GR32:$src1, (loadi32 addr:$src2)), 0)]>;
+                     "test{l}\t{$src2, $src1|$src1, $src2}",
+                     [(X86cmp (and GR32:$src1, (loadi32 addr:$src2)), 0),
+                      (implicit EFLAGS)]>;
 
 def TEST8ri  : Ii8 <0xF6, MRM0r,                     // flags = GR8  & imm8
                     (outs),  (ins GR8:$src1, i8imm:$src2),
                     "test{b}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and GR8:$src1, imm:$src2), 0)]>;
+                    [(X86cmp (and GR8:$src1, imm:$src2), 0),
+                     (implicit EFLAGS)]>;
 def TEST16ri : Ii16<0xF7, MRM0r,                     // flags = GR16 & imm16
                     (outs),  (ins GR16:$src1, i16imm:$src2),
                     "test{w}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and GR16:$src1, imm:$src2), 0)]>, OpSize;
+                    [(X86cmp (and GR16:$src1, imm:$src2), 0),
+                     (implicit EFLAGS)]>, OpSize;
 def TEST32ri : Ii32<0xF7, MRM0r,                     // flags = GR32 & imm32
                     (outs),  (ins GR32:$src1, i32imm:$src2),
                     "test{l}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and GR32:$src1, imm:$src2), 0)]>;
+                    [(X86cmp (and GR32:$src1, imm:$src2), 0),
+                     (implicit EFLAGS)]>;
 
-def TEST8mi  : Ii8 <0xF6, MRM0m,                     // flags = [mem8]  & imm8
+def TEST8mi  : Ii8 <0xF6, MRM0m,                   // flags = [mem8]  & imm8
                     (outs), (ins i8mem:$src1, i8imm:$src2),
                     "test{b}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and (loadi8 addr:$src1), imm:$src2), 0)]>;
-def TEST16mi : Ii16<0xF7, MRM0m,                     // flags = [mem16] & imm16
+                    [(X86cmp (and (loadi8 addr:$src1), imm:$src2), 0),
+                     (implicit EFLAGS)]>;
+def TEST16mi : Ii16<0xF7, MRM0m,                   // flags = [mem16] & imm16
                     (outs), (ins i16mem:$src1, i16imm:$src2),
                     "test{w}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and (loadi16 addr:$src1), imm:$src2), 0)]>,
-               OpSize;
-def TEST32mi : Ii32<0xF7, MRM0m,                     // flags = [mem32] & imm32
+                    [(X86cmp (and (loadi16 addr:$src1), imm:$src2), 0),
+                     (implicit EFLAGS)]>, OpSize;
+def TEST32mi : Ii32<0xF7, MRM0m,                   // flags = [mem32] & imm32
                     (outs), (ins i32mem:$src1, i32imm:$src2),
                     "test{l}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp (and (loadi32 addr:$src1), imm:$src2), 0)]>;
-} // Defs = [EFLAGS]
-
-
-let Defs = [EFLAGS] in {
-let isCommutable = 1 in {   // TEST X, Y   --> TEST Y, X
-def NEW_TEST8rr  : I<0x84, MRMDestReg, (outs),  (ins GR8:$src1, GR8:$src2),
-                     "test{b}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp_new (and GR8:$src1, GR8:$src2), 0),
-                      (implicit EFLAGS)]>;
-def NEW_TEST16rr : I<0x85, MRMDestReg, (outs),  (ins GR16:$src1, GR16:$src2),
-                     "test{w}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp_new (and GR16:$src1, GR16:$src2), 0),
-                      (implicit EFLAGS)]>,
-                 OpSize;
-def NEW_TEST32rr : I<0x85, MRMDestReg, (outs),  (ins GR32:$src1, GR32:$src2),
-                     "test{l}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp_new (and GR32:$src1, GR32:$src2), 0),
-                      (implicit EFLAGS)]>;
-}
-
-def NEW_TEST8rm  : I<0x84, MRMSrcMem, (outs),  (ins GR8 :$src1, i8mem :$src2),
-                     "test{b}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp_new (and GR8:$src1, (loadi8 addr:$src2)), 0),
-                      (implicit EFLAGS)]>;
-def NEW_TEST16rm : I<0x85, MRMSrcMem, (outs),  (ins GR16:$src1, i16mem:$src2),
-                     "test{w}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp_new (and GR16:$src1, (loadi16 addr:$src2)), 0),
-                      (implicit EFLAGS)]>, OpSize;
-def NEW_TEST32rm : I<0x85, MRMSrcMem, (outs),  (ins GR32:$src1, i32mem:$src2),
-                     "test{l}\t{$src2, $src1|$src1, $src2}",
-                     [(X86cmp_new (and GR32:$src1, (loadi32 addr:$src2)), 0),
-                      (implicit EFLAGS)]>;
-
-def NEW_TEST8ri  : Ii8 <0xF6, MRM0r,                     // flags = GR8  & imm8
-                    (outs),  (ins GR8:$src1, i8imm:$src2),
-                    "test{b}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp_new (and GR8:$src1, imm:$src2), 0),
-                     (implicit EFLAGS)]>;
-def NEW_TEST16ri : Ii16<0xF7, MRM0r,                     // flags = GR16 & imm16
-                    (outs),  (ins GR16:$src1, i16imm:$src2),
-                    "test{w}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp_new (and GR16:$src1, imm:$src2), 0),
-                     (implicit EFLAGS)]>, OpSize;
-def NEW_TEST32ri : Ii32<0xF7, MRM0r,                     // flags = GR32 & imm32
-                    (outs),  (ins GR32:$src1, i32imm:$src2),
-                    "test{l}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp_new (and GR32:$src1, imm:$src2), 0),
-                     (implicit EFLAGS)]>;
-
-def NEW_TEST8mi  : Ii8 <0xF6, MRM0m,                   // flags = [mem8]  & imm8
-                    (outs), (ins i8mem:$src1, i8imm:$src2),
-                    "test{b}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp_new (and (loadi8 addr:$src1), imm:$src2), 0),
-                     (implicit EFLAGS)]>;
-def NEW_TEST16mi : Ii16<0xF7, MRM0m,                   // flags = [mem16] & imm16
-                    (outs), (ins i16mem:$src1, i16imm:$src2),
-                    "test{w}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp_new (and (loadi16 addr:$src1), imm:$src2), 0),
-                     (implicit EFLAGS)]>, OpSize;
-def NEW_TEST32mi : Ii32<0xF7, MRM0m,                   // flags = [mem32] & imm32
-                    (outs), (ins i32mem:$src1, i32imm:$src2),
-                    "test{l}\t{$src2, $src1|$src1, $src2}",
-                    [(X86cmp_new (and (loadi32 addr:$src1), imm:$src2), 0),
+                    [(X86cmp (and (loadi32 addr:$src1), imm:$src2), 0),
                      (implicit EFLAGS)]>;
 } // Defs = [EFLAGS]
 
@@ -2566,465 +2110,239 @@ let Uses = [EFLAGS] in {
 def SETEr    : I<0x94, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "sete\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_E))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_E, EFLAGS))]>,
                TB;                        // GR8 = ==
 def SETEm    : I<0x94, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "sete\t$dst",
-                 [(store (X86setcc X86_COND_E), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_E, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = ==
 def SETNEr   : I<0x95, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setne\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_NE))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_NE, EFLAGS))]>,
                TB;                        // GR8 = !=
 def SETNEm   : I<0x95, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "setne\t$dst",
-                 [(store (X86setcc X86_COND_NE), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_NE, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = !=
 def SETLr    : I<0x9C, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setl\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_L))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_L, EFLAGS))]>,
                TB;                        // GR8 = <  signed
 def SETLm    : I<0x9C, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "setl\t$dst",
-                 [(store (X86setcc X86_COND_L), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_L, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = <  signed
 def SETGEr   : I<0x9D, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setge\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_GE))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_GE, EFLAGS))]>,
                TB;                        // GR8 = >= signed
 def SETGEm   : I<0x9D, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "setge\t$dst",
-                 [(store (X86setcc X86_COND_GE), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_GE, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = >= signed
 def SETLEr   : I<0x9E, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setle\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_LE))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_LE, EFLAGS))]>,
                TB;                        // GR8 = <= signed
 def SETLEm   : I<0x9E, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "setle\t$dst",
-                 [(store (X86setcc X86_COND_LE), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_LE, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = <= signed
 def SETGr    : I<0x9F, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setg\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_G))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_G, EFLAGS))]>,
                TB;                        // GR8 = >  signed
 def SETGm    : I<0x9F, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "setg\t$dst",
-                 [(store (X86setcc X86_COND_G), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_G, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = >  signed
 
 def SETBr    : I<0x92, MRM0r,
                  (outs GR8   :$dst), (ins),
                  "setb\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_B))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_B, EFLAGS))]>,
                TB;                        // GR8 = <  unsign
 def SETBm    : I<0x92, MRM0m,
                  (outs), (ins i8mem:$dst),
                  "setb\t$dst",
-                 [(store (X86setcc X86_COND_B), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_B, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = <  unsign
 def SETAEr   : I<0x93, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setae\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_AE))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_AE, EFLAGS))]>,
                TB;                        // GR8 = >= unsign
 def SETAEm   : I<0x93, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "setae\t$dst",
-                 [(store (X86setcc X86_COND_AE), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_AE, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = >= unsign
 def SETBEr   : I<0x96, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setbe\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_BE))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_BE, EFLAGS))]>,
                TB;                        // GR8 = <= unsign
 def SETBEm   : I<0x96, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "setbe\t$dst",
-                 [(store (X86setcc X86_COND_BE), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_BE, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = <= unsign
 def SETAr    : I<0x97, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "seta\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_A))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_A, EFLAGS))]>,
                TB;                        // GR8 = >  signed
 def SETAm    : I<0x97, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "seta\t$dst",
-                 [(store (X86setcc X86_COND_A), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_A, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = >  signed
 
 def SETSr    : I<0x98, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "sets\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_S))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_S, EFLAGS))]>,
                TB;                        // GR8 = <sign bit>
 def SETSm    : I<0x98, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "sets\t$dst",
-                 [(store (X86setcc X86_COND_S), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_S, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = <sign bit>
 def SETNSr   : I<0x99, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setns\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_NS))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_NS, EFLAGS))]>,
                TB;                        // GR8 = !<sign bit>
 def SETNSm   : I<0x99, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "setns\t$dst",
-                 [(store (X86setcc X86_COND_NS), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_NS, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = !<sign bit>
 def SETPr    : I<0x9A, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setp\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_P))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_P, EFLAGS))]>,
                TB;                        // GR8 = parity
 def SETPm    : I<0x9A, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "setp\t$dst",
-                 [(store (X86setcc X86_COND_P), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_P, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = parity
 def SETNPr   : I<0x9B, MRM0r, 
                  (outs GR8   :$dst), (ins),
                  "setnp\t$dst",
-                 [(set GR8:$dst, (X86setcc X86_COND_NP))]>,
+                 [(set GR8:$dst, (X86setcc X86_COND_NP, EFLAGS))]>,
                TB;                        // GR8 = not parity
 def SETNPm   : I<0x9B, MRM0m, 
                  (outs), (ins i8mem:$dst),
                  "setnp\t$dst",
-                 [(store (X86setcc X86_COND_NP), addr:$dst)]>,
+                 [(store (X86setcc X86_COND_NP, EFLAGS), addr:$dst)]>,
                TB;                        // [mem8] = not parity
 } // Uses = [EFLAGS]
 
-let Uses = [EFLAGS] in {
-def NEW_SETEr    : I<0x94, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "sete\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_E, EFLAGS))]>,
-               TB;                        // GR8 = ==
-def NEW_SETEm    : I<0x94, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "sete\t$dst",
-                 [(store (X86setcc_new X86_COND_E, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = ==
-def NEW_SETNEr   : I<0x95, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setne\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_NE, EFLAGS))]>,
-               TB;                        // GR8 = !=
-def NEW_SETNEm   : I<0x95, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setne\t$dst",
-                 [(store (X86setcc_new X86_COND_NE, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = !=
-def NEW_SETLr    : I<0x9C, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setl\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_L, EFLAGS))]>,
-               TB;                        // GR8 = <  signed
-def NEW_SETLm    : I<0x9C, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setl\t$dst",
-                 [(store (X86setcc_new X86_COND_L, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = <  signed
-def NEW_SETGEr   : I<0x9D, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setge\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_GE, EFLAGS))]>,
-               TB;                        // GR8 = >= signed
-def NEW_SETGEm   : I<0x9D, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setge\t$dst",
-                 [(store (X86setcc_new X86_COND_GE, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = >= signed
-def NEW_SETLEr   : I<0x9E, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setle\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_LE, EFLAGS))]>,
-               TB;                        // GR8 = <= signed
-def NEW_SETLEm   : I<0x9E, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setle\t$dst",
-                 [(store (X86setcc_new X86_COND_LE, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = <= signed
-def NEW_SETGr    : I<0x9F, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setg\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_G, EFLAGS))]>,
-               TB;                        // GR8 = >  signed
-def NEW_SETGm    : I<0x9F, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setg\t$dst",
-                 [(store (X86setcc_new X86_COND_G, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = >  signed
-
-def NEW_SETBr    : I<0x92, MRM0r,
-                 (outs GR8   :$dst), (ins),
-                 "setb\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_B, EFLAGS))]>,
-               TB;                        // GR8 = <  unsign
-def NEW_SETBm    : I<0x92, MRM0m,
-                 (outs), (ins i8mem:$dst),
-                 "setb\t$dst",
-                 [(store (X86setcc_new X86_COND_B, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = <  unsign
-def NEW_SETAEr   : I<0x93, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setae\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_AE, EFLAGS))]>,
-               TB;                        // GR8 = >= unsign
-def NEW_SETAEm   : I<0x93, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setae\t$dst",
-                 [(store (X86setcc_new X86_COND_AE, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = >= unsign
-def NEW_SETBEr   : I<0x96, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setbe\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_BE, EFLAGS))]>,
-               TB;                        // GR8 = <= unsign
-def NEW_SETBEm   : I<0x96, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setbe\t$dst",
-                 [(store (X86setcc_new X86_COND_BE, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = <= unsign
-def NEW_SETAr    : I<0x97, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "seta\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_A, EFLAGS))]>,
-               TB;                        // GR8 = >  signed
-def NEW_SETAm    : I<0x97, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "seta\t$dst",
-                 [(store (X86setcc_new X86_COND_A, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = >  signed
-
-def NEW_SETSr    : I<0x98, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "sets\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_S, EFLAGS))]>,
-               TB;                        // GR8 = <sign bit>
-def NEW_SETSm    : I<0x98, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "sets\t$dst",
-                 [(store (X86setcc_new X86_COND_S, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = <sign bit>
-def NEW_SETNSr   : I<0x99, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setns\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_NS, EFLAGS))]>,
-               TB;                        // GR8 = !<sign bit>
-def NEW_SETNSm   : I<0x99, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setns\t$dst",
-                 [(store (X86setcc_new X86_COND_NS, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = !<sign bit>
-def NEW_SETPr    : I<0x9A, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setp\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_P, EFLAGS))]>,
-               TB;                        // GR8 = parity
-def NEW_SETPm    : I<0x9A, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setp\t$dst",
-                 [(store (X86setcc_new X86_COND_P, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = parity
-def NEW_SETNPr   : I<0x9B, MRM0r, 
-                 (outs GR8   :$dst), (ins),
-                 "setnp\t$dst",
-                 [(set GR8:$dst, (X86setcc_new X86_COND_NP, EFLAGS))]>,
-               TB;                        // GR8 = not parity
-def NEW_SETNPm   : I<0x9B, MRM0m, 
-                 (outs), (ins i8mem:$dst),
-                 "setnp\t$dst",
-                 [(store (X86setcc_new X86_COND_NP, EFLAGS), addr:$dst)]>,
-               TB;                        // [mem8] = not parity
-} // Uses = [EFLAGS]
-
-
-//def : Pat<(X86setcc_new X86_COND_E, EFLAGS), (SETEr)>;
 
 // Integer comparisons
 let Defs = [EFLAGS] in {
 def CMP8rr  : I<0x38, MRMDestReg,
                 (outs), (ins GR8 :$src1, GR8 :$src2),
                 "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR8:$src1, GR8:$src2)]>;
+                [(X86cmp GR8:$src1, GR8:$src2), (implicit EFLAGS)]>;
 def CMP16rr : I<0x39, MRMDestReg,
                 (outs), (ins GR16:$src1, GR16:$src2),
                 "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR16:$src1, GR16:$src2)]>, OpSize;
+                [(X86cmp GR16:$src1, GR16:$src2), (implicit EFLAGS)]>, OpSize;
 def CMP32rr : I<0x39, MRMDestReg,
                 (outs), (ins GR32:$src1, GR32:$src2),
                 "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR32:$src1, GR32:$src2)]>;
+                [(X86cmp GR32:$src1, GR32:$src2), (implicit EFLAGS)]>;
 def CMP8mr  : I<0x38, MRMDestMem,
                 (outs), (ins i8mem :$src1, GR8 :$src2),
                 "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp (loadi8 addr:$src1), GR8:$src2)]>;
+                [(X86cmp (loadi8 addr:$src1), GR8:$src2),
+                 (implicit EFLAGS)]>;
 def CMP16mr : I<0x39, MRMDestMem,
                 (outs), (ins i16mem:$src1, GR16:$src2),
                 "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp (loadi16 addr:$src1), GR16:$src2)]>, OpSize;
+                [(X86cmp (loadi16 addr:$src1), GR16:$src2),
+                 (implicit EFLAGS)]>, OpSize;
 def CMP32mr : I<0x39, MRMDestMem,
                 (outs), (ins i32mem:$src1, GR32:$src2),
                 "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp (loadi32 addr:$src1), GR32:$src2)]>;
+                [(X86cmp (loadi32 addr:$src1), GR32:$src2),
+                 (implicit EFLAGS)]>;
 def CMP8rm  : I<0x3A, MRMSrcMem,
                 (outs), (ins GR8 :$src1, i8mem :$src2),
                 "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR8:$src1, (loadi8 addr:$src2))]>;
+                [(X86cmp GR8:$src1, (loadi8 addr:$src2)),
+                 (implicit EFLAGS)]>;
 def CMP16rm : I<0x3B, MRMSrcMem,
                 (outs), (ins GR16:$src1, i16mem:$src2),
                 "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR16:$src1, (loadi16 addr:$src2))]>, OpSize;
+                [(X86cmp GR16:$src1, (loadi16 addr:$src2)),
+                 (implicit EFLAGS)]>, OpSize;
 def CMP32rm : I<0x3B, MRMSrcMem,
                 (outs), (ins GR32:$src1, i32mem:$src2),
                 "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp GR32:$src1, (loadi32 addr:$src2))]>;
+                [(X86cmp GR32:$src1, (loadi32 addr:$src2)),
+                 (implicit EFLAGS)]>;
 def CMP8ri  : Ii8<0x80, MRM7r,
                   (outs), (ins GR8:$src1, i8imm:$src2),
                   "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                  [(X86cmp GR8:$src1, imm:$src2)]>;
+                  [(X86cmp GR8:$src1, imm:$src2), (implicit EFLAGS)]>;
 def CMP16ri : Ii16<0x81, MRM7r,
                    (outs), (ins GR16:$src1, i16imm:$src2),
                    "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp GR16:$src1, imm:$src2)]>, OpSize;
+                   [(X86cmp GR16:$src1, imm:$src2),
+                    (implicit EFLAGS)]>, OpSize;
 def CMP32ri : Ii32<0x81, MRM7r,
                    (outs), (ins GR32:$src1, i32imm:$src2),
                    "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp GR32:$src1, imm:$src2)]>;
+                   [(X86cmp GR32:$src1, imm:$src2), (implicit EFLAGS)]>;
 def CMP8mi  : Ii8 <0x80, MRM7m,
                    (outs), (ins i8mem :$src1, i8imm :$src2),
                    "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp (loadi8 addr:$src1), imm:$src2)]>;
+                   [(X86cmp (loadi8 addr:$src1), imm:$src2),
+                    (implicit EFLAGS)]>;
 def CMP16mi : Ii16<0x81, MRM7m,
                    (outs), (ins i16mem:$src1, i16imm:$src2),
                    "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp (loadi16 addr:$src1), imm:$src2)]>, OpSize;
+                   [(X86cmp (loadi16 addr:$src1), imm:$src2),
+                    (implicit EFLAGS)]>, OpSize;
 def CMP32mi : Ii32<0x81, MRM7m,
                    (outs), (ins i32mem:$src1, i32imm:$src2),
                    "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp (loadi32 addr:$src1), imm:$src2)]>;
+                   [(X86cmp (loadi32 addr:$src1), imm:$src2),
+                    (implicit EFLAGS)]>;
 def CMP16ri8 : Ii8<0x83, MRM7r,
                    (outs), (ins GR16:$src1, i16i8imm:$src2),
                    "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp GR16:$src1, i16immSExt8:$src2)]>, OpSize;
+                   [(X86cmp GR16:$src1, i16immSExt8:$src2),
+                    (implicit EFLAGS)]>, OpSize;
 def CMP16mi8 : Ii8<0x83, MRM7m,
                    (outs), (ins i16mem:$src1, i16i8imm:$src2),
                    "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp (loadi16 addr:$src1), i16immSExt8:$src2)]>, OpSize;
+                   [(X86cmp (loadi16 addr:$src1), i16immSExt8:$src2),
+                    (implicit EFLAGS)]>, OpSize;
 def CMP32mi8 : Ii8<0x83, MRM7m,
                    (outs), (ins i32mem:$src1, i32i8imm:$src2),
                    "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp (loadi32 addr:$src1), i32immSExt8:$src2)]>;
+                   [(X86cmp (loadi32 addr:$src1), i32immSExt8:$src2),
+                    (implicit EFLAGS)]>;
 def CMP32ri8 : Ii8<0x83, MRM7r,
                    (outs), (ins GR32:$src1, i32i8imm:$src2),
                    "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp GR32:$src1, i32immSExt8:$src2)]>;
-} // Defs = [EFLAGS]
-
-let Defs = [EFLAGS] in {
-def NEW_CMP8rr  : I<0x38, MRMDestReg,
-                (outs), (ins GR8 :$src1, GR8 :$src2),
-                "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp_new GR8:$src1, GR8:$src2), (implicit EFLAGS)]>;
-def NEW_CMP16rr : I<0x39, MRMDestReg,
-                (outs), (ins GR16:$src1, GR16:$src2),
-                "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp_new GR16:$src1, GR16:$src2), (implicit EFLAGS)]>, OpSize;
-def NEW_CMP32rr : I<0x39, MRMDestReg,
-                (outs), (ins GR32:$src1, GR32:$src2),
-                "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp_new GR32:$src1, GR32:$src2), (implicit EFLAGS)]>;
-def NEW_CMP8mr  : I<0x38, MRMDestMem,
-                (outs), (ins i8mem :$src1, GR8 :$src2),
-                "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp_new (loadi8 addr:$src1), GR8:$src2),
-                 (implicit EFLAGS)]>;
-def NEW_CMP16mr : I<0x39, MRMDestMem,
-                (outs), (ins i16mem:$src1, GR16:$src2),
-                "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp_new (loadi16 addr:$src1), GR16:$src2),
-                 (implicit EFLAGS)]>, OpSize;
-def NEW_CMP32mr : I<0x39, MRMDestMem,
-                (outs), (ins i32mem:$src1, GR32:$src2),
-                "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp_new (loadi32 addr:$src1), GR32:$src2),
-                 (implicit EFLAGS)]>;
-def NEW_CMP8rm  : I<0x3A, MRMSrcMem,
-                (outs), (ins GR8 :$src1, i8mem :$src2),
-                "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp_new GR8:$src1, (loadi8 addr:$src2)),
-                 (implicit EFLAGS)]>;
-def NEW_CMP16rm : I<0x3B, MRMSrcMem,
-                (outs), (ins GR16:$src1, i16mem:$src2),
-                "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp_new GR16:$src1, (loadi16 addr:$src2)),
-                 (implicit EFLAGS)]>, OpSize;
-def NEW_CMP32rm : I<0x3B, MRMSrcMem,
-                (outs), (ins GR32:$src1, i32mem:$src2),
-                "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                [(X86cmp_new GR32:$src1, (loadi32 addr:$src2)),
-                 (implicit EFLAGS)]>;
-def NEW_CMP8ri  : Ii8<0x80, MRM7r,
-                  (outs), (ins GR8:$src1, i8imm:$src2),
-                  "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                  [(X86cmp_new GR8:$src1, imm:$src2), (implicit EFLAGS)]>;
-def NEW_CMP16ri : Ii16<0x81, MRM7r,
-                   (outs), (ins GR16:$src1, i16imm:$src2),
-                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new GR16:$src1, imm:$src2),
-                    (implicit EFLAGS)]>, OpSize;
-def NEW_CMP32ri : Ii32<0x81, MRM7r,
-                   (outs), (ins GR32:$src1, i32imm:$src2),
-                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new GR32:$src1, imm:$src2), (implicit EFLAGS)]>;
-def NEW_CMP8mi  : Ii8 <0x80, MRM7m,
-                   (outs), (ins i8mem :$src1, i8imm :$src2),
-                   "cmp{b}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new (loadi8 addr:$src1), imm:$src2),
-                    (implicit EFLAGS)]>;
-def NEW_CMP16mi : Ii16<0x81, MRM7m,
-                   (outs), (ins i16mem:$src1, i16imm:$src2),
-                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new (loadi16 addr:$src1), imm:$src2),
-                    (implicit EFLAGS)]>, OpSize;
-def NEW_CMP32mi : Ii32<0x81, MRM7m,
-                   (outs), (ins i32mem:$src1, i32imm:$src2),
-                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new (loadi32 addr:$src1), imm:$src2),
-                    (implicit EFLAGS)]>;
-def NEW_CMP16ri8 : Ii8<0x83, MRM7r,
-                   (outs), (ins GR16:$src1, i16i8imm:$src2),
-                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new GR16:$src1, i16immSExt8:$src2),
-                    (implicit EFLAGS)]>, OpSize;
-def NEW_CMP16mi8 : Ii8<0x83, MRM7m,
-                   (outs), (ins i16mem:$src1, i16i8imm:$src2),
-                   "cmp{w}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new (loadi16 addr:$src1), i16immSExt8:$src2),
-                    (implicit EFLAGS)]>, OpSize;
-def NEW_CMP32mi8 : Ii8<0x83, MRM7m,
-                   (outs), (ins i32mem:$src1, i32i8imm:$src2),
-                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new (loadi32 addr:$src1), i32immSExt8:$src2),
-                    (implicit EFLAGS)]>;
-def NEW_CMP32ri8 : Ii8<0x83, MRM7r,
-                   (outs), (ins GR32:$src1, i32i8imm:$src2),
-                   "cmp{l}\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new GR32:$src1, i32immSExt8:$src2),
+                   [(X86cmp GR32:$src1, i32immSExt8:$src2),
                     (implicit EFLAGS)]>;
 } // Defs = [EFLAGS]
 
@@ -3233,19 +2551,12 @@ def : Pat<(truncstorei1 GR8:$src, addr:$dst),
 // Comparisons.
 
 // TEST R,R is smaller than CMP R,0
-def : Pat<(X86cmp GR8:$src1, 0),
+def : Pat<(parallel (X86cmp GR8:$src1, 0), (implicit EFLAGS)),
           (TEST8rr GR8:$src1, GR8:$src1)>;
-def : Pat<(X86cmp GR16:$src1, 0),
+def : Pat<(parallel (X86cmp GR16:$src1, 0), (implicit EFLAGS)),
           (TEST16rr GR16:$src1, GR16:$src1)>;
-def : Pat<(X86cmp GR32:$src1, 0),
+def : Pat<(parallel (X86cmp GR32:$src1, 0), (implicit EFLAGS)),
           (TEST32rr GR32:$src1, GR32:$src1)>;
-
-def : Pat<(parallel (X86cmp_new GR8:$src1, 0), (implicit EFLAGS)),
-          (NEW_TEST8rr GR8:$src1, GR8:$src1)>;
-def : Pat<(parallel (X86cmp_new GR16:$src1, 0), (implicit EFLAGS)),
-          (NEW_TEST16rr GR16:$src1, GR16:$src1)>;
-def : Pat<(parallel (X86cmp_new GR32:$src1, 0), (implicit EFLAGS)),
-          (NEW_TEST32rr GR32:$src1, GR32:$src1)>;
 
 // {s|z}extload bool -> {s|z}extload byte
 def : Pat<(sextloadi16i1 addr:$src), (MOVSX16rm8 addr:$src)>;

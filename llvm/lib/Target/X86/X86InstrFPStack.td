@@ -299,17 +299,20 @@ def TST_F  : FPI<0xE4, RawFrm, (outs), (ins), "ftst">, D9;
 
 // Floating point cmovs.
 multiclass FPCMov<PatLeaf cc> {
-  def _Fp32  : FpIf32<(outs RFP32:$dst), (ins RFP32:$src1, RFP32:$src2), CondMovFP,
+  def _Fp32  : FpIf32<(outs RFP32:$dst), (ins RFP32:$src1, RFP32:$src2),
+                       CondMovFP,
                      [(set RFP32:$dst, (X86cmov RFP32:$src1, RFP32:$src2,
-                                        cc))]>;
-  def _Fp64  : FpIf64<(outs RFP64:$dst), (ins RFP64:$src1, RFP64:$src2), CondMovFP,
+                                        cc, EFLAGS))]>;
+  def _Fp64  : FpIf64<(outs RFP64:$dst), (ins RFP64:$src1, RFP64:$src2),
+                       CondMovFP,
                      [(set RFP64:$dst, (X86cmov RFP64:$src1, RFP64:$src2,
-                                        cc))]>;
-  def _Fp80  : FpI_<(outs RFP80:$dst), (ins RFP80:$src1, RFP80:$src2), CondMovFP,
+                                        cc, EFLAGS))]>;
+  def _Fp80  : FpI_<(outs RFP80:$dst), (ins RFP80:$src1, RFP80:$src2),
+                     CondMovFP,
                      [(set RFP80:$dst, (X86cmov RFP80:$src1, RFP80:$src2,
-                                        cc))]>;
+                                        cc, EFLAGS))]>;
 }
-let isTwoAddress = 1 in {
+let Uses = [EFLAGS], isTwoAddress = 1 in {
 defm CMOVB  : FPCMov<X86_COND_B>;
 defm CMOVBE : FPCMov<X86_COND_BE>;
 defm CMOVE  : FPCMov<X86_COND_E>;
@@ -318,31 +321,6 @@ defm CMOVNB : FPCMov<X86_COND_AE>;
 defm CMOVNBE: FPCMov<X86_COND_A>;
 defm CMOVNE : FPCMov<X86_COND_NE>;
 defm CMOVNP : FPCMov<X86_COND_NP>;
-}
-
-multiclass NEW_FPCMov<PatLeaf cc> {
-  def _Fp32  : FpIf32<(outs RFP32:$dst), (ins RFP32:$src1, RFP32:$src2),
-                       CondMovFP,
-                     [(set RFP32:$dst, (X86cmov_new RFP32:$src1, RFP32:$src2,
-                                        cc, EFLAGS))]>;
-  def _Fp64  : FpIf64<(outs RFP64:$dst), (ins RFP64:$src1, RFP64:$src2),
-                       CondMovFP,
-                     [(set RFP64:$dst, (X86cmov_new RFP64:$src1, RFP64:$src2,
-                                        cc, EFLAGS))]>;
-  def _Fp80  : FpI_<(outs RFP80:$dst), (ins RFP80:$src1, RFP80:$src2),
-                     CondMovFP,
-                     [(set RFP80:$dst, (X86cmov_new RFP80:$src1, RFP80:$src2,
-                                        cc, EFLAGS))]>;
-}
-let Uses = [EFLAGS], isTwoAddress = 1 in {
-defm NEW_CMOVB  : NEW_FPCMov<X86_COND_B>;
-defm NEW_CMOVBE : NEW_FPCMov<X86_COND_BE>;
-defm NEW_CMOVE  : NEW_FPCMov<X86_COND_E>;
-defm NEW_CMOVP  : NEW_FPCMov<X86_COND_P>;
-defm NEW_CMOVNB : NEW_FPCMov<X86_COND_AE>;
-defm NEW_CMOVNBE: NEW_FPCMov<X86_COND_A>;
-defm NEW_CMOVNE : NEW_FPCMov<X86_COND_NE>;
-defm NEW_CMOVNP : NEW_FPCMov<X86_COND_NP>;
 }
 
 // These are not factored because there's no clean way to pass DA/DB.
@@ -507,30 +485,17 @@ let Defs = [EFLAGS] in {
 def UCOM_Fpr32 : FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
                   []>;  // FPSW = cmp ST(0) with ST(i)
 def UCOM_FpIr32: FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
-                  [(X86cmp RFP32:$lhs, RFP32:$rhs)]>; // CC = ST(0) cmp ST(i)
+                  [(X86cmp RFP32:$lhs, RFP32:$rhs),
+                   (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
 def UCOM_Fpr64 : FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
                   []>;  // FPSW = cmp ST(0) with ST(i)
 def UCOM_FpIr64: FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
-                  [(X86cmp RFP64:$lhs, RFP64:$rhs)]>; // CC = ST(0) cmp ST(i)
+                  [(X86cmp RFP64:$lhs, RFP64:$rhs),
+                   (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
 def UCOM_Fpr80 : FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
                   []>;  // FPSW = cmp ST(0) with ST(i)
 def UCOM_FpIr80: FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
-                  [(X86cmp RFP80:$lhs, RFP80:$rhs)]>; // CC = ST(0) cmp ST(i)
-
-def NEW_UCOM_Fpr32 : FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
-                  []>;  // FPSW = cmp ST(0) with ST(i)
-def NEW_UCOM_FpIr32: FpIf32<(outs), (ins RFP32:$lhs, RFP32:$rhs), CompareFP,
-                  [(X86cmp_new RFP32:$lhs, RFP32:$rhs),
-                   (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
-def NEW_UCOM_Fpr64 : FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
-                  []>;  // FPSW = cmp ST(0) with ST(i)
-def NEW_UCOM_FpIr64: FpIf64<(outs), (ins RFP64:$lhs, RFP64:$rhs), CompareFP,
-                  [(X86cmp_new RFP64:$lhs, RFP64:$rhs),
-                   (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
-def NEW_UCOM_Fpr80 : FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
-                  []>;  // FPSW = cmp ST(0) with ST(i)
-def NEW_UCOM_FpIr80: FpI_<(outs), (ins RFP80:$lhs, RFP80:$rhs), CompareFP,
-                  [(X86cmp_new RFP80:$lhs, RFP80:$rhs),
+                  [(X86cmp RFP80:$lhs, RFP80:$rhs),
                    (implicit EFLAGS)]>; // CC = ST(0) cmp ST(i)
 }
 

@@ -33,12 +33,8 @@ def X86frsqrt  : SDNode<"X86ISD::FRSQRT",    SDTFPUnaryOp>;
 def X86frcp    : SDNode<"X86ISD::FRCP",      SDTFPUnaryOp>;
 def X86fsrl    : SDNode<"X86ISD::FSRL",      SDTX86FPShiftOp>;
 def X86comi    : SDNode<"X86ISD::COMI",      SDTX86CmpTest,
-                        [SDNPHasChain, SDNPOutFlag]>;
-def X86ucomi   : SDNode<"X86ISD::UCOMI",     SDTX86CmpTest,
-                        [SDNPHasChain, SDNPOutFlag]>;
-def X86comi_new: SDNode<"X86ISD::COMI_NEW",  SDTX86CmpTest,
                         [SDNPHasChain]>;
-def X86ucomi_new: SDNode<"X86ISD::UCOMI_NEW",SDTX86CmpTest>;
+def X86ucomi   : SDNode<"X86ISD::UCOMI",     SDTX86CmpTest>;
 def X86s2vec   : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
 def X86pextrw  : SDNode<"X86ISD::PEXTRW", SDTypeProfile<1, 2, []>, []>;
 def X86pinsrw  : SDNode<"X86ISD::PINSRW", SDTypeProfile<1, 3, []>, []>;
@@ -271,54 +267,30 @@ let Uses = [EFLAGS], usesCustomDAGSchedInserter = 1 in {
   def CMOV_FR32 : I<0, Pseudo,
                     (outs FR32:$dst), (ins FR32:$t, FR32:$f, i8imm:$cond),
                     "#CMOV_FR32 PSEUDO!",
-                    [(set FR32:$dst, (X86cmov FR32:$t, FR32:$f, imm:$cond))]>;
+                    [(set FR32:$dst, (X86cmov FR32:$t, FR32:$f, imm:$cond,
+                                                  EFLAGS))]>;
   def CMOV_FR64 : I<0, Pseudo,
                     (outs FR64:$dst), (ins FR64:$t, FR64:$f, i8imm:$cond),
                     "#CMOV_FR64 PSEUDO!",
-                    [(set FR64:$dst, (X86cmov FR64:$t, FR64:$f, imm:$cond))]>;
+                    [(set FR64:$dst, (X86cmov FR64:$t, FR64:$f, imm:$cond,
+                                                  EFLAGS))]>;
   def CMOV_V4F32 : I<0, Pseudo,
                     (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
                     "#CMOV_V4F32 PSEUDO!",
                     [(set VR128:$dst,
-                      (v4f32 (X86cmov VR128:$t, VR128:$f, imm:$cond)))]>;
+                      (v4f32 (X86cmov VR128:$t, VR128:$f, imm:$cond,
+                                          EFLAGS)))]>;
   def CMOV_V2F64 : I<0, Pseudo,
                     (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
                     "#CMOV_V2F64 PSEUDO!",
                     [(set VR128:$dst,
-                      (v2f64 (X86cmov VR128:$t, VR128:$f, imm:$cond)))]>;
+                      (v2f64 (X86cmov VR128:$t, VR128:$f, imm:$cond,
+                                          EFLAGS)))]>;
   def CMOV_V2I64 : I<0, Pseudo,
                     (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
                     "#CMOV_V2I64 PSEUDO!",
                     [(set VR128:$dst,
-                      (v2i64 (X86cmov VR128:$t, VR128:$f, imm:$cond)))]>;
-
-  def NEW_CMOV_FR32 : I<0, Pseudo,
-                    (outs FR32:$dst), (ins FR32:$t, FR32:$f, i8imm:$cond),
-                    "#CMOV_FR32 PSEUDO!",
-                    [(set FR32:$dst, (X86cmov_new FR32:$t, FR32:$f, imm:$cond,
-                                                  EFLAGS))]>;
-  def NEW_CMOV_FR64 : I<0, Pseudo,
-                    (outs FR64:$dst), (ins FR64:$t, FR64:$f, i8imm:$cond),
-                    "#CMOV_FR64 PSEUDO!",
-                    [(set FR64:$dst, (X86cmov_new FR64:$t, FR64:$f, imm:$cond,
-                                                  EFLAGS))]>;
-  def NEW_CMOV_V4F32 : I<0, Pseudo,
-                    (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
-                    "#CMOV_V4F32 PSEUDO!",
-                    [(set VR128:$dst,
-                      (v4f32 (X86cmov_new VR128:$t, VR128:$f, imm:$cond,
-                                          EFLAGS)))]>;
-  def NEW_CMOV_V2F64 : I<0, Pseudo,
-                    (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
-                    "#CMOV_V2F64 PSEUDO!",
-                    [(set VR128:$dst,
-                      (v2f64 (X86cmov_new VR128:$t, VR128:$f, imm:$cond,
-                                          EFLAGS)))]>;
-  def NEW_CMOV_V2I64 : I<0, Pseudo,
-                    (outs VR128:$dst), (ins VR128:$t, VR128:$f, i8imm:$cond),
-                    "#CMOV_V2I64 PSEUDO!",
-                    [(set VR128:$dst,
-                      (v2i64 (X86cmov_new VR128:$t, VR128:$f, imm:$cond,
+                      (v2i64 (X86cmov VR128:$t, VR128:$f, imm:$cond,
                                           EFLAGS)))]>;
 }
 
@@ -396,17 +368,10 @@ let isTwoAddress = 1 in {
 let Defs = [EFLAGS] in {
 def UCOMISSrr: PSI<0x2E, MRMSrcReg, (outs), (ins FR32:$src1, FR32:$src2),
                    "ucomiss\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp FR32:$src1, FR32:$src2)]>;
+                   [(X86cmp FR32:$src1, FR32:$src2), (implicit EFLAGS)]>;
 def UCOMISSrm: PSI<0x2E, MRMSrcMem, (outs), (ins FR32:$src1, f32mem:$src2),
                    "ucomiss\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp FR32:$src1, (loadf32 addr:$src2))]>;
-
-def NEW_UCOMISSrr: PSI<0x2E, MRMSrcReg, (outs), (ins FR32:$src1, FR32:$src2),
-                   "ucomiss\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new FR32:$src1, FR32:$src2), (implicit EFLAGS)]>;
-def NEW_UCOMISSrm: PSI<0x2E, MRMSrcMem, (outs), (ins FR32:$src1, f32mem:$src2),
-                   "ucomiss\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new FR32:$src1, (loadf32 addr:$src2)),
+                   [(X86cmp FR32:$src1, (loadf32 addr:$src2)),
                     (implicit EFLAGS)]>;
 } // Defs = [EFLAGS]
 
@@ -425,40 +390,26 @@ let isTwoAddress = 1 in {
 }
 
 let Defs = [EFLAGS] in {
-def Int_UCOMISSrr: PSI<0x2E, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
-                       "ucomiss\t{$src2, $src1|$src1, $src2}",
-                       [(X86ucomi (v4f32 VR128:$src1), VR128:$src2)]>;
-def Int_UCOMISSrm: PSI<0x2E, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
-                       "ucomiss\t{$src2, $src1|$src1, $src2}",
-                       [(X86ucomi (v4f32 VR128:$src1), (load addr:$src2))]>;
-
-def Int_COMISSrr: PSI<0x2F, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
-                      "comiss\t{$src2, $src1|$src1, $src2}",
-                      [(X86comi (v4f32 VR128:$src1), VR128:$src2)]>;
-def Int_COMISSrm: PSI<0x2F, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
-                      "comiss\t{$src2, $src1|$src1, $src2}",
-                      [(X86comi (v4f32 VR128:$src1), (load addr:$src2))]>;
-
-def NEW_Int_UCOMISSrr: PSI<0x2E, MRMSrcReg, (outs),
+def Int_UCOMISSrr: PSI<0x2E, MRMSrcReg, (outs),
                                             (ins VR128:$src1, VR128:$src2),
                        "ucomiss\t{$src2, $src1|$src1, $src2}",
-                       [(X86ucomi_new (v4f32 VR128:$src1), VR128:$src2),
+                       [(X86ucomi (v4f32 VR128:$src1), VR128:$src2),
                         (implicit EFLAGS)]>;
-def NEW_Int_UCOMISSrm: PSI<0x2E, MRMSrcMem, (outs),
+def Int_UCOMISSrm: PSI<0x2E, MRMSrcMem, (outs),
                                             (ins VR128:$src1, f128mem:$src2),
                        "ucomiss\t{$src2, $src1|$src1, $src2}",
-                       [(X86ucomi_new (v4f32 VR128:$src1), (load addr:$src2)),
+                       [(X86ucomi (v4f32 VR128:$src1), (load addr:$src2)),
                         (implicit EFLAGS)]>;
 
-def NEW_Int_COMISSrr: PSI<0x2F, MRMSrcReg, (outs),
+def Int_COMISSrr: PSI<0x2F, MRMSrcReg, (outs),
                                            (ins VR128:$src1, VR128:$src2),
                       "comiss\t{$src2, $src1|$src1, $src2}",
-                      [(X86comi_new (v4f32 VR128:$src1), VR128:$src2),
+                      [(X86comi (v4f32 VR128:$src1), VR128:$src2),
                        (implicit EFLAGS)]>;
-def NEW_Int_COMISSrm: PSI<0x2F, MRMSrcMem, (outs),
+def Int_COMISSrm: PSI<0x2F, MRMSrcMem, (outs),
                                            (ins VR128:$src1, f128mem:$src2),
                       "comiss\t{$src2, $src1|$src1, $src2}",
-                      [(X86comi_new (v4f32 VR128:$src1), (load addr:$src2)),
+                      [(X86comi (v4f32 VR128:$src1), (load addr:$src2)),
                        (implicit EFLAGS)]>;
 } // Defs = [EFLAGS]
 
@@ -1095,17 +1046,10 @@ let isTwoAddress = 1 in {
 let Defs = [EFLAGS] in {
 def UCOMISDrr: PDI<0x2E, MRMSrcReg, (outs), (ins FR64:$src1, FR64:$src2),
                    "ucomisd\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp FR64:$src1, FR64:$src2)]>;
+                   [(X86cmp FR64:$src1, FR64:$src2), (implicit EFLAGS)]>;
 def UCOMISDrm: PDI<0x2E, MRMSrcMem, (outs), (ins FR64:$src1, f64mem:$src2),
                    "ucomisd\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp FR64:$src1, (loadf64 addr:$src2))]>;
-
-def NEW_UCOMISDrr: PDI<0x2E, MRMSrcReg, (outs), (ins FR64:$src1, FR64:$src2),
-                   "ucomisd\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new FR64:$src1, FR64:$src2), (implicit EFLAGS)]>;
-def NEW_UCOMISDrm: PDI<0x2E, MRMSrcMem, (outs), (ins FR64:$src1, f64mem:$src2),
-                   "ucomisd\t{$src2, $src1|$src1, $src2}",
-                   [(X86cmp_new FR64:$src1, (loadf64 addr:$src2)),
+                   [(X86cmp FR64:$src1, (loadf64 addr:$src2)),
                     (implicit EFLAGS)]>;
 }
 
@@ -1126,38 +1070,20 @@ let isTwoAddress = 1 in {
 let Defs = [EFLAGS] in {
 def Int_UCOMISDrr: PDI<0x2E, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
                        "ucomisd\t{$src2, $src1|$src1, $src2}",
-                       [(X86ucomi (v2f64 VR128:$src1), (v2f64 VR128:$src2))]>;
-def Int_UCOMISDrm: PDI<0x2E, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
+                       [(X86ucomi (v2f64 VR128:$src1), (v2f64 VR128:$src2)),
+                        (implicit EFLAGS)]>;
+def Int_UCOMISDrm: PDI<0x2E, MRMSrcMem, (outs),(ins VR128:$src1, f128mem:$src2),
                        "ucomisd\t{$src2, $src1|$src1, $src2}",
-                       [(X86ucomi (v2f64 VR128:$src1), (load addr:$src2))]>;
+                       [(X86ucomi (v2f64 VR128:$src1), (load addr:$src2)),
+                        (implicit EFLAGS)]>;
 
 def Int_COMISDrr: PDI<0x2F, MRMSrcReg, (outs), (ins VR128:$src1, VR128:$src2),
                       "comisd\t{$src2, $src1|$src1, $src2}",
-                      [(X86comi (v2f64 VR128:$src1), (v2f64 VR128:$src2))]>;
+                      [(X86comi (v2f64 VR128:$src1), (v2f64 VR128:$src2)),
+                       (implicit EFLAGS)]>;
 def Int_COMISDrm: PDI<0x2F, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
                       "comisd\t{$src2, $src1|$src1, $src2}",
-                      [(X86comi (v2f64 VR128:$src1), (load addr:$src2))]>;
-
-def NEW_Int_UCOMISDrr: PDI<0x2E, MRMSrcReg, (outs),
-                                            (ins VR128:$src1, VR128:$src2),
-                       "ucomisd\t{$src2, $src1|$src1, $src2}",
-                       [(X86ucomi_new (v2f64 VR128:$src1), (v2f64 VR128:$src2)),
-                        (implicit EFLAGS)]>;
-def NEW_Int_UCOMISDrm: PDI<0x2E, MRMSrcMem, (outs),
-                                            (ins VR128:$src1, f128mem:$src2),
-                       "ucomisd\t{$src2, $src1|$src1, $src2}",
-                       [(X86ucomi_new (v2f64 VR128:$src1), (load addr:$src2)),
-                        (implicit EFLAGS)]>;
-
-def NEW_Int_COMISDrr: PDI<0x2F, MRMSrcReg, (outs),
-                                           (ins VR128:$src1, VR128:$src2),
-                      "comisd\t{$src2, $src1|$src1, $src2}",
-                      [(X86comi_new (v2f64 VR128:$src1), (v2f64 VR128:$src2)),
-                       (implicit EFLAGS)]>;
-def NEW_Int_COMISDrm: PDI<0x2F, MRMSrcMem, (outs),
-                                           (ins VR128:$src1, f128mem:$src2),
-                      "comisd\t{$src2, $src1|$src1, $src2}",
-                      [(X86comi_new (v2f64 VR128:$src1), (load addr:$src2)),
+                      [(X86comi (v2f64 VR128:$src1), (load addr:$src2)),
                        (implicit EFLAGS)]>;
 } // Defs = EFLAGS]
 

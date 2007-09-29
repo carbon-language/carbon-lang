@@ -73,11 +73,6 @@ namespace llvm {
   /// ExceptionHandling - This flag indicates that exception information should
   /// be emitted.
   extern bool ExceptionHandling;
-
-  /// NewCCModeling - This temporary flag indicates whether to use the new
-  /// condition code modeling scheme.
-  extern bool NewCCModeling;
-  
 } // End llvm namespace
 
 #endif
