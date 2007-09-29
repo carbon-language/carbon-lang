@@ -551,15 +551,6 @@ if test "$lt_cv_dlopen_self" = "yes" ; then
               [Define if dlopen(0) will open the symbols of the program])
 fi
 
-dnl Check if we know how to tell etags we are using C++:
-etags_version=`$ETAGS --version 2>&1`
-case "$etags_version" in
-	*[Ee]xuberant*) ETAGSFLAGS="--language-force=c++" ;;
-	*GNU\ Emacs*) ETAGSFLAGS="-l c++" ;;
-	*) ETAGSFLAGS="" ;;
-esac
-AC_SUBST(ETAGSFLAGS,$ETAGSFLAGS)
-
 if test "$WITH_LLVMGCCDIR" = "default" ; then
   LLVMGCC="llvm-gcc${EXEEXT}"
   LLVMGXX="llvm-g++${EXEEXT}"
