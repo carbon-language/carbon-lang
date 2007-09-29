@@ -1678,12 +1678,11 @@ Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc,
   QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
   ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, Sel,
                                       resultDeclType, 0, -1, AttrList, 
-                                      MethodType == tok::minus);
+                                      MethodType == tok::minus,
+				      MethodDeclKind == tok::objc_optional ? 
+				      ObjcMethodDecl::Optional : 
+				      ObjcMethodDecl::Required);
   ObjcMethod->setMethodParams(&Params[0], Sel.getNumArgs());
-  if (MethodDeclKind == tok::objc_optional)
-    ObjcMethod->setDeclImplementation(ObjcMethodDecl::Optional);
-  else
-    ObjcMethod->setDeclImplementation(ObjcMethodDecl::Required);
   return ObjcMethod;
 }
 

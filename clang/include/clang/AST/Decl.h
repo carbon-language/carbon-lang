@@ -56,6 +56,9 @@ public:
     IDNS_Protocol,
     IDNS_Ordinary
   };
+  
+  enum ImplementationControl { None, Required, Optional };
+  
 private:
   /// DeclKind - This indicates which class this is.
   Kind DeclKind   :  8;
@@ -63,10 +66,22 @@ private:
   /// InvalidDecl - This indicates a semantic error occurred.
   unsigned int InvalidDecl :  1;
 
+  /// instance (true) or class (false) method.
+  bool IsInstance : 1;
+  /// @required/@optional
+  ImplementationControl DeclImplementation : 2;
+  
 protected:
-  Decl(Kind DK) : DeclKind(DK), InvalidDecl(0) {
+  Decl(Kind DK) : DeclKind(DK), InvalidDecl(0), 
+  IsInstance(false), DeclImplementation(None) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
+  
+  Decl(Kind DK, bool isInstance, ImplementationControl implControl) 
+  : DeclKind(DK), InvalidDecl(0), 
+  IsInstance(isInstance), DeclImplementation(implControl) {
+    if (Decl::CollectingStats()) addDeclKind(DK);
+  }  
   virtual ~Decl();
   
 public:
@@ -78,7 +93,10 @@ public:
   /// allows for graceful error recovery.
   void setInvalidDecl() { InvalidDecl = 1; }
   int isInvalidDecl() const { return InvalidDecl; }
-  
+  bool isInstance() const { return IsInstance; }
+  ImplementationControl  getImplementationControl() const
+  { return DeclImplementation; }
+
   IdentifierNamespace getIdentifierNamespace() const {
     switch (DeclKind) {
     default: assert(0 && "Unknown decl kind!");
@@ -551,20 +569,20 @@ class ObjcInterfaceDecl : public TypeDecl {
   ObjcInterfaceDecl *SuperClass;
   
   /// Protocols referenced in interface header declaration
-  ObjcProtocolDecl **IntfRefProtocols;  // Null if none
-  int NumIntfRefProtocols;  // -1 if none
+  ObjcProtocolDecl **IntfRefProtocols;  // Null if no referenced protocols
+  int NumIntfRefProtocols;  // -1 if no referenced protocols
   
   /// Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
-  ObjcIvarDecl **Ivars;   // Null if not defined.
-  int NumIvars;   // -1 if not defined.
+  ObjcIvarDecl **Ivars;   // Null if class has no ivars
+  int NumIvars;   // -1 if class has no ivars
   
   /// instance methods
-  ObjcMethodDecl **InsMethods;  // Null if not defined
-  int NumInsMethods;  // -1 if not defined
+  ObjcMethodDecl **InsMethods;  // Null if class has no instance methods
+  int NumInsMethods;  // -1 if class has no instance methods
   
   /// class methods
-  ObjcMethodDecl **ClsMethods;  // Null if not defined
-  int NumClsMethods;  // -1 if not defined
+  ObjcMethodDecl **ClsMethods;  // Null if class has no class methods
+  int NumClsMethods;  // -1 if class has no class methods
   
   /// List of categories defined for this class.
   ObjcCategoryDecl *ListCategories;
@@ -675,8 +693,6 @@ public:
 /// ObjcMethodDecl - An instance of this class is created to represent an instance
 /// or class method declaration.
 class ObjcMethodDecl : public Decl {
-public:
-  enum ImplementationControl { None, Required, Optional };
 private:
   // A unigue name for this method.
   Selector SelName;
@@ -694,19 +710,16 @@ private:
   /// Loc - location of this declaration.
   SourceLocation Loc;
 
-  /// instance (true) or class (false) method.
-  bool IsInstance : 1;
-  /// @required/@optional
-  ImplementationControl DeclImplementation : 2;
-
 public:
   ObjcMethodDecl(SourceLocation L, Selector SelInfo, QualType T,
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
-		 AttributeList *M = 0, bool isInstance = true, 
+		 AttributeList *M = 0, bool isInstance = true,
+                 ImplementationControl impControl = None,
 		 Decl *PrevDecl = 0)
-    : Decl(ObjcMethod), SelName(SelInfo), MethodDeclType(T), 
+    : Decl(ObjcMethod, isInstance, impControl), 
+      SelName(SelInfo), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
-      MethodAttrs(M), Loc(L), IsInstance(isInstance) {}
+      MethodAttrs(M), Loc(L) {}
 #if 0
   ObjcMethodDecl(Kind DK, SourceLocation L, IdentifierInfo &SelId, QualType T,
 		 ParmVarDecl **paramInfo = 0, int numParams=-1,
@@ -728,13 +741,7 @@ public:
 
   AttributeList *getMethodAttrs() const {return MethodAttrs;}
   SourceLocation getLocation() const { return Loc; }
-  bool isInstance() const { return IsInstance; }
-  // Related to protocols declared in  @protocol
-  void setDeclImplementation(ImplementationControl ic)
-         { DeclImplementation = ic; }
-  ImplementationControl  getImplementationControl() const
-                           { return DeclImplementation; }
-  
+    
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 
     return D->getKind() == ObjcMethod 

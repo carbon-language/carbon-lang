@@ -270,7 +270,6 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
   /// Insert collected methods declarations into the @interface object.
   Actions.ObjcAddMethodsToClass(CurScope,
 				interfaceDecl,&allMethods[0],allMethods.size());
-  return;
 }
 
 ///   Parse property attribute declarations.
