@@ -134,12 +134,18 @@ namespace {
         assert(Offset == 0 || Ty != AddressOf &&
                "Offset is illegal on addressof constraints");
       }
+
       bool operator==(const Constraint &RHS) const {
         return RHS.Type == Type
           && RHS.Dest == Dest
           && RHS.Src == Src
           && RHS.Offset == Offset;
       }
+
+      bool operator!=(const Constraint &RHS) const {
+        return !(*this == RHS);
+      }
+
       bool operator<(const Constraint &RHS) const {
         if (RHS.Type != Type)
           return RHS.Type < Type;
@@ -148,6 +154,23 @@ namespace {
         else if (RHS.Src != Src)
           return RHS.Src < Src;
         return RHS.Offset < Offset;
+      }
+    };
+
+    struct ConstraintKeyInfo {
+      static inline Constraint getEmptyKey() {
+        return Constraint(Constraint::Copy, ~0UL, ~0UL, ~0UL);
+      }
+      static inline Constraint getTombstoneKey() {
+        return Constraint(Constraint::Copy, ~0UL - 1, ~0UL - 1, ~0UL - 1);
+      }
+      static unsigned getHashValue(const Constraint &C) {
+        return C.Src ^ C.Dest ^ C.Type ^ C.Offset;
+      }
+      static bool isEqual(const Constraint &LHS,
+                          const Constraint &RHS) {
+        return LHS.Type == RHS.Type && LHS.Dest == RHS.Dest
+          && LHS.Src == RHS.Src && LHS.Offset == RHS.Offset;
       }
     };
 
@@ -1750,7 +1773,7 @@ void Andersens::HUValNum(unsigned NodeIndex) {
 /// replaced by their the pointer equivalence class representative.
 void Andersens::RewriteConstraints() {
   std::vector<Constraint> NewConstraints;
-  std::set<Constraint> Seen;
+  DenseMap<Constraint, bool, ConstraintKeyInfo> Seen;
 
   PEClass2Node.clear();
   PENLEClass2Node.clear();
@@ -1788,10 +1811,10 @@ void Andersens::RewriteConstraints() {
     C.Src = FindEquivalentNode(RHSNode, RHSLabel);
     C.Dest = FindEquivalentNode(FindNode(LHSNode), LHSLabel);
     if (C.Src == C.Dest && C.Type == Constraint::Copy
-        || Seen.count(C) != 0)
+        || Seen[C] == true)
       continue;
 
-    Seen.insert(C);
+    Seen[C] = true;
     NewConstraints.push_back(C);
   }
   Constraints.swap(NewConstraints);
