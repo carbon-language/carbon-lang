@@ -174,7 +174,8 @@ public:
                              Declarator &D, ExprTy *BitfieldWidth) {
     return 0;
   }
-  virtual void ActOnFields(SourceLocation RecLoc, DeclTy *TagDecl,
+  virtual void ActOnFields(Scope* S,
+				 SourceLocation RecLoc, DeclTy *TagDecl,
                                  DeclTy **Fields, unsigned NumFields,
                                  tok::ObjCKeywordKind *visibility = 0) {}
   virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
@@ -443,7 +444,7 @@ public:
                     AttributeList *AttrList) {
     return 0;
   }
-  virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl,
+  virtual void ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl,
 				     DeclTy **allMethods, unsigned allNum) {
     return;
   }
@@ -457,7 +458,8 @@ public:
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
     return 0;
   }
-  virtual DeclTy *ObjcStartCatInterface(SourceLocation AtInterfaceLoc,
+  virtual DeclTy *ObjcStartCatInterface(Scope* S,
+		    SourceLocation AtInterfaceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {

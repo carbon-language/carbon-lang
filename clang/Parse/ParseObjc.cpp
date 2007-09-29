@@ -154,7 +154,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     if (attrList) // categories don't support attributes.
       Diag(Tok, diag::err_objc_no_attributes_on_category);
     
-    DeclTy *CategoryType = Actions.ObjcStartCatInterface(atLoc, 
+    DeclTy *CategoryType = Actions.ObjcStartCatInterface(CurScope, atLoc, 
                                      nameId, nameLoc,
                                      categoryId, categoryLoc,
                                      &ProtocolRefs[0],
@@ -268,7 +268,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
     }
   }
   /// Insert collected methods declarations into the @interface object.
-  Actions.ObjcAddMethodsToClass(interfaceDecl,&allMethods[0],allMethods.size());
+  Actions.ObjcAddMethodsToClass(CurScope,
+				interfaceDecl,&allMethods[0],allMethods.size());
   return;
 }
 
@@ -801,7 +802,7 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
     }
   }
   if (AllIvarDecls.size()) {  // Check for {} - no ivars in braces
-    Actions.ActOnFields(LBraceLoc, interfaceDecl, 
+    Actions.ActOnFields(CurScope, LBraceLoc, interfaceDecl, 
                         &AllIvarDecls[0], AllIvarDecls.size(),
                         &AllVisibilities[0]);
   }
@@ -968,7 +969,7 @@ Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
     // @implementation not to have been parsed to completion and ObjcImpDecl 
     // could be 0.
     /// Insert collected methods declarations into the @interface object.
-    Actions.ObjcAddMethodsToClass(ObjcImpDecl,
+    Actions.ObjcAddMethodsToClass(CurScope, ObjcImpDecl,
                                   &AllImplMethods[0],AllImplMethods.size());
     ObjcImpDecl = 0;
     AllImplMethods.clear();

@@ -46,6 +46,7 @@ namespace clang {
   class SwitchStmt;
   class OCUVectorType;
   class TypedefDecl;
+  class ObjcInterfaceDecl;
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -121,7 +122,7 @@ public:
   bool Diag(SourceLocation Loc, unsigned DiagID, 
             const std::string &Msg1, const std::string &Msg2, 
             SourceRange R1, SourceRange R2);
-
+  
   virtual void DeleteExpr(ExprTy *E);
   virtual void DeleteStmt(StmtTy *S);
 
@@ -157,7 +158,8 @@ private:
                              Declarator &D, ExprTy *BitfieldWidth);
                                       
   // This is used for both record definitions and ObjC interface declarations.
-  virtual void ActOnFields(SourceLocation RecLoc, DeclTy *TagDecl,
+  virtual void ActOnFields(Scope* S,
+				 SourceLocation RecLoc, DeclTy *TagDecl,
                                  DeclTy **Fields, unsigned NumFields,
                                  tok::ObjCKeywordKind *visibility = 0);
   virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
@@ -181,6 +183,8 @@ private:
                                     Scope *FnBodyScope);
   ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
                                SourceLocation IdLoc, Scope *S);  
+  ObjcInterfaceDecl *getObjCInterfaceDecl(Scope *S, 
+		       IdentifierInfo *Id, SourceLocation IdLoc);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
@@ -364,7 +368,8 @@ public:
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
   
-  virtual DeclTy *ObjcStartCatInterface(SourceLocation AtInterfaceLoc,
+  virtual DeclTy *ObjcStartCatInterface(Scope* S,
+		    SourceLocation AtInterfaceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
@@ -384,7 +389,7 @@ public:
                                                  IdentifierInfo **IdentList,
                                                  unsigned NumElts);
 
-  virtual void ObjcAddMethodsToClass(DeclTy *ClassDecl, 
+  virtual void ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl, 
 				     DeclTy **allMethods, unsigned allNum);
   
   virtual void ActOnImpleIvarVsClassIvars(DeclTy *ClassDecl,

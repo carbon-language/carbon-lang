@@ -757,7 +757,8 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
   
   MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   
-  Actions.ActOnFields(RecordLoc,TagDecl,&FieldDecls[0],FieldDecls.size());
+  Actions.ActOnFields(CurScope,
+		      RecordLoc,TagDecl,&FieldDecls[0],FieldDecls.size());
   
   AttributeList *AttrList = 0;
   // If attributes exist after struct contents, parse them.
