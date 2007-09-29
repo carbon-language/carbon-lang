@@ -148,3 +148,41 @@ It's not always a good idea to choose rematerialization over spilling. If all
 the load / store instructions would be folded then spilling is cheaper because
 it won't require new live intervals / registers. See 2003-05-31-LongShifts for
 an example.
+
+//===---------------------------------------------------------------------===//
+
+Instead of unconditionally inserting a null initializer for every GC root when
+Collector::InitRoots is set, the collector infrastructure should get a little
+bit smarter and perform a trivial DSE of the initial basic block up to the
+first safe point.
+
+//===---------------------------------------------------------------------===//
+
+With a copying garbage collector, derived pointers must not be retained across
+collector safe points; the collector could move the objects and invalidate the
+derived pointer. This is bad enough in the first place, but safe points can
+crop up unpredictably. Consider:
+
+        %array = load { i32, [0 x %obj] }** %array_addr
+        %nth_el = getelementptr { i32, [0 x %obj] }* %array, i32 0, i32 %n
+        %old = load %obj** %nth_el
+        %z = div i64 %x, %y
+        store %obj* %new, %obj** %nth_el
+
+If the i64 division is lowered to a libcall, then a safe point will (must)
+appear for the call site. If a collection occurs, %array and %nth_el no longer
+point into the correct object.
+
+The fix for this is to copy address calculations so that dependent pointers
+are never live across safe point boundaries. But the loads cannot be copied
+like this if there was an intervening store, so may be hard to get right.
+
+Only a concurrent mutator can trigger a collection at the libcall safe point.
+So single-threaded programs do not have this requirement, even with a copying
+collector. Still, LLVM optimizations would probably undo a front-end's careful
+work.
+
+//===---------------------------------------------------------------------===//
+
+The ocaml frametable structure supports liveness information. It would be good
+to support it.
