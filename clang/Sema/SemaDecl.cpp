@@ -28,8 +28,7 @@ using namespace clang;
 
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   Decl *IIDecl = II.getFETokenInfo<Decl>();
-  if (dyn_cast_or_null<TypedefDecl>(IIDecl) || 
-      dyn_cast_or_null<ObjcInterfaceDecl>(IIDecl))
+  if (isa<TypedefDecl>(IIDecl) || isa<ObjcInterfaceDecl>(IIDecl))
     return IIDecl;
   return 0;
 }
