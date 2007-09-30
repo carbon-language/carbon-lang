@@ -275,10 +275,15 @@ public:
   virtual void dump();
   
 protected:
-  friend void Compress(DominatorTreeBase& DT, BasicBlock *VIn);
-  friend BasicBlock *Eval(DominatorTreeBase& DT, BasicBlock *V);
-  friend void Link(DominatorTreeBase& DT, BasicBlock *V,
-                   BasicBlock *W, InfoRec &WInfo);
+  template<class GraphT> friend void Compress(DominatorTreeBase& DT,
+                                              typename GraphT::NodeType* VIn);
+  template<class GraphT> friend typename GraphT::NodeType* Eval(
+                                                  DominatorTreeBase& DT,
+                                                  typename GraphT::NodeType* V);
+  template<class GraphT> friend void Link(DominatorTreeBase& DT,
+                                          typename GraphT::NodeType* V,
+                                          typename GraphT::NodeType* W,
+                                          InfoRec &WInfo);
   
   template<class GraphT> friend unsigned DFSPass(DominatorTreeBase& DT,
                                                  typename GraphT::NodeType* V,

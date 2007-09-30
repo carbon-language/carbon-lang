@@ -53,7 +53,7 @@ void DTcalculate(DominatorTree& DT, Function &F) {
     // Step #2: Calculate the semidominators of all vertices
     for (pred_iterator PI = pred_begin(W), E = pred_end(W); PI != E; ++PI)
       if (DT.Info.count(*PI)) {  // Only if this predecessor is reachable!
-        unsigned SemiU = DT.Info[Eval(DT, *PI)].Semi;
+        unsigned SemiU = DT.Info[Eval<GraphTraits<BasicBlock*> >(DT, *PI)].Semi;
         if (SemiU < WInfo.Semi)
           WInfo.Semi = SemiU;
       }
@@ -61,14 +61,14 @@ void DTcalculate(DominatorTree& DT, Function &F) {
     DT.Info[DT.Vertex[WInfo.Semi]].Bucket.push_back(W);
 
     BasicBlock *WParent = WInfo.Parent;
-    Link(DT, WParent, W, WInfo);
+    Link<GraphTraits<BasicBlock*> >(DT, WParent, W, WInfo);
 
     // Step #3: Implicitly define the immediate dominator of vertices
     std::vector<BasicBlock*> &WParentBucket = DT.Info[WParent].Bucket;
     while (!WParentBucket.empty()) {
       BasicBlock *V = WParentBucket.back();
       WParentBucket.pop_back();
-      BasicBlock *U = Eval(DT, V);
+      BasicBlock *U = Eval<GraphTraits<BasicBlock*> >(DT, V);
       DT.IDoms[V] = DT.Info[U].Semi < DT.Info[V].Semi ? U : WParent;
     }
   }

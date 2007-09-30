@@ -50,7 +50,8 @@ void PDTcalculate(PostDominatorTree& PDT, Function &F) {
     // Step #2: Calculate the semidominators of all vertices
     for (succ_iterator SI = succ_begin(W), SE = succ_end(W); SI != SE; ++SI)
       if (PDT.Info.count(*SI)) {  // Only if this predecessor is reachable!
-        unsigned SemiU = PDT.Info[Eval(PDT, *SI)].Semi;
+        unsigned SemiU =
+             PDT.Info[Eval<GraphTraits<Inverse<BasicBlock*> > >(PDT, *SI)].Semi;
         if (SemiU < WInfo.Semi)
           WInfo.Semi = SemiU;
       }
@@ -58,14 +59,14 @@ void PDTcalculate(PostDominatorTree& PDT, Function &F) {
     PDT.Info[PDT.Vertex[WInfo.Semi]].Bucket.push_back(W);
     
     BasicBlock *WParent = WInfo.Parent;
-    Link(PDT, WParent, W, WInfo);
+    Link<GraphTraits<Inverse<BasicBlock*> > >(PDT, WParent, W, WInfo);
     
     // Step #3: Implicitly define the immediate dominator of vertices
     std::vector<BasicBlock*> &WParentBucket = PDT.Info[WParent].Bucket;
     while (!WParentBucket.empty()) {
       BasicBlock *V = WParentBucket.back();
       WParentBucket.pop_back();
-      BasicBlock *U = Eval(PDT, V);
+      BasicBlock *U = Eval<GraphTraits<Inverse<BasicBlock*> > >(PDT, V);
       PDT.IDoms[V] = PDT.Info[U].Semi < PDT.Info[V].Semi ? U : WParent;
     }
   }
