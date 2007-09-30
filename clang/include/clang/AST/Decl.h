@@ -519,7 +519,10 @@ public:
 };
 
 
-/// RecordDecl - Represents a struct/union/class.
+/// RecordDecl - Represents a struct/union/class.  For example:
+///   struct X;                  // Forward declaration, no "body".
+///   union Y { int A, B; };     // Has body with members A and B (FieldDecls).
+///
 class RecordDecl : public TagDecl {
   /// HasFlexibleArrayMember - This is true if this struct ends with a flexible
   /// array member (e.g. int X[]) or if this union contains a struct that does.
