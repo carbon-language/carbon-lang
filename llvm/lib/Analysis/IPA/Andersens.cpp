@@ -65,7 +65,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SparseBitVector.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include <algorithm>
 #include <set>
 #include <list>
@@ -1773,7 +1773,7 @@ void Andersens::HUValNum(unsigned NodeIndex) {
 /// replaced by their the pointer equivalence class representative.
 void Andersens::RewriteConstraints() {
   std::vector<Constraint> NewConstraints;
-  DenseMap<Constraint, bool, ConstraintKeyInfo> Seen;
+  DenseSet<Constraint, ConstraintKeyInfo> Seen;
 
   PEClass2Node.clear();
   PENLEClass2Node.clear();
@@ -1811,10 +1811,10 @@ void Andersens::RewriteConstraints() {
     C.Src = FindEquivalentNode(RHSNode, RHSLabel);
     C.Dest = FindEquivalentNode(FindNode(LHSNode), LHSLabel);
     if (C.Src == C.Dest && C.Type == Constraint::Copy
-        || Seen[C] == true)
+        || Seen.count(C))
       continue;
 
-    Seen[C] = true;
+    Seen.insert(C);
     NewConstraints.push_back(C);
   }
   Constraints.swap(NewConstraints);
