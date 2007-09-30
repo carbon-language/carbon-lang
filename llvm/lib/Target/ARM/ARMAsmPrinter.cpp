@@ -152,6 +152,7 @@ namespace {
     }
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
+      AsmPrinter::getAnalysisUsage(AU);
       AU.setPreservesAll();
       AU.addRequired<MachineModuleInfo>();
     }

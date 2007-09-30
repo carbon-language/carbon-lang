@@ -64,7 +64,7 @@ struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
         Subtarget->isTargetCygMing()) {
       AU.addRequired<MachineModuleInfo>();
     }
-    MachineFunctionPass::getAnalysisUsage(AU);
+    AsmPrinter::getAnalysisUsage(AU);
   }
 
   const X86Subtarget *Subtarget;
