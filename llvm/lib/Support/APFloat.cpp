@@ -1519,17 +1519,9 @@ APFloat::convertFromInteger(const integerPart *parts, unsigned int width,
   integerPart *copy = new integerPart[partCount];
 
   sign = false;
-  if(isSigned) {
-    if (APInt::tcExtractBit(parts, width - 1)) {
-      sign = true;
-      if (width < partCount * integerPartWidth)
-        api = api.sext(partCount * integerPartWidth);
-    }
-    else if (width < partCount * integerPartWidth)
-      api = api.zext(partCount * integerPartWidth);
-  } else {
-    if (width < partCount * integerPartWidth)
-      api = api.zext(partCount * integerPartWidth);
+  if(isSigned && APInt::tcExtractBit(parts, width - 1)) {
+    sign = true;
+    api = -api;
   }
 
   APInt::tcAssign(copy, api.getRawData(), partCount);
