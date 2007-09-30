@@ -1677,7 +1677,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::FP_EXTEND:
       // This can return overflow, underflow, or inexact; we don't care.
       // FIXME need to be more flexible about rounding mode.
-      // FIXME need to be more flexible about rounding mode.
       (void) V.convert(VT==MVT::f32 ? APFloat::IEEEsingle : 
                        VT==MVT::f64 ? APFloat::IEEEdouble :
                        VT==MVT::f80 ? APFloat::x87DoubleExtended :
