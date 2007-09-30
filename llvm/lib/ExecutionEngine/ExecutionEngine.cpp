@@ -398,7 +398,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         APFloat apf = APFloat(APInt(80, 2, zero));
         (void)apf.convertFromInteger(GV.IntVal.getRawData(), 
                                GV.IntVal.getBitWidth(), false,
-                               APFloat::rmTowardZero);
+                               APFloat::rmNearestTiesToEven);
         GV.IntVal = apf.convertToAPInt();
       }
       return GV;
@@ -414,7 +414,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
         APFloat apf = APFloat(APInt(80, 2, zero));
         (void)apf.convertFromInteger(GV.IntVal.getRawData(), 
                                GV.IntVal.getBitWidth(), true,
-                               APFloat::rmTowardZero);
+                               APFloat::rmNearestTiesToEven);
         GV.IntVal = apf.convertToAPInt();
       }
       return GV;

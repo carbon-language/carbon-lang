@@ -1598,7 +1598,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       (void)apf.convertFromInteger(&Val, 
                                MVT::getSizeInBits(Operand.getValueType()), 
                                Opcode==ISD::SINT_TO_FP,
-                               APFloat::rmTowardZero);
+                               APFloat::rmNearestTiesToEven);
       return getConstantFP(apf, VT);
     }
     case ISD::BIT_CONVERT:

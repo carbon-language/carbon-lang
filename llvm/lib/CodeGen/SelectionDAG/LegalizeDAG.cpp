@@ -3220,7 +3220,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           APFloat apf = APFloat(APInt(MVT::getSizeInBits(VT), 2, zero));
           uint64_t x = 1ULL << ShiftAmt;
           (void)apf.convertFromInteger(&x, MVT::getSizeInBits(NVT), false, 
-                                       APFloat::rmTowardZero);
+                                       APFloat::rmNearestTiesToEven);
           Tmp2 = DAG.getConstantFP(apf, VT);
           Tmp3 = DAG.getSetCC(TLI.getSetCCResultTy(),
                             Node->getOperand(0), Tmp2, ISD::SETLT);

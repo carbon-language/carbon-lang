@@ -209,25 +209,17 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       return ConstantInt::get(DestTy, 0);
     return 0;                   // Other pointer types cannot be casted
   case Instruction::UIToFP:
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      double d = CI->getValue().roundToDouble();
-      if (DestTy==Type::FloatTy) 
-        return ConstantFP::get(DestTy, APFloat((float)d));
-      else if (DestTy==Type::DoubleTy)
-        return ConstantFP::get(DestTy, APFloat(d));
-      else
-        return 0;     // FIXME do this for long double
-    }
-    return 0;
   case Instruction::SIToFP:
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      double d = CI->getValue().signedRoundToDouble();
-      if (DestTy==Type::FloatTy)
-        return ConstantFP::get(DestTy, APFloat((float)d));
-      else if (DestTy==Type::DoubleTy)
-        return ConstantFP::get(DestTy, APFloat(d));
-      else
-        return 0;     // FIXME do this for long double
+      APInt api = CI->getValue();
+      const uint64_t zero[] = {0, 0};
+      uint32_t BitWidth = cast<IntegerType>(SrcTy)->getBitWidth();
+      APFloat apf = APFloat(APInt(DestTy->getPrimitiveSizeInBits(),
+                                  2, zero));
+      (void)apf.convertFromInteger(api.getRawData(), BitWidth, 
+                                   opc==Instruction::SIToFP,
+                                   APFloat::rmNearestTiesToEven);
+      return ConstantFP::get(DestTy, apf);
     }
     return 0;
   case Instruction::ZExt:
