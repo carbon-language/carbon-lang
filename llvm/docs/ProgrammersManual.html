@@ -62,6 +62,7 @@ option</a></li>
       <li><a href="#dss_sortedvectorset">A sorted 'vector'</a></li>
       <li><a href="#dss_smallset">"llvm/ADT/SmallSet.h"</a></li>
       <li><a href="#dss_smallptrset">"llvm/ADT/SmallPtrSet.h"</a></li>
+      <li><a href="#dss_denseset">"llvm/ADT/DenseSet.h"</a></li>
       <li><a href="#dss_FoldingSet">"llvm/ADT/FoldingSet.h"</a></li>
       <li><a href="#dss_set">&lt;set&gt;</a></li>
       <li><a href="#dss_setvector">"llvm/ADT/SetVector.h"</a></li>
@@ -983,6 +984,25 @@ factors) and is very stingy with malloc traffic.</p>
 <p>Note that, unlike std::set, the iterators of SmallPtrSet are invalidated
 whenever an insertion occurs.  Also, the values visited by the iterators are not
 visited in sorted order.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="dss_denseset">"llvm/ADT/DenseSet.h"</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+DenseSet is a simple quadratically probed hash table.  It excels at supporting
+small values: it uses a single allocation to hold all of the pairs that
+are currently inserted in the set.  DenseSet is a great way to unique small
+values that are not simple pointers (use <a 
+href="#dss_smallptrset">SmallPtrSet</a> for pointers).  Note that DenseSet has
+the same requirements for the value type that <a 
+href="#dss_densemap">DenseMap</a> has.
+</p>
 
 </div>
 
