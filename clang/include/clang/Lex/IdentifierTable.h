@@ -53,8 +53,17 @@ public:
   /// string is properly null terminated.
   ///
   const char *getName() const {
-    // String data is stored immediately after the IdentifierInfo object.
-    return (const char*)(this+1);
+    // We know that this is embedded into a StringMapEntry, and it knows how to
+    // efficiently find the string.
+    return llvm::StringMapEntry<IdentifierInfo>::
+                  GetStringMapEntryFromValue(*this).getKeyData();
+  }
+  
+  /// getLength - Efficiently return the length of this identifier info.
+  ///
+  unsigned getLength() const {
+    return llvm::StringMapEntry<IdentifierInfo>::
+                    GetStringMapEntryFromValue(*this).getKeyLength();
   }
   
   /// getMacroInfo - Return macro information about this identifier, or null if
