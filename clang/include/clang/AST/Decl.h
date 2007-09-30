@@ -39,7 +39,7 @@ public:
     Function, BlockVariable, FileVariable, ParmVariable, EnumConstant,
     // Concrete sub-classes of TypeDecl
     Typedef, Struct, Union, Class, Enum, ObjcInterface, ObjcClass, ObjcMethod,
-    ObjcProtoMethod, ObjcProtocol, ObjcForwardProtocol, ObjcCategory,
+    ObjcProtocol, ObjcForwardProtocol, ObjcCategory,
     ObjcImplementation,
     // Concrete sub-class of Decl
     Field, ObjcIvar
@@ -747,8 +747,7 @@ public:
     
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { 
-    return D->getKind() == ObjcMethod 
-	   || D->getKind() == ObjcProtoMethod; 
+    return D->getKind() == ObjcMethod;
   }
   static bool classof(const ObjcMethodDecl *D) { return true; }
 };

@@ -57,8 +57,6 @@ const char *Decl::getDeclKindName() const {
     return "ObjcClass";
   case ObjcMethod:
     return "ObjcMethod";
-  case ObjcProtoMethod:
-    return "ObjcProtoMethod";
   case ObjcProtocol:
     return "ObjcProtocol";
   case ObjcForwardProtocol:
@@ -183,7 +181,6 @@ void Decl::addDeclKind(const Kind k) {
       nClassDecls++;
       break;
     case ObjcMethod:
-    case ObjcProtoMethod:
       nMethodDecls++;
       break;
     case ObjcProtocol:
