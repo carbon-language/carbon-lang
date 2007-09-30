@@ -166,7 +166,18 @@ public:
     MallocAllocator A;
     return Create(KeyStart, KeyEnd, A);
   }
-
+  
+  
+  /// GetStringMapEntryFromValue - Given a value that is known to be embedded
+  /// into a StringMapEntry, return the StringMapEntry itself.
+  static StringMapEntry &GetStringMapEntryFromValue(ValueTy &V) {
+    return *reinterpret_cast<StringMapEntry*>(reinterpret_cast<char*>(&V) -
+                                              sizeof(StringMapEntryBase));
+  }
+  static const StringMapEntry &GetStringMapEntryFromValue(const ValueTy &V) {
+    return GetStringMapEntryFromValue(const_cast<ValueTy&>(V));
+  }
+  
   /// Destroy - Destroy this StringMapEntry, releasing memory back to the
   /// specified allocator.
   template<typename AllocatorTy>
