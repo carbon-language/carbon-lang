@@ -79,6 +79,7 @@ public:
   typedef std::vector<Loop*>::const_iterator iterator;
   iterator begin() const { return SubLoops.begin(); }
   iterator end() const { return SubLoops.end(); }
+  bool empty() const { return SubLoops.empty(); }
 
   /// getBlocks - Get a list of the basic blocks which make up this loop.
   ///
