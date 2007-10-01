@@ -32,8 +32,7 @@ def X86fxor    : SDNode<"X86ISD::FXOR",      SDTFPBinOp,
 def X86frsqrt  : SDNode<"X86ISD::FRSQRT",    SDTFPUnaryOp>;
 def X86frcp    : SDNode<"X86ISD::FRCP",      SDTFPUnaryOp>;
 def X86fsrl    : SDNode<"X86ISD::FSRL",      SDTX86FPShiftOp>;
-def X86comi    : SDNode<"X86ISD::COMI",      SDTX86CmpTest,
-                        [SDNPHasChain]>;
+def X86comi    : SDNode<"X86ISD::COMI",      SDTX86CmpTest>;
 def X86ucomi   : SDNode<"X86ISD::UCOMI",     SDTX86CmpTest>;
 def X86s2vec   : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
 def X86pextrw  : SDNode<"X86ISD::PEXTRW", SDTypeProfile<1, 2, []>, []>;
