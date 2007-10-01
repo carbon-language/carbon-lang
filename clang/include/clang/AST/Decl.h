@@ -57,31 +57,18 @@ public:
     IDNS_Ordinary
   };
   
-  enum ImplementationControl { None, Required, Optional };
-  
 private:
   /// DeclKind - This indicates which class this is.
   Kind DeclKind   :  8;
   
   /// InvalidDecl - This indicates a semantic error occurred.
   unsigned int InvalidDecl :  1;
-
-  /// instance (true) or class (false) method.
-  bool IsInstance : 1;
-  /// @required/@optional
-  ImplementationControl DeclImplementation : 2;
   
 protected:
-  Decl(Kind DK) : DeclKind(DK), InvalidDecl(0), 
-  IsInstance(false), DeclImplementation(None) {
+  Decl(Kind DK) : DeclKind(DK), InvalidDecl(0) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
   
-  Decl(Kind DK, bool isInstance, ImplementationControl implControl) 
-  : DeclKind(DK), InvalidDecl(0), 
-  IsInstance(isInstance), DeclImplementation(implControl) {
-    if (Decl::CollectingStats()) addDeclKind(DK);
-  }  
   virtual ~Decl();
   
 public:
@@ -93,10 +80,7 @@ public:
   /// allows for graceful error recovery.
   void setInvalidDecl() { InvalidDecl = 1; }
   int isInvalidDecl() const { return InvalidDecl; }
-  bool isInstance() const { return IsInstance; }
-  ImplementationControl  getImplementationControl() const
-  { return DeclImplementation; }
-
+  
   IdentifierNamespace getIdentifierNamespace() const {
     switch (DeclKind) {
     default: assert(0 && "Unknown decl kind!");
@@ -696,7 +680,16 @@ public:
 /// ObjcMethodDecl - An instance of this class is created to represent an instance
 /// or class method declaration.
 class ObjcMethodDecl : public Decl {
+public:
+  enum ImplementationControl { None, Required, Optional };
 private:
+  /// Bitfields must be first fields in this class so they pack with those
+  /// declared in class Decl.
+  /// instance (true) or class (false) method.
+  bool IsInstance : 1;
+  /// @required/@optional
+  ImplementationControl DeclImplementation : 2;
+  
   // A unigue name for this method.
   Selector SelName;
   
@@ -719,7 +712,8 @@ public:
 		 AttributeList *M = 0, bool isInstance = true,
                  ImplementationControl impControl = None,
 		 Decl *PrevDecl = 0)
-    : Decl(ObjcMethod, isInstance, impControl), 
+    : Decl(ObjcMethod),
+      IsInstance(isInstance), DeclImplementation(impControl),
       SelName(SelInfo), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), Loc(L) {}
@@ -733,6 +727,11 @@ public:
       MethodAttrs(M), IsInstance(isInstance) {}
 #endif
   virtual ~ObjcMethodDecl();
+  bool isInstance() const { return IsInstance; }
+  ImplementationControl  getImplementationControl() const {
+    return DeclImplementation; 
+  }
+  
   Selector getSelector() const { return SelName; }
   QualType getMethodType() const { return MethodDeclType; }
   unsigned getNumMethodParams() const { return NumMethodParams; }
