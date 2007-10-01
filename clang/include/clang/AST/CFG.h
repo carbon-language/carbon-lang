@@ -23,6 +23,7 @@
 namespace clang {
 
   class Stmt;
+  class Expr;
   class CFG;
   class PrinterHelper;
   
@@ -263,6 +264,19 @@ public:
   // CFG Introspection.
   //===--------------------------------------------------------------------===//
 
+  struct   BlkExprNumTy {
+    const signed Idx;
+    explicit BlkExprNumTy(signed idx) : Idx(idx) {}
+    explicit BlkExprNumTy() : Idx(-1) {}
+    operator bool() const { return Idx >= 0; }
+    operator unsigned() const { assert(Idx >=0); return (unsigned) Idx; }
+  };
+    
+  bool          isBlkExpr(const Stmt* S);
+  bool          isBlkExpr(const Expr* E) { return getBlkExprNum(E); }
+  BlkExprNumTy  getBlkExprNum(const Expr* E);
+  unsigned      getNumBlkExprs();
+  
   unsigned getNumBlockIDs() const { return NumBlockIDs; }
 
   //===--------------------------------------------------------------------===//
@@ -277,8 +291,10 @@ public:
   // Internal: constructors and data.
   //===--------------------------------------------------------------------===//
 
-  CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0) {};
-  ~CFG() {};
+  CFG() : Entry(NULL), Exit(NULL), IndirectGotoBlock(NULL), NumBlockIDs(0), 
+          BlkExprMap(NULL) {};
+  
+  ~CFG();
     
 private:
   CFGBlock* Entry;
@@ -286,7 +302,10 @@ private:
   CFGBlock* IndirectGotoBlock;  // Special block to contain collective dispatch
   // for indirect gotos
   CFGBlockListTy Blocks;
-  unsigned NumBlockIDs;
+  unsigned  NumBlockIDs;
+  // opaque pointer to prevent inclusion of DenseMap.h.  Map from expressions
+  // to integers to record block-level expressions.
+  void*     BlkExprMap;
 };
 } // end namespace clang
 

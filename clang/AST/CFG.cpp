@@ -315,7 +315,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
         Block->appendStmt(B);
         addStmt(B->getRHS());
         return addStmt(B->getLHS());
-      }    
+      }
 
       // Fall through to the default case.
     }
@@ -929,7 +929,55 @@ CFG* CFG::buildCFG(Stmt* Statement) {
 /// reverseStmts - Reverses the orders of statements within a CFGBlock.
 void CFGBlock::reverseStmts() { std::reverse(Stmts.begin(),Stmts.end()); }
 
+//===----------------------------------------------------------------------===//
+// CFG: Queries for BlkExprs.
+//===----------------------------------------------------------------------===//
 
+namespace {
+  typedef llvm::DenseMap<const Expr*,unsigned> BlkExprMapTy;
+}
+
+static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
+  BlkExprMapTy* M = new BlkExprMapTy();
+  
+  for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I)
+    for (CFGBlock::iterator BI=I->begin(), EI=I->end(); BI != EI; ++BI)
+      if (const Expr* E = dyn_cast<Expr>(*BI))
+        (*M)[E] = M->size();
+  
+  return M;
+}
+
+bool CFG::isBlkExpr(const Stmt* S) {
+  if (const Expr* E = dyn_cast<Expr>(S)) return getBlkExprNum(E);
+  else return true;  // Statements are by default "block-level expressions."
+}
+
+CFG::BlkExprNumTy CFG::getBlkExprNum(const Expr* E) {
+  if (!BlkExprMap) { BlkExprMap = (void*) PopulateBlkExprMap(*this); }
+  
+  BlkExprMapTy* M = reinterpret_cast<BlkExprMapTy*>(BlkExprMap);
+  BlkExprMapTy::iterator I = M->find(E);
+  
+  if (I == M->end()) return CFG::BlkExprNumTy();
+  else return CFG::BlkExprNumTy(I->second);
+}
+
+unsigned CFG::getNumBlkExprs() {
+  if (const BlkExprMapTy* M = reinterpret_cast<const BlkExprMapTy*>(BlkExprMap))
+    return M->size();
+  else {
+    // We assume callers interested in the number of BlkExprs will want
+    // the map constructed if it doesn't already exist.
+    BlkExprMap = (void*) PopulateBlkExprMap(*this);
+    return reinterpret_cast<BlkExprMapTy*>(BlkExprMap)->size();
+  }
+}
+
+CFG::~CFG() {
+  delete reinterpret_cast<const BlkExprMapTy*>(BlkExprMap);
+}
+  
 //===----------------------------------------------------------------------===//
 // CFG pretty printing
 //===----------------------------------------------------------------------===//
