@@ -800,24 +800,15 @@ void LICM::FindPromotableValuesInLoop(
           break;
         }
 
-      // Do not promote null values because it may be unsafe to do so.
-      if (isa<ConstantPointerNull>(V))
-        PointerOk = false;
-
-      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(V)) {
-        // If GEP base is NULL then the calculated address used by Store or
-        // Load instruction is invalid. Do not promote this value because
-        // it may expose load and store instruction that are covered by
-        // condition which may not yet folded.
-        if (isa<ConstantPointerNull>(GEP->getOperand(0)))
-          PointerOk = false;
-      }
-
-      // If value V use is not dominating loop exit then promoting
-      // it may expose unsafe load and store instructions unconditinally.
-      if (PointerOk)
+      // If one use of value V inside the loop is safe then it is OK to promote 
+      // this value. On the otherside if there is not any unsafe use inside the
+      // looop then also it is OK to  promote this value. Otherwise it is
+      // unsafe to promote this value.
+      if (PointerOk) {
+        bool oneSafeUse = false;
+        bool oneUnsafeUse = false;
         for(Value::use_iterator UI = V->use_begin(), UE = V->use_end();
-            UI != UE && PointerOk; ++UI) {
+            UI != UE; ++UI) {
           Instruction *Use = dyn_cast<Instruction>(*UI);
           if (!Use || !CurLoop->contains(Use->getParent()))
             continue;
@@ -825,16 +816,25 @@ void LICM::FindPromotableValuesInLoop(
                  ExitI = LoopExits.begin(), ExitE = LoopExits.end();
                ExitI != ExitE; ++ExitI) {
             Instruction *Ex = *ExitI;
-            if (!DT->dominates(Use, Ex)){
-              PointerOk = false;
+            if (!isa<PHINode>(Use) && DT->dominates(Use, Ex)) {
+              oneSafeUse = true;
               break;
             }
+            else 
+              oneUnsafeUse = true;
           }
-          
-          if (!PointerOk)
+
+          if (oneSafeUse)
             break;
         }
-      
+
+        if (oneSafeUse)
+          PointerOk = true;
+        else if (!oneUnsafeUse)
+          PointerOk = true;
+        else
+          PointerOk = false;
+      }
       
       if (PointerOk) {
         const Type *Ty = cast<PointerType>(V->getType())->getElementType();
