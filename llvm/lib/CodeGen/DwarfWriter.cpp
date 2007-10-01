@@ -1971,19 +1971,6 @@ private:
     if (didInitial) return;
     didInitial = true;
     
-    // Print out .file directives to specify files for .loc directives.
-    if (TAI->hasDotLocAndDotFile()) {
-      const UniqueVector<SourceFileInfo> &SourceFiles = MMI->getSourceFiles();
-      const UniqueVector<std::string> &Directories = MMI->getDirectories();
-      for (unsigned i = 1, e = SourceFiles.size(); i <= e; ++i) {
-        sys::Path FullPath(Directories[SourceFiles[i].getDirectoryID()]);
-        bool AppendOk = FullPath.appendComponent(SourceFiles[i].getName());
-        assert(AppendOk && "Could not append filename to directory!");
-        Asm->EmitFile(i, FullPath.toString());
-        Asm->EOL();
-      }
-    }
-
     // Dwarf sections base addresses.
     if (TAI->doesDwarfRequireFrameSection()) {
       Asm->SwitchToDataSection(TAI->getDwarfFrameSection());
@@ -2626,9 +2613,6 @@ public:
       MMI = mmi;
       shouldEmit = true;
       
-      // Emit initial sections
-      EmitInitial();
-    
       // Create all the compile unit DIEs.
       ConstructCompileUnitDIEs();
       
@@ -2640,6 +2624,23 @@ public:
       
       // Prime section data.
       SectionMap.insert(TAI->getTextSection());
+
+      // Print out .file directives to specify files for .loc directives. These
+      // are printed out early so that they precede any .loc directives.
+      if (TAI->hasDotLocAndDotFile()) {
+        const UniqueVector<SourceFileInfo> &SourceFiles = MMI->getSourceFiles();
+        const UniqueVector<std::string> &Directories = MMI->getDirectories();
+        for (unsigned i = 1, e = SourceFiles.size(); i <= e; ++i) {
+          sys::Path FullPath(Directories[SourceFiles[i].getDirectoryID()]);
+          bool AppendOk = FullPath.appendComponent(SourceFiles[i].getName());
+          assert(AppendOk && "Could not append filename to directory!");
+          Asm->EmitFile(i, FullPath.toString());
+          Asm->EOL();
+        }
+      }
+
+      // Emit initial sections
+      EmitInitial();
     }
   }
 
