@@ -35,9 +35,6 @@ namespace {
 
       (void) llvm::createSimpleRegisterCoalescer();
       
-      (void) llvm::createBFS_DAGScheduler(NULL, NULL, NULL);
-      (void) llvm::createSimpleDAGScheduler(NULL, NULL, NULL);
-      (void) llvm::createNoItinsDAGScheduler(NULL, NULL, NULL);
       (void) llvm::createBURRListDAGScheduler(NULL, NULL, NULL);
       (void) llvm::createTDRRListDAGScheduler(NULL, NULL, NULL);
       (void) llvm::createTDListDAGScheduler(NULL, NULL, NULL);

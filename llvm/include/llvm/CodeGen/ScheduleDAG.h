@@ -354,24 +354,6 @@ namespace llvm {
                     DenseMap<SDOperand, unsigned> &VRBaseMap);
   };
 
-  /// createBFS_DAGScheduler - This creates a simple breadth first instruction
-  /// scheduler.
-  ScheduleDAG *createBFS_DAGScheduler(SelectionDAGISel *IS,
-                                      SelectionDAG *DAG,
-                                      MachineBasicBlock *BB);
-  
-  /// createSimpleDAGScheduler - This creates a simple two pass instruction
-  /// scheduler using instruction itinerary.
-  ScheduleDAG* createSimpleDAGScheduler(SelectionDAGISel *IS,
-                                        SelectionDAG *DAG,
-                                        MachineBasicBlock *BB);
-
-  /// createNoItinsDAGScheduler - This creates a simple two pass instruction
-  /// scheduler without using instruction itinerary.
-  ScheduleDAG* createNoItinsDAGScheduler(SelectionDAGISel *IS,
-                                         SelectionDAG *DAG,
-                                         MachineBasicBlock *BB);
-
   /// createBURRListDAGScheduler - This creates a bottom up register usage
   /// reduction list scheduler.
   ScheduleDAG* createBURRListDAGScheduler(SelectionDAGISel *IS,
