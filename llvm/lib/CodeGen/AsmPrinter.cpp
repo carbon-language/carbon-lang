@@ -816,8 +816,12 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     if (CVA->isString()) {
       EmitString(CVA);
     } else { // Not a string.  Print the values in successive locations
-      for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
+      for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i) {
         EmitGlobalConstant(CVA->getOperand(i));
+        const Type* EltTy = CVA->getType()->getElementType();
+        uint64_t padSize = TD->getABITypeSize(EltTy) - TD->getTypeSize(EltTy);
+        EmitZeros(padSize);
+      }
     }
     return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {

@@ -2279,13 +2279,13 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
       if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
         if (CI->getZExtValue() == 0) continue;
         uint64_t Offs = 
-            TD->getTypeSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
+            TD->getABITypeSize(Ty)*cast<ConstantInt>(CI)->getSExtValue();
         N = DAG.getNode(ISD::ADD, N.getValueType(), N, getIntPtrConstant(Offs));
         continue;
       }
       
       // N = N + Idx * ElementSize;
-      uint64_t ElementSize = TD->getTypeSize(Ty);
+      uint64_t ElementSize = TD->getABITypeSize(Ty);
       SDOperand IdxN = getValue(Idx);
 
       // If the index is smaller or larger than intptr_t, truncate or extend
