@@ -65,7 +65,7 @@ class LiveVariables : public DataflowValues<LiveVariables_ValueTypes,
 public:
   typedef LiveVariables_ValueTypes::ObserverTy ObserverTy;
     
-  LiveVariables() {}
+  LiveVariables(CFG& cfg) { getAnalysisData().setCFG(&cfg); }
   
   /// IsLive - Return true if a variable is live at beginning of a
   /// specified block.

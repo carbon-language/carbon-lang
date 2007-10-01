@@ -28,19 +28,18 @@ using namespace clang;
 
 namespace {
 
-class RegisterDeclsExprs : public CFGRecStmtDeclVisitor<RegisterDeclsExprs> {  
+class RegisterDecls : public CFGRecStmtDeclVisitor<RegisterDecls> {  
   UninitializedValues::AnalysisDataTy& AD;
 public:
-  RegisterDeclsExprs(UninitializedValues::AnalysisDataTy& ad) :  AD(ad) {}
+  RegisterDecls(UninitializedValues::AnalysisDataTy& ad) :  AD(ad) {}
   
   void VisitBlockVarDecl(BlockVarDecl* VD) { AD.Register(VD); }
-  void BlockStmt_VisitExpr(Expr* E) { AD.Register(E); }
 };
   
 } // end anonymous namespace
 
 void UninitializedValues::InitializeValues(const CFG& cfg) {
-  RegisterDeclsExprs R(this->getAnalysisData());
+  RegisterDecls R(getAnalysisData());
   cfg.VisitBlockStmts(R);
 }
 
@@ -76,7 +75,6 @@ public:
   
 static const bool Initialized = true;
 static const bool Uninitialized = false;  
-
 
 bool TransferFuncs::VisitDeclRefExpr(DeclRefExpr* DR) {
   if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl())) {
@@ -230,7 +228,7 @@ void CheckUninitializedValues(CFG& cfg, ASTContext &Ctx, Diagnostic &Diags,
                               bool FullUninitTaint) {
   
   // Compute the unitialized values information.
-  UninitializedValues U;
+  UninitializedValues U(cfg);
   U.getAnalysisData().FullUninitTaint = FullUninitTaint;
   Solver S(U);
   S.runOnCFG(cfg);

@@ -949,11 +949,13 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
 }
 
 bool CFG::isBlkExpr(const Stmt* S) {
+  assert (S != NULL);
   if (const Expr* E = dyn_cast<Expr>(S)) return getBlkExprNum(E);
   else return true;  // Statements are by default "block-level expressions."
 }
 
 CFG::BlkExprNumTy CFG::getBlkExprNum(const Expr* E) {
+  assert(E != NULL);
   if (!BlkExprMap) { BlkExprMap = (void*) PopulateBlkExprMap(*this); }
   
   BlkExprMapTy* M = reinterpret_cast<BlkExprMapTy*>(BlkExprMap);

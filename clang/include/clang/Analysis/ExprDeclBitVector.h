@@ -17,6 +17,7 @@
 #ifndef LLVM_CLANG_EXPRDECLBVDVAL_H
 #define LLVM_CLANG_EXPRDECLBVDVAL_H
 
+#include "clang/AST/CFG.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 
@@ -130,36 +131,25 @@ struct ExprDeclBitVector_Types {
   //===--------------------------------------------------------------------===//
 
   class AnalysisDataTy : public DeclBitVector_Types::AnalysisDataTy {
+    CFG* cfg;
   public:
-    typedef llvm::DenseMap<const Expr*, unsigned > EMapTy;    
-    typedef EMapTy::const_iterator expr_iterator;
-
-  protected:
-    EMapTy EMap;
-    unsigned NExprs;
-
-  public:
-    
-    AnalysisDataTy() : NExprs(0) {}
+    AnalysisDataTy() {}
     virtual ~AnalysisDataTy() {}
+
+    void setCFG(CFG* c) { cfg = c; }
+    CFG& getCFG() { assert(cfg && "CFG should not be NULL."); return *cfg; }
     
-    bool isTracked(const Expr* E) { return EMap.find(E) != EMap.end(); }
+    bool isTracked(const Expr* E) { return cfg->isBlkExpr(E); }
     using DeclBitVector_Types::AnalysisDataTy::isTracked;
 
     unsigned getIdx(const Expr* E) const {
-      EMapTy::const_iterator I = EMap.find(E);
-      assert (I != EMap.end());
-      return I->second;
-    }    
+      CFG::BlkExprNumTy I = cfg->getBlkExprNum(E);
+      assert(I && "expression not tracked for bitvector.");
+      return I;
+    }
     using DeclBitVector_Types::AnalysisDataTy::getIdx;
     
-    unsigned getNumExprs() const { return NExprs; }
-    
-    void Register(const Expr* E) { if (!isTracked(E)) EMap[E] = NExprs++; }    
-    using DeclBitVector_Types::AnalysisDataTy::Register;
-    
-    expr_iterator begin_expr() const { return EMap.begin(); }
-    expr_iterator end_expr() const { return EMap.end(); }
+    unsigned getNumExprs() const { return cfg->getNumBlkExprs(); }
   };
 
   //===--------------------------------------------------------------------===//

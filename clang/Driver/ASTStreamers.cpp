@@ -222,7 +222,7 @@ namespace {
     }
 
     virtual void VisitCFG(CFG& C) {
-      LiveVariables L;
+      LiveVariables L(C);
       L.runOnCFG(C);
       L.dumpBlockLiveness(*SM);
     }
