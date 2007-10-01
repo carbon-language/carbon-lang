@@ -1439,25 +1439,16 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
   return NewFD;
 }
 
-static void ObjcSetIvarVisibility(ObjcIvarDecl *OIvar,
-                                  tok::ObjCKeywordKind ivarVisibility) {
-  assert(OIvar && "missing instance variable");
+/// TranslateIvarVisibility - Translate visibility from a token ID to an 
+///  AST enum value.
+static ObjcIvarDecl::AccessControl
+TranslateIvarVisibility(tok::ObjCKeywordKind ivarVisibility) {
   switch (ivarVisibility) {
-  case tok::objc_private:
-    OIvar->setAccessControl(ObjcIvarDecl::Private);
-    break;
-  case tok::objc_public:
-    OIvar->setAccessControl(ObjcIvarDecl::Public);
-    break;
-  case tok::objc_protected:
-    OIvar->setAccessControl(ObjcIvarDecl::Protected);
-    break;
-  case tok::objc_package:
-    OIvar->setAccessControl(ObjcIvarDecl::Package);
-    break;
-  default:
-    OIvar->setAccessControl(ObjcIvarDecl::None);
-    break;
+    case tok::objc_private: return ObjcIvarDecl::Private;
+    case tok::objc_public: return ObjcIvarDecl::Public;
+    case tok::objc_protected: return ObjcIvarDecl::Protected;
+    case tok::objc_package: return ObjcIvarDecl::Package;
+    default: assert(false && "Unknown visitibility kind");
   }
 }
 
@@ -1498,7 +1489,8 @@ void Sema::ActOnFields(Scope* S,
     
     // If we have visibility info, make sure the AST is set accordingly.
     if (visibility)
-      ObjcSetIvarVisibility(dyn_cast<ObjcIvarDecl>(FD), visibility[i]);
+      cast<ObjcIvarDecl>(FD)->setAccessControl(
+                                TranslateIvarVisibility(visibility[i]));
       
     // C99 6.7.2.1p2 - A field may not be a function type.
     if (FDTy->isFunctionType()) {

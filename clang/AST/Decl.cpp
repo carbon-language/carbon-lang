@@ -264,7 +264,7 @@ FieldDecl* RecordDecl::getMember(IdentifierInfo *name) {
 }
 
 void ObjcMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo, 
-		       unsigned NumParams) {
+				     unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
 
   // Zero params -> null pointer.
