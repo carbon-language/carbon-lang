@@ -89,6 +89,28 @@ SourceRange ReturnStmt::getSourceRange() const {
     return SourceRange(RetLoc);
 }
 
+bool Stmt::hasImplicitControlFlow() const {
+  switch (sClass) {
+    default:
+      return false;
+      
+    case CallExprClass:
+    case ConditionalOperatorClass:
+    case ChooseExprClass:
+    case StmtExprClass:
+    case DeclStmtClass:
+      return true;    
+      
+    case Stmt::BinaryOperatorClass: {
+      const BinaryOperator* B = cast<BinaryOperator>(this);
+      if (B->isLogicalOp() || B->getOpcode() == BinaryOperator::Comma)
+        return true;
+      else
+        return false;
+    }
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//

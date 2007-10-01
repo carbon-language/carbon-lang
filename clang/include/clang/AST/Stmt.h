@@ -85,6 +85,13 @@ public:
   // Implement isa<T> support.
   static bool classof(const Stmt *) { return true; }  
   
+  /// hasImplicitControlFlow - Some statements (e.g. short circuited operations)
+  ///  contain implicit control-flow in the order their subexpressions
+  ///  are evaluated.  This predicate returns true if this statement has
+  ///  such implicit control-flow.  Such statements are also specially handled
+  ///  within CFGs.
+  bool hasImplicitControlFlow() const;
+
   /// Child Iterators: All subclasses must implement child_begin and child_end
   ///  to permit easy iteration over the substatements/subexpessions of an
   ///  AST node.  This permits easy iteration over all nodes in the AST.
