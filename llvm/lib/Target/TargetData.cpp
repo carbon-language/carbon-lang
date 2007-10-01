@@ -471,7 +471,12 @@ uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
     return getTypeSize(Ty) * 8;
 }
 
-
+uint64_t TargetData::getABITypeSizeInBits(const Type *Ty) const {
+  if (Ty->isInteger())
+    return cast<IntegerType>(Ty)->getBitWidth();
+  else
+    return getABITypeSize(Ty) * 8;
+}
 /*!
   \param abi_or_pref Flag that determines which alignment is returned. true
   returns the ABI alignment, false returns the preferred alignment.

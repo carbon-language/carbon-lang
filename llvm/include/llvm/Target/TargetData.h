@@ -159,9 +159,22 @@ public:
   /// type.
   uint64_t getTypeSize(const Type *Ty) const;
 
+  /// getABITypeSize - Return the number of bytes allocated for the specified
+  /// type when used as an element in a larger object, including alignment
+  /// padding.
+  uint64_t getABITypeSize(const Type *Ty) const {
+    unsigned char Align = getABITypeAlignment(Ty);
+    return (getTypeSize(Ty) + Align - 1)/Align*Align;
+  }
+
   /// getTypeSizeInBits - Return the number of bits necessary to hold the
   /// specified type.
   uint64_t getTypeSizeInBits(const Type* Ty) const;
+
+  /// getABITypeSizeInBits - Return the number of bytes allocated for the
+  /// specified type when used as an element in a larger object, including
+  ///  alignment padding.
+  uint64_t getABITypeSizeInBits(const Type* Ty) const;
 
   /// getABITypeAlignment - Return the minimum ABI-required alignment for the
   /// specified type.
