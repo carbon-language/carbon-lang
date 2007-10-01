@@ -1,7 +1,4 @@
-; RUN: llvm-upgrade %s | llvm-as | llc -pre-RA-sched=none
 ; RUN: llvm-upgrade %s | llvm-as | llc -pre-RA-sched=default
-; RUN: llvm-upgrade %s | llvm-as | llc -pre-RA-sched=simple
-; RUN: llvm-upgrade %s | llvm-as | llc -pre-RA-sched=simple-noitin
 ; RUN: llvm-upgrade %s | llvm-as | llc -pre-RA-sched=list-td
 ; RUN: llvm-upgrade %s | llvm-as | llc -pre-RA-sched=list-tdrr
 ; RUN: llvm-upgrade %s | llvm-as | llc -pre-RA-sched=list-burr
