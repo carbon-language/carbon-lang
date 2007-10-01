@@ -14,6 +14,7 @@
 #ifndef X86REGISTERINFO_H
 #define X86REGISTERINFO_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "X86GenRegisterInfo.h.inc"
@@ -38,16 +39,32 @@ public:
 
 private:
   /// Is64Bit - Is the target 64-bits.
+  ///
   bool Is64Bit;
 
   /// SlotSize - Stack slot size in bytes.
+  ///
   unsigned SlotSize;
 
   /// StackPtr - X86 physical register used as stack ptr.
+  ///
   unsigned StackPtr;
 
   /// FramePtr - X86 physical register used as frame ptr.
+  ///
   unsigned FramePtr;
+
+  /// RegOp2MemOpTable2Addr, RegOp2MemOpTable0, RegOp2MemOpTable1,
+  /// RegOp2MemOpTable2 - Load / store folding opcode maps.
+  ///
+  DenseMap<unsigned*, unsigned> RegOp2MemOpTable2Addr;
+  DenseMap<unsigned*, unsigned> RegOp2MemOpTable0;
+  DenseMap<unsigned*, unsigned> RegOp2MemOpTable1;
+  DenseMap<unsigned*, unsigned> RegOp2MemOpTable2;
+
+  /// MemOp2RegOpTable - Load / store unfolding opcode map.
+  ///
+  DenseMap<unsigned*, unsigned> MemOp2RegOpTable;
 
 public:
   X86RegisterInfo(X86TargetMachine &tm, const TargetInstrInfo &tii);
@@ -57,6 +74,7 @@ public:
   unsigned getX86RegNum(unsigned RegNo);
 
   /// Code Generation virtual methods...
+  ///
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MI,
                                  const std::vector<CalleeSavedInfo> &CSI) const;
