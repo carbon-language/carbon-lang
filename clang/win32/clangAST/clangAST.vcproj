@@ -227,6 +227,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\clang\AST\DeclObjC.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\clang\AST\Expr.h"
 				>
 			</File>

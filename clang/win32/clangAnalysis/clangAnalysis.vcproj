@@ -171,6 +171,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\include\clang\Analysis\ExprDeclBitVector.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\clang\Analysis\LiveVariables.h"
 				>
 			</File>
@@ -231,6 +235,14 @@
 				</File>
 				<File
 					RelativePath="..\..\include\clang\Analysis\FlowSensitive\DataflowValues.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="PathSensitive"
+				>
+				<File
+					RelativePath="..\..\include\clang\Analysis\PathSensitive\ProgramEdge.h"
 					>
 				</File>
 			</Filter>
