@@ -26,6 +26,27 @@ class ObjcMethodDecl;
 class ObjcProtocolDecl;
 class ObjcCategoryDecl;
 
+/// ObjcInterfaceDecl - Represents an ObjC class declaration. For example:
+///
+///   // MostPrimitive declares no super class (not particularly useful).
+///   @interface MostPrimitive 
+///     // no instance variables or methods.
+///   @end
+///
+///   // NSResponder inherits from NSObject and implements NSCoding (a protocol). 
+///   @interface NSResponder : NSObject <NSCoding>
+///   { // instance variables are represented by ObjcIvarDecl.
+///     id nextResponder; // nextResponder instance variable.
+///   }
+///   - (NSResponder *)nextResponder; // return a pointer to NSResponder.
+///   - (void)mouseMoved:(NSEvent *)theEvent; // return void, takes a pointer
+///   @end                                    // to an NSEvent.
+///
+///   Unlike C/C++, forward class declarations are accomplished with @class.
+///   Unlike C/C++, @class allows for a list of classes to be forward declared.
+///   Unlike C++, ObjC is a single-rooted class model. In Cocoa, classes
+///   typically inherit from NSObject (an exception is NSProxy).
+///
 class ObjcInterfaceDecl : public TypeDecl {
   
   /// Class's super class.
@@ -113,6 +134,21 @@ public:
   static bool classof(const ObjcInterfaceDecl *D) { return true; }
 };
 
+/// ObjcIvarDecl - Represents an ObjC instance variable. In general, ObjC
+/// instance variables are identical to C. The only exception is Objective-C
+/// supports C++ style access control. For example:
+///
+///   @interface IvarExample : NSObject
+///   {
+///     id defaultToPrivate; // same as C++.
+///   @public:
+///     id canBePublic; // same as C++.
+///   @protected:
+///     id canBeProtected; // same as C++.
+///   @package:
+///     id canBePackage; // framework visibility (not available in C++).
+///   }
+///
 class ObjcIvarDecl : public FieldDecl {
 public:
   ObjcIvarDecl(SourceLocation L, IdentifierInfo *Id, QualType T) 
@@ -153,8 +189,26 @@ public:
   static bool classof(const ObjcClassDecl *D) { return true; }
 };
 
-/// ObjcMethodDecl - An instance of this class is created to represent an instance
-/// or class method declaration.
+/// ObjcMethodDecl - Represents an instance or class method declaration.
+/// ObjC methods can be declared within 4 contexts: class interfaces,
+/// categories, protocols, and class implementations. While C++ member
+/// functions leverage C syntax, Objective-C method syntax is modeled after 
+/// Smalltalk (using colons to specify argument types/expressions). 
+/// Here are some brief examples:
+///
+/// Setter/getter instance methods:
+/// - (void)setMenu:(NSMenu *)menu;
+/// - (NSMenu *)menu; 
+/// 
+/// Instance method that takes 2 NSView arguments:
+/// - (void)replaceSubview:(NSView *)oldView with:(NSView *)newView;
+///
+/// Getter class method:
+/// + (NSMenu *)defaultMenu;
+///
+/// A selector represents a unique name for a method. The selector names for
+/// the above methods are setMenu:, menu, replaceSubview:with:, and defaultMenu.
+///
 class ObjcMethodDecl : public Decl {
 public:
   enum ImplementationControl { None, Required, Optional };
@@ -193,15 +247,6 @@ public:
       SelName(SelInfo), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), Loc(L) {}
-#if 0
-  ObjcMethodDecl(Kind DK, SourceLocation L, IdentifierInfo &SelId, QualType T,
-		 ParmVarDecl **paramInfo = 0, int numParams=-1,
-		 AttributeList *M = 0, bool isInstance = true, 
-		 Decl *PrevDecl = 0)
-    : Decl(DK), Selector(SelId), MethodDeclType(T), 
-      ParamInfo(paramInfo), NumMethodParams(numParams),
-      MethodAttrs(M), IsInstance(isInstance) {}
-#endif
   virtual ~ObjcMethodDecl();
   Selector getSelector() const { return SelName; }
   QualType getMethodType() const { return MethodDeclType; }
@@ -228,6 +273,26 @@ public:
   static bool classof(const ObjcMethodDecl *D) { return true; }
 };
 
+/// ObjcProtocolDecl - Represents a protocol declaration. ObjC protocols
+/// declare a pure abstract type (i.e no instance variables are permitted). 
+/// Protocols orginally drew inspiration from C++ pure virtual functions (a C++ 
+/// feature with nice semantics and lousy syntax:-). Here is an example:
+///
+/// @protocol NSDraggingInfo
+/// - (NSWindow *)draggingDestinationWindow;
+/// - (NSImage *)draggedImage;
+/// @end
+///
+/// @interface ImplementsNSDraggingInfo : NSObject <NSDraggingInfo>
+/// @end
+///
+/// Objc protocols inspired Java interfaces. Unlike Java, ObjC classes and
+/// protocols are in distinct namespaces. For example, Cocoa defines both
+/// an NSObject protocol and class (which isn't allowed in Java). As a result, 
+/// protocols are referenced using angle brackets as follows:
+///
+/// id <NSDraggingInfo> anyObjectThatImplementsNSDraggingInfo;
+///
 class ObjcProtocolDecl : public TypeDecl {
   /// referenced protocols
   ObjcProtocolDecl **ReferencedProtocols;  // Null if none
@@ -288,6 +353,11 @@ public:
   static bool classof(const ObjcProtocolDecl *D) { return true; }
 };
   
+/// ObjcForwardProtocolDecl - Represents a forward protocol declaration.
+/// For example:
+///
+/// @protocol NSTextInput, NSChangeSpelling, NSDraggingInfo;
+/// 
 class ObjcForwardProtocolDecl : public TypeDecl {
     ObjcProtocolDecl **ForwardProtocolDecls;   // Null if not defined.
     int NumForwardProtocolDecls;               // -1 if not defined.
@@ -310,7 +380,24 @@ class ObjcForwardProtocolDecl : public TypeDecl {
     static bool classof(const ObjcForwardProtocolDecl *D) { return true; }
 };
 
-class ObjcCategoryDecl : public ScopedDecl {
+/// ObjcCategoryDecl - Represents a category declaration. A category allows
+/// you to add methods to an existing class (without subclassing or modifying
+/// the original class interface or implementation:-). Categories don't allow 
+/// you to add instance data. The following example adds "myMethod" to all
+/// NSView's within a process:
+///
+/// @interface NSView (MyViewMethods)
+/// - myMethod;
+/// @end
+///
+/// Cateogries also allow you to split the implementation of a class across
+/// several files (a feature more naturally supported in C++).
+///
+/// Categories were originally inspired by dynamic languages such as Common
+/// Lisp and Smalltalk. More traditional class-based languages (C++, Java) 
+/// don't support this level of dynamism, which is both powerful and dangerous.
+///
+class ObjcCategoryDecl : public ScopedDecl { // FIXME: don't subclass from ScopedDecl!
   /// Interface belonging to this category
   ObjcInterfaceDecl *ClassInterface;
   
@@ -374,7 +461,22 @@ public:
   }
   static bool classof(const ObjcCategoryDecl *D) { return true; }
 };
-  
+
+/// ObjcImplementationDecl - Represents a class definition - this is where
+/// method definitions are specified. For example:
+///
+/// @implementation MyClass
+/// - (void)myMethod { /* do something */ }
+/// @end
+///
+/// Typically, instance variables are specified in the class interface, 
+/// *not* in the implemenentation. Nevertheless (for legacy reasons), we
+/// allow instance variables to be specified in the implementation. When
+/// specified, they need to be *identical* to the interface. Now that we
+/// have support for non-fragile ivars in ObjC 2.0, we can consider removing
+/// the legacy semantics and allow developers to move private ivar declarations
+/// from the class interface to the class implementation (but I digress:-)
+///
 class ObjcImplementationDecl : public TypeDecl {
     
   /// Implementation Class's super class.
