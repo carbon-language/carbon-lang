@@ -26,7 +26,8 @@
 
 namespace clang {
   class TargetInfo;
-
+  class ObjcImplementationDecl;
+  
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
 class ASTContext {

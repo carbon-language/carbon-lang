@@ -19,6 +19,7 @@
 
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 
 #define DISPATCH_CASE(CASE,CLASS) \
 case Decl::CASE: \
