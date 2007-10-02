@@ -1031,7 +1031,7 @@ Sema::DeclTy *Sema::ObjcStartCatInterface(Scope* S,
                       IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
   ObjcCategoryDecl *CDecl;
   ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(S, ClassName, ClassLoc);
-  CDecl = new ObjcCategoryDecl(AtInterfaceLoc, NumProtoRefs, ClassName);
+  CDecl = new ObjcCategoryDecl(AtInterfaceLoc, NumProtoRefs);
   CDecl->setClassInterface(IDecl);
 
   /// Check that class of this category is already completely declared.

@@ -401,7 +401,7 @@ public:
 /// Lisp and Smalltalk. More traditional class-based languages (C++, Java) 
 /// don't support this level of dynamism, which is both powerful and dangerous.
 ///
-class ObjcCategoryDecl : public ScopedDecl { // FIXME: don't subclass from ScopedDecl!
+class ObjcCategoryDecl : public Decl {
   /// Interface belonging to this category
   ObjcInterfaceDecl *ClassInterface;
   
@@ -424,9 +424,8 @@ class ObjcCategoryDecl : public ScopedDecl { // FIXME: don't subclass from Scope
   ObjcCategoryDecl *NextClassCategory;
 
 public:
-  ObjcCategoryDecl(SourceLocation L, unsigned numRefProtocol, 
-                   IdentifierInfo *Id)
-    : ScopedDecl(ObjcCategory, L, Id, 0),
+  ObjcCategoryDecl(SourceLocation L, unsigned numRefProtocol)
+    : Decl(ObjcCategory),
       ClassInterface(0), ObjcCatName(0),
       CatReferencedProtocols(0), NumCatReferencedProtocols(-1),
       CatInsMethods(0), NumCatInsMethods(-1),

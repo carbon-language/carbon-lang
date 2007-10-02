@@ -66,7 +66,6 @@ public:
         DISPATCH_CASE(ObjcInterface,ObjcInterfaceDecl)
         DISPATCH_CASE(ObjcClass,ObjcClassDecl)
         DISPATCH_CASE(ObjcProtocol,ObjcProtocolDecl)
-        DISPATCH_CASE(ObjcCategory,ObjcCategoryDecl)
       default:
         assert(false && "Subtype of ScopedDecl not handled.");
     }
