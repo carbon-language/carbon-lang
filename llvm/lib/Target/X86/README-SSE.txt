@@ -673,6 +673,22 @@ beneficial because it prevents the load from being folded into the multiply.
 
 In this loop:
 
+bb49:		; preds = %bb49, %bb49.preheader
+	%indvar = phi i32 [ 0, %bb49.preheader ], [ %indvar.next, %bb49 ]		; <i32> [#uses=2]
+	%dp.089.0.rec = shl i32 %indvar, 3		; <i32> [#uses=2]
+	%dp.089.0 = getelementptr i32* %tmp89, i32 %dp.089.0.rec		; <i32*> [#uses=1]
+	%tmp5051 = bitcast i32* %dp.089.0 to <2 x i64>*		; <<2 x i64>*> [#uses=1]
+	store <2 x i64> zeroinitializer, <2 x i64>* %tmp5051, align 16
+	%dp.089.0.sum105 = or i32 %dp.089.0.rec, 4		; <i32> [#uses=1]
+	%tmp56 = getelementptr i32* %tmp89, i32 %dp.089.0.sum105		; <i32*> [#uses=1]
+	%tmp5657 = bitcast i32* %tmp56 to <2 x i64>*		; <<2 x i64>*> [#uses=1]
+	store <2 x i64> zeroinitializer, <2 x i64>* %tmp5657, align 16
+	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=2]
+	%exitcond = icmp eq i32 %indvar.next, %tmp98		; <i1> [#uses=1]
+	br i1 %exitcond, label %bb72, label %bb49
+
+we get:
+
 LBB4_6:	# bb47.preheader
 	shlw	$2, %si
 	decw	%si
