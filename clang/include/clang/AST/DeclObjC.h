@@ -71,17 +71,14 @@ class ObjcInterfaceDecl : public TypeDecl {
   /// List of categories defined for this class.
   ObjcCategoryDecl *ListCategories;
   
-  bool isForwardDecl; // declared with @class.
+  bool ForwardDecl; // declared with @class.
 public:
   ObjcInterfaceDecl(SourceLocation L, unsigned numRefProtos,
                     IdentifierInfo *Id, bool FD = false)
-    : TypeDecl(ObjcInterface, L, Id, 0),
-      SuperClass(0),
-      IntfRefProtocols(0), NumIntfRefProtocols(-1),
-      Ivars(0), NumIvars(-1),
+    : TypeDecl(ObjcInterface, L, Id, 0), SuperClass(0),
+      IntfRefProtocols(0), NumIntfRefProtocols(-1), Ivars(0), NumIvars(-1),
       InsMethods(0), NumInsMethods(-1), ClsMethods(0), NumClsMethods(-1),
-      ListCategories(0),
-      isForwardDecl(FD) {
+      ListCategories(0), ForwardDecl(FD) {
         AllocIntfRefProtocols(numRefProtos);
       }
     
@@ -112,8 +109,8 @@ public:
   void ObjcAddMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                       ObjcMethodDecl **clsMethods, unsigned numClsMembers);
   
-  bool getIsForwardDecl() const { return isForwardDecl; }
-  void setIsForwardDecl(bool val) { isForwardDecl = val; }
+  bool isForwardDecl() const { return ForwardDecl; }
+  void setForwardDecl(bool val) { ForwardDecl = val; }
   
   void setIntfRefProtocols(int idx, ObjcProtocolDecl *OID) {
     assert((idx < NumIntfRefProtocols) && "index out of range");
@@ -324,8 +321,8 @@ public:
   ObjcMethodDecl** getClsMethods() const { return ProtoClsMethods; }
   int getNumClsMethods() const { return NumProtoClsMethods; }
   
-  bool getIsForwardProtoDecl() const { return isForwardProtoDecl; }
-  void setIsForwardProtoDecl(bool val) { isForwardProtoDecl = val; }
+  bool isForwardDecl() const { return isForwardProtoDecl; }
+  void setForwardDecl(bool val) { isForwardProtoDecl = val; }
 
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcProtocol;

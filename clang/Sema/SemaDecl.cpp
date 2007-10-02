@@ -915,10 +915,10 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(Scope* S,
   ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(ClassName);
   if (IDecl) {
     // Class already seen. Is it a forward declaration?
-    if (!IDecl->getIsForwardDecl())
+    if (!IDecl->isForwardDecl())
       Diag(AtInterfaceLoc, diag::err_duplicate_class_def, ClassName->getName());
     else {
-      IDecl->setIsForwardDecl(false);
+      IDecl->setForwardDecl(false);
       IDecl->AllocIntfRefProtocols(NumProtocols);
     }
   }
@@ -945,7 +945,7 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(Scope* S,
       // Check that super class is previously defined
       SuperClassEntry = getObjCInterfaceDecl(SuperName); 
                               
-      if (!SuperClassEntry || SuperClassEntry->getIsForwardDecl()) {
+      if (!SuperClassEntry || SuperClassEntry->isForwardDecl()) {
         Diag(AtInterfaceLoc, diag::err_undef_superclass, SuperName->getName(),
              ClassName->getName()); 
       }
@@ -957,7 +957,7 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(Scope* S,
   for (unsigned int i = 0; i != NumProtocols; i++) {
     ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtocolNames[i], 
 						     ClassLoc);
-    if (!RefPDecl || RefPDecl->getIsForwardProtoDecl())
+    if (!RefPDecl || RefPDecl->isForwardDecl())
       Diag(ClassLoc, diag::err_undef_protocolref,
            ProtocolNames[i]->getName(),
            ClassName->getName());
@@ -975,18 +975,18 @@ Sema::DeclTy *Sema::ObjcStartProtoInterface(Scope* S,
   ObjcProtocolDecl *PDecl = getObjCProtocolDecl(S, ProtocolName, ProtocolLoc);
   if (PDecl) {
     // Protocol already seen. Better be a forward protocol declaration
-    if (!PDecl->getIsForwardProtoDecl())
+    if (!PDecl->isForwardDecl())
       Diag(ProtocolLoc, diag::err_duplicate_protocol_def, 
            ProtocolName->getName());
     else {
-      PDecl->setIsForwardProtoDecl(false);
+      PDecl->setForwardDecl(false);
       PDecl->AllocReferencedProtocols(NumProtoRefs);
     }
   }
   else {
     PDecl = new ObjcProtocolDecl(AtProtoInterfaceLoc, NumProtoRefs, 
                                  ProtocolName);
-    PDecl->setIsForwardProtoDecl(false);
+    PDecl->setForwardDecl(false);
     // Chain & install the protocol decl into the identifier.
     PDecl->setNext(ProtocolName->getFETokenInfo<ScopedDecl>());
     ProtocolName->setFETokenInfo(PDecl);
@@ -996,7 +996,7 @@ Sema::DeclTy *Sema::ObjcStartProtoInterface(Scope* S,
   for (unsigned int i = 0; i != NumProtoRefs; i++) {
     ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtoRefNames[i], 
 						     ProtocolLoc);
-    if (!RefPDecl || RefPDecl->getIsForwardProtoDecl())
+    if (!RefPDecl || RefPDecl->isForwardDecl())
       Diag(ProtocolLoc, diag::err_undef_protocolref,
 	   ProtoRefNames[i]->getName(),
            ProtocolName->getName());
@@ -1042,7 +1042,7 @@ Sema::DeclTy *Sema::ObjcStartCatInterface(Scope* S,
   CDecl->setClassInterface(IDecl);
 
   /// Check that class of this category is already completely declared.
-  if (!IDecl || IDecl->getIsForwardDecl())
+  if (!IDecl || IDecl->isForwardDecl())
     Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
   else {
     /// Check for duplicate interface declaration for this category
@@ -1065,7 +1065,7 @@ Sema::DeclTy *Sema::ObjcStartCatInterface(Scope* S,
   for (unsigned int i = 0; i != NumProtoRefs; i++) {
     ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtoRefNames[i], 
 						     CategoryLoc);
-    if (!RefPDecl || RefPDecl->getIsForwardProtoDecl())
+    if (!RefPDecl || RefPDecl->isForwardDecl())
       Diag(CategoryLoc, diag::err_undef_protocolref,
 	   ProtoRefNames[i]->getName(),
            CategoryName->getName());
@@ -1087,7 +1087,7 @@ Sema::DeclTy *Sema::ObjcStartCategoryImplementation(Scope* S,
                                                          ClassName, IDecl,
                                                          CatName);
   /// Check that class of this category is already completely declared.
-  if (!IDecl || IDecl->getIsForwardDecl())
+  if (!IDecl || IDecl->isForwardDecl())
     Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
   /// TODO: Check that CatName, category name, is not used in another
   // implementation.
