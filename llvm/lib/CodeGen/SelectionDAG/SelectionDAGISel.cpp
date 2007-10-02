@@ -2796,20 +2796,12 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
      return 0;
   }
 
-  case Intrinsic::sqrt_f32:
-  case Intrinsic::sqrt_f64:
-  case Intrinsic::sqrt_f80:
-  case Intrinsic::sqrt_f128:
-  case Intrinsic::sqrt_ppcf128:
+  case Intrinsic::sqrt:
     setValue(&I, DAG.getNode(ISD::FSQRT,
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1))));
     return 0;
-  case Intrinsic::powi_f32:
-  case Intrinsic::powi_f64:
-  case Intrinsic::powi_f80:
-  case Intrinsic::powi_f128:
-  case Intrinsic::powi_ppcf128:
+  case Intrinsic::powi:
     setValue(&I, DAG.getNode(ISD::FPOWI,
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1)),

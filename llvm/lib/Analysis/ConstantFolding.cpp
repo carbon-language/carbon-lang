@@ -329,16 +329,8 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
 bool
 llvm::canConstantFoldCallTo(Function *F) {
   switch (F->getIntrinsicID()) {
-  case Intrinsic::sqrt_f32:
-  case Intrinsic::sqrt_f64:
-  case Intrinsic::sqrt_f80:
-  case Intrinsic::sqrt_f128:
-  case Intrinsic::sqrt_ppcf128:
-  case Intrinsic::powi_f32:
-  case Intrinsic::powi_f64:
-  case Intrinsic::powi_f80:
-  case Intrinsic::powi_f128:
-  case Intrinsic::powi_ppcf128:
+  case Intrinsic::sqrt:
+  case Intrinsic::powi:
   case Intrinsic::bswap:
   case Intrinsic::ctpop:
   case Intrinsic::ctlz:
@@ -539,12 +531,12 @@ llvm::ConstantFoldCall(Function *F, Constant** Operands, unsigned NumOperands) {
     }
   } else if (NumOperands == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {
+      if (Ty!=Type::FloatTy && Ty!=Type::DoubleTy)
+        return 0;
       double Op1V = Ty==Type::FloatTy ? 
                       (double)Op1->getValueAPF().convertToFloat():
                       Op1->getValueAPF().convertToDouble();
       if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
-        if (Ty!=Type::FloatTy && Ty!=Type::DoubleTy)
-          return 0;
         double Op2V = Ty==Type::FloatTy ? 
                       (double)Op2->getValueAPF().convertToFloat():
                       Op2->getValueAPF().convertToDouble();

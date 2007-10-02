@@ -99,14 +99,20 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
                               PointerType::get(Type::Int8Ty), Type::Int32Ty, 
                               TD.getIntPtrType(), (Type *)0);
         break;
-      case Intrinsic::sqrt_f32:
-      case Intrinsic::sqrt_f64:
-        if(I->arg_begin()->getType() == Type::FloatTy)
+      case Intrinsic::sqrt:
+        switch((int)I->arg_begin()->getType()->getTypeID()) {
+        case Type::FloatTyID:
           EnsureFunctionExists(M, "sqrtf", I->arg_begin(), I->arg_end(),
                                Type::FloatTy);
-        else
+        case Type::DoubleTyID:
           EnsureFunctionExists(M, "sqrt", I->arg_begin(), I->arg_end(),
                                Type::DoubleTy);
+        case Type::X86_FP80TyID:
+        case Type::FP128TyID:
+        case Type::PPC_FP128TyID:
+          EnsureFunctionExists(M, "sqrtl", I->arg_begin(), I->arg_end(),
+                               I->arg_begin()->getType());
+        }
         break;
       }
 }
@@ -782,34 +788,27 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     MemsetFCache);
     break;
   }
-  case Intrinsic::sqrt_f32: {
+  case Intrinsic::sqrt: {
     static Constant *sqrtfFCache = 0;
-    ReplaceCallWith("sqrtf", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::FloatTy, sqrtfFCache);
-    break;
-  }
-  case Intrinsic::sqrt_f64: {
     static Constant *sqrtFCache = 0;
-    ReplaceCallWith("sqrt", CI, CI->op_begin()+1, CI->op_end(),
+    static Constant *sqrtLDCache = 0;
+    switch (CI->getOperand(1)->getType()->getTypeID()) {
+    default: assert(0 && "Invalid type in sqrt"); abort();
+    case Type::FloatTyID:
+      ReplaceCallWith("sqrtf", CI, CI->op_begin()+1, CI->op_end(),
+                    Type::FloatTy, sqrtfFCache);
+      break;
+    case Type::DoubleTyID:
+      ReplaceCallWith("sqrt", CI, CI->op_begin()+1, CI->op_end(),
                     Type::DoubleTy, sqrtFCache);
-    break;
-  }
-  case Intrinsic::sqrt_f80: {
-    static Constant *sqrtF80Cache = 0;
-    ReplaceCallWith("sqrtl", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::X86_FP80Ty, sqrtF80Cache);
-    break;
-  }
-  case Intrinsic::sqrt_f128: {
-    static Constant *sqrtF128Cache = 0;
-    ReplaceCallWith("sqrtl", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::FP128Ty, sqrtF128Cache);
-    break;
-  }
-  case Intrinsic::sqrt_ppcf128: {
-    static Constant *sqrtppcF128Cache = 0;
-    ReplaceCallWith("sqrtl", CI, CI->op_begin()+1, CI->op_end(),
-                    Type::PPC_FP128Ty, sqrtppcF128Cache);
+      break;
+    case Type::X86_FP80TyID:
+    case Type::FP128TyID:
+    case Type::PPC_FP128TyID:
+      ReplaceCallWith("sqrtl", CI, CI->op_begin()+1, CI->op_end(),
+                    CI->getOperand(1)->getType(), sqrtLDCache);
+      break;
+    }
     break;
   }
   }

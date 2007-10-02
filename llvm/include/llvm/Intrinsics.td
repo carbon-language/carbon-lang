@@ -178,18 +178,8 @@ let Properties = [IntrWriteArgMem] in {
 }
 
 let Properties = [IntrNoMem] in {
-  def int_sqrt_f32 : Intrinsic<[llvm_float_ty, llvm_float_ty]>;
-  def int_sqrt_f64 : Intrinsic<[llvm_double_ty, llvm_double_ty]>;
-  def int_sqrt_f80 : Intrinsic<[llvm_f80_ty, llvm_f80_ty]>;
-  def int_sqrt_f128 : Intrinsic<[llvm_f128_ty, llvm_f128_ty]>;
-  def int_sqrt_ppcf128 : Intrinsic<[llvm_ppcf128_ty, llvm_ppcf128_ty]>;
-
-  def int_powi_f32 : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_i32_ty]>;
-  def int_powi_f64 : Intrinsic<[llvm_double_ty, llvm_double_ty, llvm_i32_ty]>;
-  def int_powi_f80 : Intrinsic<[llvm_f80_ty, llvm_f80_ty, llvm_i32_ty]>;
-  def int_powi_f128 : Intrinsic<[llvm_f128_ty, llvm_f128_ty, llvm_i32_ty]>;
-  def int_powi_ppcf128 : Intrinsic<[llvm_ppcf128_ty, llvm_ppcf128_ty, 
-                                    llvm_i32_ty]>;
+  def int_sqrt : Intrinsic<[llvm_anyfloat_ty, LLVMMatchType<0>]>;
+  def int_powi : Intrinsic<[llvm_anyfloat_ty, LLVMMatchType<0>, llvm_i32_ty]>;
 }
 
 // NOTE: these are internal interfaces.
