@@ -1239,3 +1239,31 @@ _test:
 
 //===---------------------------------------------------------------------===//
 
+The following code:
+
+LBB3_5:	# bb114.preheader
+	movswl	-68(%ebp), %eax
+	movl	$32, %ecx
+	movl	%ecx, -80(%ebp)
+	subl	%eax, -80(%ebp)
+	movswl	-52(%ebp), %eax
+	movl	%ecx, -84(%ebp)
+	subl	%eax, -84(%ebp)
+	movswl	-70(%ebp), %eax
+	movl	%ecx, -88(%ebp)
+	subl	%eax, -88(%ebp)
+	movswl	-50(%ebp), %eax
+	subl	%eax, %ecx
+	movl	%ecx, -76(%ebp)
+	movswl	-42(%ebp), %eax
+	movl	%eax, -92(%ebp)
+	movswl	-66(%ebp), %eax
+	movl	%eax, -96(%ebp)
+	movw	$0, -98(%ebp)
+
+has redundant subtractions of %eax from a stack slot. However, %ecx doesn't
+change, so we could simply subtract %eax from %ecx first and then use %ecx (or
+vice-versa).
+
+//===---------------------------------------------------------------------===//
+
