@@ -450,6 +450,20 @@ case "$enableval" in
   ;;
 esac
 
+dnl Allow the ocaml libdir to be overridden. This could go in a configure
+dnl script for bindings/ocaml/configure, except that its auto value depends on
+dnl OCAMLC, which is found here to support tests.
+AC_ARG_WITH([ocaml-libdir],
+  [AS_HELP_STRING([--with-ocaml-libdir],
+    [Specify install location for ocaml bindings (default is stdlib)])],
+  [],
+  [withval=auto])
+case "$withval" in
+  auto) with_ocaml_libdir="$withval" ;;
+  /* | [[A-Za-z]]:[[\\/]]*) with_ocaml_libdir="$withval" ;;
+  *) AC_MSG_ERROR([Invalid path for --with-ocaml-libdir. Provide full path]) ;;
+esac
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
@@ -885,6 +899,44 @@ AC_SUBST(BINDINGS_TO_BUILD,$BINDINGS_TO_BUILD)
 # This isn't really configurey, but it avoids having to repeat the list in
 # other files.
 AC_SUBST(ALL_BINDINGS,ocaml)
+
+# Do any work necessary to ensure that bindings have what they need.
+binding_prereqs_failed=0
+for a_binding in $BINDINGS_TO_BUILD ; do
+  case "$a_binding" in
+  ocaml)
+    if test "x$OCAMLC" = x ; then
+      AC_MSG_WARN([--enable-bindings=ocaml specified, but ocamlc not found. Try configure OCAMLC=/path/to/ocamlc])
+      binding_prereqs_failed=1
+    fi
+    if test "x$OCAMLDEP" = x ; then
+      AC_MSG_WARN([--enable-bindings=ocaml specified, but ocamldep not found. Try configure OCAMLDEP=/path/to/ocamldep])
+      binding_prereqs_failed=1
+    fi
+    if test "x$OCAMLOPT" = x ; then
+      AC_MSG_WARN([--enable-bindings=ocaml specified, but ocamlopt not found. Try configure OCAMLOPT=/path/to/ocamlopt])
+      dnl ocamlopt is optional! 
+    fi
+    if test "x$with_ocaml_libdir" != xauto ; then
+      AC_SUBST(OCAML_LIBDIR,$with_ocaml_libdir)
+    else
+      ocaml_stdlib="`"$OCAMLC" -where`"
+      if test "$LLVM_PREFIX" '<' "$ocaml_stdlib" -a "$ocaml_stdlib" '<' "$LLVM_PREFIX~"
+      then
+        # ocaml stdlib is beneath our prefix; use stdlib
+        AC_SUBST(OCAML_LIBDIR,$ocaml_stdlib)
+      else
+        # ocaml stdlib is outside our prefix; use libdir/ocaml
+        AC_SUBST(OCAML_LIBDIR,$LLVM_LIBDIR/ocaml)
+      fi
+    fi
+    ;;
+  esac
+done
+if test "$binding_prereqs_failed" = 1 ; then
+  AC_MSG_ERROR([Prequisites for bindings not satisfied. Fix them or use configure --disable-bindings.])
+fi
+
 
 dnl===-----------------------------------------------------------------------===
 dnl===

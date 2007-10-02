@@ -14,12 +14,6 @@
 
 include $(LEVEL)/Makefile.config
 
-# Find the ocaml stdlib root. /usr/local/lib/ocaml is the default when built
-# from source; distros use something like /usr/lib/ocaml/3.10.0.
-ifndef OCAML_LIBDIR
-OCAML_LIBDIR := $(shell $(OCAMLC) -where)
-endif
-
 # CFLAGS needs to be set before Makefile.rules is included. Yes, ocaml puts its
 # includes under its libdir.
 CFLAGS += -I$(OCAML_LIBDIR)
@@ -27,7 +21,7 @@ CFLAGS += -I$(OCAML_LIBDIR)
 include $(LEVEL)/Makefile.common
 
 # Intentionally ignore PROJ_prefix here. We want the ocaml stdlib. However, the
-# user can override this with OCAML_LIBDIR.
+# user can override this with OCAML_LIBDIR or configure --with-ocaml-libdir=.
 PROJ_libocamldir := $(DESTDIR)$(OCAML_LIBDIR)
 OcamlDir := $(LibDir)/ocaml
 

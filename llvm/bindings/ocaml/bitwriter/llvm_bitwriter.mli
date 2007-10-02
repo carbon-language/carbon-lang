@@ -8,7 +8,7 @@
  *===----------------------------------------------------------------------===
  *
  * This interface provides an ocaml API for the LLVM bitcode writer, the
- * classes in the classes in the Bitwriter library.
+ * classes in the Bitwriter library.
  *
  *===----------------------------------------------------------------------===*)
 
