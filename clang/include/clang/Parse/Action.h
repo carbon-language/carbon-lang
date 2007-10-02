@@ -476,7 +476,7 @@ public:
                                                   SourceLocation CatLoc) {
     return 0;
   }  
-  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+  virtual DeclTy *ActOnMethodDeclaration(SourceLocation MethodLoc, 
     tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
@@ -500,26 +500,20 @@ public:
     SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs) {
     return 0;
   }
-  virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
-                                       IdentifierInfo **IdentList,
-                                       unsigned NumElts) {
+  virtual DeclTy *ActOnForwardClassDeclaration(Scope *S,
+                                               SourceLocation AtClassLoc,
+                                               IdentifierInfo **IdentList,
+                                               unsigned NumElts) {
     return 0;
   }
   
-  virtual DeclTy *ObjcForwardProtocolDeclaration(Scope *S, 
-                                                 SourceLocation AtProtocolLoc,
-                                                 IdentifierInfo **IdentList,
-                                                 unsigned NumElts) {
+  virtual DeclTy *ActOnForwardProtocolDeclaration(Scope *S, 
+                                                  SourceLocation AtProtocolLoc,
+                                                  IdentifierInfo **IdentList,
+                                                  unsigned NumElts) {
     return 0;
   }
   
-  virtual void ObjCStartCategoryInterface() { // FIXME
-    return;
-  }
-  virtual void ObjCFinishInterface() {
-    return;
-  }
-    
   //===----------------------- Obj-C Expressions --------------------------===//
   virtual ExprResult ParseObjCStringLiteral(ExprTy *string) {
     return 0;
@@ -555,14 +549,15 @@ public:
   /// they are removed from the IdentifierInfo::FETokenInfo field.
   virtual void PopScope(SourceLocation Loc, Scope *S);
   
-  virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
-                                       IdentifierInfo **IdentList,
-                                       unsigned NumElts);
+  virtual DeclTy *ActOnForwardClassDeclaration(Scope *S, 
+                                               SourceLocation AtClassLoc,
+                                               IdentifierInfo **IdentList,
+                                               unsigned NumElts);
   
-  virtual DeclTy *ObjcForwardProtocolDeclaration(Scope *S, 
-                                                 SourceLocation AtProtocolLoc,
-                                                 IdentifierInfo **IdentList,
-                                                 unsigned NumElts);
+  virtual DeclTy *ActOnForwardProtocolDeclaration(Scope *S, 
+                                                  SourceLocation AtProtocolLoc,
+                                                  IdentifierInfo **IdentList,
+                                                  unsigned NumElts);
    
   virtual DeclTy *ObjcStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,

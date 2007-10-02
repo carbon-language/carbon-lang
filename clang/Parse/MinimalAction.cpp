@@ -93,10 +93,10 @@ MinimalAction::ObjcStartProtoInterface(Scope* S,
   return 0;
 }
 
-/// ObjcClassDeclaration - 
+/// ActOnForwardClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
-MinimalAction::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
+MinimalAction::ActOnForwardClassDeclaration(Scope *S, SourceLocation AtClassLoc,
                                 IdentifierInfo **IdentList, unsigned NumElts) {
   for (unsigned i = 0; i != NumElts; ++i) {
     TypeNameInfo *TI =
@@ -110,11 +110,11 @@ MinimalAction::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
   return 0;
 }
 
-/// ObjcForwardProtocolDeclaration - 
+/// ActOnForwardProtocolDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
-MinimalAction::ObjcForwardProtocolDeclaration(Scope *S, SourceLocation AtClassLoc,
-                 IdentifierInfo **IdentList, unsigned NumElts) {
+MinimalAction::ActOnForwardProtocolDeclaration(Scope *S, 
+  SourceLocation AtClassLoc, IdentifierInfo **IdentList, unsigned NumElts) {
   for (unsigned i = 0; i != NumElts; ++i) {
     TypeNameInfo *TI =
     new TypeNameInfo(1, IdentList[i]->getFETokenInfo<TypeNameInfo>());

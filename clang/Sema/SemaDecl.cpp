@@ -1006,10 +1006,10 @@ Sema::DeclTy *Sema::ObjcStartProtoInterface(Scope* S,
   return PDecl;
 }
 
-/// ObjcForwardProtocolDeclaration - 
+/// ActOnForwardProtocolDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
-Sema::ObjcForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
+Sema::ActOnForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
         IdentifierInfo **IdentList, unsigned NumElts) {
   ObjcForwardProtocolDecl *FDecl = new ObjcForwardProtocolDecl(AtProtocolLoc, 
                                                                NumElts);
@@ -1343,11 +1343,12 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
          CatClassDecl->getCatName()->getName());
 }
 
-/// ObjcClassDeclaration - 
+/// ActOnForwardClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
-Sema::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
-                           IdentifierInfo **IdentList, unsigned NumElts) {
+Sema::ActOnForwardClassDeclaration(Scope *S, SourceLocation AtClassLoc,
+                                   IdentifierInfo **IdentList, unsigned NumElts) 
+{
   ObjcClassDecl *CDecl = new ObjcClassDecl(AtClassLoc, NumElts);
 
   for (unsigned i = 0; i != NumElts; ++i) {
@@ -1750,7 +1751,7 @@ void Sema::ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl,
   return;
 }
 
-Sema::DeclTy *Sema::ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+Sema::DeclTy *Sema::ActOnMethodDeclaration(SourceLocation MethodLoc, 
     tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().

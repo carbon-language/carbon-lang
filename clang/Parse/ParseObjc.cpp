@@ -80,7 +80,7 @@ Parser::DeclTy *Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
   if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@class"))
     return 0;
   
-  return Actions.ObjcClassDeclaration(CurScope, atLoc,
+  return Actions.ActOnForwardClassDeclaration(CurScope, atLoc,
                                       &ClassNames[0], ClassNames.size());
 }
 
@@ -684,9 +684,9 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
       methodAttrs = ParseAttributes();
       
     Selector Sel = ObjcGetKeywordSelector(KeyIdents);
-    return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, Sel, 
-                                              &KeyTypes[0], &ArgNames[0],
-					      methodAttrs, MethodImplKind);
+    return Actions.ActOnMethodDeclaration(mLoc, mType, ReturnType, Sel, 
+                                          &KeyTypes[0], &ArgNames[0],
+                                          methodAttrs, MethodImplKind);
   } else if (!selIdent) {
     Diag(Tok, diag::err_expected_ident); // missing selector name.
   }
@@ -695,8 +695,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
     methodAttrs = ParseAttributes();
 
   Selector Sel = ObjcGetUnarySelector(selIdent);
-  return Actions.ObjcBuildMethodDeclaration(mLoc, mType, ReturnType, Sel, 
-                                            0, 0, methodAttrs, MethodImplKind);
+  return Actions.ActOnMethodDeclaration(mLoc, mType, ReturnType, Sel, 
+                                        0, 0, methodAttrs, MethodImplKind);
 }
 
 ///   objc-protocol-refs:
@@ -866,9 +866,9 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
       return 0;
   }
   if (ProtocolRefs.size() > 0)
-    return Actions.ObjcForwardProtocolDeclaration(CurScope, AtLoc,
-                                                  &ProtocolRefs[0], 
-                                                  ProtocolRefs.size());
+    return Actions.ActOnForwardProtocolDeclaration(CurScope, AtLoc,
+                                                   &ProtocolRefs[0], 
+                                                   ProtocolRefs.size());
   // Last, and definitely not least, parse a protocol declaration.
   if (Tok.getKind() == tok::less) {
     if (ParseObjCProtocolReferences(ProtocolRefs))

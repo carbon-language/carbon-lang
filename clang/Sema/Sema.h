@@ -415,19 +415,19 @@ public:
                                                   IdentifierInfo *CatName,
                                                   SourceLocation CatLoc);
   
-  virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
-                                       IdentifierInfo **IdentList,
-                                       unsigned NumElts);
+  virtual DeclTy *ActOnForwardClassDeclaration(Scope *S, SourceLocation Loc,
+                                               IdentifierInfo **IdentList,
+                                               unsigned NumElts);
   
-  virtual DeclTy *ObjcForwardProtocolDeclaration(Scope *S, 
-                                                 SourceLocation AtProtocolLoc,
-                                                 IdentifierInfo **IdentList,
-                                                 unsigned NumElts);
+  virtual DeclTy *ActOnForwardProtocolDeclaration(Scope *S, 
+                                                  SourceLocation AtProtocolLoc,
+                                                  IdentifierInfo **IdentList,
+                                                  unsigned NumElts);
 
   virtual void ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl, 
 				     DeclTy **allMethods, unsigned allNum);
   
-  virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
+  virtual DeclTy *ActOnMethodDeclaration(SourceLocation MethodLoc, 
     tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
