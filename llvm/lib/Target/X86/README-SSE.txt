@@ -689,13 +689,13 @@ bb49:		; preds = %bb49, %bb49.preheader
 
 we get:
 
-LBB4_6:	# bb47.preheader
+LBB5_6:	# bb49.preheader
 	shlw	$2, %si
 	decw	%si
 	movzwl	%si, %eax
 	incl	%eax
 	xorl	%ecx, %ecx
-LBB4_7:	# bb47
+LBB5_7:	# bb49
 	xorps	%xmm0, %xmm0            # (1)
 	movaps	%xmm0, (%edx)
 	movaps	%xmm0, 16(%edx)
@@ -703,9 +703,6 @@ LBB4_7:	# bb47
 	incl	%ecx
 	cmpl	%eax, %ecx
 	jne	LBB4_7	# bb47
-LBB4_8:	# bb42.return_crit_edge
-	xorw	%si, %si
-	jmp	LBB4_12	# return
 
 The instruction at (1) can be moved out of the main body of the loop.
 
