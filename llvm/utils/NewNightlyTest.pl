@@ -737,7 +737,6 @@ $BuildWallTime=-1 unless $BuildWallTime;
 my $BuildError = 0, $BuildStatus = "OK";
 if ($NOBUILD) {
   $BuildStatus = "Skipped by user";
-  $BuildError = 1;
 }
 elsif (`grep '^$MAKECMD\[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
   `grep '^$MAKECMD: \*\*\*.*Stop.' $BuildLog | wc -l`+0) {
