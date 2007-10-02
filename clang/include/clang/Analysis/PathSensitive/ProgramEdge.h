@@ -16,6 +16,8 @@
 #define LLVM_CLANG_ANALYSIS_PATHSENS_PROGRAM_POINT
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/ADT/DenseMap.h"
+#include <cassert>
 
 namespace clang {
   
@@ -31,8 +33,23 @@ public:
   unsigned getKind() const { return (unsigned) Src & 0x3; }
   void* RawSrc() const { return reinterpret_cast<void*>(Src & ~0x3); }
   void* RawDst() const { return reinterpret_cast<void*>(Dst); }
+
+  bool operator==(const ProgramEdge & RHS) const {
+    // comparing pointer values canoncalizes "NULL" edges where both pointers 
+    // are NULL without having to worry about edgekind.  We can otherwise
+    // ignore edgekind because no CFGBlock* or Stmt* will have the same value.
+    return RawSrc() == RHS.RawSrc() && RawDst() == RHS.RawDst();    
+  }
+  
+  unsigned getHashValue() const {
+    uintptr_t v1 = reinterpret_cast<uintptr_t>(RawSrc());
+    uintptr_t v2 = reinterpret_cast<uintptr_t>(RawDst());
+    return static_cast<unsigned>( (v1 >> 4) ^ (v1 >> 9) ^ 
+                                  (v2 >> 5) ^ (v2 >> 10) );
+  }
   
 protected:
+  
   ProgramEdge(const void* src, const void* dst, EdgeKind k) {
     assert (k >= StmtBlk && k <= BlkBlk);
     Src = reinterpret_cast<uintptr_t>(const_cast<void*>(src)) | k;
@@ -86,4 +103,28 @@ public:
 };
 
 } // end namespace clang
+
+
+namespace llvm { // Traits specialization for DenseMap 
+  
+template <> struct DenseMapInfo<clang::ProgramEdge> {
+
+  static inline clang::ProgramEdge getEmptyKey() {
+    return clang::BlkBlkEdge(NULL,NULL);
+  }
+  
+  static inline clang::ProgramEdge getTombstoneKey() {
+    return clang::BlkBlkEdge(reinterpret_cast<clang::CFGBlock*>(-1),
+                             reinterpret_cast<clang::CFGBlock*>(-1));
+  }
+  
+  static bool isEqual(const clang::ProgramEdge& LHS,
+                       const clang::ProgramEdge& RHS) {
+    return LHS == RHS;
+  }
+  
+  static bool isPod() { return true; }
+};
+} // end namespace llvm
+
 #endif
