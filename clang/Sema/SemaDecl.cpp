@@ -1168,17 +1168,18 @@ Sema::DeclTy *Sema::ObjcStartClassImplementation(Scope *S,
   return IMPDecl;
 }
 
-void Sema::ActOnImpleIvarVsClassIvars(DeclTy *ClassDecl,
-                                      DeclTy **Fields, unsigned numIvars) {
-  ObjcInterfaceDecl* IDecl = 
-    cast<ObjcInterfaceDecl>(static_cast<Decl*>(ClassDecl));
-  assert(IDecl && "missing named interface class decl");
-  ObjcIvarDecl** ivars = reinterpret_cast<ObjcIvarDecl**>(Fields);
+void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
+                                    ObjcIvarDecl **ivars, unsigned numIvars) {
+  assert(ImpDecl && "missing implementation decl");
+  ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(ImpDecl->getIdentifier());
+  
+  if (!IDecl)
+    return;
   assert(ivars && "missing @implementation ivars");
   
-    // Check interface's Ivar list against those in the implementation.
-    // names and types must match.
-    //
+  // Check interface's Ivar list against those in the implementation.
+  // names and types must match.
+  //
   ObjcIvarDecl** IntfIvars = IDecl->getIntfDeclIvars();
   int IntfNumIvars = IDecl->getIntfDeclNumIvars();
   unsigned j = 0;
@@ -1676,10 +1677,7 @@ void Sema::ActOnFields(Scope* S,
 	cast<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl));
       assert(IMPDecl && "ActOnFields - missing ObjcImplementationDecl");
       IMPDecl->ObjcAddInstanceVariablesToClassImpl(ClsFields, RecFields.size());
-      ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(IMPDecl->getIdentifier());
-      if (IDecl)
-        ActOnImpleIvarVsClassIvars(static_cast<DeclTy*>(IDecl), 
-          reinterpret_cast<DeclTy**>(&RecFields[0]), RecFields.size());
+      CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size());
     }
   }
 }

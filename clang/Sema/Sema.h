@@ -51,6 +51,7 @@ namespace clang {
   class ObjcImplementationDecl;
   class ObjcCategoryImplDecl;
   class ObjcCategoryDecl;
+  class ObjcIvarDecl;
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -215,6 +216,11 @@ private:
                                bool& IncompleteImpl,
                                const llvm::DenseMap<void *, char>& InsMap,
                                const llvm::DenseMap<void *, char>& ClsMap);
+  
+  /// CheckImplementationIvars - This routine checks if the instance variables
+  /// listed in the implelementation match those listed in the interface. 
+  void CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
+                                ObjcIvarDecl **Fields, unsigned nIvars);
   
   /// ImplMethodsVsClassMethods - This is main routine to warn if any method
   /// remains unimplemented in the @implementation class.
@@ -420,9 +426,6 @@ public:
 
   virtual void ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl, 
 				     DeclTy **allMethods, unsigned allNum);
-  
-  virtual void ActOnImpleIvarVsClassIvars(DeclTy *ClassDecl,
-                                          DeclTy **Fields, unsigned NumFields);
   
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
     tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,

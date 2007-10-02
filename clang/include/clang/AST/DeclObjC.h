@@ -81,7 +81,8 @@ public:
       ListCategories(0), ForwardDecl(FD) {
         AllocIntfRefProtocols(numRefProtos);
       }
-    
+  
+  // This is necessary when converting a forward declaration to a definition.
   void AllocIntfRefProtocols(unsigned numRefProtos) {
     if (numRefProtos) {
       IntfRefProtocols = new ObjcProtocolDecl*[numRefProtos];
