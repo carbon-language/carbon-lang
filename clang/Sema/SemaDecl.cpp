@@ -1068,6 +1068,25 @@ Sema::DeclTy *Sema::ObjcStartCatInterface(Scope* S,
   return CDecl;
 }
 
+/// ObjcStartCategoryImplementation - Perform semantic checks on the
+/// category implementation declaration and build an ObjcCategoryImplDecl
+/// object.
+Sema::DeclTy *Sema::ObjcStartCategoryImplementation(Scope* S,
+                      SourceLocation AtCatImplLoc,
+                      IdentifierInfo *ClassName, SourceLocation ClassLoc,
+                      IdentifierInfo *CatName, SourceLocation CatLoc) {
+  ObjcInterfaceDecl *IDecl = getObjCInterfaceDecl(S, ClassName, ClassLoc);
+  ObjcCategoryImplDecl *CDecl = new ObjcCategoryImplDecl(AtCatImplLoc, 
+                                                         ClassName, IDecl,
+                                                         CatName);
+  /// Check that class of this category is already completely declared.
+  if (!IDecl || IDecl->getIsForwardDecl())
+    Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
+  /// TODO: Check that CatName, category name, is not used in another
+  // implementation.
+  return CDecl;
+}
+
 Sema::DeclTy *Sema::ObjcStartClassImplementation(Scope *S,
                       SourceLocation AtClassImplLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
@@ -1255,7 +1274,51 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
     ObjcProtocolDecl* PDecl = protocols[i];
     CheckProtocolMethodDefs(PDecl, InsMap, ClsMap);
   }
-  return;
+}
+
+/// ImplCategoryMethodsVsIntfMethods - Checks that methods declared in the
+/// category interface is implemented in the category @implementation.
+void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
+                                            ObjcCategoryDecl *CatClassDecl) {
+  llvm::DenseMap<void *, char> InsMap;
+  // Check and see if instance methods in category interface have been
+  // implemented in its implementation class.
+  ObjcMethodDecl **methods = CatImplDecl->getCatInsMethods();
+  for (int i=0; i < CatImplDecl->getNumCatInsMethods(); i++) {
+    InsMap[methods[i]->getSelector().getAsOpaquePtr()] = 'a';
+  }
+  
+  methods = CatClassDecl->getCatInsMethods();
+  for (int j = 0; j < CatClassDecl->getNumCatInsMethods(); j++)
+    if (!InsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
+      llvm::SmallString<128> buf;
+      Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
+           methods[j]->getSelector().getName(buf));
+    }
+  llvm::DenseMap<void *, char> ClsMap;
+  // Check and see if class methods in category interface have been
+  // implemented in its implementation class.
+  methods = CatImplDecl->getCatClsMethods();
+  for (int i=0; i < CatImplDecl->getNumCatClsMethods(); i++) {
+    ClsMap[methods[i]->getSelector().getAsOpaquePtr()] = 'a';
+  }
+  
+  methods = CatClassDecl->getCatClsMethods();
+  for (int j = 0; j < CatClassDecl->getNumCatClsMethods(); j++)
+    if (!ClsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
+      llvm::SmallString<128> buf;
+      Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
+           methods[j]->getSelector().getName(buf));
+    }
+  
+  // Check the protocol list for unimplemented methods in the @implementation
+  // class.
+  ObjcProtocolDecl** protocols = CatClassDecl->getCatReferencedProtocols();
+  for (int i = 0; i < CatClassDecl->getNumCatReferencedProtocols(); i++) {
+    ObjcProtocolDecl* PDecl = protocols[i];
+    CheckProtocolMethodDefs(PDecl, InsMap, ClsMap);
+  }
+  
 }
 
 /// ObjcClassDeclaration - 
@@ -1646,6 +1709,24 @@ void Sema::ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl,
 				 ImplClass->getIdentifier(), SourceLocation());
     if (IDecl)
       ImplMethodsVsClassMethods(ImplClass, IDecl);
+  }
+  else if (isa<ObjcCategoryImplDecl>(static_cast<Decl *>(ClassDecl))) {
+    ObjcCategoryImplDecl* CatImplClass = cast<ObjcCategoryImplDecl>(
+                                          static_cast<Decl*>(ClassDecl));
+    CatImplClass->ObjcAddCatImplMethods(&insMethods[0], insMethods.size(),
+                                        &clsMethods[0], clsMethods.size());
+    ObjcInterfaceDecl* IDecl = CatImplClass->getClassInterface();
+    // Find category interface decl and then check that all methods declared
+    // in this interface is implemented in the category @implementation.
+    if (IDecl) {
+      for (ObjcCategoryDecl *Categories = IDecl->getListCategories();
+           Categories; Categories = Categories->getNextClassCategory()) {
+        if (Categories->getCatName() == CatImplClass->getObjcCatName()) {
+          ImplCategoryMethodsVsIntfMethods(CatImplClass, Categories);
+          break;
+        }
+      }
+    }
   }
   else
     assert(0 && "Sema::ObjcAddMethodsToClass(): Unknown DeclTy");

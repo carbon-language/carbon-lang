@@ -49,6 +49,8 @@ namespace clang {
   class ObjcInterfaceDecl;
   class ObjcProtocolDecl;
   class ObjcImplementationDecl;
+  class ObjcCategoryImplDecl;
+  class ObjcCategoryDecl;
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -218,6 +220,11 @@ private:
   /// remains unimplemented in the @implementation class.
   void ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl, 
                                  ObjcInterfaceDecl* IDecl);
+  
+  /// ImplCategoryMethodsVsIntfMethods - Checks that methods declared in the
+  /// category interface is implemented in the category @implementation.
+  void ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
+                                         ObjcCategoryDecl *CatClassDecl);
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
@@ -394,6 +401,13 @@ public:
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperClassname, 
                     SourceLocation SuperClassLoc);
+  
+  virtual DeclTy *ObjcStartCategoryImplementation(Scope* S,
+                                                  SourceLocation AtCatImplLoc,
+                                                  IdentifierInfo *ClassName, 
+                                                  SourceLocation ClassLoc,
+                                                  IdentifierInfo *CatName,
+                                                  SourceLocation CatLoc);
   
   virtual DeclTy *ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
                                        IdentifierInfo **IdentList,

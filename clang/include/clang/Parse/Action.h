@@ -472,6 +472,14 @@ public:
                     SourceLocation SuperClassLoc) {
     return 0;
   }
+  virtual DeclTy *ObjcStartCategoryImplementation(Scope* S,
+                                                  SourceLocation AtCatImplLoc,
+                                                  IdentifierInfo *ClassName, 
+                                                  SourceLocation ClassLoc,
+                                                  IdentifierInfo *CatName,
+                                                  SourceLocation CatLoc) {
+    return 0;
+  }  
   virtual DeclTy *ObjcBuildMethodDeclaration(SourceLocation MethodLoc, 
     tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
     // optional arguments. The number of types/arguments is obtained

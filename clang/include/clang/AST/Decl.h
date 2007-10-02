@@ -35,7 +35,7 @@ public:
     Function, BlockVariable, FileVariable, ParmVariable, EnumConstant,
     // Concrete sub-classes of TypeDecl
     Typedef, Struct, Union, Class, Enum, ObjcInterface, ObjcClass, ObjcMethod,
-    ObjcProtocol, ObjcForwardProtocol, ObjcCategory,
+    ObjcProtocol, ObjcForwardProtocol, ObjcCategory, ObjcCategoryImpl,
     ObjcImplementation,
     // Concrete sub-class of Decl
     Field, ObjcIvar

@@ -448,6 +448,17 @@ public:
     CatReferencedProtocols[idx] = OID;
   }
   
+  ObjcProtocolDecl **getCatReferencedProtocols() const { 
+    return CatReferencedProtocols; 
+  }
+  int getNumCatReferencedProtocols() const { return NumCatReferencedProtocols; }
+  
+  ObjcMethodDecl **getCatInsMethods() const { return CatInsMethods; }
+  int getNumCatInsMethods() const { return NumCatInsMethods; }
+  
+  ObjcMethodDecl **getCatClsMethods() const { return CatClsMethods; }
+  int getNumCatClsMethods() const { return NumCatClsMethods; }
+  
   void ObjcAddCatMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                          ObjcMethodDecl **clsMethods, unsigned numClsMembers);
   
@@ -464,6 +475,56 @@ public:
     return D->getKind() == ObjcCategory;
   }
   static bool classof(const ObjcCategoryDecl *D) { return true; }
+};
+
+/// ObjcCategoryImplDecl - An object of this class encapsulates a category 
+/// @implementation declaration.
+class ObjcCategoryImplDecl : public Decl {
+  /// Class interface for this category implementation
+  ObjcInterfaceDecl *ClassInterface;
+
+  /// Category name
+  IdentifierInfo *ObjcCatName;
+      
+  /// category instance methods being implemented
+  ObjcMethodDecl **CatInsMethods; // Null if category is not implementing any
+  int NumCatInsMethods;           // -1 if category is not implementing any
+  
+  /// category class methods being implemented
+  ObjcMethodDecl **CatClsMethods; // Null if category is not implementing any
+  int NumCatClsMethods;  // -1 if category is not implementing any
+  
+  public:
+    ObjcCategoryImplDecl(SourceLocation L, IdentifierInfo *Id,
+                         ObjcInterfaceDecl *classInterface,
+                         IdentifierInfo *catName)
+    : Decl(ObjcCategoryImpl),
+    ClassInterface(classInterface),
+    ObjcCatName(catName),
+    CatInsMethods(0), NumCatInsMethods(-1),
+    CatClsMethods(0), NumCatClsMethods(-1) {}
+        
+    ObjcInterfaceDecl *getClassInterface() const { 
+      return ClassInterface; 
+    }
+  
+  IdentifierInfo *getObjcCatName() const { return ObjcCatName; }
+  
+  ObjcMethodDecl **getCatInsMethods() const { return CatInsMethods; }
+  int getNumCatInsMethods() const { return NumCatInsMethods; }
+  
+  ObjcMethodDecl **getCatClsMethods() const { return CatClsMethods; }
+  int getNumCatClsMethods() const { return NumCatClsMethods; }
+  
+  
+  void ObjcAddCatImplMethods(
+        ObjcMethodDecl **insMethods, unsigned numInsMembers,
+        ObjcMethodDecl **clsMethods, unsigned numClsMembers);
+  
+  static bool classof(const Decl *D) {
+    return D->getKind() == ObjcCategoryImpl;
+  }
+  static bool classof(const ObjcCategoryImplDecl *D) { return true; }
 };
 
 /// ObjcImplementationDecl - Represents a class definition - this is where

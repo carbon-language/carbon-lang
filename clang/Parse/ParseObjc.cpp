@@ -934,7 +934,10 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
       return 0;
     }
     rparenLoc = ConsumeParen();
-    return 0;
+    DeclTy *ImplCatType = Actions.ObjcStartCategoryImplementation(CurScope,
+                                    atLoc, nameId, nameLoc, categoryId, 
+                                    categoryLoc);
+    return ImplCatType;
   }
   // We have a class implementation
   SourceLocation superClassLoc;

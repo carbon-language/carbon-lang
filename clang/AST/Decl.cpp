@@ -34,6 +34,7 @@ static unsigned nForwardProtocolDecls = 0;
 static unsigned nCategoryDecls = 0;
 static unsigned nIvarDecls = 0;
 static unsigned nObjcImplementationDecls = 0;
+static unsigned nObjcCategoryImpl = 0;
 
 static bool StatSwitch = false;
 
@@ -136,6 +137,10 @@ void Decl::PrintStats() {
 	  nObjcImplementationDecls, (int)sizeof(ObjcImplementationDecl),
 	  int(nObjcImplementationDecls*sizeof(ObjcImplementationDecl)));
 
+  fprintf(stderr, "    %d class implementation decls, %d each (%d bytes)\n", 
+	  nObjcCategoryImpl, (int)sizeof(ObjcCategoryImplDecl),
+	  int(nObjcCategoryImpl*sizeof(ObjcCategoryImplDecl)));
+
   fprintf(stderr, "Total bytes = %d\n", 
 	  int(nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
 	      nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
@@ -198,6 +203,9 @@ void Decl::addDeclKind(const Kind k) {
       break;
     case ObjcImplementation: 
       nObjcImplementationDecls++;
+      break;
+    case ObjcCategoryImpl:
+      nObjcCategoryImpl++;
       break;
   }
 }
@@ -344,12 +352,31 @@ void ObjcProtocolDecl::ObjcAddProtoMethods(ObjcMethodDecl **insMethods,
 }
 
 /// ObjcAddCat - Insert instance and methods declarations into
-/// ObjcProtocolDecl's CatInsMethods and CatClsMethods fields.
+/// ObjcCategoryDecl's CatInsMethods and CatClsMethods fields.
 ///
 void ObjcCategoryDecl::ObjcAddCatMethods(ObjcMethodDecl **insMethods, 
 					 unsigned numInsMembers,
 					 ObjcMethodDecl **clsMethods,
 					 unsigned numClsMembers) {
+  NumCatInsMethods = numInsMembers;
+  if (numInsMembers) {
+    CatInsMethods = new ObjcMethodDecl*[numInsMembers];
+    memcpy(CatInsMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+  }
+  NumCatClsMethods = numClsMembers;
+  if (numClsMembers) {
+    CatClsMethods = new ObjcMethodDecl*[numClsMembers];
+    memcpy(CatClsMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+  }
+}
+
+/// ObjcAddCatImplMethods - Insert instance and methods declarations into
+/// ObjcCategoryImplDecl's CatInsMethods and CatClsMethods fields.
+///
+void ObjcCategoryImplDecl::ObjcAddCatImplMethods(ObjcMethodDecl **insMethods, 
+						 unsigned numInsMembers,
+						 ObjcMethodDecl **clsMethods,
+						 unsigned numClsMembers) {
   NumCatInsMethods = numInsMembers;
   if (numInsMembers) {
     CatInsMethods = new ObjcMethodDecl*[numInsMembers];
