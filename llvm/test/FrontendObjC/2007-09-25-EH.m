@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -c -w -m64 %s -o /dev/null
+// RUN: %llvmgcc -c -w -m64 -mmacosx-version-min=10.5 %s -o /dev/null
 
 @class NSDictionary, DSoBuffer, DSoDirectory, NSMutableArray;
 @interface NSException {}
