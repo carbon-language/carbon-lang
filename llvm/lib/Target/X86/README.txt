@@ -1241,6 +1241,22 @@ _test:
 
 The following code:
 
+bb114.preheader:		; preds = %cond_next94
+	%tmp231232 = sext i16 %tmp62 to i32		; <i32> [#uses=1]
+	%tmp233 = sub i32 32, %tmp231232		; <i32> [#uses=1]
+	%tmp245246 = sext i16 %tmp65 to i32		; <i32> [#uses=1]
+	%tmp252253 = sext i16 %tmp68 to i32		; <i32> [#uses=1]
+	%tmp254 = sub i32 32, %tmp252253		; <i32> [#uses=1]
+	%tmp553554 = bitcast i16* %tmp37 to i8*		; <i8*> [#uses=2]
+	%tmp583584 = sext i16 %tmp98 to i32		; <i32> [#uses=1]
+	%tmp585 = sub i32 32, %tmp583584		; <i32> [#uses=1]
+	%tmp614615 = sext i16 %tmp101 to i32		; <i32> [#uses=1]
+	%tmp621622 = sext i16 %tmp104 to i32		; <i32> [#uses=1]
+	%tmp623 = sub i32 32, %tmp621622		; <i32> [#uses=1]
+	br label %bb114
+
+produces:
+
 LBB3_5:	# bb114.preheader
 	movswl	-68(%ebp), %eax
 	movl	$32, %ecx
@@ -1261,7 +1277,7 @@ LBB3_5:	# bb114.preheader
 	movl	%eax, -96(%ebp)
 	movw	$0, -98(%ebp)
 
-has redundant subtractions of %eax from a stack slot. However, %ecx doesn't
+This has redundant subtractions of %eax from a stack slot. However, %ecx doesn't
 change, so we could simply subtract %eax from %ecx first and then use %ecx (or
 vice-versa).
 
