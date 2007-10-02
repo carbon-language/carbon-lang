@@ -53,20 +53,20 @@ class ObjcInterfaceDecl : public TypeDecl {
   ObjcInterfaceDecl *SuperClass;
   
   /// Protocols referenced in interface header declaration
-  ObjcProtocolDecl **IntfRefProtocols;  // Null if none
-  int NumIntfRefProtocols;  // -1 if none
+  ObjcProtocolDecl **ReferencedProtocols;  // Null if none
+  int NumReferencedProtocols;  // -1 if none
   
   /// Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
   ObjcIvarDecl **Ivars;   // Null if not defined.
   int NumIvars;   // -1 if not defined.
   
   /// instance methods
-  ObjcMethodDecl **InsMethods;  // Null if not defined
-  int NumInsMethods;  // -1 if not defined
+  ObjcMethodDecl **InstanceMethods;  // Null if not defined
+  int NumInstanceMethods;  // -1 if not defined
   
   /// class methods
-  ObjcMethodDecl **ClsMethods;  // Null if not defined
-  int NumClsMethods;  // -1 if not defined
+  ObjcMethodDecl **ClassMethods;  // Null if not defined
+  int NumClassMethods;  // -1 if not defined
   
   /// List of categories defined for this class.
   ObjcCategoryDecl *ListCategories;
@@ -76,8 +76,10 @@ public:
   ObjcInterfaceDecl(SourceLocation L, unsigned numRefProtos,
                     IdentifierInfo *Id, bool FD = false)
     : TypeDecl(ObjcInterface, L, Id, 0), SuperClass(0),
-      IntfRefProtocols(0), NumIntfRefProtocols(-1), Ivars(0), NumIvars(-1),
-      InsMethods(0), NumInsMethods(-1), ClsMethods(0), NumClsMethods(-1),
+      ReferencedProtocols(0), NumReferencedProtocols(-1), Ivars(0), 
+      NumIvars(-1),
+      InstanceMethods(0), NumInstanceMethods(-1), 
+      ClassMethods(0), NumClassMethods(-1),
       ListCategories(0), ForwardDecl(FD) {
         AllocIntfRefProtocols(numRefProtos);
       }
@@ -85,24 +87,26 @@ public:
   // This is necessary when converting a forward declaration to a definition.
   void AllocIntfRefProtocols(unsigned numRefProtos) {
     if (numRefProtos) {
-      IntfRefProtocols = new ObjcProtocolDecl*[numRefProtos];
-      memset(IntfRefProtocols, '\0',
+      ReferencedProtocols = new ObjcProtocolDecl*[numRefProtos];
+      memset(ReferencedProtocols, '\0',
              numRefProtos*sizeof(ObjcProtocolDecl*));
-      NumIntfRefProtocols = numRefProtos;
+      NumReferencedProtocols = numRefProtos;
     }
   }
   
-  ObjcProtocolDecl **getIntfRefProtocols() const { return IntfRefProtocols; }
-  int getNumIntfRefProtocols() const { return NumIntfRefProtocols; }
+  ObjcProtocolDecl **getReferencedProtocols() const { 
+    return ReferencedProtocols; 
+  }
+  int getNumIntfRefProtocols() const { return NumReferencedProtocols; }
   
   ObjcIvarDecl **getIntfDeclIvars() const { return Ivars; }
   int getIntfDeclNumIvars() const { return NumIvars; }
   
-  ObjcMethodDecl** getInsMethods() const { return InsMethods; }
-  int getNumInsMethods() const { return NumInsMethods; }
+  ObjcMethodDecl** getInstanceMethods() const { return InstanceMethods; }
+  int getNumInstanceMethods() const { return NumInstanceMethods; }
   
-  ObjcMethodDecl** getClsMethods() const { return ClsMethods; }
-  int getNumClsMethods() const { return NumClsMethods; }
+  ObjcMethodDecl** getClassMethods() const { return ClassMethods; }
+  int getNumClassMethods() const { return NumClassMethods; }
   
   void ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars, 
 				       unsigned numIvars);
@@ -114,8 +118,8 @@ public:
   void setForwardDecl(bool val) { ForwardDecl = val; }
   
   void setIntfRefProtocols(int idx, ObjcProtocolDecl *OID) {
-    assert((idx < NumIntfRefProtocols) && "index out of range");
-    IntfRefProtocols[idx] = OID;
+    assert((idx < NumReferencedProtocols) && "index out of range");
+    ReferencedProtocols[idx] = OID;
   }
   
   ObjcInterfaceDecl *getSuperClass() const { return SuperClass; }
@@ -277,12 +281,12 @@ class ObjcProtocolDecl : public TypeDecl {
   int NumReferencedProtocols;  // -1 if none
   
   /// protocol instance methods
-  ObjcMethodDecl **ProtoInsMethods;  // Null if not defined
-  int NumProtoInsMethods;  // -1 if not defined
+  ObjcMethodDecl **InstanceMethods;  // Null if not defined
+  int NumInstanceMethods;  // -1 if not defined
 
   /// protocol class methods
-  ObjcMethodDecl **ProtoClsMethods;  // Null if not defined
-  int NumProtoClsMethods;  // -1 if not defined
+  ObjcMethodDecl **ClassMethods;  // Null if not defined
+  int NumClassMethods;  // -1 if not defined
 
   bool isForwardProtoDecl; // declared with @protocol.
 public:
@@ -290,8 +294,8 @@ public:
                    IdentifierInfo *Id, bool FD = false)
     : TypeDecl(ObjcProtocol, L, Id, 0), 
       ReferencedProtocols(0), NumReferencedProtocols(-1),
-      ProtoInsMethods(0), NumProtoInsMethods(-1), 
-      ProtoClsMethods(0), NumProtoClsMethods(-1),
+      InstanceMethods(0), NumInstanceMethods(-1), 
+      ClassMethods(0), NumClassMethods(-1),
       isForwardProtoDecl(FD) {
         AllocReferencedProtocols(numRefProtos);
       }
@@ -316,11 +320,11 @@ public:
   }
   int getNumReferencedProtocols() const { return NumReferencedProtocols; }
   
-  ObjcMethodDecl** getInsMethods() const { return ProtoInsMethods; }
-  int getNumInsMethods() const { return NumProtoInsMethods; }
+  ObjcMethodDecl** getInstanceMethods() const { return InstanceMethods; }
+  int getNumInstanceMethods() const { return NumInstanceMethods; }
   
-  ObjcMethodDecl** getClsMethods() const { return ProtoClsMethods; }
-  int getNumClsMethods() const { return NumProtoClsMethods; }
+  ObjcMethodDecl** getClassMethods() const { return ClassMethods; }
+  int getNumClassMethods() const { return NumClassMethods; }
   
   bool isForwardDecl() const { return isForwardProtoDecl; }
   void setForwardDecl(bool val) { isForwardProtoDecl = val; }
@@ -363,20 +367,20 @@ public:
 /// @protocol NSTextInput, NSChangeSpelling, NSDraggingInfo;
 /// 
 class ObjcForwardProtocolDecl : public TypeDecl {
-  ObjcProtocolDecl **ForwardProtocolDecls;   // Null if not defined.
-  int NumForwardProtocolDecls;               // -1 if not defined.
+  ObjcProtocolDecl **ReferencedProtocols;   // Null if not defined.
+  int NumReferencedProtocols;               // -1 if not defined.
 public:
   ObjcForwardProtocolDecl(SourceLocation L, unsigned nElts)
   : TypeDecl(ObjcForwardProtocol, L, 0, 0) { 
     if (nElts) {
-      ForwardProtocolDecls = new ObjcProtocolDecl*[nElts];
-      memset(ForwardProtocolDecls, '\0', nElts*sizeof(ObjcProtocolDecl*));
-      NumForwardProtocolDecls = nElts;
+      ReferencedProtocols = new ObjcProtocolDecl*[nElts];
+      memset(ReferencedProtocols, '\0', nElts*sizeof(ObjcProtocolDecl*));
+      NumReferencedProtocols = nElts;
     }
   }
   void setForwardProtocolDecl(int idx, ObjcProtocolDecl *OID) {
-    assert((idx < NumForwardProtocolDecls) && "index out of range");
-    ForwardProtocolDecls[idx] = OID;
+    assert((idx < NumReferencedProtocols) && "index out of range");
+    ReferencedProtocols[idx] = OID;
   }
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcForwardProtocol;
@@ -409,16 +413,16 @@ class ObjcCategoryDecl : public Decl {
   IdentifierInfo *ObjcCatName;
   
   /// referenced protocols in this category
-  ObjcProtocolDecl **CatReferencedProtocols;  // Null if none
-  int NumCatReferencedProtocols;  // -1 if none
+  ObjcProtocolDecl **ReferencedProtocols;  // Null if none
+  int NumReferencedProtocols;  // -1 if none
   
   /// category instance methods
-  ObjcMethodDecl **CatInsMethods;  // Null if not defined
-  int NumCatInsMethods;  // -1 if not defined
+  ObjcMethodDecl **InstanceMethods;  // Null if not defined
+  int NumInstanceMethods;  // -1 if not defined
 
   /// category class methods
-  ObjcMethodDecl **CatClsMethods;  // Null if not defined
-  int NumCatClsMethods;  // -1 if not defined
+  ObjcMethodDecl **ClassMethods;  // Null if not defined
+  int NumClassMethods;  // -1 if not defined
   
   /// Next category belonging to this class
   ObjcCategoryDecl *NextClassCategory;
@@ -430,15 +434,15 @@ public:
   ObjcCategoryDecl(SourceLocation L, unsigned numRefProtocol)
     : Decl(ObjcCategory),
       ClassInterface(0), ObjcCatName(0),
-      CatReferencedProtocols(0), NumCatReferencedProtocols(-1),
-      CatInsMethods(0), NumCatInsMethods(-1),
-      CatClsMethods(0), NumCatClsMethods(-1),
+      ReferencedProtocols(0), NumReferencedProtocols(-1),
+      InstanceMethods(0), NumInstanceMethods(-1),
+      ClassMethods(0), NumClassMethods(-1),
       NextClassCategory(0), CatLoc(L) {
         if (numRefProtocol) {
-          CatReferencedProtocols = new ObjcProtocolDecl*[numRefProtocol];
-          memset(CatReferencedProtocols, '\0', 
+          ReferencedProtocols = new ObjcProtocolDecl*[numRefProtocol];
+          memset(ReferencedProtocols, '\0', 
                  numRefProtocol*sizeof(ObjcProtocolDecl*));
-          NumCatReferencedProtocols = numRefProtocol;
+          NumReferencedProtocols = numRefProtocol;
         }
       }
 
@@ -446,20 +450,20 @@ public:
   void setClassInterface(ObjcInterfaceDecl *IDecl) { ClassInterface = IDecl; }
   
   void setCatReferencedProtocols(int idx, ObjcProtocolDecl *OID) {
-    assert((idx < NumCatReferencedProtocols) && "index out of range");
-    CatReferencedProtocols[idx] = OID;
+    assert((idx < NumReferencedProtocols) && "index out of range");
+    ReferencedProtocols[idx] = OID;
   }
   
-  ObjcProtocolDecl **getCatReferencedProtocols() const { 
-    return CatReferencedProtocols; 
+  ObjcProtocolDecl **getReferencedProtocols() const { 
+    return ReferencedProtocols; 
   }
-  int getNumCatReferencedProtocols() const { return NumCatReferencedProtocols; }
+  int getNumReferencedProtocols() const { return NumReferencedProtocols; }
   
-  ObjcMethodDecl **getCatInsMethods() const { return CatInsMethods; }
-  int getNumCatInsMethods() const { return NumCatInsMethods; }
+  ObjcMethodDecl **getInstanceMethods() const { return InstanceMethods; }
+  int getNumInstanceMethods() const { return NumInstanceMethods; }
   
-  ObjcMethodDecl **getCatClsMethods() const { return CatClsMethods; }
-  int getNumCatClsMethods() const { return NumCatClsMethods; }
+  ObjcMethodDecl **getClassMethods() const { return ClassMethods; }
+  int getNumClassMethods() const { return NumClassMethods; }
   
   void ObjcAddCatMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                          ObjcMethodDecl **clsMethods, unsigned numClsMembers);
@@ -491,12 +495,12 @@ class ObjcCategoryImplDecl : public Decl {
   IdentifierInfo *ObjcCatName;
       
   /// category instance methods being implemented
-  ObjcMethodDecl **CatInsMethods; // Null if category is not implementing any
-  int NumCatInsMethods;           // -1 if category is not implementing any
+  ObjcMethodDecl **InstanceMethods; // Null if category is not implementing any
+  int NumInstanceMethods;           // -1 if category is not implementing any
   
   /// category class methods being implemented
-  ObjcMethodDecl **CatClsMethods; // Null if category is not implementing any
-  int NumCatClsMethods;  // -1 if category is not implementing any
+  ObjcMethodDecl **ClassMethods; // Null if category is not implementing any
+  int NumClassMethods;  // -1 if category is not implementing any
   
   public:
     ObjcCategoryImplDecl(SourceLocation L, IdentifierInfo *Id,
@@ -505,8 +509,8 @@ class ObjcCategoryImplDecl : public Decl {
     : Decl(ObjcCategoryImpl),
     ClassInterface(classInterface),
     ObjcCatName(catName),
-    CatInsMethods(0), NumCatInsMethods(-1),
-    CatClsMethods(0), NumCatClsMethods(-1) {}
+    InstanceMethods(0), NumInstanceMethods(-1),
+    ClassMethods(0), NumClassMethods(-1) {}
         
     ObjcInterfaceDecl *getClassInterface() const { 
       return ClassInterface; 
@@ -514,11 +518,11 @@ class ObjcCategoryImplDecl : public Decl {
   
   IdentifierInfo *getObjcCatName() const { return ObjcCatName; }
   
-  ObjcMethodDecl **getCatInsMethods() const { return CatInsMethods; }
-  int getNumCatInsMethods() const { return NumCatInsMethods; }
+  ObjcMethodDecl **getInstanceMethods() const { return InstanceMethods; }
+  int getNumInstanceMethods() const { return NumInstanceMethods; }
   
-  ObjcMethodDecl **getCatClsMethods() const { return CatClsMethods; }
-  int getNumCatClsMethods() const { return NumCatClsMethods; }
+  ObjcMethodDecl **getClassMethods() const { return ClassMethods; }
+  int getNumClassMethods() const { return NumClassMethods; }
   
   void ObjcAddCatImplMethods(
         ObjcMethodDecl **insMethods, unsigned numInsMembers,
@@ -555,12 +559,12 @@ class ObjcImplementationDecl : public TypeDecl {
   int NumIvars;   // -1 if not defined.
     
   /// implemented instance methods
-  ObjcMethodDecl **InsMethods;  // Null if not defined
-  int NumInsMethods;  // -1 if not defined
+  ObjcMethodDecl **InstanceMethods;  // Null if not defined
+  int NumInstanceMethods;  // -1 if not defined
     
   /// implemented class methods
-  ObjcMethodDecl **ClsMethods;  // Null if not defined
-  int NumClsMethods;  // -1 if not defined
+  ObjcMethodDecl **ClassMethods;  // Null if not defined
+  int NumClassMethods;  // -1 if not defined
     
   public:
   ObjcImplementationDecl(SourceLocation L, IdentifierInfo *Id,
@@ -568,7 +572,8 @@ class ObjcImplementationDecl : public TypeDecl {
     : TypeDecl(ObjcImplementation, L, Id, 0),
       SuperClass(superDecl),
       Ivars(0), NumIvars(-1),
-      InsMethods(0), NumInsMethods(-1), ClsMethods(0), NumClsMethods(-1) {}
+      InstanceMethods(0), NumInstanceMethods(-1), 
+      ClassMethods(0), NumClassMethods(-1) {}
   
   void ObjcAddInstanceVariablesToClassImpl(ObjcIvarDecl **ivars, 
                                            unsigned numIvars);
@@ -581,11 +586,11 @@ class ObjcImplementationDecl : public TypeDecl {
   void setImplSuperClass(ObjcInterfaceDecl * superCls) 
          { SuperClass = superCls; }
   
-  ObjcMethodDecl **getInsMethods() const { return InsMethods; }
-  int getNumInsMethods() const { return NumInsMethods; }
+  ObjcMethodDecl **getInstanceMethods() const { return InstanceMethods; }
+  int getNumInstanceMethods() const { return NumInstanceMethods; }
   
-  ObjcMethodDecl **getClsMethods() const { return ClsMethods; }
-  int getNumClsMethods() const { return NumClsMethods; }
+  ObjcMethodDecl **getClassMethods() const { return ClassMethods; }
+  int getNumClassMethods() const { return NumClassMethods; }
     
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcImplementation;

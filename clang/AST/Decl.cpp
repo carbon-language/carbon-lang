@@ -320,15 +320,15 @@ void ObjcInterfaceDecl::ObjcAddMethods(ObjcMethodDecl **insMethods,
 				       unsigned numInsMembers,
                                        ObjcMethodDecl **clsMethods,
                                        unsigned numClsMembers) {
-  NumInsMethods = numInsMembers;
+  NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
-    InsMethods = new ObjcMethodDecl*[numInsMembers];
-    memcpy(InsMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+    InstanceMethods = new ObjcMethodDecl*[numInsMembers];
+    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
   }
-  NumClsMethods = numClsMembers;
+  NumClassMethods = numClsMembers;
   if (numClsMembers) {
-    ClsMethods = new ObjcMethodDecl*[numClsMembers];
-    memcpy(ClsMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+    ClassMethods = new ObjcMethodDecl*[numClsMembers];
+    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
   }
 }
 
@@ -339,15 +339,15 @@ void ObjcProtocolDecl::ObjcAddProtoMethods(ObjcMethodDecl **insMethods,
 					   unsigned numInsMembers,
 					   ObjcMethodDecl **clsMethods,
 					   unsigned numClsMembers) {
-  NumProtoInsMethods = numInsMembers;
+  NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
-    ProtoInsMethods = new ObjcMethodDecl*[numInsMembers];
-    memcpy(ProtoInsMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+    InstanceMethods = new ObjcMethodDecl*[numInsMembers];
+    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
   }
-  NumProtoClsMethods = numClsMembers;
+  NumClassMethods = numClsMembers;
   if (numClsMembers) {
-    ProtoClsMethods = new ObjcMethodDecl*[numClsMembers];
-    memcpy(ProtoClsMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+    ClassMethods = new ObjcMethodDecl*[numClsMembers];
+    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
   }
 }
 
@@ -358,15 +358,15 @@ void ObjcCategoryDecl::ObjcAddCatMethods(ObjcMethodDecl **insMethods,
 					 unsigned numInsMembers,
 					 ObjcMethodDecl **clsMethods,
 					 unsigned numClsMembers) {
-  NumCatInsMethods = numInsMembers;
+  NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
-    CatInsMethods = new ObjcMethodDecl*[numInsMembers];
-    memcpy(CatInsMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+    InstanceMethods = new ObjcMethodDecl*[numInsMembers];
+    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
   }
-  NumCatClsMethods = numClsMembers;
+  NumClassMethods = numClsMembers;
   if (numClsMembers) {
-    CatClsMethods = new ObjcMethodDecl*[numClsMembers];
-    memcpy(CatClsMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+    ClassMethods = new ObjcMethodDecl*[numClsMembers];
+    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
   }
 }
 
@@ -377,15 +377,15 @@ void ObjcCategoryImplDecl::ObjcAddCatImplMethods(ObjcMethodDecl **insMethods,
 						 unsigned numInsMembers,
 						 ObjcMethodDecl **clsMethods,
 						 unsigned numClsMembers) {
-  NumCatInsMethods = numInsMembers;
+  NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
-    CatInsMethods = new ObjcMethodDecl*[numInsMembers];
-    memcpy(CatInsMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+    InstanceMethods = new ObjcMethodDecl*[numInsMembers];
+    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
   }
-  NumCatClsMethods = numClsMembers;
+  NumClassMethods = numClsMembers;
   if (numClsMembers) {
-    CatClsMethods = new ObjcMethodDecl*[numClsMembers];
-    memcpy(CatClsMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+    ClassMethods = new ObjcMethodDecl*[numClsMembers];
+    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
   }
 }
 
@@ -396,15 +396,15 @@ void ObjcImplementationDecl::ObjcAddImplMethods(ObjcMethodDecl **insMethods,
 						unsigned numInsMembers,
 						ObjcMethodDecl **clsMethods,
 						unsigned numClsMembers) {
-  NumInsMethods = numInsMembers;
+  NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
-    InsMethods = new ObjcMethodDecl*[numInsMembers];
-    memcpy(InsMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+    InstanceMethods = new ObjcMethodDecl*[numInsMembers];
+    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
   }
-  NumClsMethods = numClsMembers;
+  NumClassMethods = numClsMembers;
   if (numClsMembers) {
-    ClsMethods = new ObjcMethodDecl*[numClsMembers];
-    memcpy(ClsMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+    ClassMethods = new ObjcMethodDecl*[numClsMembers];
+    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
   }
 }
 
@@ -412,8 +412,8 @@ void ObjcImplementationDecl::ObjcAddImplMethods(ObjcMethodDecl **insMethods,
 ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
   ObjcInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
-    ObjcMethodDecl **methods = ClassDecl->getInsMethods();
-    int methodCount = ClassDecl->getNumInsMethods();
+    ObjcMethodDecl **methods = ClassDecl->getInstanceMethods();
+    int methodCount = ClassDecl->getNumInstanceMethods();
     for (int i = 0; i < methodCount; ++i) {
       if (methods[i]->getSelector() == Sel) {
         return methods[i];
@@ -428,8 +428,8 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
 ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
   ObjcInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
-    ObjcMethodDecl **methods = ClassDecl->getClsMethods();
-    int methodCount = ClassDecl->getNumClsMethods();
+    ObjcMethodDecl **methods = ClassDecl->getClassMethods();
+    int methodCount = ClassDecl->getNumClassMethods();
     for (int i = 0; i < methodCount; ++i) {
       if (methods[i]->getSelector() == Sel) {
         return methods[i];
