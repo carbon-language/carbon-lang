@@ -1306,3 +1306,19 @@ However, ICC caches this information before the loop and produces this:
         movl      88(%esp), %eax                                #481.12
 
 //===---------------------------------------------------------------------===//
+
+This code:
+
+	%tmp659 = icmp slt i16 %tmp654, 0		; <i1> [#uses=1]
+	br i1 %tmp659, label %cond_true662, label %cond_next715
+
+produces this:
+
+	testw	%cx, %cx
+	movswl	%cx, %esi
+	jns	LBB4_109	# cond_next715
+
+Shark tells us that using %cx in the testw instruction is sub-optimal. It
+suggests using the 32-bit register (which is what ICC uses).
+
+//===---------------------------------------------------------------------===//
