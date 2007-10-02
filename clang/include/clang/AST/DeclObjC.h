@@ -581,9 +581,9 @@ class ObjcImplementationDecl : public TypeDecl {
   void ObjcAddImplMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                           ObjcMethodDecl **clsMethods, unsigned numClsMembers);
     
-  ObjcInterfaceDecl *getImplSuperClass() const { return SuperClass; }
+  ObjcInterfaceDecl *getSuperClass() const { return SuperClass; }
   
-  void setImplSuperClass(ObjcInterfaceDecl * superCls) 
+  void setSuperClass(ObjcInterfaceDecl * superCls) 
          { SuperClass = superCls; }
   
   ObjcMethodDecl **getInstanceMethods() const { return InstanceMethods; }
