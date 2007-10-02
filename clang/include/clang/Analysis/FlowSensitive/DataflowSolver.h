@@ -15,6 +15,7 @@
 #define LLVM_CLANG_ANALYSES_DATAFLOW_SOLVER
 
 #include "clang/AST/CFG.h"
+#include "clang/Analysis/ProgramEdge.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "functional" // STL
 
@@ -68,12 +69,12 @@ template <> struct ItrTraits<forward_analysis_tag> {
   static StmtItr StmtBegin(const CFGBlock* B) { return B->begin(); }
   static StmtItr StmtEnd(const CFGBlock* B) { return B->end(); }
   
-  static CFG::Edge PrevEdge(const CFGBlock* B, const CFGBlock* PrevBlk) {
-    return CFG::Edge(PrevBlk,B);
+  static BlkBlkEdge PrevEdge(const CFGBlock* B, const CFGBlock* PrevBlk) {
+    return BlkBlkEdge(PrevBlk,B);
   }
   
-  static CFG::Edge NextEdge(const CFGBlock* B, const CFGBlock* NextBlk) {
-    return CFG::Edge(B,NextBlk);
+  static BlkBlkEdge NextEdge(const CFGBlock* B, const CFGBlock* NextBlk) {
+    return BlkBlkEdge(B,NextBlk);
   }
 };
 
@@ -91,12 +92,12 @@ template <> struct ItrTraits<backward_analysis_tag> {
   static StmtItr StmtBegin(const CFGBlock* B) { return B->rbegin(); }
   static StmtItr StmtEnd(const CFGBlock* B) { return B->rend(); }    
   
-  static CFG::Edge PrevEdge(const CFGBlock* B, const CFGBlock* PrevBlk) {
-    return CFG::Edge(B,PrevBlk);
+  static BlkBlkEdge PrevEdge(const CFGBlock* B, const CFGBlock* PrevBlk) {
+    return BlkBlkEdge(B,PrevBlk);
   }
   
-  static CFG::Edge NextEdge(const CFGBlock* B, const CFGBlock* NextBlk) {
-    return CFG::Edge(NextBlk,B);
+  static BlkBlkEdge NextEdge(const CFGBlock* B, const CFGBlock* NextBlk) {
+    return BlkBlkEdge(NextBlk,B);
   }
 };
 } // end namespace dataflow
@@ -241,7 +242,7 @@ private:
   }
     
   /// UpdateEdgeValue - Update the value associated with a given edge.
-  void UpdateEdgeValue(CFG::Edge E, ValTy& V, const CFGBlock* TargetBlock) {
+  void UpdateEdgeValue(BlkBlkEdge E, ValTy& V, const CFGBlock* TargetBlock) {
   
     EdgeDataMapTy& M = D.getEdgeDataMap();
     typename EdgeDataMapTy::iterator I = M.find(E);

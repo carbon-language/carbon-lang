@@ -17,41 +17,8 @@
 #define LLVM_CLANG_ANALYSES_DATAFLOW_VALUES
 
 #include "clang/AST/CFG.h"
+#include "clang/Analysis/ProgramEdge.h"
 #include "llvm/ADT/DenseMap.h"
-
-//===----------------------------------------------------------------------===//
-// DenseMapInfo for CFG::Edge for use with DenseMap
-//===----------------------------------------------------------------------===//
-
-namespace llvm {
-  
-  template <> struct DenseMapInfo<clang::CFG::Edge> {
-    static inline clang::CFG::Edge getEmptyKey() { 
-      return clang::CFG::Edge(NULL,NULL); 
-    }
-    
-    static inline clang::CFG::Edge getTombstoneKey() {
-      return clang::CFG::Edge(NULL,reinterpret_cast<clang::CFGBlock*>(-1));      
-    }
-    
-    static unsigned getHashValue(const clang::CFG::Edge& E) {
-      const clang::CFGBlock* P1 = E.getSrc();
-      const clang::CFGBlock* P2 = E.getDst();  
-      return static_cast<unsigned>((reinterpret_cast<uintptr_t>(P1) >> 4) ^
-                                   (reinterpret_cast<uintptr_t>(P1) >> 9) ^
-                                   (reinterpret_cast<uintptr_t>(P2) >> 5) ^
-                                   (reinterpret_cast<uintptr_t>(P2) >> 10));
-    }
-    
-    static bool isEqual(const clang::CFG::Edge& LHS,
-                        const clang::CFG::Edge& RHS) {                        
-      return LHS == RHS;
-    }
-    
-    static bool isPod() { return true; }
-  };
-  
-} // end namespace llvm
 
 //===----------------------------------------------------------------------===//
 /// Dataflow Directional Tag Classes.  These are used for tag dispatching
@@ -81,7 +48,7 @@ public:
   typedef typename ValueTypes::ValTy               ValTy;
   typedef typename ValueTypes::AnalysisDataTy      AnalysisDataTy;  
   typedef _AnalysisDirTag                          AnalysisDirTag;
-  typedef llvm::DenseMap<CFG::Edge, ValTy>         EdgeDataMapTy;
+  typedef llvm::DenseMap<ProgramEdge, ValTy>       EdgeDataMapTy;
   typedef llvm::DenseMap<const CFGBlock*, ValTy>   BlockDataMapTy;
 
   //===--------------------------------------------------------------------===//
@@ -113,13 +80,13 @@ public:
 
   /// getEdgeData - Retrieves the dataflow values associated with a
   ///  CFG edge.
-  ValTy& getEdgeData(const CFG::Edge& E) {
+  ValTy& getEdgeData(const BlkBlkEdge& E) {
     typename EdgeDataMapTy::iterator I = EdgeDataMap.find(E);
     assert (I != EdgeDataMap.end() && "No data associated with Edge.");
     return I->second;
   }
   
-  const ValTy& getEdgeData(const CFG::Edge& E) const {
+  const ValTy& getEdgeData(const BlkBlkEdge& E) const {
     return reinterpret_cast<DataflowValues*>(this)->getEdgeData(E);
   }  
 

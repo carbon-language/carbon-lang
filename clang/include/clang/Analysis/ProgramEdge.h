@@ -41,6 +41,10 @@ public:
     return RawSrc() == RHS.RawSrc() && RawDst() == RHS.RawDst();    
   }
   
+  bool operator!=(const ProgramEdge& RHS) const {
+    return RawSrc() != RHS.RawSrc() || RawDst() != RHS.RawDst();
+  }
+  
   unsigned getHashValue() const {
     uintptr_t v1 = reinterpret_cast<uintptr_t>(RawSrc());
     uintptr_t v2 = reinterpret_cast<uintptr_t>(RawDst());
@@ -116,6 +120,10 @@ template <> struct DenseMapInfo<clang::ProgramEdge> {
   static inline clang::ProgramEdge getTombstoneKey() {
     return clang::BlkBlkEdge(reinterpret_cast<clang::CFGBlock*>(-1),
                              reinterpret_cast<clang::CFGBlock*>(-1));
+  }
+  
+  static unsigned getHashValue(const clang::ProgramEdge& E) {
+    return E.getHashValue();
   }
   
   static bool isEqual(const clang::ProgramEdge& LHS,

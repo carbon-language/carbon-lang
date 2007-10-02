@@ -231,26 +231,6 @@ public:
   const CFGBlock*  getIndirectGotoBlock() const { return IndirectGotoBlock; }
   
   //===--------------------------------------------------------------------===//
-  // CFG Edges (Source Block, Destination Block)
-  //===--------------------------------------------------------------------===//
-
-  class Edge {
-    const CFGBlock* S;
-    const CFGBlock* D;
-  public:
-    Edge(const CFGBlock* src, const CFGBlock* dst) : S(src), D(dst) {}
-    Edge(const Edge& RHS) : S(RHS.S), D(RHS.D) {}
-    
-    Edge& operator=(const Edge& RHS) { S = RHS.S; D = RHS.D; return *this; }
-    
-    const CFGBlock* getSrc() const { return S; }
-    const CFGBlock* getDst() const { return D; }
-        
-    bool operator==(const Edge& RHS) const { return S == RHS.S && D == RHS.D; }    
-    bool operator!=(const Edge& RHS) const { return !(*this == RHS); }
-  };
-  
-  //===--------------------------------------------------------------------===//
   // Member templates useful for various batch operations over CFGs.
   //===--------------------------------------------------------------------===//
   
