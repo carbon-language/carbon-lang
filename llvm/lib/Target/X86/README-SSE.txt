@@ -671,3 +671,27 @@ beneficial because it prevents the load from being folded into the multiply.
 
 //===---------------------------------------------------------------------===//
 
+In this loop:
+
+LBB4_6:	# bb47.preheader
+	shlw	$2, %si
+	decw	%si
+	movzwl	%si, %eax
+	incl	%eax
+	xorl	%ecx, %ecx
+LBB4_7:	# bb47
+	xorps	%xmm0, %xmm0            # (1)
+	movaps	%xmm0, (%edx)
+	movaps	%xmm0, 16(%edx)
+	addl	$32, %edx
+	incl	%ecx
+	cmpl	%eax, %ecx
+	jne	LBB4_7	# bb47
+LBB4_8:	# bb42.return_crit_edge
+	xorw	%si, %si
+	jmp	LBB4_12	# return
+
+The instruction at (1) can be moved out of the main body of the loop.
+
+//===---------------------------------------------------------------------===//
+
