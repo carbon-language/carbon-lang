@@ -19,6 +19,7 @@
 #include <list>
 #include <vector>
 #include <iosfwd>
+#include <cassert>
 
 namespace clang {
 
