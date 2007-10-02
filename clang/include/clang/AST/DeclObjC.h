@@ -167,28 +167,6 @@ private:
   AccessControl DeclAccess : 3;
 };
 
-class ObjcClassDecl : public TypeDecl {
-  ObjcInterfaceDecl **ForwardDecls;   // Null if not defined.
-  int NumForwardDecls;               // -1 if not defined.
-public:
-  ObjcClassDecl(SourceLocation L, unsigned nElts)
-    : TypeDecl(ObjcClass, L, 0, 0) { 
-    if (nElts) {
-      ForwardDecls = new ObjcInterfaceDecl*[nElts];
-      memset(ForwardDecls, '\0', nElts*sizeof(ObjcInterfaceDecl*));
-    }
-    NumForwardDecls = nElts;
-  }
-  void setInterfaceDecl(int idx, ObjcInterfaceDecl *OID) {
-    assert((idx < NumForwardDecls) && "index out of range");
-    ForwardDecls[idx] = OID;
-  }
-  static bool classof(const Decl *D) {
-    return D->getKind() == ObjcClass;
-  }
-  static bool classof(const ObjcClassDecl *D) { return true; }
-};
-
 /// ObjcMethodDecl - Represents an instance or class method declaration.
 /// ObjC methods can be declared within 4 contexts: class interfaces,
 /// categories, protocols, and class implementations. While C++ member
@@ -353,31 +331,57 @@ public:
   static bool classof(const ObjcProtocolDecl *D) { return true; }
 };
   
-/// ObjcForwardProtocolDecl - Represents a forward protocol declaration.
-/// For example:
+/// ObjcClassDecl - Specifies a list of forward class declarations. For example:
 ///
+/// @class NSCursor, NSImage, NSPasteboard, NSWindow;
+///
+class ObjcClassDecl : public TypeDecl {
+  ObjcInterfaceDecl **ForwardDecls;   // Null if not defined.
+  int NumForwardDecls;               // -1 if not defined.
+public:
+  ObjcClassDecl(SourceLocation L, unsigned nElts)
+    : TypeDecl(ObjcClass, L, 0, 0) { 
+    if (nElts) {
+      ForwardDecls = new ObjcInterfaceDecl*[nElts];
+      memset(ForwardDecls, '\0', nElts*sizeof(ObjcInterfaceDecl*));
+    }
+    NumForwardDecls = nElts;
+  }
+  void setInterfaceDecl(int idx, ObjcInterfaceDecl *OID) {
+    assert((idx < NumForwardDecls) && "index out of range");
+    ForwardDecls[idx] = OID;
+  }
+  static bool classof(const Decl *D) {
+    return D->getKind() == ObjcClass;
+  }
+  static bool classof(const ObjcClassDecl *D) { return true; }
+};
+
+/// ObjcForwardProtocolDecl - Specifies a list of forward protocol declarations.
+/// For example:
+/// 
 /// @protocol NSTextInput, NSChangeSpelling, NSDraggingInfo;
 /// 
 class ObjcForwardProtocolDecl : public TypeDecl {
-    ObjcProtocolDecl **ForwardProtocolDecls;   // Null if not defined.
-    int NumForwardProtocolDecls;               // -1 if not defined.
-  public:
-    ObjcForwardProtocolDecl(SourceLocation L, unsigned nElts)
-    : TypeDecl(ObjcForwardProtocol, L, 0, 0) { 
-      if (nElts) {
-        ForwardProtocolDecls = new ObjcProtocolDecl*[nElts];
-        memset(ForwardProtocolDecls, '\0', nElts*sizeof(ObjcProtocolDecl*));
-        NumForwardProtocolDecls = nElts;
-      }
+  ObjcProtocolDecl **ForwardProtocolDecls;   // Null if not defined.
+  int NumForwardProtocolDecls;               // -1 if not defined.
+public:
+  ObjcForwardProtocolDecl(SourceLocation L, unsigned nElts)
+  : TypeDecl(ObjcForwardProtocol, L, 0, 0) { 
+    if (nElts) {
+      ForwardProtocolDecls = new ObjcProtocolDecl*[nElts];
+      memset(ForwardProtocolDecls, '\0', nElts*sizeof(ObjcProtocolDecl*));
+      NumForwardProtocolDecls = nElts;
     }
-    void setForwardProtocolDecl(int idx, ObjcProtocolDecl *OID) {
-      assert((idx < NumForwardProtocolDecls) && "index out of range");
-      ForwardProtocolDecls[idx] = OID;
-    }
-    static bool classof(const Decl *D) {
-      return D->getKind() == ObjcForwardProtocol;
-    }
-    static bool classof(const ObjcForwardProtocolDecl *D) { return true; }
+  }
+  void setForwardProtocolDecl(int idx, ObjcProtocolDecl *OID) {
+    assert((idx < NumForwardProtocolDecls) && "index out of range");
+    ForwardProtocolDecls[idx] = OID;
+  }
+  static bool classof(const Decl *D) {
+    return D->getKind() == ObjcForwardProtocol;
+  }
+  static bool classof(const ObjcForwardProtocolDecl *D) { return true; }
 };
 
 /// ObjcCategoryDecl - Represents a category declaration. A category allows
