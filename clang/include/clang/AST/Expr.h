@@ -1100,6 +1100,12 @@ public:
   const Expr *getReceiver() const { return SubExprs[RECEIVER]; }
   Expr *getReceiver() { return SubExprs[RECEIVER]; }
   
+  const Selector &getSelector() const { return SelName; }
+  Selector &getSelector() { return SelName; }
+  
+  const IdentifierInfo *getClassName() const { return ClassName; }
+  IdentifierInfo *getClassName() { return ClassName; }
+  
   /// getNumArgs - Return the number of actual arguments to this call.
   unsigned getNumArgs() const { return SelName.getNumArgs(); }
 

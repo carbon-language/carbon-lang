@@ -127,6 +127,8 @@ public:
   void setListCategories(ObjcCategoryDecl *category) { 
          ListCategories = category; 
   }
+  ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
+  ObjcMethodDecl *lookupClassMethod(Selector &Sel);
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcInterface;

@@ -80,11 +80,18 @@ void Sema::PopScope(SourceLocation Loc, Scope *S) {
 
 /// getObjcInterfaceDecl - Look up a for a class declaration in the scope.
 /// return 0 if one not found.
-ObjcInterfaceDecl *Sema::getObjCInterfaceDecl(Scope *S,
-                       			      IdentifierInfo *Id, 
-				              SourceLocation IdLoc) {
-  ScopedDecl *IdDecl = LookupScopedDecl(Id, Decl::IDNS_Ordinary, 
-				        IdLoc, S);
+ObjcInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
+
+  // Scan up the scope chain looking for a decl that matches this identifier
+  // that is in the appropriate namespace.  This search should not take long, as
+  // shadowing of names is uncommon, and deep shadowing is extremely uncommon.
+  ScopedDecl *IdDecl = NULL;
+  for (ScopedDecl *D = Id->getFETokenInfo<ScopedDecl>(); D; D = D->getNext()) {
+    if (D->getIdentifierNamespace() == Decl::IDNS_Ordinary) {
+      IdDecl = D;
+      break;
+    }
+  }
   if (IdDecl && !isa<ObjcInterfaceDecl>(IdDecl))
     IdDecl = 0;
   return cast_or_null<ObjcInterfaceDecl>(static_cast<Decl*>(IdDecl));
@@ -905,7 +912,7 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(Scope* S,
     Diag(PrevDecl->getLocation(), diag::err_previous_definition);
   }
   
-  ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(S, ClassName, ClassLoc);
+  ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(ClassName);
   if (IDecl) {
     // Class already seen. Is it a forward declaration?
     if (!IDecl->getIsForwardDecl())
@@ -936,7 +943,7 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(Scope* S,
     }
     else {
       // Check that super class is previously defined
-      SuperClassEntry = getObjCInterfaceDecl(S, SuperName, SuperLoc); 
+      SuperClassEntry = getObjCInterfaceDecl(SuperName); 
                               
       if (!SuperClassEntry || SuperClassEntry->getIsForwardDecl()) {
         Diag(AtInterfaceLoc, diag::err_undef_superclass, SuperName->getName(),
@@ -1030,7 +1037,7 @@ Sema::DeclTy *Sema::ObjcStartCatInterface(Scope* S,
                       IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                       IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
   ObjcCategoryDecl *CDecl;
-  ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(S, ClassName, ClassLoc);
+  ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(ClassName);
   CDecl = new ObjcCategoryDecl(AtInterfaceLoc, NumProtoRefs);
   CDecl->setClassInterface(IDecl);
 
@@ -1075,7 +1082,7 @@ Sema::DeclTy *Sema::ObjcStartCategoryImplementation(Scope* S,
                       SourceLocation AtCatImplLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CatName, SourceLocation CatLoc) {
-  ObjcInterfaceDecl *IDecl = getObjCInterfaceDecl(S, ClassName, ClassLoc);
+  ObjcInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
   ObjcCategoryImplDecl *CDecl = new ObjcCategoryImplDecl(AtCatImplLoc, 
                                                          ClassName, IDecl,
                                                          CatName);
@@ -1103,7 +1110,7 @@ Sema::DeclTy *Sema::ObjcStartClassImplementation(Scope *S,
   }
   else {
     // Is there an interface declaration of this class; if not, warn!
-    IDecl = getObjCInterfaceDecl(S, ClassName, ClassLoc); 
+    IDecl = getObjCInterfaceDecl(ClassName); 
     if (!IDecl)
       Diag(ClassLoc, diag::warn_undef_interface, ClassName->getName());
   }
@@ -1121,7 +1128,7 @@ Sema::DeclTy *Sema::ObjcStartClassImplementation(Scope *S,
       Diag(PrevDecl->getLocation(), diag::err_previous_definition);
     }
     else {
-      SDecl = getObjCInterfaceDecl(S, SuperClassname, SuperClassLoc); 
+      SDecl = getObjCInterfaceDecl(SuperClassname); 
       if (!SDecl)
         Diag(SuperClassLoc, diag::err_undef_superclass, 
              SuperClassname->getName(), ClassName->getName());
@@ -1330,7 +1337,7 @@ Sema::ObjcClassDeclaration(Scope *S, SourceLocation AtClassLoc,
 
   for (unsigned i = 0; i != NumElts; ++i) {
     ObjcInterfaceDecl *IDecl;
-    IDecl = getObjCInterfaceDecl(S, IdentList[i], AtClassLoc); 
+    IDecl = getObjCInterfaceDecl(IdentList[i]); 
     if (!IDecl)  {// Already seen?
       IDecl = new ObjcInterfaceDecl(SourceLocation(), 0, IdentList[i], true);
       // Chain & install the interface decl into the identifier.
@@ -1655,8 +1662,7 @@ void Sema::ActOnFields(Scope* S,
 	cast<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl));
       assert(IMPDecl && "ActOnFields - missing ObjcImplementationDecl");
       IMPDecl->ObjcAddInstanceVariablesToClassImpl(ClsFields, RecFields.size());
-      ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(S, 
-				   IMPDecl->getIdentifier(), RecLoc);
+      ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(IMPDecl->getIdentifier());
       if (IDecl)
         ActOnImpleIvarVsClassIvars(static_cast<DeclTy*>(IDecl), 
           reinterpret_cast<DeclTy**>(&RecFields[0]), RecFields.size());
@@ -1705,8 +1711,7 @@ void Sema::ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl,
                                                static_cast<Decl*>(ClassDecl));
     ImplClass->ObjcAddImplMethods(&insMethods[0], insMethods.size(),
                                  &clsMethods[0], clsMethods.size());
-    ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(S, 
-				 ImplClass->getIdentifier(), SourceLocation());
+    ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(ImplClass->getIdentifier());
     if (IDecl)
       ImplMethodsVsClassMethods(ImplClass, IDecl);
   }

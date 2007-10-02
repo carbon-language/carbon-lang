@@ -187,8 +187,7 @@ private:
                                     Scope *FnBodyScope);
   ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
                                SourceLocation IdLoc, Scope *S);  
-  ObjcInterfaceDecl *getObjCInterfaceDecl(Scope *S, 
-		       IdentifierInfo *Id, SourceLocation IdLoc);
+  ObjcInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
   ObjcProtocolDecl *getObjCProtocolDecl(Scope *S, 
 		       IdentifierInfo *Id, SourceLocation IdLoc);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
@@ -436,7 +435,7 @@ public:
   // is obtained from Sel.getNumArgs().
   virtual ExprResult ActOnClassMessage(
     IdentifierInfo *receivingClassName, Selector Sel,
-    SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs);
+     SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs);
 
   // ActOnInstanceMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions

@@ -408,4 +408,36 @@ void ObjcImplementationDecl::ObjcAddImplMethods(ObjcMethodDecl **insMethods,
   }
 }
 
+// FIXME: look through categories...
+ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
+  ObjcInterfaceDecl* ClassDecl = this;
+  while (ClassDecl != NULL) {
+    ObjcMethodDecl **methods = ClassDecl->getInsMethods();
+    int methodCount = ClassDecl->getNumInsMethods();
+    for (int i = 0; i < methodCount; ++i) {
+      if (methods[i]->getSelector() == Sel) {
+        return methods[i];
+      }
+    }
+    ClassDecl = ClassDecl->getSuperClass();
+  }
+  return NULL;
+}
+
+// FIXME: look through categories...
+ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
+  ObjcInterfaceDecl* ClassDecl = this;
+  while (ClassDecl != NULL) {
+    ObjcMethodDecl **methods = ClassDecl->getClsMethods();
+    int methodCount = ClassDecl->getNumClsMethods();
+    for (int i = 0; i < methodCount; ++i) {
+      if (methods[i]->getSelector() == Sel) {
+        return methods[i];
+      }
+    }
+    ClassDecl = ClassDecl->getSuperClass();
+  }
+  return NULL;
+}
+
 

@@ -614,10 +614,17 @@ void StmtPrinter::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
 
 void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
   OS << "[";
-  PrintExpr(Mess->getReceiver());
-  for (unsigned i = 0, e = Mess->getNumArgs(); i != e; ++i) {
-    // FIXME: get/print keyword...
-    PrintExpr(Mess->getArg(i));
+  Expr *receiver = Mess->getReceiver();
+  if (receiver) PrintExpr(receiver);
+  else OS << Mess->getClassName()->getName();
+  Selector &selector = Mess->getSelector();
+  if (selector.isUnarySelector()) {
+    OS << " " << selector.getIdentifierInfoForSlot(0)->getName();
+  } else {
+    for (unsigned i = 0, e = Mess->getNumArgs(); i != e; ++i) {
+      OS << " " << selector.getIdentifierInfoForSlot(i)->getName() << ":";
+      PrintExpr(Mess->getArg(i));
+    }
   }
   OS << "]";
 }
