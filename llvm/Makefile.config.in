@@ -168,6 +168,9 @@ HAVE_PTHREAD := @HAVE_PTHREAD@
 
 LIBS       := @LIBS@
 
+# Targets that we should build
+TARGETS_TO_BUILD=@TARGETS_TO_BUILD@
+
 # Path to location for LLVM C/C++ front-end. You can modify this if you
 # want to override the value set by configure.
 LLVMGCCDIR := @LLVMGCCDIR@
@@ -259,3 +262,8 @@ NOLINKALL := @NOLINKALL@
 # Get the value of HUGE_VAL_SANITY which will be either "yes" or "no" depending
 # on the check.
 HUGE_VAL_SANITY = @HUGE_VAL_SANITY@
+
+# Bindings that we should build
+BINDINGS_TO_BUILD = @BINDINGS_TO_BUILD@
+ALL_BINDINGS = @ALL_BINDINGS@
+

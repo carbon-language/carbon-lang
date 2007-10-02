@@ -432,6 +432,24 @@ case "$withval" in
 esac
 AC_SUBST(EXTRA_OPTIONS,$EXTRA_OPTIONS)
 
+dnl Allow specific bindings to be specified for building (or not)
+AC_ARG_ENABLE([bindings],AS_HELP_STRING([--enable-bindings],
+    [Build specific language bindings: all,auto,none,{binding-name} (default=auto)]),,
+    enableval=default)
+BINDINGS_TO_BUILD=""
+case "$enableval" in
+  all | yes | default | auto) BINDINGS_TO_BUILD="auto" ;;
+  all ) BINDINGS_TO_BUILD="ocaml" ;;
+  none | no) BINDINGS_TO_BUILD="" ;;
+  *)for a_binding in `echo $enableval|sed -e 's/,/ /g' ` ; do
+      case "$a_binding" in
+        ocaml) BINDINGS_TO_BUILD="ocaml $BINDINGS_TO_BUILD" ;;
+        *) AC_MSG_ERROR([Unrecognized binding $a_binding]) ;;
+      esac
+  done 
+  ;;
+esac
+
 dnl===-----------------------------------------------------------------------===
 dnl===
 dnl=== SECTION 4: Check for programs we need and that they are the right version
@@ -854,6 +872,19 @@ AC_DEFINE_UNQUOTED(LLVM_MANDIR, "$LLVM_MANDIR",
                    [Installation directory for man pages])
 AC_DEFINE_UNQUOTED(LLVM_CONFIGTIME, "$LLVM_CONFIGTIME", 
                    [Time at which LLVM was configured])
+
+# Determine which bindings to build.
+if test "$BINDINGS_TO_BUILD" = auto ; then
+  BINDINGS_TO_BUILD=""
+  if test "x$OCAMLC" != x -a "x$OCAMLDEP" != x ; then
+    BINDINGS_TO_BUILD="ocaml $BINDINGS_TO_BUILD"
+  fi
+fi
+AC_SUBST(BINDINGS_TO_BUILD,$BINDINGS_TO_BUILD)
+
+# This isn't really configurey, but it avoids having to repeat the list in
+# other files.
+AC_SUBST(ALL_BINDINGS,ocaml)
 
 dnl===-----------------------------------------------------------------------===
 dnl===
