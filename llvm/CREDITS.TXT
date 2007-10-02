@@ -108,7 +108,9 @@ D: Register allocation refactoring
 
 N: Gordon Henriksen
 E: gordonhenriksen@mac.com
+D: Pluggable GC support
 D: C interface
+D: Ocaml bindings
 
 N: Raul Fernandes Herbster
 E: raul@dsc.ufcg.edu.br
