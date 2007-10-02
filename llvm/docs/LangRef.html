@@ -4484,9 +4484,14 @@ this can be specified as the fourth argument, otherwise it should be set to 0 or
 <div class="doc_text">
 
 <h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.sqrt</tt> on any 
+floating point type. Not all targets support all types however.
 <pre>
-  declare float @llvm.sqrt.f32(float %Val)
-  declare double @llvm.sqrt.f64(double %Val)
+  declare float     @llvm.sqrt.f32(float %Val)
+  declare double    @llvm.sqrt.f64(double %Val)
+  declare x86_fp80  @llvm.sqrt.f80(x86_fp80 %Val)
+  declare fp128     @llvm.sqrt.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.sqrt.ppcf128(ppc_fp128 %Val)
 </pre>
 
 <h5>Overview:</h5>
@@ -4520,9 +4525,14 @@ floating point number.
 <div class="doc_text">
 
 <h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.powi</tt> on any 
+floating point type. Not all targets support all types however.
 <pre>
-  declare float  @llvm.powi.f32(float  %Val, i32 %power)
-  declare double @llvm.powi.f64(double %Val, i32 %power)
+  declare float     @llvm.powi.f32(float  %Val, i32 %power)
+  declare double    @llvm.powi.f64(double %Val, i32 %power)
+  declare x86_fp80  @llvm.powi.f80(x86_fp80  %Val, i32 %power)
+  declare fp128     @llvm.powi.f128(fp128 %Val, i32 %power)
+  declare ppc_fp128 @llvm.powi.ppcf128(ppc_fp128  %Val, i32 %power)
 </pre>
 
 <h5>Overview:</h5>
