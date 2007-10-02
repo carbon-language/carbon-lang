@@ -529,7 +529,7 @@ char *MultiKeywordSelector::getName(llvm::SmallVectorImpl<char> &methodName) {
   keyword_iterator KeyIter = keyword_begin();
   for (unsigned int i = 0; i < NumArgs; i++) {
     if (KeyIter[i]) {
-      unsigned KeyLen = strlen(KeyIter[i]->getName());
+      unsigned KeyLen = KeyIter[i]->getLength();
       methodName.append(KeyIter[i]->getName(), KeyIter[i]->getName()+KeyLen);
     }
     methodName.push_back(':');
@@ -542,7 +542,7 @@ char *Selector::getName(llvm::SmallVectorImpl<char> &methodName) {
   methodName[0] = '\0';
   IdentifierInfo *II = getAsIdentifierInfo();
   if (II) {
-    unsigned NameLen = strlen(II->getName());
+    unsigned NameLen = II->getLength();
     methodName.append(II->getName(), II->getName()+NameLen);
     if (getNumArgs() == 1)
       methodName.push_back(':');
