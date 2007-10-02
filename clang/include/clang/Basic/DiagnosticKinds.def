@@ -434,6 +434,11 @@ DIAG(err_conflicting_ivar_type, ERROR,
      "conflicting instance variable type")
 DIAG(warn_undef_method_impl, WARNING,
      "method definition for '%0' not found")
+DIAG(warn_incomplete_impl_class, WARNING,
+     "incomplete implementation of class '%0'")
+DIAG(warn_incomplete_impl_category, WARNING,
+     "incomplete implementation of category '%0'")
+
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis

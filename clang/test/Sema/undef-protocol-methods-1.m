@@ -28,4 +28,4 @@
 
 + (void) DefClsP3Proto{}
 
-@end
+@end // expected-warning {{ncomplete implementation of class 'INTF'}}

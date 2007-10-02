@@ -12,7 +12,7 @@
 
 @implementation MyClass1(CAT)
 - (void) Pmeth1{}
-@end
+@end  // expected-warning {{incomplete implementation of category 'CAT'}}
 
 @interface MyClass1(DOG) <P>
 - (void)ppp;  // expected-warning {{method definition for 'ppp' not found}}
@@ -20,7 +20,7 @@
 
 @implementation MyClass1(DOG)
 - (void) Pmeth {}
-@end
+@end  // expected-warning {{incomplete implementation of category 'DOG'}}
 
 @implementation MyClass1(CAT1)
 @end

@@ -424,6 +424,9 @@ class ObjcCategoryDecl : public Decl {
   
   /// Next category belonging to this class
   ObjcCategoryDecl *NextClassCategory;
+  
+  /// Location of cetagory declaration
+  SourceLocation CatLoc;
 
 public:
   ObjcCategoryDecl(SourceLocation L, unsigned numRefProtocol)
@@ -432,7 +435,7 @@ public:
       CatReferencedProtocols(0), NumCatReferencedProtocols(-1),
       CatInsMethods(0), NumCatInsMethods(-1),
       CatClsMethods(0), NumCatClsMethods(-1),
-      NextClassCategory(0) {
+      NextClassCategory(0), CatLoc(L) {
         if (numRefProtocol) {
           CatReferencedProtocols = new ObjcProtocolDecl*[numRefProtocol];
           memset(CatReferencedProtocols, '\0', 
@@ -471,7 +474,9 @@ public:
     NextClassCategory = ClassInterface->getListCategories();
     ClassInterface->setListCategories(this);
   }
-
+  
+  SourceLocation getCatLoc() const { return CatLoc; }
+  
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcCategory;
   }
@@ -516,7 +521,6 @@ class ObjcCategoryImplDecl : public Decl {
   
   ObjcMethodDecl **getCatClsMethods() const { return CatClsMethods; }
   int getNumCatClsMethods() const { return NumCatClsMethods; }
-  
   
   void ObjcAddCatImplMethods(
         ObjcMethodDecl **insMethods, unsigned numInsMembers,

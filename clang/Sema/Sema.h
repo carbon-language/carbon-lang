@@ -212,6 +212,7 @@ private:
   /// CheckProtocolMethodDefs - This routine checks unimpletented methods
   /// Declared in protocol, and those referenced by it.
   void CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
+                               bool& IncompleteImpl,
                                const llvm::DenseMap<void *, char>& InsMap,
                                const llvm::DenseMap<void *, char>& ClsMap);
   
@@ -223,7 +224,7 @@ private:
   /// ImplCategoryMethodsVsIntfMethods - Checks that methods declared in the
   /// category interface is implemented in the category @implementation.
   void ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
-                                         ObjcCategoryDecl *CatClassDecl);
+                                        ObjcCategoryDecl *CatClassDecl);
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.

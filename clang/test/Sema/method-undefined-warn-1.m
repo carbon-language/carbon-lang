@@ -10,7 +10,7 @@
 - (void) meth {}
 - (void) meth : (int) arg2{}
 - (void) cls_meth1 : (int) arg2{}
-@end
+@end	// expected-warning {{incomplete implementation of class 'INTF'}}
 
 
 @interface INTF1
@@ -25,7 +25,7 @@
 - (void) meth {}
 - (void) meth : (int) arg2{}
 - (void) cls_meth1 : (int) arg2{}
-@end
+@end // expected-warning {{incomplete implementation of class 'INTF1'}}
 
 
 @interface INTF2

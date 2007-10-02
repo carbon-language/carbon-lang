@@ -1216,6 +1216,7 @@ void Sema::ActOnImpleIvarVsClassIvars(DeclTy *ClassDecl,
 /// CheckProtocolMethodDefs - This routine checks unimpletented methods
 /// Declared in protocol, and those referenced by it.
 void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
+                                   bool& IncompleteImpl,
              const llvm::DenseMap<void *, char>& InsMap,
              const llvm::DenseMap<void *, char>& ClsMap) {
   // check unimplemented instance methods.
@@ -1225,6 +1226,7 @@ void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
       llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName(buf));
+      IncompleteImpl = true;
     }
   // check unimplemented class methods
   methods = PDecl->getClsMethods();
@@ -1233,12 +1235,13 @@ void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
       llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName(buf));
+      IncompleteImpl = true;
     }
   
   // Check on this protocols's referenced protocols, recursively
   ObjcProtocolDecl** RefPDecl = PDecl->getReferencedProtocols();
   for (int i = 0; i < PDecl->getNumReferencedProtocols(); i++)
-    CheckProtocolMethodDefs(RefPDecl[i], InsMap, ClsMap);
+    CheckProtocolMethodDefs(RefPDecl[i], IncompleteImpl, InsMap, ClsMap);
 }
 
 void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl, 
@@ -1251,12 +1254,14 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
     InsMap[methods[i]->getSelector().getAsOpaquePtr()] = 'a';
   }
   
+  bool IncompleteImpl = false;
   methods = IDecl->getInsMethods();
   for (int j = 0; j < IDecl->getNumInsMethods(); j++)
     if (!InsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
       llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName(buf));
+      IncompleteImpl = true;
     }
   llvm::DenseMap<void *, char> ClsMap;
   // Check and see if class methods in class interface have been
@@ -1272,6 +1277,7 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
       llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName(buf));
+      IncompleteImpl = true;
     }
   
   // Check the protocol list for unimplemented methods in the @implementation
@@ -1279,8 +1285,11 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
   ObjcProtocolDecl** protocols = IDecl->getIntfRefProtocols();
   for (int i = 0; i < IDecl->getNumIntfRefProtocols(); i++) {
     ObjcProtocolDecl* PDecl = protocols[i];
-    CheckProtocolMethodDefs(PDecl, InsMap, ClsMap);
+    CheckProtocolMethodDefs(PDecl, IncompleteImpl, InsMap, ClsMap);
   }
+  if (IncompleteImpl)
+    Diag(IDecl->getLocation(), diag::warn_incomplete_impl_class, 
+         IDecl->getName());
 }
 
 /// ImplCategoryMethodsVsIntfMethods - Checks that methods declared in the
@@ -1295,12 +1304,14 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
     InsMap[methods[i]->getSelector().getAsOpaquePtr()] = 'a';
   }
   
+  bool IncompleteImpl = false;
   methods = CatClassDecl->getCatInsMethods();
   for (int j = 0; j < CatClassDecl->getNumCatInsMethods(); j++)
     if (!InsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
       llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName(buf));
+      IncompleteImpl = true;
     }
   llvm::DenseMap<void *, char> ClsMap;
   // Check and see if class methods in category interface have been
@@ -1316,6 +1327,7 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
       llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName(buf));
+      IncompleteImpl = true;
     }
   
   // Check the protocol list for unimplemented methods in the @implementation
@@ -1323,9 +1335,11 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
   ObjcProtocolDecl** protocols = CatClassDecl->getCatReferencedProtocols();
   for (int i = 0; i < CatClassDecl->getNumCatReferencedProtocols(); i++) {
     ObjcProtocolDecl* PDecl = protocols[i];
-    CheckProtocolMethodDefs(PDecl, InsMap, ClsMap);
+    CheckProtocolMethodDefs(PDecl, IncompleteImpl, InsMap, ClsMap);
   }
-  
+  if (IncompleteImpl)
+    Diag(CatClassDecl->getCatLoc(), diag::warn_incomplete_impl_category, 
+         CatClassDecl->getCatName()->getName());
 }
 
 /// ObjcClassDeclaration - 
