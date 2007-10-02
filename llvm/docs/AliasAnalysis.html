@@ -50,6 +50,7 @@
     implementations</a></li>
     </ul>
   </li>
+  <li><a hread="#memdep">Memory Dependence Analysis</a></li>
 </ol>
 
 <div class="doc_author">
@@ -944,6 +945,24 @@ function and asks an alias analysis whether or not the pointers alias.  This
 gives an indication of the precision of the alias analysis.  Statistics are
 printed indicating the percent of no/may/must aliases found (a more precise
 algorithm will have a lower number of may aliases).</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="memdep">Memory Dependence Analysis</a>
+</div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>If you're just looking to be a client of alias analysis information, consider
+using the Memory Dependence Analysis interface instead.  MemDep is a lazy, 
+caching layer on top of alias analysis that is able to answer the question of
+what preceding memory operations a given instruction depends on, either at an
+intra- or inter-block level.  Because of its laziness and caching 
+policy, using MemDep can be a significant performance win over accessing alias
+analysis directly.</p>
 
 </div>
 
