@@ -105,9 +105,6 @@ BUILD_EXEEXT=@BUILD_EXEEXT@
 # Target triple (cpu-vendor-os) for which we should generate code
 TARGET_TRIPLE=@target@
 
-# Targets that we should build
-TARGETS_TO_BUILD=@TARGETS_TO_BUILD@
-
 # Extra options to compile LLVM with
 EXTRA_OPTIONS=@EXTRA_OPTIONS@
 

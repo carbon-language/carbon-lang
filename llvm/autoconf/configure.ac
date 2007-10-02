@@ -438,7 +438,7 @@ AC_ARG_ENABLE([bindings],AS_HELP_STRING([--enable-bindings],
     enableval=default)
 BINDINGS_TO_BUILD=""
 case "$enableval" in
-  all | yes | default | auto) BINDINGS_TO_BUILD="auto" ;;
+  yes | default | auto) BINDINGS_TO_BUILD="auto" ;;
   all ) BINDINGS_TO_BUILD="ocaml" ;;
   none | no) BINDINGS_TO_BUILD="" ;;
   *)for a_binding in `echo $enableval|sed -e 's/,/ /g' ` ; do
