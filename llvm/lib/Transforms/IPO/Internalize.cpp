@@ -130,6 +130,7 @@ bool InternalizePass::runOnModule(Module &M) {
   ExternalNames.insert("llvm.dbg.subprograms");
   ExternalNames.insert("llvm.global_ctors");
   ExternalNames.insert("llvm.global_dtors");
+  ExternalNames.insert("llvm.noinline");
       
   // Mark all global variables with initializers as internal as well.
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
