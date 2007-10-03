@@ -427,6 +427,22 @@ return:
 
 //===---------------------------------------------------------------------===//
 
+Tail recursion elimination is not transforming this function, because it is
+returning n, which fails the isDynamicConstant check in the accumulator 
+recursion checks.
+
+long long fib(const long long n) {
+  switch(n) {
+    case 0:
+    case 1:
+      return n;
+    default:
+      return fib(n-1) + fib(n-2);
+  }
+}
+
+//===---------------------------------------------------------------------===//
+
 Argument promotion should promote arguments for recursive functions, like 
 this:
 
