@@ -47,14 +47,14 @@ Value::~Value() {
   // still being referenced.  The value in question should be printed as
   // a <badref>
   //
-  if (use_begin() != use_end()) {
+  if (!use_empty()) {
     DOUT << "While deleting: " << *Ty << " %" << Name << "\n";
     for (use_iterator I = use_begin(), E = use_end(); I != E; ++I)
       DOUT << "Use still stuck around after Def is destroyed:"
            << **I << "\n";
   }
 #endif
-  assert(use_begin() == use_end() && "Uses remain when a value is destroyed!");
+  assert(use_empty() && "Uses remain when a value is destroyed!");
 
   // If this value is named, destroy the name.  This should not be in a symtab
   // at this point.

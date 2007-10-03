@@ -208,7 +208,7 @@ void MachineFunction::print(std::ostream &OS) const {
   
   const MRegisterInfo *MRI = getTarget().getRegisterInfo();
   
-  if (livein_begin() != livein_end()) {
+  if (!livein_empty()) {
     OS << "Live Ins:";
     for (livein_iterator I = livein_begin(), E = livein_end(); I != E; ++I) {
       if (MRI)
@@ -221,7 +221,7 @@ void MachineFunction::print(std::ostream &OS) const {
     }
     OS << "\n";
   }
-  if (liveout_begin() != liveout_end()) {
+  if (!liveout_empty()) {
     OS << "Live Outs:";
     for (liveout_iterator I = liveout_begin(), E = liveout_end(); I != E; ++I)
       if (MRI)

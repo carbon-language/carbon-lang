@@ -316,7 +316,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   }
   
   // Output linker support code for dllexported globals
-  if (DLLExportedGVs.begin() != DLLExportedGVs.end()) {
+  if (!DLLExportedGVs.empty()) {
     SwitchToDataSection(".section .drectve");
   }
 
@@ -326,7 +326,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     O << "\t.ascii \" -export:" << *i << ",data\"\n";
   }    
 
-  if (DLLExportedFns.begin() != DLLExportedFns.end()) {
+  if (!DLLExportedFns.empty()) {
     SwitchToDataSection(".section .drectve");
   }
 
@@ -362,7 +362,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     }
 
     // Output stubs for external and common global variables.
-    if (GVStubs.begin() != GVStubs.end())
+    if (!GVStubs.empty())
       SwitchToDataSection(
                     ".section __IMPORT,__pointers,non_lazy_symbol_pointers");
     for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end();

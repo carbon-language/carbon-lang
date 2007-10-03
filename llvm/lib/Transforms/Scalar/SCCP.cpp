@@ -1574,7 +1574,7 @@ bool IPSCCP::runOnModule(Module &M) {
 
         for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
           BasicBlock *Succ = TI->getSuccessor(i);
-          if (Succ->begin() != Succ->end() && isa<PHINode>(Succ->begin()))
+          if (!Succ->empty() && isa<PHINode>(Succ->begin()))
             TI->getSuccessor(i)->removePredecessor(BB);
         }
         if (!TI->use_empty())

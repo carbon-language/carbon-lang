@@ -154,7 +154,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
 
       if (Instruction *I = dyn_cast<Instruction>(U)) {
         CallSite CS = CallSite::get(I);
-        if (CS.getInstruction() && CS.arg_begin() != CS.arg_end() &&
+        if (CS.getInstruction() && !CS.arg_empty() &&
             (CS.getCalledFunction() == MallocFunc ||
              std::find(EqPointers.begin(), EqPointers.end(),
                        CS.getCalledValue()) != EqPointers.end())) {
@@ -205,7 +205,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
 
       if (Instruction *I = dyn_cast<Instruction>(U)) {
         CallSite CS = CallSite::get(I);
-        if (CS.getInstruction() && CS.arg_begin() != CS.arg_end() &&
+        if (CS.getInstruction() && !CS.arg_empty() &&
             (CS.getCalledFunction() == FreeFunc ||
              std::find(EqPointers.begin(), EqPointers.end(),
                        CS.getCalledValue()) != EqPointers.end())) {

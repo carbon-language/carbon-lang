@@ -866,7 +866,7 @@ void ScheduleDAG::EmitSchedule() {
   // that need to be copied into vregs, emit the copies into the top of the
   // block before emitting the code for the block.
   MachineFunction &MF = DAG.getMachineFunction();
-  if (&MF.front() == BB && MF.livein_begin() != MF.livein_end()) {
+  if (&MF.front() == BB) {
     for (MachineFunction::livein_iterator LI = MF.livein_begin(),
          E = MF.livein_end(); LI != E; ++LI)
       if (LI->second) {

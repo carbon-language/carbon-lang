@@ -119,7 +119,7 @@ void MachineBasicBlock::print(std::ostream &OS) const {
   OS << ":\n";
 
   const MRegisterInfo *MRI = MF->getTarget().getRegisterInfo();  
-  if (livein_begin() != livein_end()) {
+  if (!livein_empty()) {
     OS << "Live Ins:";
     for (const_livein_iterator I = livein_begin(),E = livein_end(); I != E; ++I)
       OutputReg(OS, *I, MRI);

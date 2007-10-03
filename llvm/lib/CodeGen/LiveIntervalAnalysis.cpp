@@ -817,17 +817,15 @@ void LiveIntervals::computeIntervals() {
 
     MachineBasicBlock::iterator MI = MBB->begin(), miEnd = MBB->end();
 
-    if (MBB->livein_begin() != MBB->livein_end()) {
-      // Create intervals for live-ins to this BB first.
-      for (MachineBasicBlock::const_livein_iterator LI = MBB->livein_begin(),
-             LE = MBB->livein_end(); LI != LE; ++LI) {
-        handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*LI));
-        // Multiple live-ins can alias the same register.
-        for (const unsigned* AS = mri_->getSubRegisters(*LI); *AS; ++AS)
-          if (!hasInterval(*AS))
-            handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*AS),
-                                 true);
-      }
+    // Create intervals for live-ins to this BB first.
+    for (MachineBasicBlock::const_livein_iterator LI = MBB->livein_begin(),
+           LE = MBB->livein_end(); LI != LE; ++LI) {
+      handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*LI));
+      // Multiple live-ins can alias the same register.
+      for (const unsigned* AS = mri_->getSubRegisters(*LI); *AS; ++AS)
+        if (!hasInterval(*AS))
+          handleLiveInRegister(MBB, MIIndex, getOrCreateInterval(*AS),
+                               true);
     }
     
     for (; MI != miEnd; ++MI) {

@@ -1001,7 +1001,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     O << "\n";
 
     // Output non-lazy-pointers for external and common global variables.
-    if (GVNonLazyPtrs.begin() != GVNonLazyPtrs.end())
+    if (!GVNonLazyPtrs.empty())
       SwitchToDataSection(".non_lazy_symbol_pointer", 0);
     for (std::set<std::string>::iterator i = GVNonLazyPtrs.begin(),
            e = GVNonLazyPtrs.end(); i != e; ++i) {

@@ -147,7 +147,7 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block if there are any predecessors.
-    if (I->pred_begin() != I->pred_end()) {
+    if (!I->pred_empty()) {
       printBasicBlockLabel(I, true);
       O << '\n';
     }

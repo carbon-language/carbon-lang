@@ -77,7 +77,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block if there are any predecessors.
-    if (I->pred_begin() != I->pred_end()) {
+    if (!I->pred_empty()) {
       printBasicBlockLabel(I, true);
       O << '\n';
     }
@@ -412,8 +412,8 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
   }
 
     // Output linker support code for dllexported globals
-  if ((DLLExportedGVs.begin() != DLLExportedGVs.end()) ||
-      (DLLExportedFns.begin() != DLLExportedFns.end())) {
+  if (!DLLExportedGVs.empty() ||
+      !DLLExportedFns.empty()) {
     SwitchToDataSection("");
     O << "; WARNING: The following code is valid only with MASM v8.x and (possible) higher\n"
       << "; This version of MASM is usually shipped with Microsoft Visual Studio 2005\n"
@@ -434,8 +434,8 @@ bool X86IntelAsmPrinter::doFinalization(Module &M) {
     O << "\t db ' /EXPORT:" << *i << "'\n";
   }    
 
-  if ((DLLExportedGVs.begin() != DLLExportedGVs.end()) ||
-      (DLLExportedFns.begin() != DLLExportedFns.end())) {
+  if (!DLLExportedGVs.empty() ||
+      !DLLExportedFns.empty()) {
     O << "_drectve\t ends\n";    
   }
   

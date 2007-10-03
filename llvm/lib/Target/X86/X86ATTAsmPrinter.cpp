@@ -168,7 +168,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    if (I->pred_begin() != I->pred_end()) {
+    if (!I->pred_empty()) {
       printBasicBlockLabel(I, true);
       O << '\n';
     }

@@ -1053,7 +1053,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   O << "\n";
 
   // Output stubs for external and common global variables.
-  if (GVStubs.begin() != GVStubs.end()) {
+  if (!GVStubs.empty()) {
     SwitchToDataSection(".non_lazy_symbol_pointer");
     for (std::set<std::string>::iterator I = GVStubs.begin(),
          E = GVStubs.end(); I != E; ++I) {

@@ -54,7 +54,7 @@ void LPPassManager::deleteLoopFromQueue(Loop *L) {
     }
     
     // Move all subloops into the parent loop.
-    while (L->begin() != L->end())
+    while (!L->empty())
       ParentLoop->addChildLoop(L->removeChildLoop(L->end()-1));
   } else {
     // Reparent all of the blocks in this loop.  Since BBLoop had no parent,
@@ -78,7 +78,7 @@ void LPPassManager::deleteLoopFromQueue(Loop *L) {
     }
 
     // Move all of the subloops to the top-level.
-    while (L->begin() != L->end())
+    while (!L->empty())
       LI->addTopLevelLoop(L->removeChildLoop(L->end()-1));
   }
 

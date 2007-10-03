@@ -786,7 +786,7 @@ void LICM::FindPromotableValuesInLoop(
     // volatile loads or stores.
     if (!AS.isForwardingAliasSet() && AS.isMod() && AS.isMustAlias() &&
         !AS.isVolatile() && CurLoop->isLoopInvariant(AS.begin()->first)) {
-      assert(AS.begin() != AS.end() &&
+      assert(!AS.empty() &&
              "Must alias set should have at least one pointer element in it!");
       Value *V = AS.begin()->first;
 

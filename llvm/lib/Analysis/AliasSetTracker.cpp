@@ -520,7 +520,7 @@ void AliasSet::print(std::ostream &OS) const {
     OS << " forwarding to " << (void*)Forward;
 
 
-  if (begin() != end()) {
+  if (!empty()) {
     OS << "Pointers: ";
     for (iterator I = begin(), E = end(); I != E; ++I) {
       if (I != begin()) OS << ", ";
