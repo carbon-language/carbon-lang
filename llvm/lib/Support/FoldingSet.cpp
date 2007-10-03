@@ -139,17 +139,19 @@ bool FoldingSetImpl::NodeID::operator==(const FoldingSetImpl::NodeID &RHS)const{
 /// The problem with this is that the start of the hash buckets are not
 /// Nodes.  If NextInBucketPtr is a bucket pointer, this method returns null:
 /// use GetBucketPtr when this happens.
-static FoldingSetImpl::Node *GetNextPtr(void *NextInBucketPtr,
-                                        void **Buckets, unsigned NumBuckets) {
-  if (NextInBucketPtr >= Buckets && NextInBucketPtr < Buckets + NumBuckets)
+static FoldingSetImpl::Node *GetNextPtr(void *NextInBucketPtr) {
+  // The low bit is set if this is the pointer back to the bucket.
+  if (reinterpret_cast<intptr_t>(NextInBucketPtr) & 1)
     return 0;
+  
   return static_cast<FoldingSetImpl::Node*>(NextInBucketPtr);
 }
 
 /// GetBucketPtr - Provides a casting of a bucket pointer for isNode
 /// testing.
 static void **GetBucketPtr(void *NextInBucketPtr) {
-  return static_cast<void**>(NextInBucketPtr);
+  intptr_t Ptr = reinterpret_cast<intptr_t>(NextInBucketPtr);
+  return reinterpret_cast<void**>(Ptr & ~intptr_t(1));
 }
 
 /// GetBucketFor - Hash the specified node ID and return the hash bucket for
@@ -168,8 +170,11 @@ FoldingSetImpl::FoldingSetImpl(unsigned Log2InitSize) : NumNodes(0) {
   assert(5 < Log2InitSize && Log2InitSize < 32 &&
          "Initial hash table size out of range");
   NumBuckets = 1 << Log2InitSize;
-  Buckets = new void*[NumBuckets];
+  Buckets = new void*[NumBuckets+1];
   memset(Buckets, 0, NumBuckets*sizeof(void*));
+  
+  // Set the very last bucket to be a non-null "pointer".
+  Buckets[NumBuckets] = reinterpret_cast<void*>(-2);
 }
 FoldingSetImpl::~FoldingSetImpl() {
   delete [] Buckets;
@@ -186,14 +191,17 @@ void FoldingSetImpl::GrowHashTable() {
   NumNodes = 0;
   
   // Clear out new buckets.
-  Buckets = new void*[NumBuckets];
+  Buckets = new void*[NumBuckets+1];
   memset(Buckets, 0, NumBuckets*sizeof(void*));
+
+  // Set the very last bucket to be a non-null "pointer".
+  Buckets[NumBuckets] = reinterpret_cast<void*>(-1);
 
   // Walk the old buckets, rehashing nodes into their new place.
   for (unsigned i = 0; i != OldNumBuckets; ++i) {
     void *Probe = OldBuckets[i];
     if (!Probe) continue;
-    while (Node *NodeInBucket = GetNextPtr(Probe, OldBuckets, OldNumBuckets)) {
+    while (Node *NodeInBucket = GetNextPtr(Probe)) {
       // Figure out the next link, remove NodeInBucket from the old link.
       Probe = NodeInBucket->getNextInBucket();
       NodeInBucket->SetNextInBucket(0);
@@ -218,7 +226,7 @@ FoldingSetImpl::Node *FoldingSetImpl::FindNodeOrInsertPos(const NodeID &ID,
   
   InsertPos = 0;
   
-  while (Node *NodeInBucket = GetNextPtr(Probe, Buckets, NumBuckets)) {
+  while (Node *NodeInBucket = GetNextPtr(Probe)) {
     NodeID OtherID;
     GetNodeProfile(OtherID, NodeInBucket);
     if (OtherID == ID)
@@ -253,9 +261,10 @@ void FoldingSetImpl::InsertNode(Node *N, void *InsertPos) {
   void *Next = *Bucket;
   
   // If this is the first insertion into this bucket, its next pointer will be
-  // null.  Pretend as if it pointed to itself.
+  // null.  Pretend as if it pointed to itself, setting the low bit to indicate
+  // that it is a pointer to the bucket.
   if (Next == 0)
-    Next = Bucket;
+    Next = reinterpret_cast<void*>(reinterpret_cast<intptr_t>(Bucket)|1);
 
   // Set the node's next pointer, and make the bucket point to the node.
   N->SetNextInBucket(Next);
@@ -278,7 +287,7 @@ bool FoldingSetImpl::RemoveNode(Node *N) {
   
   // Chase around the list until we find the node (or bucket) which points to N.
   while (true) {
-    if (Node *NodeInBucket = GetNextPtr(Ptr, Buckets, NumBuckets)) {
+    if (Node *NodeInBucket = GetNextPtr(Ptr)) {
       // Advance pointer.
       Ptr = NodeInBucket->getNextInBucket();
       
