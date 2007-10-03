@@ -7354,8 +7354,17 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
   if (FCmpInst *FCI = dyn_cast<FCmpInst>(CondVal)) {
     if (FCI->getOperand(0) == TrueVal && FCI->getOperand(1) == FalseVal) {
       // Transform (X == Y) ? X : Y  -> Y
-      if (FCI->getPredicate() == FCmpInst::FCMP_OEQ)
+      if (FCI->getPredicate() == FCmpInst::FCMP_OEQ) {
+        // This is not safe in general for floating point:  
+        // consider X== -0, Y== +0.
+        // It becomes safe if either operand is a nonzero constant.
+        ConstantFP *CFPt, *CFPf;
+        if (((CFPt = dyn_cast<ConstantFP>(TrueVal)) &&
+              !CFPt->getValueAPF().isZero()) ||
+            ((CFPf = dyn_cast<ConstantFP>(FalseVal)) &&
+             !CFPf->getValueAPF().isZero()))
         return ReplaceInstUsesWith(SI, FalseVal);
+      }
       // Transform (X != Y) ? X : Y  -> X
       if (FCI->getPredicate() == FCmpInst::FCMP_ONE)
         return ReplaceInstUsesWith(SI, TrueVal);
@@ -7363,8 +7372,17 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 
     } else if (FCI->getOperand(0) == FalseVal && FCI->getOperand(1) == TrueVal){
       // Transform (X == Y) ? Y : X  -> X
-      if (FCI->getPredicate() == FCmpInst::FCMP_OEQ)
-        return ReplaceInstUsesWith(SI, FalseVal);
+      if (FCI->getPredicate() == FCmpInst::FCMP_OEQ) {
+        // This is not safe in general for floating point:  
+        // consider X== -0, Y== +0.
+        // It becomes safe if either operand is a nonzero constant.
+        ConstantFP *CFPt, *CFPf;
+        if (((CFPt = dyn_cast<ConstantFP>(TrueVal)) &&
+              !CFPt->getValueAPF().isZero()) ||
+            ((CFPf = dyn_cast<ConstantFP>(FalseVal)) &&
+             !CFPf->getValueAPF().isZero()))
+          return ReplaceInstUsesWith(SI, FalseVal);
+      }
       // Transform (X != Y) ? Y : X  -> Y
       if (FCI->getPredicate() == FCmpInst::FCMP_ONE)
         return ReplaceInstUsesWith(SI, TrueVal);
