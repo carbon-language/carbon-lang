@@ -874,7 +874,7 @@ AC_DEFINE_UNQUOTED(LLVM_LIBDIR, "$LLVM_LIBDIR",
                    [Installation directory for libraries])
 AC_DEFINE_UNQUOTED(LLVM_DATADIR, "$LLVM_DATADIR", 
                    [Installation directory for data files])
-AC_DEFINE_UNQUOTED(LLVM_DATADIR, "$LLVM_DOCSDIR", 
+AC_DEFINE_UNQUOTED(LLVM_DOCSDIR, "$LLVM_DOCSDIR", 
                    [Installation directory for documentation])
 AC_DEFINE_UNQUOTED(LLVM_ETCDIR, "$LLVM_ETCDIR", 
                    [Installation directory for config files])
