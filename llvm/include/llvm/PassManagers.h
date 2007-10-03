@@ -13,7 +13,6 @@
 
 #include "llvm/PassManager.h"
 #include "llvm/ADT/SmallVector.h"
-using namespace llvm;
 class llvm::PMDataManager;
 class llvm::PMStack;
 
@@ -381,8 +380,8 @@ public:
 
 }
 
-extern void StartPassTimer(Pass *);
-extern void StopPassTimer(Pass *);
+extern void StartPassTimer(llvm::Pass *);
+extern void StopPassTimer(llvm::Pass *);
 
 #endif
 

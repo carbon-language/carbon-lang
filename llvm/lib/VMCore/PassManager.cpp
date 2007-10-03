@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+using namespace llvm;
 
 // See PassManagers.h for Pass Manager infrastructure overview.
 
