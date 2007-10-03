@@ -477,7 +477,7 @@ public:
     ClassInterface->setListCategories(this);
   }
   
-  SourceLocation getCatLoc() const { return CatLoc; }
+  SourceLocation getLocation() const { return CatLoc; }
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcCategory;

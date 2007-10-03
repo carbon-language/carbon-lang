@@ -1339,7 +1339,7 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
     CheckProtocolMethodDefs(PDecl, IncompleteImpl, InsMap, ClsMap);
   }
   if (IncompleteImpl)
-    Diag(CatClassDecl->getCatLoc(), diag::warn_incomplete_impl_category, 
+    Diag(CatClassDecl->getLocation(), diag::warn_incomplete_impl_category, 
          CatClassDecl->getCatName()->getName());
 }
 
