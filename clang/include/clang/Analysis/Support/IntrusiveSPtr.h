@@ -64,11 +64,11 @@ protected:
 ///  particular naming was chosen to be compatible with
 ///  boost::intrusive_ptr, which provides similar functionality to
 ///  IntrusiveSPtr.
-void intrusive_ptr_add_ref(clang::RefCounted* p) { p->Retain(); }
+static inline void intrusive_ptr_add_ref(clang::RefCounted* p) { p->Retain(); }
 
 /// intrusive_ptr_release - The complement of intrusive_ptr_add_ref;
 ///  decrements the reference count of a RefCounted object.
-void intrusive_ptr_release(clang::RefCounted* p) { p->Release(); }
+static inline void intrusive_ptr_release(clang::RefCounted* p) { p->Release(); }
 
 namespace clang {
 
@@ -97,14 +97,7 @@ public:
     retain(); 
   }
 
-  template <typename X>
-  IntrusiveSPtr(const IntrusiveSPtr<X>& S) {
-    Obj = static_cast<T*>(const_cast<X*>(S.getPtr()));
-    retain();
-  }
-  
-  template <typename X>
-  IntrusiveSPtr& operator=(const IntrusiveSPtr<X>& S) {
+  IntrusiveSPtr& operator=(const IntrusiveSPtr& S) {
     replace(static_cast<const T*>(S.getPtr()));
     return *this;
   }
@@ -127,7 +120,10 @@ private:
   void retain() { if (Obj) intrusive_ptr_add_ref(Obj); }
   void release() { if (Obj) intrusive_ptr_release(Obj); }
 
-  void replace(const T* o) { 
+  void replace(const T* o) {
+    if (o == Obj)
+      return;
+    
     release();
     Obj = const_cast<T*>(o);
     retain();
