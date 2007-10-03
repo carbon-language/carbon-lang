@@ -103,6 +103,11 @@ namespace {
       if (I != LoopProcessWorklist.end())
         LoopProcessWorklist.erase(I);
     }
+
+    /// Split all of the edges from inside the loop to their exit blocks.  Update
+    /// the appropriate Phi nodes as we do so.
+    void SplitExitEdges(const SmallVector<BasicBlock *, 8> &ExitBlocks,
+                        SmallVector<BasicBlock *, 8> &MiddleBlocks);
       
     bool UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L);
     unsigned getLoopUnswitchCost(Loop *L, Value *LIC);
@@ -596,38 +601,11 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   ++NumTrivial;
 }
 
-/// VersionLoop - We determined that the loop is profitable to unswitch when LIC
-/// equal Val.  Split it into loop versions and test the condition outside of
-/// either loop.  Return the loops created as Out1/Out2.
-void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val, 
-                                               Loop *L) {
-  Function *F = L->getHeader()->getParent();
-  DOUT << "loop-unswitch: Unswitching loop %"
-       << L->getHeader()->getName() << " [" << L->getBlocks().size()
-       << " blocks] in Function " << F->getName()
-       << " when '" << *Val << "' == " << *LIC << "\n";
-
-  // LoopBlocks contains all of the basic blocks of the loop, including the
-  // preheader of the loop, the body of the loop, and the exit blocks of the 
-  // loop, in that order.
-  std::vector<BasicBlock*> LoopBlocks;
-
-  // First step, split the preheader and exit blocks, and add these blocks to
-  // the LoopBlocks list.
-  BasicBlock *OrigHeader = L->getHeader();
-  BasicBlock *OrigPreheader = L->getLoopPreheader();
-  BasicBlock *NewPreheader = SplitEdge(OrigPreheader, L->getHeader(), this);
-  LoopBlocks.push_back(NewPreheader);
-
-  // We want the loop to come after the preheader, but before the exit blocks.
-  LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
-
-  SmallVector<BasicBlock*, 8> ExitBlocks;
-  L->getUniqueExitBlocks(ExitBlocks);
-
-  // Split all of the edges from inside the loop to their exit blocks.  Update
-  // the appropriate Phi nodes as we do so.
-  SmallVector<BasicBlock *,8> MiddleBlocks;
+/// SplitExitEdges -
+/// Split all of the edges from inside the loop to their exit blocks.  Update
+/// the appropriate Phi nodes as we do so.
+void LoopUnswitch::SplitExitEdges(const SmallVector<BasicBlock *, 8> &ExitBlocks,
+                                  SmallVector<BasicBlock *, 8> &MiddleBlocks) {
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];
     std::vector<BasicBlock*> Preds(pred_begin(ExitBlock), pred_end(ExitBlock));
@@ -671,7 +649,42 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
       }
     }    
   }
-  
+}
+
+/// UnswitchNontrivialCondition - We determined that the loop is profitable to unswitch when LIC
+/// equal Val.  Split it into loop versions and test the condition outside of
+/// either loop.  Return the loops created as Out1/Out2.
+void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val, 
+                                               Loop *L) {
+  Function *F = L->getHeader()->getParent();
+  DOUT << "loop-unswitch: Unswitching loop %"
+       << L->getHeader()->getName() << " [" << L->getBlocks().size()
+       << " blocks] in Function " << F->getName()
+       << " when '" << *Val << "' == " << *LIC << "\n";
+
+  // LoopBlocks contains all of the basic blocks of the loop, including the
+  // preheader of the loop, the body of the loop, and the exit blocks of the 
+  // loop, in that order.
+  std::vector<BasicBlock*> LoopBlocks;
+
+  // First step, split the preheader and exit blocks, and add these blocks to
+  // the LoopBlocks list.
+  BasicBlock *OrigHeader = L->getHeader();
+  BasicBlock *OrigPreheader = L->getLoopPreheader();
+  BasicBlock *NewPreheader = SplitEdge(OrigPreheader, L->getHeader(), this);
+  LoopBlocks.push_back(NewPreheader);
+
+  // We want the loop to come after the preheader, but before the exit blocks.
+  LoopBlocks.insert(LoopBlocks.end(), L->block_begin(), L->block_end());
+
+  SmallVector<BasicBlock*, 8> ExitBlocks;
+  L->getUniqueExitBlocks(ExitBlocks);
+
+  // Split all of the edges from inside the loop to their exit blocks.  Update
+  // the appropriate Phi nodes as we do so.
+  SmallVector<BasicBlock *,8> MiddleBlocks;
+  SplitExitEdges(ExitBlocks, MiddleBlocks);
+
   // The exit blocks may have been changed due to edge splitting, recompute.
   ExitBlocks.clear();
   L->getUniqueExitBlocks(ExitBlocks);
