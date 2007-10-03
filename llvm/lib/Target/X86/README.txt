@@ -1277,6 +1277,14 @@ LBB3_5:	# bb114.preheader
 	movl	%eax, -96(%ebp)
 	movw	$0, -98(%ebp)
 
+This appears to be bad because the RA is not folding the store to the stack 
+slot into the movl.  The above instructions could be:
+	movl    $32, -80(%ebp)
+...
+	movl    $32, -84(%ebp)
+...
+This seems like a cross between remat and spill folding.
+
 This has redundant subtractions of %eax from a stack slot. However, %ecx doesn't
 change, so we could simply subtract %eax from %ecx first and then use %ecx (or
 vice-versa).
