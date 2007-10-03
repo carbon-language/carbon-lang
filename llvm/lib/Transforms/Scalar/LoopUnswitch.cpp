@@ -651,9 +651,9 @@ void LoopUnswitch::SplitExitEdges(const SmallVector<BasicBlock *, 8> &ExitBlocks
   }
 }
 
-/// UnswitchNontrivialCondition - We determined that the loop is profitable to unswitch when LIC
-/// equal Val.  Split it into loop versions and test the condition outside of
-/// either loop.  Return the loops created as Out1/Out2.
+/// UnswitchNontrivialCondition - We determined that the loop is profitable 
+/// to unswitch when LIC equal Val.  Split it into loop versions and test the 
+/// condition outside of either loop.  Return the loops created as Out1/Out2.
 void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val, 
                                                Loop *L) {
   Function *F = L->getHeader()->getParent();
