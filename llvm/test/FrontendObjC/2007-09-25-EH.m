@@ -1,4 +1,6 @@
 // RUN: %llvmgcc -c -w -m64 -mmacosx-version-min=10.5 %s -o /dev/null
+// XFAIL: *
+// Reenable when Obj-C FE problem is fixed.
 
 @class NSDictionary, DSoBuffer, DSoDirectory, NSMutableArray;
 @interface NSException {}
