@@ -34132,7 +34132,7 @@ _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define LLVM_DATADIR "$LLVM_DOCSDIR"
+#define LLVM_DOCSDIR "$LLVM_DOCSDIR"
 _ACEOF
 
 

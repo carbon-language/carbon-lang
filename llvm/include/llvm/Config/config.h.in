@@ -449,8 +449,11 @@
 /* Time at which LLVM was configured */
 #undef LLVM_CONFIGTIME
 
-/* Installation directory for documentation */
+/* Installation directory for data files */
 #undef LLVM_DATADIR
+
+/* Installation directory for documentation */
+#undef LLVM_DOCSDIR
 
 /* Installation directory for config files */
 #undef LLVM_ETCDIR
