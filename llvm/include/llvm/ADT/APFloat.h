@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 /*  A self-contained host- and target-independent arbitrary-precision
-    floating-point software implementation using bignum integer
-    arithmetic, as provided by static functions in the APInt class.
+    floating-point software implementation.  It uses bignum integer
+    arithmetic as provided by static functions in the APInt class.
     The library will work with bignum integers whose parts are any
-    unsigned type at least 16 bits wide.  64 bits is recommended.
+    unsigned type at least 16 bits wide, but 64 bits is recommended.
 
     Written for clarity rather than speed, in particular with a view
     to use in the front-end of a cross compiler so that target
@@ -30,10 +30,7 @@
     are add, subtract, multiply, divide, fused-multiply-add,
     conversion-to-float, conversion-to-integer and
     conversion-from-integer.  New rounding modes (e.g. away from zero)
-    can be added with three or four lines of code.  The library reads
-    and correctly rounds hexadecimal floating point numbers as per
-    C99; syntax is required to have been validated by the caller.
-    Conversion from decimal is not currently implemented.
+    can be added with three or four lines of code.
 
     Four formats are built-in: IEEE single precision, double
     precision, quadruple precision, and x87 80-bit extended double
@@ -53,6 +50,17 @@
     At present, underflow tininess is detected after rounding; it
     should be straight forward to add support for the before-rounding
     case too.
+
+    The library reads hexadecimal floating point numbers as per C99,
+    and correctly rounds if necessary according to the specified
+    rounding mode.  Syntax is required to have been validated by the
+    caller.  It also converts floating point numbers to hexadecimal
+    text as per the C99 %a and %A conversions.  The output precision
+    (or alternatively the natural minimal precision) can be specified;
+    if the requested precision is less than the natural precision the
+    output is correctly rounded for the specified rounding mode.
+
+    Conversion to and from decimal text is not currently implemented.
 
     Non-zero finite numbers are represented internally as a sign bit,
     a 16-bit signed exponent, and the significand as an array of
@@ -77,17 +85,14 @@
 
     Conversions to and from decimal strings (hard).
 
-    Conversions to hexadecimal string.
-
-    Read and write IEEE-format in-memory representations.
-
     Optional ability to detect underflow tininess before rounding.
 
     New formats: x87 in single and double precision mode (IEEE apart
     from extended exponent range) and IBM two-double extended
     precision (hard).
 
-    New operations: sqrt, nextafter, nexttoward.
+    New operations: sqrt, IEEE remainder, C90 fmod, nextafter,
+    nexttoward.
 */
 
 #ifndef LLVM_FLOAT_H
@@ -205,6 +210,13 @@ namespace llvm {
        compare unordered, 0==-0). */
     cmpResult compare(const APFloat &) const;
 
+    /* Write out a hexadecimal representation of the floating point
+       value to DST, which must be of sufficient size, in the C99 form
+       [-]0xh.hhhhp[+-]d.  Return the number of characters written,
+       excluding the terminating NUL.  */
+    unsigned int convertToHexString(char *dst, unsigned int hexDigits,
+                                    bool upperCase, roundingMode) const;
+
     /* Bitwise comparison for equality (QNaNs compare equal, 0!=-0). */
     bool bitwiseIsEqual(const APFloat &) const;
 
@@ -255,9 +267,11 @@ namespace llvm {
     opStatus handleOverflow(roundingMode);
     bool roundAwayFromZero(roundingMode, lostFraction, unsigned int) const;
     opStatus convertFromUnsignedInteger(integerPart *, unsigned int,
-					roundingMode);
+                                        roundingMode);
     lostFraction combineLostFractions(lostFraction, lostFraction);
     opStatus convertFromHexadecimalString(const char *, roundingMode);
+    char *convertNormalToHexString(char *, unsigned int, bool,
+                                   roundingMode) const;
     APInt convertFloatAPFloatToAPInt() const;
     APInt convertDoubleAPFloatToAPInt() const;
     APInt convertF80LongDoubleAPFloatToAPInt() const;
