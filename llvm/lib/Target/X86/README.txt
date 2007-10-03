@@ -1330,3 +1330,35 @@ Shark tells us that using %cx in the testw instruction is sub-optimal. It
 suggests using the 32-bit register (which is what ICC uses).
 
 //===---------------------------------------------------------------------===//
+
+rdar://5506677 - We compile this:
+
+define i32 @foo(double %x) {
+        %x14 = bitcast double %x to i64         ; <i64> [#uses=1]
+        %tmp713 = trunc i64 %x14 to i32         ; <i32> [#uses=1]
+        %tmp8 = and i32 %tmp713, 2147483647             ; <i32> [#uses=1]
+        ret i32 %tmp8
+}
+
+to:
+
+_foo:
+        subl    $12, %esp
+        fldl    16(%esp)
+        fstpl   (%esp)
+        movl    $2147483647, %eax
+        andl    (%esp), %eax
+        addl    $12, %esp
+        #FP_REG_KILL
+        ret
+
+It would be much better to eliminate the fldl/fstpl by folding the bitcast 
+into the load SDNode.  That would give us:
+
+_foo:
+        movl    $2147483647, %eax
+        andl    4(%esp), %eax
+        ret
+
+//===---------------------------------------------------------------------===//
+
