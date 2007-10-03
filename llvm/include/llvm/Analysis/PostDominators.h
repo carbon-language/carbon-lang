@@ -27,11 +27,7 @@ struct PostDominatorTree : public DominatorTreeBase {
   PostDominatorTree() : 
     DominatorTreeBase((intptr_t)&ID, true) {}
 
-  virtual bool runOnFunction(Function &F) {
-    reset();     // Reset from the last time we were run...
-    PDTcalculate(*this, F);
-    return false;
-  }
+  virtual bool runOnFunction(Function &F);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();

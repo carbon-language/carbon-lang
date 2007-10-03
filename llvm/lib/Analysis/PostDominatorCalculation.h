@@ -19,24 +19,6 @@
 namespace llvm {
 
 void PDTcalculate(PostDominatorTree& PDT, Function &F) {
-  // Step #0: Scan the function looking for the root nodes of the post-dominance
-  // relationships.  These blocks, which have no successors, end with return and
-  // unwind instructions.
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-    TerminatorInst *Insn = I->getTerminator();
-    if (Insn->getNumSuccessors() == 0) {
-      // Unreachable block is not a root node.
-      if (!isa<UnreachableInst>(Insn))
-        PDT.Roots.push_back(I);
-    }
-    
-    // Prepopulate maps so that we don't get iterator invalidation issues later.
-    PDT.IDoms[I] = 0;
-    PDT.DomTreeNodes[I] = 0;
-  }
-  
-  PDT.Vertex.push_back(0);
-  
   // Step #1: Number blocks in depth-first order and initialize variables used
   // in later stages of the algorithm.
   unsigned N = 0;

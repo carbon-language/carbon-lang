@@ -40,8 +40,6 @@ void DTcalculate(DominatorTree& DT, Function &F) {
   // Add a node for the root...
   DT.DomTreeNodes[Root] = DT.RootNode = new DomTreeNode(Root, 0);
 
-  DT.Vertex.push_back(0);
-
   // Step #1: Number blocks in depth-first order and initialize variables used
   // in later stages of the algorithm.
   unsigned N = DFSPass<GraphTraits<BasicBlock*> >(DT, Root, 0);

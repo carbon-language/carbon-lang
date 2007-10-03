@@ -350,7 +350,13 @@ void DominatorTreeBase::dump() {
 
 bool DominatorTree::runOnFunction(Function &F) {
   reset();     // Reset from the last time we were run...
+  
+  // Initialize roots
   Roots.push_back(&F.getEntryBlock());
+  IDoms[&F.getEntryBlock()] = 0;
+  DomTreeNodes[&F.getEntryBlock()] = 0;
+  Vertex.push_back(0);
+  
   DTcalculate(*this, F);
   return false;
 }

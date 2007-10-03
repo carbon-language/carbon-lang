@@ -28,6 +28,29 @@ char PostDominanceFrontier::ID = 0;
 static RegisterPass<PostDominatorTree>
 F("postdomtree", "Post-Dominator Tree Construction", true);
 
+bool PostDominatorTree::runOnFunction(Function &F) {
+  reset();     // Reset from the last time we were run...
+    
+  // Initialize the roots list
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+    TerminatorInst *Insn = I->getTerminator();
+    if (Insn->getNumSuccessors() == 0) {
+      // Unreachable block is not a root node.
+      if (!isa<UnreachableInst>(Insn))
+        Roots.push_back(I);
+    }
+    
+    // Prepopulate maps so that we don't get iterator invalidation issues later.
+    IDoms[I] = 0;
+    DomTreeNodes[I] = 0;
+  }
+  
+  Vertex.push_back(0);
+    
+  PDTcalculate(*this, F);
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 //  PostDominanceFrontier Implementation
 //===----------------------------------------------------------------------===//
