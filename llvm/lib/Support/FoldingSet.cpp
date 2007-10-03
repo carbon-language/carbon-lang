@@ -151,6 +151,7 @@ static FoldingSetImpl::Node *GetNextPtr(void *NextInBucketPtr) {
 /// testing.
 static void **GetBucketPtr(void *NextInBucketPtr) {
   intptr_t Ptr = reinterpret_cast<intptr_t>(NextInBucketPtr);
+  assert((Ptr & 1) && "Not a bucket pointer");
   return reinterpret_cast<void**>(Ptr & ~intptr_t(1));
 }
 
@@ -323,3 +324,34 @@ FoldingSetImpl::Node *FoldingSetImpl::GetOrInsertNode(FoldingSetImpl::Node *N) {
   InsertNode(N, IP);
   return N;
 }
+
+//===----------------------------------------------------------------------===//
+// FoldingSetIteratorImpl Implementation
+
+FoldingSetIteratorImpl::FoldingSetIteratorImpl(void **Bucket) {
+  // Skip to the first non-null non-self-cycle bucket.
+  while (*Bucket == 0 || GetNextPtr(*Bucket) == 0)
+    ++Bucket;
+  
+  NodePtr = static_cast<FoldingSetNode*>(*Bucket);
+}
+
+void FoldingSetIteratorImpl::advance() {
+  // If there is another link within this bucket, go to it.
+  void *Probe = NodePtr->getNextInBucket();
+
+  if (FoldingSetNode *NextNodeInBucket = GetNextPtr(Probe))
+    NodePtr = NextNodeInBucket;
+  else {
+    // Otherwise, this is the last link in this bucket.  
+    void **Bucket = GetBucketPtr(Probe);
+
+    // Skip to the next non-null non-self-cycle bucket.
+    do {
+      ++Bucket;
+    } while (*Bucket == 0 || GetNextPtr(*Bucket) == 0);
+    
+    NodePtr = static_cast<FoldingSetNode*>(*Bucket);
+  }
+}
+

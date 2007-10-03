@@ -220,6 +220,8 @@ protected:
 typedef FoldingSetImpl::Node FoldingSetNode;
 typedef FoldingSetImpl::NodeID FoldingSetNodeID;
 
+template<class T> class FoldingSetIterator;
+
 //===----------------------------------------------------------------------===//
 /// FoldingSet - This template class is used to instantiate a specialized
 /// implementation of the folding set to the node class T.  T must be a 
@@ -238,6 +240,14 @@ public:
   explicit FoldingSet(unsigned Log2InitSize = 6)
   : FoldingSetImpl(Log2InitSize)
   {}
+  
+  typedef FoldingSetIterator<T> iterator;
+  iterator begin() { return iterator(Buckets); }
+  iterator end() { return iterator(Buckets+NumBuckets); }
+
+  typedef FoldingSetIterator<const T> const_iterator;
+  const_iterator begin() const { return const_iterator(Buckets); }
+  const_iterator end() const { return const_iterator(Buckets+NumBuckets); }
 
   /// GetOrInsertNode - If there is an existing simple Node exactly
   /// equal to the specified node, return it.  Otherwise, insert 'N' and
@@ -251,6 +261,47 @@ public:
   /// faster.
   T *FindNodeOrInsertPos(const FoldingSetNodeID &ID, void *&InsertPos) {
     return static_cast<T *>(FoldingSetImpl::FindNodeOrInsertPos(ID, InsertPos));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// FoldingSetIteratorImpl - This is the common iterator support shared by all
+/// folding sets, which knows how to walk the folding set hash table.
+class FoldingSetIteratorImpl {
+protected:
+  FoldingSetNode *NodePtr;
+  FoldingSetIteratorImpl(void **Bucket);
+  void advance();
+  
+public:
+  bool operator==(const FoldingSetIteratorImpl &RHS) const {
+    return NodePtr == RHS.NodePtr;
+  }
+  bool operator!=(const FoldingSetIteratorImpl &RHS) const {
+    return NodePtr != RHS.NodePtr;
+  }
+};
+
+
+template<class T>
+class FoldingSetIterator : public FoldingSetIteratorImpl {
+public:
+  FoldingSetIterator(void **Bucket) : FoldingSetIteratorImpl(Bucket) {}
+  
+  T &operator*() const {
+    return *static_cast<T*>(NodePtr);
+  }
+  
+  T *operator->() const {
+    return static_cast<T*>(NodePtr);
+  }
+  
+  inline FoldingSetIterator& operator++() {          // Preincrement
+    advance();
+    return *this;
+  }
+  FoldingSetIterator operator++(int) {        // Postincrement
+    FoldingSetIterator tmp = *this; ++*this; return tmp;
   }
 };
 
