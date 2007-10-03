@@ -289,6 +289,9 @@ protected:
                                                  typename GraphT::NodeType* V,
                                                  unsigned N);
   
+  template<class NodeT> friend void Calculate(DominatorTreeBase& DT,
+                                              Function& F);
+  
   /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking
   /// dominator tree in dfs order.
   void updateDFSNumbers();
@@ -325,9 +328,6 @@ public:
   /// BB is split and now it has one successor. Update dominator tree to
   /// reflect this change.
   void splitBlock(BasicBlock *BB);
-
-private:
-  friend void DTcalculate(DominatorTree& DT, Function& F);
 };
 
 //===-------------------------------------

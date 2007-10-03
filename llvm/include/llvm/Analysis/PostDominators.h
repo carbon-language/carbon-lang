@@ -32,8 +32,6 @@ struct PostDominatorTree : public DominatorTreeBase {
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }
-private:
-  friend void PDTcalculate(PostDominatorTree& PDT, Function &F);
 };
 
 

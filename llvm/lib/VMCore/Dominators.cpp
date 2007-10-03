@@ -21,9 +21,9 @@
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/DominatorInternals.h"
 #include "llvm/Instructions.h"
 #include "llvm/Support/Streams.h"
-#include "DominatorCalculation.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -357,7 +357,10 @@ bool DominatorTree::runOnFunction(Function &F) {
   DomTreeNodes[&F.getEntryBlock()] = 0;
   Vertex.push_back(0);
   
-  DTcalculate(*this, F);
+  Calculate<BasicBlock*>(*this, F);
+  
+  updateDFSNumbers();
+  
   return false;
 }
 

@@ -16,7 +16,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
-#include "PostDominatorCalculation.h"
+#include "llvm/Analysis/DominatorInternals.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -47,7 +47,7 @@ bool PostDominatorTree::runOnFunction(Function &F) {
   
   Vertex.push_back(0);
     
-  PDTcalculate(*this, F);
+  Calculate<Inverse<BasicBlock*> >(*this, F);
   return false;
 }
 

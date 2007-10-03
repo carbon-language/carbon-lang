@@ -208,6 +208,93 @@ void Link(DominatorTreeBase& DT, typename GraphT::NodeType* V,
 #endif
 }
 
+template<class NodeT>
+void Calculate(DominatorTreeBase& DT, Function& F) {
+  // Step #1: Number blocks in depth-first order and initialize variables used
+  // in later stages of the algorithm.
+  unsigned N = 0;
+  for (unsigned i = 0, e = DT.Roots.size(); i != e; ++i)
+    N = DFSPass<GraphTraits<NodeT> >(DT, DT.Roots[i], N);
+
+  for (unsigned i = N; i >= 2; --i) {
+    typename GraphTraits<NodeT>::NodeType* W = DT.Vertex[i];
+    DominatorTree::InfoRec &WInfo = DT.Info[W];
+
+    // Step #2: Calculate the semidominators of all vertices
+    for (typename GraphTraits<Inverse<NodeT> >::ChildIteratorType CI =
+         GraphTraits<Inverse<NodeT> >::child_begin(W),
+         E = GraphTraits<Inverse<NodeT> >::child_end(W); CI != E; ++CI)
+      if (DT.Info.count(*CI)) {  // Only if this predecessor is reachable!
+        unsigned SemiU = DT.Info[Eval<GraphTraits<NodeT> >(DT, *CI)].Semi;
+        if (SemiU < WInfo.Semi)
+          WInfo.Semi = SemiU;
+      }
+
+    DT.Info[DT.Vertex[WInfo.Semi]].Bucket.push_back(W);
+
+    typename GraphTraits<NodeT>::NodeType* WParent = WInfo.Parent;
+    Link<GraphTraits<NodeT> >(DT, WParent, W, WInfo);
+
+    // Step #3: Implicitly define the immediate dominator of vertices
+    std::vector<typename GraphTraits<NodeT>::NodeType*> &WParentBucket =
+                                                        DT.Info[WParent].Bucket;
+    while (!WParentBucket.empty()) {
+      typename GraphTraits<NodeT>::NodeType* V = WParentBucket.back();
+      WParentBucket.pop_back();
+      typename GraphTraits<NodeT>::NodeType* U =
+                                               Eval<GraphTraits<NodeT> >(DT, V);
+      DT.IDoms[V] = DT.Info[U].Semi < DT.Info[V].Semi ? U : WParent;
+    }
+  }
+
+  // Step #4: Explicitly define the immediate dominator of each vertex
+  for (unsigned i = 2; i <= N; ++i) {
+    typename GraphTraits<NodeT>::NodeType* W = DT.Vertex[i];
+    typename GraphTraits<NodeT>::NodeType*& WIDom = DT.IDoms[W];
+    if (WIDom != DT.Vertex[DT.Info[W].Semi])
+      WIDom = DT.IDoms[WIDom];
+  }
+  
+  if (DT.Roots.empty()) return;
+  
+  // Add a node for the root.  This node might be the actual root, if there is
+  // one exit block, or it may be the virtual exit (denoted by (BasicBlock *)0)
+  // which postdominates all real exits if there are multiple exit blocks.
+  typename GraphTraits<NodeT>::NodeType* Root = DT.Roots.size() == 1 ? DT.Roots[0]
+                                                                     : 0;
+  DT.DomTreeNodes[Root] = DT.RootNode = new DomTreeNode(Root, 0);
+  
+  // Loop over all of the reachable blocks in the function...
+  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+    if (typename GraphTraits<NodeT>::NodeType* ImmDom = DT.getIDom(I)) {
+      // Reachable block.
+      DomTreeNode *BBNode = DT.DomTreeNodes[I];
+      if (BBNode) continue;  // Haven't calculated this node yet?
+
+      // Get or calculate the node for the immediate dominator
+      DomTreeNode *IDomNode = DT.getNodeForBlock(ImmDom);
+
+      // Add a new tree node for this BasicBlock, and link it as a child of
+      // IDomNode
+      DomTreeNode *C = new DomTreeNode(I, IDomNode);
+      DT.DomTreeNodes[I] = IDomNode->addChild(C);
+    }
+  
+  // Free temporary memory used to construct idom's
+  DT.IDoms.clear();
+  DT.Info.clear();
+  std::vector<typename GraphTraits<NodeT>::NodeType*>().swap(DT.Vertex);
+  
+  // FIXME: This does not work on PostDomTrees.  It seems likely that this is
+  // due to an error in the algorithm for post-dominators.  This really should
+  // be investigated and fixed at some point.
+  // DT.updateDFSNumbers();
+
+  // Start out with the DFS numbers being invalid.  Let them be computed if
+  // demanded.
+  DT.DFSInfoValid = false;
+}
+
 }
 
 #endif
