@@ -174,8 +174,8 @@ Parser::ExprResult Parser::ParseExpression() {
 
 /// This routine is called when the '@' is seen and consumed. 
 /// Current token is an Identifier and is not a 'try'. This
-/// routine is necessary to disambiguate @try-statement from
-/// ,for example, @encode-expression.
+/// routine is necessary to disambiguate @try-statement from,
+/// for example, @encode-expression.
 ///
 Parser::ExprResult Parser::ParseExpressionWithLeadingAt(SourceLocation &AtLoc) {
   ExprResult LHS = ParseObjCExpression(AtLoc);
@@ -600,13 +600,12 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
   case tok::kw_reinterpret_cast:
   case tok::kw_static_cast:
     return ParseCXXCasts();
-  case tok::at:
-    {
-      SourceLocation AtLoc = ConsumeToken();
-      return ParseObjCExpression(AtLoc);
-    }
+  case tok::at: {
+    SourceLocation AtLoc = ConsumeToken();
+    return ParseObjCExpression(AtLoc);
+  }
   case tok::l_square:
-    return ParseObjCMessageExpression ();
+    return ParseObjCMessageExpression();
   default:
     Diag(Tok, diag::err_expected_expression);
     return ExprResult(true);
