@@ -384,31 +384,31 @@ public:
                                                SourceLocation RParenLoc);
   
   // Objective-C declarations.
-  virtual DeclTy *ObjcStartClassInterface(Scope* S,
+  virtual DeclTy *ActOnStartClassInterface(Scope* S,
 		    SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
                     AttributeList *AttrList);
                     
-  virtual DeclTy *ObjcStartProtoInterface(Scope* S,
+  virtual DeclTy *ActOnStartProtocolInterface(Scope* S,
 		    SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
   
-  virtual DeclTy *ObjcStartCatInterface(Scope* S,
+  virtual DeclTy *ActOnStartCategoryInterface(Scope* S,
 		    SourceLocation AtInterfaceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
   
-  virtual DeclTy *ObjcStartClassImplementation(Scope* S,
+  virtual DeclTy *ActOnStartClassImplementation(Scope* S,
 		    SourceLocation AtClassImplLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperClassname, 
                     SourceLocation SuperClassLoc);
   
-  virtual DeclTy *ObjcStartCategoryImplementation(Scope* S,
+  virtual DeclTy *ActOnStartCategoryImplementation(Scope* S,
                                                   SourceLocation AtCatImplLoc,
                                                   IdentifierInfo *ClassName, 
                                                   SourceLocation ClassLoc,
@@ -424,8 +424,8 @@ public:
                                                   IdentifierInfo **IdentList,
                                                   unsigned NumElts);
 
-  virtual void ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl, 
-				     DeclTy **allMethods, unsigned allNum);
+  virtual void ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl, 
+				         DeclTy **allMethods, unsigned allNum);
   
   virtual DeclTy *ActOnMethodDeclaration(SourceLocation MethodLoc, 
     tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,

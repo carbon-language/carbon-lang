@@ -154,11 +154,9 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     if (attrList) // categories don't support attributes.
       Diag(Tok, diag::err_objc_no_attributes_on_category);
     
-    DeclTy *CategoryType = Actions.ObjcStartCatInterface(CurScope, atLoc, 
-                                     nameId, nameLoc,
-                                     categoryId, categoryLoc,
-                                     &ProtocolRefs[0],
-                                      ProtocolRefs.size());
+    DeclTy *CategoryType = Actions.ActOnStartCategoryInterface(CurScope, atLoc, 
+                                     nameId, nameLoc, categoryId, categoryLoc,
+                                     &ProtocolRefs[0], ProtocolRefs.size());
     
     ParseObjCInterfaceDeclList(CategoryType, tok::objc_not_keyword);
 
@@ -189,7 +187,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     if (ParseObjCProtocolReferences(ProtocolRefs))
       return 0;
   }
-  DeclTy *ClsType = Actions.ObjcStartClassInterface(CurScope,
+  DeclTy *ClsType = Actions.ActOnStartClassInterface(CurScope,
 		      atLoc, nameId, nameLoc, 
                       superClassId, superClassLoc, &ProtocolRefs[0], 
                       ProtocolRefs.size(), attrList);
@@ -268,8 +266,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
     }
   }
   /// Insert collected methods declarations into the @interface object.
-  Actions.ObjcAddMethodsToClass(CurScope,
-				interfaceDecl,&allMethods[0],allMethods.size());
+  Actions.ActOnAddMethodsToObjcDecl(CurScope, interfaceDecl,
+                                    &allMethods[0], allMethods.size());
 }
 
 ///   Parse property attribute declarations.
@@ -875,7 +873,7 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
       return 0;
   }
   
-  DeclTy *ProtoType = Actions.ObjcStartProtoInterface(CurScope, AtLoc, 
+  DeclTy *ProtoType = Actions.ActOnStartProtocolInterface(CurScope, AtLoc, 
                                 protocolName, nameLoc,
                                 &ProtocolRefs[0],
                                 ProtocolRefs.size());
@@ -934,7 +932,7 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
       return 0;
     }
     rparenLoc = ConsumeParen();
-    DeclTy *ImplCatType = Actions.ObjcStartCategoryImplementation(CurScope,
+    DeclTy *ImplCatType = Actions.ActOnStartCategoryImplementation(CurScope,
                                     atLoc, nameId, nameLoc, categoryId, 
                                     categoryLoc);
     return ImplCatType;
@@ -952,9 +950,8 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
     superClassId = Tok.getIdentifierInfo();
     superClassLoc = ConsumeToken(); // Consume super class name
   }
-  DeclTy *ImplClsType = Actions.ObjcStartClassImplementation(CurScope,
-				  atLoc, 
-                                  nameId, nameLoc,
+  DeclTy *ImplClsType = Actions.ActOnStartClassImplementation(CurScope,
+				  atLoc, nameId, nameLoc,
                                   superClassId, superClassLoc);
   
   if (Tok.getKind() == tok::l_brace)
@@ -971,8 +968,8 @@ Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
     // @implementation not to have been parsed to completion and ObjcImpDecl 
     // could be 0.
     /// Insert collected methods declarations into the @interface object.
-    Actions.ObjcAddMethodsToClass(CurScope, ObjcImpDecl,
-                                  &AllImplMethods[0],AllImplMethods.size());
+    Actions.ActOnAddMethodsToObjcDecl(CurScope, ObjcImpDecl,
+                                      &AllImplMethods[0],AllImplMethods.size());
     ObjcImpDecl = 0;
     AllImplMethods.clear();
   }

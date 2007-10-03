@@ -437,59 +437,99 @@ public:
   }
   //===----------------------- Obj-C Declarations -------------------------===//
   
-  virtual DeclTy *ObjcStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
-                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
-                    IdentifierInfo *SuperName, SourceLocation SuperLoc,
-                    IdentifierInfo **ProtocolNames, unsigned NumProtocols,
-                    AttributeList *AttrList) {
+  // ActOnStartClassInterface - this action is called immdiately after parsing
+  // the prologue for a class interface (before parsing the instance 
+  // variables). Instance variables are processed by ActOnFields().
+  virtual DeclTy *ActOnStartClassInterface(
+    Scope* S, 
+    SourceLocation AtInterafceLoc,
+    IdentifierInfo *ClassName, 
+    SourceLocation ClassLoc,
+    IdentifierInfo *SuperName, 
+    SourceLocation SuperLoc,
+    IdentifierInfo **ProtocolNames, 
+    unsigned NumProtocols,
+    AttributeList *AttrList) {
     return 0;
   }
-  virtual void ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl,
-				     DeclTy **allMethods, unsigned allNum) {
-    return;
-  }
-  virtual DeclTy *ObjcStartProtoInterface(Scope* S,
-		    SourceLocation AtProtoInterfaceLoc,
-                    IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
-                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
+  // ActOnStartProtocolInterface - this action is called immdiately after
+  // parsing the prologue for a protocol interface.
+  virtual DeclTy *ActOnStartProtocolInterface(
+    Scope* S,
+    SourceLocation AtProtoInterfaceLoc,
+    IdentifierInfo *ProtocolName, 
+    SourceLocation ProtocolLoc,
+    IdentifierInfo **ProtoRefNames, 
+    unsigned NumProtoRefs) {
     return 0;
   }
-  virtual DeclTy *ObjcStartCatInterface(Scope* S,
-		    SourceLocation AtInterfaceLoc,
-                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
-                    IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
-                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
+  // ActOnStartCategoryInterface - this action is called immdiately after
+  // parsing the prologue for a category interface.
+  virtual DeclTy *ActOnStartCategoryInterface(
+    Scope* S,
+    SourceLocation AtInterfaceLoc,
+    IdentifierInfo *ClassName, 
+    SourceLocation ClassLoc,
+    IdentifierInfo *CategoryName, 
+    SourceLocation CategoryLoc,
+    IdentifierInfo **ProtoRefNames, 
+    unsigned NumProtoRefs) {
     return 0;
   }
-  virtual DeclTy *ObjcStartClassImplementation(Scope* S,
-		    SourceLocation AtClassImplLoc,
-                    IdentifierInfo *ClassName, SourceLocation ClassLoc,
-                    IdentifierInfo *SuperClassname, 
-                    SourceLocation SuperClassLoc) {
+  // ActOnStartClassImplementation - this action is called immdiately after
+  // parsing the prologue for a class implementation. Instance variables are 
+  // processed by ActOnFields().
+  virtual DeclTy *ActOnStartClassImplementation(
+    Scope* S,
+    SourceLocation AtClassImplLoc,
+    IdentifierInfo *ClassName, 
+    SourceLocation ClassLoc,
+    IdentifierInfo *SuperClassname, 
+    SourceLocation SuperClassLoc) {
     return 0;
   }
-  virtual DeclTy *ObjcStartCategoryImplementation(Scope* S,
-                                                  SourceLocation AtCatImplLoc,
-                                                  IdentifierInfo *ClassName, 
-                                                  SourceLocation ClassLoc,
-                                                  IdentifierInfo *CatName,
-                                                  SourceLocation CatLoc) {
+  // ActOnStartCategoryImplementation - this action is called immdiately after
+  // parsing the prologue for a category implementation.
+  virtual DeclTy *ActOnStartCategoryImplementation(
+    Scope* S,
+    SourceLocation AtCatImplLoc,
+    IdentifierInfo *ClassName, 
+    SourceLocation ClassLoc,
+    IdentifierInfo *CatName,
+    SourceLocation CatLoc) {
     return 0;
   }  
-  virtual DeclTy *ActOnMethodDeclaration(SourceLocation MethodLoc, 
-    tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
-    // optional arguments. The number of types/arguments is obtained
-    // from the Sel.getNumArgs().
-    TypeTy **ArgTypes, IdentifierInfo **ArgNames,
-    AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind) {
+  // ActOnMethodDeclaration - called for all method declarations. 
+  virtual DeclTy *ActOnMethodDeclaration(
+    SourceLocation MethodLoc, 
+    tok::TokenKind MethodType, // tok::minus for instance, tok::plus for class.
+    TypeTy *ReturnType,        // the method return type.
+    Selector Sel,              // a unique name for the method.
+    TypeTy **ArgTypes,         // non-zero when Sel.getNumArgs() > 0
+    IdentifierInfo **ArgNames, // non-zero when Sel.getNumArgs() > 0
+    AttributeList *AttrList,   // optional
+    // tok::objc_not_keyword, tok::objc_optional, tok::objc_required    
+    tok::ObjCKeywordKind impKind) {
     return 0;
+  }
+  // ActOnAddMethodsToObjcDecl - called to associate methods with an interface,
+  // protocol, category, or implementation. 
+  virtual void ActOnAddMethodsToObjcDecl(
+    Scope* S, 
+    DeclTy *ClassDecl,
+    DeclTy **allMethods, 
+    unsigned allNum) {
+    return;
   }
   // ActOnClassMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from Sel.getNumArgs().
   virtual ExprResult ActOnClassMessage(
-    IdentifierInfo *receivingClassName, Selector Sel,
-    SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs) {
+    IdentifierInfo *receivingClassName, 
+    Selector Sel,
+    SourceLocation lbrac, 
+    SourceLocation rbrac, 
+    ExprTy **ArgExprs) {
     return 0;
   }
   // ActOnInstanceMessage - used for both unary and keyword messages.
@@ -500,17 +540,18 @@ public:
     SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs) {
     return 0;
   }
-  virtual DeclTy *ActOnForwardClassDeclaration(Scope *S,
-                                               SourceLocation AtClassLoc,
-                                               IdentifierInfo **IdentList,
-                                               unsigned NumElts) {
+  virtual DeclTy *ActOnForwardClassDeclaration(
+    Scope *S,
+    SourceLocation AtClassLoc,
+    IdentifierInfo **IdentList,
+    unsigned NumElts) {
     return 0;
   }
-  
-  virtual DeclTy *ActOnForwardProtocolDeclaration(Scope *S, 
-                                                  SourceLocation AtProtocolLoc,
-                                                  IdentifierInfo **IdentList,
-                                                  unsigned NumElts) {
+  virtual DeclTy *ActOnForwardProtocolDeclaration(
+    Scope *S, 
+    SourceLocation AtProtocolLoc,
+    IdentifierInfo **IdentList,
+    unsigned NumElts) {
     return 0;
   }
   
@@ -559,12 +600,12 @@ public:
                                                   IdentifierInfo **IdentList,
                                                   unsigned NumElts);
    
-  virtual DeclTy *ObjcStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
+  virtual DeclTy *ActOnStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
                     AttributeList *AttrList);
-  virtual DeclTy *ObjcStartProtoInterface(Scope *S,
+  virtual DeclTy *ActOnStartProtocolInterface(Scope *S,
 		    SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);

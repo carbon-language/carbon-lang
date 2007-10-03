@@ -894,7 +894,7 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D,
   return NewTD;
 }
 
-Sema::DeclTy *Sema::ObjcStartClassInterface(Scope* S,
+Sema::DeclTy *Sema::ActOnStartClassInterface(Scope* S,
                     SourceLocation AtInterfaceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
@@ -967,7 +967,7 @@ Sema::DeclTy *Sema::ObjcStartClassInterface(Scope* S,
   return IDecl;
 }
 
-Sema::DeclTy *Sema::ObjcStartProtoInterface(Scope* S,
+Sema::DeclTy *Sema::ActOnStartProtocolInterface(Scope* S,
 		SourceLocation AtProtoInterfaceLoc,
                 IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                 IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
@@ -1031,7 +1031,7 @@ Sema::ActOnForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
   return FDecl;
 }
 
-Sema::DeclTy *Sema::ObjcStartCatInterface(Scope* S,
+Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
 		      SourceLocation AtInterfaceLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
@@ -1075,10 +1075,10 @@ Sema::DeclTy *Sema::ObjcStartCatInterface(Scope* S,
   return CDecl;
 }
 
-/// ObjcStartCategoryImplementation - Perform semantic checks on the
+/// ActOnStartCategoryImplementation - Perform semantic checks on the
 /// category implementation declaration and build an ObjcCategoryImplDecl
 /// object.
-Sema::DeclTy *Sema::ObjcStartCategoryImplementation(Scope* S,
+Sema::DeclTy *Sema::ActOnStartCategoryImplementation(Scope* S,
                       SourceLocation AtCatImplLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CatName, SourceLocation CatLoc) {
@@ -1094,7 +1094,7 @@ Sema::DeclTy *Sema::ObjcStartCategoryImplementation(Scope* S,
   return CDecl;
 }
 
-Sema::DeclTy *Sema::ObjcStartClassImplementation(Scope *S,
+Sema::DeclTy *Sema::ActOnStartClassImplementation(Scope *S,
                       SourceLocation AtClassImplLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *SuperClassname, 
@@ -1683,8 +1683,8 @@ void Sema::ActOnFields(Scope* S,
   }
 }
 
-void Sema::ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl,
-                                 DeclTy **allMethods, unsigned allNum) {
+void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl,
+                                     DeclTy **allMethods, unsigned allNum) {
   // FIXME: Fix this when we can handle methods declared in protocols.
   // See Parser::ParseObjCAtProtocolDeclaration
   if (!ClassDecl)
@@ -1747,7 +1747,7 @@ void Sema::ObjcAddMethodsToClass(Scope* S, DeclTy *ClassDecl,
     }
   }
   else
-    assert(0 && "Sema::ObjcAddMethodsToClass(): Unknown DeclTy");
+    assert(0 && "Sema::ActOnAddMethodsToObjcDecl(): Unknown DeclTy");
   return;
 }
 

@@ -68,7 +68,7 @@ MinimalAction::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
 }
 
 Action::DeclTy *
-MinimalAction::ObjcStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
+MinimalAction::ActOnStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
@@ -81,7 +81,7 @@ MinimalAction::ObjcStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
 }
 
 Action::DeclTy *
-MinimalAction::ObjcStartProtoInterface(Scope* S,
+MinimalAction::ActOnStartProtocolInterface(Scope* S,
 		 SourceLocation AtProtoInterfaceLoc,
                  IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                  IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
