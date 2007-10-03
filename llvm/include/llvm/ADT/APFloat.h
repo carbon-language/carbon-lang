@@ -253,7 +253,7 @@ namespace llvm {
     opStatus addOrSubtract(const APFloat &, roundingMode, bool subtract);
     cmpResult compareAbsoluteValue(const APFloat &) const;
     opStatus handleOverflow(roundingMode);
-    bool roundAwayFromZero(roundingMode, lostFraction);
+    bool roundAwayFromZero(roundingMode, lostFraction, unsigned int) const;
     opStatus convertFromUnsignedInteger(integerPart *, unsigned int,
 					roundingMode);
     lostFraction combineLostFractions(lostFraction, lostFraction);

@@ -184,7 +184,8 @@ namespace {
       return digitValue == 0 ? lfLessThanHalf: lfMoreThanHalf;
   }
 
-  /* Return the fraction lost were a bignum truncated.  */
+  /* Return the fraction lost were a bignum truncated losing the least
+     significant BITS bits.  */
   lostFraction
   lostFractionThroughTruncation(integerPart *parts,
                                 unsigned int partCount,
@@ -694,16 +695,20 @@ APFloat::handleOverflow(roundingMode rounding_mode)
   return opInexact;
 }
 
-/* This routine must work for fcZero of both signs, and fcNormal
-   numbers.  */
+/* Returns TRUE if, when truncating the current number, with BIT the
+   new LSB, with the given lost fraction and rounding mode, the result
+   would need to be rounded away from zero (i.e., by increasing the
+   signficand).  This routine must work for fcZero of both signs, and
+   fcNormal numbers.  */
 bool
 APFloat::roundAwayFromZero(roundingMode rounding_mode,
-                           lostFraction lost_fraction)
+                           lostFraction lost_fraction,
+                           unsigned int bit) const
 {
   /* NaNs and infinities should not have lost fractions.  */
   assert(category == fcNormal || category == fcZero);
 
-  /* Our caller has already handled this case.  */
+  /* Current callers never pass this so we don't handle it.  */
   assert(lost_fraction != lfExactlyZero);
 
   switch(rounding_mode) {
@@ -719,7 +724,7 @@ APFloat::roundAwayFromZero(roundingMode rounding_mode,
 
     /* Our zeroes don't have a significand to test.  */
     if(lost_fraction == lfExactlyHalf && category != fcZero)
-      return significandParts()[0] & 1;
+      return APInt::tcExtractBit(significandParts(), bit);
 
     return false;
 
@@ -802,7 +807,7 @@ APFloat::normalize(roundingMode rounding_mode,
   }
 
   /* Increment the significand if we're rounding away from zero.  */
-  if(roundAwayFromZero(rounding_mode, lost_fraction)) {
+  if(roundAwayFromZero(rounding_mode, lost_fraction, 0)) {
     if(omsb == 0)
       exponent = semantics->minExponent;
 
@@ -1451,7 +1456,7 @@ APFloat::convertToInteger(integerPart *parts, unsigned int width,
   }
 
   if(lost_fraction != lfExactlyZero
-     && tmp.roundAwayFromZero(rounding_mode, lost_fraction))
+     && tmp.roundAwayFromZero(rounding_mode, lost_fraction, 0))
     tmp.incrementSignificand();
 
   msb = tmp.significandMSB();
