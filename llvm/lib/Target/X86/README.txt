@@ -1362,3 +1362,43 @@ _foo:
 
 //===---------------------------------------------------------------------===//
 
+We compile this:
+
+void compare (long long foo) {
+  if (foo < 4294967297LL)
+    abort();
+}
+
+to:
+
+_compare:
+        subl    $12, %esp
+        cmpl    $0, 16(%esp)
+        setne   %al
+        movzbw  %al, %ax
+        cmpl    $1, 20(%esp)
+        setg    %cl
+        movzbw  %cl, %cx
+        cmove   %ax, %cx
+        movw    %cx, %ax
+        testb   $1, %al
+        je      LBB1_2  # cond_true
+
+(also really horrible code on ppc).  This is due to the expand code for 64-bit
+compares.  GCC produces multiple branches, which is much nicer:
+
+_compare:
+        pushl   %ebp
+        movl    %esp, %ebp
+        subl    $8, %esp
+        movl    8(%ebp), %eax
+        movl    12(%ebp), %edx
+        subl    $1, %edx
+        jg     L5
+L7:
+        jl      L4
+        cmpl    $0, %eax
+        jbe      L4
+L5:
+
+//===---------------------------------------------------------------------===//
