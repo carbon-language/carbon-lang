@@ -14,9 +14,8 @@
 
 include $(LEVEL)/Makefile.config
 
-# CFLAGS needs to be set before Makefile.rules is included. Yes, ocaml puts its
-# includes under its libdir.
-CFLAGS += -I$(OCAML_LIBDIR)
+# CFLAGS needs to be set before Makefile.rules is included.
+CFLAGS += -I$(shell $(OCAMLC) -where)
 
 include $(LEVEL)/Makefile.common
 
