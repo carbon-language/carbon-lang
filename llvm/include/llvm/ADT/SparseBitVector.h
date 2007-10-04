@@ -168,15 +168,14 @@ public:
     assert(0 && "Illegal empty element");
   }
 
-  /// find_next - Returns the index of the next set bit following the
-  /// "Prev" bit. Returns -1 if the next set bit is not found.
-  int find_next(unsigned Prev) const {
-    ++Prev;
-    if (Prev >= BITS_PER_ELEMENT)
+  /// find_next - Returns the index of the next set bit starting from the
+  /// "Curr" bit. Returns -1 if the next set bit is not found.
+  int find_next(unsigned Curr) const {
+    if (Curr >= BITS_PER_ELEMENT)
       return -1;
 
-    unsigned WordPos = Prev / BITWORD_SIZE;
-    unsigned BitPos = Prev % BITWORD_SIZE;
+    unsigned WordPos = Curr / BITWORD_SIZE;
+    unsigned BitPos = Curr % BITWORD_SIZE;
     BitWord Copy = Bits[WordPos];
     assert (WordPos <= BITWORDS_PER_ELEMENT
             && "Word Position outside of element");
@@ -390,7 +389,7 @@ class SparseBitVector {
 
       // See if we ran out of Bits in this word.
       if (!Bits) {
-        int NextSetBitNumber = Iter->find_next((BitNumber - 1) % ElementSize) ;
+        int NextSetBitNumber = Iter->find_next(BitNumber % ElementSize) ;
         // If we ran out of set bits in this element, move to next element.
         if (NextSetBitNumber == -1 || (BitNumber % ElementSize == 0)) {
           ++Iter;
@@ -546,7 +545,7 @@ public:
       }
     }
     CurrElementIter = ElementIter;
-      
+
     ElementIter->set(Idx % ElementSize);
   }
 
