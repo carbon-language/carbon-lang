@@ -247,7 +247,7 @@ class Selector {
     else if (nArgs == 1)
       InfoPtr |= OneArg;
     else
-      assert(1 && "nArgs not equal to 0/1");
+      assert(0 && "nArgs not equal to 0/1");
   }
   Selector(MultiKeywordSelector *SI) {
     InfoPtr = reinterpret_cast<uintptr_t>(SI);
