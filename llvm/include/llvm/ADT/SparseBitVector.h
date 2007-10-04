@@ -538,7 +538,8 @@ public:
         // We may have hit the beginning of our SparseBitVector, in which case,
         // we may need to insert right after this element, which requires moving
         // the current iterator forward one, because insert does insert before.
-        if (ElementIter->index() < ElementIndex)
+        if (ElementIter != Elements.end() &&
+            ElementIter->index() < ElementIndex)
           ElementIter = Elements.insert(++ElementIter, Element);
         else
           ElementIter = Elements.insert(ElementIter, Element);
