@@ -234,6 +234,7 @@ class MultiKeywordSelector : public llvm::FoldingSetNode {
 
 class Selector {
   enum IdentifierInfoFlag {
+    // MultiKeywordSelector = 0.
     ZeroArg  = 0x1,
     OneArg   = 0x2,
     ArgFlags = ZeroArg|OneArg
@@ -242,20 +243,18 @@ class Selector {
   
   Selector(IdentifierInfo *II, unsigned nArgs) {
     InfoPtr = reinterpret_cast<uintptr_t>(II);
-    if (nArgs == 0)
-      InfoPtr |= ZeroArg;
-    else if (nArgs == 1)
-      InfoPtr |= OneArg;
-    else
-      assert(0 && "nArgs not equal to 0/1");
+    assert((InfoPtr & ArgFlags) == 0 &&"Insufficiently aligned IdentifierInfo");
+    assert(nArgs < 2 && "nArgs not equal to 0/1");
+    InfoPtr |= nArgs+1;
   }
   Selector(MultiKeywordSelector *SI) {
     InfoPtr = reinterpret_cast<uintptr_t>(SI);
+    assert((InfoPtr & ArgFlags) == 0 &&"Insufficiently aligned IdentifierInfo");
   }
   friend class Parser; // only the Parser can create these.
   
   IdentifierInfo *getAsIdentifierInfo() const {
-    if (InfoPtr & ArgFlags)
+    if (getIdentifierInfoFlag())
       return reinterpret_cast<IdentifierInfo *>(InfoPtr & ~ArgFlags);
     return 0;
   }
