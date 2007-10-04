@@ -41,7 +41,10 @@ namespace clang {
   class ForStmt;
   class ReturnStmt;
   class DeclStmt;
-  
+  class CaseStmt;
+  class DefaultStmt;
+  class SwitchStmt;
+
   class Expr;
   class DeclRefExpr;
   class StringLiteral;
@@ -237,6 +240,10 @@ private:
   }; 
   llvm::SmallVector<BreakContinue, 8> BreakContinueStack;
   
+  // SwitchInsn - This is used by EmitCaseStmt() and EmitDefaultStmt() to
+  // populate switch instruction
+  llvm::SwitchInst *SwitchInsn;
+
 public:
   CodeGenFunction(CodeGenModule &cgm);
   
@@ -281,6 +288,10 @@ public:
   /// with no predecessors.
   static bool isDummyBlock(const llvm::BasicBlock *BB);
 
+  /// StartBlock - Start new block named N. If insert block is a dummy block
+  /// then reuse it.
+  void StartBlock(const char *N);
+
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
@@ -308,7 +319,10 @@ public:
   void EmitDeclStmt(const DeclStmt &S);
   void EmitBreakStmt();
   void EmitContinueStmt();
-  
+  void EmitSwitchStmt(const SwitchStmt &S);
+  void EmitDefaultStmt(const DefaultStmt &S);
+  void EmitCaseStmt(const CaseStmt &S);
+
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission
   //===--------------------------------------------------------------------===//

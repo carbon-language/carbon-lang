@@ -271,6 +271,13 @@ public:
   Expr *getRHS() { return reinterpret_cast<Expr*>(SubExprs[RHS]); }
   Stmt *getSubStmt() { return SubExprs[SUBSTMT]; }
   virtual Stmt* v_getSubStmt() { return getSubStmt(); }
+  const Expr *getLHS() const { 
+    return reinterpret_cast<const Expr*>(SubExprs[LHS]); 
+  }
+  const Expr *getRHS() const { 
+    return reinterpret_cast<const Expr*>(SubExprs[RHS]); 
+  }
+  const Stmt *getSubStmt() const { return SubExprs[SUBSTMT]; }
 
   virtual SourceRange getSourceRange() const { 
     return SourceRange(CaseLoc, SubExprs[SUBSTMT]->getLocEnd()); 
@@ -294,6 +301,7 @@ public:
     
   Stmt *getSubStmt() { return SubStmt; }
   virtual Stmt* v_getSubStmt() { return getSubStmt(); }
+  const Stmt *getSubStmt() const { return SubStmt; }
     
   SourceLocation getDefaultLoc() const { return DefaultLoc; }
 

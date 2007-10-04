@@ -57,6 +57,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
       
   case Stmt::BreakStmtClass:    EmitBreakStmt();                          break;
   case Stmt::ContinueStmtClass: EmitContinueStmt();                       break;
+  case Stmt::SwitchStmtClass:   EmitSwitchStmt(cast<SwitchStmt>(*S));     break;
+  case Stmt::DefaultStmtClass:  EmitDefaultStmt(cast<DefaultStmt>(*S));   break;
+  case Stmt::CaseStmtClass:     EmitCaseStmt(cast<CaseStmt>(*S));         break;
   }
 }
 
@@ -349,4 +352,51 @@ void CodeGenFunction::EmitContinueStmt() {
   llvm::BasicBlock *Block = BreakContinueStack.back().ContinueBlock;
   Builder.CreateBr(Block);
   EmitBlock(new llvm::BasicBlock());
+}
+
+void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
+  StartBlock("sw.bb");
+  llvm::Value *V = EmitScalarExpr(S.getLHS());
+  SwitchInsn->addCase(cast<llvm::ConstantInt>(V), Builder.GetInsertBlock());
+  assert (!S.getRHS() && "Case statement range is not yet supported");
+  EmitStmt(S.getSubStmt());
+}
+
+void CodeGenFunction::EmitDefaultStmt(const DefaultStmt &S) {
+  StartBlock("sw.default");
+  // Current insert block is the default destination.
+  SwitchInsn->setSuccessor(0, Builder.GetInsertBlock());
+  EmitStmt(S.getSubStmt());
+}
+
+void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
+  llvm::Value *CondV = EmitScalarExpr(S.getCond());
+
+  // Handle nested switch statements.
+  llvm::SwitchInst *SavedSwitchInsn = SwitchInsn;
+
+  // Create basic block to hold stuff that comes after switch statement.
+  // Initially use it to hold DefaultStmt.
+  llvm::BasicBlock *NextBlock = new llvm::BasicBlock("after.sw", CurFn);
+  SwitchInsn = Builder.CreateSwitch(CondV, NextBlock);
+
+  // All break statements jump to NextBlock. If BreakContinueStack is non empty then
+  // reuse last ContinueBlock.
+  llvm::BasicBlock *ContinueBlock = NULL;
+  if (!BreakContinueStack.empty())
+    ContinueBlock = BreakContinueStack.back().ContinueBlock;
+  BreakContinueStack.push_back(BreakContinue(NextBlock, ContinueBlock));
+
+  // Emit switch body.
+  EmitStmt(S.getBody());
+  BreakContinueStack.pop_back();
+
+  // Prune insert block if it is dummy.
+  llvm::BasicBlock *BB = Builder.GetInsertBlock();
+  if (isDummyBlock(BB))
+    BB->eraseFromParent();
+
+  // Place NextBlock as the new insert point.
+  Builder.SetInsertPoint(NextBlock);
+  SwitchInsn = SavedSwitchInsn;
 }

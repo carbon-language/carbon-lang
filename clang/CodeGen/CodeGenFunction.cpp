@@ -115,3 +115,13 @@ bool CodeGenFunction::isDummyBlock(const llvm::BasicBlock *BB) {
   return false;
 }
 
+/// StartBlock - Start new block named N. If insert block is a dummy block
+/// then reuse it.
+void CodeGenFunction::StartBlock(const char *N) {
+  llvm::BasicBlock *BB = Builder.GetInsertBlock();
+  if (!isDummyBlock(BB))
+    EmitBlock(new llvm::BasicBlock(N));
+  else
+    BB->setName(N);
+}
+
