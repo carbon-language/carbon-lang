@@ -272,8 +272,8 @@ private:
   DeclTy *ParseObjCAtAliasDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCPropertySynthesize(SourceLocation atLoc);
   DeclTy *ParseObjCPropertyDynamic(SourceLocation atLoc);
-  DeclTy *ParseObjCTryStmt(SourceLocation &atLoc);
-  DeclTy *ParseObjCThrowStmt(SourceLocation &atLoc);
+  DeclTy *ParseObjCTryStmt(SourceLocation atLoc);
+  DeclTy *ParseObjCThrowStmt(SourceLocation atLoc);
   
   IdentifierInfo *ParseObjCSelector();
   // Definitions for Objective-c context sensitive keywords recognition.
@@ -317,7 +317,7 @@ private:
   ExprResult ParseAssignmentExpression();  // Expr that doesn't include commas.
   
   ExprResult ParseExpressionWithLeadingIdentifier(const Token &Tok);
-  ExprResult ParseExpressionWithLeadingAt(SourceLocation &AtLoc);
+  ExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
   ExprResult ParseAssignmentExprWithLeadingIdentifier(const Token &Tok);
   ExprResult ParseAssignmentExpressionWithLeadingStar(const Token &Tok);
 
@@ -363,7 +363,7 @@ private:
   
   //===--------------------------------------------------------------------===//
   // Objective-C Expressions
-  ExprResult ParseObjCExpression(SourceLocation &AtLocation);
+  ExprResult ParseObjCExpression(SourceLocation AtLocation);
   ExprResult ParseObjCStringLiteral();
   ExprResult ParseObjCEncodeExpression();
   ExprResult ParseObjCProtocolExpression();

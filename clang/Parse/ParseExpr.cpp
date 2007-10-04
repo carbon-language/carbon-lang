@@ -177,7 +177,7 @@ Parser::ExprResult Parser::ParseExpression() {
 /// routine is necessary to disambiguate @try-statement from,
 /// for example, @encode-expression.
 ///
-Parser::ExprResult Parser::ParseExpressionWithLeadingAt(SourceLocation &AtLoc) {
+Parser::ExprResult Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
   ExprResult LHS = ParseObjCExpression(AtLoc);
   if (LHS.isInvalid) return LHS;
  

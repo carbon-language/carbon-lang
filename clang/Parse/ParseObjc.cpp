@@ -1067,10 +1067,10 @@ Parser::DeclTy *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
 ///  objc-throw-statement:
 ///    throw expression[opt];
 ///
-Parser::DeclTy *Parser::ParseObjCThrowStmt(SourceLocation &atLoc) {
+Parser::DeclTy *Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
   ConsumeToken(); // consume throw
   if (Tok.getKind() != tok::semi) {
-    ExprResult Res = ParseAssignmentExpression();
+    ExprResult Res = ParseExpression();
     if (Res.isInvalid) {
       SkipUntil(tok::semi);
       return 0;
@@ -1090,7 +1090,7 @@ Parser::DeclTy *Parser::ParseObjCThrowStmt(SourceLocation &atLoc) {
 ///     parameter-declaration
 ///     '...' [OBJC2]
 ///
-Parser::DeclTy *Parser::ParseObjCTryStmt(SourceLocation &atLoc) {
+Parser::DeclTy *Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   bool catch_or_finally_seen = false;
   ConsumeToken(); // consume try
   if (Tok.getKind() != tok::l_brace) {
@@ -1172,21 +1172,21 @@ void Parser::ParseObjCClassMethodDefinition() {
   StmtResult FnBody = ParseCompoundStatementBody();
 }
 
-Parser::ExprResult Parser::ParseObjCExpression(SourceLocation &AtLoc) {
+Parser::ExprResult Parser::ParseObjCExpression(SourceLocation AtLoc) {
 
   switch (Tok.getKind()) {
     case tok::string_literal:    // primary-expression: string-literal
     case tok::wide_string_literal:
-      return ParseObjCStringLiteral();
+      return ParsePostfixExpressionSuffix(ParseObjCStringLiteral());
     default:
       break;
   }
   
   switch (Tok.getIdentifierInfo()->getObjCKeywordID()) {
     case tok::objc_encode:
-      return ParseObjCEncodeExpression();
+      return ParsePostfixExpressionSuffix(ParseObjCEncodeExpression());
     case tok::objc_protocol:
-      return ParseObjCProtocolExpression();
+      return ParsePostfixExpressionSuffix(ParseObjCProtocolExpression());
     default:
       Diag(AtLoc, diag::err_unexpected_at);
       SkipUntil(tok::semi);

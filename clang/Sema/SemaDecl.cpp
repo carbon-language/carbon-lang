@@ -1729,27 +1729,28 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl,
     if (IDecl)
       ImplMethodsVsClassMethods(ImplClass, IDecl);
   }
-  else if (isa<ObjcCategoryImplDecl>(static_cast<Decl *>(ClassDecl))) {
-    ObjcCategoryImplDecl* CatImplClass = cast<ObjcCategoryImplDecl>(
+  else {
+    ObjcCategoryImplDecl* CatImplClass = dyn_cast<ObjcCategoryImplDecl>(
                                           static_cast<Decl*>(ClassDecl));
-    CatImplClass->ObjcAddCatImplMethods(&insMethods[0], insMethods.size(),
-                                        &clsMethods[0], clsMethods.size());
-    ObjcInterfaceDecl* IDecl = CatImplClass->getClassInterface();
-    // Find category interface decl and then check that all methods declared
-    // in this interface is implemented in the category @implementation.
-    if (IDecl) {
-      for (ObjcCategoryDecl *Categories = IDecl->getListCategories();
-           Categories; Categories = Categories->getNextClassCategory()) {
-        if (Categories->getCatName() == CatImplClass->getObjcCatName()) {
-          ImplCategoryMethodsVsIntfMethods(CatImplClass, Categories);
-          break;
+    if (CatImplClass) {
+      CatImplClass->ObjcAddCatImplMethods(&insMethods[0], insMethods.size(),
+                                          &clsMethods[0], clsMethods.size());
+      ObjcInterfaceDecl* IDecl = CatImplClass->getClassInterface();
+      // Find category interface decl and then check that all methods declared
+      // in this interface is implemented in the category @implementation.
+      if (IDecl) {
+        for (ObjcCategoryDecl *Categories = IDecl->getListCategories();
+             Categories; Categories = Categories->getNextClassCategory()) {
+          if (Categories->getCatName() == CatImplClass->getObjcCatName()) {
+            ImplCategoryMethodsVsIntfMethods(CatImplClass, Categories);
+            break;
+          }
         }
       }
     }
+    else
+      assert(0 && "Sema::ActOnAddMethodsToObjcDecl(): Unknown DeclTy");
   }
-  else
-    assert(0 && "Sema::ActOnAddMethodsToObjcDecl(): Unknown DeclTy");
-  return;
 }
 
 Sema::DeclTy *Sema::ActOnMethodDeclaration(SourceLocation MethodLoc, 

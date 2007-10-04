@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 void * proc();
 
 @interface Frob
@@ -22,7 +24,7 @@ void * foo()
                 return proc();
           }
           @catch (Frob* ex) {
-                @throw;
+                @throw 1,2;
           }
 	  @catch(...) {
 	    @throw (4,3,proc());

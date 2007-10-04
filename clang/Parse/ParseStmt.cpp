@@ -34,8 +34,8 @@ using namespace clang;
 ///         selection-statement
 ///         iteration-statement
 ///         jump-statement
-/// [OBC]   objc-throw-statement         [TODO]
-/// [OBC]   objc-try-catch-statement     [TODO]
+/// [OBC]   objc-throw-statement
+/// [OBC]   objc-try-catch-statement
 /// [OBC]   objc-synchronized-statement  [TODO]
 /// [GNU]   asm-statement
 /// [OMP]   openmp-construct             [TODO]
@@ -64,9 +64,9 @@ using namespace clang;
 ///         'return' expression[opt] ';'
 /// [GNU]   'goto' '*' expression ';'
 ///
-/// [OBC] objc-throw-statement:           [TODO]
-/// [OBC]   '@' 'throw' expression ';'    [TODO]
-/// [OBC]   '@' 'throw' ';'               [TODO]
+/// [OBC] objc-throw-statement:
+/// [OBC]   '@' 'throw' expression ';'
+/// [OBC]   '@' 'throw' ';' 
 /// 
 Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   const char *SemiError = 0;
@@ -91,19 +91,28 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
         return ParseObjCTryStmt(AtLoc);
       else if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_throw)
         return ParseObjCThrowStmt(AtLoc);
+      ExprResult Res = ParseExpressionWithLeadingAt(AtLoc);
+      if (Res.isInvalid) {
+        // If the expression is invalid, skip ahead to the next semicolon. Not
+        // doing this opens us up to the possibility of infinite loops if
+        // ParseExpression does not consume any tokens.
+        SkipUntil(tok::semi);
+        return true;
+      }
+      // Otherwise, eat the semicolon.
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_expr);
+      return Actions.ActOnExprStmt(Res.Val);
     }
-    // Fall thru.
 
   default:
-    if (Kind != tok::at && !OnlyStatement && isDeclarationSpecifier()) {
+    if (!OnlyStatement && isDeclarationSpecifier()) {
       return Actions.ActOnDeclStmt(ParseDeclaration(Declarator::BlockContext));
     } else if (Tok.getKind() == tok::r_brace) {
       Diag(Tok, diag::err_expected_statement);
       return true;
     } else {
       // expression[opt] ';'
-      ExprResult Res = (Kind == tok::at) ? ParseExpressionWithLeadingAt(AtLoc) 
-				         : ParseExpression();
+      ExprResult Res = ParseExpression();
       if (Res.isInvalid) {
         // If the expression is invalid, skip ahead to the next semicolon.  Not
         // doing this opens us up to the possibility of infinite loops if
