@@ -272,8 +272,8 @@ FieldDecl* RecordDecl::getMember(IdentifierInfo *name) {
   return 0;
 }
 
-void ObjcMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo, 
-				     unsigned NumParams) {
+void ObjcMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,
+                                     unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
 
   // Zero params -> null pointer.
@@ -292,7 +292,7 @@ ObjcMethodDecl::~ObjcMethodDecl() {
 /// into ObjcInterfaceDecl's fields.
 ///
 void ObjcInterfaceDecl::ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars,
-					   		unsigned numIvars) {
+                                                        unsigned numIvars) {
   NumIvars = numIvars;
   if (numIvars) {
     Ivars = new ObjcIvarDecl*[numIvars];
@@ -305,7 +305,7 @@ void ObjcInterfaceDecl::ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars,
 /// Ivars into ObjcImplementationDecl's fields.
 ///
 void ObjcImplementationDecl::ObjcAddInstanceVariablesToClassImpl(
-			      ObjcIvarDecl **ivars, unsigned numIvars) {
+                               ObjcIvarDecl **ivars, unsigned numIvars) {
   NumIvars = numIvars;
   if (numIvars) {
     Ivars = new ObjcIvarDecl*[numIvars];
@@ -317,7 +317,7 @@ void ObjcImplementationDecl::ObjcAddInstanceVariablesToClassImpl(
 /// ObjcInterfaceDecl's InsMethods and ClsMethods fields.
 ///
 void ObjcInterfaceDecl::ObjcAddMethods(ObjcMethodDecl **insMethods, 
-				       unsigned numInsMembers,
+                                       unsigned numInsMembers,
                                        ObjcMethodDecl **clsMethods,
                                        unsigned numClsMembers) {
   NumInstanceMethods = numInsMembers;
@@ -336,9 +336,9 @@ void ObjcInterfaceDecl::ObjcAddMethods(ObjcMethodDecl **insMethods,
 /// ObjcProtocolDecl's ProtoInsMethods and ProtoClsMethods fields.
 ///
 void ObjcProtocolDecl::ObjcAddProtoMethods(ObjcMethodDecl **insMethods, 
-					   unsigned numInsMembers,
-					   ObjcMethodDecl **clsMethods,
-					   unsigned numClsMembers) {
+                                           unsigned numInsMembers,
+                                           ObjcMethodDecl **clsMethods,
+                                           unsigned numClsMembers) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
     InstanceMethods = new ObjcMethodDecl*[numInsMembers];
@@ -355,9 +355,9 @@ void ObjcProtocolDecl::ObjcAddProtoMethods(ObjcMethodDecl **insMethods,
 /// ObjcCategoryDecl's CatInsMethods and CatClsMethods fields.
 ///
 void ObjcCategoryDecl::ObjcAddCatMethods(ObjcMethodDecl **insMethods, 
-					 unsigned numInsMembers,
-					 ObjcMethodDecl **clsMethods,
-					 unsigned numClsMembers) {
+                                         unsigned numInsMembers,
+                                         ObjcMethodDecl **clsMethods,
+                                         unsigned numClsMembers) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
     InstanceMethods = new ObjcMethodDecl*[numInsMembers];
@@ -374,9 +374,9 @@ void ObjcCategoryDecl::ObjcAddCatMethods(ObjcMethodDecl **insMethods,
 /// ObjcCategoryImplDecl's CatInsMethods and CatClsMethods fields.
 ///
 void ObjcCategoryImplDecl::ObjcAddCatImplMethods(ObjcMethodDecl **insMethods, 
-						 unsigned numInsMembers,
-						 ObjcMethodDecl **clsMethods,
-						 unsigned numClsMembers) {
+                                                 unsigned numInsMembers,
+                                                 ObjcMethodDecl **clsMethods,
+                                                 unsigned numClsMembers) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
     InstanceMethods = new ObjcMethodDecl*[numInsMembers];
@@ -393,9 +393,9 @@ void ObjcCategoryImplDecl::ObjcAddCatImplMethods(ObjcMethodDecl **insMethods,
 /// ObjcImplementationDecl's InsMethods and ClsMethods fields.
 ///
 void ObjcImplementationDecl::ObjcAddImplMethods(ObjcMethodDecl **insMethods, 
-						unsigned numInsMembers,
-						ObjcMethodDecl **clsMethods,
-						unsigned numClsMembers) {
+                                                unsigned numInsMembers,
+                                                ObjcMethodDecl **clsMethods,
+                                                unsigned numClsMembers) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
     InstanceMethods = new ObjcMethodDecl*[numInsMembers];
