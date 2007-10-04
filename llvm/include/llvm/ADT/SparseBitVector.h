@@ -390,7 +390,7 @@ class SparseBitVector {
 
       // See if we ran out of Bits in this word.
       if (!Bits) {
-        int NextSetBitNumber = Iter->find_next(BitNumber % ElementSize) ;
+        int NextSetBitNumber = Iter->find_next((BitNumber - 1) % ElementSize) ;
         // If we ran out of set bits in this element, move to next element.
         if (NextSetBitNumber == -1 || (BitNumber % ElementSize == 0)) {
           ++Iter;
