@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 @interface INTF
 - (void) meth;
 - (void) meth : (int) arg1;
@@ -6,12 +8,11 @@
 + (void) cls_meth1 : (int) arg1; // expected-warning {{method definition for 'cls_meth1:' not found}}
 @end
 
-@implementation INTF
+@implementation INTF 	// expected-warning {{incomplete implementation of class 'INTF'}}
 - (void) meth {}
 - (void) meth : (int) arg2{}
 - (void) cls_meth1 : (int) arg2{}
-@end	// expected-warning {{incomplete implementation of class 'INTF'}}
-
+@end
 
 @interface INTF1
 - (void) meth;
@@ -21,12 +22,11 @@
 + (void) cls_meth1 : (int) arg1; // expected-warning {{method definition for 'cls_meth1:' not found}}
 @end
 
-@implementation INTF1
+@implementation INTF1 // expected-warning {{incomplete implementation of class 'INTF1'}}
 - (void) meth {}
 - (void) meth : (int) arg2{}
 - (void) cls_meth1 : (int) arg2{}
-@end // expected-warning {{incomplete implementation of class 'INTF1'}}
-
+@end
 
 @interface INTF2
 - (void) meth;

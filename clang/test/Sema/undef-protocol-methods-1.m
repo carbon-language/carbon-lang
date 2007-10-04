@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 @protocol P1
 - (void) P1proto; // expected-warning {{method definition for 'P1proto' not found}}
 + (void) ClsP1Proto; // expected-warning {{method definition for 'ClsP1Proto' not found}}
@@ -15,17 +17,17 @@
 @end
 
 @protocol PROTO<P1, P3>
-- (void) meth;			// expected-warning {{method definition for 'meth' not found
-- (void) meth : (int) arg1;	// expected-warning {{method definition for 'meth:' not found
-+ (void) cls_meth : (int) arg1; // expected-warning {{method definition for 'cls_meth:' not found
+- (void) meth;			// expected-warning {{method definition for 'meth' not found}}
+- (void) meth : (int) arg1;	// expected-warning {{method definition for 'meth:' not found}}
++ (void) cls_meth : (int) arg1; // expected-warning {{method definition for 'cls_meth:' not found}}
 @end
 
 @interface INTF <PROTO>
 @end
 
-@implementation INTF
+@implementation INTF   // expected-warning {{incomplete implementation of class 'INTF'}}
 - (void) DefP1proto{}
 
 + (void) DefClsP3Proto{}
 
-@end // expected-warning {{ncomplete implementation of class 'INTF'}}
+@end

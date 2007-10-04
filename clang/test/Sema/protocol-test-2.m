@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 @interface INTF1 @end
 
 @protocol p1,p2,p3;

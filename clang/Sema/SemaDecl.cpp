@@ -1147,7 +1147,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(Scope *S,
   if (!IDecl) {
     // Legacy case of @implementation with no corresponding @interface.
     // Build, chain & install the interface decl into the identifier.
-    IDecl = new ObjcInterfaceDecl(AtClassImplLoc, 0, ClassName);
+    IDecl = new ObjcInterfaceDecl(SourceLocation(), 0, ClassName);
     IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
     ClassName->setFETokenInfo(IDecl);
     
@@ -1172,8 +1172,9 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
                                     ObjcIvarDecl **ivars, unsigned numIvars) {
   assert(ImpDecl && "missing implementation decl");
   ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(ImpDecl->getIdentifier());
-  
-  if (!IDecl)
+  /// 2nd check is added to accomodate case of non-existing @interface decl.
+  /// (legacy objective-c @implementation decl without an @interface decl).
+  if (!IDecl || IDecl->ImplicitInterfaceDecl())
     return;
   assert(ivars && "missing @implementation ivars");
   
@@ -1289,8 +1290,8 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
     CheckProtocolMethodDefs(PDecl, IncompleteImpl, InsMap, ClsMap);
   }
   if (IncompleteImpl)
-    Diag(IDecl->getLocation(), diag::warn_incomplete_impl_class, 
-         IDecl->getName());
+    Diag(IMPDecl->getLocation(), diag::warn_incomplete_impl_class, 
+         IMPDecl->getName());
 }
 
 /// ImplCategoryMethodsVsIntfMethods - Checks that methods declared in the
@@ -1339,7 +1340,7 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
     CheckProtocolMethodDefs(PDecl, IncompleteImpl, InsMap, ClsMap);
   }
   if (IncompleteImpl)
-    Diag(CatClassDecl->getLocation(), diag::warn_incomplete_impl_category, 
+    Diag(CatImplDecl->getLocation(), diag::warn_incomplete_impl_category, 
          CatClassDecl->getCatName()->getName());
 }
 

@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 @interface INTF 
 {
 @public

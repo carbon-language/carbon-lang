@@ -1,8 +1,10 @@
+// RUN: clang -fsyntax-only -verify %s
+
 @protocol SUPER;
 
 @interface SUPER <SUPER> @end // expected-error {{cannot find protocol definition for 'SUPER', referenced by 'SUPER'}}
 
-typedef int INTF; //  expected-error {{previou sdefinition is here}}
+typedef int INTF; //  expected-error {{previous definition is here}}
 
 @interface INTF @end // expected-error {{redefinition of 'INTF' as different kind of symbol}}
 

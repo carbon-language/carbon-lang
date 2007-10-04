@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 @class SUPER, Y;
 
 @interface INTF :SUPER  // expected-error {{cannot find interface declaration for 'SUPER', superclass of 'INTF'}}

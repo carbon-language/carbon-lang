@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 @protocol PROTO1
 @required 
 - (int) FooBar;

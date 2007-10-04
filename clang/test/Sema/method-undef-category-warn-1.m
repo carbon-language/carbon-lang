@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 @interface MyClass1 
 @end
 
@@ -10,17 +12,17 @@
 - (void) meth2;	// expected-warning {{method definition for 'meth2' not found}}
 @end
 
-@implementation MyClass1(CAT)
+@implementation MyClass1(CAT) // expected-warning {{incomplete implementation of category 'CAT'}}
 - (void) Pmeth1{}
-@end  // expected-warning {{incomplete implementation of category 'CAT'}}
+@end
 
 @interface MyClass1(DOG) <P>
 - (void)ppp;  // expected-warning {{method definition for 'ppp' not found}}
 @end
 
-@implementation MyClass1(DOG)
+@implementation MyClass1(DOG) // expected-warning {{incomplete implementation of category 'DOG'}}
 - (void) Pmeth {}
-@end  // expected-warning {{incomplete implementation of category 'DOG'}}
+@end
 
 @implementation MyClass1(CAT1)
 @end

@@ -132,6 +132,11 @@ public:
   ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
   ObjcMethodDecl *lookupClassMethod(Selector &Sel);
   
+  /// ImplicitInterfaceDecl - check that this is an implicitely declared
+  /// ObjcInterfaceDecl node. This is for legacy objective-c @implementation
+  /// declaration without an @interface declaration.
+  bool ImplicitInterfaceDecl() const { return getLocation().isInvalid(); }
+  
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcInterface;
   }
@@ -502,6 +507,8 @@ class ObjcCategoryImplDecl : public Decl {
   ObjcMethodDecl **ClassMethods; // Null if category is not implementing any
   int NumClassMethods;  // -1 if category is not implementing any
   
+  SourceLocation Loc;
+  
   public:
     ObjcCategoryImplDecl(SourceLocation L, IdentifierInfo *Id,
                          ObjcInterfaceDecl *classInterface,
@@ -510,7 +517,7 @@ class ObjcCategoryImplDecl : public Decl {
     ClassInterface(classInterface),
     ObjcCatName(catName),
     InstanceMethods(0), NumInstanceMethods(-1),
-    ClassMethods(0), NumClassMethods(-1) {}
+    ClassMethods(0), NumClassMethods(-1), Loc(L) {}
         
     ObjcInterfaceDecl *getClassInterface() const { 
       return ClassInterface; 
@@ -527,6 +534,8 @@ class ObjcCategoryImplDecl : public Decl {
   void ObjcAddCatImplMethods(
         ObjcMethodDecl **insMethods, unsigned numInsMembers,
         ObjcMethodDecl **clsMethods, unsigned numClsMembers);
+  
+  SourceLocation getLocation() const { return Loc; }
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcCategoryImpl;

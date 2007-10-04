@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 @class FOO, BAR;
 @class FOO, BAR;
 

@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only -verify %s
+
 typedef int INTF3; // expected-error {{previous definition is here}}
 
 @interface SUPER @end // expected-error {{previous definition is here}}
