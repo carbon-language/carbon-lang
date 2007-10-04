@@ -100,11 +100,11 @@ ObjcInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
 /// getObjcProtocolDecl - Look up a for a protocol declaration in the scope.
 /// return 0 if one not found.
 ObjcProtocolDecl *Sema::getObjCProtocolDecl(Scope *S,
-                       			    IdentifierInfo *Id, 
-				            SourceLocation IdLoc) {
+                                            IdentifierInfo *Id, 
+                                            SourceLocation IdLoc) {
   // Note that Protocols have their own namespace.
   ScopedDecl *PrDecl = LookupScopedDecl(Id, Decl::IDNS_Protocol, 
-				        IdLoc, S);
+                                        IdLoc, S);
   if (PrDecl && !isa<ObjcProtocolDecl>(PrDecl))
     PrDecl = 0;
   return cast_or_null<ObjcProtocolDecl>(static_cast<Decl*>(PrDecl));
@@ -956,7 +956,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(Scope* S,
   /// Check then save referenced protocols
   for (unsigned int i = 0; i != NumProtocols; i++) {
     ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtocolNames[i], 
-						     ClassLoc);
+                                                     ClassLoc);
     if (!RefPDecl || RefPDecl->isForwardDecl())
       Diag(ClassLoc, diag::err_undef_protocolref,
            ProtocolNames[i]->getName(),
@@ -968,7 +968,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(Scope* S,
 }
 
 Sema::DeclTy *Sema::ActOnStartProtocolInterface(Scope* S,
-		SourceLocation AtProtoInterfaceLoc,
+                SourceLocation AtProtoInterfaceLoc,
                 IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                 IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
   assert(ProtocolName && "Missing protocol identifier");
@@ -995,10 +995,10 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(Scope* S,
   /// Check then save referenced protocols
   for (unsigned int i = 0; i != NumProtoRefs; i++) {
     ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtoRefNames[i], 
-						     ProtocolLoc);
+                                                     ProtocolLoc);
     if (!RefPDecl || RefPDecl->isForwardDecl())
       Diag(ProtocolLoc, diag::err_undef_protocolref,
-	   ProtoRefNames[i]->getName(),
+           ProtoRefNames[i]->getName(),
            ProtocolName->getName());
     PDecl->setReferencedProtocols((int)i, RefPDecl);
   }
@@ -1032,7 +1032,7 @@ Sema::ActOnForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
 }
 
 Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
-		      SourceLocation AtInterfaceLoc,
+                      SourceLocation AtInterfaceLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                       IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
@@ -1064,10 +1064,10 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
   /// Check then save referenced protocols
   for (unsigned int i = 0; i != NumProtoRefs; i++) {
     ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtoRefNames[i], 
-						     CategoryLoc);
+                                                     CategoryLoc);
     if (!RefPDecl || RefPDecl->isForwardDecl())
       Diag(CategoryLoc, diag::err_undef_protocolref,
-	   ProtoRefNames[i]->getName(),
+           ProtoRefNames[i]->getName(),
            CategoryName->getName());
     CDecl->setCatReferencedProtocols((int)i, RefPDecl);
   }
@@ -1517,7 +1517,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
   if (isa<RecordDecl>(static_cast<Decl *>(TagDecl)))
     NewFD = new FieldDecl(Loc, II, T);
   else if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(TagDecl))
-	   || isa<ObjcImplementationDecl>(static_cast<Decl *>(TagDecl)))
+           || isa<ObjcImplementationDecl>(static_cast<Decl *>(TagDecl)))
     NewFD = new ObjcIvarDecl(Loc, II, T);
   else
     assert(0 && "Sema::ActOnField(): Unknown TagDecl");
@@ -1541,7 +1541,7 @@ TranslateIvarVisibility(tok::ObjCKeywordKind ivarVisibility) {
 }
 
 void Sema::ActOnFields(Scope* S,
-		       SourceLocation RecLoc, DeclTy *RecDecl,
+                       SourceLocation RecLoc, DeclTy *RecDecl,
                        DeclTy **Fields, unsigned NumFields,
                        tok::ObjCKeywordKind *visibility) {
   Decl *EnclosingDecl = static_cast<Decl*>(RecDecl);
@@ -1591,10 +1591,10 @@ void Sema::ActOnFields(Scope* S,
     // C99 6.7.2.1p2 - A field may not be an incomplete type except...
     if (FDTy->isIncompleteType()) {
       if (!Record) {  // Incomplete ivar type is always an error.
-	Diag(FD->getLocation(), diag::err_field_incomplete, FD->getName());
+        Diag(FD->getLocation(), diag::err_field_incomplete, FD->getName());
         FD->setInvalidDecl();
         EnclosingDecl->setInvalidDecl();
-	continue;
+        continue;
       }
       if (i != NumFields-1 ||                   // ... that the last member ...
           Record->getKind() != Decl::Struct ||  // ... of a structure ...
@@ -1637,7 +1637,7 @@ void Sema::ActOnFields(Scope* S,
           // as an extension.
           Diag(FD->getLocation(), diag::ext_flexible_array_in_struct,
                FD->getName());
-	  if (Record)
+          if (Record)
             Record->setHasFlexibleArrayMember(true);
         }
       }
@@ -1676,7 +1676,7 @@ void Sema::ActOnFields(Scope* S,
         ObjcAddInstanceVariablesToClass(ClsFields, RecFields.size());
     else if (isa<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl))) {
       ObjcImplementationDecl* IMPDecl = 
-	cast<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl));
+        cast<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl));
       assert(IMPDecl && "ActOnFields - missing ObjcImplementationDecl");
       IMPDecl->ObjcAddInstanceVariablesToClassImpl(ClsFields, RecFields.size());
       CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size());
@@ -1763,17 +1763,17 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(SourceLocation MethodLoc,
   for (unsigned i = 0; i < Sel.getNumArgs(); i++) {
     // FIXME: arg->AttrList must be stored too!
     ParmVarDecl* Param = new ParmVarDecl(SourceLocation(/*FIXME*/), ArgNames[i], 
-					 QualType::getFromOpaquePtr(ArgTypes[i]), 
-					 VarDecl::None, 0);
+                              QualType::getFromOpaquePtr(ArgTypes[i]), 
+                              VarDecl::None, 0);
     Params.push_back(Param);
   }
   QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
   ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, Sel,
                                       resultDeclType, 0, -1, AttrList, 
                                       MethodType == tok::minus,
-				      MethodDeclKind == tok::objc_optional ? 
-				      ObjcMethodDecl::Optional : 
-				      ObjcMethodDecl::Required);
+                                      MethodDeclKind == tok::objc_optional ? 
+                                      ObjcMethodDecl::Optional : 
+                                      ObjcMethodDecl::Required);
   ObjcMethod->setMethodParams(&Params[0], Sel.getNumArgs());
   return ObjcMethod;
 }

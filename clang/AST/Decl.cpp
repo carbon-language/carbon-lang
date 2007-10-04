@@ -76,7 +76,7 @@ const char *Decl::getDeclKindName() const {
 
 bool Decl::CollectingStats(bool enable) {
   if (enable) StatSwitch = true;
-	return StatSwitch;
+    return StatSwitch;
 }
 
 void Decl::PrintStats() {
@@ -263,7 +263,7 @@ void RecordDecl::defineBody(FieldDecl **members, unsigned numMembers) {
 FieldDecl* RecordDecl::getMember(IdentifierInfo *name) {
   if (Members == 0 || NumMembers < 0)
     return 0;
-	
+  
   // linear search. When C++ classes come along, will likely need to revisit.
   for (int i = 0; i < NumMembers; ++i) {
     if (Members[i]->getIdentifier() == name)
@@ -305,7 +305,7 @@ void ObjcInterfaceDecl::ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars,
 /// Ivars into ObjcImplementationDecl's fields.
 ///
 void ObjcImplementationDecl::ObjcAddInstanceVariablesToClassImpl(
-			       ObjcIvarDecl **ivars, unsigned numIvars) {
+			      ObjcIvarDecl **ivars, unsigned numIvars) {
   NumIvars = numIvars;
   if (numIvars) {
     Ivars = new ObjcIvarDecl*[numIvars];
