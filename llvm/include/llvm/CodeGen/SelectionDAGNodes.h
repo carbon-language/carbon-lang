@@ -1512,7 +1512,7 @@ class StoreSDNode : public SDNode {
   // AddrMode - unindexed, pre-indexed, post-indexed.
   ISD::MemIndexedMode AddrMode;
 
-  // IsTruncStore - True is the op does a truncation before store.
+  // IsTruncStore - True if the op does a truncation before store.
   bool IsTruncStore;
 
   // StoredVT - VT of the value after truncation.
