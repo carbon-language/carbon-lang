@@ -22,11 +22,14 @@
 #include <string> 
 #include <cassert> 
 
-class MultiKeywordSelector; // a private class used by Selector.
+namespace llvm {
+  template <typename T> struct DenseMapInfo;
+}
 
 namespace clang {
   class MacroInfo;
   struct LangOptions;
+  class MultiKeywordSelector; // a private class used by Selector.
   
 /// IdentifierInfo - One of these records is kept for each identifier that
 /// is lexed.  This contains information about whether the token was #define'd,
@@ -202,6 +205,7 @@ class Selector {
     InfoPtr = reinterpret_cast<uintptr_t>(SI);
     assert((InfoPtr & ArgFlags) == 0 &&"Insufficiently aligned IdentifierInfo");
   }
+  Selector(intptr_t V) : InfoPtr(V) {}
 public:
   friend class SelectorTable; // only the SelectorTable can create these.
   
@@ -237,6 +241,13 @@ public:
   // As a convenience, a pointer to the first character is returned.
   // Example usage: llvm::SmallString<128> mbuf; Selector->getName(mbuf);
   char *getName(llvm::SmallVectorImpl<char> &methodBuffer);
+  
+  static Selector getEmptyMarker() {
+    return Selector(uintptr_t(-1));
+  }
+  static Selector getTombstoneMarker() {
+    return Selector(uintptr_t(-2));
+  }
 };
 
 /// SelectorTable - This table allows us to fully hide how we implement
@@ -255,5 +266,26 @@ public:
 };
 
 }  // end namespace clang
+
+namespace llvm {
+template <>
+struct DenseMapInfo<clang::Selector> {
+  static inline clang::Selector getEmptyKey() {
+    return clang::Selector::getEmptyMarker();
+  }
+  static inline clang::Selector getTombstoneKey() {
+    return clang::Selector::getTombstoneMarker(); 
+  }
+  
+  static unsigned getHashValue(clang::Selector S);
+  
+  static bool isEqual(clang::Selector LHS, clang::Selector RHS) {
+    return LHS == RHS;
+  }
+  
+  static bool isPod() { return true; }
+};
+
+}  // end namespace llvm
 
 #endif

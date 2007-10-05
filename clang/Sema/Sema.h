@@ -217,7 +217,7 @@ private:
   void CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
                                bool& IncompleteImpl,
                                const llvm::DenseSet<void *>& InsMap,
-                               const llvm::DenseSet<void *>& ClsMap);
+                               const llvm::DenseSet<Selector> &ClsMap);
   
   /// CheckImplementationIvars - This routine checks if the instance variables
   /// listed in the implelementation match those listed in the interface. 
@@ -260,8 +260,8 @@ public:
                                  StmtTy *ThenVal, SourceLocation ElseLoc,
                                  StmtTy *ElseVal);
   virtual StmtResult ActOnStartOfSwitchStmt(ExprTy *Cond);
-  virtual StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc, StmtTy *Switch, 
-                                      ExprTy *Body);
+  virtual StmtResult ActOnFinishSwitchStmt(SourceLocation SwitchLoc,
+                                           StmtTy *Switch, ExprTy *Body);
   virtual StmtResult ActOnWhileStmt(SourceLocation WhileLoc, ExprTy *Cond,
                                     StmtTy *Body);
   virtual StmtResult ActOnDoStmt(SourceLocation DoLoc, StmtTy *Body,

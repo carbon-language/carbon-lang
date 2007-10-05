@@ -1221,7 +1221,7 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
 void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
                                    bool& IncompleteImpl,
              const llvm::DenseSet<void *>& InsMap,
-             const llvm::DenseSet<void *>& ClsMap) {
+             const llvm::DenseSet<Selector> &ClsMap) {
   // check unimplemented instance methods.
   ObjcMethodDecl** methods = PDecl->getInstanceMethods();
   for (int j = 0; j < PDecl->getNumInstanceMethods(); j++) {
@@ -1236,7 +1236,7 @@ void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
   // check unimplemented class methods
   methods = PDecl->getClassMethods();
   for (int j = 0; j < PDecl->getNumClassMethods(); j++)
-    if (!ClsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
+    if (!ClsMap.count(methods[j]->getSelector())) {
       llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName(buf));
@@ -1267,16 +1267,16 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
            methods[j]->getSelector().getName(buf));
       IncompleteImpl = true;
     }
-  llvm::DenseSet<void *> ClsMap;
+  llvm::DenseSet<Selector> ClsMap;
   // Check and see if class methods in class interface have been
   // implemented in the implementation class.
   methods = IMPDecl->getClassMethods();
   for (int i=0; i < IMPDecl->getNumClassMethods(); i++)
-    ClsMap.insert(methods[i]->getSelector().getAsOpaquePtr());
+    ClsMap.insert(methods[i]->getSelector());
   
   methods = IDecl->getClassMethods();
   for (int j = 0; j < IDecl->getNumClassMethods(); j++)
-    if (!ClsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
+    if (!ClsMap.count(methods[j]->getSelector())) {
       llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName(buf));
@@ -1286,10 +1286,9 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
   // Check the protocol list for unimplemented methods in the @implementation
   // class.
   ObjcProtocolDecl** protocols = IDecl->getReferencedProtocols();
-  for (int i = 0; i < IDecl->getNumIntfRefProtocols(); i++) {
-    ObjcProtocolDecl* PDecl = protocols[i];
-    CheckProtocolMethodDefs(PDecl, IncompleteImpl, InsMap, ClsMap);
-  }
+  for (int i = 0; i < IDecl->getNumIntfRefProtocols(); i++)
+    CheckProtocolMethodDefs(protocols[i], IncompleteImpl, InsMap, ClsMap);
+
   if (IncompleteImpl)
     Diag(IMPDecl->getLocation(), diag::warn_incomplete_impl_class, 
          IMPDecl->getName());
@@ -1315,16 +1314,16 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
            methods[j]->getSelector().getName(buf));
       IncompleteImpl = true;
     }
-  llvm::DenseSet<void *> ClsMap;
+  llvm::DenseSet<Selector> ClsMap;
   // Check and see if class methods in category interface have been
   // implemented in its implementation class.
   methods = CatImplDecl->getClassMethods();
   for (int i=0; i < CatImplDecl->getNumClassMethods(); i++)
-    ClsMap.insert(methods[i]->getSelector().getAsOpaquePtr());
+    ClsMap.insert(methods[i]->getSelector());
   
   methods = CatClassDecl->getClassMethods();
   for (int j = 0; j < CatClassDecl->getNumClassMethods(); j++)
-    if (!ClsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
+    if (!ClsMap.count(methods[j]->getSelector())) {
       llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName(buf));

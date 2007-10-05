@@ -16,6 +16,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/DenseMap.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -215,10 +216,16 @@ void IdentifierTable::PrintStats() const {
 // SelectorTable Implementation
 //===----------------------------------------------------------------------===//
 
+unsigned llvm::DenseMapInfo<clang::Selector>::getHashValue(clang::Selector S) {
+  return DenseMapInfo<void*>::getHashValue(S.getAsOpaquePtr());
+}
+
+
 /// MultiKeywordSelector - One of these variable length records is kept for each
 /// selector containing more than one keyword. We use a folding set
 /// to unique aggregate names (keyword selectors in ObjC parlance). Access to 
 /// this class is provided strictly through Selector.
+namespace clang {
 class MultiKeywordSelector : public llvm::FoldingSetNode {
 public:  
   unsigned NumArgs;
@@ -263,6 +270,7 @@ public:
     Profile(ID, keyword_begin(), NumArgs);
   }
 };
+} // end namespace clang.
 
 unsigned Selector::getNumArgs() const {
   unsigned IIF = getIdentifierInfoFlag();
