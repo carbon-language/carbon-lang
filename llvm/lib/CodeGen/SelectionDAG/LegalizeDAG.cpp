@@ -5395,7 +5395,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       }
     }
 
-    RTLIB::Libcall LC;
+    RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
     if (Node->getOperand(0).getValueType() == MVT::f32)
       LC = RTLIB::FPTOUINT_F32_I64;
     else if (Node->getOperand(0).getValueType() == MVT::f64)
