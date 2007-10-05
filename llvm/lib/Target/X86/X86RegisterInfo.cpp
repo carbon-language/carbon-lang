@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -232,82 +233,85 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
     unsigned MemOp = OpTbl2Addr[i][1];
     if (!RegOp2MemOpTable2Addr.insert(std::make_pair((unsigned*)RegOp, MemOp)))
       assert(false && "Duplicated entries?");
-    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp, RegOp)))
+    unsigned AuxInfo = 0 | (1 << 4) | (1 << 5); // Index 0,folded load and store
+    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
+                                               std::make_pair(RegOp, AuxInfo))))
       AmbEntries.push_back(MemOp);
   }
 
-  static const unsigned OpTbl0[][2] = {
-    { X86::CALL32r,     X86::CALL32m },
-    { X86::CALL64r,     X86::CALL64m },
-    { X86::CMP16ri,     X86::CMP16mi },
-    { X86::CMP16ri8,    X86::CMP16mi8 },
-    { X86::CMP32ri,     X86::CMP32mi },
-    { X86::CMP32ri8,    X86::CMP32mi8 },
-    { X86::CMP64ri32,   X86::CMP64mi32 },
-    { X86::CMP64ri8,    X86::CMP64mi8 },
-    { X86::CMP8ri,      X86::CMP8mi },
-    { X86::DIV16r,      X86::DIV16m },
-    { X86::DIV32r,      X86::DIV32m },
-    { X86::DIV64r,      X86::DIV64m },
-    { X86::DIV8r,       X86::DIV8m },
-    { X86::FsMOVAPDrr,  X86::MOVSDmr },
-    { X86::FsMOVAPSrr,  X86::MOVSSmr },
-    { X86::IDIV16r,     X86::IDIV16m },
-    { X86::IDIV32r,     X86::IDIV32m },
-    { X86::IDIV64r,     X86::IDIV64m },
-    { X86::IDIV8r,      X86::IDIV8m },
-    { X86::IMUL16r,     X86::IMUL16m },
-    { X86::IMUL32r,     X86::IMUL32m },
-    { X86::IMUL64r,     X86::IMUL64m },
-    { X86::IMUL8r,      X86::IMUL8m },
-    { X86::JMP32r,      X86::JMP32m },
-    { X86::JMP64r,      X86::JMP64m },
-    { X86::MOV16ri,     X86::MOV16mi },
-    { X86::MOV16rr,     X86::MOV16mr },
-    { X86::MOV32ri,     X86::MOV32mi },
-    { X86::MOV32rr,     X86::MOV32mr },
-    { X86::MOV64ri32,   X86::MOV64mi32 },
-    { X86::MOV64rr,     X86::MOV64mr },
-    { X86::MOV8ri,      X86::MOV8mi },
-    { X86::MOV8rr,      X86::MOV8mr },
-    { X86::MOVAPDrr,    X86::MOVAPDmr },
-    { X86::MOVAPSrr,    X86::MOVAPSmr },
-    { X86::MOVPDI2DIrr, X86::MOVPDI2DImr },
-    { X86::MOVPQIto64rr,X86::MOVPQIto64mr },
-    { X86::MOVPS2SSrr,  X86::MOVPS2SSmr },
-    { X86::MOVSDrr,     X86::MOVSDmr },
-    { X86::MOVSDto64rr, X86::MOVSDto64mr },
-    { X86::MOVSS2DIrr,  X86::MOVSS2DImr },
-    { X86::MOVSSrr,     X86::MOVSSmr },
-    { X86::MOVUPDrr,    X86::MOVUPDmr },
-    { X86::MOVUPSrr,    X86::MOVUPSmr },
-    { X86::MUL16r,      X86::MUL16m },
-    { X86::MUL32r,      X86::MUL32m },
-    { X86::MUL64r,      X86::MUL64m },
-    { X86::MUL8r,       X86::MUL8m },
-    { X86::SETAEr,      X86::SETAEm },
-    { X86::SETAr,       X86::SETAm },
-    { X86::SETBEr,      X86::SETBEm },
-    { X86::SETBr,       X86::SETBm },
-    { X86::SETEr,       X86::SETEm },
-    { X86::SETGEr,      X86::SETGEm },
-    { X86::SETGr,       X86::SETGm },
-    { X86::SETLEr,      X86::SETLEm },
-    { X86::SETLr,       X86::SETLm },
-    { X86::SETNEr,      X86::SETNEm },
-    { X86::SETNPr,      X86::SETNPm },
-    { X86::SETNSr,      X86::SETNSm },
-    { X86::SETPr,       X86::SETPm },
-    { X86::SETSr,       X86::SETSm },
-    { X86::TAILJMPr,    X86::TAILJMPm },
-    { X86::TEST16ri,    X86::TEST16mi },
-    { X86::TEST32ri,    X86::TEST32mi },
-    { X86::TEST64ri32,  X86::TEST64mi32 },
-    { X86::TEST8ri,     X86::TEST8mi },
-    { X86::XCHG16rr,    X86::XCHG16mr },
-    { X86::XCHG32rr,    X86::XCHG32mr },
-    { X86::XCHG64rr,    X86::XCHG64mr },
-    { X86::XCHG8rr,     X86::XCHG8mr }
+  // If the third value is 1, then it's folding either a load or a store.
+  static const unsigned OpTbl0[][3] = {
+    { X86::CALL32r,     X86::CALL32m, 1 },
+    { X86::CALL64r,     X86::CALL64m, 1 },
+    { X86::CMP16ri,     X86::CMP16mi, 1 },
+    { X86::CMP16ri8,    X86::CMP16mi8, 1 },
+    { X86::CMP32ri,     X86::CMP32mi, 1 },
+    { X86::CMP32ri8,    X86::CMP32mi8, 1 },
+    { X86::CMP64ri32,   X86::CMP64mi32, 1 },
+    { X86::CMP64ri8,    X86::CMP64mi8, 1 },
+    { X86::CMP8ri,      X86::CMP8mi, 1 },
+    { X86::DIV16r,      X86::DIV16m, 1 },
+    { X86::DIV32r,      X86::DIV32m, 1 },
+    { X86::DIV64r,      X86::DIV64m, 1 },
+    { X86::DIV8r,       X86::DIV8m, 1 },
+    { X86::FsMOVAPDrr,  X86::MOVSDmr, 0 },
+    { X86::FsMOVAPSrr,  X86::MOVSSmr, 0 },
+    { X86::IDIV16r,     X86::IDIV16m, 1 },
+    { X86::IDIV32r,     X86::IDIV32m, 1 },
+    { X86::IDIV64r,     X86::IDIV64m, 1 },
+    { X86::IDIV8r,      X86::IDIV8m, 1 },
+    { X86::IMUL16r,     X86::IMUL16m, 1 },
+    { X86::IMUL32r,     X86::IMUL32m, 1 },
+    { X86::IMUL64r,     X86::IMUL64m, 1 },
+    { X86::IMUL8r,      X86::IMUL8m, 1 },
+    { X86::JMP32r,      X86::JMP32m, 1 },
+    { X86::JMP64r,      X86::JMP64m, 1 },
+    { X86::MOV16ri,     X86::MOV16mi, 0 },
+    { X86::MOV16rr,     X86::MOV16mr, 0 },
+    { X86::MOV32ri,     X86::MOV32mi, 0 },
+    { X86::MOV32rr,     X86::MOV32mr, 0 },
+    { X86::MOV64ri32,   X86::MOV64mi32, 0 },
+    { X86::MOV64rr,     X86::MOV64mr, 0 },
+    { X86::MOV8ri,      X86::MOV8mi, 0 },
+    { X86::MOV8rr,      X86::MOV8mr, 0 },
+    { X86::MOVAPDrr,    X86::MOVAPDmr, 0 },
+    { X86::MOVAPSrr,    X86::MOVAPSmr, 0 },
+    { X86::MOVPDI2DIrr, X86::MOVPDI2DImr, 0 },
+    { X86::MOVPQIto64rr,X86::MOVPQIto64mr, 0 },
+    { X86::MOVPS2SSrr,  X86::MOVPS2SSmr, 0 },
+    { X86::MOVSDrr,     X86::MOVSDmr, 0 },
+    { X86::MOVSDto64rr, X86::MOVSDto64mr, 0 },
+    { X86::MOVSS2DIrr,  X86::MOVSS2DImr, 0 },
+    { X86::MOVSSrr,     X86::MOVSSmr, 0 },
+    { X86::MOVUPDrr,    X86::MOVUPDmr, 0 },
+    { X86::MOVUPSrr,    X86::MOVUPSmr, 0 },
+    { X86::MUL16r,      X86::MUL16m, 1 },
+    { X86::MUL32r,      X86::MUL32m, 1 },
+    { X86::MUL64r,      X86::MUL64m, 1 },
+    { X86::MUL8r,       X86::MUL8m, 1 },
+    { X86::SETAEr,      X86::SETAEm, 0 },
+    { X86::SETAr,       X86::SETAm, 0 },
+    { X86::SETBEr,      X86::SETBEm, 0 },
+    { X86::SETBr,       X86::SETBm, 0 },
+    { X86::SETEr,       X86::SETEm, 0 },
+    { X86::SETGEr,      X86::SETGEm, 0 },
+    { X86::SETGr,       X86::SETGm, 0 },
+    { X86::SETLEr,      X86::SETLEm, 0 },
+    { X86::SETLr,       X86::SETLm, 0 },
+    { X86::SETNEr,      X86::SETNEm, 0 },
+    { X86::SETNPr,      X86::SETNPm, 0 },
+    { X86::SETNSr,      X86::SETNSm, 0 },
+    { X86::SETPr,       X86::SETPm, 0 },
+    { X86::SETSr,       X86::SETSm, 0 },
+    { X86::TAILJMPr,    X86::TAILJMPm, 1 },
+    { X86::TEST16ri,    X86::TEST16mi, 1 },
+    { X86::TEST32ri,    X86::TEST32mi, 1 },
+    { X86::TEST64ri32,  X86::TEST64mi32, 1 },
+    { X86::TEST8ri,     X86::TEST8mi, 1 },
+    { X86::XCHG16rr,    X86::XCHG16mr, 0 },
+    { X86::XCHG32rr,    X86::XCHG32mr, 0 },
+    { X86::XCHG64rr,    X86::XCHG64mr, 0 },
+    { X86::XCHG8rr,     X86::XCHG8mr, 0 }
   };
 
   for (unsigned i = 0, e = array_lengthof(OpTbl0); i != e; ++i) {
@@ -315,7 +319,11 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
     unsigned MemOp = OpTbl0[i][1];
     if (!RegOp2MemOpTable0.insert(std::make_pair((unsigned*)RegOp, MemOp)))
       assert(false && "Duplicated entries?");
-    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp, RegOp)))
+    unsigned FoldedLoad = OpTbl0[i][2];
+    // Index 0, folded load or store.
+    unsigned AuxInfo = 0 | (FoldedLoad << 4) | ((FoldedLoad^1) << 5);
+    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
+                                               std::make_pair(RegOp, AuxInfo))))
       AmbEntries.push_back(MemOp);
   }
 
@@ -436,7 +444,9 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
     unsigned MemOp = OpTbl1[i][1];
     if (!RegOp2MemOpTable1.insert(std::make_pair((unsigned*)RegOp, MemOp)))
       assert(false && "Duplicated entries?");
-    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp, RegOp)))
+    unsigned AuxInfo = 1 | (1 << 4); // Index 1, folded load
+    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
+                                               std::make_pair(RegOp, AuxInfo))))
       AmbEntries.push_back(MemOp);
   }
 
@@ -627,7 +637,9 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
     unsigned MemOp = OpTbl2[i][1];
     if (!RegOp2MemOpTable2.insert(std::make_pair((unsigned*)RegOp, MemOp)))
       assert(false && "Duplicated entries?");
-    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp, RegOp)))
+    unsigned AuxInfo = 2 | (1 << 4); // Index 1, folded load
+    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
+                                               std::make_pair(RegOp, AuxInfo))))
       AmbEntries.push_back(MemOp);
   }
 
@@ -722,11 +734,30 @@ bool X86RegisterInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
-void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-                                          MachineBasicBlock::iterator MI,
-                                          unsigned SrcReg, int FrameIdx,
-                                          const TargetRegisterClass *RC) const {
-  unsigned Opc;
+static const MachineInstrBuilder &X86InstrAddOperand(MachineInstrBuilder &MIB,
+                                                     MachineOperand &MO) {
+  if (MO.isRegister())
+    MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
+  else if (MO.isImmediate())
+    MIB = MIB.addImm(MO.getImm());
+  else if (MO.isFrameIndex())
+    MIB = MIB.addFrameIndex(MO.getFrameIndex());
+  else if (MO.isGlobalAddress())
+    MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
+  else if (MO.isConstantPoolIndex())
+    MIB = MIB.addConstantPoolIndex(MO.getConstantPoolIndex(), MO.getOffset());
+  else if (MO.isJumpTableIndex())
+    MIB = MIB.addJumpTableIndex(MO.getJumpTableIndex());
+  else if (MO.isExternalSymbol())
+    MIB = MIB.addExternalSymbol(MO.getSymbolName());
+  else
+    assert(0 && "Unknown operand for X86InstrAddOperand!");
+
+  return MIB;
+}
+
+static unsigned getStoreRegOpcode(const TargetRegisterClass *RC) {
+  unsigned Opc = 0;
   if (RC == &X86::GR64RegClass) {
     Opc = X86::MOV64mr;
   } else if (RC == &X86::GR32RegClass) {
@@ -757,15 +788,33 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     assert(0 && "Unknown regclass");
     abort();
   }
+
+  return Opc;
+}
+
+void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+                                          MachineBasicBlock::iterator MI,
+                                          unsigned SrcReg, int FrameIdx,
+                                          const TargetRegisterClass *RC) const {
+  unsigned Opc = getStoreRegOpcode(RC);
   addFrameReference(BuildMI(MBB, MI, TII.get(Opc)), FrameIdx)
     .addReg(SrcReg, false, false, true);
 }
 
-void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                           MachineBasicBlock::iterator MI,
-                                           unsigned DestReg, int FrameIdx,
-                                           const TargetRegisterClass *RC) const{
-  unsigned Opc;
+void X86RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                     SmallVector<MachineOperand,4> Addr,
+                                     const TargetRegisterClass *RC,
+                                   SmallVector<MachineInstr*,4> &NewMIs) const {
+  unsigned Opc = getStoreRegOpcode(RC);
+  MachineInstrBuilder MIB = BuildMI(TII.get(Opc));
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+    MIB = X86InstrAddOperand(MIB, Addr[i]);
+  MIB.addReg(SrcReg, false, false, true);
+  NewMIs.push_back(MIB);
+}
+
+static unsigned getLoadRegOpcode(const TargetRegisterClass *RC) {
+  unsigned Opc = 0;
   if (RC == &X86::GR64RegClass) {
     Opc = X86::MOV64rm;
   } else if (RC == &X86::GR32RegClass) {
@@ -796,7 +845,27 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     assert(0 && "Unknown regclass");
     abort();
   }
+
+  return Opc;
+}
+
+void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator MI,
+                                           unsigned DestReg, int FrameIdx,
+                                           const TargetRegisterClass *RC) const{
+  unsigned Opc = getLoadRegOpcode(RC);
   addFrameReference(BuildMI(MBB, MI, TII.get(Opc), DestReg), FrameIdx);
+}
+
+void X86RegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                                      SmallVector<MachineOperand,4> Addr,
+                                      const TargetRegisterClass *RC,
+                                      SmallVector<MachineInstr*,4> &NewMIs) const {
+  unsigned Opc = getLoadRegOpcode(RC);
+  MachineInstrBuilder MIB = BuildMI(TII.get(Opc), DestReg);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+    MIB = X86InstrAddOperand(MIB, Addr[i]);
+  NewMIs.push_back(MIB);
 }
 
 void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -905,28 +974,6 @@ void X86RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
   }
 }
 
-static const MachineInstrBuilder &FuseInstrAddOperand(MachineInstrBuilder &MIB,
-                                                      MachineOperand &MO) {
-  if (MO.isRegister())
-    MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
-  else if (MO.isImmediate())
-    MIB = MIB.addImm(MO.getImm());
-  else if (MO.isFrameIndex())
-    MIB = MIB.addFrameIndex(MO.getFrameIndex());
-  else if (MO.isGlobalAddress())
-    MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
-  else if (MO.isConstantPoolIndex())
-    MIB = MIB.addConstantPoolIndex(MO.getConstantPoolIndex(), MO.getOffset());
-  else if (MO.isJumpTableIndex())
-    MIB = MIB.addJumpTableIndex(MO.getJumpTableIndex());
-  else if (MO.isExternalSymbol())
-    MIB = MIB.addExternalSymbol(MO.getSymbolName());
-  else
-    assert(0 && "Unknown operand for FuseInst!");
-
-  return MIB;
-}
-
 static MachineInstr *FuseTwoAddrInst(unsigned Opcode,
                                      SmallVector<MachineOperand,4> &MOs,
                                  MachineInstr *MI, const TargetInstrInfo &TII) {
@@ -936,14 +983,14 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode,
   MachineInstrBuilder MIB = BuildMI(TII.get(Opcode));
   unsigned NumAddrOps = MOs.size();
   for (unsigned i = 0; i != NumAddrOps; ++i)
-    MIB = FuseInstrAddOperand(MIB, MOs[i]);
+    MIB = X86InstrAddOperand(MIB, MOs[i]);
   if (NumAddrOps < 4)  // FrameIndex only
     MIB.addImm(1).addReg(0).addImm(0);
   
   // Loop over the rest of the ri operands, converting them over.
   for (unsigned i = 0; i != NumOps; ++i) {
     MachineOperand &MO = MI->getOperand(i+2);
-    MIB = FuseInstrAddOperand(MIB, MO);
+    MIB = X86InstrAddOperand(MIB, MO);
   }
   return MIB;
 }
@@ -959,11 +1006,11 @@ static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
       assert(MO.isRegister() && "Expected to fold into reg operand!");
       unsigned NumAddrOps = MOs.size();
       for (unsigned i = 0; i != NumAddrOps; ++i)
-        MIB = FuseInstrAddOperand(MIB, MOs[i]);
+        MIB = X86InstrAddOperand(MIB, MOs[i]);
       if (NumAddrOps < 4)  // FrameIndex only
         MIB.addImm(1).addReg(0).addImm(0);
     } else {
-      MIB = FuseInstrAddOperand(MIB, MO);
+      MIB = X86InstrAddOperand(MIB, MO);
     }
   }
   return MIB;
@@ -976,7 +1023,7 @@ static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
 
   unsigned NumAddrOps = MOs.size();
   for (unsigned i = 0; i != NumAddrOps; ++i)
-    MIB = FuseInstrAddOperand(MIB, MOs[i]);
+    MIB = X86InstrAddOperand(MIB, MOs[i]);
   if (NumAddrOps < 4)  // FrameIndex only
     MIB.addImm(1).addReg(0).addImm(0);
   return MIB.addImm(0);
@@ -1065,6 +1112,156 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned OpNu
     MOs.push_back(LoadMI->getOperand(i));
   return foldMemoryOperand(MI, OpNum, MOs);
 }
+
+bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
+                                          SSARegMap *RegMap,
+                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
+    MemOp2RegOpTable.find((unsigned*)MI->getOpcode());
+  if (I == MemOp2RegOpTable.end())
+    return false;
+  unsigned Opc = I->second.first;
+  unsigned Index = I->second.second & 0xf;
+  bool HasLoad = I->second.second & (1 << 4);
+  bool HasStore = I->second.second & (1 << 5);
+  const TargetInstrDescriptor &TID = TII.get(Opc);
+  const TargetOperandInfo &TOI = TID.OpInfo[Index];
+  const TargetRegisterClass *RC = (TOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
+    ? TII.getPointerRegClass() : getRegClass(TOI.RegClass);
+  SmallVector<MachineOperand,4> AddrOps;
+  SmallVector<MachineOperand,2> BeforeOps;
+  SmallVector<MachineOperand,2> AfterOps;
+  SmallVector<MachineOperand,4> ImpOps;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &Op = MI->getOperand(i);
+    if (i >= Index && i < Index+4)
+      AddrOps.push_back(Op);
+    else if (Op.isRegister() && Op.isImplicit())
+      ImpOps.push_back(Op);
+    else if (i < Index)
+      BeforeOps.push_back(Op);
+    else if (i > Index)
+      AfterOps.push_back(Op);
+  }
+
+  // Emit the load instruction.
+  unsigned LoadReg = 0;
+  if (HasLoad) {
+    LoadReg = RegMap->createVirtualRegister(RC);
+    loadRegFromAddr(MF, LoadReg, AddrOps, RC, NewMIs);
+    if (HasStore) {
+      // Address operands cannot be marked isKill.
+      for (unsigned i = 1; i != 5; ++i) {
+        MachineOperand &MO = NewMIs[0]->getOperand(i);
+        if (MO.isRegister())
+          MO.unsetIsKill();
+      }
+    }
+  }
+
+  // Emit the data processing instruction.
+  MachineInstrBuilder MIB = BuildMI(TII.get(Opc));
+  unsigned StoreReg = 0;
+  const TargetRegisterClass *DstRC = 0;
+  if (HasStore) {
+    const TargetOperandInfo &DstTOI = TID.OpInfo[0];
+    DstRC = (DstTOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
+      ? TII.getPointerRegClass() : getRegClass(DstTOI.RegClass);
+    StoreReg = RegMap->createVirtualRegister(RC);
+    MIB.addReg(StoreReg, true);
+  }
+  for (unsigned i = 0, e = BeforeOps.size(); i != e; ++i)
+    MIB = X86InstrAddOperand(MIB, BeforeOps[i]);
+  if (LoadReg)
+    MIB.addReg(LoadReg);
+  for (unsigned i = 0, e = AfterOps.size(); i != e; ++i)
+    MIB = X86InstrAddOperand(MIB, AfterOps[i]);
+  NewMIs.push_back(MIB);
+
+  // Emit the store instruction.
+  if (HasStore)
+    storeRegToAddr(MF, StoreReg, AddrOps, DstRC, NewMIs);
+
+  return true;
+}
+
+
+bool
+X86RegisterInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
+                                     SmallVector<SDNode*, 4> &NewNodes) const {
+  if (!N->isTargetOpcode())
+    return false;
+
+  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
+    MemOp2RegOpTable.find((unsigned*)N->getTargetOpcode());
+  if (I == MemOp2RegOpTable.end())
+    return false;
+  unsigned Opc = I->second.first;
+  unsigned Index = I->second.second & 0xf;
+  bool HasLoad = I->second.second & (1 << 4);
+  bool HasStore = I->second.second & (1 << 5);
+  const TargetInstrDescriptor &TID = TII.get(Opc);
+  const TargetOperandInfo &TOI = TID.OpInfo[Index];
+  const TargetRegisterClass *RC = (TOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
+    ? TII.getPointerRegClass() : getRegClass(TOI.RegClass);
+  std::vector<SDOperand> AddrOps;
+  std::vector<SDOperand> BeforeOps;
+  std::vector<SDOperand> AfterOps;
+  unsigned NumOps = N->getNumOperands();
+  for (unsigned i = 0; i != NumOps-1; ++i) {
+    SDOperand Op = N->getOperand(i);
+    if (i >= Index && i < Index+4)
+      AddrOps.push_back(Op);
+    else if (i < Index)
+      BeforeOps.push_back(Op);
+    else if (i > Index)
+      AfterOps.push_back(Op);
+  }
+  SDOperand Chain = N->getOperand(NumOps-1);
+  AddrOps.push_back(Chain);
+
+  // Emit the load instruction.
+  SDNode *Load = 0;
+  if (HasLoad) {
+    MVT::ValueType VT = *RC->vt_begin();
+    Load = DAG.getTargetNode(getLoadRegOpcode(RC), VT, MVT::Other,
+                             &AddrOps[0], AddrOps.size());
+    NewNodes.push_back(Load);
+  }
+
+  // Emit the data processing instruction.
+  std::vector<MVT::ValueType> VTs;
+  const TargetRegisterClass *DstRC = 0;
+  if (TID.numDefs > 0) {
+    const TargetOperandInfo &DstTOI = TID.OpInfo[0];
+    DstRC = (DstTOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
+      ? TII.getPointerRegClass() : getRegClass(DstTOI.RegClass);
+    VTs.push_back(*DstRC->vt_begin());
+  }
+  for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
+    MVT::ValueType VT = N->getValueType(i);
+    if (VT != MVT::Other && i >= TID.numDefs)
+      VTs.push_back(VT);
+  }
+  if (Load)
+    BeforeOps.push_back(SDOperand(Load, 0));
+  std::copy(AfterOps.begin(), AfterOps.end(), std::back_inserter(BeforeOps));
+  SDNode *NewNode= DAG.getTargetNode(Opc, VTs, &BeforeOps[0], BeforeOps.size());
+  NewNodes.push_back(NewNode);
+
+  // Emit the store instruction.
+  if (HasStore) {
+    AddrOps.pop_back();
+    AddrOps.push_back(SDOperand(NewNode, 0));
+    AddrOps.push_back(Chain);
+    SDNode *Store = DAG.getTargetNode(getStoreRegOpcode(DstRC),
+                                      MVT::Other, &AddrOps[0], AddrOps.size());
+    NewNodes.push_back(Store);
+  }
+
+  return true;
+}
+
 
 const unsigned *
 X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {

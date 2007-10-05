@@ -64,7 +64,7 @@ private:
 
   /// MemOp2RegOpTable - Load / store unfolding opcode map.
   ///
-  DenseMap<unsigned*, unsigned> MemOp2RegOpTable;
+  DenseMap<unsigned*, std::pair<unsigned, unsigned> > MemOp2RegOpTable;
 
 public:
   X86RegisterInfo(X86TargetMachine &tm, const TargetInstrInfo &tii);
@@ -88,10 +88,20 @@ public:
                            unsigned SrcReg, int FrameIndex,
                            const TargetRegisterClass *RC) const;
 
+  void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                      SmallVector<MachineOperand,4> Addr,
+                      const TargetRegisterClass *RC,
+                      SmallVector<MachineInstr*,4> &NewMIs) const;
+
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             unsigned DestReg, int FrameIndex,
                             const TargetRegisterClass *RC) const;
+
+  void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                       SmallVector<MachineOperand,4> Addr,
+                       const TargetRegisterClass *RC,
+                       SmallVector<MachineInstr*,4> &NewMIs) const;
 
   void copyRegToReg(MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator MI,
@@ -121,6 +131,16 @@ public:
   MachineInstr* foldMemoryOperand(MachineInstr* MI,
                                   unsigned OpNum,
                                   MachineInstr* LoadMI) const;
+
+  /// unfoldMemoryOperand - Separate a single instruction which folded a load or a
+  /// a store or a load and a store into two or more instruction. If this is
+  /// possible, returns true as well as the new instructions by reference.
+  bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
+                           SSARegMap *RegMap,
+                           SmallVector<MachineInstr*, 4> &NewMIs) const;
+
+  bool unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
+                           SmallVector<SDNode*, 4> &NewNodes) const;
 
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee-save registers on this target.
