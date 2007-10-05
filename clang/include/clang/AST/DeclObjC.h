@@ -242,6 +242,12 @@ public:
     assert(i < getNumMethodParams() && "Illegal param #");
     return ParamInfo[i];
   }
+  
+  int getNumParams() const { return NumMethodParams; }
+  ParmVarDecl *getParamDecl(int i) const {
+    assert(i < getNumParams() && "Illegal param #");
+    return ParamInfo[i];
+  }  
   void setMethodParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
 
   AttributeList *getMethodAttrs() const {return MethodAttrs;}

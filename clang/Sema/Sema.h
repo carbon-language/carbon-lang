@@ -18,6 +18,7 @@
 #include "clang/Parse/Action.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/DenseSet.h"
 #include <vector>
 #include <string>
 
@@ -52,6 +53,7 @@ namespace clang {
   class ObjcCategoryImplDecl;
   class ObjcCategoryDecl;
   class ObjcIvarDecl;
+  class ObjcMethodDecl;
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -214,8 +216,8 @@ private:
   /// Declared in protocol, and those referenced by it.
   void CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
                                bool& IncompleteImpl,
-                               const llvm::DenseMap<void *, char>& InsMap,
-                               const llvm::DenseMap<void *, char>& ClsMap);
+                               const llvm::DenseSet<void *>& InsMap,
+                               const llvm::DenseSet<void *>& ClsMap);
   
   /// CheckImplementationIvars - This routine checks if the instance variables
   /// listed in the implelementation match those listed in the interface. 
@@ -231,6 +233,10 @@ private:
   /// category interface is implemented in the category @implementation.
   void ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
                                         ObjcCategoryDecl *CatClassDecl);
+  /// MatchTwoMethodDeclarations - Checks if two methods' type match and returns
+  /// true, or false, accordingly.
+  bool MatchTwoMethodDeclarations(const ObjcMethodDecl *Method, 
+                                  const ObjcMethodDecl *PrevMethod); 
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
