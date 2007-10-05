@@ -2630,6 +2630,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
     
+  case ISD::SMUL_LOHI:
+  case ISD::UMUL_LOHI:
+  case ISD::SDIVREM:
+  case ISD::UDIVREM:
+    // These nodes will only be produced by target-specific lowering, so
+    // they shouldn't be here if they aren't legal.
+    assert(TLI.isOperationLegal(Node->getValueType(0), Node->getValueType(0)) &&
+           "This must be legal!");
+    break;
+
   case ISD::FCOPYSIGN:  // FCOPYSIGN does not require LHS/RHS to match type!
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
