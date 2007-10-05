@@ -132,6 +132,30 @@ bool ARMRegisterInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
+static inline
+const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
+  return MIB.addImm((int64_t)ARMCC::AL).addReg(0);
+}
+
+static inline
+const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
+  return MIB.addReg(0);
+}
+
+static const MachineInstrBuilder &ARMInstrAddOperand(MachineInstrBuilder &MIB,
+                                                     MachineOperand &MO) {
+  if (MO.isRegister())
+    MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
+  else if (MO.isImmediate())
+    MIB = MIB.addImm(MO.getImm());
+  else if (MO.isFrameIndex())
+    MIB = MIB.addFrameIndex(MO.getFrameIndex());
+  else
+    assert(0 && "Unknown operand for ARMInstrAddOperand!");
+
+  return MIB;
+}
+
 void ARMRegisterInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, int FI,
@@ -143,17 +167,52 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       BuildMI(MBB, I, TII.get(ARM::tSpill)).addReg(SrcReg, false, false, true)
         .addFrameIndex(FI).addImm(0);
     else
-      BuildMI(MBB, I, TII.get(ARM::STR)).addReg(SrcReg, false, false, true)
-        .addFrameIndex(FI).addReg(0).addImm(0).addImm((int64_t)ARMCC::AL)
-        .addReg(0);
+      AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::STR))
+                     .addReg(SrcReg, false, false, true)
+                     .addFrameIndex(FI).addReg(0).addImm(0));
   } else if (RC == ARM::DPRRegisterClass) {
-    BuildMI(MBB, I, TII.get(ARM::FSTD)).addReg(SrcReg, false, false, true)
-      .addFrameIndex(FI).addImm(0).addImm((int64_t)ARMCC::AL).addReg(0);
+    AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::FSTD))
+                   .addReg(SrcReg, false, false, true)
+                   .addFrameIndex(FI).addImm(0));
   } else {
     assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
-    BuildMI(MBB, I, TII.get(ARM::FSTS)).addReg(SrcReg, false, false, true)
-      .addFrameIndex(FI).addImm(0).addImm((int64_t)ARMCC::AL).addReg(0);
+    AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::FSTS))
+                   .addReg(SrcReg, false, false, true)
+                   .addFrameIndex(FI).addImm(0));
   }
+}
+
+void ARMRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                     SmallVector<MachineOperand,4> Addr,
+                                     const TargetRegisterClass *RC,
+                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == ARM::GPRRegisterClass) {
+    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+    if (AFI->isThumbFunction()) {
+      Opc = Addr[0].isFrameIndex() ? ARM::tSpill : ARM::tSTR;
+      MachineInstrBuilder MIB = 
+        BuildMI(TII.get(Opc)).addReg(SrcReg, false, false, true);
+      for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+        MIB = ARMInstrAddOperand(MIB, Addr[i]);
+      NewMIs.push_back(MIB);
+      return;
+    }
+    Opc = ARM::STR;
+  } else if (RC == ARM::DPRRegisterClass) {
+    Opc = ARM::FSTD;
+  } else {
+    assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
+    Opc = ARM::FSTS;
+  }
+
+  MachineInstrBuilder MIB = 
+    BuildMI(TII.get(Opc)).addReg(SrcReg, false, false, true);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+    MIB = ARMInstrAddOperand(MIB, Addr[i]);
+  AddDefaultPred(MIB);
+  NewMIs.push_back(MIB);
+  return;
 }
 
 void ARMRegisterInfo::
@@ -167,17 +226,47 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       BuildMI(MBB, I, TII.get(ARM::tRestore), DestReg)
         .addFrameIndex(FI).addImm(0);
     else
-      BuildMI(MBB, I, TII.get(ARM::LDR), DestReg)
-        .addFrameIndex(FI).addReg(0).addImm(0).addImm((int64_t)ARMCC::AL)
-        .addReg(0);
+      AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::LDR), DestReg)
+                     .addFrameIndex(FI).addReg(0).addImm(0));
   } else if (RC == ARM::DPRRegisterClass) {
-    BuildMI(MBB, I, TII.get(ARM::FLDD), DestReg)
-      .addFrameIndex(FI).addImm(0).addImm((int64_t)ARMCC::AL).addReg(0);
+    AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::FLDD), DestReg)
+                   .addFrameIndex(FI).addImm(0));
   } else {
     assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
-    BuildMI(MBB, I, TII.get(ARM::FLDS), DestReg)
-      .addFrameIndex(FI).addImm(0).addImm((int64_t)ARMCC::AL).addReg(0);
+    AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::FLDS), DestReg)
+                   .addFrameIndex(FI).addImm(0));
   }
+}
+
+void ARMRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                                      SmallVector<MachineOperand,4> Addr,
+                                      const TargetRegisterClass *RC,
+                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == ARM::GPRRegisterClass) {
+    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+    if (AFI->isThumbFunction()) {
+      Opc = Addr[0].isFrameIndex() ? ARM::tRestore : ARM::tLDR;
+      MachineInstrBuilder MIB = BuildMI(TII.get(Opc), DestReg);
+      for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+        MIB = ARMInstrAddOperand(MIB, Addr[i]);
+      NewMIs.push_back(MIB);
+      return;
+    }
+    Opc = ARM::LDR;
+  } else if (RC == ARM::DPRRegisterClass) {
+    Opc = ARM::FLDD;
+  } else {
+    assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
+    Opc = ARM::FLDS;
+  }
+
+  MachineInstrBuilder MIB =  BuildMI(TII.get(Opc), DestReg);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+    MIB = ARMInstrAddOperand(MIB, Addr[i]);
+  AddDefaultPred(MIB);
+  NewMIs.push_back(MIB);
+  return;
 }
 
 void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -196,14 +285,14 @@ void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     if (AFI->isThumbFunction())
       BuildMI(MBB, I, TII.get(ARM::tMOVr), DestReg).addReg(SrcReg);
     else
-      BuildMI(MBB, I, TII.get(ARM::MOVr), DestReg).addReg(SrcReg)
-        .addImm((int64_t)ARMCC::AL).addReg(0).addReg(0);
+      AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::MOVr), DestReg)
+                                  .addReg(SrcReg)));
   } else if (DestRC == ARM::SPRRegisterClass)
-    BuildMI(MBB, I, TII.get(ARM::FCPYS), DestReg).addReg(SrcReg)
-      .addImm((int64_t)ARMCC::AL).addReg(0);
+    AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::FCPYS), DestReg)
+                   .addReg(SrcReg));
   else if (DestRC == ARM::DPRRegisterClass)
-    BuildMI(MBB, I, TII.get(ARM::FCPYD), DestReg).addReg(SrcReg)
-      .addImm((int64_t)ARMCC::AL).addReg(0);
+    AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::FCPYD), DestReg)
+                   .addReg(SrcReg));
   else
     abort();
 }
@@ -1390,7 +1479,7 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
     MachineInstrBuilder MIB =
       BuildMI(MBB, MBBI, TII.get(isThumb ? ARM::tADDrSPi : ARM::ADDri),FramePtr)
       .addFrameIndex(FramePtrSpillFI).addImm(0);
-    if (!isThumb) MIB.addImm(ARMCC::AL).addReg(0).addReg(0);
+    if (!isThumb) AddDefaultCC(AddDefaultPred(MIB));
   }
 
   if (!isThumb) {

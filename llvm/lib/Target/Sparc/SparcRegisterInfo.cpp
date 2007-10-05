@@ -48,6 +48,34 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     assert(0 && "Can't store this register to stack slot");
 }
 
+void SparcRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                       SmallVector<MachineOperand,4> Addr,
+                                       const TargetRegisterClass *RC,
+                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == SP::IntRegsRegisterClass)
+    Opc = SP::STri;
+  else if (RC == SP::FPRegsRegisterClass)
+    Opc = SP::STFri;
+  else if (RC == SP::DFPRegsRegisterClass)
+    Opc = SP::STDFri;
+  else
+    assert(0 && "Can't load this register");
+  MachineInstrBuilder MIB = BuildMI(TII.get(Opc));
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
+    MachineOperand &MO = Addr[i];
+    if (MO.isRegister())
+      MIB.addReg(MO.getReg());
+    else if (MO.isImmediate())
+      MIB.addImm(MO.getImmedValue());
+    else
+      MIB.addFrameIndex(MO.getFrameIndex());
+  }
+  MIB.addReg(SrcReg, false, false, true);
+  NewMIs.push_back(MIB);
+  return;
+}
+
 void SparcRegisterInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FI,
@@ -60,6 +88,33 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     BuildMI(MBB, I, TII.get(SP::LDDFri), DestReg).addFrameIndex(FI).addImm(0);
   else
     assert(0 && "Can't load this register from stack slot");
+}
+
+void SparcRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                                        SmallVector<MachineOperand,4> Addr,
+                                        const TargetRegisterClass *RC,
+                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == SP::IntRegsRegisterClass)
+    Opc = SP::LDri;
+  else if (RC == SP::FPRegsRegisterClass)
+    Opc = SP::LDFri;
+  else if (RC == SP::DFPRegsRegisterClass)
+    Opc = SP::LDDFri;
+  else
+    assert(0 && "Can't load this register");
+  MachineInstrBuilder MIB = BuildMI(TII.get(Opc), DestReg);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
+    MachineOperand &MO = Addr[i];
+    if (MO.isRegister())
+      MIB.addReg(MO.getReg());
+    else if (MO.isImmediate())
+      MIB.addImm(MO.getImmedValue());
+    else
+      MIB.addFrameIndex(MO.getFrameIndex());
+  }
+  NewMIs.push_back(MIB);
+  return;
 }
 
 void SparcRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,

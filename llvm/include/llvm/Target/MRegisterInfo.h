@@ -16,6 +16,7 @@
 #ifndef LLVM_TARGET_MREGISTERINFO_H
 #define LLVM_TARGET_MREGISTERINFO_H
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include <cassert>
@@ -30,6 +31,9 @@ class MachineInstr;
 class MachineLocation;
 class MachineMove;
 class RegScavenger;
+class SDNode;
+class SelectionDAG;
+class SSARegMap;
 class TargetRegisterClass;
 class Type;
 
@@ -503,10 +507,20 @@ public:
                                    unsigned SrcReg, int FrameIndex,
                                    const TargetRegisterClass *RC) const = 0;
 
+  virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                              SmallVector<MachineOperand,4> Addr,
+                              const TargetRegisterClass *RC,
+                              SmallVector<MachineInstr*,4> &NewMIs) const = 0;
+
   virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator MI,
                                     unsigned DestReg, int FrameIndex,
                                     const TargetRegisterClass *RC) const = 0;
+
+  virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                               SmallVector<MachineOperand,4> Addr,
+                               const TargetRegisterClass *RC,
+                               SmallVector<MachineInstr*,4> &NewMIs) const = 0;
 
   virtual void copyRegToReg(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
@@ -548,6 +562,20 @@ public:
                                           unsigned OpNum,
                                           MachineInstr* LoadMI) const {
     return 0;
+  }
+
+  /// unfoldMemoryOperand - Separate a single instruction which folded a load or a
+  /// a store or a load and a store into two or more instruction. If this is
+  /// possible, returns true as well as the new instructions by reference.
+  virtual bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
+                                   SSARegMap *RegMap,
+                                   SmallVector<MachineInstr*, 4> &NewMIs) const {
+    return false;
+  }
+
+  virtual bool unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
+                                   SmallVector<SDNode*, 4> &NewNodes) const {
+    return false;
   }
 
   /// targetHandlesStackFrameRounding - Returns true if the target is responsible

@@ -82,6 +82,31 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     abort();
 }
 
+void AlphaRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                       SmallVector<MachineOperand,4> Addr,
+                                       const TargetRegisterClass *RC,
+                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == Alpha::F4RCRegisterClass)
+    Opc = Alpha::STS;
+  else if (RC == Alpha::F8RCRegisterClass)
+    Opc = Alpha::STT;
+  else if (RC == Alpha::GPRCRegisterClass)
+    Opc = Alpha::STQ;
+  else
+    abort();
+  MachineInstrBuilder MIB = 
+    BuildMI(TII.get(Opc)).addReg(SrcReg, false, false, true);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
+    MachineOperand &MO = Addr[i];
+    if (MO.isRegister())
+      MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
+    else
+      MIB.addImm(MO.getImm());
+  }
+  NewMIs.push_back(MIB);
+}
+
 void
 AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
@@ -100,6 +125,31 @@ AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
     abort();
+}
+
+void AlphaRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                                        SmallVector<MachineOperand,4> Addr,
+                                        const TargetRegisterClass *RC,
+                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == Alpha::F4RCRegisterClass)
+    Opc = Alpha::LDS;
+  else if (RC == Alpha::F8RCRegisterClass)
+    Opc = Alpha::LDT;
+  else if (RC == Alpha::GPRCRegisterClass)
+    Opc = Alpha::LDQ;
+  else
+    abort();
+  MachineInstrBuilder MIB = 
+    BuildMI(TII.get(Opc), DestReg);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
+    MachineOperand &MO = Addr[i];
+    if (MO.isRegister())
+      MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
+    else
+      MIB.addImm(MO.getImm());
+  }
+  NewMIs.push_back(MIB);
 }
 
 MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,

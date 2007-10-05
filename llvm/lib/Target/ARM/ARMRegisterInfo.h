@@ -51,10 +51,20 @@ public:
                            unsigned SrcReg, int FrameIndex,
                            const TargetRegisterClass *RC) const;
 
+  void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                      SmallVector<MachineOperand,4> Addr,
+                      const TargetRegisterClass *RC,
+                      SmallVector<MachineInstr*, 4> &NewMIs) const;
+
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI,
                             unsigned DestReg, int FrameIndex,
                             const TargetRegisterClass *RC) const;
+
+  void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                       SmallVector<MachineOperand,4> Addr,
+                       const TargetRegisterClass *RC,
+                       SmallVector<MachineInstr*, 4> &NewMIs) const;
 
   void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                     unsigned DestReg, unsigned SrcReg,
