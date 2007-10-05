@@ -262,6 +262,7 @@ def ADD64mi8 : RIi8<0x83, MRM0m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
                     "add{q}\t{$src2, $dst|$dst, $src2}",
                 [(store (add (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
 
+let Uses = [EFLAGS] in {
 let isTwoAddress = 1 in {
 let isCommutable = 1 in
 def ADC64rr  : RI<0x11, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
@@ -289,6 +290,7 @@ def ADC64mi32 : RIi32<0x81, MRM2m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
 def ADC64mi8 : RIi8<0x83, MRM2m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
                     "adc{q}\t{$src2, $dst|$dst, $src2}",
                [(store (adde (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
+} // Uses = [EFLAGS]
 
 let isTwoAddress = 1 in {
 def SUB64rr  : RI<0x29, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
@@ -317,6 +319,7 @@ def SUB64mi8 : RIi8<0x83, MRM5m, (outs), (ins i64mem:$dst, i64i8imm :$src2),
                     "sub{q}\t{$src2, $dst|$dst, $src2}",
                 [(store (sub (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
 
+let Uses = [EFLAGS] in {
 let isTwoAddress = 1 in {
 def SBB64rr    : RI<0x19, MRMDestReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                     "sbb{q}\t{$src2, $dst|$dst, $src2}",
@@ -343,6 +346,7 @@ def SBB64mi32 : RIi32<0x81, MRM3m, (outs), (ins i64mem:$dst, i64i32imm:$src2),
 def SBB64mi8 : RIi8<0x83, MRM3m, (outs), (ins i64mem:$dst, i64i8imm :$src2), 
                     "sbb{q}\t{$src2, $dst|$dst, $src2}",
                [(store (sube (load addr:$dst), i64immSExt8:$src2), addr:$dst)]>;
+} // Uses = [EFLAGS]
 } // Defs = [EFLAGS]
 
 // Unsigned multiplication

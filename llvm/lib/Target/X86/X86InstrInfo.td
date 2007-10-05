@@ -1853,6 +1853,7 @@ let isTwoAddress = 0 in {
                 [(store (add (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
 }
 
+let Uses = [EFLAGS] in {
 let isCommutable = 1 in {  // X = ADC Y, Z --> X = ADC Z, Y
 def ADC32rr  : I<0x11, MRMDestReg, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                  "adc{l}\t{$src2, $dst|$dst, $src2}",
@@ -1879,6 +1880,7 @@ let isTwoAddress = 0 in {
                      "adc{l}\t{$src2, $dst|$dst, $src2}",
              [(store (adde (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
 }
+} // Uses = [EFLAGS]
 
 def SUB8rr   : I<0x28, MRMDestReg, (outs GR8 :$dst), (ins GR8 :$src1, GR8 :$src2),
                  "sub{b}\t{$src2, $dst|$dst, $src2}",
@@ -1945,6 +1947,7 @@ let isTwoAddress = 0 in {
                 [(store (sub (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
 }
 
+let Uses = [EFLAGS] in {
 def SBB32rr    : I<0x19, MRMDestReg, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
                   "sbb{l}\t{$src2, $dst|$dst, $src2}",
                  [(set GR32:$dst, (sube GR32:$src1, GR32:$src2))]>;
@@ -1972,6 +1975,7 @@ def SBB32ri  : Ii32<0x81, MRM3r, (outs GR32:$dst), (ins GR32:$src1, i32imm:$src2
 def SBB32ri8 : Ii8<0x83, MRM3r, (outs GR32:$dst), (ins GR32:$src1, i32i8imm:$src2),
                    "sbb{l}\t{$src2, $dst|$dst, $src2}",
                    [(set GR32:$dst, (sube GR32:$src1, i32immSExt8:$src2))]>;
+} // Uses = [EFLAGS]
 } // Defs = [EFLAGS]
 
 let Defs = [EFLAGS] in {
