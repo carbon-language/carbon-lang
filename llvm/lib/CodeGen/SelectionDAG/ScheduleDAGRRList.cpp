@@ -397,17 +397,19 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     return NULL;
 
   SUnit *NewSU;
-  for (unsigned i = 0, e = N->getNumValues(); i != e; ++i)
-    if (N->getValueType(i) == MVT::Flag)
-      return NULL;
   bool TryUnfold = false;
+  for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
+    MVT::ValueType VT = N->getValueType(i);
+    if (VT == MVT::Flag)
+      return NULL;
+    else if (VT == MVT::Other)
+      TryUnfold = true;
+  }
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     const SDOperand &Op = N->getOperand(i);
     MVT::ValueType VT = Op.Val->getValueType(Op.ResNo);
     if (VT == MVT::Flag)
       return NULL;
-    else if (VT == MVT::Other)
-      TryUnfold = true;
   }
 
   if (TryUnfold) {
