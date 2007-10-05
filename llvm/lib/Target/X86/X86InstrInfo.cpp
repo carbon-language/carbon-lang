@@ -283,11 +283,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     switch (MIOpc) {
     default: return 0;
     case X86::INC64r:
-    case X86::INC32r:
-    case X86::INC64_32r: {
+    case X86::INC32r: {
       assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
-      unsigned Opc = MIOpc == X86::INC64r ? X86::LEA64r
-        : (MIOpc == X86::INC64_32r ? X86::LEA64_32r : X86::LEA32r);
+      unsigned Opc = MIOpc == X86::INC64r ? X86::LEA64r : X86::LEA32r;
       NewMI = addRegOffset(BuildMI(get(Opc), Dest), Src, 1);
       break;
     }
@@ -298,11 +296,9 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src, 1);
       break;
     case X86::DEC64r:
-    case X86::DEC32r:
-    case X86::DEC64_32r: {
+    case X86::DEC32r: {
       assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
-      unsigned Opc = MIOpc == X86::DEC64r ? X86::LEA64r
-        : (MIOpc == X86::DEC64_32r ? X86::LEA64_32r : X86::LEA32r);
+      unsigned Opc = MIOpc == X86::DEC64r ? X86::LEA64r : X86::LEA32r;
       NewMI = addRegOffset(BuildMI(get(Opc), Dest), Src, -1);
       break;
     }
