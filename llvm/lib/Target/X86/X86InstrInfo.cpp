@@ -22,7 +22,14 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+namespace {
+  cl::opt<bool>
+  EnableConvert3Addr("enable-x86-conv-3-addr",
+           cl::desc("Enable convertToThreeAddress for X86"));
+}
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   : TargetInstrInfo(X86Insts, array_lengthof(X86Insts)),
@@ -144,6 +151,21 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   return true;
 }
 
+/// hasLiveCondCodeDef - True if MI has a condition code def, e.g. EFLAGS, that
+/// is not marked dead.
+static bool hasLiveCondCodeDef(MachineInstr *MI) {
+  if (!EnableConvert3Addr)
+    return true;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
+    if (MO.isRegister() && MO.isDef() &&
+        MO.getReg() == X86::EFLAGS && !MO.isDead()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /// convertToThreeAddress - This method must be implemented by targets that
 /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
 /// may be able to convert a two-address instruction into a true
@@ -169,7 +191,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   bool DisableLEA16 = true;
 
   switch (MI->getOpcode()) {
-  default: return 0;
+  default: break;  // All others need to check for live condition code defs.
   case X86::SHUFPSrri: {
     assert(MI->getNumOperands() == 4 && "Unknown shufps instruction!");
     if (!TM.getSubtarget<X86Subtarget>().hasSSE2()) return 0;
@@ -253,10 +275,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   }
   }
 
-  // FIXME: None of these instructions are promotable to LEAs without
-  // additional information.  In particular, LEA doesn't set the flags that
-  // add and inc do.  :(
-  if (0)
+  if (!hasLiveCondCodeDef(MI))
   switch (MI->getOpcode()) {
   case X86::INC32r:
   case X86::INC64_32r:
