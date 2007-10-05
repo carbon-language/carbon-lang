@@ -1,0 +1,64 @@
+/*
+	Consulted:
+	http://www.w3.org/TR/CSS1 &
+	http://www.w3.org/TR/CSS21/
+*/
+
+/***************/
+/* page layout */
+/***************/
+
+/***IE***/
+#menu {
+	float:left;
+}
+#content {
+	float:left;
+	margin-left:1ex;
+}
+/***W3C***/
+[id=menu] {
+	position:fixed;
+}
+[id=content] {
+	padding-left:16ex;	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
+}
+
+/****************/
+/* menu display */
+/****************/
+label, #menu a {
+	display:block;
+	padding:.05em .3em;
+}
+#menu * {
+	display:block;
+}
+#quick_links {
+	padding-top:1em;
+}
+a {
+	margin:.05em;
+}
+
+/**************/
+/* menu style */
+/**************/
+label {
+	font-size:.8em;
+}
+#menu a {
+	background-color:rgb(244,250,255);
+}
+#menu label {
+	background-color:rgb(244,255,250);
+}
+#menu {
+	padding: 0 .2em .2em 0;
+	border-color: rgb(240,240,240);
+	border-width: 0 .1em 0 0;
+	border-style: solid;
+}
+#menu a:visited {
+	color:rgb(130,50,100);
+}

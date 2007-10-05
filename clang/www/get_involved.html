@@ -1,0 +1,136 @@
+<!-- Consulted: http://www.w3.org/TR/CSS1 & http://www.w3.org/TR/CSS21/ & http://www.w3.org/TR/html401/ -->
+<!--
+Consulted:
+HTML 4.01 specs: http://www.w3.org/TR/html401/
+-->
+<head>
+	<title>Clang - Get Involved</title>
+	<link type="text/css" rel="stylesheet" href="menu.css" />
+	<link type="text/css" rel="stylesheet" href="content.css" />
+</head>
+<body>
+<!--#include virtual="menu.html.incl"-->
+<div id="content">
+<h1>Getting Involved</h1>
+There are many tasks that are open to new developers who want to get involved with the Clang project.  Below, you will find details on how to get started with Clang, plus a few tasks that we need help with.<br>
+<br>
+Please note that the information provided here is not completely thorough.  This is intentional. If you plan to work on Clang, we would like you to get involved with the other developers. This will allow us to work together better and will give you a better feel for how things are done.
+You can talk with other developers at the following mailing list: <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev mailing list</a>.  (On the other hand, if you feel uncomfortable getting involved in a public mailing list right away, and you just want to ask a few questions to begin with, then you can contact Chris personally, until you feel comfortable moving to the mailing list.)
+
+<h2>Getting Started</h2>
+<h3>A word of warning</h3>
+While this work aims to provide a fully functional C/C++/ObjC front- end, it is *still very early work*. In particular, there is no real C++ support yet (this is obviously a big project), and C/ObjC support is still missing some features. Some of the more notable missing pieces of C support are:
+<ol>
+	<li>The semantic analyzer does not produce all of the warnings and errors it should.
+	<li>The LLVM code generator is still very early on. It does not support many important things, like any support for structs and unions. That said, it does handle scalar operations and vectors.
+	<li>We don't consider the API to be stable yet, and reserve the right to change fundamental things :)
+</ol>
+Our plan is to continue chipping away at these issues until C works really well, but we'd love help from other interested contributors.
+<h3>Follow what's going on</h3>
+To avoid spamming the main LLVM mailing list, two lists were setup just for Clang.  Please take all Clang related discussion to these two lists. (Note: If all you care about is the Clang front-end, and not the overall LLVM Compiler project, then the two CFE lists are all that you need.)<br>
+<ul>
+<li><a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits</a> - This list is for patch submission/discussion.
+<li><a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a> - This list is for everything else clang related.
+</ul>
+<h3>Building clang / working with the code</h3>
+If you would like to check out and build the project, the current scheme is:<br>
+<ol>
+	<li>Check out llvm
+	<ul>
+		<li>cd llvm/tools
+		<li>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang
+	</ul>
+	<li>Non-mac users: Paths to system header files are currently hard coded into the tool; as a result, non-Mac users will need to change the path in one of the files.
+	<ul>
+		<li>'touch empty.c; gcc -v empty.c -fsyntax-only' to get the path.
+		<li>change clang/Driver/clang.cpp:606 to include that path
+	</ul>
+	<li>Build llvm
+	<ul>
+		<li>cd clang
+		<li>make
+	</ul>
+</ol>
+<p>Note that the C front-end uses libsupport and libsystem. You don't need llvm-gcc :)
+<p>We will eventually integrate this better as a sub-project, but for now it builds a single tool named 'clang'.<br>
+Once llvm is built in this way, you can compile C code.
+<h3>Examples of using clang</h3>
+The clang driver takes a lot of GCC compatible options, which you can see with 'clang --help'. Here are a few examples:
+<!-- Thanks to http://shiflett.org/blog/2006/oct/formatting-and-highlighting-php-code-listings
+	Site suggested using pre in CSS, but doesn't work in IE, so went for the <pre> tag.
+-->
+<pre class="code">
+$ cat ~/t.c
+
+typedef float V __attribute__((vector_size(16)));
+V foo(V a, V b) { return a+b*a; }
+
+
+Preprocessing:
+$ clang ~/t.c -E
+# 1 "/Users/sabre/t.c" 1
+
+typedef float V __attribute__((vector_size(16)));
+
+V foo(V a, V b) { return a+b*a; }
+
+
+Type checking:
+$ clang -fsyntax-only ~/t.c
+
+
+GCC options:
+$ clang -fsyntax-only ~/t.c -pedantic
+/Users/sabre/t.c:2:17: warning: extension used
+typedef float V __attribute__((vector_size(16)));
+                 ^
+1 diagnostic generated.
+
+
+
+Pretty printing from the AST:
+$ clang ~/t.c -parse-ast-print
+typedef float V __attribute__(( vector_size(16) ));
+
+V foo(V a, V b) {
+   return a + b * a;
+}
+
+
+LLVM code generation:
+$ clang ~/t.c -emit-llvm | llvm-as | opt -std-compile-opts | llvm-dis
+define <4 x float> @foo(<4 x float> %a, <4 x float> %b) {
+entry:
+         %mul = mul <4 x float> %b, %a           ; <<4 x float>>  
+[#uses=1]
+         %add = add <4 x float> %mul, %a         ; <<4 x float>>  
+[#uses=1]
+         ret <4 x float> %add
+}
+$ clang ~/t.c -emit-llvm | llvm-as | opt -std-compile-opts | llc - 
+march=ppc32 -mcpu=g5
+..
+_foo:
+         vmaddfp v2, v3, v2, v2
+         blr
+$ clang ~/t.c -emit-llvm | llvm-as | opt -std-compile-opts | llc - 
+march=x86 -mcpu=yonah
+..
+_foo:
+         mulps %xmm0, %xmm1
+         addps %xmm0, %xmm1
+         movaps %xmm1, %xmm0
+         ret
+</pre>
+<h2>Available tasks</h2>
+Here are a few tasks that are currently available for newcomers to work on:
+
+<h2>Final words</h2>
+In any case, we welcome questions, comments, and especially patches :).
+<br><br>
+Thanks!
+<br><br>
+-Chris
+</div>
+</body>
+</html>
