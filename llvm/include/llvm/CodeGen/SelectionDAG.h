@@ -457,6 +457,8 @@ public:
     case ISD::MUL:
     case ISD::MULHU:
     case ISD::MULHS:
+    case ISD::SMUL_LOHI:
+    case ISD::UMUL_LOHI:
     case ISD::FADD:
     case ISD::FMUL:
     case ISD::AND:
