@@ -68,6 +68,7 @@ SUnit *ScheduleDAG::Clone(SUnit *Old) {
   return SU;
 }
 
+
 /// BuildSchedUnits - Build SUnits from the selection dag that we are input.
 /// This SUnit graph is similar to the SelectionDAG, but represents flagged
 /// together nodes with a single SUnit.
@@ -76,8 +77,6 @@ void ScheduleDAG::BuildSchedUnits() {
   // ensure that reallocation of the vector won't happen, so SUnit*'s won't get
   // invalidated.
   SUnits.reserve(std::distance(DAG.allnodes_begin(), DAG.allnodes_end()));
-  
-  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
   
   for (SelectionDAG::allnodes_iterator NI = DAG.allnodes_begin(),
        E = DAG.allnodes_end(); NI != E; ++NI) {
@@ -131,32 +130,8 @@ void ScheduleDAG::BuildSchedUnits() {
     // Update the SUnit
     NodeSUnit->Node = N;
     SUnitMap[N].push_back(NodeSUnit);
-    
-    // Compute the latency for the node.  We use the sum of the latencies for
-    // all nodes flagged together into this SUnit.
-    if (InstrItins.isEmpty()) {
-      // No latency information.
-      NodeSUnit->Latency = 1;
-    } else {
-      NodeSUnit->Latency = 0;
-      if (N->isTargetOpcode()) {
-        unsigned SchedClass = TII->getSchedClass(N->getTargetOpcode());
-        InstrStage *S = InstrItins.begin(SchedClass);
-        InstrStage *E = InstrItins.end(SchedClass);
-        for (; S != E; ++S)
-          NodeSUnit->Latency += S->Cycles;
-      }
-      for (unsigned i = 0, e = NodeSUnit->FlaggedNodes.size(); i != e; ++i) {
-        SDNode *FNode = NodeSUnit->FlaggedNodes[i];
-        if (FNode->isTargetOpcode()) {
-          unsigned SchedClass = TII->getSchedClass(FNode->getTargetOpcode());
-          InstrStage *S = InstrItins.begin(SchedClass);
-          InstrStage *E = InstrItins.end(SchedClass);
-          for (; S != E; ++S)
-            NodeSUnit->Latency += S->Cycles;
-        }
-      }
-    }
+
+    ComputeLatency(NodeSUnit);
   }
   
   // Pass 2: add the preds, succs, etc.
@@ -212,6 +187,36 @@ void ScheduleDAG::BuildSchedUnits() {
   }
   
   return;
+}
+
+void ScheduleDAG::ComputeLatency(SUnit *SU) {
+  const InstrItineraryData &InstrItins = TM.getInstrItineraryData();
+  
+  // Compute the latency for the node.  We use the sum of the latencies for
+  // all nodes flagged together into this SUnit.
+  if (InstrItins.isEmpty()) {
+    // No latency information.
+    SU->Latency = 1;
+  } else {
+    SU->Latency = 0;
+    if (SU->Node->isTargetOpcode()) {
+      unsigned SchedClass = TII->getSchedClass(SU->Node->getTargetOpcode());
+      InstrStage *S = InstrItins.begin(SchedClass);
+      InstrStage *E = InstrItins.end(SchedClass);
+      for (; S != E; ++S)
+        SU->Latency += S->Cycles;
+    }
+    for (unsigned i = 0, e = SU->FlaggedNodes.size(); i != e; ++i) {
+      SDNode *FNode = SU->FlaggedNodes[i];
+      if (FNode->isTargetOpcode()) {
+        unsigned SchedClass = TII->getSchedClass(FNode->getTargetOpcode());
+        InstrStage *S = InstrItins.begin(SchedClass);
+        InstrStage *E = InstrItins.end(SchedClass);
+        for (; S != E; ++S)
+          SU->Latency += S->Cycles;
+      }
+    }
+  }
 }
 
 void ScheduleDAG::CalculateDepths() {

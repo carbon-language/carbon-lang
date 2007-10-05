@@ -115,7 +115,7 @@ namespace llvm {
     short NumSuccsLeft;                 // # of succs not scheduled.
     bool isTwoAddress     : 1;          // Is a two-address instruction.
     bool isCommutable     : 1;          // Is a commutable instruction.
-    bool hasPhysRegDefs  : 1;           // Has physreg defs that are being used.
+    bool hasPhysRegDefs   : 1;          // Has physreg defs that are being used.
     bool isPending        : 1;          // True once pending.
     bool isAvailable      : 1;          // True once available.
     bool isScheduled      : 1;          // True once scheduled.
@@ -296,6 +296,10 @@ namespace llvm {
     /// This SUnit graph is similar to the SelectionDAG, but represents flagged
     /// together nodes with a single SUnit.
     void BuildSchedUnits();
+
+    /// ComputeLatency - Compute node latency.
+    ///
+    void ComputeLatency(SUnit *SU);
 
     /// CalculateDepths, CalculateHeights - Calculate node depth / height.
     ///
