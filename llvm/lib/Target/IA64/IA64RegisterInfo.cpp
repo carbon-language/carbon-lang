@@ -60,6 +60,38 @@ void IA64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
       "sorry, I don't know how to store this sort of reg in the stack\n");
 }
 
+void IA64RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                      SmallVector<MachineOperand,4> Addr,
+                                      const TargetRegisterClass *RC,
+                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == IA64::FPRegisterClass) {
+    Opc = IA64::STF8;
+  } else if (RC == IA64::GRRegisterClass) {
+    Opc = IA64::ST8;
+  } else if (RC == IA64::PRRegisterClass) {
+    Opc = IA64::ST1;
+  } else {
+    assert(0 &&
+      "sorry, I don't know how to store this sort of reg\n");
+  }
+
+  MachineInstrBuilder MIB = BuildMI(TII.get(Opc));
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
+    MachineOperand &MO = Addr[i];
+    if (MO.isRegister())
+      MIB.addReg(MO.getReg());
+    else if (MO.isImmediate())
+      MIB.addImm(MO.getImmedValue());
+    else
+      MIB.addFrameIndex(MO.getFrameIndex());
+  }
+  MIB.addReg(SrcReg, false, false, true);
+  NewMIs.push_back(MIB);
+  return;
+
+}
+
 void IA64RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                             MachineBasicBlock::iterator MI,
                                             unsigned DestReg, int FrameIdx,
@@ -78,6 +110,36 @@ void IA64RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
    BuildMI(MBB, MI, TII.get(IA64::CMPNE), DestReg).addReg(IA64::r2).addReg(IA64::r0);
  } else assert(0 &&
      "sorry, I don't know how to load this sort of reg from the stack\n");
+}
+
+void IA64RegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                                       SmallVector<MachineOperand,4> Addr,
+                                       const TargetRegisterClass *RC,
+                                       SmallVector<MachineInstr*, 4> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == IA64::FPRegisterClass) {
+    Opc = IA64::LDF8;
+  } else if (RC == IA64::GRRegisterClass) {
+    Opc = IA64::LD8;
+  } else if (RC == IA64::PRRegisterClass) {
+    Opc = IA64::LD1;
+  } else {
+    assert(0 &&
+      "sorry, I don't know how to store this sort of reg\n");
+  }
+
+  MachineInstrBuilder MIB = BuildMI(TII.get(Opc), DestReg);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
+    MachineOperand &MO = Addr[i];
+    if (MO.isRegister())
+      MIB.addReg(MO.getReg());
+    else if (MO.isImmediate())
+      MIB.addImm(MO.getImmedValue());
+    else
+      MIB.addFrameIndex(MO.getFrameIndex());
+  }
+  NewMIs.push_back(MIB);
+  return;
 }
 
 void IA64RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
