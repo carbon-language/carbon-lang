@@ -414,6 +414,8 @@ public:
                         MVT::ValueType VT2, MVT::ValueType VT3,
                         MVT::ValueType VT4,
                         const SDOperand *Ops, unsigned NumOps);
+  SDNode *getTargetNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
+                        const SDOperand *Ops, unsigned NumOps);
   
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
   /// This can cause recursive merging of nodes in the DAG.  Use the first

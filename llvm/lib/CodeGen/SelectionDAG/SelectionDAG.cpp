@@ -3054,6 +3054,13 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
   const MVT::ValueType *VTs = getNodeValueTypes(VTList);
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 4, Ops, NumOps).Val;
 }
+SDNode *SelectionDAG::getTargetNode(unsigned Opcode,
+                                    std::vector<MVT::ValueType> &ResultTys,
+                                    const SDOperand *Ops, unsigned NumOps) {
+  const MVT::ValueType *VTs = getNodeValueTypes(ResultTys);
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, ResultTys.size(),
+                 Ops, NumOps).Val;
+}
 
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.
