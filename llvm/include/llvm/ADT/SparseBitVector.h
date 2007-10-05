@@ -580,8 +580,8 @@ public:
     ElementListIter Iter1 = Elements.begin();
     ElementListConstIter Iter2 = RHS.Elements.begin();
 
-    // Check if both bitmaps are empty
-    if (Elements.empty() && RHS.Elements.empty())
+    // If RHS is empty, we are done
+    if (RHS.Elements.empty())
       return false;
 
     while (Iter2 != RHS.Elements.end()) {
@@ -671,9 +671,7 @@ public:
         }
         ++Iter2;
       } else {
-        ElementListIter IterTmp = Iter1;
         ++Iter1;
-        Elements.erase(IterTmp);
       }
     }
     CurrElementIter = Elements.begin();
