@@ -126,7 +126,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       O << "\t.weak_definition\t" << CurrentFnName << "\n";
     } else if (Subtarget->isTargetCygMing()) {
       EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
-      O << "\t.globl " << CurrentFnName << "\n";
+      O << "\t.globl\t" << CurrentFnName << "\n";
       O << "\t.linkonce discard\n";
     } else {
       EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
