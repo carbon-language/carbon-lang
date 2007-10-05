@@ -422,8 +422,11 @@ void DominanceFrontier::splitBlock(BasicBlock *NewBB) {
       }
 
       if (NewBBI != end()) {
-        DominanceFrontier::DomSetType NewBBSet = NewBBI->second;
-        NewBBSet.insert(Set.begin(), Set.end());
+        for (DominanceFrontier::DomSetType::iterator SetI = Set.begin(),
+               E = Set.end(); SetI != E; ++SetI) {
+          BasicBlock *SB = *SetI;
+          addToFrontier(NewBBI, SB);
+        }
       } else 
         addBasicBlock(NewBB, Set);
     }

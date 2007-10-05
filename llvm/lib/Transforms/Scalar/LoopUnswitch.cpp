@@ -41,7 +41,6 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
@@ -71,6 +70,18 @@ namespace {
     
     bool OptimizeForSize;
     bool redoLoop;
+
+    DominanceFrontier *DF;
+    DominatorTree *DT;
+    
+    /// LoopDF - Loop's dominance frontier. This set is a collection of 
+    /// loop exiting blocks' DF member blocks. However this does set does not
+    /// includes basic blocks that are inside loop.
+    SmallPtrSet<BasicBlock *, 8> LoopDF;
+
+    /// OrigLoopExitMap - This is used to map loop exiting block with 
+    /// corresponding loop exit block, before updating CFG.
+    DenseMap<BasicBlock *, BasicBlock *> OrigLoopExitMap;
   public:
     static char ID; // Pass ID, replacement for typeid
     explicit LoopUnswitch(bool Os = false) : 
@@ -106,8 +117,13 @@ namespace {
 
     /// Split all of the edges from inside the loop to their exit blocks.  Update
     /// the appropriate Phi nodes as we do so.
-    void SplitExitEdges(const SmallVector<BasicBlock *, 8> &ExitBlocks,
+    void SplitExitEdges(Loop *L, const SmallVector<BasicBlock *, 8> &ExitBlocks,
                         SmallVector<BasicBlock *, 8> &MiddleBlocks);
+
+    /// If BB's dominance frontier  has a member that is not part of loop L then 
+    /// remove it. Add NewDFMember in BB's dominance frontier.
+    void ReplaceLoopExternalDFMember(Loop *L, BasicBlock *BB,
+                                     BasicBlock *NewDFMember);
       
     bool UnswitchIfProfitable(Value *LoopCond, Constant *Val,Loop *L);
     unsigned getLoopUnswitchCost(Loop *L, Value *LIC);
@@ -158,13 +174,16 @@ static Value *FindLIVLoopCondition(Value *Cond, Loop *L, bool &Changed) {
       if (Value *RHS = FindLIVLoopCondition(BO->getOperand(1), L, Changed))
         return RHS;
     }
-      
-      return 0;
+  
+  return 0;
 }
 
 bool LoopUnswitch::runOnLoop(Loop *L, LPPassManager &LPM_Ref) {
   LI = &getAnalysis<LoopInfo>();
   LPM = &LPM_Ref;
+  DF = getAnalysisToUpdate<DominanceFrontier>();
+  DT = getAnalysisToUpdate<DominatorTree>();
+
   bool Changed = false;
 
   do {
@@ -601,11 +620,36 @@ void LoopUnswitch::UnswitchTrivialCondition(Loop *L, Value *Cond,
   ++NumTrivial;
 }
 
+/// ReplaceLoopExternalDFMember -
+/// If BB's dominance frontier  has a member that is not part of loop L then 
+/// remove it. Add NewDFMember in BB's dominance frontier.
+void LoopUnswitch::ReplaceLoopExternalDFMember(Loop *L, BasicBlock *BB,
+                                               BasicBlock *NewDFMember) {
+  
+  DominanceFrontier::iterator DFI = DF->find(BB);
+  if (DFI == DF->end())
+    return;
+  
+  DominanceFrontier::DomSetType &DFSet = DFI->second;
+  for (DominanceFrontier::DomSetType::iterator DI = DFSet.begin(),
+         DE = DFSet.end(); DI != DE; ++DI) {
+    BasicBlock *B = *DI;
+    if (L->contains(B))
+      continue;
+  
+    DF->removeFromFrontier(DFI, B);
+    LoopDF.insert(B);
+  }
+
+  DF->addToFrontier(DFI, NewDFMember);
+}
+
 /// SplitExitEdges -
 /// Split all of the edges from inside the loop to their exit blocks.  Update
 /// the appropriate Phi nodes as we do so.
-void LoopUnswitch::SplitExitEdges(const SmallVector<BasicBlock *, 8> &ExitBlocks,
+void LoopUnswitch::SplitExitEdges(Loop *L, const SmallVector<BasicBlock *, 8> &ExitBlocks,
                                   SmallVector<BasicBlock *, 8> &MiddleBlocks) {
+
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *ExitBlock = ExitBlocks[i];
     std::vector<BasicBlock*> Preds(pred_begin(ExitBlock), pred_end(ExitBlock));
@@ -622,6 +666,8 @@ void LoopUnswitch::SplitExitEdges(const SmallVector<BasicBlock *, 8> &ExitBlocks
         EndBlock = ExitBlock;
       }
       
+      OrigLoopExitMap[StartBlock] = EndBlock;
+
       std::set<PHINode*> InsertedPHIs;
       PHINode* OldLCSSA = 0;
       for (BasicBlock::iterator I = EndBlock->begin();
@@ -647,8 +693,24 @@ void LoopUnswitch::SplitExitEdges(const SmallVector<BasicBlock *, 8> &ExitBlocks
         OldLCSSA->replaceAllUsesWith(NewLCSSA);
         NewLCSSA->addIncoming(OldLCSSA, MiddleBlock);
       }
+
+      if (DF && DT) {
+        // StartBlock -- > MiddleBlock -- > EndBlock
+        // StartBlock is loop exiting block. EndBlock will become merge point 
+        // of two loop exits after loop unswitch.
+        
+        // If StartBlock's DF member includes a block that is not loop member 
+        // then replace that DF member with EndBlock.
+
+        // If MiddleBlock's DF member includes a block that is not loop member
+        // tnen replace that DF member with EndBlock.
+
+        ReplaceLoopExternalDFMember(L, StartBlock, EndBlock);
+        ReplaceLoopExternalDFMember(L, MiddleBlock, EndBlock);
+      }
     }    
   }
+
 }
 
 /// UnswitchNontrivialCondition - We determined that the loop is profitable 
@@ -683,7 +745,7 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   // Split all of the edges from inside the loop to their exit blocks.  Update
   // the appropriate Phi nodes as we do so.
   SmallVector<BasicBlock *,8> MiddleBlocks;
-  SplitExitEdges(ExitBlocks, MiddleBlocks);
+  SplitExitEdges(L, ExitBlocks, MiddleBlocks);
 
   // The exit blocks may have been changed due to edge splitting, recompute.
   ExitBlocks.clear();
@@ -691,9 +753,6 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
 
   // Add exit blocks to the loop blocks.
   LoopBlocks.insert(LoopBlocks.end(), ExitBlocks.begin(), ExitBlocks.end());
-
-  DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>();
-  DominatorTree *DT = getAnalysisToUpdate<DominatorTree>();
 
   // Next step, clone all of the basic blocks that make up the loop (including
   // the loop preheader and exit blocks), keeping track of the mapping between
@@ -778,6 +837,9 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   // Update dominator info
   if (DF && DT) {
 
+    SmallVector<BasicBlock *,4> ExitingBlocks;
+    L->getExitingBlocks(ExitingBlocks);
+
     // Clone dominator info for all cloned basic block.
     for (unsigned i = 0, e = LoopBlocks.size(); i != e; ++i) {
       BasicBlock *LBB = LoopBlocks[i];
@@ -785,29 +847,57 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
       CloneDomInfo(NBB, LBB, NewPreheader, OrigPreheader, 
                    OrigHeader, DT, DF, ValueMap);
 
-      // Remove any OutSiders from LBB and NBB's dominance frontier.
-      DominanceFrontier::iterator LBBI = DF->find(LBB);
-      if (LBBI != DF->end()) {
-        DominanceFrontier::DomSetType &LBSet = LBBI->second;
-        for (DominanceFrontier::DomSetType::iterator LI = LBSet.begin(),
-               LE = LBSet.end(); LI != LE; /* NULL */) {
-          BasicBlock *B = *LI++;
-          if (OutSiders.count(B))
-            DF->removeFromFrontier(LBBI, B);
-        }
-      }
+      //   If LBB's dominance frontier includes DFMember 
+      //      such that DFMember is also a member of LoopDF then
+      //         - Remove DFMember from LBB's dominance frontier
+      //         - Copy loop exiting blocks', that are dominated by BB, dominance frontier
+      //           member in BB's dominance frontier
 
-      // Remove any OutSiders from LBB and NBB's dominance frontier.
+      DominanceFrontier::iterator LBBI = DF->find(LBB);
       DominanceFrontier::iterator NBBI = DF->find(NBB);
-      if (NBBI != DF->end()) {
-        DominanceFrontier::DomSetType NBSet = NBBI->second;
-        for (DominanceFrontier::DomSetType::iterator NI = NBSet.begin(),
-               NE = NBSet.end(); NI != NE; /* NULL */) {
-          BasicBlock *B = *NI++;
-          if (OutSiders.count(B))
+      if (LBBI == DF->end())
+        continue;
+
+      DominanceFrontier::DomSetType &LBSet = LBBI->second;
+      for (DominanceFrontier::DomSetType::iterator LI = LBSet.begin(),
+             LE = LBSet.end(); LI != LE; /* NULL */) {
+        BasicBlock *B = *LI++;
+        if (B == LBB && B == L->getHeader())
+          continue;
+        bool removeB = false;
+        if (!LoopDF.count(B))
+          continue;
+        
+        // If LBB dominates loop exits then insert loop exit block's DF
+        // into B's DF.
+        for(SmallVector<BasicBlock *, 4>::iterator LExitI = ExitingBlocks.begin(),
+              LExitE = ExitingBlocks.end(); LExitI != LExitE; ++LExitI) {
+          BasicBlock *E = *LExitI;
+          
+          if (!DT->dominates(LBB,E))
+            continue;
+          
+          DenseMap<BasicBlock *, BasicBlock *>::iterator DFBI = 
+            OrigLoopExitMap.find(E);
+          if (DFBI == OrigLoopExitMap.end()) 
+            continue;
+          
+          BasicBlock *DFB = DFBI->second;
+          DF->addToFrontier(LBBI, DFB);
+          DF->addToFrontier(NBBI, DFB);
+          removeB = true;
+        }
+        
+        // If B's replacement is inserted in DF then now is the time to remove B.
+        if (removeB) {
+          DF->removeFromFrontier(LBBI, B);
+          if (L->contains(B))
+            DF->removeFromFrontier(NBBI, cast<BasicBlock>(ValueMap[B]));
+          else
             DF->removeFromFrontier(NBBI, B);
         }
       }
+
     }
 
     // MiddleBlocks are dominated by original pre header. SplitEdge updated
