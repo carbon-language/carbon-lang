@@ -454,6 +454,7 @@ let Uses = [CL] in
 def SHL64rCL : RI<0xD3, MRM4r, (outs GR64:$dst), (ins GR64:$src),
                   "shl{q}\t{%cl, $dst|$dst, %CL}",
                   [(set GR64:$dst, (shl GR64:$src, CL))]>;
+let isConvertibleToThreeAddress = 1 in   // Can transform into LEA.
 def SHL64ri  : RIi8<0xC1, MRM4r, (outs GR64:$dst), (ins GR64:$src1, i8imm:$src2),
                     "shl{q}\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (shl GR64:$src1, (i8 imm:$src2)))]>;
