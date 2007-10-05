@@ -213,7 +213,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     case GlobalValue::LinkOnceLinkage:
     case GlobalValue::WeakLinkage:
       if (Subtarget->isTargetDarwin()) {
-        O << "\t.globl " << name << "\n"
+        O << "\t.globl\t" << name << "\n"
           << "\t.weak_definition " << name << "\n";
         SwitchToDataSection(".section __DATA,__const_coal,coalesced", I);
       } else if (Subtarget->isTargetCygMing()) {
@@ -221,7 +221,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
                                 name +
                                 ",\"aw\"");
         SwitchToDataSection(SectionName.c_str(), I);
-        O << "\t.globl " << name << "\n"
+        O << "\t.globl\t" << name << "\n"
           << "\t.linkonce same_size\n";
       } else {
         std::string SectionName("\t.section\t.llvm.linkonce.d." +
@@ -239,7 +239,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       // their name or something.  For now, just emit them as external.
     case GlobalValue::ExternalLinkage:
       // If external or appending, declare as a global symbol
-      O << "\t.globl " << name << "\n";
+      O << "\t.globl\t" << name << "\n";
       // FALL THROUGH
     case GlobalValue::InternalLinkage: {
       if (I->isConstant()) {
