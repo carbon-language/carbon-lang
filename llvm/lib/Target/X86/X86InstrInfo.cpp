@@ -190,8 +190,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   // we have better subtarget support, enable the 16-bit LEA generation here.
   bool DisableLEA16 = true;
 
-  switch (MI->getOpcode()) {
-  default: break;  // All others need to check for live condition code defs.
+  unsigned MIOpc = MI->getOpcode();
+  switch (MIOpc) {
   case X86::SHUFPSrri: {
     assert(MI->getNumOperands() == 4 && "Unknown shufps instruction!");
     if (!TM.getSubtarget<X86Subtarget>().hasSSE2()) return 0;
@@ -273,96 +273,105 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     }
     break;
   }
-  }
+  default: {
+    // The following opcodes also sets the condition code register(s). Only
+    // convert them to equivalent lea if the condition code register def's
+    // are dead!
+    if (hasLiveCondCodeDef(MI))
+      return 0;
 
-  if (!hasLiveCondCodeDef(MI))
-  switch (MI->getOpcode()) {
-  case X86::INC64r:
-  case X86::INC32r:
-  case X86::INC64_32r: {
-    assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
-    unsigned Opc = MI->getOpcode() == X86::INC64r ? X86::LEA64r : X86::LEA32r;
-    NewMI = addRegOffset(BuildMI(get(Opc), Dest), Src, 1);
-    break;
-  }
-  case X86::INC16r:
-  case X86::INC64_16r:
-    if (DisableLEA16) return 0;
-    assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
-    NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src, 1);
-    break;
-  case X86::DEC64r:
-  case X86::DEC32r:
-  case X86::DEC64_32r: {
-    assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
-    unsigned Opc = MI->getOpcode() == X86::DEC64r ? X86::LEA64r : X86::LEA32r;
-    NewMI = addRegOffset(BuildMI(get(Opc), Dest), Src, -1);
-    break;
-  }
-  case X86::DEC16r:
-  case X86::DEC64_16r:
-    if (DisableLEA16) return 0;
-    assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
-    NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src, -1);
-    break;
-  case X86::ADD64rr:
-  case X86::ADD32rr: {
-    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-    unsigned Opc = MI->getOpcode() == X86::ADD64rr ? X86::LEA64r : X86::LEA32r;
-    NewMI = addRegReg(BuildMI(get(Opc), Dest), Src, MI->getOperand(2).getReg());
-    break;
-  }
-  case X86::ADD16rr:
-    if (DisableLEA16) return 0;
-    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-    NewMI = addRegReg(BuildMI(get(X86::LEA16r), Dest), Src,
-                     MI->getOperand(2).getReg());
-    break;
-  case X86::ADD64ri32:
-  case X86::ADD64ri8:
-    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-    if (MI->getOperand(2).isImmediate())
-      NewMI = addRegOffset(BuildMI(get(X86::LEA64r), Dest), Src,
-                          MI->getOperand(2).getImmedValue());
-    break;
-  case X86::ADD32ri:
-  case X86::ADD32ri8:
-    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-    if (MI->getOperand(2).isImmediate())
-      NewMI = addRegOffset(BuildMI(get(X86::LEA32r), Dest), Src,
-                          MI->getOperand(2).getImmedValue());
-    break;
-  case X86::ADD16ri:
-  case X86::ADD16ri8:
-    if (DisableLEA16) return 0;
-    assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-    if (MI->getOperand(2).isImmediate())
-      NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src,
-                          MI->getOperand(2).getImmedValue());
-    break;
-  case X86::SHL16ri:
-    if (DisableLEA16) return 0;
-  case X86::SHL32ri:
-  case X86::SHL64ri: 
-    assert(MI->getNumOperands() >= 3 && MI->getOperand(2).isImmediate() &&
-           "Unknown shl instruction!");
-    unsigned ShAmt = MI->getOperand(2).getImmedValue();
-    if (ShAmt == 1 || ShAmt == 2 || ShAmt == 3) {
-      X86AddressMode AM;
-      AM.Scale = 1 << ShAmt;
-      AM.IndexReg = Src;
-      unsigned Opc = MI->getOpcode() == X86::SHL64ri ? X86::LEA64r
-        : (MI->getOpcode() == X86::SHL32ri ? X86::LEA32r : X86::LEA16r);
-      NewMI = addFullAddress(BuildMI(get(Opc), Dest), AM);
+    switch (MIOpc) {
+    default: return 0;
+    case X86::INC64r:
+    case X86::INC32r:
+    case X86::INC64_32r: {
+      assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
+      unsigned Opc = MIOpc == X86::INC64r ? X86::LEA64r
+        : (MIOpc == X86::INC64_32r ? X86::LEA64_32r : X86::LEA32r);
+      NewMI = addRegOffset(BuildMI(get(Opc), Dest), Src, 1);
+      break;
     }
-    break;
+    case X86::INC16r:
+    case X86::INC64_16r:
+      if (DisableLEA16) return 0;
+      assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
+      NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src, 1);
+      break;
+    case X86::DEC64r:
+    case X86::DEC32r:
+    case X86::DEC64_32r: {
+      assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
+      unsigned Opc = MIOpc == X86::DEC64r ? X86::LEA64r
+        : (MIOpc == X86::DEC64_32r ? X86::LEA64_32r : X86::LEA32r);
+      NewMI = addRegOffset(BuildMI(get(Opc), Dest), Src, -1);
+      break;
+    }
+    case X86::DEC16r:
+    case X86::DEC64_16r:
+      if (DisableLEA16) return 0;
+      assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
+      NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src, -1);
+      break;
+    case X86::ADD64rr:
+    case X86::ADD32rr: {
+      assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
+      unsigned Opc = MIOpc == X86::ADD64rr ? X86::LEA64r : X86::LEA32r;
+      NewMI = addRegReg(BuildMI(get(Opc), Dest), Src,
+                        MI->getOperand(2).getReg());
+      break;
+    }
+    case X86::ADD16rr:
+      if (DisableLEA16) return 0;
+      assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
+      NewMI = addRegReg(BuildMI(get(X86::LEA16r), Dest), Src,
+                        MI->getOperand(2).getReg());
+      break;
+    case X86::ADD64ri32:
+    case X86::ADD64ri8:
+      assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
+      if (MI->getOperand(2).isImmediate())
+        NewMI = addRegOffset(BuildMI(get(X86::LEA64r), Dest), Src,
+                             MI->getOperand(2).getImmedValue());
+      break;
+    case X86::ADD32ri:
+    case X86::ADD32ri8:
+      assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
+      if (MI->getOperand(2).isImmediate())
+        NewMI = addRegOffset(BuildMI(get(X86::LEA32r), Dest), Src,
+                             MI->getOperand(2).getImmedValue());
+      break;
+    case X86::ADD16ri:
+    case X86::ADD16ri8:
+      if (DisableLEA16) return 0;
+      assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
+      if (MI->getOperand(2).isImmediate())
+        NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src,
+                             MI->getOperand(2).getImmedValue());
+      break;
+    case X86::SHL16ri:
+      if (DisableLEA16) return 0;
+    case X86::SHL32ri:
+    case X86::SHL64ri: {
+      assert(MI->getNumOperands() >= 3 && MI->getOperand(2).isImmediate() &&
+             "Unknown shl instruction!");
+      unsigned ShAmt = MI->getOperand(2).getImmedValue();
+      if (ShAmt == 1 || ShAmt == 2 || ShAmt == 3) {
+        X86AddressMode AM;
+        AM.Scale = 1 << ShAmt;
+        AM.IndexReg = Src;
+        unsigned Opc = MIOpc == X86::SHL64ri ? X86::LEA64r
+          : (MIOpc == X86::SHL32ri ? X86::LEA32r : X86::LEA16r);
+        NewMI = addFullAddress(BuildMI(get(Opc), Dest), AM);
+      }
+      break;
+    }
+    }
+  }
   }
 
-  if (NewMI) {
-    NewMI->copyKillDeadInfo(MI);
-    LV.instructionChanged(MI, NewMI);  // Update live variables
-    MFI->insert(MBBI, NewMI);          // Insert the new inst    
-  }
+  NewMI->copyKillDeadInfo(MI);
+  LV.instructionChanged(MI, NewMI);  // Update live variables
+  MFI->insert(MBBI, NewMI);          // Insert the new inst    
   return NewMI;
 }
 
