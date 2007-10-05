@@ -290,10 +290,6 @@ It would be better to emit "cmp %al, 1" than a xor and test.
 
 //===---------------------------------------------------------------------===//
 
-Enable X86InstrInfo::convertToThreeAddress().
-
-//===---------------------------------------------------------------------===//
-
 We are currently lowering large (1MB+) memmove/memcpy to rep/stosl and rep/movsl
 We should leave these as libcalls for everything over a much lower threshold,
 since libc is hand tuned for medium and large mem ops (avoiding RFO for large
