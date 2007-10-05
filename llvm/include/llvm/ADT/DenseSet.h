@@ -38,7 +38,7 @@ public:
     TheMap.clear();
   }
   
-  bool count(const ValueT &V) {
+  bool count(const ValueT &V) const {
     return TheMap.count(V);
   }
   
