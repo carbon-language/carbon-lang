@@ -1,35 +1,48 @@
-<title>Minimal clang home page</title>
-
-<p>
-This is a bare bones web page for the "clang" C front-end.  This project will
-provide a new C/C++/ObjC front-end for <a href="http://llvm.org">LLVM</a>.
-</p>
-
-<p>The motivation for this project is described well in Steve Naroff's talk
-at the <a href="http://llvm.org/devmtg/2007-05/">2007 LLVM Developer Meeting</a>.
-A <a href="http://llvm.org/devmtg/2007-05/09-Naroff-CFE.mov">video</a> and 
-<a href="http://llvm.org/devmtg/2007-05/09-Naroff-CFE.pdf">slides</a> are 
-available.</p>
-
-<p>Some more motivation, details, and performance numbers are in the second
-half of Chris' <a 
-href="http://llvm.org/pubs/2007-07-25-LLVM-2.0-and-Beyond.html"> LLVM 2.0 
-and Beyond!</a> talk, which describes how the clang pre-processor can be used
-to make distcc 3-4x more scalable.</p>
-
-<p>To get and build the source, please follow <a 
-href="http://lists.cs.uiuc.edu/pipermail/llvmdev/2007-July/009817.html">these 
-directions</a>.</p>
-
-<p>If you are interested in discussing this work, please join the <a 
-href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a> mailing 
-list.  If you are interested in contributing to it or following its progress,
-please join the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">
-cfe-commits</a> list.</p>
-
-<p>A rough <a href="docs/InternalsManual.html">Internals Manual</a> is 
-available.</p>
-
-<p>Please note that we don't consider this to be ready for people to take and
-compile random pieces of code with yet.  However, if you'd like to do so 
-<em>and</em> help fix problems exposed by doing so, we would appreciate the help.</p>
+<!--
+Consulted:
+HTML 4.01 specs: http://www.w3.org/TR/html401/
+-->
+<html>
+<head>
+	<title>Clang c-lang parser for LLVM</title>
+	<link type="text/css" rel="stylesheet" href="menu.css" />
+	<link type="text/css" rel="stylesheet" href="content.css" />
+</head>
+<body>
+	<!--#include virtual="menu.html.incl"-->
+	<div id="content">
+		<h1>Clang: a C language front-end for LLVM</h1>
+		<h2>About</h2>
+		<p>The goal of the Clang project is to create a new <a href="http://llvm.org/svn/llvm-project/cfe/trunk/LICENSE.TXT">BSD Licensed</a> C, C++, & ObjC front-end for the <a href="http://www.llvm.org/">LLVM</a> compiler.
+		<br><br>
+		<p>In the context of this website, the term Clang actually refers to two things:
+		<p>1) A "code name" for the LLVM compiler front-end.
+		<p>2) A specific library in the LLVM front-end -- in particular the "driver" that makes all the other libraries work together.
+		<br><br>
+		<p>The developers of Clang include contributers from Apple and numerous other volunteers.
+		<h2>Why?</h2>
+		<p>The development of a new front-end was started out of a need -- a need for a compiler that allows better diagnostics, better integration with IDEs, a license that is compatible with commercial products, and a compiler that is easier to develop and maintain.  All of these were motiviations for starting work on a new C/C++/ObjC front-end that could meet these needs.
+		<p>An excellent introduction to Clang can be found in the following video lectures:
+		<ul>
+			<li><a href="clang_video-05-25-2007.html">Clang Introduction</a>
+			<li><a href="clang_video-07-25-2007.html">Features and Performance of Clang</a>
+		</ul>
+		<h2>Features/Goals</h2>
+		Some of the goals for the project include the following:
+		<ul>
+			<li>Unified parser for C-based languages
+			<li>Language conformance with C99, ObjC, C++
+			<li>Real-world, production quality compiler
+			<li>GCC compatibility
+			<li>Library based architecture with finely crafted C++ API’s
+			<li>High performance
+			<li>Better integration with IDEs
+			<li>Expressive diagnostics
+			<li>BSD License
+		</ul>
+		Of course this is only a rough outline of the goals and features of Clang.  To get a true sense of what the new LLVM front-end is all about, as well as why you might want to considering using it, see the <a href="features.html">Features</a> section.
+		<h2>Get Involved</h2>
+		If you are interested in working on Clang, then check out the <a href="get_involved.html">Get Involved</a> section.
+	</div>
+</body>
+</html>
