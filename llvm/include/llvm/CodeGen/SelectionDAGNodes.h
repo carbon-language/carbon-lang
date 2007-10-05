@@ -233,6 +233,15 @@ namespace ISD {
 
     // Simple integer binary arithmetic operators.
     ADD, SUB, MUL, SDIV, UDIV, SREM, UREM,
+
+    // SMUL_LOHI/UMUL_LOHI - Multiply two integers of type iN, producing
+    // a signed/unsigned value of type i[2*n], and return the full value as
+    // two results, each of type iN.
+    SMUL_LOHI, UMUL_LOHI,
+
+    // SDIVREM/UDIVREM - Divide two integers and produce both a quotient and
+    // remainder result.
+    SDIVREM, UDIVREM,
     
     // CARRY_FALSE - This node is used when folding other nodes,
     // like ADDC/SUBC, which indicate the carry result is always false.
