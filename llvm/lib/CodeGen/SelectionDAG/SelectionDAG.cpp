@@ -3571,6 +3571,10 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::UDIV:   return "udiv";
   case ISD::SREM:   return "srem";
   case ISD::UREM:   return "urem";
+  case ISD::SMUL_LOHI:  return "smul_lohi";
+  case ISD::UMUL_LOHI:  return "umul_lohi";
+  case ISD::SDIVREM:    return "sdivrem";
+  case ISD::UDIVREM:    return "divrem";
   case ISD::AND:    return "and";
   case ISD::OR:     return "or";
   case ISD::XOR:    return "xor";
