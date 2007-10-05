@@ -22,14 +22,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Support/CommandLine.h"
 using namespace llvm;
-
-namespace {
-  cl::opt<bool>
-  EnableConvert3Addr("enable-x86-conv-3-addr",
-           cl::desc("Enable convertToThreeAddress for X86"));
-}
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   : TargetInstrInfo(X86Insts, array_lengthof(X86Insts)),
@@ -154,8 +147,6 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
 /// hasLiveCondCodeDef - True if MI has a condition code def, e.g. EFLAGS, that
 /// is not marked dead.
 static bool hasLiveCondCodeDef(MachineInstr *MI) {
-  if (!EnableConvert3Addr)
-    return true;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isRegister() && MO.isDef() &&
