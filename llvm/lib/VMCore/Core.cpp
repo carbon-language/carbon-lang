@@ -17,24 +17,10 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
-#include "llvm/Support/CHelpers.h"
-#include "llvm/Support/LLVMBuilder.h"
 #include "llvm/TypeSymbolTable.h"
 #include <cassert>
 
 using namespace llvm;
-
-namespace {
-  /// Opaque builder conversions.
-  /// 
-  inline LLVMBuilder *unwrap(LLVMBuilderRef B) {
-    return reinterpret_cast<LLVMBuilder*>(B);
-  }
-  
-  inline LLVMBuilderRef wrap(LLVMBuilder *B) {
-    return reinterpret_cast<LLVMBuilderRef>(B);
-  }
-}
 
 
 /*===-- Operations on modules ---------------------------------------------===*/

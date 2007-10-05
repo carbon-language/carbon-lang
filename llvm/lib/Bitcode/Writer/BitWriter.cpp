@@ -9,7 +9,6 @@
 
 #include "llvm-c/BitWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Support/CHelpers.h"
 #include <fstream>
 
 using namespace llvm;

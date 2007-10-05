@@ -170,8 +170,6 @@
 		9FE25D940CAB16FB005383FC /* RegisterCoalescer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterCoalescer.cpp; sourceTree = "<group>"; };
 		9FE25D950CAB1724005383FC /* APFloat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = APFloat.cpp; sourceTree = "<group>"; };
 		9FE25D960CAB1759005383FC /* TargetCallingConv.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = TargetCallingConv.td; sourceTree = "<group>"; };
-		9FE25D970CAB17F9005383FC /* DominatorCalculation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DominatorCalculation.h; path = ../lib/VMCore/DominatorCalculation.h; sourceTree = SOURCE_ROOT; };
-		9FE25D980CAB17F9005383FC /* DominatorInternals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DominatorInternals.cpp; path = ../lib/VMCore/DominatorInternals.cpp; sourceTree = SOURCE_ROOT; };
 		9FE4508B0C77A77000C4FEA4 /* ARMCodeEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ARMCodeEmitter.cpp; sourceTree = "<group>"; };
 		9FE4508C0C77A77000C4FEA4 /* ARMGenAsmWriter.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.pascal; path = ARMGenAsmWriter.inc; sourceTree = "<group>"; };
 		9FE4508D0C77A77000C4FEA4 /* ARMGenDAGISel.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.pascal; path = ARMGenDAGISel.inc; sourceTree = "<group>"; };
@@ -1345,8 +1343,6 @@
 				9F77937D0C73C4F400551F9C /* ConstantFold.h */,
 				DE66EC6008ABE86A00323D32 /* Constants.cpp */,
 				9FD3E5900CA0129D00E54D15 /* Core.cpp */,
-				9FE25D970CAB17F9005383FC /* DominatorCalculation.h */,
-				9FE25D980CAB17F9005383FC /* DominatorInternals.cpp */,
 				DE66EC6108ABE86A00323D32 /* Dominators.cpp */,
 				DE66EC6208ABE86A00323D32 /* Function.cpp */,
 				DE66EC6308ABE86A00323D32 /* Globals.cpp */,
