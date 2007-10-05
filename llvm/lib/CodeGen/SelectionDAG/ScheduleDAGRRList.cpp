@@ -1301,7 +1301,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
              I != E; ++I) {
           if (I->isCtrl) continue;
           SUnit *SuccSU = I->Dep;
-          // Don't constraint nodes with implicit defs. It can create cycles
+          // Don't constrain nodes with implicit defs. It can create cycles
           // plus it may increase register pressures.
           if (SuccSU == SU || SuccSU->hasPhysRegDefs)
             continue;
