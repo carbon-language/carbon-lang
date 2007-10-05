@@ -22,7 +22,14 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+namespace {
+  cl::opt<bool>
+  EnableCommuteCMove("enable-x86-commute-cmove",
+           cl::desc("Commute conditional moves by inverting conditions"));
+}
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   : TargetInstrInfo(X86Insts, array_lengthof(X86Insts)),
@@ -366,7 +373,6 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
 /// commute them.
 ///
 MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
-  // FIXME: Can commute cmoves by changing the condition!
   switch (MI->getOpcode()) {
   case X86::SHRD16rri8: // A = SHRD16rri8 B, C, I -> A = SHLD16rri8 C, B, (16-I)
   case X86::SHLD16rri8: // A = SHLD16rri8 B, C, I -> A = SHRD16rri8 C, B, (16-I)
@@ -393,6 +399,100 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
     bool CisKill = MI->getOperand(2).isKill();
     return BuildMI(get(Opc), A).addReg(C, false, false, CisKill)
       .addReg(B, false, false, BisKill).addImm(Size-Amt);
+  }
+  case X86::CMOVB16rr:
+  case X86::CMOVB32rr:
+  case X86::CMOVB64rr:
+  case X86::CMOVAE16rr:
+  case X86::CMOVAE32rr:
+  case X86::CMOVAE64rr:
+  case X86::CMOVE16rr:
+  case X86::CMOVE32rr:
+  case X86::CMOVE64rr:
+  case X86::CMOVNE16rr:
+  case X86::CMOVNE32rr:
+  case X86::CMOVNE64rr:
+  case X86::CMOVBE16rr:
+  case X86::CMOVBE32rr:
+  case X86::CMOVBE64rr:
+  case X86::CMOVA16rr:
+  case X86::CMOVA32rr:
+  case X86::CMOVA64rr:
+  case X86::CMOVL16rr:
+  case X86::CMOVL32rr:
+  case X86::CMOVL64rr:
+  case X86::CMOVGE16rr:
+  case X86::CMOVGE32rr:
+  case X86::CMOVGE64rr:
+  case X86::CMOVLE16rr:
+  case X86::CMOVLE32rr:
+  case X86::CMOVLE64rr:
+  case X86::CMOVG16rr:
+  case X86::CMOVG32rr:
+  case X86::CMOVG64rr:
+  case X86::CMOVS16rr:
+  case X86::CMOVS32rr:
+  case X86::CMOVS64rr:
+  case X86::CMOVNS16rr:
+  case X86::CMOVNS32rr:
+  case X86::CMOVNS64rr:
+  case X86::CMOVP16rr:
+  case X86::CMOVP32rr:
+  case X86::CMOVP64rr:
+  case X86::CMOVNP16rr:
+  case X86::CMOVNP32rr:
+  case X86::CMOVNP64rr: {
+    if (!EnableCommuteCMove)
+      return 0;
+    unsigned Opc = 0;
+    switch (MI->getOpcode()) {
+    default: break;
+    case X86::CMOVB16rr:  Opc = X86::CMOVAE16rr; break;
+    case X86::CMOVB32rr:  Opc = X86::CMOVAE32rr; break;
+    case X86::CMOVB64rr:  Opc = X86::CMOVAE64rr; break;
+    case X86::CMOVAE16rr: Opc = X86::CMOVB16rr; break;
+    case X86::CMOVAE32rr: Opc = X86::CMOVB32rr; break;
+    case X86::CMOVAE64rr: Opc = X86::CMOVB64rr; break;
+    case X86::CMOVE16rr:  Opc = X86::CMOVNE16rr; break;
+    case X86::CMOVE32rr:  Opc = X86::CMOVNE32rr; break;
+    case X86::CMOVE64rr:  Opc = X86::CMOVNE64rr; break;
+    case X86::CMOVNE16rr: Opc = X86::CMOVE16rr; break;
+    case X86::CMOVNE32rr: Opc = X86::CMOVE32rr; break;
+    case X86::CMOVNE64rr: Opc = X86::CMOVE64rr; break;
+    case X86::CMOVBE16rr: Opc = X86::CMOVA16rr; break;
+    case X86::CMOVBE32rr: Opc = X86::CMOVA32rr; break;
+    case X86::CMOVBE64rr: Opc = X86::CMOVA64rr; break;
+    case X86::CMOVA16rr:  Opc = X86::CMOVBE16rr; break;
+    case X86::CMOVA32rr:  Opc = X86::CMOVBE32rr; break;
+    case X86::CMOVA64rr:  Opc = X86::CMOVBE64rr; break;
+    case X86::CMOVL16rr:  Opc = X86::CMOVGE16rr; break;
+    case X86::CMOVL32rr:  Opc = X86::CMOVGE32rr; break;
+    case X86::CMOVL64rr:  Opc = X86::CMOVGE64rr; break;
+    case X86::CMOVGE16rr: Opc = X86::CMOVL16rr; break;
+    case X86::CMOVGE32rr: Opc = X86::CMOVL32rr; break;
+    case X86::CMOVGE64rr: Opc = X86::CMOVL64rr; break;
+    case X86::CMOVLE16rr: Opc = X86::CMOVG16rr; break;
+    case X86::CMOVLE32rr: Opc = X86::CMOVG32rr; break;
+    case X86::CMOVLE64rr: Opc = X86::CMOVG64rr; break;
+    case X86::CMOVG16rr:  Opc = X86::CMOVLE16rr; break;
+    case X86::CMOVG32rr:  Opc = X86::CMOVLE32rr; break;
+    case X86::CMOVG64rr:  Opc = X86::CMOVLE64rr; break;
+    case X86::CMOVS16rr:  Opc = X86::CMOVNS16rr; break;
+    case X86::CMOVS32rr:  Opc = X86::CMOVNS32rr; break;
+    case X86::CMOVS64rr:  Opc = X86::CMOVNS32rr; break;
+    case X86::CMOVNS16rr: Opc = X86::CMOVS16rr; break;
+    case X86::CMOVNS32rr: Opc = X86::CMOVS32rr; break;
+    case X86::CMOVNS64rr: Opc = X86::CMOVS64rr; break;
+    case X86::CMOVP16rr:  Opc = X86::CMOVNP16rr; break;
+    case X86::CMOVP32rr:  Opc = X86::CMOVNP32rr; break;
+    case X86::CMOVP64rr:  Opc = X86::CMOVNP32rr; break;
+    case X86::CMOVNP16rr: Opc = X86::CMOVP16rr; break;
+    case X86::CMOVNP32rr: Opc = X86::CMOVP32rr; break;
+    case X86::CMOVNP64rr: Opc = X86::CMOVP64rr; break;
+    }
+
+    MI->setInstrDescriptor(get(Opc));
+    // Fallthrough intended.
   }
   default:
     return TargetInstrInfo::commuteInstruction(MI);

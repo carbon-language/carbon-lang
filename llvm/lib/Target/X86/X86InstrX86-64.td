@@ -778,141 +778,144 @@ def CMP64ri8 : RIi8<0x83, MRM7r, (outs), (ins GR64:$src1, i64i8imm:$src2),
 
 // Conditional moves
 let Uses = [EFLAGS], isTwoAddress = 1 in {
+let isCommutable = 1 in {
 def CMOVB64rr : RI<0x42, MRMSrcReg,       // if <u, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovb\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
-                                     X86_COND_B, EFLAGS))]>, TB;
-def CMOVB64rm : RI<0x42, MRMSrcMem,       // if <u, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovb\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
                                      X86_COND_B, EFLAGS))]>, TB;
 def CMOVAE64rr: RI<0x43, MRMSrcReg,       // if >=u, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovae\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
                                      X86_COND_AE, EFLAGS))]>, TB;
-def CMOVAE64rm: RI<0x43, MRMSrcMem,       // if >=u, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovae\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
-                                     X86_COND_AE, EFLAGS))]>, TB;
 def CMOVE64rr : RI<0x44, MRMSrcReg,       // if ==, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmove\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
-                                     X86_COND_E, EFLAGS))]>, TB;
-def CMOVE64rm : RI<0x44, MRMSrcMem,       // if ==, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmove\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
                                      X86_COND_E, EFLAGS))]>, TB;
 def CMOVNE64rr: RI<0x45, MRMSrcReg,       // if !=, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovne\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
                                     X86_COND_NE, EFLAGS))]>, TB;
-def CMOVNE64rm: RI<0x45, MRMSrcMem,       // if !=, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovne\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
-                                    X86_COND_NE, EFLAGS))]>, TB;
 def CMOVBE64rr: RI<0x46, MRMSrcReg,       // if <=u, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovbe\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
-                                    X86_COND_BE, EFLAGS))]>, TB;
-def CMOVBE64rm: RI<0x46, MRMSrcMem,       // if <=u, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovbe\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
                                     X86_COND_BE, EFLAGS))]>, TB;
 def CMOVA64rr : RI<0x47, MRMSrcReg,       // if >u, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmova\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
                                     X86_COND_A, EFLAGS))]>, TB;
-def CMOVA64rm : RI<0x47, MRMSrcMem,       // if >u, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmova\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
-                                    X86_COND_A, EFLAGS))]>, TB;
 def CMOVL64rr : RI<0x4C, MRMSrcReg,       // if <s, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovl\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
-                                    X86_COND_L, EFLAGS))]>, TB;
-def CMOVL64rm : RI<0x4C, MRMSrcMem,       // if <s, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovl\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
                                     X86_COND_L, EFLAGS))]>, TB;
 def CMOVGE64rr: RI<0x4D, MRMSrcReg,       // if >=s, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovge\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
                                     X86_COND_GE, EFLAGS))]>, TB;
-def CMOVGE64rm: RI<0x4D, MRMSrcMem,       // if >=s, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovge\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
-                                    X86_COND_GE, EFLAGS))]>, TB;
 def CMOVLE64rr: RI<0x4E, MRMSrcReg,       // if <=s, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovle\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
-                                    X86_COND_LE, EFLAGS))]>, TB;
-def CMOVLE64rm: RI<0x4E, MRMSrcMem,       // if <=s, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovle\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
                                     X86_COND_LE, EFLAGS))]>, TB;
 def CMOVG64rr : RI<0x4F, MRMSrcReg,       // if >s, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovg\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
                                     X86_COND_G, EFLAGS))]>, TB;
-def CMOVG64rm : RI<0x4F, MRMSrcMem,       // if >s, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovg\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
-                                    X86_COND_G, EFLAGS))]>, TB;
 def CMOVS64rr : RI<0x48, MRMSrcReg,       // if signed, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovs\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
-                                    X86_COND_S, EFLAGS))]>, TB;
-def CMOVS64rm : RI<0x48, MRMSrcMem,       // if signed, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovs\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
                                     X86_COND_S, EFLAGS))]>, TB;
 def CMOVNS64rr: RI<0x49, MRMSrcReg,       // if !signed, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovns\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
                                     X86_COND_NS, EFLAGS))]>, TB;
-def CMOVNS64rm: RI<0x49, MRMSrcMem,       // if !signed, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovns\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
-                                    X86_COND_NS, EFLAGS))]>, TB;
 def CMOVP64rr : RI<0x4A, MRMSrcReg,       // if parity, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovp\t{$src2, $dst|$dst, $src2}",
                    [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
-                                    X86_COND_P, EFLAGS))]>, TB;
-def CMOVP64rm : RI<0x4A, MRMSrcMem,       // if parity, GR64 = [mem64]
-                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
-                   "cmovp\t{$src2, $dst|$dst, $src2}",
-                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
                                     X86_COND_P, EFLAGS))]>, TB;
 def CMOVNP64rr : RI<0x4B, MRMSrcReg,       // if !parity, GR64 = GR64
                    (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
                    "cmovnp\t{$src2, $dst|$dst, $src2}",
                     [(set GR64:$dst, (X86cmov GR64:$src1, GR64:$src2,
                                      X86_COND_NP, EFLAGS))]>, TB;
+} // isCommutable = 1
+
+def CMOVB64rm : RI<0x42, MRMSrcMem,       // if <u, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovb\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                     X86_COND_B, EFLAGS))]>, TB;
+def CMOVAE64rm: RI<0x43, MRMSrcMem,       // if >=u, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovae\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                     X86_COND_AE, EFLAGS))]>, TB;
+def CMOVE64rm : RI<0x44, MRMSrcMem,       // if ==, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmove\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                     X86_COND_E, EFLAGS))]>, TB;
+def CMOVNE64rm: RI<0x45, MRMSrcMem,       // if !=, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovne\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                    X86_COND_NE, EFLAGS))]>, TB;
+def CMOVBE64rm: RI<0x46, MRMSrcMem,       // if <=u, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovbe\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                    X86_COND_BE, EFLAGS))]>, TB;
+def CMOVA64rm : RI<0x47, MRMSrcMem,       // if >u, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmova\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                    X86_COND_A, EFLAGS))]>, TB;
+def CMOVL64rm : RI<0x4C, MRMSrcMem,       // if <s, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovl\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                    X86_COND_L, EFLAGS))]>, TB;
+def CMOVGE64rm: RI<0x4D, MRMSrcMem,       // if >=s, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovge\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                    X86_COND_GE, EFLAGS))]>, TB;
+def CMOVLE64rm: RI<0x4E, MRMSrcMem,       // if <=s, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovle\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                    X86_COND_LE, EFLAGS))]>, TB;
+def CMOVG64rm : RI<0x4F, MRMSrcMem,       // if >s, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovg\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                    X86_COND_G, EFLAGS))]>, TB;
+def CMOVS64rm : RI<0x48, MRMSrcMem,       // if signed, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovs\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                    X86_COND_S, EFLAGS))]>, TB;
+def CMOVNS64rm: RI<0x49, MRMSrcMem,       // if !signed, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovns\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                    X86_COND_NS, EFLAGS))]>, TB;
+def CMOVP64rm : RI<0x4A, MRMSrcMem,       // if parity, GR64 = [mem64]
+                   (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
+                   "cmovp\t{$src2, $dst|$dst, $src2}",
+                   [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
+                                    X86_COND_P, EFLAGS))]>, TB;
 def CMOVNP64rm : RI<0x4B, MRMSrcMem,       // if !parity, GR64 = [mem64]
                    (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
                    "cmovnp\t{$src2, $dst|$dst, $src2}",
