@@ -18,7 +18,6 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/MacroExpander.h"
 #include "clang/Basic/SourceLocation.h"
-#include "llvm/ADT/FoldingSet.h"
 
 namespace clang {
   
@@ -81,7 +80,7 @@ class Preprocessor {
   /// flow (in clang::ParseAST()), make it convenient to put here. 
   /// FIXME: Make sure the lifetime of Identifiers/Selectors *isn't* tied to
   /// the lifetime fo the preprocessor.
-  llvm::FoldingSet<MultiKeywordSelector> Selectors;
+  SelectorTable Selectors;
   
   /// PragmaHandlers - This tracks all of the pragmas that the client registered
   /// with this preprocessor.
@@ -142,7 +141,7 @@ public:
   HeaderSearch &getHeaderSearchInfo() const { return HeaderInfo; }
 
   IdentifierTable &getIdentifierTable() { return Identifiers; }
-  llvm::FoldingSet<MultiKeywordSelector> &getSelectorTable() { return Selectors; }
+  SelectorTable &getSelectorTable() { return Selectors; }
   
   /// SetCommentRetentionState - Control whether or not the preprocessor retains
   /// comments in output.

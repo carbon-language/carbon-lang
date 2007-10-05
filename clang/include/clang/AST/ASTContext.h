@@ -47,7 +47,7 @@ public:
   SourceManager &SourceMgr;
   TargetInfo &Target;
   IdentifierTable &Idents;
-  llvm::FoldingSet<MultiKeywordSelector> &Selectors;
+  SelectorTable &Selectors;
   Builtin::Context BuiltinInfo;
 
   // Builtin Types.
@@ -61,7 +61,7 @@ public:
   QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
   
   ASTContext(SourceManager &SM, TargetInfo &t, IdentifierTable &idents,
-             llvm::FoldingSet<MultiKeywordSelector> &sels) : 
+             SelectorTable &sels) : 
     CFConstantStringTypeDecl(0), SourceMgr(SM), Target(t), 
     Idents(idents), Selectors(sels) {
     InitBuiltinTypes();

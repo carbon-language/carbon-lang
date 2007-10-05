@@ -15,6 +15,7 @@
 #include "clang/Lex/IdentifierTable.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Basic/LangOptions.h"
+#include "llvm/ADT/FoldingSet.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -209,4 +210,151 @@ void IdentifierTable::PrintStats() const {
   // Compute statistics about the memory allocated for identifiers.
   HashTable.getAllocator().PrintStats();
 }
+
+//===----------------------------------------------------------------------===//
+// SelectorTable Implementation
+//===----------------------------------------------------------------------===//
+
+/// MultiKeywordSelector - One of these variable length records is kept for each
+/// selector containing more than one keyword. We use a folding set
+/// to unique aggregate names (keyword selectors in ObjC parlance). Access to 
+/// this class is provided strictly through Selector.
+class MultiKeywordSelector : public llvm::FoldingSetNode {
+public:  
+  unsigned NumArgs;
+
+  // Constructor for keyword selectors.
+  MultiKeywordSelector(unsigned nKeys, IdentifierInfo **IIV) {
+    assert((nKeys > 1) && "not a multi-keyword selector");
+    NumArgs = nKeys;
+    // Fill in the trailing keyword array.
+    IdentifierInfo **KeyInfo = reinterpret_cast<IdentifierInfo **>(this+1);
+    for (unsigned i = 0; i != nKeys; ++i)
+      KeyInfo[i] = IIV[i];
+  }
+  // Derive the full selector name, placing the result into methodBuffer.
+  // As a convenience, a pointer to the first character is returned.
+  // Example usage: llvm::SmallString<128> mbuf; Selector->getName(mbuf);
+  char *getName(llvm::SmallVectorImpl<char> &methodBuffer);
+
+  unsigned getNumArgs() const { return NumArgs; }
+  
+  typedef IdentifierInfo *const *keyword_iterator;
+  keyword_iterator keyword_begin() const {
+    return reinterpret_cast<keyword_iterator>(this+1);
+  }
+  keyword_iterator keyword_end() const { 
+    return keyword_begin()+NumArgs; 
+  }
+  IdentifierInfo *getIdentifierInfoForSlot(unsigned i) {
+    assert((i < NumArgs) && "getIdentifierInfoForSlot(): illegal index");
+    return keyword_begin()[i];
+  }
+  static void Profile(llvm::FoldingSetNodeID &ID, 
+                      keyword_iterator ArgTys, unsigned NumArgs) {
+    ID.AddInteger(NumArgs);
+    if (NumArgs) { // handle keyword selector.
+      for (unsigned i = 0; i != NumArgs; ++i)
+        ID.AddPointer(ArgTys[i]);
+    } else // handle unary selector.
+      ID.AddPointer(ArgTys[0]);
+  }
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    Profile(ID, keyword_begin(), NumArgs);
+  }
+};
+
+unsigned Selector::getNumArgs() const {
+  unsigned IIF = getIdentifierInfoFlag();
+  if (IIF == ZeroArg)
+    return 0;
+  if (IIF == OneArg)
+    return 1;
+  // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
+  MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+  return SI->getNumArgs(); 
+}
+
+IdentifierInfo *Selector::getIdentifierInfoForSlot(unsigned argIndex) {
+  IdentifierInfo *II = getAsIdentifierInfo();
+  if (II) {
+    assert(((argIndex == 0) || (argIndex == 1)) && "illegal keyword index");
+    return II;
+  }
+  // We point to a MultiKeywordSelector (pointer doesn't contain any flags).
+  MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+  return SI->getIdentifierInfoForSlot(argIndex);
+}
+
+char *MultiKeywordSelector::getName(llvm::SmallVectorImpl<char> &methodName) {
+  methodName[0] = '\0';
+  keyword_iterator KeyIter = keyword_begin();
+  for (unsigned int i = 0; i < NumArgs; i++) {
+    if (KeyIter[i]) {
+      unsigned KeyLen = KeyIter[i]->getLength();
+      methodName.append(KeyIter[i]->getName(), KeyIter[i]->getName()+KeyLen);
+    }
+    methodName.push_back(':');
+  }
+  methodName.push_back('\0');
+  return &methodName[0];
+}
+
+char *Selector::getName(llvm::SmallVectorImpl<char> &methodName) {
+  methodName[0] = '\0';
+  IdentifierInfo *II = getAsIdentifierInfo();
+  if (II) {
+    unsigned NameLen = II->getLength();
+    methodName.append(II->getName(), II->getName()+NameLen);
+    if (getNumArgs() == 1)
+      methodName.push_back(':');
+    methodName.push_back('\0');
+  } else { // We have a multiple keyword selector (no embedded flags).
+    MultiKeywordSelector *SI = reinterpret_cast<MultiKeywordSelector *>(InfoPtr);
+    SI->getName(methodName);
+  }
+  return &methodName[0];
+}
+
+
+Selector SelectorTable::getKeywordSelector(unsigned nKeys, IdentifierInfo **IIV) 
+{
+  llvm::FoldingSet<MultiKeywordSelector> *SelTab;
+  
+  SelTab = static_cast<llvm::FoldingSet<MultiKeywordSelector> *>(Impl);
+    
+  // Unique selector, to guarantee there is one per name.
+  llvm::FoldingSetNodeID ID;
+  MultiKeywordSelector::Profile(ID, IIV, nKeys);
+
+  void *InsertPos = 0;
+  if (MultiKeywordSelector *SI = SelTab->FindNodeOrInsertPos(ID, InsertPos)) {
+    return Selector(SI);
+  }
+  // MultiKeywordSelector objects are not allocated with new because they have a
+  // variable size array (for parameter types) at the end of them.
+  MultiKeywordSelector *SI = 
+    (MultiKeywordSelector*)malloc(sizeof(MultiKeywordSelector) + 
+                                  nKeys*sizeof(IdentifierInfo *));
+  new (SI) MultiKeywordSelector(nKeys, IIV);
+  SelTab->InsertNode(SI, InsertPos);
+  return Selector(SI);
+}
+
+Selector SelectorTable::getUnarySelector(IdentifierInfo *ID) {
+  return Selector(ID, 1);
+}
+
+Selector SelectorTable::getNullarySelector(IdentifierInfo *ID) {
+  return Selector(ID, 0);
+}
+
+SelectorTable::SelectorTable() {
+  Impl = new llvm::FoldingSet<MultiKeywordSelector>;
+}
+
+SelectorTable::~SelectorTable() {
+  delete static_cast<llvm::FoldingSet<MultiKeywordSelector> *>(Impl);
+}
+
 

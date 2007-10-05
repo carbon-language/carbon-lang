@@ -18,10 +18,11 @@
 // this data is long-lived.
 #include "clang/Basic/TokenKinds.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallString.h"
 #include <string> 
 #include <cassert> 
+
+class MultiKeywordSelector; // a private class used by Selector.
 
 namespace clang {
   class MacroInfo;
@@ -135,8 +136,6 @@ public:
   void setFETokenInfo(void *T) { FETokenInfo = T; }
 };
 
-
-
 /// IdentifierTable - This table implements an efficient mapping from strings to
 /// IdentifierInfo nodes.  It has no other purpose, but this is an
 /// extremely performance-critical piece of the code, as each occurrance of
@@ -179,59 +178,11 @@ private:
   void AddKeywords(const LangOptions &LangOpts);
 };
 
-/// MultiKeywordSelector - One of these variable length records is kept for each
-/// selector containing more than one keyword. We use a folding set
-/// to unique aggregate names (keyword selectors in ObjC parlance). Access to 
-/// this class is provided strictly through Selector. All methods are private.
-/// The only reason it appears in this header is FoldingSet needs to see it:-(
-class MultiKeywordSelector : public llvm::FoldingSetNode {
-  friend class Selector; // Only Selector can access me.
-  friend class Parser;   // Only Parser can instantiate me.
-  
-  unsigned NumArgs;
-
-  // Constructor for keyword selectors.
-  MultiKeywordSelector(unsigned nKeys, IdentifierInfo **IIV) {
-    assert((nKeys > 1) && "not a multi-keyword selector");
-    NumArgs = nKeys;
-    // Fill in the trailing keyword array.
-    IdentifierInfo **KeyInfo = reinterpret_cast<IdentifierInfo **>(this+1);
-    for (unsigned i = 0; i != nKeys; ++i)
-      KeyInfo[i] = IIV[i];
-  }
-  // Derive the full selector name, placing the result into methodBuffer.
-  // As a convenience, a pointer to the first character is returned.
-  // Example usage: llvm::SmallString<128> mbuf; Selector->getName(mbuf);
-  char *getName(llvm::SmallVectorImpl<char> &methodBuffer);
-
-  unsigned getNumArgs() const { return NumArgs; }
-  
-  typedef IdentifierInfo *const *keyword_iterator;
-  keyword_iterator keyword_begin() const {
-    return reinterpret_cast<keyword_iterator>(this+1);
-  }
-  keyword_iterator keyword_end() const { 
-    return keyword_begin()+NumArgs; 
-  }
-  IdentifierInfo *getIdentifierInfoForSlot(unsigned i) {
-    assert((i < NumArgs) && "getIdentifierInfoForSlot(): illegal index");
-    return keyword_begin()[i];
-  }
-  friend class llvm::FoldingSet<MultiKeywordSelector>;
-  static void Profile(llvm::FoldingSetNodeID &ID, 
-                      keyword_iterator ArgTys, unsigned NumArgs) {
-    ID.AddInteger(NumArgs);
-    if (NumArgs) { // handle keyword selector.
-      for (unsigned i = 0; i != NumArgs; ++i)
-        ID.AddPointer(ArgTys[i]);
-    } else // handle unary selector.
-      ID.AddPointer(ArgTys[0]);
-  }
-  void Profile(llvm::FoldingSetNodeID &ID) {
-    Profile(ID, keyword_begin(), NumArgs);
-  }
-};
-
+/// Selector - This smart pointer class efficiently represents Objective-C
+/// method names. This class will either point to an IdentifierInfo or a
+/// MultiKeywordSelector (which is private). This enables us to optimize
+/// selectors that no arguments and selectors that take 1 argument, which 
+/// accounts for 78% of all selectors in Cocoa.h.
 class Selector {
   enum IdentifierInfoFlag {
     // MultiKeywordSelector = 0.
@@ -251,14 +202,14 @@ class Selector {
     InfoPtr = reinterpret_cast<uintptr_t>(SI);
     assert((InfoPtr & ArgFlags) == 0 &&"Insufficiently aligned IdentifierInfo");
   }
-  friend class Parser; // only the Parser can create these.
+public:
+  friend class SelectorTable; // only the SelectorTable can create these.
   
   IdentifierInfo *getAsIdentifierInfo() const {
     if (getIdentifierInfoFlag())
       return reinterpret_cast<IdentifierInfo *>(InfoPtr & ~ArgFlags);
     return 0;
   }
-public:
   unsigned getIdentifierInfoFlag() const {
     return InfoPtr & ArgFlags;
   }
@@ -286,6 +237,21 @@ public:
   // As a convenience, a pointer to the first character is returned.
   // Example usage: llvm::SmallString<128> mbuf; Selector->getName(mbuf);
   char *getName(llvm::SmallVectorImpl<char> &methodBuffer);
+};
+
+/// SelectorTable - This table allows us to fully hide how we implement
+/// multi-keyword caching.
+class SelectorTable {
+  void *Impl;  // Actually a FoldingSet<MultiKeywordSelector>*
+  SelectorTable(const SelectorTable&); // DISABLED: DO NOT IMPLEMENT
+  void operator=(const SelectorTable&); // DISABLED: DO NOT IMPLEMENT
+public:
+  SelectorTable();
+  ~SelectorTable();
+
+  Selector getKeywordSelector(unsigned nKeys, IdentifierInfo **IIV);
+  Selector getUnarySelector(IdentifierInfo *ID);
+  Selector getNullarySelector(IdentifierInfo *ID);
 };
 
 }  // end namespace clang

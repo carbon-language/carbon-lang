@@ -303,9 +303,6 @@ private:
   void ParseObjCInstanceMethodDefinition();
   void ParseObjCClassMethodDefinition();
   
-  Selector ObjcGetUnarySelector(IdentifierInfo *unarySel);
-  Selector ObjcGetKeywordSelector(llvm::SmallVectorImpl<IdentifierInfo *> &IIV);
-
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
 
