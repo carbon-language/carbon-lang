@@ -356,9 +356,21 @@ void CodeGenFunction::EmitContinueStmt() {
 
 void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
   StartBlock("sw.bb");
-  llvm::Value *V = EmitScalarExpr(S.getLHS());
-  SwitchInsn->addCase(cast<llvm::ConstantInt>(V), Builder.GetInsertBlock());
-  assert (!S.getRHS() && "Case statement range is not yet supported");
+  llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
+  llvm::ConstantInt *LV = cast<llvm::ConstantInt>(EmitScalarExpr(S.getLHS()));
+  SwitchInsn->addCase(LV, CaseDest);
+  if (const Expr *R = S.getRHS()) {
+    llvm::ConstantInt *RV = cast<llvm::ConstantInt>(EmitScalarExpr(R));
+    llvm::APInt LHS = LV->getValue();
+    llvm::APInt RHS = RV->getValue();
+    LHS++;
+    while (LHS != RHS) {
+      SwitchInsn->addCase(llvm::ConstantInt::get(LHS), CaseDest);
+      LHS++;
+    }
+    SwitchInsn->addCase(llvm::ConstantInt::get(LHS), CaseDest);
+  }
+
   EmitStmt(S.getSubStmt());
 }
 

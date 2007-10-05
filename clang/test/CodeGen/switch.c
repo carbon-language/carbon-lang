@@ -15,3 +15,18 @@ int foo(int i) {
 }
 
     
+int foo2(int i) {
+  int j = 0;
+  switch (i) {
+  case 1 : 
+    j = 2; break;
+  case 2 ... 10:
+    j = 3; break;
+  default:
+    j = 42; break;
+  }
+  j = j + 1;
+  return j;
+}
+
+    
