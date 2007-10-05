@@ -1812,8 +1812,20 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
     NumResults = 1;
     NodeTys.push_back(MVT::i64);
     break;
-  case MVT::f32:
   case MVT::f64:
+    if (Op.Val->getValueType(1) == MVT::f64) {
+      Chain = DAG.getCopyFromReg(Chain, PPC::F1, MVT::f64, InFlag).getValue(1);
+      ResultVals[0] = Chain.getValue(0);
+      Chain = DAG.getCopyFromReg(Chain, PPC::F2, MVT::f64,
+                                 Chain.getValue(2)).getValue(1);
+      ResultVals[1] = Chain.getValue(0);
+      NumResults = 2;
+      NodeTys.push_back(MVT::f64);
+      NodeTys.push_back(MVT::f64);
+      break;
+    } 
+    // else fall through
+  case MVT::f32:
     Chain = DAG.getCopyFromReg(Chain, PPC::F1, Op.Val->getValueType(0),
                                InFlag).getValue(1);
     ResultVals[0] = Chain.getValue(0);

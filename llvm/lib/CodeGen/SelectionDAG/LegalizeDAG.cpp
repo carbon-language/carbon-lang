@@ -3055,7 +3055,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         switch(Node->getOpcode()) {
         case ISD::FSQRT:
           LC = VT == MVT::f32 ? RTLIB::SQRT_F32 : 
-               VT == MVT::f64 ? RTLIB::SQRT_F64 : RTLIB::SQRT_LD;
+               VT == MVT::f64 ? RTLIB::SQRT_F64 : 
+               VT == MVT::f80 ? RTLIB::SQRT_F80 :
+               VT == MVT::ppcf128 ? RTLIB::SQRT_PPCF128 :
+               RTLIB::UNKNOWN_LIBCALL;
           break;
         case ISD::FSIN:
           LC = VT == MVT::f32 ? RTLIB::SIN_F32 : RTLIB::SIN_F64;
@@ -3079,7 +3082,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     RTLIB::Libcall LC = 
       Node->getValueType(0) == MVT::f32 ? RTLIB::POWI_F32 : 
       Node->getValueType(0) == MVT::f64 ? RTLIB::POWI_F64 : 
-      RTLIB::POWI_LD;
+      Node->getValueType(0) == MVT::f80 ? RTLIB::POWI_F80 : 
+      Node->getValueType(0) == MVT::ppcf128 ? RTLIB::POWI_PPCF128 : 
+      RTLIB::UNKNOWN_LIBCALL;
     SDOperand Dummy;
     Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
                            false/*sign irrelevant*/, Dummy);
@@ -3261,9 +3266,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         else if (OVT == MVT::f64)
           LC = (VT == MVT::i32)
             ? RTLIB::FPTOSINT_F64_I32 : RTLIB::FPTOSINT_F64_I64;
-        else if (OVT == MVT::f80 || OVT == MVT::f128 || OVT == MVT::ppcf128) {
+        else if (OVT == MVT::f80) {
           assert(VT == MVT::i64);
-          LC = RTLIB::FPTOSINT_LD_I64;
+          LC = RTLIB::FPTOSINT_F80_I64;
+        }
+        else if (OVT == MVT::ppcf128) {
+          assert(VT == MVT::i64);
+          LC = RTLIB::FPTOSINT_PPCF128_I64;
         }
         break;
       }
@@ -3275,9 +3284,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         else if (OVT == MVT::f64)
           LC = (VT == MVT::i32)
             ? RTLIB::FPTOUINT_F64_I32 : RTLIB::FPTOSINT_F64_I64;
-        else if (OVT == MVT::f80 || OVT == MVT::f128 || OVT == MVT::ppcf128) {
+        else if (OVT == MVT::f80) {
           LC = (VT == MVT::i32)
-            ? RTLIB::FPTOUINT_LD_I32 : RTLIB::FPTOUINT_LD_I64;
+            ? RTLIB::FPTOUINT_F80_I32 : RTLIB::FPTOUINT_F80_I64;
+        }
+        else if (OVT ==  MVT::ppcf128) {
+          assert(VT == MVT::i64);
+          LC = RTLIB::FPTOUINT_PPCF128_I64;
         }
         break;
       }
@@ -5375,13 +5388,15 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       }
     }
 
-    RTLIB::Libcall LC;
+    RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
     if (Node->getOperand(0).getValueType() == MVT::f32)
       LC = RTLIB::FPTOSINT_F32_I64;
     else if (Node->getOperand(0).getValueType() == MVT::f64)
       LC = RTLIB::FPTOSINT_F64_I64;
-    else
-      LC = RTLIB::FPTOSINT_LD_I64;
+    else if (Node->getOperand(0).getValueType() == MVT::f80)
+      LC = RTLIB::FPTOSINT_F80_I64;
+    else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
+      LC = RTLIB::FPTOSINT_PPCF128_I64;
     Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
                        false/*sign irrelevant*/, Hi);
     break;
@@ -5410,10 +5425,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       LC = RTLIB::FPTOUINT_F32_I64;
     else if (Node->getOperand(0).getValueType() == MVT::f64)
       LC = RTLIB::FPTOUINT_F64_I64;
-    else if (Node->getOperand(0).getValueType() == MVT::f80 ||
-             Node->getOperand(0).getValueType() == MVT::f128 ||
-             Node->getOperand(0).getValueType() == MVT::ppcf128)
-      LC = RTLIB::FPTOUINT_LD_I64;
+    else if (Node->getOperand(0).getValueType() == MVT::f80)
+      LC = RTLIB::FPTOUINT_F80_I64;
+    else if (Node->getOperand(0).getValueType() == MVT::ppcf128)
+      LC = RTLIB::FPTOUINT_PPCF128_I64;
     Lo = ExpandLibCall(TLI.getLibcallName(LC), Node,
                        false/*sign irrelevant*/, Hi);
     break;
@@ -5679,23 +5694,35 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
 
   case ISD::FADD:
-    Lo = ExpandLibCall(TLI.getLibcallName((VT == MVT::f32)
-                                          ? RTLIB::ADD_F32 : RTLIB::ADD_F64),
+    Lo = ExpandLibCall(TLI.getLibcallName(VT == MVT::f32 ? RTLIB::ADD_F32 : 
+                                          VT == MVT::f64 ? RTLIB::ADD_F64 :
+                                          VT == MVT::ppcf128 ? 
+                                                      RTLIB::ADD_PPCF128 :
+                                          RTLIB::UNKNOWN_LIBCALL),
                        Node, false, Hi);
     break;
   case ISD::FSUB:
-    Lo = ExpandLibCall(TLI.getLibcallName((VT == MVT::f32)
-                                          ? RTLIB::SUB_F32 : RTLIB::SUB_F64),
+    Lo = ExpandLibCall(TLI.getLibcallName(VT == MVT::f32 ? RTLIB::SUB_F32 :
+                                          VT == MVT::f64 ? RTLIB::SUB_F64 :
+                                          VT == MVT::ppcf128 ? 
+                                                      RTLIB::SUB_PPCF128 :
+                                          RTLIB::UNKNOWN_LIBCALL),
                        Node, false, Hi);
     break;
   case ISD::FMUL:
-    Lo = ExpandLibCall(TLI.getLibcallName((VT == MVT::f32)
-                                          ? RTLIB::MUL_F32 : RTLIB::MUL_F64),
+    Lo = ExpandLibCall(TLI.getLibcallName(VT == MVT::f32 ? RTLIB::MUL_F32 :
+                                          VT == MVT::f64 ? RTLIB::MUL_F64 :
+                                          VT == MVT::ppcf128 ? 
+                                                      RTLIB::MUL_PPCF128 :
+                                          RTLIB::UNKNOWN_LIBCALL),
                        Node, false, Hi);
     break;
   case ISD::FDIV:
-    Lo = ExpandLibCall(TLI.getLibcallName((VT == MVT::f32)
-                                          ? RTLIB::DIV_F32 : RTLIB::DIV_F64),
+    Lo = ExpandLibCall(TLI.getLibcallName(VT == MVT::f32 ? RTLIB::DIV_F32 :
+                                          VT == MVT::f64 ? RTLIB::DIV_F64 :
+                                          VT == MVT::ppcf128 ? 
+                                                      RTLIB::DIV_PPCF128 :
+                                          RTLIB::UNKNOWN_LIBCALL),
                        Node, false, Hi);
     break;
   case ISD::FP_EXTEND:
@@ -5707,7 +5734,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::FPOWI:
     Lo = ExpandLibCall(TLI.getLibcallName((VT == MVT::f32) ? RTLIB::POWI_F32 : 
                                           (VT == MVT::f64) ? RTLIB::POWI_F64 :
-                                          RTLIB::POWI_LD),
+                                          (VT == MVT::f80) ? RTLIB::POWI_F80 :
+                                          (VT == MVT::ppcf128) ? 
+                                                         RTLIB::POWI_PPCF128 :
+                                          RTLIB::UNKNOWN_LIBCALL),
                        Node, false, Hi);
     break;
   case ISD::FSQRT:
@@ -5717,7 +5747,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     switch(Node->getOpcode()) {
     case ISD::FSQRT:
       LC = (VT == MVT::f32) ? RTLIB::SQRT_F32 : 
-           (VT == MVT::f64) ? RTLIB::SQRT_F64 : RTLIB::SQRT_LD;
+           (VT == MVT::f64) ? RTLIB::SQRT_F64 : 
+           (VT == MVT::f80) ? RTLIB::SQRT_F80 : 
+           (VT == MVT::ppcf128) ? RTLIB::SQRT_PPCF128 : 
+           RTLIB::UNKNOWN_LIBCALL;
       break;
     case ISD::FSIN:
       LC = (VT == MVT::f32) ? RTLIB::SIN_F32 : RTLIB::SIN_F64;
@@ -5768,9 +5801,13 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
         LC = isSigned ? RTLIB::SINTTOFP_I64_F32 : RTLIB::UINTTOFP_I64_F32;
       else if (VT == MVT::f64)
         LC = isSigned ? RTLIB::SINTTOFP_I64_F64 : RTLIB::UINTTOFP_I64_F64;
-      else if (VT == MVT::f80 || VT == MVT::f128 || VT == MVT::ppcf128) {
+      else if (VT == MVT::f80) {
         assert(isSigned);
-        LC = RTLIB::SINTTOFP_I64_LD;
+        LC = RTLIB::SINTTOFP_I64_F80;
+      }
+      else if (VT == MVT::ppcf128) {
+        assert(isSigned);
+        LC = RTLIB::SINTTOFP_I64_PPCF128;
       }
     } else {
       if (VT == MVT::f32)

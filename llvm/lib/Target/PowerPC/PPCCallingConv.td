@@ -25,7 +25,8 @@ def RetCC_PPC : CallingConv<[
   CCIfType<[i32], CCAssignToReg<[R3, R4]>>,
   CCIfType<[i64], CCAssignToReg<[X3, X4]>>,
   
-  CCIfType<[f32, f64], CCAssignToReg<[F1]>>,
+  CCIfType<[f32], CCAssignToReg<[F1]>>,
+  CCIfType<[f64], CCAssignToReg<[F1, F2]>>,
   
   // Vector types are always returned in V2.
   CCIfType<[v16i8, v8i16, v4i32, v4f32], CCAssignToReg<[V2]>>

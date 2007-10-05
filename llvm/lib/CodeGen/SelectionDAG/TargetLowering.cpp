@@ -46,22 +46,29 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::NEG_I64] = "__negdi2";
   Names[RTLIB::ADD_F32] = "__addsf3";
   Names[RTLIB::ADD_F64] = "__adddf3";
+  Names[RTLIB::ADD_PPCF128] = "__gcc_qadd";
   Names[RTLIB::SUB_F32] = "__subsf3";
   Names[RTLIB::SUB_F64] = "__subdf3";
+  Names[RTLIB::SUB_PPCF128] = "__gcc_qsub";
   Names[RTLIB::MUL_F32] = "__mulsf3";
   Names[RTLIB::MUL_F64] = "__muldf3";
+  Names[RTLIB::MUL_PPCF128] = "__gcc_qmul";
   Names[RTLIB::DIV_F32] = "__divsf3";
   Names[RTLIB::DIV_F64] = "__divdf3";
+  Names[RTLIB::DIV_PPCF128] = "__gcc_qdiv";
   Names[RTLIB::REM_F32] = "fmodf";
   Names[RTLIB::REM_F64] = "fmod";
+  Names[RTLIB::REM_PPCF128] = "fmodl";
   Names[RTLIB::NEG_F32] = "__negsf2";
   Names[RTLIB::NEG_F64] = "__negdf2";
   Names[RTLIB::POWI_F32] = "__powisf2";
   Names[RTLIB::POWI_F64] = "__powidf2";
-  Names[RTLIB::POWI_LD] = "__powixf2";
+  Names[RTLIB::POWI_F80] = "__powixf2";
+  Names[RTLIB::POWI_PPCF128] = "__powitf2";
   Names[RTLIB::SQRT_F32] = "sqrtf";
   Names[RTLIB::SQRT_F64] = "sqrt";
-  Names[RTLIB::SQRT_LD] = "sqrtl";
+  Names[RTLIB::SQRT_F80] = "sqrtl";
+  Names[RTLIB::SQRT_PPCF128] = "sqrtl";
   Names[RTLIB::SIN_F32] = "sinf";
   Names[RTLIB::SIN_F64] = "sin";
   Names[RTLIB::COS_F32] = "cosf";
@@ -72,18 +79,21 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPTOSINT_F32_I64] = "__fixsfdi";
   Names[RTLIB::FPTOSINT_F64_I32] = "__fixdfsi";
   Names[RTLIB::FPTOSINT_F64_I64] = "__fixdfdi";
-  Names[RTLIB::FPTOSINT_LD_I64] = "__fixxfdi";
+  Names[RTLIB::FPTOSINT_F80_I64] = "__fixxfdi";
+  Names[RTLIB::FPTOSINT_PPCF128_I64] = "__fixtfdi";
   Names[RTLIB::FPTOUINT_F32_I32] = "__fixunssfsi";
   Names[RTLIB::FPTOUINT_F32_I64] = "__fixunssfdi";
   Names[RTLIB::FPTOUINT_F64_I32] = "__fixunsdfsi";
   Names[RTLIB::FPTOUINT_F64_I64] = "__fixunsdfdi";
-  Names[RTLIB::FPTOUINT_LD_I32] = "__fixunsxfsi";
-  Names[RTLIB::FPTOUINT_LD_I64] = "__fixunsxfdi";
+  Names[RTLIB::FPTOUINT_F80_I32] = "__fixunsxfsi";
+  Names[RTLIB::FPTOUINT_F80_I64] = "__fixunsxfdi";
+  Names[RTLIB::FPTOUINT_PPCF128_I64] = "__fixunstfdi";
   Names[RTLIB::SINTTOFP_I32_F32] = "__floatsisf";
   Names[RTLIB::SINTTOFP_I32_F64] = "__floatsidf";
   Names[RTLIB::SINTTOFP_I64_F32] = "__floatdisf";
   Names[RTLIB::SINTTOFP_I64_F64] = "__floatdidf";
-  Names[RTLIB::SINTTOFP_I64_LD] = "__floatdixf";
+  Names[RTLIB::SINTTOFP_I64_F80] = "__floatdixf";
+  Names[RTLIB::SINTTOFP_I64_PPCF128] = "__floatditf";
   Names[RTLIB::UINTTOFP_I32_F32] = "__floatunsisf";
   Names[RTLIB::UINTTOFP_I32_F64] = "__floatunsidf";
   Names[RTLIB::UINTTOFP_I64_F32] = "__floatundisf";
@@ -221,6 +231,14 @@ void TargetLowering::computeRegisterProperties() {
       ValueTypeActions.setTypeAction(IntReg, Promote);
     }
   }
+
+  // ppcf128 type is really two f64's.
+  if (!isTypeLegal(MVT::ppcf128)) {
+    NumRegistersForVT[MVT::ppcf128] = 2*NumRegistersForVT[MVT::f64];
+    RegisterTypeForVT[MVT::ppcf128] = MVT::f64;
+    TransformToType[MVT::ppcf128] = MVT::f64;
+    ValueTypeActions.setTypeAction(MVT::ppcf128, Expand);
+  }    
 
   // Decide how to handle f64. If the target does not have native f64 support,
   // expand it to i64 and we will be generating soft float library calls.

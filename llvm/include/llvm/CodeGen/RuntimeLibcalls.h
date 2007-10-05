@@ -18,9 +18,8 @@
 namespace llvm {
 namespace RTLIB {
   /// RTLIB::Libcall enum - This enum defines all of the runtime library calls
-  /// the backend can emit.  "LD" is used for all long double types, since
-  /// these functions will have the same interface on different targets even 
-  /// though the data is not in the same format.
+  /// the backend can emit.  The various long double types cannot be merged,
+  /// because 80-bit library functions use "xf" and 128-bit use "tf".
   ///
   enum Libcall {
     // Integer
@@ -46,22 +45,29 @@ namespace RTLIB {
     // FLOATING POINT
     ADD_F32,
     ADD_F64,
+    ADD_PPCF128,
     SUB_F32,
     SUB_F64,
+    SUB_PPCF128,
     MUL_F32,
     MUL_F64,
+    MUL_PPCF128,
     DIV_F32,
     DIV_F64,
+    DIV_PPCF128,
     REM_F32,
     REM_F64,
+    REM_PPCF128,
     NEG_F32,
     NEG_F64,
     POWI_F32,
     POWI_F64,
-    POWI_LD,
+    POWI_F80,
+    POWI_PPCF128,
     SQRT_F32,
     SQRT_F64,
-    SQRT_LD,
+    SQRT_F80,
+    SQRT_PPCF128,
     SIN_F32,
     SIN_F64,
     COS_F32,
@@ -74,18 +80,21 @@ namespace RTLIB {
     FPTOSINT_F32_I64,
     FPTOSINT_F64_I32,
     FPTOSINT_F64_I64,
-    FPTOSINT_LD_I64,
+    FPTOSINT_F80_I64,
+    FPTOSINT_PPCF128_I64,
     FPTOUINT_F32_I32,
     FPTOUINT_F32_I64,
     FPTOUINT_F64_I32,
     FPTOUINT_F64_I64,
-    FPTOUINT_LD_I32,
-    FPTOUINT_LD_I64,
+    FPTOUINT_F80_I32,
+    FPTOUINT_F80_I64,
+    FPTOUINT_PPCF128_I64,
     SINTTOFP_I32_F32,
     SINTTOFP_I32_F64,
     SINTTOFP_I64_F32,
     SINTTOFP_I64_F64,
-    SINTTOFP_I64_LD,
+    SINTTOFP_I64_F80,
+    SINTTOFP_I64_PPCF128,
     UINTTOFP_I32_F32,
     UINTTOFP_I32_F64,
     UINTTOFP_I64_F32,
