@@ -555,6 +555,17 @@ public:
     return 0;
   }
   
+  /// ActOnFindProtocolDeclaration - This routine looks for a previously
+  /// declared protocol and returns it. If not found, issues diagnostic.
+  /// Will build a list of previously protocol declarations found in the list.
+  virtual DeclTy **ActOnFindProtocolDeclaration(Scope *S,
+                                                SourceLocation TypeLoc,
+                                                IdentifierInfo **ProtocolId,
+                                                unsigned NumProtocols) {
+    return 0;
+  }
+                                               
+                                               
   //===----------------------- Obj-C Expressions --------------------------===//
   virtual ExprResult ParseObjCStringLiteral(ExprTy *string) {
     return 0;

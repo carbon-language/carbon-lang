@@ -442,6 +442,8 @@ DIAG(error_duplicate_method_decl, ERROR,
      "duplicate declaration of method '%0'")
 DIAG(err_previous_declaration, ERROR,
      "previous declaration is here")
+DIAG(err_undeclared_protocol, ERROR,
+     "cannot find protocol declaration for '%0'")
 
 
 //===----------------------------------------------------------------------===//

@@ -409,6 +409,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
             if (Tok.getKind() == tok::less) {
               llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
               ParseObjCProtocolReferences(ProtocolRefs);
+              Actions.ActOnFindProtocolDeclaration(CurScope,
+                                                   Loc,
+                                                   &ProtocolRefs[0],
+                                                   ProtocolRefs.size());
             }
             continue;
           }

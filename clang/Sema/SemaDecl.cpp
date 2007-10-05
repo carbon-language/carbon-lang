@@ -104,8 +104,14 @@ ObjcProtocolDecl *Sema::getObjCProtocolDecl(Scope *S,
                                             IdentifierInfo *Id, 
                                             SourceLocation IdLoc) {
   // Note that Protocols have their own namespace.
-  ScopedDecl *PrDecl = LookupScopedDecl(Id, Decl::IDNS_Protocol, 
-                                        IdLoc, S);
+  ScopedDecl *PrDecl = NULL;
+  for (ScopedDecl *D = Id->getFETokenInfo<ScopedDecl>(); D; D = D->getNext()) {
+    if (D->getIdentifierNamespace() == Decl::IDNS_Protocol) {
+      PrDecl = D;
+      break;
+    }
+  }
+  
   if (PrDecl && !isa<ObjcProtocolDecl>(PrDecl))
     PrDecl = 0;
   return cast_or_null<ObjcProtocolDecl>(static_cast<Decl*>(PrDecl));
@@ -1005,6 +1011,24 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(Scope* S,
   }
 
   return PDecl;
+}
+
+/// ActOnFindProtocolDeclaration - This routine looks for a previously
+/// declared protocol and returns it. If not found, issues diagnostic.
+/// Will build a list of previously protocol declarations found in the list.
+Action::DeclTy **
+Sema::ActOnFindProtocolDeclaration(Scope *S,
+                                   SourceLocation TypeLoc,
+                                   IdentifierInfo **ProtocolId,
+                                   unsigned NumProtocols) {
+  for (unsigned i = 0; i != NumProtocols; ++i) {
+    ObjcProtocolDecl *PDecl = getObjCProtocolDecl(S, ProtocolId[i], 
+                                                  TypeLoc);
+    if (!PDecl)
+      Diag(TypeLoc, diag::err_undeclared_protocol, 
+           ProtocolId[i]->getName());
+  }
+  return 0;
 }
 
 /// ActOnForwardProtocolDeclaration - 

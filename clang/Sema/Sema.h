@@ -429,6 +429,11 @@ public:
                                                   SourceLocation AtProtocolLoc,
                                                   IdentifierInfo **IdentList,
                                                   unsigned NumElts);
+  
+  virtual DeclTy **ActOnFindProtocolDeclaration(Scope *S,
+                                                SourceLocation TypeLoc,
+                                                IdentifierInfo **ProtocolId,
+                                                unsigned NumProtocols);
 
   virtual void ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl, 
 				         DeclTy **allMethods, unsigned allNum);
