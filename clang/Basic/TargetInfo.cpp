@@ -88,6 +88,35 @@ static void GetTargetDefineMap(const TargetInfoImpl *Target,
 /// getTargetDefines - Appends the target-specific #define values for this
 /// target set to the specified buffer.
 void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
+  // If we have no secondary targets, be a bit more efficient.
+  if (SecondaryTargets.empty()) {
+    std::vector<std::string> PrimaryDefines;
+    PrimaryTarget->getTargetDefines(PrimaryDefines);
+
+    for (unsigned i = 0, e = PrimaryDefines.size(); i != e; ++i) {
+      // Always produce a #define.
+      const char *Command = "#define ";
+      Buffer.insert(Buffer.end(), Command, Command+strlen("#define "));
+      
+      const std::string &Val = PrimaryDefines[i];
+      unsigned EqualPos = Val.find('=');
+      if (EqualPos != std::string::npos) {
+        // Insert "defname defvalue\n".
+        Buffer.insert(Buffer.end(), Val.begin(), Val.begin()+EqualPos);
+        Buffer.push_back(' ');
+        Buffer.insert(Buffer.end(), Val.begin()+EqualPos+1, Val.end());
+        Buffer.push_back('\n');
+      } else {
+        // Insert "defname 1\n".
+        Buffer.insert(Buffer.end(), Val.begin(), Val.end());
+        Buffer.push_back(' ');
+        Buffer.push_back('1');
+        Buffer.push_back('\n');
+      }
+    }
+    return;
+  }
+  
   // This is tricky in the face of secondary targets.  Specifically, 
   // target-specific #defines that are present and identical across all
   // secondary targets are turned into #defines, #defines that are present in
@@ -100,27 +129,6 @@ void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
   // Get the set of primary #defines.
   llvm::StringMap<std::string> PrimaryDefines;
   GetTargetDefineMap(PrimaryTarget, PrimaryDefines);
-  
-  // If we have no secondary targets, be a bit more efficient.
-  if (SecondaryTargets.empty()) {
-    for (llvm::StringMap<std::string>::iterator I = 
-           PrimaryDefines.begin(), E = PrimaryDefines.end(); I != E; ++I) {
-      // If this define is non-portable, turn it into #define_target, otherwise
-      // just use #define.
-      const char *Command = "#define ";
-      Buffer.insert(Buffer.end(), Command, Command+strlen(Command));
-      
-      // Insert "defname defvalue\n".
-      const char *KeyStart = I->getKeyData();
-      const char *KeyEnd = KeyStart + I->getKeyLength();
-      
-      Buffer.insert(Buffer.end(), KeyStart, KeyEnd);
-      Buffer.push_back(' ');
-      Buffer.insert(Buffer.end(), I->getValue().begin(), I->getValue().end());
-      Buffer.push_back('\n');
-    }
-    return;
-  }
   
   // Get the sets of secondary #defines.
   llvm::StringMap<std::string> *SecondaryDefines
