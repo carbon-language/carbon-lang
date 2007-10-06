@@ -381,12 +381,13 @@ class ObjcForwardProtocolDecl : public TypeDecl {
   ObjcProtocolDecl **ReferencedProtocols;
   unsigned NumReferencedProtocols;
 public:
-  ObjcForwardProtocolDecl(SourceLocation L, unsigned nElts)
+  ObjcForwardProtocolDecl(SourceLocation L, 
+                          ObjcProtocolDecl **Elts, unsigned nElts)
   : TypeDecl(ObjcForwardProtocol, L, 0, 0) { 
+    NumReferencedProtocols = nElts;
     if (nElts) {
       ReferencedProtocols = new ObjcProtocolDecl*[nElts];
-      memset(ReferencedProtocols, '\0', nElts*sizeof(ObjcProtocolDecl*));
-      NumReferencedProtocols = nElts;
+      memcpy(ReferencedProtocols, Elts, nElts*sizeof(ObjcProtocolDecl*));
     } else {
       ReferencedProtocols = 0;
     }
@@ -406,7 +407,6 @@ public:
     assert(idx < NumReferencedProtocols && "index out of range");
     return ReferencedProtocols[idx];
   }
-  
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcForwardProtocol;

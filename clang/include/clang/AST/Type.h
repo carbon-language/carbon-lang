@@ -326,7 +326,6 @@ private:
   friend class QualType;
 public:
   virtual void getAsStringInternal(std::string &InnerString) const = 0;
-  
   static bool classof(const Type *) { return true; }
 };
 

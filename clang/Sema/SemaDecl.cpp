@@ -1036,13 +1036,12 @@ Sema::ActOnFindProtocolDeclaration(Scope *S,
 Action::DeclTy *
 Sema::ActOnForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
         IdentifierInfo **IdentList, unsigned NumElts) {
-  ObjcForwardProtocolDecl *FDecl = new ObjcForwardProtocolDecl(AtProtocolLoc, 
-                                                               NumElts);
+  llvm::SmallVector<ObjcProtocolDecl*, 32> Protocols;
   
   for (unsigned i = 0; i != NumElts; ++i) {
-    ObjcProtocolDecl *PDecl;
-    PDecl = getObjCProtocolDecl(S, IdentList[i], AtProtocolLoc);
-    if (!PDecl)  {// Already seen?
+    ObjcProtocolDecl *PDecl = getObjCProtocolDecl(S, IdentList[i],
+                                                  AtProtocolLoc);
+    if (!PDecl)  { // Already seen?
       PDecl = new ObjcProtocolDecl(SourceLocation(), 0, IdentList[i], true);
       // Chain & install the protocol decl into the identifier.
       PDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
@@ -1051,9 +1050,10 @@ Sema::ActOnForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
     // Remember that this needs to be removed when the scope is popped.
     S->AddDecl(IdentList[i]);
     
-    FDecl->setForwardProtocolDecl((int)i, PDecl);
+    Protocols.push_back(PDecl);
   }
-  return FDecl;
+  return new ObjcForwardProtocolDecl(AtProtocolLoc,
+                                     &Protocols[0], Protocols.size());
 }
 
 Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
