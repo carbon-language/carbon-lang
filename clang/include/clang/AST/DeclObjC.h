@@ -351,19 +351,21 @@ public:
 /// @class NSCursor, NSImage, NSPasteboard, NSWindow;
 ///
 class ObjcClassDecl : public TypeDecl {
-  ObjcInterfaceDecl **ForwardDecls;   // Null if not defined.
-  int NumForwardDecls;               // -1 if not defined.
+  ObjcInterfaceDecl **ForwardDecls;
+  unsigned NumForwardDecls;
 public:
-  ObjcClassDecl(SourceLocation L, unsigned nElts)
+  ObjcClassDecl(SourceLocation L, ObjcInterfaceDecl **Elts, unsigned nElts)
     : TypeDecl(ObjcClass, L, 0, 0) { 
     if (nElts) {
       ForwardDecls = new ObjcInterfaceDecl*[nElts];
-      memset(ForwardDecls, '\0', nElts*sizeof(ObjcInterfaceDecl*));
+      memcpy(ForwardDecls, Elts, nElts*sizeof(ObjcInterfaceDecl*));
+    } else {
+      ForwardDecls = 0;
     }
     NumForwardDecls = nElts;
   }
-  void setInterfaceDecl(int idx, ObjcInterfaceDecl *OID) {
-    assert((idx < NumForwardDecls) && "index out of range");
+  void setInterfaceDecl(unsigned idx, ObjcInterfaceDecl *OID) {
+    assert(idx < NumForwardDecls && "index out of range");
     ForwardDecls[idx] = OID;
   }
   static bool classof(const Decl *D) {

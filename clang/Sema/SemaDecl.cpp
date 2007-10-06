@@ -1372,12 +1372,11 @@ Action::DeclTy *
 Sema::ActOnForwardClassDeclaration(Scope *S, SourceLocation AtClassLoc,
                                    IdentifierInfo **IdentList, unsigned NumElts) 
 {
-  ObjcClassDecl *CDecl = new ObjcClassDecl(AtClassLoc, NumElts);
-
+  llvm::SmallVector<ObjcInterfaceDecl*, 32> Interfaces;
+  
   for (unsigned i = 0; i != NumElts; ++i) {
-    ObjcInterfaceDecl *IDecl;
-    IDecl = getObjCInterfaceDecl(IdentList[i]); 
-    if (!IDecl)  {// Already seen?
+    ObjcInterfaceDecl *IDecl = getObjCInterfaceDecl(IdentList[i]); 
+    if (!IDecl) {  // Not already seen?  Make a forward decl.
       IDecl = new ObjcInterfaceDecl(SourceLocation(), 0, IdentList[i], true);
       // Chain & install the interface decl into the identifier.
       IDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
@@ -1385,10 +1384,11 @@ Sema::ActOnForwardClassDeclaration(Scope *S, SourceLocation AtClassLoc,
     }
     // Remember that this needs to be removed when the scope is popped.
     S->AddDecl(IdentList[i]);
-    
-    CDecl->setInterfaceDecl((int)i, IDecl);
+
+    Interfaces.push_back(IDecl);
   }
-  return CDecl;
+  
+  return new ObjcClassDecl(AtClassLoc, &Interfaces[0], Interfaces.size());
 }
 
 
