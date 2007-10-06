@@ -68,7 +68,7 @@ LLVMTypeRef LLVMInt16Type() { return (LLVMTypeRef) Type::Int16Ty; }
 LLVMTypeRef LLVMInt32Type() { return (LLVMTypeRef) Type::Int32Ty; }
 LLVMTypeRef LLVMInt64Type() { return (LLVMTypeRef) Type::Int64Ty; }
 
-LLVMTypeRef LLVMCreateIntType(unsigned NumBits) {
+LLVMTypeRef LLVMIntType(unsigned NumBits) {
   return wrap(IntegerType::get(NumBits));
 }
 
@@ -86,9 +86,9 @@ LLVMTypeRef LLVMPPCFP128Type() { return (LLVMTypeRef) Type::PPC_FP128Ty; }
 
 /*--.. Operations on function types ........................................--*/
 
-LLVMTypeRef LLVMCreateFunctionType(LLVMTypeRef ReturnType,
-                           LLVMTypeRef *ParamTypes, unsigned ParamCount,
-                           int IsVarArg) {
+LLVMTypeRef LLVMFunctionType(LLVMTypeRef ReturnType,
+                             LLVMTypeRef *ParamTypes, unsigned ParamCount,
+                             int IsVarArg) {
   std::vector<const Type*> Tys;
   for (LLVMTypeRef *I = ParamTypes, *E = ParamTypes + ParamCount; I != E; ++I)
     Tys.push_back(unwrap(*I));
@@ -117,8 +117,8 @@ void LLVMGetParamTypes(LLVMTypeRef FunctionTy, LLVMTypeRef *Dest) {
 
 /*--.. Operations on struct types ..........................................--*/
 
-LLVMTypeRef LLVMCreateStructType(LLVMTypeRef *ElementTypes,
-                                 unsigned ElementCount, int Packed) {
+LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes,
+                           unsigned ElementCount, int Packed) {
   std::vector<const Type*> Tys;
   for (LLVMTypeRef *I = ElementTypes,
                    *E = ElementTypes + ElementCount; I != E; ++I)
@@ -144,15 +144,15 @@ int LLVMIsPackedStruct(LLVMTypeRef StructTy) {
 
 /*--.. Operations on array, pointer, and vector types (sequence types) .....--*/
 
-LLVMTypeRef LLVMCreateArrayType(LLVMTypeRef ElementType, unsigned ElementCount){
+LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, unsigned ElementCount){
   return wrap(ArrayType::get(unwrap(ElementType), ElementCount));
 }
 
-LLVMTypeRef LLVMCreatePointerType(LLVMTypeRef ElementType) {
+LLVMTypeRef LLVMPointerType(LLVMTypeRef ElementType) {
   return wrap(PointerType::get(unwrap(ElementType)));
 }
 
-LLVMTypeRef LLVMCreateVectorType(LLVMTypeRef ElementType,unsigned ElementCount){
+LLVMTypeRef LLVMVectorType(LLVMTypeRef ElementType,unsigned ElementCount){
   return wrap(VectorType::get(unwrap(ElementType), ElementCount));
 }
 
@@ -173,7 +173,7 @@ unsigned LLVMGetVectorSize(LLVMTypeRef VectorTy) {
 LLVMTypeRef LLVMVoidType()  { return (LLVMTypeRef) Type::VoidTy;  }
 LLVMTypeRef LLVMLabelType() { return (LLVMTypeRef) Type::LabelTy; }
 
-LLVMTypeRef LLVMCreateOpaqueType() {
+LLVMTypeRef LLVMOpaqueType() {
   return wrap(llvm::OpaqueType::get());
 }
 

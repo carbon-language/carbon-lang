@@ -164,7 +164,7 @@ LLVMTypeRef LLVMInt8Type();
 LLVMTypeRef LLVMInt16Type();
 LLVMTypeRef LLVMInt32Type();
 LLVMTypeRef LLVMInt64Type();
-LLVMTypeRef LLVMCreateIntType(unsigned NumBits);
+LLVMTypeRef LLVMIntType(unsigned NumBits);
 unsigned LLVMGetIntTypeWidth(LLVMTypeRef IntegerTy);
 
 /* Operations on real types */
@@ -175,25 +175,25 @@ LLVMTypeRef LLVMFP128Type();
 LLVMTypeRef LLVMPPCFP128Type();
 
 /* Operations on function types */
-LLVMTypeRef LLVMCreateFunctionType(LLVMTypeRef ReturnType,
-                                   LLVMTypeRef *ParamTypes, unsigned ParamCount,
-                                   int IsVarArg);
+LLVMTypeRef LLVMFunctionType(LLVMTypeRef ReturnType,
+                             LLVMTypeRef *ParamTypes, unsigned ParamCount,
+                             int IsVarArg);
 int LLVMIsFunctionVarArg(LLVMTypeRef FunctionTy);
 LLVMTypeRef LLVMGetReturnType(LLVMTypeRef FunctionTy);
 unsigned LLVMCountParamTypes(LLVMTypeRef FunctionTy);
 void LLVMGetParamTypes(LLVMTypeRef FunctionTy, LLVMTypeRef *Dest);
 
 /* Operations on struct types */
-LLVMTypeRef LLVMCreateStructType(LLVMTypeRef *ElementTypes,
-                                 unsigned ElementCount, int Packed);
+LLVMTypeRef LLVMStructType(LLVMTypeRef *ElementTypes, unsigned ElementCount,
+                           int Packed);
 unsigned LLVMCountStructElementTypes(LLVMTypeRef StructTy);
 void LLVMGetStructElementTypes(LLVMTypeRef StructTy, LLVMTypeRef *Dest);
 int LLVMIsPackedStruct(LLVMTypeRef StructTy);
 
 /* Operations on array, pointer, and vector types (sequence types) */
-LLVMTypeRef LLVMCreateArrayType(LLVMTypeRef ElementType, unsigned ElementCount);
-LLVMTypeRef LLVMCreatePointerType(LLVMTypeRef ElementType);
-LLVMTypeRef LLVMCreateVectorType(LLVMTypeRef ElementType,unsigned ElementCount);
+LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, unsigned ElementCount);
+LLVMTypeRef LLVMPointerType(LLVMTypeRef ElementType);
+LLVMTypeRef LLVMVectorType(LLVMTypeRef ElementType, unsigned ElementCount);
 
 LLVMTypeRef LLVMGetElementType(LLVMTypeRef Ty);
 unsigned LLVMGetArrayLength(LLVMTypeRef ArrayTy);
@@ -202,7 +202,7 @@ unsigned LLVMGetVectorSize(LLVMTypeRef VectorTy);
 /* Operations on other types */
 LLVMTypeRef LLVMVoidType();
 LLVMTypeRef LLVMLabelType();
-LLVMTypeRef LLVMCreateOpaqueType();
+LLVMTypeRef LLVMOpaqueType();
 
 
 /*===-- Values ------------------------------------------------------------===*/

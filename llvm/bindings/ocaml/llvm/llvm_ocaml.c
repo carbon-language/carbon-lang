@@ -74,7 +74,7 @@ CAMLprim LLVMTypeRef llvm_i64_type(value Unit) { return LLVMInt64Type(); }
 
 /* int -> lltype */
 CAMLprim LLVMTypeRef llvm_make_integer_type(value Width) {
-  return LLVMCreateIntType(Int_val(Width));
+  return LLVMIntType(Int_val(Width));
 }
 
 /* lltype -> int */
@@ -114,9 +114,9 @@ CAMLprim LLVMTypeRef llvm_ppc_fp128_type(value Unit) {
 /* lltype -> lltype array -> bool -> lltype */
 CAMLprim LLVMTypeRef llvm_make_function_type(LLVMTypeRef RetTy, value ParamTys,
                                              value IsVarArg) {
-  return LLVMCreateFunctionType(RetTy, (LLVMTypeRef *) ParamTys,
-                                Wosize_val(ParamTys),
-                                Bool_val(IsVarArg));
+  return LLVMFunctionType(RetTy, (LLVMTypeRef *) ParamTys,
+                          Wosize_val(ParamTys),
+                          Bool_val(IsVarArg));
 }
 
 /* lltype -> bool */
@@ -140,9 +140,9 @@ CAMLprim value llvm_param_types(LLVMTypeRef FunTy) {
 
 /* lltype array -> bool -> lltype */
 CAMLprim LLVMTypeRef llvm_make_struct_type(value ElementTypes, value Packed) {
-  return LLVMCreateStructType((LLVMTypeRef *) ElementTypes,
-                              Wosize_val(ElementTypes),
-                              Bool_val(Packed));
+  return LLVMStructType((LLVMTypeRef *) ElementTypes,
+                        Wosize_val(ElementTypes),
+                        Bool_val(Packed));
 }
 
 /* lltype -> lltype array */
@@ -161,17 +161,17 @@ CAMLprim value llvm_is_packed(LLVMTypeRef StructTy) {
 
 /* lltype -> int -> lltype */
 CAMLprim LLVMTypeRef llvm_make_array_type(LLVMTypeRef ElementTy, value Count) {
-  return LLVMCreateArrayType(ElementTy, Int_val(Count));
+  return LLVMArrayType(ElementTy, Int_val(Count));
 }
 
 /* lltype -> lltype */
 CAMLprim LLVMTypeRef llvm_make_pointer_type(LLVMTypeRef ElementTy) {
-  return LLVMCreatePointerType(ElementTy);
+  return LLVMPointerType(ElementTy);
 }
 
 /* lltype -> int -> lltype */
 CAMLprim LLVMTypeRef llvm_make_vector_type(LLVMTypeRef ElementTy, value Count) {
-  return LLVMCreateVectorType(ElementTy, Int_val(Count));
+  return LLVMVectorType(ElementTy, Int_val(Count));
 }
 
 /* lltype -> lltype */
@@ -197,7 +197,7 @@ CAMLprim LLVMTypeRef llvm_label_type(value Unit) { return LLVMLabelType(); }
 
 /* unit -> lltype */
 CAMLprim LLVMTypeRef llvm_make_opaque_type(value Unit) {
-  return LLVMCreateOpaqueType();
+  return LLVMOpaqueType();
 }
 
 
