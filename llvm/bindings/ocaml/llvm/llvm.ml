@@ -128,7 +128,7 @@ let i16_type = _i16_type ()
 let i32_type = _i32_type ()
 let i64_type = _i64_type ()
 
-external make_integer_type : int -> lltype = "llvm_make_integer_type"
+external integer_type : int -> lltype = "llvm_integer_type"
 external integer_bitwidth : lltype -> int = "llvm_integer_bitwidth"
 
 (*--... Operations on real types ...........................................--*)
@@ -146,29 +146,30 @@ let ppc_fp128_type = _ppc_fp128_type ()
 
 (*--... Operations on function types .......................................--*)
 (* FIXME: handle parameter attributes *)
-external make_function_type : lltype -> lltype array -> bool -> lltype
-                            = "llvm_make_function_type"
+external function_type : lltype -> lltype array -> lltype = "llvm_function_type"
+external var_arg_function_type : lltype -> lltype array -> lltype
+                               = "llvm_var_arg_function_type"
 external is_var_arg : lltype -> bool = "llvm_is_var_arg"
 external return_type : lltype -> lltype = "llvm_return_type"
 external param_types : lltype -> lltype array = "llvm_param_types"
 
 (*--... Operations on struct types .........................................--*)
-external make_struct_type : lltype array -> bool -> lltype
-                          = "llvm_make_struct_type"
+external struct_type : lltype array -> lltype = "llvm_struct_type"
+external packed_struct_type : lltype array -> lltype = "llvm_packed_struct_type"
 external element_types : lltype -> lltype array = "llvm_element_types"
 external is_packed : lltype -> bool = "llvm_is_packed"
 
 (*--... Operations on pointer, vector, and array types .....................--*)
-external make_array_type : lltype -> int -> lltype = "llvm_make_array_type"
-external make_pointer_type : lltype -> lltype = "llvm_make_pointer_type"
-external make_vector_type : lltype -> int -> lltype = "llvm_make_vector_type"
+external array_type : lltype -> int -> lltype = "llvm_array_type"
+external pointer_type : lltype -> lltype = "llvm_pointer_type"
+external vector_type : lltype -> int -> lltype = "llvm_vector_type"
 
 external element_type : lltype -> lltype = "llvm_element_type"
 external array_length : lltype -> int = "llvm_array_length"
 external vector_size : lltype -> int = "llvm_vector_size"
 
 (*--... Operations on other types ..........................................--*)
-external make_opaque_type : unit -> lltype = "llvm_make_opaque_type"
+external opaque_type : unit -> lltype = "llvm_opaque_type"
 external _void_type : unit -> lltype = "llvm_void_type"
 external _label_type : unit -> lltype = "llvm_label_type"
 

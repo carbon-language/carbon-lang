@@ -73,7 +73,7 @@ CAMLprim LLVMTypeRef llvm_i32_type(value Unit) { return LLVMInt32Type(); }
 CAMLprim LLVMTypeRef llvm_i64_type(value Unit) { return LLVMInt64Type(); }
 
 /* int -> lltype */
-CAMLprim LLVMTypeRef llvm_make_integer_type(value Width) {
+CAMLprim LLVMTypeRef llvm_integer_type(value Width) {
   return LLVMIntType(Int_val(Width));
 }
 
@@ -111,12 +111,17 @@ CAMLprim LLVMTypeRef llvm_ppc_fp128_type(value Unit) {
 
 /*--... Operations on function types .......................................--*/
 
-/* lltype -> lltype array -> bool -> lltype */
-CAMLprim LLVMTypeRef llvm_make_function_type(LLVMTypeRef RetTy, value ParamTys,
-                                             value IsVarArg) {
+/* lltype -> lltype array -> lltype */
+CAMLprim LLVMTypeRef llvm_function_type(LLVMTypeRef RetTy, value ParamTys) {
   return LLVMFunctionType(RetTy, (LLVMTypeRef *) ParamTys,
-                          Wosize_val(ParamTys),
-                          Bool_val(IsVarArg));
+                          Wosize_val(ParamTys), 0);
+}
+
+/* lltype -> lltype array -> lltype */
+CAMLprim LLVMTypeRef llvm_var_arg_function_type(LLVMTypeRef RetTy,
+                                                value ParamTys) {
+  return LLVMFunctionType(RetTy, (LLVMTypeRef *) ParamTys,
+                          Wosize_val(ParamTys), 1);
 }
 
 /* lltype -> bool */
@@ -138,11 +143,16 @@ CAMLprim value llvm_param_types(LLVMTypeRef FunTy) {
 
 /*--... Operations on struct types .........................................--*/
 
-/* lltype array -> bool -> lltype */
-CAMLprim LLVMTypeRef llvm_make_struct_type(value ElementTypes, value Packed) {
+/* lltype array -> lltype */
+CAMLprim LLVMTypeRef llvm_struct_type(value ElementTypes) {
   return LLVMStructType((LLVMTypeRef *) ElementTypes,
-                        Wosize_val(ElementTypes),
-                        Bool_val(Packed));
+                        Wosize_val(ElementTypes), 0);
+}
+
+/* lltype array -> lltype */
+CAMLprim LLVMTypeRef llvm_packed_struct_type(value ElementTypes) {
+  return LLVMStructType((LLVMTypeRef *) ElementTypes,
+                        Wosize_val(ElementTypes), 1);
 }
 
 /* lltype -> lltype array */
@@ -160,17 +170,17 @@ CAMLprim value llvm_is_packed(LLVMTypeRef StructTy) {
 /*--... Operations on array, pointer, and vector types .....................--*/
 
 /* lltype -> int -> lltype */
-CAMLprim LLVMTypeRef llvm_make_array_type(LLVMTypeRef ElementTy, value Count) {
+CAMLprim LLVMTypeRef llvm_array_type(LLVMTypeRef ElementTy, value Count) {
   return LLVMArrayType(ElementTy, Int_val(Count));
 }
 
 /* lltype -> lltype */
-CAMLprim LLVMTypeRef llvm_make_pointer_type(LLVMTypeRef ElementTy) {
+CAMLprim LLVMTypeRef llvm_pointer_type(LLVMTypeRef ElementTy) {
   return LLVMPointerType(ElementTy);
 }
 
 /* lltype -> int -> lltype */
-CAMLprim LLVMTypeRef llvm_make_vector_type(LLVMTypeRef ElementTy, value Count) {
+CAMLprim LLVMTypeRef llvm_vector_type(LLVMTypeRef ElementTy, value Count) {
   return LLVMVectorType(ElementTy, Int_val(Count));
 }
 
@@ -196,7 +206,7 @@ CAMLprim LLVMTypeRef llvm_void_type (value Unit) { return LLVMVoidType();  }
 CAMLprim LLVMTypeRef llvm_label_type(value Unit) { return LLVMLabelType(); }
 
 /* unit -> lltype */
-CAMLprim LLVMTypeRef llvm_make_opaque_type(value Unit) {
+CAMLprim LLVMTypeRef llvm_opaque_type(value Unit) {
   return LLVMOpaqueType();
 }
 

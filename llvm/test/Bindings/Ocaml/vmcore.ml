@@ -61,7 +61,7 @@ let test_types () =
   (* RUN: grep {Ty04.*i42} < %t.ll
    *)
   group "i42";
-  let ty = make_integer_type 42 in
+  let ty = integer_type 42 in
   insist (define_type_name "Ty04" ty m);
 
   (* RUN: grep {Ty05.*float} < %t.ll
@@ -79,7 +79,7 @@ let test_types () =
   (* RUN: grep {Ty07.*i32.*i1, double} < %t.ll
    *)
   group "function";
-  let ty = make_function_type i32_type [| i1_type; double_type |] false in
+  let ty = function_type i32_type [| i1_type; double_type |] in
   insist (define_type_name "Ty07" ty m);
   insist (Function_type = classify_type ty);
   insist (not (is_var_arg ty));
@@ -88,15 +88,15 @@ let test_types () =
   
   (* RUN: grep {Ty08.*\.\.\.} < %t.ll
    *)
-  group "vararg";
-  let ty = make_function_type void_type [| i32_type |] true in
+  group "var arg function";
+  let ty = var_arg_function_type void_type [| i32_type |] in
   insist (define_type_name "Ty08" ty m);
   insist (is_var_arg ty);
   
   (* RUN: grep {Ty09.*\\\[7 x i8\\\]} < %t.ll
    *)
   group "array";
-  let ty = make_array_type i8_type 7 in
+  let ty = array_type i8_type 7 in
   insist (define_type_name "Ty09" ty m);
   insist (7 = array_length ty);
   insist (i8_type == element_type ty);
@@ -105,7 +105,7 @@ let test_types () =
   (* RUN: grep {Ty10.*float\*} < %t.ll
    *)
   group "pointer";
-  let ty = make_pointer_type float_type in
+  let ty = pointer_type float_type in
   insist (define_type_name "Ty10" ty m);
   insist (float_type == element_type ty);
   insist (Pointer_type == classify_type ty);
@@ -113,7 +113,7 @@ let test_types () =
   (* RUN: grep {Ty11.*\<4 x i16\>} < %t.ll
    *)
   group "vector";
-  let ty = make_vector_type i16_type 4 in
+  let ty = vector_type i16_type 4 in
   insist (define_type_name "Ty11" ty m);
   insist (i16_type == element_type ty);
   insist (4 = vector_size ty);
@@ -121,15 +121,15 @@ let test_types () =
   (* RUN: grep {Ty12.*opaque} < %t.ll
    *)
   group "opaque";
-  let ty = make_opaque_type () in
+  let ty = opaque_type () in
   insist (define_type_name "Ty12" ty m);
   insist (ty == ty);
-  insist (ty <> make_opaque_type ());
+  insist (ty <> opaque_type ());
   
   (* RUN: grep -v {Ty13} < %t.ll
    *)
   group "delete";
-  let ty = make_opaque_type () in
+  let ty = opaque_type () in
   insist (define_type_name "Ty13" ty m);
   delete_type_name "Ty13" m
 
@@ -164,14 +164,14 @@ let test_constants () =
   group "string";
   let c = const_string "cruel\000world" in
   ignore (define_global "Const04" c m);
-  insist ((make_array_type i8_type 11) = type_of c);
+  insist ((array_type i8_type 11) = type_of c);
 
   (* RUN: grep {Const05.*"hi\\\\00again\\\\00"} < %t.ll
    *)
   group "stringz";
   let c = const_stringz "hi\000again" in
   ignore (define_global "Const05" c m);
-  insist ((make_array_type i8_type 9) = type_of c);
+  insist ((array_type i8_type 9) = type_of c);
 
   (* RUN: grep {Const06.*3.1459} < %t.ll
    *)
@@ -190,7 +190,7 @@ let test_constants () =
   group "array";
   let c = const_array i32_type [| three; four |] in
   ignore (define_global "Const07" c m);
-  insist ((make_array_type i32_type 2) = (type_of c));
+  insist ((array_type i32_type 2) = (type_of c));
   
   (* RUN: grep {Const08.*< i16 1, i16 2.* >} < %t.ll
    *)
@@ -198,21 +198,21 @@ let test_constants () =
   let c = const_vector [| one; two; one; two;
                           one; two; one; two |] in
   ignore (define_global "Const08" c m);
-  insist ((make_vector_type i16_type 8) = (type_of c));
+  insist ((vector_type i16_type 8) = (type_of c));
   
   (* RUN: grep {Const09.*\{ i16, i16, i32, i32 \} \{} < %t.ll
    *)
   group "structure";
   let c = const_struct [| one; two; three; four |] in
   ignore (define_global "Const09" c m);
-  insist ((make_struct_type [| i16_type; i16_type; i32_type; i32_type |] false)
+  insist ((struct_type [| i16_type; i16_type; i32_type; i32_type |])
         = (type_of c));
   
   (* RUN: grep {Const10.*zeroinit} < %t.ll
    *)
   group "null";
-  let c = const_null (make_struct_type [| i1_type; i8_type;
-                                          i64_type; double_type |] true) in
+  let c = const_null (packed_struct_type [| i1_type; i8_type;
+                                            i64_type; double_type |]) in
   ignore (define_global "Const10" c m);
   
   (* RUN: grep {Const11.*-1} < %t.ll
@@ -247,7 +247,7 @@ let test_constants () =
    * RUN: grep {ConstICmp.*icmp} < %t.ll
    * RUN: grep {ConstFCmp.*fcmp} < %t.ll
    *)
-  let void_ptr = make_pointer_type i8_type in
+  let void_ptr = pointer_type i8_type in
   let five = const_int i64_type 5 in
   let ffive = const_uitofp five double_type in
   let foldbomb_gv = define_global "FoldBomb" (const_null i8_type) m in
@@ -284,7 +284,7 @@ let test_constants () =
    * RUN: grep {ConstIntToPtr.*inttoptr} < %t.ll
    * RUN: grep {ConstBitCast.*bitcast} < %t.ll
    *)
-  let i128_type = make_integer_type 128 in
+  let i128_type = integer_type 128 in
   ignore (define_global "ConstTrunc" (const_trunc (const_add foldbomb five)
                                                i8_type) m);
   ignore (define_global "ConstSExt" (const_sext foldbomb i128_type) m);
@@ -296,7 +296,7 @@ let test_constants () =
   ignore (define_global "ConstFPToUI" (const_fptoui ffoldbomb i32_type) m);
   ignore (define_global "ConstFPToSI" (const_fptosi ffoldbomb i32_type) m);
   ignore (define_global "ConstPtrToInt" (const_ptrtoint 
-    (const_gep (const_null (make_pointer_type i8_type))
+    (const_gep (const_null (pointer_type i8_type))
                [| const_int i32_type 1 |])
     i32_type) m);
   ignore (define_global "ConstIntToPtr" (const_inttoptr (const_add foldbomb five)
@@ -311,7 +311,7 @@ let test_constants () =
    * RUN: grep {ConstInsertElement.*insertelement} < %t.ll
    * RUN: grep {ConstShuffleVector.*shufflevector} < %t.ll
    *)
-  ignore (define_global "ConstSizeOf" (size_of (make_pointer_type i8_type)) m);
+  ignore (define_global "ConstSizeOf" (size_of (pointer_type i8_type)) m);
   ignore (define_global "ConstGEP" (const_gep foldbomb_gv [| five |]) m);
   ignore (define_global "ConstSelect" (const_select
     (const_icmp Icmp_sle foldbomb five)
@@ -328,7 +328,7 @@ let test_constants () =
   ignore (define_global "ConstShuffleVector" (const_shufflevector
     (const_vector [| zero; one |])
     (const_vector [| one; zero |])
-    (const_bitcast foldbomb (make_vector_type i32_type 2))) m)
+    (const_bitcast foldbomb (vector_type i32_type 2))) m)
 
 
 (*===-- Global Values -----------------------------------------------------===*)
@@ -414,8 +414,8 @@ let test_global_variables () =
 (*===-- Functions ---------------------------------------------------------===*)
 
 let test_functions () =
-  let ty = make_function_type i32_type [| i32_type; i64_type |] false in
-  let pty = make_pointer_type ty in
+  let ty = function_type i32_type [| i32_type; i64_type |] in
+  let pty = pointer_type ty in
   
   (* RUN: grep {declare i32 @Fn1\(i32, i64\)} < %t.ll
    *)
@@ -465,7 +465,7 @@ let test_functions () =
 (*===-- Basic Blocks ------------------------------------------------------===*)
 
 let test_basic_blocks () =
-  let ty = make_function_type void_type [| |] false in
+  let ty = function_type void_type [| |] in
   
   (* RUN: grep {Bb1} < %t.ll
    *)
@@ -513,14 +513,14 @@ let test_builder () =
   begin
     (* RUN: grep {ret void} < %t.ll
      *)
-    let fty = make_function_type void_type [| |] false in
+    let fty = function_type void_type [| |] in
     let fn = declare_function "X6" fty m in
     let b = builder_at_end (append_block "Bb01" fn) in
     ignore (build_ret_void b)
   end;
   
   (* The rest of the tests will use one big function. *)
-  let fty = make_function_type i32_type [| i32_type; i32_type |] false in
+  let fty = function_type i32_type [| i32_type; i32_type |] in
   let fn = define_function "X7" fty m in
   let atentry = builder_at_end (entry_block fn) in
   let p1 = param fn 0 ++ set_value_name "P1" in
@@ -647,7 +647,7 @@ let test_builder () =
   end;
   
   group "casts"; begin
-    let void_ptr = make_pointer_type i8_type in
+    let void_ptr = pointer_type i8_type in
     
     (* RUN: grep {Inst28.*trunc.*P1.*i8} < %t.ll
      * RUN: grep {Inst29.*zext.*Inst28.*i32} < %t.ll
@@ -703,7 +703,7 @@ let test_builder () =
     let inst46 = build_icmp Icmp_eq p1 p2 "Inst46" atentry in
          ignore (build_select inst46 p1 p2 "Inst47" atentry);
          ignore (build_va_arg
-                  (const_null (make_pointer_type (make_pointer_type i8_type)))
+                  (const_null (pointer_type (pointer_type i8_type)))
                   i32_type "Inst48" atentry);
     
     (* Set up some vector vregs. *)
