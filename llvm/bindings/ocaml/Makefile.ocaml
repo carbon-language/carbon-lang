@@ -10,6 +10,11 @@
 # An ocaml library is a unique project type in the context of LLVM, so rules are
 # here rather than in Makefile.rules.
 # 
+# Reference materials on installing ocaml libraries:
+# 
+#   https://fedoraproject.org/wiki/Packaging/OCaml
+#   http://pkg-ocaml-maint.alioth.debian.org/ocaml_packaging_policy.txt
+# 
 ##===----------------------------------------------------------------------===##
 
 include $(LEVEL)/Makefile.config
@@ -188,7 +193,6 @@ install-cma:: $(OutputCMA)
 	$(Verb) $(MKDIR) $(PROJ_libocamldir)
 	$(Verb) $(DataInstall) $(OutputCMA) "$(DestCMA)"
 	$(Verb) for i in $(UsedLibNames); do \
-	  $(EchoCmd) "Installing $(BuildMode) $(PROJ_libocamldir)/$$i"; \
 	  ln -sf "$(PROJ_libdir)/$$i" "$(PROJ_libocamldir)/$$i"; \
 	done
 
@@ -196,7 +200,6 @@ uninstall-cma::
 	$(Echo) "Uninstalling $(DestCMA)"
 	-$(Verb) $(RM) -f $(DestCMA)
 	$(Verb) for i in $(UsedLibNames); do \
-	  $(EchoCmd) "Uninstalling $(PROJ_libocamldir)/$$i"; \
 	  $(RM) -f "$(PROJ_libocamldir)/$$i"; \
 	done
 

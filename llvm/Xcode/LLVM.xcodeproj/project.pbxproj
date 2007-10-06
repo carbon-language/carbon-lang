@@ -137,6 +137,11 @@
 		9F7794870C73D51000551F9C /* LLVMBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LLVMBuilder.h; sourceTree = "<group>"; };
 		9F7794880C73D51000551F9C /* MemoryBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MemoryBuffer.h; sourceTree = "<group>"; };
 		9F7794890C73D51000551F9C /* Streams.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Streams.h; sourceTree = "<group>"; };
+		9F7C23E50CB81C2100498408 /* Analysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Analysis.h; sourceTree = "<group>"; };
+		9F7C23E60CB81C2B00498408 /* Analysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Analysis.cpp; sourceTree = "<group>"; };
+		9F7C240C0CB81ECD00498408 /* analysis_ocaml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = analysis_ocaml.c; sourceTree = "<group>"; };
+		9F7C240D0CB81ECD00498408 /* llvm_analysis.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = llvm_analysis.ml; sourceTree = "<group>"; };
+		9F7C240E0CB81ECD00498408 /* llvm_analysis.mli */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = llvm_analysis.mli; sourceTree = "<group>"; };
 		9FA638D90C77B184007F12AE /* AutoUpgrade.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AutoUpgrade.h; sourceTree = "<group>"; };
 		9FA638DA0C77B184007F12AE /* GlobalAlias.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GlobalAlias.h; sourceTree = "<group>"; };
 		9FA638DB0C77B1AB007F12AE /* APInt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = APInt.h; sourceTree = "<group>"; };
@@ -166,7 +171,6 @@
 		9FE25D900CAB166D005383FC /* APFloat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APFloat.h; sourceTree = "<group>"; };
 		9FE25D910CAB166D005383FC /* SparseBitVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SparseBitVector.h; sourceTree = "<group>"; };
 		9FE25D920CAB169F005383FC /* RegisterCoalescer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterCoalescer.h; sourceTree = "<group>"; };
-		9FE25D930CAB16D8005383FC /* PostDominatorCalculation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PostDominatorCalculation.h; sourceTree = "<group>"; };
 		9FE25D940CAB16FB005383FC /* RegisterCoalescer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterCoalescer.cpp; sourceTree = "<group>"; };
 		9FE25D950CAB1724005383FC /* APFloat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = APFloat.cpp; sourceTree = "<group>"; };
 		9FE25D960CAB1759005383FC /* TargetCallingConv.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = TargetCallingConv.td; sourceTree = "<group>"; };
@@ -1156,6 +1160,16 @@
 			path = MSIL;
 			sourceTree = "<group>";
 		};
+		9F7C240B0CB81ECD00498408 /* analysis */ = {
+			isa = PBXGroup;
+			children = (
+				9F7C240C0CB81ECD00498408 /* analysis_ocaml.c */,
+				9F7C240D0CB81ECD00498408 /* llvm_analysis.ml */,
+				9F7C240E0CB81ECD00498408 /* llvm_analysis.mli */,
+			);
+			path = analysis;
+			sourceTree = "<group>";
+		};
 		9FA638E90C77B252007F12AE /* IPO */ = {
 			isa = PBXGroup;
 			children = (
@@ -1176,6 +1190,7 @@
 		9FD3E56F0CA0116100E54D15 /* ocaml */ = {
 			isa = PBXGroup;
 			children = (
+				9F7C240B0CB81ECD00498408 /* analysis */,
 				9FD3E5700CA0116100E54D15 /* bitwriter */,
 				9FD3E57A0CA0116100E54D15 /* llvm */,
 			);
@@ -1217,6 +1232,7 @@
 		CF8F1B480B64F7AB00BB4199 /* include/llvm-c */ = {
 			isa = PBXGroup;
 			children = (
+				9F7C23E50CB81C2100498408 /* Analysis.h */,
 				9FD3E58D0CA0125F00E54D15 /* BitWriter.h */,
 				9FD3E58E0CA0125F00E54D15 /* Core.h */,
 				CF8F1B490B64F7AB00BB4199 /* LinkTimeOptimizer.h */,
@@ -1381,15 +1397,13 @@
 		DE66ECBD08ABEC0700323D32 /* lib/Analysis */ = {
 			isa = PBXGroup;
 			children = (
-				9FE25D930CAB16D8005383FC /* PostDominatorCalculation.h */,
-				9F68EB010C77AD02004AA152 /* LoopPass.cpp */,
-				9F68EB020C77AD02004AA152 /* MemoryDependenceAnalysis.cpp */,
 				DE66ED1A08ABEC0800323D32 /* IPA */,
 				DE66ECBE08ABEC0700323D32 /* AliasAnalysis.cpp */,
 				DE66ECBF08ABEC0700323D32 /* AliasAnalysisCounter.cpp */,
 				DE66ECC008ABEC0700323D32 /* AliasAnalysisEvaluator.cpp */,
 				CF8F1B4D0B64F80700BB4199 /* AliasDebugger.cpp */,
 				DE66ECC108ABEC0700323D32 /* AliasSetTracker.cpp */,
+				9F7C23E60CB81C2B00498408 /* Analysis.cpp */,
 				DE66ECC208ABEC0700323D32 /* BasicAliasAnalysis.cpp */,
 				DE66ECC308ABEC0700323D32 /* CFGPrinter.cpp */,
 				CF73C0B0098A523C00627152 /* ConstantFolding.cpp */,
@@ -1398,6 +1412,8 @@
 				DE66ED1908ABEC0800323D32 /* IntervalPartition.cpp */,
 				DE66ED3308ABEC0800323D32 /* LoadValueNumbering.cpp */,
 				DE66ED3408ABEC0800323D32 /* LoopInfo.cpp */,
+				9F68EB010C77AD02004AA152 /* LoopPass.cpp */,
+				9F68EB020C77AD02004AA152 /* MemoryDependenceAnalysis.cpp */,
 				DE66ED3608ABEC0800323D32 /* PostDominators.cpp */,
 				DE66ED3708ABEC0800323D32 /* ProfileInfo.cpp */,
 				DE66ED3808ABEC0800323D32 /* ProfileInfoLoader.cpp */,

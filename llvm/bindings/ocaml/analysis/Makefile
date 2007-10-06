@@ -1,4 +1,4 @@
-##===- bindings/ocaml/bitwriter/Makefile -------------------*- Makefile -*-===##
+##===- bindings/ocaml/analysis/Makefile --------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,14 +7,14 @@
 # 
 ##===----------------------------------------------------------------------===##
 # 
-# This is the makefile for the Objective Caml Llvm interface.
+# This is the makefile for the Objective Caml Llvm_analysis interface.
 # 
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../../..
-LIBRARYNAME := llvm
+LIBRARYNAME := llvm_analysis
 DONT_BUILD_RELINKED := 1
-UsedComponents := core
-UsedOcamLibs := llvm
+UsedComponents := analysis
+UsedOcamlInterfaces := llvm
 
 include ../Makefile.ocaml

@@ -1,17 +1,13 @@
-##===- bindings/ocaml/llvm/Makefile ------------------------*- Makefile -*-===##
+##===- bindings/ocaml/bitwriter/Makefile -------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
-# This file was developed by the LLVM research group and is distributed under
-# the University of Illinois Open Source License. See LICENSE.TXT for details.
+# This file was developed by Gordon Henriksen and is distributed under the
+# University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
 # 
-# This is the makefile for the llvm-ml interface. Reference materials on
-# installing ocaml libraries:
-# 
-#   https://fedoraproject.org/wiki/Packaging/OCaml
-#   http://pkg-ocaml-maint.alioth.debian.org/ocaml_packaging_policy.txt
+# This is the makefile for the Objective Caml Llvm_bitwriter interface.
 # 
 ##===----------------------------------------------------------------------===##
 

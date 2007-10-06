@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../..
-DIRS = llvm bitwriter
+DIRS = llvm bitwriter analysis
 
 include $(LEVEL)/Makefile.common
