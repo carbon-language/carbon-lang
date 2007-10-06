@@ -263,6 +263,7 @@ namespace {
     SDOperand visitLOAD(SDNode *N);
     SDOperand visitSTORE(SDNode *N);
     SDOperand visitINSERT_VECTOR_ELT(SDNode *N);
+    SDOperand visitEXTRACT_VECTOR_ELT(SDNode *N);
     SDOperand visitBUILD_VECTOR(SDNode *N);
     SDOperand visitCONCAT_VECTORS(SDNode *N);
     SDOperand visitVECTOR_SHUFFLE(SDNode *N);
@@ -682,6 +683,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::LOAD:               return visitLOAD(N);
   case ISD::STORE:              return visitSTORE(N);
   case ISD::INSERT_VECTOR_ELT:  return visitINSERT_VECTOR_ELT(N);
+  case ISD::EXTRACT_VECTOR_ELT: return visitEXTRACT_VECTOR_ELT(N);
   case ISD::BUILD_VECTOR:       return visitBUILD_VECTOR(N);
   case ISD::CONCAT_VECTORS:     return visitCONCAT_VECTORS(N);
   case ISD::VECTOR_SHUFFLE:     return visitVECTOR_SHUFFLE(N);
@@ -2907,9 +2909,8 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
     return DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
 
   // fold (conv (load x)) -> (load (conv*)x)
-  // If the resultant load doesn't need a  higher alignment than the original!
-  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
-      ISD::isUNINDEXEDLoad(N0.Val) &&
+  // If the resultant load doesn't need a higher alignment than the original!
+  if (ISD::isNormalLoad(N0.Val) && N0.hasOneUse() &&
       TLI.isOperationLegal(ISD::LOAD, VT)) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     unsigned Align = TLI.getTargetMachine().getTargetData()->
@@ -3900,6 +3901,54 @@ SDOperand DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
   
   return SDOperand();
 }
+
+SDOperand DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
+  SDOperand InVec = N->getOperand(0);
+  SDOperand EltNo = N->getOperand(1);
+
+  // (vextract (v4f32 s2v (f32 load $addr)), 0) -> (f32 load $addr)
+  // (vextract (v4i32 bc (v4f32 s2v (f32 load $addr))), 0) -> (i32 load $addr)
+  if (isa<ConstantSDNode>(EltNo)) {
+    unsigned Elt = cast<ConstantSDNode>(EltNo)->getValue();
+    bool NewLoad = false;
+    if (Elt == 0) {
+      MVT::ValueType VT = InVec.getValueType();
+      MVT::ValueType EVT = MVT::getVectorElementType(VT);
+      MVT::ValueType LVT = EVT;
+      unsigned NumElts = MVT::getVectorNumElements(VT);
+      if (InVec.getOpcode() == ISD::BIT_CONVERT) {
+        MVT::ValueType BCVT = InVec.getOperand(0).getValueType();
+        if (NumElts != MVT::getVectorNumElements(BCVT))
+          return SDOperand();
+        InVec = InVec.getOperand(0);
+        EVT = MVT::getVectorElementType(BCVT);
+        NewLoad = true;
+      }
+      if (InVec.getOpcode() == ISD::SCALAR_TO_VECTOR &&
+          InVec.getOperand(0).getValueType() == EVT &&
+          ISD::isNormalLoad(InVec.getOperand(0).Val) &&
+          InVec.getOperand(0).hasOneUse()) {
+        LoadSDNode *LN0 = cast<LoadSDNode>(InVec.getOperand(0));
+        unsigned Align = LN0->getAlignment();
+        if (NewLoad) {
+          // Check the resultant load doesn't need a higher alignment than the
+          // original load.
+          unsigned NewAlign = TLI.getTargetMachine().getTargetData()->
+            getABITypeAlignment(MVT::getTypeForValueType(LVT));
+          if (!TLI.isOperationLegal(ISD::LOAD, LVT) || NewAlign > Align)
+            return SDOperand();
+          Align = NewAlign;
+        }
+
+        return DAG.getLoad(LVT, LN0->getChain(), LN0->getBasePtr(),
+                           LN0->getSrcValue(), LN0->getSrcValueOffset(),
+                           LN0->isVolatile(), Align);
+      }
+    }
+  }
+  return SDOperand();
+}
+  
 
 SDOperand DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   unsigned NumInScalars = N->getNumOperands();
