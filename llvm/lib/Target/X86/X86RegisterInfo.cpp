@@ -1477,6 +1477,29 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
   }
 }
 
+// mergeSPUpdatesUp - Merge two stack-manipulating instructions upper iterator.
+static
+void mergeSPUpdatesUp(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
+                      unsigned StackPtr, uint64_t *NumBytes = NULL) {
+  if (MBBI != MBB.begin()) {
+    MachineBasicBlock::iterator PI = prior(MBBI);
+    unsigned Opc = PI->getOpcode();
+    if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
+         Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
+        PI->getOperand(0).getReg() == StackPtr) {
+      if (NumBytes)
+        *NumBytes += PI->getOperand(2).getImm();
+      MBB.erase(PI);
+    } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
+                Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
+               PI->getOperand(0).getReg() == StackPtr) {
+      if (NumBytes)
+        *NumBytes -= PI->getOperand(2).getImm();
+      MBB.erase(PI);
+    }
+  }
+}
+
 void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -1562,26 +1585,10 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
         MBB.insert(MBBI, MI);
       }
     } else {
-      // If there is an ADD32ri or SUB32ri of ESP immediately after this
+      // If there is an ADD32ri or SUB32ri of ESP immediately before this
       // instruction, merge the two instructions.
-      if (MBBI != MBB.end()) {
-        MachineBasicBlock::iterator NI = next(MBBI);
-        unsigned Opc = MBBI->getOpcode();
-        if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
-             Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
-            MBBI->getOperand(0).getReg() == StackPtr) {
-          NumBytes -= MBBI->getOperand(2).getImm();
-          MBB.erase(MBBI);
-          MBBI = NI;
-        } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
-                    Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
-                   MBBI->getOperand(0).getReg() == StackPtr) {
-          NumBytes += MBBI->getOperand(2).getImm();
-          MBB.erase(MBBI);
-          MBBI = NI;
-        }
-      }
-
+      mergeSPUpdatesUp(MBB, MBBI, StackPtr, &NumBytes);
+      
       if (NumBytes)
         emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit, TII);
     }
@@ -1702,31 +1709,15 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     --MBBI;
   }
 
-  if (NumBytes || MFI->hasVarSizedObjects()) {
-    // If there is an ADD32ri or SUB32ri of ESP immediately before this
-    // instruction, merge the two instructions.
-    if (MBBI != MBB.begin()) {
-      MachineBasicBlock::iterator PI = prior(MBBI);
-      unsigned Opc = PI->getOpcode();
-      if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
-           Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
-          PI->getOperand(0).getReg() == StackPtr) {
-        NumBytes += PI->getOperand(2).getImm();
-        MBB.erase(PI);
-      } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
-                  Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
-                 PI->getOperand(0).getReg() == StackPtr) {
-        NumBytes -= PI->getOperand(2).getImm();
-        MBB.erase(PI);
-      }
-    }
-  }
+  // If there is an ADD32ri or SUB32ri of ESP immediately before this
+  // instruction, merge the two instructions.
+  if (NumBytes || MFI->hasVarSizedObjects())
+    mergeSPUpdatesUp(MBB, MBBI, StackPtr, &NumBytes);
 
-  // If dynamic alloca is used, then reset esp to point to the last
-  // callee-saved slot before popping them off!
-  // Also, if it's main() on Cygwin/Mingw32 we aligned stack in the prologue, - revert
-  // stack changes back. Note: we're assuming, that frame pointer was forced
-  // for main()
+  // If dynamic alloca is used, then reset esp to point to the last callee-saved
+  // slot before popping them off!  Also, if it's main() on Cygwin/Mingw32 we
+  // aligned stack in the prologue, - revert stack changes back. Note: we're
+  // assuming, that frame pointer was forced for main()
   if (MFI->hasVarSizedObjects() ||
       (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
        Subtarget->isTargetCygMing())) {
