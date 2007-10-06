@@ -1651,6 +1651,16 @@ struct ilist_traits<SDNode> {
 };
 
 namespace ISD {
+  /// isNormalLoad - Returns true if the specified node is a non-extending
+  /// and unindexed load.
+  inline bool isNormalLoad(const SDNode *N) {
+    if (N->getOpcode() != ISD::LOAD)
+      return false;
+    const LoadSDNode *Ld = cast<LoadSDNode>(N);
+    return Ld->getExtensionType() == ISD::NON_EXTLOAD &&
+      Ld->getAddressingMode() == ISD::UNINDEXED;
+  }
+
   /// isNON_EXTLoad - Returns true if the specified node is a non-extending
   /// load.
   inline bool isNON_EXTLoad(const SDNode *N) {
