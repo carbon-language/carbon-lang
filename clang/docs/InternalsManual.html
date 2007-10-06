@@ -310,13 +310,13 @@ and represent it in the AST perfectly, but the semantics of operations need to
 
 <code>
 void func() {<br>
-  typedef int foo;<br>
-  foo X, *Y;<br>
-  typedef foo* bar;<br>
-  bar Z;<br>
-  *X;   <i>// error</i><br>
-  **Y;  <i>// error</i><br>
-  **Z;  <i>// error</i><br>
+&nbsp;&nbsp;typedef int foo;<br>
+&nbsp;&nbsp;foo X, *Y;<br>
+&nbsp;&nbsp;typedef foo* bar;<br>
+&nbsp;&nbsp;bar Z;<br>
+&nbsp;&nbsp;*X;   <i>// error</i><br>
+&nbsp;&nbsp;**Y;  <i>// error</i><br>
+&nbsp;&nbsp;**Z;  <i>// error</i><br>
 }<br>
 </code>
 
