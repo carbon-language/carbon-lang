@@ -29,6 +29,7 @@
 #ifndef LLVM_PASS_H
 #define LLVM_PASS_H
 
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
 #include <vector>
 #include <deque>
