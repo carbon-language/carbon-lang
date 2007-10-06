@@ -220,20 +220,17 @@ private:
   /// List of attributes for this method declaration.
   AttributeList *MethodAttrs;
   
-  /// Loc - location of this declaration.
-  SourceLocation Loc;
-
 public:
   ObjcMethodDecl(SourceLocation L, Selector SelInfo, QualType T,
                  ParmVarDecl **paramInfo = 0, int numParams=-1,
                  AttributeList *M = 0, bool isInstance = true,
                  ImplementationControl impControl = None,
                  Decl *PrevDecl = 0)
-    : Decl(ObjcMethod),
+    : Decl(ObjcMethod, L),
       IsInstance(isInstance), DeclImplementation(impControl),
       SelName(SelInfo), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
-      MethodAttrs(M), Loc(L) {}
+      MethodAttrs(M) {}
   virtual ~ObjcMethodDecl();
   Selector getSelector() const { return SelName; }
   QualType getMethodType() const { return MethodDeclType; }
@@ -251,7 +248,6 @@ public:
   void setMethodParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
 
   AttributeList *getMethodAttrs() const {return MethodAttrs;}
-  SourceLocation getLocation() const { return Loc; }
   bool isInstance() const { return IsInstance; }
   // Related to protocols declared in  @protocol
   void setDeclImplementation(ImplementationControl ic)
@@ -455,17 +451,14 @@ class ObjcCategoryDecl : public Decl {
   /// Next category belonging to this class
   ObjcCategoryDecl *NextClassCategory;
   
-  /// Location of cetagory declaration
-  SourceLocation CatLoc;
-
 public:
   ObjcCategoryDecl(SourceLocation L, unsigned numRefProtocol)
-    : Decl(ObjcCategory),
+    : Decl(ObjcCategory, L),
       ClassInterface(0), ObjcCatName(0),
       ReferencedProtocols(0), NumReferencedProtocols(-1),
       InstanceMethods(0), NumInstanceMethods(-1),
       ClassMethods(0), NumClassMethods(-1),
-      NextClassCategory(0), CatLoc(L) {
+      NextClassCategory(0) {
         if (numRefProtocol) {
           ReferencedProtocols = new ObjcProtocolDecl*[numRefProtocol];
           memset(ReferencedProtocols, '\0', 
@@ -505,8 +498,6 @@ public:
     ClassInterface->setListCategories(this);
   }
   
-  SourceLocation getLocation() const { return CatLoc; }
-  
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcCategory;
   }
@@ -530,17 +521,15 @@ class ObjcCategoryImplDecl : public Decl {
   ObjcMethodDecl **ClassMethods; // Null if category is not implementing any
   int NumClassMethods;  // -1 if category is not implementing any
   
-  SourceLocation Loc;
-  
   public:
     ObjcCategoryImplDecl(SourceLocation L, IdentifierInfo *Id,
                          ObjcInterfaceDecl *classInterface,
                          IdentifierInfo *catName)
-    : Decl(ObjcCategoryImpl),
+    : Decl(ObjcCategoryImpl, L),
     ClassInterface(classInterface),
     ObjcCatName(catName),
     InstanceMethods(0), NumInstanceMethods(-1),
-    ClassMethods(0), NumClassMethods(-1), Loc(L) {}
+    ClassMethods(0), NumClassMethods(-1) {}
         
     ObjcInterfaceDecl *getClassInterface() const { 
       return ClassInterface; 
@@ -557,8 +546,6 @@ class ObjcCategoryImplDecl : public Decl {
   void ObjcAddCatImplMethods(
         ObjcMethodDecl **insMethods, unsigned numInsMembers,
         ObjcMethodDecl **clsMethods, unsigned numClsMembers);
-  
-  SourceLocation getLocation() const { return Loc; }
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcCategoryImpl;

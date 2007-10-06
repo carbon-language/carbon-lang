@@ -54,6 +54,9 @@ public:
   };
   
 private:
+  /// Loc - The location that this decl.
+  SourceLocation Loc;
+
   /// DeclKind - This indicates which class this is.
   Kind DeclKind   :  8;
   
@@ -61,14 +64,16 @@ private:
   unsigned int InvalidDecl :  1;
   
 protected:
-  Decl(Kind DK) : DeclKind(DK), InvalidDecl(0) {
+  Decl(Kind DK, SourceLocation L) : Loc(L), DeclKind(DK), InvalidDecl(0) {
     if (Decl::CollectingStats()) addDeclKind(DK);
   }
   
   virtual ~Decl();
   
 public:
-  
+  SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
+
   Kind getKind() const { return DeclKind; }
   const char *getDeclKindName() const;
   
@@ -113,9 +118,6 @@ class ScopedDecl : public Decl {
   /// variable, the tag for a struct).
   IdentifierInfo *Identifier;
   
-  /// Loc - The location that this decl.
-  SourceLocation Loc;
-  
   /// NextDeclarator - If this decl was part of a multi-declarator declaration,
   /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
   ScopedDecl *NextDeclarator;
@@ -127,11 +129,9 @@ class ScopedDecl : public Decl {
   ScopedDecl *Next;
 protected:
   ScopedDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, ScopedDecl *PrevDecl) 
-    : Decl(DK), Identifier(Id), Loc(L), NextDeclarator(PrevDecl), Next(0) {}
+    : Decl(DK, L), Identifier(Id), NextDeclarator(PrevDecl), Next(0) {}
 public:
   IdentifierInfo *getIdentifier() const { return Identifier; }
-  SourceLocation getLocation() const { return Loc; }
-  void setLocation(SourceLocation L) { Loc = L; }
   const char *getName() const;
 
   ScopedDecl *getNext() const { return Next; }
@@ -329,20 +329,15 @@ class FieldDecl : public Decl {
   /// Identifier - The identifier for this declaration (e.g. the name for the
   /// variable, the tag for a struct).
   IdentifierInfo *Identifier;
-  
-  /// Loc - The location that this decl.
-  SourceLocation Loc;
 
   QualType DeclType;  
 public:
   FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
-    : Decl(Field), Identifier(Id), Loc(L), DeclType(T) {}
+    : Decl(Field, L), Identifier(Id), DeclType(T) {}
   FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T) 
-    : Decl(DK), Identifier(Id), Loc(L), DeclType(T) {}
+    : Decl(DK, L), Identifier(Id), DeclType(T) {}
 
   IdentifierInfo *getIdentifier() const { return Identifier; }
-  SourceLocation getLocation() const { return Loc; }
-  void setLocation(SourceLocation L) { Loc = L; }
   const char *getName() const;
 
   QualType getType() const { return DeclType; }
