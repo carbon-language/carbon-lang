@@ -92,10 +92,27 @@ namespace {
         }
       } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
         PrintTypeDefDecl(TD);
-      } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
-        PrintObjcInterfaceDecl(OID);
       } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
         fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
+      } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
+        PrintObjcInterfaceDecl(OID);
+      } else if (ObjcForwardProtocolDecl *OFPD = 
+                     dyn_cast<ObjcForwardProtocolDecl>(D)) {
+        fprintf(stderr, "@protocol ");
+        for (unsigned i = 0, e = OFPD->getNumForwardDecls(); i != e; ++i) {
+          const ObjcProtocolDecl *D = OFPD->getForwardProtocolDecl(i);
+          if (i) fprintf(stderr, ", ");
+          fprintf(stderr, "%s", D->getName());
+        }
+        fprintf(stderr, "\n");
+      } else if (ObjcImplementationDecl *OID = 
+                   dyn_cast<ObjcImplementationDecl>(D)) {
+        fprintf(stderr, "@implementation %s  [printing todo]\n",
+                OID->getName());
+      } else if (isa<ObjcClassDecl>(D)) {
+        fprintf(stderr, "@class [printing todo]\n");
+      } else {
+        assert(0 && "Unknown decl type!");
       }
     }
   };
@@ -124,6 +141,12 @@ namespace {
         PrintTypeDefDecl(TD);
       } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
         fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
+      } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
+        fprintf(stderr, "Read objc interface '%s'\n", OID->getName());
+      } else if (isa<ObjcForwardProtocolDecl>(D)) {
+        fprintf(stderr, "Read objc fwd protocol decl\n");
+      } else {
+        assert(0 && "Unknown decl type!");
       }
     }
   };

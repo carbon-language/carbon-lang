@@ -378,8 +378,8 @@ public:
 /// @protocol NSTextInput, NSChangeSpelling, NSDraggingInfo;
 /// 
 class ObjcForwardProtocolDecl : public TypeDecl {
-  ObjcProtocolDecl **ReferencedProtocols;   // Null if not defined.
-  int NumReferencedProtocols;               // -1 if not defined.
+  ObjcProtocolDecl **ReferencedProtocols;
+  unsigned NumReferencedProtocols;
 public:
   ObjcForwardProtocolDecl(SourceLocation L, unsigned nElts)
   : TypeDecl(ObjcForwardProtocol, L, 0, 0) { 
@@ -387,12 +387,27 @@ public:
       ReferencedProtocols = new ObjcProtocolDecl*[nElts];
       memset(ReferencedProtocols, '\0', nElts*sizeof(ObjcProtocolDecl*));
       NumReferencedProtocols = nElts;
+    } else {
+      ReferencedProtocols = 0;
     }
   }
-  void setForwardProtocolDecl(int idx, ObjcProtocolDecl *OID) {
-    assert((idx < NumReferencedProtocols) && "index out of range");
+  void setForwardProtocolDecl(unsigned idx, ObjcProtocolDecl *OID) {
+    assert(idx < NumReferencedProtocols && "index out of range");
     ReferencedProtocols[idx] = OID;
   }
+  
+  unsigned getNumForwardDecls() const { return NumReferencedProtocols; }
+  
+  ObjcProtocolDecl *getForwardProtocolDecl(unsigned idx) {
+    assert(idx < NumReferencedProtocols && "index out of range");
+    return ReferencedProtocols[idx];
+  }
+  const ObjcProtocolDecl *getForwardProtocolDecl(unsigned idx) const {
+    assert(idx < NumReferencedProtocols && "index out of range");
+    return ReferencedProtocols[idx];
+  }
+  
+  
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcForwardProtocol;
   }
@@ -581,7 +596,7 @@ class ObjcImplementationDecl : public TypeDecl {
   ObjcMethodDecl **ClassMethods;  // Null if not defined
   int NumClassMethods;  // -1 if not defined
     
-  public:
+public:
   ObjcImplementationDecl(SourceLocation L, IdentifierInfo *Id,
                          ObjcInterfaceDecl* superDecl)
     : TypeDecl(ObjcImplementation, L, Id, 0),
