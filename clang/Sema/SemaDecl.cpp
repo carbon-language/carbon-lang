@@ -1107,8 +1107,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryImplementation(Scope* S,
                       IdentifierInfo *CatName, SourceLocation CatLoc) {
   ObjcInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
   ObjcCategoryImplDecl *CDecl = new ObjcCategoryImplDecl(AtCatImplLoc, 
-                                                         ClassName, IDecl,
-                                                         CatName);
+                                                         CatName, IDecl);
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl())
     Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
@@ -1809,7 +1808,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
     if (IDecl) {
       for (ObjcCategoryDecl *Categories = IDecl->getListCategories();
            Categories; Categories = Categories->getNextClassCategory()) {
-        if (Categories->getIdentifier() == CatImplClass->getObjcCatName()) {
+        if (Categories->getIdentifier() == CatImplClass->getIdentifier()) {
           ImplCategoryMethodsVsIntfMethods(CatImplClass, Categories);
           break;
         }

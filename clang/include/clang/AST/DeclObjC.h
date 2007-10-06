@@ -499,13 +499,10 @@ public:
 
 /// ObjcCategoryImplDecl - An object of this class encapsulates a category 
 /// @implementation declaration.
-class ObjcCategoryImplDecl : public Decl {
+class ObjcCategoryImplDecl : public NamedDecl {
   /// Class interface for this category implementation
   ObjcInterfaceDecl *ClassInterface;
 
-  /// Category name
-  IdentifierInfo *ObjcCatName;
-      
   /// category instance methods being implemented
   ObjcMethodDecl **InstanceMethods; // Null if category is not implementing any
   int NumInstanceMethods;           // -1 if category is not implementing any
@@ -516,19 +513,15 @@ class ObjcCategoryImplDecl : public Decl {
   
   public:
     ObjcCategoryImplDecl(SourceLocation L, IdentifierInfo *Id,
-                         ObjcInterfaceDecl *classInterface,
-                         IdentifierInfo *catName)
-    : Decl(ObjcCategoryImpl, L),
+                         ObjcInterfaceDecl *classInterface)
+    : NamedDecl(ObjcCategoryImpl, L, Id),
     ClassInterface(classInterface),
-    ObjcCatName(catName),
     InstanceMethods(0), NumInstanceMethods(-1),
     ClassMethods(0), NumClassMethods(-1) {}
         
     ObjcInterfaceDecl *getClassInterface() const { 
       return ClassInterface; 
     }
-  
-  IdentifierInfo *getObjcCatName() const { return ObjcCatName; }
   
   ObjcMethodDecl **getInstanceMethods() const { return InstanceMethods; }
   int getNumInstanceMethods() const { return NumInstanceMethods; }
