@@ -1913,19 +1913,18 @@ APFloat::convertF80LongDoubleAPFloatToAPInt() const
   } else if (category==fcInfinity) {
     myexponent = 0x7fff;
     mysignificand = 0x8000000000000000ULL;
-  } else if (category==fcNaN) {
+  } else {
+    assert(category == fcNaN && "Unknown category");
     myexponent = 0x7fff;
     mysignificand = significandParts()[0];
-  } else
-    assert(0);
+  }
 
   uint64_t words[2];
   words[0] =  (((uint64_t)sign & 1) << 63) |
               ((myexponent & 0x7fff) <<  48) |
               ((mysignificand >>16) & 0xffffffffffffLL);
   words[1] = mysignificand & 0xffff;
-  APInt api(80, 2, words);
-  return api;
+  return APInt(80, 2, words);
 }
 
 APInt
@@ -1947,16 +1946,15 @@ APFloat::convertDoubleAPFloatToAPInt() const
   } else if (category==fcInfinity) {
     myexponent = 0x7ff;
     mysignificand = 0;
-  } else if (category==fcNaN) {
+  } else {
+    assert(category == fcNaN && "Unknown category!");
     myexponent = 0x7ff;
     mysignificand = *significandParts();
-  } else
-    assert(0);
+  }
 
-  APInt api(64, (((((uint64_t)sign & 1) << 63) |
-                 ((myexponent & 0x7ff) <<  52) |
-                 (mysignificand & 0xfffffffffffffLL))));
-  return api;
+  return APInt(64, (((((uint64_t)sign & 1) << 63) |
+                     ((myexponent & 0x7ff) <<  52) |
+                     (mysignificand & 0xfffffffffffffLL))));
 }
 
 APInt
@@ -1978,15 +1976,14 @@ APFloat::convertFloatAPFloatToAPInt() const
   } else if (category==fcInfinity) {
     myexponent = 0xff;
     mysignificand = 0;
-  } else if (category==fcNaN) {
+  } else {
+    assert(category == fcNaN && "Unknown category!");
     myexponent = 0xff;
     mysignificand = *significandParts();
-  } else
-    assert(0);
+  }
 
-  APInt api(32, (((sign&1) << 31) | ((myexponent&0xff) << 23) |
-                 (mysignificand & 0x7fffff)));
-  return api;
+  return APInt(32, (((sign&1) << 31) | ((myexponent&0xff) << 23) |
+                    (mysignificand & 0x7fffff)));
 }
 
 APInt
@@ -1994,13 +1991,13 @@ APFloat::convertToAPInt() const
 {
   if (semantics == (const llvm::fltSemantics* const)&IEEEsingle)
     return convertFloatAPFloatToAPInt();
-  else if (semantics == (const llvm::fltSemantics* const)&IEEEdouble)
+  
+  if (semantics == (const llvm::fltSemantics* const)&IEEEdouble)
     return convertDoubleAPFloatToAPInt();
-  else if (semantics == (const llvm::fltSemantics* const)&x87DoubleExtended)
-    return convertF80LongDoubleAPFloatToAPInt();
 
-  assert(0);
-  abort();
+  assert(semantics == (const llvm::fltSemantics* const)&x87DoubleExtended &&
+         "unknown format!");
+  return convertF80LongDoubleAPFloatToAPInt();
 }
 
 float
