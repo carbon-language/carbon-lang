@@ -1114,10 +1114,12 @@ public:
   static int tcMultiply(integerPart *, const integerPart *,
 			const integerPart *, unsigned);
 
-  /// DST = LHS * RHS, where DST has twice the width as the operands.
-  /// No overflow occurs.  DST must be disjoint from both operands.
-  static void tcFullMultiply(integerPart *, const integerPart *,
-			     const integerPart *, unsigned);
+  /// DST = LHS * RHS, where DST has width the sum of the widths of
+  /// the operands.  No overflow occurs.  DST must be disjoint from
+  /// both operands. Returns the number of parts required to hold the
+  /// result.
+  static unsigned int tcFullMultiply(integerPart *, const integerPart *,
+				     const integerPart *, unsigned, unsigned);
 
   /// If RHS is zero LHS and REMAINDER are left unchanged, return one.
   /// Otherwise set LHS to LHS / RHS with the fractional part

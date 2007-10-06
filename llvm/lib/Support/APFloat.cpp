@@ -519,7 +519,7 @@ APFloat::multiplySignificand(const APFloat &rhs, const APFloat *addend)
   partsCount = partCount();
 
   APInt::tcFullMultiply(fullSignificand, lhsSignificand,
-                        rhs.significandParts(), partsCount);
+                        rhs.significandParts(), partsCount, partsCount);
 
   lost_fraction = lfExactlyZero;
   omsb = APInt::tcMSB(fullSignificand, newPartsCount) + 1;
@@ -1795,7 +1795,7 @@ APFloat::convertNormalToHexString(char *dst, unsigned int hexDigits,
 
   /* hexDigits of zero means use the required number for the
      precision.  Otherwise, see if we are truncating.  If we are,
-     found out if we need to round away from zero.  */
+     find out if we need to round away from zero.  */
   if (hexDigits) {
     if (hexDigits < outputDigits) {
       /* We are dropping non-zero bits, so need to check how to round.
@@ -1845,7 +1845,8 @@ APFloat::convertNormalToHexString(char *dst, unsigned int hexDigits,
     do {
       q--;
       *q = hexDigitChars[hexDigitValue (*q) + 1];
-    } while (*q == '0' && q > p);
+    } while (*q == '0');
+    assert (q >= p);
   } else {
     /* Add trailing zeroes.  */
     memset (dst, '0', outputDigits);

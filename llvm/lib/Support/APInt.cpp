@@ -2363,25 +2363,32 @@ APInt::tcMultiply(integerPart *dst, const integerPart *lhs,
   return overflow;
 }
 
-/* DST = LHS * RHS, where DST has twice the width as the operands.  No
-   overflow occurs.  DST must be disjoint from both operands.  */
-void
+/* DST = LHS * RHS, where DST has width the sum of the widths of the
+   operands.  No overflow occurs.  DST must be disjoint from both
+   operands.  Returns the number of parts required to hold the
+   result.  */
+unsigned int
 APInt::tcFullMultiply(integerPart *dst, const integerPart *lhs,
-                      const integerPart *rhs, unsigned int parts)
+                      const integerPart *rhs, unsigned int lhsParts,
+                      unsigned int rhsParts)
 {
-  unsigned int i;
-  int overflow;
+  /* Put the narrower number on the LHS for less loops below.  */
+  if (lhsParts > rhsParts) {
+    return tcFullMultiply (dst, rhs, lhs, rhsParts, lhsParts);
+  } else {
+    unsigned int n;
 
-  assert(dst != lhs && dst != rhs);
+    assert(dst != lhs && dst != rhs);
 
-  overflow = 0;
-  tcSet(dst, 0, parts);
+    tcSet(dst, 0, rhsParts);
 
-  for(i = 0; i < parts; i++)
-    overflow |= tcMultiplyPart(&dst[i], lhs, rhs[i], 0, parts,
-                               parts + 1, true);
+    for(n = 0; n < lhsParts; n++)
+      tcMultiplyPart(&dst[n], rhs, lhs[n], 0, rhsParts, rhsParts + 1, true);
 
-  assert(!overflow);
+    n = lhsParts + rhsParts;
+
+    return n - (dst[n - 1] == 0);
+  }
 }
 
 /* If RHS is zero LHS and REMAINDER are left unchanged, return one.
