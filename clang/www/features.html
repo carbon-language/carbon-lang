@@ -14,36 +14,43 @@
 <!--#include virtual="menu.html.incl"-->
 <div id="content">
 	<h1>Features of Clang</h1>
-This page outlines the main goals of Clang, as well as some compelling reasons why you should consider using Clang. In the "Goals" section below, you will find a brief, bulletted overview of the goals and features that we are striving for in the development of Clang.  However, in the "Key Features" section you will find a more detailed presentation on what we believe are some key drawing points for the LLVM front-end.  <span class="key_point">If you are new to Clang and the LLVM front-end, and you want a reason for considering working on or using the new front-end, then make sure you check out the "Key Features" section.</span>
-<h1>Goals</h1>
+<p>
+This page outlines the main goals of Clang, as well as some compelling reasons why you should consider using Clang. In the <a href="#goals">Goals</a> section below, you will find a brief, bulleted overview of the goals and features that we are striving for in the development of Clang.  However, in the <a href="#keyfeatures">Key Features</a> section you will find a more detailed presentation on what we believe are some key drawing points for the Clang front-end.</p>
+
+<p><em>If you are new to Clang and the LLVM front-end, and you want a reason for considering working on or using the new front-end, then make sure you check out the <a href="#keyfeatures">Key Features</a> section.</em></p>
+
+<h1><a name="goals">Goals</a></h1>
 	<ul>
-		<li>Unified parser for C-based languages<div class="li_desc">We are only focusing on the C languages (C,C++,ObjC); however, if someone wants to work on another language, they are free to take charge of such a project.</div>
-		<li>Language conformance with C99, ObjC, C++
-		<li>Real-world, production quality compiler
-		<li>GCC compatibility
-		<li>Library based architecture with finely crafted C++ APIs
+		<li>Real-world, production quality compiler</li>
+		<li>Unified parser for C-based languages</li>
+                 <div class="li_desc">We are only focusing on the C family of languages (C, C++, ObjC); however, if someone wants to work on another language, they are free to take charge of such a project.</div>
+		<li>Language conformance with C, ObjC, C++, including dialects (C99, C90, ObjC2, etc)</li>
+		<li>GCC compatibility (GCC extensions and 'quirks', where it makes sense)</li>
+		<li>Library based architecture with finely crafted C++ APIs</li>
 			<div class="li_desc">Makes Clang easier to work with and more flexible.</div>
 			<div class="li_weak_desc">(more details on this in the "Key Features" section)</div>
-		<li>Easy to extend
+		<li>Easy to extend</li>
 			<div class="li_weak_desc">(because of the library based architecture)</div>
-		<li>Multipurpose
+		<li>Multipurpose</li>
 			<div class="li_desc">Can be used for:
-			Indexing, static analysis, code generation
-			Source to source tools, refactoring</div>
+			Indexing, static analysis, code generation,
+			source to source tools, refactoring</div>
 			<div class="li_weak_desc">(because of library based architecture)</div>
-		<li>High performance
-			<div class="li_desc">Faster than GCC (parse time), Low memory footprint, lazy evaluation</div>
+		<li>High performance</li>
+			<div class="li_desc">Extremely fast (much faster than GCC), low memory footprint, use lazy evaluation and multithreading</div>
 			<div class="li_weak_desc">(more details in the "Key Features" section)</div>
-		<li>Better integration with IDEs
+		<li>Better integration with IDEs</li>
 			<div class="li_weak_desc">(more details in the "Key Features" section)</div>
-		<li>Expressive diagnostics
+		<li><a href="#expressivediags">Expressive diagnostics</a></li>
 			<div class="li_desc">Error reporting and diagnostic messages are more detailed an accurate than GCC.</div>
 			<div class="li_weak_desc">(more details in the "Key Features" section)</div>
-		<li>BSD License
+		<li>BSD License</li>
 			<div class="li_desc">Fewer restrictions on developers; allows for use in commercial products.</div>
 	</ul>
-<h1>Key Features</h1>
-There are several key features which we believe will make Clang a compelling alternative.  These features are designed to make things easier for both the compiler developer (people working on Clang and derivative products) and the application developer (those who use Clang/LLVM).
+<h1><a name="keyfeatures">Key Features</a></h1>
+
+There are several key features which we believe make Clang an exciting front-end.  These features are designed to make things easier for both the compiler developer (people working on Clang and derivative products) and the application developer (those who use Clang/LLVM).
+
 <h2>Library based architecture</h2>
 A major design concept for the LLVM front-end involves using a library based architecture.  In this library based architecture, various parts of the front-end can be cleanly divided into separate libraries which can then be mixed up for different needs and uses.  In addition, the library based approach makes it much easier for new developers to get involved and extend LLVM to do new and unique things.  In the words of Chris,
 <div class="quote">"The world needs better compiler tools, tools which are built as libraries. This design point allows reuse of the tools in new and novel ways. However, building the tools as libraries isn't enough: they must have clean APIs, be as decoupled from each other as possible, and be easy to modify/extend. This requires clean layering, decent design, and avoiding tying the libraries to a specific use."</div>
@@ -56,13 +63,15 @@ Currently, the LLVM front-end is divided into the following libraries:
 	<li>liblex - C/C++/ObjC lexing and preprocessing, identifier hash table, pragma handling, tokens, and macros. <span class="weak_txt">(depends on above libraries)</span>
 	<li>libparse - Parsing and local semantic analysis. This library invokes coarse-grained 'Actions' provided by the client to do stuff (e.g. libsema builds ASTs). <span class="weak_txt">(depends on above libraries)</span>
 	<li>libsema - Provides a set of parser actions to build a standardized AST for programs. AST's are 'streamed' out a top-level declaration at a time, allowing clients to use decl-at-a-time processing, build up entire translation units, or even build 'whole program' ASTs depending on how they use the APIs. <span class="weak_txt">(depends on libast and libparse)</span>
-	<li>libcodegen - Lower the AST to LLVM IR for optimization & codegen. <span class="weak_txt">(depends on libast)</span>
+	<li>libcodegen - Lower the AST to LLVM IR for optimization &amp; codegen. <span class="weak_txt">(depends on libast)</span>
+        <li>librewrite - Editing of text buffers, depends on libast.</li>
+        <li>libanalysis - Static analysis support, depends on libast.</li>
 	<li><b>clang</b> - An example driver, client of the libraries at various levels. <span class="weak_txt">(depends on above libraries, and LLVM VMCore)</span>
 </ul>
 As an example of the power of this library based design....  If you wanted to build a preprocessor, you would take the Basic and Lexer libraries. If you want an indexer, you would take the previous two and add the Parser library and some actions for indexing. If you want a refactoring, static analysis, or source-to-source compiler tool, you would then add the AST building and semantic analyzer libraries.
 In the end, LLVM's library based design will provide developers with many more possibilities.
 
-<h2>Speed & Memory</h2>
+<h2>Speed and Memory</h2>
 Another major focus of LLVM's frontend is speed (for all libraries).  Even at this early stage, the LLVM front-end is quicker than gcc and uses less memory.<br>
 <div class="img_container">
 	<div class="img_title">Memory:</div>
