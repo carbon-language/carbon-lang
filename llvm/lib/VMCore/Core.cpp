@@ -194,6 +194,10 @@ void LLVMSetValueName(LLVMValueRef Val, const char *Name) {
   unwrap(Val)->setName(Name);
 }
 
+void LLVMDumpValue(LLVMValueRef Val) {
+  unwrap(Val)->dump();
+}
+
 /*--.. Operations on constants of any type .................................--*/
 
 LLVMValueRef LLVMGetNull(LLVMTypeRef Ty) {

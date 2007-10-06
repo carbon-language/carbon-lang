@@ -225,6 +225,7 @@ LLVMTypeRef LLVMCreateOpaqueType();
 LLVMTypeRef LLVMTypeOf(LLVMValueRef Val);
 const char *LLVMGetValueName(LLVMValueRef Val);
 void LLVMSetValueName(LLVMValueRef Val, const char *Name);
+void LLVMDumpValue(LLVMValueRef Val);
 
 /* Operations on constants of any type */
 LLVMValueRef LLVMGetNull(LLVMTypeRef Ty); /* all zeroes */

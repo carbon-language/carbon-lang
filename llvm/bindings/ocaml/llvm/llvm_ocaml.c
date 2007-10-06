@@ -219,6 +219,12 @@ CAMLprim value llvm_set_value_name(value Name, LLVMValueRef Val) {
   return Val_unit;
 }
 
+/* llvalue -> unit */
+CAMLprim value llvm_dump_value(LLVMValueRef Val) {
+  LLVMDumpValue(Val);
+  return Val_unit;
+}
+
 /*--... Operations on constants of (mostly) any type .......................--*/
 
 /* llvalue -> bool */
