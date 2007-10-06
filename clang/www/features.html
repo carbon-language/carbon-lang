@@ -53,7 +53,7 @@ There are several key features which we believe make Clang an exciting front-end
 
 <h2>Library based architecture</h2>
 A major design concept for the LLVM front-end involves using a library based architecture.  In this library based architecture, various parts of the front-end can be cleanly divided into separate libraries which can then be mixed up for different needs and uses.  In addition, the library based approach makes it much easier for new developers to get involved and extend LLVM to do new and unique things.  In the words of Chris,
-<div class="quote">"The world needs better compiler tools, tools which are built as libraries. This design point allows reuse of the tools in new and novel ways. However, building the tools as libraries isn't enough: they must have clean APIs, be as decoupled from each other as possible, and be easy to modify/extend. This requires clean layering, decent design, and avoiding tying the libraries to a specific use."</div>
+<div class="quote">"The world needs better compiler tools, tools which are built as libraries. This design point allows reuse of the tools in new and novel ways. However, building the tools as libraries isn't enough: they must have clean APIs, be as decoupled from each other as possible, and be easy to modify/extend. This requires clean layering, decent design, and keeping the libraries independent of any specific client."</div>
 Currently, the LLVM front-end is divided into the following libraries:
 <ul>
 	<li>libsupport - Basic support library, reused from LLVM.
