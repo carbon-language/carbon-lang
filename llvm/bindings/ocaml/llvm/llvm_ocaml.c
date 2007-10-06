@@ -139,10 +139,10 @@ CAMLprim value llvm_param_types(LLVMTypeRef FunTy) {
 /*--... Operations on struct types .........................................--*/
 
 /* lltype array -> bool -> lltype */
-CAMLprim value llvm_make_struct_type(value ElementTypes, value Packed) {
-  return (value) LLVMCreateStructType((LLVMTypeRef *) ElementTypes,
-                                      Wosize_val(ElementTypes),
-                                      Bool_val(Packed));
+CAMLprim LLVMTypeRef llvm_make_struct_type(value ElementTypes, value Packed) {
+  return LLVMCreateStructType((LLVMTypeRef *) ElementTypes,
+                              Wosize_val(ElementTypes),
+                              Bool_val(Packed));
 }
 
 /* lltype -> lltype array */
@@ -160,8 +160,8 @@ CAMLprim value llvm_is_packed(LLVMTypeRef StructTy) {
 /*--... Operations on array, pointer, and vector types .....................--*/
 
 /* lltype -> int -> lltype */
-CAMLprim value llvm_make_array_type(LLVMTypeRef ElementTy, value Count) {
-  return (value) LLVMCreateArrayType(ElementTy, Int_val(Count));
+CAMLprim LLVMTypeRef llvm_make_array_type(LLVMTypeRef ElementTy, value Count) {
+  return LLVMCreateArrayType(ElementTy, Int_val(Count));
 }
 
 /* lltype -> lltype */
@@ -291,9 +291,31 @@ CAMLprim LLVMValueRef llvm_make_struct_constant(value ElementVals,
 }
 
 /* llvalue array -> llvalue */
-CAMLprim value llvm_make_vector_constant(value ElementVals) {
-  return (value) LLVMGetVectorConstant((LLVMValueRef*) Op_val(ElementVals),
-                                       Wosize_val(ElementVals));
+CAMLprim LLVMValueRef llvm_make_vector_constant(value ElementVals) {
+  return LLVMGetVectorConstant((LLVMValueRef*) Op_val(ElementVals),
+                               Wosize_val(ElementVals));
+}
+
+/*--... Constant expressions ...............................................--*/
+
+/* int_predicate -> llvalue -> llvalue -> llvalue */
+CAMLprim LLVMValueRef llvm_const_icmp(value Pred,
+                                      LLVMValueRef LHSConstant,
+                                      LLVMValueRef RHSConstant) {
+  return LLVMConstICmp(Int_val(Pred) + LLVMIntEQ, LHSConstant, RHSConstant);
+}
+
+/* real_predicate -> llvalue -> llvalue -> llvalue */
+CAMLprim LLVMValueRef llvm_const_fcmp(value Pred,
+                                      LLVMValueRef LHSConstant,
+                                      LLVMValueRef RHSConstant) {
+  return LLVMConstFCmp(Int_val(Pred), LHSConstant, RHSConstant);
+}
+
+/* llvalue -> llvalue array -> llvalue */
+CAMLprim LLVMValueRef llvm_const_gep(LLVMValueRef ConstantVal, value Indices) {
+  return LLVMConstGEP(ConstantVal, (LLVMValueRef*) Op_val(Indices),
+                      Wosize_val(Indices));
 }
 
 /*--... Operations on global variables, functions, and aliases (globals) ...--*/

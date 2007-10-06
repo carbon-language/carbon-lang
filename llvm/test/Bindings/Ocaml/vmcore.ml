@@ -227,7 +227,108 @@ let test_constants () =
   let c = make_undef i1_type in
   ignore (define_global "Const12" c m);
   insist (i1_type = type_of c);
-  insist (is_undef c)
+  insist (is_undef c);
+  
+  group "constant arithmetic";
+  (* RUN: grep {ConstNeg.*sub} < %t.ll
+   * RUN: grep {ConstNot.*xor} < %t.ll
+   * RUN: grep {ConstAdd.*add} < %t.ll
+   * RUN: grep {ConstSub.*sub} < %t.ll
+   * RUN: grep {ConstMul.*mul} < %t.ll
+   * RUN: grep {ConstUDiv.*udiv} < %t.ll
+   * RUN: grep {ConstSDiv.*sdiv} < %t.ll
+   * RUN: grep {ConstFDiv.*fdiv} < %t.ll
+   * RUN: grep {ConstURem.*urem} < %t.ll
+   * RUN: grep {ConstSRem.*srem} < %t.ll
+   * RUN: grep {ConstFRem.*frem} < %t.ll
+   * RUN: grep {ConstAnd.*and} < %t.ll
+   * RUN: grep {ConstOr.*or} < %t.ll
+   * RUN: grep {ConstXor.*xor} < %t.ll
+   * RUN: grep {ConstICmp.*icmp} < %t.ll
+   * RUN: grep {ConstFCmp.*fcmp} < %t.ll
+   *)
+  let void_ptr = make_pointer_type i8_type in
+  let five = make_int_constant i64_type 5 false in
+  let ffive = const_uitofp five double_type in
+  let foldbomb_gv = define_global "FoldBomb" (make_null i8_type) m in
+  let foldbomb = const_ptrtoint foldbomb_gv i64_type in
+  let ffoldbomb = const_uitofp foldbomb double_type in
+  ignore (define_global "ConstNeg" (const_neg foldbomb) m);
+  ignore (define_global "ConstNot" (const_not foldbomb) m);
+  ignore (define_global "ConstAdd" (const_add foldbomb five) m);
+  ignore (define_global "ConstSub" (const_sub foldbomb five) m);
+  ignore (define_global "ConstMul" (const_mul foldbomb five) m);
+  ignore (define_global "ConstUDiv" (const_udiv foldbomb five) m);
+  ignore (define_global "ConstSDiv" (const_sdiv foldbomb five) m);
+  ignore (define_global "ConstFDiv" (const_fdiv ffoldbomb ffive) m);
+  ignore (define_global "ConstURem" (const_urem foldbomb five) m);
+  ignore (define_global "ConstSRem" (const_srem foldbomb five) m);
+  ignore (define_global "ConstFRem" (const_frem ffoldbomb ffive) m);
+  ignore (define_global "ConstAnd" (const_and foldbomb five) m);
+  ignore (define_global "ConstOr" (const_or foldbomb five) m);
+  ignore (define_global "ConstXor" (const_xor foldbomb five) m);
+  ignore (define_global "ConstICmp" (const_icmp Icmp_sle foldbomb five) m);
+  ignore (define_global "ConstFCmp" (const_fcmp Fcmp_ole ffoldbomb ffive) m);
+  
+  group "constant casts";
+  (* RUN: grep {ConstTrunc.*trunc} < %t.ll
+   * RUN: grep {ConstSExt.*sext} < %t.ll
+   * RUN: grep {ConstZExt.*zext} < %t.ll
+   * RUN: grep {ConstFPTrunc.*fptrunc} < %t.ll
+   * RUN: grep {ConstFPExt.*fpext} < %t.ll
+   * RUN: grep {ConstUIToFP.*uitofp} < %t.ll
+   * RUN: grep {ConstSIToFP.*sitofp} < %t.ll
+   * RUN: grep {ConstFPToUI.*fptoui} < %t.ll
+   * RUN: grep {ConstFPToSI.*fptosi} < %t.ll
+   * RUN: grep {ConstPtrToInt.*ptrtoint} < %t.ll
+   * RUN: grep {ConstIntToPtr.*inttoptr} < %t.ll
+   * RUN: grep {ConstBitCast.*bitcast} < %t.ll
+   *)
+  let i128_type = make_integer_type 128 in
+  ignore (define_global "ConstTrunc" (const_trunc (const_add foldbomb five)
+                                               i8_type) m);
+  ignore (define_global "ConstSExt" (const_sext foldbomb i128_type) m);
+  ignore (define_global "ConstZExt" (const_zext foldbomb i128_type) m);
+  ignore (define_global "ConstFPTrunc" (const_fptrunc ffoldbomb float_type) m);
+  ignore (define_global "ConstFPExt" (const_fpext ffoldbomb fp128_type) m);
+  ignore (define_global "ConstUIToFP" (const_uitofp foldbomb double_type) m);
+  ignore (define_global "ConstSIToFP" (const_sitofp foldbomb double_type) m);
+  ignore (define_global "ConstFPToUI" (const_fptoui ffoldbomb i32_type) m);
+  ignore (define_global "ConstFPToSI" (const_fptosi ffoldbomb i32_type) m);
+  ignore (define_global "ConstPtrToInt" (const_ptrtoint 
+    (const_gep (make_null (make_pointer_type i8_type))
+               [| make_int_constant i32_type 1 false |])
+    i32_type) m);
+  ignore (define_global "ConstIntToPtr" (const_inttoptr (const_add foldbomb five)
+                                                  void_ptr) m);
+  ignore (define_global "ConstBitCast" (const_bitcast ffoldbomb i64_type) m);
+  
+  group "misc constants";
+  (* RUN: grep {ConstSizeOf.*getelementptr.*null} < %t.ll
+   * RUN: grep {ConstGEP.*getelementptr} < %t.ll
+   * RUN: grep {ConstSelect.*select} < %t.ll
+   * RUN: grep {ConstExtractElement.*extractelement} < %t.ll
+   * RUN: grep {ConstInsertElement.*insertelement} < %t.ll
+   * RUN: grep {ConstShuffleVector.*shufflevector} < %t.ll
+   *)
+  ignore (define_global "ConstSizeOf" (sizeof (make_pointer_type i8_type)) m);
+  ignore (define_global "ConstGEP" (const_gep foldbomb_gv [| five |]) m);
+  ignore (define_global "ConstSelect" (const_select
+    (const_icmp Icmp_sle foldbomb five)
+    (make_int_constant i8_type (-1) true)
+    (make_int_constant i8_type 0 true)) m);
+  let zero = make_int_constant i32_type 0 false in
+  let one  = make_int_constant i32_type 1 false in
+  ignore (define_global "ConstExtractElement" (const_extractelement
+    (make_vector_constant [| zero; one; zero; one |])
+    (const_trunc foldbomb i32_type)) m);
+  ignore (define_global "ConstInsertElement" (const_insertelement
+    (make_vector_constant [| zero; one; zero; one |])
+    zero (const_trunc foldbomb i32_type)) m);
+  ignore (define_global "ConstShuffleVector" (const_shufflevector
+    (make_vector_constant [| zero; one |])
+    (make_vector_constant [| one; zero |])
+    (const_bitcast foldbomb (make_vector_type i32_type 2))) m)
 
 
 (*===-- Global Values -----------------------------------------------------===*)

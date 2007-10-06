@@ -533,7 +533,7 @@ Constant *ConstantExpr::getNeg(Constant *C) {
              C);
 }
 Constant *ConstantExpr::getNot(Constant *C) {
-  assert(isa<ConstantInt>(C) && "Cannot NOT a nonintegral type!");
+  assert(isa<IntegerType>(C->getType()) && "Cannot NOT a nonintegral value!");
   return get(Instruction::Xor, C,
              ConstantInt::getAllOnesValue(C->getType()));
 }
@@ -1675,7 +1675,7 @@ Constant *ConstantExpr::getBitCast(Constant *C, const Type *DstTy) {
 }
 
 Constant *ConstantExpr::getSizeOf(const Type *Ty) {
-  // sizeof is implemented as: (ulong) gep (Ty*)null, 1
+  // sizeof is implemented as: (i64) gep (Ty*)null, 1
   Constant *GEPIdx = ConstantInt::get(Type::Int32Ty, 1);
   Constant *GEP =
     getGetElementPtr(getNullValue(PointerType::get(Ty)), &GEPIdx, 1);

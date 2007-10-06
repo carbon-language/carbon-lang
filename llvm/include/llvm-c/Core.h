@@ -250,6 +250,55 @@ LLVMValueRef LLVMGetStructConstant(LLVMValueRef *ConstantVals, unsigned Count,
 LLVMValueRef LLVMGetVectorConstant(LLVMValueRef *ScalarConstantVals,
                                    unsigned Size);
 
+/* Constant expressions */
+LLVMValueRef LLVMSizeOf(LLVMTypeRef Ty);
+LLVMValueRef LLVMConstNeg(LLVMValueRef ConstantVal);
+LLVMValueRef LLVMConstNot(LLVMValueRef ConstantVal);
+LLVMValueRef LLVMConstAdd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstSub(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstMul(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstUDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstSDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstFDiv(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstURem(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstSRem(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstFRem(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstAnd(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstOr(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstXor(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstICmp(LLVMIntPredicate Predicate,
+                           LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstFCmp(LLVMRealPredicate Predicate,
+                           LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstShl(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstLShr(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstAShr(LLVMValueRef LHSConstant, LLVMValueRef RHSConstant);
+LLVMValueRef LLVMConstGEP(LLVMValueRef ConstantVal,
+                          LLVMValueRef *ConstantIndices, unsigned NumIndices);
+LLVMValueRef LLVMConstTrunc(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstSExt(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstZExt(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstFPTrunc(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstFPExt(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstUIToFP(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstSIToFP(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstFPToUI(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstFPToSI(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstPtrToInt(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstIntToPtr(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstBitCast(LLVMValueRef ConstantVal, LLVMTypeRef ToType);
+LLVMValueRef LLVMConstSelect(LLVMValueRef ConstantCondition,
+                             LLVMValueRef ConstantIfTrue,
+                             LLVMValueRef ConstantIfFalse);
+LLVMValueRef LLVMConstExtractElement(LLVMValueRef VectorConstant,
+                                     LLVMValueRef IndexConstant);
+LLVMValueRef LLVMConstInsertElement(LLVMValueRef VectorConstant,
+                                    LLVMValueRef ElementValueConstant,
+                                    LLVMValueRef IndexConstant);
+LLVMValueRef LLVMConstShuffleVector(LLVMValueRef VectorAConstant,
+                                    LLVMValueRef VectorBConstant,
+                                    LLVMValueRef MaskConstant);
+
 /* Operations on global variables, functions, and aliases (globals) */
 int LLVMIsDeclaration(LLVMValueRef Global);
 LLVMLinkage LLVMGetLinkage(LLVMValueRef Global);

@@ -209,6 +209,51 @@ external make_struct_constant : llvalue array -> bool -> llvalue
 external make_vector_constant : llvalue array -> llvalue
                               = "llvm_make_vector_constant"
 
+(*--... Constant expressions ...............................................--*)
+external sizeof : lltype -> llvalue = "LLVMSizeOf"
+external const_neg : llvalue -> llvalue = "LLVMConstNeg"
+external const_not : llvalue -> llvalue = "LLVMConstNot"
+external const_add : llvalue -> llvalue -> llvalue = "LLVMConstAdd"
+external const_sub : llvalue -> llvalue -> llvalue = "LLVMConstSub"
+external const_mul : llvalue -> llvalue -> llvalue = "LLVMConstMul"
+external const_udiv : llvalue -> llvalue -> llvalue = "LLVMConstUDiv"
+external const_sdiv : llvalue -> llvalue -> llvalue = "LLVMConstSDiv"
+external const_fdiv : llvalue -> llvalue -> llvalue = "LLVMConstFDiv"
+external const_urem : llvalue -> llvalue -> llvalue = "LLVMConstURem"
+external const_srem : llvalue -> llvalue -> llvalue = "LLVMConstSRem"
+external const_frem : llvalue -> llvalue -> llvalue = "LLVMConstFRem"
+external const_and : llvalue -> llvalue -> llvalue = "LLVMConstAnd"
+external const_or : llvalue -> llvalue -> llvalue = "LLVMConstOr"
+external const_xor : llvalue -> llvalue -> llvalue = "LLVMConstXor"
+external const_icmp : int_predicate -> llvalue -> llvalue -> llvalue
+                    = "llvm_const_icmp"
+external const_fcmp : real_predicate -> llvalue -> llvalue -> llvalue
+                    = "llvm_const_fcmp"
+external const_shl : llvalue -> llvalue -> llvalue = "LLVMConstShl"
+external const_lshr : llvalue -> llvalue -> llvalue = "LLVMConstLShr"
+external const_ashr : llvalue -> llvalue -> llvalue = "LLVMConstAShr"
+external const_gep : llvalue -> llvalue array -> llvalue = "llvm_const_gep"
+external const_trunc : llvalue -> lltype -> llvalue = "LLVMConstTrunc"
+external const_sext : llvalue -> lltype -> llvalue = "LLVMConstSExt"
+external const_zext : llvalue -> lltype -> llvalue = "LLVMConstZExt"
+external const_fptrunc : llvalue -> lltype -> llvalue = "LLVMConstFPTrunc"
+external const_fpext : llvalue -> lltype -> llvalue = "LLVMConstFPExt"
+external const_uitofp : llvalue -> lltype -> llvalue = "LLVMConstUIToFP"
+external const_sitofp : llvalue -> lltype -> llvalue = "LLVMConstSIToFP"
+external const_fptoui : llvalue -> lltype -> llvalue = "LLVMConstFPToUI"
+external const_fptosi : llvalue -> lltype -> llvalue = "LLVMConstFPToSI"
+external const_ptrtoint : llvalue -> lltype -> llvalue = "LLVMConstPtrToInt"
+external const_inttoptr : llvalue -> lltype -> llvalue = "LLVMConstIntToPtr"
+external const_bitcast : llvalue -> lltype -> llvalue = "LLVMConstBitCast"
+external const_select : llvalue -> llvalue -> llvalue -> llvalue
+                      = "LLVMConstSelect"
+external const_extractelement : llvalue -> llvalue -> llvalue
+                              = "LLVMConstExtractElement"
+external const_insertelement : llvalue -> llvalue -> llvalue -> llvalue
+                             = "LLVMConstInsertElement"
+external const_shufflevector : llvalue -> llvalue -> llvalue -> llvalue
+                             = "LLVMConstShuffleVector"
+
 (*--... Operations on global variables, functions, and aliases (globals) ...--*)
 external is_declaration : llvalue -> bool = "llvm_is_declaration"
 external linkage : llvalue -> linkage = "llvm_linkage"

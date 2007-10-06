@@ -599,7 +599,7 @@ public:
   }
 
   /// getSizeOf constant expr - computes the size of a type in a target
-  /// independent way (Note: the return type is a ULong).
+  /// independent way (Note: the return type is an i64).
   ///
   static Constant *getSizeOf(const Type *Ty);
 
@@ -628,8 +628,8 @@ public:
   static Constant *getAnd(Constant *C1, Constant *C2);
   static Constant *getOr(Constant *C1, Constant *C2);
   static Constant *getXor(Constant *C1, Constant *C2);
-  static Constant* getICmp(unsigned short pred, Constant* LHS, Constant* RHS);
-  static Constant* getFCmp(unsigned short pred, Constant* LHS, Constant* RHS);
+  static Constant *getICmp(unsigned short pred, Constant *LHS, Constant *RHS);
+  static Constant *getFCmp(unsigned short pred, Constant *LHS, Constant *RHS);
   static Constant *getShl(Constant *C1, Constant *C2);
   static Constant *getLShr(Constant *C1, Constant *C2);
   static Constant *getAShr(Constant *C1, Constant *C2);
