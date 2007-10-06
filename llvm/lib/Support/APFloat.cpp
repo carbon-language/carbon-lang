@@ -252,32 +252,33 @@ namespace {
     return result;
   }
 
-  /* Write out a decimal exponent.  */
+  /* Write out an unsigned decimal integer.  */
   static char *
-  writeDecimalExponent (char *dst, int exponent)
+  writeUnsignedDecimal (char *dst, unsigned int n)
   {
-    assert (exponent >= -65536 && exponent <= 65535);
+    char buff[40], *p;
 
-    if (exponent < 0) {
+    p = buff;
+    do
+      *p++ = '0' + n % 10;
+    while (n /= 10);
+
+    do
+      *dst++ = *--p;
+    while (p != buff);
+
+    return dst;
+  }
+
+  /* Write out a signed decimal integer.  */
+  static char *
+  writeSignedDecimal (char *dst, int value)
+  {
+    if (value < 0) {
       *dst++ = '-';
-      exponent = -exponent;
-    }
-
-    if (exponent == 0) {
-      *dst++ = '0';
-    } else {
-      char buff[12], *p;
-
-      p = buff;
-      while (exponent) {
-        *p++ = '0' + exponent % 10;
-        exponent /= 10;
-      }
-
-      do
-        *dst++ = *--p;
-      while (p != buff);
-    }
+      dst = writeUnsignedDecimal(dst, -(unsigned) value);
+    } else
+      dst = writeUnsignedDecimal(dst, value);
 
     return dst;
   }
@@ -1865,7 +1866,7 @@ APFloat::convertNormalToHexString(char *dst, unsigned int hexDigits,
   /* Finally output the exponent.  */
   *dst++ = upperCase ? 'P': 'p';
 
-  return writeDecimalExponent (dst, exponent);
+  return writeSignedDecimal (dst, exponent);
 }
 
 // For good performance it is desirable for different APFloats
