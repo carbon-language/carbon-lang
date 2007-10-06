@@ -104,7 +104,7 @@ namespace {
           if (i) fprintf(stderr, ", ");
           fprintf(stderr, "%s", D->getName());
         }
-        fprintf(stderr, "\n");
+        fprintf(stderr, ";\n");
       } else if (ObjcImplementationDecl *OID = 
                    dyn_cast<ObjcImplementationDecl>(D)) {
         fprintf(stderr, "@implementation %s  [printing todo]\n",
