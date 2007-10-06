@@ -3314,32 +3314,42 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       MVT::ValueType newVT = Op.getValueType();
       MVT::ValueType oldVT = Op.getOperand(0).getValueType();
       if (TLI.getConvertAction(oldVT, newVT) == TargetLowering::Expand) {
-        // The only way we can lower this is to turn it into a STORE,
-        // LOAD pair, targetting a temporary location (a stack slot).
-
-        // NOTE: there is a choice here between constantly creating new stack
-        // slots and always reusing the same one.  We currently always create
-        // new ones, as reuse may inhibit scheduling.
-        MVT::ValueType slotVT = 
-                (Node->getOpcode() == ISD::FP_EXTEND) ? oldVT : newVT;
-        const Type *Ty = MVT::getTypeForValueType(slotVT);
-        uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
-        unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
-        MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI =
-          MF.getFrameInfo()->CreateStackObject(TySize, Align);
-        SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
-        if (Node->getOpcode() == ISD::FP_EXTEND) {
-          Result = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0),
-                                     StackSlot, NULL, 0);
-          Result = DAG.getExtLoad(ISD::EXTLOAD, newVT,
-                                     Result, StackSlot, NULL, 0, oldVT);
+        if (Node->getOpcode() == ISD::FP_ROUND && oldVT == MVT::ppcf128) {
+          SDOperand Lo, Hi;
+          ExpandOp(Node->getOperand(0), Lo, Hi);
+          if (newVT == MVT::f64)
+            Result = Hi;
+          else
+            Result = DAG.getNode(ISD::FP_ROUND, newVT, Hi);
+          break;
         } else {
-          Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
-                                     StackSlot, NULL, 0, newVT);
-          Result = DAG.getLoad(newVT, Result, StackSlot, NULL, 0, newVT);
+          // The only other way we can lower this is to turn it into a STORE,
+          // LOAD pair, targetting a temporary location (a stack slot).
+
+          // NOTE: there is a choice here between constantly creating new stack
+          // slots and always reusing the same one.  We currently always create
+          // new ones, as reuse may inhibit scheduling.
+          MVT::ValueType slotVT = 
+                  (Node->getOpcode() == ISD::FP_EXTEND) ? oldVT : newVT;
+          const Type *Ty = MVT::getTypeForValueType(slotVT);
+          uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
+          unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
+          MachineFunction &MF = DAG.getMachineFunction();
+          int SSFI =
+            MF.getFrameInfo()->CreateStackObject(TySize, Align);
+          SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+          if (Node->getOpcode() == ISD::FP_EXTEND) {
+            Result = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0),
+                                       StackSlot, NULL, 0);
+            Result = DAG.getExtLoad(ISD::EXTLOAD, newVT,
+                                       Result, StackSlot, NULL, 0, oldVT);
+          } else {
+            Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
+                                       StackSlot, NULL, 0, newVT);
+            Result = DAG.getLoad(newVT, Result, StackSlot, NULL, 0, newVT);
+          }
+          break;
         }
-        break;
       }
     }
     // FALL THROUGH
@@ -3995,7 +4005,7 @@ SDOperand SelectionDAGLegalize::ExpandEXTRACT_SUBVECTOR(SDOperand Op) {
 void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
                                                  SDOperand &RHS,
                                                  SDOperand &CC) {
-  SDOperand Tmp1, Tmp2, Result;    
+  SDOperand Tmp1, Tmp2, Tmp3, Result;    
   
   switch (getTypeAction(LHS.getValueType())) {
   case Legal:
@@ -4126,8 +4136,27 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
 
     SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
     ExpandOp(LHS, LHSLo, LHSHi);
-    ExpandOp(RHS, RHSLo, RHSHi);    
-    switch (cast<CondCodeSDNode>(CC)->get()) {
+    ExpandOp(RHS, RHSLo, RHSHi);
+    ISD::CondCode CCCode = cast<CondCodeSDNode>(CC)->get();
+
+    if (VT==MVT::ppcf128) {
+      // FIXME:  This generated code sucks.  We want to generate
+      //         FCMP crN, hi1, hi2
+      //         BNE crN, L:
+      //         FCMP crN, lo1, lo2
+      // The following can be improved, but not that much.
+      Tmp1 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, ISD::SETEQ);
+      Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSLo, RHSLo, CCCode);
+      Tmp3 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
+      Tmp1 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, ISD::SETNE);
+      Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi, CCCode);
+      Tmp1 = DAG.getNode(ISD::AND, Tmp1.getValueType(), Tmp1, Tmp2);
+      Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp3);
+      Tmp2 = SDOperand();
+      break;
+    }
+
+    switch (CCCode) {
     case ISD::SETEQ:
     case ISD::SETNE:
       if (RHSLo == RHSHi)
@@ -4159,7 +4188,6 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
 
       // FIXME: This generated code sucks.
       ISD::CondCode LowCC;
-      ISD::CondCode CCCode = cast<CondCodeSDNode>(CC)->get();
       switch (CCCode) {
       default: assert(0 && "Unknown integer setcc!");
       case ISD::SETLT:

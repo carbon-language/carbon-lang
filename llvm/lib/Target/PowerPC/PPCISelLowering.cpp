@@ -73,6 +73,10 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
 
+  // Shortening conversions involving ppcf128 get expanded (2 regs -> 1 reg)
+  setConvertAction(MVT::ppcf128, MVT::f64, Expand);
+  setConvertAction(MVT::ppcf128, MVT::f32, Expand);
+
   // PowerPC has no intrinsics for these particular operations
   setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
   setOperationAction(ISD::MEMSET, MVT::Other, Expand);
