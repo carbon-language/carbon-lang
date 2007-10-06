@@ -111,6 +111,8 @@ public:
   static bool classof(const Decl *) { return true; }
 };
 
+/// NamedDecl - This represents a decl with an identifier for a name.  Many
+/// decls have names, but not ObjcMethodDecl, @class, etc.
 class NamedDecl : public Decl {
   /// Identifier - The identifier for this declaration (e.g. the name for the
   /// variable, the tag for a struct).
@@ -123,7 +125,7 @@ public:
   const char *getName() const;
   
   
-  // FIXME: classof.
+  // FIXME: classof when the hierarchy is sorted out.
   static bool classof(const NamedDecl *D) { return true; }
 };
 
