@@ -185,32 +185,29 @@ external dump_value : llvalue -> unit = "llvm_dump_value"
 
 (*--... Operations on constants of (mostly) any type .......................--*)
 external is_constant : llvalue -> bool = "llvm_is_constant"
-external make_null : lltype -> llvalue = "LLVMGetNull"
-external make_all_ones : (*int|vec*)lltype -> llvalue = "LLVMGetAllOnes"
-external make_undef : lltype -> llvalue = "LLVMGetUndef"
+external const_null : lltype -> llvalue = "LLVMConstNull"
+external const_all_ones : (*int|vec*)lltype -> llvalue = "LLVMConstAllOnes"
+external undef : lltype -> llvalue = "LLVMGetUndef"
 external is_null : llvalue -> bool = "llvm_is_null"
 external is_undef : llvalue -> bool = "llvm_is_undef"
 
 (*--... Operations on scalar constants .....................................--*)
-external make_int_constant : lltype -> int -> bool -> llvalue
-                           = "llvm_make_int_constant"
-external make_int64_constant : lltype -> Int64.t -> bool -> llvalue
-                             = "llvm_make_int64_constant"
-external make_real_constant : lltype -> float -> llvalue
-                            = "llvm_make_real_constant"
+external const_int : lltype -> int -> llvalue = "llvm_const_int"
+external const_of_int64 : lltype -> Int64.t -> bool -> llvalue
+                        = "llvm_const_of_int64"
+external const_float : lltype -> float -> llvalue = "llvm_const_float"
 
 (*--... Operations on composite constants ..................................--*)
-external make_string_constant : string -> bool -> llvalue
-                              = "llvm_make_string_constant"
-external make_array_constant : lltype -> llvalue array -> llvalue
-                             = "llvm_make_array_constant"
-external make_struct_constant : llvalue array -> bool -> llvalue
-                              = "llvm_make_struct_constant"
-external make_vector_constant : llvalue array -> llvalue
-                              = "llvm_make_vector_constant"
+external const_string : string -> llvalue = "llvm_const_string"
+external const_stringz : string -> llvalue = "llvm_const_stringz"
+external const_array : lltype -> llvalue array -> llvalue = "llvm_const_array"
+external const_struct : llvalue array -> llvalue = "llvm_const_struct"
+external const_packed_struct : llvalue array -> llvalue
+                             = "llvm_const_packed_struct"
+external const_vector : llvalue array -> llvalue = "llvm_const_vector"
 
 (*--... Constant expressions ...............................................--*)
-external sizeof : lltype -> llvalue = "LLVMSizeOf"
+external size_of : lltype -> llvalue = "LLVMSizeOf"
 external const_neg : llvalue -> llvalue = "LLVMConstNeg"
 external const_not : llvalue -> llvalue = "LLVMConstNot"
 external const_add : llvalue -> llvalue -> llvalue = "LLVMConstAdd"

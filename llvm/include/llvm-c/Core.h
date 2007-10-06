@@ -228,27 +228,26 @@ void LLVMSetValueName(LLVMValueRef Val, const char *Name);
 void LLVMDumpValue(LLVMValueRef Val);
 
 /* Operations on constants of any type */
-LLVMValueRef LLVMGetNull(LLVMTypeRef Ty); /* all zeroes */
-LLVMValueRef LLVMGetAllOnes(LLVMTypeRef Ty); /* only for int/vector */
+LLVMValueRef LLVMConstNull(LLVMTypeRef Ty); /* all zeroes */
+LLVMValueRef LLVMConstAllOnes(LLVMTypeRef Ty); /* only for int/vector */
 LLVMValueRef LLVMGetUndef(LLVMTypeRef Ty);
 int LLVMIsConstant(LLVMValueRef Val);
 int LLVMIsNull(LLVMValueRef Val);
 int LLVMIsUndef(LLVMValueRef Val);
 
 /* Operations on scalar constants */
-LLVMValueRef LLVMGetIntConstant(LLVMTypeRef IntTy, unsigned long long N,
-                                int SignExtend);
-LLVMValueRef LLVMGetRealConstant(LLVMTypeRef RealTy, double N);
+LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
+                          int SignExtend);
+LLVMValueRef LLVMConstReal(LLVMTypeRef RealTy, double N);
 
 /* Operations on composite constants */
-LLVMValueRef LLVMGetStringConstant(const char *Str, unsigned Length,
-                                   int DontNullTerminate);
-LLVMValueRef LLVMGetArrayConstant(LLVMTypeRef ArrayTy,
-                                  LLVMValueRef *ConstantVals, unsigned Length);
-LLVMValueRef LLVMGetStructConstant(LLVMValueRef *ConstantVals, unsigned Count,
-                                   int packed);
-LLVMValueRef LLVMGetVectorConstant(LLVMValueRef *ScalarConstantVals,
-                                   unsigned Size);
+LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
+                             int DontNullTerminate);
+LLVMValueRef LLVMConstArray(LLVMTypeRef ArrayTy,
+                            LLVMValueRef *ConstantVals, unsigned Length);
+LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
+                             int packed);
+LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size);
 
 /* Constant expressions */
 LLVMValueRef LLVMSizeOf(LLVMTypeRef Ty);

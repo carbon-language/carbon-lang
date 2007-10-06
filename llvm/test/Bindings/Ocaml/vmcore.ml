@@ -140,7 +140,7 @@ let test_constants () =
   (* RUN: grep {Const01.*i32.*-1} < %t.ll
    *)
   group "int";
-  let c = make_int_constant i32_type (-1) true in
+  let c = const_int i32_type (-1) in
   ignore (define_global "Const01" c m);
   insist (i32_type = type_of c);
   insist (is_constant c);
@@ -148,62 +148,62 @@ let test_constants () =
   (* RUN: grep {Const02.*i64.*-1} < %t.ll
    *)
   group "sext int";
-  let c = make_int_constant i64_type (-1) true in
+  let c = const_int i64_type (-1) in
   ignore (define_global "Const02" c m);
   insist (i64_type = type_of c);
 
   (* RUN: grep {Const03.*i64.*4294967295} < %t.ll
    *)
   group "zext int64";
-  let c = make_int64_constant i64_type (Int64.of_string "4294967295") false in
+  let c = const_of_int64 i64_type (Int64.of_string "4294967295") false in
   ignore (define_global "Const03" c m);
   insist (i64_type = type_of c);
 
   (* RUN: grep {Const04.*"cruel\\\\00world"} < %t.ll
    *)
   group "string";
-  let c = make_string_constant "cruel\000world" false in
+  let c = const_string "cruel\000world" in
   ignore (define_global "Const04" c m);
   insist ((make_array_type i8_type 11) = type_of c);
 
   (* RUN: grep {Const05.*"hi\\\\00again\\\\00"} < %t.ll
    *)
-  group "string w/ null";
-  let c = make_string_constant "hi\000again" true in
+  group "stringz";
+  let c = const_stringz "hi\000again" in
   ignore (define_global "Const05" c m);
   insist ((make_array_type i8_type 9) = type_of c);
 
   (* RUN: grep {Const06.*3.1459} < %t.ll
    *)
   group "real";
-  let c = make_real_constant double_type 3.1459 in
+  let c = const_float double_type 3.1459 in
   ignore (define_global "Const06" c m);
   insist (double_type = type_of c);
   
-  let one = make_int_constant i16_type 1 true in
-  let two = make_int_constant i16_type 2 true in
-  let three = make_int_constant i32_type 3 true in
-  let four = make_int_constant i32_type 4 true in
+  let one = const_int i16_type 1 in
+  let two = const_int i16_type 2 in
+  let three = const_int i32_type 3 in
+  let four = const_int i32_type 4 in
   
   (* RUN: grep {Const07.*\\\[ i32 3, i32 4 \\\]} < %t.ll
    *)
   group "array";
-  let c = make_array_constant i32_type [| three; four |] in
+  let c = const_array i32_type [| three; four |] in
   ignore (define_global "Const07" c m);
   insist ((make_array_type i32_type 2) = (type_of c));
   
   (* RUN: grep {Const08.*< i16 1, i16 2.* >} < %t.ll
    *)
   group "vector";
-  let c = make_vector_constant [| one; two; one; two;
-                                  one; two; one; two |] in
+  let c = const_vector [| one; two; one; two;
+                          one; two; one; two |] in
   ignore (define_global "Const08" c m);
   insist ((make_vector_type i16_type 8) = (type_of c));
   
   (* RUN: grep {Const09.*\{ i16, i16, i32, i32 \} \{} < %t.ll
    *)
   group "structure";
-  let c = make_struct_constant [| one; two; three; four |] false in
+  let c = const_struct [| one; two; three; four |] in
   ignore (define_global "Const09" c m);
   insist ((make_struct_type [| i16_type; i16_type; i32_type; i32_type |] false)
         = (type_of c));
@@ -211,20 +211,20 @@ let test_constants () =
   (* RUN: grep {Const10.*zeroinit} < %t.ll
    *)
   group "null";
-  let c = make_null (make_struct_type [| i1_type; i8_type;
-                                         i64_type; double_type |] true) in
+  let c = const_null (make_struct_type [| i1_type; i8_type;
+                                          i64_type; double_type |] true) in
   ignore (define_global "Const10" c m);
   
   (* RUN: grep {Const11.*-1} < %t.ll
    *)
   group "all ones";
-  let c = make_all_ones i64_type in
+  let c = const_all_ones i64_type in
   ignore (define_global "Const11" c m);
   
   (* RUN: grep {Const12.*undef} < %t.ll
    *)
   group "undef";
-  let c = make_undef i1_type in
+  let c = undef i1_type in
   ignore (define_global "Const12" c m);
   insist (i1_type = type_of c);
   insist (is_undef c);
@@ -248,9 +248,9 @@ let test_constants () =
    * RUN: grep {ConstFCmp.*fcmp} < %t.ll
    *)
   let void_ptr = make_pointer_type i8_type in
-  let five = make_int_constant i64_type 5 false in
+  let five = const_int i64_type 5 in
   let ffive = const_uitofp five double_type in
-  let foldbomb_gv = define_global "FoldBomb" (make_null i8_type) m in
+  let foldbomb_gv = define_global "FoldBomb" (const_null i8_type) m in
   let foldbomb = const_ptrtoint foldbomb_gv i64_type in
   let ffoldbomb = const_uitofp foldbomb double_type in
   ignore (define_global "ConstNeg" (const_neg foldbomb) m);
@@ -296,8 +296,8 @@ let test_constants () =
   ignore (define_global "ConstFPToUI" (const_fptoui ffoldbomb i32_type) m);
   ignore (define_global "ConstFPToSI" (const_fptosi ffoldbomb i32_type) m);
   ignore (define_global "ConstPtrToInt" (const_ptrtoint 
-    (const_gep (make_null (make_pointer_type i8_type))
-               [| make_int_constant i32_type 1 false |])
+    (const_gep (const_null (make_pointer_type i8_type))
+               [| const_int i32_type 1 |])
     i32_type) m);
   ignore (define_global "ConstIntToPtr" (const_inttoptr (const_add foldbomb five)
                                                   void_ptr) m);
@@ -311,23 +311,23 @@ let test_constants () =
    * RUN: grep {ConstInsertElement.*insertelement} < %t.ll
    * RUN: grep {ConstShuffleVector.*shufflevector} < %t.ll
    *)
-  ignore (define_global "ConstSizeOf" (sizeof (make_pointer_type i8_type)) m);
+  ignore (define_global "ConstSizeOf" (size_of (make_pointer_type i8_type)) m);
   ignore (define_global "ConstGEP" (const_gep foldbomb_gv [| five |]) m);
   ignore (define_global "ConstSelect" (const_select
     (const_icmp Icmp_sle foldbomb five)
-    (make_int_constant i8_type (-1) true)
-    (make_int_constant i8_type 0 true)) m);
-  let zero = make_int_constant i32_type 0 false in
-  let one  = make_int_constant i32_type 1 false in
+    (const_int i8_type (-1))
+    (const_int i8_type 0)) m);
+  let zero = const_int i32_type 0 in
+  let one  = const_int i32_type 1 in
   ignore (define_global "ConstExtractElement" (const_extractelement
-    (make_vector_constant [| zero; one; zero; one |])
+    (const_vector [| zero; one; zero; one |])
     (const_trunc foldbomb i32_type)) m);
   ignore (define_global "ConstInsertElement" (const_insertelement
-    (make_vector_constant [| zero; one; zero; one |])
+    (const_vector [| zero; one; zero; one |])
     zero (const_trunc foldbomb i32_type)) m);
   ignore (define_global "ConstShuffleVector" (const_shufflevector
-    (make_vector_constant [| zero; one |])
-    (make_vector_constant [| one; zero |])
+    (const_vector [| zero; one |])
+    (const_vector [| one; zero |])
     (const_bitcast foldbomb (make_vector_type i32_type 2))) m)
 
 
@@ -335,7 +335,7 @@ let test_constants () =
 
 let test_global_values () =
   let (++) x f = f x; x in
-  let zero32 = make_null i32_type in
+  let zero32 = const_null i32_type in
 
   (* RUN: grep {GVal01} < %t.ll
    *)
@@ -378,7 +378,7 @@ let test_global_values () =
 
 let test_global_variables () =
   let (++) x f = f x; x in
-  let fourty_two32 = make_int_constant i32_type 42 false in
+  let fourty_two32 = const_int i32_type 42 in
 
   (* RUN: grep {GVar01.*external} < %t.ll
    *)
@@ -501,7 +501,7 @@ let test_basic_blocks () =
   let bb = entry_block fn in
   insist (bb = block_of_value (value_of_block bb));
   insist (value_is_block (value_of_block bb));
-  insist (not (value_is_block (make_null i32_type)))
+  insist (not (value_is_block (const_null i32_type)))
 
 
 (*===-- Builder -----------------------------------------------------------===*)
@@ -703,15 +703,15 @@ let test_builder () =
     let inst46 = build_icmp Icmp_eq p1 p2 "Inst46" atentry in
          ignore (build_select inst46 p1 p2 "Inst47" atentry);
          ignore (build_va_arg
-                  (make_null (make_pointer_type (make_pointer_type i8_type)))
+                  (const_null (make_pointer_type (make_pointer_type i8_type)))
                   i32_type "Inst48" atentry);
     
     (* Set up some vector vregs. *)
-    let one = make_int_constant i32_type (-1) true in
-    let zero = make_int_constant i32_type 1 true in
-    let t1 = make_vector_constant [| one; zero; one; zero |] in
-    let t2 = make_vector_constant [| zero; one; zero; one |] in
-    let t3 = make_vector_constant [| one; one; zero; zero |] in
+    let one = const_int i32_type (-1) in
+    let zero = const_int i32_type 1 in
+    let t1 = const_vector [| one; zero; one; zero |] in
+    let t2 = const_vector [| zero; one; zero; one |] in
+    let t3 = const_vector [| one; one; zero; zero |] in
     let vec1 = build_insertelement t1 p1 p2 "Vec1" atentry in
     let vec2 = build_insertelement t2 p1 p2 "Vec2" atentry in
     let vec3 = build_insertelement t3 p1 p2 "Vec3" atentry in

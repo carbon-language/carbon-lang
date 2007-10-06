@@ -244,56 +244,57 @@ CAMLprim value llvm_is_undef(LLVMValueRef Val) {
 
 /*--... Operations on scalar constants .....................................--*/
 
-/* lltype -> int -> bool -> llvalue */
-CAMLprim LLVMValueRef llvm_make_int_constant(LLVMTypeRef IntTy, value N,
-                                             value SExt) {
-  /* GCC warns if we use the ternary operator. */
-  unsigned long long N2;
-  if (Bool_val(SExt))
-    N2 = (value) Int_val(N);
-  else
-    N2 = (mlsize_t) Int_val(N);
-  
-  return LLVMGetIntConstant(IntTy, N2, Bool_val(SExt));
+/* lltype -> int -> llvalue */
+CAMLprim LLVMValueRef llvm_const_int(LLVMTypeRef IntTy, value N) {
+  return LLVMConstInt(IntTy, (long long) Int_val(N), 1);
 }
 
 /* lltype -> Int64.t -> bool -> llvalue */
-CAMLprim LLVMValueRef llvm_make_int64_constant(LLVMTypeRef IntTy, value N,
-                                               value SExt) {
-  return LLVMGetIntConstant(IntTy, Int64_val(N), Bool_val(SExt));
+CAMLprim LLVMValueRef llvm_const_of_int64(LLVMTypeRef IntTy, value N,
+                                          value SExt) {
+  return LLVMConstInt(IntTy, Int64_val(N), Bool_val(SExt));
 }
 
 /* lltype -> float -> llvalue */
-CAMLprim LLVMValueRef llvm_make_real_constant(LLVMTypeRef RealTy, value N) {
-  return LLVMGetRealConstant(RealTy, Double_val(N));
+CAMLprim LLVMValueRef llvm_const_float(LLVMTypeRef RealTy, value N) {
+  return LLVMConstReal(RealTy, Double_val(N));
 }
 
 /*--... Operations on composite constants ..................................--*/
 
-/* string -> bool -> llvalue */
-CAMLprim LLVMValueRef llvm_make_string_constant(value Str, value NullTerminate) {
-  return LLVMGetStringConstant(String_val(Str), string_length(Str),
-                               Bool_val(NullTerminate) == 0);
+/* string -> llvalue */
+CAMLprim LLVMValueRef llvm_const_string(value Str, value NullTerminate) {
+  return LLVMConstString(String_val(Str), string_length(Str), 1);
+}
+
+/* string -> llvalue */
+CAMLprim LLVMValueRef llvm_const_stringz(value Str, value NullTerminate) {
+  return LLVMConstString(String_val(Str), string_length(Str), 0);
 }
 
 /* lltype -> llvalue array -> llvalue */
-CAMLprim LLVMValueRef llvm_make_array_constant(LLVMTypeRef ElementTy,
+CAMLprim LLVMValueRef llvm_const_array(LLVMTypeRef ElementTy,
                                                value ElementVals) {
-  return LLVMGetArrayConstant(ElementTy, (LLVMValueRef*) Op_val(ElementVals),
-                              Wosize_val(ElementVals));
-}
-
-/* llvalue array -> bool -> llvalue */
-CAMLprim LLVMValueRef llvm_make_struct_constant(value ElementVals,
-                                                value Packed) {
-  return LLVMGetStructConstant((LLVMValueRef *) Op_val(ElementVals),
-                               Wosize_val(ElementVals), Bool_val(Packed));
+  return LLVMConstArray(ElementTy, (LLVMValueRef*) Op_val(ElementVals),
+                        Wosize_val(ElementVals));
 }
 
 /* llvalue array -> llvalue */
-CAMLprim LLVMValueRef llvm_make_vector_constant(value ElementVals) {
-  return LLVMGetVectorConstant((LLVMValueRef*) Op_val(ElementVals),
-                               Wosize_val(ElementVals));
+CAMLprim LLVMValueRef llvm_const_struct(value ElementVals) {
+  return LLVMConstStruct((LLVMValueRef *) Op_val(ElementVals),
+                         Wosize_val(ElementVals), 0);
+}
+
+/* llvalue array -> llvalue */
+CAMLprim LLVMValueRef llvm_const_packed_struct(value ElementVals) {
+  return LLVMConstStruct((LLVMValueRef *) Op_val(ElementVals),
+                         Wosize_val(ElementVals), 1);
+}
+
+/* llvalue array -> llvalue */
+CAMLprim LLVMValueRef llvm_const_vector(value ElementVals) {
+  return LLVMConstVector((LLVMValueRef*) Op_val(ElementVals),
+                         Wosize_val(ElementVals));
 }
 
 /*--... Constant expressions ...............................................--*/

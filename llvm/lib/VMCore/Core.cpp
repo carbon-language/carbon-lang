@@ -200,11 +200,11 @@ void LLVMDumpValue(LLVMValueRef Val) {
 
 /*--.. Operations on constants of any type .................................--*/
 
-LLVMValueRef LLVMGetNull(LLVMTypeRef Ty) {
+LLVMValueRef LLVMConstNull(LLVMTypeRef Ty) {
   return wrap(Constant::getNullValue(unwrap(Ty)));
 }
 
-LLVMValueRef LLVMGetAllOnes(LLVMTypeRef Ty) {
+LLVMValueRef LLVMConstAllOnes(LLVMTypeRef Ty) {
   return wrap(Constant::getAllOnesValue(unwrap(Ty)));
 }
 
@@ -228,40 +228,39 @@ int LLVMIsUndef(LLVMValueRef Val) {
 
 /*--.. Operations on scalar constants ......................................--*/
 
-LLVMValueRef LLVMGetIntConstant(LLVMTypeRef IntTy, unsigned long long N,
-                                int SignExtend) {
+LLVMValueRef LLVMConstInt(LLVMTypeRef IntTy, unsigned long long N,
+                          int SignExtend) {
   return wrap(ConstantInt::get(unwrap<IntegerType>(IntTy), N, SignExtend != 0));
 }
 
-LLVMValueRef LLVMGetRealConstant(LLVMTypeRef RealTy, double N) {
+LLVMValueRef LLVMConstReal(LLVMTypeRef RealTy, double N) {
   return wrap(ConstantFP::get(unwrap(RealTy), APFloat(N)));
 }
 
 /*--.. Operations on composite constants ...................................--*/
 
-LLVMValueRef LLVMGetStringConstant(const char *Str, unsigned Length,
-                                   int DontNullTerminate) {
+LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
+                             int DontNullTerminate) {
   /* Inverted the sense of AddNull because ', 0)' is a
      better mnemonic for null termination than ', 1)'. */
   return wrap(ConstantArray::get(std::string(Str, Length),
                                  DontNullTerminate == 0));
 }
 
-LLVMValueRef LLVMGetArrayConstant(LLVMTypeRef ElementTy,
-                                  LLVMValueRef *ConstantVals, unsigned Length) {
+LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
+                            LLVMValueRef *ConstantVals, unsigned Length) {
   return wrap(ConstantArray::get(ArrayType::get(unwrap(ElementTy), Length),
                                  unwrap<Constant>(ConstantVals, Length),
                                  Length));
 }
 
-LLVMValueRef LLVMGetStructConstant(LLVMValueRef *ConstantVals, unsigned Count,
-                                   int Packed) {
+LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
+                             int Packed) {
   return wrap(ConstantStruct::get(unwrap<Constant>(ConstantVals, Count),
                                   Count, Packed != 0));
 }
 
-LLVMValueRef LLVMGetVectorConstant(LLVMValueRef *ScalarConstantVals,
-                                   unsigned Size) {
+LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
   return wrap(ConstantVector::get(unwrap<Constant>(ScalarConstantVals, Size),
                                   Size));
 }
