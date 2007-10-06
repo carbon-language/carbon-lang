@@ -129,11 +129,6 @@ CAMLprim value llvm_is_var_arg(LLVMTypeRef FunTy) {
   return Val_bool(LLVMIsFunctionVarArg(FunTy));
 }
 
-/* lltype -> lltype */
-CAMLprim LLVMTypeRef llvm_return_type(LLVMTypeRef FunTy) {
-  return LLVMGetReturnType(FunTy);
-}
-
 /* lltype -> lltype array */
 CAMLprim value llvm_param_types(LLVMTypeRef FunTy) {
   value Tys = alloc(LLVMCountParamTypes(FunTy), 0);
@@ -174,19 +169,9 @@ CAMLprim LLVMTypeRef llvm_array_type(LLVMTypeRef ElementTy, value Count) {
   return LLVMArrayType(ElementTy, Int_val(Count));
 }
 
-/* lltype -> lltype */
-CAMLprim LLVMTypeRef llvm_pointer_type(LLVMTypeRef ElementTy) {
-  return LLVMPointerType(ElementTy);
-}
-
 /* lltype -> int -> lltype */
 CAMLprim LLVMTypeRef llvm_vector_type(LLVMTypeRef ElementTy, value Count) {
   return LLVMVectorType(ElementTy, Int_val(Count));
-}
-
-/* lltype -> lltype */
-CAMLprim LLVMTypeRef llvm_element_type(LLVMTypeRef Ty) {
-  return LLVMGetElementType(Ty);
 }
 
 /* lltype -> int */

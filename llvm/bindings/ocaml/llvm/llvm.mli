@@ -137,7 +137,7 @@ external function_type : lltype -> lltype array -> lltype = "llvm_function_type"
 external var_arg_function_type : lltype -> lltype array -> lltype
                                = "llvm_var_arg_function_type"
 external is_var_arg : lltype -> bool = "llvm_is_var_arg"
-external return_type : lltype -> lltype = "llvm_return_type"
+external return_type : lltype -> lltype = "LLVMGetReturnType"
 external param_types : lltype -> lltype array = "llvm_param_types"
 
 (*--... Operations on struct types .........................................--*)
@@ -148,10 +148,10 @@ external is_packed : lltype -> bool = "llvm_is_packed"
 
 (*--... Operations on pointer, vector, and array types .....................--*)
 external array_type : lltype -> int -> lltype = "llvm_array_type"
-external pointer_type : lltype -> lltype = "llvm_pointer_type"
+external pointer_type : lltype -> lltype = "LLVMPointerType"
 external vector_type : lltype -> int -> lltype = "llvm_vector_type"
 
-external element_type : lltype -> lltype = "llvm_element_type"
+external element_type : lltype -> lltype = "LLVMGetElementType"
 external array_length : lltype -> int = "llvm_array_length"
 external vector_size : lltype -> int = "llvm_vector_size"
 
