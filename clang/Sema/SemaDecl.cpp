@@ -1061,9 +1061,9 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                       IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
-  ObjcCategoryDecl *CDecl;
-  ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(ClassName);
-  CDecl = new ObjcCategoryDecl(AtInterfaceLoc, NumProtoRefs);
+  ObjcInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
+  ObjcCategoryDecl *CDecl = new ObjcCategoryDecl(AtInterfaceLoc, NumProtoRefs,
+                                                 CategoryName);
   CDecl->setClassInterface(IDecl);
 
   /// Check that class of this category is already completely declared.
@@ -1074,16 +1074,14 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
     ObjcCategoryDecl *CDeclChain;
     for (CDeclChain = IDecl->getListCategories(); CDeclChain;
          CDeclChain = CDeclChain->getNextClassCategory()) {
-      if (CDeclChain->getCatName() == CategoryName) {
+      if (CDeclChain->getIdentifier() == CategoryName) {
         Diag(CategoryLoc, diag::err_dup_category_def, ClassName->getName(),
              CategoryName->getName());
         break;
       }
     }
-    if (!CDeclChain) {
-      CDecl->setCatName(CategoryName);
+    if (!CDeclChain)
       CDecl->insertNextClassCategory();
-    }
   }
   
   /// Check then save referenced protocols
@@ -1363,7 +1361,7 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
   }
   if (IncompleteImpl)
     Diag(CatImplDecl->getLocation(), diag::warn_incomplete_impl_category, 
-         CatClassDecl->getCatName()->getName());
+         CatClassDecl->getName());
 }
 
 /// ActOnForwardClassDeclaration - 
@@ -1723,8 +1721,10 @@ bool Sema:: MatchTwoMethodDeclarations(const ObjcMethodDecl *Method,
   return true;
 }
 
-void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl,
+void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
                                      DeclTy **allMethods, unsigned allNum) {
+  Decl *ClassDecl = static_cast<Decl *>(classDecl);
+  
   // FIXME: Fix this when we can handle methods declared in protocols.
   // See Parser::ParseObjCAtProtocolDeclaration
   if (!ClassDecl)
@@ -1736,8 +1736,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl,
   llvm::DenseMap<void *, const ObjcMethodDecl*> ClsMap;
   
   bool isClassDeclaration = 
-        (isa<ObjcInterfaceDecl>(static_cast<Decl *>(ClassDecl))
-         || isa<ObjcCategoryDecl>(static_cast<Decl *>(ClassDecl)));
+        (isa<ObjcInterfaceDecl>(ClassDecl) || isa<ObjcCategoryDecl>(ClassDecl));
   
   for (unsigned i = 0; i < allNum; i++ ) {
     ObjcMethodDecl *Method =
@@ -1782,54 +1781,40 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl,
         clsMethods.push_back(Method);
     }
   }
-  if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(ClassDecl))) {
-    ObjcInterfaceDecl *Interface = cast<ObjcInterfaceDecl>(
-                                          static_cast<Decl*>(ClassDecl));
-    Interface->ObjcAddMethods(&insMethods[0], insMethods.size(),
-                              &clsMethods[0], clsMethods.size());
+  
+  if (ObjcInterfaceDecl *I = dyn_cast<ObjcInterfaceDecl>(ClassDecl)) {
+    I->ObjcAddMethods(&insMethods[0], insMethods.size(),
+                      &clsMethods[0], clsMethods.size());
+  } else if (ObjcProtocolDecl *P = dyn_cast<ObjcProtocolDecl>(ClassDecl)) {
+    P->ObjcAddProtoMethods(&insMethods[0], insMethods.size(),
+                           &clsMethods[0], clsMethods.size());
   }
-  else if (isa<ObjcProtocolDecl>(static_cast<Decl *>(ClassDecl))) {
-    ObjcProtocolDecl *Protocol = cast<ObjcProtocolDecl>(
-                                        static_cast<Decl*>(ClassDecl));
-    Protocol->ObjcAddProtoMethods(&insMethods[0], insMethods.size(),
-                                  &clsMethods[0], clsMethods.size());
+  else if (ObjcCategoryDecl *C = dyn_cast<ObjcCategoryDecl>(ClassDecl)) {
+    C->ObjcAddCatMethods(&insMethods[0], insMethods.size(),
+                         &clsMethods[0], clsMethods.size());
   }
-  else if (isa<ObjcCategoryDecl>(static_cast<Decl *>(ClassDecl))) {
-    ObjcCategoryDecl *Category = cast<ObjcCategoryDecl>(
-                                        static_cast<Decl*>(ClassDecl));
-    Category->ObjcAddCatMethods(&insMethods[0], insMethods.size(),
-                                &clsMethods[0], clsMethods.size());
-  }
-  else if (isa<ObjcImplementationDecl>(static_cast<Decl *>(ClassDecl))) {
-    ObjcImplementationDecl* ImplClass = cast<ObjcImplementationDecl>(
-                                               static_cast<Decl*>(ClassDecl));
-    ImplClass->ObjcAddImplMethods(&insMethods[0], insMethods.size(),
-                                 &clsMethods[0], clsMethods.size());
-    ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(ImplClass->getIdentifier());
-    if (IDecl)
-      ImplMethodsVsClassMethods(ImplClass, IDecl);
-  }
-  else {
-    ObjcCategoryImplDecl* CatImplClass = dyn_cast<ObjcCategoryImplDecl>(
-                                          static_cast<Decl*>(ClassDecl));
-    if (CatImplClass) {
-      CatImplClass->ObjcAddCatImplMethods(&insMethods[0], insMethods.size(),
-                                          &clsMethods[0], clsMethods.size());
-      ObjcInterfaceDecl* IDecl = CatImplClass->getClassInterface();
-      // Find category interface decl and then check that all methods declared
-      // in this interface is implemented in the category @implementation.
-      if (IDecl) {
-        for (ObjcCategoryDecl *Categories = IDecl->getListCategories();
-             Categories; Categories = Categories->getNextClassCategory()) {
-          if (Categories->getCatName() == CatImplClass->getObjcCatName()) {
-            ImplCategoryMethodsVsIntfMethods(CatImplClass, Categories);
-            break;
-          }
+  else if (ObjcImplementationDecl *IC = 
+                dyn_cast<ObjcImplementationDecl>(ClassDecl)) {
+    IC->ObjcAddImplMethods(&insMethods[0], insMethods.size(),
+                           &clsMethods[0], clsMethods.size());
+    if (ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(IC->getIdentifier()))
+      ImplMethodsVsClassMethods(IC, IDecl);
+  } else {
+    ObjcCategoryImplDecl* CatImplClass = cast<ObjcCategoryImplDecl>(ClassDecl);
+    CatImplClass->ObjcAddCatImplMethods(&insMethods[0], insMethods.size(),
+                                        &clsMethods[0], clsMethods.size());
+    ObjcInterfaceDecl* IDecl = CatImplClass->getClassInterface();
+    // Find category interface decl and then check that all methods declared
+    // in this interface is implemented in the category @implementation.
+    if (IDecl) {
+      for (ObjcCategoryDecl *Categories = IDecl->getListCategories();
+           Categories; Categories = Categories->getNextClassCategory()) {
+        if (Categories->getIdentifier() == CatImplClass->getObjcCatName()) {
+          ImplCategoryMethodsVsIntfMethods(CatImplClass, Categories);
+          break;
         }
       }
     }
-    else
-      assert(0 && "Sema::ActOnAddMethodsToObjcDecl(): Unknown DeclTy");
   }
 }
 

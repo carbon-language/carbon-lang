@@ -111,12 +111,25 @@ public:
   static bool classof(const Decl *) { return true; }
 };
 
-/// ScopedDecl - Represent lexically scoped names, used for all ValueDecl's
-/// and TypeDecl's.
-class ScopedDecl : public Decl {
+class NamedDecl : public Decl {
   /// Identifier - The identifier for this declaration (e.g. the name for the
   /// variable, the tag for a struct).
   IdentifierInfo *Identifier;
+public:
+  NamedDecl(Kind DK, SourceLocation L, IdentifierInfo *Id)
+   : Decl(DK, L), Identifier(Id) {}
+  
+  IdentifierInfo *getIdentifier() const { return Identifier; }
+  const char *getName() const;
+  
+  
+  // FIXME: classof.
+  static bool classof(const NamedDecl *D) { return true; }
+};
+
+/// ScopedDecl - Represent lexically scoped names, used for all ValueDecl's
+/// and TypeDecl's.
+class ScopedDecl : public NamedDecl {
   
   /// NextDeclarator - If this decl was part of a multi-declarator declaration,
   /// such as "int X, Y, *Z;" this indicates Decl for the next declarator.
@@ -128,12 +141,9 @@ class ScopedDecl : public Decl {
   ///
   ScopedDecl *Next;
 protected:
-  ScopedDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, ScopedDecl *PrevDecl) 
-    : Decl(DK, L), Identifier(Id), NextDeclarator(PrevDecl), Next(0) {}
+  ScopedDecl(Kind DK, SourceLocation L, IdentifierInfo *Id,ScopedDecl *PrevDecl)
+    : NamedDecl(DK, L, Id), NextDeclarator(PrevDecl), Next(0) {}
 public:
-  IdentifierInfo *getIdentifier() const { return Identifier; }
-  const char *getName() const;
-
   ScopedDecl *getNext() const { return Next; }
   void setNext(ScopedDecl *N) { Next = N; }
   
@@ -325,7 +335,7 @@ private:
 
 /// FieldDecl - An instance of this class is created by Sema::ActOnField to 
 /// represent a member of a struct/union/class.
-class FieldDecl : public Decl {
+class FieldDecl : public NamedDecl {
   /// Identifier - The identifier for this declaration (e.g. the name for the
   /// variable, the tag for a struct).
   IdentifierInfo *Identifier;
@@ -333,12 +343,9 @@ class FieldDecl : public Decl {
   QualType DeclType;  
 public:
   FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
-    : Decl(Field, L), Identifier(Id), DeclType(T) {}
+    : NamedDecl(Field, L, Id), DeclType(T) {}
   FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T) 
-    : Decl(DK, L), Identifier(Id), DeclType(T) {}
-
-  IdentifierInfo *getIdentifier() const { return Identifier; }
-  const char *getName() const;
+    : NamedDecl(DK, L, Id), DeclType(T) {}
 
   QualType getType() const { return DeclType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }

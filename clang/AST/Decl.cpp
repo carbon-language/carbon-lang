@@ -214,13 +214,7 @@ void Decl::addDeclKind(const Kind k) {
 Decl::~Decl() {
 }
 
-const char *FieldDecl::getName() const {
-  if (const IdentifierInfo *II = getIdentifier())
-    return II->getName();
-  return "";
-}
-
-const char *ScopedDecl::getName() const {
+const char *NamedDecl::getName() const {
   if (const IdentifierInfo *II = getIdentifier())
     return II->getName();
   return "";

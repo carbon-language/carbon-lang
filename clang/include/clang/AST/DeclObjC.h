@@ -33,7 +33,7 @@ class ObjcCategoryDecl;
 ///     // no instance variables or methods.
 ///   @end
 ///
-///   // NSResponder inherits from NSObject and implements NSCoding (a protocol). 
+///   // NSResponder inherits from NSObject & implements NSCoding (a protocol). 
 ///   @interface NSResponder : NSObject <NSCoding>
 ///   { // instance variables are represented by ObjcIvarDecl.
 ///     id nextResponder; // nextResponder instance variable.
@@ -429,12 +429,9 @@ public:
 /// Lisp and Smalltalk. More traditional class-based languages (C++, Java) 
 /// don't support this level of dynamism, which is both powerful and dangerous.
 ///
-class ObjcCategoryDecl : public Decl {
+class ObjcCategoryDecl : public NamedDecl {
   /// Interface belonging to this category
   ObjcInterfaceDecl *ClassInterface;
-  
-  /// Category name
-  IdentifierInfo *ObjcCatName;
   
   /// referenced protocols in this category
   ObjcProtocolDecl **ReferencedProtocols;  // Null if none
@@ -452,10 +449,9 @@ class ObjcCategoryDecl : public Decl {
   ObjcCategoryDecl *NextClassCategory;
   
 public:
-  ObjcCategoryDecl(SourceLocation L, unsigned numRefProtocol)
-    : Decl(ObjcCategory, L),
-      ClassInterface(0), ObjcCatName(0),
-      ReferencedProtocols(0), NumReferencedProtocols(-1),
+  ObjcCategoryDecl(SourceLocation L, unsigned numRefProtocol,IdentifierInfo *Id)
+    : NamedDecl(ObjcCategory, L, Id),
+      ClassInterface(0), ReferencedProtocols(0), NumReferencedProtocols(-1),
       InstanceMethods(0), NumInstanceMethods(-1),
       ClassMethods(0), NumClassMethods(-1),
       NextClassCategory(0) {
@@ -488,9 +484,6 @@ public:
   
   void ObjcAddCatMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                          ObjcMethodDecl **clsMethods, unsigned numClsMembers);
-  
-  IdentifierInfo *getCatName() const { return ObjcCatName; }
-  void setCatName(IdentifierInfo *catName) { ObjcCatName = catName; }
   
   ObjcCategoryDecl *getNextClassCategory() const { return NextClassCategory; }
   void insertNextClassCategory() {
