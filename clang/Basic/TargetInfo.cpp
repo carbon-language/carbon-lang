@@ -63,25 +63,25 @@ void TargetInfo::DiagnoseNonPortability(SourceLocation Loc, unsigned DiagKind) {
 /// collection for easy lookup.
 static void GetTargetDefineMap(const TargetInfoImpl *Target,
                                llvm::StringMap<std::string> &Map) {
-  std::vector<std::string> PrimaryDefines;
-  Target->getTargetDefines(PrimaryDefines);
+  std::vector<char> Defines;
+  Defines.reserve(4096);
+  Target->getTargetDefines(Defines);
 
-  while (!PrimaryDefines.empty()) {
-    std::string &PrimDefineStr = PrimaryDefines.back();
-    const char *Str    = PrimDefineStr.c_str();
-    const char *StrEnd = Str+PrimDefineStr.size();
+  for (const char *DefStr = &Defines[0], *E = DefStr+Defines.size();
+       DefStr != E;) {
+    // Skip the '#define ' portion.
+    assert(memcmp(DefStr, "#define ", strlen("#define ")) == 0 &&
+           "#define didn't start with #define!");
+    DefStr += strlen("#define ");
     
-    if (const char *Equal = strchr(Str, '=')) {
-      // Split at the '='.
-      
-      std::string &Entry = Map.GetOrCreateValue(Str, Equal).getValue();
-      Entry = std::string(Equal+1, StrEnd);
-    } else {
-      // Remember "macroname=1".
-      std::string &Entry = Map.GetOrCreateValue(Str, StrEnd).getValue();
-      Entry = "1";
-    }
-    PrimaryDefines.pop_back();
+    // Find the divider between the key and value.
+    const char *SpacePos = strchr(DefStr, ' ');
+
+    std::string &Entry = Map.GetOrCreateValue(DefStr, SpacePos).getValue();
+
+    const char *EndPos = strchr(SpacePos+1, '\n');
+    Entry = std::string(SpacePos+1, EndPos);
+    DefStr = EndPos+1;
   }
 }
 
@@ -90,30 +90,7 @@ static void GetTargetDefineMap(const TargetInfoImpl *Target,
 void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
   // If we have no secondary targets, be a bit more efficient.
   if (SecondaryTargets.empty()) {
-    std::vector<std::string> PrimaryDefines;
-    PrimaryTarget->getTargetDefines(PrimaryDefines);
-
-    for (unsigned i = 0, e = PrimaryDefines.size(); i != e; ++i) {
-      // Always produce a #define.
-      const char *Command = "#define ";
-      Buffer.insert(Buffer.end(), Command, Command+strlen("#define "));
-      
-      const std::string &Val = PrimaryDefines[i];
-      unsigned EqualPos = Val.find('=');
-      if (EqualPos != std::string::npos) {
-        // Insert "defname defvalue\n".
-        Buffer.insert(Buffer.end(), Val.begin(), Val.begin()+EqualPos);
-        Buffer.push_back(' ');
-        Buffer.insert(Buffer.end(), Val.begin()+EqualPos+1, Val.end());
-        Buffer.push_back('\n');
-      } else {
-        // Insert "defname 1\n".
-        Buffer.insert(Buffer.end(), Val.begin(), Val.end());
-        Buffer.push_back(' ');
-        Buffer.push_back('1');
-        Buffer.push_back('\n');
-      }
-    }
+    PrimaryTarget->getTargetDefines(Buffer);
     return;
   }
   

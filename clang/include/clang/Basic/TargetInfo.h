@@ -234,9 +234,9 @@ public:
   virtual ~TargetInfoImpl() {}
   
   /// getTargetDefines - Return a list of the target-specific #define values set
-  /// when compiling to this target.  Each string should be of the form "X",
-  /// which results in '#define X 1' or "X=Y" which results in "#define X Y"
-  virtual void getTargetDefines(std::vector<std::string> &Defines) const = 0;
+  /// when compiling to this target.  Each string should be of the form
+  /// "#define X Y\n".
+  virtual void getTargetDefines(std::vector<char> &Defines) const = 0;
 
   /// getWCharWidth - Return the size of wchar_t in bits.
   ///

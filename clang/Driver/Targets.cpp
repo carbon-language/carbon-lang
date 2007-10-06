@@ -40,27 +40,38 @@ llvm::cl::values(clEnumValN(target_ppc,       "ppc",   "32-bit Darwin PowerPC"),
 //  Common code shared among targets.
 //===----------------------------------------------------------------------===//
 
+static void Define(std::vector<char> &Buf, const char *Macro,
+                   const char *Val = "1") {
+  const char *Def = "#define ";
+  Buf.insert(Buf.end(), Def, Def+strlen(Def));
+  Buf.insert(Buf.end(), Macro, Macro+strlen(Macro));
+  Buf.push_back(' ');
+  Buf.insert(Buf.end(), Val, Val+strlen(Val));
+  Buf.push_back('\n');
+}
+
+
 namespace {
 class DarwinTargetInfo : public TargetInfoImpl {
 public:
-  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
-    Defines.push_back("__APPLE__=1");
-    Defines.push_back("__MACH__=1");
+  virtual void getTargetDefines(std::vector<char> &Defs) const {
+    Define(Defs, "__APPLE__");
+    Define(Defs, "__MACH__");
     
     if (1) {// -fobjc-gc controls this.
-      Defines.push_back("__weak=");
-      Defines.push_back("__strong=");
+      Define(Defs, "__weak", "");
+      Define(Defs, "__strong", "");
     } else {
-      Defines.push_back("__weak=__attribute__((objc_gc(weak)))");
-      Defines.push_back("__strong=__attribute__((objc_gc(strong)))");
-      Defines.push_back("__OBJC_GC__");
+      Define(Defs, "__weak", "__attribute__((objc_gc(weak)))");
+      Define(Defs, "__strong", "__attribute__((objc_gc(strong)))");
+      Define(Defs, "__OBJC_GC__");
     }
 
     // darwin_constant_cfstrings controls this.
-    Defines.push_back("__CONSTANT_CFSTRINGS__=1");
+    Define(Defs, "__CONSTANT_CFSTRINGS__");
     
     if (0)  // darwin_pascal_strings
-      Defines.push_back("__PASCAL_STRINGS__");
+      Define(Defs, "__PASCAL_STRINGS__");
   }
 
 };
@@ -69,205 +80,203 @@ public:
 
 /// getPowerPCDefines - Return a set of the PowerPC-specific #defines that are
 /// not tied to a specific subtarget.
-static void getPowerPCDefines(std::vector<std::string> &Defines, bool is64Bit) {
+static void getPowerPCDefines(std::vector<char> &Defs, bool is64Bit) {
   // Target identification.
-  Defines.push_back("__ppc__");
-  Defines.push_back("_ARCH_PPC=1");
-  Defines.push_back("__POWERPC__=1");
+  Define(Defs, "__ppc__");
+  Define(Defs, "_ARCH_PPC");
+  Define(Defs, "__POWERPC__");
   if (is64Bit) {
-    Defines.push_back("_ARCH_PPC64");
-    Defines.push_back("_LP64");
-    Defines.push_back("__LP64__");
-    Defines.push_back("__ppc64__");
+    Define(Defs, "_ARCH_PPC64");
+    Define(Defs, "_LP64");
+    Define(Defs, "__LP64__");
+    Define(Defs, "__ppc64__");
   } else {
-    Defines.push_back("__ppc__=1");
+    Define(Defs, "__ppc__");
   }
 
   // Target properties.
-  Defines.push_back("_BIG_ENDIAN=1");
-  Defines.push_back("__BIG_ENDIAN__=1");
+  Define(Defs, "_BIG_ENDIAN");
+  Define(Defs, "__BIG_ENDIAN__");
 
   if (is64Bit) {
-    Defines.push_back("__INTMAX_MAX__=9223372036854775807L");
-    Defines.push_back("__INTMAX_TYPE__=long int");
-    Defines.push_back("__LONG_MAX__=9223372036854775807L");
-    Defines.push_back("__PTRDIFF_TYPE__=long int");
-    Defines.push_back("__UINTMAX_TYPE__=long unsigned int");
+    Define(Defs, "__INTMAX_MAX__", "9223372036854775807L");
+    Define(Defs, "__INTMAX_TYPE__", "long int");
+    Define(Defs, "__LONG_MAX__", "9223372036854775807L");
+    Define(Defs, "__PTRDIFF_TYPE__", "long int");
+    Define(Defs, "__UINTMAX_TYPE__", "long unsigned int");
   } else {
-    Defines.push_back("__INTMAX_MAX__=9223372036854775807LL");
-    Defines.push_back("__INTMAX_TYPE__=long long int");
-    Defines.push_back("__LONG_MAX__=2147483647L");
-    Defines.push_back("__PTRDIFF_TYPE__=int");
-    Defines.push_back("__UINTMAX_TYPE__=long long unsigned int");
+    Define(Defs, "__INTMAX_MAX__", "9223372036854775807LL");
+    Define(Defs, "__INTMAX_TYPE__", "long long int");
+    Define(Defs, "__LONG_MAX__", "2147483647L");
+    Define(Defs, "__PTRDIFF_TYPE__", "int");
+    Define(Defs, "__UINTMAX_TYPE__", "long long unsigned int");
   }
-  Defines.push_back("__INT_MAX__=2147483647");
-  Defines.push_back("__LONG_LONG_MAX__=9223372036854775807LL");
-  Defines.push_back("__CHAR_BIT__=8");
-  Defines.push_back("__SCHAR_MAX__=127");
-  Defines.push_back("__SHRT_MAX__=32767");
-  Defines.push_back("__SIZE_TYPE__=long unsigned int");
+  Define(Defs, "__INT_MAX__", "2147483647");
+  Define(Defs, "__LONG_LONG_MAX__", "9223372036854775807LL");
+  Define(Defs, "__CHAR_BIT__", "8");
+  Define(Defs, "__SCHAR_MAX__", "127");
+  Define(Defs, "__SHRT_MAX__", "32767");
+  Define(Defs, "__SIZE_TYPE__", "long unsigned int");
   
   // Subtarget options.
-  Defines.push_back("__USER_LABEL_PREFIX__=_");
-  Defines.push_back("__NATURAL_ALIGNMENT__=1");
-  Defines.push_back("__REGISTER_PREFIX__=");
+  Define(Defs, "__USER_LABEL_PREFIX__", "_");
+  Define(Defs, "__NATURAL_ALIGNMENT__");
+  Define(Defs, "__REGISTER_PREFIX__", "");
 
-  Defines.push_back("__WCHAR_MAX__=2147483647");
-  Defines.push_back("__WCHAR_TYPE__=int");
-  Defines.push_back("__WINT_TYPE__=int");
+  Define(Defs, "__WCHAR_MAX__", "2147483647");
+  Define(Defs, "__WCHAR_TYPE__", "int");
+  Define(Defs, "__WINT_TYPE__", "int");
   
   // Float macros.
-  Defines.push_back("__FLT_DENORM_MIN__=1.40129846e-45F");
-  Defines.push_back("__FLT_DIG__=6");
-  Defines.push_back("__FLT_EPSILON__=1.19209290e-7F");
-  Defines.push_back("__FLT_EVAL_METHOD__=0");
-  Defines.push_back("__FLT_HAS_INFINITY__=1");
-  Defines.push_back("__FLT_HAS_QUIET_NAN__=1");
-  Defines.push_back("__FLT_MANT_DIG__=24");
-  Defines.push_back("__FLT_MAX_10_EXP__=38");
-  Defines.push_back("__FLT_MAX_EXP__=128");
-  Defines.push_back("__FLT_MAX__=3.40282347e+38F");
-  Defines.push_back("__FLT_MIN_10_EXP__=(-37)");
-  Defines.push_back("__FLT_MIN_EXP__=(-125)");
-  Defines.push_back("__FLT_MIN__=1.17549435e-38F");
-  Defines.push_back("__FLT_RADIX__=2");
+  Define(Defs, "__FLT_DENORM_MIN__", "1.40129846e-45F");
+  Define(Defs, "__FLT_DIG__", "6");
+  Define(Defs, "__FLT_EPSILON__", "1.19209290e-7F");
+  Define(Defs, "__FLT_EVAL_METHOD__", "0");
+  Define(Defs, "__FLT_HAS_INFINITY__");
+  Define(Defs, "__FLT_HAS_QUIET_NAN__");
+  Define(Defs, "__FLT_MANT_DIG__", "24");
+  Define(Defs, "__FLT_MAX_10_EXP__", "38");
+  Define(Defs, "__FLT_MAX_EXP__", "128");
+  Define(Defs, "__FLT_MAX__", "3.40282347e+38F");
+  Define(Defs, "__FLT_MIN_10_EXP__", "(-37)");
+  Define(Defs, "__FLT_MIN_EXP__", "(-125)");
+  Define(Defs, "__FLT_MIN__", "1.17549435e-38F");
+  Define(Defs, "__FLT_RADIX__", "2");
   
   // double macros.
-  Defines.push_back("__DBL_DENORM_MIN__=4.9406564584124654e-324");
-  Defines.push_back("__DBL_DIG__=15");
-  Defines.push_back("__DBL_EPSILON__=2.2204460492503131e-16");
-  Defines.push_back("__DBL_HAS_INFINITY__=1");
-  Defines.push_back("__DBL_HAS_QUIET_NAN__=1");
-  Defines.push_back("__DBL_MANT_DIG__=53");
-  Defines.push_back("__DBL_MAX_10_EXP__=308");
-  Defines.push_back("__DBL_MAX_EXP__=1024");
-  Defines.push_back("__DBL_MAX__=1.7976931348623157e+308");
-  Defines.push_back("__DBL_MIN_10_EXP__=(-307)");
-  Defines.push_back("__DBL_MIN_EXP__=(-1021)");
-  Defines.push_back("__DBL_MIN__=2.2250738585072014e-308");
-  Defines.push_back("__DECIMAL_DIG__=33");
+  Define(Defs, "__DBL_DENORM_MIN__", "4.9406564584124654e-324");
+  Define(Defs, "__DBL_DIG__", "15");
+  Define(Defs, "__DBL_EPSILON__", "2.2204460492503131e-16");
+  Define(Defs, "__DBL_HAS_INFINITY__");
+  Define(Defs, "__DBL_HAS_QUIET_NAN__");
+  Define(Defs, "__DBL_MANT_DIG__", "53");
+  Define(Defs, "__DBL_MAX_10_EXP__", "308");
+  Define(Defs, "__DBL_MAX_EXP__", "1024");
+  Define(Defs, "__DBL_MAX__", "1.7976931348623157e+308");
+  Define(Defs, "__DBL_MIN_10_EXP__", "(-307)");
+  Define(Defs, "__DBL_MIN_EXP__", "(-1021)");
+  Define(Defs, "__DBL_MIN__", "2.2250738585072014e-308");
+  Define(Defs, "__DECIMAL_DIG__", "33");
   
   // 128-bit long double macros.
-  Defines.push_back("__LDBL_DENORM_MIN__=4.940656458412465441765687"
-                     "92868221e-324L");
-  Defines.push_back("__LDBL_DIG__=31");
-  Defines.push_back("__LDBL_EPSILON__=4.9406564584124654417656879286822"
-                     "1e-324L");
-  Defines.push_back("__LDBL_HAS_INFINITY__=1");
-  Defines.push_back("__LDBL_HAS_QUIET_NAN__=1");
-  Defines.push_back("__LDBL_MANT_DIG__=106");
-  Defines.push_back("__LDBL_MAX_10_EXP__=308");
-  Defines.push_back("__LDBL_MAX_EXP__=1024");
-  Defines.push_back("__LDBL_MAX__=1.7976931348623158079372897140"
-                     "5301e+308L");
-  Defines.push_back("__LDBL_MIN_10_EXP__=(-291)");
-  Defines.push_back("__LDBL_MIN_EXP__=(-968)");
-  Defines.push_back("__LDBL_MIN__=2.004168360008972777996108051350"
-                     "16e-292L");
-  Defines.push_back("__LONG_DOUBLE_128__=1");
-  
+  Define(Defs, "__LDBL_DENORM_MIN__",
+         "4.94065645841246544176568792868221e-324L");
+  Define(Defs, "__LDBL_DIG__", "31");
+  Define(Defs, "__LDBL_EPSILON__",
+         "4.94065645841246544176568792868221e-324L");
+  Define(Defs, "__LDBL_HAS_INFINITY__");
+  Define(Defs, "__LDBL_HAS_QUIET_NAN__");
+  Define(Defs, "__LDBL_MANT_DIG__", "106");
+  Define(Defs, "__LDBL_MAX_10_EXP__", "308");
+  Define(Defs, "__LDBL_MAX_EXP__", "1024");
+  Define(Defs, "__LDBL_MAX__",
+         "1.79769313486231580793728971405301e+308L");
+  Define(Defs, "__LDBL_MIN_10_EXP__", "(-291)");
+  Define(Defs, "__LDBL_MIN_EXP__", "(-968)");
+  Define(Defs, "__LDBL_MIN__",
+         "2.00416836000897277799610805135016e-292L");
+  Define(Defs, "__LONG_DOUBLE_128__");
 }
 
 /// getX86Defines - Return a set of the X86-specific #defines that are
 /// not tied to a specific subtarget.
-static void getX86Defines(std::vector<std::string> &Defines, bool is64Bit) {
+static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
   // Target identification.
   if (is64Bit) {
-    Defines.push_back("_LP64");
-    Defines.push_back("__LP64__");
-    Defines.push_back("__amd64__");
-    Defines.push_back("__amd64");
-    Defines.push_back("__x86_64");
-    Defines.push_back("__x86_64__");
+    Define(Defs, "_LP64");
+    Define(Defs, "__LP64__");
+    Define(Defs, "__amd64__");
+    Define(Defs, "__amd64");
+    Define(Defs, "__x86_64");
+    Define(Defs, "__x86_64__");
   } else {
-    Defines.push_back("__i386__=1");
-    Defines.push_back("__i386=1");
-    Defines.push_back("i386=1");
+    Define(Defs, "__i386__");
+    Define(Defs, "__i386");
+    Define(Defs, "i386");
   }
 
   // Target properties.
-  Defines.push_back("__LITTLE_ENDIAN__=1");
+  Define(Defs, "__LITTLE_ENDIAN__");
   
   if (is64Bit) {
-    Defines.push_back("__INTMAX_MAX__=9223372036854775807L");
-    Defines.push_back("__INTMAX_TYPE__=long int");
-    Defines.push_back("__LONG_MAX__=9223372036854775807L");
-    Defines.push_back("__PTRDIFF_TYPE__=long int");
-    Defines.push_back("__UINTMAX_TYPE__=long unsigned int");
+    Define(Defs, "__INTMAX_MAX__", "9223372036854775807L");
+    Define(Defs, "__INTMAX_TYPE__", "long int");
+    Define(Defs, "__LONG_MAX__", "9223372036854775807L");
+    Define(Defs, "__PTRDIFF_TYPE__", "long int");
+    Define(Defs, "__UINTMAX_TYPE__", "long unsigned int");
   } else {
-    Defines.push_back("__INTMAX_MAX__=9223372036854775807LL");
-    Defines.push_back("__INTMAX_TYPE__=long long int");
-    Defines.push_back("__LONG_MAX__=2147483647L");
-    Defines.push_back("__PTRDIFF_TYPE__=int");
-    Defines.push_back("__UINTMAX_TYPE__=long long unsigned int");
+    Define(Defs, "__INTMAX_MAX__", "9223372036854775807LL");
+    Define(Defs, "__INTMAX_TYPE__", "long long int");
+    Define(Defs, "__LONG_MAX__", "2147483647L");
+    Define(Defs, "__PTRDIFF_TYPE__", "int");
+    Define(Defs, "__UINTMAX_TYPE__", "long long unsigned int");
   }
-  Defines.push_back("__CHAR_BIT__=8");
-  Defines.push_back("__INT_MAX__=2147483647");
-  Defines.push_back("__LONG_LONG_MAX__=9223372036854775807LL");
-  Defines.push_back("__SCHAR_MAX__=127");
-  Defines.push_back("__SHRT_MAX__=32767");
-  Defines.push_back("__SIZE_TYPE__=long unsigned int");
+  Define(Defs, "__CHAR_BIT__", "8");
+  Define(Defs, "__INT_MAX__", "2147483647");
+  Define(Defs, "__LONG_LONG_MAX__", "9223372036854775807LL");
+  Define(Defs, "__SCHAR_MAX__", "127");
+  Define(Defs, "__SHRT_MAX__", "32767");
+  Define(Defs, "__SIZE_TYPE__", "long unsigned int");
   
   // Subtarget options.
-  Defines.push_back("__nocona=1");
-  Defines.push_back("__nocona__=1");
-  Defines.push_back("__tune_nocona__=1");
-  Defines.push_back("__SSE2_MATH__=1");
-  Defines.push_back("__SSE2__=1");
-  Defines.push_back("__SSE_MATH__=1");
-  Defines.push_back("__SSE__=1");
-  Defines.push_back("__MMX__=1");
-  Defines.push_back("__REGISTER_PREFIX__=");
+  Define(Defs, "__nocona");
+  Define(Defs, "__nocona__");
+  Define(Defs, "__tune_nocona__");
+  Define(Defs, "__SSE2_MATH__");
+  Define(Defs, "__SSE2__");
+  Define(Defs, "__SSE_MATH__");
+  Define(Defs, "__SSE__");
+  Define(Defs, "__MMX__");
+  Define(Defs, "__REGISTER_PREFIX__", "");
 
-  Defines.push_back("__WCHAR_MAX__=2147483647");
-  Defines.push_back("__WCHAR_TYPE__=int");
-  Defines.push_back("__WINT_TYPE__=int");
+  Define(Defs, "__WCHAR_MAX__", "2147483647");
+  Define(Defs, "__WCHAR_TYPE__", "int");
+  Define(Defs, "__WINT_TYPE__", "int");
   
   // Float macros.
-  Defines.push_back("__FLT_DENORM_MIN__=1.40129846e-45F");
-  Defines.push_back("__FLT_DIG__=6");
-  Defines.push_back("__FLT_EPSILON__=1.19209290e-7F");
-  Defines.push_back("__FLT_EVAL_METHOD__=0");
-  Defines.push_back("__FLT_HAS_INFINITY__=1");
-  Defines.push_back("__FLT_HAS_QUIET_NAN__=1");
-  Defines.push_back("__FLT_MANT_DIG__=24");
-  Defines.push_back("__FLT_MAX_10_EXP__=38");
-  Defines.push_back("__FLT_MAX_EXP__=128");
-  Defines.push_back("__FLT_MAX__=3.40282347e+38F");
-  Defines.push_back("__FLT_MIN_10_EXP__=(-37)");
-  Defines.push_back("__FLT_MIN_EXP__=(-125)");
-  Defines.push_back("__FLT_MIN__=1.17549435e-38F");
-  Defines.push_back("__FLT_RADIX__=2");
+  Define(Defs, "__FLT_DENORM_MIN__", "1.40129846e-45F");
+  Define(Defs, "__FLT_DIG__", "6");
+  Define(Defs, "__FLT_EPSILON__", "1.19209290e-7F");
+  Define(Defs, "__FLT_EVAL_METHOD__", "0");
+  Define(Defs, "__FLT_HAS_INFINITY__");
+  Define(Defs, "__FLT_HAS_QUIET_NAN__");
+  Define(Defs, "__FLT_MANT_DIG__", "24");
+  Define(Defs, "__FLT_MAX_10_EXP__", "38");
+  Define(Defs, "__FLT_MAX_EXP__", "128");
+  Define(Defs, "__FLT_MAX__", "3.40282347e+38F");
+  Define(Defs, "__FLT_MIN_10_EXP__", "(-37)");
+  Define(Defs, "__FLT_MIN_EXP__", "(-125)");
+  Define(Defs, "__FLT_MIN__", "1.17549435e-38F");
+  Define(Defs, "__FLT_RADIX__", "2");
   
   // Double macros.
-  Defines.push_back("__DBL_DENORM_MIN__=4.9406564584124654e-324");
-  Defines.push_back("__DBL_DIG__=15");
-  Defines.push_back("__DBL_EPSILON__=2.2204460492503131e-16");
-  Defines.push_back("__DBL_HAS_INFINITY__=1");
-  Defines.push_back("__DBL_HAS_QUIET_NAN__=1");
-  Defines.push_back("__DBL_MANT_DIG__=53");
-  Defines.push_back("__DBL_MAX_10_EXP__=308");
-  Defines.push_back("__DBL_MAX_EXP__=1024");
-  Defines.push_back("__DBL_MAX__=1.7976931348623157e+308");
-  Defines.push_back("__DBL_MIN_10_EXP__=(-307)");
-  Defines.push_back("__DBL_MIN_EXP__=(-1021)");
-  Defines.push_back("__DBL_MIN__=2.2250738585072014e-308");
-  Defines.push_back("__DECIMAL_DIG__=21");
+  Define(Defs, "__DBL_DENORM_MIN__", "4.9406564584124654e-324");
+  Define(Defs, "__DBL_DIG__", "15");
+  Define(Defs, "__DBL_EPSILON__", "2.2204460492503131e-16");
+  Define(Defs, "__DBL_HAS_INFINITY__");
+  Define(Defs, "__DBL_HAS_QUIET_NAN__");
+  Define(Defs, "__DBL_MANT_DIG__", "53");
+  Define(Defs, "__DBL_MAX_10_EXP__", "308");
+  Define(Defs, "__DBL_MAX_EXP__", "1024");
+  Define(Defs, "__DBL_MAX__", "1.7976931348623157e+308");
+  Define(Defs, "__DBL_MIN_10_EXP__", "(-307)");
+  Define(Defs, "__DBL_MIN_EXP__", "(-1021)");
+  Define(Defs, "__DBL_MIN__", "2.2250738585072014e-308");
+  Define(Defs, "__DECIMAL_DIG__", "21");
   
   // 80-bit Long double macros.
-  Defines.push_back("__LDBL_DENORM_MIN__=3.64519953188247460253e-4951L");
-  Defines.push_back("__LDBL_DIG__=18");
-  Defines.push_back("__LDBL_EPSILON__=1.08420217248550443401e-19L");
-  Defines.push_back("__LDBL_HAS_INFINITY__=1");
-  Defines.push_back("__LDBL_HAS_QUIET_NAN__=1");
-  Defines.push_back("__LDBL_MANT_DIG__=64");
-  Defines.push_back("__LDBL_MAX_10_EXP__=4932");
-  Defines.push_back("__LDBL_MAX_EXP__=16384");
-  Defines.push_back("__LDBL_MAX__=1.18973149535723176502e+4932L");
-  Defines.push_back("__LDBL_MIN_10_EXP__=(-4931)");
-  Defines.push_back("__LDBL_MIN_EXP__=(-16381)");
-  Defines.push_back("__LDBL_MIN__=3.36210314311209350626e-4932L");
-
+  Define(Defs, "__LDBL_DENORM_MIN__", "3.64519953188247460253e-4951L");
+  Define(Defs, "__LDBL_DIG__", "18");
+  Define(Defs, "__LDBL_EPSILON__", "1.08420217248550443401e-19L");
+  Define(Defs, "__LDBL_HAS_INFINITY__");
+  Define(Defs, "__LDBL_HAS_QUIET_NAN__");
+  Define(Defs, "__LDBL_MANT_DIG__", "64");
+  Define(Defs, "__LDBL_MAX_10_EXP__", "4932");
+  Define(Defs, "__LDBL_MAX_EXP__", "16384");
+  Define(Defs, "__LDBL_MAX__", "1.18973149535723176502e+4932L");
+  Define(Defs, "__LDBL_MIN_10_EXP__", "(-4931)");
+  Define(Defs, "__LDBL_MIN_EXP__", "(-16381)");
+  Define(Defs, "__LDBL_MIN__", "3.36210314311209350626e-4932L");
 }
 
 /// PPC builtin info.
@@ -319,7 +328,7 @@ namespace X86 {
 namespace {
 class DarwinPPCTargetInfo : public DarwinTargetInfo {
 public:
-  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
     getPowerPCDefines(Defines, false);
   }
@@ -333,7 +342,7 @@ public:
 namespace {
 class DarwinPPC64TargetInfo : public DarwinTargetInfo {
 public:
-  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
     getPowerPCDefines(Defines, true);
   }
@@ -347,7 +356,7 @@ public:
 namespace {
 class DarwinI386TargetInfo : public DarwinTargetInfo {
 public:
-  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
     getX86Defines(Defines, false);
   }
@@ -361,7 +370,7 @@ public:
 namespace {
 class DarwinX86_64TargetInfo : public DarwinTargetInfo {
 public:
-  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
     getX86Defines(Defines, true);
   }
@@ -381,7 +390,7 @@ public:
     WCharAlign = 16;
   }
   
-  virtual void getTargetDefines(std::vector<std::string> &Defines) const {
+  virtual void getTargetDefines(std::vector<char> &Defines) const {
     // TODO: linux-specific stuff.
     getX86Defines(Defines, false);
   }

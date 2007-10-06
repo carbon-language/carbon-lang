@@ -744,6 +744,8 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
                                        HeaderSearch &HeaderInfo,
                                        const LangOptions &LangInfo,
                                        std::vector<char> &PrologMacros) {
+  PrologMacros.reserve(4080);
+  
   FileManager &FileMgr = HeaderInfo.getFileMgr();
   
   // Install things like __POWERPC__, __GNUC__, etc into the macro table.
