@@ -17,7 +17,7 @@
 <p>
 This page outlines the main goals of Clang, as well as some compelling reasons why you should consider using Clang. In the <a href="#goals">Goals</a> section below, you will find a brief, bulleted overview of the goals and features that we are striving for in the development of Clang.  However, in the <a href="#keyfeatures">Key Features</a> section you will find a more detailed presentation on what we believe are some key drawing points for the Clang front-end.</p>
 
-<p><em>If you are new to Clang and the LLVM front-end, and you want a reason for considering working on or using the new front-end, then make sure you check out the <a href="#keyfeatures">Key Features</a> section.</em></p>
+<p><em>If you are new to the Clang front-end and you want a reason for considering working on or using the new front-end, then make sure you check out the <a href="#keyfeatures">Key Features</a> section.</em></p>
 
 <h1><a name="goals">Goals</a></h1>
 	<ul>
@@ -72,33 +72,29 @@ As an example of the power of this library based design....  If you wanted to bu
 In the end, LLVM's library based design will provide developers with many more possibilities.
 
 <h2>Speed and Memory</h2>
-Another major focus of LLVM's frontend is speed (for all libraries).  Even at this early stage, the LLVM front-end is quicker than gcc and uses less memory.<br>
+Another major focus of LLVM's frontend is speed (for all libraries).  Even at this early stage, the clang front-end is quicker than gcc and uses less memory.<br>
 <div class="img_container">
 	<div class="img_title">Memory:</div>
 	<img src="feature-memory1.png" />
 	<div class="img_desc">This test was run using Mac OS X's Carbon.h header, which is 12.3MB spread across 558 files!
-	Although this is one of the worst case scenarios for GCC, it shows how clang's implemenation is significantly more memory efficient.
-	</div>
-	<div class="img_notes"><span>Notes:</span>
-	Most of the additional memory used by GCC is due to extra data that is added in, which is not needed by the Clang front-end.
+	Although large headers are one of the worst case scenarios for GCC, they are very common and it shows how clang's implemenation is significantly more memory efficient.
 	</div>
 </div>
 <div class="img_container">
 	<div class="img_title">Performance:</div>
 	<img src="feature-compile1.png" />
-	<div class="img_desc">Even at this early stage, the C parser for Clang is able to achieve significantly better performance.
+	<div class="img_desc">Even at this early stage, the C parser for Clang is able to achieve significantly better performance.  Many optimizations are still possible of course.
 	</div>
 </div>
 <div class="img_container">
 	<div class="img_title">Performance:</div>
 	<img src="feature-compile2.png" />
-	<div class="img_desc">By moving to distributed compiling using distcc, the performance improvement also becomes noticeable.</div>
-	<div class="img_notes"><span>Notes:</span>
-	These are SPEC2006 benchmarks using Distcc.</div>
+	<div class="img_desc">By using very trivial file-system caching, clang can significantly speed up preprocessing-bound applications like distcc.	<span class="img_notes">(<a href="clang_video-07-25-2007.html">more details</a>)</span>
+</div>
 </div>
 
 <h2><a name="expressivediags">Expressive Diagnostics</a></h2>
-The design of the Clang driver (one of the LLVM front_end libraries) provies more detailed diagnostic information.<br>
+Clang is designed to efficiently capture range information for expressions and statements, which allows it to emit very detailed diagnostic information when a problem is detected.<br>
 <div class="img_container">
 	<div class="img_title">Clang vs GCC:</div>
 	<img src="feature-diagnostics1.png" />
@@ -111,7 +107,7 @@ The design of the Clang driver (one of the LLVM front_end libraries) provies mor
 	<div class="img_notes"><span>Notes:</span>The first results are from clang; the second results are from gcc.</div>
 </div>
 <h2>Better Integration with IDEs</h2>
-Another benefit of Clang is that it was designed to integrate better with IDEs. In IDEs, the more information the IDE can get to, the better. The clang driver already provides more detailed (and useful) information than gcc.  However, because of the library based design of LLVM, you can access additional information by mixing and matching parts of the library to create specialized development and debug tools.  In this sense, LLVM is friendlier towards IDEs.
+Another design goal of Clang is to integrate extremely well with IDEs. IDEs often have very different requirements than code generation, often requiring information that a codegen-only frontend can throw away.  Clang is specifically designed and built to capture this information.
 </div>
 </body>
 </html>
