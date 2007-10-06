@@ -2029,22 +2029,22 @@ namespace {
     return ~(integerPart) 0 >> (integerPartWidth - bits);
   }
 
-  /* Returns the value of the lower nibble of PART.  */
+  /* Returns the value of the lower half of PART.  */
   inline integerPart
   lowHalf(integerPart part)
   {
     return part & lowBitMask(integerPartWidth / 2);
   }
 
-  /* Returns the value of the upper nibble of PART.  */
+  /* Returns the value of the upper half of PART.  */
   inline integerPart
   highHalf(integerPart part)
   {
     return part >> (integerPartWidth / 2);
   }
 
-  /* Returns the bit number of the most significant bit of a part.  If
-     the input number has no bits set -1U is returned.  */
+  /* Returns the bit number of the most significant set bit of a part.
+     If the input number has no bits set -1U is returned.  */
   unsigned int
   partMSB(integerPart value)
   {
@@ -2068,8 +2068,8 @@ namespace {
     return msb;
   }
 
-  /* Returns the bit number of the least significant bit of a part.
-     If the input number has no bits set -1U is returned.  */
+  /* Returns the bit number of the least significant set bit of a
+     part.  If the input number has no bits set -1U is returned.  */
   unsigned int
   partLSB(integerPart value)
   {
@@ -2144,8 +2144,8 @@ APInt::tcSetBit(integerPart *parts, unsigned int bit)
   parts[bit / integerPartWidth] |= (integerPart) 1 << (bit % integerPartWidth);
 }
 
-/* Returns the bit number of the least significant bit of a number.
-   If the input number has no bits set -1U is returned.  */
+/* Returns the bit number of the least significant set bit of a
+   number.  If the input number has no bits set -1U is returned.  */
 unsigned int
 APInt::tcLSB(const integerPart *parts, unsigned int n)
 {
@@ -2162,8 +2162,8 @@ APInt::tcLSB(const integerPart *parts, unsigned int n)
   return -1U;
 }
 
-/* Returns the bit number of the most significant bit of a number.  If
-   the input number has no bits set -1U is returned.  */
+/* Returns the bit number of the most significant set bit of a number.
+   If the input number has no bits set -1U is returned.  */
 unsigned int
 APInt::tcMSB(const integerPart *parts, unsigned int n)
 {
@@ -2240,8 +2240,8 @@ APInt::tcNegate(integerPart *dst, unsigned int parts)
   tcIncrement(dst, parts);
 }
 
-/*  DST += SRC * MULTIPLIER + PART   if add is true
-    DST  = SRC * MULTIPLIER + PART   if add is false
+/*  DST += SRC * MULTIPLIER + CARRY   if add is true
+    DST  = SRC * MULTIPLIER + CARRY   if add is false
 
     Requires 0 <= DSTPARTS <= SRCPARTS + 1.  If DST overlaps SRC
     they must start at the same point, i.e. DST == SRC.
