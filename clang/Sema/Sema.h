@@ -16,9 +16,9 @@
 #define LLVM_CLANG_AST_SEMA_H
 
 #include "clang/Parse/Action.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <vector>
 #include <string>
 
@@ -83,6 +83,10 @@ class Sema : public Action {
   /// This is only necessary for issuing pretty diagnostics.
   llvm::SmallVector<TypedefDecl*, 24> OCUVectorDecls;
 
+  /// ObjcImplementations - Keep track of all of the classes with
+  /// @implementation's, so that we can emit errors on duplicates.
+  llvm::SmallPtrSet<IdentifierInfo*, 8> ObjcImplementations;
+  
   // Enum values used by KnownFunctionIDs (see below).
   enum {
     id_printf,

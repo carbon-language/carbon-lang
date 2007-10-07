@@ -1176,16 +1176,8 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(Scope *S,
   }
   
   // Check that there is no duplicate implementation of this class.
-  bool err = false;
-  for (unsigned i = 0; i != Context.sizeObjcImplementationClass(); i++) {
-    if (Context.getObjcImplementationClass(i)->getIdentifier() == ClassName) {
-      Diag(ClassLoc, diag::err_dup_implementation_class, ClassName->getName());
-      err = true;
-      break;
-    }
-  }
-  if (!err)     
-    Context.setObjcImplementationClass(IMPDecl);
+  if (!ObjcImplementations.insert(ClassName))
+    Diag(ClassLoc, diag::err_dup_implementation_class, ClassName->getName());
       
   return IMPDecl;
 }

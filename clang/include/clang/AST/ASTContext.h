@@ -26,7 +26,6 @@
 
 namespace clang {
   class TargetInfo;
-  class ObjcImplementationDecl;
   
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
@@ -40,7 +39,6 @@ class ASTContext {
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
-  llvm::SmallVector<ObjcImplementationDecl*, 8> ImplementationClassInfo;
   RecordDecl *CFConstantStringTypeDecl;
 public:
   
@@ -164,16 +162,6 @@ public:
   /// specified record (struct/union/class), which indicates its size and field
   /// position information.
   const RecordLayout &getRecordLayout(const RecordDecl *D, SourceLocation L);
-  
-  ObjcImplementationDecl* getObjcImplementationClass(unsigned ix) {
-    return ImplementationClassInfo[ix];
-  }
-  void setObjcImplementationClass(ObjcImplementationDecl* ImplDecl) {
-    ImplementationClassInfo.push_back(ImplDecl);
-  }
-  unsigned sizeObjcImplementationClass() const {
-    return ImplementationClassInfo.size();
-  }
   
   //===--------------------------------------------------------------------===//
   //                            Type Operators
