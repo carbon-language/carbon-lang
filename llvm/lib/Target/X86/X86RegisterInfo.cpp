@@ -1505,6 +1505,8 @@ static
 void mergeSPUpdatesDown(MachineBasicBlock &MBB,
                         MachineBasicBlock::iterator &MBBI,
                         unsigned StackPtr, uint64_t *NumBytes = NULL) {
+  return;
+  
   if (MBBI == MBB.end()) return;
   
   MachineBasicBlock::iterator NI = next(MBBI);
