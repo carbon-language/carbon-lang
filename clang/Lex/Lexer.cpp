@@ -35,6 +35,27 @@ using namespace clang;
 
 static void InitCharacterInfo();
 
+//===----------------------------------------------------------------------===//
+// Token Class Implementation
+//===----------------------------------------------------------------------===//
+
+/// isObjCAtKeyword - Return true if we have an ObjC keyword identifier. 
+bool Token::isObjCAtKeyword(tok::ObjCKeywordKind objcKey) const {
+  return getKind() == tok::identifier && 
+  getIdentifierInfo()->getObjCKeywordID() == objcKey;
+}
+
+/// getObjCKeywordID - Return the ObjC keyword kind.
+tok::ObjCKeywordKind Token::getObjCKeywordID() const {
+  IdentifierInfo *specId = getIdentifierInfo();
+  return specId ? specId->getObjCKeywordID() : tok::objc_not_keyword;
+}
+
+//===----------------------------------------------------------------------===//
+// Lexer Class Implementation
+//===----------------------------------------------------------------------===//
+
+
 Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
              const char *BufStart, const char *BufEnd)
   : FileLoc(fileloc), PP(pp), Features(PP.getLangOptions()) {
@@ -141,26 +162,26 @@ static void InitCharacterInfo() {
 /// isIdentifierBody - Return true if this is the body character of an
 /// identifier, which is [a-zA-Z0-9_].
 static inline bool isIdentifierBody(unsigned char c) {
-  return (CharInfo[c] & (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER)) ? true : false;
+  return CharInfo[c] & (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER);
 }
 
 /// isHorizontalWhitespace - Return true if this character is horizontal
 /// whitespace: ' ', '\t', '\f', '\v'.  Note that this returns false for '\0'.
 static inline bool isHorizontalWhitespace(unsigned char c) {
-  return (CharInfo[c] & CHAR_HORZ_WS) ? true : false;
+  return CharInfo[c] & CHAR_HORZ_WS;
 }
 
 /// isWhitespace - Return true if this character is horizontal or vertical
 /// whitespace: ' ', '\t', '\f', '\v', '\n', '\r'.  Note that this returns false
 /// for '\0'.
 static inline bool isWhitespace(unsigned char c) {
-  return (CharInfo[c] & (CHAR_HORZ_WS|CHAR_VERT_WS)) ? true : false;
+  return CharInfo[c] & (CHAR_HORZ_WS|CHAR_VERT_WS);
 }
 
 /// isNumberBody - Return true if this is the body character of an
 /// preprocessing number, which is [a-zA-Z0-9_.].
 static inline bool isNumberBody(unsigned char c) {
-  return (CharInfo[c] & (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER|CHAR_PERIOD)) ? true : false;
+  return CharInfo[c] & (CHAR_LETTER|CHAR_NUMBER|CHAR_UNDER|CHAR_PERIOD);
 }
 
 
