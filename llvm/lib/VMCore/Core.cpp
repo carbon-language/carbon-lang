@@ -177,6 +177,24 @@ LLVMTypeRef LLVMOpaqueType() {
   return wrap(llvm::OpaqueType::get());
 }
 
+/* Operations on type handles */
+
+LLVMTypeHandleRef LLVMCreateTypeHandle(LLVMTypeRef PotentiallyAbstractTy) {
+  return wrap(new PATypeHolder(unwrap(PotentiallyAbstractTy)));
+}
+
+void LLVMDisposeTypeHandle(LLVMTypeHandleRef TypeHandle) {
+  delete unwrap(TypeHandle);
+}
+
+LLVMTypeRef LLVMResolveTypeHandle(LLVMTypeHandleRef TypeHandle) {
+  return wrap(unwrap(TypeHandle)->get());
+}
+
+void LLVMRefineType(LLVMTypeRef AbstractTy, LLVMTypeRef ConcreteTy) {
+  unwrap<DerivedType>(AbstractTy)->refineAbstractTypeTo(unwrap(ConcreteTy));
+}
+
 
 /*===-- Operations on values ----------------------------------------------===*/
 

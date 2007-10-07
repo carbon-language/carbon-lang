@@ -16,6 +16,7 @@
 (* These abstract types correlate directly to the LLVM VMCore classes. *)
 type llmodule
 type lltype
+type lltypehandle
 type llvalue
 type llbasicblock (* These are actually values, but
                      benefit from type checking. *)
@@ -175,6 +176,11 @@ external _label_type : unit -> lltype = "llvm_label_type"
 
 let void_type = _void_type ()
 let label_type = _label_type ()
+
+(*--... Operations on type handles .........................................--*)
+external handle_to_type : lltype -> lltypehandle = "llvm_handle_to_type"
+external type_of_handle : lltypehandle -> lltype = "llvm_type_of_handle"
+external refine_type : lltype -> lltype -> unit = "llvm_refine_type"
 
 
 (*===-- Values ------------------------------------------------------------===*)

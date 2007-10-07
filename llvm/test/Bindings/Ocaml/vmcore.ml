@@ -131,7 +131,17 @@ let test_types () =
   group "delete";
   let ty = opaque_type () in
   insist (define_type_name "Ty13" ty m);
-  delete_type_name "Ty13" m
+  delete_type_name "Ty13" m;
+  
+  (* RUN: grep -v {RecursiveTy.*RecursiveTy} < %t.ll
+   *)
+  group "recursive";
+  let ty = opaque_type () in
+  let th = handle_to_type ty in
+  refine_type ty (pointer_type ty);
+  let ty = type_of_handle th in
+  insist (define_type_name "RecursiveTy" ty m);
+  insist (ty == element_type ty)
 
 
 (*===-- Constants ---------------------------------------------------------===*)

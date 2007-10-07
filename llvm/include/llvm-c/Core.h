@@ -47,6 +47,7 @@ extern "C" {
 /* Opaque types. */
 typedef struct LLVMOpaqueModule *LLVMModuleRef;
 typedef struct LLVMOpaqueType *LLVMTypeRef;
+typedef struct LLVMOpaqueTypeHandle *LLVMTypeHandleRef;
 typedef struct LLVMOpaqueValue *LLVMValueRef;
 typedef struct LLVMOpaqueBasicBlock *LLVMBasicBlockRef;
 typedef struct LLVMOpaqueBuilder *LLVMBuilderRef;
@@ -203,6 +204,12 @@ unsigned LLVMGetVectorSize(LLVMTypeRef VectorTy);
 LLVMTypeRef LLVMVoidType();
 LLVMTypeRef LLVMLabelType();
 LLVMTypeRef LLVMOpaqueType();
+
+/* Operations on type handles */
+LLVMTypeHandleRef LLVMCreateTypeHandle(LLVMTypeRef PotentiallyAbstractTy);
+void LLVMRefineType(LLVMTypeRef AbstractTy, LLVMTypeRef ConcreteTy);
+LLVMTypeRef LLVMResolveTypeHandle(LLVMTypeHandleRef TypeHandle);
+void LLVMDisposeTypeHandle(LLVMTypeHandleRef TypeHandle);
 
 
 /*===-- Values ------------------------------------------------------------===*/
@@ -557,6 +564,16 @@ namespace llvm {
   
   inline LLVMBuilderRef wrap(LLVMBuilder *B) {
     return reinterpret_cast<LLVMBuilderRef>(B);
+  }
+  
+  /* Opaque type handle conversions.
+   */ 
+  inline PATypeHolder *unwrap(LLVMTypeHandleRef B) {
+    return reinterpret_cast<PATypeHolder*>(B);
+  }
+  
+  inline LLVMTypeHandleRef wrap(PATypeHolder *B) {
+    return reinterpret_cast<LLVMTypeHandleRef>(B);
   }
 }
 
