@@ -1594,9 +1594,7 @@ APFloat::convertFromZeroExtendedInteger(const integerPart *parts,
                                         roundingMode rounding_mode)
 {
   unsigned int partCount = partCountForBits(width);
-  opStatus status;
   APInt api = APInt(width, partCount, parts);
-  integerPart *copy = new integerPart[partCount];
 
   sign = false;
   if(isSigned && APInt::tcExtractBit(parts, width - 1)) {
@@ -1604,9 +1602,7 @@ APFloat::convertFromZeroExtendedInteger(const integerPart *parts,
     api = -api;
   }
 
-  APInt::tcAssign(copy, api.getRawData(), partCount);
-  status = convertFromUnsignedParts(copy, partCount, rounding_mode);
-  return status;
+  return convertFromUnsignedParts(api.getRawData(), partCount, rounding_mode);
 }
 
 APFloat::opStatus
