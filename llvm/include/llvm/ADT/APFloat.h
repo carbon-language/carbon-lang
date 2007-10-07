@@ -268,7 +268,6 @@ namespace llvm {
     bool roundAwayFromZero(roundingMode, lostFraction, unsigned int) const;
     opStatus convertFromUnsignedInteger(integerPart *, unsigned int,
                                         roundingMode);
-    lostFraction combineLostFractions(lostFraction, lostFraction);
     opStatus convertFromHexadecimalString(const char *, roundingMode);
     char *convertNormalToHexString(char *, unsigned int, bool,
                                    roundingMode) const;

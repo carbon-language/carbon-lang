@@ -222,6 +222,20 @@ namespace {
     return lost_fraction;
   }
 
+  /* Combine the effect of two lost fractions.  */
+  lostFraction
+  combineLostFractions(lostFraction moreSignificant,
+                       lostFraction lessSignificant)
+  {
+    if(lessSignificant != lfExactlyZero) {
+      if(moreSignificant == lfExactlyZero)
+        moreSignificant = lfLessThanHalf;
+      else if(moreSignificant == lfExactlyHalf)
+        moreSignificant = lfMoreThanHalf;
+    }
+
+    return moreSignificant;
+  }
 
   /* Zero at the end to avoid modular arithmetic when adding one; used
      when rounding up during hexadecimal output.  */
@@ -427,21 +441,6 @@ APFloat::significandParts()
     return significand.parts;
   else
     return &significand.part;
-}
-
-/* Combine the effect of two lost fractions.  */
-lostFraction
-APFloat::combineLostFractions(lostFraction moreSignificant,
-                              lostFraction lessSignificant)
-{
-  if(lessSignificant != lfExactlyZero) {
-    if(moreSignificant == lfExactlyZero)
-      moreSignificant = lfLessThanHalf;
-    else if(moreSignificant == lfExactlyHalf)
-      moreSignificant = lfMoreThanHalf;
-  }
-
-  return moreSignificant;
 }
 
 void
@@ -1614,7 +1613,7 @@ APFloat::convertFromHexadecimalString(const char *p,
   partsCount = partCount();
   bitPos = partsCount * integerPartWidth;
 
-  /* Skip leading zeroes and any(hexa)decimal point.  */
+  /* Skip leading zeroes and any (hexa)decimal point.  */
   p = skipLeadingZeroesAndAnyDot(p, &dot);
   firstSignificantDigit = p;
 
