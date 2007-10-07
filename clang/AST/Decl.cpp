@@ -13,7 +13,7 @@
 
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/Lex/IdentifierTable.h"
+#include "clang/Basic/IdentifierTable.h"
 using namespace clang;
 
 // temporary statistics gathering

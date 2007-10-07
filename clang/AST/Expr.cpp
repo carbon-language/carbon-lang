@@ -14,7 +14,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
-#include "clang/Lex/IdentifierTable.h"
+#include "clang/Basic/IdentifierTable.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//

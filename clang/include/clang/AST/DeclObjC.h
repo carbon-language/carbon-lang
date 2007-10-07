@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_DECLOBJC_H
 
 #include "clang/AST/Decl.h"
+#include "clang/Basic/IdentifierTable.h"
 
 namespace clang {
 class Expr;

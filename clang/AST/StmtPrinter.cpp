@@ -16,7 +16,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/PrettyPrinter.h"
-#include "clang/Lex/IdentifierTable.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "llvm/Support/Compiler.h"
 #include <iostream>
 #include <iomanip>

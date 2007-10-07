@@ -17,7 +17,6 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
-#include "clang/Lex/IdentifierTable.h"
 using namespace clang;
 
 enum FloatingRank {

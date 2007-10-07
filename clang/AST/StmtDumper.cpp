@@ -15,7 +15,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/ExprCXX.h"
-#include "clang/Lex/IdentifierTable.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/Compiler.h"
 #include <cstdio>

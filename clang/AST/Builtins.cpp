@@ -13,7 +13,7 @@
 
 #include "clang/AST/Builtins.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/Lex/IdentifierTable.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/TargetInfo.h"
 using namespace clang;
 

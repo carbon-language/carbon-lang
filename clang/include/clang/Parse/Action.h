@@ -14,9 +14,9 @@
 #ifndef LLVM_CLANG_PARSE_ACTION_H
 #define LLVM_CLANG_PARSE_ACTION_H
 
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/TokenKinds.h"
-#include "clang/Lex/IdentifierTable.h" // FIXME: should be in Basic, not Lex.
 
 namespace clang {
   // Semantic.

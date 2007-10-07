@@ -17,13 +17,13 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/APSInt.h"
-#include "clang/Lex/IdentifierTable.h" // FIXME: should be in Basic, not Lex.
 
 namespace clang {
 class Expr;
 class Stmt;
 class FunctionDecl;
 class AttributeList;
+class IdentifierInfo;
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
 /// typedef, function, struct, etc.  

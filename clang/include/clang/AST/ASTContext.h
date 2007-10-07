@@ -14,7 +14,6 @@
 #ifndef LLVM_CLANG_AST_ASTCONTEXT_H
 #define LLVM_CLANG_AST_ASTCONTEXT_H
 
-#include "clang/Lex/IdentifierTable.h" // FIXME: Move IdentifierTable to Basic
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
@@ -26,6 +25,7 @@
 
 namespace clang {
   class TargetInfo;
+  class IdentifierTable;
   
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.

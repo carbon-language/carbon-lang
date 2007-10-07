@@ -14,9 +14,9 @@
 #ifndef LLVM_CLANG_LEX_PREPROCESSOR_H
 #define LLVM_CLANG_LEX_PREPROCESSOR_H
 
-#include "clang/Lex/IdentifierTable.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/MacroExpander.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
 

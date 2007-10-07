@@ -18,7 +18,6 @@
 #include "clang/AST/CFG.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Analysis/FlowSensitive/DataflowSolver.h"
-#include "clang/Lex/IdentifierTable.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
 #include <string.h>

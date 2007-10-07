@@ -7,15 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the IdentifierInfo and IdentifierTable interfaces.
+// This file defines the IdentifierInfo, IdentifierTable, and Selector
+// interfaces.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_LEX_IDENTIFIERTABLE_H
-#define LLVM_CLANG_LEX_IDENTIFIERTABLE_H
+#ifndef LLVM_CLANG_BASIC_IDENTIFIERTABLE_H
+#define LLVM_CLANG_BASIC_IDENTIFIERTABLE_H
 
-// FIXME: Move this header header/module to the "Basic" library. Unlike Lex,
-// this data is long-lived.
 #include "clang/Basic/TokenKinds.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallString.h"

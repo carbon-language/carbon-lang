@@ -11,9 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/FileManager.h"
 #include "clang/Lex/HeaderSearch.h"
-#include "clang/Lex/IdentifierTable.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/IdentifierTable.h"
 #include "llvm/System/Path.h"
 #include "llvm/ADT/SmallString.h"
 using namespace clang;
