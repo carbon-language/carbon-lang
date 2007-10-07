@@ -235,12 +235,11 @@ public:
     return getIdentifierInfoFlag() == ZeroArg;
   }
   unsigned getNumArgs() const;
-  IdentifierInfo *getIdentifierInfoForSlot(unsigned argIndex);
+  IdentifierInfo *getIdentifierInfoForSlot(unsigned argIndex) const;
   
-  // Derive the full selector name, placing the result into methodBuffer.
-  // As a convenience, a pointer to the first character is returned.
-  // Example usage: llvm::SmallString<128> mbuf; Selector->getName(mbuf);
-  char *getName(llvm::SmallVectorImpl<char> &methodBuffer);
+  /// getName - Derive the full selector name (e.g. "foo:bar:") and return it.
+  ///
+  std::string getName() const;
   
   static Selector getEmptyMarker() {
     return Selector(uintptr_t(-1));

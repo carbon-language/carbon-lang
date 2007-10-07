@@ -1240,9 +1240,8 @@ void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
   for (int j = 0; j < PDecl->getNumInstanceMethods(); j++) {
     void * cpv = methods[j]->getSelector().getAsOpaquePtr();
     if (!InsMap.count(cpv)) {
-      llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           methods[j]->getSelector().getName(buf));
+           methods[j]->getSelector().getName());
       IncompleteImpl = true;
     }
   }
@@ -1250,9 +1249,8 @@ void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
   methods = PDecl->getClassMethods();
   for (int j = 0; j < PDecl->getNumClassMethods(); j++)
     if (!ClsMap.count(methods[j]->getSelector())) {
-      llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           methods[j]->getSelector().getName(buf));
+           methods[j]->getSelector().getName());
       IncompleteImpl = true;
     }
   
@@ -1275,9 +1273,8 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
   methods = IDecl->getInstanceMethods();
   for (int j = 0; j < IDecl->getNumInstanceMethods(); j++)
     if (!InsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
-      llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           methods[j]->getSelector().getName(buf));
+           methods[j]->getSelector().getName());
       IncompleteImpl = true;
     }
   llvm::DenseSet<Selector> ClsMap;
@@ -1290,9 +1287,8 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
   methods = IDecl->getClassMethods();
   for (int j = 0; j < IDecl->getNumClassMethods(); j++)
     if (!ClsMap.count(methods[j]->getSelector())) {
-      llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           methods[j]->getSelector().getName(buf));
+           methods[j]->getSelector().getName());
       IncompleteImpl = true;
     }
   
@@ -1322,9 +1318,8 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
   methods = CatClassDecl->getInstanceMethods();
   for (int j = 0; j < CatClassDecl->getNumInstanceMethods(); j++)
     if (!InsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
-      llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           methods[j]->getSelector().getName(buf));
+           methods[j]->getSelector().getName());
       IncompleteImpl = true;
     }
   llvm::DenseSet<Selector> ClsMap;
@@ -1337,9 +1332,8 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
   methods = CatClassDecl->getClassMethods();
   for (int j = 0; j < CatClassDecl->getNumClassMethods(); j++)
     if (!ClsMap.count(methods[j]->getSelector())) {
-      llvm::SmallString<128> buf;
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           methods[j]->getSelector().getName(buf));
+           methods[j]->getSelector().getName());
       IncompleteImpl = true;
     }
   
@@ -1739,9 +1733,8 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
         const ObjcMethodDecl *&PrevMethod = 
                 InsMap[Method->getSelector().getAsOpaquePtr()];
         if (PrevMethod && !MatchTwoMethodDeclarations(Method, PrevMethod)) {
-          llvm::SmallString<128> buf;
           Diag(Method->getLocation(), diag::error_duplicate_method_decl,
-               Method->getSelector().getName(buf));
+               Method->getSelector().getName());
           Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
         }
         else {
@@ -1758,9 +1751,8 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
         const ObjcMethodDecl *&PrevMethod = 
                 ClsMap[Method->getSelector().getAsOpaquePtr()];
         if (PrevMethod && !MatchTwoMethodDeclarations(Method, PrevMethod)) {
-          llvm::SmallString<128> buf;
           Diag(Method->getLocation(), diag::error_duplicate_method_decl,
-               Method->getSelector().getName(buf));
+               Method->getSelector().getName());
           Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
         }
         else {        
