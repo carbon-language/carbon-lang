@@ -14,7 +14,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
