@@ -1481,47 +1481,50 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
 static
 void mergeSPUpdatesUp(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
                       unsigned StackPtr, uint64_t *NumBytes = NULL) {
-  if (MBBI != MBB.begin()) {
-    MachineBasicBlock::iterator PI = prior(MBBI);
-    unsigned Opc = PI->getOpcode();
-    if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
-         Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
-        PI->getOperand(0).getReg() == StackPtr) {
-      if (NumBytes)
-        *NumBytes += PI->getOperand(2).getImm();
-      MBB.erase(PI);
-    } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
-                Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
-               PI->getOperand(0).getReg() == StackPtr) {
-      if (NumBytes)
-        *NumBytes -= PI->getOperand(2).getImm();
-      MBB.erase(PI);
-    }
+  if (MBBI == MBB.begin()) return;
+  
+  MachineBasicBlock::iterator PI = prior(MBBI);
+  unsigned Opc = PI->getOpcode();
+  if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
+       Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
+      PI->getOperand(0).getReg() == StackPtr) {
+    if (NumBytes)
+      *NumBytes += PI->getOperand(2).getImm();
+    MBB.erase(PI);
+  } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
+              Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
+             PI->getOperand(0).getReg() == StackPtr) {
+    if (NumBytes)
+      *NumBytes -= PI->getOperand(2).getImm();
+    MBB.erase(PI);
   }
 }
 
 // mergeSPUpdatesUp - Merge two stack-manipulating instructions lower iterator.
 static
-void mergeSPUpdatesDown(MachineBasicBlock &MBB,MachineBasicBlock::iterator &MBBI,
+void mergeSPUpdatesDown(MachineBasicBlock &MBB,
+                        MachineBasicBlock::iterator &MBBI,
                         unsigned StackPtr, uint64_t *NumBytes = NULL) {
-  if (MBBI != MBB.end()) {
-    MachineBasicBlock::iterator NI = next(MBBI);
-    unsigned Opc = NI->getOpcode();
-    if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
-         Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
-        NI->getOperand(0).getReg() == StackPtr) {
-      if (NumBytes)
-        *NumBytes -= NI->getOperand(2).getImm();
-      MBB.erase(NI);
-      MBBI = NI;
-    } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
-                Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
-               NI->getOperand(0).getReg() == StackPtr) {
-      if (NumBytes)
-        *NumBytes += NI->getOperand(2).getImm();
-      MBB.erase(NI);
-      MBBI = NI;
-    }
+  if (MBBI == MBB.end()) return;
+  
+  MachineBasicBlock::iterator NI = next(MBBI);
+  if (NI == MBB.end()) return;
+  
+  unsigned Opc = NI->getOpcode();
+  if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
+       Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
+      NI->getOperand(0).getReg() == StackPtr) {
+    if (NumBytes)
+      *NumBytes -= NI->getOperand(2).getImm();
+    MBB.erase(NI);
+    MBBI = NI;
+  } else if ((Opc == X86::SUB64ri32 || Opc == X86::SUB64ri8 ||
+              Opc == X86::SUB32ri || Opc == X86::SUB32ri8) &&
+             NI->getOperand(0).getReg() == StackPtr) {
+    if (NumBytes)
+      *NumBytes += NI->getOperand(2).getImm();
+    MBB.erase(NI);
+    MBBI = NI;
   }
 }
 
