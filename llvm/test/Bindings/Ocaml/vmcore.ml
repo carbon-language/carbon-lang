@@ -418,7 +418,15 @@ let test_global_variables () =
    *)
   group "delete";
   let g = define_global "GVar05" fourty_two32 m in
-  delete_global g
+  delete_global g;
+
+  (* RUN: grep -v {ConstGlobalVar.*constant} < %t.ll
+   *)
+  group "constant";
+  let g = define_global "ConstGlobalVar" fourty_two32 m in
+  insist (not (is_global_constant g));
+  set_global_constant true g;
+  insist (is_global_constant g)
 
 
 (*===-- Functions ---------------------------------------------------------===*)

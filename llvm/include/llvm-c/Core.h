@@ -324,6 +324,8 @@ LLVMValueRef LLVMGetInitializer(LLVMValueRef GlobalVar);
 void LLVMSetInitializer(LLVMValueRef GlobalVar, LLVMValueRef ConstantVal);
 int LLVMIsThreadLocal(LLVMValueRef GlobalVar);
 void LLVMSetThreadLocal(LLVMValueRef GlobalVar, int IsThreadLocal);
+int LLVMIsGlobalConstant(LLVMValueRef GlobalVar);
+void LLVMSetGlobalConstant(LLVMValueRef GlobalVar, int IsConstant);
 
 /* Operations on functions */
 LLVMValueRef LLVMAddFunction(LLVMModuleRef M, const char *Name,

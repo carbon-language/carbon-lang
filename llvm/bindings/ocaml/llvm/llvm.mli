@@ -251,6 +251,9 @@ external visibility : llvalue -> visibility = "llvm_visibility"
 external set_visibility : visibility -> llvalue -> unit = "llvm_set_visibility"
 external alignment : llvalue -> int = "llvm_alignment"
 external set_alignment : int -> llvalue -> unit = "llvm_set_alignment"
+external is_global_constant : llvalue -> bool = "llvm_is_global_constant"
+external set_global_constant : bool -> llvalue -> unit
+                             = "llvm_set_global_constant"
 
 (*--... Operations on global variables .....................................--*)
 external declare_global : lltype -> string -> llmodule -> llvalue

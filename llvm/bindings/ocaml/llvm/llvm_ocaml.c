@@ -445,6 +445,17 @@ CAMLprim value llvm_set_thread_local(value IsThreadLocal,
   return Val_unit;
 }
 
+/* llvalue -> bool */
+CAMLprim value llvm_is_global_constant(LLVMValueRef GlobalVar) {
+  return Val_bool(LLVMIsGlobalConstant(GlobalVar));
+}
+
+/* bool -> llvalue -> unit */
+CAMLprim value llvm_set_global_constant(value Flag, LLVMValueRef GlobalVar) {
+  LLVMSetGlobalConstant(GlobalVar, Bool_val(Flag));
+  return Val_unit;
+}
+
 /*--... Operations on functions ............................................--*/
 
 /* string -> lltype -> llmodule -> llvalue */

@@ -142,6 +142,9 @@
 		9F7C240C0CB81ECD00498408 /* analysis_ocaml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = analysis_ocaml.c; sourceTree = "<group>"; };
 		9F7C240D0CB81ECD00498408 /* llvm_analysis.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = llvm_analysis.ml; sourceTree = "<group>"; };
 		9F7C240E0CB81ECD00498408 /* llvm_analysis.mli */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = llvm_analysis.mli; sourceTree = "<group>"; };
+		9F7C2C4F0CB9496C00498408 /* analysis.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = analysis.ml; sourceTree = "<group>"; };
+		9F7C2C520CB9496C00498408 /* bitwriter.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = bitwriter.ml; sourceTree = "<group>"; };
+		9F7C2C5D0CB9496C00498408 /* vmcore.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = vmcore.ml; sourceTree = "<group>"; };
 		9FA638D90C77B184007F12AE /* AutoUpgrade.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AutoUpgrade.h; sourceTree = "<group>"; };
 		9FA638DA0C77B184007F12AE /* GlobalAlias.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = GlobalAlias.h; sourceTree = "<group>"; };
 		9FA638DB0C77B1AB007F12AE /* APInt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = APInt.h; sourceTree = "<group>"; };
@@ -1071,6 +1074,7 @@
 				DE816FAC08CFB44C0093BDEF /* utils */,
 				DE66F38D08ABF35C00323D32 /* docs */,
 				9FD3E56D0CA0116100E54D15 /* bindings */,
+				9F7C2B690CB9496B00498408 /* test */,
 				DE66F3FD08ABF37000323D32 /* examples */,
 				DE66F38C08ABF35300323D32 /* CREDITS.TXT */,
 				CFD99AA80AFE827B0068D19C /* LICENSE.TXT */,
@@ -1168,6 +1172,33 @@
 				9F7C240E0CB81ECD00498408 /* llvm_analysis.mli */,
 			);
 			path = analysis;
+			sourceTree = "<group>";
+		};
+		9F7C2B690CB9496B00498408 /* test */ = {
+			isa = PBXGroup;
+			children = (
+				9F7C2C4B0CB9496C00498408 /* Bindings */,
+			);
+			name = test;
+			path = ../test;
+			sourceTree = SOURCE_ROOT;
+		};
+		9F7C2C4B0CB9496C00498408 /* Bindings */ = {
+			isa = PBXGroup;
+			children = (
+				9F7C2C4C0CB9496C00498408 /* Ocaml */,
+			);
+			path = Bindings;
+			sourceTree = "<group>";
+		};
+		9F7C2C4C0CB9496C00498408 /* Ocaml */ = {
+			isa = PBXGroup;
+			children = (
+				9F7C2C4F0CB9496C00498408 /* analysis.ml */,
+				9F7C2C520CB9496C00498408 /* bitwriter.ml */,
+				9F7C2C5D0CB9496C00498408 /* vmcore.ml */,
+			);
+			path = Ocaml;
 			sourceTree = "<group>";
 		};
 		9FA638E90C77B252007F12AE /* IPO */ = {
