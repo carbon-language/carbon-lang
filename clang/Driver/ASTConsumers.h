@@ -1,18 +1,18 @@
-//===--- ASTStreamers.h - ASTStreamer Drivers -------------------*- C++ -*-===//
+//===--- ASTConsumers.h - ASTConsumer implementations -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Bill Wendling and is distributed under the
+// This file was developed by Chris Lattner and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
-// AST Streamers.
+// AST Consumers.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef DRIVER_ASTSTREAMERS_H_
-#define DRIVER_ASTSTREAMERS_H_
+#ifndef DRIVER_ASTCONSUMERS_H
+#define DRIVER_ASTCONSUMERS_H
 
 namespace clang {
 

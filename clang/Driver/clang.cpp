@@ -23,7 +23,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang.h"
-#include "ASTStreamers.h"
+#include "ASTConsumers.h"
 #include "TextDiagnosticBuffer.h"
 #include "TextDiagnosticPrinter.h"
 #include "clang/Sema/ASTStreamer.h"

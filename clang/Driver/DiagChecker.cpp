@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang.h"
-#include "ASTStreamers.h"
+#include "ASTConsumers.h"
 #include "TextDiagnosticBuffer.h"
 #include "clang/Sema/ASTStreamer.h"
 #include "clang/AST/ASTConsumer.h"
