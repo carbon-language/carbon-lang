@@ -84,7 +84,7 @@ public:
   void setTokenID(tok::TokenKind ID) { TokenID = ID; }
   
   /// getPPKeywordID - Return the preprocessor keyword ID for this identifier.
-  /// For example, define will return tok::pp_define.
+  /// For example, "define" will return tok::pp_define.
   tok::PPKeywordKind getPPKeywordID() const;
   
   /// getObjCKeywordID - Return the Objective-C keyword ID for the this
