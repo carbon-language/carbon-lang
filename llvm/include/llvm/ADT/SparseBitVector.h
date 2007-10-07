@@ -648,8 +648,8 @@ public:
     ElementListIter Iter1 = Elements.begin();
     ElementListConstIter Iter2 = RHS.Elements.begin();
 
-    // Check if they are both empty
-    if (Elements.empty() && RHS.Elements.empty())
+    // If either our bitmap or RHS is empty, we are done
+    if (Elements.empty() || RHS.Elements.empty())
       return false;
 
     // Loop through, intersecting as we go, erasing elements when necessary.
@@ -692,8 +692,9 @@ public:
     ElementListConstIter Iter1 = RHS1.Elements.begin();
     ElementListConstIter Iter2 = RHS2.Elements.begin();
 
-    // Check if they are both empty.
-    if (RHS1.empty() && RHS2.empty())
+    // If RHS1 is empty, we are done
+    // If RHS2 is empty, we still have to copy RHS1
+    if (RHS1.Elements.empty())
       return;
 
     // Loop through, intersecting as we go, erasing elements when necessary.
@@ -716,6 +717,9 @@ public:
         ++Iter1;
         ++Iter2;
       } else {
+        SparseBitVectorElement<ElementSize> *NewElement =
+          new SparseBitVectorElement<ElementSize>(*Iter1);
+        Elements.push_back(NewElement);
         ++Iter1;
       }
     }
