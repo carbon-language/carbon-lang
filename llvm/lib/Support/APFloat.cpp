@@ -1587,6 +1587,36 @@ APFloat::convertFromUnsignedParts(const integerPart *src,
   return normalize(rounding_mode, lost_fraction);
 }
 
+/* Convert a two's complement integer SRC to a floating point number,
+   rounding according to ROUNDING_MODE.  ISSIGNED is true if the
+   integer is signed, in which case it must be sign-extended.  */
+APFloat::opStatus
+APFloat::convertFromSignExtendedInteger(const integerPart *src,
+                                        unsigned int srcCount,
+                                        bool isSigned,
+                                        roundingMode rounding_mode)
+{
+  opStatus status;
+
+  if (isSigned
+      && APInt::tcExtractBit(src, srcCount * integerPartWidth - 1)) {
+    integerPart *copy;
+
+    /* If we're signed and negative negate a copy.  */
+    sign = true;
+    copy = new integerPart[srcCount];
+    APInt::tcAssign(copy, src, srcCount);
+    APInt::tcNegate(copy, srcCount);
+    status = convertFromUnsignedParts(copy, srcCount, rounding_mode);
+    delete [] copy;
+  } else {
+    sign = false;
+    status = convertFromUnsignedParts(src, srcCount, rounding_mode);
+  }
+
+  return status;
+}
+
 /* FIXME: should this just take a const APInt reference?  */
 APFloat::opStatus
 APFloat::convertFromZeroExtendedInteger(const integerPart *parts,

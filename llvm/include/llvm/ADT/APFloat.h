@@ -194,6 +194,8 @@ namespace llvm {
     opStatus convert(const fltSemantics &, roundingMode);
     opStatus convertToInteger(integerPart *, unsigned int, bool,
 			      roundingMode) const;
+    opStatus convertFromSignExtendedInteger(const integerPart *, unsigned int,
+                                            bool, roundingMode);
     opStatus convertFromZeroExtendedInteger(const integerPart *, unsigned int,
                                             bool, roundingMode);
     opStatus convertFromString(const char *, roundingMode);
