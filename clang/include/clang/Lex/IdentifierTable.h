@@ -41,7 +41,7 @@ class IdentifierInfo {
   tok::TokenKind TokenID      : 8; // Front-end token ID or tok::identifier.
   tok::PPKeywordKind PPID     : 5; // ID for preprocessor command like #'ifdef'.
   tok::ObjCKeywordKind ObjCID : 5; // ID for objc @ keyword like @'protocol'.
-  unsigned BuiltinID          :12; // ID if this is a builtin (__builtin_inf).
+  unsigned BuiltinID          : 9; // ID if this is a builtin (__builtin_inf).
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.
@@ -97,8 +97,8 @@ public:
   /// 2+ are specific builtin functions.
   unsigned getBuiltinID() const { return BuiltinID; }
   void setBuiltinID(unsigned ID) {
-    assert(ID < (1 << 12) && "ID too large for field!");
     BuiltinID = ID;
+    assert(BuiltinID == ID && "ID too large for field!");
   }
   
   /// isNonPortableBuiltin - Return true if this identifier corresponds to a
