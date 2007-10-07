@@ -156,10 +156,11 @@ public:
   const ScopedDecl *getNextDeclarator() const { return NextDeclarator; }
   void setNextDeclarator(ScopedDecl *N) { NextDeclarator = N; }
   
-  // Implement isa/cast/dyncast/etc. - true for all ValueDecl's and TypeDecl's.
+  // Implement isa/cast/dyncast/etc - true for all ValueDecl's and TypeDecl's.
   static bool classof(const Decl *D) {
     return (D->getKind() >= Function && D->getKind() <= EnumConstant) || 
-           (D->getKind() >= Typedef && D->getKind() <= Enum);
+           (D->getKind() >= Typedef && D->getKind() <= Enum) ||
+           D->getKind() == ObjcProtocol || D->getKind() == ObjcInterface;
   }
   static bool classof(const ScopedDecl *D) { return true; }
 };
