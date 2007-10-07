@@ -36,8 +36,8 @@ struct DenseMapInfo<T*> {
   static inline T* getEmptyKey() { return reinterpret_cast<T*>(-1); }
   static inline T* getTombstoneKey() { return reinterpret_cast<T*>(-2); }
   static unsigned getHashValue(const T *PtrVal) {
-    return (unsigned(uintptr_t(PtrVal)) >> 4) ^ 
-           (unsigned(uintptr_t(PtrVal)) >> 9);
+    return (unsigned((uintptr_t)PtrVal) >> 4) ^ 
+           (unsigned((uintptr_t)PtrVal) >> 9);
   }
   static bool isEqual(const T *LHS, const T *RHS) { return LHS == RHS; }
   static bool isPod() { return true; }
