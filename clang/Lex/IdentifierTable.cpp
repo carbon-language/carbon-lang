@@ -59,7 +59,6 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
 
 IdentifierInfo::IdentifierInfo() {
   TokenID = tok::identifier;
-  PPID = tok::pp_not_keyword;
   ObjCID = tok::objc_not_keyword;
   BuiltinID = 0;
   HasMacro = false;
@@ -127,14 +126,6 @@ static void AddAlias(const char *Keyword, unsigned KWLen,
   AliasInfo.setIsExtensionToken(AliaseeInfo.isExtensionToken());
 }  
 
-/// AddPPKeyword - Register a preprocessor keyword like "define" "undef" or 
-/// "elif".
-static void AddPPKeyword(tok::PPKeywordKind PPID, 
-                         const char *Name, unsigned NameLen,
-                         IdentifierTable &Table) {
-  Table.get(Name, Name+NameLen).setPPKeywordID(PPID);
-}
-
 /// AddCXXOperatorKeyword - Register a C++ operator keyword alternative
 /// representations.
 static void AddCXXOperatorKeyword(const char *Keyword, unsigned KWLen,
@@ -181,8 +172,6 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
              ((FLAGS) >> CPP0xShift) & Mask, LangOpts, *this);
 #define ALIAS(NAME, TOK) \
   AddAlias(NAME, strlen(NAME), #TOK, strlen(#TOK), LangOpts, *this);
-#define PPKEYWORD(NAME) \
-  AddPPKeyword(tok::pp_##NAME, #NAME, strlen(#NAME), *this);
 #define CXX_KEYWORD_OPERATOR(NAME, ALIAS) \
   if (LangOpts.CXXOperatorNames)          \
     AddCXXOperatorKeyword(#NAME, strlen(#NAME), tok::ALIAS, *this);
@@ -195,6 +184,51 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
 #include "clang/Basic/TokenKinds.def"
 }
 
+tok::PPKeywordKind IdentifierInfo::getPPKeywordID() const {
+  // We use a perfect hash function here involving the length of the keyword,
+  // the first and third character.  For preprocessor ID's there are no
+  // collisions (if there were, the switch below would complain about duplicate
+  // case values).  Note that this depends on 'if' being null terminated.
+  
+#define HASH(LEN, FIRST, THIRD) \
+  (LEN << 5) + (((FIRST-'a') + (THIRD-'a')) & 31)
+#define CASE(LEN, FIRST, THIRD, NAME) \
+  case HASH(LEN, FIRST, THIRD): \
+    return memcmp(Name, #NAME, LEN) ? tok::pp_not_keyword : tok::pp_ ## NAME
+    
+  unsigned Len = getLength();
+  const char *Name = getName();
+  switch (HASH(Len, Name[0], Name[2])) {
+  default: return tok::pp_not_keyword;
+  CASE( 2, 'i', '\0', if);
+  CASE( 4, 'e', 'i', elif);
+  CASE( 4, 'e', 's', else);
+  CASE( 4, 'l', 'n', line);
+  CASE( 4, 's', 'c', sccs);
+  CASE( 5, 'e', 'd', endif);
+  CASE( 5, 'e', 'r', error);
+  CASE( 5, 'i', 'e', ident);
+  CASE( 5, 'i', 'd', ifdef);
+  CASE( 5, 'u', 'd', undef);
+
+  CASE( 6, 'a', 's', assert);
+  CASE( 6, 'd', 'f', define);
+  CASE( 6, 'i', 'n', ifndef);
+  CASE( 6, 'i', 'p', import);
+  CASE( 6, 'p', 'a', pragma);
+
+  CASE( 7, 'd', 'f', defined);
+  CASE( 7, 'i', 'c', include);
+  CASE( 7, 'w', 'r', warning);
+
+  CASE( 8, 'u', 'a', unassert);
+  CASE(12, 'i', 'c', include_next);
+  CASE(13, 'd', 'f', define_target);
+  CASE(19, 'd', 'f', define_other_target);
+#undef CASE
+#undef HASH
+  }
+}
 
 //===----------------------------------------------------------------------===//
 // Stats Implementation

@@ -39,7 +39,6 @@ namespace clang {
 class IdentifierInfo {
   tok::TokenKind TokenID      : 8; // Front-end token ID or tok::identifier.
   unsigned BuiltinID          : 9; // ID if this is a builtin (__builtin_inf).
-  tok::PPKeywordKind PPID     : 5; // ID for preprocessor command like #'ifdef'.
   tok::ObjCKeywordKind ObjCID : 5; // ID for objc @ keyword like @'protocol'.
   bool HasMacro               : 1; // True if there is a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
@@ -86,8 +85,7 @@ public:
   
   /// getPPKeywordID - Return the preprocessor keyword ID for this identifier.
   /// For example, define will return tok::pp_define.
-  tok::PPKeywordKind getPPKeywordID() const { return PPID; }
-  void setPPKeywordID(tok::PPKeywordKind ID) { PPID = ID; }
+  tok::PPKeywordKind getPPKeywordID() const;
   
   /// getObjCKeywordID - Return the Objective-C keyword ID for the this
   /// identifier.  For example, 'class' will return tok::objc_class if ObjC is

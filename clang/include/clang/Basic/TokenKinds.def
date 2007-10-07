@@ -41,7 +41,8 @@
 //===----------------------------------------------------------------------===//
 
 // These have meaning after a '#' at the start of a line. These define enums in
-// the tok::pp_* namespace.
+// the tok::pp_* namespace.  Note that IdentifierInfo::getPPKeywordID must be
+// manually updated if something is added here.
 PPKEYWORD(not_keyword)
 
 // C99 6.10.1 - Conditional Inclusion.
