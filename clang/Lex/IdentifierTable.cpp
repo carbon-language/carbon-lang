@@ -19,6 +19,24 @@
 #include "llvm/ADT/DenseMap.h"
 using namespace clang;
 
+static llvm::DenseMap<const IdentifierInfo*, MacroInfo*> Macros;
+
+MacroInfo *IdentifierInfo::getMacroInfoInternal() const {
+  return Macros[this];
+}
+void IdentifierInfo::setMacroInfo(MacroInfo *I) {
+  if (I == 0) {
+    if (HasMacro) {
+      Macros.erase(this);
+      HasMacro = false;
+    }
+  } else {
+    Macros[this] = I;
+    HasMacro = true;
+  }
+}
+
+
 //===----------------------------------------------------------------------===//
 // Token Implementation
 //===----------------------------------------------------------------------===//
@@ -40,11 +58,11 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
 //===----------------------------------------------------------------------===//
 
 IdentifierInfo::IdentifierInfo() {
-  Macro = 0;
   TokenID = tok::identifier;
   PPID = tok::pp_not_keyword;
   ObjCID = tok::objc_not_keyword;
   BuiltinID = 0;
+  HasMacro = false;
   IsExtension = false;
   IsPoisoned = false;
   IsOtherTargetMacro = false;
@@ -54,7 +72,8 @@ IdentifierInfo::IdentifierInfo() {
 }
 
 IdentifierInfo::~IdentifierInfo() {
-  delete Macro;
+  if (MacroInfo *Macro = getMacroInfo())
+    delete Macro;
 }
 
 //===----------------------------------------------------------------------===//

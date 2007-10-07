@@ -37,11 +37,11 @@ namespace clang {
 /// variable or function name).  The preprocessor keeps this information in a
 /// set, and all tok::identifier tokens have a pointer to one of these.  
 class IdentifierInfo {
-  MacroInfo *Macro;                // Set if this identifier is #define'd.
   tok::TokenKind TokenID      : 8; // Front-end token ID or tok::identifier.
+  unsigned BuiltinID          : 9; // ID if this is a builtin (__builtin_inf).
   tok::PPKeywordKind PPID     : 5; // ID for preprocessor command like #'ifdef'.
   tok::ObjCKeywordKind ObjCID : 5; // ID for objc @ keyword like @'protocol'.
-  unsigned BuiltinID          : 9; // ID if this is a builtin (__builtin_inf).
+  bool HasMacro               : 1; // True if there is a #define for this.
   bool IsExtension            : 1; // True if identifier is a lang extension.
   bool IsPoisoned             : 1; // True if identifier is poisoned.
   bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.
@@ -49,6 +49,7 @@ class IdentifierInfo {
   bool IsNonPortableBuiltin   : 1; // True if builtin varies across targets.
   void *FETokenInfo;               // Managed by the language front-end.
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
+  void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
 public:
   IdentifierInfo();
   ~IdentifierInfo();
@@ -72,8 +73,10 @@ public:
   
   /// getMacroInfo - Return macro information about this identifier, or null if
   /// it is not a macro.
-  MacroInfo *getMacroInfo() const { return Macro; }
-  void setMacroInfo(MacroInfo *I) { Macro = I; }
+  MacroInfo *getMacroInfo() const {
+    return HasMacro ? getMacroInfoInternal() : 0;
+  }
+  void setMacroInfo(MacroInfo *I);
   
   /// get/setTokenID - If this is a source-language token (e.g. 'for'), this API
   /// can be used to cause the lexer to map identifiers to source-language
@@ -137,6 +140,8 @@ public:
   template<typename T>
   T *getFETokenInfo() const { return static_cast<T*>(FETokenInfo); }
   void setFETokenInfo(void *T) { FETokenInfo = T; }
+private:
+  MacroInfo *getMacroInfoInternal() const;
 };
 
 /// IdentifierTable - This table implements an efficient mapping from strings to
@@ -274,6 +279,9 @@ public:
 
 }  // end namespace clang
 
+
+/// Define DenseMapInfo so that Selectors can be used as keys in DenseMap and
+/// DenseSets.
 namespace llvm {
 template <>
 struct DenseMapInfo<clang::Selector> {
