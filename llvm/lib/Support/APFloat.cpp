@@ -1548,30 +1548,41 @@ APFloat::convertToInteger(integerPart *parts, unsigned int width,
     return opInexact;
 }
 
+/* Convert an unsigned integer SRC to a floating point number,
+   rounding according to ROUNDING_MODE.  The sign of the floating
+   point number is not modified.  */
 APFloat::opStatus
-APFloat::convertFromUnsignedInteger(integerPart *parts,
-                                    unsigned int partCount,
-                                    roundingMode rounding_mode)
+APFloat::convertFromUnsignedParts(const integerPart *src,
+                                  unsigned int srcCount,
+                                  roundingMode rounding_mode)
 {
-  unsigned int msb, precision;
+  unsigned int dstCount;
   lostFraction lost_fraction;
-
-  msb = APInt::tcMSB(parts, partCount) + 1;
-  precision = semantics->precision;
+  integerPart *dst;
 
   category = fcNormal;
-  exponent = precision - 1;
+  exponent = semantics->precision - 1;
 
-  if(msb > precision) {
-    exponent += (msb - precision);
-    lost_fraction = shiftRight(parts, partCount, msb - precision);
-    msb = precision;
-  } else
+  dst = significandParts();
+  dstCount = partCount();
+
+  /* We need to capture the non-zero most significant parts.  */
+  while (srcCount > dstCount && src[srcCount - 1] == 0)
+    srcCount--;
+
+  /* Copy the bit image of as many parts as we can.  If we are wider,
+     zero-out remaining parts.  */
+  if (dstCount >= srcCount) {
+    APInt::tcAssign(dst, src, srcCount);
+    while (srcCount < dstCount)
+      dst[srcCount++] = 0;
     lost_fraction = lfExactlyZero;
-
-  /* Copy the bit image.  */
-  zeroSignificand();
-  APInt::tcAssign(significandParts(), parts, partCountForBits(msb));
+  } else {
+    exponent += (srcCount - dstCount) * integerPartWidth;
+    APInt::tcAssign(dst, src + (srcCount - dstCount), dstCount);
+    lost_fraction = lostFractionThroughTruncation(src, srcCount,
+                                                  dstCount * integerPartWidth);
+  }
 
   return normalize(rounding_mode, lost_fraction);
 }
@@ -1594,7 +1605,7 @@ APFloat::convertFromZeroExtendedInteger(const integerPart *parts,
   }
 
   APInt::tcAssign(copy, api.getRawData(), partCount);
-  status = convertFromUnsignedInteger(copy, partCount, rounding_mode);
+  status = convertFromUnsignedParts(copy, partCount, rounding_mode);
   return status;
 }
 
