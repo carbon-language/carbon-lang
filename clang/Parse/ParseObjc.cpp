@@ -395,55 +395,52 @@ Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *IDecl,
 ///       in out inout bycopy byref oneway int char float double void _Bool
 ///
 IdentifierInfo *Parser::ParseObjCSelector() {
-  tok::TokenKind tKind = Tok.getKind();
-  IdentifierInfo *II = 0;
-  switch (tKind) {
-    case tok::identifier:
-    case tok::kw_typeof:
-    case tok::kw___alignof:
-    case tok::kw_auto:
-    case tok::kw_break:                    
-    case tok::kw_case:                        
-    case tok::kw_char:                        
-    case tok::kw_const:                       
-    case tok::kw_continue:                    
-    case tok::kw_default:                     
-    case tok::kw_do:                          
-    case tok::kw_double:                      
-    case tok::kw_else:                        
-    case tok::kw_enum:                        
-    case tok::kw_extern:                      
-    case tok::kw_float:                       
-    case tok::kw_for:                         
-    case tok::kw_goto:                        
-    case tok::kw_if:                       
-    case tok::kw_inline:                     
-    case tok::kw_int:                         
-    case tok::kw_long:                        
-    case tok::kw_register:                    
-    case tok::kw_restrict:
-    case tok::kw_return:                      
-    case tok::kw_short:                       
-    case tok::kw_signed:                      
-    case tok::kw_sizeof:                      
-    case tok::kw_static:                      
-    case tok::kw_struct:                      
-    case tok::kw_switch:                      
-    case tok::kw_typedef:                     
-    case tok::kw_union:                       
-    case tok::kw_unsigned:                    
-    case tok::kw_void:                        
-    case tok::kw_volatile:                    
-    case tok::kw_while:                       
-    case tok::kw__Bool:
-    case tok::kw__Complex:
-      II = Tok.getIdentifierInfo();
-      ConsumeToken();
-    default:
-      break;
+  switch (Tok.getKind()) {
+  default:
+    return 0;
+  case tok::identifier:
+  case tok::kw_typeof:
+  case tok::kw___alignof:
+  case tok::kw_auto:
+  case tok::kw_break:                    
+  case tok::kw_case:                        
+  case tok::kw_char:                        
+  case tok::kw_const:                       
+  case tok::kw_continue:                    
+  case tok::kw_default:                     
+  case tok::kw_do:                          
+  case tok::kw_double:                      
+  case tok::kw_else:                        
+  case tok::kw_enum:                        
+  case tok::kw_extern:                      
+  case tok::kw_float:                       
+  case tok::kw_for:                         
+  case tok::kw_goto:                        
+  case tok::kw_if:                       
+  case tok::kw_inline:                     
+  case tok::kw_int:                         
+  case tok::kw_long:                        
+  case tok::kw_register:                    
+  case tok::kw_restrict:
+  case tok::kw_return:                      
+  case tok::kw_short:                       
+  case tok::kw_signed:                      
+  case tok::kw_sizeof:                      
+  case tok::kw_static:                      
+  case tok::kw_struct:                      
+  case tok::kw_switch:                      
+  case tok::kw_typedef:                     
+  case tok::kw_union:                       
+  case tok::kw_unsigned:                    
+  case tok::kw_void:                        
+  case tok::kw_volatile:                    
+  case tok::kw_while:                       
+  case tok::kw__Bool:
+  case tok::kw__Complex:
+    IdentifierInfo *II = Tok.getIdentifierInfo();
+    ConsumeToken();
+    return II;
   }
-  
-  return II;
 }
 
 ///   objc-type-qualifier: one of
@@ -532,89 +529,93 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
                                             SourceLocation mLoc,
 					    tok::ObjCKeywordKind MethodImplKind)
 {
-  TypeTy *ReturnType = 0;
-  AttributeList *methodAttrs = 0;
-  
   // Parse the return type.
+  TypeTy *ReturnType = 0;
   if (Tok.getKind() == tok::l_paren)
     ReturnType = ParseObjCTypeName();
-  IdentifierInfo *selIdent = ParseObjCSelector();
+
+  IdentifierInfo *SelIdent = ParseObjCSelector();
+  if (Tok.getKind() != tok::colon) {
+    if (!SelIdent) {
+      Diag(Tok, diag::err_expected_ident); // missing selector name.
+      // FIXME: this creates a unary selector with a null identifier, is this
+      // ok??  Maybe we should skip to the next semicolon or something.
+    }
+    
+    // If attributes exist after the method, parse them.
+    AttributeList *MethodAttrs = 0;
+    if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
+      MethodAttrs = ParseAttributes();
+    
+    Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
+    return Actions.ActOnMethodDeclaration(mLoc, mType, ReturnType, Sel, 
+                                          0, 0, MethodAttrs, MethodImplKind);
+  }
 
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   llvm::SmallVector<Action::TypeTy *, 12> KeyTypes;
   llvm::SmallVector<IdentifierInfo *, 12> ArgNames;
+  
+  Action::TypeTy *TypeInfo;
+  while (1) {
+    KeyIdents.push_back(SelIdent);
     
-  if (Tok.getKind() == tok::colon) {
-    Action::TypeTy *TypeInfo;
+    // Each iteration parses a single keyword argument.
+    if (Tok.getKind() != tok::colon) {
+      Diag(Tok, diag::err_expected_colon);
+      break;
+    }
+    ConsumeToken(); // Eat the ':'.
+    if (Tok.getKind() == tok::l_paren) // Parse the argument type.
+      TypeInfo = ParseObjCTypeName();
+    else
+      TypeInfo = 0;
+    KeyTypes.push_back(TypeInfo);
     
-    while (1) {
-      KeyIdents.push_back(selIdent);
-      
-      // Each iteration parses a single keyword argument.
-      if (Tok.getKind() != tok::colon) {
-        Diag(Tok, diag::err_expected_colon);
-        break;
-      }
-      ConsumeToken(); // Eat the ':'.
-      if (Tok.getKind() == tok::l_paren) // Parse the argument type.
-        TypeInfo = ParseObjCTypeName();
-      else
-        TypeInfo = 0;
-      KeyTypes.push_back(TypeInfo);
-      
-      // If attributes exist before the argument name, parse them.
-      if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute)
-        ParseAttributes(); // FIXME: pass attributes through.
+    // If attributes exist before the argument name, parse them.
+    if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute)
+      ParseAttributes(); // FIXME: pass attributes through.
 
-      if (Tok.getKind() != tok::identifier) {
-        Diag(Tok, diag::err_expected_ident); // missing argument name.
-        break;
-      }
-      ArgNames.push_back(Tok.getIdentifierInfo());
-      ConsumeToken(); // Eat the identifier.
-      
-      // Check for another keyword selector.
-      selIdent = ParseObjCSelector();
-      if (!selIdent && Tok.getKind() != tok::colon)
-        break;
-      // We have a selector or a colon, continue parsing.
+    if (Tok.getKind() != tok::identifier) {
+      Diag(Tok, diag::err_expected_ident); // missing argument name.
+      break;
     }
-    // Parse the (optional) parameter list.
-    while (Tok.getKind() == tok::comma) {
-      ConsumeToken();
-      if (Tok.getKind() == tok::ellipsis) {
-        ConsumeToken();
-        break;
-      }
-      // Parse the c-style argument declaration-specifier.
-      DeclSpec DS;
-      ParseDeclarationSpecifiers(DS);
-      // Parse the declarator. 
-      Declarator ParmDecl(DS, Declarator::PrototypeContext);
-      ParseDeclarator(ParmDecl);
-    }
-    // FIXME: Add support for optional parmameter list...
-    // If attributes exist after the method, parse them.
-    if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
-      methodAttrs = ParseAttributes();
+    ArgNames.push_back(Tok.getIdentifierInfo());
+    ConsumeToken(); // Eat the identifier.
     
-    unsigned nKeys = KeyIdents.size();
-    Selector Sel = (nKeys == 1) ? 
-      PP.getSelectorTable().getUnarySelector(KeyIdents[0]) :
-      PP.getSelectorTable().getKeywordSelector(nKeys, &KeyIdents[0]);
-    return Actions.ActOnMethodDeclaration(mLoc, mType, ReturnType, Sel, 
-                                          &KeyTypes[0], &ArgNames[0],
-                                          methodAttrs, MethodImplKind);
-  } else if (!selIdent) {
-    Diag(Tok, diag::err_expected_ident); // missing selector name.
+    // Check for another keyword selector.
+    SelIdent = ParseObjCSelector();
+    if (!SelIdent && Tok.getKind() != tok::colon)
+      break;
+    // We have a selector or a colon, continue parsing.
   }
+  
+  // Parse the (optional) parameter list.
+  while (Tok.getKind() == tok::comma) {
+    ConsumeToken();
+    if (Tok.getKind() == tok::ellipsis) {
+      ConsumeToken();
+      break;
+    }
+    // Parse the c-style argument declaration-specifier.
+    DeclSpec DS;
+    ParseDeclarationSpecifiers(DS);
+    // Parse the declarator. 
+    Declarator ParmDecl(DS, Declarator::PrototypeContext);
+    ParseDeclarator(ParmDecl);
+  }
+  
+  // FIXME: Add support for optional parmameter list...
   // If attributes exist after the method, parse them.
+  AttributeList *MethodAttrs = 0;
   if (getLang().ObjC2 && Tok.getKind() == tok::kw___attribute) 
-    methodAttrs = ParseAttributes();
-
-  Selector Sel = PP.getSelectorTable().getNullarySelector(selIdent);
+    MethodAttrs = ParseAttributes();
+  
+  Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
+                                                   &KeyIdents[0]);
   return Actions.ActOnMethodDeclaration(mLoc, mType, ReturnType, Sel, 
-                                        0, 0, methodAttrs, MethodImplKind);
+                                        &KeyTypes[0], &ArgNames[0],
+                                        MethodAttrs, MethodImplKind);
 }
 
 ///   objc-protocol-refs:
@@ -1203,6 +1204,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
     SkipUntil(tok::semi);
     return 0;
   }
+  
   if (Tok.getKind() != tok::r_square) {
     Diag(Tok, diag::err_expected_rsquare);
     SkipUntil(tok::semi);
@@ -1211,23 +1213,16 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   SourceLocation RBracloc = ConsumeBracket(); // consume ']'
   
   unsigned nKeys = KeyIdents.size();
-  if (nKeys) {
-    Selector Sel = (nKeys == 1) ? 
-      PP.getSelectorTable().getUnarySelector(KeyIdents[0]) :
-      PP.getSelectorTable().getKeywordSelector(nKeys, &KeyIdents[0]);
-    // We've just parsed a keyword message.
-    if (ReceiverName) 
-      return Actions.ActOnClassMessage(ReceiverName, Sel, LBracloc, RBracloc,
-                                       &KeyExprs[0]);
-    return Actions.ActOnInstanceMessage(ReceiverExpr, Sel, LBracloc, RBracloc,
-                                        &KeyExprs[0]);
-  }
-  Selector Sel = PP.getSelectorTable().getNullarySelector(selIdent);
-
-  // We've just parsed a unary message (a message with no arguments).
+  if (nKeys == 0)
+    KeyIdents.push_back(selIdent);
+  Selector Sel = PP.getSelectorTable().getSelector(nKeys, &KeyIdents[0]);
+  
+  // We've just parsed a keyword message.
   if (ReceiverName) 
-    return Actions.ActOnClassMessage(ReceiverName, Sel, LBracloc, RBracloc, 0);
-  return Actions.ActOnInstanceMessage(ReceiverExpr, Sel, LBracloc, RBracloc, 0);
+    return Actions.ActOnClassMessage(ReceiverName, Sel, LBracloc, RBracloc,
+                                     &KeyExprs[0]);
+  return Actions.ActOnInstanceMessage(ReceiverExpr, Sel, LBracloc, RBracloc,
+                                      &KeyExprs[0]);
 }
 
 Parser::ExprResult Parser::ParseObjCStringLiteral() {

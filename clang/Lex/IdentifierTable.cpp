@@ -324,10 +324,9 @@ std::string Selector::getName() const {
 }
 
 
-Selector SelectorTable::getKeywordSelector(unsigned nKeys, 
-                                           IdentifierInfo **IIV) {
-  if (nKeys == 1)
-    return Selector(IIV[0], 1);
+Selector SelectorTable::getSelector(unsigned nKeys, IdentifierInfo **IIV) {
+  if (nKeys < 2)
+    return Selector(IIV[0], nKeys);
   
   llvm::FoldingSet<MultiKeywordSelector> *SelTab;
   
@@ -349,14 +348,6 @@ Selector SelectorTable::getKeywordSelector(unsigned nKeys,
   new (SI) MultiKeywordSelector(nKeys, IIV);
   SelTab->InsertNode(SI, InsertPos);
   return Selector(SI);
-}
-
-Selector SelectorTable::getUnarySelector(IdentifierInfo *ID) {
-  return Selector(ID, 1);
-}
-
-Selector SelectorTable::getNullarySelector(IdentifierInfo *ID) {
-  return Selector(ID, 0);
 }
 
 SelectorTable::SelectorTable() {

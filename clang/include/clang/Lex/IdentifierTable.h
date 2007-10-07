@@ -259,9 +259,17 @@ public:
   SelectorTable();
   ~SelectorTable();
 
-  Selector getKeywordSelector(unsigned nKeys, IdentifierInfo **IIV);
-  Selector getUnarySelector(IdentifierInfo *ID);
-  Selector getNullarySelector(IdentifierInfo *ID);
+  /// getSelector - This can create any sort of selector.  NumArgs indicates
+  /// whether this is a no argument selector "foo", a single argument selector
+  /// "foo:" or multi-argument "foo:bar:".
+  Selector getSelector(unsigned NumArgs, IdentifierInfo **IIV);
+  
+  Selector getUnarySelector(IdentifierInfo *ID) {
+    return Selector(ID, 1);
+  }
+  Selector getNullarySelector(IdentifierInfo *ID) {
+    return Selector(ID, 0);
+  }
 };
 
 }  // end namespace clang
