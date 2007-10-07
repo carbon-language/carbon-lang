@@ -1039,16 +1039,18 @@ Sema::ActOnForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
   llvm::SmallVector<ObjcProtocolDecl*, 32> Protocols;
   
   for (unsigned i = 0; i != NumElts; ++i) {
-    ObjcProtocolDecl *PDecl = getObjCProtocolDecl(S, IdentList[i],
-                                                  AtProtocolLoc);
-    if (!PDecl)  { // Already seen?
-      PDecl = new ObjcProtocolDecl(SourceLocation(), 0, IdentList[i], true);
+    IdentifierInfo *P = IdentList[i];
+    ObjcProtocolDecl *PDecl = getObjCProtocolDecl(S, P, AtProtocolLoc);
+    if (!PDecl)  { // Not already seen?
+      // FIXME: Pass in the location of the identifier!
+      PDecl = new ObjcProtocolDecl(AtProtocolLoc, 0, P, true);
       // Chain & install the protocol decl into the identifier.
       PDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
       IdentList[i]->setFETokenInfo(PDecl);
+
+      // Remember that this needs to be removed when the scope is popped.
+      S->AddDecl(PDecl);
     }
-    // Remember that this needs to be removed when the scope is popped.
-    S->AddDecl(IdentList[i]);
     
     Protocols.push_back(PDecl);
   }
@@ -1364,9 +1366,10 @@ Sema::ActOnForwardClassDeclaration(Scope *S, SourceLocation AtClassLoc,
       // Chain & install the interface decl into the identifier.
       IDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
       IdentList[i]->setFETokenInfo(IDecl);
+
+      // Remember that this needs to be removed when the scope is popped.
+      S->AddDecl(IDecl);
     }
-    // Remember that this needs to be removed when the scope is popped.
-    S->AddDecl(IdentList[i]);
 
     Interfaces.push_back(IDecl);
   }
