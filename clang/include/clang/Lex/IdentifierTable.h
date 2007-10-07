@@ -70,6 +70,12 @@ public:
                     GetStringMapEntryFromValue(*this).getKeyLength();
   }
   
+  /// hasMacroDefinition - Return true if this identifier is #defined to some
+  /// other value.
+  bool hasMacroDefinition() const {
+    return HasMacro;
+  }
+  
   /// getMacroInfo - Return macro information about this identifier, or null if
   /// it is not a macro.
   MacroInfo *getMacroInfo() const {

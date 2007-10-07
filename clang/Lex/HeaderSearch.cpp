@@ -329,7 +329,8 @@ bool HeaderSearch::ShouldEnterIncludeFile(const FileEntry *File, bool isImport){
   
   // Next, check to see if the file is wrapped with #ifndef guards.  If so, and
   // if the macro that guards it is defined, we know the #include has no effect.
-  if (FileInfo.ControllingMacro && FileInfo.ControllingMacro->getMacroInfo()) {
+  if (FileInfo.ControllingMacro &&
+      FileInfo.ControllingMacro->hasMacroDefinition()) {
     ++NumMultiIncludeFileOptzn;
     return false;
   }
