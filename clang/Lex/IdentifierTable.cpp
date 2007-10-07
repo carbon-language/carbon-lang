@@ -13,33 +13,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/IdentifierTable.h"
-#include "clang/Lex/MacroInfo.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
 using namespace clang;
 
-static llvm::DenseMap<const IdentifierInfo*, MacroInfo*> Macros;
-
-MacroInfo *IdentifierInfo::getMacroInfoInternal() const {
-  return Macros[this];
-}
-void IdentifierInfo::setMacroInfo(MacroInfo *I) {
-  if (I == 0) {
-    if (HasMacro) {
-      Macros.erase(this);
-      HasMacro = false;
-    }
-  } else {
-    Macros[this] = I;
-    HasMacro = true;
-  }
-}
-
-
 //===----------------------------------------------------------------------===//
 // Token Implementation
 //===----------------------------------------------------------------------===//
+
+// FIXME: Move this elsewhere!
+#include "clang/Lex/Token.h"
 
 /// isObjCAtKeyword - Return true if we have an ObjC keyword identifier. 
 bool Token::isObjCAtKeyword(tok::ObjCKeywordKind objcKey) const {
@@ -68,11 +52,6 @@ IdentifierInfo::IdentifierInfo() {
   IsCPPOperatorKeyword = false;
   IsNonPortableBuiltin = false;
   FETokenInfo = 0;
-}
-
-IdentifierInfo::~IdentifierInfo() {
-  if (MacroInfo *Macro = getMacroInfo())
-    delete Macro;
 }
 
 //===----------------------------------------------------------------------===//

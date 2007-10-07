@@ -27,7 +27,6 @@ namespace llvm {
 }
 
 namespace clang {
-  class MacroInfo;
   struct LangOptions;
   class MultiKeywordSelector; // a private class used by Selector.
   
@@ -51,7 +50,6 @@ class IdentifierInfo {
   void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
 public:
   IdentifierInfo();
-  ~IdentifierInfo();
 
   /// getName - Return the actual string for this identifier.  The returned 
   /// string is properly null terminated.
@@ -75,13 +73,7 @@ public:
   bool hasMacroDefinition() const {
     return HasMacro;
   }
-  
-  /// getMacroInfo - Return macro information about this identifier, or null if
-  /// it is not a macro.
-  MacroInfo *getMacroInfo() const {
-    return HasMacro ? getMacroInfoInternal() : 0;
-  }
-  void setMacroInfo(MacroInfo *I);
+  void setHasMacroDefinition(bool Val) { HasMacro = Val; }
   
   /// get/setTokenID - If this is a source-language token (e.g. 'for'), this API
   /// can be used to cause the lexer to map identifiers to source-language
@@ -144,8 +136,6 @@ public:
   template<typename T>
   T *getFETokenInfo() const { return static_cast<T*>(FETokenInfo); }
   void setFETokenInfo(void *T) { FETokenInfo = T; }
-private:
-  MacroInfo *getMacroInfoInternal() const;
 };
 
 /// IdentifierTable - This table implements an efficient mapping from strings to

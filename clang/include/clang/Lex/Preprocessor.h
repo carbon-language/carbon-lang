@@ -18,6 +18,7 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Lex/MacroExpander.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace clang {
   
@@ -116,6 +117,10 @@ class Preprocessor {
   /// encountered (e.g. a file is #included, etc).
   PPCallbacks *Callbacks;
   
+  /// Macros - For each IdentifierInfo with 'HasMacro' set, we keep a mapping
+  /// to the actual definition of the macro.
+  llvm::DenseMap<IdentifierInfo*, MacroInfo*> Macros;
+  
   // Various statistics we track for performance analysis.
   unsigned NumDirectives, NumIncluded, NumDefined, NumUndefined, NumPragma;
   unsigned NumIf, NumElse, NumEndif;
@@ -173,6 +178,16 @@ public:
   void setPPCallbacks(PPCallbacks *C) {
     Callbacks = C;
   }
+  
+  /// getMacroInfo - Given an identifier, return the MacroInfo it is #defined to
+  /// or null if it isn't #define'd.
+  MacroInfo *getMacroInfo(IdentifierInfo *II) const {
+    return II->hasMacroDefinition() ? Macros.find(II)->second : 0;
+  }
+  
+  /// setMacroInfo - Specify a macro for this identifier.
+  ///
+  void setMacroInfo(IdentifierInfo *II, MacroInfo *MI);
   
   /// getIdentifierInfo - Return information about the specified preprocessor
   /// identifier token.  The version of this method that takes two character

@@ -90,6 +90,15 @@ Preprocessor::~Preprocessor() {
     delete IncludeMacroStack.back().TheMacroExpander;
     IncludeMacroStack.pop_back();
   }
+
+  // Free any macro definitions.
+  for (llvm::DenseMap<IdentifierInfo*, MacroInfo*>::iterator I =
+       Macros.begin(), E = Macros.end(); I != E; ++I) {
+    // Free the macro definition.
+    delete I->second;
+    I->second = 0;
+    I->first->setHasMacroDefinition(false);
+  }
   
   // Free any cached macro expanders.
   for (unsigned i = 0, e = NumCachedMacroExpanders; i != e; ++i)
@@ -493,6 +502,20 @@ void Preprocessor::RemoveTopOfLexerStack() {
 // Macro Expansion Handling.
 //===----------------------------------------------------------------------===//
 
+/// setMacroInfo - Specify a macro for this identifier.
+///
+void Preprocessor::setMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
+  if (MI == 0) {
+    if (II->hasMacroDefinition()) {
+      Macros.erase(II);
+      II->setHasMacroDefinition(false);
+    }
+  } else {
+    Macros[II] = MI;
+    II->setHasMacroDefinition(true);
+  }
+}
+
 /// RegisterBuiltinMacro - Register the specified identifier in the identifier
 /// table and mark it as a builtin macro to be expanded.
 IdentifierInfo *Preprocessor::RegisterBuiltinMacro(const char *Name) {
@@ -502,7 +525,7 @@ IdentifierInfo *Preprocessor::RegisterBuiltinMacro(const char *Name) {
   // Mark it as being a macro that is builtin.
   MacroInfo *MI = new MacroInfo(SourceLocation());
   MI->setIsBuiltinMacro();
-  Id->setMacroInfo(MI);
+  setMacroInfo(Id, MI);
   return Id;
 }
 
@@ -525,7 +548,8 @@ void Preprocessor::RegisterBuiltinMacros() {
 /// isTrivialSingleTokenExpansion - Return true if MI, which has a single token
 /// in its expansion, currently expands to that token literally.
 static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
-                                          const IdentifierInfo *MacroIdent) {
+                                          const IdentifierInfo *MacroIdent,
+                                          Preprocessor &PP) {
   IdentifierInfo *II = MI->getReplacementToken(0).getIdentifierInfo();
 
   // If the token isn't an identifier, it's always literally expanded.
@@ -533,7 +557,7 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
   
   // If the identifier is a macro, and if that macro is enabled, it may be
   // expanded so it's not a trivial expansion.
-  if (II->hasMacroDefinition() && II->getMacroInfo()->isEnabled() &&
+  if (II->hasMacroDefinition() && PP.getMacroInfo(II)->isEnabled() &&
       // Fast expanding "#define X X" is ok, because X would be disabled.
       II != MacroIdent)
     return false;
@@ -676,7 +700,8 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     return false;
     
   } else if (MI->getNumTokens() == 1 &&
-             isTrivialSingleTokenExpansion(MI, Identifier.getIdentifierInfo())){
+             isTrivialSingleTokenExpansion(MI, Identifier.getIdentifierInfo(),
+                                           *this)){
     // Otherwise, if this macro expands into a single trivially-expanded
     // token: expand it now.  This handles common cases like 
     // "#define VAL 42".
@@ -704,7 +729,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     
     // If this is #define X X, we must mark the result as unexpandible.
     if (IdentifierInfo *NewII = Identifier.getIdentifierInfo())
-      if (NewII->getMacroInfo() == MI)
+      if (getMacroInfo(NewII) == MI)
         Identifier.setFlag(Token::DisableExpand);
     
     // Since this is not an identifier token, it can't be macro expanded, so
@@ -1020,7 +1045,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   }
   
   // If this is a macro to be expanded, do it.
-  if (MacroInfo *MI = II.getMacroInfo()) {
+  if (MacroInfo *MI = getMacroInfo(&II)) {
     if (!DisableMacroExpansion && !Identifier.isExpandDisabled()) {
       if (MI->isEnabled()) {
         if (!HandleMacroExpandedIdentifier(Identifier, MI))
@@ -1110,17 +1135,14 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
   CurLexer = 0;
 
   // This is the end of the top-level file.  If the diag::pp_macro_not_used
-  // diagnostic is enabled, walk all of the identifiers, looking for macros that
-  // have not been used.
+  // diagnostic is enabled, look for macros that have not been used.
   if (Diags.getDiagnosticLevel(diag::pp_macro_not_used) != Diagnostic::Ignored){
-    for (IdentifierTable::iterator I = Identifiers.begin(),
-         E = Identifiers.end(); I != E; ++I) {
-      const IdentifierInfo &II = I->getValue();
-      if (II.hasMacroDefinition() && !II.getMacroInfo()->isUsed())
-        Diag(II.getMacroInfo()->getDefinitionLoc(), diag::pp_macro_not_used);
+    for (llvm::DenseMap<IdentifierInfo*, MacroInfo*>::iterator I =
+         Macros.begin(), E = Macros.end(); I != E; ++I) {
+      if (!I->second->isUsed())
+        Diag(I->second->getDefinitionLoc(), diag::pp_macro_not_used);
     }
   }
-  
   return true;
 }
 
@@ -1189,7 +1211,7 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
     // Error if defining "defined": C99 6.10.8.4.
     Diag(MacroNameTok, diag::err_defined_macro_name);
   } else if (isDefineUndef && II->hasMacroDefinition() &&
-             II->getMacroInfo()->isBuiltinMacro()) {
+             getMacroInfo(II)->isBuiltinMacro()) {
     // Error if defining "__LINE__" and other builtins: C99 6.10.8.4.
     if (isDefineUndef == 1)
       Diag(MacroNameTok, diag::pp_redef_builtin_macro);
@@ -2029,7 +2051,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
   
   // Finally, if this identifier already had a macro defined for it, verify that
   // the macro bodies are identical and free the old definition.
-  if (MacroInfo *OtherMI = MacroNameTok.getIdentifierInfo()->getMacroInfo()) {
+  if (MacroInfo *OtherMI = getMacroInfo(MacroNameTok.getIdentifierInfo())) {
     if (!OtherMI->isUsed())
       Diag(OtherMI->getDefinitionLoc(), diag::pp_macro_not_used);
 
@@ -2043,7 +2065,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
     delete OtherMI;
   }
   
-  MacroNameTok.getIdentifierInfo()->setMacroInfo(MI);
+  setMacroInfo(MacroNameTok.getIdentifierInfo(), MI);
 }
 
 /// HandleDefineOtherTargetDirective - Implements #define_other_target.
@@ -2060,7 +2082,7 @@ void Preprocessor::HandleDefineOtherTargetDirective(Token &Tok) {
 
   // If there is already a macro defined by this name, turn it into a
   // target-specific define.
-  if (MacroInfo *MI = MacroNameTok.getIdentifierInfo()->getMacroInfo()) {
+  if (MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo())) {
     MI->setIsTargetSpecific(true);
     return;
   }
@@ -2086,7 +2108,7 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   CheckEndOfDirective("#undef");
   
   // Okay, we finally have a valid identifier to undef.
-  MacroInfo *MI = MacroNameTok.getIdentifierInfo()->getMacroInfo();
+  MacroInfo *MI = getMacroInfo(MacroNameTok.getIdentifierInfo());
   
   // #undef untaints an identifier if it were marked by define_other_target.
   MacroNameTok.getIdentifierInfo()->setIsOtherTargetMacro(false);
@@ -2099,7 +2121,7 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   
   // Free macro definition.
   delete MI;
-  MacroNameTok.getIdentifierInfo()->setMacroInfo(0);
+  setMacroInfo(MacroNameTok.getIdentifierInfo(), 0);
 }
 
 
@@ -2140,7 +2162,7 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   }
   
   IdentifierInfo *MII = MacroNameTok.getIdentifierInfo();
-  MacroInfo *MI = MII->getMacroInfo();
+  MacroInfo *MI = getMacroInfo(MII);
 
   // If there is a macro, process it.
   if (MI) {

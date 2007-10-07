@@ -105,7 +105,7 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
 
     // If there is a macro, mark it used.
     if (Result != 0 && ValueLive) {
-      MacroInfo *Macro = II->getMacroInfo();
+      MacroInfo *Macro = PP.getMacroInfo(II);
       Macro->setIsUsed(true);
       
       // If this is the first use of a target-specific macro, warn about it.

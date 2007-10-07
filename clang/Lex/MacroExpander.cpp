@@ -84,12 +84,13 @@ const Token *MacroArgs::getUnexpArgument(unsigned Arg) const {
 
 /// ArgNeedsPreexpansion - If we can prove that the argument won't be affected
 /// by pre-expansion, return false.  Otherwise, conservatively return true.
-bool MacroArgs::ArgNeedsPreexpansion(const Token *ArgTok) const {
+bool MacroArgs::ArgNeedsPreexpansion(const Token *ArgTok,
+                                     Preprocessor &PP) const {
   // If there are no identifiers in the argument list, or if the identifiers are
   // known to not be macros, pre-expansion won't modify it.
   for (; ArgTok->getKind() != tok::eof; ++ArgTok)
     if (IdentifierInfo *II = ArgTok->getIdentifierInfo()) {
-      if (II->getMacroInfo() && II->getMacroInfo()->isEnabled())
+      if (II->hasMacroDefinition() && PP.getMacroInfo(II)->isEnabled())
         // Return true even though the macro could be a function-like macro
         // without a following '(' token.
         return true;
@@ -238,7 +239,7 @@ void MacroExpander::Init(Token &Tok, MacroArgs *Actuals) {
   // associated with it.
   destroy();
   
-  Macro = Tok.getIdentifierInfo()->getMacroInfo();
+  Macro = PP.getMacroInfo(Tok.getIdentifierInfo());
   ActualArgs = Actuals;
   CurToken = 0;
   InstantiateLoc = Tok.getLocation();
@@ -377,7 +378,7 @@ void MacroExpander::ExpandFunctionArguments() {
       // Only preexpand the argument if it could possibly need it.  This
       // avoids some work in common cases.
       const Token *ArgTok = ActualArgs->getUnexpArgument(ArgNo);
-      if (ActualArgs->ArgNeedsPreexpansion(ArgTok))
+      if (ActualArgs->ArgNeedsPreexpansion(ArgTok, PP))
         ResultArgToks = &ActualArgs->getPreExpArgument(ArgNo, PP)[0];
       else
         ResultArgToks = ArgTok;  // Use non-preexpanded tokens.
