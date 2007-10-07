@@ -1247,8 +1247,8 @@ APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
   if (fs==opInvalidOp)
     return fs;
 
-  fs = V.convertFromInteger(x, parts * integerPartWidth, true,
-                            rmNearestTiesToEven);
+  fs = V.convertFromZeroExtendedInteger(x, parts * integerPartWidth, true,
+                                        rmNearestTiesToEven);
   assert(fs==opOK);   // should always work
 
   fs = V.multiply(rhs, rounding_mode);
@@ -1576,9 +1576,11 @@ APFloat::convertFromUnsignedInteger(integerPart *parts,
   return normalize(rounding_mode, lost_fraction);
 }
 
+/* FIXME: should this just take a const APInt reference?  */
 APFloat::opStatus
-APFloat::convertFromInteger(const integerPart *parts, unsigned int width,
-                            bool isSigned, roundingMode rounding_mode)
+APFloat::convertFromZeroExtendedInteger(const integerPart *parts,
+                                        unsigned int width, bool isSigned,
+                                        roundingMode rounding_mode)
 {
   unsigned int partCount = partCountForBits(width);
   opStatus status;

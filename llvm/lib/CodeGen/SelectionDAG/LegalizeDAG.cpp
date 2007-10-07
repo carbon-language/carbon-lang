@@ -3234,8 +3234,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           const uint64_t zero[] = {0, 0};
           APFloat apf = APFloat(APInt(MVT::getSizeInBits(VT), 2, zero));
           uint64_t x = 1ULL << ShiftAmt;
-          (void)apf.convertFromInteger(&x, MVT::getSizeInBits(NVT), false, 
-                                       APFloat::rmNearestTiesToEven);
+          (void)apf.convertFromZeroExtendedInteger
+            (&x, MVT::getSizeInBits(NVT), false, APFloat::rmNearestTiesToEven);
           Tmp2 = DAG.getConstantFP(apf, VT);
           Tmp3 = DAG.getSetCC(TLI.getSetCCResultTy(),
                             Node->getOperand(0), Tmp2, ISD::SETLT);

@@ -216,7 +216,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       uint32_t BitWidth = cast<IntegerType>(SrcTy)->getBitWidth();
       APFloat apf = APFloat(APInt(DestTy->getPrimitiveSizeInBits(),
                                   2, zero));
-      (void)apf.convertFromInteger(api.getRawData(), BitWidth, 
+      (void)apf.convertFromZeroExtendedInteger(api.getRawData(), BitWidth, 
                                    opc==Instruction::SIToFP,
                                    APFloat::rmNearestTiesToEven);
       return ConstantFP::get(DestTy, apf);
