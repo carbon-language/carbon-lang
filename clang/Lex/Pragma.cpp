@@ -210,7 +210,7 @@ void Preprocessor::HandlePragmaPoison(Token &PoisonTok) {
     if (II->isPoisoned()) continue;
     
     // If this is a macro identifier, emit a warning.
-    if (II->getMacroInfo())
+    if (II->hasMacroDefinition())
       Diag(Tok, diag::pp_poisoning_existing_macro);
     
     // Finally, poison it!

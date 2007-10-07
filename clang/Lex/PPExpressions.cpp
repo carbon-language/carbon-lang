@@ -100,17 +100,18 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
     }
     
     // Otherwise, we got an identifier, is it defined to something?
-    Result = II->getMacroInfo() != 0;
+    Result = II->hasMacroDefinition();
     Result.setIsUnsigned(false);  // Result is signed intmax_t.
 
     // If there is a macro, mark it used.
     if (Result != 0 && ValueLive) {
-      II->getMacroInfo()->setIsUsed(true);
+      MacroInfo *Macro = II->getMacroInfo();
+      Macro->setIsUsed(true);
       
       // If this is the first use of a target-specific macro, warn about it.
-      if (II->getMacroInfo()->isTargetSpecific()) {
+      if (Macro->isTargetSpecific()) {
         // Don't warn on second use.
-        II->getMacroInfo()->setIsTargetSpecific(false);
+        Macro->setIsTargetSpecific(false);
         PP.getTargetInfo().DiagnoseNonPortability(PeekTok.getLocation(),
                                                   diag::port_target_macro_use);
       }

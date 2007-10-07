@@ -533,7 +533,7 @@ static bool isTrivialSingleTokenExpansion(const MacroInfo *MI,
   
   // If the identifier is a macro, and if that macro is enabled, it may be
   // expanded so it's not a trivial expansion.
-  if (II->getMacroInfo() && II->getMacroInfo()->isEnabled() &&
+  if (II->hasMacroDefinition() && II->getMacroInfo()->isEnabled() &&
       // Fast expanding "#define X X" is ok, because X would be disabled.
       II != MacroIdent)
     return false;
@@ -1116,7 +1116,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     for (IdentifierTable::iterator I = Identifiers.begin(),
          E = Identifiers.end(); I != E; ++I) {
       const IdentifierInfo &II = I->getValue();
-      if (II.getMacroInfo() && !II.getMacroInfo()->isUsed())
+      if (II.hasMacroDefinition() && !II.getMacroInfo()->isUsed())
         Diag(II.getMacroInfo()->getDefinitionLoc(), diag::pp_macro_not_used);
     }
   }
@@ -1188,7 +1188,7 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
   } else if (isDefineUndef && II->getPPKeywordID() == tok::pp_defined) {
     // Error if defining "defined": C99 6.10.8.4.
     Diag(MacroNameTok, diag::err_defined_macro_name);
-  } else if (isDefineUndef && II->getMacroInfo() &&
+  } else if (isDefineUndef && II->hasMacroDefinition() &&
              II->getMacroInfo()->isBuiltinMacro()) {
     // Error if defining "__LINE__" and other builtins: C99 6.10.8.4.
     if (isDefineUndef == 1)
