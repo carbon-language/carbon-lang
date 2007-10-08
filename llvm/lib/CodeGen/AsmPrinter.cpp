@@ -1209,7 +1209,7 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
                                       bool printColon,
                                       bool printComment) const {
-  O << TAI->getPrivateGlobalPrefix() << "BB" << FunctionNumber << "_"
+  O << TAI->getPrivateGlobalPrefix() << "BB" << getFunctionNumber() << "_"
     << MBB->getNumber();
   if (printColon)
     O << ':';
