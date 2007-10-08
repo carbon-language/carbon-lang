@@ -86,6 +86,7 @@ class Pass {
   Pass(const Pass &);           // DO NOT IMPLEMENT
 public:
   explicit Pass(intptr_t pid) : Resolver(0), PassID(pid) {}
+  explicit Pass(const void *pid) : Resolver(0), PassID((intptr_t)pid) {}
   virtual ~Pass();
 
   /// getPassName - Return a nice clean name for a pass.  This usually
@@ -241,6 +242,7 @@ public:
   }
 
   explicit ModulePass(intptr_t pid) : Pass(pid) {}
+  explicit ModulePass(const void *pid) : Pass(pid) {}
   // Force out-of-line virtual method.
   virtual ~ModulePass();
 };
@@ -266,6 +268,8 @@ public:
   bool runOnModule(Module &M) { return false; }
 
   explicit ImmutablePass(intptr_t pid) : ModulePass(pid) {}
+  explicit ImmutablePass(const void *pid) : ModulePass(pid) {}
+  
   // Force out-of-line virtual method.
   virtual ~ImmutablePass();
 };
@@ -282,6 +286,7 @@ public:
 class FunctionPass : public Pass {
 public:
   explicit FunctionPass(intptr_t pid) : Pass(pid) {}
+  explicit FunctionPass(const void *pid) : Pass(pid) {}
 
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.
@@ -333,6 +338,7 @@ public:
 class BasicBlockPass : public Pass {
 public:
   explicit BasicBlockPass(intptr_t pid) : Pass(pid) {}
+  explicit BasicBlockPass(const void *pid) : Pass(pid) {}
 
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.
