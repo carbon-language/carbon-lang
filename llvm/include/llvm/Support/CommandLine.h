@@ -53,7 +53,7 @@ void ParseEnvironmentOptions(const char *progName, const char *envvar,
 ///===---------------------------------------------------------------------===//
 /// SetVersionPrinter - Override the default (LLVM specific) version printer
 ///                     used to print out the version when --version is given
-///                     on the command line. This gives other systems using the
+///                     on the command line. This allows other systems using the
 ///                     CommandLine utilities to print their own version string.
 void SetVersionPrinter(void (*func)());
 
