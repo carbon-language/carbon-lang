@@ -1556,32 +1556,27 @@ APFloat::convertFromUnsignedParts(const integerPart *src,
                                   unsigned int srcCount,
                                   roundingMode rounding_mode)
 {
-  unsigned int dstCount;
-  lostFraction lost_fraction;
+  unsigned int omsb, precision, dstCount;
   integerPart *dst;
+  lostFraction lost_fraction;
 
   category = fcNormal;
-  exponent = semantics->precision - 1;
-
+  omsb = APInt::tcMSB(src, srcCount) + 1;
   dst = significandParts();
   dstCount = partCount();
+  precision = semantics->precision;
 
-  /* We need to capture the non-zero most significant parts.  */
-  while (srcCount > dstCount && src[srcCount - 1] == 0)
-    srcCount--;
-
-  /* Copy the bit image of as many parts as we can.  If we are wider,
-     zero-out remaining parts.  */
-  if (dstCount >= srcCount) {
-    APInt::tcAssign(dst, src, srcCount);
-    while (srcCount < dstCount)
-      dst[srcCount++] = 0;
-    lost_fraction = lfExactlyZero;
-  } else {
-    exponent += (srcCount - dstCount) * integerPartWidth;
-    APInt::tcAssign(dst, src + (srcCount - dstCount), dstCount);
+  /* We want the most significant PRECISON bits of SRC.  There may not
+     be that many; extract what we can.  */
+  if (precision <= omsb) {
+    exponent = omsb - 1;
     lost_fraction = lostFractionThroughTruncation(src, srcCount,
-                                                  dstCount * integerPartWidth);
+                                                  omsb - precision);
+    APInt::tcExtract(dst, dstCount, src, precision, omsb - precision);
+  } else {
+    exponent = precision - 1;
+    lost_fraction = lfExactlyZero;
+    APInt::tcExtract(dst, dstCount, src, omsb, 0);
   }
 
   return normalize(rounding_mode, lost_fraction);
