@@ -4624,10 +4624,13 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 }
 
 void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
+  DOUT << "Lowered selection DAG:\n";
+  DEBUG(DAG.dump());
+
   // Run the DAG combiner in pre-legalize mode.
   DAG.Combine(false, *AA);
   
-  DOUT << "Lowered selection DAG:\n";
+  DOUT << "Optimized lowered selection DAG:\n";
   DEBUG(DAG.dump());
   
   // Second step, hack on the DAG until it only uses operations and types that
@@ -4640,6 +4643,9 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   // Run the DAG combiner in post-legalize mode.
   DAG.Combine(true, *AA);
   
+  DOUT << "Optimized legalized selection DAG:\n";
+  DEBUG(DAG.dump());
+
   if (ViewISelDAGs) DAG.viewGraph();
 
   // Third, instruction select all of the operations to machine code, adding the
