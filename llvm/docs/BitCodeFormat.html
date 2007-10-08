@@ -29,7 +29,8 @@
   </li>
 </ol>
 <div class="doc_author">
-  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>.
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a>
+  and <a href="http://www.reverberate.org">Joshua Haberman</a>.
 </p>
 </div>
 
@@ -105,8 +106,10 @@ understanding the encoding.</p>
 
 <div class="doc_text">
 
-<p>The first four bytes of the stream identify the encoding of the file.  This
-is used by a reader to know what is contained in the file.</p>
+<p>The first two bytes of a bitcode file are 'BC' (0x42, 0x43).
+The second two bytes are an application-specific magic number.  Generic
+bitcode tools can look at only the first two bytes to verify the file is
+bitcode, while application-specific programs will want to look at all four.</p>
 
 </div>
 
@@ -117,7 +120,8 @@ is used by a reader to know what is contained in the file.</p>
 <div class="doc_text">
 
 <p>
-A bitstream literally consists of a stream of bits.  This stream is made up of a
+A bitstream literally consists of a stream of bits, which are read in order
+starting with the least significant bit of each byte.  The stream is made up of a
 number of primitive values that encode a stream of unsigned integer values.
 These
 integers are are encoded in two ways: either as <a href="#fixedwidth">Fixed
@@ -172,8 +176,8 @@ represent the following characters with the following 6-bit values:</p>
 
 <ul>
 <li>'a' .. 'z' - 0 .. 25</li>
-<li>'A' .. 'Z' - 26 .. 52</li>
-<li>'0' .. '9' - 53 .. 61</li>
+<li>'A' .. 'Z' - 26 .. 51</li>
+<li>'0' .. '9' - 52 .. 61</li>
 <li>'.' - 62</li>
 <li>'_' - 63</li>
 </ul>
@@ -240,7 +244,9 @@ an <a href="#abbrev_records">abbreviated record encoding</a>.</p>
 <p>
 Blocks in a bitstream denote nested regions of the stream, and are identified by
 a content-specific id number (for example, LLVM IR uses an ID of 12 to represent
-function bodies).  Nested blocks capture the hierachical structure of the data
+function bodies).  Block IDs 0-7 are reserved for <a href="#stdblocks">standard blocks</a>
+whose meaning is defined by Bitcode; block IDs 8 and greater are
+application specific. Nested blocks capture the hierachical structure of the data
 encoded in it, and various properties are associated with blocks as the file is
 parsed.  Block definitions allow the reader to efficiently skip blocks
 in constant time if the reader wants a summary of blocks, or if it wants to
@@ -258,8 +264,11 @@ block.  In particular, each block maintains:
     block record is entered.  The block entry specifies the abbrev id width for
     the body of the block.</li>
 
-<li>A set of abbreviations.  Abbreviations may be defined within a block, or
-    they may be associated with all blocks of a particular ID.
+<li>A set of abbreviations.  Abbreviations may be defined within a block, in
+    which case they are only defined in that block (neither subblocks nor
+    enclosing blocks see the abbreviation).  Abbreviations can also be defined
+    inside a <a href="#BLOCKINFO">BLOCKINFO</a> block, in which case they are
+    defined in all blocks that match the ID that the BLOCKINFO block is describing.
 </li>
 </ol>
 
@@ -281,7 +290,8 @@ Encoding</a></div>
 <p>
 The ENTER_SUBBLOCK abbreviation ID specifies the start of a new block record.
 The <tt>blockid</tt> value is encoded as a 8-bit VBR identifier, and indicates
-the type of block being entered (which is application specific).  The
+the type of block being entered (which can be a <a href="#stdblocks">standard
+block</a> or an application-specific block).  The
 <tt>newabbrevlen</tt> value is a 4-bit VBR which specifies the
 abbrev id width for the sub-block.  The <tt>blocklen</tt> is a 32-bit aligned
 value that specifies the size of the subblock, in 32-bit words.  This value
@@ -397,6 +407,17 @@ operators, the abbreviation does not need to be emitted.
 <p><tt>[DEFINE_ABBREV, numabbrevops<sub>vbr5</sub>, abbrevop0, abbrevop1,
  ...]</tt></p>
 
+<p>A DEFINE_ABBREV record adds an abbreviation to the list of currently
+defined abbreviations in the scope of this block.  This definition only
+exists inside this immediate block -- it is not visible in subblocks or
+enclosing blocks.
+Abbreviations are implicitly assigned IDs
+sequentially starting from 4 (the first application-defined abbreviation ID).
+Any abbreviations defined in a BLOCKINFO record receive IDs first, in order,
+followed by any abbreviations defined within the block itself.
+Abbreviated data records reference this ID to indicate what abbreviation
+they are invoking.</p>
+
 <p>An abbreviation definition consists of the DEFINE_ABBREV abbrevid followed
 by a VBR that specifies the number of abbrev operands, then the abbrev
 operands themselves.  Abbreviation operands come in three forms.  They all start
@@ -422,14 +443,19 @@ emitted as their code, followed by the extra data.
 <ul>
 <li>1 - Fixed - The field should be emitted as a <a 
     href="#fixedwidth">fixed-width value</a>, whose width
-    is specified by the encoding operand.</li>
+    is specified by the operand's extra data.</li>
 <li>2 - VBR - The field should be emitted as a <a 
     href="#variablewidth">variable-width value</a>, whose width
-    is specified by the encoding operand.</li>
-<li>3 - Array - This field is an array of values.  The element type of the array
-    is specified by the next encoding operand.</li>
+    is specified by the operand's extra data.</li>
+<li>3 - Array - This field is an array of values.  The array operand has no
+    extra data, but expects another operand to follow it which indicates the
+    element type of the array.  When reading an array in an abbreviated record,
+    the first integer is a vbr6 that indicates the array length, followed by
+    the encoded elements of the array.  An array may only occur as the last
+    operand of an abbreviation (except for the one final operand that gives
+    the array's type).</li>
 <li>4 - Char6 - This field should be emitted as a <a href="#char6">char6-encoded
-    value</a>.</li>
+    value</a>.  This operand type takes no extra data.</li>
 </ul>
 
 <p>For example, target triples in LLVM modules are encoded as a record of the
@@ -476,7 +502,7 @@ any other string value.
 In addition to the basic block structure and record encodings, the bitstream
 also defines specific builtin block types.  These block types specify how the
 stream is to be decoded or other metadata.  In the future, new standard blocks
-may be added.
+may be added.  Block IDs 0-7 are reserved for standard blocks.
 </p>
 
 </div>
@@ -496,10 +522,24 @@ Block</a></div>
 </ul>
 
 <p>
-The SETBID record indicates which block ID is being described.  The standard
-DEFINE_ABBREV record specifies an abbreviation.  The abbreviation is associated
-with the record ID, and any records with matching ID automatically get the
-abbreviation. 
+The SETBID record indicates which block ID is being described.  SETBID
+records can occur multiple times throughout the block to change which
+block ID is being described.  There must be a SETBID record prior to
+any other records.
+</p>
+
+<p>
+Standard DEFINE_ABBREV records can occur inside BLOCKINFO blocks, but unlike
+their occurrence in normal blocks, the abbreviation is defined for blocks
+matching the block ID we are describing, <i>not</i> the BLOCKINFO block itself.
+The abbreviations defined in BLOCKINFO blocks receive abbreviation ids
+as described in <a href="#DEFINE_ABBREV">DEFINE_ABBREV</a>.
+</p>
+
+<p>
+Note that although the data in BLOCKINFO blocks is described as "metadata," the
+abbreviations they contain are essential for parsing records from the
+corresponding blocks.  It is not safe to skip them.
 </p>
 
 </div>
@@ -532,10 +572,9 @@ reader is not allowed to build in any knowledge of this.</p>
 The magic number for LLVM IR files is:
 </p>
 
-<p><tt>['B'<sub>8</sub>, 'C'<sub>8</sub>, 0x0<sub>4</sub>, 0xC<sub>4</sub>,
-0xE<sub>4</sub>, 0xD<sub>4</sub>]</tt></p>
+<p><tt>[0x0<sub>4</sub>, 0xC<sub>4</sub>, 0xE<sub>4</sub>, 0xD<sub>4</sub>]</tt></p>
 
-<p>When viewed as bytes, this is "BC 0xC0DE".</p>
+<p>When combined with the bitcode magic number and viewed as bytes, this is "BC 0xC0DE".</p>
 
 </div>
 
