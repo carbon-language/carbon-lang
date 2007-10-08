@@ -271,7 +271,7 @@
 		DE3464210B03040900DBC861 /* Type.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Type.h; path = clang/AST/Type.h; sourceTree = "<group>"; };
 		DE3985780CB8ADC800223765 /* ASTConsumers.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ASTConsumers.h; path = Driver/ASTConsumers.h; sourceTree = "<group>"; };
 		DE39857A0CB8ADCB00223765 /* ASTConsumers.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumers.cpp; path = Driver/ASTConsumers.cpp; sourceTree = "<group>"; };
-		DE3986EF0CB8D4B300223765 /* IdentifierTable.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = IdentifierTable.h; path = include/clang/Basic/IdentifierTable.h; sourceTree = SOURCE_ROOT; };
+		DE3986EF0CB8D4B300223765 /* IdentifierTable.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = IdentifierTable.h; sourceTree = "<group>"; };
 		DE3986F30CB8D50C00223765 /* IdentifierTable.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = IdentifierTable.cpp; sourceTree = "<group>"; };
 		DE4264FB0C113592005A861D /* CGDecl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CGDecl.cpp; path = CodeGen/CGDecl.cpp; sourceTree = "<group>"; };
 		DE46BF270AE0A82D00CC047C /* TargetInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetInfo.h; sourceTree = "<group>"; };
@@ -635,6 +635,7 @@
 				DED7D7310A524295003AD0FB /* Diagnostic.h */,
 				DED7D7320A524295003AD0FB /* DiagnosticKinds.def */,
 				DED7D7330A524295003AD0FB /* FileManager.h */,
+				DE3986EF0CB8D4B300223765 /* IdentifierTable.h */,
 				DE06B73D0A8307640050E87E /* LangOptions.h */,
 				DED7D7350A524295003AD0FB /* SourceLocation.h */,
 				DED7D7360A524295003AD0FB /* SourceManager.h */,
@@ -651,7 +652,6 @@
 			children = (
 				DE3450D60AEB543100DBC861 /* DirectoryLookup.h */,
 				DE344AB70AE5DF6D00DBC861 /* HeaderSearch.h */,
-				DE3986EF0CB8D4B300223765 /* IdentifierTable.h */,
 				DED7D73B0A524295003AD0FB /* Lexer.h */,
 				1A869A6E0BA2164C008DA07A /* LiteralSupport.h */,
 				DED7D73D0A524295003AD0FB /* MacroExpander.h */,
