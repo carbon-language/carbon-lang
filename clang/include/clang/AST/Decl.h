@@ -374,10 +374,6 @@ private:
 /// FieldDecl - An instance of this class is created by Sema::ActOnField to 
 /// represent a member of a struct/union/class.
 class FieldDecl : public NamedDecl {
-  /// Identifier - The identifier for this declaration (e.g. the name for the
-  /// variable, the tag for a struct).
-  IdentifierInfo *Identifier;
-
   QualType DeclType;  
 public:
   FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
