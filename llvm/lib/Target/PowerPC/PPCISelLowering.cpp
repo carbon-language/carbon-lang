@@ -87,6 +87,16 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setOperationAction(ISD::UREM, MVT::i32, Expand);
   setOperationAction(ISD::SREM, MVT::i64, Expand);
   setOperationAction(ISD::UREM, MVT::i64, Expand);
+
+  // Don't use SMUL_LOHI/UMUL_LOHI or SDIVREM/UDIVREM to lower SREM/UREM.
+  setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
+  setOperationAction(ISD::UMUL_LOHI, MVT::i64, Expand);
+  setOperationAction(ISD::SMUL_LOHI, MVT::i64, Expand);
+  setOperationAction(ISD::UDIVREM, MVT::i32, Expand);
+  setOperationAction(ISD::SDIVREM, MVT::i32, Expand);
+  setOperationAction(ISD::UDIVREM, MVT::i64, Expand);
+  setOperationAction(ISD::SDIVREM, MVT::i64, Expand);
   
   // We don't support sin/cos/sqrt/fmod
   setOperationAction(ISD::FSIN , MVT::f64, Expand);
@@ -265,6 +275,10 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::INSERT_VECTOR_ELT, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::BUILD_VECTOR, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::UMUL_LOHI, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::SMUL_LOHI, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::UDIVREM, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::SDIVREM, (MVT::ValueType)VT, Expand);
 
       setOperationAction(ISD::SCALAR_TO_VECTOR, (MVT::ValueType)VT, Expand);
     }
