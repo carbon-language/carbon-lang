@@ -532,6 +532,10 @@ LLVMValueRef LLVMAddGlobal(LLVMModuleRef M, LLVMTypeRef Ty, const char *Name) {
               GlobalValue::ExternalLinkage, 0, Name, unwrap(M)));
 }
 
+LLVMValueRef LLVMGetNamedGlobal(LLVMModuleRef M, const char *Name) {
+  return wrap(unwrap(M)->getNamedGlobal(Name));
+}
+
 void LLVMDeleteGlobal(LLVMValueRef GlobalVar) {
   unwrap<GlobalVariable>(GlobalVar)->eraseFromParent();
 }
@@ -574,6 +578,10 @@ LLVMValueRef LLVMAddFunction(LLVMModuleRef M, const char *Name,
                              LLVMTypeRef FunctionTy) {
   return wrap(new Function(unwrap<FunctionType>(FunctionTy),
                            GlobalValue::ExternalLinkage, Name, unwrap(M)));
+}
+
+LLVMValueRef LLVMGetNamedFunction(LLVMModuleRef M, const char *Name) {
+  return wrap(unwrap(M)->getFunction(Name));
 }
 
 void LLVMDeleteFunction(LLVMValueRef Fn) {

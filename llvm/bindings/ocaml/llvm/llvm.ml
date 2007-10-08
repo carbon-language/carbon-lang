@@ -277,6 +277,8 @@ external declare_global : lltype -> string -> llmodule -> llvalue
                         = "llvm_declare_global"
 external define_global : string -> llvalue -> llmodule -> llvalue
                        = "llvm_define_global"
+external lookup_global : string -> llmodule -> llvalue option
+                       = "llvm_lookup_global"
 external delete_global : llvalue -> unit = "llvm_delete_global"
 external global_initializer : llvalue -> llvalue = "LLVMGetInitializer"
 external set_initializer : llvalue -> llvalue -> unit = "llvm_set_initializer"
@@ -289,6 +291,8 @@ external declare_function : string -> lltype -> llmodule -> llvalue
                           = "llvm_declare_function"
 external define_function : string -> lltype -> llmodule -> llvalue
                          = "llvm_define_function"
+external lookup_function : string -> llmodule -> llvalue option
+                         = "llvm_lookup_function"
 external delete_function : llvalue -> unit = "llvm_delete_function"
 external params : llvalue -> llvalue array = "llvm_params"
 external param : llvalue -> int -> llvalue = "llvm_param"

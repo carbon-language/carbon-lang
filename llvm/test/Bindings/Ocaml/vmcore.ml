@@ -393,8 +393,14 @@ let test_global_variables () =
   (* RUN: grep {GVar01.*external} < %t.ll
    *)
   group "declarations";
+  insist (None == lookup_global "GVar01" m);
   let g = declare_global i32_type "GVar01" m in
   insist (is_declaration g);
+  insist (pointer_type float_type ==
+            type_of (declare_global float_type "GVar01" m));
+  insist (g == declare_global i32_type "GVar01" m);
+  insist (match lookup_global "GVar01" m with Some x -> x = g
+                                            | None -> false);
   
   (* RUN: grep {GVar02.*42} < %t.ll
    * RUN: grep {GVar03.*42} < %t.ll
@@ -433,15 +439,21 @@ let test_global_variables () =
 
 let test_functions () =
   let ty = function_type i32_type [| i32_type; i64_type |] in
-  let pty = pointer_type ty in
+  let ty2 = function_type i8_type [| i8_type; i64_type |] in
   
   (* RUN: grep {declare i32 @Fn1\(i32, i64\)} < %t.ll
    *)
   group "declare";
+  insist (None = lookup_function "Fn1" m);
   let fn = declare_function "Fn1" ty m in
-  insist (pty = type_of fn);
+  insist (pointer_type ty = type_of fn);
   insist (is_declaration fn);
   insist (0 = Array.length (basic_blocks fn));
+  insist (pointer_type ty2 == type_of (declare_function "Fn1" ty2 m));
+  insist (fn == declare_function "Fn1" ty m);
+  insist (None <> lookup_function "Fn1" m);
+  insist (match lookup_function "Fn1" m with Some x -> x = fn
+                                           | None -> false);
   
   (* RUN: grep -v {Fn2} < %t.ll
    *)

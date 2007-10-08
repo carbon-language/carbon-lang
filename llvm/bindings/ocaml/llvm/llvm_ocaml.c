@@ -20,7 +20,7 @@
 #include "caml/custom.h"
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
-#include "llvm/Config/config.h" 
+#include "llvm/Config/config.h"
 
 
 /*===-- Modules -----------------------------------------------------------===*/
@@ -402,7 +402,25 @@ CAMLprim value llvm_set_alignment(value Bytes, LLVMValueRef Global) {
 /* lltype -> string -> llmodule -> llvalue */
 CAMLprim LLVMValueRef llvm_declare_global(LLVMTypeRef Ty, value Name,
                                           LLVMModuleRef M) {
+  LLVMValueRef GlobalVar;
+  if ((GlobalVar = LLVMGetNamedGlobal(M, String_val(Name)))) {
+    if (LLVMGetElementType(LLVMTypeOf(GlobalVar)) != Ty)
+      return LLVMConstBitCast(GlobalVar, LLVMPointerType(Ty));
+    return GlobalVar;
+  }
   return LLVMAddGlobal(M, Ty, String_val(Name));
+}
+
+/* string -> llmodule -> llvalue option */
+CAMLprim value llvm_lookup_global(value Name, LLVMModuleRef M) {
+  CAMLparam1(Name);
+  LLVMValueRef GlobalVar;
+  if ((GlobalVar = LLVMGetNamedGlobal(M, String_val(Name)))) {
+    value Option = caml_alloc(1, 1);
+    Field(Option, 0) = (value) GlobalVar;
+    CAMLreturn(Option);
+  }
+  CAMLreturn(Val_int(0));
 }
 
 /* string -> llvalue -> llmodule -> llvalue */
@@ -461,7 +479,25 @@ CAMLprim value llvm_set_global_constant(value Flag, LLVMValueRef GlobalVar) {
 /* string -> lltype -> llmodule -> llvalue */
 CAMLprim LLVMValueRef llvm_declare_function(value Name, LLVMTypeRef Ty,
                                             LLVMModuleRef M) {
+  LLVMValueRef Fn;
+  if ((Fn = LLVMGetNamedFunction(M, String_val(Name)))) {
+    if (LLVMGetElementType(LLVMTypeOf(Fn)) != Ty)
+      return LLVMConstBitCast(Fn, LLVMPointerType(Ty));
+    return Fn;
+  }
   return LLVMAddFunction(M, String_val(Name), Ty);
+}
+
+/* string -> llmodule -> llvalue option */
+CAMLprim value llvm_lookup_function(value Name, LLVMModuleRef M) {
+  CAMLparam1(Name);
+  LLVMValueRef Fn;
+  if ((Fn = LLVMGetNamedFunction(M, String_val(Name)))) {
+    value Option = caml_alloc(1, 1);
+    Field(Option, 0) = (value) Fn;
+    CAMLreturn(Option);
+  }
+  CAMLreturn(Val_int(0));
 }
 
 /* string -> lltype -> llmodule -> llvalue */

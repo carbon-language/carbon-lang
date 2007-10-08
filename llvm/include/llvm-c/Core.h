@@ -318,6 +318,7 @@ void LLVMSetAlignment(LLVMValueRef Global, unsigned Bytes);
 
 /* Operations on global variables */
 LLVMValueRef LLVMAddGlobal(LLVMModuleRef M, LLVMTypeRef Ty, const char *Name);
+LLVMValueRef LLVMGetNamedGlobal(LLVMModuleRef M, const char *Name);
 void LLVMDeleteGlobal(LLVMValueRef GlobalVar);
 int LLVMHasInitializer(LLVMValueRef GlobalVar);
 LLVMValueRef LLVMGetInitializer(LLVMValueRef GlobalVar);
@@ -330,6 +331,7 @@ void LLVMSetGlobalConstant(LLVMValueRef GlobalVar, int IsConstant);
 /* Operations on functions */
 LLVMValueRef LLVMAddFunction(LLVMModuleRef M, const char *Name,
                              LLVMTypeRef FunctionTy);
+LLVMValueRef LLVMGetNamedFunction(LLVMModuleRef M, const char *Name);
 void LLVMDeleteFunction(LLVMValueRef Fn);
 unsigned LLVMCountParams(LLVMValueRef Fn);
 void LLVMGetParams(LLVMValueRef Fn, LLVMValueRef *Params);
