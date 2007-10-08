@@ -449,7 +449,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
           nI.weight = HUGE_VALF;
 
           if (HasUse) {
-            LiveRange LR(getLoadIndex(index), getUseIndex(index),
+            LiveRange LR(getLoadIndex(index), getUseIndex(index)+1,
                          nI.getNextValue(~0U, 0, VNInfoAllocator));
             DOUT << " +" << LR;
             nI.addRange(LR);
