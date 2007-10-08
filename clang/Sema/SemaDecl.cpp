@@ -1240,13 +1240,12 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
 /// Declared in protocol, and those referenced by it.
 void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
                                    bool& IncompleteImpl,
-             const llvm::DenseSet<void *>& InsMap,
+             const llvm::DenseSet<Selector> &InsMap,
              const llvm::DenseSet<Selector> &ClsMap) {
   // check unimplemented instance methods.
   ObjcMethodDecl** methods = PDecl->getInstanceMethods();
   for (int j = 0; j < PDecl->getNumInstanceMethods(); j++) {
-    void * cpv = methods[j]->getSelector().getAsOpaquePtr();
-    if (!InsMap.count(cpv)) {
+    if (!InsMap.count(methods[j]->getSelector())) {
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName());
       IncompleteImpl = true;
@@ -1269,17 +1268,17 @@ void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
 
 void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl, 
                                      ObjcInterfaceDecl* IDecl) {
-  llvm::DenseSet<void *> InsMap;
+  llvm::DenseSet<Selector> InsMap;
   // Check and see if instance methods in class interface have been
   // implemented in the implementation class.
   ObjcMethodDecl **methods = IMPDecl->getInstanceMethods();
   for (int i=0; i < IMPDecl->getNumInstanceMethods(); i++) 
-    InsMap.insert(methods[i]->getSelector().getAsOpaquePtr());
+    InsMap.insert(methods[i]->getSelector());
   
   bool IncompleteImpl = false;
   methods = IDecl->getInstanceMethods();
   for (int j = 0; j < IDecl->getNumInstanceMethods(); j++)
-    if (!InsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
+    if (!InsMap.count(methods[j]->getSelector())) {
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName());
       IncompleteImpl = true;
@@ -1314,17 +1313,17 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
 /// category interface is implemented in the category @implementation.
 void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
                                             ObjcCategoryDecl *CatClassDecl) {
-  llvm::DenseSet<void *> InsMap;
+  llvm::DenseSet<Selector> InsMap;
   // Check and see if instance methods in category interface have been
   // implemented in its implementation class.
   ObjcMethodDecl **methods = CatImplDecl->getInstanceMethods();
   for (int i=0; i < CatImplDecl->getNumInstanceMethods(); i++)
-    InsMap.insert(methods[i]->getSelector().getAsOpaquePtr());
+    InsMap.insert(methods[i]->getSelector());
   
   bool IncompleteImpl = false;
   methods = CatClassDecl->getInstanceMethods();
   for (int j = 0; j < CatClassDecl->getNumInstanceMethods(); j++)
-    if (!InsMap.count(methods[j]->getSelector().getAsOpaquePtr())) {
+    if (!InsMap.count(methods[j]->getSelector())) {
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName());
       IncompleteImpl = true;
@@ -1725,8 +1724,8 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
   llvm::SmallVector<ObjcMethodDecl*, 32> insMethods;
   llvm::SmallVector<ObjcMethodDecl*, 16> clsMethods;
   
-  llvm::DenseMap<void *, const ObjcMethodDecl*> InsMap;
-  llvm::DenseMap<void *, const ObjcMethodDecl*> ClsMap;
+  llvm::DenseMap<Selector, const ObjcMethodDecl*> InsMap;
+  llvm::DenseMap<Selector, const ObjcMethodDecl*> ClsMap;
   
   bool isClassDeclaration = 
         (isa<ObjcInterfaceDecl>(ClassDecl) || isa<ObjcCategoryDecl>(ClassDecl));
@@ -1738,8 +1737,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
     if (Method->isInstance()) {
       if (isClassDeclaration) {
         /// Check for instance method of the same name with incompatible types
-        const ObjcMethodDecl *&PrevMethod = 
-                InsMap[Method->getSelector().getAsOpaquePtr()];
+        const ObjcMethodDecl *&PrevMethod = InsMap[Method->getSelector()];
         if (PrevMethod && !MatchTwoMethodDeclarations(Method, PrevMethod)) {
           Diag(Method->getLocation(), diag::error_duplicate_method_decl,
                Method->getSelector().getName());
@@ -1747,7 +1745,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
         }
         else {
           insMethods.push_back(Method);
-          InsMap[Method->getSelector().getAsOpaquePtr()] = Method;
+          InsMap[Method->getSelector()] = Method;
         }
       }
       else
@@ -1756,8 +1754,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
     else {
       if (isClassDeclaration) {
         /// Check for class method of the same name with incompatible types
-        const ObjcMethodDecl *&PrevMethod = 
-                ClsMap[Method->getSelector().getAsOpaquePtr()];
+        const ObjcMethodDecl *&PrevMethod = ClsMap[Method->getSelector()];
         if (PrevMethod && !MatchTwoMethodDeclarations(Method, PrevMethod)) {
           Diag(Method->getLocation(), diag::error_duplicate_method_decl,
                Method->getSelector().getName());
@@ -1765,7 +1762,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
         }
         else {        
           clsMethods.push_back(Method);
-          ClsMap[Method->getSelector().getAsOpaquePtr()] = Method;
+          ClsMap[Method->getSelector()] = Method;
         }
       }
       else

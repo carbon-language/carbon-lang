@@ -220,7 +220,7 @@ private:
   /// Declared in protocol, and those referenced by it.
   void CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
                                bool& IncompleteImpl,
-                               const llvm::DenseSet<void *>& InsMap,
+                               const llvm::DenseSet<Selector> &InsMap,
                                const llvm::DenseSet<Selector> &ClsMap);
   
   /// CheckImplementationIvars - This routine checks if the instance variables
