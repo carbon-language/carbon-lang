@@ -147,11 +147,13 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::MUL,     MVT::i64, Expand);
     setOperationAction(ISD::MULHU,   MVT::i32, Expand);
     setOperationAction(ISD::MULHS,   MVT::i32, Expand);
+    setOperationAction(ISD::UMUL_LOHI, MVT::i32, Expand);
+    setOperationAction(ISD::SMUL_LOHI, MVT::i32, Expand);
   } else {
-    setOperationAction(ISD::MUL,     MVT::i64, Custom);
-    setOperationAction(ISD::MULHU,   MVT::i32, Custom);
+    setOperationAction(ISD::MUL,     MVT::i64, Expand);
+    setOperationAction(ISD::MULHU,   MVT::i32, Expand);
     if (!Subtarget->hasV6Ops())
-      setOperationAction(ISD::MULHS, MVT::i32, Custom);
+      setOperationAction(ISD::MULHS, MVT::i32, Expand);
   }
   setOperationAction(ISD::SHL_PARTS, MVT::i32, Expand);
   setOperationAction(ISD::SRA_PARTS, MVT::i32, Expand);
@@ -175,6 +177,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::UDIV,  MVT::i32, Expand);
   setOperationAction(ISD::SREM,  MVT::i32, Expand);
   setOperationAction(ISD::UREM,  MVT::i32, Expand);
+  setOperationAction(ISD::SDIVREM, MVT::i32, Expand);
+  setOperationAction(ISD::UDIVREM, MVT::i32, Expand);
   
   // Support label based line numbers.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
@@ -286,8 +290,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::FTOUI:         return "ARMISD::FTOUI";
   case ARMISD::SITOF:         return "ARMISD::SITOF";
   case ARMISD::UITOF:         return "ARMISD::UITOF";
-  case ARMISD::MULHILOU:      return "ARMISD::MULHILOU";
-  case ARMISD::MULHILOS:      return "ARMISD::MULHILOS";
 
   case ARMISD::SRL_FLAG:      return "ARMISD::SRL_FLAG";
   case ARMISD::SRA_FLAG:      return "ARMISD::SRA_FLAG";
@@ -1249,66 +1251,6 @@ static SDOperand LowerBIT_CONVERT(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Cvt, Cvt.getValue(1));
 }
 
-static SDOperand LowerMUL(SDOperand Op, SelectionDAG &DAG) {
-  // FIXME: All this code is target-independent.  Create a new target-indep
-  // MULHILO node and move this code to the legalizer.
-  //
-  assert(Op.getValueType() == MVT::i64 && "Only handles i64 expand right now!");
-  
-  SDOperand LL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                             DAG.getConstant(0, MVT::i32));
-  SDOperand RL = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(1),
-                             DAG.getConstant(0, MVT::i32));
-
-  unsigned LHSSB = DAG.ComputeNumSignBits(Op.getOperand(0));
-  unsigned RHSSB = DAG.ComputeNumSignBits(Op.getOperand(1));
-  
-  SDOperand Lo, Hi;
-  // Figure out how to lower this multiply.
-  if (LHSSB >= 33 && RHSSB >= 33) {
-    // If the input values are both sign extended, we can emit a mulhs+mul.
-    Lo = DAG.getNode(ISD::MUL, MVT::i32, LL, RL);
-    Hi = DAG.getNode(ISD::MULHS, MVT::i32, LL, RL);
-  } else if (LHSSB == 32 && RHSSB == 32 &&
-             DAG.MaskedValueIsZero(Op.getOperand(0), 0xFFFFFFFF00000000ULL) &&
-             DAG.MaskedValueIsZero(Op.getOperand(1), 0xFFFFFFFF00000000ULL)) {
-    // If the inputs are zero extended, use mulhu.
-    Lo = DAG.getNode(ISD::MUL, MVT::i32, LL, RL);
-    Hi = DAG.getNode(ISD::MULHU, MVT::i32, LL, RL);
-  } else {
-    SDOperand LH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                               DAG.getConstant(1, MVT::i32));
-    SDOperand RH = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(1),
-                               DAG.getConstant(1, MVT::i32));
-  
-    // Lo,Hi = umul LHS, RHS.
-    SDOperand Ops[] = { LL, RL };
-    SDOperand UMul64 = DAG.getNode(ARMISD::MULHILOU,
-                                   DAG.getVTList(MVT::i32, MVT::i32), Ops, 2);
-    Lo = UMul64;
-    Hi = UMul64.getValue(1);
-    RH = DAG.getNode(ISD::MUL, MVT::i32, LL, RH);
-    LH = DAG.getNode(ISD::MUL, MVT::i32, LH, RL);
-    Hi = DAG.getNode(ISD::ADD, MVT::i32, Hi, RH);
-    Hi = DAG.getNode(ISD::ADD, MVT::i32, Hi, LH);
-  }
-  
-  // Merge the pieces into a single i64 value.
-  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
-}
-
-static SDOperand LowerMULHU(SDOperand Op, SelectionDAG &DAG) {
-  SDOperand Ops[] = { Op.getOperand(0), Op.getOperand(1) };
-  return DAG.getNode(ARMISD::MULHILOU,
-                     DAG.getVTList(MVT::i32, MVT::i32), Ops, 2).getValue(1);
-}
-
-static SDOperand LowerMULHS(SDOperand Op, SelectionDAG &DAG) {
-  SDOperand Ops[] = { Op.getOperand(0), Op.getOperand(1) };
-  return DAG.getNode(ARMISD::MULHILOS,
-                     DAG.getVTList(MVT::i32, MVT::i32), Ops, 2).getValue(1);
-}
-
 static SDOperand LowerSRx(SDOperand Op, SelectionDAG &DAG,
                           const ARMSubtarget *ST) {
   assert(Op.getValueType() == MVT::i64 &&
@@ -1433,9 +1375,6 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FP_TO_UINT:    return LowerFP_TO_INT(Op, DAG);
   case ISD::FCOPYSIGN:     return LowerFCOPYSIGN(Op, DAG);
   case ISD::BIT_CONVERT:   return LowerBIT_CONVERT(Op, DAG);
-  case ISD::MUL:           return LowerMUL(Op, DAG);
-  case ISD::MULHU:         return LowerMULHU(Op, DAG);
-  case ISD::MULHS:         return LowerMULHS(Op, DAG);
   case ISD::SRL:
   case ISD::SRA:           return LowerSRx(Op, DAG, Subtarget);
   case ISD::FORMAL_ARGUMENTS:

@@ -177,10 +177,6 @@ namespace llvm {
       /// in order to obtain suitable precision.
       FRSQRT, FRCP,
 
-      /// DIV, IDIV - Unsigned and signed integer division and remainder.
-      ///
-      DIV, IDIV,
-
       // Thread Local Storage
       TLSADDR, THREAD_POINTER,
 

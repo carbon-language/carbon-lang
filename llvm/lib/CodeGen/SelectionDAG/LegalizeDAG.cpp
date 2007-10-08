@@ -2577,6 +2577,55 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (Tmp1.Val) Result = Tmp1;
       break;
     case TargetLowering::Expand: {
+      MVT::ValueType VT = Op.getValueType();
+ 
+      // See if multiply or divide can be lowered using two-result operations.
+      SDVTList VTs = DAG.getVTList(VT, VT);
+      if (Node->getOpcode() == ISD::MUL) {
+        // We just need the low half of the multiply; try both the signed
+        // and unsigned forms. If the target supports both SMUL_LOHI and
+        // UMUL_LOHI, form a preference by checking which forms of plain
+        // MULH it supports.
+        bool HasSMUL_LOHI = TLI.isOperationLegal(ISD::SMUL_LOHI, VT);
+        bool HasUMUL_LOHI = TLI.isOperationLegal(ISD::UMUL_LOHI, VT);
+        bool HasMULHS = TLI.isOperationLegal(ISD::MULHS, VT);
+        bool HasMULHU = TLI.isOperationLegal(ISD::MULHU, VT);
+        unsigned OpToUse = 0;
+        if (HasSMUL_LOHI && !HasMULHS) {
+          OpToUse = ISD::SMUL_LOHI;
+        } else if (HasUMUL_LOHI && !HasMULHU) {
+          OpToUse = ISD::UMUL_LOHI;
+        } else if (HasSMUL_LOHI) {
+          OpToUse = ISD::SMUL_LOHI;
+        } else if (HasUMUL_LOHI) {
+          OpToUse = ISD::UMUL_LOHI;
+        }
+        if (OpToUse) {
+          Result = SDOperand(DAG.getNode(OpToUse, VTs, Tmp1, Tmp2).Val, 0);
+          break;
+        }
+      }
+      if (Node->getOpcode() == ISD::MULHS &&
+          TLI.isOperationLegal(ISD::SMUL_LOHI, VT)) {
+        Result = SDOperand(DAG.getNode(ISD::SMUL_LOHI, VTs, Tmp1, Tmp2).Val, 1);
+        break;
+      }
+      if (Node->getOpcode() == ISD::MULHU && 
+          TLI.isOperationLegal(ISD::UMUL_LOHI, VT)) {
+        Result = SDOperand(DAG.getNode(ISD::UMUL_LOHI, VTs, Tmp1, Tmp2).Val, 1);
+        break;
+      }
+      if (Node->getOpcode() == ISD::SDIV &&
+          TLI.isOperationLegal(ISD::SDIVREM, VT)) {
+        Result = SDOperand(DAG.getNode(ISD::SDIVREM, VTs, Tmp1, Tmp2).Val, 0);
+        break;
+      }
+      if (Node->getOpcode() == ISD::UDIV &&
+          TLI.isOperationLegal(ISD::UDIVREM, VT)) {
+        Result = SDOperand(DAG.getNode(ISD::UDIVREM, VTs, Tmp1, Tmp2).Val, 0);
+        break;
+      }
+
       if (Node->getValueType(0) == MVT::i32) {
         switch (Node->getOpcode()) {
         default:  assert(0 && "Do not know how to expand this integer BinOp!");
@@ -2638,6 +2687,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // they shouldn't be here if they aren't legal.
     assert(TLI.isOperationLegal(Node->getValueType(0), Node->getValueType(0)) &&
            "This must be legal!");
+
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+    Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2);
     break;
 
   case ISD::FCOPYSIGN:  // FCOPYSIGN does not require LHS/RHS to match type!
@@ -2764,19 +2817,33 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         if (Tmp1.Val) Result = Tmp1;
       }
       break;
-    case TargetLowering::Expand:
+    case TargetLowering::Expand: {
       unsigned DivOpc= (Node->getOpcode() == ISD::UREM) ? ISD::UDIV : ISD::SDIV;
       bool isSigned = DivOpc == ISD::SDIV;
-      if (MVT::isInteger(Node->getValueType(0))) {
-        if (TLI.getOperationAction(DivOpc, Node->getValueType(0)) ==
+      MVT::ValueType VT = Node->getValueType(0);
+ 
+      // See if remainder can be lowered using two-result operations.
+      SDVTList VTs = DAG.getVTList(VT, VT);
+      if (Node->getOpcode() == ISD::SREM &&
+          TLI.isOperationLegal(ISD::SDIVREM, VT)) {
+        Result = SDOperand(DAG.getNode(ISD::SDIVREM, VTs, Tmp1, Tmp2).Val, 1);
+        break;
+      }
+      if (Node->getOpcode() == ISD::UREM &&
+          TLI.isOperationLegal(ISD::UDIVREM, VT)) {
+        Result = SDOperand(DAG.getNode(ISD::UDIVREM, VTs, Tmp1, Tmp2).Val, 1);
+        break;
+      }
+
+      if (MVT::isInteger(VT)) {
+        if (TLI.getOperationAction(DivOpc, VT) ==
             TargetLowering::Legal) {
           // X % Y -> X-X/Y*Y
-          MVT::ValueType VT = Node->getValueType(0);
           Result = DAG.getNode(DivOpc, VT, Tmp1, Tmp2);
           Result = DAG.getNode(ISD::MUL, VT, Result, Tmp2);
           Result = DAG.getNode(ISD::SUB, VT, Tmp1, Result);
         } else {
-          assert(Node->getValueType(0) == MVT::i32 &&
+          assert(VT == MVT::i32 &&
                  "Cannot expand this binary operator!");
           RTLIB::Libcall LC = Node->getOpcode() == ISD::UREM
             ? RTLIB::UREM_I32 : RTLIB::SREM_I32;
@@ -2785,13 +2852,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
       } else {
         // Floating point mod -> fmod libcall.
-        RTLIB::Libcall LC = Node->getValueType(0) == MVT::f32
+        RTLIB::Libcall LC = VT == MVT::f32
           ? RTLIB::REM_F32 : RTLIB::REM_F64;
         SDOperand Dummy;
         Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
                                false/*sign irrelevant*/, Dummy);
       }
       break;
+    }
     }
     break;
   case ISD::VAARG: {
@@ -5666,36 +5734,55 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     
     bool HasMULHS = TLI.isOperationLegal(ISD::MULHS, NVT);
     bool HasMULHU = TLI.isOperationLegal(ISD::MULHU, NVT);
-    if (HasMULHS || HasMULHU) {
+    bool HasSMUL_LOHI = TLI.isOperationLegal(ISD::SMUL_LOHI, NVT);
+    bool HasUMUL_LOHI = TLI.isOperationLegal(ISD::UMUL_LOHI, NVT);
+    if (HasMULHU || HasMULHS || HasUMUL_LOHI || HasSMUL_LOHI) {
       SDOperand LL, LH, RL, RH;
       ExpandOp(Node->getOperand(0), LL, LH);
       ExpandOp(Node->getOperand(1), RL, RH);
-      unsigned SH = MVT::getSizeInBits(RH.getValueType())-1;
-      // FIXME: Move this to the dag combiner.
-      // MULHS implicitly sign extends its inputs.  Check to see if ExpandOp
-      // extended the sign bit of the low half through the upper half, and if so
-      // emit a MULHS instead of the alternate sequence that is valid for any
-      // i64 x i64 multiply.
-      if (HasMULHS &&
-          // is RH an extension of the sign bit of RL?
-          RH.getOpcode() == ISD::SRA && RH.getOperand(0) == RL &&
-          RH.getOperand(1).getOpcode() == ISD::Constant &&
-          cast<ConstantSDNode>(RH.getOperand(1))->getValue() == SH &&
-          // is LH an extension of the sign bit of LL?
-          LH.getOpcode() == ISD::SRA && LH.getOperand(0) == LL &&
-          LH.getOperand(1).getOpcode() == ISD::Constant &&
-          cast<ConstantSDNode>(LH.getOperand(1))->getValue() == SH) {
-        // Low part:
-        Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
-        // High part:
-        Hi = DAG.getNode(ISD::MULHS, NVT, LL, RL);
+      unsigned BitSize = MVT::getSizeInBits(RH.getValueType());
+      unsigned LHSSB = DAG.ComputeNumSignBits(Op.getOperand(0));
+      unsigned RHSSB = DAG.ComputeNumSignBits(Op.getOperand(1));
+      // FIXME: generalize this to handle other bit sizes
+      if (LHSSB == 32 && RHSSB == 32 &&
+          DAG.MaskedValueIsZero(Op.getOperand(0), 0xFFFFFFFF00000000ULL) &&
+          DAG.MaskedValueIsZero(Op.getOperand(1), 0xFFFFFFFF00000000ULL)) {
+        // The inputs are both zero-extended.
+        if (HasUMUL_LOHI) {
+          // We can emit a umul_lohi.
+          Lo = DAG.getNode(ISD::UMUL_LOHI, DAG.getVTList(NVT, NVT), LL, RL);
+          Hi = SDOperand(Lo.Val, 1);
+          break;
+        }
+        if (HasMULHU) {
+          // We can emit a mulhu+mul.
+          Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
+          Hi = DAG.getNode(ISD::MULHU, NVT, LL, RL);
+          break;
+        }
         break;
-      } else if (HasMULHU) {
-        // Low part:
-        Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
-        
-        // High part:
-        Hi = DAG.getNode(ISD::MULHU, NVT, LL, RL);
+      }
+      if (LHSSB > BitSize && RHSSB > BitSize) {
+        // The input values are both sign-extended.
+        if (HasSMUL_LOHI) {
+          // We can emit a smul_lohi.
+          Lo = DAG.getNode(ISD::SMUL_LOHI, DAG.getVTList(NVT, NVT), LL, RL);
+          Hi = SDOperand(Lo.Val, 1);
+          break;
+        }
+        if (HasMULHS) {
+          // We can emit a mulhs+mul.
+          Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
+          Hi = DAG.getNode(ISD::MULHS, NVT, LL, RL);
+          break;
+        }
+      }
+      if (HasUMUL_LOHI) {
+        // Lo,Hi = umul LHS, RHS.
+        SDOperand UMulLOHI = DAG.getNode(ISD::UMUL_LOHI,
+                                         DAG.getVTList(NVT, NVT), LL, RL);
+        Lo = UMulLOHI;
+        Hi = UMulLOHI.getValue(1);
         RH = DAG.getNode(ISD::MUL, NVT, LL, RH);
         LH = DAG.getNode(ISD::MUL, NVT, LH, RL);
         Hi = DAG.getNode(ISD::ADD, NVT, Hi, RH);
@@ -5704,6 +5791,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       }
     }
 
+    // If nothing else, we can make a libcall.
     Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::MUL_I64), Node,
                        false/*sign irrelevant*/, Hi);
     break;

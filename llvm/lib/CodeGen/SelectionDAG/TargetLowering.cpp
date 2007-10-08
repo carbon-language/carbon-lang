@@ -1706,15 +1706,21 @@ SDOperand TargetLowering::BuildSDIV(SDNode *N, SelectionDAG &DAG,
   // Check to see if we can do this.
   if (!isTypeLegal(VT) || (VT != MVT::i32 && VT != MVT::i64))
     return SDOperand();       // BuildSDIV only operates on i32 or i64
-  if (!isOperationLegal(ISD::MULHS, VT))
-    return SDOperand();       // Make sure the target supports MULHS.
   
   int64_t d = cast<ConstantSDNode>(N->getOperand(1))->getSignExtended();
   ms magics = (VT == MVT::i32) ? magic32(d) : magic64(d);
   
   // Multiply the numerator (operand 0) by the magic value
-  SDOperand Q = DAG.getNode(ISD::MULHS, VT, N->getOperand(0),
-                            DAG.getConstant(magics.m, VT));
+  SDOperand Q;
+  if (isOperationLegal(ISD::MULHS, VT))
+    Q = DAG.getNode(ISD::MULHS, VT, N->getOperand(0),
+                    DAG.getConstant(magics.m, VT));
+  else if (isOperationLegal(ISD::SMUL_LOHI, VT))
+    Q = SDOperand(DAG.getNode(ISD::SMUL_LOHI, DAG.getVTList(VT, VT),
+                              N->getOperand(0),
+                              DAG.getConstant(magics.m, VT)).Val, 1);
+  else
+    return SDOperand();       // No mulhs or equvialent
   // If d > 0 and m < 0, add the numerator
   if (d > 0 && magics.m < 0) { 
     Q = DAG.getNode(ISD::ADD, VT, Q, N->getOperand(0));
@@ -1754,15 +1760,21 @@ SDOperand TargetLowering::BuildUDIV(SDNode *N, SelectionDAG &DAG,
   // Check to see if we can do this.
   if (!isTypeLegal(VT) || (VT != MVT::i32 && VT != MVT::i64))
     return SDOperand();       // BuildUDIV only operates on i32 or i64
-  if (!isOperationLegal(ISD::MULHU, VT))
-    return SDOperand();       // Make sure the target supports MULHU.
   
   uint64_t d = cast<ConstantSDNode>(N->getOperand(1))->getValue();
   mu magics = (VT == MVT::i32) ? magicu32(d) : magicu64(d);
   
   // Multiply the numerator (operand 0) by the magic value
-  SDOperand Q = DAG.getNode(ISD::MULHU, VT, N->getOperand(0),
-                            DAG.getConstant(magics.m, VT));
+  SDOperand Q;
+  if (isOperationLegal(ISD::MULHU, VT))
+    Q = DAG.getNode(ISD::MULHU, VT, N->getOperand(0),
+                    DAG.getConstant(magics.m, VT));
+  else if (isOperationLegal(ISD::UMUL_LOHI, VT))
+    Q = SDOperand(DAG.getNode(ISD::UMUL_LOHI, DAG.getVTList(VT, VT),
+                              N->getOperand(0),
+                              DAG.getConstant(magics.m, VT)).Val, 1);
+  else
+    return SDOperand();       // No mulhu or equvialent
   if (Created)
     Created->push_back(Q.Val);
 

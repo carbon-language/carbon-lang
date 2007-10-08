@@ -641,7 +641,7 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
     return CurDAG->getTargetNode(ARM::FMRRD, MVT::i32, MVT::i32,
                                  Op.getOperand(0), getAL(CurDAG),
                                  CurDAG->getRegister(0, MVT::i32));
-  case ARMISD::MULHILOU: {
+  case ISD::UMUL_LOHI: {
     AddToISelQueue(Op.getOperand(0));
     AddToISelQueue(Op.getOperand(1));
     SDOperand Ops[] = { Op.getOperand(0), Op.getOperand(1),
@@ -649,7 +649,7 @@ SDNode *ARMDAGToDAGISel::Select(SDOperand Op) {
                         CurDAG->getRegister(0, MVT::i32) };
     return CurDAG->getTargetNode(ARM::UMULL, MVT::i32, MVT::i32, Ops, 5);
   }
-  case ARMISD::MULHILOS: {
+  case ISD::SMUL_LOHI: {
     AddToISelQueue(Op.getOperand(0));
     AddToISelQueue(Op.getOperand(1));
     SDOperand Ops[] = { Op.getOperand(0), Op.getOperand(1),
