@@ -276,22 +276,6 @@ BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A,
   return NULL;
 }
 
-void DomTreeNode::setIDom(DomTreeNode *NewIDom) {
-  assert(IDom && "No immediate dominator?");
-  if (IDom != NewIDom) {
-    std::vector<DomTreeNode*>::iterator I =
-      std::find(IDom->Children.begin(), IDom->Children.end(), this);
-    assert(I != IDom->Children.end() &&
-           "Not in immediate dominator children set!");
-    // I am no longer your child...
-    IDom->Children.erase(I);
-
-    // Switch to new dominator
-    IDom = NewIDom;
-    IDom->Children.push_back(this);
-  }
-}
-
 static std::ostream &operator<<(std::ostream &o, const DomTreeNode *Node) {
   if (Node->getBlock())
     WriteAsOperand(o, Node->getBlock(), false);

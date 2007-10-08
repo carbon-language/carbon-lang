@@ -22,6 +22,7 @@
 #define LLVM_ANALYSIS_DOMINATORS_H
 
 #include "llvm/Pass.h"
+#include <algorithm>
 #include <set>
 #include "llvm/ADT/DenseMap.h"
 
@@ -59,32 +60,56 @@ public:
 // DomTreeNode - Dominator Tree Node
 class DominatorTreeBase;
 class PostDominatorTree;
-class DomTreeNode {
-  BasicBlock *TheBB;
-  DomTreeNode *IDom;
-  std::vector<DomTreeNode*> Children;
+class MachineBasicBlock;
+
+template <class NodeT>
+class DomTreeNodeBase {
+  NodeT *TheBB;
+  DomTreeNodeBase<NodeT> *IDom;
+  std::vector<DomTreeNodeBase<NodeT> *> Children;
   int DFSNumIn, DFSNumOut;
 
   friend class DominatorTreeBase;
   friend class PostDominatorTree;
 public:
-  typedef std::vector<DomTreeNode*>::iterator iterator;
-  typedef std::vector<DomTreeNode*>::const_iterator const_iterator;
+  typedef typename std::vector<DomTreeNodeBase<NodeT> *>::iterator iterator;
+  typedef typename std::vector<DomTreeNodeBase<NodeT> *>::const_iterator
+                   const_iterator;
   
   iterator begin()             { return Children.begin(); }
   iterator end()               { return Children.end(); }
   const_iterator begin() const { return Children.begin(); }
   const_iterator end()   const { return Children.end(); }
   
-  BasicBlock *getBlock() const { return TheBB; }
-  DomTreeNode *getIDom() const { return IDom; }
-  const std::vector<DomTreeNode*> &getChildren() const { return Children; }
+  NodeT *getBlock() const { return TheBB; }
+  DomTreeNodeBase<NodeT> *getIDom() const { return IDom; }
+  const std::vector<DomTreeNodeBase<NodeT>*> &getChildren() const {
+    return Children;
+  }
   
-  DomTreeNode(BasicBlock *BB, DomTreeNode *iDom)
+  DomTreeNodeBase(NodeT *BB, DomTreeNodeBase<NodeT> *iDom)
     : TheBB(BB), IDom(iDom), DFSNumIn(-1), DFSNumOut(-1) { }
-  DomTreeNode *addChild(DomTreeNode *C) { Children.push_back(C); return C; }
-  void setIDom(DomTreeNode *NewIDom);
+  
+  DomTreeNodeBase<NodeT> *addChild(DomTreeNodeBase<NodeT> *C) {
+    Children.push_back(C);
+    return C;
+  }
+  
+  void setIDom(DomTreeNodeBase<NodeT> *NewIDom) {
+    assert(IDom && "No immediate dominator?");
+    if (IDom != NewIDom) {
+      std::vector<DomTreeNodeBase<BasicBlock>*>::iterator I =
+                  std::find(IDom->Children.begin(), IDom->Children.end(), this);
+      assert(I != IDom->Children.end() &&
+             "Not in immediate dominator children set!");
+      // I am no longer your child...
+      IDom->Children.erase(I);
 
+      // Switch to new dominator
+      IDom = NewIDom;
+      IDom->Children.push_back(this);
+    }
+  }
   
   /// getDFSNumIn/getDFSNumOut - These are an internal implementation detail, do
   /// not call them.
@@ -93,11 +118,14 @@ public:
 private:
   // Return true if this node is dominated by other. Use this only if DFS info
   // is valid.
-  bool DominatedBy(const DomTreeNode *other) const {
+  bool DominatedBy(const DomTreeNodeBase<NodeT> *other) const {
     return this->DFSNumIn >= other->DFSNumIn &&
       this->DFSNumOut <= other->DFSNumOut;
   }
 };
+
+typedef DomTreeNodeBase<BasicBlock> DomTreeNode;
+typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 
 //===----------------------------------------------------------------------===//
 /// DominatorTree - Calculate the immediate dominator tree for a function.
@@ -162,7 +190,8 @@ public:
   /// properlyDominates - Returns true iff this dominates N and this != N.
   /// Note that this is not a constant time operation!
   ///
-  bool properlyDominates(const DomTreeNode *A, DomTreeNode *B) const {
+  bool properlyDominates(const DomTreeNode *A,
+                         DomTreeNode *B) const {
     if (A == 0 || B == 0) return false;
     return dominatedBySlowTreeWalk(A, B);
   }
@@ -188,7 +217,8 @@ public:
   /// dominates - Returns true iff A dominates B.  Note that this is not a
   /// constant time operation!
   ///
-  inline bool dominates(const DomTreeNode *A, DomTreeNode *B) {
+  inline bool dominates(const DomTreeNode *A,
+                        DomTreeNode *B) {
     if (B == A) 
       return true;  // A node trivially dominates itself.
 
@@ -243,7 +273,8 @@ public:
   /// changeImmediateDominator - This method is used to update the dominator
   /// tree information when a node's immediate dominator changes.
   ///
-  void changeImmediateDominator(DomTreeNode *N, DomTreeNode *NewIDom) {
+  void changeImmediateDominator(DomTreeNode *N,
+                                DomTreeNode *NewIDom) {
     assert(N && NewIDom && "Cannot change null node pointers!");
     DFSInfoValid = false;
     N->setIDom(NewIDom);
@@ -334,7 +365,7 @@ public:
 /// DominatorTree GraphTraits specialization so the DominatorTree can be
 /// iterable by generic graph iterators.
 ///
-template <> struct GraphTraits<DomTreeNode*> {
+template <> struct GraphTraits<DomTreeNode *> {
   typedef DomTreeNode NodeType;
   typedef NodeType::iterator  ChildIteratorType;
   
@@ -350,7 +381,7 @@ template <> struct GraphTraits<DomTreeNode*> {
 };
 
 template <> struct GraphTraits<DominatorTree*>
-  : public GraphTraits<DomTreeNode*> {
+  : public GraphTraits<DomTreeNode *> {
   static NodeType *getEntryNode(DominatorTree *DT) {
     return DT->getRootNode();
   }
