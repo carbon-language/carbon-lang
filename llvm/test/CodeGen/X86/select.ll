@@ -1,64 +1,63 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=yonah
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mcpu=pentium
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=pentium
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah
+; RUN: llvm-as < %s | llc -march=x86 -mcpu=yonah | not grep set
 
-bool %boolSel(bool %A, bool %B, bool %C) {
-	%X = select bool %A, bool %B, bool %C
-	ret bool %X
+define i1 @boolSel(i1 %A, i1 %B, i1 %C) {
+	%X = select i1 %A, i1 %B, i1 %C		; <i1> [#uses=1]
+	ret i1 %X
 }
 
-sbyte %byteSel(bool %A, sbyte %B, sbyte %C) {
-	%X = select bool %A, sbyte %B, sbyte %C
-	ret sbyte %X
+define i8 @byteSel(i1 %A, i8 %B, i8 %C) {
+	%X = select i1 %A, i8 %B, i8 %C		; <i8> [#uses=1]
+	ret i8 %X
 }
 
-short %shortSel(bool %A, short %B, short %C) {
-	%X = select bool %A, short %B, short %C
-	ret short %X
+define i16 @shortSel(i1 %A, i16 %B, i16 %C) {
+	%X = select i1 %A, i16 %B, i16 %C		; <i16> [#uses=1]
+	ret i16 %X
 }
 
-int %intSel(bool %A, int %B, int %C) {
-	%X = select bool %A, int %B, int %C
-	ret int %X
+define i32 @intSel(i1 %A, i32 %B, i32 %C) {
+	%X = select i1 %A, i32 %B, i32 %C		; <i32> [#uses=1]
+	ret i32 %X
 }
 
-long %longSel(bool %A, long %B, long %C) {
-	%X = select bool %A, long %B, long %C
-	ret long %X
+define i64 @longSel(i1 %A, i64 %B, i64 %C) {
+	%X = select i1 %A, i64 %B, i64 %C		; <i64> [#uses=1]
+	ret i64 %X
 }
 
-double %doubleSel(bool %A, double %B, double %C) {
-	%X = select bool %A, double %B, double %C
+define double @doubleSel(i1 %A, double %B, double %C) {
+	%X = select i1 %A, double %B, double %C		; <double> [#uses=1]
 	ret double %X
 }
 
-sbyte %foldSel(bool %A, sbyte %B, sbyte %C) {
-	%Cond = setlt sbyte %B, %C
-	%X = select bool %Cond, sbyte %B, sbyte %C
-	ret sbyte %X
+define i8 @foldSel(i1 %A, i8 %B, i8 %C) {
+	%Cond = icmp slt i8 %B, %C		; <i1> [#uses=1]
+	%X = select i1 %Cond, i8 %B, i8 %C		; <i8> [#uses=1]
+	ret i8 %X
 }
 
-int %foldSel2(bool %A, int %B, int %C) {
-	%Cond = seteq int %B, %C
-	%X = select bool %Cond, int %B, int %C
-	ret int %X
+define i32 @foldSel2(i1 %A, i32 %B, i32 %C) {
+	%Cond = icmp eq i32 %B, %C		; <i1> [#uses=1]
+	%X = select i1 %Cond, i32 %B, i32 %C		; <i32> [#uses=1]
+	ret i32 %X
 }
 
-int %foldSel2a(bool %A, int %B, int %C, double %X, double %Y) {
-	%Cond = setlt double %X, %Y
-	%X = select bool %Cond, int %B, int %C
-	ret int %X
+define i32 @foldSel2a(i1 %A, i32 %B, i32 %C, double %X, double %Y) {
+	%Cond = fcmp olt double %X, %Y		; <i1> [#uses=1]
+	%X.upgrd.1 = select i1 %Cond, i32 %B, i32 %C		; <i32> [#uses=1]
+	ret i32 %X.upgrd.1
 }
 
-float %foldSel3(bool %A, float %B, float %C, uint %X, uint %Y) {
-	%Cond = setlt uint %X, %Y
-	%X = select bool %Cond, float %B, float %C
-	ret float %X
+define float @foldSel3(i1 %A, float %B, float %C, i32 %X, i32 %Y) {
+	%Cond = icmp ult i32 %X, %Y		; <i1> [#uses=1]
+	%X.upgrd.2 = select i1 %Cond, float %B, float %C		; <float> [#uses=1]
+	ret float %X.upgrd.2
 }
 
-float %nofoldSel4(bool %A, float %B, float %C, int %X, int %Y) {
-	; X86 doesn't have a cmov that reads the right flags for this!
-	%Cond = setlt int %X, %Y
-	%X = select bool %Cond, float %B, float %C
-	ret float %X
+define float @nofoldSel4(i1 %A, float %B, float %C, i32 %X, i32 %Y) {
+	%Cond = icmp slt i32 %X, %Y		; <i1> [#uses=1]
+	%X.upgrd.3 = select i1 %Cond, float %B, float %C		; <float> [#uses=1]
+	ret float %X.upgrd.3
 }
-
