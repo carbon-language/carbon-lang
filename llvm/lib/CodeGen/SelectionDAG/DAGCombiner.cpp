@@ -101,6 +101,10 @@ namespace {
                      WorkList.end());
     }
     
+    /// visit - call the node-specific routine that knows how to fold each
+    /// particular type of node.
+    SDOperand visit(SDNode *N);
+
   public:
     /// AddToWorkList - Add to the work list making sure it's instance is at the
     /// the back (next to be processed.)
@@ -201,9 +205,10 @@ namespace {
     bool CombineToPostIndexedLoadStore(SDNode *N);
     
     
-    /// visit - call the node-specific routine that knows how to fold each
-    /// particular type of node.
-    SDOperand visit(SDNode *N);
+    /// combine - call the node-specific routine that knows how to fold each
+    /// particular type of node. If that doesn't do anything, try the
+    /// target-specific DAG combines.
+    SDOperand combine(SDNode *N);
 
     // Visitation implementation - Implement dag node combining for different
     // node types.  The semantics are as follows:
@@ -224,6 +229,10 @@ namespace {
     SDOperand visitUREM(SDNode *N);
     SDOperand visitMULHU(SDNode *N);
     SDOperand visitMULHS(SDNode *N);
+    SDOperand visitSMUL_LOHI(SDNode *N);
+    SDOperand visitUMUL_LOHI(SDNode *N);
+    SDOperand visitSDIVREM(SDNode *N);
+    SDOperand visitUDIVREM(SDNode *N);
     SDOperand visitAND(SDNode *N);
     SDOperand visitOR(SDNode *N);
     SDOperand visitXOR(SDNode *N);
@@ -279,6 +288,7 @@ namespace {
                                bool NotExtCompare = false);
     SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
                             ISD::CondCode Cond, bool foldBooleans = true);
+    bool SimplifyNodeWithTwoResults(SDNode *N, unsigned LoOp, unsigned HiOp);
     SDOperand ConstantFoldBIT_CONVERTofBUILD_VECTOR(SDNode *, MVT::ValueType);
     SDOperand BuildSDIV(SDNode *N);
     SDOperand BuildUDIV(SDNode *N);
@@ -555,10 +565,6 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
   // done.  Set it to null to avoid confusion.
   DAG.setRoot(SDOperand());
   
-  /// DagCombineInfo - Expose the DAG combiner to the target combiner impls.
-  TargetLowering::DAGCombinerInfo 
-    DagCombineInfo(DAG, !RunningAfterLegalize, false, this);
-
   // while the worklist isn't empty, inspect the node on the end of it and
   // try and combine it.
   while (!WorkList.empty()) {
@@ -576,16 +582,7 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
       continue;
     }
     
-    SDOperand RV = visit(N);
-    
-    // If nothing happened, try a target-specific DAG combine.
-    if (RV.Val == 0) {
-      assert(N->getOpcode() != ISD::DELETED_NODE &&
-             "Node was deleted but visit returned NULL!");
-      if (N->getOpcode() >= ISD::BUILTIN_OP_END ||
-          TLI.hasTargetDAGCombine((ISD::NodeType)N->getOpcode()))
-        RV = TLI.PerformDAGCombine(N, DagCombineInfo);
-    }
+    SDOperand RV = combine(N);
     
     if (RV.Val) {
       ++NodesCombined;
@@ -645,6 +642,10 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::UREM:               return visitUREM(N);
   case ISD::MULHU:              return visitMULHU(N);
   case ISD::MULHS:              return visitMULHS(N);
+  case ISD::SMUL_LOHI:          return visitSMUL_LOHI(N);
+  case ISD::UMUL_LOHI:          return visitUMUL_LOHI(N);
+  case ISD::SDIVREM:            return visitSDIVREM(N);
+  case ISD::UDIVREM:            return visitUDIVREM(N);
   case ISD::AND:                return visitAND(N);
   case ISD::OR:                 return visitOR(N);
   case ISD::XOR:                return visitXOR(N);
@@ -690,6 +691,29 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   }
   return SDOperand();
 }
+
+SDOperand DAGCombiner::combine(SDNode *N) {
+
+  SDOperand RV = visit(N);
+
+  // If nothing happened, try a target-specific DAG combine.
+  if (RV.Val == 0) {
+    assert(N->getOpcode() != ISD::DELETED_NODE &&
+           "Node was deleted but visit returned NULL!");
+
+    if (N->getOpcode() >= ISD::BUILTIN_OP_END ||
+        TLI.hasTargetDAGCombine((ISD::NodeType)N->getOpcode())) {
+
+      // Expose the DAG combiner to the target combiner impls.
+      TargetLowering::DAGCombinerInfo 
+        DagCombineInfo(DAG, !AfterLegalize, false, this);
+
+      RV = TLI.PerformDAGCombine(N, DagCombineInfo);
+    }
+  }
+
+  return RV;
+} 
 
 /// getInputChainForNode - Given a node, return its input chain if it has one,
 /// otherwise return a null sd operand.
@@ -1379,6 +1403,102 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
   if (N0.getOpcode() == ISD::UNDEF || N1.getOpcode() == ISD::UNDEF)
     return DAG.getConstant(0, VT);
 
+  return SDOperand();
+}
+
+/// SimplifyNodeWithTwoResults - Perform optimizations common to nodes that
+/// compute two values. LoOp and HiOp give the opcodes for the two computations
+/// that are being performed. Return true if a simplification was made.
+///
+bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
+                                             unsigned LoOp, unsigned HiOp) {
+  std::vector<SDNode*> NowDead;
+
+  // If the high half is not needed, just compute the low half.
+  if (!N->hasAnyUseOfValue(1) &&
+      (!AfterLegalize ||
+       TLI.isOperationLegal(LoOp, N->getValueType(0)))) {
+    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0),
+                                  DAG.getNode(LoOp, N->getValueType(0),
+                                              N->op_begin(),
+                                              N->getNumOperands()),
+                                  NowDead);
+    return true;
+  }
+
+  // If the low half is not needed, just compute the high half.
+  if (!N->hasAnyUseOfValue(0) &&
+      (!AfterLegalize ||
+       TLI.isOperationLegal(HiOp, N->getValueType(1)))) {
+    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1),
+                                  DAG.getNode(HiOp, N->getValueType(1),
+                                              N->op_begin(),
+                                              N->getNumOperands()),
+                                  NowDead);
+    return true;
+  }
+
+  // If the two computed results can be siplified separately, separate them.
+  SDOperand Lo = DAG.getNode(LoOp, N->getValueType(0),
+                             N->op_begin(), N->getNumOperands());
+  SDOperand Hi = DAG.getNode(HiOp, N->getValueType(1),
+                             N->op_begin(), N->getNumOperands());
+  unsigned LoExists = !Lo.use_empty();
+  unsigned HiExists = !Hi.use_empty();
+  SDOperand LoOpt = Lo;
+  SDOperand HiOpt = Hi;
+  if (!LoExists || !HiExists) {
+    SDOperand Pair = DAG.getNode(ISD::BUILD_PAIR, MVT::Other, Lo, Hi);
+    assert(Pair.use_empty() && "Pair with type MVT::Other already exists!");
+    LoOpt = combine(Lo.Val);
+    HiOpt = combine(Hi.Val);
+    if (!LoOpt.Val)
+      LoOpt = Pair.getOperand(0);
+    if (!HiOpt.Val)
+      HiOpt = Pair.getOperand(1);
+    DAG.DeleteNode(Pair.Val);
+  }
+  if ((LoExists || LoOpt != Lo) &&
+      (HiExists || HiOpt != Hi) &&
+      TLI.isOperationLegal(LoOpt.getOpcode(), LoOpt.getValueType()) &&
+      TLI.isOperationLegal(HiOpt.getOpcode(), HiOpt.getValueType())) {
+    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), LoOpt, NowDead);
+    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), HiOpt, NowDead);
+    return true;
+  }
+
+  return false;
+}
+
+SDOperand DAGCombiner::visitSMUL_LOHI(SDNode *N) {
+  
+  if (SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHS))
+    return SDOperand();
+
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitUMUL_LOHI(SDNode *N) {
+  
+  if (SimplifyNodeWithTwoResults(N, ISD::MUL, ISD::MULHU))
+    return SDOperand();
+
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitSDIVREM(SDNode *N) {
+  
+  if (SimplifyNodeWithTwoResults(N, ISD::SDIV, ISD::SREM))
+    return SDOperand();
+  
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitUDIVREM(SDNode *N) {
+  
+  if (SimplifyNodeWithTwoResults(N, ISD::UDIV, ISD::UREM))
+    return SDOperand();
+  
   return SDOperand();
 }
 
