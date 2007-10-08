@@ -44,6 +44,7 @@ class IdentifierInfo {
   bool IsOtherTargetMacro     : 1; // True if ident is macro on another target.
   bool IsCPPOperatorKeyword   : 1; // True if ident is a C++ operator keyword.
   bool IsNonPortableBuiltin   : 1; // True if builtin varies across targets.
+  // 4 bits left in 32-bit word.
   void *FETokenInfo;               // Managed by the language front-end.
   IdentifierInfo(const IdentifierInfo&);  // NONCOPYABLE.
   void operator=(const IdentifierInfo&);  // NONASSIGNABLE.
