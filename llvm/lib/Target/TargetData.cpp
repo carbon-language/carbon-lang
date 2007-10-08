@@ -565,12 +565,7 @@ unsigned char TargetData::getPreferredTypeAlignmentShift(const Type *Ty) const {
 /// getIntPtrType - Return an unsigned integer type that is the same size or
 /// greater to the host pointer size.
 const Type *TargetData::getIntPtrType() const {
-  switch (getPointerSize()) {
-  default: assert(0 && "Unknown pointer size!");
-  case 2: return Type::Int16Ty;
-  case 4: return Type::Int32Ty;
-  case 8: return Type::Int64Ty;
-  }
+  return IntegerType::get(getPointerSizeInBits());
 }
 
 
