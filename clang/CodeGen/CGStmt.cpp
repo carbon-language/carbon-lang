@@ -354,23 +354,73 @@ void CodeGenFunction::EmitContinueStmt() {
   EmitBlock(new llvm::BasicBlock());
 }
 
-void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
-  StartBlock("sw.bb");
-  llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
-  llvm::ConstantInt *LV = cast<llvm::ConstantInt>(EmitScalarExpr(S.getLHS()));
-  SwitchInsn->addCase(LV, CaseDest);
-  if (const Expr *R = S.getRHS()) {
-    llvm::ConstantInt *RV = cast<llvm::ConstantInt>(EmitScalarExpr(R));
-    llvm::APInt LHS = LV->getValue();
-    llvm::APInt RHS = RV->getValue();
+/// EmitCaseStmtRange - If case statement range is not too big then
+/// add multiple cases to switch instruction, one for each value within
+/// the range. If range is too big then emit "if" condition check.
+void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
+  assert (S.getRHS() && "Unexpected RHS value in CaseStmt");
+
+  const Expr *L = S.getLHS();
+  const Expr *R = S.getRHS();
+  llvm::ConstantInt *LV = cast<llvm::ConstantInt>(EmitScalarExpr(L));
+  llvm::ConstantInt *RV = cast<llvm::ConstantInt>(EmitScalarExpr(R));
+  llvm::APInt LHS = LV->getValue();
+  llvm::APInt RHS = RV->getValue();
+
+  llvm::APInt Range = RHS - LHS;
+  if (Range.ult(llvm::APInt(Range.getBitWidth(), 64))) {
+    // Range is small enough to add multiple switch instruction cases.
+    StartBlock("sw.bb");
+    llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
+    SwitchInsn->addCase(LV, CaseDest);
     LHS++;
     while (LHS != RHS) {
       SwitchInsn->addCase(llvm::ConstantInt::get(LHS), CaseDest);
       LHS++;
     }
-    SwitchInsn->addCase(llvm::ConstantInt::get(LHS), CaseDest);
-  }
+    SwitchInsn->addCase(RV, CaseDest);
+    EmitStmt(S.getSubStmt());
+    return;
+  } 
+    
+  // The range is too big. Emit "if" condition.
+  llvm::BasicBlock *FalseDest = NULL;
+  llvm::BasicBlock *CaseDest = new llvm::BasicBlock("sw.bb");
 
+  // If we have already seen one case statement range for this switch
+  // instruction then piggy-back otherwise use default block as false
+  // destination.
+  if (CaseRangeBlock)
+    FalseDest = CaseRangeBlock;
+  else 
+    FalseDest = SwitchInsn->getDefaultDest();
+
+  // Start new block to hold case statement range check instructions.
+  StartBlock("case.range");
+  CaseRangeBlock = Builder.GetInsertBlock();
+
+  // Emit range check.
+  llvm::Value *Diff = 
+    Builder.CreateSub(SwitchInsn->getCondition(), LV, "tmp");
+  llvm::Value *Cond = 
+    Builder.CreateICmpULE(Diff, llvm::ConstantInt::get(Range), "tmp");
+  Builder.CreateCondBr(Cond, CaseDest, FalseDest);
+
+  // Now emit case statement body.
+  EmitBlock(CaseDest);
+  EmitStmt(S.getSubStmt());
+}
+
+void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
+  if (S.getRHS()) {
+    EmitCaseStmtRange(S);
+    return;
+  }
+    
+  StartBlock("sw.bb");
+  llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
+  llvm::ConstantInt *LV = cast<llvm::ConstantInt>(EmitScalarExpr(S.getLHS()));
+  SwitchInsn->addCase(LV, CaseDest);
   EmitStmt(S.getSubStmt());
 }
 
@@ -386,6 +436,8 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
 
   // Handle nested switch statements.
   llvm::SwitchInst *SavedSwitchInsn = SwitchInsn;
+  llvm::BasicBlock *SavedCRBlock = CaseRangeBlock;
+  CaseRangeBlock = NULL;
 
   // Create basic block to hold stuff that comes after switch statement.
   // Initially use it to hold DefaultStmt.
@@ -403,6 +455,12 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   EmitStmt(S.getBody());
   BreakContinueStack.pop_back();
 
+  // If one or more case statement range is seen then use CaseRangeBlock
+  // as the default block. False edge of CaseRangeBlock will lead to 
+  // original default block.
+  if (CaseRangeBlock)
+    SwitchInsn->setSuccessor(0, CaseRangeBlock);
+  
   // Prune insert block if it is dummy.
   llvm::BasicBlock *BB = Builder.GetInsertBlock();
   if (isDummyBlock(BB))
@@ -411,4 +469,5 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   // Place NextBlock as the new insert point.
   Builder.SetInsertPoint(NextBlock);
   SwitchInsn = SavedSwitchInsn;
+  CaseRangeBlock = SavedCRBlock;
 }

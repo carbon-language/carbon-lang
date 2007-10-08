@@ -24,7 +24,8 @@ using namespace clang;
 using namespace CodeGen;
 
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm) 
-  : CGM(cgm), Target(CGM.getContext().Target) {}
+  : CGM(cgm), Target(CGM.getContext().Target), SwitchInsn(NULL), 
+    CaseRangeBlock(NULL) {}
 
 ASTContext &CodeGenFunction::getContext() const {
   return CGM.getContext();

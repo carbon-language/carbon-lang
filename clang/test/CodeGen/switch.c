@@ -30,3 +30,35 @@ int foo2(int i) {
 }
 
     
+int foo3(int i) {
+  int j = 0;
+  switch (i) {
+  default:
+    j = 42; break;
+  case 111:
+    j = 111; break;
+  case 0 ... 100:
+    j = 1; break;
+  case 222:
+    j = 222; break;
+  }
+  return j;
+}
+
+
+int foo4(int i) {
+  int j = 0;
+  switch (i) {
+  case 111:
+    j = 111; break;
+  case 0 ... 100:
+    j = 1; break;
+  case 222:
+    j = 222; break;
+  default:
+    j = 42; break;
+  case 501 ... 600:
+    j = 5; break;
+  }
+  return j;
+}

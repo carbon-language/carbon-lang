@@ -240,9 +240,13 @@ private:
   }; 
   llvm::SmallVector<BreakContinue, 8> BreakContinueStack;
   
-  // SwitchInsn - This is used by EmitCaseStmt() and EmitDefaultStmt() to
-  // populate switch instruction
+  /// SwitchInsn - This is used by EmitCaseStmt() and EmitDefaultStmt() to
+  /// populate switch instruction
   llvm::SwitchInst *SwitchInsn;
+
+  /// CaseRangeBlock - This is used, while constructiong swtich instruction,
+  /// to hold "if" condition for case statement ranges.
+  llvm::BasicBlock *CaseRangeBlock;
 
 public:
   CodeGenFunction(CodeGenModule &cgm);
@@ -322,6 +326,7 @@ public:
   void EmitSwitchStmt(const SwitchStmt &S);
   void EmitDefaultStmt(const DefaultStmt &S);
   void EmitCaseStmt(const CaseStmt &S);
+  void EmitCaseStmtRange(const CaseStmt &S);
 
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission
