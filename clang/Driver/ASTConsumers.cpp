@@ -79,6 +79,26 @@ static void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
   // FIXME: implement the rest...
 }
 
+static void PrintObjcProtocolDecl(ObjcProtocolDecl *PID) {
+  std::string S = PID->getName();
+  fprintf(stderr, "@protocol %s;\n", S.c_str());
+  // FIXME: implement the rest...
+}
+
+static void PrintObjcCategoryImplDecl(ObjcCategoryImplDecl *PID) {
+  std::string S = PID->getName();
+  std::string I = PID->getClassInterface()->getName();
+  fprintf(stderr, "@implementation %s(%s);\n", I.c_str(), S.c_str());
+  // FIXME: implement the rest...
+}
+
+static void PrintObjcCategoryDecl(ObjcCategoryDecl *PID) {
+  std::string S = PID->getName();
+  std::string I = PID->getClassInterface()->getName();
+  fprintf(stderr, "@interface %s(%s);\n", I.c_str(), S.c_str());
+  // FIXME: implement the rest...
+}
+
 namespace {
   class ASTPrinter : public ASTConsumer {
     virtual void HandleTopLevelDecl(Decl *D) {
@@ -92,10 +112,10 @@ namespace {
         }
       } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
         PrintTypeDefDecl(TD);
-      } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-        fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
       } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
         PrintObjcInterfaceDecl(OID);
+      } else if (ObjcProtocolDecl *PID = dyn_cast<ObjcProtocolDecl>(D)) {
+        PrintObjcProtocolDecl(PID);
       } else if (ObjcForwardProtocolDecl *OFPD = 
                      dyn_cast<ObjcForwardProtocolDecl>(D)) {
         fprintf(stderr, "@protocol ");
@@ -109,8 +129,16 @@ namespace {
                    dyn_cast<ObjcImplementationDecl>(D)) {
         fprintf(stderr, "@implementation %s  [printing todo]\n",
                 OID->getName());
+      } else if (ObjcCategoryImplDecl *OID = 
+                 dyn_cast<ObjcCategoryImplDecl>(D)) {
+        PrintObjcCategoryImplDecl(OID);
+      } else if (ObjcCategoryDecl *OID = 
+                 dyn_cast<ObjcCategoryDecl>(D)) {
+        PrintObjcCategoryDecl(OID);
       } else if (isa<ObjcClassDecl>(D)) {
         fprintf(stderr, "@class [printing todo]\n");
+      } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
+        fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
       } else {
         assert(0 && "Unknown decl type!");
       }

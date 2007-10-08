@@ -347,12 +347,12 @@ public:
 ///
 /// @class NSCursor, NSImage, NSPasteboard, NSWindow;
 ///
-class ObjcClassDecl : public TypeDecl {
+class ObjcClassDecl : public Decl {
   ObjcInterfaceDecl **ForwardDecls;
   unsigned NumForwardDecls;
 public:
   ObjcClassDecl(SourceLocation L, ObjcInterfaceDecl **Elts, unsigned nElts)
-    : TypeDecl(ObjcClass, L, 0, 0) { 
+    : Decl(ObjcClass, L) { 
     if (nElts) {
       ForwardDecls = new ObjcInterfaceDecl*[nElts];
       memcpy(ForwardDecls, Elts, nElts*sizeof(ObjcInterfaceDecl*));

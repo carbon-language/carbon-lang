@@ -163,7 +163,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     // The @ sign was already consumed by ParseObjCInterfaceDeclList().
     if (Tok.isObjCAtKeyword(tok::objc_end)) {
       ConsumeToken(); // the "end" identifier
-      return 0;
+      return CategoryType;
     }
     Diag(Tok, diag::err_objc_missing_end);
     return 0;
@@ -803,7 +803,7 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
   // The @ sign was already consumed by ParseObjCInterfaceDeclList().
   if (Tok.isObjCAtKeyword(tok::objc_end)) {
     ConsumeToken(); // the "end" identifier
-    return 0;
+    return ProtoType;
   }
   Diag(Tok, diag::err_objc_missing_end);
   return 0;
