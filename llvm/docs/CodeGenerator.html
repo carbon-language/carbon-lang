@@ -748,11 +748,8 @@ explains how they work and some of the rationale behind their design.</p>
 <p>
 Instruction Selection is the process of translating LLVM code presented to the
 code generator into target-specific machine instructions.  There are several
-well-known ways to do this in the literature.  In LLVM there are two main forms:
-the SelectionDAG based instruction selector framework and an old-style 'simple'
-instruction selector, which effectively peephole selects each LLVM instruction
-into a series of machine instructions.  We recommend that all targets use the
-SelectionDAG infrastructure.
+well-known ways to do this in the literature.  LLVM uses a SelectionDAG based
+instruction selector.
 </p>
 
 <p>Portions of the DAG instruction selector are generated from the target 
