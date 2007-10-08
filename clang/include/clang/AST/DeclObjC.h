@@ -138,9 +138,7 @@ public:
   /// declaration without an @interface declaration.
   bool ImplicitInterfaceDecl() const { return getLocation().isInvalid(); }
   
-  static bool classof(const Decl *D) {
-    return D->getKind() == ObjcInterface;
-  }
+  static bool classof(const Decl *D) { return D->getKind() == ObjcInterface; }
   static bool classof(const ObjcInterfaceDecl *D) { return true; }
 };
 
@@ -257,9 +255,7 @@ public:
                            { return DeclImplementation; }
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { 
-    return D->getKind() == ObjcMethod; 
-  }
+  static bool classof(const Decl *D) { return D->getKind() == ObjcMethod; }
   static bool classof(const ObjcMethodDecl *D) { return true; }
 };
 
@@ -337,9 +333,7 @@ public:
   bool isForwardDecl() const { return isForwardProtoDecl; }
   void setForwardDecl(bool val) { isForwardProtoDecl = val; }
 
-  static bool classof(const Decl *D) {
-    return D->getKind() == ObjcProtocol;
-  }
+  static bool classof(const Decl *D) { return D->getKind() == ObjcProtocol; }
   static bool classof(const ObjcProtocolDecl *D) { return true; }
 };
   
@@ -365,9 +359,7 @@ public:
     assert(idx < NumForwardDecls && "index out of range");
     ForwardDecls[idx] = OID;
   }
-  static bool classof(const Decl *D) {
-    return D->getKind() == ObjcClass;
-  }
+  static bool classof(const Decl *D) { return D->getKind() == ObjcClass; }
   static bool classof(const ObjcClassDecl *D) { return true; }
 };
 
@@ -492,9 +484,7 @@ public:
     ClassInterface->setListCategories(this);
   }
   
-  static bool classof(const Decl *D) {
-    return D->getKind() == ObjcCategory;
-  }
+  static bool classof(const Decl *D) { return D->getKind() == ObjcCategory; }
   static bool classof(const ObjcCategoryDecl *D) { return true; }
 };
 
@@ -534,9 +524,7 @@ class ObjcCategoryImplDecl : public NamedDecl {
         ObjcMethodDecl **insMethods, unsigned numInsMembers,
         ObjcMethodDecl **clsMethods, unsigned numClsMembers);
   
-  static bool classof(const Decl *D) {
-    return D->getKind() == ObjcCategoryImpl;
-  }
+  static bool classof(const Decl *D) { return D->getKind() == ObjcCategoryImpl;}
   static bool classof(const ObjcCategoryImplDecl *D) { return true; }
 };
 

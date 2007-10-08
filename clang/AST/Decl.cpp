@@ -45,12 +45,12 @@ const char *Decl::getDeclKindName() const {
     return "Typedef";
   case Function:
     return "Function";
-  case BlockVariable:
-    return "BlockVariable";
-  case FileVariable:
-    return "FileVariable";
-  case ParmVariable:
-    return "ParmVariable";
+  case BlockVar:
+    return "BlockVar";
+  case FileVar:
+    return "FileVar";
+  case ParmVar:
+    return "ParmVar";
   case EnumConstant:
     return "EnumConstant";
   case ObjcInterface:
@@ -157,13 +157,13 @@ void Decl::addDeclKind(const Kind k) {
     case Function:
       nFuncs++;
       break;
-    case BlockVariable:
+    case BlockVar:
       nBlockVars++;
       break;
-    case FileVariable:
+    case FileVar:
       nFileVars++;
       break;
-    case ParmVariable:
+    case ParmVar:
       nParmVars++;
       break;
     case EnumConstant:

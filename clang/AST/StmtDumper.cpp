@@ -260,9 +260,9 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
   fprintf(F, " ");
   switch (Node->getDecl()->getKind()) {
     case Decl::Function: fprintf(F,"FunctionDecl"); break;
-    case Decl::BlockVariable: fprintf(F,"BlockVariable"); break;
-    case Decl::FileVariable: fprintf(F,"FileVariable"); break;
-    case Decl::ParmVariable: fprintf(F,"ParmVariable"); break;
+    case Decl::BlockVar: fprintf(F,"BlockVar"); break;
+    case Decl::FileVar: fprintf(F,"FileVar"); break;
+    case Decl::ParmVar: fprintf(F,"ParmVar"); break;
     case Decl::EnumConstant: fprintf(F,"EnumConstant"); break;
     case Decl::Typedef: fprintf(F,"Typedef"); break;
     case Decl::Struct: fprintf(F,"Struct"); break;

@@ -21,9 +21,9 @@ using namespace CodeGen;
 void CodeGenFunction::EmitDecl(const Decl &D) {
   switch (D.getKind()) {
   default: assert(0 && "Unknown decl kind!");
-  case Decl::FileVariable:
+  case Decl::FileVar:
     assert(0 && "Should not see file-scope variables inside a function!");
-  case Decl::ParmVariable:
+  case Decl::ParmVar:
     assert(0 && "Parmdecls should not be in declstmts!");
   case Decl::Typedef:   // typedef int X;
   case Decl::Function:  // void X();
@@ -34,7 +34,7 @@ void CodeGenFunction::EmitDecl(const Decl &D) {
     // None of these decls require codegen support.
     return;
     
-  case Decl::BlockVariable:
+  case Decl::BlockVar:
     return EmitBlockVarDecl(cast<BlockVarDecl>(D));
   case Decl::EnumConstant:
     return EmitEnumConstantDecl(cast<EnumConstantDecl>(D));

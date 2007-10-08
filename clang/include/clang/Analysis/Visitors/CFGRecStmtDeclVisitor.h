@@ -54,9 +54,9 @@ public:
   void VisitScopedDecl(ScopedDecl* D) {
     switch (D->getKind()) {
         DISPATCH_CASE(Function,FunctionDecl)
-        DISPATCH_CASE(BlockVariable,BlockVarDecl) // FIXME:Refine. VisitVarDecl?
-        DISPATCH_CASE(FileVariable,FileVarDecl)   // FIXME: (same)
-        DISPATCH_CASE(ParmVariable,ParmVarDecl)       // FIXME: (same)
+        DISPATCH_CASE(BlockVar,BlockVarDecl) // FIXME:Refine. VisitVarDecl?
+        DISPATCH_CASE(FileVar,FileVarDecl)   // FIXME: (same)
+        DISPATCH_CASE(ParmVar,ParmVarDecl)       // FIXME: (same)
         DISPATCH_CASE(EnumConstant,EnumConstantDecl)
         DISPATCH_CASE(Typedef,TypedefDecl)
         DISPATCH_CASE(Struct,RecordDecl)    // FIXME: Refine.  VisitStructDecl?

@@ -31,14 +31,49 @@ class IdentifierInfo;
 class Decl {
 public:
   enum Kind {
-    // Concrete sub-classes of ValueDecl
-    Function, BlockVariable, FileVariable, ParmVariable, EnumConstant,
-    // Concrete sub-classes of TypeDecl
-    Typedef, Struct, Union, Class, Enum, ObjcInterface, ObjcClass, ObjcMethod,
-    ObjcProtocol, ObjcForwardProtocol, ObjcCategory, ObjcCategoryImpl,
-    ObjcImplementation,
-    // Concrete sub-class of Decl
-    Field, ObjcIvar
+    // This lists the concrete classes of Decl in order of the inheritance
+    // hierarchy.  This allows us to do efficient classof tests based on the
+    // enums below.   The commented out names are abstract class names.
+    
+    // Decl
+    //   NamedDecl
+           Field,
+             ObjcIvar,
+           ObjcCategory,
+           ObjcCategoryImpl,
+           ObjcImplementation,
+    //     ScopedDecl
+             ObjcProtocol,
+    //       TypeDecl
+               ObjcInterface,
+               Typedef,
+    //         TagDecl
+                 Enum,
+    //           RecordDecl,
+                   Struct,
+                   Union,
+                   Class,
+    //       ValueDecl
+               EnumConstant,
+               Function,
+    //         VarDecl
+                 BlockVar,
+                 FileVar,
+                 ParmVar,
+         ObjcMethod,
+         ObjcClass,
+         ObjcForwardProtocol,
+  
+    // For each non-leaf class, we now define a mapping to the first/last member
+    // of the class, to allow efficient classof.
+    NamedFirst  = Field,         NamedLast  = ParmVar,
+    FieldFirst  = Field,         FieldLast  = ObjcIvar,
+    ScopedFirst = ObjcProtocol,  ScopedLast = ParmVar,
+    TypeFirst   = ObjcInterface, TypeLast   = Class,
+    TagFirst    = Enum         , TagLast    = Class,
+    RecordFirst = Struct       , RecordLast = Class,
+    ValueFirst  = EnumConstant , ValueLast  = ParmVar,
+    VarFirst    = BlockVar     , VarLast    = ParmVar
   };
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
@@ -87,9 +122,9 @@ public:
     default: assert(0 && "Unknown decl kind!");
     case Typedef:
     case Function:
-    case BlockVariable:
-    case FileVariable:
-    case ParmVariable:
+    case BlockVar:
+    case FileVar:
+    case ParmVar:
     case EnumConstant:
     case ObjcInterface:
       return IDNS_Ordinary;
@@ -125,7 +160,9 @@ public:
   const char *getName() const;
   
   
-  // FIXME: classof when the hierarchy is sorted out.
+  static bool classof(const Decl *D) {
+    return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;
+  }
   static bool classof(const NamedDecl *D) { return true; }
 };
 
@@ -156,11 +193,9 @@ public:
   const ScopedDecl *getNextDeclarator() const { return NextDeclarator; }
   void setNextDeclarator(ScopedDecl *N) { NextDeclarator = N; }
   
-  // Implement isa/cast/dyncast/etc - true for all ValueDecl's and TypeDecl's.
+  // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
-    return (D->getKind() >= Function && D->getKind() <= EnumConstant) || 
-           (D->getKind() >= Typedef && D->getKind() <= Enum) ||
-           D->getKind() == ObjcProtocol || D->getKind() == ObjcInterface;
+    return D->getKind() >= ScopedFirst && D->getKind() <= ScopedLast;
   }
   static bool classof(const ScopedDecl *D) { return true; }
 };
@@ -180,7 +215,7 @@ public:
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
-    return D->getKind() >= Function && D->getKind() <= EnumConstant;
+    return D->getKind() >= ValueFirst && D->getKind() <= ValueLast;
   }
   static bool classof(const ValueDecl *D) { return true; }
 };
@@ -203,8 +238,8 @@ public:
   //  declared within a function that lack a storage keyword are
   //  implicitly "auto", but are represented internally with a storage
   //  class of None.
-  bool hasAutoStorage() {
-    return (SClass == Auto || (SClass == None && getKind() != FileVariable));
+  bool hasAutoStorage() const {
+    return SClass == Auto || (SClass == None && getKind() != FileVar);
   }
 
   // hasStaticStorage - Returns true if either the implicit or
@@ -212,22 +247,22 @@ public:
   //  particular, variables declared within a file (outside of a
   //  function) that lack a storage keyword are implicitly "static,"
   //  but are represented internally with a storage class of "None".
-  bool hasStaticStorage() {
-    return (SClass == Static || (SClass == None && getKind() == FileVariable));
+  bool hasStaticStorage() const {
+    return SClass == Static || (SClass == None && getKind() == FileVar);
   }
       
   // hasLocalStorage - Returns true if a variable with function scope
   //  is a non-static local variable.
-  bool hasLocalStorage() { return (hasAutoStorage() || SClass == Register); }
+  bool hasLocalStorage() const { return hasAutoStorage() || SClass == Register;}
 
   // hasGlobalStorage - Returns true for all variables that do not
   //  have local storage.  This includs all global variables as well
   //  as static variables declared within a function.
-  bool hasGlobalStorage() { return !hasAutoStorage(); }
+  bool hasGlobalStorage() const { return !hasAutoStorage(); }
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { 
-    return D->getKind() >= BlockVariable && D->getKind() <= ParmVariable; 
+  static bool classof(const Decl *D) {
+    return D->getKind() >= VarFirst && D->getKind() <= VarLast;
   }
   static bool classof(const VarDecl *D) { return true; }
 protected:
@@ -244,10 +279,10 @@ class BlockVarDecl : public VarDecl {
 public:
   BlockVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
                ScopedDecl *PrevDecl)
-    : VarDecl(BlockVariable, L, Id, T, S, PrevDecl) {}
+    : VarDecl(BlockVar, L, Id, T, S, PrevDecl) {}
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == BlockVariable; }
+  static bool classof(const Decl *D) { return D->getKind() == BlockVar; }
   static bool classof(const BlockVarDecl *D) { return true; }
 };
 
@@ -259,10 +294,10 @@ class FileVarDecl : public VarDecl {
 public:
   FileVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
               ScopedDecl *PrevDecl)
-    : VarDecl(FileVariable, L, Id, T, S, PrevDecl) {}
+    : VarDecl(FileVar, L, Id, T, S, PrevDecl) {}
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == FileVariable; }
+  static bool classof(const Decl *D) { return D->getKind() == FileVar; }
   static bool classof(const FileVarDecl *D) { return true; }
 };
 
@@ -271,10 +306,10 @@ class ParmVarDecl : public VarDecl {
 public:
   ParmVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
               ScopedDecl *PrevDecl)
-    : VarDecl(ParmVariable, L, Id, T, S, PrevDecl) {}
+    : VarDecl(ParmVar, L, Id, T, S, PrevDecl) {}
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == ParmVariable; }
+  static bool classof(const Decl *D) { return D->getKind() == ParmVar; }
   static bool classof(const ParmVarDecl *D) { return true; }
 };
 
@@ -355,7 +390,7 @@ public:
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
-    return D->getKind() == Field || D->getKind() == ObjcIvar;
+    return D->getKind() >= FieldFirst && D->getKind() <= FieldLast;
   }
   static bool classof(const FieldDecl *D) { return true; }
 };
@@ -380,9 +415,7 @@ public:
   void setInitVal(llvm::APSInt &V) { Val = V; }
   
   // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) {
-    return D->getKind() == EnumConstant;
-  }
+  static bool classof(const Decl *D) { return D->getKind() == EnumConstant; }
   static bool classof(const EnumConstantDecl *D) { return true; }
 };
 
@@ -401,7 +434,7 @@ protected:
 public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
-    return D->getKind() >= Typedef && D->getKind() <= Enum;
+    return D->getKind() >= TypeFirst && D->getKind() <= TypeLast;
   }
   static bool classof(const TypeDecl *D) { return true; }
 };
@@ -452,8 +485,7 @@ public:
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
-    return D->getKind() == Struct || D->getKind() == Union ||
-           D->getKind() == Class || D->getKind() == Enum;
+    return D->getKind() >= TagFirst && D->getKind() <= TagLast;
   }
   static bool classof(const TagDecl *D) { return true; }
 protected:
@@ -497,9 +529,7 @@ public:
   EnumConstantDecl *getEnumConstantList() { return ElementList; }
   const EnumConstantDecl *getEnumConstantList() const { return ElementList; }
   
-  static bool classof(const Decl *D) {
-    return D->getKind() == Enum;
-  }
+  static bool classof(const Decl *D) { return D->getKind() == Enum; }
   static bool classof(const EnumDecl *D) { return true; }
 };
 
@@ -545,8 +575,7 @@ public:
   FieldDecl *getMember(IdentifierInfo *name);
 
   static bool classof(const Decl *D) {
-    return D->getKind() == Struct || D->getKind() == Union ||
-           D->getKind() == Class;
+    return D->getKind() >= RecordFirst && D->getKind() <= RecordLast;
   }
   static bool classof(const RecordDecl *D) { return true; }
 };
