@@ -59,7 +59,7 @@ class BitstreamWriter {
   std::vector<BlockInfo> BlockInfoRecords;
   
 public:
-  BitstreamWriter(std::vector<unsigned char> &O) 
+  explicit BitstreamWriter(std::vector<unsigned char> &O) 
     : Out(O), CurBit(0), CurValue(0), CurCodeSize(2) {}
 
   ~BitstreamWriter() {

@@ -838,7 +838,7 @@ public:
 
   // One option...
   template<class M0t>
-  opt(const M0t &M0) : Option(Optional | NotHidden) {
+  explicit opt(const M0t &M0) : Option(Optional | NotHidden) {
     apply(M0, this);
     done();
   }
@@ -998,7 +998,7 @@ public:
 
   // One option...
   template<class M0t>
-  list(const M0t &M0) : Option(ZeroOrMore | NotHidden) {
+  explicit list(const M0t &M0) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this);
     done();
   }
@@ -1184,7 +1184,7 @@ public:
 
   // One option...
   template<class M0t>
-  bits(const M0t &M0) : Option(ZeroOrMore | NotHidden) {
+  explicit bits(const M0t &M0) : Option(ZeroOrMore | NotHidden) {
     apply(M0, this);
     done();
   }
@@ -1277,7 +1277,7 @@ public:
 
   // One option...
   template<class M0t>
-  alias(const M0t &M0) : Option(Optional | Hidden), AliasFor(0) {
+  explicit alias(const M0t &M0) : Option(Optional | Hidden), AliasFor(0) {
     apply(M0, this);
     done();
   }
@@ -1306,7 +1306,7 @@ public:
 // aliasfor - Modifier to set the option an alias aliases.
 struct aliasopt {
   Option &Opt;
-  aliasopt(Option &O) : Opt(O) {}
+  explicit aliasopt(Option &O) : Opt(O) {}
   void apply(alias &A) const { A.setAliasFor(Opt); }
 };
 

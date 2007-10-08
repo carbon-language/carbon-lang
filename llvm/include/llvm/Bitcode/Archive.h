@@ -198,7 +198,7 @@ class ArchiveMember {
   private:
     /// Used internally by the Archive class to construct an ArchiveMember.
     /// The contents of the ArchiveMember are filled out by the Archive class.
-    ArchiveMember(Archive *PAR);
+    explicit ArchiveMember(Archive *PAR);
 
     // So Archive can construct an ArchiveMember
     friend class llvm::Archive;
@@ -461,7 +461,7 @@ class Archive {
   protected:
     /// @brief Construct an Archive for \p filename and optionally  map it
     /// into memory.
-    Archive(const sys::Path& filename);
+    explicit Archive(const sys::Path& filename);
 
     /// @param data The symbol table data to be parsed
     /// @param len  The length of the symbol table data

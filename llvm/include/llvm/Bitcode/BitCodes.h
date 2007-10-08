@@ -91,8 +91,8 @@ public:
     Char6 = 4   // A 6-bit fixed field which maps to [a-zA-Z0-9._].
   };
     
-  BitCodeAbbrevOp(uint64_t V) :  Val(V), IsLiteral(true) {}
-  BitCodeAbbrevOp(Encoding E, uint64_t Data = 0)
+  explicit BitCodeAbbrevOp(uint64_t V) :  Val(V), IsLiteral(true) {}
+  explicit BitCodeAbbrevOp(Encoding E, uint64_t Data = 0)
     : Val(Data), IsLiteral(false), Enc(E) {}
   
   bool isLiteral() const { return IsLiteral; }

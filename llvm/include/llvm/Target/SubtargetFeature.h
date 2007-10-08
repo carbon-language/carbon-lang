@@ -73,7 +73,7 @@ struct SubtargetInfoKV {
 class SubtargetFeatures {
   std::vector<std::string> Features;    // Subtarget features as a vector
 public:
-  SubtargetFeatures(const std::string &Initial = std::string());
+  explicit SubtargetFeatures(const std::string &Initial = std::string());
 
   /// Features string accessors.
   std::string getString() const;
