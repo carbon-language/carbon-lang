@@ -21,6 +21,7 @@
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
 #include "llvm/Config/config.h"
+#include <assert.h>
 
 
 /*===-- Modules -----------------------------------------------------------===*/
@@ -572,6 +573,39 @@ CAMLprim value llvm_value_is_block(LLVMValueRef Val) {
   return Val_bool(LLVMValueIsBasicBlock(Val));
 }
 
+/*--... Operations on phi nodes ............................................--*/
+
+/* (llvalue * llbasicblock) -> llvalue -> unit */
+CAMLprim value llvm_add_incoming(value Incoming, LLVMValueRef PhiNode) {
+  LLVMAddIncoming(PhiNode,
+                  (LLVMValueRef*) &Field(Incoming, 0),
+                  (LLVMBasicBlockRef*) &Field(Incoming, 1),
+                  1);
+  return Val_unit;
+}
+
+/* llvalue -> (llvalue * llbasicblock) list */
+CAMLprim value llvm_incoming(LLVMValueRef PhiNode) {
+  unsigned I;
+  CAMLparam0();
+  CAMLlocal3(Hd, Tl, Tmp);
+  
+  /* Build a tuple list of them. */
+  Tl = Val_int(0);
+  for (I = LLVMCountIncoming(PhiNode); I != 0; ) {
+    Hd = alloc(2, 0);
+    Store_field(Hd, 0, (value) LLVMGetIncomingValue(PhiNode, --I));
+    Store_field(Hd, 1, (value) LLVMGetIncomingBlock(PhiNode, I));
+    
+    Tmp = alloc(2, 0);
+    Store_field(Tmp, 0, Hd);
+    Store_field(Tmp, 1, Tl);
+    Tl = Tmp;
+  }
+  
+  CAMLreturn(Tl);
+}
+
 
 /*===-- Instruction builders ----------------------------------------------===*/
 
@@ -933,10 +967,25 @@ CAMLprim LLVMValueRef llvm_build_fcmp(value Pred,
 
 /*--... Miscellaneous instructions .........................................--*/
 
-/* lltype -> string -> llbuilder -> llvalue */
-CAMLprim LLVMValueRef llvm_build_phi(LLVMTypeRef Ty,
-                                     value Name, value B) {
-  return LLVMBuildPhi(Builder_val(B), Ty, String_val(Name));
+/* (llvalue * llbasicblock) list -> string -> llbuilder -> llvalue */
+CAMLprim LLVMValueRef llvm_build_phi(value Incoming, value Name, value B) {
+  value Hd, Tl;
+  LLVMValueRef FirstValue, PhiNode;
+  
+  assert(Incoming != Val_int(0) && "Empty list passed to Llvm.build_phi!");
+  
+  Hd = Field(Incoming, 0);
+  FirstValue = (LLVMValueRef) Field(Hd, 0);
+  PhiNode = LLVMBuildPhi(Builder_val(B), LLVMTypeOf(FirstValue),
+                         String_val(Name));
+
+  for (Tl = Incoming; Tl != Val_int(0); Tl = Field(Tl, 1)) {
+    value Hd = Field(Tl, 0);
+    LLVMAddIncoming(PhiNode, (LLVMValueRef*) &Field(Hd, 0),
+                    (LLVMBasicBlockRef*) &Field(Hd, 1), 1);
+  }
+  
+  return PhiNode;
 }
 
 /* llvalue -> llvalue array -> string -> llbuilder -> llvalue */

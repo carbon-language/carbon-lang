@@ -1,4 +1,4 @@
-(* RUN: %ocamlc llvm.cma llvm_bitwriter.cma %s -o %t
+(* RUN: %ocamlc llvm.cma llvm_analysis.cma llvm_bitwriter.cma %s -o %t
  * RUN: ./%t %t.bc
  * RUN: llvm-dis < %t.bc > %t.ll
  *)
@@ -467,7 +467,7 @@ let test_functions () =
   let fn = define_function "Fn3" ty m in
   insist (not (is_declaration fn));
   insist (1 = Array.length (basic_blocks fn));
-  (* this function is not valid because init bb lacks a terminator *)
+  ignore (build_unreachable (builder_at_end (entry_block fn)));
   
   (* RUN: grep {define.*Fn4.*Param1.*Param2} < %t.ll
    *)
@@ -481,7 +481,7 @@ let test_functions () =
   insist (i64_type = type_of params.(1));
   set_value_name "Param1" params.(0);
   set_value_name "Param2" params.(1);
-  (* this function is not valid because init bb lacks a terminator *)
+  ignore (build_unreachable (builder_at_end (entry_block fn)));
   
   (* RUN: grep {fastcc.*Fn5} < %t.ll
    *)
@@ -489,7 +489,8 @@ let test_functions () =
   let fn = define_function "Fn5" ty m in
   insist (ccc = function_call_conv fn);
   set_function_call_conv fastcc fn;
-  insist (fastcc = function_call_conv fn)
+  insist (fastcc = function_call_conv fn);
+  ignore (build_unreachable (builder_at_end (entry_block fn)))
 
 
 (*===-- Basic Blocks ------------------------------------------------------===*)
@@ -503,6 +504,7 @@ let test_basic_blocks () =
   let fn = declare_function "X" ty m in
   let bb = append_block "Bb1" fn in
   insist (bb = entry_block fn);
+  ignore (build_unreachable (builder_at_end bb));
   
   (* RUN: grep -v Bb2 < %t.ll
    *)
@@ -513,15 +515,18 @@ let test_basic_blocks () =
   
   group "insert";
   let fn = declare_function "X3" ty m in
-  let bbb = append_block "" fn in
-  let bba = insert_block "" bbb in
+  let bbb = append_block "b" fn in
+  let bba = insert_block "a" bbb in
   insist ([| bba; bbb |] = basic_blocks fn);
+  ignore (build_unreachable (builder_at_end bba));
+  ignore (build_unreachable (builder_at_end bbb));
   
   (* RUN: grep Bb3 < %t.ll
    *)
   group "name/value";
   let fn = define_function "X4" ty m in
   let bb = entry_block fn in
+  ignore (build_unreachable (builder_at_end bb));
   let bbv = value_of_block bb in
   set_value_name "Bb3" bbv;
   insist ("Bb3" = value_name bbv);
@@ -529,6 +534,7 @@ let test_basic_blocks () =
   group "casts";
   let fn = define_function "X5" ty m in
   let bb = entry_block fn in
+  ignore (build_unreachable (builder_at_end bb));
   insist (bb = block_of_value (value_of_block bb));
   insist (value_is_block (value_of_block bb));
   insist (not (value_is_block (const_null i32_type)))
@@ -650,7 +656,8 @@ let test_builder () =
     let inst16 = build_or   p1 inst15 "Inst16" b in
     let inst17 = build_xor  p1 inst16 "Inst17" b in
     let inst18 = build_neg  inst17    "Inst18" b in
-         ignore (build_not  inst18    "Inst19" b)
+         ignore (build_not  inst18    "Inst19" b);
+         ignore (build_unreachable b)
   end;
   
   group "memory"; begin
@@ -673,7 +680,8 @@ let test_builder () =
           ignore(build_free inst20 b);
           ignore(build_load inst21 "Inst25" b);
           ignore(build_store p2 inst22 b);
-          ignore(build_gep inst23 [| p2 |] "Inst27" b)
+          ignore(build_gep inst23 [| p2 |] "Inst27" b);
+          ignore(build_unreachable b)
   end;
   
   group "casts"; begin
@@ -724,11 +732,8 @@ let test_builder () =
      * RUN: grep {Inst48.*va_arg.*null.*i32} < %t.ll
      * RUN: grep {Inst49.*extractelement.*Vec1.*P2} < %t.ll
      * RUN: grep {Inst50.*insertelement.*Vec1.*P1.*P2} < %t.ll
-     * RUN: grep {Inst51.*shufflevector.*Vec1.*Vec2.*Vec3} < %t.ll
+     * RUN: grep {Inst51.*shufflevector.*Vec1.*Vec2.*1.*1.*0.*0} < %t.ll
      *)
-    
-    (* TODO: %Inst44 = Phi *)
-    
          ignore (build_call fn [| p2; p1 |] "Inst45" atentry);
     let inst46 = build_icmp Icmp_eq p1 p2 "Inst46" atentry in
          ignore (build_select inst46 p1 p2 "Inst47" atentry);
@@ -737,8 +742,8 @@ let test_builder () =
                   i32_type "Inst48" atentry);
     
     (* Set up some vector vregs. *)
-    let one = const_int i32_type (-1) in
-    let zero = const_int i32_type 1 in
+    let one  = const_int i32_type 1 in
+    let zero = const_int i32_type 0 in
     let t1 = const_vector [| one; zero; one; zero |] in
     let t2 = const_vector [| zero; one; zero; one |] in
     let t3 = const_vector [| one; one; zero; zero |] in
@@ -748,13 +753,38 @@ let test_builder () =
     
     ignore (build_extractelement vec1 p2 "Inst49" atentry);
     ignore (build_insertelement vec1 p1 p2 "Inst50" atentry);
-    ignore (build_shufflevector vec1 vec2 vec3 "Inst51" atentry);
+    ignore (build_shufflevector vec1 vec2 t3 "Inst51" atentry);
+  end;
+  
+  group "phi"; begin
+    (* RUN: grep {PhiNode.*P1.*PhiBlock1.*P2.*PhiBlock2} < %t.ll
+     *)
+    let b1 = append_block "PhiBlock1" fn in
+    let b2 = append_block "PhiBlock2" fn in
+    
+    let jb = append_block "PhiJoinBlock" fn in
+    ignore (build_br jb (builder_at_end b1));
+    ignore (build_br jb (builder_at_end b2));
+    let at_jb = builder_at_end jb in
+    
+    let phi = build_phi [(p1, b1)] "PhiNode" at_jb in
+    insist ([(p1, b1)] = incoming phi);
+    
+    add_incoming (p2, b2) phi;
+    insist ([(p1, b1); (p2, b2)] = incoming phi);
+    
+    ignore (build_unreachable at_jb);
   end
 
 
 (*===-- Writer ------------------------------------------------------------===*)
 
 let test_writer () =
+  group "valid";
+  insist (match Llvm_analysis.verify_module m with
+          | None -> true
+          | Some msg -> prerr_string msg; false);
+
   group "writer";
   insist (write_bitcode_file m filename);
   

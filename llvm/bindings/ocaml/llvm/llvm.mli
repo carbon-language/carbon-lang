@@ -295,6 +295,11 @@ external value_of_block : llbasicblock -> llvalue = "LLVMBasicBlockAsValue"
 external value_is_block : llvalue -> bool = "llvm_value_is_block"
 external block_of_value : llvalue -> llbasicblock = "LLVMValueAsBasicBlock"
 
+(*--... Operations on phi nodes ............................................--*)
+external add_incoming : (llvalue * llbasicblock) -> llvalue -> unit
+                      = "llvm_add_incoming"
+external incoming : llvalue -> (llvalue * llbasicblock) list = "llvm_incoming"
+
 
 (*===-- Instruction builders ----------------------------------------------===*)
 external builder_before : llvalue -> llbuilder = "llvm_builder_before"
@@ -403,7 +408,8 @@ external build_fcmp : real_predicate -> llvalue -> llvalue -> string ->
                       llbuilder -> llvalue = "llvm_build_fcmp"
 
 (*--... Miscellaneous instructions .........................................--*)
-external build_phi : lltype -> string -> llbuilder -> llvalue = "llvm_build_phi"
+external build_phi : (llvalue * llbasicblock) list -> string -> llbuilder ->
+                     llvalue = "llvm_build_phi"
 external build_call : llvalue -> llvalue array -> string -> llbuilder -> llvalue
                     = "llvm_build_call"
 external build_select : llvalue -> llvalue -> llvalue -> string -> llbuilder ->

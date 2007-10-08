@@ -352,6 +352,12 @@ LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef InsertBeforeBB,
                                        const char *Name);
 void LLVMDeleteBasicBlock(LLVMBasicBlockRef BB);
 
+/* Operations on phi nodes */
+void LLVMAddIncoming(LLVMValueRef PhiNode, LLVMValueRef *IncomingValues,
+                     LLVMBasicBlockRef *IncomingBlocks, unsigned Count);
+unsigned LLVMCountIncoming(LLVMValueRef PhiNode);
+LLVMValueRef LLVMGetIncomingValue(LLVMValueRef PhiNode, unsigned Index);
+LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index);
 
 /*===-- Instruction builders ----------------------------------------------===*/
 

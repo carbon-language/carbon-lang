@@ -562,7 +562,6 @@ void LLVMSetThreadLocal(LLVMValueRef GlobalVar, int IsThreadLocal) {
 }
 
 int LLVMIsGlobalConstant(LLVMValueRef GlobalVar) {
-  bool res = unwrap<GlobalVariable>(GlobalVar)->isConstant();
   return unwrap<GlobalVariable>(GlobalVar)->isConstant();
 }
 
@@ -682,6 +681,27 @@ void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC) {
   else if (InvokeInst *II = dyn_cast<InvokeInst>(V))
     return II->setCallingConv(CC);
   assert(0 && "LLVMSetInstructionCallConv applies only to call and invoke!");
+}
+
+/*--.. Operations on phi nodes .............................................--*/
+
+void LLVMAddIncoming(LLVMValueRef PhiNode, LLVMValueRef *IncomingValues,
+                     LLVMBasicBlockRef *IncomingBlocks, unsigned Count) {
+  PHINode *PhiVal = unwrap<PHINode>(PhiNode);
+  for (unsigned I = 0; I != Count; ++I)
+    PhiVal->addIncoming(unwrap(IncomingValues[I]), unwrap(IncomingBlocks[I]));
+}
+
+unsigned LLVMCountIncoming(LLVMValueRef PhiNode) {
+  return unwrap<PHINode>(PhiNode)->getNumIncomingValues();
+}
+
+LLVMValueRef LLVMGetIncomingValue(LLVMValueRef PhiNode, unsigned Index) {
+  return wrap(unwrap<PHINode>(PhiNode)->getIncomingValue(Index));
+}
+
+LLVMBasicBlockRef LLVMGetIncomingBlock(LLVMValueRef PhiNode, unsigned Index) {
+  return wrap(unwrap<PHINode>(PhiNode)->getIncomingBlock(Index));
 }
 
 
