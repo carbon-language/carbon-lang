@@ -22,14 +22,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Support/CommandLine.h"
 using namespace llvm;
-
-namespace {
-  cl::opt<bool>
-  EnableCommuteCMove("enable-x86-commute-cmove",
-           cl::desc("Commute conditional moves by inverting conditions"));
-}
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
   : TargetInstrInfo(X86Insts, array_lengthof(X86Insts)),
@@ -442,8 +435,6 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
   case X86::CMOVNP16rr:
   case X86::CMOVNP32rr:
   case X86::CMOVNP64rr: {
-    if (!EnableCommuteCMove)
-      return 0;
     unsigned Opc = 0;
     switch (MI->getOpcode()) {
     default: break;
