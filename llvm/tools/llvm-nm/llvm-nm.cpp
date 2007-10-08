@@ -165,7 +165,7 @@ static void DumpSymbolNamesFromFile(std::string &Filename) {
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  cl::ParseCommandLineOptions(argc, argv, " llvm symbol table dumper\n");
+  cl::ParseCommandLineOptions(argc, argv, "llvm symbol table dumper\n");
   sys::PrintStackTraceOnErrorSignal();
 
   ToolName = argv[0];

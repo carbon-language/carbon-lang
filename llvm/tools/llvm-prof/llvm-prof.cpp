@@ -112,7 +112,7 @@ namespace {
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
-    cl::ParseCommandLineOptions(argc, argv, " llvm profile dump decoder\n");
+    cl::ParseCommandLineOptions(argc, argv, "llvm profile dump decoder\n");
     sys::PrintStackTraceOnErrorSignal();
 
     // Read in the bitcode file...

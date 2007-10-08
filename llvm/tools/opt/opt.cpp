@@ -308,7 +308,7 @@ int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
     cl::ParseCommandLineOptions(argc, argv,
-      " llvm .bc -> .bc modular optimizer and analysis printer \n");
+      "llvm .bc -> .bc modular optimizer and analysis printer\n");
     sys::PrintStackTraceOnErrorSignal();
 
     // Allocate a full target machine description only if necessary.

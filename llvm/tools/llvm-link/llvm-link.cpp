@@ -79,7 +79,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
+  cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
   sys::PrintStackTraceOnErrorSignal();
   assert(InputFilenames.size() > 0 && "OneOrMore is not working");
 

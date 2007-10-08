@@ -46,7 +46,7 @@ DontPrint("disable-output", cl::desc("Don't output the .ll file"), cl::Hidden);
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
   try {
-    cl::ParseCommandLineOptions(argc, argv, " llvm .bc -> .ll disassembler\n");
+    cl::ParseCommandLineOptions(argc, argv, "llvm .bc -> .ll disassembler\n");
     sys::PrintStackTraceOnErrorSignal();
 
     std::ostream *Out = &std::cout;  // Default to printing to stdout.

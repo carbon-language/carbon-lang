@@ -257,7 +257,7 @@ int main(int argc, char **argv) {
 
     // Parse the command line options
     cl::ParseCommandLineOptions(argc, argv,
-      " LLVM Compiler Driver (llvmc)\n\n"
+      "LLVM Compiler Driver (llvmc)\n\n"
       "  This program provides easy invocation of the LLVM tool set\n"
       "  and other compiler tools.\n"
     );

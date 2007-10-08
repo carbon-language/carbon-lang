@@ -48,7 +48,7 @@ DisableVerify("disable-verify", cl::Hidden,
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  cl::ParseCommandLineOptions(argc, argv, " llvm .ll -> .bc assembler\n");
+  cl::ParseCommandLineOptions(argc, argv, "llvm .ll -> .bc assembler\n");
   sys::PrintStackTraceOnErrorSignal();
 
   int exitCode = 0;

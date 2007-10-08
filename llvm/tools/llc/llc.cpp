@@ -172,7 +172,7 @@ static std::ostream *GetOutputStream(const char *ProgName) {
 //
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  cl::ParseCommandLineOptions(argc, argv, " llvm system compiler\n");
+  cl::ParseCommandLineOptions(argc, argv, "llvm system compiler\n");
   sys::PrintStackTraceOnErrorSignal();
 
   // Load the module to be compiled...

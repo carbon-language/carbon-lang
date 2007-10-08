@@ -52,7 +52,7 @@ ExtractFunc("func", cl::desc("Specify function to extract"), cl::init("main"),
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  cl::ParseCommandLineOptions(argc, argv, " llvm extractor\n");
+  cl::ParseCommandLineOptions(argc, argv, "llvm extractor\n");
   sys::PrintStackTraceOnErrorSignal();
 
   std::auto_ptr<Module> M;

@@ -690,7 +690,7 @@ int main(int argc, char **argv) {
   // Have the command line options parsed and handle things
   // like --help and --version.
   cl::ParseCommandLineOptions(argc, argv,
-    " LLVM Archiver (llvm-ar)\n\n"
+    "LLVM Archiver (llvm-ar)\n\n"
     "  This program archives bitcode files into single libraries\n"
   );
 

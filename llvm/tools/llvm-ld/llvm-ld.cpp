@@ -469,7 +469,7 @@ int main(int argc, char **argv, char **envp) {
     progname = sys::Path(argv[0]).getBasename();
 
     // Parse the command line options
-    cl::ParseCommandLineOptions(argc, argv, " llvm linker\n");
+    cl::ParseCommandLineOptions(argc, argv, "llvm linker\n");
     sys::PrintStackTraceOnErrorSignal();
 
     // Construct a Linker (now that Verbose is set)

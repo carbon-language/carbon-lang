@@ -496,7 +496,7 @@ static int AnalyzeBitcode() {
 
 int main(int argc, char **argv) {
   llvm_shutdown_obj X;  // Call llvm_shutdown() on exit.
-  cl::ParseCommandLineOptions(argc, argv, " llvm-bcanalyzer file analyzer\n");
+  cl::ParseCommandLineOptions(argc, argv, "llvm-bcanalyzer file analyzer\n");
   
   sys::PrintStackTraceOnErrorSignal();
   

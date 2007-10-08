@@ -67,7 +67,7 @@ static void do_shutdown() {
 int main(int argc, char **argv, char * const *envp) {
   atexit(do_shutdown);  // Call llvm_shutdown() on exit.
   cl::ParseCommandLineOptions(argc, argv,
-                              " llvm interpreter & dynamic compiler\n");
+                              "llvm interpreter & dynamic compiler\n");
   sys::PrintStackTraceOnErrorSignal();
 
   // If the user doesn't want core files, disable them.

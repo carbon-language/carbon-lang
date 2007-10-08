@@ -53,7 +53,7 @@ int main(int argc, char **argv, char * const *envp) {
   std::cout << "NOTE: llvm-db is known useless right now.\n";
   try {
     cl::ParseCommandLineOptions(argc, argv,
-                                " llvm source-level debugger\n");
+                                "llvm source-level debugger\n");
     sys::PrintStackTraceOnErrorSignal();
 
     if (!Quiet)

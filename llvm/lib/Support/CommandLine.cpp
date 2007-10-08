@@ -951,7 +951,7 @@ public:
     }
 
     if (ProgramOverview)
-      cout << "OVERVIEW:" << ProgramOverview << "\n";
+      cout << "OVERVIEW: " << ProgramOverview << "\n";
 
     cout << "USAGE: " << ProgramName << " [options]";
 
