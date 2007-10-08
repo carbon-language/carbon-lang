@@ -283,7 +283,7 @@ public:
 ///
 /// id <NSDraggingInfo> anyObjectThatImplementsNSDraggingInfo;
 ///
-class ObjcProtocolDecl : public TypeDecl {
+class ObjcProtocolDecl : public ScopedDecl {
   /// referenced protocols
   ObjcProtocolDecl **ReferencedProtocols;  // Null if none
   int NumReferencedProtocols;  // -1 if none
@@ -300,7 +300,7 @@ class ObjcProtocolDecl : public TypeDecl {
 public:
   ObjcProtocolDecl(SourceLocation L, unsigned numRefProtos,
                    IdentifierInfo *Id, bool FD = false)
-    : TypeDecl(ObjcProtocol, L, Id, 0), 
+    : ScopedDecl(ObjcProtocol, L, Id, 0), 
       ReferencedProtocols(0), NumReferencedProtocols(-1),
       InstanceMethods(0), NumInstanceMethods(-1), 
       ClassMethods(0), NumClassMethods(-1),
@@ -376,13 +376,13 @@ public:
 /// 
 /// @protocol NSTextInput, NSChangeSpelling, NSDraggingInfo;
 /// 
-class ObjcForwardProtocolDecl : public TypeDecl {
+class ObjcForwardProtocolDecl : public Decl {
   ObjcProtocolDecl **ReferencedProtocols;
   unsigned NumReferencedProtocols;
 public:
   ObjcForwardProtocolDecl(SourceLocation L, 
                           ObjcProtocolDecl **Elts, unsigned nElts)
-  : TypeDecl(ObjcForwardProtocol, L, 0, 0) { 
+  : Decl(ObjcForwardProtocol, L) { 
     NumReferencedProtocols = nElts;
     if (nElts) {
       ReferencedProtocols = new ObjcProtocolDecl*[nElts];
@@ -555,7 +555,7 @@ class ObjcCategoryImplDecl : public NamedDecl {
 /// the legacy semantics and allow developers to move private ivar declarations
 /// from the class interface to the class implementation (but I digress:-)
 ///
-class ObjcImplementationDecl : public TypeDecl {
+class ObjcImplementationDecl : public NamedDecl {
     
   /// Implementation Class's super class.
   ObjcInterfaceDecl *SuperClass;
@@ -575,7 +575,7 @@ class ObjcImplementationDecl : public TypeDecl {
 public:
   ObjcImplementationDecl(SourceLocation L, IdentifierInfo *Id,
                          ObjcInterfaceDecl* superDecl)
-    : TypeDecl(ObjcImplementation, L, Id, 0),
+    : NamedDecl(ObjcImplementation, L, Id),
       SuperClass(superDecl),
       Ivars(0), NumIvars(-1),
       InstanceMethods(0), NumInstanceMethods(-1), 
