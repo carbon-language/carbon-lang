@@ -606,20 +606,11 @@ public:
                                                IdentifierInfo **IdentList,
                                                unsigned NumElts);
   
-  virtual DeclTy *ActOnForwardProtocolDeclaration(Scope *S, 
-                                                  SourceLocation AtProtocolLoc,
-                                                  IdentifierInfo **IdentList,
-                                                  unsigned NumElts);
-   
-  virtual DeclTy *ActOnStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
+  virtual DeclTy *ActOnStartClassInterface(Scope* S, SourceLocation interLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
                     AttributeList *AttrList);
-  virtual DeclTy *ActOnStartProtocolInterface(Scope *S,
-		    SourceLocation AtProtoInterfaceLoc,
-                    IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
-                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
 };
 
 }  // end namespace clang

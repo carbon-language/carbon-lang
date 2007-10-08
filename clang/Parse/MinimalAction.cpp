@@ -80,19 +80,6 @@ MinimalAction::ActOnStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
   return 0;
 }
 
-Action::DeclTy *
-MinimalAction::ActOnStartProtocolInterface(Scope* S,
-		 SourceLocation AtProtoInterfaceLoc,
-                 IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
-                 IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
-  
-  TypeNameInfo *TI =
-  new TypeNameInfo(1, ProtocolName->getFETokenInfo<TypeNameInfo>());
-  
-  ProtocolName->setFETokenInfo(TI);
-  return 0;
-}
-
 /// ActOnForwardClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
@@ -104,23 +91,6 @@ MinimalAction::ActOnForwardClassDeclaration(Scope *S, SourceLocation AtClassLoc,
 
     IdentList[i]->setFETokenInfo(TI);
   
-    // Remember that this needs to be removed when the scope is popped.
-    S->AddDecl(IdentList[i]);
-  }
-  return 0;
-}
-
-/// ActOnForwardProtocolDeclaration - 
-/// Scope will always be top level file scope. 
-Action::DeclTy *
-MinimalAction::ActOnForwardProtocolDeclaration(Scope *S, 
-  SourceLocation AtClassLoc, IdentifierInfo **IdentList, unsigned NumElts) {
-  for (unsigned i = 0; i != NumElts; ++i) {
-    TypeNameInfo *TI =
-    new TypeNameInfo(1, IdentList[i]->getFETokenInfo<TypeNameInfo>());
-    
-    IdentList[i]->setFETokenInfo(TI);
-    
     // Remember that this needs to be removed when the scope is popped.
     S->AddDecl(IdentList[i]);
   }
