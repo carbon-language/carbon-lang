@@ -287,6 +287,17 @@ public:
                     const SDOperand *Ops, unsigned NumOps);
   SDOperand getNode(unsigned Opcode, const MVT::ValueType *VTs, unsigned NumVTs,
                     const SDOperand *Ops, unsigned NumOps);
+  SDOperand getNode(unsigned Opcode, SDVTList VTs);
+  SDOperand getNode(unsigned Opcode, SDVTList VTs, SDOperand N);
+  SDOperand getNode(unsigned Opcode, SDVTList VTs,
+                    SDOperand N1, SDOperand N2);
+  SDOperand getNode(unsigned Opcode, SDVTList VTs,
+                    SDOperand N1, SDOperand N2, SDOperand N3);
+  SDOperand getNode(unsigned Opcode, SDVTList VTs,
+                    SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4);
+  SDOperand getNode(unsigned Opcode, SDVTList VTs,
+                    SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4,
+                    SDOperand N5);
   SDOperand getNode(unsigned Opcode, SDVTList VTs,
                     const SDOperand *Ops, unsigned NumOps);
   

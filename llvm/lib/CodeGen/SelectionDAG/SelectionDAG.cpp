@@ -2595,6 +2595,42 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
   return SDOperand(N, 0);
 }
 
+SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList) {
+  return getNode(Opcode, VTList, 0, 0);
+}
+
+SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                                SDOperand N1) {
+  SDOperand Ops[] = { N1 };
+  return getNode(Opcode, VTList, Ops, 1);
+}
+
+SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                                SDOperand N1, SDOperand N2) {
+  SDOperand Ops[] = { N1, N2 };
+  return getNode(Opcode, VTList, Ops, 2);
+}
+
+SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                                SDOperand N1, SDOperand N2, SDOperand N3) {
+  SDOperand Ops[] = { N1, N2, N3 };
+  return getNode(Opcode, VTList, Ops, 3);
+}
+
+SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                                SDOperand N1, SDOperand N2, SDOperand N3,
+                                SDOperand N4) {
+  SDOperand Ops[] = { N1, N2, N3, N4 };
+  return getNode(Opcode, VTList, Ops, 4);
+}
+
+SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
+                                SDOperand N1, SDOperand N2, SDOperand N3,
+                                SDOperand N4, SDOperand N5) {
+  SDOperand Ops[] = { N1, N2, N3, N4, N5 };
+  return getNode(Opcode, VTList, Ops, 5);
+}
+
 SDVTList SelectionDAG::getVTList(MVT::ValueType VT) {
   if (!MVT::isExtendedVT(VT))
     return makeVTList(SDNode::getValueTypeList(VT), 1);
