@@ -3705,33 +3705,30 @@ SDOperand X86TargetLowering::LowerSELECT(SDOperand Op, SelectionDAG &DAG) {
   if (Cond.getOpcode() == ISD::SETCC)
     Cond = LowerSETCC(Cond, DAG);
 
+  // If condition flag is set by a X86ISD::CMP, then use it as the condition
+  // setting operand in place of the X86ISD::SETCC.
   if (Cond.getOpcode() == X86ISD::SETCC) {
     CC = Cond.getOperand(0);
 
-    // If condition flag is set by a X86ISD::CMP, then make a copy of it
-    // (since flag operand cannot be shared). Use it as the condition setting
-    // operand in place of the X86ISD::SETCC.
-    // If the X86ISD::SETCC has more than one use, then perhaps it's better
-    // to use a test instead of duplicating the X86ISD::CMP (for register
-    // pressure reason)?
     SDOperand Cmp = Cond.getOperand(1);
     unsigned Opc = Cmp.getOpcode();
-    bool IllegalFPCMov = 
-      ! ((X86ScalarSSEf32 && Op.getValueType()==MVT::f32) ||
-         (X86ScalarSSEf64 && Op.getValueType()==MVT::f64)) &&
-      !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
+    MVT::ValueType VT = Op.getValueType();
+    bool IllegalFPCMov = false;
+    if (VT == MVT::f32 && !X86ScalarSSEf32)
+      IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
+    else if (VT == MVT::f64 && !X86ScalarSSEf64)
+      IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
     if ((Opc == X86ISD::CMP ||
          Opc == X86ISD::COMI ||
          Opc == X86ISD::UCOMI) && !IllegalFPCMov) {
-      Cond = DAG.getNode(Opc, MVT::i32, Cmp.getOperand(0), Cmp.getOperand(1));
+      Cond = Cmp;
       addTest = false;
     }
   }
 
   if (addTest) {
     CC = DAG.getConstant(X86::COND_NE, MVT::i8);
-    Cond = DAG.getNode(X86ISD::CMP, MVT::i32, Cond,
-                       DAG.getConstant(0, MVT::i8));
+    Cond= DAG.getNode(X86ISD::CMP, MVT::i32, Cond, DAG.getConstant(0, MVT::i8));
   }
 
   const MVT::ValueType *VTs = DAG.getNodeValueTypes(Op.getValueType(),
@@ -3756,21 +3753,17 @@ SDOperand X86TargetLowering::LowerBRCOND(SDOperand Op, SelectionDAG &DAG) {
   if (Cond.getOpcode() == ISD::SETCC)
     Cond = LowerSETCC(Cond, DAG);
 
+  // If condition flag is set by a X86ISD::CMP, then use it as the condition
+  // setting operand in place of the X86ISD::SETCC.
   if (Cond.getOpcode() == X86ISD::SETCC) {
     CC = Cond.getOperand(0);
 
-    // If condition flag is set by a X86ISD::CMP, then make a copy of it
-    // (since flag operand cannot be shared). Use it as the condition setting
-    // operand in place of the X86ISD::SETCC.
-    // If the X86ISD::SETCC has more than one use, then perhaps it's better
-    // to use a test instead of duplicating the X86ISD::CMP (for register
-    // pressure reason)?
     SDOperand Cmp = Cond.getOperand(1);
     unsigned Opc = Cmp.getOpcode();
     if (Opc == X86ISD::CMP ||
         Opc == X86ISD::COMI ||
         Opc == X86ISD::UCOMI) {
-      Cond = DAG.getNode(Opc, MVT::i32, Cmp.getOperand(0), Cmp.getOperand(1));
+      Cond = Cmp;
       addTest = false;
     }
   }
