@@ -140,6 +140,10 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   case Type::ObjcInterface:
     assert(0 && "FIXME: add missing functionality here");
     break;
+      
+  case Type::ObjcQualifiedInterface:
+    assert(0 && "FIXME: add missing functionality here");
+    break;
 
   case Type::Tagged:
     const TagType &TT = cast<TagType>(Ty);

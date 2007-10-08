@@ -32,6 +32,7 @@ namespace clang {
   class RecordDecl;
   class EnumDecl;
   class ObjcInterfaceDecl;
+  class ObjcProtocolDecl;
   class Expr;
   class SourceLocation;
   class PointerType;
@@ -204,7 +205,7 @@ public:
     Vector, OCUVector,
     FunctionNoProto, FunctionProto,
     TypeName, Tagged, 
-    ObjcInterface,
+    ObjcInterface, ObjcQualifiedInterface,
     TypeOfExp, TypeOfTyp // GNU typeof extension.
   };
 private:
@@ -831,6 +832,28 @@ public:
   static bool classof(const ObjcInterfaceType *) { return true; }
 };
 
+/// - ObjcQualifiedInterfaceType - This class represense interface types 
+/// conforming to a list of protocols; such as, INTF<Proto1, Proto2, Proto1>.
+class ObjcQualifiedInterfaceType : public Type {
+  // Interface type for this protocol conforming object type
+  ObjcInterfaceType *InterfaceType;
+
+  // List of protocols for this protocol conforming object type
+  // List is sorted on protocol name. No protocol is enterred more than once.
+  llvm::SmallVector<ObjcProtocolDecl*, 8> Protocols;
+
+  ObjcQualifiedInterfaceType(ObjcInterfaceType *T) : 
+    Type(ObjcQualifiedInterface, QualType()), InterfaceType(T) { }
+public:
+  
+  ObjcInterfaceType *getInterfaceType() const { return InterfaceType; }
+
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == ObjcQualifiedInterface; 
+  }
+  static bool classof(const ObjcQualifiedInterfaceType *) { return true; }
+};
+  
 /// RecordType - This is a helper class that allows the use of isa/cast/dyncast
 /// to detect TagType objects of structs/unions/classes.
 class RecordType : public TagType {

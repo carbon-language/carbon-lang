@@ -618,6 +618,12 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
                                         MethodAttrs, MethodImplKind);
 }
 
+/// CmpProtocolVals - Comparison predicate for sorting protocols.
+static bool CmpProtocolVals(const IdentifierInfo* const& lhs,
+                            const IdentifierInfo* const& rhs) {
+  return strcmp(lhs->getName(), rhs->getName()) < 0;
+}
+
 ///   objc-protocol-refs:
 ///     '<' identifier-list '>'
 ///
@@ -640,6 +646,15 @@ bool Parser::ParseObjCProtocolReferences(
       break;
     ConsumeToken();
   }
+  
+  // Sort protocols, keyed by name.
+  // Later on, we remove duplicates.
+  std::stable_sort(ProtocolRefs.begin(), ProtocolRefs.end(), CmpProtocolVals);
+  
+  // Make protocol names unique.
+  ProtocolRefs.erase(std::unique(ProtocolRefs.begin(), ProtocolRefs.end()), 
+                     ProtocolRefs.end());
+
   // Consume the '>'.
   return ExpectAndConsume(tok::greater, diag::err_expected_greater);
 }

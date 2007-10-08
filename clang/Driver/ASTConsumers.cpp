@@ -74,8 +74,26 @@ static void PrintTypeDefDecl(TypedefDecl *TD) {
 }
 
 static void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
-  std::string S = OID->getName();
-  fprintf(stderr, "@interface %s;\n", S.c_str());
+  std::string I = OID->getName();
+  ObjcInterfaceDecl *SID = OID->getSuperClass();
+  if (SID) {
+    std::string S = SID->getName();
+    fprintf(stderr, "@interface %s : %s", I.c_str(), S.c_str());
+  }
+  else
+    fprintf(stderr, "@interface %s", I.c_str());
+  // Protocols?
+  int count = OID->getNumIntfRefProtocols();
+  if (count > 0) {
+    ObjcProtocolDecl **refProtocols = OID->getReferencedProtocols();
+    for (int i = 0; i < count; i++)
+      fprintf(stderr, "%c%s", (i == 0 ? '<' : ','), 
+              refProtocols[i]->getName());
+  }
+  if (count > 0)
+    fprintf(stderr, ">;\n");
+  else
+    fprintf(stderr, ";\n");
   // FIXME: implement the rest...
 }
 
