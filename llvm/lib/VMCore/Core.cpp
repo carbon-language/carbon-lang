@@ -563,8 +563,6 @@ void LLVMSetThreadLocal(LLVMValueRef GlobalVar, int IsThreadLocal) {
 
 int LLVMIsGlobalConstant(LLVMValueRef GlobalVar) {
   bool res = unwrap<GlobalVariable>(GlobalVar)->isConstant();
-  fprintf(stderr, "LLVMIsConstantGlobal(0x%08x) = %s\n",
-                  (int) GlobalVar, res? "YES" : "NO");
   return unwrap<GlobalVariable>(GlobalVar)->isConstant();
 }
 
