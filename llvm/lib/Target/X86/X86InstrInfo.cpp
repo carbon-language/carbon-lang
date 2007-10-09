@@ -271,12 +271,14 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     if (hasLiveCondCodeDef(MI))
       return 0;
 
+    bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
     switch (MIOpc) {
     default: return 0;
     case X86::INC64r:
     case X86::INC32r: {
       assert(MI->getNumOperands() >= 2 && "Unknown inc instruction!");
-      unsigned Opc = MIOpc == X86::INC64r ? X86::LEA64r : X86::LEA32r;
+      unsigned Opc = MIOpc == X86::INC64r ? X86::LEA64r
+        : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
       NewMI = addRegOffset(BuildMI(get(Opc), Dest), Src, 1);
       break;
     }
@@ -289,7 +291,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::DEC64r:
     case X86::DEC32r: {
       assert(MI->getNumOperands() >= 2 && "Unknown dec instruction!");
-      unsigned Opc = MIOpc == X86::DEC64r ? X86::LEA64r : X86::LEA32r;
+      unsigned Opc = MIOpc == X86::DEC64r ? X86::LEA64r
+        : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
       NewMI = addRegOffset(BuildMI(get(Opc), Dest), Src, -1);
       break;
     }
@@ -302,7 +305,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::ADD64rr:
     case X86::ADD32rr: {
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      unsigned Opc = MIOpc == X86::ADD64rr ? X86::LEA64r : X86::LEA32r;
+      unsigned Opc = MIOpc == X86::ADD64rr ? X86::LEA64r
+        : (is64Bit ? X86::LEA64_32r : X86::LEA32r);
       NewMI = addRegReg(BuildMI(get(Opc), Dest), Src,
                         MI->getOperand(2).getReg());
       break;
@@ -323,9 +327,11 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::ADD32ri:
     case X86::ADD32ri8:
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
-      if (MI->getOperand(2).isImmediate())
-        NewMI = addRegOffset(BuildMI(get(X86::LEA32r), Dest), Src,
+      if (MI->getOperand(2).isImmediate()) {
+        unsigned Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
+        NewMI = addRegOffset(BuildMI(get(Opc), Dest), Src,
                              MI->getOperand(2).getImmedValue());
+      }
       break;
     case X86::ADD16ri:
     case X86::ADD16ri8:
@@ -347,7 +353,8 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
         AM.Scale = 1 << ShAmt;
         AM.IndexReg = Src;
         unsigned Opc = MIOpc == X86::SHL64ri ? X86::LEA64r
-          : (MIOpc == X86::SHL32ri ? X86::LEA32r : X86::LEA16r);
+          : (MIOpc == X86::SHL32ri
+             ? (is64Bit ? X86::LEA64_32r : X86::LEA32r) : X86::LEA16r);
         NewMI = addFullAddress(BuildMI(get(Opc), Dest), AM);
       }
       break;
