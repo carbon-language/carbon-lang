@@ -42,8 +42,8 @@ public:
            ObjcCategory,
            ObjcCategoryImpl,
            ObjcImplementation,
+           ObjcProtocol,
     //     ScopedDecl
-             ObjcProtocol,
     //       TypeDecl
                ObjcInterface,
                Typedef,
@@ -68,7 +68,7 @@ public:
     // of the class, to allow efficient classof.
     NamedFirst  = Field,         NamedLast  = ParmVar,
     FieldFirst  = Field,         FieldLast  = ObjcIvar,
-    ScopedFirst = ObjcProtocol,  ScopedLast = ParmVar,
+    ScopedFirst = ObjcInterface, ScopedLast = ParmVar,
     TypeFirst   = ObjcInterface, TypeLast   = Class,
     TagFirst    = Enum         , TagLast    = Class,
     RecordFirst = Struct       , RecordLast = Class,

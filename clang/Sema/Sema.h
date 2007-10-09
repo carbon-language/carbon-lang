@@ -89,7 +89,7 @@ class Sema : public Action {
   
   /// ObjcProtocols - Keep track of all protocol declarations declared
   /// with @protocol keyword, so that we can emit errors on duplicates and
-  /// find the declarations when needded.
+  /// find the declarations when needed.
   llvm::DenseMap<IdentifierInfo*, ObjcProtocolDecl*> ObjcProtocols;
   
   // Enum values used by KnownFunctionIDs (see below).
