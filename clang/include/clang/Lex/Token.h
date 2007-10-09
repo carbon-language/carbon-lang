@@ -52,6 +52,11 @@ public:
 
   tok::TokenKind getKind() const { return Kind; }
   void setKind(tok::TokenKind K) { Kind = K; }
+  
+  /// is/isNot - Predicates to check if this token is a specific kind, as in
+  /// "if (Tok.is(tok::l_brace)) {...}".
+  bool is(tok::TokenKind K) const { return Kind == K; }
+  bool isNot(tok::TokenKind K) const { return Kind != K; }
 
   /// getLocation - Return a source location identifier for the specified
   /// offset in the current file.

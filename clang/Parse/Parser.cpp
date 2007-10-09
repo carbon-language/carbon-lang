@@ -43,7 +43,7 @@ void Parser::Diag(SourceLocation Loc, unsigned DiagID,
 SourceLocation Parser::MatchRHSPunctuation(tok::TokenKind RHSTok,
                                            SourceLocation LHSLoc) {
   
-  if (Tok.getKind() == RHSTok)
+  if (Tok.is(RHSTok))
     return ConsumeAnyToken();
     
   SourceLocation R = Tok.getLocation();
@@ -70,7 +70,7 @@ SourceLocation Parser::MatchRHSPunctuation(tok::TokenKind RHSTok,
 /// returned.
 bool Parser::ExpectAndConsume(tok::TokenKind ExpectedTok, unsigned DiagID,
                               const char *Msg, tok::TokenKind SkipToTok) {
-  if (Tok.getKind() == ExpectedTok) {
+  if (Tok.is(ExpectedTok)) {
     ConsumeAnyToken();
     return false;
   }
@@ -101,7 +101,7 @@ bool Parser::SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
   while (1) {
     // If we found one of the tokens, stop and return true.
     for (unsigned i = 0; i != NumToks; ++i) {
-      if (Tok.getKind() == Toks[i]) {
+      if (Tok.is(Toks[i])) {
         if (DontConsume) {
           // Noop, don't consume the token.
         } else {
@@ -246,7 +246,7 @@ void Parser::Initialize() {
     Actions.ActOnDeclarator(CurScope, D, 0);
   }
   
-  if (Tok.getKind() == tok::eof &&
+  if (Tok.is(tok::eof) &&
       !getLang().CPlusPlus)  // Empty source file is an extension in C
     Diag(Tok, diag::ext_empty_source_file);
   
@@ -278,7 +278,7 @@ void Parser::Initialize() {
 /// action tells us to.  This returns true if the EOF was encountered.
 bool Parser::ParseTopLevelDecl(DeclTy*& Result) {
   Result = 0;
-  if (Tok.getKind() == tok::eof) return true;
+  if (Tok.is(tok::eof)) return true;
   
   Result = ParseExternalDeclaration();
   return false;
@@ -390,13 +390,13 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
 
   // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
   // declaration-specifiers init-declarator-list[opt] ';'
-  if (Tok.getKind() == tok::semi) {
+  if (Tok.is(tok::semi)) {
     ConsumeToken();
     return Actions.ParsedFreeStandingDeclSpec(CurScope, DS);
   }
   
   // ObjC2 allows prefix attributes on class interfaces.
-  if (getLang().ObjC2 && Tok.getKind() == tok::at) {
+  if (getLang().ObjC2 && Tok.is(tok::at)) {
     SourceLocation AtLoc = ConsumeToken(); // the "@"
     if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_interface)
       return ParseObjCAtInterfaceDeclaration(AtLoc, DS.getAttributes()); 
@@ -409,20 +409,20 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
   if (DeclaratorInfo.getIdentifier() == 0) {
     // If so, skip until the semi-colon or a }.
     SkipUntil(tok::r_brace, true);
-    if (Tok.getKind() == tok::semi)
+    if (Tok.is(tok::semi))
       ConsumeToken();
     return 0;
   }
 
   // If the declarator is the start of a function definition, handle it.
-  if (Tok.getKind() == tok::equal ||  // int X()=  -> not a function def
-      Tok.getKind() == tok::comma ||  // int X(),  -> not a function def
-      Tok.getKind() == tok::semi  ||  // int X();  -> not a function def
-      Tok.getKind() == tok::kw_asm || // int X() __asm__ -> not a fn def
-      Tok.getKind() == tok::kw___attribute) {// int X() __attr__ -> not a fn def
+  if (Tok.is(tok::equal) ||           // int X()=  -> not a function def
+      Tok.is(tok::comma) ||           // int X(),  -> not a function def
+      Tok.is(tok::semi)  ||           // int X();  -> not a function def
+      Tok.is(tok::kw_asm) ||          // int X() __asm__ -> not a function def
+      Tok.is(tok::kw___attribute)) {  // int X() __attr__ -> not a function def
     // FALL THROUGH.
   } else if (DeclaratorInfo.isFunctionDeclarator() &&
-             (Tok.getKind() == tok::l_brace ||  // int X() {}
+             (Tok.is(tok::l_brace) ||           // int X() {}
               isDeclarationSpecifier())) {      // int X(f) int f; {}
     return ParseFunctionDefinition(DeclaratorInfo);
   } else {
@@ -458,14 +458,14 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
     ParseKNRParamDeclarations(D);
 
   // We should have an opening brace now.
-  if (Tok.getKind() != tok::l_brace) {
+  if (Tok.isNot(tok::l_brace)) {
     Diag(Tok, diag::err_expected_fn_body);
 
     // Skip over garbage, until we get to '{'.  Don't eat the '{'.
     SkipUntil(tok::l_brace, true, true);
     
     // If we didn't find the '{', bail out.
-    if (Tok.getKind() != tok::l_brace)
+    if (Tok.isNot(tok::l_brace))
       return 0;
   }
   
@@ -514,7 +514,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
     // NOTE: GCC just makes this an ext-warn.  It's not clear what it does with
     // the declarations though.  It's trivial to ignore them, really hard to do
     // anything else with them.
-    if (Tok.getKind() == tok::semi) {
+    if (Tok.is(tok::semi)) {
       Diag(DSStart, diag::err_declaration_does_not_declare_param);
       ConsumeToken();
       continue;
@@ -542,7 +542,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
     while (1) {
       DeclTy *AttrList;
       // If attributes are present, parse them.
-      if (Tok.getKind() == tok::kw___attribute)
+      if (Tok.is(tok::kw___attribute))
         // FIXME: attach attributes too.
         AttrList = ParseAttributes();
       
@@ -581,7 +581,7 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
 
       // If we don't have a comma, it is either the end of the list (a ';') or
       // an error, bail out.
-      if (Tok.getKind() != tok::comma)
+      if (Tok.isNot(tok::comma))
         break;
       
       // Consume the comma.
@@ -592,13 +592,13 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
       ParseDeclarator(ParmDeclarator);
     }
     
-    if (Tok.getKind() == tok::semi) {
+    if (Tok.is(tok::semi)) {
       ConsumeToken();
     } else {
       Diag(Tok, diag::err_parse_error);
       // Skip to end of block or statement
       SkipUntil(tok::semi, true);
-      if (Tok.getKind() == tok::semi)
+      if (Tok.is(tok::semi))
         ConsumeToken();
     }
   }
@@ -631,10 +631,10 @@ void Parser::ParseAsmStringLiteral() {
 ///         'asm' '(' asm-string-literal ')'
 ///
 void Parser::ParseSimpleAsm() {
-  assert(Tok.getKind() == tok::kw_asm && "Not an asm!");
+  assert(Tok.is(tok::kw_asm) && "Not an asm!");
   ConsumeToken();
   
-  if (Tok.getKind() != tok::l_paren) {
+  if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after, "asm");
     return;
   }
