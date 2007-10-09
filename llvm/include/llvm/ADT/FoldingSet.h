@@ -18,10 +18,10 @@
 
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/APFloat.h"
 #include <string>
 
 namespace llvm {
+  class APFloat;
 
 /// This folding set used for two purposes:
 ///   1. Given information about a node we want to create, look up the unique

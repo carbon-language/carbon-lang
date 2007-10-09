@@ -15,6 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/APFloat.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 using namespace llvm;
