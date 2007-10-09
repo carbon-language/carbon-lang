@@ -73,6 +73,8 @@ Preprocessor::Preprocessor(Diagnostic &diags, const LangOptions &opts,
   // This gets unpoisoned where it is allowed.
   (Ident__VA_ARGS__ = getIdentifierInfo("__VA_ARGS__"))->setIsPoisoned();
   
+  Predefines = 0;
+  
   // Initialize the pragma handlers.
   PragmaHandlers = new PragmaNamespace(0);
   RegisterBuiltinPragmas();
@@ -311,6 +313,127 @@ SourceLocation Preprocessor::AdvanceToTokenCharacter(SourceLocation TokStart,
 }
 
 
+//===----------------------------------------------------------------------===//
+// Preprocessor Initialization Methods
+//===----------------------------------------------------------------------===//
+
+// Append a #define line to Buf for Macro.  Macro should be of the form XXX,
+// in which case we emit "#define XXX 1" or "XXX=Y z W" in which case we emit
+// "#define XXX Y z W".  To get a #define with no value, use "XXX=".
+static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
+                               const char *Command = "#define ") {
+  Buf.insert(Buf.end(), Command, Command+strlen(Command));
+  if (const char *Equal = strchr(Macro, '=')) {
+    // Turn the = into ' '.
+    Buf.insert(Buf.end(), Macro, Equal);
+    Buf.push_back(' ');
+    Buf.insert(Buf.end(), Equal+1, Equal+strlen(Equal));
+  } else {
+    // Push "macroname 1".
+    Buf.insert(Buf.end(), Macro, Macro+strlen(Macro));
+    Buf.push_back(' ');
+    Buf.push_back('1');
+  }
+  Buf.push_back('\n');
+}
+
+
+static void InitializePredefinedMacros(Preprocessor &PP, 
+                                       std::vector<char> &Buf) {
+  // FIXME: Implement magic like cpp_init_builtins for things like __STDC__
+  // and __DATE__ etc.
+#if 0
+  /* __STDC__ has the value 1 under normal circumstances.
+  However, if (a) we are in a system header, (b) the option
+  stdc_0_in_system_headers is true (set by target config), and
+  (c) we are not in strictly conforming mode, then it has the
+  value 0.  (b) and (c) are already checked in cpp_init_builtins.  */
+  //case BT_STDC:
+  if (cpp_in_system_header (pfile))
+    number = 0;
+  else
+    number = 1;
+  break;
+#endif    
+  // These should all be defined in the preprocessor according to the
+  // current language configuration.
+  DefineBuiltinMacro(Buf, "__STDC__=1");
+  //DefineBuiltinMacro(Buf, "__ASSEMBLER__=1");
+  if (PP.getLangOptions().C99 && !PP.getLangOptions().CPlusPlus)
+    DefineBuiltinMacro(Buf, "__STDC_VERSION__=199901L");
+  else if (0) // STDC94 ?
+    DefineBuiltinMacro(Buf, "__STDC_VERSION__=199409L");
+  
+  DefineBuiltinMacro(Buf, "__STDC_HOSTED__=1");
+  if (PP.getLangOptions().ObjC1)
+    DefineBuiltinMacro(Buf, "__OBJC__=1");
+  if (PP.getLangOptions().ObjC2)
+    DefineBuiltinMacro(Buf, "__OBJC2__=1");
+  
+  // Get the target #defines.
+  PP.getTargetInfo().getTargetDefines(Buf);
+  
+  // Compiler set macros.
+  DefineBuiltinMacro(Buf, "__APPLE_CC__=5250");
+  DefineBuiltinMacro(Buf, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1030");
+  DefineBuiltinMacro(Buf, "__GNUC_MINOR__=0");
+  DefineBuiltinMacro(Buf, "__GNUC_PATCHLEVEL__=1");
+  DefineBuiltinMacro(Buf, "__GNUC__=4");
+  DefineBuiltinMacro(Buf, "__GXX_ABI_VERSION=1002");
+  DefineBuiltinMacro(Buf, "__VERSION__=\"4.0.1 (Apple Computer, Inc. "
+                     "build 5250)\"");
+  
+  // Build configuration options.
+  DefineBuiltinMacro(Buf, "__DYNAMIC__=1");
+  DefineBuiltinMacro(Buf, "__FINITE_MATH_ONLY__=0");
+  DefineBuiltinMacro(Buf, "__NO_INLINE__=1");
+  DefineBuiltinMacro(Buf, "__PIC__=1");
+  
+  
+  if (PP.getLangOptions().CPlusPlus) {
+    DefineBuiltinMacro(Buf, "__DEPRECATED=1");
+    DefineBuiltinMacro(Buf, "__EXCEPTIONS=1");
+    DefineBuiltinMacro(Buf, "__GNUG__=4");
+    DefineBuiltinMacro(Buf, "__GXX_WEAK__=1");
+    DefineBuiltinMacro(Buf, "__cplusplus=1");
+    DefineBuiltinMacro(Buf, "__private_extern__=extern");
+  }
+  
+  // FIXME: Should emit a #line directive here.
+}
+
+
+/// EnterMainSourceFile - Enter the specified FileID as the main source file,
+/// which implicitly adds the builting defines etc.
+void Preprocessor::EnterMainSourceFile(unsigned MainFileID) {
+  // Enter the main file source buffer.
+  EnterSourceFile(MainFileID, 0);
+  
+  
+  std::vector<char> PrologFile;
+  PrologFile.reserve(4080);
+  
+  // Install things like __POWERPC__, __GNUC__, etc into the macro table.
+  InitializePredefinedMacros(*this, PrologFile);
+  
+  // Add on the predefines from the driver.
+  PrologFile.insert(PrologFile.end(), Predefines,Predefines+strlen(Predefines));
+  
+  // Memory buffer must end with a null byte!
+  PrologFile.push_back(0);
+
+  // Now that we have emitted the predefined macros, #includes, etc into
+  // PrologFile, preprocess it to populate the initial preprocessor state.
+  llvm::MemoryBuffer *SB = 
+    llvm::MemoryBuffer::getMemBufferCopy(&PrologFile.front(),&PrologFile.back(),
+                                         "<predefines>");
+  assert(SB && "Cannot fail to create predefined source buffer");
+  unsigned FileID = SourceMgr.createFileIDForMemBuffer(SB);
+  assert(FileID && "Could not create FileID for predefines?");
+  
+  // Start parsing the predefines.
+  EnterSourceFile(FileID, 0);
+}
 
 //===----------------------------------------------------------------------===//
 // Source File Location Methods.
@@ -367,14 +490,17 @@ const FileEntry *Preprocessor::LookupFile(const char *FilenameStart,
 /// #include.
 bool Preprocessor::isInPrimaryFile() const {
   if (CurLexer && !CurLexer->Is_PragmaLexer)
-    return CurLexer->isMainFile();
+    return IncludeMacroStack.empty();
   
   // If there are any stacked lexers, we're in a #include.
-  for (unsigned i = 0, e = IncludeMacroStack.size(); i != e; ++i)
+  assert(IncludeMacroStack[0].TheLexer &&
+         !IncludeMacroStack[0].TheLexer->Is_PragmaLexer &&
+         "Top level include stack isn't our primary lexer?");
+  for (unsigned i = 1, e = IncludeMacroStack.size(); i != e; ++i)
     if (IncludeMacroStack[i].TheLexer &&
         !IncludeMacroStack[i].TheLexer->Is_PragmaLexer)
-      return IncludeMacroStack[i].TheLexer->isMainFile();
-  return false;
+      return false;
+  return true;
 }
 
 /// getCurrentLexer - Return the current file lexer being lexed from.  Note
@@ -397,8 +523,7 @@ Lexer *Preprocessor::getCurrentFileLexer() const {
 /// start lexing tokens from it instead of the current buffer.  Return true
 /// on failure.
 void Preprocessor::EnterSourceFile(unsigned FileID,
-                                   const DirectoryLookup *CurDir,
-                                   bool isMainFile) {
+                                   const DirectoryLookup *CurDir) {
   assert(CurMacroExpander == 0 && "Cannot #include a file inside a macro!");
   ++NumEnteredSourceFiles;
   
@@ -406,7 +531,6 @@ void Preprocessor::EnterSourceFile(unsigned FileID,
     MaxIncludeStackDepth = IncludeMacroStack.size();
 
   Lexer *TheLexer = new Lexer(SourceLocation::getFileLoc(FileID, 0), *this);
-  if (isMainFile) TheLexer->setIsMainFile();
   EnterSourceFileWithLexer(TheLexer, CurDir);
 }  
   

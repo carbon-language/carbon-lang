@@ -65,7 +65,6 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
   const llvm::MemoryBuffer *InputFile = SourceMgr.getBuffer(InputFileID);
       
   Is_PragmaLexer = false;
-  IsMainFile = false;
   InitCharacterInfo();
   
   // BufferStart must always be InputFile->getBufferStart().

@@ -534,7 +534,7 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
   // After we have configured the preprocessor, enter the main file.
   
   // Start parsing the specified input file.
-  PP.EnterSourceFile(MainFileID, 0, true);
+  PP.EnterMainSourceFile(MainFileID);
   
   do {
     PrevTok = Tok;

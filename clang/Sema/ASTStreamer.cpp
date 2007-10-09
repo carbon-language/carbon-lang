@@ -28,7 +28,7 @@ namespace {
   public:
     ASTStreamer(Preprocessor &pp, ASTContext &ctxt, unsigned MainFileID)
       : P(pp, *new Sema(pp, ctxt, LastInGroupList)) {
-      pp.EnterSourceFile(MainFileID, 0, true);
+      pp.EnterMainSourceFile(MainFileID);
       
       // Initialize the parser.
       P.Initialize();

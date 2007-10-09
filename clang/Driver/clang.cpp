@@ -394,76 +394,56 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
   Buf.push_back('\n');
 }
 
-static void InitializePredefinedMacros(Preprocessor &PP, 
-                                       std::vector<char> &Buf) {
-  // FIXME: Implement magic like cpp_init_builtins for things like __STDC__
-  // and __DATE__ etc.
-#if 0
-  /* __STDC__ has the value 1 under normal circumstances.
-  However, if (a) we are in a system header, (b) the option
-  stdc_0_in_system_headers is true (set by target config), and
-  (c) we are not in strictly conforming mode, then it has the
-  value 0.  (b) and (c) are already checked in cpp_init_builtins.  */
-  //case BT_STDC:
-    if (cpp_in_system_header (pfile))
-      number = 0;
-    else
-      number = 1;
-    break;
-#endif    
-  // These should all be defined in the preprocessor according to the
-  // current language configuration.
-  DefineBuiltinMacro(Buf, "__STDC__=1");
-  //DefineBuiltinMacro(Buf, "__ASSEMBLER__=1");
-  if (PP.getLangOptions().C99 && !PP.getLangOptions().CPlusPlus)
-    DefineBuiltinMacro(Buf, "__STDC_VERSION__=199901L");
-  else if (0) // STDC94 ?
-    DefineBuiltinMacro(Buf, "__STDC_VERSION__=199409L");
-  
-  DefineBuiltinMacro(Buf, "__STDC_HOSTED__=1");
-  if (PP.getLangOptions().ObjC1)
-    DefineBuiltinMacro(Buf, "__OBJC__=1");
-  if (PP.getLangOptions().ObjC2)
-    DefineBuiltinMacro(Buf, "__OBJC2__=1");
 
-  // Get the target #defines.
-  PP.getTargetInfo().getTargetDefines(Buf);
+/// InitializePreprocessor - Initialize the preprocessor getting it and the
+/// environment ready to process a single file. This returns the file ID for the
+/// input file. If a failure happens, it returns 0.
+///
+static unsigned InitializePreprocessor(Preprocessor &PP,
+                                       const std::string &InFile,
+                                       SourceManager &SourceMgr,
+                                       HeaderSearch &HeaderInfo,
+                                       const LangOptions &LangInfo,
+                                       std::vector<char> &PredefineBuffer) {
   
-  // Compiler set macros.
-  DefineBuiltinMacro(Buf, "__APPLE_CC__=5250");
-  DefineBuiltinMacro(Buf, "__ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__=1030");
-  DefineBuiltinMacro(Buf, "__GNUC_MINOR__=0");
-  DefineBuiltinMacro(Buf, "__GNUC_PATCHLEVEL__=1");
-  DefineBuiltinMacro(Buf, "__GNUC__=4");
-  DefineBuiltinMacro(Buf, "__GXX_ABI_VERSION=1002");
-  DefineBuiltinMacro(Buf, "__VERSION__=\"4.0.1 (Apple Computer, Inc. "
-                     "build 5250)\"");
-
-  // Build configuration options.
-  DefineBuiltinMacro(Buf, "__DYNAMIC__=1");
-  DefineBuiltinMacro(Buf, "__FINITE_MATH_ONLY__=0");
-  DefineBuiltinMacro(Buf, "__NO_INLINE__=1");
-  DefineBuiltinMacro(Buf, "__PIC__=1");
-
+  FileManager &FileMgr = HeaderInfo.getFileMgr();
   
-  if (PP.getLangOptions().CPlusPlus) {
-    DefineBuiltinMacro(Buf, "__DEPRECATED=1");
-    DefineBuiltinMacro(Buf, "__EXCEPTIONS=1");
-    DefineBuiltinMacro(Buf, "__GNUG__=4");
-    DefineBuiltinMacro(Buf, "__GXX_WEAK__=1");
-    DefineBuiltinMacro(Buf, "__cplusplus=1");
-    DefineBuiltinMacro(Buf, "__private_extern__=extern");
+  // Figure out where to get and map in the main file.
+  unsigned MainFileID = 0;
+  if (InFile != "-") {
+    const FileEntry *File = FileMgr.getFile(InFile);
+    if (File) MainFileID = SourceMgr.createFileID(File, SourceLocation());
+    if (MainFileID == 0) {
+      fprintf(stderr, "Error reading '%s'!\n",InFile.c_str());
+      return 0;
+    }
+  } else {
+    llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
+    if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
+    if (MainFileID == 0) {
+      fprintf(stderr, "Error reading standard input!  Empty?\n");
+      return 0;
+    }
   }
   
-  // FIXME: Should emit a #line directive here.
-
   // Add macros from the command line.
   // FIXME: Should traverse the #define/#undef lists in parallel.
   for (unsigned i = 0, e = D_macros.size(); i != e; ++i)
-    DefineBuiltinMacro(Buf, D_macros[i].c_str());
+    DefineBuiltinMacro(PredefineBuffer, D_macros[i].c_str());
   for (unsigned i = 0, e = U_macros.size(); i != e; ++i)
-    DefineBuiltinMacro(Buf, U_macros[i].c_str(), "#undef ");
+    DefineBuiltinMacro(PredefineBuffer, U_macros[i].c_str(), "#undef ");
+  
+  // FIXME: Read any files specified by -imacros or -include.
+  
+  // Null terminate PredefinedBuffer and add it.
+  PredefineBuffer.push_back(0);
+  PP.setPredefines(&PredefineBuffer[0]);
+  
+  // Once we've read this, we're done.
+  return MainFileID;
 }
+ 
+ 
 
 //===----------------------------------------------------------------------===//
 // Preprocessor include path information.
@@ -712,18 +692,13 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
 }
 
 
-// Read any files specified by -imacros or -include.
-static void ReadPrologFiles(Preprocessor &PP, std::vector<char> &Buf) {
-  // FIXME: IMPLEMENT
-}
-
 //===----------------------------------------------------------------------===//
 // Basic Parser driver
 //===----------------------------------------------------------------------===//
 
 static void ParseFile(Preprocessor &PP, MinimalAction *PA, unsigned MainFileID){
   Parser P(PP, *PA);
-  PP.EnterSourceFile(MainFileID, 0, true);
+  PP.EnterMainSourceFile(MainFileID);
   
   // Parsing the specified input file.
   P.ParseTranslationUnit();
@@ -733,69 +708,6 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA, unsigned MainFileID){
 //===----------------------------------------------------------------------===//
 // Main driver
 //===----------------------------------------------------------------------===//
-
-/// InitializePreprocessor - Initialize the preprocessor getting it and the
-/// environment ready to process a single file. This returns the file ID for the
-/// input file. If a failure happens, it returns 0.
-///
-static unsigned InitializePreprocessor(Preprocessor &PP,
-                                       const std::string &InFile,
-                                       SourceManager &SourceMgr,
-                                       HeaderSearch &HeaderInfo,
-                                       const LangOptions &LangInfo,
-                                       std::vector<char> &PrologMacros) {
-  PrologMacros.reserve(4080);
-  
-  FileManager &FileMgr = HeaderInfo.getFileMgr();
-  
-  // Install things like __POWERPC__, __GNUC__, etc into the macro table.
-  InitializePredefinedMacros(PP, PrologMacros);
-  
-  // Read any files specified by -imacros or -include.
-  ReadPrologFiles(PP, PrologMacros);
-  
-  // Figure out where to get and map in the main file.
-  unsigned MainFileID = 0;
-  if (InFile != "-") {
-    const FileEntry *File = FileMgr.getFile(InFile);
-    if (File) MainFileID = SourceMgr.createFileID(File, SourceLocation());
-    if (MainFileID == 0) {
-      fprintf(stderr, "Error reading '%s'!\n",InFile.c_str());
-      return 0;
-    }
-  } else {
-    llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
-    if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
-    if (MainFileID == 0) {
-      fprintf(stderr, "Error reading standard input!  Empty?\n");
-      return 0;
-    }
-  }
-  
-  // Now that we have emitted the predefined macros, #includes, etc into
-  // PrologMacros, preprocess it to populate the initial preprocessor state.
-
-  // Memory buffer must end with a null byte!
-  PrologMacros.push_back(0);
-
-  llvm::MemoryBuffer *SB = 
-    llvm::MemoryBuffer::getMemBuffer(&PrologMacros.front(),&PrologMacros.back(),
-                                     "<predefines>");
-  assert(SB && "Cannot fail to create predefined source buffer");
-  unsigned FileID = SourceMgr.createFileIDForMemBuffer(SB);
-  assert(FileID && "Could not create FileID for predefines?");
-
-  // Start parsing the predefines.
-  PP.EnterSourceFile(FileID, 0);
-
-  // Lex the file, which will read all the macros.
-  Token Tok;
-  PP.Lex(Tok);
-  assert(Tok.is(tok::eof) && "Didn't read entire file!");
-
-  // Once we've read this, we're done.
-  return MainFileID;
-}
 
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
@@ -816,7 +728,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   case DumpTokens: {                 // Token dump mode.
     Token Tok;
     // Start parsing the specified input file.
-    PP.EnterSourceFile(MainFileID, 0, true);
+    PP.EnterMainSourceFile(MainFileID);
     do {
       PP.Lex(Tok);
       PP.DumpToken(Tok, true);
@@ -828,7 +740,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   case RunPreprocessorOnly: {        // Just lex as fast as we can, no output.
     Token Tok;
     // Start parsing the specified input file.
-    PP.EnterSourceFile(MainFileID, 0, true);
+    PP.EnterMainSourceFile(MainFileID);
     do {
       PP.Lex(Tok);
     } while (Tok.isNot(tok::eof));
@@ -982,10 +894,10 @@ int main(int argc, char **argv) {
     Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
     DiagClient->setPreprocessor(PP);
     const std::string &InFile = InputFilenames[i];
-    std::vector<char> PrologMacros;
+    std::vector<char> PredefineBuffer;
     unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,
                                                  HeaderInfo, LangInfo,
-                                                 PrologMacros);
+                                                 PredefineBuffer);
     
     if (!MainFileID) continue;
 

@@ -91,7 +91,7 @@ static void FindExpectedDiags(Preprocessor &PP, unsigned MainFileID,
   PP.SetCommentRetentionState(true, true);
 
   // Enter the cave.
-  PP.EnterSourceFile(MainFileID, 0, true);
+  PP.EnterMainSourceFile(MainFileID);
 
   // Turn off all warnings from relexing or preprocessing.
   PP.getDiagnostics().setWarnOnExtensions(false);

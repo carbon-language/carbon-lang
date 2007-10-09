@@ -129,6 +129,10 @@ class Preprocessor {
   unsigned NumFastMacroExpanded, NumTokenPaste, NumFastTokenPaste;
   unsigned NumSkipped;
   
+  /// Predefines - This pointer, if non-null, are the predefined macros that 
+  /// preprocessor should use from the command line etc.
+  const char *Predefines;
+  
   /// MacroExpanderCache - Cache macro expanders to reduce malloc traffic.
   enum { MacroExpanderCacheSize = 8 };
   unsigned NumCachedMacroExpanders;
@@ -163,10 +167,6 @@ public:
     return CurLexer == L;
   }
   
-  /// isInPrimaryFile - Return true if we're in the top-level file, not in a
-  /// #include.
-  bool isInPrimaryFile() const;
-  
   /// getCurrentLexer - Return the current file lexer being lexed from.  Note
   /// that this ignores any potentially active macro expansions and _Pragma
   /// expansions going on at the time.
@@ -189,6 +189,10 @@ public:
   ///
   void setMacroInfo(IdentifierInfo *II, MacroInfo *MI);
   
+  void setPredefines(const char *P) {
+    Predefines = P;
+  }
+  
   /// getIdentifierInfo - Return information about the specified preprocessor
   /// identifier token.  The version of this method that takes two character
   /// pointers is preferred unless the identifier is already available as a
@@ -207,11 +211,15 @@ public:
   /// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
   void AddPragmaHandler(const char *Namespace, PragmaHandler *Handler);
 
+  /// EnterMainSourceFile - Enter the specified FileID as the main source file,
+  /// which implicitly adds the builting defines etc.
+  void EnterMainSourceFile(unsigned CurFileID);
+  
+  
   /// EnterSourceFile - Add a source file to the top of the include stack and
   /// start lexing tokens from it instead of the current buffer.  If isMainFile
   /// is true, this is the main file for the translation unit.
-  void EnterSourceFile(unsigned CurFileID, const DirectoryLookup *Dir,
-                       bool isMainFile = false);
+  void EnterSourceFile(unsigned CurFileID, const DirectoryLookup *Dir);
 
   /// EnterMacro - Add a Macro to the top of the include stack and start lexing
   /// tokens from it instead of the current buffer.  Args specifies the
@@ -358,7 +366,10 @@ public:
   /// not, emit a diagnostic and consume up until the eom.
   void CheckEndOfDirective(const char *Directive);
 private:
-
+  /// isInPrimaryFile - Return true if we're in the top-level file, not in a
+  /// #include.
+  bool isInPrimaryFile() const;
+  
   /// DiscardUntilEndOfDirective - Read and discard all tokens remaining on the
   /// current line until the tok::eom token is found.
   void DiscardUntilEndOfDirective();

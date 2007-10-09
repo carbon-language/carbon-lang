@@ -39,7 +39,6 @@ class Lexer {
   Preprocessor &PP;              // Preprocessor object controlling lexing.
   LangOptions Features;          // Features enabled by this language (cache).
   bool Is_PragmaLexer;           // True if lexer for _Pragma handling.
-  bool IsMainFile;               // True if top-level file.
   
   //===--------------------------------------------------------------------===//
   // Context-specific lexing flags set by the preprocessor.
@@ -111,16 +110,6 @@ public:
   /// the virtual location encodes where we should *claim* the characters came
   /// from.  Currently this is only used by _Pragma handling.
   SourceLocation getFileLoc() const { return FileLoc; }
-  
-  /// setIsMainFile - Mark this lexer as being the lexer for the top-level
-  /// source file.
-  void setIsMainFile() {
-    IsMainFile = true;
-  }
-  
-  /// isMainFile - Return true if this is the top-level file.
-  ///
-  bool isMainFile() const { return IsMainFile; }
   
   /// Lex - Return the next token in the file.  If this is the end of file, it
   /// return the tok::eof token.  Return true if an error occurred and
