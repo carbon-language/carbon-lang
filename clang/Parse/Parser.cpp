@@ -189,8 +189,10 @@ void Parser::EnterScope(unsigned ScopeFlags) {
 void Parser::ExitScope() {
   assert(CurScope && "Scope imbalance!");
 
-  // Inform the actions module that this scope is going away.
-  Actions.PopScope(Tok.getLocation(), CurScope);
+  // Inform the actions module that this scope is going away if there are any
+  // decls in it.
+  if (!CurScope->decl_empty())
+    Actions.PopScope(Tok.getLocation(), CurScope);
   
   Scope *OldScope = CurScope;
   CurScope = OldScope->getParent();
