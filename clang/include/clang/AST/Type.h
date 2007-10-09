@@ -832,8 +832,10 @@ public:
   static bool classof(const ObjcInterfaceType *) { return true; }
 };
 
-/// - ObjcQualifiedInterfaceType - This class represense interface types 
+/// ObjcQualifiedInterfaceType - This class represents interface types 
 /// conforming to a list of protocols; such as, INTF<Proto1, Proto2, Proto1>.
+/// Duplicate protocols are removed and protocol list is canonicalized to be in
+/// alphabetical order.
 class ObjcQualifiedInterfaceType : public Type {
   // Interface type for this protocol conforming object type
   ObjcInterfaceType *InterfaceType;
