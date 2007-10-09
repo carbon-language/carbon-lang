@@ -369,6 +369,13 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__OBJC__=1");
   if (PP.getLangOptions().ObjC2)
     DefineBuiltinMacro(Buf, "__OBJC2__=1");
+
+  if (PP.getLangOptions().ObjC1) {
+    // FIXME: make this the right thing.
+    const char *IDTypedef = "/*typedef int id;*/\n";
+    Buf.insert(Buf.end(), IDTypedef, IDTypedef+strlen(IDTypedef));
+  }
+
   
   // Get the target #defines.
   PP.getTargetInfo().getTargetDefines(Buf);
