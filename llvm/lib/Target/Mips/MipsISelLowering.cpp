@@ -44,6 +44,7 @@ getTargetNodeName(unsigned Opcode) const
     case MipsISD::Lo        : return "MipsISD::Lo";
     case MipsISD::Ret       : return "MipsISD::Ret";
     case MipsISD::Add       : return "MipsISD::Add";
+    case MipsISD::LoadAddr  : return "MipsISD::LoadAddr";
     default                 : return NULL;
   }
 }
@@ -146,18 +147,25 @@ AddLiveIn(MachineFunction &MF, unsigned PReg, TargetRegisterClass *RC)
 SDOperand MipsTargetLowering::
 LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG) 
 {
+  SDOperand ResNode;
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
 
   SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
 
-  const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::i32, MVT::Flag);
-  SDOperand Ops[] = { GA };
+  // On PIC code global addresses are loaded with "la" instruction
+  if (!(getTargetMachine().getRelocationModel() == Reloc::PIC_)) {
+    const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::i32, MVT::Flag);
+    SDOperand Ops[] = { GA };
 
-  SDOperand Hi = DAG.getNode(MipsISD::Hi, VTs, 2, Ops, 1);
-  SDOperand Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
+    SDOperand Hi = DAG.getNode(MipsISD::Hi, VTs, 2, Ops, 1);
+    SDOperand Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
 
-  SDOperand InFlag = Hi.getValue(1);
-  return DAG.getNode(MipsISD::Add, MVT::i32, Lo, Hi, InFlag);
+    SDOperand InFlag = Hi.getValue(1);
+    ResNode = DAG.getNode(MipsISD::Add, MVT::i32, Lo, Hi, InFlag);
+  } else
+    ResNode = DAG.getNode(MipsISD::LoadAddr, MVT::i32, GA);
+
+  return ResNode;
 }
 
 SDOperand MipsTargetLowering::
@@ -236,6 +244,7 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
   SmallVector<SDOperand, 8> MemOpChains;
 
   SDOperand StackPtr;
+  unsigned LastStackLoc=0;
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -273,8 +282,9 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
       // Create the frame index object for this incoming parameter
       // This guarantees that when allocating Local Area the firsts
       // 16 bytes which are alwayes reserved won't be overwritten.
+      LastStackLoc = (16 + VA.getLocMemOffset());
       int FI = MFI->CreateFixedObject(MVT::getSizeInBits(VA.getValVT())/8,
-                                      (16 + VA.getLocMemOffset()));
+                                      LastStackLoc);
 
       SDOperand PtrOff = DAG.getFrameIndex(FI,getPointerTy());
 
@@ -282,6 +292,14 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
       // parameter value to a stack Location
       MemOpChains.push_back(DAG.getStore(Chain, Arg, PtrOff, NULL, 0));
     }
+  }
+
+  // Create a stack location to hold GP when PIC is used 
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+      LastStackLoc = (!LastStackLoc) ? (16) : (LastStackLoc+4);
+      MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+      MFI->CreateFixedObject(4, LastStackLoc);
+      MipsFI->setGPStackOffset(LastStackLoc);
   }
 
   // Transform all store nodes into one single node because
@@ -301,13 +319,13 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
     InFlag = Chain.getValue(1);
   }
 
-  // If the callee is a GlobalAddress node (quite common, every direct 
-  // call is) turn it into a TargetGlobalAddress node so that legalize 
-  // doesn't hack it.
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+  // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
+  // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol 
+  // node so that legalize doesn't hack it. Otherwise we have an indirect call,
+  // if PIC is used, the call must use register GP
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
-  } else 
-  if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
   // MipsJmpLink = #chain, #target_address, #opt_in_flags...
@@ -543,8 +561,7 @@ LowerRET(SDOperand Op, SelectionDAG &DAG)
 
     // ISD::RET => ret chain, (regnum1,val1), ...
     // So i*2+1 index only the regnums
-    Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), 
-                                 Op.getOperand(i*2+1), Flag);
+    Chain = DAG.getCopyToReg(Chain, VA.getLocReg(), Op.getOperand(i*2+1), Flag);
 
     // guarantee that all emitted copies are
     // stuck together, avoiding something bad
@@ -554,10 +571,10 @@ LowerRET(SDOperand Op, SelectionDAG &DAG)
   // Return on Mips is always a "jr $ra"
   if (Flag.Val)
     return DAG.getNode(MipsISD::Ret, MVT::Other, 
-                           Chain, DAG.getRegister(Mips::RA, MVT::i32), Flag);
+                       Chain, DAG.getRegister(Mips::RA, MVT::i32), Flag);
   else // Return Void
     return DAG.getNode(MipsISD::Ret, MVT::Other, 
-                           Chain, DAG.getRegister(Mips::RA, MVT::i32));
+                       Chain, DAG.getRegister(Mips::RA, MVT::i32));
 }
 
 //===----------------------------------------------------------------------===//

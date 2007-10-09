@@ -369,9 +369,10 @@ emitPrologue(MachineFunction &MF) const
   MachineFrameInfo *MFI    = MF.getFrameInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
+  bool isPIC = (MF.getTarget().getRelocationModel() == Reloc::PIC_);
 
-  // Replace the dummy '0' SPOffset by the negative offsets, as 
-  // explained on LowerFORMAL_ARGUMENTS
+  // Replace the dummy '0' SPOffset by the negative 
+  // offsets, as explained on LowerFORMAL_ARGUMENTS
   MipsFI->adjustLoadArgsFI(MFI);
   MipsFI->adjustStoreVarArgsFI(MFI); 
 
@@ -421,6 +422,10 @@ emitPrologue(MachineFunction &MF) const
   // Update frame info
   MFI->setStackSize(NumBytes);
 
+  // PIC speficic function prologue
+  if (isPIC)
+    BuildMI(MBB, MBBI, TII.get(Mips::CPLOAD)).addReg(Mips::T9);
+
   // Adjust stack : addi sp, sp, (-imm)
   BuildMI(MBB, MBBI, TII.get(Mips::ADDiu), Mips::SP)
       .addReg(Mips::SP).addImm(-NumBytes);
@@ -443,6 +448,12 @@ emitPrologue(MachineFunction &MF) const
     BuildMI(MBB, MBBI, TII.get(Mips::ADDu), Mips::FP)
       .addReg(Mips::SP).addReg(Mips::ZERO);
   }
+
+  // PIC speficic function prologue
+  if ((isPIC) && (MFI->hasCalls()))
+    BuildMI(MBB, MBBI, TII.get(Mips::CPRESTORE))
+      .addImm(MipsFI->getGPStackOffset());
+
 }
 
 void MipsRegisterInfo::
