@@ -457,14 +457,6 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   if (!FTI.hasPrototype && FTI.NumArgs != 0)
     ParseKNRParamDeclarations(D);
 
-  // Enter a scope for the function body.
-  EnterScope(Scope::FnScope|Scope::DeclScope);
-  
-  // Tell the actions module that we have entered a function definition with the
-  // specified Declarator for the function.
-  DeclTy *Res = Actions.ParseStartOfFunctionDef(CurScope, D);
-  
-  
   // We should have an opening brace now.
   if (Tok.getKind() != tok::l_brace) {
     Diag(Tok, diag::err_expected_fn_body);
@@ -473,26 +465,34 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
     SkipUntil(tok::l_brace, true, true);
     
     // If we didn't find the '{', bail out.
-    if (Tok.getKind() != tok::l_brace) {
-      ExitScope();
+    if (Tok.getKind() != tok::l_brace)
       return 0;
-    }
   }
+  
+  SourceLocation BraceLoc = Tok.getLocation();
+  
+  // Enter a scope for the function body.
+  EnterScope(Scope::FnScope|Scope::DeclScope);
+  
+  // Tell the actions module that we have entered a function definition with the
+  // specified Declarator for the function.
+  DeclTy *Res = Actions.ActOnStartOfFunctionDef(CurScope, D);
+  
   
   // Do not enter a scope for the brace, as the arguments are in the same scope
   // (the function body) as the body itself.  Instead, just read the statement
   // list and put it into a CompoundStmt for safe keeping.
   StmtResult FnBody = ParseCompoundStatementBody();
-  if (FnBody.isInvalid) {
-    ExitScope();
-    return 0;
-  }
+
+  // If the function body could not be parsed, make a bogus compoundstmt.
+  if (FnBody.isInvalid)
+    FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc, 0, 0, false);
 
   // Leave the function body scope.
   ExitScope();
 
   // TODO: Pass argument information.
-  return Actions.ParseFunctionDefBody(Res, FnBody.Val);
+  return Actions.ActOnFunctionDefBody(Res, FnBody.Val);
 }
 
 /// ParseKNRParamDeclarations - Parse 'declaration-list[opt]' which provides

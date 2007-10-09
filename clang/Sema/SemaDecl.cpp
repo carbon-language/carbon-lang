@@ -768,7 +768,7 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
 }
   
 
-Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
+Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   assert(CurFunctionDecl == 0 && "Function parsing confused");
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
          "Not a function declarator!");
@@ -819,7 +819,7 @@ Sema::DeclTy *Sema::ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   return FD;
 }
 
-Sema::DeclTy *Sema::ParseFunctionDefBody(DeclTy *D, StmtTy *Body) {
+Sema::DeclTy *Sema::ActOnFunctionDefBody(DeclTy *D, StmtTy *Body) {
   FunctionDecl *FD = static_cast<FunctionDecl*>(D);
   FD->setBody((Stmt*)Body);
   

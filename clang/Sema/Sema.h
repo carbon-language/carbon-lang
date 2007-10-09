@@ -154,8 +154,8 @@ private:
   void AddInitializerToDecl(DeclTy *dcl, ExprTy *init);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
-  virtual DeclTy *ParseStartOfFunctionDef(Scope *S, Declarator &D);
-  virtual DeclTy *ParseFunctionDefBody(DeclTy *Decl, StmtTy *Body);
+  virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
+  virtual DeclTy *ActOnFunctionDefBody(DeclTy *Decl, StmtTy *Body);
   virtual void PopScope(SourceLocation Loc, Scope *S);
 
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with

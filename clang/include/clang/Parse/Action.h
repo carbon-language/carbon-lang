@@ -120,17 +120,17 @@ public:
     return Group;
   }
 
-  /// ParseStartOfFunctionDef - This is called at the start of a function
+  /// ActOnStartOfFunctionDef - This is called at the start of a function
   /// definition, instead of calling ActOnDeclarator.  The Declarator includes
   /// information about formal arguments that are part of this function.
-  virtual DeclTy *ParseStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
+  virtual DeclTy *ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
     // Default to ActOnDeclarator.
     return ActOnDeclarator(FnBodyScope, D, 0);
   }
 
-  /// ParseFunctionDefBody - This is called when a function body has completed
+  /// ActOnFunctionDefBody - This is called when a function body has completed
   /// parsing.  Decl is the DeclTy returned by ParseStartOfFunctionDef.
-  virtual DeclTy *ParseFunctionDefBody(DeclTy *Decl, StmtTy *Body) {
+  virtual DeclTy *ActOnFunctionDefBody(DeclTy *Decl, StmtTy *Body) {
     return Decl;
   }
 
