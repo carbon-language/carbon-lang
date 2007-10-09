@@ -36,7 +36,7 @@ namespace {
 class VISIBILITY_HIDDEN ScalarExprEmitter
   : public StmtVisitor<ScalarExprEmitter, Value*> {
   CodeGenFunction &CGF;
-  llvm::LLVMBuilder &Builder;
+  llvm::LLVMFoldingBuilder &Builder;
 public:
 
   ScalarExprEmitter(CodeGenFunction &cgf) : CGF(cgf), Builder(CGF.Builder) {

@@ -209,7 +209,7 @@ public:
   TargetInfo &Target;
   
   typedef std::pair<llvm::Value *, llvm::Value *> ComplexPairTy;
-  llvm::LLVMBuilder Builder;
+  llvm::LLVMFoldingBuilder Builder;
   
   const FunctionDecl *CurFuncDecl;
   llvm::Function *CurFn;

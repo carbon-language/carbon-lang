@@ -27,7 +27,7 @@ using namespace CodeGen;
 namespace  {
 class VISIBILITY_HIDDEN AggExprEmitter : public StmtVisitor<AggExprEmitter> {
   CodeGenFunction &CGF;
-  llvm::LLVMBuilder &Builder;
+  llvm::LLVMFoldingBuilder &Builder;
   llvm::Value *DestPtr;
   bool VolatileDest;
 public:
