@@ -632,8 +632,8 @@ void LoopUnswitch::ReplaceLoopExternalDFMember(Loop *L, BasicBlock *BB,
   
   DominanceFrontier::DomSetType &DFSet = DFI->second;
   for (DominanceFrontier::DomSetType::iterator DI = DFSet.begin(),
-         DE = DFSet.end(); DI != DE; ++DI) {
-    BasicBlock *B = *DI;
+         DE = DFSet.end(); DI != DE;) {
+    BasicBlock *B = *DI++;
     if (L->contains(B))
       continue;
   
