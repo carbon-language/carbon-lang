@@ -332,7 +332,7 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
     free (*i);
 }
 
-void cl::ParseCommandLineOptions(int &argc, char **argv,
+void cl::ParseCommandLineOptions(int argc, char **argv,
                                  const char *Overview) {
   // Process all registered options.
   std::vector<Option*> PositionalOpts;

@@ -40,7 +40,7 @@ namespace cl {
 //===----------------------------------------------------------------------===//
 // ParseCommandLineOptions - Command line option processing entry point.
 //
-void ParseCommandLineOptions(int &argc, char **argv,
+void ParseCommandLineOptions(int argc, char **argv,
                              const char *Overview = 0);
 
 //===----------------------------------------------------------------------===//
