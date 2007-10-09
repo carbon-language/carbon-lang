@@ -517,26 +517,26 @@ public:
   }
 
   Value *CreateShl(Value *LHS, Value *RHS, const char *Name = "") {
-     if (Constant *LC = dyn_cast<Constant>(LHS))
+    if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getShl(LC, RC);
     return LLVMBuilder::CreateShl(LHS, RHS, Name);
   }
 
   Value *CreateLShr(Value *LHS, Value *RHS, const char *Name = "") {
-     if (Constant *LC = dyn_cast<Constant>(LHS))
+    if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getLShr(LC, RC);
     return LLVMBuilder::CreateLShr(LHS, RHS, Name);
   }
 
   Value *CreateAShr(Value *LHS, Value *RHS, const char *Name = "") {
-     if (Constant *LC = dyn_cast<Constant>(LHS))
+    if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getAShr(LC, RC);
     return LLVMBuilder::CreateAShr(LHS, RHS, Name);
   }
-
+  
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Compare Instructions
   //===--------------------------------------------------------------------===//
@@ -617,7 +617,7 @@ public:
   
   Value *CreateICmp(ICmpInst::Predicate P, Value *LHS, Value *RHS, 
                     const char *Name = "") {
-     if (Constant *LC = dyn_cast<Constant>(LHS))
+    if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getCompare(P, LC, RC);
     return LLVMBuilder::CreateICmp(P, LHS, RHS, Name);
@@ -625,7 +625,7 @@ public:
 
   Value *CreateFCmp(FCmpInst::Predicate P, Value *LHS, Value *RHS, 
                     const char *Name = "") {
-     if (Constant *LC = dyn_cast<Constant>(LHS))
+    if (Constant *LC = dyn_cast<Constant>(LHS))
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getCompare(P, LC, RC);
     return LLVMBuilder::CreateFCmp(P, LHS, RHS, Name);
