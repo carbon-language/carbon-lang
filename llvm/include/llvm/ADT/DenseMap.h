@@ -75,7 +75,8 @@ public:
   ~DenseMap() {
     const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
     for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
-      if (P->first != EmptyKey && P->first != TombstoneKey)
+      if (!KeyInfoT::isEqual(P->first, EmptyKey) &&
+          !KeyInfoT::isEqual(P->first, TombstoneKey))
         P->second.~ValueT();
       P->first.~KeyT();
     }
@@ -113,8 +114,8 @@ public:
     
     const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
     for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
-      if (P->first != EmptyKey) {
-        if (P->first != TombstoneKey) {
+      if (!KeyInfoT::isEqual(P->first, EmptyKey)) {
+        if (!KeyInfoT::isEqual(P->first, TombstoneKey)) {
           P->second.~ValueT();
           --NumEntries;
         }
@@ -192,7 +193,8 @@ private:
     if (NumBuckets != 0 && (!KeyInfoT::isPod() || !ValueInfoT::isPod())) {
       const KeyT EmptyKey = getEmptyKey(), TombstoneKey = getTombstoneKey();
       for (BucketT *P = Buckets, *E = Buckets+NumBuckets; P != E; ++P) {
-        if (P->first != EmptyKey && P->first != TombstoneKey)
+        if (!KeyInfoT::isEqual(P->first, EmptyKey) &&
+            !KeyInfoT::isEqual(P->first, TombstoneKey))
           P->second.~ValueT();
         P->first.~KeyT();
       }
@@ -211,8 +213,8 @@ private:
     else
       for (size_t i = 0; i < other.NumBuckets; ++i) {
         new (Buckets[i].first) KeyT(other.Buckets[i].first);
-        if (Buckets[i].first != getEmptyKey() &&
-            Buckets[i].first != getTombstoneKey())
+        if (!KeyInfoT::isEqual(Buckets[i].first, getEmptyKey()) &&
+            !KeyInfoT::isEqual(Buckets[i].first, getTombstoneKey()))
           new (&Buckets[i].second) ValueT(other.Buckets[i].second);
       }
     NumBuckets = other.NumBuckets;
@@ -237,7 +239,7 @@ private:
     ++NumEntries;
     
     // If we are writing over a tombstone, remember this.
-    if (TheBucket->first != getEmptyKey())
+    if (!KeyInfoT::isEqual(TheBucket->first, getEmptyKey()))
       --NumTombstones;
     
     TheBucket->first = Key;
@@ -268,7 +270,8 @@ private:
     BucketT *FoundTombstone = 0;
     const KeyT EmptyKey = getEmptyKey();
     const KeyT TombstoneKey = getTombstoneKey();
-    assert(Val != EmptyKey && Val != TombstoneKey &&
+    assert(!KeyInfoT::isEqual(Val, EmptyKey) &&
+           !KeyInfoT::isEqual(Val, TombstoneKey) &&
            "Empty/Tombstone value shouldn't be inserted into map!");
       
     while (1) {
@@ -331,7 +334,8 @@ private:
     // Insert all the old elements.
     const KeyT TombstoneKey = getTombstoneKey();
     for (BucketT *B = OldBuckets, *E = OldBuckets+OldNumBuckets; B != E; ++B) {
-      if (B->first != EmptyKey && B->first != TombstoneKey) {
+      if (!KeyInfoT::isEqual(B->first, EmptyKey) &&
+          !KeyInfoT::isEqual(B->first, TombstoneKey)) {
         // Insert the key/value into the new table.
         BucketT *DestBucket;
         bool FoundVal = LookupBucketFor(B->first, DestBucket);
@@ -368,7 +372,8 @@ private:
     // Free the old buckets.
     const KeyT TombstoneKey = getTombstoneKey();
     for (BucketT *B = OldBuckets, *E = OldBuckets+OldNumBuckets; B != E; ++B) {
-      if (B->first != EmptyKey && B->first != TombstoneKey) {
+      if (!KeyInfoT::isEqual(B->first, EmptyKey) &&
+          !KeyInfoT::isEqual(B->first, TombstoneKey)) {
         // Free the value.
         B->second.~ValueT();
       }
