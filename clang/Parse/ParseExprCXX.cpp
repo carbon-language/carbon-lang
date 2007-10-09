@@ -52,7 +52,7 @@ Parser::ExprResult Parser::ParseCXXCasts() {
 
   SourceLocation LParenLoc = Tok.getLocation(), RParenLoc;
 
-  if (Tok.getKind() != tok::l_paren) {
+  if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after, CastName);
     return ExprResult(true);
   }

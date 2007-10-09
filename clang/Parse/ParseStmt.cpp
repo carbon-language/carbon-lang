@@ -107,7 +107,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   default:
     if (!OnlyStatement && isDeclarationSpecifier()) {
       return Actions.ActOnDeclStmt(ParseDeclaration(Declarator::BlockContext));
-    } else if (Tok.getKind() == tok::r_brace) {
+    } else if (Tok.is(tok::r_brace)) {
       Diag(Tok, diag::err_expected_statement);
       return true;
     } else {
@@ -173,7 +173,7 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   }
   
   // If we reached this code, the statement must end in a semicolon.
-  if (Tok.getKind() == tok::semi) {
+  if (Tok.is(tok::semi)) {
     ConsumeToken();
   } else {
     Diag(Tok, diag::err_expected_semi_after, SemiError);
@@ -195,19 +195,19 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
 ///         expression[opt] ';'
 ///
 Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
-  assert(Tok.getKind() == tok::identifier && Tok.getIdentifierInfo() &&
+  assert(Tok.is(tok::identifier) && Tok.getIdentifierInfo() &&
          "Not an identifier!");
 
   Token IdentTok = Tok;  // Save the whole token.
   ConsumeToken();  // eat the identifier.
   
   // identifier ':' statement
-  if (Tok.getKind() == tok::colon) {
+  if (Tok.is(tok::colon)) {
     SourceLocation ColonLoc = ConsumeToken();
 
     // Read label attributes, if present.
     DeclTy *AttrList = 0;
-    if (Tok.getKind() == tok::kw___attribute)
+    if (Tok.is(tok::kw___attribute))
       // TODO: save these somewhere.
       AttrList = ParseAttributes();
 
@@ -241,7 +241,7 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
 
     // C99 6.7.2.3p6: Handle "struct-or-union identifier;", "enum { X };"
     // declaration-specifiers init-declarator-list[opt] ';'
-    if (Tok.getKind() == tok::semi) {
+    if (Tok.is(tok::semi)) {
       // TODO: emit error on 'int;' or 'const enum foo;'.
       // if (!DS.isMissingDeclaratorOk()) Diag(...);
       
@@ -263,7 +263,7 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
   if (Res.isInvalid) {
     SkipUntil(tok::semi);
     return true;
-  } else if (Tok.getKind() != tok::semi) {
+  } else if (Tok.isNot(tok::semi)) {
     Diag(Tok, diag::err_expected_semi_after, "expression");
     SkipUntil(tok::semi);
     return true;
@@ -282,7 +282,7 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
 /// Note that this does not parse the 'statement' at the end.
 ///
 Parser::StmtResult Parser::ParseCaseStatement() {
-  assert(Tok.getKind() == tok::kw_case && "Not a case stmt!");
+  assert(Tok.is(tok::kw_case) && "Not a case stmt!");
   SourceLocation CaseLoc = ConsumeToken();  // eat the 'case'.
 
   ExprResult LHS = ParseConstantExpression();
@@ -294,7 +294,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
   // GNU case range extension.
   SourceLocation DotDotDotLoc;
   ExprTy *RHSVal = 0;
-  if (Tok.getKind() == tok::ellipsis) {
+  if (Tok.is(tok::ellipsis)) {
     Diag(Tok, diag::ext_gnu_case_range);
     DotDotDotLoc = ConsumeToken();
     
@@ -306,7 +306,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
     RHSVal = RHS.Val;
   }
   
-  if (Tok.getKind() != tok::colon) {
+  if (Tok.isNot(tok::colon)) {
     Diag(Tok, diag::err_expected_colon_after, "'case'");
     SkipUntil(tok::colon);
     return true;
@@ -315,7 +315,7 @@ Parser::StmtResult Parser::ParseCaseStatement() {
   SourceLocation ColonLoc = ConsumeToken();
   
   // Diagnose the common error "switch (X) { case 4: }", which is not valid.
-  if (Tok.getKind() == tok::r_brace) {
+  if (Tok.is(tok::r_brace)) {
     Diag(Tok, diag::err_label_end_of_compound_statement);
     return true;
   }
@@ -336,10 +336,10 @@ Parser::StmtResult Parser::ParseCaseStatement() {
 /// Note that this does not parse the 'statement' at the end.
 ///
 Parser::StmtResult Parser::ParseDefaultStatement() {
-  assert(Tok.getKind() == tok::kw_default && "Not a default stmt!");
+  assert(Tok.is(tok::kw_default) && "Not a default stmt!");
   SourceLocation DefaultLoc = ConsumeToken();  // eat the 'default'.
 
-  if (Tok.getKind() != tok::colon) {
+  if (Tok.isNot(tok::colon)) {
     Diag(Tok, diag::err_expected_colon_after, "'default'");
     SkipUntil(tok::colon);
     return true;
@@ -348,7 +348,7 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
   SourceLocation ColonLoc = ConsumeToken();
   
   // Diagnose the common error "switch (X) {... default: }", which is not valid.
-  if (Tok.getKind() == tok::r_brace) {
+  if (Tok.is(tok::r_brace)) {
     Diag(Tok, diag::err_label_end_of_compound_statement);
     return true;
   }
@@ -389,7 +389,7 @@ Parser::StmtResult Parser::ParseDefaultStatement() {
 /// [OMP]   flush-directive
 ///
 Parser::StmtResult Parser::ParseCompoundStatement(bool isStmtExpr) {
-  assert(Tok.getKind() == tok::l_brace && "Not a compount stmt!");
+  assert(Tok.is(tok::l_brace) && "Not a compount stmt!");
   
   // Enter a scope to hold everything within the compound stmt.  Compound
   // statements can always hold declarations.
@@ -414,16 +414,16 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   // only allowed at the start of a compound stmt regardless of the language.
   
   llvm::SmallVector<StmtTy*, 32> Stmts;
-  while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof) {
+  while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
     StmtResult R;
-    if (Tok.getKind() != tok::kw___extension__) {
+    if (Tok.isNot(tok::kw___extension__)) {
       R = ParseStatementOrDeclaration(false);
     } else {
       // __extension__ can start declarations and it can also be a unary
       // operator for expressions.  Consume multiple __extension__ markers here
       // until we can determine which is which.
       SourceLocation ExtLoc = ConsumeToken();
-      while (Tok.getKind() == tok::kw___extension__)
+      while (Tok.is(tok::kw___extension__))
         ConsumeToken();
       
       // If this is the start of a declaration, parse it as such.
@@ -457,7 +457,7 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   }
   
   // We broke out of the while loop because we found a '}' or EOF.
-  if (Tok.getKind() != tok::r_brace) {
+  if (Tok.isNot(tok::r_brace)) {
     Diag(Tok, diag::err_expected_rbrace);
     return 0;
   }
@@ -473,10 +473,10 @@ Parser::StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
 ///         'if' '(' expression ')' statement 'else' statement
 ///
 Parser::StmtResult Parser::ParseIfStatement() {
-  assert(Tok.getKind() == tok::kw_if && "Not an if stmt!");
+  assert(Tok.is(tok::kw_if) && "Not an if stmt!");
   SourceLocation IfLoc = ConsumeToken();  // eat the 'if'.
 
-  if (Tok.getKind() != tok::l_paren) {
+  if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after, "if");
     SkipUntil(tok::semi);
     return true;
@@ -499,7 +499,7 @@ Parser::StmtResult Parser::ParseIfStatement() {
   // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the if condition.
@@ -515,14 +515,14 @@ Parser::StmtResult Parser::ParseIfStatement() {
   // If it has an else, parse it.
   SourceLocation ElseLoc;
   StmtResult ElseStmt(false);
-  if (Tok.getKind() == tok::kw_else) {
+  if (Tok.is(tok::kw_else)) {
     ElseLoc = ConsumeToken();
     
     // C99 6.8.4p3 - In C99, the body of the if statement is a scope, even if
     // there is no compound stmt.  C90 does not have this clause.  We only do
     // this if the body isn't a compound statement to avoid push/pop in common
     // cases.
-    NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+    NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
     if (NeedsInnerScope) EnterScope(Scope::DeclScope);
     
     ElseStmt = ParseStatement();
@@ -545,10 +545,10 @@ Parser::StmtResult Parser::ParseIfStatement() {
 ///       switch-statement:
 ///         'switch' '(' expression ')' statement
 Parser::StmtResult Parser::ParseSwitchStatement() {
-  assert(Tok.getKind() == tok::kw_switch && "Not a switch stmt!");
+  assert(Tok.is(tok::kw_switch) && "Not a switch stmt!");
   SourceLocation SwitchLoc = ConsumeToken();  // eat the 'switch'.
 
-  if (Tok.getKind() != tok::l_paren) {
+  if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after, "switch");
     SkipUntil(tok::semi);
     return true;
@@ -574,7 +574,7 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
   // C99 6.8.4p3 - In C99, the body of the switch statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
@@ -597,11 +597,11 @@ Parser::StmtResult Parser::ParseSwitchStatement() {
 ///       while-statement: [C99 6.8.5.1]
 ///         'while' '(' expression ')' statement
 Parser::StmtResult Parser::ParseWhileStatement() {
-  assert(Tok.getKind() == tok::kw_while && "Not a while stmt!");
+  assert(Tok.is(tok::kw_while) && "Not a while stmt!");
   SourceLocation WhileLoc = Tok.getLocation();
   ConsumeToken();  // eat the 'while'.
   
-  if (Tok.getKind() != tok::l_paren) {
+  if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after, "while");
     SkipUntil(tok::semi);
     return true;
@@ -620,7 +620,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
@@ -641,7 +641,7 @@ Parser::StmtResult Parser::ParseWhileStatement() {
 ///         'do' statement 'while' '(' expression ')' ';'
 /// Note: this lets the caller parse the end ';'.
 Parser::StmtResult Parser::ParseDoStatement() {
-  assert(Tok.getKind() == tok::kw_do && "Not a do stmt!");
+  assert(Tok.is(tok::kw_do) && "Not a do stmt!");
   SourceLocation DoLoc = ConsumeToken();  // eat the 'do'.
   
   // C99 6.8.5p5 - In C99, the do statement is a block.  This is not
@@ -654,7 +654,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause. We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
@@ -663,7 +663,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   // Pop the body scope if needed.
   if (NeedsInnerScope) ExitScope();
 
-  if (Tok.getKind() != tok::kw_while) {
+  if (Tok.isNot(tok::kw_while)) {
     ExitScope();
     Diag(Tok, diag::err_expected_while);
     Diag(DoLoc, diag::err_matching, "do");
@@ -672,7 +672,7 @@ Parser::StmtResult Parser::ParseDoStatement() {
   }
   SourceLocation WhileLoc = ConsumeToken();
   
-  if (Tok.getKind() != tok::l_paren) {
+  if (Tok.isNot(tok::l_paren)) {
     ExitScope();
     Diag(Tok, diag::err_expected_lparen_after, "do/while");
     SkipUntil(tok::semi);
@@ -694,10 +694,10 @@ Parser::StmtResult Parser::ParseDoStatement() {
 ///         'for' '(' expr[opt] ';' expr[opt] ';' expr[opt] ')' statement
 ///         'for' '(' declaration expr[opt] ';' expr[opt] ')' statement
 Parser::StmtResult Parser::ParseForStatement() {
-  assert(Tok.getKind() == tok::kw_for && "Not a for stmt!");
+  assert(Tok.is(tok::kw_for) && "Not a for stmt!");
   SourceLocation ForLoc = ConsumeToken();  // eat the 'for'.
   
-  if (Tok.getKind() != tok::l_paren) {
+  if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after, "for");
     SkipUntil(tok::semi);
     return true;
@@ -718,7 +718,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   StmtTy *ThirdPart = 0;
   
   // Parse the first part of the for specifier.
-  if (Tok.getKind() == tok::semi) {  // for (;
+  if (Tok.is(tok::semi)) {  // for (;
     // no first part, eat the ';'.
     ConsumeToken();
   } else if (isDeclarationSpecifier()) {  // for (int X = 4;
@@ -738,7 +738,7 @@ Parser::StmtResult Parser::ParseForStatement() {
         FirstPart = R.Val;
     }
       
-    if (Tok.getKind() == tok::semi) {
+    if (Tok.is(tok::semi)) {
       ConsumeToken();
     } else {
       if (!Value.isInvalid) Diag(Tok, diag::err_expected_semi_for);
@@ -747,7 +747,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   }
   
   // Parse the second part of the for specifier.
-  if (Tok.getKind() == tok::semi) {  // for (...;;
+  if (Tok.is(tok::semi)) {  // for (...;;
     // no second part.
     Value = ExprResult();
   } else {
@@ -756,7 +756,7 @@ Parser::StmtResult Parser::ParseForStatement() {
       SecondPart = Value.Val;
   }
   
-  if (Tok.getKind() == tok::semi) {
+  if (Tok.is(tok::semi)) {
     ConsumeToken();
   } else {
     if (!Value.isInvalid) Diag(Tok, diag::err_expected_semi_for);
@@ -764,7 +764,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   }
   
   // Parse the third part of the for specifier.
-  if (Tok.getKind() == tok::r_paren) {  // for (...;...;)
+  if (Tok.is(tok::r_paren)) {  // for (...;...;)
     // no third part.
     Value = ExprResult();
   } else {
@@ -783,7 +783,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   // C99 6.8.5p5 - In C99, the body of the if statement is a scope, even if
   // there is no compound stmt.  C90 does not have this clause.  We only do this
   // if the body isn't a compound statement to avoid push/pop in common cases.
-  bool NeedsInnerScope = getLang().C99 && Tok.getKind() != tok::l_brace;
+  bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
   // Read the body statement.
@@ -810,15 +810,15 @@ Parser::StmtResult Parser::ParseForStatement() {
 /// Note: this lets the caller parse the end ';'.
 ///
 Parser::StmtResult Parser::ParseGotoStatement() {
-  assert(Tok.getKind() == tok::kw_goto && "Not a goto stmt!");
+  assert(Tok.is(tok::kw_goto) && "Not a goto stmt!");
   SourceLocation GotoLoc = ConsumeToken();  // eat the 'goto'.
   
   StmtResult Res;
-  if (Tok.getKind() == tok::identifier) {
+  if (Tok.is(tok::identifier)) {
     Res = Actions.ActOnGotoStmt(GotoLoc, Tok.getLocation(),
                                 Tok.getIdentifierInfo());
     ConsumeToken();
-  } else if (Tok.getKind() == tok::star && !getLang().NoExtensions) {
+  } else if (Tok.is(tok::star) && !getLang().NoExtensions) {
     // GNU indirect goto extension.
     Diag(Tok, diag::ext_gnu_indirect_goto);
     SourceLocation StarLoc = ConsumeToken();
@@ -862,11 +862,11 @@ Parser::StmtResult Parser::ParseBreakStatement() {
 ///       jump-statement:
 ///         'return' expression[opt] ';'
 Parser::StmtResult Parser::ParseReturnStatement() {
-  assert(Tok.getKind() == tok::kw_return && "Not a return stmt!");
+  assert(Tok.is(tok::kw_return) && "Not a return stmt!");
   SourceLocation ReturnLoc = ConsumeToken();  // eat the 'return'.
   
   ExprResult R(0);
-  if (Tok.getKind() != tok::semi) {
+  if (Tok.isNot(tok::semi)) {
     R = ParseExpression();
     if (R.isInvalid) {  // Skip to the semicolon, but don't consume it.
       SkipUntil(tok::semi, false, true);
@@ -892,7 +892,7 @@ Parser::StmtResult Parser::ParseReturnStatement() {
 ///         asm-clobbers ',' asm-string-literal
 ///
 Parser::StmtResult Parser::ParseAsmStatement() {
-  assert(Tok.getKind() == tok::kw_asm && "Not an asm stmt");
+  assert(Tok.is(tok::kw_asm) && "Not an asm stmt");
   ConsumeToken();
   
   DeclSpec DS;
@@ -908,7 +908,7 @@ Parser::StmtResult Parser::ParseAsmStatement() {
   // Remember if this was a volatile asm.
   //bool isVolatile = DS.TypeQualifiers & DeclSpec::TQ_volatile;
   
-  if (Tok.getKind() != tok::l_paren) {
+  if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after, "asm");
     SkipUntil(tok::r_paren);
     return true;
@@ -924,7 +924,7 @@ Parser::StmtResult Parser::ParseAsmStatement() {
   ParseAsmOperandsOpt();
   
   // Parse the clobbers, if present.
-  if (Tok.getKind() == tok::colon) {
+  if (Tok.is(tok::colon)) {
     ConsumeToken();
     
     if (isTokenStringLiteral()) {
@@ -932,7 +932,7 @@ Parser::StmtResult Parser::ParseAsmStatement() {
       while (1) {
         ParseAsmStringLiteral();
 
-        if (Tok.getKind() != tok::comma) break;
+        if (Tok.isNot(tok::comma)) break;
         ConsumeToken();
       }
     }
@@ -958,19 +958,19 @@ Parser::StmtResult Parser::ParseAsmStatement() {
 ///
 void Parser::ParseAsmOperandsOpt() {
   // Only do anything if this operand is present.
-  if (Tok.getKind() != tok::colon) return;
+  if (Tok.isNot(tok::colon)) return;
   ConsumeToken();
   
   // 'asm-operands' isn't present?
-  if (!isTokenStringLiteral() && Tok.getKind() != tok::l_square)
+  if (!isTokenStringLiteral() && Tok.isNot(tok::l_square))
     return;
   
   while (1) {
     // Read the [id] if present.
-    if (Tok.getKind() == tok::l_square) {
+    if (Tok.is(tok::l_square)) {
       SourceLocation Loc = ConsumeBracket();
       
-      if (Tok.getKind() != tok::identifier) {
+      if (Tok.isNot(tok::identifier)) {
         Diag(Tok, diag::err_expected_ident);
         SkipUntil(tok::r_paren);
         return;
@@ -980,7 +980,7 @@ void Parser::ParseAsmOperandsOpt() {
     
     ParseAsmStringLiteral();
 
-    if (Tok.getKind() != tok::l_paren) {
+    if (Tok.isNot(tok::l_paren)) {
       Diag(Tok, diag::err_expected_lparen_after, "asm operand");
       SkipUntil(tok::r_paren);
       return;
@@ -994,7 +994,7 @@ void Parser::ParseAsmOperandsOpt() {
     }
 
     // Eat the comma and continue parsing if it exists.
-    if (Tok.getKind() != tok::comma) return;
+    if (Tok.isNot(tok::comma)) return;
     ConsumeToken();
   }
 }
