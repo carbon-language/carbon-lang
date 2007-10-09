@@ -78,8 +78,6 @@ public:
 
   /// IdentifierNamespace - According to C99 6.2.3, there are four namespaces,
   /// labels, tags, members and ordinary identifiers.
-  /// Objective-c protocols have their own namespace, so a protocol can have 
-  /// the same name as category, class, struct, typedef, etc.
   enum IdentifierNamespace {
     IDNS_Label,
     IDNS_Tag,
