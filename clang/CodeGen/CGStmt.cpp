@@ -365,7 +365,7 @@ void CodeGenFunction::EmitCaseStmtRange(const CaseStmt &S) {
   llvm::ConstantInt *LV = cast<llvm::ConstantInt>(EmitScalarExpr(L));
   llvm::ConstantInt *RV = cast<llvm::ConstantInt>(EmitScalarExpr(R));
   llvm::APInt LHS = LV->getValue();
-  llvm::APInt RHS = RV->getValue();
+  const llvm::APInt &RHS = RV->getValue();
 
   llvm::APInt Range = RHS - LHS;
   if (Range.ult(llvm::APInt(Range.getBitWidth(), 64))) {
