@@ -198,9 +198,6 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
 }
 
 void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
-  // TODO: "do {} while (0)" is common in macros, avoid extra blocks.  Be sure
-  // to correctly handle break/continue though.
-
   // Emit the body for the loop, insert it, which will create an uncond br to
   // it.
   llvm::BasicBlock *LoopBody = new llvm::BasicBlock("dobody");
@@ -226,12 +223,28 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
   // C99 6.8.5p2/p4: The first substatement is executed if the expression
   // compares unequal to 0.  The condition must be a scalar type.
   llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
-  
+
+  // "do {} while (0)" is common in macros, avoid extra blocks.  Be sure
+  // to correctly handle break/continue though.
+  bool EmitBoolCondBranch = true;
+  if (llvm::ConstantInt *C = dyn_cast<llvm::ConstantInt>(BoolCondVal)) 
+    if (C->isZero())
+      EmitBoolCondBranch = false;
+
+
   // As long as the condition is true, iterate the loop.
-  Builder.CreateCondBr(BoolCondVal, LoopBody, AfterDo);
+  if (EmitBoolCondBranch)
+    Builder.CreateCondBr(BoolCondVal, LoopBody, AfterDo);
   
   // Emit the exit block.
   EmitBlock(AfterDo);
+
+  // If DoCond is a simple forwarding block then eliminate it.
+  if (!EmitBoolCondBranch && &DoCond->front() == DoCond->getTerminator()) {
+    DoCond->replaceAllUsesWith(AfterDo);
+    DoCond->getTerminator()->eraseFromParent();
+    DoCond->eraseFromParent();
+  }
 }
 
 void CodeGenFunction::EmitForStmt(const ForStmt &S) {
