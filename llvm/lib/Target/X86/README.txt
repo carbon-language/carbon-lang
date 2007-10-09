@@ -10,36 +10,6 @@ http://softwarecommunity.intel.com/isn/Downloads/Intel%20SSE4%20Programming%20Re
 
 //===---------------------------------------------------------------------===//
 
-Add a MUL2U and MUL2S nodes to represent a multiply that returns both the
-Hi and Lo parts (combination of MUL and MULH[SU] into one node).  Add this to
-X86, & make the dag combiner produce it when needed.  This will eliminate one
-imul from the code generated for:
-
-long long test(long long X, long long Y) { return X*Y; }
-
-by using the EAX result from the mul.  We should add a similar node for
-DIVREM.
-
-another case is:
-
-long long test(int X, int Y) { return (long long)X*Y; }
-
-... which should only be one imul instruction.
-
-or:
-
-unsigned long long int t2(unsigned int a, unsigned int b) {
-       return (unsigned long long)a * b;
-}
-
-... which should be one mul instruction.
-
-
-This can be done with a custom expander, but it would be nice to move this to
-generic code.
-
-//===---------------------------------------------------------------------===//
-
 CodeGen/X86/lea-3.ll:test3 should be a single LEA, not a shift/move.  The X86
 backend knows how to three-addressify this shift, but it appears the register
 allocator isn't even asking it to do so in this case.  We should investigate
