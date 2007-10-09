@@ -113,6 +113,9 @@ class Sema : public Action {
   /// This list is populated upon the creation of a Sema object.    
   IdentifierInfo* KnownFunctionIDs[ id_num_known_functions ];
   
+  /// Translation Unit Scope - useful to many Objective-C actions that need
+  /// to lookup file scope declarations (like classes, protocols, etc.).
+  Scope *TUScope;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
   
@@ -161,7 +164,10 @@ private:
 
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
   virtual DeclTy *ActOnFunctionDefBody(DeclTy *Decl, StmtTy *Body);
-  virtual void PopScope(SourceLocation Loc, Scope *S);
+  
+  /// Scope actions.
+  virtual void ActOnPopScope(SourceLocation Loc, Scope *S);
+  virtual void ActOnTranslationUnitScope(SourceLocation Loc, Scope *S);
 
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
   /// no declarator (e.g. "struct foo;") is parsed.

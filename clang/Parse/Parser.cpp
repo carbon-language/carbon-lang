@@ -192,7 +192,7 @@ void Parser::ExitScope() {
   // Inform the actions module that this scope is going away if there are any
   // decls in it.
   if (!CurScope->decl_empty())
-    Actions.PopScope(Tok.getLocation(), CurScope);
+    Actions.ActOnPopScope(Tok.getLocation(), CurScope);
   
   Scope *OldScope = CurScope;
   CurScope = OldScope->getParent();
@@ -228,7 +228,8 @@ void Parser::Initialize() {
   // Create the translation unit scope.  Install it as the current scope.
   assert(CurScope == 0 && "A scope is already active?");
   EnterScope(Scope::DeclScope);
-    
+  Actions.ActOnTranslationUnitScope(Tok.getLocation(), CurScope);
+  
   // Install builtin types.
   // TODO: Move this someplace more useful.
   {

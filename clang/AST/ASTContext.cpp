@@ -110,7 +110,6 @@ void ASTContext::InitBuiltinType(QualType &R, BuiltinType::Kind K) {
   Types.push_back((R = QualType(new BuiltinType(K),0)).getTypePtr());
 }
 
-
 void ASTContext::InitBuiltinTypes() {
   assert(VoidTy.isNull() && "Context reinitialized?");
   

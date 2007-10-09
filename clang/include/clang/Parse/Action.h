@@ -135,10 +135,14 @@ public:
   }
 
   
-  /// PopScope - This callback is called immediately before the specified scope
-  /// is popped and deleted.
-  virtual void PopScope(SourceLocation Loc, Scope *S) {}
-  
+  /// ActOnPopScope - This callback is called immediately before the specified
+  /// scope is popped and deleted.
+  virtual void ActOnPopScope(SourceLocation Loc, Scope *S) {}
+
+  /// ActOnTranslationUnitScope - This callback is called once, immediately
+  /// after creating the translation unit scope (in Parser::Initialize).
+  virtual void ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {}
+    
   /// ParsedFreeStandingDeclSpec - This method is invoked when a declspec with
   /// no declarator (e.g. "struct foo;") is parsed.
   virtual DeclTy *ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {

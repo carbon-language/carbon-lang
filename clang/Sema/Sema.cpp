@@ -19,6 +19,10 @@
 
 using namespace clang;
 
+void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
+  TUScope = S;
+}
+
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   : PP(pp), Context(ctxt), CurFunctionDecl(0), LastInGroupList(prevInGroup) {
   

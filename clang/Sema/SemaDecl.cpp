@@ -34,7 +34,7 @@ Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   return 0;
 }
 
-void Sema::PopScope(SourceLocation Loc, Scope *S) {
+void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   if (S->decl_empty()) return;
   assert((S->getFlags() & Scope::DeclScope) &&"Scope shouldn't contain decls!");
          
@@ -1782,7 +1782,18 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(SourceLocation MethodLoc,
                               VarDecl::None, 0);
     Params.push_back(Param);
   }
-  QualType resultDeclType = QualType::getFromOpaquePtr(ReturnType);
+  QualType resultDeclType;
+  
+  if (ReturnType)
+    resultDeclType = QualType::getFromOpaquePtr(ReturnType);
+  else { // get the type for "id".
+    IdentifierInfo *IdIdent = &Context.Idents.get("id");
+    ScopedDecl *IdDecl = LookupScopedDecl(IdIdent, Decl::IDNS_Ordinary, 
+                                          SourceLocation(), TUScope);
+    TypedefDecl *IdTypedef = dyn_cast_or_null<TypedefDecl>(IdDecl);
+    assert(IdTypedef && "ActOnMethodDeclaration(): Couldn't find 'id' type");
+    resultDeclType = IdTypedef->getUnderlyingType();
+  }
   ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, Sel,
                                       resultDeclType, 0, -1, AttrList, 
                                       MethodType == tok::minus,
