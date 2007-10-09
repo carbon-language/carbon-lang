@@ -416,7 +416,6 @@ namespace llvm {
     SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerExternalSymbol(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerShift(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerIntegerDivOrRem(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFABS(SDOperand Op, SelectionDAG &DAG);
