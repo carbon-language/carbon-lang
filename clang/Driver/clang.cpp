@@ -791,7 +791,7 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
   // Lex the file, which will read all the macros.
   Token Tok;
   PP.Lex(Tok);
-  assert(Tok.getKind() == tok::eof && "Didn't read entire file!");
+  assert(Tok.is(tok::eof) && "Didn't read entire file!");
 
   // Once we've read this, we're done.
   return MainFileID;
@@ -821,7 +821,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
       PP.Lex(Tok);
       PP.DumpToken(Tok, true);
       fprintf(stderr, "\n");
-    } while (Tok.getKind() != tok::eof);
+    } while (Tok.isNot(tok::eof));
     ClearSourceMgr = true;
     break;
   }
@@ -831,7 +831,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     PP.EnterSourceFile(MainFileID, 0, true);
     do {
       PP.Lex(Tok);
-    } while (Tok.getKind() != tok::eof);
+    } while (Tok.isNot(tok::eof));
     ClearSourceMgr = true;
     break;
   }

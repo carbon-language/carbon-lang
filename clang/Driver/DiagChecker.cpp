@@ -104,7 +104,7 @@ static void FindExpectedDiags(Preprocessor &PP, unsigned MainFileID,
   do {
     PP.Lex(Tok);
 
-    if (Tok.getKind() == tok::comment) {
+    if (Tok.is(tok::comment)) {
       std::string Comment = PP.getSpelling(Tok);
 
       // Find all expected errors
@@ -115,7 +115,7 @@ static void FindExpectedDiags(Preprocessor &PP, unsigned MainFileID,
       FindDiagnostics(Comment, ExpectedWarnings, PP.getSourceManager(),
                       Tok.getLocation(), ExpectedWarnStr);
     }
-  } while (Tok.getKind() != tok::eof);
+  } while (Tok.isNot(tok::eof));
 
   PP.SetCommentRetentionState(false, false);
 }

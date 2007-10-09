@@ -308,7 +308,7 @@ void PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
   // From having the # character end up at column 1, which makes it so it
   // is not handled as a #define next time through the preprocessor if in
   // -fpreprocessed mode.
-  if (ColNo <= 1 && Tok.getKind() == tok::hash)
+  if (ColNo <= 1 && Tok.is(tok::hash))
     OutputChar(' ');
   
   // Otherwise, indent the appropriate number of spaces.
@@ -330,7 +330,7 @@ struct UnknownPragmaHandler : public PragmaHandler {
     OutputString(Prefix, strlen(Prefix));
     
     // Read and print all of the pragma tokens.
-    while (PragmaTok.getKind() != tok::eom) {
+    while (PragmaTok.isNot(tok::eom)) {
       if (PragmaTok.hasLeadingSpace())
         OutputChar(' ');
       std::string TokSpell = PP.getSpelling(PragmaTok);
@@ -430,8 +430,7 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
 
   if (ConcatInfo & aci_avoid_equal) {
     // If the next token is '=' or '==', avoid concatenation.
-    if (Tok.getKind() == tok::equal ||
-        Tok.getKind() == tok::equalequal)
+    if (Tok.is(tok::equal) || Tok.is(tok::equalequal))
       return true;
     ConcatInfo &= ~aci_avoid_equal;
   }
@@ -464,11 +463,11 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
   switch (PrevKind) {
   default: assert(0 && "InitAvoidConcatTokenInfo built wrong");
   case tok::identifier:   // id+id or id+number or id+L"foo".
-    if (Tok.getKind() == tok::numeric_constant || Tok.getIdentifierInfo() ||
-        Tok.getKind() == tok::wide_string_literal /* ||
-        Tok.getKind() == tok::wide_char_literal*/)
+    if (Tok.is(tok::numeric_constant) || Tok.getIdentifierInfo() ||
+        Tok.is(tok::wide_string_literal) /* ||
+        Tok.is(tok::wide_char_literal)*/)
       return true;
-    if (Tok.getKind() != tok::char_constant)
+    if (Tok.isNot(tok::char_constant))
       return false;
       
     // FIXME: need a wide_char_constant!
@@ -484,7 +483,7 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
       return PP.getSpelling(Tok)[0] == 'L';
     }
   case tok::numeric_constant:
-    return isalnum(FirstChar) || Tok.getKind() == tok::numeric_constant ||
+    return isalnum(FirstChar) || Tok.is(tok::numeric_constant) ||
            FirstChar == '+' || FirstChar == '-' || FirstChar == '.';
   case tok::period:          // ..., .*, .1234
     return FirstChar == '.' || FirstChar == '*' || isdigit(FirstChar);
@@ -566,7 +565,7 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
       OutputString(&S[0], S.size());
     }
     Callbacks->SetEmittedTokensOnThisLine();
-  } while (Tok.getKind() != tok::eof);
+  } while (Tok.isNot(tok::eof));
   OutputChar('\n');
   
   CleanupOutputBuffer();
