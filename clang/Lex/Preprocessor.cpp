@@ -618,7 +618,7 @@ bool Preprocessor::isNextPPTokenLParen() {
   
   Token Tok;
   LexUnexpandedToken(Tok);
-  assert(Tok.getKind() == tok::l_paren && "Error computing l-paren-ness?");
+  assert(Tok.is(tok::l_paren) && "Error computing l-paren-ness?");
   return true;
 }
 
@@ -767,7 +767,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
   llvm::SmallVector<Token, 64> ArgTokens;
 
   unsigned NumActuals = 0;
-  while (Tok.getKind() == tok::comma) {
+  while (Tok.is(tok::comma)) {
     // C99 6.10.3p11: Keep track of the number of l_parens we have seen.  Note
     // that we already consumed the first one.
     unsigned NumParens = 0;
@@ -777,18 +777,18 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       // an argument value in a macro could expand to ',' or '(' or ')'.
       LexUnexpandedToken(Tok);
       
-      if (Tok.getKind() == tok::eof) {
+      if (Tok.is(tok::eof)) {
         Diag(MacroName, diag::err_unterm_macro_invoc);
         // Do not lose the EOF.  Return it to the client.
         MacroName = Tok;
         return 0;
-      } else if (Tok.getKind() == tok::r_paren) {
+      } else if (Tok.is(tok::r_paren)) {
         // If we found the ) token, the macro arg list is done.
         if (NumParens-- == 0)
           break;
-      } else if (Tok.getKind() == tok::l_paren) {
+      } else if (Tok.is(tok::l_paren)) {
         ++NumParens;
-      } else if (Tok.getKind() == tok::comma && NumParens == 0) {
+      } else if (Tok.is(tok::comma) && NumParens == 0) {
         // Comma ends this argument if there are more fixed arguments expected.
         if (NumFixedArgsLeft)
           break;
@@ -801,7 +801,7 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
           return 0;
         }
         // Otherwise, continue to add the tokens to this variable argument.
-      } else if (Tok.getKind() == tok::comment && !KeepMacroComments) {
+      } else if (Tok.is(tok::comment) && !KeepMacroComments) {
         // If this is a comment token in the argument list and we're just in
         // -C mode (not -CC mode), discard the comment.
         continue;
@@ -1005,7 +1005,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
 /// identifier information for the token and install it into the token.
 IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier,
                                                    const char *BufPtr) {
-  assert(Identifier.getKind() == tok::identifier && "Not an identifier!");
+  assert(Identifier.is(tok::identifier) && "Not an identifier!");
   assert(Identifier.getIdentifierInfo() == 0 && "Identinfo already exists!");
   
   // Look up this token, see if it is a macro, or if it is a language keyword.
@@ -1174,7 +1174,7 @@ void Preprocessor::DiscardUntilEndOfDirective() {
   Token Tmp;
   do {
     LexUnexpandedToken(Tmp);
-  } while (Tmp.getKind() != tok::eom);
+  } while (Tmp.isNot(tok::eom));
 }
 
 /// isCXXNamedOperator - Returns "true" if the token is a named operator in C++.
@@ -1194,7 +1194,7 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
   LexUnexpandedToken(MacroNameTok);
   
   // Missing macro name?
-  if (MacroNameTok.getKind() == tok::eom)
+  if (MacroNameTok.is(tok::eom))
     return Diag(MacroNameTok, diag::err_pp_missing_macro_name);
   
   IdentifierInfo *II = MacroNameTok.getIdentifierInfo();
@@ -1235,10 +1235,10 @@ void Preprocessor::CheckEndOfDirective(const char *DirType) {
   Lex(Tmp);
   // There should be no tokens after the directive, but we allow them as an
   // extension.
-  while (Tmp.getKind() == tok::comment)  // Skip comments in -C mode.
+  while (Tmp.is(tok::comment))  // Skip comments in -C mode.
     Lex(Tmp);
   
-  if (Tmp.getKind() != tok::eom) {
+  if (Tmp.isNot(tok::eom)) {
     Diag(Tmp, diag::ext_pp_extra_tokens_at_eol, DirType);
     DiscardUntilEndOfDirective();
   }
@@ -1272,7 +1272,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     CurLexer->Lex(Tok);
     
     // If this is the end of the buffer, we have an error.
-    if (Tok.getKind() == tok::eof) {
+    if (Tok.is(tok::eof)) {
       // Emit errors for each unterminated conditional on the stack, including
       // the current one.
       while (!CurLexer->ConditionalStack.empty()) {
@@ -1286,7 +1286,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     }
     
     // If this token is not a preprocessor directive, just skip it.
-    if (Tok.getKind() != tok::hash || !Tok.isAtStartOfLine())
+    if (Tok.isNot(tok::hash) || !Tok.isAtStartOfLine())
       continue;
       
     // We just parsed a # character at the start of a line, so we're in
@@ -1301,7 +1301,7 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
     
     // If this isn't an identifier directive (e.g. is "# 1\n" or "#\n", or
     // something bogus), skip it.
-    if (Tok.getKind() != tok::identifier) {
+    if (Tok.isNot(tok::identifier)) {
       CurLexer->ParsingPreprocessorDirective = false;
       // Restore comment saving mode.
       CurLexer->KeepCommentMode = KeepComments;
@@ -1586,8 +1586,8 @@ void Preprocessor::HandleIdentSCCSDirective(Token &Tok) {
   Lex(StrTok);
   
   // If the token kind isn't a string, it's a malformed directive.
-  if (StrTok.getKind() != tok::string_literal &&
-      StrTok.getKind() != tok::wide_string_literal)
+  if (StrTok.isNot(tok::string_literal) &&
+      StrTok.isNot(tok::wide_string_literal))
     return Diag(StrTok, diag::err_pp_malformed_ident);
   
   // Verify that there is nothing after the string, other than EOM.
@@ -1663,7 +1663,7 @@ static bool ConcatenateIncludeName(llvm::SmallVector<char, 128> &FilenameBuffer,
   Token CurTok;
   
   PP.Lex(CurTok);
-  while (CurTok.getKind() != tok::eom) {
+  while (CurTok.isNot(tok::eom)) {
     // Append the spelling of this token to the buffer. If there was a space
     // before it, add it now.
     if (CurTok.hasLeadingSpace())
@@ -1685,7 +1685,7 @@ static bool ConcatenateIncludeName(llvm::SmallVector<char, 128> &FilenameBuffer,
       FilenameBuffer.resize(PreAppendSize+ActualLen);
     
     // If we found the '>' marker, return success.
-    if (CurTok.getKind() == tok::greater)
+    if (CurTok.is(tok::greater))
       return false;
     
     PP.Lex(CurTok);
@@ -1842,7 +1842,7 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
 
       // Lex the token after the identifier.
       LexUnexpandedToken(Tok);
-      if (Tok.getKind() != tok::r_paren) {
+      if (Tok.isNot(tok::r_paren)) {
         Diag(Tok, diag::err_pp_missing_rparen_in_macro_def);
         return true;
       }
@@ -1893,7 +1893,7 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI) {
         
         // Lex the token after the identifier.
         LexUnexpandedToken(Tok);
-        if (Tok.getKind() != tok::r_paren) {
+        if (Tok.isNot(tok::r_paren)) {
           Diag(Tok, diag::err_pp_missing_rparen_in_macro_def);
           return true;
         }
@@ -1918,7 +1918,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
   ReadMacroName(MacroNameTok, 1);
   
   // Error reading macro name?  If so, diagnostic already issued.
-  if (MacroNameTok.getKind() == tok::eom)
+  if (MacroNameTok.is(tok::eom))
     return;
 
   // If we are supposed to keep comments in #defines, reenable comment saving
@@ -1939,9 +1939,9 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
   // If this is a function-like macro definition, parse the argument list,
   // marking each of the identifiers as being used as macro arguments.  Also,
   // check other constraints on the first token of the macro body.
-  if (Tok.getKind() == tok::eom) {
+  if (Tok.is(tok::eom)) {
     // If there is no body to this macro, we have no special handling here.
-  } else if (Tok.getKind() == tok::l_paren && !Tok.hasLeadingSpace()) {
+  } else if (Tok.is(tok::l_paren) && !Tok.hasLeadingSpace()) {
     // This is a function-like macro definition.  Read the argument list.
     MI->setIsFunctionLike();
     if (ReadMacroDefinitionArgList(MI)) {
@@ -1982,7 +1982,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
   // Read the rest of the macro body.
   if (MI->isObjectLike()) {
     // Object-like macros are very simple, just read their body.
-    while (Tok.getKind() != tok::eom) {
+    while (Tok.isNot(tok::eom)) {
       MI->AddTokenToBody(Tok);
       // Get the next token of the macro.
       LexUnexpandedToken(Tok);
@@ -1991,12 +1991,12 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
   } else {
     // Otherwise, read the body of a function-like macro.  This has to validate
     // the # (stringize) operator.
-    while (Tok.getKind() != tok::eom) {
+    while (Tok.isNot(tok::eom)) {
       MI->AddTokenToBody(Tok);
 
       // Check C99 6.10.3.2p1: ensure that # operators are followed by macro
       // parameters in function-like macro expansions.
-      if (Tok.getKind() != tok::hash) {
+      if (Tok.isNot(tok::hash)) {
         // Get the next token of the macro.
         LexUnexpandedToken(Tok);
         continue;
@@ -2032,12 +2032,12 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok,
   // replacement list.
   unsigned NumTokens = MI->getNumTokens();
   if (NumTokens != 0) {
-    if (MI->getReplacementToken(0).getKind() == tok::hashhash) {
+    if (MI->getReplacementToken(0).is(tok::hashhash)) {
       Diag(MI->getReplacementToken(0), diag::err_paste_at_start);
       delete MI;
       return;
     }
-    if (MI->getReplacementToken(NumTokens-1).getKind() == tok::hashhash) {
+    if (MI->getReplacementToken(NumTokens-1).is(tok::hashhash)) {
       Diag(MI->getReplacementToken(NumTokens-1), diag::err_paste_at_end);
       delete MI;
       return;
@@ -2074,7 +2074,7 @@ void Preprocessor::HandleDefineOtherTargetDirective(Token &Tok) {
   ReadMacroName(MacroNameTok, 1);
   
   // Error reading macro name?  If so, diagnostic already issued.
-  if (MacroNameTok.getKind() == tok::eom)
+  if (MacroNameTok.is(tok::eom))
     return;
 
   // Check to see if this is the last token on the #undef line.
@@ -2101,7 +2101,7 @@ void Preprocessor::HandleUndefDirective(Token &UndefTok) {
   ReadMacroName(MacroNameTok, 2);
   
   // Error reading macro name?  If so, diagnostic already issued.
-  if (MacroNameTok.getKind() == tok::eom)
+  if (MacroNameTok.is(tok::eom))
     return;
   
   // Check to see if this is the last token on the #undef line.
@@ -2143,7 +2143,7 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   ReadMacroName(MacroNameTok);
   
   // Error reading macro name?  If so, diagnostic already issued.
-  if (MacroNameTok.getKind() == tok::eom) {
+  if (MacroNameTok.is(tok::eom)) {
     // Skip code until we get to #endif.  This helps with recovery by not
     // emitting an error when the #endif is reached.
     SkipExcludedConditionalBlock(DirectiveTok.getLocation(),

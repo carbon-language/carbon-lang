@@ -87,7 +87,7 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
 
     // Two options, it can either be a pp-identifier or a (.
     bool InParens = false;
-    if (PeekTok.getKind() == tok::l_paren) {
+    if (PeekTok.is(tok::l_paren)) {
       // Found a paren, remember we saw it and skip it.
       InParens = true;
       PP.LexUnexpandedToken(PeekTok);
@@ -129,7 +129,7 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
 
     // If we are in parens, ensure we have a trailing ).
     if (InParens) {
-      if (PeekTok.getKind() != tok::r_paren) {
+      if (PeekTok.isNot(tok::r_paren)) {
         PP.Diag(PeekTok, diag::err_pp_missing_rparen);
         return true;
       }
@@ -246,13 +246,13 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
 
     // If this is a silly value like (X), which doesn't need parens, check for
     // !(defined X).
-    if (PeekTok.getKind() == tok::r_paren) {
+    if (PeekTok.is(tok::r_paren)) {
       // Just use DT unmodified as our result.
     } else {
       if (EvaluateDirectiveSubExpr(Result, 1, PeekTok, ValueLive, PP))
         return true;
       
-      if (PeekTok.getKind() != tok::r_paren) {
+      if (PeekTok.isNot(tok::r_paren)) {
         PP.Diag(PeekTok, diag::err_pp_expected_rparen);
         return true;
       }
@@ -560,7 +560,7 @@ static bool EvaluateDirectiveSubExpr(llvm::APSInt &LHS, unsigned MinPrec,
       break; 
     case tok::question: {
       // Parse the : part of the expression.
-      if (PeekTok.getKind() != tok::colon) {
+      if (PeekTok.isNot(tok::colon)) {
         PP.Diag(OpToken, diag::err_pp_question_without_colon);
         return true;
       }
@@ -622,7 +622,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   DefinedTracker DT;
   if (EvaluateValue(ResVal, Tok, DT, true, *this)) {
     // Parse error, skip the rest of the macro line.
-    if (Tok.getKind() != tok::eom)
+    if (Tok.isNot(tok::eom))
       DiscardUntilEndOfDirective();
     return false;
   }
@@ -630,7 +630,7 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   // If we are at the end of the expression after just parsing a value, there
   // must be no (unparenthesized) binary operators involved, so we can exit
   // directly.
-  if (Tok.getKind() == tok::eom) {
+  if (Tok.is(tok::eom)) {
     // If the expression we parsed was of the form !defined(macro), return the
     // macro in IfNDefMacro.
     if (DT.State == DefinedTracker::NotDefinedMacro)
@@ -643,14 +643,14 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   // operator and the stuff after it.
   if (EvaluateDirectiveSubExpr(ResVal, 1, Tok, true, *this)) {
     // Parse error, skip the rest of the macro line.
-    if (Tok.getKind() != tok::eom)
+    if (Tok.isNot(tok::eom))
       DiscardUntilEndOfDirective();
     return false;
   }
   
   // If we aren't at the tok::eom token, something bad happened, like an extra
   // ')' token.
-  if (Tok.getKind() != tok::eom) {
+  if (Tok.isNot(tok::eom)) {
     Diag(Tok, diag::err_pp_expected_eol);
     DiscardUntilEndOfDirective();
   }

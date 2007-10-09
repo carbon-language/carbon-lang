@@ -41,8 +41,8 @@ static void InitCharacterInfo();
 
 /// isObjCAtKeyword - Return true if we have an ObjC keyword identifier. 
 bool Token::isObjCAtKeyword(tok::ObjCKeywordKind objcKey) const {
-  return getKind() == tok::identifier && 
-  getIdentifierInfo()->getObjCKeywordID() == objcKey;
+  return is(tok::identifier) && 
+         getIdentifierInfo()->getObjCKeywordID() == objcKey;
 }
 
 /// getObjCKeywordID - Return the ObjC keyword kind.
@@ -979,7 +979,7 @@ void Lexer::LexIncludeFilename(Token &FilenameTok) {
   ParsingFilename = false;
   
   // No filename?
-  if (FilenameTok.getKind() == tok::eom)
+  if (FilenameTok.is(tok::eom))
     Diag(FilenameTok.getLocation(), diag::err_pp_expects_filename);
 }
 
@@ -1015,7 +1015,7 @@ std::string Lexer::ReadToEndOfLine() {
       
       // Next, lex the character, which should handle the EOM transition.
       Lex(Tmp);
-      assert(Tmp.getKind() == tok::eom && "Unexpected token!");
+      assert(Tmp.is(tok::eom) && "Unexpected token!");
       
       // Finally, we're done, return the string we found.
       return Result;
@@ -1096,9 +1096,9 @@ unsigned Lexer::isNextPPTokenLParen() {
   // Restore the lexer back to non-skipping mode.
   LexingRawMode = false;
   
-  if (Tok.getKind() == tok::eof)
+  if (Tok.is(tok::eof))
     return 2;
-  return Tok.getKind() == tok::l_paren;
+  return Tok.is(tok::l_paren);
 }
 
 

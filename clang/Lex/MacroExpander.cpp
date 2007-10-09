@@ -59,7 +59,7 @@ void MacroArgs::destroy() {
 /// argument.
 unsigned MacroArgs::getArgLength(const Token *ArgPtr) {
   unsigned NumArgTokens = 0;
-  for (; ArgPtr->getKind() != tok::eof; ++ArgPtr)
+  for (; ArgPtr->isNot(tok::eof); ++ArgPtr)
     ++NumArgTokens;
   return NumArgTokens;
 }
@@ -75,7 +75,7 @@ const Token *MacroArgs::getUnexpArgument(unsigned Arg) const {
   // Scan to find Arg.
   for (; Arg; ++Result) {
     assert(Result < Start+NumUnexpArgTokens && "Invalid arg #");
-    if (Result->getKind() == tok::eof)
+    if (Result->is(tok::eof))
       --Arg;
   }
   return Result;
@@ -88,7 +88,7 @@ bool MacroArgs::ArgNeedsPreexpansion(const Token *ArgTok,
                                      Preprocessor &PP) const {
   // If there are no identifiers in the argument list, or if the identifiers are
   // known to not be macros, pre-expansion won't modify it.
-  for (; ArgTok->getKind() != tok::eof; ++ArgTok)
+  for (; ArgTok->isNot(tok::eof); ++ArgTok)
     if (IdentifierInfo *II = ArgTok->getIdentifierInfo()) {
       if (II->hasMacroDefinition() && PP.getMacroInfo(II)->isEnabled())
         // Return true even though the macro could be a function-like macro
@@ -124,7 +124,7 @@ MacroArgs::getPreExpArgument(unsigned Arg, Preprocessor &PP) {
   do {
     Result.push_back(Token());
     PP.Lex(Result.back());
-  } while (Result.back().getKind() != tok::eof);
+  } while (Result.back().isNot(tok::eof));
   
   // Pop the token stream off the top of the stack.  We know that the internal
   // pointer inside of it is to the "end" of the token stream, but the stack
@@ -152,7 +152,7 @@ static Token StringifyArgument(const Token *ArgToks,
   std::string Result = "\"";
   // FIXME: Optimize this loop to not use std::strings.
   bool isFirst = true;
-  for (; ArgToks->getKind() != tok::eof; ++ArgToks) {
+  for (; ArgToks->isNot(tok::eof); ++ArgToks) {
     const Token &Tok = *ArgToks;
     if (!isFirst && (Tok.hasLeadingSpace() || Tok.isAtStartOfLine()))
       Result += ' ';
@@ -160,9 +160,9 @@ static Token StringifyArgument(const Token *ArgToks,
     
     // If this is a string or character constant, escape the token as specified
     // by 6.10.3.2p2.
-    if (Tok.getKind() == tok::string_literal ||      // "foo"
-        Tok.getKind() == tok::wide_string_literal || // L"foo"
-        Tok.getKind() == tok::char_constant) {       // 'x' and L'x'.
+    if (Tok.is(tok::string_literal) ||       // "foo"
+        Tok.is(tok::wide_string_literal) ||  // L"foo"
+        Tok.is(tok::char_constant)) {        // 'x' and L'x'.
       Result += Lexer::Stringify(PP.getSpelling(Tok));
     } else {
       // Otherwise, just append the token.
@@ -223,7 +223,7 @@ const Token &MacroArgs::getStringifiedArgument(unsigned ArgNo,
     memset(&StringifiedArgs[0], 0,
            sizeof(StringifiedArgs[0])*getNumArguments());
   }
-  if (StringifiedArgs[ArgNo].getKind() != tok::string_literal)
+  if (StringifiedArgs[ArgNo].isNot(tok::string_literal))
     StringifiedArgs[ArgNo] = StringifyArgument(getUnexpArgument(ArgNo), PP);
   return StringifiedArgs[ArgNo];
 }
@@ -320,12 +320,12 @@ void MacroExpander::ExpandFunctionArguments() {
     // preprocessor already verified that the following token is a macro name
     // when the #define was parsed.
     const Token &CurTok = MacroTokens[i];
-    if (CurTok.getKind() == tok::hash || CurTok.getKind() == tok::hashat) {
+    if (CurTok.is(tok::hash) || CurTok.is(tok::hashat)) {
       int ArgNo = Macro->getArgumentNum(MacroTokens[i+1].getIdentifierInfo());
       assert(ArgNo != -1 && "Token following # is not an argument?");
     
       Token Res;
-      if (CurTok.getKind() == tok::hash)  // Stringify
+      if (CurTok.is(tok::hash))  // Stringify
         Res = ActualArgs->getStringifiedArgument(ArgNo, PP);
       else {
         // 'charify': don't bother caching these.
@@ -366,8 +366,8 @@ void MacroExpander::ExpandFunctionArguments() {
     // Otherwise, this is a use of the argument.  Find out if there is a paste
     // (##) operator before or after the argument.
     bool PasteBefore = 
-      !ResultToks.empty() && ResultToks.back().getKind() == tok::hashhash;
-    bool PasteAfter = i+1 != e && MacroTokens[i+1].getKind() == tok::hashhash;
+      !ResultToks.empty() && ResultToks.back().is(tok::hashhash);
+    bool PasteAfter = i+1 != e && MacroTokens[i+1].is(tok::hashhash);
     
     // If it is not the LHS/RHS of a ## operator, we must pre-expand the
     // argument and substitute the expanded tokens into the result.  This is
@@ -384,7 +384,7 @@ void MacroExpander::ExpandFunctionArguments() {
         ResultArgToks = ArgTok;  // Use non-preexpanded tokens.
       
       // If the arg token expanded into anything, append it.
-      if (ResultArgToks->getKind() != tok::eof) {
+      if (ResultArgToks->isNot(tok::eof)) {
         unsigned FirstResult = ResultToks.size();
         unsigned NumToks = MacroArgs::getArgLength(ResultArgToks);
         ResultToks.append(ResultArgToks, ResultArgToks+NumToks);
@@ -435,7 +435,7 @@ void MacroExpander::ExpandFunctionArguments() {
     
     // If this is on the RHS of a paste operator, we've already copied the
     // paste operator to the ResultToks list.  Remove it.
-    assert(PasteBefore && ResultToks.back().getKind() == tok::hashhash);
+    assert(PasteBefore && ResultToks.back().is(tok::hashhash));
     NextTokGetsSpace |= ResultToks.back().hasLeadingSpace();
     ResultToks.pop_back();
     
@@ -444,7 +444,7 @@ void MacroExpander::ExpandFunctionArguments() {
     // the ## was a comma, remove the comma.
     if ((unsigned)ArgNo == Macro->getNumArgs()-1 && // is __VA_ARGS__
         ActualArgs->isVarargsElidedUse() &&       // Argument elided.
-        !ResultToks.empty() && ResultToks.back().getKind() == tok::comma) {
+        !ResultToks.empty() && ResultToks.back().is(tok::comma)) {
       // Never add a space, even if the comma, ##, or arg had a space.
       NextTokGetsSpace = false;
       ResultToks.pop_back();
@@ -492,7 +492,7 @@ void MacroExpander::Lex(Token &Tok) {
   Tok = MacroTokens[CurToken++];
   
   // If this token is followed by a token paste (##) operator, paste the tokens!
-  if (!isAtEnd() && MacroTokens[CurToken].getKind() == tok::hashhash)
+  if (!isAtEnd() && MacroTokens[CurToken].is(tok::hashhash))
     PasteTokens(Tok);
 
   // The token's current location indicate where the token was lexed from.  We
@@ -566,10 +566,9 @@ void MacroExpander::PasteTokens(Token &Tok) {
     
     // Avoid testing /*, as the lexer would think it is the start of a comment
     // and emit an error that it is unterminated.
-    if (Tok.getKind() == tok::slash && RHS.getKind() == tok::star) {
+    if (Tok.is(tok::slash) && RHS.is(tok::star)) {
       isInvalid = true;
-    } else if (Tok.getKind() == tok::identifier && 
-               RHS.getKind() == tok::identifier) {
+    } else if (Tok.is(tok::identifier) && RHS.is(tok::identifier)) {
       // Common paste case: identifier+identifier = identifier.  Avoid creating
       // a lexer and other overhead.
       PP.IncrementPasteCounter(true);
@@ -596,7 +595,7 @@ void MacroExpander::PasteTokens(Token &Tok) {
       
       // If we got an EOF token, we didn't form even ONE token.  For example, we
       // did "/ ## /" to get "//".
-      IsComplete &= Result.getKind() != tok::eof;
+      IsComplete &= Result.isNot(tok::eof);
       isInvalid = !IsComplete;
       
       // We're now done with the temporary lexer.
@@ -614,7 +613,7 @@ void MacroExpander::PasteTokens(Token &Tok) {
     }
     
     // Turn ## into 'other' to avoid # ## # from looking like a paste operator.
-    if (Result.getKind() == tok::hashhash)
+    if (Result.is(tok::hashhash))
       Result.setKind(tok::unknown);
     // FIXME: Turn __VARRGS__ into "not a token"?
     
@@ -625,12 +624,12 @@ void MacroExpander::PasteTokens(Token &Tok) {
     // Finally, replace LHS with the result, consume the RHS, and iterate.
     ++CurToken;
     Tok = Result;
-  } while (!isAtEnd() && MacroTokens[CurToken].getKind() == tok::hashhash);
+  } while (!isAtEnd() && MacroTokens[CurToken].is(tok::hashhash));
   
   // Now that we got the result token, it will be subject to expansion.  Since
   // token pasting re-lexes the result token in raw mode, identifier information
   // isn't looked up.  As such, if the result is an identifier, look up id info.
-  if (Tok.getKind() == tok::identifier) {
+  if (Tok.is(tok::identifier)) {
     // Look up the identifier info for the token.  We disabled identifier lookup
     // by saying we're skipping contents, so we need to do this manually.
     Tok.setIdentifierInfo(PP.LookUpIdentifierInfo(Tok));
@@ -644,5 +643,5 @@ unsigned MacroExpander::isNextTokenLParen() const {
   // Out of tokens?
   if (isAtEnd())
     return 2;
-  return MacroTokens[CurToken].getKind() == tok::l_paren;
+  return MacroTokens[CurToken].is(tok::l_paren);
 }

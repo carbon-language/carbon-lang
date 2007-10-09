@@ -93,13 +93,12 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   
   // Read the '('.
   Lex(Tok);
-  if (Tok.getKind() != tok::l_paren)
+  if (Tok.isNot(tok::l_paren))
     return Diag(PragmaLoc, diag::err__Pragma_malformed);
 
   // Read the '"..."'.
   Lex(Tok);
-  if (Tok.getKind() != tok::string_literal &&
-      Tok.getKind() != tok::wide_string_literal)
+  if (Tok.isNot(tok::string_literal) && Tok.isNot(tok::wide_string_literal))
     return Diag(PragmaLoc, diag::err__Pragma_malformed);
   
   // Remember the string.
@@ -108,7 +107,7 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
 
   // Read the ')'.
   Lex(Tok);
-  if (Tok.getKind() != tok::r_paren)
+  if (Tok.isNot(tok::r_paren))
     return Diag(PragmaLoc, diag::err__Pragma_malformed);
   
   // The _Pragma is lexically sound.  Destringize according to C99 6.10.9.1.
@@ -194,10 +193,10 @@ void Preprocessor::HandlePragmaPoison(Token &PoisonTok) {
     if (CurLexer) CurLexer->LexingRawMode = false;
     
     // If we reached the end of line, we're done.
-    if (Tok.getKind() == tok::eom) return;
+    if (Tok.is(tok::eom)) return;
     
     // Can only poison identifiers.
-    if (Tok.getKind() != tok::identifier) {
+    if (Tok.isNot(tok::identifier)) {
       Diag(Tok, diag::err_pp_invalid_poison);
       return;
     }
@@ -247,7 +246,7 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
   CurLexer->LexIncludeFilename(FilenameTok);
 
   // If the token kind is EOM, the error has already been diagnosed.
-  if (FilenameTok.getKind() == tok::eom)
+  if (FilenameTok.is(tok::eom))
     return;
   
   // Reserve a buffer to get the spelling.
@@ -280,7 +279,7 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
     // Lex tokens at the end of the message and include them in the message.
     std::string Message;
     Lex(DependencyTok);
-    while (DependencyTok.getKind() != tok::eom) {
+    while (DependencyTok.isNot(tok::eom)) {
       Message += getSpelling(DependencyTok) + " ";
       Lex(DependencyTok);
     }

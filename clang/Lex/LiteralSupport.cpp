@@ -549,7 +549,7 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
   // literal, the result is a wide-string literal [C99 6.4.5p4].
   MaxTokenLength = StringToks[0].getLength();
   SizeBound = StringToks[0].getLength()-2;  // -2 for "".
-  AnyWide = StringToks[0].getKind() == tok::wide_string_literal;
+  AnyWide = StringToks[0].is(tok::wide_string_literal);
   
   hadError = false;
 
@@ -565,7 +565,7 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
       MaxTokenLength = StringToks[i].getLength();
     
     // Remember if we see any wide strings.
-    AnyWide |= StringToks[i].getKind() == tok::wide_string_literal;
+    AnyWide |= StringToks[i].is(tok::wide_string_literal);
   }
   
   
