@@ -1063,17 +1063,17 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
                       IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                       IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
   ObjcInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
-  ObjcCategoryDecl *CDecl = new ObjcCategoryDecl(AtInterfaceLoc, NumProtoRefs,
-                                                 CategoryName);
-  bool err = false;
-  CDecl->setClassInterface(IDecl);
-
+  ObjcCategoryDecl *CDecl;
+  
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl()) {
     Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
-    err = true;
+    return 0;
   }
   else {
+    CDecl = new ObjcCategoryDecl(AtInterfaceLoc, NumProtoRefs,
+                                 CategoryName);
+    CDecl->setClassInterface(IDecl);
     /// Check for duplicate interface declaration for this category
     ObjcCategoryDecl *CDeclChain;
     for (CDeclChain = IDecl->getListCategories(); CDeclChain;
@@ -1081,7 +1081,6 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
       if (CDeclChain->getIdentifier() == CategoryName) {
         Diag(CategoryLoc, diag::err_dup_category_def, ClassName->getName(),
              CategoryName->getName());
-        err = true;
         break;
       }
     }
@@ -1097,12 +1096,11 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
       Diag(CategoryLoc, diag::err_undef_protocolref,
            ProtoRefNames[i]->getName(),
            CategoryName->getName());
-      err = true;
     }
     CDecl->setCatReferencedProtocols((int)i, RefPDecl);
   }
   
-  return err ? 0 : CDecl;
+  return CDecl;
 }
 
 /// ActOnStartCategoryImplementation - Perform semantic checks on the
