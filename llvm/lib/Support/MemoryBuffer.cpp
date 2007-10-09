@@ -59,9 +59,13 @@ namespace {
 class MemoryBufferMem : public MemoryBuffer {
   std::string FileID;
 public:
-  MemoryBufferMem(const char *Start, const char *End, const char *FID)
+  MemoryBufferMem(const char *Start, const char *End, const char *FID,
+                  bool Copy = false)
   : FileID(FID) {
-    init(Start, End);
+    if (!Copy)
+      init(Start, End);
+    else
+      initCopyOf(Start, End);
   }
   
   virtual const char *getBufferIdentifier() const {
@@ -76,6 +80,15 @@ MemoryBuffer *MemoryBuffer::getMemBuffer(const char *StartPtr,
                                          const char *EndPtr,
                                          const char *BufferName) {
   return new MemoryBufferMem(StartPtr, EndPtr, BufferName);
+}
+
+/// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
+/// copying the contents and taking ownership of it.  This has no requirements
+/// on EndPtr[0].
+MemoryBuffer *MemoryBuffer::getMemBufferCopy(const char *StartPtr, 
+                                             const char *EndPtr,
+                                             const char *BufferName) {
+  return new MemoryBufferMem(StartPtr, EndPtr, BufferName, true);
 }
 
 /// getNewUninitMemBuffer - Allocate a new MemoryBuffer of the specified size

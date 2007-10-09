@@ -61,6 +61,12 @@ public:
   static MemoryBuffer *getMemBuffer(const char *StartPtr, const char *EndPtr,
                                     const char *BufferName = "");
   
+  /// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
+  /// copying the contents and taking ownership of it.  This has no requirements
+  /// on EndPtr[0].
+  static MemoryBuffer *getMemBufferCopy(const char *StartPtr,const char *EndPtr,
+                                        const char *BufferName = "");
+  
   /// getNewMemBuffer - Allocate a new MemoryBuffer of the specified size that
   /// is completely initialized to zeros.  Note that the caller should
   /// initialize the memory allocated by this method.  The memory is owned by
