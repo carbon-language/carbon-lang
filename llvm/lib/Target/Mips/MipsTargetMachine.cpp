@@ -39,7 +39,11 @@ MipsTargetMachine::
 MipsTargetMachine(const Module &M, const std::string &FS): 
   Subtarget(*this, M, FS), DataLayout("E-p:32:32:32"), 
   InstrInfo(*this), FrameInfo(TargetFrameInfo::StackGrowsUp, 8, 0),
-  TLInfo(*this) {}
+  TLInfo(*this) 
+{
+  if (getRelocationModel() != Reloc::Static)
+    setRelocationModel(Reloc::PIC_);  
+}
 
 // return 0 and must specify -march to gen MIPS code.
 unsigned MipsTargetMachine::

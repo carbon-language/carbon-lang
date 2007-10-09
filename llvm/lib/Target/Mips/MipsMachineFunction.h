@@ -33,6 +33,11 @@ private:
   /// the Return Address must be saved
   int RAStackOffset;
 
+  /// When PIC is used the GP must be saved on the stack
+  /// on the function prologue, so a reference to its stack
+  /// location must be kept.
+  int GPStackOffset;
+
   /// MipsFIHolder - Holds a FrameIndex and it's Stack Pointer Offset
   struct MipsFIHolder {
 
@@ -68,6 +73,9 @@ public:
 
   int getRAStackOffset() const { return RAStackOffset; }
   void setRAStackOffset(int Off) { RAStackOffset = Off; }
+
+  int getGPStackOffset() const { return GPStackOffset; }
+  void setGPStackOffset(int Off) { GPStackOffset = Off; }
 
   int getTopSavedRegOffset() const { 
     return (RAStackOffset > FPStackOffset) ? 

@@ -67,7 +67,7 @@ namespace {
     void printHex32(unsigned int Value);
 
     void emitFunctionStart(MachineFunction &MF);
-    void emitFunctionEnd();
+    void emitFunctionEnd(MachineFunction &MF);
     void emitFrameDirective(MachineFunction &MF);
     void emitMaskDirective(MachineFunction &MF);
     void emitFMaskDirective(MachineFunction &MF);
@@ -209,10 +209,12 @@ getSavedRegsBitmask(bool isFloat, MachineFunction &MF)
     Bitmask |= (1 << MipsRegisterInfo::getRegisterNumbering(CSI[i].getReg()));
 
   if (RI.hasFP(MF)) 
-    Bitmask |= (1 << MipsRegisterInfo::getRegisterNumbering(RI.getFrameRegister(MF)));
+    Bitmask |= (1 << MipsRegisterInfo::
+                getRegisterNumbering(RI.getFrameRegister(MF)));
   
   if (MF.getFrameInfo()->hasCalls()) 
-    Bitmask |= (1 << MipsRegisterInfo::getRegisterNumbering(RI.getRARegister()));
+    Bitmask |= (1 << MipsRegisterInfo::
+                getRegisterNumbering(RI.getRARegister()));
 
   return Bitmask;
 }
@@ -247,16 +249,24 @@ emitFunctionStart(MachineFunction &MF)
   emitFrameDirective(MF);
   emitMaskDirective(MF);
   emitFMaskDirective(MF);
-  emitSetDirective(NOREORDER);
-  emitSetDirective(NOMACRO);
+
+  if (MF.getTarget().getRelocationModel() == Reloc::Static) {
+    emitSetDirective(NOREORDER);
+    emitSetDirective(NOMACRO);
+  }
+
   O << "\n";
 }
 
 /// Emit the directives used by GAS on the end of functions
 void MipsAsmPrinter::
-emitFunctionEnd() {
-  emitSetDirective(MACRO);
-  emitSetDirective(REORDER);
+emitFunctionEnd(MachineFunction &MF) 
+{
+  if (MF.getTarget().getRelocationModel() == Reloc::Static) {
+    emitSetDirective(MACRO);
+    emitSetDirective(REORDER);
+  }    
+
   O << "\t.end\t" << CurrentFnName << "\n";
 }
 
@@ -298,7 +308,7 @@ runOnMachineFunction(MachineFunction &MF)
   }
 
   // Emit function end directives
-  emitFunctionEnd();
+  emitFunctionEnd(MF);
 
   // We didn't modify anything.
   return false;
