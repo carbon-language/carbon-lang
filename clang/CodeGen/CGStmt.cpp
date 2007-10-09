@@ -169,9 +169,13 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   // of the controlling expression takes place before each execution of the loop
   // body. 
   llvm::Value *BoolCondVal = EvaluateExprAsBool(S.getCond());
-  
-  // TODO: while(1) is common, avoid extra exit blocks, etc.  Be sure
+
+  // while(1) is common, avoid extra exit blocks.  Be sure
   // to correctly handle break/continue though.
+  bool EmitBoolCondBranch = true;
+  if (llvm::ConstantInt *C = dyn_cast<llvm::ConstantInt>(BoolCondVal)) 
+    if (C->isOne())
+      EmitBoolCondBranch = false;
   
   // Create an exit block for when the condition fails, create a block for the
   // body of the loop.
@@ -179,7 +183,8 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   llvm::BasicBlock *LoopBody  = new llvm::BasicBlock("whilebody");
   
   // As long as the condition is true, go to the loop body.
-  Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
+  if (EmitBoolCondBranch)
+    Builder.CreateCondBr(BoolCondVal, LoopBody, ExitBlock);
 
   // Store the blocks to use for break and continue.
   BreakContinueStack.push_back(BreakContinue(ExitBlock, LoopHeader));
@@ -195,6 +200,14 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S) {
   
   // Emit the exit block.
   EmitBlock(ExitBlock);
+
+  // If LoopHeader is a simple forwarding block then eliminate it.
+  if (!EmitBoolCondBranch 
+      && &LoopHeader->front() == LoopHeader->getTerminator()) {
+    LoopHeader->replaceAllUsesWith(LoopBody);
+    LoopHeader->getTerminator()->eraseFromParent();
+    LoopHeader->eraseFromParent();
+  }
 }
 
 void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
@@ -230,7 +243,6 @@ void CodeGenFunction::EmitDoStmt(const DoStmt &S) {
   if (llvm::ConstantInt *C = dyn_cast<llvm::ConstantInt>(BoolCondVal)) 
     if (C->isZero())
       EmitBoolCondBranch = false;
-
 
   // As long as the condition is true, iterate the loop.
   if (EmitBoolCondBranch)
