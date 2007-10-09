@@ -1031,31 +1031,28 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
                       IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                       IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
   ObjcInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
-  ObjcCategoryDecl *CDecl;
   
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl()) {
     Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
     return 0;
   }
-  else {
-    CDecl = new ObjcCategoryDecl(AtInterfaceLoc, NumProtoRefs,
-                                 CategoryName);
-    CDecl->setClassInterface(IDecl);
-    /// Check for duplicate interface declaration for this category
-    ObjcCategoryDecl *CDeclChain;
-    for (CDeclChain = IDecl->getListCategories(); CDeclChain;
-         CDeclChain = CDeclChain->getNextClassCategory()) {
-      if (CDeclChain->getIdentifier() == CategoryName) {
-        Diag(CategoryLoc, diag::err_dup_category_def, ClassName->getName(),
-             CategoryName->getName());
-        break;
-      }
+  ObjcCategoryDecl *CDecl = new ObjcCategoryDecl(AtInterfaceLoc, NumProtoRefs,
+                                                 CategoryName);
+  CDecl->setClassInterface(IDecl);
+  /// Check for duplicate interface declaration for this category
+  ObjcCategoryDecl *CDeclChain;
+  for (CDeclChain = IDecl->getListCategories(); CDeclChain;
+       CDeclChain = CDeclChain->getNextClassCategory()) {
+    if (CDeclChain->getIdentifier() == CategoryName) {
+      Diag(CategoryLoc, diag::err_dup_category_def, ClassName->getName(),
+           CategoryName->getName());
+      break;
     }
-    if (!CDeclChain)
-      CDecl->insertNextClassCategory();
   }
-  
+  if (!CDeclChain)
+    CDecl->insertNextClassCategory();
+
   /// Check then save referenced protocols
   for (unsigned int i = 0; i != NumProtoRefs; i++) {
     ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtoRefNames[i]];
