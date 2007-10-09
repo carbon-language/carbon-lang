@@ -65,6 +65,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		35E98A830CBC2ED300C5CDC1 /* DenseSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DenseSet.h; sourceTree = "<group>"; };
+		35E98A840CBC2ED300C5CDC1 /* ImmutableMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImmutableMap.h; sourceTree = "<group>"; };
+		35E98A850CBC2ED300C5CDC1 /* ImmutableSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImmutableSet.h; sourceTree = "<group>"; };
 		84115FFE0B66D87400E1293E /* TargetMachOWriterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetMachOWriterInfo.cpp; sourceTree = "<group>"; };
 		84115FFF0B66D89B00E1293E /* PPCMachOWriterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PPCMachOWriterInfo.cpp; sourceTree = "<group>"; };
 		841160000B66D8AC00E1293E /* PPCMachOWriterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCMachOWriterInfo.h; sourceTree = "<group>"; };
@@ -2162,6 +2165,9 @@
 		DE66F1EB08ABF03100323D32 /* ADT */ = {
 			isa = PBXGroup;
 			children = (
+				35E98A830CBC2ED300C5CDC1 /* DenseSet.h */,
+				35E98A840CBC2ED300C5CDC1 /* ImmutableMap.h */,
+				35E98A850CBC2ED300C5CDC1 /* ImmutableSet.h */,
 				9FA638DD0C77B1AB007F12AE /* BitVector.h */,
 				DE66F1EE08ABF03100323D32 /* DenseMap.h */,
 				DE66F1EF08ABF03100323D32 /* DepthFirstIterator.h */,
@@ -2772,6 +2778,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = DE66EC5008ABE78900323D32 /* Build configuration list for PBXProject "LLVM" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* LLVM */;
 			projectDirPath = "";
