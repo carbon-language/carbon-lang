@@ -1090,9 +1090,9 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       SDOperand N0 = Node->getOperand(0);
       SDOperand N1 = Node->getOperand(1);
 
-      // There are several forms of IMUL just return the low part and don't
-      // have fixed-register operands. If we don't need the high part, use
-      // these instead. They can be selected with the generated ISel code.
+      // There are several forms of IMUL that just return the low part and
+      // don't have fixed-register operands. If we don't need the high part,
+      // use these instead. They can be selected with the generated ISel code.
       if (NVT != MVT::i8 &&
           N.getValue(1).use_empty()) {
         N = CurDAG->getNode(ISD::MUL, NVT, N0, N1);
