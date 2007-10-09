@@ -240,12 +240,12 @@ private:
   }; 
   llvm::SmallVector<BreakContinue, 8> BreakContinueStack;
   
-  /// SwitchInsn - This is used by EmitCaseStmt() and EmitDefaultStmt() to
-  /// populate switch instruction
+  /// SwitchInsn - This is nearest current switch instruction. It is null if
+  /// if current context is not in a switch.
   llvm::SwitchInst *SwitchInsn;
 
-  /// CaseRangeBlock - This is used, while constructiong swtich instruction,
-  /// to hold "if" condition for case statement ranges.
+  /// CaseRangeBlock - This block holds if condition check for last case 
+  /// statement range in current switch instruction.
   llvm::BasicBlock *CaseRangeBlock;
 
 public:
