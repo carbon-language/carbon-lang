@@ -24,7 +24,7 @@ def MipsJmpLink     : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink, [SDNPHasChain,
 
 // Hi and Lo nodes are created to let easy manipulation of 16-bit when 
 // handling 32-bit immediates. They are used on MipsISelLowering to 
-// lower stuff like GlobalAddress, ExternalSymbol, ...
+// lower stuff like GlobalAddress, ExternalSymbol, ... on static model
 // This two nodes have nothing to do with Mips Registers Hi and Lo.
 def MipsHi : SDNode<"MipsISD::Hi", SDTIntUnaryOp, [SDNPOutFlag]>;
 def MipsLo : SDNode<"MipsISD::Lo", SDTIntUnaryOp>; 
@@ -33,6 +33,9 @@ def MipsLo : SDNode<"MipsISD::Lo", SDTIntUnaryOp>;
 // into registers.
 def MipsAdd : SDNode<"MipsISD::Add", SDTIntBinOp, [SDNPCommutative, 
                      SDNPAssociative, SDNPOptInFlag]>;
+
+// Used to Load Addresses on PIC code.
+def MipsLoadAddr: SDNode<"MipsISD::LoadAddr", SDTIntUnaryOp>;
 
 // Return 
 def SDT_MipsRet : SDTypeProfile<0, 1, [SDTCisInt<0>]>; 
@@ -46,22 +49,28 @@ def callseq_start   : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeq,
 def callseq_end     : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeq, 
                              [SDNPHasChain, SDNPOutFlag]>;
 
+//===----------------------------------------------------------------------===//
+// Mips Instruction Predicate Definitions.
+//===----------------------------------------------------------------------===//
+def IsStatic : Predicate<"TM.getRelocationModel() == Reloc::Static">;
+
+//===----------------------------------------------------------------------===//
+// Mips Operand, Complex Patterns and Transformations Definitions.
+//===----------------------------------------------------------------------===//
+
 // Instruction operand types
 def brtarget    : Operand<OtherVT>;
 def calltarget  : Operand<i32>;
 def uimm16      : Operand<i32>;
 def simm16      : Operand<i32>;
 def shamt       : Operand<i32>; 
+def addrlabel   : Operand<i32>;
 
 // Address operand
 def mem : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops simm16, CPURegs);
 }
-
-//===----------------------------------------------------------------------===//
-// Mips Patterns and Transformations
-//===----------------------------------------------------------------------===//
 
 // Transformation Function - get the lower 16 bits.
 def LO16 : SDNodeXForm<imm, [{
@@ -280,7 +289,7 @@ class JumpFR<bits<6> op, bits<6> func, string instr_asm>:
 let isCall=1, hasDelaySlot=1, 
   // All calls clobber the non-callee saved registers...
   Defs = [AT, V0, V1, A0, A1, A2, A3, T0, T1, T2, 
-          T3, T4, T5, T6, T7, T8, T9, K0, K1, GP] in {
+          T3, T4, T5, T6, T7, T8, T9, K0, K1] in {
   class JumpLink<bits<6> op, string instr_asm>: 
     FJ< op,
         (outs),
@@ -343,22 +352,34 @@ class EffectiveAddress<string instr_asm> :
 // Pseudo instructions
 //===----------------------------------------------------------------------===//
 
-class Pseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
-      MipsInst<outs, ins, asmstr, pattern, IIPseudo>;
-
 // As stack alignment is always done with addiu, we need a 16-bit immediate
 let Defs = [SP], Uses = [SP] in {
-def ADJCALLSTACKDOWN : Pseudo<(outs), (ins uimm16:$amt),
-                              "!ADJCALLSTACKDOWN $amt",
-                              [(callseq_start imm:$amt)]>;
-def ADJCALLSTACKUP   : Pseudo<(outs), (ins uimm16:$amt),
-                              "!ADJCALLSTACKUP $amt",
-                              [(callseq_end imm:$amt)]>;
+def ADJCALLSTACKDOWN : PseudoInstMips<(outs), (ins uimm16:$amt),
+                                      "!ADJCALLSTACKDOWN $amt",
+                                      [(callseq_start imm:$amt)]>;
+def ADJCALLSTACKUP   : PseudoInstMips<(outs), (ins uimm16:$amt),
+                                      "!ADJCALLSTACKUP $amt",
+                                      [(callseq_end imm:$amt)]>;
 }
 
-def IMPLICIT_DEF_CPURegs : Pseudo<(outs CPURegs:$dst), (ins),
-                                  "!IMPLICIT_DEF $dst",
-                                  [(set CPURegs:$dst, (undef))]>;
+def IMPLICIT_DEF_CPURegs : PseudoInstMips<(outs CPURegs:$dst), (ins),
+                                          "!IMPLICIT_DEF $dst",
+                                          [(set CPURegs:$dst, (undef))]>;
+
+// When handling PIC code the assembler needs .cpload and .cprestore 
+// directives. If the real instructions corresponding these directives 
+// are used, we have the same behavior, but get also a bunch of warnings 
+// from the assembler.
+def CPLOAD: PseudoInstMips<(outs), (ins CPURegs:$reg), 
+                          ".set noreorder\n\t.cpload $reg\n\t.set reorder", []>;
+def CPRESTORE: PseudoInstMips<(outs), (ins uimm16:$loc), 
+                              ".cprestore $loc", []>;
+
+// Used on PIC code only, it loads the address of label into register reg. The
+// address is calculated from the global pointer ($gp) and is expanded by the
+// assembler into two instructions "lw" and "addiu".
+def LA: PseudoInstMips<(outs CPURegs:$dst), (ins addrlabel:$label), 
+                       "la $dst, $label", []>;
 
 //===----------------------------------------------------------------------===//
 // Instruction definition
@@ -507,6 +528,7 @@ def : Pat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
 def : Pat<(MipsLo tglobaladdr:$in), (ADDiu ZERO, tglobaladdr:$in)>;
 def : Pat<(MipsAdd CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
           (ADDiu CPURegs:$hi, tglobaladdr:$lo)>;
+def : Pat<(MipsLoadAddr tglobaladdr:$in), (LA tglobaladdr:$in)>;          
 
 // Mips does not have not, so we increase the operation  
 def : Pat<(not CPURegs:$in),

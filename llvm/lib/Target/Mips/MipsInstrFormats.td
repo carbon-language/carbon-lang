@@ -42,6 +42,9 @@ class MipsInst<dag outs, dag ins, string asmstr, list<dag> pattern,
   let Itinerary   = itin;
 }
 
+// Mips Pseudo Instructions Format
+class PseudoInstMips<dag outs, dag ins, string asmstr, list<dag> pattern>:
+      MipsInst<outs, ins, asmstr, pattern, IIPseudo>;
 
 //===----------------------------------------------------------------------===//
 // Format R instruction class in Mips : <|opcode|rs|rt|rd|shamt|funct|>
@@ -98,3 +101,4 @@ class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
   
   let Inst{25-0} = addr;
 }
+
