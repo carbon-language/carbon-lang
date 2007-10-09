@@ -133,7 +133,6 @@ enum MiscFlags {               // Miscellaneous flags to adjust argument
 //
 class alias;
 class Option {
-  friend void cl::ParseCommandLineOptions(int, char **, const char *);
   friend class alias;
 
   // handleOccurrences - Overriden by subclasses to handle the value passed into
