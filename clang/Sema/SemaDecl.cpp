@@ -97,25 +97,6 @@ ObjcInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
   return cast_or_null<ObjcInterfaceDecl>(static_cast<Decl*>(IdDecl));
 }
 
-/// getObjcProtocolDecl - Look up a for a protocol declaration in the scope.
-/// return 0 if one not found.
-ObjcProtocolDecl *Sema::getObjCProtocolDecl(Scope *S,
-                                            IdentifierInfo *Id, 
-                                            SourceLocation IdLoc) {
-  // Note that Protocols have their own namespace.
-  ScopedDecl *PrDecl = NULL;
-  for (ScopedDecl *D = Id->getFETokenInfo<ScopedDecl>(); D; D = D->getNext()) {
-    if (D->getIdentifierNamespace() == Decl::IDNS_Protocol) {
-      PrDecl = D;
-      break;
-    }
-  }
-  
-  if (PrDecl && !isa<ObjcProtocolDecl>(PrDecl))
-    PrDecl = 0;
-  return cast_or_null<ObjcProtocolDecl>(static_cast<Decl*>(PrDecl));
-}
-
 /// LookupScopedDecl - Look up the inner-most declaration in the specified
 /// namespace.
 ScopedDecl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
@@ -911,8 +892,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(Scope* S,
   // Check for another declaration kind with the same name.
   ScopedDecl *PrevDecl = LookupScopedDecl(ClassName, Decl::IDNS_Ordinary,
                                           ClassLoc, S);
-  if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)
-      && !isa<ObjcProtocolDecl>(PrevDecl)) {
+  if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind,
          ClassName->getName());
     Diag(PrevDecl->getLocation(), diag::err_previous_definition);
@@ -941,8 +921,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(Scope* S,
     // Check if a different kind of symbol declared in this scope.
     PrevDecl = LookupScopedDecl(SuperName, Decl::IDNS_Ordinary,
                                 SuperLoc, S);
-    if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)
-        && !isa<ObjcProtocolDecl>(PrevDecl)) {
+    if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
       Diag(SuperLoc, diag::err_redefinition_different_kind,
            SuperName->getName());
       Diag(PrevDecl->getLocation(), diag::err_previous_definition);
@@ -961,8 +940,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(Scope* S,
   
   /// Check then save referenced protocols
   for (unsigned int i = 0; i != NumProtocols; i++) {
-    ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtocolNames[i], 
-                                                     ClassLoc);
+    ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtocolNames[i]];
     if (!RefPDecl || RefPDecl->isForwardDecl())
       Diag(ClassLoc, diag::err_undef_protocolref,
            ProtocolNames[i]->getName(),
@@ -978,7 +956,7 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(Scope* S,
                 IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                 IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
   assert(ProtocolName && "Missing protocol identifier");
-  ObjcProtocolDecl *PDecl = getObjCProtocolDecl(S, ProtocolName, ProtocolLoc);
+  ObjcProtocolDecl *PDecl = ObjcProtocols[ProtocolName];
   if (PDecl) {
     // Protocol already seen. Better be a forward protocol declaration
     if (!PDecl->isForwardDecl())
@@ -992,16 +970,12 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(Scope* S,
   else {
     PDecl = new ObjcProtocolDecl(AtProtoInterfaceLoc, NumProtoRefs, 
                                  ProtocolName);
-    PDecl->setForwardDecl(false);
-    // Chain & install the protocol decl into the identifier.
-    PDecl->setNext(ProtocolName->getFETokenInfo<ScopedDecl>());
-    ProtocolName->setFETokenInfo(PDecl);
+    ObjcProtocols[ProtocolName] = PDecl;
   }    
   
   /// Check then save referenced protocols
   for (unsigned int i = 0; i != NumProtoRefs; i++) {
-    ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtoRefNames[i], 
-                                                     ProtocolLoc);
+    ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtoRefNames[i]];
     if (!RefPDecl || RefPDecl->isForwardDecl())
       Diag(ProtocolLoc, diag::err_undef_protocolref,
            ProtoRefNames[i]->getName(),
@@ -1021,8 +995,7 @@ Sema::ActOnFindProtocolDeclaration(Scope *S,
                                    IdentifierInfo **ProtocolId,
                                    unsigned NumProtocols) {
   for (unsigned i = 0; i != NumProtocols; ++i) {
-    ObjcProtocolDecl *PDecl = getObjCProtocolDecl(S, ProtocolId[i], 
-                                                  TypeLoc);
+    ObjcProtocolDecl *PDecl = ObjcProtocols[ProtocolId[i]];
     if (!PDecl)
       Diag(TypeLoc, diag::err_undeclared_protocol, 
            ProtocolId[i]->getName());
@@ -1039,16 +1012,11 @@ Sema::ActOnForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
   
   for (unsigned i = 0; i != NumElts; ++i) {
     IdentifierInfo *P = IdentList[i];
-    ObjcProtocolDecl *PDecl = getObjCProtocolDecl(S, P, AtProtocolLoc);
+    ObjcProtocolDecl *PDecl = ObjcProtocols[P];
     if (!PDecl)  { // Not already seen?
       // FIXME: Pass in the location of the identifier!
       PDecl = new ObjcProtocolDecl(AtProtocolLoc, 0, P, true);
-      // Chain & install the protocol decl into the identifier.
-      PDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
-      IdentList[i]->setFETokenInfo(PDecl);
-
-      // Remember that this needs to be removed when the scope is popped.
-      S->AddDecl(PDecl);
+      ObjcProtocols[P] = PDecl;
     }
     
     Protocols.push_back(PDecl);
@@ -1090,8 +1058,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
   
   /// Check then save referenced protocols
   for (unsigned int i = 0; i != NumProtoRefs; i++) {
-    ObjcProtocolDecl* RefPDecl = getObjCProtocolDecl(S, ProtoRefNames[i], 
-                                                     CategoryLoc);
+    ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtoRefNames[i]];
     if (!RefPDecl || RefPDecl->isForwardDecl()) {
       Diag(CategoryLoc, diag::err_undef_protocolref,
            ProtoRefNames[i]->getName(),
@@ -1148,8 +1115,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(Scope *S,
     // Check if a different kind of symbol declared in this scope.
     PrevDecl = LookupScopedDecl(SuperClassname, Decl::IDNS_Ordinary,
                                 SuperClassLoc, S);
-    if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)
-        && !isa<ObjcProtocolDecl>(PrevDecl)) {
+    if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
       Diag(SuperClassLoc, diag::err_redefinition_different_kind,
            SuperClassname->getName());
       Diag(PrevDecl->getLocation(), diag::err_previous_definition);

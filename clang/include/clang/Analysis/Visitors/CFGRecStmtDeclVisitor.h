@@ -64,7 +64,6 @@ public:
         DISPATCH_CASE(Class,RecordDecl)     // FIXME: Refine. 
         DISPATCH_CASE(Enum,EnumDecl)
         DISPATCH_CASE(ObjcInterface,ObjcInterfaceDecl)
-        DISPATCH_CASE(ObjcProtocol,ObjcProtocolDecl)
       default:
         assert(false && "Subtype of ScopedDecl not handled.");
     }

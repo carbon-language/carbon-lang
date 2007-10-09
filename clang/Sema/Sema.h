@@ -87,6 +87,11 @@ class Sema : public Action {
   /// @implementation's, so that we can emit errors on duplicates.
   llvm::SmallPtrSet<IdentifierInfo*, 8> ObjcImplementations;
   
+  /// ObjcProtocols - Keep track of all protocol declarations declared
+  /// with @protocol keyword, so that we can emit errors on duplicates and
+  /// find the declarations when needded.
+  llvm::DenseMap<IdentifierInfo*, ObjcProtocolDecl*> ObjcProtocols;
+  
   // Enum values used by KnownFunctionIDs (see below).
   enum {
     id_printf,
@@ -195,8 +200,6 @@ private:
   ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
                                SourceLocation IdLoc, Scope *S);  
   ObjcInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
-  ObjcProtocolDecl *getObjCProtocolDecl(Scope *S, 
-		       IdentifierInfo *Id, SourceLocation IdLoc);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);

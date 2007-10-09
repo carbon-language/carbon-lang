@@ -279,7 +279,7 @@ public:
 ///
 /// id <NSDraggingInfo> anyObjectThatImplementsNSDraggingInfo;
 ///
-class ObjcProtocolDecl : public ScopedDecl {
+class ObjcProtocolDecl : public NamedDecl {
   /// referenced protocols
   ObjcProtocolDecl **ReferencedProtocols;  // Null if none
   int NumReferencedProtocols;  // -1 if none
@@ -296,7 +296,7 @@ class ObjcProtocolDecl : public ScopedDecl {
 public:
   ObjcProtocolDecl(SourceLocation L, unsigned numRefProtos,
                    IdentifierInfo *Id, bool FD = false)
-    : ScopedDecl(ObjcProtocol, L, Id, 0), 
+    : NamedDecl(ObjcProtocol, L, Id), 
       ReferencedProtocols(0), NumReferencedProtocols(-1),
       InstanceMethods(0), NumInstanceMethods(-1), 
       ClassMethods(0), NumClassMethods(-1),

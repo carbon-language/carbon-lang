@@ -84,7 +84,6 @@ public:
     IDNS_Label,
     IDNS_Tag,
     IDNS_Member,
-    IDNS_Protocol,
     IDNS_Ordinary
   };
   
@@ -133,8 +132,6 @@ public:
     case Class:
     case Enum:
       return IDNS_Tag;
-    case ObjcProtocol:
-      return IDNS_Protocol;
     }
   }
   // global temp stats (until we have a per-module visitor)
