@@ -95,7 +95,7 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       }
       
       // Handle the gnu array range extension.
-      if (Tok.getKind() == tok::ellipsis) {
+      if (Tok.is(tok::ellipsis)) {
         Diag(Tok, diag::ext_gnu_array_range);
         ConsumeToken();
         
@@ -119,7 +119,7 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
       ConsumeToken();
       
       // If this is the gross GNU extension, handle it now.
-      if (Tok.getKind() == tok::colon) {
+      if (Tok.is(tok::colon)) {
         Diag(Ident, diag::ext_gnu_old_style_field_designator);
         ConsumeToken();
         return ParseInitializer();
@@ -146,14 +146,14 @@ Parser::ExprResult Parser::ParseInitializerWithPotentialDesignator() {
 ///         initializer-list ',' designation[opt] initializer
 ///
 Parser::ExprResult Parser::ParseInitializer() {
-  if (Tok.getKind() != tok::l_brace)
+  if (Tok.isNot(tok::l_brace))
     return ParseAssignmentExpression();
 
   SourceLocation LBraceLoc = ConsumeBrace();
   
   // We support empty initializers, but tell the user that they aren't using
   // C99-clean code.
-  if (Tok.getKind() == tok::r_brace) {
+  if (Tok.is(tok::r_brace)) {
     Diag(LBraceLoc, diag::ext_gnu_empty_initializer);
     // Match the '}'.
     return Actions.ActOnInitList(LBraceLoc, 0, 0, ConsumeBrace());
@@ -181,15 +181,15 @@ Parser::ExprResult Parser::ParseInitializer() {
       InitExprs.push_back(SubElt.Val);
       
     // If we don't have a comma continued list, we're done.
-    if (Tok.getKind() != tok::comma) break;
+    if (Tok.isNot(tok::comma)) break;
     
     // FIXME: save comma locations.
     ConsumeToken();
     
     // Handle trailing comma.
-    if (Tok.getKind() == tok::r_brace) break;
+    if (Tok.is(tok::r_brace)) break;
   }
-  if (InitExprsOk && Tok.getKind() == tok::r_brace)
+  if (InitExprsOk && Tok.is(tok::r_brace))
     return Actions.ActOnInitList(LBraceLoc, &InitExprs[0], InitExprs.size(), 
                                  ConsumeBrace());
   // Match the '}'.

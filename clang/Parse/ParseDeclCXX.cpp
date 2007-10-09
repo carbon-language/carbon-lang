@@ -40,31 +40,31 @@ using namespace clang;
 ///         'namespace' identifier '=' qualified-namespace-specifier ';'
 ///
 Parser::DeclTy *Parser::ParseNamespace(unsigned Context) {
-  assert(Tok.getKind() == tok::kw_namespace && "Not a namespace!");
+  assert(Tok.is(tok::kw_namespace) && "Not a namespace!");
   SourceLocation NamespaceLoc = ConsumeToken();  // eat the 'namespace'.
   
   SourceLocation IdentLoc;
   IdentifierInfo *Ident = 0;
   
-  if (Tok.getKind() == tok::identifier) {
+  if (Tok.is(tok::identifier)) {
     Ident = Tok.getIdentifierInfo();
     IdentLoc = ConsumeToken();  // eat the identifier.
   }
   
   // Read label attributes, if present.
   DeclTy *AttrList = 0;
-  if (Tok.getKind() == tok::kw___attribute)
+  if (Tok.is(tok::kw___attribute))
     // FIXME: save these somewhere.
     AttrList = ParseAttributes();
   
-  if (Tok.getKind() == tok::equal) {
+  if (Tok.is(tok::equal)) {
     // FIXME: Verify no attributes were present.
     // FIXME: parse this.
-  } else if (Tok.getKind() == tok::l_brace) {
+  } else if (Tok.is(tok::l_brace)) {
     SourceLocation LBrace = ConsumeBrace();
     // FIXME: push a scope, push a namespace decl.
     
-    while (Tok.getKind() != tok::r_brace && Tok.getKind() != tok::eof) {
+    while (Tok.isNot(tok::r_brace) && Tok.isNot(tok::eof)) {
       // FIXME capture the decls.
       ParseExternalDeclaration();
     }
