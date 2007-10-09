@@ -17,6 +17,7 @@
 
 #include "llvm/BasicBlock.h"
 #include "llvm/Instructions.h"
+#include "llvm/Constants.h"
 
 namespace llvm {
 
@@ -416,9 +417,220 @@ public:
   }
 };
 
-// TODO: A version of LLVMBuilder that constant folds operands as they come in.
-//class LLVMFoldingBuilder {
-//};
+/// LLVMFoldingBuilder - A version of LLVMBuilder that constant folds operands 
+/// as they come in.
+class LLVMFoldingBuilder : public LLVMBuilder {
+    
+public:
+  LLVMFoldingBuilder() {}
+  explicit LLVMFoldingBuilder(BasicBlock *TheBB) 
+    : LLVMBuilder(TheBB) {}
+  LLVMFoldingBuilder(BasicBlock *TheBB, BasicBlock::iterator IP) 
+    : LLVMBuilder(TheBB, IP) {}
+
+  //===--------------------------------------------------------------------===//
+  // Instruction creation methods: Binary Operators
+  //===--------------------------------------------------------------------===//
+
+  Value *CreateAdd(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getAdd(LC, RC);
+    return LLVMBuilder::CreateAdd(LHS, RHS, Name);
+  }
+
+  Value *CreateSub(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getSub(LC, RC);
+    return LLVMBuilder::CreateSub(LHS, RHS, Name);
+  }
+
+  Value *CreateMul(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getMul(LC, RC);
+    return LLVMBuilder::CreateMul(LHS, RHS, Name);
+  }
+
+  Value *CreateUDiv(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getUDiv(LC, RC);
+    return LLVMBuilder::CreateUDiv(LHS, RHS, Name);
+  }
+
+  Value *CreateSDiv(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getSDiv(LC, RC);
+    return LLVMBuilder::CreateSDiv(LHS, RHS, Name);
+  }
+
+  Value *CreateFDiv(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getFDiv(LC, RC);
+    return LLVMBuilder::CreateFDiv(LHS, RHS, Name);
+  }
+
+  Value *CreateURem(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getURem(LC, RC);
+    return LLVMBuilder::CreateURem(LHS, RHS, Name);
+  }
+
+  Value *CreateSRem(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getSRem(LC, RC);
+    return LLVMBuilder::CreateSRem(LHS, RHS, Name);
+  }
+
+  Value *CreateFRem(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getFRem(LC, RC);
+    return LLVMBuilder::CreateFRem(LHS, RHS, Name);
+  }
+
+  Value *CreateAnd(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getAnd(LC, RC);
+    return LLVMBuilder::CreateAnd(LHS, RHS, Name);
+  }
+
+  Value *CreateOr(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getOr(LC, RC);
+    return LLVMBuilder::CreateOr(LHS, RHS, Name);
+  }
+
+  Value *CreateXor(Value *LHS, Value *RHS, const char *Name = "") {
+    if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getXor(LC, RC);
+    return LLVMBuilder::CreateXor(LHS, RHS, Name);
+  }
+
+  Value *CreateShl(Value *LHS, Value *RHS, const char *Name = "") {
+     if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getShl(LC, RC);
+    return LLVMBuilder::CreateShl(LHS, RHS, Name);
+  }
+
+  Value *CreateLShr(Value *LHS, Value *RHS, const char *Name = "") {
+     if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getLShr(LC, RC);
+    return LLVMBuilder::CreateLShr(LHS, RHS, Name);
+  }
+
+  Value *CreateAShr(Value *LHS, Value *RHS, const char *Name = "") {
+     if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getAShr(LC, RC);
+    return LLVMBuilder::CreateAShr(LHS, RHS, Name);
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Instruction creation methods: Compare Instructions
+  //===--------------------------------------------------------------------===//
+  
+  Value *CreateICmpEQ(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateICmp(ICmpInst::ICMP_EQ, LHS, RHS, Name);
+  }
+  Value *CreateICmpNE(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateICmp(ICmpInst::ICMP_NE, LHS, RHS, Name);
+  }
+  Value *CreateICmpUGT(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateICmp(ICmpInst::ICMP_UGT, LHS, RHS, Name);
+  }
+  Value *CreateICmpUGE(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateICmp(ICmpInst::ICMP_UGE, LHS, RHS, Name);
+  }
+  Value *CreateICmpULT(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateICmp(ICmpInst::ICMP_ULT, LHS, RHS, Name);
+  }
+  Value *CreateICmpULE(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateICmp(ICmpInst::ICMP_ULE, LHS, RHS, Name);
+  }
+  Value *CreateICmpSGT(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateICmp(ICmpInst::ICMP_SGT, LHS, RHS, Name);
+  }
+  Value *CreateICmpSGE(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateICmp(ICmpInst::ICMP_SGE, LHS, RHS, Name);
+  }
+  Value *CreateICmpSLT(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateICmp(ICmpInst::ICMP_SLT, LHS, RHS, Name);
+  }
+  Value *CreateICmpSLE(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateICmp(ICmpInst::ICMP_SLE, LHS, RHS, Name);
+  }
+
+  Value *CreateFCmpOEQ(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_OEQ, LHS, RHS, Name);
+  }
+  Value *CreateFCmpOGT(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_OGT, LHS, RHS, Name);
+  }
+  Value *CreateFCmpOGE(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_OGE, LHS, RHS, Name);
+  }
+  Value *CreateFCmpOLT(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_OLT, LHS, RHS, Name);
+  }
+  Value *CreateFCmpOLE(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_OLE, LHS, RHS, Name);
+  }
+  Value *CreateFCmpONE(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_ONE, LHS, RHS, Name);
+  }
+  Value *CreateFCmpORD(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_ORD, LHS, RHS, Name);
+  }
+  Value *CreateFCmpUNO(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_UNO, LHS, RHS, Name);
+  }
+  Value *CreateFCmpUEQ(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_UEQ, LHS, RHS, Name);
+  }
+  Value *CreateFCmpUGT(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_UGT, LHS, RHS, Name);
+  }
+  Value *CreateFCmpUGE(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_UGE, LHS, RHS, Name);
+  }
+  Value *CreateFCmpULT(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_ULT, LHS, RHS, Name);
+  }
+  Value *CreateFCmpULE(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_ULE, LHS, RHS, Name);
+  }
+  Value *CreateFCmpUNE(Value *LHS, Value *RHS, const char *Name = "") {
+    return CreateFCmp(FCmpInst::FCMP_UNE, LHS, RHS, Name);
+  }
+  
+  Value *CreateICmp(ICmpInst::Predicate P, Value *LHS, Value *RHS, 
+                    const char *Name = "") {
+     if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getCompare(P, LC, RC);
+    return LLVMBuilder::CreateICmp(P, LHS, RHS, Name);
+  }
+
+  Value *CreateFCmp(FCmpInst::Predicate P, Value *LHS, Value *RHS, 
+                    const char *Name = "") {
+     if (Constant *LC = dyn_cast<Constant>(LHS))
+      if (Constant *RC = dyn_cast<Constant>(RHS))
+        return ConstantExpr::getCompare(P, LC, RC);
+    return LLVMBuilder::CreateFCmp(P, LHS, RHS, Name);
+  }
+};
   
 }
 
