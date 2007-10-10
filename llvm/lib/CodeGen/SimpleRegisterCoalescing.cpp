@@ -861,8 +861,8 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
     unsigned SrcReg, DstReg;
     if (!tii_->isMoveInstr(*Inst, SrcReg, DstReg)) continue;
     
-    bool Success = JoinCopy(Inst, SrcReg, DstReg, PhysOnly);
-    if (TryAgain && !Success)
+    bool Done = JoinCopy(Inst, SrcReg, DstReg, PhysOnly);
+    if (TryAgain && !Done)
       TryAgain->push_back(getCopyRec(Inst, SrcReg, DstReg));
   }
 }
