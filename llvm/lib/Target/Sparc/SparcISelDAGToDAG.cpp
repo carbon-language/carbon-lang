@@ -149,9 +149,11 @@ SparcTargetLowering::SparcTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8 , Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1 , Expand);
 
-  // Sparc has no REM operation.
+  // Sparc has no REM or DIVREM operations.
   setOperationAction(ISD::UREM, MVT::i32, Expand);
   setOperationAction(ISD::SREM, MVT::i32, Expand);
+  setOperationAction(ISD::SDIVREM, MVT::i32, Expand);
+  setOperationAction(ISD::UDIVREM, MVT::i32, Expand);
 
   // Custom expand fp<->sint
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
