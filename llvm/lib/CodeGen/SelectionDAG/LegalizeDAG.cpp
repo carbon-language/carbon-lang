@@ -3324,10 +3324,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case Expand: {
       // Convert f32 / f64 to i32 / i64.
       MVT::ValueType VT = Op.getValueType();
+      MVT::ValueType OVT = Node->getOperand(0).getValueType();
+      if (OVT == MVT::ppcf128 && VT == MVT::i32) {
+        Result = DAG.getNode(ISD::FP_TO_SINT, VT,
+                             DAG.getNode(ISD::FP_ROUND, MVT::f64,
+                                         (DAG.getNode(ISD::FP_ROUND_INREG, 
+                                          MVT::ppcf128, Node->getOperand(0),
+                                          DAG.getValueType(MVT::f64)))));
+        break;
+      }
       RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
       switch (Node->getOpcode()) {
       case ISD::FP_TO_SINT: {
-        MVT::ValueType OVT = Node->getOperand(0).getValueType();
         if (OVT == MVT::f32)
           LC = (VT == MVT::i32)
             ? RTLIB::FPTOSINT_F32_I32 : RTLIB::FPTOSINT_F32_I64;
@@ -3345,7 +3353,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
       case ISD::FP_TO_UINT: {
-        MVT::ValueType OVT = Node->getOperand(0).getValueType();
         if (OVT == MVT::f32)
           LC = (VT == MVT::i32)
             ? RTLIB::FPTOUINT_F32_I32 : RTLIB::FPTOSINT_F32_I64;
@@ -5159,6 +5166,17 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   switch (Node->getOpcode()) {
   case ISD::CopyFromReg:
     assert(0 && "CopyFromReg must be legal!");
+  case ISD::FP_ROUND_INREG:
+    if (VT == MVT::ppcf128 && 
+        TLI.getOperationAction(ISD::FP_ROUND_INREG, VT) == 
+            TargetLowering::Custom) {
+      SDOperand Result = TLI.LowerOperation(Op, DAG);
+      assert(Result.Val->getOpcode() == ISD::BUILD_PAIR);
+      Lo = Result.Val->getOperand(0);
+      Hi = Result.Val->getOperand(1);
+      break;
+    }
+    // fall through
   default:
 #ifndef NDEBUG
     cerr << "NODE: "; Node->dump(&DAG); cerr << "\n";

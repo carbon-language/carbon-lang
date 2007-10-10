@@ -3033,6 +3033,12 @@ SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT,
   return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops, NumOps).Val;
 }
 SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
+                                    MVT::ValueType VT2) {
+  const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
+  SDOperand Op;
+  return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, &Op, 0).Val;
+}
+SDNode *SelectionDAG::getTargetNode(unsigned Opcode, MVT::ValueType VT1,
                                     MVT::ValueType VT2, SDOperand Op1) {
   const MVT::ValueType *VTs = getNodeValueTypes(VT1, VT2);
   return getNode(ISD::BUILTIN_OP_END+Opcode, VTs, 2, &Op1, 1).Val;

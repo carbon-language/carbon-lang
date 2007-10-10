@@ -315,6 +315,34 @@ class XForm_28<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   : XForm_base_r3xo<opcode, xo, OOL, IOL, asmstr, itin, pattern> {
 }
 
+// This is used for MFFS, MTFSB0, MTFSB1.  42 is arbitrary; this series of
+// numbers presumably relates to some document, but I haven't found it.
+class XForm_42<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+              InstrItinClass itin, list<dag> pattern>
+  : XForm_base_r3xo<opcode, xo, OOL, IOL, asmstr, itin, pattern> {
+  let Pattern = pattern;
+
+  bit RC = 0;    // set by isDOT
+
+  let Inst{6-10}  = RST;
+  let Inst{11-20} = 0;
+  let Inst{21-30} = xo;
+  let Inst{31}    = RC;
+}
+class XForm_43<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+              InstrItinClass itin, list<dag> pattern>
+  : XForm_base_r3xo<opcode, xo, OOL, IOL, asmstr, itin, pattern> {
+  let Pattern = pattern;
+  bits<5> FM;
+
+  bit RC = 0;    // set by isDOT
+
+  let Inst{6-10}  = FM;
+  let Inst{11-20} = 0;
+  let Inst{21-30} = xo;
+  let Inst{31}    = RC;
+}
+
 // DCB_Form - Form X instruction, used for dcb* instructions.
 class DCB_Form<bits<10> xo, bits<5> immfield, dag OOL, dag IOL, string asmstr, 
                       InstrItinClass itin, list<dag> pattern>
@@ -511,6 +539,27 @@ class XFXForm_7_ext<bits<6> opcode, bits<10> xo, bits<10> spr,
                     dag OOL, dag IOL, string asmstr, InstrItinClass itin> 
   : XFXForm_7<opcode, xo, OOL, IOL, asmstr, itin> {
   let SPR = spr;
+}
+
+// XFL-Form - MTFSF
+// This is probably 1.7.9, but I don't have the reference that uses this
+// numbering scheme...
+class XFLForm<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr, 
+                      string cstr, InstrItinClass itin, list<dag>pattern>
+  : I<opcode, OOL, IOL, asmstr, itin> {
+  bits<8> FM;
+  bits<5> RT;
+
+  bit RC = 0;    // set by isDOT
+  let Pattern = pattern;
+  let Constraints = cstr;
+
+  let Inst{6} = 0;
+  let Inst{7-14}  = FM;
+  let Inst{15} = 0;
+  let Inst{16-20} = RT;
+  let Inst{21-30} = xo;
+  let Inst{31}    = RC;
 }
 
 // 1.7.10 XS-Form - SRADI.

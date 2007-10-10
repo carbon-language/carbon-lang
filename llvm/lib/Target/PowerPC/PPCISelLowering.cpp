@@ -76,6 +76,9 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   // Shortening conversions involving ppcf128 get expanded (2 regs -> 1 reg)
   setConvertAction(MVT::ppcf128, MVT::f64, Expand);
   setConvertAction(MVT::ppcf128, MVT::f32, Expand);
+  // This is used in the ppcf128->int sequence.  Note it has different semantics
+  // from FP_ROUND:  that rounds to nearest, this rounds to zero.
+  setOperationAction(ISD::FP_ROUND_INREG, MVT::ppcf128, Custom);
 
   // PowerPC has no intrinsics for these particular operations
   setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
@@ -2079,6 +2082,64 @@ static SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   return Bits;
 }
 
+static SDOperand LowerFP_ROUND_INREG(SDOperand Op, SelectionDAG &DAG) {
+  assert(Op.getValueType() == MVT::ppcf128);
+  SDNode *Node = Op.Val;
+  assert(Node->getOperand(0).getValueType() == MVT::ppcf128);
+  assert(Node->getOperand(0).Val->getOpcode()==ISD::BUILD_PAIR);
+  SDOperand Lo = Node->getOperand(0).Val->getOperand(0);
+  SDOperand Hi = Node->getOperand(0).Val->getOperand(1);
+
+  // This sequence changes FPSCR to do round-to-zero, adds the two halves
+  // of the long double, and puts FPSCR back the way it was.  We do not
+  // actually model FPSCR.
+  std::vector<MVT::ValueType> NodeTys;
+  SDOperand Ops[4], Result, MFFSreg, InFlag, FPreg;
+
+  NodeTys.push_back(MVT::f64);   // Return register
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for later insns
+  Result = DAG.getNode(PPCISD::MFFS, NodeTys, &InFlag, 0);
+  MFFSreg = Result.getValue(0);
+  InFlag = Result.getValue(1);
+
+  NodeTys.clear();
+  NodeTys.push_back(MVT::Flag);   // Returns a flag
+  Ops[0] = DAG.getConstant(31, MVT::i32);
+  Ops[1] = InFlag;
+  Result = DAG.getNode(PPCISD::MTFSB1, NodeTys, Ops, 2);
+  InFlag = Result.getValue(0);
+
+  NodeTys.clear();
+  NodeTys.push_back(MVT::Flag);   // Returns a flag
+  Ops[0] = DAG.getConstant(30, MVT::i32);
+  Ops[1] = InFlag;
+  Result = DAG.getNode(PPCISD::MTFSB0, NodeTys, Ops, 2);
+  InFlag = Result.getValue(0);
+
+  NodeTys.clear();
+  NodeTys.push_back(MVT::f64);    // result of add
+  NodeTys.push_back(MVT::Flag);   // Returns a flag
+  Ops[0] = Lo;
+  Ops[1] = Hi;
+  Ops[2] = InFlag;
+  Result = DAG.getNode(PPCISD::FADDRTZ, NodeTys, Ops, 3);
+  FPreg = Result.getValue(0);
+  InFlag = Result.getValue(1);
+
+  NodeTys.clear();
+  NodeTys.push_back(MVT::f64);
+  Ops[0] = DAG.getConstant(1, MVT::i32);
+  Ops[1] = MFFSreg;
+  Ops[2] = FPreg;
+  Ops[3] = InFlag;
+  Result = DAG.getNode(PPCISD::MTFSF, NodeTys, Ops, 4);
+  FPreg = Result.getValue(0);
+
+  // We know the low half is about to be thrown away, so just use something
+  // convenient.
+  return DAG.getNode(ISD::BUILD_PAIR, Lo.getValueType(), FPreg, FPreg);
+}
+
 static SDOperand LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   if (Op.getOperand(0).getValueType() == MVT::i64) {
     SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, Op.getOperand(0));
@@ -2935,6 +2996,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::SELECT_CC:          return LowerSELECT_CC(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
+  case ISD::FP_ROUND_INREG:     return LowerFP_ROUND_INREG(Op, DAG);
 
   // Lower 64-bit shifts.
   case ISD::SHL_PARTS:          return LowerSHL_PARTS(Op, DAG);

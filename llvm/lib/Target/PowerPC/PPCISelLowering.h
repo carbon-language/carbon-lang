@@ -129,7 +129,28 @@ namespace llvm {
       /// byte-swapping load instruction.  It loads "Type" bits, byte swaps it,
       /// then puts it in the bottom bits of the GPRC.  TYPE can be either i16
       /// or i32.
-      LBRX
+      LBRX,
+
+      // The following 5 instructions are used only as part of the
+      // long double-to-int conversion sequence.
+
+      /// OUTFLAG = MFFS F8RC - This moves the FPSCR (not modelled) into the
+      /// register.
+      MFFS,
+
+      /// OUTFLAG = MTFSB0 INFLAG - This clears a bit in the FPSCR.
+      MTFSB0,
+
+      /// OUTFLAG = MTFSB1 INFLAG - This sets a bit in the FPSCR.
+      MTFSB1,
+
+      /// F8RC, OUTFLAG = FADDRTZ F8RC, F8RC, INFLAG - This is an FADD done with
+      /// rounding towards zero.  It has flags added so it won't move past the 
+      /// FPSCR-setting instructions.
+      FADDRTZ,
+
+      /// MTFSF = F8RC, INFLAG - This moves the register into the FPSCR.
+      MTFSF
     };
   }
 

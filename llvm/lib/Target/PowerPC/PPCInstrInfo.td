@@ -53,6 +53,21 @@ def PPCfctidz : SDNode<"PPCISD::FCTIDZ", SDTFPUnaryOp, []>;
 def PPCfctiwz : SDNode<"PPCISD::FCTIWZ", SDTFPUnaryOp, []>;
 def PPCstfiwx : SDNode<"PPCISD::STFIWX", SDT_PPCstfiwx, [SDNPHasChain]>;
 
+// This sequence is used for long double->int conversions.  It changes the
+// bits in the FPSCR which is not modelled.  
+def PPCmffs   : SDNode<"PPCISD::MFFS", SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>,
+                        [SDNPOutFlag]>;
+def PPCmtfsb0 : SDNode<"PPCISD::MTFSB0", SDTypeProfile<0, 1, [SDTCisInt<0>]>,
+                       [SDNPInFlag, SDNPOutFlag]>;
+def PPCmtfsb1 : SDNode<"PPCISD::MTFSB1", SDTypeProfile<0, 1, [SDTCisInt<0>]>,
+                       [SDNPInFlag, SDNPOutFlag]>;
+def PPCfaddrtz: SDNode<"PPCISD::FADDRTZ", SDTFPBinOp,
+                       [SDNPInFlag, SDNPOutFlag]>;
+def PPCmtfsf  : SDNode<"PPCISD::MTFSF", SDTypeProfile<1, 3, 
+                       [SDTCisVT<0, f64>, SDTCisInt<1>, SDTCisVT<2, f64>,
+                        SDTCisVT<3, f64>]>,
+                       [SDNPInFlag]>;
+
 def PPCfsel   : SDNode<"PPCISD::FSEL",  
    // Type constraint for fsel.
    SDTypeProfile<1, 3, [SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>, 
@@ -872,6 +887,37 @@ def MFCR  : XFXForm_3<31, 19, (outs GPRC:$rT), (ins), "mfcr $rT", SprMFCR>,
 def MFOCRF: XFXForm_5a<31, 19, (outs GPRC:$rT), (ins crbitm:$FXM),
                        "mfcr $rT, $FXM", SprMFCR>,
             PPC970_DGroup_First, PPC970_Unit_CRU;
+
+// Instructions to manipulate FPSCR.  Only long double handling uses these.
+// FPSCR is not modelled; we use the SDNode Flag to keep things in order.
+
+def MFFS   : XForm_42<63, 583, (outs F8RC:$rT), (ins), 
+                       "mffs $rT", IntMFFS,
+                       [(set F8RC:$rT, (PPCmffs))]>,
+             PPC970_DGroup_Single, PPC970_Unit_FPU;
+def MTFSB0 : XForm_43<63, 70, (outs), (ins u5imm:$FM),
+                       "mtfsb0 $FM", IntMTFSB0,
+                      [(PPCmtfsb0 (i32 imm:$FM))]>,
+             PPC970_DGroup_Single, PPC970_Unit_FPU;
+def MTFSB1 : XForm_43<63, 38, (outs), (ins u5imm:$FM),
+                       "mtfsb1 $FM", IntMTFSB0,
+                      [(PPCmtfsb1 (i32 imm:$FM))]>,
+             PPC970_DGroup_Single, PPC970_Unit_FPU;
+def FADDrtz: AForm_2<63, 21,
+                    (outs F8RC:$FRT), (ins F8RC:$FRA, F8RC:$FRB),
+                    "fadd $FRT, $FRA, $FRB", FPGeneral,
+                    [(set F8RC:$FRT, (PPCfaddrtz F8RC:$FRA, F8RC:$FRB))]>,
+             PPC970_DGroup_Single, PPC970_Unit_FPU;
+// MTFSF does not actually produce an FP result.  We pretend it copies
+// input reg B to the output.  If we didn't do this it would look like the
+// instruction had no outputs (because we aren't modelling the FPSCR) and
+// it would be deleted.
+def MTFSF  : XFLForm<63, 711, (outs F8RC:$FRA),
+                              (ins i32imm:$FM, F8RC:$rT, F8RC:$FRB),
+                       "mtfsf $FM, $rT", "$FRB = $FRA", IntMTFSB0,
+                       [(set F8RC:$FRA, (PPCmtfsf (i32 imm:$FM), 
+                                                   F8RC:$rT, F8RC:$FRB))]>,
+             PPC970_DGroup_Single, PPC970_Unit_FPU;
 
 let PPC970_Unit = 1 in {  // FXU Operations.
 
