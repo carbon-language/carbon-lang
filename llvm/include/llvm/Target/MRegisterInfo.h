@@ -392,22 +392,22 @@ public:
     return get(RegNo).Name;
   }
 
-  /// getNumRegs - Return the number of registers this target has
-  /// (useful for sizing arrays holding per register information)
+  /// getNumRegs - Return the number of registers this target has (useful for
+  /// sizing arrays holding per register information)
   unsigned getNumRegs() const {
     return NumRegs;
   }
 
-  /// areAliases - Returns true if the two registers alias each other,
-  /// false otherwise
+  /// areAliases - Returns true if the two registers alias each other, false
+  /// otherwise
   bool areAliases(unsigned regA, unsigned regB) const {
     for (const unsigned *Alias = getAliasSet(regA); *Alias; ++Alias)
       if (*Alias == regB) return true;
     return false;
   }
 
-  /// regsOverlap - Returns true if the two registers are equal or alias
-  /// each other. The registers may be virtual register.
+  /// regsOverlap - Returns true if the two registers are equal or alias each
+  /// other. The registers may be virtual register.
   bool regsOverlap(unsigned regA, unsigned regB) const {
     if (regA == regB)
       return true;
@@ -447,9 +447,9 @@ public:
                                             const MachineFunction *MF) const =0;
 
   /// getReservedRegs - Returns a bitset indexed by physical register number
-  /// indicating if a register is a special register that has particular uses and
-  /// should be considered unavailable at all times, e.g. SP, RA. This is used by
-  /// register scavenger to determine what registers are free.
+  /// indicating if a register is a special register that has particular uses
+  /// and should be considered unavailable at all times, e.g. SP, RA. This is
+  /// used by register scavenger to determine what registers are free.
   virtual BitVector getReservedRegs(const MachineFunction &MF) const = 0;
 
   /// getSubReg - Returns the physical register number of sub-register "Index"
@@ -482,10 +482,10 @@ public:
   // immediates and memory.  FIXME: Move these to TargetInstrInfo.h.
   //
 
-  /// spillCalleeSavedRegisters - Issues instruction(s) to spill all callee saved
-  /// registers and returns true if it isn't possible / profitable to do so by
-  /// issuing a series of store instructions via storeRegToStackSlot(). Returns
-  /// false otherwise.
+  /// spillCalleeSavedRegisters - Issues instruction(s) to spill all callee
+  /// saved registers and returns true if it isn't possible / profitable to do
+  /// so by issuing a series of store instructions via
+  /// storeRegToStackSlot(). Returns false otherwise.
   virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator MI,
                                 const std::vector<CalleeSavedInfo> &CSI) const {
@@ -543,12 +543,11 @@ public:
                              unsigned DestReg,
                              const MachineInstr *Orig) const = 0;
 
-  /// foldMemoryOperand - Attempt to fold a load or store of the
-  /// specified stack slot into the specified machine instruction for
-  /// the specified operand.  If this is possible, a new instruction
-  /// is returned with the specified operand folded, otherwise NULL is
-  /// returned. The client is responsible for removing the old
-  /// instruction and adding the new one in the instruction stream
+  /// foldMemoryOperand - Attempt to fold a load or store of the specified stack
+  /// slot into the specified machine instruction for the specified operand.  If
+  /// this is possible, a new instruction is returned with the specified operand
+  /// folded, otherwise NULL is returned. The client is responsible for removing
+  /// the old instruction and adding the new one in the instruction stream
   virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
                                           unsigned OpNum,
                                           int FrameIndex) const {
@@ -564,12 +563,12 @@ public:
     return 0;
   }
 
-  /// unfoldMemoryOperand - Separate a single instruction which folded a load or a
-  /// a store or a load and a store into two or more instruction. If this is
+  /// unfoldMemoryOperand - Separate a single instruction which folded a load or
+  /// a a store or a load and a store into two or more instruction. If this is
   /// possible, returns true as well as the new instructions by reference.
   virtual bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                                    SSARegMap *RegMap,
-                                   SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                   SmallVector<MachineInstr*, 4> &NewMIs) const{
     return false;
   }
 
@@ -578,21 +577,22 @@ public:
     return false;
   }
 
-  /// targetHandlesStackFrameRounding - Returns true if the target is responsible
-  /// for rounding up the stack frame (probably at emitPrologue time).
+  /// targetHandlesStackFrameRounding - Returns true if the target is
+  /// responsible for rounding up the stack frame (probably at emitPrologue
+  /// time).
   virtual bool targetHandlesStackFrameRounding() const {
     return false;
   }
 
-  /// requiresRegisterScavenging - returns true if the target requires (and
-  /// can make use of) the register scavenger.
+  /// requiresRegisterScavenging - returns true if the target requires (and can
+  /// make use of) the register scavenger.
   virtual bool requiresRegisterScavenging(const MachineFunction &MF) const {
     return false;
   }
   
-  /// hasFP - Return true if the specified function should have a dedicated frame
-  /// pointer register. For most targets this is true only if the function has
-  /// variable sized allocas or if frame pointer elimination is disabled.
+  /// hasFP - Return true if the specified function should have a dedicated
+  /// frame pointer register. For most targets this is true only if the function
+  /// has variable sized allocas or if frame pointer elimination is disabled.
   virtual bool hasFP(const MachineFunction &MF) const = 0;
 
   // hasReservedCallFrame - Under normal circumstances, when a frame pointer is
