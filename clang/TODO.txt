@@ -3,6 +3,8 @@
 //===---------------------------------------------------------------------===//
 
 
+Warn about "X && 0x1000" saying that the user may mean "X & 0x1000".
+Probably only want to do this for hex immediates.  Likewise for ||.
 
 //===---------------------------------------------------------------------===//
 
