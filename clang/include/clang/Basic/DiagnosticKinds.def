@@ -838,7 +838,9 @@ DIAG(err_typecheck_statement_requires_integer, ERROR,
     "statement requires expression of integer type ('%0' invalid)")
 DIAG(err_multiple_default_labels_defined, ERROR,
     "multiple default labels in one switch")
-     
+DIAG(warn_empty_if_body, WARNING,
+    "if statement has empty body")
+
 DIAG(warn_return_missing_expr, WARNING,
      "non-void function '%0' should return a value")
 DIAG(ext_return_missing_expr, EXTENSION,

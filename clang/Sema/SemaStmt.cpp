@@ -173,6 +173,8 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
                   StmtTy *ThenVal, SourceLocation ElseLoc,
                   StmtTy *ElseVal) {
   Expr *condExpr = (Expr *)CondVal;
+  Stmt *thenStmt = (Stmt *)ThenVal;
+    
   assert(condExpr && "ActOnIfStmt(): missing expression");
   
   DefaultFunctionArrayConversion(condExpr);
@@ -182,7 +184,16 @@ Sema::ActOnIfStmt(SourceLocation IfLoc, ExprTy *CondVal,
     return Diag(IfLoc, diag::err_typecheck_statement_requires_scalar,
              condType.getAsString(), condExpr->getSourceRange());
 
-  return new IfStmt(IfLoc, condExpr, (Stmt*)ThenVal, (Stmt*)ElseVal);
+  // Warn if the if block has a null body without an else value.
+  // this helps prevent bugs due to typos, such as
+  // if (condition);
+  //   do_stuff();
+  if (!ElseVal) { 
+    if (NullStmt* stmt = dyn_cast<NullStmt>(thenStmt))
+      Diag(stmt->getSemiLoc(), diag::warn_empty_if_body);
+  }
+
+  return new IfStmt(IfLoc, condExpr, thenStmt, (Stmt*)ElseVal);
 }
 
 Action::StmtResult
