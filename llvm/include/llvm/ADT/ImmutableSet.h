@@ -26,6 +26,7 @@ namespace llvm {
 
 template <typename ImutInfo> class ImutAVLFactory;
 
+
 template <typename ImutInfo >
 class ImutAVLTree : public FoldingSetNode {
   struct ComputeIsEqual;
@@ -34,6 +35,7 @@ public:
   typedef typename ImutInfo::value_type     value_type;
   typedef typename ImutInfo::value_type_ref value_type_ref;
   typedef ImutAVLFactory<ImutInfo>          Factory;
+  
   friend class ImutAVLFactory<ImutInfo>;
   
   //===----------------------------------------------------===//  
@@ -52,7 +54,7 @@ public:
     ImutAVLTree *T = this;
     
     while (T) {
-      key_type_ref CurrentKey = ImutInfo::KeyOfValue(Value(T));
+      key_type_ref CurrentKey = ImutInfo::KeyOfValue(T->getValue());
       
       if (ImutInfo::isEqual(K,CurrentKey))
         return T;
@@ -73,7 +75,6 @@ public:
     
     return n;
   }
-  
   
   
   bool isEqual(const ImutAVLTree& RHS) const {
@@ -267,7 +268,7 @@ private:
   }
   
   //===--------------------------------------------------===//    
-  // "Create" is used to generate new tree roots that link
+  // "CreateNode" is used to generate new tree roots that link
   // to other trees.  The functon may also simply move links
   // in an existing root if that root is still marked mutable.
   // This is necessary because otherwise our balancing code
@@ -276,7 +277,7 @@ private:
   // returned to the caller.
   //===--------------------------------------------------===//
   
-  TreeTy* Create(TreeTy* L, value_type_ref V, TreeTy* R) {
+  TreeTy* CreateNode(TreeTy* L, value_type_ref V, TreeTy* R) {
     FoldingSetNodeID ID;      
     unsigned height = IncrementHeight(L,R);
     
@@ -296,7 +297,7 @@ private:
     return T;      
   }
   
-  TreeTy* Create(TreeTy* L, TreeTy* OldTree, TreeTy* R) {      
+  TreeTy* CreateNode(TreeTy* L, TreeTy* OldTree, TreeTy* R) {      
     assert (!isEmpty(OldTree));
     
     if (OldTree->isMutable()) {
@@ -305,7 +306,7 @@ private:
       OldTree->setHeight(IncrementHeight(L,R));
       return OldTree;
     }
-    else return Create(L, Value(OldTree), R);
+    else return CreateNode(L, Value(OldTree), R);
   }
   
   /// Balance - Used by Add_internal and Remove_internal to
@@ -323,7 +324,7 @@ private:
       TreeTy* LR = Right(L);
       
       if (Height(LL) >= Height(LR))
-        return Create(LL, L, Create(LR,V,R));
+        return CreateNode(LL, L, CreateNode(LR,V,R));
       
       assert (!isEmpty(LR) &&
               "LR cannot be empty because it has a height >= 1.");
@@ -331,7 +332,7 @@ private:
       TreeTy* LRL = Left(LR);
       TreeTy* LRR = Right(LR);
       
-      return Create(Create(LL,L,LRL), LR, Create(LRR,V,R));                              
+      return CreateNode(CreateNode(LL,L,LRL), LR, CreateNode(LRR,V,R));                              
     }
     else if (hr > hl + 2) {
       assert (!isEmpty(R) &&
@@ -341,7 +342,7 @@ private:
       TreeTy* RR = Right(R);
       
       if (Height(RR) >= Height(RL))
-        return Create(Create(L,V,RL), R, RR);
+        return CreateNode(CreateNode(L,V,RL), R, RR);
       
       assert (!isEmpty(RL) &&
               "RL cannot be empty because it has a height >= 1.");
@@ -349,10 +350,10 @@ private:
       TreeTy* RLL = Left(RL);
       TreeTy* RLR = Right(RL);
       
-      return Create(Create(L,V,RLL), RL, Create(RLR,R,RR));
+      return CreateNode(CreateNode(L,V,RLL), RL, CreateNode(RLR,R,RR));
     }
     else
-      return Create(L,V,R);
+      return CreateNode(L,V,R);
   }
   
   /// Add_internal - Creates a new tree that includes the specified
@@ -360,7 +361,7 @@ private:
   ///  already contained the data item, the original tree is returned.
   TreeTy* Add_internal(value_type_ref V, TreeTy* T) {
     if (isEmpty(T))
-      return Create(T, V, T);
+      return CreateNode(T, V, T);
     
     assert (!T->isMutable());
     
@@ -368,7 +369,7 @@ private:
     key_type_ref KCurrent = ImutInfo::KeyOfValue(Value(T));
     
     if (ImutInfo::isEqual(K,KCurrent))
-      return Create(Left(T), V, Right(T));
+      return CreateNode(Left(T), V, Right(T));
     else if (ImutInfo::isLess(K,KCurrent))
       return Balance(Add_internal(V,Left(T)), Value(T), Right(T));
     else
