@@ -541,7 +541,7 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
   // start.
   const SourceManager &SourceMgr = PP.getSourceManager();
   do PP.Lex(Tok);
-  while (Tok.isNot(tok::eof) && 
+  while (Tok.isNot(tok::eof) && Tok.getLocation().isFileID() &&
          !strcmp(SourceMgr.getSourceName(Tok.getLocation()), "<predefines>"));
 
   while (1) {
