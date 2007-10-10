@@ -791,12 +791,27 @@ public:
   public:
     Factory() {}
     
+    /// GetEmptySet - Returns an immutable set that contains no elements.
     ImmutableSet GetEmptySet() { return ImmutableSet(F.GetEmptyTree()); }
     
+    /// Add - Creates a new immutable set that contains all of the values
+    ///  of the original set with the addition of the specified value.  If
+    ///  the original set already included the value, then the original set is
+    ///  returned and no memory is allocated.  The time and space complexity
+    ///  of this operation is logarithmic in the size of the original set.
+    ///  The memory allocated to represent the set is released when the
+    ///  factory object that created the set is destroyed.
     ImmutableSet Add(ImmutableSet Old, value_type_ref V) {
       return ImmutableSet(F.Add(Old.Root,V));
     }
     
+    /// Remove - Creates a new immutable set that contains all of the values
+    ///  of the original set with the exception of the specified value.  If
+    ///  the original set did not contain the value, the original set is
+    ///  returned and no memory is allocated.  The time and space complexity
+    ///  of this operation is logarithmic in the size of the original set.
+    ///  The memory allocated to represent the set is released when the
+    ///  factory object that created the set is destroyed.
     ImmutableSet Remove(ImmutableSet Old, value_type_ref V) {
       return ImmutableSet(F.Remove(Old.Root,V));
     }
@@ -807,7 +822,8 @@ public:
   };
   
   friend class Factory;
-  
+
+  /// contains - Returns true if the set contains the specified value.
   bool contains(const value_type_ref V) const {
     return Root ? Root->contains(V) : false;
   }
@@ -820,6 +836,7 @@ public:
     return Root && RHS.Root ? Root->isNotEqual(*RHS.Root) : Root != RHS.Root;
   }
   
+  /// isEmpty - Return true if the set contains no elements.
   bool isEmpty() const { return !Root; }
   
   template <typename Callback>
