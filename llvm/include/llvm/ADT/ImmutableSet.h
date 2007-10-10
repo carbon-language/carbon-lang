@@ -45,14 +45,28 @@ public:
   // Public Interface.
   //===----------------------------------------------------===//  
   
-  ImutAVLTree* getLeft() const { return reinterpret_cast<ImutAVLTree*>(Left); }  
+  /// getLeft - Returns a pointer to the left subtree.  This value
+  ///  is NULL if there is no left subtree.
+  ImutAVLTree* getLeft() const { 
+    assert (!isMutable() && "Node is incorrectly marked mutable.");
+    
+    return reinterpret_cast<ImutAVLTree*>(Left);
+  }
   
+  /// getRight - Returns a pointer to the right subtree.  This value is
+  ///  NULL if there is no right subtree.
   ImutAVLTree* getRight() const { return Right; }  
   
+  
+  /// getHeight - Returns the height of the tree.  A tree with no subtrees
+  ///  has a height of 1.
   unsigned getHeight() const { return Height; }  
   
+  /// getValue - Returns the data value associated with the tree node.
   const value_type& getValue() const { return Value; }
   
+  /// find - Finds the subtree associated with the specified key value.
+  ///  This method returns NULL if no matching subtree is found.
   ImutAVLTree* find(key_type_ref K) {
     ImutAVLTree *T = this;
     
@@ -70,6 +84,8 @@ public:
     return NULL;
   }
   
+  /// size - Returns the number of nodes in the tree, which includes
+  ///  both leaves and non-leaf nodes.
   unsigned size() const {
     unsigned n = 1;
     
@@ -79,9 +95,18 @@ public:
     return n;
   }
   
+  /// begin - Returns an iterator that iterates over the nodes of the tree
+  ///  in an inorder traversal.  The returned iterator thus refers to the
+  ///  the tree node with the minimum data element.
   iterator begin() const { return iterator(this); }
+  
+  /// end - Returns an iterator for the tree that denotes the end of an
+  ///  inorder traversal.
   iterator end() const { return iterator(); }
   
+  /// isEqual - Compares two trees for structural equality and returns true
+  ///   if they are equal.  This worst case performance of this operation is
+  //    linear in the sizes of the trees.
   bool isEqual(const ImutAVLTree& RHS) const {
     if (&RHS == this)
       return true;
@@ -108,11 +133,19 @@ public:
     
     return LItr == LEnd && RItr == REnd;
   }
-  
+
+  /// isNotEqual - Compares two trees for structural inequality.  Performance
+  ///  is the same is isEqual.
   bool isNotEqual(const ImutAVLTree& RHS) const { return !isEqual(RHS); }
   
+  /// contains - Returns true if this tree contains a subtree (node) that
+  ///  has an data element that matches the specified key.  Complexity
+  ///  is logarithmic in the size of the tree.
   bool contains(const key_type_ref K) { return (bool) find(K); }
   
+  /// foreach - A member template the accepts invokes operator() on a functor
+  ///  object (specifed by Callback) for every node/subtree in the tree.
+  ///  Nodes are visited using an inorder traversal.
   template <typename Callback>
   void foreach(Callback& C) {
     if (ImutAVLTree* L = getLeft()) L->foreach(C);
@@ -122,6 +155,12 @@ public:
     if (ImutAVLTree* R = getRight()) R->foreach(C);
   }
   
+  /// verify - A utility method that checks that the balancing and
+  ///  ordering invariants of the tree are satisifed.  It is a recursive
+  ///  method that returns the height of the tree, which is then consumed
+  ///  by the enclosing verify call.  External callers should ignore the
+  ///  return value.  An invalid tree will cause an assertion to fire in
+  ///  a debug build.
   unsigned verify() const {
     unsigned HL = getLeft() ? getLeft()->verify() : 0;
     unsigned HR = getRight() ? getRight()->verify() : 0;
