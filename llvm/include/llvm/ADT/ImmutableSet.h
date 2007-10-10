@@ -30,7 +30,6 @@ template <typename ImutInfo> class ImutAVLTreeInOrderIterator;
   
 template <typename ImutInfo >
 class ImutAVLTree : public FoldingSetNode {
-  struct ComputeIsEqual;
 public:
   typedef typename ImutInfo::key_type_ref   key_type_ref;
   typedef typename ImutInfo::value_type     value_type;
