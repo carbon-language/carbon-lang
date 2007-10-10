@@ -162,6 +162,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Basic\IdentifierTable.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Basic\SourceManager.cpp"
 				>
 			</File>
@@ -185,6 +189,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\clang\Basic\FileManager.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\clang\Basic\IdentifierTable.h"
 				>
 			</File>
 			<File

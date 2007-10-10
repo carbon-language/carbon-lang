@@ -183,6 +183,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\clang\Analysis\ProgramEdge.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\clang\Analysis\UninitializedValues.h"
 				>
 			</File>
@@ -203,10 +207,6 @@
 				</File>
 				<File
 					RelativePath="..\..\include\clang\Analysis\Visitors\CFGVarDeclVisitor.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\include\clang\Analysis\Visitors\DataflowStmtVisitor.h"
 					>
 				</File>
 			</Filter>
@@ -235,14 +235,6 @@
 				</File>
 				<File
 					RelativePath="..\..\include\clang\Analysis\FlowSensitive\DataflowValues.h"
-					>
-				</File>
-			</Filter>
-			<Filter
-				Name="PathSensitive"
-				>
-				<File
-					RelativePath="..\..\include\clang\Analysis\PathSensitive\ProgramEdge.h"
 					>
 				</File>
 			</Filter>

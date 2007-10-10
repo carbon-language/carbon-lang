@@ -157,10 +157,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\Lex\IdentifierTable.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\Lex\Lexer.cpp"
 				>
 			</File>
@@ -204,10 +200,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\clang\Lex\HeaderSearch.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\clang\Lex\IdentifierTable.h"
 				>
 			</File>
 			<File
