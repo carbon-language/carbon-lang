@@ -535,10 +535,16 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
   
   // Start parsing the specified input file.
   PP.EnterMainSourceFile(MainFileID);
-  
-  do {
-    PrevTok = Tok;
-    PP.Lex(Tok);
+
+  // Consume all of the tokens that come from the predefines buffer.  Those
+  // should not be emitted into the output and are guaranteed to be at the
+  // start.
+  const SourceManager &SourceMgr = PP.getSourceManager();
+  do PP.Lex(Tok);
+  while (Tok.isNot(tok::eof) && 
+         !strcmp(SourceMgr.getSourceName(Tok.getLocation()), "<predefines>"));
+
+  while (1) {
     
     // If this token is at the start of a line, emit newlines if needed.
     if (Tok.isAtStartOfLine()) {
@@ -565,7 +571,12 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
       OutputString(&S[0], S.size());
     }
     Callbacks->SetEmittedTokensOnThisLine();
-  } while (Tok.isNot(tok::eof));
+    
+    if (Tok.is(tok::eof)) break;
+   
+    PrevTok = Tok;
+    PP.Lex(Tok);
+  }
   OutputChar('\n');
   
   CleanupOutputBuffer();
