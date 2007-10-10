@@ -369,10 +369,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\RedundantLoadElimination.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\Reg2Mem.cpp"
 					>
 				</File>

@@ -170,6 +170,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\CollectorMetadata.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\Collectors.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\DwarfWriter.cpp"
 				>
 			</File>
@@ -270,6 +278,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\RegisterCoalescer.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\RegisterScavenging.cpp"
 				>
 			</File>
@@ -317,10 +329,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAGSimple.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\SelectionDAG.cpp"
 					>
 				</File>
@@ -349,6 +357,18 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\CallingConvLower.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\Collector.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\CollectorMetadata.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\Collectors.h"
 				>
 			</File>
 			<File
@@ -449,6 +469,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\RegAllocRegistry.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\RegisterCoalescer.h"
 				>
 			</File>
 			<File

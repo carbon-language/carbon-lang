@@ -182,6 +182,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\Analysis.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\BasicAliasAnalysis.cpp"
 				>
 			</File>
@@ -305,6 +309,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\ConstantsScanner.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Analysis\DominatorInternals.h"
 				>
 			</File>
 			<File

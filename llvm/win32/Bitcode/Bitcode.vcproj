@@ -185,6 +185,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\Bitcode\Writer\BitWriter.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\Bitcode\Writer\ValueEnumerator.cpp"
 					>
 				</File>
