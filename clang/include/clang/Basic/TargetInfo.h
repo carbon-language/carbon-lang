@@ -183,6 +183,12 @@ public:
   void getTargetBuiltins(const Builtin::Info *&Records, unsigned &NumRecords,
                          std::vector<const char *> &NonPortableBuiltins) const;
 
+  /// getVAListDeclaration - Return the declaration to use for
+  /// __builtin_va_list, which is target-specific.
+  const char *getVAListDeclaration() const {
+    // FIXME: dispatch to target impl.
+    return "typedef int __builtin_va_list;";
+  }
   ///===---- Some helper methods ------------------------------------------===//
 
   unsigned getCharWidth(SourceLocation Loc) {

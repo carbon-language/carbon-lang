@@ -230,25 +230,6 @@ void Parser::Initialize() {
   EnterScope(Scope::DeclScope);
   Actions.ActOnTranslationUnitScope(Tok.getLocation(), CurScope);
   
-  // Install builtin types.
-  // TODO: Move this someplace more useful.
-  {
-    const char *Dummy;
-    
-    //__builtin_va_list
-    DeclSpec DS;
-    bool Error = DS.SetStorageClassSpec(DeclSpec::SCS_typedef, SourceLocation(),
-                                        Dummy);
-    
-    // TODO: add a 'TST_builtin' type?
-    Error |= DS.SetTypeSpecType(DeclSpec::TST_int, SourceLocation(), Dummy);
-    assert(!Error && "Error setting up __builtin_va_list!");
-    
-    Declarator D(DS, Declarator::FileContext);
-    D.SetIdentifier(PP.getIdentifierInfo("__builtin_va_list"),SourceLocation());
-    Actions.ActOnDeclarator(CurScope, D, 0);
-  }
-  
   if (Tok.is(tok::eof) &&
       !getLang().CPlusPlus)  // Empty source file is an extension in C
     Diag(Tok, diag::ext_empty_source_file);

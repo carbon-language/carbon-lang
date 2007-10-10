@@ -376,6 +376,12 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     Buf.insert(Buf.end(), IDTypedef, IDTypedef+strlen(IDTypedef));
   }
 
+  // Add __builtin_va_list typedef.
+  {
+    const char *VAList = PP.getTargetInfo().getVAListDeclaration();
+    Buf.insert(Buf.end(), VAList, VAList+strlen(VAList));
+    Buf.push_back('\n');
+  }
   
   // Get the target #defines.
   PP.getTargetInfo().getTargetDefines(Buf);
