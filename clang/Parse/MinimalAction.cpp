@@ -97,9 +97,9 @@ MinimalAction::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
   return 0;
 }
 
-/// PopScope - When a scope is popped, if any typedefs are now out-of-scope,
+/// ActOnPopScope - When a scope is popped, if any typedefs are now out-of-scope,
 /// they are removed from the IdentifierInfo::FETokenInfo field.
-void MinimalAction::PopScope(SourceLocation Loc, Scope *S) {
+void MinimalAction::ActOnPopScope(SourceLocation Loc, Scope *S) {
   for (Scope::decl_iterator I = S->decl_begin(), E = S->decl_end();
        I != E; ++I) {
     IdentifierInfo &II = *static_cast<IdentifierInfo*>(*I);

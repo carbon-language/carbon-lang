@@ -38,13 +38,13 @@ namespace {
       return MinimalAction::ActOnDeclarator(S, D, LastInGroup);
     }
     
-    /// PopScope - This callback is called immediately before the specified scope
-    /// is popped and deleted.
-    virtual void PopScope(SourceLocation Loc, Scope *S) {
-      std::cout << "PopScope\n";
+    /// ActOnPopScope - This callback is called immediately before the specified
+    /// scope is popped and deleted.
+    virtual void ActOnPopScope(SourceLocation Loc, Scope *S) {
+      std::cout << "ActOnPopScope\n";
       
       // Pass up to EmptyActions so that the symbol table is maintained right.
-      MinimalAction::PopScope(Loc, S);
+      MinimalAction::ActOnPopScope(Loc, S);
     }
   };
 }
