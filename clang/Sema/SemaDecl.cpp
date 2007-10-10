@@ -133,7 +133,8 @@ ScopedDecl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
 
 /// LazilyCreateBuiltin - The specified Builtin-ID was first used at file scope.
 /// lazily create a decl for it.
-ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid, Scope *S) {
+ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
+                                      Scope *S) {
   Builtin::ID BID = (Builtin::ID)bid;
 
   QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);

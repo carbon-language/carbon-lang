@@ -152,7 +152,8 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
 }
 
 /// GetBuiltinType - Return the type for the specified builtin.
-QualType Builtin::Context::GetBuiltinType(unsigned id, ASTContext &Context)const{
+QualType Builtin::Context::GetBuiltinType(unsigned id,
+                                          ASTContext &Context) const {
   const char *TypeStr = GetRecord(id).Type;
   
   llvm::SmallVector<QualType, 8> ArgTypes;

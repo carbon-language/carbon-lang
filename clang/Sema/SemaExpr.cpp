@@ -1887,7 +1887,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
   QualType retType = Method->getMethodType();
   // Expr *RExpr = global reference to the class symbol...
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
-  return new ObjCMessageExpr(receiverName, Sel, retType, lbrac, rbrac, ArgExprs);
+  return new ObjCMessageExpr(receiverName, Sel, retType, lbrac, rbrac,
+                             ArgExprs);
 }
 
 // ActOnInstanceMessage - used for both unary and keyword messages.
@@ -1906,13 +1907,15 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   if (receiverType == GetObjcIdType()) {
     returnType = Context.IntTy; // FIXME:just a placeholder
   } else {
-    // FIXME (snaroff): checking in this code from Patrick. Needs to be revisited.
-    // how do we get the ClassDecl from the receiver expression?
+    // FIXME (snaroff): checking in this code from Patrick. Needs to be
+    // revisited. how do we get the ClassDecl from the receiver expression?
     while (receiverType->isPointerType()) {
-      PointerType *pointerType = static_cast<PointerType*>(receiverType.getTypePtr());
+      PointerType *pointerType =
+        static_cast<PointerType*>(receiverType.getTypePtr());
       receiverType = pointerType->getPointeeType();
     }
-    assert(ObjcInterfaceType::classof(receiverType.getTypePtr()) && "bad receiver type");
+    assert(ObjcInterfaceType::classof(receiverType.getTypePtr()) &&
+           "bad receiver type");
     ObjcInterfaceDecl* ClassDecl = static_cast<ObjcInterfaceType*>(
                                      receiverType.getTypePtr())->getDecl();
     ObjcMethodDecl *Method = ClassDecl->lookupInstanceMethod(Sel);
