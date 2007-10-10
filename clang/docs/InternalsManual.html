@@ -27,6 +27,7 @@
   <ul>
   <li><a href="#Type">The Type class and its subclasses</a></li>
   <li><a href="#QualType">The QualType class</a></li>
+  <li><a href="#CFG">The CFG class</a></li>
   </ul>
 </li>
 </ul>
@@ -429,3 +430,180 @@ uniquing types (<a href="#Type">Type</a> does not even contain qualifiers).</p>
 the low bit of the pointer to the Type object.  This means that QualType is
 exactly the same size as a pointer, and this works fine on any system where
 malloc'd objects are at least 8 byte aligned.</p>
+
+<!-- ======================================================================= -->
+<h3 id="CFG">The <tt>CFG</tt> class</h3>
+<!-- ======================================================================= -->
+
+<p>The <tt>CFG</tt> class is designed to represent a source-level
+control-flow graph for a single statement (<tt>Stmt*</tt>).  Typically
+instances of <tt>CFG</tt> are constructed for function bodies (usually
+an instance of <tt>CompoundStmt</tt>), but can also be instantiated to
+represent the control-flow of any class that subclasses <tt>Stmt</tt>,
+which includes simple expressions.  Control-flow graphs are especially
+useful for performing
+<a href="http://en.wikipedia.org/wiki/Data_flow_analysis#Sensitivities">flow-
+or path-sensitive</a> program analyses on a given function.</p>
+
+<h4>Basic Blocks</h4>
+
+<p>Concretely, an instance of <tt>CFG</tt> is a collection of basic
+blocks.  Each basic block is an instance of <tt>CFGBlock</tt>, which
+simply contains an ordered sequence of <tt>Stmt*</tt> (each referring
+to statements in the AST).  The ordering of statements within a block
+indicates unconditional flow of control from one statement to the
+next.  <a href="#ConditionalControlFlow">Conditional control-flow</a>
+is represented using edges between basic blocks.  The statements
+within a given <tt>CFGBlock</tt> can be traversed using
+the <tt>CFGBlock::*iterator</tt> interface.</p>
+
+<p>
+A <tt>CFG</tt> objects owns the instances of <tt>CFGBlock</tt> within
+the control-flow graph it represents.  Each <tt>CFGBlock</tt> within a
+CFG is also uniquely numbered (accessible
+via <tt>CFGBlock::getBlockID()</tt>).  Currently the number is
+based on the ordering the blocks were created, but no assumptions
+should be made on how <tt>CFGBlock</tt>s are numbered other than their
+numbers are unique and that they are numbered from 0..N-1 (where N is
+the number of basic blocks in the CFG).</p>
+
+<h4>Entry and Exit Blocks</h4>
+
+Each instance of <tt>CFG</tt> contains two special blocks:
+an <i>entry</i> block (accessible via <tt>CFG::getEntry()</tt>), which
+has no incoming edges, and an <i>exit</i> block (accessible
+via <tt>CFG::getExit()</tt>), which has no outgoing edges.  Neither
+block contains any statements, and they serve the role of providing a
+clear entrance and exit for a body of code such as a function body.
+The presence of these empty blocks greatly simplifies the
+implementation of many analyses built on top of CFGs.
+
+<h4 id ="ConditionalControlFlow">Conditional Control-Flow</h4>
+
+<p>Conditional control-flow (such as those induced by if-statements
+and loops) is represented as edges between <tt>CFGBlock</tt>s.
+Because different C language constructs can induce control-flow,
+each <tt>CFGBlock</tt> also records an extra <tt>Stmt*</tt> that
+represents the <i>terminator</i> of the block.  A terminator is simply
+the statement that caused the control-flow, and is used to identify
+the nature of the conditional control-flow between blocks.  For
+example, in the case of an if-statement, the terminator refers to
+the <tt>IfStmt</tt> object in the AST that represented the given
+branch.</p>
+
+<p>To illustrate, consider the following code example:</p>
+
+<code>
+int foo(int x) {<br>
+&nbsp;&nbsp;x = x + 1;<br>
+<br>
+&nbsp;&nbsp;if (x > 2) x++;<br>
+&nbsp;&nbsp;else {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;x += 2;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;x *= 2;<br>
+&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;return x;<br>
+}
+</code>
+
+<p>After invoking the parser+semantic analyzer on this code fragment,
+the AST of the body of <tt>foo</tt> is referenced by a
+single <tt>Stmt*</tt>.  We can then construct an instance
+of <tt>CFG</tt> representing the control-flow graph of this function
+body by single call to a static class method:</p>
+
+<code>
+&nbsp;&nbsp;Stmt* FooBody = ...<br>
+&nbsp;&nbsp;CFG*  FooCFG = <b>CFG::buildCFG</b>(FooBody);
+</code>
+
+<p>It is the responsibility of the caller of <tt>CFG::buildCFG</tt>
+to <tt>delete</tt> the returned <tt>CFG*</tt> when the CFG is no
+longer needed.</p>
+
+<p>Along with providing an interface to iterate over
+its <tt>CFGBlock</tt>s, the <tt>CFG</tt> class also provides methods
+that are useful for debugging and visualizing CFGs.  For example, the
+method
+<tt>CFG::dump()</tt> dumps a pretty-printed version of the CFG to
+standard error.  This is especially useful when one is using a
+debugger such as gdb.  For example, here is the output
+of <tt>FooCFG->dump()</tt>:</p>
+
+<code>
+&nbsp;[ B5 (ENTRY) ]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Predecessors (0):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Successors (1): B4<br>
+<br>
+&nbsp;[ B4 ]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;1: x = x + 1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;2: (x > 2)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<b>T: if [B4.2]</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;Predecessors (1): B5<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Successors (2): B3 B2<br>
+<br>
+&nbsp;[ B3 ]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;1: x++<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Predecessors (1): B4<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Successors (1): B1<br>
+<br>
+&nbsp;[ B2 ]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;1: x += 2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;2: x *= 2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Predecessors (1): B4<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Successors (1): B1<br>
+<br>
+&nbsp;[ B1 ]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;1: return x;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Predecessors (2): B2 B3<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Successors (1): B0<br>
+<br>
+&nbsp;[ B0 (EXIT) ]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Predecessors (1): B1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Successors (0):
+</code>
+
+<p>For each block, the pretty-printed output displays for each block
+the number of <i>predecessor</i> blocks (blocks that have outgoing
+control-flow to the given block) and <i>successor</i> blocks (blocks
+that have control-flow that have incoming control-flow from the given
+block).  We can also clearly see the special entry and exit blocks at
+the beginning and end of the pretty-printed output.  For the entry
+block (block B5), the number of predecessor blocks is 0, while for the
+exit block (block B0) the number of successor blocks is 0.</p>
+
+<p>The most interesting block here is B4, whose outgoing control-flow
+represents the branching caused by the sole if-statement
+in <tt>foo</tt>.  Of particular interest is the second statement in
+the block, <b><tt>(x > 2)</tt></b>, and the terminator, printed
+as <b><tt>if [B4.2]</tt></b>.  The second statement represents the
+evaluation of the condition of the if-statement, which occurs before
+the actual branching of control-flow.  Within the <tt>CFGBlock</tt>
+for B4, the <tt>Stmt*</tt> for the second statement refers to the
+actual expression in the AST for <b><tt>(x > 2)</tt></b>.  Thus
+pointers to subclasses of <tt>Expr</tt> can appear in the list of
+statements in a block, and not just subclasses of <tt>Stmt</tt> that
+refer to proper C statements.</p>
+
+<p>The terminator of block B4 is a pointer to the <tt>IfStmt</tt>
+object in the AST.  The pretty-printer outputs <b><tt>if
+[B4.2]</tt></b> because the condition expression of the if-statement
+has an actual place in the basic block, and thus the terminator is
+essentially
+<i>referring</i> to the expression that is the second statement of
+block B4 (i.e., B4.2).  In this manner, conditions for control-flow
+(which also includes conditions for loops and switch statements) are
+hoisted into the actual basic block.</p>
+
+
+<h4>Implicit Control-Flow</h4>
+
+<!--
+<p>A key design principle of the <tt>CFG</tt> class was to not require
+any transformations to the AST in order to represent control-flow.
+Thus the <tt>CFG</tt> does not perform any "lowering" of the
+statements in an AST: loops are not transformed into guarded gotos,
+short-circuit operations are not converted to a set of if-statements,
+and so on.</p>
+-->
