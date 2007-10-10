@@ -113,8 +113,9 @@ class Sema : public Action {
   /// This list is populated upon the creation of a Sema object.    
   IdentifierInfo* KnownFunctionIDs[ id_num_known_functions ];
   
-  /// Translation Unit Scope - useful to many Objective-C actions that need
-  /// to lookup file scope declarations (like classes, protocols, etc.).
+  /// Translation Unit Scope - useful to Objective-C actions that need
+  /// to lookup file scope declarations in the "ordinary" C decl namespace.
+  /// For example, user-defined classes, built-in "id" type, etc.
   Scope *TUScope;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
@@ -403,48 +404,46 @@ public:
                                                SourceLocation RParenLoc);
   
   // Objective-C declarations.
-  virtual DeclTy *ActOnStartClassInterface(Scope* S,
+  virtual DeclTy *ActOnStartClassInterface(
 		    SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
                     AttributeList *AttrList);
                     
-  virtual DeclTy *ActOnStartProtocolInterface(Scope* S,
+  virtual DeclTy *ActOnStartProtocolInterface(
 		    SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
   
-  virtual DeclTy *ActOnStartCategoryInterface(Scope* S,
+  virtual DeclTy *ActOnStartCategoryInterface(
 		    SourceLocation AtInterfaceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
                     IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
   
-  virtual DeclTy *ActOnStartClassImplementation(Scope* S,
+  virtual DeclTy *ActOnStartClassImplementation(
 		    SourceLocation AtClassImplLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperClassname, 
                     SourceLocation SuperClassLoc);
   
-  virtual DeclTy *ActOnStartCategoryImplementation(Scope* S,
+  virtual DeclTy *ActOnStartCategoryImplementation(
                                                   SourceLocation AtCatImplLoc,
                                                   IdentifierInfo *ClassName, 
                                                   SourceLocation ClassLoc,
                                                   IdentifierInfo *CatName,
                                                   SourceLocation CatLoc);
   
-  virtual DeclTy *ActOnForwardClassDeclaration(Scope *S, SourceLocation Loc,
+  virtual DeclTy *ActOnForwardClassDeclaration(SourceLocation Loc,
                                                IdentifierInfo **IdentList,
                                                unsigned NumElts);
   
-  virtual DeclTy *ActOnForwardProtocolDeclaration(Scope *S, 
-                                                  SourceLocation AtProtocolLoc,
+  virtual DeclTy *ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
                                                   IdentifierInfo **IdentList,
                                                   unsigned NumElts);
   
-  virtual DeclTy **ActOnFindProtocolDeclaration(Scope *S,
-                                                SourceLocation TypeLoc,
+  virtual DeclTy **ActOnFindProtocolDeclaration(SourceLocation TypeLoc,
                                                 IdentifierInfo **ProtocolId,
                                                 unsigned NumProtocols);
 

@@ -68,7 +68,7 @@ MinimalAction::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup) {
 }
 
 Action::DeclTy *
-MinimalAction::ActOnStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
+MinimalAction::ActOnStartClassInterface(SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
@@ -83,7 +83,7 @@ MinimalAction::ActOnStartClassInterface(Scope* S, SourceLocation AtInterafceLoc,
 /// ActOnForwardClassDeclaration - 
 /// Scope will always be top level file scope. 
 Action::DeclTy *
-MinimalAction::ActOnForwardClassDeclaration(Scope *S, SourceLocation AtClassLoc,
+MinimalAction::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                 IdentifierInfo **IdentList, unsigned NumElts) {
   for (unsigned i = 0; i != NumElts; ++i) {
     TypeNameInfo *TI =
@@ -92,7 +92,7 @@ MinimalAction::ActOnForwardClassDeclaration(Scope *S, SourceLocation AtClassLoc,
     IdentList[i]->setFETokenInfo(TI);
   
     // Remember that this needs to be removed when the scope is popped.
-    S->AddDecl(IdentList[i]);
+    TUScope->AddDecl(IdentList[i]);
   }
   return 0;
 }

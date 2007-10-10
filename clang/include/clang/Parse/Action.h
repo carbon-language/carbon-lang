@@ -445,7 +445,6 @@ public:
   // the prologue for a class interface (before parsing the instance 
   // variables). Instance variables are processed by ActOnFields().
   virtual DeclTy *ActOnStartClassInterface(
-    Scope* S, 
     SourceLocation AtInterafceLoc,
     IdentifierInfo *ClassName, 
     SourceLocation ClassLoc,
@@ -459,7 +458,6 @@ public:
   // ActOnStartProtocolInterface - this action is called immdiately after
   // parsing the prologue for a protocol interface.
   virtual DeclTy *ActOnStartProtocolInterface(
-    Scope* S,
     SourceLocation AtProtoInterfaceLoc,
     IdentifierInfo *ProtocolName, 
     SourceLocation ProtocolLoc,
@@ -470,7 +468,6 @@ public:
   // ActOnStartCategoryInterface - this action is called immdiately after
   // parsing the prologue for a category interface.
   virtual DeclTy *ActOnStartCategoryInterface(
-    Scope* S,
     SourceLocation AtInterfaceLoc,
     IdentifierInfo *ClassName, 
     SourceLocation ClassLoc,
@@ -484,7 +481,6 @@ public:
   // parsing the prologue for a class implementation. Instance variables are 
   // processed by ActOnFields().
   virtual DeclTy *ActOnStartClassImplementation(
-    Scope* S,
     SourceLocation AtClassImplLoc,
     IdentifierInfo *ClassName, 
     SourceLocation ClassLoc,
@@ -495,7 +491,6 @@ public:
   // ActOnStartCategoryImplementation - this action is called immdiately after
   // parsing the prologue for a category implementation.
   virtual DeclTy *ActOnStartCategoryImplementation(
-    Scope* S,
     SourceLocation AtCatImplLoc,
     IdentifierInfo *ClassName, 
     SourceLocation ClassLoc,
@@ -545,14 +540,12 @@ public:
     return 0;
   }
   virtual DeclTy *ActOnForwardClassDeclaration(
-    Scope *S,
     SourceLocation AtClassLoc,
     IdentifierInfo **IdentList,
     unsigned NumElts) {
     return 0;
   }
   virtual DeclTy *ActOnForwardProtocolDeclaration(
-    Scope *S, 
     SourceLocation AtProtocolLoc,
     IdentifierInfo **IdentList,
     unsigned NumElts) {
@@ -562,8 +555,7 @@ public:
   /// ActOnFindProtocolDeclaration - This routine looks for a previously
   /// declared protocol and returns it. If not found, issues diagnostic.
   /// Will build a list of previously protocol declarations found in the list.
-  virtual DeclTy **ActOnFindProtocolDeclaration(Scope *S,
-                                                SourceLocation TypeLoc,
+  virtual DeclTy **ActOnFindProtocolDeclaration(SourceLocation TypeLoc,
                                                 IdentifierInfo **ProtocolId,
                                                 unsigned NumProtocols) {
     return 0;
@@ -591,6 +583,10 @@ public:
 /// the parser doesn't have to build complex data structures and thus runs more
 /// quickly.
 class MinimalAction : public Action {
+  /// Translation Unit Scope - useful to Objective-C actions that need
+  /// to lookup file scope declarations in the "ordinary" C decl namespace.
+  /// For example, user-defined classes, built-in "id" type, etc.
+  Scope *TUScope;
 public:
   /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
@@ -604,13 +600,15 @@ public:
   /// PopScope - When a scope is popped, if any typedefs are now out-of-scope,
   /// they are removed from the IdentifierInfo::FETokenInfo field.
   virtual void PopScope(SourceLocation Loc, Scope *S);
+  virtual void ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
+    TUScope = S;
+  }
   
-  virtual DeclTy *ActOnForwardClassDeclaration(Scope *S, 
-                                               SourceLocation AtClassLoc,
+  virtual DeclTy *ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                                IdentifierInfo **IdentList,
                                                unsigned NumElts);
   
-  virtual DeclTy *ActOnStartClassInterface(Scope* S, SourceLocation interLoc,
+  virtual DeclTy *ActOnStartClassInterface(SourceLocation interLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,

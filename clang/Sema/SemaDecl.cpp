@@ -881,7 +881,7 @@ TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D,
   return NewTD;
 }
 
-Sema::DeclTy *Sema::ActOnStartClassInterface(Scope* S,
+Sema::DeclTy *Sema::ActOnStartClassInterface(
                     SourceLocation AtInterfaceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
@@ -891,7 +891,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(Scope* S,
   
   // Check for another declaration kind with the same name.
   ScopedDecl *PrevDecl = LookupScopedDecl(ClassName, Decl::IDNS_Ordinary,
-                                          ClassLoc, S);
+                                          ClassLoc, TUScope);
   if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind,
          ClassName->getName());
@@ -920,7 +920,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(Scope* S,
     ObjcInterfaceDecl* SuperClassEntry = 0;
     // Check if a different kind of symbol declared in this scope.
     PrevDecl = LookupScopedDecl(SuperName, Decl::IDNS_Ordinary,
-                                SuperLoc, S);
+                                SuperLoc, TUScope);
     if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
       Diag(SuperLoc, diag::err_redefinition_different_kind,
            SuperName->getName());
@@ -951,7 +951,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(Scope* S,
   return IDecl;
 }
 
-Sema::DeclTy *Sema::ActOnStartProtocolInterface(Scope* S,
+Sema::DeclTy *Sema::ActOnStartProtocolInterface(
                 SourceLocation AtProtoInterfaceLoc,
                 IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
                 IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
@@ -990,8 +990,7 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(Scope* S,
 /// declared protocol and returns it. If not found, issues diagnostic.
 /// Will build a list of previously protocol declarations found in the list.
 Action::DeclTy **
-Sema::ActOnFindProtocolDeclaration(Scope *S,
-                                   SourceLocation TypeLoc,
+Sema::ActOnFindProtocolDeclaration(SourceLocation TypeLoc,
                                    IdentifierInfo **ProtocolId,
                                    unsigned NumProtocols) {
   for (unsigned i = 0; i != NumProtocols; ++i) {
@@ -1004,9 +1003,8 @@ Sema::ActOnFindProtocolDeclaration(Scope *S,
 }
 
 /// ActOnForwardProtocolDeclaration - 
-/// Scope will always be top level file scope. 
 Action::DeclTy *
-Sema::ActOnForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
+Sema::ActOnForwardProtocolDeclaration(SourceLocation AtProtocolLoc,
         IdentifierInfo **IdentList, unsigned NumElts) {
   llvm::SmallVector<ObjcProtocolDecl*, 32> Protocols;
   
@@ -1025,7 +1023,7 @@ Sema::ActOnForwardProtocolDeclaration(Scope *S, SourceLocation AtProtocolLoc,
                                      &Protocols[0], Protocols.size());
 }
 
-Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
+Sema::DeclTy *Sema::ActOnStartCategoryInterface(
                       SourceLocation AtInterfaceLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
@@ -1070,7 +1068,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(Scope* S,
 /// ActOnStartCategoryImplementation - Perform semantic checks on the
 /// category implementation declaration and build an ObjcCategoryImplDecl
 /// object.
-Sema::DeclTy *Sema::ActOnStartCategoryImplementation(Scope* S,
+Sema::DeclTy *Sema::ActOnStartCategoryImplementation(
                       SourceLocation AtCatImplLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CatName, SourceLocation CatLoc) {
@@ -1085,7 +1083,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryImplementation(Scope* S,
   return CDecl;
 }
 
-Sema::DeclTy *Sema::ActOnStartClassImplementation(Scope *S,
+Sema::DeclTy *Sema::ActOnStartClassImplementation(
                       SourceLocation AtClassImplLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *SuperClassname, 
@@ -1093,7 +1091,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(Scope *S,
   ObjcInterfaceDecl* IDecl = 0;
   // Check for another declaration kind with the same name.
   ScopedDecl *PrevDecl = LookupScopedDecl(ClassName, Decl::IDNS_Ordinary,
-                                          ClassLoc, S);
+                                          ClassLoc, TUScope);
   if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind,
          ClassName->getName());
@@ -1111,7 +1109,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(Scope *S,
   if (SuperClassname) {
     // Check if a different kind of symbol declared in this scope.
     PrevDecl = LookupScopedDecl(SuperClassname, Decl::IDNS_Ordinary,
-                                SuperClassLoc, S);
+                                SuperClassLoc, TUScope);
     if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
       Diag(SuperClassLoc, diag::err_redefinition_different_kind,
            SuperClassname->getName());
@@ -1317,9 +1315,8 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
 }
 
 /// ActOnForwardClassDeclaration - 
-/// Scope will always be top level file scope. 
 Action::DeclTy *
-Sema::ActOnForwardClassDeclaration(Scope *S, SourceLocation AtClassLoc,
+Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                    IdentifierInfo **IdentList, unsigned NumElts) 
 {
   llvm::SmallVector<ObjcInterfaceDecl*, 32> Interfaces;
@@ -1333,7 +1330,7 @@ Sema::ActOnForwardClassDeclaration(Scope *S, SourceLocation AtClassLoc,
       IdentList[i]->setFETokenInfo(IDecl);
 
       // Remember that this needs to be removed when the scope is popped.
-      S->AddDecl(IDecl);
+      TUScope->AddDecl(IDecl);
     }
 
     Interfaces.push_back(IDecl);

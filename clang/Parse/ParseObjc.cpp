@@ -80,7 +80,7 @@ Parser::DeclTy *Parser::ParseObjCAtClassDeclaration(SourceLocation atLoc) {
   if (ExpectAndConsume(tok::semi, diag::err_expected_semi_after, "@class"))
     return 0;
   
-  return Actions.ActOnForwardClassDeclaration(CurScope, atLoc,
+  return Actions.ActOnForwardClassDeclaration(atLoc,
                                       &ClassNames[0], ClassNames.size());
 }
 
@@ -154,7 +154,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     if (attrList) // categories don't support attributes.
       Diag(Tok, diag::err_objc_no_attributes_on_category);
     
-    DeclTy *CategoryType = Actions.ActOnStartCategoryInterface(CurScope, atLoc, 
+    DeclTy *CategoryType = Actions.ActOnStartCategoryInterface(atLoc, 
                                      nameId, nameLoc, categoryId, categoryLoc,
                                      &ProtocolRefs[0], ProtocolRefs.size());
     
@@ -187,7 +187,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     if (ParseObjCProtocolReferences(ProtocolRefs))
       return 0;
   }
-  DeclTy *ClsType = Actions.ActOnStartClassInterface(CurScope,
+  DeclTy *ClsType = Actions.ActOnStartClassInterface(
 		      atLoc, nameId, nameLoc, 
                       superClassId, superClassLoc, &ProtocolRefs[0], 
                       ProtocolRefs.size(), attrList);
@@ -799,7 +799,7 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
       return 0;
   }
   if (ProtocolRefs.size() > 0)
-    return Actions.ActOnForwardProtocolDeclaration(CurScope, AtLoc,
+    return Actions.ActOnForwardProtocolDeclaration(AtLoc,
                                                    &ProtocolRefs[0], 
                                                    ProtocolRefs.size());
   // Last, and definitely not least, parse a protocol declaration.
@@ -808,7 +808,7 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
       return 0;
   }
   
-  DeclTy *ProtoType = Actions.ActOnStartProtocolInterface(CurScope, AtLoc, 
+  DeclTy *ProtoType = Actions.ActOnStartProtocolInterface(AtLoc, 
                                 protocolName, nameLoc,
                                 &ProtocolRefs[0],
                                 ProtocolRefs.size());
@@ -867,7 +867,7 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
       return 0;
     }
     rparenLoc = ConsumeParen();
-    DeclTy *ImplCatType = Actions.ActOnStartCategoryImplementation(CurScope,
+    DeclTy *ImplCatType = Actions.ActOnStartCategoryImplementation(
                                     atLoc, nameId, nameLoc, categoryId, 
                                     categoryLoc);
     return ImplCatType;
@@ -885,7 +885,7 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
     superClassId = Tok.getIdentifierInfo();
     superClassLoc = ConsumeToken(); // Consume super class name
   }
-  DeclTy *ImplClsType = Actions.ActOnStartClassImplementation(CurScope,
+  DeclTy *ImplClsType = Actions.ActOnStartClassImplementation(
 				  atLoc, nameId, nameLoc,
                                   superClassId, superClassLoc);
   
