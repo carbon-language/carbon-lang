@@ -302,28 +302,11 @@ public:
   //===--------------------------------------------------===//
 private:
   
-  bool isEmpty(TreeTy* T) const {
-    return !T;
-  }
-  
-  unsigned Height(TreeTy* T) const {
-    return T ? T->getHeight() : 0;
-  }
-  
-  TreeTy* Left(TreeTy* T) const {
-    assert (T);
-    return T->getSafeLeft();
-  }
-  
-  TreeTy* Right(TreeTy* T) const {
-    assert (T);
-    return T->getRight();
-  }
-  
-  value_type_ref Value(TreeTy* T) const {
-    assert (T);
-    return T->Value;
-  }
+  bool           isEmpty(TreeTy* T) const { return !T; }
+  unsigned        Height(TreeTy* T) const { return T ? T->getHeight() : 0; }  
+  TreeTy*           Left(TreeTy* T) const { return T->getSafeLeft(); }
+  TreeTy*          Right(TreeTy* T) const { return T->getRight(); }  
+  value_type_ref   Value(TreeTy* T) const { return T->Value; }
   
   unsigned IncrementHeight(TreeTy* L, TreeTy* R) const {
     unsigned hl = Height(L);
