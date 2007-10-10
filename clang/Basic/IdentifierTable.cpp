@@ -157,6 +157,7 @@ tok::PPKeywordKind IdentifierInfo::getPPKeywordID() const {
     return memcmp(Name, #NAME, LEN) ? tok::pp_not_keyword : tok::pp_ ## NAME
     
   unsigned Len = getLength();
+  if (Len < 2) return tok::pp_not_keyword;
   const char *Name = getName();
   switch (HASH(Len, Name[0], Name[2])) {
   default: return tok::pp_not_keyword;
