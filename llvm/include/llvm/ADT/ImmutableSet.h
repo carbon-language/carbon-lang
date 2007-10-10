@@ -201,17 +201,16 @@ private:
   
   static inline
   void Profile(FoldingSetNodeID& ID, ImutAVLTree* L, ImutAVLTree* R,
-               unsigned H, value_type_ref V) {    
+               value_type_ref V) {    
     ID.AddPointer(L);
     ID.AddPointer(R);
-    ID.AddInteger(H);
     ImutInfo::Profile(ID,V);
   }
   
 public:
   
   void Profile(FoldingSetNodeID& ID) {
-    Profile(ID,getSafeLeft(),getRight(),getHeight(),getValue());    
+    Profile(ID,getSafeLeft(),getRight(),getValue());    
   }
   
   //===----------------------------------------------------===//    
@@ -344,9 +343,7 @@ private:
   
   TreeTy* CreateNode(TreeTy* L, value_type_ref V, TreeTy* R) {
     FoldingSetNodeID ID;      
-    unsigned height = IncrementHeight(L,R);
-    
-    TreeTy::Profile(ID,L,R,height,V);      
+    TreeTy::Profile(ID,L,R,V);      
     void* InsertPos;
     
     if (TreeTy* T = Cache.FindNodeOrInsertPos(ID,InsertPos))
@@ -356,7 +353,7 @@ private:
     
     // FIXME: more intelligent calculation of alignment.
     TreeTy* T = (TreeTy*) Allocator.Allocate(sizeof(*T),16);
-    new (T) TreeTy(L,R,V,height);
+    new (T) TreeTy(L,R,V,IncrementHeight(L,R));
     
     Cache.InsertNode(T,InsertPos);
     return T;      
