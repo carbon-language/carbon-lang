@@ -1900,19 +1900,25 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   assert(receiver && "missing receiver expression");
   
   Expr *RExpr = static_cast<Expr *>(receiver);
-  // FIXME (snaroff): checking in this code from Patrick. Needs to be revisited.
-  // how do we get the ClassDecl from the receiver expression?
   QualType receiverType = RExpr->getType();
-  while (receiverType->isPointerType()) {
-    PointerType *pointerType = static_cast<PointerType*>(receiverType.getTypePtr());
-    receiverType = pointerType->getPointeeType();
+  QualType returnType;
+  
+  if (receiverType == GetObjcIdType()) {
+    returnType = Context.IntTy; // FIXME:just a placeholder
+  } else {
+    // FIXME (snaroff): checking in this code from Patrick. Needs to be revisited.
+    // how do we get the ClassDecl from the receiver expression?
+    while (receiverType->isPointerType()) {
+      PointerType *pointerType = static_cast<PointerType*>(receiverType.getTypePtr());
+      receiverType = pointerType->getPointeeType();
+    }
+    assert(ObjcInterfaceType::classof(receiverType.getTypePtr()) && "bad receiver type");
+    ObjcInterfaceDecl* ClassDecl = static_cast<ObjcInterfaceType*>(
+                                     receiverType.getTypePtr())->getDecl();
+    ObjcMethodDecl *Method = ClassDecl->lookupInstanceMethod(Sel);
+    assert(Method && "missing method declaration");
+    returnType = Method->getMethodType();
   }
-  assert(ObjcInterfaceType::classof(receiverType.getTypePtr()) && "bad receiver type");
-  ObjcInterfaceDecl* ClassDecl = static_cast<ObjcInterfaceType*>(
-                                   receiverType.getTypePtr())->getDecl();
-  ObjcMethodDecl *Method = ClassDecl->lookupInstanceMethod(Sel);
-  assert(Method && "missing method declaration");
-  QualType returnType = Method->getMethodType();
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   return new ObjCMessageExpr(RExpr, Sel, returnType, lbrac, rbrac, ArgExprs);
 }

@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "clang/AST/Type.h"
 #include <vector>
 #include <string>
 
@@ -117,6 +118,9 @@ class Sema : public Action {
   /// to lookup file scope declarations in the "ordinary" C decl namespace.
   /// For example, user-defined classes, built-in "id" type, etc.
   Scope *TUScope;
+  
+  /// ObjcIdType - built-in type for "id".
+  QualType ObjcIdType;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
   
@@ -251,6 +255,9 @@ private:
   /// true, or false, accordingly.
   bool MatchTwoMethodDeclarations(const ObjcMethodDecl *Method, 
                                   const ObjcMethodDecl *PrevMethod); 
+
+  /// GetObjcIdType - Getter for the build-in "id" type.
+  QualType GetObjcIdType();
   
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.

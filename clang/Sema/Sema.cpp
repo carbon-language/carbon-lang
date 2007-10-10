@@ -23,6 +23,20 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
 }
 
+QualType Sema::GetObjcIdType() {
+  assert(TUScope && "GetObjcIdType(): Top-level scope is null");
+  if (ObjcIdType.isNull()) {
+    IdentifierInfo *IdIdent = &Context.Idents.get("id");
+    ScopedDecl *IdDecl = LookupScopedDecl(IdIdent, Decl::IDNS_Ordinary, 
+                                          SourceLocation(), TUScope);
+    TypedefDecl *IdTypedef = dyn_cast_or_null<TypedefDecl>(IdDecl);
+    assert(IdTypedef && "GetObjcIdType(): Couldn't find 'id' type");
+    ObjcIdType = Context.getTypedefType(IdTypedef);
+  }
+  return ObjcIdType;
+}
+
+
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   : PP(pp), Context(ctxt), CurFunctionDecl(0), LastInGroupList(prevInGroup) {
   
@@ -40,6 +54,9 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   KnownFunctionIDs[ id_vfprintf ] = &IT.get("vfprintf");
   KnownFunctionIDs[ id_vsprintf ] = &IT.get("vsprintf");
   KnownFunctionIDs[ id_vprintf ] = &IT.get("vprintf");
+  
+  TUScope = 0;
+  ObjcIdType = QualType();
 }
 
 void Sema::DeleteExpr(ExprTy *E) {

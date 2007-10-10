@@ -1774,23 +1774,23 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(SourceLocation MethodLoc,
 
   for (unsigned i = 0; i < Sel.getNumArgs(); i++) {
     // FIXME: arg->AttrList must be stored too!
+    QualType argType;
+    
+    if (ArgTypes[i])
+      argType = QualType::getFromOpaquePtr(ArgTypes[i]);
+    else
+      argType = GetObjcIdType();
     ParmVarDecl* Param = new ParmVarDecl(SourceLocation(/*FIXME*/), ArgNames[i], 
-                              QualType::getFromOpaquePtr(ArgTypes[i]), 
-                              VarDecl::None, 0);
+                                         argType, VarDecl::None, 0);
     Params.push_back(Param);
   }
   QualType resultDeclType;
   
   if (ReturnType)
     resultDeclType = QualType::getFromOpaquePtr(ReturnType);
-  else { // get the type for "id".
-    IdentifierInfo *IdIdent = &Context.Idents.get("id");
-    ScopedDecl *IdDecl = LookupScopedDecl(IdIdent, Decl::IDNS_Ordinary, 
-                                          SourceLocation(), TUScope);
-    TypedefDecl *IdTypedef = dyn_cast_or_null<TypedefDecl>(IdDecl);
-    assert(IdTypedef && "ActOnMethodDeclaration(): Couldn't find 'id' type");
-    resultDeclType = IdTypedef->getUnderlyingType();
-  }
+  else // get the type for "id".
+    resultDeclType = GetObjcIdType();
+
   ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, Sel,
                                       resultDeclType, 0, -1, AttrList, 
                                       MethodType == tok::minus,

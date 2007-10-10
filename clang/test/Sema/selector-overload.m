@@ -37,7 +37,7 @@ struct D {
 @end
 
 int main() {
-//  id xx = [[Car alloc] init];
+  id xx = [[Car alloc] init];
 
-//  [xx method:4];
+  [xx method:4];
 }
