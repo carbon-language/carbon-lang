@@ -444,6 +444,8 @@ DIAG(err_previous_declaration, ERROR,
      "previous declaration is here")
 DIAG(err_undeclared_protocol, ERROR,
      "cannot find protocol declaration for '%0'")
+DIAG(err_missing_id_definition, ERROR,
+     "cannot find definition of 'id'")
 
 
 //===----------------------------------------------------------------------===//

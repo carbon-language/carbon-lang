@@ -1779,7 +1779,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(SourceLocation MethodLoc,
     if (ArgTypes[i])
       argType = QualType::getFromOpaquePtr(ArgTypes[i]);
     else
-      argType = GetObjcIdType();
+      argType = GetObjcIdType(MethodLoc);
     ParmVarDecl* Param = new ParmVarDecl(SourceLocation(/*FIXME*/), ArgNames[i], 
                                          argType, VarDecl::None, 0);
     Params.push_back(Param);
@@ -1789,7 +1789,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(SourceLocation MethodLoc,
   if (ReturnType)
     resultDeclType = QualType::getFromOpaquePtr(ReturnType);
   else // get the type for "id".
-    resultDeclType = GetObjcIdType();
+    resultDeclType = GetObjcIdType(MethodLoc);
 
   ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, Sel,
                                       resultDeclType, 0, -1, AttrList, 

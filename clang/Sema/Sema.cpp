@@ -23,17 +23,25 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
 }
 
-QualType Sema::GetObjcIdType() {
+/// GetObjcIdType - The following method assumes that "id" is imported
+/// via <objc/objc.h>. This is the way GCC worked for almost 20 years.
+/// In GCC 4.0, "id" is now a built-in type. Unfortunately, typedefs *cannot* be
+/// redefined (even if they are identical). To allow a built-in types to coexist
+/// with <objc/objc.h>, GCC has a special hack on decls (DECL_IN_SYSTEM_HEADER).
+/// For now, we will *not* install id as a built-in. FIXME: reconsider this.
+QualType Sema::GetObjcIdType(SourceLocation Loc) {
   assert(TUScope && "GetObjcIdType(): Top-level scope is null");
-  if (ObjcIdType.isNull()) {
+  if (!ObjcIdTypedef) {
     IdentifierInfo *IdIdent = &Context.Idents.get("id");
     ScopedDecl *IdDecl = LookupScopedDecl(IdIdent, Decl::IDNS_Ordinary, 
                                           SourceLocation(), TUScope);
-    TypedefDecl *IdTypedef = dyn_cast_or_null<TypedefDecl>(IdDecl);
-    assert(IdTypedef && "GetObjcIdType(): Couldn't find 'id' type");
-    ObjcIdType = Context.getTypedefType(IdTypedef);
+    ObjcIdTypedef = dyn_cast_or_null<TypedefDecl>(IdDecl);
+    if (!ObjcIdTypedef) {
+      Diag(Loc, diag::err_missing_id_definition);
+      return QualType();
+    }
   }
-  return ObjcIdType;
+  return Context.getTypedefType(ObjcIdTypedef);
 }
 
 
@@ -56,7 +64,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   KnownFunctionIDs[ id_vprintf ] = &IT.get("vprintf");
   
   TUScope = 0;
-  ObjcIdType = QualType();
+  ObjcIdTypedef = 0;
 }
 
 void Sema::DeleteExpr(ExprTy *E) {
