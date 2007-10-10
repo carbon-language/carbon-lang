@@ -2068,7 +2068,7 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
       N0.Val->hasOneUse() && isSetCCEquivalent(N0.getOperand(0), LHS, RHS, CC)){
     SDOperand V = N0.getOperand(0);
     V = DAG.getNode(ISD::XOR, V.getValueType(), V, 
-                    DAG.getConstant(V.getValueType(), 1));
+                    DAG.getConstant(1, V.getValueType()));
     AddToWorkList(V.Val);
     return DAG.getNode(ISD::ZERO_EXTEND, VT, V);
   }
