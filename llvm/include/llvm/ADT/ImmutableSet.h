@@ -26,7 +26,8 @@ namespace llvm {
 
 template <typename ImutInfo> class ImutAVLFactory;
 
-
+template <typename ImutInfo> class ImutAVLTreeInOrderIterator;
+  
 template <typename ImutInfo >
 class ImutAVLTree : public FoldingSetNode {
   struct ComputeIsEqual;
@@ -34,9 +35,11 @@ public:
   typedef typename ImutInfo::key_type_ref   key_type_ref;
   typedef typename ImutInfo::value_type     value_type;
   typedef typename ImutInfo::value_type_ref value_type_ref;
+
   typedef ImutAVLFactory<ImutInfo>          Factory;
-  
   friend class ImutAVLFactory<ImutInfo>;
+  
+  typedef ImutAVLTreeInOrderIterator<ImutInfo>  iterator;
   
   //===----------------------------------------------------===//  
   // Public Interface.
@@ -76,10 +79,34 @@ public:
     return n;
   }
   
+  iterator begin() const { return iterator(this); }
+  iterator end() const { return iterator(); }
   
   bool isEqual(const ImutAVLTree& RHS) const {
-    // FIXME: Todo.
-    return true;    
+    if (&RHS == this)
+      return true;
+    
+    iterator LItr = begin(), LEnd = end();
+    iterator RItr = RHS.begin(), REnd = RHS.end();
+    
+    while (LItr != LEnd && RItr != REnd) {
+      if (*LItr == *RItr) {
+        LItr.SkipSubTree();
+        RItr.SkipSubTree();
+        continue;
+      }
+      
+      // FIXME: need to compare data values, not key values, but our
+      // traits don't support this yet.
+      if (!ImutInfo::isEqual(ImutInfo::KeyOfValue(LItr->getValue()),
+                             ImutInfo::KeyOfValue(RItr->getValue())))
+        return false;
+      
+      ++LItr;
+      ++RItr;
+    }
+    
+    return LItr == LEnd && RItr == REnd;
   }
   
   bool isNotEqual(const ImutAVLTree& RHS) const { return !isEqual(RHS); }
@@ -427,8 +454,195 @@ private:
     MarkImmutable(Right(T));
   }
 };
+  
+  
+//===----------------------------------------------------------------------===//    
+// Immutable AVL-Tree Iterators.
+//===----------------------------------------------------------------------===//  
 
+template <typename ImutInfo>
+class ImutAVLTreeGenericIterator {
+  SmallVector<uintptr_t,20> stack;
+public:
+  enum VisitFlag { VisitedNone=0x0, VisitedLeft=0x1, VisitedRight=0x3, 
+                   Flags=0x3 };
+  
+  typedef ImutAVLTree<ImutInfo> TreeTy;      
+  typedef ImutAVLTreeGenericIterator<ImutInfo> _Self;
 
+  inline ImutAVLTreeGenericIterator() {}
+  inline ImutAVLTreeGenericIterator(const TreeTy* Root) {
+    if (Root) stack.push_back(reinterpret_cast<uintptr_t>(Root));
+  }  
+  
+  TreeTy* operator*() const {
+    assert (!stack.empty());    
+    return reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
+  }
+  
+  uintptr_t getVisitState() {
+    assert (!stack.empty());
+    return stack.back() & Flags;
+  }
+  
+  
+  bool AtEnd() const { return stack.empty(); }
+
+  bool AtBeginning() const { 
+    return stack.size() == 1 && getVisitState() == VisitedNone;
+  }
+  
+  void SkipToParent() {
+    assert (!stack.empty());
+    stack.pop_back();
+    
+    if (stack.empty())
+      return;
+    
+    switch (getVisitState()) {
+      case VisitedNone:
+        stack.back() |= VisitedLeft;
+        break;
+      case VisitedLeft:
+        stack.back() |= VisitedRight;
+        break;
+      default:
+        assert (false && "Unreachable.");            
+    }
+  }
+  
+  inline bool operator==(const _Self& x) const {
+    if (stack.size() != x.stack.size())
+      return false;
+    
+    for (unsigned i = 0 ; i < stack.size(); i++)
+      if (stack[i] != x.stack[i])
+        return false;
+    
+    return true;
+  }
+  
+  inline bool operator!=(const _Self& x) const { return !operator==(x); }  
+  
+  _Self& operator++() {
+    assert (!stack.empty());
+    
+    TreeTy* Current = reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
+    assert (Current);
+    
+    switch (getVisitState()) {
+      case VisitedNone:
+        if (TreeTy* L = Current->getLeft())
+          stack.push_back(reinterpret_cast<uintptr_t>(L));
+        else
+          stack.back() |= VisitedLeft;
+        
+        break;
+        
+      case VisitedLeft:
+        if (TreeTy* R = Current->getRight())
+          stack.push_back(reinterpret_cast<uintptr_t>(R));
+        else
+          stack.back() |= VisitedRight;
+        
+        break;
+        
+      case VisitedRight:
+        SkipToParent();        
+        break;
+        
+      default:
+        assert (false && "Unreachable.");
+    }
+    
+    return *this;
+  }
+  
+  _Self& operator--() {
+    assert (!stack.empty());
+    
+    TreeTy* Current = reinterpret_cast<TreeTy*>(stack.back() & ~Flags);
+    assert (Current);
+    
+    switch (getVisitState()) {
+      case VisitedNone:
+        stack.pop_back();
+        break;
+        
+      case VisitedLeft:                
+        stack.back() &= ~Flags; // Set state to "VisitedNone."
+        
+        if (TreeTy* L = Current->getLeft())
+          stack.push_back(reinterpret_cast<uintptr_t>(L) | VisitedRight);
+          
+        break;
+        
+      case VisitedRight:        
+        stack.back() &= ~Flags;
+        stack.back() |= VisitedLeft;
+        
+        if (TreeTy* R = Current->getRight())
+          stack.push_back(reinterpret_cast<uintptr_t>(R) | VisitedRight);
+          
+        break;
+        
+      default:
+        assert (false && "Unreachable.");
+    }
+    
+    return *this;
+  }
+};
+  
+template <typename ImutInfo>
+class ImutAVLTreeInOrderIterator {
+  typedef ImutAVLTreeGenericIterator<ImutInfo> InternalIteratorTy;
+  InternalIteratorTy InternalItr;
+
+public:
+  typedef ImutAVLTree<ImutInfo> TreeTy;
+  typedef ImutAVLTreeInOrderIterator<ImutInfo> _Self;
+
+  ImutAVLTreeInOrderIterator(const TreeTy* Root) : InternalItr(Root) { 
+    if (Root) operator++(); // Advance to first element.
+  }
+  
+  ImutAVLTreeInOrderIterator() : InternalItr() {}
+
+  inline bool operator==(const _Self& x) const {
+    return InternalItr == x.InternalItr;
+  }
+  
+  inline bool operator!=(const _Self& x) const { return !operator==(x); }  
+  
+  inline TreeTy* operator*() { return *InternalItr; }
+  inline TreeTy* operator->() { return *InternalItr; }
+  
+  inline _Self& operator++() { 
+    do ++InternalItr;
+    while (!InternalItr.AtEnd() && 
+           InternalItr.getVisitState() != InternalIteratorTy::VisitedLeft);
+
+    return *this;
+  }
+  
+  inline _Self& operator--() { 
+    do --InternalItr;
+    while (!InternalItr.AtBeginning() && 
+           InternalItr.getVisitState() != InternalIteratorTy::VisitedLeft);
+    
+    return *this;
+  }
+  
+  inline void SkipSubTree() {
+    InternalItr.SkipToParent();
+    
+    while (!InternalItr.AtEnd() &&
+           InternalItr.getVisitState() != InternalIteratorTy::VisitedLeft)
+      ++InternalItr;        
+  }
+};
+    
 //===----------------------------------------------------------------------===//    
 // Trait classes for Profile information.
 //===----------------------------------------------------------------------===//
