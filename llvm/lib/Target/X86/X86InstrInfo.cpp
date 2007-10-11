@@ -706,6 +706,8 @@ bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   
   switch (MBB.back().getOpcode()) {
+  case X86::TCRETURNri:
+  case X86::TCRETURNdi:
   case X86::RET:     // Return.
   case X86::RETI:
   case X86::TAILJMPd:

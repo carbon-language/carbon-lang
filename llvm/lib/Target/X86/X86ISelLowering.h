@@ -181,7 +181,14 @@ namespace llvm {
       TLSADDR, THREAD_POINTER,
 
       // Exception Handling helpers
-      EH_RETURN
+      EH_RETURN,
+      
+      // tail call return 
+      //   oeprand #0 chain
+      //   operand #1 callee (register or absolute)
+      //   operand #2 stack adjustment
+      //   operand #3 optional in flag
+      TC_RETURN
     };
   }
 
@@ -285,6 +292,7 @@ namespace llvm {
     unsigned VarArgsFPOffset;         // X86-64 vararg func fp reg offset.
     int BytesToPopOnReturn;           // Number of arg bytes ret should pop.
     int BytesCallerReserves;          // Number of arg bytes caller makes.
+
   public:
     explicit X86TargetLowering(TargetMachine &TM);
 
@@ -364,6 +372,14 @@ namespace llvm {
     virtual bool isVectorClearMaskLegal(std::vector<SDOperand> &BVOps,
                                         MVT::ValueType EVT,
                                         SelectionDAG &DAG) const;
+    
+    /// IsEligibleForTailCallOptimization - Check whether the call is eligible
+    /// for tail call optimization. Target which want to do tail call
+    /// optimization should implement this function.
+    virtual bool IsEligibleForTailCallOptimization(SDOperand Call, 
+                                                   SDOperand Ret, 
+                                                   SelectionDAG &DAG) const;
+
   private:
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
@@ -372,7 +388,7 @@ namespace llvm {
 
     /// X86StackPtr - X86 physical register used as stack ptr.
     unsigned X86StackPtr;
-
+   
     /// X86ScalarSSEf32, X86ScalarSSEf64 - Select between SSE or x87 
     /// floating point ops.
     /// When SSE is available, use it for f32 operations.
@@ -402,6 +418,10 @@ namespace llvm {
     SDOperand LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,unsigned CC);
 
+    // fast calling convention (tail call) implementation for 32/64bit
+    SDOperand LowerX86_TailCallTo(SDOperand Op, 
+                                      SelectionDAG & DAG, unsigned CC);
+    unsigned GetAlignedArgumentStackSize(unsigned StackSize, SelectionDAG &DAG);
     // Fast and FastCall Calling Convention implementation.
     SDOperand LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC);

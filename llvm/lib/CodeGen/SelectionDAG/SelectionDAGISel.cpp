@@ -4444,6 +4444,48 @@ static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
     }
 }
 
+/// CheckDAGForTailCallsAndFixThem - This Function looks for CALL nodes in the
+/// DAG and fixes their tailcall attribute operand
+static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG, 
+                                           TargetLowering& TLI) {
+  SDNode * Ret = NULL;
+  SDOperand Terminator = DAG.getRoot();
+
+  // Find RET node.
+  if (Terminator.getOpcode() == ISD::RET) {
+    Ret = Terminator.Val;
+  }
+ 
+  // Fix tail call attribute of CALL nodes.
+  for (SelectionDAG::allnodes_iterator BE = DAG.allnodes_begin(),
+         BI = prior(DAG.allnodes_end()); BI != BE; --BI) {
+    if (BI->getOpcode() == ISD::CALL) {
+      SDOperand OpRet(Ret, 0);
+      SDOperand OpCall(static_cast<SDNode*>(BI), 0);
+      bool isMarkedTailCall = 
+        cast<ConstantSDNode>(OpCall.getOperand(3))->getValue() != 0;
+      // If CALL node has tail call attribute set to true and the call is not
+      // eligible (no RET or the target rejects) the attribute is fixed to
+      // false.  The TargetLowering::IsEligibleForTailCallOptimization function
+      // must correctly identify tail call optimizable calls.
+      if (isMarkedTailCall && 
+          (Ret==NULL || 
+           !TLI.IsEligibleForTailCallOptimization(OpCall, OpRet, DAG))) {
+        SmallVector<SDOperand, 32> Ops;
+        unsigned idx=0;
+        for(SDNode::op_iterator I =OpCall.Val->op_begin(), 
+              E=OpCall.Val->op_end(); I!=E; I++, idx++) {
+          if (idx!=3)
+            Ops.push_back(*I);
+          else 
+            Ops.push_back(DAG.getConstant(false, TLI.getPointerTy()));
+        }
+        DAG.UpdateNodeOperands(OpCall, Ops.begin(), Ops.size());
+      }
+    }
+  }
+}
+
 void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
        std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                                          FunctionLoweringInfo &FuncInfo) {
@@ -4621,6 +4663,12 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
     
   // Make sure the root of the DAG is up-to-date.
   DAG.setRoot(SDL.getRoot());
+
+  // Check whether calls in this block are real tail calls. Fix up CALL nodes
+  // with correct tailcall attribute so that the target can rely on the tailcall
+  // attribute indicating whether the call is really eligible for tail call
+  // optimization.
+  CheckDAGForTailCallsAndFixThem(DAG, TLI);
 }
 
 void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {

@@ -55,6 +55,8 @@ def SDT_X86TLSTP : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 
 def SDT_X86EHRET : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
 
+def SDT_X86TCRET : SDTypeProfile<0, 2, [SDTCisPtrTy<0>, SDTCisVT<1, i32>]>;
+
 def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
 def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
 
@@ -73,7 +75,7 @@ def X86callseq_start :
                         [SDNPHasChain, SDNPOutFlag]>;
 def X86callseq_end :
                  SDNode<"ISD::CALLSEQ_END",   SDT_X86CallSeqEnd,
-                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+                        [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;       
 
 def X86call    : SDNode<"X86ISD::CALL",     SDT_X86Call,
                         [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
@@ -99,6 +101,8 @@ def X86TLStp : SDNode<"X86ISD::THREAD_POINTER", SDT_X86TLSTP, []>;
 def X86ehret : SDNode<"X86ISD::EH_RETURN", SDT_X86EHRET,
                         [SDNPHasChain]>;
 
+def X86tcret : SDNode<"X86ISD::TC_RETURN", SDT_X86TCRET, 
+                        [SDNPHasChain,  SDNPOptInFlag]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -356,15 +360,30 @@ let isCall = 1 in
   }
 
 // Tail call stuff.
+
+def TAILCALL : I<0, Pseudo, (outs), (ins ),
+                         "#TAILCALL",
+                         []>;
+
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPd : IBr<0xE9, (ins i32imm:$dst), "jmp\t${dst:call}  # TAIL CALL",
+def TCRETURNdi : I<0, Pseudo, (outs), (ins i32imm:$dst, i32imm:$offset),
+                 "#TC_RETURN $dst $offset",
+                 []>;
+
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+def TCRETURNri : I<0, Pseudo, (outs), (ins GR32:$dst, i32imm:$offset),
+                 "#TC_RETURN $dst $offset",
+                 []>;
+
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+  def TAILJMPd : IBr<0xE9, (ins i32imm:$dst), "jmp\t${dst:call}  # TAILCALL",
                  []>;
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPr : I<0xFF, MRM4r, (outs), (ins GR32:$dst), "jmp\t{*}$dst  # TAIL CALL",
-                 []>;
+  def TAILJMPr : I<0xFF, MRM4r, (outs), (ins GR32:$dst), "jmp{l}\t{*}$dst  # TAILCALL",
+                 []>;     
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def TAILJMPm : I<0xFF, MRM4m, (outs), (ins i32mem:$dst),
-                   "jmp\t{*}$dst  # TAIL CALL", []>;
+                   "jmp\t{*}$dst  # TAILCALL", []>;
 
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
@@ -2507,13 +2526,23 @@ def : Pat<(store (i32 (X86Wrapper texternalsym:$src)), addr:$dst),
           (MOV32mi addr:$dst, texternalsym:$src)>;
 
 // Calls
+// tailcall stuff
 def : Pat<(X86tailcall GR32:$dst),
-          (CALL32r     GR32:$dst)>;
+          (TAILCALL)>;
 
 def : Pat<(X86tailcall (i32 tglobaladdr:$dst)),
-          (CALLpcrel32 tglobaladdr:$dst)>;
+          (TAILCALL)>;
 def : Pat<(X86tailcall (i32 texternalsym:$dst)),
-          (CALLpcrel32 texternalsym:$dst)>;
+          (TAILCALL)>;
+
+def : Pat<(X86tcret GR32:$dst, imm:$off),
+          (TCRETURNri GR32:$dst, imm:$off)>;
+
+def : Pat<(X86tcret (i32 tglobaladdr:$dst), imm:$off),
+          (TCRETURNdi texternalsym:$dst, imm:$off)>;
+
+def : Pat<(X86tcret (i32 texternalsym:$dst), imm:$off),
+          (TCRETURNdi texternalsym:$dst, imm:$off)>;
 
 def : Pat<(X86call (i32 tglobaladdr:$dst)),
           (CALLpcrel32 tglobaladdr:$dst)>;

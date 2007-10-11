@@ -1368,3 +1368,83 @@ L7:
 L5:
 
 //===---------------------------------------------------------------------===//
+Tail call optimization improvements: Tail call optimization currently
+pushes all arguments on the top of the stack (their normal place if
+that was a not tail call optimized functiong call ) before moving them
+to actual stack slot. this is done to prevent overwriting of paramters
+(see example below) that might be used, since the arguments of the
+callee overwrites callers arguments.
+
+ example:  
+
+int callee(int32, int64); 
+int caller(int32 arg1, int32 arg2) { 
+  int64 local = arg2 * 2; 
+  return callee(arg2, (int64)local); 
+}
+
+[arg1]          [!arg2 no longer valid since we moved local onto it]
+[arg2]      ->  [(int64)
+[RETADDR]        local  ]
+
+moving arg1 onto the stack slot of callee function would overwrite
+arg2 of the caller.
+
+Possible optimizations:
+
+ - only push those arguments to the top of the stack that are actual
+   parameters of the caller function and have no local value in the
+   caller
+
+   in above example local does not need to be pushed onto the top of
+   the stack as it is definitetly not a caller's function parameter
+
+ - analyse the actual parameters of the callee to see which would
+   overwrite a caller paramter which is used by the callee and only
+   push them onto the top of the stack
+
+   int callee (int32 arg1, int32 arg2);
+   int caller (int32 arg1, int32 arg2) {
+       return callee(arg1,arg2);
+   }
+
+   here we don't need to write any variables to the top of the stack
+   since they don't overwrite each other
+
+   int callee (int32 arg1, int32 arg2);
+   int caller (int32 arg1, int32 arg2) {
+       return callee(arg2,arg1);
+   }
+
+   here we need to push the arguments because they overwrite each other
+
+
+   code for lowering directly onto callers arguments:
++  SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
++  SmallVector<SDOperand, 8> MemOpChains;
++
++  SDOperand FramePtr;
++  SDOperand PtrOff;
++  SDOperand FIN;
++  int FI = 0;
++  // Walk the register/memloc assignments, inserting copies/loads.
++  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
++    CCValAssign &VA = ArgLocs[i];
++    SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
++    
++    ....
++    
++    if (VA.isRegLoc()) {
++      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
++    } else {
++      assert(VA.isMemLoc());
++      // create frame index
++      int32_t Offset = VA.getLocMemOffset()+FPDiff;
++      uint32_t OpSize = (MVT::getSizeInBits(VA.getLocVT())+7)/8;
++      FI = MF.getFrameInfo()->CreateFixedObject(OpSize, Offset);
++      FIN = DAG.getFrameIndex(FI, MVT::i32);
++      // store relative to framepointer
++      MemOpChains.push_back(DAG.getStore(Chain, Arg, FIN, NULL, 0));
++    }
++  }
+//===---------------------------------------------------------------------===//

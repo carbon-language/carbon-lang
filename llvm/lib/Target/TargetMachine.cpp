@@ -33,6 +33,7 @@ namespace llvm {
   bool ExceptionHandling;
   Reloc::Model RelocationModel;
   CodeModel::Model CMModel;
+  bool PerformTailCallOpt;
 }
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -116,6 +117,12 @@ namespace {
       clEnumValN(CodeModel::Large, "large",
                  "  Large code model"),
       clEnumValEnd));
+
+  cl::opt<bool, true>
+  EnablePerformTailCallOpt("tailcallopt",
+                           cl::desc("Turn on tail call optimization."),
+                           cl::location(PerformTailCallOpt),
+                           cl::init(false));
 }
 
 //---------------------------------------------------------------------------

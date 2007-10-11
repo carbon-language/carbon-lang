@@ -73,6 +73,11 @@ namespace llvm {
   /// ExceptionHandling - This flag indicates that exception information should
   /// be emitted.
   extern bool ExceptionHandling;
+
+  /// PerformTailCallOpt - This flag is enabled when the -tailcallopt is
+  /// specified on the commandline. When the flag is on, the target will perform
+  /// tail call optimization (pop the caller's stack) providing it supports it.
+  extern bool PerformTailCallOpt;
 } // End llvm namespace
 
 #endif

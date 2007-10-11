@@ -32,6 +32,8 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ParameterAttributes.h"
@@ -43,6 +45,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   X86ScalarSSEf64 = Subtarget->hasSSE2();
   X86ScalarSSEf32 = Subtarget->hasSSE1();
   X86StackPtr = Subtarget->is64Bit() ? X86::RSP : X86::ESP;
+  
 
   RegInfo = TM.getRegisterInfo();
 
@@ -641,6 +644,19 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 //===----------------------------------------------------------------------===//
 
 #include "X86GenCallingConv.inc"
+
+/// GetPossiblePreceedingTailCall - Get preceeding X86ISD::TAILCALL node if it
+/// exists skip possible ISD:TokenFactor.
+static SDOperand GetPossiblePreceedingTailCall(SDOperand Chain) {
+  if (Chain.getOpcode()==X86ISD::TAILCALL) {
+    return Chain;
+  } else if (Chain.getOpcode()==ISD::TokenFactor) {
+    if (Chain.getNumOperands() &&
+        Chain.getOperand(0).getOpcode()==X86ISD::TAILCALL)
+      return Chain.getOperand(0);
+  }
+  return Chain;
+}
     
 /// LowerRET - Lower an ISD::RET node.
 SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
@@ -651,8 +667,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
   bool isVarArg = DAG.getMachineFunction().getFunction()->isVarArg();
   CCState CCInfo(CC, isVarArg, getTargetMachine(), RVLocs);
   CCInfo.AnalyzeReturn(Op.Val, RetCC_X86);
-  
-  
+    
   // If this is the first return lowered for this function, add the regs to the
   // liveout set for the function.
   if (DAG.getMachineFunction().liveout_empty()) {
@@ -660,10 +675,38 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
       if (RVLocs[i].isRegLoc())
         DAG.getMachineFunction().addLiveOut(RVLocs[i].getLocReg());
   }
-  
   SDOperand Chain = Op.getOperand(0);
-  SDOperand Flag;
   
+  // Handle tail call return.
+  Chain = GetPossiblePreceedingTailCall(Chain);
+  if (Chain.getOpcode() == X86ISD::TAILCALL) {
+    SDOperand TailCall = Chain;
+    SDOperand TargetAddress = TailCall.getOperand(1);
+    SDOperand StackAdjustment = TailCall.getOperand(2);
+    assert ( ((TargetAddress.getOpcode() == ISD::Register &&
+               (cast<RegisterSDNode>(TargetAddress)->getReg() == X86::ECX ||
+                cast<RegisterSDNode>(TargetAddress)->getReg() == X86::R9)) ||
+              TargetAddress.getOpcode() == ISD::TargetExternalSymbol ||
+              TargetAddress.getOpcode() == ISD::TargetGlobalAddress) && 
+             "Expecting an global address, external symbol, or register");
+    assert( StackAdjustment.getOpcode() == ISD::Constant &&
+            "Expecting a const value");
+
+    SmallVector<SDOperand,8> Operands;
+    Operands.push_back(Chain.getOperand(0));
+    Operands.push_back(TargetAddress);
+    Operands.push_back(StackAdjustment);
+    // Copy registers used by the call. Last operand is a flag so it is not
+    // copied.
+    for(unsigned i=3; i < TailCall.getNumOperands()-1;i++) {
+      Operands.push_back(Chain.getOperand(i));
+    }
+    return DAG.getNode(X86ISD::TC_RETURN, MVT::Other, &Operands[0], Operands.size()); 
+  }
+  
+  // Regular return.
+  SDOperand Flag;
+
   // Copy the result values into the output registers.
   if (RVLocs.size() != 1 || !RVLocs[0].isRegLoc() ||
       RVLocs[0].getLocReg() != X86::ST0) {
@@ -684,7 +727,7 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     if ((X86ScalarSSEf32 && RVLocs[0].getValVT()==MVT::f32) ||
         (X86ScalarSSEf64 && RVLocs[0].getValVT()==MVT::f64)) {
       SDOperand MemLoc;
-      
+        
       // If this is a load into a scalarsse value, don't store the loaded value
       // back to the stack, only to reload it: just replace the scalar-sse load.
       if (ISD::isNON_EXTLoad(Value.Val) &&
@@ -784,12 +827,14 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
 
 
 //===----------------------------------------------------------------------===//
-//                C & StdCall Calling Convention implementation
+//                C & StdCall & Fast Calling Convention implementation
 //===----------------------------------------------------------------------===//
 //  StdCall calling convention seems to be standard for many Windows' API
 //  routines and around. It differs from C calling convention just a little:
 //  callee should clean up the stack, not caller. Symbols should be also
 //  decorated in some fancy way :) It doesn't support any vector arguments.
+//  For info on fast calling convention see Fast Calling Convention (tail call)
+//  implementation LowerX86_32FastCCCallTo.
 
 /// AddLiveIn - This helper function adds the specified physical register to the
 /// MachineFunction as a live in value.  It also creates a corresponding virtual
@@ -801,6 +846,9 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
   MF.addLiveIn(PReg, VReg);
   return VReg;
 }
+
+// align stack arguments according to platform alignment needed for tail calls
+unsigned GetAlignedArgumentStackSize(unsigned StackSize, SelectionDAG& DAG);
 
 SDOperand X86TargetLowering::LowerMemArgument(SDOperand Op, SelectionDAG &DAG,
                                               const CCValAssign &VA,
@@ -826,13 +874,17 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SDOperand Root = Op.getOperand(0);
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
-
+  unsigned CC = MF.getFunction()->getCallingConv();
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(MF.getFunction()->getCallingConv(), isVarArg,
+  CCState CCInfo(CC, isVarArg,
                  getTargetMachine(), ArgLocs);
-  CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_32_C);
-   
+  // Check for possible tail call calling convention.
+  if (CC == CallingConv::Fast && PerformTailCallOpt) 
+    CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_32_TailCall);
+  else
+    CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_32_C);
+  
   SmallVector<SDOperand, 8> ArgValues;
   unsigned LastVal = ~0U;
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -877,6 +929,9 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
   }
   
   unsigned StackSize = CCInfo.getNextStackOffset();
+  // align stack specially for tail calls
+  if (CC==CallingConv::Fast)
+    StackSize = GetAlignedArgumentStackSize(StackSize,DAG);
 
   ArgValues.push_back(Root);
 
@@ -885,7 +940,12 @@ SDOperand X86TargetLowering::LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
   if (isVarArg)
     VarArgsFrameIndex = MFI->CreateFixedObject(1, StackSize);
 
-  if (isStdCall && !isVarArg) {
+  // Tail call calling convention (CallingConv::Fast) does not support varargs.
+  assert( !(isVarArg && CC == CallingConv::Fast) && 
+         "CallingConv::Fast does not support varargs.");
+
+  if (isStdCall && !isVarArg && 
+      (CC==CallingConv::Fast && PerformTailCallOpt || CC!=CallingConv::Fast)) {
     BytesToPopOnReturn  = StackSize;    // Callee pops everything..
     BytesCallerReserves = 0;
   } else {
@@ -914,17 +974,21 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
                                             unsigned CC) {
   SDOperand Chain     = Op.getOperand(0);
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
-  bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
   unsigned NumOps     = (Op.getNumOperands() - 5) / 2;
-
+ 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
-  CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_32_C);
+  if(CC==CallingConv::Fast && PerformTailCallOpt)
+    CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_32_TailCall);
+  else
+    CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_32_C);
   
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
+  if (CC==CallingConv::Fast)
+    NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
 
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 
@@ -1023,19 +1087,21 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
   
   if (InFlag.Val)
     Ops.push_back(InFlag);
-
-  Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
-                      NodeTys, &Ops[0], Ops.size());
+ 
+  Chain = DAG.getNode(X86ISD::CALL, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
   unsigned NumBytesForCalleeToPush = 0;
 
-  if (CC == CallingConv::X86_StdCall) {
+  if (CC == CallingConv::X86_StdCall || 
+      (CC == CallingConv::Fast && PerformTailCallOpt)) {
     if (isVarArg)
       NumBytesForCalleeToPush = isSRet ? 4 : 0;
     else
       NumBytesForCalleeToPush = NumBytes;
+    assert(!(isVarArg && CC==CallingConv::Fast) &&
+            "CallingConv::Fast does not support varargs.");
   } else {
     // If this is is a call to a struct-return function, the callee
     // pops the hidden struct pointer, so we have to push it back.
@@ -1132,7 +1198,8 @@ X86TargetLowering::LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG) {
 
   if (!Subtarget->isTargetCygMing() && !Subtarget->isTargetWindows()) {
     // Make sure the instruction takes 8n+4 bytes to make sure the start of the
-    // arguments and the arguments after the retaddr has been pushed are aligned.
+    // arguments and the arguments after the retaddr has been pushed are
+    // aligned.
     if ((StackSize & 7) == 0)
       StackSize += 4;
   }
@@ -1194,7 +1261,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
 
   if (!Subtarget->isTargetCygMing() && !Subtarget->isTargetWindows()) {
     // Make sure the instruction takes 8n+4 bytes to make sure the start of the
-    // arguments and the arguments after the retaddr has been pushed are aligned.
+    // arguments and the arguments after the retaddr has been pushed are
+    // aligned.
     if ((NumBytes & 7) == 0)
       NumBytes += 4;
   }
@@ -1292,8 +1360,8 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   if (InFlag.Val)
     Ops.push_back(InFlag);
 
-  // FIXME: Do not generate X86ISD::TAILCALL for now.
-  Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+  assert(isTailCall==false && "no tail call here");
+  Chain = DAG.getNode(X86ISD::CALL,
                       NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
@@ -1312,6 +1380,314 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
   return SDOperand(LowerCallResult(Chain, InFlag, Op.Val, CC, DAG), Op.ResNo);
 }
 
+//===----------------------------------------------------------------------===//
+//                Fast Calling Convention (tail call) implementation
+//===----------------------------------------------------------------------===//
+
+//  Like std call, callee cleans arguments, convention except that ECX is
+//  reserved for storing the tail called function address. Only 2 registers are
+//  free for argument passing (inreg). Tail call optimization is performed
+//  provided:
+//                * tailcallopt is enabled
+//                * caller/callee are fastcc
+//                * elf/pic is disabled OR
+//                * elf/pic enabled + callee is in module + callee has
+//                  visibility protected or hidden
+//  To ensure the stack is aligned according to platform abi pass
+//  tail-call-align-stack. This makes sure that argument delta is always
+//  multiples of stack alignment. (Dynamic linkers need this - darwin's dyld for
+//  example)
+//  If a tail called function callee has more arguments than the caller the
+//  caller needs to make sure that there is room to move the RETADDR to. This is
+//  achived by reserving an area the size of the argument delta right after the
+//  original REtADDR, but before the saved framepointer or the spilled registers
+//  e.g. caller(arg1, arg2) calls callee(arg1, arg2,arg3,arg4)
+//  stack layout:
+//    arg1
+//    arg2
+//    RETADDR
+//    [ new RETADDR 
+//      move area ]
+//    (possible EBP)
+//    ESI
+//    EDI
+//    local1 ..
+
+/// GetAlignedArgumentStackSize - Make the stack size align e.g 16n + 12 aligned
+/// for a 16 byte align requirement.
+unsigned X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize, 
+                                                        SelectionDAG& DAG) {
+  if (PerformTailCallOpt) {
+    MachineFunction &MF = DAG.getMachineFunction();
+    const TargetMachine &TM = MF.getTarget();
+    const TargetFrameInfo &TFI = *TM.getFrameInfo();
+    unsigned StackAlignment = TFI.getStackAlignment();
+    uint64_t AlignMask = StackAlignment - 1; 
+    int64_t Offset = StackSize;
+    unsigned SlotSize = Subtarget->is64Bit() ? 8 : 4;
+    if ( (Offset & AlignMask) <= (StackAlignment - SlotSize) ) {
+      // Number smaller than 12 so just add the difference.
+      Offset += ((StackAlignment - SlotSize) - (Offset & AlignMask));
+    } else {
+      // Mask out lower bits, add stackalignment once plus the 12 bytes.
+      Offset = ((~AlignMask) & Offset) + StackAlignment + 
+        (StackAlignment-SlotSize);
+    }
+    StackSize = Offset;
+  }
+  return StackSize;
+}
+
+/// IsEligibleForTailCallElimination - Check to see whether the next instruction
+// following the call is a return. A function is eligible if caller/callee
+// calling conventions match, currently only fastcc supports tail calls, and the
+// function CALL is immediatly followed by a RET.
+bool X86TargetLowering::IsEligibleForTailCallOptimization(SDOperand Call,
+                                                      SDOperand Ret,
+                                                      SelectionDAG& DAG) const {
+  bool IsEligible = false;
+
+  // Check whether CALL node immediatly preceeds the RET node and whether the
+  // return uses the result of the node or is a void return.
+  if ((Ret.getNumOperands() == 1 && 
+       (Ret.getOperand(0)== SDOperand(Call.Val,1) ||
+        Ret.getOperand(0)== SDOperand(Call.Val,0))) ||
+      (Ret.getOperand(0)== SDOperand(Call.Val,Call.Val->getNumValues()-1) &&
+       Ret.getOperand(1)== SDOperand(Call.Val,0))) {
+    MachineFunction &MF = DAG.getMachineFunction();
+    unsigned CallerCC = MF.getFunction()->getCallingConv();
+    unsigned CalleeCC = cast<ConstantSDNode>(Call.getOperand(1))->getValue();
+    if (CalleeCC == CallingConv::Fast && CallerCC == CalleeCC) {
+      SDOperand Callee = Call.getOperand(4);
+      // On elf/pic %ebx needs to be livein.
+      if(getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
+         Subtarget->isPICStyleGOT()) {
+        // Can only do local tail calls with PIC.
+        GlobalValue * GV = 0;
+        GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
+        if(G != 0 &&
+           (GV = G->getGlobal()) &&
+           (GV->hasHiddenVisibility() || GV->hasProtectedVisibility()))
+          IsEligible=true;
+      } else {
+        IsEligible=true;
+      }
+    }
+  }
+  return IsEligible;
+}
+
+SDOperand X86TargetLowering::LowerX86_TailCallTo(SDOperand Op, 
+                                                     SelectionDAG &DAG,
+                                                     unsigned CC) {
+  SDOperand Chain     = Op.getOperand(0);
+  bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
+  SDOperand Callee    = Op.getOperand(4);
+  bool is64Bit        = Subtarget->is64Bit();
+
+  assert(isTailCall && PerformTailCallOpt && "Should only emit tail calls.");
+
+  // Analyze operands of the call, assigning locations to each operand.
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
+  if (is64Bit)
+    CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_64_TailCall);
+  else
+    CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_32_TailCall);
+  
+  
+  // Lower arguments at fp - stackoffset + fpdiff.
+  MachineFunction &MF = DAG.getMachineFunction();
+
+  unsigned NumBytesToBePushed = 
+    GetAlignedArgumentStackSize(CCInfo.getNextStackOffset(), DAG);
+    
+  unsigned NumBytesCallerPushed = 
+    MF.getInfo<X86MachineFunctionInfo>()->getBytesToPopOnReturn();
+  int FPDiff = NumBytesCallerPushed - NumBytesToBePushed;
+
+  // Set the delta of movement of the returnaddr stackslot.
+  // But only set if delta is greater than previous delta.
+  if (FPDiff < (MF.getInfo<X86MachineFunctionInfo>()->getTCReturnAddrDelta()))
+    MF.getInfo<X86MachineFunctionInfo>()->setTCReturnAddrDelta(FPDiff);
+
+  // Adjust the ret address stack slot.
+  if (FPDiff) {
+    MVT::ValueType VT = is64Bit ? MVT::i64 : MVT::i32;
+    SDOperand RetAddrFrIdx = getReturnAddressFrameIndex(DAG); 
+    RetAddrFrIdx = 
+      DAG.getLoad(VT, DAG.getEntryNode(),RetAddrFrIdx, NULL, 0);
+    // Emit a store of the saved ret value to the new location.
+    int SlotSize = is64Bit ? 8 : 4;
+    int NewReturnAddrFI = 
+      MF.getFrameInfo()->CreateFixedObject(SlotSize, FPDiff-SlotSize);
+    SDOperand NewRetAddrFrIdx = DAG.getFrameIndex(NewReturnAddrFI, VT);
+    Chain = DAG.getStore(Chain,RetAddrFrIdx, NewRetAddrFrIdx, NULL, 0);
+  }
+
+  Chain = DAG.
+   getCALLSEQ_START(Chain, DAG.getConstant(NumBytesToBePushed, getPointerTy()));
+
+  SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
+  SmallVector<SDOperand, 8> MemOpChains;
+  SmallVector<SDOperand, 8> MemOpChains2;
+  SDOperand FramePtr, StackPtr;
+  SDOperand PtrOff;
+  SDOperand FIN;
+  int FI = 0;
+
+  // Walk the register/memloc assignments, inserting copies/loads.  Lower
+  // arguments first to the stack slot where they would normally - in case of a
+  // normal function call - be.
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    SDOperand Arg = Op.getOperand(5+2*VA.getValNo());
+    
+    // Promote the value if needed.
+    switch (VA.getLocInfo()) {
+    default: assert(0 && "Unknown loc info!");
+    case CCValAssign::Full: break;
+    case CCValAssign::SExt:
+      Arg = DAG.getNode(ISD::SIGN_EXTEND, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::ZExt:
+      Arg = DAG.getNode(ISD::ZERO_EXTEND, VA.getLocVT(), Arg);
+      break;
+    case CCValAssign::AExt:
+      Arg = DAG.getNode(ISD::ANY_EXTEND, VA.getLocVT(), Arg);
+      break;
+    }
+    
+    if (VA.isRegLoc()) {
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+    } else {
+      assert(VA.isMemLoc());
+      if (StackPtr.Val == 0)
+        StackPtr = DAG.getRegister(getStackPtrReg(), getPointerTy());
+
+      MemOpChains.push_back(LowerMemOpCallTo(Op, DAG, StackPtr, VA, Chain,
+                                             Arg));
+    }
+  }
+
+  if (!MemOpChains.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                        &MemOpChains[0], MemOpChains.size());
+
+  // Build a sequence of copy-to-reg nodes chained together with token chain
+  // and flag operands which copy the outgoing args into registers.
+  SDOperand InFlag;
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, RegsToPass[i].first, RegsToPass[i].second,
+                             InFlag);
+    InFlag = Chain.getValue(1);
+  }
+  InFlag = SDOperand();
+  // Copy from stack slots to stack slot of a tail called function. This needs
+  // to be done because if we would lower the arguments directly to their real
+  // stack slot we might end up overwriting each other.
+  // TODO: To make this more efficient (sometimes saving a store/load) we could
+  // analyse the arguments and emit this store/load/store sequence only for
+  // arguments which would be overwritten otherwise.
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+    if (!VA.isRegLoc()) {
+      SDOperand FlagsOp = Op.getOperand(6+2*VA.getValNo());
+      unsigned Flags    = cast<ConstantSDNode>(FlagsOp)->getValue();
+      
+      // Get source stack slot. 
+      SDOperand PtrOff = DAG.getConstant(VA.getLocMemOffset(), getPointerTy());
+      PtrOff = DAG.getNode(ISD::ADD, getPointerTy(), StackPtr, PtrOff);
+      // Create frame index.
+      int32_t Offset = VA.getLocMemOffset()+FPDiff;
+      uint32_t OpSize = (MVT::getSizeInBits(VA.getLocVT())+7)/8;
+      FI = MF.getFrameInfo()->CreateFixedObject(OpSize, Offset);
+      FIN = DAG.getFrameIndex(FI, MVT::i32);
+      if (Flags & ISD::ParamFlags::ByVal) {
+        // Copy relative to framepointer.
+        unsigned Align = 1 << ((Flags & ISD::ParamFlags::ByValAlign) >>
+                               ISD::ParamFlags::ByValAlignOffs);
+
+        unsigned  Size = (Flags & ISD::ParamFlags::ByValSize) >>
+          ISD::ParamFlags::ByValSizeOffs;
+ 
+        SDOperand AlignNode = DAG.getConstant(Align, MVT::i32);
+        SDOperand  SizeNode = DAG.getConstant(Size, MVT::i32);
+        // Copy relative to framepointer.
+        MemOpChains2.push_back(DAG.getNode(ISD::MEMCPY, MVT::Other, Chain, FIN,
+                                           PtrOff, SizeNode, AlignNode));
+      } else {
+        SDOperand LoadedArg = DAG.getLoad(VA.getValVT(), Chain, PtrOff, NULL,0);
+        // Store relative to framepointer.
+        MemOpChains2.push_back(DAG.getStore(Chain, LoadedArg, FIN, NULL, 0));
+      }
+    }
+  }
+
+  if (!MemOpChains2.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
+                        &MemOpChains2[0], MemOpChains.size());
+
+  // ELF / PIC requires GOT in the EBX register before function calls via PLT
+  // GOT pointer.
+  // Does not work with tail call since ebx is not restored correctly by
+  // tailcaller. TODO: at least for x86 - verify for x86-64
+
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    // We should use extra load for direct calls to dllimported functions in
+    // non-JIT mode.
+    if (!Subtarget->GVRequiresExtraLoad(G->getGlobal(),
+                                        getTargetMachine(), true))
+      Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+  } else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
+  else {
+    assert(Callee.getOpcode() == ISD::LOAD && 
+           "Function destination must be loaded into virtual register");
+    unsigned Opc = is64Bit ? X86::R9 : X86::ECX;
+
+    Chain = DAG.getCopyToReg(Chain, 
+                             DAG.getRegister(Opc, getPointerTy()) , 
+                             Callee,InFlag);
+    Callee = DAG.getRegister(Opc, getPointerTy());
+    // Add register as live out.
+    DAG.getMachineFunction().addLiveOut(Opc);
+  }
+   
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  SmallVector<SDOperand, 8> Ops;
+
+  Ops.push_back(Chain);
+  Ops.push_back(DAG.getConstant(NumBytesToBePushed, getPointerTy()));
+  Ops.push_back(DAG.getConstant(0, getPointerTy()));
+  if (InFlag.Val)
+    Ops.push_back(InFlag);
+  Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0], Ops.size());
+  InFlag = Chain.getValue(1);
+
+  // Returns a chain & a flag for retval copy to use.
+  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
+  Ops.clear();
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+  Ops.push_back(DAG.getConstant(FPDiff, MVT::i32));
+  // Add argument registers to the end of the list so that they are known live
+  // into the call.
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first,
+                                  RegsToPass[i].second.getValueType()));
+  if (InFlag.Val)
+    Ops.push_back(InFlag);
+  assert(InFlag.Val && 
+         "Flag must be set. Depend on flag being set in LowerRET");
+  Chain = DAG.getNode(X86ISD::TAILCALL,
+                      Op.Val->getVTList(), &Ops[0], Ops.size());
+    
+  return SDOperand(Chain.Val, Op.ResNo);
+}
 
 //===----------------------------------------------------------------------===//
 //                 X86-64 C Calling Convention implementation
@@ -1323,6 +1699,7 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   SDOperand Root = Op.getOperand(0);
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
+  unsigned CC= MF.getFunction()->getCallingConv();
 
   static const unsigned GPR64ArgRegs[] = {
     X86::RDI, X86::RSI, X86::RDX, X86::RCX, X86::R8,  X86::R9
@@ -1335,9 +1712,12 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
   
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(MF.getFunction()->getCallingConv(), isVarArg,
+  CCState CCInfo(CC, isVarArg,
                  getTargetMachine(), ArgLocs);
-  CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_64_C);
+  if (CC == CallingConv::Fast && PerformTailCallOpt)
+    CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_64_TailCall);
+  else
+    CCInfo.AnalyzeFormalArguments(Op.Val, CC_X86_64_C);
   
   SmallVector<SDOperand, 8> ArgValues;
   unsigned LastVal = ~0U;
@@ -1398,10 +1778,14 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
   }
   
   unsigned StackSize = CCInfo.getNextStackOffset();
+  if (CC==CallingConv::Fast)
+    StackSize =GetAlignedArgumentStackSize(StackSize, DAG);
   
   // If the function takes variable number of arguments, make a frame index for
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (isVarArg) {
+    assert(CC!=CallingConv::Fast 
+           && "Var arg not supported with calling convention fastcc");
     unsigned NumIntRegs = CCInfo.getFirstUnallocated(GPR64ArgRegs, 6);
     unsigned NumXMMRegs = CCInfo.getFirstUnallocated(XMMArgRegs, 8);
     
@@ -1446,10 +1830,14 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
   }
 
   ArgValues.push_back(Root);
-
-  BytesToPopOnReturn = 0;  // Callee pops nothing.
-  BytesCallerReserves = StackSize;
-
+  // Tail call convention (fastcc) needs callee pop.
+  if (CC == CallingConv::Fast && PerformTailCallOpt){
+    BytesToPopOnReturn = StackSize;  // Callee pops everything.
+    BytesCallerReserves = 0;
+  } else {
+    BytesToPopOnReturn = 0;  // Callee pops nothing.
+    BytesCallerReserves = StackSize;
+  }
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
   FuncInfo->setBytesToPopOnReturn(BytesToPopOnReturn);
 
@@ -1463,16 +1851,21 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
                                         unsigned CC) {
   SDOperand Chain     = Op.getOperand(0);
   bool isVarArg       = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
-  bool isTailCall     = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
   SDOperand Callee    = Op.getOperand(4);
   
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
-  CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_64_C);
+  if (CC==CallingConv::Fast)
+    CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_64_TailCall);
+  else
+    CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_64_C);
     
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
+  if (CC == CallingConv::Fast)
+    NumBytes = GetAlignedArgumentStackSize(NumBytes,DAG);
+
   Chain = DAG.getCALLSEQ_START(Chain,DAG.getConstant(NumBytes, getPointerTy()));
 
   SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
@@ -1526,6 +1919,9 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   }
 
   if (isVarArg) {
+    assert ( CallingConv::Fast != CC &&
+             "Var args not supported with calling convention fastcc");
+
     // From AMD64 ABI document:
     // For calls that may call functions that use varargs or stdargs
     // (prototype-less calls or calls to functions containing ellipsis (...) in
@@ -1574,17 +1970,22 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   if (InFlag.Val)
     Ops.push_back(InFlag);
 
-  // FIXME: Do not generate X86ISD::TAILCALL for now.
-  Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+  Chain = DAG.getNode(X86ISD::CALL,
                       NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
-
+  int NumBytesForCalleeToPush = 0;
+   if (CC==CallingConv::Fast) {
+    NumBytesForCalleeToPush = NumBytes;  // Callee pops everything
+  
+  } else {
+    NumBytesForCalleeToPush = 0;  // Callee pops nothing.
+  }
   // Returns a flag for retval copy to use.
   NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
   Ops.clear();
   Ops.push_back(Chain);
   Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
-  Ops.push_back(DAG.getConstant(0, getPointerTy()));
+  Ops.push_back(DAG.getConstant(NumBytesForCalleeToPush, getPointerTy()));
   Ops.push_back(InFlag);
   Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
@@ -3106,10 +3507,14 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     // SHUFPS the element to the lowest double word, then movss.
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
     SmallVector<SDOperand, 8> IdxVec;
-    IdxVec.push_back(DAG.getConstant(Idx, MVT::getVectorElementType(MaskVT)));
-    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
-    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
-    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
+    IdxVec.
+      push_back(DAG.getConstant(Idx, MVT::getVectorElementType(MaskVT)));
+    IdxVec.
+      push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
+    IdxVec.
+      push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
+    IdxVec.
+      push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
     SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
                                  &IdxVec[0], IdxVec.size());
     Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, Vec.getValueType(),
@@ -3128,7 +3533,8 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
     MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
     SmallVector<SDOperand, 8> IdxVec;
     IdxVec.push_back(DAG.getConstant(1, MVT::getVectorElementType(MaskVT)));
-    IdxVec.push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
+    IdxVec.
+      push_back(DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(MaskVT)));
     SDOperand Mask = DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
                                  &IdxVec[0], IdxVec.size());
     Vec = DAG.getNode(ISD::VECTOR_SHUFFLE, Vec.getValueType(),
@@ -3777,17 +4183,23 @@ SDOperand X86TargetLowering::LowerBRCOND(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
-  unsigned CallingConv= cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  unsigned CallingConv = cast<ConstantSDNode>(Op.getOperand(1))->getValue();
+  bool isTailCall = cast<ConstantSDNode>(Op.getOperand(3))->getValue() != 0;
 
-  if (Subtarget->is64Bit())
-    return LowerX86_64CCCCallTo(Op, DAG, CallingConv);
+   if (Subtarget->is64Bit())
+     if(CallingConv==CallingConv::Fast && isTailCall && PerformTailCallOpt)
+       return LowerX86_TailCallTo(Op, DAG, CallingConv);
+     else
+       return LowerX86_64CCCCallTo(Op, DAG, CallingConv);
   else
     switch (CallingConv) {
     default:
       assert(0 && "Unsupported calling convention");
     case CallingConv::Fast:
-      // TODO: Implement fastcc
-      // Falls through
+      if (isTailCall && PerformTailCallOpt)
+        return LowerX86_TailCallTo(Op, DAG, CallingConv);
+      else
+        return LowerCCCCallTo(Op,DAG, CallingConv);
     case CallingConv::C:
     case CallingConv::X86_StdCall:
       return LowerCCCCallTo(Op, DAG, CallingConv);
@@ -3855,8 +4267,7 @@ X86TargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
     default:
       assert(0 && "Unsupported calling convention");
     case CallingConv::Fast:
-      // TODO: implement fastcc.
-      
+      return LowerCCCArguments(Op,DAG, true);
       // Falls through
     case CallingConv::C:
       return LowerCCCArguments(Op, DAG);
@@ -4176,7 +4587,8 @@ X86TargetLowering::LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG) {
   SDOperand TheOp = Op.getOperand(0);
   SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, &TheOp, 1);
   if (Subtarget->is64Bit()) {
-    SDOperand Copy1 = DAG.getCopyFromReg(rd, X86::RAX, MVT::i64, rd.getValue(1));
+    SDOperand Copy1 = 
+      DAG.getCopyFromReg(rd, X86::RAX, MVT::i64, rd.getValue(1));
     SDOperand Copy2 = DAG.getCopyFromReg(Copy1.getValue(1), X86::RDX,
                                          MVT::i64, Copy1.getValue(2));
     SDOperand Tmp = DAG.getNode(ISD::SHL, MVT::i64, Copy2,
@@ -4612,6 +5024,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::TLSADDR:            return "X86ISD::TLSADDR";
   case X86ISD::THREAD_POINTER:     return "X86ISD::THREAD_POINTER";
   case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
+  case X86ISD::TC_RETURN:          return "X86ISD::TC_RETURN";
   }
 }
 
@@ -4885,7 +5298,7 @@ static SDOperand getShuffleScalarElt(SDNode *N, unsigned i, SelectionDAG &DAG) {
   i %= NumElems;
   if (V.getOpcode() == ISD::SCALAR_TO_VECTOR) {
     return (i == 0)
-      ? V.getOperand(0) : DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(VT));
+     ? V.getOperand(0) : DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(VT));
   } else if (V.getOpcode() == ISD::VECTOR_SHUFFLE) {
     SDOperand Idx = PermMask.getOperand(i);
     if (Idx.getOpcode() == ISD::UNDEF)

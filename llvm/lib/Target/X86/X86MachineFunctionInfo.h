@@ -47,18 +47,26 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
 
   // FrameIndex for return slot.
   int ReturnAddrIndex;
+
+  // Delta the ReturnAddr stack slot is moved
+  // Used for creating an area before the register spill area on the stack
+  // the returnaddr can be savely move to this area
+  int TailCallReturnAddrDelta;
+
 public:
   X86MachineFunctionInfo() : ForceFramePointer(false),
                              CalleeSavedFrameSize(0),
                              BytesToPopOnReturn(0),
                              DecorationStyle(None),
-                             ReturnAddrIndex(0) {}
+                             ReturnAddrIndex(0),
+                             TailCallReturnAddrDelta(0){}
   
   X86MachineFunctionInfo(MachineFunction &MF) : ForceFramePointer(false),
                                                 CalleeSavedFrameSize(0),
                                                 BytesToPopOnReturn(0),
                                                 DecorationStyle(None),
-                                                ReturnAddrIndex(0) {}
+                                                ReturnAddrIndex(0),
+                                                TailCallReturnAddrDelta(0) {}
   
   bool getForceFramePointer() const { return ForceFramePointer;} 
   void setForceFramePointer(bool forceFP) { ForceFramePointer = forceFP; }
@@ -74,6 +82,9 @@ public:
 
   int getRAIndex() const { return ReturnAddrIndex; }
   void setRAIndex(int Index) { ReturnAddrIndex = Index; }
+
+  int getTCReturnAddrDelta() const { return TailCallReturnAddrDelta; }
+  void setTCReturnAddrDelta(int delta) {TailCallReturnAddrDelta = delta;}
 };
 } // End llvm namespace
 

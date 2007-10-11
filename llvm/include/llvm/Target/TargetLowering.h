@@ -860,6 +860,15 @@ public:
   /// implement this.  The default implementation of this aborts.
   virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
+  /// IsEligibleForTailCallOptimization - Check whether the call is eligible for
+  /// tail call optimization. Target which want to do tail call optimization
+  /// should implement this function. 
+  virtual bool IsEligibleForTailCallOptimization(SDOperand Call, 
+                                                 SDOperand Ret, 
+                                                 SelectionDAG &DAG) const {
+    return false;
+  }
+
   /// CustomPromoteOperation - This callback is invoked for operations that are
   /// unsupported by the target, are registered to use 'custom' lowering, and
   /// whose type needs to be promoted.
