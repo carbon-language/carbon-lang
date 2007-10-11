@@ -408,10 +408,10 @@ namespace ISD {
     // conversions, but that is a noop, deleted by getNode().
     BIT_CONVERT,
     
-    // FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI - Perform unary floating point
-    // negation, absolute value, square root, sine and cosine, and powi
+    // FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW - Perform unary floating point
+    // negation, absolute value, square root, sine and cosine, powi, and pow
     // operations.
-    FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI,
+    FNEG, FABS, FSQRT, FSIN, FCOS, FPOWI, FPOW,
     
     // LOAD and STORE have token chains as their first operand, then the same
     // operands as an LLVM load/store instruction, then an offset node that

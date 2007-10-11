@@ -3602,6 +3602,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FSIN:   return "fsin";
   case ISD::FCOS:   return "fcos";
   case ISD::FPOWI:  return "fpowi";
+  case ISD::FPOW:   return "fpow";
 
   // Binary operators
   case ISD::ADD:    return "add";
