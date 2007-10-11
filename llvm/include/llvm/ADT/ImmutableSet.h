@@ -633,8 +633,8 @@ public:
   
   inline bool operator!=(const _Self& x) const { return !operator==(x); }  
   
-  inline TreeTy* operator*() { return *InternalItr; }
-  inline TreeTy* operator->() { return *InternalItr; }
+  inline TreeTy* operator*() const { return *InternalItr; }
+  inline TreeTy* operator->() const { return *InternalItr; }
   
   inline _Self& operator++() { 
     do ++InternalItr;
@@ -821,7 +821,7 @@ public:
     void operator=(const Factory& RHS) {};    
   };
   
-  friend class Factory;
+  friend class Factory;  
 
   /// contains - Returns true if the set contains the specified value.
   bool contains(const value_type_ref V) const {
@@ -844,6 +844,27 @@ public:
   
   template <typename Callback>
   void foreach() { if (Root) { Callback C; Root->foreach(C); } }
+    
+  //===--------------------------------------------------===//    
+  // Iterators.
+  //===--------------------------------------------------===//  
+
+  class iterator {
+    typename TreeTy::iterator itr;
+    
+    iterator() {}
+    iterator(TreeTy* t) : itr(t) {}
+    friend class ImmutableSet<ValT,ValInfo>;
+  public:
+    inline value_type_ref operator*() const { return itr->getValue(); }
+    inline iterator& operator++() { ++itr; return *this; }
+    inline iterator& operator--() { --itr; return *this; }
+    inline bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
+    inline bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }        
+  };
+  
+  iterator begin() const { return iterator(Root); }
+  iterator end() const { return iterator(); }  
   
   //===--------------------------------------------------===//    
   // For testing.
