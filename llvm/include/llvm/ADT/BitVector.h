@@ -274,9 +274,18 @@ public:
 
   // Intersection, union, disjoint union.
   BitVector operator&=(const BitVector &RHS) {
-    assert(Size == RHS.Size && "Illegal operation!");
-    for (unsigned i = 0; i < NumBitWords(size()); ++i)
+    unsigned ThisWords = NumBitWords(size());
+    unsigned RHSWords  = NumBitWords(RHS.size());
+    unsigned i;
+    for (i = 0; i != std::min(ThisWords, RHSWords); ++i)
       Bits[i] &= RHS.Bits[i];
+    
+    // Any bits that are just in this bitvector become zero, because they aren't
+    // in the RHS bit vector.  Any words only in RHS are ignored because they
+    // are already zero in the LHS.
+    for (; i != ThisWords; ++i)
+      Bits[i] = 0;
+    
     return *this;
   }
 
