@@ -3322,17 +3322,35 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       break;
     case Expand: {
-      // Convert f32 / f64 to i32 / i64.
       MVT::ValueType VT = Op.getValueType();
       MVT::ValueType OVT = Node->getOperand(0).getValueType();
+      // Convert ppcf128 to i32
       if (OVT == MVT::ppcf128 && VT == MVT::i32) {
-        Result = DAG.getNode(ISD::FP_TO_SINT, VT,
+        if (Node->getOpcode()==ISD::FP_TO_SINT)
+          Result = DAG.getNode(ISD::FP_TO_SINT, VT,
                              DAG.getNode(ISD::FP_ROUND, MVT::f64,
                                          (DAG.getNode(ISD::FP_ROUND_INREG, 
                                           MVT::ppcf128, Node->getOperand(0),
                                           DAG.getValueType(MVT::f64)))));
+        else {
+          const uint64_t TwoE31[] = {0x41e0000000000000LL, 0};
+          APFloat apf = APFloat(APInt(128, 2, TwoE31));
+          Tmp2 = DAG.getConstantFP(apf, OVT);
+          //  X>=2^31 ? (int)(X-2^31)+0x80000000 : (int)X
+          // FIXME: generated code sucks.
+          Result = DAG.getNode(ISD::SELECT_CC, VT, Node->getOperand(0), Tmp2,
+                               DAG.getNode(ISD::ADD, MVT::i32,
+                                 DAG.getNode(ISD::FP_TO_SINT, VT,
+                                   DAG.getNode(ISD::FSUB, OVT,
+                                                 Node->getOperand(0), Tmp2)),
+                                 DAG.getConstant(0x80000000, MVT::i32)),
+                               DAG.getNode(ISD::FP_TO_SINT, VT, 
+                                           Node->getOperand(0)),
+                               DAG.getCondCode(ISD::SETGE));
+        }
         break;
       }
+      // Convert f32 / f64 to i32 / i64.
       RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
       switch (Node->getOpcode()) {
       case ISD::FP_TO_SINT: {
@@ -5170,7 +5188,11 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     if (VT == MVT::ppcf128 && 
         TLI.getOperationAction(ISD::FP_ROUND_INREG, VT) == 
             TargetLowering::Custom) {
-      SDOperand Result = TLI.LowerOperation(Op, DAG);
+      SDOperand SrcLo, SrcHi, Src;
+      ExpandOp(Op.getOperand(0), SrcLo, SrcHi);
+      Src = DAG.getNode(ISD::BUILD_PAIR, VT, SrcLo, SrcHi);
+      SDOperand Result = TLI.LowerOperation(
+        DAG.getNode(ISD::FP_ROUND_INREG, VT, Src, Op.getOperand(1)), DAG);
       assert(Result.Val->getOpcode() == ISD::BUILD_PAIR);
       Lo = Result.Val->getOperand(0);
       Hi = Result.Val->getOperand(1);

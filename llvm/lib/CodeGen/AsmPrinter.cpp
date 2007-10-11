@@ -917,6 +917,39 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
           << " long double most significant halfword\n";
       }
       return;
+    } else if (CFP->getType() == Type::PPC_FP128Ty) {
+      // all long double variants are printed as hex
+      // api needed to prevent premature destruction
+      APInt api = CFP->getValueAPF().convertToAPInt();
+      const uint64_t *p = api.getRawData();
+      if (TD->isBigEndian()) {
+        O << TAI->getData32bitsDirective() << uint32_t(p[0] >> 32)
+          << "\t" << TAI->getCommentString()
+          << " long double most significant word\n";
+        O << TAI->getData32bitsDirective() << uint32_t(p[0])
+          << "\t" << TAI->getCommentString()
+          << " long double next word\n";
+        O << TAI->getData32bitsDirective() << uint32_t(p[1] >> 32)
+          << "\t" << TAI->getCommentString()
+          << " long double next word\n";
+        O << TAI->getData32bitsDirective() << uint32_t(p[1])
+          << "\t" << TAI->getCommentString()
+          << " long double least significant word\n";
+       } else {
+        O << TAI->getData32bitsDirective() << uint32_t(p[1])
+          << "\t" << TAI->getCommentString()
+          << " long double least significant word\n";
+        O << TAI->getData32bitsDirective() << uint32_t(p[1] >> 32)
+          << "\t" << TAI->getCommentString()
+          << " long double next word\n";
+        O << TAI->getData32bitsDirective() << uint32_t(p[0])
+          << "\t" << TAI->getCommentString()
+          << " long double next word\n";
+        O << TAI->getData32bitsDirective() << uint32_t(p[0] >> 32)
+          << "\t" << TAI->getCommentString()
+          << " long double most significant word\n";
+      }
+      return;
     } else assert(0 && "Floating point constant type not handled");
   } else if (CV->getType() == Type::Int64Ty) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
