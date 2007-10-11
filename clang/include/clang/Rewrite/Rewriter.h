@@ -15,11 +15,13 @@
 #ifndef LLVM_CLANG_REWRITER_H
 #define LLVM_CLANG_REWRITER_H
 
+#include "clang/Basic/SourceLocation.h"
+#include <map>
 #include <vector>
 
 namespace clang {
   class SourceManager;
-  class SourceLocation;
+  class Rewriter;
   
 /// SourceDelta - As code in the original input buffer is added and deleted,
 /// SourceDelta records are used to keep track of how the input SourceLocation
@@ -37,6 +39,7 @@ struct SourceDelta {
 /// RewriteBuffer.  For example, if text is inserted into the buffer, any
 /// locations after the insertion point have to be mapped.
 class RewriteBuffer {
+  friend class Rewriter;
   /// Deltas - Keep track of all the deltas in the source code due to insertions
   /// and deletions.  These are kept in sorted order based on the FileLoc.
   std::vector<SourceDelta> Deltas;
@@ -46,10 +49,19 @@ class RewriteBuffer {
   /// instead.
   std::vector<char> Buffer;
 public:
+
+  
+  
+private:  // Methods only usable by Rewriter.
+  
+  /// Initialize - Start this rewrite buffer out with a copy of the unmodified
+  /// input buffer.
+  void Initialize(const char *BufStart, const char *BufEnd) {
+    Buffer.assign(BufStart, BufEnd);
+  }
   
   /// RemoveText - Remove the specified text.
   void RemoveText(unsigned OrigOffset, unsigned Size);
-  
   
   /// InsertText - Insert some text at the specified point, where the offset in
   /// the buffer is specified relative to the original SourceBuffer.
@@ -58,29 +70,50 @@ public:
   /// after the atomic point: i.e. whether the atomic point is moved to after
   /// the inserted text or not.
   void InsertText(unsigned OrigOffset, const char *StrData, unsigned StrLen);
-  
 };
   
+
+/// Rewriter - This is the main interface to the rewrite buffers.  Its primary
+/// job is to dispatch high-level requests to the low-level RewriteBuffers that
+/// are involved.
 class Rewriter {
   SourceManager &SourceMgr;
   
-  // FIXME: list of buffers.
+  std::map<unsigned, RewriteBuffer> RewriteBuffers;
 public:
   explicit Rewriter(SourceManager &SM) : SourceMgr(SM) {}
   
+  /// isRewritable - Return true if this location is a raw file location, which
+  /// is rewritable.  Locations from macros, etc are not rewritable.
+  static bool isRewritable(SourceLocation Loc) {
+    return Loc.isFileID();
+  }
+  
   /// InsertText - Insert the specified string at the specified location in the
-  /// original buffer.
-  bool InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen);
+  /// original buffer.  This method is only valid on rewritable source
+  /// locations.
+  void InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen);
   
-  /// RemoveText - Remove the specified text region.
-  bool RemoveText(SourceLocation Start, SourceLocation End);
+  /// RemoveText - Remove the specified text region.  This method is only valid
+  /// on rewritable source locations.
+  void RemoveText(SourceLocation Start, SourceLocation End);
   
   
-  // TODO: Replace Stmt/Expr with another.
+  void ReplaceText(SourceLocation Start, unsigned OrigLength,
+                   const char *NewStr, unsigned NewLength);
   
+  // TODO: Replace Stmt/Expr with another.  Return bool to indicate whether the
+  // locations were rewritable.
   
-  // Write out output buffer.
-  
+  /// getRewriteBufferFor - Return the rewrite buffer for the specified FileID.
+  /// If no modification has been made to it, return null.
+  const RewriteBuffer *getRewriteBufferFor(unsigned FileID) const {
+    std::map<unsigned, RewriteBuffer>::const_iterator I =
+      RewriteBuffers.find(FileID);
+    return I == RewriteBuffers.end() ? 0 : &I->second;
+  }
+private:
+  RewriteBuffer &getEditBuffer(unsigned FileID);
 };
   
 } // end namespace clang

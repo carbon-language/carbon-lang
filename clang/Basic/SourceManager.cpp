@@ -209,6 +209,13 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
   return SourceLocation::getMacroLoc(MacroIDs.size()-1, 0, 0);
 }
 
+/// getBufferData - Return a pointer to the start and end of the character
+/// data for the specified FileID.
+std::pair<const char*, const char*> 
+SourceManager::getBufferData(unsigned FileID) const {
+  const llvm::MemoryBuffer *Buf = getBuffer(FileID);
+  return std::make_pair(Buf->getBufferStart(), Buf->getBufferEnd());
+}
 
 
 /// getCharacterData - Return a pointer to the start of the specified location

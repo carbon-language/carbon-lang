@@ -198,6 +198,10 @@ public:
     return getFileInfo(FileID)->Buffer;
   }
   
+  /// getBufferData - Return a pointer to the start and end of the character
+  /// data for the specified FileID.
+  std::pair<const char*, const char*> getBufferData(unsigned FileID) const;
+  
   /// getIncludeLoc - Return the location of the #include for the specified
   /// SourceLocation.  If this is a macro expansion, this transparently figures
   /// out which file includes the file being expanded into.
