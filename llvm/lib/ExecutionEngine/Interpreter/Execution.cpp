@@ -24,6 +24,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <cmath>
+#include <algorithm>
 using namespace llvm;
 
 STATISTIC(NumDynamicInsts, "Number of dynamic instructions executed");
@@ -747,7 +748,8 @@ void Interpreter::visitAllocationInst(AllocationInst &I) {
 
   unsigned TypeSize = (size_t)TD.getTypeSize(Ty);
 
-  unsigned MemToAlloc = NumElements * TypeSize;
+  // Avoid malloc-ing zero bytes, use max()...
+  unsigned MemToAlloc = std::max(1U, NumElements * TypeSize);
 
   // Allocate enough memory to hold the type...
   void *Memory = malloc(MemToAlloc);
