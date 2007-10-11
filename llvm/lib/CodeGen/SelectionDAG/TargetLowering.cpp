@@ -73,6 +73,10 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::SIN_F64] = "sin";
   Names[RTLIB::COS_F32] = "cosf";
   Names[RTLIB::COS_F64] = "cos";
+  Names[RTLIB::POW_F32] = "powf";
+  Names[RTLIB::POW_F64] = "pow";
+  Names[RTLIB::POW_F80] = "powl";
+  Names[RTLIB::POW_PPCF128] = "powl";
   Names[RTLIB::FPEXT_F32_F64] = "__extendsfdf2";
   Names[RTLIB::FPROUND_F64_F32] = "__truncdfsf2";
   Names[RTLIB::FPTOSINT_F32_I32] = "__fixsfsi";

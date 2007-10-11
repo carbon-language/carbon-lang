@@ -72,6 +72,10 @@ namespace RTLIB {
     SIN_F64,
     COS_F32,
     COS_F64,
+    POW_F32,
+    POW_F64,
+    POW_F80,
+    POW_PPCF128,
 
     // CONVERSION
     FPEXT_F32_F64,
