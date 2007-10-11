@@ -627,9 +627,8 @@ QualType ASTContext::getObjcQualifiedInterfaceType(ObjcInterfaceDecl *Decl,
     return QualType(QT, 0);
   
   // No Match;
-  ObjcQualifiedInterfaceType *QType = new ObjcQualifiedInterfaceType(IType);
-  for (unsigned i = 0; i != NumProtocols; i++)
-    QType->setProtocols(Protocols[i]);
+  ObjcQualifiedInterfaceType *QType =
+    new ObjcQualifiedInterfaceType(IType, Protocols, NumProtocols);
   Types.push_back(QType);
   ObjcQualifiedInterfaceTypes.InsertNode(QType, InsertPos);
   return QualType(QType, 0);

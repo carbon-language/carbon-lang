@@ -846,12 +846,10 @@ class ObjcQualifiedInterfaceType : public Type, public llvm::FoldingSetNode {
   // List is sorted on protocol name. No protocol is enterred more than once.
   llvm::SmallVector<ObjcProtocolDecl*, 8> Protocols;
 
-  ObjcQualifiedInterfaceType(ObjcInterfaceType *T) : 
-    Type(ObjcQualifiedInterface, QualType()), InterfaceType(T) { }
-  
-  void setProtocols(ObjcProtocolDecl *pType) {
-    Protocols.push_back(pType);
-  }
+  ObjcQualifiedInterfaceType(ObjcInterfaceType *T,
+                             ObjcProtocolDecl **Protos,  unsigned NumP) : 
+    Type(ObjcQualifiedInterface, QualType()), InterfaceType(T),
+    Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
   
