@@ -124,6 +124,9 @@ private:
   // attributes.
   AttributeList *AttrList;
   
+  // List of protocol qualifiers for objective-c classes.
+  llvm::SmallVector<Action::DeclTy *, 8> *ProtocolQualifiers;
+  
   // SourceLocation info.  These are null if the item wasn't specified or if
   // the setting was synthesized.
   SourceLocation StorageClassSpecLoc, SCS_threadLoc;
@@ -142,10 +145,12 @@ public:
       TypeQualifiers(TSS_unspecified),
       FS_inline_specified(false),
       TypeRep(0),
-      AttrList(0) {
+      AttrList(0),
+      ProtocolQualifiers(0) {
   }
   ~DeclSpec() {
     delete AttrList;
+    delete ProtocolQualifiers;
   }
   // storage-class-specifier
   SCS getStorageClassSpec() const { return StorageClassSpec; }
@@ -248,6 +253,15 @@ public:
   }
   AttributeList *getAttributes() const { return AttrList; }
   
+  llvm::SmallVector<Action::DeclTy *, 8> *getProtocolQualifiers() const {
+    return ProtocolQualifiers;
+  }
+  void setProtocolQualifiers(llvm::SmallVector<Action::DeclTy *, 8> *protos) {
+    ProtocolQualifiers = protos;
+  }
+  unsigned NumProtocolQualifiers() const {
+    return ProtocolQualifiers ?  ProtocolQualifiers->size() : 0;
+  }
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.

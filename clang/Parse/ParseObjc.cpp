@@ -378,9 +378,9 @@ Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *IDecl,
   assert((Tok.is(tok::minus) || Tok.is(tok::plus)) && "expected +/-");
 
   tok::TokenKind methodType = Tok.getKind();  
-  SourceLocation methodLoc = ConsumeToken();
+  ConsumeToken();
   
-  DeclTy *MDecl = ParseObjCMethodDecl(methodType, methodLoc, MethodImplKind);
+  DeclTy *MDecl = ParseObjCMethodDecl(methodType, MethodImplKind);
   // Since this rule is used for both method declarations and definitions,
   // the caller is (optionally) responsible for consuming the ';'.
   return MDecl;
@@ -394,7 +394,7 @@ Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *IDecl,
 ///       unsigned long const short volatile signed restrict _Complex
 ///       in out inout bycopy byref oneway int char float double void _Bool
 ///
-IdentifierInfo *Parser::ParseObjCSelector() {
+IdentifierInfo *Parser::ParseObjCSelector(SourceLocation &SelectorLoc) {
   switch (Tok.getKind()) {
   default:
     return 0;
@@ -438,7 +438,7 @@ IdentifierInfo *Parser::ParseObjCSelector() {
   case tok::kw__Bool:
   case tok::kw__Complex:
     IdentifierInfo *II = Tok.getIdentifierInfo();
-    ConsumeToken();
+    SelectorLoc = ConsumeToken();
     return II;
   }
 }
@@ -526,15 +526,14 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
 ///     __attribute__((unused))
 ///
 Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType, 
-                                            SourceLocation mLoc,
 					    tok::ObjCKeywordKind MethodImplKind)
 {
   // Parse the return type.
   TypeTy *ReturnType = 0;
   if (Tok.is(tok::l_paren))
     ReturnType = ParseObjCTypeName();
-
-  IdentifierInfo *SelIdent = ParseObjCSelector();
+  SourceLocation mLoc;
+  IdentifierInfo *SelIdent = ParseObjCSelector(mLoc);
   if (Tok.isNot(tok::colon)) {
     if (!SelIdent) {
       Diag(Tok, diag::err_expected_ident); // missing selector name.
@@ -584,7 +583,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
     ConsumeToken(); // Eat the identifier.
     
     // Check for another keyword selector.
-    SelIdent = ParseObjCSelector();
+    SourceLocation Loc;
+    SelIdent = ParseObjCSelector(Loc);
     if (!SelIdent && Tok.isNot(tok::colon))
       break;
     // We have a selector or a colon, continue parsing.
@@ -1175,7 +1175,8 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
     ReceiverExpr = Res.Val;
   }
   // Parse objc-selector
-  IdentifierInfo *selIdent = ParseObjCSelector();
+  SourceLocation Loc;
+  IdentifierInfo *selIdent = ParseObjCSelector(Loc);
 
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   llvm::SmallVector<Action::ExprTy *, 12> KeyExprs;
@@ -1201,7 +1202,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
       KeyExprs.push_back(Res.Val);
       
       // Check for another keyword selector.
-      selIdent = ParseObjCSelector();
+      selIdent = ParseObjCSelector(Loc);
       if (!selIdent && Tok.isNot(tok::colon))
         break;
       // We have a selector or a colon, continue parsing.

@@ -987,20 +987,22 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
   return PDecl;
 }
 
-/// ActOnFindProtocolDeclaration - This routine looks for a previously
-/// declared protocol and returns it. If not found, issues diagnostic.
-/// Will build a list of previously protocol declarations found in the list.
-Action::DeclTy **
-Sema::ActOnFindProtocolDeclaration(SourceLocation TypeLoc,
-                                   IdentifierInfo **ProtocolId,
-                                   unsigned NumProtocols) {
+/// FindProtocolDeclaration - This routine looks up protocols and
+/// issuer error if they are not declared. It returns list of protocol
+/// declarations in its 'Protocols' argument.
+void
+Sema::FindProtocolDeclaration(SourceLocation TypeLoc,
+                              IdentifierInfo **ProtocolId,
+                              unsigned NumProtocols,
+                              llvm::SmallVector<DeclTy *,8> &Protocols) {
   for (unsigned i = 0; i != NumProtocols; ++i) {
     ObjcProtocolDecl *PDecl = ObjcProtocols[ProtocolId[i]];
     if (!PDecl)
       Diag(TypeLoc, diag::err_undeclared_protocol, 
            ProtocolId[i]->getName());
+    else
+      Protocols.push_back(PDecl); 
   }
-  return 0;
 }
 
 /// ActOnForwardProtocolDeclaration - 

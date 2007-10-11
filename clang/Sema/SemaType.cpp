@@ -104,8 +104,15 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
            "Can't handle qualifiers on typedef names yet!");
     // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so
     // we have this "hack" for now... 
-    if (isa<ObjcInterfaceDecl>(D))
-      return Ctx.getObjcInterfaceType(cast<ObjcInterfaceDecl>(D));
+    if (ObjcInterfaceDecl *ObjcIntDecl = dyn_cast<ObjcInterfaceDecl>(D)) {
+      if (DS.getProtocolQualifiers() == 0)
+        return Ctx.getObjcInterfaceType(ObjcIntDecl);
+      
+      Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
+      return Ctx.getObjcQualifiedInterfaceType(ObjcIntDecl,
+               reinterpret_cast<ObjcProtocolDecl**>(PPDecl),
+              DS.NumProtocolQualifiers());
+    }
     // TypeQuals handled by caller.
     return Ctx.getTypedefType(cast<TypedefDecl>(D));
   }

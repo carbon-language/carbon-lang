@@ -38,6 +38,7 @@ class ASTContext {
   llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
+  llvm::FoldingSet<ObjcQualifiedInterfaceType> ObjcQualifiedInterfaceTypes;
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
   RecordDecl *CFConstantStringTypeDecl;
 public:
@@ -118,6 +119,12 @@ public:
   /// specified typename decl.
   QualType getTypedefType(TypedefDecl *Decl);
   QualType getObjcInterfaceType(ObjcInterfaceDecl *Decl);
+  
+  /// getObjcQualifiedInterfaceType - Return a 
+  /// ObjcQualifiedInterfaceType type for the given interface decl and
+  /// the conforming protocol list.
+  QualType getObjcQualifiedInterfaceType(ObjcInterfaceDecl *Decl,
+             ObjcProtocolDecl **ProtocolList, unsigned NumProtocols);
 
   /// getTypeOfType - GCC extension.
   QualType getTypeOfExpr(Expr *e);

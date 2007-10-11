@@ -610,6 +610,31 @@ QualType ASTContext::getObjcInterfaceType(ObjcInterfaceDecl *Decl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
+/// getObjcQualifiedInterfaceType - Return a 
+/// ObjcQualifiedInterfaceType type for the given interface decl and
+/// the conforming protocol list.
+QualType ASTContext::getObjcQualifiedInterfaceType(ObjcInterfaceDecl *Decl,
+                       ObjcProtocolDecl **Protocols, unsigned NumProtocols) {
+  ObjcInterfaceType *IType = 
+    cast<ObjcInterfaceType>(getObjcInterfaceType(Decl));
+  
+  llvm::FoldingSetNodeID ID;
+  ObjcQualifiedInterfaceType::Profile(ID, IType, Protocols, NumProtocols);
+  
+  void *InsertPos = 0;
+  if (ObjcQualifiedInterfaceType *QT =
+      ObjcQualifiedInterfaceTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(QT, 0);
+  
+  // No Match;
+  ObjcQualifiedInterfaceType *QType = new ObjcQualifiedInterfaceType(IType);
+  for (unsigned i = 0; i != NumProtocols; i++)
+    QType->setProtocols(Protocols[i]);
+  Types.push_back(QType);
+  ObjcQualifiedInterfaceTypes.InsertNode(QType, InsertPos);
+  return QualType(QType, 0);
+}
+
 /// getTypeOfExpr - Unlike many "get<Type>" functions, we can't unique
 /// TypeOfExpr AST's (since expression's are never shared). For example,
 /// multiple declarations that refer to "typeof(x)" all contain different

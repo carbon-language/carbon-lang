@@ -618,6 +618,19 @@ void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getResultType(), arg_type_begin(), NumArgs, isVariadic());
 }
 
+void ObjcQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
+                                         ObjcInterfaceType *interfaceType, 
+                                         ObjcProtocolDecl **protocols, 
+                                         unsigned NumProtocols) {
+  ID.AddPointer(interfaceType);
+  for (unsigned i = 0; i != NumProtocols; i++)
+    ID.AddPointer(protocols[i]);
+}
+
+void ObjcQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID) {
+  Profile(ID, getInterfaceType(), &Protocols[0], getNumProtocols());
+}
+
 /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
 /// potentially looking through *all* consequtive typedefs.  This returns the
 /// sum of the type qualifiers, so if you have:
@@ -841,6 +854,18 @@ void ObjcInterfaceType::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   InnerString = getDecl()->getIdentifier()->getName() + InnerString;
+}
+
+void ObjcQualifiedInterfaceType::getAsStringInternal(
+                                  std::string &InnerString) const {
+  InnerString = getInterfaceType()->getDecl()->getName() + '<';
+  int num = getNumProtocols();
+  for (int i = 0; i < num; i++) {
+    InnerString += getProtocols(i)->getName();
+    if (i < num-1)
+      InnerString += ',';
+  }
+  InnerString += '>';
 }
 
 void TagType::getAsStringInternal(std::string &InnerString) const {

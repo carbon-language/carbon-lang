@@ -403,18 +403,20 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
                                          TypeRep);
           if (isInvalid)
             break;
-          else { // FIXME: restrict this to "id" and ObjC classnames.
-            DS.Range.setEnd(Tok.getLocation());
-            ConsumeToken(); // The identifier
-            if (Tok.is(tok::less)) {
-              llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
-              ParseObjCProtocolReferences(ProtocolRefs);
-              Actions.ActOnFindProtocolDeclaration(Loc,
-                                                   &ProtocolRefs[0],
-                                                   ProtocolRefs.size());
-            }
-            continue;
+          // FIXME: restrict this to "id" and ObjC classnames.
+          DS.Range.setEnd(Tok.getLocation());
+          ConsumeToken(); // The identifier
+          if (Tok.is(tok::less)) {
+            llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
+            ParseObjCProtocolReferences(ProtocolRefs);
+            llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
+                    new llvm::SmallVector<DeclTy *, 8>;
+            DS.setProtocolQualifiers(ProtocolDecl);
+            Actions.FindProtocolDeclaration(Loc, 
+                      &ProtocolRefs[0], ProtocolRefs.size(),
+                      *ProtocolDecl);
           }
+          continue;
         }
       }
       // FALL THROUGH.

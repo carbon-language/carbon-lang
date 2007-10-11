@@ -47,6 +47,7 @@ namespace clang {
   class FunctionType;
   class OCUVectorType;
   class BuiltinType;
+  class ObjcQualifiedInterfaceType;
   
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -817,6 +818,7 @@ public:
 
 class ObjcInterfaceType : public Type {
   ObjcInterfaceDecl *Decl;
+  
   ObjcInterfaceType(ObjcInterfaceDecl *D) : 
     Type(ObjcInterface, QualType()), Decl(D) { }
   friend class ASTContext;  // ASTContext creates these.
@@ -825,7 +827,7 @@ public:
   ObjcInterfaceDecl *getDecl() const { return Decl; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
-
+  
   static bool classof(const Type *T) { 
     return T->getTypeClass() == ObjcInterface; 
   }
@@ -836,7 +838,7 @@ public:
 /// conforming to a list of protocols; such as, INTF<Proto1, Proto2, Proto1>.
 /// Duplicate protocols are removed and protocol list is canonicalized to be in
 /// alphabetical order.
-class ObjcQualifiedInterfaceType : public Type {
+class ObjcQualifiedInterfaceType : public Type, public llvm::FoldingSetNode {
   // Interface type for this protocol conforming object type
   ObjcInterfaceType *InterfaceType;
 
@@ -846,10 +848,29 @@ class ObjcQualifiedInterfaceType : public Type {
 
   ObjcQualifiedInterfaceType(ObjcInterfaceType *T) : 
     Type(ObjcQualifiedInterface, QualType()), InterfaceType(T) { }
+  
+  void setProtocols(ObjcProtocolDecl *pType) {
+    Protocols.push_back(pType);
+  }
+  friend class ASTContext;  // ASTContext creates these.
 public:
   
   ObjcInterfaceType *getInterfaceType() const { return InterfaceType; }
-
+  
+  ObjcProtocolDecl *getProtocols(unsigned i) const {
+    return Protocols[i];
+  }
+  unsigned getNumProtocols() const {
+    return Protocols.size();
+  }
+    
+  virtual void getAsStringInternal(std::string &InnerString) const;
+  
+  void Profile(llvm::FoldingSetNodeID &ID);
+  static void Profile(llvm::FoldingSetNodeID &ID, 
+                      ObjcInterfaceType *interfaceType, 
+                      ObjcProtocolDecl **protocols, unsigned NumProtocols);
+ 
   static bool classof(const Type *T) { 
     return T->getTypeClass() == ObjcQualifiedInterface; 
   }

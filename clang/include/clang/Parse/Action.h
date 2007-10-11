@@ -552,13 +552,14 @@ public:
     return 0;
   }
   
-  /// ActOnFindProtocolDeclaration - This routine looks for a previously
-  /// declared protocol and returns it. If not found, issues diagnostic.
-  /// Will build a list of previously protocol declarations found in the list.
-  virtual DeclTy **ActOnFindProtocolDeclaration(SourceLocation TypeLoc,
-                                                IdentifierInfo **ProtocolId,
-                                                unsigned NumProtocols) {
-    return 0;
+  /// FindProtocolDeclaration - This routine looks up protocols and
+  /// issues error if they are not declared. It returns list of valid
+  /// protocols found.
+  virtual void FindProtocolDeclaration(SourceLocation TypeLoc,
+                                       IdentifierInfo **ProtocolId,
+                                       unsigned NumProtocols,
+                                       llvm::SmallVector<DeclTy *, 8> &
+                                       Protocols) {
   }
                                                
                                                

@@ -449,9 +449,11 @@ public:
                                                   IdentifierInfo **IdentList,
                                                   unsigned NumElts);
   
-  virtual DeclTy **ActOnFindProtocolDeclaration(SourceLocation TypeLoc,
-                                                IdentifierInfo **ProtocolId,
-                                                unsigned NumProtocols);
+  virtual void FindProtocolDeclaration(SourceLocation TypeLoc,
+                                       IdentifierInfo **ProtocolId,
+                                       unsigned NumProtocols,
+                                       llvm::SmallVector<DeclTy *, 8> & 
+                                       Protocols);
 
   virtual void ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl, 
 				         DeclTy **allMethods, unsigned allNum);
