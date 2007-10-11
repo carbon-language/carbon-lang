@@ -5196,6 +5196,14 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
   case ISD::ConstantFP: {
     ConstantFPSDNode *CFP = cast<ConstantFPSDNode>(Node);
+    if (CFP->getValueType(0) == MVT::ppcf128) {
+      APInt api = CFP->getValueAPF().convertToAPInt();
+      Lo = DAG.getConstantFP(APFloat(APInt(64, 1, &api.getRawData()[1])),
+                             MVT::f64);
+      Hi = DAG.getConstantFP(APFloat(APInt(64, 1, &api.getRawData()[0])), 
+                             MVT::f64);
+      break;
+    }
     Lo = ExpandConstantFP(CFP, false, DAG, TLI);
     if (getTypeAction(Lo.getValueType()) == Expand)
       ExpandOp(Lo, Lo, Hi);

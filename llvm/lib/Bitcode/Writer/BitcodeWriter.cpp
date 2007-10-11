@@ -534,13 +534,11 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         const uint64_t *p = api.getRawData();
         Record.push_back(p[0]);
         Record.push_back((uint16_t)p[1]);
-      } else if (Ty == Type::FP128Ty) {
+      } else if (Ty == Type::FP128Ty || Ty == Type::PPC_FP128Ty) {
         APInt api = CFP->getValueAPF().convertToAPInt();
         const uint64_t *p = api.getRawData();
         Record.push_back(p[0]);
         Record.push_back(p[1]);
-      } else if (Ty == Type::PPC_FP128Ty) {
-        assert(0 && "PowerPC long double constants not handled yet.");
       } else {
         assert (0 && "Unknown FP type!");
       }

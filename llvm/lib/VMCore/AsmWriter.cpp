@@ -519,6 +519,8 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
         Out << 'K';
       else if (&CFP->getValueAPF().getSemantics() == &APFloat::IEEEquad)
         Out << 'L';
+      else if (&CFP->getValueAPF().getSemantics() == &APFloat::PPCDoubleDouble)
+        Out << 'M';
       else
         assert(0 && "Unsupported floating point type");
       // api needed to prevent premature destruction
@@ -526,7 +528,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
       const uint64_t* p = api.getRawData();
       uint64_t word = *p;
       int shiftcount=60;
-      int width = CFP->getValueAPF().convertToAPInt().getBitWidth();
+      int width = api.getBitWidth();
       for (int j=0; j<width; j+=4, shiftcount-=4) {
         unsigned int nibble = (word>>shiftcount) & 15;
         if (nibble < 10)
@@ -535,7 +537,7 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
           Out << (unsigned char)(nibble - 10 + 'A');
         if (shiftcount == 0) {
           word = *(++p);
-          shiftcount = 60;
+          shiftcount = 64;
           if (width-j-4 < 64)
             shiftcount = width-j-4;
         }

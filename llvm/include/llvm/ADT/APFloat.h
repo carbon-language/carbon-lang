@@ -126,6 +126,7 @@ namespace llvm {
     static const fltSemantics IEEEsingle;
     static const fltSemantics IEEEdouble;
     static const fltSemantics IEEEquad;
+    static const fltSemantics PPCDoubleDouble;
     static const fltSemantics x87DoubleExtended;
     /* And this psuedo, used to construct APFloats that cannot
        conflict with anything real. */
@@ -175,7 +176,7 @@ namespace llvm {
     APFloat(const fltSemantics &, fltCategory, bool negative);
     explicit APFloat(double d);
     explicit APFloat(float f);
-    explicit APFloat(const APInt &);
+    explicit APFloat(const APInt &, bool isIEEE = false);
     APFloat(const APFloat &);
     ~APFloat();
 
@@ -276,10 +277,12 @@ namespace llvm {
     APInt convertFloatAPFloatToAPInt() const;
     APInt convertDoubleAPFloatToAPInt() const;
     APInt convertF80LongDoubleAPFloatToAPInt() const;
-    void initFromAPInt(const APInt& api);
+    APInt convertPPCDoubleDoubleAPFloatToAPInt() const;
+    void initFromAPInt(const APInt& api, bool isIEEE = false);
     void initFromFloatAPInt(const APInt& api);
     void initFromDoubleAPInt(const APInt& api);
     void initFromF80LongDoubleAPInt(const APInt& api);
+    void initFromPPCDoubleDoubleAPInt(const APInt& api);
 
     void assign(const APFloat &);
     void copySignificand(const APFloat &);
@@ -306,6 +309,13 @@ namespace llvm {
 
     /* The sign bit of this number.  */
     unsigned int sign: 1;
+
+    /* For PPCDoubleDouble, we have a second exponent and sign (the second
+       significand is appended to the first one, although it would be wrong to
+       regard these as a single number for arithmetic purposes).  These fields
+       are not meaningful for any other type. */
+    exponent_t exponent2 : 11;
+    unsigned int sign2: 1;
   };
 } /* namespace llvm */
 

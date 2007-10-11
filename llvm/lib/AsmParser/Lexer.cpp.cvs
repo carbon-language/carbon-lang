@@ -2199,7 +2199,7 @@ YY_RULE_SETUP
 #line 488 "/Volumes/MacOS9/gcc/llvm/lib/AsmParser/Lexer.l"
 { uint64_t Pair[2];
                     HexToIntPair(yytext+3, Pair);
-                    llvmAsmlval.FPVal = new APFloat(APInt(128, 2, Pair));
+                    llvmAsmlval.FPVal = new APFloat(APInt(128, 2, Pair), true);
                     return FPVAL;
                 }
 	YY_BREAK

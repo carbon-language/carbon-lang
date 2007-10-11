@@ -632,9 +632,9 @@ bool BitcodeReader::ParseConstants() {
       else if (CurTy == Type::X86_FP80Ty)
         V = ConstantFP::get(CurTy, APFloat(APInt(80, 2, &Record[0])));
       else if (CurTy == Type::FP128Ty)
-        V = ConstantFP::get(CurTy, APFloat(APInt(128, 2, &Record[0])));
+        V = ConstantFP::get(CurTy, APFloat(APInt(128, 2, &Record[0]), true));
       else if (CurTy == Type::PPC_FP128Ty)
-        assert(0 && "PowerPC long double constants not handled yet.");
+        V = ConstantFP::get(CurTy, APFloat(APInt(128, 2, &Record[0])));
       else
         V = UndefValue::get(CurTy);
       break;

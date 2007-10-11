@@ -487,7 +487,7 @@ shufflevector   { RET_TOK(OtherOpVal, ShuffleVector, SHUFFLEVECTOR); }
                 }
 {HexFP128Constant} { uint64_t Pair[2];
                     HexToIntPair(yytext+3, Pair);
-                    llvmAsmlval.FPVal = new APFloat(APInt(128, 2, Pair));
+                    llvmAsmlval.FPVal = new APFloat(APInt(128, 2, Pair), true);
                     return FPVAL;
                 }
 {HexPPC128Constant} { uint64_t Pair[2];

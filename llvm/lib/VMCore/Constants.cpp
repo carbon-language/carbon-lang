@@ -114,6 +114,7 @@ Constant *Constant::getNullValue(const Type *Ty) {
   case Type::X86_FP80TyID:
     return ConstantFP::get(Ty, APFloat(APInt(80, 2, zero)));
   case Type::FP128TyID:
+    return ConstantFP::get(Ty, APFloat(APInt(128, 2, zero), true));
   case Type::PPC_FP128TyID:
     return ConstantFP::get(Ty, APFloat(APInt(128, 2, zero)));
   case Type::PointerTyID:
@@ -256,6 +257,8 @@ ConstantFP::ConstantFP(const Type *Ty, const APFloat& V)
     assert(&V.getSemantics()==&APFloat::x87DoubleExtended);
   else if (Ty==Type::FP128Ty)
     assert(&V.getSemantics()==&APFloat::IEEEquad);
+  else if (Ty==Type::PPC_FP128Ty)
+    assert(&V.getSemantics()==&APFloat::PPCDoubleDouble);
   else
     assert(0);
 }
@@ -320,6 +323,8 @@ ConstantFP *ConstantFP::get(const Type *Ty, const APFloat& V) {
     assert(&V.getSemantics()==&APFloat::x87DoubleExtended);
   else if (Ty==Type::FP128Ty)
     assert(&V.getSemantics()==&APFloat::IEEEquad);
+  else if (Ty==Type::PPC_FP128Ty)
+    assert(&V.getSemantics()==&APFloat::PPCDoubleDouble);
   else
     assert(0);
   
@@ -747,6 +752,10 @@ bool ConstantFP::isValueValidForType(const Type *Ty, const APFloat& Val) {
     return &Val2.getSemantics() == &APFloat::IEEEsingle || 
            &Val2.getSemantics() == &APFloat::IEEEdouble ||
            &Val2.getSemantics() == &APFloat::IEEEquad;
+  case Type::PPC_FP128TyID:
+    return &Val2.getSemantics() == &APFloat::IEEEsingle || 
+           &Val2.getSemantics() == &APFloat::IEEEdouble ||
+           &Val2.getSemantics() == &APFloat::PPCDoubleDouble;
   }
 }
 
