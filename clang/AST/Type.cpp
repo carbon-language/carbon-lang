@@ -858,14 +858,18 @@ void ObjcInterfaceType::getAsStringInternal(std::string &InnerString) const {
 
 void ObjcQualifiedInterfaceType::getAsStringInternal(
                                   std::string &InnerString) const {
-  InnerString = getInterfaceType()->getDecl()->getName() + '<';
+  if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
+    InnerString = ' ' + InnerString;
+  std::string ObjcQIString = getInterfaceType()->getDecl()->getName();
+  ObjcQIString += '<';
   int num = getNumProtocols();
   for (int i = 0; i < num; i++) {
-    InnerString += getProtocols(i)->getName();
+    ObjcQIString += getProtocols(i)->getName();
     if (i < num-1)
-      InnerString += ',';
+      ObjcQIString += ',';
   }
-  InnerString += '>';
+  ObjcQIString += '>';
+  InnerString = ObjcQIString + InnerString;
 }
 
 void TagType::getAsStringInternal(std::string &InnerString) const {

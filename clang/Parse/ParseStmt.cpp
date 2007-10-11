@@ -235,6 +235,16 @@ Parser::StmtResult Parser::ParseIdentifierStatement(bool OnlyStatement) {
                                        IdentTok.getLocation(), PrevSpec,
                                        TypeRep);
     assert(!isInvalid && "First declspec can't be invalid!");
+    if (Tok.is(tok::less)) {
+      llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
+      ParseObjCProtocolReferences(ProtocolRefs);
+      llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
+              new llvm::SmallVector<DeclTy *, 8>;
+      DS.setProtocolQualifiers(ProtocolDecl);
+      Actions.FindProtocolDeclaration(IdentTok.getLocation(), 
+                                      &ProtocolRefs[0], ProtocolRefs.size(),
+                                      *ProtocolDecl);
+    }    
     
     // ParseDeclarationSpecifiers will continue from there.
     ParseDeclarationSpecifiers(DS);
