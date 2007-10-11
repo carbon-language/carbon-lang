@@ -82,6 +82,7 @@
 		DE928B7F0C0A615600231DA4 /* CodeGenModule.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */; };
 		DE928B810C0A615B00231DA4 /* CodeGenFunction.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DE928B800C0A615B00231DA4 /* CodeGenFunction.h */; };
 		DE928B830C0A616000231DA4 /* CodeGenFunction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */; };
+		DEA9778A0CBE87EB00F872F9 /* RewriteTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DEA977890CBE87EB00F872F9 /* RewriteTest.cpp */; };
 		DEAEE98B0A5A2B970045101B /* MultipleIncludeOpt.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */; };
 		DEAEED4B0A5AF89A0045101B /* NOTES.txt in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEAEED4A0A5AF89A0045101B /* NOTES.txt */; };
 		DEB0AEB90C2087A700718A22 /* TextDiagnostics.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEB0AEB80C2087A700718A22 /* TextDiagnostics.h */; };
@@ -300,6 +301,7 @@
 		DE928B7E0C0A615600231DA4 /* CodeGenModule.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenModule.cpp; path = CodeGen/CodeGenModule.cpp; sourceTree = "<group>"; };
 		DE928B800C0A615B00231DA4 /* CodeGenFunction.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CodeGenFunction.h; path = CodeGen/CodeGenFunction.h; sourceTree = "<group>"; };
 		DE928B820C0A616000231DA4 /* CodeGenFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = CodeGenFunction.cpp; path = CodeGen/CodeGenFunction.cpp; sourceTree = "<group>"; };
+		DEA977890CBE87EB00F872F9 /* RewriteTest.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = RewriteTest.cpp; path = Driver/RewriteTest.cpp; sourceTree = "<group>"; };
 		DEAEE98A0A5A2B970045101B /* MultipleIncludeOpt.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = MultipleIncludeOpt.h; sourceTree = "<group>"; };
 		DEAEED4A0A5AF89A0045101B /* NOTES.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = NOTES.txt; sourceTree = "<group>"; };
 		DEB0AEB80C2087A700718A22 /* TextDiagnostics.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = TextDiagnostics.h; path = Driver/TextDiagnostics.h; sourceTree = "<group>"; };
@@ -561,6 +563,7 @@
 				DEC82DC30C32D50A00BAC245 /* DiagChecker.cpp */,
 				DE5932CF0AD60FF400BC794C /* PrintParserCallbacks.cpp */,
 				DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */,
+				DEA977890CBE87EB00F872F9 /* RewriteTest.cpp */,
 				DED627020AE0C51D001E80A4 /* Targets.cpp */,
 				DEB0AEBA0C2087AB00718A22 /* TextDiagnostics.cpp */,
 				DEB0AEB80C2087A700718A22 /* TextDiagnostics.h */,
@@ -739,7 +742,6 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
-			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
 			projectDirPath = "";
@@ -825,6 +827,7 @@
 				35CFFE000CA1CBCB00E6F2BE /* StmtViz.cpp in Sources */,
 				DE39857B0CB8ADCB00223765 /* ASTConsumers.cpp in Sources */,
 				DE3986F40CB8D50C00223765 /* IdentifierTable.cpp in Sources */,
+				DEA9778A0CBE87EB00F872F9 /* RewriteTest.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
