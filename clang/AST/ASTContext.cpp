@@ -830,3 +830,11 @@ QualType ASTContext::getCFConstantStringType() {
   
   return getTagDeclType(CFConstantStringTypeDecl);
 }
+
+void ASTContext::setBuiltinVaListType(QualType T)
+{
+  assert(BuiltinVaListType.isNull() && "__builtin_va_list type already set!");
+    
+  BuiltinVaListType = T;
+}
+

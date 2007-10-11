@@ -137,7 +137,16 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
                                       Scope *S) {
   Builtin::ID BID = (Builtin::ID)bid;
 
-  QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);
+  if (BID == Builtin::BI__builtin_va_start &&
+      Context.getBuiltinVaListType().isNull()) {
+    IdentifierInfo *VaIdent = &Context.Idents.get("__builtin_va_list");
+    ScopedDecl *VaDecl = LookupScopedDecl(VaIdent, Decl::IDNS_Ordinary, 
+                                          SourceLocation(), TUScope);
+    TypedefDecl *VaTypedef = cast<TypedefDecl>(VaDecl);
+    Context.setBuiltinVaListType(Context.getTypedefType(VaTypedef));
+  }
+  
+  QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);  
   FunctionDecl *New = new FunctionDecl(SourceLocation(), II, R,
                                        FunctionDecl::Extern, false, 0);
   

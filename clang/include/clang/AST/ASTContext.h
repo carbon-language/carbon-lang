@@ -41,6 +41,11 @@ class ASTContext {
   llvm::FoldingSet<ObjcQualifiedInterfaceType> ObjcQualifiedInterfaceTypes;
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
   RecordDecl *CFConstantStringTypeDecl;
+    
+  /// BuiltinVaListType - built-in va list type.
+  /// This is initially null and set by Sema::LazilyCreateBuiltin when
+  /// a builtin that takes a valist is encountered.
+  QualType BuiltinVaListType;
 public:
   
   SourceManager &SourceMgr;
@@ -145,6 +150,9 @@ public:
   // getCFConstantStringType - Return the type used for constant CFStrings. 
   QualType getCFConstantStringType(); 
   
+  void setBuiltinVaListType(QualType T);
+  QualType getBuiltinVaListType() const { return BuiltinVaListType; }
+    
   //===--------------------------------------------------------------------===//
   //                         Type Sizing and Analysis
   //===--------------------------------------------------------------------===//

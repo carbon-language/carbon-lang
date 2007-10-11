@@ -133,6 +133,9 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
   case 'F':
     Type = Context.getCFConstantStringType();
     break;
+  case 'V':
+    Type = Context.getBuiltinVaListType();
+    break;
   }
   
   Done = false;

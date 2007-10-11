@@ -30,6 +30,7 @@
 //  f -> float
 //  d -> double
 //  F -> constant CFString
+//  V -> __builtin_va_list
 //  . -> "...".  This may only occur at the end of the function list.
 //
 // Types maybe prefixed with the following modifiers:
@@ -58,5 +59,6 @@ BUILTIN(__builtin_fabsl, "LdLd", "ncF")
 BUILTIN(__builtin_constant_p, "UsUs", "nc")
 BUILTIN(__builtin_classify_type, "i.", "nc")
 BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
+BUILTIN(__builtin_va_start, "vV.", "nc")
 
 #undef BUILTIN
