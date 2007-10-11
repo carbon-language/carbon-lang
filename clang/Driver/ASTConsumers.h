@@ -27,6 +27,7 @@ ASTConsumer *CreateLiveVarAnalyzer();
 ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
 ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
 ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags);
+ASTConsumer *CreateCodeRewriterTest();
 
 } // end clang namespace
 

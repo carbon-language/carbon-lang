@@ -49,6 +49,7 @@ static llvm::cl::opt<bool>
 Stats("stats", llvm::cl::desc("Print performance metrics and statistics"));
 
 enum ProgActions {
+  RewriteTest,                  // Rewriter testing stuff.
   EmitLLVM,                     // Emit a .ll file.
   ASTPrint,                     // Parse ASTs and print them.
   ASTDump,                      // Parse ASTs and dump them.
@@ -101,6 +102,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Flag warnings of uses of unitialized variables."),
              clEnumValN(EmitLLVM, "emit-llvm",
                         "Build ASTs then convert to LLVM, emit .ll file"),
+             clEnumValN(RewriteTest, "rewrite-test",
+                        "Playground for the code rewriter"),
              clEnumValEnd));
 
 static llvm::cl::opt<bool>
@@ -795,6 +798,10 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
 
   case EmitLLVM:
     Consumer = CreateLLVMEmitter(PP.getDiagnostics());
+    break;
+    
+  case RewriteTest:
+    Consumer = CreateCodeRewriterTest();
     break;
   }
   
