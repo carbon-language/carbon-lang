@@ -7669,6 +7669,52 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         MI->setAlignment(ConstantInt::get(Type::Int32Ty, Align));
         Changed = true;
       }
+
+      // If MemCpyInst length is 1/2/4/8 bytes then replace memcpy with load/store
+      ConstantInt *MemOpLength = dyn_cast<ConstantInt>(CI.getOperand(3));
+      if (isa<MemCpyInst>(MI))
+        if (MemOpLength) {
+        unsigned Size = MemOpLength->getZExtValue();
+        unsigned Align = cast<ConstantInt>(CI.getOperand(4))->getZExtValue();
+        const PointerType *PTy = cast<PointerType>(CI.getOperand(1)->getType());
+        const Type *MTy = PTy->getElementType();
+        PointerType *NewPtrTy = NULL;
+        if (MTy == Type::Int8Ty) {
+          if (Size == 8)
+            NewPtrTy = PointerType::get(Type::Int64Ty);
+          else if (Size == 4)
+            NewPtrTy = PointerType::get(Type::Int32Ty);
+          else if (Size == 2)
+            NewPtrTy = PointerType::get(Type::Int16Ty);
+          else if (Size == 1)
+            NewPtrTy = PointerType::get(Type::Int8Ty);
+        } else if (MTy == Type::Int16Ty) {
+          if (Size == 4)
+            NewPtrTy = PointerType::get(Type::Int64Ty);
+          else if (Size == 2)
+            NewPtrTy = PointerType::get(Type::Int32Ty);
+          else if (Size == 1)
+            NewPtrTy = PointerType::get(Type::Int16Ty);
+        } else if (MTy == Type::Int32Ty) {
+          if (Size == 2)
+            NewPtrTy = PointerType::get(Type::Int64Ty);
+          else if (Size == 1)
+            NewPtrTy = PointerType::get(Type::Int32Ty);
+        } else if (MTy == Type::Int64Ty) {
+          if (Size == 1)
+            NewPtrTy = PointerType::get(Type::Int64Ty);
+        }
+        if (NewPtrTy)
+        {
+          Value *Src = InsertCastBefore(Instruction::BitCast, CI.getOperand(2), NewPtrTy, CI);
+          Value *Dest = InsertCastBefore(Instruction::BitCast, CI.getOperand(1), NewPtrTy, CI);
+          Value *L = new LoadInst(Src, "tmp", false, Align, &CI);
+          Value *NS = new StoreInst(L, Dest, false, Align, &CI);
+          CI.replaceAllUsesWith(NS);
+          Changed = true;
+          return EraseInstFromFunction(CI);
+        }
+      }
     } else if (isa<MemSetInst>(MI)) {
       unsigned Alignment = GetOrEnforceKnownAlignment(MI->getDest(), TD);
       if (MI->getAlignment()->getZExtValue() < Alignment) {
