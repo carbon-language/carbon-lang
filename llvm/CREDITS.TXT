@@ -229,6 +229,10 @@ N: Ruchira Sasanka
 E: sasanka@uiuc.edu
 D: Graph coloring register allocator for the Sparc64 backend
 
+N: Arnold Schwaighofer
+E: arnold.schwaighofer@gmail.com
+D: Tail call optimization for the x86 backend
+
 N: Anand Shukla
 E: ashukla@cs.uiuc.edu
 D: The `paths' pass
