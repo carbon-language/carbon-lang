@@ -120,6 +120,9 @@ public:
   bool operator!=(const _Self &x) const {
     return !operator==(x);
   }
+  
+  /// atEnd - return true if this iterator is equal to use_end() on the value.
+  bool atEnd() const { return U == 0; }
 
   // Iterator traversal: forward iteration only
   _Self &operator++() {          // Preincrement

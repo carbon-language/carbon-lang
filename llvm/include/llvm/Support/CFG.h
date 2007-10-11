@@ -29,7 +29,6 @@ namespace llvm {
 template <class _Ptr,  class _USE_iterator> // Predecessor Iterator
 class PredIterator : public forward_iterator<_Ptr, ptrdiff_t> {
   typedef forward_iterator<_Ptr, ptrdiff_t> super;
-  _Ptr *BB;
   _USE_iterator It;
 public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
@@ -37,26 +36,26 @@ public:
 
   inline void advancePastNonTerminators() {
     // Loop to ignore non terminator uses (for example PHI nodes)...
-    while (It != BB->use_end() && !isa<TerminatorInst>(*It))
+    while (!It.atEnd() && !isa<TerminatorInst>(*It))
       ++It;
   }
 
-  inline PredIterator(_Ptr *bb) : BB(bb), It(bb->use_begin()) {
+  inline PredIterator(_Ptr *bb) : It(bb->use_begin()) {
     advancePastNonTerminators();
   }
-  inline PredIterator(_Ptr *bb, bool) : BB(bb), It(bb->use_end()) {}
+  inline PredIterator(_Ptr *bb, bool) : It(bb->use_end()) {}
 
   inline bool operator==(const _Self& x) const { return It == x.It; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
   inline pointer operator*() const {
-    assert(It != BB->use_end() && "pred_iterator out of range!");
+    assert(!It.atEnd() && "pred_iterator out of range!");
     return cast<TerminatorInst>(*It)->getParent();
   }
   inline pointer *operator->() const { return &(operator*()); }
 
   inline _Self& operator++() {   // Preincrement
-    assert(It != BB->use_end() && "pred_iterator out of range!");
+    assert(!It.atEnd() && "pred_iterator out of range!");
     ++It; advancePastNonTerminators();
     return *this;
   }
