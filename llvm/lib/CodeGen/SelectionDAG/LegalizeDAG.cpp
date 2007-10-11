@@ -147,6 +147,12 @@ private:
   /// result.
   SDOperand LegalizeOp(SDOperand O);
   
+  /// UnrollVectorOp - We know that the given vector has a legal type, however
+  /// the operation it performs is not legal and is an operation that we have
+  /// no way of lowering.  "Unroll" the vector, splitting out the scalars and
+  /// operating on each element individually.
+  SDOperand UnrollVectorOp(SDOperand O);
+
   /// PromoteOp - Given an operation that produces a value in an invalid type,
   /// promote it to compute the value into a larger type.  The produced value
   /// will have the correct bits for the low portion of the register, but no
@@ -677,6 +683,44 @@ SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
 
   SDOperand Ops[] = { Result, TF };
   return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other), Ops, 2);
+}
+
+/// UnrollVectorOp - We know that the given vector has a legal type, however
+/// the operation it performs is not legal and is an operation that we have
+/// no way of lowering.  "Unroll" the vector, splitting out the scalars and
+/// operating on each element individually.
+SDOperand SelectionDAGLegalize::UnrollVectorOp(SDOperand Op) {
+  MVT::ValueType VT = Op.getValueType();
+  assert(isTypeLegal(VT) &&
+         "Caller should expand or promote operands that are not legal!");
+  assert(Op.Val->getNumValues() == 1 &&
+         "Can't unroll a vector with multiple results!");
+  unsigned NE = MVT::getVectorNumElements(VT);
+  MVT::ValueType EltVT = MVT::getVectorElementType(VT);
+
+  SmallVector<SDOperand, 8> Scalars;
+  SmallVector<SDOperand, 4> Operands(Op.getNumOperands());
+  for (unsigned i = 0; i != NE; ++i) {
+    for (unsigned j = 0; j != Op.getNumOperands(); ++j) {
+      SDOperand Operand = Op.getOperand(j);
+      MVT::ValueType OperandVT = Operand.getValueType();
+      if (MVT::isVector(OperandVT)) {
+        // A vector operand; extract a single element.
+        MVT::ValueType OperandEltVT = MVT::getVectorElementType(OperandVT);
+        Operands[j] = DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
+                                  OperandEltVT,
+                                  Operand,
+                                  DAG.getConstant(i, MVT::i32));
+      } else {
+        // A scalar operand; just use it as is.
+        Operands[j] = Operand;
+      }
+    }
+    Scalars.push_back(DAG.getNode(Op.getOpcode(), EltVT,
+                                  &Operands[0], Operands.size()));
+  }
+
+  return DAG.getNode(ISD::BUILD_VECTOR, VT, &Scalars[0], Scalars.size());
 }
 
 /// LegalizeOp - We know that the specified value has a legal type, and
@@ -2556,6 +2600,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::FSUB:
   case ISD::FMUL:
   case ISD::FDIV:
+  case ISD::FPOW:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
     case Expand: assert(0 && "Not possible");
@@ -2626,35 +2671,37 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
 
-      if (Node->getValueType(0) == MVT::i32) {
-        switch (Node->getOpcode()) {
-        default:  assert(0 && "Do not know how to expand this integer BinOp!");
-        case ISD::UDIV:
-        case ISD::SDIV:
-          RTLIB::Libcall LC = Node->getOpcode() == ISD::UDIV
+      // Check to see if we have a libcall for this operator.
+      RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
+      bool isSigned = false;
+      switch (Node->getOpcode()) {
+      case ISD::UDIV:
+      case ISD::SDIV:
+        if (VT == MVT::i32) {
+          LC = Node->getOpcode() == ISD::UDIV
             ? RTLIB::UDIV_I32 : RTLIB::SDIV_I32;
-          SDOperand Dummy;
-          bool isSigned = Node->getOpcode() == ISD::SDIV;
-          Result = ExpandLibCall(TLI.getLibcallName(LC), Node, isSigned, Dummy);
-        };
+          isSigned = Node->getOpcode() == ISD::SDIV;
+        }
+        break;
+      case ISD::FPOW:
+        LC = VT == MVT::f32 ? RTLIB::POW_F32 :
+             VT == MVT::f64 ? RTLIB::POW_F64 :
+             VT == MVT::f80 ? RTLIB::POW_F80 :
+             VT == MVT::ppcf128 ? RTLIB::POW_PPCF128 :
+             RTLIB::UNKNOWN_LIBCALL;
+        break;
+      default: break;
+      }
+      if (LC != RTLIB::UNKNOWN_LIBCALL) {
+        SDOperand Dummy;
+        Result = ExpandLibCall(TLI.getLibcallName(LC), Node, isSigned, Dummy);
         break;
       }
 
       assert(MVT::isVector(Node->getValueType(0)) &&
              "Cannot expand this binary operator!");
       // Expand the operation into a bunch of nasty scalar code.
-      SmallVector<SDOperand, 8> Ops;
-      MVT::ValueType EltVT = MVT::getVectorElementType(Node->getValueType(0));
-      MVT::ValueType PtrVT = TLI.getPointerTy();
-      for (unsigned i = 0, e = MVT::getVectorNumElements(Node->getValueType(0));
-           i != e; ++i) {
-        SDOperand Idx = DAG.getConstant(i, PtrVT);
-        SDOperand LHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, Tmp1, Idx);
-        SDOperand RHS = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, EltVT, Tmp2, Idx);
-        Ops.push_back(DAG.getNode(Node->getOpcode(), EltVT, LHS, RHS));
-      }
-      Result = DAG.getNode(ISD::BUILD_VECTOR, Node->getValueType(0), 
-                           &Ops[0], Ops.size());
+      Result = LegalizeOp(UnrollVectorOp(Op));
       break;
     }
     case TargetLowering::Promote: {
@@ -3119,6 +3166,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       case ISD::FSIN:
       case ISD::FCOS: {
         MVT::ValueType VT = Node->getValueType(0);
+
+        // Expand unsupported unary vector operators by unrolling them.
+        if (MVT::isVector(VT)) {
+          Result = LegalizeOp(UnrollVectorOp(Op));
+          break;
+        }
+
         RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
         switch(Node->getOpcode()) {
         case ISD::FSQRT:
@@ -3146,12 +3200,20 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   case ISD::FPOWI: {
-    // We always lower FPOWI into a libcall.  No target support it yet.
+    MVT::ValueType VT = Node->getValueType(0);
+
+    // Expand unsupported unary vector operators by unrolling them.
+    if (MVT::isVector(VT)) {
+      Result = LegalizeOp(UnrollVectorOp(Op));
+      break;
+    }
+
+    // We always lower FPOWI into a libcall.  No target support for it yet.
     RTLIB::Libcall LC = 
-      Node->getValueType(0) == MVT::f32 ? RTLIB::POWI_F32 : 
-      Node->getValueType(0) == MVT::f64 ? RTLIB::POWI_F64 : 
-      Node->getValueType(0) == MVT::f80 ? RTLIB::POWI_F80 : 
-      Node->getValueType(0) == MVT::ppcf128 ? RTLIB::POWI_PPCF128 : 
+      VT == MVT::f32 ? RTLIB::POWI_F32 : 
+      VT == MVT::f64 ? RTLIB::POWI_F64 : 
+      VT == MVT::f80 ? RTLIB::POWI_F80 : 
+      VT == MVT::ppcf128 ? RTLIB::POWI_PPCF128 : 
       RTLIB::UNKNOWN_LIBCALL;
     SDOperand Dummy;
     Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
@@ -6095,6 +6157,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
   case ISD::SDIV:
   case ISD::UDIV:
   case ISD::FDIV:
+  case ISD::FPOW:
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR: {
@@ -6104,6 +6167,29 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     
     Lo = DAG.getNode(Node->getOpcode(), NewVT, LL, RL);
     Hi = DAG.getNode(Node->getOpcode(), NewVT, LH, RH);
+    break;
+  }
+  case ISD::FPOWI: {
+    SDOperand L, H;
+    SplitVectorOp(Node->getOperand(0), L, H);
+
+    Lo = DAG.getNode(Node->getOpcode(), NewVT, L, Node->getOperand(1));
+    Hi = DAG.getNode(Node->getOpcode(), NewVT, H, Node->getOperand(1));
+    break;
+  }
+  case ISD::CTTZ:
+  case ISD::CTLZ:
+  case ISD::CTPOP:
+  case ISD::FNEG:
+  case ISD::FABS:
+  case ISD::FSQRT:
+  case ISD::FSIN:
+  case ISD::FCOS: {
+    SDOperand L, H;
+    SplitVectorOp(Node->getOperand(0), L, H);
+
+    Lo = DAG.getNode(Node->getOpcode(), NewVT, L);
+    Hi = DAG.getNode(Node->getOpcode(), NewVT, H);
     break;
   }
   case ISD::LOAD: {
@@ -6196,6 +6282,7 @@ SDOperand SelectionDAGLegalize::ScalarizeVectorOp(SDOperand Op) {
   case ISD::SREM:
   case ISD::UREM:
   case ISD::FREM:
+  case ISD::FPOW:
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
