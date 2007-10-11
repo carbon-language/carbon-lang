@@ -1,4 +1,4 @@
-/* RUN: clang -parse-ast -verify %s
+/* RUN: clang -fsyntax-only -verify %s
 */
 int foo() { 
   break; /* expected-error {{'break' statement not in loop or switch statement}} */

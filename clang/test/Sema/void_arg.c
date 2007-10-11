@@ -1,4 +1,4 @@
-/* RUN: clang -parse-ast %s 2>&1 | grep '6 diagnostics'
+/* RUN: clang -fsyntax-only %s 2>&1 | grep '6 diagnostics'
  */
 
 typedef void Void;

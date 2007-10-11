@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast -verify %s
+// RUN: clang -fsyntax-only -verify %s
 
 typedef __attribute__(( ocu_vector_type(2) )) float float2;
 typedef __attribute__(( ocu_vector_type(3) )) float float3;

@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast -verify %s
+// RUN: clang -fsyntax-only -verify %s
 _Complex double X;
 void test1(int c) {
   X = 5;

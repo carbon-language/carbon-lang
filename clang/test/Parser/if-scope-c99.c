@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast -verify --std=c99 %s
+// RUN: clang -fsyntax-only -verify --std=c99 %s
 
 int f (int z)
 { 

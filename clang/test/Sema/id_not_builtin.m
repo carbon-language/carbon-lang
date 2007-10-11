@@ -1,4 +1,4 @@
-// RUN: clang %s -parse-ast -verify
+// RUN: clang %s -fsyntax-only -verify
 
 id obj; // expected-error{{expected '=', ',', ';', 'asm', or '__attribute__' after declarator}}
 

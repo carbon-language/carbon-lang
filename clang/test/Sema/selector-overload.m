@@ -1,4 +1,4 @@
-// RUN: clang %s -parse-ast
+// RUN: clang %s -fsyntax-only
 #import <Foundation/NSObject.h>
 
 struct D {

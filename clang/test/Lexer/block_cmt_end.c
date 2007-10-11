@@ -3,7 +3,7 @@
   RUN: clang -E %s | grep foo &&
   RUN: clang -E %s | not grep abc &&
   RUN: clang -E %s | not grep xyz &&
-  RUN: clang -parse-ast -verify %s
+  RUN: clang -fsyntax-only -verify %s
  */
 
 // This is a simple comment, /*/ does not end a comment, the trailing */ does.

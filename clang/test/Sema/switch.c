@@ -1,4 +1,4 @@
-// RUN: clang -parse-ast -verify %s
+// RUN: clang -fsyntax-only -verify %s
 
 void f (int z) { 
   while (z) { 

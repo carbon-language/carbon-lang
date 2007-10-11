@@ -1,4 +1,4 @@
-// RUN: clang %s -parse-ast -verify -pedantic
+// RUN: clang %s -fsyntax-only -verify -pedantic
 
 enum e {A, 
         B = 42LL << 32,        // expected-warning {{ISO C restricts enumerator values to range of 'int'}}

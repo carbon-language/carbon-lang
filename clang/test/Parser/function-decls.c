@@ -1,4 +1,4 @@
-/* RUN: clang %s -parse-ast-print
+/* RUN: clang %s -ast-print
  */
 
 void foo() {
