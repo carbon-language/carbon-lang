@@ -923,15 +923,22 @@ Parser::DeclTy *Parser::ParseObjCAtAliasDeclaration(SourceLocation atLoc) {
     Diag(Tok, diag::err_expected_ident);
     return 0;
   }
-  ConsumeToken(); // consume alias-name
+  IdentifierInfo *aliasId = Tok.getIdentifierInfo();
+  SourceLocation aliasLoc = ConsumeToken(); // consume alias-name
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_ident);
     return 0;
   }
-  ConsumeToken(); // consume class-name;
-  if (Tok.isNot(tok::semi))
+  IdentifierInfo *classId = Tok.getIdentifierInfo();
+  SourceLocation classLoc = ConsumeToken(); // consume class-name;
+  if (Tok.isNot(tok::semi)) {
     Diag(Tok, diag::err_expected_semi_after, "@compatibility_alias");
-  return 0;
+    return 0;
+  }
+  DeclTy *ClsType = Actions.ActOnCompatiblityAlias(atLoc, 
+                                                   aliasId, aliasLoc,
+                                                   classId, classLoc);
+  return ClsType;
 }
 
 ///   property-synthesis:

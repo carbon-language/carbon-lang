@@ -416,6 +416,11 @@ public:
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
                     AttributeList *AttrList);
+  
+  virtual DeclTy *ActOnCompatiblityAlias(
+                    SourceLocation AtCompatibilityAliasLoc,
+                    IdentifierInfo *AliasName,  SourceLocation AliasLocation,
+                    IdentifierInfo *ClassName, SourceLocation ClassLocation);
                     
   virtual DeclTy *ActOnStartProtocolInterface(
 		    SourceLocation AtProtoInterfaceLoc,

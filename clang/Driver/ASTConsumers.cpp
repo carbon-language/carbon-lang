@@ -117,6 +117,12 @@ static void PrintObjcCategoryDecl(ObjcCategoryDecl *PID) {
   // FIXME: implement the rest...
 }
 
+static void PrintObjcCompatibleAliasDecl(ObjcCompatibleAliasDecl *AID) {
+  std::string A = AID->getName();
+  std::string I = AID->getClassInterface()->getName();
+  fprintf(stderr, "@compatibility_alias %s %s;\n", A.c_str(), I.c_str());
+}
+
 namespace {
   class ASTPrinter : public ASTConsumer {
     virtual void HandleTopLevelDecl(Decl *D) {
@@ -153,6 +159,9 @@ namespace {
       } else if (ObjcCategoryDecl *OID = 
                  dyn_cast<ObjcCategoryDecl>(D)) {
         PrintObjcCategoryDecl(OID);
+      } else if (ObjcCompatibleAliasDecl *OID = 
+                 dyn_cast<ObjcCompatibleAliasDecl>(D)) {
+        PrintObjcCompatibleAliasDecl(OID);
       } else if (isa<ObjcClassDecl>(D)) {
         fprintf(stderr, "@class [printing todo]\n");
       } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {

@@ -591,7 +591,27 @@ public:
   }
   static bool classof(const ObjcImplementationDecl *D) { return true; }
 };
+
+/// ObjcCompatibleAliasDecl - Represents alias of a class. This alias is 
+/// declared as @compatibility_alias alias class.
+class ObjcCompatibleAliasDecl : public ScopedDecl {
+  /// Class that this is an alias of.
+  ObjcInterfaceDecl *AliasedClass;
   
+public:
+  ObjcCompatibleAliasDecl(SourceLocation L, IdentifierInfo *Id,
+                         ObjcInterfaceDecl* aliasedClass)
+  : ScopedDecl(CompatibleAlias, L, Id, 0),
+  AliasedClass(aliasedClass) {}
+  
+  ObjcInterfaceDecl *getClassInterface() const { return AliasedClass; }
+  
+  static bool classof(const Decl *D) {
+    return D->getKind() == CompatibleAlias;
+  }
+  static bool classof(const ObjcCompatibleAliasDecl *D) { return true; }
+  
+};
 
 }  // end namespace clang
 #endif

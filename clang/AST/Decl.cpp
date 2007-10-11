@@ -35,6 +35,7 @@ static unsigned nCategoryDecls = 0;
 static unsigned nIvarDecls = 0;
 static unsigned nObjcImplementationDecls = 0;
 static unsigned nObjcCategoryImpl = 0;
+static unsigned nObjcCompatibleAlias = 0;
 
 static bool StatSwitch = false;
 
@@ -141,6 +142,10 @@ void Decl::PrintStats() {
 	  nObjcCategoryImpl, (int)sizeof(ObjcCategoryImplDecl),
 	  int(nObjcCategoryImpl*sizeof(ObjcCategoryImplDecl)));
 
+  fprintf(stderr, "    %d compatibility alias decls, %d each (%d bytes)\n", 
+	  nObjcCompatibleAlias, (int)sizeof(ObjcCompatibleAliasDecl),
+	  int(nObjcCompatibleAlias*sizeof(ObjcCompatibleAliasDecl)));
+  
   fprintf(stderr, "Total bytes = %d\n", 
 	  int(nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
 	      nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
@@ -206,6 +211,9 @@ void Decl::addDeclKind(const Kind k) {
       break;
     case ObjcCategoryImpl:
       nObjcCategoryImpl++;
+      break;
+    case CompatibleAlias:
+      nObjcCompatibleAlias++;
       break;
   }
 }

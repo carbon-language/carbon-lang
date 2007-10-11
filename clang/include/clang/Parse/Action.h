@@ -455,6 +455,16 @@ public:
     AttributeList *AttrList) {
     return 0;
   }
+  
+  /// ActOnCompatiblityAlias - this action is called after complete parsing of
+  /// @compaatibility_alias declaration. It sets up the alias relationships.
+  virtual DeclTy *ActOnCompatiblityAlias(
+    SourceLocation AtCompatibilityAliasLoc,
+    IdentifierInfo *AliasName,  SourceLocation AliasLocation,
+    IdentifierInfo *ClassName, SourceLocation ClassLocation) {
+    return 0;
+  }
+  
   // ActOnStartProtocolInterface - this action is called immdiately after
   // parsing the prologue for a protocol interface.
   virtual DeclTy *ActOnStartProtocolInterface(

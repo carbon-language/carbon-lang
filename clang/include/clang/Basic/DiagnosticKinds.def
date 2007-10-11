@@ -446,7 +446,12 @@ DIAG(err_undeclared_protocol, ERROR,
      "cannot find protocol declaration for '%0'")
 DIAG(err_missing_id_definition, ERROR,
      "cannot find definition of 'id'")
-
+DIAG(warn_previous_alias_decl, WARNING,
+     "previously declared alias is ignored")
+DIAG(warn_previous_declaration, WARNING,
+     "previous declaration is here")
+DIAG(err_conflicting_aliasing_type, ERROR,
+     "conflicting types for alias %0'")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis

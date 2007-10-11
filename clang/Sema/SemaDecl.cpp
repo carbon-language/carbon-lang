@@ -31,6 +31,9 @@ Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
   if (Decl *IIDecl = II.getFETokenInfo<Decl>())
     if (isa<TypedefDecl>(IIDecl) || isa<ObjcInterfaceDecl>(IIDecl))
       return IIDecl;
+    else if (ObjcCompatibleAliasDecl *ADecl = 
+               dyn_cast<ObjcCompatibleAliasDecl>(IIDecl))
+      return ADecl->getClassInterface();
   return 0;
 }
 
@@ -959,6 +962,49 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
   }
   
   return IDecl;
+}
+
+/// ActOnCompatiblityAlias - this action is called after complete parsing of
+/// @compaatibility_alias declaration. It sets up the alias relationships.
+Sema::DeclTy *Sema::ActOnCompatiblityAlias(
+                      SourceLocation AtCompatibilityAliasLoc,
+                      IdentifierInfo *AliasName,  SourceLocation AliasLocation,
+                      IdentifierInfo *ClassName, SourceLocation ClassLocation) {
+  // Look for previous declaration of alias name
+  ScopedDecl *ADecl = LookupScopedDecl(AliasName, Decl::IDNS_Ordinary,
+                                       AliasLocation, TUScope);
+  if (ADecl) {
+    if (isa<ObjcCompatibleAliasDecl>(ADecl)) {
+      Diag(AliasLocation, diag::warn_previous_alias_decl);
+      Diag(ADecl->getLocation(), diag::warn_previous_declaration);
+    }
+    else {
+      Diag(AliasLocation, diag::err_conflicting_aliasing_type,
+           AliasName->getName());
+      Diag(ADecl->getLocation(), diag::err_previous_declaration);
+    }
+    return 0;
+  }
+  // Check for class declaration
+  ScopedDecl *CDecl = LookupScopedDecl(ClassName, Decl::IDNS_Ordinary,
+                                       ClassLocation, TUScope);
+  if (!CDecl || !isa<ObjcInterfaceDecl>(CDecl)) {
+    Diag(ClassLocation, diag::warn_undef_interface,
+         ClassName->getName());
+    if (CDecl)
+      Diag(CDecl->getLocation(), diag::warn_previous_declaration);
+    return 0;
+  }
+  // Everything checked out, instantiate a new alias declaration ast
+  ObjcCompatibleAliasDecl *AliasDecl = 
+    new ObjcCompatibleAliasDecl(AtCompatibilityAliasLoc, 
+                                AliasName,
+                                dyn_cast<ObjcInterfaceDecl>(CDecl));
+    
+  // Chain & install the interface decl into the identifier.
+  AliasDecl->setNext(AliasName->getFETokenInfo<ScopedDecl>());
+  AliasName->setFETokenInfo(AliasDecl);
+  return AliasDecl;
 }
 
 Sema::DeclTy *Sema::ActOnStartProtocolInterface(

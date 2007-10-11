@@ -44,6 +44,7 @@ public:
            ObjcImplementation,
            ObjcProtocol,
     //     ScopedDecl
+             CompatibleAlias,
     //       TypeDecl
                ObjcInterface,
                Typedef,
@@ -68,7 +69,7 @@ public:
     // of the class, to allow efficient classof.
     NamedFirst  = Field,         NamedLast  = ParmVar,
     FieldFirst  = Field,         FieldLast  = ObjcIvar,
-    ScopedFirst = ObjcInterface, ScopedLast = ParmVar,
+    ScopedFirst = CompatibleAlias, ScopedLast = ParmVar,
     TypeFirst   = ObjcInterface, TypeLast   = Class,
     TagFirst    = Enum         , TagLast    = Class,
     RecordFirst = Struct       , RecordLast = Class,
@@ -124,6 +125,7 @@ public:
     case ParmVar:
     case EnumConstant:
     case ObjcInterface:
+    case CompatibleAlias:
       return IDNS_Ordinary;
     case Struct:
     case Union:
