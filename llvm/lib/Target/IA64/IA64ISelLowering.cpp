@@ -73,13 +73,15 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
       setOperationAction(ISD::UINT_TO_FP       , MVT::i1   , Promote);
 
-      // We don't support sin/cos/sqrt
+      // We don't support sin/cos/sqrt/pow
       setOperationAction(ISD::FSIN , MVT::f64, Expand);
       setOperationAction(ISD::FCOS , MVT::f64, Expand);
       setOperationAction(ISD::FSQRT, MVT::f64, Expand);
+      setOperationAction(ISD::FPOW , MVT::f64, Expand);
       setOperationAction(ISD::FSIN , MVT::f32, Expand);
       setOperationAction(ISD::FCOS , MVT::f32, Expand);
       setOperationAction(ISD::FSQRT, MVT::f32, Expand);
+      setOperationAction(ISD::FPOW , MVT::f32, Expand);
 
       // FIXME: IA64 supports fcopysign natively!
       setOperationAction(ISD::FCOPYSIGN, MVT::f64, Expand);

@@ -240,7 +240,7 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
 
-  // We don't support sin/cos/fmod/copysign
+  // We don't support sin/cos/fmod/copysign/pow
   setOperationAction(ISD::FSIN     , MVT::f64, Expand);
   setOperationAction(ISD::FSIN     , MVT::f32, Expand);
   setOperationAction(ISD::FCOS     , MVT::f32, Expand);
@@ -249,6 +249,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FREM     , MVT::f32, Expand);
   setOperationAction(ISD::FCOPYSIGN, MVT::f64, Custom);
   setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
+  setOperationAction(ISD::FPOW     , MVT::f64, Expand);
+  setOperationAction(ISD::FPOW     , MVT::f32, Expand);
   
   // int <-> fp are custom expanded into bit_convert + ARMISD ops.
   setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);

@@ -440,6 +440,11 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FCOS           , MVT::f80  , Expand);
   }
 
+  // Always use a library call for pow.
+  setOperationAction(ISD::FPOW             , MVT::f32  , Expand);
+  setOperationAction(ISD::FPOW             , MVT::f64  , Expand);
+  setOperationAction(ISD::FPOW             , MVT::f80  , Expand);
+
   // First set operation action for all vector types to expand. Then we
   // will selectively turn on ones that can be effectively codegen'd.
   for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
@@ -471,6 +476,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::UMUL_LOHI, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::SDIVREM, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::UDIVREM, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::FPOW, (MVT::ValueType)VT, Expand);
   }
 
   if (Subtarget->hasMMX()) {
