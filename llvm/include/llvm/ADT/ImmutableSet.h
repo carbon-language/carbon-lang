@@ -294,6 +294,8 @@ public:
   
   TreeTy* GetEmptyTree() const { return NULL; }
   
+  BumpPtrAllocator& getAllocator() { return Allocator; }
+  
   //===--------------------------------------------------===//    
   // A bunch of quick helper functions used for reasoning
   // about the properties of trees and their children.
@@ -336,6 +338,7 @@ private:
     
     // FIXME: more intelligent calculation of alignment.
     TreeTy* T = (TreeTy*) Allocator.Allocate(sizeof(*T),16);
+    
     new (T) TreeTy(L,R,V,IncrementHeight(L,R));
     
     Cache.InsertNode(T,InsertPos);
@@ -816,6 +819,8 @@ public:
       return ImmutableSet(F.Remove(Old.Root,V));
     }
     
+    BumpPtrAllocator& getAllocator() { return F.getAllocator(); }
+
   private:
     Factory(const Factory& RHS) {};
     void operator=(const Factory& RHS) {};    
@@ -858,7 +863,9 @@ public:
   public:
     inline value_type_ref operator*() const { return itr->getValue(); }
     inline iterator& operator++() { ++itr; return *this; }
+    inline iterator  operator++(int) { iterator tmp(*this); ++itr; return tmp; }
     inline iterator& operator--() { --itr; return *this; }
+    inline iterator  operator--(int) { iterator tmp(*this); --itr; return tmp; }
     inline bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
     inline bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }        
   };
