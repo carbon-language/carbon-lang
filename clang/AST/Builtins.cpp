@@ -135,6 +135,7 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
     break;
   case 'V':
     Type = Context.getBuiltinVaListType();
+    assert(!Type.isNull() && "builtin va list type not initialized!");
     break;
   }
   
@@ -144,6 +145,9 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
       default: Done = true; --Str; break; 
       case '*':
         Type = Context.getPointerType(Type);
+        break;
+      case '&':
+        Type = Context.getReferenceType(Type);
         break;
       case 'C':
         Type = Type.getQualifiedType(QualType::Const);

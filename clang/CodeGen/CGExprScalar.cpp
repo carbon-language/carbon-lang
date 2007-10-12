@@ -418,6 +418,11 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
     
     llvm::Value *Ops[] = {Idx0, Idx0};
     return Builder.CreateGEP(V, Ops, Ops+2, "arraydecay");
+  } else if (E->getType()->isReferenceType()) {
+    assert(cast<ReferenceType>(E->getType())->getReferenceeType() == 
+           Op->getType() && "Incompatible types!");
+    
+    return EmitLValue(Op).getAddress();
   }
   
   return EmitCastExpr(Op, E->getType());

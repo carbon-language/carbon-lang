@@ -18,6 +18,8 @@
 #include "clang/AST/Expr.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/Intrinsics.h"
+
 using namespace clang;
 using namespace CodeGen;
 
@@ -45,7 +47,22 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     std::string S(Literal->getStrData(), Literal->getByteLength());
     
     return RValue::get(CGM.GetAddrOfConstantCFString(S));
-  }      
+  }
+  case Builtin::BI__builtin_va_start:
+  case Builtin::BI__builtin_va_end: {
+    llvm::Value *ArgValue = EmitScalarExpr(E->getArg(0));
+    const llvm::Type *DestType = llvm::PointerType::get(llvm::Type::Int8Ty);
+    if (ArgValue->getType() != DestType)
+      ArgValue = Builder.CreateBitCast(ArgValue, DestType, 
+                                       ArgValue->getNameStart());
+
+    llvm::Intrinsic::ID inst = (BuiltinID == Builtin::BI__builtin_va_start) ? 
+      llvm::Intrinsic::vastart : llvm::Intrinsic::vaend;
+    llvm::Value *F = llvm::Intrinsic::getDeclaration(&CGM.getModule(), inst);
+    llvm::Value *V = Builder.CreateCall(F, ArgValue);
+
+    return RValue::get(V);
+  }
   }
       
   return RValue::get(0);

@@ -152,7 +152,9 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
                                       Scope *S) {
   Builtin::ID BID = (Builtin::ID)bid;
 
-  if (BID == Builtin::BI__builtin_va_start &&
+  if ((BID == Builtin::BI__builtin_va_start ||
+       BID == Builtin::BI__builtin_va_copy ||
+       BID == Builtin::BI__builtin_va_end) &&
       Context.getBuiltinVaListType().isNull()) {
     IdentifierInfo *VaIdent = &Context.Idents.get("__builtin_va_list");
     ScopedDecl *VaDecl = LookupScopedDecl(VaIdent, Decl::IDNS_Ordinary, 

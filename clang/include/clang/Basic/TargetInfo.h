@@ -187,7 +187,7 @@ public:
   /// __builtin_va_list, which is target-specific.
   const char *getVAListDeclaration() const {
     // FIXME: dispatch to target impl.
-    return "typedef int __builtin_va_list;";
+    return "typedef char* __builtin_va_list;";
   }
   ///===---- Some helper methods ------------------------------------------===//
 

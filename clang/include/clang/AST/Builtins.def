@@ -41,6 +41,7 @@
 //
 // Types may be postfixed with the following modifiers:
 // * -> pointer
+// & -> reference
 // C -> const
 
 // The third value provided to the macro specifies information about attributes
@@ -59,6 +60,8 @@ BUILTIN(__builtin_fabsl, "LdLd", "ncF")
 BUILTIN(__builtin_constant_p, "UsUs", "nc")
 BUILTIN(__builtin_classify_type, "i.", "nc")
 BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
-BUILTIN(__builtin_va_start, "vV.", "nc")
+BUILTIN(__builtin_va_start, "vV&.", "nc")
+BUILTIN(__builtin_va_end, "vV&", "nc")
+BUILTIN(__builtin_va_copy, "vV&V", "nc")
 
 #undef BUILTIN
