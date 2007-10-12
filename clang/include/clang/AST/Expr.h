@@ -383,11 +383,6 @@ public:
   bool isSizeOfAlignOfOp() const { return Opc == SizeOf || Opc == AlignOf; }
   static bool isArithmeticOp(Opcode Op) { return Op >= Plus && Op <= LNot; }
   
-  /// getDecl - a recursive routine that derives the base decl for an
-  /// expression. For example, it will return the declaration for "s" from
-  /// the following complex expression "s.zz[2].bb.vv".
-  static bool isAddressable(Expr *e);
-  
   /// getOpcodeStr - Turn an Opcode enum value into the punctuation char it
   /// corresponds to, e.g. "sizeof" or "[pre]++"
   static const char *getOpcodeStr(Opcode Op);
