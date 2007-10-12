@@ -6190,33 +6190,29 @@ static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
   assert(Val->getType() == Type::Int32Ty && "Unexpected allocation size type!");
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Val)) {
     Offset = CI->getZExtValue();
-    Scale  = 1;
+    Scale  = 0;
     return ConstantInt::get(Type::Int32Ty, 0);
-  } else if (Instruction *I = dyn_cast<Instruction>(Val)) {
-    if (I->getNumOperands() == 2) {
-      if (ConstantInt *CUI = dyn_cast<ConstantInt>(I->getOperand(1))) {
-        if (I->getOpcode() == Instruction::Shl) {
-          // This is a value scaled by '1 << the shift amt'.
-          Scale = 1U << CUI->getZExtValue();
-          Offset = 0;
-          return I->getOperand(0);
-        } else if (I->getOpcode() == Instruction::Mul) {
-          // This value is scaled by 'CUI'.
-          Scale = CUI->getZExtValue();
-          Offset = 0;
-          return I->getOperand(0);
-        } else if (I->getOpcode() == Instruction::Add) {
-          // We have X+C.  Check to see if we really have (X*C2)+C1, 
-          // where C1 is divisible by C2.
-          unsigned SubScale;
-          Value *SubVal = 
-            DecomposeSimpleLinearExpr(I->getOperand(0), SubScale, Offset);
-          Offset += CUI->getZExtValue();
-          if (SubScale > 1 && (Offset % SubScale == 0)) {
-            Scale = SubScale;
-            return SubVal;
-          }
-        }
+  } else if (BinaryOperator *I = dyn_cast<BinaryOperator>(Val)) {
+    if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
+      if (I->getOpcode() == Instruction::Shl) {
+        // This is a value scaled by '1 << the shift amt'.
+        Scale = 1U << RHS->getZExtValue();
+        Offset = 0;
+        return I->getOperand(0);
+      } else if (I->getOpcode() == Instruction::Mul) {
+        // This value is scaled by 'RHS'.
+        Scale = RHS->getZExtValue();
+        Offset = 0;
+        return I->getOperand(0);
+      } else if (I->getOpcode() == Instruction::Add) {
+        // We have X+C.  Check to see if we really have (X*C2)+C1, 
+        // where C1 is divisible by C2.
+        unsigned SubScale;
+        Value *SubVal = 
+          DecomposeSimpleLinearExpr(I->getOperand(0), SubScale, Offset);
+        Offset += RHS->getZExtValue();
+        Scale = SubScale;
+        return SubVal;
       }
     }
   }
@@ -7670,7 +7666,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         Changed = true;
       }
 
-      // If MemCpyInst length is 1/2/4/8 bytes then replace memcpy with load/store
+      // If MemCpyInst length is 1/2/4/8 bytes then replace memcpy with
+      // load/store.
       ConstantInt *MemOpLength = dyn_cast<ConstantInt>(CI.getOperand(3));
       if (isa<MemCpyInst>(MI))
         if (MemOpLength) {
@@ -7704,10 +7701,11 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           if (Size == 1)
             NewPtrTy = PointerType::get(Type::Int64Ty);
         }
-        if (NewPtrTy)
-        {
-          Value *Src = InsertCastBefore(Instruction::BitCast, CI.getOperand(2), NewPtrTy, CI);
-          Value *Dest = InsertCastBefore(Instruction::BitCast, CI.getOperand(1), NewPtrTy, CI);
+        if (NewPtrTy) {
+          Value *Src =
+            InsertCastBefore(Instruction::BitCast,CI.getOperand(2),NewPtrTy,CI);
+          Value *Dest = 
+            InsertCastBefore(Instruction::BitCast,CI.getOperand(1),NewPtrTy,CI);
           Value *L = new LoadInst(Src, "tmp", false, Align, &CI);
           Value *NS = new StoreInst(L, Dest, false, Align, &CI);
           CI.replaceAllUsesWith(NS);
@@ -8639,10 +8637,19 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
   // If this GEP instruction doesn't move the pointer, and if the input operand
   // is a bitcast of another pointer, just replace the GEP with a bitcast of the
   // real input to the dest type.
-  if (GEP.hasAllZeroIndices() && isa<BitCastInst>(GEP.getOperand(0)))
-    return new BitCastInst(cast<BitCastInst>(GEP.getOperand(0))->getOperand(0),
-                           GEP.getType());
-    
+  if (GEP.hasAllZeroIndices()) {
+    if (BitCastInst *BCI = dyn_cast<BitCastInst>(GEP.getOperand(0))) {
+      // If the bitcast is of an allocation, and the allocation will be
+      // converted to match the type of the cast, don't touch this.
+      if (isa<AllocationInst>(BCI->getOperand(0))) {
+        // See if the bitcast simplifies, if so, don't nuke this GEP yet.
+        if (Instruction *I = visitBitCast(*BCI))
+          return &GEP;
+      }
+      return new BitCastInst(BCI->getOperand(0), GEP.getType());
+    }
+  }
+  
   // Combine Indices - If the source pointer to this getelementptr instruction
   // is a getelementptr instruction, combine the indices of the two
   // getelementptr instructions into a single instruction.
