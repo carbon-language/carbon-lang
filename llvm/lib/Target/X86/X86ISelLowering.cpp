@@ -1,4 +1,4 @@
-//===-- X86isellowering.cpp - X86 DAG Lowering Implementation -------------===//
+//===-- X86ISelLowering.cpp - X86 DAG Lowering Implementation -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
