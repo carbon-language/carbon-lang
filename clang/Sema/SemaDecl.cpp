@@ -1737,11 +1737,13 @@ bool Sema:: MatchTwoMethodDeclarations(const ObjcMethodDecl *Method,
 void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
                                      DeclTy **allMethods, unsigned allNum) {
   Decl *ClassDecl = static_cast<Decl *>(classDecl);
-  
-  // FIXME: Fix this when we can handle methods declared in protocols.
-  // See Parser::ParseObjCAtProtocolDeclaration
+
+  // FIXME: If we don't have a ClassDecl, we have an error. I (snaroff) would
+  // prefer we always pass in a decl. If the decl has an error, isInvalidDecl()
+  // should be true.
   if (!ClassDecl)
     return;
+  
   llvm::SmallVector<ObjcMethodDecl*, 32> insMethods;
   llvm::SmallVector<ObjcMethodDecl*, 16> clsMethods;
   

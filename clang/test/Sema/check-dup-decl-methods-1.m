@@ -30,3 +30,9 @@
 + (T**) meth1; // expected-error {{duplicate declaration of method 'meth1'}}
 + (int) foobar;
 @end
+
+@protocol P
+- (int) meth;
+- (int*) meth;
+@end
+
