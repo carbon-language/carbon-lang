@@ -61,3 +61,11 @@ void check_wide_string(char* b, ...)
   printf(L"foo %d",2); // expected-warning {{should not be a wide string}}
   vasprintf(&b,L"bar %d",2); // expected-warning {{should not be a wide string}}
 }
+
+void check_asterisk_precision_width(int x) {
+  printf("%*d"); // expected-warning {{'*' specified field width is missing a matching 'int' argument}}
+  printf("%.*d"); // expected-warning {{'.*' specified field precision is missing a matching 'int' argument}}
+  printf("%*d",12,x); // no-warning
+  printf("%*d","foo",x); // expected-warning {{field width should have type 'int', but argument has type 'char *'}}
+  printf("%.*d","foo",x); // expected-warning {{field precision should have type 'int', but argument has type 'char *'}}
+}

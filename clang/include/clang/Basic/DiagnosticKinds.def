@@ -789,6 +789,14 @@ DIAG(warn_printf_format_string_is_wide_literal, WARNING,
   "format string should not be a wide string")
 DIAG(warn_printf_format_string_contains_null_char, WARNING,
   "format string contains '\\0' within the string body")
+DIAG(warn_printf_asterisk_width_missing_arg, WARNING,
+     "'*' specified field width is missing a matching 'int' argument")
+DIAG(warn_printf_asterisk_precision_missing_arg, WARNING,
+     "'.*' specified field precision is missing a matching 'int' argument")
+DIAG(warn_printf_asterisk_width_wrong_type, WARNING,
+     "field width should have type 'int', but argument has type '%0'")
+DIAG(warn_printf_asterisk_precision_wrong_type, WARNING,
+     "field precision should have type 'int', but argument has type '%0'")
 
 // CHECK: returning address/reference of stack memory
 DIAG(warn_ret_stack_addr, WARNING,

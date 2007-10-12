@@ -313,10 +313,47 @@ Sema::CheckPrintfArguments(Expr *Fn,
 
     // Seen '%'.  Now processing a format conversion.
     switch (Str[StrIdx]) {
-        // Handle dynamic precision specifier.     
-      case '*':
-        if (Str[StrIdx-1] == '.') ++numConversions;          
+        // Handle dynamic precision or width specifier.     
+      case '*': {
+        ++numConversions;
+        
+        if (!HasVAListArg && numConversions > numDataArgs) {
+          
+          SourceLocation Loc =
+            PP.AdvanceToTokenCharacter(Args[format_idx]->getLocStart(),
+                                       StrIdx+1);
+
+          if (Str[StrIdx-1] == '.')
+            Diag(Loc, diag::warn_printf_asterisk_precision_missing_arg,
+                 Fn->getSourceRange());
+          else
+            Diag(Loc, diag::warn_printf_asterisk_width_missing_arg,
+                Fn->getSourceRange());
+          
+          // Don't do any more checking.  We'll just emit spurious errors.
+          return;
+        }
+        
+        // Perform type checking on width/precision specifier.
+        Expr* E = Args[format_idx+numConversions];
+        QualType T = E->getType().getCanonicalType();
+        if (BuiltinType *BT = dyn_cast<BuiltinType>(T))
+            if (BT->getKind() == BuiltinType::Int)
+              break;
+
+        SourceLocation Loc =
+          PP.AdvanceToTokenCharacter(Args[format_idx]->getLocStart(),
+                                     StrIdx+1);
+        
+        if (Str[StrIdx-1] == '.')
+          Diag(Loc, diag::warn_printf_asterisk_precision_wrong_type,
+               T.getAsString(), E->getSourceRange());
+        else
+          Diag(Loc, diag::warn_printf_asterisk_width_wrong_type,
+               T.getAsString(), E->getSourceRange());
+        
         break;
+      }
         
       // Characters which can terminate a format conversion
       // (e.g. "%d").  Characters that specify length modifiers or
@@ -376,7 +413,7 @@ Sema::CheckPrintfArguments(Expr *Fn,
                                        LastConversionIdx+1);
               
           Diag(Loc, diag::warn_printf_invalid_conversion, 
-	       std::string(Str+LastConversionIdx, Str+StrIdx),
+               std::string(Str+LastConversionIdx, Str+StrIdx),
                Fn->getSourceRange());
                
           // This conversion is broken.  Advance to the next format
