@@ -89,6 +89,8 @@ Should we promote i16 to i32 to avoid partial register update stalls?
 
 Leave any_extend as pseudo instruction and hint to register
 allocator. Delay codegen until post register allocation.
+Note. any_extend is now turned into an INSERT_SUBREG. We still need to teach
+the coalescer how to deal with it though.
 
 //===---------------------------------------------------------------------===//
 
@@ -988,24 +990,6 @@ int %test2(int %X) {
         volatile store int %Z, int* %G
         ret int %X
 }
-
-//===---------------------------------------------------------------------===//
-
-This:
-#include <xmmintrin.h>
-unsigned test(float f) {
- return _mm_cvtsi128_si32( (__m128i) _mm_set_ss( f ));
-}
-
-Compiles to:
-_test:
-        movss 4(%esp), %xmm0
-        movd %xmm0, %eax
-        ret
-
-it should compile to a move from the stack slot directly into eax.  DAGCombine
-has this xform, but it is currently disabled until the alignment fields of 
-the load/store nodes are trustworthy.
 
 //===---------------------------------------------------------------------===//
 
