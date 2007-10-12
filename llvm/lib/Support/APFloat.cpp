@@ -325,17 +325,6 @@ namespace {
   static unsigned int
   powerOf5(integerPart *dst, unsigned int power)
   {
-    /* A tight upper bound on number of parts required to hold the
-       value pow(5, power) is
-
-         power * 65536 / (28224 * integerPartWidth) + 1
-
-       However, whilst the result may require only N parts, because we
-       are multiplying two values to get it, the multiplication may
-       require N + 1 parts with the excess part being zero (consider
-       the trivial case of 1 * 1, the multiplier requires two parts to
-       hold the single-part result).  So we add two to guarantee
-       enough space whilst multiplying.  */
     static integerPart firstEightPowers[] = { 1, 5, 25, 125, 625, 3125,
                                               15625, 78125 };
     static integerPart pow5s[maxPowerOfFiveParts * 2 + 5] = { 78125 * 5 };
