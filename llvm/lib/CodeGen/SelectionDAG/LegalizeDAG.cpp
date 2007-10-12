@@ -6032,7 +6032,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::UINT_TO_FP: {
     bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
     MVT::ValueType SrcVT = Node->getOperand(0).getValueType();
-    if (VT == MVT::ppcf128) {
+    if (VT == MVT::ppcf128 && SrcVT != MVT::i64) {
       static uint64_t zero = 0;
       if (isSigned) {
         Hi = LegalizeOp(DAG.getNode(ISD::SINT_TO_FP, MVT::f64, 
@@ -6044,6 +6044,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                                     Node->getOperand(0)));
         Lo = DAG.getConstantFP(APFloat(APInt(64, 1, &zero)), MVT::f64);
         Hi = DAG.getNode(ISD::BUILD_PAIR, VT, Lo, Hi);
+        // X>=0 ? {(f64)x, 0} : {(f64)x, 0} + 2^32
         ExpandOp(DAG.getNode(ISD::SELECT_CC, MVT::ppcf128, Node->getOperand(0),
                              DAG.getConstant(0, MVT::i32), 
                              DAG.getNode(ISD::FADD, MVT::ppcf128, Hi,
@@ -6054,6 +6055,24 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                              DAG.getCondCode(ISD::SETLT)),
                  Lo, Hi);
       }
+      break;
+    }
+    if (VT == MVT::ppcf128 && SrcVT == MVT::i64 && !isSigned) {
+      // si64->ppcf128 done by libcall, below
+      static uint64_t TwoE64[] = { 0x43f0000000000000LL, 0 };
+      ExpandOp(DAG.getNode(ISD::SINT_TO_FP, MVT::ppcf128, Node->getOperand(0)),
+               Lo, Hi);
+      Hi = DAG.getNode(ISD::BUILD_PAIR, VT, Lo, Hi);
+      // x>=0 ? (ppcf128)(i64)x : (ppcf128)(i64)x + 2^64
+      ExpandOp(DAG.getNode(ISD::SELECT_CC, MVT::ppcf128, Node->getOperand(0),
+                           DAG.getConstant(0, MVT::i64), 
+                           DAG.getNode(ISD::FADD, MVT::ppcf128, Hi,
+                                       DAG.getConstantFP(
+                                          APFloat(APInt(128, 2, TwoE64)),
+                                          MVT::ppcf128)),
+                           Hi,
+                           DAG.getCondCode(ISD::SETLT)),
+               Lo, Hi);
       break;
     }
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
