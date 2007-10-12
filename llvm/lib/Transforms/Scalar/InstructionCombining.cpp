@@ -8643,7 +8643,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // converted to match the type of the cast, don't touch this.
       if (isa<AllocationInst>(BCI->getOperand(0))) {
         // See if the bitcast simplifies, if so, don't nuke this GEP yet.
-        if (Instruction *I = visitBitCast(*BCI))
+        if (visitBitCast(*BCI))
           return &GEP;
       }
       return new BitCastInst(BCI->getOperand(0), GEP.getType());
