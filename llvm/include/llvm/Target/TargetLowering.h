@@ -861,8 +861,8 @@ public:
   virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
   /// IsEligibleForTailCallOptimization - Check whether the call is eligible for
-  /// tail call optimization. Target which want to do tail call optimization
-  /// should implement this function. 
+  /// tail call optimization. Targets which want to do tail call optimization
+  /// should override this function. 
   virtual bool IsEligibleForTailCallOptimization(SDOperand Call, 
                                                  SDOperand Ret, 
                                                  SelectionDAG &DAG) const {

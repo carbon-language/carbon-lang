@@ -1,4 +1,4 @@
-//===- X86InstrInfo.td - Describe the X86 Instruction Set -------*- C++ -*-===//
+//===- X86InstrInfo.td - Describe the X86 Instruction Set --*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

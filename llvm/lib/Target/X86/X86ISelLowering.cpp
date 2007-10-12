@@ -1,4 +1,4 @@
-//===-- X86ISelLowering.cpp - X86 DAG Lowering Implementation -------------===//
+//===-- X86isellowering.cpp - X86 DAG Lowering Implementation -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -1402,13 +1402,12 @@ SDOperand X86TargetLowering::LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG,
 //                * elf/pic is disabled OR
 //                * elf/pic enabled + callee is in module + callee has
 //                  visibility protected or hidden
-//  To ensure the stack is aligned according to platform abi pass
-//  tail-call-align-stack. This makes sure that argument delta is always
-//  multiples of stack alignment. (Dynamic linkers need this - darwin's dyld for
-//  example)
+//  To keep the stack aligned according to platform abi the function
+//  GetAlignedArgumentStackSize ensures that argument delta is always multiples
+//  of stack alignment. (Dynamic linkers need this - darwin's dyld for example)
 //  If a tail called function callee has more arguments than the caller the
 //  caller needs to make sure that there is room to move the RETADDR to. This is
-//  achived by reserving an area the size of the argument delta right after the
+//  achieved by reserving an area the size of the argument delta right after the
 //  original REtADDR, but before the saved framepointer or the spilled registers
 //  e.g. caller(arg1, arg2) calls callee(arg1, arg2,arg3,arg4)
 //  stack layout:

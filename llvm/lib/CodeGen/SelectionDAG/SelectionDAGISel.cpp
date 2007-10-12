@@ -4476,7 +4476,7 @@ static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
 }
 
 /// CheckDAGForTailCallsAndFixThem - This Function looks for CALL nodes in the
-/// DAG and fixes their tailcall attribute operand
+/// DAG and fixes their tailcall attribute operand.
 static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG, 
                                            TargetLowering& TLI) {
   SDNode * Ret = NULL;
@@ -4497,7 +4497,7 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
         cast<ConstantSDNode>(OpCall.getOperand(3))->getValue() != 0;
       // If CALL node has tail call attribute set to true and the call is not
       // eligible (no RET or the target rejects) the attribute is fixed to
-      // false.  The TargetLowering::IsEligibleForTailCallOptimization function
+      // false. The TargetLowering::IsEligibleForTailCallOptimization function
       // must correctly identify tail call optimizable calls.
       if (isMarkedTailCall && 
           (Ret==NULL || 

@@ -1,4 +1,4 @@
-//===- X86.td - Target definition file for the Intel X86 arch ---*- C++ -*-===//
+//===- X86.td - Target definition file for the Intel X86 ---*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //

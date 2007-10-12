@@ -1352,14 +1352,15 @@ L7:
 L5:
 
 //===---------------------------------------------------------------------===//
-Tail call optimization improvements: Tail call optimization currently
-pushes all arguments on the top of the stack (their normal place if
-that was a not tail call optimized functiong call ) before moving them
-to actual stack slot. this is done to prevent overwriting of paramters
-(see example below) that might be used, since the arguments of the
-callee overwrites callers arguments.
 
- example:  
+Tail call optimization improvements: Tail call optimization currently
+pushes all arguments on the top of the stack (their normal place for
+non-tail call optimized calls) before moving them to actual stack
+slot. This is done to prevent overwriting of parameters (see example
+below) that might be used, since the arguments of the callee
+overwrites caller's arguments.
+
+example:  
 
 int callee(int32, int64); 
 int caller(int32 arg1, int32 arg2) { 
@@ -1371,39 +1372,41 @@ int caller(int32 arg1, int32 arg2) {
 [arg2]      ->  [(int64)
 [RETADDR]        local  ]
 
-moving arg1 onto the stack slot of callee function would overwrite
+Moving arg1 onto the stack slot of callee function would overwrite
 arg2 of the caller.
 
 Possible optimizations:
 
- - only push those arguments to the top of the stack that are actual
+ - Only push those arguments to the top of the stack that are actual
    parameters of the caller function and have no local value in the
-   caller
+   caller.
 
-   in above example local does not need to be pushed onto the top of
-   the stack as it is definitetly not a caller's function parameter
+   In the above example local does not need to be pushed onto the top
+   of the stack as it is definitely not a caller's function
+   parameter.
 
- - analyse the actual parameters of the callee to see which would
-   overwrite a caller paramter which is used by the callee and only
-   push them onto the top of the stack
+ - Analyse the actual parameters of the callee to see which would
+   overwrite a caller parameter which is used by the callee and only
+   push them onto the top of the stack.
 
    int callee (int32 arg1, int32 arg2);
    int caller (int32 arg1, int32 arg2) {
        return callee(arg1,arg2);
    }
 
-   here we don't need to write any variables to the top of the stack
-   since they don't overwrite each other
+   Here we don't need to write any variables to the top of the stack
+   since they don't overwrite each other.
 
    int callee (int32 arg1, int32 arg2);
    int caller (int32 arg1, int32 arg2) {
        return callee(arg2,arg1);
    }
 
-   here we need to push the arguments because they overwrite each other
+   Here we need to push the arguments because they overwrite each
+   other.
 
 
-   code for lowering directly onto callers arguments:
+   Code for lowering directly onto callers arguments:
 +  SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
 +  SmallVector<SDOperand, 8> MemOpChains;
 +

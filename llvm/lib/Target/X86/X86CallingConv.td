@@ -1,4 +1,4 @@
-//===- X86CallingConv.td - Calling Conventions for X86 32/64 ----*- C++ -*-===//
+//===- X86CallingConv.td - Calling Conventions X86 32/64 ---*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -127,7 +127,7 @@ def CC_X86_64_C : CallingConv<[
   CCIfType<[v8i8, v4i16, v2i32, v1i64], CCAssignToStack<8, 8>>
 ]>;
 
-// tail call convetion (fast) one register is reserved for target address
+// Tail call convention (fast): One register is reserved for target address,
 // namely R9
 def CC_X86_64_TailCall : CallingConv<[
   // Promote i8/i16 arguments to i32.
@@ -207,15 +207,14 @@ def CC_X86_32_C : CallingConv<[
   CCDelegateTo<CC_X86_32_Common>
 ]>;
 
-/// Same as C calling convention up to nonfree ECX which is used for storing 
-/// potential pointer to tail called function
+/// Same as C calling convention except for non-free ECX which is used for storing 
+/// a potential pointer to the tail called function.
 def CC_X86_32_TailCall : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
-  // The 'nest' parameter, if any, is passed in ECX.
-  CCIfNest<CCAssignToReg<[ECX]>>,
-
+  // Nested functions are currently not supported by fastcc.
+  
   // The first 3 integer arguments, if marked 'inreg' and if the call is not
   // a vararg call, are passed in integer registers.
   CCIfNotVarArg<CCIfInReg<CCIfType<[i32], CCAssignToReg<[EAX, EDX]>>>>,

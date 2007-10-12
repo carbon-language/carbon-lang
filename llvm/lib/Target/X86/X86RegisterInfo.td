@@ -1,4 +1,4 @@
-//===- X86RegisterInfo.td - Describe the X86 Register File ------*- C++ -*-===//
+//===- X86RegisterInfo.td - Describe the X86 Register File --*- tablegen -*-==//
 // 
 //                     The LLVM Compiler Infrastructure
 //
