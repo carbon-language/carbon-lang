@@ -648,7 +648,15 @@ static SDOperand getCopyFromParts(SelectionDAG &DAG,
   
     if (MVT::isVector(PartVT)) {
       assert(MVT::isVector(ValueVT) && "Unknown vector conversion!");
-      return DAG.getNode(ISD::BIT_CONVERT, PartVT, Val);
+      return DAG.getNode(ISD::BIT_CONVERT, ValueVT, Val);
+    }
+  
+    if (MVT::isVector(ValueVT)) {
+      assert(NumParts == 1 &&
+             MVT::getVectorElementType(ValueVT) == PartVT &&
+             MVT::getVectorNumElements(ValueVT) == 1 &&
+             "Only trivial scalar-to-vector conversions should get here!");
+      return DAG.getNode(ISD::BUILD_VECTOR, ValueVT, Val);
     }
   
     if (MVT::isInteger(PartVT) &&
@@ -746,6 +754,13 @@ static void getCopyToParts(SelectionDAG &DAG,
         assert(MVT::isVector(ValueVT) &&
                "Not a vector-vector cast?");
         Val = DAG.getNode(ISD::BIT_CONVERT, PartVT, Val);
+      } else if (MVT::isVector(ValueVT)) {
+        assert(NumParts == 1 &&
+               MVT::getVectorElementType(ValueVT) == PartVT &&
+               MVT::getVectorNumElements(ValueVT) == 1 &&
+               "Only trivial vector-to-scalar conversions should get here!");
+        Val = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, PartVT, Val,
+                          DAG.getConstant(0, PtrVT));
       } else if (MVT::isInteger(PartVT) && MVT::isInteger(ValueVT)) {
         if (PartVT < ValueVT)
           Val = DAG.getNode(ISD::TRUNCATE, PartVT, Val);
