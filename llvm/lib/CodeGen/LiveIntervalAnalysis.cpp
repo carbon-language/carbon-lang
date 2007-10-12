@@ -448,8 +448,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     unsigned SrcReg, DstReg;
     if (tii_->isMoveInstr(*mi, SrcReg, DstReg))
       ValNo = interval.getNextValue(defIndex, SrcReg, VNInfoAllocator);
-    else if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG ||
-             mi->getOpcode() == TargetInstrInfo::INSERT_SUBREG)
+    else if (mi->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)
       ValNo = interval.getNextValue(defIndex, mi->getOperand(1).getReg(),
                                     VNInfoAllocator);
     else
