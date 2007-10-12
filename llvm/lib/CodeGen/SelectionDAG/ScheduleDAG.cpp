@@ -567,9 +567,6 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     // TODO: If the node is a use of a CopyFromReg from a physical register
     // fold the extract into the copy now
 
-    // TODO: Add tracking info to SSARegMap of which vregs are subregs
-    // to allow coalescing in the allocator
-    
     // Create the extract_subreg machine instruction.
     MachineInstr *MI =
       new MachineInstr(BB, TII->get(TargetInstrInfo::EXTRACT_SUBREG));

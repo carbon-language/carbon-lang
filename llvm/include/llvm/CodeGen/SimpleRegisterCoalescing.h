@@ -47,6 +47,10 @@ namespace llvm {
     /// with other intervals.
     BitVector JoinedLIs;
 
+    /// SubRegIdxes - Keep track of sub-register and sub-indexes.
+    ///
+    std::vector<std::pair<unsigned, unsigned> > SubRegIdxes;
+
   public:
     static char ID; // Pass identifcation, replacement for typeid
     SimpleRegisterCoalescing() : MachineFunctionPass((intptr_t)&ID) {}

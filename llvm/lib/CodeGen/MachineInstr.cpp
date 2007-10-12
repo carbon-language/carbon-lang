@@ -220,6 +220,24 @@ int MachineInstr::findFirstPredOperandIdx() const {
   return -1;
 }
   
+/// isRegReDefinedByTwoAddr - Returns true if the Reg re-definition is due
+/// to two addr elimination.
+bool MachineInstr::isRegReDefinedByTwoAddr(unsigned Reg) const {
+  const TargetInstrDescriptor *TID = getInstrDescriptor();
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO1 = getOperand(i);
+    if (MO1.isRegister() && MO1.isDef() && MO1.getReg() == Reg) {
+      for (unsigned j = i+1; j < e; ++j) {
+        const MachineOperand &MO2 = getOperand(j);
+        if (MO2.isRegister() && MO2.isUse() && MO2.getReg() == Reg &&
+            TID->getOperandConstraint(j, TOI::TIED_TO) == (int)i)
+          return true;
+      }
+    }
+  }
+  return false;
+}
+
 /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
 ///
 void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {

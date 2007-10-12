@@ -167,11 +167,6 @@ namespace llvm {
       return I->second;
     }
 
-    /// CreateNewLiveInterval - Create a new live interval with the given live
-    /// ranges. The new live interval will have an infinite spill weight.
-    LiveInterval &CreateNewLiveInterval(const LiveInterval *LI,
-                                        const std::vector<LiveRange> &LRs);
-
     std::vector<LiveInterval*> addIntervalsForSpills(const LiveInterval& i,
                                                  VirtRegMap& vrm, unsigned reg);
 
@@ -254,8 +249,8 @@ namespace llvm {
     /// MI. If it is successul, MI is updated with the newly created MI and
     /// returns true.
     bool tryFoldMemoryOperand(MachineInstr* &MI, VirtRegMap &vrm,
-                              unsigned index, unsigned i, bool isSS,
-                              MachineInstr *DefMI, int slot, unsigned reg);
+                              MachineInstr *DefMI, unsigned index, unsigned i,
+                              bool isSS, int slot, unsigned reg);
 
     static LiveInterval createInterval(unsigned Reg);
 

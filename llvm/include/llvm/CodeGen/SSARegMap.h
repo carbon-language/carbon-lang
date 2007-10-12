@@ -26,6 +26,7 @@ class TargetRegisterClass;
 
 class SSARegMap {
   IndexedMap<const TargetRegisterClass*, VirtReg2IndexFunctor> RegClassMap;
+  IndexedMap<std::pair<unsigned, unsigned>, VirtReg2IndexFunctor> RegSubIdxMap;
   unsigned NextRegNum;
 
  public:
@@ -42,11 +43,29 @@ class SSARegMap {
     assert(RegClass && "Cannot create register without RegClass!");
     RegClassMap.grow(NextRegNum);
     RegClassMap[NextRegNum] = RegClass;
+    RegSubIdxMap.grow(NextRegNum);
+    RegSubIdxMap[NextRegNum] = std::make_pair(0,0);
     return NextRegNum++;
   }
 
   unsigned getLastVirtReg() const {
     return NextRegNum - 1;
+  }
+
+  void setIsSubRegister(unsigned Reg, unsigned SuperReg, unsigned SubIdx) {
+    RegSubIdxMap[Reg] = std::make_pair(SuperReg, SubIdx);
+  }
+
+  bool isSubRegister(unsigned Reg) const {
+    return RegSubIdxMap[Reg].first != 0;
+  }
+
+  unsigned getSuperRegister(unsigned Reg) const {
+    return RegSubIdxMap[Reg].first;
+  }
+
+  unsigned getSubRegisterIndex(unsigned Reg) const {
+    return RegSubIdxMap[Reg].second;
   }
 };
 

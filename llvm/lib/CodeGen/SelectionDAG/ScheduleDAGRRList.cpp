@@ -1097,6 +1097,11 @@ namespace {
         // CopyToReg should be close to its uses to facilitate coalescing and
         // avoid spilling.
         return 0;
+      else if (Opc == TargetInstrInfo::EXTRACT_SUBREG ||
+               Opc == TargetInstrInfo::INSERT_SUBREG)
+        // EXTRACT_SUBREG / INSERT_SUBREG should be close to its use to
+        // facilitate coalescing.
+        return 0;
       else if (SU->NumSuccs == 0)
         // If SU does not have a use, i.e. it doesn't produce a value that would
         // be consumed (e.g. store), then it terminates a chain of computation.
@@ -1307,6 +1312,14 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
             continue;
           // Be conservative. Ignore if nodes aren't at the same depth.
           if (SuccSU->Depth != SU->Depth)
+            continue;
+          if (!SuccSU->Node || !SuccSU->Node->isTargetOpcode())
+            continue;
+          // Don't constraint extract_subreg / insert_subreg these may be
+          // coalesced away. We don't them close to their uses.
+          unsigned SuccOpc = SuccSU->Node->getTargetOpcode();
+          if (SuccOpc == TargetInstrInfo::EXTRACT_SUBREG ||
+              SuccOpc == TargetInstrInfo::INSERT_SUBREG)
             continue;
           if ((!canClobber(SuccSU, DUSU) ||
                (hasCopyToRegUse(SU) && !hasCopyToRegUse(SuccSU)) ||

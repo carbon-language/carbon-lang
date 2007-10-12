@@ -383,6 +383,26 @@ void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS,
 }
 
 
+/// MergeValueInAsValue - Merge all of the live ranges of a specific val#
+/// in RHS into this live interval as the specified value number.
+/// The LiveRanges in RHS are allowed to overlap with LiveRanges in the
+/// current interval, but only if the overlapping LiveRanges have the
+/// specified value number.
+void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
+                                       VNInfo *RHSValNo, VNInfo *LHSValNo) {
+  // TODO: Make this more efficient.
+  iterator InsertPos = begin();
+  for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {
+    if (I->valno != RHSValNo)
+      continue;
+    // Map the valno in the other live range to the current live range.
+    LiveRange Tmp = *I;
+    Tmp.valno = LHSValNo;
+    InsertPos = addRangeFrom(Tmp, InsertPos);
+  }
+}
+
+
 /// MergeInClobberRanges - For any live ranges that are not defined in the
 /// current interval, but are defined in the Clobbers interval, mark them
 /// used with an unknown definition value.
@@ -482,6 +502,23 @@ void LiveInterval::MergeValueNumberInto(VNInfo *V1, VNInfo *V2) {
     } while (valnos.back()->def == ~1U);
   } else {
     V1->def = ~1U;
+  }
+}
+
+void LiveInterval::Copy(const LiveInterval &RHS,
+                        BumpPtrAllocator &VNInfoAllocator) {
+  ranges.clear();
+  valnos.clear();
+  preference = RHS.preference;
+  weight = RHS.weight;
+  for (unsigned i = 0, e = RHS.getNumValNums(); i != e; ++i) {
+    const VNInfo *VNI = RHS.getValNumInfo(i);
+    VNInfo *NewVNI = getNextValue(~0U, 0, VNInfoAllocator);
+    copyValNumInfo(NewVNI, VNI);
+  }
+  for (unsigned i = 0, e = RHS.ranges.size(); i != e; ++i) {
+    const LiveRange &LR = RHS.ranges[i];
+    addRange(LiveRange(LR.start, LR.end, getValNumInfo(LR.valno->id)));
   }
 }
 

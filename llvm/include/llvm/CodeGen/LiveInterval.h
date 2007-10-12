@@ -155,7 +155,7 @@ namespace llvm {
     
     /// copyValNumInfo - Copy the value number info for one value number to
     /// another.
-    void copyValNumInfo(VNInfo *DstValNo, VNInfo *SrcValNo) {
+    void copyValNumInfo(VNInfo *DstValNo, const VNInfo *SrcValNo) {
       DstValNo->def = SrcValNo->def;
       DstValNo->reg = SrcValNo->reg;
       DstValNo->kills = SrcValNo->kills;
@@ -241,11 +241,23 @@ namespace llvm {
     void MergeInClobberRanges(const LiveInterval &Clobbers,
                               BumpPtrAllocator &VNInfoAllocator);
 
-    /// MergeRangesInAsValue - Merge all of the intervals in RHS into this live
-    /// interval as the specified value number.  The LiveRanges in RHS are
+    /// MergeRangesInAsValue - Merge all of the live ranges in RHS into this
+    /// live interval as the specified value number.  The LiveRanges in RHS are
     /// allowed to overlap with LiveRanges in the current interval, but only if
     /// the overlapping LiveRanges have the specified value number.
     void MergeRangesInAsValue(const LiveInterval &RHS, VNInfo *LHSValNo);
+
+    /// MergeValueInAsValue - Merge all of the live ranges of a specific val#
+    /// in RHS into this live interval as the specified value number.
+    /// The LiveRanges in RHS are allowed to overlap with LiveRanges in the
+    /// current interval, but only if the overlapping LiveRanges have the
+    /// specified value number.
+    void MergeValueInAsValue(const LiveInterval &RHS,
+                             VNInfo *RHSValNo, VNInfo *LHSValNo);
+
+    /// Copy - Copy the specified live interval. This copies all the fields
+    /// except for the register of the interval.
+    void Copy(const LiveInterval &RHS, BumpPtrAllocator &VNInfoAllocator);
     
     bool empty() const { return ranges.empty(); }
 

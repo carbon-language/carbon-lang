@@ -242,10 +242,12 @@ namespace {
   /// blocks that have low register pressure (the vreg may be spilled due to
   /// register pressure in other blocks).
   class VISIBILITY_HIDDEN LocalSpiller : public Spiller {
+    SSARegMap *RegMap;
     const MRegisterInfo *MRI;
     const TargetInstrInfo *TII;
   public:
     bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
+      RegMap = MF.getSSARegMap();
       MRI = MF.getTarget().getRegisterInfo();
       TII = MF.getTarget().getInstrInfo();
       DOUT << "\n**** Local spiller rewriting function '"
@@ -776,25 +778,33 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       if (!MO.isRegister() || MO.getReg() == 0)
         continue;   // Ignore non-register operands.
       
-      if (MRegisterInfo::isPhysicalRegister(MO.getReg())) {
+      unsigned VirtReg = MO.getReg();
+      if (MRegisterInfo::isPhysicalRegister(VirtReg)) {
         // Ignore physregs for spilling, but remember that it is used by this
         // function.
-        MF.setPhysRegUsed(MO.getReg());
-        ReusedOperands.markClobbered(MO.getReg());
+        MF.setPhysRegUsed(VirtReg);
+        ReusedOperands.markClobbered(VirtReg);
         continue;
       }
       
-      assert(MRegisterInfo::isVirtualRegister(MO.getReg()) &&
+      assert(MRegisterInfo::isVirtualRegister(VirtReg) &&
              "Not a virtual or a physical register?");
       
-      unsigned VirtReg = MO.getReg();
+      unsigned SubIdx = 0;
+      bool isSubReg = RegMap->isSubRegister(VirtReg);
+      if (isSubReg) {
+        SubIdx = RegMap->getSubRegisterIndex(VirtReg);
+        VirtReg = RegMap->getSuperRegister(VirtReg);
+      }
+
       if (VRM.isAssignedReg(VirtReg)) {
         // This virtual register was assigned a physreg!
         unsigned Phys = VRM.getPhys(VirtReg);
         MF.setPhysRegUsed(Phys);
         if (MO.isDef())
           ReusedOperands.markClobbered(Phys);
-        MI.getOperand(i).setReg(Phys);
+        unsigned RReg = isSubReg ? MRI->getSubReg(Phys, SubIdx) : Phys;
+        MI.getOperand(i).setReg(RReg);
         continue;
       }
       
@@ -817,6 +827,24 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         if (ReuseSlot != VirtRegMap::NO_STACK_SLOT)
           PhysReg = Spills.getSpillSlotOrReMatPhysReg(ReuseSlot);
       }
+
+      // If this is a sub-register use, make sure the reuse register is in the
+      // right register class. For example, for x86 not all of the 32-bit
+      // registers have accessible sub-registers.
+      // Similarly so for EXTRACT_SUBREG. Consider this:
+      // EDI = op
+      // MOV32_mr fi#1, EDI
+      // ...
+      //       = EXTRACT_SUBREG fi#1
+      // fi#1 is available in EDI, but it cannot be reused because it's not in
+      // the right register file.
+      if (PhysReg &&
+          (isSubReg || MI.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)) {
+        const TargetRegisterClass* RC = RegMap->getRegClass(VirtReg);
+        if (!RC->contains(PhysReg))
+          PhysReg = 0;
+      }
+
       if (PhysReg) {
         // This spilled operand might be part of a two-address operand.  If this
         // is the case, then changing it will necessarily require changing the 
@@ -824,6 +852,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // aren't allowed to modify the reused register.  If none of these cases
         // apply, reuse it.
         bool CanReuse = true;
+
         int ti = TID->getOperandConstraint(i, TOI::TIED_TO);
         if (ti != -1 &&
             MI.getOperand(ti).isRegister() && 
@@ -845,7 +874,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
                << MRI->getName(PhysReg) << " for vreg"
                << VirtReg <<" instead of reloading into physreg "
                << MRI->getName(VRM.getPhys(VirtReg)) << "\n";
-          MI.getOperand(i).setReg(PhysReg);
+          unsigned RReg = isSubReg ? MRI->getSubReg(PhysReg, SubIdx) : PhysReg;
+          MI.getOperand(i).setReg(RReg);
 
           // The only technical detail we have is that we don't know that
           // PhysReg won't be clobbered by a reloaded stack slot that occurs
@@ -883,7 +913,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             }
           }
           continue;
-        }
+        }  // CanReuse
         
         // Otherwise we have a situation where we have a two-address instruction
         // whose mod/ref operand needs to be reloaded.  This reload is already
@@ -917,13 +947,14 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           DOUT << " from physreg " << MRI->getName(PhysReg) << " for vreg"
                << VirtReg
                << " instead of reloading into same physreg.\n";
-          MI.getOperand(i).setReg(PhysReg);
+          unsigned RReg = isSubReg ? MRI->getSubReg(PhysReg, SubIdx) : PhysReg;
+          MI.getOperand(i).setReg(RReg);
           ReusedOperands.markClobbered(PhysReg);
           ++NumReused;
           continue;
         }
         
-        const TargetRegisterClass* RC = MF.getSSARegMap()->getRegClass(VirtReg);
+        const TargetRegisterClass* RC = RegMap->getRegClass(VirtReg);
         MF.setPhysRegUsed(DesignatedReg);
         ReusedOperands.markClobbered(DesignatedReg);
         MRI->copyRegToReg(MBB, &MI, DesignatedReg, PhysReg, RC, RC);
@@ -935,16 +966,17 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         Spills.ClobberPhysReg(DesignatedReg);
         
         Spills.addAvailable(ReuseSlot, &MI, DesignatedReg);
-        MI.getOperand(i).setReg(DesignatedReg);
+        unsigned RReg =
+          isSubReg ? MRI->getSubReg(DesignatedReg, SubIdx) : DesignatedReg;
+        MI.getOperand(i).setReg(RReg);
         DOUT << '\t' << *prior(MII);
         ++NumReused;
         continue;
-      }
+      } // is (PhysReg)
       
       // Otherwise, reload it and remember that we have it.
       PhysReg = VRM.getPhys(VirtReg);
       assert(PhysReg && "Must map virtreg to physreg!");
-      const TargetRegisterClass* RC = MF.getSSARegMap()->getRegClass(VirtReg);
 
       // Note that, if we reused a register for a previous operand, the
       // register we want to reload into might not actually be
@@ -960,6 +992,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         MRI->reMaterialize(MBB, &MI, PhysReg, VRM.getReMaterializedMI(VirtReg));
         ++NumReMats;
       } else {
+        const TargetRegisterClass* RC = RegMap->getRegClass(VirtReg);
         MRI->loadRegFromStackSlot(MBB, &MI, PhysReg, SSorRMId, RC);
         ++NumLoads;
       }
@@ -974,7 +1007,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       // unless it's a two-address operand.
       if (TID->getOperandConstraint(i, TOI::TIED_TO) == -1)
         MI.getOperand(i).setIsKill();
-      MI.getOperand(i).setReg(PhysReg);
+      unsigned RReg = isSubReg ? MRI->getSubReg(PhysReg, SubIdx) : PhysReg;
+      MI.getOperand(i).setReg(RReg);
       UpdateKills(*prior(MII), RegKills, KillOps);
       DOUT << '\t' << *prior(MII);
     }
@@ -1002,30 +1036,28 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       // straight load from the virt reg slot.
       if ((MR & VirtRegMap::isRef) && !(MR & VirtRegMap::isMod)) {
         int FrameIdx;
-        if (unsigned DestReg = TII->isLoadFromStackSlot(&MI, FrameIdx)) {
-          if (FrameIdx == SS) {
-            // If this spill slot is available, turn it into a copy (or nothing)
-            // instead of leaving it as a load!
-            if (unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SS)) {
-              DOUT << "Promoted Load To Copy: " << MI;
-              if (DestReg != InReg) {
-                const TargetRegisterClass *RC =
-                  MF.getSSARegMap()->getRegClass(VirtReg);
-                MRI->copyRegToReg(MBB, &MI, DestReg, InReg, RC, RC);
-                // Revisit the copy so we make sure to notice the effects of the
-                // operation on the destreg (either needing to RA it if it's 
-                // virtual or needing to clobber any values if it's physical).
-                NextMII = &MI;
-                --NextMII;  // backtrack to the copy.
-                BackTracked = true;
-              } else
-                DOUT << "Removing now-noop copy: " << MI;
+        unsigned DestReg = TII->isLoadFromStackSlot(&MI, FrameIdx);
+        if (DestReg && FrameIdx == SS) {
+          // If this spill slot is available, turn it into a copy (or nothing)
+          // instead of leaving it as a load!
+          if (unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SS)) {
+            DOUT << "Promoted Load To Copy: " << MI;
+            if (DestReg != InReg) {
+              const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
+              MRI->copyRegToReg(MBB, &MI, DestReg, InReg, RC, RC);
+              // Revisit the copy so we make sure to notice the effects of the
+              // operation on the destreg (either needing to RA it if it's 
+              // virtual or needing to clobber any values if it's physical).
+              NextMII = &MI;
+              --NextMII;  // backtrack to the copy.
+              BackTracked = true;
+            } else
+              DOUT << "Removing now-noop copy: " << MI;
 
-              VRM.RemoveFromFoldedVirtMap(&MI);
-              MBB.erase(&MI);
-              Erased = true;
-              goto ProcessNextInst;
-            }
+            VRM.RemoveFromFoldedVirtMap(&MI);
+            MBB.erase(&MI);
+            Erased = true;
+            goto ProcessNextInst;
           }
         }
       }
@@ -1121,7 +1153,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
         // The only vregs left are stack slot definitions.
         int StackSlot = VRM.getStackSlot(VirtReg);
-        const TargetRegisterClass *RC = MF.getSSARegMap()->getRegClass(VirtReg);
+        const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
 
         // If this def is part of a two-address operand, make sure to execute
         // the store from the correct physical register.

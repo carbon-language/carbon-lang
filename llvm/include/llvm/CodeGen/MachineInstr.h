@@ -418,6 +418,10 @@ public:
   /// none is found.
   int findFirstPredOperandIdx() const;
   
+  /// isRegReDefinedByTwoAddr - Returns true if the Reg re-definition is due
+  /// to two addr elimination.
+  bool isRegReDefinedByTwoAddr(unsigned Reg) const;
+
   /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
   ///
   void copyKillDeadInfo(const MachineInstr *MI);
