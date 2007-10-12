@@ -2212,7 +2212,8 @@ APInt::tcExtract(integerPart *dst, unsigned int dstCount, const integerPart *src
     dst[dstParts - 1] |= ((src[firstSrcPart + dstParts] & mask)
                           << n % integerPartWidth);
   } else if (n > srcBits) {
-    dst[dstParts - 1] &= lowBitMask (srcBits % integerPartWidth);
+    if (srcBits % integerPartWidth)
+      dst[dstParts - 1] &= lowBitMask (srcBits % integerPartWidth);
   }
 
   /* Clear high parts.  */
