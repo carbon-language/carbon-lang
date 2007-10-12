@@ -88,7 +88,7 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
 
 /// LookupInterfaceDecl - Lookup interface declaration in the scope chain.
 /// Return the first declaration found (which may or may not be a class
-/// declaration. Caller is respopnsible for handling the none-class case.
+/// declaration. Caller is responsible for handling the none-class case.
 /// Bypassing the alias of a class by returning the aliased class.
 ScopedDecl *Sema::LookupInterfaceDecl(IdentifierInfo *ClassName) {
   ScopedDecl *IDecl;
