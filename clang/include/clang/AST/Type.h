@@ -275,6 +275,7 @@ public:
   bool isUnionType() const;  
   bool isVectorType() const; // GCC vector type.
   bool isOCUVectorType() const; // OCU vector type.
+  bool isObjcInterfaceType() const; // includes conforming protocol type
   
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs, and return a pointer to the best type
@@ -933,7 +934,10 @@ inline bool Type::isVectorType() const {
 inline bool Type::isOCUVectorType() const {
   return isa<OCUVectorType>(CanonicalType);
 }
-
+inline bool Type::isObjcInterfaceType() const {
+  return isa<ObjcInterfaceType>(CanonicalType)
+           || isa<ObjcQualifiedInterfaceType>(CanonicalType);
+}
 }  // end namespace clang
 
 #endif

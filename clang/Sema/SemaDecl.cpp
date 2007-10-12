@@ -556,6 +556,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   } else {
     QualType R = GetTypeForDeclarator(D, S);
     assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
+    if (R.getTypePtr()->isObjcInterfaceType()) {
+      Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object,
+           D.getIdentifier()->getName());
+      InvalidDecl = true;
+    }
 
     VarDecl *NewVD;
     VarDecl::StorageClass SC;
@@ -1679,6 +1684,14 @@ void Sema::ActOnFields(Scope* S,
             Record->setHasFlexibleArrayMember(true);
         }
       }
+    }
+    /// A field cannot be an Objective-c object
+    if (FDTy->isObjcInterfaceType()) {
+      Diag(FD->getLocation(), diag::err_statically_allocated_object,
+           FD->getName());
+      FD->setInvalidDecl();
+      EnclosingDecl->setInvalidDecl();
+      continue;
     }
     // Keep track of the number of named members.
     if (IdentifierInfo *II = FD->getIdentifier()) {

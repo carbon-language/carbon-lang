@@ -452,6 +452,8 @@ DIAG(warn_previous_declaration, WARNING,
      "previous declaration is here")
 DIAG(err_conflicting_aliasing_type, ERROR,
      "conflicting types for alias %0'")
+DIAG(err_statically_allocated_object, ERROR,
+     "statically allocated Objective-c object '%0'")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
