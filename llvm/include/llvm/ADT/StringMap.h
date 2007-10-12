@@ -172,7 +172,9 @@ public:
   /// into a StringMapEntry, return the StringMapEntry itself.
   static StringMapEntry &GetStringMapEntryFromValue(ValueTy &V) {
     StringMapEntry *EPtr = 0;
-    char *Ptr = reinterpret_cast<char*>(&V) - (intptr_t)&EPtr->Val;
+    char *Ptr = reinterpret_cast<char*>(&V) - 
+                  (reinterpret_cast<char*>(&EPtr->Val) - 
+                   reinterpret_cast<char*>(EPtr));
     return *reinterpret_cast<StringMapEntry*>(Ptr);
   }
   static const StringMapEntry &GetStringMapEntryFromValue(const ValueTy &V) {
