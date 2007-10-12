@@ -6001,6 +6001,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
   case ISD::FABS: {
+    if (VT == MVT::ppcf128) {
+      SDOperand Tmp;
+      ExpandOp(Node->getOperand(0), Lo, Tmp);
+      Hi = DAG.getNode(ISD::FABS, NVT, Tmp);
+      // lo = hi==fabs(hi) ? lo : -lo;
+      Lo = DAG.getNode(ISD::SELECT_CC, NVT, Hi, Tmp,
+                    Lo, DAG.getNode(ISD::FNEG, NVT, Lo),
+                    DAG.getCondCode(ISD::SETEQ));
+      break;
+    }
     SDOperand Mask = (VT == MVT::f64)
       ? DAG.getConstantFP(BitsToDouble(~(1ULL << 63)), VT)
       : DAG.getConstantFP(BitsToFloat(~(1U << 31)), VT);
@@ -6012,6 +6022,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
   case ISD::FNEG: {
+    if (VT == MVT::ppcf128) {
+      ExpandOp(Node->getOperand(0), Lo, Hi);
+      Lo = DAG.getNode(ISD::FNEG, MVT::f64, Lo);
+      Hi = DAG.getNode(ISD::FNEG, MVT::f64, Hi);
+      break;
+    }
     SDOperand Mask = (VT == MVT::f64)
       ? DAG.getConstantFP(BitsToDouble(1ULL << 63), VT)
       : DAG.getConstantFP(BitsToFloat(1U << 31), VT);
