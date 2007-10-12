@@ -477,6 +477,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SDIVREM, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::UDIVREM, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::FPOW, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::CTPOP, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::CTTZ, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::CTLZ, (MVT::ValueType)VT, Expand);
   }
 
   if (Subtarget->hasMMX()) {
