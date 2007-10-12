@@ -1000,8 +1000,9 @@ SDNode *X86DAGToDAGISel::getTruncate(SDOperand N0, MVT::ValueType VT) {
           VT = MVT::i32;
           break;
         }
-        N0 = 
-          SDOperand(CurDAG->getTargetNode(Opc, VT, N0), 0);
+        N0 = SDOperand(CurDAG->getTargetNode(Opc, VT, MVT::Flag, N0), 0);
+        return CurDAG->getTargetNode(X86::EXTRACT_SUBREG,
+                                     VT, N0, SRIdx, N0.getValue(1));
       }
       break;
     case MVT::i16:
@@ -1010,11 +1011,9 @@ SDNode *X86DAGToDAGISel::getTruncate(SDOperand N0, MVT::ValueType VT) {
     case MVT::i32:
       SRIdx = CurDAG->getTargetConstant(3, MVT::i32); // SubRegSet 3
       break;
-    default: assert(0 && "Unknown truncate!");
+    default: assert(0 && "Unknown truncate!"); break;
     }
-    return CurDAG->getTargetNode(X86::EXTRACT_SUBREG, 
-                                 VT, 
-                                 N0, SRIdx);
+    return CurDAG->getTargetNode(X86::EXTRACT_SUBREG, VT, N0, SRIdx);
 }
 
 
@@ -1382,7 +1381,8 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
         default: assert(0 && "Unknown any_extend!");
         }
         if (SRIdx.Val) {
-          SDNode *ResNode = CurDAG->getTargetNode(X86::INSERT_SUBREG, NVT, N0, SRIdx);
+          SDNode *ResNode = CurDAG->getTargetNode(X86::INSERT_SUBREG,
+                                                  NVT, N0, SRIdx);
 
 #ifndef NDEBUG
           DOUT << std::string(Indent-2, ' ') << "=> ";
