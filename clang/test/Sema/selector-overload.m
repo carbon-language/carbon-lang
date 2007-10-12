@@ -1,5 +1,10 @@
 // RUN: clang %s -fsyntax-only
-#import <Foundation/NSObject.h>
+
+typedef struct objc_object *id;
+@interface NSObject
++ alloc;
+- init;
+@end
 
 struct D {
   double d;
@@ -37,7 +42,7 @@ struct D {
 @end
 
 int main() {
-  id xx = [[Car alloc] init];
+  id xx = [[Car alloc] init]; // expected-warning {{incompatible types assigning 'int' to 'id'}}
 
   [xx method:4];
 }
