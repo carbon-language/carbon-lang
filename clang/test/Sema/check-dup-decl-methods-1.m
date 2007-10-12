@@ -32,7 +32,7 @@
 @end
 
 @protocol P
-- (int) meth;
-- (int*) meth;
+- (int) meth; // expected-error {{previous declaration is here}}
+- (int*) meth; // expected-error {{duplicate declaration of method 'meth'}}
 @end
 

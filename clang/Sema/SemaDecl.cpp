@@ -1768,15 +1768,16 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
   llvm::DenseMap<Selector, const ObjcMethodDecl*> InsMap;
   llvm::DenseMap<Selector, const ObjcMethodDecl*> ClsMap;
   
-  bool isClassDeclaration = 
-        (isa<ObjcInterfaceDecl>(ClassDecl) || isa<ObjcCategoryDecl>(ClassDecl));
+  bool checkDuplicateMethods = 
+        (isa<ObjcInterfaceDecl>(ClassDecl) || isa<ObjcCategoryDecl>(ClassDecl)
+         || isa<ObjcProtocolDecl>(ClassDecl));
   
   for (unsigned i = 0; i < allNum; i++ ) {
     ObjcMethodDecl *Method =
       cast_or_null<ObjcMethodDecl>(static_cast<Decl*>(allMethods[i]));
     if (!Method) continue;  // Already issued a diagnostic.
     if (Method->isInstance()) {
-      if (isClassDeclaration) {
+      if (checkDuplicateMethods) {
         /// Check for instance method of the same name with incompatible types
         const ObjcMethodDecl *&PrevMethod = InsMap[Method->getSelector()];
         if (PrevMethod && !MatchTwoMethodDeclarations(Method, PrevMethod)) {
@@ -1793,7 +1794,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
         insMethods.push_back(Method);
     }
     else {
-      if (isClassDeclaration) {
+      if (checkDuplicateMethods) {
         /// Check for class method of the same name with incompatible types
         const ObjcMethodDecl *&PrevMethod = ClsMap[Method->getSelector()];
         if (PrevMethod && !MatchTwoMethodDeclarations(Method, PrevMethod)) {
