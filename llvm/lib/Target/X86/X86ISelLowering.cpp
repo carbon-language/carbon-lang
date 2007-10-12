@@ -4878,7 +4878,6 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
     default:
       assert(0 && "Unsupported calling convention");
     case CallingConv::C:
-    case CallingConv::Fast:
     case CallingConv::X86_StdCall: {
       // Pass 'nest' parameter in ECX.
       // Must be kept in sync with X86CallingConv.td
