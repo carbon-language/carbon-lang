@@ -28,12 +28,17 @@
 using namespace clang;
 
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
-  if (Decl *IIDecl = II.getFETokenInfo<Decl>())
-    if (isa<TypedefDecl>(IIDecl) || isa<ObjcInterfaceDecl>(IIDecl))
-      return IIDecl;
-    else if (ObjcCompatibleAliasDecl *ADecl = 
-               dyn_cast<ObjcCompatibleAliasDecl>(IIDecl))
-      return ADecl->getClassInterface();
+  Decl *IIDecl = II.getFETokenInfo<Decl>();
+  // Find first occurance of none-tagged declaration
+  while(IIDecl && IIDecl->getIdentifierNamespace() != Decl::IDNS_Ordinary)
+    IIDecl = cast<ScopedDecl>(IIDecl)->getNext();
+  if (!IIDecl)
+    return 0;
+  if (isa<TypedefDecl>(IIDecl) || isa<ObjcInterfaceDecl>(IIDecl))
+    return IIDecl;
+  if (ObjcCompatibleAliasDecl *ADecl = 
+      dyn_cast<ObjcCompatibleAliasDecl>(IIDecl))
+    return ADecl->getClassInterface(); 
   return 0;
 }
 
