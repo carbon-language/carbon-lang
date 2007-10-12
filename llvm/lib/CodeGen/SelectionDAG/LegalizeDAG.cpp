@@ -5952,6 +5952,17 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                        Node, false, Hi);
     break;
   case ISD::FP_EXTEND:
+    if (VT == MVT::ppcf128) {
+      assert(Node->getOperand(0).getValueType()==MVT::f32 ||
+             Node->getOperand(0).getValueType()==MVT::f64);
+      const uint64_t zero = 0;
+      if (Node->getOperand(0).getValueType()==MVT::f32)
+        Hi = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Node->getOperand(0));
+      else
+        Hi = Node->getOperand(0);
+      Lo = DAG.getConstantFP(APFloat(APInt(64, 1, &zero)), MVT::f64);
+      break;
+    }
     Lo = ExpandLibCall(TLI.getLibcallName(RTLIB::FPEXT_F32_F64), Node, true,Hi);
     break;
   case ISD::FP_ROUND:
@@ -6021,6 +6032,30 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::UINT_TO_FP: {
     bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
     MVT::ValueType SrcVT = Node->getOperand(0).getValueType();
+    if (VT == MVT::ppcf128) {
+      static uint64_t zero = 0;
+      if (isSigned) {
+        Hi = LegalizeOp(DAG.getNode(ISD::SINT_TO_FP, MVT::f64, 
+                                    Node->getOperand(0)));
+        Lo = DAG.getConstantFP(APFloat(APInt(64, 1, &zero)), MVT::f64);
+      } else {
+        static uint64_t TwoE32[] = { 0x41f0000000000000LL, 0 };
+        Hi = LegalizeOp(DAG.getNode(ISD::SINT_TO_FP, MVT::f64, 
+                                    Node->getOperand(0)));
+        Lo = DAG.getConstantFP(APFloat(APInt(64, 1, &zero)), MVT::f64);
+        Hi = DAG.getNode(ISD::BUILD_PAIR, VT, Lo, Hi);
+        ExpandOp(DAG.getNode(ISD::SELECT_CC, MVT::ppcf128, Node->getOperand(0),
+                             DAG.getConstant(0, MVT::i32), 
+                             DAG.getNode(ISD::FADD, MVT::ppcf128, Hi,
+                                         DAG.getConstantFP(
+                                            APFloat(APInt(128, 2, TwoE32)),
+                                            MVT::ppcf128)),
+                             Hi,
+                             DAG.getCondCode(ISD::SETLT)),
+                 Lo, Hi);
+      }
+      break;
+    }
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
     if (Node->getOperand(0).getValueType() == MVT::i64) {
       if (VT == MVT::f32)
