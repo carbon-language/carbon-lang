@@ -6335,6 +6335,12 @@ SDOperand SelectionDAGLegalize::ScalarizeVectorOp(SDOperand Op) {
                          NewVT, 
                          ScalarizeVectorOp(Node->getOperand(0)));
     break;
+  case ISD::FPOWI:
+    Result = DAG.getNode(Node->getOpcode(),
+                         NewVT, 
+                         ScalarizeVectorOp(Node->getOperand(0)),
+                         Node->getOperand(1));
+    break;
   case ISD::LOAD: {
     LoadSDNode *LD = cast<LoadSDNode>(Node);
     SDOperand Ch = LegalizeOp(LD->getChain());     // Legalize the chain.
