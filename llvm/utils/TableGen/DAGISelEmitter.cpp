@@ -3729,7 +3729,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(N0);\n"
      << "  return CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,\n"
-     << "                             N.getValueType(), N0, Tmp);\n"
+     << "                               N.getValueType(), N0, Tmp);\n"
      << "}\n\n";
 
   OS << "SDNode *Select_INSERT_SUBREG(const SDOperand &N) {\n"
@@ -3740,12 +3740,12 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(N1);\n"
      << "  if (N0.getOpcode() == ISD::UNDEF) {\n"
-     << "    return CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,\n"
-     << "                                    N.getValueType(), N1, Tmp);\n"
+     << "    return CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG,\n"
+     << "                                 N.getValueType(), N1, Tmp);\n"
      << "  } else {\n"
      << "    AddToISelQueue(N0);\n"
-     << "    return CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,\n"
-     << "                                    N.getValueType(), N0, N1, Tmp);\n"
+     << "    return CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG,\n"
+     << "                                 N.getValueType(), N0, N1, Tmp);\n"
      << "  }\n"
      << "}\n\n";
 
