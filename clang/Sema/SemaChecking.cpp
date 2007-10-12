@@ -282,11 +282,16 @@ Sema::CheckPrintfArguments(Expr *Fn,
 
     // Seen '%'.  Now processing a format conversion.
     switch (Str[StrIdx]) {
+        // Handle dynamic precision specifier.     
+      case '*':
+        if (Str[StrIdx-1] == '.') ++numConversions;          
+        break;
+        
       // Characters which can terminate a format conversion
       // (e.g. "%d").  Characters that specify length modifiers or
       // other flags are handled by the default case below.
       //
-      // TODO: additional checks will go into the following cases.
+      // FIXME: additional checks will go into the following cases.                
       case 'i':
       case 'd':
       case 'o': 
