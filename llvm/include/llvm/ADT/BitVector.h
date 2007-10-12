@@ -259,12 +259,23 @@ public:
 
   // Comparison operators.
   bool operator==(const BitVector &RHS) const {
-    if (Size != RHS.Size)
-      return false;
-
-    for (unsigned i = 0; i < NumBitWords(size()); ++i)
+    unsigned ThisWords = NumBitWords(size());
+    unsigned RHSWords  = NumBitWords(RHS.size());
+    unsigned i;
+    for (i = 0; i != std::min(ThisWords, RHSWords); ++i)
       if (Bits[i] != RHS.Bits[i])
         return false;
+    
+    // Verify that any extra words are all zeros.
+    if (i != ThisWords) {
+      for (; i != ThisWords; ++i)
+        if (Bits[i])
+          return false;
+    } else if (i != RHSWords) {
+      for (; i != RHSWords; ++i)
+        if (RHS.Bits[i])
+          return false;
+    }
     return true;
   }
 
