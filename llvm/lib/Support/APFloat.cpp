@@ -39,7 +39,7 @@ namespace llvm {
 
     /* Number of bits in the significand.  This includes the integer
        bit.  */
-    unsigned char precision;
+    unsigned int precision;
 
     /* If the target format has an implicit integer bit.  */
     bool implicitIntegerBit;
