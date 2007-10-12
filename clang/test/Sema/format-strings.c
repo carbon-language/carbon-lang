@@ -45,7 +45,7 @@ void check_null_char_string(char* b)
   printf("%\0d",1); // expected-warning {{string contains '\0'}}
 }
 
-void check_empty_format_string(char* buf)
+void check_empty_format_string(char* buf, ...)
 {
   va_list ap;
   va_start(ap,buf);
@@ -53,9 +53,8 @@ void check_empty_format_string(char* buf)
   sprintf(buf,""); // expected-warning {{format string is empty}}
 }
 
-void check_wide_string()
+void check_wide_string(char* b, ...)
 {
-  char *b;
   va_list ap;
   va_start(ap,b);
 

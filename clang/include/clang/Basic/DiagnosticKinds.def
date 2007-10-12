@@ -847,6 +847,10 @@ DIAG(err_multiple_default_labels_defined, ERROR,
     "multiple default labels in one switch")
 DIAG(warn_empty_if_body, WARNING,
     "if statement has empty body")
+DIAG(err_va_start_used_in_non_variadic_function, ERROR,
+    "'va_start' used in function with fixed args")
+DIAG(warn_second_parameter_of_va_start_not_last_named_argument, WARNING,
+    "second parameter of 'va_start' not last named argument")
 
 DIAG(warn_return_missing_expr, WARNING,
      "non-void function '%0' should return a value")

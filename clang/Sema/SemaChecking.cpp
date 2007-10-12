@@ -43,6 +43,37 @@ Sema::CheckFunctionCall(Expr *Fn,
     assert(NumArgsInCall == 1 &&
            "Wrong number of arguments to builtin CFStringMakeConstantString");
     return CheckBuiltinCFStringArgument(Args[0]);
+  } else if (FnInfo->getBuiltinID() == Builtin::BI__builtin_va_start) {
+    if (NumArgsInCall > 2) {
+      Diag(Args[2]->getLocStart(), 
+           diag::err_typecheck_call_too_many_args, Fn->getSourceRange(),
+           SourceRange(Args[2]->getLocStart(),
+                       Args[NumArgsInCall - 1]->getLocEnd()));
+      return true;
+    }
+    
+    FunctionTypeProto* proto = 
+      cast<FunctionTypeProto>(CurFunctionDecl->getType());      
+    if (!proto->isVariadic()) {
+      Diag(Fn->getLocStart(),
+           diag::err_va_start_used_in_non_variadic_function);
+      return true;
+    }
+      
+    bool SecondArgIsLastNamedArgument = false;
+    if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Args[1])) {
+      if (ParmVarDecl *PV = dyn_cast<ParmVarDecl>(DR->getDecl())) {
+        ParmVarDecl *LastNamedArg = 
+          CurFunctionDecl->getParamDecl(CurFunctionDecl->getNumParams() - 1);
+              
+        if (PV == LastNamedArg)
+          SecondArgIsLastNamedArgument = true;
+      }
+    }
+      
+    if (!SecondArgIsLastNamedArgument)
+      Diag(Args[1]->getLocStart(), 
+           diag::warn_second_parameter_of_va_start_not_last_named_argument);
   }
   
   // Search the KnownFunctionIDs for the identifier.
