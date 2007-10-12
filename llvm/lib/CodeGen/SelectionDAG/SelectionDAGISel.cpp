@@ -2807,6 +2807,22 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                              getValue(I.getOperand(1)),
                              getValue(I.getOperand(2))));
     return 0;
+  case Intrinsic::sin:
+    setValue(&I, DAG.getNode(ISD::FSIN,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  case Intrinsic::cos:
+    setValue(&I, DAG.getNode(ISD::FCOS,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  case Intrinsic::pow:
+    setValue(&I, DAG.getNode(ISD::FPOW,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1)),
+                             getValue(I.getOperand(2))));
+    return 0;
   case Intrinsic::pcmarker: {
     SDOperand Tmp = getValue(I.getOperand(1));
     DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Tmp));

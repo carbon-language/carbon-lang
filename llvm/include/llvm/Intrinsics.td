@@ -184,6 +184,10 @@ let Properties = [IntrWriteArgMem] in {
 let Properties = [IntrNoMem] in {
   def int_sqrt : Intrinsic<[llvm_anyfloat_ty, LLVMMatchType<0>]>;
   def int_powi : Intrinsic<[llvm_anyfloat_ty, LLVMMatchType<0>, llvm_i32_ty]>;
+  def int_sin  : Intrinsic<[llvm_anyfloat_ty, LLVMMatchType<0>]>;
+  def int_cos  : Intrinsic<[llvm_anyfloat_ty, LLVMMatchType<0>]>; 
+  def int_pow  : Intrinsic<[llvm_anyfloat_ty,
+                            LLVMMatchType<0>, LLVMMatchType<0>]>; 
 }
 
 // NOTE: these are internal interfaces.
