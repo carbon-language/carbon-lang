@@ -38,8 +38,9 @@ endif
 # Tools
 OCAMLCFLAGS += -I $(OcamlDir) -I $(ObjDir)
 OCAMLAFLAGS += $(patsubst %,-cclib %, \
-                 $(filter-out -L$(LibDir),$(shell $(LLVM_CONFIG) --ldflags)) \
-				 $(UsedLibs) -l$(LIBRARYNAME))
+                 $(filter-out -L$(LibDir),-l$(LIBRARYNAME) \
+                                          $(shell $(LLVM_CONFIG) --ldflags)) \
+                                          $(UsedLibs))
 
 Compile.CMI  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) -o)
 Compile.CMO  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) -o)
