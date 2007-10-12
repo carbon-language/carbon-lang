@@ -35,7 +35,7 @@ AsmVerbose("asm-verbose", cl::Hidden, cl::desc("Add comments to directives."));
 char AsmPrinter::ID = 0;
 AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm,
                        const TargetAsmInfo *T)
-  : MachineFunctionPass((intptr_t)&ID), FunctionNumber(0), O(o), TM(tm), TAI(T)
+  : MachineFunctionPass((intptr_t)&ID), O(o), TM(tm), TAI(T)
 {}
 
 std::string AsmPrinter::getSectionForFunction(const Function &F) const {
@@ -169,7 +169,6 @@ std::string AsmPrinter::getCurrentFunctionEHName(const MachineFunction *MF) {
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   // What's my mangled name?
   CurrentFnName = Mang->getValueName(MF.getFunction());
-  IncrementFunctionNumber();
 }
 
 /// EmitConstantPool - Print to the current output stream assembly
@@ -219,8 +218,9 @@ void AsmPrinter::EmitConstantPool(unsigned Alignment, const char *Section,
   SwitchToDataSection(Section);
   EmitAlignment(Alignment);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << '_'
-      << CP[i].second << ":\t\t\t\t\t" << TAI->getCommentString() << " ";
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << CP[i].second
+      << '_' << CurrentFnName
+      << ":\t\t\t\t\t" << TAI->getCommentString() << ' ';
     WriteTypeSymbolic(O, CP[i].first.getType(), 0) << '\n';
     if (CP[i].first.isMachineConstantPoolEntry())
       EmitMachineConstantPoolValue(CP[i].first.Val.MachineCPVal);
@@ -293,10 +293,10 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     // the assembler and linker the extents of the jump table object.  The
     // second label is actually referenced by the code.
     if (const char *JTLabelPrefix = TAI->getJumpTableSpecialLabelPrefix())
-      O << JTLabelPrefix << "JTI" << getFunctionNumber() << '_' << i << ":\n";
+      O << JTLabelPrefix << "JTI" << i << '_' << CurrentFnName << ":\n";
     
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
-      << '_' << i << ":\n";
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << i
+      << '_' << CurrentFnName << ":\n";
     
     for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
       O << JTEntryDirective << ' ';
@@ -306,15 +306,15 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
       // If we're emitting non-PIC code, then emit the entries as direct
       // references to the target basic blocks.
       if (!EmittedSets.empty()) {
-        O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
-          << '_' << i << "_set_" << JTBBs[ii]->getNumber();
+        O << TAI->getPrivateGlobalPrefix() << i
+          << '_' << "_set_" << JTBBs[ii]->getNumber() << '_' << CurrentFnName;
       } else if (IsPic) {
         printBasicBlockLabel(JTBBs[ii], false, false);
         // If the arch uses custom Jump Table directives, don't calc relative to
         // JT
         if (!HadJTEntryDirective) 
           O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
-            << getFunctionNumber() << '_' << i;
+            << i << '_' << CurrentFnName;
       } else {
         printBasicBlockLabel(JTBBs[ii], false, false);
       }
@@ -1242,8 +1242,8 @@ bool AsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI, unsigned OpNo,
 void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
                                       bool printColon,
                                       bool printComment) const {
-  O << TAI->getPrivateGlobalPrefix() << "BB" << getFunctionNumber() << "_"
-    << MBB->getNumber();
+  O << TAI->getPrivateGlobalPrefix() << "BB" << MBB->getNumber() << '_'
+    << CurrentFnName;
   if (printColon)
     O << ':';
   if (printComment && MBB->getBasicBlock())
@@ -1259,10 +1259,10 @@ void AsmPrinter::printSetLabel(unsigned uid,
     return;
   
   O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
-    << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
+    << uid << "_set_" << MBB->getNumber() << '_' << CurrentFnName << ',';
   printBasicBlockLabel(MBB, false, false);
-  O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
-    << '_' << uid << '\n';
+  O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << uid
+    << '_' << CurrentFnName << '\n';
 }
 
 void AsmPrinter::printSetLabel(unsigned uid, unsigned uid2,
@@ -1271,11 +1271,11 @@ void AsmPrinter::printSetLabel(unsigned uid, unsigned uid2,
     return;
   
   O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
-    << getFunctionNumber() << '_' << uid << '_' << uid2
-    << "_set_" << MBB->getNumber() << ',';
+    << uid << '_' << uid2
+    << "_set_" << MBB->getNumber() << '_' << CurrentFnName << ',';
   printBasicBlockLabel(MBB, false, false);
-  O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
-    << '_' << uid << '_' << uid2 << '\n';
+  O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << uid 
+    << '_' << uid2 << '_' << CurrentFnName << '\n';
 }
 
 /// printDataDirective - This method prints the asm directive for the

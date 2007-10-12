@@ -104,8 +104,8 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
-      << MO.getConstantPoolIndex();
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << MO.getConstantPoolIndex()
+      << '_' << CurrentFnName;
     return;
 
   case MachineOperand::MO_ExternalSymbol:
@@ -121,8 +121,8 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   }
 
   case MachineOperand::MO_JumpTableIndex:
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-      << '_' << MO.getJumpTableIndex();
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << MO.getJumpTableIndex()
+      << '_' << CurrentFnName;
     return;
 
   default:

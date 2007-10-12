@@ -31,14 +31,14 @@ using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
-static std::string computePICLabel(unsigned FnNum,
+static std::string computePICLabel(const std::string &FnName,
                                    const TargetAsmInfo *TAI,
                                    const X86Subtarget* Subtarget)  {
   std::string label;
   if (Subtarget->isTargetDarwin())
-    label =  "\"L" + utostr_32(FnNum) + "$pb\"";
+    label =  "\"L" "pb$" + FnName + "\"";
   else if (Subtarget->isTargetELF())
-    label = ".Lllvm$" + utostr_32(FnNum) + "$piclabel";
+    label = ".Lllvm$piclabel$" + FnName;
   else
     assert(0 && "Don't know how to print PIC label!\n");
 
@@ -236,13 +236,13 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_JumpTableIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << '$';
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << "_"
-      << MO.getJumpTableIndex();
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << MO.getJumpTableIndex()
+      << '_' << CurrentFnName;
 
     if (TM.getRelocationModel() == Reloc::PIC_) {
       if (Subtarget->isPICStyleStub())
-        O << "-\"" << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
-          << "$pb\"";
+        O << "-\"" << TAI->getPrivateGlobalPrefix() << "pb$" << CurrentFnName
+          << "\"";
       else if (Subtarget->isPICStyleGOT())
         O << "@GOTOFF";
     }
@@ -254,13 +254,13 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
   case MachineOperand::MO_ConstantPoolIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << '$';
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
-      << MO.getConstantPoolIndex();
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << MO.getConstantPoolIndex()
+      << '_' << CurrentFnName;
 
     if (TM.getRelocationModel() == Reloc::PIC_) {
       if (Subtarget->isPICStyleStub())
-        O << "-\"" << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
-          << "$pb\"";
+        O << "-\"" << TAI->getPrivateGlobalPrefix() << "pb$" << CurrentFnName
+          << "\"";
       else if (Subtarget->isPICStyleGOT())
         O << "@GOTOFF";
     }
@@ -317,8 +317,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       }
       
       if (!isCallOp && TM.getRelocationModel() == Reloc::PIC_)
-        O << "-\"" << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
-          << "$pb\"";
+        O << "-\"" << TAI->getPrivateGlobalPrefix() << "pb$" << CurrentFnName
+          << "\"";
     } else {
       if (GV->hasDLLImportLinkage()) {
         O << "__imp_";          
@@ -418,7 +418,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         //   popl %some_register
         //   addl $_GLOBAL_ADDRESS_TABLE_ + [.-piclabel], %some_register
         O << " + [.-"
-          << computePICLabel(getFunctionNumber(), TAI, Subtarget) << "]";
+          << computePICLabel(CurrentFnName, TAI, Subtarget) << "]";
 
       if (isCallOp)
         O << "@PLT";
@@ -498,7 +498,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
 }
 
 void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
-  std::string label = computePICLabel(getFunctionNumber(), TAI, Subtarget);
+  std::string label = computePICLabel(CurrentFnName, TAI, Subtarget);
   O << label << "\n" << label << ":";
 }
 

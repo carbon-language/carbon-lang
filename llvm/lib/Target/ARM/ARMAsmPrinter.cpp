@@ -319,12 +319,12 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     break;
   }
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
-      << '_' << MO.getConstantPoolIndex();
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << MO.getConstantPoolIndex()
+      << '_' << CurrentFnName;
     break;
   case MachineOperand::MO_JumpTableIndex:
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-      << '_' << MO.getJumpTableIndex();
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << MO.getJumpTableIndex()
+      << '_' << CurrentFnName;
     break;
   default:
     O << "<unknown operand type>"; abort (); break;
@@ -652,8 +652,8 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNo,
   // data itself.
   if (!strcmp(Modifier, "label")) {
     unsigned ID = MI->getOperand(OpNo).getImm();
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
-      << '_' << ID << ":\n";
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << ID
+      << '_' << CurrentFnName << ":\n";
   } else {
     assert(!strcmp(Modifier, "cpentry") && "Unknown modifier for CPE");
     unsigned CPI = MI->getOperand(OpNo).getConstantPoolIndex();
@@ -677,8 +677,8 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNo) {
   const MachineOperand &MO1 = MI->getOperand(OpNo);
   const MachineOperand &MO2 = MI->getOperand(OpNo+1); // Unique Id
   unsigned JTI = MO1.getJumpTableIndex();
-  O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-    << '_' << JTI << '_' << MO2.getImmedValue() << ":\n";
+  O << TAI->getPrivateGlobalPrefix() << "JTI" << JTI
+    << '_' << MO2.getImmedValue() << '_' << CurrentFnName << ":\n";
 
   const char *JTEntryDirective = TAI->getJumpTableDirective();
   if (!JTEntryDirective)
@@ -697,15 +697,16 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNo) {
 
     O << JTEntryDirective << ' ';
     if (UseSet)
-      O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
-        << '_' << JTI << '_' << MO2.getImmedValue()
-        << "_set_" << MBB->getNumber();
+      O << TAI->getPrivateGlobalPrefix() << JTI
+        << '_' << MO2.getImmedValue()
+        << "_set_" << MBB->getNumber()
+        << CurrentFnName;
     else if (TM.getRelocationModel() == Reloc::PIC_) {
       printBasicBlockLabel(MBB, false, false);
       // If the arch uses custom Jump Table directives, don't calc relative to JT
       if (!TAI->getJumpTableDirective()) 
         O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
-          << getFunctionNumber() << '_' << JTI << '_' << MO2.getImmedValue();
+          << JTI << '_' << MO2.getImmedValue() << '_' << CurrentFnName;
     } else
       printBasicBlockLabel(MBB, false, false);
     if (i != e-1)

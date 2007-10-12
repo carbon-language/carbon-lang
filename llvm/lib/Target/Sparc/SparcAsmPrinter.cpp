@@ -164,8 +164,8 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << MO.getSymbolName();
     break;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
-      << MO.getConstantPoolIndex();
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << MO.getConstantPoolIndex()
+      << '_' << CurrentFnName;
     break;
   default:
     O << "<unknown operand type>"; abort (); break;

@@ -179,8 +179,8 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     return;
   case MachineOperand::MO_ConstantPoolIndex: {
     O << "@gprel(" << TAI->getPrivateGlobalPrefix()
-      << "CPI" << getFunctionNumber() << "_"
-      << MO.getConstantPoolIndex() << ")";
+      << "CPI" << MO.getConstantPoolIndex() << '_'
+      << CurrentFnName << ")";
     return;
   }
 

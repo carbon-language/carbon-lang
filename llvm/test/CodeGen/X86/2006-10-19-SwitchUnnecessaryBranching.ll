@@ -1,5 +1,5 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 | %prcontext je 1 | \
-; RUN:   grep BB1_1:
+; RUN:   grep BB1_main:
 
 %str = internal constant [14 x sbyte] c"Hello world!\0A\00"		; <[14 x sbyte]*> [#uses=1]
 %str = internal constant [13 x sbyte] c"Blah world!\0A\00"		; <[13 x sbyte]*> [#uses=1]
