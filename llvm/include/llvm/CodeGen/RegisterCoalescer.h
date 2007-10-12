@@ -143,7 +143,7 @@ namespace llvm
     /// about which copies to coalesce should be made by the
     /// coalescer.
     virtual bool isLegalToCoalesce(const MachineInstr &inst) const {
-      return(true);
+      return true;
     }
   };
 }
