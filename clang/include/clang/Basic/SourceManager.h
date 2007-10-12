@@ -275,6 +275,24 @@ public:
     return FileIDs[FileID-1].getInfo()->first;
   }
   
+  /// getDecomposedFileLoc - Decompose the specified file location into a raw
+  /// FileID + Offset pair.  The first element is the FileID, the second is the
+  /// offset from the start of the buffer of the location.
+  std::pair<unsigned, unsigned> getDecomposedFileLoc(SourceLocation Loc) const {
+    assert(Loc.isFileID() && "Isn't a File SourceLocation");
+    
+    // TODO: Add a flag "is first chunk" to SLOC.
+    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(Loc.getFileID());
+      
+    // If this file has been split up into chunks, factor in the chunk number
+    // that the FileID references.
+    unsigned ChunkNo = FIDInfo->getChunkNo();
+    unsigned Offset = Loc.getRawFilePos();
+    Offset += (ChunkNo << SourceLocation::FilePosBits);
+    
+    return std::pair<unsigned,unsigned>(Loc.getFileID()-ChunkNo, Offset);
+  }
+  
   /// PrintStats - Print statistics to stderr.
   ///
   void PrintStats() const;
@@ -319,13 +337,7 @@ private:
   /// returns the location of the physical character data, not the logical file
   /// position.
   unsigned getFullFilePos(SourceLocation PhysLoc) const {
-    // TODO: Add a flag "is first chunk" to SLOC.
-    const SrcMgr::FileIDInfo *FIDInfo = getFIDInfo(PhysLoc.getFileID());
-    
-    // If this file has been split up into chunks, factor in the chunk number
-    // that the FileID references.
-    unsigned ChunkNo = FIDInfo->getChunkNo();
-    return PhysLoc.getRawFilePos() + (ChunkNo << SourceLocation::FilePosBits);
+    return getDecomposedFileLoc(PhysLoc).second;
   }
 };
 
