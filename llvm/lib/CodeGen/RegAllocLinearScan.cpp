@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
-#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "PhysRegTracker.h"
 #include "VirtRegMap.h"
@@ -216,9 +215,7 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
 
   // Rewrite spill code and update the PhysRegsUsed set.
   spiller_->runOnMachineFunction(*mf_, *vrm_);
-
   vrm_.reset();  // Free the VirtRegMap
-
 
   while (!unhandled_.empty()) unhandled_.pop();
   fixed_.clear();
