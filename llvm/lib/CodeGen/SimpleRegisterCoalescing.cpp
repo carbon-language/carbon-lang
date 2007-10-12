@@ -264,8 +264,13 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
         if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
           DOUT << "Interfere with sub-register ";
           DEBUG(li_->getInterval(*SR).print(DOUT, mri_));
-          return true;
+          return true; // Not coalescable
         }
+    } else if (li_->getInterval(repDstReg).getSize() >
+               li_->getInterval(repSrcReg).getSize()) {
+      // Be conservative. If both sides are virtual registers, do not coalesce
+      // if the sub-register live interval is longer.
+      return false;
     }
   } else if (differingRegisterClasses(repSrcReg, repDstReg)) {
     // If they are not of the same register class, we cannot join them.
