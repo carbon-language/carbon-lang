@@ -98,7 +98,9 @@ public:
   /// on rewritable source locations.
   void RemoveText(SourceLocation Start, SourceLocation End);
   
-  
+  /// ReplaceText - This method replaces a range of characters in the input
+  /// buffer with a new string.  This is effectively a combined "remove/insert"
+  /// operation.
   void ReplaceText(SourceLocation Start, unsigned OrigLength,
                    const char *NewStr, unsigned NewLength);
   
