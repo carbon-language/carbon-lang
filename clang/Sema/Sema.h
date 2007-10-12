@@ -208,7 +208,8 @@ private:
   ParmVarDecl *ParseParamDeclarator(DeclaratorChunk &FI, unsigned ArgNo,
                                     Scope *FnBodyScope);
   ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
-                               SourceLocation IdLoc, Scope *S);  
+                               SourceLocation IdLoc, Scope *S);
+  ScopedDecl *LookupInterfaceDecl(IdentifierInfo *II);
   ObjcInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,

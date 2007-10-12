@@ -86,23 +86,30 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   }
 }
 
+/// LookupInterfaceDecl - Lookup interface declaration in the scope chain.
+/// Return the first declaration found (which may or may not be a class
+/// declaration. Caller is respopnsible for handling the none-class case.
+/// Bypassing the alias of a class by returning the aliased class.
+ScopedDecl *Sema::LookupInterfaceDecl(IdentifierInfo *ClassName) {
+  ScopedDecl *IDecl;
+  // Scan up the scope chain looking for a decl that matches this identifier
+  // that is in the appropriate namespace.
+  for (IDecl = ClassName->getFETokenInfo<ScopedDecl>(); IDecl; 
+       IDecl = IDecl->getNext())
+    if (IDecl->getIdentifierNamespace() == Decl::IDNS_Ordinary)
+      break;
+  
+  if (ObjcCompatibleAliasDecl *ADecl =
+      dyn_cast_or_null<ObjcCompatibleAliasDecl>(IDecl))
+    return ADecl->getClassInterface();
+  return IDecl;
+}
+
 /// getObjcInterfaceDecl - Look up a for a class declaration in the scope.
 /// return 0 if one not found.
 ObjcInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
-
-  // Scan up the scope chain looking for a decl that matches this identifier
-  // that is in the appropriate namespace.  This search should not take long, as
-  // shadowing of names is uncommon, and deep shadowing is extremely uncommon.
-  ScopedDecl *IdDecl = NULL;
-  for (ScopedDecl *D = Id->getFETokenInfo<ScopedDecl>(); D; D = D->getNext()) {
-    if (D->getIdentifierNamespace() == Decl::IDNS_Ordinary) {
-      IdDecl = D;
-      break;
-    }
-  }
-  if (IdDecl && !isa<ObjcInterfaceDecl>(IdDecl))
-    IdDecl = 0;
-  return cast_or_null<ObjcInterfaceDecl>(static_cast<Decl*>(IdDecl));
+  ScopedDecl *IdDecl = LookupInterfaceDecl(Id);
+  return cast_or_null<ObjcInterfaceDecl>(IdDecl);
 }
 
 /// LookupScopedDecl - Look up the inner-most declaration in the specified
@@ -908,19 +915,18 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
   assert(ClassName && "Missing class identifier");
   
   // Check for another declaration kind with the same name.
-  ScopedDecl *PrevDecl = LookupScopedDecl(ClassName, Decl::IDNS_Ordinary,
-                                          ClassLoc, TUScope);
+  ScopedDecl *PrevDecl = LookupInterfaceDecl(ClassName);
   if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind,
          ClassName->getName());
     Diag(PrevDecl->getLocation(), diag::err_previous_definition);
   }
   
-  ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(ClassName);
+  ObjcInterfaceDecl* IDecl = dyn_cast_or_null<ObjcInterfaceDecl>(PrevDecl);
   if (IDecl) {
     // Class already seen. Is it a forward declaration?
     if (!IDecl->isForwardDecl())
-      Diag(AtInterfaceLoc, diag::err_duplicate_class_def, ClassName->getName());
+      Diag(AtInterfaceLoc, diag::err_duplicate_class_def, IDecl->getName());
     else {
       IDecl->setForwardDecl(false);
       IDecl->AllocIntfRefProtocols(NumProtocols);
@@ -937,8 +943,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
   if (SuperName) {
     ObjcInterfaceDecl* SuperClassEntry = 0;
     // Check if a different kind of symbol declared in this scope.
-    PrevDecl = LookupScopedDecl(SuperName, Decl::IDNS_Ordinary,
-                                SuperLoc, TUScope);
+    PrevDecl = LookupInterfaceDecl(SuperName);
     if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
       Diag(SuperLoc, diag::err_redefinition_different_kind,
            SuperName->getName());
@@ -946,10 +951,12 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
     }
     else {
       // Check that super class is previously defined
-      SuperClassEntry = getObjCInterfaceDecl(SuperName); 
+      SuperClassEntry = dyn_cast_or_null<ObjcInterfaceDecl>(PrevDecl); 
                               
       if (!SuperClassEntry || SuperClassEntry->isForwardDecl()) {
-        Diag(AtInterfaceLoc, diag::err_undef_superclass, SuperName->getName(),
+        Diag(AtInterfaceLoc, diag::err_undef_superclass, 
+             SuperClassEntry ? SuperClassEntry->getName() 
+                             : SuperName->getName(),
              ClassName->getName()); 
       }
     }
@@ -1153,8 +1160,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
                       SourceLocation SuperClassLoc) {
   ObjcInterfaceDecl* IDecl = 0;
   // Check for another declaration kind with the same name.
-  ScopedDecl *PrevDecl = LookupScopedDecl(ClassName, Decl::IDNS_Ordinary,
-                                          ClassLoc, TUScope);
+  ScopedDecl *PrevDecl = LookupInterfaceDecl(ClassName);
   if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
     Diag(ClassLoc, diag::err_redefinition_different_kind,
          ClassName->getName());
@@ -1162,7 +1168,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   }
   else {
     // Is there an interface declaration of this class; if not, warn!
-    IDecl = getObjCInterfaceDecl(ClassName); 
+    IDecl = dyn_cast_or_null<ObjcInterfaceDecl>(PrevDecl); 
     if (!IDecl)
       Diag(ClassLoc, diag::warn_undef_interface, ClassName->getName());
   }
@@ -1171,15 +1177,14 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   ObjcInterfaceDecl* SDecl = 0;
   if (SuperClassname) {
     // Check if a different kind of symbol declared in this scope.
-    PrevDecl = LookupScopedDecl(SuperClassname, Decl::IDNS_Ordinary,
-                                SuperClassLoc, TUScope);
+    PrevDecl = LookupInterfaceDecl(SuperClassname);
     if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
       Diag(SuperClassLoc, diag::err_redefinition_different_kind,
            SuperClassname->getName());
       Diag(PrevDecl->getLocation(), diag::err_previous_definition);
     }
     else {
-      SDecl = getObjCInterfaceDecl(SuperClassname); 
+      SDecl = dyn_cast_or_null<ObjcInterfaceDecl>(PrevDecl); 
       if (!SDecl)
         Diag(SuperClassLoc, diag::err_undef_superclass, 
              SuperClassname->getName(), ClassName->getName());
@@ -1187,7 +1192,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
         // This implementation and its interface do not have the same
         // super class.
         Diag(SuperClassLoc, diag::err_conflicting_super_class, 
-             SuperClassname->getName());
+             SDecl->getName());
         Diag(SDecl->getLocation(), diag::err_previous_definition);
       }
     }
