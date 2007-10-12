@@ -60,7 +60,10 @@
     if the requested precision is less than the natural precision the
     output is correctly rounded for the specified rounding mode.
 
-    Conversion to and from decimal text is not currently implemented.
+    It also reads decimal floating point numbers and correctly rounds
+    according to the specified rounding mode.
+
+    Conversion to decimal text is not currently implemented.
 
     Non-zero finite numbers are represented internally as a sign bit,
     a 16-bit signed exponent, and the significand as an array of
@@ -83,13 +86,12 @@
 
     Some features that may or may not be worth adding:
 
-    Conversions to and from decimal strings (hard).
+    Binary to decimal conversion (hard).
 
     Optional ability to detect underflow tininess before rounding.
 
     New formats: x87 in single and double precision mode (IEEE apart
-    from extended exponent range) and IBM two-double extended
-    precision (hard).
+    from extended exponent range) (hard).
 
     New operations: sqrt, IEEE remainder, C90 fmod, nextafter,
     nexttoward.
@@ -186,10 +188,12 @@ namespace llvm {
     opStatus multiply(const APFloat &, roundingMode);
     opStatus divide(const APFloat &, roundingMode);
     opStatus mod(const APFloat &, roundingMode);
-    void copySign(const APFloat &);
     opStatus fusedMultiplyAdd(const APFloat &, const APFloat &, roundingMode);
-    void changeSign();    // neg
-    void clearSign();     // abs
+
+    /* Sign operations.  */
+    void changeSign();
+    void clearSign();
+    void copySign(const APFloat &);
 
     /* Conversions.  */
     opStatus convert(const fltSemantics &, roundingMode);
@@ -272,8 +276,12 @@ namespace llvm {
     opStatus convertFromUnsignedParts(const integerPart *, unsigned int,
                                       roundingMode);
     opStatus convertFromHexadecimalString(const char *, roundingMode);
+    opStatus convertFromDecimalString (const char *, roundingMode);
     char *convertNormalToHexString(char *, unsigned int, bool,
                                    roundingMode) const;
+    opStatus roundSignificandWithExponent(const integerPart *, unsigned int,
+                                          int, roundingMode);
+
     APInt convertFloatAPFloatToAPInt() const;
     APInt convertDoubleAPFloatToAPInt() const;
     APInt convertF80LongDoubleAPFloatToAPInt() const;

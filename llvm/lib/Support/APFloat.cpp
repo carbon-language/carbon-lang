@@ -52,6 +52,23 @@ namespace llvm {
   // onto the usual format above.  For now only storage of constants of
   // this type is supported, no arithmetic.
   const fltSemantics APFloat::PPCDoubleDouble = { 1023, -1022, 106 };
+
+  /* A tight upper bound on number of parts required to hold the value
+     pow(5, power) is
+
+       power * 1024 / (441 * integerPartWidth) + 1
+       
+     However, whilst the result may require only this many parts,
+     because we are multiplying two values to get it, the
+     multiplication may require an extra part with the excess part
+     being zero (consider the trivial case of 1 * 1, tcFullMultiply
+     requires two parts to hold the single-part result).  So we add an
+     extra one to guarantee enough space whilst multiplying.  */
+  const unsigned int maxExponent = 16383;
+  const unsigned int maxPrecision = 113;
+  const unsigned int maxPowerOfFiveExponent = maxExponent + maxPrecision - 1;
+  const unsigned int maxPowerOfFiveParts = 2 + ((maxPowerOfFiveExponent * 1024)
+                                                / (441 * integerPartWidth));
 }
 
 /* Put a bunch of private, handy routines in an anonymous namespace.  */
@@ -76,7 +93,7 @@ namespace {
   }
 
   unsigned int
-  hexDigitValue (unsigned int c)
+  hexDigitValue(unsigned int c)
   {
     unsigned int r;
 
@@ -237,6 +254,142 @@ namespace {
     }
 
     return moreSignificant;
+  }
+
+  /* The error from the true value, in half-ulps, on multiplying two
+     floating point numbers, which differ from the value they
+     approximate by at most HUE1 and HUE2 half-ulps, is strictly less
+     than the returned value.
+
+     See "How to Read Floating Point Numbers Accurately" by William D
+     Clinger.  */
+  unsigned int
+  HUerrBound(bool inexactMultiply, unsigned int HUerr1, unsigned int HUerr2)
+  {
+    assert(HUerr1 < 2 || HUerr2 < 2 || (HUerr1 + HUerr2 < 8));
+
+    if (HUerr1 + HUerr2 == 0)
+      return inexactMultiply * 2;  /* <= inexactMultiply half-ulps.  */
+    else
+      return inexactMultiply + 2 * (HUerr1 + HUerr2);
+  }
+
+  /* The number of ulps from the boundary (zero, or half if ISNEAREST)
+     when the least significant BITS are truncated.  BITS cannot be
+     zero.  */
+  integerPart
+  ulpsFromBoundary(const integerPart *parts, unsigned int bits, bool isNearest)
+  {
+    unsigned int count, partBits;
+    integerPart part, boundary;
+
+    assert (bits != 0);
+
+    bits--;
+    count = bits / integerPartWidth;
+    partBits = bits % integerPartWidth + 1;
+
+    part = parts[count] & (~(integerPart) 0 >> (integerPartWidth - partBits));
+
+    if (isNearest)
+      boundary = (integerPart) 1 << (partBits - 1);
+    else
+      boundary = 0;
+
+    if (count == 0) {
+      if (part - boundary <= boundary - part)
+        return part - boundary;
+      else
+        return boundary - part;
+    }
+
+    if (part == boundary) {
+      while (--count)
+        if (parts[count])
+          return ~(integerPart) 0; /* A lot.  */
+
+      return parts[0];
+    } else if (part == boundary - 1) {
+      while (--count)
+        if (~parts[count])
+          return ~(integerPart) 0; /* A lot.  */
+
+      return -parts[0];
+    }
+
+    return ~(integerPart) 0; /* A lot.  */
+  }
+
+  /* Place pow(5, power) in DST, and return the number of parts used.
+     DST must be at least one part larger than size of the answer.  */
+  static unsigned int
+  powerOf5(integerPart *dst, unsigned int power)
+  {
+    /* A tight upper bound on number of parts required to hold the
+       value pow(5, power) is
+
+         power * 65536 / (28224 * integerPartWidth) + 1
+
+       However, whilst the result may require only N parts, because we
+       are multiplying two values to get it, the multiplication may
+       require N + 1 parts with the excess part being zero (consider
+       the trivial case of 1 * 1, the multiplier requires two parts to
+       hold the single-part result).  So we add two to guarantee
+       enough space whilst multiplying.  */
+    static integerPart firstEightPowers[] = { 1, 5, 25, 125, 625, 3125,
+                                              15625, 78125 };
+    static integerPart pow5s[maxPowerOfFiveParts * 2 + 5] = { 78125 * 5 };
+    static unsigned int partsCount[16] = { 1 };
+
+    integerPart scratch[maxPowerOfFiveParts], *p1, *p2, *pow5;
+    unsigned int result;
+
+    assert(power <= maxExponent);
+
+    p1 = dst;
+    p2 = scratch;
+
+    *p1 = firstEightPowers[power & 7];
+    power >>= 3;
+
+    result = 1;
+    pow5 = pow5s;
+
+    for (unsigned int n = 0; power; power >>= 1, n++) {
+      unsigned int pc;
+
+      pc = partsCount[n];
+
+      /* Calculate pow(5,pow(2,n+3)) if we haven't yet.  */
+      if (pc == 0) {
+        pc = partsCount[n - 1];
+        APInt::tcFullMultiply(pow5, pow5 - pc, pow5 - pc, pc, pc);
+        pc *= 2;
+        if (pow5[pc - 1] == 0)
+          pc--;
+        partsCount[n] = pc;
+      }
+
+      if (power & 1) {
+        integerPart *tmp;
+
+        APInt::tcFullMultiply(p2, p1, pow5, result, pc);
+        result += pc;
+        if (p2[result - 1] == 0)
+          result--;
+
+        /* Now result is in p1 with partsCount parts and p2 is scratch
+           space.  */
+        tmp = p1, p1 = p2, p2 = tmp;
+      }
+
+      pow5 += pc;
+    }
+
+    if (p1 != dst)
+      APInt::tcAssign(dst, p1, result);
+
+    return result;
   }
 
   /* Zero at the end to avoid modular arithmetic when adding one; used
@@ -650,6 +803,9 @@ APFloat::divideSignificand(const APFloat &rhs)
     APInt::tcShiftLeft(dividend, partsCount, bit);
   }
 
+  /* Ensure the dividend >= divisor initially for the loop below.
+     Incidentally, this means that the division loop below is
+     guaranteed to set the integer bit to one.  */
   if(APInt::tcCompare(dividend, divisor, partsCount) < 0) {
     exponent--;
     APInt::tcShiftLeft(dividend, partsCount, 1);
@@ -865,7 +1021,7 @@ APFloat::normalize(roundingMode rounding_mode,
 
       /* Keep OMSB up-to-date.  */
       if(omsb > (unsigned) exponentChange)
-        omsb -= (unsigned) exponentChange;
+        omsb -= exponentChange;
       else
         omsb = 0;
     }
@@ -916,7 +1072,6 @@ APFloat::normalize(roundingMode rounding_mode,
 
   /* We have a non-zero denormal.  */
   assert(omsb < semantics->precision);
-  assert(exponent == semantics->minExponent);
 
   /* Canonicalize zeroes.  */
   if(omsb == 0)
@@ -1751,6 +1906,195 @@ APFloat::convertFromHexadecimalString(const char *p,
 }
 
 APFloat::opStatus
+APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
+                                      unsigned sigPartCount, int exp,
+                                      roundingMode rounding_mode)
+{
+  unsigned int parts, pow5PartCount;
+  fltSemantics calcSemantics = { 32767, -32767, 0 };
+  integerPart pow5Parts[maxPowerOfFiveParts];
+  bool isNearest;
+
+  isNearest = (rounding_mode == rmNearestTiesToEven
+               || rounding_mode == rmNearestTiesToAway);
+
+  parts = partCountForBits(semantics->precision + 11);
+
+  /* Calculate pow(5, abs(exp)).  */
+  pow5PartCount = powerOf5(pow5Parts, exp >= 0 ? exp: -exp);
+
+  for (;; parts *= 2) {
+    opStatus sigStatus, powStatus;
+    unsigned int excessPrecision, truncatedBits;
+
+    calcSemantics.precision = parts * integerPartWidth - 1;
+    excessPrecision = calcSemantics.precision - semantics->precision;
+    truncatedBits = excessPrecision;
+
+    APFloat decSig(calcSemantics, fcZero, sign);
+    APFloat pow5(calcSemantics, fcZero, false);
+
+    sigStatus = decSig.convertFromUnsignedParts(decSigParts, sigPartCount,
+                                                rmNearestTiesToEven);
+    powStatus = pow5.convertFromUnsignedParts(pow5Parts, pow5PartCount,
+                                              rmNearestTiesToEven);
+    /* Add exp, as 10^n = 5^n * 2^n.  */
+    decSig.exponent += exp;
+
+    lostFraction calcLostFraction;
+    integerPart HUerr, HUdistance, powHUerr;
+
+    if (exp >= 0) {
+      /* multiplySignificand leaves the precision-th bit set to 1.  */
+      calcLostFraction = decSig.multiplySignificand(pow5, NULL);
+      powHUerr = powStatus != opOK;
+    } else {
+      calcLostFraction = decSig.divideSignificand(pow5);
+      /* Denormal numbers have less precision.  */
+      if (decSig.exponent < semantics->minExponent) {
+        excessPrecision += (semantics->minExponent - decSig.exponent);
+        truncatedBits = excessPrecision;
+        if (excessPrecision > calcSemantics.precision)
+          excessPrecision = calcSemantics.precision;
+      }
+      /* Extra half-ulp lost in reciprocal of exponent.  */
+      powHUerr = 1 + powStatus != opOK;
+    }
+
+    /* Both multiplySignificand and divideSignificand return the
+       result with the integer bit set.  */
+    assert (APInt::tcExtractBit
+            (decSig.significandParts(), calcSemantics.precision - 1) == 1);
+
+    HUerr = HUerrBound(calcLostFraction != lfExactlyZero, sigStatus != opOK,
+                       powHUerr);
+    HUdistance = 2 * ulpsFromBoundary(decSig.significandParts(),
+                                      excessPrecision, isNearest);
+
+    /* Are we guaranteed to round correctly if we truncate?  */
+    if (HUdistance >= HUerr) {
+      APInt::tcExtract(significandParts(), partCount(), decSig.significandParts(),
+                       calcSemantics.precision - excessPrecision,
+                       excessPrecision);
+      /* Take the exponent of decSig.  If we tcExtract-ed less bits
+         above we must adjust our exponent to compensate for the
+         implicit right shift.  */
+      exponent = (decSig.exponent + semantics->precision
+                  - (calcSemantics.precision - excessPrecision));
+      calcLostFraction = lostFractionThroughTruncation(decSig.significandParts(),
+                                                       decSig.partCount(),
+                                                       truncatedBits);
+      return normalize(rounding_mode, calcLostFraction);
+    }
+  }
+}
+
+APFloat::opStatus
+APFloat::convertFromDecimalString(const char *p, roundingMode rounding_mode)
+{
+  const char *dot, *firstSignificantDigit;
+  integerPart val, maxVal, decValue;
+  opStatus fs;
+
+  /* Skip leading zeroes and any decimal point.  */
+  p = skipLeadingZeroesAndAnyDot(p, &dot);
+  firstSignificantDigit = p;
+
+  /* The maximum number that can be multiplied by ten with any digit
+     added without overflowing an integerPart.  */
+  maxVal = (~ (integerPart) 0 - 9) / 10;
+
+  val = 0;
+  while (val <= maxVal) {
+    if (*p == '.') {
+      assert(dot == 0);
+      dot = p++;
+    }
+
+    decValue = digitValue(*p);
+    if (decValue == -1U)
+      break;
+    p++;
+    val = val * 10 + decValue;
+  }
+
+  integerPart *decSignificand;
+  unsigned int partCount, maxPartCount;
+
+  partCount = 0;
+  maxPartCount = 4;
+  decSignificand = new integerPart[maxPartCount];
+  decSignificand[partCount++] = val;
+
+  /* Now continue to do single-part arithmetic for as long as we can.
+     Then do a part multiplication, and repeat.  */
+  while (decValue != -1U) {
+    integerPart multiplier;
+
+    val = 0;
+    multiplier = 1;
+
+    while (multiplier <= maxVal) {
+      if (*p == '.') {
+        assert(dot == 0);
+        dot = p++;
+      }
+
+      decValue = digitValue(*p);
+      if (decValue == -1U)
+        break;
+      p++;
+      multiplier *= 10;
+      val = val * 10 + decValue;
+    }
+
+    if (partCount == maxPartCount) {
+      integerPart *newDecSignificand;
+      newDecSignificand = new integerPart[maxPartCount = partCount * 2];
+      APInt::tcAssign(newDecSignificand, decSignificand, partCount);
+      delete [] decSignificand;
+      decSignificand = newDecSignificand;
+    }
+
+    APInt::tcMultiplyPart(decSignificand, decSignificand, multiplier, val,
+                          partCount, partCount + 1, false);
+
+    /* If we used another part (likely), increase the count.  */
+    if (decSignificand[partCount] != 0)
+      partCount++;
+  }
+
+  /* Now decSignificand contains the supplied significand ignoring the
+     decimal point.  Figure out our effective exponent, which is the
+     specified exponent adjusted for any decimal point.  */
+
+  if (p == firstSignificantDigit) {
+    /* Ignore the exponent if we are zero - we cannot overflow.  */
+    category = fcZero;
+    fs = opOK;
+  } else {
+    int decimalExponent;
+
+    if (dot)
+      decimalExponent = dot + 1 - p;
+    else
+      decimalExponent = 0;
+
+    /* Add the given exponent.  */
+    if (*p == 'e' || *p == 'E')
+      decimalExponent = totalExponent(p, decimalExponent);
+
+    category = fcNormal;
+    fs = roundSignificandWithExponent(decSignificand, partCount,
+                                      decimalExponent, rounding_mode);
+  }
+
+  delete [] decSignificand;
+
+  return fs;
+}
+
+APFloat::opStatus
 APFloat::convertFromString(const char *p, roundingMode rounding_mode)
 {
   assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
@@ -1763,9 +2107,8 @@ APFloat::convertFromString(const char *p, roundingMode rounding_mode)
 
   if(p[0] == '0' && (p[1] == 'x' || p[1] == 'X'))
     return convertFromHexadecimalString(p + 2, rounding_mode);
-
-  assert(0 && "Decimal to binary conversions not yet implemented");
-  abort();
+  else
+    return convertFromDecimalString(p, rounding_mode);
 }
 
 /* Write out a hexadecimal representation of the floating point value
