@@ -284,8 +284,11 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
       setOperationAction(ISD::SMUL_LOHI, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::UDIVREM, (MVT::ValueType)VT, Expand);
       setOperationAction(ISD::SDIVREM, (MVT::ValueType)VT, Expand);
-
       setOperationAction(ISD::SCALAR_TO_VECTOR, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::FPOW, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::CTPOP, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::CTLZ, (MVT::ValueType)VT, Expand);
+      setOperationAction(ISD::CTTZ, (MVT::ValueType)VT, Expand);
     }
 
     // We can custom expand all VECTOR_SHUFFLEs to VPERM, others we can handle
