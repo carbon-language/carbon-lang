@@ -1947,7 +1947,7 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
           excessPrecision = calcSemantics.precision;
       }
       /* Extra half-ulp lost in reciprocal of exponent.  */
-      powHUerr = 1 + powStatus != opOK;
+      powHUerr = (powStatus == opOK && calcLostFraction == lfExactlyZero) ? 0: 2;
     }
 
     /* Both multiplySignificand and divideSignificand return the
