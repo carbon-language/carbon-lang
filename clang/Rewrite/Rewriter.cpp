@@ -114,17 +114,26 @@ void RewriteBuffer::InsertText(unsigned OrigOffset,
 /// operation.
 void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
                                 const char *NewStr, unsigned NewLength) {
-  InsertText(OrigOffset, NewStr, NewLength);
-  return;
+  unsigned RealOffset = getMappedOffset(OrigOffset);
+  assert(RealOffset+OrigLength <= Buffer.size() && "Invalid location");
+
+  // Overwrite the common piece.
+  memcpy(&Buffer[RealOffset], NewStr, std::min(OrigLength, NewLength));
   
-  unsigned MappedOffs = getMappedOffset(OrigOffset);
-  // TODO: FIXME location.
-  assert(OrigOffset+OrigLength <= Buffer.size() && "Invalid location");
-  if (OrigLength == NewLength) {
-    // If replacing without shifting around, just overwrite the text.
-    memcpy(&Buffer[OrigOffset], NewStr, NewLength);
+  // If replacing without shifting around, just overwrite the text.
+  if (OrigLength == NewLength)
     return;
+
+  // If inserting more than existed before, this is like an insertion.
+  if (NewLength > OrigLength) {
+    Buffer.insert(Buffer.begin()+RealOffset+OrigLength,
+                  NewStr+OrigLength, NewStr+NewLength);
+  } else {
+    // If insertion less than existed before, this is like a removal.
+    Buffer.erase(Buffer.begin()+RealOffset+NewLength,
+                 Buffer.begin()+RealOffset+OrigLength);
   }
+  AddDelta(OrigOffset, NewLength-OrigLength);
 }
 
 

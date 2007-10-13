@@ -78,7 +78,7 @@ RewriteTest::~RewriteTest() {
       SourceLocation::getFileLoc(MainFileID, BufPtr-MainBufStart);
     
     // Rewrite the single tab character into a sequence of spaces.
-    Rewrite.ReplaceText(TabLoc, 1, "xxxxxxxxxxx", Spaces);
+    Rewrite.ReplaceText(TabLoc, 1, "        ", Spaces);
   }
   
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
