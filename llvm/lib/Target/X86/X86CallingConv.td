@@ -213,7 +213,7 @@ def CC_X86_32_TailCall : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
-  // Nested functions are currently not supported by fastcc.
+  // Nested function trampolines are currently not supported by fastcc.
   
   // The first 3 integer arguments, if marked 'inreg' and if the call is not
   // a vararg call, are passed in integer registers.
