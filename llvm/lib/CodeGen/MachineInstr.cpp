@@ -58,16 +58,17 @@ void MachineInstr::addImplicitDefUseOperands() {
 /// implicit operands. It reserves space for number of operands specified by
 /// TargetInstrDescriptor or the numOperands if it is not zero. (for
 /// instructions with variable number of operands).
-MachineInstr::MachineInstr(const TargetInstrDescriptor &tid)
+MachineInstr::MachineInstr(const TargetInstrDescriptor &tid, bool NoImp)
   : TID(&tid), NumImplicitOps(0), parent(0) {
-  if (TID->ImplicitDefs)
+  if (!NoImp && TID->ImplicitDefs)
     for (const unsigned *ImpDefs = TID->ImplicitDefs; *ImpDefs; ++ImpDefs)
       NumImplicitOps++;
-  if (TID->ImplicitUses)
+  if (!NoImp && TID->ImplicitUses)
     for (const unsigned *ImpUses = TID->ImplicitUses; *ImpUses; ++ImpUses)
       NumImplicitOps++;
   Operands.reserve(NumImplicitOps + TID->numOperands);
-  addImplicitDefUseOperands();
+  if (!NoImp)
+    addImplicitDefUseOperands();
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
 }
