@@ -156,10 +156,10 @@ namespace {
     /// SimplifyDemandedBits - Check the specified integer node value to see if
     /// it can be simplified or if things it uses can be simplified by bit
     /// propagation.  If so, return true.
-    bool SimplifyDemandedBits(SDOperand Op) {
+    bool SimplifyDemandedBits(SDOperand Op, uint64_t Demanded = ~0ULL) {
       TargetLowering::TargetLoweringOpt TLO(DAG);
       uint64_t KnownZero, KnownOne;
-      uint64_t Demanded = MVT::getIntVTBitMask(Op.getValueType());
+      Demanded &= MVT::getIntVTBitMask(Op.getValueType());
       if (!TLI.SimplifyDemandedBits(Op, Demanded, KnownZero, KnownOne, TLO))
         return false;
 
@@ -2809,6 +2809,20 @@ SDOperand DAGCombiner::GetDemandedBits(SDOperand V, uint64_t Mask) {
     if (DAG.MaskedValueIsZero(V.getOperand(1), Mask))
       return V.getOperand(0);
     break;
+  case ISD::SRL:
+    // Only look at single-use SRLs.
+    if (!V.Val->hasOneUse())
+      break;
+    if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(V.getOperand(1))) {
+      // See if we can recursively simplify the LHS.
+      unsigned Amt = RHSC->getValue();
+      Mask = (Mask << Amt) & MVT::getIntVTBitMask(V.getValueType());
+      SDOperand SimplifyLHS = GetDemandedBits(V.getOperand(0), Mask);
+      if (SimplifyLHS.Val) {
+        return DAG.getNode(ISD::SRL, V.getValueType(), 
+                           SimplifyLHS, V.getOperand(1));
+      }
+    }
   }
   return SDOperand();
 }
@@ -4040,6 +4054,11 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
       return DAG.getTruncStore(Chain, Shorter, Ptr, ST->getSrcValue(),
                                ST->getSrcValueOffset(), ST->getStoredVT(),
                                ST->isVolatile(), ST->getAlignment());
+    
+    // Otherwise, see if we can simplify the operation with
+    // SimplifyDemandedBits, which only works if the value has a single use.
+    if (SimplifyDemandedBits(Value, MVT::getIntVTBitMask(ST->getStoredVT())))
+      return SDOperand(N, 0);
   }
   
   return SDOperand();
