@@ -85,8 +85,9 @@ RewriteTest::~RewriteTest() {
   // we are done.
   if (const RewriteBuffer *RewriteBuf = 
           Rewrite.getRewriteBufferFor(MainFileID)) {
-    RewriteBuf = 0;
-    printf("Changed\n");
+    printf("Changed:\n");
+    std::string S(RewriteBuf->begin(), RewriteBuf->end());
+    printf("%s\n", S.c_str());
   } else {
     printf("No changes\n");
   }

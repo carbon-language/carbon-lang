@@ -29,6 +29,13 @@ namespace clang {
 struct SourceDelta {
   unsigned FileLoc;
   int Delta;
+  
+  static SourceDelta get(unsigned Loc, int D) {
+    SourceDelta Delta;
+    Delta.FileLoc = Loc;
+    Delta.Delta = D;
+    return Delta;
+  }
 };
 
 
@@ -51,6 +58,10 @@ class RewriteBuffer {
 public:
 
   
+  typedef std::vector<char>::const_iterator iterator;
+  iterator begin() const { return Buffer.begin(); }
+  iterator end() const { return Buffer.end(); }
+  
   
 private:  // Methods only usable by Rewriter.
   
@@ -59,6 +70,18 @@ private:  // Methods only usable by Rewriter.
   void Initialize(const char *BufStart, const char *BufEnd) {
     Buffer.assign(BufStart, BufEnd);
   }
+  
+  /// getMappedOffset - Given an offset into the original SourceBuffer that this
+  /// RewriteBuffer is based on, map it into the offset space of the
+  /// RewriteBuffer.  If AfterInserts is true and if the OrigOffset indicates a
+  /// position where text is inserted, the location returned will be after any
+  /// inserted text at the position.
+  unsigned getMappedOffset(unsigned OrigOffset, bool AfterInserts = false)const;
+  
+  
+  /// AddDelta - When a change is made that shifts around the text buffer, this
+  /// method is used to record that info.
+  void AddDelta(unsigned OrigOffset, int Change);
   
   /// RemoveText - Remove the specified text.
   void RemoveText(unsigned OrigOffset, unsigned Size);
@@ -70,6 +93,13 @@ private:  // Methods only usable by Rewriter.
   /// after the atomic point: i.e. whether the atomic point is moved to after
   /// the inserted text or not.
   void InsertText(unsigned OrigOffset, const char *StrData, unsigned StrLen);
+  
+  /// ReplaceText - This method replaces a range of characters in the input
+  /// buffer with a new string.  This is effectively a combined "remove/insert"
+  /// operation.
+  void ReplaceText(unsigned OrigOffset, unsigned OrigLength,
+                   const char *NewStr, unsigned NewLength);
+  
 };
   
 
@@ -116,6 +146,8 @@ public:
   }
 private:
   RewriteBuffer &getEditBuffer(unsigned FileID);
+  unsigned getLocationOffsetAndFileID(SourceLocation Loc,
+                                      unsigned &FileID) const;
 };
   
 } // end namespace clang
