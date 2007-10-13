@@ -295,6 +295,8 @@ namespace {
     SDNode *MatchRotate(SDOperand LHS, SDOperand RHS);
     SDOperand ReduceLoadWidth(SDNode *N);
     
+    SDOperand GetDemandedBits(SDOperand V, uint64_t Mask);
+    
     /// GatherAllAliases - Walk up chain skipping non-aliasing memory nodes,
     /// looking for aliasing nodes and adding them to the Aliases vector.
     void GatherAllAliases(SDNode *N, SDOperand OriginalChain,
@@ -2793,6 +2795,24 @@ SDOperand DAGCombiner::visitANY_EXTEND(SDNode *N) {
   return SDOperand();
 }
 
+/// GetDemandedBits - See if the specified operand can be simplified with the
+/// knowledge that only the bits specified by Mask are used.  If so, return the
+/// simpler operand, otherwise return a null SDOperand.
+SDOperand DAGCombiner::GetDemandedBits(SDOperand V, uint64_t Mask) {
+  switch (V.getOpcode()) {
+  default: break;
+  case ISD::OR:
+  case ISD::XOR:
+    // If the LHS or RHS don't contribute bits to the or, drop them.
+    if (DAG.MaskedValueIsZero(V.getOperand(0), Mask))
+      return V.getOperand(1);
+    if (DAG.MaskedValueIsZero(V.getOperand(1), Mask))
+      return V.getOperand(0);
+    break;
+  }
+  return SDOperand();
+}
+
 /// ReduceLoadWidth - If the result of a wider load is shifted to right of N
 /// bits and then truncated to a narrower type and where N is a multiple
 /// of number of bits of the narrower type, transform it to a narrower load
@@ -2985,6 +3005,13 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
       // and the truncate
       return N0.getOperand(0);
   }
+
+  // See if we can simplify the input to this truncate through knowledge that
+  // only the low bits are being used.  For example "trunc (or (shl x, 8), y)"
+  // -> trunc y
+  SDOperand Shorter = GetDemandedBits(N0, MVT::getIntVTBitMask(VT));
+  if (Shorter.Val)
+    return DAG.getNode(ISD::TRUNCATE, VT, Shorter);
 
   // fold (truncate (load x)) -> (smaller load x)
   // fold (truncate (srl (load x), c)) -> (smaller load (x+c/evtbits))
@@ -4000,6 +4027,21 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   if (CombineToPreIndexedLoadStore(N) || CombineToPostIndexedLoadStore(N))
     return SDOperand(N, 0);
 
+  // FIXME: is there such a think as a truncating indexed store?
+  if (ST->isTruncatingStore() && ST->getAddressingMode() == ISD::UNINDEXED &&
+      MVT::isInteger(Value.getValueType())) {
+    // See if we can simplify the input to this truncstore with knowledge that
+    // only the low bits are being used.  For example:
+    // "truncstore (or (shl x, 8), y), i8"  -> "truncstore y, i8"
+    SDOperand Shorter = 
+      GetDemandedBits(Value, MVT::getIntVTBitMask(ST->getStoredVT()));
+    AddToWorkList(Value.Val);
+    if (Shorter.Val)
+      return DAG.getTruncStore(Chain, Shorter, Ptr, ST->getSrcValue(),
+                               ST->getSrcValueOffset(), ST->getStoredVT(),
+                               ST->isVolatile(), ST->getAlignment());
+  }
+  
   return SDOperand();
 }
 

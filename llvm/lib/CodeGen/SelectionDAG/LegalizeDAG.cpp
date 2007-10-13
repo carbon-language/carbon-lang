@@ -2025,7 +2025,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // probably means that we need to integrate dag combiner and legalizer
       // together.
       // We generally can't do this one for long doubles.
-      if (ConstantFPSDNode *CFP =dyn_cast<ConstantFPSDNode>(ST->getValue())) {
+      if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(ST->getValue())) {
         if (CFP->getValueType(0) == MVT::f32) {
           Tmp3 = DAG.getConstant((uint32_t)CFP->getValueAPF().
                                           convertToAPInt().getZExtValue(),
