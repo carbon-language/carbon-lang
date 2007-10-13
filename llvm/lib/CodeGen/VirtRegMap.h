@@ -181,6 +181,10 @@ namespace llvm {
     void virtFolded(unsigned VirtReg, MachineInstr *OldMI, unsigned OpNum,
                     MachineInstr *NewMI);
 
+    /// @brief Updates information about the specified virtual register's value
+    /// folded into the specified machine instruction.
+    void virtFolded(unsigned VirtReg, MachineInstr *MI, ModRef MRInfo);
+
     /// @brief returns the virtual registers' values folded in memory
     /// operands of this instruction
     std::pair<MI2VirtMapTy::const_iterator, MI2VirtMapTy::const_iterator>

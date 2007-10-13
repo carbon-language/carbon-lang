@@ -139,6 +139,11 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
   MI2VirtMap.insert(IP, std::make_pair(NewMI, std::make_pair(VirtReg, MRInfo)));
 }
 
+void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *MI, ModRef MRInfo) {
+  MI2VirtMapTy::iterator IP = MI2VirtMap.lower_bound(MI);
+  MI2VirtMap.insert(IP, std::make_pair(MI, std::make_pair(VirtReg, MRInfo)));
+}
+
 void VirtRegMap::print(std::ostream &OS) const {
   const MRegisterInfo* MRI = MF.getTarget().getRegisterInfo();
 
@@ -1059,6 +1064,19 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             Erased = true;
             goto ProcessNextInst;
           }
+        } else {
+          unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SS);
+          SmallVector<MachineInstr*, 4> NewMIs;
+          if (PhysReg &&
+              MRI->unfoldMemoryOperand(MF, &MI, PhysReg, false, false, NewMIs)) {
+            MBB.insert(MII, NewMIs[0]);
+            VRM.RemoveFromFoldedVirtMap(&MI);
+            MBB.erase(&MI);
+            Erased = true;
+            --NextMII;  // backtrack to the unfolded instruction.
+            BackTracked = true;
+            goto ProcessNextInst;
+          }
         }
       }
 
@@ -1066,16 +1084,44 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       // Otherwise, the store to this stack slot is not dead anymore.
       MachineInstr* DeadStore = MaybeDeadStores[SS];
       if (DeadStore) {
-        if (!(MR & VirtRegMap::isRef)) {  // Previous store is dead.
+        bool isDead = true;
+        MachineInstr *NewStore = NULL;
+        if (MR & VirtRegMap::isRef) {
+          unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SS);
+          SmallVector<MachineInstr*, 4> NewMIs;
+          if (PhysReg &&
+              DeadStore->findRegisterUseOperandIdx(PhysReg, true) != -1 &&
+              MRI->unfoldMemoryOperand(MF, &MI, PhysReg, false, true, NewMIs)) {
+            MBB.insert(MII, NewMIs[0]);
+            NewStore = NewMIs[1];
+            MBB.insert(MII, NewStore);
+            VRM.RemoveFromFoldedVirtMap(&MI);
+            MBB.erase(&MI);
+            Erased = true;
+            --NextMII;
+            --NextMII;  // backtrack to the unfolded instruction.
+            BackTracked = true;
+          } else
+            isDead = false;
+        }
+
+        if (isDead) {  // Previous store is dead.
           // If we get here, the store is dead, nuke it now.
-          assert(VirtRegMap::isMod && "Can't be modref!");
           DOUT << "Removed dead store:\t" << *DeadStore;
           InvalidateKills(*DeadStore, RegKills, KillOps);
-          MBB.erase(DeadStore);
           VRM.RemoveFromFoldedVirtMap(DeadStore);
-          ++NumDSE;
+          MBB.erase(DeadStore);
+          if (!NewStore)
+            ++NumDSE;
         }
+
         MaybeDeadStores[SS] = NULL;
+        if (NewStore) {
+          // Treat this store as a spill merged into a copy. That makes the
+          // stack slot value available.
+          VRM.virtFolded(VirtReg, NewStore, VirtRegMap::isMod);
+          goto ProcessNextInst;
+        }
       }
 
       // If the spill slot value is available, and this is a new definition of
