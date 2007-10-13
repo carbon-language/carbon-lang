@@ -27,7 +27,7 @@ unsigned RewriteBuffer::getMappedOffset(unsigned OrigOffset,
   // Move past any deltas that are relevant.
   // FIXME: binary search.
   for (; DeltaIdx != Deltas.size() && 
-       OrigOffset < Deltas[DeltaIdx].FileLoc; ++DeltaIdx)
+       Deltas[DeltaIdx].FileLoc < OrigOffset; ++DeltaIdx)
     ResultOffset += Deltas[DeltaIdx].Delta;
 
   if (AfterInserts && DeltaIdx != Deltas.size() && 
@@ -44,7 +44,7 @@ void RewriteBuffer::AddDelta(unsigned OrigOffset, int Change) {
   
   // Skip over any unrelated deltas.
   for (; DeltaIdx != Deltas.size() && 
-       OrigOffset < Deltas[DeltaIdx].FileLoc; ++DeltaIdx)
+       Deltas[DeltaIdx].FileLoc < OrigOffset; ++DeltaIdx)
     ;
   
   // If there is no a delta for this offset, insert a new delta record.
