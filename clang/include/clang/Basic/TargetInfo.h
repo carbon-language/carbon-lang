@@ -185,10 +185,8 @@ public:
 
   /// getVAListDeclaration - Return the declaration to use for
   /// __builtin_va_list, which is target-specific.
-  const char *getVAListDeclaration() const {
-    // FIXME: dispatch to target impl.
-    return "typedef char* __builtin_va_list;";
-  }
+  const char *getVAListDeclaration() const;
+
   ///===---- Some helper methods ------------------------------------------===//
 
   unsigned getCharWidth(SourceLocation Loc) {
@@ -244,6 +242,10 @@ public:
   /// "#define X Y\n".
   virtual void getTargetDefines(std::vector<char> &Defines) const = 0;
 
+  /// getVAListDeclaration - Return the declaration to use for
+  /// __builtin_va_list, which is target-specific.
+  virtual const char *getVAListDeclaration() const = 0;
+  
   /// getWCharWidth - Return the size of wchar_t in bits.
   ///
   void getWCharInfo(unsigned &Size, unsigned &Align) const {

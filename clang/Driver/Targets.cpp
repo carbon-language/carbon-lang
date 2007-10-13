@@ -279,6 +279,32 @@ static void getX86Defines(std::vector<char> &Defs, bool is64Bit) {
   Define(Defs, "__LDBL_MIN__", "3.36210314311209350626e-4932L");
 }
 
+static const char* getI386VAListDeclaration() {
+  return "typedef char* __builtin_va_list;";
+}
+
+static const char* getX86_64VAListDeclaration() {
+  return 
+    "typedef struct __va_list_tag {"
+    "  unsigned gp_offset;"
+    "  unsigned fp_offset;"
+    "  void* overflow_arg_area;"
+    "  void* reg_save_area;"
+    "} __builtin_va_list[1];";
+}
+
+static const char* getPPCVAListDeclaration() {
+  return 
+    "typedef struct __va_list_tag {"
+    "  unsigned char gpr;"
+    "  unsigned char fpr;"
+    "  unsigned short reserved;"
+    "  void* overflow_arg_area;"
+    "  void* reg_save_area;"
+    "} __builtin_va_list[1];";
+}
+
+
 /// PPC builtin info.
 namespace PPC {
   enum {
@@ -336,6 +362,9 @@ public:
                                  unsigned &NumRecords) const {
     PPC::getBuiltins(Records, NumRecords);
   }
+  virtual const char *getVAListDeclaration() const {
+    return getPPCVAListDeclaration();
+  }  
 };
 } // end anonymous namespace.
 
@@ -350,6 +379,9 @@ public:
                                  unsigned &NumRecords) const {
     PPC::getBuiltins(Records, NumRecords);
   }
+  virtual const char *getVAListDeclaration() const {
+    return getPPCVAListDeclaration();
+  }  
 };
 } // end anonymous namespace.
 
@@ -363,6 +395,10 @@ public:
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const {
     X86::getBuiltins(Records, NumRecords);
+  }
+  
+  virtual const char *getVAListDeclaration() const {
+    return getI386VAListDeclaration();
   }
 };
 } // end anonymous namespace.
@@ -378,6 +414,9 @@ public:
                                  unsigned &NumRecords) const {
     X86::getBuiltins(Records, NumRecords);
   }
+  virtual const char *getVAListDeclaration() const {
+    return getX86_64VAListDeclaration();
+  }  
 };
 } // end anonymous namespace.
 
@@ -398,6 +437,9 @@ public:
                                  unsigned &NumRecords) const {
     X86::getBuiltins(Records, NumRecords);
   }
+  virtual const char *getVAListDeclaration() const {
+    return getI386VAListDeclaration();
+  }  
 };
 } // end anonymous namespace.
 

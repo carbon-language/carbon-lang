@@ -260,4 +260,9 @@ void TargetInfo::getTargetBuiltins(const Builtin::Info *&Records,
   }
 }
 
+/// getVAListDeclaration - Return the declaration to use for
+/// __builtin_va_list, which is target-specific.
+const char *TargetInfo::getVAListDeclaration() const {
+  return PrimaryTarget->getVAListDeclaration();
+}
 
