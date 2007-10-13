@@ -96,8 +96,17 @@ void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {
 
 void RewriteBuffer::InsertText(unsigned OrigOffset,
                                const char *StrData, unsigned StrLen) {
+  // Nothing to insert, exit early.
   if (StrLen == 0) return;
-  // FIXME:
+  
+  unsigned RealOffset = getMappedOffset(OrigOffset, true);
+  assert(RealOffset <= Buffer.size() && "Invalid location");
+
+  // Remove the dead characters.
+  Buffer.insert(Buffer.begin()+RealOffset, StrData, StrData+StrLen);
+  
+  // Add a delta so that future changes are offset correctly.
+  AddDelta(OrigOffset, StrLen);
 }
 
 /// ReplaceText - This method replaces a range of characters in the input
@@ -105,7 +114,7 @@ void RewriteBuffer::InsertText(unsigned OrigOffset,
 /// operation.
 void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
                                 const char *NewStr, unsigned NewLength) {
-  RemoveText(OrigOffset, OrigLength);
+  InsertText(OrigOffset, NewStr, NewLength);
   return;
   
   unsigned MappedOffs = getMappedOffset(OrigOffset);
