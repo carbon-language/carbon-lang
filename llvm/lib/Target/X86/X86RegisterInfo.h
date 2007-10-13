@@ -136,7 +136,7 @@ public:
   /// a store or a load and a store into two or more instruction. If this is
   /// possible, returns true as well as the new instructions by reference.
   bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
-                           SSARegMap *RegMap,
+                           unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
                            SmallVector<MachineInstr*, 4> &NewMIs) const;
 
   bool unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,

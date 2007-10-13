@@ -1118,7 +1118,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned OpNu
 }
 
 bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
-                                          SSARegMap *RegMap,
+                                unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
                                   SmallVector<MachineInstr*, 4> &NewMIs) const {
   DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
     MemOp2RegOpTable.find((unsigned*)MI->getOpcode());
@@ -1128,6 +1128,13 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   unsigned Index = I->second.second & 0xf;
   bool HasLoad = I->second.second & (1 << 4);
   bool HasStore = I->second.second & (1 << 5);
+  if (UnfoldLoad && !HasLoad)
+    return false;
+  HasLoad &= UnfoldLoad;
+  if (UnfoldStore && !HasStore)
+    return false;
+  HasStore &= UnfoldStore;
+
   const TargetInstrDescriptor &TID = TII.get(Opc);
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
   const TargetRegisterClass *RC = (TOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
@@ -1149,10 +1156,8 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   }
 
   // Emit the load instruction.
-  unsigned LoadReg = 0;
   if (HasLoad) {
-    LoadReg = RegMap->createVirtualRegister(RC);
-    loadRegFromAddr(MF, LoadReg, AddrOps, RC, NewMIs);
+    loadRegFromAddr(MF, Reg, AddrOps, RC, NewMIs);
     if (HasStore) {
       // Address operands cannot be marked isKill.
       for (unsigned i = 1; i != 5; ++i) {
@@ -1164,27 +1169,29 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   }
 
   // Emit the data processing instruction.
-  MachineInstrBuilder MIB = BuildMI(TII.get(Opc));
-  unsigned StoreReg = 0;
+  MachineInstr *DataMI = new MachineInstr (TID, true);
+  MachineInstrBuilder MIB(DataMI);
   const TargetRegisterClass *DstRC = 0;
   if (HasStore) {
     const TargetOperandInfo &DstTOI = TID.OpInfo[0];
     DstRC = (DstTOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
       ? TII.getPointerRegClass() : getRegClass(DstTOI.RegClass);
-    StoreReg = RegMap->createVirtualRegister(RC);
-    MIB.addReg(StoreReg, true);
+    MIB.addReg(Reg, true);
   }
   for (unsigned i = 0, e = BeforeOps.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, BeforeOps[i]);
-  if (LoadReg)
-    MIB.addReg(LoadReg);
+  MIB.addReg(Reg);
   for (unsigned i = 0, e = AfterOps.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, AfterOps[i]);
+  for (unsigned i = 0, e = ImpOps.size(); i != e; ++i) {
+    MachineOperand &MO = ImpOps[i];
+    MIB.addReg(MO.getReg(), MO.isDef(), true, MO.isKill(), MO.isDead());
+  }
   NewMIs.push_back(MIB);
 
   // Emit the store instruction.
   if (HasStore)
-    storeRegToAddr(MF, StoreReg, AddrOps, DstRC, NewMIs);
+    storeRegToAddr(MF, Reg, AddrOps, DstRC, NewMIs);
 
   return true;
 }
