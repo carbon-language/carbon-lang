@@ -4623,8 +4623,7 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   unsigned VTBits = MVT::getSizeInBits(Op.getValueType());
   unsigned NVTBits = MVT::getSizeInBits(NVT);
 
-  // Handle the case when Amt is an immediate.  Other cases are currently broken
-  // and are disabled.
+  // Handle the case when Amt is an immediate.
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Amt.Val)) {
     unsigned Cst = CN->getValue();
     // Expand the incoming operand to be shifted, so that we have its parts
