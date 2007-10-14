@@ -80,16 +80,11 @@ namespace {
     return ((bits) + integerPartWidth - 1) / integerPartWidth;
   }
 
-  unsigned int
-  digitValue(unsigned int c)
+  /* Returns 0U-9U.  Return values >= 10U are not digits.  */
+  inline unsigned int
+  decDigitValue(unsigned int c)
   {
-    unsigned int r;
-
-    r = c - '0';
-    if(r <= 9)
-      return r;
-
-    return -1U;
+    return c - '0';
   }
 
   unsigned int
@@ -112,6 +107,47 @@ namespace {
     return -1U;
   }
 
+  /* Return the value of a decimal exponent of the form
+     [+-]ddddddd.
+
+     If the exponent overflows, returns a large exponent with the
+     appropriate sign.  */
+  static int
+  readExponent(const char *p)
+  {
+    bool isNegative;
+    unsigned int absExponent;
+    const unsigned int overlargeExponent = 24000;  /* FIXME.  */
+
+    isNegative = (*p == '-');
+    if (*p == '-' || *p == '+')
+      p++;
+
+    absExponent = decDigitValue(*p++);
+    assert (absExponent < 10U);
+
+    for (;;) {
+      unsigned int value;
+
+      value = decDigitValue(*p);
+      if (value >= 10U)
+        break;
+
+      p++;
+      value += absExponent * 10;
+      if (absExponent >= overlargeExponent) {
+        absExponent = overlargeExponent;
+        break;
+      }
+      absExponent = value;
+    }
+
+    if (isNegative)
+      return -(int) absExponent;
+    else
+      return (int) absExponent;
+  }
+
   /* This is ugly and needs cleaning up, but I don't immediately see
      how whilst remaining safe.  */
   static int
@@ -132,8 +168,8 @@ namespace {
     for(;;) {
       unsigned int value;
 
-      value = digitValue(*p);
-      if(value == -1U)
+      value = decDigitValue(*p);
+      if(value >= 10U)
         break;
 
       p++;
@@ -174,6 +210,62 @@ namespace {
     }
 
     return p;
+  }
+
+  /* Given a normal decimal floating point number of the form
+
+       dddd.dddd[eE][+-]ddd
+
+     where the decimal point and exponent are optional, fill out the
+     structure D.  If the value is zero, V->firstSigDigit
+     points to a zero, and the return exponent is zero.  */
+  struct decimalInfo {
+    const char *firstSigDigit;
+    const char *lastSigDigit;
+    int exponent;
+  };
+
+  void
+  interpretDecimal(const char *p, decimalInfo *D)
+  {
+    const char *dot;
+
+    p = skipLeadingZeroesAndAnyDot (p, &dot);
+
+    D->firstSigDigit = p;
+    D->exponent = 0;
+
+    for (;;) {
+      if (*p == '.') {
+        assert(dot == 0);
+        dot = p++;
+      }
+      if (decDigitValue(*p) >= 10U)
+        break;
+      p++;
+    }
+
+    /* If number is all zerooes accept any exponent.  */
+    if (p != D->firstSigDigit) {
+      if (*p == 'e' || *p == 'E')
+        D->exponent = readExponent(p + 1);
+
+      /* Implied decimal point?  */
+      if (!dot)
+        dot = p;
+
+      /* Drop insignificant trailing zeroes.  */
+      do
+        do
+          p--;
+        while (*p == '0');
+      while (*p == '.');
+
+      /* Adjust the specified exponent for any decimal point.  */
+      D->exponent += (dot - p) - (dot > p);
+    }
+
+    D->lastSigDigit = p;
   }
 
   /* Return the trailing fraction of a hexadecimal number.
@@ -1981,104 +2073,65 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
 APFloat::opStatus
 APFloat::convertFromDecimalString(const char *p, roundingMode rounding_mode)
 {
-  const char *dot, *firstSignificantDigit;
-  integerPart val, maxVal, decValue;
+  decimalInfo D;
   opStatus fs;
 
-  /* Skip leading zeroes and any decimal point.  */
-  p = skipLeadingZeroesAndAnyDot(p, &dot);
-  firstSignificantDigit = p;
+  /* Scan the text.  */
+  interpretDecimal(p, &D);
 
-  /* The maximum number that can be multiplied by ten with any digit
-     added without overflowing an integerPart.  */
-  maxVal = (~ (integerPart) 0 - 9) / 10;
-
-  val = 0;
-  while (val <= maxVal) {
-    if (*p == '.') {
-      assert(dot == 0);
-      dot = p++;
-    }
-
-    decValue = digitValue(*p);
-    if (decValue == -1U)
-      break;
-    p++;
-    val = val * 10 + decValue;
-  }
-
-  integerPart *decSignificand;
-  unsigned int partCount, maxPartCount;
-
-  partCount = 0;
-  maxPartCount = 4;
-  decSignificand = new integerPart[maxPartCount];
-  decSignificand[partCount++] = val;
-
-  /* Now continue to do single-part arithmetic for as long as we can.
-     Then do a part multiplication, and repeat.  */
-  while (decValue != -1U) {
-    integerPart multiplier;
-
-    val = 0;
-    multiplier = 1;
-
-    while (multiplier <= maxVal) {
-      if (*p == '.') {
-        assert(dot == 0);
-        dot = p++;
-      }
-
-      decValue = digitValue(*p);
-      if (decValue == -1U)
-        break;
-      p++;
-      multiplier *= 10;
-      val = val * 10 + decValue;
-    }
-
-    if (partCount == maxPartCount) {
-      integerPart *newDecSignificand;
-      newDecSignificand = new integerPart[maxPartCount = partCount * 2];
-      APInt::tcAssign(newDecSignificand, decSignificand, partCount);
-      delete [] decSignificand;
-      decSignificand = newDecSignificand;
-    }
-
-    APInt::tcMultiplyPart(decSignificand, decSignificand, multiplier, val,
-                          partCount, partCount + 1, false);
-
-    /* If we used another part (likely), increase the count.  */
-    if (decSignificand[partCount] != 0)
-      partCount++;
-  }
-
-  /* Now decSignificand contains the supplied significand ignoring the
-     decimal point.  Figure out our effective exponent, which is the
-     specified exponent adjusted for any decimal point.  */
-
-  if (p == firstSignificantDigit) {
-    /* Ignore the exponent if we are zero - we cannot overflow.  */
+  if (*D.firstSigDigit == '0') {
     category = fcZero;
     fs = opOK;
   } else {
-    int decimalExponent;
+    integerPart *decSignificand;
+    unsigned int partCount;
 
-    if (dot)
-      decimalExponent = dot + 1 - p;
-    else
-      decimalExponent = 0;
+    /* A tight upper bound on number of bits required to hold an
+       N-digit decimal integer is N * 256 / 77.  Allocate enough space
+       to hold the full significand, and an extra part required by
+       tcMultiplyPart.  */
+    partCount = (D.lastSigDigit - D.firstSigDigit) + 1;
+    partCount = partCountForBits(1 + 256 * partCount / 77);
+    decSignificand = new integerPart[partCount + 1];
+    partCount = 0;
 
-    /* Add the given exponent.  */
-    if (*p == 'e' || *p == 'E')
-      decimalExponent = totalExponent(p, decimalExponent);
+    /* Convert to binary efficiently - we do almost all multiplication
+       in an integerPart.  When this would overflow do we do a single
+       bignum multiplication, and then revert again to multiplication
+       in an integerPart.  */
+    do {
+      integerPart decValue, val, multiplier;
+
+      val = 0;
+      multiplier = 1;
+
+      do {
+        if (*p == '.')
+          p++;
+
+        decValue = decDigitValue(*p++);
+        multiplier *= 10;
+        val = val * 10 + decValue;
+        /* The maximum number that can be multiplied by ten with any
+           digit added without overflowing an integerPart.  */
+      } while (p <= D.lastSigDigit && multiplier <= (~ (integerPart) 0 - 9) / 10);
+
+      /* Multiply out the current part.  */
+      APInt::tcMultiplyPart(decSignificand, decSignificand, multiplier, val,
+                            partCount, partCount + 1, false);
+
+      /* If we used another part (likely but not guaranteed), increase
+         the count.  */
+      if (decSignificand[partCount])
+        partCount++;
+    } while (p <= D.lastSigDigit);
 
     category = fcNormal;
     fs = roundSignificandWithExponent(decSignificand, partCount,
-                                      decimalExponent, rounding_mode);
-  }
+                                      D.exponent, rounding_mode);
 
-  delete [] decSignificand;
+    delete [] decSignificand;
+  }
 
   return fs;
 }
