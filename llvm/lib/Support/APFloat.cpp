@@ -586,6 +586,15 @@ APFloat::copySignificand(const APFloat &rhs)
                   partCount());
 }
 
+/* Make this number a NaN, with an arbitrary but deterministic value
+   for the significand.  */
+void
+APFloat::makeNaN(void)
+{
+  category = fcNaN;
+  APInt::tcSet(significandParts(), ~0U, partCount());
+}
+
 APFloat &
 APFloat::operator=(const APFloat &rhs)
 {
@@ -650,6 +659,8 @@ APFloat::APFloat(const fltSemantics &ourSemantics,
   sign = negative;
   if(category == fcNormal)
     category = fcZero;
+  else if (ourCategory == fcNaN)
+    makeNaN();
 }
 
 APFloat::APFloat(const fltSemantics &ourSemantics, const char *text)
@@ -1210,9 +1221,7 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
     /* Differently signed infinities can only be validly
        subtracted.  */
     if(sign ^ rhs.sign != subtract) {
-      category = fcNaN;
-      // Arbitrary but deterministic value for significand
-      APInt::tcSet(significandParts(), ~0U, partCount());
+      makeNaN();
       return opInvalidOp;
     }
 
@@ -1328,9 +1337,7 @@ APFloat::multiplySpecials(const APFloat &rhs)
 
   case convolve(fcZero, fcInfinity):
   case convolve(fcInfinity, fcZero):
-    category = fcNaN;
-    // Arbitrary but deterministic value for significand
-    APInt::tcSet(significandParts(), ~0U, partCount());
+    makeNaN();
     return opInvalidOp;
 
   case convolve(fcNormal, fcNormal):
@@ -1372,9 +1379,7 @@ APFloat::divideSpecials(const APFloat &rhs)
 
   case convolve(fcInfinity, fcInfinity):
   case convolve(fcZero, fcZero):
-    category = fcNaN;
-    // Arbitrary but deterministic value for significand
-    APInt::tcSet(significandParts(), ~0U, partCount());
+    makeNaN();
     return opInvalidOp;
 
   case convolve(fcNormal, fcNormal):
@@ -1769,7 +1774,7 @@ APFloat::convertToInteger(integerPart *parts, unsigned int width,
   if(bits > 0) {
     lost_fraction = tmp.shiftSignificandRight(bits);
   } else {
-    if (-bits >= semantics->precision) {
+    if ((unsigned) -bits >= semantics->precision) {
       // Unrepresentably large.
       if (!sign && isSigned)
         APInt::tcSetLeastSignificantBits(parts, partsCount, width-1);

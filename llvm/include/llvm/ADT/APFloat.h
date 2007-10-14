@@ -268,6 +268,7 @@ namespace llvm {
     opStatus multiplySpecials(const APFloat &);
 
     /* Miscellany.  */
+    void makeNaN(void);
     opStatus normalize(roundingMode, lostFraction);
     opStatus addOrSubtract(const APFloat &, roundingMode, bool subtract);
     cmpResult compareAbsoluteValue(const APFloat &) const;
