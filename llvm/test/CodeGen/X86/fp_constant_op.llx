@@ -3,32 +3,32 @@
 
 ; Test that the load of the constant is folded into the operation.
 
-double %foo_add(double %P) {
+double %test_add(double %P) {
         %tmp.1 = add double %P, 0x405EC00000000000
         ret double %tmp.1
 }
 
-double %foo_mul(double %P) {
+double %test_mul(double %P) {
         %tmp.1 = mul double %P, 0x405EC00000000000
         ret double %tmp.1
 }
 
-double %foo_sub(double %P) {
+double %test_sub(double %P) {
         %tmp.1 = sub double %P, 0x405EC00000000000
         ret double %tmp.1
 }
 
-double %foo_subr(double %P) {
+double %test_subr(double %P) {
         %tmp.1 = sub double 0x405EC00000000000, %P
         ret double %tmp.1
 }
 
-double %foo_div(double %P) {
+double %test_div(double %P) {
         %tmp.1 = div double %P, 0x405EC00000000000
         ret double %tmp.1
 }
 
-double %foo_divr(double %P) {
+double %test_divr(double %P) {
         %tmp.1 = div double 0x405EC00000000000, %P
         ret double %tmp.1
 }

@@ -164,7 +164,7 @@ namespace {
         O << "lo16(";
         printOp(MI->getOperand(OpNo));
         if (TM.getRelocationModel() == Reloc::PIC_)
-          O << "-\"L" "pb$" << CurrentFnName << "\")";
+          O << "-\"L" << getFunctionNumber() << "$pb\")";
         else
           O << ')';
       }
@@ -208,8 +208,8 @@ namespace {
      O << (int)MI->getOperand(OpNo).getImmedValue()*4;
     }
     void printPICLabel(const MachineInstr *MI, unsigned OpNo) {
-      O << "\"L" "pb$" << CurrentFnName << "\"\n";
-      O << "\"L" "pb$" << CurrentFnName << "\":";
+      O << "\"L" << getFunctionNumber() << "$pb\"\n";
+      O << "\"L" << getFunctionNumber() << "$pb\":";
     }
     void printSymbolHi(const MachineInstr *MI, unsigned OpNo) {
       if (MI->getOperand(OpNo).isImmediate()) {
@@ -218,7 +218,7 @@ namespace {
         if (Subtarget.isDarwin()) O << "ha16(";
         printOp(MI->getOperand(OpNo));
         if (TM.getRelocationModel() == Reloc::PIC_)
-          O << "-\"L" "pb$" << CurrentFnName << "\"";
+          O << "-\"L" << getFunctionNumber() << "$pb\"";
         if (Subtarget.isDarwin())
           O << ')';
         else
@@ -232,7 +232,7 @@ namespace {
         if (Subtarget.isDarwin()) O << "lo16(";
         printOp(MI->getOperand(OpNo));
         if (TM.getRelocationModel() == Reloc::PIC_)
-          O << "-\"L" "pb$" << CurrentFnName << "\"";
+          O << "-\"L" << getFunctionNumber() << "$pb\"";
         if (Subtarget.isDarwin())
           O << ')';
         else
@@ -362,13 +362,13 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     printBasicBlockLabel(MO.getMachineBasicBlock());
     return;
   case MachineOperand::MO_JumpTableIndex:
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << MO.getJumpTableIndex()
-      << '_' << CurrentFnName;
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+      << '_' << MO.getJumpTableIndex();
     // FIXME: PIC relocation model
     return;
   case MachineOperand::MO_ConstantPoolIndex:
-    O << TAI->getPrivateGlobalPrefix() << "CPI" << MO.getConstantPoolIndex()
-      << '_' << CurrentFnName;
+    O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
+      << '_' << MO.getConstantPoolIndex();
     return;
   case MachineOperand::MO_ExternalSymbol:
     // Computing the address of an external symbol, not calling it.

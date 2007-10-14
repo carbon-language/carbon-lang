@@ -36,6 +36,13 @@ namespace llvm {
   class AsmPrinter : public MachineFunctionPass {
     static char ID;
 
+    /// FunctionNumber - This provides a unique ID for each function emitted in
+    /// this translation unit.  It is autoincremented by SetupMachineFunction,
+    /// and can be accessed with getFunctionNumber() and 
+    /// IncrementFunctionNumber().
+    ///
+    unsigned FunctionNumber;
+
   protected:
     // Necessary for external weak linkage support
     std::set<const GlobalValue*> ExtWeakSymbols;
@@ -152,6 +159,15 @@ namespace llvm {
     /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);
+    
+    /// getFunctionNumber - Return a unique ID for the current function.
+    ///
+    unsigned getFunctionNumber() const { return FunctionNumber; }
+    
+    /// IncrementFunctionNumber - Increase Function Number.  AsmPrinters should
+    /// not normally call this, as the counter is automatically bumped by
+    /// SetupMachineFunction.
+    void IncrementFunctionNumber() { FunctionNumber++; }
     
     /// EmitConstantPool - Print to the current output stream assembly
     /// representations of the constants in the constant pool MCP. This is

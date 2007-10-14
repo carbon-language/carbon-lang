@@ -140,15 +140,15 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_JumpTableIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << "OFFSET ";
-    O << TAI->getPrivateGlobalPrefix() << "JTI" << MO.getJumpTableIndex()
-      << '_' << CurrentFnName;
+    O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+      << "_" << MO.getJumpTableIndex();
     return;
   }    
   case MachineOperand::MO_ConstantPoolIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << "OFFSET ";
     O << "[" << TAI->getPrivateGlobalPrefix() << "CPI"
-      << MO.getConstantPoolIndex() << '_' << CurrentFnName;
+      << getFunctionNumber() << "_" << MO.getConstantPoolIndex();
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << " + " << Offset;
@@ -236,8 +236,8 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
 }
 
 void X86IntelAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
-  O << "\"L" "pb$" << CurrentFnName << "\"\n";
-  O << "\"L" "pb$" << CurrentFnName << "\":";
+  O << "\"L" << getFunctionNumber() << "$pb\"\n";
+  O << "\"L" << getFunctionNumber() << "$pb\":";
 }
 
 bool X86IntelAsmPrinter::printAsmMRegister(const MachineOperand &MO,

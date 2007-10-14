@@ -363,7 +363,7 @@ printOperand(const MachineInstr *MI, int opNum)
 
     case MachineOperand::MO_ConstantPoolIndex:
       O << TAI->getPrivateGlobalPrefix() << "CPI"
-        << MO.getConstantPoolIndex() << '_' << CurrentFnName;
+        << getFunctionNumber() << "_" << MO.getConstantPoolIndex();
       break;
   
     default:
