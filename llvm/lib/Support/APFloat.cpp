@@ -40,18 +40,21 @@ namespace llvm {
     /* Number of bits in the significand.  This includes the integer
        bit.  */
     unsigned int precision;
+
+    /* True if arithmetic is supported.  */
+    unsigned int arithmeticOK;
   };
 
-  const fltSemantics APFloat::IEEEsingle = { 127, -126, 24 };
-  const fltSemantics APFloat::IEEEdouble = { 1023, -1022, 53 };
-  const fltSemantics APFloat::IEEEquad = { 16383, -16382, 113 };
-  const fltSemantics APFloat::x87DoubleExtended = { 16383, -16382, 64 };
-  const fltSemantics APFloat::Bogus = { 0, 0, 0 };
+  const fltSemantics APFloat::IEEEsingle = { 127, -126, 24, true };
+  const fltSemantics APFloat::IEEEdouble = { 1023, -1022, 53, true };
+  const fltSemantics APFloat::IEEEquad = { 16383, -16382, 113, true };
+  const fltSemantics APFloat::x87DoubleExtended = { 16383, -16382, 64, true };
+  const fltSemantics APFloat::Bogus = { 0, 0, 0, true };
 
   // The PowerPC format consists of two doubles.  It does not map cleanly
   // onto the usual format above.  For now only storage of constants of
   // this type is supported, no arithmetic.
-  const fltSemantics APFloat::PPCDoubleDouble = { 1023, -1022, 106 };
+  const fltSemantics APFloat::PPCDoubleDouble = { 1023, -1022, 106, false };
 
   /* A tight upper bound on number of parts required to hold the value
      pow(5, power) is
@@ -105,6 +108,12 @@ namespace {
       return r + 10;
 
     return -1U;
+  }
+
+  inline void
+  assertArithmeticOK(const llvm::fltSemantics &semantics) {
+    assert(semantics.arithmeticOK
+           && "Compile-time arithmetic does not support these semantics");
   }
 
   /* Return the value of a decimal exponent of the form
@@ -623,8 +632,7 @@ APFloat::bitwiseIsEqual(const APFloat &rhs) const {
 
 APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
+  assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
   sign = 0;
   zeroSignificand();
@@ -636,8 +644,7 @@ APFloat::APFloat(const fltSemantics &ourSemantics, integerPart value)
 APFloat::APFloat(const fltSemantics &ourSemantics,
                  fltCategory ourCategory, bool negative)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
+  assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
   category = ourCategory;
   sign = negative;
@@ -647,8 +654,7 @@ APFloat::APFloat(const fltSemantics &ourSemantics,
 
 APFloat::APFloat(const fltSemantics &ourSemantics, const char *text)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
+  assertArithmeticOK(ourSemantics);
   initialize(&ourSemantics);
   convertFromString(text, rmNearestTiesToEven);
 }
@@ -1405,6 +1411,8 @@ APFloat::addOrSubtract(const APFloat &rhs, roundingMode rounding_mode,
 {
   opStatus fs;
 
+  assertArithmeticOK(*semantics);
+
   fs = addOrSubtractSpecials(rhs, subtract);
 
   /* This return code means it was not a simple case.  */
@@ -1433,8 +1441,6 @@ APFloat::addOrSubtract(const APFloat &rhs, roundingMode rounding_mode,
 APFloat::opStatus
 APFloat::add(const APFloat &rhs, roundingMode rounding_mode)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   return addOrSubtract(rhs, rounding_mode, false);
 }
 
@@ -1442,8 +1448,6 @@ APFloat::add(const APFloat &rhs, roundingMode rounding_mode)
 APFloat::opStatus
 APFloat::subtract(const APFloat &rhs, roundingMode rounding_mode)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   return addOrSubtract(rhs, rounding_mode, true);
 }
 
@@ -1451,10 +1455,9 @@ APFloat::subtract(const APFloat &rhs, roundingMode rounding_mode)
 APFloat::opStatus
 APFloat::multiply(const APFloat &rhs, roundingMode rounding_mode)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   opStatus fs;
 
+  assertArithmeticOK(*semantics);
   sign ^= rhs.sign;
   fs = multiplySpecials(rhs);
 
@@ -1472,10 +1475,9 @@ APFloat::multiply(const APFloat &rhs, roundingMode rounding_mode)
 APFloat::opStatus
 APFloat::divide(const APFloat &rhs, roundingMode rounding_mode)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   opStatus fs;
 
+  assertArithmeticOK(*semantics);
   sign ^= rhs.sign;
   fs = divideSpecials(rhs);
 
@@ -1493,11 +1495,11 @@ APFloat::divide(const APFloat &rhs, roundingMode rounding_mode)
 APFloat::opStatus
 APFloat::mod(const APFloat &rhs, roundingMode rounding_mode)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   opStatus fs;
   APFloat V = *this;
   unsigned int origSign = sign;
+
+  assertArithmeticOK(*semantics);
   fs = V.divide(rhs, rmNearestTiesToEven);
   if (fs == opDivByZero)
     return fs;
@@ -1531,9 +1533,9 @@ APFloat::fusedMultiplyAdd(const APFloat &multiplicand,
                           const APFloat &addend,
                           roundingMode rounding_mode)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   opStatus fs;
+
+  assertArithmeticOK(*semantics);
 
   /* Post-multiplication sign, before addition.  */
   sign ^= multiplicand.sign;
@@ -1576,10 +1578,9 @@ APFloat::fusedMultiplyAdd(const APFloat &multiplicand,
 APFloat::cmpResult
 APFloat::compare(const APFloat &rhs) const
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   cmpResult result;
 
+  assertArithmeticOK(*semantics);
   assert(semantics == rhs.semantics);
 
   switch(convolve(category, rhs.category)) {
@@ -1651,12 +1652,11 @@ APFloat::opStatus
 APFloat::convert(const fltSemantics &toSemantics,
                  roundingMode rounding_mode)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   lostFraction lostFraction;
   unsigned int newPartCount, oldPartCount;
   opStatus fs;
 
+  assertArithmeticOK(*semantics);
   lostFraction = lfExactlyZero;
   newPartCount = partCountForBits(toSemantics.precision + 1);
   oldPartCount = partCount();
@@ -1730,12 +1730,11 @@ APFloat::convertToInteger(integerPart *parts, unsigned int width,
                           bool isSigned,
                           roundingMode rounding_mode) const
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   lostFraction lost_fraction;
   unsigned int msb, partsCount;
   int bits;
 
+  assertArithmeticOK(*semantics);
   partsCount = partCountForBits(width);
 
   /* Handle the three special cases first.  We produce
@@ -1830,6 +1829,7 @@ APFloat::convertFromUnsignedParts(const integerPart *src,
   integerPart *dst;
   lostFraction lost_fraction;
 
+  assertArithmeticOK(*semantics);
   category = fcNormal;
   omsb = APInt::tcMSB(src, srcCount) + 1;
   dst = significandParts();
@@ -1861,10 +1861,9 @@ APFloat::convertFromSignExtendedInteger(const integerPart *src,
                                         bool isSigned,
                                         roundingMode rounding_mode)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   opStatus status;
 
+  assertArithmeticOK(*semantics);
   if (isSigned
       && APInt::tcExtractBit(src, srcCount * integerPartWidth - 1)) {
     integerPart *copy;
@@ -1890,8 +1889,6 @@ APFloat::convertFromZeroExtendedInteger(const integerPart *parts,
                                         unsigned int width, bool isSigned,
                                         roundingMode rounding_mode)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   unsigned int partCount = partCountForBits(width);
   APInt api = APInt(width, partCount, parts);
 
@@ -1908,8 +1905,6 @@ APFloat::opStatus
 APFloat::convertFromHexadecimalString(const char *p,
                                       roundingMode rounding_mode)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   lostFraction lost_fraction;
   integerPart *significand;
   unsigned int bitPos, partsCount;
@@ -1992,7 +1987,7 @@ APFloat::roundSignificandWithExponent(const integerPart *decSigParts,
                                       roundingMode rounding_mode)
 {
   unsigned int parts, pow5PartCount;
-  fltSemantics calcSemantics = { 32767, -32767, 0 };
+  fltSemantics calcSemantics = { 32767, -32767, 0, true };
   integerPart pow5Parts[maxPowerOfFiveParts];
   bool isNearest;
 
@@ -2139,8 +2134,8 @@ APFloat::convertFromDecimalString(const char *p, roundingMode rounding_mode)
 APFloat::opStatus
 APFloat::convertFromString(const char *p, roundingMode rounding_mode)
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
+  assertArithmeticOK(*semantics);
+
   /* Handle a leading minus sign.  */
   if(*p == '-')
     sign = 1, p++;
@@ -2181,9 +2176,9 @@ unsigned int
 APFloat::convertToHexString(char *dst, unsigned int hexDigits,
                             bool upperCase, roundingMode rounding_mode) const
 {
-  assert(semantics != (const llvm::fltSemantics* const)&PPCDoubleDouble &&
-         "Compile-time arithmetic on PPC long double not supported yet");
   char *p;
+
+  assertArithmeticOK(*semantics);
 
   p = dst;
   if (sign)
