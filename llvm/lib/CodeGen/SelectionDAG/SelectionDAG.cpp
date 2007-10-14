@@ -965,6 +965,9 @@ SDOperand SelectionDAG::FoldSetCC(MVT::ValueType VT, SDOperand N1,
   }
   if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.Val))
     if (ConstantFPSDNode *N2C = dyn_cast<ConstantFPSDNode>(N2.Val)) {
+      // No compile time operations on this type yet.
+      if (N1C->getValueType(0) == MVT::ppcf128)
+        return SDOperand();
 
       APFloat::cmpResult R = N1C->getValueAPF().compare(N2C->getValueAPF());
       switch (Cond) {

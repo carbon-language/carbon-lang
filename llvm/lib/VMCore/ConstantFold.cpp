@@ -149,6 +149,9 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       return Constant::getNullValue(DestTy);
     return UndefValue::get(DestTy);
   }
+  // No compile-time operations on this type yet.
+  if (V->getType() == Type::PPC_FP128Ty || DestTy == Type::PPC_FP128Ty)
+    return 0;
 
   // If the cast operand is a constant expression, there's a few things we can
   // do to try to simplify it.
@@ -808,6 +811,11 @@ static FCmpInst::Predicate evaluateFCmpRelation(const Constant *V1,
                                                 const Constant *V2) {
   assert(V1->getType() == V2->getType() &&
          "Cannot compare values of different types!");
+
+  // No compile-time operations on this type yet.
+  if (V1->getType() == Type::PPC_FP128Ty)
+    return FCmpInst::BAD_FCMP_PREDICATE;
+
   // Handle degenerate case quickly
   if (V1 == V2) return FCmpInst::FCMP_OEQ;
 
@@ -1094,6 +1102,10 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
   // Handle some degenerate cases first
   if (isa<UndefValue>(C1) || isa<UndefValue>(C2))
     return UndefValue::get(Type::Int1Ty);
+
+  // No compile-time operations on this type yet.
+  if (C1->getType() == Type::PPC_FP128Ty)
+    return 0;
 
   // icmp eq/ne(null,GV) -> false/true
   if (C1->isNullValue()) {
