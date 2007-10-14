@@ -1839,7 +1839,7 @@ X86TargetLowering::LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG) {
 
   ArgValues.push_back(Root);
   // Tail call convention (fastcc) needs callee pop.
-  if (CC == CallingConv::Fast && PerformTailCallOpt){
+  if (CC == CallingConv::Fast && PerformTailCallOpt) {
     BytesToPopOnReturn = StackSize;  // Callee pops everything.
     BytesCallerReserves = 0;
   } else {
@@ -1864,7 +1864,7 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, isVarArg, getTargetMachine(), ArgLocs);
-  if (CC==CallingConv::Fast)
+  if (CC==CallingConv::Fast && PerformTailCallOpt)
     CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_64_TailCall);
   else
     CCInfo.AnalyzeCallOperands(Op.Val, CC_X86_64_C);
@@ -1982,9 +1982,8 @@ X86TargetLowering::LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,
                       NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
   int NumBytesForCalleeToPush = 0;
-   if (CC==CallingConv::Fast) {
+   if (CC==CallingConv::Fast && PerformTailCallOpt) {
     NumBytesForCalleeToPush = NumBytes;  // Callee pops everything
-  
   } else {
     NumBytesForCalleeToPush = 0;  // Callee pops nothing.
   }
