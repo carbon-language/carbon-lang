@@ -198,8 +198,14 @@ namespace {
         fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
       } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
         fprintf(stderr, "Read objc interface '%s'\n", OID->getName());
+      } else if (ObjcProtocolDecl *OPD = dyn_cast<ObjcProtocolDecl>(D)) {
+        fprintf(stderr, "Read objc protocol '%s'\n", OPD->getName());
+      } else if (ObjcCategoryDecl *OCD = dyn_cast<ObjcCategoryDecl>(D)) {
+        fprintf(stderr, "Read objc category '%s'\n", OCD->getName());
       } else if (isa<ObjcForwardProtocolDecl>(D)) {
         fprintf(stderr, "Read objc fwd protocol decl\n");
+      } else if (isa<ObjcClassDecl>(D)) {
+        fprintf(stderr, "Read objc fwd class decl\n");
       } else {
         assert(0 && "Unknown decl type!");
       }
