@@ -1117,7 +1117,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
   CDecl->setClassInterface(IDecl);
   /// Check for duplicate interface declaration for this category
   ObjcCategoryDecl *CDeclChain;
-  for (CDeclChain = IDecl->getListCategories(); CDeclChain;
+  for (CDeclChain = IDecl->getCategoryList(); CDeclChain;
        CDeclChain = CDeclChain->getNextClassCategory()) {
     if (CDeclChain->getIdentifier() == CategoryName) {
       Diag(CategoryLoc, diag::err_dup_category_def, ClassName->getName(),
@@ -1889,7 +1889,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
     // Find category interface decl and then check that all methods declared
     // in this interface is implemented in the category @implementation.
     if (IDecl) {
-      for (ObjcCategoryDecl *Categories = IDecl->getListCategories();
+      for (ObjcCategoryDecl *Categories = IDecl->getCategoryList();
            Categories; Categories = Categories->getNextClassCategory()) {
         if (Categories->getIdentifier() == CatImplClass->getIdentifier()) {
           ImplCategoryMethodsVsIntfMethods(CatImplClass, Categories);

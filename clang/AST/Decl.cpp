@@ -410,7 +410,8 @@ void ObjcImplementationDecl::ObjcAddImplMethods(ObjcMethodDecl **insMethods,
   }
 }
 
-// FIXME: look through categories...
+// lookupInstanceMethod - This method returns an instance method by looking in
+// the class, it's categories, and it's super classes (using a linear search).
 ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
   ObjcInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
@@ -421,12 +422,25 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
         return methods[i];
       }
     }
+    // Didn't find one yet - now look through categories.
+    ObjcCategoryDecl *CatDecl = this->getCategoryList();
+    while (CatDecl) {
+      ObjcMethodDecl **methods = CatDecl->getInstanceMethods();
+      int methodCount = CatDecl->getNumInstanceMethods();
+      for (int i = 0; i < methodCount; ++i) {
+        if (methods[i]->getSelector() == Sel) {
+          return methods[i];
+        }
+      }
+      CatDecl = CatDecl->getNextClassCategory();
+    }
     ClassDecl = ClassDecl->getSuperClass();
   }
   return NULL;
 }
 
-// FIXME: look through categories...
+// lookupClassMethod - This method returns a class method by looking in the
+// class, it's categories, and it's super classes (using a linear search).
 ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
   ObjcInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
@@ -436,6 +450,18 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
       if (methods[i]->getSelector() == Sel) {
         return methods[i];
       }
+    }
+    // Didn't find one yet - now look through categories.
+    ObjcCategoryDecl *CatDecl = this->getCategoryList();
+    while (CatDecl) {
+      ObjcMethodDecl **methods = CatDecl->getClassMethods();
+      int methodCount = CatDecl->getNumClassMethods();
+      for (int i = 0; i < methodCount; ++i) {
+        if (methods[i]->getSelector() == Sel) {
+          return methods[i];
+        }
+      }
+      CatDecl = CatDecl->getNextClassCategory();
     }
     ClassDecl = ClassDecl->getSuperClass();
   }

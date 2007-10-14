@@ -70,7 +70,7 @@ class ObjcInterfaceDecl : public TypeDecl {
   int NumClassMethods;  // -1 if not defined
   
   /// List of categories defined for this class.
-  ObjcCategoryDecl *ListCategories;
+  ObjcCategoryDecl *CategoryList;
   
   bool ForwardDecl; // declared with @class.
 public:
@@ -81,7 +81,7 @@ public:
       NumIvars(-1),
       InstanceMethods(0), NumInstanceMethods(-1), 
       ClassMethods(0), NumClassMethods(-1),
-      ListCategories(0), ForwardDecl(FD) {
+      CategoryList(0), ForwardDecl(FD) {
         AllocIntfRefProtocols(numRefProtos);
       }
   
@@ -126,9 +126,9 @@ public:
   ObjcInterfaceDecl *getSuperClass() const { return SuperClass; }
   void setSuperClass(ObjcInterfaceDecl * superCls) { SuperClass = superCls; }
   
-  ObjcCategoryDecl* getListCategories() const { return ListCategories; }
-  void setListCategories(ObjcCategoryDecl *category) { 
-         ListCategories = category; 
+  ObjcCategoryDecl* getCategoryList() const { return CategoryList; }
+  void setCategoryList(ObjcCategoryDecl *category) { 
+         CategoryList = category; 
   }
   ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
   ObjcMethodDecl *lookupClassMethod(Selector &Sel);
@@ -480,8 +480,8 @@ public:
   
   ObjcCategoryDecl *getNextClassCategory() const { return NextClassCategory; }
   void insertNextClassCategory() {
-    NextClassCategory = ClassInterface->getListCategories();
-    ClassInterface->setListCategories(this);
+    NextClassCategory = ClassInterface->getCategoryList();
+    ClassInterface->setCategoryList(this);
   }
   
   static bool classof(const Decl *D) { return D->getKind() == ObjcCategory; }
