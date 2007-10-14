@@ -2570,14 +2570,14 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     if (SextVal >= 0 && SextVal <= 31) {
       SDOperand LHS = BuildSplatI(SextVal-16, SplatSize, MVT::Other, DAG);
       SDOperand RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG);
-      LHS = DAG.getNode(ISD::SUB, Op.getValueType(), LHS, RHS);
+      LHS = DAG.getNode(ISD::SUB, LHS.getValueType(), LHS, RHS);
       return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), LHS);
     }
     // Odd, in range [-31,-17]:  (vsplti C)+(vsplti -16).
     if (SextVal >= -31 && SextVal <= 0) {
       SDOperand LHS = BuildSplatI(SextVal+16, SplatSize, MVT::Other, DAG);
       SDOperand RHS = BuildSplatI(-16, SplatSize, MVT::Other, DAG);
-      LHS = DAG.getNode(ISD::ADD, Op.getValueType(), LHS, RHS);
+      LHS = DAG.getNode(ISD::ADD, LHS.getValueType(), LHS, RHS);
       return DAG.getNode(ISD::BIT_CONVERT, Op.getValueType(), LHS);
     }
   }
