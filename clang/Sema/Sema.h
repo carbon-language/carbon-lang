@@ -120,6 +120,27 @@ class Sema : public Action {
   
   /// ObjcIdTypedef - built-in typedef for "id".
   TypedefDecl *ObjcIdTypedef;
+
+  /// ObjCMethodList - a linked list of methods with different signatures.
+  struct ObjcMethodList {
+    ObjcMethodDecl *Method;
+    ObjcMethodList *Next;
+    
+    ObjcMethodList() {
+      Method = 0; 
+      Next = 0;
+    }
+    ObjcMethodList(ObjcMethodDecl *M, ObjcMethodList *C) {
+      Method = M;
+      Next = C;
+    }
+  };
+  /// Instance/Factory Method Pools - allows efficient lookup when typechecking
+  /// messages to "id". We need to maintain a list, since selectors can have
+  /// differing signatures across classes. In Cocoa, this happens to be 
+  /// extremely uncommon (only 1% of selectors are "overloaded").
+  llvm::DenseMap<Selector, ObjcMethodList> InstanceMethodPool;
+  llvm::DenseMap<Selector, ObjcMethodList> FactoryMethodPool;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup);
   
@@ -259,6 +280,14 @@ private:
   /// GetObjcIdType - Getter for the build-in "id" type.
   QualType GetObjcIdType(SourceLocation Loc = SourceLocation());
   
+  /// AddInstanceMethodToGlobalPool - All instance methods in a translation
+  /// unit are added to a global pool. This allows us to efficiently associate
+  /// a selector with a method declaraation for purposes of typechecking
+  /// messages sent to "id" (where the class of the object is unknown).
+  void AddInstanceMethodToGlobalPool(ObjcMethodDecl *Method);
+  
+  /// AddFactoryMethodToGlobalPool - Same as above, but for factory methods.
+  void AddFactoryMethodToGlobalPool(ObjcMethodDecl *Method);
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 public:

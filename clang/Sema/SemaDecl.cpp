@@ -1754,6 +1754,52 @@ bool Sema:: MatchTwoMethodDeclarations(const ObjcMethodDecl *Method,
   return true;
 }
 
+void Sema::AddInstanceMethodToGlobalPool(ObjcMethodDecl *Method) {
+  ObjcMethodList &FirstMethod = InstanceMethodPool[Method->getSelector()];
+  if (!FirstMethod.Method) {
+    // Haven't seen a method with this selector name yet - add it.
+    FirstMethod.Method = Method;
+    FirstMethod.Next = 0;
+  } else {
+    // We've seen a method with this name, now check the type signature(s).
+    bool match = MatchTwoMethodDeclarations(Method, FirstMethod.Method);
+    
+    for (ObjcMethodList *Next = FirstMethod.Next; !match && Next; 
+         Next = Next->Next)
+      match = MatchTwoMethodDeclarations(Method, Next->Method);
+      
+    if (!match) {
+      // We have a new signature for an existing method - add it.
+      // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
+      struct ObjcMethodList *OMI = new ObjcMethodList(Method, FirstMethod.Next);
+      FirstMethod.Next = OMI;
+    }
+  }
+}
+
+void Sema::AddFactoryMethodToGlobalPool(ObjcMethodDecl *Method) {
+  ObjcMethodList &FirstMethod = FactoryMethodPool[Method->getSelector()];
+  if (!FirstMethod.Method) {
+    // Haven't seen a method with this selector name yet - add it.
+    FirstMethod.Method = Method;
+    FirstMethod.Next = 0;
+  } else {
+    // We've seen a method with this name, now check the type signature(s).
+    bool match = MatchTwoMethodDeclarations(Method, FirstMethod.Method);
+    
+    for (ObjcMethodList *Next = FirstMethod.Next; !match && Next; 
+         Next = Next->Next)
+      match = MatchTwoMethodDeclarations(Method, Next->Method);
+      
+    if (!match) {
+      // We have a new signature for an existing method - add it.
+      // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
+      struct ObjcMethodList *OMI = new ObjcMethodList(Method, FirstMethod.Next);
+      FirstMethod.Next = OMI;
+    }
+  }
+}
+
 void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
                                      DeclTy **allMethods, unsigned allNum) {
   Decl *ClassDecl = static_cast<Decl *>(classDecl);
@@ -1777,6 +1823,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
   for (unsigned i = 0; i < allNum; i++ ) {
     ObjcMethodDecl *Method =
       cast_or_null<ObjcMethodDecl>(static_cast<Decl*>(allMethods[i]));
+
     if (!Method) continue;  // Already issued a diagnostic.
     if (Method->isInstance()) {
       if (checkDuplicateMethods) {
@@ -1786,16 +1833,17 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
           Diag(Method->getLocation(), diag::error_duplicate_method_decl,
                Method->getSelector().getName());
           Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
-        }
-        else {
+        } else {
           insMethods.push_back(Method);
           InsMap[Method->getSelector()] = Method;
         }
       }
       else
         insMethods.push_back(Method);
-    }
-    else {
+        
+      /// The following allows us to typecheck messages to "id".
+      AddInstanceMethodToGlobalPool(Method);
+    } else {
       if (checkDuplicateMethods) {
         /// Check for class method of the same name with incompatible types
         const ObjcMethodDecl *&PrevMethod = ClsMap[Method->getSelector()];
@@ -1803,14 +1851,16 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
           Diag(Method->getLocation(), diag::error_duplicate_method_decl,
                Method->getSelector().getName());
           Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
-        }
-        else {        
+        } else {        
           clsMethods.push_back(Method);
           ClsMap[Method->getSelector()] = Method;
         }
       }
       else
         clsMethods.push_back(Method);
+        
+      /// The following allows us to typecheck messages to "id".
+      AddFactoryMethodToGlobalPool(Method);
     }
   }
   

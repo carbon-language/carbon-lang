@@ -85,6 +85,8 @@ public:
   virtual void DeleteExpr(ExprTy *E) {}
   virtual void DeleteStmt(StmtTy *E) {}
   
+  /// Statistics.
+  virtual void PrintStats() const {}
   //===--------------------------------------------------------------------===//
   // Declaration Tracking Callbacks.
   //===--------------------------------------------------------------------===//

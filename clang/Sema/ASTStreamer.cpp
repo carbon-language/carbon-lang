@@ -81,6 +81,7 @@ Decl *ASTStreamer::ReadTopLevelDecl() {
 }
 
 void ASTStreamer::PrintStats() const {
+  P.getActions().PrintStats();
 }
 
 //===----------------------------------------------------------------------===//
