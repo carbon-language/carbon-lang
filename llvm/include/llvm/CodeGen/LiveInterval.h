@@ -253,7 +253,7 @@ namespace llvm {
     /// current interval, but only if the overlapping LiveRanges have the
     /// specified value number.
     void MergeValueInAsValue(const LiveInterval &RHS,
-                             VNInfo *RHSValNo, VNInfo *LHSValNo);
+                             const VNInfo *RHSValNo, VNInfo *LHSValNo);
 
     /// Copy - Copy the specified live interval. This copies all the fields
     /// except for the register of the interval.

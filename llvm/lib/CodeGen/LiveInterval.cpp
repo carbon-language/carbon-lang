@@ -389,7 +389,7 @@ void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS,
 /// current interval, but only if the overlapping LiveRanges have the
 /// specified value number.
 void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
-                                       VNInfo *RHSValNo, VNInfo *LHSValNo) {
+                                     const VNInfo *RHSValNo, VNInfo *LHSValNo) {
   // TODO: Make this more efficient.
   iterator InsertPos = begin();
   for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {

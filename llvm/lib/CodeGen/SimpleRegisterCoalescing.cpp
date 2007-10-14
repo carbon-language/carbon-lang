@@ -421,14 +421,16 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
     // cl = EXTRACT_SUBREG reg1024, 1
     // then create and update the actual physical register allocated to RHS.
     if (RealDstReg) {
-      unsigned CopyIdx = li_->getInstructionIndex(CopyMI);
-      VNInfo *DstValNo =
-        ResDstInt->getLiveRangeContaining(li_->getUseIndex(CopyIdx))->valno;
       LiveInterval &RealDstInt = li_->getOrCreateInterval(RealDstReg);
-      VNInfo *ValNo = RealDstInt.getNextValue(DstValNo->def, DstValNo->reg,
-                                              li_->getVNInfoAllocator());
-      RealDstInt.addKills(ValNo, DstValNo->kills);
-      RealDstInt.MergeValueInAsValue(*ResDstInt, DstValNo, ValNo);
+      for (unsigned i = 0, e = ResSrcInt->getNumValNums(); i != e; ++i) {
+        const VNInfo *SrcValNo = ResSrcInt->getValNumInfo(i);
+        const VNInfo *DstValNo =
+          ResDstInt->FindLiveRangeContaining(SrcValNo->def)->valno;
+        VNInfo *ValNo = RealDstInt.getNextValue(DstValNo->def, DstValNo->reg,
+                                                li_->getVNInfoAllocator());
+        RealDstInt.addKills(ValNo, DstValNo->kills);
+        RealDstInt.MergeValueInAsValue(*ResDstInt, DstValNo, ValNo);
+      }
       repDstReg = RealDstReg;
     }
 
@@ -879,32 +881,32 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     }
   }
 
+  // Update kill info. Some live ranges are extended due to copy coalescing.
+  for (DenseMap<VNInfo*, VNInfo*>::iterator I = LHSValsDefinedFromRHS.begin(),
+         E = LHSValsDefinedFromRHS.end(); I != E; ++I) {
+    VNInfo *VNI = I->first;
+    unsigned LHSValID = LHSValNoAssignments[VNI->id];
+    LiveInterval::removeKill(NewVNInfo[LHSValID], VNI->def);
+    RHS.addKills(NewVNInfo[LHSValID], VNI->kills);
+  }
+
+  // Update kill info. Some live ranges are extended due to copy coalescing.
+  for (DenseMap<VNInfo*, VNInfo*>::iterator I = RHSValsDefinedFromLHS.begin(),
+         E = RHSValsDefinedFromLHS.end(); I != E; ++I) {
+    VNInfo *VNI = I->first;
+    unsigned RHSValID = RHSValNoAssignments[VNI->id];
+    LiveInterval::removeKill(NewVNInfo[RHSValID], VNI->def);
+    LHS.addKills(NewVNInfo[RHSValID], VNI->kills);
+  }
+
   // If we get here, we know that we can coalesce the live ranges.  Ask the
   // intervals to coalesce themselves now.
   if ((RHS.ranges.size() > LHS.ranges.size() &&
       MRegisterInfo::isVirtualRegister(LHS.reg)) ||
       MRegisterInfo::isPhysicalRegister(RHS.reg)) {
-    // Update kill info. Some live ranges are extended due to copy coalescing.
-    for (DenseMap<VNInfo*, VNInfo*>::iterator I = LHSValsDefinedFromRHS.begin(),
-           E = LHSValsDefinedFromRHS.end(); I != E; ++I) {
-      VNInfo *VNI = I->first;
-      unsigned LHSValID = LHSValNoAssignments[VNI->id];
-      LiveInterval::removeKill(NewVNInfo[LHSValID], VNI->def);
-      RHS.addKills(NewVNInfo[LHSValID], VNI->kills);
-    }
-
     RHS.join(LHS, &RHSValNoAssignments[0], &LHSValNoAssignments[0], NewVNInfo);
     Swapped = true;
   } else {
-    // Update kill info. Some live ranges are extended due to copy coalescing.
-    for (DenseMap<VNInfo*, VNInfo*>::iterator I = RHSValsDefinedFromLHS.begin(),
-           E = RHSValsDefinedFromLHS.end(); I != E; ++I) {
-      VNInfo *VNI = I->first;
-      unsigned RHSValID = RHSValNoAssignments[VNI->id];
-      LiveInterval::removeKill(NewVNInfo[RHSValID], VNI->def);
-      LHS.addKills(NewVNInfo[RHSValID], VNI->kills);
-    }
-
     LHS.join(RHS, &LHSValNoAssignments[0], &RHSValNoAssignments[0], NewVNInfo);
     Swapped = false;
   }
