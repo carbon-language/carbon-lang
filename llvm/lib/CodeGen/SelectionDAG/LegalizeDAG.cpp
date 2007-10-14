@@ -5870,7 +5870,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
           Hi = DAG.getNode(ISD::MULHU, NVT, LL, RL);
           break;
         }
-        break;
       }
       if (LHSSB > BitSize && RHSSB > BitSize) {
         // The input values are both sign-extended.
