@@ -324,6 +324,7 @@ public:
   static bool functionTypesAreCompatible(QualType, QualType); // C99 6.7.5.3p15
   static bool arrayTypesAreCompatible(QualType, QualType); // C99 6.7.5.2p6
   static bool builtinTypesAreCompatible(QualType, QualType);
+  static bool interfaceTypesAreCompatible(QualType, QualType);
 private:  
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   friend class QualType;

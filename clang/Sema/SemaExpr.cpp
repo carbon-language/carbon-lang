@@ -1905,7 +1905,10 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   QualType returnType;
   
   if (receiverType == GetObjcIdType()) {
-    returnType = Context.IntTy; // FIXME:just a placeholder
+    ObjcMethodDecl *Method = InstanceMethodPool[Sel].Method;
+    // FIXME: emit a diagnostic. For now, I want a hard error...
+    assert(Method && "missing method declaration");
+    returnType = Method->getMethodType();
   } else {
     // FIXME (snaroff): checking in this code from Patrick. Needs to be
     // revisited. how do we get the ClassDecl from the receiver expression?
@@ -1919,6 +1922,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     ObjcInterfaceDecl* ClassDecl = static_cast<ObjcInterfaceType*>(
                                      receiverType.getTypePtr())->getDecl();
     ObjcMethodDecl *Method = ClassDecl->lookupInstanceMethod(Sel);
+    // FIXME: emit a diagnostic. For now, I want a hard error...
     assert(Method && "missing method declaration");
     returnType = Method->getMethodType();
   }

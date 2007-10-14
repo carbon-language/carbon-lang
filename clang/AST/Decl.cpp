@@ -422,8 +422,20 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
         return methods[i];
       }
     }
+    // Didn't find one yet - look through protocols.
+    ObjcProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
+    int numProtocols = ClassDecl->getNumIntfRefProtocols();
+    for (int pIdx = 0; pIdx < numProtocols; pIdx++) {
+      ObjcMethodDecl **methods = protocols[pIdx]->getInstanceMethods();
+      int methodCount = protocols[pIdx]->getNumInstanceMethods();
+      for (int i = 0; i < methodCount; ++i) {
+        if (methods[i]->getSelector() == Sel) {
+          return methods[i];
+        }
+      }
+    }
     // Didn't find one yet - now look through categories.
-    ObjcCategoryDecl *CatDecl = this->getCategoryList();
+    ObjcCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
       ObjcMethodDecl **methods = CatDecl->getInstanceMethods();
       int methodCount = CatDecl->getNumInstanceMethods();
@@ -451,8 +463,20 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
         return methods[i];
       }
     }
+    // Didn't find one yet - look through protocols.
+    ObjcProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
+    int numProtocols = ClassDecl->getNumIntfRefProtocols();
+    for (int pIdx = 0; pIdx < numProtocols; pIdx++) {
+      ObjcMethodDecl **methods = protocols[pIdx]->getClassMethods();
+      int methodCount = protocols[pIdx]->getNumClassMethods();
+      for (int i = 0; i < methodCount; ++i) {
+        if (methods[i]->getSelector() == Sel) {
+          return methods[i];
+        }
+      }
+    }
     // Didn't find one yet - now look through categories.
-    ObjcCategoryDecl *CatDecl = this->getCategoryList();
+    ObjcCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
       ObjcMethodDecl **methods = CatDecl->getClassMethods();
       int methodCount = CatDecl->getNumClassMethods();

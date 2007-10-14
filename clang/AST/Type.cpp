@@ -267,6 +267,10 @@ bool Type::builtinTypesAreCompatible(QualType lhs, QualType rhs) {
   return lBuiltin->getKind() == rBuiltin->getKind();
 }
 
+bool Type::interfaceTypesAreCompatible(QualType lhs, QualType rhs) {
+  return true; // FIXME: IMPLEMENT.
+}
+
 // C99 6.2.7p1: If both are complete types, then the following additional
 // requirements apply...FIXME (handle compatibility across source files).
 bool Type::tagTypesAreCompatible(QualType lhs, QualType rhs) {
@@ -398,6 +402,8 @@ bool Type::typesAreCompatible(QualType lhs, QualType rhs) {
       return tagTypesAreCompatible(lcanon, rcanon);
     case Type::Builtin:
       return builtinTypesAreCompatible(lcanon, rcanon); 
+    case Type::ObjcInterface:
+      return interfaceTypesAreCompatible(lcanon, rcanon); 
     default:
       assert(0 && "unexpected type");
   }
