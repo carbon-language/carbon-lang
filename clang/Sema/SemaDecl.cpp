@@ -945,6 +945,9 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
     // Chain & install the interface decl into the identifier.
     IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
     ClassName->setFETokenInfo(IDecl);
+    
+    // Remember that this needs to be removed when the scope is popped.
+    TUScope->AddDecl(IDecl);
   }
   
   if (SuperName) {
@@ -1214,6 +1217,8 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
     IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
     ClassName->setFETokenInfo(IDecl);
     
+    // Remember that this needs to be removed when the scope is popped.
+    TUScope->AddDecl(IDecl);
   }
   
   // Check that there is no duplicate implementation of this class.
@@ -1397,9 +1402,16 @@ Sema::ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
   llvm::SmallVector<ObjcInterfaceDecl*, 32> Interfaces;
   
   for (unsigned i = 0; i != NumElts; ++i) {
-    ObjcInterfaceDecl *IDecl = getObjCInterfaceDecl(IdentList[i]); 
+    // Check for another declaration kind with the same name.
+    ScopedDecl *PrevDecl = LookupInterfaceDecl(IdentList[i]);
+    if (PrevDecl && !isa<ObjcInterfaceDecl>(PrevDecl)) {
+      Diag(AtClassLoc, diag::err_redefinition_different_kind,
+           IdentList[i]->getName());
+      Diag(PrevDecl->getLocation(), diag::err_previous_definition);
+    }
+    ObjcInterfaceDecl *IDecl = dyn_cast_or_null<ObjcInterfaceDecl>(PrevDecl); 
     if (!IDecl) {  // Not already seen?  Make a forward decl.
-      IDecl = new ObjcInterfaceDecl(SourceLocation(), 0, IdentList[i], true);
+      IDecl = new ObjcInterfaceDecl(AtClassLoc, 0, IdentList[i], true);
       // Chain & install the interface decl into the identifier.
       IDecl->setNext(IdentList[i]->getFETokenInfo<ScopedDecl>());
       IdentList[i]->setFETokenInfo(IDecl);
