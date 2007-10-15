@@ -178,7 +178,7 @@ Parser::ExprResult Parser::ParseExpression() {
 /// for example, @encode-expression.
 ///
 Parser::ExprResult Parser::ParseExpressionWithLeadingAt(SourceLocation AtLoc) {
-  ExprResult LHS = ParseObjCExpression(AtLoc);
+  ExprResult LHS = ParseObjCAtExpression(AtLoc);
   if (LHS.isInvalid) return LHS;
  
   return ParseRHSOfBinaryExpression(LHS, prec::Comma);
@@ -601,10 +601,11 @@ Parser::ExprResult Parser::ParseCastExpression(bool isUnaryExpression) {
     return ParseCXXCasts();
   case tok::at: {
     SourceLocation AtLoc = ConsumeToken();
-    return ParseObjCExpression(AtLoc);
+    return ParseObjCAtExpression(AtLoc);
   }
   case tok::l_square:
-    return ParseObjCMessageExpression();
+    // These can be followed by postfix-expr pieces.
+    return ParsePostfixExpressionSuffix(ParseObjCMessageExpression());
   default:
     Diag(Tok, diag::err_expected_expression);
     return ExprResult(true);

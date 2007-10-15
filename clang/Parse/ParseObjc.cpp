@@ -1114,7 +1114,7 @@ void Parser::ParseObjCClassMethodDefinition() {
   StmtResult FnBody = ParseCompoundStatementBody();
 }
 
-Parser::ExprResult Parser::ParseObjCExpression(SourceLocation AtLoc) {
+Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 
   switch (Tok.getKind()) {
     case tok::string_literal:    // primary-expression: string-literal

@@ -360,7 +360,7 @@ private:
   
   //===--------------------------------------------------------------------===//
   // Objective-C Expressions
-  ExprResult ParseObjCExpression(SourceLocation AtLocation);
+  ExprResult ParseObjCAtExpression(SourceLocation AtLocation);
   ExprResult ParseObjCStringLiteral();
   ExprResult ParseObjCEncodeExpression();
   ExprResult ParseObjCProtocolExpression();
