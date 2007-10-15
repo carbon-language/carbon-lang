@@ -23,7 +23,7 @@
 #include <memory>
 using namespace llvm;
 
-// Option for compatibility with ASIX, not used but must allow it to be present.
+// Option for compatibility with AIX, not used but must allow it to be present.
 static cl::opt<bool>
 X32Option ("X32_64", cl::Hidden,
             cl::desc("Ignored option for compatibility with AIX"));
