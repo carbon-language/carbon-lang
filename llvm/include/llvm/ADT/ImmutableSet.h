@@ -198,7 +198,12 @@ private:
   //===----------------------------------------------------===//  
   // Profiling or FoldingSet.
   //===----------------------------------------------------===//
-  
+
+private:
+
+  /// Profile - Generates a FoldingSet profile for a tree node before it is
+  ///   created.  This is used by the ImutAVLFactory when creating
+  ///   trees.
   static inline
   void Profile(FoldingSetNodeID& ID, ImutAVLTree* L, ImutAVLTree* R,
                value_type_ref V) {    
@@ -208,7 +213,8 @@ private:
   }
   
 public:
-  
+
+  /// Profile - Generates a FoldingSet profile for an existing tree node.
   void Profile(FoldingSetNodeID& ID) {
     Profile(ID,getSafeLeft(),getRight(),getValue());    
   }
@@ -219,41 +225,72 @@ public:
   
 private:
   
+  enum { Mutable = 0x1 };
+  
+  /// ImutAVLTree - Internal constructor that is only called by
+  ///   ImutAVLFactory.
   ImutAVLTree(ImutAVLTree* l, ImutAVLTree* r, value_type_ref v, unsigned height)
-  : Left(reinterpret_cast<uintptr_t>(l) | 0x1),
+  : Left(reinterpret_cast<uintptr_t>(l) | Mutable),
   Right(r), Height(height), Value(v) {}
   
-  bool isMutable() const { return Left & 0x1; }
   
+  /// isMutable - Returns true if the left and right subtree references
+  ///  (as well as height) can be changed.  If this method returns false,
+  ///  the tree is truly immutable.  Trees returned from an ImutAVLFactory
+  ///  object should always have this method return true.  Further, if this
+  ///  method returns false for an instance of ImutAVLTree, all subtrees
+  ///  will also have this method return false.  The converse is not true.
+  bool isMutable() const { return Left & Mutable; }
+  
+  /// getSafeLeft - Returns the pointer to the left tree by always masking
+  ///  out the mutable bit.  This is used internally by ImutAVLFactory,
+  ///  as no trees returned to the client should have the mutable flag set.
   ImutAVLTree* getSafeLeft() const { 
-    return reinterpret_cast<ImutAVLTree*>(Left & ~0x1);
+    return reinterpret_cast<ImutAVLTree*>(Left & ~Mutable);
   }
   
-  // Mutating operations.  A tree root can be manipulated as long as
-  // its reference has not "escaped" from internal methods of a
-  // factory object (see below).  When a tree pointer is externally
-  // viewable by client code, the internal "mutable bit" is cleared
-  // to mark the tree immutable.  Note that a tree that still has
-  // its mutable bit set may have children (subtrees) that are themselves
+  //===----------------------------------------------------===//    
+  // Mutating operations.  A tree root can be manipulated as
+  // long as its reference has not "escaped" from internal 
+  // methods of a factory object (see below).  When a tree
+  // pointer is externally viewable by client code, the 
+  // internal "mutable bit" is cleared to mark the tree 
+  // immutable.  Note that a tree that still has its mutable
+  // bit set may have children (subtrees) that are themselves
   // immutable.
+  //===----------------------------------------------------===//
   
-  void RemoveMutableFlag() {
-    assert (Left & 0x1 && "Mutable flag already removed.");
-    Left &= ~0x1;
+  
+  /// MarkImmutable - Clears the mutable flag for a tree.  After this happens,
+  ///   it is an error to call setLeft(), setRight(), and setHeight().  It
+  ///   is also then safe to call getLeft() instead of getSafeLeft().  
+  void MarkMutable() {
+    assert (isMutable() && "Mutable flag already removed.");
+    Left &= ~Mutable;
   }
   
+  /// setLeft - Changes the reference of the left subtree.  Used internally
+  ///   by ImutAVLFactory.
   void setLeft(ImutAVLTree* NewLeft) {
-    assert (isMutable());
-    Left = reinterpret_cast<uintptr_t>(NewLeft) | 0x1;
+    assert (isMutable() && 
+            "Only a mutable tree can have its left subtree changed.");
+    
+    Left = reinterpret_cast<uintptr_t>(NewLeft) | Mutable;
   }
   
+  /// setRight - Changes the reference of the right subtree.  Used internally
+  ///  by ImutAVLFactory.
   void setRight(ImutAVLTree* NewRight) {
-    assert (isMutable());
+    assert (isMutable() &&
+            "Only a mutable tree can have its right subtree changed.");
+    
     Right = NewRight;
   }
   
+  /// setHeight - Changes the height of the tree.  Used internally by
+  ///  ImutAVLFactory.
   void setHeight(unsigned h) {
-    assert (isMutable());
+    assert (isMutable() && "Only a mutable tree can have its height changed.");
     Height = h;
   }
 };
@@ -470,7 +507,7 @@ private:
     if (!T || !T->isMutable())
       return;
     
-    T->RemoveMutableFlag();
+    T->MarkMutable();
     MarkImmutable(Left(T));
     MarkImmutable(Right(T));
   }
