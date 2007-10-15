@@ -2026,7 +2026,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // together.
       // We generally can't do this one for long doubles.
       if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(ST->getValue())) {
-        if (CFP->getValueType(0) == MVT::f32) {
+        if (CFP->getValueType(0) == MVT::f32 && 
+            getTypeAction(MVT::i32) == Legal) {
           Tmp3 = DAG.getConstant((uint32_t)CFP->getValueAPF().
                                           convertToAPInt().getZExtValue(),
                                   MVT::i32);
@@ -2034,11 +2035,32 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                 SVOffset, isVolatile, Alignment);
           break;
         } else if (CFP->getValueType(0) == MVT::f64) {
-          Tmp3 = DAG.getConstant(CFP->getValueAPF().convertToAPInt().
-                                   getZExtValue(), MVT::i64);
-          Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                                SVOffset, isVolatile, Alignment);
-          break;
+          // If this target supports 64-bit registers, do a single 64-bit store.
+          if (getTypeAction(MVT::i64) == Legal) {
+            Tmp3 = DAG.getConstant(CFP->getValueAPF().convertToAPInt().
+                                     getZExtValue(), MVT::i64);
+            Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                                  SVOffset, isVolatile, Alignment);
+            break;
+          } else if (getTypeAction(MVT::i32) == Legal) {
+            // Otherwise, if the target supports 32-bit registers, use 2 32-bit
+            // stores.  If the target supports neither 32- nor 64-bits, this
+            // xform is certainly not worth it.
+            uint64_t IntVal =CFP->getValueAPF().convertToAPInt().getZExtValue();
+            SDOperand Lo = DAG.getConstant(uint32_t(IntVal), MVT::i32);
+            SDOperand Hi = DAG.getConstant(uint32_t(IntVal >>32), MVT::i32);
+            if (!TLI.isLittleEndian()) std::swap(Lo, Hi);
+
+            Lo = DAG.getStore(Tmp1, Lo, Tmp2, ST->getSrcValue(),
+                              SVOffset, isVolatile, Alignment);
+            Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
+                               getIntPtrConstant(4));
+            Hi = DAG.getStore(Tmp1, Hi, Tmp2, ST->getSrcValue(), SVOffset+4,
+                              isVolatile, std::max(Alignment, 4U));
+
+            Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
+            break;
+          }
         }
       }
       
