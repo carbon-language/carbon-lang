@@ -55,9 +55,9 @@ class VISIBILITY_HIDDEN DAGTypeLegalizer {
   };
   
   enum LegalizeAction {
-    Legal,      // The target natively supports this operation.
-    Promote,    // This operation should be executed in a larger type.
-    Expand      // Try to expand this to other ops, otherwise use a libcall.
+    Legal,      // The target natively supports this type.
+    Promote,    // This type should be executed in a larger type.
+    Expand      // This type should be split into two types of half the size.
   };
   
   /// ValueTypeActions - This is a bitvector that contains two bits for each
@@ -244,7 +244,7 @@ void DAGTypeLegalizer::run() {
       }
     }
 
-    // If the node needs revisitation, don't add all users to the worklist etc.
+    // If the node needs revisiting, don't add all users to the worklist etc.
     if (NeedsRevisit)
       continue;
     
@@ -328,7 +328,7 @@ void DAGTypeLegalizer::MarkNewNodes(SDNode *N) {
   // Okay, we know that this node is new.  Recursively walk all of its operands
   // to see if they are new also.  The depth of this walk is bounded by the size
   // of the new tree that was constructed (usually 2-3 nodes), so we don't worry
-  // about revisitation of nodes.
+  // about revisitating of nodes.
   //
   // As we walk the operands, keep track of the number of nodes that are
   // processed.  If non-zero, this will become the new nodeid of this node.
