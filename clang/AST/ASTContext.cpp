@@ -146,6 +146,10 @@ void ASTContext::InitBuiltinTypes() {
   FloatComplexTy      = getComplexType(FloatTy);
   DoubleComplexTy     = getComplexType(DoubleTy);
   LongDoubleComplexTy = getComplexType(LongDoubleTy);
+  
+  BuiltinVaListType = QualType();
+  ObjcIdType = QualType();
+  IdStructType = 0;
 }
 
 //===----------------------------------------------------------------------===//
@@ -835,5 +839,19 @@ void ASTContext::setBuiltinVaListType(QualType T)
   assert(BuiltinVaListType.isNull() && "__builtin_va_list type already set!");
     
   BuiltinVaListType = T;
+}
+
+void ASTContext::setObjcIdType(TypedefDecl *TD)
+{
+  assert(ObjcIdType.isNull() && "'id' type already set!");
+    
+  ObjcIdType = getTypedefType(TD);
+
+  // typedef struct objc_object *id;
+  const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
+  assert(ptr && "'id' incorrectly typed");
+  const RecordType *rec = ptr->getPointeeType()->getAsStructureType();
+  assert(rec && "'id' incorrectly typed");
+  IdStructType = rec;
 }
 

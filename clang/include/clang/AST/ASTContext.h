@@ -46,6 +46,10 @@ class ASTContext {
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
   /// a builtin that takes a valist is encountered.
   QualType BuiltinVaListType;
+  
+  /// ObjcIdType - a psuedo built-in typedef type (set by Sema).
+  QualType ObjcIdType;
+  const RecordType *IdStructType;
 public:
   
   SourceManager &SourceMgr;
@@ -149,6 +153,9 @@ public:
   
   // getCFConstantStringType - Return the type used for constant CFStrings. 
   QualType getCFConstantStringType(); 
+  
+  void setObjcIdType(TypedefDecl *Decl);
+  QualType getObjcIdType() const { return ObjcIdType; }
   
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }

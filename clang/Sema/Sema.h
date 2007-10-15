@@ -118,9 +118,6 @@ class Sema : public Action {
   /// For example, user-defined classes, built-in "id" type, etc.
   Scope *TUScope;
   
-  /// ObjcIdTypedef - built-in typedef for "id".
-  TypedefDecl *ObjcIdTypedef;
-
   /// ObjCMethodList - a linked list of methods with different signatures.
   struct ObjcMethodList {
     ObjcMethodDecl *Method;

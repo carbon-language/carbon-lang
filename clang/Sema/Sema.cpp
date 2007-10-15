@@ -31,17 +31,18 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
 /// For now, we will *not* install id as a built-in. FIXME: reconsider this.
 QualType Sema::GetObjcIdType(SourceLocation Loc) {
   assert(TUScope && "GetObjcIdType(): Top-level scope is null");
-  if (!ObjcIdTypedef) {
+  if (Context.getObjcIdType().isNull()) {
     IdentifierInfo *IdIdent = &Context.Idents.get("id");
     ScopedDecl *IdDecl = LookupScopedDecl(IdIdent, Decl::IDNS_Ordinary, 
                                           SourceLocation(), TUScope);
-    ObjcIdTypedef = dyn_cast_or_null<TypedefDecl>(IdDecl);
+    TypedefDecl *ObjcIdTypedef = dyn_cast_or_null<TypedefDecl>(IdDecl);
     if (!ObjcIdTypedef) {
       Diag(Loc, diag::err_missing_id_definition);
       return QualType();
     }
+    Context.setObjcIdType(ObjcIdTypedef);
   }
-  return Context.getTypedefType(ObjcIdTypedef);
+  return Context.getObjcIdType();
 }
 
 
@@ -64,7 +65,6 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   KnownFunctionIDs[ id_vprintf ] = &IT.get("vprintf");
   
   TUScope = 0;
-  ObjcIdTypedef = 0;
 }
 
 void Sema::DeleteExpr(ExprTy *E) {

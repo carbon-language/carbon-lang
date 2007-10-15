@@ -268,6 +268,8 @@ bool Type::builtinTypesAreCompatible(QualType lhs, QualType rhs) {
 }
 
 // FIXME: Devise a way to do this without using strcmp.
+// Would like to say..."return getAsStructureType() == IdStructType;", but
+// we don't have a pointer to ASTContext.
 bool Type::isObjcIdType() const {
   if (const RecordType *RT = getAsStructureType())
     return !strcmp(RT->getDecl()->getName(), "objc_object");
