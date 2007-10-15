@@ -193,8 +193,6 @@ private:
 
   void LegalizeSetCCOperands(SDOperand &LHS, SDOperand &RHS, SDOperand &CC);
     
-  SDOperand CreateStackTemporary(MVT::ValueType VT);
-
   SDOperand ExpandLibCall(const char *Name, SDNode *Node, bool isSigned,
                           SDOperand &Hi);
   SDOperand ExpandIntToFP(bool isSigned, MVT::ValueType DestTy,
@@ -1245,7 +1243,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       MVT::ValueType EltVT = Tmp2.getValueType();
       MVT::ValueType IdxVT = Tmp3.getValueType();
       MVT::ValueType PtrVT = TLI.getPointerTy();
-      SDOperand StackPtr = CreateStackTemporary(VT);
+      SDOperand StackPtr = DAG.CreateStackTemporary(VT);
       // Store the vector.
       SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Tmp1, StackPtr, NULL, 0);
 
@@ -4129,7 +4127,7 @@ SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
   } else {
     // Store the value to a temporary stack slot, then LOAD the scalar
     // element back out.
-    SDOperand StackPtr = CreateStackTemporary(Vec.getValueType());
+    SDOperand StackPtr = DAG.CreateStackTemporary(Vec.getValueType());
     SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Vec, StackPtr, NULL, 0);
 
     // Add the offset to the index.
@@ -4391,7 +4389,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
       Tmp2 = TLI.SimplifySetCC(TLI.getSetCCResultTy(), LHSHi, RHSHi,
                                CCCode, false, DagCombineInfo);
       if (!Tmp2.Val)
-        Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), LHSHi, RHSHi, CC);
+        Tmp2 = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), LHSHi, RHSHi,CC);
       
       ConstantSDNode *Tmp1C = dyn_cast<ConstantSDNode>(Tmp1.Val);
       ConstantSDNode *Tmp2C = dyn_cast<ConstantSDNode>(Tmp2.Val);
@@ -4430,7 +4428,7 @@ void SelectionDAGLegalize::LegalizeSetCCOperands(SDOperand &LHS,
 SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT, 
                                                   SDOperand SrcOp) {
   // Create the stack frame object.
-  SDOperand FIPtr = CreateStackTemporary(DestVT);
+  SDOperand FIPtr = DAG.CreateStackTemporary(DestVT);
   
   // Emit a store to the stack slot.
   SDOperand Store = DAG.getStore(DAG.getEntryNode(), SrcOp, FIPtr, NULL, 0);
@@ -4441,7 +4439,7 @@ SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT,
 SDOperand SelectionDAGLegalize::ExpandSCALAR_TO_VECTOR(SDNode *Node) {
   // Create a vector sized/aligned stack slot, store the value to element #0,
   // then load the whole vector back out.
-  SDOperand StackPtr = CreateStackTemporary(Node->getValueType(0));
+  SDOperand StackPtr = DAG.CreateStackTemporary(Node->getValueType(0));
   SDOperand Ch = DAG.getStore(DAG.getEntryNode(), Node->getOperand(0), StackPtr,
                               NULL, 0);
   return DAG.getLoad(Node->getValueType(0), Ch, StackPtr, NULL, 0);
@@ -4574,7 +4572,7 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   // the result as a vector.
   MVT::ValueType VT = Node->getValueType(0);
   // Create the stack frame object.
-  SDOperand FIPtr = CreateStackTemporary(VT);
+  SDOperand FIPtr = DAG.CreateStackTemporary(VT);
   
   // Emit a store of each element to the stack slot.
   SmallVector<SDOperand, 8> Stores;
@@ -4603,17 +4601,6 @@ SDOperand SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   
   // Result is a load from the stack slot.
   return DAG.getLoad(VT, StoreChain, FIPtr, NULL, 0);
-}
-
-/// CreateStackTemporary - Create a stack temporary, suitable for holding the
-/// specified value type.
-SDOperand SelectionDAGLegalize::CreateStackTemporary(MVT::ValueType VT) {
-  MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
-  unsigned ByteSize = MVT::getSizeInBits(VT)/8;
-  const Type *Ty = MVT::getTypeForValueType(VT);
-  unsigned StackAlign = (unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty);
-  int FrameIdx = FrameInfo->CreateStackObject(ByteSize, StackAlign);
-  return DAG.getFrameIndex(FrameIdx, TLI.getPointerTy());
 }
 
 void SelectionDAGLegalize::ExpandShiftParts(unsigned NodeOp,
@@ -6318,7 +6305,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
       // The input is a scalar or single-element vector.
       // Lower to a store/load so that it can be split.
       // FIXME: this could be improved probably.
-      SDOperand Ptr = CreateStackTemporary(InOp.getValueType());
+      SDOperand Ptr = DAG.CreateStackTemporary(InOp.getValueType());
 
       SDOperand St = DAG.getStore(DAG.getEntryNode(),
                                   InOp, Ptr, NULL, 0);
