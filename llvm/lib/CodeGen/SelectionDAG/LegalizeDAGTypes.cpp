@@ -161,8 +161,11 @@ private:
   SDOperand PromoteOperand_FP_ROUND(SDNode *N);
   SDOperand PromoteOperand_SELECT(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_BRCOND(SDNode *N, unsigned OpNo);
+  SDOperand PromoteOperand_BR_CC(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo);
   
+  void PromoteSetCCOperands(SDOperand &LHS,SDOperand &RHS, ISD::CondCode Code);
+
   // Operand Expansion.
   bool ExpandOperand(SDNode *N, unsigned OperandNo);
   SDOperand ExpandOperand_TRUNCATE(SDNode *N);
@@ -328,7 +331,7 @@ void DAGTypeLegalizer::MarkNewNodes(SDNode *N) {
   // Okay, we know that this node is new.  Recursively walk all of its operands
   // to see if they are new also.  The depth of this walk is bounded by the size
   // of the new tree that was constructed (usually 2-3 nodes), so we don't worry
-  // about revisitating of nodes.
+  // about revisiting of nodes.
   //
   // As we walk the operands, keep track of the number of nodes that are
   // processed.  If non-zero, this will become the new nodeid of this node.
@@ -1141,6 +1144,8 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
     
   case ISD::SELECT:      Res = PromoteOperand_SELECT(N, OpNo); break;
   case ISD::BRCOND:      Res = PromoteOperand_BRCOND(N, OpNo); break;
+  case ISD::BR_CC:       Res = PromoteOperand_BR_CC(N, OpNo); break;
+
   case ISD::STORE:       Res = PromoteOperand_STORE(cast<StoreSDNode>(N),
                                                     OpNo); break;
   }
@@ -1225,6 +1230,64 @@ SDOperand DAGTypeLegalizer::PromoteOperand_BRCOND(SDNode *N, unsigned OpNo) {
   return DAG.UpdateNodeOperands(SDOperand(N, 0), N->getOperand(0), Cond,
                                 N->getOperand(2));
 }
+
+SDOperand DAGTypeLegalizer::PromoteOperand_BR_CC(SDNode *N, unsigned OpNo) {
+  assert(OpNo == 2 && "Don't know how to promote this operand");
+  
+  SDOperand LHS = N->getOperand(2);
+  SDOperand RHS = N->getOperand(3);
+  PromoteSetCCOperands(LHS, RHS, cast<CondCodeSDNode>(N->getOperand(1))->get());
+  
+  // The chain (Op#0), CC (#1) and basic block destination (Op#4) are always
+  // legal types.
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), N->getOperand(0),
+                                N->getOperand(1), LHS, RHS, N->getOperand(4));
+}
+
+/// PromoteSetCCOperands - Promote the operands of a comparison.  This code is
+/// shared among BR_CC, SELECT_CC, and SETCC handlers.
+void DAGTypeLegalizer::PromoteSetCCOperands(SDOperand &NewLHS,SDOperand &NewRHS,
+                                            ISD::CondCode CCCode) {
+  MVT::ValueType VT = NewLHS.getValueType();
+  
+  // Get the promoted values.
+  NewLHS = GetPromotedOp(NewLHS);
+  NewRHS = GetPromotedOp(NewRHS);
+  
+  // If this is an FP compare, the operands have already been extended.
+  if (!MVT::isInteger(NewLHS.getValueType()))
+    return;
+  
+  // Otherwise, we have to insert explicit sign or zero extends.  Note
+  // that we could insert sign extends for ALL conditions, but zero extend
+  // is cheaper on many machines (an AND instead of two shifts), so prefer
+  // it.
+  switch (CCCode) {
+  default: assert(0 && "Unknown integer comparison!");
+  case ISD::SETEQ:
+  case ISD::SETNE:
+  case ISD::SETUGE:
+  case ISD::SETUGT:
+  case ISD::SETULE:
+  case ISD::SETULT:
+    // ALL of these operations will work if we either sign or zero extend
+    // the operands (including the unsigned comparisons!).  Zero extend is
+    // usually a simpler/cheaper operation, so prefer it.
+    NewLHS = DAG.getZeroExtendInReg(NewLHS, VT);
+    NewRHS = DAG.getZeroExtendInReg(NewRHS, VT);
+    return;
+  case ISD::SETGE:
+  case ISD::SETGT:
+  case ISD::SETLT:
+  case ISD::SETLE:
+    NewLHS = DAG.getNode(ISD::SIGN_EXTEND_INREG, NewLHS.getValueType(), NewLHS,
+                         DAG.getValueType(VT));
+    NewRHS = DAG.getNode(ISD::SIGN_EXTEND_INREG, NewRHS.getValueType(), NewRHS,
+                         DAG.getValueType(VT));
+    return;
+  }
+}
+  
 
 SDOperand DAGTypeLegalizer::PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo){
   SDOperand Ch = N->getChain(), Ptr = N->getBasePtr();
@@ -1316,7 +1379,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_SETCC(SDNode *N) {
                                 DAG.getCondCode(CCCode));
 }
 
-/// ExpandSetCCOperands - Expand the operands to a comparison.  This code is
+/// ExpandSetCCOperands - Expand the operands of a comparison.  This code is
 /// shared among BR_CC, SELECT_CC, and SETCC handlers.
 void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
                                            ISD::CondCode &CCCode) {
