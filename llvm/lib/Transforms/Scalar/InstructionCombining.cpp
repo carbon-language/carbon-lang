@@ -7674,14 +7674,13 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         unsigned Align = cast<ConstantInt>(CI.getOperand(4))->getZExtValue();
         PointerType *NewPtrTy = NULL;
         // Destination pointer type is always i8 *
-        if (Size == 8)
-          NewPtrTy = PointerType::get(Type::Int64Ty);
-        else if (Size == 4)
-          NewPtrTy = PointerType::get(Type::Int32Ty);
-        else if (Size == 2)
-          NewPtrTy = PointerType::get(Type::Int16Ty);
-        else if (Size == 1)
-          NewPtrTy = PointerType::get(Type::Int8Ty);
+        // If Size is 8 then use Int64Ty
+        // If Size is 4 then use Int32Ty
+        // If Size is 2 then use Int16Ty
+        // If Size is 1 then use Int8Ty
+        if (Size && Size <=8 && !(Size&(Size-1)))
+          NewPtrTy = PointerType::get(IntegerType::get(Size<<3));
+
         if (NewPtrTy) {
           Value *Src = InsertCastBefore(Instruction::BitCast, CI.getOperand(2), NewPtrTy, CI);
           Value *Dest = InsertCastBefore(Instruction::BitCast, CI.getOperand(1), NewPtrTy, CI);
