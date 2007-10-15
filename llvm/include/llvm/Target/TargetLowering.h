@@ -538,9 +538,9 @@ public:
     }
     
     /// ShrinkDemandedConstant - Check to see if the specified operand of the 
-    /// specified instruction is a constant integer.  If so, check to see if there
-    /// are any bits set in the constant that are not demanded.  If so, shrink the
-    /// constant and return true.
+    /// specified instruction is a constant integer.  If so, check to see if
+    /// there are any bits set in the constant that are not demanded.  If so,
+    /// shrink the constant and return true.
     bool ShrinkDemandedConstant(SDOperand Op, uint64_t Demanded);
   };
                                                 
