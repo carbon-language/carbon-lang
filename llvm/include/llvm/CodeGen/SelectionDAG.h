@@ -492,6 +492,10 @@ public:
 
   void dump() const;
 
+  /// CreateStackTemporary - Create a stack temporary, suitable for holding the
+  /// specified value type.
+  SDOperand CreateStackTemporary(MVT::ValueType VT);
+  
   /// FoldSetCC - Constant fold a setcc to true or false.
   SDOperand FoldSetCC(MVT::ValueType VT, SDOperand N1,
                       SDOperand N2, ISD::CondCode Cond);

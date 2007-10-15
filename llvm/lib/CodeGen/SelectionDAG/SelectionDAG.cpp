@@ -19,6 +19,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
@@ -912,6 +913,18 @@ SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
+
+/// CreateStackTemporary - Create a stack temporary, suitable for holding the
+/// specified value type.
+SDOperand SelectionDAG::CreateStackTemporary(MVT::ValueType VT) {
+  MachineFrameInfo *FrameInfo = getMachineFunction().getFrameInfo();
+  unsigned ByteSize = MVT::getSizeInBits(VT)/8;
+  const Type *Ty = MVT::getTypeForValueType(VT);
+  unsigned StackAlign = (unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty);
+  int FrameIdx = FrameInfo->CreateStackObject(ByteSize, StackAlign);
+  return getFrameIndex(FrameIdx, TLI.getPointerTy());
+}
+
 
 SDOperand SelectionDAG::FoldSetCC(MVT::ValueType VT, SDOperand N1,
                                   SDOperand N2, ISD::CondCode Cond) {
