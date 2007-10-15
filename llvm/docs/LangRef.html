@@ -177,6 +177,9 @@
           <li><a href="#int_memset">'<tt>llvm.memset.*</tt>' Intrinsic</a></li>
           <li><a href="#int_sqrt">'<tt>llvm.sqrt.*</tt>' Intrinsic</a></li>
           <li><a href="#int_powi">'<tt>llvm.powi.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_sin">'<tt>llvm.sin.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_cos">'<tt>llvm.cos.*</tt>' Intrinsic</a></li>
+          <li><a href="#int_pow">'<tt>llvm.pow.*</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_manip">Bit Manipulation Intrinsics</a>
@@ -4492,7 +4495,8 @@ this can be specified as the fourth argument, otherwise it should be set to 0 or
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.sqrt</tt> on any 
-floating point type. Not all targets support all types however.
+floating point or vector of floating point type. Not all targets support all
+types however.
 <pre>
   declare float     @llvm.sqrt.f32(float %Val)
   declare double    @llvm.sqrt.f64(double %Val)
@@ -4505,7 +4509,7 @@ floating point type. Not all targets support all types however.
 
 <p>
 The '<tt>llvm.sqrt</tt>' intrinsics return the sqrt of the specified operand,
-returning the same value as the libm '<tt>sqrt</tt>' function would.  Unlike
+returning the same value as the libm '<tt>sqrt</tt>' functions would.  Unlike
 <tt>sqrt</tt> in libm, however, <tt>llvm.sqrt</tt> has undefined behavior for
 negative numbers (which allows for better optimization).
 </p>
@@ -4533,7 +4537,8 @@ floating point number.
 
 <h5>Syntax:</h5>
 <p>This is an overloaded intrinsic. You can use <tt>llvm.powi</tt> on any 
-floating point type. Not all targets support all types however.
+floating point or vector of floating point type. Not all targets support all
+types however.
 <pre>
   declare float     @llvm.powi.f32(float  %Val, i32 %power)
   declare double    @llvm.powi.f64(double %Val, i32 %power)
@@ -4547,7 +4552,8 @@ floating point type. Not all targets support all types however.
 <p>
 The '<tt>llvm.powi.*</tt>' intrinsics return the first operand raised to the
 specified (positive or negative) power.  The order of evaluation of
-multiplications is not defined.
+multiplications is not defined.  When a vector of floating point type is
+used, the second argument remains a scalar integer value.
 </p>
 
 <h5>Arguments:</h5>
@@ -4562,6 +4568,132 @@ that power.
 <p>
 This function returns the first value raised to the second power with an
 unspecified sequence of rounding operations.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_sin">'<tt>llvm.sin.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.sin</tt> on any 
+floating point or vector of floating point type. Not all targets support all
+types however.
+<pre>
+  declare float     @llvm.sin.f32(float  %Val)
+  declare double    @llvm.sin.f64(double %Val)
+  declare x86_fp80  @llvm.sin.f80(x86_fp80  %Val)
+  declare fp128     @llvm.sin.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.sin.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.sin.*</tt>' intrinsics return the sine of the operand.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The argument and return value are floating point numbers of the same type.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This function returns the sine of the specified operand, returning the
+same values as the libm <tt>sin</tt> functions would, and handles error
+conditions in the same way, unless the --enable-unsafe-fp-math is enabled
+during code generation, in which case the result may have different
+precision and if any errors occur the behavior is undefined.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_cos">'<tt>llvm.cos.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.cos</tt> on any 
+floating point or vector of floating point type. Not all targets support all
+types however.
+<pre>
+  declare float     @llvm.cos.f32(float  %Val)
+  declare double    @llvm.cos.f64(double %Val)
+  declare x86_fp80  @llvm.cos.f80(x86_fp80  %Val)
+  declare fp128     @llvm.cos.f128(fp128 %Val)
+  declare ppc_fp128 @llvm.cos.ppcf128(ppc_fp128  %Val)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.cos.*</tt>' intrinsics return the cosine of the operand.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The argument and return value are floating point numbers of the same type.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This function returns the cosine of the specified operand, returning the
+same values as the libm <tt>cos</tt> functions would, and handles error
+conditions in the same way, unless the --enable-unsafe-fp-math is enabled
+during code generation, in which case the result may have different
+precision and if any errors occur the behavior is undefined.</p>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_pow">'<tt>llvm.pow.*</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<p>This is an overloaded intrinsic. You can use <tt>llvm.pow</tt> on any 
+floating point or vector of floating point type. Not all targets support all
+types however.
+<pre>
+  declare float     @llvm.pow.f32(float  %Val, float %Power)
+  declare double    @llvm.pow.f64(double %Val, double %Power)
+  declare x86_fp80  @llvm.pow.f80(x86_fp80  %Val, x86_fp80 %Power)
+  declare fp128     @llvm.pow.f128(fp128 %Val, fp128 %Power)
+  declare ppc_fp128 @llvm.pow.ppcf128(ppc_fp128  %Val, ppc_fp128 Power)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.pow.*</tt>' intrinsics return the first operand raised to the
+specified (positive or negative) power.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The second argument is a floating point power, and the first is a value to
+raise to that power.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This function returns the first value raised to the second power,
+returning the
+same values as the libm <tt>pow</tt> functions would, and handles error
+conditions in the same way, unless the --enable-unsafe-fp-math is enabled
+during code generation, in which case the result may have different
+precision and if any errors occur the behavior is undefined.</p>
 </div>
 
 
