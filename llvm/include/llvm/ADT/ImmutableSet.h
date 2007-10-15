@@ -264,7 +264,7 @@ private:
   /// MarkImmutable - Clears the mutable flag for a tree.  After this happens,
   ///   it is an error to call setLeft(), setRight(), and setHeight().  It
   ///   is also then safe to call getLeft() instead of getSafeLeft().  
-  void MarkMutable() {
+  void MarkImmutable() {
     assert (isMutable() && "Mutable flag already removed.");
     Left &= ~Mutable;
   }
@@ -507,7 +507,7 @@ private:
     if (!T || !T->isMutable())
       return;
     
-    T->MarkMutable();
+    T->MarkImmutable();
     MarkImmutable(Left(T));
     MarkImmutable(Right(T));
   }
