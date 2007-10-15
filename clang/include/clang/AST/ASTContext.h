@@ -204,6 +204,26 @@ public:
   /// 'typeSize' is a real floating point or complex type.
   QualType getFloatingTypeOfSizeWithinDomain(QualType typeSize, 
                                              QualType typeDomain) const;
+
+  //===--------------------------------------------------------------------===//
+  //                    Type Compatibility Predicates
+  //===--------------------------------------------------------------------===//
+                                             
+  /// Compatibility predicates used to check assignment expressions.
+  bool typesAreCompatible(QualType, QualType); // C99 6.2.7p1
+  bool tagTypesAreCompatible(QualType, QualType); // C99 6.2.7p1
+  bool pointerTypesAreCompatible(QualType, QualType);  // C99 6.7.5.1p2
+  bool referenceTypesAreCompatible(QualType, QualType); // C++ 5.17p6
+  bool functionTypesAreCompatible(QualType, QualType); // C99 6.7.5.3p15
+  bool arrayTypesAreCompatible(QualType, QualType); // C99 6.7.5.2p6
+  bool builtinTypesAreCompatible(QualType, QualType);
+  
+  /// Objective-C specific type checking.
+  bool interfaceTypesAreCompatible(QualType, QualType);
+  bool objcTypesAreCompatible(QualType, QualType);
+  bool isObjcIdType(QualType T) const {
+    return T->getAsStructureType() == IdStructType;
+  }
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
   void operator=(const ASTContext&); // DO NOT IMPLEMENT

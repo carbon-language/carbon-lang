@@ -757,8 +757,8 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
           (lhptee->isObjectType() || lhptee->isIncompleteType()))
         return rexT;
 
-      if (!Type::typesAreCompatible(lhptee.getUnqualifiedType(), 
-                                    rhptee.getUnqualifiedType())) {
+      if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
+                                      rhptee.getUnqualifiedType())) {
         Diag(questionLoc, diag::ext_typecheck_cond_incompatible_pointers,
              lexT.getAsString(), rexT.getAsString(),
              lex->getSourceRange(), rex->getSourceRange());
@@ -997,8 +997,8 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
     ;
   // C99 6.5.16.1p1 (constraint 3): both operands are pointers to qualified or 
   // unqualified versions of compatible types, ...
-  else if (!Type::typesAreCompatible(lhptee.getUnqualifiedType(), 
-                                     rhptee.getUnqualifiedType()))
+  else if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
+                                       rhptee.getUnqualifiedType()))
     r = IncompatiblePointer; // this "trumps" PointerAssignDiscardsQualifiers
   return r;
 }
@@ -1026,7 +1026,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     return Compatible;
 
   if (lhsType->isReferenceType() || rhsType->isReferenceType()) {
-    if (Type::referenceTypesAreCompatible(lhsType, rhsType))
+    if (Context.referenceTypesAreCompatible(lhsType, rhsType))
       return Compatible;
   } else if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
     if (lhsType->isVectorType() || rhsType->isVectorType()) {
@@ -1048,7 +1048,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (lhsType->isPointerType()) 
       return CheckPointerTypesForAssignment(lhsType, rhsType);
   } else if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
-    if (Type::tagTypesAreCompatible(lhsType, rhsType))
+    if (Context.tagTypesAreCompatible(lhsType, rhsType))
       return Compatible;
   }
   return Incompatible;
@@ -1213,8 +1213,8 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   // errors (when -pedantic-errors is enabled).
   if (lType->isPointerType() && rType->isPointerType()) { // C99 6.5.8p2
     if (!LHSIsNull && !RHSIsNull &&
-        !Type::pointerTypesAreCompatible(lType.getUnqualifiedType(),
-                                         rType.getUnqualifiedType())) {
+        !Context.pointerTypesAreCompatible(lType.getUnqualifiedType(),
+                                           rType.getUnqualifiedType())) {
       Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
            lType.getAsString(), rType.getAsString(),
            lex->getSourceRange(), rex->getSourceRange());

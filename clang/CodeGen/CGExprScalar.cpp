@@ -101,7 +101,8 @@ public:
   }
   Value *VisitTypesCompatibleExpr(const TypesCompatibleExpr *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()),
-                                  E->typesAreCompatible());
+                                  CGF.getContext().typesAreCompatible(
+                                    E->getArgType1(), E->getArgType2()));
   }
   Value *VisitSizeOfAlignOfTypeExpr(const SizeOfAlignOfTypeExpr *E) {
     return EmitSizeAlignOf(E->getArgumentType(), E->getType(), E->isSizeOf());

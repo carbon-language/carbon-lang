@@ -855,3 +855,166 @@ void ASTContext::setObjcIdType(TypedefDecl *TD)
   IdStructType = rec;
 }
 
+bool ASTContext::builtinTypesAreCompatible(QualType lhs, QualType rhs) {
+  const BuiltinType *lBuiltin = lhs->getAsBuiltinType();
+  const BuiltinType *rBuiltin = rhs->getAsBuiltinType();
+  
+  return lBuiltin->getKind() == rBuiltin->getKind();
+}
+
+
+bool ASTContext::objcTypesAreCompatible(QualType lhs, QualType rhs) {
+  if (lhs->isObjcInterfaceType() && isObjcIdType(rhs))
+    return true;
+  else if (isObjcIdType(lhs) && rhs->isObjcInterfaceType())
+    return true;
+  return false;
+}
+
+bool ASTContext::interfaceTypesAreCompatible(QualType lhs, QualType rhs) {
+  return true; // FIXME: IMPLEMENT.
+}
+
+// C99 6.2.7p1: If both are complete types, then the following additional
+// requirements apply...FIXME (handle compatibility across source files).
+bool ASTContext::tagTypesAreCompatible(QualType lhs, QualType rhs) {
+  TagDecl *ldecl = cast<TagType>(lhs.getCanonicalType())->getDecl();
+  TagDecl *rdecl = cast<TagType>(rhs.getCanonicalType())->getDecl();
+  
+  if (ldecl->getKind() == Decl::Struct && rdecl->getKind() == Decl::Struct) {
+    if (ldecl->getIdentifier() == rdecl->getIdentifier())
+      return true;
+  }
+  if (ldecl->getKind() == Decl::Union && rdecl->getKind() == Decl::Union) {
+    if (ldecl->getIdentifier() == rdecl->getIdentifier())
+      return true;
+  }
+  return false;
+}
+
+bool ASTContext::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
+  // C99 6.7.5.1p2: For two pointer types to be compatible, both shall be 
+  // identically qualified and both shall be pointers to compatible types.
+  if (lhs.getQualifiers() != rhs.getQualifiers())
+    return false;
+    
+  QualType ltype = cast<PointerType>(lhs.getCanonicalType())->getPointeeType();
+  QualType rtype = cast<PointerType>(rhs.getCanonicalType())->getPointeeType();
+  
+  return typesAreCompatible(ltype, rtype);
+}
+
+// C++ 5.17p6: When the left opperand of an assignment operator denotes a
+// reference to T, the operation assigns to the object of type T denoted by the
+// reference.
+bool ASTContext::referenceTypesAreCompatible(QualType lhs, QualType rhs) {
+  QualType ltype = lhs;
+
+  if (lhs->isReferenceType())
+    ltype = cast<ReferenceType>(lhs.getCanonicalType())->getReferenceeType();
+
+  QualType rtype = rhs;
+
+  if (rhs->isReferenceType())
+    rtype = cast<ReferenceType>(rhs.getCanonicalType())->getReferenceeType();
+
+  return typesAreCompatible(ltype, rtype);
+}
+
+bool ASTContext::functionTypesAreCompatible(QualType lhs, QualType rhs) {
+  const FunctionType *lbase = cast<FunctionType>(lhs.getCanonicalType());
+  const FunctionType *rbase = cast<FunctionType>(rhs.getCanonicalType());
+  const FunctionTypeProto *lproto = dyn_cast<FunctionTypeProto>(lbase);
+  const FunctionTypeProto *rproto = dyn_cast<FunctionTypeProto>(rbase);
+
+  // first check the return types (common between C99 and K&R).
+  if (!typesAreCompatible(lbase->getResultType(), rbase->getResultType()))
+    return false;
+
+  if (lproto && rproto) { // two C99 style function prototypes
+    unsigned lproto_nargs = lproto->getNumArgs();
+    unsigned rproto_nargs = rproto->getNumArgs();
+    
+    if (lproto_nargs != rproto_nargs)
+      return false;
+      
+    // both prototypes have the same number of arguments.
+    if ((lproto->isVariadic() && !rproto->isVariadic()) ||
+        (rproto->isVariadic() && !lproto->isVariadic()))
+      return false;
+      
+    // The use of ellipsis agree...now check the argument types.
+    for (unsigned i = 0; i < lproto_nargs; i++)
+      if (!typesAreCompatible(lproto->getArgType(i), rproto->getArgType(i)))
+        return false;
+    return true;
+  }
+  if (!lproto && !rproto) // two K&R style function decls, nothing to do.
+    return true;
+
+  // we have a mixture of K&R style with C99 prototypes
+  const FunctionTypeProto *proto = lproto ? lproto : rproto;
+  
+  if (proto->isVariadic())
+    return false;
+    
+  // FIXME: Each parameter type T in the prototype must be compatible with the
+  // type resulting from applying the usual argument conversions to T.
+  return true;
+}
+
+bool ASTContext::arrayTypesAreCompatible(QualType lhs, QualType rhs) {
+  QualType ltype = cast<ArrayType>(lhs.getCanonicalType())->getElementType();
+  QualType rtype = cast<ArrayType>(rhs.getCanonicalType())->getElementType();
+  
+  if (!typesAreCompatible(ltype, rtype))
+    return false;
+    
+  // FIXME: If both types specify constant sizes, then the sizes must also be 
+  // the same. Even if the sizes are the same, GCC produces an error.
+  return true;
+}
+
+/// typesAreCompatible - C99 6.7.3p9: For two qualified types to be compatible, 
+/// both shall have the identically qualified version of a compatible type.
+/// C99 6.2.7p1: Two types have compatible types if their types are the 
+/// same. See 6.7.[2,3,5] for additional rules.
+bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
+  QualType lcanon = lhs.getCanonicalType();
+  QualType rcanon = rhs.getCanonicalType();
+
+  // If two types are identical, they are are compatible
+  if (lcanon == rcanon)
+    return true;
+  
+  // If the canonical type classes don't match, they can't be compatible
+  if (lcanon->getTypeClass() != rcanon->getTypeClass()) {
+    // For Objective-C, it is possible for two types to be compatible
+    // when their classes don't match (when dealing with "id"). If either type
+    // is an interface, we defer to objcTypesAreCompatible(). 
+    if (lcanon->isObjcInterfaceType() || rcanon->isObjcInterfaceType())
+      return objcTypesAreCompatible(lcanon, rcanon);
+    return false;
+  }
+  switch (lcanon->getTypeClass()) {
+    case Type::Pointer:
+      return pointerTypesAreCompatible(lcanon, rcanon);
+    case Type::Reference:
+      return referenceTypesAreCompatible(lcanon, rcanon);
+    case Type::ConstantArray:
+    case Type::VariableArray:
+      return arrayTypesAreCompatible(lcanon, rcanon);
+    case Type::FunctionNoProto:
+    case Type::FunctionProto:
+      return functionTypesAreCompatible(lcanon, rcanon);
+    case Type::Tagged: // handle structures, unions
+      return tagTypesAreCompatible(lcanon, rcanon);
+    case Type::Builtin:
+      return builtinTypesAreCompatible(lcanon, rcanon); 
+    case Type::ObjcInterface:
+      return interfaceTypesAreCompatible(lcanon, rcanon); 
+    default:
+      assert(0 && "unexpected type");
+  }
+  return true; // should never get here...
+}

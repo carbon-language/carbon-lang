@@ -512,7 +512,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     const TypesCompatibleExpr *TCE = cast<TypesCompatibleExpr>(this);
     Result.zextOrTrunc(
       static_cast<uint32_t>(Ctx.getTypeSize(getType(), TCE->getLocStart())));
-    Result = TCE->typesAreCompatible();
+    Result = Ctx.typesAreCompatible(TCE->getArgType1(), TCE->getArgType2());
     break;
   }
   case CallExprClass: {
