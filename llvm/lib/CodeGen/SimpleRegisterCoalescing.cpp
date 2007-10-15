@@ -422,14 +422,19 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
     // then create and update the actual physical register allocated to RHS.
     if (RealDstReg) {
       LiveInterval &RealDstInt = li_->getOrCreateInterval(RealDstReg);
-      for (unsigned i = 0, e = ResSrcInt->getNumValNums(); i != e; ++i) {
-        const VNInfo *SrcValNo = ResSrcInt->getValNumInfo(i);
-        const VNInfo *DstValNo =
-          ResDstInt->FindLiveRangeContaining(SrcValNo->def)->valno;
-        VNInfo *ValNo = RealDstInt.getNextValue(DstValNo->def, DstValNo->reg,
-                                                li_->getVNInfoAllocator());
-        RealDstInt.addKills(ValNo, DstValNo->kills);
-        RealDstInt.MergeValueInAsValue(*ResDstInt, DstValNo, ValNo);
+      SmallSet<const VNInfo*, 4> CopiedValNos;
+      for (LiveInterval::Ranges::const_iterator I = ResSrcInt->ranges.begin(),
+             E = ResSrcInt->ranges.end(); I != E; ++I) {
+        LiveInterval::const_iterator DstLR =
+          ResDstInt->FindLiveRangeContaining(I->start);
+        assert(DstLR != ResDstInt->end() && "Invalid joined interval!");
+        const VNInfo *DstValNo = DstLR->valno;
+        if (CopiedValNos.insert(DstValNo)) {
+          VNInfo *ValNo = RealDstInt.getNextValue(DstValNo->def, DstValNo->reg,
+                                                  li_->getVNInfoAllocator());
+          RealDstInt.addKills(ValNo, DstValNo->kills);
+          RealDstInt.MergeValueInAsValue(*ResDstInt, DstValNo, ValNo);
+        }
       }
       repDstReg = RealDstReg;
     }
