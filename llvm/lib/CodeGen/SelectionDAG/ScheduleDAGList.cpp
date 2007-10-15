@@ -443,22 +443,57 @@ int LatencyPriorityQueue::CalcLatency(const SUnit &SU) {
   int &Latency = Latencies[SU.NodeNum];
   if (Latency != -1)
     return Latency;
-  
-  int MaxSuccLatency = 0;
-  for (SUnit::const_succ_iterator I = SU.Succs.begin(), E = SU.Succs.end();
-       I != E; ++I)
-    MaxSuccLatency = std::max(MaxSuccLatency, CalcLatency(*I->Dep));
 
-  return Latency = MaxSuccLatency + SU.Latency;
+  std::vector<const SUnit*> WorkList;
+  WorkList.push_back(&SU);
+  while (!WorkList.empty()) {
+    const SUnit *Cur = WorkList.back();
+    bool AllDone = true;
+    int MaxSuccLatency = 0;
+    for (SUnit::const_succ_iterator I = Cur->Succs.begin(),E = Cur->Succs.end();
+         I != E; ++I) {
+      int SuccLatency = Latencies[I->Dep->NodeNum];
+      if (SuccLatency == -1) {
+        AllDone = false;
+        WorkList.push_back(I->Dep);
+      } else {
+        MaxSuccLatency = std::max(MaxSuccLatency, SuccLatency);
+      }
+    }
+    if (AllDone) {
+      Latencies[Cur->NodeNum] = MaxSuccLatency + Cur->Latency;
+      WorkList.pop_back();
+    }
+  }
+
+  return Latency;
 }
 
 /// CalculatePriorities - Calculate priorities of all scheduling units.
 void LatencyPriorityQueue::CalculatePriorities() {
   Latencies.assign(SUnits->size(), -1);
   NumNodesSolelyBlocking.assign(SUnits->size(), 0);
-  
-  for (unsigned i = 0, e = SUnits->size(); i != e; ++i)
-    CalcLatency((*SUnits)[i]);
+
+  // For each node, calculate the maximal path from the node to the exit.
+  std::vector<std::pair<const SUnit*, unsigned> > WorkList;
+  for (unsigned i = 0, e = SUnits->size(); i != e; ++i) {
+    const SUnit *SU = &(*SUnits)[i];
+    if (SU->Succs.size() == 0)
+      WorkList.push_back(std::make_pair(SU, 0U));
+  }
+
+  while (!WorkList.empty()) {
+    const SUnit *SU = WorkList.back().first;
+    unsigned SuccLat = WorkList.back().second;
+    WorkList.pop_back();
+    int &Latency = Latencies[SU->NodeNum];
+    if (Latency == -1 || (SU->Latency + SuccLat) > (unsigned)Latency) {
+      Latency = SU->Latency + SuccLat;
+      for (SUnit::const_pred_iterator I = SU->Preds.begin(),E = SU->Preds.end();
+           I != E; ++I)
+        WorkList.push_back(std::make_pair(I->Dep, Latency));
+    }
+  }
 }
 
 /// getSingleUnscheduledPred - If there is exactly one unscheduled predecessor
