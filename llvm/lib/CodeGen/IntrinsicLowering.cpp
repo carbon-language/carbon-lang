@@ -114,6 +114,51 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
                                I->arg_begin()->getType());
         }
         break;
+      case Intrinsic::sin:
+        switch((int)I->arg_begin()->getType()->getTypeID()) {
+        case Type::FloatTyID:
+          EnsureFunctionExists(M, "sinf", I->arg_begin(), I->arg_end(),
+                               Type::FloatTy);
+        case Type::DoubleTyID:
+          EnsureFunctionExists(M, "sin", I->arg_begin(), I->arg_end(),
+                               Type::DoubleTy);
+        case Type::X86_FP80TyID:
+        case Type::FP128TyID:
+        case Type::PPC_FP128TyID:
+          EnsureFunctionExists(M, "sinl", I->arg_begin(), I->arg_end(),
+                               I->arg_begin()->getType());
+        }
+        break;
+      case Intrinsic::cos:
+        switch((int)I->arg_begin()->getType()->getTypeID()) {
+        case Type::FloatTyID:
+          EnsureFunctionExists(M, "cosf", I->arg_begin(), I->arg_end(),
+                               Type::FloatTy);
+        case Type::DoubleTyID:
+          EnsureFunctionExists(M, "cos", I->arg_begin(), I->arg_end(),
+                               Type::DoubleTy);
+        case Type::X86_FP80TyID:
+        case Type::FP128TyID:
+        case Type::PPC_FP128TyID:
+          EnsureFunctionExists(M, "cosl", I->arg_begin(), I->arg_end(),
+                               I->arg_begin()->getType());
+        }
+        break;
+      case Intrinsic::pow:
+        switch((int)I->arg_begin()->getType()->getTypeID()) {
+        case Type::FloatTyID:
+          EnsureFunctionExists(M, "powf", I->arg_begin(), I->arg_end(),
+                               Type::FloatTy);
+        case Type::DoubleTyID:
+          EnsureFunctionExists(M, "pow", I->arg_begin(), I->arg_end(),
+                               Type::DoubleTy);
+        case Type::X86_FP80TyID:
+        case Type::FP128TyID:
+        case Type::PPC_FP128TyID:
+          EnsureFunctionExists(M, "powl", I->arg_begin(), I->arg_end(),
+                               I->arg_begin()->getType());
+        }
+        break;
       }
 }
 
