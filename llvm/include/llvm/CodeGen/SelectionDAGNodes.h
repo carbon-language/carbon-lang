@@ -419,13 +419,6 @@ namespace ISD {
     // indexed memory ops).
     LOAD, STORE,
     
-    // TRUNCSTORE - This operators truncates (for integer) or rounds (for FP) a
-    // value and stores it to memory in one operation.  This can be used for
-    // either integer or floating point operands.  The first four operands of
-    // this are the same as a standard store.  The fifth is the ValueType to
-    // store it as (which will be smaller than the source value).
-    TRUNCSTORE,
-
     // DYNAMIC_STACKALLOC - Allocate some number of bytes on the stack aligned
     // to a specified boundary.  This node always has two return values: a new
     // stack pointer value and a chain. The first operand is the token chain,
@@ -950,6 +943,10 @@ public:
   ///
   void Profile(FoldingSetNodeID &ID);
 
+  void setNodeId(int Id) {
+    NodeId = Id;
+  }
+  
 protected:
   friend class SelectionDAG;
   
@@ -1017,10 +1014,6 @@ protected:
         return;
       }
     }
-  }
-
-  void setNodeId(int Id) {
-    NodeId = Id;
   }
 };
 
