@@ -3895,13 +3895,7 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
 SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   assert(Op.getValueType() <= MVT::i64 && Op.getValueType() >= MVT::i16 &&
          "Unknown FP_TO_SINT to lower!");
-  // We lower FP->sint64 into FISTP64, followed by a load, all to a temporary
-  // stack slot.
   SDOperand Result;
-  MachineFunction &MF = DAG.getMachineFunction();
-  unsigned MemSize = MVT::getSizeInBits(Op.getValueType())/8;
-  int SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize);
-  SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
 
   // These are really Legal.
   if (Op.getValueType() == MVT::i32 && 
@@ -3915,6 +3909,12 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
       Op.getOperand(0).getValueType() != MVT::f80)
     return Result;
 
+  // We lower FP->sint64 into FISTP64, followed by a load, all to a temporary
+  // stack slot.
+  MachineFunction &MF = DAG.getMachineFunction();
+  unsigned MemSize = MVT::getSizeInBits(Op.getValueType())/8;
+  int SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize);
+  SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
   unsigned Opc;
   switch (Op.getValueType()) {
     default: assert(0 && "Invalid FP_TO_SINT to lower!");
