@@ -51,6 +51,21 @@ ExecutionEngine::~ExecutionEngine() {
     delete Modules[i];
 }
 
+/// removeModuleProvider - Remove a ModuleProvider from the list of modules.
+/// Release module from ModuleProvider.
+Module* ExecutionEngine::removeModuleProvider(ModuleProvider *P, 
+                                              std::string *ErrInfo) {
+  for(SmallVector<ModuleProvider *, 1>::iterator I = Modules.begin(), 
+        E = Modules.end(); I != E; ++I) {
+    ModuleProvider *MP = *I;
+    if (MP == P) {
+      Modules.erase(I);
+      return MP->releaseModule(ErrInfo);
+    }
+  }
+  return NULL;
+}
+
 /// FindFunctionNamed - Search all of the active modules to find the one that
 /// defines FnName.  This is very slow operation and shouldn't be used for
 /// general code.

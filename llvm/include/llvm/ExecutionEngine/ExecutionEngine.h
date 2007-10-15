@@ -97,7 +97,11 @@ public:
   void addModuleProvider(ModuleProvider *P) {
     Modules.push_back(P);
   }
-  
+
+  /// removeModuleProvider - Remove a ModuleProvider from the list of modules.
+  /// Release module from ModuleProvider.
+  Module* removeModuleProvider(ModuleProvider *P, std::string *ErrInfo = 0);
+
   /// FindFunctionNamed - Search all of the active modules to find the one that
   /// defines FnName.  This is very slow operation and shouldn't be used for
   /// general code.
