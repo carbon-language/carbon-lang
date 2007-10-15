@@ -862,7 +862,11 @@ of the code compiled (if you only get errors printed to the console while using
 this, you probably <a href="ProgrammersManual.html#ViewGraph">need to configure
 your system</a> to add support for it).  The <tt>-view-sched-dags</tt> option
 views the SelectionDAG output from the Select phase and input to the Scheduler
-phase.</p>
+phase.  The <tt>-view-sunit-dags</tt> option views the ScheduleDAG, which is
+based on the final SelectionDAG, with nodes that must be scheduled as a unit
+bundled together into a single node, and with immediate operands and other
+nodes that aren't relevent for scheduling omitted.
+</p>
 
 </div>
 
