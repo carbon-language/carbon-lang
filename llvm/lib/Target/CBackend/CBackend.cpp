@@ -1505,6 +1505,7 @@ bool CWriter::doInitialization(Module &M) {
       << "typedef unsigned int        ConstantFloatTy;\n"
       << "typedef struct { unsigned long long f1; unsigned short f2; "
          "unsigned short pad[3]; } ConstantFP80Ty;\n"
+      // This is used for both kinds of 128-bit long double; meaning differs.
       << "typedef struct { unsigned long long f1; unsigned long long f2; }"
          " ConstantFP128Ty;\n"
       << "\n\n/* Global Declarations */\n";
@@ -1737,6 +1738,14 @@ void CWriter::printFloatingPointConstants(Function &F) {
               << ((uint16_t)p[1] | (p[0] & 0xffffffffffffLL)<<16)
               << ", 0x" << (uint16_t)(p[0] >> 48) << ",0,0,0"
               << "}; /* Long double constant */\n" << std::dec;
+        } else if (FPC->getType() == Type::PPC_FP128Ty) {
+          APInt api = FPC->getValueAPF().convertToAPInt();
+          const uint64_t *p = api.getRawData();
+          Out << "static const ConstantFP128Ty FPConstant" << FPCounter++
+              << " = { 0x" << std::hex
+              << p[0] << ", 0x" << p[1]
+              << "}; /* Long double constant */\n" << std::dec;
+
         } else
           assert(0 && "Unknown float type!");
       }
