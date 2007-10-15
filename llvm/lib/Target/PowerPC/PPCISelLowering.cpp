@@ -2028,7 +2028,7 @@ static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
                          DAG.getNode(ISD::FNEG, MVT::f64, LHS), TV, FV);
     }
       
-      SDOperand Cmp;
+  SDOperand Cmp;
   switch (CC) {
   default: break;       // SETUO etc aren't handled by fsel.
   case ISD::SETULT:
@@ -2081,10 +2081,17 @@ static SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   }
   
   // Convert the FP value to an int value through memory.
-  SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::i64, Tmp);
+  SDOperand FIPtr = DAG.CreateStackTemporary(MVT::f64);
+  
+  // Emit a store to the stack slot.
+  SDOperand Chain = DAG.getStore(DAG.getEntryNode(), Tmp, FIPtr, NULL, 0);
+
+  // Result is a load from the stack slot.  If loading 4 bytes, make sure to
+  // add in a bias.
   if (Op.getValueType() == MVT::i32)
-    Bits = DAG.getNode(ISD::TRUNCATE, MVT::i32, Bits);
-  return Bits;
+    FIPtr = DAG.getNode(ISD::ADD, FIPtr.getValueType(), FIPtr,
+                        DAG.getConstant(4, FIPtr.getValueType()));
+  return DAG.getLoad(Op.getValueType(), Chain, FIPtr, NULL, 0);
 }
 
 static SDOperand LowerFP_ROUND_INREG(SDOperand Op, SelectionDAG &DAG) {
