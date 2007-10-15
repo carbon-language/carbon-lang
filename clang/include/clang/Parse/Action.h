@@ -594,6 +594,13 @@ public:
     return 0;
   }
   
+  virtual ExprResult ParseObjCSelectorExpression(SourceLocation EncLoc,
+                                               SourceLocation LParenLoc,
+                                               TypeTy *Ty,
+                                               SourceLocation RParenLoc) {
+    return 0;
+  }
+  
 };
 
 /// MinimalAction - Minimal actions are used by light-weight clients of the

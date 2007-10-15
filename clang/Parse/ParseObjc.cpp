@@ -1129,6 +1129,8 @@ Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
       return ParsePostfixExpressionSuffix(ParseObjCEncodeExpression());
     case tok::objc_protocol:
       return ParsePostfixExpressionSuffix(ParseObjCProtocolExpression());
+    case tok::objc_selector:
+      return ParsePostfixExpressionSuffix(ParseObjCSelectorExpression());
     default:
       Diag(AtLoc, diag::err_unexpected_at);
       SkipUntil(tok::semi);
@@ -1301,6 +1303,46 @@ Parser::ExprResult Parser::ParseObjCProtocolExpression()
   
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
+  // FIXME 
+  return 0;
+}
+
+///     objc-selector-expression
+///       @selector '(' objc-keyword-selector ')'
+Parser::ExprResult Parser::ParseObjCSelectorExpression()
+{
+  SourceLocation SelectorLoc = ConsumeToken();
+  
+  if (Tok.isNot(tok::l_paren)) {
+    Diag(Tok, diag::err_expected_lparen_after, "@selector");
+    return 0;
+  }
+  
+  SourceLocation LParenLoc = ConsumeParen();
+  SourceLocation sLoc;
+  IdentifierInfo *SelIdent = ParseObjCSelector(sLoc);
+  if (!SelIdent && Tok.isNot(tok::colon)) {
+    
+    Diag(Tok, diag::err_expected_ident); // missing selector name.
+    return 0;
+  }
+  if (Tok.isNot(tok::r_paren))
+    while (1) {
+      if (Tok.isNot(tok::colon)) {
+        Diag(Tok, diag::err_expected_colon);
+        break;
+      }
+      ConsumeToken(); // Eat the ':'.
+      if (Tok.is(tok::r_paren))
+        break;
+      // Check for another keyword selector.
+      SourceLocation Loc;
+      SelIdent = ParseObjCSelector(Loc);
+      if (!SelIdent && Tok.isNot(tok::colon))
+        break;
+    }
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
+  
   // FIXME 
   return 0;
 }
