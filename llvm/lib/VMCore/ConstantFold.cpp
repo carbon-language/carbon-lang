@@ -194,7 +194,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
   case Instruction::FPToUI: 
   case Instruction::FPToSI:
     if (const ConstantFP *FPC = dyn_cast<ConstantFP>(V)) {
-      APFloat V = FPC->getValueAPF();
+      const APFloat &V = FPC->getValueAPF();
       uint64_t x[2]; 
       uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
       (void) V.convertToInteger(x, DestBitWidth, opc==Instruction::FPToSI,
