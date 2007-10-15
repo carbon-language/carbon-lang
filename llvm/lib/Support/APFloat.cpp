@@ -59,7 +59,7 @@ namespace llvm {
   /* A tight upper bound on number of parts required to hold the value
      pow(5, power) is
 
-       power * 1024 / (441 * integerPartWidth) + 1
+       power * 815 / (351 * integerPartWidth) + 1
        
      However, whilst the result may require only this many parts,
      because we are multiplying two values to get it, the
@@ -70,8 +70,8 @@ namespace llvm {
   const unsigned int maxExponent = 16383;
   const unsigned int maxPrecision = 113;
   const unsigned int maxPowerOfFiveExponent = maxExponent + maxPrecision - 1;
-  const unsigned int maxPowerOfFiveParts = 2 + ((maxPowerOfFiveExponent * 1024)
-                                                / (441 * integerPartWidth));
+  const unsigned int maxPowerOfFiveParts = 2 + ((maxPowerOfFiveExponent * 815)
+                                                / (351 * integerPartWidth));
 }
 
 /* Put a bunch of private, handy routines in an anonymous namespace.  */
@@ -226,12 +226,19 @@ namespace {
        dddd.dddd[eE][+-]ddd
 
      where the decimal point and exponent are optional, fill out the
-     structure D.  If the value is zero, V->firstSigDigit
-     points to a zero, and the return exponent is zero.  */
+     structure D.  Exponent is appropriate if the significand is
+     treated as an integer, and normalizedExponent if the significand
+     is taken to have the decimal point after a single leading
+     non-zero digit.
+
+     If the value is zero, V->firstSigDigit points to a zero, and the
+     return exponent is zero.
+  */
   struct decimalInfo {
     const char *firstSigDigit;
     const char *lastSigDigit;
     int exponent;
+    int normalizedExponent;
   };
 
   void
@@ -243,6 +250,7 @@ namespace {
 
     D->firstSigDigit = p;
     D->exponent = 0;
+    D->normalizedExponent = 0;
 
     for (;;) {
       if (*p == '.') {
@@ -270,8 +278,10 @@ namespace {
         while (*p == '0');
       while (*p == '.');
 
-      /* Adjust the specified exponent for any decimal point.  */
+      /* Adjust the exponents for any decimal point.  */
       D->exponent += (dot - p) - (dot > p);
+      D->normalizedExponent = (D->exponent + (p - D->firstSigDigit)
+                               - (dot > D->firstSigDigit && dot < p));
     }
 
     D->lastSigDigit = p;
@@ -2079,19 +2089,45 @@ APFloat::convertFromDecimalString(const char *p, roundingMode rounding_mode)
   /* Scan the text.  */
   interpretDecimal(p, &D);
 
+  /* Handle the quick cases.  First the case of no significant digits,
+     i.e. zero, and then exponents that are obviously too large or too
+     small.  Writing L for log 10 / log 2, a number d.ddddd*10^exp
+     definitely overflows if
+
+           (exp - 1) * L >= maxExponent
+
+     and definitely underflows to zero where
+
+           (exp + 1) * L <= minExponent - precision
+
+     With integer arithmetic the tightest bounds for L are
+
+           93/28 < L < 196/59            [ numerator <= 256 ]
+           42039/12655 < L < 28738/8651  [ numerator <= 65536 ]
+  */
+
   if (*D.firstSigDigit == '0') {
     category = fcZero;
     fs = opOK;
+  } else if ((D.normalizedExponent + 1) * 28738
+             <= 8651 * (semantics->minExponent - (int) semantics->precision)) {
+    /* Underflow to zero and round.  */
+    zeroSignificand();
+    fs = normalize(rounding_mode, lfLessThanHalf);
+  } else if ((D.normalizedExponent - 1) * 42039
+             >= 12655 * semantics->maxExponent) {
+    /* Overflow and round.  */
+    fs = handleOverflow(rounding_mode);
   } else {
     integerPart *decSignificand;
     unsigned int partCount;
 
     /* A tight upper bound on number of bits required to hold an
-       N-digit decimal integer is N * 256 / 77.  Allocate enough space
+       N-digit decimal integer is N * 196 / 59.  Allocate enough space
        to hold the full significand, and an extra part required by
        tcMultiplyPart.  */
     partCount = (D.lastSigDigit - D.firstSigDigit) + 1;
-    partCount = partCountForBits(1 + 256 * partCount / 77);
+    partCount = partCountForBits(1 + 196 * partCount / 59);
     decSignificand = new integerPart[partCount + 1];
     partCount = 0;
 
