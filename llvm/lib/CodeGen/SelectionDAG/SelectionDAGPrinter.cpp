@@ -172,6 +172,10 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       Op = Op + "<trunc " + MVT::getValueTypeString(ST->getStoredVT()) + ">";
     Op += ST->getIndexedModeName(ST->getAddressingMode());
   }
+
+#if 0
+  Op += " Id=" + itostr(Node->getNodeId());
+#endif
   
   return Op;
 }
