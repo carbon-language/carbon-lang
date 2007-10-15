@@ -276,6 +276,7 @@ public:
   bool isVectorType() const; // GCC vector type.
   bool isOCUVectorType() const; // OCU vector type.
   bool isObjcInterfaceType() const; // includes conforming protocol type
+  bool isObjcIdType() const;
   
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs, and return a pointer to the best type
@@ -325,6 +326,7 @@ public:
   static bool arrayTypesAreCompatible(QualType, QualType); // C99 6.7.5.2p6
   static bool builtinTypesAreCompatible(QualType, QualType);
   static bool interfaceTypesAreCompatible(QualType, QualType);
+  static bool objcTypesAreCompatible(QualType, QualType);
 private:  
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   friend class QualType;

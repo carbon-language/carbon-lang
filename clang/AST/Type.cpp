@@ -267,6 +267,21 @@ bool Type::builtinTypesAreCompatible(QualType lhs, QualType rhs) {
   return lBuiltin->getKind() == rBuiltin->getKind();
 }
 
+// FIXME: Devise a way to do this without using strcmp.
+bool Type::isObjcIdType() const {
+  if (const RecordType *RT = getAsStructureType())
+    return !strcmp(RT->getDecl()->getName(), "objc_object");
+  return false;
+}
+
+bool Type::objcTypesAreCompatible(QualType lhs, QualType rhs) {
+  if (lhs->isObjcInterfaceType() && rhs->isObjcIdType())
+    return true;
+  else if (lhs->isObjcIdType() && rhs->isObjcInterfaceType())
+    return true;
+  return false;
+}
+
 bool Type::interfaceTypesAreCompatible(QualType lhs, QualType rhs) {
   return true; // FIXME: IMPLEMENT.
 }
@@ -384,9 +399,14 @@ bool Type::typesAreCompatible(QualType lhs, QualType rhs) {
     return true;
   
   // If the canonical type classes don't match, they can't be compatible
-  if (lcanon->getTypeClass() != rcanon->getTypeClass())
+  if (lcanon->getTypeClass() != rcanon->getTypeClass()) {
+    // For Objective-C, it is possible for two types to be compatible
+    // when their classes don't match (when dealing with "id"). If either type
+    // is an interface, we defer to objcTypesAreCompatible(). 
+    if (lcanon->isObjcInterfaceType() || rcanon->isObjcInterfaceType())
+      return objcTypesAreCompatible(lcanon, rcanon);
     return false;
-
+  }
   switch (lcanon->getTypeClass()) {
     case Type::Pointer:
       return pointerTypesAreCompatible(lcanon, rcanon);
