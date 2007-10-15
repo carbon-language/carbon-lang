@@ -59,7 +59,7 @@ void check_wide_string(char* b, ...)
   va_start(ap,b);
 
   printf(L"foo %d",2); // expected-warning {{should not be a wide string}}
-  vasprintf(&b,L"bar %d",2); // expected-warning {{should not be a wide string}}
+  vasprintf(&b,L"bar %d",ap); // expected-warning {{should not be a wide string}}
 }
 
 void check_asterisk_precision_width(int x) {
