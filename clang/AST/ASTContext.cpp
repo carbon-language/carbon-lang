@@ -150,6 +150,7 @@ void ASTContext::InitBuiltinTypes() {
   BuiltinVaListType = QualType();
   ObjcIdType = QualType();
   IdStructType = 0;
+  ObjcConstantStringType = QualType();
 }
 
 //===----------------------------------------------------------------------===//
@@ -853,6 +854,13 @@ void ASTContext::setObjcIdType(TypedefDecl *TD)
   const RecordType *rec = ptr->getPointeeType()->getAsStructureType();
   assert(rec && "'id' incorrectly typed");
   IdStructType = rec;
+}
+
+void ASTContext::setObjcConstantStringInterface(ObjcInterfaceDecl *Decl) {
+  assert(ObjcConstantStringType.isNull() && 
+         "'NSConstantString' type already set!");
+  
+  ObjcConstantStringType = getObjcInterfaceType(Decl);
 }
 
 bool ASTContext::builtinTypesAreCompatible(QualType lhs, QualType rhs) {

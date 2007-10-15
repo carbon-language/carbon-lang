@@ -1890,10 +1890,18 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(ExprTy *string) {
   if (CheckBuiltinCFStringArgument(S))
     return true;
   
-  QualType t = Context.getCFConstantStringType();
-  t = t.getQualifiedType(QualType::Const);
+  if (Context.getObjcConstantStringInterface().isNull()) {
+    // Initialize the constant string interface lazily. This assumes
+    // the NSConstantString interface is seen in this translation unit.
+    IdentifierInfo *NSIdent = &Context.Idents.get("NSConstantString");
+    ScopedDecl *IFace = LookupScopedDecl(NSIdent, Decl::IDNS_Ordinary, 
+                                         SourceLocation(), TUScope);
+    ObjcInterfaceDecl *stringInterface = cast<ObjcInterfaceDecl>(IFace);
+    assert(stringInterface && "missing '@interface NSConstantString'");
+    Context.setObjcConstantStringInterface(stringInterface);
+  }
+  QualType t = Context.getObjcConstantStringInterface();
   t = Context.getPointerType(t);
-
   return new ObjCStringLiteral(S, t);
 }
 

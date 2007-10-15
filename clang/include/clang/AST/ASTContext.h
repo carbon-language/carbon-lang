@@ -40,7 +40,6 @@ class ASTContext {
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   llvm::FoldingSet<ObjcQualifiedInterfaceType> ObjcQualifiedInterfaceTypes;
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
-  RecordDecl *CFConstantStringTypeDecl;
     
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
@@ -50,6 +49,9 @@ class ASTContext {
   /// ObjcIdType - a psuedo built-in typedef type (set by Sema).
   QualType ObjcIdType;
   const RecordType *IdStructType;
+  
+  QualType ObjcConstantStringType;
+  RecordDecl *CFConstantStringTypeDecl;
 public:
   
   SourceManager &SourceMgr;
@@ -151,12 +153,19 @@ public:
   /// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
   QualType getPointerDiffType() const;
   
-  // getCFConstantStringType - Return the type used for constant CFStrings. 
+  // getCFConstantStringType - Return the type used for constant CFStrings.
+  // CURRENTLY UNUSED (10/15/07). ObjCStringLiteral now uses the hook below.
   QualType getCFConstantStringType(); 
+  
+  // This setter/getter represents the actual ObjC type for an NSConstantString.
+  void setObjcConstantStringInterface(ObjcInterfaceDecl *Decl);
+  QualType getObjcConstantStringInterface() const { 
+    return ObjcConstantStringType; 
+  }
   
   void setObjcIdType(TypedefDecl *Decl);
   QualType getObjcIdType() const { return ObjcIdType; }
-  
+
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
     
