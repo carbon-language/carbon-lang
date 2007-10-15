@@ -61,8 +61,8 @@ class VISIBILITY_HIDDEN DAGTypeLegalizer {
   };
   
   /// ValueTypeActions - This is a bitvector that contains two bits for each
-  /// value type, where the two bits correspond to the LegalizeAction enum.
-  /// This can be queried with "getTypeAction(VT)".
+  /// simple value type, where the two bits correspond to the LegalizeAction
+  /// enum.  This can be queried with "getTypeAction(VT)".
   TargetLowering::ValueTypeActionImpl ValueTypeActions;
   
   /// getTypeAction - Return how we should legalize values of this type, either
@@ -87,7 +87,7 @@ class VISIBILITY_HIDDEN DAGTypeLegalizer {
   DenseMap<SDOperand, SDOperand> PromotedNodes;
   
   /// ExpandedNodes - For nodes that need to be expanded this map indicates
-  /// which which operands are the expanded version of the input.
+  /// which operands are the expanded version of the input.
   DenseMap<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedNodes;
   
   /// Worklist - This defines a worklist of nodes to process.  In order to be
@@ -190,7 +190,7 @@ void DAGTypeLegalizer::run() {
   DAG.setRoot(SDOperand());
   
   // Walk all nodes in the graph, assigning them a NodeID of 'ReadyToProcess'
-  // (and remembering them) if they are leafs and assigning 'NewNode' if
+  // (and remembering them) if they are leaves and assigning 'NewNode' if
   // non-leaves.
   for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
        E = DAG.allnodes_end(); I != E; ++I) {
@@ -416,7 +416,7 @@ void DAGTypeLegalizer::SetExpandedOp(SDOperand Op, SDOperand Lo,
 /// PromoteResult - This method is called when a result of a node is found to be
 /// in need of promotion to a larger type.  At this point, the node may also
 /// have invalid operands or may have other results that need expansion, we just
-/// know that (at least) the one result needs promotion.
+/// know that (at least) one result needs promotion.
 void DAGTypeLegalizer::PromoteResult(SDNode *N, unsigned ResNo) {
   DEBUG(cerr << "Promote node result: "; N->dump(&DAG); cerr << "\n");
   SDOperand Result = SDOperand();
@@ -556,7 +556,7 @@ SDOperand DAGTypeLegalizer::PromoteResult_SimpleIntBinOp(SDNode *N) {
 /// ExpandResult - This method is called when the specified result of the
 /// specified node is found to need expansion.  At this point, the node may also
 /// have invalid operands or may have other results that need promotion, we just
-/// know that (at least) the one result needs expansion.
+/// know that (at least) one result needs expansion.
 void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   DEBUG(cerr << "Expand node result: "; N->dump(&DAG); cerr << "\n");
   SDOperand Lo, Hi;
@@ -599,13 +599,13 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
 
 void DAGTypeLegalizer::ExpandResult_UNDEF(SDNode *N,
                                           SDOperand &Lo, SDOperand &Hi) {
-  MVT::ValueType NVT = TLI.getTypeToExpandTo(N->getValueType(0));
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   Lo = Hi = DAG.getNode(ISD::UNDEF, NVT);
 }
 
 void DAGTypeLegalizer::ExpandResult_Constant(SDNode *N,
                                              SDOperand &Lo, SDOperand &Hi) {
-  MVT::ValueType NVT = TLI.getTypeToExpandTo(N->getValueType(0));
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   uint64_t Cst = cast<ConstantSDNode>(N)->getValue();
   Lo = DAG.getConstant(Cst, NVT);
   Hi = DAG.getConstant(Cst >> MVT::getSizeInBits(NVT), NVT);
@@ -621,7 +621,7 @@ void DAGTypeLegalizer::ExpandResult_BUILD_PAIR(SDNode *N,
 void DAGTypeLegalizer::ExpandResult_ANY_EXTEND(SDNode *N, 
                                                SDOperand &Lo, SDOperand &Hi) {
   
-  MVT::ValueType NVT = TLI.getTypeToExpandTo(N->getValueType(0));
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   // The low part is any extension of the input (which degenerates to a copy).
   Lo = DAG.getNode(ISD::ANY_EXTEND, NVT, N->getOperand(0));
   Hi = DAG.getNode(ISD::UNDEF, NVT);   // The high part is undefined.
@@ -629,7 +629,7 @@ void DAGTypeLegalizer::ExpandResult_ANY_EXTEND(SDNode *N,
 
 void DAGTypeLegalizer::ExpandResult_ZERO_EXTEND(SDNode *N,
                                                 SDOperand &Lo, SDOperand &Hi) {
-  MVT::ValueType NVT = TLI.getTypeToExpandTo(N->getValueType(0));
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   // The low part is zero extension of the input (which degenerates to a copy).
   Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, N->getOperand(0));
   Hi = DAG.getConstant(0, NVT);   // The high part is just a zero.
@@ -637,7 +637,7 @@ void DAGTypeLegalizer::ExpandResult_ZERO_EXTEND(SDNode *N,
 
 void DAGTypeLegalizer::ExpandResult_SIGN_EXTEND(SDNode *N,
                                                 SDOperand &Lo, SDOperand &Hi) {
-  MVT::ValueType NVT = TLI.getTypeToExpandTo(N->getValueType(0));
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   // The low part is sign extension of the input (which degenerates to a copy).
   Lo = DAG.getNode(ISD::SIGN_EXTEND, NVT, N->getOperand(0));
 
@@ -651,7 +651,7 @@ void DAGTypeLegalizer::ExpandResult_SIGN_EXTEND(SDNode *N,
 void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
   MVT::ValueType VT = N->getValueType(0);
-  MVT::ValueType NVT = TLI.getTypeToExpandTo(VT);
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
   SDOperand Ch  = N->getChain();    // Legalize the chain.
   SDOperand Ptr = N->getBasePtr();  // Legalize the pointer.
   ISD::LoadExtType ExtType = N->getExtensionType();
@@ -816,7 +816,7 @@ void DAGTypeLegalizer::ExpandResult_ADDSUB(SDNode *N,
 void DAGTypeLegalizer::ExpandResult_MUL(SDNode *N,
                                         SDOperand &Lo, SDOperand &Hi) {
   MVT::ValueType VT = N->getValueType(0);
-  MVT::ValueType NVT = TLI.getTypeToExpandTo(VT);
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
   
   // If the target wants to custom expand this, let them.
   if (TLI.getOperationAction(ISD::MUL, VT) == TargetLowering::Custom) {
@@ -941,7 +941,7 @@ void DAGTypeLegalizer::ExpandResult_Shift(SDNode *N,
   
   // Next check to see if the target supports this SHL_PARTS operation or if it
   // will custom expand it.
-  MVT::ValueType NVT = TLI.getTypeToExpandTo(VT);
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
   TargetLowering::LegalizeAction Action = TLI.getOperationAction(PartsOpc, NVT);
   if ((Action == TargetLowering::Legal && TLI.isTypeLegal(NVT)) ||
       Action == TargetLowering::Custom) {
