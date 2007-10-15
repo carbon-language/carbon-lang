@@ -173,7 +173,7 @@ namespace {
       DOUT << '\n';
 
       std::vector<SDNode*> NowDead;
-      DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, NowDead);
+      DAG.ReplaceAllUsesOfValueWith(TLO.Old, TLO.New, &NowDead);
       
       // Push the new node and any (possibly new) users onto the worklist.
       AddToWorkList(TLO.New.Val);
@@ -1414,8 +1414,6 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
 ///
 bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
                                              unsigned LoOp, unsigned HiOp) {
-  std::vector<SDNode*> NowDead;
-
   // If the high half is not needed, just compute the low half.
   if (!N->hasAnyUseOfValue(1) &&
       (!AfterLegalize ||
@@ -1423,8 +1421,7 @@ bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
     DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0),
                                   DAG.getNode(LoOp, N->getValueType(0),
                                               N->op_begin(),
-                                              N->getNumOperands()),
-                                  NowDead);
+                                              N->getNumOperands()));
     return true;
   }
 
@@ -1435,8 +1432,7 @@ bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
     DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1),
                                   DAG.getNode(HiOp, N->getValueType(1),
                                               N->op_begin(),
-                                              N->getNumOperands()),
-                                  NowDead);
+                                              N->getNumOperands()));
     return true;
   }
 
@@ -1464,8 +1460,8 @@ bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
       (HiExists || HiOpt != Hi) &&
       TLI.isOperationLegal(LoOpt.getOpcode(), LoOpt.getValueType()) &&
       TLI.isOperationLegal(HiOpt.getOpcode(), HiOpt.getValueType())) {
-    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), LoOpt, NowDead);
-    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), HiOpt, NowDead);
+    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), LoOpt);
+    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), HiOpt);
     return true;
   }
 
@@ -2891,8 +2887,7 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
                        LN0->isVolatile(), LN0->getAlignment());
     AddToWorkList(N);
     if (CombineSRL) {
-      std::vector<SDNode*> NowDead;
-      DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1), NowDead);
+      DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1));
       CombineTo(N->getOperand(0).Val, Load);
     } else
       CombineTo(N0.Val, Load, Load.getValue(1));
@@ -3694,12 +3689,12 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
   std::vector<SDNode*> NowDead;
   if (isLoad) {
     DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(0),
-                                  NowDead);
+                                  &NowDead);
     DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), Result.getValue(2),
-                                  NowDead);
+                                  &NowDead);
   } else {
     DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(1),
-                                  NowDead);
+                                  &NowDead);
   }
 
   // Nodes can end up on the worklist more than once.  Make sure we do
@@ -3711,7 +3706,7 @@ bool DAGCombiner::CombineToPreIndexedLoadStore(SDNode *N) {
 
   // Replace the uses of Ptr with uses of the updated base value.
   DAG.ReplaceAllUsesOfValueWith(Ptr, Result.getValue(isLoad ? 1 : 0),
-                                NowDead);
+                                &NowDead);
   removeFromWorkList(Ptr.Val);
   for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
     removeFromWorkList(NowDead[i]);
@@ -3825,12 +3820,12 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
         std::vector<SDNode*> NowDead;
         if (isLoad) {
           DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(0),
-                                        NowDead);
+                                        &NowDead);
           DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), Result.getValue(2),
-                                        NowDead);
+                                        &NowDead);
         } else {
           DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), Result.getValue(1),
-                                        NowDead);
+                                        &NowDead);
         }
 
         // Nodes can end up on the worklist more than once.  Make sure we do
@@ -3843,7 +3838,7 @@ bool DAGCombiner::CombineToPostIndexedLoadStore(SDNode *N) {
         // Replace the uses of Use with uses of the updated base value.
         DAG.ReplaceAllUsesOfValueWith(SDOperand(Op, 0),
                                       Result.getValue(isLoad ? 1 : 0),
-                                      NowDead);
+                                      &NowDead);
         removeFromWorkList(Op);
         for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
           removeFromWorkList(NowDead[i]);

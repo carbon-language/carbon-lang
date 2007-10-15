@@ -4714,6 +4714,10 @@ void SelectionDAGISel::CodeGenAndEmitDAG(SelectionDAG &DAG) {
   
   // Second step, hack on the DAG until it only uses operations and types that
   // the target supports.
+#if 0  // Enable this some day.
+  DAG.LegalizeTypes();
+  // Someday even later, enable a dag combine pass here.
+#endif
   DAG.Legalize();
   
   DOUT << "Legalized selection DAG:\n";

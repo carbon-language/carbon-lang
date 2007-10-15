@@ -120,6 +120,13 @@ public:
   /// generate any nodes that will be illegal on the target.
   void Combine(bool AfterLegalize, AliasAnalysis &AA);
   
+  /// LegalizeTypes - This transforms the SelectionDAG into a SelectionDAG that
+  /// only uses types natively supported by the target.
+  ///
+  /// Note that this is an involved process that may invalidate pointers into
+  /// the graph.
+  void LegalizeTypes();
+  
   /// Legalize - This transforms the SelectionDAG into a SelectionDAG that is
   /// compatible with the target instruction selector, as indicated by the
   /// TargetLowering object.
@@ -451,7 +458,7 @@ public:
   /// handled the same was as for ReplaceAllUsesWith, but it is required for
   /// this method.
   void ReplaceAllUsesOfValueWith(SDOperand From, SDOperand To,
-                                 std::vector<SDNode*> &Deleted);
+                                 std::vector<SDNode*> *Deleted = 0);
 
   /// AssignNodeIds - Assign a unique node id for each node in the DAG based on
   /// their allnodes order. It returns the maximum id.

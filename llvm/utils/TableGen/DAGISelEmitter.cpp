@@ -3939,7 +3939,7 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "}\n\n";
 
   OS << "void ReplaceUses(SDOperand F, SDOperand T) DISABLE_INLINE {\n";
-  OS << "  CurDAG->ReplaceAllUsesOfValueWith(F, T, ISelKilled);\n";
+  OS << "  CurDAG->ReplaceAllUsesOfValueWith(F, T, &ISelKilled);\n";
   OS << "  setSelected(F.Val->getNodeId());\n";
   OS << "  RemoveKilled();\n";
   OS << "}\n";
@@ -3950,7 +3950,7 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "    for (unsigned i = 0, e = std::min(FNumVals, TNumVals); "
      << "i < e; ++i)\n";
   OS << "      CurDAG->ReplaceAllUsesOfValueWith(SDOperand(F, i), "
-     << "SDOperand(T, i), ISelKilled);\n";
+     << "SDOperand(T, i), &ISelKilled);\n";
   OS << "  } else {\n";
   OS << "    CurDAG->ReplaceAllUsesWith(F, T, &ISelKilled);\n";
   OS << "  }\n";

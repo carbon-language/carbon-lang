@@ -422,14 +422,12 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
 
     N = NewNodes[1];
     SDNode *LoadNode = NewNodes[0];
-    std::vector<SDNode*> Deleted;
     unsigned NumVals = N->getNumValues();
     unsigned OldNumVals = SU->Node->getNumValues();
     for (unsigned i = 0; i != NumVals; ++i)
-      DAG.ReplaceAllUsesOfValueWith(SDOperand(SU->Node, i),
-                                    SDOperand(N, i), Deleted);
+      DAG.ReplaceAllUsesOfValueWith(SDOperand(SU->Node, i), SDOperand(N, i));
     DAG.ReplaceAllUsesOfValueWith(SDOperand(SU->Node, OldNumVals-1),
-                                  SDOperand(LoadNode, 1), Deleted);
+                                  SDOperand(LoadNode, 1));
 
     SUnit *LoadSU = NewSUnit(LoadNode);
     SUnit *NewSU = NewSUnit(N);
