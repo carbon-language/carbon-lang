@@ -271,10 +271,15 @@ NoOperatorNames("fno-operator-names",
                 llvm::cl::desc("Do not treat C++ operator name keywords as "
                                "synonyms for operators"));
 
+static llvm::cl::opt<bool>
+PascalStrings("fpascal-strings",
+              llvm::cl::desc("Recognize and construct Pascal-style "
+                             "string literals"));
 // FIXME: add:
 //   -ansi
 //   -trigraphs
 //   -fdollars-in-identifiers
+//   -fpascal-strings
 static void InitializeLanguageStandard(LangOptions &Options) {
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
@@ -325,6 +330,7 @@ static void InitializeLanguageStandard(LangOptions &Options) {
   
   Options.Trigraphs = 1; // -trigraphs or -ansi
   Options.DollarIdents = 1;  // FIXME: Really a target property.
+  Options.PascalStrings = PascalStrings;
 }
 
 //===----------------------------------------------------------------------===//

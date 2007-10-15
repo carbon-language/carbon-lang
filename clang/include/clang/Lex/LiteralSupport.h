@@ -150,6 +150,7 @@ public:
                       Preprocessor &PP, TargetInfo &T);
   bool hadError;
   bool AnyWide;
+  bool Pascal;
   
   const char *GetString() { return &ResultBuf[0]; }
   unsigned GetStringLength() { return ResultPtr-&ResultBuf[0]; }

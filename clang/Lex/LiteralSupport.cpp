@@ -599,6 +599,8 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
   // wide strings as appropriate.
   ResultPtr = &ResultBuf[0];   // Next byte to fill in.
   
+  Pascal = false;
+  
   for (unsigned i = 0, e = NumStringToks; i != e; ++i) {
     const char *ThisTokBuf = &TokenBuf[0];
     // Get the spelling of the token, which eliminates trigraphs, etc.  We know
@@ -619,6 +621,19 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     assert(ThisTokBuf[0] == '"' && "Expected quote, lexer broken?");
     ++ThisTokBuf;
     
+    // Check if this is a pascal string
+    if (pp.getLangOptions().PascalStrings && ThisTokBuf + 1 != ThisTokEnd &&
+        ThisTokBuf[0] == '\\' && ThisTokBuf[1] == 'p') {
+      
+      // If the \p sequence is found in the first token, we have a pascal string
+      // Otherwise, if we already have a pascal string, ignore the first \p
+      if (i == 0) {
+        ++ThisTokBuf;
+        Pascal = true;
+      } else if (Pascal)
+        ThisTokBuf += 2;
+    }
+      
     while (ThisTokBuf != ThisTokEnd) {
       // Is this a span of non-escape characters?
       if (ThisTokBuf[0] != '\\') {
@@ -665,4 +680,7 @@ StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
     for (unsigned i = 1, e = wchar_tByteWidth; i != e; ++i)
     *ResultPtr++ = 0;
   }
+    
+  if (Pascal) 
+    ResultBuf[0] = ResultPtr-&ResultBuf[0]-1;
 }

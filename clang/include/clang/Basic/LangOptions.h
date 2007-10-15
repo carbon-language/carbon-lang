@@ -34,10 +34,12 @@ struct LangOptions {
   unsigned ObjC1             : 1;  // Objective C 1 support enabled.
   unsigned ObjC2             : 1;  // Objective C 2 support enabled.
   
+  unsigned PascalStrings     : 1;  // Allow Pascal strings
+  
   LangOptions() {
     Trigraphs = BCPLComment = DollarIdents = Digraphs = ObjC1 = ObjC2 = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
-    CXXOperatorNames = 0;
+    CXXOperatorNames = PascalStrings = 0;
   }
 };
 

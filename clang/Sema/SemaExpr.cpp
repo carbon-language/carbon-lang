@@ -46,11 +46,22 @@ Sema::ActOnStringLiteral(const Token *StringToks, unsigned NumStringToks) {
     StringTokLocs.push_back(StringToks[i].getLocation());
   
   // FIXME: handle wchar_t
-  QualType t = Context.getPointerType(Context.CharTy);
+  QualType t;
+  
+  if (Literal.Pascal) 
+    t = Context.getPointerType(Context.UnsignedCharTy);
+  else
+    t = Context.getPointerType(Context.CharTy);
+  
+  if (Literal.Pascal && Literal.GetStringLength() > 256)
+    return Diag(StringToks[0].getLocation(), diag::err_pascal_string_too_long,
+                SourceRange(StringToks[0].getLocation(),
+                            StringToks[NumStringToks-1].getLocation()));
   
   // Pass &StringTokLocs[0], StringTokLocs.size() to factory!
   return new StringLiteral(Literal.GetString(), Literal.GetStringLength(), 
-                           Literal.AnyWide, t, StringToks[0].getLocation(),
+                           Literal.AnyWide, t, 
+                           StringToks[0].getLocation(),
                            StringToks[NumStringToks-1].getLocation());
 }
 

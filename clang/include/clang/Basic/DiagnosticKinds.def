@@ -771,6 +771,8 @@ DIAG(err_typecheck_choose_expr_requires_constant, ERROR,
      "'__builtin_choose_expr' requires a constant expression")
 DIAG(warn_unused_expr, WARNING,
      "expression result unused")
+DIAG(err_pascal_string_too_long, ERROR,
+    "Pascal string is too long")
 
 // CHECK: printf format string errors
 DIAG(warn_printf_not_string_constant, WARNING,

@@ -419,7 +419,7 @@ void StmtPrinter::VisitImaginaryLiteral(ImaginaryLiteral *Node) {
 void StmtPrinter::VisitStringLiteral(StringLiteral *Str) {
   if (Str->isWide()) OS << 'L';
   OS << '"';
-  
+
   // FIXME: this doesn't print wstrings right.
   for (unsigned i = 0, e = Str->getByteLength(); i != e; ++i) {
     switch (Str->getStrData()[i]) {
