@@ -66,6 +66,7 @@ STMT(49, ImplicitCastExpr      , Expr)
 STMT(50, CompoundLiteralExpr   , Expr)
 STMT(51, OCUVectorElementExpr  , Expr)
 STMT(52, InitListExpr          , Expr)
+STMT(53, VAArgExpr             , Expr)
 
 // GNU Extensions.
 STMT(55, AddrLabelExpr        , Expr)

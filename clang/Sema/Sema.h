@@ -418,6 +418,11 @@ public:
                                      ExprTy *cond, ExprTy *expr1, ExprTy *expr2,
                                      SourceLocation RPLoc);
   
+  // __builtin_va_arg(expr, type)
+  virtual ExprResult ActOnVAArg(SourceLocation BuiltinLoc,
+                                ExprTy *expr, TypeTy *type,
+                                SourceLocation RPLoc);
+  
   /// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.
   virtual ExprResult ActOnCXXCasts(SourceLocation OpLoc, tok::TokenKind Kind,
                                    SourceLocation LAngleBracketLoc, TypeTy *Ty,
@@ -623,6 +628,8 @@ private:
   void ConvertIntegerToTypeWarnOnOverflow(llvm::APSInt &OldVal, 
                                           unsigned NewWidth, bool NewSign,
                                           SourceLocation Loc, unsigned DiagID);
+  
+  void InitBuiltinVaListType();
   
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system

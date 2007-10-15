@@ -16,6 +16,7 @@
 #include "clang/AST/AST.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Support/Compiler.h"
 using namespace clang;
 using namespace CodeGen;
@@ -241,6 +242,7 @@ public:
   // Other Operators.
   Value *VisitConditionalOperator(const ConditionalOperator *CO);
   Value *VisitChooseExpr(ChooseExpr *CE);
+  Value *VisitVAArgExpr(VAArgExpr *VE);
   Value *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
     return CGF.EmitObjCStringLiteral(E);
   }
@@ -890,6 +892,14 @@ Value *ScalarExprEmitter::VisitChooseExpr(ChooseExpr *E) {
   
   // Emit the LHS or RHS as appropriate.
   return Visit(CondVal != 0 ? E->getLHS() : E->getRHS());
+}
+
+Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE)
+{
+  llvm::Value *ArgValue = EmitLValue(VE->getSubExpr()).getAddress();
+
+  llvm::Value *V = Builder.CreateVAArg(ArgValue, ConvertType(VE->getType()));  
+  return V;
 }
 
 //===----------------------------------------------------------------------===//

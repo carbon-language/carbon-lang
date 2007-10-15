@@ -425,6 +425,13 @@ public:
     return 0;
   }
 
+  // __builtin_va_arg(expr, type)
+  virtual ExprResult ActOnVAArg(SourceLocation BuiltinLoc,
+                                ExprTy *expr, TypeTy *type,
+                                SourceLocation RPLoc) {
+    return 0;
+  }
+  
   //===------------------------- C++ Expressions --------------------------===//
   
   /// ActOnCXXCasts - Parse {dynamic,static,reinterpret,const}_cast's.

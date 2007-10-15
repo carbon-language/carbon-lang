@@ -793,9 +793,9 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
 
   switch (T) {
   default: assert(0 && "Not a builtin primary expression!");
-  case tok::kw___builtin_va_arg:
-    Res = ParseAssignmentExpression();
-    if (Res.isInvalid) {
+  case tok::kw___builtin_va_arg: {
+    ExprResult Expr = ParseAssignmentExpression();
+    if (Expr.isInvalid) {
       SkipUntil(tok::r_paren);
       return Res;
     }
@@ -803,11 +803,15 @@ Parser::ExprResult Parser::ParseBuiltinPrimaryExpression() {
     if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "",tok::r_paren))
       return ExprResult(true);
 
-    ParseTypeName();
+    TypeTy *Ty = ParseTypeName();
     
-    MatchRHSPunctuation(tok::r_paren, LParenLoc);
+    if (Tok.isNot(tok::r_paren)) {
+      Diag(Tok, diag::err_expected_rparen);
+      return ExprResult(true);
+    }
+    Res = Actions.ActOnVAArg(StartLoc, Expr.Val, Ty, ConsumeParen());
     break;
-    
+  }
   case tok::kw___builtin_offsetof: {
     SourceLocation TypeLoc = Tok.getLocation();
     TypeTy *Ty = ParseTypeName();

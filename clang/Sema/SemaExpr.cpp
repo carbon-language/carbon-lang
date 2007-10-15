@@ -1859,6 +1859,30 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
   return new ChooseExpr(BuiltinLoc, CondExpr, LHSExpr, RHSExpr, resType, RPLoc);
 }
 
+Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
+                                  ExprTy *expr, TypeTy *type,
+                                  SourceLocation RPLoc)
+{
+  Expr *E = static_cast<Expr*>(expr);
+  QualType T = QualType::getFromOpaquePtr(type);
+
+  InitBuiltinVaListType();
+  
+  Sema::AssignmentCheckResult result;
+
+  result = CheckAssignmentConstraints(Context.getBuiltinVaListType(), 
+                                      E->getType());
+  if (result != Compatible)
+    return Diag(E->getLocStart(),
+                diag::err_first_argument_to_va_arg_not_of_type_va_list,
+                E->getType().getAsString(),
+                E->getSourceRange());
+  
+  // FIXME: Warn if a non-POD type is passed in.
+  
+  return new VAArgExpr(BuiltinLoc, E, T, RPLoc);
+}
+
 // TODO: Move this to SemaObjC.cpp
 Sema::ExprResult Sema::ParseObjCStringLiteral(ExprTy *string) {
   StringLiteral* S = static_cast<StringLiteral *>(string);

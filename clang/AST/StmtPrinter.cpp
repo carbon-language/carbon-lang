@@ -587,6 +587,14 @@ void StmtPrinter::VisitInitListExpr(InitListExpr* Node) {
   OS << " }";
 }
 
+void StmtPrinter::VisitVAArgExpr(VAArgExpr *Node) {
+  OS << "va_arg(";
+  PrintExpr(Node->getSubExpr());
+  OS << ", ";
+  OS << Node->getType().getAsString();
+  OS << ")";
+}
+
 // C++
 
 void StmtPrinter::VisitCXXCastExpr(CXXCastExpr *Node) {

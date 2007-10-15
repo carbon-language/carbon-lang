@@ -1054,6 +1054,15 @@ Stmt::child_iterator ChooseExpr::child_end() {
   return reinterpret_cast<Stmt**>(&SubExprs)+END_EXPR;
 }
 
+// VAArgExpr
+Stmt::child_iterator VAArgExpr::child_begin() {
+  return reinterpret_cast<Stmt**>(&Val);
+}
+
+Stmt::child_iterator VAArgExpr::child_end() {
+  return reinterpret_cast<Stmt**>(&Val)+1;
+}
+
 // InitListExpr
 Stmt::child_iterator InitListExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&InitExprs[0]);

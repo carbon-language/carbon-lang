@@ -146,23 +146,29 @@ ScopedDecl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
   return 0;
 }
 
+void Sema::InitBuiltinVaListType()
+{
+  if (!Context.getBuiltinVaListType().isNull())
+    return;
+  
+  IdentifierInfo *VaIdent = &Context.Idents.get("__builtin_va_list");
+  ScopedDecl *VaDecl = LookupScopedDecl(VaIdent, Decl::IDNS_Ordinary, 
+                                          SourceLocation(), TUScope);
+  TypedefDecl *VaTypedef = cast<TypedefDecl>(VaDecl);
+  Context.setBuiltinVaListType(Context.getTypedefType(VaTypedef));
+}
+
 /// LazilyCreateBuiltin - The specified Builtin-ID was first used at file scope.
 /// lazily create a decl for it.
 ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
                                       Scope *S) {
   Builtin::ID BID = (Builtin::ID)bid;
 
-  if ((BID == Builtin::BI__builtin_va_start ||
+  if (BID == Builtin::BI__builtin_va_start ||
        BID == Builtin::BI__builtin_va_copy ||
-       BID == Builtin::BI__builtin_va_end) &&
-      Context.getBuiltinVaListType().isNull()) {
-    IdentifierInfo *VaIdent = &Context.Idents.get("__builtin_va_list");
-    ScopedDecl *VaDecl = LookupScopedDecl(VaIdent, Decl::IDNS_Ordinary, 
-                                          SourceLocation(), TUScope);
-    TypedefDecl *VaTypedef = cast<TypedefDecl>(VaDecl);
-    Context.setBuiltinVaListType(Context.getTypedefType(VaTypedef));
-  }
-  
+       BID == Builtin::BI__builtin_va_end)
+    InitBuiltinVaListType();
+    
   QualType R = Context.BuiltinInfo.GetBuiltinType(BID, Context);  
   FunctionDecl *New = new FunctionDecl(SourceLocation(), II, R,
                                        FunctionDecl::Extern, false, 0);

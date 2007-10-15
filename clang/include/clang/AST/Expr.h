@@ -976,6 +976,32 @@ public:
   virtual child_iterator child_end();
 };
 
+/// VAArgExpr, used for the builtin function __builtin_va_start.
+class VAArgExpr : public Expr {
+  Expr *Val;
+  SourceLocation BuiltinLoc, RParenLoc;
+public:
+  VAArgExpr(SourceLocation BLoc, Expr* e, QualType t, SourceLocation RPLoc)
+    : Expr(VAArgExprClass, t),
+      Val(e),
+      BuiltinLoc(BLoc),
+      RParenLoc(RPLoc) { }
+  
+  const Expr *getSubExpr() const { return Val; }
+  Expr *getSubExpr() { return Val; }
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(BuiltinLoc, RParenLoc);
+  }  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == VAArgExprClass;
+  }
+  static bool classof(const VAArgExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();  
+};
+  
 /// InitListExpr, used for struct and array initializers.
 class InitListExpr : public Expr {
   Expr **InitExprs;
