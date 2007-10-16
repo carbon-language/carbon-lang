@@ -22,9 +22,11 @@ using namespace llvm;
 std::string MVT::getValueTypeString(MVT::ValueType VT) {
   switch (VT) {
   default:
-    if (isExtendedVT(VT))
+    if (isVector(VT))
       return "v" + utostr(getVectorNumElements(VT)) +
              getValueTypeString(getVectorElementType(VT));
+    if (isInteger(VT))
+      return "i" + utostr(getSizeInBits(VT));
     assert(0 && "Invalid ValueType!");
   case MVT::i1:      return "i1";
   case MVT::i8:      return "i8";
@@ -62,9 +64,11 @@ std::string MVT::getValueTypeString(MVT::ValueType VT) {
 const Type *MVT::getTypeForValueType(MVT::ValueType VT) {
   switch (VT) {
   default:
-    if (isExtendedVT(VT))
+    if (isVector(VT))
       return VectorType::get(getTypeForValueType(getVectorElementType(VT)),
                              getVectorNumElements(VT));
+    if (isInteger(VT))
+      return IntegerType::get(getSizeInBits(VT));
     assert(0 && "ValueType does not correspond to LLVM type!");
   case MVT::isVoid:return Type::VoidTy;
   case MVT::i1:      return Type::Int1Ty;
@@ -105,19 +109,7 @@ MVT::ValueType MVT::getValueType(const Type *Ty, bool HandleUnknown) {
   case Type::VoidTyID:
     return MVT::isVoid;
   case Type::IntegerTyID:
-    switch (cast<IntegerType>(Ty)->getBitWidth()) {
-    default:
-      // FIXME: Return MVT::iANY.
-      if (HandleUnknown) return MVT::Other;
-      assert(0 && "Invalid width for value type");
-    case 1:    return MVT::i1;
-    case 8:    return MVT::i8;
-    case 16:   return MVT::i16;
-    case 32:   return MVT::i32;
-    case 64:   return MVT::i64;
-    case 128:  return MVT::i128;
-    }
-    break;
+    return getIntegerType(cast<IntegerType>(Ty)->getBitWidth());
   case Type::FloatTyID:     return MVT::f32;
   case Type::DoubleTyID:    return MVT::f64;
   case Type::X86_FP80TyID:  return MVT::f80;

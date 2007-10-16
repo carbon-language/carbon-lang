@@ -150,7 +150,13 @@ public:
     }
     
     LegalizeAction getTypeAction(MVT::ValueType VT) const {
-      if (MVT::isExtendedVT(VT)) return Expand;
+      if (MVT::isExtendedVT(VT)) {
+        if (MVT::isVector(VT)) return Expand;
+        if (MVT::isInteger(VT))
+          // First promote to a power-of-two size, then expand if necessary.
+          return VT == MVT::RoundIntegerType(VT) ? Expand : Promote;
+        assert(0 && "Unsupported extended type!");
+      }
       return (LegalizeAction)((ValueTypeActions[VT>>4] >> ((2*VT) & 31)) & 3);
     }
     void setTypeAction(MVT::ValueType VT, LegalizeAction Action) {
@@ -179,19 +185,34 @@ public:
   /// to get to the smaller register. For illegal floating point types, this
   /// returns the integer type to transform to.
   MVT::ValueType getTypeToTransformTo(MVT::ValueType VT) const {
-    if (MVT::isExtendedVT(VT))
+    if (!MVT::isExtendedVT(VT)) {
+      MVT::ValueType NVT = TransformToType[VT];
+      assert(getTypeAction(NVT) != Promote &&
+             "Promote may not follow Expand or Promote");
+      return NVT;
+    }
+
+    if (MVT::isVector(VT))
       return MVT::getVectorType(MVT::getVectorElementType(VT),
                                 MVT::getVectorNumElements(VT) / 2);
-
-    return TransformToType[VT];
+    if (MVT::isInteger(VT)) {
+      MVT::ValueType NVT = MVT::RoundIntegerType(VT);
+      if (NVT == VT)
+        // Size is a power of two - expand to half the size.
+        return MVT::getIntegerType(MVT::getSizeInBits(VT) / 2);
+      else
+        // Promote to a power of two size, avoiding multi-step promotion.
+        return getTypeAction(NVT) == Promote ? getTypeToTransformTo(NVT) : NVT;
+    }
+    assert(0 && "Unsupported extended type!");
   }
-  
+
   /// getTypeToExpandTo - For types supported by the target, this is an
   /// identity function.  For types that must be expanded (i.e. integer types
   /// that are larger than the largest integer register or illegal floating
   /// point types), this returns the largest legal type it will be expanded to.
   MVT::ValueType getTypeToExpandTo(MVT::ValueType VT) const {
-    assert(!MVT::isExtendedVT(VT));
+    assert(!MVT::isVector(VT));
     while (true) {
       switch (getTypeAction(VT)) {
       case Legal:
@@ -252,7 +273,7 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getOperationAction(unsigned Op, MVT::ValueType VT) const {
-    if (MVT::isExtendedVT(VT)) return Expand;
+    if (MVT::isExtendedVT(VT)) return getTypeAction(VT);
     return (LegalizeAction)((OpActions[Op] >> (2*VT)) & 3);
   }
   
@@ -268,7 +289,7 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getLoadXAction(unsigned LType, MVT::ValueType VT) const {
-    if (MVT::isExtendedVT(VT)) return Expand;
+    if (MVT::isExtendedVT(VT)) return getTypeAction(VT);
     return (LegalizeAction)((LoadXActions[LType] >> (2*VT)) & 3);
   }
   
@@ -284,7 +305,7 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getStoreXAction(MVT::ValueType VT) const {
-    if (MVT::isExtendedVT(VT)) return Expand;
+    if (MVT::isExtendedVT(VT)) return getTypeAction(VT);
     return (LegalizeAction)((StoreXActions >> (2*VT)) & 3);
   }
   
@@ -300,7 +321,7 @@ public:
   /// for it.
   LegalizeAction
   getIndexedLoadAction(unsigned IdxMode, MVT::ValueType VT) const {
-    if (MVT::isExtendedVT(VT)) return Expand;
+    if (MVT::isExtendedVT(VT)) return getTypeAction(VT);
     return (LegalizeAction)((IndexedModeActions[0][IdxMode] >> (2*VT)) & 3);
   }
 
@@ -317,7 +338,7 @@ public:
   /// for it.
   LegalizeAction
   getIndexedStoreAction(unsigned IdxMode, MVT::ValueType VT) const {
-    if (MVT::isExtendedVT(VT)) return Expand;
+    if (MVT::isExtendedVT(VT)) return getTypeAction(VT);
     return (LegalizeAction)((IndexedModeActions[1][IdxMode] >> (2*VT)) & 3);
   }  
   
@@ -385,13 +406,15 @@ public:
   MVT::ValueType getRegisterType(MVT::ValueType VT) const {
     if (!MVT::isExtendedVT(VT))
       return RegisterTypeForVT[VT];
-           
-    MVT::ValueType VT1, RegisterVT;
-    unsigned NumIntermediates;
-    (void)getVectorTypeBreakdown(VT, VT1, NumIntermediates, RegisterVT);
-    return RegisterVT;
+    if (MVT::isVector(VT)) {
+      MVT::ValueType VT1, RegisterVT;
+      unsigned NumIntermediates;
+      (void)getVectorTypeBreakdown(VT, VT1, NumIntermediates, RegisterVT);
+      return RegisterVT;
+    }
+    assert(0 && "Unsupported extended type!");
   }
-  
+
   /// getNumRegisters - Return the number of registers that this ValueType will
   /// eventually require.  This is one for any types promoted to live in larger
   /// registers, but may be more than one for types (like i64) that are split
@@ -399,10 +422,12 @@ public:
   unsigned getNumRegisters(MVT::ValueType VT) const {
     if (!MVT::isExtendedVT(VT))
       return NumRegistersForVT[VT];
-           
-    MVT::ValueType VT1, VT2;
-    unsigned NumIntermediates;
-    return getVectorTypeBreakdown(VT, VT1, NumIntermediates, VT2);
+    if (MVT::isVector(VT)) {
+      MVT::ValueType VT1, VT2;
+      unsigned NumIntermediates;
+      return getVectorTypeBreakdown(VT, VT1, NumIntermediates, VT2);
+    }
+    assert(0 && "Unsupported extended type!");
   }
   
   /// hasTargetDAGCombine - If true, the target has custom DAG combine

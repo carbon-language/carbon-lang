@@ -19,6 +19,7 @@
 #include <cassert>
 #include <string>
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/MathExtras.h"
 
 namespace llvm {
   class Type;
@@ -38,6 +39,9 @@ namespace MVT {  // MVT = Machine Value Types
     i64            =   5,   // This is a 64 bit integer value
     i128           =   6,   // This is a 128 bit integer value
 
+    FIRST_INTEGER_VALUETYPE = i1,
+    LAST_INTEGER_VALUETYPE  = i128,
+
     f32            =   7,   // This is a 32 bit floating point value
     f64            =   8,   // This is a 64 bit floating point value
     f80            =   9,   // This is a 80 bit floating point value
@@ -46,22 +50,22 @@ namespace MVT {  // MVT = Machine Value Types
     Flag           =  12,   // This is a condition code or machine flag.
 
     isVoid         =  13,   // This has no value
-    
+
     v8i8           =  14,   //  8 x i8
     v4i16          =  15,   //  4 x i16
     v2i32          =  16,   //  2 x i32
     v1i64          =  17,   //  1 x i64
     v16i8          =  18,   // 16 x i8
     v8i16          =  19,   //  8 x i16
-    v3i32           = 20,   //  3 x i32
+    v3i32          =  20,   //  3 x i32
     v4i32          =  21,   //  4 x i32
     v2i64          =  22,   //  2 x i64
 
     v2f32          =  23,   //  2 x f32
-    v3f32           = 24,   //  3 x f32
+    v3f32          =  24,   //  3 x f32
     v4f32          =  25,   //  4 x f32
     v2f64          =  26,   //  2 x f64
-    
+
     FIRST_VECTOR_VALUETYPE = v8i8,
     LAST_VECTOR_VALUETYPE  = v2f64,
 
@@ -70,12 +74,12 @@ namespace MVT {  // MVT = Machine Value Types
     // fAny - Any floating-point or vector floating-point value. This is used
     // for intrinsics that have overloadings based on floating-point types.
     // This is only for tblgen's consumption!
-    fAny           =  253,   
+    fAny           =  253,
 
     // iAny - An integer or vector integer value of any bit width. This is
     // used for intrinsics that have overloadings based on integer bit widths.
     // This is only for tblgen's consumption!
-    iAny           =  254,   
+    iAny           =  254,
 
     // iPTR - An int value the size of the pointer of the current
     // target.  This should only be used internal to tblgen!
@@ -93,16 +97,35 @@ namespace MVT {  // MVT = Machine Value Types
   /// value types that are not legal.
   ///
   /// @internal
-  /// Currently extended types are always vector types. Extended types are
-  /// encoded by having the first SimpleTypeBits bits encode the vector
-  /// element type (which must be a scalar type) and the remaining upper
-  /// bits encode the vector length, offset by one.
+  /// Extended types are either vector types or arbitrary precision integers.
+  /// Arbitrary precision integers have iAny in the first SimpleTypeBits bits,
+  /// and the bit-width in the next PrecisionBits bits, offset by minus one.
+  /// Vector types are encoded by having the first SimpleTypeBits+PrecisionBits
+  /// bits encode the vector element type (which must be a scalar type, possibly
+  /// an arbitrary precision integer) and the remaining VectorBits upper bits
+  /// encode the vector length, offset by one.
+  ///
+  /// 31--------------16-----------8-------------0
+  ///  | Vector length | Precision | Simple type |
+  ///                  |      Vector element     |
+
   typedef uint32_t ValueType;
 
   static const int SimpleTypeBits = 8;
+  static const int PrecisionBits  = 8;
+  static const int VectorBits     = 32 - SimpleTypeBits - PrecisionBits;
 
   static const uint32_t SimpleTypeMask =
     (~uint32_t(0) << (32 - SimpleTypeBits)) >> (32 - SimpleTypeBits);
+
+  static const uint32_t PrecisionMask =
+    ((~uint32_t(0) << VectorBits) >> (32 - PrecisionBits)) << SimpleTypeBits;
+
+  static const uint32_t VectorMask =
+    (~uint32_t(0) >> (32 - VectorBits)) << (32 - VectorBits);
+
+  static const uint32_t ElementMask =
+    (~uint32_t(0) << VectorBits) >> VectorBits;
 
   /// MVT::isExtendedVT - Test if the given ValueType is extended
   /// (as opposed to being simple).
@@ -114,33 +137,34 @@ namespace MVT {  // MVT = Machine Value Types
   /// type.
   static inline bool isInteger(ValueType VT) {
     ValueType SVT = VT & SimpleTypeMask;
-    return (SVT >= i1 && SVT <= i128) || (SVT >= v8i8 && SVT <= v2i64);
+    return (SVT >= FIRST_INTEGER_VALUETYPE && SVT <= LAST_INTEGER_VALUETYPE) ||
+      (SVT >= v8i8 && SVT <= v2i64) || (SVT == iAny && (VT & PrecisionMask));
   }
-  
+
   /// MVT::isFloatingPoint - Return true if this is an FP, or a vector FP type.
   static inline bool isFloatingPoint(ValueType VT) {
     ValueType SVT = VT & SimpleTypeMask;
     return (SVT >= f32 && SVT <= ppcf128) || (SVT >= v2f32 && SVT <= v2f64);
   }
-  
+
   /// MVT::isVector - Return true if this is a vector value type.
   static inline bool isVector(ValueType VT) {
     return (VT >= FIRST_VECTOR_VALUETYPE && VT <= LAST_VECTOR_VALUETYPE) ||
-           isExtendedVT(VT);
+           (VT & VectorMask);
   }
-  
+
   /// MVT::getVectorElementType - Given a vector type, return the type of
   /// each element.
   static inline ValueType getVectorElementType(ValueType VT) {
+    assert(isVector(VT) && "Invalid vector type!");
     switch (VT) {
     default:
-      if (isExtendedVT(VT))
-        return VT & SimpleTypeMask;
-      assert(0 && "Invalid vector type!");
+      assert(isExtendedVT(VT) && "Unknown simple vector type!");
+      return VT & ElementMask;
     case v8i8 :
     case v16i8: return i8;
     case v4i16:
-    case v8i16: return i16; 
+    case v8i16: return i16;
     case v2i32:
     case v3i32:
     case v4i32: return i32;
@@ -152,20 +176,20 @@ namespace MVT {  // MVT = Machine Value Types
     case v2f64: return f64;
     }
   }
-  
+
   /// MVT::getVectorNumElements - Given a vector type, return the
   /// number of elements it contains.
   static inline unsigned getVectorNumElements(ValueType VT) {
+    assert(isVector(VT) && "Invalid vector type!");
     switch (VT) {
     default:
-      if (isExtendedVT(VT))
-        return ((VT & ~SimpleTypeMask) >> SimpleTypeBits) - 1;
-      assert(0 && "Invalid vector type!");
+      assert(isExtendedVT(VT) && "Unknown simple vector type!");
+      return ((VT & VectorMask) >> (32 - VectorBits)) - 1;
     case v16i8: return 16;
     case v8i8 :
     case v8i16: return 8;
     case v4i16:
-    case v4i32: 
+    case v4i32:
     case v4f32: return 4;
     case v3i32:
     case v3f32: return 3;
@@ -176,17 +200,20 @@ namespace MVT {  // MVT = Machine Value Types
     case v1i64: return 1;
     }
   }
-  
+
   /// MVT::getSizeInBits - Return the size of the specified value type
   /// in bits.
   ///
   static inline unsigned getSizeInBits(ValueType VT) {
     switch (VT) {
     default:
-      if (isExtendedVT(VT))
+      assert(isExtendedVT(VT) && "ValueType has no known size!");
+      if (isVector(VT))
         return getSizeInBits(getVectorElementType(VT)) *
                getVectorNumElements(VT);
-      assert(0 && "ValueType has no known size!");
+      if (isInteger(VT))
+        return ((VT & PrecisionMask) >> SimpleTypeBits) + 1;
+      assert(0 && "Unknown value type!");
     case MVT::i1  :  return 1;
     case MVT::i8  :  return 8;
     case MVT::i16 :  return 16;
@@ -196,7 +223,7 @@ namespace MVT {  // MVT = Machine Value Types
     case MVT::i64 :
     case MVT::v8i8:
     case MVT::v4i16:
-    case MVT::v2i32: 
+    case MVT::v2i32:
     case MVT::v1i64:
     case MVT::v2f32: return 64;
     case MVT::f80 :  return 80;
@@ -204,7 +231,7 @@ namespace MVT {  // MVT = Machine Value Types
     case MVT::v3f32: return 96;
     case MVT::f128:
     case MVT::ppcf128:
-    case MVT::i128: 
+    case MVT::i128:
     case MVT::v16i8:
     case MVT::v8i16:
     case MVT::v4i32:
@@ -213,7 +240,46 @@ namespace MVT {  // MVT = Machine Value Types
     case MVT::v2f64: return 128;
     }
   }
-  
+
+  /// MVT::getIntegerType - Returns the ValueType that represents an integer
+  /// with the given number of bits.
+  ///
+  static inline ValueType getIntegerType(unsigned BitWidth) {
+    switch (BitWidth) {
+    default:
+      break;
+    case 1:
+      return MVT::i1;
+    case 8:
+      return MVT::i8;
+    case 16:
+      return MVT::i16;
+    case 32:
+      return MVT::i32;
+    case 64:
+      return MVT::i64;
+    case 128:
+      return MVT::i128;
+    }
+    ValueType Result = iAny |
+      (((BitWidth - 1) << SimpleTypeBits) & PrecisionMask);
+    assert(getSizeInBits(Result) == BitWidth && "Bad bit width!");
+    return Result;
+  }
+
+  /// MVT::RoundIntegerType - Rounds the bit-width of the given integer
+  /// ValueType up to the nearest power of two (and at least to eight),
+  /// and returns the integer ValueType with that number of bits.
+  ///
+  static inline ValueType RoundIntegerType(ValueType VT) {
+    assert(isInteger(VT) && !isVector(VT) && "Invalid integer type!");
+    unsigned BitWidth = getSizeInBits(VT);
+    if (BitWidth <= 8)
+      return MVT::i8;
+    else
+      return getIntegerType(1 << Log2_32_Ceil(BitWidth));
+  }
+
   /// MVT::getVectorType - Returns the ValueType that represents a vector
   /// NumElements in length, where each element is of type VT.
   ///
@@ -247,7 +313,7 @@ namespace MVT {  // MVT = Machine Value Types
       if (NumElements == 2)  return MVT::v2f64;
       break;
     }
-    ValueType Result = VT | ((NumElements + 1) << SimpleTypeBits);
+    ValueType Result = VT | ((NumElements + 1) << (32 - VectorBits));
     assert(getVectorElementType(Result) == VT &&
            "Bad vector element type!");
     assert(getVectorNumElements(Result) == NumElements &&
@@ -268,8 +334,8 @@ namespace MVT {  // MVT = Machine Value Types
     case 16: return v16i8;
     }
   }
-  
-  
+
+
   /// MVT::getIntVTBitMask - Return an integer with 1's every place there are
   /// bits in the specified integer value type.
   static inline uint64_t getIntVTBitMask(ValueType VT) {
@@ -291,7 +357,7 @@ namespace MVT {  // MVT = Machine Value Types
   /// to the specified ValueType.  For integer types, this returns an unsigned
   /// type.  Note that this will abort for types that cannot be represented.
   const Type *getTypeForValueType(ValueType VT);
-  
+
   /// MVT::getValueType - Return the value type corresponding to the specified
   /// type.  This returns all pointers as MVT::iPTR.  If HandleUnknown is true,
   /// unknown types are returned as Other, otherwise they are invalid.

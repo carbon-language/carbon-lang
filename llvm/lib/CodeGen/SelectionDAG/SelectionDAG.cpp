@@ -28,6 +28,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
@@ -846,6 +847,7 @@ SDOperand SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
 }
 
 SDOperand SelectionDAG::getValueType(MVT::ValueType VT) {
+  assert(!MVT::isExtendedVT(VT) && "Expecting a simple value type!");
   if ((unsigned)VT >= ValueTypeNodes.size())
     ValueTypeNodes.resize(VT+1);
   if (ValueTypeNodes[VT] == 0) {
@@ -1734,7 +1736,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(MVT::isInteger(VT) && MVT::isInteger(Operand.getValueType()) &&
            "Invalid SIGN_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
-    assert(Operand.getValueType() < VT && "Invalid sext node, dst < src!");
+    assert(MVT::getSizeInBits(Operand.getValueType()) < MVT::getSizeInBits(VT)
+           && "Invalid sext node, dst < src!");
     if (OpOpcode == ISD::SIGN_EXTEND || OpOpcode == ISD::ZERO_EXTEND)
       return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
     break;
@@ -1742,7 +1745,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(MVT::isInteger(VT) && MVT::isInteger(Operand.getValueType()) &&
            "Invalid ZERO_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
-    assert(Operand.getValueType() < VT && "Invalid zext node, dst < src!");
+    assert(MVT::getSizeInBits(Operand.getValueType()) < MVT::getSizeInBits(VT)
+           && "Invalid zext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND)   // (zext (zext x)) -> (zext x)
       return getNode(ISD::ZERO_EXTEND, VT, Operand.Val->getOperand(0));
     break;
@@ -1750,7 +1754,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(MVT::isInteger(VT) && MVT::isInteger(Operand.getValueType()) &&
            "Invalid ANY_EXTEND!");
     if (Operand.getValueType() == VT) return Operand;   // noop extension
-    assert(Operand.getValueType() < VT && "Invalid anyext node, dst < src!");
+    assert(MVT::getSizeInBits(Operand.getValueType()) < MVT::getSizeInBits(VT)
+           && "Invalid anyext node, dst < src!");
     if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND)
       // (ext (zext x)) -> (zext x)  and  (ext (sext x)) -> (sext x)
       return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
@@ -1759,15 +1764,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(MVT::isInteger(VT) && MVT::isInteger(Operand.getValueType()) &&
            "Invalid TRUNCATE!");
     if (Operand.getValueType() == VT) return Operand;   // noop truncate
-    assert(Operand.getValueType() > VT && "Invalid truncate node, src < dst!");
+    assert(MVT::getSizeInBits(Operand.getValueType()) > MVT::getSizeInBits(VT)
+           && "Invalid truncate node, src < dst!");
     if (OpOpcode == ISD::TRUNCATE)
       return getNode(ISD::TRUNCATE, VT, Operand.Val->getOperand(0));
     else if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND ||
              OpOpcode == ISD::ANY_EXTEND) {
       // If the source is smaller than the dest, we still need an extend.
-      if (Operand.Val->getOperand(0).getValueType() < VT)
+      if (MVT::getSizeInBits(Operand.Val->getOperand(0).getValueType())
+          < MVT::getSizeInBits(VT))
         return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
-      else if (Operand.Val->getOperand(0).getValueType() > VT)
+      else if (MVT::getSizeInBits(Operand.Val->getOperand(0).getValueType())
+               > MVT::getSizeInBits(VT))
         return getNode(ISD::TRUNCATE, VT, Operand.Val->getOperand(0));
       else
         return Operand.Val->getOperand(0);
@@ -1874,7 +1882,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(VT == N1.getValueType() && "Not an inreg round!");
     assert(MVT::isFloatingPoint(VT) && MVT::isFloatingPoint(EVT) &&
            "Cannot FP_ROUND_INREG integer types");
-    assert(EVT <= VT && "Not rounding down!");
+    assert(MVT::getSizeInBits(EVT) <= MVT::getSizeInBits(VT) &&
+           "Not rounding down!");
     break;
   }
   case ISD::AssertSext:
@@ -1884,7 +1893,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(VT == N1.getValueType() && "Not an inreg extend!");
     assert(MVT::isInteger(VT) && MVT::isInteger(EVT) &&
            "Cannot *_EXTEND_INREG FP types");
-    assert(EVT <= VT && "Not extending!");
+    assert(MVT::getSizeInBits(EVT) <= MVT::getSizeInBits(VT) &&
+           "Not extending!");
   }
 
   default: break;
@@ -2299,7 +2309,8 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   if (MVT::isVector(VT))
     assert(EVT == MVT::getVectorElementType(VT) && "Invalid vector extload!");
   else
-    assert(EVT < VT && "Should only be an extending load, not truncating!");
+    assert(MVT::getSizeInBits(EVT) < MVT::getSizeInBits(VT) &&
+           "Should only be an extending load, not truncating!");
   assert((ExtType == ISD::EXTLOAD || MVT::isInteger(VT)) &&
          "Cannot sign/zero extend a FP/Vector load!");
   assert(MVT::isInteger(VT) == MVT::isInteger(EVT) &&
@@ -2415,7 +2426,8 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   MVT::ValueType VT = Val.getValueType();
   bool isTrunc = VT != SVT;
 
-  assert(VT > SVT && "Not a truncation?");
+  assert(MVT::getSizeInBits(VT) > MVT::getSizeInBits(SVT) &&
+         "Not a truncation?");
   assert(MVT::isInteger(VT) == MVT::isInteger(SVT) &&
          "Can't do FP-INT conversion!");
 
@@ -2648,18 +2660,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, SDVTList VTList,
 }
 
 SDVTList SelectionDAG::getVTList(MVT::ValueType VT) {
-  if (!MVT::isExtendedVT(VT))
-    return makeVTList(SDNode::getValueTypeList(VT), 1);
-
-  for (std::list<std::vector<MVT::ValueType> >::iterator I = VTList.begin(),
-       E = VTList.end(); I != E; ++I) {
-    if (I->size() == 1 && (*I)[0] == VT)
-      return makeVTList(&(*I)[0], 1);
-  }
-  std::vector<MVT::ValueType> V;
-  V.push_back(VT);
-  VTList.push_front(V);
-  return makeVTList(&(*VTList.begin())[0], 1);
+  return makeVTList(SDNode::getValueTypeList(VT), 1);
 }
 
 SDVTList SelectionDAG::getVTList(MVT::ValueType VT1, MVT::ValueType VT2) {
@@ -3427,11 +3428,16 @@ void SDNode::Profile(FoldingSetNodeID &ID) {
 /// getValueTypeList - Return a pointer to the specified value type.
 ///
 MVT::ValueType *SDNode::getValueTypeList(MVT::ValueType VT) {
-  static MVT::ValueType VTs[MVT::LAST_VALUETYPE];
-  VTs[VT] = VT;
-  return &VTs[VT];
+  if (MVT::isExtendedVT(VT)) {
+    static std::set<MVT::ValueType> EVTs;
+    return (MVT::ValueType *)&(*EVTs.insert(VT).first);
+  } else {
+    static MVT::ValueType VTs[MVT::LAST_VALUETYPE];
+    VTs[VT] = VT;
+    return &VTs[VT];
+  }
 }
-  
+
 /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
 /// indicated value.  This method ignores uses of other values defined by this
 /// operation.
