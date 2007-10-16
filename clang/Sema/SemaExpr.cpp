@@ -1896,9 +1896,9 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(ExprTy *string) {
     IdentifierInfo *NSIdent = &Context.Idents.get("NSConstantString");
     ScopedDecl *IFace = LookupScopedDecl(NSIdent, Decl::IDNS_Ordinary, 
                                          SourceLocation(), TUScope);
-    ObjcInterfaceDecl *stringInterface = cast<ObjcInterfaceDecl>(IFace);
-    assert(stringInterface && "missing '@interface NSConstantString'");
-    Context.setObjcConstantStringInterface(stringInterface);
+    ObjcInterfaceDecl *strIFace = dyn_cast_or_null<ObjcInterfaceDecl>(IFace);
+    assert(strIFace && "missing '@interface NSConstantString'");
+    Context.setObjcConstantStringInterface(strIFace);
   }
   QualType t = Context.getObjcConstantStringInterface();
   t = Context.getPointerType(t);
