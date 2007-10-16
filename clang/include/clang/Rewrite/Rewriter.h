@@ -107,11 +107,14 @@ private:  // Methods only usable by Rewriter.
 /// job is to dispatch high-level requests to the low-level RewriteBuffers that
 /// are involved.
 class Rewriter {
-  SourceManager &SourceMgr;
+  SourceManager *SourceMgr;
   
   std::map<unsigned, RewriteBuffer> RewriteBuffers;
 public:
-  explicit Rewriter(SourceManager &SM) : SourceMgr(SM) {}
+  explicit Rewriter(SourceManager &SM) : SourceMgr(&SM) {}
+  explicit Rewriter() : SourceMgr(0) {}
+  
+  void setSourceMgr(SourceManager &SM) { SourceMgr = &SM; }
   
   /// isRewritable - Return true if this location is a raw file location, which
   /// is rewritable.  Locations from macros, etc are not rewritable.

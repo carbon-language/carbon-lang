@@ -143,7 +143,7 @@ void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
 
 unsigned Rewriter::getLocationOffsetAndFileID(SourceLocation Loc,
                                               unsigned &FileID) const {
-  std::pair<unsigned,unsigned> V = SourceMgr.getDecomposedFileLoc(Loc);
+  std::pair<unsigned,unsigned> V = SourceMgr->getDecomposedFileLoc(Loc);
   FileID = V.first;
   return V.second;
 }
@@ -158,7 +158,7 @@ RewriteBuffer &Rewriter::getEditBuffer(unsigned FileID) {
     return I->second;
   I = RewriteBuffers.insert(I, std::make_pair(FileID, RewriteBuffer()));
   
-  std::pair<const char*, const char*> MB = SourceMgr.getBufferData(FileID);
+  std::pair<const char*, const char*> MB = SourceMgr->getBufferData(FileID);
   I->second.Initialize(MB.first, MB.second);
   
   return I->second;

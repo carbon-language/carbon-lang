@@ -30,7 +30,9 @@ public:
     
     MacroIDBits       = 20,
     MacroPhysOffsBits = 9,
-    MacroLogOffBits   = 2
+    MacroLogOffBits   = 2,
+    
+    ChunkSize = (1 << FilePosBits)
   };
 
   SourceLocation() : ID(0) {}  // 0 is an invalid FileID.
@@ -42,9 +44,9 @@ public:
     SourceLocation L;
     // If a FilePos is larger than (1<<FilePosBits), the SourceManager makes
     // enough consequtive FileIDs that we have one for each chunk.
-    if (FilePos >= (1 << FilePosBits)) {
+    if (FilePos >= ChunkSize) {
       FileID += FilePos >> FilePosBits;
-      FilePos &= (1 << FilePosBits)-1;
+      FilePos &= ChunkSize-1;
     }
     
     // FIXME: Find a way to handle out of FileID bits!  Maybe MaxFileID is an
@@ -98,7 +100,7 @@ public:
   /// SourceManager::getFilePos.  This method will be incorrect for large files.
   unsigned getRawFilePos() const { 
     assert(isFileID() && "can't get the file id of a non-file sloc!");
-    return ID & ((1 << FilePosBits)-1);
+    return ID & (ChunkSize-1);
   }
 
   unsigned getMacroID() const {
@@ -122,7 +124,14 @@ public:
   /// getFileLocWithOffset - Return a source location with the specified offset
   /// from this file SourceLocation.
   SourceLocation getFileLocWithOffset(int Offset) const {
-    return getFileLoc(getFileID(), getRawFilePos()+Offset);
+    unsigned FileID = getFileID();
+    Offset += getRawFilePos();
+    // Handle negative offsets correctly.
+    while (Offset < 0) {
+      --FileID;
+      Offset += ChunkSize;
+    }
+    return getFileLoc(FileID, Offset);
   }
   
   /// getRawEncoding - When a SourceLocation itself cannot be used, this returns

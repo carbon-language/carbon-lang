@@ -21,17 +21,22 @@ using namespace clang;
 
 namespace {
   class RewriteTest : public ASTConsumer {
+    Rewriter Rewrite;
     SourceManager *SM;
     unsigned MainFileID;
+    SourceLocation LastIncLoc;
   public:
     void Initialize(ASTContext &Context, unsigned mainFileID) {
       SM = &Context.SourceMgr;
       MainFileID = mainFileID;
+      Rewrite.setSourceMgr(Context.SourceMgr);
     }
     
     virtual void HandleTopLevelDecl(Decl *D);
 
-    
+    void HandleDeclInMainFile(Decl *D);
+    void RewriteInclude(SourceLocation Loc);
+
     ~RewriteTest();
   };
 }
@@ -39,19 +44,53 @@ namespace {
 ASTConsumer *clang::CreateCodeRewriterTest() { return new RewriteTest(); }
 
 void RewriteTest::HandleTopLevelDecl(Decl *D) {
-  // Nothing to do here yet.
-#if 0
-  if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
-    if (ND->getName())
-      printf("%s\n", ND->getName());
-#endif
+  // Two cases: either the decl could be in the main file, or it could be in a
+  // #included file.  If the former, rewrite it now.  If the later, check to see
+  // if we rewrote the #include/#import.
+  SourceLocation Loc = D->getLocation();
+  Loc = SM->getLogicalLoc(Loc);
+  
+  // If this is for a builtin, ignore it.
+  if (Loc.isInvalid()) return;
+
+  if (SM->getDecomposedFileLoc(Loc).first == MainFileID)
+    return HandleDeclInMainFile(D);
+
+  RewriteInclude(Loc);
+}
+
+void RewriteTest::RewriteInclude(SourceLocation Loc) {
+  // Rip up the #include stack to the main file.
+  SourceLocation IncLoc = Loc, NextLoc = Loc;
+  do {
+    IncLoc = Loc;
+    Loc = SM->getLogicalLoc(NextLoc);
+    NextLoc = SM->getIncludeLoc(Loc);
+  } while (!NextLoc.isInvalid());
+
+  // Loc is now the location of the #include filename "foo" or <foo/bar.h>.
+  // IncLoc indicates the header that was included if it is useful.
+  IncLoc = SM->getLogicalLoc(IncLoc);
+  if (SM->getDecomposedFileLoc(Loc).first != MainFileID ||
+      Loc == LastIncLoc)
+    return;
+  LastIncLoc = Loc;
+  
+  unsigned IncCol = SM->getColumnNumber(Loc);
+  SourceLocation LineStartLoc = Loc.getFileLocWithOffset(-IncCol+1);
+
+  // Replace the #import with #include.
+  Rewrite.ReplaceText(LineStartLoc, IncCol-1, "#include ", strlen("#include "));
+}
+
+/// HandleDeclInMainFile - This is called for each top-level decl defined in the
+/// main file of the input.
+void RewriteTest::HandleDeclInMainFile(Decl *D) {
+  // Nothing yet.
 }
 
 
-
 RewriteTest::~RewriteTest() {
-  Rewriter Rewrite(*SM);
-  
   // Get the top-level buffer that this corresponds to.
   std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
   const char *MainBufStart = MainBuf.first;
