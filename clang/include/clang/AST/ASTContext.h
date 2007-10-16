@@ -157,12 +157,14 @@ public:
   // CURRENTLY UNUSED (10/15/07). ObjCStringLiteral now uses the hook below.
   QualType getCFConstantStringType(); 
   
-  // This setter/getter represents the actual ObjC type for an NSConstantString.
+  // This setter/getter represents the ObjC type for an NSConstantString.
   void setObjcConstantStringInterface(ObjcInterfaceDecl *Decl);
   QualType getObjcConstantStringInterface() const { 
     return ObjcConstantStringType; 
   }
   
+  // This setter/getter repreents the ObjC 'id' type. It is setup lazily, by
+  // Sema.
   void setObjcIdType(TypedefDecl *Decl);
   QualType getObjcIdType() const { return ObjcIdType; }
 

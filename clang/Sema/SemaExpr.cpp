@@ -1930,11 +1930,17 @@ Sema::ExprResult Sema::ActOnClassMessage(
 
   ObjcInterfaceDecl* ClassDecl = getObjCInterfaceDecl(receiverName);
   ObjcMethodDecl *Method = ClassDecl->lookupClassMethod(Sel);
-  assert(Method && "missing method declaration");
-  QualType retType = Method->getMethodType();
+  QualType returnType;
+  if (!Method) {
+    Diag(lbrac, diag::warn_method_not_found, std::string("+"), Sel.getName(),
+         SourceRange(lbrac, rbrac));
+    returnType = GetObjcIdType();
+  } else {
+    returnType = Method->getMethodType();
+  }
   // Expr *RExpr = global reference to the class symbol...
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
-  return new ObjCMessageExpr(receiverName, Sel, retType, lbrac, rbrac,
+  return new ObjCMessageExpr(receiverName, Sel, returnType, lbrac, rbrac,
                              ArgExprs);
 }
 
@@ -1953,9 +1959,13 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   
   if (receiverType == GetObjcIdType()) {
     ObjcMethodDecl *Method = InstanceMethodPool[Sel].Method;
-    // FIXME: emit a diagnostic. For now, I want a hard error...
-    assert(Method && "missing method declaration");
-    returnType = Method->getMethodType();
+    if (!Method) {
+      Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
+           SourceRange(lbrac, rbrac));
+      returnType = GetObjcIdType();
+    } else {
+      returnType = Method->getMethodType();
+    }
   } else {
     // FIXME (snaroff): checking in this code from Patrick. Needs to be
     // revisited. how do we get the ClassDecl from the receiver expression?
@@ -1968,10 +1978,17 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
            "bad receiver type");
     ObjcInterfaceDecl* ClassDecl = static_cast<ObjcInterfaceType*>(
                                      receiverType.getTypePtr())->getDecl();
+    // FIXME: consider using InstanceMethodPool, since it will be faster
+    // than the following method (which can do *many* linear searches). The
+    // idea is to add class info to InstanceMethodPool...
     ObjcMethodDecl *Method = ClassDecl->lookupInstanceMethod(Sel);
-    // FIXME: emit a diagnostic. For now, I want a hard error...
-    assert(Method && "missing method declaration");
-    returnType = Method->getMethodType();
+    if (!Method) {
+      Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
+           SourceRange(lbrac, rbrac));
+      returnType = GetObjcIdType();
+    } else {
+      returnType = Method->getMethodType();
+    }
   }
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   return new ObjCMessageExpr(RExpr, Sel, returnType, lbrac, rbrac, ArgExprs);

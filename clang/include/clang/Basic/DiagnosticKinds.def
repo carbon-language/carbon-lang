@@ -454,6 +454,8 @@ DIAG(err_conflicting_aliasing_type, ERROR,
      "conflicting types for alias %0'")
 DIAG(err_statically_allocated_object, ERROR,
      "statically allocated Objective-c object '%0'")
+DIAG(warn_method_not_found, WARNING,
+     "method '%0%1' not found (return type defaults to 'id')")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis
