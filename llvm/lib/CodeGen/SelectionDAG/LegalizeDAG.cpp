@@ -772,7 +772,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::STRING:
   case ISD::CONDCODE:
     // Primitives must all be legal.
-    assert(TLI.isOperationLegal(Node->getValueType(0), Node->getValueType(0)) &&
+    assert(TLI.isOperationLegal(Node->getOpcode(), Node->getValueType(0)) &&
            "This must be legal!");
     break;
   default:
@@ -2752,7 +2752,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::UDIVREM:
     // These nodes will only be produced by target-specific lowering, so
     // they shouldn't be here if they aren't legal.
-    assert(TLI.isOperationLegal(Node->getValueType(0), Node->getValueType(0)) &&
+    assert(TLI.isOperationLegal(Node->getOpcode(), Node->getValueType(0)) &&
            "This must be legal!");
 
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
@@ -3521,7 +3521,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           } else {
             Result = DAG.getTruncStore(DAG.getEntryNode(), Node->getOperand(0),
                                        StackSlot, NULL, 0, newVT);
-            Result = DAG.getLoad(newVT, Result, StackSlot, NULL, 0, newVT);
+            Result = DAG.getLoad(newVT, Result, StackSlot, NULL, 0);
           }
           break;
         }
