@@ -47,7 +47,7 @@ bool PostDominatorTree::runOnFunction(Function &F) {
   
   Vertex.push_back(0);
     
-  Calculate<Inverse<BasicBlock*> >(*this, F);
+  Calculate<Inverse<BasicBlock*>, GraphTraits<Inverse<BasicBlock*> > >(*this, F);
   return false;
 }
 

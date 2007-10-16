@@ -21,11 +21,11 @@ namespace llvm {
 /// PostDominatorTree Class - Concrete subclass of DominatorTree that is used to
 /// compute the a post-dominator tree.
 ///
-struct PostDominatorTree : public DominatorTreeBase {
+struct PostDominatorTree : public DominatorTreeBase<BasicBlock> {
   static char ID; // Pass identification, replacement for typeid
 
   PostDominatorTree() : 
-    DominatorTreeBase((intptr_t)&ID, true) {}
+    DominatorTreeBase<BasicBlock>((intptr_t)&ID, true) {}
 
   virtual bool runOnFunction(Function &F);
 

@@ -16,7 +16,7 @@
 
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Assembly/Writer.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -48,6 +48,9 @@ static std::ostream &operator<<(std::ostream &o,
 // can be found in DominatorCalculation.h.
 //
 //===----------------------------------------------------------------------===//
+
+TEMPLATE_INSTANTIATION(class DomTreeNodeBase<BasicBlock>);
+TEMPLATE_INSTANTIATION(class DominatorTreeBase<BasicBlock>);
 
 char DominatorTree::ID = 0;
 static RegisterPass<DominatorTree>
@@ -135,203 +138,6 @@ void DominatorTree::splitBlock(BasicBlock *NewBB) {
   }
 }
 
-void DominatorTreeBase::updateDFSNumbers() {
-  unsigned DFSNum = 0;
-
-  SmallVector<std::pair<DomTreeNode*, DomTreeNode::iterator>, 32> WorkStack;
-  
-  for (unsigned i = 0, e = Roots.size(); i != e; ++i) {
-    DomTreeNode *ThisRoot = getNode(Roots[i]);
-    WorkStack.push_back(std::make_pair(ThisRoot, ThisRoot->begin()));
-    ThisRoot->DFSNumIn = DFSNum++;
-    
-    while (!WorkStack.empty()) {
-      DomTreeNode *Node = WorkStack.back().first;
-      DomTreeNode::iterator ChildIt = WorkStack.back().second;
-
-      // If we visited all of the children of this node, "recurse" back up the
-      // stack setting the DFOutNum.
-      if (ChildIt == Node->end()) {
-        Node->DFSNumOut = DFSNum++;
-        WorkStack.pop_back();
-      } else {
-        // Otherwise, recursively visit this child.
-        DomTreeNode *Child = *ChildIt;
-        ++WorkStack.back().second;
-        
-        WorkStack.push_back(std::make_pair(Child, Child->begin()));
-        Child->DFSNumIn = DFSNum++;
-      }
-    }
-  }
-  
-  SlowQueries = 0;
-  DFSInfoValid = true;
-}
-
-/// isReachableFromEntry - Return true if A is dominated by the entry
-/// block of the function containing it.
-const bool DominatorTreeBase::isReachableFromEntry(BasicBlock* A) {
-  assert (!isPostDominator() 
-          && "This is not implemented for post dominators");
-  return dominates(&A->getParent()->getEntryBlock(), A);
-}
-
-// dominates - Return true if A dominates B. THis performs the
-// special checks necessary if A and B are in the same basic block.
-bool DominatorTreeBase::dominates(Instruction *A, Instruction *B) {
-  BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
-  if (BBA != BBB) return dominates(BBA, BBB);
-  
-  // It is not possible to determine dominance between two PHI nodes 
-  // based on their ordering.
-  if (isa<PHINode>(A) && isa<PHINode>(B)) 
-    return false;
-
-  // Loop through the basic block until we find A or B.
-  BasicBlock::iterator I = BBA->begin();
-  for (; &*I != A && &*I != B; ++I) /*empty*/;
-  
-  if(!IsPostDominators) {
-    // A dominates B if it is found first in the basic block.
-    return &*I == A;
-  } else {
-    // A post-dominates B if B is found first in the basic block.
-    return &*I == B;
-  }
-}
-
-// DominatorTreeBase::reset - Free all of the tree node memory.
-//
-void DominatorTreeBase::reset() {
-  for (DomTreeNodeMapType::iterator I = DomTreeNodes.begin(), 
-         E = DomTreeNodes.end(); I != E; ++I)
-    delete I->second;
-  DomTreeNodes.clear();
-  IDoms.clear();
-  Roots.clear();
-  Vertex.clear();
-  RootNode = 0;
-}
-
-DomTreeNode *DominatorTreeBase::getNodeForBlock(BasicBlock *BB) {
-  if (DomTreeNode *BBNode = DomTreeNodes[BB])
-    return BBNode;
-
-  // Haven't calculated this node yet?  Get or calculate the node for the
-  // immediate dominator.
-  BasicBlock *IDom = getIDom(BB);
-  DomTreeNode *IDomNode = getNodeForBlock(IDom);
-
-  // Add a new tree node for this BasicBlock, and link it as a child of
-  // IDomNode
-  DomTreeNode *C = new DomTreeNode(BB, IDomNode);
-  return DomTreeNodes[BB] = IDomNode->addChild(C);
-}
-
-/// findNearestCommonDominator - Find nearest common dominator basic block
-/// for basic block A and B. If there is no such block then return NULL.
-BasicBlock *DominatorTreeBase::findNearestCommonDominator(BasicBlock *A, 
-                                                          BasicBlock *B) {
-
-  assert (!isPostDominator() 
-          && "This is not implemented for post dominators");
-  assert (A->getParent() == B->getParent() 
-          && "Two blocks are not in same function");
-
-  // If either A or B is a entry block then it is nearest common dominator.
-  BasicBlock &Entry  = A->getParent()->getEntryBlock();
-  if (A == &Entry || B == &Entry)
-    return &Entry;
-
-  // If B dominates A then B is nearest common dominator.
-  if (dominates(B, A))
-    return B;
-
-  // If A dominates B then A is nearest common dominator.
-  if (dominates(A, B))
-    return A;
-
-  DomTreeNode *NodeA = getNode(A);
-  DomTreeNode *NodeB = getNode(B);
-
-  // Collect NodeA dominators set.
-  SmallPtrSet<DomTreeNode*, 16> NodeADoms;
-  NodeADoms.insert(NodeA);
-  DomTreeNode *IDomA = NodeA->getIDom();
-  while (IDomA) {
-    NodeADoms.insert(IDomA);
-    IDomA = IDomA->getIDom();
-  }
-
-  // Walk NodeB immediate dominators chain and find common dominator node.
-  DomTreeNode *IDomB = NodeB->getIDom();
-  while(IDomB) {
-    if (NodeADoms.count(IDomB) != 0)
-      return IDomB->getBlock();
-
-    IDomB = IDomB->getIDom();
-  }
-
-  return NULL;
-}
-
-static std::ostream &operator<<(std::ostream &o, const DomTreeNode *Node) {
-  if (Node->getBlock())
-    WriteAsOperand(o, Node->getBlock(), false);
-  else
-    o << " <<exit node>>";
-  
-  o << " {" << Node->getDFSNumIn() << "," << Node->getDFSNumOut() << "}";
-  
-  return o << "\n";
-}
-
-static void PrintDomTree(const DomTreeNode *N, std::ostream &o,
-                         unsigned Lev) {
-  o << std::string(2*Lev, ' ') << "[" << Lev << "] " << N;
-  for (DomTreeNode::const_iterator I = N->begin(), E = N->end();
-       I != E; ++I)
-    PrintDomTree(*I, o, Lev+1);
-}
-
-/// eraseNode - Removes a node from  the domiantor tree. Block must not
-/// domiante any other blocks. Removes node from its immediate dominator's
-/// children list. Deletes dominator node associated with basic block BB.
-void DominatorTreeBase::eraseNode(BasicBlock *BB) {
-  DomTreeNode *Node = getNode(BB);
-  assert (Node && "Removing node that isn't in dominator tree.");
-  assert (Node->getChildren().empty() && "Node is not a leaf node.");
-
-    // Remove node from immediate dominator's children list.
-  DomTreeNode *IDom = Node->getIDom();
-  if (IDom) {
-    std::vector<DomTreeNode*>::iterator I =
-      std::find(IDom->Children.begin(), IDom->Children.end(), Node);
-    assert(I != IDom->Children.end() &&
-           "Not in immediate dominator children set!");
-    // I am no longer your child...
-    IDom->Children.erase(I);
-  }
-  
-  DomTreeNodes.erase(BB);
-  delete Node;
-}
-
-void DominatorTreeBase::print(std::ostream &o, const Module* ) const {
-  o << "=============================--------------------------------\n";
-  o << "Inorder Dominator Tree: ";
-  if (DFSInfoValid)
-    o << "DFSNumbers invalid: " << SlowQueries << " slow queries.";
-  o << "\n";
-  
-  PrintDomTree(getRootNode(), o, 1);
-}
-
-void DominatorTreeBase::dump() {
-  print(llvm::cerr);
-}
-
 bool DominatorTree::runOnFunction(Function &F) {
   reset();     // Reset from the last time we were run...
   
@@ -341,7 +147,7 @@ bool DominatorTree::runOnFunction(Function &F) {
   DomTreeNodes[&F.getEntryBlock()] = 0;
   Vertex.push_back(0);
   
-  Calculate<BasicBlock*>(*this, F);
+  Calculate<BasicBlock*, GraphTraits<BasicBlock*> >(*this, F);
   
   updateDFSNumbers();
   
