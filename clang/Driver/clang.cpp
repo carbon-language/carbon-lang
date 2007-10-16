@@ -60,6 +60,7 @@ enum ProgActions {
   WarnDeadStores,               // Run DeadStores checker on parsed ASTs.
   WarnDeadStoresCheck,          // Check diagnostics for "DeadStores".
   WarnUninitVals,               // Run UnitializedVariables checker.
+  TestSerialization,            // Run experimental serialization code.
   ParsePrintCallbacks,          // Parse and print each callback.
   ParseSyntaxOnly,              // Parse and perform semantic analysis.
   ParseNoop,                    // Parse with noop callbacks.
@@ -100,6 +101,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Flag warnings of stores to dead variables."),
              clEnumValN(WarnUninitVals, "warn-uninit-values",
                         "Flag warnings of uses of unitialized variables."),
+             clEnumValN(TestSerialization, "test-pickling",
+                        "Run prototype serializtion code."),
              clEnumValN(EmitLLVM, "emit-llvm",
                         "Build ASTs then convert to LLVM, emit .ll file"),
              clEnumValN(RewriteTest, "rewrite-test",
@@ -802,6 +805,10 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     Consumer = CreateUnitValsChecker(PP.getDiagnostics());
     break;
 
+  case TestSerialization:
+    Consumer = CreateSerializationTest();
+    break;
+      
   case EmitLLVM:
     Consumer = CreateLLVMEmitter(PP.getDiagnostics());
     break;

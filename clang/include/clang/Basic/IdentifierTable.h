@@ -21,7 +21,9 @@
 #include <string> 
 #include <cassert> 
 
+
 namespace llvm {
+  template<typename T> class IntrospectionTrait;
   template <typename T> struct DenseMapInfo;
 }
 
@@ -136,6 +138,9 @@ public:
   template<typename T>
   T *getFETokenInfo() const { return static_cast<T*>(FETokenInfo); }
   void setFETokenInfo(void *T) { FETokenInfo = T; }
+  
+  // For serialization and profiling.
+  template<typename T> friend class llvm::IntrospectionTrait;
 };
 
 /// IdentifierTable - This table implements an efficient mapping from strings to
@@ -176,6 +181,9 @@ public:
   /// PrintStats - Print some statistics to stderr that indicate how well the
   /// hashing is doing.
   void PrintStats() const;
+  
+  // For serialization and profiling.
+  template<typename T> friend class llvm::IntrospectionTrait;
 private:
   void AddKeywords(const LangOptions &LangOpts);
 };
