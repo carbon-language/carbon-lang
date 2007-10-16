@@ -1128,9 +1128,9 @@ Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
   case tok::objc_encode:
     return ParsePostfixExpressionSuffix(ParseObjCEncodeExpression(AtLoc));
   case tok::objc_protocol:
-    return ParsePostfixExpressionSuffix(ParseObjCProtocolExpression());
+    return ParsePostfixExpressionSuffix(ParseObjCProtocolExpression(AtLoc));
   case tok::objc_selector:
-    return ParsePostfixExpressionSuffix(ParseObjCSelectorExpression());
+    return ParsePostfixExpressionSuffix(ParseObjCSelectorExpression(AtLoc));
   default:
     Diag(AtLoc, diag::err_unexpected_at);
     SkipUntil(tok::semi);
@@ -1282,7 +1282,7 @@ Parser::ExprResult Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
 ///     objc-protocol-expression
 ///       @protocol ( protocol-name )
 
-Parser::ExprResult Parser::ParseObjCProtocolExpression()
+Parser::ExprResult Parser::ParseObjCProtocolExpression(SourceLocation AtLoc)
 {
   SourceLocation ProtoLoc = ConsumeToken();
   
@@ -1309,7 +1309,7 @@ Parser::ExprResult Parser::ParseObjCProtocolExpression()
 
 ///     objc-selector-expression
 ///       @selector '(' objc-keyword-selector ')'
-Parser::ExprResult Parser::ParseObjCSelectorExpression()
+Parser::ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc)
 {
   SourceLocation SelectorLoc = ConsumeToken();
   
@@ -1347,6 +1347,6 @@ Parser::ExprResult Parser::ParseObjCSelectorExpression()
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
   Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
                                                    &KeyIdents[0]);
-  return Actions.ParseObjCSelectorExpression(Sel, SelectorLoc, LParenLoc, 
+  return Actions.ParseObjCSelectorExpression(Sel, AtLoc, SelectorLoc, LParenLoc, 
                                              RParenLoc);
  }

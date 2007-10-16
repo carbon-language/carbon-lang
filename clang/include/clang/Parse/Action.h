@@ -596,6 +596,7 @@ public:
   }
   
   virtual ExprResult ParseObjCSelectorExpression(Selector Sel,
+                                                 SourceLocation AtLoc,
                                                  SourceLocation SelLoc,
                                                  SourceLocation LParenLoc,
                                                  SourceLocation RParenLoc) {

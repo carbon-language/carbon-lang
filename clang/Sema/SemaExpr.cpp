@@ -1922,6 +1922,7 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
 
 Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
                                                    SourceLocation AtLoc,
+                                                   SourceLocation SelLoc,
                                                    SourceLocation LParenLoc,
                                                    SourceLocation RParenLoc) {
   QualType t = GetObjcSelType(AtLoc);

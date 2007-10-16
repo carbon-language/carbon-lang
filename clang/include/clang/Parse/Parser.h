@@ -363,8 +363,8 @@ private:
   ExprResult ParseObjCAtExpression(SourceLocation AtLocation);
   ExprResult ParseObjCStringLiteral();
   ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc);
-  ExprResult ParseObjCSelectorExpression();
-  ExprResult ParseObjCProtocolExpression();
+  ExprResult ParseObjCSelectorExpression(SourceLocation AtLoc);
+  ExprResult ParseObjCProtocolExpression(SourceLocation AtLoc);
   ExprResult ParseObjCMessageExpression();
 
   //===--------------------------------------------------------------------===//

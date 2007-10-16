@@ -1099,20 +1099,22 @@ class ObjCSelectorExpr : public Expr {
 
   Selector SelName;
   
-  SourceLocation SelLoc, RParenLoc;
+  SourceLocation AtLoc, RParenLoc;
 public:
   ObjCSelectorExpr(QualType T, Selector selInfo,
-                   SourceLocation selLoc, SourceLocation rp)
+                   SourceLocation at, SourceLocation rp)
   : Expr(ObjCSelectorExprClass, T), SelName(selInfo), 
-  SelLoc(selLoc), RParenLoc(rp) {}
+  AtLoc(at), RParenLoc(rp) {}
   
   const Selector &getSelector() const { return SelName; }
   Selector &getSelector() { return SelName; }
   
+  SourceLocation getAtLoc() const { return AtLoc; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  SourceRange getSourceRange() const { return SourceRange(AtLoc, RParenLoc); }
+  
   /// getNumArgs - Return the number of actual arguments to this call.
   unsigned getNumArgs() const { return SelName.getNumArgs(); }
-  
-  SourceRange getSourceRange() const { return SourceRange(SelLoc, RParenLoc); }
   
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCSelectorExprClass;

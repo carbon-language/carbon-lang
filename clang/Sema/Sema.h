@@ -448,6 +448,7 @@ public:
   // ParseObjCSelectorExpression - Build selector expression for @selector
   virtual ExprResult ParseObjCSelectorExpression(Selector Sel,
                                                  SourceLocation AtLoc,
+                                                 SourceLocation SelLoc,
                                                  SourceLocation LParenLoc,
                                                  SourceLocation RParenLoc);
   
