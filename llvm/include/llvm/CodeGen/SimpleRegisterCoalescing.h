@@ -100,7 +100,7 @@ namespace llvm {
     /// CopyCoalesceInMBB - Coalesce copies in the specified MBB, putting
     /// copies that cannot yet be coalesced into the "TryAgain" list.
     void CopyCoalesceInMBB(MachineBasicBlock *MBB,
-                         std::vector<CopyRec> *TryAgain, bool PhysOnly = false);
+                           std::vector<CopyRec> &TryAgain);
 
     /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
     /// which are the src/dst of the copy instruction CopyMI.  This returns true
@@ -108,8 +108,7 @@ namespace llvm {
     /// to coalesce these this copy, due to register constraints.  It returns
     /// false if it is not currently possible to coalesce this interval, but
     /// it may be possible if other things get coalesced.
-    bool JoinCopy(MachineInstr *CopyMI, unsigned SrcReg, unsigned DstReg,
-                  bool PhysOnly = false);
+    bool JoinCopy(MachineInstr *CopyMI, unsigned SrcReg, unsigned DstReg);
     
     /// JoinIntervals - Attempt to join these two intervals.  On failure, this
     /// returns false.  Otherwise, if one of the intervals being joined is a

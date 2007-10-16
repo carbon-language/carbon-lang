@@ -192,7 +192,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
 /// false if it is not currently possible to coalesce this interval, but
 /// it may be possible if other things get coalesced.
 bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
-                             unsigned SrcReg, unsigned DstReg, bool PhysOnly) {
+                                        unsigned SrcReg, unsigned DstReg) {
   DOUT << li_->getInstructionIndex(CopyMI) << '\t' << *CopyMI;
 
   // Get representative registers.
@@ -207,9 +207,6 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
   
   bool SrcIsPhys = MRegisterInfo::isPhysicalRegister(repSrcReg);
   bool DstIsPhys = MRegisterInfo::isPhysicalRegister(repDstReg);
-  if (PhysOnly && !SrcIsPhys && !DstIsPhys)
-    // Only joining physical registers with virtual registers in this round.
-    return true;
 
   // If they are both physical registers, we cannot join them.
   if (SrcIsPhys && DstIsPhys) {
@@ -932,9 +929,11 @@ namespace {
 }
 
 void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
-                                std::vector<CopyRec> *TryAgain, bool PhysOnly) {
+                                               std::vector<CopyRec> &TryAgain) {
   DOUT << ((Value*)MBB->getBasicBlock())->getName() << ":\n";
   
+  std::vector<CopyRec> VirtCopies;
+  std::vector<CopyRec> PhysCopies;
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
        MII != E;) {
     MachineInstr *Inst = MII++;
@@ -946,10 +945,27 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
       SrcReg = Inst->getOperand(1).getReg();
     } else if (!tii_->isMoveInstr(*Inst, SrcReg, DstReg))
       continue;
-    
-    bool Done = JoinCopy(Inst, SrcReg, DstReg, PhysOnly);
-    if (TryAgain && !Done)
-      TryAgain->push_back(getCopyRec(Inst, SrcReg, DstReg));
+
+    unsigned repSrcReg = rep(SrcReg);
+    unsigned repDstReg = rep(DstReg);
+    bool SrcIsPhys = MRegisterInfo::isPhysicalRegister(repSrcReg);
+    bool DstIsPhys = MRegisterInfo::isPhysicalRegister(repDstReg);
+    if (SrcIsPhys || DstIsPhys)
+      PhysCopies.push_back(getCopyRec(Inst, SrcReg, DstReg));
+    else
+      VirtCopies.push_back(getCopyRec(Inst, SrcReg, DstReg));
+  }
+
+  // Try coalescing physical register + virtual register first.
+  for (unsigned i = 0, e = PhysCopies.size(); i != e; ++i) {
+    CopyRec &TheCopy = PhysCopies[i];
+    if (!JoinCopy(TheCopy.MI, TheCopy.SrcReg, TheCopy.DstReg))
+      TryAgain.push_back(TheCopy);
+  }
+  for (unsigned i = 0, e = VirtCopies.size(); i != e; ++i) {
+    CopyRec &TheCopy = VirtCopies[i];
+    if (!JoinCopy(TheCopy.MI, TheCopy.SrcReg, TheCopy.DstReg))
+      TryAgain.push_back(TheCopy);
   }
 }
 
@@ -965,7 +981,7 @@ void SimpleRegisterCoalescing::joinIntervals() {
     // If there are no loops in the function, join intervals in function order.
     for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
          I != E; ++I)
-      CopyCoalesceInMBB(I, &TryAgainList);
+      CopyCoalesceInMBB(I, TryAgainList);
   } else {
     // Otherwise, join intervals in inner loops before other intervals.
     // Unfortunately we can't just iterate over loop hierarchy here because
@@ -982,9 +998,7 @@ void SimpleRegisterCoalescing::joinIntervals() {
 
     // Finally, join intervals in loop nest order.
     for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      CopyCoalesceInMBB(MBBs[i].second, NULL, true);
-    for (unsigned i = 0, e = MBBs.size(); i != e; ++i)
-      CopyCoalesceInMBB(MBBs[i].second, &TryAgainList, false);
+      CopyCoalesceInMBB(MBBs[i].second, TryAgainList);
   }
   
   // Joining intervals can allow other intervals to be joined.  Iteratively join
