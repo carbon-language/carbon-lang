@@ -183,7 +183,17 @@ RewriteBuffer &Rewriter::getEditBuffer(unsigned FileID) {
   return I->second;
 }
 
+/// RemoveText - Remove the specified text region.  This method is only valid
+/// on a rewritable source location.
+void Rewriter::RemoveText(SourceLocation Start, unsigned Length) {
+  unsigned FileID;
+  unsigned StartOffs = getLocationOffsetAndFileID(Start, FileID);
+  getEditBuffer(FileID).RemoveText(StartOffs, Length);
+}
 
+/// ReplaceText - This method replaces a range of characters in the input
+/// buffer with a new string.  This is effectively a combined "remove/insert"
+/// operation.
 void Rewriter::ReplaceText(SourceLocation Start, unsigned OrigLength,
                            const char *NewStr, unsigned NewLength) {
   assert(isRewritable(Start) && "Not a rewritable location!");

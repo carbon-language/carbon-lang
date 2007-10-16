@@ -440,6 +440,7 @@ public:
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   virtual ExprResult ParseObjCStringLiteral(ExprTy *string);
   virtual ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc,
+                                               SourceLocation EncodeLoc,
                                                SourceLocation LParenLoc,
                                                TypeTy *Ty,
                                                SourceLocation RParenLoc);

@@ -1910,6 +1910,7 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(ExprTy *string) {
 }
 
 Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
+                                                 SourceLocation EncodeLoc,
                                                  SourceLocation LParenLoc,
                                                  TypeTy *Ty,
                                                  SourceLocation RParenLoc) {

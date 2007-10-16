@@ -1125,16 +1125,16 @@ Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
   }
   
   switch (Tok.getIdentifierInfo()->getObjCKeywordID()) {
-    case tok::objc_encode:
-      return ParsePostfixExpressionSuffix(ParseObjCEncodeExpression());
-    case tok::objc_protocol:
-      return ParsePostfixExpressionSuffix(ParseObjCProtocolExpression());
-    case tok::objc_selector:
-      return ParsePostfixExpressionSuffix(ParseObjCSelectorExpression());
-    default:
-      Diag(AtLoc, diag::err_unexpected_at);
-      SkipUntil(tok::semi);
-      break;
+  case tok::objc_encode:
+    return ParsePostfixExpressionSuffix(ParseObjCEncodeExpression(AtLoc));
+  case tok::objc_protocol:
+    return ParsePostfixExpressionSuffix(ParseObjCProtocolExpression());
+  case tok::objc_selector:
+    return ParsePostfixExpressionSuffix(ParseObjCSelectorExpression());
+  default:
+    Diag(AtLoc, diag::err_unexpected_at);
+    SkipUntil(tok::semi);
+    break;
   }
   
   return 0;
@@ -1259,7 +1259,7 @@ Parser::ExprResult Parser::ParseObjCStringLiteral() {
 
 ///    objc-encode-expression:
 ///      @encode ( type-name )
-Parser::ExprResult Parser::ParseObjCEncodeExpression() {
+Parser::ExprResult Parser::ParseObjCEncodeExpression(SourceLocation AtLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_encode) && "Not an @encode expression!");
   
   SourceLocation EncLoc = ConsumeToken();
@@ -1275,7 +1275,7 @@ Parser::ExprResult Parser::ParseObjCEncodeExpression() {
   
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
    
-  return Actions.ParseObjCEncodeExpression(EncLoc, LParenLoc, Ty, 
+  return Actions.ParseObjCEncodeExpression(AtLoc, EncLoc, LParenLoc, Ty, 
                                            RParenLoc);
 }
 

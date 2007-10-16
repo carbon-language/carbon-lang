@@ -114,7 +114,7 @@ void RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
     printf("BLAH!");
   }
   
-  Rewrite.RemoveText(Exp->getEncLoc(), Size);
+  Rewrite.RemoveText(Exp->getAtLoc(), Size);
 #endif
 }
 

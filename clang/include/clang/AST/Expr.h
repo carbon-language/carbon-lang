@@ -1071,16 +1071,16 @@ public:
 /// ObjCEncodeExpr, used for @encode in Objective-C.
 class ObjCEncodeExpr : public Expr {
   QualType EncType;
-  SourceLocation EncLoc, RParenLoc;
+  SourceLocation AtLoc, RParenLoc;
 public:
   ObjCEncodeExpr(QualType T, QualType ET, 
-                 SourceLocation enc, SourceLocation rp)
-    : Expr(ObjCEncodeExprClass, T), EncType(ET), EncLoc(enc), RParenLoc(rp) {}
+                 SourceLocation at, SourceLocation rp)
+    : Expr(ObjCEncodeExprClass, T), EncType(ET), AtLoc(at), RParenLoc(rp) {}
   
-  SourceLocation getEncLoc() const { return EncLoc; }
+  SourceLocation getAtLoc() const { return AtLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
   
-  SourceRange getSourceRange() const { return SourceRange(EncLoc, RParenLoc); }
+  SourceRange getSourceRange() const { return SourceRange(AtLoc, RParenLoc); }
 
   QualType getEncodedType() const { return EncType; }
 

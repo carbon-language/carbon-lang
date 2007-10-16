@@ -587,7 +587,8 @@ public:
     return 0;
   }
 
-  virtual ExprResult ParseObjCEncodeExpression(SourceLocation EncLoc,
+  virtual ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc,
+                                               SourceLocation EncLoc,
                                                SourceLocation LParenLoc,
                                                TypeTy *Ty,
                                                SourceLocation RParenLoc) {
