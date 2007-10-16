@@ -50,6 +50,10 @@ class ASTContext {
   QualType ObjcIdType;
   const RecordType *IdStructType;
   
+  /// ObjcSelType - another psuedo built-in typedef type (set by Sema).
+  QualType ObjcSelType;
+  const RecordType *SelStructType;
+  
   QualType ObjcConstantStringType;
   RecordDecl *CFConstantStringTypeDecl;
 public:
@@ -162,12 +166,15 @@ public:
   QualType getObjcConstantStringInterface() const { 
     return ObjcConstantStringType; 
   }
-  
+
   // This setter/getter repreents the ObjC 'id' type. It is setup lazily, by
   // Sema.
   void setObjcIdType(TypedefDecl *Decl);
   QualType getObjcIdType() const { return ObjcIdType; }
-
+  
+  void setObjcSelType(TypedefDecl *Decl);
+  QualType getObjcSelType() const { return ObjcSelType; }
+  
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
     

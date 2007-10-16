@@ -1079,6 +1079,10 @@ Stmt::child_iterator ObjCStringLiteral::child_end() { return NULL; }
 Stmt::child_iterator ObjCEncodeExpr::child_begin() { return NULL; }
 Stmt::child_iterator ObjCEncodeExpr::child_end() { return NULL; }
 
+// ObjCSelectorExpr
+Stmt::child_iterator ObjCSelectorExpr::child_begin() { return NULL; }
+Stmt::child_iterator ObjCSelectorExpr::child_end() { return NULL; }
+
 // ObjCMessageExpr
 Stmt::child_iterator ObjCMessageExpr::child_begin() {
   return reinterpret_cast<Stmt**>(&SubExprs[0]);

@@ -1919,6 +1919,14 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
   return new ObjCEncodeExpr(t, EncodedType, AtLoc, RParenLoc);
 }
 
+Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
+                                                   SourceLocation AtLoc,
+                                                   SourceLocation LParenLoc,
+                                                   SourceLocation RParenLoc) {
+  QualType t = GetObjcSelType(AtLoc);
+  return new ObjCSelectorExpr(t, Sel, AtLoc, RParenLoc);
+}
+
 // ActOnClassMessage - used for both unary and keyword messages.
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().

@@ -45,6 +45,23 @@ QualType Sema::GetObjcIdType(SourceLocation Loc) {
   return Context.getObjcIdType();
 }
 
+/// GetObjcSelType - See comments for Sema::GetObjcIdType above; replace "id"
+/// with "SEL".
+QualType Sema::GetObjcSelType(SourceLocation Loc) {
+  assert(TUScope && "GetObjcSelType(): Top-level scope is null");
+  if (Context.getObjcSelType().isNull()) {
+    IdentifierInfo *SelIdent = &Context.Idents.get("SEL");
+    ScopedDecl *SelDecl = LookupScopedDecl(SelIdent, Decl::IDNS_Ordinary, 
+                                          SourceLocation(), TUScope);
+    TypedefDecl *ObjcSelTypedef = dyn_cast_or_null<TypedefDecl>(SelDecl);
+    if (!ObjcSelTypedef) {
+      Diag(Loc, diag::err_missing_sel_definition);
+      return QualType();
+    }
+    Context.setObjcSelType(ObjcSelTypedef);
+  }
+  return Context.getObjcSelType();
+}
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   : PP(pp), Context(ctxt), CurFunctionDecl(0), LastInGroupList(prevInGroup) {

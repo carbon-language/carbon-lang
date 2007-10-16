@@ -128,6 +128,7 @@ namespace  {
 
     // ObjC
     void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
+    void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
   };
 }
 
@@ -404,6 +405,19 @@ void StmtDumper::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
  
   fprintf(F, " ");
   DumpType(Node->getEncodedType());
+}
+
+void StmtDumper::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
+  DumpExpr(Node);
+  
+  fprintf(F, " ");
+  Selector &selector = Node->getSelector();
+  if (selector.isUnarySelector())
+    fprintf(F, "%s", selector.getIdentifierInfoForSlot(0)->getName());
+  else {
+    for (unsigned i = 0, e = Node->getNumArgs(); i != e; ++i)
+      fprintf(F, "%s:", selector.getIdentifierInfoForSlot(i)->getName());
+  }
 }
 
 //===----------------------------------------------------------------------===//

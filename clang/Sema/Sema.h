@@ -277,6 +277,9 @@ private:
   /// GetObjcIdType - Getter for the build-in "id" type.
   QualType GetObjcIdType(SourceLocation Loc = SourceLocation());
   
+  /// GetObjcSelType - Getter for the build-in "SEL" type.
+  QualType GetObjcSelType(SourceLocation Loc = SourceLocation());
+  
   /// AddInstanceMethodToGlobalPool - All instance methods in a translation
   /// unit are added to a global pool. This allows us to efficiently associate
   /// a selector with a method declaraation for purposes of typechecking
@@ -440,6 +443,12 @@ public:
                                                SourceLocation LParenLoc,
                                                TypeTy *Ty,
                                                SourceLocation RParenLoc);
+  
+  // ParseObjCSelectorExpression - Build selector expression for @selector
+  virtual ExprResult ParseObjCSelectorExpression(Selector Sel,
+                                                 SourceLocation AtLoc,
+                                                 SourceLocation LParenLoc,
+                                                 SourceLocation RParenLoc);
   
   // Objective-C declarations.
   virtual DeclTy *ActOnStartClassInterface(

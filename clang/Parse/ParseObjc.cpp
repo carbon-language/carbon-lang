@@ -1318,6 +1318,7 @@ Parser::ExprResult Parser::ParseObjCSelectorExpression()
     return 0;
   }
   
+  llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   SourceLocation LParenLoc = ConsumeParen();
   SourceLocation sLoc;
   IdentifierInfo *SelIdent = ParseObjCSelector(sLoc);
@@ -1326,6 +1327,9 @@ Parser::ExprResult Parser::ParseObjCSelectorExpression()
     Diag(Tok, diag::err_expected_ident); // missing selector name.
     return 0;
   }
+  if (!SelIdent)
+    SelIdent = &PP.getIdentifierTable().get("");
+  KeyIdents.push_back(SelIdent);
   if (Tok.isNot(tok::r_paren))
     while (1) {
       if (Tok.isNot(tok::colon)) {
@@ -1338,11 +1342,15 @@ Parser::ExprResult Parser::ParseObjCSelectorExpression()
       // Check for another keyword selector.
       SourceLocation Loc;
       SelIdent = ParseObjCSelector(Loc);
+      if (!SelIdent)
+        SelIdent = &PP.getIdentifierTable().get("");
+      KeyIdents.push_back(SelIdent);
       if (!SelIdent && Tok.isNot(tok::colon))
         break;
     }
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-  
-  // FIXME 
-  return 0;
-}
+  Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
+                                                   &KeyIdents[0]);
+  return Actions.ParseObjCSelectorExpression(Sel, SelectorLoc, LParenLoc, 
+                                             RParenLoc);
+ }

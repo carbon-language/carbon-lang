@@ -82,8 +82,9 @@ STMT(61, CXXBoolLiteralExpr   , Expr)
 STMT(70, ObjCStringLiteral    , Expr)
 STMT(71, ObjCEncodeExpr       , Expr)
 STMT(72, ObjCMessageExpr      , Expr)
+STMT(73, ObjCSelectorExpr     , Expr)
 
-LAST_EXPR(72)
+LAST_EXPR(73)
 
 #undef STMT
 #undef FIRST_STMT

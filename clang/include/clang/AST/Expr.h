@@ -1091,6 +1091,37 @@ public:
   virtual child_iterator child_end();
 };
 
+/// ObjCSelectorExpr used for @selector in Objective-C.
+class ObjCSelectorExpr : public Expr {
+
+  Selector SelName;
+  
+  SourceLocation SelLoc, RParenLoc;
+public:
+  ObjCSelectorExpr(QualType T, Selector selInfo,
+                   SourceLocation selLoc, SourceLocation rp)
+  : Expr(ObjCSelectorExprClass, T), SelName(selInfo), 
+  SelLoc(selLoc), RParenLoc(rp) {}
+  
+  const Selector &getSelector() const { return SelName; }
+  Selector &getSelector() { return SelName; }
+  
+  /// getNumArgs - Return the number of actual arguments to this call.
+  unsigned getNumArgs() const { return SelName.getNumArgs(); }
+  
+  SourceRange getSourceRange() const { return SourceRange(SelLoc, RParenLoc); }
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjCSelectorExprClass;
+  }
+  static bool classof(const ObjCEncodeExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
+};
+  
 class ObjCMessageExpr : public Expr {
   enum { RECEIVER=0, ARGS_START=1 };
 

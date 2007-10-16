@@ -594,10 +594,10 @@ public:
     return 0;
   }
   
-  virtual ExprResult ParseObjCSelectorExpression(SourceLocation EncLoc,
-                                               SourceLocation LParenLoc,
-                                               TypeTy *Ty,
-                                               SourceLocation RParenLoc) {
+  virtual ExprResult ParseObjCSelectorExpression(Selector Sel,
+                                                 SourceLocation SelLoc,
+                                                 SourceLocation LParenLoc,
+                                                 SourceLocation RParenLoc) {
     return 0;
   }
   

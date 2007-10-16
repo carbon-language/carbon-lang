@@ -620,6 +620,18 @@ void StmtPrinter::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
   OS << Node->getEncodedType().getAsString() << ")";
 }
 
+void StmtPrinter::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
+  OS << "@selector(";
+  Selector &selector = Node->getSelector();
+  if (selector.isUnarySelector())
+    OS << " " << selector.getIdentifierInfoForSlot(0)->getName();
+  else {
+    for (unsigned i = 0, e = Node->getNumArgs(); i != e; ++i)
+      OS << selector.getIdentifierInfoForSlot(i)->getName() << ":";
+  }
+  OS << ")";
+}
+
 void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
   OS << "[";
   Expr *receiver = Mess->getReceiver();

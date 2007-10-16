@@ -856,6 +856,20 @@ void ASTContext::setObjcIdType(TypedefDecl *TD)
   IdStructType = rec;
 }
 
+void ASTContext::setObjcSelType(TypedefDecl *TD)
+{
+  assert(ObjcSelType.isNull() && "'SEL' type already set!");
+    
+  ObjcSelType = getTypedefType(TD);
+
+  // typedef struct objc_selector *SEL;
+  const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
+  assert(ptr && "'SEL' incorrectly typed");
+  const RecordType *rec = ptr->getPointeeType()->getAsStructureType();
+  assert(rec && "'SEL' incorrectly typed");
+  SelStructType = rec;
+}
+
 void ASTContext::setObjcConstantStringInterface(ObjcInterfaceDecl *Decl) {
   assert(ObjcConstantStringType.isNull() && 
          "'NSConstantString' type already set!");
