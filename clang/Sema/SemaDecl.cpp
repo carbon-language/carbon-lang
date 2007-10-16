@@ -1760,8 +1760,8 @@ void Sema::ActOnFields(Scope* S,
 /// TODO: Handle protocol list; such as id<p1,p2> in type comparisons
 bool Sema:: MatchTwoMethodDeclarations(const ObjcMethodDecl *Method, 
                                        const ObjcMethodDecl *PrevMethod) {
-  if (Method->getMethodType().getCanonicalType() !=
-      PrevMethod->getMethodType().getCanonicalType())
+  if (Method->getResultType().getCanonicalType() !=
+      PrevMethod->getResultType().getCanonicalType())
     return false;
   for (int i = 0; i < Method->getNumParams(); i++) {
     ParmVarDecl *ParamDecl = Method->getParamDecl(i);

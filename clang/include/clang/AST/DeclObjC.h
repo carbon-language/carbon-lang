@@ -231,14 +231,10 @@ public:
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M) {}
   virtual ~ObjcMethodDecl();
-  Selector getSelector() const { return SelName; }
-  QualType getMethodType() const { return MethodDeclType; }
-  unsigned getNumMethodParams() const { return NumMethodParams; }
-  ParmVarDecl *getMethodParamDecl(unsigned i) {
-    assert(i < getNumMethodParams() && "Illegal param #");
-    return ParamInfo[i];
-  }
   
+  Selector getSelector() const { return SelName; }
+  QualType getResultType() const { return MethodDeclType; }
+
   int getNumParams() const { return NumMethodParams; }
   ParmVarDecl *getParamDecl(int i) const {
     assert(i < getNumParams() && "Illegal param #");

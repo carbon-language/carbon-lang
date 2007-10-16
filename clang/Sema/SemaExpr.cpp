@@ -1944,7 +1944,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
          SourceRange(lbrac, rbrac));
     returnType = GetObjcIdType();
   } else {
-    returnType = Method->getMethodType();
+    returnType = Method->getResultType();
   }
   // Expr *RExpr = global reference to the class symbol...
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
@@ -1972,7 +1972,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
            SourceRange(lbrac, rbrac));
       returnType = GetObjcIdType();
     } else {
-      returnType = Method->getMethodType();
+      returnType = Method->getResultType();
     }
   } else {
     // FIXME (snaroff): checking in this code from Patrick. Needs to be
@@ -1995,7 +1995,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
            SourceRange(lbrac, rbrac));
       returnType = GetObjcIdType();
     } else {
-      returnType = Method->getMethodType();
+      returnType = Method->getResultType();
     }
   }
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
