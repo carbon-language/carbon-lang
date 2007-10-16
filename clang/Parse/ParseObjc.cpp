@@ -1327,8 +1327,6 @@ Parser::ExprResult Parser::ParseObjCSelectorExpression()
     Diag(Tok, diag::err_expected_ident); // missing selector name.
     return 0;
   }
-  if (!SelIdent)
-    SelIdent = &PP.getIdentifierTable().get("");
   KeyIdents.push_back(SelIdent);
   if (Tok.isNot(tok::r_paren))
     while (1) {
@@ -1342,8 +1340,6 @@ Parser::ExprResult Parser::ParseObjCSelectorExpression()
       // Check for another keyword selector.
       SourceLocation Loc;
       SelIdent = ParseObjCSelector(Loc);
-      if (!SelIdent)
-        SelIdent = &PP.getIdentifierTable().get("");
       KeyIdents.push_back(SelIdent);
       if (!SelIdent && Tok.isNot(tok::colon))
         break;

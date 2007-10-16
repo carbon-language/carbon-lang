@@ -627,7 +627,10 @@ void StmtPrinter::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
     OS << " " << selector.getIdentifierInfoForSlot(0)->getName();
   else {
     for (unsigned i = 0, e = Node->getNumArgs(); i != e; ++i)
-      OS << selector.getIdentifierInfoForSlot(i)->getName() << ":";
+      if (selector.getIdentifierInfoForSlot(i))
+        OS << selector.getIdentifierInfoForSlot(i)->getName() << ":";
+      else
+        OS <<  ":";
   }
   OS << ")";
 }
@@ -642,7 +645,10 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
     OS << " " << selector.getIdentifierInfoForSlot(0)->getName();
   } else {
     for (unsigned i = 0, e = Mess->getNumArgs(); i != e; ++i) {
-      OS << " " << selector.getIdentifierInfoForSlot(i)->getName() << ":";
+      if (selector.getIdentifierInfoForSlot(i))
+        OS << selector.getIdentifierInfoForSlot(i)->getName() << ":";
+      else
+         OS << ":";
       PrintExpr(Mess->getArg(i));
     }
   }
