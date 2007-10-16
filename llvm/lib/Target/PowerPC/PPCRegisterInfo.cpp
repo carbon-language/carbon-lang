@@ -722,18 +722,19 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Find out which operand is the frame index.
-  unsigned i = 0;
-  while (!MI.getOperand(i).isFrameIndex()) {
-    ++i;
-    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
+  unsigned FIOperandNo = 0;
+  while (!MI.getOperand(FIOperandNo).isFrameIndex()) {
+    ++FIOperandNo;
+    assert(FIOperandNo != MI.getNumOperands() &&
+           "Instr doesn't have FrameIndex operand!");
   }
   // Take into account whether it's an add or mem instruction
-  unsigned OffIdx = (i == 2) ? 1 : 2;
+  unsigned OffsetOperandNo = (FIOperandNo == 2) ? 1 : 2;
   if (MI.getOpcode() == TargetInstrInfo::INLINEASM)
-    OffIdx = i-1;
+    OffsetOperandNo = FIOperandNo-1;
       
   // Get the frame index.
-  int FrameIndex = MI.getOperand(i).getFrameIndex();
+  int FrameIndex = MI.getOperand(FIOperandNo).getFrameIndex();
   
   // Get the frame pointer save index.  Users of this index are primarily
   // DYNALLOC instructions.
@@ -750,7 +751,8 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   // Replace the FrameIndex with base register with GPR1 (SP) or GPR31 (FP).
-  MI.getOperand(i).ChangeToRegister(hasFP(MF) ? PPC::R31 : PPC::R1, false);
+  MI.getOperand(FIOperandNo).ChangeToRegister(hasFP(MF) ? PPC::R31 : PPC::R1,
+                                              false);
 
   // Figure out if the offset in the instruction is shifted right two bits. This
   // is true for instructions like "STD", which the machine implicitly adds two
@@ -767,37 +769,44 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   
   // Now add the frame object offset to the offset from r1.
   int Offset = MFI->getObjectOffset(FrameIndex);
-  
   if (!isIXAddr)
-    Offset += MI.getOperand(OffIdx).getImmedValue();
+    Offset += MI.getOperand(OffsetOperandNo).getImmedValue();
   else
-    Offset += MI.getOperand(OffIdx).getImmedValue() << 2;
+    Offset += MI.getOperand(OffsetOperandNo).getImmedValue() << 2;
 
   // If we're not using a Frame Pointer that has been set to the value of the
   // SP before having the stack size subtracted from it, then add the stack size
   // to Offset to get the correct offset.
   Offset += MFI->getStackSize();
 
-  if (!isInt16(Offset)) {
-    // Insert a set of r0 with the full offset value before the ld, st, or add
-    BuildMI(MBB, II, TII.get(PPC::LIS), PPC::R0).addImm(Offset >> 16);
-    BuildMI(MBB, II, TII.get(PPC::ORI), PPC::R0).addReg(PPC::R0).addImm(Offset);
-    
-    // convert into indexed form of the instruction
-    // sth 0:rA, 1:imm 2:(rB) ==> sthx 0:rA, 2:rB, 1:r0
-    // addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
-    assert(ImmToIdxMap.count(OpC) &&
-           "No indexed form of load or store available!");
-    unsigned NewOpcode = ImmToIdxMap.find(OpC)->second;
-    MI.setInstrDescriptor(TII.get(NewOpcode));
-    MI.getOperand(1).ChangeToRegister(MI.getOperand(i).getReg(), false);
-    MI.getOperand(2).ChangeToRegister(PPC::R0, false);
-  } else {
+  if (isInt16(Offset)) {
     if (isIXAddr) {
       assert((Offset & 3) == 0 && "Invalid frame offset!");
       Offset >>= 2;    // The actual encoded value has the low two bits zero.
     }
-    MI.getOperand(OffIdx).ChangeToImmediate(Offset);
+    MI.getOperand(OffsetOperandNo).ChangeToImmediate(Offset);
+  } else {
+    // Insert a set of r0 with the full offset value before the ld, st, or add
+    BuildMI(MBB, II, TII.get(PPC::LIS), PPC::R0).addImm(Offset >> 16);
+    BuildMI(MBB, II, TII.get(PPC::ORI), PPC::R0).addReg(PPC::R0).addImm(Offset);
+    
+    // Convert into indexed form of the instruction
+    // sth 0:rA, 1:imm 2:(rB) ==> sthx 0:rA, 2:rB, 1:r0
+    // addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
+    unsigned OperandBase;
+    if (OpC != TargetInstrInfo::INLINEASM) {
+      assert(ImmToIdxMap.count(OpC) &&
+             "No indexed form of load or store available!");
+      unsigned NewOpcode = ImmToIdxMap.find(OpC)->second;
+      MI.setInstrDescriptor(TII.get(NewOpcode));
+      OperandBase = 1;
+    } else {
+      OperandBase = OffsetOperandNo;
+    }
+      
+    unsigned StackReg = MI.getOperand(FIOperandNo).getReg();
+    MI.getOperand(OperandBase).ChangeToRegister(StackReg, false);
+    MI.getOperand(OperandBase+1).ChangeToRegister(PPC::R0, false);
   }
 }
 
