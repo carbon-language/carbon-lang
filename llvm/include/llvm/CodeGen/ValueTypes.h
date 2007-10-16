@@ -107,7 +107,9 @@ namespace MVT {  // MVT = Machine Value Types
   ///
   /// 31--------------16-----------8-------------0
   ///  | Vector length | Precision | Simple type |
-  ///                  |      Vector element     |
+  ///  |               |      Vector element     |
+  ///
+  /// Note that the verifier currently requires the top bit to be zero.
 
   typedef uint32_t ValueType;
 
@@ -313,7 +315,8 @@ namespace MVT {  // MVT = Machine Value Types
       if (NumElements == 2)  return MVT::v2f64;
       break;
     }
-    ValueType Result = VT | ((NumElements + 1) << (32 - VectorBits));
+    // Set the length with the top bit forced to zero (needed by the verifier).
+    ValueType Result = VT | (((NumElements + 1) << (33 - VectorBits)) >> 1);
     assert(getVectorElementType(Result) == VT &&
            "Bad vector element type!");
     assert(getVectorNumElements(Result) == NumElements &&
