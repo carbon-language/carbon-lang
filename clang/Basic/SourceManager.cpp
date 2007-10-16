@@ -42,7 +42,7 @@ SourceManager::~SourceManager() {
 // FIXME: REMOVE THESE
 #include <unistd.h>
 #include <sys/types.h>
-#if !defined(_MSC_VER)
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <sys/uio.h>
 #include <sys/fcntl.h>
 #else
