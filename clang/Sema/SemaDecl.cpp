@@ -1837,6 +1837,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
   bool checkDuplicateMethods = 
         (isa<ObjcInterfaceDecl>(ClassDecl) || isa<ObjcCategoryDecl>(ClassDecl)
          || isa<ObjcProtocolDecl>(ClassDecl));
+  bool checkIdenticalMethods = isa<ObjcImplementationDecl>(ClassDecl);
   
   for (unsigned i = 0; i < allNum; i++ ) {
     ObjcMethodDecl *Method =
@@ -1844,41 +1845,38 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
 
     if (!Method) continue;  // Already issued a diagnostic.
     if (Method->isInstance()) {
-      if (checkDuplicateMethods) {
-        /// Check for instance method of the same name with incompatible types
-        const ObjcMethodDecl *&PrevMethod = InsMap[Method->getSelector()];
-        if (PrevMethod && !MatchTwoMethodDeclarations(Method, PrevMethod)) {
+      /// Check for instance method of the same name with incompatible types
+      const ObjcMethodDecl *&PrevMethod = InsMap[Method->getSelector()];
+      bool match = PrevMethod ? MatchTwoMethodDeclarations(Method, PrevMethod) 
+                              : false;
+      if (checkDuplicateMethods && PrevMethod && !match 
+          || checkIdenticalMethods && match) {
           Diag(Method->getLocation(), diag::error_duplicate_method_decl,
                Method->getSelector().getName());
           Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
-        } else {
-          insMethods.push_back(Method);
-          InsMap[Method->getSelector()] = Method;
-        }
-      }
-      else
+      } else {
         insMethods.push_back(Method);
-        
-      /// The following allows us to typecheck messages to "id".
-      AddInstanceMethodToGlobalPool(Method);
-    } else {
-      if (checkDuplicateMethods) {
-        /// Check for class method of the same name with incompatible types
-        const ObjcMethodDecl *&PrevMethod = ClsMap[Method->getSelector()];
-        if (PrevMethod && !MatchTwoMethodDeclarations(Method, PrevMethod)) {
-          Diag(Method->getLocation(), diag::error_duplicate_method_decl,
-               Method->getSelector().getName());
-          Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
-        } else {        
-          clsMethods.push_back(Method);
-          ClsMap[Method->getSelector()] = Method;
-        }
+        InsMap[Method->getSelector()] = Method;
+        /// The following allows us to typecheck messages to "id".
+        AddInstanceMethodToGlobalPool(Method);
       }
-      else
+    }
+    else {
+      /// Check for class method of the same name with incompatible types
+      const ObjcMethodDecl *&PrevMethod = ClsMap[Method->getSelector()];
+      bool match = PrevMethod ? MatchTwoMethodDeclarations(Method, PrevMethod) 
+                              : false;
+      if (checkDuplicateMethods && PrevMethod && !match 
+          || checkIdenticalMethods && match) {
+        Diag(Method->getLocation(), diag::error_duplicate_method_decl,
+             Method->getSelector().getName());
+        Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
+      } else {
         clsMethods.push_back(Method);
-        
-      /// The following allows us to typecheck messages to "id".
-      AddFactoryMethodToGlobalPool(Method);
+        ClsMap[Method->getSelector()] = Method;
+        /// The following allows us to typecheck messages to "id".
+        AddInstanceMethodToGlobalPool(Method);
+      }
     }
   }
   
