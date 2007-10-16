@@ -1056,11 +1056,15 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
 Sema::AssignmentCheckResult
 Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
-  // This check seems unnatural, however it is necessary to insure the proper
+  // This check seems unnatural, however it is necessary to ensure the proper
   // conversion of functions/arrays. If the conversion were done for all
   // DeclExpr's (created by ActOnIdentifierExpr), it would mess up the unary
   // expressions that surpress this implicit conversion (&, sizeof).
-  DefaultFunctionArrayConversion(rExpr);
+  //
+  // Suppress this for references: C99 8.5.3p5.  FIXME: revisit when references
+  // are better understood.
+  if (!lhsType->isReferenceType())
+    DefaultFunctionArrayConversion(rExpr);
 
   Sema::AssignmentCheckResult result;
   

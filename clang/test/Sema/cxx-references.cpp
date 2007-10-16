@@ -1,12 +1,13 @@
 // RUN: clang -fsyntax-only %s
 int g(int);
 
-#if 0
 void f() {
   int i;
   int &r = i;
   r = 1;
+#if 0  // FIXME: &ref not right yet
   int *p = &r;
+#endif
   int &rr = r;
   int (&rg)(int) = g;
   rg(i);
@@ -18,4 +19,12 @@ void f() {
   P[1] = 1;
 }
 
-#endif
+typedef int t[1];
+void test2() {
+    t a;
+    t& b = a;
+
+
+    int c[3];
+    int (&rc)[3] = c;
+}
