@@ -763,6 +763,12 @@ DIAG(ext_typecheck_passing_pointer_int, WARNING,
      "incompatible types passing '%1' to function expecting '%0'")
 DIAG(ext_typecheck_passing_discards_qualifiers, WARNING,
      "passing '%0' to '%1' discards qualifiers")
+DIAG(err_typecheck_sending_incompatible, ERROR,
+     "incompatible types passing '%0' to method expecting '%1'")
+DIAG(ext_typecheck_sending_incompatible_pointer, WARNING,
+     "incompatible pointer types passing '%0' to method expecting '%1'")
+DIAG(ext_typecheck_sending_pointer_int, WARNING,
+     "incompatible types passing '%1' to method expecting '%0'")
 DIAG(err_typecheck_cond_expect_scalar, ERROR,
      "used type '%0' where arithmetic or pointer type is required")
 DIAG(err_typecheck_expect_scalar_operand, ERROR,

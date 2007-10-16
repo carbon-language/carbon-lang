@@ -1928,6 +1928,67 @@ Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
   return new ObjCSelectorExpr(t, Sel, AtLoc, RParenLoc);
 }
 
+
+bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
+                                     ObjcMethodDecl *Method) {
+  bool anyIncompatibleArgs = false;
+  
+  for (unsigned i = 0; i < NumArgs; i++) {
+    Expr *argExpr = Args[i];
+    assert(argExpr && "CheckMessageArgumentTypes(): missing expression");
+    
+    QualType lhsType = Method->getParamDecl(i)->getType();
+    QualType rhsType = argExpr->getType();
+
+    // If necessary, apply function/array conversion. C99 6.7.5.3p[7,8]. 
+    if (const ArrayType *ary = lhsType->getAsArrayType())
+      lhsType = Context.getPointerType(ary->getElementType());
+    else if (lhsType->isFunctionType())
+      lhsType = Context.getPointerType(lhsType);
+
+    AssignmentCheckResult result = CheckSingleAssignmentConstraints(lhsType,
+                                                                    argExpr);
+    if (Args[i] != argExpr) // The expression was converted.
+      Args[i] = argExpr; // Make sure we store the converted expression.
+    SourceLocation l = argExpr->getLocStart();
+
+    // decode the result (notice that AST's are still created for extensions).
+    switch (result) {
+    case Compatible:
+      break;
+    case PointerFromInt:
+      // check for null pointer constant (C99 6.3.2.3p3)
+      if (!argExpr->isNullPointerConstant(Context)) {
+        Diag(l, diag::ext_typecheck_sending_pointer_int, 
+             lhsType.getAsString(), rhsType.getAsString(),
+             argExpr->getSourceRange());
+      }
+      break;
+    case IntFromPointer:
+      Diag(l, diag::ext_typecheck_sending_pointer_int, 
+           lhsType.getAsString(), rhsType.getAsString(),
+           argExpr->getSourceRange());
+      break;
+    case IncompatiblePointer:
+      Diag(l, diag::ext_typecheck_sending_incompatible_pointer, 
+           rhsType.getAsString(), lhsType.getAsString(),
+           argExpr->getSourceRange());
+      break;
+    case CompatiblePointerDiscardsQualifiers:
+      Diag(l, diag::ext_typecheck_passing_discards_qualifiers,
+           rhsType.getAsString(), lhsType.getAsString(),
+           argExpr->getSourceRange());
+      break;
+    case Incompatible:
+      Diag(l, diag::err_typecheck_sending_incompatible,
+           rhsType.getAsString(), lhsType.getAsString(),
+           argExpr->getSourceRange());
+      anyIncompatibleArgs = true;
+    }
+  }
+  return anyIncompatibleArgs;
+}
+
 // ActOnClassMessage - used for both unary and keyword messages.
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
@@ -1937,6 +1998,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
 {
   assert(receiverName && "missing receiver class name");
 
+  Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   ObjcInterfaceDecl* ClassDecl = getObjCInterfaceDecl(receiverName);
   ObjcMethodDecl *Method = ClassDecl->lookupClassMethod(Sel);
   QualType returnType;
@@ -1946,9 +2008,11 @@ Sema::ExprResult Sema::ActOnClassMessage(
     returnType = GetObjcIdType();
   } else {
     returnType = Method->getResultType();
+    if (Sel.getNumArgs()) {
+      if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
+        return true;
+    }
   }
-  // Expr *RExpr = global reference to the class symbol...
-  Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   return new ObjCMessageExpr(receiverName, Sel, returnType, lbrac, rbrac,
                              ArgExprs);
 }
@@ -1962,6 +2026,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
 {
   assert(receiver && "missing receiver expression");
   
+  Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   Expr *RExpr = static_cast<Expr *>(receiver);
   QualType receiverType = RExpr->getType();
   QualType returnType;
@@ -1974,6 +2039,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
       returnType = GetObjcIdType();
     } else {
       returnType = Method->getResultType();
+      if (Sel.getNumArgs())
+        if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
+          return true;
     }
   } else {
     // FIXME (snaroff): checking in this code from Patrick. Needs to be
@@ -1997,8 +2065,10 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
       returnType = GetObjcIdType();
     } else {
       returnType = Method->getResultType();
+      if (Sel.getNumArgs())
+        if (CheckMessageArgumentTypes(ArgExprs, Sel.getNumArgs(), Method))
+          return true;
     }
   }
-  Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
   return new ObjCMessageExpr(RExpr, Sel, returnType, lbrac, rbrac, ArgExprs);
 }

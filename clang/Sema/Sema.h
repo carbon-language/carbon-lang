@@ -511,7 +511,7 @@ public:
     // from the Sel.getNumArgs().
     TypeTy **ArgTypes, IdentifierInfo **ArgNames,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind);
-                    
+
   // ActOnClassMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from Sel.getNumArgs().
@@ -631,7 +631,11 @@ private:
   void CheckConstantInitList(QualType DeclType, InitListExpr *IList, 
                              QualType ElementType, bool isStatic, 
                              int &nInitializers, bool &hadError);
-   
+                             
+  // returns true if there were any incompatible arguments.                           
+  bool CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
+                                 ObjcMethodDecl *Method);
+                    
   /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
   /// the specified width and sign.  If an overflow occurs, detect it and emit
   /// the specified diagnostic.
