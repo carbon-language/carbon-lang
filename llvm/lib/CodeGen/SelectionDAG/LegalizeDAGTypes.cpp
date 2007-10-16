@@ -130,6 +130,8 @@ private:
   SDOperand PromoteResult_SETCC(SDNode *N);
   SDOperand PromoteResult_LOAD(LoadSDNode *N);
   SDOperand PromoteResult_SimpleIntBinOp(SDNode *N);
+  SDOperand PromoteResult_SELECT   (SDNode *N);
+  SDOperand PromoteResult_SELECT_CC(SDNode *N);
   
   // Result Expansion.
   void ExpandResult(SDNode *N, unsigned ResNo);
@@ -450,6 +452,10 @@ void DAGTypeLegalizer::PromoteResult(SDNode *N, unsigned ResNo) {
   case ISD::ADD:
   case ISD::SUB:
   case ISD::MUL:      Result = PromoteResult_SimpleIntBinOp(N); break;
+    
+  case ISD::SELECT:    Result = PromoteResult_SELECT(N); break;
+  case ISD::SELECT_CC: Result = PromoteResult_SELECT_CC(N); break;
+
   }      
   
   // If Result is null, the sub-method took care of registering the result.
@@ -550,6 +556,19 @@ SDOperand DAGTypeLegalizer::PromoteResult_SimpleIntBinOp(SDNode *N) {
   SDOperand LHS = GetPromotedOp(N->getOperand(0));
   SDOperand RHS = GetPromotedOp(N->getOperand(1));
   return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
+}
+
+SDOperand DAGTypeLegalizer::PromoteResult_SELECT(SDNode *N) {
+  SDOperand LHS = GetPromotedOp(N->getOperand(1));
+  SDOperand RHS = GetPromotedOp(N->getOperand(2));
+  return DAG.getNode(ISD::SELECT, LHS.getValueType(), N->getOperand(0),LHS,RHS);
+}
+
+SDOperand DAGTypeLegalizer::PromoteResult_SELECT_CC(SDNode *N) {
+  SDOperand LHS = GetPromotedOp(N->getOperand(2));
+  SDOperand RHS = GetPromotedOp(N->getOperand(3));
+  return DAG.getNode(ISD::SELECT_CC, LHS.getValueType(), N->getOperand(0),
+                     N->getOperand(1), LHS, RHS, N->getOperand(4));
 }
 
 //===----------------------------------------------------------------------===//
