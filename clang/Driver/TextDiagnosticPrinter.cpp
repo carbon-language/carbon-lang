@@ -54,16 +54,16 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
          "Expect a correspondence between source and carat line!");
   if (!R.isValid()) return;
 
-  unsigned StartLineNo = SourceMgr.getLogicalLineNumber(R.Begin());
+  unsigned StartLineNo = SourceMgr.getLogicalLineNumber(R.getBegin());
   if (StartLineNo > LineNo) return;  // No intersection.
   
-  unsigned EndLineNo = SourceMgr.getLogicalLineNumber(R.End());
+  unsigned EndLineNo = SourceMgr.getLogicalLineNumber(R.getEnd());
   if (EndLineNo < LineNo) return;  // No intersection.
   
   // Compute the column number of the start.
   unsigned StartColNo = 0;
   if (StartLineNo == LineNo) {
-    StartColNo = SourceMgr.getLogicalColumnNumber(R.Begin());
+    StartColNo = SourceMgr.getLogicalColumnNumber(R.getBegin());
     if (StartColNo) --StartColNo;  // Zero base the col #.
   }
 
@@ -75,12 +75,12 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   // Compute the column number of the end.
   unsigned EndColNo = CaratLine.size();
   if (EndLineNo == LineNo) {
-    EndColNo = SourceMgr.getLogicalColumnNumber(R.End());
+    EndColNo = SourceMgr.getLogicalColumnNumber(R.getEnd());
     if (EndColNo) {
       --EndColNo;  // Zero base the col #.
       
       // Add in the length of the token, so that we cover multi-char tokens.
-      EndColNo += GetTokenLength(R.End());
+      EndColNo += GetTokenLength(R.getEnd());
     } else {
       EndColNo = CaratLine.size();
     }

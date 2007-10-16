@@ -36,6 +36,9 @@ namespace {
 
     void HandleDeclInMainFile(Decl *D);
     void RewriteInclude(SourceLocation Loc);
+    
+    void RewriteFunctionBody(Stmt *S);
+    void RewriteAtEncode(ObjCEncodeExpr *Exp);
 
     ~RewriteTest();
   };
@@ -86,7 +89,33 @@ void RewriteTest::RewriteInclude(SourceLocation Loc) {
 /// HandleDeclInMainFile - This is called for each top-level decl defined in the
 /// main file of the input.
 void RewriteTest::HandleDeclInMainFile(Decl *D) {
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    if (Stmt *Body = FD->getBody())
+      RewriteFunctionBody(Body);
   // Nothing yet.
+}
+
+
+void RewriteTest::RewriteFunctionBody(Stmt *S) {
+  // Handle specific things.
+  if (ObjCEncodeExpr *AtEncode = dyn_cast<ObjCEncodeExpr>(S))
+    return RewriteAtEncode(AtEncode);
+  
+  // Otherwise, just rewrite all children.
+  for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
+       CI != E; ++CI)
+    RewriteFunctionBody(*CI);
+}
+
+void RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
+#if 0
+  int Size = Rewrite.getRangeSize(Exp->getSourceRange());
+  if (Size == -1) {
+    printf("BLAH!");
+  }
+  
+  Rewrite.RemoveText(Exp->getEncLoc(), Size);
+#endif
 }
 
 

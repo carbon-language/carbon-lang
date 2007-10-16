@@ -60,7 +60,7 @@ namespace clang {
     }
     
     virtual SourceRange getSourceRange() const {
-      return SourceRange(Loc, getSubExpr()->getSourceRange().End());
+      return SourceRange(Loc, getSubExpr()->getSourceRange().getEnd());
     }
     static bool classof(const Stmt *T) { 
       return T->getStmtClass() == CXXCastExprClass;

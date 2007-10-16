@@ -141,6 +141,25 @@ void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
 // Rewriter class
 //===----------------------------------------------------------------------===//
 
+/// getRangeSize - Return the size in bytes of the specified range if they
+/// are in the same file.  If not, this returns -1.
+int Rewriter::getRangeSize(SourceRange Range) const {
+  if (!isRewritable(Range.getBegin()) ||
+      !isRewritable(Range.getEnd())) return -1;
+  
+  unsigned StartOff, StartFileID;
+  unsigned EndOff  , EndFileID;
+  
+  StartOff = getLocationOffsetAndFileID(Range.getBegin(), StartFileID);
+  EndOff   = getLocationOffsetAndFileID(Range.getEnd(), EndFileID);
+  
+  if (StartFileID != EndFileID)
+    return -1;
+  
+  return EndOff-StartOff;
+}
+
+
 unsigned Rewriter::getLocationOffsetAndFileID(SourceLocation Loc,
                                               unsigned &FileID) const {
   std::pair<unsigned,unsigned> V = SourceMgr->getDecomposedFileLoc(Loc);

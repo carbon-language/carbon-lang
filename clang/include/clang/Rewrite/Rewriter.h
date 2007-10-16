@@ -121,6 +121,10 @@ public:
   static bool isRewritable(SourceLocation Loc) {
     return Loc.isFileID();
   }
+
+  /// getRangeSize - Return the size in bytes of the specified range if they
+  /// are in the same file.  If not, this returns -1.
+  int getRangeSize(SourceRange Range) const;
   
   /// InsertText - Insert the specified string at the specified location in the
   /// original buffer.  This method is only valid on rewritable source
@@ -128,8 +132,8 @@ public:
   void InsertText(SourceLocation Loc, const char *StrData, unsigned StrLen);
   
   /// RemoveText - Remove the specified text region.  This method is only valid
-  /// on rewritable source locations.
-  void RemoveText(SourceLocation Start, SourceLocation End);
+  /// on a rewritable source location.
+  void RemoveText(SourceLocation Start, unsigned Length);
   
   /// ReplaceText - This method replaces a range of characters in the input
   /// buffer with a new string.  This is effectively a combined "remove/insert"

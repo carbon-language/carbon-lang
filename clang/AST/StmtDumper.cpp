@@ -164,10 +164,10 @@ void StmtDumper::DumpSourceRange(const Stmt *Node) {
   SourceRange R = Node->getSourceRange();
   
   fprintf(stderr, " <");
-  DumpLocation(R.Begin());
-  if (R.Begin() != R.End()) {
+  DumpLocation(R.getBegin());
+  if (R.getBegin() != R.getEnd()) {
     fprintf(stderr, ", ");
-    DumpLocation(R.End());
+    DumpLocation(R.getEnd());
   }
   fprintf(stderr, ">");
     

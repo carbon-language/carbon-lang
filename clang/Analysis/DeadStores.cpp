@@ -40,7 +40,7 @@ public:
         if (VarDecl* VD = dyn_cast<VarDecl>(DR->getDecl()))
           if (VD->hasLocalStorage() && !Live(VD,AD)) {
             SourceRange R = B->getRHS()->getSourceRange();
-            Diags.Report(DR->getSourceRange().Begin(), diag::warn_dead_store,
+            Diags.Report(DR->getSourceRange().getBegin(), diag::warn_dead_store,
                          0, 0, &R, 1);                                                                        
         }
     }

@@ -55,8 +55,8 @@ public:
   /// value objects created/interpreted by SourceManager. We assume AST
   /// clients will have a pointer to the respective SourceManager.
   virtual SourceRange getSourceRange() const = 0;
-  SourceLocation getLocStart() const { return getSourceRange().Begin(); }
-  SourceLocation getLocEnd() const { return getSourceRange().End(); }
+  SourceLocation getLocStart() const { return getSourceRange().getBegin(); }
+  SourceLocation getLocEnd() const { return getSourceRange().getEnd(); }
 
   // global temp stats (until we have a per-module visitor)
   static void addStmtClass(const StmtClass s);

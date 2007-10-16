@@ -218,7 +218,7 @@ public:
     
     if (V(VD,AD) == Uninitialized)
       if (AlreadyWarned.insert(VD))
-        Diags.Report(DR->getSourceRange().Begin(), diag::warn_uninit_val);
+        Diags.Report(DR->getSourceRange().getBegin(), diag::warn_uninit_val);
   }
 };
 } // end anonymous namespace
