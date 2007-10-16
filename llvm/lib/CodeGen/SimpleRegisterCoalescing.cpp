@@ -459,7 +459,7 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
       std::swap(repSrcReg, repDstReg);
       std::swap(ResSrcInt, ResDstInt);
     }
-    SubRegIdxes.push_back(std::make_pair(repSrcReg,
+    SubRegIdxes.push_back(std::make_pair(DstReg,
                                          CopyMI->getOperand(2).getImm()));
   }
 
