@@ -60,8 +60,8 @@ BUILTIN(__builtin_fabsl, "LdLd", "ncF")
 BUILTIN(__builtin_constant_p, "UsUs", "nc")
 BUILTIN(__builtin_classify_type, "i.", "nc")
 BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
-BUILTIN(__builtin_va_start, "vV&.", "nc")
-BUILTIN(__builtin_va_end, "vV&", "nc")
-BUILTIN(__builtin_va_copy, "vV&V", "nc")
+BUILTIN(__builtin_va_start, "vV&.", "n")
+BUILTIN(__builtin_va_end, "vV&", "n")
+BUILTIN(__builtin_va_copy, "vV&V", "n")
 
 #undef BUILTIN
