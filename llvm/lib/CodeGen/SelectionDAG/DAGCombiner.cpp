@@ -364,6 +364,10 @@ CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1) {
 /// specified expression for the same cost as the expression itself, or 2 if we
 /// can compute the negated form more cheaply than the expression itself.
 static char isNegatibleForFree(SDOperand Op, unsigned Depth = 0) {
+  // No compile time optimizations on this type.
+  if (Op.getValueType() == MVT::ppcf128)
+    return 0;
+
   // fneg is removable even if it has multiple uses.
   if (Op.getOpcode() == ISD::FNEG) return 2;
   
@@ -3211,7 +3215,7 @@ SDOperand DAGCombiner::visitFADD(SDNode *N) {
   }
   
   // fold (fadd c1, c2) -> c1+c2
-  if (N0CFP && N1CFP)
+  if (N0CFP && N1CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FADD, VT, N0, N1);
   // canonicalize constant to RHS
   if (N0CFP && !N1CFP)
@@ -3246,7 +3250,7 @@ SDOperand DAGCombiner::visitFSUB(SDNode *N) {
   }
   
   // fold (fsub c1, c2) -> c1-c2
-  if (N0CFP && N1CFP)
+  if (N0CFP && N1CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FSUB, VT, N0, N1);
   // fold (0-B) -> -B
   if (UnsafeFPMath && N0CFP && N0CFP->getValueAPF().isZero()) {
@@ -3275,7 +3279,7 @@ SDOperand DAGCombiner::visitFMUL(SDNode *N) {
   }
   
   // fold (fmul c1, c2) -> c1*c2
-  if (N0CFP && N1CFP)
+  if (N0CFP && N1CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FMUL, VT, N0, N1);
   // canonicalize constant to RHS
   if (N0CFP && !N1CFP)
@@ -3321,7 +3325,7 @@ SDOperand DAGCombiner::visitFDIV(SDNode *N) {
   }
   
   // fold (fdiv c1, c2) -> c1/c2
-  if (N0CFP && N1CFP)
+  if (N0CFP && N1CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FDIV, VT, N0, N1);
   
   
@@ -3347,7 +3351,7 @@ SDOperand DAGCombiner::visitFREM(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
 
   // fold (frem c1, c2) -> fmod(c1,c2)
-  if (N0CFP && N1CFP)
+  if (N0CFP && N1CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FREM, VT, N0, N1);
 
   return SDOperand();
@@ -3360,7 +3364,7 @@ SDOperand DAGCombiner::visitFCOPYSIGN(SDNode *N) {
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   MVT::ValueType VT = N->getValueType(0);
 
-  if (N0CFP && N1CFP)  // Constant fold
+  if (N0CFP && N1CFP && VT != MVT::ppcf128)  // Constant fold
     return DAG.getNode(ISD::FCOPYSIGN, VT, N0, N1);
   
   if (N1CFP) {
@@ -3404,7 +3408,7 @@ SDOperand DAGCombiner::visitSINT_TO_FP(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
   
   // fold (sint_to_fp c1) -> c1fp
-  if (N0C)
+  if (N0C && N0.getValueType() != MVT::ppcf128)
     return DAG.getNode(ISD::SINT_TO_FP, VT, N0);
   return SDOperand();
 }
@@ -3415,7 +3419,7 @@ SDOperand DAGCombiner::visitUINT_TO_FP(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
 
   // fold (uint_to_fp c1) -> c1fp
-  if (N0C)
+  if (N0C && N0.getValueType() != MVT::ppcf128)
     return DAG.getNode(ISD::UINT_TO_FP, VT, N0);
   return SDOperand();
 }
@@ -3437,7 +3441,7 @@ SDOperand DAGCombiner::visitFP_TO_UINT(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
   
   // fold (fp_to_uint c1fp) -> c1
-  if (N0CFP)
+  if (N0CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FP_TO_UINT, VT, N0);
   return SDOperand();
 }
@@ -3448,7 +3452,7 @@ SDOperand DAGCombiner::visitFP_ROUND(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
   
   // fold (fp_round c1fp) -> c1fp
-  if (N0CFP)
+  if (N0CFP && N0.getValueType() != MVT::ppcf128)
     return DAG.getNode(ISD::FP_ROUND, VT, N0);
   
   // fold (fp_round (fp_extend x)) -> x
@@ -3485,7 +3489,7 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
   
   // fold (fp_extend c1fp) -> c1fp
-  if (N0CFP)
+  if (N0CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FP_EXTEND, VT, N0);
   
   // fold (fpext (load x)) -> (fpext (fpround (extload x)))
@@ -3523,7 +3527,7 @@ SDOperand DAGCombiner::visitFABS(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
   
   // fold (fabs c1) -> fabs(c1)
-  if (N0CFP)
+  if (N0CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FABS, VT, N0);
   // fold (fabs (fabs x)) -> (fabs x)
   if (N0.getOpcode() == ISD::FABS)

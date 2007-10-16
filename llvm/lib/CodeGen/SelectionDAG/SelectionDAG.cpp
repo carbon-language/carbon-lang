@@ -1612,6 +1612,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::UINT_TO_FP:
     case ISD::SINT_TO_FP: {
       const uint64_t zero[] = {0, 0};
+      // No compile time operations on this type.
+      if (VT==MVT::ppcf128)
+        break;
       APFloat apf = APFloat(APInt(MVT::getSizeInBits(VT), 2, zero));
       (void)apf.convertFromZeroExtendedInteger(&Val, 
                                MVT::getSizeInBits(Operand.getValueType()), 
@@ -1684,42 +1687,44 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   // Constant fold unary operations with a floating point constant operand.
   if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Operand.Val)) {
     APFloat V = C->getValueAPF();    // make copy
-    switch (Opcode) {
-    case ISD::FNEG:
-      V.changeSign();
-      return getConstantFP(V, VT);
-    case ISD::FABS:
-      V.clearSign();
-      return getConstantFP(V, VT);
-    case ISD::FP_ROUND:
-    case ISD::FP_EXTEND:
-      // This can return overflow, underflow, or inexact; we don't care.
-      // FIXME need to be more flexible about rounding mode.
-      (void) V.convert(VT==MVT::f32 ? APFloat::IEEEsingle : 
-                       VT==MVT::f64 ? APFloat::IEEEdouble :
-                       VT==MVT::f80 ? APFloat::x87DoubleExtended :
-                       VT==MVT::f128 ? APFloat::IEEEquad :
-                       APFloat::Bogus,
-                       APFloat::rmNearestTiesToEven);
-      return getConstantFP(V, VT);
-    case ISD::FP_TO_SINT:
-    case ISD::FP_TO_UINT: {
-      integerPart x;
-      assert(integerPartWidth >= 64);
-      // FIXME need to be more flexible about rounding mode.
-      APFloat::opStatus s = V.convertToInteger(&x, 64U,
-                            Opcode==ISD::FP_TO_SINT,
-                            APFloat::rmTowardZero);
-      if (s==APFloat::opInvalidOp)     // inexact is OK, in fact usual
+    if (VT!=MVT::ppcf128 && Operand.getValueType()!=MVT::ppcf128) {
+      switch (Opcode) {
+      case ISD::FNEG:
+        V.changeSign();
+        return getConstantFP(V, VT);
+      case ISD::FABS:
+        V.clearSign();
+        return getConstantFP(V, VT);
+      case ISD::FP_ROUND:
+      case ISD::FP_EXTEND:
+        // This can return overflow, underflow, or inexact; we don't care.
+        // FIXME need to be more flexible about rounding mode.
+        (void) V.convert(VT==MVT::f32 ? APFloat::IEEEsingle : 
+                         VT==MVT::f64 ? APFloat::IEEEdouble :
+                         VT==MVT::f80 ? APFloat::x87DoubleExtended :
+                         VT==MVT::f128 ? APFloat::IEEEquad :
+                         APFloat::Bogus,
+                         APFloat::rmNearestTiesToEven);
+        return getConstantFP(V, VT);
+      case ISD::FP_TO_SINT:
+      case ISD::FP_TO_UINT: {
+        integerPart x;
+        assert(integerPartWidth >= 64);
+        // FIXME need to be more flexible about rounding mode.
+        APFloat::opStatus s = V.convertToInteger(&x, 64U,
+                              Opcode==ISD::FP_TO_SINT,
+                              APFloat::rmTowardZero);
+        if (s==APFloat::opInvalidOp)     // inexact is OK, in fact usual
+          break;
+        return getConstant(x, VT);
+      }
+      case ISD::BIT_CONVERT:
+        if (VT == MVT::i32 && C->getValueType(0) == MVT::f32)
+          return getConstant((uint32_t)V.convertToAPInt().getZExtValue(), VT);
+        else if (VT == MVT::i64 && C->getValueType(0) == MVT::f64)
+          return getConstant(V.convertToAPInt().getZExtValue(), VT);
         break;
-      return getConstant(x, VT);
-    }
-    case ISD::BIT_CONVERT:
-      if (VT == MVT::i32 && C->getValueType(0) == MVT::f32)
-        return getConstant((uint32_t)V.convertToAPInt().getZExtValue(), VT);
-      else if (VT == MVT::i64 && C->getValueType(0) == MVT::f64)
-        return getConstant(V.convertToAPInt().getZExtValue(), VT);
-      break;
+      }
     }
   }
 
@@ -1957,7 +1962,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1.Val);
   ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2.Val);
   if (N1CFP) {
-    if (N2CFP) {
+    if (N2CFP && VT!=MVT::ppcf128) {
       APFloat V1 = N1CFP->getValueAPF(), V2 = N2CFP->getValueAPF();
       APFloat::opStatus s;
       switch (Opcode) {

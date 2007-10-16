@@ -464,6 +464,10 @@ static Constant *EvalVectorOp(const ConstantVector *V1,
 Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
                                               const Constant *C1,
                                               const Constant *C2) {
+  // No compile-time operations on this type yet.
+  if (C1->getType() == Type::PPC_FP128Ty)
+    return 0;
+
   // Handle UndefValue up front
   if (isa<UndefValue>(C1) || isa<UndefValue>(C2)) {
     switch (Opcode) {
