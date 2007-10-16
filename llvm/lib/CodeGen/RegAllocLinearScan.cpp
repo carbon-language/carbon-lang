@@ -44,9 +44,6 @@ linearscanRegAlloc("linearscan", "  linear scan register allocator",
                    createLinearScanRegisterAllocator);
 
 namespace {
-  static unsigned numIterations = 0;
-  static unsigned numIntervals = 0;
-
   struct VISIBILITY_HIDDEN RALinScan : public MachineFunctionPass {
     static char ID;
     RALinScan() : MachineFunctionPass((intptr_t)&ID) {}
@@ -249,16 +246,13 @@ void RALinScan::linearScan()
   DOUT << "********** LINEAR SCAN **********\n";
   DOUT << "********** Function: " << mf_->getFunction()->getName() << '\n';
 
-  // DEBUG(printIntervals("unhandled", unhandled_.begin(), unhandled_.end()));
   DEBUG(printIntervals("fixed", fixed_.begin(), fixed_.end()));
-  DEBUG(printIntervals("active", active_.begin(), active_.end()));
-  DEBUG(printIntervals("inactive", inactive_.begin(), inactive_.end()));
 
   while (!unhandled_.empty()) {
     // pick the interval with the earliest start point
     LiveInterval* cur = unhandled_.top();
     unhandled_.pop();
-    ++numIterations;
+    ++NumIters;
     DOUT << "\n*** CURRENT ***: " << *cur << '\n';
 
     processActiveIntervals(cur->beginNumber());
@@ -275,27 +269,24 @@ void RALinScan::linearScan()
     DEBUG(printIntervals("active", active_.begin(), active_.end()));
     DEBUG(printIntervals("inactive", inactive_.begin(), inactive_.end()));
   }
-  numIntervals += li_->getNumIntervals();
-  NumIters += numIterations;
 
   // expire any remaining active intervals
-  for (IntervalPtrs::reverse_iterator
-         i = active_.rbegin(); i != active_.rend(); ) {
-    unsigned reg = i->first->reg;
-    DOUT << "\tinterval " << *i->first << " expired\n";
+  while (!active_.empty()) {
+    IntervalPtr &IP = active_.back();
+    unsigned reg = IP.first->reg;
+    DOUT << "\tinterval " << *IP.first << " expired\n";
     assert(MRegisterInfo::isVirtualRegister(reg) &&
            "Can only allocate virtual registers!");
     reg = vrm_->getPhys(reg);
     prt_->delRegUse(reg);
-    i = IntervalPtrs::reverse_iterator(active_.erase(i.base()-1));
+    active_.pop_back();
   }
 
   // expire any remaining inactive intervals
-  for (IntervalPtrs::reverse_iterator
-         i = inactive_.rbegin(); i != inactive_.rend(); ) {
-    DOUT << "\tinterval " << *i->first << " expired\n";
-    i = IntervalPtrs::reverse_iterator(inactive_.erase(i.base()-1));
-  }
+  DEBUG(for (IntervalPtrs::reverse_iterator
+               i = inactive_.rbegin(); i != inactive_.rend(); )
+        DOUT << "\tinterval " << *i->first << " expired\n");
+  inactive_.clear();
 
   // A brute force way of adding live-ins to every BB.
   MachineFunction::iterator MBB = mf_->begin();
