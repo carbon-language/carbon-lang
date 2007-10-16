@@ -623,15 +623,7 @@ void StmtPrinter::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
 void StmtPrinter::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
   OS << "@selector(";
   Selector &selector = Node->getSelector();
-  if (selector.isUnarySelector())
-    OS << " " << selector.getIdentifierInfoForSlot(0)->getName();
-  else {
-    for (unsigned i = 0, e = Node->getNumArgs(); i != e; ++i)
-      if (selector.getIdentifierInfoForSlot(i))
-        OS << selector.getIdentifierInfoForSlot(i)->getName() << ":";
-      else
-        OS <<  ":";
-  }
+  OS << " " << selector.getName();
   OS << ")";
 }
 

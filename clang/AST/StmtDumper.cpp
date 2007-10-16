@@ -412,15 +412,7 @@ void StmtDumper::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
   
   fprintf(F, " ");
   Selector &selector = Node->getSelector();
-  if (selector.isUnarySelector())
-    fprintf(F, "%s", selector.getIdentifierInfoForSlot(0)->getName());
-  else {
-    for (unsigned i = 0, e = Node->getNumArgs(); i != e; ++i)
-      if (selector.getIdentifierInfoForSlot(i))
-        fprintf(F, "%s:", selector.getIdentifierInfoForSlot(i)->getName());
-      else
-        fprintf(F, ":");
-  }
+  fprintf(F, "%s", selector.getName().c_str());
 }
 
 //===----------------------------------------------------------------------===//
