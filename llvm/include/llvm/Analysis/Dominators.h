@@ -443,23 +443,29 @@ public:
   }
   
 protected:
-  template<class GraphT> friend void Compress(DominatorTreeBase<typename GraphT::NodeType>& DT,
-                                              typename GraphT::NodeType* VIn);
-  template<class GraphT> friend typename GraphT::NodeType* Eval(
-                                                  DominatorTreeBase<typename GraphT::NodeType>& DT,
-                                                  typename GraphT::NodeType* V);
-  template<class GraphT> friend void Link(DominatorTreeBase<typename GraphT::NodeType>& DT,
-                                          typename GraphT::NodeType* V,
-                                          typename GraphT::NodeType* W,
-                                 typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &WInfo);
+  template<class GraphT>
+  friend void Compress(DominatorTreeBase<typename GraphT::NodeType>& DT,
+                       typename GraphT::NodeType* VIn);
+
+  template<class GraphT>
+  friend typename GraphT::NodeType* Eval(
+                               DominatorTreeBase<typename GraphT::NodeType>& DT,
+                                         typename GraphT::NodeType* V);
+
+  template<class GraphT>
+  friend void Link(DominatorTreeBase<typename GraphT::NodeType>& DT,
+                   typename GraphT::NodeType* V,
+                   typename GraphT::NodeType* W,
+         typename DominatorTreeBase<typename GraphT::NodeType>::InfoRec &WInfo);
   
-  template<class GraphT> friend unsigned DFSPass(
-                                                 DominatorTreeBase<typename GraphT::NodeType>& DT,
-                                                 typename GraphT::NodeType* V,
-                                                 unsigned N);
+  template<class GraphT>
+  friend unsigned DFSPass(DominatorTreeBase<typename GraphT::NodeType>& DT,
+                          typename GraphT::NodeType* V,
+                          unsigned N);
   
-  template<class N, class GraphT> friend void Calculate(DominatorTreeBase<typename GraphT::NodeType>& DT,
-                                                   Function& F);
+  template<class N, class GraphT>
+  friend void Calculate(DominatorTreeBase<typename GraphT::NodeType>& DT,
+                        Function& F);
   
   /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking
   /// dominator tree in dfs order.
