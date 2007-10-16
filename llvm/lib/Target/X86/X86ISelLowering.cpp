@@ -4139,6 +4139,8 @@ SDOperand X86TargetLowering::LowerSELECT(SDOperand Op, SelectionDAG &DAG) {
       IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
     else if (VT == MVT::f64 && !X86ScalarSSEf64)
       IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
+    else if (VT == MVT::f80)
+      IllegalFPCMov = !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
     if ((Opc == X86ISD::CMP ||
          Opc == X86ISD::COMI ||
          Opc == X86ISD::UCOMI) && !IllegalFPCMov) {
