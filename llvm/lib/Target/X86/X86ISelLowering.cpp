@@ -707,10 +707,11 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     Operands.push_back(StackAdjustment);
     // Copy registers used by the call. Last operand is a flag so it is not
     // copied.
-    for(unsigned i=3; i < TailCall.getNumOperands()-1;i++) {
+    for (unsigned i=3; i < TailCall.getNumOperands()-1; i++) {
       Operands.push_back(Chain.getOperand(i));
     }
-    return DAG.getNode(X86ISD::TC_RETURN, MVT::Other, &Operands[0], Operands.size()); 
+    return DAG.getNode(X86ISD::TC_RETURN, MVT::Other, &Operands[0], 
+                       Operands.size());
   }
   
   // Regular return.
@@ -1520,22 +1521,24 @@ SDOperand X86TargetLowering::LowerX86_TailCallTo(SDOperand Op,
   if (FPDiff < (MF.getInfo<X86MachineFunctionInfo>()->getTCReturnAddrDelta()))
     MF.getInfo<X86MachineFunctionInfo>()->setTCReturnAddrDelta(FPDiff);
 
-  // Adjust the ret address stack slot.
+  Chain = DAG.
+   getCALLSEQ_START(Chain, DAG.getConstant(NumBytesToBePushed, getPointerTy()));
+
+  // Adjust the Return address stack slot.
+  SDOperand RetAddrFrIdx, NewRetAddrFrIdx;
   if (FPDiff) {
     MVT::ValueType VT = is64Bit ? MVT::i64 : MVT::i32;
-    SDOperand RetAddrFrIdx = getReturnAddressFrameIndex(DAG); 
+    RetAddrFrIdx = getReturnAddressFrameIndex(DAG);
+    // Load the "old" Return address.
     RetAddrFrIdx = 
-      DAG.getLoad(VT, DAG.getEntryNode(),RetAddrFrIdx, NULL, 0);
-    // Emit a store of the saved ret value to the new location.
+      DAG.getLoad(VT, Chain,RetAddrFrIdx, NULL, 0);
+    // Calculate the new stack slot for the return address.
     int SlotSize = is64Bit ? 8 : 4;
     int NewReturnAddrFI = 
       MF.getFrameInfo()->CreateFixedObject(SlotSize, FPDiff-SlotSize);
-    SDOperand NewRetAddrFrIdx = DAG.getFrameIndex(NewReturnAddrFI, VT);
-    Chain = DAG.getStore(Chain,RetAddrFrIdx, NewRetAddrFrIdx, NULL, 0);
+    NewRetAddrFrIdx = DAG.getFrameIndex(NewReturnAddrFI, VT);
+    Chain = SDOperand(RetAddrFrIdx.Val, 1);
   }
-
-  Chain = DAG.
-   getCALLSEQ_START(Chain, DAG.getConstant(NumBytesToBePushed, getPointerTy()));
 
   SmallVector<std::pair<unsigned, SDOperand>, 8> RegsToPass;
   SmallVector<SDOperand, 8> MemOpChains;
@@ -1592,6 +1595,7 @@ SDOperand X86TargetLowering::LowerX86_TailCallTo(SDOperand Op,
     InFlag = Chain.getValue(1);
   }
   InFlag = SDOperand();
+
   // Copy from stack slots to stack slot of a tail called function. This needs
   // to be done because if we would lower the arguments directly to their real
   // stack slot we might end up overwriting each other.
@@ -1636,6 +1640,10 @@ SDOperand X86TargetLowering::LowerX86_TailCallTo(SDOperand Op,
   if (!MemOpChains2.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other,
                         &MemOpChains2[0], MemOpChains.size());
+
+  // Store the return address to the appropriate stack slot.
+  if (FPDiff)
+    Chain = DAG.getStore(Chain,RetAddrFrIdx, NewRetAddrFrIdx, NULL, 0);
 
   // ELF / PIC requires GOT in the EBX register before function calls via PLT
   // GOT pointer.
