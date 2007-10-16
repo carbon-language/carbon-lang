@@ -1077,6 +1077,9 @@ public:
                  SourceLocation enc, SourceLocation rp)
     : Expr(ObjCEncodeExprClass, T), EncType(ET), EncLoc(enc), RParenLoc(rp) {}
   
+  SourceLocation getEncLoc() const { return EncLoc; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  
   SourceRange getSourceRange() const { return SourceRange(EncLoc, RParenLoc); }
 
   QualType getEncodedType() const { return EncType; }
