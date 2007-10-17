@@ -1,7 +1,5 @@
 // RUN: clang -fsyntax-only -verify %s
 
-typedef struct objc_object *id;
-
 struct S { int a; };
 
 extern int charStarFunc(char *);

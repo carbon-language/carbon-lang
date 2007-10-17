@@ -1,6 +1,5 @@
 // RUN: clang %s -fsyntax-only
 
-typedef struct objc_object *id;
 @interface NSObject
 + alloc;
 - init;

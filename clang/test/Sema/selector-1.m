@@ -1,7 +1,5 @@
 // RUN: clang -verify %s 
 
-typedef struct objc_selector *SEL;
-
 int main() {
  SEL s = @selector(retain);
  SEL s1 = @selector(meth1:);

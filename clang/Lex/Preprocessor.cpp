@@ -371,9 +371,27 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__OBJC2__=1");
 
   if (PP.getLangOptions().ObjC1) {
-    // FIXME: make this the right thing.
-    const char *IDTypedef = "/*typedef int id;*/\n";
-    Buf.insert(Buf.end(), IDTypedef, IDTypedef+strlen(IDTypedef));
+    // Predefine all the ObjC goodies (traditionally declared in <objc/objc.h>).
+    // We define the following header guard for source compatibility. It has
+    // the effect of ignoring any explicit inclusion of <objc/objc.h>:-)
+    DefineBuiltinMacro(Buf, "_OBJC_OBJC_H_=1");
+    DefineBuiltinMacro(Buf, "OBJC_EXPORT=extern");
+    DefineBuiltinMacro(Buf, "OBJC_IMPORT=extern");
+    const char *ObjcType;
+    ObjcType = "typedef struct objc_class *Class;\n";
+    Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
+    ObjcType = "typedef struct objc_object { Class isa; } *id;\n";
+    Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
+    ObjcType = "typedef struct objc_selector *SEL;\n";
+    Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
+    ObjcType = "typedef id (*IMP)(id, SEL, ...);\n";
+    Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
+    ObjcType = "typedef signed char BOOL;\n";
+    Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
+    DefineBuiltinMacro(Buf, "YES=(BOOL)1");
+    DefineBuiltinMacro(Buf, "NO=(BOOL)0");
+    DefineBuiltinMacro(Buf, "Nil=0");
+    DefineBuiltinMacro(Buf, "nil=0");
   }
 
   // Add __builtin_va_list typedef.

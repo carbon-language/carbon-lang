@@ -1,9 +1,10 @@
 // RUN: clang %s -fsyntax-only -verify
 
-id obj; // expected-error{{expected '=', ',', ';', 'asm', or '__attribute__' after declarator}}
+// id is now builtin. There should be no errors. Should probably remove this file.
+id obj; 
 
 @interface Foo
 
-- defaultToId; // expected-error{{cannot find definition of 'id'}}
+- defaultToId; 
 
 @end
