@@ -7673,41 +7673,21 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         unsigned Size = MemOpLength->getZExtValue();
         unsigned Align = cast<ConstantInt>(CI.getOperand(4))->getZExtValue();
         PointerType *NewPtrTy = NULL;
-        unsigned numBits = Size << 3;
         // Destination pointer type is always i8 *
         // If Size is 8 then use Int64Ty
         // If Size is 4 then use Int32Ty
         // If Size is 2 then use Int16Ty
         // If Size is 1 then use Int8Ty
         if (Size && Size <=8 && !(Size&(Size-1)))
-          NewPtrTy = PointerType::get(IntegerType::get(numBits));
+          NewPtrTy = PointerType::get(IntegerType::get(Size<<3));
 
         if (NewPtrTy) {
-          Value *L = NULL;
-          // If source is a null terminated constant c string then try to use immediate store.
-          if (Constant *C = dyn_cast<Constant>(CI.getOperand(2))) {
-            const std::string &Str = C->getStringValue();
-            if (!Str.empty()) {
-              APInt StrVal(numBits, 0);
-              unsigned len = Str.length();
-              APInt SingleChar(numBits, 0);
-              for (unsigned i = 0; i < len; i++) {
-                SingleChar = (uint64_t) Str[i];
-                StrVal = (StrVal << 8) | SingleChar;
-              }
-              // Append NULL at the end.
-              SingleChar = 0;
-              StrVal = (StrVal << 8) | SingleChar;
-              L = ConstantInt::get(StrVal);
-            }
-          }
-          // Otherwise load source from memory.
-          if (L == NULL) {
-            Value *Src = InsertCastBefore(Instruction::BitCast, CI.getOperand(2), NewPtrTy, CI);
-            L = new LoadInst(Src, "tmp", false, Align, &CI);
-          }
+          Value *Src = InsertCastBefore(Instruction::BitCast, CI.getOperand(2), NewPtrTy, CI);
           Value *Dest = InsertCastBefore(Instruction::BitCast, CI.getOperand(1), NewPtrTy, CI);
+          Value *L = new LoadInst(Src, "tmp", false, Align, &CI);
           Value *NS = new StoreInst(L, Dest, false, Align, &CI);
+          AddToWorkList(cast<Instruction>(L));
+          AddToWorkList(cast<Instruction>(NS));
           CI.replaceAllUsesWith(NS);
           Changed = true;
           return EraseInstFromFunction(CI);
@@ -9136,6 +9116,29 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
         }
 
       } else if (CE->isCast()) {
+        // Instead of loading constant c string, use corresponding integer value
+        // directly if string length is small enough.
+        const std::string &Str = CE->getOperand(0)->getStringValue();
+        if (!Str.empty()) {
+          unsigned len = Str.length();
+          const Type *Ty = cast<PointerType>(CE->getType())->getElementType();
+          unsigned numBits = Ty->getPrimitiveSizeInBits();
+          if ((numBits >> 3) == len + 1) {
+            // Replace LI with immediate integer store.
+            APInt StrVal(numBits, 0);
+            APInt SingleChar(numBits, 0);
+            for (unsigned i = 0; i < len; i++) {
+              SingleChar = (uint64_t) Str[i];
+              StrVal = (StrVal << 8) | SingleChar;
+            }
+            // Append NULL at the end.
+            SingleChar = 0;
+            StrVal = (StrVal << 8) | SingleChar;
+            Value *NL = ConstantInt::get(StrVal);
+            return ReplaceInstUsesWith(LI, NL);
+          }
+        }
+
         if (Instruction *Res = InstCombineLoadCast(*this, LI))
           return Res;
       }

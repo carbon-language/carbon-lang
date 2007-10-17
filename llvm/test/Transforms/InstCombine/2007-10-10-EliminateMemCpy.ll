@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | opt -instcombine | llvm-dis | not grep call
+; RUN: llvm-as < %s | opt -std-compile-opts | llvm-dis | not grep xyz
 @.str = internal constant [4 x i8] c"xyz\00"		; <[4 x i8]*> [#uses=1]
 
 define void @foo(i8* %P) {
