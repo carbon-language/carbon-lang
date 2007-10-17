@@ -145,7 +145,7 @@ public:
   /// switch it back.  Return true if the 'next character to read' pointer
   /// points and the end of the lexer buffer, false otherwise.
   bool LexRawToken(Token &Result) {
-    assert(!LexingRawMode && "Already in raw mode!");
+    assert(!(PP && LexingRawMode) && "Already in raw mode!");
     LexingRawMode = true;
     Lex(Result);
     LexingRawMode = PP == 0;
