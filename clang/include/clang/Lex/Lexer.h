@@ -139,6 +139,8 @@ public:
     LexingRawMode = true;
     Lex(Result);
     LexingRawMode = false;
+    // Note that lexing to the end of the buffer doesn't implicitly delete the
+    // lexer when in raw mode.
     return BufferPtr == BufferEnd; 
   }
   

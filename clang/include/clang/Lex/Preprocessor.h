@@ -33,7 +33,7 @@ class TargetInfo;
 class PPCallbacks;
 class DirectoryLookup;
 
-/// Preprocessor - This object forms engages in a tight little dance to
+/// Preprocessor - This object engages in a tight little dance with the lexer to
 /// efficiently preprocess tokens.  Lexers know only about tokens within a
 /// single source file, and don't know anything about preprocessor-level issues
 /// like the #include stack, token expansion, etc.
