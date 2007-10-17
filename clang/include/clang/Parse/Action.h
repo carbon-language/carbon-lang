@@ -603,6 +603,13 @@ public:
     return 0;
   }
   
+  virtual ExprResult ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
+                                                 SourceLocation AtLoc,
+                                                 SourceLocation ProtoLoc,
+                                                 SourceLocation LParenLoc,
+                                                 SourceLocation RParenLoc) {
+    return 0;
+  } 
 };
 
 /// MinimalAction - Minimal actions are used by light-weight clients of the

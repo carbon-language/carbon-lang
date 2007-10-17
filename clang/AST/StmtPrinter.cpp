@@ -14,6 +14,7 @@
 
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjc.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -624,6 +625,12 @@ void StmtPrinter::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
   OS << "@selector(";
   Selector &selector = Node->getSelector();
   OS << " " << selector.getName();
+  OS << ")";
+}
+
+void StmtPrinter::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
+  OS << "@protocol(";
+  OS << Node->getProtocol()->getName();
   OS << ")";
 }
 

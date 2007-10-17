@@ -1929,6 +1929,20 @@ Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
   return new ObjCSelectorExpr(t, Sel, AtLoc, RParenLoc);
 }
 
+Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
+                                                   SourceLocation AtLoc,
+                                                   SourceLocation ProtoLoc,
+                                                   SourceLocation LParenLoc,
+                                                   SourceLocation RParenLoc) {
+  ObjcProtocolDecl* PDecl = ObjcProtocols[ProtocolId];
+  if (!PDecl) {
+    Diag(ProtoLoc, diag::err_undeclared_protocol, ProtocolId->getName());
+    return true;
+  }
+  
+  QualType t = GetObjcProtoType(AtLoc);
+  return new ObjCProtocolExpr(t, PDecl, AtLoc, RParenLoc);
+}
 
 bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
                                      ObjcMethodDecl *Method) {

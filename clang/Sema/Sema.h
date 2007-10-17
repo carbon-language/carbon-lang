@@ -280,6 +280,9 @@ private:
   /// GetObjcSelType - Getter for the build-in "SEL" type.
   QualType GetObjcSelType(SourceLocation Loc = SourceLocation());
   
+  /// GetObjcSelType - Getter for the build-in "Protocol *" type.
+  QualType GetObjcProtoType(SourceLocation Loc = SourceLocation());
+  
   /// AddInstanceMethodToGlobalPool - All instance methods in a translation
   /// unit are added to a global pool. This allows us to efficiently associate
   /// a selector with a method declaraation for purposes of typechecking
@@ -449,6 +452,13 @@ public:
   virtual ExprResult ParseObjCSelectorExpression(Selector Sel,
                                                  SourceLocation AtLoc,
                                                  SourceLocation SelLoc,
+                                                 SourceLocation LParenLoc,
+                                                 SourceLocation RParenLoc);
+  
+  // ParseObjCProtocolExpression - Build protocol expression for @protocol
+  virtual ExprResult ParseObjCProtocolExpression(IdentifierInfo * ProtocolName,
+                                                 SourceLocation AtLoc,
+                                                 SourceLocation ProtoLoc,
                                                  SourceLocation LParenLoc,
                                                  SourceLocation RParenLoc);
   

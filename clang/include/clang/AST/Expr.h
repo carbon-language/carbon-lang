@@ -1119,12 +1119,41 @@ public:
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == ObjCSelectorExprClass;
   }
-  static bool classof(const ObjCEncodeExpr *) { return true; }
+  static bool classof(const ObjCSelectorExpr *) { return true; }
   
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
+};
+  
+/// ObjCProtocolExpr used for protocol in Objective-C.
+class ObjCProtocolExpr : public Expr {
+    
+  ObjcProtocolDecl *Protocol;
+    
+  SourceLocation AtLoc, RParenLoc;
+  public:
+  ObjCProtocolExpr(QualType T, ObjcProtocolDecl *protocol,
+                   SourceLocation at, SourceLocation rp)
+  : Expr(ObjCProtocolExprClass, T), Protocol(protocol), 
+  AtLoc(at), RParenLoc(rp) {}
+    
+  ObjcProtocolDecl *getProtocol() const { return Protocol; }
+    
+  SourceLocation getAtLoc() const { return AtLoc; }
+  SourceLocation getRParenLoc() const { return RParenLoc; }
+  SourceRange getSourceRange() const { return SourceRange(AtLoc, RParenLoc); }
+        
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjCProtocolExprClass;
+  }
+  static bool classof(const ObjCProtocolExpr *) { return true; }
+    
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+    
 };
   
 class ObjCMessageExpr : public Expr {

@@ -14,6 +14,7 @@
 
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjc.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceManager.h"
@@ -129,6 +130,7 @@ namespace  {
     // ObjC
     void VisitObjCEncodeExpr(ObjCEncodeExpr *Node);
     void VisitObjCSelectorExpr(ObjCSelectorExpr *Node);
+    void VisitObjCProtocolExpr(ObjCProtocolExpr *Node);
   };
 }
 
@@ -415,6 +417,12 @@ void StmtDumper::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
   fprintf(F, "%s", selector.getName().c_str());
 }
 
+void StmtDumper::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
+  DumpExpr(Node);
+  
+  fprintf(F, " ");
+  fprintf(F, "%s", Node->getProtocol()->getName());
+}
 //===----------------------------------------------------------------------===//
 // Stmt method implementations
 //===----------------------------------------------------------------------===//

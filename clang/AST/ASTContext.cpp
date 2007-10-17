@@ -870,6 +870,17 @@ void ASTContext::setObjcSelType(TypedefDecl *TD)
   SelStructType = rec;
 }
 
+void ASTContext::setObjcProtoType(TypedefDecl *TD)
+{
+  assert(ObjcProtoType.isNull() && "'Protocol' type already set!");
+  
+  // typedef struct Protocol Protocol;
+  ObjcProtoType = TD->getUnderlyingType();
+  // Protocol * type
+  ObjcProtoType = getPointerType(ObjcProtoType);  
+  ProtoStructType = TD->getUnderlyingType()->getAsStructureType();
+}
+
 void ASTContext::setObjcConstantStringInterface(ObjcInterfaceDecl *Decl) {
   assert(ObjcConstantStringType.isNull() && 
          "'NSConstantString' type already set!");

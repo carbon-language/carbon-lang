@@ -1297,14 +1297,13 @@ Parser::ExprResult Parser::ParseObjCProtocolExpression(SourceLocation AtLoc)
     Diag(Tok, diag::err_expected_ident);
     return true;
   }
-
-  // FIXME: Do something with the protocol name
+  IdentifierInfo *protocolId = Tok.getIdentifierInfo();
   ConsumeToken();
   
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
 
-  // FIXME 
-  return 0;
+  return Actions.ParseObjCProtocolExpression(protocolId, AtLoc, ProtoLoc, 
+                                             LParenLoc, RParenLoc);
 }
 
 ///     objc-selector-expression

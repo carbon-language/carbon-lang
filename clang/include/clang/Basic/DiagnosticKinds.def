@@ -448,6 +448,8 @@ DIAG(err_missing_sel_definition, ERROR,
      "cannot find definition of 'SEL'")
 DIAG(err_missing_id_definition, ERROR,
      "cannot find definition of 'id'")
+DIAG(err_missing_proto_definition, ERROR,
+     "cannot find definition of 'Protocol'")
 DIAG(warn_previous_alias_decl, WARNING,
      "previously declared alias is ignored")
 DIAG(warn_previous_declaration, WARNING,

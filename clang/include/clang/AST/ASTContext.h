@@ -54,6 +54,10 @@ class ASTContext {
   QualType ObjcSelType;
   const RecordType *SelStructType;
   
+  /// ObjcProtoType - another psuedo built-in typedef type (set by Sema).
+  QualType ObjcProtoType;
+  const RecordType *ProtoStructType;
+  
   QualType ObjcConstantStringType;
   RecordDecl *CFConstantStringTypeDecl;
 public:
@@ -174,6 +178,9 @@ public:
   
   void setObjcSelType(TypedefDecl *Decl);
   QualType getObjcSelType() const { return ObjcSelType; }
+  
+  void setObjcProtoType(TypedefDecl *Decl);
+  QualType getObjcProtoType() const { return ObjcProtoType; }
   
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
