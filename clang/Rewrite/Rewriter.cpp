@@ -13,8 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Rewrite/Rewriter.h"
+#include "clang/AST/Stmt.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
+#include <sstream>
 using namespace clang;
 
 /// getMappedOffset - Given an offset into the original SourceBuffer that this
@@ -208,3 +210,23 @@ void Rewriter::ReplaceText(SourceLocation Start, unsigned OrigLength,
   getEditBuffer(StartFileID).ReplaceText(StartOffs, OrigLength,
                                          NewStr, NewLength);
 }
+
+/// ReplaceStmt - This replaces a Stmt/Expr with another, using the pretty
+/// printer to generate the replacement code.  This returns true if the input
+/// could not be rewritten, or false if successful.
+bool Rewriter::ReplaceStmt(Stmt *From, Stmt *To) {
+  // Measaure the old text.
+  int Size = getRangeSize(From->getSourceRange());
+  if (Size == -1)
+    return true;
+  
+  // Get the new text.
+  std::ostringstream S;
+  To->printPretty(S);
+  const std::string &Str = S.str();
+
+  ReplaceText(From->getLocStart(), Size, &Str[0], Str.size());
+  return false;
+}
+
+

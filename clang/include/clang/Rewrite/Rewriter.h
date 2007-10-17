@@ -22,6 +22,7 @@
 namespace clang {
   class SourceManager;
   class Rewriter;
+  class Stmt;
   
 /// SourceDelta - As code in the original input buffer is added and deleted,
 /// SourceDelta records are used to keep track of how the input SourceLocation
@@ -141,8 +142,10 @@ public:
   void ReplaceText(SourceLocation Start, unsigned OrigLength,
                    const char *NewStr, unsigned NewLength);
   
-  // TODO: Replace Stmt/Expr with another.  Return bool to indicate whether the
-  // locations were rewritable.
+  /// ReplaceStmt - This replaces a Stmt/Expr with another, using the pretty
+  /// printer to generate the replacement code.  This returns true if the input
+  /// could not be rewritten, or false if successful.
+  bool ReplaceStmt(Stmt *From, Stmt *To);
   
   /// getRewriteBufferFor - Return the rewrite buffer for the specified FileID.
   /// If no modification has been made to it, return null.

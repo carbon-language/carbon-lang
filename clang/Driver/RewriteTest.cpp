@@ -22,14 +22,16 @@ using namespace clang;
 namespace {
   class RewriteTest : public ASTConsumer {
     Rewriter Rewrite;
+    ASTContext *Context;
     SourceManager *SM;
     unsigned MainFileID;
     SourceLocation LastIncLoc;
   public:
-    void Initialize(ASTContext &Context, unsigned mainFileID) {
-      SM = &Context.SourceMgr;
+    void Initialize(ASTContext &context, unsigned mainFileID) {
+      Context = &context;
+      SM = &Context->SourceMgr;
       MainFileID = mainFileID;
-      Rewrite.setSourceMgr(Context.SourceMgr);
+      Rewrite.setSourceMgr(Context->SourceMgr);
     }
     
     virtual void HandleTopLevelDecl(Decl *D);
@@ -109,13 +111,12 @@ void RewriteTest::RewriteFunctionBody(Stmt *S) {
 }
 
 void RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
-  int Size = Rewrite.getRangeSize(Exp->getSourceRange());
-  if (Size == -1) {
-    printf("BLAH!");
-    return;
-  }
-  
-  Rewrite.ReplaceText(Exp->getAtLoc(), Size, "\"foo\"", 5);
+  // Create a new string expression.
+  QualType StrType = Context->getPointerType(Context->CharTy);
+  Expr *Replacement = new StringLiteral("foo", 3, false, StrType, 
+                                        SourceLocation(), SourceLocation());
+  Rewrite.ReplaceStmt(Exp, Replacement);
+  delete Replacement;
 }
 
 
