@@ -3952,8 +3952,18 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Ops[] = { Chain, Value, StackSlot };
   SDOperand FIST = DAG.getNode(Opc, MVT::Other, Ops, 3);
 
-  // Load the result.
-  return DAG.getLoad(Op.getValueType(), FIST, StackSlot, NULL, 0);
+  // Load the result.  If this is an i64 load on an x86-32 host, expand the
+  // load.
+  if (Op.getValueType() != MVT::i64 || Subtarget->is64Bit())
+    return DAG.getLoad(Op.getValueType(), FIST, StackSlot, NULL, 0);
+  
+  SDOperand Lo = DAG.getLoad(MVT::i32, FIST, StackSlot, NULL, 0);
+  StackSlot = DAG.getNode(ISD::ADD, StackSlot.getValueType(), StackSlot,
+                          DAG.getConstant(StackSlot.getValueType(), 4));
+  SDOperand Hi = DAG.getLoad(MVT::i32, FIST, StackSlot, NULL, 0);
+  
+  
+  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
 }
 
 SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
