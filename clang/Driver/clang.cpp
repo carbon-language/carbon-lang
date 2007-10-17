@@ -908,7 +908,6 @@ int main(int argc, char **argv) {
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     // Set up the preprocessor with these options.
     Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
-    DiagClient->setPreprocessor(PP);
     const std::string &InFile = InputFilenames[i];
     std::vector<char> PredefineBuffer;
     unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,

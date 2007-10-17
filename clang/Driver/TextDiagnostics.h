@@ -25,7 +25,6 @@ class TextDiagnostics : public DiagnosticClient {
   HeaderSearch *TheHeaderSearch;
 protected:
   SourceManager &SourceMgr;
-  Preprocessor *ThePreprocessor;
 
   std::string FormatDiagnostic(Diagnostic::Level Level,
                                diag::kind ID,
@@ -36,7 +35,6 @@ public:
   virtual ~TextDiagnostics();
 
   void setHeaderSearch(HeaderSearch &HS) { TheHeaderSearch = &HS; }
-  void setPreprocessor(Preprocessor &P) { ThePreprocessor = &P; }
 
   virtual bool IgnoreDiagnostic(Diagnostic::Level Level, 
                                 SourceLocation Pos);
