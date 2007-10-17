@@ -1286,6 +1286,17 @@ bool ConstantVector::isAllOnesValue() const {
   return true;
 }
 
+/// getSplatValue - If this is a splat constant, where all of the
+/// elements have the same value, return that value. Otherwise return null.
+Constant *ConstantVector::getSplatValue() {
+  // Check out first element.
+  Constant *Elt = getOperand(0);
+  // Then make sure all remaining elements point to the same value.
+  for (unsigned I = 1, E = getNumOperands(); I < E; ++I)
+    if (getOperand(I) != Elt) return 0;
+  return Elt;
+}
+
 //---- ConstantPointerNull::get() implementation...
 //
 

@@ -438,6 +438,10 @@ public:
   /// @brief Determine if the value is all ones.
   bool isAllOnesValue() const;
 
+  /// getSplatValue - If this is a splat constant, meaning that all of the
+  /// elements have the same value, return that value. Otherwise return NULL.
+  Constant *getSplatValue();
+
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
