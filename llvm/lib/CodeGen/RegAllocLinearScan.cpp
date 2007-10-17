@@ -290,6 +290,7 @@ void RALinScan::linearScan()
 
   // Add live-ins to every BB except for entry.
   MachineFunction::iterator EntryMBB = mf_->begin();
+  SmallVector<MachineBasicBlock*, 8> LiveInMBBs;
   for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i) {
     const LiveInterval &cur = i->second;
     unsigned Reg = 0;
@@ -302,11 +303,11 @@ void RALinScan::linearScan()
     for (LiveInterval::Ranges::const_iterator I = cur.begin(), E = cur.end();
          I != E; ++I) {
       const LiveRange &LR = *I;
-      SmallVector<MachineBasicBlock*, 4> LiveInMBBs;
       if (li_->findLiveInMBBs(LR, LiveInMBBs)) {
         for (unsigned i = 0, e = LiveInMBBs.size(); i != e; ++i)
           if (LiveInMBBs[i] != EntryMBB)
             LiveInMBBs[i]->addLiveIn(Reg);
+        LiveInMBBs.clear();
       }
     }
   }

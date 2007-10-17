@@ -817,7 +817,7 @@ void LiveIntervals::computeIntervals() {
 }
 
 bool LiveIntervals::findLiveInMBBs(const LiveRange &LR,
-                               SmallVector<MachineBasicBlock*, 4> &MBBs) const {
+                              SmallVectorImpl<MachineBasicBlock*> &MBBs) const {
   std::vector<IdxMBBPair>::const_iterator I =
     std::lower_bound(Idx2MBBMap.begin(), Idx2MBBMap.end(), LR.start);
 

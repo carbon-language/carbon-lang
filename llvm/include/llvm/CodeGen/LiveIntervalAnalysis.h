@@ -167,7 +167,7 @@ namespace llvm {
     /// is live in any MBB returns true as well as the list of basic blocks
     /// where the value is live in.
     bool findLiveInMBBs(const LiveRange &LR,
-                        SmallVector<MachineBasicBlock*, 4> &MBBs) const;
+                        SmallVectorImpl<MachineBasicBlock*> &MBBs) const;
 
     // Interval creation
 
