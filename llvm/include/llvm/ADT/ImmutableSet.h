@@ -373,12 +373,11 @@ private:
     
     assert (InsertPos != NULL);
     
-    // FIXME: more intelligent calculation of alignment.
-    TreeTy* T = (TreeTy*) Allocator.Allocate(sizeof(*T),16);
-    
+    // Allocate the new tree node and insert it into the cache.
+    TreeTy* T = Allocator.Allocate<TreeTy>();    
     new (T) TreeTy(L,R,V,IncrementHeight(L,R));
-    
     Cache.InsertNode(T,InsertPos);
+
     return T;      
   }
   
