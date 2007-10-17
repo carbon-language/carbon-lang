@@ -1,6 +1,6 @@
 // RUN: clang %s -fsyntax-only -verify
 
-// id is now builtin. There should be no errors. Should probably remove this file.
+// id is now builtin. There should be no errors. 
 id obj; 
 
 @interface Foo
