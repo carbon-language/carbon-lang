@@ -236,7 +236,7 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
       // If this is a extract_subreg where dst is a physical register, e.g.
       // cl = EXTRACT_SUBREG reg1024, 1
       // then create and update the actual physical register allocated to RHS.
-      const TargetRegisterClass *RC = mf_->getSSARegMap()->getRegClass(SrcReg);
+      const TargetRegisterClass *RC=mf_->getSSARegMap()->getRegClass(repSrcReg);
       for (const unsigned *SRs = mri_->getSuperRegisters(repDstReg);
            unsigned SR = *SRs; ++SRs) {
         if (repDstReg == mri_->getSubReg(SR, SubIdx) &&
