@@ -140,10 +140,12 @@ public:
     // Okay, the item doesn't already exist, and 'Bucket' is the bucket to fill
     // in.  Allocate a new item with space for the string at the end and a null
     // terminator.
+    
     unsigned AllocSize = sizeof(StringMapEntry)+KeyLength+1;
-
-    StringMapEntry *NewItem = static_cast<StringMapEntry*>(
-        Allocator.Allocate(AllocSize, AlignOf<StringMapEntry>::Alignment));
+    unsigned Alignment = alignof<StringMapEntry>();
+    
+    StringMapEntry *NewItem =
+      static_cast<StringMapEntry*>(Allocator.Allocate(AllocSize,Alignment));
     
     // Default construct the value.
     new (NewItem) StringMapEntry(KeyLength);
