@@ -527,10 +527,16 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     Erased =
       TargetExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
     break;
-  case ISD::VALUETYPE:
-    Erased = ValueTypeNodes[cast<VTSDNode>(N)->getVT()] != 0;
-    ValueTypeNodes[cast<VTSDNode>(N)->getVT()] = 0;
+  case ISD::VALUETYPE: {
+    MVT::ValueType VT = cast<VTSDNode>(N)->getVT();
+    if (MVT::isExtendedVT(VT)) {
+      Erased = ExtendedValueTypeNodes.erase(VT);
+    } else {
+      Erased = ValueTypeNodes[VT] != 0;
+      ValueTypeNodes[VT] = 0;
+    }
     break;
+  }
   default:
     // Remove it from the CSE Map.
     Erased = CSEMap.RemoveNode(N);
@@ -847,15 +853,16 @@ SDOperand SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
 }
 
 SDOperand SelectionDAG::getValueType(MVT::ValueType VT) {
-  assert(!MVT::isExtendedVT(VT) && "Expecting a simple value type!");
-  if ((unsigned)VT >= ValueTypeNodes.size())
+  if (!MVT::isExtendedVT(VT) && (unsigned)VT >= ValueTypeNodes.size())
     ValueTypeNodes.resize(VT+1);
-  if (ValueTypeNodes[VT] == 0) {
-    ValueTypeNodes[VT] = new VTSDNode(VT);
-    AllNodes.push_back(ValueTypeNodes[VT]);
-  }
 
-  return SDOperand(ValueTypeNodes[VT], 0);
+  SDNode *&N = MVT::isExtendedVT(VT) ?
+    ExtendedValueTypeNodes[VT] : ValueTypeNodes[VT];
+
+  if (N) return SDOperand(N, 0);
+  N = new VTSDNode(VT);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
 }
 
 SDOperand SelectionDAG::getExternalSymbol(const char *Sym, MVT::ValueType VT) {

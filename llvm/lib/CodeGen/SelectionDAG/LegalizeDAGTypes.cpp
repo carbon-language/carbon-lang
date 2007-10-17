@@ -390,7 +390,6 @@ void DAGTypeLegalizer::SetPromotedOp(SDOperand Op, SDOperand Result) {
   OpEntry = Result;
 }
 
-
 void DAGTypeLegalizer::GetExpandedOp(SDOperand Op, SDOperand &Lo, 
                                      SDOperand &Hi) {
   std::pair<SDOperand, SDOperand> &Entry = ExpandedNodes[Op];
@@ -479,46 +478,53 @@ SDOperand DAGTypeLegalizer::PromoteResult_Constant(SDNode *N) {
 }
 
 SDOperand DAGTypeLegalizer::PromoteResult_TRUNCATE(SDNode *N) {
-  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  SDOperand Res;
+
   switch (getTypeAction(N->getOperand(0).getValueType())) {
   default: assert(0 && "Unknown type action!");
-  case Legal: {
-    SDOperand Res = N->getOperand(0);
-    assert(Res.getValueType() >= NVT && "Truncation doesn't make sense!");
-    if (Res.getValueType() > NVT)             // Truncate to NVT instead of VT
-      return DAG.getNode(ISD::TRUNCATE, NVT, Res);
-    return Res;
-  }
-  case Promote:
-    // The truncation is not required, because we don't guarantee anything
-    // about high bits anyway.
-    return GetPromotedOp(N->getOperand(0));
+  case Legal:
   case Expand:
-    // Truncate the low part of the expanded value to the result type
-    SDOperand Lo, Hi;
-    GetExpandedOp(N->getOperand(0), Lo, Hi);
-    return DAG.getNode(ISD::TRUNCATE, NVT, Lo);
+    Res = N->getOperand(0);
+    break;
+  case Promote:
+    Res = GetPromotedOp(N->getOperand(0));
+    break;
   }
+
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  assert(MVT::getSizeInBits(Res.getValueType()) >= MVT::getSizeInBits(NVT) &&
+         "Truncation doesn't make sense!");
+  if (Res.getValueType() == NVT)
+    return Res;
+
+  // Truncate to NVT instead of VT
+  return DAG.getNode(ISD::TRUNCATE, NVT, Res);
 }
+
 SDOperand DAGTypeLegalizer::PromoteResult_INT_EXTEND(SDNode *N) {
   MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  switch (getTypeAction(N->getOperand(0).getValueType())) {
-  default: assert(0 && "BUG: Smaller reg should have been promoted!");
-  case Legal:
-    // Input is legal?  Just do extend all the way to the larger type.
-    return DAG.getNode(N->getOpcode(), NVT, N->getOperand(0));
-  case Promote:
-    // Get promoted operand if it is smaller.
+
+  if (getTypeAction(N->getOperand(0).getValueType()) == Promote) {
     SDOperand Res = GetPromotedOp(N->getOperand(0));
-    // The high bits are not guaranteed to be anything.  Insert an extend.
-    if (N->getOpcode() == ISD::SIGN_EXTEND)
-      return DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Res,
-                         DAG.getValueType(N->getOperand(0).getValueType()));
-    if (N->getOpcode() == ISD::ZERO_EXTEND)
-      return DAG.getZeroExtendInReg(Res, N->getOperand(0).getValueType());
-    assert(N->getOpcode() == ISD::ANY_EXTEND && "Unknown integer extension!");
-    return Res;
+    assert(MVT::getSizeInBits(Res.getValueType()) <= MVT::getSizeInBits(NVT) &&
+           "Extension doesn't make sense!");
+
+    // If the result and operand types are the same after promotion, simplify
+    // to an in-register extension.
+    if (NVT == Res.getValueType()) {
+      // The high bits are not guaranteed to be anything.  Insert an extend.
+      if (N->getOpcode() == ISD::SIGN_EXTEND)
+        return DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Res,
+                           DAG.getValueType(N->getOperand(0).getValueType()));
+      if (N->getOpcode() == ISD::ZERO_EXTEND)
+        return DAG.getZeroExtendInReg(Res, N->getOperand(0).getValueType());
+      assert(N->getOpcode() == ISD::ANY_EXTEND && "Unknown integer extension!");
+      return Res;
+    }
   }
+
+  // Otherwise, just extend the original operand all the way to the larger type.
+  return DAG.getNode(N->getOpcode(), NVT, N->getOperand(0));
 }
 
 SDOperand DAGTypeLegalizer::PromoteResult_FP_ROUND(SDNode *N) {
@@ -526,7 +532,6 @@ SDOperand DAGTypeLegalizer::PromoteResult_FP_ROUND(SDNode *N) {
   return DAG.getNode(ISD::FP_ROUND_INREG, N->getOperand(0).getValueType(),
                      N->getOperand(0), DAG.getValueType(N->getValueType(0)));
 }
-
 
 SDOperand DAGTypeLegalizer::PromoteResult_SETCC(SDNode *N) {
   assert(isTypeLegal(TLI.getSetCCResultTy()) && "SetCC type is not legal??");
@@ -1198,6 +1203,7 @@ SDOperand DAGTypeLegalizer::PromoteOperand_ZERO_EXTEND(SDNode *N) {
   Op = DAG.getNode(ISD::ANY_EXTEND, N->getValueType(0), Op);
   return DAG.getZeroExtendInReg(Op, N->getOperand(0).getValueType());
 }
+
 SDOperand DAGTypeLegalizer::PromoteOperand_SIGN_EXTEND(SDNode *N) {
   SDOperand Op = GetPromotedOp(N->getOperand(0));
   Op = DAG.getNode(ISD::ANY_EXTEND, N->getValueType(0), Op);

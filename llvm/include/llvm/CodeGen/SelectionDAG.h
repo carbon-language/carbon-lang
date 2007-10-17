@@ -541,6 +541,7 @@ private:
   std::vector<CondCodeSDNode*> CondCodeNodes;
 
   std::vector<SDNode*> ValueTypeNodes;
+  std::map<MVT::ValueType, SDNode*> ExtendedValueTypeNodes;
   std::map<std::string, SDNode*> ExternalSymbols;
   std::map<std::string, SDNode*> TargetExternalSymbols;
   std::map<std::string, StringSDNode*> StringNodes;

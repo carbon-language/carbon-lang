@@ -1762,8 +1762,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getExtLoad(ExtType, Node->getValueType(0), Tmp1, Tmp2,
                                 LD->getSrcValue(), LD->getSrcValueOffset(),
                                 MVT::i8, LD->isVolatile(), LD->getAlignment());
-      Tmp1 = Result.getValue(0);
-      Tmp2 = Result.getValue(1);
+        Tmp1 = Result.getValue(0);
+        Tmp2 = Result.getValue(1);
       break;
       case TargetLowering::Custom:
         isCustom = true;

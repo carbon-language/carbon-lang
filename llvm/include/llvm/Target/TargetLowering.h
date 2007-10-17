@@ -273,7 +273,7 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction getOperationAction(unsigned Op, MVT::ValueType VT) const {
-    if (MVT::isExtendedVT(VT)) return getTypeAction(VT);
+    if (MVT::isExtendedVT(VT)) return Expand;
     return (LegalizeAction)((OpActions[Op] >> (2*VT)) & 3);
   }
   
