@@ -19,6 +19,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/LiveInterval.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -386,19 +387,68 @@ void LiveInterval::MergeRangesInAsValue(const LiveInterval &RHS,
 /// MergeValueInAsValue - Merge all of the live ranges of a specific val#
 /// in RHS into this live interval as the specified value number.
 /// The LiveRanges in RHS are allowed to overlap with LiveRanges in the
-/// current interval, but only if the overlapping LiveRanges have the
-/// specified value number.
+/// current interval, it will replace the value numbers of the overlaped
+/// live ranges with the specified value number.
 void LiveInterval::MergeValueInAsValue(const LiveInterval &RHS,
                                      const VNInfo *RHSValNo, VNInfo *LHSValNo) {
-  // TODO: Make this more efficient.
-  iterator InsertPos = begin();
+  SmallVector<VNInfo*, 4> ReplacedValNos;
+  iterator IP = begin();
   for (const_iterator I = RHS.begin(), E = RHS.end(); I != E; ++I) {
     if (I->valno != RHSValNo)
       continue;
+    unsigned Start = I->start, End = I->end;
+    IP = std::upper_bound(IP, end(), Start);
+    // If the start of this range overlaps with an existing liverange, trim it.
+    if (IP != begin() && IP[-1].end > Start) {
+      if (IP->valno != LHSValNo) {
+        ReplacedValNos.push_back(IP->valno);
+        IP->valno = LHSValNo; // Update val#.
+      }
+      Start = IP[-1].end;
+      // Trimmed away the whole range?
+      if (Start >= End) continue;
+    }
+    // If the end of this range overlaps with an existing liverange, trim it.
+    if (IP != end() && End > IP->start) {
+      if (IP->valno != LHSValNo) {
+        ReplacedValNos.push_back(IP->valno);
+        IP->valno = LHSValNo;  // Update val#.
+      }
+      End = IP->start;
+      // If this trimmed away the whole range, ignore it.
+      if (Start == End) continue;
+    }
+    
     // Map the valno in the other live range to the current live range.
-    LiveRange Tmp = *I;
-    Tmp.valno = LHSValNo;
-    InsertPos = addRangeFrom(Tmp, InsertPos);
+    IP = addRangeFrom(LiveRange(Start, End, LHSValNo), IP);
+  }
+
+
+  SmallSet<VNInfo*, 4> Seen;
+  for (unsigned i = 0, e = ReplacedValNos.size(); i != e; ++i) {
+    VNInfo *V1 = ReplacedValNos[i];
+    if (Seen.insert(V1)) {
+      bool isDead = true;
+      for (const_iterator I = begin(), E = end(); I != E; ++I)
+        if (I->valno == V1) {
+          isDead = false;
+          break;
+        }          
+      if (isDead) {
+        // Now that V1 is dead, remove it.  If it is the largest value number,
+        // just nuke it (and any other deleted values neighboring it), otherwise
+        // mark it as ~1U so it can be nuked later.
+        if (V1->id == getNumValNums()-1) {
+          do {
+            VNInfo *VNI = valnos.back();
+            valnos.pop_back();
+            VNI->~VNInfo();
+          } while (valnos.back()->def == ~1U);
+        } else {
+          V1->def = ~1U;
+        }
+      }
+    }
   }
 }
 
