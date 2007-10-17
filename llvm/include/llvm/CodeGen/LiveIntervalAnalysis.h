@@ -36,6 +36,7 @@ namespace llvm {
   class TargetInstrInfo;
   class TargetRegisterClass;
   class VirtRegMap;
+  typedef std::pair<unsigned, MachineBasicBlock*> IdxMBBPair;
 
   class LiveIntervals : public MachineFunctionPass {
     MachineFunction* mf_;
@@ -51,6 +52,10 @@ namespace llvm {
     /// MBB2IdxMap - The indexes of the first and last instructions in the
     /// specified basic block.
     std::vector<std::pair<unsigned, unsigned> > MBB2IdxMap;
+
+    /// Idx2MBBMap - Sorted list of pairs of index of first instruction
+    /// and MBB id.
+    std::vector<IdxMBBPair> Idx2MBBMap;
 
     typedef std::map<MachineInstr*, unsigned> Mi2IndexMap;
     Mi2IndexMap mi2iMap_;
@@ -157,6 +162,12 @@ namespace llvm {
              "index does not correspond to an instruction");
       return i2miMap_[index];
     }
+
+    /// findLiveInMBBs - Given a live range, if the value of the range
+    /// is live in any MBB returns true as well as the list of basic blocks
+    /// where the value is live in.
+    bool findLiveInMBBs(const LiveRange &LR,
+                        SmallVector<MachineBasicBlock*, 4> &MBBs) const;
 
     // Interval creation
 

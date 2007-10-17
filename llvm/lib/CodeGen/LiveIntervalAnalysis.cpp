@@ -62,6 +62,7 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void LiveIntervals::releaseMemory() {
+  Idx2MBBMap.clear();
   mi2iMap_.clear();
   i2miMap_.clear();
   r2iMap_.clear();
@@ -69,6 +70,22 @@ void LiveIntervals::releaseMemory() {
   VNInfoAllocator.Reset();
   for (unsigned i = 0, e = ClonedMIs.size(); i != e; ++i)
     delete ClonedMIs[i];
+}
+
+namespace llvm {
+  inline bool operator<(unsigned V, const IdxMBBPair &IM) {
+    return V < IM.first;
+  }
+
+  inline bool operator<(const IdxMBBPair &IM, unsigned V) {
+    return IM.first < V;
+  }
+
+  struct Idx2MBBCompare {
+    bool operator()(const IdxMBBPair &LHS, const IdxMBBPair &RHS) const {
+      return LHS.first < RHS.first;
+    }
+  };
 }
 
 /// runOnMachineFunction - Register allocate the whole function
@@ -100,7 +117,9 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
     // Set the MBB2IdxMap entry for this MBB.
     MBB2IdxMap[MBB->getNumber()] = std::make_pair(StartIdx, MIIndex - 1);
+    Idx2MBBMap.push_back(std::make_pair(StartIdx, MBB));
   }
+  std::sort(Idx2MBBMap.begin(), Idx2MBBMap.end(), Idx2MBBCompare());
 
   computeIntervals();
 
@@ -796,6 +815,23 @@ void LiveIntervals::computeIntervals() {
     }
   }
 }
+
+bool LiveIntervals::findLiveInMBBs(const LiveRange &LR,
+                               SmallVector<MachineBasicBlock*, 4> &MBBs) const {
+  std::vector<IdxMBBPair>::const_iterator I =
+    std::lower_bound(Idx2MBBMap.begin(), Idx2MBBMap.end(), LR.start);
+
+  bool ResVal = false;
+  while (I != Idx2MBBMap.end()) {
+    if (LR.end <= I->first)
+      break;
+    MBBs.push_back(I->second);
+    ResVal = true;
+    ++I;
+  }
+  return ResVal;
+}
+
 
 LiveInterval LiveIntervals::createInterval(unsigned reg) {
   float Weight = MRegisterInfo::isPhysicalRegister(reg) ?
