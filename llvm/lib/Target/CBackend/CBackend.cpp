@@ -2684,7 +2684,7 @@ std::string CWriter::InterpretASMConstraint(InlineAsm::ConstraintInfo& c) {
   //Grab the translation table from TargetAsmInfo if it exists
   if (!TAsm) {
     std::string E;
-    const TargetMachineRegistry::Entry* Match = 
+    const TargetMachineRegistry::entry* Match = 
       TargetMachineRegistry::getClosestStaticTargetForModule(*TheModule, E);
     if (Match) {
       //Per platform Target Machines don't exist, so create it

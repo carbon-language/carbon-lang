@@ -20,7 +20,8 @@
 #include "llvm/Target/TargetMachineRegistry.h"
 using namespace llvm;
 
-static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
+static cl::opt<const TargetMachineRegistry::entry*, false,
+               TargetMachineRegistry::Parser>
 MArch("march", cl::desc("Architecture to generate assembly for:"));
 
 static cl::opt<std::string>
@@ -39,7 +40,7 @@ MAttrs("mattr",
 /// for the current target.  Otherwise, return null.
 ///
 ExecutionEngine *JIT::create(ModuleProvider *MP, std::string *ErrorStr) {
-  const TargetMachineRegistry::Entry *TheArch = MArch;
+  const TargetMachineRegistry::entry *TheArch = MArch;
   if (TheArch == 0) {
     std::string Error;
     TheArch = TargetMachineRegistry::getClosestTargetForJIT(Error);

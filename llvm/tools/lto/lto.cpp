@@ -217,7 +217,7 @@ LTO::getTarget (Module *M) {
     return;
 
   std::string Err;
-  const TargetMachineRegistry::Entry* March = 
+  const TargetMachineRegistry::entry* March = 
     TargetMachineRegistry::getClosestStaticTargetForModule(*M, Err);
   
   if (March == 0)

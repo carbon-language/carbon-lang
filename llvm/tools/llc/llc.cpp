@@ -57,7 +57,8 @@ static cl::opt<bool> Fast("fast",
 static cl::opt<std::string>
 TargetTriple("mtriple", cl::desc("Override target triple for module"));
 
-static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
+static cl::opt<const TargetMachineRegistry::entry*, false,
+               TargetMachineRegistry::Parser>
 MArch("march", cl::desc("Architecture to generate code for:"));
 
 static cl::opt<std::string>

@@ -24,7 +24,7 @@
 %option noreject
 %option noyymore
 
-%x comment
+%x in_comment
 
 %{
 #include "llvm/Config/config.h"
@@ -226,13 +226,13 @@ ${Identifier}  { Filelval.StrVal = new std::string(yytext+1, yytext+yyleng);
 [ \t\n\r]+     { /* Ignore whitespace */ }
 
 
-"/*"                    { BEGIN(comment); CommentDepth++; }
-<comment>[^*/]*         {} /* eat anything that's not a '*' or '/' */
-<comment>"*"+[^*/]*     {} /* eat up '*'s not followed by '/'s */
-<comment>"/*"           { ++CommentDepth; }
-<comment>"/"+[^*/]*     {} /* eat up /'s not followed by *'s */
-<comment>"*"+"/"        { if (!--CommentDepth) { BEGIN(INITIAL); } }
-<comment><<EOF>>        { err() << "Unterminated comment!\n"; exit(1); }
+"/*"                       { BEGIN(in_comment); CommentDepth++; }
+<in_comment>[^*/]*         {} /* eat anything that's not a '*' or '/' */
+<in_comment>"*"+[^*/]*     {} /* eat up '*'s not followed by '/'s */
+<in_comment>"/*"           { ++CommentDepth; }
+<in_comment>"/"+[^*/]*     {} /* eat up /'s not followed by *'s */
+<in_comment>"*"+"/"        { if (!--CommentDepth) { BEGIN(INITIAL); } }
+<in_comment><<EOF>>        { err() << "Unterminated comment!\n"; exit(1); }
 
 .              { return Filetext[0]; }
 

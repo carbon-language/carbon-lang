@@ -18,44 +18,23 @@
 #include <algorithm>
 using namespace llvm;
 
-/// List - This is the main list of all of the registered target machines.
-const TargetMachineRegistry::Entry *TargetMachineRegistry::List = 0;
-
-/// Listeners - All of the listeners registered to get notified when new targets
-/// are loaded.
-static TargetRegistrationListener *Listeners = 0;
-
-TargetMachineRegistry::Entry::Entry(const char *N, const char *SD,
-                       TargetMachine *(*CF)(const Module &,const std::string &),
-                           unsigned (*MMF)(const Module &M), unsigned (*JMF)())
-  : Name(N), ShortDesc(SD), CtorFn(CF), ModuleMatchQualityFn(MMF),
-    JITMatchQualityFn(JMF), Next(List) {
-  List = this;
-  for (TargetRegistrationListener *L = Listeners; L; L = L->getNext())
-    L->targetRegistered(this);
-}
-
-TargetRegistrationListener::TargetRegistrationListener() {
-  Next = Listeners;
-  if (Next) Next->Prev = &Next;
-  Prev = &Listeners;
-  Listeners = this;
-}
-
-TargetRegistrationListener::~TargetRegistrationListener() {
-  *Prev = Next;
-}
+template<> Registry<TargetMachine>::node *Registry<TargetMachine>::Head = 0;
+template<> Registry<TargetMachine>::node *Registry<TargetMachine>::Tail = 0;
+template<> Registry<TargetMachine>::listener *Registry<TargetMachine>::
+ListenerHead = 0;
+template<> Registry<TargetMachine>::listener *Registry<TargetMachine>::
+ListenerTail = 0;
 
 /// getClosestStaticTargetForModule - Given an LLVM module, pick the best target
 /// that is compatible with the module.  If no close target can be found, this
 /// returns null and sets the Error string to a reason.
-const TargetMachineRegistry::Entry *
+const TargetMachineRegistry::entry *
 TargetMachineRegistry::getClosestStaticTargetForModule(const Module &M,
                                                        std::string &Error) {
-  std::vector<std::pair<unsigned, const Entry *> > UsableTargets;
-  for (const Entry *E = getList(); E; E = E->getNext())
-    if (unsigned Qual = E->ModuleMatchQualityFn(M))
-      UsableTargets.push_back(std::make_pair(Qual, E));
+  std::vector<std::pair<unsigned, const entry *> > UsableTargets;
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    if (unsigned Qual = I->ModuleMatchQualityFn(M))
+      UsableTargets.push_back(std::make_pair(Qual, &*I));
 
   if (UsableTargets.empty()) {
     Error = "No available targets are compatible with this module";
@@ -78,12 +57,12 @@ TargetMachineRegistry::getClosestStaticTargetForModule(const Module &M,
 /// getClosestTargetForJIT - Pick the best target that is compatible with
 /// the current host.  If no close target can be found, this returns null
 /// and sets the Error string to a reason.
-const TargetMachineRegistry::Entry *
+const TargetMachineRegistry::entry *
 TargetMachineRegistry::getClosestTargetForJIT(std::string &Error) {
-  std::vector<std::pair<unsigned, const Entry *> > UsableTargets;
-  for (const Entry *E = getList(); E; E = E->getNext())
-    if (unsigned Qual = E->JITMatchQualityFn())
-      UsableTargets.push_back(std::make_pair(Qual, E));
+  std::vector<std::pair<unsigned, const entry *> > UsableTargets;
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    if (unsigned Qual = I->JITMatchQualityFn())
+      UsableTargets.push_back(std::make_pair(Qual, &*I));
 
   if (UsableTargets.empty()) {
     Error = "No JIT is available for this host";
@@ -93,7 +72,7 @@ TargetMachineRegistry::getClosestTargetForJIT(std::string &Error) {
 
   // Otherwise, take the best target.  If there is a tie, just pick one.
   unsigned MaxQual = UsableTargets.front().first;
-  const Entry *MaxQualTarget = UsableTargets.front().second;
+  const entry *MaxQualTarget = UsableTargets.front().second;
 
   for (unsigned i = 1, e = UsableTargets.size(); i != e; ++i)
     if (UsableTargets[i].first > MaxQual) {
