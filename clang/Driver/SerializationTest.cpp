@@ -21,6 +21,7 @@
 #include "llvm/System/Path.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include <fstream>
+#include <iostream>
 
 using namespace clang;
 using llvm::BitstreamWriter;
