@@ -56,11 +56,15 @@ tok::ObjCKeywordKind Token::getObjCKeywordID() const {
 //===----------------------------------------------------------------------===//
 
 
+/// Lexer constructor - Create a new lexer object for the specified buffer
+/// with the specified preprocessor managing the lexing process.  This lexer
+/// assumes that the associated file buffer and Preprocessor objects will
+/// outlive it, so it doesn't take ownership of either of them.
 Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
              const char *BufStart, const char *BufEnd)
-  : FileLoc(fileloc), PP(pp), Features(PP.getLangOptions()) {
+  : FileLoc(fileloc), PP(&pp), Features(pp.getLangOptions()) {
       
-  SourceManager &SourceMgr = PP.getSourceManager();
+  SourceManager &SourceMgr = PP->getSourceManager();
   unsigned InputFileID = SourceMgr.getPhysicalLoc(FileLoc).getFileID();
   const llvm::MemoryBuffer *InputFile = SourceMgr.getBuffer(InputFileID);
       
@@ -95,8 +99,43 @@ Lexer::Lexer(SourceLocation fileloc, Preprocessor &pp,
   LexingRawMode = false;
   
   // Default to keeping comments if requested.
-  KeepCommentMode = PP.getCommentRetentionState();
+  KeepCommentMode = PP->getCommentRetentionState();
 }
+
+/// Lexer constructor - Create a new raw lexer object.  This object is only
+/// suitable for calls to 'LexRawToken'.  This lexer assumes that the
+/// associated file buffer will outlive it, so it doesn't take ownership of
+/// either of them.
+Lexer::Lexer(SourceLocation fileloc, const LangOptions &features,
+             const char *BufStart, const char *BufEnd)
+  : FileLoc(fileloc), PP(0), Features(features) {
+  Is_PragmaLexer = false;
+  InitCharacterInfo();
+  
+  BufferStart = BufStart;
+  BufferPtr = BufStart;
+  BufferEnd = BufEnd;
+  
+  assert(BufferEnd[0] == 0 &&
+         "We assume that the input buffer has a null character at the end"
+         " to simplify lexing!");
+  
+  // Start of the file is a start of line.
+  IsAtStartOfLine = true;
+  
+  // We are not after parsing a #.
+  ParsingPreprocessorDirective = false;
+  
+  // We are not after parsing #include.
+  ParsingFilename = false;
+  
+  // We *are* in raw mode.
+  LexingRawMode = true;
+  
+  // Never keep comments in raw mode.
+  KeepCommentMode = false;
+}
+
 
 /// Stringify - Convert the specified string into a C string, with surrounding
 /// ""'s, and with escaped \ and " characters.
@@ -223,7 +262,8 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
   if (FileLoc.isFileID())
     return SourceLocation::getFileLoc(FileLoc.getFileID(), CharNo);
   
-  return GetMappedTokenLoc(PP, FileLoc, CharNo);
+  assert(PP && "This doesn't work on raw lexers");
+  return GetMappedTokenLoc(*PP, FileLoc, CharNo);
 }
 
 /// Diag - Forwarding function for diagnostics.  This translate a source
@@ -232,13 +272,13 @@ void Lexer::Diag(const char *Loc, unsigned DiagID,
                  const std::string &Msg) const {
   if (LexingRawMode && Diagnostic::isNoteWarningOrExtension(DiagID))
     return;
-  PP.Diag(getSourceLocation(Loc), DiagID, Msg);
+  PP->Diag(getSourceLocation(Loc), DiagID, Msg);
 }
 void Lexer::Diag(SourceLocation Loc, unsigned DiagID,
                  const std::string &Msg) const {
   if (LexingRawMode && Diagnostic::isNoteWarningOrExtension(DiagID))
     return;
-  PP.Diag(Loc, DiagID, Msg);
+  PP->Diag(Loc, DiagID, Msg);
 }
 
 
@@ -446,11 +486,11 @@ FinishIdentifier:
     
     // Fill in Result.IdentifierInfo, looking up the identifier in the
     // identifier table.
-    PP.LookUpIdentifierInfo(Result, IdStart);
+    PP->LookUpIdentifierInfo(Result, IdStart);
     
     // Finally, now that we know we have an identifier, pass this off to the
     // preprocessor, which may macro expand it or something.
-    return PP.HandleIdentifier(Result);
+    return PP->HandleIdentifier(Result);
   }
   
   // Otherwise, $,\,? in identifier found.  Enter slower path.
@@ -758,13 +798,13 @@ bool Lexer::SaveBCPLComment(Token &Result, const char *CurPtr) {
   // If this BCPL-style comment is in a macro definition, transmogrify it into
   // a C-style block comment.
   if (ParsingPreprocessorDirective) {
-    std::string Spelling = PP.getSpelling(Result);
+    std::string Spelling = PP->getSpelling(Result);
     assert(Spelling[0] == '/' && Spelling[1] == '/' && "Not bcpl comment?");
     Spelling[1] = '*';   // Change prefix to "/*".
     Spelling += "*/";    // add suffix.
     
-    Result.setLocation(PP.CreateString(&Spelling[0], Spelling.size(),
-                                       Result.getLocation()));
+    Result.setLocation(PP->CreateString(&Spelling[0], Spelling.size(),
+                                        Result.getLocation()));
     Result.setLength(Spelling.size());
   }
   return false;
@@ -1038,7 +1078,7 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
     FormTokenWithChars(Result, CurPtr);
     
     // Restore comment saving mode, in case it was disabled for directive.
-    KeepCommentMode = PP.getCommentRetentionState();
+    KeepCommentMode = PP->getCommentRetentionState();
     return true;  // Have a token.
   }        
 
@@ -1067,7 +1107,7 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
   BufferPtr = CurPtr;
 
   // Finally, let the preprocessor handle this.
-  return PP.HandleEndOfFile(Result);
+  return PP->HandleEndOfFile(Result);
 }
 
 /// isNextPPTokenLParen - Return 1 if the next unexpanded token lexed from
@@ -1136,10 +1176,11 @@ LexNextToken:
     if (CurPtr-1 == BufferEnd) {
       // Read the PP instance variable into an automatic variable, because
       // LexEndOfFile will often delete 'this'.
-      Preprocessor &PPCache = PP;
+      Preprocessor *PPCache = PP;
       if (LexEndOfFile(Result, CurPtr-1))  // Retreat back into the file.
         return;   // Got a token to return.
-      return PPCache.Lex(Result);
+      assert(PPCache && "Raw buffer::LexEndOfFile should return a token");
+      return PPCache->Lex(Result);
     }
     
     Diag(CurPtr-1, diag::null_in_file);
@@ -1155,7 +1196,7 @@ LexNextToken:
       ParsingPreprocessorDirective = false;
       
       // Restore comment saving mode, in case it was disabled for directive.
-      KeepCommentMode = PP.getCommentRetentionState();
+      KeepCommentMode = PP->getCommentRetentionState();
       
       // Since we consumed a newline, we are back at the start of a line.
       IsAtStartOfLine = true;
@@ -1396,11 +1437,11 @@ LexNextToken:
         // FIXME: -fpreprocessed mode??
         if (Result.isAtStartOfLine() && !LexingRawMode) {
           BufferPtr = CurPtr;
-          PP.HandleDirective(Result);
+          PP->HandleDirective(Result);
           
           // As an optimization, if the preprocessor didn't switch lexers, tail
           // recurse.
-          if (PP.isCurrentLexer(this)) {
+          if (PP->isCurrentLexer(this)) {
             // Start a new token. If this is a #include or something, the PP may
             // want us starting at the beginning of the line again.  If so, set
             // the StartOfLine flag.
@@ -1411,7 +1452,7 @@ LexNextToken:
             goto LexNextToken;   // GCC isn't tail call eliminating.
           }
           
-          return PP.Lex(Result);
+          return PP->Lex(Result);
         }
       }
     } else {
@@ -1525,11 +1566,11 @@ LexNextToken:
       // FIXME: -fpreprocessed mode??
       if (Result.isAtStartOfLine() && !LexingRawMode) {
         BufferPtr = CurPtr;
-        PP.HandleDirective(Result);
+        PP->HandleDirective(Result);
         
         // As an optimization, if the preprocessor didn't switch lexers, tail
         // recurse.
-        if (PP.isCurrentLexer(this)) {
+        if (PP->isCurrentLexer(this)) {
           // Start a new token.  If this is a #include or something, the PP may
           // want us starting at the beginning of the line again.  If so, set
           // the StartOfLine flag.
@@ -1539,7 +1580,7 @@ LexNextToken:
           }
           goto LexNextToken;   // GCC isn't tail call eliminating.
         }
-        return PP.Lex(Result);
+        return PP->Lex(Result);
       }
     }
     break;

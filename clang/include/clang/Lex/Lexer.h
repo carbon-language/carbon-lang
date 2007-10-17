@@ -36,7 +36,7 @@ class Lexer {
   const char *BufferStart;       // Start of the buffer.
   const char *BufferEnd;         // End of the buffer.
   SourceLocation FileLoc;        // Location for start of file.
-  Preprocessor &PP;              // Preprocessor object controlling lexing.
+  Preprocessor *PP;              // Preprocessor object controlling lexing.
   LangOptions Features;          // Features enabled by this language (cache).
   bool Is_PragmaLexer;           // True if lexer for _Pragma handling.
   
@@ -62,6 +62,8 @@ class Lexer {
   ///  4. All diagnostic messages are disabled, except for unterminated /*.
   ///  5. The only callback made into the preprocessor is to report a hard error
   ///     on an unterminated '/*' comment.
+  ///
+  /// Note that in raw mode that the PP pointer may be null.
   bool LexingRawMode;
   
   /// KeepCommentMode - The lexer can optionally keep C & BCPL-style comments,
@@ -96,10 +98,17 @@ public:
     
   /// Lexer constructor - Create a new lexer object for the specified buffer
   /// with the specified preprocessor managing the lexing process.  This lexer
-  /// assumes that the associated MemoryBuffer and Preprocessor objects will
+  /// assumes that the associated file buffer and Preprocessor objects will
   /// outlive it, so it doesn't take ownership of either of them.
   Lexer(SourceLocation FileLoc, Preprocessor &PP,
         const char *BufStart = 0, const char *BufEnd = 0);
+  
+  /// Lexer constructor - Create a new raw lexer object.  This object is only
+  /// suitable for calls to 'LexRawToken'.  This lexer assumes that the
+  /// associated file buffer will outlive it, so it doesn't take ownership of
+  /// either of them.
+  Lexer(SourceLocation FileLoc, const LangOptions &Features,
+        const char *BufStart, const char *BufEnd);
   
   /// getFeatures - Return the language features currently enabled.  NOTE: this
   /// lexer modifies features as a file is parsed!
@@ -138,7 +147,7 @@ public:
     assert(!LexingRawMode && "Already in raw mode!");
     LexingRawMode = true;
     Lex(Result);
-    LexingRawMode = false;
+    LexingRawMode = PP == 0;
     // Note that lexing to the end of the buffer doesn't implicitly delete the
     // lexer when in raw mode.
     return BufferPtr == BufferEnd; 
