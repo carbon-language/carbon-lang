@@ -55,8 +55,12 @@ namespace {
 class DarwinTargetInfo : public TargetInfoImpl {
 public:
   virtual void getTargetDefines(std::vector<char> &Defs) const {
+// FIXME: we need a real target configuration system.  For now, only define
+// __APPLE__ if the host has it.
+#ifdef __APPLE__
     Define(Defs, "__APPLE__");
     Define(Defs, "__MACH__");
+#endif
     
     if (1) {// -fobjc-gc controls this.
       Define(Defs, "__weak", "");
