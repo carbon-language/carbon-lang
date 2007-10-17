@@ -14,6 +14,7 @@
 #ifndef LLVM_SUPPORT_ALLOCATOR_H
 #define LLVM_SUPPORT_ALLOCATOR_H
 
+#include "llvm/Support/AlignOf.h"
 #include <cstdlib>
 
 namespace llvm {
@@ -25,6 +26,10 @@ public:
   
   void Reset() {}
   void *Allocate(unsigned Size, unsigned Alignment) { return malloc(Size); }
+  
+  template <typename T>
+  T* Allocate() { return reinterpret_cast<T*>(malloc(sizeof(T))); }
+  
   void Deallocate(void *Ptr) { free(Ptr); }
   void PrintStats() const {}
 };
@@ -41,6 +46,13 @@ public:
   
   void Reset();
   void *Allocate(unsigned Size, unsigned Alignment);
+
+  template <typename T>
+  T* Allocate() { 
+    return reinterpret_cast<T*>(Allocate(sizeof(T),AlignOf<T>::Alignment));
+  }
+
+  
   void Deallocate(void *Ptr) {}
   void PrintStats() const;
 };
