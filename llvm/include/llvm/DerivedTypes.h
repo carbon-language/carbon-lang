@@ -263,7 +263,7 @@ public:
     return T->getTypeID() == StructTyID;
   }
 
-  bool isPacked() const { return getSubclassData(); }
+  bool isPacked() const { return (0 != getSubclassData()) ? true : false; }
 };
 
 
@@ -279,9 +279,12 @@ class SequentialType : public CompositeType {
   PATypeHandle ContainedType; ///< Storage for the single contained type
   SequentialType(const SequentialType &);                  // Do not implement!
   const SequentialType &operator=(const SequentialType &); // Do not implement!
+
+  // avoiding warning: 'this' : used in base member initializer list
+  SequentialType* this_() { return this; }
 protected:
   SequentialType(TypeID TID, const Type *ElType) 
-    : CompositeType(TID), ContainedType(ElType, this) {
+    : CompositeType(TID), ContainedType(ElType, this_()) {
     ContainedTys = &ContainedType; 
     NumContainedTys = 1;
   }

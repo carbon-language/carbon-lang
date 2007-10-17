@@ -1,8 +1,8 @@
 /* This file is appended to config.h.in to form the Windows version of
  * config.h */
 
-#define PACKAGE_NAME "LLVM (win32 vc7.1)" 
-#define PACKAGE_VERSION 1.4 
+#define PACKAGE_NAME "LLVM (win32 vc8.0)" 
+#define PACKAGE_VERSION 2.1
 #define HAVE_WINDOWS_H 1 
 #define HAVE_LIMITS_H 1 
 #define HAVE_SYS_STAT_H 1 
@@ -22,3 +22,6 @@
 #define LLVM_ON_WIN32 1 
 
 #define strtoll strtol
+#define stricmp _stricmp
+#define strdup _strdup
+

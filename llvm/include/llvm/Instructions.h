@@ -256,7 +256,7 @@ public:
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
   void setVolatile(bool V) { 
-    SubclassData = (SubclassData & ~1) | V; 
+    SubclassData = (SubclassData & ~1) | (V ? 1 : 0); 
   }
 
   virtual LoadInst *clone() const;
@@ -324,7 +324,7 @@ public:
   /// setVolatile - Specify whether this is a volatile load or not.
   ///
   void setVolatile(bool V) { 
-    SubclassData = (SubclassData & ~1) | V; 
+    SubclassData = (SubclassData & ~1) | (V ? 1 : 0); 
   }
 
   /// Transparently provide more efficient getOperand methods.

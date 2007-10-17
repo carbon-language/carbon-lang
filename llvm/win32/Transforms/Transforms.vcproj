@@ -405,6 +405,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\Utils\BasicInliner.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Utils\BreakCriticalEdges.cpp"
 					>
 				</File>

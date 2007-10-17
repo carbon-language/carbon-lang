@@ -57,7 +57,7 @@ public:
     }
 
     operator bool() const {
-      return (*WordRef) & (1L << BitPos);
+      return ((*WordRef) & (1L << BitPos)) ? true : false;
     }
   };
 

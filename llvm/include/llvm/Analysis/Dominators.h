@@ -64,7 +64,7 @@ public:
 //===----------------------------------------------------------------------===//
 // DomTreeNode - Dominator Tree Node
 template<class NodeT> class DominatorTreeBase;
-class PostDominatorTree;
+struct PostDominatorTree;
 class MachineBasicBlock;
 
 template <class NodeT>
@@ -75,7 +75,7 @@ class DomTreeNodeBase {
   int DFSNumIn, DFSNumOut;
 
   template<class N> friend class DominatorTreeBase;
-  friend class PostDominatorTree;
+  friend struct PostDominatorTree;
 public:
   typedef typename std::vector<DomTreeNodeBase<NodeT> *>::iterator iterator;
   typedef typename std::vector<DomTreeNodeBase<NodeT> *>::const_iterator

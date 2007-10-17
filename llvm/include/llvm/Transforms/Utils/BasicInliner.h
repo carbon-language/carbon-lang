@@ -21,7 +21,7 @@ namespace llvm {
 
   class Function;
   class TargetData;
-  class BasicInlinerImpl;
+  struct BasicInlinerImpl;
 
   /// BasicInliner - BasicInliner provides function level inlining interface.
   /// Clients provide list of functions which are inline without using

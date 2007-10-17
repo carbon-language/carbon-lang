@@ -25,7 +25,7 @@ class APSInt : public APInt {
 public:
   /// APSInt ctor - Create an APSInt with the specified width, default to
   /// unsigned.
-  explicit APSInt(unsigned BitWidth) : APInt(BitWidth, 0), IsUnsigned(true) {}
+  explicit APSInt(uint32_t BitWidth) : APInt(BitWidth, 0), IsUnsigned(true) {}
   APSInt(const APInt &I) : APInt(I), IsUnsigned(true) {}
 
   APSInt &operator=(const APSInt &RHS) {

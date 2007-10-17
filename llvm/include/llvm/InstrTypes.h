@@ -84,12 +84,15 @@ public:
 
 class UnaryInstruction : public Instruction {
   Use Op;
+  
+  // avoiding warning: 'this' : used in base member initializer list
+  UnaryInstruction* this_() { return this; }
 protected:
   UnaryInstruction(const Type *Ty, unsigned iType, Value *V, Instruction *IB =0)
-    : Instruction(Ty, iType, &Op, 1, IB), Op(V, this) {
+    : Instruction(Ty, iType, &Op, 1, IB), Op(V, this_()) {
   }
   UnaryInstruction(const Type *Ty, unsigned iType, Value *V, BasicBlock *IAE)
-    : Instruction(Ty, iType, &Op, 1, IAE), Op(V, this) {
+    : Instruction(Ty, iType, &Op, 1, IAE), Op(V, this_()) {
   }
 public:
   // Out of line virtual method, so the vtable, etc has a home.

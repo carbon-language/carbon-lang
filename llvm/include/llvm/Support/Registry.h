@@ -67,7 +67,10 @@ namespace llvm {
   private:
     Registry(); // Do not implement.
     
-    static void Announce(node *);
+    static void Announce(const entry &E) {
+      for (listener *Cur = ListenerHead; Cur; Cur = Cur->Next)
+        Cur->registered(E);
+    }
     
     friend class node;
     static node *Head, *Tail;
@@ -228,13 +231,6 @@ namespace llvm {
         cl::parser<const typename U::entry*>::initialize(O);
       }
     };
-    
-    
-  private:
-    static void Announce(const entry &E) {
-      for (listener *Cur = ListenerHead; Cur; Cur = Cur->Next)
-        Cur->registered(E);
-    }
     
   };
   
