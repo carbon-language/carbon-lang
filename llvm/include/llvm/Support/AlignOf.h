@@ -15,8 +15,6 @@
 #ifndef LLVM_SUPPORT_ALIGNOF_H
 #define LLVM_SUPPORT_ALIGNOF_H
 
-#include <cassert>
-
 namespace llvm {
   
 template <typename T>
