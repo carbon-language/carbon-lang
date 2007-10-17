@@ -3772,70 +3772,71 @@ SDOperand X86TargetLowering::LowerJumpTable(SDOperand Op, SelectionDAG &DAG) {
   return Result;
 }
 
+/// LowerShift - Lower SRA_PARTS and friends, which return two i32 values and
+/// take a 2 x i32 value to shift plus a shift amount. 
 SDOperand X86TargetLowering::LowerShift(SDOperand Op, SelectionDAG &DAG) {
-    assert(Op.getNumOperands() == 3 && Op.getValueType() == MVT::i32 &&
-           "Not an i64 shift!");
-    bool isSRA = Op.getOpcode() == ISD::SRA_PARTS;
-    SDOperand ShOpLo = Op.getOperand(0);
-    SDOperand ShOpHi = Op.getOperand(1);
-    SDOperand ShAmt  = Op.getOperand(2);
-    SDOperand Tmp1 = isSRA ?
-      DAG.getNode(ISD::SRA, MVT::i32, ShOpHi, DAG.getConstant(31, MVT::i8)) :
-      DAG.getConstant(0, MVT::i32);
+  assert(Op.getNumOperands() == 3 && Op.getValueType() == MVT::i32 &&
+         "Not an i64 shift!");
+  bool isSRA = Op.getOpcode() == ISD::SRA_PARTS;
+  SDOperand ShOpLo = Op.getOperand(0);
+  SDOperand ShOpHi = Op.getOperand(1);
+  SDOperand ShAmt  = Op.getOperand(2);
+  SDOperand Tmp1 = isSRA ?
+    DAG.getNode(ISD::SRA, MVT::i32, ShOpHi, DAG.getConstant(31, MVT::i8)) :
+    DAG.getConstant(0, MVT::i32);
 
-    SDOperand Tmp2, Tmp3;
-    if (Op.getOpcode() == ISD::SHL_PARTS) {
-      Tmp2 = DAG.getNode(X86ISD::SHLD, MVT::i32, ShOpHi, ShOpLo, ShAmt);
-      Tmp3 = DAG.getNode(ISD::SHL, MVT::i32, ShOpLo, ShAmt);
-    } else {
-      Tmp2 = DAG.getNode(X86ISD::SHRD, MVT::i32, ShOpLo, ShOpHi, ShAmt);
-      Tmp3 = DAG.getNode(isSRA ? ISD::SRA : ISD::SRL, MVT::i32, ShOpHi, ShAmt);
-    }
+  SDOperand Tmp2, Tmp3;
+  if (Op.getOpcode() == ISD::SHL_PARTS) {
+    Tmp2 = DAG.getNode(X86ISD::SHLD, MVT::i32, ShOpHi, ShOpLo, ShAmt);
+    Tmp3 = DAG.getNode(ISD::SHL, MVT::i32, ShOpLo, ShAmt);
+  } else {
+    Tmp2 = DAG.getNode(X86ISD::SHRD, MVT::i32, ShOpLo, ShOpHi, ShAmt);
+    Tmp3 = DAG.getNode(isSRA ? ISD::SRA : ISD::SRL, MVT::i32, ShOpHi, ShAmt);
+  }
 
-    const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::Other, MVT::Flag);
-    SDOperand AndNode = DAG.getNode(ISD::AND, MVT::i8, ShAmt,
-                                    DAG.getConstant(32, MVT::i8));
-    SDOperand Cond = DAG.getNode(X86ISD::CMP, MVT::i32,
-                                 AndNode, DAG.getConstant(0, MVT::i8));
+  const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::Other, MVT::Flag);
+  SDOperand AndNode = DAG.getNode(ISD::AND, MVT::i8, ShAmt,
+                                  DAG.getConstant(32, MVT::i8));
+  SDOperand Cond = DAG.getNode(X86ISD::CMP, MVT::i32,
+                               AndNode, DAG.getConstant(0, MVT::i8));
 
-    SDOperand Hi, Lo;
-    SDOperand CC = DAG.getConstant(X86::COND_NE, MVT::i8);
-    unsigned Opc = X86ISD::CMOV;
-    VTs = DAG.getNodeValueTypes(MVT::i32, MVT::Flag);
-    SmallVector<SDOperand, 4> Ops;
-    if (Op.getOpcode() == ISD::SHL_PARTS) {
-      Ops.push_back(Tmp2);
-      Ops.push_back(Tmp3);
-      Ops.push_back(CC);
-      Ops.push_back(Cond);
-      Hi = DAG.getNode(Opc, MVT::i32, &Ops[0], Ops.size());
+  SDOperand Hi, Lo;
+  SDOperand CC = DAG.getConstant(X86::COND_NE, MVT::i8);
+  VTs = DAG.getNodeValueTypes(MVT::i32, MVT::Flag);
+  SmallVector<SDOperand, 4> Ops;
+  if (Op.getOpcode() == ISD::SHL_PARTS) {
+    Ops.push_back(Tmp2);
+    Ops.push_back(Tmp3);
+    Ops.push_back(CC);
+    Ops.push_back(Cond);
+    Hi = DAG.getNode(X86ISD::CMOV, MVT::i32, &Ops[0], Ops.size());
 
-      Ops.clear();
-      Ops.push_back(Tmp3);
-      Ops.push_back(Tmp1);
-      Ops.push_back(CC);
-      Ops.push_back(Cond);
-      Lo = DAG.getNode(Opc, MVT::i32, &Ops[0], Ops.size());
-    } else {
-      Ops.push_back(Tmp2);
-      Ops.push_back(Tmp3);
-      Ops.push_back(CC);
-      Ops.push_back(Cond);
-      Lo = DAG.getNode(Opc, MVT::i32, &Ops[0], Ops.size());
-
-      Ops.clear();
-      Ops.push_back(Tmp3);
-      Ops.push_back(Tmp1);
-      Ops.push_back(CC);
-      Ops.push_back(Cond);
-      Hi = DAG.getNode(Opc, MVT::i32, &Ops[0], Ops.size());
-    }
-
-    VTs = DAG.getNodeValueTypes(MVT::i32, MVT::i32);
     Ops.clear();
-    Ops.push_back(Lo);
-    Ops.push_back(Hi);
-    return DAG.getNode(ISD::MERGE_VALUES, VTs, 2, &Ops[0], Ops.size());
+    Ops.push_back(Tmp3);
+    Ops.push_back(Tmp1);
+    Ops.push_back(CC);
+    Ops.push_back(Cond);
+    Lo = DAG.getNode(X86ISD::CMOV, MVT::i32, &Ops[0], Ops.size());
+  } else {
+    Ops.push_back(Tmp2);
+    Ops.push_back(Tmp3);
+    Ops.push_back(CC);
+    Ops.push_back(Cond);
+    Lo = DAG.getNode(X86ISD::CMOV, MVT::i32, &Ops[0], Ops.size());
+
+    Ops.clear();
+    Ops.push_back(Tmp3);
+    Ops.push_back(Tmp1);
+    Ops.push_back(CC);
+    Ops.push_back(Cond);
+    Hi = DAG.getNode(X86ISD::CMOV, MVT::i32, &Ops[0], Ops.size());
+  }
+
+  VTs = DAG.getNodeValueTypes(MVT::i32, MVT::i32);
+  Ops.clear();
+  Ops.push_back(Lo);
+  Ops.push_back(Hi);
+  return DAG.getNode(ISD::MERGE_VALUES, VTs, 2, &Ops[0], Ops.size());
 }
 
 SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
