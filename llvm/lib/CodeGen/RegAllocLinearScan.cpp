@@ -288,23 +288,25 @@ void RALinScan::linearScan()
         DOUT << "\tinterval " << *i->first << " expired\n");
   inactive_.clear();
 
-  // A brute force way of adding live-ins to every BB.
-  MachineFunction::iterator MBB = mf_->begin();
-  ++MBB; // Skip entry MBB.
-  for (MachineFunction::iterator E = mf_->end(); MBB != E; ++MBB) {
-    unsigned StartIdx = li_->getMBBStartIdx(MBB->getNumber());
-    for (IntervalPtrs::iterator i = fixed_.begin(), e = fixed_.end();
-         i != e; ++i)
-      if (i->first->liveAt(StartIdx))
-        MBB->addLiveIn(i->first->reg);
-
-    for (unsigned i = 0, e = handled_.size(); i != e; ++i) { 
-      LiveInterval *HI = handled_[i];
-      unsigned Reg = HI->reg;
-      if (vrm_->isAssignedReg(Reg) && HI->liveAt(StartIdx)) {
-        assert(MRegisterInfo::isVirtualRegister(Reg));
-        Reg = vrm_->getPhys(Reg);
-        MBB->addLiveIn(Reg);
+  // Add live-ins to every BB except for entry.
+  MachineFunction::iterator EntryMBB = mf_->begin();
+  for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i) {
+    const LiveInterval &cur = i->second;
+    unsigned Reg = 0;
+    if (MRegisterInfo::isPhysicalRegister(cur.reg))
+      Reg = i->second.reg;
+    else if (vrm_->isAssignedReg(cur.reg))
+      Reg = vrm_->getPhys(cur.reg);
+    if (!Reg)
+      continue;
+    for (LiveInterval::Ranges::const_iterator I = cur.begin(), E = cur.end();
+         I != E; ++I) {
+      const LiveRange &LR = *I;
+      SmallVector<MachineBasicBlock*, 4> LiveInMBBs;
+      if (li_->findLiveInMBBs(LR, LiveInMBBs)) {
+        for (unsigned i = 0, e = LiveInMBBs.size(); i != e; ++i)
+          if (LiveInMBBs[i] != EntryMBB)
+            LiveInMBBs[i]->addLiveIn(Reg);
       }
     }
   }
