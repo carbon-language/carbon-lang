@@ -104,18 +104,18 @@ void RewriteTest::RewriteFunctionBody(Stmt *S) {
   // Otherwise, just rewrite all children.
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
-    RewriteFunctionBody(*CI);
+    if (*CI)
+      RewriteFunctionBody(*CI);
 }
 
 void RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
-#if 0
   int Size = Rewrite.getRangeSize(Exp->getSourceRange());
   if (Size == -1) {
     printf("BLAH!");
+    return;
   }
   
-  Rewrite.RemoveText(Exp->getAtLoc(), Size);
-#endif
+  Rewrite.ReplaceText(Exp->getAtLoc(), Size, "\"foo\"", 5);
 }
 
 
