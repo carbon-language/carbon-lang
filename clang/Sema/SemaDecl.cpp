@@ -299,9 +299,20 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   return 0;
 }
 
-bool Sema::CheckSingleInitializer(Expr *&Init, QualType DeclType) {
+bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic, 
+                                  QualType DeclType) {
+  SourceLocation loc;
+  
+  // FIXME: Remove the isReferenceType check and handle assignment
+  // to a reference.
+  if (isStatic && !DeclType->isReferenceType() &&
+      !Init->isConstantExpr(Context, &loc)) { // C99 6.7.8p4.
+    Diag(loc, diag::err_init_element_not_constant, Init->getSourceRange());
+    return true;
+  }
+  
   AssignmentCheckResult result;
-  SourceLocation loc = Init->getLocStart();
+  loc = Init->getLocStart();
   // Get the type before calling CheckSingleAssignmentConstraints(), since
   // it can promote the expression.
   QualType rhsType = Init->getType(); 
@@ -357,7 +368,7 @@ bool Sema::CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
   if (isStatic && !expr->isConstantExpr(Context, &loc)) { // C99 6.7.8p4.
     Diag(loc, diag::err_init_element_not_constant, expr->getSourceRange());
     return true;
-  } else if (CheckSingleInitializer(expr, ElementType)) {
+  } else if (CheckSingleInitializer(expr, isStatic, ElementType)) {
     return true; // types weren't compatible.
   }
   if (savExpr != expr) // The type was promoted, update initializer list.
@@ -437,8 +448,8 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
 bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
   InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
   if (!InitList)
-    return CheckSingleInitializer(Init, DeclType);
-
+    return CheckSingleInitializer(Init, isStatic, DeclType);
+  
   // We have an InitListExpr, make sure we set the type.
   Init->setType(DeclType);
 

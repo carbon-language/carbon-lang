@@ -304,6 +304,7 @@ public:
   void EmitEnumConstantDecl(const EnumConstantDecl &D);
   void EmitBlockVarDecl(const BlockVarDecl &D);
   void EmitLocalBlockVarDecl(const BlockVarDecl &D);
+  void EmitStaticBlockVarDecl(const BlockVarDecl &D);
   void EmitParmDecl(const ParmVarDecl &D, llvm::Value *Arg);
   
   //===--------------------------------------------------------------------===//

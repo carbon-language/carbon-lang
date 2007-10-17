@@ -623,7 +623,8 @@ private:
   /// type checking declaration initializers (C99 6.7.8)
   bool CheckInitializer(Expr *&simpleInit_or_initList, QualType &declType,
                         bool isStatic);
-  bool CheckSingleInitializer(Expr *&simpleInit, QualType declType);
+  bool CheckSingleInitializer(Expr *&simpleInit, bool isStatic, 
+                              QualType declType);
   bool CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
                      bool isStatic, QualType ElementType);
   void CheckVariableInitList(QualType DeclType, InitListExpr *IList, 

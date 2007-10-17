@@ -365,7 +365,8 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case IntegerLiteralClass:
   case CharacterLiteralClass:
   case ImaginaryLiteralClass:
-  case TypesCompatibleExprClass: 
+  case TypesCompatibleExprClass:
+  case CXXBoolLiteralExprClass:
     break;
   case CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);

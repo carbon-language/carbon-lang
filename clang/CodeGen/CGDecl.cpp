@@ -12,7 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenFunction.h"
+#include "CodeGenModule.h"
 #include "clang/AST/AST.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Type.h"
 using namespace clang;
 using namespace CodeGen;
@@ -50,7 +52,7 @@ void CodeGenFunction::EmitEnumConstantDecl(const EnumConstantDecl &D) {
 void CodeGenFunction::EmitBlockVarDecl(const BlockVarDecl &D) {
   switch (D.getStorageClass()) {
   case VarDecl::Static:
-    assert(0 && "FIXME: local static vars not implemented yet");
+    return EmitStaticBlockVarDecl(D);
   case VarDecl::Extern:
     assert(0 && "FIXME: should call up to codegenmodule");
   default:
@@ -62,6 +64,28 @@ void CodeGenFunction::EmitBlockVarDecl(const BlockVarDecl &D) {
   }
 }
 
+void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
+  QualType Ty = D.getCanonicalType();
+  assert(Ty->isConstantSizeType(getContext()) && "VLAs can't be static");
+  
+  llvm::Value *&DMEntry = LocalDeclMap[&D];
+  assert(DMEntry == 0 && "Decl already exists in localdeclmap!");
+  
+  const llvm::Type *LTy = ConvertType(Ty);
+  llvm::Constant *Init = 0;
+  if (D.getInit() == 0) {
+    Init = llvm::Constant::getNullValue(LTy);
+  } else
+    assert(0 && "FIXME: Support initializers");
+  
+  
+  DMEntry = 
+    new llvm::GlobalVariable(LTy, false, 
+                            llvm::GlobalValue::InternalLinkage,
+                             Init, D.getName(), &CGM.getModule());
+  
+}
+  
 /// EmitLocalBlockVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects.
