@@ -303,6 +303,93 @@ void Calculate(DominatorTreeBase<typename GraphT::NodeType>& DT, Function& F) {
   DT.DFSInfoValid = false;
 }
 
+// NewBB is split and now it has one successor. Update dominator tree to
+// reflect this change.
+template<class NodeT, class GraphT>
+void Split(DominatorTreeBase<typename GraphT::NodeType>& DT,
+           typename GraphT::NodeType* NewBB) {
+  assert(std::distance(GraphT::child_begin(NewBB), GraphT::child_end(NewBB)) == 1
+         && "NewBB should have a single successor!");
+  typename GraphT::NodeType* NewBBSucc = *GraphT::child_begin(NewBB);
+
+  std::vector<typename GraphT::NodeType*> PredBlocks;
+  for (typename GraphTraits<Inverse<NodeT> >::ChildIteratorType PI =
+       GraphTraits<Inverse<NodeT> >::child_begin(NewBB),
+       PE = GraphTraits<Inverse<NodeT> >::child_end(NewBB); PI != PE; ++PI)
+    PredBlocks.push_back(*PI);  
+
+    assert(!PredBlocks.empty() && "No predblocks??");
+
+    // The newly inserted basic block will dominate existing basic blocks iff the
+    // PredBlocks dominate all of the non-pred blocks.  If all predblocks dominate
+    // the non-pred blocks, then they all must be the same block!
+    //
+    bool NewBBDominatesNewBBSucc = true;
+    {
+      typename GraphT::NodeType* OnePred = PredBlocks[0];
+      unsigned i = 1, e = PredBlocks.size();
+      for (i = 1; !DT.isReachableFromEntry(OnePred); ++i) {
+        assert(i != e && "Didn't find reachable pred?");
+        OnePred = PredBlocks[i];
+      }
+  
+      for (; i != e; ++i)
+        if (PredBlocks[i] != OnePred && DT.isReachableFromEntry(OnePred)) {
+          NewBBDominatesNewBBSucc = false;
+          break;
+        }
+
+    if (NewBBDominatesNewBBSucc)
+      for (typename GraphTraits<Inverse<NodeT> >::ChildIteratorType PI =
+           GraphTraits<Inverse<NodeT> >::child_begin(NewBBSucc),
+           E = GraphTraits<Inverse<NodeT> >::child_end(NewBBSucc); PI != E; ++PI)
+        if (*PI != NewBB && !DT.dominates(NewBBSucc, *PI)) {
+          NewBBDominatesNewBBSucc = false;
+          break;
+        }
+  }
+
+  // The other scenario where the new block can dominate its successors are when
+  // all predecessors of NewBBSucc that are not NewBB are dominated by NewBBSucc
+  // already.
+  if (!NewBBDominatesNewBBSucc) {
+    NewBBDominatesNewBBSucc = true;
+    for (typename GraphTraits<Inverse<NodeT> >::ChildIteratorType PI = 
+         GraphTraits<Inverse<NodeT> >::child_begin(NewBBSucc),
+         E = GraphTraits<Inverse<NodeT> >::child_end(NewBBSucc); PI != E; ++PI)
+       if (*PI != NewBB && !DT.dominates(NewBBSucc, *PI)) {
+        NewBBDominatesNewBBSucc = false;
+        break;
+      }
+  }
+
+  // Find NewBB's immediate dominator and create new dominator tree node for
+  // NewBB.
+  BasicBlock *NewBBIDom = 0;
+  unsigned i = 0;
+  for (i = 0; i < PredBlocks.size(); ++i)
+    if (DT.isReachableFromEntry(PredBlocks[i])) {
+      NewBBIDom = PredBlocks[i];
+      break;
+    }
+  assert(i != PredBlocks.size() && "No reachable preds?");
+  for (i = i + 1; i < PredBlocks.size(); ++i) {
+    if (DT.isReachableFromEntry(PredBlocks[i]))
+      NewBBIDom = DT.findNearestCommonDominator(NewBBIDom, PredBlocks[i]);
+  }
+  assert(NewBBIDom && "No immediate dominator found??");
+
+  // Create the new dominator tree node... and set the idom of NewBB.
+  DomTreeNode *NewBBNode = DT.addNewBlock(NewBB, NewBBIDom);
+
+  // If NewBB strictly dominates other blocks, then it is now the immediate
+  // dominator of NewBBSucc.  Update the dominator tree as appropriate.
+  if (NewBBDominatesNewBBSucc) {
+    DomTreeNode *NewBBSuccNode = DT.getNode(NewBBSucc);
+    DT.changeImmediateDominator(NewBBSuccNode, NewBBNode);
+  }
+}
+
 }
 
 #endif

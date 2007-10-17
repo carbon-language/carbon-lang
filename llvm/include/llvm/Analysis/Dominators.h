@@ -160,6 +160,10 @@ typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 /// DominatorTree - Calculate the immediate dominator tree for a function.
 ///
 
+template<class N, class GraphT>
+void Split(DominatorTreeBase<typename GraphT::NodeType>& DT,
+           typename GraphT::NodeType* NewBB);
+
 template<class NodeT>
 class DominatorTreeBase : public DominatorBase<NodeT> {
 protected:
@@ -467,6 +471,21 @@ protected:
   friend void Calculate(DominatorTreeBase<typename GraphT::NodeType>& DT,
                         Function& F);
   
+  template<class N, class GraphT>
+  friend void Split(DominatorTreeBase<typename GraphT::NodeType>& DT,
+                    typename GraphT::NodeType* NewBB);
+  
+public:
+  /// splitBlock - BB is split and now it has one successor. Update dominator
+  /// tree to reflect this change.
+  void splitBlock(NodeT* NewBB) {
+    if (this->IsPostDominators)
+      Split<Inverse<NodeT*>, GraphTraits<Inverse<NodeT*> > >(*this, NewBB);
+    else
+      Split<NodeT*, GraphTraits<NodeT*> >(*this, NewBB);
+  }
+  
+protected:
   /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking
   /// dominator tree in dfs order.
   void updateDFSNumbers() {
@@ -547,11 +566,6 @@ public:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }
-
-  /// splitBlock
-  /// BB is split and now it has one successor. Update dominator tree to
-  /// reflect this change.
-  void splitBlock(BasicBlock *BB);
 };
 
 //===-------------------------------------
