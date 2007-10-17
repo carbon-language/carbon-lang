@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Rewrite/Rewriter.h"
+#include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
 using namespace clang;
 
@@ -155,6 +156,10 @@ int Rewriter::getRangeSize(SourceRange Range) const {
   
   if (StartFileID != EndFileID)
     return -1;
+  
+  // Adjust the end offset to the end of the last token, instead of being the
+  // start of the last token.
+  EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr);
   
   return EndOff-StartOff;
 }
