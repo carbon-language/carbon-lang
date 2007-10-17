@@ -24,6 +24,7 @@
 
 namespace clang {
 class Diagnostic;
+class SourceManager;
 class Preprocessor;
 
 /// Lexer - This provides a simple interface that turns a text buffer into a
@@ -177,6 +178,13 @@ public:
   /// Stringify - Convert the specified string into a C string by escaping '\'
   /// and " characters.  This does not add surrounding ""'s to the string.
   static void Stringify(llvm::SmallVectorImpl<char> &Str);
+  
+  /// MeasureTokenLength - Relex the token at the specified location and return
+  /// its length in bytes in the input file.  If the token needs cleaning (e.g.
+  /// includes a trigraph or an escaped newline) then this count includes bytes
+  /// that are part of that.
+  static unsigned MeasureTokenLength(SourceLocation Loc,
+                                     const SourceManager &SM);
   
   //===--------------------------------------------------------------------===//
   // Internal implementation interfaces.

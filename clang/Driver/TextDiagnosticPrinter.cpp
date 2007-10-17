@@ -80,7 +80,7 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
       --EndColNo;  // Zero base the col #.
       
       // Add in the length of the token, so that we cover multi-char tokens.
-      EndColNo += GetTokenLength(R.getEnd());
+      EndColNo += Lexer::MeasureTokenLength(R.getEnd(), SourceMgr);
     } else {
       EndColNo = CaratLine.size();
     }
@@ -95,31 +95,6 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   assert(StartColNo <= EndColNo && "Invalid range!");
   for (unsigned i = StartColNo; i != EndColNo; ++i)
     CaratLine[i] = '~';
-}
-
-/// GetTokenLength - Given the source location of a token, determine its length.
-/// This is a fully general function that uses a lexer to relex the token.
-unsigned TextDiagnosticPrinter::GetTokenLength(SourceLocation Loc) {
-  // If this comes from a macro expansion, we really do want the macro name, not
-  // the token this macro expanded to.
-  Loc = SourceMgr.getLogicalLoc(Loc);
-  const char *StrData = SourceMgr.getCharacterData(Loc);
-  const char *BufEnd = SourceMgr.getBufferData(Loc.getFileID()).second;
-  
-  // TODO: this could be special cased for common tokens like identifiers, ')',
-  // etc to make this faster, if it mattered.  This could use 
-  // Lexer::isObviouslySimpleCharacter for example.
-  
-  // Create a langops struct and enable trigraphs.  This is sufficient for
-  // measuring tokens.
-  LangOptions LangOpts;
-  LangOpts.Trigraphs = true;
-  
-  // Create a lexer starting at the beginning of this token.
-  Lexer TheLexer(Loc, LangOpts, StrData, BufEnd);
-  Token TheTok;
-  TheLexer.LexRawToken(TheTok);
-  return TheTok.getLength();
 }
 
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 

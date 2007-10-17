@@ -163,6 +163,39 @@ void Lexer::Stringify(llvm::SmallVectorImpl<char> &Str) {
 }
 
 
+/// MeasureTokenLength - Relex the token at the specified location and return
+/// its length in bytes in the input file.  If the token needs cleaning (e.g.
+/// includes a trigraph or an escaped newline) then this count includes bytes
+/// that are part of that.
+unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
+                                   const SourceManager &SM) {
+  // If this comes from a macro expansion, we really do want the macro name, not
+  // the token this macro expanded to.
+  Loc = SM.getLogicalLoc(Loc);
+  
+  const char *StrData = SM.getCharacterData(Loc);
+  
+  // TODO: this could be special cased for common tokens like identifiers, ')',
+  // etc to make this faster, if it mattered.  Just look at StrData[0] to handle
+  // all obviously single-char tokens.  This could use 
+  // Lexer::isObviouslySimpleCharacter for example to handle identifiers or
+  // something.
+  
+  
+  const char *BufEnd = SM.getBufferData(Loc.getFileID()).second;
+  
+  // Create a langops struct and enable trigraphs.  This is sufficient for
+  // measuring tokens.
+  LangOptions LangOpts;
+  LangOpts.Trigraphs = true;
+  
+  // Create a lexer starting at the beginning of this token.
+  Lexer TheLexer(Loc, LangOpts, StrData, BufEnd);
+  Token TheTok;
+  TheLexer.LexRawToken(TheTok);
+  return TheTok.getLength();
+}
+
 //===----------------------------------------------------------------------===//
 // Character information.
 //===----------------------------------------------------------------------===//

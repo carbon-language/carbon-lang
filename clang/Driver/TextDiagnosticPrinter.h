@@ -31,7 +31,6 @@ public:
   void HighlightRange(const SourceRange &R, unsigned LineNo,
                       std::string &CaratLine,
                       const std::string &SourceLine);
-  unsigned GetTokenLength(SourceLocation Loc);
 
   virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
