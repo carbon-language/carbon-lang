@@ -241,10 +241,11 @@ namespace llvm {
     void MergeInClobberRanges(const LiveInterval &Clobbers,
                               BumpPtrAllocator &VNInfoAllocator);
 
-    /// MergeRangesInAsValue - Merge all of the live ranges in RHS into this
-    /// live interval as the specified value number.  The LiveRanges in RHS are
-    /// allowed to overlap with LiveRanges in the current interval, but only if
-    /// the overlapping LiveRanges have the specified value number.
+    /// MergeValueInAsValue - Merge all of the live ranges of a specific val#
+    /// in RHS into this live interval as the specified value number.
+    /// The LiveRanges in RHS are allowed to overlap with LiveRanges in the
+    /// current interval, it will replace the value numbers of the overlaped
+    /// live ranges with the specified value number.
     void MergeRangesInAsValue(const LiveInterval &RHS, VNInfo *LHSValNo);
 
     /// MergeValueInAsValue - Merge all of the live ranges of a specific val#
