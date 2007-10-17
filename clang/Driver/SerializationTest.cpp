@@ -196,29 +196,32 @@ IntrospectionTrait<short>::Flags : public IntrospectionPrimitivesFlags {};
 
 
 template<> 
-struct IntrospectionTrait<clang::IdentifierInfo>::Flags {
-  enum { isPod = false,  // Cannot copy via memcpy.  Must use copy-ctor.    
-         hasUniqueInstances = true, // Two pointers with different
-                                    // addreses point to objects
-                                    // that are not equal to each other.    
-         hasUniqueReferences = true // Two (non-temporary) pointers                                    
-                                    // will point to distinct instances.
+struct IntrospectionTrait<clang::IdentifierInfo> {
+
+  struct Flags { 
+    enum { isPod = false,  // Cannot copy via memcpy.  Must use copy-ctor.    
+           hasUniqueInstances = true, // Two pointers with different
+                                      // addreses point to objects
+                                      // that are not equal to each other.    
+           hasUniqueReferences = true // Two (non-temporary) pointers                                    
+                                      // will point to distinct instances.
+    };
   };
-};
-  
-template<> template<typename Introspector>
-struct IntrospectionTrait<clang::IdentifierInfo>::Ops<Introspector> {
-  static void Introspect(clang::IdentifierInfo& X, Introspector& I) {
-//    I(X.getTokenID());
-    I(X.getBuiltinID(),9); // FIXME: do 9 bit specialization.
-//    I(X.getObjCKeywordID());
-    I(X.hasMacroDefinition());
-    I(X.isExtensionToken());
-    I(X.isPoisoned());
-    I(X.isOtherTargetMacro());
-    I(X.isCPlusPlusOperatorKeyword());
-    I(X.isNonPortableBuiltin());
-  }
+
+  template<typename Introspector>
+  struct Ops {
+    static void Introspect(clang::IdentifierInfo& X, Introspector& I) {
+  //    I(X.getTokenID());
+      I(X.getBuiltinID(),9); // FIXME: do 9 bit specialization.
+  //    I(X.getObjCKeywordID());
+      I(X.hasMacroDefinition());
+      I(X.isExtensionToken());
+      I(X.isPoisoned());
+      I(X.isOtherTargetMacro());
+      I(X.isCPlusPlusOperatorKeyword());
+      I(X.isNonPortableBuiltin());
+    }
+  };
 };
   
 template<> template<>

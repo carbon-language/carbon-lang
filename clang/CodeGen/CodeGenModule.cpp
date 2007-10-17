@@ -67,7 +67,7 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
   if (D->getInit() == 0) {
     Init = llvm::Constant::getNullValue(GV->getType()->getElementType());
   } else if (D->getType()->isIntegerType()) {
-    llvm::APSInt Value(static_cast<unsigned>(
+    llvm::APSInt Value(static_cast<uint32_t>(
       getContext().getTypeSize(D->getInit()->getType(), SourceLocation())));
     if (D->getInit()->isIntegerConstantExpr(Value, Context))
       Init = llvm::ConstantInt::get(Value);

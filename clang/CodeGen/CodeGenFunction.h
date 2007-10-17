@@ -219,7 +219,7 @@ public:
   llvm::Instruction *AllocaInsertPt;
   
   const llvm::Type *LLVMIntTy;
-  unsigned LLVMPointerWidth;
+  uint32_t LLVMPointerWidth;
   
 private:
   /// LocalDeclMap - This keeps track of the LLVM allocas or globals for local C

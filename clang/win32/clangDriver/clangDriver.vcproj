@@ -206,6 +206,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Driver\RewriteTest.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Driver\SerializationTest.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Driver\Targets.cpp"
 				>
 			</File>

@@ -536,7 +536,8 @@ Value *ScalarExprEmitter::EmitSizeAlignOf(QualType TypeToSize,
   
   assert(RetType->isIntegerType() && "Result type must be an integer!");
   
-  unsigned ResultWidth = static_cast<unsigned>(CGF.getContext().getTypeSize(RetType,SourceLocation()));
+  uint32_t ResultWidth = static_cast<uint32_t>(
+    CGF.getContext().getTypeSize(RetType, SourceLocation()));
   return llvm::ConstantInt::get(llvm::APInt(ResultWidth, Val));
 }
 

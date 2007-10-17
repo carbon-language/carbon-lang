@@ -23,7 +23,7 @@
 
 
 namespace llvm {
-  template<typename T> class IntrospectionTrait;
+  template <typename T> struct IntrospectionTrait;
   template <typename T> struct DenseMapInfo;
 }
 
@@ -140,7 +140,11 @@ public:
   void setFETokenInfo(void *T) { FETokenInfo = T; }
   
   // For serialization and profiling.
+#if defined(_MSC_VER) && _MSC_VER <= 1400   // workaround for VC++ upto V8.0
+  template<typename T> friend class /*llvm::*/IntrospectionTrait;
+#else
   template<typename T> friend class llvm::IntrospectionTrait;
+#endif
 };
 
 /// IdentifierTable - This table implements an efficient mapping from strings to
@@ -183,7 +187,11 @@ public:
   void PrintStats() const;
   
   // For serialization and profiling.
+#if defined(_MSC_VER) && _MSC_VER <= 1400   // workaround for VC++ upto V8.0
+  template<typename T> friend class /*llvm::*/IntrospectionTrait;
+#else
   template<typename T> friend class llvm::IntrospectionTrait;
+#endif
 private:
   void AddKeywords(const LangOptions &LangOpts);
 };
