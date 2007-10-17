@@ -204,6 +204,8 @@ bool RaiseAllocations::runOnModule(Module &M) {
       Users.pop_back();
 
       if (Instruction *I = dyn_cast<Instruction>(U)) {
+        if (isa<InvokeInst>(I))
+          continue;
         CallSite CS = CallSite::get(I);
         if (CS.getInstruction() && !CS.arg_empty() &&
             (CS.getCalledFunction() == FreeFunc ||
