@@ -141,15 +141,9 @@ public:
     // in.  Allocate a new item with space for the string at the end and a null
     // terminator.
     unsigned AllocSize = sizeof(StringMapEntry)+KeyLength+1;
-    
-#ifdef __GNUC__
-    unsigned Alignment = __alignof__(StringMapEntry);
-#else
-    // FIXME: ugly.
-    unsigned Alignment = 8;
-#endif
-    StringMapEntry *NewItem = 
-      static_cast<StringMapEntry*>(Allocator.Allocate(AllocSize, Alignment));
+
+    StringMapEntry *NewItem = static_cast<StringMapEntry*>(
+        Allocator.Allocate(AllocSize, AlignOf<StringMapEntry>::Alignment));
     
     // Default construct the value.
     new (NewItem) StringMapEntry(KeyLength);
