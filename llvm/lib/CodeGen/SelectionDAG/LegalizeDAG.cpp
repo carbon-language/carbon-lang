@@ -6225,6 +6225,26 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     }
     break;
   }
+  case ISD::SELECT: {
+    SDOperand Cond = Node->getOperand(0);
+
+    SDOperand LL, LH, RL, RH;
+    SplitVectorOp(Node->getOperand(1), LL, LH);
+    SplitVectorOp(Node->getOperand(2), RL, RH);
+
+    if (MVT::isVector(Cond.getValueType())) {
+      // Handle a vector merge.
+      SDOperand CL, CH;
+      SplitVectorOp(Cond, CL, CH);
+      Lo = DAG.getNode(Node->getOpcode(), NewVT, CL, LL, RL);
+      Hi = DAG.getNode(Node->getOpcode(), NewVT, CH, LH, RH);
+    } else {
+      // Handle a simple select with vector operands.
+      Lo = DAG.getNode(Node->getOpcode(), NewVT, Cond, LL, RL);
+      Hi = DAG.getNode(Node->getOpcode(), NewVT, Cond, LH, RH);
+    }
+    break;
+  }
   case ISD::ADD:
   case ISD::SUB:
   case ISD::MUL:
