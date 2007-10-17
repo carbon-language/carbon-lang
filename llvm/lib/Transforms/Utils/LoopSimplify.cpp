@@ -40,6 +40,7 @@
 #include "llvm/Type.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/DominatorInternals.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
