@@ -670,10 +670,12 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
     if (Op.getValueType() == MVT::f32) {
       Op = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Op);
     } else if (Op.getValueType() == MVT::f64) {
-      // Recursively legalize f64 -> i64.
-      Op = DAG.getNode(ISD::BIT_CONVERT, MVT::i64, Op);
-      return DAG.getNode(ISD::RET, MVT::Other, Chain, Op,
-                         DAG.getConstant(0, MVT::i32));
+      // Legalize ret f64 -> ret 2 x i32.  We always have fmrrd if f64 is
+      // available.
+      Op = DAG.getNode(ARMISD::FMRRD, DAG.getVTList(MVT::i32, MVT::i32), &Op,1);
+      SDOperand Sign = DAG.getConstant(0, MVT::i32);
+      return DAG.getNode(ISD::RET, MVT::Other, Chain, Op, Sign, 
+                         Op.getValue(1), Sign);
     }
     Copy = DAG.getCopyToReg(Chain, ARM::R0, Op, SDOperand());
     if (DAG.getMachineFunction().liveout_empty())
