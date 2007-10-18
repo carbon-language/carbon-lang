@@ -109,6 +109,14 @@ static inline std::string LowercaseString(const std::string &S) {
   return result;
 }
 
+static inline std::string UppercaseString(const std::string &S) {
+  std::string result(S);
+  for (unsigned i = 0; i < S.length(); ++i)
+    if (islower(result[i]))
+      result[i] = char(toupper(result[i]));
+  return result;
+}
+
 /// StringsEqualNoCase - Return true if the two strings are equal, ignoring
 /// case.
 static inline bool StringsEqualNoCase(const std::string &LHS, 
