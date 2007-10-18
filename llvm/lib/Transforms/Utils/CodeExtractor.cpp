@@ -21,7 +21,6 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Analysis/DominatorInternals.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
