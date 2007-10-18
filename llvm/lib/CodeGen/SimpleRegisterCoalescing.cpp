@@ -57,7 +57,6 @@ namespace {
 const PassInfo *llvm::SimpleRegisterCoalescingID = X.getPassInfo();
 
 void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
-   //AU.addPreserved<LiveVariables>();
   AU.addPreserved<LiveIntervals>();
   AU.addPreservedID(PHIEliminationID);
   AU.addPreservedID(TwoAddressInstructionPassID);
@@ -183,6 +182,17 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
   CopyMI->eraseFromParent();
   ++numPeep;
   return true;
+}
+
+/// AddSubRegIdxPairs - Recursively mark all the registers represented by the
+/// specified register as sub-registers. The recursion level is expected to be
+/// shallow.
+void SimpleRegisterCoalescing::AddSubRegIdxPairs(unsigned Reg, unsigned SubIdx) {
+  std::vector<unsigned> &JoinedRegs = r2rRevMap_[Reg];
+  for (unsigned i = 0, e = JoinedRegs.size(); i != e; ++i) {
+    SubRegIdxes.push_back(std::make_pair(JoinedRegs[i], SubIdx));
+    AddSubRegIdxPairs(JoinedRegs[i], SubIdx);
+  }
 }
 
 /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
@@ -459,8 +469,9 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
       std::swap(repSrcReg, repDstReg);
       std::swap(ResSrcInt, ResDstInt);
     }
-    SubRegIdxes.push_back(std::make_pair(DstReg,
-                                         CopyMI->getOperand(2).getImm()));
+    unsigned SubIdx = CopyMI->getOperand(2).getImm();
+    SubRegIdxes.push_back(std::make_pair(repSrcReg, SubIdx));
+    AddSubRegIdxPairs(repSrcReg, SubIdx);
   }
 
   DOUT << "\n\t\tJoined.  Result = "; ResDstInt->print(DOUT, mri_);
@@ -470,6 +481,7 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
   // being merged.
   li_->removeInterval(repSrcReg);
   r2rMap_[repSrcReg] = repDstReg;
+  r2rRevMap_[repDstReg].push_back(repSrcReg);
 
   // Finally, delete the copy instruction.
   li_->RemoveMachineInstrFromMaps(CopyMI);
@@ -1039,7 +1051,7 @@ void SimpleRegisterCoalescing::joinIntervals() {
   }
   
   DOUT << "*** Register mapping ***\n";
-  for (int i = 0, e = r2rMap_.size(); i != e; ++i)
+  for (unsigned i = 0, e = r2rMap_.size(); i != e; ++i)
     if (r2rMap_[i]) {
       DOUT << "  reg " << i << " -> ";
       DEBUG(printRegName(r2rMap_[i]));
@@ -1172,9 +1184,12 @@ void SimpleRegisterCoalescing::printRegName(unsigned reg) const {
 }
 
 void SimpleRegisterCoalescing::releaseMemory() {
-   r2rMap_.clear();
-   JoinedLIs.clear();
-   SubRegIdxes.clear();
+  for (unsigned i = 0, e = r2rMap_.size(); i != e; ++i)
+    r2rRevMap_[i].clear();
+  r2rRevMap_.clear();
+  r2rMap_.clear();
+  JoinedLIs.clear();
+  SubRegIdxes.clear();
 }
 
 static bool isZeroLengthInterval(LiveInterval *li) {
@@ -1204,6 +1219,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 
   SSARegMap *RegMap = mf_->getSSARegMap();
   r2rMap_.grow(RegMap->getLastVirtReg());
+  r2rRevMap_.grow(RegMap->getLastVirtReg());
 
   // Join (coalesce) intervals if requested.
   if (EnableJoining) {
@@ -1214,7 +1230,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       DOUT << "\n";
     }
 
-    // Track coalesced sub-registers.
+    // Transfer sub-registers info to SSARegMap now that coalescing information
+    // is complete.
     while (!SubRegIdxes.empty()) {
       std::pair<unsigned, unsigned> RI = SubRegIdxes.back();
       SubRegIdxes.pop_back();

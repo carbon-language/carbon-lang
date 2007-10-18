@@ -37,19 +37,24 @@ namespace llvm {
     LiveIntervals *li_;
     LiveVariables *lv_;
     
-    typedef IndexedMap<unsigned> Reg2RegMap;
-    Reg2RegMap r2rMap_;
-
     BitVector allocatableRegs_;
     DenseMap<const TargetRegisterClass*, BitVector> allocatableRCRegs_;
+
+    /// r2rMap_ - Map from register to its representative register.
+    ///
+    IndexedMap<unsigned> r2rMap_;
+
+    /// r2rRevMap_ - Reverse of r2rRevMap_, i.e. Map from register to all
+    /// the registers it represent.
+    IndexedMap<std::vector<unsigned> > r2rRevMap_;
 
     /// JoinedLIs - Keep track which register intervals have been coalesced
     /// with other intervals.
     BitVector JoinedLIs;
 
-    /// SubRegIdxes - Keep track of sub-register and sub-indexes.
+    /// SubRegIdxes - Keep track of sub-register and indexes.
     ///
-    std::vector<std::pair<unsigned, unsigned> > SubRegIdxes;
+    SmallVector<std::pair<unsigned, unsigned>, 32> SubRegIdxes;
 
   public:
     static char ID; // Pass identifcation, replacement for typeid
@@ -132,10 +137,15 @@ namespace llvm {
     bool AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
                               MachineInstr *CopyMI);
 
+    /// AddSubRegIdxPairs - Recursively mark all the registers represented by the
+    /// specified register as sub-registers. The recursion level is expected to be
+    /// shallow.
+    void AddSubRegIdxPairs(unsigned Reg, unsigned SubIdx);
+
     /// lastRegisterUse - Returns the last use of the specific register between
     /// cycles Start and End. It also returns the use operand by reference. It
     /// returns NULL if there are no uses.
-     MachineInstr *lastRegisterUse(unsigned Start, unsigned End, unsigned Reg,
+    MachineInstr *lastRegisterUse(unsigned Start, unsigned End, unsigned Reg,
                                   MachineOperand *&MOU);
 
     /// findDefOperand - Returns the MachineOperand that is a def of the specific
