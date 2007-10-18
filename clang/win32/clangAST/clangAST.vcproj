@@ -185,6 +185,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\AST\StmtIterator.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\AST\StmtPrinter.cpp"
 				>
 			</File>
@@ -252,6 +256,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\clang\AST\StmtGraphTraits.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\clang\AST\StmtIterator.h"
 				>
 			</File>
 			<File
