@@ -45,6 +45,7 @@ namespace {
     void RewriteFunctionBody(Stmt *S);
     void RewriteAtEncode(ObjCEncodeExpr *Exp);
 
+    void WriteObjcClassMetaData(ObjcImplementationDecl *IDecl);
     void WriteObjcMetaData();
     
     ~RewriteTest();
@@ -119,7 +120,7 @@ void RewriteTest::RewriteFunctionBody(Stmt *S) {
     if (*CI)
       RewriteFunctionBody(*CI);
 }
-
+ 
 void RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   // Create a new string expression.
   QualType StrType = Context->getPointerType(Context->CharTy);
@@ -129,11 +130,66 @@ void RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   delete Replacement;
 }
 
+void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
+  ObjcInterfaceDecl *CDecl = IDecl->getClassInterface();
+  
+  if (IDecl->getImplDeclNumIvars() > 0 || 
+      CDecl&& CDecl->getIntfDeclNumIvars() > 0) {
+    static bool objc_ivar = false;
+    
+    int NumIvars = IDecl->getImplDeclNumIvars() > 0 
+                     ? IDecl->getImplDeclNumIvars() 
+                     : CDecl->getIntfDeclNumIvars();
+    
+    if (!objc_ivar) {
+      /* struct _objc_ivar {
+          char *ivar_name;
+          char *ivar_type;
+          int ivar_offset;
+        };  
+       */
+      printf("\nstruct _objc_ivar {\n");
+      printf("\tchar *ivar_name;\n");
+      printf("\tchar *ivar_type;\n");
+      printf("\tint ivar_offset;\n");
+      printf("};\n");
+      objc_ivar = true;
+    }
+
+    /* struct _objc_ivar_list {
+        int ivar_count;
+        struct _objc_ivar ivar_list[ivar_count];
+     };  
+    */
+    printf("\nstatic struct {\n");
+    printf("\tint ivar_count;\n");
+    printf("\tstruct _objc_ivar ivar_list[%d];\n", NumIvars);
+    printf("} _OBJC_INSTANCE_VARIABLES_%s "
+      "__attribute__ ((section (\"__OBJC, __instance_vars\")))= "
+      "{\n\t%d\n",IDecl->getName(), 
+           NumIvars);
+    ObjcIvarDecl **Ivars = IDecl->getImplDeclIVars() 
+                             ? IDecl->getImplDeclIVars() 
+                             : CDecl->getIntfDeclIvars();
+    for (int i = 0; i < NumIvars; i++)
+      // TODO: 1) ivar names may have to go to another section. 2) encode
+      // ivar_type type of each ivar . 3) compute and add ivar offset.
+      printf("\t,\"%s\", \"\", 0\n", Ivars[i]->getName());
+    printf("};\n");
+  }
+  
+}
+
 void RewriteTest::WriteObjcMetaData() {
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
   if (ClsDefCount == 0 && CatDefCount == 0)
     return;
+  
+  // For each defined class, write out all its meta data.
+  for (int i = 0; i < ClsDefCount; i++)
+    WriteObjcClassMetaData(ClassImplementation[i]);
+  
   // Write objc_symtab metadata
   /*
    struct _objc_symtab

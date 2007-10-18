@@ -540,7 +540,9 @@ class ObjcCategoryImplDecl : public NamedDecl {
 /// from the class interface to the class implementation (but I digress:-)
 ///
 class ObjcImplementationDecl : public NamedDecl {
-    
+  /// Class interface for this category implementation
+  ObjcInterfaceDecl *ClassInterface;
+  
   /// Implementation Class's super class.
   ObjcInterfaceDecl *SuperClass;
     
@@ -558,8 +560,10 @@ class ObjcImplementationDecl : public NamedDecl {
     
 public:
   ObjcImplementationDecl(SourceLocation L, IdentifierInfo *Id,
-                         ObjcInterfaceDecl* superDecl)
+                         ObjcInterfaceDecl *classInterface,
+                         ObjcInterfaceDecl *superDecl)
     : NamedDecl(ObjcImplementation, L, Id),
+      ClassInterface(classInterface),
       SuperClass(superDecl),
       Ivars(0), NumIvars(-1),
       InstanceMethods(0), NumInstanceMethods(-1), 
@@ -571,6 +575,7 @@ public:
   void ObjcAddImplMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                           ObjcMethodDecl **clsMethods, unsigned numClsMembers);
     
+  ObjcInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjcInterfaceDecl *getSuperClass() const { return SuperClass; }
   
   void setSuperClass(ObjcInterfaceDecl * superCls) 
@@ -581,6 +586,9 @@ public:
   
   ObjcMethodDecl **getClassMethods() const { return ClassMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
+  
+  ObjcIvarDecl **getImplDeclIVars() const { return Ivars; }
+  int getImplDeclNumIvars() const { return NumIvars; }
     
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcImplementation;

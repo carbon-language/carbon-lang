@@ -1225,8 +1225,6 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
     }
   }
   
-  ObjcImplementationDecl* IMPDecl = 
-    new ObjcImplementationDecl(AtClassImplLoc, ClassName, SDecl);
   if (!IDecl) {
     // Legacy case of @implementation with no corresponding @interface.
     // Build, chain & install the interface decl into the identifier.
@@ -1237,6 +1235,9 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
     // Remember that this needs to be removed when the scope is popped.
     TUScope->AddDecl(IDecl);
   }
+  
+  ObjcImplementationDecl* IMPDecl = 
+  new ObjcImplementationDecl(AtClassImplLoc, ClassName, IDecl, SDecl);
   
   // Check that there is no duplicate implementation of this class.
   if (!ObjcImplementations.insert(ClassName))
