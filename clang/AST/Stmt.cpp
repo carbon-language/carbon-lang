@@ -116,12 +116,12 @@ bool Stmt::hasImplicitControlFlow() const {
 //===----------------------------------------------------------------------===//
 
 // DeclStmt
-Stmt::child_iterator DeclStmt::child_begin() { return NULL; }
-Stmt::child_iterator DeclStmt::child_end() { return NULL; }
+Stmt::child_iterator DeclStmt::child_begin() { return getDecl(); }
+Stmt::child_iterator DeclStmt::child_end() { return child_iterator(); }
 
 // NullStmt
-Stmt::child_iterator NullStmt::child_begin() { return NULL; }
-Stmt::child_iterator NullStmt::child_end() { return NULL; }
+Stmt::child_iterator NullStmt::child_begin() { return child_iterator(); }
+Stmt::child_iterator NullStmt::child_end() { return child_iterator(); }
 
 // CompoundStmt
 Stmt::child_iterator CompoundStmt::child_begin() { return &Body[0]; }
@@ -160,8 +160,8 @@ Stmt::child_iterator ForStmt::child_begin() { return &SubExprs[0]; }
 Stmt::child_iterator ForStmt::child_end() { return &SubExprs[0]+END_EXPR; }
 
 // GotoStmt
-Stmt::child_iterator GotoStmt::child_begin() { return NULL; }
-Stmt::child_iterator GotoStmt::child_end() { return NULL; }
+Stmt::child_iterator GotoStmt::child_begin() { return child_iterator(); }
+Stmt::child_iterator GotoStmt::child_end() { return child_iterator(); }
 
 // IndirectGotoStmt
 Stmt::child_iterator IndirectGotoStmt::child_begin() { 
@@ -171,21 +171,21 @@ Stmt::child_iterator IndirectGotoStmt::child_begin() {
 Stmt::child_iterator IndirectGotoStmt::child_end() { return ++child_begin(); }
 
 // ContinueStmt
-Stmt::child_iterator ContinueStmt::child_begin() { return NULL; }
-Stmt::child_iterator ContinueStmt::child_end() { return NULL; }
+Stmt::child_iterator ContinueStmt::child_begin() { return child_iterator(); }
+Stmt::child_iterator ContinueStmt::child_end() { return child_iterator(); }
 
 // BreakStmt
-Stmt::child_iterator BreakStmt::child_begin() { return NULL; }
-Stmt::child_iterator BreakStmt::child_end() { return NULL; }
+Stmt::child_iterator BreakStmt::child_begin() { return child_iterator(); }
+Stmt::child_iterator BreakStmt::child_end() { return child_iterator(); }
 
 // ReturnStmt
 Stmt::child_iterator ReturnStmt::child_begin() {
   if (RetExpr) return reinterpret_cast<Stmt**>(&RetExpr);
-  else return NULL;
+  else return child_iterator();
 }
 
 Stmt::child_iterator ReturnStmt::child_end() { 
   if (RetExpr) return reinterpret_cast<Stmt**>(&RetExpr)+1;
-  else return NULL;
+  else return child_iterator();
 }
 

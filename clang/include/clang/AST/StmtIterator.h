@@ -91,11 +91,16 @@ public:
 };
 
 struct StmtIterator : public StmtIteratorImpl<StmtIterator,Stmt*> {
+  explicit StmtIterator() : StmtIteratorImpl<StmtIterator,Stmt*>() {}
   StmtIterator(Stmt** S) : StmtIteratorImpl<StmtIterator,Stmt*>(S) {}
+  StmtIterator(ScopedDecl* D) : StmtIteratorImpl<StmtIterator,Stmt*>(D) {}
 };
 
 struct ConstStmtIterator : public StmtIteratorImpl<ConstStmtIterator,
-                                                   const Stmt*> {    
+                                                   const Stmt*> {
+  explicit ConstStmtIterator() : 
+    StmtIteratorImpl<ConstStmtIterator,const Stmt*>() {}
+
   ConstStmtIterator(const StmtIterator& RHS) : 
     StmtIteratorImpl<ConstStmtIterator,const Stmt*>(RHS) {}
 };

@@ -899,24 +899,24 @@ ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
 //===----------------------------------------------------------------------===//
 
 // DeclRefExpr
-Stmt::child_iterator DeclRefExpr::child_begin() { return NULL; }
-Stmt::child_iterator DeclRefExpr::child_end() { return NULL; }
+Stmt::child_iterator DeclRefExpr::child_begin() { return child_iterator(); }
+Stmt::child_iterator DeclRefExpr::child_end() { return child_iterator(); }
 
 // PreDefinedExpr
-Stmt::child_iterator PreDefinedExpr::child_begin() { return NULL; }
-Stmt::child_iterator PreDefinedExpr::child_end() { return NULL; }
+Stmt::child_iterator PreDefinedExpr::child_begin() { return child_iterator(); }
+Stmt::child_iterator PreDefinedExpr::child_end() { return child_iterator(); }
 
 // IntegerLiteral
-Stmt::child_iterator IntegerLiteral::child_begin() { return NULL; }
-Stmt::child_iterator IntegerLiteral::child_end() { return NULL; }
+Stmt::child_iterator IntegerLiteral::child_begin() { return child_iterator(); }
+Stmt::child_iterator IntegerLiteral::child_end() { return child_iterator(); }
 
 // CharacterLiteral
-Stmt::child_iterator CharacterLiteral::child_begin() { return NULL; }
-Stmt::child_iterator CharacterLiteral::child_end() { return NULL; }
+Stmt::child_iterator CharacterLiteral::child_begin() { return child_iterator(); }
+Stmt::child_iterator CharacterLiteral::child_end() { return child_iterator(); }
 
 // FloatingLiteral
-Stmt::child_iterator FloatingLiteral::child_begin() { return NULL; }
-Stmt::child_iterator FloatingLiteral::child_end() { return NULL; }
+Stmt::child_iterator FloatingLiteral::child_begin() { return child_iterator(); }
+Stmt::child_iterator FloatingLiteral::child_end() { return child_iterator(); }
 
 // ImaginaryLiteral
 Stmt::child_iterator ImaginaryLiteral::child_begin() {
@@ -927,8 +927,8 @@ Stmt::child_iterator ImaginaryLiteral::child_end() {
 }
 
 // StringLiteral
-Stmt::child_iterator StringLiteral::child_begin() { return NULL; }
-Stmt::child_iterator StringLiteral::child_end() { return NULL; }
+Stmt::child_iterator StringLiteral::child_begin() { return child_iterator(); }
+Stmt::child_iterator StringLiteral::child_end() { return child_iterator(); }
 
 // ParenExpr
 Stmt::child_iterator ParenExpr::child_begin() {
@@ -947,8 +947,12 @@ Stmt::child_iterator UnaryOperator::child_end() {
 }
 
 // SizeOfAlignOfTypeExpr
-Stmt::child_iterator SizeOfAlignOfTypeExpr::child_begin() { return NULL; }
-Stmt::child_iterator SizeOfAlignOfTypeExpr::child_end() { return NULL; }
+Stmt::child_iterator SizeOfAlignOfTypeExpr::child_begin() { 
+  return child_iterator(); 
+}
+Stmt::child_iterator SizeOfAlignOfTypeExpr::child_end() {
+  return child_iterator();
+}
 
 // ArraySubscriptExpr
 Stmt::child_iterator ArraySubscriptExpr::child_begin() {
@@ -1023,8 +1027,8 @@ Stmt::child_iterator ConditionalOperator::child_end() {
 }
 
 // AddrLabelExpr
-Stmt::child_iterator AddrLabelExpr::child_begin() { return NULL; }
-Stmt::child_iterator AddrLabelExpr::child_end() { return NULL; }
+Stmt::child_iterator AddrLabelExpr::child_begin() { return child_iterator(); }
+Stmt::child_iterator AddrLabelExpr::child_end() { return child_iterator(); }
 
 // StmtExpr
 Stmt::child_iterator StmtExpr::child_begin() {
@@ -1035,8 +1039,13 @@ Stmt::child_iterator StmtExpr::child_end() {
 }
 
 // TypesCompatibleExpr
-Stmt::child_iterator TypesCompatibleExpr::child_begin() { return NULL; }
-Stmt::child_iterator TypesCompatibleExpr::child_end() { return NULL; }
+Stmt::child_iterator TypesCompatibleExpr::child_begin() {
+  return child_iterator();
+}
+
+Stmt::child_iterator TypesCompatibleExpr::child_end() {
+  return child_iterator();
+}
 
 // ChooseExpr
 Stmt::child_iterator ChooseExpr::child_begin() {
@@ -1065,20 +1074,32 @@ Stmt::child_iterator InitListExpr::child_end() {
 }
 
 // ObjCStringLiteral
-Stmt::child_iterator ObjCStringLiteral::child_begin() { return NULL; }
-Stmt::child_iterator ObjCStringLiteral::child_end() { return NULL; }
+Stmt::child_iterator ObjCStringLiteral::child_begin() { 
+  return child_iterator();
+}
+Stmt::child_iterator ObjCStringLiteral::child_end() {
+  return child_iterator();
+}
 
 // ObjCEncodeExpr
-Stmt::child_iterator ObjCEncodeExpr::child_begin() { return NULL; }
-Stmt::child_iterator ObjCEncodeExpr::child_end() { return NULL; }
+Stmt::child_iterator ObjCEncodeExpr::child_begin() { return child_iterator(); }
+Stmt::child_iterator ObjCEncodeExpr::child_end() { return child_iterator(); }
 
 // ObjCSelectorExpr
-Stmt::child_iterator ObjCSelectorExpr::child_begin() { return NULL; }
-Stmt::child_iterator ObjCSelectorExpr::child_end() { return NULL; }
+Stmt::child_iterator ObjCSelectorExpr::child_begin() { 
+  return child_iterator();
+}
+Stmt::child_iterator ObjCSelectorExpr::child_end() {
+  return child_iterator();
+}
 
 // ObjCProtocolExpr
-Stmt::child_iterator ObjCProtocolExpr::child_begin() { return NULL; }
-Stmt::child_iterator ObjCProtocolExpr::child_end() { return NULL; }
+Stmt::child_iterator ObjCProtocolExpr::child_begin() {
+  return child_iterator();
+}
+Stmt::child_iterator ObjCProtocolExpr::child_end() {
+  return child_iterator();
+}
 
 // ObjCMessageExpr
 Stmt::child_iterator ObjCMessageExpr::child_begin() {

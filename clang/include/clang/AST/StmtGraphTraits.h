@@ -33,12 +33,12 @@ template <> struct GraphTraits<clang::Stmt*> {
   
   static inline ChildIteratorType child_begin(NodeType* N) {
     if (N) return N->child_begin();
-    else return NULL;
+    else return ChildIteratorType();
   }
   
   static inline ChildIteratorType child_end(NodeType* N) {
     if (N) return N->child_end();
-    else return NULL;
+    else return ChildIteratorType();
   }
   
   static nodes_iterator nodes_begin(clang::Stmt* S) {
@@ -60,12 +60,12 @@ template <> struct GraphTraits<const clang::Stmt*> {
   
   static inline ChildIteratorType child_begin(NodeType* N) {
     if (N) return N->child_begin();
-    else return ChildIteratorType(NULL);    
+    else return ChildIteratorType();    
   }
   
   static inline ChildIteratorType child_end(NodeType* N) {
     if (N) return N->child_end();
-    else return ChildIteratorType(NULL);
+    else return ChildIteratorType();
   }
   
   static nodes_iterator nodes_begin(const clang::Stmt* S) {

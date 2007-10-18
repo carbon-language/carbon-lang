@@ -29,5 +29,9 @@ Stmt::child_iterator CXXCastExpr::child_end() {
 }
 
 // CXXBoolLiteralExpr
-Stmt::child_iterator CXXBoolLiteralExpr::child_begin() { return NULL; }
-Stmt::child_iterator CXXBoolLiteralExpr::child_end() { return NULL; }
+Stmt::child_iterator CXXBoolLiteralExpr::child_begin() { 
+  return child_iterator();
+}
+Stmt::child_iterator CXXBoolLiteralExpr::child_end() {
+  return child_iterator();
+}

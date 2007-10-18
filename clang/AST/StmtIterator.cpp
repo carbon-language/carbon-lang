@@ -22,6 +22,8 @@ void StmtIteratorBase::NextDecl() {
 
   do Ptr.D = Ptr.D->getNextDeclarator();
   while (Ptr.D != NULL && !isa<VarDecl>(Ptr.D));
+  
+  if (Ptr.D == NULL) FirstDecl = NULL;
 }
 
 StmtIteratorBase::StmtIteratorBase(ScopedDecl* d) {
