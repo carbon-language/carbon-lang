@@ -580,7 +580,7 @@ Constant *ConstantExpr::getXor(Constant *C1, Constant *C2) {
 }
 unsigned ConstantExpr::getPredicate() const {
   assert(getOpcode() == Instruction::FCmp || getOpcode() == Instruction::ICmp);
-  return dynamic_cast<const CompareConstantExpr*>(this)->predicate;
+  return ((const CompareConstantExpr*)this)->predicate;
 }
 Constant *ConstantExpr::getShl(Constant *C1, Constant *C2) {
   return get(Instruction::Shl, C1, C2);
