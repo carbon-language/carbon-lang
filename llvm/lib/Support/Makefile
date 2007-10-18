@@ -1,4 +1,4 @@
-##===- lib/Support/Makefile ------------------------------*- Makefile -*-===##
+##===- lib/Support/Makefile --------------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -10,5 +10,8 @@
 LEVEL = ../..
 LIBRARYNAME = LLVMSupport
 BUILD_ARCHIVE = 1
+
+## FIXME: This only requires RTTI because tblgen uses it.  Fix that.
+REQUIRES_RTTI = 1
 
 include $(LEVEL)/Makefile.common
