@@ -18,7 +18,6 @@
 #include "llvm/ModuleProvider.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ManagedStatic.h"
-#include "llvm/Support/TypeInfo.h"
 #include <algorithm>
 #include <set>
 using namespace llvm;
@@ -49,7 +48,7 @@ void Pass::dumpPassStructure(unsigned Offset) {
 const char *Pass::getPassName() const {
   if (const PassInfo *PI = getPassInfo())
     return PI->getPassName();
-  return typeid(*this).name();
+  return "Unnamed pass: implement Pass::getPassName()";
 }
 
 // print - Print out the internal state of the pass.  This is called by Analyze
