@@ -132,7 +132,7 @@ public:
                                   unsigned OpNum,
                                   MachineInstr* LoadMI) const;
 
-  /// unfoldMemoryOperand - Separate a single instruction which folded a load or a
+  /// unfoldMemoryOperand - Separate a single instruction which folded a load or
   /// a store or a load and a store into two or more instruction. If this is
   /// possible, returns true as well as the new instructions by reference.
   bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
