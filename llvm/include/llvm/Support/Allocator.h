@@ -28,7 +28,7 @@ public:
   void *Allocate(unsigned Size, unsigned Alignment) { return malloc(Size); }
   
   template <typename T>
-  T* Allocate() { return reinterpret_cast<T*>(malloc(sizeof(T))); }
+  void *Allocate() { return reinterpret_cast<T*>(malloc(sizeof(T))); }
   
   void Deallocate(void *Ptr) { free(Ptr); }
   void PrintStats() const {}
@@ -48,7 +48,7 @@ public:
   void *Allocate(unsigned Size, unsigned Alignment);
 
   template <typename T>
-  T* Allocate() { 
+  void *Allocate() { 
     return reinterpret_cast<T*>(Allocate(sizeof(T),AlignOf<T>::Alignment));
   }
 

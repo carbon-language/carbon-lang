@@ -374,7 +374,7 @@ private:
     assert (InsertPos != NULL);
     
     // Allocate the new tree node and insert it into the cache.
-    TreeTy* T = Allocator.Allocate<TreeTy>();    
+    TreeTy* T = (TreeTy*) Allocator.Allocate<TreeTy>();    
     new (T) TreeTy(L,R,V,IncrementHeight(L,R));
     Cache.InsertNode(T,InsertPos);
 
