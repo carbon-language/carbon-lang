@@ -64,7 +64,7 @@ public:
   ///
   const char *getPassArgument() const { return PassArgument; }
 
-  /// getTypeInfo - Return the type_info object for the pass...
+  /// getTypeInfo - Return the id object for the pass...
   /// TODO : Rename
   intptr_t getTypeInfo() const { return PassID; }
 
