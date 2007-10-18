@@ -705,6 +705,16 @@ ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
   return new CastExpr(castType, castExpr, LParenLoc);
 }
 
+// promoteExprToType - a helper function to ensure we create exactly one 
+// ImplicitCastExpr.
+static void promoteExprToType(Expr *&expr, QualType type) {
+  if (ImplicitCastExpr *impCast = dyn_cast<ImplicitCastExpr>(expr))
+    impCast->setType(type);
+  else 
+    expr = new ImplicitCastExpr(type, expr);
+  return;
+}
+
 inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   Expr *&cond, Expr *&lex, Expr *&rex, SourceLocation questionLoc) {
   UsualUnaryConversions(cond);
@@ -738,11 +748,14 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     }
   }
   // C99 6.5.15p3
-  if (lexT->isPointerType() && rex->isNullPointerConstant(Context))
+  if (lexT->isPointerType() && rex->isNullPointerConstant(Context)) {
+    promoteExprToType(rex, lexT); // promote the null to a pointer.
     return lexT;
-  if (rexT->isPointerType() && lex->isNullPointerConstant(Context))
+  }
+  if (rexT->isPointerType() && lex->isNullPointerConstant(Context)) {
+    promoteExprToType(lex, rexT); // promote the null to a pointer.
     return rexT;
-    
+  }
   if (const PointerType *LHSPT = lexT->getAsPointerType()) { // C99 6.5.15p3,6
     if (const PointerType *RHSPT = rexT->getAsPointerType()) {
       // get the "pointed to" types
@@ -795,16 +808,6 @@ Action::ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
   if (result.isNull())
     return true;
   return new ConditionalOperator(CondExpr, LHSExpr, RHSExpr, result);
-}
-
-// promoteExprToType - a helper function to ensure we create exactly one 
-// ImplicitCastExpr. As a convenience (to the caller), we return the type.
-static void promoteExprToType(Expr *&expr, QualType type) {
-  if (ImplicitCastExpr *impCast = dyn_cast<ImplicitCastExpr>(expr))
-    impCast->setType(type);
-  else 
-    expr = new ImplicitCastExpr(type, expr);
-  return;
 }
 
 /// DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
