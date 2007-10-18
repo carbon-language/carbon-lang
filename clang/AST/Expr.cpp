@@ -353,7 +353,6 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() const {
 }
 
 bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
-  
   switch (getStmtClass()) {
   default:
     if (Loc) *Loc = getLocStart();
@@ -367,20 +366,20 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case ImaginaryLiteralClass:
   case TypesCompatibleExprClass:
   case CXXBoolLiteralExprClass:
-    break;
+    return true;
   case CallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
     llvm::APSInt Result(32);
     Result.zextOrTrunc(
       static_cast<uint32_t>(Ctx.getTypeSize(getType(), CE->getLocStart())));
     if (CE->isBuiltinClassifyType(Result))
-      break;
+      return true;
     if (Loc) *Loc = getLocStart();
     return false;
   }
   case DeclRefExprClass:
     if (isa<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl()))
-      break;
+      return true;
     if (Loc) *Loc = getLocStart();
     return false;
   case UnaryOperatorClass: {
@@ -405,21 +404,20 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
       // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
       if (!Exp->getSubExpr()->getType()->isConstantSizeType(Ctx, Loc))
         return false;
-      break;
+      return true;
     case UnaryOperator::LNot:
     case UnaryOperator::Plus:
     case UnaryOperator::Minus:
     case UnaryOperator::Not:
-      break;
+      return true;
     }
-    break;
   }
   case SizeOfAlignOfTypeExprClass: {
     const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
     // alignof always evaluates to a constant.
     if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Ctx,Loc))
       return false;
-    break;
+    return true;
   }
   case BinaryOperatorClass: {
     const BinaryOperator *Exp = cast<BinaryOperator>(this);
@@ -430,8 +428,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
 
     if (!Exp->getRHS()->isConstantExpr(Ctx, Loc))
       return false;
-    
-    break;
+    return true;
   }
   case ImplicitCastExprClass:
   case CastExprClass: {
@@ -448,20 +445,15 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
       if (Loc) *Loc = SubExpr->getLocStart();
       return false;
     }
-    break;
+    return true;
   }
   case ConditionalOperatorClass: {
     const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
-    
-    if (!Exp->getCond()->isConstantExpr(Ctx, Loc))
+    if (!Exp->getCond()->isConstantExpr(Ctx, Loc) ||
+        !Exp->getLHS()->isConstantExpr(Ctx, Loc) ||
+        !Exp->getRHS()->isConstantExpr(Ctx, Loc))
       return false;
-
-    if (!Exp->getLHS()->isConstantExpr(Ctx, Loc))
-      return false;
-
-    if (!Exp->getRHS()->isConstantExpr(Ctx, Loc))
-      return false;
-    break;
+    return true;
   }
   }
 
