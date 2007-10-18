@@ -1,4 +1,4 @@
-// RUN: %llvmgcc -x objective-c %s -arch i386 -pipe -std=gnu99 -O2 -fexceptions -S -o  t.m | not grep Unwind_Resume
+// RUN: %llvmgcc -x objective-c %s -arch i386 -pipe -std=gnu99 -O2 -fexceptions -S -o - | not grep Unwind_Resume
 
 #import <Foundation/Foundation.h>
 
