@@ -20,82 +20,86 @@ namespace clang {
 
 class Stmt;
 class ScopedDecl;
-  
-class StmtIterator : public bidirectional_iterator<Stmt*, ptrdiff_t> {
-  Stmt** S;
-  ScopedDecl* D;
+
+class StmtIteratorBase {
+protected:
+  union { Stmt** S; ScopedDecl* D; } Ptr;
+  ScopedDecl* FirstDecl;
   
   void NextDecl();
   void PrevDecl();
-  Stmt*& GetInitializer() const;
-public:  
-  StmtIterator(Stmt** s, ScopedDecl* d = NULL) : S(s), D(d) {}
-  
-  StmtIterator& operator++() { 
-    if (D) NextDecl();
-    else ++S;
-      
-    return *this;
-  }
-    
-  StmtIterator operator++(int) {
-    StmtIterator tmp = *this;
-    operator++();
-    return tmp;
-  }
-  
-  StmtIterator& operator--() {
-    if (D) PrevDecl();
-    else --S;
-    
-    return *this;
-  }
-  
-  StmtIterator operator--(int) {
-    StmtIterator tmp = *this;
-    operator--();
-    return tmp;
-  }
-  
-  reference operator*() const { return D ? GetInitializer() : *S; }
-  pointer operator->() const { return D ? &GetInitializer() : S; }
+  Stmt* GetInitializer() const;
 
-  bool operator==(const StmtIterator& RHS) const {
-    return D == RHS.D && S == RHS.S;
-  }
-  
-  bool operator!=(const StmtIterator& RHS) const {
-    return D != RHS.D || S != RHS.S;
-  }
+  StmtIteratorBase(Stmt** s) : FirstDecl(NULL) { Ptr.S = s; }
+  StmtIteratorBase(ScopedDecl* d);
+  StmtIteratorBase() : FirstDecl(NULL) { Ptr.S = NULL; }
 };
   
-class ConstStmtIterator: public bidirectional_iterator<const Stmt*, ptrdiff_t> {
-  StmtIterator I;
+  
+template <typename DERIVED, typename STMT_PTR>
+class StmtIteratorImpl : public StmtIteratorBase, 
+                         public std::iterator<std::bidirectional_iterator_tag,
+                                              STMT_PTR, ptrdiff_t, 
+                                              STMT_PTR, STMT_PTR> {  
+protected:
+  StmtIteratorImpl(const StmtIteratorBase& RHS) : StmtIteratorBase(RHS) {}
 public:
-  explicit ConstStmtIterator(const StmtIterator& i) : I(i) {}
+  StmtIteratorImpl() {}                                                
+  StmtIteratorImpl(Stmt** s) : StmtIteratorBase(s) {}
+  StmtIteratorImpl(ScopedDecl* d) : StmtIteratorBase(d) {}
 
-  ConstStmtIterator& operator++() { ++I; return *this; }
-  ConstStmtIterator& operator--() { --I; return *this; }
-
-  ConstStmtIterator operator++(int) {
-    ConstStmtIterator tmp = *this;
+  
+  DERIVED& operator++() { 
+    if (FirstDecl) NextDecl();
+    else ++Ptr.S;
+      
+    return static_cast<DERIVED&>(*this);
+  }
+    
+  DERIVED operator++(int) {
+    DERIVED tmp = static_cast<DERIVED&>(*this);
     operator++();
     return tmp;
   }
   
-  ConstStmtIterator operator--(int) {
-    ConstStmtIterator tmp = *this;
+  DERIVED& operator--() {
+    if (FirstDecl) PrevDecl();
+    else --Ptr.S;
+    
+    return static_cast<DERIVED&>(*this);
+  }
+  
+  DERIVED operator--(int) {
+    DERIVED tmp = static_cast<DERIVED&>(*this);
     operator--();
     return tmp;
   }
+
+  bool operator==(const DERIVED& RHS) const {
+    return FirstDecl == RHS.FirstDecl && Ptr.S == RHS.Ptr.S;
+  }
   
-  reference operator*() const { return const_cast<reference>(*I); }
-  pointer operator->() const { return const_cast<pointer>(I.operator->()); }
+  bool operator!=(const DERIVED& RHS) const {
+    return FirstDecl != RHS.FirstDecl || Ptr.S != RHS.Ptr.S;
+  }
   
-  bool operator==(const ConstStmtIterator& RHS) const { return I == RHS.I; }
-  bool operator!=(const ConstStmtIterator& RHS) const { return I != RHS.I; }
+  STMT_PTR operator*() const { 
+    return (STMT_PTR) (FirstDecl ? GetInitializer() : *Ptr.S);
+  }
+  
+  STMT_PTR operator->() const { return operator*(); }   
 };
-  
+
+struct StmtIterator : public StmtIteratorImpl<StmtIterator,Stmt*> {
+  StmtIterator(Stmt** S) : StmtIteratorImpl<StmtIterator,Stmt*>(S) {}
+};
+
+struct ConstStmtIterator : public StmtIteratorImpl<ConstStmtIterator,
+                                                   const Stmt*> {    
+  ConstStmtIterator(const StmtIterator& RHS) : 
+    StmtIteratorImpl<ConstStmtIterator,const Stmt*>(RHS) {}
+};
+
 } // end namespace clang
 
 #endif

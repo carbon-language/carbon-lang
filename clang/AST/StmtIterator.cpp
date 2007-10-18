@@ -12,39 +12,53 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/StmtIterator.h"
-#include "clang/AST/Stmt.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 
 using namespace clang;
 
-void StmtIterator::NextDecl() {
-  assert (D);
-  do D = D->getNextDeclarator();
-  while (D != NULL && !isa<VarDecl>(D));
-  
-  if (!D) S = NULL;
+void StmtIteratorBase::NextDecl() {
+  assert (FirstDecl && Ptr.D);
+
+  do Ptr.D = Ptr.D->getNextDeclarator();
+  while (Ptr.D != NULL && !isa<VarDecl>(Ptr.D));
 }
 
-void StmtIterator::PrevDecl() {
-  assert (isa<DeclStmt>(*S));
-  DeclStmt* DS = cast<DeclStmt>(*S);
-
-  ScopedDecl* d = DS->getDecl();
+StmtIteratorBase::StmtIteratorBase(ScopedDecl* d) {
   assert (d);
   
-  if (d == D) { assert(false) ; return; }
+  while (d != NULL) {
+    if (VarDecl* V = dyn_cast<VarDecl>(d))
+      if (V->getInit()) break;
+    
+    d = d->getNextDeclarator();
+  }
+  
+  FirstDecl = d;
+  Ptr.D = d;
+}
+
+void StmtIteratorBase::PrevDecl() {
+  assert (FirstDecl);
+  assert (Ptr.D != FirstDecl);
   
   // March through the list of decls until we find the decl just before
   // the one we currently point 
   
-  while (d->getNextDeclarator() != D)
-    d = d->getNextDeclarator();
+  ScopedDecl* d = FirstDecl;
+  ScopedDecl* lastVD = d;
   
-  D = d;
+  while (d->getNextDeclarator() != Ptr.D) {
+    if (VarDecl* V = dyn_cast<VarDecl>(d))
+      if (V->getInit())
+        lastVD = d;
+
+    d = d->getNextDeclarator();
+  }
+  
+  Ptr.D = lastVD;
 }
 
-Stmt*& StmtIterator::GetInitializer() const {
-  assert (D && isa<VarDecl>(D));
-  assert (cast<VarDecl>(D)->Init);
-  return reinterpret_cast<Stmt*&>(cast<VarDecl>(D)->Init);
+Stmt* StmtIteratorBase::GetInitializer() const {
+  return cast<VarDecl>(Ptr.D)->getInit();
 }
