@@ -1947,6 +1947,8 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
   }
   
   QualType t = GetObjcProtoType(AtLoc);
+  if (t.isNull())
+    return true;
   return new ObjCProtocolExpr(t, PDecl, AtLoc, RParenLoc);
 }
 
