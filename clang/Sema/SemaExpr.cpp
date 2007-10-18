@@ -868,8 +868,8 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   QualType rhs = rhsExpr->getType();
   
   // If both types are identical, no conversion is needed.
-  if (lhs == rhs) 
-    return lhs;
+  if (lhs.getTypePtr() == rhs.getTypePtr())
+    return lhs.getQualifiedType(0);
   
   // If either side is a non-arithmetic type (e.g. a pointer), we are done.
   // The caller can deal with this (e.g. pointer + int).
