@@ -154,7 +154,7 @@ void Sema::InitBuiltinVaListType()
   IdentifierInfo *VaIdent = &Context.Idents.get("__builtin_va_list");
   ScopedDecl *VaDecl = LookupScopedDecl(VaIdent, Decl::IDNS_Ordinary, 
                                           SourceLocation(), TUScope);
-  TypedefDecl *VaTypedef = dyn_cast_or_null<TypedefDecl>(VaDecl);
+  TypedefDecl *VaTypedef = cast<TypedefDecl>(VaDecl);
   Context.setBuiltinVaListType(Context.getTypedefType(VaTypedef));
 }
 
