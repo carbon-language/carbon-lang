@@ -168,7 +168,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     CallSite CS = CallSite::get(Fn.use_back());
     Instruction *Call = CS.getInstruction();
     
-    // Loop over the operands, dropping extraneous ones at the end of the list.
+    // Pass all the same arguments.
     Args.assign(CS.arg_begin(), CS.arg_begin()+NumArgs);
     
     Instruction *New;
@@ -185,13 +185,13 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     Args.clear();
     
     if (!Call->use_empty())
-      Call->replaceAllUsesWith(Constant::getNullValue(Call->getType()));
+      Call->replaceAllUsesWith(New);
     
     New->takeName(Call);
     
     // Finally, remove the old call from the program, reducing the use-count of
     // F.
-    Call->getParent()->getInstList().erase(Call);
+    Call->eraseFromParent();
   }
   
   // Since we have now created the new function, splice the body of the old
