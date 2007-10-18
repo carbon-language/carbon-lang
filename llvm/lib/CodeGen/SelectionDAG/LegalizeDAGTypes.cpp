@@ -145,6 +145,7 @@ private:
 
   void ExpandResult_Logical    (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_ADDSUB     (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_ADDSUBC    (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SELECT     (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SELECT_CC  (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_MUL        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -547,8 +548,8 @@ SDOperand DAGTypeLegalizer::PromoteResult_LOAD(LoadSDNode *N) {
                                  N->getSrcValue(), N->getSrcValueOffset(),
                                  N->getLoadedVT(), N->isVolatile(),
                                  N->getAlignment());
-  
-  // Legalized the chain result, switching anything that used the old chain to
+
+  // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
   ReplaceLegalValueWith(SDOperand(N, 1), Res.getValue(1));
   return Res;
@@ -610,6 +611,8 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   case ISD::XOR:         ExpandResult_Logical(N, Lo, Hi); break;
   case ISD::ADD:
   case ISD::SUB:         ExpandResult_ADDSUB(N, Lo, Hi); break;
+  case ISD::ADDC:
+  case ISD::SUBC:        ExpandResult_ADDSUBC(N, Lo, Hi); break;
   case ISD::SELECT:      ExpandResult_SELECT(N, Lo, Hi); break;
   case ISD::SELECT_CC:   ExpandResult_SELECT_CC(N, Lo, Hi); break;
   case ISD::MUL:         ExpandResult_MUL(N, Lo, Hi); break;
@@ -759,7 +762,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
     }
   }
   
-  // Legalized the chain result, switching anything that used the old chain to
+  // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
   ReplaceLegalValueWith(SDOperand(N, 1), Ch);
 }  
@@ -823,11 +826,9 @@ void DAGTypeLegalizer::ExpandResult_ADDSUB(SDNode *N,
   GetExpandedOp(N->getOperand(0), LHSL, LHSH);
   GetExpandedOp(N->getOperand(1), RHSL, RHSH);
   SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
-  SDOperand LoOps[2], HiOps[3];
-  LoOps[0] = LHSL;
-  LoOps[1] = RHSL;
-  HiOps[0] = LHSH;
-  HiOps[1] = RHSH;
+  SDOperand LoOps[2] = { LHSL, RHSL };
+  SDOperand HiOps[3] = { LHSH, RHSH };
+
   if (N->getOpcode() == ISD::ADD) {
     Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
     HiOps[2] = Lo.getValue(1);
@@ -839,6 +840,30 @@ void DAGTypeLegalizer::ExpandResult_ADDSUB(SDNode *N,
   }
 }
 
+void DAGTypeLegalizer::ExpandResult_ADDSUBC(SDNode *N,
+                                            SDOperand &Lo, SDOperand &Hi) {
+  // Expand the subcomponents.
+  SDOperand LHSL, LHSH, RHSL, RHSH;
+  GetExpandedOp(N->getOperand(0), LHSL, LHSH);
+  GetExpandedOp(N->getOperand(1), RHSL, RHSH);
+  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
+  SDOperand LoOps[2] = { LHSL, RHSL };
+  SDOperand HiOps[3] = { LHSH, RHSH };
+
+  if (N->getOpcode() == ISD::ADDC) {
+    Lo = DAG.getNode(ISD::ADDC, VTList, LoOps, 2);
+    HiOps[2] = Lo.getValue(1);
+    Hi = DAG.getNode(ISD::ADDE, VTList, HiOps, 3);
+  } else {
+    Lo = DAG.getNode(ISD::SUBC, VTList, LoOps, 2);
+    HiOps[2] = Lo.getValue(1);
+    Hi = DAG.getNode(ISD::SUBE, VTList, HiOps, 3);
+  }
+
+  // Legalized the flag result - switch anything that used the old flag to
+  // use the new one.
+  ReplaceLegalValueWith(SDOperand(N, 1), Hi.getValue(1));
+}
 
 void DAGTypeLegalizer::ExpandResult_MUL(SDNode *N,
                                         SDOperand &Lo, SDOperand &Hi) {
