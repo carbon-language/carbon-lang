@@ -17,8 +17,31 @@
 
 using namespace clang;
 
-void StmtIterator::NextDecl() { assert(false); }
-void StmtIterator::PrevDecl() { assert(false); }
+void StmtIterator::NextDecl() {
+  assert (D);
+  do D = D->getNextDeclarator();
+  while (D != NULL && !isa<VarDecl>(D));
+  
+  if (!D) S = NULL;
+}
+
+void StmtIterator::PrevDecl() {
+  assert (isa<DeclStmt>(*S));
+  DeclStmt* DS = cast<DeclStmt>(*S);
+
+  ScopedDecl* d = DS->getDecl();
+  assert (d);
+  
+  if (d == D) { assert(false) ; return; }
+  
+  // March through the list of decls until we find the decl just before
+  // the one we currently point 
+  
+  while (d->getNextDeclarator() != D)
+    d = d->getNextDeclarator();
+  
+  D = d;
+}
 
 Stmt*& StmtIterator::GetInitializer() const {
   assert (D && isa<VarDecl>(D));
