@@ -103,6 +103,11 @@ void legal() {
   };
 }
 
+unsigned char asso_values[] = { 34 };
+int legal2() { 
+  return asso_values[0]; 
+}
+
 void illegal() {
   short q2[4][][2] = { // expected-error{{array has incomplete element type 'short [][2]'}}
     { 1, 0, 0, 0, 0, 0 },

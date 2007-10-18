@@ -472,7 +472,7 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
       // Return a new array type from the number of initializers (C99 6.7.8p22).
       llvm::APSInt ConstVal(32);
       ConstVal = numInits;
-      DeclType = Context.getConstantArrayType(DeclType, ConstVal, 
+      DeclType = Context.getConstantArrayType(VAT->getElementType(), ConstVal, 
                                               ArrayType::Normal, 0);
     }
     return hadError;
