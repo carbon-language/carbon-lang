@@ -617,21 +617,15 @@ void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
 }
 
 void StmtPrinter::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
-  OS << "@encode(";
-  OS << Node->getEncodedType().getAsString() << ")";
+  OS << "@encode(" << Node->getEncodedType().getAsString() << ")";
 }
 
 void StmtPrinter::VisitObjCSelectorExpr(ObjCSelectorExpr *Node) {
-  OS << "@selector(";
-  Selector &selector = Node->getSelector();
-  OS << " " << selector.getName();
-  OS << ")";
+  OS << "@selector(" << Node->getSelector().getName() << ")";
 }
 
 void StmtPrinter::VisitObjCProtocolExpr(ObjCProtocolExpr *Node) {
-  OS << "@protocol(";
-  OS << Node->getProtocol()->getName();
-  OS << ")";
+  OS << "@protocol(" << Node->getProtocol()->getName() << ")";
 }
 
 void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
