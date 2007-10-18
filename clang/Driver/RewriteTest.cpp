@@ -26,6 +26,9 @@ namespace {
     SourceManager *SM;
     unsigned MainFileID;
     SourceLocation LastIncLoc;
+    llvm::SmallVector<ObjcImplementationDecl *, 8> ClassImplementation;
+    llvm::SmallVector<ObjcCategoryImplDecl *, 8> CategoryImplementation;
+    static const int OBJC_ABI_VERSION =7 ;
   public:
     void Initialize(ASTContext &context, unsigned mainFileID) {
       Context = &context;
@@ -42,6 +45,8 @@ namespace {
     void RewriteFunctionBody(Stmt *S);
     void RewriteAtEncode(ObjCEncodeExpr *Exp);
 
+    void WriteObjcMetaData();
+    
     ~RewriteTest();
   };
 }
@@ -94,6 +99,11 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     if (Stmt *Body = FD->getBody())
       RewriteFunctionBody(Body);
+  
+  if (ObjcImplementationDecl *CI = dyn_cast<ObjcImplementationDecl>(D))
+    ClassImplementation.push_back(CI);
+  else if (ObjcCategoryImplDecl *CI = dyn_cast<ObjcCategoryImplDecl>(D))
+    CategoryImplementation.push_back(CI);
   // Nothing yet.
 }
 
@@ -119,6 +129,66 @@ void RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   delete Replacement;
 }
 
+void RewriteTest::WriteObjcMetaData() {
+  int ClsDefCount = ClassImplementation.size();
+  int CatDefCount = CategoryImplementation.size();
+  if (ClsDefCount == 0 && CatDefCount == 0)
+    return;
+  // Write objc_symtab metadata
+  /*
+   struct _objc_symtab
+   {
+   long sel_ref_cnt;
+   SEL *refs;
+   short cls_def_cnt;
+   short cat_def_cnt;
+   void *defs[cls_def_cnt + cat_def_cnt];
+   }; 
+   */
+  
+  printf("\nstruct _objc_symtab {\n");
+  printf("\tlong sel_ref_cnt;\n");
+  printf("\tSEL *refs;\n");
+  printf("\tshort cls_def_cnt;\n");
+  printf("\tshort cat_def_cnt;\n");
+  printf("\tvoid *defs[%d];\n", ClsDefCount + CatDefCount);
+  printf("};\n\n");
+  
+  printf("static struct _objc_symtab "
+         "_OBJC_SYMBOLS __attribute__ ((section (\"__OBJC, __symbols\")))= {\n");
+  printf("\t0, 0, %d, %d\n", ClsDefCount, CatDefCount);
+  for (int i = 0; i < ClsDefCount; i++)
+    printf("\t,_OBJC_CLASS_%s\n", ClassImplementation[i]->getName());
+  
+  for (int i = 0; i < CatDefCount; i++)
+    printf("\t,_OBJC_CATEGORY_%s_%s\n", 
+           CategoryImplementation[i]->getClassInterface()->getName(), 
+           CategoryImplementation[i]->getName());
+  
+  printf("};\n\n");
+  
+  // Write objc_module metadata
+  
+  /*
+   struct _objc_module {
+    long version;
+    long size;
+    const char *name;
+    struct _objc_symtab *symtab;
+   }
+  */
+  
+  printf("\nstruct _objc_module {\n");
+  printf("\tlong version;\n");
+  printf("\tlong size;\n");
+  printf("\tconst char *name;\n");
+  printf("\tstruct _objc_symtab *symtab;");
+  printf("};\n\n");
+  printf("static struct _objc_module "
+    "_OBJC_MODULES __attribute__ ((section (\"__OBJC, __module_info\")))= {\n");
+  printf("\t%d, %d, \"\", &_OBJC_SYMBOLS\n", OBJC_ABI_VERSION, 16);
+  printf("};\n\n");
+}
 
 RewriteTest::~RewriteTest() {
   // Get the top-level buffer that this corresponds to.
@@ -160,4 +230,6 @@ RewriteTest::~RewriteTest() {
   } else {
     printf("No changes\n");
   }
+  // Rewrite Objective-c meta data*
+  WriteObjcMetaData();
 }
