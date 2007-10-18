@@ -25,7 +25,7 @@ Stmt::child_iterator CXXCastExpr::child_begin() {
 }
 
 Stmt::child_iterator CXXCastExpr::child_end() {
-  return ++child_begin();
+  return reinterpret_cast<Stmt**>(&Op)+1;
 }
 
 // CXXBoolLiteralExpr
