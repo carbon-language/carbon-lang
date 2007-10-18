@@ -173,7 +173,7 @@ public:
 
   virtual
   bool SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
-                         const std::vector<MachineOperand> &Pred1) const;
+                         const std::vector<MachineOperand> &Pred2) const;
 
   virtual bool DefinesPredicate(MachineInstr *MI,
                                 std::vector<MachineOperand> &Pred) const;
