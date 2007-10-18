@@ -32,7 +32,7 @@ const TargetMachineRegistry::entry *
 TargetMachineRegistry::getClosestStaticTargetForModule(const Module &M,
                                                        std::string &Error) {
   std::vector<std::pair<unsigned, const entry *> > UsableTargets;
-  for (iterator I = begin(), E = end(); I != E; ++I)
+  for (Registry<TargetMachine>::iterator I = begin(), E = end(); I != E; ++I)
     if (unsigned Qual = I->ModuleMatchQualityFn(M))
       UsableTargets.push_back(std::make_pair(Qual, &*I));
 
@@ -60,7 +60,7 @@ TargetMachineRegistry::getClosestStaticTargetForModule(const Module &M,
 const TargetMachineRegistry::entry *
 TargetMachineRegistry::getClosestTargetForJIT(std::string &Error) {
   std::vector<std::pair<unsigned, const entry *> > UsableTargets;
-  for (iterator I = begin(), E = end(); I != E; ++I)
+  for (Registry<TargetMachine>::iterator I = begin(), E = end(); I != E; ++I)
     if (unsigned Qual = I->JITMatchQualityFn())
       UsableTargets.push_back(std::make_pair(Qual, &*I));
 
