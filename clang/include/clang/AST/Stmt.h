@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_STMT_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/AST/StmtIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator"
 #include <iosfwd>
@@ -95,23 +96,24 @@ public:
   /// Child Iterators: All subclasses must implement child_begin and child_end
   ///  to permit easy iteration over the substatements/subexpessions of an
   ///  AST node.  This permits easy iteration over all nodes in the AST.
-  typedef Stmt**                                               child_iterator;
-  typedef Stmt* const *                                  const_child_iterator;
+  typedef StmtIterator       child_iterator;
+  typedef ConstStmtIterator  const_child_iterator;
   
   typedef std::reverse_iterator<child_iterator>                
-  reverse_child_iterator;
+          reverse_child_iterator;
+  
   typedef std::reverse_iterator<const_child_iterator> 
-  const_reverse_child_iterator;
+          const_reverse_child_iterator;
   
   virtual child_iterator child_begin() = 0;
   virtual child_iterator child_end()   = 0;
   
   const_child_iterator child_begin() const {
-    return (child_iterator) const_cast<Stmt*>(this)->child_begin();
+    return const_child_iterator(const_cast<Stmt*>(this)->child_begin());
   }
   
   const_child_iterator child_end() const {
-    return (child_iterator) const_cast<Stmt*>(this)->child_end();  
+    return const_child_iterator(const_cast<Stmt*>(this)->child_end());
   }
   
   reverse_child_iterator child_rbegin() {

@@ -168,7 +168,7 @@ Stmt::child_iterator IndirectGotoStmt::child_begin() {
   return reinterpret_cast<Stmt**>(&Target); 
 }
 
-Stmt::child_iterator IndirectGotoStmt::child_end() { return child_begin()+1; }
+Stmt::child_iterator IndirectGotoStmt::child_end() { return ++child_begin(); }
 
 // ContinueStmt
 Stmt::child_iterator ContinueStmt::child_begin() { return NULL; }

@@ -268,7 +268,8 @@ protected:
     : ValueDecl(DK, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
 private:
   StorageClass SClass;
-  Expr *Init;
+  Expr *Init;  
+  friend class StmtIterator;
 };
 
 /// BlockVarDecl - Represent a local variable declaration.
