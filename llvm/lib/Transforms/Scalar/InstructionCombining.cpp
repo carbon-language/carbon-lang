@@ -8941,9 +8941,42 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
 
 
 /// InstCombineLoadCast - Fold 'load (cast P)' -> cast (load P)' when possible.
-static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
+static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI,
+					const TargetData *TD) {
   User *CI = cast<User>(LI.getOperand(0));
   Value *CastOp = CI->getOperand(0);
+
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(CI)) {
+    // Instead of loading constant c string, use corresponding integer value
+    // directly if string length is small enough.
+    const std::string &Str = CE->getOperand(0)->getStringValue();
+    if (!Str.empty()) {
+      unsigned len = Str.length();
+      const Type *Ty = cast<PointerType>(CE->getType())->getElementType();
+      unsigned numBits = Ty->getPrimitiveSizeInBits();
+      // Replace LI with immediate integer store.
+      if ((numBits >> 3) == len + 1) {
+	APInt StrVal(numBits, 0);
+	APInt SingleChar(numBits, 0);
+	if (TD->isLittleEndian()) {
+	  for (signed i = len-1; i >= 0; i--) {
+	    SingleChar = (uint64_t) Str[i];
+	    StrVal = (StrVal << 8) | SingleChar;
+	  }
+	} else {
+	  for (unsigned i = 0; i < len; i++) {
+	    SingleChar = (uint64_t) Str[i];
+		StrVal = (StrVal << 8) | SingleChar;
+	  }
+	  // Append NULL at the end.
+	  SingleChar = 0;
+	  StrVal = (StrVal << 8) | SingleChar;
+	}
+	Value *NL = ConstantInt::get(StrVal);
+	return IC.ReplaceInstUsesWith(LI, NL);
+      }
+    }
+  }
 
   const Type *DestPTy = cast<PointerType>(CI->getType())->getElementType();
   if (const PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType())) {
@@ -9050,7 +9083,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 
   // load (cast X) --> cast (load X) iff safe
   if (isa<CastInst>(Op))
-    if (Instruction *Res = InstCombineLoadCast(*this, LI))
+    if (Instruction *Res = InstCombineLoadCast(*this, LI, TD))
       return Res;
 
   // None of the following transforms are legal for volatile loads.
@@ -9114,7 +9147,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
         }
 
       } else if (CE->isCast()) {
-        if (Instruction *Res = InstCombineLoadCast(*this, LI))
+        if (Instruction *Res = InstCombineLoadCast(*this, LI, TD))
           return Res;
       }
   }
