@@ -48,7 +48,7 @@ namespace llvm {
     static const char *descof(const entry &Entry) { return Entry.ShortDesc; }
   };
 
-  struct TargetMachineRegistry : Registry<TargetMachine> {
+  struct TargetMachineRegistry : public Registry<TargetMachine> {
     /// getClosestStaticTargetForModule - Given an LLVM module, pick the best
     /// target that is compatible with the module.  If no close target can be
     /// found, this returns null and sets the Error string to a reason.
