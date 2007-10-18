@@ -61,9 +61,9 @@ void IA64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 void IA64RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                      SmallVector<MachineOperand,4> Addr,
+                                      SmallVectorImpl<MachineOperand> Addr,
                                       const TargetRegisterClass *RC,
-                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = 0;
   if (RC == IA64::FPRegisterClass) {
     Opc = IA64::STF8;
@@ -113,9 +113,9 @@ void IA64RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 void IA64RegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                       SmallVector<MachineOperand,4> Addr,
+                                       SmallVectorImpl<MachineOperand> Addr,
                                        const TargetRegisterClass *RC,
-                                       SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = 0;
   if (RC == IA64::FPRegisterClass) {
     Opc = IA64::LDF8;

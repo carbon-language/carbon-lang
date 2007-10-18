@@ -96,9 +96,9 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 }
 
 void MipsRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                      SmallVector<MachineOperand,4> Addr,
+                                      SmallVectorImpl<MachineOperand> Addr,
                                       const TargetRegisterClass *RC,
-                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   if (RC != Mips::CPURegsRegisterClass)
     assert(0 && "Can't store this register");
   MachineInstrBuilder MIB = BuildMI(TII.get(Mips::SW))
@@ -128,9 +128,9 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 }
 
 void MipsRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                       SmallVector<MachineOperand,4> Addr,
+                                       SmallVectorImpl<MachineOperand> Addr,
                                        const TargetRegisterClass *RC,
-                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   if (RC != Mips::CPURegsRegisterClass)
     assert(0 && "Can't load this register");
   MachineInstrBuilder MIB = BuildMI(TII.get(Mips::LW), DestReg);

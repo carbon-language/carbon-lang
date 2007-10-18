@@ -508,9 +508,9 @@ public:
                                    const TargetRegisterClass *RC) const = 0;
 
   virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                              SmallVector<MachineOperand,4> Addr,
+                              SmallVectorImpl<MachineOperand> Addr,
                               const TargetRegisterClass *RC,
-                              SmallVector<MachineInstr*,4> &NewMIs) const = 0;
+                              SmallVectorImpl<MachineInstr*> &NewMIs) const = 0;
 
   virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator MI,
@@ -518,9 +518,9 @@ public:
                                     const TargetRegisterClass *RC) const = 0;
 
   virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                               SmallVector<MachineOperand,4> Addr,
+                               SmallVectorImpl<MachineOperand> Addr,
                                const TargetRegisterClass *RC,
-                               SmallVector<MachineInstr*,4> &NewMIs) const = 0;
+                               SmallVectorImpl<MachineInstr*> &NewMIs) const =0;
 
   virtual void copyRegToReg(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
@@ -568,12 +568,12 @@ public:
   /// possible, returns true as well as the new instructions by reference.
   virtual bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                                 unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
-                                   SmallVector<MachineInstr*, 4> &NewMIs) const{
+                                  SmallVectorImpl<MachineInstr*> &NewMIs) const{
     return false;
   }
 
   virtual bool unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
-                                   SmallVector<SDNode*, 4> &NewNodes) const {
+                                   SmallVectorImpl<SDNode*> &NewNodes) const {
     return false;
   }
 

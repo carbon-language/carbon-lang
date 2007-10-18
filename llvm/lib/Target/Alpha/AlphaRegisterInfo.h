@@ -34,9 +34,9 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
                            const TargetRegisterClass *RC) const;
 
   void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                      SmallVector<MachineOperand,4> Addr,
+                      SmallVectorImpl<MachineOperand> Addr,
                       const TargetRegisterClass *RC,
-                      SmallVector<MachineInstr*, 4> &NewMIs) const;
+                      SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI,
@@ -44,9 +44,9 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
                             const TargetRegisterClass *RC) const;
   
   void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                       SmallVector<MachineOperand,4> Addr,
+                       SmallVectorImpl<MachineOperand> Addr,
                        const TargetRegisterClass *RC,
-                       SmallVector<MachineInstr*, 4> &NewMIs) const;
+                       SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
   MachineInstr* foldMemoryOperand(MachineInstr *MI, unsigned OpNum, 
                                   int FrameIndex) const;

@@ -89,9 +89,9 @@ public:
                            const TargetRegisterClass *RC) const;
 
   void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                      SmallVector<MachineOperand,4> Addr,
+                      SmallVectorImpl<MachineOperand> Addr,
                       const TargetRegisterClass *RC,
-                      SmallVector<MachineInstr*,4> &NewMIs) const;
+                      SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
@@ -99,9 +99,9 @@ public:
                             const TargetRegisterClass *RC) const;
 
   void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                       SmallVector<MachineOperand,4> Addr,
+                       SmallVectorImpl<MachineOperand> Addr,
                        const TargetRegisterClass *RC,
-                       SmallVector<MachineInstr*,4> &NewMIs) const;
+                       SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
   void copyRegToReg(MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator MI,
@@ -137,10 +137,10 @@ public:
   /// possible, returns true as well as the new instructions by reference.
   bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                            unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
-                           SmallVector<MachineInstr*, 4> &NewMIs) const;
+                           SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
   bool unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
-                           SmallVector<SDNode*, 4> &NewNodes) const;
+                           SmallVectorImpl<SDNode*> &NewNodes) const;
 
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee-save registers on this target.

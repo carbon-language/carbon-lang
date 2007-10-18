@@ -49,9 +49,9 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 }
 
 void SparcRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                       SmallVector<MachineOperand,4> Addr,
+                                       SmallVectorImpl<MachineOperand> Addr,
                                        const TargetRegisterClass *RC,
-                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = 0;
   if (RC == SP::IntRegsRegisterClass)
     Opc = SP::STri;
@@ -91,9 +91,9 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 }
 
 void SparcRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                        SmallVector<MachineOperand,4> Addr,
+                                        SmallVectorImpl<MachineOperand> Addr,
                                         const TargetRegisterClass *RC,
-                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = 0;
   if (RC == SP::IntRegsRegisterClass)
     Opc = SP::LDri;

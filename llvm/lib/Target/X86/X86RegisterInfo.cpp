@@ -806,9 +806,9 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 void X86RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                     SmallVector<MachineOperand,4> Addr,
+                                     SmallVectorImpl<MachineOperand> Addr,
                                      const TargetRegisterClass *RC,
-                                   SmallVector<MachineInstr*,4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = getStoreRegOpcode(RC);
   MachineInstrBuilder MIB = BuildMI(TII.get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
@@ -862,9 +862,9 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 void X86RegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                      SmallVector<MachineOperand,4> Addr,
+                                      SmallVectorImpl<MachineOperand> Addr,
                                       const TargetRegisterClass *RC,
-                                      SmallVector<MachineInstr*,4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = getLoadRegOpcode(RC);
   MachineInstrBuilder MIB = BuildMI(TII.get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
@@ -1119,7 +1119,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned OpNu
 
 bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                                 unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
-                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
     MemOp2RegOpTable.find((unsigned*)MI->getOpcode());
   if (I == MemOp2RegOpTable.end())
@@ -1199,7 +1199,7 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
 
 bool
 X86RegisterInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
-                                     SmallVector<SDNode*, 4> &NewNodes) const {
+                                     SmallVectorImpl<SDNode*> &NewNodes) const {
   if (!N->isTargetOpcode())
     return false;
 

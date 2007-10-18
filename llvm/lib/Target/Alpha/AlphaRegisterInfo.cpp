@@ -83,9 +83,9 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 void AlphaRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                       SmallVector<MachineOperand,4> Addr,
+                                       SmallVectorImpl<MachineOperand> Addr,
                                        const TargetRegisterClass *RC,
-                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = 0;
   if (RC == Alpha::F4RCRegisterClass)
     Opc = Alpha::STS;
@@ -128,9 +128,9 @@ AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 void AlphaRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                        SmallVector<MachineOperand,4> Addr,
+                                        SmallVectorImpl<MachineOperand> Addr,
                                         const TargetRegisterClass *RC,
-                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = 0;
   if (RC == Alpha::F4RCRegisterClass)
     Opc = Alpha::LDS;

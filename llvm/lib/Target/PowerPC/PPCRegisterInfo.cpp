@@ -106,7 +106,7 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
 static void StoreRegToStackSlot(const TargetInstrInfo &TII,
                                 unsigned SrcReg, int FrameIdx,
                                 const TargetRegisterClass *RC,
-                                SmallVector<MachineInstr*, 4> &NewMIs) {
+                                SmallVectorImpl<MachineInstr*> &NewMIs) {
   if (RC == PPC::GPRCRegisterClass) {
     if (SrcReg != PPC::LR) {
       NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STW))
@@ -182,9 +182,9 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 void PPCRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                     SmallVector<MachineOperand,4> Addr,
+                                     SmallVectorImpl<MachineOperand> Addr,
                                      const TargetRegisterClass *RC,
-                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
   if (Addr[0].isFrameIndex()) {
     StoreRegToStackSlot(TII, SrcReg, Addr[0].getFrameIndex(), RC, NewMIs);
     return;
@@ -223,7 +223,7 @@ void PPCRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
 static void LoadRegFromStackSlot(const TargetInstrInfo &TII,
                                  unsigned DestReg, int FrameIdx,
                                  const TargetRegisterClass *RC,
-                                 SmallVector<MachineInstr*, 4> &NewMIs) {
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) {
   if (RC == PPC::GPRCRegisterClass) {
     if (DestReg != PPC::LR) {
       NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::LWZ), DestReg),
@@ -291,9 +291,9 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 void PPCRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                      SmallVector<MachineOperand,4> Addr,
+                                      SmallVectorImpl<MachineOperand> Addr,
                                       const TargetRegisterClass *RC,
-                                  SmallVector<MachineInstr*, 4> &NewMIs) const {
+                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   if (Addr[0].isFrameIndex()) {
     LoadRegFromStackSlot(TII, DestReg, Addr[0].getFrameIndex(), RC, NewMIs);
     return;
