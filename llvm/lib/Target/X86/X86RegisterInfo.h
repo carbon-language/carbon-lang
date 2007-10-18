@@ -89,7 +89,7 @@ public:
                            const TargetRegisterClass *RC) const;
 
   void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                      SmallVectorImpl<MachineOperand> Addr,
+                      SmallVectorImpl<MachineOperand> &Addr,
                       const TargetRegisterClass *RC,
                       SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
@@ -99,7 +99,7 @@ public:
                             const TargetRegisterClass *RC) const;
 
   void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                       SmallVectorImpl<MachineOperand> Addr,
+                       SmallVectorImpl<MachineOperand> &Addr,
                        const TargetRegisterClass *RC,
                        SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
@@ -141,6 +141,12 @@ public:
 
   bool unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
                            SmallVectorImpl<SDNode*> &NewNodes) const;
+
+  /// getOpcodeAfterMemoryUnfold - Returns the opcode of the would be new
+  /// instruction after load / store are unfolded from the specified opcode.
+  /// It returns zero if the specified unfolding is impossible.
+  unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
+                                      bool UnfoldLoad, bool UnfoldStore) const;
 
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee-save registers on this target.

@@ -508,7 +508,7 @@ public:
                                    const TargetRegisterClass *RC) const = 0;
 
   virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                              SmallVectorImpl<MachineOperand> Addr,
+                              SmallVectorImpl<MachineOperand> &Addr,
                               const TargetRegisterClass *RC,
                               SmallVectorImpl<MachineInstr*> &NewMIs) const = 0;
 
@@ -518,7 +518,7 @@ public:
                                     const TargetRegisterClass *RC) const = 0;
 
   virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                               SmallVectorImpl<MachineOperand> Addr,
+                               SmallVectorImpl<MachineOperand> &Addr,
                                const TargetRegisterClass *RC,
                                SmallVectorImpl<MachineInstr*> &NewMIs) const =0;
 
@@ -575,6 +575,14 @@ public:
   virtual bool unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
                                    SmallVectorImpl<SDNode*> &NewNodes) const {
     return false;
+  }
+
+  /// getOpcodeAfterMemoryUnfold - Returns the opcode of the would be new
+  /// instruction after load / store are unfolded from the specified opcode.
+  /// It returns zero if the specified unfolding is impossible.
+  virtual unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
+                                      bool UnfoldLoad, bool UnfoldStore) const {
+    return 0;
   }
 
   /// targetHandlesStackFrameRounding - Returns true if the target is

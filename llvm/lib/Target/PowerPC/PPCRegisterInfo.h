@@ -41,7 +41,7 @@ public:
                            const TargetRegisterClass *RC) const;
 
   void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                      SmallVectorImpl<MachineOperand> Addr,
+                      SmallVectorImpl<MachineOperand> &Addr,
                       const TargetRegisterClass *RC,
                       SmallVectorImpl<MachineInstr*> &NewMIs) const;
 
@@ -51,7 +51,7 @@ public:
                             const TargetRegisterClass *RC) const;
 
   void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                       SmallVectorImpl<MachineOperand> Addr,
+                       SmallVectorImpl<MachineOperand> &Addr,
                        const TargetRegisterClass *RC,
                        SmallVectorImpl<MachineInstr*> &NewMIs) const;
 

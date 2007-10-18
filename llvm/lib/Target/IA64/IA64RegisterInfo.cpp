@@ -61,7 +61,7 @@ void IA64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 void IA64RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                      SmallVectorImpl<MachineOperand> Addr,
+                                      SmallVectorImpl<MachineOperand> &Addr,
                                       const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = 0;
@@ -113,7 +113,7 @@ void IA64RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 void IA64RegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                       SmallVectorImpl<MachineOperand> Addr,
+                                       SmallVectorImpl<MachineOperand> &Addr,
                                        const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = 0;

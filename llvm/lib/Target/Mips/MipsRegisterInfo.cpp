@@ -96,7 +96,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 }
 
 void MipsRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                      SmallVectorImpl<MachineOperand> Addr,
+                                      SmallVectorImpl<MachineOperand> &Addr,
                                       const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   if (RC != Mips::CPURegsRegisterClass)
@@ -128,7 +128,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 }
 
 void MipsRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                       SmallVectorImpl<MachineOperand> Addr,
+                                       SmallVectorImpl<MachineOperand> &Addr,
                                        const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   if (RC != Mips::CPURegsRegisterClass)

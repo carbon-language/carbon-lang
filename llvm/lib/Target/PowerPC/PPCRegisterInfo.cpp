@@ -182,7 +182,7 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 void PPCRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                     SmallVectorImpl<MachineOperand> Addr,
+                                     SmallVectorImpl<MachineOperand> &Addr,
                                      const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   if (Addr[0].isFrameIndex()) {
@@ -291,7 +291,7 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 void PPCRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                      SmallVectorImpl<MachineOperand> Addr,
+                                      SmallVectorImpl<MachineOperand> &Addr,
                                       const TargetRegisterClass *RC,
                                   SmallVectorImpl<MachineInstr*> &NewMIs) const {
   if (Addr[0].isFrameIndex()) {

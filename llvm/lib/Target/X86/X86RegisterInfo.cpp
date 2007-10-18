@@ -806,7 +806,7 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 void X86RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                     SmallVectorImpl<MachineOperand> Addr,
+                                     SmallVectorImpl<MachineOperand> &Addr,
                                      const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = getStoreRegOpcode(RC);
@@ -862,7 +862,7 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 }
 
 void X86RegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                      SmallVectorImpl<MachineOperand> Addr,
+                                      SmallVectorImpl<MachineOperand> &Addr,
                                       const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   unsigned Opc = getLoadRegOpcode(RC);
@@ -1273,6 +1273,20 @@ X86RegisterInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   return true;
 }
 
+unsigned X86RegisterInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
+                                      bool UnfoldLoad, bool UnfoldStore) const {
+  DenseMap<unsigned*, std::pair<unsigned,unsigned> >::iterator I =
+    MemOp2RegOpTable.find((unsigned*)Opc);
+  if (I == MemOp2RegOpTable.end())
+    return 0;
+  bool HasLoad = I->second.second & (1 << 4);
+  bool HasStore = I->second.second & (1 << 5);
+  if (UnfoldLoad && !HasLoad)
+    return 0;
+  if (UnfoldStore && !HasStore)
+    return 0;
+  return I->second.first;
+}
 
 const unsigned *
 X86RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
