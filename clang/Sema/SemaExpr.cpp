@@ -867,12 +867,14 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
     UsualUnaryConversions(lhsExpr);
     UsualUnaryConversions(rhsExpr);
   }
-  QualType lhs = lhsExpr->getType();
-  QualType rhs = rhsExpr->getType();
+  // For conversion purposes, we ignore any qualifiers. 
+  // For example, "const float" and "float" are equivalent.
+  QualType lhs = lhsExpr->getType().getUnqualifiedType();
+  QualType rhs = rhsExpr->getType().getUnqualifiedType();
   
   // If both types are identical, no conversion is needed.
-  if (lhs.getTypePtr() == rhs.getTypePtr())
-    return lhs.getQualifiedType(0);
+  if (lhs == rhs)
+    return lhs;
   
   // If either side is a non-arithmetic type (e.g. a pointer), we are done.
   // The caller can deal with this (e.g. pointer + int).
