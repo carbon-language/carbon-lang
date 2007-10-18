@@ -601,7 +601,7 @@ static Value *getAISize(Value *Amt) {
     Amt = ConstantInt::get(Type::Int32Ty, 1);
   else {
     assert(!isa<BasicBlock>(Amt) &&
-           "Passed basic block into allocation size parameter!  Ue other ctor");
+           "Passed basic block into allocation size parameter! Use other ctor");
     assert(Amt->getType() == Type::Int32Ty &&
            "Malloc/Allocation array size is not a 32-bit integer!");
   }
