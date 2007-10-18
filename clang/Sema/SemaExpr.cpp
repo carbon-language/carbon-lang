@@ -1906,8 +1906,9 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(ExprTy *string) {
     ScopedDecl *IFace = LookupScopedDecl(NSIdent, Decl::IDNS_Ordinary, 
                                          SourceLocation(), TUScope);
     ObjcInterfaceDecl *strIFace = dyn_cast_or_null<ObjcInterfaceDecl>(IFace);
-    assert(strIFace && "missing @interface for NSConstantString"
-           "FIXME: need to predefine without breaking explicit inclusion");
+    if (!strIFace)
+      return Diag(S->getLocStart(), diag::err_undef_interface,
+                  NSIdent->getName());
     Context.setObjcConstantStringInterface(strIFace);
   }
   QualType t = Context.getObjcConstantStringInterface();
