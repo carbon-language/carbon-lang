@@ -20,6 +20,10 @@ namespace RTLIB {
   /// RTLIB::Libcall enum - This enum defines all of the runtime library calls
   /// the backend can emit.  The various long double types cannot be merged,
   /// because 80-bit library functions use "xf" and 128-bit use "tf".
+  /// 
+  /// When adding PPCF128 functions here, note that their names generally need
+  /// to be overridden for Darwin with the xxx$LDBL128 form.  See
+  /// PPCISelLowering.cpp.
   ///
   enum Libcall {
     // Integer

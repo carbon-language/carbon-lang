@@ -3493,7 +3493,7 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
     return DAG.getNode(ISD::FP_EXTEND, VT, N0);
   
   // fold (fpext (load x)) -> (fpext (fpround (extload x)))
-  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
+  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() && VT != MVT::ppcf128 &&
       (!AfterLegalize||TLI.isLoadXLegal(ISD::EXTLOAD, N0.getValueType()))) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDOperand ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, VT, LN0->getChain(),

@@ -341,6 +341,13 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   setTargetDAGCombine(ISD::BR_CC);
   setTargetDAGCombine(ISD::BSWAP);
   
+  // Darwin long double math library functions have $LDBL128 appended.
+  if (TM.getSubtarget<PPCSubtarget>().isDarwin()) {
+    setLibcallName(RTLIB::SQRT_PPCF128, "sqrtl$LDBL128");
+    setLibcallName(RTLIB::POW_PPCF128, "powl$LDBL128");
+    setLibcallName(RTLIB::REM_PPCF128, "fmodl$LDBL128");
+  }
+
   computeRegisterProperties();
 }
 
