@@ -4150,9 +4150,9 @@ SDOperand SelectionDAGLegalize::ExpandEXTRACT_VECTOR_ELT(SDOperand Op) {
 
     if (MVT::getSizeInBits(Idx.getValueType()) >
         MVT::getSizeInBits(TLI.getPointerTy()))
-      Idx = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), StackPtr);
+      Idx = DAG.getNode(ISD::TRUNCATE, TLI.getPointerTy(), Idx);
     else
-      Idx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), StackPtr);
+      Idx = DAG.getNode(ISD::ZERO_EXTEND, TLI.getPointerTy(), Idx);
 
     StackPtr = DAG.getNode(ISD::ADD, Idx.getValueType(), Idx, StackPtr);
 
