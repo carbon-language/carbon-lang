@@ -133,6 +133,7 @@ void RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
 void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
   ObjcInterfaceDecl *CDecl = IDecl->getClassInterface();
   
+  // Build _objc_ivar_list metadata for classes ivars if needed
   if (IDecl->getImplDeclNumIvars() > 0 || 
       CDecl&& CDecl->getIntfDeclNumIvars() > 0) {
     static bool objc_ivar = false;
@@ -177,6 +178,48 @@ void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
       printf("\t,\"%s\", \"\", 0\n", Ivars[i]->getName());
     printf("};\n");
   }
+  
+  // Build _objc_method_list for class's instance methods if needed
+  if (IDecl->getNumInstanceMethods() > 0) {
+    int NumMethods = IDecl->getNumInstanceMethods();
+    static bool objc_method = false;
+    if (!objc_method) {
+      /* struct _objc_method {
+           SEL _cmd;
+           char *method_types;
+           void *_imp;
+         }
+      */
+      printf("\nstruct _objc_method {\n");
+      printf("\tSEL _cmd;\n");
+      printf("\tchar *method_types;\n");
+      printf("\tvoid *_imp;\n");
+      printf("};\n");
+      objc_method = true;
+    }
+    /* struct _objc_method_list {
+         struct objc_method_list *next_method;
+         int method_count;
+         struct _objc_method method_list[method_count];
+       }
+    */
+    printf("\nstatic struct {\n");
+    printf("\tstruct objc_method_list *next_method;\n");
+    printf("\tint method_count;\n");
+    printf("\tstruct _objc_method method_list[%d];\n", NumMethods);
+    printf("} _OBJC_INSTANCE_METHODS_%s "
+           "__attribute__ ((section (\"__OBJC, __inst_meth\")))= "
+           "{\n\t0, %d\n", IDecl->getName(), NumMethods);
+    ObjcMethodDecl **Methods = IDecl->getInstanceMethods();
+    for (int i = 0; i < NumMethods; i++)
+      // TODO: 1) method selector name may hav to go into their own section
+      // 2) encode method types for use here (which may have to go into 
+      // __meth_var_types section, 3) Need method address as 3rd initializer.
+      printf("\t,(SEL)\"%s\", \"\", 0\n", 
+             Methods[i]->getSelector().getName().c_str());
+    printf("};\n");
+  }
+  
   
 }
 
