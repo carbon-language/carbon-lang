@@ -725,19 +725,6 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
   if (ExtType == ISD::NON_EXTLOAD) {
     Lo = DAG.getLoad(NVT, Ch, Ptr, N->getSrcValue(), SVOffset,
                      isVolatile, Alignment);
-    if (VT == MVT::f32 || VT == MVT::f64) {
-      assert(0 && "FIXME: softfp should use promotion!");
-#if 0
-      // f32->i32 or f64->i64 one to one expansion.
-      // Remember that we legalized the chain.
-      AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Lo.getValue(1)));
-      // Recursively expand the new load.
-      if (getTypeAction(NVT) == Expand)
-        ExpandOp(Lo, Lo, Hi);
-      break;
-#endif
-    }
-    
     // Increment the pointer to the other half.
     unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
@@ -755,19 +742,6 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
       std::swap(Lo, Hi);
   } else {
     MVT::ValueType EVT = N->getLoadedVT();
-    
-    if (VT == MVT::f64 && EVT == MVT::f32) {
-      assert(0 && "FIXME: softfp should use promotion!");
-#if 0
-      // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
-      SDOperand Load = DAG.getLoad(EVT, Ch, Ptr, N->getSrcValue(),
-                                   SVOffset, isVolatile, Alignment);
-      // Remember that we legalized the chain.
-      AddLegalizedOperand(SDOperand(Node, 1), LegalizeOp(Load.getValue(1)));
-      ExpandOp(DAG.getNode(ISD::FP_EXTEND, VT, Load), Lo, Hi);
-      break;
-#endif
-    }
     
     if (EVT == NVT)
       Lo = DAG.getLoad(NVT, Ch, Ptr, N->getSrcValue(),
@@ -843,13 +817,11 @@ void DAGTypeLegalizer::ExpandResult_ADDSUB(SDNode *N,
   // If the target wants to custom expand this, let them.
   if (TLI.getOperationAction(N->getOpcode(), VT) ==
       TargetLowering::Custom) {
-    SDOperand Op = TLI.LowerOperation(SDOperand(N, 0), DAG);
-    // FIXME: Do a replace all uses with here!
-    assert(0 && "Custom not impl yet!");
-    if (Op.Val) {
-#if 0
-      ExpandOp(Op, Lo, Hi);
-#endif
+    std::pair<SDOperand,SDOperand> Ret = 
+      TLI.ExpandOperation(SDOperand(N, 0), DAG);
+    if (Ret.first.Val) {
+      Lo = Ret.first;
+      Hi = Ret.second;
       return;
     }
   }
@@ -905,13 +877,11 @@ void DAGTypeLegalizer::ExpandResult_MUL(SDNode *N,
   
   // If the target wants to custom expand this, let them.
   if (TLI.getOperationAction(ISD::MUL, VT) == TargetLowering::Custom) {
-    SDOperand New = TLI.LowerOperation(SDOperand(N, 0), DAG);
-    if (New.Val) {
-      // FIXME: Do a replace all uses with here!
-      assert(0 && "Custom not impl yet!");
-#if 0
-      ExpandOp(New, Lo, Hi);
-#endif
+    std::pair<SDOperand,SDOperand> Ret = 
+      TLI.ExpandOperation(SDOperand(N, 0), DAG);
+    if (Ret.first.Val) {
+      Lo = Ret.first;
+      Hi = Ret.second;
       return;
     }
   }
@@ -990,15 +960,11 @@ void DAGTypeLegalizer::ExpandResult_Shift(SDNode *N,
   
   // If the target wants custom lowering, do so.
   if (TLI.getOperationAction(N->getOpcode(), VT) == TargetLowering::Custom) {
-    SDOperand Op = TLI.LowerOperation(SDOperand(N, 0), DAG);
-    if (Op.Val) {
-      // Now that the custom expander is done, expand the result, which is
-      // still VT.
-      // FIXME: Do a replace all uses with here!
-      abort();
-#if 0
-      ExpandOp(Op, Lo, Hi);
-#endif
+    std::pair<SDOperand,SDOperand> Ret = 
+       TLI.ExpandOperation(SDOperand(N, 0), DAG);
+    if (Ret.first.Val) {
+      Lo = Ret.first;
+      Hi = Ret.second;
       return;
     }
   }
