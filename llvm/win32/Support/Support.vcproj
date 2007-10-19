@@ -431,10 +431,6 @@
 				RelativePath="..\..\include\llvm\Support\type_traits.h"
 				>
 			</File>
-			<File
-				RelativePath="..\..\include\llvm\Support\TypeInfo.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="ADT"
