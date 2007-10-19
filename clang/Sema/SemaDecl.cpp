@@ -635,8 +635,14 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
 void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
   Decl *RealDecl = static_cast<Decl *>(dcl);
   Expr *Init = static_cast<Expr *>(init);
+  assert(Init && "missing initializer");
   
-  assert((RealDecl && Init) && "missing decl or initializer");
+  // If there is no declaration, there was an error parsing it.  Just ignore
+  // the initializer.
+  if (RealDecl == 0) {
+    delete Init;
+    return;
+  }
   
   VarDecl *VDecl = dyn_cast<VarDecl>(RealDecl);
   if (!VDecl) {
