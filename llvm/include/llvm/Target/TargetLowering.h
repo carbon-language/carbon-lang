@@ -885,6 +885,15 @@ public:
   /// implement this.  The default implementation of this aborts.
   virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
+  /// ExpandOperation - This callback is invoked for operations that are 
+  /// unsupported by the target, which are registered to use 'custom' lowering,
+  /// and whose result type needs to be expanded.
+  ///
+  /// If the target has no operations that require custom lowering, it need not
+  /// implement this.  The default implementation of this aborts.
+  virtual std::pair<SDOperand,SDOperand> 
+    ExpandOperation(SDOperand Op, SelectionDAG &DAG);
+  
   /// IsEligibleForTailCallOptimization - Check whether the call is eligible for
   /// tail call optimization. Targets which want to do tail call optimization
   /// should override this function. 

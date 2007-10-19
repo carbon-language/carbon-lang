@@ -4134,6 +4134,14 @@ SDOperand TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   return SDOperand();
 }
 
+std::pair<SDOperand,SDOperand>
+TargetLowering::ExpandOperation(SDOperand Op, SelectionDAG &DAG) {
+  assert(0 && "ExpandOperation not implemented for this target!");
+  abort();
+  return std::pair<SDOperand,SDOperand>();
+}
+
+
 SDOperand TargetLowering::CustomPromoteOperation(SDOperand Op,
                                                  SelectionDAG &DAG) {
   assert(0 && "CustomPromoteOperation not implemented for this target!");
