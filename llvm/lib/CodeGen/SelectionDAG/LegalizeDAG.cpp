@@ -5443,7 +5443,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     } else {
       MVT::ValueType EVT = LD->getLoadedVT();
 
-      if (VT == MVT::f64 && EVT == MVT::f32) {
+      if ((VT == MVT::f64 && EVT == MVT::f32) ||
+          (VT == MVT::ppcf128 && (EVT==MVT::f64 || EVT==MVT::f32))) {
         // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
         SDOperand Load = DAG.getLoad(EVT, Ch, Ptr, LD->getSrcValue(),
                                      SVOffset, isVolatile, Alignment);
