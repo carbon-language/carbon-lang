@@ -1,18 +1,23 @@
-// RUN: %llvmgcc -x objective-c %s -arch i386 -pipe -std=gnu99 -O2 -fexceptions -S -o - | not grep Unwind_Resume
+#import <stdio.h>
 
-#import <Foundation/Foundation.h>
+@interface Foo {
+  char c;
+  short s;
+  int i;
+  long l;
+  float f;
+  double d;
+}
+-(Foo*)retain;
+@end
 
-static NSMutableArray *anArray = nil;
+struct Foo *bork(Foo *FooArray) {
+  struct Foo *result = 0;
+  @try {
+    result = [FooArray retain];
+  } @catch(id any) {
+    printf("hello world\n");
+  }
 
-CFArrayRef bork(void) {
-    CFArrayRef result = NULL;
-    NSAutoreleasePool *pool = [NSAutoreleasePool new];
-    @try {
-	result = CFRetain(anArray);
-    } @catch(id any) {
-	NSLog(@"Swallowed exception %@", any);
-    }
-
-    [pool release];
-    return result;
+  return result;
 }
