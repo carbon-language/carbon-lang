@@ -153,6 +153,7 @@ private:
   void ExpandResult_BSWAP      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_ADDSUB     (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_ADDSUBC    (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_ADDSUBE    (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SELECT     (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SELECT_CC  (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_MUL        (SDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -653,6 +654,8 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   case ISD::SUB:         ExpandResult_ADDSUB(N, Lo, Hi); break;
   case ISD::ADDC:
   case ISD::SUBC:        ExpandResult_ADDSUBC(N, Lo, Hi); break;
+  case ISD::ADDE:
+  case ISD::SUBE:        ExpandResult_ADDSUBE(N, Lo, Hi); break;
   case ISD::SELECT:      ExpandResult_SELECT(N, Lo, Hi); break;
   case ISD::SELECT_CC:   ExpandResult_SELECT_CC(N, Lo, Hi); break;
   case ISD::MUL:         ExpandResult_MUL(N, Lo, Hi); break;
@@ -901,6 +904,25 @@ void DAGTypeLegalizer::ExpandResult_ADDSUBC(SDNode *N,
     HiOps[2] = Lo.getValue(1);
     Hi = DAG.getNode(ISD::SUBE, VTList, HiOps, 3);
   }
+
+  // Legalized the flag result - switch anything that used the old flag to
+  // use the new one.
+  ReplaceLegalValueWith(SDOperand(N, 1), Hi.getValue(1));
+}
+
+void DAGTypeLegalizer::ExpandResult_ADDSUBE(SDNode *N,
+                                            SDOperand &Lo, SDOperand &Hi) {
+  // Expand the subcomponents.
+  SDOperand LHSL, LHSH, RHSL, RHSH;
+  GetExpandedOp(N->getOperand(0), LHSL, LHSH);
+  GetExpandedOp(N->getOperand(1), RHSL, RHSH);
+  SDVTList VTList = DAG.getVTList(LHSL.getValueType(), MVT::Flag);
+  SDOperand LoOps[3] = { LHSL, RHSL, N->getOperand(2) };
+  SDOperand HiOps[3] = { LHSH, RHSH };
+
+  Lo = DAG.getNode(N->getOpcode(), VTList, LoOps, 3);
+  HiOps[2] = Lo.getValue(1);
+  Hi = DAG.getNode(N->getOpcode(), VTList, HiOps, 3);
 
   // Legalized the flag result - switch anything that used the old flag to
   // use the new one.
