@@ -271,7 +271,8 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
   unsigned TailLen = 0;
   while (I1 != MBB1->begin() && I2 != MBB2->begin()) {
     --I1; --I2;
-    if (!I1->isIdenticalTo(I2)) {
+    if (!I1->isIdenticalTo(I2) || 
+        I1->getOpcode() == TargetInstrInfo::INLINEASM) {
       ++I1; ++I2;
       break;
     }
