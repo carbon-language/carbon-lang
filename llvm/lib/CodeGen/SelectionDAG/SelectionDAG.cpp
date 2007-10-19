@@ -2269,6 +2269,30 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   return getNode(Opcode, VT, Ops, 5);
 }
 
+SDOperand SelectionDAG::getMemcpy(SDOperand Chain, SDOperand Dest,
+                                  SDOperand Src, SDOperand Size,
+                                  SDOperand Align,
+                                  SDOperand AlwaysInline) {
+  SDOperand Ops[] = { Chain, Dest, Src, Size, Align, AlwaysInline };
+  return getNode(ISD::MEMCPY, MVT::Other, Ops, 6);
+}
+
+SDOperand SelectionDAG::getMemmove(SDOperand Chain, SDOperand Dest,
+                                  SDOperand Src, SDOperand Size,
+                                  SDOperand Align,
+                                  SDOperand AlwaysInline) {
+  SDOperand Ops[] = { Chain, Dest, Src, Size, Align, AlwaysInline };
+  return getNode(ISD::MEMMOVE, MVT::Other, Ops, 6);
+}
+
+SDOperand SelectionDAG::getMemset(SDOperand Chain, SDOperand Dest,
+                                  SDOperand Src, SDOperand Size,
+                                  SDOperand Align,
+                                  SDOperand AlwaysInline) {
+  SDOperand Ops[] = { Chain, Dest, Src, Size, Align, AlwaysInline };
+  return getNode(ISD::MEMSET, MVT::Other, Ops, 6);
+}
+
 SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
                                 SDOperand Chain, SDOperand Ptr,
                                 const Value *SV, int SVOffset,

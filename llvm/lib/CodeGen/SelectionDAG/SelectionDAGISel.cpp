@@ -4367,7 +4367,22 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
     }
   }
 
-  DAG.setRoot(DAG.getNode(Op, MVT::Other, getRoot(), Op1, Op2, Op3, Op4));
+  SDOperand AlwaysInline = DAG.getConstant(0, MVT::i1);
+  SDOperand Node;
+  switch(Op) {
+    default:
+      assert(0 && "Unknown Op");
+    case ISD::MEMCPY:
+      Node = DAG.getMemcpy(getRoot(), Op1, Op2, Op3, Op4, AlwaysInline);
+      break;
+    case ISD::MEMMOVE:
+      Node = DAG.getMemmove(getRoot(), Op1, Op2, Op3, Op4, AlwaysInline);
+      break;
+    case ISD::MEMSET:
+      Node = DAG.getMemset(getRoot(), Op1, Op2, Op3, Op4, AlwaysInline);
+      break;
+  }
+  DAG.setRoot(Node);
 }
 
 //===----------------------------------------------------------------------===//

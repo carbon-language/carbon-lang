@@ -2506,18 +2506,31 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
 
+    SDOperand Tmp6;
+    switch (getTypeAction(Node->getOperand(5).getValueType())) {  // bool
+    case Expand: assert(0 && "Cannot expand this yet!");
+    case Legal:
+      Tmp6 = LegalizeOp(Node->getOperand(5));
+      break;
+    case Promote:
+      Tmp6 = PromoteOp(Node->getOperand(5));
+      break;
+    }
+
     switch (TLI.getOperationAction(Node->getOpcode(), MVT::Other)) {
     default: assert(0 && "This action not implemented for this operation!");
     case TargetLowering::Custom:
       isCustom = true;
       // FALLTHROUGH
-    case TargetLowering::Legal:
-      Result = DAG.UpdateNodeOperands(Result, Tmp1, Tmp2, Tmp3, Tmp4, Tmp5);
+    case TargetLowering::Legal: {
+      SDOperand Ops[] = { Tmp1, Tmp2, Tmp3, Tmp4, Tmp5, Tmp6 };
+      Result = DAG.UpdateNodeOperands(Result, Ops, 6);
       if (isCustom) {
         Tmp1 = TLI.LowerOperation(Result, DAG);
         if (Tmp1.Val) Result = Tmp1;
       }
       break;
+    }
     case TargetLowering::Expand: {
       // Otherwise, the target does not support this operation.  Lower the
       // operation to an explicit libcall as appropriate.

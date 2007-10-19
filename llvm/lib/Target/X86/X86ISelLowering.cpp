@@ -1246,9 +1246,10 @@ X86TargetLowering::LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
 
     SDOperand AlignNode = DAG.getConstant(Align, MVT::i32);
     SDOperand  SizeNode = DAG.getConstant(Size, MVT::i32);
+    SDOperand AlwaysInline = DAG.getConstant(1, MVT::i1);
 
-    return DAG.getNode(ISD::MEMCPY, MVT::Other, Chain, PtrOff, Arg, SizeNode,
-                       AlignNode);
+    return DAG.getMemcpy(Chain, PtrOff, Arg, SizeNode, AlignNode,
+                         AlwaysInline);
   } else {
     return DAG.getStore(Chain, Arg, PtrOff, NULL, 0);
   }
@@ -4472,8 +4473,22 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   SDOperand SourceOp = Op.getOperand(2);
   SDOperand CountOp = Op.getOperand(3);
   SDOperand AlignOp = Op.getOperand(4);
+  SDOperand AlwaysInlineOp = Op.getOperand(5);
+
+  bool AlwaysInline = (bool)cast<ConstantSDNode>(AlwaysInlineOp)->getValue();
   unsigned Align = (unsigned)cast<ConstantSDNode>(AlignOp)->getValue();
   if (Align == 0) Align = 1;
+
+  // If size is unknown, call memcpy.
+  ConstantSDNode *I = dyn_cast<ConstantSDNode>(CountOp);
+  if (!I) {
+    assert(!AlwaysInline && "Cannot inline copy of unknown size");
+    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
+  }
+  unsigned Size = I->getValue();
+
+  if (AlwaysInline)
+    return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
 
   // The libc version is likely to be faster for the following cases. It can
   // use the address value and run time information about the CPU.
@@ -4483,13 +4498,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   if ((Align & 3) != 0)
     return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
 
-  // If size is unknown, call memcpy.
-  ConstantSDNode *I = dyn_cast<ConstantSDNode>(CountOp);
-  if (!I)
-    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
-
   // If size is more than the threshold, call memcpy.
-  unsigned Size = I->getValue();
   if (Size > Subtarget->getMinRepStrSizeThreshold())
     return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
 

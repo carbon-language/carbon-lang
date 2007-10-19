@@ -307,7 +307,19 @@ public:
                     SDOperand N5);
   SDOperand getNode(unsigned Opcode, SDVTList VTs,
                     const SDOperand *Ops, unsigned NumOps);
-  
+
+  SDOperand getMemcpy(SDOperand Chain, SDOperand Dest, SDOperand Src,
+                      SDOperand Size, SDOperand Align,
+                      SDOperand AlwaysInline);
+
+  SDOperand getMemmove(SDOperand Chain, SDOperand Dest, SDOperand Src,
+                      SDOperand Size, SDOperand Align,
+                      SDOperand AlwaysInline);
+
+  SDOperand getMemset(SDOperand Chain, SDOperand Dest, SDOperand Src,
+                      SDOperand Size, SDOperand Align,
+                      SDOperand AlwaysInline);
+
   /// getSetCC - Helper function to make it easier to build SetCC's if you just
   /// have an ISD::CondCode instead of an SDOperand.
   ///
