@@ -119,7 +119,9 @@ private:
 
   void GetExpandedOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
   void SetExpandedOp(SDOperand Op, SDOperand Lo, SDOperand Hi);
-    
+  
+  SDOperand CreateStackStoreLoad(SDOperand Op, MVT::ValueType DestVT);
+  
   // Result Promotion.
   void PromoteResult(SDNode *N, unsigned ResNo);
   SDOperand PromoteResult_UNDEF(SDNode *N);
@@ -141,6 +143,7 @@ private:
   void ExpandResult_ANY_EXTEND (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_ZERO_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SIGN_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_BIT_CONVERT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_LOAD       (LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   void ExpandResult_Logical    (SDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -414,6 +417,17 @@ void DAGTypeLegalizer::SetExpandedOp(SDOperand Op, SDOperand Lo,
     MarkNewNodes(Hi.Val);
 }
 
+SDOperand DAGTypeLegalizer::CreateStackStoreLoad(SDOperand Op, 
+                                                 MVT::ValueType DestVT) {
+  // Create the stack frame object.
+  SDOperand FIPtr = DAG.CreateStackTemporary(DestVT);
+  
+  // Emit a store to the stack slot.
+  SDOperand Store = DAG.getStore(DAG.getEntryNode(), Op, FIPtr, NULL, 0);
+  // Result is a load from the stack slot.
+  return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0);
+}
+
 //===----------------------------------------------------------------------===//
 //  Result Promotion
 //===----------------------------------------------------------------------===//
@@ -604,6 +618,7 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   case ISD::ANY_EXTEND:  ExpandResult_ANY_EXTEND(N, Lo, Hi); break;
   case ISD::ZERO_EXTEND: ExpandResult_ZERO_EXTEND(N, Lo, Hi); break;
   case ISD::SIGN_EXTEND: ExpandResult_SIGN_EXTEND(N, Lo, Hi); break;
+  case ISD::BIT_CONVERT: ExpandResult_BIT_CONVERT(N, Lo, Hi); break;
   case ISD::LOAD:        ExpandResult_LOAD(cast<LoadSDNode>(N), Lo, Hi); break;
     
   case ISD::AND:
@@ -677,6 +692,24 @@ void DAGTypeLegalizer::ExpandResult_SIGN_EXTEND(SDNode *N,
                    DAG.getConstant(LoSize-1, TLI.getShiftAmountTy()));
 }
 
+void DAGTypeLegalizer::ExpandResult_BIT_CONVERT(SDNode *N,
+                                                SDOperand &Lo, SDOperand &Hi) {
+  MVT::ValueType VT = N->getValueType(0);
+  if (TLI.getOperationAction(ISD::BIT_CONVERT, VT) == TargetLowering::Custom){
+    // If the target wants to, allow it to lower this itself.
+    std::pair<SDOperand,SDOperand> P =
+      TLI.ExpandOperation(SDOperand(N, 0), DAG);
+    if (P.first.Val) {
+      Lo = P.first;
+      Hi = P.second;
+      return;
+    }
+  }
+
+  // Lower the bit-convert to a store/load from the stack, then expand the load.
+  SDOperand Op = CreateStackStoreLoad(N->getOperand(0), VT);
+  ExpandResult_LOAD(cast<LoadSDNode>(Op.Val), Lo, Hi);
+}
 
 void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
