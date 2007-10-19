@@ -231,12 +231,12 @@ PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
   }
 
   if (TM.getSubtarget<PPCSubtarget>().use64BitRegs()) {
-    // 64 bit PowerPC implementations can support i64 types directly
+    // 64-bit PowerPC implementations can support i64 types directly
     addRegisterClass(MVT::i64, PPC::G8RCRegisterClass);
     // BUILD_PAIR can't be handled natively, and should be expanded to shl/or
     setOperationAction(ISD::BUILD_PAIR, MVT::i64, Expand);
   } else {
-    // 32 bit PowerPC wants to expand i64 shifts itself.
+    // 32-bit PowerPC wants to expand i64 shifts itself.
     setOperationAction(ISD::SHL_PARTS, MVT::i32, Custom);
     setOperationAction(ISD::SRA_PARTS, MVT::i32, Custom);
     setOperationAction(ISD::SRL_PARTS, MVT::i32, Custom);
@@ -2105,7 +2105,7 @@ static SDOperand LowerFP_ROUND_INREG(SDOperand Op, SelectionDAG &DAG) {
   assert(Op.getValueType() == MVT::ppcf128);
   SDNode *Node = Op.Val;
   assert(Node->getOperand(0).getValueType() == MVT::ppcf128);
-  assert(Node->getOperand(0).Val->getOpcode()==ISD::BUILD_PAIR);
+  assert(Node->getOperand(0).Val->getOpcode() == ISD::BUILD_PAIR);
   SDOperand Lo = Node->getOperand(0).Val->getOperand(0);
   SDOperand Hi = Node->getOperand(0).Val->getOperand(1);
 
