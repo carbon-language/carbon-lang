@@ -14,6 +14,8 @@
 
 #define DEBUG_TYPE "legalize-types"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Compiler.h"
@@ -175,6 +177,8 @@ private:
   // Operand Expansion.
   bool ExpandOperand(SDNode *N, unsigned OperandNo);
   SDOperand ExpandOperand_TRUNCATE(SDNode *N);
+  SDOperand ExpandOperand_UINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
+  SDOperand ExpandOperand_SINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
   SDOperand ExpandOperand_EXTRACT_ELEMENT(SDNode *N);
   SDOperand ExpandOperand_SETCC(SDNode *N);
   SDOperand ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo);
@@ -1358,6 +1362,12 @@ bool DAGTypeLegalizer::ExpandOperand(SDNode *N, unsigned OpNo) {
     abort();
     
   case ISD::TRUNCATE:        Res = ExpandOperand_TRUNCATE(N); break;
+  case ISD::SINT_TO_FP:
+    Res = ExpandOperand_SINT_TO_FP(N->getOperand(0), N->getValueType(0));
+    break;
+  case ISD::UINT_TO_FP:
+    Res = ExpandOperand_UINT_TO_FP(N->getOperand(0), N->getValueType(0)); 
+    break;
   case ISD::EXTRACT_ELEMENT: Res = ExpandOperand_EXTRACT_ELEMENT(N); break;
   case ISD::SETCC:           Res = ExpandOperand_SETCC(N); break;
 
@@ -1390,6 +1400,85 @@ SDOperand DAGTypeLegalizer::ExpandOperand_TRUNCATE(SDNode *N) {
   // Just truncate the low part of the source.
   return DAG.getNode(ISD::TRUNCATE, N->getValueType(0), InL);
 }
+
+SDOperand DAGTypeLegalizer::ExpandOperand_SINT_TO_FP(SDOperand Source, 
+                                                     MVT::ValueType DestTy) {
+  // We know the destination is legal, but that the input needs to be expanded.
+  assert(Source.getValueType() == MVT::i64 && "Only handle expand from i64!");
+  
+  // Check to see if the target has a custom way to lower this.  If so, use it.
+  switch (TLI.getOperationAction(ISD::SINT_TO_FP, Source.getValueType())) {
+  default: assert(0 && "This action not implemented for this operation!");
+  case TargetLowering::Legal:
+  case TargetLowering::Expand:
+    break;   // This case is handled below.
+  case TargetLowering::Custom:
+    SDOperand NV = TLI.LowerOperation(DAG.getNode(ISD::SINT_TO_FP, DestTy,
+                                                  Source), DAG);
+    if (NV.Val) return NV;
+    break;   // The target lowered this.
+  }
+  
+  RTLIB::Libcall LC;
+  if (DestTy == MVT::f32)
+    LC = RTLIB::SINTTOFP_I64_F32;
+  else {
+    assert(DestTy == MVT::f64 && "Unknown fp value type!");
+    LC = RTLIB::SINTTOFP_I64_F64;
+  }
+  
+  assert(0 && "FIXME: no libcalls yet!");
+  abort();
+#if 0
+  assert(TLI.getLibcallName(LC) && "Don't know how to expand this SINT_TO_FP!");
+  Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
+  SDOperand UnusedHiPart;
+  return ExpandLibCall(TLI.getLibcallName(LC), Source.Val, true, UnusedHiPart);
+#endif
+}
+
+SDOperand DAGTypeLegalizer::ExpandOperand_UINT_TO_FP(SDOperand Source, 
+                                                     MVT::ValueType DestTy) {
+  // We know the destination is legal, but that the input needs to be expanded.
+  assert(getTypeAction(Source.getValueType()) == Expand &&
+         "This is not an expansion!");
+  assert(Source.getValueType() == MVT::i64 && "Only handle expand from i64!");
+  
+  // If this is unsigned, and not supported, first perform the conversion to
+  // signed, then adjust the result if the sign bit is set.
+  SDOperand SignedConv = ExpandOperand_SINT_TO_FP(Source, DestTy);
+
+  // The 64-bit value loaded will be incorrectly if the 'sign bit' of the
+  // incoming integer is set.  To handle this, we dynamically test to see if
+  // it is set, and, if so, add a fudge factor.
+  SDOperand Lo, Hi;
+  GetExpandedOp(Source, Lo, Hi);
+  
+  SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Hi,
+                                   DAG.getConstant(0, Hi.getValueType()),
+                                   ISD::SETLT);
+  SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
+  SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
+                                    SignSet, Four, Zero);
+  uint64_t FF = 0x5f800000ULL;
+  if (TLI.isLittleEndian()) FF <<= 32;
+  Constant *FudgeFactor = ConstantInt::get(Type::Int64Ty, FF);
+  
+  SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
+  CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
+  SDOperand FudgeInReg;
+  if (DestTy == MVT::f32)
+    FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx, NULL, 0);
+  else if (MVT::getSizeInBits(DestTy) > MVT::getSizeInBits(MVT::f32))
+    // FIXME: Avoid the extend by construction the right constantpool?
+    FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, DestTy, DAG.getEntryNode(),
+                                CPIdx, NULL, 0, MVT::f32);
+  else 
+    assert(0 && "Unexpected conversion");
+  
+  return DAG.getNode(ISD::FADD, DestTy, SignedConv, FudgeInReg);
+}
+
 
 SDOperand DAGTypeLegalizer::ExpandOperand_EXTRACT_ELEMENT(SDNode *N) {
   SDOperand Lo, Hi;
