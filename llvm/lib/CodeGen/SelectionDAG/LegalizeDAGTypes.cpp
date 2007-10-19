@@ -146,9 +146,11 @@ private:
   void ExpandResult_ZERO_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SIGN_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_BIT_CONVERT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_SIGN_EXTEND_INREG(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_LOAD       (LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
 
   void ExpandResult_Logical    (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_BSWAP      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_ADDSUB     (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_ADDSUBC    (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SELECT     (SDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -177,6 +179,7 @@ private:
   // Operand Expansion.
   bool ExpandOperand(SDNode *N, unsigned OperandNo);
   SDOperand ExpandOperand_TRUNCATE(SDNode *N);
+  SDOperand ExpandOperand_BIT_CONVERT(SDNode *N);
   SDOperand ExpandOperand_UINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
   SDOperand ExpandOperand_SINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
   SDOperand ExpandOperand_EXTRACT_ELEMENT(SDNode *N);
@@ -639,11 +642,13 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   case ISD::ZERO_EXTEND: ExpandResult_ZERO_EXTEND(N, Lo, Hi); break;
   case ISD::SIGN_EXTEND: ExpandResult_SIGN_EXTEND(N, Lo, Hi); break;
   case ISD::BIT_CONVERT: ExpandResult_BIT_CONVERT(N, Lo, Hi); break;
+  case ISD::SIGN_EXTEND_INREG: ExpandResult_SIGN_EXTEND_INREG(N, Lo, Hi); break;
   case ISD::LOAD:        ExpandResult_LOAD(cast<LoadSDNode>(N), Lo, Hi); break;
     
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:         ExpandResult_Logical(N, Lo, Hi); break;
+  case ISD::BSWAP:       ExpandResult_BSWAP(N, Lo, Hi); break;
   case ISD::ADD:
   case ISD::SUB:         ExpandResult_ADDSUB(N, Lo, Hi); break;
   case ISD::ADDC:
@@ -719,6 +724,22 @@ void DAGTypeLegalizer::ExpandResult_BIT_CONVERT(SDNode *N,
   ExpandResult_LOAD(cast<LoadSDNode>(Op.Val), Lo, Hi);
 }
 
+void DAGTypeLegalizer::
+ExpandResult_SIGN_EXTEND_INREG(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
+  GetExpandedOp(N->getOperand(0), Lo, Hi);
+  
+  // sext_inreg the low part if needed.
+  Lo = DAG.getNode(ISD::SIGN_EXTEND_INREG, Lo.getValueType(), Lo,
+                   N->getOperand(1));
+  
+  // The high part gets the sign extension from the lo-part.  This handles
+  // things like sextinreg V:i64 from i8.
+  Hi = DAG.getNode(ISD::SRA, Hi.getValueType(), Lo,
+                   DAG.getConstant(MVT::getSizeInBits(Hi.getValueType())-1,
+                                   TLI.getShiftAmountTy()));
+}
+
+
 void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
   MVT::ValueType VT = N->getValueType(0);
@@ -791,6 +812,14 @@ void DAGTypeLegalizer::ExpandResult_Logical(SDNode *N,
   Lo = DAG.getNode(N->getOpcode(), LL.getValueType(), LL, RL);
   Hi = DAG.getNode(N->getOpcode(), LL.getValueType(), LH, RH);
 }
+
+void DAGTypeLegalizer::ExpandResult_BSWAP(SDNode *N,
+                                          SDOperand &Lo, SDOperand &Hi) {
+  GetExpandedOp(N->getOperand(0), Hi, Lo);  // Note swapped operands.
+  Lo = DAG.getNode(ISD::BSWAP, Lo.getValueType(), Lo);
+  Hi = DAG.getNode(ISD::BSWAP, Hi.getValueType(), Hi);
+}
+
 
 void DAGTypeLegalizer::ExpandResult_SELECT(SDNode *N,
                                            SDOperand &Lo, SDOperand &Hi) {
@@ -1362,6 +1391,8 @@ bool DAGTypeLegalizer::ExpandOperand(SDNode *N, unsigned OpNo) {
     abort();
     
   case ISD::TRUNCATE:        Res = ExpandOperand_TRUNCATE(N); break;
+  case ISD::BIT_CONVERT:     Res = ExpandOperand_BIT_CONVERT(N); break;
+
   case ISD::SINT_TO_FP:
     Res = ExpandOperand_SINT_TO_FP(N->getOperand(0), N->getValueType(0));
     break;
@@ -1399,6 +1430,10 @@ SDOperand DAGTypeLegalizer::ExpandOperand_TRUNCATE(SDNode *N) {
   GetExpandedOp(N->getOperand(0), InL, InH);
   // Just truncate the low part of the source.
   return DAG.getNode(ISD::TRUNCATE, N->getValueType(0), InL);
+}
+
+SDOperand DAGTypeLegalizer::ExpandOperand_BIT_CONVERT(SDNode *N) {
+  return CreateStackStoreLoad(N->getOperand(0), N->getValueType(0));
 }
 
 SDOperand DAGTypeLegalizer::ExpandOperand_SINT_TO_FP(SDOperand Source, 
