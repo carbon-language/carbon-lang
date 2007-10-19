@@ -603,6 +603,22 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   DEBUG(cerr << "Expand node result: "; N->dump(&DAG); cerr << "\n");
   SDOperand Lo, Hi;
   Lo = Hi = SDOperand();
+
+  // If this is a single-result node, see if the target wants to custom expand
+  // it.
+  if (N->getNumValues() == 1 &&
+      TLI.getOperationAction(N->getOpcode(),
+                             N->getValueType(0)) == TargetLowering::Custom) {
+    // If the target wants to, allow it to lower this itself.
+    std::pair<SDOperand,SDOperand> P =
+      TLI.ExpandOperation(SDOperand(N, 0), DAG);
+    if (P.first.Val) {
+      Lo = P.first;
+      Hi = P.second;
+      return;
+    }
+  }
+  
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
@@ -694,20 +710,8 @@ void DAGTypeLegalizer::ExpandResult_SIGN_EXTEND(SDNode *N,
 
 void DAGTypeLegalizer::ExpandResult_BIT_CONVERT(SDNode *N,
                                                 SDOperand &Lo, SDOperand &Hi) {
-  MVT::ValueType VT = N->getValueType(0);
-  if (TLI.getOperationAction(ISD::BIT_CONVERT, VT) == TargetLowering::Custom){
-    // If the target wants to, allow it to lower this itself.
-    std::pair<SDOperand,SDOperand> P =
-      TLI.ExpandOperation(SDOperand(N, 0), DAG);
-    if (P.first.Val) {
-      Lo = P.first;
-      Hi = P.second;
-      return;
-    }
-  }
-
   // Lower the bit-convert to a store/load from the stack, then expand the load.
-  SDOperand Op = CreateStackStoreLoad(N->getOperand(0), VT);
+  SDOperand Op = CreateStackStoreLoad(N->getOperand(0), N->getValueType(0));
   ExpandResult_LOAD(cast<LoadSDNode>(Op.Val), Lo, Hi);
 }
 
@@ -875,17 +879,6 @@ void DAGTypeLegalizer::ExpandResult_MUL(SDNode *N,
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
   
-  // If the target wants to custom expand this, let them.
-  if (TLI.getOperationAction(ISD::MUL, VT) == TargetLowering::Custom) {
-    std::pair<SDOperand,SDOperand> Ret = 
-      TLI.ExpandOperation(SDOperand(N, 0), DAG);
-    if (Ret.first.Val) {
-      Lo = Ret.first;
-      Hi = Ret.second;
-      return;
-    }
-  }
-  
   bool HasMULHS = TLI.isOperationLegal(ISD::MULHS, NVT);
   bool HasMULHU = TLI.isOperationLegal(ISD::MULHU, NVT);
   bool HasSMUL_LOHI = TLI.isOperationLegal(ISD::SMUL_LOHI, NVT);
@@ -957,17 +950,6 @@ void DAGTypeLegalizer::ExpandResult_MUL(SDNode *N,
 void DAGTypeLegalizer::ExpandResult_Shift(SDNode *N,
                                           SDOperand &Lo, SDOperand &Hi) {
   MVT::ValueType VT = N->getValueType(0);
-  
-  // If the target wants custom lowering, do so.
-  if (TLI.getOperationAction(N->getOpcode(), VT) == TargetLowering::Custom) {
-    std::pair<SDOperand,SDOperand> Ret = 
-       TLI.ExpandOperation(SDOperand(N, 0), DAG);
-    if (Ret.first.Val) {
-      Lo = Ret.first;
-      Hi = Ret.second;
-      return;
-    }
-  }
   
   // If we can emit an efficient shift operation, do so now.  Check to see if 
   // the RHS is a constant.
