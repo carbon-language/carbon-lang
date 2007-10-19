@@ -1288,40 +1288,73 @@ static SDOperand LowerSRx(SDOperand Op, SelectionDAG &DAG,
 }
 
 SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
-  SDOperand Chain = Op.getOperand(0);
-  SDOperand Dest = Op.getOperand(1);
-  SDOperand Src = Op.getOperand(2);
-  SDOperand Count = Op.getOperand(3);
-  unsigned Align =
-    (unsigned)cast<ConstantSDNode>(Op.getOperand(4))->getValue();
+  SDOperand ChainOp = Op.getOperand(0);
+  SDOperand DestOp = Op.getOperand(1);
+  SDOperand SourceOp = Op.getOperand(2);
+  SDOperand CountOp = Op.getOperand(3);
+  SDOperand AlignOp = Op.getOperand(4);
+  SDOperand AlwaysInlineOp = Op.getOperand(5);
+
+  bool AlwaysInline = (bool)cast<ConstantSDNode>(AlwaysInlineOp)->getValue();
+  unsigned Align = (unsigned)cast<ConstantSDNode>(AlignOp)->getValue();
   if (Align == 0) Align = 1;
 
-  ConstantSDNode *I = dyn_cast<ConstantSDNode>(Count);
-  // Just call memcpy if:
-  // not 4-byte aligned
-  // size is unknown
-  // size is >= the threshold.
-  if ((Align & 3) != 0 || 
-       !I ||
-       I->getValue() >= 64 ||
-       (I->getValue() & 3) != 0) {
-    MVT::ValueType IntPtr = getPointerTy();
-    TargetLowering::ArgListTy Args;
-    TargetLowering::ArgListEntry Entry;
-    Entry.Ty = getTargetData()->getIntPtrType();
-    Entry.Node = Op.getOperand(1); Args.push_back(Entry);
-    Entry.Node = Op.getOperand(2); Args.push_back(Entry);
-    Entry.Node = Op.getOperand(3); Args.push_back(Entry);
-    std::pair<SDOperand,SDOperand> CallResult =
+  // If size is unknown, call memcpy.
+  ConstantSDNode *I = dyn_cast<ConstantSDNode>(CountOp);
+  if (!I) {
+    assert(!AlwaysInline && "Cannot inline copy of unknown size");
+    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
+  }
+  unsigned Size = I->getValue();
+
+  if (AlwaysInline)
+    return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
+
+  // The libc version is likely to be faster for the following cases. It can
+  // use the address value and run time information about the CPU.
+  // With glibc 2.6.1 on a core 2, coping an array of 100M longs was 30% faster
+
+  // If not DWORD aligned, call memcpy.
+  if ((Align & 3) != 0)
+    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
+
+  // If size is more than the threshold, call memcpy.
+  //  if (Size > Subtarget->getMinRepStrSizeThreshold())
+  if (Size >= 64)
+    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
+
+  return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
+}
+
+SDOperand ARMTargetLowering::LowerMEMCPYCall(SDOperand Chain,
+                                             SDOperand Dest,
+                                             SDOperand Source,
+                                             SDOperand Count,
+                                             SelectionDAG &DAG) {
+  MVT::ValueType IntPtr = getPointerTy();
+  TargetLowering::ArgListTy Args;
+  TargetLowering::ArgListEntry Entry;
+  Entry.Ty = getTargetData()->getIntPtrType();
+  Entry.Node = Dest; Args.push_back(Entry);
+  Entry.Node = Source; Args.push_back(Entry);
+  Entry.Node = Count; Args.push_back(Entry);
+  std::pair<SDOperand,SDOperand> CallResult =
       LowerCallTo(Chain, Type::VoidTy, false, false, CallingConv::C, false,
                   DAG.getExternalSymbol("memcpy", IntPtr), Args, DAG);
-    return CallResult.second;
-  }
+  return CallResult.second;
+}
 
-  // Otherwise do repeated 4-byte loads and stores.  To be improved.
-  assert((I->getValue() & 3) == 0);
+SDOperand ARMTargetLowering::LowerMEMCPYInline(SDOperand Chain,
+                                               SDOperand Dest,
+                                               SDOperand Source,
+                                               unsigned Size,
+                                               unsigned Align,
+                                               SelectionDAG &DAG) {
+
+  // Do repeated 4-byte loads and stores.  To be improved.
+  assert((Size& 3) == 0);
   assert((Align & 3) == 0);
-  unsigned NumMemOps = I->getValue() >> 2;
+  unsigned NumMemOps = Size >> 2;
   unsigned EmittedNumMemOps = 0;
   unsigned SrcOff = 0, DstOff = 0;
   MVT::ValueType VT = MVT::i32;
@@ -1337,7 +1370,7 @@ SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
     unsigned i;
     for (i=0; i<MAX_LOADS_IN_LDM && EmittedNumMemOps+i < NumMemOps; i++) {
       Loads[i] = DAG.getLoad(VT, Chain,
-                             DAG.getNode(ISD::ADD, VT, Src, 
+                             DAG.getNode(ISD::ADD, VT, Source,
                                          DAG.getConstant(SrcOff, VT)),
                              NULL, 0);
       LoadChains[i] = Loads[i].getValue(1);
