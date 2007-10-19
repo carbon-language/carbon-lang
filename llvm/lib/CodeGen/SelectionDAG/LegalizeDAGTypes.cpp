@@ -134,6 +134,9 @@ private:
   SDOperand PromoteResult_SETCC(SDNode *N);
   SDOperand PromoteResult_LOAD(LoadSDNode *N);
   SDOperand PromoteResult_SimpleIntBinOp(SDNode *N);
+  SDOperand PromoteResult_SHL(SDNode *N);
+  SDOperand PromoteResult_SRA(SDNode *N);
+  SDOperand PromoteResult_SRL(SDNode *N);
   SDOperand PromoteResult_SELECT   (SDNode *N);
   SDOperand PromoteResult_SELECT_CC(SDNode *N);
   
@@ -168,13 +171,14 @@ private:
   SDOperand PromoteOperand_ANY_EXTEND(SDNode *N);
   SDOperand PromoteOperand_ZERO_EXTEND(SDNode *N);
   SDOperand PromoteOperand_SIGN_EXTEND(SDNode *N);
+  SDOperand PromoteOperand_TRUNCATE(SDNode *N);
   SDOperand PromoteOperand_FP_EXTEND(SDNode *N);
   SDOperand PromoteOperand_FP_ROUND(SDNode *N);
   SDOperand PromoteOperand_SELECT(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_BRCOND(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_BR_CC(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo);
-  
+
   void PromoteSetCCOperands(SDOperand &LHS,SDOperand &RHS, ISD::CondCode Code);
 
   // Operand Expansion.
@@ -458,23 +462,27 @@ void DAGTypeLegalizer::PromoteResult(SDNode *N, unsigned ResNo) {
     abort();
   case ISD::UNDEF:    Result = PromoteResult_UNDEF(N); break;
   case ISD::Constant: Result = PromoteResult_Constant(N); break;
-    
+
   case ISD::TRUNCATE:    Result = PromoteResult_TRUNCATE(N); break;
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND:  Result = PromoteResult_INT_EXTEND(N); break;
   case ISD::FP_ROUND:    Result = PromoteResult_FP_ROUND(N); break;
-    
+
   case ISD::SETCC:    Result = PromoteResult_SETCC(N); break;
   case ISD::LOAD:     Result = PromoteResult_LOAD(cast<LoadSDNode>(N)); break;
-    
+
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:
   case ISD::ADD:
   case ISD::SUB:
   case ISD::MUL:      Result = PromoteResult_SimpleIntBinOp(N); break;
-    
+
+  case ISD::SHL:      Result = PromoteResult_SHL(N); break;
+  case ISD::SRA:      Result = PromoteResult_SRA(N); break;
+  case ISD::SRL:      Result = PromoteResult_SRL(N); break;
+
   case ISD::SELECT:    Result = PromoteResult_SELECT(N); break;
   case ISD::SELECT_CC: Result = PromoteResult_SELECT_CC(N); break;
 
@@ -584,6 +592,28 @@ SDOperand DAGTypeLegalizer::PromoteResult_SimpleIntBinOp(SDNode *N) {
   SDOperand LHS = GetPromotedOp(N->getOperand(0));
   SDOperand RHS = GetPromotedOp(N->getOperand(1));
   return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
+}
+
+SDOperand DAGTypeLegalizer::PromoteResult_SHL(SDNode *N) {
+  return DAG.getNode(ISD::SHL, TLI.getTypeToTransformTo(N->getValueType(0)),
+                     GetPromotedOp(N->getOperand(0)), N->getOperand(1));
+}
+
+SDOperand DAGTypeLegalizer::PromoteResult_SRA(SDNode *N) {
+  // The input value must be properly sign extended.
+  MVT::ValueType VT = N->getValueType(0);
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
+  SDOperand Res = GetPromotedOp(N->getOperand(0));
+  Res = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Res, DAG.getValueType(VT));
+  return DAG.getNode(ISD::SRA, NVT, Res, N->getOperand(1));
+}
+
+SDOperand DAGTypeLegalizer::PromoteResult_SRL(SDNode *N) {
+  // The input value must be properly zero extended.
+  MVT::ValueType VT = N->getValueType(0);
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
+  SDOperand Res = DAG.getZeroExtendInReg(GetPromotedOp(N->getOperand(0)), VT);
+  return DAG.getNode(ISD::SRL, NVT, Res, N->getOperand(1));
 }
 
 SDOperand DAGTypeLegalizer::PromoteResult_SELECT(SDNode *N) {
@@ -1209,6 +1239,7 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
   case ISD::ANY_EXTEND:  Res = PromoteOperand_ANY_EXTEND(N); break;
   case ISD::ZERO_EXTEND: Res = PromoteOperand_ZERO_EXTEND(N); break;
   case ISD::SIGN_EXTEND: Res = PromoteOperand_SIGN_EXTEND(N); break;
+  case ISD::TRUNCATE:    Res = PromoteOperand_TRUNCATE(N); break;
   case ISD::FP_EXTEND:   Res = PromoteOperand_FP_EXTEND(N); break;
   case ISD::FP_ROUND:    Res = PromoteOperand_FP_ROUND(N); break;
     
@@ -1257,10 +1288,16 @@ SDOperand DAGTypeLegalizer::PromoteOperand_SIGN_EXTEND(SDNode *N) {
                      Op, DAG.getValueType(N->getOperand(0).getValueType()));
 }
 
+SDOperand DAGTypeLegalizer::PromoteOperand_TRUNCATE(SDNode *N) {
+  SDOperand Op = GetPromotedOp(N->getOperand(0));
+  return DAG.getNode(ISD::TRUNCATE, N->getValueType(0), Op);
+}
+
 SDOperand DAGTypeLegalizer::PromoteOperand_FP_EXTEND(SDNode *N) {
   SDOperand Op = GetPromotedOp(N->getOperand(0));
   return DAG.getNode(ISD::FP_EXTEND, N->getValueType(0), Op);
 }
+
 SDOperand DAGTypeLegalizer::PromoteOperand_FP_ROUND(SDNode *N) {
   SDOperand Op = GetPromotedOp(N->getOperand(0));
   return DAG.getNode(ISD::FP_ROUND, N->getValueType(0), Op);
