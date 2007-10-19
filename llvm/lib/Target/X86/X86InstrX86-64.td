@@ -461,6 +461,23 @@ def DEC64_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src), "dec{l}\t$dst"
                   [(set GR32:$dst, (add GR32:$src, -1))]>,
                 Requires<[In64BitMode]>;
 } // isConvertibleToThreeAddress
+
+// These are duplicates of their 32-bit counterparts. Only needed so X86 knows
+// how to unfold them.
+let isTwoAddress = 0, CodeSize = 2 in {
+  def INC64_16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst), "inc{w}\t$dst",
+                    [(store (add (loadi16 addr:$dst), 1), addr:$dst)]>,
+                  OpSize, Requires<[In64BitMode]>;
+  def INC64_32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst), "inc{l}\t$dst",
+                    [(store (add (loadi32 addr:$dst), 1), addr:$dst)]>,
+                  Requires<[In64BitMode]>;
+  def DEC64_16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst), "dec{w}\t$dst",
+                    [(store (add (loadi16 addr:$dst), -1), addr:$dst)]>,
+                  OpSize, Requires<[In64BitMode]>;
+  def DEC64_32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst), "dec{l}\t$dst",
+                    [(store (add (loadi32 addr:$dst), -1), addr:$dst)]>,
+                  Requires<[In64BitMode]>;
+}
 } // Defs = [EFLAGS], CodeSize
 
 

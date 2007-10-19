@@ -97,14 +97,14 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
     { X86::AND8rr,      X86::AND8mr },
     { X86::DEC16r,      X86::DEC16m },
     { X86::DEC32r,      X86::DEC32m },
-    { X86::DEC64_16r,   X86::DEC16m },
-    { X86::DEC64_32r,   X86::DEC32m },
+    { X86::DEC64_16r,   X86::DEC64_16m },
+    { X86::DEC64_32r,   X86::DEC64_32m },
     { X86::DEC64r,      X86::DEC64m },
     { X86::DEC8r,       X86::DEC8m },
     { X86::INC16r,      X86::INC16m },
     { X86::INC32r,      X86::INC32m },
-    { X86::INC64_16r,   X86::INC16m },
-    { X86::INC64_32r,   X86::INC32m },
+    { X86::INC64_16r,   X86::INC64_16m },
+    { X86::INC64_32r,   X86::INC64_32m },
     { X86::INC64r,      X86::INC64m },
     { X86::INC8r,       X86::INC8m },
     { X86::NEG16r,      X86::NEG16m },
@@ -981,10 +981,9 @@ void X86RegisterInfo::reMaterialize(MachineBasicBlock &MBB,
 static MachineInstr *FuseTwoAddrInst(unsigned Opcode,
                                      SmallVector<MachineOperand,4> &MOs,
                                  MachineInstr *MI, const TargetInstrInfo &TII) {
-  unsigned NumOps = TII.getNumOperands(MI->getOpcode())-2;
-
   // Create the base instruction with the memory operand as the first part.
-  MachineInstrBuilder MIB = BuildMI(TII.get(Opcode));
+  MachineInstr *NewMI = new MachineInstr(TII.get(Opcode), true);
+  MachineInstrBuilder MIB(NewMI);
   unsigned NumAddrOps = MOs.size();
   for (unsigned i = 0; i != NumAddrOps; ++i)
     MIB = X86InstrAddOperand(MIB, MOs[i]);
@@ -992,8 +991,13 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode,
     MIB.addImm(1).addReg(0).addImm(0);
   
   // Loop over the rest of the ri operands, converting them over.
+  unsigned NumOps = TII.getNumOperands(MI->getOpcode())-2;
   for (unsigned i = 0; i != NumOps; ++i) {
     MachineOperand &MO = MI->getOperand(i+2);
+    MIB = X86InstrAddOperand(MIB, MO);
+  }
+  for (unsigned i = NumOps+2, e = MI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI->getOperand(i);
     MIB = X86InstrAddOperand(MIB, MO);
   }
   return MIB;
@@ -1002,7 +1006,8 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode,
 static MachineInstr *FuseInst(unsigned Opcode, unsigned OpNo,
                               SmallVector<MachineOperand,4> &MOs,
                               MachineInstr *MI, const TargetInstrInfo &TII) {
-  MachineInstrBuilder MIB = BuildMI(TII.get(Opcode));
+  MachineInstr *NewMI = new MachineInstr(TII.get(Opcode), true);
+  MachineInstrBuilder MIB(NewMI);
   
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
@@ -1036,7 +1041,6 @@ static MachineInstr *MakeM0Inst(const TargetInstrInfo &TII, unsigned Opcode,
 MachineInstr*
 X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
                                    SmallVector<MachineOperand,4> &MOs) const {
-  // Table (and size) to search
   const DenseMap<unsigned*, unsigned> *OpcodeTablePtr = NULL;
   bool isTwoAddrFold = false;
   unsigned NumOps = TII.getNumOperands(MI->getOpcode());
@@ -1117,6 +1121,49 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned OpNu
   return foldMemoryOperand(MI, OpNum, MOs);
 }
 
+unsigned X86RegisterInfo::getOpcodeAfterMemoryFold(unsigned Opc,
+                                                   unsigned OpNum) const {
+  // Check switch flag 
+  if (NoFusing) return 0;
+  const DenseMap<unsigned*, unsigned> *OpcodeTablePtr = NULL;
+  unsigned NumOps = TII.getNumOperands(Opc);
+  bool isTwoAddr = NumOps > 1 &&
+    TII.getOperandConstraint(Opc, 1, TOI::TIED_TO) != -1;
+
+  // Folding a memory location into the two-address part of a two-address
+  // instruction is different than folding it other places.  It requires
+  // replacing the *two* registers with the memory location.
+  if (isTwoAddr && NumOps >= 2 && OpNum < 2) { 
+    OpcodeTablePtr = &RegOp2MemOpTable2Addr;
+  } else if (OpNum == 0) { // If operand 0
+    switch (Opc) {
+    case X86::MOV16r0:
+      return X86::MOV16mi;
+    case X86::MOV32r0:
+      return X86::MOV32mi;
+    case X86::MOV64r0:
+      return X86::MOV64mi32;
+    case X86::MOV8r0:
+      return X86::MOV8mi;
+    default: break;
+    }
+    OpcodeTablePtr = &RegOp2MemOpTable0;
+  } else if (OpNum == 1) {
+    OpcodeTablePtr = &RegOp2MemOpTable1;
+  } else if (OpNum == 2) {
+    OpcodeTablePtr = &RegOp2MemOpTable2;
+  }
+  
+  if (OpcodeTablePtr) {
+    // Find the Opcode to fuse
+    DenseMap<unsigned*, unsigned>::iterator I =
+      OpcodeTablePtr->find((unsigned*)Opc);
+    if (I != OpcodeTablePtr->end())
+      return I->second;
+  }
+  return 0;
+}
+
 bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                                 unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
@@ -1126,14 +1173,14 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     return false;
   unsigned Opc = I->second.first;
   unsigned Index = I->second.second & 0xf;
-  bool HasLoad = I->second.second & (1 << 4);
-  bool HasStore = I->second.second & (1 << 5);
-  if (UnfoldLoad && !HasLoad)
+  bool FoldedLoad = I->second.second & (1 << 4);
+  bool FoldedStore = I->second.second & (1 << 5);
+  if (UnfoldLoad && !FoldedLoad)
     return false;
-  HasLoad &= UnfoldLoad;
-  if (UnfoldStore && !HasStore)
+  UnfoldLoad &= FoldedLoad;
+  if (UnfoldStore && !FoldedStore)
     return false;
-  HasStore &= UnfoldStore;
+  UnfoldStore &= FoldedStore;
 
   const TargetInstrDescriptor &TID = TII.get(Opc);
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
@@ -1156,9 +1203,9 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   }
 
   // Emit the load instruction.
-  if (HasLoad) {
+  if (UnfoldLoad) {
     loadRegFromAddr(MF, Reg, AddrOps, RC, NewMIs);
-    if (HasStore) {
+    if (UnfoldStore) {
       // Address operands cannot be marked isKill.
       for (unsigned i = 1; i != 5; ++i) {
         MachineOperand &MO = NewMIs[0]->getOperand(i);
@@ -1169,15 +1216,11 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   }
 
   // Emit the data processing instruction.
-  MachineInstr *DataMI = new MachineInstr (TID, true);
+  MachineInstr *DataMI = new MachineInstr(TID, true);
   MachineInstrBuilder MIB(DataMI);
-  const TargetRegisterClass *DstRC = 0;
-  if (HasStore) {
-    const TargetOperandInfo &DstTOI = TID.OpInfo[0];
-    DstRC = (DstTOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
-      ? TII.getPointerRegClass() : getRegClass(DstTOI.RegClass);
+  
+  if (FoldedStore)
     MIB.addReg(Reg, true);
-  }
   for (unsigned i = 0, e = BeforeOps.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, BeforeOps[i]);
   MIB.addReg(Reg);
@@ -1190,8 +1233,12 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   NewMIs.push_back(MIB);
 
   // Emit the store instruction.
-  if (HasStore)
+  if (UnfoldStore) {
+    const TargetOperandInfo &DstTOI = TID.OpInfo[0];
+    const TargetRegisterClass *DstRC = (DstTOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
+      ? TII.getPointerRegClass() : getRegClass(DstTOI.RegClass);
     storeRegToAddr(MF, Reg, AddrOps, DstRC, NewMIs);
+  }
 
   return true;
 }
@@ -1209,8 +1256,8 @@ X86RegisterInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     return false;
   unsigned Opc = I->second.first;
   unsigned Index = I->second.second & 0xf;
-  bool HasLoad = I->second.second & (1 << 4);
-  bool HasStore = I->second.second & (1 << 5);
+  bool FoldedLoad = I->second.second & (1 << 4);
+  bool FoldedStore = I->second.second & (1 << 5);
   const TargetInstrDescriptor &TID = TII.get(Opc);
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
   const TargetRegisterClass *RC = (TOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
@@ -1233,7 +1280,7 @@ X86RegisterInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
 
   // Emit the load instruction.
   SDNode *Load = 0;
-  if (HasLoad) {
+  if (FoldedLoad) {
     MVT::ValueType VT = *RC->vt_begin();
     Load = DAG.getTargetNode(getLoadRegOpcode(RC), VT, MVT::Other,
                              &AddrOps[0], AddrOps.size());
@@ -1261,7 +1308,7 @@ X86RegisterInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   NewNodes.push_back(NewNode);
 
   // Emit the store instruction.
-  if (HasStore) {
+  if (FoldedStore) {
     AddrOps.pop_back();
     AddrOps.push_back(SDOperand(NewNode, 0));
     AddrOps.push_back(Chain);
@@ -1279,11 +1326,11 @@ unsigned X86RegisterInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
     MemOp2RegOpTable.find((unsigned*)Opc);
   if (I == MemOp2RegOpTable.end())
     return 0;
-  bool HasLoad = I->second.second & (1 << 4);
-  bool HasStore = I->second.second & (1 << 5);
-  if (UnfoldLoad && !HasLoad)
+  bool FoldedLoad = I->second.second & (1 << 4);
+  bool FoldedStore = I->second.second & (1 << 5);
+  if (UnfoldLoad && !FoldedLoad)
     return 0;
-  if (UnfoldStore && !HasStore)
+  if (UnfoldStore && !FoldedStore)
     return 0;
   return I->second.first;
 }

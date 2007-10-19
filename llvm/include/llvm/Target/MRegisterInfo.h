@@ -563,6 +563,14 @@ public:
     return 0;
   }
 
+  /// getOpcodeAfterMemoryFold - Returns the opcode of the would be new
+  /// instruction after load / store is folded into an instruction of the
+  /// specified opcode. It returns zero if the specified unfolding is not
+  /// possible.
+  virtual unsigned getOpcodeAfterMemoryFold(unsigned Opc, unsigned OpNum) const{
+    return 0;
+  }
+
   /// unfoldMemoryOperand - Separate a single instruction which folded a load or
   /// a a store or a load and a store into two or more instruction. If this is
   /// possible, returns true as well as the new instructions by reference.
@@ -578,8 +586,9 @@ public:
   }
 
   /// getOpcodeAfterMemoryUnfold - Returns the opcode of the would be new
-  /// instruction after load / store are unfolded from the specified opcode.
-  /// It returns zero if the specified unfolding is impossible.
+  /// instruction after load / store are unfolded from an instruction of the
+  /// specified opcode. It returns zero if the specified unfolding is not
+  /// possible.
   virtual unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
                                       bool UnfoldLoad, bool UnfoldStore) const {
     return 0;

@@ -1062,9 +1062,11 @@ let isTwoAddress = 0, CodeSize = 2 in {
   def INC8m  : I<0xFE, MRM0m, (outs), (ins i8mem :$dst), "inc{b}\t$dst",
                [(store (add (loadi8 addr:$dst), 1), addr:$dst)]>;
   def INC16m : I<0xFF, MRM0m, (outs), (ins i16mem:$dst), "inc{w}\t$dst",
-               [(store (add (loadi16 addr:$dst), 1), addr:$dst)]>, OpSize;
+               [(store (add (loadi16 addr:$dst), 1), addr:$dst)]>,
+               OpSize, Requires<[In32BitMode]>;
   def INC32m : I<0xFF, MRM0m, (outs), (ins i32mem:$dst), "inc{l}\t$dst",
-               [(store (add (loadi32 addr:$dst), 1), addr:$dst)]>;
+               [(store (add (loadi32 addr:$dst), 1), addr:$dst)]>,
+               Requires<[In32BitMode]>;
 }
 
 let CodeSize = 2 in
@@ -1082,9 +1084,11 @@ let isTwoAddress = 0, CodeSize = 2 in {
   def DEC8m  : I<0xFE, MRM1m, (outs), (ins i8mem :$dst), "dec{b}\t$dst",
                [(store (add (loadi8 addr:$dst), -1), addr:$dst)]>;
   def DEC16m : I<0xFF, MRM1m, (outs), (ins i16mem:$dst), "dec{w}\t$dst",
-               [(store (add (loadi16 addr:$dst), -1), addr:$dst)]>, OpSize;
+               [(store (add (loadi16 addr:$dst), -1), addr:$dst)]>,
+               OpSize, Requires<[In32BitMode]>;
   def DEC32m : I<0xFF, MRM1m, (outs), (ins i32mem:$dst), "dec{l}\t$dst",
-               [(store (add (loadi32 addr:$dst), -1), addr:$dst)]>;
+               [(store (add (loadi32 addr:$dst), -1), addr:$dst)]>,
+               Requires<[In32BitMode]>;
 }
 } // Defs = [EFLAGS]
 

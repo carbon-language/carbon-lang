@@ -242,6 +242,8 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
 //===----------------------------------------------------------------------===//
 
 namespace {
+  class AvailableSpills;
+
   /// LocalSpiller - This spiller does a simple pass over the machine basic
   /// block to attempt to keep spills in registers as much as possible for
   /// blocks that have low register pressure (the vreg may be spilled due to
@@ -270,6 +272,12 @@ namespace {
       return true;
     }
   private:
+    bool PrepForUnfoldOpti(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator &MII,
+                           std::vector<MachineInstr*> &MaybeDeadStores,
+                           AvailableSpills &Spills, BitVector &RegKills,
+                           std::vector<MachineOperand*> &KillOps,
+                           VirtRegMap &VRM);
     void RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM);
   };
 }
@@ -357,7 +365,7 @@ public:
   void disallowClobberPhysReg(unsigned PhysReg);
   
   /// ClobberPhysReg - This is called when the specified physreg changes
-  /// value.  We use this to invalidate any info about stuff we thing lives in
+  /// value.  We use this to invalidate any info about stuff that lives in
   /// it and any of its aliases.
   void ClobberPhysReg(unsigned PhysReg);
 
@@ -450,7 +458,7 @@ void AvailableSpills::ModifyStackSlotOrReMat(int SlotOrReMat) {
 /// marked kill, then invalidate the information.
 static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
                             std::vector<MachineOperand*> &KillOps,
-                            SmallVector<unsigned, 1> *KillRegs = NULL) {
+                            SmallVector<unsigned, 2> *KillRegs = NULL) {
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
     if (!MO.isRegister() || !MO.isUse() || !MO.isKill())
@@ -723,6 +731,112 @@ namespace {
   };
 }
 
+/// PrepForUnfoldOpti - Turn a store folding instruction into a load folding
+/// instruction. e.g.
+///     xorl  %edi, %eax
+///     movl  %eax, -32(%ebp)
+///     movl  -36(%ebp), %eax
+///	orl   %eax, -32(%ebp)
+/// ==>
+///     xorl  %edi, %eax
+///     orl   -36(%ebp), %eax
+///     mov   %eax, -32(%ebp)
+/// This enables unfolding optimization for a subsequent instruction which will
+/// also eliminate the newly introduced store instruction.
+bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator &MII,
+                                    std::vector<MachineInstr*> &MaybeDeadStores,
+                                     AvailableSpills &Spills,
+                                     BitVector &RegKills,
+                                     std::vector<MachineOperand*> &KillOps,
+                                     VirtRegMap &VRM) {
+  MachineFunction &MF = *MBB.getParent();
+  MachineInstr &MI = *MII;
+  unsigned UnfoldedOpc = 0;
+  unsigned UnfoldPR = 0;
+  unsigned UnfoldVR = 0;
+  int FoldedSS = VirtRegMap::NO_STACK_SLOT;
+  VirtRegMap::MI2VirtMapTy::const_iterator I, End;
+  for (tie(I, End) = VRM.getFoldedVirts(&MI); I != End; ++I) {
+    // Only transform a MI that folds a single register.
+    if (UnfoldedOpc)
+      return false;
+    UnfoldVR = I->second.first;
+    VirtRegMap::ModRef MR = I->second.second;
+    if (VRM.isAssignedReg(UnfoldVR))
+      continue;
+    // If this reference is not a use, any previous store is now dead.
+    // Otherwise, the store to this stack slot is not dead anymore.
+    FoldedSS = VRM.getStackSlot(UnfoldVR);
+    MachineInstr* DeadStore = MaybeDeadStores[FoldedSS];
+    if (DeadStore && (MR & VirtRegMap::isModRef)) {
+      unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(FoldedSS);
+      if (!PhysReg ||
+          DeadStore->findRegisterUseOperandIdx(PhysReg, true) == -1)
+        continue;
+      UnfoldPR = PhysReg;
+      UnfoldedOpc = MRI->getOpcodeAfterMemoryUnfold(MI.getOpcode(),
+                                                    false, true);
+    }
+  }
+
+  if (!UnfoldedOpc)
+    return false;
+
+  for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = MI.getOperand(i);
+    if (!MO.isRegister() || MO.getReg() == 0 || !MO.isUse())
+      continue;
+    unsigned VirtReg = MO.getReg();
+    if (MRegisterInfo::isPhysicalRegister(VirtReg) ||
+        RegMap->isSubRegister(VirtReg))
+      continue;
+    if (VRM.isAssignedReg(VirtReg)) {
+      unsigned PhysReg = VRM.getPhys(VirtReg);
+      if (PhysReg && MRI->regsOverlap(PhysReg, UnfoldPR))
+        return false;
+    } else if (VRM.isReMaterialized(VirtReg))
+      continue;
+    int SS = VRM.getStackSlot(VirtReg);
+    unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SS);
+    if (PhysReg) {
+      if (MRI->regsOverlap(PhysReg, UnfoldPR))
+        return false;
+      continue;
+    }
+    PhysReg = VRM.getPhys(VirtReg);
+    if (!MRI->regsOverlap(PhysReg, UnfoldPR))
+      continue;
+
+    // Ok, we'll need to reload the value into a register which makes
+    // it impossible to perform the store unfolding optimization later.
+    // Let's see if it is possible to fold the load if the store is
+    // unfolded. This allows us to perform the store unfolding
+    // optimization.
+    SmallVector<MachineInstr*, 4> NewMIs;
+    if (MRI->unfoldMemoryOperand(MF, &MI, UnfoldVR, false, false, NewMIs)) {
+      assert(NewMIs.size() == 1);
+      MachineInstr *NewMI = NewMIs.back();
+      NewMIs.clear();
+      unsigned Idx = NewMI->findRegisterUseOperandIdx(VirtReg);
+      MachineInstr *FoldedMI = MRI->foldMemoryOperand(NewMI, Idx, SS);
+      if (FoldedMI) {
+        if (VRM.hasPhys(UnfoldVR))
+          assert(VRM.getPhys(UnfoldVR) == UnfoldPR);
+        else
+          VRM.assignVirt2Phys(UnfoldVR, UnfoldPR);
+
+        VRM.virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
+        MII = MBB.insert(MII, FoldedMI);
+        VRM.RemoveFromFoldedVirtMap(&MI);
+        MBB.erase(&MI);
+        return true;
+      }
+      delete NewMI;
+    }
+  }
+  return false;
+}
 
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avoid reloading vregs.
@@ -754,28 +868,21 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
   for (MachineBasicBlock::iterator MII = MBB.begin(), E = MBB.end();
        MII != E; ) {
-    MachineInstr &MI = *MII;
     MachineBasicBlock::iterator NextMII = MII; ++NextMII;
-    VirtRegMap::MI2VirtMapTy::const_iterator I, End;
 
+    VirtRegMap::MI2VirtMapTy::const_iterator I, End;
     bool Erased = false;
     bool BackTracked = false;
+    if (PrepForUnfoldOpti(MBB, MII,
+                          MaybeDeadStores, Spills, RegKills, KillOps, VRM))
+      NextMII = next(MII);
 
     /// ReusedOperands - Keep track of operand reuse in case we need to undo
     /// reuse.
+    MachineInstr &MI = *MII;
     ReuseInfo ReusedOperands(MI, MRI);
 
-    // Loop over all of the implicit defs, clearing them from our available
-    // sets.
     const TargetInstrDescriptor *TID = MI.getInstrDescriptor();
-    if (TID->ImplicitDefs) {
-      const unsigned *ImpDef = TID->ImplicitDefs;
-      for ( ; *ImpDef; ++ImpDef) {
-        MF.setPhysRegUsed(*ImpDef);
-        ReusedOperands.markClobbered(*ImpDef);
-        Spills.ClobberPhysReg(*ImpDef);
-      }
-    }
 
     // Process all of the spilled uses and all non spilled reg references.
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
@@ -788,7 +895,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // Ignore physregs for spilling, but remember that it is used by this
         // function.
         MF.setPhysRegUsed(VirtReg);
-        ReusedOperands.markClobbered(VirtReg);
         continue;
       }
       
@@ -826,7 +932,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
       if (!PhysReg && DoReMat) {
         // This use is rematerializable. But perhaps the value is available in
-        // stack if the definition is not deleted. If so, check if we can
+        // a register if the definition is not deleted. If so, check if we can
         // reuse the value.
         ReuseSlot = VRM.getStackSlot(VirtReg);
         if (ReuseSlot != VirtRegMap::NO_STACK_SLOT)
@@ -857,7 +963,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // aren't allowed to modify the reused register.  If none of these cases
         // apply, reuse it.
         bool CanReuse = true;
-
         int ti = TID->getOperandConstraint(i, TOI::TIED_TO);
         if (ti != -1 &&
             MI.getOperand(ti).isRegister() && 
@@ -911,8 +1016,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             if (DeadStore) {
               DOUT << "Removed dead store:\t" << *DeadStore;
               InvalidateKills(*DeadStore, RegKills, KillOps);
-              MBB.erase(DeadStore);
               VRM.RemoveFromFoldedVirtMap(DeadStore);
+              MBB.erase(DeadStore);
               MaybeDeadStores[ReuseSlot] = NULL;
               ++NumDSE;
             }
@@ -977,7 +1082,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         DOUT << '\t' << *prior(MII);
         ++NumReused;
         continue;
-      } // is (PhysReg)
+      } // if (PhysReg)
       
       // Otherwise, reload it and remember that we have it.
       PhysReg = VRM.getPhys(VirtReg);
@@ -1023,12 +1128,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     // If we have folded references to memory operands, make sure we clear all
     // physical registers that may contain the value of the spilled virtual
     // register
-    SmallSet<int, 1> FoldedSS;
+    SmallSet<int, 2> FoldedSS;
     for (tie(I, End) = VRM.getFoldedVirts(&MI); I != End; ++I) {
-      DOUT << "Folded vreg: " << I->second.first << "  MR: "
-           << I->second.second;
       unsigned VirtReg = I->second.first;
       VirtRegMap::ModRef MR = I->second.second;
+      DOUT << "Folded vreg: " << VirtReg << "  MR: " << MR;
       if (VRM.isAssignedReg(VirtReg)) {
         DOUT << ": No stack slot!\n";
         continue;
@@ -1084,9 +1188,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       // Otherwise, the store to this stack slot is not dead anymore.
       MachineInstr* DeadStore = MaybeDeadStores[SS];
       if (DeadStore) {
-        bool isDead = true;
+        bool isDead = !(MR & VirtRegMap::isRef);
         MachineInstr *NewStore = NULL;
-        if (MR & VirtRegMap::isRef) {
+        if (MR & VirtRegMap::isMod) {
           unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SS);
           SmallVector<MachineInstr*, 4> NewMIs;
           if (PhysReg &&
@@ -1101,8 +1205,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             --NextMII;
             --NextMII;  // backtrack to the unfolded instruction.
             BackTracked = true;
-          } else
-            isDead = false;
+            isDead = true;
+          }
         }
 
         if (isDead) {  // Previous store is dead.
@@ -1156,12 +1260,120 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     // Process all of the spilled defs.
     for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI.getOperand(i);
-      if (MO.isRegister() && MO.getReg() && MO.isDef()) {
-        unsigned VirtReg = MO.getReg();
+      if (!(MO.isRegister() && MO.getReg() && MO.isDef()))
+        continue;
 
-        if (!MRegisterInfo::isVirtualRegister(VirtReg)) {
-          // Check to see if this is a noop copy.  If so, eliminate the
-          // instruction before considering the dest reg to be changed.
+      unsigned VirtReg = MO.getReg();
+      if (!MRegisterInfo::isVirtualRegister(VirtReg)) {
+        // Check to see if this is a noop copy.  If so, eliminate the
+        // instruction before considering the dest reg to be changed.
+        unsigned Src, Dst;
+        if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
+          ++NumDCE;
+          DOUT << "Removing now-noop copy: " << MI;
+          MBB.erase(&MI);
+          Erased = true;
+          VRM.RemoveFromFoldedVirtMap(&MI);
+          Spills.disallowClobberPhysReg(VirtReg);
+          goto ProcessNextInst;
+        }
+          
+        // If it's not a no-op copy, it clobbers the value in the destreg.
+        Spills.ClobberPhysReg(VirtReg);
+        ReusedOperands.markClobbered(VirtReg);
+ 
+        // Check to see if this instruction is a load from a stack slot into
+        // a register.  If so, this provides the stack slot value in the reg.
+        int FrameIdx;
+        if (unsigned DestReg = TII->isLoadFromStackSlot(&MI, FrameIdx)) {
+          assert(DestReg == VirtReg && "Unknown load situation!");
+
+          // If it is a folded reference, then it's not safe to clobber.
+          bool Folded = FoldedSS.count(FrameIdx);
+          // Otherwise, if it wasn't available, remember that it is now!
+          Spills.addAvailable(FrameIdx, &MI, DestReg, !Folded);
+          goto ProcessNextInst;
+        }
+            
+        continue;
+      }
+
+      bool DoReMat = VRM.isReMaterialized(VirtReg);
+      if (DoReMat)
+        ReMatDefs.insert(&MI);
+
+      // The only vregs left are stack slot definitions.
+      int StackSlot = VRM.getStackSlot(VirtReg);
+      const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
+
+      // If this def is part of a two-address operand, make sure to execute
+      // the store from the correct physical register.
+      unsigned PhysReg;
+      int TiedOp = MI.getInstrDescriptor()->findTiedToSrcOperand(i);
+      if (TiedOp != -1)
+        PhysReg = MI.getOperand(TiedOp).getReg();
+      else {
+        PhysReg = VRM.getPhys(VirtReg);
+        if (ReusedOperands.isClobbered(PhysReg)) {
+          // Another def has taken the assigned physreg. It must have been a
+          // use&def which got it due to reuse. Undo the reuse!
+          PhysReg = ReusedOperands.GetRegForReload(PhysReg, &MI, 
+                               Spills, MaybeDeadStores, RegKills, KillOps, VRM);
+        }
+      }
+
+      MF.setPhysRegUsed(PhysReg);
+      ReusedOperands.markClobbered(PhysReg);
+      MI.getOperand(i).setReg(PhysReg);
+      if (!MO.isDead()) {
+        MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
+        DOUT << "Store:\t" << *next(MII);
+
+        // If there is a dead store to this stack slot, nuke it now.
+        MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
+        if (LastStore) {
+          DOUT << "Removed dead store:\t" << *LastStore;
+          ++NumDSE;
+          SmallVector<unsigned, 2> KillRegs;
+          InvalidateKills(*LastStore, RegKills, KillOps, &KillRegs);
+          MachineBasicBlock::iterator PrevMII = LastStore;
+          bool CheckDef = PrevMII != MBB.begin();
+          if (CheckDef)
+            --PrevMII;
+          MBB.erase(LastStore);
+          VRM.RemoveFromFoldedVirtMap(LastStore);
+          if (CheckDef) {
+            // Look at defs of killed registers on the store. Mark the defs
+            // as dead since the store has been deleted and they aren't
+            // being reused.
+            for (unsigned j = 0, ee = KillRegs.size(); j != ee; ++j) {
+              bool HasOtherDef = false;
+              if (InvalidateRegDef(PrevMII, MI, KillRegs[j], HasOtherDef)) {
+                MachineInstr *DeadDef = PrevMII;
+                if (ReMatDefs.count(DeadDef) && !HasOtherDef) {
+                  // FIXME: This assumes a remat def does not have side
+                  // effects.
+                  MBB.erase(DeadDef);
+                  VRM.RemoveFromFoldedVirtMap(DeadDef);
+                  ++NumDRM;
+                }
+              }
+            }
+          }
+        }
+        LastStore = next(MII);
+
+        // If the stack slot value was previously available in some other
+        // register, change it now.  Otherwise, make the register available,
+        // in PhysReg.
+        Spills.ModifyStackSlotOrReMat(StackSlot);
+        Spills.ClobberPhysReg(PhysReg);
+        Spills.addAvailable(StackSlot, LastStore, PhysReg);
+        ++NumStores;
+
+        // Check to see if this is a noop copy.  If so, eliminate the
+        // instruction before considering the dest reg to be changed.
+        {
           unsigned Src, Dst;
           if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
             ++NumDCE;
@@ -1169,119 +1381,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             MBB.erase(&MI);
             Erased = true;
             VRM.RemoveFromFoldedVirtMap(&MI);
-            Spills.disallowClobberPhysReg(VirtReg);
+            UpdateKills(*LastStore, RegKills, KillOps);
             goto ProcessNextInst;
           }
-          
-          // If it's not a no-op copy, it clobbers the value in the destreg.
-          Spills.ClobberPhysReg(VirtReg);
-          ReusedOperands.markClobbered(VirtReg);
- 
-          // Check to see if this instruction is a load from a stack slot into
-          // a register.  If so, this provides the stack slot value in the reg.
-          int FrameIdx;
-          if (unsigned DestReg = TII->isLoadFromStackSlot(&MI, FrameIdx)) {
-            assert(DestReg == VirtReg && "Unknown load situation!");
-
-            // If it is a folded reference, then it's not safe to clobber.
-            bool Folded = FoldedSS.count(FrameIdx);
-            // Otherwise, if it wasn't available, remember that it is now!
-            Spills.addAvailable(FrameIdx, &MI, DestReg, !Folded);
-            goto ProcessNextInst;
-          }
-            
-          continue;
         }
-
-        bool DoReMat = VRM.isReMaterialized(VirtReg);
-        if (DoReMat)
-          ReMatDefs.insert(&MI);
-
-        // The only vregs left are stack slot definitions.
-        int StackSlot = VRM.getStackSlot(VirtReg);
-        const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
-
-        // If this def is part of a two-address operand, make sure to execute
-        // the store from the correct physical register.
-        unsigned PhysReg;
-        int TiedOp = MI.getInstrDescriptor()->findTiedToSrcOperand(i);
-        if (TiedOp != -1)
-          PhysReg = MI.getOperand(TiedOp).getReg();
-        else {
-          PhysReg = VRM.getPhys(VirtReg);
-          if (ReusedOperands.isClobbered(PhysReg)) {
-            // Another def has taken the assigned physreg. It must have been a
-            // use&def which got it due to reuse. Undo the reuse!
-            PhysReg = ReusedOperands.GetRegForReload(PhysReg, &MI, 
-                               Spills, MaybeDeadStores, RegKills, KillOps, VRM);
-          }
-        }
-
-        MF.setPhysRegUsed(PhysReg);
-        ReusedOperands.markClobbered(PhysReg);
-        MI.getOperand(i).setReg(PhysReg);
-        if (!MO.isDead()) {
-          MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
-          DOUT << "Store:\t" << *next(MII);
-
-          // If there is a dead store to this stack slot, nuke it now.
-          MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
-          if (LastStore) {
-            DOUT << "Removed dead store:\t" << *LastStore;
-            ++NumDSE;
-            SmallVector<unsigned, 1> KillRegs;
-            InvalidateKills(*LastStore, RegKills, KillOps, &KillRegs);
-            MachineBasicBlock::iterator PrevMII = LastStore;
-            bool CheckDef = PrevMII != MBB.begin();
-            if (CheckDef)
-              --PrevMII;
-            MBB.erase(LastStore);
-            VRM.RemoveFromFoldedVirtMap(LastStore);
-            if (CheckDef) {
-              // Look at defs of killed registers on the store. Mark the defs
-              // as dead since the store has been deleted and they aren't
-              // being reused.
-              for (unsigned j = 0, ee = KillRegs.size(); j != ee; ++j) {
-                bool HasOtherDef = false;
-                if (InvalidateRegDef(PrevMII, MI, KillRegs[j], HasOtherDef)) {
-                  MachineInstr *DeadDef = PrevMII;
-                  if (ReMatDefs.count(DeadDef) && !HasOtherDef) {
-                    // FIXME: This assumes a remat def does not have side
-                    // effects.
-                    MBB.erase(DeadDef);
-                    VRM.RemoveFromFoldedVirtMap(DeadDef);
-                    ++NumDRM;
-                  }
-                }
-              }
-            }
-          }
-          LastStore = next(MII);
-
-          // If the stack slot value was previously available in some other
-          // register, change it now.  Otherwise, make the register available,
-          // in PhysReg.
-          Spills.ModifyStackSlotOrReMat(StackSlot);
-          Spills.ClobberPhysReg(PhysReg);
-          Spills.addAvailable(StackSlot, LastStore, PhysReg);
-          ++NumStores;
-
-          // Check to see if this is a noop copy.  If so, eliminate the
-          // instruction before considering the dest reg to be changed.
-          {
-            unsigned Src, Dst;
-            if (TII->isMoveInstr(MI, Src, Dst) && Src == Dst) {
-              ++NumDCE;
-              DOUT << "Removing now-noop copy: " << MI;
-              MBB.erase(&MI);
-              Erased = true;
-              VRM.RemoveFromFoldedVirtMap(&MI);
-              UpdateKills(*LastStore, RegKills, KillOps);
-              goto ProcessNextInst;
-            }
-          }
-        }    
-      }
+      }    
     }
   ProcessNextInst:
     if (!Erased && !BackTracked)
