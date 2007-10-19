@@ -324,9 +324,10 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
     unsigned FoldedLoad = OpTbl0[i][2];
     // Index 0, folded load or store.
     unsigned AuxInfo = 0 | (FoldedLoad << 4) | ((FoldedLoad^1) << 5);
-    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
+    if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr)
+      if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
                                                std::make_pair(RegOp, AuxInfo))))
-      AmbEntries.push_back(MemOp);
+        AmbEntries.push_back(MemOp);
   }
 
   static const unsigned OpTbl1[][2] = {
@@ -449,9 +450,10 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
     if (!RegOp2MemOpTable1.insert(std::make_pair((unsigned*)RegOp, MemOp)))
       assert(false && "Duplicated entries?");
     unsigned AuxInfo = 1 | (1 << 4); // Index 1, folded load
-    if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
+    if (RegOp != X86::FsMOVAPDrr && RegOp != X86::FsMOVAPSrr)
+      if (!MemOp2RegOpTable.insert(std::make_pair((unsigned*)MemOp,
                                                std::make_pair(RegOp, AuxInfo))))
-      AmbEntries.push_back(MemOp);
+        AmbEntries.push_back(MemOp);
   }
 
   static const unsigned OpTbl2[][2] = {
@@ -648,8 +650,7 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
   }
 
   // Remove ambiguous entries.
-  for (unsigned i = 0, e = AmbEntries.size(); i != e; ++i)
-    MemOp2RegOpTable.erase((unsigned*)AmbEntries[i]);
+  assert(AmbEntries.empty() && "Duplicated entries in unfolding maps?");
 }
 
 // getX86RegNum - This function maps LLVM register identifiers to their X86
