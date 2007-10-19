@@ -1,6 +1,6 @@
 ;; Maintainer:  The LLVM team, http://llvm.org/
 ;; Description: Major mode for the LLVM assembler language.
-;; Updated:     2003-06-02
+;; Updated:     2007-09-19
 
 ;; Create mode-specific tables.
 (defvar llvm-mode-syntax-table nil
@@ -18,24 +18,24 @@
    '("\"[^\"]+\"" . font-lock-string-face)
    ;; Unnamed variable slots
    '("%[-]?[0-9]+" . font-lock-variable-name-face)
-   ;; Integer literals
-   '("[-]?[0-9]+" . font-lock-preprocessor-face)
-   ;; Floating point constants
-   '("[-+]?[0-9]+\.[0-9]*\([eE][-+]?[0-9]+\)?" . font-lock-preprocessor-face)
-   ;; Hex constants
-   '("0x[0-9A-Fa-f]+" . font-lock-preprocessor-face)
-   ;; Keywords
-   '("begin\\|end\\|true\\|false\\|zeroinitializer\\|declare\\|global\\|constant\\|const\\|internal\\|linkonce\\|weak\\|appending\\|uninitialized\\|implementation\\|\\.\\.\\.\\|null\\|undef\\|to\\|except\\|not\\|target\\|endian\\|little\\|big\\|pointersize\\|deplibs\\|volatile\\|fastcc\\|coldcc\\|cc" . font-lock-keyword-face)
    ;; Types
-   '("void\\|bool\\|sbyte\\|ubyte\\|u?short\\|u?int\\|u?long\\|float\\|double\\|type\\|label\\|opaque" . font-lock-type-face)
+   '("\\bvoid\\b\\|\\bi[0-9]+\\b\\|\\float\\b\\|\\bdouble\\b\\|\\btype\\b\\|\\blabel\\b\\|\\bopaque\\b" . font-lock-type-face)
+   ;; Integer literals
+   '("\\b[-]?[0-9]+\\b" . font-lock-preprocessor-face)
+   ;; Floating point constants
+   '("\\b[-+]?[0-9]+\.[0-9]*\([eE][-+]?[0-9]+\)?\\b" . font-lock-preprocessor-face)
+   ;; Hex constants
+   '("\\b0x[0-9A-Fa-f]+\\b" . font-lock-preprocessor-face)
+   ;; Keywords
+   '("\\bbegin\\b\\|\\bend\\b\\|\\btrue\\b\\|\\bfalse\\b\\|\\bzeroinitializer\\b\\|\\bdeclare\\b\\|\\bdefine\\b\\|\\bglobal\\b\\|\\bconstant\\b\\|\\bconst\\b\\|\\binternal\\b\\|\\blinkonce\\b\\|\\bweak\\b\\|\\bappending\\b\\|\\buninitialized\\b\\|\\bimplementation\\b\\|\\b\\.\\.\\.\\b\\|\\bnull\\b\\|\\bundef\\b\\|\\bto\\b\\|\\bexcept\\b\\|\\bnot\\b\\|\\btarget\\b\\|\\bendian\\b\\|\\blittle\\b\\|\\bbig\\b\\|\\bpointersize\\b\\|\\bdeplibs\\b\\|\\bvolatile\\b\\|\\bfastcc\\b\\|\\bcoldcc\\b\\|\\bcc\\b" . font-lock-keyword-face)
    ;; Arithmetic and Logical Operators
-   '("add\\|sub\\|mul\\|div\\|rem\\|and\\|or\\|xor\\|set\\(ne\\|eq\\|lt\\|gt\\|le\\|ge\\)" . font-lock-keyword-face)
+   '("\\badd\\b\\|\\bsub\\b\\|\\bmul\\b\\|\\bdiv\\b\\|\\brem\\b\\|\\band\\b\\|\\bor\\b\\|\\bxor\\b\\|\\bset\\(ne\\b\\|\\beq\\b\\|\\blt\\b\\|\\bgt\\b\\|\\ble\\b\\|\\bge\\b\\)" . font-lock-keyword-face)
    ;; Special instructions
-   '("phi\\|tail\\|call\\|cast\\|select\\|to\\|shl\\|shr\\|vaarg\\|vanext" . font-lock-keyword-face)
+   '("\\bphi\\b\\|\\btail\\b\\|\\bcall\\b\\|\\bcast\\b\\|\\bselect\\b\\|\\bto\\b\\|\\bshl\\b\\|\\bshr\\b\\|\\bvaarg\\b\\|\\bvanext\\b" . font-lock-keyword-face)
    ;; Control instructions
-   '("ret\\|br\\|switch\\|invoke\\|unwind\\|unreachable" . font-lock-keyword-face)
+   '("\\bret\\b\\|\\bbr\\b\\|\\bswitch\\b\\|\\binvoke\\b\\|\\bunwind\\b\\|\\bunreachable\\b" . font-lock-keyword-face)
    ;; Memory operators
-   '("malloc\\|alloca\\|free\\|load\\|store\\|getelementptr" . font-lock-keyword-face)
+   '("\\bmalloc\\b\\|\\balloca\\b\\|\\bfree\\b\\|\\bload\\b\\|\\bstore\\b\\|\\bgetelementptr\\b" . font-lock-keyword-face)
    )
   "Syntax highlighting for LLVM"
   )
@@ -116,6 +116,7 @@
 
   (setq local-abbrev-table llvm-mode-abbrev-table)
   (set-syntax-table llvm-mode-syntax-table)
+  (setq comment-start ";")
   (run-hooks 'llvm-mode-hook))          ; Finally, this permits the user to
                                         ;   customize the mode with a hook.
 
