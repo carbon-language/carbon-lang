@@ -4135,7 +4135,7 @@ SDOperand TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 }
 
 std::pair<SDOperand,SDOperand>
-TargetLowering::ExpandOperation(SDOperand Op, SelectionDAG &DAG) {
+TargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
   assert(0 && "ExpandOperation not implemented for this target!");
   abort();
   return std::pair<SDOperand,SDOperand>();

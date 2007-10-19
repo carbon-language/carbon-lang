@@ -618,8 +618,7 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
       TLI.getOperationAction(N->getOpcode(),
                              N->getValueType(0)) == TargetLowering::Custom) {
     // If the target wants to, allow it to lower this itself.
-    std::pair<SDOperand,SDOperand> P =
-      TLI.ExpandOperation(SDOperand(N, 0), DAG);
+    std::pair<SDOperand,SDOperand> P = TLI.ExpandOperationResult(N, DAG);
     if (P.first.Val) {
       Lo = P.first;
       Hi = P.second;
@@ -852,20 +851,6 @@ void DAGTypeLegalizer::ExpandResult_SELECT_CC(SDNode *N,
 
 void DAGTypeLegalizer::ExpandResult_ADDSUB(SDNode *N,
                                            SDOperand &Lo, SDOperand &Hi) {
-  MVT::ValueType VT = N->getValueType(0);
-  
-  // If the target wants to custom expand this, let them.
-  if (TLI.getOperationAction(N->getOpcode(), VT) ==
-      TargetLowering::Custom) {
-    std::pair<SDOperand,SDOperand> Ret = 
-      TLI.ExpandOperation(SDOperand(N, 0), DAG);
-    if (Ret.first.Val) {
-      Lo = Ret.first;
-      Hi = Ret.second;
-      return;
-    }
-  }
-  
   // Expand the subcomponents.
   SDOperand LHSL, LHSH, RHSL, RHSH;
   GetExpandedOp(N->getOperand(0), LHSL, LHSH);
