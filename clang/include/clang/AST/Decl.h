@@ -269,7 +269,7 @@ protected:
 private:
   StorageClass SClass;
   Expr *Init;  
-  friend class StmtIterator;
+  friend struct StmtIterator;
 };
 
 /// BlockVarDecl - Represent a local variable declaration.
