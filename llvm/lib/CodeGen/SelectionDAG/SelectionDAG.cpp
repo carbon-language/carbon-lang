@@ -2340,7 +2340,7 @@ SDOperand SelectionDAG::getExtLoad(ISD::LoadExtType ExtType, MVT::ValueType VT,
   // If they are asking for an extending load from/to the same thing, return a
   // normal load.
   if (VT == EVT)
-    ExtType = ISD::NON_EXTLOAD;
+    return getLoad(VT, Chain, Ptr, SV, SVOffset, isVolatile, Alignment);
 
   if (MVT::isVector(VT))
     assert(EVT == MVT::getVectorElementType(VT) && "Invalid vector extload!");
