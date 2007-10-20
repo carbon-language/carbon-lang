@@ -44,7 +44,7 @@ entry:
 </pre>
 </div>
 
-<p>Before going any further in this tutorial, you should look through the <a href="../LangRef.html">LLVM Language Reference Manual</a> and convince yourself that the above LLVM IR is actually equivalent to the original function.  Once you’re satisfied with that, let’s move on to actually generating it programmatically!</p>
+<p>If you're unsure what the above code says, skim through the <a href="../LangRef.html">LLVM Language Reference Manual</a> and convince yourself that the above LLVM IR is actually equivalent to the original function.  Once you’re satisfied with that, let’s move on to actually generating it programmatically!</p>
 
 <p>... STUFF ABOUT HEADERS ... </p>
 
@@ -76,7 +76,7 @@ int main(int argc, char**argv) {
 
 <p>Finally, we instantiate an LLVM <code>PassManager</code> and run the <code>PrintModulePass</code> on our module.  LLVM uses an explicit pass infrastructure to manage optimizations and various other things.  A <code>PassManager</code>, as should be obvious from its name, manages passes: it is responsible for scheduling them, invoking them, and insuring the proper disposal after we’re done with them.  For this example, we’re just using a trivial pass that prints out our module in textual form.</p>
 
-<p>Now onto the interesting part: creating a populating a module.  Here’s the first chunk of our <code>createLLVMModule()</code>:</p>
+<p>Now onto the interesting part: creating a populating a module.  Here’s the first chunk of our <code>makeLLVMModule()</code>:</p>
 
 <div class="doc_code">
 <pre>
