@@ -90,41 +90,22 @@ Module* makeLLVMModule() {
 
 <div class="doc_code">
 <pre>
-  // Create a prototype for our function
-  std::vector&lt;const Type*&gt;argTypes;
-  argTypes.push_back(IntegerType::get(32));
-  argTypes.push_back(IntegerType::get(32));
-  argTypes.push_back(IntegerType::get(32));
-
-  FunctionType* functionSig = FunctionType::get(
-  /*return type*/ IntegerType::get(32),
-  /*arg types*/   argTypes,
-  /*varargs*/     false,
-  /*arg attrs*/   FuncTy_0_PAL);
-</pre>
-</div>
-
-<p>LLVM has a strong type system, including types for functions.  So, before we can create our function, we need to create a <code>FunctionType</code> object to represent our function’s type.  There are four things that go into defining a <code>FunctionType</code>: the return type, the arguments’ types, whether the function is varargs, and any attributes attached to the arguments.  If you don’t understand the latter two, don’t worry.  They’re not important for now.</p>
-
-<p>We construct our <code>FunctionType</code> by first creating a std::vector of Type’s to hold to types of the arguments.  In the case of our <code>mul_add</code> function, that means three 32-bit integers.  Then, we pass in the return type (another 32-bit integer), our list of argument types, and the varargs and attributes, and we’ve got ourselves a FunctionType.</p>
-
-<p>Now that we have a <code>FunctionType</code>, of course, it would be nice to use it for something...</p>
-
-<div class="doc_code">
-<pre>
-  Function* mul_add = new Function(
-  /*func type*/ functionSig,
-  /*linkage*/   GlobalValue::ExternalLinkage,
-  /*name*/      "mul_add",
-  /*module*/    mod);
+  Constant* c->getOrInsertFunction("mul_add",
+  /*ret type*/                     IntegerType::get(32),
+  /*args*/                         IntegerType::get(32),
+                                   IntegerType::get(32),
+                                   IntegerType::get(32));
   
+  Function* mul_add = cast&lt;Function&gt;(c);
   mul_add->setCallingConv(CallingConv::C);
 </pre>
 </div>
 
-<p>Creating a function is as easy as calling its constructor and passing the appropriate parameters.  The first parameter is the function type that we created earlier.  The second is the function’s linkage type.  This one is important for optimization and linking, but for now we’ll just play it safe and give it external linkage.  If you don’t know what to choose, external is probably your safest bet.</p>
+<p>We construct our <code>Function</code> by calling <code>getOrInsertFunction()</code> on our module, passing in the name, return type, and argument types of the function.  In the case of our <code>mul_add</code> function, that means one 32-bit integer for the return value, and three 32-bit integers for the arguments.</p>
 
-<p>The third and fourth parameters give the function a name and add it to our module, respectively.  In addition, we set the calling convention for our new function to be the C calling convention.  This isn’t strictly necessary, but it insures that our new function will interoperate properly with C code, which is a good thing.</p>
+<p>You'll notice that <code>getOrInsertFunction</code> doesn't actually return a <code>Function*</code>.  This is because, if the function already existed, but with a different prototype, <code>getOrInsertFunction</code> will return a cast of the existing function to the desired prototype.  Since we know that there's not already a <code>mul_add</code> function, we can safely just cast <code>c</code> to a <code>Function*</code>.
+  
+<p>In addition, we set the calling convention for our new function to be the C calling convention.  This isn’t strictly necessary, but it insures that our new function will interoperate properly with C code, which is a good thing.</p>
 
 <div class="doc_code">
 <pre>
