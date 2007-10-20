@@ -141,6 +141,7 @@ private:
   SDOperand PromoteResult_TRUNCATE(SDNode *N);
   SDOperand PromoteResult_INT_EXTEND(SDNode *N);
   SDOperand PromoteResult_FP_ROUND(SDNode *N);
+  SDOperand PromoteResult_FP_TO_XINT(SDNode *N);
   SDOperand PromoteResult_SETCC(SDNode *N);
   SDOperand PromoteResult_LOAD(LoadSDNode *N);
   SDOperand PromoteResult_SimpleIntBinOp(SDNode *N);
@@ -524,7 +525,8 @@ void DAGTypeLegalizer::PromoteResult(SDNode *N, unsigned ResNo) {
   case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND:  Result = PromoteResult_INT_EXTEND(N); break;
   case ISD::FP_ROUND:    Result = PromoteResult_FP_ROUND(N); break;
-
+  case ISD::FP_TO_SINT:
+  case ISD::FP_TO_UINT:  Result = PromoteResult_FP_TO_XINT(N); break;
   case ISD::SETCC:    Result = PromoteResult_SETCC(N); break;
   case ISD::LOAD:     Result = PromoteResult_LOAD(cast<LoadSDNode>(N)); break;
 
@@ -619,6 +621,32 @@ SDOperand DAGTypeLegalizer::PromoteResult_FP_ROUND(SDNode *N) {
   return DAG.getNode(ISD::FP_ROUND_INREG, N->getOperand(0).getValueType(),
                      N->getOperand(0), DAG.getValueType(N->getValueType(0)));
 }
+
+SDOperand DAGTypeLegalizer::PromoteResult_FP_TO_XINT(SDNode *N) {
+  SDOperand Op = N->getOperand(0);
+  // If the operand needed to be promoted, do so now.
+  if (getTypeAction(Op.getValueType()) == Promote)
+    // The input result is prerounded, so we don't have to do anything special.
+    Op = GetPromotedOp(Op);
+  
+  unsigned NewOpc = N->getOpcode();
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
+  
+  // If we're promoting a UINT to a larger size, check to see if the new node
+  // will be legal.  If it isn't, check to see if FP_TO_SINT is legal, since
+  // we can use that instead.  This allows us to generate better code for
+  // FP_TO_UINT for small destination sizes on targets where FP_TO_UINT is not
+  // legal, such as PowerPC.
+  if (N->getOpcode() == ISD::FP_TO_UINT) {
+    if (!TLI.isOperationLegal(ISD::FP_TO_UINT, NVT) &&
+        (TLI.isOperationLegal(ISD::FP_TO_SINT, NVT) ||
+         TLI.getOperationAction(ISD::FP_TO_SINT, NVT)==TargetLowering::Custom))
+      NewOpc = ISD::FP_TO_SINT;
+  }
+
+  return DAG.getNode(NewOpc, NVT, Op);
+}
+
 
 SDOperand DAGTypeLegalizer::PromoteResult_SETCC(SDNode *N) {
   assert(isTypeLegal(TLI.getSetCCResultTy()) && "SetCC type is not legal??");
