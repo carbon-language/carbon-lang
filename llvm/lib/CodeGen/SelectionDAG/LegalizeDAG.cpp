@@ -1919,8 +1919,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Result = LegalizeOp(Result);
         } else {
           SDNode *InVal = Tmp2.Val;
-          unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(0));
-          MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(0));
+          int InIx = Tmp2.ResNo;
+          unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(InIx));
+          MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(InIx));
           
           // Figure out if there is a simple type corresponding to this Vector
           // type.  If so, convert to the vector type.
@@ -2114,8 +2115,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // in the high half of the vector.
         if (MVT::isVector(ST->getValue().getValueType())) {
           SDNode *InVal = ST->getValue().Val;
-          unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(0));
-          MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(0));
+          int InIx = ST->getValue().ResNo;
+          unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(InIx));
+          MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(InIx));
 
           // Figure out if there is a simple type corresponding to this Vector
           // type.  If so, convert to the vector type.
@@ -3260,8 +3262,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // The input has to be a vector type, we have to either scalarize it, pack
       // it, or convert it based on whether the input vector type is legal.
       SDNode *InVal = Node->getOperand(0).Val;
-      unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(0));
-      MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(0));
+      int InIx = Node->getOperand(0).ResNo;
+      unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(InIx));
+      MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(InIx));
     
       // Figure out if there is a simple type corresponding to this Vector
       // type.  If so, convert to the vector type.
