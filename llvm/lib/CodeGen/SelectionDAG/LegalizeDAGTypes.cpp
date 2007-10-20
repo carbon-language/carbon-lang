@@ -185,6 +185,7 @@ private:
   SDOperand PromoteOperand_TRUNCATE(SDNode *N);
   SDOperand PromoteOperand_FP_EXTEND(SDNode *N);
   SDOperand PromoteOperand_FP_ROUND(SDNode *N);
+  SDOperand PromoteOperand_INT_TO_FP(SDNode *N);
   SDOperand PromoteOperand_SELECT(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_BRCOND(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_BR_CC(SDNode *N, unsigned OpNo);
@@ -1326,6 +1327,8 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
   case ISD::TRUNCATE:    Res = PromoteOperand_TRUNCATE(N); break;
   case ISD::FP_EXTEND:   Res = PromoteOperand_FP_EXTEND(N); break;
   case ISD::FP_ROUND:    Res = PromoteOperand_FP_ROUND(N); break;
+  case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP:  Res = PromoteOperand_INT_TO_FP(N); break;
     
   case ISD::SELECT:      Res = PromoteOperand_SELECT(N, OpNo); break;
   case ISD::BRCOND:      Res = PromoteOperand_BRCOND(N, OpNo); break;
@@ -1388,6 +1391,18 @@ SDOperand DAGTypeLegalizer::PromoteOperand_FP_EXTEND(SDNode *N) {
 SDOperand DAGTypeLegalizer::PromoteOperand_FP_ROUND(SDNode *N) {
   SDOperand Op = GetPromotedOp(N->getOperand(0));
   return DAG.getNode(ISD::FP_ROUND, N->getValueType(0), Op);
+}
+
+SDOperand DAGTypeLegalizer::PromoteOperand_INT_TO_FP(SDNode *N) {
+  SDOperand In = GetPromotedOp(N->getOperand(0));
+  MVT::ValueType OpVT = N->getOperand(0).getValueType();
+  if (N->getOpcode() == ISD::UINT_TO_FP)
+    In = DAG.getZeroExtendInReg(In, OpVT);
+  else
+    In = DAG.getNode(ISD::SIGN_EXTEND_INREG, In.getValueType(),
+                     In, DAG.getValueType(OpVT));
+  
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), In);
 }
 
 
