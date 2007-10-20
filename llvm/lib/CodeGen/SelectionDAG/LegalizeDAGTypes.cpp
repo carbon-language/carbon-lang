@@ -119,10 +119,20 @@ private:
   }    
   void SetPromotedOp(SDOperand Op, SDOperand Result);
 
+  /// GetPromotedZExtOp - Get a promoted operand and zero extend it to the final
+  /// size.
+  SDOperand GetPromotedZExtOp(SDOperand Op) {
+    MVT::ValueType OldVT = Op.getValueType();
+    Op = GetPromotedOp(Op);
+    return DAG.getZeroExtendInReg(Op, OldVT);
+  }    
+  
   void GetExpandedOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
   void SetExpandedOp(SDOperand Op, SDOperand Lo, SDOperand Hi);
   
+  // Common routines.
   SDOperand CreateStackStoreLoad(SDOperand Op, MVT::ValueType DestVT);
+  SDOperand HandleMemIntrinsic(SDNode *N);
   
   // Result Promotion.
   void PromoteResult(SDNode *N, unsigned ResNo);
@@ -438,6 +448,52 @@ SDOperand DAGTypeLegalizer::CreateStackStoreLoad(SDOperand Op,
   SDOperand Store = DAG.getStore(DAG.getEntryNode(), Op, FIPtr, NULL, 0);
   // Result is a load from the stack slot.
   return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0);
+}
+
+
+/// HandleMemIntrinsic - This handles memcpy/memset/memmove with invalid
+/// operands.  This promotes or expands the operands as required.
+SDOperand DAGTypeLegalizer::HandleMemIntrinsic(SDNode *N) {
+  // The chain and pointer [operands #0 and #1] are always valid types.
+  SDOperand Chain = N->getOperand(0);
+  SDOperand Ptr   = N->getOperand(1);
+  SDOperand Op2   = N->getOperand(2);
+  
+  // Op #2 is either a value (memset) or a pointer.  Promote it if required.
+  switch (getTypeAction(Op2.getValueType())) {
+  default: assert(0 && "Unknown action for pointer/value operand");
+  case Legal: break;
+  case Promote: Op2 = GetPromotedOp(Op2); break;
+  }
+  
+  // The length could have any action required.
+  SDOperand Length = N->getOperand(3);
+  switch (getTypeAction(Length.getValueType())) {
+  default: assert(0 && "Unknown action for memop operand");
+  case Legal: break;
+  case Promote: Length = GetPromotedZExtOp(Length); break;
+  case Expand:
+    SDOperand Dummy;  // discard the high part.
+    GetExpandedOp(Length, Length, Dummy);
+    break;
+  }
+  
+  SDOperand Align = N->getOperand(4);
+  switch (getTypeAction(Align.getValueType())) {
+  default: assert(0 && "Unknown action for memop operand");
+  case Legal: break;
+  case Promote: Align = GetPromotedZExtOp(Align); break;
+  }
+  
+  SDOperand AlwaysInline = N->getOperand(5);
+  switch (getTypeAction(AlwaysInline.getValueType())) {
+  default: assert(0 && "Unknown action for memop operand");
+  case Legal: break;
+  case Promote: AlwaysInline = GetPromotedZExtOp(AlwaysInline); break;
+  }
+  
+  SDOperand Ops[] = { Chain, Ptr, Op2, Length, Align, AlwaysInline };
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), Ops, 6);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1249,6 +1305,9 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
 
   case ISD::STORE:       Res = PromoteOperand_STORE(cast<StoreSDNode>(N),
                                                     OpNo); break;
+  case ISD::MEMSET:
+  case ISD::MEMCPY:
+  case ISD::MEMMOVE:     Res = HandleMemIntrinsic(N); break;
   }
   
   // If the result is null, the sub-method took care of registering results etc.
@@ -1447,6 +1506,9 @@ bool DAGTypeLegalizer::ExpandOperand(SDNode *N, unsigned OpNo) {
   case ISD::SETCC:           Res = ExpandOperand_SETCC(N); break;
 
   case ISD::STORE: Res = ExpandOperand_STORE(cast<StoreSDNode>(N), OpNo); break;
+  case ISD::MEMSET:
+  case ISD::MEMCPY:
+  case ISD::MEMMOVE:     Res = HandleMemIntrinsic(N); break;
   }
   
   // If the result is null, the sub-method took care of registering results etc.
