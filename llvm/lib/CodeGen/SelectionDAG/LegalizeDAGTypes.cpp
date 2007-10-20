@@ -668,7 +668,7 @@ SDOperand DAGTypeLegalizer::PromoteResult_SRL(SDNode *N) {
   // The input value must be properly zero extended.
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
-  SDOperand Res = DAG.getZeroExtendInReg(GetPromotedOp(N->getOperand(0)), VT);
+  SDOperand Res = GetPromotedZExtOp(N->getOperand(0));
   return DAG.getNode(ISD::SRL, NVT, Res, N->getOperand(1));
 }
 
