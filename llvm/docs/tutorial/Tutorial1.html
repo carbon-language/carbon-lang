@@ -25,9 +25,9 @@
 
 <div class="doc_code">
 <pre>
-  int mul_add(int x, int y, int z) {
-      return x * y + z;
-  }
+int mul_add(int x, int y, int z) {
+  return x * y + z;
+}
 </pre>
 </div>
 
@@ -35,12 +35,12 @@
 
 <div class="doc_code">
 <pre>
-  define i32 @mul_add(i32 %x, i32 %y, i32 %z) {
-  entry:
-  	%tmp = mul i32 %x, %y
-  	%tmp2 = add i32 %tmp, %z
-  	ret i32 %tmp2
-  }
+define i32 @mul_add(i32 %x, i32 %y, i32 %z) {
+entry:
+  %tmp = mul i32 %x, %y
+  %tmp2 = add i32 %tmp, %z
+  ret i32 %tmp2
+}
 </pre>
 </div>
 
