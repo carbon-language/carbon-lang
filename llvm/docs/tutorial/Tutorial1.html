@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+<head>
+  <title>LLVM Tutorial 1: A First Function</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="author" content="Owen Anderson">
+  <meta name="description" 
+  content="LLVM Tutorial 1: A First Function.">
+  <link rel="stylesheet" href="../llvm.css" type="text/css">
+</head>
+
+<body>
+
+<div class="doc_title"> LLVM Tutorial 1: A First Function </div>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:owen@apple.com">Owen Anderson</a></p>
+</div>
+
+<div class="doc_text">
+
+<p>For starters, lets consider a relatively straightforward function that takes three integer parameters and returns an arithmetic combination of them.  This is nice and simple, especially since it involves no control flow:</p>
+
+<div class="doc_code">
+<pre>
+  int mul_add(int x, int y, int z) {
+      return x * y + z;
+  }
+</pre>
+</div>
+
+<p>As a preview, the LLVM IR we’re going to end up generating for this function will look like:</p>
+
+<div class="doc_code">
+<pre>
+  define i32 @mul_add(i32 %x, i32 %y, i32 %z) {
+  entry:
+  	%tmp = mul i32 %x, %y
+  	%tmp2 = add i32 %tmp, %z
+  	ret i32 %tmp2
+  }
+</pre>
+</div>
+
+<p>Before going any further in this tutorial, you should look through the <a href="../LangRef.html">LLVM Language Reference Manual</a> and convince yourself that the above LLVM IR is actually equivalent to the original function.  Once you’re satisfied with that, let’s move on to actually generating it programmatically!</p>
+
+<p>... STUFF ABOUT HEADERS ... </p>
+
+<p>Now, let’s get started on our real program.  Here’s what our basic <code>main()</code> will look like:</p>
+
+<div class="doc_code">
+<pre>
+using namespace llvm;
+
+Module* makeLLVMModule();
+
+int main(int argc, char**argv) {
+  Module* Mod = makeLLVMModule();
+
+  verifyModule(*Mod, PrintMessageAction);
+
+  PassManager PM;
+  PM.add(new PrintModulePass(&amp;llvm::cout));
+  PM.run(*Mod);
+
+  return 0;
+}
+</pre>
+</div>
+
+<p>The first segment is pretty simple: it creates an LLVM “module.”  In LLVM, a module represents a single unit of code that is to be processed together.  A module contains things like global variables and function declarations and implementations.  Here, we’ve declared a <code>makeLLVMModule()</code> function to do the real work of creating the module.  Don’t worry, we’ll be looking at that one next!</p>
+
+<p>The second segment runs the LLVM module verifier on our newly created module.  While this probably isn’t really necessary for a simple module like this one, it’s always a good idea, especially if you’re generating LLVM IR based on some input.  The verifier will print an error message if your LLVM module is malformed in any way.</p>
+
+<p>Finally, we instantiate an LLVM <code>PassManager</code> and run the <code>PrintModulePass</code> on our module.  LLVM uses an explicit pass infrastructure to manage optimizations and various other things.  A <code>PassManager</code>, as should be obvious from its name, manages passes: it is responsible for scheduling them, invoking them, and insuring the proper disposal after we’re done with them.  For this example, we’re just using a trivial pass that prints out our module in textual form.</p>
+
+<p>Now onto the interesting part: creating a populating a module.  Here’s the first chunk of our <code>createLLVMModule()</code>:</p>
+
+<div class="doc_code">
+<pre>
+Module* makeLLVMModule() {
+  // Module Construction
+  Module* mod = new Module("test");
+</pre>
+</div>
+
+<p>Exciting, isn’t it!?  All we’re doing here is instantiating a module and giving it a name.  The name isn’t particularly important unless you’re going to be dealing with multiple modules at once.</p>
+
+<div class="doc_code">
+<pre>
+  // Create a prototype for our function
+  std::vector&lt;const Type*&gt;argTypes;
+  argTypes.push_back(IntegerType::get(32));
+  argTypes.push_back(IntegerType::get(32));
+  argTypes.push_back(IntegerType::get(32));
+
+  FunctionType* functionSig = FunctionType::get(
+  /*return type*/ IntegerType::get(32),
+  /*arg types*/   argTypes,
+  /*varargs*/     false,
+  /*arg attrs*/   FuncTy_0_PAL);
+</pre>
+</div>
+
+<p>LLVM has a strong type system, including types for functions.  So, before we can create our function, we need to create a <code>FunctionType</code> object to represent our function’s type.  There are four things that go into defining a <code>FunctionType</code>: the return type, the arguments’ types, whether the function is varargs, and any attributes attached to the arguments.  If you don’t understand the latter two, don’t worry.  They’re not important for now.</p>
+
+<p>We construct our <code>FunctionType</code> by first creating a std::vector of Type’s to hold to types of the arguments.  In the case of our <code>mul_add</code> function, that means three 32-bit integers.  Then, we pass in the return type (another 32-bit integer), our list of argument types, and the varargs and attributes, and we’ve got ourselves a FunctionType.</p>
+
+<p>Now that we have a <code>FunctionType</code>, of course, it would be nice to use it for something...</p>
+
+<div class="doc_code">
+<pre>
+  Function* mul_add = new Function(
+  /*func type*/ functionSig,
+  /*linkage*/   GlobalValue::ExternalLinkage,
+  /*name*/      "mul_add",
+  /*module*/    mod);
+  
+  mul_add->setCallingConv(CallingConv::C);
+</pre>
+</div>
+
+<p>Creating a function is as easy as calling its constructor and passing the appropriate parameters.  The first parameter is the function type that we created earlier.  The second is the function’s linkage type.  This one is important for optimization and linking, but for now we’ll just play it safe and give it external linkage.  If you don’t know what to choose, external is probably your safest bet.</p>
+
+<p>The third and fourth parameters give the function a name and add it to our module, respectively.  In addition, we set the calling convention for our new function to be the C calling convention.  This isn’t strictly necessary, but it insures that our new function will interoperate properly with C code, which is a good thing.</p>
+
+<div class="doc_code">
+<pre>
+  Function::arg_iterator args = mul_add->arg_begin();
+  Value* x = args++;
+  x->setName("x");
+  Value* y = args++;
+  y->setName("y");
+  Value* z = args++;
+  z->setName("z");
+</pre>
+</div>
+
+<p>While we’re setting up our function, let’s also give names to the parameters.  This also isn’t strictly necessary (LLVM will generate names for them if you don’t specify them), but it’ll make looking at our output somewhat more pleasant.  To name the parameters, we iterator over the arguments of our function, and call <code>setName()</code> on them.  We’ll also keep the pointer to <code>x</code>, <code>y</code>, and <code>z</code> around, since we’ll need them when we get around to creating instructions.</p>
+
+<p>Great!  We have a function now.  But what good is a function if it has no body?  Before we start working on a body for our new function, we need to recall some details of the LLVM IR.  The IR, being an abstract assembly language, represents control flow using jumps (we call them branches), both conditional and unconditional.  The straight-line sequences of code between branches are called basic blocks, or just blocks.  To create a body for our function, we fill it with blocks!</p>
+
+<div class="doc_code">
+<pre>
+  BasicBlock* block = new BasicBlock("entry", mul_add);
+  LLVMBuilder builder(block);
+</pre>
+</div>
+
+<p>We create a new basic block, as you might expect, by calling its constructor.  All we need to tell it is its name and the function to which it belongs.  In addition, we’re creating an <code>LLVMBuilder</code> object, which is a convenience interface for creating instructions and appending them to the end of a block.  Instructions can be created through their constructors as well, but some of their interfaces are quite complicated.  Unless you need a lot of control, using <code>LLVMBuilder</code> will make your life simpler.</p>
+
+<div class="doc_code">
+<pre>
+  Value* tmp = builder.CreateBinOp(Instruction::Mul,
+                                    x, y, "tmp");
+  Value* tmp2 = builder.CreateBinOp(Instruction::Add,
+                                    tmp, z, "tmp2");
+
+  builder.CreateRet(tmp2);
+}
+</pre>
+</div>
+
+<p>The final step in creating our function is to create the instructions that make it up.  Our <code>mul_add</code> function is composed of just three instructions: a multiply, an add, and a return.  <code>LLVMBuilder</code> gives us a simple interface for constructing these instructions and appending them to the “entry” block.  Each of the calls to <code>LLVMBuilder</code> returns a <code>Value*</code> that represents the value yielded by the instruction.  You’ll also notice that, above, <code>x</code>, <code>y</code>, and <code>z</code> are also <code>Value*</code>’s, so it’s clear that instructions operate on <code>Value*</code>’s.</p>
+
+<p>And that’s it!  Now you can compile and run your code, and get a wonder textual print out of the LLVM IR we saw at the beginning.</p>
+
+<p> ... SECTION ABOUT USING llvm-config TO GET THE NECESSARY COMPILER FLAGS TO COMPILE YOUR CODE ... </p>
+
+</div>
+
+</body>
+</html>
