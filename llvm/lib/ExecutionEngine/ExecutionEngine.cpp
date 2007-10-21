@@ -319,9 +319,9 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
   if (EE) {
     // Make sure we can resolve symbols in the program as well. The zero arg
     // to the function tells DynamicLibrary to load the program, not a library.
-    try {
-      sys::DynamicLibrary::LoadLibraryPermanently(0);
-    } catch (...) {
+    if (sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr)) {
+      delete EE;
+      return 0;
     }
   }
 
