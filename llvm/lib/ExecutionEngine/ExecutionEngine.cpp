@@ -328,6 +328,10 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
   return EE;
 }
 
+ExecutionEngine *ExecutionEngine::create(Module *M) {
+  return create(new ExistingModuleProvider(M));
+}
+
 /// getPointerToGlobal - This returns the address of the specified global
 /// value.  This may involve code generation if it's a function.
 ///

@@ -108,11 +108,17 @@ public:
   Function *FindFunctionNamed(const char *FnName);
   
   /// create - This is the factory method for creating an execution engine which
-  /// is appropriate for the current machine.
+  /// is appropriate for the current machine.  This takes ownership of the
+  /// module provider.
   static ExecutionEngine *create(ModuleProvider *MP,
                                  bool ForceInterpreter = false,
                                  std::string *ErrorStr = 0);
 
+  /// create - This is the factory method for creating an execution engine which
+  /// is appropriate for the current machine.  This takes ownership of the
+  /// module.
+  static ExecutionEngine *create(Module *M);
+  
   /// runFunction - Execute the specified function with the specified arguments,
   /// and return the result.
   ///
