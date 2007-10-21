@@ -26,10 +26,12 @@
 #include "llvm/Instructions.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/CFG.h"
 #include <list>
 using namespace llvm;
 
-STATISTIC(NumDemoted, "Number of registers demoted");
+STATISTIC(NumRegsDemoted, "Number of registers demoted");
+STATISTIC(NumPhisDemoted, "Number of phi-nodes demoted");
 
 namespace {
   struct VISIBILITY_HIDDEN RegToMem : public FunctionPass {
@@ -43,8 +45,8 @@ namespace {
 
    bool valueEscapes(Instruction* i) {
       BasicBlock* bb = i->getParent();
-      for(Value::use_iterator ii = i->use_begin(), ie = i->use_end();
-          ii != ie; ++ii)
+      for (Value::use_iterator ii = i->use_begin(), ie = i->use_end();
+           ii != ie; ++ii)
         if (cast<Instruction>(*ii)->getParent() != bb ||
             isa<PHINode>(*ii))
           return true;
@@ -53,26 +55,57 @@ namespace {
 
     virtual bool runOnFunction(Function &F) {
       if (!F.isDeclaration()) {
-        //give us a clean block
-        BasicBlock* bbold = &F.getEntryBlock();
-        BasicBlock* bbnew = new BasicBlock("allocablock", &F, 
-                                           &F.getEntryBlock());
-        new BranchInst(bbold, bbnew);
+        // Insert all new allocas into entry block.
+        BasicBlock* BBEntry = &F.getEntryBlock();
+        assert(pred_begin(BBEntry) == pred_end(BBEntry) &&
+               "Entry block to function must not have predecessors!");
 
-        //find the instructions
+        // Find first non-alloca instruction and create insertion point. This is
+        // safe if block is well-formed: it always have terminator, otherwise
+        // we'll get and assertion.
+        BasicBlock::iterator I = BBEntry->begin();
+        while (isa<AllocaInst>(I)) ++I;
+
+        CastInst *AllocaInsertionPoint =
+          CastInst::create(Instruction::BitCast,
+                           Constant::getNullValue(Type::Int32Ty), Type::Int32Ty,
+                           "reg2mem alloca point", I);
+
+        // Find the escaped instructions. But don't create stack slots for
+        // allocas in entry block.
         std::list<Instruction*> worklist;
         for (Function::iterator ibb = F.begin(), ibe = F.end();
              ibb != ibe; ++ibb)
           for (BasicBlock::iterator iib = ibb->begin(), iie = ibb->end();
                iib != iie; ++iib) {
-            if(valueEscapes(iib))
+            if (!(isa<AllocaInst>(iib) && iib->getParent() == BBEntry) &&
+                valueEscapes(iib)) {
               worklist.push_front(&*iib);
+            }
           }
-        //demote escaped instructions
-        NumDemoted += worklist.size();
+
+        // Demote escaped instructions
+        NumRegsDemoted += worklist.size();
         for (std::list<Instruction*>::iterator ilb = worklist.begin(), 
                ile = worklist.end(); ilb != ile; ++ilb)
-          DemoteRegToStack(**ilb, false);
+          DemoteRegToStack(**ilb, false, AllocaInsertionPoint);
+
+        worklist.clear();
+
+        // Find all phi's
+        for (Function::iterator ibb = F.begin(), ibe = F.end();
+             ibb != ibe; ++ibb)
+          for (BasicBlock::iterator iib = ibb->begin(), iie = ibb->end();
+               iib != iie; ++iib)
+            if (isa<PHINode>(iib))
+              worklist.push_front(&*iib);
+
+        // Demote phi nodes
+        NumPhisDemoted += worklist.size();
+        for (std::list<Instruction*>::iterator ilb = worklist.begin(), 
+               ile = worklist.end(); ilb != ile; ++ilb)
+          DemotePHIToStack(cast<PHINode>(*ilb), AllocaInsertionPoint);
+
         return true;
       }
       return false;

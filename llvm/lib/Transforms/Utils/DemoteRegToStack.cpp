@@ -29,14 +29,23 @@ using namespace llvm;
 /// invalidating the SSA information for the value.  It returns the pointer to
 /// the alloca inserted to create a stack slot for I.
 ///
-AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads) {
-  if (I.use_empty()) return 0;                // nothing to do!
-
+AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
+                                   Instruction *AllocaPoint) {
+  if (I.use_empty()) {
+    I.eraseFromParent();
+    return 0;
+  }
+  
   // Create a stack slot to hold the value.
-  Function *F = I.getParent()->getParent();
-  AllocaInst *Slot = new AllocaInst(I.getType(), 0, I.getName(),
-                                    F->getEntryBlock().begin());
-
+  AllocaInst *Slot;
+  if (AllocaPoint) {
+    Slot = new AllocaInst(I.getType(), 0, I.getName()+".reg2mem", AllocaPoint);
+  } else {
+    Function *F = I.getParent()->getParent();
+    Slot = new AllocaInst(I.getType(), 0, I.getName()+".reg2mem",
+                          F->getEntryBlock().begin());
+  }
+  
   // Change all of the users of the instruction to read from the stack slot
   // instead.
   while (!I.use_empty()) {
@@ -98,16 +107,21 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads) {
 /// DemotePHIToStack - This function takes a virtual register computed by a phi
 /// node and replaces it with a slot in the stack frame, allocated via alloca.
 /// The phi node is deleted and it returns the pointer to the alloca inserted.
-AllocaInst* llvm::DemotePHIToStack(PHINode *P) {
+AllocaInst* llvm::DemotePHIToStack(PHINode *P, Instruction *AllocaPoint) {
   if (P->use_empty()) {
     P->eraseFromParent();    
     return 0;                
   }
-  
+
   // Create a stack slot to hold the value.
-  Function *F = P->getParent()->getParent();
-  AllocaInst *Slot = new AllocaInst(P->getType(), 0, P->getName(),
-                                    F->getEntryBlock().begin());
+  AllocaInst *Slot;
+  if (AllocaPoint) {
+    Slot = new AllocaInst(P->getType(), 0, P->getName()+".reg2mem", AllocaPoint);
+  } else {
+    Function *F = P->getParent()->getParent();
+    Slot = new AllocaInst(P->getType(), 0, P->getName()+".reg2mem",
+                          F->getEntryBlock().begin());
+  }
   
   // Iterate over each operand, insert store in each predecessor.
   for (unsigned i = 0, e = P->getNumIncomingValues(); i < e; ++i) {

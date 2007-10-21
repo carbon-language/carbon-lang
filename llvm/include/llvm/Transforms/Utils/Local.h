@@ -78,12 +78,13 @@ bool SimplifyCFG(BasicBlock *BB);
 /// invalidating the SSA information for the value.  It returns the pointer to
 /// the alloca inserted to create a stack slot for X.
 ///
-AllocaInst *DemoteRegToStack(Instruction &X, bool VolatileLoads = false);
+AllocaInst *DemoteRegToStack(Instruction &X, bool VolatileLoads = false,
+                             Instruction *AllocaPoint = NULL);
 
 /// DemotePHIToStack - This function takes a virtual register computed by a phi
 /// node and replaces it with a slot in the stack frame, allocated via alloca.
 /// The phi node is deleted and it returns the pointer to the alloca inserted. 
-AllocaInst *DemotePHIToStack(PHINode *P);
+AllocaInst *DemotePHIToStack(PHINode *P, Instruction *AllocaPoint = NULL);
 
 } // End llvm namespace
 
