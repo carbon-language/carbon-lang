@@ -4040,6 +4040,15 @@ SDOperand X86TargetLowering::LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
     SrcVT = VT;
     SrcTy = MVT::getTypeForValueType(SrcVT);
   }
+  // And if it is bigger, shrink it first.
+  if (MVT::getSizeInBits(SrcVT) > MVT::getSizeInBits(VT)) {
+    Op1 = DAG.getNode(ISD::FP_ROUND, VT, Op1);
+    SrcVT = VT;
+    SrcTy = MVT::getTypeForValueType(SrcVT);
+  }
+
+  // At this point the operands and the result should have the same
+  // type, and that won't be f80 since that is not custom lowered.
 
   // First get the sign bit of second operand.
   std::vector<Constant*> CV;
