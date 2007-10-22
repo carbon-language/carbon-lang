@@ -821,11 +821,8 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
       unsigned Idx = NewMI->findRegisterUseOperandIdx(VirtReg);
       MachineInstr *FoldedMI = MRI->foldMemoryOperand(NewMI, Idx, SS);
       if (FoldedMI) {
-        if (VRM.hasPhys(UnfoldVR))
-          assert(VRM.getPhys(UnfoldVR) == UnfoldPR);
-        else
+        if (!VRM.hasPhys(UnfoldVR))
           VRM.assignVirt2Phys(UnfoldVR, UnfoldPR);
-
         VRM.virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
         MII = MBB.insert(MII, FoldedMI);
         VRM.RemoveFromFoldedVirtMap(&MI);
@@ -1190,7 +1187,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       if (DeadStore) {
         bool isDead = !(MR & VirtRegMap::isRef);
         MachineInstr *NewStore = NULL;
-        if (MR & VirtRegMap::isMod) {
+        if (MR & VirtRegMap::isModRef) {
           unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SS);
           SmallVector<MachineInstr*, 4> NewMIs;
           if (PhysReg &&
