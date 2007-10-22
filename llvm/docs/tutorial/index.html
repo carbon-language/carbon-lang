@@ -15,17 +15,26 @@
 <div class="doc_title"> LLVM Tutorial: Table of Contents </div>
 
 <ol>
-  <li><a href="Introduction.html">An Introduction to LLVM: Basic Concepts and Design</a></li>
-  <li>Basic Tutorials
+  <li><!--<a href="Introduction.html">-->An Introduction to LLVM: Basic Concepts and Design</li>
+  <li>Simple JIT Tutorials
     <ol>
-      <li><a href="JITTutorial1.html">Tutorial 1: A First Function</a></li>
-      <li><!--<a href="Tutorial2.html">-->Tutorial 2: A More Complicated Function</li>
-      <li><!--<a href="Tutorial3.html">-->Tutorial 3: Reading and Writing Bitcode</li>
-      <li><!--<a href="Tutorial4.html">-->Tutorial 4: Running Optimizations</li>
-      <li><!--<a href="Tutorial5.html">-->Tutorial 5: Invoking the JIT</li>
+      <li><a href="JITTutorial1.html">A First Function</a></li>
+      <li><!--<a href="Tutorial2.html">-->A More Complicated Function</li>
+      <li><!--<a href="Tutorial3.html">-->Reading and Writing Bitcode</li>
+      <li><!--<a href="Tutorial4.html">-->Running Optimizations</li>
+      <li><!--<a href="Tutorial5.html">-->Invoking the JIT</li>
     </ol>
   </li>
-  <li><a href="Example.html">Example: Using LLVM to execute a simple language in JIT</a></li>
+  <li>Implementing a simple language with LLVM
+  <ol>
+    <li><a href="LangImpl1.html">The basic language, with its lexer</a></li>
+    <li>Implementing a Parser and AST</li>
+    <li>Implementing code generation to LLVM IR</li>
+    <li>Extending the language: if/then/else</li>
+    <li>Extending the language: operator overloading</li>
+    <li>Adding JIT codegen support</li>
+    <li>Thoughts and ideas for extensions</li>
+  </ol></li>
 </ol>
 
 </body>
