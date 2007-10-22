@@ -62,14 +62,6 @@ void *FunctionPointers[] = {
 };
 #endif // __linux__
 
-// __mainFunc - If the program does not have a linked in __main function, allow
-// it to run, but print a warning.
-static void __mainFunc() {
-  fprintf(stderr, "WARNING: Program called __main but was not linked to "
-          "libcrtend.a.\nThis probably won't hurt anything unless the "
-          "program is written in C++.\n");
-}
-
 // jit_exit - Used to intercept the "exit" library call.
 static void jit_exit(int Status) {
   runAtExitHandlers();   // Run atexit handlers...
@@ -94,10 +86,6 @@ void *JIT::getPointerToNamedFunction(const std::string &Name) {
   // about casting a function pointer to a normal pointer.
   if (Name == "exit") return (void*)(intptr_t)&jit_exit;
   if (Name == "atexit") return (void*)(intptr_t)&jit_atexit;
-
-  // If the program does not have a linked in __main function, allow it to run,
-  // but print a warning.
-  if (Name == "__main") return (void*)(intptr_t)&__mainFunc;
 
   const char *NameStr = Name.c_str();
   // If this is an asm specifier, skip the sentinal.
