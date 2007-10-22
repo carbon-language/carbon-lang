@@ -133,7 +133,8 @@ private:
   // Common routines.
   SDOperand CreateStackStoreLoad(SDOperand Op, MVT::ValueType DestVT);
   SDOperand HandleMemIntrinsic(SDNode *N);
-  
+  void SplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
+
   // Result Promotion.
   void PromoteResult(SDNode *N, unsigned ResNo);
   SDOperand PromoteResult_UNDEF(SDNode *N);
@@ -498,6 +499,20 @@ SDOperand DAGTypeLegalizer::HandleMemIntrinsic(SDNode *N) {
   return DAG.UpdateNodeOperands(SDOperand(N, 0), Ops, 6);
 }
 
+/// SplitOp - Return the lower and upper halves of Op's bits in a value type
+/// half the size of Op's.
+void DAGTypeLegalizer::SplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi) {
+  unsigned NVTBits = MVT::getSizeInBits(Op.getValueType())/2;
+  assert(MVT::getSizeInBits(Op.getValueType()) == 2*NVTBits &&
+         "Cannot split odd sized integer type");
+  MVT::ValueType NVT = MVT::getIntegerType(NVTBits);
+  Lo = DAG.getNode(ISD::TRUNCATE, NVT, Op);
+  Hi = DAG.getNode(ISD::SRL, Op.getValueType(), Op,
+                   DAG.getConstant(NVTBits, TLI.getShiftAmountTy()));
+  Hi = DAG.getNode(ISD::TRUNCATE, NVT, Hi);
+}
+
+
 //===----------------------------------------------------------------------===//
 //  Result Promotion
 //===----------------------------------------------------------------------===//
@@ -805,33 +820,77 @@ void DAGTypeLegalizer::ExpandResult_BUILD_PAIR(SDNode *N,
   Hi = N->getOperand(1);
 }
 
-void DAGTypeLegalizer::ExpandResult_ANY_EXTEND(SDNode *N, 
+void DAGTypeLegalizer::ExpandResult_ANY_EXTEND(SDNode *N,
                                                SDOperand &Lo, SDOperand &Hi) {
-  
   MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  // The low part is any extension of the input (which degenerates to a copy).
-  Lo = DAG.getNode(ISD::ANY_EXTEND, NVT, N->getOperand(0));
-  Hi = DAG.getNode(ISD::UNDEF, NVT);   // The high part is undefined.
+  SDOperand Op = N->getOperand(0);
+  if (MVT::getSizeInBits(Op.getValueType()) <= MVT::getSizeInBits(NVT)) {
+    // The low part is any extension of the input (which degenerates to a copy).
+    Lo = DAG.getNode(ISD::ANY_EXTEND, NVT, Op);
+    Hi = DAG.getNode(ISD::UNDEF, NVT);   // The high part is undefined.
+  } else {
+    // For example, extension of an i48 to an i64.  The operand type necessarily
+    // promotes to the result type, so will end up being expanded too.
+    assert(getTypeAction(Op.getValueType()) == Promote &&
+           "Don't know how to expand this result!");
+    SDOperand Res = GetPromotedOp(Op);
+    assert(Res.getValueType() == N->getValueType(0) &&
+           "Operand over promoted?");
+    // Split the promoted operand.  This will simplify when it is expanded.
+    SplitOp(Res, Lo, Hi);
+  }
 }
 
 void DAGTypeLegalizer::ExpandResult_ZERO_EXTEND(SDNode *N,
                                                 SDOperand &Lo, SDOperand &Hi) {
   MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  // The low part is zero extension of the input (which degenerates to a copy).
-  Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, N->getOperand(0));
-  Hi = DAG.getConstant(0, NVT);   // The high part is just a zero.
+  SDOperand Op = N->getOperand(0);
+  if (MVT::getSizeInBits(Op.getValueType()) <= MVT::getSizeInBits(NVT)) {
+    // The low part is zero extension of the input (which degenerates to a copy).
+    Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, N->getOperand(0));
+    Hi = DAG.getConstant(0, NVT);   // The high part is just a zero.
+  } else {
+    // For example, extension of an i48 to an i64.  The operand type necessarily
+    // promotes to the result type, so will end up being expanded too.
+    assert(getTypeAction(Op.getValueType()) == Promote &&
+           "Don't know how to expand this result!");
+    SDOperand Res = GetPromotedOp(Op);
+    assert(Res.getValueType() == N->getValueType(0) &&
+           "Operand over promoted?");
+    // Split the promoted operand.  This will simplify when it is expanded.
+    SplitOp(Res, Lo, Hi);
+    unsigned ExcessBits =
+      MVT::getSizeInBits(Op.getValueType()) - MVT::getSizeInBits(NVT);
+    Hi = DAG.getZeroExtendInReg(Hi, MVT::getIntegerType(ExcessBits));
+  }
 }
 
 void DAGTypeLegalizer::ExpandResult_SIGN_EXTEND(SDNode *N,
                                                 SDOperand &Lo, SDOperand &Hi) {
   MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
-  // The low part is sign extension of the input (which degenerates to a copy).
-  Lo = DAG.getNode(ISD::SIGN_EXTEND, NVT, N->getOperand(0));
-
-  // The high part is obtained by SRA'ing all but one of the bits of low part.
-  unsigned LoSize = MVT::getSizeInBits(NVT);
-  Hi = DAG.getNode(ISD::SRA, NVT, Lo,
-                   DAG.getConstant(LoSize-1, TLI.getShiftAmountTy()));
+  SDOperand Op = N->getOperand(0);
+  if (MVT::getSizeInBits(Op.getValueType()) <= MVT::getSizeInBits(NVT)) {
+    // The low part is sign extension of the input (which degenerates to a copy).
+    Lo = DAG.getNode(ISD::SIGN_EXTEND, NVT, N->getOperand(0));
+    // The high part is obtained by SRA'ing all but one of the bits of low part.
+    unsigned LoSize = MVT::getSizeInBits(NVT);
+    Hi = DAG.getNode(ISD::SRA, NVT, Lo,
+                     DAG.getConstant(LoSize-1, TLI.getShiftAmountTy()));
+  } else {
+    // For example, extension of an i48 to an i64.  The operand type necessarily
+    // promotes to the result type, so will end up being expanded too.
+    assert(getTypeAction(Op.getValueType()) == Promote &&
+           "Don't know how to expand this result!");
+    SDOperand Res = GetPromotedOp(Op);
+    assert(Res.getValueType() == N->getValueType(0) &&
+           "Operand over promoted?");
+    // Split the promoted operand.  This will simplify when it is expanded.
+    SplitOp(Res, Lo, Hi);
+    unsigned ExcessBits =
+      MVT::getSizeInBits(Op.getValueType()) - MVT::getSizeInBits(NVT);
+    Hi = DAG.getNode(ISD::SIGN_EXTEND_INREG, Hi.getValueType(), Hi,
+                     DAG.getValueType(MVT::getIntegerType(ExcessBits)));
+  }
 }
 
 void DAGTypeLegalizer::ExpandResult_BIT_CONVERT(SDNode *N,
@@ -844,18 +903,27 @@ void DAGTypeLegalizer::ExpandResult_BIT_CONVERT(SDNode *N,
 void DAGTypeLegalizer::
 ExpandResult_SIGN_EXTEND_INREG(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
   GetExpandedOp(N->getOperand(0), Lo, Hi);
-  
-  // sext_inreg the low part if needed.
-  Lo = DAG.getNode(ISD::SIGN_EXTEND_INREG, Lo.getValueType(), Lo,
-                   N->getOperand(1));
-  
-  // The high part gets the sign extension from the lo-part.  This handles
-  // things like sextinreg V:i64 from i8.
-  Hi = DAG.getNode(ISD::SRA, Hi.getValueType(), Lo,
-                   DAG.getConstant(MVT::getSizeInBits(Hi.getValueType())-1,
-                                   TLI.getShiftAmountTy()));
-}
+  MVT::ValueType EVT = N->getOperand(1).getValueType();
 
+  if (MVT::getSizeInBits(EVT) <= MVT::getSizeInBits(Lo.getValueType())) {
+    // sext_inreg the low part if needed.
+    Lo = DAG.getNode(ISD::SIGN_EXTEND_INREG, Lo.getValueType(), Lo,
+                     N->getOperand(1));
+
+    // The high part gets the sign extension from the lo-part.  This handles
+    // things like sextinreg V:i64 from i8.
+    Hi = DAG.getNode(ISD::SRA, Hi.getValueType(), Lo,
+                     DAG.getConstant(MVT::getSizeInBits(Hi.getValueType())-1,
+                                     TLI.getShiftAmountTy()));
+  } else {
+    // For example, extension of an i48 to an i64.  Leave the low part alone,
+    // sext_inreg the high part.
+    unsigned ExcessBits =
+      MVT::getSizeInBits(EVT) - MVT::getSizeInBits(Lo.getValueType());
+    Hi = DAG.getNode(ISD::SIGN_EXTEND_INREG, Hi.getValueType(), Hi,
+                     DAG.getValueType(MVT::getIntegerType(ExcessBits)));
+  }
+}
 
 void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
                                          SDOperand &Lo, SDOperand &Hi) {
