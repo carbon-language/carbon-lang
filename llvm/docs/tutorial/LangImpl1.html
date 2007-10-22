@@ -56,7 +56,7 @@ which looks like this:</p>
 <pre>
 # Compute the x'th fibonacci number.
 def fib(x)
-  if x < 3 then
+  if x &lt; 3 then
     1
   else
     fib(x-1)+fib(x-2)
@@ -241,8 +241,8 @@ this code:</p>
 
 <p>With this, we have the complete lexer for the basic Kaleidoscope language.
 Next we'll <a href="LangImpl2.html">build a simple parser that uses this to 
-build an Abstract Syntax Tree</a>.  If you prefer, you can jump to the <a
-href="index.html">main tutorial index page</a>.
+build an Abstract Syntax Tree</a>.  When we have that, we'll include a driver
+so that you can use the lexer and parser together.
 </p>
 
 </div>
