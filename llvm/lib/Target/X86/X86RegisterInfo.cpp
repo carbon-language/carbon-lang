@@ -1224,7 +1224,8 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     MIB.addReg(Reg, true);
   for (unsigned i = 0, e = BeforeOps.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, BeforeOps[i]);
-  MIB.addReg(Reg);
+  if (FoldedLoad)
+    MIB.addReg(Reg);
   for (unsigned i = 0, e = AfterOps.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, AfterOps[i]);
   for (unsigned i = 0, e = ImpOps.size(); i != e; ++i) {
