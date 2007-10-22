@@ -221,3 +221,7 @@ LPC0:
 
 Make register allocator / spiller smarter so we can re-materialize "mov r, imm",
 etc. Almost all Thumb instructions clobber condition code.
+
+//===---------------------------------------------------------------------===//
+
+Add ldmia, stmia support.

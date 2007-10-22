@@ -1287,7 +1287,8 @@ static SDOperand LowerSRx(SDOperand Op, SelectionDAG &DAG,
   return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
 }
 
-SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
+SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG,
+                                         const ARMSubtarget *ST) {
   SDOperand ChainOp = Op.getOperand(0);
   SDOperand DestOp = Op.getOperand(1);
   SDOperand SourceOp = Op.getOperand(2);
@@ -1305,25 +1306,18 @@ SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
     assert(!AlwaysInline && "Cannot inline copy of unknown size");
     return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
   }
-  unsigned Size = I->getValue();
 
-  if (AlwaysInline)
-    return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
-
-  // The libc version is likely to be faster for the following cases. It can
+  // If not DWORD aligned or if size is more than threshold, then call memcpy.
+  // The libc version is likely to be faster for the these cases. It can
   // use the address value and run time information about the CPU.
   // With glibc 2.6.1 on a core 2, coping an array of 100M longs was 30% faster
-
-  // If not DWORD aligned, call memcpy.
-  if ((Align & 3) != 0)
-    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
-
-  // If size is more than the threshold, call memcpy.
-  //  if (Size > Subtarget->getMinRepStrSizeThreshold())
-  if (Size >= 64)
-    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
-
-  return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
+  // FIXME: For now, we don't lower memcpy's to loads / stores for Thumb. Change
+  // this once Thumb ldmia / stmia support is added.
+  unsigned Size = I->getValue();
+  if (AlwaysInline ||
+      (!ST->isThumb() && Size < 64 && (Align & 3) == 0))
+    return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
+  return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
 }
 
 SDOperand ARMTargetLowering::LowerMEMCPYCall(SDOperand Chain,
@@ -1350,46 +1344,93 @@ SDOperand ARMTargetLowering::LowerMEMCPYInline(SDOperand Chain,
                                                unsigned Size,
                                                unsigned Align,
                                                SelectionDAG &DAG) {
-
-  // Do repeated 4-byte loads and stores.  To be improved.
-  assert((Size& 3) == 0);
-  assert((Align & 3) == 0);
+  // Do repeated 4-byte loads and stores. To be improved.
+  assert((Align & 3) == 0 && "Expected 4-byte aligned addresses!");
+  unsigned BytesLeft = Size & 3;
   unsigned NumMemOps = Size >> 2;
   unsigned EmittedNumMemOps = 0;
   unsigned SrcOff = 0, DstOff = 0;
   MVT::ValueType VT = MVT::i32;
   unsigned VTSize = 4;
+  unsigned i = 0;
   const unsigned MAX_LOADS_IN_LDM = 6;
-  SDOperand LoadChains[MAX_LOADS_IN_LDM];
+  SDOperand TFOps[MAX_LOADS_IN_LDM];
   SDOperand Loads[MAX_LOADS_IN_LDM];
 
-  // Emit up to 4 loads, then a TokenFactor barrier, then the same
-  // number of stores.  The loads and stores will get combined into
+  // Emit up to MAX_LOADS_IN_LDM loads, then a TokenFactor barrier, then the
+  // same number of stores.  The loads and stores will get combined into
   // ldm/stm later on.
-  while(EmittedNumMemOps < NumMemOps) {
-    unsigned i;
-    for (i=0; i<MAX_LOADS_IN_LDM && EmittedNumMemOps+i < NumMemOps; i++) {
+  while (EmittedNumMemOps < NumMemOps) {
+    for (i = 0;
+         i < MAX_LOADS_IN_LDM && EmittedNumMemOps + i < NumMemOps; ++i) {
       Loads[i] = DAG.getLoad(VT, Chain,
-                             DAG.getNode(ISD::ADD, VT, Source,
-                                         DAG.getConstant(SrcOff, VT)),
+                             DAG.getNode(ISD::ADD, MVT::i32, Source,
+                                         DAG.getConstant(SrcOff, MVT::i32)),
                              NULL, 0);
-      LoadChains[i] = Loads[i].getValue(1);
+      TFOps[i] = Loads[i].getValue(1);
       SrcOff += VTSize;
     }
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
 
-    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &LoadChains[0], i);
-
-    for (i=0; i<MAX_LOADS_IN_LDM && EmittedNumMemOps+i < NumMemOps; i++) {
-      Chain = DAG.getStore(Chain, Loads[i],
-                           DAG.getNode(ISD::ADD, VT, Dest, 
-                                       DAG.getConstant(DstOff, VT)),
+    for (i = 0;
+         i < MAX_LOADS_IN_LDM && EmittedNumMemOps + i < NumMemOps; ++i) {
+      TFOps[i] = DAG.getStore(Chain, Loads[i],
+                           DAG.getNode(ISD::ADD, MVT::i32, Dest, 
+                                       DAG.getConstant(DstOff, MVT::i32)),
                            NULL, 0);
       DstOff += VTSize;
     }
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
+
     EmittedNumMemOps += i;
   }
 
-  return Chain;
+  if (BytesLeft == 0) 
+    return Chain;
+
+  // Issue loads / stores for the trailing (1 - 3) bytes.
+  unsigned BytesLeftSave = BytesLeft;
+  i = 0;
+  while (BytesLeft) {
+    if (BytesLeft >= 2) {
+      VT = MVT::i16;
+      VTSize = 2;
+    } else {
+      VT = MVT::i8;
+      VTSize = 1;
+    }
+
+    Loads[i] = DAG.getLoad(VT, Chain,
+                           DAG.getNode(ISD::ADD, MVT::i32, Source,
+                                       DAG.getConstant(SrcOff, MVT::i32)),
+                           NULL, 0);
+    TFOps[i] = Loads[i].getValue(1);
+    ++i;
+    SrcOff += VTSize;
+    BytesLeft -= VTSize;
+  }
+  Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
+
+  i = 0;
+  BytesLeft = BytesLeftSave;
+  while (BytesLeft) {
+    if (BytesLeft >= 2) {
+      VT = MVT::i16;
+      VTSize = 2;
+    } else {
+      VT = MVT::i8;
+      VTSize = 1;
+    }
+
+    TFOps[i] = DAG.getStore(Chain, Loads[i],
+                            DAG.getNode(ISD::ADD, MVT::i32, Dest, 
+                                        DAG.getConstant(DstOff, MVT::i32)),
+                            NULL, 0);
+    ++i;
+    DstOff += VTSize;
+    BytesLeft -= VTSize;
+  }
+  return DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
 }
 
 SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -1419,7 +1460,7 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::RETURNADDR:    break;
   case ISD::FRAMEADDR:     break;
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
-  case ISD::MEMCPY:        return LowerMEMCPY(Op, DAG);
+  case ISD::MEMCPY:        return LowerMEMCPY(Op, DAG, Subtarget);
   }
   return SDOperand();
 }
