@@ -1,0 +1,787 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+<head>
+  <title>Kaleidoscope: Implementing code generation to LLVM IR</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="author" content="Chris Lattner">
+  <link rel="stylesheet" href="../llvm.css" type="text/css">
+</head>
+
+<body>
+
+<div class="doc_title">Kaleidoscope: Code generation to LLVM IR</div>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="intro">Part 3 Introduction</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Welcome to part 3 of the "<a href="index.html">Implementing a language with
+LLVM</a>" tutorial.  This chapter shows you how to transform the <a 
+href="LangImpl2.html">Abstract Syntax Tree built in Chapter 2</a> into LLVM IR.
+This will teach you a little bit about how LLVM does things, as well as
+demonstrate how easy it is to use.  It's much more work to build a lexer and
+parser than it is to generate LLVM IR code.
+</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="basics">Code Generation setup</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+In order to generate LLVM IR, we want some simple setup to get started.  First,
+we define virtual codegen methods in each AST class:</p>
+
+<div class="doc_code">
+<pre>
+/// ExprAST - Base class for all expression nodes.
+class ExprAST {
+public:
+  virtual ~ExprAST() {}
+  virtual Value *Codegen() = 0;
+};
+
+/// NumberExprAST - Expression class for numeric literals like "1.0".
+class NumberExprAST : public ExprAST {
+  double Val;
+public:
+  NumberExprAST(double val) : Val(val) {}
+  virtual Value *Codegen();
+};
+...
+</pre>
+</div>
+
+<p>"Value" is the class used to represent a "register" in LLVM.  The Codegen()
+method says to emit IR for that AST node and all things it depends on.  The
+second thing we want is an "Error" method like we used for parser, which will
+be used to report errors found during code generation (for example, use of an
+undeclared parameter):</p>
+
+<div class="doc_code">
+<pre>
+Value *ErrorV(const char *Str) { Error(Str); return 0; }
+
+static Module *TheModule;
+static LLVMBuilder Builder;
+static std::map&lt;std::string, Value*&gt; NamedValues;
+</pre>
+</div>
+
+<p>The static variables will be used during code generation.  <tt>TheModule</tt>
+is the LLVM construct that contains all of the functions and global variables in
+a chunk of code.  In many ways, it is the top-level structure that the LLVM IR
+uses to contain code.</p>
+
+<p>The <tt>Builder</tt> object is a helper object that makes it easy to generate
+LLVM instructions.  The <tt>Builder</tt> keeps track of the current place to
+insert instructions and has methods to create new instructions.</p>
+
+<p>The <tt>NamedValues</tt> map keeps track of which values are defined in the
+current scope and what their LLVM representation is.  In this form of
+Kaleidoscope, the only things that can be referenced are function parameters.
+As such, function parameters will be in this map when generating code for their
+function body.</p>
+
+<p>
+With these basics in place, we can start talking about how to generate code for
+each expression.  Note that this assumes that the <tt>Builder</tt> has been set
+up to generate code <em>into</em> something.  For now, we'll assume that this
+has already been done, and we'll just use it to emit code.
+</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="exprs">Expression Code Generation</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Generating LLVM code for expression nodes is very straight-forward: less
+than 45 lines of commented code for all four of our expression nodes.  First,
+we'll do numeric literals:</p>
+
+<div class="doc_code">
+<pre>
+Value *NumberExprAST::Codegen() {
+  return ConstantFP::get(Type::DoubleTy, APFloat(Val));
+}
+</pre>
+</div>
+
+<p>In the LLVM IR, numeric constants are represented with the ConstantFP class,
+which holds the numeric value in an APFloat internally (APFloat has the
+capability of holding floating point constants of arbitrary precision).  This
+code basically just creates and returns a ConstantFP.  Note that in the LLVM IR
+that constants are all uniqued together and shared.  For this reason, the API
+uses "the foo::get(...)" idiom instead of a "create" method or "new foo".</p>
+
+<div class="doc_code">
+<pre>
+Value *VariableExprAST::Codegen() {
+  // Look this variable up in the function.
+  Value *V = NamedValues[Name];
+  return V ? V : ErrorV("Unknown variable name");
+}
+</pre>
+</div>
+
+<p>References to variables is also quite simple here.  In our system, we assume
+that the variable has already been emited somewhere and its value is available.
+In practice, the only values in the NamedValues map will be arguments.  This
+code simply checks to see that the specified name is in the map (if not, an 
+unknown variable is being referenced) and returns the value for it.</p>
+
+<div class="doc_code">
+<pre>
+Value *BinaryExprAST::Codegen() {
+  Value *L = LHS-&gt;Codegen();
+  Value *R = RHS-&gt;Codegen();
+  if (L == 0 || R == 0) return 0;
+  
+  switch (Op) {
+  case '+': return Builder.CreateAdd(L, R, "addtmp");
+  case '-': return Builder.CreateSub(L, R, "subtmp");
+  case '*': return Builder.CreateMul(L, R, "multmp");
+  case '&lt;':
+    L = Builder.CreateFCmpULT(L, R, "multmp");
+    // Convert bool 0/1 to double 0.0 or 1.0
+    return Builder.CreateUIToFP(L, Type::DoubleTy, "booltmp");
+  default: return ErrorV("invalid binary operator");
+  }
+}
+</pre>
+</div>
+
+
+
+<div class="doc_code">
+<pre>
+Value *CallExprAST::Codegen() {
+  // Look up the name in the global module table.
+  Function *CalleeF = TheModule-&gt;getFunction(Callee);
+  if (CalleeF == 0)
+    return ErrorV("Unknown function referenced");
+  
+  // If argument mismatch error.
+  if (CalleeF-&gt;arg_size() != Args.size())
+    return ErrorV("Incorrect # arguments passed");
+
+  std::vector&lt;Value*&gt; ArgsV;
+  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+    ArgsV.push_back(Args[i]-&gt;Codegen());
+    if (ArgsV.back() == 0) return 0;
+  }
+  
+  return Builder.CreateCall(CalleeF, ArgsV.begin(), ArgsV.end(), "calltmp");
+}
+</pre>
+</div>
+
+<h1> more todo</h1>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="code">Conclusions and the Full Code</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<div class="doc_code">
+<pre>
+// To build this:
+//  g++ -g toy.cpp `llvm-config --cppflags` `llvm-config --ldflags` \
+//                `llvm-config --libs core` -I ~/llvm/include/
+//  ./a.out 
+// See example below.
+
+#include "llvm/DerivedTypes.h"
+#include "llvm/Module.h"
+#include "llvm/Support/LLVMBuilder.h"
+#include &lt;cstdio&gt;
+#include &lt;string&gt;
+#include &lt;map&gt;
+#include &lt;vector&gt;
+using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+// Lexer
+//===----------------------------------------------------------------------===//
+
+// The lexer returns tokens [0-255] if it is an unknown character, otherwise one
+// of these for known things.
+enum Token {
+  tok_eof = -1,
+
+  // commands
+  tok_def = -2, tok_extern = -3,
+
+  // primary
+  tok_identifier = -4, tok_number = -5,
+};
+
+static std::string IdentifierStr;  // Filled in if tok_identifier
+static double NumVal;              // Filled in if tok_number
+
+/// gettok - Return the next token from standard input.
+static int gettok() {
+  static int LastChar = ' ';
+
+  // Skip any whitespace.
+  while (isspace(LastChar))
+    LastChar = getchar();
+
+  if (isalpha(LastChar)) { // identifier: [a-zA-Z][a-zA-Z0-9]*
+    IdentifierStr = LastChar;
+    while (isalnum((LastChar = getchar())))
+      IdentifierStr += LastChar;
+
+    if (IdentifierStr == "def") return tok_def;
+    if (IdentifierStr == "extern") return tok_extern;
+    return tok_identifier;
+  }
+
+  if (isdigit(LastChar) || LastChar == '.') {   // Number: [0-9.]+
+    std::string NumStr;
+    do {
+      NumStr += LastChar;
+      LastChar = getchar();
+    } while (isdigit(LastChar) || LastChar == '.');
+
+    NumVal = strtod(NumStr.c_str(), 0);
+    return tok_number;
+  }
+
+  if (LastChar == '#') {
+    // Comment until end of line.
+    do LastChar = getchar();
+    while (LastChar != EOF &amp;&amp; LastChar != '\n' &amp; LastChar != '\r');
+    
+    if (LastChar != EOF)
+      return gettok();
+  }
+  
+  // Check for end of file.  Don't eat the EOF.
+  if (LastChar == EOF)
+    return tok_eof;
+
+  // Otherwise, just return the character as its ascii value.
+  int ThisChar = LastChar;
+  LastChar = getchar();
+  return ThisChar;
+}
+
+//===----------------------------------------------------------------------===//
+// Abstract Syntax Tree (aka Parse Tree)
+//===----------------------------------------------------------------------===//
+
+/// ExprAST - Base class for all expression nodes.
+class ExprAST {
+public:
+  virtual ~ExprAST() {}
+  virtual Value *Codegen() = 0;
+};
+
+/// NumberExprAST - Expression class for numeric literals like "1.0".
+class NumberExprAST : public ExprAST {
+  double Val;
+public:
+  NumberExprAST(double val) : Val(val) {}
+  virtual Value *Codegen();
+};
+
+/// VariableExprAST - Expression class for referencing a variable, like "a".
+class VariableExprAST : public ExprAST {
+  std::string Name;
+public:
+  VariableExprAST(const std::string &amp;name) : Name(name) {}
+  virtual Value *Codegen();
+};
+
+/// BinaryExprAST - Expression class for a binary operator.
+class BinaryExprAST : public ExprAST {
+  char Op;
+  ExprAST *LHS, *RHS;
+public:
+  BinaryExprAST(char op, ExprAST *lhs, ExprAST *rhs) 
+    : Op(op), LHS(lhs), RHS(rhs) {}
+  virtual Value *Codegen();
+};
+
+/// CallExprAST - Expression class for function calls.
+class CallExprAST : public ExprAST {
+  std::string Callee;
+  std::vector&lt;ExprAST*&gt; Args;
+public:
+  CallExprAST(const std::string &amp;callee, std::vector&lt;ExprAST*&gt; &amp;args)
+    : Callee(callee), Args(args) {}
+  virtual Value *Codegen();
+};
+
+/// PrototypeAST - This class represents the "prototype" for a function,
+/// which captures its argument names as well as if it is an operator.
+class PrototypeAST {
+  std::string Name;
+  std::vector&lt;std::string&gt; Args;
+public:
+  PrototypeAST(const std::string &amp;name, const std::vector&lt;std::string&gt; &amp;args)
+    : Name(name), Args(args) {}
+  
+  Function *Codegen();
+};
+
+/// FunctionAST - This class represents a function definition itself.
+class FunctionAST {
+  PrototypeAST *Proto;
+  ExprAST *Body;
+public:
+  FunctionAST(PrototypeAST *proto, ExprAST *body)
+    : Proto(proto), Body(body) {}
+  
+  Function *Codegen();
+};
+
+//===----------------------------------------------------------------------===//
+// Parser
+//===----------------------------------------------------------------------===//
+
+/// CurTok/getNextToken - Provide a simple token buffer.  CurTok is the current
+/// token the parser it looking at.  getNextToken reads another token from the
+/// lexer and updates CurTok with its results.
+static int CurTok;
+static int getNextToken() {
+  return CurTok = gettok();
+}
+
+/// BinopPrecedence - This holds the precedence for each binary operator that is
+/// defined.
+static std::map&lt;char, int&gt; BinopPrecedence;
+
+/// GetTokPrecedence - Get the precedence of the pending binary operator token.
+static int GetTokPrecedence() {
+  if (!isascii(CurTok))
+    return -1;
+  
+  // Make sure it's a declared binop.
+  int TokPrec = BinopPrecedence[CurTok];
+  if (TokPrec &lt;= 0) return -1;
+  return TokPrec;
+}
+
+/// Error* - These are little helper functions for error handling.
+ExprAST *Error(const char *Str) { fprintf(stderr, "Error: %s\n", Str);return 0;}
+PrototypeAST *ErrorP(const char *Str) { Error(Str); return 0; }
+FunctionAST *ErrorF(const char *Str) { Error(Str); return 0; }
+
+static ExprAST *ParseExpression();
+
+/// identifierexpr
+///   ::= identifer
+///   ::= identifer '(' expression* ')'
+static ExprAST *ParseIdentifierExpr() {
+  std::string IdName = IdentifierStr;
+  
+  getNextToken();  // eat identifer.
+  
+  if (CurTok != '(') // Simple variable ref.
+    return new VariableExprAST(IdName);
+  
+  // Call.
+  getNextToken();  // eat (
+  std::vector&lt;ExprAST*&gt; Args;
+  while (1) {
+    ExprAST *Arg = ParseExpression();
+    if (!Arg) return 0;
+    Args.push_back(Arg);
+    
+    if (CurTok == ')') break;
+    
+    if (CurTok != ',')
+      return Error("Expected ')'");
+    getNextToken();
+  }
+
+  // Eat the ')'.
+  getNextToken();
+  
+  return new CallExprAST(IdName, Args);
+}
+
+/// numberexpr ::= number
+static ExprAST *ParseNumberExpr() {
+  ExprAST *Result = new NumberExprAST(NumVal);
+  getNextToken(); // consume the number
+  return Result;
+}
+
+/// parenexpr ::= '(' expression ')'
+static ExprAST *ParseParenExpr() {
+  getNextToken();  // eat (.
+  ExprAST *V = ParseExpression();
+  if (!V) return 0;
+  
+  if (CurTok != ')')
+    return Error("expected ')'");
+  getNextToken();  // eat ).
+  return V;
+}
+
+/// primary
+///   ::= identifierexpr
+///   ::= numberexpr
+///   ::= parenexpr
+static ExprAST *ParsePrimary() {
+  switch (CurTok) {
+  default: return Error("unknown token when expecting an expression");
+  case tok_identifier: return ParseIdentifierExpr();
+  case tok_number:     return ParseNumberExpr();
+  case '(':            return ParseParenExpr();
+  }
+}
+
+/// binoprhs
+///   ::= ('+' primary)*
+static ExprAST *ParseBinOpRHS(int ExprPrec, ExprAST *LHS) {
+  // If this is a binop, find its precedence.
+  while (1) {
+    int TokPrec = GetTokPrecedence();
+    
+    // If this is a binop that binds at least as tightly as the current binop,
+    // consume it, otherwise we are done.
+    if (TokPrec &lt; ExprPrec)
+      return LHS;
+    
+    // Okay, we know this is a binop.
+    int BinOp = CurTok;
+    getNextToken();  // eat binop
+    
+    // Parse the primary expression after the binary operator.
+    ExprAST *RHS = ParsePrimary();
+    if (!RHS) return 0;
+    
+    // If BinOp binds less tightly with RHS than the operator after RHS, let
+    // the pending operator take RHS as its LHS.
+    int NextPrec = GetTokPrecedence();
+    if (TokPrec &lt; NextPrec) {
+      RHS = ParseBinOpRHS(TokPrec+1, RHS);
+      if (RHS == 0) return 0;
+    }
+    
+    // Merge LHS/RHS.
+    LHS = new BinaryExprAST(BinOp, LHS, RHS);
+  }
+}
+
+/// expression
+///   ::= primary binoprhs
+///
+static ExprAST *ParseExpression() {
+  ExprAST *LHS = ParsePrimary();
+  if (!LHS) return 0;
+  
+  return ParseBinOpRHS(0, LHS);
+}
+
+/// prototype
+///   ::= id '(' id* ')'
+static PrototypeAST *ParsePrototype() {
+  if (CurTok != tok_identifier)
+    return ErrorP("Expected function name in prototype");
+
+  std::string FnName = IdentifierStr;
+  getNextToken();
+  
+  if (CurTok != '(')
+    return ErrorP("Expected '(' in prototype");
+  
+  std::vector&lt;std::string&gt; ArgNames;
+  while (getNextToken() == tok_identifier)
+    ArgNames.push_back(IdentifierStr);
+  if (CurTok != ')')
+    return ErrorP("Expected ')' in prototype");
+  
+  // success.
+  getNextToken();  // eat ')'.
+  
+  return new PrototypeAST(FnName, ArgNames);
+}
+
+/// definition ::= 'def' prototype expression
+static FunctionAST *ParseDefinition() {
+  getNextToken();  // eat def.
+  PrototypeAST *Proto = ParsePrototype();
+  if (Proto == 0) return 0;
+
+  if (ExprAST *E = ParseExpression())
+    return new FunctionAST(Proto, E);
+  return 0;
+}
+
+/// toplevelexpr ::= expression
+static FunctionAST *ParseTopLevelExpr() {
+  if (ExprAST *E = ParseExpression()) {
+    // Make an anonymous proto.
+    PrototypeAST *Proto = new PrototypeAST("", std::vector&lt;std::string&gt;());
+    return new FunctionAST(Proto, E);
+  }
+  return 0;
+}
+
+/// external ::= 'extern' prototype
+static PrototypeAST *ParseExtern() {
+  getNextToken();  // eat extern.
+  return ParsePrototype();
+}
+
+//===----------------------------------------------------------------------===//
+// Code Generation
+//===----------------------------------------------------------------------===//
+
+static Module *TheModule;
+static LLVMBuilder Builder;
+static std::map&lt;std::string, Value*&gt; NamedValues;
+
+Value *ErrorV(const char *Str) { Error(Str); return 0; }
+
+Value *NumberExprAST::Codegen() {
+  return ConstantFP::get(Type::DoubleTy, APFloat(Val));
+}
+
+Value *VariableExprAST::Codegen() {
+  // Look this variable up in the function.
+  Value *V = NamedValues[Name];
+  return V ? V : ErrorV("Unknown variable name");
+}
+
+Value *BinaryExprAST::Codegen() {
+  Value *L = LHS-&gt;Codegen();
+  Value *R = RHS-&gt;Codegen();
+  if (L == 0 || R == 0) return 0;
+  
+  switch (Op) {
+  case '+': return Builder.CreateAdd(L, R, "addtmp");
+  case '-': return Builder.CreateSub(L, R, "subtmp");
+  case '*': return Builder.CreateMul(L, R, "multmp");
+  case '&lt;':
+    L = Builder.CreateFCmpULT(L, R, "multmp");
+    // Convert bool 0/1 to double 0.0 or 1.0
+    return Builder.CreateUIToFP(L, Type::DoubleTy, "booltmp");
+  default: return ErrorV("invalid binary operator");
+  }
+}
+
+Value *CallExprAST::Codegen() {
+  // Look up the name in the global module table.
+  Function *CalleeF = TheModule-&gt;getFunction(Callee);
+  if (CalleeF == 0)
+    return ErrorV("Unknown function referenced");
+  
+  // If argument mismatch error.
+  if (CalleeF-&gt;arg_size() != Args.size())
+    return ErrorV("Incorrect # arguments passed");
+
+  std::vector&lt;Value*&gt; ArgsV;
+  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+    ArgsV.push_back(Args[i]-&gt;Codegen());
+    if (ArgsV.back() == 0) return 0;
+  }
+  
+  return Builder.CreateCall(CalleeF, ArgsV.begin(), ArgsV.end(), "calltmp");
+}
+
+Function *PrototypeAST::Codegen() {
+  // Make the function type:  double(double,double) etc.
+  FunctionType *FT = 
+    FunctionType::get(Type::DoubleTy, std::vector&lt;const Type*&gt;(Args.size(),
+                                                               Type::DoubleTy),
+                      false);
+  
+  Function *F = new Function(FT, Function::ExternalLinkage, Name, TheModule);
+  
+  // If F conflicted, there was already something named 'Name'.  If it has a
+  // body, don't allow redefinition or reextern.
+  if (F-&gt;getName() != Name) {
+    // Delete the one we just made and get the existing one.
+    F-&gt;eraseFromParent();
+    F = TheModule-&gt;getFunction(Name);
+    
+    // If F already has a body, reject this.
+    if (!F-&gt;empty()) {
+      ErrorF("redefinition of function");
+      return 0;
+    }
+    
+    // If F took a different number of args, reject.
+    if (F-&gt;arg_size() != Args.size()) {
+      ErrorF("redefinition of function with different # args");
+      return 0;
+    }
+  }
+  
+  // Set names for all arguments.
+  unsigned Idx = 0;
+  for (Function::arg_iterator AI = F-&gt;arg_begin(); Idx != Args.size();
+       ++AI, ++Idx) {
+    AI-&gt;setName(Args[Idx]);
+    
+    // Add arguments to variable symbol table.
+    NamedValues[Args[Idx]] = AI;
+  }
+  
+  return F;
+}
+
+Function *FunctionAST::Codegen() {
+  NamedValues.clear();
+  
+  Function *TheFunction = Proto-&gt;Codegen();
+  if (TheFunction == 0)
+    return 0;
+  
+  // Create a new basic block to start insertion into.
+  Builder.SetInsertPoint(new BasicBlock("entry", TheFunction));
+  
+  if (Value *RetVal = Body-&gt;Codegen()) {
+    // Finish off the function.
+    Builder.CreateRet(RetVal);
+    return TheFunction;
+  }
+  
+  // Error reading body, remove function.
+  TheFunction-&gt;eraseFromParent();
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
+// Top-Level parsing and JIT Driver
+//===----------------------------------------------------------------------===//
+
+static void HandleDefinition() {
+  if (FunctionAST *F = ParseDefinition()) {
+    if (Function *LF = F-&gt;Codegen()) {
+      fprintf(stderr, "Read function definition:");
+      LF-&gt;dump();
+    }
+  } else {
+    // Skip token for error recovery.
+    getNextToken();
+  }
+}
+
+static void HandleExtern() {
+  if (PrototypeAST *P = ParseExtern()) {
+    if (Function *F = P-&gt;Codegen()) {
+      fprintf(stderr, "Read extern: ");
+      F-&gt;dump();
+    }
+  } else {
+    // Skip token for error recovery.
+    getNextToken();
+  }
+}
+
+static void HandleTopLevelExpression() {
+  // Evaluate a top level expression into an anonymous function.
+  if (FunctionAST *F = ParseTopLevelExpr()) {
+    if (Function *LF = F-&gt;Codegen()) {
+      fprintf(stderr, "Read top-level expression:");
+      LF-&gt;dump();
+    }
+  } else {
+    // Skip token for error recovery.
+    getNextToken();
+  }
+}
+
+/// top ::= definition | external | expression | ';'
+static void MainLoop() {
+  while (1) {
+    fprintf(stderr, "ready&gt; ");
+    switch (CurTok) {
+    case tok_eof:    return;
+    case ';':        getNextToken(); break;  // ignore top level semicolons.
+    case tok_def:    HandleDefinition(); break;
+    case tok_extern: HandleExtern(); break;
+    default:         HandleTopLevelExpression(); break;
+    }
+  }
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// "Library" functions that can be "extern'd" from user code.
+//===----------------------------------------------------------------------===//
+
+/// putchard - putchar that takes a double and returns 0.
+extern "C" 
+double putchard(double X) {
+  putchar((char)X);
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
+// Main driver code.
+//===----------------------------------------------------------------------===//
+
+int main() {
+  TheModule = new Module("my cool jit");
+
+  // Install standard binary operators.
+  // 1 is lowest precedence.
+  BinopPrecedence['&lt;'] = 10;
+  BinopPrecedence['+'] = 20;
+  BinopPrecedence['-'] = 20;
+  BinopPrecedence['*'] = 40;  // highest.
+
+  // Prime the first token.
+  fprintf(stderr, "ready&gt; ");
+  getNextToken();
+
+  MainLoop();
+  TheModule-&gt;dump();
+  return 0;
+}
+
+/* Examples:
+
+def fib(x)
+  if (x &lt; 3) then
+    1
+  else
+    fib(x-1)+fib(x-2);
+
+fib(10);
+
+*/
+</pre>
+</div>
+</div>
+
+<!-- *********************************************************************** -->
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!" /></a>
+
+  <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
+  <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date: 2007-10-17 11:05:13 -0700 (Wed, 17 Oct 2007) $
+</address>
+</body>
+</html>
