@@ -253,6 +253,9 @@ int main(int argc, char **argv) {
   // Make sure we print stack trace if we get bad signals
   sys::PrintStackTraceOnErrorSignal();
 
+  std::cout << "NOTE: llvmc is highly experimental and mostly useless right "
+               "now.\nPlease use llvm-gcc directly instead.\n\n";
+
   try {
 
     // Parse the command line options
