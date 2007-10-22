@@ -618,7 +618,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
         // Unallocatable register dead, ignore.
         continue;
       } else {
-        assert(!PhysRegsUsed[PhysReg] || PhysRegsUsed[PhysReg] == -1 &&
+        assert((!PhysRegsUsed[PhysReg] || PhysRegsUsed[PhysReg] == -1) &&
                "Silently clearing a virtual register?");
       }
 
