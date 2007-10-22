@@ -128,8 +128,8 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
       !cast<SCEVConstant>(S->getStart())->getValue()->isZero()) {
     Value *Start = expand(S->getStart());
     std::vector<SCEVHandle> NewOps(S->op_begin(), S->op_end());
-    NewOps[0] = SCEVUnknown::getIntegerSCEV(0, Ty);
-    Value *Rest = expand(SCEVAddRecExpr::get(NewOps, L));
+    NewOps[0] = SE.getIntegerSCEV(0, Ty);
+    Value *Rest = expand(SE.getAddRecExpr(NewOps, L));
 
     // FIXME: look for an existing add to use.
     return InsertBinop(Instruction::Add, Rest, Start, InsertPt);
@@ -137,7 +137,7 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
 
   // {0,+,1} --> Insert a canonical induction variable into the loop!
   if (S->getNumOperands() == 2 &&
-      S->getOperand(1) == SCEVUnknown::getIntegerSCEV(1, Ty)) {
+      S->getOperand(1) == SE.getIntegerSCEV(1, Ty)) {
     // Create and insert the PHI node for the induction variable in the
     // specified loop.
     BasicBlock *Header = L->getHeader();
@@ -200,9 +200,9 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   // folders, then expandCodeFor the closed form.  This allows the folders to
   // simplify the expression without having to build a bunch of special code
   // into this folder.
-  SCEVHandle IH = SCEVUnknown::get(I);   // Get I as a "symbolic" SCEV.
+  SCEVHandle IH = SE.getUnknown(I);   // Get I as a "symbolic" SCEV.
 
-  SCEVHandle V = S->evaluateAtIteration(IH);
+  SCEVHandle V = S->evaluateAtIteration(IH, SE);
   //cerr << "Evaluated: " << *this << "\n     to: " << *V << "\n";
 
   return expand(V);

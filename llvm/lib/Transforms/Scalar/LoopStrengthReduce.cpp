@@ -90,9 +90,6 @@ namespace {
     PHINode    *PHI;
     Value      *IncV;
 
-    IVExpr()
-      : Stride(SCEVUnknown::getIntegerSCEV(0, Type::Int32Ty)),
-        Base  (SCEVUnknown::getIntegerSCEV(0, Type::Int32Ty)) {}
     IVExpr(const SCEVHandle &stride, const SCEVHandle &base, PHINode *phi,
            Value *incv)
       : Stride(stride), Base(base), PHI(phi), IncV(incv) {}
@@ -261,7 +258,7 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
 
   // Build up the base expression.  Insert an LLVM cast of the pointer to
   // uintptr_t first.
-  SCEVHandle GEPVal = SCEVUnknown::get(
+  SCEVHandle GEPVal = SE->getUnknown(
       getCastedVersionOf(Instruction::PtrToInt, GEP->getOperand(0)));
 
   gep_type_iterator GTI = gep_type_begin(GEP);
@@ -274,8 +271,8 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
       const StructLayout *SL = TD->getStructLayout(STy);
       unsigned Idx = cast<ConstantInt>(GEP->getOperand(i))->getZExtValue();
       uint64_t Offset = SL->getElementOffset(Idx);
-      GEPVal = SCEVAddExpr::get(GEPVal,
-                                SCEVUnknown::getIntegerSCEV(Offset, UIntPtrTy));
+      GEPVal = SE->getAddExpr(GEPVal,
+                             SE->getIntegerSCEV(Offset, UIntPtrTy));
     } else {
       unsigned GEPOpiBits = 
         GEP->getOperand(i)->getType()->getPrimitiveSizeInBits();
@@ -288,10 +285,10 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
 
       uint64_t TypeSize = TD->getABITypeSize(GTI.getIndexedType());
       if (TypeSize != 1)
-        Idx = SCEVMulExpr::get(Idx,
-                               SCEVConstant::get(ConstantInt::get(UIntPtrTy,
-                                                                   TypeSize)));
-      GEPVal = SCEVAddExpr::get(GEPVal, Idx);
+        Idx = SE->getMulExpr(Idx,
+                            SE->getConstant(ConstantInt::get(UIntPtrTy,
+                                                             TypeSize)));
+      GEPVal = SE->getAddExpr(GEPVal, Idx);
     }
   }
 
@@ -304,7 +301,8 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
 /// is.  The stride must be a loop invariant expression, but the start may be
 /// a mix of loop invariant and loop variant expressions.
 static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
-                                  SCEVHandle &Start, SCEVHandle &Stride) {
+                                  SCEVHandle &Start, SCEVHandle &Stride,
+                                  ScalarEvolution *SE) {
   SCEVHandle TheAddRec = Start;   // Initialize to zero.
 
   // If the outer level is an AddExpr, the operands are all start values except
@@ -314,11 +312,11 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
       if (SCEVAddRecExpr *AddRec =
              dyn_cast<SCEVAddRecExpr>(AE->getOperand(i))) {
         if (AddRec->getLoop() == L)
-          TheAddRec = SCEVAddExpr::get(AddRec, TheAddRec);
+          TheAddRec = SE->getAddExpr(AddRec, TheAddRec);
         else
           return false;  // Nested IV of some sort?
       } else {
-        Start = SCEVAddExpr::get(Start, AE->getOperand(i));
+        Start = SE->getAddExpr(Start, AE->getOperand(i));
       }
         
   } else if (isa<SCEVAddRecExpr>(SH)) {
@@ -333,7 +331,7 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
   // FIXME: Generalize to non-affine IV's.
   if (!AddRec->isAffine()) return false;
 
-  Start = SCEVAddExpr::get(Start, AddRec->getOperand(0));
+  Start = SE->getAddExpr(Start, AddRec->getOperand(0));
   
   if (!isa<SCEVConstant>(AddRec->getOperand(1)))
     DOUT << "[" << L->getHeader()->getName()
@@ -414,9 +412,9 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
   if (isa<SCEVCouldNotCompute>(ISE)) return false;
   
   // Get the start and stride for this expression.
-  SCEVHandle Start = SCEVUnknown::getIntegerSCEV(0, ISE->getType());
+  SCEVHandle Start = SE->getIntegerSCEV(0, ISE->getType());
   SCEVHandle Stride = Start;
-  if (!getSCEVStartAndStride(ISE, L, Start, Stride))
+  if (!getSCEVStartAndStride(ISE, L, Start, Stride, SE))
     return false;  // Non-reducible symbolic expression, bail out.
 
   std::vector<Instruction *> IUsers;
@@ -458,7 +456,7 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
       if (IVUseShouldUsePostIncValue(User, I, L, DT, this)) {
         // The value used will be incremented by the stride more than we are
         // expecting, so subtract this off.
-        SCEVHandle NewStart = SCEV::getMinusSCEV(Start, Stride);
+        SCEVHandle NewStart = SE->getMinusSCEV(Start, Stride);
         StrideUses.addUser(NewStart, User, I);
         StrideUses.Users.back().isUseOfPostIncrementedValue = true;
         DOUT << "   USING POSTINC SCEV, START=" << *NewStart<< "\n";
@@ -474,6 +472,9 @@ namespace {
   /// BasedUser - For a particular base value, keep information about how we've
   /// partitioned the expression so far.
   struct BasedUser {
+    /// SE - The current ScalarEvolution object.
+    ScalarEvolution *SE;
+
     /// Base - The Base value for the PHI node that needs to be inserted for
     /// this use.  As the use is processed, information gets moved from this
     /// field to the Imm field (below).  BasedUser values are sorted by this
@@ -503,10 +504,10 @@ namespace {
     // the loop.
     bool isUseOfPostIncrementedValue;
     
-    BasedUser(IVStrideUse &IVSU)
-      : Base(IVSU.Offset), Inst(IVSU.User), 
+    BasedUser(IVStrideUse &IVSU, ScalarEvolution *se)
+      : SE(se), Base(IVSU.Offset), Inst(IVSU.User), 
         OperandValToReplace(IVSU.OperandValToReplace), 
-        Imm(SCEVUnknown::getIntegerSCEV(0, Base->getType())), EmittedBase(0),
+        Imm(SE->getIntegerSCEV(0, Base->getType())), EmittedBase(0),
         isUseOfPostIncrementedValue(IVSU.isUseOfPostIncrementedValue) {}
 
     // Once we rewrite the code to insert the new IVs we want, update the
@@ -565,7 +566,7 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
     IP = Rewriter.getInsertionPoint();
   
   // Always emit the immediate (if non-zero) into the same block as the user.
-  SCEVHandle NewValSCEV = SCEVAddExpr::get(SCEVUnknown::get(Base), Imm);
+  SCEVHandle NewValSCEV = SE->getAddExpr(SE->getUnknown(Base), Imm);
   return Rewriter.expandCodeFor(NewValSCEV, IP);
   
 }
@@ -703,7 +704,7 @@ static bool isTargetConstant(const SCEVHandle &V, const Type *UseTy,
 /// MoveLoopVariantsToImediateField - Move any subexpressions from Val that are
 /// loop varying to the Imm operand.
 static void MoveLoopVariantsToImediateField(SCEVHandle &Val, SCEVHandle &Imm,
-                                            Loop *L) {
+                                            Loop *L, ScalarEvolution *SE) {
   if (Val->isLoopInvariant(L)) return;  // Nothing to do.
   
   if (SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
@@ -714,27 +715,27 @@ static void MoveLoopVariantsToImediateField(SCEVHandle &Val, SCEVHandle &Imm,
       if (!SAE->getOperand(i)->isLoopInvariant(L)) {
         // If this is a loop-variant expression, it must stay in the immediate
         // field of the expression.
-        Imm = SCEVAddExpr::get(Imm, SAE->getOperand(i));
+        Imm = SE->getAddExpr(Imm, SAE->getOperand(i));
       } else {
         NewOps.push_back(SAE->getOperand(i));
       }
 
     if (NewOps.empty())
-      Val = SCEVUnknown::getIntegerSCEV(0, Val->getType());
+      Val = SE->getIntegerSCEV(0, Val->getType());
     else
-      Val = SCEVAddExpr::get(NewOps);
+      Val = SE->getAddExpr(NewOps);
   } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
     // Try to pull immediates out of the start value of nested addrec's.
     SCEVHandle Start = SARE->getStart();
-    MoveLoopVariantsToImediateField(Start, Imm, L);
+    MoveLoopVariantsToImediateField(Start, Imm, L, SE);
     
     std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
     Ops[0] = Start;
-    Val = SCEVAddRecExpr::get(Ops, SARE->getLoop());
+    Val = SE->getAddRecExpr(Ops, SARE->getLoop());
   } else {
     // Otherwise, all of Val is variant, move the whole thing over.
-    Imm = SCEVAddExpr::get(Imm, Val);
-    Val = SCEVUnknown::getIntegerSCEV(0, Val->getType());
+    Imm = SE->getAddExpr(Imm, Val);
+    Val = SE->getIntegerSCEV(0, Val->getType());
   }
 }
 
@@ -745,7 +746,8 @@ static void MoveLoopVariantsToImediateField(SCEVHandle &Val, SCEVHandle &Imm,
 static void MoveImmediateValues(const TargetLowering *TLI,
                                 Instruction *User,
                                 SCEVHandle &Val, SCEVHandle &Imm,
-                                bool isAddress, Loop *L) {
+                                bool isAddress, Loop *L,
+                                ScalarEvolution *SE) {
   const Type *UseTy = User->getType();
   if (StoreInst *SI = dyn_cast<StoreInst>(User))
     UseTy = SI->getOperand(0)->getType();
@@ -756,31 +758,31 @@ static void MoveImmediateValues(const TargetLowering *TLI,
     
     for (unsigned i = 0; i != SAE->getNumOperands(); ++i) {
       SCEVHandle NewOp = SAE->getOperand(i);
-      MoveImmediateValues(TLI, User, NewOp, Imm, isAddress, L);
+      MoveImmediateValues(TLI, User, NewOp, Imm, isAddress, L, SE);
       
       if (!NewOp->isLoopInvariant(L)) {
         // If this is a loop-variant expression, it must stay in the immediate
         // field of the expression.
-        Imm = SCEVAddExpr::get(Imm, NewOp);
+        Imm = SE->getAddExpr(Imm, NewOp);
       } else {
         NewOps.push_back(NewOp);
       }
     }
 
     if (NewOps.empty())
-      Val = SCEVUnknown::getIntegerSCEV(0, Val->getType());
+      Val = SE->getIntegerSCEV(0, Val->getType());
     else
-      Val = SCEVAddExpr::get(NewOps);
+      Val = SE->getAddExpr(NewOps);
     return;
   } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
     // Try to pull immediates out of the start value of nested addrec's.
     SCEVHandle Start = SARE->getStart();
-    MoveImmediateValues(TLI, User, Start, Imm, isAddress, L);
+    MoveImmediateValues(TLI, User, Start, Imm, isAddress, L, SE);
     
     if (Start != SARE->getStart()) {
       std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
       Ops[0] = Start;
-      Val = SCEVAddRecExpr::get(Ops, SARE->getLoop());
+      Val = SE->getAddRecExpr(Ops, SARE->getLoop());
     }
     return;
   } else if (SCEVMulExpr *SME = dyn_cast<SCEVMulExpr>(Val)) {
@@ -788,22 +790,22 @@ static void MoveImmediateValues(const TargetLowering *TLI,
     if (isAddress && isTargetConstant(SME->getOperand(0), UseTy, TLI) &&
         SME->getNumOperands() == 2 && SME->isLoopInvariant(L)) {
 
-      SCEVHandle SubImm = SCEVUnknown::getIntegerSCEV(0, Val->getType());
+      SCEVHandle SubImm = SE->getIntegerSCEV(0, Val->getType());
       SCEVHandle NewOp = SME->getOperand(1);
-      MoveImmediateValues(TLI, User, NewOp, SubImm, isAddress, L);
+      MoveImmediateValues(TLI, User, NewOp, SubImm, isAddress, L, SE);
       
       // If we extracted something out of the subexpressions, see if we can 
       // simplify this!
       if (NewOp != SME->getOperand(1)) {
         // Scale SubImm up by "8".  If the result is a target constant, we are
         // good.
-        SubImm = SCEVMulExpr::get(SubImm, SME->getOperand(0));
+        SubImm = SE->getMulExpr(SubImm, SME->getOperand(0));
         if (isTargetConstant(SubImm, UseTy, TLI)) {
           // Accumulate the immediate.
-          Imm = SCEVAddExpr::get(Imm, SubImm);
+          Imm = SE->getAddExpr(Imm, SubImm);
           
           // Update what is left of 'Val'.
-          Val = SCEVMulExpr::get(SME->getOperand(0), NewOp);
+          Val = SE->getMulExpr(SME->getOperand(0), NewOp);
           return;
         }
       }
@@ -814,8 +816,8 @@ static void MoveImmediateValues(const TargetLowering *TLI,
   // expression.
   if ((isAddress && isTargetConstant(Val, UseTy, TLI)) ||
       !Val->isLoopInvariant(L)) {
-    Imm = SCEVAddExpr::get(Imm, Val);
-    Val = SCEVUnknown::getIntegerSCEV(0, Val->getType());
+    Imm = SE->getAddExpr(Imm, Val);
+    Val = SE->getIntegerSCEV(0, Val->getType());
     return;
   }
 
@@ -827,22 +829,23 @@ static void MoveImmediateValues(const TargetLowering *TLI,
 /// added together.  This is used to reassociate common addition subexprs
 /// together for maximal sharing when rewriting bases.
 static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
-                             SCEVHandle Expr) {
+                             SCEVHandle Expr,
+                             ScalarEvolution *SE) {
   if (SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(Expr)) {
     for (unsigned j = 0, e = AE->getNumOperands(); j != e; ++j)
-      SeparateSubExprs(SubExprs, AE->getOperand(j));
+      SeparateSubExprs(SubExprs, AE->getOperand(j), SE);
   } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Expr)) {
-    SCEVHandle Zero = SCEVUnknown::getIntegerSCEV(0, Expr->getType());
+    SCEVHandle Zero = SE->getIntegerSCEV(0, Expr->getType());
     if (SARE->getOperand(0) == Zero) {
       SubExprs.push_back(Expr);
     } else {
       // Compute the addrec with zero as its base.
       std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
       Ops[0] = Zero;   // Start with zero base.
-      SubExprs.push_back(SCEVAddRecExpr::get(Ops, SARE->getLoop()));
+      SubExprs.push_back(SE->getAddRecExpr(Ops, SARE->getLoop()));
       
 
-      SeparateSubExprs(SubExprs, SARE->getOperand(0));
+      SeparateSubExprs(SubExprs, SARE->getOperand(0), SE);
     }
   } else if (!isa<SCEVConstant>(Expr) ||
              !cast<SCEVConstant>(Expr)->getValue()->isZero()) {
@@ -857,11 +860,12 @@ static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
 /// removed, accumulated, and returned.  This looks for things like (a+b+c) and
 /// (a+c+d) -> (a+c).  The common expression is *removed* from the Bases.
 static SCEVHandle 
-RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
+RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
+                                    ScalarEvolution *SE) {
   unsigned NumUses = Uses.size();
 
   // Only one use?  Use its base, regardless of what it is!
-  SCEVHandle Zero = SCEVUnknown::getIntegerSCEV(0, Uses[0].Base->getType());
+  SCEVHandle Zero = SE->getIntegerSCEV(0, Uses[0].Base->getType());
   SCEVHandle Result = Zero;
   if (NumUses == 1) {
     std::swap(Result, Uses[0].Base);
@@ -883,7 +887,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
     if (Uses[i].Base == Zero) return Zero;
 
     // Split the expression into subexprs.
-    SeparateSubExprs(SubExprs, Uses[i].Base);
+    SeparateSubExprs(SubExprs, Uses[i].Base, SE);
     // Add one to SubExpressionUseCounts for each subexpr present.
     for (unsigned j = 0, e = SubExprs.size(); j != e; ++j)
       if (++SubExpressionUseCounts[SubExprs[j]] == 1)
@@ -898,7 +902,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
        SubExpressionUseCounts.find(UniqueSubExprs[i]);
     assert(I != SubExpressionUseCounts.end() && "Entry not found?");
     if (I->second == NumUses) {  // Found CSE!
-      Result = SCEVAddExpr::get(Result, I->first);
+      Result = SE->getAddExpr(Result, I->first);
     } else {
       // Remove non-cse's from SubExpressionUseCounts.
       SubExpressionUseCounts.erase(I);
@@ -911,7 +915,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
   // Otherwise, remove all of the CSE's we found from each of the base values.
   for (unsigned i = 0; i != NumUses; ++i) {
     // Split the expression into subexprs.
-    SeparateSubExprs(SubExprs, Uses[i].Base);
+    SeparateSubExprs(SubExprs, Uses[i].Base, SE);
 
     // Remove any common subexpressions.
     for (unsigned j = 0, e = SubExprs.size(); j != e; ++j)
@@ -924,7 +928,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
     if (SubExprs.empty())
       Uses[i].Base = Zero;
     else
-      Uses[i].Base = SCEVAddExpr::get(SubExprs);
+      Uses[i].Base = SE->getAddExpr(SubExprs);
     SubExprs.clear();
   }
  
@@ -1037,13 +1041,13 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   std::vector<BasedUser> UsersToProcess;
   UsersToProcess.reserve(Uses.Users.size());
   for (unsigned i = 0, e = Uses.Users.size(); i != e; ++i) {
-    UsersToProcess.push_back(Uses.Users[i]);
+    UsersToProcess.push_back(BasedUser(Uses.Users[i], SE));
     
     // Move any loop invariant operands from the offset field to the immediate
     // field of the use, so that we don't try to use something before it is
     // computed.
     MoveLoopVariantsToImediateField(UsersToProcess.back().Base,
-                                    UsersToProcess.back().Imm, L);
+                                    UsersToProcess.back().Imm, L, SE);
     assert(UsersToProcess.back().Base->isLoopInvariant(L) &&
            "Base value is not loop invariant!");
   }
@@ -1056,7 +1060,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // "A+B"), emit it to the preheader, then remove the expression from the
   // UsersToProcess base values.
   SCEVHandle CommonExprs =
-    RemoveCommonExpressionsFromUseBases(UsersToProcess);
+    RemoveCommonExpressionsFromUseBases(UsersToProcess, SE);
   
   // Next, figure out what we can represent in the immediate fields of
   // instructions.  If we can represent anything there, move it to the imm
@@ -1067,10 +1071,10 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // value of the IV.  Do not put anything in the base, make sure it's all in
     // the immediate field to allow as much factoring as possible.
     if (!L->contains(UsersToProcess[i].Inst->getParent())) {
-      UsersToProcess[i].Imm = SCEVAddExpr::get(UsersToProcess[i].Imm,
-                                               UsersToProcess[i].Base);
+      UsersToProcess[i].Imm = SE->getAddExpr(UsersToProcess[i].Imm,
+                                             UsersToProcess[i].Base);
       UsersToProcess[i].Base = 
-        SCEVUnknown::getIntegerSCEV(0, UsersToProcess[i].Base->getType());
+        SE->getIntegerSCEV(0, UsersToProcess[i].Base->getType());
     } else {
       
       // Addressing modes can be folded into loads and stores.  Be careful that
@@ -1088,7 +1092,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       }
       
       MoveImmediateValues(TLI, UsersToProcess[i].Inst, UsersToProcess[i].Base,
-                          UsersToProcess[i].Imm, isAddress, L);
+                          UsersToProcess[i].Imm, isAddress, L, SE);
     }
   }
 
@@ -1098,7 +1102,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // instruction after this substition, including the immediate field, if any.
   PHINode *NewPHI = NULL;
   Value   *IncV   = NULL;
-  IVExpr   ReuseIV;
+  IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),
+                   SE->getIntegerSCEV(0, Type::Int32Ty),
+                   0, 0);
   unsigned RewriteFactor = CheckForIVReuse(Stride, ReuseIV,
                                            CommonExprs->getType(),
                                            UsersToProcess);
@@ -1143,7 +1149,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     bool isNegative = isNonConstantNegative(Stride);
     SCEVHandle IncAmount = Stride;
     if (isNegative)
-      IncAmount = SCEV::getNegativeSCEV(Stride);
+      IncAmount = SE->getNegativeSCEV(Stride);
     
     // Insert the stride into the preheader.
     Value *StrideV = PreheaderRewriter.expandCodeFor(IncAmount, PreInsertPt);
@@ -1151,10 +1157,10 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
     // Emit the increment of the base value before the terminator of the loop
     // latch block, and add it to the Phi node.
-    SCEVHandle IncExp = SCEVUnknown::get(StrideV);
+    SCEVHandle IncExp = SE->getUnknown(StrideV);
     if (isNegative)
-      IncExp = SCEV::getNegativeSCEV(IncExp);
-    IncExp = SCEVAddExpr::get(SCEVUnknown::get(NewPHI), IncExp);
+      IncExp = SE->getNegativeSCEV(IncExp);
+    IncExp = SE->getAddExpr(SE->getUnknown(NewPHI), IncExp);
   
     IncV = Rewriter.expandCodeFor(IncExp, LatchBlock->getTerminator());
     IncV->setName(NewPHI->getName()+".inc");
@@ -1168,7 +1174,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     Constant *C = dyn_cast<Constant>(CommonBaseV);
     if (!C ||
         (!C->isNullValue() &&
-         !isTargetConstant(SCEVUnknown::get(CommonBaseV), ReplacedTy, TLI)))
+         !isTargetConstant(SE->getUnknown(CommonBaseV), ReplacedTy, TLI)))
       // We want the common base emitted into the preheader! This is just
       // using cast as a copy so BitCast (no-op cast) is appropriate
       CommonBaseV = new BitCastInst(CommonBaseV, CommonBaseV->getType(), 
@@ -1257,7 +1263,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         RewriteOp = SCEVExpander::InsertCastOfTo(opcode, RewriteOp, ReplacedTy);
       }
 
-      SCEVHandle RewriteExpr = SCEVUnknown::get(RewriteOp);
+      SCEVHandle RewriteExpr = SE->getUnknown(RewriteOp);
 
       // Clear the SCEVExpander's expression map so that we are guaranteed
       // to have the code emitted where we expect it.
@@ -1267,8 +1273,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       // factor take advantage of addressing mode scale component.
       if (RewriteFactor != 0) {
         RewriteExpr =
-          SCEVMulExpr::get(SCEVUnknown::getIntegerSCEV(RewriteFactor,
-                                                       RewriteExpr->getType()),
+          SE->getMulExpr(SE->getIntegerSCEV(RewriteFactor,
+                                          RewriteExpr->getType()),
                            RewriteExpr);
 
         // The common base is emitted in the loop preheader. But since we
@@ -1276,15 +1282,15 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         // Add it to the expression used to rewrite the uses.
         if (!isa<ConstantInt>(CommonBaseV) ||
             !cast<ConstantInt>(CommonBaseV)->isZero())
-          RewriteExpr = SCEVAddExpr::get(RewriteExpr,
-                                         SCEVUnknown::get(CommonBaseV));
+          RewriteExpr = SE->getAddExpr(RewriteExpr,
+                                      SE->getUnknown(CommonBaseV));
       }
 
       // Now that we know what we need to do, insert code before User for the
       // immediate and any loop-variant expressions.
       if (!isa<ConstantInt>(BaseV) || !cast<ConstantInt>(BaseV)->isZero())
         // Add BaseV to the PHI value if needed.
-        RewriteExpr = SCEVAddExpr::get(RewriteExpr, SCEVUnknown::get(BaseV));
+        RewriteExpr = SE->getAddExpr(RewriteExpr, SE->getUnknown(BaseV));
 
       User.RewriteInstructionToUseNewBase(RewriteExpr, Rewriter, L, this);
 
@@ -1380,7 +1386,7 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   // If we get to here, we know that we can transform the setcc instruction to
   // use the post-incremented version of the IV, allowing us to coalesce the
   // live ranges for the IV correctly.
-  CondUse->Offset = SCEV::getMinusSCEV(CondUse->Offset, *CondStride);
+  CondUse->Offset = SE->getMinusSCEV(CondUse->Offset, *CondStride);
   CondUse->isUseOfPostIncrementedValue = true;
 }
 

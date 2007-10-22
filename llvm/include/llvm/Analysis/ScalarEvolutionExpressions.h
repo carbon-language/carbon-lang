@@ -32,16 +32,13 @@ namespace llvm {
   /// SCEVConstant - This class represents a constant integer value.
   ///
   class SCEVConstant : public SCEV {
+    friend class ScalarEvolution;
+
     ConstantInt *V;
     explicit SCEVConstant(ConstantInt *v) : SCEV(scConstant), V(v) {}
 
     virtual ~SCEVConstant();
   public:
-    /// get method - This just gets and returns a new SCEVConstant object.
-    ///
-    static SCEVHandle get(ConstantInt *V);
-    static SCEVHandle get(const APInt& Val);
-
     ConstantInt *getValue() const { return V; }
 
     /// getValueRange - Return the tightest constant bounds that this value is
@@ -59,7 +56,8 @@ namespace llvm {
     virtual const Type *getType() const;
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
-                                                 const SCEVHandle &Conc) const {
+                                                 const SCEVHandle &Conc,
+                                                 ScalarEvolution &SE) const {
       return this;
     }
 
@@ -78,15 +76,13 @@ namespace llvm {
   /// to a smaller integer value.
   ///
   class SCEVTruncateExpr : public SCEV {
+    friend class ScalarEvolution;
+
     SCEVHandle Op;
     const Type *Ty;
     SCEVTruncateExpr(const SCEVHandle &op, const Type *ty);
     virtual ~SCEVTruncateExpr();
   public:
-    /// get method - This just gets and returns a new SCEVTruncate object
-    ///
-    static SCEVHandle get(const SCEVHandle &Op, const Type *Ty);
-
     const SCEVHandle &getOperand() const { return Op; }
     virtual const Type *getType() const { return Ty; }
 
@@ -99,11 +95,12 @@ namespace llvm {
     }
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
-                                                 const SCEVHandle &Conc) const {
-      SCEVHandle H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc);
+                                                 const SCEVHandle &Conc,
+                                                 ScalarEvolution &SE) const {
+      SCEVHandle H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
       if (H == Op)
         return this;
-      return get(H, Ty);
+      return SE.getTruncateExpr(H, Ty);
     }
 
     /// getValueRange - Return the tightest constant bounds that this value is
@@ -125,15 +122,13 @@ namespace llvm {
   /// integer value to a larger integer value.
   ///
   class SCEVZeroExtendExpr : public SCEV {
+    friend class ScalarEvolution;
+
     SCEVHandle Op;
     const Type *Ty;
     SCEVZeroExtendExpr(const SCEVHandle &op, const Type *ty);
     virtual ~SCEVZeroExtendExpr();
   public:
-    /// get method - This just gets and returns a new SCEVZeroExtend object
-    ///
-    static SCEVHandle get(const SCEVHandle &Op, const Type *Ty);
-
     const SCEVHandle &getOperand() const { return Op; }
     virtual const Type *getType() const { return Ty; }
 
@@ -150,11 +145,12 @@ namespace llvm {
     virtual ConstantRange getValueRange() const;
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
-                                                 const SCEVHandle &Conc) const {
-      SCEVHandle H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc);
+                                                 const SCEVHandle &Conc,
+                                                 ScalarEvolution &SE) const {
+      SCEVHandle H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
       if (H == Op)
         return this;
-      return get(H, Ty);
+      return SE.getZeroExtendExpr(H, Ty);
     }
 
     virtual void print(std::ostream &OS) const;
@@ -172,15 +168,13 @@ namespace llvm {
   /// integer value to a larger integer value.
   ///
   class SCEVSignExtendExpr : public SCEV {
+    friend class ScalarEvolution;
+
     SCEVHandle Op;
     const Type *Ty;
     SCEVSignExtendExpr(const SCEVHandle &op, const Type *ty);
     virtual ~SCEVSignExtendExpr();
   public:
-    /// get method - This just gets and returns a new SCEVSignExtend object
-    ///
-    static SCEVHandle get(const SCEVHandle &Op, const Type *Ty);
-
     const SCEVHandle &getOperand() const { return Op; }
     virtual const Type *getType() const { return Ty; }
 
@@ -197,11 +191,12 @@ namespace llvm {
     virtual ConstantRange getValueRange() const;
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
-                                                 const SCEVHandle &Conc) const {
-      SCEVHandle H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc);
+                                                 const SCEVHandle &Conc,
+                                                 ScalarEvolution &SE) const {
+      SCEVHandle H = Op->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
       if (H == Op)
         return this;
-      return get(H, Ty);
+      return SE.getSignExtendExpr(H, Ty);
     }
 
     virtual void print(std::ostream &OS) const;
@@ -220,6 +215,8 @@ namespace llvm {
   /// operators.
   ///
   class SCEVCommutativeExpr : public SCEV {
+    friend class ScalarEvolution;
+
     std::vector<SCEVHandle> Operands;
 
   protected:
@@ -264,7 +261,8 @@ namespace llvm {
     }
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
-                                                 const SCEVHandle &Conc) const;
+                                                 const SCEVHandle &Conc,
+                                                 ScalarEvolution &SE) const;
 
     virtual const char *getOperationStr() const = 0;
 
@@ -285,29 +283,13 @@ namespace llvm {
   /// SCEVAddExpr - This node represents an addition of some number of SCEVs.
   ///
   class SCEVAddExpr : public SCEVCommutativeExpr {
+    friend class ScalarEvolution;
+
     SCEVAddExpr(const std::vector<SCEVHandle> &ops)
       : SCEVCommutativeExpr(scAddExpr, ops) {
     }
 
   public:
-    static SCEVHandle get(std::vector<SCEVHandle> &Ops);
-
-    static SCEVHandle get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
-      std::vector<SCEVHandle> Ops;
-      Ops.push_back(LHS);
-      Ops.push_back(RHS);
-      return get(Ops);
-    }
-
-    static SCEVHandle get(const SCEVHandle &Op0, const SCEVHandle &Op1,
-                          const SCEVHandle &Op2) {
-      std::vector<SCEVHandle> Ops;
-      Ops.push_back(Op0);
-      Ops.push_back(Op1);
-      Ops.push_back(Op2);
-      return get(Ops);
-    }
-
     virtual const char *getOperationStr() const { return " + "; }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -321,20 +303,13 @@ namespace llvm {
   /// SCEVMulExpr - This node represents multiplication of some number of SCEVs.
   ///
   class SCEVMulExpr : public SCEVCommutativeExpr {
+    friend class ScalarEvolution;
+
     SCEVMulExpr(const std::vector<SCEVHandle> &ops)
       : SCEVCommutativeExpr(scMulExpr, ops) {
     }
 
   public:
-    static SCEVHandle get(std::vector<SCEVHandle> &Ops);
-
-    static SCEVHandle get(const SCEVHandle &LHS, const SCEVHandle &RHS) {
-      std::vector<SCEVHandle> Ops;
-      Ops.push_back(LHS);
-      Ops.push_back(RHS);
-      return get(Ops);
-    }
-
     virtual const char *getOperationStr() const { return " * "; }
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -349,16 +324,14 @@ namespace llvm {
   /// SCEVSDivExpr - This class represents a binary signed division operation.
   ///
   class SCEVSDivExpr : public SCEV {
+    friend class ScalarEvolution;
+
     SCEVHandle LHS, RHS;
     SCEVSDivExpr(const SCEVHandle &lhs, const SCEVHandle &rhs)
       : SCEV(scSDivExpr), LHS(lhs), RHS(rhs) {}
 
     virtual ~SCEVSDivExpr();
   public:
-    /// get method - This just gets and returns a new SCEVSDiv object.
-    ///
-    static SCEVHandle get(const SCEVHandle &LHS, const SCEVHandle &RHS);
-
     const SCEVHandle &getLHS() const { return LHS; }
     const SCEVHandle &getRHS() const { return RHS; }
 
@@ -372,13 +345,14 @@ namespace llvm {
     }
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
-                                                 const SCEVHandle &Conc) const {
-      SCEVHandle L = LHS->replaceSymbolicValuesWithConcrete(Sym, Conc);
-      SCEVHandle R = RHS->replaceSymbolicValuesWithConcrete(Sym, Conc);
+                                                 const SCEVHandle &Conc,
+                                                 ScalarEvolution &SE) const {
+      SCEVHandle L = LHS->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
+      SCEVHandle R = RHS->replaceSymbolicValuesWithConcrete(Sym, Conc, SE);
       if (L == LHS && R == RHS)
         return this;
       else
-        return get(L, R);
+        return SE.getSDivExpr(L, R);
     }
 
 
@@ -402,6 +376,8 @@ namespace llvm {
   /// All operands of an AddRec are required to be loop invariant.
   ///
   class SCEVAddRecExpr : public SCEV {
+    friend class ScalarEvolution;
+
     std::vector<SCEVHandle> Operands;
     const Loop *L;
 
@@ -413,16 +389,6 @@ namespace llvm {
     }
     ~SCEVAddRecExpr();
   public:
-    static SCEVHandle get(const SCEVHandle &Start, const SCEVHandle &Step,
-                          const Loop *);
-    static SCEVHandle get(std::vector<SCEVHandle> &Operands,
-                          const Loop *);
-    static SCEVHandle get(const std::vector<SCEVHandle> &Operands,
-                          const Loop *L) {
-      std::vector<SCEVHandle> NewOp(Operands);
-      return get(NewOp, L);
-    }
-
     typedef std::vector<SCEVHandle>::const_iterator op_iterator;
     op_iterator op_begin() const { return Operands.begin(); }
     op_iterator op_end() const { return Operands.end(); }
@@ -436,10 +402,10 @@ namespace llvm {
     /// getStepRecurrence - This method constructs and returns the recurrence
     /// indicating how much this expression steps by.  If this is a polynomial
     /// of degree N, it returns a chrec of degree N-1.
-    SCEVHandle getStepRecurrence() const {
+    SCEVHandle getStepRecurrence(ScalarEvolution &SE) const {
       if (getNumOperands() == 2) return getOperand(1);
-      return SCEVAddRecExpr::get(std::vector<SCEVHandle>(op_begin()+1,op_end()),
-                                 getLoop());
+      return SE.getAddRecExpr(std::vector<SCEVHandle>(op_begin()+1,op_end()),
+                              getLoop());
     }
 
     virtual bool hasComputableLoopEvolution(const Loop *QL) const {
@@ -468,7 +434,7 @@ namespace llvm {
 
     /// evaluateAtIteration - Return the value of this chain of recurrences at
     /// the specified iteration number.
-    SCEVHandle evaluateAtIteration(SCEVHandle It) const;
+    SCEVHandle evaluateAtIteration(SCEVHandle It, ScalarEvolution &SE) const;
 
     /// getNumIterationsInRange - Return the number of iterations of this loop
     /// that produce values in the specified constant range.  Another way of
@@ -476,10 +442,12 @@ namespace llvm {
     /// value is not in the condition, thus computing the exit count.  If the
     /// iteration count can't be computed, an instance of SCEVCouldNotCompute is
     /// returned.
-    SCEVHandle getNumIterationsInRange(ConstantRange Range) const;
+    SCEVHandle getNumIterationsInRange(ConstantRange Range,
+                                       ScalarEvolution &SE) const;
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
-                                                 const SCEVHandle &Conc) const;
+                                                 const SCEVHandle &Conc,
+                                                 ScalarEvolution &SE) const;
 
     virtual void print(std::ostream &OS) const;
     void print(std::ostream *OS) const { if (OS) print(*OS); }
@@ -497,20 +465,14 @@ namespace llvm {
   /// value for the analysis.
   ///
   class SCEVUnknown : public SCEV {
+    friend class ScalarEvolution;
+
     Value *V;
     SCEVUnknown(Value *v) : SCEV(scUnknown), V(v) {}
 
   protected:
     ~SCEVUnknown();
   public:
-    /// get method - For SCEVUnknown, this just gets and returns a new
-    /// SCEVUnknown.
-    static SCEVHandle get(Value *V);
-
-    /// getIntegerSCEV - Given an integer or FP type, create a constant for the
-    /// specified signed integer value and return a SCEV for the constant.
-    static SCEVHandle getIntegerSCEV(int Val, const Type *Ty);
-
     Value *getValue() const { return V; }
 
     virtual bool isLoopInvariant(const Loop *L) const;
@@ -519,7 +481,8 @@ namespace llvm {
     }
 
     SCEVHandle replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
-                                                 const SCEVHandle &Conc) const {
+                                                 const SCEVHandle &Conc,
+                                                 ScalarEvolution &SE) const {
       if (&*Sym == this) return Conc;
       return this;
     }

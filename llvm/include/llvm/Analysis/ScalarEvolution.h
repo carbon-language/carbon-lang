@@ -27,12 +27,15 @@
 #include <set>
 
 namespace llvm {
+  class APInt;
+  class ConstantInt;
   class Instruction;
   class Type;
   class ConstantRange;
   class Loop;
   class LoopInfo;
   class SCEVHandle;
+  class ScalarEvolution;
 
   /// SCEV - This class represent an analyzed expression in the program.  These
   /// are reference counted opaque objects that the client is not allowed to
@@ -55,16 +58,6 @@ namespace llvm {
     virtual ~SCEV();
   public:
     explicit SCEV(unsigned SCEVTy) : SCEVType(SCEVTy), RefCount(0) {}
-
-    /// getNegativeSCEV - Return the SCEV object corresponding to -V.
-    ///
-    static SCEVHandle getNegativeSCEV(const SCEVHandle &V);
-
-    /// getMinusSCEV - Return LHS-RHS.
-    ///
-    static SCEVHandle getMinusSCEV(const SCEVHandle &LHS,
-                                   const SCEVHandle &RHS);
-
 
     unsigned getSCEVType() const { return SCEVType; }
 
@@ -97,7 +90,8 @@ namespace llvm {
     /// returns itself.
     virtual SCEVHandle
     replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
-                                      const SCEVHandle &Conc) const = 0;
+                                      const SCEVHandle &Conc,
+                                      ScalarEvolution &SE) const = 0;
 
     /// print - Print out the internal representation of this scalar to the
     /// specified stream.  This should really only be used for debugging
@@ -131,7 +125,8 @@ namespace llvm {
     void print(std::ostream *OS) const { if (OS) print(*OS); }
     virtual SCEVHandle
     replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
-                                      const SCEVHandle &Conc) const;
+                                      const SCEVHandle &Conc,
+                                      ScalarEvolution &SE) const;
 
     /// Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const SCEVCouldNotCompute *S) { return true; }
@@ -203,6 +198,58 @@ namespace llvm {
     /// getSCEV - Return a SCEV expression handle for the full generality of the
     /// specified expression.
     SCEVHandle getSCEV(Value *V) const;
+
+    SCEVHandle getConstant(ConstantInt *V);
+    SCEVHandle getConstant(const APInt& Val);
+    SCEVHandle getTruncateExpr(const SCEVHandle &Op, const Type *Ty);
+    SCEVHandle getZeroExtendExpr(const SCEVHandle &Op, const Type *Ty);
+    SCEVHandle getSignExtendExpr(const SCEVHandle &Op, const Type *Ty);
+    SCEVHandle getAddExpr(std::vector<SCEVHandle> &Ops);
+    SCEVHandle getAddExpr(const SCEVHandle &LHS, const SCEVHandle &RHS) {
+      std::vector<SCEVHandle> Ops;
+      Ops.push_back(LHS);
+      Ops.push_back(RHS);
+      return getAddExpr(Ops);
+    }
+    SCEVHandle getAddExpr(const SCEVHandle &Op0, const SCEVHandle &Op1,
+                          const SCEVHandle &Op2) {
+      std::vector<SCEVHandle> Ops;
+      Ops.push_back(Op0);
+      Ops.push_back(Op1);
+      Ops.push_back(Op2);
+      return getAddExpr(Ops);
+    }
+    SCEVHandle getMulExpr(std::vector<SCEVHandle> &Ops);
+    SCEVHandle getMulExpr(const SCEVHandle &LHS, const SCEVHandle &RHS) {
+      std::vector<SCEVHandle> Ops;
+      Ops.push_back(LHS);
+      Ops.push_back(RHS);
+      return getMulExpr(Ops);
+    }
+    SCEVHandle getSDivExpr(const SCEVHandle &LHS, const SCEVHandle &RHS);
+    SCEVHandle getAddRecExpr(const SCEVHandle &Start, const SCEVHandle &Step,
+                             const Loop *L);
+    SCEVHandle getAddRecExpr(std::vector<SCEVHandle> &Operands,
+                             const Loop *L);
+    SCEVHandle getAddRecExpr(const std::vector<SCEVHandle> &Operands,
+                             const Loop *L) {
+      std::vector<SCEVHandle> NewOp(Operands);
+      return getAddRecExpr(NewOp, L);
+    }
+    SCEVHandle getUnknown(Value *V);
+
+    /// getNegativeSCEV - Return the SCEV object corresponding to -V.
+    ///
+    SCEVHandle getNegativeSCEV(const SCEVHandle &V);
+
+    /// getMinusSCEV - Return LHS-RHS.
+    ///
+    SCEVHandle getMinusSCEV(const SCEVHandle &LHS,
+                            const SCEVHandle &RHS);
+
+    /// getIntegerSCEV - Given an integer or FP type, create a constant for the
+    /// specified signed integer value and return a SCEV for the constant.
+    SCEVHandle getIntegerSCEV(int Val, const Type *Ty);
 
     /// hasSCEV - Return true if the SCEV for this value has already been
     /// computed.

@@ -268,7 +268,7 @@ Instruction *IndVarSimplify::LinearFunctionTestReplace(Loop *L,
     // backedge actually branches to the loop header.  This is one less than the
     // number of times the loop executes, so add one to it.
     ConstantInt *OneC = ConstantInt::get(IterationCount->getType(), 1);
-    TripCount = SCEVAddExpr::get(IterationCount, SCEVConstant::get(OneC));
+    TripCount = SE->getAddExpr(IterationCount, SE->getConstant(OneC));
     IndVar = L->getCanonicalInductionVariableIncrement();
   } else {
     // We have to use the preincremented value...
@@ -524,9 +524,9 @@ bool IndVarSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!isa<SCEVCouldNotCompute>(IterationCount)) {
     if (IterationCount->getType()->getPrimitiveSizeInBits() <
         LargestType->getPrimitiveSizeInBits())
-      IterationCount = SCEVZeroExtendExpr::get(IterationCount, LargestType);
+      IterationCount = SE->getZeroExtendExpr(IterationCount, LargestType);
     else if (IterationCount->getType() != LargestType)
-      IterationCount = SCEVTruncateExpr::get(IterationCount, LargestType);
+      IterationCount = SE->getTruncateExpr(IterationCount, LargestType);
     if (Instruction *DI = LinearFunctionTestReplace(L, IterationCount,Rewriter))
       DeadInsts.insert(DI);
   }
