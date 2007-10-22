@@ -175,10 +175,12 @@ private:
     bool FindIVForUser(ICmpInst *Cond, IVStrideUse *&CondUse,
                        const SCEVHandle *&CondStride);
 
-    unsigned CheckForIVReuse(const SCEVHandle&, IVExpr&, const Type*,
+    unsigned CheckForIVReuse(bool, const SCEVHandle&,
+                             IVExpr&, const Type*,
                              const std::vector<BasedUser>& UsersToProcess);
 
-    bool ValidStride(int64_t, const std::vector<BasedUser>& UsersToProcess);
+    bool ValidStride(bool, int64_t,
+                     const std::vector<BasedUser>& UsersToProcess);
 
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
@@ -937,8 +939,8 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses,
 
 /// isZero - returns true if the scalar evolution expression is zero.
 ///
-static bool isZero(SCEVHandle &V) {
-  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V))
+static bool isZero(const SCEVHandle &V) {
+  if (const SCEVConstant *SC = dyn_cast<SCEVConstant>(V))
     return SC->getValue()->isZero();
   return false;
 }
@@ -946,7 +948,8 @@ static bool isZero(SCEVHandle &V) {
 /// ValidStride - Check whether the given Scale is valid for all loads and 
 /// stores in UsersToProcess.
 ///
-bool LoopStrengthReduce::ValidStride(int64_t Scale, 
+bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
+                               int64_t Scale, 
                                const std::vector<BasedUser>& UsersToProcess) {
   for (unsigned i=0, e = UsersToProcess.size(); i!=e; ++i) {
     // If this is a load or other access, pass the type of the access in.
@@ -959,6 +962,7 @@ bool LoopStrengthReduce::ValidStride(int64_t Scale,
     TargetLowering::AddrMode AM;
     if (SCEVConstant *SC = dyn_cast<SCEVConstant>(UsersToProcess[i].Imm))
       AM.BaseOffs = SC->getValue()->getSExtValue();
+    AM.HasBaseReg = HasBaseReg || !isZero(UsersToProcess[i].Base);
     AM.Scale = Scale;
 
     // If load[imm+r*scale] is illegal, bail out.
@@ -970,9 +974,11 @@ bool LoopStrengthReduce::ValidStride(int64_t Scale,
 
 /// CheckForIVReuse - Returns the multiple if the stride is the multiple
 /// of a previous stride and it is a legal value for the target addressing
-/// mode scale component. This allows the users of this stride to be rewritten
-/// as prev iv * factor. It returns 0 if no reuse is possible.
-unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride, 
+/// mode scale component and optional base reg. This allows the users of
+/// this stride to be rewritten as prev iv * factor. It returns 0 if no
+/// reuse is possible.
+unsigned LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
+                                const SCEVHandle &Stride, 
                                 IVExpr &IV, const Type *Ty,
                                 const std::vector<BasedUser>& UsersToProcess) {
   if (!TLI) return 0;
@@ -992,7 +998,7 @@ unsigned LoopStrengthReduce::CheckForIVReuse(const SCEVHandle &Stride,
       // stores; if it can be used for some and not others, we might as well use
       // the original stride everywhere, since we have to create the IV for it
       // anyway.
-      if (ValidStride(Scale, UsersToProcess))
+      if (ValidStride(HasBaseReg, Scale, UsersToProcess))
         for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
                IE = SI->second.IVs.end(); II != IE; ++II)
           // FIXME: Only handle base == 0 for now.
@@ -1061,7 +1067,18 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // UsersToProcess base values.
   SCEVHandle CommonExprs =
     RemoveCommonExpressionsFromUseBases(UsersToProcess, SE);
+
+  // If we managed to find some expressions in common, we'll need to carry
+  // their value in a register and add it in for each use. This will take up
+  // a register operand, which potentially restricts what stride values are
+  // valid.
+  bool HaveCommonExprs = !isZero(CommonExprs);
   
+  // Keep track if every use in UsersToProcess is an address. If they all are,
+  // we may be able to rewrite the entire collection of them in terms of a
+  // smaller-stride IV.
+  bool AllUsesAreAddresses = true;
+
   // Next, figure out what we can represent in the immediate fields of
   // instructions.  If we can represent anything there, move it to the imm
   // fields of the BasedUsers.  We do this so that it increases the commonality
@@ -1085,29 +1102,53 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
           isAddress = true;
       } else if (IntrinsicInst *II =
                    dyn_cast<IntrinsicInst>(UsersToProcess[i].Inst)) {
-        // Addressing modes can also be folded into prefetches.
-        if (II->getIntrinsicID() == Intrinsic::prefetch &&
-            II->getOperand(1) == UsersToProcess[i].OperandValToReplace)
-          isAddress = true;
+        // Addressing modes can also be folded into prefetches and a variety
+        // of intrinsics.
+        switch (II->getIntrinsicID()) {
+        default: break;
+        case Intrinsic::prefetch:
+        case Intrinsic::x86_sse2_loadu_dq:
+        case Intrinsic::x86_sse2_loadu_pd:
+        case Intrinsic::x86_sse_loadu_ps:
+        case Intrinsic::x86_sse_storeu_ps:
+        case Intrinsic::x86_sse2_storeu_pd:
+        case Intrinsic::x86_sse2_storeu_dq:
+        case Intrinsic::x86_sse2_storel_dq:
+          if (II->getOperand(1) == UsersToProcess[i].OperandValToReplace)
+            isAddress = true;
+          break;
+        case Intrinsic::x86_sse2_loadh_pd:
+        case Intrinsic::x86_sse2_loadl_pd:
+          if (II->getOperand(2) == UsersToProcess[i].OperandValToReplace)
+            isAddress = true;
+          break;
+        }
       }
+
+      // If this use isn't an address, then not all uses are addresses.
+      if (!isAddress)
+        AllUsesAreAddresses = false;
       
       MoveImmediateValues(TLI, UsersToProcess[i].Inst, UsersToProcess[i].Base,
                           UsersToProcess[i].Imm, isAddress, L, SE);
     }
   }
 
-  // Check if it is possible to reuse a IV with stride that is factor of this
-  // stride. And the multiple is a number that can be encoded in the scale
-  // field of the target addressing mode.  And we will have a valid
-  // instruction after this substition, including the immediate field, if any.
+  // If all uses are addresses, check if it is possible to reuse an IV with a
+  // stride that is a factor of this stride. And that the multiple is a number
+  // that can be encoded in the scale field of the target addressing mode. And
+  // that we will have a valid instruction after this substition, including the
+  // immediate field, if any.
   PHINode *NewPHI = NULL;
   Value   *IncV   = NULL;
   IVExpr   ReuseIV(SE->getIntegerSCEV(0, Type::Int32Ty),
                    SE->getIntegerSCEV(0, Type::Int32Ty),
                    0, 0);
-  unsigned RewriteFactor = CheckForIVReuse(Stride, ReuseIV,
-                                           CommonExprs->getType(),
-                                           UsersToProcess);
+  unsigned RewriteFactor = 0;
+  if (AllUsesAreAddresses)
+    RewriteFactor = CheckForIVReuse(HaveCommonExprs, Stride, ReuseIV,
+                                    CommonExprs->getType(),
+                                    UsersToProcess);
   if (RewriteFactor != 0) {
     DOUT << "BASED ON IV of STRIDE " << *ReuseIV.Stride
          << " and BASE " << *ReuseIV.Base << " :\n";

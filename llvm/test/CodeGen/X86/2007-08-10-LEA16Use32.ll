@@ -1,4 +1,8 @@
 ; RUN: llvm-as < %s | llc -march=x86 | grep {leal}
+; XFAIL: *
+; This test is XFAIL'd because strength-reduction was improved to
+; avoid emitting the lea, so it longer tests whether the 16-bit
+; lea is avoided.
 
 @X = global i16 0               ; <i16*> [#uses=1]
 @Y = global i16 0               ; <i16*> [#uses=1]
