@@ -118,7 +118,7 @@ about the syntax of the language.  Note that there is no discussion about
 precedence of binary operators, lexical structure etc.</p>
 
 <p>For our basic language, these are all of the expression nodes we'll define.
-because it doesn't have conditional control flow, it isn't turing complete:
+Because it doesn't have conditional control flow, it isn't Turing-complete;
 we'll fix that in a later installment.  The two things we need next are a way
 to talk about the interface to a function, and a way to talk about functions
 themselves:</p>
@@ -195,9 +195,7 @@ us to look one token ahead at what the lexer is returning.  Every function in
 our lexer will assume that CurTok is the current token that needs to be
 parsed.</p>
 
-<p>Again, we define
-these with global variables: it would be better design to wrap the entire parser
-in a class and use instance variables for these.
+<p>Again, we define these with global variables; it would be better design to wrap the entire parser in a class and use instance variables for these.
 </p>
 
 <div class="doc_code">
@@ -282,7 +280,7 @@ occur, the parser needs a way to indicate that they happened: in our parser, we
 return null on an error.</p>
 
 <p>Another interesting aspect of this function is that it uses recursion by
-calling <tt>ParseExpression</tt> (we will soon see that ParseExpression can call
+calling <tt>ParseExpression</tt> (we will soon see that <tt>ParseExpression</tt> can call
 <tt>ParseParenExpr</tt>).  This is powerful because it allows us to handle 
 recursive grammars, and keeps each production very simple.  Note that
 parenthesis do not cause construction of AST nodes themselves.  While we could
@@ -716,7 +714,7 @@ static void MainLoop() {
 </div>
 
 <p>The most interesting part of this is that we ignore top-level semi colons.
-Why is this do you ask?  The basic reason is that if you type "4 + 5" at the
+Why is this, you ask?  The basic reason is that if you type "4 + 5" at the
 command line, the parser doesn't know that that is the end of what you will
 type.  For example, on the next line you could type "def foo..." in which case
 4+5 is the end of a top-level expression.  Alternatively you could type "* 6",
