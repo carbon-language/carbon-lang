@@ -1537,7 +1537,8 @@ static SDNode *isBLACompatibleAddress(SDOperand Op, SelectionDAG &DAG) {
       (Addr << 6 >> 6) != Addr)
     return 0;  // Top 6 bits have to be sext of immediate.
   
-  return DAG.getConstant((int)C->getValue() >> 2, MVT::i32).Val;
+  return DAG.getConstant((int)C->getValue() >> 2,
+                         DAG.getTargetLoweringInfo().getPointerTy()).Val;
 }
 
 
