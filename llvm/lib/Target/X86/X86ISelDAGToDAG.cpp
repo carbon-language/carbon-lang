@@ -681,6 +681,11 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
       }
     break;
 
+  case ISD::SMUL_LOHI:
+  case ISD::UMUL_LOHI:
+    // A mul_lohi where we need the low part can be folded as a plain multiply.
+    if (N.ResNo != 0) break;
+    // FALL THROUGH
   case ISD::MUL:
     // X*[3,5,9] -> X+X*[2,4,8]
     if (!Available &&
