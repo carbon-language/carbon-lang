@@ -33,13 +33,13 @@ STATISTIC(NumGlobals  , "Number of global vars initialized");
 ExecutionEngine::EECtorFn ExecutionEngine::JITCtor = 0;
 ExecutionEngine::EECtorFn ExecutionEngine::InterpCtor = 0;
 
-ExecutionEngine::ExecutionEngine(ModuleProvider *P) {
+ExecutionEngine::ExecutionEngine(ModuleProvider *P) : LazyFunctionCreator(0) {
   LazyCompilationDisabled = false;
   Modules.push_back(P);
   assert(P && "ModuleProvider is null?");
 }
 
-ExecutionEngine::ExecutionEngine(Module *M) {
+ExecutionEngine::ExecutionEngine(Module *M) : LazyFunctionCreator(0) {
   LazyCompilationDisabled = false;
   assert(M && "Module is null?");
   Modules.push_back(new ExistingModuleProvider(M));

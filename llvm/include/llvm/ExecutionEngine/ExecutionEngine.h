@@ -64,6 +64,7 @@ class ExecutionEngine {
   const TargetData *TD;
   ExecutionEngineState state;
   bool LazyCompilationDisabled;
+
 protected:
   /// Modules - This is a list of ModuleProvider's that we are JIT'ing from.  We
   /// use a smallvector to optimize for the case where there is only one module.
@@ -78,7 +79,11 @@ protected:
   // at startup time if they are linked in.
   typedef ExecutionEngine *(*EECtorFn)(ModuleProvider*, std::string*);
   static EECtorFn JITCtor, InterpCtor;
-    
+
+  /// LazyFunctionCreator - If an unknown function is needed, this function
+  /// pointer is invoked to create it. If this returns null, the JIT will abort.
+  void* (*LazyFunctionCreator)(const std::string &);
+  
 public:
   /// lock - This lock is protects the ExecutionEngine, JIT, JITResolver and
   /// JITEmitter classes.  It must be held while changing the internal state of
@@ -217,6 +222,14 @@ public:
   }
   bool isLazyCompilationDisabled() const {
     return LazyCompilationDisabled;
+  }
+  
+  
+  /// InstallLazyFunctionCreator - If an unknown function is needed, the
+  /// specified function pointer is invoked to create it.  If it returns null,
+  /// the JIT will abort.
+  void InstallLazyFunctionCreator(void* (*P)(const std::string &)) {
+    LazyFunctionCreator = P;
   }
 
 protected:

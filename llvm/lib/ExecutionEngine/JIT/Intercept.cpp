@@ -101,6 +101,11 @@ void *JIT::getPointerToNamedFunction(const std::string &Name) {
     Ptr = sys::DynamicLibrary::SearchForAddressOfSymbol(NameStr+1);
     if (Ptr) return Ptr;
   }
+  
+  /// If a LazyFunctionCreator is installed, use it to get/create the function. 
+  if (LazyFunctionCreator)
+    if (void *RP = LazyFunctionCreator(Name))
+      return RP;
 
   cerr << "ERROR: Program used external function '" << Name
        << "' which could not be resolved!\n";
