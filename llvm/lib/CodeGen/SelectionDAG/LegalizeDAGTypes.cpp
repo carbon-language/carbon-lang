@@ -935,17 +935,19 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
   int SVOffset = N->getSrcValueOffset();
   unsigned Alignment = N->getAlignment();
   bool isVolatile = N->isVolatile();
-  
+
+  assert(!(MVT::getSizeInBits(NVT) & 7) && "Expanded type not byte sized!");
+
   if (ExtType == ISD::NON_EXTLOAD) {
     Lo = DAG.getLoad(NVT, Ch, Ptr, N->getSrcValue(), SVOffset,
                      isVolatile, Alignment);
     // Increment the pointer to the other half.
-    unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
+    unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                       getIntPtrConstant(IncrementSize));
     Hi = DAG.getLoad(NVT, Ch, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
                      isVolatile, std::max(Alignment, IncrementSize));
-    
+
     // Build a factor node to remember that this load is independent of the
     // other one.
     Ch = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
@@ -954,19 +956,15 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
     // Handle endianness of the load.
     if (!TLI.isLittleEndian())
       std::swap(Lo, Hi);
-  } else {
+  } else if (MVT::getSizeInBits(N->getLoadedVT()) <= MVT::getSizeInBits(NVT)) {
     MVT::ValueType EVT = N->getLoadedVT();
-    
-    if (EVT == NVT)
-      Lo = DAG.getLoad(NVT, Ch, Ptr, N->getSrcValue(),
-                       SVOffset, isVolatile, Alignment);
-    else
-      Lo = DAG.getExtLoad(ExtType, NVT, Ch, Ptr, N->getSrcValue(),
-                          SVOffset, EVT, isVolatile,
-                          Alignment);
+
+    Lo = DAG.getExtLoad(ExtType, NVT, Ch, Ptr, N->getSrcValue(), SVOffset, EVT,
+                        isVolatile, Alignment);
+
     // Remember the chain.
     Ch = Lo.getValue(1);
-    
+
     if (ExtType == ISD::SEXTLOAD) {
       // The high part is obtained by SRA'ing all but one of the bits of the
       // lo part.
@@ -981,13 +979,70 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
       // The high part is undefined.
       Hi = DAG.getNode(ISD::UNDEF, NVT);
     }
+  } else if (TLI.isLittleEndian()) {
+    // Little-endian - low bits are at low addresses.
+    Lo = DAG.getLoad(NVT, Ch, Ptr, N->getSrcValue(), SVOffset,
+                     isVolatile, Alignment);
+
+    unsigned ExcessBits =
+      MVT::getSizeInBits(N->getLoadedVT()) - MVT::getSizeInBits(NVT);
+    MVT::ValueType NEVT = MVT::getIntegerType(ExcessBits);
+
+    // Increment the pointer to the other half.
+    unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
+    Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                      getIntPtrConstant(IncrementSize));
+    Hi = DAG.getExtLoad(ExtType, NVT, Ch, Ptr, N->getSrcValue(),
+                        SVOffset+IncrementSize, NEVT,
+                        isVolatile, std::max(Alignment, IncrementSize));
+
+    // Build a factor node to remember that this load is independent of the
+    // other one.
+    Ch = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
+                     Hi.getValue(1));
+  } else {
+    // Big-endian - high bits are at low addresses.  Favor aligned loads at
+    // the cost of some bit-fiddling.
+    MVT::ValueType EVT = N->getLoadedVT();
+    unsigned EBytes = (MVT::getSizeInBits(EVT) + 7)/8;
+    unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
+    unsigned ExcessBits = (EBytes - IncrementSize)*8;
+
+    // Load both the high bits and maybe some of the low bits.
+    Hi = DAG.getExtLoad(ExtType, NVT, Ch, Ptr, N->getSrcValue(), SVOffset,
+                        MVT::getIntegerType(MVT::getSizeInBits(EVT)-ExcessBits),
+                        isVolatile, Alignment);
+
+    // Increment the pointer to the other half.
+    Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                      getIntPtrConstant(IncrementSize));
+    // Load the rest of the low bits.
+    Lo = DAG.getExtLoad(ISD::ZEXTLOAD, NVT, Ch, Ptr, N->getSrcValue(),
+                        SVOffset+IncrementSize, MVT::getIntegerType(ExcessBits),
+                        isVolatile, std::max(Alignment, IncrementSize));
+
+    // Build a factor node to remember that this load is independent of the
+    // other one.
+    Ch = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
+                     Hi.getValue(1));
+
+    if (ExcessBits < MVT::getSizeInBits(NVT)) {
+      // Transfer low bits from the bottom of Hi to the top of Lo.
+      Lo = DAG.getNode(ISD::OR, NVT, Lo,
+                       DAG.getNode(ISD::SHL, NVT, Hi,
+                                   DAG.getConstant(ExcessBits,
+                                                   TLI.getShiftAmountTy())));
+      // Move high bits to the right position in Hi.
+      Hi = DAG.getNode(ExtType == ISD::SEXTLOAD ? ISD::SRA : ISD::SRL, NVT, Hi,
+                       DAG.getConstant(MVT::getSizeInBits(NVT) - ExcessBits,
+                                       TLI.getShiftAmountTy()));
+    }
   }
-  
+
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
   ReplaceLegalValueWith(SDOperand(N, 1), Ch);
-}  
-
+}
 
 void DAGTypeLegalizer::ExpandResult_Logical(SDNode *N,
                                             SDOperand &Lo, SDOperand &Hi) {
