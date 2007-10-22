@@ -90,11 +90,12 @@ Module* makeLLVMModule() {
 
 <div class="doc_code">
 <pre>
-  Constant* c->getOrInsertFunction("mul_add",
-  /*ret type*/                     IntegerType::get(32),
-  /*args*/                         IntegerType::get(32),
-                                   IntegerType::get(32),
-                                   IntegerType::get(32));
+  Constant* c = mod->getOrInsertFunction("mul_add",
+  /*ret type*/                           IntegerType::get(32),
+  /*args*/                               IntegerType::get(32),
+                                         IntegerType::get(32),
+                                         IntegerType::get(32),
+  /*varargs terminated with null*/       NULL);
   
   Function* mul_add = cast&lt;Function&gt;(c);
   mul_add->setCallingConv(CallingConv::C);
@@ -140,6 +141,8 @@ Module* makeLLVMModule() {
                                     tmp, z, "tmp2");
 
   builder.CreateRet(tmp2);
+  
+  return mod;
 }
 </pre>
 </div>
