@@ -2788,9 +2788,8 @@ this <tt>store</tt> with other volatile <tt>load</tt> and <tt><a
 at the location specified by the '<tt>&lt;pointer&gt;</tt>' operand.</p>
 <h5>Example:</h5>
 <pre>  %ptr = <a href="#i_alloca">alloca</a> i32                               <i>; yields {i32*}:ptr</i>
-  <a
- href="#i_store">store</a> i32 3, i32* %ptr                          <i>; yields {void}</i>
-  %val = load i32* %ptr                           <i>; yields {i32}:val = i32 3</i>
+  store i32 3, i32* %ptr                          <i>; yields {void}</i>
+  %val = <a href="#i_load">load</a> i32* %ptr                           <i>; yields {i32}:val = i32 3</i>
 </pre>
 </div>
 
