@@ -43,12 +43,12 @@ namespace llvm {
 /// inherit from.
 ///
 template <class NodeT>
-class DominatorBase : public FunctionPass {
+class DominatorBase {
 protected:
   std::vector<NodeT*> Roots;
   const bool IsPostDominators;
-  inline DominatorBase(intptr_t ID, bool isPostDom) : 
-    FunctionPass(ID), Roots(), IsPostDominators(isPostDom) {}
+  inline DominatorBase(bool isPostDom) : 
+    Roots(), IsPostDominators(isPostDom) {}
 public:
 
   /// getRoots -  Return the root blocks of the current CFG.  This may include
@@ -293,9 +293,9 @@ protected:
   }
 
 public:
-  DominatorTreeBase(intptr_t ID, bool isPostDom) 
-    : DominatorBase<NodeT>(ID, isPostDom), DFSInfoValid(false), SlowQueries(0) {}
-  ~DominatorTreeBase() { reset(); }
+  DominatorTreeBase(bool isPostDom) 
+    : DominatorBase<NodeT>(isPostDom), DFSInfoValid(false), SlowQueries(0) {}
+  virtual ~DominatorTreeBase() { reset(); }
 
   // FIXME: Should remove this
   virtual bool runOnFunction(Function &F) { return false; }
@@ -658,7 +658,7 @@ public:
   DominatorTreeBase<BasicBlock>* DT;
   
   DominatorTree() : FunctionPass(intptr_t(&ID)) {
-    DT = new DominatorTreeBase<BasicBlock>(intptr_t(&ID), false);
+    DT = new DominatorTreeBase<BasicBlock>(false);
   }
   
   ~DominatorTree() {
@@ -817,15 +817,28 @@ template <> struct GraphTraits<DominatorTree*>
 /// DominanceFrontierBase - Common base class for computing forward and inverse
 /// dominance frontiers for a function.
 ///
-class DominanceFrontierBase : public DominatorBase<BasicBlock> {
+class DominanceFrontierBase : public FunctionPass {
 public:
   typedef std::set<BasicBlock*>             DomSetType;    // Dom set for a bb
   typedef std::map<BasicBlock*, DomSetType> DomSetMapType; // Dom set map
 protected:
   DomSetMapType Frontiers;
+    std::vector<BasicBlock*> Roots;
+    const bool IsPostDominators;
+  
 public:
   DominanceFrontierBase(intptr_t ID, bool isPostDom) 
-    : DominatorBase<BasicBlock>(ID, isPostDom) {}
+    : FunctionPass(ID), IsPostDominators(isPostDom) {}
+
+  /// getRoots -  Return the root blocks of the current CFG.  This may include
+  /// multiple blocks if we are computing post dominators.  For forward
+  /// dominators, this will always be a single block (the entry node).
+  ///
+  inline const std::vector<BasicBlock*> &getRoots() const { return Roots; }
+  
+  /// isPostDominator - Returns true if analysis based of postdoms
+  ///
+  bool isPostDominator() const { return IsPostDominators; }
 
   virtual void releaseMemory() { Frontiers.clear(); }
 

@@ -26,7 +26,7 @@ struct PostDominatorTree : public FunctionPass {
   DominatorTreeBase<BasicBlock>* DT;
 
   PostDominatorTree() : FunctionPass((intptr_t)&ID) {
-    DT = new DominatorTreeBase<BasicBlock>(intptr_t(&ID), true);
+    DT = new DominatorTreeBase<BasicBlock>(true);
   }
 
   virtual bool runOnFunction(Function &F);
