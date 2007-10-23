@@ -4329,18 +4329,13 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
           }
         }
 
-        // Check to see if there is an unaligned memcpy from/onto the stack. If
-        // so, then ignore it for the present.
+        // The lowered load/store instructions from/to the stack frame can be
+        // unaligned depending on whether it's accessed off sp or fp. If this is
+        // the case, then just use the memcpy library call.
         if (Op1.getOpcode() == ISD::FrameIndex ||
-            Op2.getOpcode() == ISD::FrameIndex) {
-          unsigned TotalSize = 0;
-
-          for (unsigned i = 0; i < NumMemOps; i++)
-            TotalSize += MVT::getSizeInBits(MemOps[i]) / 8;
-
-          if (TotalSize % Align != 0)
+            Op2.getOpcode() == ISD::FrameIndex)
+          if (Size->getValue() % Align != 0)
             break;
-        }
 
         for (unsigned i = 0; i < NumMemOps; i++) {
           MVT::ValueType VT = MemOps[i];
