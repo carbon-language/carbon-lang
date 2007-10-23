@@ -304,6 +304,8 @@ def iaddroff : ComplexPattern<iPTR, 1, "SelectAddrImmOffs", [], []>;
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.
 def FPContractions : Predicate<"!NoExcessFPPrecision">;
+def In32BitMode  : Predicate<"!PPCSubTarget.isPPC64()">;
+def In64BitMode  : Predicate<"PPCSubTarget.isPPC64()">;
 
 
 //===----------------------------------------------------------------------===//
@@ -409,7 +411,7 @@ let isCall = 1, PPC970_Unit = 7,
   def BCTRL_Macho : XLForm_2_ext<19, 528, 20, 0, 1, 
                                  (outs), (ins variable_ops),
                                  "bctrl", BrB,
-                                 [(PPCbctrl_Macho)]>;
+                                 [(PPCbctrl_Macho)]>, Requires<[In32BitMode]>;
 }
 
 // ELF ABI Calls.
@@ -431,7 +433,7 @@ let isCall = 1, PPC970_Unit = 7,
   def BCTRL_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
                                (outs), (ins variable_ops),
                                "bctrl", BrB,
-                               [(PPCbctrl_ELF)]>;
+                               [(PPCbctrl_ELF)]>, Requires<[In32BitMode]>;
 }
 
 // DCB* instructions.

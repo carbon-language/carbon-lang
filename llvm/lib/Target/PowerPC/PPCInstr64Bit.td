@@ -81,10 +81,13 @@ let isCall = 1, PPC970_Unit = 7,
   def BL8_Macho  : IForm<18, 0, 1,
                          (outs), (ins calltarget:$func, variable_ops), 
                          "bl $func", BrB, []>;  // See Pat patterns below.
-                            
   def BLA8_Macho : IForm<18, 1, 1,
                          (outs), (ins aaddr:$func, variable_ops),
                          "bla $func", BrB, [(PPCcall_Macho (i64 imm:$func))]>;
+  def BCTRL8_Macho : XLForm_2_ext<19, 528, 20, 0, 1, 
+                                 (outs), (ins variable_ops),
+                                 "bctrl", BrB,
+                                 [(PPCbctrl_Macho)]>, Requires<[In64BitMode]>;
 }
 
 // ELF 64 ABI Calls = Macho ABI Calls
@@ -99,11 +102,14 @@ let isCall = 1, PPC970_Unit = 7,
   // Convenient aliases for call instructions
   def BL8_ELF  : IForm<18, 0, 1,
                        (outs), (ins calltarget:$func, variable_ops), 
-                       "bl $func", BrB, []>;  // See Pat patterns below.
-                            
+                       "bl $func", BrB, []>;  // See Pat patterns below.                            
   def BLA8_ELF : IForm<18, 1, 1,
                        (outs), (ins aaddr:$func, variable_ops),
                        "bla $func", BrB, [(PPCcall_ELF (i64 imm:$func))]>;
+  def BCTRL8_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
+                               (outs), (ins variable_ops),
+                               "bctrl", BrB,
+                               [(PPCbctrl_ELF)]>, Requires<[In64BitMode]>;
 }
 
 

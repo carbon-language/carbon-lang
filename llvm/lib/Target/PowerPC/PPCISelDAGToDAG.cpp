@@ -42,11 +42,13 @@ namespace {
   class VISIBILITY_HIDDEN PPCDAGToDAGISel : public SelectionDAGISel {
     PPCTargetMachine &TM;
     PPCTargetLowering PPCLowering;
+    const PPCSubtarget &PPCSubTarget;
     unsigned GlobalBaseReg;
   public:
     PPCDAGToDAGISel(PPCTargetMachine &tm)
       : SelectionDAGISel(PPCLowering), TM(tm),
-        PPCLowering(*TM.getTargetLowering()) {}
+        PPCLowering(*TM.getTargetLowering()),
+        PPCSubTarget(*TM.getSubtargetImpl()) {}
     
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary
@@ -736,7 +738,7 @@ SDNode *PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   CCReg = CurDAG->getCopyToReg(CurDAG->getEntryNode(), CR7Reg, CCReg, 
                                InFlag).getValue(1);
   
-  if (TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor())
+  if (PPCSubTarget.isGigaProcessor())
     IntCR = SDOperand(CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32, CR7Reg,
                                             CCReg), 0);
   else
@@ -859,7 +861,7 @@ SDNode *PPCDAGToDAGISel::Select(SDOperand Op) {
     SDOperand InFlag = N->getOperand(1);
     AddToISelQueue(InFlag);
     // Use MFOCRF if supported.
-    if (TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor())
+    if (PPCSubTarget.isGigaProcessor())
       return CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32,
                                    N->getOperand(0), InFlag);
     else
