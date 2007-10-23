@@ -4302,6 +4302,10 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
       break;
     }
     case ISD::MEMCPY: {
+      // FIXME: Disabling memcpy lowering for copying onto the stack.
+      if (Op1.getOpcode() == ISD::FrameIndex)
+        break;
+
       if (MeetsMaxMemopRequirement(MemOps, TLI.getMaxStoresPerMemcpy(),
                                    Size->getValue(), Align, TLI)) {
         unsigned NumMemOps = MemOps.size();
