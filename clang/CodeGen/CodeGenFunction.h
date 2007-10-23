@@ -65,13 +65,15 @@ namespace clang {
   class ChooseExpr;
   class PreDefinedExpr;
   class ObjCStringLiteral;
-  
+  class MemberExpr;
+
   class BlockVarDecl;
   class EnumConstantDecl;
   class ParmVarDecl;
 namespace CodeGen {
   class CodeGenModule;
-  
+  class CodeGenTypes;
+  class RecordLayoutInfo;  
 
 /// RValue - This trivial value class is used to represent the result of an
 /// expression that is evaluated.  It can be one of three things: either a
@@ -296,6 +298,8 @@ public:
   /// then reuse it.
   void StartBlock(const char *N);
 
+  /// getRecordLayoutInfo - Return record layout info.
+  RecordLayoutInfo *getRecordLayoutInfo(CodeGenTypes &CGT, QualType RTy);
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//
@@ -370,6 +374,7 @@ public:
   LValue EmitUnaryOpLValue(const UnaryOperator *E);
   LValue EmitArraySubscriptExpr(const ArraySubscriptExpr *E);
   LValue EmitOCUVectorElementExpr(const OCUVectorElementExpr *E);
+  LValue EmitMemberExpr(const MemberExpr *E);
     
   //===--------------------------------------------------------------------===//
   //                         Scalar Expression Emission

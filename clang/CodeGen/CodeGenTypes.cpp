@@ -24,6 +24,14 @@ CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M)
   : Context(Ctx), Target(Ctx.Target), TheModule(M) {
 }
 
+CodeGenTypes::~CodeGenTypes() {
+  for(llvm::DenseMap<const llvm::Type *, RecordLayoutInfo *>::iterator
+	I = RecordLayouts.begin(), E = RecordLayouts.end();
+      I != E; ++I)
+    delete I->second;
+  RecordLayouts.clear();
+}
+
 /// ConvertType - Convert the specified type to its LLVM form.
 const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   // FIXME: Cache these, move the CodeGenModule, expand, etc.
@@ -159,10 +167,14 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       return ConvertType(cast<EnumDecl>(TD)->getIntegerType());
     } else if (TD->getKind() == Decl::Struct) {
       const RecordDecl *RD = cast<const RecordDecl>(TD);
-      std::vector<const llvm::Type*> Fields;
+      RecordOrganizer *RO = new RecordOrganizer();
       for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
-        Fields.push_back(ConvertType(RD->getMember(i)->getType()));
-      ResultType = llvm::StructType::get(Fields);
+	RO->addField(RD->getMember(i));
+      RO->layoutFields(*this);
+      RecordLayoutInfo *RLI = new RecordLayoutInfo(RO);
+      ResultType = RLI->getLLVMType();
+      RecordLayouts[ResultType] = RLI;
+      delete RO;
     } else if (TD->getKind() == Decl::Union) {
       const RecordDecl *RD = cast<const RecordDecl>(TD);
       // Just use the largest element of the union, breaking ties with the
@@ -214,3 +226,67 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
   }
 }
 
+/// getLLVMFieldNo - Return llvm::StructType element number
+/// that corresponds to the field FD.
+unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
+  llvm::DenseMap<const FieldDecl *, unsigned>::iterator
+    I = FieldInfo.find(FD);
+  if (I != FieldInfo.end()  && "Unable to find field info");
+  return I->second;
+}
+
+  /// addFieldInfo - Assign field number to field FD.
+void CodeGenTypes::addFieldInfo(const FieldDecl *FD, unsigned No) {
+  FieldInfo[FD] = No;
+}
+
+/// getRecordLayoutInfo - Return record layout info for the given llvm::Type.
+RecordLayoutInfo *CodeGenTypes::getRecordLayoutInfo(const llvm::Type* Ty) {
+  llvm::DenseMap<const llvm::Type*, RecordLayoutInfo *>::iterator I
+    = RecordLayouts.find(Ty);
+  assert (I != RecordLayouts.end() 
+          && "Unable to find record layout information for type");
+  return I->second;
+}
+
+/// RecordLayoutInfo - Construct record layout info object using layout 
+/// organized by record organizer.
+RecordLayoutInfo::RecordLayoutInfo(RecordOrganizer *RO) {
+  STy = RO->getLLVMType();
+  assert (STy && "Record layout is incomplete to determine llvm::Type");
+  // FIXME : Collect info about fields that requires adjustments 
+  // (i.e. fields that do not directly map to llvm struct fields.)
+}
+
+
+/// addField - Add new field.
+void RecordOrganizer::addField(const FieldDecl *FD) {
+  assert (!STy && "Record fields are already laid out");
+  FieldDecls.push_back(FD);
+}
+
+/// layoutFields - Do the actual work and lay out all fields. Create
+/// corresponding llvm struct type.  This should be invoked only after
+/// all fields are added.
+/// FIXME : At the moment assume 
+///    - one to one mapping between AST FieldDecls and 
+///      llvm::StructType elements.
+///    - Ignore bit fields
+///    - Ignore field aligments
+///    - Ignore packed structs
+void RecordOrganizer::layoutFields(CodeGenTypes &CGT) {
+  // FIXME : Use SmallVector
+  std::vector<const llvm::Type*> Fields;
+  unsigned FieldNo = 0;
+  for (llvm::SmallVector<const FieldDecl *, 8>::iterator I = FieldDecls.begin(),
+	 E = FieldDecls.end(); I != E; ++I) {
+    const FieldDecl *FD = *I;
+    const llvm::Type *Ty = CGT.ConvertType(FD->getType());
+
+    // FIXME : Layout FieldDecl FD
+
+    Fields.push_back(Ty);
+    CGT.addFieldInfo(FD, FieldNo++);
+  }
+  STy = llvm::StructType::get(Fields);
+}
