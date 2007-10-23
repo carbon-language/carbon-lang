@@ -22,19 +22,21 @@
 #define LLVM_ANALYSIS_DOMINATORS_H
 
 #include "llvm/Pass.h"
+#include "llvm/BasicBlock.h"
+#include "llvm/Function.h"
 #include "llvm/Instruction.h"
 #include "llvm/Instructions.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
 #include <set>
 
 namespace llvm {
-
-template <typename GraphType> struct GraphTraits;
 
 //===----------------------------------------------------------------------===//
 /// DominatorBase - Base class that other, more interesting dominator analyses
@@ -161,8 +163,8 @@ typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 ///
 
 template<class N, class GraphT>
-void Split(DominatorTreeBase<typename GraphT::NodeType>& DT,
-           typename GraphT::NodeType* NewBB);
+void Calculate(DominatorTreeBase<typename GraphT::NodeType>& DT,
+               Function& F);
 
 template<class NodeT>
 class DominatorTreeBase : public DominatorBase<NodeT> {
@@ -295,6 +297,9 @@ public:
     : DominatorBase<NodeT>(ID, isPostDom), DFSInfoValid(false), SlowQueries(0) {}
   ~DominatorTreeBase() { reset(); }
 
+  // FIXME: Should remove this
+  virtual bool runOnFunction(Function &F) { return false; }
+
   virtual void releaseMemory() { reset(); }
 
   /// getNode - return the (Post)DominatorTree node for the specified basic
@@ -303,10 +308,6 @@ public:
   inline DomTreeNodeBase<NodeT> *getNode(NodeT *BB) const {
     typename DomTreeNodeMapType::const_iterator I = DomTreeNodes.find(BB);
     return I != DomTreeNodes.end() ? I->second : 0;
-  }
-
-  inline DomTreeNodeBase<NodeT> *operator[](NodeT *BB) const {
-    return getNode(BB);
   }
 
   /// getRootNode - This returns the entry node for the CFG of the function.  If
@@ -381,6 +382,11 @@ public:
     
     return dominates(getNode(A), getNode(B));
   }
+  
+  NodeT *getRoot() const {
+    assert(this->Roots.size() == 1 && "Should always have entry node!");
+    return this->Roots[0];
+  }
 
   /// findNearestCommonDominator - Find nearest common dominator basic block
   /// for basic block A and B. If there is no such block then return NULL.
@@ -426,30 +432,6 @@ public:
     }
 
     return NULL;
-  }
-
-  // dominates - Return true if A dominates B. This performs the
-  // special checks necessary if A and B are in the same basic block.
-  bool dominates(Instruction *A, Instruction *B) {
-    NodeT *BBA = A->getParent(), *BBB = B->getParent();
-    if (BBA != BBB) return this->dominates(BBA, BBB);
-
-    // It is not possible to determine dominance between two PHI nodes 
-    // based on their ordering.
-    if (isa<PHINode>(A) && isa<PHINode>(B)) 
-      return false;
-
-    // Loop through the basic block until we find A or B.
-    typename NodeT::iterator I = BBA->begin();
-    for (; &*I != A && &*I != B; ++I) /*empty*/;
-
-    if(!this->IsPostDominators) {
-      // A dominates B if it is found first in the basic block.
-      return &*I == A;
-    } else {
-      // A post-dominates B if B is found first in the basic block.
-      return &*I == B;
-    }
   }
 
   //===--------------------------------------------------------------------===//
@@ -517,9 +499,9 @@ public:
   /// tree to reflect this change.
   void splitBlock(NodeT* NewBB) {
     if (this->IsPostDominators)
-      Split<Inverse<NodeT*>, GraphTraits<Inverse<NodeT*> > >(*this, NewBB);
+      this->Split<Inverse<NodeT*>, GraphTraits<Inverse<NodeT*> > >(*this, NewBB);
     else
-      Split<NodeT*, GraphTraits<NodeT*> >(*this, NewBB);
+      this->Split<NodeT*, GraphTraits<NodeT*> >(*this, NewBB);
   }
 
   /// print - Convert to human readable form
@@ -624,6 +606,44 @@ protected:
     typename DenseMap<NodeT*, NodeT*>::const_iterator I = IDoms.find(BB);
     return I != IDoms.end() ? I->second : 0;
   }
+  
+public:
+  /// recalculate - compute a dominator tree for the given function
+  void recalculate(Function& F) {
+    if (!this->IsPostDominators) {
+      reset();
+      
+      // Initialize roots
+      this->Roots.push_back(&F.getEntryBlock());
+      this->IDoms[&F.getEntryBlock()] = 0;
+      this->DomTreeNodes[&F.getEntryBlock()] = 0;
+      this->Vertex.push_back(0);
+      
+      Calculate<NodeT*, GraphTraits<NodeT*> >(*this, F);
+      
+      updateDFSNumbers();
+    } else {
+      reset();     // Reset from the last time we were run...
+
+      // Initialize the roots list
+      for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+        TerminatorInst *Insn = I->getTerminator();
+        if (Insn->getNumSuccessors() == 0) {
+          // Unreachable block is not a root node.
+          if (!isa<UnreachableInst>(Insn))
+            this->Roots.push_back(I);
+        }
+
+        // Prepopulate maps so that we don't get iterator invalidation issues later.
+        this->IDoms[I] = 0;
+        this->DomTreeNodes[I] = 0;
+      }
+
+      this->Vertex.push_back(0);
+      
+      Calculate<Inverse<NodeT*>, GraphTraits<Inverse<NodeT*> > >(*this, F);
+    }
+  }
 };
 
 EXTERN_TEMPLATE_INSTANTIATION(class DominatorTreeBase<BasicBlock>);
@@ -632,20 +652,137 @@ EXTERN_TEMPLATE_INSTANTIATION(class DominatorTreeBase<BasicBlock>);
 /// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
 /// compute a normal dominator tree.
 ///
-class DominatorTree : public DominatorTreeBase<BasicBlock> {
+class DominatorTree : public FunctionPass {
 public:
   static char ID; // Pass ID, replacement for typeid
-  DominatorTree() : DominatorTreeBase<BasicBlock>(intptr_t(&ID), false) {}
+  DominatorTreeBase<BasicBlock>* DT;
   
-  BasicBlock *getRoot() const {
-    assert(Roots.size() == 1 && "Should always have entry node!");
-    return Roots[0];
+  DominatorTree() : FunctionPass(intptr_t(&ID)) {
+    DT = new DominatorTreeBase<BasicBlock>(intptr_t(&ID), false);
+  }
+  
+  ~DominatorTree() {
+    DT->releaseMemory();
+    delete DT;
+  }
+  
+  /// getRoots -  Return the root blocks of the current CFG.  This may include
+  /// multiple blocks if we are computing post dominators.  For forward
+  /// dominators, this will always be a single block (the entry node).
+  ///
+  inline const std::vector<BasicBlock*> &getRoots() const {
+    return DT->getRoots();
+  }
+  
+  inline BasicBlock *getRoot() const {
+    return DT->getRoot();
+  }
+  
+  inline DomTreeNode *getRootNode() const {
+    return DT->getRootNode();
   }
   
   virtual bool runOnFunction(Function &F);
   
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
+  }
+  
+  inline bool dominates(DomTreeNode* A, DomTreeNode* B) const {
+    return DT->dominates(A, B);
+  }
+  
+  inline bool dominates(BasicBlock* A, BasicBlock* B) const {
+    return DT->dominates(A, B);
+  }
+  
+  // dominates - Return true if A dominates B. This performs the
+  // special checks necessary if A and B are in the same basic block.
+  bool dominates(Instruction *A, Instruction *B) const {
+    BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
+    if (BBA != BBB) return DT->dominates(BBA, BBB);
+
+    // It is not possible to determine dominance between two PHI nodes 
+    // based on their ordering.
+    if (isa<PHINode>(A) && isa<PHINode>(B)) 
+      return false;
+
+    // Loop through the basic block until we find A or B.
+    BasicBlock::iterator I = BBA->begin();
+    for (; &*I != A && &*I != B; ++I) /*empty*/;
+
+    //if(!DT.IsPostDominators) {
+      // A dominates B if it is found first in the basic block.
+      return &*I == A;
+    //} else {
+    //  // A post-dominates B if B is found first in the basic block.
+    //  return &*I == B;
+    //}
+  }
+  
+  inline bool properlyDominates(const DomTreeNode* A, DomTreeNode* B) const {
+    return DT->properlyDominates(A, B);
+  }
+  
+  inline bool properlyDominates(BasicBlock* A, BasicBlock* B) const {
+    return DT->properlyDominates(A, B);
+  }
+  
+  /// findNearestCommonDominator - Find nearest common dominator basic block
+  /// for basic block A and B. If there is no such block then return NULL.
+  inline BasicBlock *findNearestCommonDominator(BasicBlock *A, BasicBlock *B) {
+    return DT->findNearestCommonDominator(A, B);
+  }
+  
+  inline DomTreeNode *operator[](BasicBlock *BB) const {
+    return DT->getNode(BB);
+  }
+  
+  /// getNode - return the (Post)DominatorTree node for the specified basic
+  /// block.  This is the same as using operator[] on this class.
+  ///
+  inline DomTreeNode *getNode(BasicBlock *BB) const {
+    return DT->getNode(BB);
+  }
+  
+  /// addNewBlock - Add a new node to the dominator tree information.  This
+  /// creates a new node as a child of DomBB dominator node,linking it into 
+  /// the children list of the immediate dominator.
+  inline DomTreeNode *addNewBlock(BasicBlock *BB, BasicBlock *DomBB) {
+    return DT->addNewBlock(BB, DomBB);
+  }
+  
+  /// changeImmediateDominator - This method is used to update the dominator
+  /// tree information when a node's immediate dominator changes.
+  ///
+  inline void changeImmediateDominator(BasicBlock *N, BasicBlock* NewIDom) {
+    DT->changeImmediateDominator(N, NewIDom);
+  }
+  
+  inline void changeImmediateDominator(DomTreeNode *N, DomTreeNode* NewIDom) {
+    DT->changeImmediateDominator(N, NewIDom);
+  }
+  
+  /// eraseNode - Removes a node from  the dominator tree. Block must not
+  /// domiante any other blocks. Removes node from its immediate dominator's
+  /// children list. Deletes dominator node associated with basic block BB.
+  inline void eraseNode(BasicBlock *BB) {
+    DT->eraseNode(BB);
+  }
+  
+  /// splitBlock - BB is split and now it has one successor. Update dominator
+  /// tree to reflect this change.
+  inline void splitBlock(BasicBlock* NewBB) {
+    DT->splitBlock(NewBB);
+  }
+  
+  
+  virtual void releaseMemory() { 
+    DT->releaseMemory();
+  }
+  
+  virtual void print(std::ostream &OS, const Module* M= 0) const {
+    DT->print(OS, M);
   }
 };
 
