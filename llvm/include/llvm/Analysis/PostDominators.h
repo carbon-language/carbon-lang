@@ -21,16 +21,38 @@ namespace llvm {
 /// PostDominatorTree Class - Concrete subclass of DominatorTree that is used to
 /// compute the a post-dominator tree.
 ///
-struct PostDominatorTree : public DominatorTreeBase<BasicBlock> {
+struct PostDominatorTree : public FunctionPass {
   static char ID; // Pass identification, replacement for typeid
+  DominatorTreeBase<BasicBlock>* DT;
 
-  PostDominatorTree() : 
-    DominatorTreeBase<BasicBlock>((intptr_t)&ID, true) {}
+  PostDominatorTree() : FunctionPass((intptr_t)&ID) {
+    DT = new DominatorTreeBase<BasicBlock>(intptr_t(&ID), true);
+  }
 
   virtual bool runOnFunction(Function &F);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
+  }
+  
+  inline const std::vector<BasicBlock*> &getRoots() const {
+    return DT->getRoots();
+  }
+  
+  inline DomTreeNode *getRootNode() const {
+    return DT->getRootNode();
+  }
+  
+  inline DomTreeNode *operator[](BasicBlock *BB) const {
+    return DT->getNode(BB);
+  }
+  
+  inline bool properlyDominates(const DomTreeNode* A, DomTreeNode* B) const {
+    return DT->properlyDominates(A, B);
+  }
+  
+  inline bool properlyDominates(BasicBlock* A, BasicBlock* B) const {
+    return DT->properlyDominates(A, B);
   }
 };
 

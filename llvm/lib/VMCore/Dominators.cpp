@@ -57,17 +57,7 @@ static RegisterPass<DominatorTree>
 E("domtree", "Dominator Tree Construction", true);
 
 bool DominatorTree::runOnFunction(Function &F) {
-  reset();     // Reset from the last time we were run...
-  
-  // Initialize roots
-  Roots.push_back(&F.getEntryBlock());
-  IDoms[&F.getEntryBlock()] = 0;
-  DomTreeNodes[&F.getEntryBlock()] = 0;
-  Vertex.push_back(0);
-  
-  Calculate<BasicBlock*, GraphTraits<BasicBlock*> >(*this, F);
-  
-  updateDFSNumbers();
+  DT->recalculate(F);
   
   return false;
 }
