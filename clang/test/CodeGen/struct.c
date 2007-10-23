@@ -43,7 +43,7 @@ typedef struct NA {
   int data;
   struct NA *next;
 } NA;
-void f1() {  A a; }
+void f1() {  NA a; }
 
 typedef struct NB {
   int d1;
