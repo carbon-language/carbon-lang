@@ -132,12 +132,13 @@ Value *NumberExprAST::Codegen() {
 </pre>
 </div>
 
-<p>In the LLVM IR, numeric constants are represented with the ConstantFP class,
-which holds the numeric value in an APFloat internally (APFloat has the
-capability of holding floating point constants of arbitrary precision).  This
-code basically just creates and returns a ConstantFP.  Note that in the LLVM IR
+<p>In the LLVM IR, numeric constants are represented with the
+<tt>ConstantFP</tt> class, which holds the numeric value in an <tt>APFloat</tt>
+internally (<tt>APFloat</tt> has the capability of holding floating point
+constants of <em>A</em>rbitrary <em>P</em>recision).  This code basically just
+creates and returns a <tt>ConstantFP</tt>.  Note that in the LLVM IR
 that constants are all uniqued together and shared.  For this reason, the API
-uses "the foo::get(...)" idiom instead of a "create" method or "new foo".</p>
+uses "the foo::get(..)" idiom instead of "new foo(..)" or "foo::create(..).</p>
 
 <div class="doc_code">
 <pre>
@@ -149,9 +150,10 @@ Value *VariableExprAST::Codegen() {
 </pre>
 </div>
 
-<p>References to variables is also quite simple here.  In our system, we assume
-that the variable has already been emited somewhere and its value is available.
-In practice, the only values in the NamedValues map will be arguments.  This
+<p>References to variables is also quite simple here.  In the simple version
+of Kaleidoscope, we assume that the variable has already been emited somewhere
+and its value is available.  In practice, the only values that can be in the
+<tt>NamedValues</tt> map are function arguments.  This
 code simply checks to see that the specified name is in the map (if not, an 
 unknown variable is being referenced) and returns the value for it.</p>
 
@@ -176,7 +178,38 @@ Value *BinaryExprAST::Codegen() {
 </pre>
 </div>
 
+<p>Binary operators start to get more interesting.  The basic idea here is that
+we recursively emit code for the left-hand side of the expression, then the 
+right-hand side, then we compute the result of the binary expression.  In this
+code, we do a simple switch on the opcode to create the right LLVM instruction.
+</p>
 
+<p>In this example, the LLVM builder class is starting to show its value.  
+Because it knows where to insert the newly created instruction, you just have to
+specificy what instruction to create (e.g. with <tt>CreateAdd</tt>), which
+operands to use (<tt>L</tt> and <tt>R</tt> here) and optionally provide a name
+for the generated instruction.  One nice thing about LLVM is that the name is 
+just a hint: if there are multiple additions in a single function, the first
+will be named "addtmp" and the second will be "autorenamed" by adding a suffix,
+giving it a name like "addtmp42".  Local value names for instructions are purely
+optional, but it makes it much easier to read the IR dumps.</p>
+
+<p><a href="../LangRef.html#instref">LLVM instructions</a> are constrained to
+have very strict type properties: for example, the Left and Right operators of
+an <a href="../LangRef.html#i_add">add instruction</a> have to have the same
+type, and that the result of the add matches the operands.  Because all values
+in Kaleidoscope are doubles, this makes for very simple code for add, sub and
+mul.</p>
+
+<p>On the other hand, LLVM specifies that the <a 
+href="../LangRef.html#i_fcmp">fcmp instruction</a> always returns an 'i1' value
+(a one bit integer).  However, Kaleidoscope wants the value to be a 0.0 or 1.0
+value.  In order to get these semantics, we combine the fcmp instruction with
+a <a href="../LangRef.html#i_uitofp">uitofp instruction</a>.  This instruction
+converts its input integer into a floating point value by treating the input
+as an unsigned value.  In contrast, if we used the <a 
+href="../LangRef.html#i_sitofp">sitofp instruction</a>, the Kaleidoscope '<'
+operator would return 0.0 and -1.0, depending on the input value.</p>
 
 <div class="doc_code">
 <pre>
@@ -201,7 +234,24 @@ Value *CallExprAST::Codegen() {
 </pre>
 </div>
 
-<h1> more todo</h1>
+<p>Code generation for function calls is quite straight-forward with LLVM.  The
+code above first looks the name of the function up in the LLVM Module's symbol
+table.  Recall that the LLVM Module is the container that holds all of the
+functions we are JIT'ing.  By giving each function the same name as what the
+user specifies, we can use the LLVM symbol table to resolve function names for
+us.</p>
+
+<p>Once we have the function to call, we recursively codegen each argument that
+is to be passed in, and create an LLVM <a href="../LangRef.html#i_call">call
+instruction</a>.  Note that LLVM uses the native C calling conventions by
+default, allowing these calls to call into standard library functions like
+"sin" and "cos" with no additional effort.</p>
+
+<p>This wraps up our handling of the four basic expressions that we have so far
+in Kaleidoscope.  Feel free to go in and add some more.  For example, by 
+browsing the <a href="../LangRef.html">LLVM language reference</a> you'll find
+several other interesting instructions that are really easy to plug into our
+basic framework.</p>
 
 </div>
 
