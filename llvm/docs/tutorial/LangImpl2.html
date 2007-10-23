@@ -753,20 +753,40 @@ $
 </pre>
 </div>
 
+<p>There is a lot of room for extension here.  You can define new AST nodes,
+extend the language in many ways, etc.  In the <a href="LangImpl3.html">next
+installment</a>, we will describe how to generate LLVM IR from the AST.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="code">Full Code Listing</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
 <p>
-Here is the full code.  Note that it is fully self-contained: you don't even
-need LLVM for this.  In the <a href="LangImpl3.html">next installment</a>, we
-will describe how to generate LLVM IR from the AST.</p>
+Here is the complete code listing for this and the previous chapter.  
+Note that it is fully self-contained: you don't need LLVM or any external
+libraries at all for this (other than the C and C++ standard libraries of
+course).  To build this, just compile with:</p>
 
 <div class="doc_code">
 <pre>
-// To build this:
-//  g++ -g toy.cpp 
-//  ./a.out 
+   # Compile
+   g++ -g toy.cpp 
+   # Run
+   ./a.out 
+</pre>
+</div>
 
+<p>Here is the code:</p>
+
+<div class="doc_code">
+<pre>
 #include &lt;cstdio&gt;
 #include &lt;string&gt;
-#include &lt;
+#include &lt;map&gt;
 #include &lt;vector&gt;
 
 //===----------------------------------------------------------------------===//
