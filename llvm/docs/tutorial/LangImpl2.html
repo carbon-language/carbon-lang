@@ -65,7 +65,7 @@ public:
 class NumberExprAST : public ExprAST {
   double Val;
 public:
-  NumberExprAST(double val) : Val(val) {}
+  explicit NumberExprAST(double val) : Val(val) {}
 };
 </pre>
 </div>
@@ -87,7 +87,7 @@ in the basic form of the Kaleidoscope language.
 class VariableExprAST : public ExprAST {
   std::string Name;
 public:
-  VariableExprAST(const std::string &amp;name) : Name(name) {}
+  explicit VariableExprAST(const std::string &amp;name) : Name(name) {}
 };
 
 /// BinaryExprAST - Expression class for a binary operator.
@@ -850,14 +850,14 @@ public:
 class NumberExprAST : public ExprAST {
   double Val;
 public:
-  NumberExprAST(double val) : Val(val) {}
+  explicit NumberExprAST(double val) : Val(val) {}
 };
 
 /// VariableExprAST - Expression class for referencing a variable, like "a".
 class VariableExprAST : public ExprAST {
   std::string Name;
 public:
-  VariableExprAST(const std::string &amp;name) : Name(name) {}
+  explicit VariableExprAST(const std::string &amp;name) : Name(name) {}
 };
 
 /// BinaryExprAST - Expression class for a binary operator.

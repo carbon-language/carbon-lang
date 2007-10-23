@@ -56,15 +56,26 @@ public:
 class NumberExprAST : public ExprAST {
   double Val;
 public:
-  NumberExprAST(double val) : Val(val) {}
+  explicit NumberExprAST(double val) : Val(val) {}
   virtual Value *Codegen();
 };
 ...
 </pre>
 </div>
 
-<p>"Value" is the class used to represent a "register" in LLVM.  The Codegen()
-method says to emit IR for that AST node and all things it depends on.  The
+<p>The Codegen() method says to emit IR for that AST node and all things it
+depends on, and they all return an LLVM Value object. 
+"Value" is the class used to represent a "<a 
+href="http://en.wikipedia.org/wiki/Static_single_assignment_form">Static Single
+Assignment (SSA)</a> register" or "SSA value" in LLVM.  The most distinct aspect
+of SSA values is that their value is computed as the related instruction
+executes, and it does not get a new value until (and if) the instruction
+re-executes.  In order words, there is no way to "change" an SSA value.  For
+more information, please read up on <a 
+href="http://en.wikipedia.org/wiki/Static_single_assignment_form">Static Single
+Assignment</a> - the concepts are really quite natural once you grok them.</p>
+
+<p>The
 second thing we want is an "Error" method like we used for parser, which will
 be used to report errors found during code generation (for example, use of an
 undeclared parameter):</p>
@@ -299,7 +310,7 @@ public:
 class NumberExprAST : public ExprAST {
   double Val;
 public:
-  NumberExprAST(double val) : Val(val) {}
+  explicit NumberExprAST(double val) : Val(val) {}
   virtual Value *Codegen();
 };
 
@@ -307,7 +318,7 @@ public:
 class VariableExprAST : public ExprAST {
   std::string Name;
 public:
-  VariableExprAST(const std::string &amp;name) : Name(name) {}
+  explicit VariableExprAST(const std::string &amp;name) : Name(name) {}
   virtual Value *Codegen();
 };
 
