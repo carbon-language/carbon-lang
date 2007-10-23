@@ -134,14 +134,12 @@ void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
   ObjcInterfaceDecl *CDecl = IDecl->getClassInterface();
   
   // Build _objc_ivar_list metadata for classes ivars if needed
-  if (IDecl->getImplDeclNumIvars() > 0 || 
-      CDecl&& CDecl->getIntfDeclNumIvars() > 0) {
+  int NumIvars = IDecl->getImplDeclNumIvars() > 0 
+                   ? IDecl->getImplDeclNumIvars() 
+                   : (CDecl ? CDecl->getIntfDeclNumIvars() : 0);
+  
+  if (NumIvars > 0) {
     static bool objc_ivar = false;
-    
-    int NumIvars = IDecl->getImplDeclNumIvars() > 0 
-                     ? IDecl->getImplDeclNumIvars() 
-                     : CDecl->getIntfDeclNumIvars();
-    
     if (!objc_ivar) {
       /* struct _objc_ivar {
           char *ivar_name;
@@ -201,13 +199,13 @@ void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
   if (IDecl->getNumInstanceMethods() > 0) {
     int NumMethods = IDecl->getNumInstanceMethods();
     /* struct _objc_method_list {
-         struct objc_method_list *next_method;
+         struct _objc_method_list *next_method;
          int method_count;
          struct _objc_method method_list[method_count];
        }
     */
     printf("\nstatic struct {\n");
-    printf("\tstruct objc_method_list *next_method;\n");
+    printf("\tstruct _objc_method_list *next_method;\n");
     printf("\tint method_count;\n");
     printf("\tstruct _objc_method method_list[%d];\n", NumMethods);
     printf("} _OBJC_INSTANCE_METHODS_%s "
@@ -227,13 +225,13 @@ void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
   if (IDecl->getNumClassMethods() > 0) {
     int NumMethods = IDecl->getNumClassMethods();
     /* struct _objc_method_list {
-     struct objc_method_list *next_method;
+     struct _objc_method_list *next_method;
      int method_count;
      struct _objc_method method_list[method_count];
      }
      */
     printf("\nstatic struct {\n");
-    printf("\tstruct objc_method_list *next_method;\n");
+    printf("\tstruct _objc_method_list *next_method;\n");
     printf("\tint method_count;\n");
     printf("\tstruct _objc_method method_list[%d];\n", NumMethods);
     printf("} _OBJC_CLASS_METHODS_%s "
@@ -375,39 +373,39 @@ void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
     printf("};\n");
   }
   
-  // Declaration of top-level metadata
-  /* struct _objc_meta_class {
-   const char *root_class_name;
+  // Declaration of class/meta-class metadata
+  /* struct _objc_class {
+   struct _objc_class *isa; // or const char *root_class_name when metadata
    const char *super_class_name;
    char *name;
    long version;
    long info;
    long instance_size;
-   struct objc_ivar_list *ivars;
-   struct objc_method_list *methods;
+   struct _objc_ivar_list *ivars;
+   struct _objc_method_list *methods;
    struct objc_cache *cache;
    struct objc_protocol_list *protocols;
    const char *ivar_layout;
    struct _objc_class_ext  *ext;
    };  
   */
-  static bool objc_meta_class = false;
-  if (!objc_meta_class) {
+  static bool objc_class = false;
+  if (!objc_class) {
     printf("\nstruct _objc_class {\n");
-    printf("\tconst char *root_class_name;\n");
+    printf("\tstruct _objc_class *isa;\n");
     printf("\tconst char *super_class_name;\n");
     printf("\tchar *name;\n");
     printf("\tlong version;\n");
     printf("\tlong info;\n");
     printf("\tlong instance_size;\n");
-    printf("\tstruct objc_ivar_list *ivars;\n");
-    printf("\tstruct objc_method_list *methods;\n");
+    printf("\tstruct _objc_ivar_list *ivars;\n");
+    printf("\tstruct _objc_method_list *methods;\n");
     printf("\tstruct objc_cache *cache;\n");
-    printf("\tstruct objc_protocol_list *protocols;\n");
+    printf("\tstruct _objc_protocol_list *protocols;\n");
     printf("\tconst char *ivar_layout;\n");
     printf("\tstruct _objc_class_ext  *ext;\n");
     printf("};\n");
-    objc_meta_class = true;
+    objc_class = true;
   }
   
   // Meta-class metadata generation.
@@ -421,8 +419,9 @@ void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
   
   printf("\nstatic struct _objc_class _OBJC_METACLASS_%s "
          "__attribute__ ((section (\"__OBJC, __meta_class\")))= "
-         "{\n\t\"%s\"", CDecl->getName(), RootClass ? RootClass->getName() 
-                                                :  CDecl->getName());
+         "{\n\t(struct _objc_class *)\"%s\"", 
+         CDecl->getName(), RootClass ? RootClass->getName() 
+                                     :  CDecl->getName());
   if (SuperClass)
     printf(", \"%s\", \"%s\"", SuperClass->getName(), CDecl->getName());
   else
@@ -432,11 +431,39 @@ void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
   // 'info' field is initialized to CLS_META(2) for metaclass
   printf(", 0,2,48,0");
   if (CDecl->getNumClassMethods() > 0)
-    printf(", (struct objc_method_list *)&_OBJC_CLASS_METHODS_%s\n", 
+    printf("\n\t, (struct _objc_method_list *)&_OBJC_CLASS_METHODS_%s\n", 
            CDecl->getName());
   else
     printf(", 0\n");
   printf("\t,0,0,0,0\n");
+  printf("};\n");
+  
+  // class metadata generation.
+  printf("\nstatic struct _objc_class _OBJC_CLASS_%s "
+         "__attribute__ ((section (\"__OBJC, __class\")))= "
+         "{\n\t&_OBJC_METACLASS_%s", CDecl->getName(), CDecl->getName());
+  if (SuperClass)
+    printf(", \"%s\", \"%s\"", SuperClass->getName(), CDecl->getName());
+  else
+    printf(", 0, \"%s\"", CDecl->getName());
+  // 'info' field is initialized to CLS_CLASS(1) for class
+  // TODO: instance_size is curently set to 0.
+  printf(", 0,1,0");
+  if (NumIvars > 0)
+    printf(", (struct _objc_ivar_list *)&_OBJC_INSTANCE_VARIABLES_%s\n\t", 
+           CDecl->getName());
+  else
+    printf(",0");
+  if (IDecl->getNumInstanceMethods() > 0)
+    printf(", (struct _objc_method_list*)&_OBJC_INSTANCE_METHODS_%s, 0\n\t", 
+           CDecl->getName());
+  else
+    printf(",0,0");
+  if (NumProtocols > 0)
+    printf(", (struct _objc_protocol_list*)&_OBJC_CLASS_PROTOCOLS_%s, 0,0\n", 
+           CDecl->getName());
+  else
+    printf(",0,0,0\n");
   printf("};\n");
 }
 
@@ -474,10 +501,10 @@ void RewriteTest::WriteObjcMetaData() {
          "_OBJC_SYMBOLS __attribute__ ((section (\"__OBJC, __symbols\")))= {\n");
   printf("\t0, 0, %d, %d\n", ClsDefCount, CatDefCount);
   for (int i = 0; i < ClsDefCount; i++)
-    printf("\t,_OBJC_CLASS_%s\n", ClassImplementation[i]->getName());
+    printf("\t,&_OBJC_CLASS_%s\n", ClassImplementation[i]->getName());
   
   for (int i = 0; i < CatDefCount; i++)
-    printf("\t,_OBJC_CATEGORY_%s_%s\n", 
+    printf("\t,&_OBJC_CATEGORY_%s_%s\n", 
            CategoryImplementation[i]->getClassInterface()->getName(), 
            CategoryImplementation[i]->getName());
   
