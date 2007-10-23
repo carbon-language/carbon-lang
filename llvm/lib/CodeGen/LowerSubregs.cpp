@@ -146,7 +146,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
   // of the destination, we copy the subreg into the source
   // However, this is only safe if the insert instruction is the kill
   // of the source register
-  bool revCopyOrder = MRI.isSubRegOf(InsReg, DstReg);    
+  bool revCopyOrder = MRI.isSubRegister(DstReg, InsReg);
   if (revCopyOrder && InsReg != DstSubReg) {
     if (MI->getOperand(1).isKill()) {
       DstSubReg = MRI.getSubReg(SrcReg, SubIdx);
