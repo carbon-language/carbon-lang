@@ -4329,6 +4329,19 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
           }
         }
 
+        // Check to see if there is an unaligned memcpy from/onto the stack. If
+        // so, then ignore it for the present.
+        if (Op1.getOpcode() == ISD::FrameIndex ||
+            Op2.getOpcode() == ISD::FrameIndex) {
+          unsigned TotalSize = 0;
+
+          for (unsigned i = 0; i < NumMemOps; i++)
+            TotalSize += MVT::getSizeInBits(MemOps[i]) / 8;
+
+          if (TotalSize % Align != 0)
+            break;
+        }
+
         for (unsigned i = 0; i < NumMemOps; i++) {
           MVT::ValueType VT = MemOps[i];
           unsigned VTSize = MVT::getSizeInBits(VT) / 8;
