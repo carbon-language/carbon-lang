@@ -355,6 +355,9 @@ public:
     assert(idx < NumForwardDecls && "index out of range");
     ForwardDecls[idx] = OID;
   }
+  ObjcInterfaceDecl** getForwardDecls() const { return ForwardDecls; }
+  int getNumForwardDecls() const { return NumForwardDecls; }
+  
   static bool classof(const Decl *D) { return D->getKind() == ObjcClass; }
   static bool classof(const ObjcClassDecl *D) { return true; }
 };

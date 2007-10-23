@@ -44,7 +44,8 @@ namespace {
     
     void RewriteFunctionBody(Stmt *S);
     void RewriteAtEncode(ObjCEncodeExpr *Exp);
-
+    void RewriteForwardClassDecl(ObjcClassDecl *Dcl);
+    
     void WriteObjcClassMetaData(ObjcImplementationDecl *IDecl);
     void WriteObjcMetaData();
     
@@ -105,6 +106,8 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
     ClassImplementation.push_back(CI);
   else if (ObjcCategoryImplDecl *CI = dyn_cast<ObjcCategoryImplDecl>(D))
     CategoryImplementation.push_back(CI);
+  else if (ObjcClassDecl *CD = dyn_cast<ObjcClassDecl>(D))
+    RewriteForwardClassDecl(CD);
   // Nothing yet.
 }
 
@@ -128,6 +131,37 @@ void RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
                                         SourceLocation(), SourceLocation());
   Rewrite.ReplaceStmt(Exp, Replacement);
   delete Replacement;
+}
+
+void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
+  int numDecls = ClassDecl->getNumForwardDecls();
+  ObjcInterfaceDecl **ForwardDecls = ClassDecl->getForwardDecls();
+  
+  // Get the start location and compute the semi location.
+  SourceLocation startLoc = ClassDecl->getLocation();
+  const char *startBuf = SM->getCharacterData(startLoc);
+  const char *semiPtr = startBuf;
+  while (semiPtr && (*semiPtr != ';')) semiPtr++;
+
+  // Translate to typedef's that forward reference structs with the same name
+  // as the class. As a convenience, we include the original declaration
+  // as a comment.
+  std::string typedefString;
+  typedefString += "// ";
+  typedefString.append(startBuf, semiPtr-startBuf+1);
+  typedefString += "\n";
+  for (int i = 0; i < numDecls; i++) {
+    ObjcInterfaceDecl *ForwardDecl = ForwardDecls[i];
+    typedefString += "typedef struct ";
+    typedefString += ForwardDecl->getName();
+    typedefString += " ";
+    typedefString += ForwardDecl->getName();
+    typedefString += ";\n";
+  }
+  
+  // Replace the @class with typedefs corresponding to the classes.
+  Rewrite.ReplaceText(startLoc, semiPtr-startBuf+1, 
+                      typedefString.c_str(), typedefString.size());
 }
 
 void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
