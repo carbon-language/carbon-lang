@@ -3143,7 +3143,8 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
         // Turn (sint_to_fp (fp_to_sint X)) -> fctidz/fcfid without load/stores.
         // We allow the src/dst to be either f32/f64, but the intermediate
         // type must be i64.
-        if (N->getOperand(0).getValueType() == MVT::i64) {
+        if (N->getOperand(0).getValueType() == MVT::i64 &&
+            N->getOperand(0).getOperand(0).getValueType() != MVT::ppcf128) {
           SDOperand Val = N->getOperand(0).getOperand(0);
           if (Val.getValueType() == MVT::f32) {
             Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
@@ -3170,7 +3171,8 @@ SDOperand PPCTargetLowering::PerformDAGCombine(SDNode *N,
     // Turn STORE (FP_TO_SINT F) -> STFIWX(FCTIWZ(F)).
     if (TM.getSubtarget<PPCSubtarget>().hasSTFIWX() &&
         N->getOperand(1).getOpcode() == ISD::FP_TO_SINT &&
-        N->getOperand(1).getValueType() == MVT::i32) {
+        N->getOperand(1).getValueType() == MVT::i32 &&
+        N->getOperand(1).getOperand(0).getValueType() != MVT::ppcf128) {
       SDOperand Val = N->getOperand(1).getOperand(0);
       if (Val.getValueType() == MVT::f32) {
         Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
