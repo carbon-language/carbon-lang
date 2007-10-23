@@ -51,9 +51,9 @@ unsigned gcd(unsigned x, unsigned y) {
 
 <p>With this example, we'll learn how to create functions with multiple blocks and control flow, and how to make function calls within your LLVM code.  For starters, consider the diagram below.</p>
 
-<div style="text-align: center;"><img src="JITTutorial2-1.png" alt="GCD CFG" width="60%" /></div>
+<div style="text-align: center;"><img src="JITTutorial2-1.png" alt="GCD CFG" width="60%"></div>
 
-<p>The above is a graphical representation of a program in LLVM IR.  It places each basic block on a node of a graph, and uses directed edges to indicate flow control.  These blocks will be serialized when written to a text or bitcode file, but it is often useful conceptually to think of them as a graph.  Again, if you are unsure about the code in the diagram, you should skim through the <a href=../LangRef.html">LLVM Language Reference Manual</a> and convince yourself that it is, in fact, the GCD algorithm.</p>
+<p>The above is a graphical representation of a program in LLVM IR.  It places each basic block on a node of a graph, and uses directed edges to indicate flow control.  These blocks will be serialized when written to a text or bitcode file, but it is often useful conceptually to think of them as a graph.  Again, if you are unsure about the code in the diagram, you should skim through the <a href="../LangRef.html">LLVM Language Reference Manual</a> and convince yourself that it is, in fact, the GCD algorithm.</p>
 
 <p>The first part of our code is the same as from first tutorial.  The same basic setup is required: creating a module, verifying it, and running the <code>PrintModulePass</code> on it.  Even the first segment of  <code>makeLLVMModule()</code> looks the same, because <code>gcd</code> happens the have the same prototype as our <code>mul_add</code> function.</p>
 
@@ -76,27 +76,27 @@ int main(int argc, char**argv) {
   verifyModule(*Mod, PrintMessageAction);
   
   PassManager PM;
-  PM.add(new PrintModulePass(&llvm::cout));
+  PM.add(new PrintModulePass(&amp;llvm::cout));
   PM.run(*Mod);
   
   return 0;
 }
 
 Module* makeLLVMModule() {
-  Module* mod = new Module("tut2");
+  Module* mod = new Module(&quot;tut2&quot;);
   
-  Constant* c = mod->getOrInsertFunction("gcd",
+  Constant* c = mod-&gt;getOrInsertFunction(&quot;gcd&quot;,
                                          IntegerType::get(32),
                                          IntegerType::get(32),
                                          IntegerType::get(32),
                                          NULL);
-  Function* gcd = cast<Function>(c);
+  Function* gcd = cast&lt;Function&gt;(c);
   
-  Function::arg_iterator args = gcd->arg_begin();
+  Function::arg_iterator args = gcd-&gt;arg_begin();
   Value* x = args++;
-  x->setName("x");
+  x-&gt;setName(&quot;x&quot;);
   Value* y = args++;
-  y->setName("y");
+  y-&gt;setName(&quot;y&quot;);
 </pre>
 </div>
 
@@ -106,11 +106,11 @@ Module* makeLLVMModule() {
 
 <div class="doc_code">
 <pre>
-  BasicBlock* entry = new BasicBlock("entry", gcd);
-  BasicBlock* ret = new BasicBlock("return", gcd);
-  BasicBlock* cond_false = new BasicBlock("cond_false", gcd);
-  BasicBlock* cond_true = new BasicBlock("cond_true", gcd);
-  BasicBlock* cond_false_2 = new BasicBlock("cond_false", gcd);
+  BasicBlock* entry = new BasicBlock(&quot;entry&quot;, gcd);
+  BasicBlock* ret = new BasicBlock(&quot;return&quot;, gcd);
+  BasicBlock* cond_false = new BasicBlock(&quot;cond_false&quot;, gcd);
+  BasicBlock* cond_true = new BasicBlock(&quot;cond_true&quot;, gcd);
+  BasicBlock* cond_false_2 = new BasicBlock(&quot;cond_false&quot;, gcd);
 </pre>
 </div>
 
@@ -119,7 +119,7 @@ Module* makeLLVMModule() {
 <div class="doc_code">
 <pre>
   LLVMBuilder builder(entry);
-  Value* xEqualsY = builder.CreateICmpEQ(x, y, "tmp");
+  Value* xEqualsY = builder.CreateICmpEQ(x, y, &quot;tmp&quot;);
   builder.CreateCondBr(xEqualsY, ret, cond_false);
 </pre>
 </div>
@@ -140,7 +140,7 @@ Module* makeLLVMModule() {
 <div class="doc_code">
 <pre>
   builder.SetInsertPoint(cond_false);
-  Value* xLessThanY = builder.CreateICmpULT(x, y, "tmp");
+  Value* xLessThanY = builder.CreateICmpULT(x, y, &quot;tmp&quot;);
   builder.CreateCondBr(xLessThanY, cond_true, cond_false_2);
 </pre>
 </div>
@@ -150,19 +150,19 @@ Module* makeLLVMModule() {
 <div class="doc_code">
 <pre>
   builder.SetInsertPoint(cond_true);
-  Value* yMinusX = builder.CreateSub(y, x, "tmp");
-  std::vector<Value*> args1;
+  Value* yMinusX = builder.CreateSub(y, x, &quot;tmp&quot;);
+  std::vector&lt;Value*&gt; args1;
   args1.push_back(x);
   args1.push_back(yMinusX);
-  Value* recur_1 = builder.CreateCall(gcd, args1.begin(), args1.end(), "tmp");
+  Value* recur_1 = builder.CreateCall(gcd, args1.begin(), args1.end(), &quot;tmp&quot;);
   builder.CreateRet(recur_1);
   
   builder.SetInsertPoint(cond_false_2);
-  Value* xMinusY = builder.CreateSub(x, y, "tmp");
-  std::vector<Value*> args2;
+  Value* xMinusY = builder.CreateSub(x, y, &quot;tmp&quot;);
+  std::vector&lt;Value*&gt; args2;
   args2.push_back(xMinusY);
   args2.push_back(y);
-  Value* recur_2 = builder.CreateCall(gcd, args2.begin(), args2.end(), "tmp");
+  Value* recur_2 = builder.CreateCall(gcd, args2.begin(), args2.end(), &quot;tmp&quot;);
   builder.CreateRet(recur_2);
   
   return mod;
