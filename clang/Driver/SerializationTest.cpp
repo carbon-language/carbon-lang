@@ -19,226 +19,148 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "llvm/System/Path.h"
-#include "llvm/Bitcode/BitstreamWriter.h"
-#include <fstream>
-#include <iostream>
+#include "llvm/Support/Streams.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Bitcode/Serialization.h"
+#include <stdio.h>
+
+//===----------------------------------------------------------------------===//
+// Driver code.
+//===----------------------------------------------------------------------===//
 
 using namespace clang;
-using llvm::BitstreamWriter;
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::flush;
-
-namespace llvm {  
-template<typename T> struct IntrospectionTrait {
-  struct Flags { 
-    enum { isPod = false, UniqueInstances = false, UniqueRefs = false };
-  };
-  
-  template<typename Introspector>
-  struct Ops {
-    static inline void Introspect(T& X, Introspector& I) {
-      assert (false && "Introspect not implemented.");
-    }
-  };
-};
-}
 
 namespace {
-class SerializationTest : public ASTConsumer {
-  IdentifierTable* IdTable;
-  unsigned MainFileID;
-public:
-  void Initialize(ASTContext& Context, unsigned mainFileID) {
-    IdTable = &Context.Idents;
-    MainFileID = mainFileID;
-    RunSerializationTest();
-  }
-  
-  void RunSerializationTest();
-  bool WriteAll(llvm::sys::Path& Filename);
-  
-  virtual void HandleTopLevelDecl(Decl *D) {}
-};
+  template<typename T>
+  struct Janitor {
+    T* Obj;
+    Janitor(T* obj) : Obj(obj) {}
+    ~Janitor() { delete Obj; }
+  };
+} // end anonymous namespace
 
-class Writer {
-  std::vector<unsigned char> Buffer;
-  BitstreamWriter Stream;
-  std::ostream& Out;
-public:
-  
-  enum { IdentifierTableBID = 0x8 };
-  
-  Writer(std::ostream& out) : Stream(Buffer), Out(out) {
-    Buffer.reserve(256*1024);
+namespace {
+  class SerializationTest : public ASTConsumer {
+    IdentifierTable* IdTable;
+    unsigned MainFileID;
+  public:
+    void Initialize(ASTContext& Context, unsigned mainFileID) {
+      IdTable = &Context.Idents;
+      MainFileID = mainFileID;
+    }
     
-    // Emit the file header.
-    Stream.Emit((unsigned)'B', 8);
-    Stream.Emit((unsigned)'C', 8);
-    Stream.Emit(0xC, 4);
-    Stream.Emit(0xF, 4);
-    Stream.Emit(0xE, 4);
-    Stream.Emit(0x0, 4);
-  }
-  
-  ~Writer() {
-    Out.write((char*)&Buffer.front(), Buffer.size());
-    Out.flush();
-  }
-  
-  template <typename T> inline void operator()(T& x) {
-    llvm::IntrospectionTrait<T>::template Ops<Writer>::Introspect(x,*this);
-  }
+    ~SerializationTest() {
+      RunSerializationTest();
+    }
     
-  template <typename T> inline void operator()(T& x, unsigned bits) {
-    llvm::IntrospectionTrait<T>::template Ops<Writer>::Introspect(x,bits,*this);
-  }
-  
-  template <typename T> inline void operator()(const T& x) {
-    operator()(const_cast<T&>(x));
-  }
-  
-  template <typename T> inline void operator()(const T& x, unsigned bits) {
-    operator()(const_cast<T&>(x),bits);
-  }  
-  
-  inline void operator()(bool X) { Stream.Emit(X,1); }
-  inline void operator()(unsigned X) { Stream.Emit(X,32); }
-  inline void operator()(unsigned X, unsigned bits, bool VBR=false) {
-    if (VBR) Stream.Emit(X,bits);
-    else Stream.Emit(X,bits);
-  }
-  
-  inline BitstreamWriter& getStream() {
-    return Stream;
-  }
-  
-  template <typename T> inline void EnterSubblock(unsigned CodeLen) {
-    Stream.EnterSubblock(8,CodeLen);
-  }
-  
-  inline void ExitBlock() { Stream.ExitBlock(); }
-  
-};  
-  
-} // end anonymous namespace  
-
-//===----------------------------------------------------------------------===//
-// External Interface.
-//===----------------------------------------------------------------------===//
+    void RunSerializationTest();
+    bool WriteTable(llvm::sys::Path& Filename, IdentifierTable* T);
+    IdentifierTable* ReadTable(llvm::sys::Path& Filename);
+    
+    virtual void HandleTopLevelDecl(Decl *D) {}
+  };
+} // end anonymous namespace
 
 ASTConsumer* clang::CreateSerializationTest() {
   return new SerializationTest();
 }
-  
-//===----------------------------------------------------------------------===//
-// Serialization "Driver" code.
-//===----------------------------------------------------------------------===//
 
 void SerializationTest::RunSerializationTest() { 
   std::string ErrMsg;
   llvm::sys::Path Filename = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
-
+  
   if (Filename.isEmpty()) {
-    cerr << "Error: " << ErrMsg << "\n";
+    llvm::cerr << "Error: " << ErrMsg << "\n";
     return;
   }
   
-  Filename.appendComponent("test.cfe_bc");
+  Filename.appendComponent("test.ast");
   
   if (Filename.makeUnique(true,&ErrMsg)) {
-    cerr << "Error: " << ErrMsg << "\n";
+    llvm::cerr << "Error: " << ErrMsg << "\n";
     return;
   }
   
-  if (!WriteAll(Filename))
-    return;
+  llvm::cerr << "Writing out Identifier table\n";
+  WriteTable(Filename,IdTable);
+  llvm::cerr << "Reading in Identifier Table\n";
+  IdentifierTable* T = ReadTable(Filename);
+  Janitor<IdentifierTable> roger(T);
   
-  cout << "Wrote file: " << Filename.c_str() << "\n";
+  Filename.appendSuffix("2");
+  llvm::cerr << "Writing out Identifier table (2)\n";
+  WriteTable(Filename,T);
+  llvm::cerr << "Reading in Identifier Table (2)\n";
+  Janitor<IdentifierTable> wilco(ReadTable(Filename));
 }
 
-bool SerializationTest::WriteAll(llvm::sys::Path& Filename) {  
-  std::ofstream Out(Filename.c_str());
+bool SerializationTest::WriteTable(llvm::sys::Path& Filename,
+                                   IdentifierTable* T) {
+  if (!T)
+    return false;
   
-  if (!Out) {
-    cerr << "Error: Cannot open " << Filename.c_str() << "\n";
+  std::vector<unsigned char> Buffer;
+  Buffer.reserve(256*1024);
+  
+  llvm::BitstreamWriter Stream(Buffer);
+  
+  Stream.Emit((unsigned)'B', 8);
+  Stream.Emit((unsigned)'C', 8);
+  Stream.Emit(0xC, 4);
+  Stream.Emit(0xF, 4);
+  Stream.Emit(0xE, 4);
+  Stream.Emit(0x0, 4);
+
+  llvm::Serializer S(Stream);
+  S.Emit(*T);
+  S.Flush();
+  
+  if (FILE *fp = fopen(Filename.c_str(),"wb")) {
+    fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
+    fclose(fp);
+  }
+  else { 
+    llvm::cerr << "Error: Cannot open " << Filename.c_str() << "\n";
     return false;
   }
-    
-  Writer W(Out);
-  W(*IdTable);
-
-  W.getStream().FlushToWord();
+  
+  llvm::cerr << "Wrote file: " << Filename.c_str() << "\n";
   return true;
 }
 
-//===----------------------------------------------------------------------===//
-// Serialization Methods.
-//===----------------------------------------------------------------------===//
 
-namespace llvm {
-
-struct IntrospectionPrimitivesFlags {
-  enum { isPod = true, UniqueInstances = false, UniqueRefs = false };
-};
+IdentifierTable* SerializationTest::ReadTable(llvm::sys::Path& Filename) {
+  llvm::MemoryBuffer* Buffer = 
+    llvm::MemoryBuffer::getFile(Filename.c_str(), strlen(Filename.c_str()));
   
-
-template<> struct
-IntrospectionTrait<bool>::Flags : public IntrospectionPrimitivesFlags {};
-  
-template<> struct
-IntrospectionTrait<unsigned>::Flags : public IntrospectionPrimitivesFlags {};
-
-template<> struct
-IntrospectionTrait<short>::Flags : public IntrospectionPrimitivesFlags {};
-
-
-
-template<> 
-struct IntrospectionTrait<clang::IdentifierInfo> {
-
-  struct Flags { 
-    enum { isPod = false,  // Cannot copy via memcpy.  Must use copy-ctor.    
-           hasUniqueInstances = true, // Two pointers with different
-                                      // addreses point to objects
-                                      // that are not equal to each other.    
-           hasUniqueReferences = true // Two (non-temporary) pointers                                    
-                                      // will point to distinct instances.
-    };
-  };
-
-  template<typename Introspector>
-  struct Ops {
-    static void Introspect(clang::IdentifierInfo& X, Introspector& I) {
-  //    I(X.getTokenID());
-      I(X.getBuiltinID(),9); // FIXME: do 9 bit specialization.
-  //    I(X.getObjCKeywordID());
-      I(X.hasMacroDefinition());
-      I(X.isExtensionToken());
-      I(X.isPoisoned());
-      I(X.isOtherTargetMacro());
-      I(X.isCPlusPlusOperatorKeyword());
-      I(X.isNonPortableBuiltin());
-    }
-  };
-};
-  
-template<> template<>
-struct IntrospectionTrait<clang::IdentifierTable>::Ops<Writer> {
-  static void Introspect(clang::IdentifierTable& X, Writer& W) {
-    W.EnterSubblock<clang::IdentifierTable>(1);
-/*        
-    for (clang::IdentifierTable::iterator I = X.begin(), E = X.end();
-         I != E; ++I)
-      W(I->getValue());
-   */ 
-    W.ExitBlock();
+  if(!Buffer) {
+    llvm::cerr << "Error reading file\n";
+    return NULL;
   }
-};
-
   
-
+  Janitor<llvm::MemoryBuffer> AutoReleaseBuffer(Buffer);
   
-} // end namespace llvm
+  if (Buffer->getBufferSize() & 0x3) {
+    llvm::cerr << "AST file should be a multiple of 4 bytes in length\n";
+    return NULL;
+  }
+  
+  unsigned char *BufPtr = (unsigned char *)Buffer->getBufferStart();
+  llvm::BitstreamReader Stream(BufPtr,BufPtr+Buffer->getBufferSize());
+  
+  // Sniff for the signature.
+  if (Stream.Read(8) != 'B' ||
+      Stream.Read(8) != 'C' ||
+      Stream.Read(4) != 0xC ||
+      Stream.Read(4) != 0xF ||
+      Stream.Read(4) != 0xE ||
+      Stream.Read(4) != 0x0) {
+    llvm::cerr << "Invalid AST-bitcode signature\n";
+    return NULL;
+  }
+  
+  llvm::Deserializer D(Stream);
 
+  llvm::cerr << "Materializing identifier table.\n";
+  return D.Materialize<IdentifierTable>();
+}

@@ -23,8 +23,10 @@
 
 
 namespace llvm {
-  template <typename T> struct IntrospectionTrait;
   template <typename T> struct DenseMapInfo;
+  template <typename T> struct SerializeTrait;
+  class Serializer;
+  class Deserializer;
 }
 
 namespace clang {
@@ -129,7 +131,7 @@ public:
 
   /// isCPlusPlusOperatorKeyword/setIsCPlusPlusOperatorKeyword controls whether
   /// this identifier is a C++ alternate representation of an operator.
-  void setIsCPlusplusOperatorKeyword(bool Val = true)
+  void setIsCPlusPlusOperatorKeyword(bool Val = true)
     { IsCPPOperatorKeyword = Val; }
   bool isCPlusPlusOperatorKeyword() const { return IsCPPOperatorKeyword; }
 
@@ -138,13 +140,6 @@ public:
   template<typename T>
   T *getFETokenInfo() const { return static_cast<T*>(FETokenInfo); }
   void setFETokenInfo(void *T) { FETokenInfo = T; }
-  
-  // For serialization and profiling.
-#if defined(_MSC_VER) && _MSC_VER <= 1400   // workaround for VC++ upto V8.0
-  template<typename T> friend class /*llvm::*/IntrospectionTrait;
-#else
-  template<typename T> friend class llvm::IntrospectionTrait;
-#endif
 };
 
 /// IdentifierTable - This table implements an efficient mapping from strings to
@@ -182,18 +177,20 @@ public:
   iterator begin() const { return HashTable.begin(); }
   iterator end() const   { return HashTable.end(); }
   
+  unsigned size() const { return HashTable.size(); }
+  
   /// PrintStats - Print some statistics to stderr that indicate how well the
   /// hashing is doing.
   void PrintStats() const;
   
-  // For serialization and profiling.
-#if defined(_MSC_VER) && _MSC_VER <= 1400   // workaround for VC++ upto V8.0
-  template<typename T> friend class /*llvm::*/IntrospectionTrait;
-#else
-  template<typename T> friend class llvm::IntrospectionTrait;
-#endif
-private:
   void AddKeywords(const LangOptions &LangOpts);
+
+private:  
+  /// This ctor is not intended to be used by anyone except for object
+  /// serialization.
+  IdentifierTable();
+  
+  friend class llvm::SerializeTrait<IdentifierTable>;
 };
 
 /// Selector - This smart pointer class efficiently represents Objective-C
@@ -309,6 +306,27 @@ struct DenseMapInfo<clang::Selector> {
   }
   
   static bool isPod() { return true; }
+};
+
+/// Define SerializeTrait to enable serialization for IdentifierInfos.
+template <>
+struct SerializeTrait<clang::IdentifierInfo> {
+  static void Serialize(llvm::Serializer& S, const clang::IdentifierInfo& I);
+  static void Deserialize(llvm::Deserializer& S, clang::IdentifierInfo& I);
+};
+
+/// Define SerializeTrait to enable serialization for IdentifierTables.  
+template <>
+struct SerializeTrait<clang::IdentifierTable> {
+  static void Serialize(llvm::Serializer& S, const clang::IdentifierTable& X);
+  static void Deserialize(llvm::Deserializer& S, clang::IdentifierTable& X);
+
+private:
+  static inline clang::IdentifierTable* Instantiate() { 
+    return new clang::IdentifierTable();
+  }
+  
+  friend class Deserializer;
 };
 
 }  // end namespace llvm

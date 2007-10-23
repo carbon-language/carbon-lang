@@ -16,6 +16,8 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Bitcode/Serialization.h"
+
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -47,6 +49,9 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts)
   // language.
   AddKeywords(LangOpts);
 }
+
+// This cstor is intended to be used only for serialization.
+IdentifierTable::IdentifierTable() : HashTable(8192) {}
 
 //===----------------------------------------------------------------------===//
 // Language Keyword Implementation
@@ -93,7 +98,7 @@ static void AddCXXOperatorKeyword(const char *Keyword, unsigned KWLen,
                                   IdentifierTable &Table) {
   IdentifierInfo &Info = Table.get(Keyword, Keyword + KWLen);
   Info.setTokenID(TokenCode);
-  Info.setIsCPlusplusOperatorKeyword();
+  Info.setIsCPlusPlusOperatorKeyword();
 }
 
 /// AddObjCKeyword - Register an Objective-C @keyword like "class" "selector" or 
@@ -372,4 +377,63 @@ SelectorTable::~SelectorTable() {
   delete static_cast<llvm::FoldingSet<MultiKeywordSelector> *>(Impl);
 }
 
+//===----------------------------------------------------------------------===//
+// Serialization for IdentifierInfo and IdentifierTable.
+//===----------------------------------------------------------------------===//
+
+void llvm::SerializeTrait<IdentifierInfo>::Serialize(llvm::Serializer& S,
+                                                    const IdentifierInfo& I) {
+
+  S.Emit<tok::TokenKind>(I.getTokenID());
+  S.EmitInt(I.getBuiltinID(),9);
+  S.Emit<tok::ObjCKeywordKind>(I.getObjCKeywordID());  
+  S.Emit(I.hasMacroDefinition());
+  S.Emit(I.isExtensionToken());
+  S.Emit(I.isPoisoned());
+  S.Emit(I.isOtherTargetMacro());
+  S.Emit(I.isCPlusPlusOperatorKeyword());
+  S.Emit(I.isNonPortableBuiltin());   
+}
+
+void llvm::SerializeTrait<IdentifierInfo>::Deserialize(llvm::Deserializer& D,
+                                                       IdentifierInfo& I) {
+  tok::TokenKind X;
+  I.setTokenID(D.Read<tok::TokenKind>(X));
+
+  I.setBuiltinID(D.ReadInt(9));  
+  
+  tok::ObjCKeywordKind Y;
+  I.setObjCKeywordID(D.Read<tok::ObjCKeywordKind>(Y));
+  
+  I.setHasMacroDefinition(D.ReadBool());
+  I.setIsExtensionToken(D.ReadBool());
+  I.setIsPoisoned(D.ReadBool());
+  I.setIsOtherTargetMacro(D.ReadBool());
+  I.setIsCPlusPlusOperatorKeyword(D.ReadBool());
+  I.setNonPortableBuiltin(D.ReadBool());
+}
+
+void llvm::SerializeTrait<IdentifierTable>::Serialize(llvm::Serializer& S,
+                                                      const IdentifierTable& T){
+  S.Emit<unsigned>(T.size());
+  
+  for (clang::IdentifierTable::iterator I=T.begin(), E=T.end(); I != E; ++I) {
+    S.EmitCString(I->getKeyData());
+    S.Emit(I->getValue());
+  }
+}
+
+void llvm::SerializeTrait<IdentifierTable>::Deserialize(llvm::Deserializer& D,
+                                                        IdentifierTable& T) {
+  unsigned len = D.ReadInt();
+  std::vector<char> buff;
+  buff.reserve(200);
+  
+  for (unsigned i = 0; i < len; ++i) {
+    D.ReadCString(buff);
+    IdentifierInfo& Info = T.get(&buff[0],&buff[0]+buff.size());
+    D.Read(Info);
+  }
+}
+  
 

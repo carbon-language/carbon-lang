@@ -48,4 +48,33 @@ const char *getTokenName(enum TokenKind Kind);
 }  // end namespace tok
 }  // end namespace clang
 
+//===----------------------------------------------------------------------===//
+// Serialization traits.
+//===----------------------------------------------------------------------===//
+
+namespace llvm {
+  template <typename T> struct SerializeTrait;
+  class Serializer;
+  class Deserializer;
+  
+template<>
+struct SerializeTrait<clang::tok::TokenKind> {
+  static void Serialize(llvm::Serializer& S, clang::tok::TokenKind X);
+  static void Deserialize(llvm::Deserializer& D, clang::tok::TokenKind& X);
+};
+  
+template<>
+struct SerializeTrait<clang::tok::PPKeywordKind> {
+  static void Serialize(llvm::Serializer& S, clang::tok::PPKeywordKind X);
+  static void Deserialize(llvm::Deserializer& D, clang::tok::PPKeywordKind& X);
+};
+
+template<>
+struct SerializeTrait<clang::tok::ObjCKeywordKind> {
+  static void Serialize(llvm::Serializer& S, clang::tok::ObjCKeywordKind X);
+  static void Deserialize(llvm::Deserializer& D, clang::tok::ObjCKeywordKind& X);
+};
+  
+} // end namespace llvm
+
 #endif
