@@ -374,7 +374,71 @@ void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
     }
     printf("};\n");
   }
- }
+  
+  // Declaration of top-level metadata
+  /* struct _objc_meta_class {
+   const char *root_class_name;
+   const char *super_class_name;
+   char *name;
+   long version;
+   long info;
+   long instance_size;
+   struct objc_ivar_list *ivars;
+   struct objc_method_list *methods;
+   struct objc_cache *cache;
+   struct objc_protocol_list *protocols;
+   const char *ivar_layout;
+   struct _objc_class_ext  *ext;
+   };  
+  */
+  static bool objc_meta_class = false;
+  if (!objc_meta_class) {
+    printf("\nstruct _objc_class {\n");
+    printf("\tconst char *root_class_name;\n");
+    printf("\tconst char *super_class_name;\n");
+    printf("\tchar *name;\n");
+    printf("\tlong version;\n");
+    printf("\tlong info;\n");
+    printf("\tlong instance_size;\n");
+    printf("\tstruct objc_ivar_list *ivars;\n");
+    printf("\tstruct objc_method_list *methods;\n");
+    printf("\tstruct objc_cache *cache;\n");
+    printf("\tstruct objc_protocol_list *protocols;\n");
+    printf("\tconst char *ivar_layout;\n");
+    printf("\tstruct _objc_class_ext  *ext;\n");
+    printf("};\n");
+    objc_meta_class = true;
+  }
+  
+  // Meta-class metadata generation.
+  ObjcInterfaceDecl *RootClass = 0;
+  ObjcInterfaceDecl *SuperClass = CDecl->getSuperClass();
+  while (SuperClass) {
+    RootClass = SuperClass;
+    SuperClass = SuperClass->getSuperClass();
+  }
+  SuperClass = CDecl->getSuperClass();
+  
+  printf("\nstatic struct _objc_class _OBJC_METACLASS_%s "
+         "__attribute__ ((section (\"__OBJC, __meta_class\")))= "
+         "{\n\t\"%s\"", CDecl->getName(), RootClass ? RootClass->getName() 
+                                                :  CDecl->getName());
+  if (SuperClass)
+    printf(", \"%s\", \"%s\"", SuperClass->getName(), CDecl->getName());
+  else
+    printf(", 0, \"%s\"", CDecl->getName());
+  // FIXME: better way of getting size struct _objc_class (48)
+  // TODO: 'ivars' field for root class is currently set to 0.
+  // 'info' field is initialized to CLS_META(2) for metaclass
+  printf(", 0,2,48,0");
+  if (CDecl->getNumClassMethods() > 0)
+    printf(", (struct objc_method_list *)&_OBJC_CLASS_METHODS_%s\n", 
+           CDecl->getName());
+  else
+    printf(", 0\n");
+  printf("\t,0,0,0,0\n");
+  printf("};\n");
+}
 
 void RewriteTest::WriteObjcMetaData() {
   int ClsDefCount = ClassImplementation.size();
