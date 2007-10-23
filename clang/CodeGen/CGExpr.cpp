@@ -101,6 +101,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitArraySubscriptExpr(cast<ArraySubscriptExpr>(E));
   case Expr::OCUVectorElementExprClass:
     return EmitOCUVectorElementExpr(cast<OCUVectorElementExpr>(E));
+  case Expr::MemberExprClass: return EmitMemberExpr(cast<MemberExpr>(E));
   }
 }
 
@@ -379,6 +380,36 @@ EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
 
   return LValue::MakeOCUVectorElt(Base.getAddress(), 
                                   E->getEncodedElementAccess());
+}
+
+LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
+
+  // FIXME: Handle union members.
+  if (E->getBase()->getType()->getAsUnionType()) {
+    fprintf(stderr, "Unimplemented lvalue expr!\n");
+    E->dump(getContext().SourceMgr);
+    llvm::Type *Ty = llvm::PointerType::get(ConvertType(E->getType()));
+    return LValue::MakeAddr(llvm::UndefValue::get(Ty));
+  }
+  
+  LValue BaseLV = EmitLValue(E->getBase());
+  llvm::Value *BaseValue = BaseLV.getAddress();
+
+  FieldDecl *Field = E->getMemberDecl();
+  unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
+  llvm::Value *Idxs[2] = { llvm::Constant::getNullValue(llvm::Type::Int32Ty), 
+			   llvm::ConstantInt::get(llvm::Type::Int32Ty, idx) };
+  if (E->isArrow()) {
+    QualType PTy = cast<PointerType>(E->getBase()->getType())->getPointeeType();
+    BaseValue =  Builder.CreateBitCast(BaseValue, 
+				       llvm::PointerType::get(ConvertType(PTy)),
+				       "tmp");
+  }
+
+  return LValue::MakeAddr(Builder.CreateGEP(BaseValue,Idxs, Idxs + 2, "tmp"));
+  
+  // FIXME: If record field does not have one to one match with llvm::StructType
+  // field then apply appropriate masks to select only member field bits.
 }
 
 //===--------------------------------------------------------------------===//
