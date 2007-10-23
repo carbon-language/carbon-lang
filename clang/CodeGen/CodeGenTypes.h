@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <vector>
 
 namespace llvm {
@@ -29,7 +30,8 @@ namespace clang {
   class TargetInfo;
   class QualType;
   class FunctionTypeProto;
- class FieldDecl;
+  class FieldDecl;
+  class RecordDecl;
 
 namespace CodeGen {
   class CodeGenTypes;
@@ -97,6 +99,11 @@ class CodeGenTypes {
   /// FieldInfo - This maps struct field with corresponding llvm struct type
   /// field no. This info is populated by record organizer.
   llvm::DenseMap<const FieldDecl *, unsigned> FieldInfo;
+
+  /// RecordTypesToResolve - This keeps track of record types that are not 
+  /// yet incomplete. One llvm::OpaqueType is associated with each incomplete
+  /// record.
+  llvm::DenseMap<const RecordDecl *, llvm::Type *> RecordTypesToResolve;
 
 public:
   CodeGenTypes(ASTContext &Ctx, llvm::Module &M);

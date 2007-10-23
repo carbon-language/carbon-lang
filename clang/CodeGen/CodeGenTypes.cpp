@@ -167,13 +167,36 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       return ConvertType(cast<EnumDecl>(TD)->getIntegerType());
     } else if (TD->getKind() == Decl::Struct) {
       const RecordDecl *RD = cast<const RecordDecl>(TD);
+      
+      // If this is nested record and this RecordDecl is already under
+      // process then return associated OpaqueType for now.
+      llvm::DenseMap<const RecordDecl *, llvm::Type *>::iterator 
+	OpaqueI = RecordTypesToResolve.find(RD);
+      if (OpaqueI != RecordTypesToResolve.end())
+	return OpaqueI->second;
+
+      // Create new OpaqueType now for later use.
+      llvm::OpaqueType *OpaqueTy =  llvm::OpaqueType::get();
+      RecordTypesToResolve[RD] = OpaqueTy;
+
+      // Layout fields.
       RecordOrganizer *RO = new RecordOrganizer();
       for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
 	RO->addField(RD->getMember(i));
       RO->layoutFields(*this);
+
+      // Get llvm::StructType.
       RecordLayoutInfo *RLI = new RecordLayoutInfo(RO);
       ResultType = RLI->getLLVMType();
       RecordLayouts[ResultType] = RLI;
+
+      // Refine any OpaqueType associated with this RecordDecl.
+      OpaqueTy->refineAbstractTypeTo(ResultType);
+      OpaqueI = RecordTypesToResolve.find(RD);
+      assert (OpaqueI != RecordTypesToResolve.end() 
+	      && "Expected RecordDecl in RecordTypesToResolve");
+      RecordTypesToResolve.erase(OpaqueI);
+
       delete RO;
     } else if (TD->getKind() == Decl::Union) {
       const RecordDecl *RD = cast<const RecordDecl>(TD);

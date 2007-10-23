@@ -37,3 +37,21 @@ int fn3(F2 *c) {
   else
     return 0;
 }
+
+/* Nested structs */
+typedef struct NA {
+  int data;
+  struct NA *next;
+} NA;
+void f1() {  A a; }
+
+typedef struct NB {
+  int d1;
+  struct _B2 {
+    int d2;
+    struct NB *n2;
+  } B2;
+} NB;
+
+void f2() { NB b; }
+
