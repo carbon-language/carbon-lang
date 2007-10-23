@@ -35,7 +35,12 @@ public:
   template <typename T>
   inline void Emit(const T& X) { SerializeTrait<T>::Serialize(*this,X); }
     
-  void EmitInt(unsigned X, unsigned bits);  
+  void EmitInt(unsigned X, unsigned bits);
+  
+  // FIXME: Substitute a better implementation which calculates the minimum
+  // number of bits needed to serialize the enum.
+  void EmitEnum(unsigned X, unsigned MinVal, unsigned MaxVal) { EmitInt(X,32); }
+  
   void EmitCString(const char* cstr);
 
   void Flush() { if (inRecord()) EmitRecord(); }
@@ -55,7 +60,7 @@ public:
   ~Deserializer();
 
   template <typename T>
-  inline void Read(T& X) { SerializeTrait<T>::Deserialize(*this,X); }
+  inline T& Read(T& X) { SerializeTrait<T>::Deserialize(*this,X); return X; }
 
   template <typename T>
   inline T* Materialize() {
@@ -66,6 +71,13 @@ public:
   
   uint64_t ReadInt(unsigned bits = 32);
   bool ReadBool() { return ReadInt(1); }
+  
+  // FIXME: Substitute a better implementation which calculates the minimum
+  // number of bits needed to serialize the enum.
+  template <typename EnumT>
+  EnumT ReadEnum(unsigned MinVal, unsigned MaxVal) { 
+    return static_cast<EnumT>(ReadInt(32));
+  }
   
   char* ReadCString(char* cstr = NULL, unsigned MaxLen=0, bool isNullTerm=true);
   void ReadCString(std::vector<char>& buff, bool isNullTerm=false);
@@ -97,7 +109,6 @@ struct SerializeIntTrait {
     X = (uintty) S.ReadInt(Bits);
   }
 };
-
   
 template <> struct SerializeTrait<bool>
   : public SerializeIntTrait<bool,1> {};
@@ -111,5 +122,7 @@ template <> struct SerializeTrait<short>
 template <> struct SerializeTrait<unsigned>
   : public SerializeIntTrait<unsigned,32> {};
 
+  
+  
 } // end namespace llvm
 #endif
