@@ -256,17 +256,372 @@ basic framework.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="code">Conclusions and the Full Code</a></div>
+<div class="doc_section"><a name="funcs">Function Code Generation</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
 
+<p>Code generation for prototypes and functions has to handle a number of
+details, which make their code less beautiful and elegant than expression code
+generation, but they illustrate some important points.  First, lets talk about
+code generation for prototypes: this is used both for function bodies as well
+as external function declarations.  The code starts with:</p>
+
+<div class="doc_code">
+<pre>
+Function *PrototypeAST::Codegen() {
+  // Make the function type:  double(double,double) etc.
+  std::vector&lt;const Type*&gt; Doubles(Args.size(), Type::DoubleTy);
+  FunctionType *FT = FunctionType::get(Type::DoubleTy, Doubles, false);
+  
+  Function *F = new Function(FT, Function::ExternalLinkage, Name, TheModule);
+</pre>
+</div>
+
+<p>This code packs a lot of power into a few lines.  The first step is to create
+the <tt>FunctionType</tt> that should be used for a given Prototype.  Since all
+function arguments in Kaleidoscope are of type double, the first line creates
+a vector of "N" LLVM Double types.  It then uses the <tt>FunctionType::get</tt>
+method to create a function type that takes "N" doubles as arguments, returns
+one double as a result, and that is not vararg (the false parameter indicates
+this).  Note that Types in LLVM are uniqued just like Constants are, so you
+don't "new" a type, you "get" it.</p>
+
+<p>The final line above actually creates the function that the prototype will
+correspond to.  This indicates which type, linkage, and name to use, and which
+module to insert into.  "<a href="LangRef.html#linkage">external linkage</a>"
+means that the function may be defined outside the current module and/or that it
+is callable by functions outside the module.  The Name passed in is the name the
+user specified: since "<tt>TheModule</tt>" is specified, this name is registered
+in "<tt>TheModule</tt>"s symbol table, which is used by the function call code
+above.</p>
+
+<div class="doc_code">
+<pre>
+  // If F conflicted, there was already something named 'Name'.  If it has a
+  // body, don't allow redefinition or reextern.
+  if (F-&gt;getName() != Name) {
+    // Delete the one we just made and get the existing one.
+    F-&gt;eraseFromParent();
+    F = TheModule-&gt;getFunction(Name);
+</pre>
+</div>
+
+<p>The Module symbol table works just like the Function symbol table when it
+comes to name conflicts: if a new function is created with a name was previously
+added to the symbol table, it will get implicitly renamed when added to the
+Module.  The code above exploits this fact to tell if there was a previous
+definition of this function.</p>
+
+<p>In Kaleidoscope, I choose to allow redefinitions of functions in two cases:
+first, we want to allow 'extern'ing a function more than once, so long as the
+prototypes for the externs match (since all arguments have the same type, we
+just have to check that the number of arguments match).  Second, we want to
+allow 'extern'ing a function and then definining a body for it.  This is useful
+when defining mutually recursive functions.</p>
+
+<p>In order to implement this, the code above first checks to see if there is
+a collision on the name of the function.  If so, it deletes the function we just
+created (by calling <tt>eraseFromParent</tt>) and then calling 
+<tt>getFunction</tt> to get the existing function with the specified name.  Note
+that many APIs in LLVM have "erase" forms and "remove" forms.  The "remove" form
+unlinks the object from its parent (e.g. a Function from a Module) and returns
+it.  The "erase" form unlinks the object and then deletes it.</p>
+   
+<div class="doc_code">
+<pre>
+    // If F already has a body, reject this.
+    if (!F-&gt;empty()) {
+      ErrorF("redefinition of function");
+      return 0;
+    }
+    
+    // If F took a different number of args, reject.
+    if (F-&gt;arg_size() != Args.size()) {
+      ErrorF("redefinition of function with different # args");
+      return 0;
+    }
+  }
+</pre>
+</div>
+
+<p>In order to verify the logic above, we first check to see if the preexisting
+function is "empty".  In this case, empty means that it has no basic blocks in
+it, which means it has no body.  If it has no body, this means its a forward 
+declaration.  Since we don't allow anything after a full definition of the
+function, the code rejects this case.  If the previous reference to a function
+was an 'extern', we simply verify that the number of arguments for that
+definition and this one match up.  If not, we emit an error.</p>
+
+<div class="doc_code">
+<pre>
+  // Set names for all arguments.
+  unsigned Idx = 0;
+  for (Function::arg_iterator AI = F-&gt;arg_begin(); Idx != Args.size();
+       ++AI, ++Idx) {
+    AI-&gt;setName(Args[Idx]);
+    
+    // Add arguments to variable symbol table.
+    NamedValues[Args[Idx]] = AI;
+  }
+  return F;
+}
+</pre>
+</div>
+
+<p>The last bit of code for prototypes loops over all of the arguments in the
+function, setting the name of the LLVM Argument objects to match and registering
+the arguments in the <tt>NamedValues</tt> map for future use by the
+<tt>VariableExprAST</tt> AST node.  Once this is set up, it returns the Function
+object to the caller.  Note that we don't check for conflicting 
+argument names here (e.g. "extern foo(a b a)").  Doing so would be very
+straight-forward.</p>
+
+<div class="doc_code">
+<pre>
+Function *FunctionAST::Codegen() {
+  NamedValues.clear();
+  
+  Function *TheFunction = Proto-&gt;Codegen();
+  if (TheFunction == 0)
+    return 0;
+</pre>
+</div>
+
+<p>Code generation for function definitions starts out simply enough: first we
+codegen the prototype and verify that it is ok.  We also clear out the
+<tt>NamedValues</tt> map to make sure that there isn't anything in it from the
+last function we compiled.</p>
+
+<div class="doc_code">
+<pre>
+  // Create a new basic block to start insertion into.
+  BasicBlock *BB = new BasicBlock("entry", TheFunction);
+  Builder.SetInsertPoint(BB);
+  
+  if (Value *RetVal = Body-&gt;Codegen()) {
+    // Finish off the function.
+    Builder.CreateRet(RetVal);
+    return TheFunction;
+  }
+</pre>
+</div>
+
+<p>Now we get to the point where the <tt>Builder</tt> is set up.  The first
+line creates a new <a href="http://en.wikipedia.org/wiki/Basic_block">basic
+block</a> (named "entry"), which is inserted into <tt>TheFunction</tt>.  The
+second line then tells the builder that new instructions should be inserted into
+the end of the new basic block.  Basic blocks in LLVM are an important part
+of functions that define the <a 
+href="http://en.wikipedia.org/wiki/Control_flow_graph">Control Flow Graph</a>.
+Since we don't have any control flow, our functions will only contain one 
+block so far.  We'll fix this in a future installment :).</p>
+
+<p>Once the insertion point is set up, we call the <tt>CodeGen()</tt> method for
+the root expression of the function.  If no error happens, this emits code to
+compute the expression into the entry block and returns the value that was
+computed.  Assuming no error, we then create an LLVM <a 
+href="../LangRef.html#i_ret">ret instruction</a>.  This completes the function,
+which is then returned.</p>
+  
+<div class="doc_code">
+<pre>
+  // Error reading body, remove function.
+  TheFunction-&gt;eraseFromParent();
+  return 0;
+}
+</pre>
+</div>
+
+<p>The only piece left here is handling of the error case.  For simplicity, we
+simply handle this by deleting the function we produced with the 
+<tt>eraseFromParent</tt> method.  This allows the user to redefine a function
+that they incorrectly typed in before: if we didn't delete it, it would live in
+the symbol table, with a body, preventing future redefinition.</p>
+
+<p>This code does have a bug though.  Since the <tt>PrototypeAST::Codegen</tt>
+can return a previously defined forward declaration, this can actually delete
+a forward declaration.  There are a number of ways to fix this bug, see what you
+can come up with!  Here is a testcase:</p>
+
+<div class="doc_code">
+<pre>
+extern foo(a b);     # ok, defines foo.
+def foo(a b) c;      # error, 'c' is invalid.
+def bar() foo(1, 2); # error, unknown function "foo"
+</pre>
+</div>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="driver">Driver Changes and 
+Closing Thoughts</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+For now, code generation to LLVM doesn't really get us much, except that we can
+look at the pretty IR calls.  The sample code inserts calls to Codegen into the
+"<tt>HandleDefinition</tt>", "<tt>HandleExtern</tt>" etc functions, and then
+dumps out the LLVM IR.  This gives a nice way to look at the LLVM IR for simple
+functions.  For example:
+</p>
+
+<div class="doc_code">
+<pre>
+ready> <b>4+5</b>;
+ready> Read top-level expression:
+define double @""() {
+entry:
+        %addtmp = add double 4.000000e+00, 5.000000e+00
+        ret double %addtmp
+}
+</pre>
+</div>
+
+<p>Note how the parser turns the top-level expression into anonymous functions
+for us.  This will be handy when we add JIT support in the next chapter.  Also
+note that the code is very literally transcribed, no optimizations are being
+performed.  We will add optimizations explicitly in the next chapter.</p>
+
+<div class="doc_code">
+<pre>
+ready&gt; <b>def foo(a b) a*a + 2*a*b + b*b;</b>
+ready&gt; Read function definition:
+define double @foo(double %a, double %b) {
+entry:
+        %multmp = mul double %a, %a
+        %multmp1 = mul double 2.000000e+00, %a
+        %multmp2 = mul double %multmp1, %b
+        %addtmp = add double %multmp, %multmp2
+        %multmp3 = mul double %b, %b
+        %addtmp4 = add double %addtmp, %multmp3
+        ret double %addtmp4
+}
+</pre>
+</div>
+
+<p>This shows some simple arithmetic. Notice the striking similarity to the
+LLVM builder calls that we use to create the instructions.</p>
+
+<div class="doc_code">
+<pre>
+ready&gt; <b>def bar(a) foo(a, 4.0) + bar(31337);</b>
+ready&gt; Read function definition:
+define double @bar(double %a) {
+entry:
+        %calltmp = call double @foo( double %a, double 4.000000e+00 )
+        %calltmp1 = call double @bar( double 3.133700e+04 )
+        %addtmp = add double %calltmp, %calltmp1
+        ret double %addtmp
+}
+</pre>
+</div>
+
+<p>This shows some function calls.  Note that the runtime of this function might
+be fairly high.  In the future we'll add conditional control flow to make
+recursion actually be useful :).</p>
+
+<div class="doc_code">
+<pre>
+ready&gt; <b>extern cos(x);</b>
+ready&gt; Read extern: 
+declare double @cos(double)
+
+ready&gt; <b>cos(1.234);</b>
+ready&gt; Read top-level expression:
+define double @""() {
+entry:
+        %calltmp = call double @cos( double 1.234000e+00 )              ; <double> [#uses=1]
+        ret double %calltmp
+}
+</pre>
+</div>
+
+<p>This shows an extern for the libm "cos" function, and a call to it.</p>
+
+
+<div class="doc_code">
+<pre>
+ready&gt; <b>^D</b>
+; ModuleID = 'my cool jit'
+
+define double @""() {
+entry:
+        %addtmp = add double 4.000000e+00, 5.000000e+00
+        ret double %addtmp
+}
+
+define double @foo(double %a, double %b) {
+entry:
+        %multmp = mul double %a, %a
+        %multmp1 = mul double 2.000000e+00, %a
+        %multmp2 = mul double %multmp1, %b
+        %addtmp = add double %multmp, %multmp2
+        %multmp3 = mul double %b, %b
+        %addtmp4 = add double %addtmp, %multmp3
+        ret double %addtmp4
+}
+
+define double @bar(double %a) {
+entry:
+        %calltmp = call double @foo( double %a, double 4.000000e+00 )
+        %calltmp1 = call double @bar( double 3.133700e+04 )
+        %addtmp = add double %calltmp, %calltmp1
+        ret double %addtmp
+}
+
+declare double @cos(double)
+
+define double @""() {
+entry:
+        %calltmp = call double @cos( double 1.234000e+00 )
+        ret double %calltmp
+}
+</pre>
+</div>
+
+<p>When you quit the current demo, it dumps out the IR for the entire module
+generated.  Here you can see the big picture with all the functions referencing
+each other.</p>
+
+<p>This wraps up this chapter of the Kaleidoscope tutorial.  Up next we'll
+describe how to <a href="LangImpl4.html">add JIT codegen and optimizer
+support</a> to this so we can actually start running code!</p>
+
+</div>
+
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="code">Full Code Listing</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+Here is the complete code listing for our running example, enhanced with the
+LLVM code generator.    Because this uses the LLVM libraries, we need to link
+them in.  To do this, we use the <a 
+href="http://llvm.org/cmds/llvm-config.html">llvm-config</a> tool to inform
+our makefile/command line about which options to use:</p>
+
+<div class="doc_code">
+<pre>
+   # Compile
+   g++ -g toy.cpp `llvm-config --cppflags` `llvm-config --ldflags` \
+                  `llvm-config --libs core` -I ~/llvm/include/ -o toy
+   # Run
+   ./toy
+</pre>
+</div>
+
+<p>Here is the code:</p>
+
 <div class="doc_code">
 <pre>
 // To build this:
-//  g++ -g toy.cpp `llvm-config --cppflags` `llvm-config --ldflags` \
-//                `llvm-config --libs core` -I ~/llvm/include/
-//  ./a.out 
 // See example below.
 
 #include "llvm/DerivedTypes.h"
@@ -665,10 +1020,8 @@ Value *CallExprAST::Codegen() {
 
 Function *PrototypeAST::Codegen() {
   // Make the function type:  double(double,double) etc.
-  FunctionType *FT = 
-    FunctionType::get(Type::DoubleTy, std::vector&lt;const Type*&gt;(Args.size(),
-                                                               Type::DoubleTy),
-                      false);
+  std::vector&lt;const Type*&gt; Doubles(Args.size(), Type::DoubleTy);
+  FunctionType *FT = FunctionType::get(Type::DoubleTy, Doubles, false);
   
   Function *F = new Function(FT, Function::ExternalLinkage, Name, TheModule);
   
@@ -713,7 +1066,8 @@ Function *FunctionAST::Codegen() {
     return 0;
   
   // Create a new basic block to start insertion into.
-  Builder.SetInsertPoint(new BasicBlock("entry", TheFunction));
+  BasicBlock *BB = new BasicBlock("entry", TheFunction);
+  Builder.SetInsertPoint(BB);
   
   if (Value *RetVal = Body-&gt;Codegen()) {
     // Finish off the function.
@@ -816,18 +1170,6 @@ int main() {
   TheModule-&gt;dump();
   return 0;
 }
-
-/* Examples:
-
-def fib(x)
-  if (x &lt; 3) then
-    1
-  else
-    fib(x-1)+fib(x-2);
-
-fib(10);
-
-*/
 </pre>
 </div>
 </div>
