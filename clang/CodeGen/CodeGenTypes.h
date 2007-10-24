@@ -58,10 +58,12 @@ namespace CodeGen {
 
     /// getLLVMType - Return associated llvm struct type. This may be NULL
     /// if fields are not laid out.
-    llvm::Type *getLLVMType() {
+    llvm::Type *getLLVMType() const {
       return STy;
     }
 
+    /// Clear private data so that this object can be reused.
+    void clear();
   private:
     llvm::Type *STy;
     llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
@@ -75,7 +77,7 @@ namespace CodeGen {
     RecordLayoutInfo(RecordOrganizer *RO);
 
     /// getLLVMType - Return llvm type associated with this record.
-    llvm::Type *getLLVMType() {
+    llvm::Type *getLLVMType() const {
       return STy;
     }
 
@@ -117,7 +119,7 @@ public:
   void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
                            std::vector<const llvm::Type*> &ArgTys);
 
-  RecordLayoutInfo *getRecordLayoutInfo(const llvm::Type*);
+  const RecordLayoutInfo *getRecordLayoutInfo(const llvm::Type*) const;
   
   /// getLLVMFieldNo - Return llvm::StructType element number
   /// that corresponds to the field FD.

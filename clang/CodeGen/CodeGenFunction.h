@@ -299,7 +299,7 @@ public:
   void StartBlock(const char *N);
 
   /// getRecordLayoutInfo - Return record layout info.
-  RecordLayoutInfo *getRecordLayoutInfo(CodeGenTypes &CGT, QualType RTy);
+  const RecordLayoutInfo *getRecordLayoutInfo(CodeGenTypes &CGT, QualType RTy);
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//

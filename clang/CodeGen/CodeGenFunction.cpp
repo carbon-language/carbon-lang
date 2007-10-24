@@ -127,7 +127,7 @@ void CodeGenFunction::StartBlock(const char *N) {
 }
 
 /// getRecordLayoutInfo - Return record layout info.
-RecordLayoutInfo *CodeGenFunction::getRecordLayoutInfo(CodeGenTypes &CGT,
+const RecordLayoutInfo *CodeGenFunction::getRecordLayoutInfo(CodeGenTypes &CGT,
                                                        QualType RTy) {
   assert (isa<RecordType>(RTy) 
           && "Unexpected type. RecordType expected here.");

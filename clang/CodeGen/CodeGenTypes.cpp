@@ -182,13 +182,13 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       RecordTypesToResolve[RD] = OpaqueTy;
 
       // Layout fields.
-      RecordOrganizer *RO = new RecordOrganizer();
+      RecordOrganizer RO;
       for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
-        RO->addField(RD->getMember(i));
-      RO->layoutFields(*this);
+        RO.addField(RD->getMember(i));
+      RO.layoutFields(*this);
 
       // Get llvm::StructType.
-      RecordLayoutInfo *RLI = new RecordLayoutInfo(RO);
+      RecordLayoutInfo *RLI = new RecordLayoutInfo(&RO);
       ResultType = RLI->getLLVMType();
       RecordLayouts[ResultType] = RLI;
 
@@ -199,7 +199,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
               && "Expected RecordDecl in RecordTypesToResolve");
       RecordTypesToResolve.erase(OpaqueI);
 
-      delete RO;
+      RO.clear();
     } else if (TD->getKind() == Decl::Union) {
       const RecordDecl *RD = cast<const RecordDecl>(TD);
       // Just use the largest element of the union, breaking ties with the
@@ -260,13 +260,14 @@ unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
   return I->second;
 }
 
-  /// addFieldInfo - Assign field number to field FD.
+/// addFieldInfo - Assign field number to field FD.
 void CodeGenTypes::addFieldInfo(const FieldDecl *FD, unsigned No) {
   FieldInfo[FD] = No;
 }
 
 /// getRecordLayoutInfo - Return record layout info for the given llvm::Type.
-RecordLayoutInfo *CodeGenTypes::getRecordLayoutInfo(const llvm::Type* Ty) {
+const RecordLayoutInfo *
+CodeGenTypes::getRecordLayoutInfo(const llvm::Type* Ty) const {
   llvm::DenseMap<const llvm::Type*, RecordLayoutInfo *>::iterator I
     = RecordLayouts.find(Ty);
   assert (I != RecordLayouts.end() 
@@ -314,4 +315,10 @@ void RecordOrganizer::layoutFields(CodeGenTypes &CGT) {
     CGT.addFieldInfo(FD, FieldNo++);
   }
   STy = llvm::StructType::get(Fields);
+}
+
+/// Clear private data so that this object can be reused.
+void RecordOrganizer::clear() {
+  STy = NULL;
+  FieldDecls.clear();
 }
