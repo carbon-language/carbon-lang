@@ -3637,8 +3637,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
           if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
             // If either of the constants are nans, then the whole thing returns
             // false.
-            if (LHSC->getValueAPF().getCategory() == APFloat::fcNaN ||
-                RHSC->getValueAPF().getCategory() == APFloat::fcNaN)
+            if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
               return ReplaceInstUsesWith(I, ConstantInt::getFalse());
             return new FCmpInst(FCmpInst::FCMP_ORD, LHS->getOperand(0),
                                 RHS->getOperand(0));
@@ -4121,8 +4120,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
             // If either of the constants are nans, then the whole thing returns
             // true.
-            if (LHSC->getValueAPF().getCategory() == APFloat::fcNaN ||
-                RHSC->getValueAPF().getCategory() == APFloat::fcNaN)
+            if (LHSC->getValueAPF().isNaN() || RHSC->getValueAPF().isNaN())
               return ReplaceInstUsesWith(I, ConstantInt::getTrue());
             
             // Otherwise, no need to compare the two constants, compare the
