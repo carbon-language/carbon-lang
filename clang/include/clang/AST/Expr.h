@@ -525,7 +525,11 @@ public:
     assert(Arg < NumArgs && "Arg access out of range!");
     return SubExprs[Arg+ARGS_START];
   }
-  
+  /// setArg - Set the specified argument.
+  void setArg(unsigned Arg, Expr *ArgExpr) {
+    assert(Arg < NumArgs && "Arg access out of range!");
+    SubExprs[Arg+ARGS_START] = ArgExpr;
+  }
   /// getNumCommas - Return the number of commas that must have been present in
   /// this function call.
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
@@ -1202,7 +1206,11 @@ public:
     assert(Arg < SelName.getNumArgs() && "Arg access out of range!");
     return SubExprs[Arg+ARGS_START];
   }
-
+  /// setArg - Set the specified argument.
+  void setArg(unsigned Arg, Expr *ArgExpr) {
+    assert(Arg < SelName.getNumArgs() && "Arg access out of range!");
+    SubExprs[Arg+ARGS_START] = ArgExpr;
+  }
   SourceRange getSourceRange() const { return SourceRange(LBracloc, RBracloc); }
 
   static bool classof(const Stmt *T) {

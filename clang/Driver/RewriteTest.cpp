@@ -31,6 +31,7 @@ namespace {
     
     FunctionDecl *MsgSendFunctionDecl;
     FunctionDecl *GetClassFunctionDecl;
+    FunctionDecl *SelGetUidFunctionDecl;
     
     static const int OBJC_ABI_VERSION =7 ;
   public:
@@ -40,6 +41,7 @@ namespace {
       MainFileID = mainFileID;
       MsgSendFunctionDecl = 0;
       GetClassFunctionDecl = 0;
+      SelGetUidFunctionDecl = 0;
       Rewrite.setSourceMgr(Context->SourceMgr);
     }
 
@@ -57,7 +59,8 @@ namespace {
     Stmt *RewriteFunctionBody(Stmt *S);
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
-
+    CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
+                                           Expr **args, unsigned nargs);
     // Metadata emission.
     void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl);
     
@@ -99,6 +102,8 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
       MsgSendFunctionDecl = FD;
     else if (strcmp(FD->getName(), "objc_getClass") == 0)
       GetClassFunctionDecl = FD;
+    else if (strcmp(FD->getName(), "sel_getUid") == 0)
+      SelGetUidFunctionDecl = FD;
   }
   
   // If we have a decl in the main file, see if we should rewrite it.
@@ -218,20 +223,20 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
   // as a comment.
   std::string typedefString;
   typedefString += "// ";
-    typedefString.append(startBuf, semiPtr-startBuf+1);
-    typedefString += "\n";
-    for (int i = 0; i < numDecls; i++) {
-      ObjcInterfaceDecl *ForwardDecl = ForwardDecls[i];
-      typedefString += "typedef struct ";
-      typedefString += ForwardDecl->getName();
-      typedefString += " ";
-      typedefString += ForwardDecl->getName();
-      typedefString += ";\n";
-    }
-    
-    // Replace the @class with typedefs corresponding to the classes.
-    Rewrite.ReplaceText(startLoc, semiPtr-startBuf+1, 
-                        typedefString.c_str(), typedefString.size());
+  typedefString.append(startBuf, semiPtr-startBuf+1);
+  typedefString += "\n";
+  for (int i = 0; i < numDecls; i++) {
+    ObjcInterfaceDecl *ForwardDecl = ForwardDecls[i];
+    typedefString += "typedef struct ";
+    typedefString += ForwardDecl->getName();
+    typedefString += " ";
+    typedefString += ForwardDecl->getName();
+    typedefString += ";\n";
+  }
+  
+  // Replace the @class with typedefs corresponding to the classes.
+  Rewrite.ReplaceText(startLoc, semiPtr-startBuf+1, 
+                      typedefString.c_str(), typedefString.size());
 }
 
 //===----------------------------------------------------------------------===//
@@ -249,9 +254,25 @@ Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
   if (ObjCEncodeExpr *AtEncode = dyn_cast<ObjCEncodeExpr>(S))
     return RewriteAtEncode(AtEncode);
     
-  if (ObjCMessageExpr *MessExpr = dyn_cast<ObjCMessageExpr>(S))
+  if (ObjCMessageExpr *MessExpr = dyn_cast<ObjCMessageExpr>(S)) {
+    // Before we rewrite it, put the original message expression in a comment.
+    SourceLocation startLoc = MessExpr->getLocStart();
+    SourceLocation endLoc = MessExpr->getLocEnd();
+    
+    const char *startBuf = SM->getCharacterData(startLoc);
+    const char *endBuf = SM->getCharacterData(endLoc);
+    
+    std::string messString;
+    messString += "// ";
+    messString.append(startBuf, endBuf-startBuf+1);
+    messString += "\n";
+    
+    // FIXME: Missing definition of Rewrite.InsertText(clang::SourceLocation, char const*, unsigned int).
+    // Rewrite.InsertText(startLoc, messString.c_str(), messString.size());
+    // Tried this, but it didn't work either...
+    // Rewrite.ReplaceText(startLoc, 0, messString.c_str(), messString.size());
     return RewriteMessageExpr(MessExpr);
-  
+  }
   // Return this stmt unmodified.
   return S;
 }
@@ -266,35 +287,71 @@ Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   return Replacement;
 }
 
-Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
-  assert(MsgSendFunctionDecl && "Can't find objc_msgSend() decl");
-  //Exp->dumpPretty();
-  //printf("\n");
-  
-  // Synthesize a call to objc_msgSend().
-  
+CallExpr *RewriteTest::SynthesizeCallToFunctionDecl(
+  FunctionDecl *FD, Expr **args, unsigned nargs) {
   // Get the type, we will need to reference it in a couple spots.
-  QualType msgSendType = MsgSendFunctionDecl->getType();
+  QualType msgSendType = FD->getType();
   
   // Create a reference to the objc_msgSend() declaration.
-  DeclRefExpr *DRE = new DeclRefExpr(MsgSendFunctionDecl, msgSendType,
-                                     SourceLocation());
+  DeclRefExpr *DRE = new DeclRefExpr(FD, msgSendType, SourceLocation());
                                      
   // Now, we cast the reference to a pointer to the objc_msgSend type.
   QualType pToFunc = Context->getPointerType(msgSendType);
   ImplicitCastExpr *ICE = new ImplicitCastExpr(pToFunc, DRE);
   
   const FunctionType *FT = msgSendType->getAsFunctionType();
-  CallExpr *CE = new CallExpr(ICE, 0, 0, FT->getResultType(), 
-                              SourceLocation());
-  Rewrite.ReplaceStmt(Exp, CE);
-  //Exp->dump();
-  //CE->dump();
   
-  // FIXME: Walk the operands of Exp, setting them to null before we delete Exp.
-  // This will be needed when "CE" points to the operands of Exp.
+  return new CallExpr(ICE, args, nargs, FT->getResultType(), SourceLocation());
+}
+
+Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
+  assert(MsgSendFunctionDecl && "Can't find objc_msgSend() decl");
+  assert(SelGetUidFunctionDecl && "Can't find sel_getUid() decl");
+  assert(GetClassFunctionDecl && "Can't find objc_getClass() decl");
+
+  // Synthesize a call to objc_msgSend().
+  llvm::SmallVector<Expr*, 8> MsgExprs;
+  IdentifierInfo *clsName = Exp->getClassName();
+  
+  // Derive/push the receiver/selector, 2 implicit arguments to objc_msgSend().
+  if (clsName) { // class message.
+    llvm::SmallVector<Expr*, 8> ClsExprs;
+    QualType argType = Context->getPointerType(Context->CharTy);
+    ClsExprs.push_back(new StringLiteral(clsName->getName(), 
+                                         clsName->getLength(),
+                                         false, argType, SourceLocation(),
+                                         SourceLocation()));
+    CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
+                                                 &ClsExprs[0], ClsExprs.size());
+    MsgExprs.push_back(Cls);
+  } else // instance message.
+    MsgExprs.push_back(Exp->getReceiver());
+    
+  // Create a call to sel_getUid("selName"), it will be the 2nd argument.
+  llvm::SmallVector<Expr*, 8> SelExprs;
+  QualType argType = Context->getPointerType(Context->CharTy);
+  SelExprs.push_back(new StringLiteral(Exp->getSelector().getName().c_str(),
+                                       Exp->getSelector().getName().size(),
+                                       false, argType, SourceLocation(),
+                                       SourceLocation()));
+  CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
+                                                 &SelExprs[0], SelExprs.size());
+  MsgExprs.push_back(SelExp);
+  
+  // Now push any user supplied arguments.
+  for (unsigned i = 0; i < Exp->getNumArgs(); i++) {
+    MsgExprs.push_back(Exp->getArg(i));
+    // We've transferred the ownership to MsgExprs. Null out the argument in
+    // the original expression, since we will delete it below.
+    Exp->setArg(i, 0);
+  }
+  CallExpr *MessExp = SynthesizeCallToFunctionDecl(MsgSendFunctionDecl,
+                                                 &MsgExprs[0], MsgExprs.size());
+  // Now do the actual rewrite.
+  Rewrite.ReplaceStmt(Exp, MessExp);
+  
   delete Exp;
-  return CE;
+  return MessExp;
 }
 
 // RewriteObjcMethodsMetaData - Rewrite methods metadata for instance or
