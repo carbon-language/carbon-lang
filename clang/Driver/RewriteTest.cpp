@@ -19,7 +19,6 @@
 #include "clang/Basic/IdentifierTable.h"
 using namespace clang;
 
-
 namespace {
   class RewriteTest : public ASTConsumer {
     Rewriter Rewrite;
@@ -43,25 +42,33 @@ namespace {
       GetClassFunctionDecl = 0;
       Rewrite.setSourceMgr(Context->SourceMgr);
     }
-    
-    virtual void HandleTopLevelDecl(Decl *D);
 
+    // Top Level Driver code.
+    virtual void HandleTopLevelDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
+    ~RewriteTest();
+
+    // Syntactic Rewriting.
     void RewriteInclude(SourceLocation Loc);
+    void RewriteTabs();
+    void RewriteForwardClassDecl(ObjcClassDecl *Dcl);
     
+    // Expression Rewriting.
     Stmt *RewriteFunctionBody(Stmt *S);
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
-    void RewriteForwardClassDecl(ObjcClassDecl *Dcl);
-    
+
+    // Metadata emission.
     void WriteObjcClassMetaData(ObjcImplementationDecl *IDecl);
     void WriteObjcMetaData();
-    
-    ~RewriteTest();
   };
 }
 
 ASTConsumer *clang::CreateCodeRewriterTest() { return new RewriteTest(); }
+
+//===----------------------------------------------------------------------===//
+// Top Level Driver Code
+//===----------------------------------------------------------------------===//
 
 void RewriteTest::HandleTopLevelDecl(Decl *D) {
   // Two cases: either the decl could be in the main file, or it could be in a
@@ -80,11 +87,54 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
     else if (strcmp(FD->getName(), "objc_getClass") == 0)
       GetClassFunctionDecl = FD;
   }
+  
+  // If we have a decl in the main file, see if we should rewrite it.
   if (SM->getDecomposedFileLoc(Loc).first == MainFileID)
     return HandleDeclInMainFile(D);
 
+  // Otherwise, see if there is a #import in the main file that should be
+  // rewritten.
   RewriteInclude(Loc);
 }
+
+/// HandleDeclInMainFile - This is called for each top-level decl defined in the
+/// main file of the input.
+void RewriteTest::HandleDeclInMainFile(Decl *D) {
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    if (Stmt *Body = FD->getBody())
+      FD->setBody(RewriteFunctionBody(Body));
+  
+  if (ObjcImplementationDecl *CI = dyn_cast<ObjcImplementationDecl>(D))
+    ClassImplementation.push_back(CI);
+  else if (ObjcCategoryImplDecl *CI = dyn_cast<ObjcCategoryImplDecl>(D))
+    CategoryImplementation.push_back(CI);
+  else if (ObjcClassDecl *CD = dyn_cast<ObjcClassDecl>(D))
+    RewriteForwardClassDecl(CD);
+  // Nothing yet.
+}
+
+RewriteTest::~RewriteTest() {
+  // Get the top-level buffer that this corresponds to.
+  RewriteTabs();
+  
+  // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
+  // we are done.
+  if (const RewriteBuffer *RewriteBuf = 
+      Rewrite.getRewriteBufferFor(MainFileID)) {
+    printf("Changed:\n");
+    std::string S(RewriteBuf->begin(), RewriteBuf->end());
+    printf("%s\n", S.c_str());
+  } else {
+    printf("No changes\n");
+  }
+  
+  // Rewrite Objective-c meta data*
+  WriteObjcMetaData();
+}
+
+//===----------------------------------------------------------------------===//
+// Syntactic (non-AST) Rewriting Code
+//===----------------------------------------------------------------------===//
 
 void RewriteTest::RewriteInclude(SourceLocation Loc) {
   // Rip up the #include stack to the main file.
@@ -110,22 +160,70 @@ void RewriteTest::RewriteInclude(SourceLocation Loc) {
   Rewrite.ReplaceText(LineStartLoc, IncCol-1, "#include ", strlen("#include "));
 }
 
-/// HandleDeclInMainFile - This is called for each top-level decl defined in the
-/// main file of the input.
-void RewriteTest::HandleDeclInMainFile(Decl *D) {
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
-    if (Stmt *Body = FD->getBody())
-      FD->setBody(RewriteFunctionBody(Body));
+void RewriteTest::RewriteTabs() {
+  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
+  const char *MainBufStart = MainBuf.first;
+  const char *MainBufEnd = MainBuf.second;
   
-  if (ObjcImplementationDecl *CI = dyn_cast<ObjcImplementationDecl>(D))
-    ClassImplementation.push_back(CI);
-  else if (ObjcCategoryImplDecl *CI = dyn_cast<ObjcCategoryImplDecl>(D))
-    CategoryImplementation.push_back(CI);
-  else if (ObjcClassDecl *CD = dyn_cast<ObjcClassDecl>(D))
-    RewriteForwardClassDecl(CD);
-  // Nothing yet.
+  // Loop over the whole file, looking for tabs.
+  for (const char *BufPtr = MainBufStart; BufPtr != MainBufEnd; ++BufPtr) {
+    if (*BufPtr != '\t')
+      continue;
+    
+    // Okay, we found a tab.  This tab will turn into at least one character,
+    // but it depends on which 'virtual column' it is in.  Compute that now.
+    unsigned VCol = 0;
+    while (BufPtr-VCol != MainBufStart && BufPtr[-VCol-1] != '\t' &&
+           BufPtr[-VCol-1] != '\n' && BufPtr[-VCol-1] != '\r')
+      ++VCol;
+    
+    // Okay, now that we know the virtual column, we know how many spaces to
+    // insert.  We assume 8-character tab-stops.
+    unsigned Spaces = 8-(VCol & 7);
+    
+    // Get the location of the tab.
+    SourceLocation TabLoc =
+      SourceLocation::getFileLoc(MainFileID, BufPtr-MainBufStart);
+    
+    // Rewrite the single tab character into a sequence of spaces.
+    Rewrite.ReplaceText(TabLoc, 1, "        ", Spaces);
+  }
 }
 
+
+void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
+  int numDecls = ClassDecl->getNumForwardDecls();
+  ObjcInterfaceDecl **ForwardDecls = ClassDecl->getForwardDecls();
+  
+  // Get the start location and compute the semi location.
+  SourceLocation startLoc = ClassDecl->getLocation();
+  const char *startBuf = SM->getCharacterData(startLoc);
+  const char *semiPtr = strchr(startBuf, ';');
+  
+  // Translate to typedef's that forward reference structs with the same name
+  // as the class. As a convenience, we include the original declaration
+  // as a comment.
+  std::string typedefString;
+  typedefString += "// ";
+    typedefString.append(startBuf, semiPtr-startBuf+1);
+    typedefString += "\n";
+    for (int i = 0; i < numDecls; i++) {
+      ObjcInterfaceDecl *ForwardDecl = ForwardDecls[i];
+      typedefString += "typedef struct ";
+      typedefString += ForwardDecl->getName();
+      typedefString += " ";
+      typedefString += ForwardDecl->getName();
+      typedefString += ";\n";
+    }
+    
+    // Replace the @class with typedefs corresponding to the classes.
+    Rewrite.ReplaceText(startLoc, semiPtr-startBuf+1, 
+                        typedefString.c_str(), typedefString.size());
+}
+
+//===----------------------------------------------------------------------===//
+// Function Body / Expression rewriting
+//===----------------------------------------------------------------------===//
 
 Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
   // Otherwise, just rewrite all children.
@@ -155,7 +253,6 @@ Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   return Replacement;
 }
 
-
 Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   assert(MsgSendFunctionDecl && "Can't find objc_msgSend() decl");
   //Exp->dumpPretty();
@@ -171,7 +268,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
                                      SourceLocation());
                                      
   // Now, we cast the reference to a pointer to the objc_msgSend type.
-  QualType pToFunc = Context->getPointerType(msgSendType);                                  
+  QualType pToFunc = Context->getPointerType(msgSendType);
   ImplicitCastExpr *ICE = new ImplicitCastExpr(pToFunc, DRE);
   
   const FunctionType *FT = msgSendType->getAsFunctionType();
@@ -187,35 +284,10 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   return CE;
 }
 
-void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
-  int numDecls = ClassDecl->getNumForwardDecls();
-  ObjcInterfaceDecl **ForwardDecls = ClassDecl->getForwardDecls();
-  
-  // Get the start location and compute the semi location.
-  SourceLocation startLoc = ClassDecl->getLocation();
-  const char *startBuf = SM->getCharacterData(startLoc);
-  const char *semiPtr = strchr(startBuf, ';');
 
-  // Translate to typedef's that forward reference structs with the same name
-  // as the class. As a convenience, we include the original declaration
-  // as a comment.
-  std::string typedefString;
-  typedefString += "// ";
-  typedefString.append(startBuf, semiPtr-startBuf+1);
-  typedefString += "\n";
-  for (int i = 0; i < numDecls; i++) {
-    ObjcInterfaceDecl *ForwardDecl = ForwardDecls[i];
-    typedefString += "typedef struct ";
-    typedefString += ForwardDecl->getName();
-    typedefString += " ";
-    typedefString += ForwardDecl->getName();
-    typedefString += ";\n";
-  }
-  
-  // Replace the @class with typedefs corresponding to the classes.
-  Rewrite.ReplaceText(startLoc, semiPtr-startBuf+1, 
-                      typedefString.c_str(), typedefString.size());
-}
+//===----------------------------------------------------------------------===//
+// Meta Data Emission
+//===----------------------------------------------------------------------===//
 
 void RewriteTest::WriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
   ObjcInterfaceDecl *CDecl = IDecl->getClassInterface();
@@ -585,7 +657,7 @@ void RewriteTest::WriteObjcMetaData() {
   printf("};\n\n");
   
   printf("static struct _objc_symtab "
-         "_OBJC_SYMBOLS __attribute__ ((section (\"__OBJC, __symbols\")))= {\n");
+         "_OBJC_SYMBOLS __attribute__((section (\"__OBJC, __symbols\")))= {\n");
   printf("\t0, 0, %d, %d\n", ClsDefCount, CatDefCount);
   for (int i = 0; i < ClsDefCount; i++)
     printf("\t,&_OBJC_CLASS_%s\n", ClassImplementation[i]->getName());
@@ -620,46 +692,3 @@ void RewriteTest::WriteObjcMetaData() {
   printf("};\n\n");
 }
 
-RewriteTest::~RewriteTest() {
-  // Get the top-level buffer that this corresponds to.
-  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
-  const char *MainBufStart = MainBuf.first;
-  const char *MainBufEnd = MainBuf.second;
-  
-  // Loop over the whole file, looking for tabs.
-  for (const char *BufPtr = MainBufStart; BufPtr != MainBufEnd; ++BufPtr) {
-    if (*BufPtr != '\t')
-      continue;
-    
-    // Okay, we found a tab.  This tab will turn into at least one character,
-    // but it depends on which 'virtual column' it is in.  Compute that now.
-    unsigned VCol = 0;
-    while (BufPtr-VCol != MainBufStart && BufPtr[-VCol-1] != '\t' &&
-           BufPtr[-VCol-1] != '\n' && BufPtr[-VCol-1] != '\r')
-      ++VCol;
-    
-    // Okay, now that we know the virtual column, we know how many spaces to
-    // insert.  We assume 8-character tab-stops.
-    unsigned Spaces = 8-(VCol & 7);
-    
-    // Get the location of the tab.
-    SourceLocation TabLoc =
-      SourceLocation::getFileLoc(MainFileID, BufPtr-MainBufStart);
-    
-    // Rewrite the single tab character into a sequence of spaces.
-    Rewrite.ReplaceText(TabLoc, 1, "        ", Spaces);
-  }
-  
-  // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
-  // we are done.
-  if (const RewriteBuffer *RewriteBuf = 
-          Rewrite.getRewriteBufferFor(MainFileID)) {
-    printf("Changed:\n");
-    std::string S(RewriteBuf->begin(), RewriteBuf->end());
-    printf("%s\n", S.c_str());
-  } else {
-    printf("No changes\n");
-  }
-  // Rewrite Objective-c meta data*
-  WriteObjcMetaData();
-}
