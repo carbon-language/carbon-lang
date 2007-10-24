@@ -3628,6 +3628,24 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       }
   }
 
+  // (fcmp ord x, c) & (fcmp ord y, c)  -> (fcmp ord x, y)
+  if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0))) {
+    if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1))) {
+      if (LHS->getPredicate() == FCmpInst::FCMP_ORD &&
+          RHS->getPredicate() == FCmpInst::FCMP_ORD)
+        if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
+          if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
+            // If either of the constants are nans, then the whole thing returns
+            // false.
+            if (LHSC->getValueAPF().getCategory() == APFloat::fcNaN ||
+                RHSC->getValueAPF().getCategory() == APFloat::fcNaN)
+              return ReplaceInstUsesWith(I, ConstantInt::getFalse());
+            return new FCmpInst(FCmpInst::FCMP_ORD, LHS->getOperand(0),
+                                RHS->getOperand(0));
+          }
+    }
+  }
+      
   return Changed ? &I : 0;
 }
 
@@ -4074,7 +4092,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   }
     
   // fold (or (cast A), (cast B)) -> (cast (or A, B))
-  if (CastInst *Op0C = dyn_cast<CastInst>(Op0))
+  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (Op0C->getOpcode() == Op1C->getOpcode()) {// same cast kind ?
         const Type *SrcTy = Op0C->getOperand(0)->getType();
@@ -4091,7 +4109,29 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           return CastInst::create(Op0C->getOpcode(), NewOp, I.getType());
         }
       }
-      
+  }
+  
+    
+  // (fcmp uno x, c) | (fcmp uno y, c)  -> (fcmp uno x, y)
+  if (FCmpInst *LHS = dyn_cast<FCmpInst>(I.getOperand(0))) {
+    if (FCmpInst *RHS = dyn_cast<FCmpInst>(I.getOperand(1))) {
+      if (LHS->getPredicate() == FCmpInst::FCMP_UNO &&
+          RHS->getPredicate() == FCmpInst::FCMP_UNO)
+        if (ConstantFP *LHSC = dyn_cast<ConstantFP>(LHS->getOperand(1)))
+          if (ConstantFP *RHSC = dyn_cast<ConstantFP>(RHS->getOperand(1))) {
+            // If either of the constants are nans, then the whole thing returns
+            // true.
+            if (LHSC->getValueAPF().getCategory() == APFloat::fcNaN ||
+                RHSC->getValueAPF().getCategory() == APFloat::fcNaN)
+              return ReplaceInstUsesWith(I, ConstantInt::getTrue());
+            
+            // Otherwise, no need to compare the two constants, compare the
+            // rest.
+            return new FCmpInst(FCmpInst::FCMP_UNO, LHS->getOperand(0),
+                                RHS->getOperand(0));
+          }
+    }
+  }
 
   return Changed ? &I : 0;
 }
@@ -4341,7 +4381,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       return R;
 
   // fold (xor (cast A), (cast B)) -> (cast (xor A, B))
-  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) 
+  if (CastInst *Op0C = dyn_cast<CastInst>(Op0)) {
     if (CastInst *Op1C = dyn_cast<CastInst>(Op1))
       if (Op0C->getOpcode() == Op1C->getOpcode()) { // same cast kind?
         const Type *SrcTy = Op0C->getOperand(0)->getType();
@@ -4358,7 +4398,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
           return CastInst::create(Op0C->getOpcode(), NewOp, I.getType());
         }
       }
-
+  }
   return Changed ? &I : 0;
 }
 
