@@ -385,7 +385,7 @@ EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 
   // FIXME: Handle union members.
-  if (E->getType()->isUnionType()) {
+  if (E->getBase()->getType()->isUnionType()) {
     fprintf(stderr, "Unimplemented lvalue expr!\n");
     E->dump(getContext().SourceMgr);
     llvm::Type *Ty = llvm::PointerType::get(ConvertType(E->getType()));
