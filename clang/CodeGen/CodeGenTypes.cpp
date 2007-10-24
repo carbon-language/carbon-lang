@@ -254,7 +254,7 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
 unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
   llvm::DenseMap<const FieldDecl *, unsigned>::iterator
     I = FieldInfo.find(FD);
-  if (I != FieldInfo.end()  && "Unable to find field info");
+  assert (I != FieldInfo.end()  && "Unable to find field info");
   return I->second;
 }
 
