@@ -385,7 +385,7 @@ public:
     BitCodeAbbrev *Abbv = new BitCodeAbbrev();
     unsigned NumOpInfo = ReadVBR(5);
     for (unsigned i = 0; i != NumOpInfo; ++i) {
-      bool IsLiteral = Read(1);
+      bool IsLiteral = Read(1) ? true : false;
       if (IsLiteral) {
         Abbv->Add(BitCodeAbbrevOp(ReadVBR64(8)));
         continue;

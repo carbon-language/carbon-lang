@@ -70,7 +70,7 @@ public:
   }
   
   uint64_t ReadInt(unsigned bits = 32);
-  bool ReadBool() { return ReadInt(1); }
+  bool ReadBool() { return ReadInt(1) ? true : false; }
   
   // FIXME: Substitute a better implementation which calculates the minimum
   // number of bits needed to serialize the enum.
