@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep lea | count 1
+; RUN: llvm-as < %s | llc -march=x86 -relocation-model=static | grep lea | count 1
 ; RUN: llvm-as < %s | llc -march=x86-64 | not grep lea
 
 ; For x86 there's an lea above the loop. In both cases, there shouldn't
