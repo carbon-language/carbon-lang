@@ -49,10 +49,10 @@ namespace {
     void HandleDeclInMainFile(Decl *D);
     void RewriteInclude(SourceLocation Loc);
     
-    void RewriteFunctionBody(Stmt *S);
-    void RewriteAtEncode(ObjCEncodeExpr *Exp);
+    Stmt *RewriteFunctionBody(Stmt *S);
+    Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
+    Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     void RewriteForwardClassDecl(ObjcClassDecl *Dcl);
-    void RewriteMessageExpr(ObjCMessageExpr *Exp);
     
     void WriteObjcClassMetaData(ObjcImplementationDecl *IDecl);
     void WriteObjcMetaData();
@@ -115,7 +115,7 @@ void RewriteTest::RewriteInclude(SourceLocation Loc) {
 void RewriteTest::HandleDeclInMainFile(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     if (Stmt *Body = FD->getBody())
-      RewriteFunctionBody(Body);
+      FD->setBody(RewriteFunctionBody(Body));
   
   if (ObjcImplementationDecl *CI = dyn_cast<ObjcImplementationDecl>(D))
     ClassImplementation.push_back(CI);
@@ -127,12 +127,12 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
 }
 
 
-void RewriteTest::RewriteFunctionBody(Stmt *S) {
+Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
   // Otherwise, just rewrite all children.
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
     if (*CI)
-      RewriteFunctionBody(*CI);
+      *CI = RewriteFunctionBody(*CI);
       
   // Handle specific things.
   if (ObjCEncodeExpr *AtEncode = dyn_cast<ObjCEncodeExpr>(S))
@@ -141,19 +141,22 @@ void RewriteTest::RewriteFunctionBody(Stmt *S) {
   if (ObjCMessageExpr *MessExpr = dyn_cast<ObjCMessageExpr>(S))
     return RewriteMessageExpr(MessExpr);
   
+  // Return this stmt unmodified.
+  return S;
 }
  
-void RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
+Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   // Create a new string expression.
   QualType StrType = Context->getPointerType(Context->CharTy);
   Expr *Replacement = new StringLiteral("foo", 3, false, StrType, 
                                         SourceLocation(), SourceLocation());
   Rewrite.ReplaceStmt(Exp, Replacement);
-  delete Replacement;
+  delete Exp;
+  return Replacement;
 }
 
 
-void RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
+Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   assert(MsgSendFunctionDecl && "Can't find objc_msgSend() decl");
   //Exp->dumpPretty();
   //printf("\n");
@@ -177,6 +180,11 @@ void RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   Rewrite.ReplaceStmt(Exp, CE);
   //Exp->dump();
   //CE->dump();
+  
+  // FIXME: Walk the operands of Exp, setting them to null before we delete Exp.
+  // This will be needed when "CE" points to the operands of Exp.
+  delete Exp;
+  return CE;
 }
 
 void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
