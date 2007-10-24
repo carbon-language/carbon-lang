@@ -611,7 +611,7 @@ our makefile/command line about which options to use:</p>
 <pre>
    # Compile
    g++ -g toy.cpp `llvm-config --cppflags` `llvm-config --ldflags` \
-                  `llvm-config --libs core` -I ~/llvm/include/ -o toy
+                  `llvm-config --libs core` -o toy
    # Run
    ./toy
 </pre>
