@@ -190,7 +190,7 @@ private:
   /// serialization.
   IdentifierTable();
   
-  friend class llvm::SerializeTrait<IdentifierTable>;
+  friend struct llvm::SerializeTrait<IdentifierTable>;
 };
 
 /// Selector - This smart pointer class efficiently represents Objective-C
