@@ -3718,8 +3718,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  unsigned C = cast<ConstantSDNode>(N1)->getValue();\n"
      << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(Chain);\n"
+     << "  SDOperand Ops[] = { Tmp, Chain };\n"
      << "  return CurDAG->getTargetNode(TargetInstrInfo::LABEL,\n"
-     << "                               MVT::Other, Tmp, Chain);\n"
+     << "                               MVT::Other, Ops, 2);\n"
      << "}\n\n";
 
   OS << "SDNode *Select_EXTRACT_SUBREG(const SDOperand &N) {\n"
@@ -3728,8 +3729,9 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  unsigned C = cast<ConstantSDNode>(N1)->getValue();\n"
      << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(N0);\n"
+     << "  SDOperand Ops[] = { N0, Tmp };\n"
      << "  return CurDAG->getTargetNode(TargetInstrInfo::EXTRACT_SUBREG,\n"
-     << "                               N.getValueType(), N0, Tmp);\n"
+     << "                               N.getValueType(), Ops, 2);\n"
      << "}\n\n";
 
   OS << "SDNode *Select_INSERT_SUBREG(const SDOperand &N) {\n"
@@ -3739,13 +3741,14 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  unsigned C = cast<ConstantSDNode>(N2)->getValue();\n"
      << "  SDOperand Tmp = CurDAG->getTargetConstant(C, MVT::i32);\n"
      << "  AddToISelQueue(N1);\n"
+     << "  SDOperand Ops[] = { N0, N1, Tmp };\n"
      << "  if (N0.getOpcode() == ISD::UNDEF) {\n"
      << "    return CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG,\n"
-     << "                                 N.getValueType(), N1, Tmp);\n"
+     << "                                 N.getValueType(), Ops+1, 2);\n"
      << "  } else {\n"
      << "    AddToISelQueue(N0);\n"
      << "    return CurDAG->getTargetNode(TargetInstrInfo::INSERT_SUBREG,\n"
-     << "                                 N.getValueType(), N0, N1, Tmp);\n"
+     << "                                 N.getValueType(), Ops, 3);\n"
      << "  }\n"
      << "}\n\n";
 
