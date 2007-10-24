@@ -400,7 +400,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     // Predefine ObjC primitive functions, traditionally declared in
     // <objc/objc-runtime.h>. Unlike the declarations above, we don't protect
     // these with a header guard (since multiple identical function declarations
-    // don't result in an error.
+    // don't result in an error. FIXME: don't predefine these...
     ObjcType = "OBJC_EXPORT id objc_getClass(const char *name);\n";
     Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
     ObjcType = "OBJC_EXPORT id objc_getMetaClass(const char *name);\n";

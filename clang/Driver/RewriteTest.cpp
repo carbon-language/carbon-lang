@@ -40,6 +40,7 @@ namespace {
       SM = &Context->SourceMgr;
       MainFileID = mainFileID;
       MsgSendFunctionDecl = 0;
+      GetClassFunctionDecl = 0;
       Rewrite.setSourceMgr(Context->SourceMgr);
     }
     
@@ -74,9 +75,9 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
 
   // Look for built-in declarations that we need to refer during the rewrite.
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    if (FD->getIdentifier() == &Context->Idents.get("objc_msgSend"))
+    if (strcmp(FD->getName(), "objc_msgSend") == 0)
       MsgSendFunctionDecl = FD;
-    else if (FD->getIdentifier() == &Context->Idents.get("objc_getClass"))
+    else if (strcmp(FD->getName(), "objc_getClass") == 0)
       GetClassFunctionDecl = FD;
   }
   if (SM->getDecomposedFileLoc(Loc).first == MainFileID)
@@ -185,8 +186,7 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
   // Get the start location and compute the semi location.
   SourceLocation startLoc = ClassDecl->getLocation();
   const char *startBuf = SM->getCharacterData(startLoc);
-  const char *semiPtr = startBuf;
-  while (semiPtr && (*semiPtr != ';')) semiPtr++;
+  const char *semiPtr = strchr(startBuf, ';');
 
   // Translate to typedef's that forward reference structs with the same name
   // as the class. As a convenience, we include the original declaration
