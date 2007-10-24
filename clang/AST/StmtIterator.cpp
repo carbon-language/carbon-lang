@@ -61,6 +61,6 @@ void StmtIteratorBase::PrevDecl() {
   Ptr.D = lastVD;
 }
 
-Stmt* StmtIteratorBase::GetInitializer() const {
-  return cast<VarDecl>(Ptr.D)->getInit();
+Stmt*& StmtIteratorBase::GetInitializer() const {
+  return reinterpret_cast<Stmt*&>(cast<VarDecl>(Ptr.D)->Init);
 }

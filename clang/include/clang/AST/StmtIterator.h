@@ -28,7 +28,7 @@ protected:
   
   void NextDecl();
   void PrevDecl();
-  Stmt* GetInitializer() const;
+  Stmt*& GetInitializer() const;
 
   StmtIteratorBase(Stmt** s) : FirstDecl(NULL) { Ptr.S = s; }
   StmtIteratorBase(ScopedDecl* d);
@@ -36,11 +36,11 @@ protected:
 };
   
   
-template <typename DERIVED, typename STMT_PTR>
+template <typename DERIVED, typename REFERENCE>
 class StmtIteratorImpl : public StmtIteratorBase, 
                          public std::iterator<std::bidirectional_iterator_tag,
-                                              STMT_PTR, ptrdiff_t, 
-                                              STMT_PTR, STMT_PTR> {  
+                                              REFERENCE, ptrdiff_t, 
+                                              REFERENCE, REFERENCE> {  
 protected:
   StmtIteratorImpl(const StmtIteratorBase& RHS) : StmtIteratorBase(RHS) {}
 public:
@@ -83,17 +83,17 @@ public:
     return FirstDecl != RHS.FirstDecl || Ptr.S != RHS.Ptr.S;
   }
   
-  STMT_PTR operator*() const { 
-    return (STMT_PTR) (FirstDecl ? GetInitializer() : *Ptr.S);
+  REFERENCE operator*() const { 
+    return (REFERENCE) (FirstDecl ? GetInitializer() : *Ptr.S);
   }
   
-  STMT_PTR operator->() const { return operator*(); }   
+  REFERENCE operator->() const { return operator*(); }   
 };
 
-struct StmtIterator : public StmtIteratorImpl<StmtIterator,Stmt*> {
-  explicit StmtIterator() : StmtIteratorImpl<StmtIterator,Stmt*>() {}
-  StmtIterator(Stmt** S) : StmtIteratorImpl<StmtIterator,Stmt*>(S) {}
-  StmtIterator(ScopedDecl* D) : StmtIteratorImpl<StmtIterator,Stmt*>(D) {}
+struct StmtIterator : public StmtIteratorImpl<StmtIterator,Stmt*&> {
+  explicit StmtIterator() : StmtIteratorImpl<StmtIterator,Stmt*&>() {}
+  StmtIterator(Stmt** S) : StmtIteratorImpl<StmtIterator,Stmt*&>(S) {}
+  StmtIterator(ScopedDecl* D) : StmtIteratorImpl<StmtIterator,Stmt*&>(D) {}
 };
 
 struct ConstStmtIterator : public StmtIteratorImpl<ConstStmtIterator,
