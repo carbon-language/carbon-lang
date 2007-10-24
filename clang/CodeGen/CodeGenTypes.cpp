@@ -26,7 +26,7 @@ CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M)
 
 CodeGenTypes::~CodeGenTypes() {
   for(llvm::DenseMap<const llvm::Type *, RecordLayoutInfo *>::iterator
-	I = RecordLayouts.begin(), E = RecordLayouts.end();
+        I = RecordLayouts.begin(), E = RecordLayouts.end();
       I != E; ++I)
     delete I->second;
   RecordLayouts.clear();
@@ -171,9 +171,9 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       // If this is nested record and this RecordDecl is already under
       // process then return associated OpaqueType for now.
       llvm::DenseMap<const RecordDecl *, llvm::Type *>::iterator 
-	OpaqueI = RecordTypesToResolve.find(RD);
+        OpaqueI = RecordTypesToResolve.find(RD);
       if (OpaqueI != RecordTypesToResolve.end())
-	return OpaqueI->second;
+        return OpaqueI->second;
 
       // Create new OpaqueType now for later use.
       llvm::OpaqueType *OpaqueTy =  llvm::OpaqueType::get();
@@ -182,7 +182,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       // Layout fields.
       RecordOrganizer *RO = new RecordOrganizer();
       for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
-	RO->addField(RD->getMember(i));
+        RO->addField(RD->getMember(i));
       RO->layoutFields(*this);
 
       // Get llvm::StructType.
@@ -194,7 +194,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       OpaqueTy->refineAbstractTypeTo(ResultType);
       OpaqueI = RecordTypesToResolve.find(RD);
       assert (OpaqueI != RecordTypesToResolve.end() 
-	      && "Expected RecordDecl in RecordTypesToResolve");
+              && "Expected RecordDecl in RecordTypesToResolve");
       RecordTypesToResolve.erase(OpaqueI);
 
       delete RO;
@@ -302,7 +302,7 @@ void RecordOrganizer::layoutFields(CodeGenTypes &CGT) {
   std::vector<const llvm::Type*> Fields;
   unsigned FieldNo = 0;
   for (llvm::SmallVector<const FieldDecl *, 8>::iterator I = FieldDecls.begin(),
-	 E = FieldDecls.end(); I != E; ++I) {
+         E = FieldDecls.end(); I != E; ++I) {
     const FieldDecl *FD = *I;
     const llvm::Type *Ty = CGT.ConvertType(FD->getType());
 

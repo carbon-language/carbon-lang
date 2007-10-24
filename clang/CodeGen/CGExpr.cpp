@@ -398,12 +398,12 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   FieldDecl *Field = E->getMemberDecl();
   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
   llvm::Value *Idxs[2] = { llvm::Constant::getNullValue(llvm::Type::Int32Ty), 
-			   llvm::ConstantInt::get(llvm::Type::Int32Ty, idx) };
+                           llvm::ConstantInt::get(llvm::Type::Int32Ty, idx) };
   if (E->isArrow()) {
     QualType PTy = cast<PointerType>(E->getBase()->getType())->getPointeeType();
     BaseValue =  Builder.CreateBitCast(BaseValue, 
-				       llvm::PointerType::get(ConvertType(PTy)),
-				       "tmp");
+                                       llvm::PointerType::get(ConvertType(PTy)),
+                                       "tmp");
   }
 
   return LValue::MakeAddr(Builder.CreateGEP(BaseValue,Idxs, Idxs + 2, "tmp"));
