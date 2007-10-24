@@ -232,6 +232,7 @@ namespace llvm {
     const fltSemantics &getSemantics() const { return *semantics; }
     bool isZero() const { return category == fcZero; }
     bool isNonZero() const { return category != fcZero; }
+    bool isNaN() const { return category == fcNaN; }
     bool isNegative() const { return sign; }
     bool isPosZero() const { return isZero() && !isNegative(); }
     bool isNegZero() const { return isZero() && isNegative(); }
