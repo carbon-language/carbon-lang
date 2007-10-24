@@ -686,7 +686,11 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
            CDecl->getName());
   else
     printf(", 0\n");
-  printf("\t,0,0,0,0\n");
+  if (CDecl->getNumIntfRefProtocols() > 0)
+    printf("\t,0,(struct _objc_protocol_list*)&_OBJC_CLASS_PROTOCOLS_%s,0,0\n", 
+           CDecl->getName());
+  else
+    printf("\t,0,0,0,0\n");
   printf("};\n");
   
   // class metadata generation.
@@ -723,6 +727,10 @@ void RewriteTest::WriteObjcMetaData() {
   int CatDefCount = CategoryImplementation.size();
   if (ClsDefCount == 0 && CatDefCount == 0)
     return;
+  
+  // TODO: This is temporary until we decide how to access objc types in a
+  // c program
+  printf("\n#include <Objc/objc.h>\n");
   
   // For each implemented class, write out all its meta data.
   for (int i = 0; i < ClsDefCount; i++)
