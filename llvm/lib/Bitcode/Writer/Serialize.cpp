@@ -11,7 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Bitcode/Serialization.h"
+#include "llvm/Bitcode/Serialize.h"
+#include "string.h"
 
 using namespace llvm;
 
@@ -37,16 +38,31 @@ void Serializer::EmitRecord() {
   Record.clear();
 }
 
-void Serializer::EmitInt(unsigned X, unsigned bits) {
+void Serializer::EmitInt(unsigned X) {
   Record.push_back(X);
 }
 
-void Serializer::EmitCString(const char* cstr) {
-  unsigned l = strlen(cstr);
-  Record.push_back(l);
+void Serializer::EmitCStr(const char* s, const char* end) {
+  Record.push_back(end - s);
   
-  for (unsigned i = 0; i < l; i++)
-    Record.push_back(cstr[i]);
+  while(s != end) {
+    Record.push_back(*s);
+    ++s;
+  }
 
   EmitRecord();
 }
+
+void Serializer::EmitCStr(const char* s) {
+  EmitCStr(s,s+strlen(s));
+}
+
+#define INT_EMIT(TYPE)\
+void SerializeTrait<TYPE>::Emit(Serializer&S, TYPE X) { S.EmitInt(X); }
+
+INT_EMIT(bool)
+INT_EMIT(unsigned char)
+INT_EMIT(unsigned short)
+INT_EMIT(unsigned int)
+INT_EMIT(unsigned long)
+INT_EMIT(unsigned long long)
