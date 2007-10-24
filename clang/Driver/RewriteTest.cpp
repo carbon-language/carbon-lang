@@ -552,8 +552,7 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl) {
            FullCategoryName);
   else
     printf("\t, 0\n");
-  // size of struct _objc_category
-  printf("\t, 28, 0\n};\n");
+  printf("\t, sizeof(struct _objc_category), 0\n};\n");
 }
 
 //===----------------------------------------------------------------------===//
@@ -677,10 +676,9 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
     printf(", \"%s\", \"%s\"", SuperClass->getName(), CDecl->getName());
   else
     printf(", 0, \"%s\"", CDecl->getName());
-  // FIXME: better way of getting size struct _objc_class (48)
   // TODO: 'ivars' field for root class is currently set to 0.
   // 'info' field is initialized to CLS_META(2) for metaclass
-  printf(", 0,2,48,0");
+  printf(", 0,2, sizeof(struct _objc_class), 0");
   if (CDecl->getNumClassMethods() > 0)
     printf("\n\t, (struct _objc_method_list *)&_OBJC_CLASS_METHODS_%s\n", 
            CDecl->getName());
@@ -792,7 +790,7 @@ void RewriteTest::WriteObjcMetaData() {
   printf("};\n\n");
   printf("static struct _objc_module "
     "_OBJC_MODULES __attribute__ ((section (\"__OBJC, __module_info\")))= {\n");
-  printf("\t%d, %d, \"\", &_OBJC_SYMBOLS\n", OBJC_ABI_VERSION, 16);
+  printf("\t%d, sizeof(struct _objc_module), \"\", &_OBJC_SYMBOLS\n", OBJC_ABI_VERSION);
   printf("};\n\n");
 }
 
