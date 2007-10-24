@@ -94,6 +94,8 @@ class CodeGenTypes {
 
   /// RecordLayouts - This maps llvm struct type with corresponding 
   /// record layout info. 
+  /// FIXME : If RecordLayoutInfo is less than 16 bytes then use 
+  /// inline it in the map.
   llvm::DenseMap<const llvm::Type*, RecordLayoutInfo *> RecordLayouts;
 
   /// FieldInfo - This maps struct field with corresponding llvm struct type

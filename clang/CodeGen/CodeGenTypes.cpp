@@ -176,6 +176,8 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
         return OpaqueI->second;
 
       // Create new OpaqueType now for later use.
+      // FIXME: This creates a lot of opaque types, most of which are not needed.  
+      // Reevaluate this when performance analyis finds tons of opaque types.
       llvm::OpaqueType *OpaqueTy =  llvm::OpaqueType::get();
       RecordTypesToResolve[RD] = OpaqueTy;
 
