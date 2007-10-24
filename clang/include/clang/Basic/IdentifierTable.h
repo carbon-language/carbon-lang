@@ -18,15 +18,12 @@
 #include "clang/Basic/TokenKinds.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/Bitcode/Serialization.h"
 #include <string> 
 #include <cassert> 
 
-
 namespace llvm {
   template <typename T> struct DenseMapInfo;
-  template <typename T> struct SerializeTrait;
-  class Serializer;
-  class Deserializer;
 }
 
 namespace clang {
@@ -311,21 +308,18 @@ struct DenseMapInfo<clang::Selector> {
 /// Define SerializeTrait to enable serialization for IdentifierInfos.
 template <>
 struct SerializeTrait<clang::IdentifierInfo> {
-  static void Serialize(llvm::Serializer& S, const clang::IdentifierInfo& I);
-  static void Deserialize(llvm::Deserializer& S, clang::IdentifierInfo& I);
+  static void Emit(Serializer& S, const clang::IdentifierInfo& I);
+  static void Read(Deserializer& S, clang::IdentifierInfo& I);
 };
 
 /// Define SerializeTrait to enable serialization for IdentifierTables.  
 template <>
 struct SerializeTrait<clang::IdentifierTable> {
-  static void Serialize(llvm::Serializer& S, const clang::IdentifierTable& X);
-  static void Deserialize(llvm::Deserializer& S, clang::IdentifierTable& X);
+  static void Emit(Serializer& S, const clang::IdentifierTable& X);
+  static void Read(Deserializer& S, clang::IdentifierTable& X);
 
 private:
-  static inline clang::IdentifierTable* Instantiate() { 
-    return new clang::IdentifierTable();
-  }
-  
+  static clang::IdentifierTable* Materialize(Deserializer& D);
   friend class Deserializer;
 };
 

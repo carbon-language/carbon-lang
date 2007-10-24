@@ -16,7 +16,8 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Bitcode/Serialization.h"
+#include "llvm/Bitcode/Serialize.h"
+#include "llvm/Bitcode/Deserialize.h"
 
 using namespace clang;
 
@@ -381,30 +382,25 @@ SelectorTable::~SelectorTable() {
 // Serialization for IdentifierInfo and IdentifierTable.
 //===----------------------------------------------------------------------===//
 
-void llvm::SerializeTrait<IdentifierInfo>::Serialize(llvm::Serializer& S,
+void llvm::SerializeTrait<IdentifierInfo>::Emit(llvm::Serializer& S,
                                                     const IdentifierInfo& I) {
 
-  S.Emit<tok::TokenKind>(I.getTokenID());
-  S.EmitInt(I.getBuiltinID(),9);
-  S.Emit<tok::ObjCKeywordKind>(I.getObjCKeywordID());  
-  S.Emit(I.hasMacroDefinition());
-  S.Emit(I.isExtensionToken());
-  S.Emit(I.isPoisoned());
-  S.Emit(I.isOtherTargetMacro());
-  S.Emit(I.isCPlusPlusOperatorKeyword());
-  S.Emit(I.isNonPortableBuiltin());   
+  S.EmitInt(I.getTokenID());
+  S.EmitInt(I.getBuiltinID());
+  S.EmitInt(I.getObjCKeywordID());  
+  S.EmitBool(I.hasMacroDefinition());
+  S.EmitBool(I.isExtensionToken());
+  S.EmitBool(I.isPoisoned());
+  S.EmitBool(I.isOtherTargetMacro());
+  S.EmitBool(I.isCPlusPlusOperatorKeyword());
+  S.EmitBool(I.isNonPortableBuiltin());   
 }
 
-void llvm::SerializeTrait<IdentifierInfo>::Deserialize(llvm::Deserializer& D,
-                                                       IdentifierInfo& I) {
-  tok::TokenKind X;
-  I.setTokenID(D.Read<tok::TokenKind>(X));
-
-  I.setBuiltinID(D.ReadInt(9));  
-  
-  tok::ObjCKeywordKind Y;
-  I.setObjCKeywordID(D.Read<tok::ObjCKeywordKind>(Y));
-  
+void llvm::SerializeTrait<IdentifierInfo>::Read(llvm::Deserializer& D,
+                                                IdentifierInfo& I) {
+  I.setTokenID((tok::TokenKind) D.ReadInt());
+  I.setBuiltinID(D.ReadInt());  
+  I.setObjCKeywordID((tok::ObjCKeywordKind) D.ReadInt());  
   I.setHasMacroDefinition(D.ReadBool());
   I.setIsExtensionToken(D.ReadBool());
   I.setIsPoisoned(D.ReadBool());
@@ -413,27 +409,34 @@ void llvm::SerializeTrait<IdentifierInfo>::Deserialize(llvm::Deserializer& D,
   I.setNonPortableBuiltin(D.ReadBool());
 }
 
-void llvm::SerializeTrait<IdentifierTable>::Serialize(llvm::Serializer& S,
-                                                      const IdentifierTable& T){
+void llvm::SerializeTrait<IdentifierTable>::Emit(llvm::Serializer& S,
+                                                 const IdentifierTable& T){
   S.Emit<unsigned>(T.size());
   
   for (clang::IdentifierTable::iterator I=T.begin(), E=T.end(); I != E; ++I) {
-    S.EmitCString(I->getKeyData());
+    S.EmitCStr(I->getKeyData());
     S.Emit(I->getValue());
   }
 }
 
-void llvm::SerializeTrait<IdentifierTable>::Deserialize(llvm::Deserializer& D,
-                                                        IdentifierTable& T) {
+void llvm::SerializeTrait<IdentifierTable>::Read(llvm::Deserializer& D,
+                                                 IdentifierTable& T) {
   unsigned len = D.ReadInt();
   std::vector<char> buff;
   buff.reserve(200);
   
   for (unsigned i = 0; i < len; ++i) {
-    D.ReadCString(buff);
+    D.ReadCStr(buff);
     IdentifierInfo& Info = T.get(&buff[0],&buff[0]+buff.size());
     D.Read(Info);
   }
 }
-  
+
+IdentifierTable*
+llvm::SerializeTrait<IdentifierTable>::Materialize(llvm::Deserializer& D)
+{
+  IdentifierTable* t = new IdentifierTable();
+  D.Read(*t);
+  return t;
+}
 

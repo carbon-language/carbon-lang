@@ -21,7 +21,8 @@
 #include "llvm/System/Path.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Bitcode/Serialization.h"
+#include "llvm/Bitcode/Serialize.h"
+#include "llvm/Bitcode/Deserialize.h"
 #include <stdio.h>
 
 //===----------------------------------------------------------------------===//
