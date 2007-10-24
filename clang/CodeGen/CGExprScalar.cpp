@@ -121,14 +121,15 @@ public:
   Value *VisitPreDefinedExpr(Expr *E) { return EmitLValue(E).getAddress(); }
 
   Value *VisitInitListExpr(InitListExpr *E) {
-    std::vector<llvm::Constant *> Elements;
     unsigned N = E->getNumInits();
+    QualType T = E->getInit(0)->getType();
+    Value *V = llvm::UndefValue::get(llvm::VectorType::get(ConvertType(T), N));
     for (unsigned i = 0; i < N; ++i) {
-      Value *V = Visit(E->getInit(i));
-      llvm::Constant * C = cast<llvm::Constant>(V);
-      Elements.push_back(C);
+      Value *NewV = Visit(E->getInit(i));
+      Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
+      V = Builder.CreateInsertElement(V, NewV, Idx);
     }
-    return llvm::ConstantVector::get(Elements);
+    return V;
   }
 
   Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {

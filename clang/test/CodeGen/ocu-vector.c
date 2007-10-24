@@ -22,3 +22,14 @@ static void test2() {
     vec2.yx = vec2; // reverse
 }
 
+static void test3(float4 *out) {
+  *out = ((float4) {1.0f, 2.0f, 3.0f, 4.0f });
+}
+
+static void test4(float4 *out) {
+  float a = 1.0f;
+  float b = 2.0f;
+  float c = 3.0f;
+  float d = 4.0f;
+  *out = ((float4) {a,b,c,d});
+}
