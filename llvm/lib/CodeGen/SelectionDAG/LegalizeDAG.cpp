@@ -5930,6 +5930,15 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
         Hi = DAG.getNode(ISD::ADD, NVT, Hi, LH);
         break;
       }
+      if (HasMULHU) {
+        Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
+        Hi = DAG.getNode(ISD::MULHU, NVT, LL, RL);
+        RH = DAG.getNode(ISD::MUL, NVT, LL, RH);
+        LH = DAG.getNode(ISD::MUL, NVT, LH, RL);
+        Hi = DAG.getNode(ISD::ADD, NVT, Hi, RH);
+        Hi = DAG.getNode(ISD::ADD, NVT, Hi, LH);
+        break;
+      }
     }
 
     // If nothing else, we can make a libcall.
