@@ -119,8 +119,22 @@ public:
   Value *VisitOCUVectorElementExpr(Expr *E) { return EmitLoadOfLValue(E); }
   Value *VisitStringLiteral(Expr *E)  { return EmitLValue(E).getAddress(); }
   Value *VisitPreDefinedExpr(Expr *E) { return EmitLValue(E).getAddress(); }
-  
-  // FIXME: CompoundLiteralExpr
+
+  Value *VisitInitListExpr(InitListExpr *E) {
+    std::vector<llvm::Constant *> Elements;
+    unsigned N = E->getNumInits();
+    for (unsigned i = 0; i < N; ++i) {
+      Value *V = Visit(E->getInit(i));
+      llvm::Constant * C = cast<llvm::Constant>(V);
+      Elements.push_back(C);
+    }
+    return llvm::ConstantVector::get(Elements);
+  }
+
+  Value *VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+    return Visit(E->getInitializer());
+  }
+
   Value *VisitImplicitCastExpr(const ImplicitCastExpr *E);
   Value *VisitCastExpr(const CastExpr *E) { 
     return EmitCastExpr(E->getSubExpr(), E->getType());
