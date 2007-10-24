@@ -610,8 +610,7 @@ our makefile/command line about which options to use:</p>
 <div class="doc_code">
 <pre>
    # Compile
-   g++ -g toy.cpp `llvm-config --cppflags` `llvm-config --ldflags` \
-                  `llvm-config --libs core` -o toy
+   g++ -g toy.cpp `llvm-config --cppflags --ldflags --libs core` -o toy
    # Run
    ./toy
 </pre>
