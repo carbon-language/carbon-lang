@@ -55,3 +55,7 @@ typedef struct NB {
 
 void f2() { NB b; }
 
+extern NB *f3();
+void f4() {
+  f3()->d1 = 42;
+}

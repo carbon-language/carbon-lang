@@ -384,27 +384,36 @@ EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 
+  Expr *BaseExpr = E->getBase();
   // FIXME: Handle union members.
-  if (E->getBase()->getType()->isUnionType()) {
+  if (BaseExpr->getType()->isUnionType()) {
     fprintf(stderr, "Unimplemented lvalue expr!\n");
     E->dump(getContext().SourceMgr);
     llvm::Type *Ty = llvm::PointerType::get(ConvertType(E->getType()));
     return LValue::MakeAddr(llvm::UndefValue::get(Ty));
   }
-  
-  LValue BaseLV = EmitLValue(E->getBase());
-  llvm::Value *BaseValue = BaseLV.getAddress();
+
+  llvm::Value *BaseValue = NULL;
+  if (const CallExpr *CE = dyn_cast<CallExpr>(BaseExpr)) {
+    RValue Base = EmitCallExpr(CE);
+    BaseValue = Base.getScalarVal();
+  }
+  else {
+    LValue BaseLV = EmitLValue(BaseExpr);
+    BaseValue = BaseLV.getAddress();
+
+    if (E->isArrow()) {
+      QualType PTy = cast<PointerType>(BaseExpr->getType())->getPointeeType();
+      BaseValue =  Builder.CreateBitCast(BaseValue, 
+                                      llvm::PointerType::get(ConvertType(PTy)),
+                                         "tmp");
+    }
+  }
 
   FieldDecl *Field = E->getMemberDecl();
   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
   llvm::Value *Idxs[2] = { llvm::Constant::getNullValue(llvm::Type::Int32Ty), 
                            llvm::ConstantInt::get(llvm::Type::Int32Ty, idx) };
-  if (E->isArrow()) {
-    QualType PTy = cast<PointerType>(E->getBase()->getType())->getPointeeType();
-    BaseValue =  Builder.CreateBitCast(BaseValue, 
-                                       llvm::PointerType::get(ConvertType(PTy)),
-                                       "tmp");
-  }
 
   return LValue::MakeAddr(Builder.CreateGEP(BaseValue,Idxs, Idxs + 2, "tmp"));
   
