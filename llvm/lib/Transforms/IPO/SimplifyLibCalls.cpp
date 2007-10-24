@@ -1211,8 +1211,10 @@ public:
       new CallInst(SLC.get_puts(), GV, "", CI);
 
       if (CI->use_empty()) return ReplaceCallWith(CI, 0);
+      // The return value from printf includes the \n we just removed, so +1.
       return ReplaceCallWith(CI,
-                             ConstantInt::get(CI->getType(), FormatStr.size()));
+                             ConstantInt::get(CI->getType(), 
+                                              FormatStr.size()+1));
     }
     
     
