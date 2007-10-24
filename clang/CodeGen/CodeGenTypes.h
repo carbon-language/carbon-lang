@@ -36,45 +36,15 @@ namespace clang {
 namespace CodeGen {
   class CodeGenTypes;
 
-  /// RecordOrganizer - This helper class, used by RecordLayoutInfo, layouts 
-  /// structs and unions. It manages transient information used during layout.
-  /// FIXME : At the moment assume 
-  ///    - one to one mapping between AST FieldDecls and 
-  ///      llvm::StructType elements.
-  ///    - Ignore bit fields
-  ///    - Ignore field aligments
-  ///    - Ignore packed structs
-  class RecordOrganizer {
-  public:
-    RecordOrganizer() : STy(NULL) {}
-    
-    /// addField - Add new field.
-    void addField(const FieldDecl *FD);
-
-    /// layoutFields - Do the actual work and lay out all fields. Create
-    /// corresponding llvm struct type.  This should be invoked only after
-    /// all fields are added.
-    void layoutFields(CodeGenTypes &CGT);
-
-    /// getLLVMType - Return associated llvm struct type. This may be NULL
-    /// if fields are not laid out.
-    llvm::Type *getLLVMType() const {
-      return STy;
-    }
-
-    /// Clear private data so that this object can be reused.
-    void clear();
-  private:
-    llvm::Type *STy;
-    llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
-  };
-
   /// RecordLayoutInfo - This class handles struct and union layout info while 
   /// lowering AST types to LLVM types.
   class RecordLayoutInfo {
     RecordLayoutInfo(); // DO NOT IMPLEMENT
   public:
-    RecordLayoutInfo(RecordOrganizer *RO);
+    RecordLayoutInfo(llvm::Type *T) : STy(T) {
+      // FIXME : Collect info about fields that requires adjustments 
+      // (i.e. fields that do not directly map to llvm struct fields.)
+    }
 
     /// getLLVMType - Return llvm type associated with this record.
     llvm::Type *getLLVMType() const {

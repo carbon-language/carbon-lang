@@ -20,6 +20,41 @@
 using namespace clang;
 using namespace CodeGen;
 
+namespace {
+  /// RecordOrganizer - This helper class, used by RecordLayoutInfo, layouts 
+  /// structs and unions. It manages transient information used during layout.
+  /// FIXME : At the moment assume 
+  ///    - one to one mapping between AST FieldDecls and 
+  ///      llvm::StructType elements.
+  ///    - Ignore bit fields
+  ///    - Ignore field aligments
+  ///    - Ignore packed structs
+  class RecordOrganizer {
+  public:
+    RecordOrganizer() : STy(NULL) {}
+    
+    /// addField - Add new field.
+    void addField(const FieldDecl *FD);
+
+    /// layoutFields - Do the actual work and lay out all fields. Create
+    /// corresponding llvm struct type.  This should be invoked only after
+    /// all fields are added.
+    void layoutFields(CodeGenTypes &CGT);
+
+    /// getLLVMType - Return associated llvm struct type. This may be NULL
+    /// if fields are not laid out.
+    llvm::Type *getLLVMType() const {
+      return STy;
+    }
+
+    /// Clear private data so that this object can be reused.
+    void clear();
+  private:
+    llvm::Type *STy;
+    llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
+  };
+}
+
 CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M)
   : Context(Ctx), Target(Ctx.Target), TheModule(M) {
 }
@@ -188,7 +223,7 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       RO.layoutFields(*this);
 
       // Get llvm::StructType.
-      RecordLayoutInfo *RLI = new RecordLayoutInfo(&RO);
+      RecordLayoutInfo *RLI = new RecordLayoutInfo(RO.getLLVMType());
       ResultType = RLI->getLLVMType();
       RecordLayouts[ResultType] = RLI;
 
@@ -274,16 +309,6 @@ CodeGenTypes::getRecordLayoutInfo(const llvm::Type* Ty) const {
           && "Unable to find record layout information for type");
   return I->second;
 }
-
-/// RecordLayoutInfo - Construct record layout info object using layout 
-/// organized by record organizer.
-RecordLayoutInfo::RecordLayoutInfo(RecordOrganizer *RO) {
-  STy = RO->getLLVMType();
-  assert (STy && "Record layout is incomplete to determine llvm::Type");
-  // FIXME : Collect info about fields that requires adjustments 
-  // (i.e. fields that do not directly map to llvm struct fields.)
-}
-
 
 /// addField - Add new field.
 void RecordOrganizer::addField(const FieldDecl *FD) {
