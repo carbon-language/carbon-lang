@@ -189,7 +189,7 @@ public:
                SourceLocation LB, SourceLocation RB)
     : Stmt(CompoundStmtClass), Body(StmtStart, StmtStart+NumStmts),
       LBracLoc(LB), RBracLoc(RB) {}
-  
+    
   bool body_empty() const { return Body.empty(); }
   
   typedef llvm::SmallVector<Stmt*, 16>::iterator body_iterator;
@@ -216,6 +216,10 @@ public:
   virtual SourceRange getSourceRange() const { 
     return SourceRange(LBracLoc, RBracLoc); 
   }
+  
+  SourceLocation getLBracLoc() { return LBracLoc; }
+  SourceLocation getRBracLoc() { return RBracLoc; }
+  
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CompoundStmtClass; 
   }
