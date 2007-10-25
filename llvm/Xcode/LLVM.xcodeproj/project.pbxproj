@@ -65,6 +65,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		35A9CDED0CD0F6AF008ABC1D /* Deserialize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Deserialize.h; sourceTree = "<group>"; };
+		35A9CDEE0CD0F6AF008ABC1D /* Serialization.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Serialization.h; sourceTree = "<group>"; };
+		35A9CDEF0CD0F6AF008ABC1D /* Serialize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Serialize.h; sourceTree = "<group>"; };
+		35A9CDF00CD0F6D5008ABC1D /* Deserialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Deserialize.cpp; sourceTree = "<group>"; };
+		35A9CDF10CD0F6E1008ABC1D /* Serialize.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Serialize.cpp; sourceTree = "<group>"; };
 		35E98A830CBC2ED300C5CDC1 /* DenseSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DenseSet.h; sourceTree = "<group>"; };
 		35E98A840CBC2ED300C5CDC1 /* ImmutableMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImmutableMap.h; sourceTree = "<group>"; };
 		35E98A850CBC2ED300C5CDC1 /* ImmutableSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImmutableSet.h; sourceTree = "<group>"; };
@@ -1099,6 +1104,7 @@
 		9F68EB050C77AD2C004AA152 /* Reader */ = {
 			isa = PBXGroup;
 			children = (
+				35A9CDF00CD0F6D5008ABC1D /* Deserialize.cpp */,
 				9F68EB060C77AD2C004AA152 /* BitcodeReader.cpp */,
 				9F68EB070C77AD2C004AA152 /* BitcodeReader.h */,
 			);
@@ -1113,6 +1119,7 @@
 				9F68EB130C77AD2C004AA152 /* BitcodeWriterPass.cpp */,
 				9F68EB250C77AD2C004AA152 /* ValueEnumerator.cpp */,
 				9F68EB260C77AD2C004AA152 /* ValueEnumerator.h */,
+				35A9CDF10CD0F6E1008ABC1D /* Serialize.cpp */,
 			);
 			path = Writer;
 			sourceTree = "<group>";
@@ -1126,6 +1133,9 @@
 				9F7793830C73C54C00551F9C /* BitstreamWriter.h */,
 				9F7793840C73C54C00551F9C /* LLVMBitCodes.h */,
 				9F7793850C73C54C00551F9C /* ReaderWriter.h */,
+				35A9CDEE0CD0F6AF008ABC1D /* Serialization.h */,
+				35A9CDEF0CD0F6AF008ABC1D /* Serialize.h */,
+				35A9CDED0CD0F6AF008ABC1D /* Deserialize.h */,
 			);
 			path = Bitcode;
 			sourceTree = "<group>";
