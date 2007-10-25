@@ -1230,7 +1230,7 @@ APFloat::addOrSubtractSpecials(const APFloat &rhs, bool subtract)
   case convolve(fcInfinity, fcInfinity):
     /* Differently signed infinities can only be validly
        subtracted.  */
-    if(sign ^ rhs.sign != subtract) {
+    if((sign ^ rhs.sign) != subtract) {
       makeNaN();
       return opInvalidOp;
     }
@@ -1252,7 +1252,7 @@ APFloat::addOrSubtractSignificand(const APFloat &rhs, bool subtract)
 
   /* Determine if the operation on the absolute values is effectively
      an addition or subtraction.  */
-  subtract ^= (sign ^ rhs.sign);
+  subtract ^= (sign ^ rhs.sign) ? true : false;
 
   /* Are we bigger exponent-wise than the RHS?  */
   bits = exponent - rhs.exponent;
