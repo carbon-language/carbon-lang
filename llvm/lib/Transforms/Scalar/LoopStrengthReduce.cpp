@@ -177,11 +177,17 @@ private:
     void OptimizeIndvars(Loop *L);
     bool FindIVForUser(ICmpInst *Cond, IVStrideUse *&CondUse,
                        const SCEVHandle *&CondStride);
+    bool RequiresTypeConversion(const Type *Ty, const Type *NewTy);
     unsigned CheckForIVReuse(bool, const SCEVHandle&,
                              IVExpr&, const Type*,
                              const std::vector<BasedUser>& UsersToProcess);
     bool ValidStride(bool, int64_t,
                      const std::vector<BasedUser>& UsersToProcess);
+    SCEVHandle CollectIVUsers(const SCEVHandle &Stride,
+                              IVUsersOfOneStride &Uses,
+                              Loop *L,
+                              bool &AllUsesAreAddresses,
+                              std::vector<BasedUser> &UsersToProcess);
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
                                       Loop *L, bool isOnlyStride);
@@ -972,6 +978,19 @@ bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
   return true;
 }
 
+/// RequiresTypeConversion - Returns true if converting Ty to NewTy is not
+/// a nop.
+bool LoopStrengthReduce::RequiresTypeConversion(const Type *Ty,
+                                                const Type *NewTy) {
+  if (Ty == NewTy)
+    return false;
+  return (!Ty->canLosslesslyBitCastTo(NewTy) &&
+          !(isa<PointerType>(NewTy) &&
+            Ty->canLosslesslyBitCastTo(UIntPtrTy)) &&
+          !(isa<PointerType>(Ty) &&
+            NewTy->canLosslesslyBitCastTo(UIntPtrTy)));
+}
+
 /// CheckForIVReuse - Returns the multiple if the stride is the multiple
 /// of a previous stride and it is a legal value for the target addressing
 /// mode scale component and optional base reg. This allows the users of
@@ -1001,7 +1020,8 @@ unsigned LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                IE = SI->second.IVs.end(); II != IE; ++II)
           // FIXME: Only handle base == 0 for now.
           // Only reuse previous IV if it would not require a type conversion.
-          if (isZero(II->Base) && II->Base->getType() == Ty) {
+          if (isZero(II->Base) &&
+              !RequiresTypeConversion(II->Base->getType(),Ty)) {
             IV = *II;
             return Scale;
           }
@@ -1030,23 +1050,16 @@ static bool isNonConstantNegative(const SCEVHandle &Expr) {
   return SC->getValue()->getValue().isNegative();
 }
 
-/// StrengthReduceStridedIVUsers - Strength reduce all of the users of a single
-/// stride of IV.  All of the users may have different starting values, and this
-/// may not be the only stride (we know it is if isOnlyStride is true).
-void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
-                                                      IVUsersOfOneStride &Uses,
-                                                      Loop *L,
-                                                      bool isOnlyStride) {
-  // If all the users are moved to another stride, then there is nothing to do.
-  if (Uses.Users.size() == 0)
-    return;
-
-  // Transform our list of users and offsets to a bit more complex table.  In
-  // this new vector, each 'BasedUser' contains 'Base' the base of the
-  // strided accessas well as the old information from Uses.  We progressively
-  // move information from the Base field to the Imm field, until we eventually
-  // have the full access expression to rewrite the use.
-  std::vector<BasedUser> UsersToProcess;
+// CollectIVUsers - Transform our list of users and offsets to a bit more
+// complex table. In this new vector, each 'BasedUser' contains 'Base' the base
+// of the strided accessas well as the old information from Uses. We
+// progressively move information from the Base field to the Imm field, until
+// we eventually have the full access expression to rewrite the use.
+SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
+                                              IVUsersOfOneStride &Uses,
+                                              Loop *L,
+                                              bool &AllUsesAreAddresses,
+                                       std::vector<BasedUser> &UsersToProcess) {
   UsersToProcess.reserve(Uses.Users.size());
   for (unsigned i = 0, e = Uses.Users.size(); i != e; ++i) {
     UsersToProcess.push_back(BasedUser(Uses.Users[i], SE));
@@ -1069,17 +1082,6 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // UsersToProcess base values.
   SCEVHandle CommonExprs =
     RemoveCommonExpressionsFromUseBases(UsersToProcess, SE);
-
-  // If we managed to find some expressions in common, we'll need to carry
-  // their value in a register and add it in for each use. This will take up
-  // a register operand, which potentially restricts what stride values are
-  // valid.
-  bool HaveCommonExprs = !isZero(CommonExprs);
-  
-  // Keep track if every use in UsersToProcess is an address. If they all are,
-  // we may be able to rewrite the entire collection of them in terms of a
-  // smaller-stride IV.
-  bool AllUsesAreAddresses = true;
 
   // Next, figure out what we can represent in the immediate fields of
   // instructions.  If we can represent anything there, move it to the imm
@@ -1136,6 +1138,40 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     }
   }
 
+  return CommonExprs;
+}
+
+/// StrengthReduceStridedIVUsers - Strength reduce all of the users of a single
+/// stride of IV.  All of the users may have different starting values, and this
+/// may not be the only stride (we know it is if isOnlyStride is true).
+void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
+                                                      IVUsersOfOneStride &Uses,
+                                                      Loop *L,
+                                                      bool isOnlyStride) {
+  // If all the users are moved to another stride, then there is nothing to do.
+  if (Uses.Users.size() == 0)
+    return;
+
+  // Keep track if every use in UsersToProcess is an address. If they all are,
+  // we may be able to rewrite the entire collection of them in terms of a
+  // smaller-stride IV.
+  bool AllUsesAreAddresses = true;
+
+  // Transform our list of users and offsets to a bit more complex table.  In
+  // this new vector, each 'BasedUser' contains 'Base' the base of the
+  // strided accessas well as the old information from Uses.  We progressively
+  // move information from the Base field to the Imm field, until we eventually
+  // have the full access expression to rewrite the use.
+  std::vector<BasedUser> UsersToProcess;
+  SCEVHandle CommonExprs = CollectIVUsers(Stride, Uses, L, AllUsesAreAddresses,
+                                          UsersToProcess);
+
+  // If we managed to find some expressions in common, we'll need to carry
+  // their value in a register and add it in for each use. This will take up
+  // a register operand, which potentially restricts what stride values are
+  // valid.
+  bool HaveCommonExprs = !isZero(CommonExprs);
+  
   // If all uses are addresses, check if it is possible to reuse an IV with a
   // stride that is a factor of this stride. And that the multiple is a number
   // that can be encoded in the scale field of the target addressing mode. And
@@ -1424,9 +1460,6 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   if (StrideOrder.size() < 2 ||
       IVUsesByStride[*CondStride].Users.size() != 1)
     return Cond;
-  // FIXME: loosen this restriction?
-  if (!isa<SCEVConstant>(CondUse->Offset))
-    return Cond;
   const SCEVConstant *SC = dyn_cast<SCEVConstant>(*CondStride);
   if (!SC) return Cond;
   ConstantInt *C = dyn_cast<ConstantInt>(Cond->getOperand(1));
@@ -1478,11 +1511,22 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
         continue;
       }
 
-      // FIXME: allow reuse of iv of a smaller type?
       NewCmpTy = NewIncV->getType();
-      if (!CmpTy->canLosslesslyBitCastTo(NewCmpTy) &&
-          !(isa<PointerType>(NewCmpTy) &&
-            CmpTy->canLosslesslyBitCastTo(UIntPtrTy))) {
+      if (RequiresTypeConversion(CmpTy, NewCmpTy)) {
+        // FIXME: allow reuse of iv of a smaller type?
+        NewCmpVal = CmpVal;
+        continue;
+      }
+
+      bool AllUsesAreAddresses = true;
+      std::vector<BasedUser> UsersToProcess;
+      SCEVHandle CommonExprs = CollectIVUsers(SI->first, SI->second, L,
+                                              AllUsesAreAddresses,
+                                              UsersToProcess);
+      // Avoid rewriting the compare instruction with an iv of new stride
+      // if it's likely the new stride uses will be rewritten using the
+      if (AllUsesAreAddresses &&
+          ValidStride(!isZero(CommonExprs), Scale, UsersToProcess)) {        
         NewCmpVal = CmpVal;
         continue;
       }
