@@ -86,6 +86,10 @@ public:
   template <typename T>
   inline T* ReadOwnedPtr() {    
     unsigned PtrId = ReadInt();
+
+    if (PtrId == 0)
+      return NULL;
+    
     T* x = SerializeTrait<T>::Materialize(*this);
     RegisterPtr(PtrId,x);
     return x;

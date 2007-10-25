@@ -47,7 +47,7 @@ public:
   template <typename T>
   void EmitOwnedPtr(T* ptr) {
     EmitPtr(ptr);
-    SerializeTrait<T>::Emit(*this,*ptr);    
+    if (ptr) SerializeTrait<T>::Emit(*this,*ptr);
   }
 
   void Flush() { if (inRecord()) EmitRecord(); }

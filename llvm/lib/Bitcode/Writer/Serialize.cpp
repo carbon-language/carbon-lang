@@ -58,10 +58,13 @@ void Serializer::EmitCStr(const char* s) {
 }
 
 unsigned Serializer::getPtrId(void* ptr) {
+  if (!ptr)
+    return 0;
+  
   MapTy::iterator I = PtrMap.find(ptr);
   
   if (I == PtrMap.end()) {
-    unsigned id = PtrMap.size();
+    unsigned id = PtrMap.size()+1;
     PtrMap[ptr] = id;
     return id;
   }

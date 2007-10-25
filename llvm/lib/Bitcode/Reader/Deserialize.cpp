@@ -103,6 +103,11 @@ void Deserializer::RegisterPtr(unsigned PtrId,void* Ptr) {
 void Deserializer::ReadPtr(void*& PtrRef) {
   unsigned PtrId = ReadInt();
   
+  if (PtrId == 0) {
+    PtrRef = NULL;
+    return;
+  }  
+  
   BPatchEntry& E = BPatchMap[PtrId];
   
   if (E.Ptr == NULL) {
