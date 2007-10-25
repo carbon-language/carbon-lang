@@ -7,19 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines the interface for generic object serialization to
-// LLVM bitcode.
+// This file defines traits for primitive types used for both object
+// serialization and deserialization.
 //
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_BITCODE_SERIALIZE
 #define LLVM_BITCODE_SERIALIZE
 
-namespace llvm {
+#include "llvm/Bitcode/SerializationFwd.h"
 
-class Serializer;
-class Deserializer;  
-template <typename T> struct SerializeTrait;
+namespace llvm {
   
 #define SERIALIZE_INT_TRAIT(TYPE)\
 template <> struct SerializeTrait<TYPE> {\
