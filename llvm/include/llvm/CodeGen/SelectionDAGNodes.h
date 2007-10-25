@@ -235,7 +235,7 @@ namespace ISD {
     ADD, SUB, MUL, SDIV, UDIV, SREM, UREM,
 
     // SMUL_LOHI/UMUL_LOHI - Multiply two integers of type iN, producing
-    // a signed/unsigned value of type i[2*n], and return the full value as
+    // a signed/unsigned value of type i[2*N], and return the full value as
     // two results, each of type iN.
     SMUL_LOHI, UMUL_LOHI,
 
@@ -319,7 +319,7 @@ namespace ISD {
     INSERT_SUBREG,
     
     // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing
-    // an unsigned/signed value of type i[2*n], then return the top part.
+    // an unsigned/signed value of type i[2*N], then return the top part.
     MULHU, MULHS,
 
     // Bitwise operators - logical and, logical or, logical xor, shift left,
