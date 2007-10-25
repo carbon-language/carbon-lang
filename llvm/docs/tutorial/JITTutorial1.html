@@ -50,7 +50,18 @@ entry:
 
 <p>If you're unsure what the above code says, skim through the <a href="../LangRef.html">LLVM Language Reference Manual</a> and convince yourself that the above LLVM IR is actually equivalent to the original function.  Once you’re satisfied with that, let’s move on to actually generating it programmatically!</p>
 
-<p>... STUFF ABOUT HEADERS ... </p>
+<p>Of course, before we can start, we need to <code>#include</code> the appropriate LLVM header files:</p>
+
+<div class="doc_code">
+<pre>
+#include &lt;llvm/Module.h&gt;
+#include &lt;llvm/Function.h&gt;
+#include &lt;llvm/PassManager.h&gt;
+#include &lt;llvm/Analysis/Verifier.h&gt;
+#include &lt;llvm/Assembly/PrintModulePass.h&gt;
+#include &lt;llvm/Support/LLVMBuilder.h&gt;
+</pre>
+</div>
 
 <p>Now, let’s get started on our real program.  Here’s what our basic <code>main()</code> will look like:</p>
 
@@ -153,9 +164,16 @@ Module* makeLLVMModule() {
 
 <p>The final step in creating our function is to create the instructions that make it up.  Our <code>mul_add</code> function is composed of just three instructions: a multiply, an add, and a return.  <code>LLVMBuilder</code> gives us a simple interface for constructing these instructions and appending them to the “entry” block.  Each of the calls to <code>LLVMBuilder</code> returns a <code>Value*</code> that represents the value yielded by the instruction.  You’ll also notice that, above, <code>x</code>, <code>y</code>, and <code>z</code> are also <code>Value*</code>’s, so it’s clear that instructions operate on <code>Value*</code>’s.</p>
 
-<p>And that’s it!  Now you can compile and run your code, and get a wonder textual print out of the LLVM IR we saw at the beginning.</p>
+<p>And that’s it!  Now you can compile and run your code, and get a wonderful textual print out of the LLVM IR we saw at the beginning.  To compile, use the following commandline as a guide:</p>
 
-<p> ... SECTION ABOUT USING llvm-config TO GET THE NECESSARY COMPILER FLAGS TO COMPILE YOUR CODE ... </p>
+<div class="doc_code">
+<pre>
+# c++ -g tut2.cpp `llvm-config --cppflags --ldflags --libs core` -o tut2
+# ./tut2
+</pre>
+</div>
+
+<p>The <code>llvm-config</code> utility is used to obtain the necessary GCC-compatible compiler flags for linking with LLVM.  For this example, we only need the 'core' library.  We'll use others once we start adding optimizers and the JIT engine.</p>
 
 </div>
 
