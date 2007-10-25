@@ -64,9 +64,11 @@ namespace {
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
     // Metadata emission.
-    void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl);
+    void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
+                                  std::string &Result);
     
-    void RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *CDecl);
+    void RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *CDecl,
+                                     std::string &Result);
     
     void RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
                                     int NumMethods,
@@ -78,8 +80,9 @@ namespace {
     void RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
                                       int NumProtocols,
                                       const char *prefix,
-                                      const char *ClassName);
-    void WriteObjcMetaData();
+                                      const char *ClassName,
+                                      std::string &Result);
+    void WriteObjcMetaData(std::string &Result);
   };
 }
 
@@ -150,7 +153,10 @@ RewriteTest::~RewriteTest() {
   }
   
   // Rewrite Objective-c meta data*
-  WriteObjcMetaData();
+  std::string ResultStr;
+  WriteObjcMetaData(ResultStr);
+  // For now just print the string out.
+  printf("%s", ResultStr.c_str());
 }
 
 //===----------------------------------------------------------------------===//
@@ -378,37 +384,44 @@ void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
     Result += "\tchar *method_types;\n";
     Result += "\tvoid *_imp;\n";
     Result += "};\n";
+    
+    /* struct _objc_method_list {
+     struct _objc_method_list *next_method;
+     int method_count;
+     struct _objc_method method_list[];
+     }
+     */
+    Result += "\nstruct _objc_method_list {\n";
+    Result += "\tstruct _objc_method_list *next_method;\n";
+    Result += "\tint method_count;\n";
+    Result += "\tstruct _objc_method method_list[];\n};\n";
     objc_impl_method = true;
   }
   // Build _objc_method_list for class's methods if needed
   if (NumMethods > 0) {
-    /* struct _objc_method_list {
-     struct _objc_method_list *next_method;
-     int method_count;
-     struct _objc_method method_list[method_count];
-     }
-     */
-    Result += "\nstatic struct {\n";
-    Result += "\tstruct _objc_method_list *next_method;\n";
-    Result += "\tint method_count;\n";
-    Result += "\tstruct _objc_method method_list[" + utostr(NumMethods) +"];\n";
-    Result += "} _OBJC_";
+    Result += "\nstatic struct _objc_method_list _OBJC_";
     Result += prefix;
     Result += IsInstanceMethod ? "INSTANCE" : "CLASS";
     Result += "_METHODS_";
     Result += ClassName;
     Result += " __attribute__ ((section (\"__OBJC, __";
     Result += IsInstanceMethod ? "inst" : "cls";
-    Result += "_meth\")))= {\n\t0, " + utostr(NumMethods) + "\n";
-    
-    for (int i = 0; i < NumMethods; i++) {
+    Result += "_meth\")))= ";
+    Result += "{\n\t0, " + utostr(NumMethods) + "\n";
+
+    Result += "\t,{{(SEL)\"";
+    Result += Methods[0]->getSelector().getName().c_str();
+    Result += "\", \"\", 0}\n";
+  
+    for (int i = 1; i < NumMethods; i++) {
       // TODO: 1) method selector name may hav to go into their own section
       // 2) encode method types for use here (which may have to go into 
       // __meth_var_types section, 3) Need method address as 3rd initializer.
-      Result += "\t,(SEL)\"" + Methods[i]->getSelector().getName() +
-                "\", \"\", 0\n";
-      }
-    Result += "};\n";
+      Result += "\t  ,{(SEL)\"";
+      Result += Methods[i]->getSelector().getName().c_str();
+      Result += "\", \"\", 0}\n";
+    }
+    Result += "\t }\n};\n";
   }
 }
 
@@ -416,7 +429,8 @@ void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
 void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
                                                int NumProtocols,
                                                const char *prefix,
-                                               const char *ClassName) {
+                                               const char *ClassName,
+                                               std::string &Result) {
   static bool objc_protocol_methods = false;
   if (NumProtocols > 0) {
     for (int i = 0; i < NumProtocols; i++) {
@@ -430,53 +444,72 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
          char *method_types;
          }
          */
-        printf("\nstruct protocol_methods {\n");
-        printf("\tSEL _cmd;\n");
-        printf("\tchar *method_types;\n");
-        printf("};\n");
+        Result += "\nstruct protocol_methods {\n";
+        Result += "\tSEL _cmd;\n";
+        Result += "\tchar *method_types;\n";
+        Result += "};\n";
+        
+        /* struct _objc_protocol_method_list {
+         int protocol_method_count;
+         struct protocol_methods protocols[];
+         }
+         */
+        Result += "\nstruct _objc_protocol_method_list {\n";
+        Result += "\tint protocol_method_count;\n";
+        Result += "\tstruct protocol_methods protocols[];\n};\n";
         objc_protocol_methods = true;
       }
+      
       // Output instance methods declared in this protocol.
-      /* struct _objc_protocol_method_list {
-       int protocol_method_count;
-       struct protocol_methods protocols[protocol_method_count];
-       }
-       */      
       int NumMethods = PDecl->getNumInstanceMethods();
       if (NumMethods > 0) {
-        printf("\nstatic struct {\n");
-        printf("\tint protocol_method_count;\n");
-        printf("\tstruct protocol_methods protocols[%d];\n", NumMethods);
-        printf("} _OBJC_PROTOCOL_INSTANCE_METHODS_%s "
-               "__attribute__ ((section (\"__OBJC, __cat_inst_meth\")))= "
-               "{\n\t%d\n",PDecl->getName(), NumMethods);
+        Result += "\nstatic struct _objc_protocol_method_list "
+               "_OBJC_PROTOCOL_INSTANCE_METHODS_";
+        Result += PDecl->getName();
+        Result += " __attribute__ ((section (\"__OBJC, __cat_inst_meth\")))= "
+          "{\n\t" + utostr(NumMethods) + "\n";
+        
         ObjcMethodDecl **Methods = PDecl->getInstanceMethods();
-        for (int i = 0; i < NumMethods; i++)
+        Result += "\t,{{(SEL)\"";
+        Result += Methods[0]->getSelector().getName().c_str();
+        Result += "\", \"\"}\n";
+                       
+        for (int i = 1; i < NumMethods; i++) {
           // TODO: 1) method selector name may hav to go into their own section
           // 2) encode method types for use here (which may have to go into 
           // __meth_var_types section.
-          printf("\t,(SEL)\"%s\", \"\"\n", 
-                 Methods[i]->getSelector().getName().c_str());
-        printf("};\n");
+          Result += "\t  ,{(SEL)\"";
+          Result += Methods[i]->getSelector().getName().c_str();
+          Result += "\", \"\"}\n";
+        }
+        Result += "\t }\n};\n";
       }
       
       // Output class methods declared in this protocol.
       NumMethods = PDecl->getNumClassMethods();
       if (NumMethods > 0) {
-        printf("\nstatic struct {\n");
-        printf("\tint protocol_method_count;\n");
-        printf("\tstruct protocol_methods protocols[%d];\n", NumMethods);
-        printf("} _OBJC_PROTOCOL_CLASS_METHODS_%s "
-               "__attribute__ ((section (\"__OBJC, __cat_cls_meth\")))= "
-               "{\n\t%d\n",PDecl->getName(), NumMethods);
+        Result += "\nstatic struct _objc_protocol_method_list "
+               "_OBJC_PROTOCOL_CLASS_METHODS_";
+        Result += PDecl->getName();
+        Result += " __attribute__ ((section (\"__OBJC, __cat_cls_meth\")))= "
+               "{\n\t";
+        Result += utostr(NumMethods);
+        Result += "\n";
+        
         ObjcMethodDecl **Methods = PDecl->getClassMethods();
-        for (int i = 0; i < NumMethods; i++)
+        Result += "\t,{{(SEL)\"";
+        Result += Methods[0]->getSelector().getName().c_str();
+        Result += "\", \"\"}\n";
+            
+        for (int i = 1; i < NumMethods; i++) {
           // TODO: 1) method selector name may hav to go into their own section
           // 2) encode method types for use here (which may have to go into 
           // __meth_var_types section.
-          printf("\t,(SEL)\"%s\", \"\"\n", 
-                 Methods[i]->getSelector().getName().c_str());
-        printf("};\n");
+          Result += "\t  ,{(SEL)\"";
+          Result += Methods[i]->getSelector().getName().c_str();
+          Result += "\", \"\"}\n";
+        }
+        Result += "\t }\n};\n";
       }
       // Output:
       /* struct _objc_protocol {
@@ -484,64 +517,84 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
        struct _objc_protocol_extension *isa;
        char *protocol_name;
        struct _objc_protocol **protocol_list;
-       struct _objc__method_prototype_list *instance_methods;
-       struct _objc__method_prototype_list *class_methods;
+       struct _objc_protocol_method_list *instance_methods;
+       struct _objc_protocol_method_list *class_methods;
        };  
        */
       static bool objc_protocol = false;
       if (!objc_protocol) {
-        printf("\nstruct _objc_protocol {\n");
-        printf("\tstruct _objc_protocol_extension *isa;\n");
-        printf("\tchar *protocol_name;\n");
-        printf("\tstruct _objc_protocol **protocol_list;\n");
-        printf("\tstruct _objc__method_prototype_list *instance_methods;\n");
-        printf("\tstruct _objc__method_prototype_list *class_methods;\n");
-        printf("};\n");
+        Result += "\nstruct _objc_protocol {\n";
+        Result += "\tstruct _objc_protocol_extension *isa;\n";
+        Result += "\tchar *protocol_name;\n";
+        Result += "\tstruct _objc_protocol **protocol_list;\n";
+        Result += "\tstruct _objc_protocol_method_list *instance_methods;\n";
+        Result += "\tstruct _objc_protocol_method_list *class_methods;\n";
+        Result += "};\n";
+        
+        /* struct _objc_protocol_list {
+         struct _objc_protocol_list *next;
+         int    protocol_count;
+         struct _objc_protocol *class_protocols[];
+         }
+         */
+        Result += "\nstruct _objc_protocol_list {\n";
+        Result += "\tstruct _objc_protocol_list *next;\n";
+        Result += "\tint    protocol_count;\n";
+        Result += "\tstruct _objc_protocol *class_protocols[];\n";
+        Result += "};\n";
         objc_protocol = true;
       }
       
-      printf("\nstatic struct _objc_protocol _OBJC_PROTOCOL_%s "
-             "__attribute__ ((section (\"__OBJC, __protocol\")))= "
-             "{\n\t0, \"%s\", 0, ", PDecl->getName(), PDecl->getName());
-      if (PDecl->getInstanceMethods() > 0)
-        printf("(struct _objc__method_prototype_list *)"
-               "&_OBJC_PROTOCOL_INSTANCE_METHODS_%s, ", PDecl->getName());
+      Result += "\nstatic struct _objc_protocol _OBJC_PROTOCOL_";
+      Result += PDecl->getName();
+      Result += " __attribute__ ((section (\"__OBJC, __protocol\")))= "
+        "{\n\t0, \"";
+      Result += PDecl->getName();
+      Result += "\", 0, ";
+      if (PDecl->getInstanceMethods() > 0) {
+        Result += "&_OBJC_PROTOCOL_INSTANCE_METHODS_";
+        Result += PDecl->getName();
+        Result += ", ";
+      }
       else
-        printf("0, ");
-      if (PDecl->getClassMethods() > 0)
-        printf("(struct _objc__method_prototype_list *)"
-               "&_OBJC_PROTOCOL_CLASS_METHODS_%s\n", PDecl->getName());
+        Result += "0, ";
+      if (PDecl->getClassMethods() > 0) {
+        Result += "&_OBJC_PROTOCOL_CLASS_METHODS_";
+        Result += PDecl->getName();
+        Result += "\n";
+      }
       else
-        printf("0\n");
-      printf("};\n");
+        Result += "0\n";
+      Result += "};\n";
     }
     // Output the top lovel protocol meta-data for the class.
-    /* struct _objc_protocol_list {
-     struct _objc_protocol_list *next;
-     int    protocol_count;
-     struct _objc_protocol *class_protocols[protocol_count];
-     }
-     */
-    printf("\nstatic struct {\n");
-    printf("\tstruct _objc_protocol_list *next;\n");
-    printf("\tint    protocol_count;\n");
-    printf("\tstruct _objc_protocol *class_protocols[%d];\n"
-           "} _OBJC_%s_PROTOCOLS_%s "
-           "__attribute__ ((section (\"__OBJC, __cat_cls_meth\")))= "
-           "{\n\t0, %d\n",NumProtocols, prefix,
-           ClassName, NumProtocols);
-    for (int i = 0; i < NumProtocols; i++) {
+    Result += "\nstatic struct _objc_protocol_list _OBJC_";
+    Result += prefix;
+    Result += "_PROTOCOLS_";
+    Result += ClassName;
+    Result += " __attribute__ ((section (\"__OBJC, __cat_cls_meth\")))= "
+      "{\n\t0, ";
+    Result += utostr(NumProtocols);
+    Result += "\n";
+    
+    Result += "\t,{&_OBJC_PROTOCOL_";
+    Result += Protocols[0]->getName();
+    Result += " \n";
+    
+    for (int i = 1; i < NumProtocols; i++) {
       ObjcProtocolDecl *PDecl = Protocols[i];
-      printf("\t,&_OBJC_PROTOCOL_%s \n", 
-             PDecl->getName());
+      Result += "\t ,&_OBJC_PROTOCOL_";
+      Result += PDecl->getName();
+      Result += "\n";
     }
-    printf("};\n");
+    Result += "\t }\n};\n";
   }  
 }
 
 /// RewriteObjcCategoryImplDecl - Rewrite metadata for each category 
 /// implementation.
-void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl) {
+void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
+                                              std::string &Result) {
   ObjcInterfaceDecl *ClassDecl = IDecl->getClassInterface();
   // Find category declaration for this implementation.
   ObjcCategoryDecl *CDecl;
@@ -555,29 +608,23 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl) {
     strlen(ClassDecl->getName()) + strlen(IDecl->getName()) + 2);
   sprintf(FullCategoryName, "%s_%s", ClassDecl->getName(), IDecl->getName());
   
-  std::string ResultStr;
-  
   // Build _objc_method_list for class's instance methods if needed
   RewriteObjcMethodsMetaData(IDecl->getInstanceMethods(),
                              IDecl->getNumInstanceMethods(),
                              true,
-                             "CATEGORY_", FullCategoryName, ResultStr);
+                             "CATEGORY_", FullCategoryName, Result);
   
   // Build _objc_method_list for class's class methods if needed
   RewriteObjcMethodsMetaData(IDecl->getClassMethods(),
                              IDecl->getNumClassMethods(),
                              false,
-                             "CATEGORY_", FullCategoryName, ResultStr);
-  
-  // For now just print the string out.  It should be passed to the other
-  // functions to collect all metadata info into the string.
-  printf("%s", ResultStr.c_str());
+                             "CATEGORY_", FullCategoryName, Result);
   
   // Protocols referenced in class declaration?
   RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(),
                                CDecl->getNumReferencedProtocols(),
                                "CATEGORY",
-                               FullCategoryName);
+                               FullCategoryName, Result);
   
   /* struct _objc_category {
    char *category_name;
@@ -594,48 +641,58 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl) {
   
   static bool objc_category = false;
   if (!objc_category) {
-    printf("\nstruct _objc_category {\n");
-    printf("\tchar *category_name;\n");
-    printf("\tchar *class_name;\n");
-    printf("\tstruct _objc_method_list *instance_methods;\n");
-    printf("\tstruct _objc_method_list *class_methods;\n");
-    printf("\tstruct _objc_protocol_list *protocols;\n");
-    printf("\tunsigned int size;\n");   
-    printf("\tstruct _objc_property_list *instance_properties;\n");
-    printf("};\n");
+    Result += "\nstruct _objc_category {\n";
+    Result += "\tchar *category_name;\n";
+    Result += "\tchar *class_name;\n";
+    Result += "\tstruct _objc_method_list *instance_methods;\n";
+    Result += "\tstruct _objc_method_list *class_methods;\n";
+    Result += "\tstruct _objc_protocol_list *protocols;\n";
+    Result += "\tunsigned int size;\n";   
+    Result += "\tstruct _objc_property_list *instance_properties;\n";
+    Result += "};\n";
     objc_category = true;
   }
-  printf("\nstatic struct _objc_category _OBJC_CATEGORY_%s "
-         "__attribute__ ((section (\"__OBJC, __category\")))= {\n"
-         "\t\"%s\"\n\t, \"%s\"\n",FullCategoryName, 
-         IDecl->getName(), 
-         ClassDecl->getName());
-  if (IDecl->getNumInstanceMethods() > 0)
-    printf("\t, (struct _objc_method_list *)"
-           "&_OBJC_CATEGORY_INSTANCE_METHODS_%s\n", 
-           FullCategoryName);
-  else
-    printf("\t, 0\n");
-  if (IDecl->getNumClassMethods() > 0)
-    printf("\t, (struct _objc_method_list *)"
-           "&_OBJC_CATEGORY_CLASS_METHODS_%s\n", 
-           FullCategoryName);
-  else
-    printf("\t, 0\n");
+  Result += "\nstatic struct _objc_category _OBJC_CATEGORY_";
+  Result += FullCategoryName;
+  Result += " __attribute__ ((section (\"__OBJC, __category\")))= {\n\t\"";
+  Result += IDecl->getName();
+  Result += "\"\n\t, \"";
+  Result += ClassDecl->getName();
+  Result += "\"\n";
   
-  if (CDecl->getNumReferencedProtocols() > 0)
-    printf("\t, (struct _objc_protocol_list *)&_OBJC_CATEGORY_PROTOCOLS_%s\n", 
-           FullCategoryName);
+  if (IDecl->getNumInstanceMethods() > 0) {
+    Result += "\t, (struct _objc_method_list *)"
+           "&_OBJC_CATEGORY_INSTANCE_METHODS_";
+    Result += FullCategoryName;
+    Result += "\n";
+  }
   else
-    printf("\t, 0\n");
-  printf("\t, sizeof(struct _objc_category), 0\n};\n");
+    Result += "\t, 0\n";
+  if (IDecl->getNumClassMethods() > 0) {
+    Result += "\t, (struct _objc_method_list *)"
+           "&_OBJC_CATEGORY_CLASS_METHODS_";
+    Result += FullCategoryName;
+    Result += "\n";
+  }
+  else
+    Result += "\t, 0\n";
+  
+  if (CDecl->getNumReferencedProtocols() > 0) {
+    Result += "\t, (struct _objc_protocol_list *)&_OBJC_CATEGORY_PROTOCOLS_"; 
+    Result += FullCategoryName;
+    Result += "\n";
+  }
+  else
+    Result += "\t, 0\n";
+  Result += "\t, sizeof(struct _objc_category), 0\n};\n";
 }
 
 //===----------------------------------------------------------------------===//
 // Meta Data Emission
 //===----------------------------------------------------------------------===//
 
-void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
+void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
+                                           std::string &Result) {
   ObjcInterfaceDecl *CDecl = IDecl->getClassInterface();
   
   // Build _objc_ivar_list metadata for classes ivars if needed
@@ -652,57 +709,64 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
           int ivar_offset;
         };  
        */
-      printf("\nstruct _objc_ivar {\n");
-      printf("\tchar *ivar_name;\n");
-      printf("\tchar *ivar_type;\n");
-      printf("\tint ivar_offset;\n");
-      printf("};\n");
+      Result += "\nstruct _objc_ivar {\n";
+      Result += "\tchar *ivar_name;\n";
+      Result += "\tchar *ivar_type;\n";
+      Result += "\tint ivar_offset;\n";
+      Result += "};\n";
+      
+      /* struct _objc_ivar_list {
+       int ivar_count;
+       struct _objc_ivar ivar_list[];
+       };  
+       */
+      Result += "\nstruct _objc_ivar_list {\n";
+      Result += "\tint ivar_count;\n";
+      Result += "\tstruct _objc_ivar ivar_list[];\n};\n";
       objc_ivar = true;
     }
 
-    /* struct _objc_ivar_list {
-        int ivar_count;
-        struct _objc_ivar ivar_list[ivar_count];
-     };  
-    */
-    printf("\nstatic struct {\n");
-    printf("\tint ivar_count;\n");
-    printf("\tstruct _objc_ivar ivar_list[%d];\n", NumIvars);
-    printf("} _OBJC_INSTANCE_VARIABLES_%s "
-      "__attribute__ ((section (\"__OBJC, __instance_vars\")))= "
-      "{\n\t%d\n",IDecl->getName(), 
-           NumIvars);
+    Result += "\nstatic struct _objc_ivar_list _OBJC_INSTANCE_VARIABLES_";
+    Result += IDecl->getName();
+    Result += " __attribute__ ((section (\"__OBJC, __instance_vars\")))= "
+      "{\n\t";
+    Result += utostr(NumIvars);
+    Result += "\n";
+          
     ObjcIvarDecl **Ivars = IDecl->getImplDeclIVars() 
                              ? IDecl->getImplDeclIVars() 
                              : CDecl->getIntfDeclIvars();
-    for (int i = 0; i < NumIvars; i++)
+    Result += "\t,{{\"";
+    Result += Ivars[0]->getName();
+    Result += "\", \"\", 0}\n";
+    for (int i = 1; i < NumIvars; i++) {
       // TODO: 1) ivar names may have to go to another section. 2) encode
       // ivar_type type of each ivar . 3) compute and add ivar offset.
-      printf("\t,\"%s\", \"\", 0\n", Ivars[i]->getName());
-    printf("};\n");
+      Result += "\t  ,{\"";
+      Result += Ivars[i]->getName();
+      Result += "\", \"\", 0}\n";
+    }
+    
+    Result += "\t }\n};\n";
   }
-  
-  std::string ResultStr;
   
   // Build _objc_method_list for class's instance methods if needed
   RewriteObjcMethodsMetaData(IDecl->getInstanceMethods(), 
                              IDecl->getNumInstanceMethods(), 
-                             true, "", IDecl->getName(), ResultStr);
+                             true,
+                             "", IDecl->getName(), Result);
   
   // Build _objc_method_list for class's class methods if needed
   RewriteObjcMethodsMetaData(IDecl->getClassMethods(), 
                              IDecl->getNumClassMethods(),
-                             false, "", IDecl->getName(), ResultStr);
-  
-  // For now just print the string out.  It should be passed to the other
-  // functions to collect all metadata info into the string.
-  printf("%s", ResultStr.c_str());
-  
+                             false,
+                             "", IDecl->getName(), Result);
+    
   // Protocols referenced in class declaration?
   RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(), 
                                CDecl->getNumIntfRefProtocols(),
                                "CLASS",
-                               CDecl->getName());
+                               CDecl->getName(), Result);
     
   
   // Declaration of class/meta-class metadata
@@ -723,20 +787,20 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
   */
   static bool objc_class = false;
   if (!objc_class) {
-    printf("\nstruct _objc_class {\n");
-    printf("\tstruct _objc_class *isa;\n");
-    printf("\tconst char *super_class_name;\n");
-    printf("\tchar *name;\n");
-    printf("\tlong version;\n");
-    printf("\tlong info;\n");
-    printf("\tlong instance_size;\n");
-    printf("\tstruct _objc_ivar_list *ivars;\n");
-    printf("\tstruct _objc_method_list *methods;\n");
-    printf("\tstruct objc_cache *cache;\n");
-    printf("\tstruct _objc_protocol_list *protocols;\n");
-    printf("\tconst char *ivar_layout;\n");
-    printf("\tstruct _objc_class_ext  *ext;\n");
-    printf("};\n");
+    Result += "\nstruct _objc_class {\n";
+    Result += "\tstruct _objc_class *isa;\n";
+    Result += "\tconst char *super_class_name;\n";
+    Result += "\tchar *name;\n";
+    Result += "\tlong version;\n";
+    Result += "\tlong info;\n";
+    Result += "\tlong instance_size;\n";
+    Result += "\tstruct _objc_ivar_list *ivars;\n";
+    Result += "\tstruct _objc_method_list *methods;\n";
+    Result += "\tstruct objc_cache *cache;\n";
+    Result += "\tstruct _objc_protocol_list *protocols;\n";
+    Result += "\tconst char *ivar_layout;\n";
+    Result += "\tstruct _objc_class_ext  *ext;\n";
+    Result += "};\n";
     objc_class = true;
   }
   
@@ -749,60 +813,90 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
   }
   SuperClass = CDecl->getSuperClass();
   
-  printf("\nstatic struct _objc_class _OBJC_METACLASS_%s "
-         "__attribute__ ((section (\"__OBJC, __meta_class\")))= "
-         "{\n\t(struct _objc_class *)\"%s\"", 
-         CDecl->getName(), RootClass ? RootClass->getName() 
-                                     :  CDecl->getName());
-  if (SuperClass)
-    printf(", \"%s\", \"%s\"", SuperClass->getName(), CDecl->getName());
-  else
-    printf(", 0, \"%s\"", CDecl->getName());
+  Result += "\nstatic struct _objc_class _OBJC_METACLASS_";
+  Result += CDecl->getName();
+  Result += " __attribute__ ((section (\"__OBJC, __meta_class\")))= "
+  "{\n\t(struct _objc_class *)\"";
+  Result += (RootClass ? RootClass->getName() : CDecl->getName());
+  Result += "\"";
+
+  if (SuperClass) {
+    Result += ", \"";
+    Result += SuperClass->getName();
+    Result += "\", \"";
+    Result += CDecl->getName();
+    Result += "\"";
+  }
+  else {
+    Result += ", 0, \"";
+    Result += CDecl->getName();
+    Result += "\"";
+  }
   // TODO: 'ivars' field for root class is currently set to 0.
   // 'info' field is initialized to CLS_META(2) for metaclass
-  printf(", 0,2, sizeof(struct _objc_class), 0");
-  if (CDecl->getNumClassMethods() > 0)
-    printf("\n\t, (struct _objc_method_list *)&_OBJC_CLASS_METHODS_%s\n", 
-           CDecl->getName());
+  Result += ", 0,2, sizeof(struct _objc_class), 0";
+  if (CDecl->getNumClassMethods() > 0) {
+    Result += "\n\t, &_OBJC_CLASS_METHODS_";
+    Result += CDecl->getName();
+    Result += "\n"; 
+  }
   else
-    printf(", 0\n");
-  if (CDecl->getNumIntfRefProtocols() > 0)
-    printf("\t,0,(struct _objc_protocol_list*)&_OBJC_CLASS_PROTOCOLS_%s,0,0\n", 
-           CDecl->getName());
+    Result += ", 0\n";
+  if (CDecl->getNumIntfRefProtocols() > 0) {
+    Result += "\t,0, &_OBJC_CLASS_PROTOCOLS_";
+    Result += CDecl->getName();
+    Result += ",0,0\n";
+  }
   else
-    printf("\t,0,0,0,0\n");
-  printf("};\n");
+    Result += "\t,0,0,0,0\n";
+  Result += "};\n";
   
   // class metadata generation.
-  printf("\nstatic struct _objc_class _OBJC_CLASS_%s "
-         "__attribute__ ((section (\"__OBJC, __class\")))= "
-         "{\n\t&_OBJC_METACLASS_%s", CDecl->getName(), CDecl->getName());
-  if (SuperClass)
-    printf(", \"%s\", \"%s\"", SuperClass->getName(), CDecl->getName());
-  else
-    printf(", 0, \"%s\"", CDecl->getName());
+  Result += "\nstatic struct _objc_class _OBJC_CLASS_";
+  Result += CDecl->getName();
+  Result += " __attribute__ ((section (\"__OBJC, __class\")))= "
+            "{\n\t&_OBJC_METACLASS_";
+  Result += CDecl->getName();
+  if (SuperClass) {
+    Result += ", \"";
+    Result += SuperClass->getName();
+    Result += "\", \"";
+    Result += CDecl->getName();
+    Result += "\"";
+  }
+  else {
+    Result += ", 0, \"";
+    Result += CDecl->getName();
+    Result += "\"";
+  }
   // 'info' field is initialized to CLS_CLASS(1) for class
   // TODO: instance_size is curently set to 0.
-  printf(", 0,1,0");
-  if (NumIvars > 0)
-    printf(", (struct _objc_ivar_list *)&_OBJC_INSTANCE_VARIABLES_%s\n\t", 
-           CDecl->getName());
+  Result += ", 0,1,0";
+  if (NumIvars > 0) {
+    Result += ", &_OBJC_INSTANCE_VARIABLES_";
+    Result += CDecl->getName();
+    Result += "\n\t";
+  }
   else
-    printf(",0");
-  if (IDecl->getNumInstanceMethods() > 0)
-    printf(", (struct _objc_method_list*)&_OBJC_INSTANCE_METHODS_%s, 0\n\t", 
-           CDecl->getName());
+    Result += ",0";
+  if (IDecl->getNumInstanceMethods() > 0) {
+    Result += ", &_OBJC_INSTANCE_METHODS_";
+    Result += CDecl->getName();
+    Result += ", 0\n\t"; 
+  }
   else
-    printf(",0,0");
-  if (CDecl->getNumIntfRefProtocols() > 0)
-    printf(", (struct _objc_protocol_list*)&_OBJC_CLASS_PROTOCOLS_%s, 0,0\n", 
-           CDecl->getName());
+    Result += ",0,0";
+  if (CDecl->getNumIntfRefProtocols() > 0) {
+    Result += ", &_OBJC_CLASS_PROTOCOLS_";
+    Result += CDecl->getName();
+    Result += ", 0,0\n";
+  }
   else
-    printf(",0,0,0\n");
-  printf("};\n");
+    Result += ",0,0,0\n";
+  Result += "};\n";
 }
 
-void RewriteTest::WriteObjcMetaData() {
+void RewriteTest::WriteObjcMetaData(std::string &Result) {
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
   if (ClsDefCount == 0 && CatDefCount == 0)
@@ -810,15 +904,15 @@ void RewriteTest::WriteObjcMetaData() {
   
   // TODO: This is temporary until we decide how to access objc types in a
   // c program
-  printf("\n#include <Objc/objc.h>\n");
+  Result += "\n#include <Objc/objc.h>\n";
   
   // For each implemented class, write out all its meta data.
   for (int i = 0; i < ClsDefCount; i++)
-    RewriteObjcClassMetaData(ClassImplementation[i]);
+    RewriteObjcClassMetaData(ClassImplementation[i], Result);
   
   // For each implemented category, write out all its meta data.
   for (int i = 0; i < CatDefCount; i++)
-    RewriteObjcCategoryImplDecl(CategoryImplementation[i]);
+    RewriteObjcCategoryImplDecl(CategoryImplementation[i], Result);
   
   // Write objc_symtab metadata
   /*
@@ -832,26 +926,33 @@ void RewriteTest::WriteObjcMetaData() {
    }; 
    */
   
-  printf("\nstruct _objc_symtab {\n");
-  printf("\tlong sel_ref_cnt;\n");
-  printf("\tSEL *refs;\n");
-  printf("\tshort cls_def_cnt;\n");
-  printf("\tshort cat_def_cnt;\n");
-  printf("\tvoid *defs[%d];\n", ClsDefCount + CatDefCount);
-  printf("};\n\n");
+  Result += "\nstruct _objc_symtab {\n";
+  Result += "\tlong sel_ref_cnt;\n";
+  Result += "\tSEL *refs;\n";
+  Result += "\tshort cls_def_cnt;\n";
+  Result += "\tshort cat_def_cnt;\n";
+  Result += "\tvoid *defs[" + utostr(ClsDefCount + CatDefCount)+ "];\n";
+  Result += "};\n\n";
   
-  printf("static struct _objc_symtab "
-         "_OBJC_SYMBOLS __attribute__((section (\"__OBJC, __symbols\")))= {\n");
-  printf("\t0, 0, %d, %d\n", ClsDefCount, CatDefCount);
-  for (int i = 0; i < ClsDefCount; i++)
-    printf("\t,&_OBJC_CLASS_%s\n", ClassImplementation[i]->getName());
+  Result += "static struct _objc_symtab "
+         "_OBJC_SYMBOLS __attribute__((section (\"__OBJC, __symbols\")))= {\n";
+  Result += "\t0, 0, " + utostr(ClsDefCount) 
+            + ", " + utostr(CatDefCount) + "\n";
+  for (int i = 0; i < ClsDefCount; i++) {
+    Result += "\t,&_OBJC_CLASS_";
+    Result += ClassImplementation[i]->getName();
+    Result += "\n";
+  }
   
-  for (int i = 0; i < CatDefCount; i++)
-    printf("\t,&_OBJC_CATEGORY_%s_%s\n", 
-           CategoryImplementation[i]->getClassInterface()->getName(), 
-           CategoryImplementation[i]->getName());
+  for (int i = 0; i < CatDefCount; i++) {
+    Result += "\t,&_OBJC_CATEGORY_";
+    Result += CategoryImplementation[i]->getClassInterface()->getName();
+    Result += "_";
+    Result += CategoryImplementation[i]->getName();
+    Result += "\n";
+  }
   
-  printf("};\n\n");
+  Result += "};\n\n";
   
   // Write objc_module metadata
   
@@ -864,15 +965,15 @@ void RewriteTest::WriteObjcMetaData() {
    }
   */
   
-  printf("\nstruct _objc_module {\n");
-  printf("\tlong version;\n");
-  printf("\tlong size;\n");
-  printf("\tconst char *name;\n");
-  printf("\tstruct _objc_symtab *symtab;\n");
-  printf("};\n\n");
-  printf("static struct _objc_module "
-    "_OBJC_MODULES __attribute__ ((section (\"__OBJC, __module_info\")))= {\n");
-  printf("\t%d, sizeof(struct _objc_module), \"\", &_OBJC_SYMBOLS\n", OBJC_ABI_VERSION);
-  printf("};\n\n");
+  Result += "\nstruct _objc_module {\n";
+  Result += "\tlong version;\n";
+  Result += "\tlong size;\n";
+  Result += "\tconst char *name;\n";
+  Result += "\tstruct _objc_symtab *symtab;\n";
+  Result += "};\n\n";
+  Result += "static struct _objc_module "
+    "_OBJC_MODULES __attribute__ ((section (\"__OBJC, __module_info\")))= {\n";
+  Result += "\t" + utostr(OBJC_ABI_VERSION) + ", sizeof(struct _objc_module), \"\", &_OBJC_SYMBOLS\n";
+  Result += "};\n\n";
 }
 
