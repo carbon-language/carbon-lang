@@ -192,7 +192,7 @@ static int getNextToken() {
 <p>
 This implements a simple token buffer around the lexer.  This allows 
 us to look one token ahead at what the lexer is returning.  Every function in
-our lexer will assume that CurTok is the current token that needs to be
+our parser will assume that CurTok is the current token that needs to be
 parsed.</p>
 
 <p>Again, we define these with global variables; it would be better design to 
