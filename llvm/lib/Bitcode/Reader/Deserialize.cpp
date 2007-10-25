@@ -122,13 +122,13 @@ void Deserializer::ReadPtr(void*& PtrRef) {
 void Deserializer::BackpatchPointers() {
   for (MapTy::iterator I=BPatchMap.begin(),E=BPatchMap.end(); I!=E; ++I) {
     
-    BPatchEntry& E = I->second;
-    assert (E.Ptr && "No pointer found for backpatch.");
+    BPatchEntry& Entry = I->second;
+    assert (Entry.Ptr && "No pointer found for backpatch.");
     
-    for (BPatchNode* N = E.Head; N != NULL; N = N->Next)
-      N->PtrRef = E.Ptr;
+    for (BPatchNode* N = Entry.Head; N != NULL; N = N->Next)
+      N->PtrRef = Entry.Ptr;
     
-    E.Head = NULL;
+    Entry.Head = NULL;
   }
   
   Allocator.Reset();
