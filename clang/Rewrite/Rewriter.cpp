@@ -159,11 +159,27 @@ int Rewriter::getRangeSize(SourceRange Range) const {
   if (StartFileID != EndFileID)
     return -1;
   
+  unsigned Delta;
+  
+  // If no edits have been made to this buffer, the delta between the range
+  // Is just the difference in offsets.
+  std::map<unsigned, RewriteBuffer>::const_iterator I =
+    RewriteBuffers.find(StartFileID);
+  if (I == RewriteBuffers.end()) {
+    Delta = EndOff-StartOff;
+  } else {
+    // Otherwise, subtracted the mapped offsets instead.
+    const RewriteBuffer &RB = I->second;
+    Delta = RB.getMappedOffset(EndOff, true);
+    Delta -= RB.getMappedOffset(StartOff);
+  }
+
+  
   // Adjust the end offset to the end of the last token, instead of being the
   // start of the last token.
-  EndOff += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr);
+  Delta += Lexer::MeasureTokenLength(Range.getEnd(), *SourceMgr);
   
-  return EndOff-StartOff;
+  return Delta;
 }
 
 
