@@ -400,10 +400,6 @@ last function we compiled.</p>
   Builder.SetInsertPoint(BB);
   
   if (Value *RetVal = Body-&gt;Codegen()) {
-    // Finish off the function.
-    Builder.CreateRet(RetVal);
-    return TheFunction;
-  }
 </pre>
 </div>
 
@@ -417,12 +413,29 @@ href="http://en.wikipedia.org/wiki/Control_flow_graph">Control Flow Graph</a>.
 Since we don't have any control flow, our functions will only contain one 
 block so far.  We'll fix this in a future installment :).</p>
 
+<div class="doc_code">
+<pre>
+  if (Value *RetVal = Body-&gt;Codegen()) {
+    // Finish off the function.
+    Builder.CreateRet(RetVal);
+    
+    // Validate the generated code, checking for consistency.
+    verifyFunction(*TheFunction);
+    return TheFunction;
+  }
+</pre>
+</div>
+
 <p>Once the insertion point is set up, we call the <tt>CodeGen()</tt> method for
 the root expression of the function.  If no error happens, this emits code to
 compute the expression into the entry block and returns the value that was
 computed.  Assuming no error, we then create an LLVM <a 
-href="../LangRef.html#i_ret">ret instruction</a>.  This completes the function,
-which is then returned.</p>
+href="../LangRef.html#i_ret">ret instruction</a>, which completes the function.
+Once the function is built, we call the <tt>verifyFunction</tt> function, which
+is provided by LLVM.  This function does a variety of consistency checks on the
+generated code, to determine if our compiler is doing everything right.  Using
+this is important: it can catch a lot of bugs.  Once the function is finished
+and validated, we return it.</p>
   
 <div class="doc_code">
 <pre>
@@ -625,6 +638,7 @@ our makefile/command line about which options to use:</p>
 
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/Support/LLVMBuilder.h"
 #include &lt;cstdio&gt;
 #include &lt;string&gt;
@@ -1071,6 +1085,9 @@ Function *FunctionAST::Codegen() {
   if (Value *RetVal = Body-&gt;Codegen()) {
     // Finish off the function.
     Builder.CreateRet(RetVal);
+    
+    // Validate the generated code, checking for consistency.
+    verifyFunction(*TheFunction);
     return TheFunction;
   }
   
