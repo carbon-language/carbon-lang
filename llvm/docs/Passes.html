@@ -7,6 +7,34 @@
 </head>
 <body>
 
+<!--
+
+If Passes.html is up to date, the following "one-liner" should print
+an empty diff.
+
+egrep -e '^<tr><td><a href="#.*">-.*</a></td><td>.*</td></tr>$' \
+      -e '^  <a name=".*">.*</a>$' < Passes.html >html; \
+perl >help <<'EOT' && diff -u help html; rm -f help html
+open HTML, "<Passes.html" or die "open: Passes.html: $!\n";
+while (<HTML>) {
+  m:^<tr><td><a href="#(.*)">-.*</a></td><td>.*</td></tr>$: or next;
+  $order{$1} = sprintf("%03d", 1 + int %order);
+}
+open HELP, "../Release/bin/opt --help|" or die "open: opt --help: $!\n";
+while (<HELP>) {
+  m:^    -([^ ]+) +- (.*)$: or next;
+  my $o = $order{$1};
+  $o = "000" unless defined $o;
+  push @x, "$o<tr><td><a href=\"#$1\">-$1</a></td><td>$2</td></tr>\n";
+  push @y, "$o  <a name=\"$1\">$2</a>\n";
+}
+@x = map { s/^\d\d\d//; $_ } sort @x;
+@y = map { s/^\d\d\d//; $_ } sort @y;
+print @x, @y;
+EOT
+
+  -->
+
 <div class="doc_title">LLVM's Analysis and Transform Passes</div>
 
 <ol>
@@ -26,11 +54,11 @@
   <p>This document serves as a high level summary of the optimization features 
   that LLVM provides. Optimizations are implemented as Passes that traverse some
   portion of a program to either collect information or transform the program.
-  THe table below divides the passes that LLVM provides into three categories.
+  The table below divides the passes that LLVM provides into three categories.
   Analysis passes compute information that other passes can use or for debugging
   or program visualization purposes. Transform passes can use (or invalidate)
   the analysis passes. Transform passes all mutate the program in some way. 
-  Utility passes provides ome utility but don't otherwise fit categorization.
+  Utility passes provides some utility but don't otherwise fit categorization.
   For example passes to extract functions to bitcode or write a module to
   bitcode are neither analysis nor transform passes.
   <p>The table below provides a quick summary of each pass and links to the more
@@ -48,26 +76,23 @@
 <tr><td><a href="#callgraph">-callgraph</a></td><td>Print a call graph</td></tr>
 <tr><td><a href="#callscc">-callscc</a></td><td>Print SCCs of the Call Graph</td></tr>
 <tr><td><a href="#cfgscc">-cfgscc</a></td><td>Print SCCs of each function CFG</td></tr>
+<tr><td><a href="#codegenprepare">-codegenprepare</a></td><td>Optimize for code generation</td></tr>
 <tr><td><a href="#count-aa">-count-aa</a></td><td>Count Alias Analysis Query Responses</td></tr>
 <tr><td><a href="#debug-aa">-debug-aa</a></td><td>AA use debugger</td></tr>
 <tr><td><a href="#domfrontier">-domfrontier</a></td><td>Dominance Frontier Construction</td></tr>
-<tr><td><a href="#domset">-domset</a></td><td>Dominator Set Construction</td></tr>
 <tr><td><a href="#domtree">-domtree</a></td><td>Dominator Tree Construction</td></tr>
-<tr><td><a href="#etforest">-etforest</a></td><td>ET Forest Construction</td></tr>
 <tr><td><a href="#externalfnconstants">-externalfnconstants</a></td><td>Print external fn callsites passed constants</td></tr>
 <tr><td><a href="#globalsmodref-aa">-globalsmodref-aa</a></td><td>Simple mod/ref analysis for globals</td></tr>
-<tr><td><a href="#idom">-idom</a></td><td>Immediate Dominators Construction</td></tr>
+<tr><td><a href="#gvn">-gvn</a></td><td>Global Value Numbering</td></tr>
 <tr><td><a href="#instcount">-instcount</a></td><td>Counts the various types of Instructions</td></tr>
 <tr><td><a href="#intervals">-intervals</a></td><td>Interval Partition Construction</td></tr>
 <tr><td><a href="#load-vn">-load-vn</a></td><td>Load Value Numbering</td></tr>
 <tr><td><a href="#loops">-loops</a></td><td>Natural Loop Construction</td></tr>
+<tr><td><a href="#memdep">-memdep</a></td><td>Memory Dependence Analysis</td></tr>
 <tr><td><a href="#no-aa">-no-aa</a></td><td>No Alias Analysis (always returns 'may' alias)</td></tr>
 <tr><td><a href="#no-profile">-no-profile</a></td><td>No Profile Information</td></tr>
 <tr><td><a href="#postdomfrontier">-postdomfrontier</a></td><td>Post-Dominance Frontier Construction</td></tr>
-<tr><td><a href="#postdomset">-postdomset</a></td><td>Post-Dominator Set Construction</td></tr>
 <tr><td><a href="#postdomtree">-postdomtree</a></td><td>Post-Dominator Tree Construction</td></tr>
-<tr><td><a href="#postetforest">-postetforest</a></td><td>Post-ET-Forest Construction</td></tr>
-<tr><td><a href="#postidom">-postidom</a></td><td>Immediate Post-Dominators Construction</td></tr>
 <tr><td><a href="#print">-print</a></td><td>Print function to stderr</td></tr>
 <tr><td><a href="#print-alias-sets">-print-alias-sets</a></td><td>Alias Set Printer</td></tr>
 <tr><td><a href="#print-callgraph">-print-callgraph</a></td><td>Print Call Graph to 'dot' file</td></tr>
@@ -85,7 +110,7 @@
 <tr><td><a href="#adce">-adce</a></td><td>Aggressive Dead Code Elimination</td></tr>
 <tr><td><a href="#argpromotion">-argpromotion</a></td><td>Promote 'by reference' arguments to scalars</td></tr>
 <tr><td><a href="#block-placement">-block-placement</a></td><td>Profile Guided Basic Block Placement</td></tr>
-<tr><td><a href="#break-crit-edges">-break-crit-edges</a></td><td>Break Critical Edges in CFG</td></tr>
+<tr><td><a href="#break-crit-edges">-break-crit-edges</a></td><td>Break critical edges in CFG</td></tr>
 <tr><td><a href="#cee">-cee</a></td><td>Correlated Expression Elimination</td></tr>
 <tr><td><a href="#condprop">-condprop</a></td><td>Conditional Propagation</td></tr>
 <tr><td><a href="#constmerge">-constmerge</a></td><td>Merge Duplicate Global Constants</td></tr>
@@ -98,6 +123,7 @@
 <tr><td><a href="#gcse">-gcse</a></td><td>Global Common Subexpression Elimination</td></tr>
 <tr><td><a href="#globaldce">-globaldce</a></td><td>Dead Global Elimination</td></tr>
 <tr><td><a href="#globalopt">-globalopt</a></td><td>Global Variable Optimizer</td></tr>
+<tr><td><a href="#gvnpre">-gvnpre</a></td><td>Global Value Numbering/Partial Redundancy Elimination</td></tr>
 <tr><td><a href="#indmemrem">-indmemrem</a></td><td>Indirect Malloc and Free Removal</td></tr>
 <tr><td><a href="#indvars">-indvars</a></td><td>Canonicalize Induction Variables</td></tr>
 <tr><td><a href="#inline">-inline</a></td><td>Function Integration/Inlining</td></tr>
@@ -114,24 +140,26 @@
 <tr><td><a href="#licm">-licm</a></td><td>Loop Invariant Code Motion</td></tr>
 <tr><td><a href="#loop-extract">-loop-extract</a></td><td>Extract loops into new functions</td></tr>
 <tr><td><a href="#loop-extract-single">-loop-extract-single</a></td><td>Extract at most one loop into a new function</td></tr>
+<tr><td><a href="#loop-index-split">-loop-index-split</a></td><td>Index Split Loops</td></tr>
 <tr><td><a href="#loop-reduce">-loop-reduce</a></td><td>Loop Strength Reduction</td></tr>
-<tr><td><a href="#loop-unroll">-loop-unroll</a></td><td>Unroll Loops</td></tr>
-<tr><td><a href="#loop-unswitch">-loop-unswitch</a></td><td>Unswitch Loops</td></tr>
-<tr><td><a href="#loopsimplify">-loopsimplify</a></td><td>Canonicalize Natural Loops</td></tr>
-<tr><td><a href="#lower-packed">-lower-packed</a></td><td>Lower Packed Operations</td></tr>
+<tr><td><a href="#loop-rotate">-loop-rotate</a></td><td>Rotate Loops</td></tr>
+<tr><td><a href="#loop-unroll">-loop-unroll</a></td><td>Unroll loops</td></tr>
+<tr><td><a href="#loop-unswitch">-loop-unswitch</a></td><td>Unswitch loops</td></tr>
+<tr><td><a href="#loopsimplify">-loopsimplify</a></td><td>Canonicalize natural loops</td></tr>
+<tr><td><a href="#lower-packed">-lower-packed</a></td><td>lowers packed operations to operations on smaller packed datatypes</td></tr>
 <tr><td><a href="#lowerallocs">-lowerallocs</a></td><td>Lower allocations from instructions to calls</td></tr>
 <tr><td><a href="#lowergc">-lowergc</a></td><td>Lower GC intrinsics, for GCless code generators</td></tr>
-<tr><td><a href="#lowerinvoke">-lowerinvoke</a></td><td>Lower Invoke and Unwind</td></tr>
-<tr><td><a href="#lowerselect">-lowerselect</a></td><td>Lower Selects To Branches</td></tr>
+<tr><td><a href="#lowerinvoke">-lowerinvoke</a></td><td>Lower invoke and unwind, for unwindless code generators</td></tr>
+<tr><td><a href="#lowerselect">-lowerselect</a></td><td>Lower select instructions to branches</td></tr>
 <tr><td><a href="#lowersetjmp">-lowersetjmp</a></td><td>Lower Set Jump</td></tr>
 <tr><td><a href="#lowerswitch">-lowerswitch</a></td><td>Lower SwitchInst's to branches</td></tr>
 <tr><td><a href="#mem2reg">-mem2reg</a></td><td>Promote Memory to Register</td></tr>
-<tr><td><a href="#mergereturn">-mergereturn</a></td><td>Unify Function Exit Nodes</td></tr>
+<tr><td><a href="#mergereturn">-mergereturn</a></td><td>Unify function exit nodes</td></tr>
 <tr><td><a href="#predsimplify">-predsimplify</a></td><td>Predicate Simplifier</td></tr>
 <tr><td><a href="#prune-eh">-prune-eh</a></td><td>Remove unused exception handling info</td></tr>
 <tr><td><a href="#raiseallocs">-raiseallocs</a></td><td>Raise allocations from calls to instructions</td></tr>
-<tr><td><a href="#reassociate">-reassociate</a></td><td>Reassociate Expressions</td></tr>
-<tr><td><a href="#reg2mem">-reg2mem</a></td><td>Demote Values to Memory</td></tr>
+<tr><td><a href="#reassociate">-reassociate</a></td><td>Reassociate expressions</td></tr>
+<tr><td><a href="#reg2mem">-reg2mem</a></td><td>Demote all values to stack slots</td></tr>
 <tr><td><a href="#scalarrepl">-scalarrepl</a></td><td>Scalar Replacement of Aggregates</td></tr>
 <tr><td><a href="#sccp">-sccp</a></td><td>Sparse Conditional Constant Propagation</td></tr>
 <tr><td><a href="#simplify-libcalls">-simplify-libcalls</a></td><td>Simplify well-known library calls</td></tr>
@@ -139,12 +167,16 @@
 <tr><td><a href="#strip">-strip</a></td><td>Strip all symbols from a module</td></tr>
 <tr><td><a href="#tailcallelim">-tailcallelim</a></td><td>Tail Call Elimination</td></tr>
 <tr><td><a href="#tailduplicate">-tailduplicate</a></td><td>Tail Duplication</td></tr>
+
+
 <tr><th colspan="3"><b>UTILITY PASSES</b></th></tr>
 <tr><th>Option</th><th>Name</th><th>Directory</th></tr>
-<tr><td><a href="#deadarghaX0r">-deadarghaX0r</a></td><td>Dead Argument Hacking (BUGPOINT ONLY)</td></tr>
-<tr><td><a href="#extract-blocks">-extract-blocks</a></td><td>Extract Basic Blocks From Module (BUGPOINT ONLY)</td></tr>
+<tr><td><a href="#deadarghaX0r">-deadarghaX0r</a></td><td>Dead Argument Hacking (BUGPOINT USE ONLY; DO NOT USE)</td></tr>
+<tr><td><a href="#extract-blocks">-extract-blocks</a></td><td>Extract Basic Blocks From Module (for bugpoint use)</td></tr>
 <tr><td><a href="#emitbitcode">-emitbitcode</a></td><td>Bitcode Writer</td></tr>
 <tr><td><a href="#verify">-verify</a></td><td>Module Verifier</td></tr>
+<tr><td><a href="#view-cfg">-view-cfg</a></td><td>View CFG of function</td></tr>
+<tr><td><a href="#view-cfg-only">-view-cfg-only</a></td><td>View CFG of function (with no function bodies)</td></tr>
 </table>
 </div>
 
@@ -172,7 +204,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="basicaa">Basic Alias Analysis</a>
+  <a name="basicaa">Basic Alias Analysis (default AA impl)</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -180,7 +212,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="basiccg">Basic Call Graph Construction</a>
+  <a name="basiccg">Basic CallGraph Construction</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -188,7 +220,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="basicvn">Basic Value Numbering</a>
+  <a name="basicvn">Basic Value Numbering (default GVN impl)</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -196,7 +228,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="callgraph">Print Call Graph</a>
+  <a name="callgraph">Print a call graph</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -212,7 +244,15 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="cfgscc">Print SCCs of each Function Control Flow Graph</a>
+  <a name="cfgscc">Print SCCs of each function CFG</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="codegenprepare">Optimize for code generation</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -228,7 +268,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="debug-aa">Alias Analysis Usage Debugger</a>
+  <a name="debug-aa">AA use debugger</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -244,31 +284,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="domset">Dominator Set Construction</a>
-</div>
-<div class="doc_text">
-  <p>Yet to be written.</p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
   <a name="domtree">Dominator Tree Construction</a>
-</div>
-<div class="doc_text">
-  <p>Yet to be written.</p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="etforest">ET Forest Construction</a>
-</div>
-<div class="doc_text">
-  <p>Yet to be written.</p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="basicvn">Basic Value Numbering</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -292,7 +308,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="idom">Immediate Dominators Construction</a>
+  <a name="gvn">Global Value Numbering</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -332,6 +348,14 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
+  <a name="memdep">Memory Dependence Analysis</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
   <a name="no-aa">No Alias Analysis (always returns 'may' alias)</a>
 </div>
 <div class="doc_text">
@@ -356,31 +380,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="postdomset">Post-Dominator Set Construction</a>
-</div>
-<div class="doc_text">
-  <p>Yet to be written.</p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
   <a name="postdomtree">Post-Dominator Tree Construction</a>
-</div>
-<div class="doc_text">
-  <p>Yet to be written.</p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="postetforest">Post-ET-Forest Construction</a>
-</div>
-<div class="doc_text">
-  <p>Yet to be written.</p>
-</div>
-
-<!-------------------------------------------------------------------------- -->
-<div class="doc_subsection">
-  <a name="postidom">Immediate Post-Dominators Construction</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -515,7 +515,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="break-crit-edges">Break Critical Edges in CFG</a>
+  <a name="break-crit-edges">Break critical edges in CFG</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -564,7 +564,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="constprop">Constant Propagation</a>
+  <a name="constprop">Simple constant propagation</a>
 </div>
 <div class="doc_text">
   <p>This file implements constant propagation and merging. It looks for
@@ -637,6 +637,14 @@
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
   <a name="globalopt">Global Variable Optimizer</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="gvnpre">Global Value Numbering/Partial Redundancy Elimination</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -772,6 +780,14 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
+  <a name="loop-index-split">Index Split Loops</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
   <a name="loop-reduce">Loop Strength Reduction</a>
 </div>
 <div class="doc_text">
@@ -780,7 +796,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="loop-unroll">Unroll Loops</a>
+  <a name="loop-rotate">Rotate Loops</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -788,7 +804,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="loop-unswitch">Unswitch Loops</a>
+  <a name="loop-unroll">Unroll loops</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -796,7 +812,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="loopsimplify">Canonicalize Natural Loops</a>
+  <a name="loop-unswitch">Unswitch loops</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -804,7 +820,15 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="lower-packed">Lower Packed Operations</a>
+  <a name="loopsimplify">Canonicalize natural loops</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="lower-packed">lowers packed operations to operations on smaller packed datatypes</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -828,7 +852,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="lowerinvoke">Lower Invoke and Unwind</a>
+  <a name="lowerinvoke">Lower invoke and unwind, for unwindless code generators</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -836,7 +860,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="lowerselect">Lower Selects To Branches</a>
+  <a name="lowerselect">Lower select instructions to branches</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -868,7 +892,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="mergereturn">Unify Function Exit Nodes</a>
+  <a name="mergereturn">Unify function exit nodes</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -900,7 +924,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="reassociate">Reassociate Expressions</a>
+  <a name="reassociate">Reassociate expressions</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -908,7 +932,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="reg2mem">Demote Values to Memory</a>
+  <a name="reg2mem">Demote all values to stack slots</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -978,7 +1002,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="deadarghaX0r">Dead Argument Hacking (BUGPOINT ONLY)</a>
+  <a name="deadarghaX0r">Dead Argument Hacking (BUGPOINT USE ONLY; DO NOT USE)</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -986,7 +1010,7 @@
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="extract-blocks">Extract Basic Blocks From Module (BUGPOINT ONLY)</a>
+  <a name="extract-blocks">Extract Basic Blocks From Module (for bugpoint use)</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
@@ -1003,6 +1027,22 @@
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
   <a name="verify">Module Verifier</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="view-cfg">View CFG of function</a>
+</div>
+<div class="doc_text">
+  <p>Yet to be written.</p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<div class="doc_subsection">
+  <a name="view-cfg-only">View CFG of function (with no function bodies)</a>
 </div>
 <div class="doc_text">
   <p>Yet to be written.</p>
