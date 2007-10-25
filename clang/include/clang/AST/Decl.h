@@ -17,6 +17,18 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/Bitcode/Serialization.h"
+
+namespace clang {
+class Decl;
+}
+
+namespace llvm {
+template <> struct SerializeTrait<clang::Decl> {
+  static void Emit(Serializer& S, clang::Decl& D);
+  static clang::Decl* Materialize(Deserializer& D);
+};  
+} // end namespace llvm
 
 namespace clang {
 class Expr;
@@ -113,7 +125,7 @@ public:
   /// setInvalidDecl - Indicates the Decl had a semantic error. This
   /// allows for graceful error recovery.
   void setInvalidDecl() { InvalidDecl = 1; }
-  int isInvalidDecl() const { return InvalidDecl; }
+  bool isInvalidDecl() const { return (bool) InvalidDecl; }
   
   IdentifierNamespace getIdentifierNamespace() const {
     switch (DeclKind) {
@@ -138,6 +150,13 @@ public:
   static void addDeclKind(const Kind k);
   static bool CollectingStats(bool enable=false);
   static void PrintStats();
+  
+  // Deserialization of Decls.
+  template <typename DeclType>
+  static inline DeclType* DeserializeDecl(llvm::Deserializer& D) {
+    Decl* decl = llvm::SerializeTrait<Decl>::Materialize(D);
+    return cast<DeclType>(decl);
+  }  
     
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *) { return true; }
@@ -575,4 +594,5 @@ public:
 };
 
 }  // end namespace clang
+
 #endif
