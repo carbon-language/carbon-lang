@@ -179,3 +179,11 @@ work.
 
 The ocaml frametable structure supports liveness information. It would be good
 to support it.
+
+//===---------------------------------------------------------------------===//
+
+The FIXME in ComputeCommonTailLength in BranchFolding.cpp needs to be
+revisited. The check is there to work around a misuse of directives in inline
+assembly.
+
+//===---------------------------------------------------------------------===//
