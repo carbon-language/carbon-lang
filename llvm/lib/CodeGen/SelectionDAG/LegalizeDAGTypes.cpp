@@ -190,6 +190,7 @@ private:
   SDOperand PromoteOperand_SELECT(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_BRCOND(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_BR_CC(SDNode *N, unsigned OpNo);
+  SDOperand PromoteOperand_SETCC(SDNode *N, unsigned OpNo);
   SDOperand PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo);
 
   void PromoteSetCCOperands(SDOperand &LHS,SDOperand &RHS, ISD::CondCode Code);
@@ -1456,6 +1457,7 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
   case ISD::SELECT:      Res = PromoteOperand_SELECT(N, OpNo); break;
   case ISD::BRCOND:      Res = PromoteOperand_BRCOND(N, OpNo); break;
   case ISD::BR_CC:       Res = PromoteOperand_BR_CC(N, OpNo); break;
+  case ISD::SETCC:       Res = PromoteOperand_SETCC(N, OpNo); break;
 
   case ISD::STORE:       Res = PromoteOperand_STORE(cast<StoreSDNode>(N),
                                                     OpNo); break;
@@ -1575,6 +1577,17 @@ SDOperand DAGTypeLegalizer::PromoteOperand_BR_CC(SDNode *N, unsigned OpNo) {
   // legal types.
   return DAG.UpdateNodeOperands(SDOperand(N, 0), N->getOperand(0),
                                 N->getOperand(1), LHS, RHS, N->getOperand(4));
+}
+
+SDOperand DAGTypeLegalizer::PromoteOperand_SETCC(SDNode *N, unsigned OpNo) {
+  assert(OpNo == 0 && "Don't know how to promote this operand");
+
+  SDOperand LHS = N->getOperand(0);
+  SDOperand RHS = N->getOperand(1);
+  PromoteSetCCOperands(LHS, RHS, cast<CondCodeSDNode>(N->getOperand(2))->get());
+
+  // The CC (#2) is always legal.
+  return DAG.UpdateNodeOperands(SDOperand(N, 0), LHS, RHS, N->getOperand(2));
 }
 
 /// PromoteSetCCOperands - Promote the operands of a comparison.  This code is
