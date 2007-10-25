@@ -39,9 +39,10 @@
 #include <set>
 using namespace llvm;
 
-STATISTIC(NumReduced , "Number of GEPs strength reduced");
-STATISTIC(NumInserted, "Number of PHIs inserted");
-STATISTIC(NumVariable, "Number of PHIs with variable strides");
+STATISTIC(NumReduced ,    "Number of GEPs strength reduced");
+STATISTIC(NumInserted,    "Number of PHIs inserted");
+STATISTIC(NumVariable,    "Number of PHIs with variable strides");
+STATISTIC(NumEliminated , "Number of strides eliminated");
 
 namespace {
 
@@ -170,18 +171,17 @@ private:
     bool AddUsersIfInteresting(Instruction *I, Loop *L,
                                std::set<Instruction*> &Processed);
     SCEVHandle GetExpressionSCEV(Instruction *E, Loop *L);
-
+    ICmpInst *ChangeCompareStride(Loop *L, ICmpInst *Cond,
+                                  IVStrideUse* &CondUse,
+                                  const SCEVHandle* &CondStride);
     void OptimizeIndvars(Loop *L);
     bool FindIVForUser(ICmpInst *Cond, IVStrideUse *&CondUse,
                        const SCEVHandle *&CondStride);
-
     unsigned CheckForIVReuse(bool, const SCEVHandle&,
                              IVExpr&, const Type*,
                              const std::vector<BasedUser>& UsersToProcess);
-
     bool ValidStride(bool, int64_t,
                      const std::vector<BasedUser>& UsersToProcess);
-
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
                                       Loop *L, bool isOnlyStride);
@@ -981,8 +981,6 @@ unsigned LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                                 const SCEVHandle &Stride, 
                                 IVExpr &IV, const Type *Ty,
                                 const std::vector<BasedUser>& UsersToProcess) {
-  if (!TLI) return 0;
-
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
     int64_t SInt = SC->getValue()->getSExtValue();
     if (SInt == 1) return 0;
@@ -1039,6 +1037,10 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                                       IVUsersOfOneStride &Uses,
                                                       Loop *L,
                                                       bool isOnlyStride) {
+  // If all the users are moved to another stride, then there is nothing to do.
+  if (Uses.Users.size() == 0)
+    return;
+
   // Transform our list of users and offsets to a bit more complex table.  In
   // this new vector, each 'BasedUser' contains 'Base' the base of the
   // strided accessas well as the old information from Uses.  We progressively
@@ -1377,6 +1379,154 @@ bool LoopStrengthReduce::FindIVForUser(ICmpInst *Cond, IVStrideUse *&CondUse,
   return false;
 }    
 
+namespace {
+  // Constant strides come first which in turns are sorted by their absolute
+  // values. If absolute values are the same, then positive strides comes first.
+  // e.g.
+  // 4, -1, X, 1, 2 ==> 1, -1, 2, 4, X
+  struct StrideCompare {
+    bool operator()(const SCEVHandle &LHS, const SCEVHandle &RHS) {
+      SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS);
+      SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS);
+      if (LHSC && RHSC) {
+        int64_t  LV = LHSC->getValue()->getSExtValue();
+        int64_t  RV = RHSC->getValue()->getSExtValue();
+        uint64_t ALV = (LV < 0) ? -LV : LV;
+        uint64_t ARV = (RV < 0) ? -RV : RV;
+        if (ALV == ARV)
+          return LV > RV;
+        else
+          return ALV < ARV;
+      }
+      return (LHSC && !RHSC);
+    }
+  };
+}
+
+/// ChangeCompareStride - If a loop termination compare instruction is the
+/// only use of its stride, and the compaison is against a constant value,
+/// try eliminate the stride by moving the compare instruction to another
+/// stride and change its constant operand accordingly. e.g.
+///
+/// loop:
+/// ...
+/// v1 = v1 + 3
+/// v2 = v2 + 1
+/// if (v2 < 10) goto loop
+/// =>
+/// loop:
+/// ...
+/// v1 = v1 + 3
+/// if (v1 < 30) goto loop
+ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
+                                                  IVStrideUse* &CondUse,
+                                                const SCEVHandle* &CondStride) {
+  if (StrideOrder.size() < 2 ||
+      IVUsesByStride[*CondStride].Users.size() != 1)
+    return Cond;
+  // FIXME: loosen this restriction?
+  if (!isa<SCEVConstant>(CondUse->Offset))
+    return Cond;
+  const SCEVConstant *SC = dyn_cast<SCEVConstant>(*CondStride);
+  if (!SC) return Cond;
+  ConstantInt *C = dyn_cast<ConstantInt>(Cond->getOperand(1));
+  if (!C) return Cond;
+
+  ICmpInst::Predicate Predicate = Cond->getPredicate();
+  bool isSigned = ICmpInst::isSignedPredicate(Predicate);
+  int64_t CmpSSInt = SC->getValue()->getSExtValue();
+  int64_t CmpVal = C->getValue().getSExtValue();
+  uint64_t SignBit = 1ULL << (C->getValue().getBitWidth()-1);
+  int64_t NewCmpVal = CmpVal;
+  SCEVHandle *NewStride = NULL;
+  Value *NewIncV = NULL;
+  int64_t Scale = 1;
+  const Type *CmpTy = C->getType();
+  const Type *NewCmpTy = NULL;
+
+  // Look for a suitable stride / iv as replacement.
+  std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare());
+  for (unsigned i = 0, e = StrideOrder.size(); i != e; ++i) {
+    std::map<SCEVHandle, IVUsersOfOneStride>::iterator SI = 
+      IVUsesByStride.find(StrideOrder[i]);
+    if (!isa<SCEVConstant>(SI->first))
+      continue;
+    int64_t SSInt = cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
+    if (abs(SSInt) < abs(CmpSSInt) && (CmpSSInt % SSInt) == 0) {
+      Scale = CmpSSInt / SSInt;
+      NewCmpVal = CmpVal / Scale;
+    } else if (abs(SSInt) > abs(CmpSSInt) && (SSInt % CmpSSInt) == 0) {
+      Scale = SSInt / CmpSSInt;
+      NewCmpVal = CmpVal * Scale;
+    } else
+      continue;
+
+    // Watch out for overflow.
+    if (isSigned && (CmpVal & SignBit) != (NewCmpVal & SignBit))
+      NewCmpVal = CmpVal;
+    if (NewCmpVal != CmpVal) {
+      // Pick the best iv to use trying to avoid a cast.
+      NewIncV = NULL;
+      for (std::vector<IVStrideUse>::iterator UI = SI->second.Users.begin(),
+             E = SI->second.Users.end(); UI != E; ++UI) {
+        //        if (!isa<SCEVConstant>(UI->Offset))
+        //          continue;
+        NewIncV = UI->OperandValToReplace;
+        if (NewIncV->getType() == CmpTy)
+          break;
+      }
+      if (!NewIncV) {
+        NewCmpVal = CmpVal;
+        continue;
+      }
+
+      // FIXME: allow reuse of iv of a smaller type?
+      NewCmpTy = NewIncV->getType();
+      if (!CmpTy->canLosslesslyBitCastTo(NewCmpTy) &&
+          !(isa<PointerType>(NewCmpTy) &&
+            CmpTy->canLosslesslyBitCastTo(UIntPtrTy))) {
+        NewCmpVal = CmpVal;
+        continue;
+      }
+
+      // If scale is negative, use inverse predicate unless it's testing
+      // for equality.
+      if (Scale < 0 && !Cond->isEquality())
+        Predicate = ICmpInst::getInversePredicate(Predicate);
+
+      NewStride = &StrideOrder[i];
+      break;
+    }
+  }
+
+  if (NewCmpVal != CmpVal) {
+    // Create a new compare instruction using new stride / iv.
+    ICmpInst *OldCond = Cond;
+    Value *RHS = ConstantInt::get(C->getType(), NewCmpVal);
+    // Both sides of a ICmpInst must be of the same type.
+    if (NewCmpTy != CmpTy) {
+      if (isa<PointerType>(NewCmpTy) && !isa<PointerType>(CmpTy))
+        RHS= SCEVExpander::InsertCastOfTo(Instruction::IntToPtr, RHS, NewCmpTy);
+      else
+        RHS = SCEVExpander::InsertCastOfTo(Instruction::BitCast, RHS, NewCmpTy);
+    }
+    Cond = new ICmpInst(Predicate, NewIncV, RHS);
+    Cond->setName(L->getHeader()->getName() + ".termcond");
+    OldCond->getParent()->getInstList().insert(OldCond, Cond);
+    OldCond->replaceAllUsesWith(Cond);
+    OldCond->eraseFromParent();
+    IVUsesByStride[*CondStride].Users.pop_back();
+    SCEVHandle NewOffset = SE->getMulExpr(CondUse->Offset,
+          SE->getConstant(ConstantInt::get(CondUse->Offset->getType(), Scale)));
+    IVUsesByStride[*NewStride].addUser(NewOffset, Cond, NewIncV);
+    CondUse = &IVUsesByStride[*NewStride].Users.back();
+    CondStride = NewStride;
+    ++NumEliminated;
+  }
+
+  return Cond;
+}
+
 // OptimizeIndvars - Now that IVUsesByStride is set up with all of the indvar
 // uses in the loop, look to see if we can eliminate some, in favor of using
 // common indvars for the different uses.
@@ -1403,7 +1553,10 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
 
   if (!FindIVForUser(Cond, CondUse, CondStride))
     return; // setcc doesn't use the IV.
-  
+
+  // If possible, change stride and operands of the compare instruction to
+  // eliminate one stride.
+  Cond = ChangeCompareStride(L, Cond, CondUse, CondStride);
 
   // It's possible for the setcc instruction to be anywhere in the loop, and
   // possible for it to have multiple users.  If it is not immediately before
@@ -1429,30 +1582,6 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   // live ranges for the IV correctly.
   CondUse->Offset = SE->getMinusSCEV(CondUse->Offset, *CondStride);
   CondUse->isUseOfPostIncrementedValue = true;
-}
-
-namespace {
-  // Constant strides come first which in turns are sorted by their absolute
-  // values. If absolute values are the same, then positive strides comes first.
-  // e.g.
-  // 4, -1, X, 1, 2 ==> 1, -1, 2, 4, X
-  struct StrideCompare {
-    bool operator()(const SCEVHandle &LHS, const SCEVHandle &RHS) {
-      SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS);
-      SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS);
-      if (LHSC && RHSC) {
-        int64_t  LV = LHSC->getValue()->getSExtValue();
-        int64_t  RV = RHSC->getValue()->getSExtValue();
-        uint64_t ALV = (LV < 0) ? -LV : LV;
-        uint64_t ARV = (RV < 0) ? -RV : RV;
-        if (ALV == ARV)
-          return LV > RV;
-        else
-          return ALV < ARV;
-      }
-      return (LHSC && !RHSC);
-    }
-  };
 }
 
 bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
