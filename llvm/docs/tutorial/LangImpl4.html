@@ -94,7 +94,7 @@ entry:
 </div>
 
 <p>Well, that was easy.  :)  In practice, we recommend always using
-<tt>LLVMConstantBuilder</tt> when generating code like this.  It has no
+<tt>LLVMFoldingBuilder</tt> when generating code like this.  It has no
 "syntactic overhead" for its use (you don't have to uglify your compiler with
 constant checks everywhere) and it can dramatically reduce the amount of
 LLVM IR that is generated in some cases (particular for languages with a macro
