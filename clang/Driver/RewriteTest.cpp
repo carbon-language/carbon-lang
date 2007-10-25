@@ -17,7 +17,9 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "llvm/ADT/StringExtras.h"
 using namespace clang;
+using llvm::utostr;
 
 namespace {
   class RewriteTest : public ASTConsumer {
@@ -70,7 +72,8 @@ namespace {
                                     int NumMethods,
                                     bool IsInstanceMethod,
                                     const char *prefix,
-                                    const char *ClassName);
+                                    const char *ClassName,
+                                    std::string &Result);
     
     void RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
                                       int NumProtocols,
@@ -360,7 +363,8 @@ void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
                                              int NumMethods,
                                              bool IsInstanceMethod,
                                              const char *prefix,
-                                             const char *ClassName) {
+                                             const char *ClassName,
+                                             std::string &Result) {
   static bool objc_impl_method = false;
   if (NumMethods > 0 && !objc_impl_method) {
     /* struct _objc_method {
@@ -369,11 +373,11 @@ void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
        void *_imp;
        }
      */
-    printf("\nstruct _objc_method {\n");
-    printf("\tSEL _cmd;\n");
-    printf("\tchar *method_types;\n");
-    printf("\tvoid *_imp;\n");
-    printf("};\n");
+    Result += "\nstruct _objc_method {\n";
+    Result += "\tSEL _cmd;\n";
+    Result += "\tchar *method_types;\n";
+    Result += "\tvoid *_imp;\n";
+    Result += "};\n";
     objc_impl_method = true;
   }
   // Build _objc_method_list for class's methods if needed
@@ -384,21 +388,27 @@ void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
      struct _objc_method method_list[method_count];
      }
      */
-    printf("\nstatic struct {\n");
-    printf("\tstruct _objc_method_list *next_method;\n");
-    printf("\tint method_count;\n");
-    printf("\tstruct _objc_method method_list[%d];\n", NumMethods);
-    printf("} _OBJC_%s%s_METHODS_%s "
-           "__attribute__ ((section (\"__OBJC, __%s_meth\")))= "
-           "{\n\t0, %d\n", prefix, IsInstanceMethod ? "INSTANCE" : "CLASS", 
-           ClassName, IsInstanceMethod ? "inst" : "cls", NumMethods);
-    for (int i = 0; i < NumMethods; i++)
+    Result += "\nstatic struct {\n";
+    Result += "\tstruct _objc_method_list *next_method;\n";
+    Result += "\tint method_count;\n";
+    Result += "\tstruct _objc_method method_list[" + utostr(NumMethods) +"];\n";
+    Result += "} _OBJC_";
+    Result += prefix;
+    Result += IsInstanceMethod ? "INSTANCE" : "CLASS";
+    Result += "_METHODS_";
+    Result += ClassName;
+    Result += " __attribute__ ((section (\"__OBJC, __";
+    Result += IsInstanceMethod ? "inst" : "cls";
+    Result += "_meth\")))= {\n\t0, " + utostr(NumMethods) + "\n";
+    
+    for (int i = 0; i < NumMethods; i++) {
       // TODO: 1) method selector name may hav to go into their own section
       // 2) encode method types for use here (which may have to go into 
       // __meth_var_types section, 3) Need method address as 3rd initializer.
-      printf("\t,(SEL)\"%s\", \"\", 0\n", 
-             Methods[i]->getSelector().getName().c_str());
-    printf("};\n");
+      Result += "\t,(SEL)\"" + Methods[i]->getSelector().getName() +
+                "\", \"\", 0\n";
+      }
+    Result += "};\n";
   }
 }
 
@@ -545,17 +555,23 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl) {
     strlen(ClassDecl->getName()) + strlen(IDecl->getName()) + 2);
   sprintf(FullCategoryName, "%s_%s", ClassDecl->getName(), IDecl->getName());
   
+  std::string ResultStr;
+  
   // Build _objc_method_list for class's instance methods if needed
   RewriteObjcMethodsMetaData(IDecl->getInstanceMethods(),
                              IDecl->getNumInstanceMethods(),
                              true,
-                             "CATEGORY_", FullCategoryName);
+                             "CATEGORY_", FullCategoryName, ResultStr);
   
   // Build _objc_method_list for class's class methods if needed
   RewriteObjcMethodsMetaData(IDecl->getClassMethods(),
                              IDecl->getNumClassMethods(),
                              false,
-                             "CATEGORY_", FullCategoryName);
+                             "CATEGORY_", FullCategoryName, ResultStr);
+  
+  // For now just print the string out.  It should be passed to the other
+  // functions to collect all metadata info into the string.
+  printf("%s", ResultStr.c_str());
   
   // Protocols referenced in class declaration?
   RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(),
@@ -666,18 +682,22 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
     printf("};\n");
   }
   
+  std::string ResultStr;
+  
   // Build _objc_method_list for class's instance methods if needed
   RewriteObjcMethodsMetaData(IDecl->getInstanceMethods(), 
                              IDecl->getNumInstanceMethods(), 
-                             true,
-                             "", IDecl->getName());
+                             true, "", IDecl->getName(), ResultStr);
   
   // Build _objc_method_list for class's class methods if needed
   RewriteObjcMethodsMetaData(IDecl->getClassMethods(), 
                              IDecl->getNumClassMethods(),
-                             false,
-                             "", IDecl->getName());
-    
+                             false, "", IDecl->getName(), ResultStr);
+  
+  // For now just print the string out.  It should be passed to the other
+  // functions to collect all metadata info into the string.
+  printf("%s", ResultStr.c_str());
+  
   // Protocols referenced in class declaration?
   RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(), 
                                CDecl->getNumIntfRefProtocols(),
