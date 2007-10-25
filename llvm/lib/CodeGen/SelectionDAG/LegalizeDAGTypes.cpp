@@ -454,7 +454,6 @@ SDOperand DAGTypeLegalizer::CreateStackStoreLoad(SDOperand Op,
   return DAG.getLoad(DestVT, Store, FIPtr, NULL, 0);
 }
 
-
 /// HandleMemIntrinsic - This handles memcpy/memset/memmove with invalid
 /// operands.  This promotes or expands the operands as required.
 SDOperand DAGTypeLegalizer::HandleMemIntrinsic(SDNode *N) {
@@ -664,7 +663,6 @@ SDOperand DAGTypeLegalizer::PromoteResult_FP_TO_XINT(SDNode *N) {
   return DAG.getNode(NewOpc, NVT, Op);
 }
 
-
 SDOperand DAGTypeLegalizer::PromoteResult_SETCC(SDNode *N) {
   assert(isTypeLegal(TLI.getSetCCResultTy()) && "SetCC type is not legal??");
   return DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(), N->getOperand(0),
@@ -729,6 +727,7 @@ SDOperand DAGTypeLegalizer::PromoteResult_SELECT_CC(SDNode *N) {
   return DAG.getNode(ISD::SELECT_CC, LHS.getValueType(), N->getOperand(0),
                      N->getOperand(1), LHS, RHS, N->getOperand(4));
 }
+
 
 //===----------------------------------------------------------------------===//
 //  Result Expansion
@@ -1061,7 +1060,6 @@ void DAGTypeLegalizer::ExpandResult_BSWAP(SDNode *N,
   Hi = DAG.getNode(ISD::BSWAP, Hi.getValueType(), Hi);
 }
 
-
 void DAGTypeLegalizer::ExpandResult_SELECT(SDNode *N,
                                            SDOperand &Lo, SDOperand &Hi) {
   SDOperand LL, LH, RL, RH;
@@ -1166,7 +1164,7 @@ void DAGTypeLegalizer::ExpandResult_MUL(SDNode *N,
     SDOperand LL, LH, RL, RH;
     GetExpandedOp(N->getOperand(0), LL, LH);
     GetExpandedOp(N->getOperand(1), RL, RH);
-    unsigned BitSize = MVT::getSizeInBits(RH.getValueType());
+    unsigned BitSize = MVT::getSizeInBits(NVT);
     unsigned LHSSB = DAG.ComputeNumSignBits(N->getOperand(0));
     unsigned RHSSB = DAG.ComputeNumSignBits(N->getOperand(1));
     
@@ -1364,6 +1362,8 @@ bool DAGTypeLegalizer::
 ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
   MVT::ValueType NVT = TLI.getTypeToTransformTo(N->getValueType(0));
   unsigned NVTBits = MVT::getSizeInBits(NVT);
+  assert(!(NVTBits & (NVTBits - 1)) &&
+         "Expanded integer type size not a power of two!");
 
   uint64_t HighBitMask = NVTBits, KnownZero, KnownOne;
   DAG.ComputeMaskedBits(N->getOperand(1), HighBitMask, KnownZero, KnownOne);
@@ -1424,6 +1424,7 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
                    DAG.getNode(Op2, NVT, InL, Amt2));
   return true;
 }
+
 
 //===----------------------------------------------------------------------===//
 //  Operand Promotion
@@ -1530,7 +1531,6 @@ SDOperand DAGTypeLegalizer::PromoteOperand_INT_TO_FP(SDNode *N) {
   return DAG.UpdateNodeOperands(SDOperand(N, 0), In);
 }
 
-
 SDOperand DAGTypeLegalizer::PromoteOperand_SELECT(SDNode *N, unsigned OpNo) {
   assert(OpNo == 0 && "Only know how to promote condition");
   SDOperand Cond = GetPromotedOp(N->getOperand(0));  // Promote the condition.
@@ -1547,7 +1547,6 @@ SDOperand DAGTypeLegalizer::PromoteOperand_SELECT(SDNode *N, unsigned OpNo) {
   return DAG.UpdateNodeOperands(SDOperand(N, 0), Cond, N->getOperand(1),
                                 N->getOperand(2));
 }
-
 
 SDOperand DAGTypeLegalizer::PromoteOperand_BRCOND(SDNode *N, unsigned OpNo) {
   assert(OpNo == 1 && "only know how to promote condition");
@@ -1633,7 +1632,6 @@ void DAGTypeLegalizer::PromoteSetCCOperands(SDOperand &NewLHS,SDOperand &NewRHS,
     return;
   }
 }
-  
 
 SDOperand DAGTypeLegalizer::PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo){
   SDOperand Ch = N->getChain(), Ptr = N->getBasePtr();
@@ -1799,7 +1797,6 @@ SDOperand DAGTypeLegalizer::ExpandOperand_UINT_TO_FP(SDOperand Source,
   return DAG.getNode(ISD::FADD, DestTy, SignedConv, FudgeInReg);
 }
 
-
 SDOperand DAGTypeLegalizer::ExpandOperand_EXTRACT_ELEMENT(SDNode *N) {
   SDOperand Lo, Hi;
   GetExpandedOp(N->getOperand(0), Lo, Hi);
@@ -1936,7 +1933,6 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
   NewRHS = SDOperand();
 }
 
-
 SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
   assert(OpNo == 1 && "Can only expand the stored value so far");
   assert(!N->isTruncatingStore() && "Can't expand truncstore!");
@@ -2010,6 +2006,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
   return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
 }
 
+
 //===----------------------------------------------------------------------===//
 //  Entry Point
 //===----------------------------------------------------------------------===//
@@ -2022,4 +2019,3 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
 void SelectionDAG::LegalizeTypes() {
   DAGTypeLegalizer(*this).run();
 }
-
