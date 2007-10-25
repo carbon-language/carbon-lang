@@ -14,3 +14,7 @@ void test1() {
 short x; 
 void test2(char c) { x += c; }
 
+void foo(char *strbuf) {
+  int stufflen = 4;
+  strbuf += stufflen;
+}

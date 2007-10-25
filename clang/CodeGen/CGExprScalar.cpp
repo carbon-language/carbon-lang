@@ -618,8 +618,10 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
   // Convert the LHS/RHS values to the computation type.
   OpInfo.LHS = EmitScalarConversion(OpInfo.LHS, LHSTy, ComputeType);
   
-  // Do not merge types for -= where the LHS is a pointer.
-  if (E->getOpcode() != BinaryOperator::SubAssign ||
+  // Do not merge types for -= or += where the LHS is a pointer.
+  if (!(E->getOpcode() == BinaryOperator::SubAssign ||
+          E->getOpcode() == BinaryOperator::AddAssign) ||
+  //  if (E->getOpcode() != BinaryOperator::SubAssign ||
       !E->getLHS()->getType()->isPointerType()) {
     OpInfo.RHS = EmitScalarConversion(OpInfo.RHS, RHSTy, ComputeType);
   }
