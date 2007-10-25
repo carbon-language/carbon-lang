@@ -22,6 +22,21 @@ Deserializer::Deserializer(BitstreamReader& stream)
 Deserializer::~Deserializer() {
   assert (RecIdx >= Record.size() && 
           "Still scanning bitcode record when deserialization completed.");
+  
+  BackpatchPointers();
+}
+
+
+bool Deserializer::inRecord() {
+  if (Record.size() > 0) {
+    if (RecIdx >= Record.size()) {
+      RecIdx = 0;
+      Record.clear();
+      return false;
+    }
+    else return true;
+  }
+  else return false;
 }
 
 void Deserializer::ReadRecord() {
@@ -79,14 +94,49 @@ void Deserializer::ReadCStr(std::vector<char>& buff, bool isNullTerm) {
     buff.push_back('\0');
 }
 
+void Deserializer::RegisterPtr(unsigned PtrId,void* Ptr) {
+  BPatchEntry& E = BPatchMap[PtrId];
+  assert (E.Ptr == NULL && "Pointer already registered.");
+  E.Ptr = Ptr;
+}
+
+void Deserializer::ReadPtr(void*& PtrRef) {
+  unsigned PtrId = ReadInt();
+  
+  BPatchEntry& E = BPatchMap[PtrId];
+  
+  if (E.Ptr == NULL) {
+    // Register backpatch.
+    void* P = Allocator.Allocate<BPatchNode>();    
+    E.Head = new (P) BPatchNode(E.Head,PtrRef);
+  }
+  else
+    PtrRef = E.Ptr;
+}
+
+void Deserializer::BackpatchPointers() {
+  for (MapTy::iterator I=BPatchMap.begin(),E=BPatchMap.end(); I!=E; ++I) {
+    
+    BPatchEntry& E = I->second;
+    assert (E.Ptr && "No pointer found for backpatch.");
+    
+    for (BPatchNode* N = E.Head; N != NULL; N = N->Next)
+      N->PtrRef = E.Ptr;
+    
+    E.Head = NULL;
+  }
+  
+  Allocator.Reset();
+}
 
 #define INT_READ(TYPE)\
 void SerializeTrait<TYPE>::Read(Deserializer& D, TYPE& X) {\
-  X = (TYPE) D.ReadInt(); }
+  X = (TYPE) D.ReadInt(); }\
+TYPE SerializeTrait<TYPE>::ReadVal(Deserializer& D) {\
+  return (TYPE) D.ReadInt(); }
 
 INT_READ(bool)
 INT_READ(unsigned char)
 INT_READ(unsigned short)
 INT_READ(unsigned int)
 INT_READ(unsigned long)
-INT_READ(unsigned long long)

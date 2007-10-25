@@ -24,14 +24,14 @@ template <typename T> struct SerializeTrait;
 #define SERIALIZE_INT_TRAIT(TYPE)\
 template <> struct SerializeTrait<TYPE> {\
   static void Emit(Serializer& S, TYPE X);\
-  static void Read(Deserializer& S, TYPE& X); };
+  static void Read(Deserializer& S, TYPE& X);\
+  static TYPE ReadVal(Deserializer& S); };
 
 SERIALIZE_INT_TRAIT(bool)
 SERIALIZE_INT_TRAIT(unsigned char)
 SERIALIZE_INT_TRAIT(unsigned short)
 SERIALIZE_INT_TRAIT(unsigned int)
 SERIALIZE_INT_TRAIT(unsigned long)
-SERIALIZE_INT_TRAIT(unsigned long long)
 
 #undef SERIALIZE_INT_TRAIT
   

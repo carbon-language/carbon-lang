@@ -57,6 +57,17 @@ void Serializer::EmitCStr(const char* s) {
   EmitCStr(s,s+strlen(s));
 }
 
+unsigned Serializer::getPtrId(void* ptr) {
+  MapTy::iterator I = PtrMap.find(ptr);
+  
+  if (I == PtrMap.end()) {
+    unsigned id = PtrMap.size();
+    PtrMap[ptr] = id;
+    return id;
+  }
+  else return I->second;
+}
+
 #define INT_EMIT(TYPE)\
 void SerializeTrait<TYPE>::Emit(Serializer&S, TYPE X) { S.EmitInt(X); }
 
@@ -65,4 +76,3 @@ INT_EMIT(unsigned char)
 INT_EMIT(unsigned short)
 INT_EMIT(unsigned int)
 INT_EMIT(unsigned long)
-INT_EMIT(unsigned long long)
