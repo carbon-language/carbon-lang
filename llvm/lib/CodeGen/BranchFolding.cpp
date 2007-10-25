@@ -272,6 +272,11 @@ static unsigned ComputeCommonTailLength(MachineBasicBlock *MBB1,
   while (I1 != MBB1->begin() && I2 != MBB2->begin()) {
     --I1; --I2;
     if (!I1->isIdenticalTo(I2) || 
+        // XXX: This check is dubious. It's used to get around a problem where
+        // people incorrectly expect inline asm directives to remain in the same
+        // relative order. This is untenable because normal compiler
+        // optimizations (like this one) may reorder and/or merge these
+        // directives.
         I1->getOpcode() == TargetInstrInfo::INLINEASM) {
       ++I1; ++I2;
       break;
