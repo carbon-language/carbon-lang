@@ -430,6 +430,8 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == EnumConstant; }
   static bool classof(const EnumConstantDecl *D) { return true; }
+  
+  friend class StmtIteratorBase;
 };
 
 

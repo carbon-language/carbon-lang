@@ -28,7 +28,7 @@ protected:
   
   void NextDecl();
   void PrevDecl();
-  Stmt*& GetInitializer() const;
+  Stmt*& GetDeclExpr() const;
 
   StmtIteratorBase(Stmt** s) : FirstDecl(NULL) { Ptr.S = s; }
   StmtIteratorBase(ScopedDecl* d);
@@ -84,7 +84,7 @@ public:
   }
   
   REFERENCE operator*() const { 
-    return (REFERENCE) (FirstDecl ? GetInitializer() : *Ptr.S);
+    return (REFERENCE) (FirstDecl ? GetDeclExpr() : *Ptr.S);
   }
   
   REFERENCE operator->() const { return operator*(); }   
