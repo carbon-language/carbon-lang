@@ -1469,8 +1469,6 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       NewIncV = NULL;
       for (std::vector<IVStrideUse>::iterator UI = SI->second.Users.begin(),
              E = SI->second.Users.end(); UI != E; ++UI) {
-        //        if (!isa<SCEVConstant>(UI->Offset))
-        //          continue;
         NewIncV = UI->OperandValToReplace;
         if (NewIncV->getType() == CmpTy)
           break;
