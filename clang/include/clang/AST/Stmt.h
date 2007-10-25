@@ -18,6 +18,7 @@
 #include "clang/AST/StmtIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator"
+#include "llvm/Bitcode/Serialization.h"
 #include <iosfwd>
 
 namespace clang {
@@ -217,8 +218,8 @@ public:
     return SourceRange(LBracLoc, RBracLoc); 
   }
   
-  SourceLocation getLBracLoc() { return LBracLoc; }
-  SourceLocation getRBracLoc() { return RBracLoc; }
+  SourceLocation getLBracLoc() const { return LBracLoc; }
+  SourceLocation getRBracLoc() const { return RBracLoc; }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == CompoundStmtClass; 
@@ -660,5 +661,18 @@ public:
 };
 
 }  // end namespace clang
+
+//===----------------------------------------------------------------------===//
+// For Stmt serialization.
+//===----------------------------------------------------------------------===//
+
+namespace llvm {
+  
+template<> struct SerializeTrait<clang::Stmt> {
+  static void Emit(Serializer& S, clang::Stmt& stmt);
+  static clang::Stmt* Materialize(Deserializer& D);
+};
+  
+} // end namespace llvm
 
 #endif
