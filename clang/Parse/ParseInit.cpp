@@ -175,7 +175,7 @@ Parser::ExprResult Parser::ParseInitializer() {
     // If we couldn't parse the subelement, bail out.
     if (SubElt.isInvalid) {
       InitExprsOk = false;
-      SkipUntil(tok::r_brace);
+      SkipUntil(tok::r_brace, false, true);
       break;
     } else
       InitExprs.push_back(SubElt.Val);
