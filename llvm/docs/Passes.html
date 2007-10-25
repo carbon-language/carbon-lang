@@ -4,6 +4,7 @@
 <head>
   <title>LLVM's Analysis and Transform Passes</title>
   <link rel="stylesheet" href="llvm.css" type="text/css">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 </head>
 <body>
 
@@ -20,7 +21,7 @@ while (<HTML>) {
   m:^<tr><td><a href="#(.*)">-.*</a></td><td>.*</td></tr>$: or next;
   $order{$1} = sprintf("%03d", 1 + int %order);
 }
-open HELP, "../Release/bin/opt --help|" or die "open: opt --help: $!\n";
+open HELP, "../Release/bin/opt -help|" or die "open: opt -help: $!\n";
 while (<HELP>) {
   m:^    -([^ ]+) +- (.*)$: or next;
   my $o = $order{$1};
@@ -66,8 +67,8 @@ EOT
 </div>
 <div class="doc_text" >
 <table>
-<tr><th colspan="3"><b>ANALYSIS PASSES</b></th></tr>
-<tr><th>Option</th><th>Name</th><th>Directory</th></tr>
+<tr><th colspan="2"><b>ANALYSIS PASSES</b></th></tr>
+<tr><th>Option</th><th>Name</th></tr>
 <tr><td><a href="#aa-eval">-aa-eval</a></td><td>Exhaustive Alias Analysis Precision Evaluator</td></tr>
 <tr><td><a href="#anders-aa">-anders-aa</a></td><td>Andersen's Interprocedural Alias Analysis</td></tr>
 <tr><td><a href="#basicaa">-basicaa</a></td><td>Basic Alias Analysis (default AA impl)</td></tr>
@@ -105,8 +106,8 @@ EOT
 <tr><td><a href="#targetdata">-targetdata</a></td><td>Target Data Layout</td></tr>
 
 
-<tr><th colspan="3"><b>TRANSFORM PASSES</b></th></tr>
-<tr><th>Option</th><th>Name</th><th>Directory</th></tr>
+<tr><th colspan="2"><b>TRANSFORM PASSES</b></th></tr>
+<tr><th>Option</th><th>Name</th></tr>
 <tr><td><a href="#adce">-adce</a></td><td>Aggressive Dead Code Elimination</td></tr>
 <tr><td><a href="#argpromotion">-argpromotion</a></td><td>Promote 'by reference' arguments to scalars</td></tr>
 <tr><td><a href="#block-placement">-block-placement</a></td><td>Profile Guided Basic Block Placement</td></tr>
@@ -169,8 +170,8 @@ EOT
 <tr><td><a href="#tailduplicate">-tailduplicate</a></td><td>Tail Duplication</td></tr>
 
 
-<tr><th colspan="3"><b>UTILITY PASSES</b></th></tr>
-<tr><th>Option</th><th>Name</th><th>Directory</th></tr>
+<tr><th colspan="2"><b>UTILITY PASSES</b></th></tr>
+<tr><th>Option</th><th>Name</th></tr>
 <tr><td><a href="#deadarghaX0r">-deadarghaX0r</a></td><td>Dead Argument Hacking (BUGPOINT USE ONLY; DO NOT USE)</td></tr>
 <tr><td><a href="#extract-blocks">-extract-blocks</a></td><td>Extract Basic Blocks From Module (for bugpoint use)</td></tr>
 <tr><td><a href="#emitbitcode">-emitbitcode</a></td><td>Bitcode Writer</td></tr>
@@ -529,15 +530,16 @@ EOT
   <p>Correlated Expression Elimination propagates information from conditional
   branches to blocks dominated by destinations of the branch.  It propagates
   information from the condition check itself into the body of the branch,
-  allowing transformations like these for example:
-  <pre>
-    if (i == 7)
-      ... 4*i;  // constant propagation
+  allowing transformations like these for example:</p>
+  
+<blockquote><pre>
+if (i == 7)
+  ... 4*i;  // constant propagation
 
-    M = i+1; N = j+1;
-    if (i == j)
-      X = M-N;  // = M-M == 0;
-   </pre></p>
+M = i+1; N = j+1;
+if (i == j)
+  X = M-N;  // = M-M == 0;
+</pre></blockquote>
 
    <p>This is called Correlated Expression Elimination because we eliminate or
    simplify expressions that are correlated with the direction of a branch. In
@@ -569,10 +571,10 @@ EOT
 <div class="doc_text">
   <p>This file implements constant propagation and merging. It looks for
   instructions involving only constant operands and replaces them with a
-  constant value instead of an instruction. For example:
-  <pre>add i32 1, 2</pre><br/>
-  becomes
-  <pre>i32 3</pre></p>
+  constant value instead of an instruction. For example:</p>
+  <blockquote><pre>add i32 1, 2</pre></blockquote>
+  <p>becomes</p>
+  <blockquote><pre>i32 3</pre></blockquote>
   <p>NOTE: this pass has a habit of making definitions be dead.  It is a good 
   idea to to run a <a href="#die">DIE</a> (Dead Instruction Elimination) pass 
   sometime after running this pass.</p>
