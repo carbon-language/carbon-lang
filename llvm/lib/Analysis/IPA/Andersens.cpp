@@ -112,7 +112,7 @@ namespace {
 
   class VISIBILITY_HIDDEN Andersens : public ModulePass, public AliasAnalysis,
                                       private InstVisitor<Andersens> {
-    class Node;
+    struct Node;
 
     /// Constraint - Objects of this structure are used to represent the various
     /// constraints identified by the algorithm.  The constraints are 'copy',
