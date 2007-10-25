@@ -903,7 +903,7 @@ void DAGTypeLegalizer::ExpandResult_BIT_CONVERT(SDNode *N,
 void DAGTypeLegalizer::
 ExpandResult_SIGN_EXTEND_INREG(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
   GetExpandedOp(N->getOperand(0), Lo, Hi);
-  MVT::ValueType EVT = N->getOperand(1).getValueType();
+  MVT::ValueType EVT = cast<VTSDNode>(N->getOperand(1))->getVT();
 
   if (MVT::getSizeInBits(EVT) <= MVT::getSizeInBits(Lo.getValueType())) {
     // sext_inreg the low part if needed.
