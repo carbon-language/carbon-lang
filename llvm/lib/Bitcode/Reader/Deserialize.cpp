@@ -126,7 +126,9 @@ void Deserializer::BackpatchPointers() {
     assert (Entry.Ptr && "No pointer found for backpatch.");
     
     for (BPatchNode* N = Entry.Head; N != NULL; N = N->Next)
-      N->PtrRef = Entry.Ptr;
+      // Bitwise-OR in the pointer to support "smart" pointers that use
+      // unused bits to store extra data.
+      N->PtrRef |= reinterpret_cast<uintptr_t>(Entry.Ptr);
     
     Entry.Head = NULL;
   }

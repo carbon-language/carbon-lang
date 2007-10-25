@@ -20,6 +20,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/DataTypes.h"
 #include <vector>
 
 namespace llvm {
@@ -40,8 +41,11 @@ class Deserializer {
   
   struct BPatchNode {
     BPatchNode* const Next;
-    void*& PtrRef;    
-    BPatchNode(BPatchNode* n, void*& pref) : Next(n), PtrRef(pref) {}
+    uintptr_t& PtrRef;
+    BPatchNode(BPatchNode* n, void*& pref) 
+      : Next(n), PtrRef(reinterpret_cast<uintptr_t&>(pref)) {
+        PtrRef = 0;
+      }
   };
   
   struct BPatchEntry {
