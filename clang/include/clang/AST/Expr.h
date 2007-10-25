@@ -961,6 +961,10 @@ public:
       SubExprs[RHS] = rhs;
     }        
   
+  /// isConditionTrue - Return true if the condition is true.  This is always
+  /// statically knowable for a well-formed choosexpr.
+  bool isConditionTrue(ASTContext &C) const;
+  
   Expr *getCond() const { return SubExprs[COND]; }
   Expr *getLHS() const { return SubExprs[LHS]; }
   Expr *getRHS() const { return SubExprs[RHS]; }

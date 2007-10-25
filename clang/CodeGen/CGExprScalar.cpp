@@ -903,12 +903,8 @@ VisitConditionalOperator(const ConditionalOperator *E) {
 }
 
 Value *ScalarExprEmitter::VisitChooseExpr(ChooseExpr *E) {
-  llvm::APSInt CondVal(32);
-  bool IsConst = E->getCond()->isIntegerConstantExpr(CondVal, CGF.getContext());
-  assert(IsConst && "Condition of choose expr must be i-c-e"); IsConst=IsConst;
-  
   // Emit the LHS or RHS as appropriate.
-  return Visit(CondVal != 0 ? E->getLHS() : E->getRHS());
+  return Visit(E->isConditionTrue(CGF.getContext()) ? E->getLHS() : E->getRHS());
 }
 
 Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE)

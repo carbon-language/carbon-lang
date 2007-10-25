@@ -894,6 +894,14 @@ ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
   RBracloc = RBrac;
 }
 
+
+bool ChooseExpr::isConditionTrue(ASTContext &C) const {
+  llvm::APSInt CondVal(32);
+  bool IsConst = getCond()->isIntegerConstantExpr(CondVal, C);
+  assert(IsConst && "Condition of choose expr must be i-c-e"); IsConst=IsConst;
+  return CondVal != 0;
+}
+
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//
