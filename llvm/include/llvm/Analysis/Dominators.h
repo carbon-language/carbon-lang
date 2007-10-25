@@ -162,9 +162,9 @@ typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 /// DominatorTree - Calculate the immediate dominator tree for a function.
 ///
 
-template<class N, class GraphT>
-void Calculate(DominatorTreeBase<typename GraphT::NodeType>& DT,
-               Function& F);
+template<class FuncT, class N>
+void Calculate(DominatorTreeBase<typename GraphTraits<N>::NodeType>& DT,
+               FuncT& F);
 
 template<class NodeT>
 class DominatorTreeBase : public DominatorBase<NodeT> {
@@ -545,9 +545,9 @@ protected:
                           typename GraphT::NodeType* V,
                           unsigned N);
   
-  template<class N, class GraphT>
-  friend void Calculate(DominatorTreeBase<typename GraphT::NodeType>& DT,
-                        Function& F);
+  template<class FuncT, class N>
+  friend void Calculate(DominatorTreeBase<typename GraphTraits<N>::NodeType>& DT,
+                        FuncT& F);
   
   /// updateDFSNumbers - Assign In and Out numbers to the nodes while walking
   /// dominator tree in dfs order.
@@ -609,7 +609,8 @@ protected:
   
 public:
   /// recalculate - compute a dominator tree for the given function
-  void recalculate(Function& F) {
+  template<class FT>
+  void recalculate(FT& F) {
     if (!this->IsPostDominators) {
       reset();
       
@@ -619,7 +620,7 @@ public:
       this->DomTreeNodes[&F.getEntryBlock()] = 0;
       this->Vertex.push_back(0);
       
-      Calculate<NodeT*, GraphTraits<NodeT*> >(*this, F);
+      Calculate<FT, NodeT*>(*this, F);
       
       updateDFSNumbers();
     } else {
@@ -641,7 +642,7 @@ public:
 
       this->Vertex.push_back(0);
       
-      Calculate<Inverse<NodeT*>, GraphTraits<Inverse<NodeT*> > >(*this, F);
+      Calculate<FT, Inverse<NodeT*> >(*this, F);
     }
   }
 };

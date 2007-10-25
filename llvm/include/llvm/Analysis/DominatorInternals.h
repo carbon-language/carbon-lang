@@ -216,8 +216,11 @@ void Link(DominatorTreeBase<typename GraphT::NodeType>& DT,
 #endif
 }
 
-template<class NodeT, class GraphT>
-void Calculate(DominatorTreeBase<typename GraphT::NodeType>& DT, Function& F) {
+template<class FuncT, class NodeT>
+void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
+               FuncT& F) {
+  typedef GraphTraits<NodeT> GraphT;
+  
   // Step #1: Number blocks in depth-first order and initialize variables used
   // in later stages of the algorithm.
   unsigned N = 0;
