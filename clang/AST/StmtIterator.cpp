@@ -73,7 +73,7 @@ Stmt*& StmtIteratorBase::GetDeclExpr() const {
   if (VarDecl* D = dyn_cast<VarDecl>(Ptr.D))
     return reinterpret_cast<Stmt*&>(D->Init);
   else {
-    EnumConstantDecl* D = cast<EnumConstantDecl>(Ptr.D);
-    return reinterpret_cast<Stmt*&>(D->Init);
+    EnumConstantDecl* Decl = cast<EnumConstantDecl>(Ptr.D);
+    return reinterpret_cast<Stmt*&>(Decl->Init);
   }
 }
