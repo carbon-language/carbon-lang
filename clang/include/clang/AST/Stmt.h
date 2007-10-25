@@ -18,7 +18,7 @@
 #include "clang/AST/StmtIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator"
-#include "llvm/Bitcode/Serialization.h"
+#include "llvm/Bitcode/SerializationFwd.h"
 #include <iosfwd>
 
 namespace clang {

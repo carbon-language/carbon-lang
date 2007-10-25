@@ -15,7 +15,7 @@
 #define LLVM_CLANG_SOURCELOCATION_H
 
 #include <cassert>
-#include "llvm/Bitcode/Serialization.h"
+#include "llvm/Bitcode/SerializationFwd.h"
 
 namespace clang {
     
