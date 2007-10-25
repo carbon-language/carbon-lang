@@ -31,7 +31,6 @@ class FunctionPassManagerImpl;
 
 /// PassManager manages ModulePassManagers
 class PassManager {
-
 public:
 
   PassManager();
@@ -52,14 +51,14 @@ private:
   /// PassManagerImpl_New is the actual class. PassManager is just the 
   /// wraper to publish simple pass manager interface
   PassManagerImpl *PM;
-
 };
 
 /// FunctionPassManager manages FunctionPasses and BasicBlockPassManagers.
 class FunctionPassManager {
 public:
+  /// FunctionPassManager ctor - This initializes the pass manager.  It needs,
+  /// but does not take ownership of, the specified module provider.
   explicit FunctionPassManager(ModuleProvider *P);
-  FunctionPassManager();
   ~FunctionPassManager();
  
   /// add - Add a pass to the queue of passes to run.  This passes
@@ -82,8 +81,8 @@ public:
   /// doFinalization - Run all of the finalizers for the function passes.
   ///
   bool doFinalization();
+
 private:
-  
   FunctionPassManagerImpl *FPM;
   ModuleProvider *MP;
 };
