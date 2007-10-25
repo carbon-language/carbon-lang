@@ -252,8 +252,9 @@ entry:
 add from the program.</p>
 
 <p>LLVM provides a wide variety of optimizations that can be used in certain
-circumstances.  Unfortunately we don't have a good centralized description of
-what every pass does, but you can check out the ones that <tt>llvm-gcc</tt> or
+circumstances.  Some <a href="../Passes.html">documentation about the various 
+passes</a> is available, but it isn't very complete.  Another good source of
+ideas is to look at the passes that <tt>llvm-gcc</tt> or
 <tt>llvm-ld</tt> run to get started.  The "<tt>opt</tt>" tool allows you to 
 experiment with passes from the command line, so you can see if they do
 anything.</p>
@@ -410,6 +411,7 @@ declare double @cos(double)
 
 ready&gt; <b>sin(1.0);</b>
 <em>Evaluated to 0.841471</em>
+
 ready&gt; <b>def foo(x) sin(x)*sin(x) + cos(x)*cos(x);</b>
 Read function definition:
 define double @foo(double %x) {
@@ -443,6 +445,27 @@ addresses (useful for LLVM global variables that you want to map to static
 tables, for example), allows you to dynamically decide on the fly based on the
 function name, and even allows you to have the JIT abort itself if any lazy
 compilation is attempted.</p>
+
+<p>One interesting application of this is that we can now extend the language
+by writing arbitrary C++ code to implement operations.  For example, if we add:
+</p>
+
+<div class="doc_code">
+<pre>
+/// putchard - putchar that takes a double and returns 0.
+extern "C" 
+double putchard(double X) {
+  putchar((char)X);
+  return 0;
+}
+</pre>
+</div>
+
+<p>Now we can produce simple output to the console by using things like:
+"<tt>extern putchard(x); putchard(120);</tt>", which prints a lowercase 'x' on
+the console (120 is the ascii code for 'x').  Similar code could be used to 
+implement file I/O, console input, and many other capabilities in
+Kaleidoscope.</p>
 
 <p>This completes the JIT and optimizer chapter of the Kaleidoscope tutorial. At
 this point, we can compile a non-Turing-complete programming language, optimize
