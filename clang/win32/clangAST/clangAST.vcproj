@@ -169,6 +169,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\AST\DeclSerialization.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\AST\Expr.cpp"
 				>
 			</File>

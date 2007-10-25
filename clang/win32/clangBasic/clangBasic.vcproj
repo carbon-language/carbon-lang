@@ -166,6 +166,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Basic\SourceLocation.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Basic\SourceManager.cpp"
 				>
 			</File>
