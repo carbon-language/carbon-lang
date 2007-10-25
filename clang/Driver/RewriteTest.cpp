@@ -68,8 +68,8 @@ namespace {
     
     void RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
                                     int NumMethods,
+                                    bool IsInstanceMethod,
                                     const char *prefix,
-                                    const char *MethodKind,
                                     const char *ClassName);
     
     void RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
@@ -358,8 +358,8 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
 /// class methods.
 void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
                                              int NumMethods,
+                                             bool IsInstanceMethod,
                                              const char *prefix,
-                                             const char *MethodKind,
                                              const char *ClassName) {
   static bool objc_impl_method = false;
   if (NumMethods > 0 && !objc_impl_method) {
@@ -389,8 +389,9 @@ void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
     printf("\tint method_count;\n");
     printf("\tstruct _objc_method method_list[%d];\n", NumMethods);
     printf("} _OBJC_%s%s_METHODS_%s "
-           "__attribute__ ((section (\"__OBJC, __inst_meth\")))= "
-           "{\n\t0, %d\n", prefix, MethodKind, ClassName, NumMethods);
+           "__attribute__ ((section (\"__OBJC, __%s_meth\")))= "
+           "{\n\t0, %d\n", prefix, IsInstanceMethod ? "INSTANCE" : "CLASS", 
+           ClassName, IsInstanceMethod ? "inst" : "cls", NumMethods);
     for (int i = 0; i < NumMethods; i++)
       // TODO: 1) method selector name may hav to go into their own section
       // 2) encode method types for use here (which may have to go into 
@@ -547,12 +548,14 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl) {
   // Build _objc_method_list for class's instance methods if needed
   RewriteObjcMethodsMetaData(IDecl->getInstanceMethods(),
                              IDecl->getNumInstanceMethods(),
-                             "CATEGORY_", "INSTANCE", FullCategoryName);
+                             true,
+                             "CATEGORY_", FullCategoryName);
   
   // Build _objc_method_list for class's class methods if needed
   RewriteObjcMethodsMetaData(IDecl->getClassMethods(),
                              IDecl->getNumClassMethods(),
-                             "CATEGORY_", "CLASS", FullCategoryName);
+                             false,
+                             "CATEGORY_", FullCategoryName);
   
   // Protocols referenced in class declaration?
   RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(),
@@ -666,12 +669,14 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl) {
   // Build _objc_method_list for class's instance methods if needed
   RewriteObjcMethodsMetaData(IDecl->getInstanceMethods(), 
                              IDecl->getNumInstanceMethods(), 
-                             "", "INSTANCE", IDecl->getName());
+                             true,
+                             "", IDecl->getName());
   
   // Build _objc_method_list for class's class methods if needed
   RewriteObjcMethodsMetaData(IDecl->getClassMethods(), 
-                             IDecl->getNumClassMethods(), 
-                             "", "CLASS", IDecl->getName());
+                             IDecl->getNumClassMethods(),
+                             false,
+                             "", IDecl->getName());
     
   // Protocols referenced in class declaration?
   RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(), 
