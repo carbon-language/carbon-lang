@@ -212,6 +212,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\include\llvm\Bitcode\Archive.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Bitcode\Bitcodes.h"
 				>
 			</File>
@@ -224,11 +228,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\Bitcode\Deserialize.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Bitcode\LLVMBitCodes.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Bitcode\ReaderWriter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Bitcode\Serialization.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Bitcode\SerializationFwd.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Bitcode\Serialize.h"
 				>
 			</File>
 		</Filter>
