@@ -84,13 +84,20 @@ class CodeGenTypes {
   /// used instead of llvm::Type because it allows us to bypass potential 
   /// dangling type pointers due to type refinement on llvm side.
   llvm::DenseMap<Type *, llvm::PATypeHolder *> TypeHolderMap;
+
+  /// ConvertNewType - Convert type T into a llvm::Type. Do not use this
+  /// method directly because it does not do any type caching. This method
+  /// is available only for ConvertType(). CovertType() is preferred
+  /// interface to convert type T into a llvm::Type.
+  const llvm::Type *ConvertNewType(QualType T);
 public:
   CodeGenTypes(ASTContext &Ctx, llvm::Module &M);
   ~CodeGenTypes();
   
   TargetInfo &getTarget() const { return Target; }
-  
-  const llvm::Type *ConvertNewType(QualType T);
+
+  /// ConvertType - Convert type T into a llvm::Type. Maintain and use
+  /// type cache through TypeHOlderMap.
   const llvm::Type *ConvertType(QualType T);
   void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
                            std::vector<const llvm::Type*> &ArgTys);
