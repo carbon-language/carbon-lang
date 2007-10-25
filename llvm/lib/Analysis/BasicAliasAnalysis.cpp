@@ -339,8 +339,9 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
           
         // Otherwise, nothing is known...
       } else if (O1 != O2) {
-        // If they are two different objects, we know that we have no alias...
-        return NoAlias;
+        if (!isa<Argument>(O1))
+          // If they are two different objects, we know that we have no alias...
+          return NoAlias;
       }
 
       // If they are the same object, they we can look at the indexes.  If they
