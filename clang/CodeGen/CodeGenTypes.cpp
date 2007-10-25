@@ -69,7 +69,21 @@ CodeGenTypes::~CodeGenTypes() {
 
 /// ConvertType - Convert the specified type to its LLVM form.
 const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
-  // FIXME: Cache these, move the CodeGenModule, expand, etc.
+  // See if type is already cached.
+  llvm::DenseMap<Type *, llvm::PATypeHolder *>::iterator
+    I = TypeHolderMap.find(T.getTypePtr());
+  if (I != TypeHolderMap.end()) {
+    llvm::PATypeHolder *PAT = I->second;
+    return PAT->get();
+  }
+
+  const llvm::Type *ResultType = ConvertNewType(T);
+  llvm::PATypeHolder *PAT = new llvm::PATypeHolder(ResultType);
+  TypeHolderMap[T.getTypePtr()] = PAT;
+  return ResultType;
+}
+
+const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   const clang::Type &Ty = *T.getCanonicalType();
   
   switch (Ty.getTypeClass()) {
@@ -166,7 +180,10 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     
     // Struct return passes the struct byref.
     if (!ResultType->isFirstClassType() && ResultType != llvm::Type::VoidTy) {
-      ArgTys.push_back(llvm::PointerType::get(ResultType));
+      const llvm::Type *RType = llvm::PointerType::get(ResultType);
+      QualType RTy = Context.getPointerType(FP.getResultType());
+      TypeHolderMap[RTy.getTypePtr()] = new llvm::PATypeHolder(RType);
+      ArgTys.push_back(RType);
       ResultType = llvm::Type::VoidTy;
     }
     
@@ -215,6 +232,8 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       // Reevaluate this when performance analyis finds tons of opaque types.
       llvm::OpaqueType *OpaqueTy =  llvm::OpaqueType::get();
       RecordTypesToResolve[RD] = OpaqueTy;
+      QualType Opq;
+      TypeHolderMap[Opq.getTypePtr()] = new llvm::PATypeHolder(OpaqueTy);
 
       // Layout fields.
       RecordOrganizer RO;
@@ -281,8 +300,12 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
     const llvm::Type *Ty = ConvertType(FTP.getArgType(i));
     if (Ty->isFirstClassType())
       ArgTys.push_back(Ty);
-    else
-      ArgTys.push_back(llvm::PointerType::get(Ty));
+    else {
+      QualType PTy = Context.getPointerType(FTP.getArgType(i));
+      const llvm::Type *PtrTy = llvm::PointerType::get(Ty);
+      TypeHolderMap[PTy.getTypePtr()] = new llvm::PATypeHolder(PtrTy);
+      ArgTys.push_back(PtrTy);
+    }
   }
 }
 

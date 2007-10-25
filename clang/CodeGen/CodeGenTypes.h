@@ -20,6 +20,7 @@
 namespace llvm {
   class Module;
   class Type;
+  class PATypeHolder;
 }
 
 namespace clang {
@@ -27,6 +28,7 @@ namespace clang {
   class TagDecl;
   class TargetInfo;
   class QualType;
+  class Type;
   class FunctionTypeProto;
   class FieldDecl;
   class RecordDecl;
@@ -77,12 +79,18 @@ class CodeGenTypes {
   /// record.
   llvm::DenseMap<const RecordDecl *, llvm::Type *> RecordTypesToResolve;
 
+  /// TypeHolderMap - This map keeps cache of llvm::Types (through PATypeHolder)
+  /// and maps llvm::Types to corresponding clang::Type. llvm::PATypeHolder is
+  /// used instead of llvm::Type because it allows us to bypass potential 
+  /// dangling type pointers due to type refinement on llvm side.
+  llvm::DenseMap<Type *, llvm::PATypeHolder *> TypeHolderMap;
 public:
   CodeGenTypes(ASTContext &Ctx, llvm::Module &M);
   ~CodeGenTypes();
   
   TargetInfo &getTarget() const { return Target; }
   
+  const llvm::Type *ConvertNewType(QualType T);
   const llvm::Type *ConvertType(QualType T);
   void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
                            std::vector<const llvm::Type*> &ArgTys);
