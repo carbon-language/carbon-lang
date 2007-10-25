@@ -15,6 +15,7 @@
 #define LLVM_CLANG_SOURCELOCATION_H
 
 #include <cassert>
+#include "llvm/Bitcode/Serialization.h"
 
 namespace clang {
     
@@ -176,5 +177,32 @@ public:
 };
   
 }  // end namespace clang
+
+//===----------------------------------------------------------------------===//
+// Serialization of SourceLocations and SourceRanges.
+//===----------------------------------------------------------------------===//
+
+namespace llvm {
+  
+template<> struct SerializeTrait<clang::SourceLocation> {
+  static void Emit(Serializer& S, clang::SourceLocation L);
+  static clang::SourceLocation ReadVal(Deserializer& D);
+};
+
+template<> struct SerializeTrait<clang::SourceRange> {
+  static inline void Emit(Serializer& S, clang::SourceRange R) {
+    SerializeTrait<clang::SourceLocation>::Emit(S,R.getBegin());
+    SerializeTrait<clang::SourceLocation>::Emit(S,R.getEnd());
+  }
+  
+  static inline clang::SourceRange ReadVal(Deserializer& D) {
+    using clang::SourceLocation;
+    SourceLocation L = SerializeTrait<SourceLocation>::ReadVal(D);
+    SourceLocation R = SerializeTrait<SourceLocation>::ReadVal(D);
+    return clang::SourceRange(L,R);
+  }
+};
+  
+} // end namespace llvm
 
 #endif
