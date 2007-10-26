@@ -18,6 +18,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 using namespace clang;
 using llvm::utostr;
 
@@ -30,6 +31,7 @@ namespace {
     SourceLocation LastIncLoc;
     llvm::SmallVector<ObjcImplementationDecl *, 8> ClassImplementation;
     llvm::SmallVector<ObjcCategoryImplDecl *, 8> CategoryImplementation;
+    llvm::SmallPtrSet<ObjcInterfaceDecl*, 8> ObjcSynthesizedStructs;
     
     FunctionDecl *MsgSendFunctionDecl;
     FunctionDecl *GetClassFunctionDecl;
@@ -64,6 +66,7 @@ namespace {
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
     // Metadata emission.
+    void HandleObjcMetaDataEmission();
     void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
                                   std::string &Result);
     
@@ -82,6 +85,13 @@ namespace {
                                       const char *prefix,
                                       const char *ClassName,
                                       std::string &Result);
+    void SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
+                                      std::string &Result);
+    void RewriteObjcInternalStructs(ObjcImplementationDecl *IDecl,
+                                    std::string &Result);
+    void SynthesizeIvarOffsetComputation(ObjcImplementationDecl *IDecl, 
+                                         ObjcIvarDecl *ivar, 
+                                         std::string &Result);
     void WriteObjcMetaData(std::string &Result);
   };
 }
@@ -151,7 +161,12 @@ RewriteTest::~RewriteTest() {
   } else {
     printf("No changes\n");
   }
-  
+
+}
+
+/// HandleObjcMetaDataEmission - main routine to generate objective-c's 
+/// metadata.
+void RewriteTest::HandleObjcMetaDataEmission() {
   // Rewrite Objective-c meta data*
   std::string ResultStr;
   WriteObjcMetaData(ResultStr);
@@ -361,6 +376,47 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   
   delete Exp;
   return MessExp;
+}
+
+/// SynthesizeObjcInternalStruct - Rewrite one internal struct corresponding to
+/// an objective-c class with ivars.
+void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
+                                               std::string &Result) {
+  assert(CDecl && "Class missing in SynthesizeObjcInternalStruct");
+  assert(CDecl->getName() && "Name missing in SynthesizeObjcInternalStruct");
+  ObjcInterfaceDecl *RCDecl = CDecl->getSuperClass();
+  if (RCDecl && !ObjcSynthesizedStructs.count(RCDecl)) {
+    // Do it for the root
+    SynthesizeObjcInternalStruct(RCDecl, Result);
+  }
+  
+  int NumIvars = CDecl->getIntfDeclNumIvars();
+  if (NumIvars <= 0 && (!RCDecl || !ObjcSynthesizedStructs.count(RCDecl)))
+    return;
+  
+  Result += "\nstruct _interface_";
+  Result += CDecl->getName();
+  Result += " {\n";
+  if (RCDecl && ObjcSynthesizedStructs.count(RCDecl)) {
+    Result += "\tstruct _interface_";
+    Result += RCDecl->getName();
+    Result += " _";
+    Result += RCDecl->getName();
+    Result += ";\n";
+  }
+  
+  ObjcIvarDecl **Ivars = CDecl->getIntfDeclIvars();
+  for (int i = 0; i < NumIvars; i++) {
+    Result += "\t";
+    std::string Name = Ivars[i]->getName();
+    Ivars[i]->getType().getAsStringInternal(Name);
+    Result += Name;
+    Result += ";\n";
+  }
+  Result += "};\n";
+  // Mark this struct as having been generated.
+  if (!ObjcSynthesizedStructs.insert(CDecl))
+  assert(true && "struct already synthesize- SynthesizeObjcInternalStruct");
 }
 
 // RewriteObjcMethodsMetaData - Rewrite methods metadata for instance or
@@ -687,6 +743,18 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
   Result += "\t, sizeof(struct _objc_category), 0\n};\n";
 }
 
+/// SynthesizeIvarOffsetComputation - This rutine synthesizes computation of
+/// ivar offset.
+void RewriteTest::SynthesizeIvarOffsetComputation(ObjcImplementationDecl *IDecl, 
+                                                  ObjcIvarDecl *ivar, 
+                                                  std::string &Result) {
+  Result += "offsetof(struct _interface_";
+  Result += IDecl->getName();
+  Result += ", ";
+  Result += ivar->getName();
+  Result += ")";
+}
+
 //===----------------------------------------------------------------------===//
 // Meta Data Emission
 //===----------------------------------------------------------------------===//
@@ -701,6 +769,8 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
                    : (CDecl ? CDecl->getIntfDeclNumIvars() : 0);
   
   if (NumIvars > 0) {
+    SynthesizeObjcInternalStruct(CDecl, Result);
+    
     static bool objc_ivar = false;
     if (!objc_ivar) {
       /* struct _objc_ivar {
@@ -738,13 +808,17 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
                              : CDecl->getIntfDeclIvars();
     Result += "\t,{{\"";
     Result += Ivars[0]->getName();
-    Result += "\", \"\", 0}\n";
+    Result += "\", \"\", ";
+    SynthesizeIvarOffsetComputation(IDecl, Ivars[0], Result);
+    Result += "}\n";
     for (int i = 1; i < NumIvars; i++) {
       // TODO: 1) ivar names may have to go to another section. 2) encode
-      // ivar_type type of each ivar . 3) compute and add ivar offset.
+      // ivar_type type of each ivar .
       Result += "\t  ,{\"";
       Result += Ivars[i]->getName();
-      Result += "\", \"\", 0}\n";
+      Result += "\", \"\", ";
+      SynthesizeIvarOffsetComputation(IDecl, Ivars[i], Result);
+      Result += "}\n";
     }
     
     Result += "\t }\n};\n";
@@ -904,7 +978,9 @@ void RewriteTest::WriteObjcMetaData(std::string &Result) {
   
   // TODO: This is temporary until we decide how to access objc types in a
   // c program
-  Result += "\n#include <Objc/objc.h>\n";
+  Result += "#include <Objc/objc.h>\n";
+  // This is needed for use of offsetof
+  Result += "#include <stddef.h>\n";
   
   // For each implemented class, write out all its meta data.
   for (int i = 0; i < ClsDefCount; i++)
@@ -973,7 +1049,8 @@ void RewriteTest::WriteObjcMetaData(std::string &Result) {
   Result += "};\n\n";
   Result += "static struct _objc_module "
     "_OBJC_MODULES __attribute__ ((section (\"__OBJC, __module_info\")))= {\n";
-  Result += "\t" + utostr(OBJC_ABI_VERSION) + ", sizeof(struct _objc_module), \"\", &_OBJC_SYMBOLS\n";
+  Result += "\t" + utostr(OBJC_ABI_VERSION) + 
+  ", sizeof(struct _objc_module), \"\", &_OBJC_SYMBOLS\n";
   Result += "};\n\n";
 }
 

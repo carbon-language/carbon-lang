@@ -107,6 +107,8 @@ void clang::ParseAST(Preprocessor &PP, unsigned MainFileID,
   
   while (Decl *D = Streamer.ReadTopLevelDecl())
     Consumer.HandleTopLevelDecl(D);
+
+  Consumer.HandleObjcMetaDataEmission();
   
   if (PrintStats) {
     fprintf(stderr, "\nSTATISTICS:\n");
