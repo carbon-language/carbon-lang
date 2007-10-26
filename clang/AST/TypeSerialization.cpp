@@ -101,27 +101,19 @@ void ArrayType::ReadArrayTypeInternal(llvm::Deserializer& D) {
 }
 
 void ConstantArrayType::Emit(llvm::Serializer& S) const {
-#if 0
-  // FIXME: APInt serialization
-  S.Emit(Size);
-#endif
   EmitArrayTypeInternal(S);
+  S.Emit(Size);
 }
 
 ConstantArrayType* ConstantArrayType::Materialize(llvm::Deserializer& D) {
-#if 0
-  llvm::APInt x = S.ReadVal<llvm::APInt>(D);
-  
   // "Default" construct the array.
   ConstantArrayType* T =
-    new ConstantArrayType(QualType(), QualType(), x, ArrayType::Normal, 0);
+    new ConstantArrayType(QualType(), QualType(), llvm::APInt(), 
+                          ArrayType::Normal, 0);
   
   // Deserialize the internal values.
-  T->ReadArrayTypeInternal(D);
+  T->ReadArrayTypeInternal(D);  
+  D.Read(T->Size);
 
   return T;
-#else
-  return NULL;
-#endif
-
 }
