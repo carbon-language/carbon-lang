@@ -972,7 +972,7 @@ bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
     AM.Scale = Scale;
 
     // If load[imm+r*scale] is illegal, bail out.
-    if (!TLI->isLegalAddressingMode(AM, AccessTy))
+    if (TLI && !TLI->isLegalAddressingMode(AM, AccessTy))
       return false;
   }
   return true;
