@@ -10,7 +10,7 @@
 // This file defines two passes to print out a module.  The PrintModulePass pass
 // simply prints out the entire module when it is executed.  The
 // PrintFunctionPass class is designed to be pipelined with other
-// FunctionPass's, and prints out the functions of the class as they are
+// FunctionPass's, and prints out the functions of the module as they are
 // processed.
 //
 //===----------------------------------------------------------------------===//

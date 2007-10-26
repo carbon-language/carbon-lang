@@ -9,22 +9,22 @@
 //
 // This pass promotes "by reference" arguments to be "by value" arguments.  In
 // practice, this means looking for internal functions that have pointer
-// arguments.  If we can prove, through the use of alias analysis, that an
-// argument is *only* loaded, then we can pass the value into the function
+// arguments.  If it can prove, through the use of alias analysis, that an
+// argument is *only* loaded, then it can pass the value into the function
 // instead of the address of the value.  This can cause recursive simplification
 // of code and lead to the elimination of allocas (especially in C++ template
 // code like the STL).
 //
 // This pass also handles aggregate arguments that are passed into a function,
 // scalarizing them if the elements of the aggregate are only loaded.  Note that
-// we refuse to scalarize aggregates which would require passing in more than
-// three operands to the function, because we don't want to pass thousands of
-// operands for a large array or structure!
+// it refuses to scalarize aggregates which would require passing in more than
+// three operands to the function, because passing thousands of operands for a
+// large array or structure is unprofitable!
 //
 // Note that this transformation could also be done for arguments that are only
-// stored to (returning the value instead), but we do not currently handle that
-// case.  This case would be best handled when and if we start supporting
-// multiple return values from functions.
+// stored to (returning the value instead), but does not currently.  This case
+// would be best handled when and if LLVM begins supporting multiple return
+// values from functions.
 //
 //===----------------------------------------------------------------------===//
 

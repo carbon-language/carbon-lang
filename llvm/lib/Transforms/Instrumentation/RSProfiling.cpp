@@ -18,7 +18,7 @@
 // backedges.  At each connection point a choice is made as to whether to jump
 // to the profiled code (take a sample) or execute the unprofiled code.
 //
-// It is highly recommeneded that after this pass one runs mem2reg and adce
+// It is highly recommended that after this pass one runs mem2reg and adce
 // (instcombine load-vn gdce dse also are good to run afterwards)
 //
 // This design is intended to make the profiling passes independent of the RS

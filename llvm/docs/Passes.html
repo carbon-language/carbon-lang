@@ -313,9 +313,8 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 </div>
 <div class="doc_text">
   <p>
-  This pass, only available in <code>opt</code>, prints
-  the call graph into a <code>.dot</code> graph.  This graph can then be processed with the
-  "dot" tool to convert it to postscript or some other suitable format.
+  This pass, only available in <code>opt</code>, prints the call graph to
+  standard output in a human-readable form.
   </p>
 </div>
 
@@ -325,8 +324,8 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 </div>
 <div class="doc_text">
   <p>
-  This pass, only available in <code>opt</code>, prints
-  the SCCs of the call graph to standard output in a human-readable form.
+  This pass, only available in <code>opt</code>, prints the SCCs of the call
+  graph to standard output in a human-readable form.
   </p>
 </div>
 
@@ -336,8 +335,8 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 </div>
 <div class="doc_text">
   <p>
-  This pass, only available in <code>opt</code>, prints
-  the SCCs of each function CFG to standard output in a human-readable form.
+  This pass, only available in <code>opt</code>, prints the SCCs of each
+  function CFG to standard output in a human-readable form.
   </p>
 </div>
 
@@ -495,7 +494,12 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="memdep">Memory Dependence Analysis</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  An analysis that determines, for a given memory operation, what preceding 
+  memory operations it depends on.  It builds on alias analysis information, and 
+  tries to provide a lazy, caching interface to a common kind of alias 
+  information query.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -503,7 +507,11 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="no-aa">No Alias Analysis (always returns 'may' alias)</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Always returns "I don't know" for alias queries.  NoAA is unlike other alias
+  analysis implementations, in that it does not chain to a previous analysis. As
+  such it doesn't follow many of the rules that other alias analyses must.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -511,7 +519,10 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="no-profile">No Profile Information</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  The default "no profile" implementation of the abstract
+  <code>ProfileInfo</code> interface.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -519,7 +530,10 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="postdomfrontier">Post-Dominance Frontier Construction</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass is a simple post-dominator construction algorithm for finding
+  post-dominator frontiers.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -527,7 +541,10 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="postdomtree">Post-Dominator Tree Construction</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass is a simple post-dominator construction algorithm for finding
+  post-dominators.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -535,7 +552,11 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="print">Print function to stderr</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  The <code>PrintFunctionPass</code> class is designed to be pipelined with
+  other <code>FunctionPass</code>es, and prints out the functions of the module
+  as they are processed.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -551,7 +572,11 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="print-callgraph">Print Call Graph to 'dot' file</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass, only available in <code>opt</code>, prints the call graph into a
+  <code>.dot</code> graph.  This graph can then be processed with the "dot" tool
+  to convert it to postscript or some other suitable format.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -559,7 +584,11 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="print-cfg">Print CFG of function to 'dot' file</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass, only available in <code>opt</code>, prints the control flow graph
+  into a <code>.dot</code> graph.  This graph can then be processed with the
+  "dot" tool to convert it to postscript or some other suitable format.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -567,7 +596,12 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="print-cfg-only">Print CFG of function to 'dot' file (with no function bodies)</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass, only available in <code>opt</code>, prints the control flow graph
+  into a <code>.dot</code> graph, omitting the function bodies.  This graph can
+  then be processed with the "dot" tool to convert it to postscript or some
+  other suitable format.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -575,7 +609,9 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="printm">Print module to stderr</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass simply prints out the entire module when it is executed.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -583,7 +619,10 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="printusedtypes">Find Used Types</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass is used to seek out all of the types in use by the program.  Note
+  that this analysis explicitly does not include types only used by the symbol
+  table.
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -591,7 +630,10 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="profile-loader">Load profile information from llvmprof.out</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  A concrete implementation of profiling information that loads the information
+  from a profile dump file.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -599,7 +641,18 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="scalar-evolution">Scalar Evolution Analysis</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  The <code>ScalarEvolution</code> analysis can be used to analyze and
+  catagorize scalar expressions in loops.  It specializes in recognizing general
+  induction variables, representing them with the abstract and opaque
+  <code>SCEV</code> class.  Given this analysis, trip counts of loops and other
+  important properties can be obtained.
+  </p>
+  
+  <p>
+  This analysis is primarily useful for induction variable substitution and
+  strength reduction.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -607,7 +660,8 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="targetdata">Target Data Layout</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>Provides other passes access to information on how the size and alignment
+  required by the the target ABI for various data types.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -632,7 +686,30 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="argpromotion">Promote 'by reference' arguments to scalars</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass promotes "by reference" arguments to be "by value" arguments.  In
+  practice, this means looking for internal functions that have pointer
+  arguments.  If it can prove, through the use of alias analysis, that an
+  argument is *only* loaded, then it can pass the value into the function
+  instead of the address of the value.  This can cause recursive simplification
+  of code and lead to the elimination of allocas (especially in C++ template
+  code like the STL).
+  </p>
+  
+  <p>
+  This pass also handles aggregate arguments that are passed into a function,
+  scalarizing them if the elements of the aggregate are only loaded.  Note that
+  it refuses to scalarize aggregates which would require passing in more than
+  three operands to the function, because passing thousands of operands for a
+  large array or structure is unprofitable!
+  </p>
+  
+  <p>
+  Note that this transformation could also be done for arguments that are only
+  stored to (returning the value instead), but does not currently.  This case
+  would be best handled when and if LLVM starts supporting multiple return
+  values from functions.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -640,22 +717,11 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="block-placement">Profile Guided Basic Block Placement</a>
 </div>
 <div class="doc_text">
-  <p>This pass implements a very simple profile guided basic block placement
-  algorithm.  The idea is to put frequently executed blocks together at the
-  start of the function, and hopefully increase the number of fall-through
-  conditional branches.  If there is no profile information for a particular
-  function, this pass basically orders blocks in depth-first order.</p>
-  <p>The algorithm implemented here is basically "Algo1" from "Profile Guided 
-  Code Positioning" by Pettis and Hansen, except that it uses basic block 
-  counts instead of edge counts.  This could be improved in many ways, but is 
-  very simple for now.</p>
-  
-  <p>Basically we "place" the entry block, then loop over all successors in a 
-  DFO, placing the most frequently executed successor until we run out of 
-  blocks.  Did we mention that this was <b>extremely</b> simplistic? This is 
-  also much slower than it could be.  When it becomes important, this pass 
-  will be rewritten to use a better algorithm, and then we can worry about 
-  efficiency.</p>
+  <p>This pass is a very simple profile guided basic block placement algorithm.
+  The idea is to put frequently executed blocks together at the start of the
+  function and hopefully increase the number of fall-through conditional
+  branches.  If there is no profile information for a particular function, this
+  pass basically orders blocks in depth-first order.</p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -663,7 +729,12 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   <a name="break-crit-edges">Break critical edges in CFG</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Break all of the critical edges in the CFG by inserting a dummy basic block.
+  It may be "required" by passes that cannot deal with critical edges. This
+  transformation obviously invalidates the CFG, but can update forward dominator
+  (set, immediate dominators, tree, and frontier) information.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -705,7 +776,12 @@ if (i == j)
   <a name="constmerge">Merge Duplicate Global Constants</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Merges duplicate global constants together into a single constant that is
+  shared.  This is useful because some passes (ie TraceValues) insert a lot of
+  string constants into the program, regardless of whether or not an existing
+  string is available.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -729,7 +805,11 @@ if (i == j)
   <a name="dce">Dead Code Elimination</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Dead code elimination is similar to <a href="#die">dead instruction
+  elimination</a>, but it rechecks instructions that were used by removed
+  instructions to see if they are newly dead.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -737,7 +817,17 @@ if (i == j)
   <a name="deadargelim">Dead Argument Elimination</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass deletes dead arguments from internal functions.  Dead argument
+  elimination removes arguments which are directly dead, as well as arguments
+  only passed into function calls as dead arguments of other functions.  This
+  pass also deletes dead arguments in a similar way.
+  </p>
+  
+  <p>
+  This pass is often useful as a cleanup pass to run after aggressive
+  interprocedural passes, which add possibly-dead arguments.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -745,7 +835,11 @@ if (i == j)
   <a name="deadtypeelim">Dead Type Elimination</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass is used to cleanup the output of GCC.  It eliminate names for types
+  that are unused in the entire translation unit, using the <a
+  href="#findusedtypes">find used types</a> pass.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -753,7 +847,10 @@ if (i == j)
   <a name="die">Dead Instruction Elimination</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Dead instruction elimination performs a single pass over the function,
+  removing instructions that are obviously dead.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -761,7 +858,10 @@ if (i == j)
   <a name="dse">Dead Store Elimination</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  A trivial dead store elimination that only considers basic-block local
+  redundant stores.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -769,7 +869,12 @@ if (i == j)
   <a name="gcse">Global Common Subexpression Elimination</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass is designed to be a very quick global transformation that
+  eliminates global common subexpressions from a function.  It does this by
+  using an existing value numbering implementation to identify the common
+  subexpressions, eliminating them when possible.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -777,7 +882,13 @@ if (i == j)
   <a name="globaldce">Dead Global Elimination</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This transform is designed to eliminate unreachable internal globals from the
+  program.  It uses an aggressive algorithm, searching out globals that are
+  known to be alive.  After it finds all of the globals which are needed, it
+  deletes whatever is left over.  This allows it to delete recursive chunks of
+  the program which are unreachable.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -785,7 +896,11 @@ if (i == j)
   <a name="globalopt">Global Variable Optimizer</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass transforms simple global variables that never have their address
+  taken.  If obviously true, it marks read/write globals as constant, deletes
+  variables only stored to, etc.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -821,7 +936,16 @@ if (i == j)
   <a name="indmemrem">Indirect Malloc and Free Removal</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass finds places where memory allocation functions may escape into
+  indirect land.  Some transforms are much easier (aka possible) only if free 
+  or malloc are not called indirectly.
+  </p>
+  
+  <p>
+  Thus find places where the address of memory functions are taken and construct
+  bounce functions with direct calls of those functions.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -829,7 +953,50 @@ if (i == j)
   <a name="indvars">Canonicalize Induction Variables</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This transformation analyzes and transforms the induction variables (and
+  computations derived from them) into simpler forms suitable for subsequent
+  analysis and transformation.
+  </p>
+  
+  <p>
+  This transformation makes the following changes to each loop with an
+  identifiable induction variable:
+  </p>
+  
+  <ol>
+    <li>All loops are transformed to have a <em>single</em> canonical
+        induction variable which starts at zero and steps by one.</li>
+    <li>The canonical induction variable is guaranteed to be the first PHI node
+        in the loop header block.</li>
+    <li>Any pointer arithmetic recurrences are raised to use array
+        subscripts.</li>
+  </ol>
+  
+  <p>
+  If the trip count of a loop is computable, this pass also makes the following
+  changes:
+  </p>
+  
+  <ol>
+    <li>The exit condition for the loop is canonicalized to compare the
+        induction value against the exit value.  This turns loops like:
+        <blockquote><pre>for (i = 7; i*i < 1000; ++i)</pre></blockquote>
+        into
+        <blockquote><pre>for (i = 0; i != 25; ++i)</pre></blockquote></li>
+    <li>Any use outside of the loop of an expression derived from the indvar
+        is changed to compute the derived value outside of the loop, eliminating
+        the dependence on the exit value of the induction variable.  If the only
+        purpose of the loop is to compute the exit value of some derived
+        expression, this transformation will make the loop dead.</li>
+  </p>
+  
+  <p>
+  This transformation should be followed by strength reduction after all of the
+  desired loop transformations have been performed.  Additionally, on targets
+  where it is profitable, the loop could be transformed to count down to zero
+  (the "do loop" optimization).
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -837,7 +1004,9 @@ if (i == j)
   <a name="inline">Function Integration/Inlining</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Bottom-up inlining of functions into callees.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -845,7 +1014,18 @@ if (i == j)
   <a name="insert-block-profiling">Insert instrumentation for block profiling</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass instruments the specified program with counters for basic block
+  profiling, which counts the number of times each basic block executes.  This
+  is the most basic form of profiling, which can tell which blocks are hot, but
+  cannot reliably detect hot paths through the CFG.
+  </p>
+  
+  <p>
+  Note that this implementation is very naïve.  Control equivalent regions of
+  the CFG should not require duplicate counters, but it does put duplicate
+  counters in.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -853,7 +1033,17 @@ if (i == j)
   <a name="insert-edge-profiling">Insert instrumentation for edge profiling</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass instruments the specified program with counters for edge profiling.
+  Edge profiling can give a reasonable approximation of the hot paths through a
+  program, and is used for a wide variety of program transformations.
+  </p>
+  
+  <p>
+  Note that this implementation is very naïve.  It inserts a counter for
+  <em>every</em> edge in the program, instead of using control flow information
+  to prune the number of counters inserted.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -861,7 +1051,10 @@ if (i == j)
   <a name="insert-function-profiling">Insert instrumentation for function profiling</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass instruments the specified program with counters for function
+  profiling, which counts the number of times each function is called.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -869,7 +1062,11 @@ if (i == j)
   <a name="insert-null-profiling-rs">Measure profiling framework overhead</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  The basic profiler that does nothing.  It is the default profiler and thus
+  terminates <code>RSProfiler</code> chains.  It is useful for  measuring
+  framework overhead.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -877,7 +1074,20 @@ if (i == j)
   <a name="insert-rs-profiling-framework">Insert random sampling instrumentation framework</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  The second stage of the random-sampling instrumentation framework, duplicates
+  all instructions in a function, ignoring the profiling code, then connects the
+  two versions together at the entry and at backedges.  At each connection point
+  a choice is made as to whether to jump to the profiled code (take a sample) or
+  execute the unprofiled code.
+  </p>
+  
+  <p>
+  After this pass, it is highly recommended to run<a href="#mem2reg">mem2reg</a>
+  and <a href="#adce">adce</a>. <a href="#instcombine">instcombine</a>,
+  <a href="#load-vn">load-vn</a>, <a href="#gdce">gdce</a>, and
+  <a href="#dse">dse</a> also are good to run afterwards.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -885,7 +1095,53 @@ if (i == j)
   <a name="instcombine">Combine redundant instructions</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Combine instructions to form fewer, simple
+  instructions.  This pass does not modify the CFG This pass is where algebraic
+  simplification happens.
+  </p>
+  
+  <p>
+  This pass combines things like:
+  </p>
+  
+<blockquote><pre
+>%Y = add i32 %X, 1
+%Z = add i32 %Y, 1</pre></blockquote>
+  
+  <p>
+  into:
+  </p>
+
+<blockquote><pre
+>%Z = add i32 %X, 2</pre></blockquote>
+  
+  <p>
+  This is a simple worklist driven algorithm.
+  </p>
+  
+  <p>
+  This pass guarantees that the following canonicalizations are performed on
+  the program:
+  </p>
+
+  <ul>
+    <li>If a binary operator has a constant operand, it is moved to the right-
+        hand side.</li>
+    <li>Bitwise operators with constant operands are always grouped so that
+        shifts are performed first, then <code>or</code>s, then
+        <code>and</code>s, then <code>xor</code>s.</li>
+    <li>Compare instructions are converted from <code>&lt;</code>,
+        <code>&gt;</code>, <code>≤</code>, or <code>≥</code> to
+        <code>=</code> or <code>≠</code> if possible.</li>
+    <li>All <code>cmp</code> instructions on boolean values are replaced with
+        logical operations.</li>
+    <li><code>add <var>X</var>, <var>X</var></code> is represented as
+        <code>mul <var>X</var>, 2</code> ⇒ <code>shl <var>X</var>, 1</code></li>
+    <li>Multiplies with a constant power-of-two argument are transformed into
+        shifts.</li>
+    <li>… etc.</li>
+  </ul>
 </div>
 
 <!-------------------------------------------------------------------------- -->
