@@ -16,6 +16,7 @@
 #include "clang/AST/AST.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Support/Compiler.h"
 using namespace clang;
 using namespace CodeGen;
@@ -73,6 +74,7 @@ public:
 
   
   void VisitConditionalOperator(const ConditionalOperator *CO);
+  void VisitInitListExpr(InitListExpr *E);
   //  case Expr::ChooseExprClass:
 };
 }  // end anonymous namespace.
@@ -101,7 +103,8 @@ void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
   
   llvm::Value *MemCpyOps[4] = {
     DestPtr, SrcPtr,
-    llvm::ConstantInt::get(IntPtr, TypeInfo.first),
+    // TypeInfo.first describes size in bits.
+    llvm::ConstantInt::get(IntPtr, TypeInfo.first/8),
     llvm::ConstantInt::get(llvm::Type::Int32Ty, TypeInfo.second)
   };
   
@@ -176,6 +179,79 @@ void AggExprEmitter::VisitConditionalOperator(const ConditionalOperator *E) {
   RHSBlock = Builder.GetInsertBlock();
   
   CGF.EmitBlock(ContBlock);
+}
+
+void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
+
+  unsigned NumInitElements = E->getNumInits();
+
+  assert ( E->getType()->isArrayType() 
+           && "Only Array initializers are supported");
+
+  std::vector<llvm::Constant*> ArrayElts;
+  const llvm::PointerType *APType = cast<llvm::PointerType>(DestPtr->getType());
+  const llvm::ArrayType *AType = cast<llvm::ArrayType>(APType->getElementType());
+
+  // Copy initializer elements.
+  bool AllConstElements = true;
+  unsigned i = 0;
+  for (i = 0; i < NumInitElements; ++i) {
+    if (llvm::Constant *C = dyn_cast<llvm::Constant>(CGF.EmitScalarExpr(E->getInit(i))))
+      ArrayElts.push_back(C);
+    else {
+      AllConstElements = false;
+      break;
+    }
+  }
+
+  unsigned NumArrayElements = AType->getNumElements();
+  const llvm::Type *ElementType = CGF.ConvertType(E->getInit(0)->getType());
+
+  if (AllConstElements) {
+    // Initialize remaining array elements.
+    for (/*Do not initialize i*/; i < NumArrayElements; ++i)
+      ArrayElts.push_back(llvm::Constant::getNullValue(ElementType));
+
+    // Create global value to hold this array.
+    llvm::Constant *V = llvm::ConstantArray::get(AType, ArrayElts);
+    V = new llvm::GlobalVariable(V->getType(), true, 
+                                 llvm::GlobalValue::InternalLinkage,
+                                 V, ".array", 
+                                 &CGF.CGM.getModule());
+    
+    EmitAggregateCopy(DestPtr, V , E->getType());
+    return;
+  }
+
+  // Emit indiviudal array element stores.
+  unsigned index = 0;
+  llvm::Value *NextVal = NULL;
+  llvm::Value *Idxs[] = {
+    llvm::Constant::getNullValue(llvm::Type::Int32Ty),
+    NULL
+  };
+  
+  // Emit already seen constants initializers.
+  for (i = 0; i < ArrayElts.size(); i++) {
+    Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, index++);
+    NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2, ".array");
+    Builder.CreateStore(ArrayElts[i], NextVal);
+  }
+
+  // Emit remaining initializers
+  for (/*Do not initizalize i*/; i < NumInitElements; ++i) {
+    Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, index++);
+    NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2, ".array");
+    llvm::Value *V = CGF.EmitScalarExpr(E->getInit(i));
+    Builder.CreateStore(V, NextVal);
+  }
+
+  // Emit remaining default initializers
+  for (/*Do not initialize i*/; i < NumArrayElements; ++i) {
+    Idxs[1] = llvm::ConstantInt::get(llvm::Type::Int32Ty, index++);
+    NextVal = Builder.CreateGEP(DestPtr, Idxs, Idxs + 2, ".array");
+    Builder.CreateStore(llvm::Constant::getNullValue(ElementType), NextVal);
+  }
 }
 
 //===----------------------------------------------------------------------===//
