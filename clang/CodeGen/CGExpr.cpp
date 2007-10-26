@@ -394,21 +394,18 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   }
 
   llvm::Value *BaseValue = NULL;
-  if (const CallExpr *CE = dyn_cast<CallExpr>(BaseExpr)) {
-    RValue Base = EmitCallExpr(CE);
-    BaseValue = Base.getScalarVal();
-  }
-  else {
+  if (BaseExpr->isLvalue() == Expr::LV_Valid) {
     LValue BaseLV = EmitLValue(BaseExpr);
     BaseValue = BaseLV.getAddress();
-
+    
     if (E->isArrow()) {
       QualType PTy = cast<PointerType>(BaseExpr->getType())->getPointeeType();
       BaseValue =  Builder.CreateBitCast(BaseValue, 
-                                      llvm::PointerType::get(ConvertType(PTy)),
+                                         llvm::PointerType::get(ConvertType(PTy)),
                                          "tmp");
     }
-  }
+  } else
+    BaseValue = EmitScalarExpr(BaseExpr);
 
   FieldDecl *Field = E->getMemberDecl();
   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
