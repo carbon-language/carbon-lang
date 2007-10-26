@@ -17,6 +17,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/Bitcode/SerializationFwd.h"
 
 using llvm::isa;
 using llvm::cast;
@@ -153,6 +154,17 @@ public:
   /// appropriate type qualifiers on it.
   inline QualType getCanonicalType() const;
   
+  /// Emit - Serialize a QualType using a Bitcode Serializer.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Read - Deserialize a QualType using a Bitcode Deserializer.  This
+  ///  deserialization requires that a QualType be default constructed
+  ///  first.  This is because internally the deserialization relies on
+  ///  pointer backpatching performed by the Deserializer.  Deserialization
+  ///  of a QualType should only be done on an instance of QualType that
+  ///  exists, in place, within its containing object.
+  void Read(llvm::Deserializer& D);
+  
 private:
 };
 
@@ -169,7 +181,8 @@ template<> struct simplify_type<const ::clang::QualType> {
 };
 template<> struct simplify_type< ::clang::QualType>
   : public simplify_type<const ::clang::QualType> {};
-}
+  
+} // end namespace llvm
 
 namespace clang {
 
@@ -223,6 +236,10 @@ protected:
     : CanonicalType(Canonical.isNull() ? QualType(this_(),0) : Canonical), TC(tc){}
   virtual ~Type();
   friend class ASTContext;
+  
+  void EmitTypeInternal(llvm::Serializer& S) const;
+  void ReadTypeInternal(llvm::Deserializer& D);
+  
 public:
   TypeClass getTypeClass() const { return static_cast<TypeClass>(TC); }
   
@@ -359,6 +376,8 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
   static bool classof(const BuiltinType *) { return true; }
+  
+  void Emit(llvm::Serializer& S) const;
 };
 
 /// ComplexType - C99 6.2.5p11 - Complex values.  This supports the C99 complex
@@ -385,6 +404,9 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == Complex; }
   static bool classof(const ComplexType *) { return true; }
+  
+  void Emit(llvm::Serializer& S) const;
+  static ComplexType* Materialize(llvm::Deserializer& D);
 };
 
 
@@ -412,6 +434,9 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
   static bool classof(const PointerType *) { return true; }
+  
+  void Emit(llvm::Serializer& S) const;
+  static PointerType* Materialize(llvm::Deserializer& D);
 };
 
 /// ReferenceType - C++ 8.3.2 - Reference Declarators.
@@ -436,6 +461,9 @@ public:
 
   static bool classof(const Type *T) { return T->getTypeClass() == Reference; }
   static bool classof(const ReferenceType *) { return true; }
+  
+  void Emit(llvm::Serializer& S) const;
+  static ReferenceType* Materialize(llvm::Deserializer& D);
 };
 
 /// ArrayType - C99 6.7.5.2 - Array Declarators.
@@ -482,6 +510,10 @@ public:
            T->getTypeClass() == VariableArray;
   }
   static bool classof(const ArrayType *) { return true; }
+  
+protected:
+  void EmitArrayTypeInternal(llvm::Serializer& S) const;
+  void ReadArrayTypeInternal(llvm::Deserializer& S);
 };
 
 class ConstantArrayType : public ArrayType, public llvm::FoldingSetNode {
@@ -519,6 +551,9 @@ public:
     return T->getTypeClass() == ConstantArray; 
   }
   static bool classof(const ConstantArrayType *) { return true; }
+  
+  void Emit(llvm::Serializer& S) const;
+  static ConstantArrayType* Materialize(llvm::Deserializer& D);
 };
 
 // FIXME: VariableArrayType's aren't uniqued (since expressions aren't).
