@@ -1816,10 +1816,11 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
                            MFI->getObjectOffset(CSI[I].getFrameIdx()));
 
     // Calculate offsets
+    int64_t saveAreaOffset = (hasFP(MF) ? 3 : 2)*stackGrowth;
     for (unsigned I = 0, E = CSI.size(); I!=E; ++I) {
       int64_t Offset = MFI->getObjectOffset(CSI[I].getFrameIdx());
       unsigned Reg = CSI[I].getReg();
-      Offset = (MaxOffset-Offset+3*stackGrowth);
+      Offset = (MaxOffset-Offset+saveAreaOffset);
       MachineLocation CSDst(MachineLocation::VirtualFP, Offset);
       MachineLocation CSSrc(Reg);
       Moves.push_back(MachineMove(FrameLabelId, CSDst, CSSrc));
