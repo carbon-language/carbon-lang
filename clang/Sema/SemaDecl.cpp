@@ -1237,6 +1237,7 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
     IDecl = new ObjcInterfaceDecl(SourceLocation(), 0, ClassName);
     IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
     ClassName->setFETokenInfo(IDecl);
+    IDecl->setSuperClass(SDecl);
     
     // Remember that this needs to be removed when the scope is popped.
     TUScope->AddDecl(IDecl);
@@ -1256,10 +1257,16 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
                                     ObjcIvarDecl **ivars, unsigned numIvars) {
   assert(ImpDecl && "missing implementation decl");
   ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(ImpDecl->getIdentifier());
-  /// 2nd check is added to accomodate case of non-existing @interface decl.
-  /// (legacy objective-c @implementation decl without an @interface decl).
-  if (!IDecl || IDecl->ImplicitInterfaceDecl())
+  if (!IDecl)
     return;
+  /// Check case of non-existing @interface decl.
+  /// (legacy objective-c @implementation decl without an @interface decl).
+  /// Add implementations's ivar to the synthesize class's ivar list.
+  if (IDecl->ImplicitInterfaceDecl()) {
+    IDecl->ObjcAddInstanceVariablesToClass(ivars, numIvars);
+    return;
+  }
+  
   assert(ivars && "missing @implementation ivars");
   
   // Check interface's Ivar list against those in the implementation.
