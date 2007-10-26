@@ -31,6 +31,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
@@ -135,7 +136,7 @@ namespace {
 
     /// DeadInsts - Keep track of instructions we may have made dead, so that
     /// we can remove them after we are done working.
-    std::set<Instruction*> DeadInsts;
+    SmallPtrSet<Instruction*,16> DeadInsts;
 
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// transformation profitability.
@@ -169,7 +170,7 @@ namespace {
     Value *getCastedVersionOf(Instruction::CastOps opcode, Value *V);
 private:
     bool AddUsersIfInteresting(Instruction *I, Loop *L,
-                               std::set<Instruction*> &Processed);
+                               SmallPtrSet<Instruction*,16> &Processed);
     SCEVHandle GetExpressionSCEV(Instruction *E, Loop *L);
     ICmpInst *ChangeCompareStride(Loop *L, ICmpInst *Cond,
                                   IVStrideUse* &CondUse,
@@ -191,7 +192,7 @@ private:
     void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                       IVUsersOfOneStride &Uses,
                                       Loop *L, bool isOnlyStride);
-    void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
+    void DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*,16> &Insts);
   };
   char LoopStrengthReduce::ID = 0;
   RegisterPass<LoopStrengthReduce> X("loop-reduce", "Loop Strength Reduction");
@@ -223,10 +224,10 @@ Value *LoopStrengthReduce::getCastedVersionOf(Instruction::CastOps opcode,
 /// specified set are trivially dead, delete them and see if this makes any of
 /// their operands subsequently dead.
 void LoopStrengthReduce::
-DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
+DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*,16> &Insts) {
   while (!Insts.empty()) {
     Instruction *I = *Insts.begin();
-    Insts.erase(Insts.begin());
+    Insts.erase(I);
     if (isInstructionTriviallyDead(I)) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
@@ -409,10 +410,10 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
 /// reducible SCEV, recursively add its users to the IVUsesByStride set and
 /// return true.  Otherwise, return false.
 bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
-                                            std::set<Instruction*> &Processed) {
+                                      SmallPtrSet<Instruction*,16> &Processed) {
   if (!I->getType()->isInteger() && !isa<PointerType>(I->getType()))
       return false;   // Void and FP expressions cannot be reduced.
-  if (!Processed.insert(I).second)
+  if (!Processed.insert(I))
     return true;    // Instruction already handled.
   
   // Get the symbolic expression for this instruction.
@@ -1470,16 +1471,16 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   if (!C) return Cond;
 
   ICmpInst::Predicate Predicate = Cond->getPredicate();
-  bool isSigned = ICmpInst::isSignedPredicate(Predicate);
   int64_t CmpSSInt = SC->getValue()->getSExtValue();
   int64_t CmpVal = C->getValue().getSExtValue();
-  uint64_t SignBit = 1ULL << (C->getValue().getBitWidth()-1);
+  unsigned BitWidth = C->getValue().getBitWidth();
+  uint64_t SignBit = 1ULL << (BitWidth-1);
+  const Type *CmpTy = C->getType();
+  const Type *NewCmpTy = NULL;
   int64_t NewCmpVal = CmpVal;
   SCEVHandle *NewStride = NULL;
   Value *NewIncV = NULL;
   int64_t Scale = 1;
-  const Type *CmpTy = C->getType();
-  const Type *NewCmpTy = NULL;
 
   // Look for a suitable stride / iv as replacement.
   std::stable_sort(StrideOrder.begin(), StrideOrder.end(), StrideCompare());
@@ -1489,18 +1490,23 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
     if (!isa<SCEVConstant>(SI->first))
       continue;
     int64_t SSInt = cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
-    if (abs(SSInt) < abs(CmpSSInt) && (CmpSSInt % SSInt) == 0) {
-      Scale = CmpSSInt / SSInt;
-      NewCmpVal = CmpVal / Scale;
-    } else if (abs(SSInt) > abs(CmpSSInt) && (SSInt % CmpSSInt) == 0) {
-      Scale = SSInt / CmpSSInt;
-      NewCmpVal = CmpVal * Scale;
-    } else
+    if (abs(SSInt) <= abs(CmpSSInt) || (SSInt % CmpSSInt) != 0)
       continue;
 
-    // Watch out for overflow.
-    if (isSigned && (CmpVal & SignBit) != (NewCmpVal & SignBit))
+    Scale = SSInt / CmpSSInt;
+    NewCmpVal = CmpVal * Scale;
+    APInt Mul = APInt(BitWidth, NewCmpVal);
+    // Check for overflow.
+    if (Mul.getSExtValue() != NewCmpVal) {
       NewCmpVal = CmpVal;
+      continue;
+    }
+
+    // Watch out for overflow.
+    if (ICmpInst::isSignedPredicate(Predicate) &&
+        (CmpVal & SignBit) != (NewCmpVal & SignBit))
+      NewCmpVal = CmpVal;
+
     if (NewCmpVal != CmpVal) {
       // Pick the best iv to use trying to avoid a cast.
       NewIncV = NULL;
@@ -1517,7 +1523,6 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
 
       NewCmpTy = NewIncV->getType();
       if (RequiresTypeConversion(CmpTy, NewCmpTy)) {
-        // FIXME: allow reuse of iv of a smaller type?
         NewCmpVal = CmpVal;
         continue;
       }
@@ -1556,11 +1561,17 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       else
         RHS = SCEVExpander::InsertCastOfTo(Instruction::BitCast, RHS, NewCmpTy);
     }
+    // Insert new compare instruction.
     Cond = new ICmpInst(Predicate, NewIncV, RHS);
     Cond->setName(L->getHeader()->getName() + ".termcond");
     OldCond->getParent()->getInstList().insert(OldCond, Cond);
+
+    // Remove the old compare instruction. The old indvar is probably dead too.
+    DeadInsts.insert(cast<Instruction>(CondUse->OperandValToReplace));
     OldCond->replaceAllUsesWith(Cond);
+    SE->deleteValueFromRecords(OldCond);
     OldCond->eraseFromParent();
+
     IVUsesByStride[*CondStride].Users.pop_back();
     SCEVHandle NewOffset = SE->getMulExpr(CondUse->Offset,
           SE->getConstant(ConstantInt::get(CondUse->Offset->getType(), Scale)));
@@ -1641,7 +1652,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Find all uses of induction variables in this loop, and catagorize
   // them by stride.  Start by finding all of the PHI nodes in the header for
   // this loop.  If they are induction variables, inspect their uses.
-  std::set<Instruction*> Processed;   // Don't reprocess instructions.
+  SmallPtrSet<Instruction*,16> Processed;   // Don't reprocess instructions.
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I)
     AddUsersIfInteresting(I, L, Processed);
 
