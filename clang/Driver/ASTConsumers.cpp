@@ -91,9 +91,22 @@ static void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
               refProtocols[i]->getName());
   }
   if (count > 0)
-    fprintf(stderr, ">;\n");
+    fprintf(stderr, ">\n");
   else
-    fprintf(stderr, ";\n");
+    fprintf(stderr, "\n");
+  
+  int NumIvars = OID->getIntfDeclNumIvars();
+  if (NumIvars > 0) {
+    ObjcIvarDecl **Ivars = OID->getIntfDeclIvars();
+    fprintf(stderr,"{");
+    for (int i = 0; i < NumIvars; i++) {
+      fprintf(stderr, "\t%s %s;\n", Ivars[i]->getType().getAsString().c_str(),
+              Ivars[i]->getName());
+    }
+    fprintf(stderr, "}\n@end\n");
+  }
+  else
+    fprintf(stderr,"@end\n");
   // FIXME: implement the rest...
 }
 
