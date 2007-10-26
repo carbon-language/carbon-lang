@@ -1,4 +1,4 @@
-//===-- llvm/Support/APInt.h - For Arbitrary Precision Integer -*- C++ -*--===//
+//===-- llvm/ADT/APInt.h - For Arbitrary Precision Integer -----*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
