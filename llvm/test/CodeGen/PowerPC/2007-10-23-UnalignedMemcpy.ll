@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llc -mtriple=powerpc64-apple-darwin9 -o - | grep memcpy
+; XFAIL: *
 
 @C.0.1173 = external constant [33 x i8]         ; <[33 x i8]*> [#uses=1]
 

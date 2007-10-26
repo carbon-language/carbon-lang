@@ -4329,14 +4329,6 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
           }
         }
 
-        // The lowered load/store instructions from/to the stack frame can be
-        // unaligned depending on whether it's accessed off sp or fp. If this is
-        // the case, then just use the memcpy library call.
-        if (Op1.getOpcode() == ISD::FrameIndex ||
-            Op2.getOpcode() == ISD::FrameIndex)
-          if (Size->getValue() % Align != 0)
-            break;
-
         for (unsigned i = 0; i < NumMemOps; i++) {
           MVT::ValueType VT = MemOps[i];
           unsigned VTSize = MVT::getSizeInBits(VT) / 8;
@@ -4351,13 +4343,13 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
                            I.getOperand(1), DstOff);
           } else {
             Value = DAG.getLoad(VT, getRoot(),
-                        getMemBasePlusOffset(Op2, SrcOff, DAG, TLI),
-                        I.getOperand(2), SrcOff);
+                                getMemBasePlusOffset(Op2, SrcOff, DAG, TLI),
+                                I.getOperand(2), SrcOff, false, Align);
             Chain = Value.getValue(1);
             Store =
               DAG.getStore(Chain, Value,
                            getMemBasePlusOffset(Op1, DstOff, DAG, TLI),
-                           I.getOperand(1), DstOff);
+                           I.getOperand(1), DstOff, false, Align);
           }
           OutChains.push_back(Store);
           SrcOff += VTSize;
