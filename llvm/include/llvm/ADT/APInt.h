@@ -16,6 +16,7 @@
 #define LLVM_APINT_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Bitcode/SerializationFwd.h"
 #include <cassert>
 #include <string>
 
@@ -203,6 +204,16 @@ public:
 
   /// @brief Destructor.
   ~APInt();
+  
+  /// Default constructor that creates an uninitialized APInt.  This is useful
+  ///  for object deserialization (pair this with the static method Read).
+  explicit APInt() {}
+  
+  /// @brief Used by the Bitcode serializer to emit APInts to Bitcode.
+  void Emit(Serializer& S) const;
+  
+  /// @brief Used by the Bitcode deserializer to deserialize APInts.
+  void Read(Deserializer& D);
 
   /// @}
   /// @name Value Tests
