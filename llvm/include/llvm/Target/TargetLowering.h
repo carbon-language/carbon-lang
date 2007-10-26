@@ -104,7 +104,7 @@ public:
   /// isPow2DivCheap() - Return true if pow2 div is cheaper than a chain of
   /// srl/add/sra.
   bool isPow2DivCheap() const { return Pow2DivIsCheap; }
-  
+
   /// getSetCCResultTy - Return the ValueType of the result of setcc operations.
   ///
   MVT::ValueType getSetCCResultTy() const { return SetCCResultTy; }
@@ -994,6 +994,13 @@ public:
   /// TODO: Handle pre/postinc as well.
   virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty) const;
 
+  /// isTruncateFree - Return true if it's free to truncate a value of
+  /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
+  /// register EAX to i16 by referencing its sub-register AX.
+  virtual bool isTruncateFree(const Type *Ty1, const Type *Ty2) const {
+    return false;
+  }
+  
   //===--------------------------------------------------------------------===//
   // Div utility functions
   //

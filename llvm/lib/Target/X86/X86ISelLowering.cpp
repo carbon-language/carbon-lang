@@ -5122,6 +5122,13 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
 }
 
 
+bool X86TargetLowering::isTruncateFree(const Type *Ty1, const Type *Ty2) const {
+  if (!Ty1->isInteger() || !Ty2->isInteger())
+    return false;
+  return Ty1->getPrimitiveSizeInBits() > Ty2->getPrimitiveSizeInBits();
+}
+
+
 /// isShuffleMaskLegal - Targets can use this to indicate that they only
 /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
 /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values

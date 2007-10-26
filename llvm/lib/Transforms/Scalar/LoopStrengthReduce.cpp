@@ -178,7 +178,7 @@ private:
     bool FindIVForUser(ICmpInst *Cond, IVStrideUse *&CondUse,
                        const SCEVHandle *&CondStride);
     bool RequiresTypeConversion(const Type *Ty, const Type *NewTy);
-    unsigned CheckForIVReuse(bool, const SCEVHandle&,
+    unsigned CheckForIVReuse(bool, bool, const SCEVHandle&,
                              IVExpr&, const Type*,
                              const std::vector<BasedUser>& UsersToProcess);
     bool ValidStride(bool, int64_t,
@@ -980,15 +980,17 @@ bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
 
 /// RequiresTypeConversion - Returns true if converting Ty to NewTy is not
 /// a nop.
-bool LoopStrengthReduce::RequiresTypeConversion(const Type *Ty,
-                                                const Type *NewTy) {
-  if (Ty == NewTy)
+bool LoopStrengthReduce::RequiresTypeConversion(const Type *Ty1,
+                                                const Type *Ty2) {
+  if (Ty1 == Ty2)
     return false;
-  return (!Ty->canLosslesslyBitCastTo(NewTy) &&
-          !(isa<PointerType>(NewTy) &&
-            Ty->canLosslesslyBitCastTo(UIntPtrTy)) &&
-          !(isa<PointerType>(Ty) &&
-            NewTy->canLosslesslyBitCastTo(UIntPtrTy)));
+  if (TLI && TLI->isTruncateFree(Ty1, Ty2))
+    return false;
+  return (!Ty1->canLosslesslyBitCastTo(Ty2) &&
+          !(isa<PointerType>(Ty2) &&
+            Ty1->canLosslesslyBitCastTo(UIntPtrTy)) &&
+          !(isa<PointerType>(Ty1) &&
+            Ty2->canLosslesslyBitCastTo(UIntPtrTy)));
 }
 
 /// CheckForIVReuse - Returns the multiple if the stride is the multiple
@@ -997,20 +999,23 @@ bool LoopStrengthReduce::RequiresTypeConversion(const Type *Ty,
 /// this stride to be rewritten as prev iv * factor. It returns 0 if no
 /// reuse is possible.
 unsigned LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
+                                bool AllUsesAreAddresses,
                                 const SCEVHandle &Stride, 
                                 IVExpr &IV, const Type *Ty,
                                 const std::vector<BasedUser>& UsersToProcess) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
     int64_t SInt = SC->getValue()->getSExtValue();
-    if (SInt == 1) return 0;
-
     for (std::map<SCEVHandle, IVsOfOneStride>::iterator SI= IVsByStride.begin(),
            SE = IVsByStride.end(); SI != SE; ++SI) {
       int64_t SSInt = cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
-      if (SInt != -SSInt &&
+      if (SI->first != Stride &&
           (unsigned(abs(SInt)) < SSInt || (SInt % SSInt) != 0))
         continue;
       int64_t Scale = SInt / SSInt;
+      // When scale is 1, we don't need to worry about whether the
+      // multiplication can be folded into the addressing mode.
+      if (!AllUsesAreAddresses && Scale != 1)
+        continue;
       // Check that this stride is valid for all the types used for loads and
       // stores; if it can be used for some and not others, we might as well use
       // the original stride everywhere, since we have to create the IV for it
@@ -1021,7 +1026,7 @@ unsigned LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
           // FIXME: Only handle base == 0 for now.
           // Only reuse previous IV if it would not require a type conversion.
           if (isZero(II->Base) &&
-              !RequiresTypeConversion(II->Base->getType(),Ty)) {
+              !RequiresTypeConversion(II->Base->getType(), Ty)) {
             IV = *II;
             return Scale;
           }
@@ -1183,10 +1188,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                    SE->getIntegerSCEV(0, Type::Int32Ty),
                    0, 0);
   unsigned RewriteFactor = 0;
-  if (AllUsesAreAddresses)
-    RewriteFactor = CheckForIVReuse(HaveCommonExprs, Stride, ReuseIV,
-                                    CommonExprs->getType(),
-                                    UsersToProcess);
+  RewriteFactor = CheckForIVReuse(HaveCommonExprs, AllUsesAreAddresses,
+                                  Stride, ReuseIV, CommonExprs->getType(),
+                                  UsersToProcess);
   if (RewriteFactor != 0) {
     DOUT << "BASED ON IV of STRIDE " << *ReuseIV.Stride
          << " and BASE " << *ReuseIV.Base << " :\n";

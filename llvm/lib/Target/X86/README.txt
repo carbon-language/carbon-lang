@@ -339,20 +339,18 @@ void foo(int N) {
   for (i = 0; i < N; i++) { X = i; Y = i*4; }
 }
 
-LBB1_1:	#bb.preheader
-	xorl %ecx, %ecx
-	xorw %dx, %dx
-LBB1_2:	#bb
-	movl L_X$non_lazy_ptr, %esi
-	movw %dx, (%esi)
-	movw %dx, %si
-	shlw $2, %si
-	movl L_Y$non_lazy_ptr, %edi
-	movw %si, (%edi)
-	incl %ecx
-	incw %dx
-	cmpl %eax, %ecx
-	jne LBB1_2	#bb
+LBB1_1:	# entry.bb_crit_edge
+	xorl	%ecx, %ecx
+	xorw	%dx, %dx
+LBB1_2:	# bb
+	movl	L_X$non_lazy_ptr, %esi
+	movw	%cx, (%esi)
+	movl	L_Y$non_lazy_ptr, %esi
+	movw	%dx, (%esi)
+	addw	$4, %dx
+	incl	%ecx
+	cmpl	%eax, %ecx
+	jne	LBB1_2	# bb
 
 vs.
 
@@ -367,11 +365,7 @@ L4:
 	cmpl	%edx, %edi
 	jne	L4
 
-There are 3 issues:
-
-1. Lack of post regalloc LICM.
-2. LSR unable to reused IV for a different type (i16 vs. i32) even though
-   the cast would be free.
+This is due to the lack of post regalloc LICM.
 
 //===---------------------------------------------------------------------===//
 

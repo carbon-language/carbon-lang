@@ -359,6 +359,11 @@ namespace llvm {
     /// by AM is legal for this target, for a load/store of the specified type.
     virtual bool isLegalAddressingMode(const AddrMode &AM, const Type *Ty)const;
 
+    /// isTruncateFree - Return true if it's free to truncate a value of
+    /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
+    /// register EAX to i16 by referencing its sub-register AX.
+    virtual bool isTruncateFree(const Type *Ty1, const Type *Ty2) const;
+  
     /// isShuffleMaskLegal - Targets can use this to indicate that they only
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
     /// By default, if a target supports the VECTOR_SHUFFLE node, all mask
