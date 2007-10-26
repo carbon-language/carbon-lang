@@ -27,6 +27,16 @@ void QualType::Read(llvm::Deserializer& D) {
   ThePtr |= D.ReadInt();
 }
 
+void QualType::EmitOwned(llvm::Serializer& S) const {
+  S.EmitInt(getQualifiers());
+  S.EmitOwnedPtr(cast<BuiltinType>(getTypePtr()));
+}
+
+void QualType::ReadOwned(llvm::Deserializer& D) {
+  ThePtr = D.ReadInt();
+  ThePtr |= reinterpret_cast<uintptr_t>(D.ReadOwnedPtr<BuiltinType>());
+}
+
 /*  FIXME: Either remove this method or complete it.
 
 void Type::Emit(llvm::Serializer& S) {
@@ -49,6 +59,18 @@ void Type::EmitTypeInternal(llvm::Serializer& S) const {
 void Type::ReadTypeInternal(llvm::Deserializer& D) {
   D.Read(CanonicalType);
 }
+
+void BuiltinType::Emit(llvm::Serializer& S) const {
+  S.EmitInt(TypeKind);
+}
+
+BuiltinType* BuiltinType::Materialize(llvm::Deserializer& D) {
+  Kind k = static_cast<Kind>(D.ReadInt());
+  BuiltinType* T = new BuiltinType(k);
+  return T;
+}
+
+
 
 void ComplexType::Emit(llvm::Serializer& S) const {
   EmitTypeInternal(S);
@@ -106,7 +128,7 @@ void ConstantArrayType::Emit(llvm::Serializer& S) const {
 }
 
 ConstantArrayType* ConstantArrayType::Materialize(llvm::Deserializer& D) {
-  // "Default" construct the array.
+  // "Default" construct the array type.
   ConstantArrayType* T =
     new ConstantArrayType(QualType(), QualType(), llvm::APInt(), 
                           ArrayType::Normal, 0);

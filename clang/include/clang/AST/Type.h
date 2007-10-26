@@ -165,6 +165,12 @@ public:
   ///  exists, in place, within its containing object.
   void Read(llvm::Deserializer& D);
   
+  /// EmitOwned - Serialize a QualType that owns the underlying Type*.
+  void EmitOwned(llvm::Serializer& S) const;
+  
+  /// ReadOwned - Deserialize a QualType that owns the underlying Thpe*.
+  void ReadOwned(llvm::Deserializer& S);
+  
 private:
 };
 
@@ -378,6 +384,7 @@ public:
   static bool classof(const BuiltinType *) { return true; }
   
   void Emit(llvm::Serializer& S) const;
+  static BuiltinType* Materialize(llvm::Deserializer& D);
 };
 
 /// ComplexType - C99 6.2.5p11 - Complex values.  This supports the C99 complex
@@ -575,6 +582,9 @@ public:
     return T->getTypeClass() == VariableArray; 
   }
   static bool classof(const VariableArrayType *) { return true; }
+  
+  // FIXME: Who owns VariableArrayType's?  What are the semantics
+  //  for serialization.
 };
 
 /// VectorType - GCC generic vector type. This type is created using
