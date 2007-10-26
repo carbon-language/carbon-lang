@@ -19,6 +19,28 @@
 
 namespace llvm {
   
+/// SerializeTrait - SerializeTrait bridges between the Serializer/Deserializer
+///  and the functions that serialize objects of specific types.  The default
+///  behavior is to call static methods of the class for the object being
+///  serialized, but this behavior can be changed by specializing this
+///  template.  Classes only need to implement the methods corresponding
+///  to the serialization scheme they want to support.  For example, "Read"
+///  and "ReadVal" correspond to different deserialization schemes which make
+///  sense for different types; a class need only implement one of them.
+///  Serialization and deserialization of pointers are specially handled
+///  by the Serializer and Deserializer using the EmitOwnedPtr, etc. methods.
+///  To serialize the actual object referred to by a pointer, the class
+///  of the object either must implement the methods called by the default
+///  behavior of SerializeTrait, or specialize SerializeTrait.  This latter
+///  is useful when one cannot add methods to an existing class (for example).
+template <typename T>
+struct SerializeTrait {
+  static inline void Emit(Serializer& S, const T& X) { X.Emit(S); }
+  static inline void Read(Deserializer& D, T& X) { X.Read(D); }
+  static inline T ReadVal(Deserializer& D) { T::ReadVal(D); }
+  static inline T* Materialize(Deserializer& D) { T::Materialize(D); }
+};
+
 #define SERIALIZE_INT_TRAIT(TYPE)\
 template <> struct SerializeTrait<TYPE> {\
   static void Emit(Serializer& S, TYPE X);\

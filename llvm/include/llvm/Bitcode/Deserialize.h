@@ -99,7 +99,9 @@ public:
     return x;
   }
   
-  void ReadPtr(void*& PtrRef);  
+  void ReadPtr(void*& PtrRef);
+  void ReadPtr(uintptr_t& PtrRef) { ReadPtr(reinterpret_cast<void*&>(PtrRef)); }
+  
   void RegisterPtr(unsigned PtrId, void* Ptr);
 
 
