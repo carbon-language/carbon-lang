@@ -385,14 +385,6 @@ EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 
   Expr *BaseExpr = E->getBase();
-  // FIXME: Handle union members.
-  if (BaseExpr->getType()->isUnionType()) {
-    fprintf(stderr, "Unimplemented lvalue expr!\n");
-    E->dump(getContext().SourceMgr);
-    llvm::Type *Ty = llvm::PointerType::get(ConvertType(E->getType()));
-    return LValue::MakeAddr(llvm::UndefValue::get(Ty));
-  }
-
   llvm::Value *BaseValue = NULL;
   if (BaseExpr->isLvalue() == Expr::LV_Valid) {
     LValue BaseLV = EmitLValue(BaseExpr);
@@ -412,7 +404,16 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   llvm::Value *Idxs[2] = { llvm::Constant::getNullValue(llvm::Type::Int32Ty), 
                            llvm::ConstantInt::get(llvm::Type::Int32Ty, idx) };
 
-  return LValue::MakeAddr(Builder.CreateGEP(BaseValue,Idxs, Idxs + 2, "tmp"));
+  llvm::Value *V = Builder.CreateGEP(BaseValue,Idxs, Idxs + 2, "tmp");
+  // Match union field type.
+  if (BaseExpr->getType()->isUnionType()) {
+    const llvm::Type * FieldTy = ConvertType(Field->getType());
+    const llvm::PointerType * BaseTy = cast<llvm::PointerType>(BaseValue->getType());
+    if (FieldTy != BaseTy->getElementType()) {
+      V = Builder.CreateBitCast(V, llvm::PointerType::get(FieldTy), "tmp");
+    }
+  }
+  return LValue::MakeAddr(V);
   
   // FIXME: If record field does not have one to one match with llvm::StructType
   // field then apply appropriate masks to select only member field bits.

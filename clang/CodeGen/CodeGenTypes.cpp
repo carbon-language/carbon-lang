@@ -258,13 +258,15 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       const RecordDecl *RD = cast<const RecordDecl>(TD);
       // Just use the largest element of the union, breaking ties with the
       // highest aligned member.
-      std::vector<const llvm::Type*> Fields;
+
       if (RD->getNumMembers() != 0) {
         std::pair<uint64_t, unsigned> MaxElt = 
           Context.getTypeInfo(RD->getMember(0)->getType(), SourceLocation());
         unsigned MaxEltNo = 0;
-        
+        addFieldInfo(RD->getMember(0), 0); // Each field gets first slot.
+        // FIXME : Move union field handling in RecordOrganize
         for (unsigned i = 1, e = RD->getNumMembers(); i != e; ++i) {
+          addFieldInfo(RD->getMember(i), 0); // Each field gets first slot.
           std::pair<uint64_t, unsigned> EltInfo = 
             Context.getTypeInfo(RD->getMember(i)->getType(), SourceLocation());
           if (EltInfo.first > MaxElt.first ||
@@ -274,10 +276,19 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
             MaxEltNo = i;
           }
         }
-        
-        Fields.push_back(ConvertType(RD->getMember(MaxEltNo)->getType()));
-      }        
-      ResultType = llvm::StructType::get(Fields);
+
+        RecordOrganizer RO;
+        RO.addField(RD->getMember(MaxEltNo));
+        RO.layoutFields(*this);
+
+        // Get llvm::StructType.
+        RecordLayoutInfo *RLI = new RecordLayoutInfo(RO.getLLVMType());
+        ResultType = RLI->getLLVMType();
+        RecordLayouts[ResultType] = RLI;
+      } else {       
+        std::vector<const llvm::Type*> Fields;
+        ResultType = llvm::StructType::get(Fields);
+      }
     } else {
       assert(0 && "FIXME: Implement tag decl kind!");
     }
