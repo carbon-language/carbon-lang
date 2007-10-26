@@ -219,18 +219,24 @@ private:
   /// List of attributes for this method declaration.
   AttributeList *MethodAttrs;
   
+  SourceLocation EndLoc; // the location of the ';' or '{'.
 public:
-  ObjcMethodDecl(SourceLocation L, Selector SelInfo, QualType T,
+  ObjcMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
+                 Selector SelInfo, QualType T,
                  ParmVarDecl **paramInfo = 0, int numParams=-1,
                  AttributeList *M = 0, bool isInstance = true,
                  ImplementationControl impControl = None,
                  Decl *PrevDecl = 0)
-    : Decl(ObjcMethod, L),
+    : Decl(ObjcMethod, beginLoc),
       IsInstance(isInstance), DeclImplementation(impControl),
       SelName(SelInfo), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
-      MethodAttrs(M) {}
+      MethodAttrs(M), EndLoc(endLoc) {}
   virtual ~ObjcMethodDecl();
+  
+  // Location information, modeled after the Stmt API.
+  SourceLocation getLocStart() const { return getLocation(); }
+  SourceLocation getLocEnd() const { return EndLoc; }
   
   Selector getSelector() const { return SelName; }
   QualType getResultType() const { return MethodDeclType; }

@@ -516,7 +516,9 @@ public:
   virtual void ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl, 
 				         DeclTy **allMethods, unsigned allNum);
   
-  virtual DeclTy *ActOnMethodDeclaration(SourceLocation MethodLoc, 
+  virtual DeclTy *ActOnMethodDeclaration(
+    SourceLocation BeginLoc, // location of the + or -.
+    SourceLocation EndLoc,   // location of the ; or {.
     tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
@@ -528,7 +530,7 @@ public:
   // is obtained from Sel.getNumArgs().
   virtual ExprResult ActOnClassMessage(
     IdentifierInfo *receivingClassName, Selector Sel,
-     SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs);
+    SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs);
 
   // ActOnInstanceMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions

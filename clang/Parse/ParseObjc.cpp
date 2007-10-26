@@ -379,9 +379,9 @@ Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *IDecl,
   assert((Tok.is(tok::minus) || Tok.is(tok::plus)) && "expected +/-");
 
   tok::TokenKind methodType = Tok.getKind();  
-  ConsumeToken();
+  SourceLocation mLoc = ConsumeToken();
   
-  DeclTy *MDecl = ParseObjCMethodDecl(methodType, MethodImplKind);
+  DeclTy *MDecl = ParseObjCMethodDecl(mLoc, methodType, MethodImplKind);
   // Since this rule is used for both method declarations and definitions,
   // the caller is (optionally) responsible for consuming the ';'.
   return MDecl;
@@ -526,15 +526,16 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
 ///   objc-keyword-attributes:         [OBJC2]
 ///     __attribute__((unused))
 ///
-Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType, 
+Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
+                                            tok::TokenKind mType, 
 					    tok::ObjCKeywordKind MethodImplKind)
 {
   // Parse the return type.
   TypeTy *ReturnType = 0;
   if (Tok.is(tok::l_paren))
     ReturnType = ParseObjCTypeName();
-  SourceLocation mLoc;
-  IdentifierInfo *SelIdent = ParseObjCSelector(mLoc);
+  SourceLocation selLoc;
+  IdentifierInfo *SelIdent = ParseObjCSelector(selLoc);
   if (Tok.isNot(tok::colon)) {
     if (!SelIdent) {
       Diag(Tok, diag::err_expected_ident); // missing selector name.
@@ -548,7 +549,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
       MethodAttrs = ParseAttributes();
     
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
-    return Actions.ActOnMethodDeclaration(mLoc, mType, ReturnType, Sel, 
+    return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
+                                          mType, ReturnType, Sel,
                                           0, 0, MethodAttrs, MethodImplKind);
   }
 
@@ -614,7 +616,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(tok::TokenKind mType,
   
   Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
                                                    &KeyIdents[0]);
-  return Actions.ActOnMethodDeclaration(mLoc, mType, ReturnType, Sel, 
+  return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
+                                        mType, ReturnType, Sel, 
                                         &KeyTypes[0], &ArgNames[0],
                                         MethodAttrs, MethodImplKind);
 }

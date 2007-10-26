@@ -1941,7 +1941,8 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
   }
 }
 
-Sema::DeclTy *Sema::ActOnMethodDeclaration(SourceLocation MethodLoc, 
+Sema::DeclTy *Sema::ActOnMethodDeclaration(
+    SourceLocation MethodLoc, SourceLocation EndLoc,
     tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
@@ -1968,7 +1969,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(SourceLocation MethodLoc,
   else // get the type for "id".
     resultDeclType = GetObjcIdType(MethodLoc);
 
-  ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, Sel,
+  ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, EndLoc, Sel,
                                       resultDeclType, 0, -1, AttrList, 
                                       MethodType == tok::minus,
                                       MethodDeclKind == tok::objc_optional ? 

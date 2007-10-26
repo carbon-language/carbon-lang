@@ -519,7 +519,8 @@ public:
   }  
   // ActOnMethodDeclaration - called for all method declarations. 
   virtual DeclTy *ActOnMethodDeclaration(
-    SourceLocation MethodLoc, 
+    SourceLocation BeginLoc,   // location of the + or -.
+    SourceLocation EndLoc,     // location of the ; or {.
     tok::TokenKind MethodType, // tok::minus for instance, tok::plus for class.
     TypeTy *ReturnType,        // the method return type.
     Selector Sel,              // a unique name for the method.

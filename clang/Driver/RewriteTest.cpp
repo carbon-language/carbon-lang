@@ -58,6 +58,7 @@ namespace {
     void RewriteInclude(SourceLocation Loc);
     void RewriteTabs();
     void RewriteForwardClassDecl(ObjcClassDecl *Dcl);
+    void RewriteInterfaceDecl(ObjcInterfaceDecl *Dcl);
     
     // Expression Rewriting.
     Stmt *RewriteFunctionBody(Stmt *S);
@@ -120,8 +121,9 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
       GetClassFunctionDecl = FD;
     else if (strcmp(FD->getName(), "sel_getUid") == 0)
       SelGetUidFunctionDecl = FD;
+  } else if (ObjcInterfaceDecl *MD = dyn_cast<ObjcInterfaceDecl>(D)) {
+    RewriteInterfaceDecl(MD);
   }
-  
   // If we have a decl in the main file, see if we should rewrite it.
   if (SM->getDecomposedFileLoc(Loc).first == MainFileID)
     return HandleDeclInMainFile(D);
@@ -263,6 +265,31 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
                       typedefString.c_str(), typedefString.size());
 }
 
+void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
+  int nInstanceMethods = ClassDecl->getNumInstanceMethods();
+  ObjcMethodDecl **instanceMethods = ClassDecl->getInstanceMethods();
+  
+  for (int i = 0; i < nInstanceMethods; i++) {
+    ObjcMethodDecl *instanceMethod = instanceMethods[i];
+    SourceLocation Loc = instanceMethod->getLocStart();
+
+    Rewrite.ReplaceText(Loc, 0, "// ", 3);
+    
+    // FIXME: handle methods that are declared across multiple lines.
+  }
+  int nClassMethods = ClassDecl->getNumClassMethods();
+  ObjcMethodDecl **classMethods = ClassDecl->getClassMethods();
+  
+  for (int i = 0; i < nClassMethods; i++) {
+    ObjcMethodDecl *classMethod = classMethods[i];
+    SourceLocation Loc = classMethod->getLocStart();
+
+    Rewrite.ReplaceText(Loc, 0, "// ", 3);
+    
+    // FIXME: handle methods that are declared across multiple lines.
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Function Body / Expression rewriting
 //===----------------------------------------------------------------------===//
@@ -290,11 +317,11 @@ Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
     messString += "// ";
     messString.append(startBuf, endBuf-startBuf+1);
     messString += "\n";
-    
+        
     // FIXME: Missing definition of Rewrite.InsertText(clang::SourceLocation, char const*, unsigned int).
     // Rewrite.InsertText(startLoc, messString.c_str(), messString.size());
     // Tried this, but it didn't work either...
-    // Rewrite.ReplaceText(startLoc, 0, messString.c_str(), messString.size());
+    Rewrite.ReplaceText(startLoc, 0, messString.c_str(), messString.size());
     return RewriteMessageExpr(MessExpr);
   }
   // Return this stmt unmodified.
