@@ -88,8 +88,6 @@ namespace {
                                       std::string &Result);
     void SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
                                       std::string &Result);
-    void RewriteObjcInternalStructs(ObjcImplementationDecl *IDecl,
-                                    std::string &Result);
     void SynthesizeIvarOffsetComputation(ObjcImplementationDecl *IDecl, 
                                          ObjcIvarDecl *ivar, 
                                          std::string &Result);
@@ -795,9 +793,9 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
                    ? IDecl->getImplDeclNumIvars() 
                    : (CDecl ? CDecl->getIntfDeclNumIvars() : 0);
   
+  SynthesizeObjcInternalStruct(CDecl, Result);
+  
   if (NumIvars > 0) {
-    SynthesizeObjcInternalStruct(CDecl, Result);
-    
     static bool objc_ivar = false;
     if (!objc_ivar) {
       /* struct _objc_ivar {
@@ -971,8 +969,15 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
     Result += "\"";
   }
   // 'info' field is initialized to CLS_CLASS(1) for class
-  // TODO: instance_size is curently set to 0.
-  Result += ", 0,1,0";
+  Result += ", 0,1";
+  if (!ObjcSynthesizedStructs.count(CDecl))
+    Result += ",0";
+  else {
+    // class has size. Must synthesize its size.
+    Result += ",sizeof(struct _interface_";
+    Result += CDecl->getName();
+    Result += ")";
+  }
   if (NumIvars > 0) {
     Result += ", &_OBJC_INSTANCE_VARIABLES_";
     Result += CDecl->getName();
