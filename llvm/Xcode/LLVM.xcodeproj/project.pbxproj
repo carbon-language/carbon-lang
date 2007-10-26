@@ -65,6 +65,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		354CF6D10CD299440059AF3E /* DeserializeAPInt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DeserializeAPInt.cpp; sourceTree = "<group>"; };
+		354CF6D20CD2994D0059AF3E /* SerializeAPInt.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SerializeAPInt.cpp; sourceTree = "<group>"; };
 		35A9CDED0CD0F6AF008ABC1D /* Deserialize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Deserialize.h; sourceTree = "<group>"; };
 		35A9CDEE0CD0F6AF008ABC1D /* Serialization.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Serialization.h; sourceTree = "<group>"; };
 		35A9CDEF0CD0F6AF008ABC1D /* Serialize.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Serialize.h; sourceTree = "<group>"; };
@@ -1104,6 +1106,7 @@
 		9F68EB050C77AD2C004AA152 /* Reader */ = {
 			isa = PBXGroup;
 			children = (
+				354CF6D10CD299440059AF3E /* DeserializeAPInt.cpp */,
 				35A9CDF00CD0F6D5008ABC1D /* Deserialize.cpp */,
 				9F68EB060C77AD2C004AA152 /* BitcodeReader.cpp */,
 				9F68EB070C77AD2C004AA152 /* BitcodeReader.h */,
@@ -1114,6 +1117,7 @@
 		9F68EB110C77AD2C004AA152 /* Writer */ = {
 			isa = PBXGroup;
 			children = (
+				354CF6D20CD2994D0059AF3E /* SerializeAPInt.cpp */,
 				9FD3E5920CA012B300E54D15 /* BitWriter.cpp */,
 				9F68EB120C77AD2C004AA152 /* BitcodeWriter.cpp */,
 				9F68EB130C77AD2C004AA152 /* BitcodeWriterPass.cpp */,
