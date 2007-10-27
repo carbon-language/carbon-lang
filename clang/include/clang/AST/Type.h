@@ -625,6 +625,9 @@ public:
     return T->getTypeClass() == Vector || T->getTypeClass() == OCUVector; 
   }
   static bool classof(const VectorType *) { return true; }
+  
+  void Emit(llvm::Serializer& S) const;
+  static VectorType* Materialize(llvm::Deserializer& D);
 };
 
 /// OCUVectorType - Extended vector type. This type is created using

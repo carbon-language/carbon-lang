@@ -139,3 +139,17 @@ ConstantArrayType* ConstantArrayType::Materialize(llvm::Deserializer& D) {
 
   return T;
 }
+
+void VectorType::Emit(llvm::Serializer& S) const {
+  EmitTypeInternal(S);
+  S.Emit(ElementType);
+  S.EmitInt(NumElements);
+}
+
+VectorType* VectorType::Materialize(llvm::Deserializer& D) {
+  VectorType* T = new VectorType(QualType(),0,QualType());
+  T->ReadTypeInternal(D);
+  D.Read(T->ElementType);
+  T->NumElements = D.ReadInt();
+  return T;
+}
