@@ -711,6 +711,10 @@ public:
            T->getTypeClass() == FunctionProto;
   }
   static bool classof(const FunctionType *) { return true; }
+  
+protected:
+  void EmitFunctionTypeInternal(llvm::Serializer& S) const;
+  void ReadFunctionTypeInternal(llvm::Deserializer& D);
 };
 
 /// FunctionTypeNoProto - Represents a K&R-style 'int foo()' function, which has
@@ -735,6 +739,9 @@ public:
     return T->getTypeClass() == FunctionNoProto;
   }
   static bool classof(const FunctionTypeNoProto *) { return true; }
+  
+  void Emit(llvm::Serializer& S) const { EmitFunctionTypeInternal(S); }
+  static FunctionTypeNoProto* Materialize(llvm::Deserializer& D);
 };
 
 /// FunctionTypeProto - Represents a prototype with argument type info, e.g.

@@ -153,3 +153,22 @@ VectorType* VectorType::Materialize(llvm::Deserializer& D) {
   T->NumElements = D.ReadInt();
   return T;
 }
+
+void FunctionType::EmitFunctionTypeInternal(llvm::Serializer &S) const {
+  EmitTypeInternal(S);
+  S.EmitBool(SubClassData);
+  S.Emit(ResultType);
+}
+
+void FunctionType::ReadFunctionTypeInternal(llvm::Deserializer& D) {
+  ReadTypeInternal(D);
+  SubClassData = D.ReadBool();
+  D.Read(ResultType);
+}
+
+
+FunctionTypeNoProto* FunctionTypeNoProto::Materialize(llvm::Deserializer& D) {
+  FunctionTypeNoProto* T = new FunctionTypeNoProto(QualType(),QualType());
+  T->ReadFunctionTypeInternal(D);
+  return T;
+}
