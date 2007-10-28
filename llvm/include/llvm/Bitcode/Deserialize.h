@@ -26,11 +26,11 @@
 namespace llvm {
   
 class Deserializer {  
-  BitstreamReader& Stream;
-  SmallVector<uint64_t,10> Record;
-  unsigned RecIdx;
-  BumpPtrAllocator Allocator;
-  
+
+  //===----------------------------------------------------------===//
+  // Internal type definitions.
+  //===----------------------------------------------------------===//
+
   struct PtrIdInfo {
     static inline unsigned getEmptyKey() { return ~((unsigned) 0x0); }
     static inline unsigned getTombstoneKey() { return getEmptyKey()-1; }
@@ -39,25 +39,57 @@ class Deserializer {
     static inline bool isPod() { return true; }
   };
   
-  struct BPatchNode {
-    BPatchNode* const Next;
+  struct BPNode {
+    BPNode* Next;
     uintptr_t& PtrRef;
-    BPatchNode(BPatchNode* n, void*& pref) 
-      : Next(n), PtrRef(reinterpret_cast<uintptr_t&>(pref)) {
+    BPNode(BPNode* n, uintptr_t& pref) 
+      : Next(n), PtrRef(pref) {
         PtrRef = 0;
       }
   };
   
-  struct BPatchEntry {
-    BPatchNode* Head;
-    void* Ptr;    
-    BPatchEntry() : Head(NULL), Ptr(NULL) {}
+  class BPatchEntry {
+    uintptr_t Ptr;
+  public:
+    
+    BPatchEntry() : Ptr(0x1) {}
+      
+    BPatchEntry(void* P) : Ptr(reinterpret_cast<uintptr_t>(P)) {}
+
+    bool hasFinalPtr() const { return Ptr & 0x1 ? true : false; }
+    void setFinalPtr(BPNode*& FreeList, void* P);
+
+    BPNode* getBPNode() const {
+      assert (!hasFinalPtr());
+      return reinterpret_cast<BPNode*>(Ptr & ~0x1);
+    }
+    
+    void setBPNode(BPNode* N) {
+      assert (!hasFinalPtr());
+      Ptr = reinterpret_cast<uintptr_t>(N) | 0x1;
+    }
+    
+    uintptr_t getRawPtr() const { return Ptr; }
+
     static inline bool isPod() { return true; }
-  };  
-  
+  };
+
   typedef llvm::DenseMap<unsigned,BPatchEntry,PtrIdInfo,BPatchEntry> MapTy;
 
+  //===----------------------------------------------------------===//
+  // Internal data members.
+  //===----------------------------------------------------------===//
+  
+  BitstreamReader& Stream;
+  SmallVector<uint64_t,10> Record;
+  unsigned RecIdx;
+  BumpPtrAllocator Allocator;
+  BPNode* FreeList;
   MapTy BPatchMap;  
+  
+  //===----------------------------------------------------------===//
+  // Public Interface.
+  //===----------------------------------------------------------===//
   
 public:
   Deserializer(BitstreamReader& stream);
@@ -99,13 +131,15 @@ public:
     return x;
   }
   
-  void ReadPtr(void*& PtrRef);
-  void ReadPtr(uintptr_t& PtrRef) { ReadPtr(reinterpret_cast<void*&>(PtrRef)); }
+  template <typename T>
+  void ReadPtr(T*& PtrRef) { ReadUIntPtr(reinterpret_cast<uintptr_t&>(PtrRef));}
+
+  void ReadPtr(uintptr_t& PtrRef) { ReadUIntPtr(PtrRef); }
+  
+  void ReadUIntPtr(uintptr_t& PtrRef);
   
   void RegisterPtr(unsigned PtrId, void* Ptr);
 
-
-  void BackpatchPointers();
 private:
   void ReadRecord();  
   bool inRecord();

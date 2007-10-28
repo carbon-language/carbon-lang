@@ -16,14 +16,14 @@
 using namespace llvm;
 
 Deserializer::Deserializer(BitstreamReader& stream)
-  : Stream(stream), RecIdx(0) {
+  : Stream(stream), RecIdx(0), FreeList(NULL) {
 }
 
 Deserializer::~Deserializer() {
   assert (RecIdx >= Record.size() && 
           "Still scanning bitcode record when deserialization completed.");
   
-  BackpatchPointers();
+  assert (FreeList == NULL && "Some pointers were not backpatched.");
 }
 
 
@@ -96,11 +96,11 @@ void Deserializer::ReadCStr(std::vector<char>& buff, bool isNullTerm) {
 
 void Deserializer::RegisterPtr(unsigned PtrId,void* Ptr) {
   BPatchEntry& E = BPatchMap[PtrId];
-  assert (E.Ptr == NULL && "Pointer already registered.");
-  E.Ptr = Ptr;
+  assert (E.hasFinalPtr() && "Pointer already registered.");
+  E.setFinalPtr(FreeList,Ptr);
 }
 
-void Deserializer::ReadPtr(void*& PtrRef) {
+void Deserializer::ReadUIntPtr(uintptr_t& PtrRef) {
   unsigned PtrId = ReadInt();
   
   if (PtrId == 0) {
@@ -110,31 +110,45 @@ void Deserializer::ReadPtr(void*& PtrRef) {
   
   BPatchEntry& E = BPatchMap[PtrId];
   
-  if (E.Ptr == NULL) {
-    // Register backpatch.
-    void* P = Allocator.Allocate<BPatchNode>();    
-    E.Head = new (P) BPatchNode(E.Head,PtrRef);
+  if (E.hasFinalPtr())
+    PtrRef = E.getRawPtr();
+  else {
+    // Register backpatch.  Check the freelist for a BPNode.
+    BPNode* N;
+
+    if (FreeList) {
+      N = FreeList;
+      FreeList = FreeList->Next;
+    }
+    else // No available BPNode.  Allocate one.
+      N = (BPNode*) Allocator.Allocate<BPNode>();
+    
+    new (N) BPNode(E.getBPNode(),PtrRef);
+    E.setBPNode(N);
   }
-  else
-    PtrRef = E.Ptr;
 }
 
-void Deserializer::BackpatchPointers() {
-  for (MapTy::iterator I=BPatchMap.begin(),E=BPatchMap.end(); I!=E; ++I) {
-    
-    BPatchEntry& Entry = I->second;
-    assert (Entry.Ptr && "No pointer found for backpatch.");
-    
-    for (BPatchNode* N = Entry.Head; N != NULL; N = N->Next)
-      // Bitwise-OR in the pointer to support "smart" pointers that use
-      // unused bits to store extra data.
-      N->PtrRef |= reinterpret_cast<uintptr_t>(Entry.Ptr);
-    
-    Entry.Head = NULL;
+
+void Deserializer::BPatchEntry::setFinalPtr(BPNode*& FreeList, void* P) {
+  assert (!hasFinalPtr());
+  
+  // Perform backpatching.
+  
+  BPNode* Last = NULL;
+  
+  for (BPNode* N = getBPNode() ; N != NULL; N = N->Next) {
+    Last = N;
+    N->PtrRef |= reinterpret_cast<uintptr_t>(P);
   }
   
-  Allocator.Reset();
+  if (Last) {
+    Last->Next = FreeList;
+    FreeList = getBPNode();    
+  }
+  
+  Ptr = reinterpret_cast<uintptr_t>(P);
 }
+
 
 #define INT_READ(TYPE)\
 void SerializeTrait<TYPE>::Read(Deserializer& D, TYPE& X) {\
