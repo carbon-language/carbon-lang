@@ -203,3 +203,15 @@ FunctionTypeProto* FunctionTypeProto::Materialize(llvm::Deserializer& D) {
   
   return FTP;
 }
+
+void TypedefType::Emit(llvm::Serializer& S) const {
+  EmitTypeInternal(S);
+  S.EmitPtr(Decl);
+}
+
+TypedefType* TypedefType::Materialize(llvm::Deserializer& D) {
+  TypedefType* T = new TypedefType(NULL,QualType());
+  T->ReadTypeInternal(D);
+  D.ReadPtr(T->Decl);
+  return T;
+}
