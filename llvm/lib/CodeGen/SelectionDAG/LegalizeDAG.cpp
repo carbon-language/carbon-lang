@@ -23,9 +23,10 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Support/MathExtras.h"
+#include "llvm/Support/Alignment.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -602,6 +603,7 @@ SDOperand ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
                              ST->isVolatile(), Alignment);
   Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                     DAG.getConstant(IncrementSize, TLI.getPointerTy()));
+  Alignment = MinAlign(Alignment, IncrementSize);
   Store2 = DAG.getTruncStore(Chain, TLI.isLittleEndian()?Hi:Lo, Ptr,
                              ST->getSrcValue(), SVOffset + IncrementSize,
                              NewStoredVT, ST->isVolatile(), Alignment);
@@ -660,7 +662,7 @@ SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
                       DAG.getConstant(IncrementSize, TLI.getPointerTy()));
     Hi = DAG.getExtLoad(HiExtType, VT, Chain, Ptr, LD->getSrcValue(),
                         SVOffset + IncrementSize, NewLoadedVT, LD->isVolatile(),
-                        Alignment);
+                        MinAlign(Alignment, IncrementSize));
   } else {
     Hi = DAG.getExtLoad(HiExtType, VT, Chain, Ptr, LD->getSrcValue(), SVOffset,
                         NewLoadedVT,LD->isVolatile(), Alignment);
@@ -668,7 +670,7 @@ SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
                       DAG.getConstant(IncrementSize, TLI.getPointerTy()));
     Lo = DAG.getExtLoad(ISD::ZEXTLOAD, VT, Chain, Ptr, LD->getSrcValue(),
                         SVOffset + IncrementSize, NewLoadedVT, LD->isVolatile(),
-                        Alignment);
+                        MinAlign(Alignment, IncrementSize));
   }
 
   // aggregate the two parts
@@ -2055,7 +2057,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
                                getIntPtrConstant(4));
             Hi = DAG.getStore(Tmp1, Hi, Tmp2, ST->getSrcValue(), SVOffset+4,
-                              isVolatile, std::max(Alignment, 4U));
+                              isVolatile, MinAlign(Alignment, 4U));
 
             Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
             break;
@@ -2164,8 +2166,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         assert(isTypeLegal(Tmp2.getValueType()) &&
                "Pointers must be legal!");
         SVOffset += IncrementSize;
-        if (Alignment > IncrementSize)
-          Alignment = IncrementSize;
+        Alignment = MinAlign(Alignment, IncrementSize);
         Hi = DAG.getStore(Tmp1, Hi, Tmp2, ST->getSrcValue(),
                           SVOffset, isVolatile, Alignment);
         Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
@@ -5429,8 +5430,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                         getIntPtrConstant(IncrementSize));
       SVOffset += IncrementSize;
-      if (Alignment > IncrementSize)
-        Alignment = IncrementSize;
+      Alignment = MinAlign(Alignment, IncrementSize);
       Hi = DAG.getLoad(NVT, Ch, Ptr, LD->getSrcValue(), SVOffset,
                        isVolatile, Alignment);
 
@@ -6336,8 +6336,7 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                       getIntPtrConstant(IncrementSize));
     SVOffset += IncrementSize;
-    if (Alignment > IncrementSize)
-      Alignment = IncrementSize;
+    Alignment = MinAlign(Alignment, IncrementSize);
     Hi = DAG.getLoad(NewVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
     
     // Build a factor node to remember that this load is independent of the

@@ -37,6 +37,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Alignment.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -1713,15 +1714,18 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
         // read fewer bytes from the same pointer.
         unsigned PtrOff =
           (MVT::getSizeInBits(LoadedVT) - MVT::getSizeInBits(EVT)) / 8;
+        unsigned Alignment = LN0->getAlignment();
         SDOperand NewPtr = LN0->getBasePtr();
-        if (!TLI.isLittleEndian())
+        if (!TLI.isLittleEndian()) {
           NewPtr = DAG.getNode(ISD::ADD, PtrType, NewPtr,
                                DAG.getConstant(PtrOff, PtrType));
+          Alignment = MinAlign(Alignment, PtrOff);
+        }
         AddToWorkList(NewPtr.Val);
         SDOperand Load =
           DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(), NewPtr,
                          LN0->getSrcValue(), LN0->getSrcValueOffset(), EVT,
-                         LN0->isVolatile(), LN0->getAlignment());
+                         LN0->isVolatile(), Alignment);
         AddToWorkList(N);
         CombineTo(N0.Val, Load, Load.getValue(1));
         return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
@@ -2879,16 +2883,17 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
     if (!TLI.isLittleEndian())
       ShAmt = MVT::getSizeInBits(N0.getValueType()) - ShAmt - EVTBits;
     uint64_t PtrOff =  ShAmt / 8;
+    unsigned NewAlign = MinAlign(LN0->getAlignment(), PtrOff);
     SDOperand NewPtr = DAG.getNode(ISD::ADD, PtrType, LN0->getBasePtr(),
                                    DAG.getConstant(PtrOff, PtrType));
     AddToWorkList(NewPtr.Val);
     SDOperand Load = (ExtType == ISD::NON_EXTLOAD)
       ? DAG.getLoad(VT, LN0->getChain(), NewPtr,
                     LN0->getSrcValue(), LN0->getSrcValueOffset(),
-                    LN0->isVolatile(), LN0->getAlignment())
+                    LN0->isVolatile(), NewAlign)
       : DAG.getExtLoad(ExtType, VT, LN0->getChain(), NewPtr,
                        LN0->getSrcValue(), LN0->getSrcValueOffset(), EVT,
-                       LN0->isVolatile(), LN0->getAlignment());
+                       LN0->isVolatile(), NewAlign);
     AddToWorkList(N);
     if (CombineSRL) {
       DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1));
@@ -3905,8 +3910,8 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
       // Replace the chain to void dependency.
       if (LD->getExtensionType() == ISD::NON_EXTLOAD) {
         ReplLoad = DAG.getLoad(N->getValueType(0), BetterChain, Ptr,
-                              LD->getSrcValue(), LD->getSrcValueOffset(),
-                              LD->isVolatile(), LD->getAlignment());
+                               LD->getSrcValue(), LD->getSrcValueOffset(),
+                               LD->isVolatile(), LD->getAlignment());
       } else {
         ReplLoad = DAG.getExtLoad(LD->getExtensionType(),
                                   LD->getValueType(0),
@@ -3980,7 +3985,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
                               ST->getSrcValueOffset(), ST->isVolatile(),
                               ST->getAlignment());
         } else if (TLI.isTypeLegal(MVT::i32)) {
-          // Many FP stores are not make apparent until after legalize, e.g. for
+          // Many FP stores are not made apparent until after legalize, e.g. for
           // argument passing.  Since this is so common, custom legalize the
           // 64-bit integer store into two 32-bit stores.
           uint64_t Val = CFP->getValueAPF().convertToAPInt().getZExtValue();
@@ -3998,8 +4003,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
           Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                             DAG.getConstant(4, Ptr.getValueType()));
           SVOffset += 4;
-          if (Alignment > 4)
-            Alignment = 4;
+          Alignment = MinAlign(Alignment, 4U);
           SDOperand St1 = DAG.getStore(Chain, Hi, Ptr, ST->getSrcValue(),
                                        SVOffset, isVolatile, Alignment);
           return DAG.getNode(ISD::TokenFactor, MVT::Other, St0, St1);

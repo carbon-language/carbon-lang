@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Alignment.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;
@@ -946,7 +947,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                       getIntPtrConstant(IncrementSize));
     Hi = DAG.getLoad(NVT, Ch, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
-                     isVolatile, std::max(Alignment, IncrementSize));
+                     isVolatile, MinAlign(Alignment, IncrementSize));
 
     // Build a factor node to remember that this load is independent of the
     // other one.
@@ -994,7 +995,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
                       getIntPtrConstant(IncrementSize));
     Hi = DAG.getExtLoad(ExtType, NVT, Ch, Ptr, N->getSrcValue(),
                         SVOffset+IncrementSize, NEVT,
-                        isVolatile, std::max(Alignment, IncrementSize));
+                        isVolatile, MinAlign(Alignment, IncrementSize));
 
     // Build a factor node to remember that this load is independent of the
     // other one.
@@ -1019,7 +1020,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
     // Load the rest of the low bits.
     Lo = DAG.getExtLoad(ISD::ZEXTLOAD, NVT, Ch, Ptr, N->getSrcValue(),
                         SVOffset+IncrementSize, MVT::getIntegerType(ExcessBits),
-                        isVolatile, std::max(Alignment, IncrementSize));
+                        isVolatile, MinAlign(Alignment, IncrementSize));
 
     // Build a factor node to remember that this load is independent of the
     // other one.
@@ -2002,7 +2003,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
                     getIntPtrConstant(IncrementSize));
   assert(isTypeLegal(Ptr.getValueType()) && "Pointers must be legal!");
   Hi = DAG.getStore(Chain, Hi, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
-                    isVolatile, std::max(Alignment, IncrementSize));
+                    isVolatile, MinAlign(Alignment, IncrementSize));
   return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
 }
 
