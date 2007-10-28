@@ -22,8 +22,12 @@ Deserializer::Deserializer(BitstreamReader& stream)
 Deserializer::~Deserializer() {
   assert (RecIdx >= Record.size() && 
           "Still scanning bitcode record when deserialization completed.");
-  
-  assert (FreeList == NULL && "Some pointers were not backpatched.");
+ 
+#ifdef NDEBUG
+  for (MapTy::iterator I=BPatchMap.begin(), E=BPatchMap.end(); I!=E; ++I)
+    assert (I->second.hasFinalPtr() &&
+            "Some pointers were not backpatched.");
+#endif
 }
 
 
