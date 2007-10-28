@@ -172,3 +172,34 @@ FunctionTypeNoProto* FunctionTypeNoProto::Materialize(llvm::Deserializer& D) {
   T->ReadFunctionTypeInternal(D);
   return T;
 }
+
+void FunctionTypeProto::Emit(llvm::Serializer& S) const {
+  S.EmitInt(NumArgs);
+  EmitFunctionTypeInternal(S);
+  
+  for (arg_type_iterator i = arg_type_begin(), e = arg_type_end(); i!=e; ++i)
+    S.Emit(*i);    
+}
+
+FunctionTypeProto* FunctionTypeProto::Materialize(llvm::Deserializer& D) {
+  unsigned NumArgs = D.ReadInt();
+  
+  FunctionTypeProto *FTP = 
+  (FunctionTypeProto*)malloc(sizeof(FunctionTypeProto) + 
+                             NumArgs*sizeof(QualType));
+  
+  // Default construct.  Internal fields will be populated using
+  // deserialization.
+  new (FTP) FunctionTypeProto();
+  
+  FTP->NumArgs = NumArgs;
+  FTP->ReadFunctionTypeInternal(D);
+  
+  // Fill in the trailing argument array.
+  QualType *ArgInfo = reinterpret_cast<QualType *>(FTP+1);;
+
+  for (unsigned i = 0; i != NumArgs; ++i)
+    D.Read(ArgInfo[i]);
+  
+  return FTP;
+}

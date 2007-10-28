@@ -790,6 +790,14 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                       arg_type_iterator ArgTys, unsigned NumArgs,
                       bool isVariadic);
+  
+  void Emit(llvm::Serializer& S) const;
+  static FunctionTypeProto* Materialize(llvm::Deserializer& D);
+  
+protected:
+  // Used by deserialization.
+  FunctionTypeProto() 
+  : FunctionType(FunctionProto, QualType(), false, QualType()) {}
 };
 
 
