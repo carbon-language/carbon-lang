@@ -1429,3 +1429,65 @@ Possible optimizations:
 +    }
 +  }
 //===---------------------------------------------------------------------===//
+
+main ()
+{
+  int i = 0;
+  unsigned long int z = 0;
+
+  do {
+    z -= 0x00004000;
+    i++;
+    if (i > 0x00040000)
+      abort ();
+  } while (z > 0);
+  exit (0);
+}
+
+gcc compiles this to:
+
+_main:
+	subl	$28, %esp
+	xorl	%eax, %eax
+	jmp	L2
+L3:
+	cmpl	$262144, %eax
+	je	L10
+L2:
+	addl	$1, %eax
+	cmpl	$262145, %eax
+	jne	L3
+	call	L_abort$stub
+L10:
+	movl	$0, (%esp)
+	call	L_exit$stub
+
+llvm:
+
+_main:
+	subl	$12, %esp
+	movl	$1, %eax
+	movl	$16384, %ecx
+LBB1_1:	# bb
+	cmpl	$262145, %eax
+	jge	LBB1_4	# cond_true
+LBB1_2:	# cond_next
+	incl	%eax
+	addl	$4294950912, %ecx
+	cmpl	$16384, %ecx
+	jne	LBB1_1	# bb
+LBB1_3:	# bb11
+	xorl	%eax, %eax
+	addl	$12, %esp
+	ret
+LBB1_4:	# cond_true
+	call	L_abort$stub
+
+1. LSR should rewrite the first cmp with induction variable %ecx.
+2. DAG combiner should fold
+        leal    1(%eax), %edx
+        cmpl    $262145, %edx
+   =>
+        cmpl    $262144, %eax
+
+//===---------------------------------------------------------------------===//
