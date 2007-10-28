@@ -60,6 +60,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
 #include <sstream>
@@ -67,7 +68,10 @@
 using namespace llvm;
 
 namespace {  // Anonymous namespace for class
-
+  cl::opt<bool>
+  Pedantic("pedantic",
+           cl::desc("Reject code with undefined behaviour"));
+    
   struct VISIBILITY_HIDDEN
      Verifier : public FunctionPass, InstVisitor<Verifier> {
     static char ID; // Pass ID, replacement for typeid
@@ -806,10 +810,17 @@ void Verifier::visitCallInst(CallInst &CI) {
             "Call parameter type does not match function signature!",
             CI.getOperand(i+1), FTy->getParamType(i), &CI);
 
-  if (Function *F = CI.getCalledFunction())
+  if (Function *F = CI.getCalledFunction()) {
+    if (Pedantic) {
+      // Verify that calling convention of Function and CallInst match
+      Assert1(F->getCallingConv() == CI.getCallingConv(),
+              "Call uses different calling convention than function", &CI);
+    }
+    
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
       visitIntrinsicFunctionCall(ID, CI);
-
+  }
+  
   visitInstruction(CI);
 }
 
