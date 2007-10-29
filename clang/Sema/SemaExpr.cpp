@@ -1028,8 +1028,8 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 ///
 Sema::AssignmentCheckResult
 Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
-  if (lhsType == rhsType) // common case, fast path...
-    return Compatible;
+  if (lhsType.getCanonicalType() == rhsType.getCanonicalType())
+    return Compatible; // common case, fast path...
 
   if (lhsType->isReferenceType() || rhsType->isReferenceType()) {
     if (Context.referenceTypesAreCompatible(lhsType, rhsType))
