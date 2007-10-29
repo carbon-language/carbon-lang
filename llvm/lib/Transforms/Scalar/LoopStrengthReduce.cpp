@@ -1690,7 +1690,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Note: this processes each stride/type pair individually.  All users passed
   // into StrengthReduceStridedIVUsers have the same type AND stride.  Also,
-  // node that we iterate over IVUsesByStride indirectly by using StrideOrder.
+  // note that we iterate over IVUsesByStride indirectly by using StrideOrder.
   // This extra layer of indirection makes the ordering of strides deterministic
   // - not dependent on map order.
   for (unsigned Stride = 0, e = StrideOrder.size(); Stride != e; ++Stride) {
