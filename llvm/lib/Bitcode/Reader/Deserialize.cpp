@@ -108,7 +108,7 @@ void Deserializer::ReadUIntPtr(uintptr_t& PtrRef) {
   unsigned PtrId = ReadInt();
   
   if (PtrId == 0) {
-    PtrRef = NULL;
+    PtrRef = 0;
     return;
   }  
   
