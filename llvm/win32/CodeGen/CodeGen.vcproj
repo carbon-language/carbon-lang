@@ -416,6 +416,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\CodeGen\MachineDominators.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\CodeGen\MachineFrameInfo.h"
 				>
 			</File>

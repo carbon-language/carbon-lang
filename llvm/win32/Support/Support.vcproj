@@ -276,6 +276,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\Support\Alignment.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Support\AlignOf.h"
 				>
 			</File>

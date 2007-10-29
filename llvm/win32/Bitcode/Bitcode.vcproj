@@ -176,6 +176,10 @@
 					RelativePath="..\..\lib\Bitcode\Reader\Deserialize.cpp"
 					>
 				</File>
+				<File
+					RelativePath="..\..\lib\Bitcode\Reader\DeserializeAPInt.cpp"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="Writer"
@@ -194,6 +198,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Bitcode\Writer\Serialize.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Bitcode\Writer\SerializeAPInt.cpp"
 					>
 				</File>
 				<File
