@@ -217,15 +217,7 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
    if (const VectorType* PKT = dyn_cast<VectorType>(LI.getType())) {
        // Initialization, Idx is needed for getelementptr needed later
        Value *Idx[2];
-       Idx[0] = ConstantInt::get(Type::Int32Ty,0);
-
-       ArrayType* AT = ArrayType::get(PKT->getContainedType(0),
-                                      PKT->getNumElements());
-       PointerType* APT = PointerType::get(AT);
-
-       // Cast the pointer to vector type to an equivalent array
-       Value* array = new BitCastInst(LI.getPointerOperand(), APT, 
-                                      LI.getName() + ".a", &LI);
+       Idx[0] = ConstantInt::get(Type::Int32Ty, 0);
 
        // Convert this load into num elements number of loads
        std::vector<Value*> values;
@@ -236,7 +228,7 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
             Idx[1] = ConstantInt::get(Type::Int32Ty,i);
 
             // Get the pointer
-            Value* val = new GetElementPtrInst(array,
+            Value* val = new GetElementPtrInst(LI.getPointerOperand(),
                                                Idx, array_endof(Idx),
                                                LI.getName() +
                                                ".ge." + utostr(i),
@@ -316,15 +308,7 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
        dyn_cast<VectorType>(SI.getOperand(0)->getType())) {
        // We will need this for getelementptr
        Value *Idx[2];
-       Idx[0] = ConstantInt::get(Type::Int32Ty,0);
-
-       ArrayType* AT = ArrayType::get(PKT->getContainedType(0),
-                                      PKT->getNumElements());
-       PointerType* APT = PointerType::get(AT);
-
-       // Cast the pointer to packed to an array of equivalent type
-       Value* array = new BitCastInst(SI.getPointerOperand(), APT, 
-                                      "store.ge.a.", &SI);
+       Idx[0] = ConstantInt::get(Type::Int32Ty, 0);
 
        std::vector<Value*>& values = getValues(SI.getOperand(0));
 
@@ -334,7 +318,7 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
        for (unsigned i = 0, e = PKT->getNumElements(); i != e; ++i) {
             // Generate the indices for getelementptr
             Idx[1] = ConstantInt::get(Type::Int32Ty,i);
-            Value* val = new GetElementPtrInst(array,
+            Value* val = new GetElementPtrInst(SI.getPointerOperand(),
                                                Idx, array_endof(Idx),
                                                "store.ge." +
                                                utostr(i) + ".",
