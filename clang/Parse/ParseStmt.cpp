@@ -985,6 +985,10 @@ void Parser::ParseAsmOperandsOpt() {
         SkipUntil(tok::r_paren);
         return;
       }
+      
+      // Eat the identifier, FIXME: capture it.
+      ConsumeToken();
+      
       MatchRHSPunctuation(tok::r_square, Loc);
     }
     
