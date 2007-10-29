@@ -693,14 +693,15 @@ ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
 
   // C99 6.5.4p2: the cast type needs to be void or scalar and the expression
   // type needs to be scalar.
-  if (!castType->isScalarType() && !castType->isVoidType()) { 
-    return Diag(LParenLoc, diag::err_typecheck_cond_expect_scalar, 
-                castType.getAsString(), SourceRange(LParenLoc, RParenLoc));
-  }
-  if (!castExpr->getType()->isScalarType()) {
-    return Diag(castExpr->getLocStart(), 
-                diag::err_typecheck_expect_scalar_operand, 
-                castExpr->getType().getAsString(), castExpr->getSourceRange());
+  if (!castType->isVoidType()) {  // Cast to void allows any expr type.
+    if (!castType->isScalarType())
+      return Diag(LParenLoc, diag::err_typecheck_cond_expect_scalar, 
+                  castType.getAsString(), SourceRange(LParenLoc, RParenLoc));
+    if (!castExpr->getType()->isScalarType()) {
+      return Diag(castExpr->getLocStart(), 
+                  diag::err_typecheck_expect_scalar_operand, 
+                  castExpr->getType().getAsString(),castExpr->getSourceRange());
+    }
   }
   return new CastExpr(castType, castExpr, LParenLoc);
 }
