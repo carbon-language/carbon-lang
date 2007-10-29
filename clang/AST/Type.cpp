@@ -315,6 +315,16 @@ bool Type::isIntegerType() const {
   return false;
 }
 
+bool Type::isIntegralType() const {
+  if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
+    return BT->getKind() >= BuiltinType::Bool &&
+    BT->getKind() <= BuiltinType::LongLong;
+  if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
+    if (TT->getDecl()->getKind() == Decl::Enum)
+      return true;
+  return false;
+}
+
 bool Type::isEnumeralType() const {
   if (const TagType *TT = dyn_cast<TagType>(CanonicalType))
     return TT->getDecl()->getKind() == Decl::Enum;

@@ -34,6 +34,7 @@ namespace clang {
   class EnumDecl;
   class ObjcInterfaceDecl;
   class ObjcProtocolDecl;
+  class ObjcMethodDecl;
   class Expr;
   class SourceLocation;
   class PointerType;
@@ -273,6 +274,7 @@ public:
   bool isEnumeralType() const;
   bool isBooleanType() const;
   bool isCharType() const;
+  bool isIntegralType() const;
   
   /// Floating point categories.
   bool isRealFloatingType() const; // C99 6.2.5p10 (float, double, long double)

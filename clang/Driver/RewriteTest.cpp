@@ -495,15 +495,20 @@ void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
 
     Result += "\t,{{(SEL)\"";
     Result += Methods[0]->getSelector().getName().c_str();
-    Result += "\", \"\", 0}\n";
-  
+    std::string MethodTypeString;
+    Context->getObjcEncodingForMethodDecl(Methods[0], MethodTypeString);
+    Result += "\", \"";
+    Result += MethodTypeString;
+    Result += "\", 0}\n";
     for (int i = 1; i < NumMethods; i++) {
-      // TODO: 1) method selector name may hav to go into their own section
-      // 2) encode method types for use here (which may have to go into 
-      // __meth_var_types section, 3) Need method address as 3rd initializer.
+      // TODO: Need method address as 3rd initializer.
       Result += "\t  ,{(SEL)\"";
       Result += Methods[i]->getSelector().getName().c_str();
-      Result += "\", \"\", 0}\n";
+      std::string MethodTypeString;
+      Context->getObjcEncodingForMethodDecl(Methods[i], MethodTypeString);
+      Result += "\", \"";
+      Result += MethodTypeString;
+      Result += "\", 0}\n";
     }
     Result += "\t }\n};\n";
   }
@@ -559,12 +564,13 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
         Result += "\", \"\"}\n";
                        
         for (int i = 1; i < NumMethods; i++) {
-          // TODO: 1) method selector name may hav to go into their own section
-          // 2) encode method types for use here (which may have to go into 
-          // __meth_var_types section.
           Result += "\t  ,{(SEL)\"";
           Result += Methods[i]->getSelector().getName().c_str();
-          Result += "\", \"\"}\n";
+          std::string MethodTypeString;
+          Context->getObjcEncodingForMethodDecl(Methods[i], MethodTypeString);
+          Result += "\", \"";
+          Result += MethodTypeString;
+          Result += "\"}\n";
         }
         Result += "\t }\n};\n";
       }
@@ -586,12 +592,13 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
         Result += "\", \"\"}\n";
             
         for (int i = 1; i < NumMethods; i++) {
-          // TODO: 1) method selector name may hav to go into their own section
-          // 2) encode method types for use here (which may have to go into 
-          // __meth_var_types section.
           Result += "\t  ,{(SEL)\"";
           Result += Methods[i]->getSelector().getName().c_str();
-          Result += "\", \"\"}\n";
+          std::string MethodTypeString;
+          Context->getObjcEncodingForMethodDecl(Methods[i], MethodTypeString);
+          Result += "\", \"";
+          Result += MethodTypeString;
+          Result += "\"}\n";
         }
         Result += "\t }\n};\n";
       }

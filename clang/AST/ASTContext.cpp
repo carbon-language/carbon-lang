@@ -153,6 +153,9 @@ void ASTContext::InitBuiltinTypes() {
   ObjcIdType = QualType();
   IdStructType = 0;
   ObjcConstantStringType = QualType();
+  
+  // void * type
+  VoidPtrTy = getPointerType(VoidTy);
 }
 
 //===----------------------------------------------------------------------===//
@@ -846,6 +849,60 @@ static bool isTypeTypedefedAsBOOL(QualType T)
         return true;
         
   return false;
+}
+
+/// getObjcEncodingTypeSize returns size of type for objective-c encoding
+/// purpose.
+int ASTContext::getObjcEncodingTypeSize(QualType type) {
+  SourceLocation Loc;
+  uint64_t sz = getTypeSize(type, Loc);
+  
+  // Make all integer and enum types at least as large as an int
+  if (sz > 0 && type->isIntegralType())
+    sz = std::max(sz, getTypeSize(IntTy, Loc));
+  // Treat arrays as pointers, since that's how they're passed in.
+  else if (type->isArrayType())
+    sz = getTypeSize(VoidPtrTy, Loc);
+  return sz / getTypeSize(CharTy, Loc);
+}
+
+/// getObjcEncodingForMethodDecl - Return the encoded type for this method
+/// declaration.
+void ASTContext::getObjcEncodingForMethodDecl(ObjcMethodDecl *Decl, 
+                                              std::string& S)
+{
+  // TODO: First encode type qualifer, 'in', 'inout', etc. for the return type.
+  // Encode result type.
+  getObjcEncodingForType(Decl->getResultType(), S);
+  // Compute size of all parameters.
+  // Start with computing size of a pointer in number of bytes.
+  // FIXME: There might(should) be a better way of doing this computation!
+  SourceLocation Loc;
+  int PtrSize = getTypeSize(VoidPtrTy, Loc) / getTypeSize(CharTy, Loc);
+  // The first two arguments (self and _cmd) are pointers; account for
+  // their size.
+  int ParmOffset = 2 * PtrSize;
+  int NumOfParams = Decl->getNumParams();
+  for (int i = 0; i < NumOfParams; i++) {
+    QualType PType = Decl->getParamDecl(i)->getType();
+    int sz = getObjcEncodingTypeSize (PType);
+    assert (sz > 0 && "getObjcEncodingForMethodDecl - Incomplete param type");
+    ParmOffset += sz;
+  }
+  S += llvm::utostr(ParmOffset);
+  S += "@0:";
+  S += llvm::utostr(PtrSize);
+  
+  // Argument types.
+  ParmOffset = 2 * PtrSize;
+  for (int i = 0; i < NumOfParams; i++) {
+    QualType PType = Decl->getParamDecl(i)->getType();
+    // TODO: Process argument qualifiers for user supplied arguments; such as,
+    // 'in', 'inout', etc.
+    getObjcEncodingForType(PType, S);
+    S += llvm::utostr(ParmOffset);
+    ParmOffset += getObjcEncodingTypeSize(PType);
+  }
 }
 
 void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const

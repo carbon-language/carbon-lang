@@ -77,6 +77,7 @@ public:
   QualType UnsignedLongLongTy;
   QualType FloatTy, DoubleTy, LongDoubleTy;
   QualType FloatComplexTy, DoubleComplexTy, LongDoubleComplexTy;
+  QualType VoidPtrTy;
   
   ASTContext(SourceManager &SM, TargetInfo &t, IdentifierTable &idents,
              SelectorTable &sels) : 
@@ -173,6 +174,14 @@ public:
 
   // Return the ObjC type encoding for a given type.
   void getObjcEncodingForType(QualType t, std::string &S) const;
+  
+  /// getObjcEncodingForMethodDecl - Return the encoded type for this method
+  /// declaration.
+  void getObjcEncodingForMethodDecl(ObjcMethodDecl *Decl, std::string &S);
+  
+  /// getObjcEncodingTypeSize returns size of type for objective-c encoding
+  /// purpose.
+  int getObjcEncodingTypeSize(QualType t);
     
   // This setter/getter repreents the ObjC 'id' type. It is setup lazily, by
   // Sema.
