@@ -337,6 +337,9 @@ public:
   virtual StmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
                                      ExprTy *RetValExp);
   
+  virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc, 
+                                  SourceLocation RParenLoc);
+  
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
 

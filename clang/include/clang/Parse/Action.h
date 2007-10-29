@@ -282,6 +282,10 @@ public:
                                      ExprTy *RetValExp) {
     return 0;
   }
+  virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc, 
+                                  SourceLocation RParenLoc) {
+    return 0;
+  }
   
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.

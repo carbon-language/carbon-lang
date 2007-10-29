@@ -40,6 +40,9 @@ STMT(14, BreakStmt       , Stmt)
 STMT(15, ReturnStmt      , Stmt)
 STMT(16, DeclStmt        , Stmt)
 STMT(17, SwitchCase      , Stmt)
+
+// GNU Stmt Extensions
+STMT(18, AsmStmt         , Stmt)
 LAST_STMT(17)
 
 FIRST_EXPR(31)

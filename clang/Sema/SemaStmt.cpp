@@ -644,3 +644,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
   return new ReturnStmt(ReturnLoc, (Expr*)RetValExp);
 }
 
+Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc, 
+                                    SourceLocation RParenLoc) {
+  return new AsmStmt(AsmLoc, RParenLoc);
+}

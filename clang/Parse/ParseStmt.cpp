@@ -903,7 +903,7 @@ Parser::StmtResult Parser::ParseReturnStatement() {
 ///
 Parser::StmtResult Parser::ParseAsmStatement() {
   assert(Tok.is(tok::kw_asm) && "Not an asm stmt");
-  ConsumeToken();
+  SourceLocation AsmLoc = ConsumeToken();
   
   DeclSpec DS;
   SourceLocation Loc = Tok.getLocation();
@@ -948,10 +948,10 @@ Parser::StmtResult Parser::ParseAsmStatement() {
     }
   }
   
-  MatchRHSPunctuation(tok::r_paren, Loc);
+  SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, Loc);
   
-  // FIXME: Implement action for asm parsing.
-  return false;
+  // FIXME: Pass all the details down to the action.
+  return Actions.ActOnAsmStmt(AsmLoc, RParenLoc);
 }
 
 /// ParseAsmOperands - Parse the asm-operands production as used by

@@ -660,6 +660,27 @@ public:
   virtual child_iterator child_end();
 };
 
+/// AsmStmt - This represents a GNU inline-assembly statement extension.
+///
+class AsmStmt : public Stmt {
+  SourceLocation AsmLoc, RParenLoc;
+  // FIXME: This doesn't capture most of the interesting pieces.
+public:
+  AsmStmt(SourceLocation asmloc, SourceLocation rparenloc)
+    : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc) {}
+  
+  virtual SourceRange getSourceRange() const {
+    return SourceRange(AsmLoc, RParenLoc);
+  }
+  
+  static bool classof(const Stmt *T) {return T->getStmtClass() == AsmStmtClass;}
+  static bool classof(const AsmStmt *) { return true; }
+  
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
+
 }  // end namespace clang
 
 //===----------------------------------------------------------------------===//

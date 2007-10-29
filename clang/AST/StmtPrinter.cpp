@@ -316,6 +316,11 @@ void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {
   OS << ";\n";
 }
 
+
+void StmtPrinter::VisitAsmStmt(AsmStmt *Node) {
+  Indent() << "asm (/*todo*/);\n";
+}
+
 //===----------------------------------------------------------------------===//
 //  Expr printing methods.
 //===----------------------------------------------------------------------===//

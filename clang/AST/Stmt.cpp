@@ -189,3 +189,7 @@ Stmt::child_iterator ReturnStmt::child_end() {
   else return child_iterator();
 }
 
+// AsmStmt
+Stmt::child_iterator AsmStmt::child_begin() { return child_iterator(); }
+Stmt::child_iterator AsmStmt::child_end() { return child_iterator(); }
+
