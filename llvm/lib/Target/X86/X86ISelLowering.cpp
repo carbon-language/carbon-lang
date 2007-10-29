@@ -5125,7 +5125,11 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
 bool X86TargetLowering::isTruncateFree(const Type *Ty1, const Type *Ty2) const {
   if (!Ty1->isInteger() || !Ty2->isInteger())
     return false;
-  return Ty1->getPrimitiveSizeInBits() > Ty2->getPrimitiveSizeInBits();
+  unsigned NumBits1 = Ty1->getPrimitiveSizeInBits();
+  unsigned NumBits2 = Ty2->getPrimitiveSizeInBits();
+  if (NumBits1 <= NumBits2)
+    return false;
+  return Subtarget->is64Bit() || NumBits1 < 64;
 }
 
 
