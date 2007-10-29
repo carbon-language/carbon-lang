@@ -185,8 +185,12 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
   unsigned NumInitElements = E->getNumInits();
 
-  assert ( E->getType()->isArrayType() 
-           && "Only Array initializers are supported");
+  if (!E->getType()->isArrayType()) {
+    fprintf(stderr, "Unimplemented  aggregate expr! ");
+    fprintf(stderr, "Only Array initializers are implemneted\n");
+    E->dump(CGF.getContext().SourceMgr);
+    return;
+  }
 
   std::vector<llvm::Constant*> ArrayElts;
   const llvm::PointerType *APType = cast<llvm::PointerType>(DestPtr->getType());
