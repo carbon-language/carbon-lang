@@ -22,6 +22,7 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
 #include <map>
@@ -75,8 +76,9 @@ public:
    /// @param IE the insertelement operator to convert
    void visitInsertElementInst(InsertElementInst& IE);
 
-   /// This function asserts if the instruction is a VectorType but
-   /// is not handled by another function.
+   /// This function asserts that the given instruction does not have
+   /// vector type. Instructions with vector type should be handled by
+   /// the other functions in this class.
    ///
    /// @brief Asserts if VectorType instruction is not handled elsewhere.
    /// @param I the unhandled instruction
@@ -214,7 +216,7 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
    // Make sure what we are dealing with is a vector type
    if (const VectorType* PKT = dyn_cast<VectorType>(LI.getType())) {
        // Initialization, Idx is needed for getelementptr needed later
-       std::vector<Value*> Idx(2);
+       Value *Idx[2];
        Idx[0] = ConstantInt::get(Type::Int32Ty,0);
 
        ArrayType* AT = ArrayType::get(PKT->getContainedType(0),
@@ -235,7 +237,7 @@ void LowerPacked::visitLoadInst(LoadInst& LI)
 
             // Get the pointer
             Value* val = new GetElementPtrInst(array,
-                                               Idx.begin(), Idx.end(),
+                                               Idx, array_endof(Idx),
                                                LI.getName() +
                                                ".ge." + utostr(i),
                                                &LI);
@@ -313,7 +315,7 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
    if (const VectorType* PKT =
        dyn_cast<VectorType>(SI.getOperand(0)->getType())) {
        // We will need this for getelementptr
-       std::vector<Value*> Idx(2);
+       Value *Idx[2];
        Idx[0] = ConstantInt::get(Type::Int32Ty,0);
 
        ArrayType* AT = ArrayType::get(PKT->getContainedType(0),
@@ -333,7 +335,7 @@ void LowerPacked::visitStoreInst(StoreInst& SI)
             // Generate the indices for getelementptr
             Idx[1] = ConstantInt::get(Type::Int32Ty,i);
             Value* val = new GetElementPtrInst(array,
-                                               Idx.begin(), Idx.end(),
+                                               Idx, array_endof(Idx),
                                                "store.ge." +
                                                utostr(i) + ".",
                                                &SI);
