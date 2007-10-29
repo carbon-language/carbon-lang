@@ -171,6 +171,9 @@ public:
     return ObjcConstantStringType; 
   }
 
+  // Return the ObjC type encoding for a given type.
+  void getObjcEncodingForType(QualType t, std::string &S) const;
+    
   // This setter/getter repreents the ObjC 'id' type. It is setup lazily, by
   // Sema.
   void setObjcIdType(TypedefDecl *Decl);

@@ -16,6 +16,7 @@
 #include "clang/AST/AST.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Compiler.h"
 using namespace clang;
@@ -262,6 +263,7 @@ public:
   Value *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
     return CGF.EmitObjCStringLiteral(E);
   }
+  Value *VisitObjCEncodeExpr(const ObjCEncodeExpr *E);
 };
 }  // end anonymous namespace.
 
@@ -915,6 +917,23 @@ Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE)
 
   llvm::Value *V = Builder.CreateVAArg(ArgValue, ConvertType(VE->getType()));  
   return V;
+}
+
+Value *ScalarExprEmitter::VisitObjCEncodeExpr(const ObjCEncodeExpr *E)
+{
+  std::string str;
+  
+  CGF.getContext().getObjcEncodingForType(E->getEncodedType(), str);
+  
+  llvm::Constant *C = llvm::ConstantArray::get(str);
+  C = new llvm::GlobalVariable(C->getType(), true, 
+                               llvm::GlobalValue::InternalLinkage,
+                               C, ".str", &CGF.CGM.getModule());
+  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+  llvm::Constant *Zeros[] = { Zero, Zero };
+  C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
+  
+  return C;
 }
 
 //===----------------------------------------------------------------------===//

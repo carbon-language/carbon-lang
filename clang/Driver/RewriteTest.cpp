@@ -329,7 +329,10 @@ Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
 Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   // Create a new string expression.
   QualType StrType = Context->getPointerType(Context->CharTy);
-  Expr *Replacement = new StringLiteral("foo", 3, false, StrType, 
+  std::string StrEncoding;
+  Context->getObjcEncodingForType(Exp->getEncodedType(), StrEncoding);
+  Expr *Replacement = new StringLiteral(StrEncoding.c_str(),
+                                        StrEncoding.length(), false, StrType, 
                                         SourceLocation(), SourceLocation());
   Rewrite.ReplaceStmt(Exp, Replacement);
   delete Exp;

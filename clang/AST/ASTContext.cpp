@@ -16,6 +16,8 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
+
 using namespace clang;
 
 enum FloatingRank {
@@ -833,6 +835,104 @@ QualType ASTContext::getCFConstantStringType() {
   }
   
   return getTagDeclType(CFConstantStringTypeDecl);
+}
+
+static bool isTypeTypedefedAsBOOL(QualType T)
+{
+  if (const PointerType *NCPT = T->getAsPointerType())
+    if (const TypedefType *TT = dyn_cast<TypedefType>(NCPT->getPointeeType()))
+      if (!strcmp(TT->getDecl()->getName(), "BOOL"))
+        return true;
+        
+  return false;
+}
+
+void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
+{
+  QualType Ty = T.getCanonicalType();
+
+  if (const BuiltinType *BT = Ty->getAsBuiltinType()) {
+    char encoding;
+    switch (BT->getKind()) {
+    case BuiltinType::Void:
+      encoding = 'v';
+      break;
+    case BuiltinType::Bool:
+      encoding = 'B';
+      break;
+    case BuiltinType::Char_U:
+    case BuiltinType::UChar:
+      encoding = 'C';
+      break;
+    case BuiltinType::UShort:
+      encoding = 'S';
+      break;
+    case BuiltinType::UInt:
+      encoding = 'I';
+      break;
+    case BuiltinType::ULong:
+      encoding = 'L';
+      break;
+    case BuiltinType::ULongLong:
+      encoding = 'Q';
+      break;
+    case BuiltinType::Char_S:
+    case BuiltinType::SChar:
+      encoding = 'c';
+      break;
+    case BuiltinType::Short:
+      encoding = 's';
+      break;
+    case BuiltinType::Int:
+      encoding = 'i';
+      break;
+    case BuiltinType::Long:
+      encoding = 'l';
+      break;
+    case BuiltinType::LongLong:
+      encoding = 'q';
+      break;
+    case BuiltinType::Float:
+      encoding = 'f';
+      break;
+    case BuiltinType::Double:
+      encoding = 'd';
+      break;
+    case BuiltinType::LongDouble:
+      encoding = 'd';
+      break;
+    default:
+      assert(0 && "Unhandled builtin type kind");          
+    }
+    
+    S += encoding;
+  } else if (const PointerType *PT = Ty->getAsPointerType()) {
+    QualType PointeeTy = PT->getPointeeType();
+    
+    if (PointeeTy->isCharType()) {
+      // char pointer types should be encoded as '*' unless it is a
+      // type that has been typedef'd to 'BOOL'.
+      if (isTypeTypedefedAsBOOL(T)) {
+        S += '*';
+        return;
+      }
+    }
+    
+    S += '^';
+    getObjcEncodingForType(PT->getPointeeType(), S);
+  } else if (const ArrayType *AT = Ty->getAsArrayType()) {
+    S += '[';
+    
+    if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
+      S += llvm::utostr(CAT->getSize().getZExtValue());
+    else
+      assert(0 && "Unhandled array type!");
+    
+    getObjcEncodingForType(AT->getElementType(), S);
+    S += ']';
+  } else
+    fprintf(stderr, "@encode for type %s not implemented!\n", 
+            Ty.getAsString().c_str());
 }
 
 void ASTContext::setBuiltinVaListType(QualType T)
