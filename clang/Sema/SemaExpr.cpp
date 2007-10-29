@@ -1218,6 +1218,10 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   QualType lType = lex->getType();
   QualType rType = rex->getType();
   
+  
+  // For non-floating point types, check for self-comparisons of the form
+  // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
+  // often indicate logic errors in the program.
   if (!lType->isFloatingType()) {
     if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(IgnoreParen(lex)))
       if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(IgnoreParen(rex)))
@@ -1229,7 +1233,12 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
     if (lType->isRealType() && rType->isRealType())
       return Context.IntTy;
   } else {
-    if (lType->isFloatingType() && rType->isFloatingType()) {
+    // Check for comparisons of floating point operands using != and ==.
+    // Issue a warning if these are no self-comparisons, as they are not likely
+    // to do what the programmer intended.
+    if (lType->isFloatingType()) {
+      assert (rType->isFloatingType());
+      
       // Special case: check for x == x (which is OK).
       bool EmitWarning = true;
       
