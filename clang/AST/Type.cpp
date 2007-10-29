@@ -288,7 +288,8 @@ bool Type::isCharType() const {
   if (const BuiltinType *BT = dyn_cast<BuiltinType>(CanonicalType))
     return BT->getKind() == BuiltinType::Char_U ||
            BT->getKind() == BuiltinType::UChar ||
-           BT->getKind() == BuiltinType::Char_S;
+           BT->getKind() == BuiltinType::Char_S ||
+           BT->getKind() == BuiltinType::SChar;
   return false;
 }
 
