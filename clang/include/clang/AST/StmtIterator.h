@@ -15,6 +15,7 @@
 #define LLVM_CLANG_AST_STMT_ITR_H
 
 #include "llvm/ADT/iterator"
+#include <cassert>
 
 namespace clang {
 
