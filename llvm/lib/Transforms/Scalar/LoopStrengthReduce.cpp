@@ -51,8 +51,8 @@ namespace {
 
   /// IVStrideUse - Keep track of one use of a strided induction variable, where
   /// the stride is stored externally.  The Offset member keeps track of the 
-  /// offset from the IV, User is the actual user of the operand, and 'Operand'
-  /// is the operand # of the User that is the use.
+  /// offset from the IV, User is the actual user of the operand, and
+  /// 'OperandValToReplace' is the operand of the User that is the use.
   struct VISIBILITY_HIDDEN IVStrideUse {
     SCEVHandle Offset;
     Instruction *User;
