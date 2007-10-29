@@ -171,7 +171,7 @@ namespace {
 private:
     bool AddUsersIfInteresting(Instruction *I, Loop *L,
                                SmallPtrSet<Instruction*,16> &Processed);
-    SCEVHandle GetExpressionSCEV(Instruction *E, Loop *L);
+    SCEVHandle GetExpressionSCEV(Instruction *E);
     ICmpInst *ChangeCompareStride(Loop *L, ICmpInst *Cond,
                                   IVStrideUse* &CondUse,
                                   const SCEVHandle* &CondStride);
@@ -242,13 +242,13 @@ DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*,16> &Insts) {
 
 /// GetExpressionSCEV - Compute and return the SCEV for the specified
 /// instruction.
-SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
+SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp) {
   // Pointer to pointer bitcast instructions return the same value as their
   // operand.
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(Exp)) {
     if (SE->hasSCEV(BCI) || !isa<Instruction>(BCI->getOperand(0)))
       return SE->getSCEV(BCI);
-    SCEVHandle R = GetExpressionSCEV(cast<Instruction>(BCI->getOperand(0)), L);
+    SCEVHandle R = GetExpressionSCEV(cast<Instruction>(BCI->getOperand(0)));
     SE->setSCEV(BCI, R);
     return R;
   }
@@ -262,8 +262,8 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
     return SE->getSCEV(Exp);
     
   // Analyze all of the subscripts of this getelementptr instruction, looking
-  // for uses that are determined by the trip count of L.  First, skip all
-  // operands the are not dependent on the IV.
+  // for uses that are determined by the trip count of the loop.  First, skip
+  // all operands the are not dependent on the IV.
 
   // Build up the base expression.  Insert an LLVM cast of the pointer to
   // uintptr_t first.
@@ -417,7 +417,7 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
     return true;    // Instruction already handled.
   
   // Get the symbolic expression for this instruction.
-  SCEVHandle ISE = GetExpressionSCEV(I, L);
+  SCEVHandle ISE = GetExpressionSCEV(I);
   if (isa<SCEVCouldNotCompute>(ISE)) return false;
   
   // Get the start and stride for this expression.
