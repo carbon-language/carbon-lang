@@ -149,7 +149,10 @@ def int_gcwrite : Intrinsic<[llvm_void_ty, llvm_ptr_ty, llvm_ptr_ty,
 //  
 def int_returnaddress : Intrinsic<[llvm_ptr_ty, llvm_i32_ty], [IntrNoMem]>;
 def int_frameaddress  : Intrinsic<[llvm_ptr_ty, llvm_i32_ty], [IntrNoMem]>;
-def int_stacksave     : Intrinsic<[llvm_ptr_ty], [IntrReadMem]>,
+
+// Note: we treat stacksave/stackrestore as writemem because we don't otherwise
+// model their dependencies on allocas.
+def int_stacksave     : Intrinsic<[llvm_ptr_ty]>,
                         GCCBuiltin<"__builtin_stack_save">;
 def int_stackrestore  : Intrinsic<[llvm_void_ty, llvm_ptr_ty]>,
                         GCCBuiltin<"__builtin_stack_restore">;
