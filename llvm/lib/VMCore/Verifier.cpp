@@ -69,7 +69,7 @@ using namespace llvm;
 
 namespace {  // Anonymous namespace for class
   cl::opt<bool>
-  Pedantic("pedantic",
+  Pedantic("verify-pedantic",
            cl::desc("Reject code with undefined behaviour"));
     
   struct VISIBILITY_HIDDEN
