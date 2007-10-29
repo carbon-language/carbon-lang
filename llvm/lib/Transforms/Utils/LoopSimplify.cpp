@@ -34,7 +34,7 @@
 
 #define DEBUG_TYPE "loopsimplify"
 #include "llvm/Transforms/Scalar.h"
-#include "llvm/Constant.h"
+#include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "llvm/Type.h"
@@ -158,12 +158,14 @@ bool LoopSimplify::runOnFunction(Function &F) {
     for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i)
       TI->getSuccessor(i)->removePredecessor(BB);
    
-    // Add a new unreachable instruction.
+    // Add a new unreachable instruction before the old terminator.
     new UnreachableInst(TI);
     
     // Delete the dead terminator.
-    if (AA) AA->deleteValue(&BB->back());
-    BB->getInstList().pop_back();
+    if (AA) AA->deleteValue(TI);
+    if (!TI->use_empty())
+      TI->replaceAllUsesWith(UndefValue::get(TI->getType()));
+    TI->eraseFromParent();
     Changed |= true;
   }
   
