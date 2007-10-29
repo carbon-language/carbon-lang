@@ -837,10 +837,11 @@ QualType ASTContext::getCFConstantStringType() {
   return getTagDeclType(CFConstantStringTypeDecl);
 }
 
+// This returns true if a type has been typedefed to BOOL:
+// typedef <type> BOOL;
 static bool isTypeTypedefedAsBOOL(QualType T)
 {
-  if (const PointerType *NCPT = T->getAsPointerType())
-    if (const TypedefType *TT = dyn_cast<TypedefType>(NCPT->getPointeeType()))
+  if (const TypedefType *TT = dyn_cast<TypedefType>(T))
       if (!strcmp(TT->getDecl()->getName(), "BOOL"))
         return true;
         
@@ -849,9 +850,15 @@ static bool isTypeTypedefedAsBOOL(QualType T)
 
 void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
 {
-  QualType Ty = T.getCanonicalType();
-
-  if (const BuiltinType *BT = Ty->getAsBuiltinType()) {
+  // FIXME: This currently doesn't encode:
+  // @ An object (whether statically typed or typed id)
+  // # A class object (Class)
+  // : A method selector (SEL)
+  // {name=type...} A structure
+  // (name=type...) A union
+  // bnum A bit field of num bits
+  
+  if (const BuiltinType *BT = T->getAsBuiltinType()) {
     char encoding;
     switch (BT->getKind()) {
     case BuiltinType::Void:
@@ -906,13 +913,13 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     }
     
     S += encoding;
-  } else if (const PointerType *PT = Ty->getAsPointerType()) {
+  } else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
     
     if (PointeeTy->isCharType()) {
       // char pointer types should be encoded as '*' unless it is a
       // type that has been typedef'd to 'BOOL'.
-      if (!isTypeTypedefedAsBOOL(T)) {
+      if (!isTypeTypedefedAsBOOL(PointeeTy)) {
         S += '*';
         return;
       }
@@ -920,7 +927,7 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     
     S += '^';
     getObjcEncodingForType(PT->getPointeeType(), S);
-  } else if (const ArrayType *AT = Ty->getAsArrayType()) {
+  } else if (const ArrayType *AT = T->getAsArrayType()) {
     S += '[';
     
     if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT))
@@ -931,8 +938,7 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     getObjcEncodingForType(AT->getElementType(), S);
     S += ']';
   } else
-    fprintf(stderr, "@encode for type %s not implemented!\n", 
-            Ty.getAsString().c_str());
+    assert(0 && "@encode for type not implemented!");
 }
 
 void ASTContext::setBuiltinVaListType(QualType T)
