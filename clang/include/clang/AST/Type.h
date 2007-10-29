@@ -49,6 +49,7 @@ namespace clang {
   class OCUVectorType;
   class BuiltinType;
   class ObjcQualifiedInterfaceType;
+  class StmtIteratorBase;
   
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -589,6 +590,7 @@ public:
   }
   static bool classof(const VariableArrayType *) { return true; }
   
+  friend class StmtIteratorBase;
   // FIXME: Who owns VariableArrayType's?  What are the semantics
   //  for serialization.
 };

@@ -17,63 +17,85 @@
 
 using namespace clang;
 
-static inline bool declHasExpr(ScopedDecl *decl) {
-  if (VarDecl* D = dyn_cast<VarDecl>(decl))
-    if (D->getInit())
-      return true;
-  
-  if (EnumConstantDecl* D = dyn_cast<EnumConstantDecl>(decl))
-    if (D->getInitExpr())
-      return true;
-  
-  return false;  
-}
-
-void StmtIteratorBase::NextDecl() {
-  assert (FirstDecl && decl);
-
-  do decl = decl->getNextDeclarator();
-  while (decl != NULL && !declHasExpr(decl));
-  
-  if (decl == NULL) FirstDecl = NULL;
-}
-
-StmtIteratorBase::StmtIteratorBase(ScopedDecl* d) {
-  assert (d);
-  
-  while (d != NULL && !declHasExpr(d))
-    d = d->getNextDeclarator();
-  
-  FirstDecl = d;
-  decl = d;
-}
-
-void StmtIteratorBase::PrevDecl() {
-  assert (FirstDecl);
-  assert (decl != FirstDecl);
-  
-  // March through the list of decls until we find the decl just before
-  // the one we currently point 
-  
-  ScopedDecl* d = FirstDecl;
-  ScopedDecl* lastVD = d;
-  
-  while (d->getNextDeclarator() != decl) {
-    if (VarDecl* V = dyn_cast<VarDecl>(d))
-      if (V->getInit())
-        lastVD = d;
-
-    d = d->getNextDeclarator();
+static inline VariableArrayType* FindVA(Type* t) {
+  while (ArrayType* vt = dyn_cast<ArrayType>(t)) {
+    if (VariableArrayType* vat = dyn_cast<VariableArrayType>(vt))
+      if (vat->getSizeExpr())
+        return vat;
+    
+    t = vt->getElementType().getTypePtr();
   }
   
-  decl = lastVD;
+  return NULL;
+}
+
+void StmtIteratorBase::NextVA() {
+  assert (getVAPtr());
+
+  VariableArrayType* p = getVAPtr();
+  p = FindVA(p->getElementType().getTypePtr());
+  setVAPtr(p);
+
+  if (!p) {
+    VarDecl* VD = cast<VarDecl>(decl);
+    
+    if (!VD->Init)
+      NextDecl();
+  }
+}
+
+void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
+  assert (inDeclMode());
+  assert (getVAPtr() == NULL);
+  assert (decl);
+  
+  if (ImmediateAdvance) {
+    decl = decl->getNextDeclarator();
+
+    if (!decl) {
+      RawVAPtr = 0;
+      return;
+    }
+  }    
+  
+  for ( ; decl ; decl = decl->getNextDeclarator()) {
+    if (!decl) {
+      RawVAPtr = 0;
+      return;
+    }
+
+    if (VarDecl* VD = dyn_cast<VarDecl>(decl)) {        
+      if (VariableArrayType* VAPtr = FindVA(VD->getType().getTypePtr())) {
+        setVAPtr(VAPtr);
+        return;
+      }
+      
+      if (VD->getInit())
+        return;    
+    }
+    else if (EnumConstantDecl* ECD = dyn_cast<EnumConstantDecl>(decl))
+      if (ECD->getInitExpr())
+        return;  
+  }
+}
+
+StmtIteratorBase::StmtIteratorBase(ScopedDecl* d)
+  : decl(d), RawVAPtr(DeclMode) {
+  assert (decl);
+  NextDecl(false);
 }
 
 Stmt*& StmtIteratorBase::GetDeclExpr() const {
-  if (VarDecl* D = dyn_cast<VarDecl>(decl))
-    return reinterpret_cast<Stmt*&>(D->Init);
-  else {
-    EnumConstantDecl* Decl = cast<EnumConstantDecl>(decl);
-    return reinterpret_cast<Stmt*&>(Decl->Init);
+  if (VariableArrayType* VAPtr = getVAPtr()) {
+    assert (VAPtr->SizeExpr);
+    return reinterpret_cast<Stmt*&>(VAPtr->SizeExpr);
   }
+
+  if (VarDecl* VD = dyn_cast<VarDecl>(decl)) {
+    assert (VD->Init);
+    return reinterpret_cast<Stmt*&>(VD->Init);
+  }
+
+  EnumConstantDecl* ECD = cast<EnumConstantDecl>(decl);
+  return reinterpret_cast<Stmt*&>(ECD->Init);
 }

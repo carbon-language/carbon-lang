@@ -100,12 +100,6 @@ public:
   typedef StmtIterator       child_iterator;
   typedef ConstStmtIterator  const_child_iterator;
   
-  typedef std::reverse_iterator<child_iterator>                
-          reverse_child_iterator;
-  
-  typedef std::reverse_iterator<const_child_iterator> 
-          const_reverse_child_iterator;
-  
   virtual child_iterator child_begin() = 0;
   virtual child_iterator child_end()   = 0;
   
@@ -115,22 +109,6 @@ public:
   
   const_child_iterator child_end() const {
     return const_child_iterator(const_cast<Stmt*>(this)->child_end());
-  }
-  
-  reverse_child_iterator child_rbegin() {
-    return reverse_child_iterator(child_end());
-  }
-  
-  reverse_child_iterator child_rend() {
-    return reverse_child_iterator(child_begin());
-  }
-  
-  const_reverse_child_iterator child_rbegin() const {
-    return const_reverse_child_iterator(child_end());
-  }
-  
-  const_reverse_child_iterator child_rend() const {
-    return const_reverse_child_iterator(child_begin());
   }
 };
 

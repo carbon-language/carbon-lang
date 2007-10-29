@@ -24,23 +24,37 @@ class VariableArrayType;
   
 class StmtIteratorBase {
 protected:
+  enum { DeclMode = 0x1 };
   union { Stmt** stmt; ScopedDecl* decl; };
-  ScopedDecl* FirstDecl;
-  VariableArrayType* vat;
+  uintptr_t RawVAPtr;
+
+  bool inDeclMode() const { 
+    return RawVAPtr & DeclMode ? true : false;
+  }
   
-  void NextDecl();
-  void PrevDecl();
+  VariableArrayType* getVAPtr() const {
+    return reinterpret_cast<VariableArrayType*>(RawVAPtr & ~DeclMode);
+  }
+  
+  void setVAPtr(VariableArrayType* P) {
+    assert (inDeclMode());
+    RawVAPtr = reinterpret_cast<uintptr_t>(P) | DeclMode;
+  }
+  
+  void NextDecl(bool ImmediateAdvance = true);
+  void NextVA();
+  
   Stmt*& GetDeclExpr() const;
 
-  StmtIteratorBase(Stmt** s) : stmt(s), FirstDecl(NULL), vat(NULL) {}
+  StmtIteratorBase(Stmt** s) : stmt(s), RawVAPtr(0) {}
   StmtIteratorBase(ScopedDecl* d);
-  StmtIteratorBase() : stmt(NULL), FirstDecl(NULL), vat(NULL) {}
+  StmtIteratorBase() : stmt(NULL), RawVAPtr(0) {}
 };
   
   
 template <typename DERIVED, typename REFERENCE>
 class StmtIteratorImpl : public StmtIteratorBase, 
-                         public std::iterator<std::bidirectional_iterator_tag,
+                         public std::iterator<std::forward_iterator_tag,
                                               REFERENCE, ptrdiff_t, 
                                               REFERENCE, REFERENCE> {  
 protected:
@@ -51,8 +65,11 @@ public:
   StmtIteratorImpl(ScopedDecl* d) : StmtIteratorBase(d) {}
 
   
-  DERIVED& operator++() { 
-    if (FirstDecl) NextDecl();
+  DERIVED& operator++() {
+    if (inDeclMode()) {
+      if (getVAPtr()) NextVA();
+      else NextDecl();
+    }
     else ++stmt;
       
     return static_cast<DERIVED&>(*this);
@@ -64,29 +81,16 @@ public:
     return tmp;
   }
   
-  DERIVED& operator--() {
-    if (FirstDecl) PrevDecl();
-    else --stmt;
-    
-    return static_cast<DERIVED&>(*this);
-  }
-  
-  DERIVED operator--(int) {
-    DERIVED tmp = static_cast<DERIVED&>(*this);
-    operator--();
-    return tmp;
-  }
-
   bool operator==(const DERIVED& RHS) const {
-    return FirstDecl == RHS.FirstDecl && stmt == RHS.stmt;
+    return stmt == RHS.stmt && RawVAPtr == RHS.RawVAPtr;
   }
   
   bool operator!=(const DERIVED& RHS) const {
-    return FirstDecl != RHS.FirstDecl || stmt != RHS.stmt;
+    return stmt != RHS.stmt || RawVAPtr != RHS.RawVAPtr;
   }
   
   REFERENCE operator*() const { 
-    return (REFERENCE) (FirstDecl ? GetDeclExpr() : *stmt);
+    return (REFERENCE) (inDeclMode() ? GetDeclExpr() : *stmt);
   }
   
   REFERENCE operator->() const { return operator*(); }   
