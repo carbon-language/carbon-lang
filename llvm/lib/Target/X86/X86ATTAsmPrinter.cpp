@@ -521,6 +521,9 @@ bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
   case 'k': // Print SImode register
     Reg = getX86SubSuperRegister(Reg, MVT::i32);
     break;
+  case 'q': // Print DImode register
+    Reg = getX86SubSuperRegister(Reg, MVT::i64);
+    break;
   }
 
   O << '%';
@@ -547,6 +550,7 @@ bool X86ATTAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
     case 'h': // Print QImode high register
     case 'w': // Print HImode register
     case 'k': // Print SImode register
+    case 'q': // Print DImode register
       if (MI->getOperand(OpNo).isRegister())
         return printAsmMRegister(MI->getOperand(OpNo), ExtraCode[0]);
       printOperand(MI, OpNo);
@@ -566,8 +570,20 @@ bool X86ATTAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                              unsigned OpNo,
                                              unsigned AsmVariant, 
                                              const char *ExtraCode) {
-  if (ExtraCode && ExtraCode[0])
-    return true; // Unknown modifier.
+  if (ExtraCode && ExtraCode[0]) {
+    if (ExtraCode[1] != 0) return true; // Unknown modifier.
+    
+    switch (ExtraCode[0]) {
+    default: return true;  // Unknown modifier.
+    case 'b': // Print QImode register
+    case 'h': // Print QImode high register
+    case 'w': // Print HImode register
+    case 'k': // Print SImode register
+    case 'q': // Print SImode register
+      // These only apply to registers, ignore on mem.
+      break;
+    }
+  }
   printMemReference(MI, OpNo);
   return false;
 }
