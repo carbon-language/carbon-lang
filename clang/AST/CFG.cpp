@@ -1122,7 +1122,7 @@ void print_stmt(std::ostream&OS, StmtPrinterHelper* Helper, Stmt* S) {
       
       if (Sub->child_begin() != Sub->child_end()) {
         OS << "({ ... ; ";
-        Helper->handledStmt(*SE->getSubStmt()->child_rbegin(),OS);
+        Helper->handledStmt(*SE->getSubStmt()->body_rbegin(),OS);
         OS << " })\n";
         return;
       }
