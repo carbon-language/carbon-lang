@@ -29,6 +29,7 @@
 //  i -> int
 //  f -> float
 //  d -> double
+//  z -> size_t
 //  F -> constant CFString
 //  V -> __builtin_va_list
 //  . -> "...".  This may only occur at the end of the function list.
@@ -63,5 +64,6 @@ BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
 BUILTIN(__builtin_va_start, "vV&.", "n")
 BUILTIN(__builtin_va_end, "vV&", "n")
 BUILTIN(__builtin_va_copy, "vV&V", "n")
+BUILTIN(__builtin_memcpy, "v*v*vC*z", "n")
 
 #undef BUILTIN
