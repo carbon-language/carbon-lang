@@ -170,8 +170,6 @@ public:
   
   /// ReadOwned - Deserialize a QualType that owns the underlying Thpe*.
   void ReadOwned(llvm::Deserializer& S);
-  
-private:
 };
 
 } // end clang.
@@ -317,6 +315,14 @@ public:
   const VectorType *getAsVectorType() const; // GCC vector type.
   const ComplexType *getAsComplexType() const;
   const OCUVectorType *getAsOCUVectorType() const; // OCU vector type.
+  
+  /// getDesugaredType - Return the specified type with any "sugar" removed from
+  /// type type.  This takes off typedefs, typeof's etc.  If the outer level of
+  /// the type is already concrete, it returns it unmodified.  This is similar
+  /// to getting the canonical type, but it doesn't remove *all* typedefs.  For
+  /// example, it return "T*" as "T*", (not as "int*"), because the pointer is
+  /// concrete.
+  const Type *getDesugaredType() const;
   
   /// More type predicates useful for type checking/promotion
   bool isPromotableIntegerType() const; // C99 6.3.1.1p2

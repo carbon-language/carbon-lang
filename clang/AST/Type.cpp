@@ -77,16 +77,35 @@ bool Type::isComplexType() const {
   return isa<ComplexType>(CanonicalType);
 }
 
+/// getDesugaredType - Return the specified type with any "sugar" removed from
+/// type type.  This takes off typedefs, typeof's etc.  If the outer level of
+/// the type is already concrete, it returns it unmodified.  This is similar
+/// to getting the canonical type, but it doesn't remove *all* typedefs.  For
+/// example, it return "T*" as "T*", (not as "int*"), because the pointer is
+/// concrete.
+const Type *Type::getDesugaredType() const {
+  if (const TypedefType *TDT = dyn_cast<TypedefType>(this))
+    return TDT->LookThroughTypedefs().getTypePtr();
+  if (const TypeOfExpr *TOE = dyn_cast<TypeOfExpr>(this))
+    return TOE->getUnderlyingExpr()->getType().getTypePtr();
+  if (const TypeOfType *TOT = dyn_cast<TypeOfType>(this))
+    return TOT->getUnderlyingType().getTypePtr();
+  return this;
+}
+
+
 const BuiltinType *Type::getAsBuiltinType() const {
   // If this is directly a builtin type, return it.
   if (const BuiltinType *BTy = dyn_cast<BuiltinType>(this))
     return BTy;
-  
+
+  // If the canonical form of this type isn't a builtin type, reject it.
+  if (!isa<BuiltinType>(CanonicalType))
+    return 0;
+
   // If this is a typedef for a builtin type, strip the typedef off without
   // losing all typedef information.
-  if (isa<BuiltinType>(CanonicalType))
-    return cast<BuiltinType>(cast<TypedefType>(this)->LookThroughTypedefs());
-  return 0;
+  return getDesugaredType()->getAsBuiltinType();
 }
 
 const FunctionType *Type::getAsFunctionType() const {
@@ -94,11 +113,13 @@ const FunctionType *Type::getAsFunctionType() const {
   if (const FunctionType *FTy = dyn_cast<FunctionType>(this))
     return FTy;
   
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<FunctionType>(CanonicalType))
+    return 0;
+  
   // If this is a typedef for a function type, strip the typedef off without
   // losing all typedef information.
-  if (isa<FunctionType>(CanonicalType))
-    return cast<FunctionType>(cast<TypedefType>(this)->LookThroughTypedefs());
-  return 0;
+  return getDesugaredType()->getAsFunctionType();
 }
 
 const PointerType *Type::getAsPointerType() const {
@@ -106,11 +127,13 @@ const PointerType *Type::getAsPointerType() const {
   if (const PointerType *PTy = dyn_cast<PointerType>(this))
     return PTy;
   
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<PointerType>(CanonicalType))
+    return 0;
+
   // If this is a typedef for a pointer type, strip the typedef off without
   // losing all typedef information.
-  if (isa<PointerType>(CanonicalType))
-    return cast<PointerType>(cast<TypedefType>(this)->LookThroughTypedefs());
-  return 0;
+  return getDesugaredType()->getAsPointerType();
 }
 
 const ReferenceType *Type::getAsReferenceType() const {
@@ -118,11 +141,13 @@ const ReferenceType *Type::getAsReferenceType() const {
   if (const ReferenceType *RTy = dyn_cast<ReferenceType>(this))
     return RTy;
   
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<ReferenceType>(CanonicalType))
+    return 0;
+
   // If this is a typedef for a reference type, strip the typedef off without
   // losing all typedef information.
-  if (isa<ReferenceType>(CanonicalType))
-    return cast<ReferenceType>(cast<TypedefType>(this)->LookThroughTypedefs());
-  return 0;
+  return getDesugaredType()->getAsReferenceType();
 }
 
 const ArrayType *Type::getAsArrayType() const {
@@ -130,11 +155,13 @@ const ArrayType *Type::getAsArrayType() const {
   if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
     return ATy;
   
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<ArrayType>(CanonicalType))
+    return 0;
+  
   // If this is a typedef for an array type, strip the typedef off without
   // losing all typedef information.
-  if (isa<ArrayType>(CanonicalType))
-    return cast<ArrayType>(cast<TypedefType>(this)->LookThroughTypedefs());
-  return 0;
+  return getDesugaredType()->getAsArrayType();
 }
 
 const ConstantArrayType *Type::getAsConstantArrayType() const {
@@ -142,11 +169,13 @@ const ConstantArrayType *Type::getAsConstantArrayType() const {
   if (const ConstantArrayType *ATy = dyn_cast<ConstantArrayType>(this))
     return ATy;
   
-  // If this is a typedef for an array type, strip the typedef off without
-  // losing all typedef information.
-  if (isa<ConstantArrayType>(CanonicalType))
-    return cast<ConstantArrayType>(cast<TypedefType>(this)->LookThroughTypedefs());
-  return 0;
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<ConstantArrayType>(CanonicalType))
+    return 0;
+  
+  // If this is a typedef for a constant array type, strip the typedef off
+  // without losing all typedef information.
+  return getDesugaredType()->getAsConstantArrayType();
 }
 
 const VariableArrayType *Type::getAsVariableArrayType() const {
@@ -154,11 +183,13 @@ const VariableArrayType *Type::getAsVariableArrayType() const {
   if (const VariableArrayType *ATy = dyn_cast<VariableArrayType>(this))
     return ATy;
   
-  // If this is a typedef for an array type, strip the typedef off without
-  // losing all typedef information.
-  if (isa<VariableArrayType>(CanonicalType))
-    return cast<VariableArrayType>(cast<TypedefType>(this)->LookThroughTypedefs());
-  return 0;
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<VariableArrayType>(CanonicalType))
+    return 0;
+
+  // If this is a typedef for a variable array type, strip the typedef off
+  // without losing all typedef information.
+  return getDesugaredType()->getAsVariableArrayType();
 }
 
 /// isVariablyModifiedType (C99 6.7.5.2p2) - Return true for variable array
@@ -184,11 +215,13 @@ const RecordType *Type::getAsRecordType() const {
   if (const RecordType *RTy = dyn_cast<RecordType>(this))
     return RTy;
   
-  // If this is a typedef for an record type, strip the typedef off without
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<RecordType>(CanonicalType))
+    return 0;
+
+  // If this is a typedef for a record type, strip the typedef off without
   // losing all typedef information.
-  if (isa<RecordType>(CanonicalType))
-    return cast<RecordType>(cast<TypedefType>(this)->LookThroughTypedefs());
-  return 0;
+  return getDesugaredType()->getAsRecordType();
 }
 
 const RecordType *Type::getAsStructureType() const {
@@ -197,11 +230,15 @@ const RecordType *Type::getAsStructureType() const {
     if (RT->getDecl()->getKind() == Decl::Struct)
       return RT;
   }
-  // If this is a typedef for a structure type, strip the typedef off without
-  // losing all typedef information.
+
+  // If the canonical form of this type isn't the right kind, reject it.
   if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType)) {
-    if (RT->getDecl()->getKind() == Decl::Struct)
-      return cast<RecordType>(cast<TypedefType>(this)->LookThroughTypedefs());
+    if (RT->getDecl()->getKind() != Decl::Struct)
+      return 0;
+    
+    // If this is a typedef for a structure type, strip the typedef off without
+    // losing all typedef information.
+    return getDesugaredType()->getAsStructureType();
   }
   return 0;
 }
@@ -212,11 +249,14 @@ const RecordType *Type::getAsUnionType() const {
     if (RT->getDecl()->getKind() == Decl::Union)
       return RT;
   }
-  // If this is a typedef for a union type, strip the typedef off without
-  // losing all typedef information.
+  // If the canonical form of this type isn't the right kind, reject it.
   if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType)) {
-    if (RT->getDecl()->getKind() == Decl::Union)
-      return cast<RecordType>(cast<TypedefType>(this)->LookThroughTypedefs());
+    if (RT->getDecl()->getKind() != Decl::Union)
+      return 0;
+
+    // If this is a typedef for a union type, strip the typedef off without
+    // losing all typedef information.
+    return getDesugaredType()->getAsUnionType();
   }
   return 0;
 }
@@ -226,12 +266,13 @@ const ComplexType *Type::getAsComplexType() const {
   if (const ComplexType *CTy = dyn_cast<ComplexType>(this))
     return CTy;
   
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<ComplexType>(CanonicalType))
+    return 0;
+
   // If this is a typedef for a complex type, strip the typedef off without
   // losing all typedef information.
-  if (isa<ComplexType>(CanonicalType))
-    return cast<ComplexType>(cast<TypedefType>(this)->LookThroughTypedefs());
-  
-  return 0;
+  return getDesugaredType()->getAsComplexType();
 }
 
 const VectorType *Type::getAsVectorType() const {
@@ -239,12 +280,13 @@ const VectorType *Type::getAsVectorType() const {
   if (const VectorType *VTy = dyn_cast<VectorType>(this))
     return VTy;
   
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<VectorType>(CanonicalType))
+    return 0;
+
   // If this is a typedef for a vector type, strip the typedef off without
   // losing all typedef information.
-  if (isa<VectorType>(CanonicalType))
-    return cast<VectorType>(cast<TypedefType>(this)->LookThroughTypedefs());
-
-  return 0;
+  return getDesugaredType()->getAsVectorType();
 }
 
 const OCUVectorType *Type::getAsOCUVectorType() const {
@@ -252,12 +294,13 @@ const OCUVectorType *Type::getAsOCUVectorType() const {
   if (const OCUVectorType *VTy = dyn_cast<OCUVectorType>(this))
     return VTy;
   
-  // If this is a typedef for an OpenCU vector type, strip the typedef off 
-  // without losing all typedef information.
-  if (isa<OCUVectorType>(CanonicalType))
-    return cast<OCUVectorType>(cast<TypedefType>(this)->LookThroughTypedefs());
+  // If the canonical form of this type isn't the right kind, reject it.
+  if (!isa<OCUVectorType>(CanonicalType))
+    return 0;
 
-  return 0;
+  // If this is a typedef for an ocuvector type, strip the typedef off without
+  // losing all typedef information.
+  return getDesugaredType()->getAsOCUVectorType();
 }
 
 bool Type::isIntegerType() const {
