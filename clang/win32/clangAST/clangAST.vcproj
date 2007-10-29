@@ -204,6 +204,10 @@
 				RelativePath="..\..\AST\Type.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\AST\TypeSerialization.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
