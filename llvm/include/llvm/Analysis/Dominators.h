@@ -105,7 +105,7 @@ public:
   void setIDom(DomTreeNodeBase<NodeT> *NewIDom) {
     assert(IDom && "No immediate dominator?");
     if (IDom != NewIDom) {
-      std::vector<DomTreeNodeBase<BasicBlock>*>::iterator I =
+      typename std::vector<DomTreeNodeBase<NodeT>*>::iterator I =
                   std::find(IDom->Children.begin(), IDom->Children.end(), this);
       assert(I != IDom->Children.end() &&
              "Not in immediate dominator children set!");
@@ -267,7 +267,7 @@ protected:
 
     // Find NewBB's immediate dominator and create new dominator tree node for
     // NewBB.
-    BasicBlock *NewBBIDom = 0;
+    NodeT *NewBBIDom = 0;
     unsigned i = 0;
     for (i = 0; i < PredBlocks.size(); ++i)
       if (DT.isReachableFromEntry(PredBlocks[i])) {
@@ -282,12 +282,12 @@ protected:
     assert(NewBBIDom && "No immediate dominator found??");
 
     // Create the new dominator tree node... and set the idom of NewBB.
-    DomTreeNode *NewBBNode = DT.addNewBlock(NewBB, NewBBIDom);
+    DomTreeNodeBase<NodeT> *NewBBNode = DT.addNewBlock(NewBB, NewBBIDom);
 
     // If NewBB strictly dominates other blocks, then it is now the immediate
     // dominator of NewBBSucc.  Update the dominator tree as appropriate.
     if (NewBBDominatesNewBBSucc) {
-      DomTreeNode *NewBBSuccNode = DT.getNode(NewBBSucc);
+      DomTreeNodeBase<NodeT> *NewBBSuccNode = DT.getNode(NewBBSucc);
       DT.changeImmediateDominator(NewBBSuccNode, NewBBNode);
     }
   }
@@ -348,7 +348,7 @@ public:
   const bool isReachableFromEntry(NodeT* A) {
     assert (!this->isPostDominator() 
             && "This is not implemented for post dominators");
-    return dominates(&A->getParent()->getEntryBlock(), A);
+    return dominates(&A->getParent()->front(), A);
   }
   
   /// dominates - Returns true iff A dominates B.  Note that this is not a
@@ -398,7 +398,7 @@ public:
             && "Two blocks are not in same function");
 
     // If either A or B is a entry block then it is nearest common dominator.
-    NodeT &Entry  = A->getParent()->getEntryBlock();
+    NodeT &Entry  = A->getParent()->front();
     if (A == &Entry || B == &Entry)
       return &Entry;
 
@@ -447,7 +447,7 @@ public:
     assert(IDomNode && "Not immediate dominator specified for block!");
     DFSInfoValid = false;
     return DomTreeNodes[BB] = 
-      IDomNode->addChild(new DomTreeNode(BB, IDomNode));
+      IDomNode->addChild(new DomTreeNodeBase<NodeT>(BB, IDomNode));
   }
 
   /// changeImmediateDominator - This method is used to update the dominator
