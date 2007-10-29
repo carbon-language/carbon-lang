@@ -630,11 +630,13 @@ void Parser::ParseStructUnionSpecifier(DeclSpec &DS) {
     Diag(StartLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
 }
 
-/// ParseStructDeclaration
+/// ParseStructDeclaration - Parse a struct declaration without the terminating
+/// semicolon.
+///
 ///       struct-declaration:
-///         specifier-qualifier-list struct-declarator-list ';'
+///         specifier-qualifier-list struct-declarator-list
 /// [GNU]   __extension__ struct-declaration
-/// [GNU]   specifier-qualifier-list ';'
+/// [GNU]   specifier-qualifier-list
 ///       struct-declarator-list:
 ///         struct-declarator
 ///         struct-declarator-list ',' struct-declarator
@@ -661,7 +663,6 @@ void Parser::ParseStructDeclaration(DeclTy *TagDecl,
   // If there are no declarators, issue a warning.
   if (Tok.is(tok::semi)) {
     Diag(SpecQualLoc, diag::w_no_declarators);
-    ConsumeToken();
     return;
   }
 
@@ -697,7 +698,7 @@ void Parser::ParseStructDeclaration(DeclTy *TagDecl,
     // If we don't have a comma, it is either the end of the list (a ';')
     // or an error, bail out.
     if (Tok.isNot(tok::comma))
-      break;
+      return;
     
     // Consume the comma.
     ConsumeToken();
@@ -709,7 +710,6 @@ void Parser::ParseStructDeclaration(DeclTy *TagDecl,
     if (Tok.is(tok::kw___attribute))
       DeclaratorInfo.AddAttributes(ParseAttributes());
   }
-  return;
 }
 
 /// ParseStructUnionBody
