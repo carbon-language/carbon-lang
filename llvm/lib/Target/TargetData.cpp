@@ -83,9 +83,15 @@ unsigned StructLayout::getElementContainingOffset(uint64_t Offset) const {
   assert(SI != &MemberOffsets[0] && "Offset not in structure type!");
   --SI;
   assert(*SI <= Offset && "upper_bound didn't work");
-  assert((SI == &MemberOffsets[0] || *(SI-1) < Offset) &&
+  assert((SI == &MemberOffsets[0] || *(SI-1) <= Offset) &&
          (SI+1 == &MemberOffsets[NumElements] || *(SI+1) > Offset) &&
          "Upper bound didn't work!");
+  
+  // Multiple fields can have the same offset if any of them are zero sized.
+  // For example, in { i32, [0 x i32], i32 }, searching for offset 4 will stop
+  // at the i32 element, because it is the last element at that offset.  This is
+  // the right one to return, because anything after it will have a higher
+  // offset, implying that this element is non-empty.
   return SI-&MemberOffsets[0];
 }
 
