@@ -95,6 +95,7 @@ public:
   ~CodeGenTypes();
   
   TargetInfo &getTarget() const { return Target; }
+  ASTContext &getContext() const { return Context; }
 
   /// ConvertType - Convert type T into a llvm::Type. Maintain and use
   /// type cache through TypeHOlderMap.

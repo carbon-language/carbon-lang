@@ -36,10 +36,15 @@ namespace {
     /// addField - Add new field.
     void addField(const FieldDecl *FD);
 
-    /// layoutFields - Do the actual work and lay out all fields. Create
+    /// layoutStructFields - Do the actual work and lay out all fields. Create
     /// corresponding llvm struct type.  This should be invoked only after
     /// all fields are added.
-    void layoutFields(CodeGenTypes &CGT);
+    void layoutStructFields(CodeGenTypes &CGT);
+
+    /// layoutUnionFields - Do the actual work and lay out all fields. Create
+    /// corresponding llvm struct type.  This should be invoked only after
+    /// all fields are added.
+    void layoutUnionFields(CodeGenTypes &CGT);
 
     /// getLLVMType - Return associated llvm struct type. This may be NULL
     /// if fields are not laid out.
@@ -239,7 +244,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       RecordOrganizer RO;
       for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
         RO.addField(RD->getMember(i));
-      RO.layoutFields(*this);
+      RO.layoutStructFields(*this);
 
       // Get llvm::StructType.
       RecordLayoutInfo *RLI = new RecordLayoutInfo(RO.getLLVMType());
@@ -260,31 +265,16 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       // highest aligned member.
 
       if (RD->getNumMembers() != 0) {
-        std::pair<uint64_t, unsigned> MaxElt = 
-          Context.getTypeInfo(RD->getMember(0)->getType(), SourceLocation());
-        unsigned MaxEltNo = 0;
-        addFieldInfo(RD->getMember(0), 0); // Each field gets first slot.
-        // FIXME : Move union field handling in RecordOrganize
-        for (unsigned i = 1, e = RD->getNumMembers(); i != e; ++i) {
-          addFieldInfo(RD->getMember(i), 0); // Each field gets first slot.
-          std::pair<uint64_t, unsigned> EltInfo = 
-            Context.getTypeInfo(RD->getMember(i)->getType(), SourceLocation());
-          if (EltInfo.first > MaxElt.first ||
-              (EltInfo.first == MaxElt.first &&
-               EltInfo.second > MaxElt.second)) {
-            MaxElt = EltInfo;
-            MaxEltNo = i;
-          }
-        }
-
         RecordOrganizer RO;
-        RO.addField(RD->getMember(MaxEltNo));
-        RO.layoutFields(*this);
+        for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
+          RO.addField(RD->getMember(i));
+        RO.layoutUnionFields(*this);
 
         // Get llvm::StructType.
         RecordLayoutInfo *RLI = new RecordLayoutInfo(RO.getLLVMType());
         ResultType = RLI->getLLVMType();
         RecordLayouts[ResultType] = RLI;
+        RO.clear();
       } else {       
         std::vector<const llvm::Type*> Fields;
         ResultType = llvm::StructType::get(Fields);
@@ -350,7 +340,7 @@ void RecordOrganizer::addField(const FieldDecl *FD) {
   FieldDecls.push_back(FD);
 }
 
-/// layoutFields - Do the actual work and lay out all fields. Create
+/// layoutStructFields - Do the actual work and lay out all fields. Create
 /// corresponding llvm struct type.  This should be invoked only after
 /// all fields are added.
 /// FIXME : At the moment assume 
@@ -359,7 +349,7 @@ void RecordOrganizer::addField(const FieldDecl *FD) {
 ///    - Ignore bit fields
 ///    - Ignore field aligments
 ///    - Ignore packed structs
-void RecordOrganizer::layoutFields(CodeGenTypes &CGT) {
+void RecordOrganizer::layoutStructFields(CodeGenTypes &CGT) {
   // FIXME : Use SmallVector
   std::vector<const llvm::Type*> Fields;
   unsigned FieldNo = 0;
@@ -373,6 +363,40 @@ void RecordOrganizer::layoutFields(CodeGenTypes &CGT) {
     Fields.push_back(Ty);
     CGT.addFieldInfo(FD, FieldNo++);
   }
+  STy = llvm::StructType::get(Fields);
+}
+
+/// layoutUnionFields - Do the actual work and lay out all fields. Create
+/// corresponding llvm struct type.  This should be invoked only after
+/// all fields are added.
+void RecordOrganizer::layoutUnionFields(CodeGenTypes &CGT) {
+ 
+  unsigned PrimaryEltNo = 0;
+  std::pair<uint64_t, unsigned> PrimaryElt =
+    CGT.getContext().getTypeInfo(FieldDecls[0]->getType(), SourceLocation());
+  CGT.addFieldInfo(FieldDecls[0], 0);
+
+  unsigned Size = FieldDecls.size();
+  for(unsigned i = 1; i != Size; ++i) {
+    const FieldDecl *FD = FieldDecls[i];
+    std::pair<uint64_t, unsigned> EltInfo = 
+      CGT.getContext().getTypeInfo(FD->getType(), SourceLocation());
+
+    // Use largest element, breaking ties with the hightest aligned member.
+    if (EltInfo.first > PrimaryElt.first ||
+        (EltInfo.first == PrimaryElt.first &&
+         EltInfo.second > PrimaryElt.second)) {
+      PrimaryElt = EltInfo;
+      PrimaryEltNo = i;
+    }
+
+    // In union, each field gets first slot.
+    CGT.addFieldInfo(FD, 0);
+  }
+
+  std::vector<const llvm::Type*> Fields;
+  const llvm::Type *Ty = CGT.ConvertType(FieldDecls[PrimaryEltNo]->getType());
+  Fields.push_back(Ty);
   STy = llvm::StructType::get(Fields);
 }
 
