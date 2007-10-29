@@ -31,6 +31,7 @@ static inline VariableArrayType* FindVA(Type* t) {
 
 void StmtIteratorBase::NextVA() {
   assert (getVAPtr());
+  assert (decl);
 
   VariableArrayType* p = getVAPtr();
   p = FindVA(p->getElementType().getTypePtr());
@@ -59,11 +60,6 @@ void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
   }    
   
   for ( ; decl ; decl = decl->getNextDeclarator()) {
-    if (!decl) {
-      RawVAPtr = 0;
-      return;
-    }
-
     if (VarDecl* VD = dyn_cast<VarDecl>(decl)) {        
       if (VariableArrayType* VAPtr = FindVA(VD->getType().getTypePtr())) {
         setVAPtr(VAPtr);
@@ -76,6 +72,11 @@ void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
     else if (EnumConstantDecl* ECD = dyn_cast<EnumConstantDecl>(decl))
       if (ECD->getInitExpr())
         return;  
+  }
+  
+  if (!decl) {
+    RawVAPtr = 0;
+    return;
   }
 }
 
