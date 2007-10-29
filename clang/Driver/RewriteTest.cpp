@@ -836,15 +836,21 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
                              : CDecl->getIntfDeclIvars();
     Result += "\t,{{\"";
     Result += Ivars[0]->getName();
-    Result += "\", \"\", ";
+    Result += "\", \"";
+    std::string StrEncoding;
+    Context->getObjcEncodingForType(Ivars[0]->getType(), StrEncoding);
+    Result += StrEncoding;
+    Result += "\", ";
     SynthesizeIvarOffsetComputation(IDecl, Ivars[0], Result);
     Result += "}\n";
     for (int i = 1; i < NumIvars; i++) {
-      // TODO: 1) ivar names may have to go to another section. 2) encode
-      // ivar_type type of each ivar .
       Result += "\t  ,{\"";
       Result += Ivars[i]->getName();
-      Result += "\", \"\", ";
+      Result += "\", \"";
+      std::string StrEncoding;
+      Context->getObjcEncodingForType(Ivars[i]->getType(), StrEncoding);
+      Result += StrEncoding;
+      Result += "\", ";
       SynthesizeIvarOffsetComputation(IDecl, Ivars[i], Result);
       Result += "}\n";
     }
