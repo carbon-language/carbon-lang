@@ -99,7 +99,7 @@ class VISIBILITY_HIDDEN DAGTypeLegalizer {
   SmallVector<SDNode*, 128> Worklist;
   
 public:
-  DAGTypeLegalizer(SelectionDAG &dag)
+  explicit DAGTypeLegalizer(SelectionDAG &dag)
     : TLI(dag.getTargetLoweringInfo()), DAG(dag),
     ValueTypeActions(TLI.getValueTypeActions()) {
     assert(MVT::LAST_VALUETYPE <= 32 &&

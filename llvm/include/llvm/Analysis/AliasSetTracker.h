@@ -164,7 +164,7 @@ public:
   class iterator : public forward_iterator<HashNodePair, ptrdiff_t> {
     HashNodePair *CurNode;
   public:
-    iterator(HashNodePair *CN = 0) : CurNode(CN) {}
+    explicit iterator(HashNodePair *CN = 0) : CurNode(CN) {}
 
     bool operator==(const iterator& x) const {
       return CurNode == x.CurNode;
@@ -262,7 +262,7 @@ public:
   /// AliasSetTracker ctor - Create an empty collection of AliasSets, and use
   /// the specified alias analysis object to disambiguate load and store
   /// addresses.
-  AliasSetTracker(AliasAnalysis &aa) : AA(aa) {}
+  explicit AliasSetTracker(AliasAnalysis &aa) : AA(aa) {}
 
   /// add methods - These methods are used to add different types of
   /// instructions to the alias sets.  Adding a new instruction can result in

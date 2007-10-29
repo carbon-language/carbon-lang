@@ -78,7 +78,7 @@ namespace {
   ///
   struct VISIBILITY_HIDDEN BVNImpl : public InstVisitor<BVNImpl> {
     std::vector<Value*> &RetVals;
-    BVNImpl(std::vector<Value*> &RV) : RetVals(RV) {}
+    explicit BVNImpl(std::vector<Value*> &RV) : RetVals(RV) {}
 
     void visitCastInst(CastInst &I);
     void visitGetElementPtrInst(GetElementPtrInst &I);
