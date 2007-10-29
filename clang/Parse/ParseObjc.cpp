@@ -21,11 +21,11 @@ using namespace clang;
 /// ParseExternalDeclaration:
 ///       external-declaration: [C99 6.9]
 /// [OBJC]  objc-class-definition
-/// [OBJC]  objc-class-declaration     [TODO]
-/// [OBJC]  objc-alias-declaration     [TODO]
-/// [OBJC]  objc-protocol-definition   [TODO]
-/// [OBJC]  objc-method-definition     [TODO]
-/// [OBJC]  '@' 'end'                  [TODO]
+/// [OBJC]  objc-class-declaration
+/// [OBJC]  objc-alias-declaration
+/// [OBJC]  objc-protocol-definition
+/// [OBJC]  objc-method-definition
+/// [OBJC]  '@' 'end'
 Parser::DeclTy *Parser::ParseObjCAtDirectives() {
   SourceLocation AtLoc = ConsumeToken(); // the "@"
   
