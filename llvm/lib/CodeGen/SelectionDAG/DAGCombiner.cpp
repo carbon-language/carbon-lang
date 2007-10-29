@@ -4212,7 +4212,8 @@ SDOperand DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       unsigned NumElts = MVT::getVectorNumElements(VT);
       if (InVec.getOpcode() == ISD::BIT_CONVERT) {
         MVT::ValueType BCVT = InVec.getOperand(0).getValueType();
-        if (NumElts != MVT::getVectorNumElements(BCVT))
+        if (!MVT::isVector(BCVT) ||
+            NumElts != MVT::getVectorNumElements(BCVT))
           return SDOperand();
         InVec = InVec.getOperand(0);
         EVT = MVT::getVectorElementType(BCVT);
