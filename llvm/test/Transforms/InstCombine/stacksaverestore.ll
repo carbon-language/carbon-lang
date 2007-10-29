@@ -1,4 +1,4 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep call
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep {call.*stackrestore}
 
 ;; Test that llvm.stackrestore is removed when possible.
 
