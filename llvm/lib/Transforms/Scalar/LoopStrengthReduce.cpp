@@ -1013,15 +1013,14 @@ unsigned LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
           (unsigned(abs(SInt)) < SSInt || (SInt % SSInt) != 0))
         continue;
       int64_t Scale = SInt / SSInt;
-      // When scale is 1, we don't need to worry about whether the
-      // multiplication can be folded into the addressing mode.
-      if (!AllUsesAreAddresses && Scale != 1)
-        continue;
       // Check that this stride is valid for all the types used for loads and
       // stores; if it can be used for some and not others, we might as well use
       // the original stride everywhere, since we have to create the IV for it
-      // anyway.
-      if (ValidStride(HasBaseReg, Scale, UsersToProcess))
+      // anyway. If the scale is 1, then we don't need to worry about folding
+      // multiplications.
+      if (Scale == 1 ||
+          (AllUsesAreAddresses &&
+           ValidStride(HasBaseReg, Scale, UsersToProcess)))
         for (std::vector<IVExpr>::iterator II = SI->second.IVs.begin(),
                IE = SI->second.IVs.end(); II != IE; ++II)
           // FIXME: Only handle base == 0 for now.
