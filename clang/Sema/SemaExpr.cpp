@@ -1218,6 +1218,13 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   QualType lType = lex->getType();
   QualType rType = rex->getType();
   
+  if (!lType->isFloatingType()) {
+    if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(IgnoreParen(lex)))
+      if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(IgnoreParen(rex)))
+        if (DRL->getDecl() == DRR->getDecl())
+          Diag(loc, diag::warn_selfcomparison);      
+  }
+  
   if (isRelational) {
     if (lType->isRealType() && rType->isRealType())
       return Context.IntTy;
