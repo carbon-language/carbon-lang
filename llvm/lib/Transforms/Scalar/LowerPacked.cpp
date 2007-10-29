@@ -76,13 +76,13 @@ public:
    void visitInsertElementInst(InsertElementInst& IE);
 
    /// This function asserts if the instruction is a VectorType but
-   /// is handled by another function.
+   /// is not handled by another function.
    ///
    /// @brief Asserts if VectorType instruction is not handled elsewhere.
    /// @param I the unhandled instruction
    void visitInstruction(Instruction &I) {
-     if (isa<VectorType>(I.getType()))
-       cerr << "Unhandled Instruction with Packed ReturnType: " << I << '\n';
+     assert(!isa<VectorType>(I.getType()) &&
+            "Unhandled Instruction with Packed ReturnType!");
    }
 private:
    /// @brief Retrieves lowered values for a packed value.
