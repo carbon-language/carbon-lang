@@ -5132,6 +5132,16 @@ bool X86TargetLowering::isTruncateFree(const Type *Ty1, const Type *Ty2) const {
   return Subtarget->is64Bit() || NumBits1 < 64;
 }
 
+bool X86TargetLowering::isTruncateFree(MVT::ValueType VT1,
+                                       MVT::ValueType VT2) const {
+  if (!MVT::isInteger(VT1) || !MVT::isInteger(VT2))
+    return false;
+  unsigned NumBits1 = MVT::getSizeInBits(VT1);
+  unsigned NumBits2 = MVT::getSizeInBits(VT2);
+  if (NumBits1 <= NumBits2)
+    return false;
+  return Subtarget->is64Bit() || NumBits1 < 64;
+}
 
 /// isShuffleMaskLegal - Targets can use this to indicate that they only
 /// support *some* VECTOR_SHUFFLE operations, those with specific masks.

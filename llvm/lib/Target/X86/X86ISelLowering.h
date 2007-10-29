@@ -363,6 +363,7 @@ namespace llvm {
     /// type Ty1 to type Ty2. e.g. On x86 it's free to truncate a i32 value in
     /// register EAX to i16 by referencing its sub-register AX.
     virtual bool isTruncateFree(const Type *Ty1, const Type *Ty2) const;
+    virtual bool isTruncateFree(MVT::ValueType VT1, MVT::ValueType VT2) const;
   
     /// isShuffleMaskLegal - Targets can use this to indicate that they only
     /// support *some* VECTOR_SHUFFLE operations, those with specific masks.

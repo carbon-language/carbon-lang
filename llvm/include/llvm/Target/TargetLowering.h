@@ -1000,6 +1000,10 @@ public:
   virtual bool isTruncateFree(const Type *Ty1, const Type *Ty2) const {
     return false;
   }
+
+  virtual bool isTruncateFree(MVT::ValueType VT1, MVT::ValueType VT2) const {
+    return false;
+  }
   
   //===--------------------------------------------------------------------===//
   // Div utility functions

@@ -2497,6 +2497,74 @@ SDOperand DAGCombiner::visitSETCC(SDNode *N) {
                        cast<CondCodeSDNode>(N->getOperand(2))->get());
 }
 
+// ExtendUsesToFormExtLoad - Trying to extend uses of a load to enable this:
+// "fold ({s|z}ext (load x)) -> ({s|z}ext (truncate ({s|z}extload x)))"
+// transformation. Returns true if extension are possible and the above
+// mentioned transformation is profitable. 
+static bool ExtendUsesToFormExtLoad(SDNode *N, SDOperand N0,
+                                    unsigned ExtOpc,
+                                    SmallVector<SDNode*, 4> &ExtendNodes,
+                                    TargetLowering &TLI) {
+  bool HasCopyToRegUses = false;
+  bool isTruncFree = TLI.isTruncateFree(N->getValueType(0), N0.getValueType());
+  for (SDNode::use_iterator UI = N0.Val->use_begin(), UE = N0.Val->use_end();
+       UI != UE; ++UI) {
+    SDNode *User = *UI;
+    if (User == N)
+      continue;
+    // FIXME: Only extend SETCC N, N and SETCC N, c for now.
+    if (User->getOpcode() == ISD::SETCC) {
+      ISD::CondCode CC = cast<CondCodeSDNode>(User->getOperand(2))->get();
+      if (ExtOpc == ISD::ZERO_EXTEND && ISD::isSignedIntSetCC(CC))
+        // Sign bits will be lost after a zext.
+        return false;
+      bool Add = false;
+      for (unsigned i = 0; i != 2; ++i) {
+        SDOperand UseOp = User->getOperand(i);
+        if (UseOp == N0)
+          continue;
+        if (!isa<ConstantSDNode>(UseOp))
+          return false;
+        Add = true;
+      }
+      if (Add)
+        ExtendNodes.push_back(User);
+    } else {
+      for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
+        SDOperand UseOp = User->getOperand(i);
+        if (UseOp == N0) {
+          // If truncate from extended type to original load type is free
+          // on this target, then it's ok to extend a CopyToReg.
+          if (isTruncFree && User->getOpcode() == ISD::CopyToReg)
+            HasCopyToRegUses = true;
+          else
+            return false;
+        }
+      }
+    }
+  }
+
+  if (HasCopyToRegUses) {
+    bool BothLiveOut = false;
+    for (SDNode::use_iterator UI = N->use_begin(), UE = N->use_end();
+         UI != UE; ++UI) {
+      SDNode *User = *UI;
+      for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i) {
+        SDOperand UseOp = User->getOperand(i);
+        if (UseOp.Val == N && UseOp.ResNo == 0) {
+          BothLiveOut = true;
+          break;
+        }
+      }
+    }
+    if (BothLiveOut)
+      // Both unextended and extended values are live out. There had better be
+      // good a reason for the transformation.
+      return ExtendNodes.size();
+  }
+  return true;
+}
+
 SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   MVT::ValueType VT = N->getValueType(0);
@@ -2560,19 +2628,40 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   }
   
   // fold (sext (load x)) -> (sext (truncate (sextload x)))
-  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
+  if (ISD::isNON_EXTLoad(N0.Val) &&
       (!AfterLegalize||TLI.isLoadXLegal(ISD::SEXTLOAD, N0.getValueType()))){
-    LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
-                                       LN0->getBasePtr(), LN0->getSrcValue(),
-                                       LN0->getSrcValueOffset(),
-                                       N0.getValueType(), 
-                                       LN0->isVolatile(),
-                                       LN0->getAlignment());
-    CombineTo(N, ExtLoad);
-    CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
-              ExtLoad.getValue(1));
-    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+    bool DoXform = true;
+    SmallVector<SDNode*, 4> SetCCs;
+    if (!N0.hasOneUse())
+      DoXform = ExtendUsesToFormExtLoad(N, N0, ISD::SIGN_EXTEND, SetCCs, TLI);
+    if (DoXform) {
+      LoadSDNode *LN0 = cast<LoadSDNode>(N0);
+      SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, LN0->getChain(),
+                                         LN0->getBasePtr(), LN0->getSrcValue(),
+                                         LN0->getSrcValueOffset(),
+                                         N0.getValueType(), 
+                                         LN0->isVolatile(),
+                                         LN0->getAlignment());
+      CombineTo(N, ExtLoad);
+      SDOperand Trunc = DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad);
+      CombineTo(N0.Val, Trunc, ExtLoad.getValue(1));
+      // Extend SetCC uses if necessary.
+      for (unsigned i = 0, e = SetCCs.size(); i != e; ++i) {
+        SDNode *SetCC = SetCCs[i];
+        SmallVector<SDOperand, 4> Ops;
+        for (unsigned j = 0; j != 2; ++j) {
+          SDOperand SOp = SetCC->getOperand(j);
+          if (SOp == Trunc)
+            Ops.push_back(ExtLoad);
+          else
+            Ops.push_back(DAG.getNode(ISD::SIGN_EXTEND, VT, SOp));
+          }
+        Ops.push_back(SetCC->getOperand(2));
+        CombineTo(SetCC, DAG.getNode(ISD::SETCC, SetCC->getValueType(0),
+                                     &Ops[0], Ops.size()));
+      }
+      return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+    }
   }
 
   // fold (sext (sextload x)) -> (sext (truncate (sextload x)))
@@ -2656,19 +2745,40 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   }
   
   // fold (zext (load x)) -> (zext (truncate (zextload x)))
-  if (ISD::isNON_EXTLoad(N0.Val) && N0.hasOneUse() &&
+  if (ISD::isNON_EXTLoad(N0.Val) &&
       (!AfterLegalize||TLI.isLoadXLegal(ISD::ZEXTLOAD, N0.getValueType()))) {
-    LoadSDNode *LN0 = cast<LoadSDNode>(N0);
-    SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
-                                       LN0->getBasePtr(), LN0->getSrcValue(),
-                                       LN0->getSrcValueOffset(),
-                                       N0.getValueType(),
-                                       LN0->isVolatile(), 
-                                       LN0->getAlignment());
-    CombineTo(N, ExtLoad);
-    CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
-              ExtLoad.getValue(1));
-    return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+    bool DoXform = true;
+    SmallVector<SDNode*, 4> SetCCs;
+    if (!N0.hasOneUse())
+      DoXform = ExtendUsesToFormExtLoad(N, N0, ISD::ZERO_EXTEND, SetCCs, TLI);
+    if (DoXform) {
+      LoadSDNode *LN0 = cast<LoadSDNode>(N0);
+      SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, LN0->getChain(),
+                                         LN0->getBasePtr(), LN0->getSrcValue(),
+                                         LN0->getSrcValueOffset(),
+                                         N0.getValueType(),
+                                         LN0->isVolatile(), 
+                                         LN0->getAlignment());
+      CombineTo(N, ExtLoad);
+      SDOperand Trunc = DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad);
+      CombineTo(N0.Val, Trunc, ExtLoad.getValue(1));
+      // Extend SetCC uses if necessary.
+      for (unsigned i = 0, e = SetCCs.size(); i != e; ++i) {
+        SDNode *SetCC = SetCCs[i];
+        SmallVector<SDOperand, 4> Ops;
+        for (unsigned j = 0; j != 2; ++j) {
+          SDOperand SOp = SetCC->getOperand(j);
+          if (SOp == Trunc)
+            Ops.push_back(ExtLoad);
+          else
+            Ops.push_back(DAG.getNode(ISD::SIGN_EXTEND, VT, SOp));
+          }
+        Ops.push_back(SetCC->getOperand(2));
+        CombineTo(SetCC, DAG.getNode(ISD::SETCC, SetCC->getValueType(0),
+                                     &Ops[0], Ops.size()));
+      }
+      return SDOperand(N, 0);   // Return N so it doesn't get rechecked!
+    }
   }
 
   // fold (zext (zextload x)) -> (zext (truncate (zextload x)))
