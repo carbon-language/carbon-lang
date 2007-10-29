@@ -38,10 +38,11 @@ void StmtIteratorBase::NextVA() {
   setVAPtr(p);
 
   if (!p) {
-    VarDecl* VD = cast<VarDecl>(decl);
-    
-    if (!VD->Init)
-      NextDecl();
+    if (VarDecl* VD = dyn_cast<VarDecl>(decl)) 
+      if (VD->Init)
+        return;
+      
+    NextDecl();
   }
 }
 
@@ -68,6 +69,13 @@ void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
       
       if (VD->getInit())
         return;    
+    }
+    else if (TypedefDecl* TD = dyn_cast<TypedefDecl>(decl)) {
+      if (VariableArrayType* VAPtr = 
+           FindVA(TD->getUnderlyingType().getTypePtr())) {
+        setVAPtr(VAPtr);
+        return;
+      }
     }
     else if (EnumConstantDecl* ECD = dyn_cast<EnumConstantDecl>(decl))
       if (ECD->getInitExpr())
