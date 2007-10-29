@@ -573,7 +573,7 @@ public:
 };
 
 // FIXME: VariableArrayType's aren't uniqued (since expressions aren't).
-class VariableArrayType : public ArrayType {
+class VariableArrayType : public ArrayType, public llvm::FoldingSetNode {
   /// SizeExpr - An assignment expression. VLA's are only permitted within 
   /// a function block. 
   Expr *SizeExpr;
@@ -593,6 +593,18 @@ public:
   static bool classof(const VariableArrayType *) { return true; }
   
   friend class StmtIteratorBase;
+  
+  void Profile(llvm::FoldingSetNodeID &ID) {
+    assert (SizeExpr == NULL 
+            && "Can only unique VariableArrayTypes with no specified size.");
+    
+    Profile(ID, getElementType());
+  }
+  
+  static void Profile(llvm::FoldingSetNodeID &ID, QualType ET) {
+    ID.AddPointer(ET.getAsOpaquePtr());
+  }
+  
   // FIXME: Who owns VariableArrayType's?  What are the semantics
   //  for serialization.
 };

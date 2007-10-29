@@ -29,12 +29,13 @@ namespace clang {
   
 /// ASTContext - This class holds long-lived AST nodes (such as types and
 /// decls) that can be referred to throughout the semantic analysis of a file.
-class ASTContext {
+class ASTContext {  
   std::vector<Type*> Types;
   llvm::FoldingSet<ComplexType> ComplexTypes;
   llvm::FoldingSet<PointerType> PointerTypes;
   llvm::FoldingSet<ReferenceType> ReferenceTypes;
   llvm::FoldingSet<ConstantArrayType> ArrayTypes;
+  llvm::FoldingSet<VariableArrayType> IncompleteVariableArrayTypes;
   llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
