@@ -293,13 +293,15 @@ ObjcMethodDecl::~ObjcMethodDecl() {
 /// ObjcAddInstanceVariablesToClass - Inserts instance variables
 /// into ObjcInterfaceDecl's fields.
 ///
-void ObjcInterfaceDecl::ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars,
-                                                        unsigned numIvars) {
+void ObjcInterfaceDecl::addInstanceVariablesToClass(ObjcIvarDecl **ivars,
+                                                    unsigned numIvars,
+                                                    SourceLocation RB) {
   NumIvars = numIvars;
   if (numIvars) {
     Ivars = new ObjcIvarDecl*[numIvars];
     memcpy(Ivars, ivars, numIvars*sizeof(ObjcIvarDecl*));
   }
+  RBracLoc = RB;
 }
 
 /// ObjcAddInstanceVariablesToClassImpl - Checks for correctness of Instance 
@@ -315,13 +317,14 @@ void ObjcImplementationDecl::ObjcAddInstanceVariablesToClassImpl(
   }
 }
 
-/// addObjcMethods - Insert instance and methods declarations into
+/// addMethods - Insert instance and methods declarations into
 /// ObjcInterfaceDecl's InsMethods and ClsMethods fields.
 ///
-void ObjcInterfaceDecl::ObjcAddMethods(ObjcMethodDecl **insMethods, 
-                                       unsigned numInsMembers,
-                                       ObjcMethodDecl **clsMethods,
-                                       unsigned numClsMembers) {
+void ObjcInterfaceDecl::addMethods(ObjcMethodDecl **insMethods, 
+                                   unsigned numInsMembers,
+                                   ObjcMethodDecl **clsMethods,
+                                   unsigned numClsMembers,
+                                   SourceLocation endLoc) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
     InstanceMethods = new ObjcMethodDecl*[numInsMembers];
@@ -332,15 +335,17 @@ void ObjcInterfaceDecl::ObjcAddMethods(ObjcMethodDecl **insMethods,
     ClassMethods = new ObjcMethodDecl*[numClsMembers];
     memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
   }
+  EndLoc = endLoc;
 }
 
-/// ObjcAddProtoMethods - Insert instance and methods declarations into
+/// addMethods - Insert instance and methods declarations into
 /// ObjcProtocolDecl's ProtoInsMethods and ProtoClsMethods fields.
 ///
-void ObjcProtocolDecl::ObjcAddProtoMethods(ObjcMethodDecl **insMethods, 
-                                           unsigned numInsMembers,
-                                           ObjcMethodDecl **clsMethods,
-                                           unsigned numClsMembers) {
+void ObjcProtocolDecl::addMethods(ObjcMethodDecl **insMethods, 
+                                  unsigned numInsMembers,
+                                  ObjcMethodDecl **clsMethods,
+                                  unsigned numClsMembers,
+                                  SourceLocation AtEndLoc) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
     InstanceMethods = new ObjcMethodDecl*[numInsMembers];
@@ -353,13 +358,14 @@ void ObjcProtocolDecl::ObjcAddProtoMethods(ObjcMethodDecl **insMethods,
   }
 }
 
-/// ObjcAddCat - Insert instance and methods declarations into
+/// addMethods - Insert instance and methods declarations into
 /// ObjcCategoryDecl's CatInsMethods and CatClsMethods fields.
 ///
-void ObjcCategoryDecl::ObjcAddCatMethods(ObjcMethodDecl **insMethods, 
-                                         unsigned numInsMembers,
-                                         ObjcMethodDecl **clsMethods,
-                                         unsigned numClsMembers) {
+void ObjcCategoryDecl::addMethods(ObjcMethodDecl **insMethods, 
+                                  unsigned numInsMembers,
+                                  ObjcMethodDecl **clsMethods,
+                                  unsigned numClsMembers,
+                                  SourceLocation AtEndLoc) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
     InstanceMethods = new ObjcMethodDecl*[numInsMembers];
@@ -372,13 +378,14 @@ void ObjcCategoryDecl::ObjcAddCatMethods(ObjcMethodDecl **insMethods,
   }
 }
 
-/// ObjcAddCatImplMethods - Insert instance and methods declarations into
+/// addMethods - Insert instance and methods declarations into
 /// ObjcCategoryImplDecl's CatInsMethods and CatClsMethods fields.
 ///
-void ObjcCategoryImplDecl::ObjcAddCatImplMethods(ObjcMethodDecl **insMethods, 
-                                                 unsigned numInsMembers,
-                                                 ObjcMethodDecl **clsMethods,
-                                                 unsigned numClsMembers) {
+void ObjcCategoryImplDecl::addMethods(ObjcMethodDecl **insMethods, 
+                                      unsigned numInsMembers,
+                                      ObjcMethodDecl **clsMethods,
+                                      unsigned numClsMembers,
+                                      SourceLocation AtEndLoc) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
     InstanceMethods = new ObjcMethodDecl*[numInsMembers];
@@ -394,10 +401,11 @@ void ObjcCategoryImplDecl::ObjcAddCatImplMethods(ObjcMethodDecl **insMethods,
 /// ObjcAddImplMethods - Insert instance and methods declarations into
 /// ObjcImplementationDecl's InsMethods and ClsMethods fields.
 ///
-void ObjcImplementationDecl::ObjcAddImplMethods(ObjcMethodDecl **insMethods, 
-                                                unsigned numInsMembers,
-                                                ObjcMethodDecl **clsMethods,
-                                                unsigned numClsMembers) {
+void ObjcImplementationDecl::addMethods(ObjcMethodDecl **insMethods, 
+                                        unsigned numInsMembers,
+                                        ObjcMethodDecl **clsMethods,
+                                        unsigned numClsMembers,
+                                        SourceLocation AtEndLoc) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
     InstanceMethods = new ObjcMethodDecl*[numInsMembers];

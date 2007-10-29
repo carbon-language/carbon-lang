@@ -203,9 +203,10 @@ private:
                                       
   // This is used for both record definitions and ObjC interface declarations.
   virtual void ActOnFields(Scope* S,
-				 SourceLocation RecLoc, DeclTy *TagDecl,
-                                 DeclTy **Fields, unsigned NumFields,
-                                 tok::ObjCKeywordKind *visibility = 0);
+                           SourceLocation RecLoc, DeclTy *TagDecl,
+                           DeclTy **Fields, unsigned NumFields,
+                           SourceLocation LBrac, SourceLocation RBrac,
+                           tok::ObjCKeywordKind *visibility = 0);
   virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
@@ -517,7 +518,8 @@ public:
                                        Protocols);
 
   virtual void ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl, 
-				         DeclTy **allMethods, unsigned allNum);
+				         DeclTy **allMethods, unsigned allNum,
+                                         SourceLocation AtEndLoc);
   
   virtual DeclTy *ActOnMethodDeclaration(
     SourceLocation BeginLoc, // location of the + or -.

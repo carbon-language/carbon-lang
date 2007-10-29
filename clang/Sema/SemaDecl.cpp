@@ -1263,7 +1263,7 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
   /// (legacy objective-c @implementation decl without an @interface decl).
   /// Add implementations's ivar to the synthesize class's ivar list.
   if (IDecl->ImplicitInterfaceDecl()) {
-    IDecl->ObjcAddInstanceVariablesToClass(ivars, numIvars);
+    IDecl->addInstanceVariablesToClass(ivars, numIvars, SourceLocation());
     return;
   }
   
@@ -1631,6 +1631,7 @@ TranslateIvarVisibility(tok::ObjCKeywordKind ivarVisibility) {
 void Sema::ActOnFields(Scope* S,
                        SourceLocation RecLoc, DeclTy *RecDecl,
                        DeclTy **Fields, unsigned NumFields,
+                       SourceLocation LBrac, SourceLocation RBrac,
                        tok::ObjCKeywordKind *visibility) {
   Decl *EnclosingDecl = static_cast<Decl*>(RecDecl);
   assert(EnclosingDecl && "missing record or interface decl");
@@ -1769,7 +1770,7 @@ void Sema::ActOnFields(Scope* S,
                     reinterpret_cast<ObjcIvarDecl**>(&RecFields[0]);
     if (isa<ObjcInterfaceDecl>(static_cast<Decl*>(RecDecl)))
       cast<ObjcInterfaceDecl>(static_cast<Decl*>(RecDecl))->
-        ObjcAddInstanceVariablesToClass(ClsFields, RecFields.size());
+        addInstanceVariablesToClass(ClsFields, RecFields.size(), RBrac);
     else if (isa<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl))) {
       ObjcImplementationDecl* IMPDecl = 
         cast<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl));
@@ -1844,7 +1845,8 @@ void Sema::AddFactoryMethodToGlobalPool(ObjcMethodDecl *Method) {
 }
 
 void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
-                                     DeclTy **allMethods, unsigned allNum) {
+                                     DeclTy **allMethods, unsigned allNum,
+                                     SourceLocation AtEndLoc) {
   Decl *ClassDecl = static_cast<Decl *>(classDecl);
 
   // FIXME: If we don't have a ClassDecl, we have an error. I (snaroff) would
@@ -1906,26 +1908,26 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
   }
   
   if (ObjcInterfaceDecl *I = dyn_cast<ObjcInterfaceDecl>(ClassDecl)) {
-    I->ObjcAddMethods(&insMethods[0], insMethods.size(),
-                      &clsMethods[0], clsMethods.size());
+    I->addMethods(&insMethods[0], insMethods.size(),
+                  &clsMethods[0], clsMethods.size(), AtEndLoc);
   } else if (ObjcProtocolDecl *P = dyn_cast<ObjcProtocolDecl>(ClassDecl)) {
-    P->ObjcAddProtoMethods(&insMethods[0], insMethods.size(),
-                           &clsMethods[0], clsMethods.size());
+    P->addMethods(&insMethods[0], insMethods.size(),
+                  &clsMethods[0], clsMethods.size(), AtEndLoc);
   }
   else if (ObjcCategoryDecl *C = dyn_cast<ObjcCategoryDecl>(ClassDecl)) {
-    C->ObjcAddCatMethods(&insMethods[0], insMethods.size(),
-                         &clsMethods[0], clsMethods.size());
+    C->addMethods(&insMethods[0], insMethods.size(),
+                  &clsMethods[0], clsMethods.size(), AtEndLoc);
   }
   else if (ObjcImplementationDecl *IC = 
                 dyn_cast<ObjcImplementationDecl>(ClassDecl)) {
-    IC->ObjcAddImplMethods(&insMethods[0], insMethods.size(),
-                           &clsMethods[0], clsMethods.size());
+    IC->addMethods(&insMethods[0], insMethods.size(),
+                   &clsMethods[0], clsMethods.size(), AtEndLoc);
     if (ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(IC->getIdentifier()))
       ImplMethodsVsClassMethods(IC, IDecl);
   } else {
     ObjcCategoryImplDecl* CatImplClass = cast<ObjcCategoryImplDecl>(ClassDecl);
-    CatImplClass->ObjcAddCatImplMethods(&insMethods[0], insMethods.size(),
-                                        &clsMethods[0], clsMethods.size());
+    CatImplClass->addMethods(&insMethods[0], insMethods.size(),
+                             &clsMethods[0], clsMethods.size(), AtEndLoc);
     ObjcInterfaceDecl* IDecl = CatImplClass->getClassInterface();
     // Find category interface decl and then check that all methods declared
     // in this interface is implemented in the category @implementation.

@@ -73,10 +73,13 @@ class ObjcInterfaceDecl : public TypeDecl {
   ObjcCategoryDecl *CategoryList;
   
   bool ForwardDecl; // declared with @class.
+  
+  SourceLocation RBracLoc; // marks the end of the instance variables.
+  SourceLocation EndLoc; // marks the end of the entire interface.
 public:
-  ObjcInterfaceDecl(SourceLocation L, unsigned numRefProtos,
+  ObjcInterfaceDecl(SourceLocation atLoc, unsigned numRefProtos,
                     IdentifierInfo *Id, bool FD = false)
-    : TypeDecl(ObjcInterface, L, Id, 0), SuperClass(0),
+    : TypeDecl(ObjcInterface, atLoc, Id, 0), SuperClass(0),
       ReferencedProtocols(0), NumReferencedProtocols(-1), Ivars(0), 
       NumIvars(-1),
       InstanceMethods(0), NumInstanceMethods(-1), 
@@ -109,11 +112,12 @@ public:
   ObjcMethodDecl** getClassMethods() const { return ClassMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
   
-  void ObjcAddInstanceVariablesToClass(ObjcIvarDecl **ivars, 
-				       unsigned numIvars);
+  void addInstanceVariablesToClass(ObjcIvarDecl **ivars, unsigned numIvars,
+                                   SourceLocation RBracLoc);
 
-  void ObjcAddMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
-                      ObjcMethodDecl **clsMethods, unsigned numClsMembers);
+  void addMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
+                  ObjcMethodDecl **clsMethods, unsigned numClsMembers,
+                  SourceLocation AtEnd);
   
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }
@@ -132,6 +136,14 @@ public:
   }
   ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
   ObjcMethodDecl *lookupClassMethod(Selector &Sel);
+
+  // Location information, modeled after the Stmt API. For interfaces, 
+  // which are fairly course grain, the end refers to the '}' token.
+  SourceLocation getLocStart() const { return getLocation(); } // '@'interface
+  SourceLocation getLocEnd() const { return RBracLoc; }
+  
+  // We also need to record the @end location.
+  SourceLocation getAtEndLoc() const { return EndLoc; }
   
   /// ImplicitInterfaceDecl - check that this is an implicitely declared
   /// ObjcInterfaceDecl node. This is for legacy objective-c @implementation
@@ -313,8 +325,9 @@ public:
       NumReferencedProtocols = numRefProtos;
     }    
   }
-  void ObjcAddProtoMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
-                           ObjcMethodDecl **clsMethods, unsigned numClsMembers);
+  void addMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
+                  ObjcMethodDecl **clsMethods, unsigned numClsMembers,
+                  SourceLocation AtEndLoc);
   
   void setReferencedProtocols(int idx, ObjcProtocolDecl *OID) {
     assert((idx < NumReferencedProtocols) && "index out of range");
@@ -480,8 +493,9 @@ public:
   ObjcMethodDecl **getClassMethods() const { return ClassMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
   
-  void ObjcAddCatMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
-                         ObjcMethodDecl **clsMethods, unsigned numClsMembers);
+  void addMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
+                  ObjcMethodDecl **clsMethods, unsigned numClsMembers,
+                  SourceLocation AtEndLoc);
   
   ObjcCategoryDecl *getNextClassCategory() const { return NextClassCategory; }
   void insertNextClassCategory() {
@@ -525,9 +539,9 @@ class ObjcCategoryImplDecl : public NamedDecl {
   ObjcMethodDecl **getClassMethods() const { return ClassMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
   
-  void ObjcAddCatImplMethods(
-        ObjcMethodDecl **insMethods, unsigned numInsMembers,
-        ObjcMethodDecl **clsMethods, unsigned numClsMembers);
+  void addMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
+                  ObjcMethodDecl **clsMethods, unsigned numClsMembers,
+                  SourceLocation AtEndLoc);
   
   static bool classof(const Decl *D) { return D->getKind() == ObjcCategoryImpl;}
   static bool classof(const ObjcCategoryImplDecl *D) { return true; }
@@ -581,8 +595,9 @@ public:
   void ObjcAddInstanceVariablesToClassImpl(ObjcIvarDecl **ivars, 
                                            unsigned numIvars);
     
-  void ObjcAddImplMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
-                          ObjcMethodDecl **clsMethods, unsigned numClsMembers);
+  void addMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
+                  ObjcMethodDecl **clsMethods, unsigned numClsMembers,
+                  SourceLocation AtEndLoc);
     
   ObjcInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjcInterfaceDecl *getSuperClass() const { return SuperClass; }

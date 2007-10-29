@@ -180,10 +180,10 @@ public:
                              Declarator &D, ExprTy *BitfieldWidth) {
     return 0;
   }
-  virtual void ActOnFields(Scope* S,
-				 SourceLocation RecLoc, DeclTy *TagDecl,
-                                 DeclTy **Fields, unsigned NumFields,
-                                 tok::ObjCKeywordKind *visibility = 0) {}
+  virtual void ActOnFields(Scope* S, SourceLocation RecLoc, DeclTy *TagDecl,
+                           DeclTy **Fields, unsigned NumFields, 
+                           SourceLocation LBrac, SourceLocation RBrac,
+                           tok::ObjCKeywordKind *visibility = 0) {}
   virtual DeclTy *ActOnEnumConstant(Scope *S, DeclTy *EnumDecl,
                                     DeclTy *LastEnumConstant,
                                     SourceLocation IdLoc, IdentifierInfo *Id,
@@ -541,7 +541,8 @@ public:
     Scope* S, 
     DeclTy *ClassDecl,
     DeclTy **allMethods, 
-    unsigned allNum) {
+    unsigned allNum,
+    SourceLocation AtEndLoc) {
     return;
   }
   // ActOnClassMessage - used for both unary and keyword messages.

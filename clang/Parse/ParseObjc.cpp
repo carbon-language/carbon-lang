@@ -193,7 +193,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
                       ProtocolRefs.size(), attrList);
             
   if (Tok.is(tok::l_brace))
-    ParseObjCClassInstanceVariables(ClsType);
+    ParseObjCClassInstanceVariables(ClsType, atLoc);
 
   ParseObjCInterfaceDeclList(ClsType, tok::objc_interface);
 
@@ -222,12 +222,15 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
 					tok::ObjCKeywordKind contextKey) {
   llvm::SmallVector<DeclTy*, 32>  allMethods;
   tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
+  SourceLocation AtEndLoc;
+  
   while (1) {
     if (Tok.is(tok::at)) {
       SourceLocation AtLoc = ConsumeToken(); // the "@"
       tok::ObjCKeywordKind ocKind = Tok.getObjCKeywordID();
       
       if (ocKind == tok::objc_end) { // terminate list
+        AtEndLoc = AtLoc;
         break;
       } else if (ocKind == tok::objc_required) { // protocols only
         ConsumeToken();
@@ -268,8 +271,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
   }
   if (allMethods.size())
     /// Insert collected methods declarations into the @interface object.
-    Actions.ActOnAddMethodsToObjcDecl(CurScope, interfaceDecl,
-                                      &allMethods[0], allMethods.size());
+    Actions.ActOnAddMethodsToObjcDecl(CurScope, interfaceDecl, &allMethods[0], 
+                                      allMethods.size(), AtEndLoc);
 }
 
 ///   Parse property attribute declarations.
@@ -683,7 +686,8 @@ bool Parser::ParseObjCProtocolReferences(
 ///   objc-instance-variable-decl:
 ///     struct-declaration 
 ///
-void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
+void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
+                                             SourceLocation atLoc) {
   assert(Tok.is(tok::l_brace) && "expected {");
   llvm::SmallVector<DeclTy*, 16> IvarDecls;
   llvm::SmallVector<DeclTy*, 32> AllIvarDecls;
@@ -737,12 +741,12 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl) {
       SkipUntil(tok::r_brace, true, true);
     }
   }
+  SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   if (AllIvarDecls.size()) {  // Check for {} - no ivars in braces
-    Actions.ActOnFields(CurScope, LBraceLoc, interfaceDecl, 
+    Actions.ActOnFields(CurScope, atLoc, interfaceDecl,
                         &AllIvarDecls[0], AllIvarDecls.size(),
-                        &AllVisibilities[0]);
+                        LBraceLoc, RBraceLoc, &AllVisibilities[0]);
   }
-  MatchRHSPunctuation(tok::r_brace, LBraceLoc);
   return;
 }
 
@@ -893,11 +897,12 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
 				  atLoc, nameId, nameLoc,
                                   superClassId, superClassLoc);
   
-  if (Tok.is(tok::l_brace))
-    ParseObjCClassInstanceVariables(ImplClsType/*FIXME*/); // we have ivars
+  if (Tok.is(tok::l_brace)) // we have ivars
+    ParseObjCClassInstanceVariables(ImplClsType/*FIXME*/, atLoc);
   
   return ImplClsType;
 }
+
 Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_end) &&
          "ParseObjCAtEndDeclaration(): Expected @end");
@@ -908,7 +913,8 @@ Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
     // could be 0.
     /// Insert collected methods declarations into the @interface object.
     Actions.ActOnAddMethodsToObjcDecl(CurScope, ObjcImpDecl,
-                                      &AllImplMethods[0],AllImplMethods.size());
+                                      &AllImplMethods[0], AllImplMethods.size(),
+                                      atLoc);
     ObjcImpDecl = 0;
     AllImplMethods.clear();
   }
