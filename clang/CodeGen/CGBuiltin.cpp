@@ -63,7 +63,15 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
 
     return RValue::get(V);
   }
+  case Builtin::BI__builtin_classify_type: {
+    llvm::APSInt Result(32);
+    
+    if (!E->isBuiltinClassifyType(Result))
+      assert(0 && "Expr not __builtin_classify_type!");
+    
+    return RValue::get(llvm::ConstantInt::get(Result));
   }
-      
+  }
+  
   return RValue::get(0);
 }
