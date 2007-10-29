@@ -912,7 +912,7 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     if (PointeeTy->isCharType()) {
       // char pointer types should be encoded as '*' unless it is a
       // type that has been typedef'd to 'BOOL'.
-      if (isTypeTypedefedAsBOOL(T)) {
+      if (!isTypeTypedefedAsBOOL(T)) {
         S += '*';
         return;
       }
