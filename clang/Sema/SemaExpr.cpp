@@ -1191,6 +1191,20 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
   return QualType();
 }
 
+// Utility method to plow through parentheses to get the first nested
+// non-ParenExpr expr.
+static inline Expr* IgnoreParen(Expr* E) {
+  
+  while (true) {
+    if (ParenExpr* P = dyn_cast<ParenExpr>(E))
+      E = P->getSubExpr();
+    else
+      break;
+  }
+  
+  return E;
+}
+
 inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   Expr *&lex, Expr *&rex, SourceLocation loc, bool isRelational)
 {
@@ -1212,8 +1226,8 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
       // Special case: check for x == x (which is OK).
       bool EmitWarning = true;
       
-      if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(lex))
-        if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(rex))
+      if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(IgnoreParen(lex)))
+        if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(IgnoreParen(rex)))
           if (DRL->getDecl() == DRR->getDecl())
             EmitWarning = false;
       
