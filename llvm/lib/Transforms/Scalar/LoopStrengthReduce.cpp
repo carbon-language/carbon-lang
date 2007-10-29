@@ -1476,6 +1476,8 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   uint64_t SignBit = 1ULL << (BitWidth-1);
   const Type *CmpTy = C->getType();
   const Type *NewCmpTy = NULL;
+  unsigned TyBits = CmpTy->getPrimitiveSizeInBits();
+  unsigned NewTyBits = 0;
   int64_t NewCmpVal = CmpVal;
   SCEVHandle *NewStride = NULL;
   Value *NewIncV = NULL;
@@ -1521,7 +1523,31 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
       }
 
       NewCmpTy = NewIncV->getType();
-      if (RequiresTypeConversion(CmpTy, NewCmpTy)) {
+      NewTyBits = isa<PointerType>(NewCmpTy)
+        ? UIntPtrTy->getPrimitiveSizeInBits()
+        : NewCmpTy->getPrimitiveSizeInBits();
+      if (RequiresTypeConversion(NewCmpTy, CmpTy)) {
+        // Check if it is possible to rewrite it using a iv / stride of a smaller
+        // integer type.
+        bool TruncOk = false;
+        if (NewCmpTy->isInteger()) {
+          unsigned Bits = NewTyBits;
+          if (ICmpInst::isSignedPredicate(Predicate))
+            --Bits;
+          uint64_t Mask = (1ULL << Bits) - 1;
+          if (((uint64_t)NewCmpVal & Mask) == (uint64_t)NewCmpVal)
+            TruncOk = true;
+        }
+        if (!TruncOk) {
+          NewCmpVal = CmpVal;
+          continue;
+        }
+      }
+
+      // Don't rewrite if use offset is non-constant and the new type is
+      // of a different type.
+      // FIXME: too conservative?
+      if (NewTyBits != TyBits && !isa<SCEVConstant>(CondUse->Offset)) {
         NewCmpVal = CmpVal;
         continue;
       }
@@ -1552,13 +1578,12 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
   if (NewCmpVal != CmpVal) {
     // Create a new compare instruction using new stride / iv.
     ICmpInst *OldCond = Cond;
-    Value *RHS = ConstantInt::get(C->getType(), NewCmpVal);
-    // Both sides of a ICmpInst must be of the same type.
-    if (NewCmpTy != CmpTy) {
-      if (isa<PointerType>(NewCmpTy) && !isa<PointerType>(CmpTy))
-        RHS= SCEVExpander::InsertCastOfTo(Instruction::IntToPtr, RHS, NewCmpTy);
-      else
-        RHS = SCEVExpander::InsertCastOfTo(Instruction::BitCast, RHS, NewCmpTy);
+    Value *RHS;
+    if (!isa<PointerType>(NewCmpTy))
+      RHS = ConstantInt::get(NewCmpTy, NewCmpVal);
+    else {
+      RHS = ConstantInt::get(UIntPtrTy, NewCmpVal);
+      RHS = SCEVExpander::InsertCastOfTo(Instruction::IntToPtr, RHS, NewCmpTy);
     }
     // Insert new compare instruction.
     Cond = new ICmpInst(Predicate, NewIncV, RHS);
@@ -1572,8 +1597,11 @@ ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
     OldCond->eraseFromParent();
 
     IVUsesByStride[*CondStride].Users.pop_back();
-    SCEVHandle NewOffset = SE->getMulExpr(CondUse->Offset,
-          SE->getConstant(ConstantInt::get(CondUse->Offset->getType(), Scale)));
+    SCEVHandle NewOffset = TyBits == NewTyBits
+      ? SE->getMulExpr(CondUse->Offset,
+                       SE->getConstant(ConstantInt::get(CmpTy, Scale)))
+      : SE->getConstant(ConstantInt::get(NewCmpTy,
+        cast<SCEVConstant>(CondUse->Offset)->getValue()->getSExtValue()*Scale));
     IVUsesByStride[*NewStride].addUser(NewOffset, Cond, NewIncV);
     CondUse = &IVUsesByStride[*NewStride].Users.back();
     CondStride = NewStride;
