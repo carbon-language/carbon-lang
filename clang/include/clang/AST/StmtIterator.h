@@ -20,19 +20,21 @@ namespace clang {
 
 class Stmt;
 class ScopedDecl;
-
+class VariableArrayType;
+  
 class StmtIteratorBase {
 protected:
-  union { Stmt** S; ScopedDecl* D; } Ptr;
+  union { Stmt** stmt; ScopedDecl* decl; };
   ScopedDecl* FirstDecl;
+  VariableArrayType* vat;
   
   void NextDecl();
   void PrevDecl();
   Stmt*& GetDeclExpr() const;
 
-  StmtIteratorBase(Stmt** s) : FirstDecl(NULL) { Ptr.S = s; }
+  StmtIteratorBase(Stmt** s) : stmt(s), FirstDecl(NULL), vat(NULL) {}
   StmtIteratorBase(ScopedDecl* d);
-  StmtIteratorBase() : FirstDecl(NULL) { Ptr.S = NULL; }
+  StmtIteratorBase() : stmt(NULL), FirstDecl(NULL), vat(NULL) {}
 };
   
   
@@ -51,7 +53,7 @@ public:
   
   DERIVED& operator++() { 
     if (FirstDecl) NextDecl();
-    else ++Ptr.S;
+    else ++stmt;
       
     return static_cast<DERIVED&>(*this);
   }
@@ -64,7 +66,7 @@ public:
   
   DERIVED& operator--() {
     if (FirstDecl) PrevDecl();
-    else --Ptr.S;
+    else --stmt;
     
     return static_cast<DERIVED&>(*this);
   }
@@ -76,15 +78,15 @@ public:
   }
 
   bool operator==(const DERIVED& RHS) const {
-    return FirstDecl == RHS.FirstDecl && Ptr.S == RHS.Ptr.S;
+    return FirstDecl == RHS.FirstDecl && stmt == RHS.stmt;
   }
   
   bool operator!=(const DERIVED& RHS) const {
-    return FirstDecl != RHS.FirstDecl || Ptr.S != RHS.Ptr.S;
+    return FirstDecl != RHS.FirstDecl || stmt != RHS.stmt;
   }
   
   REFERENCE operator*() const { 
-    return (REFERENCE) (FirstDecl ? GetDeclExpr() : *Ptr.S);
+    return (REFERENCE) (FirstDecl ? GetDeclExpr() : *stmt);
   }
   
   REFERENCE operator->() const { return operator*(); }   

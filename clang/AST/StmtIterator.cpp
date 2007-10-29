@@ -30,12 +30,12 @@ static inline bool declHasExpr(ScopedDecl *decl) {
 }
 
 void StmtIteratorBase::NextDecl() {
-  assert (FirstDecl && Ptr.D);
+  assert (FirstDecl && decl);
 
-  do Ptr.D = Ptr.D->getNextDeclarator();
-  while (Ptr.D != NULL && !declHasExpr(Ptr.D));
+  do decl = decl->getNextDeclarator();
+  while (decl != NULL && !declHasExpr(decl));
   
-  if (Ptr.D == NULL) FirstDecl = NULL;
+  if (decl == NULL) FirstDecl = NULL;
 }
 
 StmtIteratorBase::StmtIteratorBase(ScopedDecl* d) {
@@ -45,12 +45,12 @@ StmtIteratorBase::StmtIteratorBase(ScopedDecl* d) {
     d = d->getNextDeclarator();
   
   FirstDecl = d;
-  Ptr.D = d;
+  decl = d;
 }
 
 void StmtIteratorBase::PrevDecl() {
   assert (FirstDecl);
-  assert (Ptr.D != FirstDecl);
+  assert (decl != FirstDecl);
   
   // March through the list of decls until we find the decl just before
   // the one we currently point 
@@ -58,7 +58,7 @@ void StmtIteratorBase::PrevDecl() {
   ScopedDecl* d = FirstDecl;
   ScopedDecl* lastVD = d;
   
-  while (d->getNextDeclarator() != Ptr.D) {
+  while (d->getNextDeclarator() != decl) {
     if (VarDecl* V = dyn_cast<VarDecl>(d))
       if (V->getInit())
         lastVD = d;
@@ -66,14 +66,14 @@ void StmtIteratorBase::PrevDecl() {
     d = d->getNextDeclarator();
   }
   
-  Ptr.D = lastVD;
+  decl = lastVD;
 }
 
 Stmt*& StmtIteratorBase::GetDeclExpr() const {
-  if (VarDecl* D = dyn_cast<VarDecl>(Ptr.D))
+  if (VarDecl* D = dyn_cast<VarDecl>(decl))
     return reinterpret_cast<Stmt*&>(D->Init);
   else {
-    EnumConstantDecl* Decl = cast<EnumConstantDecl>(Ptr.D);
+    EnumConstantDecl* Decl = cast<EnumConstantDecl>(decl);
     return reinterpret_cast<Stmt*&>(Decl->Init);
   }
 }
