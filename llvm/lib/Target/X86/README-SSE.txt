@@ -708,3 +708,36 @@ The instruction at (1) can be moved out of the main body of the loop.
 
 //===---------------------------------------------------------------------===//
 
+These functions:
+
+#include <xmmintrin.h>
+__m128i a;
+void x(unsigned short n) {
+  a = _mm_slli_epi32 (a, n);
+}
+void y(unsigned n) {
+  a = _mm_slli_epi32 (a, n);
+}
+
+compile to ( -O3 -static -fomit-frame-pointer):
+_x:
+        movzwl  4(%esp), %eax
+        movd    %eax, %xmm0
+        movaps  _a, %xmm1
+        pslld   %xmm0, %xmm1
+        movaps  %xmm1, _a
+        ret
+_y:
+        movd    4(%esp), %xmm0
+        movaps  _a, %xmm1
+        pslld   %xmm0, %xmm1
+        movaps  %xmm1, _a
+        ret
+
+"y" looks good, but "x" does silly movzwl stuff around into a GPR.  It seems
+like movd would be sufficient in both cases as the value is already zero 
+extended in the 32-bit stack slot IIRC.  For signed short, it should also be
+save, as a really-signed value would be undefined for pslld.
+
+
+//===---------------------------------------------------------------------===//
