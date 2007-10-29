@@ -512,19 +512,18 @@ Parser::StmtResult Parser::ParseIfStatement() {
   bool NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
   if (NeedsInnerScope) EnterScope(Scope::DeclScope);
   
-  // Read the if condition.
-  StmtResult CondStmt = ParseStatement();
+  // Read the 'then' stmt.
+  SourceLocation ThenStmtLoc = Tok.getLocation();
+  StmtResult ThenStmt = ParseStatement();
 
-  // Broken substmt shouldn't prevent the label from being added to the AST.
-  if (CondStmt.isInvalid)
-    CondStmt = Actions.ActOnNullStmt(Tok.getLocation());
-  
   // Pop the 'if' scope if needed.
   if (NeedsInnerScope) ExitScope();
   
   // If it has an else, parse it.
   SourceLocation ElseLoc;
+  SourceLocation ElseStmtLoc;
   StmtResult ElseStmt(false);
+  
   if (Tok.is(tok::kw_else)) {
     ElseLoc = ConsumeToken();
     
@@ -535,19 +534,37 @@ Parser::StmtResult Parser::ParseIfStatement() {
     NeedsInnerScope = getLang().C99 && Tok.isNot(tok::l_brace);
     if (NeedsInnerScope) EnterScope(Scope::DeclScope);
     
+    ElseStmtLoc = Tok.getLocation();
     ElseStmt = ParseStatement();
 
     // Pop the 'else' scope if needed.
     if (NeedsInnerScope) ExitScope();
-    
-    if (ElseStmt.isInvalid)
-      ElseStmt = Actions.ActOnNullStmt(ElseLoc);
   }
   
   if (getLang().C99)
     ExitScope();
 
-  return Actions.ActOnIfStmt(IfLoc, CondExp.Val, CondStmt.Val,
+  // If the then or else stmt is invalid and the other is valid (and present),
+  // make turn the invalid one into a null stmt to avoid dropping the other 
+  // part.  If both are invalid, return error.
+  if ((ThenStmt.isInvalid && ElseStmt.isInvalid) ||
+      (ThenStmt.isInvalid && ElseStmt.Val == 0) ||
+      (ThenStmt.Val == 0  && ElseStmt.isInvalid)) {
+    // Both invalid, or one is invalid and other is non-present: delete cond and
+    // return error.
+    Actions.DeleteExpr(CondExp.Val);
+    return true;
+  }
+  
+  // Now if either are invalid, replace with a ';'.
+  if (ThenStmt.isInvalid)
+    ThenStmt = Actions.ActOnNullStmt(ThenStmtLoc);
+  if (ElseStmt.isInvalid)
+    ElseStmt = Actions.ActOnNullStmt(ElseStmtLoc);
+  
+  
+  
+  return Actions.ActOnIfStmt(IfLoc, CondExp.Val, ThenStmt.Val,
                              ElseLoc, ElseStmt.Val);
 }
 
