@@ -1032,6 +1032,8 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     
     getObjcEncodingForType(AT->getElementType(), S);
     S += ']';
+  } else if (T->getAsFunctionType()) {
+    S += '?';
   } else
     assert(0 && "@encode for type not implemented!");
 }
