@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
+struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public X86SharedAsmPrinter {
  X86ATTAsmPrinter(std::ostream &O, X86TargetMachine &TM, const TargetAsmInfo *T)
     : X86SharedAsmPrinter(O, TM, T) { }
 
