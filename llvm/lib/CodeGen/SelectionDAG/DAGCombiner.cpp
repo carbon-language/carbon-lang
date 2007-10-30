@@ -2771,7 +2771,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
           if (SOp == Trunc)
             Ops.push_back(ExtLoad);
           else
-            Ops.push_back(DAG.getNode(ISD::SIGN_EXTEND, VT, SOp));
+            Ops.push_back(DAG.getNode(ISD::ZERO_EXTEND, VT, SOp));
           }
         Ops.push_back(SetCC->getOperand(2));
         CombineTo(SetCC, DAG.getNode(ISD::SETCC, SetCC->getValueType(0),
