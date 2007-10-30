@@ -450,14 +450,20 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(const Constant *V1,
 
 /// EvalVectorOp - Given two vector constants and a function pointer, apply the
 /// function pointer to each element pair, producing a new ConstantVector
-/// constant.
+/// constant. Either or both of V1 and V2 may be NULL, meaning a
+/// ConstantAggregateZero operand.
 static Constant *EvalVectorOp(const ConstantVector *V1, 
                               const ConstantVector *V2,
+                              const VectorType *VTy,
                               Constant *(*FP)(Constant*, Constant*)) {
   std::vector<Constant*> Res;
-  for (unsigned i = 0, e = V1->getNumOperands(); i != e; ++i)
-    Res.push_back(FP(const_cast<Constant*>(V1->getOperand(i)),
-                     const_cast<Constant*>(V2->getOperand(i))));
+  const Type *EltTy = VTy->getElementType();
+  for (unsigned i = 0, e = VTy->getNumElements(); i != e; ++i) {
+    const Constant *C1 = V1 ? V1->getOperand(i) : Constant::getNullValue(EltTy);
+    const Constant *C2 = V2 ? V2->getOperand(i) : Constant::getNullValue(EltTy);
+    Res.push_back(FP(const_cast<Constant*>(C1),
+                     const_cast<Constant*>(C2)));
+  }
   return ConstantVector::get(Res);
 }
 
@@ -707,36 +713,40 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         return ConstantFP::get(CFP1->getType(), C3V);
       }
     }
-  } else if (const ConstantVector *CP1 = dyn_cast<ConstantVector>(C1)) {
-    if (const ConstantVector *CP2 = dyn_cast<ConstantVector>(C2)) {
+  } else if (const VectorType *VTy = dyn_cast<VectorType>(C1->getType())) {
+    const ConstantVector *CP1 = dyn_cast<ConstantVector>(C1);
+    const ConstantVector *CP2 = dyn_cast<ConstantVector>(C2);
+    assert((CP1 != NULL || isa<ConstantAggregateZero>(C1)) &&
+           "Unexpected kind of vector constant!");
+    assert((CP2 != NULL || isa<ConstantAggregateZero>(C2)) &&
+           "Unexpected kind of vector constant!");
       switch (Opcode) {
         default:
           break;
         case Instruction::Add: 
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getAdd);
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getAdd);
         case Instruction::Sub: 
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getSub);
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getSub);
         case Instruction::Mul: 
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getMul);
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getMul);
         case Instruction::UDiv:
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getUDiv);
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getUDiv);
         case Instruction::SDiv:
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getSDiv);
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getSDiv);
         case Instruction::FDiv:
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getFDiv);
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getFDiv);
         case Instruction::URem:
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getURem);
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getURem);
         case Instruction::SRem:
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getSRem);
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getSRem);
         case Instruction::FRem:
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getFRem);
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getFRem);
         case Instruction::And: 
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getAnd);
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getAnd);
         case Instruction::Or:  
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getOr);
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getOr);
         case Instruction::Xor: 
-          return EvalVectorOp(CP1, CP2, ConstantExpr::getXor);
-      }
+        return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getXor);
     }
   }
 
