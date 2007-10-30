@@ -1193,6 +1193,15 @@ Sema::DeclTy *Sema::ActOnStartCategoryImplementation(
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl())
     Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
+  
+  // We cannot build type 'id' laziliy. It is needed when checking if a 
+  // type is an 'id' (via call to isObjcIdType) even if there is no
+  // need for the dafult 'id' type.
+  // FIXME: Depending on the need to compare to 'id', this may have to go
+  // somewhere else. At this time, this is a good enough place to do type
+  // encoding of methods and ivars for the rewrite client.
+  GetObjcIdType(AtCatImplLoc);
+  
   /// TODO: Check that CatName, category name, is not used in another
   // implementation.
   return CDecl;
@@ -1261,7 +1270,15 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   // Check that there is no duplicate implementation of this class.
   if (!ObjcImplementations.insert(ClassName))
     Diag(ClassLoc, diag::err_dup_implementation_class, ClassName->getName());
-      
+
+  // We cannot build type 'id' laziliy. It is needed when checking if a 
+  // type is an 'id' (via call to isObjcIdType) even if there is no
+  // need for the dafult 'id' type.
+  // FIXME: Depending on the need to compare to 'id', this may have to go
+  // somewhere else. At this time, this is a good enough place to do type
+  // encoding of methods and ivars for the rewrite client.
+  GetObjcIdType(AtClassImplLoc);
+  
   return IMPDecl;
 }
 
@@ -1964,14 +1981,6 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind) {
   llvm::SmallVector<ParmVarDecl*, 16> Params;
   
-  // We cannot build type 'id' laziliy. It is needed when checking if a 
-  // type is an 'id' (via call to isObjcIdType) even if there is no
-  // need for the dafult 'id' type.
-  // FIXME: Depending on the need to compare to 'id', this may have to go
-  // somewhere else. At this time, this is a good enough place to do type
-  // encoding of methods and ivars for the rewrite client.
-  GetObjcIdType(MethodLoc);
-
   for (unsigned i = 0; i < Sel.getNumArgs(); i++) {
     // FIXME: arg->AttrList must be stored too!
     QualType argType;
