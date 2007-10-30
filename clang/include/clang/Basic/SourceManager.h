@@ -58,6 +58,22 @@ namespace SrcMgr {
     : Entry(e), Buffer(NULL), SourceLineCache(NULL), NumLines(0) {}
 
     ~ContentCache();
+    
+    /// The copy ctor does not allow copies where source object has either
+    ///  a non-NULL Buffer or SourceLineCache.  Ownership of allocated memory
+    ///  is not transfered, so this is a logical error.
+    ContentCache(const ContentCache& RHS) : Buffer(NULL),SourceLineCache(NULL) {
+      Entry = RHS.Entry;
+
+      assert (RHS.Buffer == NULL && RHS.SourceLineCache == NULL
+              && "Passed ContentCache object cannot own a buffer.");
+              
+      NumLines = RHS.NumLines;      
+    }
+    
+  private:
+    // Disable assignments.
+    ContentCache& operator=(const ContentCache& RHS);    
   };  
 
   /// FileIDInfo - Information about a FileID, basically just the logical file
@@ -74,9 +90,9 @@ namespace SrcMgr {
   /// This information encodes the #include chain that a token was instantiated
   /// from.
   ///
-  /// FileIDInfos contain a "InfoRec *", describing the source file, and a Chunk
-  /// number, which allows a SourceLocation to index into very large files
-  /// (those which there are not enough FilePosBits to address).
+  /// FileIDInfos contain a "ContentCache *", describing the source file, 
+  /// and a Chunk number, which allows a SourceLocation to index into very
+  /// large files (those which there are not enough FilePosBits to address).
   ///
   struct FileIDInfo {
   private:
@@ -158,12 +174,15 @@ namespace clang {
 /// etc.
 class SourceManager {
   /// FileInfos - Memoized information about all of the files tracked by this
-  /// SourceManager.
+  /// SourceManager.  This set allows us to merge ContentCache entries based
+  /// on their FileEntry*.  All ContentCache objects will thus have unique,
+  /// non-null, FileEntry pointers.  
   std::set<SrcMgr::ContentCache> FileInfos;
   
   /// MemBufferInfos - Information about various memory buffers that we have
   /// read in.  This is a list, instead of a vector, because we need pointers to
-  /// the FileInfo objects to be stable.
+  /// the FileInfo objects to be stable.  All FileEntry* within the
+  /// stored ContentCache objects are NULL, as they do not refer to a file.
   std::list<SrcMgr::ContentCache> MemBufferInfos;
   
   /// FileIDs - Information about each FileID.  FileID #0 is not valid, so all

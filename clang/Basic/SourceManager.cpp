@@ -116,11 +116,14 @@ const ContentCache* SourceManager::getContentCache(const FileEntry *FileEnt) {
 }
 
 
-/// createMemBufferInfoRec - Create a new info record for the specified memory
+/// createMemBufferInfoRec - Create a new ContentCache for the specified memory
 /// buffer.  This does no caching.
 const ContentCache*
 SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
-  // Add a new info record to the MemBufferInfos list and return it.
+  // Add a new ContentCache to the MemBufferInfos list and return it.  We
+  // must default construct the object first that the instance actually
+  // stored within MemBufferInfos actually owns the Buffer, and not any
+  // temporary we would use in the call to "push_back".
   MemBufferInfos.push_back(ContentCache());
   ContentCache& Entry = const_cast<ContentCache&>(MemBufferInfos.back());
   Entry.Buffer = Buffer;
@@ -128,9 +131,9 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
 }
 
 
-/// createFileID - Create a new fileID for the specified InfoRec and include
-/// position.  This works regardless of whether the InfoRec corresponds to a
-/// file or some other input source.
+/// createFileID - Create a new fileID for the specified ContentCache and 
+/// include position.  This works regardless of whether the ContentCache
+/// corresponds to a file or some other input source.
 unsigned SourceManager::createFileID(const ContentCache *File,
                                      SourceLocation IncludePos) {
   // If FileEnt is really large (e.g. it's a large .i file), we may not be able
