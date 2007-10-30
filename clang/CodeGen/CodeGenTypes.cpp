@@ -77,10 +77,8 @@ const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   // See if type is already cached.
   llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator
     I = TypeHolderMap.find(T.getTypePtr());
-  if (I != TypeHolderMap.end()) {
-    llvm::PATypeHolder PAT = I->second;
-    return PAT.get();
-  }
+  if (I != TypeHolderMap.end())
+    return I->second.get();
 
   const llvm::Type *ResultType = ConvertNewType(T);
   TypeHolderMap.insert(std::make_pair(T.getTypePtr(), 
