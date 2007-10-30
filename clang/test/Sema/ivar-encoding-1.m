@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test -verify %s
+// RUN: clang -rewrite-test %s
 
 @interface Intf
 {
