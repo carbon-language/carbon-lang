@@ -2460,7 +2460,9 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
                                       int SVOffset, MVT::ValueType SVT,
                                       bool isVolatile, unsigned Alignment) {
   MVT::ValueType VT = Val.getValueType();
-  bool isTrunc = VT != SVT;
+
+  if (VT == SVT)
+    return getStore(Chain, Val, Ptr, SV, SVOffset, isVolatile, Alignment);
 
   assert(MVT::getSizeInBits(VT) > MVT::getSizeInBits(SVT) &&
          "Not a truncation?");
@@ -2485,7 +2487,7 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   FoldingSetNodeID ID;
   AddNodeIDNode(ID, ISD::STORE, VTs, Ops, 4);
   ID.AddInteger(ISD::UNINDEXED);
-  ID.AddInteger(isTrunc);
+  ID.AddInteger(1);
   ID.AddInteger((unsigned int)SVT);
   ID.AddPointer(SV);
   ID.AddInteger(SVOffset);
@@ -2494,7 +2496,7 @@ SDOperand SelectionDAG::getTruncStore(SDOperand Chain, SDOperand Val,
   void *IP = 0;
   if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
     return SDOperand(E, 0);
-  SDNode *N = new StoreSDNode(Ops, VTs, ISD::UNINDEXED, isTrunc,
+  SDNode *N = new StoreSDNode(Ops, VTs, ISD::UNINDEXED, true,
                               SVT, SV, SVOffset, Alignment, isVolatile);
   CSEMap.InsertNode(N, IP);
   AllNodes.push_back(N);
