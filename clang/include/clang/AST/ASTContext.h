@@ -260,6 +260,7 @@ public:
   bool interfaceTypesAreCompatible(QualType, QualType);
   bool objcTypesAreCompatible(QualType, QualType);
   bool isObjcIdType(QualType T) const {
+    assert(IdStructType && "isObjcIdType used before 'id' type is built");
     return T->getAsStructureType() == IdStructType;
   }
 private:
