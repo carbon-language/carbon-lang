@@ -243,7 +243,7 @@ public:
   enum StorageClass {
     None, Extern, Static, Auto, Register
   };
-  StorageClass getStorageClass() const { return SClass; }
+  StorageClass getStorageClass() const { return (StorageClass)SClass; }
 
   const Expr *getInit() const { return Init; }
   Expr *getInit() { return Init; }
@@ -255,7 +255,8 @@ public:
   //  implicitly "auto", but are represented internally with a storage
   //  class of None.
   bool hasAutoStorage() const {
-    return SClass == Auto || (SClass == None && getKind() != FileVar);
+    return getStorageClass() == Auto ||
+          (getStorageClass() == None && getKind() != FileVar);
   }
 
   // hasStaticStorage - Returns true if either the implicit or
@@ -264,12 +265,15 @@ public:
   //  function) that lack a storage keyword are implicitly "static,"
   //  but are represented internally with a storage class of "None".
   bool hasStaticStorage() const {
-    return SClass == Static || (SClass == None && getKind() == FileVar);
+    return getStorageClass() == Static ||
+          (getStorageClass() == None && getKind() == FileVar);
   }
       
   // hasLocalStorage - Returns true if a variable with function scope
   //  is a non-static local variable.
-  bool hasLocalStorage() const { return hasAutoStorage() || SClass == Register;}
+  bool hasLocalStorage() const {
+    return hasAutoStorage() || getStorageClass() == Register;
+  }
 
   // hasGlobalStorage - Returns true for all variables that do not
   //  have local storage.  This includs all global variables as well
@@ -286,8 +290,9 @@ protected:
           StorageClass SC, ScopedDecl *PrevDecl)
     : ValueDecl(DK, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
 private:
-  StorageClass SClass;
-  Expr *Init;  
+  Expr *Init;
+  // FIXME: This can be packed into the bitfields in Decl.
+  unsigned SClass : 3;
   friend class StmtIteratorBase;
 };
 
