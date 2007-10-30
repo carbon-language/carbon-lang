@@ -83,7 +83,7 @@ class CodeGenTypes {
   /// and maps llvm::Types to corresponding clang::Type. llvm::PATypeHolder is
   /// used instead of llvm::Type because it allows us to bypass potential 
   /// dangling type pointers due to type refinement on llvm side.
-  llvm::DenseMap<Type *, llvm::PATypeHolder *> TypeHolderMap;
+  llvm::DenseMap<Type *, llvm::PATypeHolder> TypeHolderMap;
 
   /// ConvertNewType - Convert type T into a llvm::Type. Do not use this
   /// method directly because it does not do any type caching. This method

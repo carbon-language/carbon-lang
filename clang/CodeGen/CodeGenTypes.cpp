@@ -75,16 +75,16 @@ CodeGenTypes::~CodeGenTypes() {
 /// ConvertType - Convert the specified type to its LLVM form.
 const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   // See if type is already cached.
-  llvm::DenseMap<Type *, llvm::PATypeHolder *>::iterator
+  llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator
     I = TypeHolderMap.find(T.getTypePtr());
   if (I != TypeHolderMap.end()) {
-    llvm::PATypeHolder *PAT = I->second;
-    return PAT->get();
+    llvm::PATypeHolder PAT = I->second;
+    return PAT.get();
   }
 
   const llvm::Type *ResultType = ConvertNewType(T);
-  llvm::PATypeHolder *PAT = new llvm::PATypeHolder(ResultType);
-  TypeHolderMap[T.getTypePtr()] = PAT;
+  TypeHolderMap.insert(std::make_pair(T.getTypePtr(), 
+                                      llvm::PATypeHolder(ResultType)));
   return ResultType;
 }
 
@@ -187,7 +187,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     if (!ResultType->isFirstClassType() && ResultType != llvm::Type::VoidTy) {
       const llvm::Type *RType = llvm::PointerType::get(ResultType);
       QualType RTy = Context.getPointerType(FP.getResultType());
-      TypeHolderMap[RTy.getTypePtr()] = new llvm::PATypeHolder(RType);
+      TypeHolderMap.insert(std::make_pair(RTy.getTypePtr(), 
+                                          llvm::PATypeHolder(RType)));
+  
       ArgTys.push_back(RType);
       ResultType = llvm::Type::VoidTy;
     }
@@ -237,8 +239,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       // Reevaluate this when performance analyis finds tons of opaque types.
       llvm::OpaqueType *OpaqueTy =  llvm::OpaqueType::get();
       RecordTypesToResolve[RD] = OpaqueTy;
-      QualType Opq;
-      TypeHolderMap[Opq.getTypePtr()] = new llvm::PATypeHolder(OpaqueTy);
+      TypeHolderMap.insert(std::make_pair(T.getTypePtr(), 
+                                          llvm::PATypeHolder(OpaqueTy)));
 
       // Layout fields.
       RecordOrganizer RO;
@@ -304,7 +306,9 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
     else {
       QualType PTy = Context.getPointerType(FTP.getArgType(i));
       const llvm::Type *PtrTy = llvm::PointerType::get(Ty);
-      TypeHolderMap[PTy.getTypePtr()] = new llvm::PATypeHolder(PtrTy);
+      TypeHolderMap.insert(std::make_pair(PTy.getTypePtr(), 
+                                          llvm::PATypeHolder(PtrTy)));
+
       ArgTys.push_back(PtrTy);
     }
   }
