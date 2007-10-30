@@ -22,6 +22,7 @@ namespace llvm {
   class Module;
   class Constant;
   class Function;
+  class GlobalVariable;
 }
 
 namespace clang {
@@ -67,6 +68,8 @@ public:
   void EmitFunction(const FunctionDecl *FD);
   void EmitGlobalVar(const FileVarDecl *D);
   void EmitGlobalVarDeclarator(const FileVarDecl *D);
+  llvm::Constant *EmitGlobalInit(const FileVarDecl *D, 
+                                 llvm::GlobalVariable *GV);
   
   void PrintStats() {}
 };

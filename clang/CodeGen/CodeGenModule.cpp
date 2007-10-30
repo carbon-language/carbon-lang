@@ -54,6 +54,47 @@ void CodeGenModule::EmitFunction(const FunctionDecl *FD) {
     CodeGenFunction(*this).GenerateCode(FD);
 }
 
+llvm::Constant *CodeGenModule::EmitGlobalInit(const FileVarDecl *D,
+                                              llvm::GlobalVariable *GV) {
+
+  const InitListExpr *ILE = dyn_cast<InitListExpr>(D->getInit());
+  if (!ILE)
+    return 0;
+
+  unsigned NumInitElements = ILE->getNumInits();
+
+  assert ( ILE->getType()->isArrayType() 
+           && "FIXME: Only Array initializers are supported");
+  
+  std::vector<llvm::Constant*> ArrayElts;
+  const llvm::PointerType *APType = cast<llvm::PointerType>(GV->getType());
+  const llvm::ArrayType *AType = 
+    cast<llvm::ArrayType>(APType->getElementType());
+
+  // Copy initializer elements.
+  unsigned i = 0;
+  for (i = 0; i < NumInitElements; ++i) {
+    assert (ILE->getInit(i)->getType()->isIntegerType() 
+            && "Only IntegerType global array initializers are supported");
+    llvm::APSInt 
+      Value(static_cast<uint32_t>
+            (getContext().getTypeSize(ILE->getInit(i)->getType(), 
+                                      SourceLocation())));
+    if (ILE->getInit(i)->isIntegerConstantExpr(Value, Context)) {
+      llvm::Constant *C = llvm::ConstantInt::get(Value);
+      ArrayElts.push_back(C);
+    }
+  }
+
+  // Initialize remaining array elements.
+  unsigned NumArrayElements = AType->getNumElements();
+  const llvm::Type *AElemTy = AType->getElementType();
+  for (; i < NumArrayElements; ++i)
+    ArrayElts.push_back(llvm::Constant::getNullValue(AElemTy));
+
+  return llvm::ConstantArray::get(AType, ArrayElts);
+}
+
 void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
   llvm::GlobalVariable *GV = cast<llvm::GlobalVariable>(GetAddrOfGlobalDecl(D));
   
@@ -73,44 +114,10 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
       Init = llvm::ConstantInt::get(Value);
   }
 
-  if (!Init) {
-    if (const InitListExpr *ILE = dyn_cast<InitListExpr>(D->getInit())) {
+  if (!Init)
+    Init = EmitGlobalInit(D, GV);
 
-      unsigned NumInitElements = ILE->getNumInits();
-
-      assert ( ILE->getType()->isArrayType() 
-               && "FIXME: Only Array initializers are supported");
-
-      std::vector<llvm::Constant*> ArrayElts;
-      const llvm::PointerType *APType = cast<llvm::PointerType>(GV->getType());
-      const llvm::ArrayType *AType = 
-        cast<llvm::ArrayType>(APType->getElementType());
-      
-      // Copy initializer elements.
-      unsigned i = 0;
-      for (i = 0; i < NumInitElements; ++i) {
-        assert (ILE->getInit(i)->getType()->isIntegerType() 
-                && "Only IntegerType global array initializers are supported");
-        llvm::APSInt 
-          Value(static_cast<uint32_t>
-                (getContext().getTypeSize(ILE->getInit(i)->getType(), 
-                                          SourceLocation())));
-        if (ILE->getInit(i)->isIntegerConstantExpr(Value, Context)) {
-          llvm::Constant *C = llvm::ConstantInt::get(Value);
-          ArrayElts.push_back(C);
-        }
-      }
-      
-      // Initialize remaining array elements.
-      unsigned NumArrayElements = AType->getNumElements();
-      const llvm::Type *AElemTy = AType->getElementType();
-      for (; i < NumArrayElements; ++i)
-        ArrayElts.push_back(llvm::Constant::getNullValue(AElemTy));
-      
-      Init = llvm::ConstantArray::get(AType, ArrayElts);
-    } else
-      assert(Init && "FIXME: Global variable initializers unimp!");
-  }
+  assert(Init && "FIXME: Global variable initializers unimp!");
 
   GV->setInitializer(Init);
   
