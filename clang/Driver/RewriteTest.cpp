@@ -264,6 +264,27 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
 }
 
 void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
+
+  SourceLocation LocStart = ClassDecl->getLocStart();
+  SourceLocation LocEnd = ClassDecl->getLocEnd();
+
+  const char *startBuf = SM->getCharacterData(LocStart);
+  const char *endBuf = SM->getCharacterData(LocEnd);
+
+  // FIXME: need to consider empty class decls (no vars, methods)...
+  //   @interface NSConstantString : NSSimpleCString
+  //   @end
+
+  if (*endBuf != '>' && *endBuf != '}')
+    // we have an identifier - scan ahead until the end of token.
+    endBuf = strchr(endBuf, ' '); // FIXME: implement correctly.
+
+  std::string ResultStr;
+  SynthesizeObjcInternalStruct(ClassDecl, ResultStr);
+    
+  Rewrite.ReplaceText(LocStart, endBuf-startBuf+1, 
+                      ResultStr.c_str(), ResultStr.size());
+  
   int nInstanceMethods = ClassDecl->getNumInstanceMethods();
   ObjcMethodDecl **instanceMethods = ClassDecl->getInstanceMethods();
   

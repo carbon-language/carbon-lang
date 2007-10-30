@@ -407,8 +407,9 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
           DS.Range.setEnd(Tok.getLocation());
           ConsumeToken(); // The identifier
           if (Tok.is(tok::less)) {
+            SourceLocation endProtoLoc;
             llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
-            ParseObjCProtocolReferences(ProtocolRefs);
+            ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc);
             llvm::SmallVector<DeclTy *, 8> *ProtocolDecl = 
                     new llvm::SmallVector<DeclTy *, 8>;
             DS.setProtocolQualifiers(ProtocolDecl);

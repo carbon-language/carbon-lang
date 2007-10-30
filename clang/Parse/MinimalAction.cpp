@@ -72,7 +72,7 @@ MinimalAction::ActOnStartClassInterface(SourceLocation AtInterafceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
-                    AttributeList *AttrList) {
+                    SourceLocation EndProtoLoc, AttributeList *AttrList) {
   TypeNameInfo *TI =
     new TypeNameInfo(1, ClassName->getFETokenInfo<TypeNameInfo>());
 

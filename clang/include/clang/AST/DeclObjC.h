@@ -74,8 +74,8 @@ class ObjcInterfaceDecl : public TypeDecl {
   
   bool ForwardDecl; // declared with @class.
   
-  SourceLocation RBracLoc; // marks the end of the instance variables.
-  SourceLocation EndLoc; // marks the end of the entire interface.
+  SourceLocation EndLoc; // marks the '>', '}', or identifier.
+  SourceLocation AtEndLoc; // marks the end of the entire interface.
 public:
   ObjcInterfaceDecl(SourceLocation atLoc, unsigned numRefProtos,
                     IdentifierInfo *Id, bool FD = false)
@@ -137,14 +137,14 @@ public:
   ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
   ObjcMethodDecl *lookupClassMethod(Selector &Sel);
 
-  // Location information, modeled after the Stmt API. For interfaces, 
-  // which are fairly course grain, the end refers to the '}' token.
+  // Location information, modeled after the Stmt API. 
   SourceLocation getLocStart() const { return getLocation(); } // '@'interface
-  SourceLocation getLocEnd() const { return RBracLoc; }
+  SourceLocation getLocEnd() const { return EndLoc; }
+  void setLocEnd(SourceLocation LE) { EndLoc = LE; };
   
   // We also need to record the @end location.
-  SourceLocation getAtEndLoc() const { return EndLoc; }
-  
+  SourceLocation getAtEndLoc() const { return AtEndLoc; }
+
   /// ImplicitInterfaceDecl - check that this is an implicitely declared
   /// ObjcInterfaceDecl node. This is for legacy objective-c @implementation
   /// declaration without an @interface declaration.

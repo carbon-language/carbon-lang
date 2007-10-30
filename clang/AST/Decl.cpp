@@ -295,13 +295,13 @@ ObjcMethodDecl::~ObjcMethodDecl() {
 ///
 void ObjcInterfaceDecl::addInstanceVariablesToClass(ObjcIvarDecl **ivars,
                                                     unsigned numIvars,
-                                                    SourceLocation RB) {
+                                                    SourceLocation RBrac) {
   NumIvars = numIvars;
   if (numIvars) {
     Ivars = new ObjcIvarDecl*[numIvars];
     memcpy(Ivars, ivars, numIvars*sizeof(ObjcIvarDecl*));
   }
-  RBracLoc = RB;
+  setLocEnd(RBrac);
 }
 
 /// ObjcAddInstanceVariablesToClassImpl - Checks for correctness of Instance 
@@ -335,7 +335,7 @@ void ObjcInterfaceDecl::addMethods(ObjcMethodDecl **insMethods,
     ClassMethods = new ObjcMethodDecl*[numClsMembers];
     memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
   }
-  EndLoc = endLoc;
+  AtEndLoc = endLoc;
 }
 
 /// addMethods - Insert instance and methods declarations into

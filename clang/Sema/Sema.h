@@ -472,7 +472,7 @@ public:
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
-                    AttributeList *AttrList);
+                    SourceLocation EndProtoLoc, AttributeList *AttrList);
   
   virtual DeclTy *ActOnCompatiblityAlias(
                     SourceLocation AtCompatibilityAliasLoc,
@@ -482,7 +482,8 @@ public:
   virtual DeclTy *ActOnStartProtocolInterface(
 		    SourceLocation AtProtoInterfaceLoc,
                     IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
-                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
+                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs,
+                    SourceLocation EndProtoLoc);
   
   virtual DeclTy *ActOnStartCategoryInterface(
 		    SourceLocation AtInterfaceLoc,

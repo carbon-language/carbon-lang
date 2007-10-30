@@ -146,9 +146,10 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
       return 0;
     }
     rparenLoc = ConsumeParen();
+    SourceLocation endProtoLoc;
     // Next, we need to check for any protocol references.
     if (Tok.is(tok::less)) {
-      if (ParseObjCProtocolReferences(ProtocolRefs))
+      if (ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc))
         return 0;
     }
     if (attrList) // categories don't support attributes.
@@ -183,14 +184,15 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
   }
   // Next, we need to check for any protocol references.
   llvm::SmallVector<IdentifierInfo *, 8> ProtocolRefs;
+  SourceLocation endProtoLoc;
   if (Tok.is(tok::less)) {
-    if (ParseObjCProtocolReferences(ProtocolRefs))
+    if (ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc))
       return 0;
   }
   DeclTy *ClsType = Actions.ActOnStartClassInterface(
 		      atLoc, nameId, nameLoc, 
                       superClassId, superClassLoc, &ProtocolRefs[0], 
-                      ProtocolRefs.size(), attrList);
+                      ProtocolRefs.size(), endProtoLoc, attrList);
             
   if (Tok.is(tok::l_brace))
     ParseObjCClassInstanceVariables(ClsType, atLoc);
@@ -635,7 +637,8 @@ static bool CmpProtocolVals(const IdentifierInfo* const& lhs,
 ///     '<' identifier-list '>'
 ///
 bool Parser::ParseObjCProtocolReferences(
-  llvm::SmallVectorImpl<IdentifierInfo*> &ProtocolRefs) {
+  llvm::SmallVectorImpl<IdentifierInfo*> &ProtocolRefs, SourceLocation &endLoc) 
+{
   assert(Tok.is(tok::less) && "expected <");
   
   ConsumeToken(); // the "<"
@@ -661,9 +664,13 @@ bool Parser::ParseObjCProtocolReferences(
   // Make protocol names unique.
   ProtocolRefs.erase(std::unique(ProtocolRefs.begin(), ProtocolRefs.end()), 
                      ProtocolRefs.end());
-
   // Consume the '>'.
-  return ExpectAndConsume(tok::greater, diag::err_expected_greater);
+  if (Tok.is(tok::greater)) {
+    endLoc = ConsumeAnyToken();
+    return false;
+  }
+  Diag(Tok, diag::err_expected_greater);
+  return true;
 }
 
 ///   objc-class-instance-variables:
@@ -811,15 +818,16 @@ Parser::DeclTy *Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc) {
                                                    &ProtocolRefs[0], 
                                                    ProtocolRefs.size());
   // Last, and definitely not least, parse a protocol declaration.
+  SourceLocation endProtoLoc;
   if (Tok.is(tok::less)) {
-    if (ParseObjCProtocolReferences(ProtocolRefs))
+    if (ParseObjCProtocolReferences(ProtocolRefs, endProtoLoc))
       return 0;
   }
   
   DeclTy *ProtoType = Actions.ActOnStartProtocolInterface(AtLoc, 
                                 protocolName, nameLoc,
                                 &ProtocolRefs[0],
-                                ProtocolRefs.size());
+                                ProtocolRefs.size(), endProtoLoc);
   ParseObjCInterfaceDeclList(ProtoType, tok::objc_protocol);
 
   // The @ sign was already consumed by ParseObjCInterfaceDeclList().

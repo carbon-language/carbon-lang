@@ -941,7 +941,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
-                    AttributeList *AttrList) {
+                    SourceLocation EndProtoLoc, AttributeList *AttrList) {
   assert(ClassName && "Missing class identifier");
   
   // Check for another declaration kind with the same name.
@@ -958,6 +958,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
     if (!IDecl->isForwardDecl())
       Diag(AtInterfaceLoc, diag::err_duplicate_class_def, IDecl->getName());
     else {
+      IDecl->setLocation(AtInterfaceLoc);
       IDecl->setForwardDecl(false);
       IDecl->AllocIntfRefProtocols(NumProtocols);
     }
@@ -994,18 +995,23 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
       }
     }
     IDecl->setSuperClass(SuperClassEntry);
+    IDecl->setLocEnd(SuperLoc);
+  } else { // we have a root class.
+    IDecl->setLocEnd(ClassLoc);
   }
   
   /// Check then save referenced protocols
-  for (unsigned int i = 0; i != NumProtocols; i++) {
-    ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtocolNames[i]];
-    if (!RefPDecl || RefPDecl->isForwardDecl())
-      Diag(ClassLoc, diag::err_undef_protocolref,
-           ProtocolNames[i]->getName(),
-           ClassName->getName());
-    IDecl->setIntfRefProtocols((int)i, RefPDecl);
+  if (NumProtocols) {
+    for (unsigned int i = 0; i != NumProtocols; i++) {
+      ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtocolNames[i]];
+      if (!RefPDecl || RefPDecl->isForwardDecl())
+        Diag(ClassLoc, diag::err_undef_protocolref,
+             ProtocolNames[i]->getName(),
+             ClassName->getName());
+      IDecl->setIntfRefProtocols((int)i, RefPDecl);
+    }
+    IDecl->setLocEnd(EndProtoLoc);
   }
-  
   return IDecl;
 }
 
@@ -1055,7 +1061,8 @@ Sema::DeclTy *Sema::ActOnCompatiblityAlias(
 Sema::DeclTy *Sema::ActOnStartProtocolInterface(
                 SourceLocation AtProtoInterfaceLoc,
                 IdentifierInfo *ProtocolName, SourceLocation ProtocolLoc,
-                IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
+                IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs,
+                SourceLocation EndProtoLoc) {
   assert(ProtocolName && "Missing protocol identifier");
   ObjcProtocolDecl *PDecl = ObjcProtocols[ProtocolName];
   if (PDecl) {

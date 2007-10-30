@@ -465,6 +465,7 @@ public:
     SourceLocation SuperLoc,
     IdentifierInfo **ProtocolNames, 
     unsigned NumProtocols,
+    SourceLocation EndProtoLoc,
     AttributeList *AttrList) {
     return 0;
   }
@@ -485,7 +486,8 @@ public:
     IdentifierInfo *ProtocolName, 
     SourceLocation ProtocolLoc,
     IdentifierInfo **ProtoRefNames, 
-    unsigned NumProtoRefs) {
+    unsigned NumProtoRefs,
+    SourceLocation EndProtoLoc) {
     return 0;
   }
   // ActOnStartCategoryInterface - this action is called immdiately after
@@ -654,7 +656,7 @@ public:
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *SuperName, SourceLocation SuperLoc,
                     IdentifierInfo **ProtocolNames, unsigned NumProtocols,
-                    AttributeList *AttrList);
+                    SourceLocation EndProtoLoc, AttributeList *AttrList);
 };
 
 }  // end namespace clang
