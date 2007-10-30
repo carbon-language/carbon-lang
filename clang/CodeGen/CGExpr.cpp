@@ -283,9 +283,21 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
   if (E->getOpcode() == UnaryOperator::Extension)
     return EmitLValue(E->getSubExpr());
   
-  assert(E->getOpcode() == UnaryOperator::Deref &&
-         "'*' is the only unary operator that produces an lvalue");
-  return LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()));
+  switch (E->getOpcode()) {
+  default: assert(0 && "Unknown unary operator lvalue!");
+  case UnaryOperator::Deref:
+    return LValue::MakeAddr(EmitScalarExpr(E->getSubExpr()));
+  case UnaryOperator::Real:
+  case UnaryOperator::Imag:
+    LValue LV = EmitLValue(E->getSubExpr());
+
+    llvm::Constant *Zero = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
+    llvm::Constant *Idx  = llvm::ConstantInt::get(llvm::Type::Int32Ty,
+                                        E->getOpcode() == UnaryOperator::Imag);
+    llvm::Value *Ops[] = {Zero, Idx};
+    return LValue::MakeAddr(Builder.CreateGEP(LV.getAddress(), Ops, Ops+2,
+                                              "idx"));
+  }
 }
 
 LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {

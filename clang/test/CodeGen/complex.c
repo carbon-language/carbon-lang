@@ -37,3 +37,12 @@ void test3() {
   g1 = g1 + D;
   g1 = D + g1;
 }
+
+void t1() {
+  (__real__ cf) = 4.0;
+}
+
+void t2() {
+  (__imag__ cf) = 4.0;
+}
+

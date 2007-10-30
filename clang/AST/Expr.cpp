@@ -278,6 +278,7 @@ bool Expr::hasLocalSideEffect() const {
 ///  - e->name
 ///  - *e, the type of e cannot be a function type
 ///  - string-constant
+///  - (__real__ e) and (__imag__ e) where e is an lvalue  [GNU extension]
 ///  - reference type [C++ [expr]]
 ///
 Expr::isLvalueResult Expr::isLvalue() const {
@@ -307,9 +308,13 @@ Expr::isLvalueResult Expr::isLvalue() const {
     const MemberExpr *m = cast<MemberExpr>(this);
     return m->isArrow() ? LV_Valid : m->getBase()->isLvalue();
   }
-  case UnaryOperatorClass: // C99 6.5.3p4
+  case UnaryOperatorClass:
     if (cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Deref)
-      return LV_Valid;
+      return LV_Valid; // C99 6.5.3p4
+
+    if (cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Real ||
+        cast<UnaryOperator>(this)->getOpcode() == UnaryOperator::Imag)
+      return cast<UnaryOperator>(this)->getSubExpr()->isLvalue();  // GNU.
     break;
   case ParenExprClass: // C99 6.5.1p5
     return cast<ParenExpr>(this)->getSubExpr()->isLvalue();
