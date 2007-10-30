@@ -17,6 +17,8 @@
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
+#include "llvm/Bitcode/Serialize.h"
+#include "llvm/Bitcode/Deserialize.h"
 #include <algorithm>
 #include <iostream>
 #include <fcntl.h>
@@ -24,20 +26,10 @@ using namespace clang;
 using namespace SrcMgr;
 using llvm::MemoryBuffer;
 
-SourceManager::~SourceManager() {
-  for (std::map<const FileEntry *, FileInfo>::iterator I = FileInfos.begin(),
-       E = FileInfos.end(); I != E; ++I) {
-    delete I->second.Buffer;
-    delete[] I->second.SourceLineCache;
-  }
-  
-  for (std::list<InfoRec>::iterator I = MemBufferInfos.begin(), 
-       E = MemBufferInfos.end(); I != E; ++I) {
-    delete I->second.Buffer;
-    delete[] I->second.SourceLineCache;
-  }
+ContentCache::~ContentCache() {
+  delete Buffer;
+  delete [] SourceLineCache;
 }
-
 
 // FIXME: REMOVE THESE
 #include <unistd.h>
@@ -100,13 +92,14 @@ static const MemoryBuffer *ReadFileFast(const FileEntry *FileEnt) {
 
 /// getFileInfo - Create or return a cached FileInfo for the specified file.
 ///
-const InfoRec *
-SourceManager::getInfoRec(const FileEntry *FileEnt) {
+const ContentCache* SourceManager::getContentCache(const FileEntry *FileEnt) {
+
   assert(FileEnt && "Didn't specify a file entry to use?");
   // Do we already have information about this file?
-  std::map<const FileEntry *, FileInfo>::iterator I = 
-    FileInfos.lower_bound(FileEnt);
-  if (I != FileInfos.end() && I->first == FileEnt)
+  std::set<ContentCache>::iterator I = 
+    FileInfos.lower_bound(ContentCache(FileEnt));
+  
+  if (I != FileInfos.end() && I->Entry == FileEnt)
     return &*I;
   
   // Nope, get information.
@@ -114,41 +107,37 @@ SourceManager::getInfoRec(const FileEntry *FileEnt) {
   if (File == 0)
     return 0;
 
-  const InfoRec &Entry =
-    *FileInfos.insert(I, std::make_pair(FileEnt, FileInfo()));
-  FileInfo &Info = const_cast<FileInfo &>(Entry.second);
+  ContentCache& Entry = const_cast<ContentCache&>(*FileInfos.insert(I,FileEnt));
 
-  Info.Buffer = File;
-  Info.SourceLineCache = 0;
-  Info.NumLines = 0;
+  Entry.Buffer = File;
+  Entry.SourceLineCache = 0;
+  Entry.NumLines = 0;
   return &Entry;
 }
 
 
 /// createMemBufferInfoRec - Create a new info record for the specified memory
 /// buffer.  This does no caching.
-const InfoRec *
-SourceManager::createMemBufferInfoRec(const MemoryBuffer *Buffer) {
+const ContentCache*
+SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
   // Add a new info record to the MemBufferInfos list and return it.
-  FileInfo FI;
-  FI.Buffer = Buffer;
-  FI.SourceLineCache = 0;
-  FI.NumLines = 0;
-  MemBufferInfos.push_back(InfoRec(0, FI));
-  return &MemBufferInfos.back();
+  MemBufferInfos.push_back(ContentCache());
+  ContentCache& Entry = const_cast<ContentCache&>(MemBufferInfos.back());
+  Entry.Buffer = Buffer;
+  return &Entry;
 }
 
 
 /// createFileID - Create a new fileID for the specified InfoRec and include
 /// position.  This works regardless of whether the InfoRec corresponds to a
 /// file or some other input source.
-unsigned SourceManager::createFileID(const InfoRec *File,
+unsigned SourceManager::createFileID(const ContentCache *File,
                                      SourceLocation IncludePos) {
   // If FileEnt is really large (e.g. it's a large .i file), we may not be able
   // to fit an arbitrary position in the file in the FilePos field.  To handle
   // this, we create one FileID for each chunk of the file that fits in a
   // FilePos field.
-  unsigned FileSize = File->second.Buffer->getBufferSize();
+  unsigned FileSize = File->Buffer->getBufferSize();
   if (FileSize+1 < (1 << SourceLocation::FilePosBits)) {
     FileIDs.push_back(FileIDInfo::get(IncludePos, 0, File));
     assert(FileIDs.size() < (1 << SourceLocation::FileIDBits) &&
@@ -225,7 +214,7 @@ const char *SourceManager::getCharacterData(SourceLocation SL) const {
   // heavily used by -E mode.
   SL = getPhysicalLoc(SL);
   
-  return getFileInfo(SL.getFileID())->Buffer->getBufferStart() + 
+  return getContentCache(SL.getFileID())->Buffer->getBufferStart() + 
          getFullFilePos(SL);
 }
 
@@ -253,11 +242,11 @@ unsigned SourceManager::getColumnNumber(SourceLocation Loc) const {
 const char *SourceManager::getSourceName(SourceLocation Loc) const {
   unsigned FileID = Loc.getFileID();
   if (FileID == 0) return "";
-  return getFileInfo(FileID)->Buffer->getBufferIdentifier();
+  return getContentCache(FileID)->Buffer->getBufferIdentifier();
 }
 
-static void ComputeLineNumbers(FileInfo *FI) DISABLE_INLINE;
-static void ComputeLineNumbers(FileInfo *FI) {
+static void ComputeLineNumbers(ContentCache* FI) DISABLE_INLINE;
+static void ComputeLineNumbers(ContentCache* FI) {
   const MemoryBuffer *Buffer = FI->Buffer;
   
   // Find the file offsets of all of the *physical* source lines.  This does
@@ -308,23 +297,24 @@ static void ComputeLineNumbers(FileInfo *FI) {
 unsigned SourceManager::getLineNumber(SourceLocation Loc) {
   unsigned FileID = Loc.getFileID();
   if (FileID == 0) return 0;
-  FileInfo *FileInfo;
+
+  ContentCache* Content;
   
   if (LastLineNoFileIDQuery == FileID)
-    FileInfo = LastLineNoFileInfo;
+    Content = LastLineNoContentCache;
   else
-    FileInfo = getFileInfo(FileID);
+    Content = const_cast<ContentCache*>(getContentCache(FileID));
   
   // If this is the first use of line information for this buffer, compute the
   /// SourceLineCache for it on demand.
-  if (FileInfo->SourceLineCache == 0)
-    ComputeLineNumbers(FileInfo);
+  if (Content->SourceLineCache == 0)
+    ComputeLineNumbers(Content);
 
   // Okay, we know we have a line number table.  Do a binary search to find the
   // line number that this character position lands on.
-  unsigned *SourceLineCache = FileInfo->SourceLineCache;
+  unsigned *SourceLineCache = Content->SourceLineCache;
   unsigned *SourceLineCacheStart = SourceLineCache;
-  unsigned *SourceLineCacheEnd = SourceLineCache + FileInfo->NumLines;
+  unsigned *SourceLineCacheEnd = SourceLineCache + Content->NumLines;
   
   unsigned QueriedFilePos = getFullFilePos(Loc)+1;
 
@@ -361,10 +351,10 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) {
   // NOTE: This is currently disabled, as it does not appear to be profitable in
   // initial measurements.
   if (0 && SourceLineCacheEnd-SourceLineCache > 20) {
-    unsigned FileLen = FileInfo->SourceLineCache[FileInfo->NumLines-1];
+    unsigned FileLen = Content->SourceLineCache[Content->NumLines-1];
     
     // Take a stab at guessing where it is.
-    unsigned ApproxPos = FileInfo->NumLines*QueriedFilePos / FileLen;
+    unsigned ApproxPos = Content->NumLines*QueriedFilePos / FileLen;
     
     // Check for -10 and +10 lines.
     unsigned LowerBound = std::max(int(ApproxPos-10), 0);
@@ -386,7 +376,7 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) {
   unsigned LineNo = Pos-SourceLineCacheStart;
   
   LastLineNoFileIDQuery = FileID;
-  LastLineNoFileInfo = FileInfo;
+  LastLineNoContentCache = Content;
   LastLineNoFilePos = QueriedFilePos;
   LastLineNoResult = LineNo;
   return LineNo;
@@ -402,15 +392,14 @@ void SourceManager::PrintStats() const {
   std::cerr << "  " << FileIDs.size() << " normal buffer FileID's, "
             << MacroIDs.size() << " macro expansion FileID's.\n";
     
-  
-  
   unsigned NumLineNumsComputed = 0;
   unsigned NumFileBytesMapped = 0;
-  for (std::map<const FileEntry *, FileInfo>::const_iterator I = 
+  for (std::set<ContentCache>::const_iterator I = 
        FileInfos.begin(), E = FileInfos.end(); I != E; ++I) {
-    NumLineNumsComputed += I->second.SourceLineCache != 0;
-    NumFileBytesMapped  += I->second.Buffer->getBufferSize();
+    NumLineNumsComputed += I->SourceLineCache != 0;
+    NumFileBytesMapped  += I->Buffer->getBufferSize();
   }
+  
   std::cerr << NumFileBytesMapped << " bytes of files mapped, "
             << NumLineNumsComputed << " files with line #'s computed.\n";
 }

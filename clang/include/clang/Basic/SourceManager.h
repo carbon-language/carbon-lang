@@ -15,8 +15,9 @@
 #define LLVM_CLANG_SOURCEMANAGER_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/Bitcode/SerializationFwd.h"
 #include <vector>
-#include <map>
+#include <set>
 #include <list>
 #include <cassert>
 
@@ -33,24 +34,31 @@ class IdentifierTokenInfo;
 /// SrcMgr - Private classes that are part of the SourceManager implementation.
 ///
 namespace SrcMgr {
-  /// FileInfo - Once instance of this struct is kept for every file loaded or
-  /// used.  This object owns the MemoryBuffer object.
-  struct FileInfo {
+  /// ContentCache - Once instance of this struct is kept for every file
+  ///  loaded or used.  This object owns the MemoryBuffer object.
+  struct ContentCache {
+    /// Reference to the file entry.  This reference does not own
+    /// the FileEntry object.  It is possible for this to be NULL if
+    /// the ContentCache encapsulates an imaginary text buffer.
+    const FileEntry* Entry;
+    
     /// Buffer - The actual buffer containing the characters from the input
-    /// file.
-    const llvm::MemoryBuffer *Buffer;
+    /// file.  This is owned by the FileInfo object.
+    const llvm::MemoryBuffer* Buffer;
     
     /// SourceLineCache - A new[]'d array of offsets for each source line.  This
-    /// is lazily computed.
-    ///
-    unsigned *SourceLineCache;
+    /// is lazily computed.  This is owned by the FileInfo object.
+    unsigned* SourceLineCache;
     
     /// NumLines - The number of lines in this FileInfo.  This is only valid if
     /// SourceLineCache is non-null.
     unsigned NumLines;
-  };
-  
-  typedef std::pair<const FileEntry * const, FileInfo> InfoRec;
+        
+    ContentCache(const FileEntry* e = NULL)
+    : Entry(e), Buffer(NULL), SourceLineCache(NULL), NumLines(0) {}
+
+    ~ContentCache();
+  };  
 
   /// FileIDInfo - Information about a FileID, basically just the logical file
   /// that it represents and include stack information.  A File SourceLocation
@@ -81,23 +89,23 @@ namespace SrcMgr {
     /// chunk number of this FileID.
     unsigned ChunkNo;
     
-    /// Info - Information about the source buffer itself.
-    ///
-    const InfoRec *Info;
-  public:
+    /// Content - Information about the source buffer itself.
+    const ContentCache* Content;
     
+  public:
     /// get - Return a FileIDInfo object.
-    static FileIDInfo get(SourceLocation IL, unsigned CN, const InfoRec *Inf) {
+    static FileIDInfo get(SourceLocation IL, unsigned CN, 
+                          const ContentCache *Con) {
       FileIDInfo X;
       X.IncludeLoc = IL;
       X.ChunkNo = CN;
-      X.Info = Inf;
+      X.Content = Con;
       return X;
     }
     
     SourceLocation getIncludeLoc() const { return IncludeLoc; }
     unsigned getChunkNo() const { return ChunkNo; }
-    const InfoRec *getInfo() const { return Info; }
+    const ContentCache* getContentCache() const { return Content; }
   };
   
   /// MacroIDInfo - Macro SourceLocations refer to these records by their ID.
@@ -123,8 +131,19 @@ namespace SrcMgr {
     }
   };
 }  // end SrcMgr namespace.
+} // end clang namespace
 
+namespace std {
+template <> struct less<clang::SrcMgr::ContentCache> {
+  inline bool operator()(const clang::SrcMgr::ContentCache& L,
+                         const clang::SrcMgr::ContentCache& R) const {
+    return L.Entry < R.Entry;
+  }
+};
+} // end std namespace
 
+namespace clang {
+  
 /// SourceManager - This file handles loading and caching of source files into
 /// memory.  This object owns the MemoryBuffer objects for all of the loaded
 /// files and assigns unique FileID's for each unique #include chain.
@@ -140,12 +159,12 @@ namespace SrcMgr {
 class SourceManager {
   /// FileInfos - Memoized information about all of the files tracked by this
   /// SourceManager.
-  std::map<const FileEntry *, SrcMgr::FileInfo> FileInfos;
+  std::set<SrcMgr::ContentCache> FileInfos;
   
   /// MemBufferInfos - Information about various memory buffers that we have
   /// read in.  This is a list, instead of a vector, because we need pointers to
   /// the FileInfo objects to be stable.
-  std::list<SrcMgr::InfoRec> MemBufferInfos;
+  std::list<SrcMgr::ContentCache> MemBufferInfos;
   
   /// FileIDs - Information about each FileID.  FileID #0 is not valid, so all
   /// entries are off by one.
@@ -157,25 +176,26 @@ class SourceManager {
   /// LastLineNo - These ivars serve as a cache used in the getLineNumber
   /// method which is used to speedup getLineNumber calls to nearby locations.
   unsigned LastLineNoFileIDQuery;
-  SrcMgr::FileInfo *LastLineNoFileInfo;
+  SrcMgr::ContentCache *LastLineNoContentCache;
   unsigned LastLineNoFilePos;
   unsigned LastLineNoResult;
+  
 public:
   SourceManager() : LastLineNoFileIDQuery(~0U) {}
-  ~SourceManager();
+  ~SourceManager() {}
   
   void clearIDTables() {
     FileIDs.clear();
     MacroIDs.clear();
     LastLineNoFileIDQuery = ~0U;
-    LastLineNoFileInfo = 0;
+    LastLineNoContentCache = 0;
   }
   
   /// createFileID - Create a new FileID that represents the specified file
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
   unsigned createFileID(const FileEntry *SourceFile, SourceLocation IncludePos){
-    const SrcMgr::InfoRec *IR = getInfoRec(SourceFile);
+    const SrcMgr::ContentCache *IR = getContentCache(SourceFile);
     if (IR == 0) return 0;    // Error opening file?
     return createFileID(IR, IncludePos);
   }
@@ -184,7 +204,7 @@ public:
   /// specified memory buffer.  This does no caching of the buffer and takes
   /// ownership of the MemoryBuffer, so only pass a MemoryBuffer to this once.
   unsigned createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
-    return createFileID(createMemBufferInfoRec(Buffer), SourceLocation());
+    return createFileID(createMemBufferContentCache(Buffer), SourceLocation());
   }
   
   /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
@@ -195,7 +215,7 @@ public:
   /// getBuffer - Return the buffer for the specified FileID.
   ///
   const llvm::MemoryBuffer *getBuffer(unsigned FileID) const {
-    return getFileInfo(FileID)->Buffer;
+    return getContentCache(FileID)->Buffer;
   }
   
   /// getBufferData - Return a pointer to the start and end of the character
@@ -266,13 +286,19 @@ public:
     return PLoc.getFileLocWithOffset(Loc.getMacroPhysOffs());
   }
 
-  /// getFileEntryForLoc - Return the FileEntry record for the physloc of the 
+  /// getContentCacheForLoc - Return the ContentCache for the physloc of the 
   /// specified SourceLocation, if one exists.
-  const FileEntry *getFileEntryForLoc(SourceLocation Loc) const {
+  const SrcMgr::ContentCache* getContentCacheForLoc(SourceLocation Loc) const {
     Loc = getPhysicalLoc(Loc);
     unsigned FileID = Loc.getFileID();
     assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
-    return FileIDs[FileID-1].getInfo()->first;
+    return FileIDs[FileID-1].getContentCache();
+  }
+  
+  /// getFileEntryForLoc - Return the FileEntry record for the physloc of the
+  ///  specified SourceLocation, if one exists.
+  const FileEntry* getFileEntryForLoc(SourceLocation Loc) const {
+    return getContentCacheForLoc(Loc)->Entry;
   }
   
   /// getDecomposedFileLoc - Decompose the specified file location into a raw
@@ -296,41 +322,38 @@ public:
   /// PrintStats - Print statistics to stderr.
   ///
   void PrintStats() const;
-private:
-  /// createFileID - Create a new fileID for the specified InfoRec and include
-  /// position.  This works regardless of whether the InfoRec corresponds to a
-  /// file or some other input source.
-  unsigned createFileID(const SrcMgr::InfoRec *File, SourceLocation IncludePos);
-    
-  /// getInfoRec - Create or return a cached FileInfo for the specified file.
-  /// This returns null on failure.
-  const SrcMgr::InfoRec *getInfoRec(const FileEntry *SourceFile);
-  
-  /// createMemBufferInfoRec - Create a new info record for the specified memory
-  /// buffer.  This does no caching.
-  const SrcMgr::InfoRec *createMemBufferInfoRec(const llvm::MemoryBuffer *Buf);
 
-  const SrcMgr::FileIDInfo *getFIDInfo(unsigned FileID) const {
+private:
+  /// createFileID - Create a new fileID for the specified ContentCache and
+  ///  include position.  This works regardless of whether the ContentCache
+  ///  corresponds to a file or some other input source.
+  unsigned createFileID(const SrcMgr::ContentCache* File,
+                        SourceLocation IncludePos);
+    
+  /// getContentCache - Create or return a cached ContentCache for the specified
+  ///  file.  This returns null on failure.
+  const SrcMgr::ContentCache* getContentCache(const FileEntry* SourceFile);
+  
+  /// createMemBufferContentCache - Create a new ContentCache for the specified
+  ///  memory buffer.
+  const SrcMgr::ContentCache* 
+  createMemBufferContentCache(const llvm::MemoryBuffer* Buf);
+
+  const SrcMgr::FileIDInfo* getFIDInfo(unsigned FileID) const {
     assert(FileID-1 < FileIDs.size() && "Invalid FileID!");
     return &FileIDs[FileID-1];
   }
   
-  const SrcMgr::InfoRec *getInfoRec(unsigned FileID) const {
-    return getInfoRec(getFIDInfo(FileID));
+  const SrcMgr::ContentCache *getContentCache(unsigned FileID) const {
+    return getContentCache(getFIDInfo(FileID));
   }
   
-  SrcMgr::FileInfo *getFileInfo(unsigned FileID) const {
-    if (const SrcMgr::InfoRec *IR = getInfoRec(FileID))
-      return const_cast<SrcMgr::FileInfo *>(&IR->second);
-    return 0;
-  }
-  
-  /// Return the InfoRec structure for the specified FileID.  This is always the
-  /// physical reference for the ID.
-  const SrcMgr::InfoRec *getInfoRec(const SrcMgr::FileIDInfo *FIDInfo) const {
-    return FIDInfo->getInfo();
-  }
-  
+  /// Return the ContentCache structure for the specified FileID.  
+  ///  This is always the physical reference for the ID.
+  const SrcMgr::ContentCache*
+  getContentCache(const SrcMgr::FileIDInfo* FIDInfo) const {
+    return FIDInfo->getContentCache();
+  }  
   
   /// getFullFilePos - This (efficient) method returns the offset from the start
   /// of the file that the specified physical SourceLocation represents.  This
