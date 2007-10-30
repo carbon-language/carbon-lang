@@ -202,7 +202,10 @@ public:
   /// it is not already in the folding set.  InsertPos must be obtained from 
   /// FindNodeOrInsertPos.
   void InsertNode(Node *N, void *InsertPos);
-    
+  
+  /// size - Returns the number of nodes in the folding set.
+  unsigned size() const { return NumNodes; }
+  
 private:
 
   /// GrowHashTable - Double the size of the hash table and rehash everything.
