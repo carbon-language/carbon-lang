@@ -1010,6 +1010,10 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     S += encoding;
   } else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
+    if (isObjcIdType(PointeeTy)) {
+      S += '@';
+      return;
+    }
     
     if (PointeeTy->isCharType()) {
       // char pointer types should be encoded as '*' unless it is a

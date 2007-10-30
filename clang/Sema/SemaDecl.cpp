@@ -1963,6 +1963,14 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     TypeTy **ArgTypes, IdentifierInfo **ArgNames,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind) {
   llvm::SmallVector<ParmVarDecl*, 16> Params;
+  
+  // We cannot build type 'id' laziliy. It is needed when checking if a 
+  // type is an 'id' (via call to isObjcIdType) even if there is no
+  // need for the dafult 'id' type.
+  // FIXME: Depending on the need to compare to 'id', this may have to go
+  // somewhere else. At this time, this is a good enough place to do type
+  // encoding of methods and ivars for the rewrite client.
+  GetObjcIdType(MethodLoc);
 
   for (unsigned i = 0; i < Sel.getNumArgs(); i++) {
     // FIXME: arg->AttrList must be stored too!
