@@ -1936,75 +1936,139 @@ void DAGTypeLegalizer::ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
 
 SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
   assert(OpNo == 1 && "Can only expand the stored value so far");
-  assert(!N->isTruncatingStore() && "Can't expand truncstore!");
 
-  unsigned IncrementSize = 0;
-  SDOperand Lo, Hi;
-  
-  // If this is a vector type, then we have to calculate the increment as
-  // the product of the element size in bytes, and the number of elements
-  // in the high half of the vector.
-  if (MVT::isVector(N->getValue().getValueType())) {
-    assert(0 && "Vectors not supported yet");
-#if 0
-    SDNode *InVal = ST->getValue().Val;
-    unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(0));
-    MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(0));
-    
-    // Figure out if there is a simple type corresponding to this Vector
-    // type.  If so, convert to the vector type.
-    MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
-    if (TLI.isTypeLegal(TVT)) {
-      // Turn this into a normal store of the vector type.
-      Tmp3 = LegalizeOp(Node->getOperand(1));
-      Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                            SVOffset, isVolatile, Alignment);
-      Result = LegalizeOp(Result);
-      break;
-    } else if (NumElems == 1) {
-      // Turn this into a normal store of the scalar type.
-      Tmp3 = ScalarizeVectorOp(Node->getOperand(1));
-      Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                            SVOffset, isVolatile, Alignment);
-      // The scalarized value type may not be legal, e.g. it might require
-      // promotion or expansion.  Relegalize the scalar store.
-      return LegalizeOp(Result);
-    } else {
-      SplitVectorOp(Node->getOperand(1), Lo, Hi);
-      IncrementSize = NumElems/2 * MVT::getSizeInBits(EVT)/8;
-    }
-#endif
-  } else {
-    GetExpandedOp(N->getValue(), Lo, Hi);
-    IncrementSize = Hi.Val ? MVT::getSizeInBits(Hi.getValueType())/8 : 0;
-    
-    if (!TLI.isLittleEndian())
-      std::swap(Lo, Hi);
-  }
-  
-  SDOperand Chain    = N->getChain();
-  SDOperand Ptr      = N->getBasePtr();
-  int SVOffset       = N->getSrcValueOffset();
+  MVT::ValueType VT = N->getOperand(1).getValueType();
+  MVT::ValueType NVT = TLI.getTypeToTransformTo(VT);
+  SDOperand Ch  = N->getChain();
+  SDOperand Ptr = N->getBasePtr();
+  int SVOffset = N->getSrcValueOffset();
   unsigned Alignment = N->getAlignment();
-  bool isVolatile    = N->isVolatile();
-  
-  Lo = DAG.getStore(Chain, Lo, Ptr, N->getSrcValue(),
-                    SVOffset, isVolatile, Alignment);
-  
-  assert(Hi.Val && "FIXME: int <-> float should be handled with promote!");
-#if 0
-  if (Hi.Val == NULL) {
-    // Must be int <-> float one-to-one expansion.
-    return Lo;
+  bool isVolatile = N->isVolatile();
+  SDOperand Lo, Hi;
+
+  assert(!(MVT::getSizeInBits(NVT) & 7) && "Expanded type not byte sized!");
+
+  if (!N->isTruncatingStore()) {
+    unsigned IncrementSize = 0;
+
+    // If this is a vector type, then we have to calculate the increment as
+    // the product of the element size in bytes, and the number of elements
+    // in the high half of the vector.
+    if (MVT::isVector(N->getValue().getValueType())) {
+      assert(0 && "Vectors not supported yet");
+  #if 0
+      SDNode *InVal = ST->getValue().Val;
+      unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(0));
+      MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(0));
+
+      // Figure out if there is a simple type corresponding to this Vector
+      // type.  If so, convert to the vector type.
+      MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
+      if (TLI.isTypeLegal(TVT)) {
+        // Turn this into a normal store of the vector type.
+        Tmp3 = LegalizeOp(Node->getOperand(1));
+        Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                              SVOffset, isVolatile, Alignment);
+        Result = LegalizeOp(Result);
+        break;
+      } else if (NumElems == 1) {
+        // Turn this into a normal store of the scalar type.
+        Tmp3 = ScalarizeVectorOp(Node->getOperand(1));
+        Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
+                              SVOffset, isVolatile, Alignment);
+        // The scalarized value type may not be legal, e.g. it might require
+        // promotion or expansion.  Relegalize the scalar store.
+        return LegalizeOp(Result);
+      } else {
+        SplitVectorOp(Node->getOperand(1), Lo, Hi);
+        IncrementSize = NumElems/2 * MVT::getSizeInBits(EVT)/8;
+      }
+  #endif
+    } else {
+      GetExpandedOp(N->getValue(), Lo, Hi);
+      IncrementSize = Hi.Val ? MVT::getSizeInBits(Hi.getValueType())/8 : 0;
+
+      if (!TLI.isLittleEndian())
+        std::swap(Lo, Hi);
+    }
+
+    Lo = DAG.getStore(Ch, Lo, Ptr, N->getSrcValue(),
+                      SVOffset, isVolatile, Alignment);
+
+    assert(Hi.Val && "FIXME: int <-> float should be handled with promote!");
+  #if 0
+    if (Hi.Val == NULL) {
+      // Must be int <-> float one-to-one expansion.
+      return Lo;
+    }
+  #endif
+
+    Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                      getIntPtrConstant(IncrementSize));
+    assert(isTypeLegal(Ptr.getValueType()) && "Pointers must be legal!");
+    Hi = DAG.getStore(Ch, Hi, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
+                      isVolatile, MinAlign(Alignment, IncrementSize));
+    return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
+  } else if (MVT::getSizeInBits(N->getStoredVT()) <= MVT::getSizeInBits(NVT)) {
+    GetExpandedOp(N->getValue(), Lo, Hi);
+    return DAG.getTruncStore(Ch, Lo, Ptr, N->getSrcValue(), SVOffset,
+                             N->getStoredVT(), isVolatile, Alignment);
+  } else if (TLI.isLittleEndian()) {
+    // Little-endian - low bits are at low addresses.
+    GetExpandedOp(N->getValue(), Lo, Hi);
+
+    Lo = DAG.getStore(Ch, Lo, Ptr, N->getSrcValue(), SVOffset,
+                      isVolatile, Alignment);
+
+    unsigned ExcessBits =
+      MVT::getSizeInBits(N->getStoredVT()) - MVT::getSizeInBits(NVT);
+    MVT::ValueType NEVT = MVT::getIntegerType(ExcessBits);
+
+    // Increment the pointer to the other half.
+    unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
+    Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                      getIntPtrConstant(IncrementSize));
+    Hi = DAG.getTruncStore(Ch, Hi, Ptr, N->getSrcValue(),
+                           SVOffset+IncrementSize, NEVT,
+                           isVolatile, MinAlign(Alignment, IncrementSize));
+    return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
+  } else {
+    // Big-endian - high bits are at low addresses.  Favor aligned stores at
+    // the cost of some bit-fiddling.
+    GetExpandedOp(N->getValue(), Lo, Hi);
+
+    MVT::ValueType EVT = N->getStoredVT();
+    unsigned EBytes = (MVT::getSizeInBits(EVT) + 7)/8;
+    unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
+    unsigned ExcessBits = (EBytes - IncrementSize)*8;
+    MVT::ValueType HiVT =
+      MVT::getIntegerType(MVT::getSizeInBits(EVT)-ExcessBits);
+
+    if (ExcessBits < MVT::getSizeInBits(NVT)) {
+      // Transfer high bits from the top of Lo to the bottom of Hi.
+      Hi = DAG.getNode(ISD::SHL, NVT, Hi,
+                       DAG.getConstant(MVT::getSizeInBits(NVT) - ExcessBits,
+                                       TLI.getShiftAmountTy()));
+      Hi = DAG.getNode(ISD::OR, NVT, Hi,
+                       DAG.getNode(ISD::SRL, NVT, Lo,
+                                   DAG.getConstant(ExcessBits,
+                                                   TLI.getShiftAmountTy())));
+    }
+
+    // Store both the high bits and maybe some of the low bits.
+    Hi = DAG.getTruncStore(Ch, Hi, Ptr, N->getSrcValue(),
+                           SVOffset, HiVT, isVolatile, Alignment);
+
+    // Increment the pointer to the other half.
+    Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                      getIntPtrConstant(IncrementSize));
+    // Store the lowest ExcessBits bits in the second half.
+    Lo = DAG.getTruncStore(Ch, Lo, Ptr, N->getSrcValue(),
+                           SVOffset+IncrementSize,
+                           MVT::getIntegerType(ExcessBits),
+                           isVolatile, MinAlign(Alignment, IncrementSize));
+    return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
   }
-#endif
-  
-  Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
-                    getIntPtrConstant(IncrementSize));
-  assert(isTypeLegal(Ptr.getValueType()) && "Pointers must be legal!");
-  Hi = DAG.getStore(Chain, Hi, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
-                    isVolatile, MinAlign(Alignment, IncrementSize));
-  return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
 }
 
 
