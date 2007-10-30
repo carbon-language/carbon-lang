@@ -113,7 +113,7 @@ private:
   CFGBlock* addStmt(Stmt* S);
   CFGBlock* WalkAST(Stmt* S, bool AlwaysAddStmt);
   CFGBlock* WalkAST_VisitChildren(Stmt* S);
-  CFGBlock* WalkAST_VisitVarDecl(VarDecl* D);
+  CFGBlock* WalkAST_VisitDeclSubExprs(StmtIterator& I);
   CFGBlock* WalkAST_VisitStmtExpr(StmtExpr* S);
   CFGBlock* WalkAST_VisitCallExpr(CallExpr* C);
   void FinishBlock(CFGBlock* B);
@@ -266,12 +266,13 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       return addStmt(C->getCond());
     }
 
-    case Stmt::DeclStmtClass:      
-      if (VarDecl* V = dyn_cast<VarDecl>(cast<DeclStmt>(S)->getDecl())) {      
-        Block->appendStmt(S);
-        return WalkAST_VisitVarDecl(V);
-      }
-      else return Block;
+    case Stmt::DeclStmtClass: {
+      ScopedDecl* D = cast<DeclStmt>(S)->getDecl();
+      Block->appendStmt(S);
+      
+      StmtIterator I(D);
+      return WalkAST_VisitDeclSubExprs(I);
+    }
       
     case Stmt::AddrLabelExprClass: {
       AddrLabelExpr* A = cast<AddrLabelExpr>(S);
@@ -325,22 +326,19 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
   };
 }
 
-/// WalkAST_VisitVarDecl - Utility method to handle VarDecls contained in
-///  DeclStmts.  Because the initialization code for declarations can
-///  contain arbitrary expressions, we must linearize declarations
-///  to handle arbitrary control-flow induced by those expressions.
-CFGBlock* CFGBuilder::WalkAST_VisitVarDecl(VarDecl* V) {
-  // We actually must parse the LAST declaration in a chain of
-  // declarations first, because we are building the CFG in reverse
-  // order.
-  if (Decl* D = V->getNextDeclarator())
-    if (VarDecl* Next = cast<VarDecl>(D))
-      Block = WalkAST_VisitVarDecl(Next);
-    
-  if (Expr* E = V->getInit())
-    return addStmt(E);
-
-  assert (Block);
+/// WalkAST_VisitDeclSubExprs - Utility method to handle Decls contained in
+///  DeclStmts.  Because the initialization code (and sometimes the
+///  the type declarations) for DeclStmts can contain arbitrary expressions, 
+///  we must linearize declarations to handle arbitrary control-flow induced by
+/// those expressions.  
+CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExprs(StmtIterator& I) {
+  Stmt* S = *I;
+  ++I;
+  
+  if (I != StmtIterator())
+    WalkAST_VisitDeclSubExprs(I);
+  
+  Block = addStmt(S);
   return Block;
 }
 
