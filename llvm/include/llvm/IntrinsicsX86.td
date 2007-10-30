@@ -759,7 +759,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
                          llvm_v2i32_ty], [IntrNoMem]>;
   def int_x86_mmx_psll_q : GCCBuiltin<"__builtin_ia32_psllq">,
-              Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
+              Intrinsic<[llvm_v1i64_ty, llvm_v1i64_ty,
                          llvm_v2i32_ty], [IntrNoMem]>;
 
   def int_x86_mmx_psrl_w : GCCBuiltin<"__builtin_ia32_psrlw">,
@@ -769,7 +769,7 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
               Intrinsic<[llvm_v2i32_ty, llvm_v2i32_ty,
                          llvm_v2i32_ty], [IntrNoMem]>;
   def int_x86_mmx_psrl_q : GCCBuiltin<"__builtin_ia32_psrlq">,
-              Intrinsic<[llvm_v2i32_ty,   llvm_v2i32_ty,
+              Intrinsic<[llvm_v1i64_ty,   llvm_v1i64_ty,
                          llvm_v2i32_ty], [IntrNoMem]>;
 
   def int_x86_mmx_psra_w : GCCBuiltin<"__builtin_ia32_psraw">,
