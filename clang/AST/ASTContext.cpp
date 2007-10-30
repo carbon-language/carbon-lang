@@ -880,11 +880,9 @@ QualType ASTContext::getCFConstantStringType() {
 
 // This returns true if a type has been typedefed to BOOL:
 // typedef <type> BOOL;
-static bool isTypeTypedefedAsBOOL(QualType T)
-{
+static bool isTypeTypedefedAsBOOL(QualType T) {
   if (const TypedefType *TT = dyn_cast<TypedefType>(T))
-      if (!strcmp(TT->getDecl()->getName(), "BOOL"))
-        return true;
+    return !strcmp(TT->getDecl()->getName(), "BOOL");
         
   return false;
 }
