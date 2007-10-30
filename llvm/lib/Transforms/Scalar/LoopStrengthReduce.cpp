@@ -127,12 +127,12 @@ namespace {
     /// StrideOrder - An ordering of the keys in IVUsesByStride that is stable:
     /// We use this to iterate over the IVUsesByStride collection without being
     /// dependent on random ordering of pointers in the process.
-    std::vector<SCEVHandle> StrideOrder;
+    SmallVector<SCEVHandle, 16> StrideOrder;
 
     /// CastedValues - As we need to cast values to uintptr_t, this keeps track
     /// of the casted version of each value.  This is accessed by
     /// getCastedVersionOf.
-    std::map<Value*, Value*> CastedPointers;
+    DenseMap<Value*, Value*> CastedPointers;
 
     /// DeadInsts - Keep track of instructions we may have made dead, so that
     /// we can remove them after we are done working.
@@ -393,8 +393,7 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
   // post-incremented value.
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
     if (PN->getIncomingValue(i) == IV) {
-      SplitCriticalEdge(PN->getIncomingBlock(i), PN->getParent(), P,
-                        true);
+      SplitCriticalEdge(PN->getIncomingBlock(i), PN->getParent(), P, false);
       // Splitting the critical edge can reduce the number of entries in this
       // PHI.
       e = PN->getNumIncomingValues();
@@ -627,7 +626,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
   // have multiple entries for the same predecessor.  We use a map to make sure
   // that a PHI node only has a single Value* for each predecessor (which also
   // prevents us from inserting duplicate code in some blocks).
-  std::map<BasicBlock*, Value*> InsertedCode;
+  DenseMap<BasicBlock*, Value*> InsertedCode;
   PHINode *PN = cast<PHINode>(Inst);
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     if (PN->getIncomingValue(i) == OperandValToReplace) {
@@ -640,7 +639,7 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
           (PN->getParent() != L->getHeader() || !L->contains(PHIPred))) {
         
         // First step, split the critical edge.
-        SplitCriticalEdge(PHIPred, PN->getParent(), P, true);
+        SplitCriticalEdge(PHIPred, PN->getParent(), P, false);
             
         // Next step: move the basic block.  In particular, if the PHI node
         // is outside of the loop, and PredTI is in the loop, we want to
@@ -1286,7 +1285,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // Get a base value.
     SCEVHandle Base = UsersToProcess[i].Base;
     
-    // Compact everything with this base to be consequetive with this one.
+    // Compact everything with this base to be consequtive with this one.
     for (unsigned j = i+1; j != e; ++j) {
       if (UsersToProcess[j].Base == Base) {
         std::swap(UsersToProcess[i+1], UsersToProcess[j]);
@@ -1355,10 +1354,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       // If we are reusing the iv, then it must be multiplied by a constant
       // factor take advantage of addressing mode scale component.
       if (RewriteFactor != 0) {
-        RewriteExpr =
-          SE->getMulExpr(SE->getIntegerSCEV(RewriteFactor,
-                                          RewriteExpr->getType()),
-                           RewriteExpr);
+        RewriteExpr = SE->getMulExpr(SE->getIntegerSCEV(RewriteFactor,
+                                                        RewriteExpr->getType()),
+                                     RewriteExpr);
 
         // The common base is emitted in the loop preheader. But since we
         // are reusing an IV, it has not been used to initialize the PHI node.
