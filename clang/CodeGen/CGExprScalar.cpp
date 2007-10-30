@@ -496,13 +496,15 @@ Value *ScalarExprEmitter::VisitPrePostIncDec(const UnaryOperator *E,
       NextVal = llvm::ConstantInt::get(InVal->getType(), AmountVal);
     else if (InVal->getType() == llvm::Type::FloatTy)
       // FIXME: Handle long double.
-      NextVal = llvm::ConstantFP::get(InVal->getType(),
-                                    llvm::APFloat(static_cast<float>(AmountVal)));
+      NextVal = 
+        llvm::ConstantFP::get(InVal->getType(),
+                              llvm::APFloat(static_cast<float>(AmountVal)));
     else {
       // FIXME: Handle long double.
       assert(InVal->getType() == llvm::Type::DoubleTy);
-      NextVal = llvm::ConstantFP::get(InVal->getType(),
-                                      llvm::APFloat(static_cast<double>(AmountVal)));
+      NextVal = 
+        llvm::ConstantFP::get(InVal->getType(),
+                              llvm::APFloat(static_cast<double>(AmountVal)));
     }
     NextVal = Builder.CreateAdd(InVal, NextVal, isInc ? "inc" : "dec");
   }
@@ -907,7 +909,8 @@ VisitConditionalOperator(const ConditionalOperator *E) {
 
 Value *ScalarExprEmitter::VisitChooseExpr(ChooseExpr *E) {
   // Emit the LHS or RHS as appropriate.
-  return Visit(E->isConditionTrue(CGF.getContext()) ? E->getLHS() : E->getRHS());
+  return
+    Visit(E->isConditionTrue(CGF.getContext()) ? E->getLHS() : E->getRHS());
 }
 
 Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE)

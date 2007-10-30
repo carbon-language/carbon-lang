@@ -194,13 +194,15 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
 
   std::vector<llvm::Constant*> ArrayElts;
   const llvm::PointerType *APType = cast<llvm::PointerType>(DestPtr->getType());
-  const llvm::ArrayType *AType = cast<llvm::ArrayType>(APType->getElementType());
+  const llvm::ArrayType *AType = 
+    cast<llvm::ArrayType>(APType->getElementType());
 
   // Copy initializer elements.
   bool AllConstElements = true;
   unsigned i = 0;
   for (i = 0; i < NumInitElements; ++i) {
-    if (llvm::Constant *C = dyn_cast<llvm::Constant>(CGF.EmitScalarExpr(E->getInit(i))))
+    if (llvm::Constant *C = 
+        dyn_cast<llvm::Constant>(CGF.EmitScalarExpr(E->getInit(i))))
       ArrayElts.push_back(C);
     else {
       AllConstElements = false;

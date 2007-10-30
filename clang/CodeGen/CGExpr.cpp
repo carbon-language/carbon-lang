@@ -230,7 +230,7 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
   Builder.CreateStore(Src.getScalarVal(), DstAddr);
 }
 
-void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst, 
+void CodeGenFunction::EmitStoreThroughOCUComponentLValue(RValue Src, LValue Dst,
                                                          QualType Ty) {
   // This access turns into a read/modify/write of the vector.  Load the input
   // value now.
@@ -392,9 +392,9 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     
     if (E->isArrow()) {
       QualType PTy = cast<PointerType>(BaseExpr->getType())->getPointeeType();
-      BaseValue =  Builder.CreateBitCast(BaseValue, 
-                                         llvm::PointerType::get(ConvertType(PTy)),
-                                         "tmp");
+      BaseValue =  
+        Builder.CreateBitCast(BaseValue, 
+                              llvm::PointerType::get(ConvertType(PTy)), "tmp");
     }
   } else
     BaseValue = EmitScalarExpr(BaseExpr);
@@ -408,7 +408,8 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   // Match union field type.
   if (BaseExpr->getType()->isUnionType()) {
     const llvm::Type * FieldTy = ConvertType(Field->getType());
-    const llvm::PointerType * BaseTy = cast<llvm::PointerType>(BaseValue->getType());
+    const llvm::PointerType * BaseTy = 
+      cast<llvm::PointerType>(BaseValue->getType());
     if (FieldTy != BaseTy->getElementType()) {
       V = Builder.CreateBitCast(V, llvm::PointerType::get(FieldTy), "tmp");
     }

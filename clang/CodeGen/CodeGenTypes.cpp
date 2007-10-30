@@ -235,8 +235,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
         return OpaqueI->second;
 
       // Create new OpaqueType now for later use.
-      // FIXME: This creates a lot of opaque types, most of which are not needed.  
-      // Reevaluate this when performance analyis finds tons of opaque types.
+      // FIXME: This creates a lot of opaque types, most of them are not 
+      // needed. Reevaluate this when performance analyis finds tons of 
+      // opaque types.
       llvm::OpaqueType *OpaqueTy =  llvm::OpaqueType::get();
       RecordTypesToResolve[RD] = OpaqueTy;
       TypeHolderMap.insert(std::make_pair(T.getTypePtr(), 
