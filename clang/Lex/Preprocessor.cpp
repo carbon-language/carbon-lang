@@ -369,15 +369,14 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__OBJC__=1");
   if (PP.getLangOptions().ObjC2)
     DefineBuiltinMacro(Buf, "__OBJC2__=1");
-
   if (PP.getLangOptions().ObjC1) {
+    const char *ObjcType;
     // Predefine all the ObjC goodies (traditionally declared in <objc/objc.h>).
     // We define the following header guard for source compatibility. It has
     // the effect of ignoring any explicit inclusion of <objc/objc.h>:-)
     DefineBuiltinMacro(Buf, "_OBJC_OBJC_H_=1");
     DefineBuiltinMacro(Buf, "OBJC_EXPORT=extern");
     DefineBuiltinMacro(Buf, "OBJC_IMPORT=extern");
-    const char *ObjcType;
     ObjcType = "typedef struct objc_class *Class;\n";
     Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
     ObjcType = "typedef struct objc_object { Class isa; } *id;\n";
@@ -395,19 +394,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     ObjcType = "extern const char *sel_getName(SEL sel);\n";
     Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
     ObjcType = "extern SEL sel_getUid(const char *str);\n";
-    Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
-    
-    // Predefine ObjC primitive functions, traditionally declared in
-    // <objc/objc-runtime.h>. Unlike the declarations above, we don't protect
-    // these with a header guard (since multiple identical function declarations
-    // don't result in an error. FIXME: don't predefine these...
-    ObjcType = "extern id objc_getClass(const char *name);\n";
-    Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
-    ObjcType = "extern id objc_getMetaClass(const char *name);\n";
-    Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
-    ObjcType = "extern id objc_msgSend(id self, SEL op, ...);\n";
-    Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
-    ObjcType = "extern id objc_msgSendSuper(struct objc_super *super, SEL op, ...);\n";
     Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
   }
 

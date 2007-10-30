@@ -2073,6 +2073,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
         return true;
     }
   }
+  GetObjcSelType(lbrac); // FIXME: a hack to install the sel type.
   return new ObjCMessageExpr(receiverName, Sel, returnType, lbrac, rbrac,
                              ArgExprs);
 }
@@ -2130,5 +2131,6 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
           return true;
     }
   }
+  GetObjcSelType(lbrac); // FIXME: a hack to install the sel type.
   return new ObjCMessageExpr(RExpr, Sel, returnType, lbrac, rbrac, ArgExprs);
 }

@@ -63,6 +63,7 @@ namespace {
     void RewriteCategoryDecl(ObjcCategoryDecl *Dcl);
     void RewriteProtocolDecl(ObjcProtocolDecl *Dcl);
     void RewriteMethods(int nMethods, ObjcMethodDecl **Methods);
+    void RewriteFunctionDecl(FunctionDecl *FD);
     
     // Expression Rewriting.
     Stmt *RewriteFunctionBody(Stmt *S);
@@ -70,6 +71,9 @@ namespace {
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
+    void SynthMsgSendFunctionDecl();
+    void SynthGetClassFunctionDecl();
+    
     // Metadata emission.
     void HandleObjcMetaDataEmission();
     void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
@@ -117,12 +121,7 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
 
   // Look for built-in declarations that we need to refer during the rewrite.
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-    if (strcmp(FD->getName(), "objc_msgSend") == 0)
-      MsgSendFunctionDecl = FD;
-    else if (strcmp(FD->getName(), "objc_getClass") == 0)
-      GetClassFunctionDecl = FD;
-    else if (strcmp(FD->getName(), "sel_getUid") == 0)
-      SelGetUidFunctionDecl = FD;
+    RewriteFunctionDecl(FD);
   } else if (ObjcInterfaceDecl *MD = dyn_cast<ObjcInterfaceDecl>(D)) {
     RewriteInterfaceDecl(MD);
   } else if (ObjcCategoryDecl *CD = dyn_cast<ObjcCategoryDecl>(D)) {
@@ -403,10 +402,52 @@ CallExpr *RewriteTest::SynthesizeCallToFunctionDecl(
   return new CallExpr(ICE, args, nargs, FT->getResultType(), SourceLocation());
 }
 
+void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
+  // declared in <objc/objc.h>
+  if (strcmp(FD->getName(), "sel_getUid") == 0)
+    SelGetUidFunctionDecl = FD;
+    
+  // FIXME: Check if any types are isa<ObjcQualifiedInterfaceType> (yuck).
+}
+
+// SynthMsgSendFunctionDecl - id objc_msgSend(id self, SEL op, ...);
+void RewriteTest::SynthMsgSendFunctionDecl() {
+  IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSend");
+  llvm::SmallVector<QualType, 16> ArgTys;
+  QualType argT = Context->getObjcIdType();
+  assert(!argT.isNull() && "Can't find 'id' type");
+  ArgTys.push_back(argT);
+  argT = Context->getObjcSelType();
+  assert(!argT.isNull() && "Can't find 'SEL' type");
+  ArgTys.push_back(argT);
+  QualType msgSendType = Context->getFunctionType(Context->getObjcIdType(),
+                                                  &ArgTys[0], ArgTys.size(),
+                                                  true /*isVariadic*/);
+  MsgSendFunctionDecl = new FunctionDecl(SourceLocation(), 
+                                         msgSendIdent, msgSendType,
+                                         FunctionDecl::Extern, false, 0);
+}
+
+// SynthGetClassFunctionDecl - id objc_getClass(const char *name);
+void RewriteTest::SynthGetClassFunctionDecl() {
+  IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getClass");
+  llvm::SmallVector<QualType, 16> ArgTys;
+  ArgTys.push_back(Context->getPointerType(
+                     Context->CharTy.getQualifiedType(QualType::Const)));
+  QualType getClassType = Context->getFunctionType(Context->getObjcIdType(),
+                                                   &ArgTys[0], ArgTys.size(),
+                                                   false /*isVariadic*/);
+  GetClassFunctionDecl = new FunctionDecl(SourceLocation(), 
+                                          getClassIdent, getClassType,
+                                          FunctionDecl::Extern, false, 0);
+}
+
 Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
-  assert(MsgSendFunctionDecl && "Can't find objc_msgSend() decl");
   assert(SelGetUidFunctionDecl && "Can't find sel_getUid() decl");
-  assert(GetClassFunctionDecl && "Can't find objc_getClass() decl");
+  if (!MsgSendFunctionDecl)
+    SynthMsgSendFunctionDecl();
+  if (!GetClassFunctionDecl)
+    SynthGetClassFunctionDecl();
 
   // Synthesize a call to objc_msgSend().
   llvm::SmallVector<Expr*, 8> MsgExprs;
