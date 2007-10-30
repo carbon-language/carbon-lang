@@ -228,6 +228,21 @@ DeleteTriviallyDeadInstructions(SmallPtrSet<Instruction*,16> &Insts) {
   while (!Insts.empty()) {
     Instruction *I = *Insts.begin();
     Insts.erase(I);
+
+    if (PHINode *PN = dyn_cast<PHINode>(I)) {
+      // If all incoming values to the Phi are the same, we can replace the Phi
+      // with that value.
+      if (Value *PNV = PN->hasConstantValue()) {
+        if (Instruction *U = dyn_cast<Instruction>(PNV))
+          Insts.insert(U);
+        PN->replaceAllUsesWith(PNV);
+        SE->deleteValueFromRecords(PN);
+        PN->eraseFromParent();
+        Changed = true;
+        continue;
+      }
+    }
+
     if (isInstructionTriviallyDead(I)) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
@@ -359,7 +374,8 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
 /// the loop, resulting in reg-reg copies (if we use the pre-inc value when we
 /// should use the post-inc value).
 static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
-                                       Loop *L, DominatorTree *DT, Pass *P) {
+                                       Loop *L, DominatorTree *DT, Pass *P,
+                                       SmallPtrSet<Instruction*,16> &DeadInsts){
   // If the user is in the loop, use the preinc value.
   if (L->contains(User->getParent())) return false;
   
@@ -399,6 +415,9 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
       e = PN->getNumIncomingValues();
       if (--NumUses == 0) break;
     }
+
+  // PHI node might have become a constant value after SplitCriticalEdge.
+  DeadInsts.insert(User);
   
   return true;
 }
@@ -461,7 +480,7 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
       // Okay, we found a user that we cannot reduce.  Analyze the instruction
       // and decide what to do with it.  If we are a use inside of the loop, use
       // the value before incrementation, otherwise use it after incrementation.
-      if (IVUseShouldUsePostIncValue(User, I, L, DT, this)) {
+      if (IVUseShouldUsePostIncValue(User, I, L, DT, this, DeadInsts)) {
         // The value used will be incremented by the stride more than we are
         // expecting, so subtract this off.
         SCEVHandle NewStart = SE->getMinusSCEV(Start, Stride);
@@ -522,8 +541,8 @@ namespace {
     // operands of Inst to use the new expression 'NewBase', with 'Imm' added
     // to it.
     void RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
-                                        SCEVExpander &Rewriter, Loop *L,
-                                        Pass *P);
+                                       SCEVExpander &Rewriter, Loop *L, Pass *P,
+                                       SmallPtrSet<Instruction*,16> &DeadInsts);
     
     Value *InsertCodeForBaseAtPosition(const SCEVHandle &NewBase, 
                                        SCEVExpander &Rewriter,
@@ -584,8 +603,8 @@ Value *BasedUser::InsertCodeForBaseAtPosition(const SCEVHandle &NewBase,
 // operands of Inst to use the new expression 'NewBase', with 'Imm' added
 // to it.
 void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
-                                               SCEVExpander &Rewriter,
-                                               Loop *L, Pass *P) {
+                                      SCEVExpander &Rewriter, Loop *L, Pass *P,
+                                      SmallPtrSet<Instruction*,16> &DeadInsts) {
   if (!isa<PHINode>(Inst)) {
     // By default, insert code at the user instruction.
     BasicBlock::iterator InsertPt = Inst;
@@ -676,6 +695,10 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
       Rewriter.clear();
     }
   }
+
+  // PHI node might have become a constant value after SplitCriticalEdge.
+  DeadInsts.insert(Inst);
+
   DOUT << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst;
 }
 
@@ -1373,7 +1396,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         // Add BaseV to the PHI value if needed.
         RewriteExpr = SE->getAddExpr(RewriteExpr, SE->getUnknown(BaseV));
 
-      User.RewriteInstructionToUseNewBase(RewriteExpr, Rewriter, L, this);
+      User.RewriteInstructionToUseNewBase(RewriteExpr, Rewriter, L, this,
+                                          DeadInsts);
 
       // Mark old value we replaced as possibly dead, so that it is elminated
       // if we just replaced the last use of that value.
@@ -1457,7 +1481,7 @@ namespace {
 /// v1 = v1 + 3
 /// if (v1 < 30) goto loop
 ICmpInst *LoopStrengthReduce::ChangeCompareStride(Loop *L, ICmpInst *Cond,
-                                                  IVStrideUse* &CondUse,
+                                                IVStrideUse* &CondUse,
                                                 const SCEVHandle* &CondStride) {
   if (StrideOrder.size() < 2 ||
       IVUsesByStride[*CondStride].Users.size() != 1)
@@ -1734,7 +1758,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager &LPM) {
     PHINode *PN;
     while ((PN = dyn_cast<PHINode>(I))) {
       ++I;  // Preincrement iterator to avoid invalidating it when deleting PN.
-      
+
       // At this point, we know that we have killed one or more GEP
       // instructions.  It is worth checking to see if the cann indvar is also
       // dead, so that we can remove it as well.  The requirements for the cann
