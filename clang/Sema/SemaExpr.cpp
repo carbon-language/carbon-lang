@@ -1194,13 +1194,8 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
 // Utility method to plow through parentheses to get the first nested
 // non-ParenExpr expr.
 static inline Expr* IgnoreParen(Expr* E) {
-  
-  while (true) {
-    if (ParenExpr* P = dyn_cast<ParenExpr>(E))
-      E = P->getSubExpr();
-    else
-      break;
-  }
+  while (ParenExpr* P = dyn_cast<ParenExpr>(E))
+    E = P->getSubExpr();
   
   return E;
 }
