@@ -489,7 +489,8 @@ public:
 		    SourceLocation AtInterfaceLoc,
                     IdentifierInfo *ClassName, SourceLocation ClassLoc,
                     IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
-                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs);
+                    IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs,
+                    SourceLocation EndProtoLoc);
   
   virtual DeclTy *ActOnStartClassImplementation(
 		    SourceLocation AtClassImplLoc,

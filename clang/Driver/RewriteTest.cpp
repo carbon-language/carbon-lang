@@ -60,6 +60,8 @@ namespace {
     void RewriteTabs();
     void RewriteForwardClassDecl(ObjcClassDecl *Dcl);
     void RewriteInterfaceDecl(ObjcInterfaceDecl *Dcl);
+    void RewriteCategoryDecl(ObjcCategoryDecl *Dcl);
+    void RewriteMethods(int nMethods, ObjcMethodDecl **Methods);
     
     // Expression Rewriting.
     Stmt *RewriteFunctionBody(Stmt *S);
@@ -122,6 +124,8 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
       SelGetUidFunctionDecl = FD;
   } else if (ObjcInterfaceDecl *MD = dyn_cast<ObjcInterfaceDecl>(D)) {
     RewriteInterfaceDecl(MD);
+  } else if (ObjcCategoryDecl *CD = dyn_cast<ObjcCategoryDecl>(D)) {
+    RewriteCategoryDecl(CD);
   }
   // If we have a decl in the main file, see if we should rewrite it.
   if (SM->getDecomposedFileLoc(Loc).first == MainFileID)
@@ -264,6 +268,31 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
                       typedefString.c_str(), typedefString.size());
 }
 
+void RewriteTest::RewriteMethods(int nMethods, ObjcMethodDecl **Methods) {
+  for (int i = 0; i < nMethods; i++) {
+    ObjcMethodDecl *Method = Methods[i];
+    SourceLocation Loc = Method->getLocStart();
+
+    Rewrite.ReplaceText(Loc, 0, "// ", 3);
+    
+    // FIXME: handle methods that are declared across multiple lines.
+  }
+}
+
+void RewriteTest::RewriteCategoryDecl(ObjcCategoryDecl *CatDecl) {
+  SourceLocation LocStart = CatDecl->getLocStart();
+  
+  // FIXME: handle category headers that are declared across multiple lines.
+  Rewrite.ReplaceText(LocStart, 0, "// ", 3);
+  
+  RewriteMethods(CatDecl->getNumInstanceMethods(),
+                 CatDecl->getInstanceMethods());
+  RewriteMethods(CatDecl->getNumClassMethods(),
+                 CatDecl->getClassMethods());
+  // Lastly, comment out the @end.
+  Rewrite.ReplaceText(CatDecl->getAtEndLoc(), 0, "// ", 3);
+}
+
 void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
 
   SourceLocation LocStart = ClassDecl->getLocStart();
@@ -280,28 +309,11 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
   Rewrite.ReplaceText(LocStart, endBuf-startBuf, 
                       ResultStr.c_str(), ResultStr.size());
   
-  int nInstanceMethods = ClassDecl->getNumInstanceMethods();
-  ObjcMethodDecl **instanceMethods = ClassDecl->getInstanceMethods();
+  RewriteMethods(ClassDecl->getNumInstanceMethods(),
+                 ClassDecl->getInstanceMethods());
+  RewriteMethods(ClassDecl->getNumClassMethods(),
+                 ClassDecl->getClassMethods());
   
-  for (int i = 0; i < nInstanceMethods; i++) {
-    ObjcMethodDecl *instanceMethod = instanceMethods[i];
-    SourceLocation Loc = instanceMethod->getLocStart();
-
-    Rewrite.ReplaceText(Loc, 0, "// ", 3);
-    
-    // FIXME: handle methods that are declared across multiple lines.
-  }
-  int nClassMethods = ClassDecl->getNumClassMethods();
-  ObjcMethodDecl **classMethods = ClassDecl->getClassMethods();
-  
-  for (int i = 0; i < nClassMethods; i++) {
-    ObjcMethodDecl *classMethod = classMethods[i];
-    SourceLocation Loc = classMethod->getLocStart();
-
-    Rewrite.ReplaceText(Loc, 0, "// ", 3);
-    
-    // FIXME: handle methods that are declared across multiple lines.
-  }
   // Lastly, comment out the @end.
   Rewrite.ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);
 }

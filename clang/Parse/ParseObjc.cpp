@@ -157,7 +157,8 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
     
     DeclTy *CategoryType = Actions.ActOnStartCategoryInterface(atLoc, 
                                      nameId, nameLoc, categoryId, categoryLoc,
-                                     &ProtocolRefs[0], ProtocolRefs.size());
+                                     &ProtocolRefs[0], ProtocolRefs.size(),
+                                     endProtoLoc);
     
     ParseObjCInterfaceDeclList(CategoryType, tok::objc_not_keyword);
 

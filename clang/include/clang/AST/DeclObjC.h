@@ -307,6 +307,9 @@ class ObjcProtocolDecl : public NamedDecl {
   int NumClassMethods;  // -1 if not defined
 
   bool isForwardProtoDecl; // declared with @protocol.
+  
+  SourceLocation EndLoc; // marks the '>' or identifier.
+  SourceLocation AtEndLoc; // marks the end of the entire interface.
 public:
   ObjcProtocolDecl(SourceLocation L, unsigned numRefProtos,
                    IdentifierInfo *Id, bool FD = false)
@@ -347,6 +350,14 @@ public:
   
   bool isForwardDecl() const { return isForwardProtoDecl; }
   void setForwardDecl(bool val) { isForwardProtoDecl = val; }
+
+  // Location information, modeled after the Stmt API. 
+  SourceLocation getLocStart() const { return getLocation(); } // '@'protocol
+  SourceLocation getLocEnd() const { return EndLoc; }
+  void setLocEnd(SourceLocation LE) { EndLoc = LE; };
+  
+  // We also need to record the @end location.
+  SourceLocation getAtEndLoc() const { return AtEndLoc; }
 
   static bool classof(const Decl *D) { return D->getKind() == ObjcProtocol; }
   static bool classof(const ObjcProtocolDecl *D) { return true; }
@@ -459,6 +470,8 @@ class ObjcCategoryDecl : public NamedDecl {
   /// Next category belonging to this class
   ObjcCategoryDecl *NextClassCategory;
   
+  SourceLocation EndLoc; // marks the '>' or identifier.
+  SourceLocation AtEndLoc; // marks the end of the entire interface.
 public:
   ObjcCategoryDecl(SourceLocation L, unsigned numRefProtocol,IdentifierInfo *Id)
     : NamedDecl(ObjcCategory, L, Id),
@@ -502,6 +515,13 @@ public:
     NextClassCategory = ClassInterface->getCategoryList();
     ClassInterface->setCategoryList(this);
   }
+  // Location information, modeled after the Stmt API. 
+  SourceLocation getLocStart() const { return getLocation(); } // '@'interface
+  SourceLocation getLocEnd() const { return EndLoc; }
+  void setLocEnd(SourceLocation LE) { EndLoc = LE; };
+  
+  // We also need to record the @end location.
+  SourceLocation getAtEndLoc() const { return AtEndLoc; }
   
   static bool classof(const Decl *D) { return D->getKind() == ObjcCategory; }
   static bool classof(const ObjcCategoryDecl *D) { return true; }

@@ -1081,16 +1081,18 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
     ObjcProtocols[ProtocolName] = PDecl;
   }    
   
-  /// Check then save referenced protocols
-  for (unsigned int i = 0; i != NumProtoRefs; i++) {
-    ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtoRefNames[i]];
-    if (!RefPDecl || RefPDecl->isForwardDecl())
-      Diag(ProtocolLoc, diag::err_undef_protocolref,
-           ProtoRefNames[i]->getName(),
-           ProtocolName->getName());
-    PDecl->setReferencedProtocols((int)i, RefPDecl);
+  if (NumProtoRefs) {
+    /// Check then save referenced protocols
+    for (unsigned int i = 0; i != NumProtoRefs; i++) {
+      ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtoRefNames[i]];
+      if (!RefPDecl || RefPDecl->isForwardDecl())
+        Diag(ProtocolLoc, diag::err_undef_protocolref,
+             ProtoRefNames[i]->getName(),
+             ProtocolName->getName());
+      PDecl->setReferencedProtocols((int)i, RefPDecl);
+    }
+    PDecl->setLocEnd(EndProtoLoc);
   }
-
   return PDecl;
 }
 
@@ -1137,7 +1139,8 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
                       SourceLocation AtInterfaceLoc,
                       IdentifierInfo *ClassName, SourceLocation ClassLoc,
                       IdentifierInfo *CategoryName, SourceLocation CategoryLoc,
-                      IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs) {
+                      IdentifierInfo **ProtoRefNames, unsigned NumProtoRefs,
+                      SourceLocation EndProtoLoc) {
   ObjcInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName);
   
   /// Check that class of this category is already completely declared.
@@ -1161,17 +1164,19 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
   if (!CDeclChain)
     CDecl->insertNextClassCategory();
 
-  /// Check then save referenced protocols
-  for (unsigned int i = 0; i != NumProtoRefs; i++) {
-    ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtoRefNames[i]];
-    if (!RefPDecl || RefPDecl->isForwardDecl()) {
-      Diag(CategoryLoc, diag::err_undef_protocolref,
-           ProtoRefNames[i]->getName(),
-           CategoryName->getName());
+  if (NumProtoRefs) {
+    /// Check then save referenced protocols
+    for (unsigned int i = 0; i != NumProtoRefs; i++) {
+      ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtoRefNames[i]];
+      if (!RefPDecl || RefPDecl->isForwardDecl()) {
+        Diag(CategoryLoc, diag::err_undef_protocolref,
+             ProtoRefNames[i]->getName(),
+             CategoryName->getName());
+      }
+      CDecl->setCatReferencedProtocols((int)i, RefPDecl);
     }
-    CDecl->setCatReferencedProtocols((int)i, RefPDecl);
+    CDecl->setLocEnd(EndProtoLoc);
   }
-  
   return CDecl;
 }
 

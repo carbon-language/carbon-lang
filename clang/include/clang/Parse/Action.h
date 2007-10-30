@@ -499,7 +499,8 @@ public:
     IdentifierInfo *CategoryName, 
     SourceLocation CategoryLoc,
     IdentifierInfo **ProtoRefNames, 
-    unsigned NumProtoRefs) {
+    unsigned NumProtoRefs,
+    SourceLocation EndProtoLoc) {
     return 0;
   }
   // ActOnStartClassImplementation - this action is called immdiately after
