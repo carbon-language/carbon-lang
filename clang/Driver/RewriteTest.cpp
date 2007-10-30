@@ -61,6 +61,7 @@ namespace {
     void RewriteForwardClassDecl(ObjcClassDecl *Dcl);
     void RewriteInterfaceDecl(ObjcInterfaceDecl *Dcl);
     void RewriteCategoryDecl(ObjcCategoryDecl *Dcl);
+    void RewriteProtocolDecl(ObjcProtocolDecl *Dcl);
     void RewriteMethods(int nMethods, ObjcMethodDecl **Methods);
     
     // Expression Rewriting.
@@ -126,6 +127,8 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
     RewriteInterfaceDecl(MD);
   } else if (ObjcCategoryDecl *CD = dyn_cast<ObjcCategoryDecl>(D)) {
     RewriteCategoryDecl(CD);
+  } else if (ObjcProtocolDecl *PD = dyn_cast<ObjcProtocolDecl>(D)) {
+    RewriteProtocolDecl(PD);
   }
   // If we have a decl in the main file, see if we should rewrite it.
   if (SM->getDecomposedFileLoc(Loc).first == MainFileID)
@@ -293,6 +296,20 @@ void RewriteTest::RewriteCategoryDecl(ObjcCategoryDecl *CatDecl) {
   Rewrite.ReplaceText(CatDecl->getAtEndLoc(), 0, "// ", 3);
 }
 
+void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
+  SourceLocation LocStart = PDecl->getLocStart();
+  
+  // FIXME: handle protocol headers that are declared across multiple lines.
+  Rewrite.ReplaceText(LocStart, 0, "// ", 3);
+  
+  RewriteMethods(PDecl->getNumInstanceMethods(),
+                 PDecl->getInstanceMethods());
+  RewriteMethods(PDecl->getNumClassMethods(),
+                 PDecl->getClassMethods());
+  // Lastly, comment out the @end.
+  Rewrite.ReplaceText(PDecl->getAtEndLoc(), 0, "// ", 3);
+}
+
 void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
 
   SourceLocation LocStart = ClassDecl->getLocStart();
@@ -349,7 +366,7 @@ Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
     // FIXME: Missing definition of Rewrite.InsertText(clang::SourceLocation, char const*, unsigned int).
     // Rewrite.InsertText(startLoc, messString.c_str(), messString.size());
     // Tried this, but it didn't work either...
-    Rewrite.ReplaceText(startLoc, 0, messString.c_str(), messString.size());
+    // Rewrite.ReplaceText(startLoc, 0, messString.c_str(), messString.size());
     return RewriteMessageExpr(MessExpr);
   }
   // Return this stmt unmodified.
