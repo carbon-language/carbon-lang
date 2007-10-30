@@ -392,22 +392,22 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "NO=(BOOL)0");
     DefineBuiltinMacro(Buf, "Nil=0");
     DefineBuiltinMacro(Buf, "nil=0");
-    ObjcType = "OBJC_EXPORT const char *sel_getName(SEL sel);\n";
+    ObjcType = "extern const char *sel_getName(SEL sel);\n";
     Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
-    ObjcType = "OBJC_EXPORT SEL sel_getUid(const char *str);\n";
+    ObjcType = "extern SEL sel_getUid(const char *str);\n";
     Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
     
     // Predefine ObjC primitive functions, traditionally declared in
     // <objc/objc-runtime.h>. Unlike the declarations above, we don't protect
     // these with a header guard (since multiple identical function declarations
     // don't result in an error. FIXME: don't predefine these...
-    ObjcType = "OBJC_EXPORT id objc_getClass(const char *name);\n";
+    ObjcType = "extern id objc_getClass(const char *name);\n";
     Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
-    ObjcType = "OBJC_EXPORT id objc_getMetaClass(const char *name);\n";
+    ObjcType = "extern id objc_getMetaClass(const char *name);\n";
     Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
-    ObjcType = "OBJC_EXPORT id objc_msgSend(id self, SEL op, ...);\n";
+    ObjcType = "extern id objc_msgSend(id self, SEL op, ...);\n";
     Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
-    ObjcType = "OBJC_EXPORT id objc_msgSendSuper(struct objc_super *super, SEL op, ...);\n";
+    ObjcType = "extern id objc_msgSendSuper(struct objc_super *super, SEL op, ...);\n";
     Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
   }
 
