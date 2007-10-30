@@ -1861,7 +1861,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
   // should be true.
   if (!ClassDecl)
     return;
-  
+    
   llvm::SmallVector<ObjcMethodDecl*, 32> insMethods;
   llvm::SmallVector<ObjcMethodDecl*, 16> clsMethods;
   

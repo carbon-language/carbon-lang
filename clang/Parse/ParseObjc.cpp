@@ -271,10 +271,11 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       ParseDeclarationOrFunctionDefinition();
     }
   }
-  if (allMethods.size())
-    /// Insert collected methods declarations into the @interface object.
-    Actions.ActOnAddMethodsToObjcDecl(CurScope, interfaceDecl, &allMethods[0], 
-                                      allMethods.size(), AtEndLoc);
+  /// Insert collected methods declarations into the @interface object.
+  /// This action is executed even if we don't have any methods (so the @end
+  /// can be recorded properly).
+  Actions.ActOnAddMethodsToObjcDecl(CurScope, interfaceDecl, &allMethods[0], 
+                                    allMethods.size(), AtEndLoc);
 }
 
 ///   Parse property attribute declarations.

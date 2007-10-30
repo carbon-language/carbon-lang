@@ -19,6 +19,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "clang/Lex/Lexer.h"
 using namespace clang;
 using llvm::utostr;
 
@@ -271,18 +272,12 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
   const char *startBuf = SM->getCharacterData(LocStart);
   const char *endBuf = SM->getCharacterData(LocEnd);
 
-  // FIXME: need to consider empty class decls (no vars, methods)...
-  //   @interface NSConstantString : NSSimpleCString
-  //   @end
-
-  if (*endBuf != '>' && *endBuf != '}')
-    // we have an identifier - scan ahead until the end of token.
-    endBuf = strchr(endBuf, ' '); // FIXME: implement correctly.
+  endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
 
   std::string ResultStr;
   SynthesizeObjcInternalStruct(ClassDecl, ResultStr);
     
-  Rewrite.ReplaceText(LocStart, endBuf-startBuf+1, 
+  Rewrite.ReplaceText(LocStart, endBuf-startBuf, 
                       ResultStr.c_str(), ResultStr.size());
   
   int nInstanceMethods = ClassDecl->getNumInstanceMethods();
@@ -307,6 +302,8 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
     
     // FIXME: handle methods that are declared across multiple lines.
   }
+  // Lastly, comment out the @end.
+  Rewrite.ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);
 }
 
 //===----------------------------------------------------------------------===//
