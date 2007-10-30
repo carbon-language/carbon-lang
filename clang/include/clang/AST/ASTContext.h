@@ -36,6 +36,7 @@ class ASTContext {
   llvm::FoldingSet<ReferenceType> ReferenceTypes;
   llvm::FoldingSet<ConstantArrayType> ArrayTypes;
   llvm::FoldingSet<VariableArrayType> IncompleteVariableArrayTypes;
+  std::vector<VariableArrayType*> CompleteVariableArrayTypes;
   llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
@@ -90,7 +91,7 @@ public:
   ~ASTContext();
   
   void PrintStats() const;
-
+ 
   //===--------------------------------------------------------------------===//
   //                           Type Constructors
   //===--------------------------------------------------------------------===//

@@ -455,10 +455,10 @@ QualType ASTContext::getVariableArrayType(QualType EltTy, Expr *NumElts,
     // Since we don't unique expressions, it isn't possible to unique VLA's
     // that have an expression provided for their size.
     
-    ArrayType *New = new VariableArrayType(EltTy, QualType(), NumElts, 
-                                           ASM, EltTypeQuals);
+    VariableArrayType *New = new VariableArrayType(EltTy, QualType(), NumElts, 
+                                                   ASM, EltTypeQuals);
     
-    // FIXME: Also add non-uniqued VLAs into a list of their own.
+    CompleteVariableArrayTypes.push_back(New);
     Types.push_back(New);
     return QualType(New, 0);
   }
