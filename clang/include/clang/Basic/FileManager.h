@@ -36,7 +36,7 @@ public:
 /// FileEntry - Cached information about one file on the disk.
 ///
 class FileEntry {
-  const char *Name;           // Name of the directory.
+  const char *Name;           // Name of the file.
   off_t Size;                 // File size in bytes.
   time_t ModTime;             // Modification time of file.
   const DirectoryEntry *Dir;  // Directory file lives in.

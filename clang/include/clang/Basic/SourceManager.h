@@ -81,7 +81,7 @@ namespace SrcMgr {
     /// chunk number of this FileID.
     unsigned ChunkNo;
     
-    /// FileInfo - Information about the source buffer itself.
+    /// Info - Information about the source buffer itself.
     ///
     const InfoRec *Info;
   public:
