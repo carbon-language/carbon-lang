@@ -124,6 +124,13 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse_cvtsi642ss : GCCBuiltin<"__builtin_ia32_cvtsi642ss">,
               Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty,
                          llvm_i64_ty], [IntrNoMem]>;
+  def int_x86_sse_cvtps2pi : GCCBuiltin<"__builtin_ia32_cvtps2pi">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+  def int_x86_sse_cvttps2pi: GCCBuiltin<"__builtin_ia32_cvttps2pi">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v4f32_ty], [IntrNoMem]>;
+  def int_x86_sse_cvtpi2ps : GCCBuiltin<"__builtin_ia32_cvtpi2ps">,
+              Intrinsic<[llvm_v4f32_ty, llvm_v4f32_ty, 
+                         llvm_v2i32_ty], [IntrNoMem]>;
 }
 
 // SIMD load ops
@@ -400,6 +407,12 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_cvtss2sd : GCCBuiltin<"__builtin_ia32_cvtss2sd">,
               Intrinsic<[llvm_v2f64_ty, llvm_v2f64_ty,
                          llvm_v4f32_ty], [IntrNoMem]>;
+  def int_x86_sse_cvtpd2pi : GCCBuiltin<"__builtin_ia32_cvtpd2pi">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v2f64_ty], [IntrNoMem]>;
+  def int_x86_sse_cvttpd2pi: GCCBuiltin<"__builtin_ia32_cvttpd2pi">,
+              Intrinsic<[llvm_v2i32_ty, llvm_v2f64_ty], [IntrNoMem]>;
+  def int_x86_sse_cvtpi2pd : GCCBuiltin<"__builtin_ia32_cvtpi2pd">,
+              Intrinsic<[llvm_v2f64_ty, llvm_v2i32_ty], [IntrNoMem]>;
 }
 
 // SIMD load ops

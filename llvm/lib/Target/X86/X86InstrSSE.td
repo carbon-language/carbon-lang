@@ -331,6 +331,34 @@ def Int_CVTSS2SIrm : SSI<0x2D, MRMSrcMem, (outs GR32:$dst), (ins f32mem:$src),
                          [(set GR32:$dst, (int_x86_sse_cvtss2si
                                            (load addr:$src)))]>;
 
+// Match intrinisics which expect MM and XMM operand(s).
+def Int_CVTPS2PIrr : PSI<0x2D, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
+                         "cvtps2pi\t{$src, $dst|$dst, $src}",
+                         [(set VR64:$dst, (int_x86_sse_cvtps2pi VR128:$src))]>;
+def Int_CVTPS2PIrm : PSI<0x2D, MRMSrcMem, (outs VR64:$dst), (ins f64mem:$src),
+                         "cvtps2pi\t{$src, $dst|$dst, $src}",
+                         [(set VR64:$dst, (int_x86_sse_cvtps2pi 
+                                           (load addr:$src)))]>;
+def Int_CVTTPS2PIrr: PSI<0x2C, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
+                         "cvttps2pi\t{$src, $dst|$dst, $src}",
+                         [(set VR64:$dst, (int_x86_sse_cvttps2pi VR128:$src))]>;
+def Int_CVTTPS2PIrm: PSI<0x2C, MRMSrcMem, (outs VR64:$dst), (ins f64mem:$src),
+                         "cvttps2pi\t{$src, $dst|$dst, $src}",
+                         [(set VR64:$dst, (int_x86_sse_cvttps2pi 
+                                           (load addr:$src)))]>;
+let isTwoAddress = 1 in {
+  def Int_CVTPI2PSrr : PSI<0x2A, MRMSrcReg, 
+                           (outs VR128:$dst), (ins VR128:$src1, VR64:$src2),
+                        "cvtpi2ps\t{$src2, $dst|$dst, $src2}",
+                        [(set VR128:$dst, (int_x86_sse_cvtpi2ps VR128:$src1,
+                                           VR64:$src2))]>;
+  def Int_CVTPI2PSrm : PSI<0x2A, MRMSrcMem, 
+                           (outs VR128:$dst), (ins VR128:$src1, i64mem:$src2),
+                        "cvtpi2ps\t{$src2, $dst|$dst, $src2}",
+                        [(set VR128:$dst, (int_x86_sse_cvtpi2ps VR128:$src1, 
+                                            (load addr:$src2)))]>;
+}
+
 // Aliases for intrinsics
 def Int_CVTTSS2SIrr : SSI<0x2C, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
                           "cvttss2si\t{$src, $dst|$dst, $src}",
@@ -1021,6 +1049,29 @@ def Int_CVTSD2SIrm : SDI<0x2D, MRMSrcMem, (outs GR32:$dst), (ins f128mem:$src),
                          "cvtsd2si\t{$src, $dst|$dst, $src}",
                          [(set GR32:$dst, (int_x86_sse2_cvtsd2si
                                            (load addr:$src)))]>;
+
+// Match intrinisics which expect MM and XMM operand(s).
+def Int_CVTPD2PIrr : PDI<0x2D, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
+                         "cvtpd2pi\t{$src, $dst|$dst, $src}",
+                         [(set VR64:$dst, (int_x86_sse_cvtpd2pi VR128:$src))]>;
+def Int_CVTPD2PIrm : PDI<0x2D, MRMSrcMem, (outs VR64:$dst), (ins f128mem:$src),
+                         "cvtpd2pi\t{$src, $dst|$dst, $src}",
+                         [(set VR64:$dst, (int_x86_sse_cvtpd2pi 
+                                           (load addr:$src)))]>;
+def Int_CVTTPD2PIrr: PDI<0x2C, MRMSrcReg, (outs VR64:$dst), (ins VR128:$src),
+                         "cvttpd2pi\t{$src, $dst|$dst, $src}",
+                         [(set VR64:$dst, (int_x86_sse_cvttpd2pi VR128:$src))]>;
+def Int_CVTTPD2PIrm: PDI<0x2C, MRMSrcMem, (outs VR64:$dst), (ins f128mem:$src),
+                         "cvttpd2pi\t{$src, $dst|$dst, $src}",
+                         [(set VR64:$dst, (int_x86_sse_cvttpd2pi 
+                                           (load addr:$src)))]>;
+def Int_CVTPI2PDrr : PDI<0x2A, MRMSrcReg, (outs VR128:$dst), (ins VR64:$src),
+                         "cvtpi2pd\t{$src, $dst|$dst, $src}",
+                         [(set VR128:$dst, (int_x86_sse_cvtpi2pd VR64:$src))]>;
+def Int_CVTPI2PDrm : PDI<0x2A, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
+                         "cvtpi2pd\t{$src, $dst|$dst, $src}",
+                         [(set VR128:$dst, (int_x86_sse_cvtpi2pd 
+                                            (load addr:$src)))]>;
 
 // Aliases for intrinsics
 def Int_CVTTSD2SIrr : SDI<0x2C, MRMSrcReg, (outs GR32:$dst), (ins VR128:$src),
