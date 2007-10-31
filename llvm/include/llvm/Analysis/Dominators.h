@@ -132,6 +132,7 @@ private:
 };
 
 EXTERN_TEMPLATE_INSTANTIATION(class DomTreeNodeBase<BasicBlock>);
+EXTERN_TEMPLATE_INSTANTIATION(class DomTreeNodeBase<MachineBasicBlock>);
 
 template<class NodeT>
 static std::ostream &operator<<(std::ostream &o,
@@ -156,7 +157,6 @@ static void PrintDomTree(const DomTreeNodeBase<NodeT> *N, std::ostream &o,
 }
 
 typedef DomTreeNodeBase<BasicBlock> DomTreeNode;
-typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 
 //===----------------------------------------------------------------------===//
 /// DominatorTree - Calculate the immediate dominator tree for a function.
@@ -607,6 +607,12 @@ protected:
     return I != IDoms.end() ? I->second : 0;
   }
   
+  inline void addRoot(NodeT* BB) {
+    // Unreachable block is not a root node.
+    if (!isa<UnreachableInst>(&BB->back()))
+      this->Roots.push_back(BB);
+  }
+  
 public:
   /// recalculate - compute a dominator tree for the given function
   template<class FT>
@@ -615,9 +621,9 @@ public:
       reset();
       
       // Initialize roots
-      this->Roots.push_back(&F.getEntryBlock());
-      this->IDoms[&F.getEntryBlock()] = 0;
-      this->DomTreeNodes[&F.getEntryBlock()] = 0;
+      this->Roots.push_back(&F.front());
+      this->IDoms[&F.front()] = 0;
+      this->DomTreeNodes[&F.front()] = 0;
       this->Vertex.push_back(0);
       
       Calculate<FT, NodeT*>(*this, F);
@@ -627,13 +633,10 @@ public:
       reset();     // Reset from the last time we were run...
 
       // Initialize the roots list
-      for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
-        TerminatorInst *Insn = I->getTerminator();
-        if (Insn->getNumSuccessors() == 0) {
-          // Unreachable block is not a root node.
-          if (!isa<UnreachableInst>(Insn))
-            this->Roots.push_back(I);
-        }
+      for (typename FT::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+        if (std::distance(GraphTraits<FT*>::child_begin(I),
+                          GraphTraits<FT*>::child_end(I)) == 0)
+          addRoot(I);
 
         // Prepopulate maps so that we don't get iterator invalidation issues later.
         this->IDoms[I] = 0;

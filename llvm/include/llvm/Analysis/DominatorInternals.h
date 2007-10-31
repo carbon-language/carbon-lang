@@ -273,21 +273,24 @@ void Calculate(DominatorTreeBase<typename GraphTraits<NodeT>::NodeType>& DT,
   // which postdominates all real exits if there are multiple exit blocks.
   typename GraphT::NodeType* Root = DT.Roots.size() == 1 ? DT.Roots[0]
                                                          : 0;
-  DT.DomTreeNodes[Root] = DT.RootNode = new DomTreeNode(Root, 0);
+  DT.DomTreeNodes[Root] = DT.RootNode =
+                        new DomTreeNodeBase<typename GraphT::NodeType>(Root, 0);
   
   // Loop over all of the reachable blocks in the function...
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+  for (typename FuncT::iterator I = F.begin(), E = F.end(); I != E; ++I)
     if (typename GraphT::NodeType* ImmDom = DT.getIDom(I)) {
       // Reachable block.
-      DomTreeNode *BBNode = DT.DomTreeNodes[I];
+      DomTreeNodeBase<typename GraphT::NodeType> *BBNode = DT.DomTreeNodes[I];
       if (BBNode) continue;  // Haven't calculated this node yet?
 
       // Get or calculate the node for the immediate dominator
-      DomTreeNode *IDomNode = DT.getNodeForBlock(ImmDom);
+      DomTreeNodeBase<typename GraphT::NodeType> *IDomNode =
+                                                     DT.getNodeForBlock(ImmDom);
 
       // Add a new tree node for this BasicBlock, and link it as a child of
       // IDomNode
-      DomTreeNode *C = new DomTreeNode(I, IDomNode);
+      DomTreeNodeBase<typename GraphT::NodeType> *C =
+                    new DomTreeNodeBase<typename GraphT::NodeType>(I, IDomNode);
       DT.DomTreeNodes[I] = IDomNode->addChild(C);
     }
   
