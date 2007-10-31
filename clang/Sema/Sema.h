@@ -259,7 +259,8 @@ private:
   /// CheckImplementationIvars - This routine checks if the instance variables
   /// listed in the implelementation match those listed in the interface. 
   void CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
-                                ObjcIvarDecl **Fields, unsigned nIvars);
+                                ObjcIvarDecl **Fields, unsigned nIvars,
+				SourceLocation Loc);
   
   /// ImplMethodsVsClassMethods - This is main routine to warn if any method
   /// remains unimplemented in the @implementation class.

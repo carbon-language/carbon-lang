@@ -1253,10 +1253,12 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   if (!IDecl) {
     // Legacy case of @implementation with no corresponding @interface.
     // Build, chain & install the interface decl into the identifier.
-    IDecl = new ObjcInterfaceDecl(SourceLocation(), 0, ClassName);
+    IDecl = new ObjcInterfaceDecl(AtClassImplLoc, 0, ClassName, 
+				  false, true);
     IDecl->setNext(ClassName->getFETokenInfo<ScopedDecl>());
     ClassName->setFETokenInfo(IDecl);
     IDecl->setSuperClass(SDecl);
+    IDecl->setLocEnd(ClassLoc);
     
     // Remember that this needs to be removed when the scope is popped.
     TUScope->AddDecl(IDecl);
@@ -1273,7 +1275,8 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
 }
 
 void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
-                                    ObjcIvarDecl **ivars, unsigned numIvars) {
+                                    ObjcIvarDecl **ivars, unsigned numIvars,
+                                    SourceLocation RBrace) {
   assert(ImpDecl && "missing implementation decl");
   ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(ImpDecl->getIdentifier());
   if (!IDecl)
@@ -1282,7 +1285,7 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
   /// (legacy objective-c @implementation decl without an @interface decl).
   /// Add implementations's ivar to the synthesize class's ivar list.
   if (IDecl->ImplicitInterfaceDecl()) {
-    IDecl->addInstanceVariablesToClass(ivars, numIvars, SourceLocation());
+    IDecl->addInstanceVariablesToClass(ivars, numIvars, RBrace);
     return;
   }
   
@@ -1795,7 +1798,7 @@ void Sema::ActOnFields(Scope* S,
         cast<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl));
       assert(IMPDecl && "ActOnFields - missing ObjcImplementationDecl");
       IMPDecl->ObjcAddInstanceVariablesToClassImpl(ClsFields, RecFields.size());
-      CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size());
+      CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size(), RBrac);
     }
   }
 }

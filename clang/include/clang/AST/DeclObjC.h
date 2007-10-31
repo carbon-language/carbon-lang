@@ -72,19 +72,21 @@ class ObjcInterfaceDecl : public TypeDecl {
   /// List of categories defined for this class.
   ObjcCategoryDecl *CategoryList;
   
-  bool ForwardDecl; // declared with @class.
+  bool ForwardDecl:1; // declared with @class.
+  bool InternalInterface:1; // true - no @interface for @implementation
   
   SourceLocation EndLoc; // marks the '>', '}', or identifier.
   SourceLocation AtEndLoc; // marks the end of the entire interface.
 public:
   ObjcInterfaceDecl(SourceLocation atLoc, unsigned numRefProtos,
-                    IdentifierInfo *Id, bool FD = false)
+                    IdentifierInfo *Id, bool FD = false, 
+                    bool isInternal = false)
     : TypeDecl(ObjcInterface, atLoc, Id, 0), SuperClass(0),
       ReferencedProtocols(0), NumReferencedProtocols(-1), Ivars(0), 
       NumIvars(-1),
       InstanceMethods(0), NumInstanceMethods(-1), 
       ClassMethods(0), NumClassMethods(-1),
-      CategoryList(0), ForwardDecl(FD) {
+      CategoryList(0), ForwardDecl(FD), InternalInterface(isInternal) {
         AllocIntfRefProtocols(numRefProtos);
       }
   
@@ -148,7 +150,7 @@ public:
   /// ImplicitInterfaceDecl - check that this is an implicitely declared
   /// ObjcInterfaceDecl node. This is for legacy objective-c @implementation
   /// declaration without an @interface declaration.
-  bool ImplicitInterfaceDecl() const { return getLocation().isInvalid(); }
+  bool ImplicitInterfaceDecl() const { return InternalInterface; }
   
   static bool classof(const Decl *D) { return D->getKind() == ObjcInterface; }
   static bool classof(const ObjcInterfaceDecl *D) { return true; }
