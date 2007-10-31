@@ -147,6 +147,8 @@ private:
   SDOperand PromoteResult_SETCC(SDNode *N);
   SDOperand PromoteResult_LOAD(LoadSDNode *N);
   SDOperand PromoteResult_SimpleIntBinOp(SDNode *N);
+  SDOperand PromoteResult_SDIV(SDNode *N);
+  SDOperand PromoteResult_UDIV(SDNode *N);
   SDOperand PromoteResult_SHL(SDNode *N);
   SDOperand PromoteResult_SRA(SDNode *N);
   SDOperand PromoteResult_SRL(SDNode *N);
@@ -554,6 +556,12 @@ void DAGTypeLegalizer::PromoteResult(SDNode *N, unsigned ResNo) {
   case ISD::SUB:
   case ISD::MUL:      Result = PromoteResult_SimpleIntBinOp(N); break;
 
+  case ISD::SDIV:
+  case ISD::SREM:     Result = PromoteResult_SDIV(N); break;
+
+  case ISD::UDIV:
+  case ISD::UREM:     Result = PromoteResult_UDIV(N); break;
+
   case ISD::SHL:      Result = PromoteResult_SHL(N); break;
   case ISD::SRA:      Result = PromoteResult_SRA(N); break;
   case ISD::SRL:      Result = PromoteResult_SRL(N); break;
@@ -691,6 +699,30 @@ SDOperand DAGTypeLegalizer::PromoteResult_SimpleIntBinOp(SDNode *N) {
   // that too is okay if they are integer operations.
   SDOperand LHS = GetPromotedOp(N->getOperand(0));
   SDOperand RHS = GetPromotedOp(N->getOperand(1));
+  return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
+}
+
+SDOperand DAGTypeLegalizer::PromoteResult_SDIV(SDNode *N) {
+  // Sign extend the input.
+  SDOperand LHS = GetPromotedOp(N->getOperand(0));
+  SDOperand RHS = GetPromotedOp(N->getOperand(1));
+  MVT::ValueType VT = N->getValueType(0);
+  LHS = DAG.getNode(ISD::SIGN_EXTEND_INREG, LHS.getValueType(), LHS,
+                    DAG.getValueType(VT));
+  RHS = DAG.getNode(ISD::SIGN_EXTEND_INREG, RHS.getValueType(), RHS,
+                    DAG.getValueType(VT));
+
+  return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
+}
+
+SDOperand DAGTypeLegalizer::PromoteResult_UDIV(SDNode *N) {
+  // Zero extend the input.
+  SDOperand LHS = GetPromotedOp(N->getOperand(0));
+  SDOperand RHS = GetPromotedOp(N->getOperand(1));
+  MVT::ValueType VT = N->getValueType(0);
+  LHS = DAG.getZeroExtendInReg(LHS, VT);
+  RHS = DAG.getZeroExtendInReg(RHS, VT);
+
   return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
 }
 
