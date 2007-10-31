@@ -368,7 +368,10 @@ void RecordOrganizer::layoutStructFields(CodeGenTypes &CGT,
     const llvm::Type *Ty = CGT.ConvertType(FD->getType());
 
     uint64_t Offset = RL.getFieldOffset(FieldNo);
-    assert (Offset == Cursor && "FIXME Invalid struct layout");
+    unsigned align = CGT.getTargetData().getABITypeAlignment(Ty);
+    if (Cursor % align != 0)
+      assert (Offset == Cursor && "FIXME Invalid struct layout");
+    
     Cursor += CGT.getTargetData().getTypeSizeInBits(Ty);
 
     Fields.push_back(Ty);
