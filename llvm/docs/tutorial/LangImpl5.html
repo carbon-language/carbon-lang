@@ -1,0 +1,523 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+<head>
+  <title>Kaleidoscope: Extending the Language: Control Flow</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="author" content="Chris Lattner">
+  <link rel="stylesheet" href="../llvm.css" type="text/css">
+</head>
+
+<body>
+
+<div class="doc_title">Kaleidoscope: Extending the Language: Control Flow</div>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="intro">Part 5 Introduction</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Welcome to Part 5 of the "<a href="index.html">Implementing a language with
+LLVM</a>" tutorial.  Parts 1-4 described the implementation of the simple
+Kaleidoscope language and included support for generating LLVM IR, following by
+optimizations and a JIT compiler.  Unfortunately, as presented, Kaleidoscope is
+mostly useless: it has no control flow other than call and return.  This means
+that you can't have conditional branches in the code, significantly limiting its
+power.  In this episode of "build that compiler", we'll extend Kaleidoscope to
+have an if/then/else expression plus a simple looping construct.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="ifthen">If/Then/Else</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+Extending Kaleidoscope to support if/then/else is quite straight-forward.  It
+basically requires adding lexer support for this "new" concept to the lexer,
+parser, AST, and LLVM code emitter.  This example is nice, because it shows how
+easy it is to "grow" a language over time, incrementally extending it as new
+ideas are discovered.</p>
+
+<p>Before we get going on "how" we do this extension, lets talk about what we
+want.  The basic idea is that we want to be able to write this sort of thing:
+</p>
+
+<div class="doc_code">
+<pre>
+def fib(x)
+  if x &lt; 3 then
+    1
+  else
+    fib(x-1)+fib(x-2);
+</pre>
+</div>
+
+<p>In Kaleidoscope, every construct is an expression: there are no statements.
+As such, the if/then/else expression needs to return a value like any other.
+Since we're using a mostly functional form, we'll have it evaluate its
+conditional, then return the 'then' or 'else' value based on how the condition
+was resolved.  This is very similar to the C "?:" expression.</p>
+
+<p>The semantics of the if/then/else expression is that it first evaluates the
+condition to a boolean equality value: 0.0 is false and everything else is true.
+If the condition is true, the first subexpression is evaluated and returned, if
+the condition is false, the second subexpression is evaluated and returned.
+Since Kaleidoscope allows side-effects, this behavior is important to nail down.
+</p>
+
+<p>Now that we know what we want, lets break this down into its constituent
+pieces.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="iflexer">Lexer Extensions for
+If/Then/Else</a></div>
+<!-- ======================================================================= -->
+
+
+<div class="doc_text">
+
+<p>The lexer extensions are straight-forward.  First we add new enum values
+for the relevant tokens:</p>
+
+<div class="doc_code">
+<pre>
+  // control
+  tok_if = -6, tok_then = -7, tok_else = -8,
+</pre>
+</div>
+
+<p>Once we have that, we recognize the new keywords in the lexer, pretty simple
+stuff:</p>
+
+<div class="doc_code">
+<pre>
+    ...
+    if (IdentifierStr == "def") return tok_def;
+    if (IdentifierStr == "extern") return tok_extern;
+    <b>if (IdentifierStr == "if") return tok_if;
+    if (IdentifierStr == "then") return tok_then;
+    if (IdentifierStr == "else") return tok_else;</b>
+    return tok_identifier;
+</pre>
+</div>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="ifast">AST Extensions for
+ If/Then/Else </a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>To represent the new expression we add a new AST node for it:</p>
+
+<div class="doc_code">
+<pre>
+/// IfExprAST - Expression class for if/then/else.
+class IfExprAST : public ExprAST {
+  ExprAST *Cond, *Then, *Else;
+public:
+  IfExprAST(ExprAST *cond, ExprAST *then, ExprAST *_else)
+    : Cond(cond), Then(then), Else(_else) {}
+  virtual Value *Codegen();
+};
+</pre>
+</div>
+
+<p>The AST node just has pointers to the various subexpressions.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="ifparser">Parser Extensions for
+If/Then/Else </a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>Now that we have the relevant tokens coming from the lexer and we have the
+AST node to build, our parsing logic is relatively straight-forward.  First we
+define a new parsing function:</p>
+
+<div class="doc_code">
+<pre>
+/// ifexpr ::= 'if' expression 'then' expression 'else' expression
+static ExprAST *ParseIfExpr() {
+  getNextToken();  // eat the if.
+  
+  // condition.
+  ExprAST *Cond = ParseExpression();
+  if (!Cond) return 0;
+  
+  if (CurTok != tok_then)
+    return Error("expected then");
+  getNextToken();  // eat the then
+  
+  ExprAST *Then = ParseExpression();
+  if (Then == 0) return 0;
+  
+  if (CurTok != tok_else)
+    return Error("expected else");
+  
+  getNextToken();
+  
+  ExprAST *Else = ParseExpression();
+  if (!Else) return 0;
+  
+  return new IfExprAST(Cond, Then, Else);
+}
+</pre>
+</div>
+
+<p>Next we hook it up as a primary expression:</p>
+
+<div class="doc_code">
+<pre>
+static ExprAST *ParsePrimary() {
+  switch (CurTok) {
+  default: return Error("unknown token when expecting an expression");
+  case tok_identifier: return ParseIdentifierExpr();
+  case tok_number:     return ParseNumberExpr();
+  case '(':            return ParseParenExpr();
+  <b>case tok_if:         return ParseIfExpr();</b>
+  }
+}
+</pre>
+</div>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="ifir">LLVM IR for If/Then/Else</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>Now that we have it parsing and building the AST, the final piece is adding
+LLVM code generation support.  This is the most interesting part of the
+if/then/else example, because this is where it starts to introduce new concepts.
+All of the code above has been described in previous chapters fairly thoroughly.
+</p>
+
+<p>To motivate the code we want to produce, lets take a look at a simple
+example.  Consider:</p>
+
+<div class="doc_code">
+<pre>
+extern foo();
+extern bar();
+def baz(x) if x then foo() else bar();
+</pre>
+</div>
+
+<p>If you disable optimizations, the code you'll (soon) get from Kaleidoscope
+looks like this:</p>
+
+<div class="doc_code">
+<pre>
+declare double @foo()
+
+declare double @bar()
+
+define double @baz(double %x) {
+entry:
+	%ifcond = fcmp one double %x, 0.000000e+00
+	br i1 %ifcond, label %then, label %else
+
+then:		; preds = %entry
+	%calltmp = call double @foo()
+	br label %ifcont
+
+else:		; preds = %entry
+	%calltmp1 = call double @bar()
+	br label %ifcont
+
+ifcont:		; preds = %else, %then
+	%iftmp = phi double [ %calltmp, %then ], [ %calltmp1, %else ]
+	ret double %iftmp
+}
+</pre>
+</div>
+
+<p>To visualize the control flow graph, you can use a nifty feature of the LLVM
+'<a href="http://llvm.org/cmds/opt.html">opt</a>' tool.  If you put this LLVM IR
+into "t.ll" and run "<tt>llvm-as &lt; t.ll | opt -analyze -view-cfg</tt>", <a
+href="../ProgrammersManual.html#ViewGraph">a window will pop up</a> and you'll
+see this graph:</p>
+
+<center><img src="LangImpl5-cfg.png" alt="Example CFG" width="423" 
+height="315"></center>
+
+<p>Another way to get this is to call "<tt>F-&gt;viewCFG()</tt>" or
+"<tt>F-&gt;viewCFGOnly()</tt>" (where F is a "<tt>Function*</tt>") either by
+inserting actual calls into the code and recompiling or by calling these in the
+debugger.  LLVM has many nice features for visualizing various graphs.</p>
+
+<p>Coming back to the generated code, it is fairly simple: the entry block 
+evaluates the conditional expression ("x" in our case here) and compares the
+result to 0.0 with the "<tt><a href="../LangRef.html#i_fcmp">fcmp</a> one</tt>"
+instruction ('one' is "ordered and not equal").  Based on the result of this
+expression, the code jumps to either the "then" or "else" blocks, which contain
+the expressions for the true/false case.</p>
+
+<p>Once the then/else blocks is finished executing, they both branch back to the
+else block to execute the code that happens after the if/then/else.  In this
+case the only thing left to do is to return to the caller of the function.  The
+question then becomes: how does the code know which expression to return?</p>
+
+<p>The answer to this question involves an important SSA operation: the
+<a href="http://en.wikipedia.org/wiki/Static_single_assignment_form">Phi
+operation</a>.  If you're not familiar with SSA, <a 
+href="http://en.wikipedia.org/wiki/Static_single_assignment_form">the wikipedia
+article</a> is a good introduction and there are various other introductions to
+it available on your favorite search engine.  The short version is that
+"execution" of the Phi operation requires "remembering" which block control came
+from.  The Phi operation takes on the value corresponding to the input control
+block.  In this case, if control comes in from the "then" block, it gets the
+value of "calltmp".  If control comes from the "else" block, it gets the value
+of "calltmp1".</p>
+
+<p>At this point, you are probably starting to think "on no! this means my
+simple and elegant front-end will have to start generating SSA form in order to
+use LLVM!".  Fortunately, this is not the case, and we strongly advise
+<em>not</em> implementing an SSA construction algorithm in your front-end
+unless there is an amazingly good reason to do so.  In practice, there are two
+sorts of values that float around in code written in your average imperative
+programming language that might need Phi nodes:</p>
+
+<ol>
+<li>Code that involves user variables: <tt>x = 1; x = x + 1; </tt></li>
+<li>Values that are implicit in the structure of your AST, such as the phi node
+in this case.</li>
+</ol>
+
+<p>At a future point in this tutorial ("mutable variables"), we'll talk about #1
+in depth.  For now, just believe me that you don't need SSA construction to
+handle them.  For #2, you have the choice of using the techniques that we will 
+describe for #1, or you can insert Phi nodes directly if convenient.  In this 
+case, it is really really easy to generate the Phi node, so we choose to do it
+directly.</p>
+
+<p>Okay, enough of the motivation and overview, lets generate code!</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="ifcodegen">Code Generation for 
+If/Then/Else</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>In order to generate code for this, we implement the <tt>Codegen</tt> method
+for <tt>IfExprAST</tt>:</p>
+
+<div class="doc_code">
+<pre>
+Value *IfExprAST::Codegen() {
+  Value *CondV = Cond-&gt;Codegen();
+  if (CondV == 0) return 0;
+  
+  // Convert condition to a bool by comparing equal to 0.0.
+  CondV = Builder.CreateFCmpONE(CondV, 
+                                ConstantFP::get(Type::DoubleTy, APFloat(0.0)),
+                                "ifcond");
+</pre>
+</div>
+
+<p>This code is straight-forward and similar to what we saw before.  We emit the
+expression for the condition, then compare that value to zero to get a truth
+value as a 1-bit (bool) value.</p>
+
+<div class="doc_code">
+<pre>
+  Function *TheFunction = Builder.GetInsertBlock()-&gt;getParent();
+  
+  // Create blocks for the then and else cases.  Insert the 'then' block at the
+  // end of the function.
+  BasicBlock *ThenBB = new BasicBlock("then", TheFunction);
+  BasicBlock *ElseBB = new BasicBlock("else");
+  BasicBlock *MergeBB = new BasicBlock("ifcont");
+
+  Builder.CreateCondBr(CondV, ThenBB, ElseBB);
+</pre>
+</div>
+
+<p>This code creates the basic blocks that are related to the if/then/else
+statement, and correspond directly to the blocks in the example above.  The
+first line of this gets the current Function object that is being built.  It
+gets this by asking the builder for the current BasicBlock, and asking that
+block for its "parent" (the function it is currently embedded into).</p>
+
+<p>Once it has that, it creates three blocks.  Note that it passes "TheFunction"
+into the constructor for the "then" block.  This causes the constructor to
+automatically insert the new block onto the end of the specified function.  The
+other two blocks are created, but aren't yet inserted into the function.</p>
+
+<p>Once the blocks are created, we can emit the conditional branch that chooses
+between them.  Note that creating new blocks does not implicitly affect the
+LLVMBuilder, so it is still inserting into the block that the condition
+went into.  Also note that it is creating a branch to the "then" block and the
+"else" block, even though the "else" block isn't inserted into the function yet.
+This is all ok: it is the standard way that LLVM supports forward 
+references.</p>
+
+<div class="doc_code">
+<pre>
+  // Emit then value.
+  Builder.SetInsertPoint(ThenBB);
+  
+  Value *ThenV = Then-&gt;Codegen();
+  if (ThenV == 0) return 0;
+  
+  Builder.CreateBr(MergeBB);
+  // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
+  ThenBB = Builder.GetInsertBlock();
+</pre>
+</div>
+
+<p>After the conditional branch is inserted, we move the builder to start
+inserting into the "then" block.  Strictly speaking, this call moves the
+insertion point to be at the end of the specified block.  However, since the
+"then" block is empty, it also starts out by inserting at the beginning of the
+block.  :)</p>
+
+<p>Once the insertion point is set, we recursively codegen the "then" expression
+from the AST.  To finish off the then block, we create an unconditional branch
+to the merge block.  One interesting (and very important) aspect of the LLVM IR
+is that it <a href="../LangRef.html#functionstructure">requires all basic blocks
+to be "terminated"</a> with a <a href="../LangRef.html#terminators">control flow
+instruction</a> such as return or branch.  This means that all control flow,
+<em>including fall throughs</em> must be made explicit in the LLVM IR.  If you
+violate this rule, the verifier will emit an error.</p>
+
+<p>The final line here is quite subtle, but is very important.  The basic issue
+is that when we create the Phi node in the merge block, we need to set up the
+block/value pairs that indicate how the Phi will work.  Importantly, the Phi
+node expects to have an extry for each predecessor of the block in the CFG.  Why
+then are we getting the current block when we just set it to ThenBB 5 lines
+above?  The problem is that the "Then" expression may actually itself change the
+block that the Builder is emitting into if, for example, it contains a nested
+"if/then/else" expression.  Because calling Codegen recursively could
+arbitrarily change the notion of the current block, we are required to get an
+up-to-date value for code that will set up the Phi node.</p>
+
+<div class="doc_code">
+<pre>
+  // Emit else block.
+  TheFunction-&gt;getBasicBlockList().push_back(ElseBB);
+  Builder.SetInsertPoint(ElseBB);
+  
+  Value *ElseV = Else-&gt;Codegen();
+  if (ElseV == 0) return 0;
+  
+  Builder.CreateBr(MergeBB);
+  // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
+  ElseBB = Builder.GetInsertBlock();
+</pre>
+</div>
+
+<p>Code generation for the 'else' block is basically identical to codegen for
+the 'then' block.  The only significant difference is the first line, which adds
+the 'else' block to the function.  Recall previously that the 'else' block was
+created, but not added to the function.  Now that the 'then' and 'else' blocks
+are emitted, we can finish up with the merge code:</p>
+
+<div class="doc_code">
+<pre>
+  // Emit merge block.
+  TheFunction->getBasicBlockList().push_back(MergeBB);
+  Builder.SetInsertPoint(MergeBB);
+  PHINode *PN = Builder.CreatePHI(Type::DoubleTy, "iftmp");
+  
+  PN->addIncoming(ThenV, ThenBB);
+  PN->addIncoming(ElseV, ElseBB);
+  return PN;
+}
+</pre>
+</div>
+
+<p>The first two lines here are now familiar: the first adds the "merge" block
+to the Function object (it was previously floating, like the else block above).
+The second block changes the insertion point so that newly created code will go
+into the "merge" block.  Once that is done, we need to create the PHI node and
+set up the block/value pairs for the PHI.</p>
+
+<p>Finally, the CodeGen function returns the phi node as the value computed by
+the if/then/else expression.  In our example above, this returned value will 
+feed into the code for the top-level function, which will create the return
+instruction.</p>
+
+<p>Overall, we now have the ability to execution conditional code in
+Kaleidoscope.  With this extension, Kaleidoscope is a fairly complete language
+that can calculate a wide variety of numeric functions.  Next up we'll add
+another useful expression that is familiar from non-functional languages...</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="for">'for' Loop Expression</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>...</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="code">Full Code Listing</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+Here is the complete code listing for our running example, enhanced with the
+if/then/else and for expressions..  To build this example, use:
+</p>
+
+<div class="doc_code">
+<pre>
+   # Compile
+   g++ -g toy.cpp `llvm-config --cppflags --ldflags --libs core jit native` -O3 -o toy
+   # Run
+   ./toy
+</pre>
+</div>
+
+<p>Here is the code:</p>
+
+<div class="doc_code">
+<pre>
+...
+</pre>
+</div>
+
+</div>
+
+<!-- *********************************************************************** -->
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
+
+  <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
+  <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date: 2007-10-17 11:05:13 -0700 (Wed, 17 Oct 2007) $
+</address>
+</body>
+</html>
