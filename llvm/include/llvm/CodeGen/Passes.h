@@ -44,6 +44,14 @@ namespace llvm {
   /// these register allocator like this: AU.addRequiredID(PHIEliminationID);
   ///
   extern const PassInfo *PHIEliminationID;
+  
+  /// StrongPHIElimination pass - This pass eliminates machine instruction PHI
+  /// nodes by inserting copy instructions.  This destroys SSA information, but
+  /// is the desired input for some register allocators.  This pass is
+  /// "required" by these register allocator like this:
+  ///    AU.addRequiredID(PHIEliminationID);
+  ///  This pass is still in development
+  extern const PassInfo *StrongPHIEliminationID;
 
   /// SimpleRegisterCoalescing pass.  Aggressively coalesces every register
   /// copy it can.
