@@ -67,7 +67,7 @@ public:
   //  case Expr::UnaryOperatorClass:
   //  case Expr::ImplicitCastExprClass:
   //  case Expr::CastExprClass: 
-  //  case Expr::CallExprClass:
+  void VisitCallExpr(const CallExpr *E);
   void VisitStmtExpr(const StmtExpr *E);
   void VisitBinaryOperator(const BinaryOperator *BO);
   void VisitBinAssign(const BinaryOperator *E);
@@ -131,6 +131,19 @@ void AggExprEmitter::EmitAggLoadOfLValue(const Expr *E) {
 //===----------------------------------------------------------------------===//
 //                            Visitor Methods
 //===----------------------------------------------------------------------===//
+
+void AggExprEmitter::VisitCallExpr(const CallExpr *E)
+{
+  RValue RV = CGF.EmitCallExpr(E);
+  assert(RV.isAggregate() && "Return value must be aggregate value!");
+  
+  // If the result is ignored, don't copy from the value.
+  if (DestPtr == 0)
+    // FIXME: If the source is volatile, we must read from it.
+    return;
+  
+  EmitAggregateCopy(DestPtr, RV.getAggregateAddr(), E->getType());
+}
 
 void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
   CGF.EmitCompoundStmt(*E->getSubStmt(), true, DestPtr, VolatileDest);

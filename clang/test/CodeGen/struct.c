@@ -63,3 +63,17 @@ void f4() {
 void f5() {
   (f3())->d1 = 42;
 }
+
+/* Function calls */
+typedef struct {
+  int location;
+  int length;
+} range;
+
+extern range f6();
+void f7()
+{
+	range r = f6();
+}
+
+
