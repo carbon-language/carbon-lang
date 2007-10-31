@@ -235,7 +235,7 @@ void Parser::Initialize() {
     Diag(Tok, diag::ext_empty_source_file);
   
   // Initialization for Objective-C context sensitive keywords recognition.
-  // Referenced in Parser::isObjCTypeQualifier.
+  // Referenced in Parser::ParseObjcTypeQualifierList.
   if (getLang().ObjC1) {
     ObjcTypeQuals[objc_in] = &PP.getIdentifierTable().get("in");
     ObjcTypeQuals[objc_out] = &PP.getIdentifierTable().get("out");

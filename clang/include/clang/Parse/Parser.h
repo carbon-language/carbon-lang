@@ -19,6 +19,7 @@
 
 namespace clang {
   class DeclSpec;
+  class ObjcDeclSpec;
   class Declarator;
   class AttributeList;
   class Scope;
@@ -284,7 +285,6 @@ private:
     objc_NumQuals
   };
   IdentifierInfo *ObjcTypeQuals[objc_NumQuals];
-  bool isObjCTypeQualifier();
   // Definitions for ObjC2's @property attributes.
   enum ObjCPropertyAttr {
     objc_readonly=0, objc_getter, objc_setter, objc_assign, 
@@ -399,6 +399,8 @@ private:
   DeclTy *ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   void ParseSpecifierQualifierList(DeclSpec &DS);
+  
+  void ParseObjcTypeQualifierList(ObjcDeclSpec &DS);
 
   bool ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc);
   void ParseEnumSpecifier(DeclSpec &DS);

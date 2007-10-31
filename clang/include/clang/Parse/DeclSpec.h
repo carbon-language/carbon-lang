@@ -277,7 +277,30 @@ private:
   }
 };
 
-
+/// ObjcDeclSpec - This class captures information about 
+/// "declaration specifiers" specific to objective-c
+class ObjcDeclSpec {
+public:
+  /// ObjcDeclQualifier - Qualifier used on types in method declarations
+  enum ObjcDeclQualifier {
+    DQ_None = 0x0,
+    DQ_In = 0x1,
+    DQ_Inout = 0x2,
+    DQ_Out = 0x4,
+    DQ_Bycopy = 0x8,
+    DQ_Byref = 0x10,
+    DQ_Oneway = 0x20
+  };
+  
+  ObjcDeclSpec() : objcDeclQualifier(DQ_None) {}
+  ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
+  void setObjcDeclQualifier(ObjcDeclQualifier DQVal) 
+    { objcDeclQualifier = (ObjcDeclQualifier) (objcDeclQualifier | DQVal); }
+  
+private:
+  ObjcDeclQualifier objcDeclQualifier : 6;
+};
+  
 /// DeclaratorChunk - One instance of this struct is used for each type in a
 /// declarator that is parsed.
 ///

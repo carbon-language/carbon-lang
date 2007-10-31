@@ -451,18 +451,6 @@ IdentifierInfo *Parser::ParseObjCSelector(SourceLocation &SelectorLoc) {
   }
 }
 
-///   objc-type-qualifier: one of
-///     in out inout bycopy byref oneway
-///
-bool Parser::isObjCTypeQualifier() {
-  if (Tok.is(tok::identifier)) {
-    const IdentifierInfo *II = Tok.getIdentifierInfo();
-    for (unsigned i = 0; i < objc_NumQuals; ++i)
-      if (II == ObjcTypeQuals[i]) return true;
-  }
-  return false;
-}
-
 ///  property-attrlist: one of
 ///    readonly getter setter assign retain copy nonatomic
 ///
@@ -489,8 +477,9 @@ Parser::TypeTy *Parser::ParseObjCTypeName() {
   SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
   TypeTy *Ty = 0;
   
-  while (isObjCTypeQualifier())
-    ConsumeToken();
+  // Parse type qualifiers, in, inout, etc.
+  ObjcDeclSpec DS;
+  ParseObjcTypeQualifierList(DS);
 
   if (isTypeSpecifierQualifier()) {
     Ty = ParseTypeName();
