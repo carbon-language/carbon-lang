@@ -740,11 +740,11 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
     }
   }
   SourceLocation RBraceLoc = MatchRHSPunctuation(tok::r_brace, LBraceLoc);
-  if (AllIvarDecls.size()) {  // Check for {} - no ivars in braces
-    Actions.ActOnFields(CurScope, atLoc, interfaceDecl,
-                        &AllIvarDecls[0], AllIvarDecls.size(),
-                        LBraceLoc, RBraceLoc, &AllVisibilities[0]);
-  }
+  // Call ActOnFields() even if we don't have any decls. This is useful
+  // for code rewriting tools that need to be aware of the empty list.
+  Actions.ActOnFields(CurScope, atLoc, interfaceDecl,
+                      &AllIvarDecls[0], AllIvarDecls.size(),
+                      LBraceLoc, RBraceLoc, &AllVisibilities[0]);
   return;
 }
 

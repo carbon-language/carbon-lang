@@ -33,6 +33,7 @@ namespace {
     llvm::SmallVector<ObjcImplementationDecl *, 8> ClassImplementation;
     llvm::SmallVector<ObjcCategoryImplDecl *, 8> CategoryImplementation;
     llvm::SmallPtrSet<ObjcInterfaceDecl*, 8> ObjcSynthesizedStructs;
+    llvm::SmallPtrSet<ObjcInterfaceDecl*, 8> ObjcForwardDecls;
     
     FunctionDecl *MsgSendFunctionDecl;
     FunctionDecl *GetClassFunctionDecl;
@@ -260,11 +261,17 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
   typedefString += "\n";
   for (int i = 0; i < numDecls; i++) {
     ObjcInterfaceDecl *ForwardDecl = ForwardDecls[i];
+    if (ObjcForwardDecls.count(ForwardDecl))
+      continue;
     typedefString += "typedef struct ";
     typedefString += ForwardDecl->getName();
     typedefString += " ";
     typedefString += ForwardDecl->getName();
     typedefString += ";\n";
+    
+    // Mark this typedef as having been generated.
+    if (!ObjcForwardDecls.insert(ForwardDecl))
+      assert(true && "typedef already output");
   }
   
   // Replace the @class with typedefs corresponding to the classes.
@@ -437,7 +444,6 @@ void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
     SelGetUidFunctionDecl = FD;
     return;
   }
-  return; // FIXME: remove when the code below is ready.
   // Check for ObjC 'id' and class types that have been adorned with protocol
   // information (id<p>, C<p>*). The protocol references need to be rewritten!
   const FunctionType *funcType = FD->getType()->getAsFunctionType();
@@ -560,6 +566,7 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   }
   else
     Result += " {";
+    
   if (NumIvars > 0) {
     SourceLocation LocStart = CDecl->getLocStart();
     SourceLocation LocEnd = CDecl->getLocEnd();
@@ -595,7 +602,7 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   Result += "};\n";
   // Mark this struct as having been generated.
   if (!ObjcSynthesizedStructs.insert(CDecl))
-  assert(true && "struct already synthesize- SynthesizeObjcInternalStruct");
+    assert(true && "struct already synthesize- SynthesizeObjcInternalStruct");
 }
 
 // RewriteObjcMethodsMetaData - Rewrite methods metadata for instance or
