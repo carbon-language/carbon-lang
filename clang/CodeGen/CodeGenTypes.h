@@ -96,6 +96,7 @@ public:
   CodeGenTypes(ASTContext &Ctx, llvm::Module &M, const llvm::TargetData &TD);
   ~CodeGenTypes();
   
+  const llvm::TargetData &getTargetData() const { return TheTargetData; }
   TargetInfo &getTarget() const { return Target; }
   ASTContext &getContext() const { return Context; }
 
