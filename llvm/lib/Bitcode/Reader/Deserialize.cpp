@@ -115,7 +115,7 @@ void Deserializer::ReadUIntPtr(uintptr_t& PtrRef) {
   BPatchEntry& E = BPatchMap[PtrId];
   
   if (E.hasFinalPtr())
-    PtrRef = E.getRawPtr();
+    PtrRef = E.getFinalPtr();
   else {
     // Register backpatch.  Check the freelist for a BPNode.
     BPNode* N;
@@ -132,6 +132,18 @@ void Deserializer::ReadUIntPtr(uintptr_t& PtrRef) {
   }
 }
 
+uintptr_t Deserializer::ReadInternalRefPtr() {
+  unsigned PtrId = ReadInt();
+  
+  assert (PtrId != 0 && "References cannot refer the NULL address.");
+
+  BPatchEntry& E = BPatchMap[PtrId];
+  
+  assert (E.hasFinalPtr() &&
+          "Cannot backpatch references.  Object must be already deserialized.");
+  
+  return E.getFinalPtr();
+}
 
 void Deserializer::BPatchEntry::setFinalPtr(BPNode*& FreeList, void* P) {
   assert (!hasFinalPtr());

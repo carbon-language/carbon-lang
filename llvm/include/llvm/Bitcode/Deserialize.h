@@ -56,7 +56,7 @@ class Deserializer {
       
     BPatchEntry(void* P) : Ptr(reinterpret_cast<uintptr_t>(P)) {}
 
-    bool hasFinalPtr() const { return Ptr & 0x1 ? true : false; }
+    bool hasFinalPtr() const { return Ptr & 0x1 ? false : true; }
     void setFinalPtr(BPNode*& FreeList, void* P);
 
     BPNode* getBPNode() const {
@@ -69,7 +69,10 @@ class Deserializer {
       Ptr = reinterpret_cast<uintptr_t>(N) | 0x1;
     }
     
-    uintptr_t getRawPtr() const { return Ptr; }
+    uintptr_t getFinalPtr() const {
+      assert (!(Ptr & 0x1) && "Backpatch pointer not yet deserialized.");
+      return Ptr;
+    }    
 
     static inline bool isPod() { return true; }
   };
@@ -132,17 +135,30 @@ public:
   }
   
   template <typename T>
-  void ReadPtr(T*& PtrRef) { ReadUIntPtr(reinterpret_cast<uintptr_t&>(PtrRef));}
-
-  void ReadPtr(uintptr_t& PtrRef) { ReadUIntPtr(PtrRef); }
+  void ReadPtr(T*& PtrRef) {
+    ReadUIntPtr(reinterpret_cast<uintptr_t&>(PtrRef));
+  }
   
+  template <typename T>
+  void ReadPtr(const T*& PtrRef) {
+    ReadPtr(const_cast<T*&>(PtrRef));
+  }            
+
   void ReadUIntPtr(uintptr_t& PtrRef);
+  
+  template <typename T>
+  T& ReadRef() {
+    T* p = reinterpret_cast<T*>(ReadInternalRefPtr());
+    return *p;
+  }
+
   
   void RegisterPtr(unsigned PtrId, void* Ptr);
 
 private:
   void ReadRecord();  
   bool inRecord();
+  uintptr_t ReadInternalRefPtr();
 };
     
 } // end namespace llvm
