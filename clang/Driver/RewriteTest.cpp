@@ -544,6 +544,9 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
                                                std::string &Result) {
   assert(CDecl && "Class missing in SynthesizeObjcInternalStruct");
   assert(CDecl->getName() && "Name missing in SynthesizeObjcInternalStruct");
+  // Do not synthesize more than once.
+  if (ObjcSynthesizedStructs.count(CDecl))
+    return;
   ObjcInterfaceDecl *RCDecl = CDecl->getSuperClass();
   if (RCDecl && !ObjcSynthesizedStructs.count(RCDecl)) {
     // Do it for the root
