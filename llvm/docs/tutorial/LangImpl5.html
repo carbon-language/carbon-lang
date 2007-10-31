@@ -479,14 +479,18 @@ aggressive, a 'for' expression:</p>
 
 <div class="doc_code">
 <pre>
- # print 100 '*' (ascii 42) characters
  extern putchard(char)
- for x = 1, x &lt; 100, 1.0 in putchard(42);
+ def printstar(n)
+   for i = 1, i &lt; n, 1.0 in
+     putchard(42);  # ascii 42 = '*'
+     
+ # print 100 '*' characters
+ printstar(100);
 </pre>
 </div>
 
-<p>This expression defines a new variable ("x" in this case) which iterates from
-a starting value, while the condition ("x &lt; 100" in this case) is true, 
+<p>This expression defines a new variable ("i" in this case) which iterates from
+a starting value, while the condition ("i &lt; n" in this case) is true, 
 incrementing by an optional step value ("1.0" in this case).  If the step value
 is omitted, it defaults to 1.0.  While the loop is true, it executes its 
 body expression.  Because we don't have anything better to return, we'll just
@@ -623,9 +627,41 @@ the 'for' Loop</a></div>
 <div class="doc_text">
 
 <p>Now we get to the good part: the LLVM IR we want to generate for this thing.
+With the simple example above, we get this LLVM IR (note that this dump is
+generated with optimizations disabled):
 </p>
 
+<div class="doc_code">
+<pre>
+declare double @putchard(double)
 
+define double @printstar(double %n) {
+entry:
+        ; initial value = 1.0 (inlined into phi)
+	br label %loop
+
+loop:		; preds = %loop, %entry
+	%i = phi double [ 1.000000e+00, %entry ], [ %nextvar, %loop ]
+        ; body
+	%calltmp = call double @putchard( double 4.200000e+01 )
+        ; increment
+	%nextvar = add double %i, 1.000000e+00
+
+        ; termination test
+	%multmp = fcmp ult double %i, %n
+	%booltmp = uitofp i1 %multmp to double
+	%loopcond = fcmp one double %booltmp, 0.000000e+00
+	br i1 %loopcond, label %loop, label %afterloop
+
+afterloop:		; preds = %loop
+        ; loop always returns 0.0
+	ret double 0.000000e+00
+}
+</pre>
+</div>
+
+<p>This loop contains all the same constructs we saw before: a phi node, several
+expressions, and some basic blocks.  Lets see how this fits together.</p>
 
 </div>
 
@@ -636,9 +672,757 @@ the 'for' Loop</a></div>
 
 <div class="doc_text">
 
+<p>The first part of codegen is very simple: we just output the start expression
+for the loop value:</p>
 
 <div class="doc_code">
 <pre>
+Value *ForExprAST::Codegen() {
+  // Emit the start code first, without 'variable' in scope.
+  Value *StartVal = Start-&gt;Codegen();
+  if (StartVal == 0) return 0;
+</pre>
+</div>
+
+<p>With this out of the way, the next step is to set up the LLVM basic block
+for the start of the loop body.  In the case above, the whole loop body is one
+block, but remember that the body code itself could consist of multiple blocks
+(e.g. if it is a if/then/else expression).</p>
+
+<div class="doc_code">
+<pre>
+  // Make the new basic block for the loop header, inserting after current
+  // block.
+  Function *TheFunction = Builder.GetInsertBlock()-&gt;getParent();
+  BasicBlock *PreheaderBB = Builder.GetInsertBlock();
+  BasicBlock *LoopBB = new BasicBlock("loop", TheFunction);
+  
+  // Insert an explicit fall through from the current block to the LoopBB.
+  Builder.CreateBr(LoopBB);
+</pre>
+</div>
+
+<p>This code is similar to what we saw for if/then/else.  Because we will need
+it to create the Phi node, we remember the block that falls through into the
+loop.  Once we have that, we create the actual block that starts the loop and
+create an unconditional branch for the fall-through between the two blocks.</p>
+  
+<div class="doc_code">
+<pre>
+  // Start insertion in LoopBB.
+  Builder.SetInsertPoint(LoopBB);
+  
+  // Start the PHI node with an entry for Start.
+  PHINode *Variable = Builder.CreatePHI(Type::DoubleTy, VarName.c_str());
+  Variable-&gt;addIncoming(StartVal, PreheaderBB);
+</pre>
+</div>
+
+<p>Now that the "preheader" for the loop is set up, we switch to emitting code
+for the loop body.  To begin with, we move the insertion point and create the
+PHI node for the loop induction variable.  SInce we already know the incoming
+value for the starting value, we add it to the Phi node.  Note that the Phi will
+eventually get a second value for the backedge, but we can't set it up yet
+(because it doesn't exist!).</p>
+
+<div class="doc_code">
+<pre>
+  // Within the loop, the variable is defined equal to the PHI node.  If it
+  // shadows an existing variable, we have to restore it, so save it now.
+  Value *OldVal = NamedValues[VarName];
+  NamedValues[VarName] = Variable;
+  
+  // Emit the body of the loop.  This, like any other expr, can change the
+  // current BB.  Note that we ignore the value computed by the body, but don't
+  // allow an error.
+  if (Body-&gt;Codegen() == 0)
+    return 0;
+</pre>
+</div>
+
+<p>Now the code starts to get more interesting.  Our 'for' loop introduces a new
+variable to the symbol table.  This means that our symbol table can now contain
+either function arguments or loop variables.  To handle this, before we codegen
+the body of the loop, we add the loop variable as the current value for its
+name.  Note that it is possible that there is a variable of the same name in the
+outer scope.  It would be easy to make this an error (emit an error and return
+null if there is already an entry for VarName) but we choose to allow shadowing
+of variables.  In order to handle this correctly, we remember the Value that
+we are potentially shadowing in <tt>OldVal</tt> (which will be null if there is
+no shadowed variable).</p>
+
+<p>Once the loop variable is set into the symbol table, the code recursively
+codegen's the body.  This allows the body to use the loop variable: any
+references to it will naturally find it in the symbol table.</p>
+
+<div class="doc_code">
+<pre>
+  // Emit the step value.
+  Value *StepVal;
+  if (Step) {
+    StepVal = Step-&gt;Codegen();
+    if (StepVal == 0) return 0;
+  } else {
+    // If not specified, use 1.0.
+    StepVal = ConstantFP::get(Type::DoubleTy, APFloat(1.0));
+  }
+  
+  Value *NextVar = Builder.CreateAdd(Variable, StepVal, "nextvar");
+</pre>
+</div>
+
+<p>Now that the body is emitted, we compute the next value of the iteration
+variable by adding the step value or 1.0 if it isn't present. '<tt>NextVar</tt>'
+will be the value of the loop variable on the next iteration of the loop.</p>
+
+<div class="doc_code">
+<pre>
+  // Compute the end condition.
+  Value *EndCond = End-&gt;Codegen();
+  if (EndCond == 0) return EndCond;
+  
+  // Convert condition to a bool by comparing equal to 0.0.
+  EndCond = Builder.CreateFCmpONE(EndCond, 
+                                  ConstantFP::get(Type::DoubleTy, APFloat(0.0)),
+                                  "loopcond");
+</pre>
+</div>
+
+<p>Finally, we evaluate the exit value of the loop, to determine whether the
+loop should exit.  This mirrors the condition evaluation for the if/then/else
+statement.</p>
+      
+<div class="doc_code">
+<pre>
+  // Create the "after loop" block and insert it.
+  BasicBlock *LoopEndBB = Builder.GetInsertBlock();
+  BasicBlock *AfterBB = new BasicBlock("afterloop", TheFunction);
+  
+  // Insert the conditional branch into the end of LoopEndBB.
+  Builder.CreateCondBr(EndCond, LoopBB, AfterBB);
+  
+  // Any new code will be inserted in AfterBB.
+  Builder.SetInsertPoint(AfterBB);
+</pre>
+</div>
+
+<p>With the code for the body of the loop complete, we just need to finish up
+the control flow for it.  This remembers the end block (for the phi node), then
+creates the block for the loop exit ("afterloop").  Based on the value of the
+exit condition, it creates a conditional branch that chooses between executing
+the loop again and exiting the loop.  Any future code is emitted in the
+"afterloop" block, so it sets the insertion position to it.</p>
+  
+<div class="doc_code">
+<pre>
+  // Add a new entry to the PHI node for the backedge.
+  Variable-&gt;addIncoming(NextVar, LoopEndBB);
+  
+  // Restore the unshadowed variable.
+  if (OldVal)
+    NamedValues[VarName] = OldVal;
+  else
+    NamedValues.erase(VarName);
+  
+  // for expr always returns 0.0.
+  return Constant::getNullValue(Type::DoubleTy);
+}
+</pre>
+</div>
+
+<p>The final code handles various cleanups: now that we have the "NextVar"
+value, we can add the incoming value to the loop PHI node.  After that, we
+remove the loop variable from the symbol table, so that it isn't in scope after
+the for loop.  Finally, code generation of the for loop always returns 0.0, so
+that is what we return from <tt>ForExprAST::Codegen</tt>.</p>
+
+<p>With this, we conclude the "adding control flow to Kaleidoscope" chapter of
+the tutorial.  We added two control flow constructs, and used them to motivate
+a couple of aspects of the LLVM IR that are important for front-end implementors
+to know.  In the next chapter of our saga, we will get a bit crazier and add
+operator overloading to our poor innocent language.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="code">Full Code Listing</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+Here is the complete code listing for our running example, enhanced with the
+if/then/else and for expressions..  To build this example, use:
+</p>
+
+<div class="doc_code">
+<pre>
+   # Compile
+   g++ -g toy.cpp `llvm-config --cppflags --ldflags --libs core jit native` -O3 -o toy
+   # Run
+   ./toy
+</pre>
+</div>
+
+<p>Here is the code:</p>
+
+<div class="doc_code">
+<pre>
+#include "llvm/DerivedTypes.h"
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/Module.h"
+#include "llvm/ModuleProvider.h"
+#include "llvm/PassManager.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Support/LLVMBuilder.h"
+#include &lt;cstdio&gt;
+#include &lt;string&gt;
+#include &lt;map&gt;
+#include &lt;vector&gt;
+using namespace llvm;
+
+//===----------------------------------------------------------------------===//
+// Lexer
+//===----------------------------------------------------------------------===//
+
+// The lexer returns tokens [0-255] if it is an unknown character, otherwise one
+// of these for known things.
+enum Token {
+  tok_eof = -1,
+
+  // commands
+  tok_def = -2, tok_extern = -3,
+
+  // primary
+  tok_identifier = -4, tok_number = -5,
+  
+  // control
+  tok_if = -6, tok_then = -7, tok_else = -8,
+  tok_for = -9, tok_in = -10
+};
+
+static std::string IdentifierStr;  // Filled in if tok_identifier
+static double NumVal;              // Filled in if tok_number
+
+/// gettok - Return the next token from standard input.
+static int gettok() {
+  static int LastChar = ' ';
+
+  // Skip any whitespace.
+  while (isspace(LastChar))
+    LastChar = getchar();
+
+  if (isalpha(LastChar)) { // identifier: [a-zA-Z][a-zA-Z0-9]*
+    IdentifierStr = LastChar;
+    while (isalnum((LastChar = getchar())))
+      IdentifierStr += LastChar;
+
+    if (IdentifierStr == "def") return tok_def;
+    if (IdentifierStr == "extern") return tok_extern;
+    if (IdentifierStr == "if") return tok_if;
+    if (IdentifierStr == "then") return tok_then;
+    if (IdentifierStr == "else") return tok_else;
+    if (IdentifierStr == "for") return tok_for;
+    if (IdentifierStr == "in") return tok_in;
+    return tok_identifier;
+  }
+
+  if (isdigit(LastChar) || LastChar == '.') {   // Number: [0-9.]+
+    std::string NumStr;
+    do {
+      NumStr += LastChar;
+      LastChar = getchar();
+    } while (isdigit(LastChar) || LastChar == '.');
+
+    NumVal = strtod(NumStr.c_str(), 0);
+    return tok_number;
+  }
+
+  if (LastChar == '#') {
+    // Comment until end of line.
+    do LastChar = getchar();
+    while (LastChar != EOF &amp;&amp; LastChar != '\n' &amp; LastChar != '\r');
+    
+    if (LastChar != EOF)
+      return gettok();
+  }
+  
+  // Check for end of file.  Don't eat the EOF.
+  if (LastChar == EOF)
+    return tok_eof;
+
+  // Otherwise, just return the character as its ascii value.
+  int ThisChar = LastChar;
+  LastChar = getchar();
+  return ThisChar;
+}
+
+//===----------------------------------------------------------------------===//
+// Abstract Syntax Tree (aka Parse Tree)
+//===----------------------------------------------------------------------===//
+
+/// ExprAST - Base class for all expression nodes.
+class ExprAST {
+public:
+  virtual ~ExprAST() {}
+  virtual Value *Codegen() = 0;
+};
+
+/// NumberExprAST - Expression class for numeric literals like "1.0".
+class NumberExprAST : public ExprAST {
+  double Val;
+public:
+  NumberExprAST(double val) : Val(val) {}
+  virtual Value *Codegen();
+};
+
+/// VariableExprAST - Expression class for referencing a variable, like "a".
+class VariableExprAST : public ExprAST {
+  std::string Name;
+public:
+  VariableExprAST(const std::string &amp;name) : Name(name) {}
+  virtual Value *Codegen();
+};
+
+/// BinaryExprAST - Expression class for a binary operator.
+class BinaryExprAST : public ExprAST {
+  char Op;
+  ExprAST *LHS, *RHS;
+public:
+  BinaryExprAST(char op, ExprAST *lhs, ExprAST *rhs) 
+    : Op(op), LHS(lhs), RHS(rhs) {}
+  virtual Value *Codegen();
+};
+
+/// CallExprAST - Expression class for function calls.
+class CallExprAST : public ExprAST {
+  std::string Callee;
+  std::vector&lt;ExprAST*&gt; Args;
+public:
+  CallExprAST(const std::string &amp;callee, std::vector&lt;ExprAST*&gt; &amp;args)
+    : Callee(callee), Args(args) {}
+  virtual Value *Codegen();
+};
+
+/// IfExprAST - Expression class for if/then/else.
+class IfExprAST : public ExprAST {
+  ExprAST *Cond, *Then, *Else;
+public:
+  IfExprAST(ExprAST *cond, ExprAST *then, ExprAST *_else)
+  : Cond(cond), Then(then), Else(_else) {}
+  virtual Value *Codegen();
+};
+
+/// ForExprAST - Expression class for for/in.
+class ForExprAST : public ExprAST {
+  std::string VarName;
+  ExprAST *Start, *End, *Step, *Body;
+public:
+  ForExprAST(const std::string &amp;varname, ExprAST *start, ExprAST *end,
+             ExprAST *step, ExprAST *body)
+    : VarName(varname), Start(start), End(end), Step(step), Body(body) {}
+  virtual Value *Codegen();
+};
+
+/// PrototypeAST - This class represents the "prototype" for a function,
+/// which captures its argument names as well as if it is an operator.
+class PrototypeAST {
+  std::string Name;
+  std::vector&lt;std::string&gt; Args;
+public:
+  PrototypeAST(const std::string &amp;name, const std::vector&lt;std::string&gt; &amp;args)
+    : Name(name), Args(args) {}
+  
+  Function *Codegen();
+};
+
+/// FunctionAST - This class represents a function definition itself.
+class FunctionAST {
+  PrototypeAST *Proto;
+  ExprAST *Body;
+public:
+  FunctionAST(PrototypeAST *proto, ExprAST *body)
+    : Proto(proto), Body(body) {}
+  
+  Function *Codegen();
+};
+
+//===----------------------------------------------------------------------===//
+// Parser
+//===----------------------------------------------------------------------===//
+
+/// CurTok/getNextToken - Provide a simple token buffer.  CurTok is the current
+/// token the parser it looking at.  getNextToken reads another token from the
+/// lexer and updates CurTok with its results.
+static int CurTok;
+static int getNextToken() {
+  return CurTok = gettok();
+}
+
+/// BinopPrecedence - This holds the precedence for each binary operator that is
+/// defined.
+static std::map&lt;char, int&gt; BinopPrecedence;
+
+/// GetTokPrecedence - Get the precedence of the pending binary operator token.
+static int GetTokPrecedence() {
+  if (!isascii(CurTok))
+    return -1;
+  
+  // Make sure it's a declared binop.
+  int TokPrec = BinopPrecedence[CurTok];
+  if (TokPrec &lt;= 0) return -1;
+  return TokPrec;
+}
+
+/// Error* - These are little helper functions for error handling.
+ExprAST *Error(const char *Str) { fprintf(stderr, "Error: %s\n", Str);return 0;}
+PrototypeAST *ErrorP(const char *Str) { Error(Str); return 0; }
+FunctionAST *ErrorF(const char *Str) { Error(Str); return 0; }
+
+static ExprAST *ParseExpression();
+
+/// identifierexpr
+///   ::= identifer
+///   ::= identifer '(' expression* ')'
+static ExprAST *ParseIdentifierExpr() {
+  std::string IdName = IdentifierStr;
+  
+  getNextToken();  // eat identifer.
+  
+  if (CurTok != '(') // Simple variable ref.
+    return new VariableExprAST(IdName);
+  
+  // Call.
+  getNextToken();  // eat (
+  std::vector&lt;ExprAST*&gt; Args;
+  if (CurTok != ')') {
+    while (1) {
+      ExprAST *Arg = ParseExpression();
+      if (!Arg) return 0;
+      Args.push_back(Arg);
+      
+      if (CurTok == ')') break;
+      
+      if (CurTok != ',')
+        return Error("Expected ')'");
+      getNextToken();
+    }
+  }
+
+  // Eat the ')'.
+  getNextToken();
+  
+  return new CallExprAST(IdName, Args);
+}
+
+/// numberexpr ::= number
+static ExprAST *ParseNumberExpr() {
+  ExprAST *Result = new NumberExprAST(NumVal);
+  getNextToken(); // consume the number
+  return Result;
+}
+
+/// parenexpr ::= '(' expression ')'
+static ExprAST *ParseParenExpr() {
+  getNextToken();  // eat (.
+  ExprAST *V = ParseExpression();
+  if (!V) return 0;
+  
+  if (CurTok != ')')
+    return Error("expected ')'");
+  getNextToken();  // eat ).
+  return V;
+}
+
+/// ifexpr ::= 'if' expression 'then' expression 'else' expression
+static ExprAST *ParseIfExpr() {
+  getNextToken();  // eat the if.
+  
+  // condition.
+  ExprAST *Cond = ParseExpression();
+  if (!Cond) return 0;
+  
+  if (CurTok != tok_then)
+    return Error("expected then");
+  getNextToken();  // eat the then
+  
+  ExprAST *Then = ParseExpression();
+  if (Then == 0) return 0;
+  
+  if (CurTok != tok_else)
+    return Error("expected else");
+  
+  getNextToken();
+  
+  ExprAST *Else = ParseExpression();
+  if (!Else) return 0;
+  
+  return new IfExprAST(Cond, Then, Else);
+}
+
+/// forexpr ::= 'for' identifer '=' expr ',' expr (',' expr)? 'in' expression
+static ExprAST *ParseForExpr() {
+  getNextToken();  // eat the for.
+
+  if (CurTok != tok_identifier)
+    return Error("expected identifier after for");
+  
+  std::string IdName = IdentifierStr;
+  getNextToken();  // eat identifer.
+  
+  if (CurTok != '=')
+    return Error("expected '=' after for");
+  getNextToken();  // eat '='.
+  
+  
+  ExprAST *Start = ParseExpression();
+  if (Start == 0) return 0;
+  if (CurTok != ',')
+    return Error("expected ',' after for start value");
+  getNextToken();
+  
+  ExprAST *End = ParseExpression();
+  if (End == 0) return 0;
+  
+  // The step value is optional.
+  ExprAST *Step = 0;
+  if (CurTok == ',') {
+    getNextToken();
+    Step = ParseExpression();
+    if (Step == 0) return 0;
+  }
+  
+  if (CurTok != tok_in)
+    return Error("expected 'in' after for");
+  getNextToken();  // eat 'in'.
+  
+  ExprAST *Body = ParseExpression();
+  if (Body == 0) return 0;
+
+  return new ForExprAST(IdName, Start, End, Step, Body);
+}
+
+
+/// primary
+///   ::= identifierexpr
+///   ::= numberexpr
+///   ::= parenexpr
+///   ::= ifexpr
+///   ::= forexpr
+static ExprAST *ParsePrimary() {
+  switch (CurTok) {
+  default: return Error("unknown token when expecting an expression");
+  case tok_identifier: return ParseIdentifierExpr();
+  case tok_number:     return ParseNumberExpr();
+  case '(':            return ParseParenExpr();
+  case tok_if:         return ParseIfExpr();
+  case tok_for:        return ParseForExpr();
+  }
+}
+
+/// binoprhs
+///   ::= ('+' primary)*
+static ExprAST *ParseBinOpRHS(int ExprPrec, ExprAST *LHS) {
+  // If this is a binop, find its precedence.
+  while (1) {
+    int TokPrec = GetTokPrecedence();
+    
+    // If this is a binop that binds at least as tightly as the current binop,
+    // consume it, otherwise we are done.
+    if (TokPrec &lt; ExprPrec)
+      return LHS;
+    
+    // Okay, we know this is a binop.
+    int BinOp = CurTok;
+    getNextToken();  // eat binop
+    
+    // Parse the primary expression after the binary operator.
+    ExprAST *RHS = ParsePrimary();
+    if (!RHS) return 0;
+    
+    // If BinOp binds less tightly with RHS than the operator after RHS, let
+    // the pending operator take RHS as its LHS.
+    int NextPrec = GetTokPrecedence();
+    if (TokPrec &lt; NextPrec) {
+      RHS = ParseBinOpRHS(TokPrec+1, RHS);
+      if (RHS == 0) return 0;
+    }
+    
+    // Merge LHS/RHS.
+    LHS = new BinaryExprAST(BinOp, LHS, RHS);
+  }
+}
+
+/// expression
+///   ::= primary binoprhs
+///
+static ExprAST *ParseExpression() {
+  ExprAST *LHS = ParsePrimary();
+  if (!LHS) return 0;
+  
+  return ParseBinOpRHS(0, LHS);
+}
+
+/// prototype
+///   ::= id '(' id* ')'
+static PrototypeAST *ParsePrototype() {
+  if (CurTok != tok_identifier)
+    return ErrorP("Expected function name in prototype");
+
+  std::string FnName = IdentifierStr;
+  getNextToken();
+  
+  if (CurTok != '(')
+    return ErrorP("Expected '(' in prototype");
+  
+  std::vector&lt;std::string&gt; ArgNames;
+  while (getNextToken() == tok_identifier)
+    ArgNames.push_back(IdentifierStr);
+  if (CurTok != ')')
+    return ErrorP("Expected ')' in prototype");
+  
+  // success.
+  getNextToken();  // eat ')'.
+  
+  return new PrototypeAST(FnName, ArgNames);
+}
+
+/// definition ::= 'def' prototype expression
+static FunctionAST *ParseDefinition() {
+  getNextToken();  // eat def.
+  PrototypeAST *Proto = ParsePrototype();
+  if (Proto == 0) return 0;
+
+  if (ExprAST *E = ParseExpression())
+    return new FunctionAST(Proto, E);
+  return 0;
+}
+
+/// toplevelexpr ::= expression
+static FunctionAST *ParseTopLevelExpr() {
+  if (ExprAST *E = ParseExpression()) {
+    // Make an anonymous proto.
+    PrototypeAST *Proto = new PrototypeAST("", std::vector&lt;std::string&gt;());
+    return new FunctionAST(Proto, E);
+  }
+  return 0;
+}
+
+/// external ::= 'extern' prototype
+static PrototypeAST *ParseExtern() {
+  getNextToken();  // eat extern.
+  return ParsePrototype();
+}
+
+//===----------------------------------------------------------------------===//
+// Code Generation
+//===----------------------------------------------------------------------===//
+
+static Module *TheModule;
+static LLVMFoldingBuilder Builder;
+static std::map&lt;std::string, Value*&gt; NamedValues;
+static FunctionPassManager *TheFPM;
+
+Value *ErrorV(const char *Str) { Error(Str); return 0; }
+
+Value *NumberExprAST::Codegen() {
+  return ConstantFP::get(Type::DoubleTy, APFloat(Val));
+}
+
+Value *VariableExprAST::Codegen() {
+  // Look this variable up in the function.
+  Value *V = NamedValues[Name];
+  return V ? V : ErrorV("Unknown variable name");
+}
+
+Value *BinaryExprAST::Codegen() {
+  Value *L = LHS-&gt;Codegen();
+  Value *R = RHS-&gt;Codegen();
+  if (L == 0 || R == 0) return 0;
+  
+  switch (Op) {
+  case '+': return Builder.CreateAdd(L, R, "addtmp");
+  case '-': return Builder.CreateSub(L, R, "subtmp");
+  case '*': return Builder.CreateMul(L, R, "multmp");
+  case '&lt;':
+    L = Builder.CreateFCmpULT(L, R, "multmp");
+    // Convert bool 0/1 to double 0.0 or 1.0
+    return Builder.CreateUIToFP(L, Type::DoubleTy, "booltmp");
+  default: return ErrorV("invalid binary operator");
+  }
+}
+
+Value *CallExprAST::Codegen() {
+  // Look up the name in the global module table.
+  Function *CalleeF = TheModule-&gt;getFunction(Callee);
+  if (CalleeF == 0)
+    return ErrorV("Unknown function referenced");
+  
+  // If argument mismatch error.
+  if (CalleeF-&gt;arg_size() != Args.size())
+    return ErrorV("Incorrect # arguments passed");
+
+  std::vector&lt;Value*&gt; ArgsV;
+  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+    ArgsV.push_back(Args[i]-&gt;Codegen());
+    if (ArgsV.back() == 0) return 0;
+  }
+  
+  return Builder.CreateCall(CalleeF, ArgsV.begin(), ArgsV.end(), "calltmp");
+}
+
+Value *IfExprAST::Codegen() {
+  Value *CondV = Cond-&gt;Codegen();
+  if (CondV == 0) return 0;
+  
+  // Convert condition to a bool by comparing equal to 0.0.
+  CondV = Builder.CreateFCmpONE(CondV, 
+                                ConstantFP::get(Type::DoubleTy, APFloat(0.0)),
+                                "ifcond");
+  
+  Function *TheFunction = Builder.GetInsertBlock()-&gt;getParent();
+  
+  // Create blocks for the then and else cases.  Insert the 'then' block at the
+  // end of the function.
+  BasicBlock *ThenBB = new BasicBlock("then", TheFunction);
+  BasicBlock *ElseBB = new BasicBlock("else");
+  BasicBlock *MergeBB = new BasicBlock("ifcont");
+  
+  Builder.CreateCondBr(CondV, ThenBB, ElseBB);
+  
+  // Emit then value.
+  Builder.SetInsertPoint(ThenBB);
+  
+  Value *ThenV = Then-&gt;Codegen();
+  if (ThenV == 0) return 0;
+  
+  Builder.CreateBr(MergeBB);
+  // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
+  ThenBB = Builder.GetInsertBlock();
+  
+  // Emit else block.
+  TheFunction-&gt;getBasicBlockList().push_back(ElseBB);
+  Builder.SetInsertPoint(ElseBB);
+  
+  Value *ElseV = Else-&gt;Codegen();
+  if (ElseV == 0) return 0;
+  
+  Builder.CreateBr(MergeBB);
+  // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
+  ElseBB = Builder.GetInsertBlock();
+  
+  // Emit merge block.
+  TheFunction-&gt;getBasicBlockList().push_back(MergeBB);
+  Builder.SetInsertPoint(MergeBB);
+  PHINode *PN = Builder.CreatePHI(Type::DoubleTy, "iftmp");
+  
+  PN-&gt;addIncoming(ThenV, ThenBB);
+  PN-&gt;addIncoming(ElseV, ElseBB);
+  return PN;
+}
+
 Value *ForExprAST::Codegen() {
   // Output this as:
   //   ...
@@ -667,8 +1451,9 @@ Value *ForExprAST::Codegen() {
   BasicBlock *LoopBB = new BasicBlock("loop", TheFunction);
   
   // Insert an explicit fall through from the current block to the LoopBB.
-  // Start insertion in LoopBB.
   Builder.CreateBr(LoopBB);
+
+  // Start insertion in LoopBB.
   Builder.SetInsertPoint(LoopBB);
   
   // Start the PHI node with an entry for Start.
@@ -698,11 +1483,6 @@ Value *ForExprAST::Codegen() {
   
   Value *NextVar = Builder.CreateAdd(Variable, StepVal, "nextvar");
 
-  // When evaluating the end condition, the value of the variable is the
-  // incremented value.
-  NamedValues[VarName] = Variable;
-  
-  
   // Compute the end condition.
   Value *EndCond = End-&gt;Codegen();
   if (EndCond == 0) return EndCond;
@@ -735,37 +1515,202 @@ Value *ForExprAST::Codegen() {
   // for expr always returns 0.0.
   return Constant::getNullValue(Type::DoubleTy);
 }
-</pre>
-</div>
+
+Function *PrototypeAST::Codegen() {
+  // Make the function type:  double(double,double) etc.
+  std::vector&lt;const Type*&gt; Doubles(Args.size(), Type::DoubleTy);
+  FunctionType *FT = FunctionType::get(Type::DoubleTy, Doubles, false);
+  
+  Function *F = new Function(FT, Function::ExternalLinkage, Name, TheModule);
+  
+  // If F conflicted, there was already something named 'Name'.  If it has a
+  // body, don't allow redefinition or reextern.
+  if (F-&gt;getName() != Name) {
+    // Delete the one we just made and get the existing one.
+    F-&gt;eraseFromParent();
+    F = TheModule-&gt;getFunction(Name);
+    
+    // If F already has a body, reject this.
+    if (!F-&gt;empty()) {
+      ErrorF("redefinition of function");
+      return 0;
+    }
+    
+    // If F took a different number of args, reject.
+    if (F-&gt;arg_size() != Args.size()) {
+      ErrorF("redefinition of function with different # args");
+      return 0;
+    }
+  }
+  
+  // Set names for all arguments.
+  unsigned Idx = 0;
+  for (Function::arg_iterator AI = F-&gt;arg_begin(); Idx != Args.size();
+       ++AI, ++Idx) {
+    AI-&gt;setName(Args[Idx]);
+    
+    // Add arguments to variable symbol table.
+    NamedValues[Args[Idx]] = AI;
+  }
+  
+  return F;
+}
+
+Function *FunctionAST::Codegen() {
+  NamedValues.clear();
+  
+  Function *TheFunction = Proto-&gt;Codegen();
+  if (TheFunction == 0)
+    return 0;
+  
+  // Create a new basic block to start insertion into.
+  BasicBlock *BB = new BasicBlock("entry", TheFunction);
+  Builder.SetInsertPoint(BB);
+  
+  if (Value *RetVal = Body-&gt;Codegen()) {
+    // Finish off the function.
+    Builder.CreateRet(RetVal);
+
+    // Validate the generated code, checking for consistency.
+    verifyFunction(*TheFunction);
+
+    // Optimize the function.
+    TheFPM-&gt;run(*TheFunction);
+    
+    return TheFunction;
+  }
+  
+  // Error reading body, remove function.
+  TheFunction-&gt;eraseFromParent();
+  return 0;
+}
+
+//===----------------------------------------------------------------------===//
+// Top-Level parsing and JIT Driver
+//===----------------------------------------------------------------------===//
+
+static ExecutionEngine *TheExecutionEngine;
+
+static void HandleDefinition() {
+  if (FunctionAST *F = ParseDefinition()) {
+    if (Function *LF = F-&gt;Codegen()) {
+      fprintf(stderr, "Read function definition:");
+      LF-&gt;dump();
+    }
+  } else {
+    // Skip token for error recovery.
+    getNextToken();
+  }
+}
+
+static void HandleExtern() {
+  if (PrototypeAST *P = ParseExtern()) {
+    if (Function *F = P-&gt;Codegen()) {
+      fprintf(stderr, "Read extern: ");
+      F-&gt;dump();
+    }
+  } else {
+    // Skip token for error recovery.
+    getNextToken();
+  }
+}
+
+static void HandleTopLevelExpression() {
+  // Evaluate a top level expression into an anonymous function.
+  if (FunctionAST *F = ParseTopLevelExpr()) {
+    if (Function *LF = F-&gt;Codegen()) {
+      // JIT the function, returning a function pointer.
+      void *FPtr = TheExecutionEngine-&gt;getPointerToFunction(LF);
+      
+      // Cast it to the right type (takes no arguments, returns a double) so we
+      // can call it as a native function.
+      double (*FP)() = (double (*)())FPtr;
+      fprintf(stderr, "Evaluated to %f\n", FP());
+    }
+  } else {
+    // Skip token for error recovery.
+    getNextToken();
+  }
+}
+
+/// top ::= definition | external | expression | ';'
+static void MainLoop() {
+  while (1) {
+    fprintf(stderr, "ready&gt; ");
+    switch (CurTok) {
+    case tok_eof:    return;
+    case ';':        getNextToken(); break;  // ignore top level semicolons.
+    case tok_def:    HandleDefinition(); break;
+    case tok_extern: HandleExtern(); break;
+    default:         HandleTopLevelExpression(); break;
+    }
+  }
+}
 
 
-</div>
 
-<!-- *********************************************************************** -->
-<div class="doc_section"><a name="code">Full Code Listing</a></div>
-<!-- *********************************************************************** -->
+//===----------------------------------------------------------------------===//
+// "Library" functions that can be "extern'd" from user code.
+//===----------------------------------------------------------------------===//
 
-<div class="doc_text">
+/// putchard - putchar that takes a double and returns 0.
+extern "C" 
+double putchard(double X) {
+  putchar((char)X);
+  return 0;
+}
 
-<p>
-Here is the complete code listing for our running example, enhanced with the
-if/then/else and for expressions..  To build this example, use:
-</p>
+//===----------------------------------------------------------------------===//
+// Main driver code.
+//===----------------------------------------------------------------------===//
 
-<div class="doc_code">
-<pre>
-   # Compile
-   g++ -g toy.cpp `llvm-config --cppflags --ldflags --libs core jit native` -O3 -o toy
-   # Run
-   ./toy
-</pre>
-</div>
+int main() {
+  // Install standard binary operators.
+  // 1 is lowest precedence.
+  BinopPrecedence['&lt;'] = 10;
+  BinopPrecedence['+'] = 20;
+  BinopPrecedence['-'] = 20;
+  BinopPrecedence['*'] = 40;  // highest.
 
-<p>Here is the code:</p>
+  // Prime the first token.
+  fprintf(stderr, "ready&gt; ");
+  getNextToken();
 
-<div class="doc_code">
-<pre>
-...
+  // Make the module, which holds all the code.
+  TheModule = new Module("my cool jit");
+  
+  // Create the JIT.
+  TheExecutionEngine = ExecutionEngine::create(TheModule);
+
+  {
+    ExistingModuleProvider OurModuleProvider(TheModule);
+    FunctionPassManager OurFPM(&amp;OurModuleProvider);
+      
+    // Set up the optimizer pipeline.  Start with registering info about how the
+    // target lays out data structures.
+    OurFPM.add(new TargetData(*TheExecutionEngine-&gt;getTargetData()));
+    // Do simple "peephole" optimizations and bit-twiddling optzns.
+    OurFPM.add(createInstructionCombiningPass());
+    // Reassociate expressions.
+    OurFPM.add(createReassociatePass());
+    // Eliminate Common SubExpressions.
+    OurFPM.add(createGVNPass());
+    // Simplify the control flow graph (deleting unreachable blocks, etc).
+    OurFPM.add(createCFGSimplificationPass());
+    // Set the global so the code gen can use this.
+    TheFPM = &amp;OurFPM;
+
+    // Run the main "interpreter loop" now.
+    MainLoop();
+    
+    TheFPM = 0;
+  }  // Free module provider and pass manager.
+                                   
+                                   
+  // Print out all of the generated code.
+  TheModule-&gt;dump();
+  return 0;
+}
 </pre>
 </div>
 
