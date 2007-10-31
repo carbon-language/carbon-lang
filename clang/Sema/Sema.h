@@ -284,6 +284,9 @@ private:
   /// GetObjcSelType - Getter for the build-in "Protocol *" type.
   QualType GetObjcProtoType(SourceLocation Loc = SourceLocation());
   
+  // GetObjcClassType - Getter for the built-in "Class" type.
+  QualType GetObjcClassType(SourceLocation Loc = SourceLocation());
+
   /// AddInstanceMethodToGlobalPool - All instance methods in a translation
   /// unit are added to a global pool. This allows us to efficiently associate
   /// a selector with a method declaraation for purposes of typechecking

@@ -1959,6 +1959,17 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                  SourceLocation RParenLoc) {
   QualType EncodedType = QualType::getFromOpaquePtr(Ty);
 
+  // We cannot build type 'id' lazily. It is needed when checking if a 
+  // type is an 'id' (via call to isObjcIdType) even if there is no
+  // need for the default 'id' type.
+  // FIXME: Depending on the need to compare to 'id', this may have to go
+  // somewhere else. At this time, this is a good enough place to do type
+  // encoding of methods and ivars for the rewrite client.
+  // The same is true for the 'Class' and 'SEL' types.
+  GetObjcIdType(EncodeLoc);
+  GetObjcClassType(EncodeLoc);
+  GetObjcSelType(EncodeLoc);
+  
   QualType t = Context.getPointerType(Context.CharTy);
   return new ObjCEncodeExpr(t, EncodedType, AtLoc, RParenLoc);
 }

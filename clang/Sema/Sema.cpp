@@ -82,6 +82,25 @@ QualType Sema::GetObjcProtoType(SourceLocation Loc) {
   return Context.getObjcProtoType();
 }
 
+/// GetObjcClassType - See comments for Sema::GetObjcIdType above; replace "id"
+/// with "Protocol".
+QualType Sema::GetObjcClassType(SourceLocation Loc) {
+  assert(TUScope && "GetObjcClassType(): Top-level scope is null");
+  if (!Context.getObjcClassType().isNull())
+    return Context.getObjcClassType();
+    
+  IdentifierInfo *ClassIdent = &Context.Idents.get("Class");
+  ScopedDecl *ClassDecl = LookupScopedDecl(ClassIdent, Decl::IDNS_Ordinary, 
+                                        SourceLocation(), TUScope);
+  TypedefDecl *ObjcClassTypedef = dyn_cast_or_null<TypedefDecl>(ClassDecl);
+  if (!ObjcClassTypedef) {
+    Diag(Loc, diag::err_missing_class_definition);
+    return QualType();
+  }
+  Context.setObjcClassType(ObjcClassTypedef);
+  return Context.getObjcClassType();
+}
+
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   : PP(pp), Context(ctxt), CurFunctionDecl(0), LastInGroupList(prevInGroup) {
   

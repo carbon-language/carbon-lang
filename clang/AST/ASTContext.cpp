@@ -152,6 +152,9 @@ void ASTContext::InitBuiltinTypes() {
   BuiltinVaListType = QualType();
   ObjcIdType = QualType();
   IdStructType = 0;
+  ObjcClassType = QualType();
+  ClassStructType = 0;
+  
   ObjcConstantStringType = QualType();
   
   // void * type
@@ -1008,8 +1011,14 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     S += encoding;
   } else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
-    if (isObjcIdType(PointeeTy)) {
+    if (isObjcIdType(PointeeTy) || PointeeTy->isObjcInterfaceType()) {
       S += '@';
+      return;
+    } else if (isObjcClassType(PointeeTy)) {
+      S += '#';
+      return;
+    } else if (isObjcSelType(PointeeTy)) {
+      S += ':';
       return;
     }
     
@@ -1084,6 +1093,20 @@ void ASTContext::setObjcProtoType(TypedefDecl *TD)
   // Protocol * type
   ObjcProtoType = getPointerType(ObjcProtoType);  
   ProtoStructType = TD->getUnderlyingType()->getAsStructureType();
+}
+
+void ASTContext::setObjcClassType(TypedefDecl *TD)
+{
+  assert(ObjcClassType.isNull() && "'Class' type already set!");
+    
+  ObjcClassType = getTypedefType(TD);
+
+  // typedef struct objc_class *Class;
+  const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
+  assert(ptr && "'Class' incorrectly typed");
+  const RecordType *rec = ptr->getPointeeType()->getAsStructureType();
+  assert(rec && "'Class' incorrectly typed");
+  ClassStructType = rec;
 }
 
 void ASTContext::setObjcConstantStringInterface(ObjcInterfaceDecl *Decl) {

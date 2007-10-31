@@ -59,6 +59,10 @@ class ASTContext {
   /// ObjcProtoType - another psuedo built-in typedef type (set by Sema).
   QualType ObjcProtoType;
   const RecordType *ProtoStructType;
+
+  /// ObjcClassType - another psuedo built-in typedef type (set by Sema).
+  QualType ObjcClassType;
+  const RecordType *ClassStructType;
   
   QualType ObjcConstantStringType;
   RecordDecl *CFConstantStringTypeDecl;
@@ -196,6 +200,9 @@ public:
   void setObjcProtoType(TypedefDecl *Decl);
   QualType getObjcProtoType() const { return ObjcProtoType; }
   
+  void setObjcClassType(TypedefDecl *Decl);
+  QualType getObjcClassType() const { return ObjcClassType; }
+  
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
     
@@ -264,6 +271,15 @@ public:
     assert(IdStructType && "isObjcIdType used before 'id' type is built");
     return T->getAsStructureType() == IdStructType;
   }
+  bool isObjcClassType(QualType T) const {
+    assert(ClassStructType && "isObjcClassType used before 'Class' type is built");
+    return T->getAsStructureType() == ClassStructType;
+  }
+  bool isObjcSelType(QualType T) const {
+    assert(SelStructType && "isObjcSelType used before 'SEL' type is built");
+    return T->getAsStructureType() == SelStructType;
+  }
+
 private:
   ASTContext(const ASTContext&); // DO NOT IMPLEMENT
   void operator=(const ASTContext&); // DO NOT IMPLEMENT
