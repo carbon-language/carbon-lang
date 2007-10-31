@@ -555,8 +555,7 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   
   int NumIvars = CDecl->getIntfDeclNumIvars();
   // If no ivars and no root or if its root, directly or indirectly,
-  // have no ivars (thus not synthesize)
-  // then no need to synthesize this class either.
+  // have no ivars (thus not synthesized) then no need to synthesize this class.
   if (NumIvars <= 0 && (!RCDecl || !ObjcSynthesizedStructs.count(RCDecl)))
     return;
   

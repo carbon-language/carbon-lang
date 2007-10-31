@@ -1288,6 +1288,9 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
     IDecl->addInstanceVariablesToClass(ivars, numIvars, RBrace);
     return;
   }
+  // If implementation has empty ivar list, just return.
+  if (numIvars == 0)
+    return;
   
   assert(ivars && "missing @implementation ivars");
   
@@ -1967,10 +1970,11 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
 
 Sema::DeclTy *Sema::ActOnMethodDeclaration(
     SourceLocation MethodLoc, SourceLocation EndLoc,
-    tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
+    tok::TokenKind MethodType, ObjcDeclSpec &ReturnQT, TypeTy *ReturnType,
+    Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
-    TypeTy **ArgTypes, IdentifierInfo **ArgNames,
+    ObjcDeclSpec *ArgQT, TypeTy **ArgTypes, IdentifierInfo **ArgNames,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind) {
   llvm::SmallVector<ParmVarDecl*, 16> Params;
   

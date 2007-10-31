@@ -471,14 +471,13 @@ bool Parser::isObjCPropertyAttribute() {
 ///     objc-type-qualifier
 ///     objc-type-qualifiers objc-type-qualifier
 ///
-Parser::TypeTy *Parser::ParseObjCTypeName() {
+Parser::TypeTy *Parser::ParseObjCTypeName(ObjcDeclSpec &DS) {
   assert(Tok.is(tok::l_paren) && "expected (");
   
   SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
   TypeTy *Ty = 0;
   
   // Parse type qualifiers, in, inout, etc.
-  ObjcDeclSpec DS;
   ParseObjcTypeQualifierList(DS);
 
   if (isTypeSpecifierQualifier()) {
@@ -528,8 +527,9 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 {
   // Parse the return type.
   TypeTy *ReturnType = 0;
+  ObjcDeclSpec DSRet;
   if (Tok.is(tok::l_paren))
-    ReturnType = ParseObjCTypeName();
+    ReturnType = ParseObjCTypeName(DSRet);
   SourceLocation selLoc;
   IdentifierInfo *SelIdent = ParseObjCSelector(selLoc);
   if (Tok.isNot(tok::colon)) {
@@ -546,12 +546,13 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
-                                          mType, ReturnType, Sel,
-                                          0, 0, MethodAttrs, MethodImplKind);
+                                          mType, DSRet, ReturnType, Sel,
+                                          0, 0, 0, MethodAttrs, MethodImplKind);
   }
 
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   llvm::SmallVector<Action::TypeTy *, 12> KeyTypes;
+  llvm::SmallVector<ObjcDeclSpec, 12> ArgTypeQuals;
   llvm::SmallVector<IdentifierInfo *, 12> ArgNames;
   
   Action::TypeTy *TypeInfo;
@@ -564,11 +565,14 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
       break;
     }
     ConsumeToken(); // Eat the ':'.
-    if (Tok.is(tok::l_paren)) // Parse the argument type.
-      TypeInfo = ParseObjCTypeName();
+    ObjcDeclSpec DSType;
+    if (Tok.is(tok::l_paren))  { // Parse the argument type.
+      TypeInfo = ParseObjCTypeName(DSType);
+    }
     else
       TypeInfo = 0;
     KeyTypes.push_back(TypeInfo);
+    ArgTypeQuals.push_back(DSType);
     
     // If attributes exist before the argument name, parse them.
     if (getLang().ObjC2 && Tok.is(tok::kw___attribute))
@@ -613,8 +617,9 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
                                                    &KeyIdents[0]);
   return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
-                                        mType, ReturnType, Sel, 
-                                        &KeyTypes[0], &ArgNames[0],
+                                        mType, DSRet, ReturnType, Sel, 
+                                        &ArgTypeQuals[0], &KeyTypes[0], 
+                                        &ArgNames[0],
                                         MethodAttrs, MethodImplKind);
 }
 

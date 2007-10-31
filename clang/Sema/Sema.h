@@ -524,10 +524,11 @@ public:
   virtual DeclTy *ActOnMethodDeclaration(
     SourceLocation BeginLoc, // location of the + or -.
     SourceLocation EndLoc,   // location of the ; or {.
-    tok::TokenKind MethodType, TypeTy *ReturnType, Selector Sel,
+    tok::TokenKind MethodType, ObjcDeclSpec &ReturnQT, TypeTy *ReturnType, 
+    Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
-    TypeTy **ArgTypes, IdentifierInfo **ArgNames,
+    ObjcDeclSpec *ArgQT, TypeTy **ArgTypes, IdentifierInfo **ArgNames,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind);
 
   // ActOnClassMessage - used for both unary and keyword messages.

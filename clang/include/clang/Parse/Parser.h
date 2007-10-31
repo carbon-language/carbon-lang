@@ -293,7 +293,7 @@ private:
   IdentifierInfo *ObjcPropertyAttrs[objc_NumAttrs];
   bool isObjCPropertyAttribute();
 
-  TypeTy *ParseObjCTypeName();
+  TypeTy *ParseObjCTypeName(ObjcDeclSpec &DS);
   void ParseObjCMethodRequirement();
   DeclTy *ParseObjCMethodPrototype(DeclTy *classOrCat,
    	    tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
