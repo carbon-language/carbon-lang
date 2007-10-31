@@ -27,7 +27,7 @@ class Serializer {
   SmallVector<uint64_t,10> Record;
   bool inBlock;
   
-  typedef DenseMap<void*,unsigned> MapTy;
+  typedef DenseMap<const void*,unsigned> MapTy;
   MapTy PtrMap;
   
 public:
@@ -42,7 +42,10 @@ public:
   void EmitCStr(const char* beg, const char* end);
   void EmitCStr(const char* cstr);
   
-  void EmitPtr(void* ptr) { EmitInt(getPtrId(ptr)); }
+  void EmitPtr(const void* ptr) { EmitInt(getPtrId(ptr)); }
+  
+  template <typename T>
+  void EmitRef(const T& ref) { EmitPtr(&ref); }
   
   template <typename T>
   void EmitOwnedPtr(T* ptr) {
@@ -55,7 +58,7 @@ public:
 private:
   void EmitRecord();
   inline bool inRecord() { return Record.size() > 0; }
-  unsigned getPtrId(void* ptr);
+  unsigned getPtrId(const void* ptr);
 };
 
 } // end namespace llvm

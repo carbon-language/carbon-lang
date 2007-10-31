@@ -57,7 +57,7 @@ void Serializer::EmitCStr(const char* s) {
   EmitCStr(s,s+strlen(s));
 }
 
-unsigned Serializer::getPtrId(void* ptr) {
+unsigned Serializer::getPtrId(const void* ptr) {
   if (!ptr)
     return 0;
   
