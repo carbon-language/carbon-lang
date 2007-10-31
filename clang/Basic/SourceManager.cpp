@@ -116,8 +116,8 @@ const ContentCache* SourceManager::getContentCache(const FileEntry *FileEnt) {
 }
 
 
-/// createMemBufferInfoRec - Create a new ContentCache for the specified memory
-/// buffer.  This does no caching.
+/// createMemBufferContentCache - Create a new ContentCache for the specified
+///  memory buffer.  This does no caching.
 const ContentCache*
 SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
   // Add a new ContentCache to the MemBufferInfos list and return it.  We
