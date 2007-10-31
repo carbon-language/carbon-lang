@@ -28,6 +28,11 @@ struct TypeNameInfo {
   }
 };
 
+void MinimalAction:: ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
+  TUScope = S;
+  // FIXME: add id/SEL/Class. We need to get our paws on the identifier table.
+}
+
 /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
 /// determine whether the name is a type name (objc class name or typedef) or
 /// not in this scope.

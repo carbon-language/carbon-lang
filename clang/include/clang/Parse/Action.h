@@ -645,9 +645,7 @@ public:
   /// ActOnPopScope - When a scope is popped, if any typedefs are now 
   /// out-of-scope, they are removed from the IdentifierInfo::FETokenInfo field.
   virtual void ActOnPopScope(SourceLocation Loc, Scope *S);
-  virtual void ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
-    TUScope = S;
-  }
+  virtual void ActOnTranslationUnitScope(SourceLocation Loc, Scope *S);
   
   virtual DeclTy *ActOnForwardClassDeclaration(SourceLocation AtClassLoc,
                                                IdentifierInfo **IdentList,

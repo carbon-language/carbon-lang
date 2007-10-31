@@ -275,17 +275,11 @@ private:
   bool MatchTwoMethodDeclarations(const ObjcMethodDecl *Method, 
                                   const ObjcMethodDecl *PrevMethod); 
 
-  /// GetObjcIdType - Getter for the build-in "id" type.
-  QualType GetObjcIdType(SourceLocation Loc = SourceLocation());
-  
-  /// GetObjcSelType - Getter for the build-in "SEL" type.
-  QualType GetObjcSelType(SourceLocation Loc = SourceLocation());
-  
   /// GetObjcSelType - Getter for the build-in "Protocol *" type.
   QualType GetObjcProtoType(SourceLocation Loc = SourceLocation());
   
-  // GetObjcClassType - Getter for the built-in "Class" type.
-  QualType GetObjcClassType(SourceLocation Loc = SourceLocation());
+  /// isBuiltinObjcType - Returns true of the type is "id", "SEL", "Class".
+  bool isBuiltinObjcType(TypedefDecl *TD);
 
   /// AddInstanceMethodToGlobalPool - All instance methods in a translation
   /// unit are added to a global pool. This allows us to efficiently associate

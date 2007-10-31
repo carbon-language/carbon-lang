@@ -25,6 +25,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/DenseSet.h"
+#include "clang/Lex/Preprocessor.h"
 using namespace clang;
 
 Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
@@ -210,6 +211,11 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *OldD) {
     return New;
   }
   
+  // Allow multiple definitions for ObjC built-in typedefs.
+  // FIXME: Verify the underlying types are equivalent!
+  if (PP.getLangOptions().ObjC1 && isBuiltinObjcType(New))
+    return Old;
+    
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
   // together etc, merging extern int X; int X; ...
@@ -1193,17 +1199,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryImplementation(
   /// Check that class of this category is already completely declared.
   if (!IDecl || IDecl->isForwardDecl())
     Diag(ClassLoc, diag::err_undef_interface, ClassName->getName());
-  
-  // We cannot build type 'id' lazily. It is needed when checking if a 
-  // type is an 'id' (via call to isObjcIdType) even if there is no
-  // need for the default 'id' type.
-  // FIXME: Depending on the need to compare to 'id', this may have to go
-  // somewhere else. At this time, this is a good enough place to do type
-  // encoding of methods and ivars for the rewrite client.
-  GetObjcIdType(AtCatImplLoc);
-  GetObjcClassType(AtCatImplLoc);
-  GetObjcSelType(AtCatImplLoc);
-  
+
   /// TODO: Check that CatName, category name, is not used in another
   // implementation.
   return CDecl;
@@ -1273,16 +1269,6 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   if (!ObjcImplementations.insert(ClassName))
     Diag(ClassLoc, diag::err_dup_implementation_class, ClassName->getName());
 
-  // We cannot build type 'id' laziliy. It is needed when checking if a 
-  // type is an 'id' (via call to isObjcIdType) even if there is no
-  // need for the dafult 'id' type.
-  // FIXME: Depending on the need to compare to 'id', this may have to go
-  // somewhere else. At this time, this is a good enough place to do type
-  // encoding of methods and ivars for the rewrite client.
-  GetObjcIdType(AtClassImplLoc);
-  GetObjcClassType(AtClassImplLoc); 
-  GetObjcSelType(AtClassImplLoc);
-  
   return IMPDecl;
 }
 
@@ -1992,7 +1978,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     if (ArgTypes[i])
       argType = QualType::getFromOpaquePtr(ArgTypes[i]);
     else
-      argType = GetObjcIdType(MethodLoc);
+      argType = Context.getObjcIdType();
     ParmVarDecl* Param = new ParmVarDecl(SourceLocation(/*FIXME*/), ArgNames[i], 
                                          argType, VarDecl::None, 0);
     Params.push_back(Param);
@@ -2002,7 +1988,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   if (ReturnType)
     resultDeclType = QualType::getFromOpaquePtr(ReturnType);
   else // get the type for "id".
-    resultDeclType = GetObjcIdType(MethodLoc);
+    resultDeclType = Context.getObjcIdType();
 
   ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, EndLoc, Sel,
                                       resultDeclType, 0, -1, AttrList, 

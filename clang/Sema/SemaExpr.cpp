@@ -1959,17 +1959,6 @@ Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                  SourceLocation RParenLoc) {
   QualType EncodedType = QualType::getFromOpaquePtr(Ty);
 
-  // We cannot build type 'id' lazily. It is needed when checking if a 
-  // type is an 'id' (via call to isObjcIdType) even if there is no
-  // need for the default 'id' type.
-  // FIXME: Depending on the need to compare to 'id', this may have to go
-  // somewhere else. At this time, this is a good enough place to do type
-  // encoding of methods and ivars for the rewrite client.
-  // The same is true for the 'Class' and 'SEL' types.
-  GetObjcIdType(EncodeLoc);
-  GetObjcClassType(EncodeLoc);
-  GetObjcSelType(EncodeLoc);
-  
   QualType t = Context.getPointerType(Context.CharTy);
   return new ObjCEncodeExpr(t, EncodedType, AtLoc, RParenLoc);
 }
@@ -1979,7 +1968,7 @@ Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
                                                    SourceLocation SelLoc,
                                                    SourceLocation LParenLoc,
                                                    SourceLocation RParenLoc) {
-  QualType t = GetObjcSelType(AtLoc);
+  QualType t = Context.getObjcSelType();
   return new ObjCSelectorExpr(t, Sel, AtLoc, RParenLoc);
 }
 
@@ -2076,7 +2065,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   if (!Method) {
     Diag(lbrac, diag::warn_method_not_found, std::string("+"), Sel.getName(),
          SourceRange(lbrac, rbrac));
-    returnType = GetObjcIdType();
+    returnType = Context.getObjcIdType();
   } else {
     returnType = Method->getResultType();
     if (Sel.getNumArgs()) {
@@ -2084,7 +2073,6 @@ Sema::ExprResult Sema::ActOnClassMessage(
         return true;
     }
   }
-  GetObjcSelType(lbrac); // FIXME: a hack to install the sel type.
   return new ObjCMessageExpr(receiverName, Sel, returnType, lbrac, rbrac,
                              ArgExprs);
 }
@@ -2103,12 +2091,12 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   QualType receiverType = RExpr->getType();
   QualType returnType;
   
-  if (receiverType == GetObjcIdType()) {
+  if (receiverType == Context.getObjcIdType()) {
     ObjcMethodDecl *Method = InstanceMethodPool[Sel].Method;
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
-      returnType = GetObjcIdType();
+      returnType = Context.getObjcIdType();
     } else {
       returnType = Method->getResultType();
       if (Sel.getNumArgs())
@@ -2134,7 +2122,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
-      returnType = GetObjcIdType();
+      returnType = Context.getObjcIdType();
     } else {
       returnType = Method->getResultType();
       if (Sel.getNumArgs())
@@ -2142,6 +2130,5 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
           return true;
     }
   }
-  GetObjcSelType(lbrac); // FIXME: a hack to install the sel type.
   return new ObjCMessageExpr(RExpr, Sel, returnType, lbrac, rbrac, ArgExprs);
 }

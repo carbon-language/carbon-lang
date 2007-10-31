@@ -16,54 +16,35 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Parse/Scope.h"
 
 using namespace clang;
 
+bool Sema::isBuiltinObjcType(TypedefDecl *TD) {
+  const char *typeName = TD->getIdentifier()->getName();
+  return strcmp(typeName, "id") == 0 || strcmp(typeName, "Class") == 0 ||
+         strcmp(typeName, "SEL") == 0;
+}
+
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
-}
-
-/// GetObjcIdType - The following method assumes that "id" is imported
-/// via <objc/objc.h>. This is the way GCC worked for almost 20 years.
-/// In GCC 4.0, "id" is now a built-in type. Unfortunately, typedefs *cannot* be
-/// redefined (even if they are identical). To allow a built-in types to coexist
-/// with <objc/objc.h>, GCC has a special hack on decls (DECL_IN_SYSTEM_HEADER).
-/// For now, we will *not* install id as a built-in. FIXME: reconsider this.
-QualType Sema::GetObjcIdType(SourceLocation Loc) {
-  assert(TUScope && "GetObjcIdType(): Top-level scope is null");
-  if (!Context.getObjcIdType().isNull())
-    return Context.getObjcIdType();
+  if (PP.getLangOptions().ObjC1) {
+    TypedefType *t;
     
-  IdentifierInfo *IdIdent = &Context.Idents.get("id");
-  ScopedDecl *IdDecl = LookupScopedDecl(IdIdent, Decl::IDNS_Ordinary, 
-                                        SourceLocation(), TUScope);
-  TypedefDecl *ObjcIdTypedef = dyn_cast_or_null<TypedefDecl>(IdDecl);
-  if (!ObjcIdTypedef) {
-    Diag(Loc, diag::err_missing_id_definition);
-    return QualType();
+    // Add the built-in ObjC types.
+    t = dyn_cast<TypedefType>(Context.getObjcIdType().getTypePtr());
+    t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
+    TUScope->AddDecl(t->getDecl());
+    t = dyn_cast<TypedefType>(Context.getObjcClassType().getTypePtr());
+    t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
+    TUScope->AddDecl(t->getDecl());
+    t = dyn_cast<TypedefType>(Context.getObjcSelType().getTypePtr());
+    t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
+    TUScope->AddDecl(t->getDecl());
   }
-  Context.setObjcIdType(ObjcIdTypedef);
-  return Context.getObjcIdType();
 }
 
-/// GetObjcSelType - See comments for Sema::GetObjcIdType above; replace "id"
-/// with "SEL".
-QualType Sema::GetObjcSelType(SourceLocation Loc) {
-  assert(TUScope && "GetObjcSelType(): Top-level scope is null");
-  if (Context.getObjcSelType().isNull()) {
-    IdentifierInfo *SelIdent = &Context.Idents.get("SEL");
-    ScopedDecl *SelDecl = LookupScopedDecl(SelIdent, Decl::IDNS_Ordinary, 
-                                          SourceLocation(), TUScope);
-    TypedefDecl *ObjcSelTypedef = dyn_cast_or_null<TypedefDecl>(SelDecl);
-    if (!ObjcSelTypedef) {
-      Diag(Loc, diag::err_missing_sel_definition);
-      return QualType();
-    }
-    Context.setObjcSelType(ObjcSelTypedef);
-  }
-  return Context.getObjcSelType();
-}
-
+/// FIXME: remove this.
 /// GetObjcProtoType - See comments for Sema::GetObjcIdType above; replace "id"
 /// with "Protocol".
 QualType Sema::GetObjcProtoType(SourceLocation Loc) {
@@ -80,25 +61,6 @@ QualType Sema::GetObjcProtoType(SourceLocation Loc) {
     Context.setObjcProtoType(ObjcProtoTypedef);
   }
   return Context.getObjcProtoType();
-}
-
-/// GetObjcClassType - See comments for Sema::GetObjcIdType above; replace "id"
-/// with "Protocol".
-QualType Sema::GetObjcClassType(SourceLocation Loc) {
-  assert(TUScope && "GetObjcClassType(): Top-level scope is null");
-  if (!Context.getObjcClassType().isNull())
-    return Context.getObjcClassType();
-    
-  IdentifierInfo *ClassIdent = &Context.Idents.get("Class");
-  ScopedDecl *ClassDecl = LookupScopedDecl(ClassIdent, Decl::IDNS_Ordinary, 
-                                        SourceLocation(), TUScope);
-  TypedefDecl *ObjcClassTypedef = dyn_cast_or_null<TypedefDecl>(ClassDecl);
-  if (!ObjcClassTypedef) {
-    Diag(Loc, diag::err_missing_class_definition);
-    return QualType();
-  }
-  Context.setObjcClassType(ObjcClassTypedef);
-  return Context.getObjcClassType();
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
@@ -118,7 +80,38 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
   KnownFunctionIDs[ id_vfprintf ] = &IT.get("vfprintf");
   KnownFunctionIDs[ id_vsprintf ] = &IT.get("vsprintf");
   KnownFunctionIDs[ id_vprintf ] = &IT.get("vprintf");
-  
+
+  if (PP.getLangOptions().ObjC1) {
+    // Synthesize "typedef struct objc_class *Class;"
+    RecordDecl *ClassTag = new RecordDecl(Decl::Struct, SourceLocation(), 
+                                          &IT.get("objc_class"), 0);
+    QualType ClassT = Context.getPointerType(Context.getTagDeclType(ClassTag));
+    TypedefDecl *ClassTypedef = new TypedefDecl(SourceLocation(),
+                                                &Context.Idents.get("Class"),
+                                                ClassT, 0);
+    Context.setObjcClassType(ClassTypedef);
+    
+    // Synthesize "typedef struct objc_object { Class isa; } *id;"
+    RecordDecl *ObjectTag = new RecordDecl(Decl::Struct, SourceLocation(), 
+                                          &IT.get("objc_object"), 0);
+    FieldDecl *IsaDecl = new FieldDecl(SourceLocation(), 0, 
+                                       Context.getObjcClassType());
+    ObjectTag->defineBody(&IsaDecl, 1);
+    QualType ObjT = Context.getPointerType(Context.getTagDeclType(ObjectTag));
+    TypedefDecl *IdTypedef = new TypedefDecl(SourceLocation(),
+                                             &Context.Idents.get("id"),
+                                             ObjT, 0);
+    Context.setObjcIdType(IdTypedef);
+    
+    // Synthesize "typedef struct objc_selector *SEL;"
+    RecordDecl *SelTag = new RecordDecl(Decl::Struct, SourceLocation(), 
+                                          &IT.get("objc_selector"), 0);
+    QualType SelT = Context.getPointerType(Context.getTagDeclType(SelTag));
+    TypedefDecl *SelTypedef = new TypedefDecl(SourceLocation(),
+                                              &Context.Idents.get("SEL"),
+                                              SelT, 0);
+    Context.setObjcSelType(SelTypedef);
+  }
   TUScope = 0;
 }
 
