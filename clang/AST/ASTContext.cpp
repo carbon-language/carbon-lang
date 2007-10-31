@@ -1286,14 +1286,48 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
 }
 
 
-template <typename T>
-static inline void EmitSet(const llvm::FoldingSet<T>& set, llvm::Serializer& S) {
+template <typename T> static inline
+void EmitSet(const llvm::FoldingSet<T>& set, llvm::Serializer& S) {
   S.EmitInt(set.size());
-  llvm::FoldingSet<T>& Set = const_cast<llvm::FoldingSet<T>&>(set);
   
-  for (typename llvm::FoldingSet<T>::iterator I=Set.begin(), E=Set.end();
+  for (typename llvm::FoldingSet<T>::const_iterator I=set.begin(), E=set.end();
        I!=E; ++I)
-    S.Emit(*I);
+    S.EmitOwnedPtr(&*I);
+}
+
+template <typename T> static inline
+void ReadSet(llvm::FoldingSet<T>& set, std::vector<Type*>& V, 
+             llvm::Deserializer& D) {
+  
+  unsigned size = D.ReadInt();
+
+  for (unsigned i = 0 ; i < size; ++i) {
+    T* t = D.ReadOwnedPtr<T>();
+    set.GetOrInsertNode(t);
+    V.push_back(t);
+  }
+}
+
+template <typename T> static inline
+void EmitVector(const std::vector<T*>& V, llvm::Serializer& S) {
+  S.EmitInt(V.size());
+
+  for (typename std::vector<T*>::const_iterator I=V.begin(),E=V.end(); I!=E;++I)
+    S.EmitOwnedPtr(*I);
+}
+ 
+template <typename T> static inline
+void ReadVector(std::vector<T*>& V, std::vector<Type*>& Types, 
+                llvm::Deserializer& D) {
+  
+  unsigned size = D.ReadInt();
+  V.reserve(size);
+  
+  for (unsigned i = 0 ; i < size ; ++i) {
+    T* t = D.Materialize<T>();
+    V.push_back(t);
+    Types.push_back(t);
+  }
 }
 
 /// Emit - Serialize an ASTContext object to Bitcode.
@@ -1302,25 +1336,67 @@ void ASTContext::Emit(llvm::Serializer& S) const {
   S.EmitRef(Target);
   S.EmitRef(Idents);
   S.EmitRef(Selectors);
-  // FIXME: BuildinInfo
 
-  EmitSet(ComplexTypes,S);
-  EmitSet(PointerTypes,S);
-  EmitSet(ReferenceTypes,S);
-  EmitSet(ConstantArrayTypes,S);
-  EmitSet(IncompleteVariableArrayTypes,S);
+  // Emit the size of the type vector so that we can reserve that size
+  // when we reconstitute the ASTContext object.
+  S.Emit(Types.size());
+  
+  // Emit pointers to builtin types.  Although these objects will be
+  // reconsituted automatically when ASTContext is created, any pointers to them
+  // will not be (and will need to be patched).  Thus we must register them 
+  // with the Serialize anyway as pointed-to-objects, even if we won't 
+  // serialize them out using EmitOwnedPtr.
 
-  S.EmitInt(CompleteVariableArrayTypes.size());
-  for (unsigned i = 0; i < CompleteVariableArrayTypes.size(); ++i)
-     S.Emit(*CompleteVariableArrayTypes[i]);
+  for (std::vector<Type*>::const_iterator I=Types.begin(),E=Types.end(); 
+       I!=E; ++I)
+    if (const BuiltinType* BT = dyn_cast<BuiltinType>(*I))
+      S.EmitPtr(BT);
+    else {
+      // Sleazy hack: builtins are at the beginning of the vector.  Stop
+      // processing the type-vector when we hit the first non-builtin.
+      break;
+    }
 
+  // Emit the remaining types.
+  EmitSet(ComplexTypes, S);
+  EmitSet(PointerTypes, S);
+  EmitSet(ReferenceTypes, S);
+  EmitSet(ConstantArrayTypes, S);
+  EmitSet(IncompleteVariableArrayTypes, S);
+  EmitVector(CompleteVariableArrayTypes, S);
   EmitSet(VectorTypes,S);
   EmitSet(FunctionTypeNoProtos,S);
   EmitSet(FunctionTypeProtos,S);
+  
   // FIXME: EmitSet(ObjcQualifiedInterfaceTypes,S);
   // FIXME: RecourdLayoutInfo
-  // FIXME: Builtins.
-
 }
 
-
+ASTContext* ASTContext::Materialize(llvm::Deserializer& D) {
+  SourceManager &SM = D.ReadRef<SourceManager>();
+  TargetInfo &t = D.ReadRef<TargetInfo>();
+  IdentifierTable &idents = D.ReadRef<IdentifierTable>();
+  SelectorTable &sels = D.ReadRef<SelectorTable>();
+  
+  unsigned size_reserve = D.ReadInt();
+  
+  ASTContext* A = new ASTContext(SM,t,idents,sels,size_reserve);
+  
+  // Register the addresses of the BuiltinTypes with the Deserializer.
+  // FIXME: How brittle is this?
+  for (std::vector<Type*>::iterator I=A->Types.begin(),E=A->Types.end(); 
+       I!=E; ++I)
+    D.RegisterPtr(cast<BuiltinType>(*I));
+  
+  ReadSet<ComplexType>(A->ComplexTypes, A->Types, D);
+  ReadSet(A->PointerTypes, A->Types, D);
+  ReadSet(A->ReferenceTypes, A->Types, D);
+  ReadSet(A->ConstantArrayTypes, A->Types, D);
+  ReadSet(A->IncompleteVariableArrayTypes, A->Types, D);
+  ReadVector(A->CompleteVariableArrayTypes, A->Types, D);
+  ReadSet(A->VectorTypes, A->Types, D);
+  ReadSet(A->FunctionTypeNoProtos, A->Types, D);
+  ReadSet(A->FunctionTypeProtos, A->Types, D);
+  
+  return A;
+}

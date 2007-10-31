@@ -87,12 +87,15 @@ public:
   QualType VoidPtrTy;
   
   ASTContext(SourceManager &SM, TargetInfo &t, IdentifierTable &idents,
-             SelectorTable &sels) : 
+             SelectorTable &sels, unsigned size_reserve=0 ) : 
     CFConstantStringTypeDecl(0), SourceMgr(SM), Target(t), 
     Idents(idents), Selectors(sels) {
+
+    if (size_reserve > 0) Types.reserve(size_reserve);    
     InitBuiltinTypes();
     BuiltinInfo.InitializeBuiltins(idents, Target);
-  }    
+  }
+
   ~ASTContext();
   
   void PrintStats() const;
