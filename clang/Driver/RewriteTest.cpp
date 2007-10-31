@@ -550,23 +550,48 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   
   Result += "\nstruct _interface_";
   Result += CDecl->getName();
-  Result += " {\n";
   if (RCDecl && ObjcSynthesizedStructs.count(RCDecl)) {
+    Result += " {\n";
     Result += "\tstruct _interface_";
     Result += RCDecl->getName();
     Result += " _";
     Result += RCDecl->getName();
     Result += ";\n";
   }
-  
-  ObjcIvarDecl **Ivars = CDecl->getIntfDeclIvars();
-  for (int i = 0; i < NumIvars; i++) {
-    Result += "\t";
-    std::string Name = Ivars[i]->getName();
-    Ivars[i]->getType().getAsStringInternal(Name);
-    Result += Name;
-    Result += ";\n";
+  else
+    Result += " {";
+  if (NumIvars > 0) {
+    SourceLocation LocStart = CDecl->getLocStart();
+    SourceLocation LocEnd = CDecl->getLocEnd();
+    
+    const char *startBuf = SM->getCharacterData(LocStart);
+    const char *endBuf = SM->getCharacterData(LocEnd);
+    startBuf = strchr(startBuf, '{');
+    assert((startBuf && endBuf) 
+           && "SynthesizeObjcInternalStruct - malformed @interface");
+    startBuf++; // past '{'
+    while (startBuf < endBuf) {
+      if (*startBuf == '@') {
+        startBuf = strchr(startBuf, 'p');
+        // FIXME: presence of @public, etc. inside comment results in
+        // this transformation as well, which is still correct c-code.
+        if (!strncmp(startBuf, "public", strlen("public"))) {
+          startBuf += strlen("public");
+          Result += "/* @public */";
+        }
+        else if (!strncmp(startBuf, "private", strlen("private"))) {
+          startBuf += strlen("private");
+          Result += "/* @private */";
+        }
+        else if (!strncmp(startBuf, "protected", strlen("protected"))) {
+          startBuf += strlen("protected");
+          Result += "/* @protected */";
+        }
+      }
+      Result += *startBuf++;
+    }
   }
+    
   Result += "};\n";
   // Mark this struct as having been generated.
   if (!ObjcSynthesizedStructs.insert(CDecl))
