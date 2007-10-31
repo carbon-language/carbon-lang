@@ -4496,24 +4496,17 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
     assert(!AlwaysInline && "Cannot inline copy of unknown size");
     return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
   }
-  unsigned Size = I->getValue();
 
-  if (AlwaysInline)
-    return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
-
+  // If not DWORD aligned or if size is more than threshold, then call memcpy.
   // The libc version is likely to be faster for the following cases. It can
   // use the address value and run time information about the CPU.
   // With glibc 2.6.1 on a core 2, coping an array of 100M longs was 30% faster
-
-  // If not DWORD aligned, call memcpy.
-  if ((Align & 3) != 0)
-    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
-
-  // If size is more than the threshold, call memcpy.
-  if (Size > Subtarget->getMaxInlineSizeThreshold())
-    return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
-
-  return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
+  unsigned Size = I->getValue();
+  if (AlwaysInline ||
+      (Size <= Subtarget->getMaxInlineSizeThreshold() &&
+       (Align & 3) == 0))
+    return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
+  return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
 }
 
 SDOperand X86TargetLowering::LowerMEMCPYCall(SDOperand Chain,

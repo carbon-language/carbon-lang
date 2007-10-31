@@ -1287,8 +1287,7 @@ static SDOperand LowerSRx(SDOperand Op, SelectionDAG &DAG,
   return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
 }
 
-SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG,
-                                         const ARMSubtarget *ST) {
+SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
   SDOperand ChainOp = Op.getOperand(0);
   SDOperand DestOp = Op.getOperand(1);
   SDOperand SourceOp = Op.getOperand(2);
@@ -1311,11 +1310,9 @@ SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG,
   // The libc version is likely to be faster for the these cases. It can
   // use the address value and run time information about the CPU.
   // With glibc 2.6.1 on a core 2, coping an array of 100M longs was 30% faster
-  // FIXME: For now, we don't lower memcpy's to loads / stores for Thumb. Change
-  // this once Thumb ldmia / stmia support is added.
   unsigned Size = I->getValue();
   if (AlwaysInline ||
-      (!ST->isThumb() && Size <= Subtarget->getMaxInlineSizeThreshold() &&
+      (Size <= Subtarget->getMaxInlineSizeThreshold() &&
        (Align & 3) == 0))
     return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
   return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
@@ -1461,7 +1458,7 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::RETURNADDR:    break;
   case ISD::FRAMEADDR:     break;
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
-  case ISD::MEMCPY:        return LowerMEMCPY(Op, DAG, Subtarget);
+  case ISD::MEMCPY:        return LowerMEMCPY(Op, DAG);
   }
   return SDOperand();
 }

@@ -134,8 +134,7 @@ namespace llvm {
     SDOperand LowerGLOBAL_OFFSET_TABLE(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerBR_JT(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG,
-                          const ARMSubtarget *ST);
+    SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerMEMCPYCall(SDOperand Chain, SDOperand Dest,
                               SDOperand Source, SDOperand Count,
                               SelectionDAG &DAG);
