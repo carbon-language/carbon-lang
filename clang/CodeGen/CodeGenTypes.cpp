@@ -32,10 +32,16 @@ namespace {
   ///    - Ignore packed structs
   class RecordOrganizer {
   public:
-    RecordOrganizer() : STy(NULL) {}
+    RecordOrganizer() : STy(NULL), FieldNo(0), Cursor(0) {}
     
     /// addField - Add new field.
     void addField(const FieldDecl *FD);
+
+    /// addLLVMField - Add llvm struct field that corresponds to llvm type Ty. Update
+    /// cursor and increment field count.
+    void addLLVMField(const llvm::Type *Ty, CodeGenTypes &CGT,
+                      const FieldDecl *FD = NULL);
+
 
     /// layoutStructFields - Do the actual work and lay out all fields. Create
     /// corresponding llvm struct type.  This should be invoked only after
@@ -57,7 +63,10 @@ namespace {
     void clear();
   private:
     llvm::Type *STy;
+    unsigned FieldNo;
+    uint64_t Cursor;
     llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
+    std::vector<const llvm::Type*> LLVMFields;
   };
 }
 
@@ -358,26 +367,35 @@ void RecordOrganizer::addField(const FieldDecl *FD) {
 void RecordOrganizer::layoutStructFields(CodeGenTypes &CGT,
                                          const RecordLayout &RL) {
   // FIXME : Use SmallVector
-  std::vector<const llvm::Type*> Fields;
-  unsigned FieldNo = 0;
   uint64_t Cursor = 0;
-
+  FieldNo = 0;
+  LLVMFields.clear();
   for (llvm::SmallVector<const FieldDecl *, 8>::iterator I = FieldDecls.begin(),
          E = FieldDecls.end(); I != E; ++I) {
     const FieldDecl *FD = *I;
     const llvm::Type *Ty = CGT.ConvertType(FD->getType());
 
     uint64_t Offset = RL.getFieldOffset(FieldNo);
-    unsigned align = CGT.getTargetData().getABITypeAlignment(Ty);
-    if (Cursor % align != 0)
+    unsigned AlignmentInBits = CGT.getTargetData().getABITypeAlignment(Ty) * 8;
+    if (Cursor % AlignmentInBits != 0)
       assert (Offset == Cursor && "FIXME Invalid struct layout");
-    
-    Cursor += CGT.getTargetData().getTypeSizeInBits(Ty);
 
-    Fields.push_back(Ty);
-    CGT.addFieldInfo(FD, FieldNo++);
+    addLLVMField(Ty, CGT, FD);
   }
-  STy = llvm::StructType::get(Fields);
+  STy = llvm::StructType::get(LLVMFields);
+}
+
+/// addLLVMField - Add llvm struct field that corresponds to llvm type Ty. Update
+/// cursor and increment field count. If field decl FD is available than update
+/// update field info at CodeGenTypes level.
+void RecordOrganizer::addLLVMField(const llvm::Type *Ty, 
+                                   CodeGenTypes &CGT,
+                                   const FieldDecl *FD) {
+  Cursor += CGT.getTargetData().getTypeSizeInBits(Ty);
+  LLVMFields.push_back(Ty);
+  if (FD)
+    CGT.addFieldInfo(FD, FieldNo);
+  ++FieldNo;
 }
 
 /// layoutUnionFields - Do the actual work and lay out all fields. Create
