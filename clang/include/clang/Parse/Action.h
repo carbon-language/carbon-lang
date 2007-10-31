@@ -632,7 +632,10 @@ class MinimalAction : public Action {
   /// to lookup file scope declarations in the "ordinary" C decl namespace.
   /// For example, user-defined classes, built-in "id" type, etc.
   Scope *TUScope;
+  IdentifierTable &Idents;
 public:
+  MinimalAction(IdentifierTable &IT) : Idents(IT) {}
+  
   /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
   /// determine whether the name is a typedef or not in this scope.
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;

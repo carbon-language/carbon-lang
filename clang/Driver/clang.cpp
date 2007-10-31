@@ -763,12 +763,13 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     break;
     
   case ParseNoop:                    // -parse-noop
-    ParseFile(PP, new MinimalAction(), MainFileID);
+    ParseFile(PP, new MinimalAction(PP.getIdentifierTable()), MainFileID);
     ClearSourceMgr = true;
     break;
     
   case ParsePrintCallbacks:
-    ParseFile(PP, CreatePrintParserActionsAction(), MainFileID);
+    ParseFile(PP, CreatePrintParserActionsAction(PP.getIdentifierTable()), 
+              MainFileID);
     ClearSourceMgr = true;
     break;
       

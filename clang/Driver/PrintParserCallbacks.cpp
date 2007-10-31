@@ -21,6 +21,9 @@ using namespace clang;
 namespace {
   class ParserPrintActions : public MinimalAction {
     
+  public:
+    ParserPrintActions(IdentifierTable &IT) : MinimalAction(IT) {}
+    
     /// ActOnDeclarator - This callback is invoked when a declarator is parsed
     /// and 'Init' specifies the initializer if any.  This is for things like:
     /// "int X = 4" or "typedef int foo".
@@ -49,6 +52,6 @@ namespace {
   };
 }
 
-MinimalAction *clang::CreatePrintParserActionsAction() {
-  return new ParserPrintActions();
+MinimalAction *clang::CreatePrintParserActionsAction(IdentifierTable &IT) {
+  return new ParserPrintActions(IT);
 }

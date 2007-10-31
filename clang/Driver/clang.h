@@ -21,6 +21,7 @@ class MinimalAction;
 class TargetInfo;
 class Diagnostic;
 class ASTConsumer;
+class IdentifierTable;
 
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
@@ -28,7 +29,7 @@ void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
 
 /// CreatePrintParserActionsAction - Return the actions implementation that
 /// implements the -parse-print-callbacks option.
-MinimalAction *CreatePrintParserActionsAction();
+MinimalAction *CreatePrintParserActionsAction(IdentifierTable &);
 
 /// CreateTargetInfo - Return the set of target info objects as specified by
 /// the -arch command line option.

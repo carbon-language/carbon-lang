@@ -30,7 +30,19 @@ struct TypeNameInfo {
 
 void MinimalAction:: ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
-  // FIXME: add id/SEL/Class. We need to get our paws on the identifier table.
+  IdentifierInfo *II;
+  TypeNameInfo *TI;
+  
+  // recognize the ObjC built-in type identifiers.
+  II = &Idents.get("id");
+  TI = new TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
+  II->setFETokenInfo(TI);
+  II = &Idents.get("SEL");
+  TI = new TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
+  II->setFETokenInfo(TI);
+  II = &Idents.get("Class");
+  TI = new TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
+  II->setFETokenInfo(TI);
 }
 
 /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to
