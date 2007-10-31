@@ -98,9 +98,9 @@ void Deserializer::ReadCStr(std::vector<char>& buff, bool isNullTerm) {
     buff.push_back('\0');
 }
 
-void Deserializer::RegisterPtr(unsigned PtrId,void* Ptr) {
+void Deserializer::RegisterPtr(unsigned PtrId, const void* Ptr) {
   BPatchEntry& E = BPatchMap[PtrId];
-  assert (E.hasFinalPtr() && "Pointer already registered.");
+  assert (!E.hasFinalPtr() && "Pointer already registered.");
   E.setFinalPtr(FreeList,Ptr);
 }
 
@@ -145,7 +145,7 @@ uintptr_t Deserializer::ReadInternalRefPtr() {
   return E.getFinalPtr();
 }
 
-void Deserializer::BPatchEntry::setFinalPtr(BPNode*& FreeList, void* P) {
+void Deserializer::BPatchEntry::setFinalPtr(BPNode*& FreeList, const void* P) {
   assert (!hasFinalPtr());
   
   // Perform backpatching.

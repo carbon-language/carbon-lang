@@ -57,7 +57,7 @@ class Deserializer {
     BPatchEntry(void* P) : Ptr(reinterpret_cast<uintptr_t>(P)) {}
 
     bool hasFinalPtr() const { return Ptr & 0x1 ? false : true; }
-    void setFinalPtr(BPNode*& FreeList, void* P);
+    void setFinalPtr(BPNode*& FreeList, const void* P);
 
     BPNode* getBPNode() const {
       assert (!hasFinalPtr());
@@ -152,8 +152,11 @@ public:
     return *p;
   }
 
+  void RegisterPtr(unsigned PtrId, const void* Ptr);
   
-  void RegisterPtr(unsigned PtrId, void* Ptr);
+  void RegisterPtr(const void* Ptr) {
+    RegisterPtr(ReadInt(),Ptr);
+  }
 
 private:
   void ReadRecord();  
