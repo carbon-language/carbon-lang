@@ -271,7 +271,7 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
     
     // Mark this typedef as having been generated.
     if (!ObjcForwardDecls.insert(ForwardDecl))
-      assert(true && "typedef already output");
+      assert(false && "typedef already output");
   }
   
   // Replace the @class with typedefs corresponding to the classes.
@@ -551,6 +551,9 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   }
   
   int NumIvars = CDecl->getIntfDeclNumIvars();
+  // If no ivars and no root or if its root, directly or indirectly,
+  // have no ivars (thus not synthesize)
+  // then no need to synthesize this class either.
   if (NumIvars <= 0 && (!RCDecl || !ObjcSynthesizedStructs.count(RCDecl)))
     return;
   
@@ -602,7 +605,7 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   Result += "};\n";
   // Mark this struct as having been generated.
   if (!ObjcSynthesizedStructs.insert(CDecl))
-    assert(true && "struct already synthesize- SynthesizeObjcInternalStruct");
+  assert(false && "struct already synthesize- SynthesizeObjcInternalStruct");
 }
 
 // RewriteObjcMethodsMetaData - Rewrite methods metadata for instance or
