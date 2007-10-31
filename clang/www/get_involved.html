@@ -43,27 +43,47 @@ as well.<br>
 <li><a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a> - This list is for everything else clang related.
 </ul>
 <h3>Building clang / working with the code<a name="build">&nbsp;</a></h3>
-If you would like to check out and build the project, the current scheme is:<br>
+If you would like to check out and build the project, the current scheme is:<br><br>
+
 <ol>
-	<li>Check out llvm
+	<li>Checkout and build LLVM
+	(<a href="http://www.llvm.org/docs/GettingStarted.html#checkout">latest
+	instructions for SVN access</a>)</li>
 	<ul>
-		<li>cd llvm/tools
-		<li>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang
+	  <li><tt>svn co http://llvm.org/svn/llvm-project/llvm/trunk
+	  llvm</tt></li>
+	  <li><tt>cd llvm</tt></li>
+          <li><tt>./configure; make</tt></li>
+        </ul>
+        <li>Checkout clang</li>
+        <ul>
+           <li>From within the <tt>llvm</tt> directory (where you
+           built llvm):</li>
+	   <li><tt>cd llvm/tools</tt>
+	   <li><tt>svn co
+		http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
+           
 	</ul>
 	<li>Non-mac users: Paths to system header files are currently hard coded
-            into the tool; as a result, if clang can't find your system headers,
+            into clang; as a result, if clang can't find your system headers,
             please follow these instructions:
 	<ul>
-		<li>'touch empty.c; gcc -v empty.c -fsyntax-only' to get the path.
+		<li>'<tt>touch empty.c; gcc -v empty.c -fsyntax-only</tt>' to get the path.
 		<li>change clang/Driver/clang.cpp:606 to include that path
 	</ul>
-	<li>Build llvm
+	<li>Build clang</li>
 	<ul>
-		<li>cd clang
-		<li>make
+	  <li><tt>cd clang</tt> (assuming that you are in <tt>llvm/tools</tt>)</li>
+	  <li><tt>make</tt></li>
 	</ul>
 </ol>
-<p>Note that the C front-end uses LLVM, but does not depend on llvm-gcc :)</p>
+<br>
+
+<p>Note that the C front-end uses LLVM, but does not depend on
+  llvm-gcc.  If you encounter problems with building clang, make
+  sure you have the latest SVN version of LLVM.  LLVM contains
+  support libraries for clang that will be updated as well as
+  development on clang progresses.</p><br>
 
 <p>We will eventually integrate this better as a sub-project, but for now it builds a single tool named 'clang'.<br>
 Once llvm is built in this way, you can compile C code.
