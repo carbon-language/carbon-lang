@@ -406,22 +406,28 @@ CallExpr *RewriteTest::SynthesizeCallToFunctionDecl(
 
 bool RewriteTest::functionReferencesAnyObjcQualifiedInterfaceTypes(
   const FunctionTypeProto *proto) {
-  const PointerType *pType = proto->getResultType()->getAsPointerType();
-  if (pType) {
+  QualType resultType = proto->getResultType();
+  
+  if (resultType == Context->getObjcIdType()) {
+    // FIXME: we don't currently represent "id <Protocol>" in the type system.
+    // Implement a heuristic here (until we do).
+  } else if (const PointerType *pType = resultType->getAsPointerType()) {
     Type *pointeeType = pType->getPointeeType().getTypePtr();
     if (isa<ObjcQualifiedInterfaceType>(pointeeType))
       return true; // we have "Class <Protocol> *".
   }
   // Now check arguments.
   for (unsigned i = 0; i < proto->getNumArgs(); i++) {
-    pType = proto->getArgType(i)->getAsPointerType();
-    if (pType) {
+    QualType argType = proto->getArgType(i);
+    if (argType == Context->getObjcIdType()) {
+      // FIXME: we don't currently represent "id <Protocol>" in the type system.
+      // Implement a heuristic here (until we do).
+    } else if (const PointerType *pType = argType->getAsPointerType()) {
       Type *pointeeType = pType->getPointeeType().getTypePtr();
       if (isa<ObjcQualifiedInterfaceType>(pointeeType))
         return true;
     }
   }
-  // FIXME: we don't currently represent "id <Protocol>" in the type system.
   return false;
 }
 
@@ -431,6 +437,7 @@ void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
     SelGetUidFunctionDecl = FD;
     return;
   }
+  return; // FIXME: remove when the code below is ready.
   // Check for ObjC 'id' and class types that have been adorned with protocol
   // information (id<p>, C<p>*). The protocol references need to be rewritten!
   const FunctionType *funcType = FD->getType()->getAsFunctionType();
