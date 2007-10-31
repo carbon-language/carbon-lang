@@ -110,6 +110,14 @@ public:
            T->getStmtClass() <= lastExprConstant; 
   }
   static bool classof(const Expr *) { return true; }
+  
+  void Emit(llvm::Serializer& S) const {
+    llvm::SerializeTrait<Stmt>::Emit(S,*this);
+  }
+  
+  static inline Expr* Materialize(llvm::Deserializer& D) {
+    return cast<Expr>(llvm::SerializeTrait<Stmt>::Materialize(D));
+  }
 };
 
 //===----------------------------------------------------------------------===//

@@ -668,7 +668,7 @@ public:
 namespace llvm {
   
 template<> struct SerializeTrait<clang::Stmt> {
-  static void Emit(Serializer& S, clang::Stmt& stmt);
+  static void Emit(Serializer& S, const clang::Stmt& stmt);
   static clang::Stmt* Materialize(Deserializer& D);
 };
   

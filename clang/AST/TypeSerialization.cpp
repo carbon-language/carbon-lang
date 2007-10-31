@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/Type.h"
+#include "clang/AST/Expr.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 
@@ -137,6 +138,23 @@ ConstantArrayType* ConstantArrayType::Materialize(llvm::Deserializer& D) {
   T->ReadArrayTypeInternal(D);  
   D.Read(T->Size);
 
+  return T;
+}
+
+void VariableArrayType::Emit(llvm::Serializer& S) const {
+  EmitArrayTypeInternal(S);
+  S.EmitOwnedPtr(SizeExpr);
+}
+
+VariableArrayType* VariableArrayType::Materialize(llvm::Deserializer& D) {
+  // "Default" construct the array type.
+  VariableArrayType* T =
+    new VariableArrayType(QualType(), QualType(), NULL, ArrayType::Normal, 0);
+  
+  // Deserialize the internal values.
+  T->ReadArrayTypeInternal(D);
+  T->SizeExpr = D.ReadOwnedPtr<Expr>();
+  
   return T;
 }
 

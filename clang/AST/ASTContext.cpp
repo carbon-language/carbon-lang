@@ -1308,15 +1308,15 @@ void ASTContext::Emit(llvm::Serializer& S) const {
   EmitSet(PointerTypes,S);
   EmitSet(ReferenceTypes,S);
   EmitSet(ConstantArrayTypes,S);
-  // FIXME EmitSet(IncompleteVariableArrayTypes,S);
-  /* FIXME: Emit for VLAs
+  EmitSet(IncompleteVariableArrayTypes,S);
+
   S.EmitInt(CompleteVariableArrayTypes.size());
   for (unsigned i = 0; i < CompleteVariableArrayTypes.size(); ++i)
-     S.Emit(*CompleteVariableArrayTypes[i]); */
+     S.Emit(*CompleteVariableArrayTypes[i]);
 
   EmitSet(VectorTypes,S);
-  // FIXME: EmitSet(FunctionTypeNoProtos);
-  // FIXME: EmitSet(FunctionTypeProtos);
+  EmitSet(FunctionTypeNoProtos,S);
+  EmitSet(FunctionTypeProtos,S);
   // FIXME: EmitSet(ObjcQualifiedInterfaceTypes,S);
   // FIXME: RecourdLayoutInfo
   // FIXME: Builtins.

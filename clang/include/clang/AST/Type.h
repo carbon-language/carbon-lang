@@ -484,7 +484,7 @@ public:
 
 /// ArrayType - C99 6.7.5.2 - Array Declarators.
 ///
-class ArrayType : public Type {
+class ArrayType : public Type, public llvm::FoldingSetNode {
 public:
   /// ArraySizeModifier - Capture whether this is a normal array (e.g. int X[4])
   /// an array with a static size (e.g. int X[static 4]), or with a star size
@@ -532,7 +532,7 @@ protected:
   void ReadArrayTypeInternal(llvm::Deserializer& S);
 };
 
-class ConstantArrayType : public ArrayType, public llvm::FoldingSetNode {
+class ConstantArrayType : public ArrayType {
   llvm::APInt Size; // Allows us to unique the type.
   
   ConstantArrayType(QualType et, QualType can, llvm::APInt sz,
@@ -573,7 +573,7 @@ public:
 };
 
 // FIXME: VariableArrayType's aren't uniqued (since expressions aren't).
-class VariableArrayType : public ArrayType, public llvm::FoldingSetNode {
+class VariableArrayType : public ArrayType {
   /// SizeExpr - An assignment expression. VLA's are only permitted within 
   /// a function block. 
   Expr *SizeExpr;
@@ -605,8 +605,8 @@ public:
     ID.AddPointer(ET.getAsOpaquePtr());
   }
   
-  // FIXME: Who owns VariableArrayType's?  What are the semantics
-  //  for serialization.
+  void Emit(llvm::Serializer& S) const;
+  static VariableArrayType* Materialize(llvm::Deserializer& D);
 };
 
 /// VectorType - GCC generic vector type. This type is created using
