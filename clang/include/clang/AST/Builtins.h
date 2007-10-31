@@ -39,7 +39,12 @@ struct Info {
            !strcmp(Type, RHS.Type) &&
            !strcmp(Attributes, RHS.Attributes);
   }
-  bool operator!=(const Info &RHS) const { return !(*this == RHS); }
+  
+  bool operator!=(const Info &RHS) const { 
+    return strcmp(Name, RHS.Name) ||
+           strcmp(Type, RHS.Type) ||
+           strcmp(Attributes, RHS.Attributes);    
+  }
 };
 
 /// Builtin::Context - This holds information about target-independent and
