@@ -17,6 +17,8 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Bitcode/Serialize.h"
+#include "llvm/Bitcode/Deserialize.h"
 
 using namespace clang;
 
@@ -428,7 +430,8 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   ConstantArrayType::Profile(ID, EltTy, ArySize);
       
   void *InsertPos = 0;
-  if (ConstantArrayType *ATP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
+  if (ConstantArrayType *ATP = 
+      ConstantArrayTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(ATP, 0);
   
   // If the element type isn't canonical, this won't be a canonical type either,
@@ -438,13 +441,15 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
     Canonical = getConstantArrayType(EltTy.getCanonicalType(), ArySize, 
                                      ASM, EltTypeQuals);
     // Get the new insert position for the node we care about.
-    ConstantArrayType *NewIP = ArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
+    ConstantArrayType *NewIP = 
+      ConstantArrayTypes.FindNodeOrInsertPos(ID, InsertPos);
+
     assert(NewIP == 0 && "Shouldn't be in the map!");
   }
   
   ConstantArrayType *New = new ConstantArrayType(EltTy, Canonical, ArySize,
                                                  ASM, EltTypeQuals);
-  ArrayTypes.InsertNode(New, InsertPos);
+  ConstantArrayTypes.InsertNode(New, InsertPos);
   Types.push_back(New);
   return QualType(New, 0);
 }
@@ -1279,3 +1284,43 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
   }
   return true; // should never get here...
 }
+
+
+template <typename T>
+static inline void EmitSet(const llvm::FoldingSet<T>& set, llvm::Serializer& S) {
+  S.EmitInt(set.size());
+  llvm::FoldingSet<T>& Set = const_cast<llvm::FoldingSet<T>&>(set);
+  
+  for (typename llvm::FoldingSet<T>::iterator I=Set.begin(), E=Set.end();
+       I!=E; ++I)
+    S.Emit(*I);
+}
+
+/// Emit - Serialize an ASTContext object to Bitcode.
+void ASTContext::Emit(llvm::Serializer& S) const {
+  // FIXME: S.EmitRef(SourceMgr);
+  // FIXME: S.EmitRef(Target);
+  // FIXME: S.EmitRef(Idents);
+  // FIXME: S.EmitRef(Selectors);
+  // FIXME: BuildinInfo
+
+  EmitSet(ComplexTypes,S);
+  EmitSet(PointerTypes,S);
+  EmitSet(ReferenceTypes,S);
+  EmitSet(ConstantArrayTypes,S);
+  // FIXME EmitSet(IncompleteVariableArrayTypes,S);
+  /* FIXME: Emit for VLAs
+  S.EmitInt(CompleteVariableArrayTypes.size());
+  for (unsigned i = 0; i < CompleteVariableArrayTypes.size(); ++i)
+     S.Emit(*CompleteVariableArrayTypes[i]); */
+
+  EmitSet(VectorTypes,S);
+  // FIXME: EmitSet(FunctionTypeNoProtos);
+  // FIXME: EmitSet(FunctionTypeProtos);
+  // FIXME: EmitSet(ObjcQualifiedInterfaceTypes,S);
+  // FIXME: RecourdLayoutInfo
+  // FIXME: Builtins.
+
+}
+
+

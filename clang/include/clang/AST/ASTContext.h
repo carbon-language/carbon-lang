@@ -21,6 +21,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/Bitcode/SerializationFwd.h"
 #include <vector>
 
 namespace clang {
@@ -34,7 +35,7 @@ class ASTContext {
   llvm::FoldingSet<ComplexType> ComplexTypes;
   llvm::FoldingSet<PointerType> PointerTypes;
   llvm::FoldingSet<ReferenceType> ReferenceTypes;
-  llvm::FoldingSet<ConstantArrayType> ArrayTypes;
+  llvm::FoldingSet<ConstantArrayType> ConstantArrayTypes;
   llvm::FoldingSet<VariableArrayType> IncompleteVariableArrayTypes;
   std::vector<VariableArrayType*> CompleteVariableArrayTypes;
   llvm::FoldingSet<VectorType> VectorTypes;
@@ -286,6 +287,13 @@ private:
   
   void InitBuiltinTypes();
   void InitBuiltinType(QualType &R, BuiltinType::Kind K);
+  
+  //===--------------------------------------------------------------------===//
+  //                    Serialization
+  //===--------------------------------------------------------------------===//
+  
+  void Emit(llvm::Serializer& S) const;
+  static ASTContext* Materialize(llvm::Deserializer& D);  
 };
   
 }  // end namespace clang
