@@ -16,6 +16,7 @@
 #include "clang/AST/AST.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
+#include "llvm/Target/TargetData.h"
 
 using namespace clang;
 using namespace CodeGen;
@@ -39,7 +40,7 @@ namespace {
     /// layoutStructFields - Do the actual work and lay out all fields. Create
     /// corresponding llvm struct type.  This should be invoked only after
     /// all fields are added.
-    void layoutStructFields(CodeGenTypes &CGT);
+    void layoutStructFields(CodeGenTypes &CGT, const RecordLayout &RL);
 
     /// layoutUnionFields - Do the actual work and lay out all fields. Create
     /// corresponding llvm struct type.  This should be invoked only after
@@ -246,7 +247,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       RecordOrganizer RO;
       for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
         RO.addField(RD->getMember(i));
-      RO.layoutStructFields(*this);
+      const RecordLayout &RL = Context.getRecordLayout(RD, SourceLocation());
+      RO.layoutStructFields(*this, RL);
 
       // Get llvm::StructType.
       RecordLayoutInfo *RLI = new RecordLayoutInfo(RO.getLLVMType());
@@ -353,16 +355,21 @@ void RecordOrganizer::addField(const FieldDecl *FD) {
 ///    - Ignore bit fields
 ///    - Ignore field aligments
 ///    - Ignore packed structs
-void RecordOrganizer::layoutStructFields(CodeGenTypes &CGT) {
+void RecordOrganizer::layoutStructFields(CodeGenTypes &CGT,
+                                         const RecordLayout &RL) {
   // FIXME : Use SmallVector
   std::vector<const llvm::Type*> Fields;
   unsigned FieldNo = 0;
+  uint64_t Cursor = 0;
+
   for (llvm::SmallVector<const FieldDecl *, 8>::iterator I = FieldDecls.begin(),
          E = FieldDecls.end(); I != E; ++I) {
     const FieldDecl *FD = *I;
     const llvm::Type *Ty = CGT.ConvertType(FD->getType());
 
-    // FIXME : Layout FieldDecl FD
+    uint64_t Offset = RL.getFieldOffset(FieldNo);
+    assert (Offset == Cursor && "FIXME Invalid struct layout");
+    Cursor += CGT.getTargetData().getTypeSizeInBits(Ty);
 
     Fields.push_back(Ty);
     CGT.addFieldInfo(FD, FieldNo++);
