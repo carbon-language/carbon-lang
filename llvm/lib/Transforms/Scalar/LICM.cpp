@@ -802,7 +802,7 @@ void LICM::FindPromotableValuesInLoop(
 
       // If one use of value V inside the loop is safe then it is OK to promote 
       // this value. On the otherside if there is not any unsafe use inside the
-      // looop then also it is OK to  promote this value. Otherwise it is
+      // loop then also it is OK to promote this value. Otherwise it is
       // unsafe to promote this value.
       if (PointerOk) {
         bool oneSafeUse = false;
