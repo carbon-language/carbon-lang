@@ -379,19 +379,14 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 // LLVM Emitter
 
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "llvm/Module.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetMachineRegistry.h"
 #include <iostream>
 
 namespace {
   class LLVMEmitter : public ASTConsumer {
     Diagnostic &Diags;
     llvm::Module *M;
-    const llvm::TargetData *TD;
     ASTContext *Ctx;
     CodeGen::BuilderTy *Builder;
   public:
@@ -399,16 +394,7 @@ namespace {
     virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
       Ctx = &Context;
       M = new llvm::Module("foo");
-      M->setTargetTriple(Ctx->Target.getTargetTriple());
-      std::string Err;
-      const llvm::TargetMachineRegistry::entry *TME = 
-        llvm::TargetMachineRegistry::getClosestStaticTargetForModule(*M, Err);
-      assert(TME && "Unable to determine target machine");
-      // FIXME : Set appropriate subtarget features.
-      std::string FeatureStr;
-      llvm::TargetMachine *TheMachine =  TME->CtorFn(*M, FeatureStr);
-      TD = TheMachine->getTargetData();
-      Builder = CodeGen::Init(Context, *M, *TD);
+      Builder = CodeGen::Init(Context, *M);
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {
