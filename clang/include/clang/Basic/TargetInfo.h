@@ -218,6 +218,17 @@ public:
     getLongLongInfo(Size, Align, Loc);
     return static_cast<unsigned>(Size);
   }
+
+  const char *getTargetTriple() {
+    // FIXME !
+    return "i686-apple-darwin9";
+  }
+  const char *getTargetDescription() {
+    // FIXME !
+    // Hard code darwin-x86 for now.
+    return "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:\
+32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128";
+  }
 private:
   void ComputeWCharInfo(SourceLocation Loc);
 };

@@ -379,14 +379,18 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 // LLVM Emitter
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "llvm/Module.h"
+#include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetMachine.h"
 #include <iostream>
 
 namespace {
   class LLVMEmitter : public ASTConsumer {
     Diagnostic &Diags;
     llvm::Module *M;
+    const llvm::TargetData *TD;
     ASTContext *Ctx;
     CodeGen::BuilderTy *Builder;
   public:
@@ -394,7 +398,9 @@ namespace {
     virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
       Ctx = &Context;
       M = new llvm::Module("foo");
-      Builder = CodeGen::Init(Context, *M);
+      M->setTargetTriple(Ctx->Target.getTargetTriple());
+      TD = new llvm::TargetData(Ctx->Target.getTargetDescription());
+      Builder = CodeGen::Init(Context, *M, *TD);
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {

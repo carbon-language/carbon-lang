@@ -60,8 +60,9 @@ namespace {
   };
 }
 
-CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M)
-  : Context(Ctx), Target(Ctx.Target), TheModule(M) {
+CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
+                           const llvm::TargetData &TD)
+  : Context(Ctx), Target(Ctx.Target), TheModule(M), TheTargetData(TD) {
 }
 
 CodeGenTypes::~CodeGenTypes() {

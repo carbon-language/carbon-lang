@@ -21,6 +21,7 @@ namespace llvm {
   class Module;
   class Type;
   class PATypeHolder;
+  class TargetData;
 }
 
 namespace clang {
@@ -61,6 +62,7 @@ class CodeGenTypes {
   ASTContext &Context;
   TargetInfo &Target;
   llvm::Module& TheModule;
+  const llvm::TargetData& TheTargetData;
   
   llvm::DenseMap<const TagDecl*, llvm::Type*> TagDeclTypes;
 
@@ -91,7 +93,7 @@ class CodeGenTypes {
   /// interface to convert type T into a llvm::Type.
   const llvm::Type *ConvertNewType(QualType T);
 public:
-  CodeGenTypes(ASTContext &Ctx, llvm::Module &M);
+  CodeGenTypes(ASTContext &Ctx, llvm::Module &M, const llvm::TargetData &TD);
   ~CodeGenTypes();
   
   TargetInfo &getTarget() const { return Target; }

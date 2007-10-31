@@ -24,9 +24,10 @@ using namespace clang;
 using namespace CodeGen;
 
 
-CodeGenModule::CodeGenModule(ASTContext &C, llvm::Module &M)
-  : Context(C), TheModule(M),
-    Types(C, M), MemCpyFn(0), CFConstantStringClassRef(0) {}
+CodeGenModule::CodeGenModule(ASTContext &C, llvm::Module &M,
+                             const llvm::TargetData &TD)
+  : Context(C), TheModule(M), TheTargetData(TD),
+    Types(C, M, TD), MemCpyFn(0), CFConstantStringClassRef(0) {}
 
 llvm::Constant *CodeGenModule::GetAddrOfGlobalDecl(const ValueDecl *D) {
   // See if it is already in the map.

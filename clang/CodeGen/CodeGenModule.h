@@ -23,6 +23,7 @@ namespace llvm {
   class Constant;
   class Function;
   class GlobalVariable;
+  class TargetData;
 }
 
 namespace clang {
@@ -39,6 +40,7 @@ namespace CodeGen {
 class CodeGenModule {
   ASTContext &Context;
   llvm::Module &TheModule;
+  const llvm::TargetData &TheTargetData;
   CodeGenTypes Types;
 
   llvm::Function *MemCpyFn;
@@ -49,7 +51,7 @@ class CodeGenModule {
   
   std::vector<llvm::Function *> BuiltinFunctions;
 public:
-  CodeGenModule(ASTContext &C, llvm::Module &M);
+  CodeGenModule(ASTContext &C, llvm::Module &M, const llvm::TargetData &TD);
   
   ASTContext &getContext() const { return Context; }
   llvm::Module &getModule() const { return TheModule; }

@@ -16,6 +16,7 @@
 
 namespace llvm {
   class Module;
+  class TargetData;
 }
 
 namespace clang {
@@ -29,7 +30,8 @@ namespace CodeGen {
   typedef void BuilderTy;
   
   /// Init - Create an ModuleBuilder with the specified ASTContext.
-  BuilderTy *Init(ASTContext &Context, llvm::Module &M);
+  BuilderTy *Init(ASTContext &Context, llvm::Module &M,
+                  const llvm::TargetData &TD);
   
   /// CodeGenFunction - Convert the AST node for a FunctionDecl into LLVM.
   ///
