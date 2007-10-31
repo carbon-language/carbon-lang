@@ -473,7 +473,271 @@ another useful expression that is familiar from non-functional languages...</p>
 
 <div class="doc_text">
 
-<p>...</p>
+<p>Now that we know how to add basic control flow constructs to the language,
+we have the tools to add more powerful things.  Lets add something more
+aggressive, a 'for' expression:</p>
+
+<div class="doc_code">
+<pre>
+ # print 100 '*' (ascii 42) characters
+ extern putchard(char)
+ for x = 1, x &lt; 100, 1.0 in putchard(42);
+</pre>
+</div>
+
+<p>This expression defines a new variable ("x" in this case) which iterates from
+a starting value, while the condition ("x &lt; 100" in this case) is true, 
+incrementing by an optional step value ("1.0" in this case).  If the step value
+is omitted, it defaults to 1.0.  While the loop is true, it executes its 
+body expression.  Because we don't have anything better to return, we'll just
+define the loop as always returning 0.0.  In the future when we have mutable
+variables, it will get more useful.</p>
+
+<p>As before, lets talk about the changes that we need to Kaleidoscope to
+support this.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="forlexer">Lexer Extensions for
+the 'for' Loop</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>The lexer extensions are the same sort of thing as for if/then/else:</p>
+
+<div class="doc_code">
+<pre>
+  ... in enum Token ...
+  // control
+  tok_if = -6, tok_then = -7, tok_else = -8,
+<b>  tok_for = -9, tok_in = -10</b>
+
+  ... in gettok ...
+  if (IdentifierStr == "def") return tok_def;
+  if (IdentifierStr == "extern") return tok_extern;
+  if (IdentifierStr == "if") return tok_if;
+  if (IdentifierStr == "then") return tok_then;
+  if (IdentifierStr == "else") return tok_else;
+  <b>if (IdentifierStr == "for") return tok_for;
+  if (IdentifierStr == "in") return tok_in;</b>
+  return tok_identifier;
+</pre>
+</div>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="forast">AST Extensions for
+the 'for' Loop</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>The AST node is similarly simple.  It basically boils down to capturing
+the variable name and the consituent expressions in the node.</p>
+
+<div class="doc_code">
+<pre>
+/// ForExprAST - Expression class for for/in.
+class ForExprAST : public ExprAST {
+  std::string VarName;
+  ExprAST *Start, *End, *Step, *Body;
+public:
+  ForExprAST(const std::string &amp;varname, ExprAST *start, ExprAST *end,
+             ExprAST *step, ExprAST *body)
+    : VarName(varname), Start(start), End(end), Step(step), Body(body) {}
+  virtual Value *Codegen();
+};
+</pre>
+</div>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="forparser">Parser Extensions for
+the 'for' Loop</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>The parser code is also fairly standard.  The only interesting thing here is
+handling of the optional step value.  The parser code handles it by checking to
+see if the second comma is present.  If not, it sets the step value to null in
+the AST node:</p>
+
+<div class="doc_code">
+<pre>
+/// forexpr ::= 'for' identifer '=' expr ',' expr (',' expr)? 'in' expression
+static ExprAST *ParseForExpr() {
+  getNextToken();  // eat the for.
+
+  if (CurTok != tok_identifier)
+    return Error("expected identifier after for");
+  
+  std::string IdName = IdentifierStr;
+  getNextToken();  // eat identifer.
+  
+  if (CurTok != '=')
+    return Error("expected '=' after for");
+  getNextToken();  // eat '='.
+  
+  
+  ExprAST *Start = ParseExpression();
+  if (Start == 0) return 0;
+  if (CurTok != ',')
+    return Error("expected ',' after for start value");
+  getNextToken();
+  
+  ExprAST *End = ParseExpression();
+  if (End == 0) return 0;
+  
+  // The step value is optional.
+  ExprAST *Step = 0;
+  if (CurTok == ',') {
+    getNextToken();
+    Step = ParseExpression();
+    if (Step == 0) return 0;
+  }
+  
+  if (CurTok != tok_in)
+    return Error("expected 'in' after for");
+  getNextToken();  // eat 'in'.
+  
+  ExprAST *Body = ParseExpression();
+  if (Body == 0) return 0;
+
+  return new ForExprAST(IdName, Start, End, Step, Body);
+}
+</pre>
+</div>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="forir">LLVM IR for 
+the 'for' Loop</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>Now we get to the good part: the LLVM IR we want to generate for this thing.
+</p>
+
+
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="forcodegen">Code Generation for 
+the 'for' Loop</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+
+<div class="doc_code">
+<pre>
+Value *ForExprAST::Codegen() {
+  // Output this as:
+  //   ...
+  //   start = startexpr
+  //   goto loop
+  // loop: 
+  //   variable = phi [start, loopheader], [nextvariable, loopend]
+  //   ...
+  //   bodyexpr
+  //   ...
+  // loopend:
+  //   step = stepexpr
+  //   nextvariable = variable + step
+  //   endcond = endexpr
+  //   br endcond, loop, endloop
+  // outloop:
+  
+  // Emit the start code first, without 'variable' in scope.
+  Value *StartVal = Start-&gt;Codegen();
+  if (StartVal == 0) return 0;
+  
+  // Make the new basic block for the loop header, inserting after current
+  // block.
+  Function *TheFunction = Builder.GetInsertBlock()-&gt;getParent();
+  BasicBlock *PreheaderBB = Builder.GetInsertBlock();
+  BasicBlock *LoopBB = new BasicBlock("loop", TheFunction);
+  
+  // Insert an explicit fall through from the current block to the LoopBB.
+  // Start insertion in LoopBB.
+  Builder.CreateBr(LoopBB);
+  Builder.SetInsertPoint(LoopBB);
+  
+  // Start the PHI node with an entry for Start.
+  PHINode *Variable = Builder.CreatePHI(Type::DoubleTy, VarName.c_str());
+  Variable-&gt;addIncoming(StartVal, PreheaderBB);
+  
+  // Within the loop, the variable is defined equal to the PHI node.  If it
+  // shadows an existing variable, we have to restore it, so save it now.
+  Value *OldVal = NamedValues[VarName];
+  NamedValues[VarName] = Variable;
+  
+  // Emit the body of the loop.  This, like any other expr, can change the
+  // current BB.  Note that we ignore the value computed by the body, but don't
+  // allow an error.
+  if (Body-&gt;Codegen() == 0)
+    return 0;
+  
+  // Emit the step value.
+  Value *StepVal;
+  if (Step) {
+    StepVal = Step-&gt;Codegen();
+    if (StepVal == 0) return 0;
+  } else {
+    // If not specified, use 1.0.
+    StepVal = ConstantFP::get(Type::DoubleTy, APFloat(1.0));
+  }
+  
+  Value *NextVar = Builder.CreateAdd(Variable, StepVal, "nextvar");
+
+  // When evaluating the end condition, the value of the variable is the
+  // incremented value.
+  NamedValues[VarName] = Variable;
+  
+  
+  // Compute the end condition.
+  Value *EndCond = End-&gt;Codegen();
+  if (EndCond == 0) return EndCond;
+  
+  // Convert condition to a bool by comparing equal to 0.0.
+  EndCond = Builder.CreateFCmpONE(EndCond, 
+                                  ConstantFP::get(Type::DoubleTy, APFloat(0.0)),
+                                  "loopcond");
+  
+  // Create the "after loop" block and insert it.
+  BasicBlock *LoopEndBB = Builder.GetInsertBlock();
+  BasicBlock *AfterBB = new BasicBlock("afterloop", TheFunction);
+  
+  // Insert the conditional branch into the end of LoopEndBB.
+  Builder.CreateCondBr(EndCond, LoopBB, AfterBB);
+  
+  // Any new code will be inserted in AfterBB.
+  Builder.SetInsertPoint(AfterBB);
+  
+  // Add a new entry to the PHI node for the backedge.
+  Variable-&gt;addIncoming(NextVar, LoopEndBB);
+  
+  // Restore the unshadowed variable.
+  if (OldVal)
+    NamedValues[VarName] = OldVal;
+  else
+    NamedValues.erase(VarName);
+
+  
+  // for expr always returns 0.0.
+  return Constant::getNullValue(Type::DoubleTy);
+}
+</pre>
+</div>
+
 
 </div>
 
