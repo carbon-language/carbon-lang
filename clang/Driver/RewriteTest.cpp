@@ -64,6 +64,8 @@ namespace {
     void RewriteProtocolDecl(ObjcProtocolDecl *Dcl);
     void RewriteMethods(int nMethods, ObjcMethodDecl **Methods);
     void RewriteFunctionDecl(FunctionDecl *FD);
+    bool functionReferencesAnyObjcQualifiedInterfaceTypes(
+        const FunctionTypeProto *proto);
     
     // Expression Rewriting.
     Stmt *RewriteFunctionBody(Stmt *S);
@@ -402,12 +404,41 @@ CallExpr *RewriteTest::SynthesizeCallToFunctionDecl(
   return new CallExpr(ICE, args, nargs, FT->getResultType(), SourceLocation());
 }
 
+bool RewriteTest::functionReferencesAnyObjcQualifiedInterfaceTypes(
+  const FunctionTypeProto *proto) {
+  const PointerType *pType = proto->getResultType()->getAsPointerType();
+  if (pType) {
+    Type *pointeeType = pType->getPointeeType().getTypePtr();
+    if (isa<ObjcQualifiedInterfaceType>(pointeeType))
+      return true; // we have "Class <Protocol> *".
+  }
+  // Now check arguments.
+  for (unsigned i = 0; i < proto->getNumArgs(); i++) {
+    pType = proto->getArgType(i)->getAsPointerType();
+    if (pType) {
+      Type *pointeeType = pType->getPointeeType().getTypePtr();
+      if (isa<ObjcQualifiedInterfaceType>(pointeeType))
+        return true;
+    }
+  }
+  // FIXME: we don't currently represent "id <Protocol>" in the type system.
+  return false;
+}
+
 void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
   // declared in <objc/objc.h>
-  if (strcmp(FD->getName(), "sel_getUid") == 0)
+  if (strcmp(FD->getName(), "sel_getUid") == 0) {
     SelGetUidFunctionDecl = FD;
-    
-  // FIXME: Check if any types are isa<ObjcQualifiedInterfaceType> (yuck).
+    return;
+  }
+  // Check for ObjC 'id' and class types that have been adorned with protocol
+  // information (id<p>, C<p>*). The protocol references need to be rewritten!
+  const FunctionType *funcType = FD->getType()->getAsFunctionType();
+  assert(funcType && "missing function type");
+  const FunctionTypeProto *proto = dyn_cast<FunctionTypeProto>(funcType);
+  if (proto && functionReferencesAnyObjcQualifiedInterfaceTypes(proto)) {
+    // FIXME: Rewrite function decl...
+  }
 }
 
 // SynthMsgSendFunctionDecl - id objc_msgSend(id self, SEL op, ...);

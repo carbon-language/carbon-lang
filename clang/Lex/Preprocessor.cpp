@@ -369,6 +369,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     DefineBuiltinMacro(Buf, "__OBJC__=1");
   if (PP.getLangOptions().ObjC2)
     DefineBuiltinMacro(Buf, "__OBJC2__=1");
+
   if (PP.getLangOptions().ObjC1) {
     const char *ObjcType;
     // Predefine all the ObjC goodies (traditionally declared in <objc/objc.h>).
@@ -396,7 +397,6 @@ static void InitializePredefinedMacros(Preprocessor &PP,
     ObjcType = "extern SEL sel_getUid(const char *str);\n";
     Buf.insert(Buf.end(), ObjcType, ObjcType+strlen(ObjcType));
   }
-
   // Add __builtin_va_list typedef.
   {
     const char *VAList = PP.getTargetInfo().getVAListDeclaration();
