@@ -608,7 +608,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2f64, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2i64, Custom);
     setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2f64, Custom);
-    setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Custom);
+    if (Subtarget->is64Bit())
+      setOperationAction(ISD::EXTRACT_VECTOR_ELT, MVT::v2i64, Custom);
 
     // Promote v16i8, v8i16, v4i32 load, select, and, or, xor to v2i64.
     for (unsigned VT = (unsigned)MVT::v16i8; VT != (unsigned)MVT::v2i64; VT++) {

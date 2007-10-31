@@ -5299,6 +5299,11 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 #endif
     assert(0 && "Do not know how to expand this operator!");
     abort();
+  case ISD::EXTRACT_VECTOR_ELT:
+    assert(VT==MVT::i64 && "Do not know how to expand this operator!");
+    // ExpandEXTRACT_VECTOR_ELT tolerates invalid result types.
+    Lo  = ExpandEXTRACT_VECTOR_ELT(Op);
+    return ExpandOp(Lo, Lo, Hi);
   case ISD::UNDEF:
     NVT = TLI.getTypeToExpandTo(VT);
     Lo = DAG.getNode(ISD::UNDEF, NVT);
