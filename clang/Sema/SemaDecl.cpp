@@ -1201,6 +1201,8 @@ Sema::DeclTy *Sema::ActOnStartCategoryImplementation(
   // somewhere else. At this time, this is a good enough place to do type
   // encoding of methods and ivars for the rewrite client.
   GetObjcIdType(AtCatImplLoc);
+  // GetObjcClassType(AtCatImplLoc); NYI
+  GetObjcSelType(AtCatImplLoc);
   
   /// TODO: Check that CatName, category name, is not used in another
   // implementation.
@@ -1278,6 +1280,8 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   // somewhere else. At this time, this is a good enough place to do type
   // encoding of methods and ivars for the rewrite client.
   GetObjcIdType(AtClassImplLoc);
+  // GetObjcClassType(AtClassImplLoc); NYI
+  GetObjcSelType(AtClassImplLoc);
   
   return IMPDecl;
 }

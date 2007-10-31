@@ -98,6 +98,19 @@ public:
     IDNS_Ordinary
   };
   
+  /// ObjcDeclQualifier - Qualifier used on types in method declarations
+  /// for remote messaging. They are meant for the arguments though and
+  /// applied to the Decls (ObjcMethodDecl and ParmVarDecl).
+  enum ObjcDeclQualifier {
+    OBJC_TQ_None = 0x0,
+    OBJC_TQ_In = 0x1,
+    OBJC_TQ_Inout = 0x2,
+    OBJC_TQ_Out = 0x4,
+    OBJC_TQ_Bycopy = 0x8,
+    OBJC_TQ_Byref = 0x10,
+    OBJC_TQ_Oneway = 0x20
+  };
+    
 private:
   /// Loc - The location that this decl.
   SourceLocation Loc;
@@ -280,6 +293,8 @@ public:
   //  as static variables declared within a function.
   bool hasGlobalStorage() const { return !hasAutoStorage(); }
   
+  ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= VarFirst && D->getKind() <= VarLast;
@@ -288,11 +303,16 @@ public:
 protected:
   VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
           StorageClass SC, ScopedDecl *PrevDecl)
-    : ValueDecl(DK, L, Id, T, PrevDecl), Init(0) { SClass = SC; }
+    : ValueDecl(DK, L, Id, T, PrevDecl), Init(0), 
+      objcDeclQualifier(OBJC_TQ_None) { SClass = SC; }
 private:
   Expr *Init;
   // FIXME: This can be packed into the bitfields in Decl.
   unsigned SClass : 3;
+  /// FIXME: Also can be paced into the bitfields in Decl.
+  /// in, inout, etc.
+  ObjcDeclQualifier objcDeclQualifier : 6;
+  
   friend class StmtIteratorBase;
 };
 

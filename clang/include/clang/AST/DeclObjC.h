@@ -218,6 +218,9 @@ private:
   /// @required/@optional
   ImplementationControl DeclImplementation : 2;
   
+  /// in, inout, etc.
+  ObjcDeclQualifier objcDeclQualifier : 6;
+  
   // A unigue name for this method.
   Selector SelName;
   
@@ -241,10 +244,13 @@ public:
                  Decl *PrevDecl = 0)
     : Decl(ObjcMethod, beginLoc),
       IsInstance(isInstance), DeclImplementation(impControl),
+      objcDeclQualifier(OBJC_TQ_None),
       SelName(SelInfo), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), EndLoc(endLoc) {}
   virtual ~ObjcMethodDecl();
+  
+  ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
   
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); }
