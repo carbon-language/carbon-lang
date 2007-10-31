@@ -716,10 +716,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   } else if (const VectorType *VTy = dyn_cast<VectorType>(C1->getType())) {
     const ConstantVector *CP1 = dyn_cast<ConstantVector>(C1);
     const ConstantVector *CP2 = dyn_cast<ConstantVector>(C2);
-    assert((CP1 != NULL || isa<ConstantAggregateZero>(C1)) &&
-           "Unexpected kind of vector constant!");
-    assert((CP2 != NULL || isa<ConstantAggregateZero>(C2)) &&
-           "Unexpected kind of vector constant!");
+    if ((CP1 != NULL || isa<ConstantAggregateZero>(C1)) &&
+        (CP2 != NULL || isa<ConstantAggregateZero>(C2))) {
       switch (Opcode) {
         default:
           break;
@@ -747,6 +745,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getOr);
         case Instruction::Xor: 
         return EvalVectorOp(CP1, CP2, VTy, ConstantExpr::getXor);
+      }
     }
   }
 
