@@ -71,7 +71,25 @@ namespace {  // Anonymous namespace for class
   cl::opt<bool>
   Pedantic("verify-pedantic",
            cl::desc("Reject code with undefined behaviour"));
-    
+  
+  struct VISIBILITY_HIDDEN PreVerifier : public FunctionPass {
+  	static char ID; // Pass ID, replacement for typeid
+  	
+  	PreVerifier() : FunctionPass((intptr_t)&ID) { }
+  	
+  	bool runOnFunction(Function &F) {
+      for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
+        assert(I->back().isTerminator()
+               && "Block does not end with a terminator?");
+      
+      return false;
+  	}
+  };
+  
+  char PreVerifier::ID = 0;
+  RegisterPass<PreVerifier> PreVer("preverify", "Preliminary module verification");
+  const PassInfo *PreVerifyID = PreVer.getPassInfo();
+  
   struct VISIBILITY_HIDDEN
      Verifier : public FunctionPass, InstVisitor<Verifier> {
     static char ID; // Pass ID, replacement for typeid
@@ -161,6 +179,7 @@ namespace {  // Anonymous namespace for class
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
+      AU.addRequiredID(PreVerifyID);
       if (RealPass)
         AU.addRequired<DominatorTree>();
     }
