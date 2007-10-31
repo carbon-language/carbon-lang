@@ -218,6 +218,11 @@ public:
     getLongLongInfo(Size, Align, Loc);
     return static_cast<unsigned>(Size);
   }
+
+  const char *getTargetTriple() {
+    // FIXME !
+    return "i686-apple-darwin9";
+  }
 private:
   void ComputeWCharInfo(SourceLocation Loc);
 };
