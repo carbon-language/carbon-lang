@@ -106,7 +106,7 @@ namespace llvm {
 /// back to the bucket to facilitate node removal.
 /// 
 class FoldingSetImpl {
-private:
+protected:
   /// Buckets - Array of bucket chains.
   ///
   void **Buckets;
