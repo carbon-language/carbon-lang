@@ -4332,7 +4332,7 @@ SDOperand X86TargetLowering::LowerMEMSET(SDOperand Op, SelectionDAG &DAG) {
   // The libc version is likely to be faster for these cases. It can use the
   // address value and run time information about the CPU.
   if ((Align & 3) != 0 ||
-      (I && I->getValue() > Subtarget->getMinRepStrSizeThreshold())) {
+      (I && I->getValue() > Subtarget->getMaxInlineSizeThreshold())) {
     MVT::ValueType IntPtr = getPointerTy();
     const Type *IntPtrTy = getTargetData()->getIntPtrType();
     TargetLowering::ArgListTy Args; 
@@ -4510,7 +4510,7 @@ SDOperand X86TargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG) {
     return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
 
   // If size is more than the threshold, call memcpy.
-  if (Size > Subtarget->getMinRepStrSizeThreshold())
+  if (Size > Subtarget->getMaxInlineSizeThreshold())
     return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
 
   return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);

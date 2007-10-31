@@ -1315,7 +1315,8 @@ SDOperand ARMTargetLowering::LowerMEMCPY(SDOperand Op, SelectionDAG &DAG,
   // this once Thumb ldmia / stmia support is added.
   unsigned Size = I->getValue();
   if (AlwaysInline ||
-      (!ST->isThumb() && Size < 64 && (Align & 3) == 0))
+      (!ST->isThumb() && Size <= Subtarget->getMaxInlineSizeThreshold() &&
+       (Align & 3) == 0))
     return LowerMEMCPYInline(ChainOp, DestOp, SourceOp, Size, Align, DAG);
   return LowerMEMCPYCall(ChainOp, DestOp, SourceOp, CountOp, DAG);
 }
