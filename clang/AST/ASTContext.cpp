@@ -1298,10 +1298,10 @@ static inline void EmitSet(const llvm::FoldingSet<T>& set, llvm::Serializer& S) 
 
 /// Emit - Serialize an ASTContext object to Bitcode.
 void ASTContext::Emit(llvm::Serializer& S) const {
-  // FIXME: S.EmitRef(SourceMgr);
-  // FIXME: S.EmitRef(Target);
-  // FIXME: S.EmitRef(Idents);
-  // FIXME: S.EmitRef(Selectors);
+  S.EmitRef(SourceMgr);
+  S.EmitRef(Target);
+  S.EmitRef(Idents);
+  S.EmitRef(Selectors);
   // FIXME: BuildinInfo
 
   EmitSet(ComplexTypes,S);
