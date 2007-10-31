@@ -334,7 +334,7 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   if (isa<PointerType>(SrcType)) {
     // Must be an ptr to int cast.
     assert(isa<llvm::IntegerType>(DstTy) && "not ptr->int?");
-    return Builder.CreateIntToPtr(Src, DstTy, "conv");
+    return Builder.CreatePtrToInt(Src, DstTy, "conv");
   }
   
   // Finally, we have the arithmetic types: real int/float.
