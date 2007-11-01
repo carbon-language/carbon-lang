@@ -329,6 +329,17 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
   endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
 
   std::string ResultStr;
+  if (!ObjcForwardDecls.count(ClassDecl)) {
+    // we haven't seen a forward decl - generate a typedef.
+    ResultStr += "typedef struct ";
+    ResultStr += ClassDecl->getName();
+    ResultStr += " ";
+    ResultStr += ClassDecl->getName();
+    ResultStr += ";";
+    
+    // Mark this typedef as having been generated.
+    ObjcForwardDecls.insert(ClassDecl);
+  }
   SynthesizeObjcInternalStruct(ClassDecl, ResultStr);
     
   Rewrite.ReplaceText(LocStart, endBuf-startBuf, 
