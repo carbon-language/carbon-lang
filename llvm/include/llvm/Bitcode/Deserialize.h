@@ -103,11 +103,6 @@ public:
     SerializeTrait<T>::Read(*this,X);
     return X;
   }
-  
-  template <typename T>
-  inline T ReadVal() {
-    return SerializeTrait<T>::ReadVal(*this);
-  }
 
   template <typename T>
   inline T* Materialize() {

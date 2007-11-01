@@ -166,9 +166,7 @@ void Deserializer::BPEntry::SetPtr(BPNode*& FreeList, void* P) {
 
 #define INT_READ(TYPE)\
 void SerializeTrait<TYPE>::Read(Deserializer& D, TYPE& X) {\
-  X = (TYPE) D.ReadInt(); }\
-TYPE SerializeTrait<TYPE>::ReadVal(Deserializer& D) {\
-  return (TYPE) D.ReadInt(); }
+  X = (TYPE) D.ReadInt(); }
 
 INT_READ(bool)
 INT_READ(unsigned char)

@@ -37,15 +37,13 @@ template <typename T>
 struct SerializeTrait {
   static inline void Emit(Serializer& S, const T& X) { X.Emit(S); }
   static inline void Read(Deserializer& D, T& X) { X.Read(D); }
-  static inline T ReadVal(Deserializer& D) { T::ReadVal(D); }
   static inline T* Materialize(Deserializer& D) { return T::Materialize(D); }
 };
 
 #define SERIALIZE_INT_TRAIT(TYPE)\
 template <> struct SerializeTrait<TYPE> {\
   static void Emit(Serializer& S, TYPE X);\
-  static void Read(Deserializer& S, TYPE& X);\
-  static TYPE ReadVal(Deserializer& S); };
+  static void Read(Deserializer& S, TYPE& X); };
 
 SERIALIZE_INT_TRAIT(bool)
 SERIALIZE_INT_TRAIT(unsigned char)
