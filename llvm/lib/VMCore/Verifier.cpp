@@ -73,17 +73,17 @@ namespace {  // Anonymous namespace for class
            cl::desc("Reject code with undefined behaviour"));
   
   struct VISIBILITY_HIDDEN PreVerifier : public FunctionPass {
-  	static char ID; // Pass ID, replacement for typeid
+    static char ID; // Pass ID, replacement for typeid
   	
-  	PreVerifier() : FunctionPass((intptr_t)&ID) { }
+    PreVerifier() : FunctionPass((intptr_t)&ID) { }
   	
-  	bool runOnFunction(Function &F) {
+    bool runOnFunction(Function &F) {
       for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
         assert(I->back().isTerminator()
                && "Block does not end with a terminator?");
       
-      return false;
-  	}
+        return false;
+    }
   };
   
   char PreVerifier::ID = 0;
