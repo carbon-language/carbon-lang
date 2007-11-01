@@ -40,8 +40,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   case Builtin::BI__builtin___CFStringMakeConstantString: {
     const Expr *Arg = E->getArg(0);
     
-    while (const ParenExpr *PE = dyn_cast<ParenExpr>(Arg))
-      Arg = PE->getSubExpr();
+    while (1) {
+      if (const ParenExpr *PE = dyn_cast<ParenExpr>(Arg))
+        Arg = PE->getSubExpr();
+      else if (const ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(Arg))
+        Arg = CE->getSubExpr();
+      else
+        break;
+    }
     
     const StringLiteral *Literal = cast<StringLiteral>(Arg);
     std::string S(Literal->getStrData(), Literal->getByteLength());
@@ -68,6 +74,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     
     if (!E->isBuiltinClassifyType(Result))
       assert(0 && "Expr not __builtin_classify_type!");
+    
+    return RValue::get(llvm::ConstantInt::get(Result));
+  }
+  case Builtin::BI__builtin_constant_p: {
+    llvm::APSInt Result(32);
+
+    // FIXME: Analyze the parameter and check if it is a constant.
+    Result = 0;
     
     return RValue::get(llvm::ConstantInt::get(Result));
   }
