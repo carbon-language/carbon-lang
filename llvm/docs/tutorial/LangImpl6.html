@@ -1,0 +1,227 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+<head>
+  <title>Kaleidoscope: Extending the Language: Operator Overloading</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="author" content="Chris Lattner">
+  <link rel="stylesheet" href="../llvm.css" type="text/css">
+</head>
+
+<body>
+
+<div class="doc_title">Kaleidoscope: Extending the Language: Operator Overloading</div>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="intro">Part 6 Introduction</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Welcome to Part 6 of the "<a href="index.html">Implementing a language with
+LLVM</a>" tutorial.  At this point in our tutorial, we now have a fully
+functional language that is fairly minimal, but also useful.  One big problem
+with it though is that it doesn't have many useful operators (like division,
+logical negation, or even any comparisons other than less-than.</p>
+
+<p>This chapter of the tutorial takes a wild digression into adding operator
+overloading to the simple and beautiful Kaleidoscope language, giving us a 
+simple and ugly language in some ways, but also a powerful one at the same time.
+One of the great things about creating your own language is that you get to
+decide what is good or bad.  In this tutorial we'll assume that it is okay and
+use this as a way to show some interesting parsing techniques.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="idea">Operator Overloading: the Idea</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+The operator overloading that we will add to Kaleidoscope is more general than
+languages like C++.  In C++, you are only allowed to redefine existing
+operators: you can't programatically change the grammar, introduce new
+operators, change precedence levels, etc.  In this chapter, we will add this
+capability to Kaleidoscope, which will allow us to round out the set of
+operators that are supported, culminating in a more interesting example app.</p>
+
+<p>The point of going into operator overloading in a tutorial like this is to
+show the power and flexibility of using a hand-written parser.  The parser we
+are using so far is using recursive descent for most parts of the grammar, and 
+operator precedence parsing for the expressions.  See <a 
+href="LangImpl2.html">Chapter 2</a> for details.  Without using operator
+precedence parsing, it would be very difficult to allow the programmer to
+introduce new operators into the grammar: the grammar is dynamically extensible
+as the JIT runs.</p>
+
+<p>The two specific features we'll add are programmable unary operators (right
+now, Kaleidoscope has no unary operators at all) as well as binary operators.
+An example of this is:</p>
+
+<div class="doc_code">
+<pre>
+# Logical unary not.
+def unary!(v)
+  if v then
+    0
+  else
+    1;
+
+# Define &gt; with the same precedence as &lt;.
+def binary&gt; 10 (LHS RHS)
+  !(LHS &lt; RHS);     # alternatively, could just use "RHS &lt; LHS"
+
+# Binary "logical or", (note that it does not "short circuit")
+def binary| 5 (LHS RHS)
+  if LHS then
+    1
+  else if RHS then
+    1
+  else
+    0;
+
+# Define = with slightly lower precedence than relationals.
+def binary= 9 (LHS RHS)
+  !(LHS &lt; RHS | LHS &gt; RHS);
+</pre>
+</div>
+
+<p>Many languages aspire to being able to implement their standard runtime
+library in the language itself.  In Kaleidoscope, we can implement significant
+parts of the language in the library!</p>
+
+<p>We will break down implementation of these features into two parts:
+implementing support for overloading of binary operators and adding unary
+operators.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="binary">Overloading Binary Operators</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Adding support for overloaded binary operators is pretty simple with our
+current framework.  We'll first add support for the unary/binary keywords:</p>
+
+<div class="doc_code">
+<pre>
+enum Token {
+  ...
+  <b>// operators
+  tok_binary = -11, tok_unary = -12</b>
+};
+...
+static int gettok() {
+...
+    if (IdentifierStr == "for") return tok_for;
+    if (IdentifierStr == "in") return tok_in;
+    <b>if (IdentifierStr == "binary") return tok_binary;
+    if (IdentifierStr == "unary") return tok_unary;</b>
+    return tok_identifier;
+</pre>
+</div>
+
+<p>This just adds lexer support for the unary and binary keywords, like we
+did in <a href="LangImpl5.html#iflexer">previous chapters</a>.  One nice thing
+about our current AST is that we represent binary operators fully generally
+with their ASCII code as the opcode.  For our extended operators, we'll use the
+same representation, so we don't need any new AST or parser support.</p>
+
+<p>On the other hand, we have to be able to represent the definitions of these
+new operators, in the "def binary| 5" part of the function definition.  In the
+grammar so far, the "name" for the function definition is parsed as the
+"prototype" production and into the <tt>PrototypeAST</tt> AST node.  To
+represent our new user-defined operators as prototypes, we have to extend
+the  <tt>PrototypeAST</tt> AST node like this:</p>
+
+<div class="doc_code">
+<pre>
+/// PrototypeAST - This class represents the "prototype" for a function,
+/// which captures its argument names as well as if it is an operator.
+class PrototypeAST {
+  std::string Name;
+  std::vector&lt;std::string&gt; Args;
+  <b>bool isOperator;
+  unsigned Precedence;  // Precedence if a binary op.</b>
+public:
+  PrototypeAST(const std::string &amp;name, const std::vector&lt;std::string&gt; &amp;args,
+               <b>bool isoperator = false, unsigned prec = 0</b>)
+  : Name(name), Args(args), <b>isOperator(isoperator), Precedence(prec)</b> {}
+  
+  <b>bool isUnaryOp() const { return isOperator &amp;&amp; Args.size() == 1; }
+  bool isBinaryOp() const { return isOperator &amp;&amp; Args.size() == 2; }
+  
+  char getOperatorName() const {
+    assert(isUnaryOp() || isBinaryOp());
+    return Name[Name.size()-1];
+  }
+  
+  unsigned getBinaryPrecedence() const { return Precedence; }</b>
+  
+  Function *Codegen();
+};
+</pre>
+</div>
+
+<p>Basically, in addition to knowing a name for the prototype, we now keep track
+of whether it was an operator, and if it was, what precedence level the operator
+is at.  The precedence is only used for binary operators.</p>
+
+
+<p>...</p>
+
+</div>
+
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="code">Full Code Listing</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+Here is the complete code listing for our running example, enhanced with the
+if/then/else and for expressions..  To build this example, use:
+</p>
+
+<div class="doc_code">
+<pre>
+   # Compile
+   g++ -g toy.cpp `llvm-config --cppflags --ldflags --libs core jit native` -O3 -o toy
+   # Run
+   ./toy
+</pre>
+</div>
+
+<p>Here is the code:</p>
+
+<div class="doc_code">
+<pre>
+</pre>
+</div>
+
+</div>
+
+<!-- *********************************************************************** -->
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
+
+  <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
+  <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date: 2007-10-17 11:05:13 -0700 (Wed, 17 Oct 2007) $
+</address>
+</body>
+</html>
