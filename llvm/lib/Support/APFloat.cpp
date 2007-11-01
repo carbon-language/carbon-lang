@@ -1733,7 +1733,8 @@ APFloat::convert(const fltSemantics &toSemantics,
 
 /* Convert a floating point number to an integer according to the
    rounding mode.  If the rounded integer value is out of range this
-   returns an invalid operation exception.  If the rounded value is in
+   returns an invalid operation exception and the contents of the
+   destination parts are unspecified.  If the rounded value is in
    range but the floating point number is not the exact integer, the C
    standard doesn't require an inexact exception to be raised.  IEEE
    854 does require it so we do that.
@@ -1741,95 +1742,131 @@ APFloat::convert(const fltSemantics &toSemantics,
    Note that for conversions to integer type the C standard requires
    round-to-zero to always be used.  */
 APFloat::opStatus
+APFloat::convertToSignExtendedInteger(integerPart *parts, unsigned int width,
+                                      bool isSigned,
+                                      roundingMode rounding_mode) const
+{
+  lostFraction lost_fraction;
+  const integerPart *src;
+  unsigned int dstPartsCount, truncatedBits;
+
+  /* Handle the three special cases first.  */
+  if(category == fcInfinity || category == fcNaN)
+    return opInvalidOp;
+
+  dstPartsCount = partCountForBits(width);
+
+  if(category == fcZero) {
+    APInt::tcSet(parts, 0, dstPartsCount);
+    return opOK;
+  }
+
+  src = significandParts();
+
+  /* Step 1: place our absolute value, with any fraction truncated, in
+     the destination.  */
+  if (exponent < 0) {
+    /* Our absolute value is less than one; truncate everything.  */
+    APInt::tcSet(parts, 0, dstPartsCount);
+    truncatedBits = semantics->precision;
+  } else {
+    /* We want the most significant (exponent + 1) bits; the rest are
+       truncated.  */
+    unsigned int bits = exponent + 1U;
+
+    /* Hopelessly large in magnitude?  */
+    if (bits > width)
+      return opInvalidOp;
+
+    if (bits < semantics->precision) {
+      /* We truncate (semantics->precision - bits) bits.  */
+      truncatedBits = semantics->precision - bits;
+      APInt::tcExtract(parts, dstPartsCount, src, bits, truncatedBits);
+    } else {
+      /* We want at least as many bits as are available.  */
+      APInt::tcExtract(parts, dstPartsCount, src, semantics->precision, 0);
+      APInt::tcShiftLeft(parts, dstPartsCount, bits - semantics->precision);
+      truncatedBits = 0;
+    }
+  }
+
+  /* Step 2: work out any lost fraction, and increment the absolute
+     value if we would round away from zero.  */
+  if (truncatedBits) {
+    lost_fraction = lostFractionThroughTruncation(src, partCount(),
+                                                  truncatedBits);
+    if (lost_fraction != lfExactlyZero
+        && roundAwayFromZero(rounding_mode, lost_fraction, truncatedBits)) {
+      if (APInt::tcIncrement(parts, dstPartsCount))
+        return opInvalidOp;     /* Overflow.  */
+    }
+  } else {
+    lost_fraction = lfExactlyZero;
+  }
+
+  /* Step 3: check if we fit in the destination.  */
+  unsigned int omsb = APInt::tcMSB(parts, dstPartsCount) + 1;
+
+  if (sign) {
+    if (!isSigned) {
+      /* Negative numbers cannot be represented as unsigned.  */
+      if (omsb != 0)
+        return opInvalidOp;
+    } else {
+      /* It takes omsb bits to represent the unsigned integer value.
+         We lose a bit for the sign, but care is needed as the
+         maximally negative integer is a special case.  */
+      if (omsb == width && APInt::tcLSB(parts, dstPartsCount) + 1 != omsb)
+        return opInvalidOp;
+
+      /* This case can happen because of rounding.  */
+      if (omsb > width)
+        return opInvalidOp;
+    }
+
+    APInt::tcNegate (parts, dstPartsCount);
+  } else {
+    if (omsb >= width + !isSigned)
+      return opInvalidOp;
+  }
+
+  if (lost_fraction == lfExactlyZero)
+    return opOK;
+  else
+    return opInexact;
+}
+
+/* Same as convertToSignExtendedInteger, except we provide
+   deterministic values in case of an invalid operation exception,
+   namely zero for NaNs and the minimal or maximal value respectively
+   for underflow or overflow.  */
+APFloat::opStatus
 APFloat::convertToInteger(integerPart *parts, unsigned int width,
                           bool isSigned,
                           roundingMode rounding_mode) const
 {
-  lostFraction lost_fraction;
-  unsigned int msb, partsCount;
-  int bits;
+  opStatus fs;
 
-  assertArithmeticOK(*semantics);
-  partsCount = partCountForBits(width);
+  fs = convertToSignExtendedInteger(parts, width, isSigned, rounding_mode);
 
-  /* Handle the three special cases first.  We produce
-     a deterministic result even for the Invalid cases. */
-  if (category == fcNaN) {
-    // Neither sign nor isSigned affects this.
-    APInt::tcSet(parts, 0, partsCount);
-    return opInvalidOp;
-  }
-  if (category == fcInfinity) {
-    if (!sign && isSigned)
-      APInt::tcSetLeastSignificantBits(parts, partsCount, width-1);
-    else if (!sign && !isSigned)
-      APInt::tcSetLeastSignificantBits(parts, partsCount, width);
-    else if (sign && isSigned) {
-      APInt::tcSetLeastSignificantBits(parts, partsCount, 1);
-      APInt::tcShiftLeft(parts, partsCount, width-1);
-    } else // sign && !isSigned
-      APInt::tcSet(parts, 0, partsCount);
-    return opInvalidOp;
-  }
-  if (category == fcZero) {
-    APInt::tcSet(parts, 0, partsCount);
-    return opOK;
+  if (fs == opInvalidOp) {
+    unsigned int bits, dstPartsCount;
+
+    dstPartsCount = partCountForBits(width);
+
+    if (category == fcNaN)
+      bits = 0;
+    else if (sign)
+      bits = isSigned;
+    else
+      bits = width - isSigned;
+
+    APInt::tcSetLeastSignificantBits(parts, dstPartsCount, bits);
+    if (sign && isSigned)
+      APInt::tcShiftLeft(parts, dstPartsCount, width - 1);
   }
 
-  /* Shift the bit pattern so the fraction is lost.  */
-  APFloat tmp(*this);
-
-  bits = (int) semantics->precision - 1 - exponent;
-
-  if(bits > 0) {
-    lost_fraction = tmp.shiftSignificandRight(bits);
-  } else {
-    if ((unsigned) -bits >= semantics->precision) {
-      // Unrepresentably large.
-      if (!sign && isSigned)
-        APInt::tcSetLeastSignificantBits(parts, partsCount, width-1);
-      else if (!sign && !isSigned)
-        APInt::tcSetLeastSignificantBits(parts, partsCount, width);
-      else if (sign && isSigned) {
-        APInt::tcSetLeastSignificantBits(parts, partsCount, 1);
-        APInt::tcShiftLeft(parts, partsCount, width-1);
-      } else // sign && !isSigned
-        APInt::tcSet(parts, 0, partsCount);
-      return (opStatus)(opOverflow | opInexact);
-    }
-    tmp.shiftSignificandLeft(-bits);
-    lost_fraction = lfExactlyZero;
-  }
-
-  if(lost_fraction != lfExactlyZero
-     && tmp.roundAwayFromZero(rounding_mode, lost_fraction, 0))
-    tmp.incrementSignificand();
-
-  msb = tmp.significandMSB();
-
-  /* Negative numbers cannot be represented as unsigned.  */
-  if(!isSigned && tmp.sign && msb != -1U)
-    return opInvalidOp;
-
-  /* It takes exponent + 1 bits to represent the truncated floating
-     point number without its sign.  We lose a bit for the sign, but
-     the maximally negative integer is a special case.  */
-  if(msb + 1 > width)                /* !! Not same as msb >= width !! */
-    return opInvalidOp;
-
-  if(isSigned && msb + 1 == width
-     && (!tmp.sign || tmp.significandLSB() != msb))
-    return opInvalidOp;
-
-  APInt::tcAssign(parts, tmp.significandParts(), partsCount);
-
-  if(tmp.sign)
-    APInt::tcNegate(parts, partsCount);
-
-  if(lost_fraction == lfExactlyZero)
-    return opOK;
-  else
-    return opInexact;
+  return fs;
 }
 
 /* Convert an unsigned integer SRC to a floating point number,
@@ -2162,7 +2199,6 @@ APFloat::convertFromDecimalString(const char *p, roundingMode rounding_mode)
         partCount++;
     } while (p <= D.lastSigDigit);
 
-    category = fcNormal;
     fs = roundSignificandWithExponent(decSignificand, partCount,
                                       D.exponent, rounding_mode);
 

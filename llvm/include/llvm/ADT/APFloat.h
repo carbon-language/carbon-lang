@@ -275,6 +275,8 @@ namespace llvm {
     cmpResult compareAbsoluteValue(const APFloat &) const;
     opStatus handleOverflow(roundingMode);
     bool roundAwayFromZero(roundingMode, lostFraction, unsigned int) const;
+    opStatus convertToSignExtendedInteger(integerPart *, unsigned int, bool,
+                                          roundingMode) const;
     opStatus convertFromUnsignedParts(const integerPart *, unsigned int,
                                       roundingMode);
     opStatus convertFromHexadecimalString(const char *, roundingMode);
