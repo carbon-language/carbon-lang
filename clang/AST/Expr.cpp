@@ -382,11 +382,14 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     if (Loc) *Loc = getLocStart();
     return false;
   }
-  case DeclRefExprClass:
-    if (isa<EnumConstantDecl>(cast<DeclRefExpr>(this)->getDecl()))
+  case DeclRefExprClass: {
+    const Decl *D = cast<DeclRefExpr>(this)->getDecl();
+    // Accept address of function.
+    if (isa<EnumConstantDecl>(D) || isa<FunctionDecl>(D))
       return true;
     if (Loc) *Loc = getLocStart();
     return false;
+  }
   case UnaryOperatorClass: {
     const UnaryOperator *Exp = cast<UnaryOperator>(this);
     
