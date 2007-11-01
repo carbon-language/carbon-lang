@@ -32,26 +32,29 @@ namespace {
   ///    - Ignore packed structs
   class RecordOrganizer {
   public:
-    RecordOrganizer() : STy(NULL), FieldNo(0), Cursor(0) {}
+    explicit RecordOrganizer(CodeGenTypes &Types) : 
+      CGT(Types), STy(NULL), FieldNo(0), Cursor(0) {}
     
     /// addField - Add new field.
     void addField(const FieldDecl *FD);
 
     /// addLLVMField - Add llvm struct field that corresponds to llvm type Ty. Update
     /// cursor and increment field count.
-    void addLLVMField(const llvm::Type *Ty, CodeGenTypes &CGT,
-                      const FieldDecl *FD = NULL);
+    void addLLVMField(const llvm::Type *Ty, const FieldDecl *FD = NULL);
 
+    /// addPaddingFields - Current cursor is not suitable place to add next field.
+    /// Add required padding fields.
+    void addPaddingFields(unsigned RequiredBits);
 
     /// layoutStructFields - Do the actual work and lay out all fields. Create
     /// corresponding llvm struct type.  This should be invoked only after
     /// all fields are added.
-    void layoutStructFields(CodeGenTypes &CGT, const RecordLayout &RL);
+    void layoutStructFields(const RecordLayout &RL);
 
     /// layoutUnionFields - Do the actual work and lay out all fields. Create
     /// corresponding llvm struct type.  This should be invoked only after
     /// all fields are added.
-    void layoutUnionFields(CodeGenTypes &CGT);
+    void layoutUnionFields();
 
     /// getLLVMType - Return associated llvm struct type. This may be NULL
     /// if fields are not laid out.
@@ -62,6 +65,7 @@ namespace {
     /// Clear private data so that this object can be reused.
     void clear();
   private:
+    CodeGenTypes &CGT;
     llvm::Type *STy;
     unsigned FieldNo;
     uint64_t Cursor;
@@ -253,11 +257,11 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
                                           llvm::PATypeHolder(OpaqueTy)));
 
       // Layout fields.
-      RecordOrganizer RO;
+      RecordOrganizer RO(*this);
       for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
         RO.addField(RD->getMember(i));
       const RecordLayout &RL = Context.getRecordLayout(RD, SourceLocation());
-      RO.layoutStructFields(*this, RL);
+      RO.layoutStructFields(RL);
 
       // Get llvm::StructType.
       RecordLayoutInfo *RLI = new RecordLayoutInfo(RO.getLLVMType());
@@ -278,10 +282,10 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       // highest aligned member.
 
       if (RD->getNumMembers() != 0) {
-        RecordOrganizer RO;
+        RecordOrganizer RO(*this);
         for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
           RO.addField(RD->getMember(i));
-        RO.layoutUnionFields(*this);
+        RO.layoutUnionFields();
 
         // Get llvm::StructType.
         RecordLayoutInfo *RLI = new RecordLayoutInfo(RO.getLLVMType());
@@ -364,10 +368,9 @@ void RecordOrganizer::addField(const FieldDecl *FD) {
 ///    - Ignore bit fields
 ///    - Ignore field aligments
 ///    - Ignore packed structs
-void RecordOrganizer::layoutStructFields(CodeGenTypes &CGT,
-                                         const RecordLayout &RL) {
+void RecordOrganizer::layoutStructFields(const RecordLayout &RL) {
   // FIXME : Use SmallVector
-  uint64_t Cursor = 0;
+  Cursor = 0;
   FieldNo = 0;
   LLVMFields.clear();
   for (llvm::SmallVector<const FieldDecl *, 8>::iterator I = FieldDecls.begin(),
@@ -375,22 +378,32 @@ void RecordOrganizer::layoutStructFields(CodeGenTypes &CGT,
     const FieldDecl *FD = *I;
     const llvm::Type *Ty = CGT.ConvertType(FD->getType());
 
-    uint64_t Offset = RL.getFieldOffset(FieldNo);
     unsigned AlignmentInBits = CGT.getTargetData().getABITypeAlignment(Ty) * 8;
     if (Cursor % AlignmentInBits != 0)
-      assert (Offset == Cursor && "FIXME Invalid struct layout");
+      // At the moment, insert padding fields even if target specific llvm 
+      // type alignment enforces implict padding fields for FD. Later on, 
+      // optimize llvm fields by removing implicit padding fields and 
+      // combining consequetive padding fields.
+      addPaddingFields(Cursor % AlignmentInBits);
 
-    addLLVMField(Ty, CGT, FD);
+    addLLVMField(Ty, FD);
   }
   STy = llvm::StructType::get(LLVMFields);
+}
+
+/// addPaddingFields - Current cursor is not suitable place to add next field.
+/// Add required padding fields.
+void RecordOrganizer::addPaddingFields(unsigned RequiredBits) {
+  assert ((RequiredBits % 8) == 0 && "FIXME Invalid struct layout");
+  unsigned RequiredBytes = RequiredBits / 8;
+  for (unsigned i = 0; i != RequiredBytes; ++i)
+    addLLVMField(llvm::Type::Int8Ty);
 }
 
 /// addLLVMField - Add llvm struct field that corresponds to llvm type Ty. Update
 /// cursor and increment field count. If field decl FD is available than update
 /// update field info at CodeGenTypes level.
-void RecordOrganizer::addLLVMField(const llvm::Type *Ty, 
-                                   CodeGenTypes &CGT,
-                                   const FieldDecl *FD) {
+void RecordOrganizer::addLLVMField(const llvm::Type *Ty, const FieldDecl *FD) {
   Cursor += CGT.getTargetData().getTypeSizeInBits(Ty);
   LLVMFields.push_back(Ty);
   if (FD)
@@ -401,7 +414,7 @@ void RecordOrganizer::addLLVMField(const llvm::Type *Ty,
 /// layoutUnionFields - Do the actual work and lay out all fields. Create
 /// corresponding llvm struct type.  This should be invoked only after
 /// all fields are added.
-void RecordOrganizer::layoutUnionFields(CodeGenTypes &CGT) {
+void RecordOrganizer::layoutUnionFields() {
  
   unsigned PrimaryEltNo = 0;
   std::pair<uint64_t, unsigned> PrimaryElt =
