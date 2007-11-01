@@ -1046,12 +1046,12 @@ Parser::DeclTy *Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
 ///     parameter-declaration
 ///     '...' [OBJC2]
 ///
-Parser::DeclTy *Parser::ParseObjCTryStmt(SourceLocation atLoc) {
+Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   bool catch_or_finally_seen = false;
   ConsumeToken(); // consume try
   if (Tok.isNot(tok::l_brace)) {
     Diag (Tok, diag::err_expected_lbrace);
-    return 0;
+    return true;
   }
   StmtResult TryBody = ParseCompoundStatementBody();
   while (Tok.is(tok::at)) {
@@ -1071,11 +1071,11 @@ Parser::DeclTy *Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         else
           ConsumeToken(); // consume '...'
         ConsumeParen();
-        StmtResult CatchMody = ParseCompoundStatementBody();
+        StmtResult CatchBody = ParseCompoundStatementBody();
       }
       else {
         Diag(catchLoc, diag::err_expected_lparen_after, "@catch clause");
-        return 0;
+        return true;
       }
       catch_or_finally_seen = true;
     }
@@ -1088,7 +1088,7 @@ Parser::DeclTy *Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   }
   if (!catch_or_finally_seen)
     Diag(atLoc, diag::err_missing_catch_finally);
-  return 0;
+  return true;
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'

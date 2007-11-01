@@ -43,7 +43,13 @@ STMT(17, SwitchCase      , Stmt)
 
 // GNU Stmt Extensions
 STMT(18, AsmStmt         , Stmt)
-LAST_STMT(17)
+
+// Obj-C statements
+STMT(19, ObjcAtTryStmt        , Stmt)
+STMT(20, ObjcAtCatchStmt      , Stmt)
+STMT(21, ObjcAtFinallyStmt    , Stmt)
+
+LAST_STMT(21)
 
 FIRST_EXPR(31)
 // Expressions.

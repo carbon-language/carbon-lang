@@ -321,6 +321,18 @@ void StmtPrinter::VisitAsmStmt(AsmStmt *Node) {
   Indent() << "asm (/*todo*/);\n";
 }
 
+void StmtPrinter::VisitObjcAtTryStmt(ObjcAtTryStmt *Node) {
+  Indent() << "@try { /* todo */ }\n";
+}
+
+void StmtPrinter::VisitObjcAtFinallyStmt(ObjcAtFinallyStmt *Node) {
+  Indent() << "@finally { /* todo */ } \n";
+}
+
+void StmtPrinter::VisitObjcAtCatchStmt (ObjcAtCatchStmt *Node) {
+  Indent() << "@catch (...) { /* todo */ } \n";
+}
+
 //===----------------------------------------------------------------------===//
 //  Expr printing methods.
 //===----------------------------------------------------------------------===//

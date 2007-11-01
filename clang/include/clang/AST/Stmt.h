@@ -657,7 +657,95 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
 };
-
+  
+/// ObjcAtCatchStmt - This represents objective-c's @catch statement.
+class ObjcAtCatchStmt : public Stmt {
+private:
+  // Points to next @catch statement, or null
+  ObjcAtCatchStmt *NextAtCatchStmt;
+  ScopedDecl *AtCatchDeclarator;
+  Stmt *AtCatchStmt;
+  
+  SourceLocation AtCatchLoc, RParenLoc;
+public:
+  ObjcAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
+                  ScopedDecl *atCatchDeclarator, Stmt *atCatchStmt)
+  : Stmt(ObjcAtCatchStmtClass), NextAtCatchStmt(0), 
+    AtCatchDeclarator(atCatchDeclarator), AtCatchStmt(atCatchStmt), 
+    AtCatchLoc(atCatchLoc), RParenLoc(rparenloc) {}
+  
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(AtCatchLoc, AtCatchStmt->getLocEnd()); 
+  }
+   
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjcAtCatchStmtClass;
+  }
+  static bool classof(const ObjcAtCatchStmt *) { return true; }
+  
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+                  
+};
+  
+/// ObjcAtFinallyStmt - This represent objective-c's @finally Statement 
+class ObjcAtFinallyStmt : public Stmt {
+  private:
+    Stmt *AtFinallyStmt;
+    SourceLocation AtFinallyLoc;
+    
+  public:
+    ObjcAtFinallyStmt(SourceLocation atFinallyLoc, Stmt *atFinallyStmt)
+    : Stmt(ObjcAtFinallyStmtClass), 
+      AtFinallyStmt(atFinallyStmt), AtFinallyLoc(atFinallyLoc) {}
+    
+    virtual SourceRange getSourceRange() const { 
+      return SourceRange(AtFinallyLoc, AtFinallyStmt->getLocEnd()); 
+    }
+    
+    static bool classof(const Stmt *T) {
+      return T->getStmtClass() == ObjcAtFinallyStmtClass;
+    }
+    static bool classof(const ObjcAtFinallyStmt *) { return true; }
+    
+    virtual child_iterator child_begin();
+    virtual child_iterator child_end();
+    
+};
+  
+/// ObjcAtTryStmt - This represent objective-c's over-all 
+/// @try ... @catch ... @finally statement.
+class ObjcAtTryStmt : public Stmt {
+private:
+  enum { TRY, CATCH, FINALLY, END_TRY };
+  Stmt* SubStmts[END_TRY]; 
+  
+  SourceLocation AtTryLoc;
+      
+public:
+  ObjcAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt, 
+                ObjcAtCatchStmt *atCatchStmt, 
+                ObjcAtFinallyStmt *atFinallyStmt)
+  : Stmt(ObjcAtTryStmtClass), AtTryLoc(atTryLoc) {
+      SubStmts[TRY] = atTryStmt;
+      SubStmts[CATCH] = atCatchStmt;
+      SubStmts[FINALLY] = atFinallyStmt;
+      SubStmts[END_TRY] = NULL;
+    }
+    
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(AtTryLoc, SubStmts[TRY]->getLocEnd()); 
+  }
+    
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjcAtTryStmtClass;
+  }
+  static bool classof(const ObjcAtTryStmt *) { return true; }
+    
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+    
+};
 
 }  // end namespace clang
 

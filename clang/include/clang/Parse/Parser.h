@@ -275,7 +275,6 @@ private:
   DeclTy *ParseObjCAtAliasDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCPropertySynthesize(SourceLocation atLoc);
   DeclTy *ParseObjCPropertyDynamic(SourceLocation atLoc);
-  DeclTy *ParseObjCTryStmt(SourceLocation atLoc);
   DeclTy *ParseObjCThrowStmt(SourceLocation atLoc);
   
   IdentifierInfo *ParseObjCSelector(SourceLocation &MethodLocation);
@@ -389,6 +388,7 @@ private:
   StmtResult ParseBreakStatement();
   StmtResult ParseReturnStatement();
   StmtResult ParseAsmStatement();
+  StmtResult ParseObjCTryStmt(SourceLocation atLoc);
   void ParseAsmOperandsOpt();
 
   //===--------------------------------------------------------------------===//
