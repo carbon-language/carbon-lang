@@ -417,15 +417,20 @@ private:
 /// represent a member of a struct/union/class.
 class FieldDecl : public NamedDecl {
   QualType DeclType;  
+  Expr *BitWidth;
 public:
-  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T)
-    : NamedDecl(Field, L, Id), DeclType(T) {}
-  FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T) 
-    : NamedDecl(DK, L, Id), DeclType(T) {}
+  FieldDecl(SourceLocation L, IdentifierInfo *Id, QualType T, 
+            Expr *BW = NULL)
+    : NamedDecl(Field, L, Id), DeclType(T), BitWidth(BW) {}
+  FieldDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
+            Expr *BW = NULL)
+    : NamedDecl(DK, L, Id), DeclType(T), BitWidth(BW) {}
 
   QualType getType() const { return DeclType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
   
+  bool isBitField() const { return BitWidth != NULL; }
+  Expr *getBitWidth() const { return BitWidth; }
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= FieldFirst && D->getKind() <= FieldLast;

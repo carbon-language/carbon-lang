@@ -1628,7 +1628,7 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
   FieldDecl *NewFD;
   
   if (isa<RecordDecl>(static_cast<Decl *>(TagDecl)))
-    NewFD = new FieldDecl(Loc, II, T);
+    NewFD = new FieldDecl(Loc, II, T, BitWidth);
   else if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(TagDecl))
            || isa<ObjcImplementationDecl>(static_cast<Decl *>(TagDecl)))
     NewFD = new ObjcIvarDecl(Loc, II, T);
