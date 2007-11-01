@@ -1344,6 +1344,14 @@ void ReadVector(std::vector<T*>& V, std::vector<Type*>& Types,
   }
 }
 
+static inline void EmitBuiltin(llvm::Serializer& S, QualType Q) {
+  S.EmitPtr(Q.getTypePtr());  
+}
+
+static inline void RegisterBuiltin(llvm::Deserializer& D, QualType Q) {
+  D.RegisterPtr(Q.getTypePtr());
+}
+
 /// Emit - Serialize an ASTContext object to Bitcode.
 void ASTContext::Emit(llvm::Serializer& S) const {
   S.EmitRef(SourceMgr);
@@ -1358,18 +1366,29 @@ void ASTContext::Emit(llvm::Serializer& S) const {
   // Emit pointers to builtin types.  Although these objects will be
   // reconsituted automatically when ASTContext is created, any pointers to them
   // will not be (and will need to be patched).  Thus we must register them 
-  // with the Serialize anyway as pointed-to-objects, even if we won't 
-  // serialize them out using EmitOwnedPtr.
-
-  for (std::vector<Type*>::const_iterator I=Types.begin(),E=Types.end(); 
-       I!=E; ++I)
-    if (const BuiltinType* BT = dyn_cast<BuiltinType>(*I))
-      S.EmitPtr(BT);
-    else {
-      // Sleazy hack: builtins are at the beginning of the vector.  Stop
-      // processing the type-vector when we hit the first non-builtin.
-      break;
-    }
+  // with the Serializer anyway as pointed-to-objects, even if we won't 
+  // serialize them out using EmitOwnedPtr.  This "registration" will then
+  // be used by the Deserializer to backpatch references to the builtins.
+  EmitBuiltin(S,VoidTy);
+  EmitBuiltin(S,BoolTy);
+  EmitBuiltin(S,CharTy);
+  EmitBuiltin(S,SignedCharTy);
+  EmitBuiltin(S,ShortTy);
+  EmitBuiltin(S,IntTy);
+  EmitBuiltin(S,LongTy);
+  EmitBuiltin(S,LongLongTy);
+  EmitBuiltin(S,UnsignedCharTy);
+  EmitBuiltin(S,UnsignedShortTy);
+  EmitBuiltin(S,UnsignedIntTy);
+  EmitBuiltin(S,UnsignedLongTy);
+  EmitBuiltin(S,UnsignedLongLongTy);
+  EmitBuiltin(S,FloatTy);
+  EmitBuiltin(S,DoubleTy);
+  EmitBuiltin(S,LongDoubleTy);
+  EmitBuiltin(S,FloatComplexTy);
+  EmitBuiltin(S,DoubleComplexTy);
+  EmitBuiltin(S,LongDoubleComplexTy);
+  EmitBuiltin(S,VoidPtrTy);
 
   // Emit the remaining types.
   EmitSet(ComplexTypes, S);
@@ -1397,11 +1416,28 @@ ASTContext* ASTContext::Materialize(llvm::Deserializer& D) {
   ASTContext* A = new ASTContext(SM,t,idents,sels,size_reserve);
   
   // Register the addresses of the BuiltinTypes with the Deserializer.
-  // FIXME: How brittle is this?
-  for (std::vector<Type*>::iterator I=A->Types.begin(),E=A->Types.end(); 
-       I!=E; ++I)
-    D.RegisterPtr(cast<BuiltinType>(*I));
-  
+  RegisterBuiltin(D,A->VoidTy);
+  RegisterBuiltin(D,A->BoolTy);
+  RegisterBuiltin(D,A->CharTy);
+  RegisterBuiltin(D,A->SignedCharTy);
+  RegisterBuiltin(D,A->ShortTy);
+  RegisterBuiltin(D,A->IntTy);
+  RegisterBuiltin(D,A->LongTy);
+  RegisterBuiltin(D,A->LongLongTy);
+  RegisterBuiltin(D,A->UnsignedCharTy);
+  RegisterBuiltin(D,A->UnsignedShortTy);
+  RegisterBuiltin(D,A->UnsignedIntTy);
+  RegisterBuiltin(D,A->UnsignedLongTy);
+  RegisterBuiltin(D,A->UnsignedLongLongTy);
+  RegisterBuiltin(D,A->FloatTy);
+  RegisterBuiltin(D,A->DoubleTy);
+  RegisterBuiltin(D,A->LongDoubleTy);
+  RegisterBuiltin(D,A->FloatComplexTy);
+  RegisterBuiltin(D,A->DoubleComplexTy);
+  RegisterBuiltin(D,A->LongDoubleComplexTy);
+  RegisterBuiltin(D,A->VoidPtrTy);
+
+  // Deserialize all other types.  
   ReadSet<ComplexType>(A->ComplexTypes, A->Types, D);
   ReadSet(A->PointerTypes, A->Types, D);
   ReadSet(A->ReferenceTypes, A->Types, D);
