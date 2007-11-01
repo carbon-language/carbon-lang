@@ -784,7 +784,7 @@ static int getFloatingRank(QualType T) {
     return getFloatingRank(CT->getElementType());
   
   switch (cast<BuiltinType>(T)->getKind()) {
-  default:  assert(0 && "getFloatingPointRank(): not a floating type");
+  default:  assert(0 && "getFloatingRank(): not a floating type");
   case BuiltinType::Float:      return FloatRank;
   case BuiltinType::Double:     return DoubleRank;
   case BuiltinType::LongDouble: return LongDoubleRank;
@@ -1141,6 +1141,17 @@ bool ASTContext::interfaceTypesAreCompatible(QualType lhs, QualType rhs) {
   return true; // FIXME: IMPLEMENT.
 }
 
+bool ASTContext::vectorTypesAreCompatible(QualType lhs, QualType rhs) {
+  const VectorType *lVector = lhs->getAsVectorType();
+  const VectorType *rVector = rhs->getAsVectorType();
+  
+  if ((lVector->getElementType().getCanonicalType() ==
+      rVector->getElementType().getCanonicalType()) &&
+      (lVector->getNumElements() == rVector->getNumElements()))
+    return true;
+  return false;
+}
+
 // C99 6.2.7p1: If both are complete types, then the following additional
 // requirements apply...FIXME (handle compatibility across source files).
 bool ASTContext::tagTypesAreCompatible(QualType lhs, QualType rhs) {
@@ -1279,6 +1290,9 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
       return builtinTypesAreCompatible(lcanon, rcanon); 
     case Type::ObjcInterface:
       return interfaceTypesAreCompatible(lcanon, rcanon); 
+    case Type::Vector:
+    case Type::OCUVector:
+      return vectorTypesAreCompatible(lcanon, rcanon);
     default:
       assert(0 && "unexpected type");
   }
