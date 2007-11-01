@@ -614,15 +614,14 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   if (NumIvars <= 0 && (!RCDecl || !ObjcSynthesizedStructs.count(RCDecl)))
     return;
   
-  Result += "\nstruct _interface_";
-  Result += CDecl->getName();
-  if (RCDecl && ObjcSynthesizedStructs.count(RCDecl)) {
-    Result += " {\n";
-    Result += "\tstruct _interface_";
-    Result += RCDecl->getName();
-    Result += " _";
-    Result += RCDecl->getName();
-    Result += ";\n";
+   Result += "\nstruct ";
+   Result += CDecl->getName();
+   if (RCDecl && ObjcSynthesizedStructs.count(RCDecl)) {
+     Result += " {\n    struct ";
+     Result += RCDecl->getName();
+     Result += " _";
+     Result += RCDecl->getName();
+     Result += ";\n";
   }
   else
     Result += " {";
