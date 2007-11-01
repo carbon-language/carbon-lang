@@ -37,12 +37,12 @@ namespace clang {
 namespace CodeGen {
   class CodeGenTypes;
 
-  /// RecordLayoutInfo - This class handles struct and union layout info while 
+  /// CGRecordLayout - This class handles struct and union layout info while 
   /// lowering AST types to LLVM types.
-  class RecordLayoutInfo {
-    RecordLayoutInfo(); // DO NOT IMPLEMENT
+  class CGRecordLayout {
+    CGRecordLayout(); // DO NOT IMPLEMENT
   public:
-    RecordLayoutInfo(llvm::Type *T) : STy(T) {
+    CGRecordLayout(llvm::Type *T) : STy(T) {
       // FIXME : Collect info about fields that requires adjustments 
       // (i.e. fields that do not directly map to llvm struct fields.)
     }
@@ -66,11 +66,11 @@ class CodeGenTypes {
   
   llvm::DenseMap<const TagDecl*, llvm::Type*> TagDeclTypes;
 
-  /// RecordLayouts - This maps llvm struct type with corresponding 
+  /// CGRecordLayouts - This maps llvm struct type with corresponding 
   /// record layout info. 
-  /// FIXME : If RecordLayoutInfo is less than 16 bytes then use 
+  /// FIXME : If CGRecordLayout is less than 16 bytes then use 
   /// inline it in the map.
-  llvm::DenseMap<const llvm::Type*, RecordLayoutInfo *> RecordLayouts;
+  llvm::DenseMap<const llvm::Type*, CGRecordLayout *> CGRecordLayouts;
 
   /// FieldInfo - This maps struct field with corresponding llvm struct type
   /// field no. This info is populated by record organizer.
@@ -106,7 +106,7 @@ public:
   void DecodeArgumentTypes(const FunctionTypeProto &FTP, 
                            std::vector<const llvm::Type*> &ArgTys);
 
-  const RecordLayoutInfo *getRecordLayoutInfo(const llvm::Type*) const;
+  const CGRecordLayout *getCGRecordLayout(const llvm::Type*) const;
   
   /// getLLVMFieldNo - Return llvm::StructType element number
   /// that corresponds to the field FD.

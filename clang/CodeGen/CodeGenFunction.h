@@ -73,7 +73,7 @@ namespace clang {
 namespace CodeGen {
   class CodeGenModule;
   class CodeGenTypes;
-  class RecordLayoutInfo;  
+  class CGRecordLayout;  
 
 /// RValue - This trivial value class is used to represent the result of an
 /// expression that is evaluated.  It can be one of three things: either a
@@ -298,8 +298,8 @@ public:
   /// then reuse it.
   void StartBlock(const char *N);
 
-  /// getRecordLayoutInfo - Return record layout info.
-  const RecordLayoutInfo *getRecordLayoutInfo(CodeGenTypes &CGT, QualType RTy);
+  /// getCGRecordLayout - Return record layout info.
+  const CGRecordLayout *getCGRecordLayout(CodeGenTypes &CGT, QualType RTy);
   //===--------------------------------------------------------------------===//
   //                            Declaration Emission
   //===--------------------------------------------------------------------===//

@@ -42,10 +42,9 @@ class ASTContext {
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   llvm::FoldingSet<ObjcQualifiedInterfaceType> ObjcQualifiedInterfaceTypes;
-  
-  /// RecordLayoutInfo - A cache mapping from RecordDecls to RecordLayoutInfo.
+  /// ASTRecordLayouts - A cache mapping from RecordDecls to ASTRecordLayouts.
   ///  This is lazily created.  This is intentionally not serialized.
-  llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
+  llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*> ASTRecordLayouts;
     
   /// BuiltinVaListType - built-in va list type.
   /// This is initially null and set by Sema::LazilyCreateBuiltin when
@@ -241,10 +240,10 @@ public:
     return getTypeInfo(T, L).second;
   }
   
-  /// getRecordLayout - Get or compute information about the layout of the
+  /// getASTRecordLayout - Get or compute information about the layout of the
   /// specified record (struct/union/class), which indicates its size and field
   /// position information.
-  const RecordLayout &getRecordLayout(const RecordDecl *D, SourceLocation L);
+  const ASTRecordLayout &getASTRecordLayout(const RecordDecl *D, SourceLocation L);
   
   //===--------------------------------------------------------------------===//
   //                            Type Operators

@@ -126,14 +126,14 @@ void CodeGenFunction::StartBlock(const char *N) {
     BB->setName(N);
 }
 
-/// getRecordLayoutInfo - Return record layout info.
-const RecordLayoutInfo *CodeGenFunction::getRecordLayoutInfo(CodeGenTypes &CGT,
-                                                       QualType RTy) {
+/// getCGRecordLayout - Return record layout info.
+const CGRecordLayout *CodeGenFunction::getCGRecordLayout(CodeGenTypes &CGT,
+                                                         QualType RTy) {
   assert (isa<RecordType>(RTy) 
           && "Unexpected type. RecordType expected here.");
 
   const llvm::Type *Ty = ConvertType(RTy);
   assert (Ty && "Unable to find llvm::Type");
   
-  return CGT.getRecordLayoutInfo(Ty);
+  return CGT.getCGRecordLayout(Ty);
 }

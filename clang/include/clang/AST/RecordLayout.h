@@ -20,17 +20,17 @@ namespace clang {
   class ASTContext;
   class RecordDecl;
 
-/// RecordLayout - This class contains layout information for one RecordDecl,
+/// ASTRecordLayout - This class contains layout information for one RecordDecl,
 /// which is a struct/union/class.  The decl represented must be a definition,
 /// not a forward declaration.  These objects are managed by ASTContext.
-class RecordLayout {
+class ASTRecordLayout {
   uint64_t Size;        // Size of record in bits.
   unsigned Alignment;   // Alignment of record in bits.
   uint64_t *FieldOffsets;
   friend class ASTContext;
   
-  RecordLayout() {}
-  ~RecordLayout() {
+  ASTRecordLayout() {}
+  ~ASTRecordLayout() {
     delete [] FieldOffsets;
   }
   
@@ -39,8 +39,8 @@ class RecordLayout {
     FieldOffsets = fieldOffsets;
   }
   
-  RecordLayout(const RecordLayout&);   // DO NOT IMPLEMENT
-  void operator=(const RecordLayout&); // DO NOT IMPLEMENT
+  ASTRecordLayout(const ASTRecordLayout&);   // DO NOT IMPLEMENT
+  void operator=(const ASTRecordLayout&); // DO NOT IMPLEMENT
 public:
   
   unsigned getAlignment() const { return Alignment; }

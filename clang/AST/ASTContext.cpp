@@ -246,7 +246,7 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
   case Type::Tagged:
     TagType *TT = cast<TagType>(T);
     if (RecordType *RT = dyn_cast<RecordType>(TT)) {
-      const RecordLayout &Layout = getRecordLayout(RT->getDecl(), L);
+      const ASTRecordLayout &Layout = getASTRecordLayout(RT->getDecl(), L);
       Size = Layout.getSize();
       Align = Layout.getAlignment();
     } else if (EnumDecl *ED = dyn_cast<EnumDecl>(TT->getDecl())) {
@@ -261,20 +261,20 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
   return std::make_pair(Size, Align);
 }
 
-/// getRecordLayout - Get or compute information about the layout of the
+/// getASTRecordLayout - Get or compute information about the layout of the
 /// specified record (struct/union/class), which indicates its size and field
 /// position information.
-const RecordLayout &ASTContext::getRecordLayout(const RecordDecl *D,
-                                                SourceLocation L) {
+const ASTRecordLayout &ASTContext::getASTRecordLayout(const RecordDecl *D,
+                                                      SourceLocation L) {
   assert(D->isDefinition() && "Cannot get layout of forward declarations!");
   
   // Look up this layout, if already laid out, return what we have.
-  const RecordLayout *&Entry = RecordLayoutInfo[D];
+  const ASTRecordLayout *&Entry = ASTRecordLayouts[D];
   if (Entry) return *Entry;
   
-  // Allocate and assign into RecordLayoutInfo here.  The "Entry" reference can
-  // be invalidated (dangle) if the RecordLayoutInfo hashtable is inserted into.
-  RecordLayout *NewEntry = new RecordLayout();
+  // Allocate and assign into ASTRecordLayouts here.  The "Entry" reference can
+  // be invalidated (dangle) if the ASTRecordLayouts hashtable is inserted into.
+  ASTRecordLayout *NewEntry = new ASTRecordLayout();
   Entry = NewEntry;
   
   uint64_t *FieldOffsets = new uint64_t[D->getNumMembers()];

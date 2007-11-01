@@ -22,7 +22,7 @@ using namespace clang;
 using namespace CodeGen;
 
 namespace {
-  /// RecordOrganizer - This helper class, used by RecordLayoutInfo, layouts 
+  /// RecordOrganizer - This helper class, used by CGRecordLayout, layouts 
   /// structs and unions. It manages transient information used during layout.
   /// FIXME : At the moment assume 
   ///    - one to one mapping between AST FieldDecls and 
@@ -49,7 +49,7 @@ namespace {
     /// layoutStructFields - Do the actual work and lay out all fields. Create
     /// corresponding llvm struct type.  This should be invoked only after
     /// all fields are added.
-    void layoutStructFields(const RecordLayout &RL);
+    void layoutStructFields(const ASTRecordLayout &RL);
 
     /// layoutUnionFields - Do the actual work and lay out all fields. Create
     /// corresponding llvm struct type.  This should be invoked only after
@@ -78,11 +78,11 @@ CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
 }
 
 CodeGenTypes::~CodeGenTypes() {
-  for(llvm::DenseMap<const llvm::Type *, RecordLayoutInfo *>::iterator
-        I = RecordLayouts.begin(), E = RecordLayouts.end();
+  for(llvm::DenseMap<const llvm::Type *, CGRecordLayout *>::iterator
+        I = CGRecordLayouts.begin(), E = CGRecordLayouts.end();
       I != E; ++I)
     delete I->second;
-  RecordLayouts.clear();
+  CGRecordLayouts.clear();
 }
 
 /// ConvertType - Convert the specified type to its LLVM form.
@@ -258,13 +258,13 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       RecordOrganizer RO(*this);
       for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
         RO.addField(RD->getMember(i));
-      const RecordLayout &RL = Context.getRecordLayout(RD, SourceLocation());
+      const ASTRecordLayout &RL = Context.getASTRecordLayout(RD, SourceLocation());
       RO.layoutStructFields(RL);
 
       // Get llvm::StructType.
-      RecordLayoutInfo *RLI = new RecordLayoutInfo(RO.getLLVMType());
+      CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType());
       ResultType = RLI->getLLVMType();
-      RecordLayouts[ResultType] = RLI;
+      CGRecordLayouts[ResultType] = RLI;
 
       // Refine any OpaqueType associated with this RecordDecl.
       OpaqueTy->refineAbstractTypeTo(ResultType);
@@ -285,9 +285,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
         RO.layoutUnionFields();
 
         // Get llvm::StructType.
-        RecordLayoutInfo *RLI = new RecordLayoutInfo(RO.getLLVMType());
+        CGRecordLayout *RLI = new CGRecordLayout(RO.getLLVMType());
         ResultType = RLI->getLLVMType();
-        RecordLayouts[ResultType] = RLI;
+        CGRecordLayouts[ResultType] = RLI;
       } else {       
         std::vector<const llvm::Type*> Fields;
         ResultType = llvm::StructType::get(Fields);
@@ -339,12 +339,12 @@ void CodeGenTypes::addFieldInfo(const FieldDecl *FD, unsigned No) {
   FieldInfo[FD] = No;
 }
 
-/// getRecordLayoutInfo - Return record layout info for the given llvm::Type.
-const RecordLayoutInfo *
-CodeGenTypes::getRecordLayoutInfo(const llvm::Type* Ty) const {
-  llvm::DenseMap<const llvm::Type*, RecordLayoutInfo *>::iterator I
-    = RecordLayouts.find(Ty);
-  assert (I != RecordLayouts.end() 
+/// getCGRecordLayout - Return record layout info for the given llvm::Type.
+const CGRecordLayout *
+CodeGenTypes::getCGRecordLayout(const llvm::Type* Ty) const {
+  llvm::DenseMap<const llvm::Type*, CGRecordLayout *>::iterator I
+    = CGRecordLayouts.find(Ty);
+  assert (I != CGRecordLayouts.end() 
           && "Unable to find record layout information for type");
   return I->second;
 }
@@ -364,7 +364,7 @@ void RecordOrganizer::addField(const FieldDecl *FD) {
 ///    - Ignore bit fields
 ///    - Ignore field aligments
 ///    - Ignore packed structs
-void RecordOrganizer::layoutStructFields(const RecordLayout &RL) {
+void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   // FIXME : Use SmallVector
   Cursor = 0;
   FieldNo = 0;
