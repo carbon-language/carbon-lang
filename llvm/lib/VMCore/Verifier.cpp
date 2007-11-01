@@ -69,22 +69,34 @@ using namespace llvm;
 namespace {  // Anonymous namespace for class
   struct VISIBILITY_HIDDEN PreVerifier : public FunctionPass {
     static char ID; // Pass ID, replacement for typeid
-  	
+
     PreVerifier() : FunctionPass((intptr_t)&ID) { }
-  	
+
+    // Check that the prerequisites for successful DominatorTree construction
+    // are satisfied.
     bool runOnFunction(Function &F) {
-      for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-        assert(I->back().isTerminator()
-               && "Block does not end with a terminator?");
-      
-        return false;
+      bool Broken = false;
+
+      for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
+        if (I->empty() || !I->back().isTerminator()) {
+          cerr << "Basic Block does not have terminator!\n";
+          WriteAsOperand(*cerr, I, true);
+          cerr << "\n";
+          Broken = true;
+        }
+      }
+
+      if (Broken)
+        abort();
+
+      return false;
     }
   };
-  
+
   char PreVerifier::ID = 0;
   RegisterPass<PreVerifier> PreVer("preverify", "Preliminary module verification");
   const PassInfo *PreVerifyID = PreVer.getPassInfo();
-  
+
   struct VISIBILITY_HIDDEN
      Verifier : public FunctionPass, InstVisitor<Verifier> {
     static char ID; // Pass ID, replacement for typeid
