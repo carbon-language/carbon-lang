@@ -247,10 +247,11 @@ GetAddrOfConstantCFString(const std::string &str) {
   // The struct.
   Ty = getTypes().ConvertType(getContext().getCFConstantStringType());
   C = llvm::ConstantStruct::get(cast<llvm::StructType>(Ty), Fields);
-  C = new llvm::GlobalVariable(C->getType(), true, 
-                               llvm::GlobalVariable::InternalLinkage, 
-                               C, "", &getModule());
-  
-  Entry.setValue(C);
-  return C;
+  llvm::GlobalVariable *GV = 
+    new llvm::GlobalVariable(C->getType(), true, 
+                             llvm::GlobalVariable::InternalLinkage, 
+                             C, "", &getModule());
+  GV->setSection("__DATA,__cfstring");
+  Entry.setValue(GV);
+  return GV;
 }
