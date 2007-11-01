@@ -42,6 +42,9 @@ class ASTContext {
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
   llvm::FoldingSet<ObjcQualifiedInterfaceType> ObjcQualifiedInterfaceTypes;
+  
+  /// RecordLayoutInfo - A cache mapping from RecordDecls to RecordLayoutInfo.
+  ///  This is lazily created.  This is intentionally not serialized.
   llvm::DenseMap<const RecordDecl*, const RecordLayout*> RecordLayoutInfo;
     
   /// BuiltinVaListType - built-in va list type.
@@ -73,6 +76,10 @@ public:
   TargetInfo &Target;
   IdentifierTable &Idents;
   SelectorTable &Selectors;
+  
+  /// This is intentionally not serialized.  It is populated by the
+  /// ASTContext ctor, and there are no external pointers/references to
+  /// internal variables of BuiltinInfo.
   Builtin::Context BuiltinInfo;
 
   // Builtin Types.

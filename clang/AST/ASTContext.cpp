@@ -1419,9 +1419,17 @@ void ASTContext::Emit(llvm::Serializer& S) const {
   EmitSet(VectorTypes,S);
   EmitSet(FunctionTypeNoProtos,S);
   EmitSet(FunctionTypeProtos,S);
-  
   // FIXME: EmitSet(ObjcQualifiedInterfaceTypes,S);
-  // FIXME: RecourdLayoutInfo
+  
+  S.Emit(BuiltinVaListType);
+  S.Emit(ObjcIdType);
+  S.EmitPtr(IdStructType);
+  S.Emit(ObjcProtoType);
+  S.EmitPtr(ProtoStructType);
+  S.Emit(ObjcClassType);
+  S.EmitPtr(ClassStructType);
+  S.Emit(ObjcConstantStringType);
+  // FIXME: S.EmitOwnedPtr(CFConstantStringTypeDecl);
 }
 
 ASTContext* ASTContext::Materialize(llvm::Deserializer& D) {
@@ -1466,6 +1474,17 @@ ASTContext* ASTContext::Materialize(llvm::Deserializer& D) {
   ReadSet(A->VectorTypes, A->Types, D);
   ReadSet(A->FunctionTypeNoProtos, A->Types, D);
   ReadSet(A->FunctionTypeProtos, A->Types, D);
+  // ReadSet(A->ObjcQualifiedInterfaceTypes,D);
+  
+  D.Read(A->BuiltinVaListType);
+  D.Read(A->ObjcIdType);
+  D.ReadPtr(A->IdStructType);
+  D.Read(A->ObjcProtoType);
+  D.ReadPtr(A->ProtoStructType);
+  D.Read(A->ObjcClassType);
+  D.ReadPtr(A->ClassStructType);
+  D.Read(A->ObjcConstantStringType);
+  // FIXME: A->CFConstantStringTypeDecl = D.ReadOwnedPtr<RecordDecl>();
   
   return A;
 }
