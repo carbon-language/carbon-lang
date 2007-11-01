@@ -648,3 +648,14 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                                     SourceLocation RParenLoc) {
   return new AsmStmt(AsmLoc, RParenLoc);
 }
+
+Action::StmtResult
+Sema::ActOnObjcAtCatchStmt(SourceLocation AtLoc, 
+                           SourceLocation RParen, StmtTy *Parm, 
+                           StmtTy *Body, StmtTy *CatchList) {
+  ObjcAtCatchStmt *CS = new ObjcAtCatchStmt(AtLoc, RParen, 
+    static_cast<Stmt*>(Parm), static_cast<Stmt*>(Body), 
+    static_cast<Stmt*>(CatchList));
+  return CatchList ? CatchList : CS;
+}
+

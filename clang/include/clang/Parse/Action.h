@@ -288,6 +288,13 @@ public:
     return 0;
   }
   
+  // Objective-c statements
+  virtual StmtResult ActOnObjcAtCatchStmt(SourceLocation AtLoc, 
+                                          SourceLocation RParen, StmtTy *Parm, 
+                                          StmtTy *Body, StmtTy *CatchList) {
+    return 0;
+  }
+  
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
   //===--------------------------------------------------------------------===//

@@ -194,8 +194,10 @@ Stmt::child_iterator AsmStmt::child_begin() { return child_iterator(); }
 Stmt::child_iterator AsmStmt::child_end() { return child_iterator(); }
 
 // ObjcAtCatchStmt
-Stmt::child_iterator ObjcAtCatchStmt::child_begin() { return &AtCatchStmt; }
-Stmt::child_iterator ObjcAtCatchStmt::child_end() { return &AtCatchStmt+1; }
+Stmt::child_iterator ObjcAtCatchStmt::child_begin() { return &SubExprs[0]; }
+Stmt::child_iterator ObjcAtCatchStmt::child_end() { 
+  return &SubExprs[0]+END_EXPR; 
+}
 
 // ObjcAtFinallyStmt
 Stmt::child_iterator ObjcAtFinallyStmt::child_begin() { return &AtFinallyStmt; }
@@ -203,5 +205,7 @@ Stmt::child_iterator ObjcAtFinallyStmt::child_end() { return &AtFinallyStmt+1; }
 
 // ObjcAtTryStmt
 Stmt::child_iterator ObjcAtTryStmt::child_begin() { return &SubStmts[0]; }
-Stmt::child_iterator ObjcAtTryStmt::child_end()   { return &SubStmts[0]+1; }
+Stmt::child_iterator ObjcAtTryStmt::child_end()   { 
+  return &SubStmts[0]+END_TRY; 
+}
 

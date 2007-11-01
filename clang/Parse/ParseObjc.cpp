@@ -13,6 +13,7 @@
 
 #include "clang/Parse/Parser.h"
 #include "clang/Parse/DeclSpec.h"
+#include "clang/Parse/Scope.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 using namespace clang;
@@ -1053,28 +1054,38 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     Diag (Tok, diag::err_expected_lbrace);
     return true;
   }
+  StmtResult CatchStmts;
   StmtResult TryBody = ParseCompoundStatementBody();
   while (Tok.is(tok::at)) {
-    ConsumeToken();
+    SourceLocation AtCatchLoc = ConsumeToken();
     if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_catch) {
-      SourceLocation catchLoc = ConsumeToken(); // consume catch
+      StmtTy *FirstPart = 0;
+      ConsumeToken(); // consume catch
       if (Tok.is(tok::l_paren)) {
         ConsumeParen();
+        EnterScope(Scope::DeclScope);
         if (Tok.isNot(tok::ellipsis)) {
           DeclSpec DS;
           ParseDeclarationSpecifiers(DS);
-          // Parse the parameter-declaration. 
-          // FIXME: BlockContext may not be the right context!
-          Declarator ParmDecl(DS, Declarator::BlockContext);
-          ParseDeclarator(ParmDecl);
+          // FIXME: Is BlockContext right?
+          Declarator DeclaratorInfo(DS, Declarator::BlockContext);
+          ParseDeclarator(DeclaratorInfo);
+          StmtResult stmtResult = Actions.ActOnDeclarator(CurScope, 
+                                                          DeclaratorInfo, 0);
+          FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
         }
         else
           ConsumeToken(); // consume '...'
-        ConsumeParen();
+        SourceLocation RParenLoc = ConsumeParen();
         StmtResult CatchBody = ParseCompoundStatementBody();
+        if (CatchBody.isInvalid)
+          CatchBody = Actions.ActOnNullStmt(Tok.getLocation());
+        CatchStmts = Actions.ActOnObjcAtCatchStmt(AtCatchLoc, RParenLoc, 
+          FirstPart, CatchBody.Val, CatchStmts.Val);
+        ExitScope();
       }
       else {
-        Diag(catchLoc, diag::err_expected_lparen_after, "@catch clause");
+        Diag(AtCatchLoc, diag::err_expected_lparen_after, "@catch clause");
         return true;
       }
       catch_or_finally_seen = true;

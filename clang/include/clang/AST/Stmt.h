@@ -663,19 +663,31 @@ class ObjcAtCatchStmt : public Stmt {
 private:
   // Points to next @catch statement, or null
   ObjcAtCatchStmt *NextAtCatchStmt;
-  ScopedDecl *AtCatchDeclarator;
-  Stmt *AtCatchStmt;
-  
+  enum { SELECTOR, BODY, END_EXPR };
+  Stmt *SubExprs[END_EXPR];
   SourceLocation AtCatchLoc, RParenLoc;
+  
 public:
   ObjcAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
-                  ScopedDecl *atCatchDeclarator, Stmt *atCatchStmt)
-  : Stmt(ObjcAtCatchStmtClass), NextAtCatchStmt(0), 
-    AtCatchDeclarator(atCatchDeclarator), AtCatchStmt(atCatchStmt), 
-    AtCatchLoc(atCatchLoc), RParenLoc(rparenloc) {}
+                  Stmt *catchVarStmtDecl, Stmt *atCatchStmt, Stmt *atCatchList)
+  : Stmt(ObjcAtCatchStmtClass),
+    AtCatchLoc(atCatchLoc), RParenLoc(rparenloc) {
+      SubExprs[SELECTOR] = catchVarStmtDecl;
+      SubExprs[BODY] = atCatchStmt;
+      SubExprs[END_EXPR] = NULL;
+      if (!atCatchList)
+        NextAtCatchStmt = NULL;
+      else {
+        ObjcAtCatchStmt *AtCatchList = 
+          static_cast<ObjcAtCatchStmt*>(atCatchList);
+        while (AtCatchList->NextAtCatchStmt)
+          AtCatchList = AtCatchList->NextAtCatchStmt;
+        AtCatchList->NextAtCatchStmt = this;
+      }
+    }
   
   virtual SourceRange getSourceRange() const { 
-    return SourceRange(AtCatchLoc, AtCatchStmt->getLocEnd()); 
+    return SourceRange(AtCatchLoc, SubExprs[BODY]->getLocEnd()); 
   }
    
   static bool classof(const Stmt *T) {

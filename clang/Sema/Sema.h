@@ -339,6 +339,10 @@ public:
   virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc, 
                                   SourceLocation RParenLoc);
   
+  virtual StmtResult ActOnObjcAtCatchStmt(SourceLocation AtLoc, 
+                                          SourceLocation RParen, StmtTy *Parm, 
+                                          StmtTy *Body, StmtTy *CatchList);
+  
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
