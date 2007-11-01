@@ -25,7 +25,7 @@ Deserializer::~Deserializer() {
  
 #ifdef NDEBUG
   for (MapTy::iterator I=BPatchMap.begin(), E=BPatchMap.end(); I!=E; ++I)
-    assert (I->second.hasFinalPtr() &&
+    assert (I->first.hasFinalPtr() &&
             "Some pointers were not backpatched.");
 #endif
 }
@@ -99,9 +99,11 @@ void Deserializer::ReadCStr(std::vector<char>& buff, bool isNullTerm) {
 }
 
 void Deserializer::RegisterPtr(unsigned PtrId, const void* Ptr) {
-  BPatchEntry& E = BPatchMap[PtrId];
-  assert (!E.hasFinalPtr() && "Pointer already registered.");
-  E.setFinalPtr(FreeList,Ptr);
+  MapTy::value_type& E = BPatchMap.FindAndConstruct(BPKey(PtrId));
+  
+  assert (!HasFinalPtr(E) && "Pointer already registered.");
+
+  SetPtr(E,Ptr);
 }
 
 void Deserializer::ReadUIntPtr(uintptr_t& PtrRef) {
@@ -111,11 +113,11 @@ void Deserializer::ReadUIntPtr(uintptr_t& PtrRef) {
     PtrRef = 0;
     return;
   }  
+
+  MapTy::value_type& E = BPatchMap.FindAndConstruct(BPKey(PtrId));
   
-  BPatchEntry& E = BPatchMap[PtrId];
-  
-  if (E.hasFinalPtr())
-    PtrRef = E.getFinalPtr();
+  if (HasFinalPtr(E))
+    PtrRef = GetFinalPtr(E);
   else {
     // Register backpatch.  Check the freelist for a BPNode.
     BPNode* N;
@@ -127,8 +129,8 @@ void Deserializer::ReadUIntPtr(uintptr_t& PtrRef) {
     else // No available BPNode.  Allocate one.
       N = (BPNode*) Allocator.Allocate<BPNode>();
     
-    new (N) BPNode(E.getBPNode(),PtrRef);
-    E.setBPNode(N);
+    new (N) BPNode(GetBPNode(E),PtrRef);
+    SetBPNode(E,N);
   }
 }
 
@@ -137,32 +139,28 @@ uintptr_t Deserializer::ReadInternalRefPtr() {
   
   assert (PtrId != 0 && "References cannot refer the NULL address.");
 
-  BPatchEntry& E = BPatchMap[PtrId];
+  MapTy::value_type& E = BPatchMap.FindAndConstruct(BPKey(PtrId));
   
-  assert (E.hasFinalPtr() &&
+  assert (!HasFinalPtr(E) &&
           "Cannot backpatch references.  Object must be already deserialized.");
   
-  return E.getFinalPtr();
+  return GetFinalPtr(E);
 }
 
-void Deserializer::BPatchEntry::setFinalPtr(BPNode*& FreeList, const void* P) {
-  assert (!hasFinalPtr());
-  
-  // Perform backpatching.
-  
+void Deserializer::BPEntry::SetPtr(BPNode*& FreeList, void* P) {
   BPNode* Last = NULL;
   
-  for (BPNode* N = getBPNode() ; N != NULL; N = N->Next) {
+  for (BPNode* N = Head; N != NULL; N=N->Next) {
     Last = N;
     N->PtrRef |= reinterpret_cast<uintptr_t>(P);
   }
   
   if (Last) {
     Last->Next = FreeList;
-    FreeList = getBPNode();    
+    FreeList = Head;
   }
   
-  Ptr = reinterpret_cast<uintptr_t>(P);
+  Ptr = const_cast<void*>(P);
 }
 
 

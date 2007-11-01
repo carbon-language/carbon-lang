@@ -30,54 +30,49 @@ class Deserializer {
   //===----------------------------------------------------------===//
   // Internal type definitions.
   //===----------------------------------------------------------===//
-
-  struct PtrIdInfo {
-    static inline unsigned getEmptyKey() { return ~((unsigned) 0x0); }
-    static inline unsigned getTombstoneKey() { return getEmptyKey()-1; }
-    static inline unsigned getHashValue(unsigned X) { return X; }
-    static inline bool isEqual(unsigned X, unsigned Y) { return X == Y; }
-    static inline bool isPod() { return true; }
-  };
   
   struct BPNode {
     BPNode* Next;
     uintptr_t& PtrRef;
+    
     BPNode(BPNode* n, uintptr_t& pref) 
       : Next(n), PtrRef(pref) {
         PtrRef = 0;
       }
   };
   
-  class BPatchEntry {
-    uintptr_t Ptr;
-  public:
+  struct BPEntry { 
+    union { BPNode* Head; void* Ptr; };
     
-    BPatchEntry() : Ptr(0x1) {}
-      
-    BPatchEntry(void* P) : Ptr(reinterpret_cast<uintptr_t>(P)) {}
-
-    bool hasFinalPtr() const { return Ptr & 0x1 ? false : true; }
-    void setFinalPtr(BPNode*& FreeList, const void* P);
-
-    BPNode* getBPNode() const {
-      assert (!hasFinalPtr());
-      return reinterpret_cast<BPNode*>(Ptr & ~0x1);
-    }
+    BPEntry() : Head(NULL) {}
     
-    void setBPNode(BPNode* N) {
-      assert (!hasFinalPtr());
-      Ptr = reinterpret_cast<uintptr_t>(N) | 0x1;
-    }
-    
-    uintptr_t getFinalPtr() const {
-      assert (!(Ptr & 0x1) && "Backpatch pointer not yet deserialized.");
-      return Ptr;
-    }    
-
     static inline bool isPod() { return true; }
-  };
+    
+    void SetPtr(BPNode*& FreeList, void* P);    
+  };  
+  
+  class BPKey {
+    unsigned Raw;
+    
+  public:
+    BPKey(unsigned PtrId) : Raw(PtrId << 1) { assert (PtrId > 0); }
+    
+    void MarkFinal() { Raw |= 0x1; }
+    bool hasFinalPtr() const { return Raw & 0x1 ? true : false; }
+    unsigned getID() const { return Raw >> 1; }
+    
+    static inline BPKey getEmptyKey() { return 0; }
+    static inline BPKey getTombstoneKey() { return 1; }
+    static inline unsigned getHashValue(const BPKey& K) { return K.Raw & ~0x1; }
 
-  typedef llvm::DenseMap<unsigned,BPatchEntry,PtrIdInfo,BPatchEntry> MapTy;
+    static bool isEqual(const BPKey& K1, const BPKey& K2) {
+      return (K1.Raw ^ K2.Raw) & ~0x1 ? false : true;
+    }
+    
+    static bool isPod() { return true; }
+  };
+  
+  typedef llvm::DenseMap<BPKey,BPEntry,BPKey,BPEntry> MapTy;
 
   //===----------------------------------------------------------===//
   // Internal data members.
@@ -162,6 +157,27 @@ private:
   void ReadRecord();  
   bool inRecord();
   uintptr_t ReadInternalRefPtr();
+  
+  static inline bool HasFinalPtr(MapTy::value_type& V) {
+    return V.first.hasFinalPtr();
+  }
+  
+  static inline uintptr_t GetFinalPtr(MapTy::value_type& V) {
+    return reinterpret_cast<uintptr_t>(V.second.Ptr);
+  }
+  
+  static inline BPNode* GetBPNode(MapTy::value_type& V) {
+    return V.second.Head;
+  }
+    
+  static inline void SetBPNode(MapTy::value_type& V, BPNode* N) {
+    V.second.Head = N;
+  }
+  
+  void SetPtr(MapTy::value_type& V, const void* P) {
+    V.first.MarkFinal();
+    V.second.SetPtr(FreeList,const_cast<void*>(P));
+  }
 };
     
 } // end namespace llvm
