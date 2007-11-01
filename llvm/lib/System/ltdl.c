@@ -865,13 +865,13 @@ struct lt_dlhandle_struct {
 
 #define LT_DLSTRERROR(name)	lt_dlerror_strings[LT_CONC(LT_ERROR_,name)]
 
-static	const char	objdir[]		= LTDL_OBJDIR;
-static	const char	archive_ext[]		= LTDL_ARCHIVE_EXT;
+static	const char	*objdir 		= LTDL_OBJDIR;
+static	const char	*archive_ext		= LTDL_ARCHIVE_EXT;
 #ifdef	LTDL_SHLIB_EXT
-static	const char	shlib_ext[]		= LTDL_SHLIB_EXT;
+static	const char	*shlib_ext		= LTDL_SHLIB_EXT;
 #endif
 #ifdef	LTDL_SYSSEARCHPATH
-static	const char	sys_search_path[]	= LTDL_SYSSEARCHPATH;
+static	const char	*sys_search_path	= LTDL_SYSSEARCHPATH;
 #endif
 
 
