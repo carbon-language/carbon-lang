@@ -65,8 +65,9 @@ namespace {
     void RewriteProtocolDecl(ObjcProtocolDecl *Dcl);
     void RewriteMethods(int nMethods, ObjcMethodDecl **Methods);
     void RewriteFunctionDecl(FunctionDecl *FD);
-    bool functionReferencesAnyObjcQualifiedInterfaceTypes(
-        const FunctionTypeProto *proto);
+    void RewriteObjcQualifiedInterfaceTypes(
+        const FunctionTypeProto *proto, FunctionDecl *FD);
+    bool needToScanForQualifiers(QualType T);
     
     // Expression Rewriting.
     Stmt *RewriteFunctionBody(Stmt *S);
@@ -422,31 +423,76 @@ CallExpr *RewriteTest::SynthesizeCallToFunctionDecl(
   return new CallExpr(ICE, args, nargs, FT->getResultType(), SourceLocation());
 }
 
-bool RewriteTest::functionReferencesAnyObjcQualifiedInterfaceTypes(
-  const FunctionTypeProto *proto) {
-  QualType resultType = proto->getResultType();
-  
-  if (resultType == Context->getObjcIdType()) {
-    // FIXME: we don't currently represent "id <Protocol>" in the type system.
-    // Implement a heuristic here (until we do).
-  } else if (const PointerType *pType = resultType->getAsPointerType()) {
+static bool scanForProtocolRefs(const char *startBuf, const char *endBuf,
+                                const char *&startRef, const char *&endRef) {
+  while (startBuf < endBuf) {
+    if (*startBuf == '<')
+      startRef = startBuf; // mark the start.
+    if (*startBuf == '>') {
+      assert((startRef && *startRef == '<') && "rewrite scanning error");
+      endRef = startBuf; // mark the end.
+      return true;
+    }
+    startBuf++;
+  }
+  return false;
+}
+
+bool RewriteTest::needToScanForQualifiers(QualType T) {
+  // FIXME: we don't currently represent "id <Protocol>" in the type system.
+  if (T == Context->getObjcIdType())
+    return true;
+    
+  if (const PointerType *pType = T->getAsPointerType()) {
     Type *pointeeType = pType->getPointeeType().getTypePtr();
     if (isa<ObjcQualifiedInterfaceType>(pointeeType))
       return true; // we have "Class <Protocol> *".
   }
-  // Now check arguments.
-  for (unsigned i = 0; i < proto->getNumArgs(); i++) {
-    QualType argType = proto->getArgType(i);
-    if (argType == Context->getObjcIdType()) {
-      // FIXME: we don't currently represent "id <Protocol>" in the type system.
-      // Implement a heuristic here (until we do).
-    } else if (const PointerType *pType = argType->getAsPointerType()) {
-      Type *pointeeType = pType->getPointeeType().getTypePtr();
-      if (isa<ObjcQualifiedInterfaceType>(pointeeType))
-        return true;
+  return false;
+}
+
+void RewriteTest::RewriteObjcQualifiedInterfaceTypes(
+  const FunctionTypeProto *proto, FunctionDecl *FD) {
+  
+  if (needToScanForQualifiers(proto->getResultType())) {
+    // Since types are unique, we need to scan the buffer.
+    SourceLocation Loc = FD->getLocation();
+    
+    const char *endBuf = SM->getCharacterData(Loc);
+    const char *startBuf = endBuf;
+    while (*startBuf != ';')
+      startBuf--; // scan backward (from the decl location) for return type.
+    const char *startRef = 0, *endRef = 0;
+    if (scanForProtocolRefs(startBuf, endBuf, startRef, endRef)) {
+      // Get the locations of the startRef, endRef.
+      SourceLocation LessLoc = Loc.getFileLocWithOffset(startRef-endBuf);
+      SourceLocation GreaterLoc = Loc.getFileLocWithOffset(endRef-endBuf+1);
+      // Comment out the protocol references.
+      Rewrite.ReplaceText(LessLoc, 0, "/*", 2);
+      Rewrite.ReplaceText(GreaterLoc, 0, "*/", 2);
     }
   }
-  return false;
+  // Now check arguments.
+  for (unsigned i = 0; i < proto->getNumArgs(); i++) {
+    if (needToScanForQualifiers(proto->getArgType(i))) {
+      // Since types are unique, we need to scan the buffer.
+      SourceLocation Loc = FD->getLocation();
+      
+      const char *startBuf = SM->getCharacterData(Loc);
+      const char *endBuf = startBuf;
+      while (*endBuf != ';')
+        endBuf++; // scan forward (from the decl location) for argument types.
+      const char *startRef = 0, *endRef = 0;
+      if (scanForProtocolRefs(startBuf, endBuf, startRef, endRef)) {
+        // Get the locations of the startRef, endRef.
+        SourceLocation LessLoc = Loc.getFileLocWithOffset(startRef-startBuf);
+        SourceLocation GreaterLoc = Loc.getFileLocWithOffset(endRef-startBuf+1);
+        // Comment out the protocol references.
+        Rewrite.ReplaceText(LessLoc, 0, "/*", 2);
+        Rewrite.ReplaceText(GreaterLoc, 0, "*/", 2);
+      }
+    } 
+  }
 }
 
 void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
@@ -459,10 +505,8 @@ void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
   // information (id<p>, C<p>*). The protocol references need to be rewritten!
   const FunctionType *funcType = FD->getType()->getAsFunctionType();
   assert(funcType && "missing function type");
-  const FunctionTypeProto *proto = dyn_cast<FunctionTypeProto>(funcType);
-  if (proto && functionReferencesAnyObjcQualifiedInterfaceTypes(proto)) {
-    // FIXME: Rewrite function decl...
-  }
+  if (const FunctionTypeProto *proto = dyn_cast<FunctionTypeProto>(funcType))
+    RewriteObjcQualifiedInterfaceTypes(proto, FD);
 }
 
 // SynthMsgSendFunctionDecl - id objc_msgSend(id self, SEL op, ...);
