@@ -63,14 +63,18 @@ namespace {
     /// from allocas, it is safe to ignore GEP indices, since
     /// either the store will be in the alloca, and thus dead,
     /// or beyond the end of the alloca, and thus undefined.
-    void TranslatePointerBitCasts(Value*& v) {
+    void TranslatePointerBitCasts(Value*& v, bool zeroGepsOnly = false) {
       assert(isa<PointerType>(v->getType()) &&
              "Translating a non-pointer type?");
       while (true) {
         if (BitCastInst* C = dyn_cast<BitCastInst>(v))
           v = C->getOperand(0);
         else if (GetElementPtrInst* G = dyn_cast<GetElementPtrInst>(v))
-          v = G->getOperand(0);
+          if (!zeroGepsOnly || G->hasAllZeroIndices()) {
+            v = G->getOperand(0);
+          } else {
+            break;
+          }
         else
           break;
       }
@@ -95,7 +99,8 @@ FunctionPass *llvm::createDeadStoreEliminationPass() { return new DSE(); }
 
 bool DSE::runOnBasicBlock(BasicBlock &BB) {
   MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-  
+  TargetData &TD = getAnalysis<TargetData>();  
+
   // Record the last-seen store to this pointer
   DenseMap<Value*, StoreInst*> lastStore;
   // Record instructions possibly made dead by deleting a store
@@ -119,6 +124,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     } else
       pointer = cast<FreeInst>(BBI)->getPointerOperand();
       
+    TranslatePointerBitCasts(pointer, true);
     StoreInst*& last = lastStore[pointer];
     bool deletedStore = false;
       
@@ -130,7 +136,9 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
       while (dep != MemoryDependenceAnalysis::None &&
              dep != MemoryDependenceAnalysis::NonLocal &&
              isa<StoreInst>(dep)) {
-        if (dep != last) {
+        if (dep != last ||
+             TD.getTypeSize(last->getOperand(0)->getType()) >
+             TD.getTypeSize(BBI->getOperand(0)->getType())) {
           dep = MD.getDependency(BBI, dep);
           continue;
         }
