@@ -746,7 +746,7 @@ void Interpreter::visitAllocationInst(AllocationInst &I) {
   unsigned NumElements = 
     getOperandValue(I.getOperand(0), SF).IntVal.getZExtValue();
 
-  unsigned TypeSize = (size_t)TD.getTypeSize(Ty);
+  unsigned TypeSize = (size_t)TD.getABITypeSize(Ty);
 
   // Avoid malloc-ing zero bytes, use max()...
   unsigned MemToAlloc = std::max(1U, NumElements * TypeSize);
@@ -806,7 +806,7 @@ GenericValue Interpreter::executeGEPOperation(Value *Ptr, gep_type_iterator I,
         Idx = (int64_t)IdxGV.IntVal.getZExtValue();
       else 
         assert(0 && "Invalid index type for getelementptr");
-      Total += TD.getTypeSize(ST->getElementType())*Idx;
+      Total += TD.getABITypeSize(ST->getElementType())*Idx;
     }
   }
 

@@ -155,26 +155,48 @@ public:
   /// Target pointer size, in bits
   unsigned char getPointerSizeInBits()   const { return 8*PointerMemSize; }
 
-  /// getTypeSize - Return the number of bytes necessary to hold the specified
-  /// type.
-  uint64_t getTypeSize(const Type *Ty) const;
-
-  /// getABITypeSize - Return the number of bytes allocated for the specified
-  /// type when used as an element in a larger object, including alignment
-  /// padding.
-  uint64_t getABITypeSize(const Type *Ty) const {
-    unsigned char Align = getABITypeAlignment(Ty);
-    return (getTypeSize(Ty) + Align - 1)/Align*Align;
-  }
-
   /// getTypeSizeInBits - Return the number of bits necessary to hold the
-  /// specified type.
+  /// specified type.  For example, returns 36 for i36 and 80 for x86_fp80.
   uint64_t getTypeSizeInBits(const Type* Ty) const;
 
-  /// getABITypeSizeInBits - Return the number of bytes allocated for the
-  /// specified type when used as an element in a larger object, including
-  ///  alignment padding.
-  uint64_t getABITypeSizeInBits(const Type* Ty) const;
+  /// getTypeStoreSize - Return the maximum number of bytes that may be
+  /// overwritten by storing the specified type.  For example, returns 5
+  /// for i36 and 10 for x86_fp80.
+  uint64_t getTypeStoreSize(const Type *Ty) const {
+    return (getTypeSizeInBits(Ty)+7)/8;
+  }
+
+  /// getTypeStoreSizeInBits - Return the maximum number of bits that may be
+  /// overwritten by storing the specified type; always a multiple of 8.  For
+  /// example, returns 40 for i36 and 80 for x86_fp80.
+  uint64_t getTypeStoreSizeInBits(const Type *Ty) const {
+    return 8*getTypeStoreSize(Ty);
+  }
+
+  /// getABITypeSize - Return the offset in bytes between successive objects
+  /// of the specified type, including alignment padding.  This is the amount
+  /// that alloca reserves for this type.  For example, returns 12 or 16 for
+  /// x86_fp80, depending on alignment.
+  uint64_t getABITypeSize(const Type* Ty) const {
+    unsigned char Align = getABITypeAlignment(Ty);
+    return (getTypeStoreSize(Ty) + Align - 1)/Align*Align;
+  }
+
+  /// getABITypeSizeInBits - Return the offset in bits between successive
+  /// objects of the specified type, including alignment padding; always a
+  /// multiple of 8.  This is the amount that alloca reserves for this type.
+  /// For example, returns 96 or 128 for x86_fp80, depending on alignment.
+  uint64_t getABITypeSizeInBits(const Type* Ty) const {
+    return 8*getABITypeSize(Ty);
+  }
+
+  /// getTypeSize - Obsolete method, do not use.  Replaced by getTypeStoreSize
+  /// and getABITypeSize.  For alias analysis of loads and stores you probably
+  /// want getTypeStoreSize.  Use getABITypeSize for GEP computations and alloca
+  /// sizing.
+  uint64_t getTypeSize(const Type *Ty) const {
+    return getTypeStoreSize(Ty);
+  }
 
   /// getABITypeAlignment - Return the minimum ABI-required alignment for the
   /// specified type.
@@ -238,6 +260,10 @@ public:
     return StructSize;
   }
   
+  uint64_t getSizeInBits() const {
+    return 8*StructSize;
+  }
+
   unsigned getAlignment() const {
     return StructAlignment;
   }

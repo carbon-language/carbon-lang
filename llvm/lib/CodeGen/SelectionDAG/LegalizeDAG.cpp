@@ -3524,7 +3524,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           MVT::ValueType slotVT = 
                   (Node->getOpcode() == ISD::FP_EXTEND) ? oldVT : newVT;
           const Type *Ty = MVT::getTypeForValueType(slotVT);
-          uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
+          uint64_t TySize = TLI.getTargetData()->getABITypeSize(Ty);
           unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
           MachineFunction &MF = DAG.getMachineFunction();
           int SSFI =
@@ -3618,7 +3618,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // slots and always reusing the same one.  We currently always create
         // new ones, as reuse may inhibit scheduling.
         const Type *Ty = MVT::getTypeForValueType(ExtraVT);
-        uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
+        uint64_t TySize = TLI.getTargetData()->getABITypeSize(Ty);
         unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
         MachineFunction &MF = DAG.getMachineFunction();
         int SSFI =

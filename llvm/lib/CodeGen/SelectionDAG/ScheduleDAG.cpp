@@ -482,7 +482,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
       Align = TM.getTargetData()->getPreferredTypeAlignmentShift(Type);
       if (Align == 0) {
         // Alignment of vector types.  FIXME!
-        Align = TM.getTargetData()->getTypeSize(Type);
+        Align = TM.getTargetData()->getABITypeSize(Type);
         Align = Log2_64(Align);
       }
     }

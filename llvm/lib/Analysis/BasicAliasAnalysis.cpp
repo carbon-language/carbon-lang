@@ -364,7 +364,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
         // global/alloca/malloc, it cannot be accessing the global (it's
         // undefined to load or store bytes before or after an object).
         const Type *ElTy = cast<PointerType>(O1->getType())->getElementType();
-        unsigned GlobalSize = getTargetData().getTypeSize(ElTy);
+        unsigned GlobalSize = getTargetData().getABITypeSize(ElTy);
         if (GlobalSize < V2Size && V2Size != ~0U)
           return NoAlias;
       }
@@ -382,7 +382,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
         // global/alloca/malloc, it cannot be accessing the object (it's
         // undefined to load or store bytes before or after an object).
         const Type *ElTy = cast<PointerType>(O2->getType())->getElementType();
-        unsigned GlobalSize = getTargetData().getTypeSize(ElTy);
+        unsigned GlobalSize = getTargetData().getABITypeSize(ElTy);
         if (GlobalSize < V1Size && V1Size != ~0U)
           return NoAlias;
       }

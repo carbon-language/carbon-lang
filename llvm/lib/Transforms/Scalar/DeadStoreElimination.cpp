@@ -137,8 +137,8 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
              dep != MemoryDependenceAnalysis::NonLocal &&
              isa<StoreInst>(dep)) {
         if (dep != last ||
-             TD.getTypeSize(last->getOperand(0)->getType()) >
-             TD.getTypeSize(BBI->getOperand(0)->getType())) {
+             TD.getTypeStoreSize(last->getOperand(0)->getType()) >
+             TD.getTypeStoreSize(BBI->getOperand(0)->getType())) {
           dep = MD.getDependency(BBI, dep);
           continue;
         }
@@ -210,7 +210,7 @@ bool DSE::handleFreeWithNonTrivialDependency(FreeInst* F, Instruction* dep,
   
   Value* depPointer = dependency->getPointerOperand();
   const Type* depType = dependency->getOperand(0)->getType();
-  unsigned depPointerSize = TD.getTypeSize(depType);
+  unsigned depPointerSize = TD.getTypeStoreSize(depType);
   
   // Check for aliasing
   AliasAnalysis::AliasResult A = AA.alias(F->getPointerOperand(), ~0UL,
@@ -329,7 +329,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
         unsigned pointerSize = ~0UL;
         if (ConstantInt* C = dyn_cast<ConstantInt>((*I)->getArraySize()))
           pointerSize = C->getZExtValue() * \
-                        TD.getTypeSize((*I)->getAllocatedType());     
+                        TD.getABITypeSize((*I)->getAllocatedType());
         
         // See if the call site touches it
         AliasAnalysis::ModRefResult A = AA.getModRefInfo(CS, *I, pointerSize);
@@ -394,7 +394,7 @@ bool DSE::RemoveUndeadPointers(Value* killPointer,
     unsigned pointerSize = ~0UL;
     if (ConstantInt* C = dyn_cast<ConstantInt>((*I)->getArraySize()))
       pointerSize = C->getZExtValue() * \
-                    TD.getTypeSize((*I)->getAllocatedType());     
+                    TD.getABITypeSize((*I)->getAllocatedType());
       
     // See if this pointer could alias it
     AliasAnalysis::AliasResult A = AA.alias(*I, pointerSize,

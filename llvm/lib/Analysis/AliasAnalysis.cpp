@@ -95,7 +95,7 @@ AliasAnalysis::getModRefInfo(CallSite CS1, CallSite CS2) {
 
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(LoadInst *L, Value *P, unsigned Size) {
-  return alias(L->getOperand(0), TD->getTypeSize(L->getType()),
+  return alias(L->getOperand(0), TD->getTypeStoreSize(L->getType()),
                P, Size) ? Ref : NoModRef;
 }
 
@@ -103,8 +103,8 @@ AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
   // If the stored address cannot alias the pointer in question, then the
   // pointer cannot be modified by the store.
-  if (!alias(S->getOperand(1), TD->getTypeSize(S->getOperand(0)->getType()),
-             P, Size))
+  if (!alias(S->getOperand(1),
+             TD->getTypeStoreSize(S->getOperand(0)->getType()), P, Size))
     return NoModRef;
 
   // If the pointer is a pointer to constant memory, then it could not have been

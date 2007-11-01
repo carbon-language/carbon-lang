@@ -1227,7 +1227,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
         // (2048 bytes currently), as we don't want to introduce a 16M global or
         // something.
         if (NElements->getZExtValue()*
-                     TD.getTypeSize(MI->getAllocatedType()) < 2048) {
+                     TD.getABITypeSize(MI->getAllocatedType()) < 2048) {
           GVI = OptimizeGlobalAddressOfMalloc(GV, MI);
           return true;
         }

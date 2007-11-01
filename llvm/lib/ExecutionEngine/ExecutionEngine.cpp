@@ -735,7 +735,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     return;
   } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(Init)) {
     unsigned ElementSize =
-      getTargetData()->getTypeSize(CP->getType()->getElementType());
+      getTargetData()->getABITypeSize(CP->getType()->getElementType());
     for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
       InitializeMemory(CP->getOperand(i), (char*)Addr+i*ElementSize);
     return;
@@ -744,7 +744,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
     StoreValueToMemory(Val, (GenericValue*)Addr, Init->getType());
     return;
   } else if (isa<ConstantAggregateZero>(Init)) {
-    memset(Addr, 0, (size_t)getTargetData()->getTypeSize(Init->getType()));
+    memset(Addr, 0, (size_t)getTargetData()->getABITypeSize(Init->getType()));
     return;
   }
 
@@ -752,7 +752,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<ConstantArray>(Init);
     unsigned ElementSize =
-      getTargetData()->getTypeSize(CPA->getType()->getElementType());
+      getTargetData()->getABITypeSize(CPA->getType()->getElementType());
     for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
       InitializeMemory(CPA->getOperand(i), (char*)Addr+i*ElementSize);
     return;
@@ -843,7 +843,7 @@ void ExecutionEngine::emitGlobals() {
         const Type *Ty = I->getType()->getElementType();
 
         // Allocate some memory for it!
-        unsigned Size = TD->getTypeSize(Ty);
+        unsigned Size = TD->getABITypeSize(Ty);
         addGlobalMapping(I, new char[Size]);
       } else {
         // External variable reference. Try to use the dynamic loader to
@@ -897,7 +897,7 @@ void ExecutionEngine::EmitGlobalVariable(const GlobalVariable *GV) {
   DOUT << "Global '" << GV->getName() << "' -> " << GA << "\n";
 
   const Type *ElTy = GV->getType()->getElementType();
-  size_t GVSize = (size_t)getTargetData()->getTypeSize(ElTy);
+  size_t GVSize = (size_t)getTargetData()->getABITypeSize(ElTy);
   if (GA == 0) {
     // If it's not already specified, allocate memory for the global.
     GA = new char[GVSize];

@@ -78,20 +78,20 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
     uint64_t pointerSize = 0;
     if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
       pointer = S->getPointerOperand();
-      pointerSize = TD.getTypeSize(S->getOperand(0)->getType());
+      pointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
     } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
       pointer = L->getPointerOperand();
-      pointerSize = TD.getTypeSize(L->getType());
+      pointerSize = TD.getTypeStoreSize(L->getType());
     } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
         pointerSize = C->getZExtValue() * \
-                      TD.getTypeSize(AI->getAllocatedType());
+                      TD.getABITypeSize(AI->getAllocatedType());
       else
         pointerSize = ~0UL;
     } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
       pointer = V->getOperand(0);
-      pointerSize = TD.getTypeSize(V->getType());
+      pointerSize = TD.getTypeStoreSize(V->getType());
     } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
       pointer = F->getPointerOperand();
       
@@ -287,15 +287,15 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   bool queryIsVolatile = false;
   if (StoreInst* S = dyn_cast<StoreInst>(query)) {
     dependee = S->getPointerOperand();
-    dependeeSize = TD.getTypeSize(S->getOperand(0)->getType());
+    dependeeSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
     queryIsVolatile = S->isVolatile();
   } else if (LoadInst* L = dyn_cast<LoadInst>(query)) {
     dependee = L->getPointerOperand();
-    dependeeSize = TD.getTypeSize(L->getType());
+    dependeeSize = TD.getTypeStoreSize(L->getType());
     queryIsVolatile = L->isVolatile();
   } else if (VAArgInst* V = dyn_cast<VAArgInst>(query)) {
     dependee = V->getOperand(0);
-    dependeeSize = TD.getTypeSize(V->getType());
+    dependeeSize = TD.getTypeStoreSize(V->getType());
   } else if (FreeInst* F = dyn_cast<FreeInst>(query)) {
     dependee = F->getPointerOperand();
     
@@ -330,7 +330,7 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
       }
       
       pointer = S->getPointerOperand();
-      pointerSize = TD.getTypeSize(S->getOperand(0)->getType());
+      pointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
     } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
       // All volatile loads/stores depend on each other
       if (queryIsVolatile && L->isVolatile()) {
@@ -343,17 +343,17 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
       }
       
       pointer = L->getPointerOperand();
-      pointerSize = TD.getTypeSize(L->getType());
+      pointerSize = TD.getTypeStoreSize(L->getType());
     } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
         pointerSize = C->getZExtValue() * \
-                      TD.getTypeSize(AI->getAllocatedType());
+                      TD.getABITypeSize(AI->getAllocatedType());
       else
         pointerSize = ~0UL;
     } else if (VAArgInst* V = dyn_cast<VAArgInst>(QI)) {
       pointer = V->getOperand(0);
-      pointerSize = TD.getTypeSize(V->getType());
+      pointerSize = TD.getTypeStoreSize(V->getType());
     } else if (FreeInst* F = dyn_cast<FreeInst>(QI)) {
       pointer = F->getPointerOperand();
       

@@ -137,12 +137,12 @@ bool AAEval::runOnFunction(Function &F) {
        I1 != E; ++I1) {
     unsigned I1Size = 0;
     const Type *I1ElTy = cast<PointerType>((*I1)->getType())->getElementType();
-    if (I1ElTy->isSized()) I1Size = TD.getTypeSize(I1ElTy);
+    if (I1ElTy->isSized()) I1Size = TD.getTypeStoreSize(I1ElTy);
 
     for (std::set<Value *>::iterator I2 = Pointers.begin(); I2 != I1; ++I2) {
       unsigned I2Size = 0;
       const Type *I2ElTy =cast<PointerType>((*I2)->getType())->getElementType();
-      if (I2ElTy->isSized()) I2Size = TD.getTypeSize(I2ElTy);
+      if (I2ElTy->isSized()) I2Size = TD.getTypeStoreSize(I2ElTy);
 
       switch (AA.alias(*I1, I1Size, *I2, I2Size)) {
       case AliasAnalysis::NoAlias:
@@ -169,7 +169,7 @@ bool AAEval::runOnFunction(Function &F) {
          V != Ve; ++V) {
       unsigned Size = 0;
       const Type *ElTy = cast<PointerType>((*V)->getType())->getElementType();
-      if (ElTy->isSized()) Size = TD.getTypeSize(ElTy);
+      if (ElTy->isSized()) Size = TD.getTypeStoreSize(ElTy);
 
       switch (AA.getModRefInfo(*C, *V, Size)) {
       case AliasAnalysis::NoModRef:

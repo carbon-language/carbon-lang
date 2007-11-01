@@ -261,7 +261,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
       if (ConstantInt *CUI = dyn_cast<ConstantInt>(AI->getArraySize())) {
         const Type *Ty = AI->getAllocatedType();
-        uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
+        uint64_t TySize = TLI.getTargetData()->getABITypeSize(Ty);
         unsigned Align = 
           std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty),
                    AI->getAlignment());
@@ -2335,7 +2335,7 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
     return;   // getValue will auto-populate this.
 
   const Type *Ty = I.getAllocatedType();
-  uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
+  uint64_t TySize = TLI.getTargetData()->getABITypeSize(Ty);
   unsigned Align =
     std::max((unsigned)TLI.getTargetData()->getPrefTypeAlignment(Ty),
              I.getAlignment());
@@ -3546,7 +3546,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         // Otherwise, create a stack slot and emit a store to it before the
         // asm.
         const Type *Ty = OpVal->getType();
-        uint64_t TySize = TLI.getTargetData()->getTypeSize(Ty);
+        uint64_t TySize = TLI.getTargetData()->getABITypeSize(Ty);
         unsigned Align  = TLI.getTargetData()->getPrefTypeAlignment(Ty);
         MachineFunction &MF = DAG.getMachineFunction();
         int SSFI = MF.getFrameInfo()->CreateStackObject(TySize, Align);
@@ -3804,7 +3804,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
     Src = DAG.getNode(ISD::ZERO_EXTEND, IntPtr, Src);
 
   // Scale the source by the type size.
-  uint64_t ElementSize = TD->getTypeSize(I.getType()->getElementType());
+  uint64_t ElementSize = TD->getABITypeSize(I.getType()->getElementType());
   Src = DAG.getNode(ISD::MUL, Src.getValueType(),
                     Src, getIntPtrConstant(ElementSize));
 
@@ -3917,7 +3917,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       const StructType *STy = cast<StructType>(Ty->getElementType());
       unsigned StructAlign =
           Log2_32(getTargetData()->getCallFrameTypeAlignment(STy));
-      unsigned StructSize  = getTargetData()->getTypeSize(STy);
+      unsigned StructSize  = getTargetData()->getABITypeSize(STy);
       Flags |= (StructAlign << ISD::ParamFlags::ByValAlignOffs);
       Flags |= (StructSize  << ISD::ParamFlags::ByValSizeOffs);
     }
@@ -4047,7 +4047,7 @@ TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       const StructType *STy = cast<StructType>(Ty->getElementType());
       unsigned StructAlign =
           Log2_32(getTargetData()->getCallFrameTypeAlignment(STy));
-      unsigned StructSize  = getTargetData()->getTypeSize(STy);
+      unsigned StructSize  = getTargetData()->getABITypeSize(STy);
       Flags |= (StructAlign << ISD::ParamFlags::ByValAlignOffs);
       Flags |= (StructSize  << ISD::ParamFlags::ByValSizeOffs);
     }

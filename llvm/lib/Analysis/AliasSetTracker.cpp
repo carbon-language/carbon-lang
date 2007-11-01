@@ -269,7 +269,7 @@ bool AliasSetTracker::add(Value *Ptr, unsigned Size) {
 bool AliasSetTracker::add(LoadInst *LI) {
   bool NewPtr;
   AliasSet &AS = addPointer(LI->getOperand(0),
-                            AA.getTargetData().getTypeSize(LI->getType()),
+                            AA.getTargetData().getTypeStoreSize(LI->getType()),
                             AliasSet::Refs, NewPtr);
   if (LI->isVolatile()) AS.setVolatile();
   return NewPtr;
@@ -279,7 +279,7 @@ bool AliasSetTracker::add(StoreInst *SI) {
   bool NewPtr;
   Value *Val = SI->getOperand(0);
   AliasSet &AS = addPointer(SI->getOperand(1),
-                            AA.getTargetData().getTypeSize(Val->getType()),
+                            AA.getTargetData().getTypeStoreSize(Val->getType()),
                             AliasSet::Mods, NewPtr);
   if (SI->isVolatile()) AS.setVolatile();
   return NewPtr;
@@ -395,7 +395,7 @@ bool AliasSetTracker::remove(Value *Ptr, unsigned Size) {
 }
 
 bool AliasSetTracker::remove(LoadInst *LI) {
-  unsigned Size = AA.getTargetData().getTypeSize(LI->getType());
+  unsigned Size = AA.getTargetData().getTypeStoreSize(LI->getType());
   AliasSet *AS = findAliasSetForPointer(LI->getOperand(0), Size);
   if (!AS) return false;
   remove(*AS);
@@ -403,7 +403,8 @@ bool AliasSetTracker::remove(LoadInst *LI) {
 }
 
 bool AliasSetTracker::remove(StoreInst *SI) {
-  unsigned Size = AA.getTargetData().getTypeSize(SI->getOperand(0)->getType());
+  unsigned Size =
+    AA.getTargetData().getTypeStoreSize(SI->getOperand(0)->getType());
   AliasSet *AS = findAliasSetForPointer(SI->getOperand(1), Size);
   if (!AS) return false;
   remove(*AS);

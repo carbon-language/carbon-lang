@@ -49,14 +49,13 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
   // Loop over each of the elements, placing them in memory...
   for (unsigned i = 0, e = NumElements; i != e; ++i) {
     const Type *Ty = ST->getElementType(i);
-    unsigned TyAlign;
-    uint64_t TySize;
-    TyAlign = (ST->isPacked() ? 1 : TD.getABITypeAlignment(Ty));
-    TySize = TD.getTypeSize(Ty);
+    unsigned TyAlign = ST->isPacked() ?
+      1 : TD.getABITypeAlignment(Ty);
+    uint64_t TySize  = ST->isPacked() ?
+      TD.getTypeStoreSize(Ty) : TD.getABITypeSize(Ty);
 
-    // Add padding if necessary to make the data element aligned properly...
-    if (StructSize % TyAlign != 0)
-      StructSize = (StructSize/TyAlign + 1) * TyAlign;   // Add padding...
+    // Add padding if necessary to align the data element properly...
+    StructSize = (StructSize + TyAlign - 1)/TyAlign * TyAlign;
 
     // Keep track of maximum alignment constraint
     StructAlignment = std::max(TyAlign, StructAlignment);
@@ -406,83 +405,47 @@ std::string TargetData::getStringRepresentation() const {
 }
 
 
-uint64_t TargetData::getTypeSize(const Type *Ty) const {
+uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
   assert(Ty->isSized() && "Cannot getTypeInfo() on a type that is unsized!");
   switch (Ty->getTypeID()) {
   case Type::LabelTyID:
   case Type::PointerTyID:
-    return getPointerSize();
+    return getPointerSizeInBits();
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
-    uint64_t Size;
-    unsigned char Alignment;
-    Size = getTypeSize(ATy->getElementType());
-    Alignment = getABITypeAlignment(ATy->getElementType());
-    uint64_t AlignedSize = (Size + Alignment - 1)/Alignment*Alignment;
-    return AlignedSize*ATy->getNumElements();
+    return getABITypeSizeInBits(ATy->getElementType())*ATy->getNumElements();
   }
   case Type::StructTyID: {
     // Get the layout annotation... which is lazily created on demand.
     const StructLayout *Layout = getStructLayout(cast<StructType>(Ty));
-    return Layout->getSizeInBytes();
+    return Layout->getSizeInBits();
   }
-  case Type::IntegerTyID: {
-    unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-    if (BitWidth <= 8) {
-      return 1;
-    } else if (BitWidth <= 16) {
-      return 2;
-    } else if (BitWidth <= 32) {
-      return 4;
-    } else if (BitWidth <= 64) {
-      return 8;
-    } else {
-      // The size of this > 64 bit type is chosen as a multiple of the
-      // preferred alignment of the largest "native" size the target supports. 
-      // We first obtain the the alignment info for this type and then compute
-      // the next largest multiple of that size.
-      uint64_t size = getAlignmentInfo(INTEGER_ALIGN, BitWidth, false) * 8;
-      return (((BitWidth / (size)) + (BitWidth % size != 0)) * size) / 8;
-    }
-    break;
-  }
+  case Type::IntegerTyID:
+    return cast<IntegerType>(Ty)->getBitWidth();
   case Type::VoidTyID:
-    return 1;
-  case Type::FloatTyID:
-    return 4;
-  case Type::DoubleTyID:
     return 8;
+  case Type::FloatTyID:
+    return 32;
+  case Type::DoubleTyID:
+    return 64;
   case Type::PPC_FP128TyID:
   case Type::FP128TyID:
-    return 16;
+    return 128;
   // In memory objects this is always aligned to a higher boundary, but
-  // only 10 bytes contain information.
+  // only 80 bits contain information.
   case Type::X86_FP80TyID:
-    return 10;
+    return 80;
   case Type::VectorTyID: {
     const VectorType *PTy = cast<VectorType>(Ty);
-    return PTy->getBitWidth() / 8;
+    return PTy->getBitWidth();
   }
   default:
-    assert(0 && "TargetData::getTypeSize(): Unsupported type");
+    assert(0 && "TargetData::getTypeSizeInBits(): Unsupported type");
     break;
   }
   return 0;
 }
 
-uint64_t TargetData::getTypeSizeInBits(const Type *Ty) const {
-  if (Ty->isInteger())
-    return cast<IntegerType>(Ty)->getBitWidth();
-  else
-    return getTypeSize(Ty) * 8;
-}
-
-uint64_t TargetData::getABITypeSizeInBits(const Type *Ty) const {
-  if (Ty->isInteger())
-    return cast<IntegerType>(Ty)->getBitWidth();
-  else
-    return getABITypeSize(Ty) * 8;
-}
 /*!
   \param abi_or_pref Flag that determines which alignment is returned. true
   returns the ABI alignment, false returns the preferred alignment.
@@ -542,7 +505,7 @@ unsigned char TargetData::getAlignment(const Type *Ty, bool abi_or_pref) const {
     break;
   }
 
-  return getAlignmentInfo((AlignTypeEnum)AlignType, getTypeSize(Ty) * 8,
+  return getAlignmentInfo((AlignTypeEnum)AlignType, getTypeSizeInBits(Ty),
                           abi_or_pref);
 }
 
@@ -603,7 +566,7 @@ uint64_t TargetData::getIndexedOffset(const Type *ptrTy, Value* const* Indices,
 
       // Get the array index and the size of each array element.
       int64_t arrayIdx = cast<ConstantInt>(Indices[CurIDX])->getSExtValue();
-      Result += arrayIdx * (int64_t)getTypeSize(Ty);
+      Result += arrayIdx * (int64_t)getABITypeSize(Ty);
     }
   }
 
@@ -623,7 +586,7 @@ unsigned TargetData::getPreferredAlignmentLog(const GlobalVariable *GV) const {
     if (Alignment < 4) {
       // If the global is not external, see if it is large.  If so, give it a
       // larger alignment.
-      if (getTypeSize(ElemType) > 128)
+      if (getTypeSizeInBits(ElemType) > 128)
         Alignment = 4;    // 16-byte alignment.
     }
   }

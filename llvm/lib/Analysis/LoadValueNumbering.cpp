@@ -293,7 +293,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
   Function *F = LoadBB->getParent();
 
   // Find out how many bytes of memory are loaded by the load instruction...
-  unsigned LoadSize = getAnalysis<TargetData>().getTypeSize(LI->getType());
+  unsigned LoadSize = getAnalysis<TargetData>().getTypeStoreSize(LI->getType());
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
   // Figure out if the load is invalidated from the entry of the block it is in

@@ -4438,7 +4438,7 @@ static Value *EmitGEPOffset(User *GEP, Instruction &I, InstCombiner &IC) {
 
   for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
     Value *Op = GEP->getOperand(i);
-    uint64_t Size = TD.getTypeSize(GTI.getIndexedType()) & PtrSizeMask;
+    uint64_t Size = TD.getABITypeSize(GTI.getIndexedType()) & PtrSizeMask;
     if (ConstantInt *OpC = dyn_cast<ConstantInt>(Op)) {
       if (OpC->isZero()) continue;
       
@@ -4523,7 +4523,7 @@ Instruction *InstCombiner::FoldGEPICmp(User *GEPLHS, Value *RHS,
             return ReplaceInstUsesWith(I, UndefValue::get(I.getType()));
           if (C->isNullValue())
             EmitIt = false;
-          else if (TD->getTypeSize(GTI.getIndexedType()) == 0) {
+          else if (TD->getABITypeSize(GTI.getIndexedType()) == 0) {
             EmitIt = false;  // This is indexing into a zero sized array?
           } else if (isa<ConstantInt>(C))
             return ReplaceInstUsesWith(I, // No comparison is needed here.
@@ -6305,8 +6305,8 @@ Instruction *InstCombiner::PromoteCastOfAllocation(BitCastInst &CI,
   // same, we open the door to infinite loops of various kinds.
   if (!AI.hasOneUse() && CastElTyAlign == AllocElTyAlign) return 0;
 
-  uint64_t AllocElTySize = TD->getTypeSize(AllocElTy);
-  uint64_t CastElTySize = TD->getTypeSize(CastElTy);
+  uint64_t AllocElTySize = TD->getABITypeSize(AllocElTy);
+  uint64_t CastElTySize = TD->getABITypeSize(CastElTy);
   if (CastElTySize == 0 || AllocElTySize == 0) return 0;
 
   // See if we can satisfy the modulus by pulling a scale out of the array
@@ -6573,7 +6573,7 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
           // is something like [0 x {int, int}]
           const Type *IntPtrTy = TD->getIntPtrType();
           int64_t FirstIdx = 0;
-          if (int64_t TySize = TD->getTypeSize(GEPIdxTy)) {
+          if (int64_t TySize = TD->getABITypeSize(GEPIdxTy)) {
             FirstIdx = Offset/TySize;
             Offset %= TySize;
           
@@ -6605,7 +6605,7 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
               }
             } else if (isa<ArrayType>(GEPIdxTy) || isa<VectorType>(GEPIdxTy)) {
               const SequentialType *STy = cast<SequentialType>(GEPIdxTy);
-              if (uint64_t EltSize = TD->getTypeSize(STy->getElementType())) {
+              if (uint64_t EltSize = TD->getABITypeSize(STy->getElementType())){
                 NewIndices.push_back(ConstantInt::get(IntPtrTy,Offset/EltSize));
                 Offset %= EltSize;
               } else {
@@ -8644,7 +8644,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // insert it.  This explicit cast can make subsequent optimizations more
       // obvious.
       Value *Op = GEP.getOperand(i);
-      if (TD->getTypeSize(Op->getType()) > TD->getPointerSize())
+      if (TD->getTypeSizeInBits(Op->getType()) > TD->getPointerSizeInBits())
         if (Constant *C = dyn_cast<Constant>(Op)) {
           GEP.setOperand(i, ConstantExpr::getTrunc(C, TD->getIntPtrType()));
           MadeChange = true;
@@ -8724,12 +8724,12 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           } else if (Constant *GO1C = dyn_cast<Constant>(GO1)) {
             GO1 = ConstantExpr::getIntegerCast(GO1C, SO1->getType(), true);
           } else {
-            unsigned PS = TD->getPointerSize();
-            if (TD->getTypeSize(SO1->getType()) == PS) {
+            unsigned PS = TD->getPointerSizeInBits();
+            if (TD->getTypeSizeInBits(SO1->getType()) == PS) {
               // Convert GO1 to SO1's type.
               GO1 = InsertCastToIntPtrTy(GO1, SO1->getType(), &GEP, this);
 
-            } else if (TD->getTypeSize(GO1->getType()) == PS) {
+            } else if (TD->getTypeSizeInBits(GO1->getType()) == PS) {
               // Convert SO1 to GO1's type.
               SO1 = InsertCastToIntPtrTy(SO1, GO1->getType(), &GEP, this);
             } else {
@@ -8818,8 +8818,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       const Type *SrcElTy = cast<PointerType>(X->getType())->getElementType();
       const Type *ResElTy=cast<PointerType>(PtrOp->getType())->getElementType();
       if (isa<ArrayType>(SrcElTy) &&
-          TD->getTypeSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
-          TD->getTypeSize(ResElTy)) {
+          TD->getABITypeSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
+          TD->getABITypeSize(ResElTy)) {
         Value *Idx[2];
         Idx[0] = Constant::getNullValue(Type::Int32Ty);
         Idx[1] = GEP.getOperand(1);
@@ -8837,7 +8837,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       if (isa<ArrayType>(SrcElTy) &&
           (ResElTy == Type::Int8Ty || ResElTy == Type::Int8Ty)) {
         uint64_t ArrayEltSize =
-            TD->getTypeSize(cast<ArrayType>(SrcElTy)->getElementType());
+            TD->getABITypeSize(cast<ArrayType>(SrcElTy)->getElementType());
         
         // Check to see if "tmp" is a scale by a multiple of ArrayEltSize.  We
         // allow either a mul, shift, or constant here.
@@ -8938,7 +8938,7 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
   // Note that we only do this for alloca's, because malloc should allocate and
   // return a unique pointer, even for a zero byte allocation.
   if (isa<AllocaInst>(AI) && AI.getAllocatedType()->isSized() &&
-      TD->getTypeSize(AI.getAllocatedType()) == 0)
+      TD->getABITypeSize(AI.getAllocatedType()) == 0)
     return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
 
   return 0;

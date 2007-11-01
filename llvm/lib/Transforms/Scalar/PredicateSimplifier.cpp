@@ -1120,11 +1120,8 @@ namespace {
     uint32_t typeToWidth(const Type *Ty) const {
       if (TD)
         return TD->getTypeSizeInBits(Ty);
-
-      if (const IntegerType *ITy = dyn_cast<IntegerType>(Ty))
-        return ITy->getBitWidth();
-
-      return 0;
+      else
+        return Ty->getPrimitiveSizeInBits();
     }
 
     static bool isRelatedBy(const ConstantRange &CR1, const ConstantRange &CR2,
