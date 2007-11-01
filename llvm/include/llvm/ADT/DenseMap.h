@@ -63,6 +63,8 @@ class DenseMap {
   unsigned NumEntries;
   unsigned NumTombstones;
 public:
+  typedef BucketT value_type;
+  
   DenseMap(const DenseMap& other) {
     NumBuckets = 0;
     CopyFrom(other);
@@ -174,13 +176,17 @@ public:
     ++NumTombstones;
     return true;
   }
-  
-  ValueT &operator[](const KeyT &Key) {
+
+  value_type& FindAndConstruct(const KeyT &Key) {
     BucketT *TheBucket;
     if (LookupBucketFor(Key, TheBucket))
-      return TheBucket->second;
-
-    return InsertIntoBucket(Key, ValueT(), TheBucket)->second;
+      return *TheBucket;
+    
+    return *InsertIntoBucket(Key, ValueT(), TheBucket);
+  }
+  
+  ValueT &operator[](const KeyT &Key) {
+    return FindAndConstruct(Key).second;
   }
   
   DenseMap& operator=(const DenseMap& other) {
