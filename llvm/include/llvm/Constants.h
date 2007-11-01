@@ -247,8 +247,8 @@ public:
       return isExactlyValue(APFloat(V));
     else if (&Val.getSemantics() == &APFloat::IEEEsingle)
       return isExactlyValue(APFloat((float)V));
-    else
-      assert(0);
+    assert(0);
+    return false;
   }
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantFP *) { return true; }
