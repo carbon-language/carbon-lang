@@ -2199,6 +2199,7 @@ APFloat::convertFromDecimalString(const char *p, roundingMode rounding_mode)
         partCount++;
     } while (p <= D.lastSigDigit);
 
+    category = fcNormal;
     fs = roundSignificandWithExponent(decSignificand, partCount,
                                       D.exponent, rounding_mode);
 
