@@ -294,6 +294,8 @@ public:
   bool hasGlobalStorage() const { return !hasAutoStorage(); }
   
   ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
+  void setObjcDeclQualifier(ObjcDeclQualifier QTVal) 
+    { objcDeclQualifier = QTVal; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {

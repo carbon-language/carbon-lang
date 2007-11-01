@@ -915,7 +915,8 @@ int ASTContext::getObjcEncodingTypeSize(QualType type) {
 void ASTContext::getObjcEncodingForMethodDecl(ObjcMethodDecl *Decl, 
                                               std::string& S)
 {
-  // TODO: First encode type qualifer, 'in', 'inout', etc. for the return type.
+  // Encode type qualifer, 'in', 'inout', etc. for the return type.
+  getObjcEncodingForTypeQualifier(Decl->getObjcDeclQualifier(), S);
   // Encode result type.
   getObjcEncodingForType(Decl->getResultType(), S);
   // Compute size of all parameters.
@@ -941,8 +942,10 @@ void ASTContext::getObjcEncodingForMethodDecl(ObjcMethodDecl *Decl,
   ParmOffset = 2 * PtrSize;
   for (int i = 0; i < NumOfParams; i++) {
     QualType PType = Decl->getParamDecl(i)->getType();
-    // TODO: Process argument qualifiers for user supplied arguments; such as,
+    // Process argument qualifiers for user supplied arguments; such as,
     // 'in', 'inout', etc.
+    getObjcEncodingForTypeQualifier(
+      Decl->getParamDecl(i)->getObjcDeclQualifier(), S);
     getObjcEncodingForType(PType, S);
     S += llvm::utostr(ParmOffset);
     ParmOffset += getObjcEncodingTypeSize(PType);
@@ -1052,6 +1055,22 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     S += '?';
   } else
     assert(0 && "@encode for type not implemented!");
+}
+
+void ASTContext::getObjcEncodingForTypeQualifier(Decl::ObjcDeclQualifier QT, 
+                                                 std::string& S) const {
+  if (QT & Decl::OBJC_TQ_In)
+    S += 'n';
+  if (QT & Decl::OBJC_TQ_Inout)
+    S += 'N';
+  if (QT & Decl::OBJC_TQ_Out)
+    S += 'o';
+  if (QT & Decl::OBJC_TQ_Bycopy)
+    S += 'O';
+  if (QT & Decl::OBJC_TQ_Byref)
+    S += 'R';
+  if (QT & Decl::OBJC_TQ_Oneway)
+    S += 'V';
 }
 
 void ASTContext::setBuiltinVaListType(QualType T)

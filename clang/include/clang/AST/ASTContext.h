@@ -185,6 +185,10 @@ public:
   // Return the ObjC type encoding for a given type.
   void getObjcEncodingForType(QualType t, std::string &S) const;
   
+  // Put the string version of type qualifiers into S.
+  void getObjcEncodingForTypeQualifier(Decl::ObjcDeclQualifier QT, 
+                                       std::string &S) const;
+  
   /// getObjcEncodingForMethodDecl - Return the encoded type for this method
   /// declaration.
   void getObjcEncodingForMethodDecl(ObjcMethodDecl *Decl, std::string &S);

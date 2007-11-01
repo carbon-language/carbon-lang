@@ -253,6 +253,7 @@ public:
   virtual ~ObjcMethodDecl();
   
   ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
+  void setObjcDeclQualifier(ObjcDeclQualifier QV) { objcDeclQualifier = QV; }
   
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); }

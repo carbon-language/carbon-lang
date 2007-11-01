@@ -1968,6 +1968,27 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
   }
 }
 
+/// CvtQTToAstBitMask - utility routine to produce an AST bitmask for
+/// objective-c's type qualifier from the parser version of the same info.
+static Decl::ObjcDeclQualifier 
+CvtQTToAstBitMask(ObjcDeclSpec::ObjcDeclQualifier PQTVal) {
+  Decl::ObjcDeclQualifier ret = Decl::OBJC_TQ_None;
+  if (PQTVal & ObjcDeclSpec::DQ_In)
+    ret = (Decl::ObjcDeclQualifier)(ret | Decl::OBJC_TQ_In);
+  if (PQTVal & ObjcDeclSpec::DQ_Inout)
+    ret = (Decl::ObjcDeclQualifier)(ret | Decl::OBJC_TQ_Inout);
+  if (PQTVal & ObjcDeclSpec::DQ_Out)
+    ret = (Decl::ObjcDeclQualifier)(ret | Decl::OBJC_TQ_Out);
+  if (PQTVal & ObjcDeclSpec::DQ_Bycopy)
+    ret = (Decl::ObjcDeclQualifier)(ret | Decl::OBJC_TQ_Bycopy);
+  if (PQTVal & ObjcDeclSpec::DQ_Byref)
+    ret = (Decl::ObjcDeclQualifier)(ret | Decl::OBJC_TQ_Byref);
+  if (PQTVal & ObjcDeclSpec::DQ_Oneway)
+    ret = (Decl::ObjcDeclQualifier)(ret | Decl::OBJC_TQ_Oneway);
+
+  return ret;
+}
+
 Sema::DeclTy *Sema::ActOnMethodDeclaration(
     SourceLocation MethodLoc, SourceLocation EndLoc,
     tok::TokenKind MethodType, ObjcDeclSpec &ReturnQT, TypeTy *ReturnType,
@@ -1988,6 +2009,8 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
       argType = Context.getObjcIdType();
     ParmVarDecl* Param = new ParmVarDecl(SourceLocation(/*FIXME*/), ArgNames[i], 
                                          argType, VarDecl::None, 0);
+    Param->setObjcDeclQualifier(
+      CvtQTToAstBitMask(ArgQT[i].getObjcDeclQualifier()));
     Params.push_back(Param);
   }
   QualType resultDeclType;
@@ -2004,6 +2027,8 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
                                       ObjcMethodDecl::Optional : 
                                       ObjcMethodDecl::Required);
   ObjcMethod->setMethodParams(&Params[0], Sel.getNumArgs());
+  ObjcMethod->setObjcDeclQualifier(
+    CvtQTToAstBitMask(ReturnQT.getObjcDeclQualifier()));
   return ObjcMethod;
 }
 
