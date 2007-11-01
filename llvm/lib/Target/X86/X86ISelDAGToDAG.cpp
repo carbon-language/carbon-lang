@@ -1407,7 +1407,7 @@ SDNode *X86DAGToDAGISel::Select(SDOperand N) {
       
       MVT::ValueType SVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
       SDOperand TruncOp = SDOperand(getTruncate(N0, SVT), 0);
-      unsigned Opc;
+      unsigned Opc = 0;
       switch (NVT) {
       case MVT::i16:
         if (SVT == MVT::i8) Opc = X86::MOVSX16rr8;
