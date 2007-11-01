@@ -4028,6 +4028,10 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
             case ICmpInst::ICMP_EQ:         // (X u< 13 | X == 14) -> no change
               break;
             case ICmpInst::ICMP_UGT:        // (X u< 13 | X u> 15) ->(X-13) u> 2
+              // If RHSCst is [us]MAXINT, it is always false.  Not handling
+              // this can cause overflow.
+              if (RHSCst->isMaxValue(false))
+                return ReplaceInstUsesWith(I, LHS);
               return InsertRangeTest(LHSVal, LHSCst, AddOne(RHSCst), false, 
                                      false, I);
             case ICmpInst::ICMP_SGT:        // (X u< 13 | X s> 15) -> no change
@@ -4045,6 +4049,10 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
             case ICmpInst::ICMP_EQ:         // (X s< 13 | X == 14) -> no change
               break;
             case ICmpInst::ICMP_SGT:        // (X s< 13 | X s> 15) ->(X-13) s> 2
+              // If RHSCst is [us]MAXINT, it is always false.  Not handling
+              // this can cause overflow.
+              if (RHSCst->isMaxValue(true))
+                return ReplaceInstUsesWith(I, LHS);
               return InsertRangeTest(LHSVal, LHSCst, AddOne(RHSCst), true, 
                                      false, I);
             case ICmpInst::ICMP_UGT:        // (X s< 13 | X u> 15) -> no change
