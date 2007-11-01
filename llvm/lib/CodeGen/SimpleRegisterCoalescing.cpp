@@ -197,22 +197,24 @@ void SimpleRegisterCoalescing::AddSubRegIdxPairs(unsigned Reg, unsigned SubIdx) 
 
 /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
 /// which are the src/dst of the copy instruction CopyMI.  This returns true
-/// if the copy was successfully coalesced away, or if it is never possible
-/// to coalesce this copy, due to register constraints.  It returns
-/// false if it is not currently possible to coalesce this interval, but
-/// it may be possible if other things get coalesced.
+/// if the copy was successfully coalesced away. If it is not currently
+/// possible to coalesce this interval, but it may be possible if other
+/// things get coalesced, then it returns true by reference in 'Again'.
 bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
-                                        unsigned SrcReg, unsigned DstReg) {
+                                        unsigned SrcReg, unsigned DstReg,
+                                        bool &Again) {
   DOUT << li_->getInstructionIndex(CopyMI) << '\t' << *CopyMI;
 
   // Get representative registers.
   unsigned repSrcReg = rep(SrcReg);
   unsigned repDstReg = rep(DstReg);
   
+  Again = false;
+
   // If they are already joined we continue.
   if (repSrcReg == repDstReg) {
     DOUT << "\tCopy already coalesced.\n";
-    return true;  // Not coalescable.
+    return false;  // Not coalescable.
   }
   
   bool SrcIsPhys = MRegisterInfo::isPhysicalRegister(repSrcReg);
@@ -221,17 +223,17 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
   // If they are both physical registers, we cannot join them.
   if (SrcIsPhys && DstIsPhys) {
     DOUT << "\tCan not coalesce physregs.\n";
-    return true;  // Not coalescable.
+    return false;  // Not coalescable.
   }
   
   // We only join virtual registers with allocatable physical registers.
   if (SrcIsPhys && !allocatableRegs_[repSrcReg]) {
     DOUT << "\tSrc reg is unallocatable physreg.\n";
-    return true;  // Not coalescable.
+    return false;  // Not coalescable.
   }
   if (DstIsPhys && !allocatableRegs_[repDstReg]) {
     DOUT << "\tDst reg is unallocatable physreg.\n";
-    return true;  // Not coalescable.
+    return false;  // Not coalescable.
   }
 
   bool isExtSubReg = CopyMI->getOpcode() == TargetInstrInfo::EXTRACT_SUBREG;
@@ -265,19 +267,30 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
           RHS.overlaps(li_->getInterval(RealDstReg))) {
         DOUT << "Interfere with register ";
         DEBUG(li_->getInterval(RealDstReg).print(DOUT, mri_));
-        return true; // Not coalescable
+        return false; // Not coalescable
       }
       for (const unsigned* SR = mri_->getSubRegisters(RealDstReg); *SR; ++SR)
         if (li_->hasInterval(*SR) && RHS.overlaps(li_->getInterval(*SR))) {
           DOUT << "Interfere with sub-register ";
           DEBUG(li_->getInterval(*SR).print(DOUT, mri_));
-          return true; // Not coalescable
+          return false; // Not coalescable
         }
-    } else if (li_->getInterval(repDstReg).getSize() >
-               li_->getInterval(repSrcReg).getSize()) {
+    } else {
+      unsigned SrcSize= li_->getInterval(repSrcReg).getSize() / InstrSlots::NUM;
+      unsigned DstSize= li_->getInterval(repDstReg).getSize() / InstrSlots::NUM;
+      const TargetRegisterClass *RC=mf_->getSSARegMap()->getRegClass(repDstReg);
+      unsigned Threshold = allocatableRCRegs_[RC].count();
       // Be conservative. If both sides are virtual registers, do not coalesce
-      // if the sub-register live interval is longer.
-      return false;
+      // if this will cause a high use density interval to target a smaller set
+      // of registers.
+      if (DstSize > Threshold || SrcSize > Threshold) {
+        LiveVariables::VarInfo &svi = lv_->getVarInfo(repSrcReg);
+        LiveVariables::VarInfo &dvi = lv_->getVarInfo(repDstReg);
+        if ((float)dvi.NumUses / DstSize < (float)svi.NumUses / SrcSize) {
+          Again = true;  // May be possible to coalesce later.
+          return false;
+        }
+      }
     }
   } else if (differingRegisterClasses(repSrcReg, repDstReg)) {
     // If they are not of the same register class, we cannot join them.
@@ -286,6 +299,7 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
     // a physical register that's compatible with the other side. e.g.
     // r1024 = MOV32to32_ r1025
     // but later r1024 is assigned EAX then r1025 may be coalesced with EAX.
+    Again = true;  // May be possible to coalesce later.
     return false;
   }
   
@@ -359,6 +373,7 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
       JoinVInt.preference = JoinPReg;
       ++numAborts;
       DOUT << "\tMay tie down a physical register, abort!\n";
+      Again = true;  // May be possible to coalesce later.
       return false;
     }
   }
@@ -401,6 +416,7 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
 
     // Otherwise, we are unable to join the intervals.
     DOUT << "Interference!\n";
+    Again = true;  // May be possible to coalesce later.
     return false;
   }
 
@@ -971,13 +987,17 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
   // Try coalescing physical register + virtual register first.
   for (unsigned i = 0, e = PhysCopies.size(); i != e; ++i) {
     CopyRec &TheCopy = PhysCopies[i];
-    if (!JoinCopy(TheCopy.MI, TheCopy.SrcReg, TheCopy.DstReg))
-      TryAgain.push_back(TheCopy);
+    bool Again = false;
+    if (!JoinCopy(TheCopy.MI, TheCopy.SrcReg, TheCopy.DstReg, Again))
+      if (Again)
+        TryAgain.push_back(TheCopy);
   }
   for (unsigned i = 0, e = VirtCopies.size(); i != e; ++i) {
     CopyRec &TheCopy = VirtCopies[i];
-    if (!JoinCopy(TheCopy.MI, TheCopy.SrcReg, TheCopy.DstReg))
-      TryAgain.push_back(TheCopy);
+    bool Again = false;
+    if (!JoinCopy(TheCopy.MI, TheCopy.SrcReg, TheCopy.DstReg, Again))
+      if (Again)
+        TryAgain.push_back(TheCopy);
   }
 }
 
@@ -1021,10 +1041,13 @@ void SimpleRegisterCoalescing::joinIntervals() {
 
     for (unsigned i = 0, e = TryAgainList.size(); i != e; ++i) {
       CopyRec &TheCopy = TryAgainList[i];
-      if (TheCopy.MI &&
-          JoinCopy(TheCopy.MI, TheCopy.SrcReg, TheCopy.DstReg)) {
-        TheCopy.MI = 0;   // Mark this one as done.
-        ProgressMade = true;
+      if (TheCopy.MI) {
+        bool Again = false;
+        bool Success = JoinCopy(TheCopy.MI,TheCopy.SrcReg,TheCopy.DstReg,Again);
+        if (Success || !Again) {
+          TheCopy.MI = 0;   // Mark this one as done.
+          ProgressMade = true;
+        }
       }
     }
   }

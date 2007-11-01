@@ -109,11 +109,11 @@ namespace llvm {
 
     /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
     /// which are the src/dst of the copy instruction CopyMI.  This returns true
-    /// if the copy was successfully coalesced away, or if it is never possible
-    /// to coalesce these this copy, due to register constraints.  It returns
-    /// false if it is not currently possible to coalesce this interval, but
-    /// it may be possible if other things get coalesced.
-    bool JoinCopy(MachineInstr *CopyMI, unsigned SrcReg, unsigned DstReg);
+    /// if the copy was successfully coalesced away. If it is not currently
+    /// possible to coalesce this interval, but it may be possible if other
+    /// things get coalesced, then it returns true by reference in 'Again'.
+    bool JoinCopy(MachineInstr *CopyMI, unsigned SrcReg, unsigned DstReg,
+                  bool &Again);
     
     /// JoinIntervals - Attempt to join these two intervals.  On failure, this
     /// returns false.  Otherwise, if one of the intervals being joined is a
