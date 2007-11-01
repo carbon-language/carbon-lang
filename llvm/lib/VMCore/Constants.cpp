@@ -2268,18 +2268,14 @@ std::string Constant::getStringValue(bool Chop, unsigned Offset) {
         }
       }
     }
-  } else if (Constant *C = dyn_cast<Constant>(this)) {
-    if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
-      return GV->getStringValue(Chop, Offset);
-    else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
-      if (CE->getOpcode() == Instruction::GetElementPtr) {
-        // Turn a gep into the specified offset.
-        if (CE->getNumOperands() == 3 &&
-            cast<Constant>(CE->getOperand(1))->isNullValue() &&
-            isa<ConstantInt>(CE->getOperand(2))) {
-          Offset += cast<ConstantInt>(CE->getOperand(2))->getZExtValue();
-          return CE->getOperand(0)->getStringValue(Chop, Offset);
-        }
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(this)) {
+    if (CE->getOpcode() == Instruction::GetElementPtr) {
+      // Turn a gep into the specified offset.
+      if (CE->getNumOperands() == 3 &&
+          cast<Constant>(CE->getOperand(1))->isNullValue() &&
+          isa<ConstantInt>(CE->getOperand(2))) {
+        Offset += cast<ConstantInt>(CE->getOperand(2))->getZExtValue();
+        return CE->getOperand(0)->getStringValue(Chop, Offset);
       }
     }
   }
