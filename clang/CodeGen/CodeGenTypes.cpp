@@ -62,8 +62,6 @@ namespace {
       return STy;
     }
 
-    /// Clear private data so that this object can be reused.
-    void clear();
   private:
     CodeGenTypes &CGT;
     llvm::Type *STy;
@@ -275,7 +273,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
               && "Expected RecordDecl in RecordTypesToResolve");
       RecordTypesToResolve.erase(OpaqueI);
 
-      RO.clear();
     } else if (TD->getKind() == Decl::Union) {
       const RecordDecl *RD = cast<const RecordDecl>(TD);
       // Just use the largest element of the union, breaking ties with the
@@ -291,7 +288,6 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
         RecordLayoutInfo *RLI = new RecordLayoutInfo(RO.getLLVMType());
         ResultType = RLI->getLLVMType();
         RecordLayouts[ResultType] = RLI;
-        RO.clear();
       } else {       
         std::vector<const llvm::Type*> Fields;
         ResultType = llvm::StructType::get(Fields);
@@ -445,8 +441,3 @@ void RecordOrganizer::layoutUnionFields() {
   STy = llvm::StructType::get(Fields);
 }
 
-/// Clear private data so that this object can be reused.
-void RecordOrganizer::clear() {
-  STy = NULL;
-  FieldDecls.clear();
-}
