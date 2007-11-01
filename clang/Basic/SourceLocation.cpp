@@ -15,16 +15,23 @@
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 
-using llvm::Serializer;
-using llvm::Deserializer;
-using llvm::SerializeTrait;
 using namespace clang;
 
-void SerializeTrait<SourceLocation>::Emit(Serializer& S, SourceLocation L) {
-  // FIXME: Add code for abbreviation.
-  S.EmitInt(L.getRawEncoding());  
+void SourceLocation::Emit(llvm::Serializer& S) const {
+  S.EmitInt(getRawEncoding());  
 }
 
-SourceLocation SerializeTrait<SourceLocation>::ReadVal(Deserializer& D) {
+SourceLocation SourceLocation::ReadVal(llvm::Deserializer& D) {
   return SourceLocation::getFromRawEncoding(D.ReadInt());   
+}
+
+void SourceRange::Emit(llvm::Serializer& S) const {
+  B.Emit(S);
+  E.Emit(S);
+}
+
+SourceRange SourceRange::ReadVal(llvm::Deserializer& D) {
+  SourceLocation A = SourceLocation::ReadVal(D);
+  SourceLocation B = SourceLocation::ReadVal(D);
+  return SourceRange(A,B);
 }

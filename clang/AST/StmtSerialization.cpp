@@ -80,11 +80,11 @@ Stmt* SerializeTrait<Stmt>::Materialize(Deserializer& D) {
 //      return new DeclStmt(D.ReadOwnedPtr<ScopedDecl>());
 
     case Stmt::NullStmtClass:
-      return new NullStmt(D.ReadVal<SourceLocation>());
+      return new NullStmt(SourceLocation::ReadVal(D));
     
     case Stmt::CompoundStmtClass: {
-      SourceLocation LBracLoc = D.ReadVal<SourceLocation>();
-      SourceLocation RBracLoc = D.ReadVal<SourceLocation>();
+      SourceLocation LBracLoc = SourceLocation::ReadVal(D);
+      SourceLocation RBracLoc = SourceLocation::ReadVal(D);
       unsigned NumStmts = D.ReadInt();
       llvm::SmallVector<Stmt*, 16> Body;
       

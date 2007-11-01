@@ -148,6 +148,12 @@ public:
     X.ID = Encoding;
     return X;
   }
+  
+  /// Emit - Emit this SourceLocation object to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// ReadVal - Read a SourceLocation object from Bitcode.
+  static SourceLocation ReadVal(llvm::Deserializer& D);
 };
 
 inline bool operator==(const SourceLocation &LHS, const SourceLocation &RHS) {
@@ -174,35 +180,14 @@ public:
   void setEnd(SourceLocation e) { E = e; }
   
   bool isValid() const { return B.isValid() && E.isValid(); }
+  
+  /// Emit - Emit this SourceRange object to Bitcode.
+  void Emit(llvm::Serializer& S) const;    
+
+  /// ReadVal - Read a SourceRange object from Bitcode.
+  static SourceRange ReadVal(llvm::Deserializer& D);
 };
   
 }  // end namespace clang
-
-//===----------------------------------------------------------------------===//
-// Serialization of SourceLocations and SourceRanges.
-//===----------------------------------------------------------------------===//
-
-namespace llvm {
-  
-template<> struct SerializeTrait<clang::SourceLocation> {
-  static void Emit(Serializer& S, clang::SourceLocation L);
-  static clang::SourceLocation ReadVal(Deserializer& D);
-};
-
-template<> struct SerializeTrait<clang::SourceRange> {
-  static inline void Emit(Serializer& S, clang::SourceRange R) {
-    SerializeTrait<clang::SourceLocation>::Emit(S,R.getBegin());
-    SerializeTrait<clang::SourceLocation>::Emit(S,R.getEnd());
-  }
-  
-  static inline clang::SourceRange ReadVal(Deserializer& D) {
-    using clang::SourceLocation;
-    SourceLocation L = SerializeTrait<SourceLocation>::ReadVal(D);
-    SourceLocation R = SerializeTrait<SourceLocation>::ReadVal(D);
-    return clang::SourceRange(L,R);
-  }
-};
-  
-} // end namespace llvm
 
 #endif

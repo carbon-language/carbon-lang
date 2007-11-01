@@ -17,18 +17,11 @@
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/APSInt.h"
-#include "llvm/Bitcode/Serialization.h"
+#include "llvm/Bitcode/SerializationFwd.h"
 
 namespace clang {
 class Decl;
 }
-
-namespace llvm {
-template <> struct SerializeTrait<clang::Decl> {
-  static void Emit(Serializer& S, clang::Decl& D);
-  static clang::Decl* Materialize(Deserializer& D);
-};  
-} // end namespace llvm
 
 namespace clang {
 class Expr;
@@ -163,16 +156,15 @@ public:
   static void addDeclKind(const Kind k);
   static bool CollectingStats(bool enable=false);
   static void PrintStats();
-  
-  // Deserialization of Decls.
-  template <typename DeclType>
-  static inline DeclType* DeserializeDecl(llvm::Deserializer& D) {
-    Decl* decl = llvm::SerializeTrait<Decl>::Materialize(D);
-    return cast<DeclType>(decl);
-  }  
     
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *) { return true; }
+  
+  /// Emit - Serialize this Decl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a Decl from Bitcode.
+  static Decl* Materialize(llvm::Deserializer& D);
 };
 
 /// NamedDecl - This represents a decl with an identifier for a name.  Many
@@ -193,6 +185,16 @@ public:
     return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;
   }
   static bool classof(const NamedDecl *D) { return true; }
+  
+  /// Emit - Serialize this NamedDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const {
+    static_cast<const Decl*>(this)->Emit(S);
+  }
+  
+  /// Materialize - Deserialize a ScopedDecl from Bitcode.
+  static inline NamedDecl* Materialize(llvm::Deserializer& D) {
+    return cast<NamedDecl>(Decl::Materialize(D));
+  } 
 };
 
 /// ScopedDecl - Represent lexically scoped names, used for all ValueDecl's
@@ -227,6 +229,16 @@ public:
     return D->getKind() >= ScopedFirst && D->getKind() <= ScopedLast;
   }
   static bool classof(const ScopedDecl *D) { return true; }
+  
+  /// Emit - Serialize this ScopedDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const {
+    static_cast<const Decl*>(this)->Emit(S);
+  }
+
+  /// Materialize - Deserialize a ScopedDecl from Bitcode.
+  static inline ScopedDecl* Materialize(llvm::Deserializer& D) {
+    return cast<ScopedDecl>(Decl::Materialize(D));
+  }  
 };
 
 /// ValueDecl - Represent the declaration of a variable (in which case it is 
@@ -247,6 +259,16 @@ public:
     return D->getKind() >= ValueFirst && D->getKind() <= ValueLast;
   }
   static bool classof(const ValueDecl *D) { return true; }
+  
+  /// Emit - Serialize this ValueDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const {
+    static_cast<const Decl*>(this)->Emit(S);
+  }
+  
+  /// Materialize - Deserialize a ValueDecl from Bitcode.
+  static inline ValueDecl* Materialize(llvm::Deserializer& D) {
+    return cast<ValueDecl>(Decl::Materialize(D));
+  }
 };
 
 /// VarDecl - An instance of this class is created to represent a variable
@@ -316,6 +338,17 @@ private:
   ObjcDeclQualifier objcDeclQualifier : 6;
   
   friend class StmtIteratorBase;
+  
+public:
+  /// Emit - Serialize this VarDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const { 
+    static_cast<const Decl*>(this)->Emit(S);
+  }
+  
+  /// Materialize - Deserialize a VarDecl from Bitcode.
+  static inline VarDecl* Materialize(llvm::Deserializer& D) {
+    return cast<VarDecl>(Decl::Materialize(D));
+  }  
 };
 
 /// BlockVarDecl - Represent a local variable declaration.
@@ -327,7 +360,13 @@ public:
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == BlockVar; }
-  static bool classof(const BlockVarDecl *D) { return true; }
+  static bool classof(const BlockVarDecl *D) { return true; }  
+
+  /// Emit - Serialize this BlockVarDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a BlockVarDecl from Bitcode.
+  static BlockVarDecl* Materialize(llvm::Deserializer& D);
 };
 
 /// FileVarDecl - Represent a file scoped variable declaration. This
@@ -343,6 +382,12 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == FileVar; }
   static bool classof(const FileVarDecl *D) { return true; }
+  
+  /// Emit - Serialize this FileVarDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a FileVarDecl from Bitcode.
+  static FileVarDecl* Materialize(llvm::Deserializer& D);
 };
 
 /// ParmVarDecl - Represent a parameter to a function.
@@ -355,6 +400,12 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ParmVar; }
   static bool classof(const ParmVarDecl *D) { return true; }
+  
+  /// Emit - Serialize this ParmVarDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a ParmVarDecl from Bitcode.
+  static ParmVarDecl* Materialize(llvm::Deserializer& D);
 };
 
 /// FunctionDecl - An instance of this class is created to represent a function
@@ -412,6 +463,13 @@ private:
 
   StorageClass SClass : 2;
   bool IsInline : 1;
+
+public:
+  /// Emit - Serialize this FunctionDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a FunctionDecl from Bitcode.
+  static FunctionDecl* Materialize(llvm::Deserializer& D);
 };
 
 
@@ -438,6 +496,13 @@ public:
     return D->getKind() >= FieldFirst && D->getKind() <= FieldLast;
   }
   static bool classof(const FieldDecl *D) { return true; }
+  
+public:
+  /// Emit - Serialize this FieldDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a FieldDecl from Bitcode.
+  static FieldDecl* Materialize(llvm::Deserializer& D);
 };
 
 /// EnumConstantDecl - An instance of this object exists for each enum constant
@@ -464,6 +529,12 @@ public:
   static bool classof(const EnumConstantDecl *D) { return true; }
   
   friend class StmtIteratorBase;
+  
+  /// Emit - Serialize this EnumConstantDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a EnumConstantDecl from Bitcode.
+  static EnumConstantDecl* Materialize(llvm::Deserializer& D);
 };
 
 
@@ -484,6 +555,12 @@ public:
     return D->getKind() >= TypeFirst && D->getKind() <= TypeLast;
   }
   static bool classof(const TypeDecl *D) { return true; }
+  
+  /// Emit - Serialize this TypeDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a TypeDecl from Bitcode.
+  static TypeDecl* Materialize(llvm::Deserializer& D);
 };
 
 
@@ -500,6 +577,12 @@ public:
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == Typedef; }
   static bool classof(const TypedefDecl *D) { return true; }
+  
+  /// Emit - Serialize this TypedefDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a TypedefDecl from Bitcode.
+  static TypedefDecl* Materialize(llvm::Deserializer& D);
 };
 
 
@@ -537,6 +620,13 @@ public:
   static bool classof(const TagDecl *D) { return true; }
 protected:
   void setDefinition(bool V) { IsDefinition = V; }
+  
+public:
+  /// Emit - Serialize this TagDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a TagDecl from Bitcode.
+  static TagDecl* Materialize(llvm::Deserializer& D);
 };
 
 /// EnumDecl - Represents an enum.  As an extension, we allow forward-declared
@@ -578,6 +668,13 @@ public:
   
   static bool classof(const Decl *D) { return D->getKind() == Enum; }
   static bool classof(const EnumDecl *D) { return true; }
+  
+public:
+  /// Emit - Serialize this EnumDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a EnumDecl from Bitcode.
+  static EnumDecl* Materialize(llvm::Deserializer& D);
 };
 
 
@@ -625,6 +722,13 @@ public:
     return D->getKind() >= RecordFirst && D->getKind() <= RecordLast;
   }
   static bool classof(const RecordDecl *D) { return true; }
+  
+public:
+  /// Emit - Serialize this RecordDecl to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize a RecordDecl from Bitcode.
+  static RecordDecl* Materialize(llvm::Deserializer& D);
 };
 
 }  // end namespace clang
