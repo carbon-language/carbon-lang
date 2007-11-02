@@ -121,7 +121,7 @@ namespace {
 
      If the exponent overflows, returns a large exponent with the
      appropriate sign.  */
-  static int
+  int
   readExponent(const char *p)
   {
     bool isNegative;
@@ -159,7 +159,7 @@ namespace {
 
   /* This is ugly and needs cleaning up, but I don't immediately see
      how whilst remaining safe.  */
-  static int
+  int
   totalExponent(const char *p, int exponentAdjustment)
   {
     integerPart unsignedExponent;
@@ -433,7 +433,7 @@ namespace {
 
   /* Place pow(5, power) in DST, and return the number of parts used.
      DST must be at least one part larger than size of the answer.  */
-  static unsigned int
+  unsigned int
   powerOf5(integerPart *dst, unsigned int power)
   {
     static integerPart firstEightPowers[] = { 1, 5, 25, 125, 625, 3125,
@@ -504,7 +504,7 @@ namespace {
   /* Write out an integerPart in hexadecimal, starting with the most
      significant nibble.  Write out exactly COUNT hexdigits, return
      COUNT.  */
-  static unsigned int
+  unsigned int
   partAsHex (char *dst, integerPart part, unsigned int count,
              const char *hexDigitChars)
   {
@@ -522,7 +522,7 @@ namespace {
   }
 
   /* Write out an unsigned decimal integer.  */
-  static char *
+  char *
   writeUnsignedDecimal (char *dst, unsigned int n)
   {
     char buff[40], *p;
@@ -540,7 +540,7 @@ namespace {
   }
 
   /* Write out a signed decimal integer.  */
-  static char *
+  char *
   writeSignedDecimal (char *dst, int value)
   {
     if (value < 0) {
@@ -1749,6 +1749,8 @@ APFloat::convertToSignExtendedInteger(integerPart *parts, unsigned int width,
   lostFraction lost_fraction;
   const integerPart *src;
   unsigned int dstPartsCount, truncatedBits;
+
+  assertArithmeticOK(*semantics);
 
   /* Handle the three special cases first.  */
   if(category == fcInfinity || category == fcNaN)
