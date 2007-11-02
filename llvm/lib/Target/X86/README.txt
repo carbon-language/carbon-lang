@@ -651,6 +651,26 @@ _f:
 
 etc.
 
+Another is:
+int usesbb(unsigned int a, unsigned int b) {
+       return (a < b ? -1 : 0);
+}
+to:
+_usesbb:
+	movl	8(%esp), %eax
+	cmpl	%eax, 4(%esp)
+	sbbl	%eax, %eax
+	ret
+
+instead of:
+_usesbb:
+	xorl	%eax, %eax
+	movl	8(%esp), %ecx
+	cmpl	%ecx, 4(%esp)
+	movl	$4294967295, %ecx
+	cmovb	%ecx, %eax
+	ret
+
 //===---------------------------------------------------------------------===//
 
 Currently we don't have elimination of redundant stack manipulations. Consider
