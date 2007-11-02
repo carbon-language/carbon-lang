@@ -1,3 +1,5 @@
+; RUN: llvm-as < %s | llc -march=x86
+
         %"struct.K::JL" = type <{ i8 }>
         %struct.jv = type { i64 }
 
