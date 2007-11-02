@@ -659,3 +659,9 @@ Sema::ActOnObjcAtCatchStmt(SourceLocation AtLoc,
   return CatchList ? CatchList : CS;
 }
 
+Action::StmtResult
+Sema::ActOnObjcAtFinallyStmt(SourceLocation AtLoc, StmtTy *Body) {
+  ObjcAtFinallyStmt *FS = new ObjcAtFinallyStmt(AtLoc, 
+                                                static_cast<Stmt*>(Body));
+  return FS;
+}

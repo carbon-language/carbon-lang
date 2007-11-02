@@ -295,6 +295,11 @@ public:
     return 0;
   }
   
+  virtual StmtResult ActOnObjcAtFinallyStmt(SourceLocation AtLoc, 
+                                            StmtTy *Body) {
+    return 0;
+  }
+  
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
   //===--------------------------------------------------------------------===//

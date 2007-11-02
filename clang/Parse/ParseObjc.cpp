@@ -1055,9 +1055,10 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     return true;
   }
   StmtResult CatchStmts;
+  StmtResult FinallyStmt;
   StmtResult TryBody = ParseCompoundStatementBody();
   while (Tok.is(tok::at)) {
-    SourceLocation AtCatchLoc = ConsumeToken();
+    SourceLocation AtCatchFinallyLoc = ConsumeToken();
     if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_catch) {
       StmtTy *FirstPart = 0;
       ConsumeToken(); // consume catch
@@ -1080,12 +1081,13 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         StmtResult CatchBody = ParseCompoundStatementBody();
         if (CatchBody.isInvalid)
           CatchBody = Actions.ActOnNullStmt(Tok.getLocation());
-        CatchStmts = Actions.ActOnObjcAtCatchStmt(AtCatchLoc, RParenLoc, 
+        CatchStmts = Actions.ActOnObjcAtCatchStmt(AtCatchFinallyLoc, RParenLoc, 
           FirstPart, CatchBody.Val, CatchStmts.Val);
         ExitScope();
       }
       else {
-        Diag(AtCatchLoc, diag::err_expected_lparen_after, "@catch clause");
+        Diag(AtCatchFinallyLoc, diag::err_expected_lparen_after, 
+             "@catch clause");
         return true;
       }
       catch_or_finally_seen = true;
@@ -1093,6 +1095,10 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     else if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_finally) {
        ConsumeToken(); // consume finally
       StmtResult FinallyBody = ParseCompoundStatementBody();
+      if (FinallyBody.isInvalid)
+        FinallyBody = Actions.ActOnNullStmt(Tok.getLocation());
+      FinallyStmt = Actions.ActOnObjcAtFinallyStmt(AtCatchFinallyLoc, 
+                                                   FinallyBody.Val);
       catch_or_finally_seen = true;
       break;
     }
