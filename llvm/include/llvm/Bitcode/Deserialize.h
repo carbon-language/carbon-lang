@@ -125,6 +125,11 @@ public:
   }
   
   template <typename T>
+  inline void ReadOwnedPtr(T*& Ptr) {
+    Ptr = ReadOwnedPtr<T>();
+  }
+  
+  template <typename T>
   void ReadPtr(T*& PtrRef) {
     ReadUIntPtr(reinterpret_cast<uintptr_t&>(PtrRef));
   }
