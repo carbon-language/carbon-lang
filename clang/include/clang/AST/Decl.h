@@ -185,16 +185,10 @@ public:
     return D->getKind() >= NamedFirst && D->getKind() <= NamedLast;
   }
   static bool classof(const NamedDecl *D) { return true; }
-  
-  /// Emit - Serialize this NamedDecl to Bitcode.
-  void Emit(llvm::Serializer& S) const {
-    static_cast<const Decl*>(this)->Emit(S);
-  }
-  
-  /// Materialize - Deserialize a ScopedDecl from Bitcode.
-  static inline NamedDecl* Materialize(llvm::Deserializer& D) {
-    return cast<NamedDecl>(Decl::Materialize(D));
-  } 
+    
+protected:
+  void InternalEmit(llvm::Serializer& S) const;
+  void InternalRead(llvm::Deserializer& D);  
 };
 
 /// ScopedDecl - Represent lexically scoped names, used for all ValueDecl's
@@ -229,16 +223,10 @@ public:
     return D->getKind() >= ScopedFirst && D->getKind() <= ScopedLast;
   }
   static bool classof(const ScopedDecl *D) { return true; }
-  
-  /// Emit - Serialize this ScopedDecl to Bitcode.
-  void Emit(llvm::Serializer& S) const {
-    static_cast<const Decl*>(this)->Emit(S);
-  }
-
-  /// Materialize - Deserialize a ScopedDecl from Bitcode.
-  static inline ScopedDecl* Materialize(llvm::Deserializer& D) {
-    return cast<ScopedDecl>(Decl::Materialize(D));
-  }  
+    
+protected:
+  void InternalEmit(llvm::Serializer& S) const;
+  void InternalRead(llvm::Deserializer& D);  
 };
 
 /// ValueDecl - Represent the declaration of a variable (in which case it is 
@@ -259,16 +247,10 @@ public:
     return D->getKind() >= ValueFirst && D->getKind() <= ValueLast;
   }
   static bool classof(const ValueDecl *D) { return true; }
-  
-  /// Emit - Serialize this ValueDecl to Bitcode.
-  void Emit(llvm::Serializer& S) const {
-    static_cast<const Decl*>(this)->Emit(S);
-  }
-  
-  /// Materialize - Deserialize a ValueDecl from Bitcode.
-  static inline ValueDecl* Materialize(llvm::Deserializer& D) {
-    return cast<ValueDecl>(Decl::Materialize(D));
-  }
+    
+protected:
+  void InternalEmit(llvm::Serializer& S) const;
+  void InternalRead(llvm::Deserializer& D); 
 };
 
 /// VarDecl - An instance of this class is created to represent a variable
@@ -339,16 +321,9 @@ private:
   
   friend class StmtIteratorBase;
   
-public:
-  /// Emit - Serialize this VarDecl to Bitcode.
-  void Emit(llvm::Serializer& S) const { 
-    static_cast<const Decl*>(this)->Emit(S);
-  }
-  
-  /// Materialize - Deserialize a VarDecl from Bitcode.
-  static inline VarDecl* Materialize(llvm::Deserializer& D) {
-    return cast<VarDecl>(Decl::Materialize(D));
-  }  
+protected:
+  void InternalEmit(llvm::Serializer& S) const;
+  void InternalRead(llvm::Deserializer& D); 
 };
 
 /// BlockVarDecl - Represent a local variable declaration.
