@@ -73,7 +73,20 @@ typedef struct {
 extern range f6();
 void f7()
 {
-	range r = f6();
+  range r = f6();
+}
+
+/* Member expressions */
+typedef struct {
+  range range1;
+  range range2;
+} rangepair;
+
+void f8()
+{
+  rangepair p;
+
+  range r = p.range1;
 }
 
 

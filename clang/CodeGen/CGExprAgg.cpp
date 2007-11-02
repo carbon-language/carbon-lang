@@ -61,6 +61,8 @@ public:
 
   // l-values.
   void VisitDeclRefExpr(DeclRefExpr *DRE) { return EmitAggLoadOfLValue(DRE); }
+  void VisitMemberExpr(MemberExpr *ME) { return EmitAggLoadOfLValue(ME); }
+  
   //  case Expr::ArraySubscriptExprClass:
 
   // Operators.
