@@ -1073,8 +1073,9 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
           // FIXME: Is BlockContext right?
           Declarator DeclaratorInfo(DS, Declarator::BlockContext);
           ParseDeclarator(DeclaratorInfo);
-          StmtResult stmtResult = Actions.ActOnDeclarator(CurScope, 
-                                                          DeclaratorInfo, 0);
+          DeclTy * aBlockVarDecl = Actions.ActOnDeclarator(CurScope, 
+                                                           DeclaratorInfo, 0);
+          StmtResult stmtResult = Actions.ActOnDeclStmt(aBlockVarDecl);
           FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
         }
         else

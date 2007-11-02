@@ -686,6 +686,10 @@ public:
       }
     }
   
+  Stmt *getCatchBody() const { return SubExprs[BODY]; }
+  Stmt *getNextCatchStmt() const { return NextAtCatchStmt; }
+  Stmt *getCatchParamStmt() const { return SubExprs[SELECTOR]; }
+  
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtCatchLoc, SubExprs[BODY]->getLocEnd()); 
   }
@@ -711,6 +715,8 @@ class ObjcAtFinallyStmt : public Stmt {
     : Stmt(ObjcAtFinallyStmtClass), 
       AtFinallyStmt(atFinallyStmt), AtFinallyLoc(atFinallyLoc) {}
     
+    Stmt *getFinallyBody () const { return AtFinallyStmt; }
+  
     virtual SourceRange getSourceRange() const { 
       return SourceRange(AtFinallyLoc, AtFinallyStmt->getLocEnd()); 
     }
@@ -745,6 +751,10 @@ public:
       SubStmts[END_TRY] = NULL;
     }
     
+  Stmt *getTryBody() const { return SubStmts[TRY]; }
+  Stmt *getCatchStmts() const { return SubStmts[CATCH]; }
+  Stmt *getFinallyStmt() const { return SubStmts[FINALLY]; }
+  
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtTryLoc, SubStmts[TRY]->getLocEnd()); 
   }
