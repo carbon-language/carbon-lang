@@ -222,6 +222,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\MachineDominators.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\MachineFunction.cpp"
 				>
 			</File>
@@ -287,6 +291,10 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\CodeGen\SimpleRegisterCoalescing.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\StrongPHIElimination.cpp"
 				>
 			</File>
 			<File
