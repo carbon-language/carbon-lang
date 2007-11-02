@@ -19,6 +19,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Compiler.h"
 #include <algorithm>
@@ -247,7 +248,7 @@ unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
 
   // Merge case into clusters
   if (Cases.size()>=2)
-    for (CaseItr I=Cases.begin(), J=++(Cases.begin()), E=Cases.end(); J!=E; ) {
+    for (CaseItr I=Cases.begin(), J=next(Cases.begin()), E=Cases.end(); J!=E; ) {
       int64_t nextValue = cast<ConstantInt>(J->Low)->getSExtValue();
       int64_t currentValue = cast<ConstantInt>(I->High)->getSExtValue();
       BasicBlock* nextBB = J->BB;
