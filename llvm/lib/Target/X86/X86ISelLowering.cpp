@@ -1451,42 +1451,45 @@ unsigned X86TargetLowering::GetAlignedArgumentStackSize(unsigned StackSize,
 }
 
 /// IsEligibleForTailCallElimination - Check to see whether the next instruction
-// following the call is a return. A function is eligible if caller/callee
-// calling conventions match, currently only fastcc supports tail calls, and the
-// function CALL is immediatly followed by a RET.
+/// following the call is a return. A function is eligible if caller/callee
+/// calling conventions match, currently only fastcc supports tail calls, and
+/// the function CALL is immediatly followed by a RET.
 bool X86TargetLowering::IsEligibleForTailCallOptimization(SDOperand Call,
                                                       SDOperand Ret,
                                                       SelectionDAG& DAG) const {
-  bool IsEligible = false;
+  if (!PerformTailCallOpt)
+    return false;
 
   // Check whether CALL node immediatly preceeds the RET node and whether the
   // return uses the result of the node or is a void return.
-  if ((Ret.getNumOperands() == 1 && 
-       (Ret.getOperand(0)== SDOperand(Call.Val,1) ||
-        Ret.getOperand(0)== SDOperand(Call.Val,0))) ||
-      (Ret.getOperand(0)== SDOperand(Call.Val,Call.Val->getNumValues()-1) &&
-       Ret.getOperand(1)== SDOperand(Call.Val,0))) {
+  unsigned NumOps = Ret.getNumOperands();
+  if ((NumOps == 1 && 
+       (Ret.getOperand(0) == SDOperand(Call.Val,1) ||
+        Ret.getOperand(0) == SDOperand(Call.Val,0))) ||
+      (NumOps == 2 &&
+       Ret.getOperand(0) == SDOperand(Call.Val,Call.Val->getNumValues()-1) &&
+       Ret.getOperand(1) == SDOperand(Call.Val,0))) {
     MachineFunction &MF = DAG.getMachineFunction();
     unsigned CallerCC = MF.getFunction()->getCallingConv();
     unsigned CalleeCC = cast<ConstantSDNode>(Call.getOperand(1))->getValue();
     if (CalleeCC == CallingConv::Fast && CallerCC == CalleeCC) {
       SDOperand Callee = Call.getOperand(4);
       // On elf/pic %ebx needs to be livein.
-      if(getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
-         Subtarget->isPICStyleGOT()) {
-        // Can only do local tail calls with PIC.
-        GlobalValue * GV = 0;
-        GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
-        if(G != 0 &&
-           (GV = G->getGlobal()) &&
-           (GV->hasHiddenVisibility() || GV->hasProtectedVisibility()))
-          IsEligible=true;
-      } else {
-        IsEligible=true;
-      }
+      if (getTargetMachine().getRelocationModel() != Reloc::PIC_ ||
+          !Subtarget->isPICStyleGOT())
+        return true;
+
+      // Can only do local tail calls with PIC.
+      GlobalValue * GV = 0;
+      GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee);
+      if(G != 0 &&
+         (GV = G->getGlobal()) &&
+         (GV->hasHiddenVisibility() || GV->hasProtectedVisibility()))
+        return true;
     }
   }
-  return IsEligible;
+
+  return false;
 }
 
 SDOperand X86TargetLowering::LowerX86_TailCallTo(SDOperand Op, 
