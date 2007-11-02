@@ -783,12 +783,11 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
     // If the target wants to, allow it to lower this itself.
     std::pair<SDOperand,SDOperand> P = TLI.ExpandOperationResult(N, DAG);
     if (P.first.Val) {
-      Lo = P.first;
-      Hi = P.second;
+      SetExpandedOp(SDOperand(N, ResNo), P.first, P.second);
       return;
     }
   }
-  
+
   switch (N->getOpcode()) {
   default:
 #ifndef NDEBUG
