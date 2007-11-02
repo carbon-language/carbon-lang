@@ -1057,6 +1057,8 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
   StmtResult CatchStmts;
   StmtResult FinallyStmt;
   StmtResult TryBody = ParseCompoundStatementBody();
+  if (TryBody.isInvalid)
+    TryBody = Actions.ActOnNullStmt(Tok.getLocation());
   while (Tok.is(tok::at)) {
     SourceLocation AtCatchFinallyLoc = ConsumeToken();
     if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_catch) {
@@ -1103,9 +1105,12 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       break;
     }
   }
-  if (!catch_or_finally_seen)
+  if (!catch_or_finally_seen) {
     Diag(atLoc, diag::err_missing_catch_finally);
-  return true;
+    return true;
+  }
+  return Actions.ActOnObjcAtTryStmt(atLoc, TryBody.Val, CatchStmts.Val, 
+                                    FinallyStmt.Val);
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'

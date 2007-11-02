@@ -300,6 +300,11 @@ public:
     return 0;
   }
   
+  virtual StmtResult ActOnObjcAtTryStmt(SourceLocation AtLoc, 
+                                        StmtTy *Try, 
+                                        StmtTy *Catch, StmtTy *Finally) {
+    return 0;
+  }
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
   //===--------------------------------------------------------------------===//

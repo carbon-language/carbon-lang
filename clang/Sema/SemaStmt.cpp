@@ -665,3 +665,16 @@ Sema::ActOnObjcAtFinallyStmt(SourceLocation AtLoc, StmtTy *Body) {
                                                 static_cast<Stmt*>(Body));
   return FS;
 }
+
+Action::StmtResult
+Sema::ActOnObjcAtTryStmt(SourceLocation AtLoc, 
+                         StmtTy *Try, StmtTy *Catch, StmtTy *Finally) {
+  ObjcAtTryStmt *TS = new ObjcAtTryStmt(AtLoc, static_cast<Stmt*>(Try), 
+                                        static_cast<Stmt*>(Catch), 
+                                        static_cast<Stmt*>(Finally));
+  return TS;
+}
+
+
+
+

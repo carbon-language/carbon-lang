@@ -736,8 +736,8 @@ private:
       
 public:
   ObjcAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt, 
-                ObjcAtCatchStmt *atCatchStmt, 
-                ObjcAtFinallyStmt *atFinallyStmt)
+                Stmt *atCatchStmt, 
+                Stmt *atFinallyStmt)
   : Stmt(ObjcAtTryStmtClass), AtTryLoc(atTryLoc) {
       SubStmts[TRY] = atTryStmt;
       SubStmts[CATCH] = atCatchStmt;

@@ -346,6 +346,10 @@ public:
   virtual StmtResult ActOnObjcAtFinallyStmt(SourceLocation AtLoc, 
                                             StmtTy *Body);
   
+  virtual StmtResult ActOnObjcAtTryStmt(SourceLocation AtLoc, 
+                                        StmtTy *Try, 
+                                        StmtTy *Catch, StmtTy *Finally);
+  
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
 
