@@ -260,7 +260,7 @@ public:
     return getModRefInfo(CallSite(I), P, Size);
   }
   ModRefResult getModRefInfo(VAArgInst* I, Value* P, unsigned Size) {
-    return AliasAnalysis::Mod;
+    return AliasAnalysis::ModRef;
   }
   ModRefResult getModRefInfo(Instruction *I, Value *P, unsigned Size) {
     switch (I->getOpcode()) {
