@@ -1915,7 +1915,7 @@ unsigned SelectionDAGLowering::Clusterify(CaseVector& Cases,
                          SI.getSuccessorValue(i),
                          SMBB));
   }
-  sort(Cases.begin(), Cases.end(), CaseCmp());
+  std::sort(Cases.begin(), Cases.end(), CaseCmp());
 
   // Merge case into clusters
   if (Cases.size()>=2)
