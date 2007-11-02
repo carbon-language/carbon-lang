@@ -835,6 +835,19 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
   return false;
 }
 
+/// findSuperReg - Find the SubReg's super-register of given register class
+/// where its SubIdx sub-register is SubReg.
+static unsigned findSuperReg(const TargetRegisterClass *RC, unsigned SubReg,
+                             unsigned SubIdx, const MRegisterInfo *MRI) {
+  for (TargetRegisterClass::iterator I = RC->begin(), E = RC->end();
+       I != E; ++I) {
+    unsigned Reg = *I;
+    if (MRI->getSubReg(Reg, SubIdx) == SubReg)
+      return Reg;
+  }
+  return 0;
+}
+
 /// rewriteMBB - Keep track of which spills are available even after the
 /// register allocator is done with them.  If possible, avoid reloading vregs.
 void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
@@ -1056,7 +1069,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
                << " instead of reloading into same physreg.\n";
           unsigned RReg = isSubReg ? MRI->getSubReg(PhysReg, SubIdx) : PhysReg;
           MI.getOperand(i).setReg(RReg);
-          ReusedOperands.markClobbered(PhysReg);
+          ReusedOperands.markClobbered(RReg);
           ++NumReused;
           continue;
         }
@@ -1295,6 +1308,13 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         continue;
       }
 
+      unsigned SubIdx = 0;
+      bool isSubReg = RegMap->isSubRegister(VirtReg);
+      if (isSubReg) {
+        SubIdx = RegMap->getSubRegisterIndex(VirtReg);
+        VirtReg = RegMap->getSuperRegister(VirtReg);
+      }
+
       bool DoReMat = VRM.isReMaterialized(VirtReg);
       if (DoReMat)
         ReMatDefs.insert(&MI);
@@ -1307,9 +1327,15 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       // the store from the correct physical register.
       unsigned PhysReg;
       int TiedOp = MI.getInstrDescriptor()->findTiedToSrcOperand(i);
-      if (TiedOp != -1)
+      if (TiedOp != -1) {
         PhysReg = MI.getOperand(TiedOp).getReg();
-      else {
+        if (isSubReg) {
+          unsigned SuperReg = findSuperReg(RC, PhysReg, SubIdx, MRI);
+          assert(SuperReg && MRI->getSubReg(SuperReg, SubIdx) == PhysReg &&
+                 "Can't find corresponding super-register!");
+          PhysReg = SuperReg;
+        }
+      } else {
         PhysReg = VRM.getPhys(VirtReg);
         if (ReusedOperands.isClobbered(PhysReg)) {
           // Another def has taken the assigned physreg. It must have been a
@@ -1320,8 +1346,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       }
 
       MF.setPhysRegUsed(PhysReg);
-      ReusedOperands.markClobbered(PhysReg);
-      MI.getOperand(i).setReg(PhysReg);
+      unsigned RReg = isSubReg ? MRI->getSubReg(PhysReg, SubIdx) : PhysReg;
+      ReusedOperands.markClobbered(RReg);
+      MI.getOperand(i).setReg(RReg);
+
       if (!MO.isDead()) {
         MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
         DOUT << "Store:\t" << *next(MII);
