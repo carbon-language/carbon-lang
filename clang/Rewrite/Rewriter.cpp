@@ -201,6 +201,16 @@ RewriteBuffer &Rewriter::getEditBuffer(unsigned FileID) {
   return I->second;
 }
 
+/// InsertText - Insert the specified string at the specified location in the
+/// original buffer.  This method is only valid on rewritable source
+/// locations.
+void Rewriter::InsertText(SourceLocation Loc,
+                          const char *StrData, unsigned StrLen) {
+  unsigned FileID;
+  unsigned StartOffs = getLocationOffsetAndFileID(Loc, FileID);
+  getEditBuffer(FileID).InsertText(StartOffs, StrData, StrLen);
+}
+
 /// RemoveText - Remove the specified text region.  This method is only valid
 /// on a rewritable source location.
 void Rewriter::RemoveText(SourceLocation Start, unsigned Length) {
