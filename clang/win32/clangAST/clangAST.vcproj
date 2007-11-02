@@ -197,6 +197,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\AST\StmtSerialization.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\AST\StmtViz.cpp"
 				>
 			</File>
