@@ -1466,7 +1466,7 @@ bool X86TargetLowering::IsEligibleForTailCallOptimization(SDOperand Call,
   if ((NumOps == 1 && 
        (Ret.getOperand(0) == SDOperand(Call.Val,1) ||
         Ret.getOperand(0) == SDOperand(Call.Val,0))) ||
-      (NumOps == 2 &&
+      (NumOps > 1 &&
        Ret.getOperand(0) == SDOperand(Call.Val,Call.Val->getNumValues()-1) &&
        Ret.getOperand(1) == SDOperand(Call.Val,0))) {
     MachineFunction &MF = DAG.getMachineFunction();
