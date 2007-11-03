@@ -686,9 +686,12 @@ public:
       }
     }
   
-  Stmt *getCatchBody() const { return SubExprs[BODY]; }
-  Stmt *getNextCatchStmt() const { return NextAtCatchStmt; }
-  Stmt *getCatchParamStmt() const { return SubExprs[SELECTOR]; }
+  const Stmt *getCatchBody() const { return SubExprs[BODY]; }
+  Stmt *getCatchBody() { return SubExprs[BODY]; }
+  const Stmt *getNextCatchStmt() const { return NextAtCatchStmt; }
+  Stmt *getNextCatchStmt() { return NextAtCatchStmt; }
+  const Stmt *getCatchParamStmt() const { return SubExprs[SELECTOR]; }
+  Stmt *getCatchParamStmt() { return SubExprs[SELECTOR]; }
   
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtCatchLoc, SubExprs[BODY]->getLocEnd()); 
