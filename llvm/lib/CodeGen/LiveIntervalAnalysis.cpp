@@ -442,6 +442,39 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
   return added;
 }
 
+/// conflictsWithPhysRegDef - Returns true if the specified register
+/// is defined during the duration of the specified interval.
+bool LiveIntervals::conflictsWithPhysRegDef(const LiveInterval &li,
+                                            VirtRegMap &vrm, unsigned reg) {
+  for (LiveInterval::Ranges::const_iterator
+         I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
+    for (unsigned index = getBaseIndex(I->start),
+           end = getBaseIndex(I->end-1) + InstrSlots::NUM; index != end;
+         index += InstrSlots::NUM) {
+      // skip deleted instructions
+      while (index != end && !getInstructionFromIndex(index))
+        index += InstrSlots::NUM;
+      if (index == end) break;
+
+      MachineInstr *MI = getInstructionFromIndex(index);
+      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+        MachineOperand& mop = MI->getOperand(i);
+        if (!mop.isRegister() || !mop.isDef())
+          continue;
+        unsigned PhysReg = mop.getReg();
+        if (PhysReg == 0)
+          continue;
+        if (MRegisterInfo::isVirtualRegister(PhysReg))
+          PhysReg = vrm.getPhys(PhysReg);
+        if (mri_->regsOverlap(PhysReg, reg))
+          return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 void LiveIntervals::printRegName(unsigned reg) const {
   if (MRegisterInfo::isPhysicalRegister(reg))
     cerr << mri_->getName(reg);

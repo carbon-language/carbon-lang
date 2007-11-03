@@ -162,6 +162,11 @@ namespace llvm {
       return i2miMap_[index];
     }
 
+    /// conflictsWithPhysRegDef - Returns true if the specified register
+    /// is defined during the duration of the specified interval.
+    bool conflictsWithPhysRegDef(const LiveInterval &li, VirtRegMap &vrm,
+                                 unsigned reg);
+
     /// findLiveInMBBs - Given a live range, if the value of the range
     /// is live in any MBB returns true as well as the list of basic blocks
     /// where the value is live in.

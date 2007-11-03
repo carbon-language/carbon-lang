@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
@@ -38,6 +39,7 @@ using namespace llvm;
 
 STATISTIC(NumIters     , "Number of iterations performed");
 STATISTIC(NumBacktracks, "Number of times we had to backtrack");
+STATISTIC(NumCoalesce,   "Number of copies coalesced");
 
 static RegisterRegAlloc
 linearscanRegAlloc("linearscan", "  linear scan register allocator",
@@ -60,6 +62,9 @@ namespace {
     MachineFunction* mf_;
     const TargetMachine* tm_;
     const MRegisterInfo* mri_;
+    const TargetInstrInfo* tii_;
+    SSARegMap *regmap_;
+    BitVector allocatableRegs_;
     LiveIntervals* li_;
 
     /// handled_ - Intervals are added to the handled_ set in the order of their
@@ -121,6 +126,15 @@ namespace {
     /// assignRegOrStackSlotAtInterval - assign a register if one
     /// is available, or spill.
     void assignRegOrStackSlotAtInterval(LiveInterval* cur);
+
+    /// attemptTrivialCoalescing - If a simple interval is defined by a copy,
+    /// try allocate the definition the same register as the source register
+    /// if the register is not defined during live time of the interval. This
+    /// eliminate a copy. This is used to coalesce copies which were not
+    /// coalesced away before allocation either due to dest and src being in
+    /// different register classes or because the coalescer was overly
+    /// conservative.
+    unsigned attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg);
 
     ///
     /// register handling helpers
@@ -187,10 +201,54 @@ void RALinScan::ComputeRelatedRegClasses() {
         RelatedRegClasses.unionSets(I->second, OneClassForEachPhysReg[*AS]);
 }
 
+/// attemptTrivialCoalescing - If a simple interval is defined by a copy,
+/// try allocate the definition the same register as the source register
+/// if the register is not defined during live time of the interval. This
+/// eliminate a copy. This is used to coalesce copies which were not
+/// coalesced away before allocation either due to dest and src being in
+/// different register classes or because the coalescer was overly
+/// conservative.
+unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
+  if (cur.preference && cur.preference == Reg || !cur.containsOneValue())
+    return Reg;
+
+  VNInfo *vni = cur.getValNumInfo(0);
+  if (!vni->def || vni->def == ~1U || vni->def == ~0U)
+    return Reg;
+  MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
+  unsigned SrcReg, DstReg;
+  if (!CopyMI || !tii_->isMoveInstr(*CopyMI, SrcReg, DstReg))
+    return Reg;
+  if (MRegisterInfo::isVirtualRegister(SrcReg))
+    if (!vrm_->isAssignedReg(SrcReg))
+      return Reg;
+    else
+      SrcReg = vrm_->getPhys(SrcReg);
+  if (Reg == SrcReg)
+    return Reg;
+
+  const TargetRegisterClass *RC = regmap_->getRegClass(cur.reg);
+  if (!RC->contains(SrcReg))
+    return Reg;
+
+  // Try to coalesce.
+  if (!li_->conflictsWithPhysRegDef(cur, *vrm_, SrcReg)) {
+    vrm_->clearVirt(cur.reg);
+    vrm_->assignVirt2Phys(cur.reg, SrcReg);
+    ++NumCoalesce;
+    return SrcReg;
+  }
+
+  return Reg;
+}
+
 bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   mf_ = &fn;
   tm_ = &fn.getTarget();
   mri_ = tm_->getRegisterInfo();
+  tii_ = tm_->getInstrInfo();
+  regmap_ = mf_->getSSARegMap();
+  allocatableRegs_ = mri_->getAllocatableSet(fn);
   li_ = &getAnalysis<LiveIntervals>();
 
   // We don't run the coalescer here because we have no reason to
@@ -292,12 +350,12 @@ void RALinScan::linearScan()
   MachineFunction::iterator EntryMBB = mf_->begin();
   SmallVector<MachineBasicBlock*, 8> LiveInMBBs;
   for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i) {
-    const LiveInterval &cur = i->second;
+    LiveInterval &cur = i->second;
     unsigned Reg = 0;
     if (MRegisterInfo::isPhysicalRegister(cur.reg))
       Reg = i->second.reg;
     else if (vrm_->isAssignedReg(cur.reg))
-      Reg = vrm_->getPhys(cur.reg);
+      Reg = attemptTrivialCoalescing(cur, vrm_->getPhys(cur.reg));
     if (!Reg)
       continue;
     for (LiveInterval::Ranges::const_iterator I = cur.begin(), E = cur.end();
@@ -441,9 +499,31 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   std::vector<std::pair<unsigned, float> > SpillWeightsToAdd;
   unsigned StartPosition = cur->beginNumber();
-  const TargetRegisterClass *RC = mf_->getSSARegMap()->getRegClass(cur->reg);
+  const TargetRegisterClass *RC = regmap_->getRegClass(cur->reg);
   const TargetRegisterClass *RCLeader = RelatedRegClasses.getLeaderValue(RC);
-      
+
+  // If this live interval is defined by a move instruction and its source is
+  // assigned a physical register that is compatible with the target register
+  // class, then we should try to assign it the same register.
+  // This can happen when the move is from a larger register class to a smaller
+  // one, e.g. X86::mov32to32_. These move instructions are not coalescable.
+  if (!cur->preference && cur->containsOneValue()) {
+    VNInfo *vni = cur->getValNumInfo(0);
+    if (vni->def && vni->def != ~1U && vni->def != ~0U) {
+      MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
+      unsigned SrcReg, DstReg;
+      if (tii_->isMoveInstr(*CopyMI, SrcReg, DstReg)) {
+        unsigned Reg = 0;
+        if (MRegisterInfo::isPhysicalRegister(SrcReg))
+          Reg = SrcReg;
+        else if (vrm_->isAssignedReg(SrcReg))
+          Reg = vrm_->getPhys(SrcReg);
+        if (Reg && allocatableRegs_[Reg] && RC->contains(Reg))
+          cur->preference = Reg;
+      }
+    }
+  }
+
   // for every interval in inactive we overlap with, mark the
   // register as not free and update spill weights.
   for (IntervalPtrs::const_iterator i = inactive_.begin(),
@@ -451,7 +531,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     unsigned Reg = i->first->reg;
     assert(MRegisterInfo::isVirtualRegister(Reg) &&
            "Can only allocate virtual registers!");
-    const TargetRegisterClass *RegRC = mf_->getSSARegMap()->getRegClass(Reg);
+    const TargetRegisterClass *RegRC = regmap_->getRegClass(Reg);
     // If this is not in a related reg class to the register we're allocating, 
     // don't check it.
     if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader &&
@@ -472,7 +552,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     // We got a register.  However, if it's in the fixed_ list, we might
     // conflict with it.  Check to see if we conflict with it or any of its
     // aliases.
-    std::set<unsigned> RegAliases;
+    SmallSet<unsigned, 8> RegAliases;
     for (const unsigned *AS = mri_->getAliasSet(physReg); *AS; ++AS)
       RegAliases.insert(*AS);
     
@@ -642,7 +722,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   unsigned earliestStart = cur->beginNumber();
 
   // set of spilled vregs (used later to rollback properly)
-  std::set<unsigned> spilled;
+  SmallSet<unsigned, 32> spilled;
 
   // spill live intervals of virtual regs mapped to the physical register we
   // want to clear (and its aliases).  We only spill those that overlap with the
@@ -744,7 +824,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   std::vector<unsigned> inactiveCounts(mri_->getNumRegs(), 0);
   unsigned MaxInactiveCount = 0;
   
-  const TargetRegisterClass *RC = mf_->getSSARegMap()->getRegClass(cur->reg);
+  const TargetRegisterClass *RC = regmap_->getRegClass(cur->reg);
   const TargetRegisterClass *RCLeader = RelatedRegClasses.getLeaderValue(RC);
  
   for (IntervalPtrs::iterator i = inactive_.begin(), e = inactive_.end();
@@ -755,7 +835,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
 
     // If this is not in a related reg class to the register we're allocating, 
     // don't check it.
-    const TargetRegisterClass *RegRC = mf_->getSSARegMap()->getRegClass(reg);
+    const TargetRegisterClass *RegRC = regmap_->getRegClass(reg);
     if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader) {
       reg = vrm_->getPhys(reg);
       ++inactiveCounts[reg];
