@@ -718,7 +718,8 @@ class ObjcAtFinallyStmt : public Stmt {
     : Stmt(ObjcAtFinallyStmtClass), 
       AtFinallyStmt(atFinallyStmt), AtFinallyLoc(atFinallyLoc) {}
     
-    Stmt *getFinallyBody () const { return AtFinallyStmt; }
+    const Stmt *getFinallyBody () const { return AtFinallyStmt; }
+    Stmt *getFinallyBody () { return AtFinallyStmt; }
   
     virtual SourceRange getSourceRange() const { 
       return SourceRange(AtFinallyLoc, AtFinallyStmt->getLocEnd()); 
@@ -754,9 +755,12 @@ public:
       SubStmts[END_TRY] = NULL;
     }
     
-  Stmt *getTryBody() const { return SubStmts[TRY]; }
-  Stmt *getCatchStmts() const { return SubStmts[CATCH]; }
-  Stmt *getFinallyStmt() const { return SubStmts[FINALLY]; }
+  const Stmt *getTryBody() const { return SubStmts[TRY]; }
+  Stmt *getTryBody() { return SubStmts[TRY]; }
+  const Stmt *getCatchStmts() const { return SubStmts[CATCH]; }
+  Stmt *getCatchStmts() { return SubStmts[CATCH]; }
+  const Stmt *getFinallyStmt() const { return SubStmts[FINALLY]; }
+  Stmt *getFinallyStmt() { return SubStmts[FINALLY]; }
   
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtTryLoc, SubStmts[TRY]->getLocEnd()); 
