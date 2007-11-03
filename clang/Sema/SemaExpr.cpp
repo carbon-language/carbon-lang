@@ -2074,8 +2074,8 @@ Sema::ExprResult Sema::ActOnClassMessage(
         return true;
     }
   }
-  return new ObjCMessageExpr(receiverName, Sel, returnType, lbrac, rbrac,
-                             ArgExprs);
+  return new ObjCMessageExpr(receiverName, Sel, returnType, Method,
+                             lbrac, rbrac, ArgExprs);
 }
 
 // ActOnInstanceMessage - used for both unary and keyword messages.
@@ -2091,9 +2091,10 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   Expr *RExpr = static_cast<Expr *>(receiver);
   QualType receiverType = RExpr->getType();
   QualType returnType;
+  ObjcMethodDecl *Method;
   
   if (receiverType == Context.getObjcIdType()) {
-    ObjcMethodDecl *Method = InstanceMethodPool[Sel].Method;
+    Method = InstanceMethodPool[Sel].Method;
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
@@ -2119,7 +2120,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     // FIXME: consider using InstanceMethodPool, since it will be faster
     // than the following method (which can do *many* linear searches). The
     // idea is to add class info to InstanceMethodPool...
-    ObjcMethodDecl *Method = ClassDecl->lookupInstanceMethod(Sel);
+    Method = ClassDecl->lookupInstanceMethod(Sel);
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
@@ -2131,5 +2132,6 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
           return true;
     }
   }
-  return new ObjCMessageExpr(RExpr, Sel, returnType, lbrac, rbrac, ArgExprs);
+  return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
+                             ArgExprs);
 }

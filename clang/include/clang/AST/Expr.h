@@ -1181,6 +1181,11 @@ class ObjCMessageExpr : public Expr {
   // A unigue name for this message.
   Selector SelName;
   
+  // A method prototype for this message (optional). 
+  // FIXME: Since method decls contain the selector, and most messages have a
+  // prototype, consider devising a scheme for unifying SelName/MethodProto.
+  ObjcMethodDecl *MethodProto;
+  
   IdentifierInfo *ClassName; // optional - 0 for instance messages.
   
   SourceLocation LBracloc, RBracloc;
@@ -1188,11 +1193,13 @@ public:
   // constructor for class messages. 
   // FIXME: clsName should be typed to ObjCInterfaceType
   ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
-                  QualType retType, SourceLocation LBrac, SourceLocation RBrac,
+                  QualType retType, ObjcMethodDecl *methDecl,
+                  SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs);
   // constructor for instance messages.
   ObjCMessageExpr(Expr *receiver, Selector selInfo,
-                  QualType retType, SourceLocation LBrac, SourceLocation RBrac,
+                  QualType retType, ObjcMethodDecl *methDecl,
+                  SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs);
   ~ObjCMessageExpr() {
     delete [] SubExprs;
@@ -1203,6 +1210,9 @@ public:
   
   const Selector &getSelector() const { return SelName; }
   Selector &getSelector() { return SelName; }
+
+  const ObjcMethodDecl *getMethodDecl() const { return MethodProto; }
+  ObjcMethodDecl *getMethodDecl() { return MethodProto; }
   
   const IdentifierInfo *getClassName() const { return ClassName; }
   IdentifierInfo *getClassName() { return ClassName; }
