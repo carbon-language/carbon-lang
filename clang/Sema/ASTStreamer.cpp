@@ -89,9 +89,10 @@ void ASTStreamer::PrintStats() const {
 //===----------------------------------------------------------------------===//
 
 /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
-/// the file is parsed.
+/// the file is parsed.  This takes ownership of the ASTConsumer and
+/// ultimately deletes it.
 void clang::ParseAST(Preprocessor &PP, unsigned MainFileID, 
-                     ASTConsumer &Consumer, bool PrintStats) {
+                     ASTConsumer *Consumer, bool PrintStats) {
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
     Decl::CollectingStats(true);
@@ -103,22 +104,22 @@ void clang::ParseAST(Preprocessor &PP, unsigned MainFileID,
   
   ASTStreamer Streamer(PP, Context, MainFileID);
   
-  Consumer.Initialize(Context, MainFileID);
+  Consumer->Initialize(Context, MainFileID);
   
   while (Decl *D = Streamer.ReadTopLevelDecl())
-    Consumer.HandleTopLevelDecl(D);
+    Consumer->HandleTopLevelDecl(D);
 
-  Consumer.HandleObjcMetaDataEmission();
-  
   if (PrintStats) {
     fprintf(stderr, "\nSTATISTICS:\n");
     Streamer.PrintStats();
     Context.PrintStats();
     Decl::PrintStats();
     Stmt::PrintStats();
-    Consumer.PrintStats();
+    Consumer->PrintStats();
     
     Decl::CollectingStats(false);
     Stmt::CollectingStats(false);
   }
+  
+  delete Consumer;
 }

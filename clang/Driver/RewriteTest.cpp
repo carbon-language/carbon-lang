@@ -79,7 +79,6 @@ namespace {
     void SynthGetClassFunctionDecl();
     
     // Metadata emission.
-    void HandleObjcMetaDataEmission();
     void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
                                   std::string &Result);
     
@@ -162,6 +161,12 @@ RewriteTest::~RewriteTest() {
   // Get the top-level buffer that this corresponds to.
   RewriteTabs();
   
+  // Rewrite Objective-c meta data*
+  std::string ResultStr;
+  WriteObjcMetaData(ResultStr);
+  // For now just print the string out.
+  printf("%s", ResultStr.c_str());
+  
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
   // we are done.
   if (const RewriteBuffer *RewriteBuf = 
@@ -173,16 +178,6 @@ RewriteTest::~RewriteTest() {
     printf("No changes\n");
   }
 
-}
-
-/// HandleObjcMetaDataEmission - main routine to generate objective-c's 
-/// metadata.
-void RewriteTest::HandleObjcMetaDataEmission() {
-  // Rewrite Objective-c meta data*
-  std::string ResultStr;
-  WriteObjcMetaData(ResultStr);
-  // For now just print the string out.
-  printf("%s", ResultStr.c_str());
 }
 
 //===----------------------------------------------------------------------===//

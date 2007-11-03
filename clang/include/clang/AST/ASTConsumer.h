@@ -34,11 +34,6 @@ public:
   virtual void HandleTopLevelDecl(Decl *D) {
   }
   
-  /// HandleObjcMetaDataEmission - top level routine for objective-c
-  /// metadata emission.
-  virtual void HandleObjcMetaDataEmission() {
-  }
-  
   /// PrintStats - If desired, print any statistics.
   virtual void PrintStats() {
   }

@@ -821,11 +821,10 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   
   if (Consumer) {
     if (VerifyDiagnostics)
-      exit (CheckASTConsumer(PP, MainFileID, Consumer));
-    else
-      ParseAST(PP, MainFileID, *Consumer, Stats);
-
-    delete Consumer;
+      exit(CheckASTConsumer(PP, MainFileID, Consumer));
+    
+    // This deletes Consumer.
+    ParseAST(PP, MainFileID, Consumer, Stats);
   }
   
   if (Stats) {
