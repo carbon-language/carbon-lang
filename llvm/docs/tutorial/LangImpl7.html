@@ -1,0 +1,298 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+<head>
+  <title>Kaleidoscope: Extending the Language: Mutable Variables / SSA
+         construction</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="author" content="Chris Lattner">
+  <link rel="stylesheet" href="../llvm.css" type="text/css">
+</head>
+
+<body>
+
+<div class="doc_title">Kaleidoscope: Extending the Language: Mutable Variables</div>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="intro">Part 7 Introduction</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Welcome to Part 7 of the "<a href="index.html">Implementing a language with
+LLVM</a>" tutorial.  In parts 1 through 6, we've built a very respectable,
+albeit simple, <a 
+href="http://en.wikipedia.org/wiki/Functional_programming">functional
+programming language</a>.  In our journey, we learned some parsing techniques,
+how to build and represent an AST, how to build LLVM IR, and how to optimize
+the resultant code and JIT compile it.</p>
+
+<p>While Kaleidoscope is interesting as a functional language, this makes it 
+"too easy" to generate LLVM IR for it.  In particular, a functional language
+makes it very easy to build LLVM IR directly in <a 
+href="http://en.wikipedia.org/wiki/Static_single_assignment_form">SSA form</a>.
+Since LLVM requires that the input code be in SSA form, this is a very nice
+property and it is often unclear to newcomers how to generate code for an
+imperative language with mutable variables.</p>
+
+<p>The short (and happy) summary of this chapter is that there is no need for
+your front-end to build SSA form: LLVM provides highly tuned and well tested
+support for this, though the way it works is a bit unexpected for some.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="why">Why is this a hard problem?</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+To understand why mutable variables cause complexities in SSA construction, 
+consider this extremely simple C example:
+</p>
+
+<div class="doc_code">
+<pre>
+int G, H;
+int test(_Bool Condition) {
+  int X;
+  if (Condition)
+    X = G;
+  else
+    X = H;
+  return X;
+}
+</pre>
+</div>
+
+<p>In this case, we have the variable "X", whose value depends on the path 
+executed in the program.  Because there are two different possible values for X
+before the return instruction, a PHI node is inserted to merge the two values.
+The LLVM IR that we want for this example looks like this:</p>
+
+<div class="doc_code">
+<pre>
+@G = weak global i32 0   ; type of @G is i32*
+@H = weak global i32 0   ; type of @H is i32*
+
+define i32 @test(i1 %Condition) {
+entry:
+	br i1 %Condition, label %cond_true, label %cond_false
+
+cond_true:
+	%X.0 = load i32* @G
+	br label %cond_next
+
+cond_false:
+	%X.1 = load i32* @H
+	br label %cond_next
+
+cond_next:
+	%X.2 = phi i32 [ %X.1, %cond_false ], [ %X.0, %cond_true ]
+	ret i32 %X.2
+}
+</pre>
+</div>
+
+<p>In this example, the loads from the G and H global variables are explicit in
+the LLVM IR, and they live in the then/else branches of the if statement
+(cond_true/cond_false).  In order to merge the incoming values, the X.2 phi node
+in the cond_next block selects the right value to use based on where control 
+flow is coming from: if control flow comes from the cond_false block, X.2 gets
+the value of X.1.  Alternatively, if control flow comes from cond_tree, it gets
+the value of X.0.  The intent of this chapter is not to explain the details of
+SSA form.  For more information, see one of the many <a 
+href="http://en.wikipedia.org/wiki/Static_single_assignment_form">online 
+references</a>.</p>
+
+<p>The question for this article is "who places phi nodes when lowering 
+assignments to mutable variables?".  The issue here is that LLVM 
+<em>requires</em> that its IR be in SSA form: there is no "non-ssa" mode for it.
+However, SSA construction requires non-trivial algorithms and data structures,
+so it is inconvenient and wasteful for every front-end to have to reproduce this
+logic.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="memory">Memory in LLVM</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>The 'trick' here is that while LLVM does require all register values to be
+in SSA form, it does not require (or permit) memory objects to be in SSA form.
+In the example above, note that the loads from G and H are direct accesses to
+G and H: they are not renamed or versioned.  This differs from some other
+compiler systems, which does try to version memory objects.  In LLVM, instead of
+encoding dataflow analysis of memory into the LLVM IR, it is handled with <a 
+href="../WritingAnLLVMPass.html">Analysis Passes</a> which are computed on
+demand.</p>
+
+<p>
+With this in mind, the high-level idea is that we want to make a stack variable
+(which lives in memory, because it is on the stack) for each mutable object in
+a function.  To take advantage of this trick, we need to talk about how LLVM
+represents stack variables.
+</p>
+
+<p>In LLVM, all memory accesses are explicit with load/store instructions, and
+it is carefully designed to not have (or need) an "address-of" operator.  Notice
+how the type of the @G/@H global variables is actually "i32*" even though the 
+variable is defined as "i32".  What this means is that @G defines <em>space</em>
+for an i32 in the global data area, but its <em>name</em> actually refers to the
+address for that space.  Stack variables work the same way, but instead of being
+declared with global variable definitions, they are declared with the 
+<a href="../LangRef.html#i_alloca">LLVM alloca instruction</a>:</p>
+
+<div class="doc_code">
+<pre>
+define i32 @test(i1 %Condition) {
+entry:
+	%X = alloca i32           ; type of %X is i32*.
+	...
+	%tmp = load i32* %X       ; load the stack value %X from the stack.
+	%tmp2 = add i32 %tmp, 1   ; increment it
+	store i32 %tmp2, i32* %X  ; store it back
+	...
+</pre>
+</div>
+
+<p>This code shows an example of how you can declare and manipulate a stack
+variable in the LLVM IR.  Stack memory allocated with the alloca instruction is
+fully general: you can pass the address of the stack slot to functions, you can
+store it in other variables, etc.  In our example above, we could rewrite the
+example to use the alloca technique to avoid using a PHI node:</p>
+
+<div class="doc_code">
+<pre>
+@G = weak global i32 0   ; type of @G is i32*
+@H = weak global i32 0   ; type of @H is i32*
+
+define i32 @test(i1 %Condition) {
+entry:
+	%X = alloca i32           ; type of %X is i32*.
+	br i1 %Condition, label %cond_true, label %cond_false
+
+cond_true:
+	%X.0 = load i32* @G
+        store i32 %X.0, i32* %X   ; Update X
+	br label %cond_next
+
+cond_false:
+	%X.1 = load i32* @H
+        store i32 %X.1, i32* %X   ; Update X
+	br label %cond_next
+
+cond_next:
+	%X.2 = load i32* %X       ; Read X
+	ret i32 %X.2
+}
+</pre>
+</div>
+
+<p>With this, we have discovered a way to handle arbitrary mutable variables
+without the need to create Phi nodes at all:</p>
+
+<ol>
+<li>Each mutable variable becomes a stack allocation.</li>
+<li>Each read of the variable becomes a load from the stack.</li>
+<li>Each update of the variable becomes a store to the stack.</li>
+<li>Taking the address of a variable just uses the stack address directly.</li>
+</ol>
+
+<p>While this solution has solved our immediate problem, it introduced another
+one: we have now apparently introduced a lot of stack traffic for very simple
+and common operations, a major performance problem.  Fortunately for us, the
+LLVM optimizer has a highly-tuned optimization pass named "mem2reg" that handles
+this case, promoting allocas like this into SSA registers, inserting Phi nodes
+as appropriate.  If you run this example through the pass, for example, you'll
+get:</p>
+
+<div class="doc_code">
+<pre>
+$ <b>llvm-as &lt; example.ll | opt -mem2reg | llvm-dis</b>
+@G = weak global i32 0
+@H = weak global i32 0
+
+define i32 @test(i1 %Condition) {
+entry:
+	br i1 %Condition, label %cond_true, label %cond_false
+
+cond_true:
+	%X.0 = load i32* @G
+	br label %cond_next
+
+cond_false:
+	%X.1 = load i32* @H
+	br label %cond_next
+
+cond_next:
+	%X.01 = phi i32 [ %X.1, %cond_false ], [ %X.0, %cond_true ]
+	ret i32 %X.01
+}
+</pre>
+
+<p>The mem2reg pass is guaranteed to work, and 
+
+which cases.
+</p>
+
+<p>The final question you may be asking is: should I bother with this nonsense
+for my front-end?  Wouldn't it be better if I just did SSA construction
+directly, avoiding use of the mem2reg optimization pass?
+
+Proven, well tested, debug info, etc.
+</p>
+</div>
+
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="code">Full Code Listing</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>
+Here is the complete code listing for our running example, enhanced with the
+if/then/else and for expressions..  To build this example, use:
+</p>
+
+<div class="doc_code">
+<pre>
+   # Compile
+   g++ -g toy.cpp `llvm-config --cppflags --ldflags --libs core jit native` -O3 -o toy
+   # Run
+   ./toy
+</pre>
+</div>
+
+<p>Here is the code:</p>
+
+<div class="doc_code">
+<pre>
+</pre>
+</div>
+
+</div>
+
+<!-- *********************************************************************** -->
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
+
+  <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
+  <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date: 2007-10-17 11:05:13 -0700 (Wed, 17 Oct 2007) $
+</address>
+</body>
+</html>
