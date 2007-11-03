@@ -238,17 +238,63 @@ cond_next:
 	ret i32 %X.01
 }
 </pre>
+</div>
 
-<p>The mem2reg pass is guaranteed to work, and 
+<p>The mem2reg pass implements the standard "iterated dominator frontier"
+algorithm for constructing SSA form and has a number of optimizations that speed
+up very common degenerate cases.  mem2reg really is the answer for dealing with
+mutable variables, and we highly recommend that you depend on it.  Note that
+mem2reg only works on variables in certain circumstances:</p>
 
-which cases.
-</p>
+<ol>
+<li>mem2reg is alloca-driven: it looks for allocas and if it can handle them, it
+promotes them.  It does not apply to global variables or heap allocations.</li>
 
-<p>The final question you may be asking is: should I bother with this nonsense
-for my front-end?  Wouldn't it be better if I just did SSA construction
-directly, avoiding use of the mem2reg optimization pass?
+<li>mem2reg only looks for alloca instructions in the entry block of the
+function.  Being in the entry block guarantees that the alloca is only executed
+once, which makes analysis simpler.</li>
 
-Proven, well tested, debug info, etc.
+<li>mem2reg only promotes allocas whose uses are direct loads and stores.  If
+the address of the stack object is passed to a function, or if any funny pointer
+arithmetic is involved, the alloca will not be promoted.</li>
+
+<li>mem2reg only works on allocas of scalar values, and only if the array size
+of the allocation is 1 (or missing in the .ll file).  mem2reg is not capable of
+promoting structs or arrays to registers.  Note that the "scalarrepl" pass is
+more powerful and can promote structs, "unions", and arrays in many cases.</li>
+
+</ol>
+
+<p>
+All of these properties are easy to satisfy for most imperative languages, and
+we'll illustrated this below with Kaleidoscope.  The final question you may be
+asking is: should I bother with this nonsense for my front-end?  Wouldn't it be
+better if I just did SSA construction directly, avoiding use of the mem2reg
+optimization pass?  In short, we strongly recommend that use you this technique
+for building SSA form, unless there is an extremely good reason not to.  Using
+this technique is:</p>
+
+<ul>
+<li>Proven and well tested: llvm-gcc and clang both use this technique for local
+mutable variables.  As such, the most common clients of LLVM are using this to
+handle a bulk of their variables.  You can be sure that bugs are found fast and
+fixed early.</li>
+
+<li>Extremely Fast: mem2reg has a number of special cases that make it fast in
+common cases as well as fully general.  For example, it has fast-paths for
+variables that are only used in a single block, variables that only have one
+assignment point, good heuristics to avoid insertion of unneeded phi nodes, etc.
+</li>
+
+<li>Needed for debug info generation: <a href="../SourceLevelDebugging.html">
+Debug information in LLVM</a> relies on having the address of the variable
+exposed to attach debug info to it.  This technique dovetails very naturally 
+with this style of debug info.</li>
+</ul>
+
+<p>If nothing else, this makes it much easier to get your front-end up and 
+running, and is very simple to implement.  Lets extend Kaleidoscope with mutable
+variables now!
 </p>
 </div>
 
