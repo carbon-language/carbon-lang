@@ -178,8 +178,8 @@ public:
   /// defined in <stddef.h>. Pointer - pointer requires this (C99 6.5.6p9).
   QualType getPointerDiffType() const;
   
-  // getCFConstantStringType - Return the type used for constant CFStrings.
-  // CURRENTLY UNUSED (10/15/07). ObjCStringLiteral now uses the hook below.
+  // getCFConstantStringType - Return the C structure type used to represent
+  // constant CFStrings.
   QualType getCFConstantStringType(); 
   
   // This setter/getter represents the ObjC type for an NSConstantString.

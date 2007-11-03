@@ -612,7 +612,8 @@ public:
                                                
                                                
   //===----------------------- Obj-C Expressions --------------------------===//
-  virtual ExprResult ParseObjCStringLiteral(ExprTy *string) {
+  virtual ExprResult ParseObjCStringLiteral(SourceLocation AtLoc, 
+                                            ExprTy *string) {
     return 0;
   }
 

@@ -1155,7 +1155,7 @@ Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
   switch (Tok.getKind()) {
     case tok::string_literal:    // primary-expression: string-literal
     case tok::wide_string_literal:
-      return ParsePostfixExpressionSuffix(ParseObjCStringLiteral());
+      return ParsePostfixExpressionSuffix(ParseObjCStringLiteral(AtLoc));
     default:
       break;
   }
@@ -1285,12 +1285,12 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
                                       &KeyExprs[0]);
 }
 
-Parser::ExprResult Parser::ParseObjCStringLiteral() {
+Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
   ExprResult Res = ParseStringLiteralExpression();
 
   if (Res.isInvalid) return Res;
 
-  return Actions.ParseObjCStringLiteral(Res.Val);
+  return Actions.ParseObjCStringLiteral(AtLoc, Res.Val);
 }
 
 ///    objc-encode-expression:

@@ -1062,16 +1062,17 @@ public:
 /// i.e. @"foo".
 class ObjCStringLiteral : public Expr {
   StringLiteral *String;
+  SourceLocation AtLoc;
 public:
-  ObjCStringLiteral(StringLiteral *SL, QualType T)
-    : Expr(ObjCStringLiteralClass, T), String(SL) {}
+  ObjCStringLiteral(StringLiteral *SL, QualType T, SourceLocation L)
+    : Expr(ObjCStringLiteralClass, T), String(SL), AtLoc(L) {}
   
   StringLiteral* getString() { return String; }
 
   const StringLiteral* getString() const { return String; }
 
   virtual SourceRange getSourceRange() const { 
-    return String->getSourceRange();
+    return SourceRange(AtLoc, String->getLocEnd());
   }
   
   static bool classof(const Stmt *T) { 

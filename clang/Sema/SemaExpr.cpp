@@ -1929,7 +1929,8 @@ Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
 }
 
 // TODO: Move this to SemaObjC.cpp
-Sema::ExprResult Sema::ParseObjCStringLiteral(ExprTy *string) {
+Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation AtLoc, 
+                                              ExprTy *string) {
   StringLiteral* S = static_cast<StringLiteral *>(string);
   
   if (CheckBuiltinCFStringArgument(S))
@@ -1949,7 +1950,7 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(ExprTy *string) {
   }
   QualType t = Context.getObjcConstantStringInterface();
   t = Context.getPointerType(t);
-  return new ObjCStringLiteral(S, t);
+  return new ObjCStringLiteral(S, t, AtLoc);
 }
 
 Sema::ExprResult Sema::ParseObjCEncodeExpression(SourceLocation AtLoc,

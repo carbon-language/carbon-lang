@@ -39,6 +39,10 @@ namespace {
     FunctionDecl *GetClassFunctionDecl;
     FunctionDecl *SelGetUidFunctionDecl;
     
+    // ObjC string constant support.
+    FileVarDecl *ConstantStringClassReference;
+    RecordDecl *NSStringRecord;
+      
     static const int OBJC_ABI_VERSION =7 ;
   public:
     void Initialize(ASTContext &context, unsigned mainFileID) {
@@ -48,6 +52,8 @@ namespace {
       MsgSendFunctionDecl = 0;
       GetClassFunctionDecl = 0;
       SelGetUidFunctionDecl = 0;
+      ConstantStringClassReference = 0;
+      NSStringRecord = 0;
       Rewrite.setSourceMgr(Context->SourceMgr);
     }
 
@@ -73,12 +79,14 @@ namespace {
     Stmt *RewriteFunctionBody(Stmt *S);
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
+    Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
     void SynthMsgSendFunctionDecl();
     void SynthGetClassFunctionDecl();
     
     // Metadata emission.
+    void HandleObjcMetaDataEmission();
     void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
                                   std::string &Result);
     
@@ -125,6 +133,12 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
   // Look for built-in declarations that we need to refer during the rewrite.
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     RewriteFunctionDecl(FD);
+  } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
+    // declared in <Foundation/NSString.h>
+    if (strcmp(FVD->getName(), "_NSConstantStringClassReference") == 0) {
+      ConstantStringClassReference = FVD;
+      return;
+    }
   } else if (ObjcInterfaceDecl *MD = dyn_cast<ObjcInterfaceDecl>(D)) {
     RewriteInterfaceDecl(MD);
   } else if (ObjcCategoryDecl *CD = dyn_cast<ObjcCategoryDecl>(D)) {
@@ -161,23 +175,27 @@ RewriteTest::~RewriteTest() {
   // Get the top-level buffer that this corresponds to.
   RewriteTabs();
   
-  // Rewrite Objective-c meta data*
-  std::string ResultStr;
-  WriteObjcMetaData(ResultStr);
-  // For now just print the string out.
-  printf("%s", ResultStr.c_str());
-  
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
   // we are done.
   if (const RewriteBuffer *RewriteBuf = 
       Rewrite.getRewriteBufferFor(MainFileID)) {
-    printf("Changed:\n");
+    //printf("Changed:\n");
     std::string S(RewriteBuf->begin(), RewriteBuf->end());
     printf("%s\n", S.c_str());
   } else {
     printf("No changes\n");
   }
 
+}
+
+/// HandleObjcMetaDataEmission - main routine to generate objective-c's 
+/// metadata.
+void RewriteTest::HandleObjcMetaDataEmission() {
+  // Rewrite Objective-c meta data*
+  std::string ResultStr;
+  WriteObjcMetaData(ResultStr);
+  // For now just print the string out.
+  printf("%s", ResultStr.c_str());
 }
 
 //===----------------------------------------------------------------------===//
@@ -364,6 +382,9 @@ Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
   // Handle specific things.
   if (ObjCEncodeExpr *AtEncode = dyn_cast<ObjCEncodeExpr>(S))
     return RewriteAtEncode(AtEncode);
+	
+  if (ObjCStringLiteral *AtString = dyn_cast<ObjCStringLiteral>(S))
+    return RewriteObjCStringLiteral(AtString);
     
   if (ObjCMessageExpr *MessExpr = dyn_cast<ObjCMessageExpr>(S)) {
     // Before we rewrite it, put the original message expression in a comment.
@@ -492,7 +513,7 @@ void RewriteTest::RewriteObjcQualifiedInterfaceTypes(
 
 void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
   // declared in <objc/objc.h>
-  if (strcmp(FD->getName(), "sel_getUid") == 0) {
+  if (strcmp(FD->getName(), "sel_registerName") == 0) {
     SelGetUidFunctionDecl = FD;
     return;
   }
@@ -536,8 +557,52 @@ void RewriteTest::SynthGetClassFunctionDecl() {
                                           FunctionDecl::Extern, false, 0);
 }
 
+Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
+  assert(ConstantStringClassReference && "Can't find constant string reference");
+  llvm::SmallVector<Expr*, 4> InitExprs;
+  
+  // Synthesize "(Class)&_NSConstantStringClassReference"
+  DeclRefExpr *ClsRef = new DeclRefExpr(ConstantStringClassReference,
+                                        ConstantStringClassReference->getType(),
+                                        SourceLocation());
+  QualType expType = Context->getPointerType(ClsRef->getType());
+  UnaryOperator *Unop = new UnaryOperator(ClsRef, UnaryOperator::AddrOf,
+                                          expType, SourceLocation());
+  CastExpr *cast = new CastExpr(Context->getObjcClassType(), Unop, 
+                                SourceLocation());
+  InitExprs.push_back(cast); // set the 'isa'.
+  InitExprs.push_back(Exp->getString()); // set "char *bytes".
+  unsigned IntSize = static_cast<unsigned>(
+      Context->getTypeSize(Context->IntTy, Exp->getLocStart()));
+  llvm::APInt IntVal(IntSize, Exp->getString()->getByteLength());
+  IntegerLiteral *len = new IntegerLiteral(IntVal, Context->IntTy, 
+                                           Exp->getLocStart());
+  InitExprs.push_back(len); // set "int numBytes".
+  
+  // struct NSConstantString
+  QualType CFConstantStrType = Context->getCFConstantStringType();
+  // (struct NSConstantString) { <exprs from above> }
+  InitListExpr *ILE = new InitListExpr(SourceLocation(), 
+                                       &InitExprs[0], InitExprs.size(), 
+                                       SourceLocation());
+  CompoundLiteralExpr *StrRep = new CompoundLiteralExpr(CFConstantStrType, ILE);
+  // struct NSConstantString *
+  expType = Context->getPointerType(StrRep->getType());
+  Unop = new UnaryOperator(StrRep, UnaryOperator::AddrOf, expType, 
+                           SourceLocation());
+  // struct NSString *
+  if (!NSStringRecord)
+    NSStringRecord = new RecordDecl(Decl::Struct, SourceLocation(), 
+                                    &Context->Idents.get("NSString"), 0);
+  expType = Context->getPointerType(Context->getTagDeclType(NSStringRecord));
+  cast = new CastExpr(expType, Unop, SourceLocation());
+  Rewrite.ReplaceStmt(Exp, cast);
+  delete Exp;
+  return StrRep;
+}
+
 Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
-  assert(SelGetUidFunctionDecl && "Can't find sel_getUid() decl");
+  assert(SelGetUidFunctionDecl && "Can't find sel_registerName() decl");
   if (!MsgSendFunctionDecl)
     SynthMsgSendFunctionDecl();
   if (!GetClassFunctionDecl)
@@ -561,7 +626,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   } else // instance message.
     MsgExprs.push_back(Exp->getReceiver());
     
-  // Create a call to sel_getUid("selName"), it will be the 2nd argument.
+  // Create a call to sel_registerName("selName"), it will be the 2nd argument.
   llvm::SmallVector<Expr*, 8> SelExprs;
   QualType argType = Context->getPointerType(Context->CharTy);
   SelExprs.push_back(new StringLiteral(Exp->getSelector().getName().c_str(),
