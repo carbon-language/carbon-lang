@@ -209,7 +209,7 @@ void RALinScan::ComputeRelatedRegClasses() {
 /// different register classes or because the coalescer was overly
 /// conservative.
 unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
-  if (cur.preference && cur.preference == Reg || !cur.containsOneValue())
+  if ((cur.preference && cur.preference == Reg) || !cur.containsOneValue())
     return Reg;
 
   VNInfo *vni = cur.getValNumInfo(0);
@@ -791,6 +791,11 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       vrm_->clearVirt(i->reg);
       unhandled_.push(i);
     }
+
+    // It interval has a preference, it must be defined by a copy. Clear the
+    // preference now since the source interval allocation may have been undone
+    // as well.
+    i->preference = 0;
   }
 
   // Rewind the iterators in the active, inactive, and fixed lists back to the
