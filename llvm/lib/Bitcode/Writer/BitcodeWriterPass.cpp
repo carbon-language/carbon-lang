@@ -17,22 +17,21 @@ using namespace llvm;
 
 namespace {
   class WriteBitcodePass : public ModulePass {
-    std::ostream *Out;                 // ostream to print on
+    std::ostream &Out;                 // ostream to print on
   public:
     static char ID; // Pass identifcation, replacement for typeid
-    WriteBitcodePass() : ModulePass((intptr_t) &ID), Out(0) { } 
-    WriteBitcodePass(std::ostream &o) : ModulePass((intptr_t) &ID), Out(&o) {}
+    WriteBitcodePass(std::ostream &o) : ModulePass((intptr_t) &ID), Out(o) {}
+    
+    const char *getPassName() const { return "Bitcode Writer"; }
     
     bool runOnModule(Module &M) {
-      if (Out)
-        WriteBitcodeToFile(&M, *Out);
+      WriteBitcodeToFile(&M, Out);
       return false;
     }
   };
 }
 
 char WriteBitcodePass::ID = 0;
-static RegisterPass<WriteBitcodePass> X("emitbitcode", "Bitcode Writer");
 
 /// CreateBitcodeWriterPass - Create and return a pass that writes the module
 /// to the specified ostream.
