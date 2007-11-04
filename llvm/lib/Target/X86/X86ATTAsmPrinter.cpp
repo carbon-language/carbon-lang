@@ -361,7 +361,8 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
           O << "@GOT";
         else
           O << "@GOTOFF";
-      } else if (Subtarget->isPICStyleRIPRel() && !NotRIPRel) {
+      } else if (Subtarget->isPICStyleRIPRel() && !NotRIPRel &&
+                 TM.getRelocationModel() != Reloc::Static) {
         if ((GV->isDeclaration() ||
              GV->hasWeakLinkage() ||
              GV->hasLinkOnceLinkage()) &&
