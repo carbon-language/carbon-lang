@@ -115,6 +115,11 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
 
   for (unsigned Size = 0; I != Dest->end(); ++I) {
     if (Size == Threshold) return false;  // The block is too large.
+    
+    // Don't tail duplicate call instructions.  They are very large compared to
+    // other instructions.
+    if (isa<CallInst>(I) || isa<InvokeInst>(I)) return false;
+    
     // Only count instructions that are not debugger intrinsics.
     if (!isa<DbgInfoIntrinsic>(I)) ++Size;
   }
