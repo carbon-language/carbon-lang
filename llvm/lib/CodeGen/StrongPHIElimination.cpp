@@ -21,6 +21,7 @@
 
 #define DEBUG_TYPE "strongphielim"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -44,6 +45,8 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addPreserved<LiveVariables>();
+      AU.addPreservedID(PHIEliminationID);
       AU.addRequired<MachineDominatorTree>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
@@ -54,10 +57,35 @@ namespace {
     }
 
   private:
+    struct DomForestNode {
+    private:
+      std::vector<DomForestNode*> children;
+      MachineInstr* instr;
+      
+      void addChild(DomForestNode* DFN) { children.push_back(DFN); }
+      
+    public:
+      typedef std::vector<DomForestNode*>::iterator iterator;
+      
+      DomForestNode(MachineInstr* MI, DomForestNode* parent) : instr(MI) {
+        if (parent)
+          parent->addChild(this);
+      }
+      
+      MachineInstr* getInstr() { return instr; }
+      
+      DomForestNode::iterator begin() { return children.begin(); }
+      DomForestNode::iterator end() { return children.end(); }
+    };
+    
     DenseMap<MachineBasicBlock*, unsigned> preorder;
     DenseMap<MachineBasicBlock*, unsigned> maxpreorder;
     
     void computeDFS(MachineFunction& MF);
+    
+    std::vector<DomForestNode*>
+      computeDomForest(SmallPtrSet<MachineInstr*, 8>& instrs);
+    
   };
 
   char StrongPHIElimination::ID = 0;
@@ -109,4 +137,64 @@ void StrongPHIElimination::computeDFS(MachineFunction& MF) {
       worklist.pop_back();
     }
   }
+}
+
+class PreorderSorter {
+private:
+  DenseMap<MachineBasicBlock*, unsigned>& preorder;
+  
+public:
+  PreorderSorter(DenseMap<MachineBasicBlock*, unsigned>& p) : preorder(p) { }
+  
+  bool operator()(MachineInstr* A, MachineInstr* B) {
+    if (A == B)
+      return false;
+    
+    if (preorder[A->getParent()] < preorder[B->getParent()])
+      return true;
+    else if (preorder[A->getParent()] > preorder[B->getParent()])
+      return false;
+    
+    if (A->getOpcode() == TargetInstrInfo::PHI &&
+        B->getOpcode() == TargetInstrInfo::PHI)
+      return A < B;
+    
+    MachineInstr* begin = A->getParent()->begin();
+    return std::distance(begin, A) < std::distance(begin, B);
+  }
+};
+
+std::vector<StrongPHIElimination::DomForestNode*>
+StrongPHIElimination::computeDomForest(SmallPtrSet<MachineInstr*, 8>& instrs) {
+  DomForestNode* VirtualRoot = new DomForestNode(0, 0);
+  maxpreorder.insert(std::make_pair((MachineBasicBlock*)0, ~0UL));
+  
+  std::vector<MachineInstr*> worklist;
+  worklist.reserve(instrs.size());
+  for (SmallPtrSet<MachineInstr*, 8>::iterator I = instrs.begin(),
+       E = instrs.end(); I != E; ++I)
+    worklist.push_back(*I);
+  PreorderSorter PS(preorder);
+  std::sort(worklist.begin(), worklist.end(), PS);
+  
+  DomForestNode* CurrentParent = VirtualRoot;
+  std::vector<DomForestNode*> stack;
+  stack.push_back(VirtualRoot);
+  
+  for (std::vector<MachineInstr*>::iterator I = worklist.begin(),
+       E = worklist.end(); I != E; ++I) {
+    while (preorder[(*I)->getParent()] >
+           maxpreorder[CurrentParent->getInstr()->getParent()]) {
+      stack.pop_back();
+      CurrentParent = stack.back();
+    }
+    
+    DomForestNode* child = new DomForestNode(*I, CurrentParent);
+    stack.push_back(child);
+    CurrentParent = child;
+  }
+  
+  std::vector<DomForestNode*> ret;
+  ret.insert(ret.end(), VirtualRoot->begin(), VirtualRoot->end());
+  return ret;
 }
