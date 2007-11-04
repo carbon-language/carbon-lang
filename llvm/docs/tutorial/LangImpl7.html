@@ -130,7 +130,7 @@ logic.</p>
 in SSA form, it does not require (or permit) memory objects to be in SSA form.
 In the example above, note that the loads from G and H are direct accesses to
 G and H: they are not renamed or versioned.  This differs from some other
-compiler systems, which does try to version memory objects.  In LLVM, instead of
+compiler systems, which do try to version memory objects.  In LLVM, instead of
 encoding dataflow analysis of memory into the LLVM IR, it is handled with <a 
 href="../WritingAnLLVMPass.html">Analysis Passes</a> which are computed on
 demand.</p>
@@ -267,7 +267,7 @@ more powerful and can promote structs, "unions", and arrays in many cases.</li>
 
 <p>
 All of these properties are easy to satisfy for most imperative languages, and
-we'll illustrated this below with Kaleidoscope.  The final question you may be
+we'll illustrate this below with Kaleidoscope.  The final question you may be
 asking is: should I bother with this nonsense for my front-end?  Wouldn't it be
 better if I just did SSA construction directly, avoiding use of the mem2reg
 optimization pass?  In short, we strongly recommend that use you this technique
