@@ -277,7 +277,11 @@ public:
     assert(Idx < NumElements && "Invalid element idx!");
     return MemberOffsets[Idx];
   }
-  
+
+  uint64_t getElementOffsetInBits(unsigned Idx) const {
+    return getElementOffset(Idx)*8;
+  }
+
 private:
   friend class TargetData;   // Only TargetData can create this class
   StructLayout(const StructType *ST, const TargetData &TD);
