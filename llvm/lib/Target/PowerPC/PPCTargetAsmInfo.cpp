@@ -60,6 +60,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   HiddenDirective = "\t.private_extern\t";
   SupportsExceptionHandling = false;
   NeedsIndirectEncoding = true;
+  BSSSection = 0;
 
   DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
   DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
@@ -94,6 +95,7 @@ LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)
   StaticDtorsSection = ".section\t.dtors,\"aw\",@progbits";
   UsedDirective = "\t# .no_dead_strip\t";
   WeakRefDirective = "\t.weak\t";
+  BSSSection = "\t.section\t\".sbss\",\"aw\",@nobits";
 
   DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
   DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";

@@ -668,6 +668,8 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
       if (I->hasExternalLinkage()) {
         O << "\t.global " << name << '\n';
         O << "\t.type " << name << ", @object\n";
+        if (TAI->getBSSSection())
+          SwitchToDataSection(TAI->getBSSSection(), I);
         O << name << ":\n";
         O << "\t.zero " << Size << "\n";
       } else if (I->hasInternalLinkage()) {
