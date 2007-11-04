@@ -42,7 +42,7 @@ namespace {
     // ObjC string constant support.
     FileVarDecl *ConstantStringClassReference;
     RecordDecl *NSStringRecord;
-      
+    
     static const int OBJC_ABI_VERSION =7 ;
   public:
     void Initialize(ASTContext &context, unsigned mainFileID) {
@@ -55,6 +55,12 @@ namespace {
       ConstantStringClassReference = 0;
       NSStringRecord = 0;
       Rewrite.setSourceMgr(Context->SourceMgr);
+      const char *s = "extern struct objc_object *objc_msgSend"
+                      "(struct objc_object *, struct objc_selector *, ...);\n"
+                      "extern struct objc_object *objc_getClass"
+                      "(const char *);\n";
+      Rewrite.InsertText(SourceLocation::getFileLoc(mainFileID, 0), 
+                         s, strlen(s));
     }
 
     // Top Level Driver code.
@@ -63,6 +69,7 @@ namespace {
     ~RewriteTest();
 
     // Syntactic Rewriting.
+    void RewritePrologue(SourceLocation Loc);
     void RewriteInclude(SourceLocation Loc);
     void RewriteTabs();
     void RewriteForwardClassDecl(ObjcClassDecl *Dcl);
@@ -644,13 +651,53 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     // the original expression, since we will delete it below.
     Exp->setArg(i, 0);
   }
-  CallExpr *MessExp = SynthesizeCallToFunctionDecl(MsgSendFunctionDecl,
-                                                 &MsgExprs[0], MsgExprs.size());
+  // Generate the funky cast.
+  CastExpr *cast;
+  llvm::SmallVector<QualType, 8> ArgTypes;
+  QualType returnType;
+  
+  // Push 'id' and 'SEL', the 2 implicit arguments.
+  ArgTypes.push_back(Context->getObjcIdType());
+  ArgTypes.push_back(Context->getObjcSelType());
+  if (ObjcMethodDecl *mDecl = Exp->getMethodDecl()) {
+    // Push any user argument types.
+    for (int i = 0; i < mDecl->getNumParams(); i++) 
+      ArgTypes.push_back(mDecl->getParamDecl(i)->getType());
+    returnType = mDecl->getResultType();
+  } else {
+    returnType = Context->getObjcIdType();
+  }
+  // Get the type, we will need to reference it in a couple spots.
+  QualType msgSendType = MsgSendFunctionDecl->getType();
+  
+  // Create a reference to the objc_msgSend() declaration.
+  DeclRefExpr *DRE = new DeclRefExpr(MsgSendFunctionDecl, msgSendType, SourceLocation());
+
+  // Need to cast objc_msgSend to "void *" (to workaround a GCC bandaid). 
+  // If we don't do this cast, we get the following bizarre warning/note:
+  // xx.m:13: warning: function called through a non-compatible type
+  // xx.m:13: note: if this code is reached, the program will abort
+  cast = new CastExpr(Context->getPointerType(Context->VoidTy), DRE, 
+                      SourceLocation());
+                                                   
+  // Now do the "normal" pointer to function cast.
+  QualType castType = Context->getFunctionType(returnType, 
+                                               &ArgTypes[0], ArgTypes.size(),
+                                               false/*FIXME:variadic*/);
+  castType = Context->getPointerType(castType);
+  cast = new CastExpr(castType, cast, SourceLocation());
+
+  // Don't forget the parens to enforce the proper binding.
+  ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), cast);
+  
+  const FunctionType *FT = msgSendType->getAsFunctionType();
+  CallExpr *CE = new CallExpr(PE, &MsgExprs[0], MsgExprs.size(), 
+                              FT->getResultType(), SourceLocation());
   // Now do the actual rewrite.
-  Rewrite.ReplaceStmt(Exp, MessExp);
+  Rewrite.ReplaceStmt(Exp, CE);
   
   delete Exp;
-  return MessExp;
+  return CE;
 }
 
 /// SynthesizeObjcInternalStruct - Rewrite one internal struct corresponding to
