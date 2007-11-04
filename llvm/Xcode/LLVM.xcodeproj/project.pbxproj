@@ -92,7 +92,6 @@
 		9F7793480C73BC2000551F9C /* GVNPRE.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GVNPRE.cpp; sourceTree = "<group>"; };
 		9F7793490C73BC2000551F9C /* LoopIndexSplit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopIndexSplit.cpp; sourceTree = "<group>"; };
 		9F77934A0C73BC2000551F9C /* LoopRotation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopRotation.cpp; sourceTree = "<group>"; };
-		9F77934B0C73BC2000551F9C /* RedundantLoadElimination.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RedundantLoadElimination.cpp; sourceTree = "<group>"; };
 		9F7793500C73BD1500551F9C /* ELFWriter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ELFWriter.h; sourceTree = "<group>"; };
 		9F7793510C73BD1500551F9C /* IfConversion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IfConversion.cpp; sourceTree = "<group>"; };
 		9F7793520C73BD1500551F9C /* LowerSubregs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LowerSubregs.cpp; sourceTree = "<group>"; };
@@ -2071,7 +2070,6 @@
 				DE66F1AF08ABEFB400323D32 /* LowerPacked.cpp */,
 				CF8F1B5B0B64FA2F00BB4199 /* PredicateSimplifier.cpp */,
 				DE66F1B508ABEFB400323D32 /* Reassociate.cpp */,
-				9F77934B0C73BC2000551F9C /* RedundantLoadElimination.cpp */,
 				CF73C0B9098A546000627152 /* Reg2Mem.cpp */,
 				DE66F1B608ABEFB400323D32 /* ScalarReplAggregates.cpp */,
 				DE66F1B708ABEFB400323D32 /* SCCP.cpp */,
