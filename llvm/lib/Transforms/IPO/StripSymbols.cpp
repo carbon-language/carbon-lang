@@ -7,18 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements stripping symbols out of symbol tables.
+// The StripSymbols transformation implements code stripping. Specifically, it
+// can delete:
+// 
+//   * names for virtual registers
+//   * symbols for internal globals and functions
+//   * debug information
 //
-// Specifically, this allows you to strip all of the symbols out of:
-//   * All functions in a module
-//   * All non-essential symbols in a module (all function symbols + all module
-//     scope symbols)
-//   * Debug information.
-//
-// Notice that:
-//   * This pass makes code much less readable, so it should only be used in
-//     situations where the 'strip' utility would be used (such as reducing
-//     code size, and making it harder to reverse engineer code).
+// Note that this transformation makes code much less readable, so it should
+// only be used in situations where the 'strip' utility would be used, such as
+// reducing code size or making it harder to reverse engineer code.
 //
 //===----------------------------------------------------------------------===//
 

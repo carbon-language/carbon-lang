@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file promote memory references to be register references.  It promotes
+// This file promotes memory references to be register references.  It promotes
 // alloca instructions which only have loads and stores as uses.  An alloca is
 // transformed by using dominator frontiers to place PHI nodes, then traversing
 // the function in depth-first order to rewrite loads and stores as appropriate.

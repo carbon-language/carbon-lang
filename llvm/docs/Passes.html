@@ -1149,7 +1149,11 @@ if (i == j)
   <a name="internalize">Internalize Global Symbols</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass loops over all of the functions in the input module, looking for a
+  main function.  If a main function is found, all other functions and all
+  global variables with initializers are marked as internal.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1157,7 +1161,13 @@ if (i == j)
   <a name="ipconstprop">Interprocedural constant propagation</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass implements an <em>extremely</em> simple interprocedural constant
+  propagation pass.  It could certainly be improved in many different ways,
+  like using a worklist.  This pass makes arguments dead, but does not remove
+  them.  The existing dead argument elimination pass should be run after this
+  to clean up the mess.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1165,7 +1175,10 @@ if (i == j)
   <a name="ipsccp">Interprocedural Sparse Conditional Constant Propagation</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  An interprocedural variant of <a href="#sccp">Sparse Conditional Constant 
+  Propagation</a>.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1173,7 +1186,28 @@ if (i == j)
   <a name="lcssa">Loop-Closed SSA Form Pass</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass transforms loops by placing phi nodes at the end of the loops for
+  all values that are live across the loop boundary.  For example, it turns
+  the left into the right code:
+  </p>
+  
+  <pre
+>for (...)                for (...)
+  if (c)                   if (c)
+    X1 = ...                 X1 = ...
+  else                     else
+    X2 = ...                 X2 = ...
+  X3 = phi(X1, X2)         X3 = phi(X1, X2)
+... = X3 + 4              X4 = phi(X3)
+                          ... = X4 + 4</pre>
+  
+  <p>
+  This is still valid LLVM; the extra phi nodes are purely redundant, and will
+  be trivially eliminated by <code>InstCombine</code>.  The major benefit of
+  this transformation is that it makes many other loop optimizations, such as 
+  LoopUnswitching, simpler.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1181,7 +1215,36 @@ if (i == j)
   <a name="licm">Loop Invariant Code Motion</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass performs loop invariant code motion, attempting to remove as much
+  code from the body of a loop as possible.  It does this by either hoisting
+  code into the preheader block, or by sinking code to the exit blocks if it is
+  safe.  This pass also promotes must-aliased memory locations in the loop to
+  live in registers, thus hoisting and sinking "invariant" loads and stores.
+  </p>
+  
+  <p>
+  This pass uses alias analysis for two purposes:
+  </p>
+  
+  <ul>
+    <li>Moving loop invariant loads and calls out of loops.  If we can determine
+        that a load or call inside of a loop never aliases anything stored to,
+        we can hoist it or sink it like any other instruction.</li>
+    <li>Scalar Promotion of Memory - If there is a store instruction inside of
+        the loop, we try to move the store to happen AFTER the loop instead of
+        inside of the loop.  This can only happen if a few conditions are true:
+        <ul>
+          <li>The pointer stored through is loop invariant.</li>
+          <li>There are no stores or loads in the loop which <em>may</em> alias
+              the pointer.  There are no calls in the loop which mod/ref the
+              pointer.</li>
+        </ul>
+        If these conditions are true, we can promote the loads and stores in the
+        loop of the pointer to use a temporary alloca'd variable.  We then use
+        the mem2reg functionality to construct the appropriate SSA form for the
+        variable.</li>
+  </ul>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1189,7 +1252,12 @@ if (i == j)
   <a name="loop-extract">Extract loops into new functions</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  A pass wrapper around the <code>ExtractLoop()</code> scalar transformation to 
+  extract each top-level loop into its own new function. If the loop is the
+  <em>only</em> loop in a given function, it is not touched. This is a pass most
+  useful for debugging via bugpoint.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1197,7 +1265,11 @@ if (i == j)
   <a name="loop-extract-single">Extract at most one loop into a new function</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Similar to <a href="#loop-extract">Extract loops into new functions</a>,
+  this pass extracts one natural loop from the program into a function if it
+  can. This is used by bugpoint.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1205,7 +1277,10 @@ if (i == j)
   <a name="loop-index-split">Index Split Loops</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass divides loop's iteration range by spliting loop such that each 
+  individual loop is executed efficiently.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1213,7 +1288,13 @@ if (i == j)
   <a name="loop-reduce">Loop Strength Reduction</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass performs a strength reduction on array references inside loops that
+  have as one or more of their components the loop induction variable.  This is
+  accomplished by creating a new value to hold the initial value of the array
+  access for the first iteration, and then creating a new GEP instruction in
+  the loop to increment the value by the appropriate amount.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1221,7 +1302,7 @@ if (i == j)
   <a name="loop-rotate">Rotate Loops</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>A simple loop rotation transformation.</p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1229,7 +1310,11 @@ if (i == j)
   <a name="loop-unroll">Unroll loops</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass implements a simple loop unroller.  It works best when loops have
+  been canonicalized by the <a href="#indvars"><tt>-indvars</tt></a> pass,
+  allowing it to determine the trip counts of loops easily.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1237,7 +1322,29 @@ if (i == j)
   <a name="loop-unswitch">Unswitch loops</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass transforms loops that contain branches on loop-invariant conditions
+  to have multiple loops.  For example, it turns the left into the right code:
+  </p>
+  
+  <pre
+>for (...)                  if (lic)
+  A                          for (...)
+  if (lic)                     A; B; C
+    B                      else
+  C                          for (...)
+                               A; C</pre>
+  
+  <p>
+  This can increase the size of the code exponentially (doubling it every time
+  a loop is unswitched) so we only unswitch if the resultant code will be
+  smaller than a threshold.
+  </p>
+  
+  <p>
+  This pass expects LICM to be run before it to hoist invariant conditions out
+  of the loop, to make the unswitching opportunity obvious.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1245,7 +1352,40 @@ if (i == j)
   <a name="loopsimplify">Canonicalize natural loops</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass performs several transformations to transform natural loops into a
+  simpler form, which makes subsequent analyses and transformations simpler and
+  more effective.
+  </p>
+  
+  <p>
+  Loop pre-header insertion guarantees that there is a single, non-critical
+  entry edge from outside of the loop to the loop header.  This simplifies a
+  number of analyses and transformations, such as LICM.
+  </p>
+  
+  <p>
+  Loop exit-block insertion guarantees that all exit blocks from the loop
+  (blocks which are outside of the loop that have predecessors inside of the
+  loop) only have predecessors from inside of the loop (and are thus dominated
+  by the loop header).  This simplifies transformations such as store-sinking
+  that are built into LICM.
+  </p>
+  
+  <p>
+  This pass also guarantees that loops will have exactly one backedge.
+  </p>
+  
+  <p>
+  Note that the simplifycfg pass will clean up blocks which are split out but
+  end up being unnecessary, so usage of this pass should not pessimize
+  generated code.
+  </p>
+  
+  <p>
+  This pass obviously modifies the CFG, but updates loop information and
+  dominator information.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1253,7 +1393,10 @@ if (i == j)
   <a name="lower-packed">lowers packed operations to operations on smaller packed datatypes</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Lowers operations on vector datatypes into operations on more primitive vector
+  datatypes, and finally to scalar operations.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1261,7 +1404,15 @@ if (i == j)
   <a name="lowerallocs">Lower allocations from instructions to calls</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Turn <tt>malloc</tt> and <tt>free</tt> instructions into <tt>@malloc</tt> and
+  <tt>@free</tt> calls.
+  </p>
+
+  <p>
+  This is a target-dependent tranformation because it depends on the size of
+  data types and alignment constraints.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1269,7 +1420,22 @@ if (i == j)
   <a name="lowergc">Lower GC intrinsics, for GCless code generators</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This file implements lowering for the <tt>llvm.gc*</tt> intrinsics for targets 
+  that do not natively support them (which includes the C backend).  Note that
+  the code generated is not as efficient as it would be for targets that
+  natively support the GC intrinsics, but it is useful for getting new targets
+  up-and-running quickly.
+  </p>
+  
+  <p>
+  This pass implements the code transformation described in this paper:
+  </p>
+  
+  <blockquote><p>
+    "Accurate Garbage Collection in an Uncooperative Environment"
+    Fergus Henderson, ISMM, 2002
+  </p></blockquote>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1277,7 +1443,40 @@ if (i == j)
   <a name="lowerinvoke">Lower invoke and unwind, for unwindless code generators</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This transformation is designed for use by code generators which do not yet
+  support stack unwinding.  This pass supports two models of exception handling
+  lowering, the 'cheap' support and the 'expensive' support.
+  </p>
+  
+  <p>
+  'Cheap' exception handling support gives the program the ability to execute
+  any program which does not "throw an exception", by turning 'invoke'
+  instructions into calls and by turning 'unwind' instructions into calls to
+  abort().  If the program does dynamically use the unwind instruction, the
+  program will print a message then abort.
+  </p>
+  
+  <p>
+  'Expensive' exception handling support gives the full exception handling
+  support to the program at the cost of making the 'invoke' instruction
+  really expensive.  It basically inserts setjmp/longjmp calls to emulate the
+  exception handling as necessary.
+  </p>
+  
+  <p>
+  Because the 'expensive' support slows down programs a lot, and EH is only
+  used for a subset of the programs, it must be specifically enabled by the
+  <tt>-enable-correct-eh-support</tt> option.
+  </p>
+  
+  <p>
+  Note that after this pass runs the CFG is not entirely accurate (exceptional
+  control flow edges are not correct anymore) so only very simple things should
+  be done after the lowerinvoke pass has run (like generation of native code).
+  This should not be used as a general purpose "my LLVM-to-LLVM pass doesn't
+  support the invoke instruction yet" lowering pass.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1285,7 +1484,18 @@ if (i == j)
   <a name="lowerselect">Lower select instructions to branches</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Lowers select instructions into conditional branches for targets that do not 
+  have conditional moves or that have not implemented the select instruction
+  yet.
+  </p>
+  
+  <p>
+  Note that this pass could be improved.  In particular it turns every select
+  instruction into a new conditional branch, even though some common cases have
+  select instructions on the same predicate next to each other.  It would be
+  better to use the same branch for the whole group of selects.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1293,7 +1503,28 @@ if (i == j)
   <a name="lowersetjmp">Lower Set Jump</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+   Lowers <tt>setjmp</tt> and <tt>longjmp</tt> to use the LLVM invoke and unwind
+   instructions as necessary.
+  </p>
+  
+  <p>
+   Lowering of <tt>longjmp</tt> is fairly trivial. We replace the call with a
+   call to the LLVM library function <tt>__llvm_sjljeh_throw_longjmp()</tt>.
+   This unwinds the stack for us calling all of the destructors for
+   objects allocated on the stack.
+  </p>
+  
+  <p>
+   At a <tt>setjmp</tt> call, the basic block is split and the <tt>setjmp</tt>
+   removed. The calls in a function that have a <tt>setjmp</tt> are converted to
+   invoke where the except part checks to see if it's a <tt>longjmp</tt>
+   exception and, if so, if it's handled in the function. If it is, then it gets
+   the value returned by the <tt>longjmp</tt> and goes to where the basic block
+   was split. <tt>invoke</tt> instructions are handled in a similar fashion with
+   the original except block being executed if it isn't a <tt>longjmp</tt>
+   except that is handled by that function.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1301,7 +1532,11 @@ if (i == j)
   <a name="lowerswitch">Lower SwitchInst's to branches</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Rewrites <tt>switch</tt> instructions with a sequence of branches, which
+  allows targets to get away with not implementing the switch instruction until
+  it is convenient.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1309,7 +1544,15 @@ if (i == j)
   <a name="mem2reg">Promote Memory to Register</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This file promotes memory references to be register references.  It promotes
+  <tt>alloca</tt> instructions which only have <tt>load</tt>s and
+  <tt>store</tt>s as uses.  An <tt>alloca</tt> is transformed by using dominator
+  frontiers to place <tt>phi</tt> nodes, then traversing the function in
+  depth-first order to rewrite <tt>load</tt>s and <tt>store</tt>s as
+  appropriate. This is just the standard SSA construction algorithm to construct
+  "pruned" SSA form.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1317,7 +1560,10 @@ if (i == j)
   <a name="mergereturn">Unify function exit nodes</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Ensure that functions have at most one <tt>ret</tt> instruction in them.
+  Additionally, it keeps track of which node is the new exit node of the CFG.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1325,7 +1571,21 @@ if (i == j)
   <a name="predsimplify">Predicate Simplifier</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Path-sensitive optimizer. In a branch where <tt>x == y</tt>, replace uses of
+  <tt>x</tt> with <tt>y</tt>. Permits further optimization, such as the 
+  elimination of the unreachable call:
+  </p>
+  
+<blockquote><pre
+>void test(int *p, int *q)
+{
+  if (p != q)
+    return;
+
+  if (*p != *q)
+    foo(); // unreachable
+}</pre></blockquote>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1333,7 +1593,12 @@ if (i == j)
   <a name="prune-eh">Remove unused exception handling info</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This file implements a simple interprocedural pass which walks the call-graph,
+  turning <tt>invoke</tt> instructions into <tt>call</tt> instructions if and
+  only if the callee cannot throw an exception. It implements this as a
+  bottom-up traversal of the call-graph.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1341,7 +1606,10 @@ if (i == j)
   <a name="raiseallocs">Raise allocations from calls to instructions</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Converts <tt>@malloc</tt> and <tt>@free</tt> calls to <tt>malloc</tt> and
+  <tt>free</tt> instructions.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1349,7 +1617,22 @@ if (i == j)
   <a name="reassociate">Reassociate expressions</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass reassociates commutative expressions in an order that is designed
+  to promote better constant propagation, GCSE, LICM, PRE, etc.
+  </p>
+  
+  <p>
+  For example: 4 + (<var>x</var> + 5) ⇒ <var>x</var> + (4 + 5)
+  </p>
+  
+  <p>
+  In the implementation of this algorithm, constants are assigned rank = 0,
+  function arguments are rank = 1, and other values are assigned ranks
+  corresponding to the reverse post order traversal of current function
+  (starting at 2), which effectively gives values in deep loops higher rank
+  than values not in loops.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1357,7 +1640,16 @@ if (i == j)
   <a name="reg2mem">Demote all values to stack slots</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This file demotes all registers to memory references.  It is intented to be
+  the inverse of <a href="#mem2reg"><tt>-mem2reg</tt></a>.  By converting to
+  <tt>load</tt> instructions, the only values live accross basic blocks are
+  <tt>alloca</tt> instructions and <tt>load</tt> instructions before
+  <tt>phi</tt> nodes. It is intended that this should make CFG hacking much 
+  easier. To make later hacking easier, the entry block is split into two, such
+  that all introduced <tt>alloca</tt> instructions (and nothing else) are in the
+  entry block.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1365,7 +1657,21 @@ if (i == j)
   <a name="scalarrepl">Scalar Replacement of Aggregates</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  The well-known scalar replacement of aggregates transformation.  This
+  transform breaks up <tt>alloca</tt> instructions of aggregate type (structure
+  or array) into individual <tt>alloca</tt> instructions for each member if
+  possible.  Then, if possible, it transforms the individual <tt>alloca</tt>
+  instructions into nice clean scalar SSA form.
+  </p>
+  
+  <p>
+  This combines a simple scalar replacement of aggregates algorithm with the <a
+  href="#mem2reg"><tt>mem2reg</tt></a> algorithm because often interact, 
+  especially for C++ programs.  As such, iterating between <tt>scalarrepl</tt>, 
+  then <a href="#mem2reg"><tt>mem2reg</tt></a> until we run out of things to 
+  promote works well.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1373,7 +1679,22 @@ if (i == j)
   <a name="sccp">Sparse Conditional Constant Propagation</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Sparse conditional constant propagation and merging, which can be summarized
+  as:
+  </p>
+  
+  <ol>
+    <li>Assumes values are constant unless proven otherwise</li>
+    <li>Assumes BasicBlocks are dead unless proven otherwise</li>
+    <li>Proves values to be constant, and replaces them with constants</li>
+    <li>Proves conditional branches to be unconditional</li>
+  </ol>
+  
+  <p>
+  Note that this pass has a habit of making definitions be dead.  It is a good
+  idea to to run a DCE pass sometime after running this pass.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1381,7 +1702,12 @@ if (i == j)
   <a name="simplify-libcalls">Simplify well-known library calls</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Applies a variety of small optimizations for calls to specific well-known 
+  function calls (e.g. runtime library functions). For example, a call
+   <tt>exit(3)</tt> that occurs within the <tt>main()</tt> function can be 
+   transformed into simply <tt>return 3</tt>.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1389,7 +1715,18 @@ if (i == j)
   <a name="simplifycfg">Simplify the CFG</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Performs dead code elimination and basic block merging. Specifically:
+  </p>
+  
+  <ol>
+    <li>Removes basic blocks with no predecessors.</li>
+    <li>Merges a basic block into its predecessor if there is only one and the
+        predecessor only has one successor.</li>
+    <li>Eliminates PHI nodes for basic blocks with a single predecessor.</li>
+    <li>Eliminates a basic block that only contains an unconditional
+        branch.</li>
+  </ol>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1397,7 +1734,21 @@ if (i == j)
   <a name="strip">Strip all symbols from a module</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Performs code stripping. This transformation can delete:
+  </p>
+  
+  <ol>
+    <li>names for virtual registers</li>
+    <li>symbols for internal globals and functions</li>
+    <li>debug information</li>
+  </ol>
+  
+  <p>
+  Note that this transformation makes code much less readable, so it should
+  only be used in situations where the <tt>strip</tt> utility would be used,
+  such as reducing code size or making it harder to reverse engineer code.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1405,7 +1756,31 @@ if (i == j)
   <a name="tailcallelim">Tail Call Elimination</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This file transforms calls of the current function (self recursion) followed
+  by a return instruction with a branch to the entry of the function, creating
+  a loop.  This pass also implements the following extensions to the basic
+  algorithm:
+  </p>
+  
+  <ul>
+  <li>Trivial instructions between the call and return do not prevent the
+      transformation from taking place, though currently the analysis cannot
+      support moving any really useful instructions (only dead ones).
+  <li>This pass transforms functions that are prevented from being tail
+      recursive by an associative expression to use an accumulator variable,
+      thus compiling the typical naive factorial or <tt>fib</tt> implementation
+      into efficient code.
+  <li>TRE is performed if the function returns void, if the return
+      returns the result returned by the call, or if the function returns a
+      run-time constant on all exits from the function.  It is possible, though
+      unlikely, that the return returns something else (like constant 0), and
+      can still be TRE'd.  It can be TRE'd if <em>all other</em> return 
+      instructions in the function return the exact same value.
+  <li>If it can prove that callees do not access theier caller stack frame,
+      they are marked as eligible for tail call elimination (by the code
+      generator).
+  </ul>
 </div>
 
 <!-------------------------------------------------------------------------- -->
@@ -1413,7 +1788,13 @@ if (i == j)
   <a name="tailduplicate">Tail Duplication</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  This pass performs a limited form of tail duplication, intended to simplify
+  CFGs by removing some unconditional branches.  This pass is necessary to
+  straighten out loops created by the C front-end, but also is capable of
+  making other code nicer.  After this pass is run, the CFG simplify pass
+  should be run to clean up the mess.
+  </p>
 </div>
 
 <!-- ======================================================================= -->

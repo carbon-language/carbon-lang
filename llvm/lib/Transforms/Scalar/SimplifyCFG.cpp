@@ -8,13 +8,13 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements dead code elimination and basic block merging.
+// Specifically:
 //
-// Specifically, this:
-//   * removes basic blocks with no predecessors
-//   * merges a basic block into its predecessor if there is only one and the
+//   * Removes basic blocks with no predecessors.
+//   * Merges a basic block into its predecessor if there is only one and the
 //     predecessor only has one successor.
-//   * Eliminates PHI nodes for basic blocks with a single predecessor
-//   * Eliminates a basic block that only contains an unconditional branch
+//   * Eliminates PHI nodes for basic blocks with a single predecessor.
+//   * Eliminates a basic block that only contains an unconditional branch.
 //
 //===----------------------------------------------------------------------===//
 

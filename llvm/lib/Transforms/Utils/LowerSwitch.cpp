@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// The LowerSwitch transformation rewrites switch statements with a sequence of
-// branches, which allows targets to get away with not implementing the switch
-// statement until it is convenient.
+// The LowerSwitch transformation rewrites switch instructions with a sequence
+// of branches, which allows targets to get away with not implementing the
+// switch instruction until it is convenient.
 //
 //===----------------------------------------------------------------------===//
 

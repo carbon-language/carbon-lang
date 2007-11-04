@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements lowering Packed datatypes into more primitive
-// Packed datatypes, and finally to scalar operations.
+// This file implements lowering vector datatypes into more primitive
+// vector datatypes, and finally to scalar operations.
 //
 //===----------------------------------------------------------------------===//
 
