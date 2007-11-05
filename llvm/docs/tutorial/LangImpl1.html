@@ -36,9 +36,10 @@
 <div class="doc_text">
 
 <p>Welcome to the "Implementing a language with LLVM" tutorial.  This tutorial
-will run through implementation of a simple language, showing how fun and easy
-it can be.  This tutorial will get you up and started and build a framework you
-can extend to other languages and to play with other things.
+will run the through implementation of a simple language, showing how fun and
+easy it can be.  This tutorial will get you up and started as well as help to 
+build a framework you can extend to other languages.  You can also use this
+tutorial to help you start playing with other LLVM specific things.
 </p>
 
 </div>
@@ -53,16 +54,15 @@ can extend to other languages and to play with other things.
 "<a href="http://en.wikipedia.org/wiki/Kaleidoscope">Kaleidoscope</a>".
 Kaleidoscope is a procedural language that allows you to define functions, use
 conditionals, math, etc.  Over the course of the tutorial, we'll extend
-Kaleidoscope to support if/then/else, operator overloading, JIT compilation with
-a simple command line interface, etc.</p>
+Kaleidoscope to support the if/then/else construct, a for loop, user defined
+operators, JIT compilation with a simple command line interface, etc.</p>
 
-<p>Because we want to keep things simple, in Kaleidoscope the only datatype is a
+<p>Because we want to keep things simple, the only datatype in Kaleidoscope is a
 64-bit floating point type (aka 'double' in C parlance).  As such, all values
 are implicitly double precision and the language doesn't require type
 declarations.  This gives the language a very nice and simple syntax.  For
-example, A simple example computes <a 
-href="http://en.wikipedia.org/wiki/Fibonacci_number">Fibonacci numbers</a>,
-which looks like this:</p>
+example, the following simple example computes <a 
+href="http://en.wikipedia.org/wiki/Fibonacci_number">Fibonacci numbers:</a></p>
 
 <div class="doc_code">
 <pre>
@@ -96,8 +96,8 @@ atan2(sin(.4), cos(42))
 <p>In the first incarnation of the language, we will only support basic
 arithmetic: if/then/else will be added in a future installment.  Another
 interesting aspect of the first implementation is that it is a completely
-functional language, which does not allow you to have side-effects etc.  We will
-eventually add side effects for those who prefer them.</p>
+functional language, which does not allow you to have side-effects, etc.  We
+will eventually add side effects for those who prefer them.</p>
 
 <p>In order to make this tutorial
 maximally understandable and hackable, we choose to implement everything in C++
@@ -145,7 +145,7 @@ static double NumVal;              // Filled in if tok_number
 </div>
 
 <p>Each token returned by our lexer will either be one of the Token enum values
-or it will be an 'unknown' character like '+' which is returned as its ascii
+or it will be an 'unknown' character like '+', which is returned as its ascii
 value.  If the current token is an identifier, the <tt>IdentifierStr</tt>
 global variable holds the name of the identifier.  If the current token is a
 numeric literal (like 1.0), <tt>NumVal</tt> holds its value.  Note that we use
@@ -153,9 +153,9 @@ global variables for simplicity, this is not the best choice for a real language
 implementation :).
 </p>
 
-<p>The actual implementation of the lexer is a single function <tt>gettok</tt>.
-<tt>gettok</tt> is called to return the next token from standard input.  Its
-definition starts as:</p>
+<p>The actual implementation of the lexer is a single function named
+<tt>gettok</tt>. The <tt>gettok</tt> function is called to return the next token
+from standard input.  Its definition starts as:</p>
 
 <div class="doc_code">
 <pre>
@@ -172,12 +172,12 @@ static int gettok() {
 <p>
 <tt>gettok</tt> works by calling the C <tt>getchar()</tt> function to read
 characters one at a time from standard input.  It eats them as it recognizes
-them and stores the last character read but not processed in LastChar.  The
+them and stores the last character read, but not processed, in LastChar.  The
 first thing that it has to do is ignore whitespace between tokens.  This is 
 accomplished with the loop above.</p>
 
-<p>The next thing it needs to do is recognize identifiers, and specific keywords
-like "def".  Kaleidoscope does this with this simple loop:</p>
+<p>The next thing <tt>gettok</tt> needs to do is recognize identifiers and
+specific keywords like "def".  Kaleidoscope does this with this simple loop:</p>
 
 <div class="doc_code">
 <pre>
@@ -193,9 +193,9 @@ like "def".  Kaleidoscope does this with this simple loop:</p>
 </pre>
 </div>
 
-<p>Note that it sets the '<tt>IdentifierStr</tt>' global whenever it lexes an
-identifier.  Also, since language keywords are matched by the same loop, we
-handle them here inline.  Numeric values are similar:</p>
+<p>Note that this code sets the '<tt>IdentifierStr</tt>' global whenever it
+lexes an identifier.  Also, since language keywords are matched by the same
+loop, we handle them here inline.  Numeric values are similar:</p>
 
 <div class="doc_code">
 <pre>
@@ -251,7 +251,9 @@ this code:</p>
 </pre>
 </div>
 
-<p>With this, we have the complete lexer for the basic Kaleidoscope language.
+<p>With this, we have the complete lexer for the basic Kaleidoscope language
+(the <a href="LangImpl2.html#code">full code listing</a> for the Lexer is
+available in the <a href="LangImpl2.html">next chapter</a> of the tutorial).
 Next we'll <a href="LangImpl2.html">build a simple parser that uses this to 
 build an Abstract Syntax Tree</a>.  When we have that, we'll include a driver
 so that you can use the lexer and parser together.
