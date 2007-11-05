@@ -415,6 +415,7 @@ void llvm::SerializeTrait<IdentifierTable>::Emit(llvm::Serializer& S,
   
   for (clang::IdentifierTable::iterator I=T.begin(), E=T.end(); I != E; ++I) {
     S.EmitCStr(I->getKeyData());
+    S.EmitPtr(&I->getValue());
     S.Emit(I->getValue());
   }
 }
@@ -428,6 +429,7 @@ void llvm::SerializeTrait<IdentifierTable>::Read(llvm::Deserializer& D,
   for (unsigned i = 0; i < len; ++i) {
     D.ReadCStr(buff);
     IdentifierInfo& Info = T.get(&buff[0],&buff[0]+buff.size());
+    D.RegisterPtr(&Info);
     D.Read(Info);
   }
 }
