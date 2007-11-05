@@ -2093,7 +2093,8 @@ unsigned division of its two arguments.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>urem</tt>' instruction must be
 <a href="#t_integer">integer</a> values. Both arguments must have identical
-types.</p>
+types. This instruction can also take <a href="#t_vector">vector</a> versions 
+of the values in which case the elements must be integers.</p>
 <h5>Semantics:</h5>
 <p>This instruction returns the unsigned integer <i>remainder</i> of a division.
 This instruction always performs an unsigned division to get the remainder,
@@ -2112,7 +2113,10 @@ Instruction</a> </div>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>srem</tt>' instruction returns the remainder from the
-signed division of its two operands.</p>
+signed division of its two operands. This instruction can also take
+<a href="#t_vector">vector</a> versions of the values in which case
+the elements must be integers.</p>
+</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>srem</tt>' instruction must be 
 <a href="#t_integer">integer</a> values.  Both arguments must have identical 
@@ -2144,7 +2148,8 @@ division of its two operands.</p>
 <h5>Arguments:</h5>
 <p>The two arguments to the '<tt>frem</tt>' instruction must be
 <a href="#t_floating">floating point</a> values.  Both arguments must have 
-identical types.</p>
+identical types.  This instruction can also take <a href="#t_vector">vector</a>
+versions of floating point values.</p>
 <h5>Semantics:</h5>
 <p>This instruction returns the <i>remainder</i> of a division.</p>
 <h5>Example:</h5>

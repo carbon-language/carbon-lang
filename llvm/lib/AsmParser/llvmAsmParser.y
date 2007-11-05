@@ -2812,11 +2812,6 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         !isa<VectorType>((*$2).get()))
       GEN_ERROR(
         "Arithmetic operator requires integer, FP, or packed operands");
-    if (isa<VectorType>((*$2).get()) && 
-        ($1 == Instruction::URem || 
-         $1 == Instruction::SRem ||
-         $1 == Instruction::FRem))
-      GEN_ERROR("Remainder not supported on vector types");
     Value* val1 = getVal(*$2, $3); 
     CHECK_FOR_ERROR
     Value* val2 = getVal(*$2, $5);

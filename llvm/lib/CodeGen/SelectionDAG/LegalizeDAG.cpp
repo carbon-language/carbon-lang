@@ -2925,6 +2925,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Result = DAG.getNode(DivOpc, VT, Tmp1, Tmp2);
           Result = DAG.getNode(ISD::MUL, VT, Result, Tmp2);
           Result = DAG.getNode(ISD::SUB, VT, Tmp1, Result);
+        } else if (MVT::isVector(VT)) {
+          Result = LegalizeOp(UnrollVectorOp(Op));
         } else {
           assert(VT == MVT::i32 &&
                  "Cannot expand this binary operator!");
@@ -2933,13 +2935,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           SDOperand Dummy;
           Result = ExpandLibCall(TLI.getLibcallName(LC), Node, isSigned, Dummy);
         }
-      } else {
-        // Floating point mod -> fmod libcall.
-        RTLIB::Libcall LC = VT == MVT::f32
-          ? RTLIB::REM_F32 : RTLIB::REM_F64;
-        SDOperand Dummy;
-        Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
-                               false/*sign irrelevant*/, Dummy);
+      } else if (MVT::isFloatingPoint(VT)) {
+        if (MVT::isVector(VT)) {
+          Result = LegalizeOp(UnrollVectorOp(Op));
+        } else {
+          // Floating point mod -> fmod libcall.
+          RTLIB::Libcall LC = VT == MVT::f32
+            ? RTLIB::REM_F32 : RTLIB::REM_F64;
+          SDOperand Dummy;
+          Result = ExpandLibCall(TLI.getLibcallName(LC), Node,
+                                 false/*sign irrelevant*/, Dummy);
+        }
       }
       break;
     }
