@@ -66,7 +66,7 @@ fib(40)
 </pre>
 </div>
 
-<p>We also allow Kaleidoscope to call into standard library functions (this LLVM
+<p>We also allow Kaleidoscope to call into standard library functions (the LLVM
 JIT makes this completely trivial).  This means that you can use the 'extern'
 keyword to define a function before you use it (this is also useful for mutually
 recursive functions).  For example:</p>
@@ -90,7 +90,7 @@ eventually add side effects for those who prefer them.</p>
 <p>In order to make this tutorial
 maximally understandable and hackable, we choose to implement everything in C++
 instead of using lexer and parser generators.  LLVM obviously works just fine
-with these tools, and choice of these tools doesn't impact overall design.</p>
+with such tools, and making use of them doesn't impact the overall design.</p>
 
 <p>A note about this tutorial: we expect you to extend the language and play
 with it on your own.  Take the code and go crazy hacking away at it.  It can be
@@ -203,7 +203,7 @@ handle them here inline.  Numeric values are similar:</p>
 <p>This is all pretty straight-forward code for processing input.  When reading
 a numeric value from input, we use the C <tt>strtod</tt> function to convert it
 to a numeric value that we store in <tt>NumVal</tt>.  Note that this isn't doing
-sufficient error checking: it will incorrect read "1.23.45.67" and handle it as
+sufficient error checking: it will incorrectly read "1.23.45.67" and handle it as
 if you typed in "1.23".  Feel free to extend it :).  Next we handle comments:
 </p>
 
@@ -220,9 +220,9 @@ if you typed in "1.23".  Feel free to extend it :).  Next we handle comments:
 </pre>
 </div>
 
-<p>We handle comments by skipping to the end of the line and then returnning the
+<p>We handle comments by skipping to the end of the line and then returning the
 next comment.  Finally, if the input doesn't match one of the above cases, it is
-either an operator character like '+', the end of file.  These are handled with
+either an operator character like '+' or the end of the file.  These are handled with
 this code:</p>
 
 <div class="doc_code">

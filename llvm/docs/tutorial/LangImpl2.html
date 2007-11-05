@@ -212,7 +212,7 @@ FunctionAST *ErrorF(const char *Str) { Error(Str); return 0; }
 <p>
 The <tt>Error</tt> routines are simple helper routines that our parser will use
 to handle errors.  The error recovery in our parser will not be the best and
-are not particular user-friendly, but it will be enough for our tutorial.  These
+is not particular user-friendly, but it will be enough for our tutorial.  These
 routines make it easier to handle errors in routines that have various return
 types: they always return null.</p>
 
@@ -284,7 +284,7 @@ return null on an error.</p>
 calling <tt>ParseExpression</tt> (we will soon see that <tt>ParseExpression</tt> can call
 <tt>ParseParenExpr</tt>).  This is powerful because it allows us to handle 
 recursive grammars, and keeps each production very simple.  Note that
-parenthesis do not cause construction of AST nodes themselves.  While we could
+parentheses do not cause construction of AST nodes themselves.  While we could
 do this, the most important role of parens are to guide the parser and provide
 grouping.  Once the parser constructs the AST, parens are not needed.</p>
 
@@ -432,7 +432,7 @@ the expression "a+b+(c+d)*e*f+g".  Operator precedence parsing considers this
 as a stream of primary expressions separated by binary operators.  As such,
 it will first parse the leading primary expression "a", then it will see the
 pairs [+, b] [+, (c+d)] [*, e] [*, f] and [+, g].  Note that because parentheses
-are primary expressions that the binary expression parser doesn't need to worry
+are primary expressions, the binary expression parser doesn't need to worry
 about nested subexpressions like (c+d) at all. 
 </p>
 
@@ -631,7 +631,7 @@ static PrototypeAST *ParsePrototype() {
 </div>
 
 <p>Given this, a function definition is very simple, just a prototype plus
-and expression to implement the body:</p>
+an expression to implement the body:</p>
 
 <div class="doc_code">
 <pre>
