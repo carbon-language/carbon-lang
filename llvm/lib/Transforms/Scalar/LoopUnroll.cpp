@@ -370,9 +370,6 @@ bool LoopUnroll::unrollLoop(Loop *L, unsigned Count, unsigned Threshold) {
           if (isa<PHINode>(UseInst) && !L->contains(UseInst->getParent())) {
             PHINode *phi = cast<PHINode>(UseInst);
             Value *Incoming = phi->getIncomingValueForBlock(*BB);
-            if (isa<Instruction>(Incoming))
-              Incoming = LastValueMap[Incoming];
-          
             phi->addIncoming(Incoming, New);
           }
         }
