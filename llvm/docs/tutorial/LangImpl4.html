@@ -13,21 +13,34 @@
 
 <div class="doc_title">Kaleidoscope: Adding JIT and Optimizer Support</div>
 
+<ul>
+<li>Chapter 4
+  <ol>
+    <li><a href="#intro">Chapter 4 Introduction</a></li>
+    <li><a href="#trivialconstfold">Trivial Constant Folding</a></li>
+    <li><a href="#optimizerpasses">LLVM Optimization Passes</a></li>
+    <li><a href="#jit">Adding a JIT Compiler</a></li>
+    <li><a href="#code">Full Code Listing</a></li>
+  </ol>
+</li>
+</ul>
+
 <div class="doc_author">
   <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="intro">Part 4 Introduction</a></div>
+<div class="doc_section"><a name="intro">Chapter 4 Introduction</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
 
-<p>Welcome to part 4 of the "<a href="index.html">Implementing a language with
-LLVM</a>" tutorial.  Parts 1-3 described the implementation of a simple language
-and included support for generating LLVM IR.  This chapter describes two new
-techniques: adding optimizer support to your language, and adding JIT compiler
-support.  This shows how to get nice efficient code for your language.</p>
+<p>Welcome to Chapter 4 of the "<a href="index.html">Implementing a language
+with LLVM</a>" tutorial.  Parts 1-3 described the implementation of a simple
+language and included support for generating LLVM IR.  This chapter describes
+two new techniques: adding optimizer support to your language, and adding JIT
+compiler support.  This shows how to get nice efficient code for your
+language.</p>
 
 </div>
 

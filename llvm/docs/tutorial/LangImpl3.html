@@ -13,18 +13,31 @@
 
 <div class="doc_title">Kaleidoscope: Code generation to LLVM IR</div>
 
+<ul>
+<li>Chapter 3
+  <ol>
+    <li><a href="#intro">Chapter 3 Introduction</a></li>
+    <li><a href="#basics">Code Generation setup</a></li>
+    <li><a href="#exprs">Expression Code Generation</a></li>
+    <li><a href="#funcs">Function Code Generation</a></li>
+    <li><a href="#driver">Driver Changes and Closing Thoughts</a></li>
+    <li><a href="#code">Full Code Listing</a></li>
+  </ol>
+</li>
+</ul>
+
 <div class="doc_author">
   <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="intro">Part 3 Introduction</a></div>
+<div class="doc_section"><a name="intro">Chapter 3 Introduction</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
 
-<p>Welcome to part 3 of the "<a href="index.html">Implementing a language with
-LLVM</a>" tutorial.  This chapter shows you how to transform the <a 
+<p>Welcome to Chapter 3 of the "<a href="index.html">Implementing a language
+with LLVM</a>" tutorial.  This chapter shows you how to transform the <a 
 href="LangImpl2.html">Abstract Syntax Tree built in Chapter 2</a> into LLVM IR.
 This will teach you a little bit about how LLVM does things, as well as
 demonstrate how easy it is to use.  It's much more work to build a lexer and

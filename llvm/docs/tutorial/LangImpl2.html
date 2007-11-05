@@ -13,18 +13,34 @@
 
 <div class="doc_title">Kaleidoscope: Implementing a Parser and AST</div>
 
+<ul>
+<li>Chapter 2
+  <ol>
+    <li><a href="#intro">Chapter 2 Introduction</a></li>
+    <li><a href="#ast">The Abstract Syntax Tree (AST)</a></li>
+    <li><a href="#parserbasics">Parser Basics</a></li>
+    <li><a href="#parserprimexprs">Basic Expression Parsing</a></li>
+    <li><a href="#parserbinops">Binary Expression Parsing</a></li>
+    <li><a href="#parsertop">Parsing the Rest</a></li>
+    <li><a href="#driver">The Driver</a></li>
+    <li><a href="#conclusions">Conclusions</a></li>
+    <li><a href="#code">Full Code Listing</a></li>
+  </ol>
+</li>
+</ul>
+
 <div class="doc_author">
   <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="intro">Part 2 Introduction</a></div>
+<div class="doc_section"><a name="intro">Chapter 2 Introduction</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
 
-<p>Welcome to part 2 of the "<a href="index.html">Implementing a language with
-LLVM</a>" tutorial.  This chapter shows you how to use the <a 
+<p>Welcome to Chapter 2 of the "<a href="index.html">Implementing a language
+with LLVM</a>" tutorial.  This chapter shows you how to use the <a 
 href="LangImpl1.html">Lexer built in Chapter 1</a> to build a full <a
 href="http://en.wikipedia.org/wiki/Parsing">parser</a> for
 our Kaleidoscope language and build an <a 
@@ -725,7 +741,7 @@ type "4+5;" and the parser will know you are done.</p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="code">Conclusions and the Full Code</a></div>
+<div class="doc_section"><a name="conclusions">Conclusions</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">

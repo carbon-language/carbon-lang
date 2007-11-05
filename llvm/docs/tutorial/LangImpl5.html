@@ -13,18 +13,45 @@
 
 <div class="doc_title">Kaleidoscope: Extending the Language: Control Flow</div>
 
+<ul>
+<li>Chapter 5
+  <ol>
+    <li><a href="#intro">Chapter 5 Introduction</a></li>
+    <li><a href="#ifthen">If/Then/Else</a>
+    <ol>
+      <li><a href="#iflexer">Lexer Extensions</a></li>
+      <li><a href="#ifast">AST Extensions</a></li>
+      <li><a href="#ifparser">Parser Extensions</a></li>
+      <li><a href="#ifir">LLVM IR</a></li>
+      <li><a href="#ifcodegen">Code Generation</a></li>
+    </ol>
+    </li>
+    <li><a href="#for">'for' Loop Expression</a>
+    <ol>
+      <li><a href="#forlexer">Lexer Extensions</a></li>
+      <li><a href="#forast">AST Extensions</a></li>
+      <li><a href="#forparser">Parser Extensions</a></li>
+      <li><a href="#forir">LLVM IR</a></li>
+      <li><a href="#forcodegen">Code Generation</a></li>
+    </ol>
+    </li>
+    <li><a href="#code">Full Code Listing</a></li>
+  </ol>
+</li>
+</ul>
+
 <div class="doc_author">
   <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="intro">Part 5 Introduction</a></div>
+<div class="doc_section"><a name="intro">Chapter 5 Introduction</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
 
-<p>Welcome to Part 5 of the "<a href="index.html">Implementing a language with
-LLVM</a>" tutorial.  Parts 1-4 described the implementation of the simple
+<p>Welcome to Chapter 5 of the "<a href="index.html">Implementing a language
+with LLVM</a>" tutorial.  Parts 1-4 described the implementation of the simple
 Kaleidoscope language and included support for generating LLVM IR, following by
 optimizations and a JIT compiler.  Unfortunately, as presented, Kaleidoscope is
 mostly useless: it has no control flow other than call and return.  This means
@@ -116,7 +143,7 @@ stuff:</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="ifast">AST Extensions for
- If/Then/Else </a></div>
+ If/Then/Else</a></div>
 <!-- ======================================================================= -->
 
 <div class="doc_text">
@@ -142,7 +169,7 @@ public:
 
 <!-- ======================================================================= -->
 <div class="doc_subsubsection"><a name="ifparser">Parser Extensions for
-If/Then/Else </a></div>
+If/Then/Else</a></div>
 <!-- ======================================================================= -->
 
 <div class="doc_text">

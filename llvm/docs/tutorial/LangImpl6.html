@@ -13,18 +13,31 @@
 
 <div class="doc_title">Kaleidoscope: Extending the Language: User-defined Operators</div>
 
+<ul>
+<li>Chapter 6
+  <ol>
+    <li><a href="#intro">Chapter 6 Introduction</a></li>
+    <li><a href="#idea">User-defined Operators: the Idea</a></li>
+    <li><a href="#binary">User-defined Binary Operators</a></li>
+    <li><a href="#unary">User-defined Unary Operators</a></li>
+    <li><a href="#example">Kicking the Tires</a></li>
+    <li><a href="#code">Full Code Listing</a></li>
+  </ol>
+</li>
+</ul>
+
 <div class="doc_author">
   <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="intro">Part 6 Introduction</a></div>
+<div class="doc_section"><a name="intro">Chapter 6 Introduction</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
 
-<p>Welcome to Part 6 of the "<a href="index.html">Implementing a language with
-LLVM</a>" tutorial.  At this point in our tutorial, we now have a fully
+<p>Welcome to Chapter 6 of the "<a href="index.html">Implementing a language
+with LLVM</a>" tutorial.  At this point in our tutorial, we now have a fully
 functional language that is fairly minimal, but also useful.  One big problem
 with it though is that it doesn't have many useful operators (like division,
 logical negation, or even any comparisons other than less-than.</p>

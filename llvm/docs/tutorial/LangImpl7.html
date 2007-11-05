@@ -14,19 +14,35 @@
 
 <div class="doc_title">Kaleidoscope: Extending the Language: Mutable Variables</div>
 
+<ul>
+<li>Chapter 7
+  <ol>
+    <li><a href="#intro">Chapter 7 Introduction</a></li>
+    <li><a href="#why">Why is this a hard problem?</a></li>
+    <li><a href="#memory">Memory in LLVM</a></li>
+    <li><a href="#kalvars">Mutable Variables in Kaleidoscope</a></li>
+    <li><a href="#adjustments">Adjusting Existing Variables for
+     Mutation</a></li>
+    <li><a href="#assignment">New Assignment Operator</a></li>
+    <li><a href="#localvars">User-defined Local Variables</a></li>
+    <li><a href="#code">Full Code Listing</a></li>
+  </ol>
+</li>
+</ul>
+
 <div class="doc_author">
   <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="intro">Part 7 Introduction</a></div>
+<div class="doc_section"><a name="intro">Chapter 7 Introduction</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
 
-<p>Welcome to Part 7 of the "<a href="index.html">Implementing a language with
-LLVM</a>" tutorial.  In parts 1 through 6, we've built a very respectable,
-albeit simple, <a 
+<p>Welcome to Chapter 7 of the "<a href="index.html">Implementing a language
+with LLVM</a>" tutorial.  In chapters 1 through 6, we've built a very
+respectable, albeit simple, <a 
 href="http://en.wikipedia.org/wiki/Functional_programming">functional
 programming language</a>.  In our journey, we learned some parsing techniques,
 how to build and represent an AST, how to build LLVM IR, and how to optimize
