@@ -93,7 +93,6 @@ namespace {
     void SynthGetClassFunctionDecl();
     
     // Metadata emission.
-    void HandleObjcMetaDataEmission();
     void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
                                   std::string &Result);
     
@@ -193,16 +192,6 @@ RewriteTest::~RewriteTest() {
     printf("No changes\n");
   }
 
-}
-
-/// HandleObjcMetaDataEmission - main routine to generate objective-c's 
-/// metadata.
-void RewriteTest::HandleObjcMetaDataEmission() {
-  // Rewrite Objective-c meta data*
-  std::string ResultStr;
-  WriteObjcMetaData(ResultStr);
-  // For now just print the string out.
-  printf("%s", ResultStr.c_str());
 }
 
 //===----------------------------------------------------------------------===//
