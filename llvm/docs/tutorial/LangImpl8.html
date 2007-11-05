@@ -89,7 +89,10 @@ very easy and are quite useful for many different applications.  Adding them is
 mostly an exercise in learning how the LLVM <a 
 href="../LangRef.html#i_getelementptr">getelementptr</a> instruction works.
 The getelementptr instruction is so nifty/unconventional, it <a 
-href="../GetElementPtr.html">has its own FAQ</a>!).</li>
+href="../GetElementPtr.html">has its own FAQ</a>!).  If you add support
+for recursive types (e.g. linked lists), make sure to read the <a 
+href="../ProgrammersManual.html#TypeResolve">section in the LLVM
+Programmer's Manual</a> that describes how to construct them.</li>
 
 <li><b>standard runtime</b> - Our current language allows the user to access
 arbitrary external functions, and we use it for things like "printd" and
