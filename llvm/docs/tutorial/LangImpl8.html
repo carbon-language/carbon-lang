@@ -3,8 +3,7 @@
 
 <html>
 <head>
-  <title>Kaleidoscope: Conclusion, ideas for extensions, and other useful
-   tidbits</title>
+  <title>Kaleidoscope: Conclusion and other useful LLVM tidbits</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="author" content="Chris Lattner">
   <link rel="stylesheet" href="../llvm.css" type="text/css">
@@ -12,14 +11,38 @@
 
 <body>
 
-<div class="doc_title">Kaleidoscope: Conclusion</div>
+<div class="doc_title">Kaleidoscope: Conclusion and other useful LLVM
+ tidbits</div>
+
+<ul>
+<li>Chapter 8
+  <ol>
+    <li><a href="#conclusion">Tutorial Conclusion</a></li>
+    <li><a href="#llvmirproperties">Properties of LLVM IR</a>
+    <ul>
+      <li><a href="#targetindep">Target Independence</a></li>
+      <li><a href="#safety">Safety Guarantees</a></li>
+      <li><a href="#langspecific">Language-Specific Optimizations</a></li>
+    </ul>
+    </li>
+    <li><a href="#tipsandtricks">Tips and Tricks</a>
+    <ul>
+      <li><a href="#offsetofsizeof">Implementing portable 
+                                    offsetof/sizeof</a></li>
+      <li><a href="#gcstack">Garbage Collected Stack Frames</a></li>
+    </ul>
+    </li>
+  </ol>
+</li>
+</ul>
+
 
 <div class="doc_author">
   <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="intro">Tutorial Conclusion</a></div>
+<div class="doc_section"><a name="conclusion">Tutorial Conclusion</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
