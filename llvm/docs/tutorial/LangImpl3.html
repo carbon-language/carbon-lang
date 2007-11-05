@@ -96,7 +96,9 @@ a chunk of code.  In many ways, it is the top-level structure that the LLVM IR
 uses to contain code.</p>
 
 <p>The <tt>Builder</tt> object is a helper object that makes it easy to generate
-LLVM instructions.  The <tt>Builder</tt> keeps track of the current place to
+LLVM instructions.  Instances of the <a 
+href="http://llvm.org/doxygen/LLVMBuilder_8h-source.html"><tt>LLVMBuilder</tt> 
+class</a> keeps track of the current place to
 insert instructions and has methods to create new instructions.</p>
 
 <p>The <tt>NamedValues</tt> map keeps track of which values are defined in the
