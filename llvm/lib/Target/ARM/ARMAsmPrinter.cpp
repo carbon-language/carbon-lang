@@ -836,7 +836,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     if (Subtarget->isTargetELF())
       O << "\t.type " << name << ",%object\n";
     
-    if (C->isNullValue() && !I->hasSection()) {
+    if (C->isNullValue() && !I->hasSection() && !I->isThreadLocal()) {
       if (I->hasExternalLinkage()) {
         if (const char *Directive = TAI->getZeroFillDirective()) {
           O << "\t.globl\t" << name << "\n";
