@@ -3,7 +3,8 @@
 
 <html>
 <head>
-  <title>Kaleidoscope: Conclusion, ideas for extensions, and other useful tidbits</title>
+  <title>Kaleidoscope: Conclusion, ideas for extensions, and other useful
+   tidbits</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="author" content="Chris Lattner">
   <link rel="stylesheet" href="../llvm.css" type="text/css">
@@ -88,7 +89,7 @@ common debuggers like GDB.  Adding support for debug info is fairly
 straight-forward.  The best way to understand it is to compile some C/C++ code
 with "<tt>llvm-gcc -g -O0</tt>" and taking a look at what it produces.</li>
 
-<li><b>exception handlingsupport</b> - LLVM supports generation of <a 
+<li><b>exception handling support</b> - LLVM supports generation of <a 
 href="../ExceptionHandling.html">zero cost exceptions</a> which interoperate
 with code compiled in other languages.  You could also generate code by
 implicitly making every function return an error value and checking it.  You 
@@ -98,6 +99,14 @@ to go here.</li>
 <li><b>object orientation, generics, database access, complex numbers,
 geometric programming, ...</b> - Really, there is
 no end of crazy features that you can add to the language.</li>
+
+<li><b>unusual domains</b> - We've been talking about applying LLVM to a domain
+that many people are interested in: building a compiler for a specific language.
+However, there are many other domains that can use compiler technology that are
+not typically considered.  For example, LLVM has been used to implement OpenGL
+graphics acceleration, translate C++ code to ActionScript, and many other
+cute and clever things.  Maybe you will be the first to JIT compile a regular
+expression interpreter into native code with LLVM?</li>
 
 </ul>
 
@@ -118,12 +127,197 @@ are very useful if you want to take advantage of LLVM's capabilities.</p>
 </div>
 
 <!-- *********************************************************************** -->
+<div class="doc_section"><a name="llvmirproperties">Properties of LLVM 
+IR</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>We have a couple common questions about code in the LLVM IR form, lets just
+get these out of the way right now shall we?</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="targetindep">Target 
+Independence</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>Kaleidoscope is an example of a "portable language": any program written in
+Kaleidoscope will work the same way on any target that it runs on.  Many other
+languages have this property, e.g. lisp, java, haskell, javascript, python, etc
+(note that while these languages are portable, not all their libraries are).</p>
+
+<p>One nice aspect of LLVM is that it is often capable of preserving language
+independence in the IR: you can take the LLVM IR for a Kaleidoscope-compiled 
+program and run it on any target that LLVM supports, even emitting C code and
+compiling that on targets that LLVM doesn't support natively.  You can trivially
+tell that the Kaleidoscope compiler generates target-independent code because it
+never queries for any target-specific information when generating code.</p>
+
+<p>The fact that LLVM provides a compact target-independent representation for
+code gets a lot of people excited.  Unfortunately, these people are usually
+thinking about C or a language from the C family when they are asking questions
+about language portability.  I say "unfortunately", because there is really no
+way to make (fully general) C code portable, other than shipping the source code
+around (and of course, C source code is not actually portable in general
+either - ever port a really old application from 32- to 64-bits?).</p>
+
+<p>The problem with C (again, in its full generality) is that it is heavily
+laden with target specific assumptions.  As one simple example, the preprocessor
+often destructively removes target-independence from the code when it processes
+the input text:</p>
+
+<div class="doc_code">
+<pre>
+#ifdef __i386__
+  int X = 1;
+#else
+  int X = 42;
+#endif
+</pre>
+</div>
+
+<p>While it is possible to engineer more and more complex solutions to problems
+like this, it cannot be solved in full generality in a way better than shipping
+the actual source code.</p>
+
+<p>That said, there are interesting subsets of C that can be made portable.  If
+you are willing to fix primitive types to a fixed size (say int = 32-bits, 
+and long = 64-bits), don't care about ABI compatibility with existing binaries,
+and are willing to give up some other minor features, you can have portable
+code.  This can even make real sense for specialized domains such as an
+in-kernel language.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="safety">Safety Guarantees</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>Many of the languages above are also "safe" languages: it is impossible for
+a program written in Java to corrupt its address space and crash the process.
+Safety is an interesting property that requires a combination of language
+design, runtime support, and often operating system support.</p>
+
+<p>It is certainly possible to implement a safe language in LLVM, but LLVM IR
+does not itself guarantee safety.  The LLVM IR allows unsafe pointer casts,
+use after free bugs, buffer over-runs, and a variety of other problems.  Safety
+needs to be implemented as a layer on top of LLVM and, conveniently, several
+groups have investigated this.  Ask on the <a 
+href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">llvmdev mailing 
+list</a> if you are interested in more details.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="langspecific">Language-Specific 
+Optimizations</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>One thing about LLVM that turns off many people is that it does not solve all
+the world's problems in one system (sorry 'world hunger', someone else will have
+to solve you some other day).  One specific complaint is that people perceive
+LLVM as being incapable of performing high-level language-specific optimization:
+LLVM "loses too much information".</p>
+
+<p>Unfortunately, this is really not the place to give you a full and unified
+version of "Chris Lattner's theory of compiler design".  Instead, I'll make a
+few observations:</p>
+
+<p>First, you're right that LLVM does lose information.  For example, as of this
+writing, there is no way to distinguish in the LLVM IR whether an SSA-value came
+from a C "int" or a C "long" on an ILP32 machine (other than debug info).  Both
+get compiled down to an 'i32' value and the information about what it came from
+is lost.  The more general issue here is that the LLVM type system uses
+"structural equivalence" instead of "name equivalence".  Another place this
+surprises people is if you have two types in a high-level language that have the
+same structure (e.g. two different structs that have a single int field): these
+types will compile down into a single LLVM type and it will be impossible to
+tell what it came from.</p>
+
+<p>Second, while LLVM does lose information, LLVM is not a fixed target: we 
+continue to enhance and improve it in many different ways.  In addition to
+adding new features (LLVM did not always support exceptions or debug info), we
+also extend the IR to capture important information for optimization (e.g.
+whether an argument is sign or zero extended, information about pointers
+aliasing, etc.  Many of the enhancements are user-driven: people want LLVM to
+do some specific feature, so they go ahead and extend it to do so.</p>
+
+<p>Third, it <em>is certainly possible</em> to add language-specific
+optimizations, and you have a number of choices in how to do it.  As one trivial
+example, it is possible to add language-specific optimization passes that
+"known" things about code compiled for a language.  In the case of the C family,
+there is an optimziation pass that "knows" about the standard C library
+functions.  If you call "exit(0)" in main(), it knows that it is safe to
+optimize that into "return 0;" for example, because C specifies what the 'exit'
+function does.</p>
+
+<p>In addition to simple library knowledge, it is possible to embed a variety of
+other language-specific information into the LLVM IR.  If you have a specific
+need and run into a wall, please bring the topic up on the llvmdev list.  At the
+very worst, you can always treat LLVM as if it were a "dumb code generator" and
+implement the high-level optimizations you desire in your front-end on the
+language-specific AST.
+</p>
+
+</div>
+
+<!-- *********************************************************************** -->
 <div class="doc_section"><a name="tipsandtricks">Tips and Tricks</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
 
-<p></p>
+<p>There is a variety of useful tips and tricks that you come to know after
+working on/with LLVM that aren't obvious at first glance.  Instead of letting
+everyone rediscover them, this section talks about some of these issues.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="offsetofsizeof">Implementing portable
+offsetof/sizeof</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>One interesting thing that comes up if you are trying to keep the code 
+generated by your compiler "target independent" is that you often need to know
+the size of some LLVM type or the offset of some field in an llvm structure.
+For example, you might need to pass the size of a type into a function that
+allocates memory.</p>
+
+<p>Unfortunately, this can vary widely across targets: for example the width of
+a pointer is trivially target-specific.  However, there is a <a 
+href="http://nondot.org/sabre/LLVMNotes/SizeOf-OffsetOf-VariableSizedStructs.txt">clever
+way to use the getelementptr instruction</a> that allows you to compute this
+in a portable way.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsubsection"><a name="gcstack">Garbage Collected 
+Stack Frames</a></div>
+<!-- ======================================================================= -->
+
+<div class="doc_text">
+
+<p>Some languages want to explicitly manage their stack frames, often so that
+they are garbage collected or to allow easy implementation of closures.  There
+are often better ways to implement these features than explicit stack frames,
+but <a 
+href="http://nondot.org/sabre/LLVMNotes/ExplicitlyManagedStackFrames.txt">LLVM
+does support them if you want</a>.  It requires your front-end to convert the
+code into <a 
+href="http://en.wikipedia.org/wiki/Continuation-passing_style">Continuation
+Passing Style</a> and use of tail calls (which LLVM also supports).</p>
 
 </div>
 
