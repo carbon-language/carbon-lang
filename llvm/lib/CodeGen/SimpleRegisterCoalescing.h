@@ -56,6 +56,10 @@ namespace llvm {
     ///
     SmallVector<std::pair<unsigned, unsigned>, 32> SubRegIdxes;
 
+    /// JoinedCopies - Keep track of copies eliminated due to coalescing.
+    ///
+    SmallPtrSet<MachineInstr*, 32> JoinedCopies;
+
   public:
     static char ID; // Pass identifcation, replacement for typeid
     SimpleRegisterCoalescing() : MachineFunctionPass((intptr_t)&ID) {}

@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regcoalescing"
-#include "llvm/CodeGen/SimpleRegisterCoalescing.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
+#include "SimpleRegisterCoalescing.h"
 #include "VirtRegMap.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
