@@ -59,9 +59,7 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
                                   int FrameIndex) const;
 
   MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
-                                  MachineInstr* LoadMI) const {
-    return 0;
-  }
+                                  MachineInstr* LoadMI) const;
 
   void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
           unsigned DestReg, unsigned SrcReg,

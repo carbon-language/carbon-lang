@@ -250,7 +250,7 @@ emitFunctionStart(MachineFunction &MF)
   emitMaskDirective(MF);
   emitFMaskDirective(MF);
 
-  if (MF.getTarget().getRelocationModel() == Reloc::Static) {
+  if (TM.getRelocationModel() == Reloc::Static) {
     emitSetDirective(NOREORDER);
     emitSetDirective(NOMACRO);
   }
@@ -262,7 +262,7 @@ emitFunctionStart(MachineFunction &MF)
 void MipsAsmPrinter::
 emitFunctionEnd(MachineFunction &MF) 
 {
-  if (MF.getTarget().getRelocationModel() == Reloc::Static) {
+  if (TM.getRelocationModel() == Reloc::Static) {
     emitSetDirective(MACRO);
     emitSetDirective(REORDER);
   }    
@@ -305,6 +305,9 @@ runOnMachineFunction(MachineFunction &MF)
       printInstruction(II);
       ++EmittedInsts;
     }
+
+    // Each Basic Block is separated by a newline
+    O << '\n';
   }
 
   // Emit function end directives
@@ -319,17 +322,41 @@ printOperand(const MachineInstr *MI, int opNum)
 {
   const MachineOperand &MO = MI->getOperand(opNum);
   const MRegisterInfo  &RI = *TM.getRegisterInfo();
-  bool  closeP=false;
+  bool closeP = false;
+  bool isPIC = (TM.getRelocationModel() == Reloc::PIC_);
+  bool isCodeLarge = (TM.getCodeModel() == CodeModel::Large);
 
-  // %hi and %lo used on mips gas to break large constants
+  // %hi and %lo used on mips gas to load global addresses on
+  // static code. %got is used to load global addresses when 
+  // using PIC_. %call16 is used to load direct call targets
+  // on PIC_ and small code size. %call_lo and %call_hi load 
+  // direct call targets on PIC_ and large code size.
   if (MI->getOpcode() == Mips::LUi && !MO.isRegister() 
       && !MO.isImmediate()) {
-    O << "%hi(";
+    if ((isPIC) && (isCodeLarge))
+      O << "%call_hi(";
+    else
+      O << "%hi(";
     closeP = true;
   } else if ((MI->getOpcode() == Mips::ADDiu) && !MO.isRegister() 
              && !MO.isImmediate()) {
     O << "%lo(";
     closeP = true;
+  } else if ((isPIC) && (MI->getOpcode() == Mips::LW)
+             && (!MO.isRegister()) && (!MO.isImmediate())) {
+    const MachineOperand &firstMO = MI->getOperand(opNum-1);
+    const MachineOperand &lastMO  = MI->getOperand(opNum+1);
+    if ((firstMO.isRegister()) && (lastMO.isRegister())) {
+      if ((firstMO.getReg() == Mips::T9) && (lastMO.getReg() == Mips::GP) 
+          && (!isCodeLarge))
+        O << "%call16(";
+      else if ((firstMO.getReg() != Mips::T9) && (lastMO.getReg() == Mips::GP))
+        O << "%got(";
+      else if ((firstMO.getReg() == Mips::T9) && (lastMO.getReg() != Mips::GP) 
+               && (isCodeLarge))
+        O << "%call_lo(";
+      closeP = true;
+    }
   }
  
   switch (MO.getType()) 
@@ -361,6 +388,7 @@ printOperand(const MachineInstr *MI, int opNum)
       O << MO.getSymbolName();
       break;
 
+    // FIXME: Verify correct
     case MachineOperand::MO_ConstantPoolIndex:
       O << TAI->getPrivateGlobalPrefix() << "CPI"
         << getFunctionNumber() << "_" << MO.getConstantPoolIndex();
@@ -385,7 +413,9 @@ printMemOperand(const MachineInstr *MI, int opNum, const char *Modifier)
     return;
   }
 
-  // Load/Store memory operands -- imm($reg)
+  // Load/Store memory operands -- imm($reg) 
+  // If PIC target the target is loaded as the 
+  // pattern lw $25,%call16($28)
   printOperand(MI, opNum);
   O << "(";
   printOperand(MI, opNum+1);

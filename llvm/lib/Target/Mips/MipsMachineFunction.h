@@ -33,11 +33,6 @@ private:
   /// the Return Address must be saved
   int RAStackOffset;
 
-  /// When PIC is used the GP must be saved on the stack
-  /// on the function prologue, so a reference to its stack
-  /// location must be kept.
-  int GPStackOffset;
-
   /// MipsFIHolder - Holds a FrameIndex and it's Stack Pointer Offset
   struct MipsFIHolder {
 
@@ -47,6 +42,13 @@ private:
     MipsFIHolder(int FrameIndex, int StackPointerOffset)
       : FI(FrameIndex), SPOffset(StackPointerOffset) {}
   };
+
+  /// When PIC is used the GP must be saved on the stack
+  /// on the function prologue and must be reloaded from this
+  /// stack location after every call. A reference to its stack
+  /// location and frame index must be kept to be used on
+  /// emitPrologue and processFunctionBeforeFrameFinalized.
+  MipsFIHolder GPHolder;
 
   // On LowerFORMAL_ARGUMENTS the stack size is unknown,
   // so the Stack Pointer Offset calculation of "not in 
@@ -64,7 +66,7 @@ private:
 
 public:
   MipsFunctionInfo(MachineFunction& MF) 
-  : FPStackOffset(0), RAStackOffset(0), 
+  : FPStackOffset(0), RAStackOffset(0), GPHolder(-1,-1),
     HasLoadArgs(false), HasStoreVarArgs(false)
   {}
 
@@ -74,8 +76,10 @@ public:
   int getRAStackOffset() const { return RAStackOffset; }
   void setRAStackOffset(int Off) { RAStackOffset = Off; }
 
-  int getGPStackOffset() const { return GPStackOffset; }
-  void setGPStackOffset(int Off) { GPStackOffset = Off; }
+  int getGPStackOffset() const { return GPHolder.SPOffset; }
+  int getGPFI() const { return GPHolder.FI; }
+  void setGPStackOffset(int Off) { GPHolder.SPOffset = Off; }
+  void setGPFI(int FI) { GPHolder.FI = FI; }
 
   int getTopSavedRegOffset() const { 
     return (RAStackOffset > FPStackOffset) ? 

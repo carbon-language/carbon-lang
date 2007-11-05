@@ -203,6 +203,12 @@ foldMemoryOperand(MachineInstr* MI, unsigned OpNum, int FI) const
   return NewMI;
 }
 
+MachineInstr *MipsRegisterInfo::
+foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
+                                MachineInstr* LoadMI) const {
+  return NULL;
+}
+
 //===----------------------------------------------------------------------===//
 //
 // Callee Saved Registers methods 
@@ -325,7 +331,7 @@ void MipsRegisterInfo::
 eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj, 
                     RegScavenger *RS) const 
 {
-  MachineInstr &MI    = *II;
+  MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
 
   unsigned i = 0;
@@ -359,7 +365,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   #endif
 
   MI.getOperand(i-1).ChangeToImmediate(Offset);
-  MI.getOperand(i).ChangeToRegister(getFrameRegister(MF),false);
+  MI.getOperand(i).ChangeToRegister(getFrameRegister(MF), false);
 }
 
 void MipsRegisterInfo::
@@ -453,7 +459,6 @@ emitPrologue(MachineFunction &MF) const
   if ((isPIC) && (MFI->hasCalls()))
     BuildMI(MBB, MBBI, TII.get(Mips::CPRESTORE))
       .addImm(MipsFI->getGPStackOffset());
-
 }
 
 void MipsRegisterInfo::
@@ -498,6 +503,17 @@ emitEpilogue(MachineFunction &MF, MachineBasicBlock &MBB) const
 
 void MipsRegisterInfo::
 processFunctionBeforeFrameFinalized(MachineFunction &MF) const {
+  // Set the SPOffset on the FI where GP must be saved/loaded.
+  MachineFrameInfo *MFI = MF.getFrameInfo();
+  if (MFI->hasCalls()) { 
+    MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+    #ifndef NDEBUG
+    DOUT << "processFunctionBeforeFrameFinalized\n";
+    DOUT << "GPOffset :" << MipsFI->getGPStackOffset() << "\n";
+    DOUT << "FI :" << MipsFI->getGPFI() << "\n";
+    #endif
+    MFI->setObjectOffset(MipsFI->getGPFI(), MipsFI->getGPStackOffset());
+  }    
 }
 
 unsigned MipsRegisterInfo::

@@ -22,20 +22,11 @@ def SDT_MipsJmpLink : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
 def MipsJmpLink     : SDNode<"MipsISD::JmpLink",SDT_MipsJmpLink, [SDNPHasChain,
                              SDNPOutFlag]>;
 
-// Hi and Lo nodes are created to let easy manipulation of 16-bit when
-// handling 32-bit immediates. They are used on MipsISelLowering to
-// lower stuff like GlobalAddress, ExternalSymbol, ... on static model
-// This two nodes have nothing to do with Mips Registers Hi and Lo.
-def MipsHi : SDNode<"MipsISD::Hi", SDTIntUnaryOp, [SDNPOutFlag]>;
-def MipsLo : SDNode<"MipsISD::Lo", SDTIntUnaryOp>;
-
-// Necessary to generate glued instructions when loading GlobalAddress
-// into registers.
-def MipsAdd : SDNode<"MipsISD::Add", SDTIntBinOp, [SDNPCommutative,
-                     SDNPAssociative, SDNPOptInFlag]>;
-
-// Used to Load Addresses on PIC code.
-def MipsLoadAddr: SDNode<"MipsISD::LoadAddr", SDTIntUnaryOp>;
+// Hi and Lo nodes are used to handle global addresses. Used on 
+// MipsISelLowering to lower stuff like GlobalAddress, ExternalSymbol 
+// static model. (nothing to do with Mips Registers Hi and Lo)
+def MipsHi  : SDNode<"MipsISD::Hi", SDTIntUnaryOp, [SDNPOutFlag]>;
+def MipsLo  : SDNode<"MipsISD::Lo", SDTIntUnaryOp>;
 
 // Return
 def SDT_MipsRet : SDTypeProfile<0, 1, [SDTCisInt<0>]>;
@@ -371,15 +362,9 @@ def IMPLICIT_DEF_CPURegs : PseudoInstMips<(outs CPURegs:$dst), (ins),
 // are used, we have the same behavior, but get also a bunch of warnings
 // from the assembler.
 def CPLOAD: PseudoInstMips<(outs), (ins CPURegs:$reg),
-                          ".set noreorder\n\t.cpload $reg\n\t.set reorder", []>;
+                          ".set noreorder\n\t.cpload $reg\n\t.set reorder\n", []>;
 def CPRESTORE: PseudoInstMips<(outs), (ins uimm16:$loc),
-                              ".cprestore $loc", []>;
-
-// Used on PIC code only, it loads the address of label into register reg. The
-// address is calculated from the global pointer ($gp) and is expanded by the
-// assembler into two instructions "lw" and "addiu".
-def LA: PseudoInstMips<(outs CPURegs:$dst), (ins addrlabel:$label),
-                       "la $dst, $label", []>;
+                              ".cprestore $loc\n", []>;
 
 //===----------------------------------------------------------------------===//
 // Instruction definition
@@ -393,17 +378,13 @@ def LA: PseudoInstMips<(outs CPURegs:$dst), (ins addrlabel:$label),
 
 // ADDiu just accept 16-bit immediates but we handle this on Pat's.
 // immZExt32 is used here so it can match GlobalAddress immediates.
-def ADDiu   : ArithI<0x09, "addiu", MipsAdd, uimm16, immZExt16>;
+def ADDiu   : ArithI<0x09, "addiu", add, uimm16, immZExt16>;
 def ADDi    : ArithI<0x08, "addi",  add, simm16, immSExt16>;
 def MUL     : ArithR<0x1c, 0x02, "mul", mul, IIImul>;
 def ADDu    : ArithR<0x00, 0x21, "addu", add, IIAlu>;
 def SUBu    : ArithR<0x00, 0x23, "subu", sub, IIAlu>;
 def ADD     : ArithOverflowR<0x00, 0x20, "add">;
 def SUB     : ArithOverflowR<0x00, 0x22, "sub">;
-def MADD    : MArithR<0x00, "madd">;
-def MADDU   : MArithR<0x01, "maddu">;
-def MSUB    : MArithR<0x04, "msub">;
-def MSUBU   : MArithR<0x05, "msubu">;
 
 // Logical
 def AND     : LogicR<0x24, "and", and>;
@@ -481,9 +462,15 @@ def MTLO    : MoveFromTo<0x13, "mtlo">;
 // Count Leading
 // CLO/CLZ are part of the newer MIPS32(tm) instruction
 // set and not older Mips I keep this for future use
-// though.
+// though. 
 //def CLO     : CountLeading<0x21, "clo">;
 //def CLZ     : CountLeading<0x20, "clz">;
+
+// MADD*/MSUB* are not part of MipsI either.
+//def MADD    : MArithR<0x00, "madd">;
+//def MADDU   : MArithR<0x01, "maddu">;
+//def MSUB    : MArithR<0x04, "msub">;
+//def MSUBU   : MArithR<0x05, "msubu">;
 
 // No operation
 let addr=0 in
@@ -529,9 +516,8 @@ def : Pat<(MipsJmpLink CPURegs:$dst),
 // GlobalAddress, Constant Pool, ExternalSymbol, and JumpTable
 def : Pat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
 def : Pat<(MipsLo tglobaladdr:$in), (ADDiu ZERO, tglobaladdr:$in)>;
-def : Pat<(MipsAdd CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
+def : Pat<(add CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
           (ADDiu CPURegs:$hi, tglobaladdr:$lo)>;
-def : Pat<(MipsLoadAddr tglobaladdr:$in), (LA tglobaladdr:$in)>;
 
 // Mips does not have not, so we increase the operation
 def : Pat<(not CPURegs:$in),
@@ -543,6 +529,9 @@ def : Pat<(i32 (extloadi8  addr:$src)), (LBu addr:$src)>;
 def : Pat<(i32 (extloadi16 addr:$src)), (LHu addr:$src)>;
 def : Pat<(truncstorei1 CPURegs:$src, addr:$addr),
            (SB CPURegs:$src, addr:$addr)>;
+
+// some peepholes
+def : Pat<(store (i32 0), addr:$dst), (SW ZERO, addr:$dst)>;
 
 ///
 /// brcond patterns

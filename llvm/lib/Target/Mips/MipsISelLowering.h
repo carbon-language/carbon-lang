@@ -38,13 +38,7 @@ namespace llvm {
       Lo, 
 
       // Return 
-      Ret,
-
-      // Need to support addition with a input flag
-      Add,
-
-      // Used on PIC Code to load global addresses
-      LoadAddr
+      Ret
     };
   }
 

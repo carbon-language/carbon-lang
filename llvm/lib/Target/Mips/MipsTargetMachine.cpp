@@ -35,6 +35,9 @@ createTargetAsmInfo() const
 // On function prologue, the stack is created by decrementing
 // its pointer. Once decremented, all references are done with positive
 // offset from the stack/frame pointer, so StackGrowsUp is used.
+// When using CodeModel::Large the behaviour 
+//
+// 
 MipsTargetMachine::
 MipsTargetMachine(const Module &M, const std::string &FS): 
   Subtarget(*this, M, FS), DataLayout("E-p:32:32:32"), 
@@ -43,6 +46,8 @@ MipsTargetMachine(const Module &M, const std::string &FS):
 {
   if (getRelocationModel() != Reloc::Static)
     setRelocationModel(Reloc::PIC_);  
+  if (getCodeModel() == CodeModel::Default)
+    setCodeModel(CodeModel::Small);
 }
 
 // return 0 and must specify -march to gen MIPS code.

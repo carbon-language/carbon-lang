@@ -15,6 +15,7 @@
 
 #include "Mips.h"
 #include "MipsISelLowering.h"
+#include "MipsMachineFunction.h"
 #include "MipsRegisterInfo.h"
 #include "MipsSubtarget.h"
 #include "MipsTargetMachine.h"
@@ -135,20 +136,24 @@ SelectAddr(SDOperand Op, SDOperand Addr, SDOperand &Offset, SDOperand &Base)
     return true;
   }
     
-  // TargetExternalSymbol and TargetGlobalAddress are
-  // lowered and their addresses go into registers, so
-  // they should not be touched here.
-  if ((Addr.getOpcode() == ISD::TargetExternalSymbol ||
-       Addr.getOpcode() == ISD::TargetGlobalAddress))
-    return false;
+  // on PIC code Load GA
+  if (TM.getRelocationModel() == Reloc::PIC_) {
+    if (Addr.getOpcode() == ISD::TargetGlobalAddress) {
+      Base   = CurDAG->getRegister(Mips::GP, MVT::i32);
+      Offset = Addr;
+      return true;
+    }
+  } else {
+    if ((Addr.getOpcode() == ISD::TargetExternalSymbol ||
+        Addr.getOpcode() == ISD::TargetGlobalAddress))
+      return false;
+  }    
   
   // Operand is a result from an ADD.
-  if (Addr.getOpcode() == ISD::ADD) 
-  {
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) 
-    {
-      if (Predicate_immSExt16(CN)) 
-      {
+  if (Addr.getOpcode() == ISD::ADD) {
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
+      if (Predicate_immSExt16(CN)) {
+
         // If the first operand is a FI, get the TargetFI Node
         if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>
                                     (Addr.getOperand(0))) {
@@ -246,6 +251,51 @@ Select(SDOperand N)
 
       SDOperand MFInFlag = SDOperand(RemNode, 0);
       return CurDAG->getTargetNode(Mips::MFHI, MVT::i32, MFInFlag);
+    }
+
+    /// Handle direct and indirect calls when using PIC. On PIC, when 
+    /// GOT is smaller than about 64k (small code) the GA target is 
+    /// loaded with only one instruction. Otherwise GA's target must 
+    /// be loaded with 3 instructions. 
+    case MipsISD::JmpLink: {
+      if (TM.getRelocationModel() == Reloc::PIC_) {
+        //bool isCodeLarge = (TM.getCodeModel() == CodeModel::Large);
+        SDOperand Chain  = Node->getOperand(0);
+        SDOperand Callee = Node->getOperand(1);
+        AddToISelQueue(Chain);
+        SDOperand T9Reg = CurDAG->getRegister(Mips::T9, MVT::i32);
+        SDOperand InFlag(0, 0);
+
+        if ( (isa<GlobalAddressSDNode>(Callee)) ||
+             (isa<ExternalSymbolSDNode>(Callee)) )
+        {
+          /// Direct call for global addresses and external symbols
+          SDOperand GPReg = CurDAG->getRegister(Mips::GP, MVT::i32);
+
+          // Use load to get GOT target
+          SDOperand Ops[] = { Callee, GPReg, Chain };
+          SDOperand Load = SDOperand(CurDAG->getTargetNode(Mips::LW, MVT::i32, 
+                                     MVT::Other, Ops, 3), 0);
+          Chain = Load.getValue(1);
+          AddToISelQueue(Chain);
+
+          // Call target must be on T9
+          Chain = CurDAG->getCopyToReg(Chain, T9Reg, Load, InFlag);
+        } else 
+          /// Indirect call
+          Chain = CurDAG->getCopyToReg(Chain, T9Reg, Callee, InFlag);
+
+        AddToISelQueue(Chain);
+
+        // Emit Jump and Link Register
+        SDNode *ResNode = CurDAG->getTargetNode(Mips::JALR, MVT::Other,
+                                  MVT::Flag, T9Reg, Chain);
+        Chain  = SDOperand(ResNode, 0);
+        InFlag = SDOperand(ResNode, 1);
+        ReplaceUses(SDOperand(Node, 0), Chain);
+        ReplaceUses(SDOperand(Node, 1), InFlag);
+        return ResNode;
+      } 
     }
   }
 

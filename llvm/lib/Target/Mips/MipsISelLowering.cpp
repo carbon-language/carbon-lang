@@ -39,13 +39,11 @@ getTargetNodeName(unsigned Opcode) const
 {
   switch (Opcode) 
   {
-    case MipsISD::JmpLink   : return "MipsISD::JmpLink";
-    case MipsISD::Hi        : return "MipsISD::Hi";
-    case MipsISD::Lo        : return "MipsISD::Lo";
-    case MipsISD::Ret       : return "MipsISD::Ret";
-    case MipsISD::Add       : return "MipsISD::Add";
-    case MipsISD::LoadAddr  : return "MipsISD::LoadAddr";
-    default                 : return NULL;
+    case MipsISD::JmpLink : return "MipsISD::JmpLink";
+    case MipsISD::Hi      : return "MipsISD::Hi";
+    case MipsISD::Lo      : return "MipsISD::Lo";
+    case MipsISD::Ret     : return "MipsISD::Ret";
+    default               : return NULL;
   }
 }
 
@@ -149,21 +147,24 @@ LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG)
 {
   SDOperand ResNode;
   GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-
   SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
+  bool isPIC = (getTargetMachine().getRelocationModel() == Reloc::PIC_);
 
-  // On PIC code global addresses are loaded with "la" instruction
-  if (!(getTargetMachine().getRelocationModel() == Reloc::PIC_)) {
-    const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::i32, MVT::Flag);
+  SDOperand HiPart; 
+  if (!isPIC) {
+    const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::i32);
     SDOperand Ops[] = { GA };
+    HiPart = DAG.getNode(MipsISD::Hi, VTs, 1, Ops, 1);
+  } else // Emit Load from Global Pointer
+    HiPart = DAG.getLoad(MVT::i32, DAG.getEntryNode(), GA, NULL, 0);
 
-    SDOperand Hi = DAG.getNode(MipsISD::Hi, VTs, 2, Ops, 1);
-    SDOperand Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
+  // On functions and global targets not internal linked only
+  // a load from got/GP is necessary for PIC to work.
+  if ((isPIC) && ((!GV->hasInternalLinkage()) || (isa<Function>(GV))))
+    return HiPart;
 
-    SDOperand InFlag = Hi.getValue(1);
-    ResNode = DAG.getNode(MipsISD::Add, MVT::i32, Lo, Hi, InFlag);
-  } else
-    ResNode = DAG.getNode(MipsISD::LoadAddr, MVT::i32, GA);
+  SDOperand Lo = DAG.getNode(MipsISD::Lo, MVT::i32, GA);
+  ResNode = DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
 
   return ResNode;
 }
@@ -211,7 +212,7 @@ LowerCALL(SDOperand Op, SelectionDAG &DAG)
 /// LowerCCCCallTo - functions arguments are copied from virtual
 /// regs to (physical regs)/(stack frame), CALLSEQ_START and
 /// CALLSEQ_END are emitted.
-/// TODO: isVarArg, isTailCall, sret, GOT, linkage types.
+/// TODO: isVarArg, isTailCall, sret.
 SDOperand MipsTargetLowering::
 LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC) 
 {
@@ -244,7 +245,7 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
   SmallVector<SDOperand, 8> MemOpChains;
 
   SDOperand StackPtr;
-  unsigned LastStackLoc=0;
+  int LastStackLoc=0;
 
   // Walk the register/memloc assignments, inserting copies/loads.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
@@ -268,8 +269,8 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
         break;
     }
     
-    // Arguments that can be passed on register, 
-    // must be kept at RegsToPass vector
+    // Arguments that can be passed on register must be kept at 
+    // RegsToPass vector
     if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else {
@@ -294,14 +295,6 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
     }
   }
 
-  // Create a stack location to hold GP when PIC is used 
-  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
-      LastStackLoc = (!LastStackLoc) ? (16) : (LastStackLoc+4);
-      MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
-      MFI->CreateFixedObject(4, LastStackLoc);
-      MipsFI->setGPStackOffset(LastStackLoc);
-  }
-
   // Transform all store nodes into one single node because
   // all store nodes are independent of each other.
   if (!MemOpChains.empty())     
@@ -321,12 +314,12 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
 
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol 
-  // node so that legalize doesn't hack it. Otherwise we have an indirect call,
-  // if PIC is used, the call must use register GP
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+  // node so that legalize doesn't hack it. 
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) 
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
   else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
+
 
   // MipsJmpLink = #chain, #target_address, #opt_in_flags...
   //             = Chain, Callee, Reg#1, Reg#2, ...  
@@ -348,6 +341,37 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
 
   Chain  = DAG.getNode(MipsISD::JmpLink, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
+
+  // Create a stack location to hold GP when PIC is used. This stack 
+  // location is used on function prologue to save GP and also after all 
+  // emited CALL's to restore GP. 
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
+
+      // Function can have an arbitrary number of calls, so 
+      // hold the LastStackLoc with the biggest offset.
+      int FI;
+      MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
+      if (LastStackLoc >= MipsFI->getGPStackOffset()) {
+
+        LastStackLoc = (!LastStackLoc) ? (16) : (LastStackLoc+4);
+        // Create the frame index only once. SPOffset here can be anything 
+        // (this will be fixed on processFunctionBeforeFrameFinalized)
+        if (MipsFI->getGPStackOffset() == -1) {
+          FI = MFI->CreateFixedObject(4, 0);
+          MipsFI->setGPFI(FI);
+        }
+        MipsFI->setGPStackOffset(LastStackLoc);
+      }
+
+
+      // Reload GP value.
+      FI = MipsFI->getGPFI();
+      SDOperand FIN = DAG.getFrameIndex(FI,getPointerTy());
+      SDOperand GPLoad = DAG.getLoad(MVT::i32, Chain, FIN, NULL, 0);
+      Chain = GPLoad.getValue(1);
+      Chain = DAG.getCopyToReg(Chain, DAG.getRegister(Mips::GP, MVT::i32), 
+                               GPLoad, SDOperand(0,0));
+  }      
 
   // Create the CALLSEQ_END node.
   NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
@@ -389,10 +413,11 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
     ResultVals.push_back(Chain.getValue(0));
   }
   
-  // Merge everything together with a MERGE_VALUES node.
   ResultVals.push_back(Chain);
+
+  // Merge everything together with a MERGE_VALUES node.
   return DAG.getNode(ISD::MERGE_VALUES, TheCall->getVTList(),
-                       &ResultVals[0], ResultVals.size()).Val;
+                     &ResultVals[0], ResultVals.size()).Val;                       
 }
 
 //===----------------------------------------------------------------------===//
