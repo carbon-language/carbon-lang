@@ -466,7 +466,7 @@ bool LiveIntervals::conflictsWithPhysRegDef(const LiveInterval &li,
           continue;
         if (MRegisterInfo::isVirtualRegister(PhysReg))
           PhysReg = vrm.getPhys(PhysReg);
-        if (mri_->regsOverlap(PhysReg, reg))
+        if (PhysReg && mri_->regsOverlap(PhysReg, reg))
           return true;
       }
     }
