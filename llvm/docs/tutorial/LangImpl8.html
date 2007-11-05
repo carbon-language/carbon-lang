@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+                      "http://www.w3.org/TR/html4/strict.dtd">
+
+<html>
+<head>
+  <title>Kaleidoscope: Conclusion, ideas for extensions, and other useful tidbits</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="author" content="Chris Lattner">
+  <link rel="stylesheet" href="../llvm.css" type="text/css">
+</head>
+
+<body>
+
+<div class="doc_title">Kaleidoscope: Conclusion</div>
+
+<div class="doc_author">
+  <p>Written by <a href="mailto:sabre@nondot.org">Chris Lattner</a></p>
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="intro">Tutorial Conclusion</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p>Welcome to the the final chapter of the "<a href="index.html">Implementing a
+language with LLVM</a>" tutorial.  In the course of this tutorial, we have grown
+our little Kaleidoscope language from being a useless toy, to being a
+semi-interesting (but probably still useless) toy. :)</p>
+
+<p>It is interesting to see how far we've come, and how little code it has
+taken.  We built the entire lexer, parser, AST, code generator, and an 
+interactive run-loop (with a JIT!) by-hand in under 700 lines of
+(non-comment/non-blank) code.</p>
+
+<p>Our little language supports a couple of interesting features: it supports
+user defined binary and unary operators, it uses JIT compilation for immediate
+evaluation, and it supports a few control flow constructs with SSA construction.
+</p>
+
+<p>Part of the idea of this tutorial was to show you how easy and fun it can be
+to define, build, and play with languages.  Building a compiler need not be a
+scary or mystical process!  Now that you've seen some of the basics, I strongly
+encourage you to take the code and hack on it.  For example, try adding:</p>
+
+<ul>
+<li><b>global variables</b> - While global variables have questional value in
+modern software engineering, they are often useful when putting together quick
+little hacks like the Kaleidoscope compiler itself.  Fortunately, our current
+setup makes it very easy to add global variables: just have value lookup check
+to see if an unresolved variable is in the global variable symbol table before
+rejecting it.  To create a new global variable, make an instance of the LLVM
+<tt>GlobalVariable</tt> class.</li>
+
+<li><b>typed variables</b> - Kaleidoscope currently only supports variables of
+type double.  This gives the language a very nice elegance, because only
+supporting one type means that you never have to specify types.  Different
+languages have different ways of handling this.  The easiest way is to require
+the user to specify types for every variable definition, and record the type
+of the variable in the symbol table along with its Value*.</li>
+
+<li><b>arrays, structs, vectors, etc</b> - Once you add types, you can start
+extending the type system in all sorts of interesting ways.  Simple arrays are
+very easy and are quite useful for many different applications.  Adding them is
+mostly an exercise in learning how the LLVM <a 
+href="../LangRef.html#i_getelementptr">getelementptr</a> instruction works.
+The getelementptr instruction is so nifty/unconventional, it <a 
+href="../GetElementPtr.html">has its own FAQ</a>!).</li>
+
+<li><b>standard runtime</b> - Our current language allows the user to access
+arbitrary external functions, and we use it for things like "printd" and
+"putchard".  As you extend the language to add higher-level constructs, often
+these constructs make the most amount of sense to be lowered into calls into a
+language-supplied runtime.  For example, if you add hash tables to the language,
+it would probably make sense to add the routines to a runtime, instead of 
+inlining them all the way.</li>
+
+<li><b>memory management</b> - Currently we can only access the stack in
+Kaleidoscope.  It would also be useful to be able to allocate heap memory,
+either with calls to the standard libc malloc/free interface or with a garbage
+collector.  If you choose to use garbage collection, note that LLVM fully
+supports <a href="../GarbageCollection.html">Accurate Garbage Collection</a>
+including algorithms that move objects and need to scan/update the stack.</li>
+
+<li><b>debugger support</b> - LLVM supports generation of <a 
+href="../SourceLevelDebugging.html">DWARF Debug info</a> which is understood by
+common debuggers like GDB.  Adding support for debug info is fairly 
+straight-forward.  The best way to understand it is to compile some C/C++ code
+with "<tt>llvm-gcc -g -O0</tt>" and taking a look at what it produces.</li>
+
+<li><b>exception handlingsupport</b> - LLVM supports generation of <a 
+href="../ExceptionHandling.html">zero cost exceptions</a> which interoperate
+with code compiled in other languages.  You could also generate code by
+implicitly making every function return an error value and checking it.  You 
+could also make explicit use of setjmp/longjmp.  There are many different ways
+to go here.</li>
+
+<li><b>object orientation, generics, database access, complex numbers,
+geometric programming, ...</b> - Really, there is
+no end of crazy features that you can add to the language.</li>
+
+</ul>
+
+<p>
+Have fun - try doing something crazy and unusual.  Building a language like
+everyone else always has is much less fun than trying something a little crazy
+and off the wall and seeing how it turns out.  If you get stuck or want to talk
+about it, feel free to email the <a 
+href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">llvmdev mailing 
+list</a>: it has lots of people who are interested in languages and are often
+willing to help out.
+</p>
+
+<p>Before we end, I want to talk about some "tips and tricks" for generating
+LLVM IR.  These are some of the more subtle things that may not be obvious, but
+are very useful if you want to take advantage of LLVM's capabilities.</p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<div class="doc_section"><a name="tipsandtricks">Tips and Tricks</a></div>
+<!-- *********************************************************************** -->
+
+<div class="doc_text">
+
+<p></p>
+
+</div>
+
+<!-- *********************************************************************** -->
+<hr>
+<address>
+  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" alt="Valid CSS!"></a>
+  <a href="http://validator.w3.org/check/referer"><img
+  src="http://www.w3.org/Icons/valid-html401" alt="Valid HTML 4.01!"></a>
+
+  <a href="mailto:sabre@nondot.org">Chris Lattner</a><br>
+  <a href="http://llvm.org">The LLVM Compiler Infrastructure</a><br>
+  Last modified: $Date: 2007-10-17 11:05:13 -0700 (Wed, 17 Oct 2007) $
+</address>
+</body>
+</html>
