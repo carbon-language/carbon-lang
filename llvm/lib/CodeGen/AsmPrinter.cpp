@@ -831,15 +831,16 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV, bool Packed) {
 
       // Check if padding is needed and insert one or more 0s.
       uint64_t fieldSize = TD->getTypeStoreSize(field->getType());
-      uint64_t padSize = ((i == e-1? cvsLayout->getSizeInBytes()
-                           : cvsLayout->getElementOffset(i+1))
+      uint64_t padSize = ((i == e-1 ? Size : cvsLayout->getElementOffset(i+1))
                           - cvsLayout->getElementOffset(i)) - fieldSize;
       sizeSoFar += fieldSize + padSize;
 
-      // Now print the actual field value
-      EmitGlobalConstant(field, CVS->getType()->isPacked());
+      // Now print the actual field value without ABI size padding.
+      EmitGlobalConstant(field, true);
 
-      // Insert the field padding unless it's zero bytes...
+      // Insert padding - this may include padding to increase the size of the
+      // current field up to the ABI size (if the struct is not packed) as well
+      // as padding to ensure that the next field starts at the right offset.
       EmitZeros(padSize);
     }
     assert(sizeSoFar == cvsLayout->getSizeInBytes() &&
