@@ -46,6 +46,10 @@ private:
   ///
   unsigned SlotSize;
 
+  /// StackAlign - Default stack alignment.
+  ///
+  unsigned StackAlign;
+
   /// StackPtr - X86 physical register used as stack ptr.
   ///
   unsigned StackPtr;

@@ -55,6 +55,7 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
   // Cache some information.
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   Is64Bit = Subtarget->is64Bit();
+  StackAlign = TM.getFrameInfo()->getStackAlignment();
   if (Is64Bit) {
     SlotSize = 8;
     StackPtr = X86::RSP;
@@ -761,7 +762,8 @@ static const MachineInstrBuilder &X86InstrAddOperand(MachineInstrBuilder &MIB,
   return MIB;
 }
 
-static unsigned getStoreRegOpcode(const TargetRegisterClass *RC) {
+static unsigned getStoreRegOpcode(const TargetRegisterClass *RC,
+                                  unsigned StackAlign) {
   unsigned Opc = 0;
   if (RC == &X86::GR64RegClass) {
     Opc = X86::MOV64mr;
@@ -786,7 +788,9 @@ static unsigned getStoreRegOpcode(const TargetRegisterClass *RC) {
   } else if (RC == &X86::FR64RegClass) {
     Opc = X86::MOVSDmr;
   } else if (RC == &X86::VR128RegClass) {
-    Opc = X86::MOVAPSmr;
+    // FIXME: Use movaps once we are capable of selectively
+    // aligning functions that spill SSE registers on 16-byte boundaries.
+    Opc = StackAlign >= 16 ? X86::MOVAPSmr : X86::MOVUPSmr;
   } else if (RC == &X86::VR64RegClass) {
     Opc = X86::MMX_MOVQ64mr;
   } else {
@@ -801,7 +805,7 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                           unsigned SrcReg, int FrameIdx,
                                           const TargetRegisterClass *RC) const {
-  unsigned Opc = getStoreRegOpcode(RC);
+  unsigned Opc = getStoreRegOpcode(RC, StackAlign);
   addFrameReference(BuildMI(MBB, MI, TII.get(Opc)), FrameIdx)
     .addReg(SrcReg, false, false, true);
 }
@@ -810,7 +814,7 @@ void X86RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                      SmallVectorImpl<MachineOperand> &Addr,
                                      const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = getStoreRegOpcode(RC);
+  unsigned Opc = getStoreRegOpcode(RC, StackAlign);
   MachineInstrBuilder MIB = BuildMI(TII.get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, Addr[i]);
@@ -818,7 +822,8 @@ void X86RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   NewMIs.push_back(MIB);
 }
 
-static unsigned getLoadRegOpcode(const TargetRegisterClass *RC) {
+static unsigned getLoadRegOpcode(const TargetRegisterClass *RC,
+                                 unsigned StackAlign) {
   unsigned Opc = 0;
   if (RC == &X86::GR64RegClass) {
     Opc = X86::MOV64rm;
@@ -843,7 +848,9 @@ static unsigned getLoadRegOpcode(const TargetRegisterClass *RC) {
   } else if (RC == &X86::FR64RegClass) {
     Opc = X86::MOVSDrm;
   } else if (RC == &X86::VR128RegClass) {
-    Opc = X86::MOVAPSrm;
+    // FIXME: Use movaps once we are capable of selectively
+    // aligning functions that spill SSE registers on 16-byte boundaries.
+    Opc = StackAlign >= 16 ? X86::MOVAPSrm : X86::MOVUPSrm;
   } else if (RC == &X86::VR64RegClass) {
     Opc = X86::MMX_MOVQ64rm;
   } else {
@@ -858,7 +865,7 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
                                            unsigned DestReg, int FrameIdx,
                                            const TargetRegisterClass *RC) const{
-  unsigned Opc = getLoadRegOpcode(RC);
+  unsigned Opc = getLoadRegOpcode(RC, StackAlign);
   addFrameReference(BuildMI(MBB, MI, TII.get(Opc), DestReg), FrameIdx);
 }
 
@@ -866,7 +873,7 @@ void X86RegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                       SmallVectorImpl<MachineOperand> &Addr,
                                       const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = getLoadRegOpcode(RC);
+  unsigned Opc = getLoadRegOpcode(RC, StackAlign);
   MachineInstrBuilder MIB = BuildMI(TII.get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, Addr[i]);
@@ -1284,7 +1291,7 @@ X86RegisterInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   SDNode *Load = 0;
   if (FoldedLoad) {
     MVT::ValueType VT = *RC->vt_begin();
-    Load = DAG.getTargetNode(getLoadRegOpcode(RC), VT, MVT::Other,
+    Load = DAG.getTargetNode(getLoadRegOpcode(RC, StackAlign), VT, MVT::Other,
                              &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Load);
   }
@@ -1314,7 +1321,7 @@ X86RegisterInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
     AddrOps.pop_back();
     AddrOps.push_back(SDOperand(NewNode, 0));
     AddrOps.push_back(Chain);
-    SDNode *Store = DAG.getTargetNode(getStoreRegOpcode(DstRC),
+    SDNode *Store = DAG.getTargetNode(getStoreRegOpcode(DstRC, StackAlign),
                                       MVT::Other, &AddrOps[0], AddrOps.size());
     NewNodes.push_back(Store);
   }
@@ -1446,8 +1453,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       // We need to keep the stack aligned properly.  To do this, we round the
       // amount of space needed for the outgoing arguments up to the next
       // alignment boundary.
-      unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
-      Amount = (Amount+Align-1)/Align*Align;
+      Amount = (Amount+StackAlign-1)/StackAlign*StackAlign;
 
       MachineInstr *New = 0;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
@@ -1666,7 +1672,6 @@ static int mergeSPUpdates(MachineBasicBlock &MBB,
 void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
   const Function* Fn = MF.getFunction();
   const X86Subtarget* Subtarget = &MF.getTarget().getSubtarget<X86Subtarget>();
   MachineModuleInfo *MMI = MFI->getMachineModuleInfo();
@@ -1842,10 +1847,10 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (Fn->hasExternalLinkage() && Fn->getName() == "main" &&
       Subtarget->isTargetCygMing()) {
     BuildMI(MBB, MBBI, TII.get(X86::AND32ri), X86::ESP)
-                .addReg(X86::ESP).addImm(-Align);
+                .addReg(X86::ESP).addImm(-StackAlign);
 
     // Probe the stack
-    BuildMI(MBB, MBBI, TII.get(X86::MOV32ri), X86::EAX).addImm(Align);
+    BuildMI(MBB, MBBI, TII.get(X86::MOV32ri), X86::EAX).addImm(StackAlign);
     BuildMI(MBB, MBBI, TII.get(X86::CALLpcrel32)).addExternalSymbol("_alloca");
   }
 }
