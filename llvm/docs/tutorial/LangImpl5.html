@@ -407,7 +407,7 @@ violate this rule, the verifier will emit an error.</p>
 <p>The final line here is quite subtle, but is very important.  The basic issue
 is that when we create the Phi node in the merge block, we need to set up the
 block/value pairs that indicate how the Phi will work.  Importantly, the Phi
-node expects to have an extry for each predecessor of the block in the CFG.  Why
+node expects to have an entry for each predecessor of the block in the CFG.  Why
 then are we getting the current block when we just set it to ThenBB 5 lines
 above?  The problem is that the "Then" expression may actually itself change the
 block that the Builder is emitting into if, for example, it contains a nested
