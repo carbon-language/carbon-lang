@@ -55,7 +55,10 @@ namespace {
       ConstantStringClassReference = 0;
       NSStringRecord = 0;
       Rewrite.setSourceMgr(Context->SourceMgr);
-      const char *s = "extern struct objc_object *objc_msgSend"
+      // declaring objc_selector outside the parameter list removes a silly
+      // scope related warning...
+      const char *s = "struct objc_selector;\n"
+                      "extern struct objc_object *objc_msgSend"
                       "(struct objc_object *, struct objc_selector *, ...);\n"
                       "extern struct objc_object *objc_getClass"
                       "(const char *);\n";
