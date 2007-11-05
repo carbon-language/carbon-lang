@@ -179,7 +179,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><th>Option</th><th>Name</th></tr>
 <tr><td><a href="#deadarghaX0r">-deadarghaX0r</a></td><td>Dead Argument Hacking (BUGPOINT USE ONLY; DO NOT USE)</td></tr>
 <tr><td><a href="#extract-blocks">-extract-blocks</a></td><td>Extract Basic Blocks From Module (for bugpoint use)</td></tr>
-<tr><td><a href="#emitbitcode">-emitbitcode</a></td><td>Bitcode Writer</td></tr>
+<tr><td><a href="#preverify">-preverify</a></td><td>Preliminary module verification</td></tr>
 <tr><td><a href="#verify">-verify</a></td><td>Module Verifier</td></tr>
 <tr><td><a href="#view-cfg">-view-cfg</a></td><td>View CFG of function</td></tr>
 <tr><td><a href="#view-cfg-only">-view-cfg-only</a></td><td>View CFG of function (with no function bodies)</td></tr>
@@ -1826,10 +1826,18 @@ if (i == j)
 
 <!-------------------------------------------------------------------------- -->
 <div class="doc_subsection">
-  <a name="emitbitcode">Bitcode Writer</a>
+  <a name="preverify">Preliminary module verification</a>
 </div>
 <div class="doc_text">
-  <p>Yet to be written.</p>
+  <p>
+  Ensures that the module is in the form required by the <a
+  href="#verifier">Module Verifier</a> pass.
+  </p>
+  
+  <p>
+  Running the verifier runs this pass automatically, so there should be no need
+  to use it directly.
+  </p>
 </div>
 
 <!-------------------------------------------------------------------------- -->
