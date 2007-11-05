@@ -821,7 +821,7 @@ bool ARMAsmPrinter::doFinalization(Module &M) {
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
     const Type *Type = C->getType();
-    unsigned Size = TD->getTypeSize(Type);
+    unsigned Size = TD->getABITypeSize(Type);
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
     const char *VisibilityDirective = NULL;

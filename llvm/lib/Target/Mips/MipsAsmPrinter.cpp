@@ -419,7 +419,7 @@ doFinalization(Module &M)
       O << "\n\n";
       std::string name = Mang->getValueName(I);
       Constant *C      = I->getInitializer();
-      unsigned Size    = TD->getTypeSize(C->getType());
+      unsigned Size    = TD->getABITypeSize(C->getType());
       unsigned Align   = TD->getPrefTypeAlignment(C->getType());
 
       if (C->isNullValue() && (I->hasLinkOnceLinkage() || 
@@ -431,7 +431,7 @@ doFinalization(Module &M)
           O << "\t.local " << name << "\n";
 
         O << "\t.comm " << name << "," 
-          << TD->getTypeSize(C->getType()) 
+          << TD->getABITypeSize(C->getType())
           << "," << Align << "\n";
 
       } else {

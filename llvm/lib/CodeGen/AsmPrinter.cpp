@@ -192,13 +192,13 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
     MachineConstantPoolEntry CPE = CP[i];
     const Type *Ty = CPE.getType();
     if (TAI->getFourByteConstantSection() &&
-        TM.getTargetData()->getTypeSize(Ty) == 4)
+        TM.getTargetData()->getABITypeSize(Ty) == 4)
       FourByteCPs.push_back(std::make_pair(CPE, i));
     else if (TAI->getEightByteConstantSection() &&
-             TM.getTargetData()->getTypeSize(Ty) == 8)
+             TM.getTargetData()->getABITypeSize(Ty) == 8)
       EightByteCPs.push_back(std::make_pair(CPE, i));
     else if (TAI->getSixteenByteConstantSection() &&
-             TM.getTargetData()->getTypeSize(Ty) == 16)
+             TM.getTargetData()->getABITypeSize(Ty) == 16)
       SixteenByteCPs.push_back(std::make_pair(CPE, i));
     else
       OtherCPs.push_back(std::make_pair(CPE, i));
@@ -229,7 +229,7 @@ void AsmPrinter::EmitConstantPool(unsigned Alignment, const char *Section,
     if (i != e-1) {
       const Type *Ty = CP[i].first.getType();
       unsigned EntSize =
-        TM.getTargetData()->getTypeSize(Ty);
+        TM.getTargetData()->getABITypeSize(Ty);
       unsigned ValEnd = CP[i].first.getOffset() + EntSize;
       // Emit inter-object padding for alignment.
       EmitZeros(CP[i+1].first.getOffset()-ValEnd);
@@ -750,7 +750,7 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
       // We can emit the pointer value into this slot if the slot is an
       // integer slot greater or equal to the size of the pointer.
       if (Ty->isInteger() &&
-          TD->getTypeSize(Ty) >= TD->getTypeSize(Op->getType()))
+          TD->getABITypeSize(Ty) >= TD->getABITypeSize(Op->getType()))
         return EmitConstantValueOnly(Op);
       
       assert(0 && "FIXME: Don't yet support this kind of constant cast expr");
@@ -805,23 +805,21 @@ void AsmPrinter::EmitString(const ConstantArray *CVA) const {
 }
 
 /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
-///
-void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
+/// If Packed is false, pad to the ABI size.
+void AsmPrinter::EmitGlobalConstant(const Constant *CV, bool Packed) {
   const TargetData *TD = TM.getTargetData();
+  unsigned Size = Packed ?
+    TD->getTypeStoreSize(CV->getType()) : TD->getABITypeSize(CV->getType());
 
   if (CV->isNullValue() || isa<UndefValue>(CV)) {
-    EmitZeros(TD->getTypeSize(CV->getType()));
+    EmitZeros(Size);
     return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (CVA->isString()) {
       EmitString(CVA);
     } else { // Not a string.  Print the values in successive locations
-      for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i) {
-        EmitGlobalConstant(CVA->getOperand(i));
-        const Type* EltTy = CVA->getType()->getElementType();
-        uint64_t padSize = TD->getABITypeSize(EltTy) - TD->getTypeSize(EltTy);
-        EmitZeros(padSize);
-      }
+      for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
+        EmitGlobalConstant(CVA->getOperand(i), false);
     }
     return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
@@ -832,14 +830,14 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
       const Constant* field = CVS->getOperand(i);
 
       // Check if padding is needed and insert one or more 0s.
-      uint64_t fieldSize = TD->getTypeSize(field->getType());
+      uint64_t fieldSize = TD->getTypeStoreSize(field->getType());
       uint64_t padSize = ((i == e-1? cvsLayout->getSizeInBytes()
                            : cvsLayout->getElementOffset(i+1))
                           - cvsLayout->getElementOffset(i)) - fieldSize;
       sizeSoFar += fieldSize + padSize;
 
       // Now print the actual field value
-      EmitGlobalConstant(field);
+      EmitGlobalConstant(field, CVS->getType()->isPacked());
 
       // Insert the field padding unless it's zero bytes...
       EmitZeros(padSize);
@@ -916,6 +914,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
           << "\t" << TAI->getCommentString()
           << " long double most significant halfword\n";
       }
+      EmitZeros(Size - TD->getTypeStoreSize(Type::X86_FP80Ty));
       return;
     } else if (CFP->getType() == Type::PPC_FP128Ty) {
       // all long double variants are printed as hex
@@ -978,7 +977,7 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
     const VectorType *PTy = CP->getType();
     
     for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
-      EmitGlobalConstant(CP->getOperand(I));
+      EmitGlobalConstant(CP->getOperand(I), false);
     
     return;
   }

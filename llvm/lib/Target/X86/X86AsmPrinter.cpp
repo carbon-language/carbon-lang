@@ -51,7 +51,7 @@ static X86MachineFunctionInfo calculateFunctionInfo(const Function *F,
   for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
        AI != AE; ++AI)
     // Size should be aligned to DWORD boundary
-    Size += ((TD->getTypeSize(AI->getType()) + 3)/4)*4;
+    Size += ((TD->getABITypeSize(AI->getType()) + 3)/4)*4;
   
   // We're not supporting tooooo huge arguments :)
   Info.setBytesToPopOnReturn((unsigned int)Size);
@@ -156,7 +156,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     std::string name = Mang->getValueName(I);
     Constant *C = I->getInitializer();
     const Type *Type = C->getType();
-    unsigned Size = TD->getTypeSize(Type);
+    unsigned Size = TD->getABITypeSize(Type);
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
     if (I->hasHiddenVisibility()) {

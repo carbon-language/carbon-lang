@@ -259,7 +259,7 @@ void MachOCodeEmitter::emitConstantPool(MachineConstantPool *MCP) {
   // "giant object for PIC" optimization.
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     const Type *Ty = CP[i].getType();
-    unsigned Size = TM.getTargetData()->getTypeSize(Ty);
+    unsigned Size = TM.getTargetData()->getABITypeSize(Ty);
 
     MachOWriter::MachOSection *Sec = MOW.getConstSection(CP[i].Val.ConstVal);
     OutputBuffer SecDataOut(Sec->SectionData, is64Bit, isLittleEndian);
@@ -333,7 +333,7 @@ MachOWriter::~MachOWriter() {
 
 void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
   const Type *Ty = GV->getType()->getElementType();
-  unsigned Size = TM.getTargetData()->getTypeSize(Ty);
+  unsigned Size = TM.getTargetData()->getABITypeSize(Ty);
   unsigned Align = GV->getAlignment();
   if (Align == 0)
     Align = TM.getTargetData()->getPrefTypeAlignment(Ty);
@@ -380,7 +380,7 @@ void MachOWriter::AddSymbolToSection(MachOSection *Sec, GlobalVariable *GV) {
 
 void MachOWriter::EmitGlobal(GlobalVariable *GV) {
   const Type *Ty = GV->getType()->getElementType();
-  unsigned Size = TM.getTargetData()->getTypeSize(Ty);
+  unsigned Size = TM.getTargetData()->getABITypeSize(Ty);
   bool NoInit = !GV->hasInitializer();
   
   // If this global has a zero initializer, it is part of the .bss or common
@@ -803,7 +803,8 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
     if (isa<UndefValue>(PC)) {
       continue;
     } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(PC)) {
-      unsigned ElementSize = TD->getTypeSize(CP->getType()->getElementType());
+      unsigned ElementSize =
+        TD->getABITypeSize(CP->getType()->getElementType());
       for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
         WorkList.push_back(CPair(CP->getOperand(i), PA+i*ElementSize));
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(PC)) {
@@ -904,9 +905,10 @@ void MachOWriter::InitMem(const Constant *C, void *Addr, intptr_t Offset,
         abort();
       }
     } else if (isa<ConstantAggregateZero>(PC)) {
-      memset((void*)PA, 0, (size_t)TD->getTypeSize(PC->getType()));
+      memset((void*)PA, 0, (size_t)TD->getABITypeSize(PC->getType()));
     } else if (const ConstantArray *CPA = dyn_cast<ConstantArray>(PC)) {
-      unsigned ElementSize = TD->getTypeSize(CPA->getType()->getElementType());
+      unsigned ElementSize =
+        TD->getABITypeSize(CPA->getType()->getElementType());
       for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
         WorkList.push_back(CPair(CPA->getOperand(i), PA+i*ElementSize));
     } else if (const ConstantStruct *CPS = dyn_cast<ConstantStruct>(PC)) {

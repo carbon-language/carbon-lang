@@ -657,7 +657,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
         O << Directive << name << "\n";
     
     Constant *C = I->getInitializer();
-    unsigned Size = TD->getTypeSize(C->getType());
+    unsigned Size = TD->getABITypeSize(C->getType());
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
     if (C->isNullValue() && /* FIXME: Verify correct */
@@ -909,7 +909,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     
     Constant *C = I->getInitializer();
     const Type *Type = C->getType();
-    unsigned Size = TD->getTypeSize(Type);
+    unsigned Size = TD->getABITypeSize(Type);
     unsigned Align = TD->getPreferredAlignmentLog(I);
 
     if (C->isNullValue() && /* FIXME: Verify correct */

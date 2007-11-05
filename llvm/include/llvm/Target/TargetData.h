@@ -190,14 +190,6 @@ public:
     return 8*getABITypeSize(Ty);
   }
 
-  /// getTypeSize - Obsolete method, do not use.  Replaced by getTypeStoreSize
-  /// and getABITypeSize.  For alias analysis of loads and stores you probably
-  /// want getTypeStoreSize.  Use getABITypeSize for GEP computations and alloca
-  /// sizing.
-  uint64_t getTypeSize(const Type *Ty) const {
-    return getTypeStoreSize(Ty);
-  }
-
   /// getABITypeAlignment - Return the minimum ABI-required alignment for the
   /// specified type.
   unsigned char getABITypeAlignment(const Type *Ty) const;

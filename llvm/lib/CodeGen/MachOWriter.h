@@ -466,7 +466,7 @@ namespace llvm {
       
       const Type *Ty = C->getType();
       if (Ty->isPrimitiveType() || Ty->isInteger()) {
-        unsigned Size = TM.getTargetData()->getTypeSize(Ty);
+        unsigned Size = TM.getTargetData()->getABITypeSize(Ty);
         switch(Size) {
         default: break; // Fall through to __TEXT,__const
         case 4:

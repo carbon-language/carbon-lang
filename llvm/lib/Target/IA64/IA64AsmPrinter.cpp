@@ -271,7 +271,7 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
       O << "\n\n";
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
-      unsigned Size = TD->getTypeSize(C->getType());
+      unsigned Size = TD->getABITypeSize(C->getType());
       unsigned Align = TD->getPreferredTypeAlignmentShift(C->getType());
       
       if (C->isNullValue() &&
@@ -279,11 +279,11 @@ bool IA64AsmPrinter::doFinalization(Module &M) {
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchToDataSection(".data", I);
         if (I->hasInternalLinkage()) {
-          O << "\t.lcomm " << name << "#," << TD->getTypeSize(C->getType())
+          O << "\t.lcomm " << name << "#," << TD->getABITypeSize(C->getType())
           << "," << (1 << Align);
           O << "\n";
         } else {
-          O << "\t.common " << name << "#," << TD->getTypeSize(C->getType())
+          O << "\t.common " << name << "#," << TD->getABITypeSize(C->getType())
           << "," << (1 << Align);
           O << "\n";
         }

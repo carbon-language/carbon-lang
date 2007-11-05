@@ -286,8 +286,8 @@ namespace llvm {
     void EmitConstantValueOnly(const Constant *CV);
 
     /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
-    ///
-    void EmitGlobalConstant(const Constant* CV);
+    /// If Packed is false, pad to the ABI size.
+    void EmitGlobalConstant(const Constant* CV, bool Packed = false);
 
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
     
