@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -mtriple=x86_64-unknown-linux-gnu
-; PR1187
+; PR1766
 
         %struct.dentry = type { %struct.dentry_operations* }
         %struct.dentry_operations = type { i32 (%struct.dentry*, %struct.qstr*)* }
