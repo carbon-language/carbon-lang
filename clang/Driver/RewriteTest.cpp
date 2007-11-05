@@ -91,6 +91,9 @@ namespace {
     Stmt *RewriteAtSelector(ObjCSelectorExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
+    Stmt *RewriteObjcTryStmt(ObjcAtTryStmt *S);
+    Stmt *RewriteObjcCatchStmt(ObjcAtCatchStmt *S);
+    Stmt *RewriteObjcFinallyStmt(ObjcAtFinallyStmt *S);
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
     void SynthMsgSendFunctionDecl();
@@ -184,6 +187,12 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
 RewriteTest::~RewriteTest() {
   // Get the top-level buffer that this corresponds to.
   RewriteTabs();
+  
+  // Rewrite Objective-c meta data*
+  std::string ResultStr;
+  WriteObjcMetaData(ResultStr);
+  // For now just print the string out.
+  printf("%s", ResultStr.c_str());
   
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
   // we are done.
@@ -404,10 +413,33 @@ Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
     // Rewrite.ReplaceText(startLoc, 0, messString.c_str(), messString.size());
     return RewriteMessageExpr(MessExpr);
   }
+  
+  if (ObjcAtTryStmt *StmtTry = dyn_cast<ObjcAtTryStmt>(S))
+    return RewriteObjcTryStmt(StmtTry);
+  
+  if (ObjcAtCatchStmt *StmtCatch = dyn_cast<ObjcAtCatchStmt>(S))
+    return RewriteObjcCatchStmt(StmtCatch);
+  
+  if (ObjcAtFinallyStmt *StmtFinally = dyn_cast<ObjcAtFinallyStmt>(S))
+    return RewriteObjcFinallyStmt(StmtFinally);
+  
   // Return this stmt unmodified.
   return S;
 }
  
+Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
+  return 0;
+}
+
+Stmt *RewriteTest::RewriteObjcCatchStmt(ObjcAtCatchStmt *S) {
+  return 0;
+}
+
+Stmt *RewriteTest::RewriteObjcFinallyStmt(ObjcAtFinallyStmt *S) {
+  return 0;
+}
+
+
 Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   // Create a new string expression.
   QualType StrType = Context->getPointerType(Context->CharTy);
@@ -1115,7 +1147,7 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
 void RewriteTest::SynthesizeIvarOffsetComputation(ObjcImplementationDecl *IDecl, 
                                                   ObjcIvarDecl *ivar, 
                                                   std::string &Result) {
-  Result += "offsetof(struct _interface_";
+  Result += "offsetof(struct ";
   Result += IDecl->getName();
   Result += ", ";
   Result += ivar->getName();
@@ -1322,7 +1354,7 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
     Result += ",0";
   else {
     // class has size. Must synthesize its size.
-    Result += ",sizeof(struct _interface_";
+    Result += ",sizeof(struct ";
     Result += CDecl->getName();
     Result += ")";
   }
