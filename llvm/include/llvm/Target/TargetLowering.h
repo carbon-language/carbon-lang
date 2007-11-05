@@ -41,6 +41,7 @@ namespace llvm {
   class MachineBasicBlock;
   class MachineInstr;
   class VectorType;
+  class TargetSubtarget;
 
 //===----------------------------------------------------------------------===//
 /// TargetLowering - This class defines information used to lower LLVM code to
@@ -845,6 +846,9 @@ protected:
   
 public:
 
+  virtual const TargetSubtarget *getSubtarget() {
+    assert(0 && "Not Implemented");
+  }
   //===--------------------------------------------------------------------===//
   // Lowering methods - These methods must be implemented by targets so that
   // the SelectionDAGLowering code knows how to lower these.
@@ -877,6 +881,18 @@ public:
   LowerCallTo(SDOperand Chain, const Type *RetTy, bool RetTyIsSigned, 
               bool isVarArg, unsigned CallingConv, bool isTailCall, 
               SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
+
+
+  virtual SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG);
+  virtual SDOperand LowerMEMCPYCall(SDOperand Chain, SDOperand Dest,
+                                    SDOperand Source, SDOperand Count,
+                                    SelectionDAG &DAG);
+  virtual SDOperand LowerMEMCPYInline(SDOperand Chain, SDOperand Dest,
+                                      SDOperand Source, unsigned Size,
+                                      unsigned Align, SelectionDAG &DAG) {
+    assert(0 && "Not Implemented");
+  }
+
 
   /// LowerOperation - This callback is invoked for operations that are 
   /// unsupported by the target, which are registered to use 'custom' lowering,

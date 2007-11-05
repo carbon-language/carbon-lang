@@ -28,6 +28,9 @@ class TargetSubtarget {
 protected: // Can only create subclasses...
   TargetSubtarget();
 public:
+  /// getMaxInlineSizeThreshold - Returns the maximum memset / memcpy size
+  /// that still makes it profitable to inline the call.
+  virtual unsigned getMaxInlineSizeThreshold() const {return 0; }
   virtual ~TargetSubtarget();
 };
 

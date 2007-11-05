@@ -386,6 +386,10 @@ namespace llvm {
                                                    SDOperand Ret, 
                                                    SelectionDAG &DAG) const;
 
+    virtual const TargetSubtarget* getSubtarget() {
+      return static_cast<const TargetSubtarget*>(Subtarget);
+    }
+
   private:
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
@@ -454,10 +458,6 @@ namespace llvm {
     SDOperand LowerMEMCPYInline(SDOperand Dest, SDOperand Source,
                                 SDOperand Chain, unsigned Size, unsigned Align,
                                 SelectionDAG &DAG);
-    SDOperand LowerMEMCPYCall(SDOperand ChainOp, SDOperand DestOp,
-                              SDOperand SourceOp, SDOperand CountOp,
-                              SelectionDAG &DAG);
-    SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);

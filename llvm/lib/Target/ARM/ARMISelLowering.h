@@ -15,13 +15,13 @@
 #ifndef ARMISELLOWERING_H
 #define ARMISELLOWERING_H
 
+#include "ARMSubtarget.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include <vector>
 
 namespace llvm {
   class ARMConstantPoolValue;
-  class ARMSubtarget;
 
   namespace ARMISD {
     // ARM Specific DAG Nodes
@@ -114,6 +114,11 @@ namespace llvm {
     std::vector<unsigned>
     getRegClassForInlineAsmConstraint(const std::string &Constraint,
                                       MVT::ValueType VT) const;
+
+    virtual const TargetSubtarget* getSubtarget() {
+      return static_cast<const TargetSubtarget*>(Subtarget);
+    }
+
   private:
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
     /// make the right decision when generating code for different targets.
@@ -134,10 +139,6 @@ namespace llvm {
     SDOperand LowerGLOBAL_OFFSET_TABLE(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerBR_JT(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerMEMCPY(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerMEMCPYCall(SDOperand Chain, SDOperand Dest,
-                              SDOperand Source, SDOperand Count,
-                              SelectionDAG &DAG);
     SDOperand LowerMEMCPYInline(SDOperand Chain, SDOperand Dest,
                                 SDOperand Source, unsigned Size,
                                 unsigned Align, SelectionDAG &DAG);
