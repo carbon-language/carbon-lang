@@ -1407,8 +1407,39 @@ void ASTContext::Emit(llvm::Serializer& S) const {
   EmitBuiltin(S,VoidPtrTy);
 
   // Emit the remaining types.
-  EmitSet(ComplexTypes, S);
-  EmitSet(PointerTypes, S);
+
+  assert (ComplexTypes.size() >= 3);
+  S.EmitInt(ComplexTypes.size() - 3);
+  
+  if (ComplexTypes.size() > 3) {
+    
+    for (llvm::FoldingSet<ComplexType>::const_iterator
+           I=ComplexTypes.begin(), E=ComplexTypes.end(); I!=E; ++I) {
+      
+      const ComplexType* T = &*I;
+    
+      if (T != FloatComplexTy.getTypePtr() &&
+          T != DoubleComplexTy.getTypePtr() &&
+          T != LongDoubleComplexTy.getTypePtr())
+        S.EmitOwnedPtr(&*I);
+    }
+  }
+  
+  assert (PointerTypes.size() >= 1);
+  S.EmitInt(PointerTypes.size() - 1);
+  
+  if (PointerTypes.size() > 1) {
+    
+    for (llvm::FoldingSet<PointerType>::const_iterator
+         I=PointerTypes.begin(), E=PointerTypes.end(); I!=E; ++I) {
+      
+      const PointerType* T = &*I;
+      
+      if (T != VoidPtrTy.getTypePtr())
+        S.EmitOwnedPtr(&*I);
+    }
+  }
+  
   EmitSet(ReferenceTypes, S);
   EmitSet(ConstantArrayTypes, S);
   EmitSet(IncompleteVariableArrayTypes, S);
