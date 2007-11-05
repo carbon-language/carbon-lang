@@ -91,7 +91,7 @@ int main(int argc, char**argv) {
 
 <p>Finally, we instantiate an LLVM <code>PassManager</code> and run the <code>PrintModulePass</code> on our module.  LLVM uses an explicit pass infrastructure to manage optimizations and various other things.  A <code>PassManager</code>, as should be obvious from its name, manages passes: it is responsible for scheduling them, invoking them, and insuring the proper disposal after we’re done with them.  For this example, we’re just using a trivial pass that prints out our module in textual form.</p>
 
-<p>Now onto the interesting part: creating a populating a module.  Here’s the first chunk of our <code>makeLLVMModule()</code>:</p>
+<p>Now onto the interesting part: creating and populating a module.  Here’s the first chunk of our <code>makeLLVMModule()</code>:</p>
 
 <div class="doc_code">
 <pre>
