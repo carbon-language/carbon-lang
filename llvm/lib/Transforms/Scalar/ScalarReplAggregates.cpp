@@ -733,7 +733,8 @@ void SROA::RewriteBitCastUserOfAlloca(Instruction *BCInst, AllocationInst *AI,
 
 /// HasPadding - Return true if the specified type has any structure or
 /// alignment padding, false otherwise.
-static bool HasPadding(const Type *Ty, const TargetData &TD) {
+static bool HasPadding(const Type *Ty, const TargetData &TD,
+                       bool inPacked = false) {
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     const StructLayout *SL = TD.getStructLayout(STy);
     unsigned PrevFieldBitOffset = 0;
@@ -741,7 +742,7 @@ static bool HasPadding(const Type *Ty, const TargetData &TD) {
       unsigned FieldBitOffset = SL->getElementOffsetInBits(i);
 
       // Padding in sub-elements?
-      if (HasPadding(STy->getElementType(i), TD))
+      if (HasPadding(STy->getElementType(i), TD, STy->isPacked()))
         return true;
 
       // Check to see if there is any padding between this element and the
@@ -765,11 +766,12 @@ static bool HasPadding(const Type *Ty, const TargetData &TD) {
     }
 
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
-    return HasPadding(ATy->getElementType(), TD);
+    return HasPadding(ATy->getElementType(), TD, false);
   } else if (const VectorType *VTy = dyn_cast<VectorType>(Ty)) {
-    return HasPadding(VTy->getElementType(), TD);
+    return HasPadding(VTy->getElementType(), TD, false);
   }
-  return TD.getTypeSizeInBits(Ty) != TD.getABITypeSizeInBits(Ty);
+  return inPacked ?
+    false : TD.getTypeSizeInBits(Ty) != TD.getABITypeSizeInBits(Ty);
 }
 
 /// isSafeStructAllocaToScalarRepl - Check to see if the specified allocation of
