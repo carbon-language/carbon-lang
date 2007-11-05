@@ -85,6 +85,7 @@ namespace {
     // Expression Rewriting.
     Stmt *RewriteFunctionBody(Stmt *S);
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
+    Stmt *RewriteAtSelector(ObjCSelectorExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
@@ -374,6 +375,9 @@ Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
   // Handle specific things.
   if (ObjCEncodeExpr *AtEncode = dyn_cast<ObjCEncodeExpr>(S))
     return RewriteAtEncode(AtEncode);
+
+  if (ObjCSelectorExpr *AtSelector = dyn_cast<ObjCSelectorExpr>(S))
+    return RewriteAtSelector(AtSelector);
 	
   if (ObjCStringLiteral *AtString = dyn_cast<ObjCStringLiteral>(S))
     return RewriteObjCStringLiteral(AtString);
@@ -412,6 +416,22 @@ Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   Rewrite.ReplaceStmt(Exp, Replacement);
   delete Exp;
   return Replacement;
+}
+
+Stmt *RewriteTest::RewriteAtSelector(ObjCSelectorExpr *Exp) {
+  assert(SelGetUidFunctionDecl && "Can't find sel_registerName() decl");
+  // Create a call to sel_registerName("selName").
+  llvm::SmallVector<Expr*, 8> SelExprs;
+  QualType argType = Context->getPointerType(Context->CharTy);
+  SelExprs.push_back(new StringLiteral(Exp->getSelector().getName().c_str(),
+                                       Exp->getSelector().getName().size(),
+                                       false, argType, SourceLocation(),
+                                       SourceLocation()));
+  CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
+                                                 &SelExprs[0], SelExprs.size());
+  Rewrite.ReplaceStmt(Exp, SelExp);
+  delete Exp;
+  return SelExp;
 }
 
 CallExpr *RewriteTest::SynthesizeCallToFunctionDecl(
