@@ -809,8 +809,8 @@ static ExprAST *ParsePrimary() {
 
 <div class="doc_code">
 <pre>
-/// varexpr ::= 'var' identifer ('=' expression)? 
-//                    (',' identifer ('=' expression)?)* 'in' expression
+/// varexpr ::= 'var' identifier ('=' expression)? 
+//                    (',' identifier ('=' expression)?)* 'in' expression
 static ExprAST *ParseVarExpr() {
   getNextToken();  // eat the var.
 
@@ -829,7 +829,7 @@ local <tt>VarNames</tt> vector.
 <pre>
   while (1) {
     std::string Name = IdentifierStr;
-    getNextToken();  // eat identifer.
+    getNextToken();  // eat identifier.
 
     // Read the optional initializer.
     ExprAST *Init = 0;
@@ -1244,12 +1244,12 @@ FunctionAST *ErrorF(const char *Str) { Error(Str); return 0; }
 static ExprAST *ParseExpression();
 
 /// identifierexpr
-///   ::= identifer
-///   ::= identifer '(' expression* ')'
+///   ::= identifier
+///   ::= identifier '(' expression* ')'
 static ExprAST *ParseIdentifierExpr() {
   std::string IdName = IdentifierStr;
   
-  getNextToken();  // eat identifer.
+  getNextToken();  // eat identifier.
   
   if (CurTok != '(') // Simple variable ref.
     return new VariableExprAST(IdName);
@@ -1322,7 +1322,7 @@ static ExprAST *ParseIfExpr() {
   return new IfExprAST(Cond, Then, Else);
 }
 
-/// forexpr ::= 'for' identifer '=' expr ',' expr (',' expr)? 'in' expression
+/// forexpr ::= 'for' identifier '=' expr ',' expr (',' expr)? 'in' expression
 static ExprAST *ParseForExpr() {
   getNextToken();  // eat the for.
 
@@ -1330,7 +1330,7 @@ static ExprAST *ParseForExpr() {
     return Error("expected identifier after for");
   
   std::string IdName = IdentifierStr;
-  getNextToken();  // eat identifer.
+  getNextToken();  // eat identifier.
   
   if (CurTok != '=')
     return Error("expected '=' after for");
@@ -1364,8 +1364,8 @@ static ExprAST *ParseForExpr() {
   return new ForExprAST(IdName, Start, End, Step, Body);
 }
 
-/// varexpr ::= 'var' identifer ('=' expression)? 
-//                    (',' identifer ('=' expression)?)* 'in' expression
+/// varexpr ::= 'var' identifier ('=' expression)? 
+//                    (',' identifier ('=' expression)?)* 'in' expression
 static ExprAST *ParseVarExpr() {
   getNextToken();  // eat the var.
 
@@ -1377,7 +1377,7 @@ static ExprAST *ParseVarExpr() {
   
   while (1) {
     std::string Name = IdentifierStr;
-    getNextToken();  // eat identifer.
+    getNextToken();  // eat identifier.
 
     // Read the optional initializer.
     ExprAST *Init = 0;

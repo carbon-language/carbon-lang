@@ -294,12 +294,12 @@ calls:</p>
 <div class="doc_code">
 <pre>
 /// identifierexpr
-///   ::= identifer
-///   ::= identifer '(' expression* ')'
+///   ::= identifier
+///   ::= identifier '(' expression* ')'
 static ExprAST *ParseIdentifierExpr() {
   std::string IdName = IdentifierStr;
   
-  getNextToken();  // eat identifer.
+  getNextToken();  // eat identifier.
   
   if (CurTok != '(') // Simple variable ref.
     return new VariableExprAST(IdName);
@@ -954,12 +954,12 @@ FunctionAST *ErrorF(const char *Str) { Error(Str); return 0; }
 static ExprAST *ParseExpression();
 
 /// identifierexpr
-///   ::= identifer
-///   ::= identifer '(' expression* ')'
+///   ::= identifier
+///   ::= identifier '(' expression* ')'
 static ExprAST *ParseIdentifierExpr() {
   std::string IdName = IdentifierStr;
   
-  getNextToken();  // eat identifer.
+  getNextToken();  // eat identifier.
   
   if (CurTok != '(') // Simple variable ref.
     return new VariableExprAST(IdName);

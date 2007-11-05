@@ -574,7 +574,7 @@ the AST node:</p>
 
 <div class="doc_code">
 <pre>
-/// forexpr ::= 'for' identifer '=' expr ',' expr (',' expr)? 'in' expression
+/// forexpr ::= 'for' identifier '=' expr ',' expr (',' expr)? 'in' expression
 static ExprAST *ParseForExpr() {
   getNextToken();  // eat the for.
 
@@ -582,7 +582,7 @@ static ExprAST *ParseForExpr() {
     return Error("expected identifier after for");
   
   std::string IdName = IdentifierStr;
-  getNextToken();  // eat identifer.
+  getNextToken();  // eat identifier.
   
   if (CurTok != '=')
     return Error("expected '=' after for");
@@ -1085,12 +1085,12 @@ FunctionAST *ErrorF(const char *Str) { Error(Str); return 0; }
 static ExprAST *ParseExpression();
 
 /// identifierexpr
-///   ::= identifer
-///   ::= identifer '(' expression* ')'
+///   ::= identifier
+///   ::= identifier '(' expression* ')'
 static ExprAST *ParseIdentifierExpr() {
   std::string IdName = IdentifierStr;
   
-  getNextToken();  // eat identifer.
+  getNextToken();  // eat identifier.
   
   if (CurTok != '(') // Simple variable ref.
     return new VariableExprAST(IdName);
@@ -1163,7 +1163,7 @@ static ExprAST *ParseIfExpr() {
   return new IfExprAST(Cond, Then, Else);
 }
 
-/// forexpr ::= 'for' identifer '=' expr ',' expr (',' expr)? 'in' expression
+/// forexpr ::= 'for' identifier '=' expr ',' expr (',' expr)? 'in' expression
 static ExprAST *ParseForExpr() {
   getNextToken();  // eat the for.
 
@@ -1171,7 +1171,7 @@ static ExprAST *ParseForExpr() {
     return Error("expected identifier after for");
   
   std::string IdName = IdentifierStr;
-  getNextToken();  // eat identifer.
+  getNextToken();  // eat identifier.
   
   if (CurTok != '=')
     return Error("expected '=' after for");
