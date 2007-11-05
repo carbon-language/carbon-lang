@@ -19,11 +19,33 @@
 using namespace clang;
 
 void Decl::Emit(llvm::Serializer& S) const {
-  assert ("FIXME: not implemented.");
+  S.EmitInt(getKind());
+
+  switch (getKind()) {
+    default:
+      assert (false && "Not implemented.");
+      break;
+      
+    case BlockVar:
+      cast<BlockVarDecl>(this)->Emit(S);
+      break;
+      
+    case FileVar:
+      cast<FileVarDecl>(this)->Emit(S);
+      break;
+      
+    case ParmVar:
+      cast<ParmVarDecl>(this)->Emit(S);
+      break;
+      
+    case Function:
+      cast<FunctionDecl>(this)->Emit(S);
+      break;
+  }
 }
 
 Decl* Decl::Materialize(llvm::Deserializer& D) {
-  assert ("FIXME: not implemented.");
+  assert (false && "FIXME: not implemented.");
   return NULL;
 }
 
