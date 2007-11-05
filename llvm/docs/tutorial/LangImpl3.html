@@ -293,7 +293,13 @@ Function *PrototypeAST::Codegen() {
 </pre>
 </div>
 
-<p>This code packs a lot of power into a few lines.  The first step is to create
+<p>This code packs a lot of power into a few lines.  Note first that this 
+function returns a Function* instead of a Value*.  Because a "prototype" really
+talks about the external interface for a function (not the value computed by
+an expression), it makes sense for it to return the LLVM Function it corresponds
+to when codegen'd.</p>
+
+<p>The next step is to create
 the <tt>FunctionType</tt> that should be used for a given Prototype.  Since all
 function arguments in Kaleidoscope are of type double, the first line creates
 a vector of "N" LLVM Double types.  It then uses the <tt>FunctionType::get</tt>
