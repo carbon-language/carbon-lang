@@ -41,6 +41,10 @@ void Decl::Emit(llvm::Serializer& S) const {
     case Function:
       cast<FunctionDecl>(this)->Emit(S);
       break;
+      
+    case Typedef:
+      cast<TypedefDecl>(this)->Emit(S);
+      break;
   }
 }
 
@@ -82,7 +86,7 @@ void ValueDecl::InternalRead(llvm::Deserializer& D) {
 void VarDecl::InternalEmit(llvm::Serializer& S) const {
   S.EmitInt(SClass);
   S.EmitInt(objcDeclQualifier);
-  VarDecl::InternalEmit(S);
+  ValueDecl::InternalEmit(S);
   S.EmitOwnedPtr(Init);
 }
 
@@ -163,5 +167,19 @@ FunctionDecl* FunctionDecl::Materialize(llvm::Deserializer& D) {
 
   D.ReadOwnedPtr(decl->Body);
   
+  return decl;
+}
+
+void TypedefDecl::Emit(llvm::Serializer& S) const {
+  S.Emit(getLocation());
+  InternalEmit(S);
+  S.Emit(UnderlyingType);  
+}
+
+TypedefDecl* TypedefDecl::Materialize(llvm::Deserializer& D) {
+  SourceLocation L = SourceLocation::ReadVal(D);
+  TypedefDecl* decl = new TypedefDecl(L,NULL,QualType(),NULL);
+  decl->InternalRead(D);
+  D.Read(decl->UnderlyingType);
   return decl;
 }
