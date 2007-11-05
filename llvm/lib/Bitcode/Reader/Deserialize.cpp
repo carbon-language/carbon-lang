@@ -47,9 +47,28 @@ void Deserializer::ReadRecord() {
   // FIXME: Check if we haven't run off the edge of the stream.
   // FIXME: Handle abbreviations.
 
-  // FIXME: Check for the correct code.
-  unsigned Code = Stream.ReadCode();
+  unsigned Code;
 
+  while (true) {
+    
+    Code = Stream.ReadCode();
+  
+    if (Code == bitc::ENTER_SUBBLOCK) {
+      // No known subblocks, always skip them.
+      unsigned id = Stream.ReadSubBlockID();
+      Stream.EnterSubBlock(id);
+      continue;
+    }
+
+    if (Code == bitc::END_BLOCK) {
+      bool x = Stream.ReadBlockEnd();
+      assert (!x && "Error at block end.");
+      continue;
+    }
+    
+    break;
+  }
+  
   assert (Record.size() == 0);  
   Stream.ReadRecord(Code,Record);  
   assert (Record.size() > 0);
@@ -141,7 +160,7 @@ uintptr_t Deserializer::ReadInternalRefPtr() {
 
   MapTy::value_type& E = BPatchMap.FindAndConstruct(BPKey(PtrId));
   
-  assert (!HasFinalPtr(E) &&
+  assert (HasFinalPtr(E) &&
           "Cannot backpatch references.  Object must be already deserialized.");
   
   return GetFinalPtr(E);
