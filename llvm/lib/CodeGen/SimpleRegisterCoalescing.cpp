@@ -805,7 +805,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
          i != e; ++i) {
       VNInfo *VNI = *i;
       unsigned ValSrcReg = VNI->reg;
-      if (ValSrcReg == 0)  // Src not defined by a copy?
+      if (VNI->def == ~1U ||ValSrcReg == 0)  // Src not defined by a copy?
         continue;
       
       // DstReg is known to be a register in the LHS interval.  If the src is
@@ -823,7 +823,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
          i != e; ++i) {
       VNInfo *VNI = *i;
       unsigned ValSrcReg = VNI->reg;
-      if (ValSrcReg == 0)  // Src not defined by a copy?
+      if (VNI->def == ~1U || ValSrcReg == 0)  // Src not defined by a copy?
         continue;
       
       // DstReg is known to be a register in the RHS interval.  If the src is
