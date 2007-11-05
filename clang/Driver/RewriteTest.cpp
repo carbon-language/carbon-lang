@@ -273,9 +273,7 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
     ObjcInterfaceDecl *ForwardDecl = ForwardDecls[i];
     if (ObjcForwardDecls.count(ForwardDecl))
       continue;
-    typedefString += "typedef struct ";
-    typedefString += ForwardDecl->getName();
-    typedefString += " ";
+    typedefString += "typedef struct objc_object ";
     typedefString += ForwardDecl->getName();
     typedefString += ";\n";
     
@@ -341,9 +339,7 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
   std::string ResultStr;
   if (!ObjcForwardDecls.count(ClassDecl)) {
     // we haven't seen a forward decl - generate a typedef.
-    ResultStr += "typedef struct ";
-    ResultStr += ClassDecl->getName();
-    ResultStr += " ";
+    ResultStr += "typedef struct objc_object ";
     ResultStr += ClassDecl->getName();
     ResultStr += ";";
     
@@ -586,15 +582,11 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   expType = Context->getPointerType(StrRep->getType());
   Unop = new UnaryOperator(StrRep, UnaryOperator::AddrOf, expType, 
                            SourceLocation());
-  // struct NSString *
-  if (!NSStringRecord)
-    NSStringRecord = new RecordDecl(Decl::Struct, SourceLocation(), 
-                                    &Context->Idents.get("NSString"), 0);
-  expType = Context->getPointerType(Context->getTagDeclType(NSStringRecord));
-  cast = new CastExpr(expType, Unop, SourceLocation());
+  // cast to NSConstantString *
+  cast = new CastExpr(Exp->getType(), Unop, SourceLocation());
   Rewrite.ReplaceStmt(Exp, cast);
   delete Exp;
-  return StrRep;
+  return cast;
 }
 
 Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
@@ -650,8 +642,12 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   ArgTypes.push_back(Context->getObjcSelType());
   if (ObjcMethodDecl *mDecl = Exp->getMethodDecl()) {
     // Push any user argument types.
-    for (int i = 0; i < mDecl->getNumParams(); i++) 
-      ArgTypes.push_back(mDecl->getParamDecl(i)->getType());
+    for (int i = 0; i < mDecl->getNumParams(); i++) {
+      QualType t = mDecl->getParamDecl(i)->getType();
+      if (t == Context->getObjcClassType())
+        t = Context->getObjcIdType(); // Convert "Class"->"id"
+      ArgTypes.push_back(t);
+    }
     returnType = mDecl->getResultType();
   } else {
     returnType = Context->getObjcIdType();
