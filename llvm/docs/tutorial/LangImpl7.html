@@ -258,7 +258,9 @@ once, which makes analysis simpler.</li>
 the address of the stack object is passed to a function, or if any funny pointer
 arithmetic is involved, the alloca will not be promoted.</li>
 
-<li>mem2reg only works on allocas of scalar values, and only if the array size
+<li>mem2reg only works on allocas of <a 
+href="../LangRef.html#t_classifications">first class</a> 
+values (such as pointers, scalars and vectors), and only if the array size
 of the allocation is 1 (or missing in the .ll file).  mem2reg is not capable of
 promoting structs or arrays to registers.  Note that the "scalarrepl" pass is
 more powerful and can promote structs, "unions", and arrays in many cases.</li>
