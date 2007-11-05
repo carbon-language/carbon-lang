@@ -2063,6 +2063,10 @@ Sema::ExprResult Sema::ActOnClassMessage(
   ObjcInterfaceDecl* ClassDecl = getObjCInterfaceDecl(receiverName);
   ObjcMethodDecl *Method = ClassDecl->lookupClassMethod(Sel);
   QualType returnType;
+  
+  // Before we give up, check if the selector is an instance method.
+  if (!Method)
+    Method = ClassDecl->lookupInstanceMethod(Sel);
   if (!Method) {
     Diag(lbrac, diag::warn_method_not_found, std::string("+"), Sel.getName(),
          SourceRange(lbrac, rbrac));
