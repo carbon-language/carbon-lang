@@ -241,12 +241,12 @@ struct ArgListEntry {
 
 typedef std::vector<struct ArgListEntry> ArgListType;
 
-struct ValueRefListEntry {
+struct ParamListEntry {
   Value *Val;
   uint16_t Attrs;
 };
 
-typedef std::vector<ValueRefListEntry> ValueRefList;
+typedef std::vector<ParamListEntry> ParamList;
 
 
 } // End llvm namespace

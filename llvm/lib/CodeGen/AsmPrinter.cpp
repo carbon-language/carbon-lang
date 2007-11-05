@@ -1188,13 +1188,18 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
           unsigned OpFlags = MI->getOperand(OpNo).getImmedValue();
           ++OpNo;  // Skip over the ID number.
 
-          AsmPrinter *AP = const_cast<AsmPrinter*>(this);
-          if ((OpFlags & 7) == 4 /*ADDR MODE*/) {
-            Error = AP->PrintAsmMemoryOperand(MI, OpNo, AsmPrinterVariant,
-                                              Modifier[0] ? Modifier : 0);
-          } else {
-            Error = AP->PrintAsmOperand(MI, OpNo, AsmPrinterVariant,
-                                        Modifier[0] ? Modifier : 0);
+          if (Modifier[0]=='l')  // labels are target independent
+            printBasicBlockLabel(MI->getOperand(OpNo).getMachineBasicBlock(), 
+                                 false, false);
+          else {
+            AsmPrinter *AP = const_cast<AsmPrinter*>(this);
+            if ((OpFlags & 7) == 4 /*ADDR MODE*/) {
+              Error = AP->PrintAsmMemoryOperand(MI, OpNo, AsmPrinterVariant,
+                                                Modifier[0] ? Modifier : 0);
+            } else {
+              Error = AP->PrintAsmOperand(MI, OpNo, AsmPrinterVariant,
+                                          Modifier[0] ? Modifier : 0);
+            }
           }
         }
         if (Error) {

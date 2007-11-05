@@ -1396,10 +1396,15 @@ void TargetLowering::LowerAsmOperandForConstraint(SDOperand Op,
                                                   SelectionDAG &DAG) {
   switch (ConstraintLetter) {
   default: break;
+  case 'X':     // Allows any operand; labels (basic block) use this.
+    if (Op.getOpcode() == ISD::BasicBlock) {
+      Ops.push_back(Op);
+      return;
+    }
+    // fall through
   case 'i':    // Simple Integer or Relocatable Constant
   case 'n':    // Simple Integer
-  case 's':    // Relocatable Constant
-  case 'X': {  // Allows any operand.
+  case 's': {  // Relocatable Constant
     // These operands are interested in values of the form (GV+C), where C may
     // be folded in as an offset of GV, or it may be explicitly added.  Also, it
     // is possible and fine if either GV or C are missing.

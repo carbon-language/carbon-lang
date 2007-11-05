@@ -14,7 +14,7 @@ typedef union {
   llvm::ArgListType                      *ArgList;
   llvm::TypeWithAttrs                     TypeWithAttrs;
   llvm::TypeWithAttrsList                *TypeWithAttrsList;
-  llvm::ValueRefList                     *ValueRefList;
+  llvm::ParamList                        *ParamList;
 
   // Represent the RHS of PHI node
   std::list<std::pair<llvm::Value*,

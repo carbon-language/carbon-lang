@@ -981,7 +981,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
   llvm::ArgListType                      *ArgList;
   llvm::TypeWithAttrs                     TypeWithAttrs;
   llvm::TypeWithAttrsList                *TypeWithAttrsList;
-  llvm::ValueRefList                     *ValueRefList;
+  llvm::ParamList                        *ParamList;
 
   // Represent the RHS of PHI node
   std::list<std::pair<llvm::Value*,
@@ -1021,7 +1021,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %type <ConstVector>   ConstVector
 %type <ArgList>       ArgList ArgListH
 %type <PHIList>       PHIList
-%type <ValueRefList>  ValueRefList      // For call param lists & GEP indices
+%type <ParamList>     ParamList      // For call param lists & GEP indices
 %type <ValueList>     IndexList         // For GEP indices
 %type <TypeList>      TypeListI 
 %type <TypeWithAttrsList> ArgTypeList ArgTypeListI
@@ -2609,7 +2609,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     $$ = S;
     CHECK_FOR_ERROR
   }
-  | INVOKE OptCallingConv ResultTypes ValueRef '(' ValueRefList ')' OptFuncAttrs
+  | INVOKE OptCallingConv ResultTypes ValueRef '(' ParamList ')' OptFuncAttrs
     TO LABEL ValueRef UNWIND LABEL ValueRef {
 
     // Handle the short syntax
@@ -2624,7 +2624,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
         ParamAttrsWithIndex PAWI; PAWI.index = 0; PAWI.attrs = $8;
         Attrs.push_back(PAWI);
       }
-      ValueRefList::iterator I = $6->begin(), E = $6->end();
+      ParamList::iterator I = $6->begin(), E = $6->end();
       unsigned index = 1;
       for (; I != E; ++I, ++index) {
         const Type *Ty = I->Val->getType();
@@ -2665,7 +2665,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       // correctly!
       FunctionType::param_iterator I = Ty->param_begin();
       FunctionType::param_iterator E = Ty->param_end();
-      ValueRefList::iterator ArgI = $6->begin(), ArgE = $6->end();
+      ParamList::iterator ArgI = $6->begin(), ArgE = $6->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I) {
         if (ArgI->Val->getType() != *I)
@@ -2755,25 +2755,37 @@ PHIList : Types '[' ValueRef ',' ValueRef ']' {    // Used for PHI nodes
   };
 
 
-ValueRefList : Types ValueRef OptParamAttrs {    
+ParamList : Types ValueRef OptParamAttrs {    
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$1)->getDescription());
     // Used for call and invoke instructions
-    $$ = new ValueRefList();
-    ValueRefListEntry E; E.Attrs = $3; E.Val = getVal($1->get(), $2);
+    $$ = new ParamList();
+    ParamListEntry E; E.Attrs = $3; E.Val = getVal($1->get(), $2);
     $$->push_back(E);
     delete $1;
   }
-  | ValueRefList ',' Types ValueRef OptParamAttrs {
+  | LABEL ValueRef OptParamAttrs {
+    // Labels are only valid in ASMs
+    $$ = new ParamList();
+    ParamListEntry E; E.Attrs = $3; E.Val = getBBVal($2);
+    $$->push_back(E);
+  }
+  | ParamList ',' Types ValueRef OptParamAttrs {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$3)->getDescription());
     $$ = $1;
-    ValueRefListEntry E; E.Attrs = $5; E.Val = getVal($3->get(), $4);
+    ParamListEntry E; E.Attrs = $5; E.Val = getVal($3->get(), $4);
     $$->push_back(E);
     delete $3;
     CHECK_FOR_ERROR
   }
-  | /*empty*/ { $$ = new ValueRefList(); };
+  | ParamList ',' LABEL ValueRef OptParamAttrs {
+    $$ = $1;
+    ParamListEntry E; E.Attrs = $5; E.Val = getBBVal($4);
+    $$->push_back(E);
+    CHECK_FOR_ERROR
+  }
+  | /*empty*/ { $$ = new ParamList(); };
 
 IndexList       // Used for gep instructions and constant expressions
   : /*empty*/ { $$ = new std::vector<Value*>(); }
@@ -2919,7 +2931,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $2;  // Free the list...
     CHECK_FOR_ERROR
   }
-  | OptTailCall OptCallingConv ResultTypes ValueRef '(' ValueRefList ')' 
+  | OptTailCall OptCallingConv ResultTypes ValueRef '(' ParamList ')' 
     OptFuncAttrs {
 
     // Handle the short syntax
@@ -2935,7 +2947,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         Attrs.push_back(PAWI);
       }
       unsigned index = 1;
-      ValueRefList::iterator I = $6->begin(), E = $6->end();
+      ParamList::iterator I = $6->begin(), E = $6->end();
       for (; I != E; ++I, ++index) {
         const Type *Ty = I->Val->getType();
         if (Ty == Type::VoidTy)
@@ -2980,7 +2992,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       //
       FunctionType::param_iterator I = Ty->param_begin();
       FunctionType::param_iterator E = Ty->param_end();
-      ValueRefList::iterator ArgI = $6->begin(), ArgE = $6->end();
+      ParamList::iterator ArgI = $6->begin(), ArgE = $6->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I) {
         if (ArgI->Val->getType() != *I)

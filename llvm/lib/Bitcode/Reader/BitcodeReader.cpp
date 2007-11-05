@@ -1506,7 +1506,10 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       SmallVector<Value*, 16> Args;
       // Read the fixed params.
       for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i, ++OpNum) {
-        Args.push_back(getFnValueByID(Record[OpNum], FTy->getParamType(i)));
+        if (FTy->getParamType(i)->getTypeID()==Type::LabelTyID)
+          Args.push_back(getBasicBlock(Record[OpNum]));
+        else
+          Args.push_back(getFnValueByID(Record[OpNum], FTy->getParamType(i)));
         if (Args.back() == 0) return Error("Invalid CALL record");
       }
       

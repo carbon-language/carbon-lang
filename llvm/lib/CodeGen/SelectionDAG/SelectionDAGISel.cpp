@@ -3489,31 +3489,37 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     }
 
     // If this is an input or an indirect output, process the call argument.
+    // BasicBlocks are labels, currently appearing only in asm's.
     if (OpInfo.CallOperandVal) {
-      OpInfo.CallOperand = getValue(OpInfo.CallOperandVal);
-      const Type *OpTy = OpInfo.CallOperandVal->getType();
-      // If this is an indirect operand, the operand is a pointer to the
-      // accessed type.
-      if (OpInfo.isIndirect)
-        OpTy = cast<PointerType>(OpTy)->getElementType();
-      
-      // If OpTy is not a first-class value, it may be a struct/union that we
-      // can tile with integers.
-      if (!OpTy->isFirstClassType() && OpTy->isSized()) {
-        unsigned BitSize = TD->getTypeSizeInBits(OpTy);
-        switch (BitSize) {
-        default: break;
-        case 1:
-        case 8:
-        case 16:
-        case 32:
-        case 64:
-          OpTy = IntegerType::get(BitSize);
-          break;
+      if (isa<BasicBlock>(OpInfo.CallOperandVal))
+        OpInfo.CallOperand = 
+          DAG.getBasicBlock(FuncInfo.MBBMap[cast<BasicBlock>(OpInfo.CallOperandVal)]);
+      else {
+        OpInfo.CallOperand = getValue(OpInfo.CallOperandVal);
+        const Type *OpTy = OpInfo.CallOperandVal->getType();
+        // If this is an indirect operand, the operand is a pointer to the
+        // accessed type.
+        if (OpInfo.isIndirect)
+          OpTy = cast<PointerType>(OpTy)->getElementType();
+
+        // If OpTy is not a first-class value, it may be a struct/union that we
+        // can tile with integers.
+        if (!OpTy->isFirstClassType() && OpTy->isSized()) {
+          unsigned BitSize = TD->getTypeSizeInBits(OpTy);
+          switch (BitSize) {
+          default: break;
+          case 1:
+          case 8:
+          case 16:
+          case 32:
+          case 64:
+            OpTy = IntegerType::get(BitSize);
+            break;
+          }
         }
+
+        OpVT = TLI.getValueType(OpTy, true);
       }
-      
-      OpVT = TLI.getValueType(OpTy, true);
     }
     
     OpInfo.ConstraintVT = OpVT;

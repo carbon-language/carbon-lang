@@ -803,10 +803,13 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
             if (ConstantSDNode *CS =
                    dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
               MI->addImmOperand(CS->getValue());
-            } else {
-              GlobalAddressSDNode *GA = 
-                  cast<GlobalAddressSDNode>(Node->getOperand(i));
+            } else if (GlobalAddressSDNode *GA = 
+                  dyn_cast<GlobalAddressSDNode>(Node->getOperand(i))) {
               MI->addGlobalAddressOperand(GA->getGlobal(), GA->getOffset());
+            } else {
+              BasicBlockSDNode *BB =
+                  cast<BasicBlockSDNode>(Node->getOperand(i));
+              MI->addMachineBasicBlockOperand(BB->getBasicBlock());
             }
           }
           break;
