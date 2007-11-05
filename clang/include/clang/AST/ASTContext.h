@@ -305,7 +305,8 @@ private:
   //===--------------------------------------------------------------------===//
   //                    Serialization
   //===--------------------------------------------------------------------===//
-  
+
+public:
   void Emit(llvm::Serializer& S) const;
   static ASTContext* Materialize(llvm::Deserializer& D);  
 };
