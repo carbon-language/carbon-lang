@@ -62,7 +62,7 @@ we define virtual codegen methods in each AST class:</p>
 class ExprAST {
 public:
   virtual ~ExprAST() {}
-  virtual Value *Codegen() = 0;
+  <b>virtual Value *Codegen() = 0;</b>
 };
 
 /// NumberExprAST - Expression class for numeric literals like "1.0".
@@ -70,7 +70,7 @@ class NumberExprAST : public ExprAST {
   double Val;
 public:
   explicit NumberExprAST(double val) : Val(val) {}
-  virtual Value *Codegen();
+  <b>virtual Value *Codegen();</b>
 };
 ...
 </pre>
@@ -87,6 +87,11 @@ re-executes.  In order words, there is no way to "change" an SSA value.  For
 more information, please read up on <a 
 href="http://en.wikipedia.org/wiki/Static_single_assignment_form">Static Single
 Assignment</a> - the concepts are really quite natural once you grok them.</p>
+
+<p>Note that instead of adding virtual methods to the ExprAST class hierarchy,
+it could also make sense to use a visitor pattern or some other way to model
+this.  Again, this tutorial won't dwell on good software engineering practices:
+for our purposes, adding virtual methods is simplest.</p>
 
 <p>The
 second thing we want is an "Error" method like we used for parser, which will
