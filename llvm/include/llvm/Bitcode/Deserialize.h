@@ -153,6 +153,8 @@ public:
   void RegisterPtr(const void* Ptr) {
     RegisterPtr(ReadInt(),Ptr);
   }
+  
+  bool AtEnd();
 
 private:
   void ReadRecord();  

@@ -25,7 +25,7 @@ namespace llvm {
 class Serializer {
   BitstreamWriter& Stream;
   SmallVector<uint64_t,10> Record;
-  bool inBlock;
+  unsigned BlockLevel;
   
   typedef DenseMap<const void*,unsigned> MapTy;
   MapTy PtrMap;
@@ -55,6 +55,9 @@ public:
   }
 
   void Flush() { if (inRecord()) EmitRecord(); }
+  
+  void EnterBlock(unsigned BlockID = 8, unsigned CodeLen = 3);
+  void ExitBlock();    
   
 private:
   void EmitRecord();

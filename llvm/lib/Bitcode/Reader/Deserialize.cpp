@@ -47,9 +47,14 @@ void Deserializer::ReadRecord() {
   // FIXME: Check if we haven't run off the edge of the stream.
   // FIXME: Handle abbreviations.
 
+  assert (Record.size() == 0);
+  
   unsigned Code;
 
   while (true) {
+    
+    if (Stream.AtEndOfStream())
+      return;
     
     Code = Stream.ReadCode();
   
@@ -71,7 +76,16 @@ void Deserializer::ReadRecord() {
   
   assert (Record.size() == 0);  
   Stream.ReadRecord(Code,Record);  
-  assert (Record.size() > 0);
+  assert (Record.size() > 0 || Stream.AtEndOfStream());
+}
+
+bool Deserializer::AtEnd() {
+  if (inRecord())
+    return false;
+  
+  ReadRecord();
+  
+  return Stream.AtEndOfStream();
 }
 
 uint64_t Deserializer::ReadInt() {

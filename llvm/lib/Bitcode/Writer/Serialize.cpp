@@ -17,16 +17,17 @@
 using namespace llvm;
 
 Serializer::Serializer(BitstreamWriter& stream, unsigned BlockID)
-  : Stream(stream), inBlock(BlockID >= 8) {
+  : Stream(stream), BlockLevel(0) {
     
-  if (inBlock) Stream.EnterSubblock(8,3);
+  if (BlockID >= 8)
+    EnterBlock(8,3);
 }
 
 Serializer::~Serializer() {
   if (inRecord())
     EmitRecord();
 
-  if (inBlock)
+  while (BlockLevel > 0)
     Stream.ExitBlock();
   
   Stream.FlushToWord();
@@ -38,7 +39,21 @@ void Serializer::EmitRecord() {
   Record.clear();
 }
 
+void Serializer::EnterBlock(unsigned BlockID,unsigned CodeLen) {
+  Flush();
+  Stream.EnterSubblock(BlockID,CodeLen);
+  ++BlockLevel;
+}
+
+void Serializer::ExitBlock() {
+  assert (BlockLevel > 0);
+  --BlockLevel;
+  Flush();
+  Stream.ExitBlock();
+}
+
 void Serializer::EmitInt(unsigned X) {
+  assert (BlockLevel > 0);
   Record.push_back(X);
 }
 
@@ -70,6 +85,7 @@ unsigned Serializer::getPtrId(const void* ptr) {
   }
   else return I->second;
 }
+
 
 #define INT_EMIT(TYPE)\
 void SerializeTrait<TYPE>::Emit(Serializer&S, TYPE X) { S.EmitInt(X); }
