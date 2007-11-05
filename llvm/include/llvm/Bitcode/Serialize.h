@@ -32,6 +32,7 @@ class Serializer {
   
 public:
   Serializer(BitstreamWriter& stream, unsigned BlockID = 0);
+  
   ~Serializer();
   
   template <typename T>

@@ -56,13 +56,14 @@ class Deserializer {
     
   public:
     BPKey(unsigned PtrId) : Raw(PtrId << 1) { assert (PtrId > 0); }
+    BPKey(unsigned code, unsigned) : Raw(code) {}
     
     void MarkFinal() { Raw |= 0x1; }
     bool hasFinalPtr() const { return Raw & 0x1 ? true : false; }
     unsigned getID() const { return Raw >> 1; }
     
-    static inline BPKey getEmptyKey() { return 0; }
-    static inline BPKey getTombstoneKey() { return 1; }
+    static inline BPKey getEmptyKey() { return BPKey(0,0); }
+    static inline BPKey getTombstoneKey() { return BPKey(1,0); }
     static inline unsigned getHashValue(const BPKey& K) { return K.Raw & ~0x1; }
 
     static bool isEqual(const BPKey& K1, const BPKey& K2) {
