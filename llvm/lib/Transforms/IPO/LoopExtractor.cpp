@@ -151,7 +151,7 @@ namespace {
     std::vector<BasicBlock*> BlocksToNotExtract;
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit BlockExtractorPass(std::vector<BasicBlock*> &B) 
+    explicit BlockExtractorPass(const std::vector<BasicBlock*> &B) 
       : ModulePass((intptr_t)&ID), BlocksToNotExtract(B) {}
     BlockExtractorPass() : ModulePass((intptr_t)&ID) {}
 
@@ -166,7 +166,8 @@ namespace {
 // createBlockExtractorPass - This pass extracts all blocks (except those
 // specified in the argument list) from the functions in the module.
 //
-ModulePass *llvm::createBlockExtractorPass(std::vector<BasicBlock*> &BTNE) {
+ModulePass *llvm::createBlockExtractorPass(const std::vector<BasicBlock*> &BTNE)
+{
   return new BlockExtractorPass(BTNE);
 }
 

@@ -153,7 +153,7 @@ FunctionPass *createSingleLoopExtractorPass();
 /// createBlockExtractorPass - This pass extracts all blocks (except those
 /// specified in the argument list) from the functions in the module.
 ///
-ModulePass *createBlockExtractorPass(std::vector<BasicBlock*> &BTNE);
+ModulePass *createBlockExtractorPass(const std::vector<BasicBlock*> &BTNE);
 
 /// createOptimizeWellKnownCallsPass - This pass optimizes specific calls to
 /// specific well-known (library) functions.

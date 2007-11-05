@@ -297,52 +297,6 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
 // Basic Block Extraction Code
 //===----------------------------------------------------------------------===//
 
-namespace {
-  std::vector<BasicBlock*> BlocksToNotExtract;
-
-  /// BlockExtractorPass - This pass is used by bugpoint to extract all blocks
-  /// from the module into their own functions except for those specified by the
-  /// BlocksToNotExtract list.
-  class BlockExtractorPass : public ModulePass {
-    bool runOnModule(Module &M);
-  public:
-    static char ID; // Pass ID, replacement for typeid
-    BlockExtractorPass() : ModulePass((intptr_t)&ID) {}
-  };
-  char BlockExtractorPass::ID = 0;
-  RegisterPass<BlockExtractorPass>
-  XX("extract-bbs", "Extract Basic Blocks From Module (for bugpoint use)");
-}
-
-bool BlockExtractorPass::runOnModule(Module &M) {
-  std::set<BasicBlock*> TranslatedBlocksToNotExtract;
-  for (unsigned i = 0, e = BlocksToNotExtract.size(); i != e; ++i) {
-    BasicBlock *BB = BlocksToNotExtract[i];
-    Function *F = BB->getParent();
-
-    // Map the corresponding function in this module.
-    Function *MF = M.getFunction(F->getName());
-
-    // Figure out which index the basic block is in its function.
-    Function::iterator BBI = MF->begin();
-    std::advance(BBI, std::distance(F->begin(), Function::iterator(BB)));
-    TranslatedBlocksToNotExtract.insert(BBI);
-  }
-
-  // Now that we know which blocks to not extract, figure out which ones we WANT
-  // to extract.
-  std::vector<BasicBlock*> BlocksToExtract;
-  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F)
-    for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-      if (!TranslatedBlocksToNotExtract.count(BB))
-        BlocksToExtract.push_back(BB);
-
-  for (unsigned i = 0, e = BlocksToExtract.size(); i != e; ++i)
-    ExtractBasicBlock(BlocksToExtract[i]);
-
-  return !BlocksToExtract.empty();
-}
-
 /// ExtractMappedBlocksFromModule - Extract all but the specified basic blocks
 /// into their own functions.  The only detail is that M is actually a module
 /// cloned from the one the BBs are in, so some mapping needs to be performed.
@@ -351,13 +305,10 @@ bool BlockExtractorPass::runOnModule(Module &M) {
 Module *BugDriver::ExtractMappedBlocksFromModule(const
                                                  std::vector<BasicBlock*> &BBs,
                                                  Module *M) {
-  // Set the global list so that pass will be able to access it.
-  BlocksToNotExtract = BBs;
-
   std::vector<const PassInfo*> PI;
-  PI.push_back(getPI(new BlockExtractorPass()));
+  // FIXME: BBs is actually ignored. See http://llvm.org/PR1775
+  PI.push_back(getPI(createBlockExtractorPass(BBs)));
   Module *Ret = runPassesOn(M, PI);
-  BlocksToNotExtract.clear();
   if (Ret == 0) {
     std::cout << "*** Basic Block extraction failed, please report a bug!\n";
     M = swapProgramIn(M);
