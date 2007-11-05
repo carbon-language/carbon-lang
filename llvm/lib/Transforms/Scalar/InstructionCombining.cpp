@@ -2622,6 +2622,7 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   if (I.getType()->isInteger()) {
     APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
     if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
+      // X sdiv Y -> X udiv Y, iff X and Y don't have sign bit set
       return BinaryOperator::createUDiv(Op0, Op1, I.getName());
     }
   }      
@@ -2811,6 +2812,7 @@ Instruction *InstCombiner::visitURem(BinaryOperator &I) {
 Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
+  // Handle the integer rem common cases
   if (Instruction *common = commonIRemTransforms(I))
     return common;
   
@@ -2823,12 +2825,14 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
       return &I;
     }
  
-  // If the top bits of both operands are zero (i.e. we can prove they are
+  // If the sign bits of both operands are zero (i.e. we can prove they are
   // unsigned inputs), turn this into a urem.
-  APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
-  if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
-    // X srem Y -> X urem Y, iff X and Y don't have sign bit set
-    return BinaryOperator::createURem(Op0, Op1, I.getName());
+  if (I.getType()->isInteger()) {
+    APInt Mask(APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()));
+    if (MaskedValueIsZero(Op1, Mask) && MaskedValueIsZero(Op0, Mask)) {
+      // X srem Y -> X urem Y, iff X and Y don't have sign bit set
+      return BinaryOperator::createURem(Op0, Op1, I.getName());
+    }
   }
 
   return 0;
