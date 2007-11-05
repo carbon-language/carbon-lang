@@ -203,7 +203,7 @@ bool LiveVariables::addRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
                  RegInfo->isSuperRegister(IncomingReg, Reg) &&
                  MO.isKill())
         // A super-register kill already exists.
-        return true;
+        Found = true;
     }
   }
 
@@ -357,7 +357,9 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
     } else if (PhysRegPartUse[Reg])
       // Add implicit use / kill to last partial use.
       addRegisterKilled(Reg, PhysRegPartUse[Reg], true);
-    else
+    else if (LastRef != MI)
+      // Defined, but not used. However, watch out for cases where a super-reg
+      // is also defined on the same MI.
       addRegisterDead(Reg, LastRef);
   }
 
