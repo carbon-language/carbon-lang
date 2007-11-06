@@ -254,6 +254,45 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
   return New;
 }
 
+
+/// hasUndefinedLength - Used by equivalentArrayTypes to determine whether the
+/// the outermost VariableArrayType has no size defined.
+static bool hasUndefinedLength(const ArrayType *Array) {
+  const VariableArrayType *VAT = Array->getAsVariableArrayType();
+  return VAT && !VAT->getSizeExpr();
+}
+
+/// equivalentArrayTypes - Used to determine whether two array types are 
+/// equivalent.
+/// We need to check this explicitly as an incomplete array definition is
+/// considered a VariableArrayType, so will not match a complete array 
+/// definition that would be otherwise equivalent.
+static bool areEquivalentArrayTypes(QualType NewQType, QualType OldQType) {
+  const ArrayType *NewAT = NewQType->getAsArrayType();
+  const ArrayType *OldAT = OldQType->getAsArrayType();
+
+  if (!NewAT || !OldAT)
+    return false;
+  
+  // If either (or both) array types in incomplete we need to strip off the
+  // outer VariableArrayType.  Once the outer VAT is removed the remaining
+  // types must be identical if the array types are to be considered 
+  // equivalent.
+  // eg. int[][1] and int[1][1] become
+  //     VAT(null, CAT(1, int)) and CAT(1, CAT(1, int))
+  // removing the outermost VAT gives
+  //     CAT(1, int) and CAT(1, int)
+  // which are equal, therefore the array types are equivalent.
+  if (hasUndefinedLength(NewAT) || hasUndefinedLength(OldAT)) {
+    if (NewAT->getIndexTypeQualifier() != OldAT->getIndexTypeQualifier())
+      return false;
+    NewQType = NewAT->getElementType();
+    OldQType = OldAT->getElementType();
+  }
+  
+  return NewQType == OldQType;
+}
+
 /// MergeVarDecl - We just parsed a variable 'New' which has the same name
 /// and scope as a previous declaration 'Old'.  Figure out how to resolve this
 /// situation, merging decls or emitting diagnostics as appropriate.
@@ -282,7 +321,8 @@ VarDecl *Sema::MergeVarDecl(VarDecl *New, ScopedDecl *OldD) {
       OldIsTentative = true;
   }
   // Verify the types match.
-  if (Old->getCanonicalType() != New->getCanonicalType()) {
+  if (Old->getCanonicalType() != New->getCanonicalType() && 
+      !areEquivalentArrayTypes(New->getCanonicalType(), Old->getCanonicalType())) {
     Diag(New->getLocation(), diag::err_redefinition, New->getName());
     Diag(Old->getLocation(), diag::err_previous_definition);
     return New;
