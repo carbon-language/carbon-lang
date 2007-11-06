@@ -36,7 +36,7 @@ void SmallPtrSetImpl::shrink_and_clear() {
   CurArray[CurArraySize] = 0;
 }
 
-bool SmallPtrSetImpl::insert(const void * Ptr) {
+bool SmallPtrSetImpl::insert_imp(const void * Ptr) {
   if (isSmall()) {
     // Check to see if it is already in the set.
     for (const void **APtr = SmallArray, **E = SmallArray+NumElements;
@@ -69,7 +69,7 @@ bool SmallPtrSetImpl::insert(const void * Ptr) {
   return true;
 }
 
-bool SmallPtrSetImpl::erase(const void * Ptr) {
+bool SmallPtrSetImpl::erase_imp(const void * Ptr) {
   if (isSmall()) {
     // Check to see if it is in the set.
     for (const void **APtr = SmallArray, **E = SmallArray+NumElements;
