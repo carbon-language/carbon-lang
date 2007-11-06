@@ -1377,7 +1377,50 @@ void ASTContext::Emit(llvm::Serializer& S) const {
 
   // Emit the size of the type vector so that we can reserve that size
   // when we reconstitute the ASTContext object.
-  S.Emit(Types.size());
+  S.EmitInt(Types.size());
+  
+  for (std::vector<Type*>::const_iterator I=Types.begin(), E=Types.end();
+         I!=E; ++I) {
+    
+    Type* t = *I;    
+    Type::TypeClass k = t->getTypeClass();
+    
+    S.EmitInt(k);
+    
+    switch (k) {
+      default:
+        assert (false && "Serialization for type not supported.");
+        break;
+      
+      case Type::Builtin:
+        break;
+        
+      case Type::Complex:
+        S.Emit(cast<ComplexType>(t)->getElementType());
+        break;
+        
+      case Type::Pointer:
+        S.Emit(cast<PointerType>(t)->getPointeeType());
+        break;
+        
+      case Type::FunctionProto: {
+        FunctionTypeProto& FT = *cast<FunctionTypeProto>(t);
+        
+        S.Emit(FT.getResultType());
+        S.Emit(FT.isVariadic());
+        S.Emit(FT.getNumArgs());
+
+        for (FunctionTypeProto::arg_type_iterator
+              I=FT.arg_type_begin(), E=FT.arg_type_end(); I!=E; ++I)
+          S.Emit(*I);
+
+        break;
+      }
+    }
+    
+    S.EmitPtr(t);
+  }
+  
   
   // Emit pointers to builtin types.  Although these objects will be
   // reconsituted automatically when ASTContext is created, any pointers to them
@@ -1385,6 +1428,8 @@ void ASTContext::Emit(llvm::Serializer& S) const {
   // with the Serializer anyway as pointed-to-objects, even if we won't 
   // serialize them out using EmitOwnedPtr.  This "registration" will then
   // be used by the Deserializer to backpatch references to the builtins.
+#if 0
+  {
   EmitBuiltin(S,VoidTy);
   EmitBuiltin(S,BoolTy);
   EmitBuiltin(S,CharTy);
@@ -1450,6 +1495,8 @@ void ASTContext::Emit(llvm::Serializer& S) const {
   // FIXME: EmitSet(ObjcQualifiedInterfaceTypes,S);
   
   S.Emit(BuiltinVaListType);
+  }
+#endif
 // FIXME:  S.Emit(ObjcIdType);
 // FIXME:  S.EmitPtr(IdStructType);
 // FIXME:  S.Emit(ObjcProtoType);
@@ -1470,7 +1517,60 @@ ASTContext* ASTContext::Materialize(llvm::Deserializer& D) {
   
   ASTContext* A = new ASTContext(SM,t,idents,sels,size_reserve);
   
+  for (unsigned i = 0; i < size_reserve; ++i) {
+    Type::TypeClass K = static_cast<Type::TypeClass>(D.ReadInt());
+    
+    switch (K) {
+      default:
+        assert (false && "Deserializaton for type not supported.");
+        break;
+        
+      case Type::Builtin:
+        assert (i < A->Types.size());
+        assert (isa<BuiltinType>(A->Types[i]));
+        D.RegisterPtr(A->Types[i]);
+        break;
+        
+      case Type::Complex: {
+        QualType ElementType;
+        D.Read(ElementType);
+        D.RegisterPtr(A->getComplexType(ElementType).getTypePtr());
+        break;
+      }
+        
+      case Type::Pointer: {
+        QualType PointeeType;
+        D.Read(PointeeType);
+        D.RegisterPtr(A->getPointerType(PointeeType).getTypePtr());
+        break;
+      }
+        
+      case Type::FunctionProto: {
+        QualType ResultType;
+        D.Read(ResultType);
+        
+        bool isVariadic = D.ReadBool();
+        
+        unsigned NumArgs = D.ReadInt();        
+        llvm::SmallVector<QualType,15> Args;
+        for (unsigned j = 0; j < NumArgs; ++j) { 
+          QualType Q;
+          D.Read(Q);
+          Args.push_back(Q);
+        }
+
+        D.RegisterPtr(A->getFunctionType(ResultType,&*Args.begin(),
+                                         NumArgs,isVariadic).getTypePtr());
+                       
+        break;
+      }
+
+    }
+  }
+  
   // Register the addresses of the BuiltinTypes with the Deserializer.
+#if 0
+  {
   RegisterBuiltin(D,A->VoidTy);
   RegisterBuiltin(D,A->BoolTy);
   RegisterBuiltin(D,A->CharTy);
@@ -1503,8 +1603,13 @@ ASTContext* ASTContext::Materialize(llvm::Deserializer& D) {
   ReadSet(A->FunctionTypeNoProtos, A->Types, D);
   ReadSet(A->FunctionTypeProtos, A->Types, D);
   // ReadSet(A->ObjcQualifiedInterfaceTypes,D);
+
+
   
   D.Read(A->BuiltinVaListType);
+  }
+#endif
+  
 // FIXME:  D.Read(A->ObjcIdType);
 // FIXME:  D.ReadPtr(A->IdStructType);
 // FIXME:  D.Read(A->ObjcProtoType);
