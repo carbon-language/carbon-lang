@@ -78,7 +78,7 @@ void RewriteBuffer::AddDelta(unsigned OrigOffset, int Change) {
   Deltas[DeltaIdx].Delta += Change;
   
   // If it is now dead, remove it.
-  if (Deltas[DeltaIdx].Delta)
+  if (Deltas[DeltaIdx].Delta == 0)
     Deltas.erase(Deltas.begin()+DeltaIdx);
 }
 
