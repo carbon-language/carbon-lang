@@ -16,12 +16,8 @@
 
 using namespace llvm;
 
-Serializer::Serializer(BitstreamWriter& stream, unsigned BlockID)
-  : Stream(stream), BlockLevel(0) {
-    
-  if (BlockID >= 8)
-    EnterBlock(8,3);
-}
+Serializer::Serializer(BitstreamWriter& stream)
+  : Stream(stream), BlockLevel(0) {}
 
 Serializer::~Serializer() {
   if (inRecord())
