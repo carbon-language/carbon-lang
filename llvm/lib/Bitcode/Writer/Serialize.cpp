@@ -29,7 +29,7 @@ Serializer::~Serializer() {
 
   while (BlockLevel > 0)
     Stream.ExitBlock();
-  
+   
   Stream.FlushToWord();
 }
 
@@ -40,7 +40,7 @@ void Serializer::EmitRecord() {
 }
 
 void Serializer::EnterBlock(unsigned BlockID,unsigned CodeLen) {
-  Flush();
+  FlushRecord();
   Stream.EnterSubblock(BlockID,CodeLen);
   ++BlockLevel;
 }
@@ -48,7 +48,7 @@ void Serializer::EnterBlock(unsigned BlockID,unsigned CodeLen) {
 void Serializer::ExitBlock() {
   assert (BlockLevel > 0);
   --BlockLevel;
-  Flush();
+  FlushRecord();
   Stream.ExitBlock();
 }
 

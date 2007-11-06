@@ -54,7 +54,7 @@ public:
     if (ptr) SerializeTrait<T>::Emit(*this,*ptr);
   }
 
-  void Flush() { if (inRecord()) EmitRecord(); }
+  void FlushRecord() { if (inRecord()) EmitRecord(); }
   
   void EnterBlock(unsigned BlockID = 8, unsigned CodeLen = 3);
   void ExitBlock();    
