@@ -2935,7 +2935,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           SDOperand Dummy;
           Result = ExpandLibCall(TLI.getLibcallName(LC), Node, isSigned, Dummy);
         }
-      } else if (MVT::isFloatingPoint(VT)) {
+      } else {
+        assert(MVT::isFloatingPoint(VT) &&
+               "remainder op must have integer or floating-point type");
         if (MVT::isVector(VT)) {
           Result = LegalizeOp(UnrollVectorOp(Op));
         } else {
