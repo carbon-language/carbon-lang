@@ -280,7 +280,7 @@ do some specific feature, so they go ahead and extend it to do so.</p>
 <p>Third, it <em>is certainly possible</em> to add language-specific
 optimizations, and you have a number of choices in how to do it.  As one trivial
 example, it is possible to add language-specific optimization passes that
-"known" things about code compiled for a language.  In the case of the C family,
+"know" things about code compiled for a language.  In the case of the C family,
 there is an optimziation pass that "knows" about the standard C library
 functions.  If you call "exit(0)" in main(), it knows that it is safe to
 optimize that into "return 0;" for example, because C specifies what the 'exit'
