@@ -748,11 +748,12 @@ public:
   ObjcAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt, 
                 Stmt *atCatchStmt, 
                 Stmt *atFinallyStmt)
-  : Stmt(ObjcAtTryStmtClass), AtTryLoc(atTryLoc) {
+  : Stmt(ObjcAtTryStmtClass) {
       SubStmts[TRY] = atTryStmt;
       SubStmts[CATCH] = atCatchStmt;
       SubStmts[FINALLY] = atFinallyStmt;
       SubStmts[END_TRY] = NULL;
+      AtTryLoc = atTryLoc;
     }
     
   const Stmt *getTryBody() const { return SubStmts[TRY]; }
