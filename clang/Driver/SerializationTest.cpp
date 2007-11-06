@@ -188,7 +188,7 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename) {
   llvm::BitstreamReader Stream(BufPtr,BufPtr+MBuffer->getBufferSize());
   
   // Sniff for the signature in the bitcode file.
-  if (!ReadPremable(Stream)) {
+  if (ReadPremable(Stream)) {
     llvm::cerr << "ERROR: Invalid AST-bitcode signature.\n";
     return;
   }  
