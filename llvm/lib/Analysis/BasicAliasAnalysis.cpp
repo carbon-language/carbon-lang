@@ -753,9 +753,8 @@ BasicAliasAnalysis::CheckGEPInstructions(
           //
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
             GEP1Ops[i] = ConstantInt::get(Type::Int64Ty,AT->getNumElements()-1);
-          else if (const VectorType *PT = dyn_cast<VectorType>(BasePtr1Ty))
-            GEP1Ops[i] = ConstantInt::get(Type::Int64Ty,PT->getNumElements()-1);
-
+          else if (const VectorType *VT = dyn_cast<VectorType>(BasePtr1Ty))
+            GEP1Ops[i] = ConstantInt::get(Type::Int64Ty,VT->getNumElements()-1);
         }
       }
 
@@ -765,8 +764,8 @@ BasicAliasAnalysis::CheckGEPInstructions(
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty)) {
             if (Op2C->getZExtValue() >= AT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
-          } else if (const VectorType *PT = dyn_cast<VectorType>(BasePtr1Ty)) {
-            if (Op2C->getZExtValue() >= PT->getNumElements())
+          } else if (const VectorType *VT = dyn_cast<VectorType>(BasePtr1Ty)) {
+            if (Op2C->getZExtValue() >= VT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
           }
         } else {  // Conservatively assume the minimum value for this index
@@ -795,8 +794,13 @@ BasicAliasAnalysis::CheckGEPInstructions(
       getTargetData().getIndexedOffset(GEPPointerTy, GEP1Ops, NumGEP1Ops);
     int64_t Offset2 = 
       getTargetData().getIndexedOffset(GEPPointerTy, GEP2Ops, NumGEP2Ops);
-    assert(Offset1<Offset2 && "There is at least one different constant here!");
-
+    assert(Offset1 != Offset2 &&
+           "There is at least one different constant here!");
+    
+    // Make sure we compare the absolute difference.
+    if (Offset1 > Offset2)
+      std::swap(Offset1, Offset2);
+    
     if ((uint64_t)(Offset2-Offset1) >= SizeMax) {
       //cerr << "Determined that these two GEP's don't alias ["
       //     << SizeMax << " bytes]: \n" << *GEP1 << *GEP2;
