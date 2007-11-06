@@ -1179,6 +1179,8 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
         // here.
         unsigned SrcWidth = TD.getTypeSizeInBits(SV->getType());
         unsigned DestWidth = TD.getTypeSizeInBits(AllocaType);
+        unsigned SrcStoreWidth = TD.getTypeStoreSizeInBits(SV->getType());
+        unsigned DestStoreWidth = TD.getTypeStoreSizeInBits(AllocaType);
         if (SV->getType()->isFloatingPoint())
           SV = new BitCastInst(SV, IntegerType::get(SrcWidth),
                                SV->getName(), SI);
@@ -1196,8 +1198,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           // On big-endian machines, the lowest bit is stored at the bit offset
           // from the pointer given by getTypeStoreSizeInBits.  This matters for
           // integers with a bitwidth that is not a multiple of 8.
-          ShAmt = TD.getTypeStoreSizeInBits(AllocaType) -
-            TD.getTypeStoreSizeInBits(SV->getType()) - Offset;
+          ShAmt = DestStoreWidth - SrcStoreWidth - Offset;
         } else {
           ShAmt = Offset;
         }
