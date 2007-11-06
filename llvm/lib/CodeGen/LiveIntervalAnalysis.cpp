@@ -19,7 +19,6 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "VirtRegMap.h"
 #include "llvm/Value.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -57,7 +56,6 @@ void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreservedID(PHIEliminationID);
   AU.addRequiredID(PHIEliminationID);
   AU.addRequiredID(TwoAddressInstructionPassID);
-  AU.addRequired<LoopInfo>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -378,8 +376,13 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
         bool HasUse = mop.isUse();
         bool HasDef = mop.isDef();
         for (unsigned j = i+1, e = MI->getNumOperands(); j != e; ++j) {
-          if (MI->getOperand(j).isRegister() &&
-              MI->getOperand(j).getReg() == li.reg) {
+          if (!MI->getOperand(j).isRegister())
+            continue;
+          unsigned RegJ = MI->getOperand(j).getReg();
+          if (RegJ != 0 && MRegisterInfo::isVirtualRegister(RegJ) &&
+              RegMap->isSubRegister(RegJ))
+            RegJ = RegMap->getSuperRegister(RegJ);
+          if (RegJ == li.reg) {
             MI->getOperand(j).setReg(NewVReg);
             HasUse |= MI->getOperand(j).isUse();
             HasDef |= MI->getOperand(j).isDef();
