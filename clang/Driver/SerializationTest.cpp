@@ -79,7 +79,7 @@ static void WritePreamble(llvm::BitstreamWriter& Stream) {
   Stream.Emit(0x0, 4);
 }
 
-static bool ReadPremable(llvm::BitstreamReader& Stream) {
+static bool ReadPreamble(llvm::BitstreamReader& Stream) {
   return Stream.Read(8) != 'B' ||
          Stream.Read(8) != 'C' ||
          Stream.Read(4) != 0xC ||
@@ -188,7 +188,7 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename) {
   llvm::BitstreamReader Stream(BufPtr,BufPtr+MBuffer->getBufferSize());
   
   // Sniff for the signature in the bitcode file.
-  if (ReadPremable(Stream)) {
+  if (ReadPreamble(Stream)) {
     llvm::cerr << "ERROR: Invalid AST-bitcode signature.\n";
     return;
   }  
