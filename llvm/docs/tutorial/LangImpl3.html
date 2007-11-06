@@ -418,9 +418,10 @@ Function *FunctionAST::Codegen() {
 </div>
 
 <p>Code generation for function definitions starts out simply enough: first we
-codegen the prototype and verify that it is ok.  We also clear out the
+codegen the prototype (Proto) and verify that it is ok.  We also clear out the
 <tt>NamedValues</tt> map to make sure that there isn't anything in it from the
-last function we compiled.</p>
+last function we compiled.  Code generation of the prototype ensures that there
+is an LLVM Function object that is ready to go for us.</p>
 
 <div class="doc_code">
 <pre>
