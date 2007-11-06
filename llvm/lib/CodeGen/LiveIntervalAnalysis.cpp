@@ -379,10 +379,19 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, unsigned reg) {
           if (!MI->getOperand(j).isRegister())
             continue;
           unsigned RegJ = MI->getOperand(j).getReg();
-          if (RegJ != 0 && MRegisterInfo::isVirtualRegister(RegJ) &&
-              RegMap->isSubRegister(RegJ))
+          if (RegJ == 0 || MRegisterInfo::isPhysicalRegister(RegJ))
+            continue;
+          bool isSubRegJ = RegMap->isSubRegister(RegJ);
+          if (isSubRegJ) {
+            assert(!isSubReg || RegMap->getSubRegisterIndex(RegJ) == SubIdx);
             RegJ = RegMap->getSuperRegister(RegJ);
-          if (RegJ == li.reg) {
+          }
+          // Important to check "isSubRegJ == isSubReg".
+          // e.g. %reg1024 = MOVSX32rr16 %reg1025. It's possible that both
+          // registers are coalesced to the same register but only %reg1025 is
+          // a sub-register use. They should not be rewritten to the same
+          // register.
+          if (RegJ == li.reg && isSubRegJ == isSubReg) {
             MI->getOperand(j).setReg(NewVReg);
             HasUse |= MI->getOperand(j).isUse();
             HasDef |= MI->getOperand(j).isDef();
