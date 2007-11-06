@@ -146,6 +146,8 @@ void StrongPHIElimination::computeDFS(MachineFunction& MF) {
   }
 }
 
+/// PreorderSorter - a helper class that is used to sort registers
+/// according to the preorder number of their defining blocks
 class PreorderSorter {
 private:
   DenseMap<MachineBasicBlock*, unsigned>& preorder;
@@ -172,6 +174,8 @@ public:
   }
 };
 
+/// computeDomForest - compute the subforest of the DomTree corresponding
+/// to the defining blocks of the registers in question
 std::vector<StrongPHIElimination::DomForestNode*>
 StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
   LiveVariables& LV = getAnalysis<LiveVariables>();
@@ -215,6 +219,7 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
   return ret;
 }
 
+/// processPHI - Eliminate the given PHI node
 void StrongPHIElimination::processPHI(MachineInstr* P) {
   
 }
