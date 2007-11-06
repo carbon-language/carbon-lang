@@ -280,7 +280,7 @@ Value *BinaryExprAST::Codegen() {
   case '-': return Builder.CreateSub(L, R, "subtmp");
   case '*': return Builder.CreateMul(L, R, "multmp");
   case '&lt;':
-    L = Builder.CreateFCmpULT(L, R, "multmp");
+    L = Builder.CreateFCmpULT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
     return Builder.CreateUIToFP(L, Type::DoubleTy, "booltmp");
   <b>default: break;</b>
@@ -1396,7 +1396,7 @@ Value *BinaryExprAST::Codegen() {
   case '-': return Builder.CreateSub(L, R, "subtmp");
   case '*': return Builder.CreateMul(L, R, "multmp");
   case '&lt;':
-    L = Builder.CreateFCmpULT(L, R, "multmp");
+    L = Builder.CreateFCmpULT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
     return Builder.CreateUIToFP(L, Type::DoubleTy, "booltmp");
   default: break;

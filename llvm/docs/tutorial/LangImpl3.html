@@ -192,7 +192,7 @@ Value *BinaryExprAST::Codegen() {
   case '-': return Builder.CreateSub(L, R, "subtmp");
   case '*': return Builder.CreateMul(L, R, "multmp");
   case '&lt;':
-    L = Builder.CreateFCmpULT(L, R, "multmp");
+    L = Builder.CreateFCmpULT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
     return Builder.CreateUIToFP(L, Type::DoubleTy, "booltmp");
   default: return ErrorV("invalid binary operator");
@@ -860,16 +860,18 @@ static ExprAST *ParseIdentifierExpr() {
   // Call.
   getNextToken();  // eat (
   std::vector&lt;ExprAST*&gt; Args;
-  while (1) {
-    ExprAST *Arg = ParseExpression();
-    if (!Arg) return 0;
-    Args.push_back(Arg);
+  if (CurTok != ')') {
+    while (1) {
+      ExprAST *Arg = ParseExpression();
+      if (!Arg) return 0;
+      Args.push_back(Arg);
     
-    if (CurTok == ')') break;
+      if (CurTok == ')') break;
     
-    if (CurTok != ',')
-      return Error("Expected ')'");
-    getNextToken();
+      if (CurTok != ',')
+        return Error("Expected ')'");
+      getNextToken();
+    }
   }
 
   // Eat the ')'.
@@ -1034,7 +1036,7 @@ Value *BinaryExprAST::Codegen() {
   case '-': return Builder.CreateSub(L, R, "subtmp");
   case '*': return Builder.CreateMul(L, R, "multmp");
   case '&lt;':
-    L = Builder.CreateFCmpULT(L, R, "multmp");
+    L = Builder.CreateFCmpULT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
     return Builder.CreateUIToFP(L, Type::DoubleTy, "booltmp");
   default: return ErrorV("invalid binary operator");

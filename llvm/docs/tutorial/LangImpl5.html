@@ -319,7 +319,7 @@ block.  In this case, if control comes in from the "then" block, it gets the
 value of "calltmp".  If control comes from the "else" block, it gets the value
 of "calltmp1".</p>
 
-<p>At this point, you are probably starting to think "on no! this means my
+<p>At this point, you are probably starting to think "oh no! this means my
 simple and elegant front-end will have to start generating SSA form in order to
 use LLVM!".  Fortunately, this is not the case, and we strongly advise
 <em>not</em> implementing an SSA construction algorithm in your front-end
@@ -679,8 +679,8 @@ loop:		; preds = %loop, %entry
 	%nextvar = add double %i, 1.000000e+00
 
         ; termination test
-	%multmp = fcmp ult double %i, %n
-	%booltmp = uitofp i1 %multmp to double
+	%cmptmp = fcmp ult double %i, %n
+	%booltmp = uitofp i1 %cmptmp to double
 	%loopcond = fcmp one double %booltmp, 0.000000e+00
 	br i1 %loopcond, label %loop, label %afterloop
 
@@ -871,7 +871,8 @@ that is what we return from <tt>ForExprAST::Codegen</tt>.</p>
 the tutorial.  We added two control flow constructs, and used them to motivate
 a couple of aspects of the LLVM IR that are important for front-end implementors
 to know.  In the next chapter of our saga, we will get a bit crazier and add
-operator overloading to our poor innocent language.</p>
+<a href="LangImpl6.html">user-defined operators</a> to our poor innocent 
+language.</p>
 
 </div>
 
@@ -1378,7 +1379,7 @@ Value *BinaryExprAST::Codegen() {
   case '-': return Builder.CreateSub(L, R, "subtmp");
   case '*': return Builder.CreateMul(L, R, "multmp");
   case '&lt;':
-    L = Builder.CreateFCmpULT(L, R, "multmp");
+    L = Builder.CreateFCmpULT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
     return Builder.CreateUIToFP(L, Type::DoubleTy, "booltmp");
   default: return ErrorV("invalid binary operator");

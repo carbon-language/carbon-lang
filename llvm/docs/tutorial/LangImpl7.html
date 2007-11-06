@@ -546,8 +546,8 @@ entry:
 	<b>%x1 = alloca double
 	store double %x, double* %x1
 	%x2 = load double* %x1</b>
-	%multmp = fcmp ult double %x2, 3.000000e+00
-	%booltmp = uitofp i1 %multmp to double
+	%cmptmp = fcmp ult double %x2, 3.000000e+00
+	%booltmp = uitofp i1 %cmptmp to double
 	%ifcond = fcmp one double %booltmp, 0.000000e+00
 	br i1 %ifcond, label %then, label %else
 
@@ -585,8 +585,8 @@ PHI node for it, so we still just make the PHI.</p>
 <pre>
 define double @fib(double %x) {
 entry:
-	%multmp = fcmp ult double <b>%x</b>, 3.000000e+00
-	%booltmp = uitofp i1 %multmp to double
+	%cmptmp = fcmp ult double <b>%x</b>, 3.000000e+00
+	%booltmp = uitofp i1 %cmptmp to double
 	%ifcond = fcmp one double %booltmp, 0.000000e+00
 	br i1 %ifcond, label %then, label %else
 
@@ -618,8 +618,8 @@ such blatent inefficiencies :).</p>
 <pre>
 define double @fib(double %x) {
 entry:
-	%multmp = fcmp ult double %x, 3.000000e+00
-	%booltmp = uitofp i1 %multmp to double
+	%cmptmp = fcmp ult double %x, 3.000000e+00
+	%booltmp = uitofp i1 %cmptmp to double
 	%ifcond = fcmp ueq double %booltmp, 0.000000e+00
 	br i1 %ifcond, label %else, label %ifcont
 
@@ -1674,7 +1674,7 @@ Value *BinaryExprAST::Codegen() {
   case '-': return Builder.CreateSub(L, R, "subtmp");
   case '*': return Builder.CreateMul(L, R, "multmp");
   case '&lt;':
-    L = Builder.CreateFCmpULT(L, R, "multmp");
+    L = Builder.CreateFCmpULT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
     return Builder.CreateUIToFP(L, Type::DoubleTy, "booltmp");
   default: break;

@@ -325,16 +325,18 @@ static ExprAST *ParseIdentifierExpr() {
   // Call.
   getNextToken();  // eat (
   std::vector&lt;ExprAST*&gt; Args;
-  while (1) {
-    ExprAST *Arg = ParseExpression();
-    if (!Arg) return 0;
-    Args.push_back(Arg);
+  if (CurTok != ')') {
+    while (1) {
+      ExprAST *Arg = ParseExpression();
+      if (!Arg) return 0;
+      Args.push_back(Arg);
     
-    if (CurTok == ')') break;
+      if (CurTok == ')') break;
     
-    if (CurTok != ',')
-      return Error("Expected ')'");
-    getNextToken();
+      if (CurTok != ',')
+        return Error("Expected ')'");
+      getNextToken();
+    }
   }
 
   // Eat the ')'.
@@ -985,16 +987,18 @@ static ExprAST *ParseIdentifierExpr() {
   // Call.
   getNextToken();  // eat (
   std::vector&lt;ExprAST*&gt; Args;
-  while (1) {
-    ExprAST *Arg = ParseExpression();
-    if (!Arg) return 0;
-    Args.push_back(Arg);
+  if (CurTok != ')') {
+    while (1) {
+      ExprAST *Arg = ParseExpression();
+      if (!Arg) return 0;
+      Args.push_back(Arg);
     
-    if (CurTok == ')') break;
+      if (CurTok == ')') break;
     
-    if (CurTok != ',')
-      return Error("Expected ')'");
-    getNextToken();
+      if (CurTok != ',')
+        return Error("Expected ')'");
+      getNextToken();
+    }
   }
 
   // Eat the ')'.
