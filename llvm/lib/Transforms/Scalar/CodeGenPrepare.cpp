@@ -155,7 +155,7 @@ bool CodeGenPrepare::CanMergeBlocks(const BasicBlock *BB,
   if (!DestBBPN) return true;  // no conflict.
   
   // Collect the preds of BB.
-  SmallPtrSet<BasicBlock*, 16> BBPreds;
+  SmallPtrSet<const BasicBlock*, 16> BBPreds;
   if (const PHINode *BBPN = dyn_cast<PHINode>(BB->begin())) {
     // It is faster to get preds from a PHI than with pred_iterator.
     for (unsigned i = 0, e = BBPN->getNumIncomingValues(); i != e; ++i)
