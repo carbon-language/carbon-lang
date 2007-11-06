@@ -505,14 +505,14 @@ library. There are two problems with this:</p>
 
 <ol>
   <li>The time to run the static c'tors impacts startup time of
-      applications&mdash;a critical time for gui apps.</li>
+      applications&mdash;a critical time for GUI apps.</li>
   <li>The static c'tors cause the app to pull many extra pages of memory off the
-      disk: both the code for the static c'tors in each .o file and the small
-      amount of data that gets touched.  In addition, touched/dirty pages put
-      more pressure on the VM system on low-memory machines.</li>
+      disk: both the code for the static c'tors in each <tt>.o</tt> file and the
+      small amount of data that gets touched. In addition, touched/dirty pages
+      put more pressure on the VM system on low-memory machines.</li>
 </ol>
 
-<div style="align: center">
+<div align="center">
 <table>
   <tbody>
     <tr>
@@ -527,7 +527,7 @@ library. There are two problems with this:</p>
       <td align="left"><pre>DEBUG(std::cerr &lt;&lt; ...);
 DEBUG(dump(std::cerr));</pre></td>
       <td align="left"><pre>DOUT &lt;&lt; ...;
-dump(DOUT);</pre></td>
+DEBUG(dump(DOUT));</pre></td>
     </tr>
     <tr>
       <td align="left"><pre>std::cerr &lt;&lt; "Hello world\n";</pre></td>
@@ -557,17 +557,17 @@ dump(DOUT);</pre></td>
       <td align="left"><pre>void print(std::ostream &amp;Out);
 // ...
 print(std::cerr);</pre></td>
-      <td align="left"><pre>void print(std::ostream &amp;Out);
-void print(std::ostream *Out) { if (Out) print(*Out) }
+      <td align="left"><pre>void print(llvm::OStream Out);<sup>1</sup>
 // ...
 print(llvm::cerr);</pre>
 
+</td> </tbody> </table>
+</div>
+
 <div class="doc_text">
-<i>N.B.</i> The second <tt>print</tt> method is called by the <tt>print</tt>
-expression. It prevents the execution of the first <tt>print</tt> method if the
-stream is <tt>cnull</tt>.</div></td>
-   </tbody>
-</table>
+<p><sup>1</sup><tt>llvm::OStream</tt> is a light-weight class so it should never
+be passed by reference. This is important because in some configurations,
+<tt>DOUT</tt> is an rvalue.</p>
 </div>
 
 </div>
