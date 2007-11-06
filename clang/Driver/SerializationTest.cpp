@@ -23,8 +23,8 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
-#include "llvm/System/TimeValue.h"
 #include <stdio.h>
+#include <list>
 
 //===----------------------------------------------------------------------===//
 // Driver code.
@@ -43,164 +43,213 @@ template<typename T> struct Janitor {
 
 class SerializationTest : public ASTConsumer {
   ASTContext* Context;
-  llvm::sys::Path Filename;
-  std::vector<unsigned char>* Buffer;
-  llvm::BitstreamWriter* OBStream;
-  llvm::Serializer* serializer;
+  std::list<Decl*> Decls;
   
-  void DeserializeTest();
-public:
-  
-  SerializationTest(llvm::sys::Path filename);
+  enum { ContextBlock = 0x1, DeclBlock = 0x3 };
+
+public:  
+  SerializationTest() : Context(NULL) {};
   ~SerializationTest();
 
-  virtual void Initialize(ASTContext& context, unsigned);    
-  virtual void HandleTopLevelDecl(Decl *D);
+  virtual void Initialize(ASTContext& context, unsigned) {
+      Context = &context;
+  }
+  
+  virtual void HandleTopLevelDecl(Decl *D) {
+    Decls.push_back(D);
+  }
+
+private:
+  void Serialize(llvm::sys::Path& Filename);
+  void Deserialize(llvm::sys::Path& Filename);
 };
   
 } // end anonymous namespace
 
-ASTConsumer* clang::CreateSerializationTest() {
-  std::string ErrMsg;
-  llvm::sys::Path Filename = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
+ASTConsumer* clang::CreateSerializationTest() {  
+  return new SerializationTest();
+}
+
+static void WritePreamble(llvm::BitstreamWriter& Stream) {
+  Stream.Emit((unsigned)'B', 8);
+  Stream.Emit((unsigned)'C', 8);
+  Stream.Emit(0xC, 4);
+  Stream.Emit(0xF, 4);
+  Stream.Emit(0xE, 4);
+  Stream.Emit(0x0, 4);
+}
+
+static bool ReadPremable(llvm::BitstreamReader& Stream) {
+  return Stream.Read(8) != 'B' ||
+         Stream.Read(8) != 'C' ||
+         Stream.Read(4) != 0xC ||
+         Stream.Read(4) != 0xF ||
+         Stream.Read(4) != 0xE ||
+         Stream.Read(4) != 0x0;
+}
+
+void SerializationTest::Serialize(llvm::sys::Path& Filename) {
   
-  if (Filename.isEmpty()) {
-    llvm::cerr << "Error: " << ErrMsg << "\n";
-    return NULL;
+  // Reserve 256K for bitstream buffer.
+  std::vector<unsigned char> Buffer;
+  Buffer.reserve(256*1024);
+  
+  // Create bitstream and write preamble.    
+  llvm::BitstreamWriter Stream(Buffer);
+  WritePreamble(Stream);
+  
+  // Create serializer.
+  llvm::Serializer Sezr(Stream);
+  
+  // ===---------------------------------------------------===/
+  //      Serialize the "Translation Unit" metadata.
+  // ===---------------------------------------------------===/
+
+  Sezr.EnterBlock(ContextBlock);
+
+  // "Fake" emit the SourceManager.
+  llvm::cerr << "Faux-serializing: SourceManager.\n";
+  Sezr.EmitPtr(&Context->SourceMgr);
+  
+  // "Fake" emit the Target.
+  llvm::cerr << "Faux-serializing: Target.\n";
+  Sezr.EmitPtr(&Context->Target);
+
+  // "Fake" emit Selectors.
+  llvm::cerr << "Faux-serializing: Selectors.\n";
+  Sezr.EmitPtr(&Context->Selectors);
+  
+  // Emit the Identifier Table.
+  llvm::cerr << "Serializing: IdentifierTable.\n";  
+  Sezr.EmitOwnedPtr(&Context->Idents);
+  
+  // Emit the ASTContext.
+  llvm::cerr << "Serializing: ASTContext.\n";  
+  Sezr.EmitOwnedPtr(Context);
+  
+  Sezr.ExitBlock();  
+  
+  // ===---------------------------------------------------===/
+  //      Serialize the top-level decls.
+  // ===---------------------------------------------------===/  
+  
+  Sezr.EnterBlock(DeclBlock);
+  
+  for (std::list<Decl*>::iterator I=Decls.begin(), E=Decls.end(); I!=E; ++I) {
+    llvm::cerr << "Serializing: Decl.\n";    
+    Sezr.EmitOwnedPtr(*I);
   }
+
+  Sezr.ExitBlock();
   
-  Filename.appendComponent("test.ast");
-  
-  if (Filename.makeUnique(true,&ErrMsg)) {
-    llvm::cerr << "Error: " << ErrMsg << "\n";
-    return NULL;
-  }
-  
-  return new SerializationTest(Filename);
-}
-
-SerializationTest::SerializationTest(llvm::sys::Path filename)
-  : Filename(filename), OBStream(NULL), serializer(NULL) {
-      
-    // Reserve 256K for bitstream buffer.
-    Buffer = new std::vector<unsigned char>();
-    assert (Buffer && "Could not allocate buffer.");
-    Buffer->reserve(256*1024);
-    
-    // Open bitstream and write preamble.    
-    OBStream = new llvm::BitstreamWriter(*Buffer);
-    assert (OBStream && "could not create bitstream for serialization");
-    
-    OBStream->Emit((unsigned)'B', 8);
-    OBStream->Emit((unsigned)'C', 8);
-    OBStream->Emit(0xC, 4);
-    OBStream->Emit(0xF, 4);
-    OBStream->Emit(0xE, 4);
-    OBStream->Emit(0x0, 4);
-    
-    // Open serializer.
-    serializer = new llvm::Serializer(*OBStream,0);
-    assert (serializer && "could not create serializer");
-}
-  
-
-void SerializationTest::Initialize(ASTContext& context, unsigned) {
-  llvm::cerr << "[ " << TimeValue::now().toString() << " ] "
-             << "Faux-serializing: SourceManager et al.\n";
-
-  serializer->EnterBlock();
-  // "Fake" emit the SourceManager, etc.
-  Context = &context;
-  serializer->EmitPtr(&context.SourceMgr);
-  serializer->EmitPtr(&context.Target);
-  serializer->EmitPtr(&context.Idents);
-  serializer->EmitPtr(&context.Selectors);  
-
-  llvm::cerr << "[ " << TimeValue::now().toString() << " ] "
-             << "Serializing: ASTContext.\n";
-
-
-  serializer->EmitOwnedPtr(&context);
-  serializer->ExitBlock();
-}
-
-void SerializationTest::HandleTopLevelDecl(Decl *D) {
-  llvm::cerr << "[ " << TimeValue::now().toString() << " ] "
-             << "Serializing: Decl.\n";
-  
-  serializer->EnterBlock();  
-  serializer->EmitOwnedPtr(D);
-  serializer->ExitBlock();
-}
-
-SerializationTest::~SerializationTest() {
-  delete serializer;
-  delete OBStream;
+  // ===---------------------------------------------------===/
+  //      Finalize serialization: write the bits to disk.
+  // ===---------------------------------------------------===/ 
   
   if (FILE *fp = fopen(Filename.c_str(),"wb")) {
-    fwrite((char*)&Buffer->front(), sizeof(char), Buffer->size(), fp);
-    delete Buffer;
+    fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
     fclose(fp);
   }
   else { 
     llvm::cerr << "Error: Cannot open " << Filename.c_str() << "\n";
-    delete Buffer;
     return;
   }
-
-  llvm::cerr << "[ " << TimeValue::now().toString() << " ] "
-             << "Commited bitstream to disk: " << Filename.c_str() << "\n";
   
-  DeserializeTest();
+  llvm::cerr << "Commited bitstream to disk: " << Filename.c_str() << "\n";
 }
 
-void SerializationTest::DeserializeTest() {
 
-  llvm::MemoryBuffer* MBuffer = 
-    llvm::MemoryBuffer::getFile(Filename.c_str(), strlen(Filename.c_str()));
+void SerializationTest::Deserialize(llvm::sys::Path& Filename) {
+  
+  // Create the memory buffer that contains the contents of the file.
+  
+  using llvm::MemoryBuffer;
+  
+  MemoryBuffer* MBuffer = MemoryBuffer::getFile(Filename.c_str(),
+                                                strlen(Filename.c_str()));
   
   if(!MBuffer) {
     llvm::cerr << "ERROR: Cannot read file for deserialization.\n";
     return;
   }
   
-  Janitor<llvm::MemoryBuffer> AutoReleaseBuffer(MBuffer);
+  // Create an "autocollector" object to release the memory buffer upon
+  // termination of the current scope.
+  Janitor<MemoryBuffer> AutoReleaseBuffer(MBuffer);
   
+  // Check if the file is of the proper length.
   if (MBuffer->getBufferSize() & 0x3) {
-    llvm::cerr << "ERROR: AST file should be a multiple of 4 bytes in length.\n";
+    llvm::cerr << "ERROR: AST file length should be a multiple of 4 bytes.\n";
     return;
   }
   
-  unsigned char *BufPtr = (unsigned char *)MBuffer->getBufferStart();
-  llvm::BitstreamReader IBStream(BufPtr,BufPtr+MBuffer->getBufferSize());
+  // Create the bitstream reader.
+  unsigned char *BufPtr = (unsigned char *) MBuffer->getBufferStart();
+  llvm::BitstreamReader Stream(BufPtr,BufPtr+MBuffer->getBufferSize());
   
-  // Sniff for the signature.
-  if (IBStream.Read(8) != 'B' ||
-      IBStream.Read(8) != 'C' ||
-      IBStream.Read(4) != 0xC ||
-      IBStream.Read(4) != 0xF ||
-      IBStream.Read(4) != 0xE ||
-      IBStream.Read(4) != 0x0) {
+  // Sniff for the signature in the bitcode file.
+  if (!ReadPremable(Stream)) {
     llvm::cerr << "ERROR: Invalid AST-bitcode signature.\n";
     return;
+  }  
+  
+  // Create the Dezr.
+  llvm::Deserializer Dezr(Stream);
+  
+  // ===---------------------------------------------------===/
+  //      Deserialize the "Translation Unit" metadata.
+  // ===---------------------------------------------------===/
+  
+  // "Fake" read the SourceManager.
+  llvm::cerr << "Faux-Deserializing: SourceManager.\n";
+  Dezr.RegisterPtr(&Context->SourceMgr);
+
+  // "Fake" read the TargetInfo.
+  llvm::cerr << "Faux-Deserializing: Target.\n";
+  Dezr.RegisterPtr(&Context->Target);
+
+  // "Fake" read the Selectors.
+  llvm::cerr << "Faux-Deserializing: Selectors.\n";
+  Dezr.RegisterPtr(&Context->Selectors);  
+  
+  // Read the identifier table.
+  llvm::cerr << "Deserializing: IdentifierTable\n";
+  Dezr.ReadOwnedPtr<IdentifierTable>();
+  
+  // Read the ASTContext.  
+  llvm::cerr << "Deserializing: ASTContext.\n";
+  Dezr.ReadOwnedPtr<ASTContext>();
+  
+  // Create a printer to "consume" our deserialized ASTS.
+  ASTConsumer* Printer = CreateASTPrinter();
+  Janitor<ASTConsumer> PrinterJanitor(Printer);  
+  
+  // The remaining objects in the file are top-level decls.
+  while (!Dezr.AtEnd()) {
+    llvm::cerr << "Deserializing: Decl.\n";
+    Decl* decl = Dezr.ReadOwnedPtr<Decl>();
+    Printer->HandleTopLevelDecl(decl);    
+  }
+}
+  
+
+SerializationTest::~SerializationTest() {
+    
+  std::string ErrMsg;
+  llvm::sys::Path Filename = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
+  
+  if (Filename.isEmpty()) {
+    llvm::cerr << "Error: " << ErrMsg << "\n";
+    return;
   }
   
-  llvm::Deserializer deserializer(IBStream);
+  Filename.appendComponent("test.ast");
   
+  if (Filename.makeUnique(true,&ErrMsg)) {
+    llvm::cerr << "Error: " << ErrMsg << "\n";
+    return;
+  }
   
-  // "Fake" read the SourceManager, etc.  
-  llvm::cerr << "[ " << TimeValue::now().toString() << " ] "
-             << "Faux-Deserializing: SourceManager et al.\n";
-  
-  deserializer.RegisterPtr(&Context->SourceMgr);
-  deserializer.RegisterPtr(&Context->Target);
-  deserializer.RegisterPtr(&Context->Idents);
-  deserializer.RegisterPtr(&Context->Selectors);  
-  
-  llvm::cerr << "[ " << TimeValue::now().toString() << " ] "
-             << "Deserializing: ASTContext.\n";
-
-  // Deserialize the AST context.
-  deserializer.ReadOwnedPtr<ASTContext>();
-//  ASTContext* context = 
+  Serialize(Filename);
+  Deserialize(Filename);
 }
