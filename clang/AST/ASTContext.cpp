@@ -1425,7 +1425,7 @@ void ASTContext::Emit(llvm::Serializer& S) const {
     }
   }
   
-  assert (PointerTypes.size() >= 1);
+  assert (PointerTypes.size() >= 1);  
   S.EmitInt(PointerTypes.size() - 1);
   
   if (PointerTypes.size() > 1) {
@@ -1450,13 +1450,13 @@ void ASTContext::Emit(llvm::Serializer& S) const {
   // FIXME: EmitSet(ObjcQualifiedInterfaceTypes,S);
   
   S.Emit(BuiltinVaListType);
-  S.Emit(ObjcIdType);
-  S.EmitPtr(IdStructType);
-  S.Emit(ObjcProtoType);
-  S.EmitPtr(ProtoStructType);
-  S.Emit(ObjcClassType);
-  S.EmitPtr(ClassStructType);
-  S.Emit(ObjcConstantStringType);
+// FIXME:  S.Emit(ObjcIdType);
+// FIXME:  S.EmitPtr(IdStructType);
+// FIXME:  S.Emit(ObjcProtoType);
+ // FIXME:  S.EmitPtr(ProtoStructType);
+ // FIXME: S.Emit(ObjcClassType);
+// FIXME:  S.EmitPtr(ClassStructType);
+// FIXME:  S.Emit(ObjcConstantStringType);
   // FIXME: S.EmitOwnedPtr(CFConstantStringTypeDecl);
 }
 
@@ -1505,13 +1505,13 @@ ASTContext* ASTContext::Materialize(llvm::Deserializer& D) {
   // ReadSet(A->ObjcQualifiedInterfaceTypes,D);
   
   D.Read(A->BuiltinVaListType);
-  D.Read(A->ObjcIdType);
-  D.ReadPtr(A->IdStructType);
-  D.Read(A->ObjcProtoType);
-  D.ReadPtr(A->ProtoStructType);
-  D.Read(A->ObjcClassType);
-  D.ReadPtr(A->ClassStructType);
-  D.Read(A->ObjcConstantStringType);
+// FIXME:  D.Read(A->ObjcIdType);
+// FIXME:  D.ReadPtr(A->IdStructType);
+// FIXME:  D.Read(A->ObjcProtoType);
+// FIXME:  D.ReadPtr(A->ProtoStructType);
+// FIXME:  D.Read(A->ObjcClassType);
+// FIXME:  D.ReadPtr(A->ClassStructType);
+// FIXME:  D.Read(A->ObjcConstantStringType);
   // FIXME: A->CFConstantStringTypeDecl = D.ReadOwnedPtr<RecordDecl>();
   
   return A;

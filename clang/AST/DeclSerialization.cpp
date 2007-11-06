@@ -49,8 +49,28 @@ void Decl::Emit(llvm::Serializer& S) const {
 }
 
 Decl* Decl::Materialize(llvm::Deserializer& D) {
-  assert (false && "FIXME: not implemented.");
-  return NULL;
+  Kind k = static_cast<Kind>(D.ReadInt());
+  
+  switch (k) {
+    default:
+      assert (false && "Not implemented.");
+      break;
+      
+    case BlockVar:
+      return BlockVarDecl::Materialize(D);
+      
+    case FileVar:
+      return FileVarDecl::Materialize(D);
+      
+    case ParmVar:
+      return ParmVarDecl::Materialize(D);
+      
+    case Function:
+      return FunctionDecl::Materialize(D);
+      
+    case Typedef:
+      return TypedefDecl::Materialize(D);
+  }
 }
 
 void NamedDecl::InternalEmit(llvm::Serializer& S) const {
@@ -70,7 +90,7 @@ void ScopedDecl::InternalEmit(llvm::Serializer& S) const {
 void ScopedDecl::InternalRead(llvm::Deserializer& D) {
   NamedDecl::InternalRead(D);
   D.ReadPtr(Next);
-  NextDeclarator = cast<ScopedDecl>(D.ReadOwnedPtr<Decl>());
+  NextDeclarator = cast_or_null<ScopedDecl>(D.ReadOwnedPtr<Decl>());
 }
 
 void ValueDecl::InternalEmit(llvm::Serializer& S) const {
@@ -93,7 +113,7 @@ void VarDecl::InternalEmit(llvm::Serializer& S) const {
 void VarDecl::InternalRead(llvm::Deserializer& D) {
   SClass = D.ReadInt();
   objcDeclQualifier = static_cast<ObjcDeclQualifier>(D.ReadInt());
-  VarDecl::InternalRead(D);
+  ValueDecl::InternalRead(D);
   D.ReadOwnedPtr(Init);
 }
 
@@ -172,14 +192,14 @@ FunctionDecl* FunctionDecl::Materialize(llvm::Deserializer& D) {
 
 void TypedefDecl::Emit(llvm::Serializer& S) const {
   S.Emit(getLocation());
+  S.Emit(UnderlyingType);
   InternalEmit(S);
-  S.Emit(UnderlyingType);  
 }
 
 TypedefDecl* TypedefDecl::Materialize(llvm::Deserializer& D) {
   SourceLocation L = SourceLocation::ReadVal(D);
   TypedefDecl* decl = new TypedefDecl(L,NULL,QualType(),NULL);
-  decl->InternalRead(D);
   D.Read(decl->UnderlyingType);
+  decl->InternalRead(D);
   return decl;
 }
