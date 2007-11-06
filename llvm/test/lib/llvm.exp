@@ -104,7 +104,10 @@ proc RunLLVMTests { test_source_files } {
     set filename [file tail $test]
     set outcome PASS
     set tmpFile "$filename.tmp"
-
+    
+    # Mark that it should not be XFAIL for this target.
+    set targetPASS 0
+    
     #set hasRunline bool to check if testcase has a runline
     set numLines 0
 
@@ -145,12 +148,36 @@ proc RunLLVMTests { test_source_files } {
         #split up target if more then 1 specified
         foreach target [split $targets ,] {
           if { [regexp {\*} $target match] } {
-              set outcome XFAIL
+              if {$targetPASS != 1} {
+                 set outcome XFAIL
+              }
           } elseif { [regexp $target $target_triplet match] } {
-              set outcome XFAIL
+              if {$targetPASS != 1} {
+                 set outcome XFAIL
+              }
           } elseif { [regexp {llvmgcc(([0-9]+)|([0-9]+[.][0-9]+))} $target match submatch submatch2]  } {
             if { [regexp ^($submatch)$|^(($submatch)(\.)) $llvmgcc_version match] } {
-              set outcome XFAIL
+              if {$targetPASS != 1} {
+                 set outcome XFAIL
+              }
+            }
+          }
+        }
+      } elseif {[regexp {XTARGET:[ *](.+)} $line match targets]} {
+        set targets
+
+        #split up target if more then 1 specified
+        foreach target [split $targets ,] {
+          if { [regexp {\*} $target match] } {
+              set targetPASS 1
+              set outcome PASS
+          } elseif { [regexp $target $target_triplet match] } {
+              set targetPASS 1
+              set outcome PASS
+          } elseif { [regexp {llvmgcc(([0-9]+)|([0-9]+[.][0-9]+))} $target match submatch submatch2]  } {
+            if { [regexp ^($submatch)$|^(($submatch)(\.)) $llvmgcc_version match] } {
+              set targetPASS 1
+              set outcome PASS
             }
           }
         }
