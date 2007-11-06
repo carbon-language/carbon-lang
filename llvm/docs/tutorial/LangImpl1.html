@@ -38,8 +38,8 @@
 <p>Welcome to the "Implementing a language with LLVM" tutorial.  This tutorial
 runs through the implementation of a simple language, showing how fun and
 easy it can be.  This tutorial will get you up and started as well as help to 
-build a framework you can extend to other languages, allowing you to use this
-as a way to start playing with other LLVM specific things.
+build a framework you can extend to other languages.  The code in this tutorial
+can also be used as a playground to hack on other LLVM specific things.
 </p>
 
 <p>
@@ -59,8 +59,8 @@ use the code as a basis for future projects, fixing these deficiencies shouldn't
 be hard.</p>
 
 <p>I've tried to put this tutorial together in a way that makes chapters easy to
-skip over if you are already familiar or are uninterested with various pieces.
-The structure of the tutorial is:
+skip over if you are already familiar with or are uninterested in the various
+pieces.  The structure of the tutorial is:
 </p>
 
 <ul>
@@ -82,10 +82,10 @@ is.</li>
 Support</b> - Because a lot of people are interested in using LLVM as a JIT,
 we'll dive right into it and show you the 3 lines it takes to add JIT support.
 LLVM is also useful in many other ways, but this is one simple and "sexy" way
-that shows off its power. :)</li>
+to shows off its power. :)</li>
 <li><b><a href="LangImpl5.html">Chapter #5</a>: Extending the Language: Control
 Flow</b> - With the language up and running, we show how to extend it with
-control flow operations (if/then/else and a for loop).  This gives us a chance
+control flow operations (if/then/else and a 'for' loop).  This gives us a chance
 to talk about simple SSA construction and control flow.</li>
 <li><b><a href="LangImpl6.html">Chapter #6</a>: Extending the Language: 
 User-defined Operators</b> - This is a silly but fun chapter that talks about
@@ -94,9 +94,9 @@ unary and binary operators (with assignable precedence!).  This lets us build a
 significant piece of the "language" as library routines.</li>
 <li><b><a href="LangImpl7.html">Chapter #7</a>: Extending the Language: Mutable
 Variables</b> - This chapter talks about adding user-defined local variables
-along with variable assignment operator.  The interesting part about this is how
-easy and trivial it is to construct SSA form in LLVM (no, LLVM does <em>not</em>
-require your front-end to construct SSA form!).</li>
+along with an assignment operator.  The interesting part about this is how
+easy and trivial it is to construct SSA form in LLVM: no, LLVM does <em>not</em>
+require your front-end to construct SSA form!</li>
 <li><b><a href="LangImpl8.html">Chapter #8</a>: Conclusion and other useful LLVM
 tidbits</b> - This chapter wraps up the series by talking about potential
 ways to extend the language, but also includes a bunch of pointers to info about
@@ -105,8 +105,8 @@ support for "spaghetti stacks", and a bunch of other tips and tricks.</li>
 
 </ul>
 
-<p>By the end of the tutorial, we'll have written about 700 lines of 
-non-comment, non-blank lines of code.  With this small amount of code, we'll
+<p>By the end of the tutorial, we'll have written a bit less than 700 lines of 
+non-comment, non-blank, lines of code.  With this small amount of code, we'll
 have built up a very reasonable compiler for a non-trivial language including
 a hand-written lexer, parser, AST, as well as code generation support with a JIT
 compiler.  While other systems may have interesting "hello world" tutorials,
@@ -115,8 +115,9 @@ LLVM and why you should consider it if you're interested in language or compiler
 design.</p>
 
 <p>A note about this tutorial: we expect you to extend the language and play
-with it on your own.  Take the code and go crazy hacking away at it.  It can be
-a lot of fun to play with languages!   In any case, lets get into the code!</p>
+with it on your own.  Take the code and go crazy hacking away at it, compilers
+don't need to be scary creatures - it can be a lot of fun to play with
+languages!</p>
 
 </div>
 
@@ -127,7 +128,8 @@ a lot of fun to play with languages!   In any case, lets get into the code!</p>
 <div class="doc_text">
 
 <p>This tutorial will be illustrated with a toy language that we'll call
-"<a href="http://en.wikipedia.org/wiki/Kaleidoscope">Kaleidoscope</a>".
+"<a href="http://en.wikipedia.org/wiki/Kaleidoscope">Kaleidoscope</a>" (derived 
+from "meaning beautiful, form, and view").
 Kaleidoscope is a procedural language that allows you to define functions, use
 conditionals, math, etc.  Over the course of the tutorial, we'll extend
 Kaleidoscope to support the if/then/else construct, a for loop, user defined
@@ -169,9 +171,11 @@ atan2(sin(.4), cos(42))
 </pre>
 </div>
 
-<p>A more interesting example is included in Chapter 6 where we show the code
-used to <a href="LangImpl6.html#example">implement a Mandelbrot Set viewer</a>
-in Kaleidoscope.</p>
+<p>A more interesting example is included in Chapter 6 where we write a little
+Kaleidoscope application that <a href="LangImpl6.html#example">displays 
+a Mandelbrot Set</a> at various levels of magnification.</p>
+
+<p>Lets dive into the implementation of this language!</p>
 
 </div>
 
@@ -210,7 +214,7 @@ static double NumVal;              // Filled in if tok_number
 </div>
 
 <p>Each token returned by our lexer will either be one of the Token enum values
-or it will be an 'unknown' character like '+', which is returned as its ascii
+or it will be an 'unknown' character like '+', which is returned as its ASCII
 value.  If the current token is an identifier, the <tt>IdentifierStr</tt>
 global variable holds the name of the identifier.  If the current token is a
 numeric literal (like 1.0), <tt>NumVal</tt> holds its value.  Note that we use
@@ -298,9 +302,9 @@ if you typed in "1.23".  Feel free to extend it :).  Next we handle comments:
 </div>
 
 <p>We handle comments by skipping to the end of the line and then return the
-next comment.  Finally, if the input doesn't match one of the above cases, it is
-either an operator character like '+' or the end of the file.  These are handled with
-this code:</p>
+next token.  Finally, if the input doesn't match one of the above cases, it is
+either an operator character like '+' or the end of the file.  These are handled
+with this code:</p>
 
 <div class="doc_code">
 <pre>
