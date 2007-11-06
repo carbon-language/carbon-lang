@@ -1308,8 +1308,11 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
           // plus it may increase register pressures.
           if (SuccSU == SU || SuccSU->hasPhysRegDefs)
             continue;
-          // Be conservative. Ignore if nodes aren't at the same depth.
-          if (SuccSU->Depth != SU->Depth)
+          // Be conservative. Ignore if nodes aren't at roughly the same
+          // depth and height.
+          if (SuccSU->Height < SU->Height && (SU->Height - SuccSU->Height) > 1)
+            continue;
+          if (SuccSU->Depth > SU->Depth && (SuccSU->Depth - SU->Depth) > 1)
             continue;
           if (!SuccSU->Node || !SuccSU->Node->isTargetOpcode())
             continue;
