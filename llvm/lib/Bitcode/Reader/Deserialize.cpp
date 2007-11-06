@@ -13,6 +13,10 @@
 
 #include "llvm/Bitcode/Deserialize.h"
 
+#ifdef DEBUG_BACKPATCH
+#include "llvm/Support/Streams.h"
+#endif
+
 using namespace llvm;
 
 Deserializer::Deserializer(BitstreamReader& stream)
@@ -68,6 +72,11 @@ void Deserializer::ReadRecord() {
     if (Code == bitc::END_BLOCK) {
       bool x = Stream.ReadBlockEnd();
       assert (!x && "Error at block end.");
+      continue;
+    }
+    
+    if (Code == bitc::DEFINE_ABBREV) {
+      Stream.ReadAbbrevRecord();
       continue;
     }
     
@@ -136,6 +145,10 @@ void Deserializer::RegisterPtr(unsigned PtrId, const void* Ptr) {
   
   assert (!HasFinalPtr(E) && "Pointer already registered.");
 
+#ifdef DEBUG_BACKPATCH
+  llvm::cerr << "RegisterPtr: " << PtrId << " => " << Ptr << "\n";
+#endif 
+  
   SetPtr(E,Ptr);
 }
 
@@ -145,8 +158,12 @@ void Deserializer::ReadUIntPtr(uintptr_t& PtrRef) {
   if (PtrId == 0) {
     PtrRef = 0;
     return;
-  }  
-
+  }
+  
+#ifdef DEBUG_BACKPATCH
+  llvm::cerr << "ReadUintPtr: " << PtrId << "\n";
+#endif
+  
   MapTy::value_type& E = BPatchMap.FindAndConstruct(BPKey(PtrId));
   
   if (HasFinalPtr(E))

@@ -156,9 +156,9 @@ public:
   
   bool AtEnd();
 
+  bool inRecord();
 private:
   void ReadRecord();  
-  bool inRecord();
   uintptr_t ReadInternalRefPtr();
   
   static inline bool HasFinalPtr(MapTy::value_type& V) {
