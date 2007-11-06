@@ -18,7 +18,7 @@
 <li>Chapter 3
   <ol>
     <li><a href="#intro">Chapter 3 Introduction</a></li>
-    <li><a href="#basics">Code Generation setup</a></li>
+    <li><a href="#basics">Code Generation Setup</a></li>
     <li><a href="#exprs">Expression Code Generation</a></li>
     <li><a href="#funcs">Function Code Generation</a></li>
     <li><a href="#driver">Driver Changes and Closing Thoughts</a></li>
@@ -44,13 +44,13 @@ with LLVM</a>" tutorial.  This chapter shows you how to transform the <a
 href="LangImpl2.html">Abstract Syntax Tree built in Chapter 2</a> into LLVM IR.
 This will teach you a little bit about how LLVM does things, as well as
 demonstrate how easy it is to use.  It's much more work to build a lexer and
-parser than it is to generate LLVM IR code.
+parser than it is to generate LLVM IR code. :)
 </p>
 
 </div>
 
 <!-- *********************************************************************** -->
-<div class="doc_section"><a name="basics">Code Generation setup</a></div>
+<div class="doc_section"><a name="basics">Code Generation Setup</a></div>
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
@@ -119,11 +119,12 @@ uses to contain code.</p>
 <p>The <tt>Builder</tt> object is a helper object that makes it easy to generate
 LLVM instructions.  Instances of the <a 
 href="http://llvm.org/doxygen/LLVMBuilder_8h-source.html"><tt>LLVMBuilder</tt> 
-class</a> keeps track of the current place to
+class</a> keep track of the current place to
 insert instructions and has methods to create new instructions.</p>
 
 <p>The <tt>NamedValues</tt> map keeps track of which values are defined in the
-current scope and what their LLVM representation is.  In this form of
+current scope and what their LLVM representation is (in other words, it is a 
+symbol table for the code).  In this form of
 Kaleidoscope, the only things that can be referenced are function parameters.
 As such, function parameters will be in this map when generating code for their
 function body.</p>
@@ -161,7 +162,7 @@ internally (<tt>APFloat</tt> has the capability of holding floating point
 constants of <em>A</em>rbitrary <em>P</em>recision).  This code basically just
 creates and returns a <tt>ConstantFP</tt>.  Note that in the LLVM IR
 that constants are all uniqued together and shared.  For this reason, the API
-uses "the foo::get(..)" idiom instead of "new foo(..)" or "foo::create(..).</p>
+uses "the foo::get(..)" idiom instead of "new foo(..)" or "foo::create(..)".</p>
 
 <div class="doc_code">
 <pre>
@@ -173,12 +174,15 @@ Value *VariableExprAST::Codegen() {
 </pre>
 </div>
 
-<p>References to variables is also quite simple here.  In the simple version
+<p>References to variables are also quite simple here.  In the simple version
 of Kaleidoscope, we assume that the variable has already been emited somewhere
 and its value is available.  In practice, the only values that can be in the
 <tt>NamedValues</tt> map are function arguments.  This
 code simply checks to see that the specified name is in the map (if not, an 
-unknown variable is being referenced) and returns the value for it.</p>
+unknown variable is being referenced) and returns the value for it.  In future
+chapters, we'll add support for <a href="LangImpl5.html#for">loop induction 
+variables</a> in the symbol table, and for <a 
+href="LangImpl7.html#localvars">local variables</a>.</p>
 
 <div class="doc_code">
 <pre>
@@ -209,7 +213,7 @@ code, we do a simple switch on the opcode to create the right LLVM instruction.
 
 <p>In this example, the LLVM builder class is starting to show its value.  
 Because it knows where to insert the newly created instruction, you just have to
-specificy what instruction to create (e.g. with <tt>CreateAdd</tt>), which
+specify what instruction to create (e.g. with <tt>CreateAdd</tt>), which
 operands to use (<tt>L</tt> and <tt>R</tt> here) and optionally provide a name
 for the generated instruction.  One nice thing about LLVM is that the name is 
 just a hint: if there are multiple additions in a single function, the first
@@ -217,12 +221,12 @@ will be named "addtmp" and the second will be "autorenamed" by adding a suffix,
 giving it a name like "addtmp42".  Local value names for instructions are purely
 optional, but it makes it much easier to read the IR dumps.</p>
 
-<p><a href="../LangRef.html#instref">LLVM instructions</a> are constrained to
-have very strict type properties: for example, the Left and Right operators of
+<p><a href="../LangRef.html#instref">LLVM instructions</a> are constrained with
+strict rules: for example, the Left and Right operators of
 an <a href="../LangRef.html#i_add">add instruction</a> have to have the same
-type, and that the result of the add matches the operands.  Because all values
-in Kaleidoscope are doubles, this makes for very simple code for add, sub and
-mul.</p>
+type, and that the result type of the add must match the operand types.  Because
+all values in Kaleidoscope are doubles, this makes for very simple code for add,
+sub and mul.</p>
 
 <p>On the other hand, LLVM specifies that the <a 
 href="../LangRef.html#i_fcmp">fcmp instruction</a> always returns an 'i1' value
