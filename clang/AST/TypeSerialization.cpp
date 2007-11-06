@@ -24,7 +24,7 @@ void QualType::Emit(llvm::Serializer& S) const {
 }
 
 void QualType::Read(llvm::Deserializer& D) {
-  D.ReadUIntPtr(ThePtr);
+  D.ReadUIntPtr(ThePtr,false);
   ThePtr |= D.ReadInt();
 }
 
