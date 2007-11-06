@@ -20,7 +20,7 @@ MipsSubtarget::MipsSubtarget(const TargetMachine &TM, const Module &M,
                              const std::string &FS) : 
   IsMipsIII(false)
 {
-  std::string CPU = "generic";
+  std::string CPU = "mips1";
 
   // Parse features string.
   ParseSubtargetFeatures(FS, CPU);

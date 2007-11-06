@@ -33,6 +33,7 @@ def MipsInstrInfo : InstrInfo {
 // CPU Directives                                                             //
 //===----------------------------------------------------------------------===//
 
+// Not currently supported, but work as SubtargetFeature placeholder.
 def FeatureMipsIII : SubtargetFeature<"mips3", "IsMipsIII", "true",
                                       "MipsIII ISA Support">;
 
@@ -40,8 +41,9 @@ def FeatureMipsIII : SubtargetFeature<"mips3", "IsMipsIII", "true",
 // Mips processors supported.
 //===----------------------------------------------------------------------===//
 
-def : Processor<"generic", MipsGenericItineraries, []>;
-//def : Processor<"r4000",   MipsR4000Itineraries,   [FeatureMipsIII]>;
+def : Processor<"mips1", MipsGenericItineraries, []>;
+def : Processor<"r2000", MipsGenericItineraries, []>;
+def : Processor<"r3000", MipsGenericItineraries, []>;
 
 def Mips : Target {
   let InstructionSet = MipsInstrInfo;
