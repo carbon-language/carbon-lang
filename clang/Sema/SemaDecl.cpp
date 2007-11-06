@@ -245,6 +245,11 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
       Old->getCanonicalType() == New->getCanonicalType()) {
     return New;
   }
+
+  if (New->getBody() == 0 && 
+      Old->getCanonicalType() == New->getCanonicalType()) {
+    return 0;
+  }
   
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // TODO: This is totally simplistic.  It should handle merging functions
