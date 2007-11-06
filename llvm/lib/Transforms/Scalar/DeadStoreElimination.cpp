@@ -271,7 +271,8 @@ bool DSE::handleEndBlock(BasicBlock& BB,
         // See through pointer-to-pointer bitcasts
         TranslatePointerBitCasts(pointerOperand);
       
-        if (deadPointers.count(pointerOperand)){
+        if (isa<AllocaInst>(pointerOperand) && 
+            deadPointers.count(cast<AllocaInst>(pointerOperand))) {
           // Remove it!
           MD.removeInstruction(S);
         
@@ -345,7 +346,8 @@ bool DSE::handleEndBlock(BasicBlock& BB,
 
       for (std::vector<Instruction*>::iterator I = dead.begin(), E = dead.end();
            I != E; ++I)
-        deadPointers.erase(*I);
+        if (AllocaInst *AI = dyn_cast<AllocaInst>(*I))
+          deadPointers.erase(AI);
       
       continue;
     }
@@ -427,7 +429,8 @@ bool DSE::RemoveUndeadPointers(Value* killPointer,
 
   for (std::vector<Instruction*>::iterator I = undead.begin(), E = undead.end();
        I != E; ++I)
-    deadPointers.erase(*I);
+    if (AllocaInst *AI = dyn_cast<AllocaInst>(*I))
+      deadPointers.erase(AI);
   
   return MadeChange;
 }
