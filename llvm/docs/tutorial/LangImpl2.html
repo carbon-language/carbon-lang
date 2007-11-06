@@ -45,7 +45,7 @@
 with LLVM</a>" tutorial.  This chapter shows you how to use the <a 
 href="LangImpl1.html">Lexer built in Chapter 1</a> to build a full <a
 href="http://en.wikipedia.org/wiki/Parsing">parser</a> for
-our Kaleidoscope language and build an <a 
+our Kaleidoscope language.  Once we have a parser, we'll define and build an <a 
 href="http://en.wikipedia.org/wiki/Abstract_syntax_tree">Abstract Syntax 
 Tree</a> (AST).</p>
 
@@ -53,7 +53,7 @@ Tree</a> (AST).</p>
 href="http://en.wikipedia.org/wiki/Recursive_descent_parser">Recursive Descent
 Parsing</a> and <a href=
 "http://en.wikipedia.org/wiki/Operator-precedence_parser">Operator-Precedence 
-Parsing</a> to parse the Kaleidoscope language (the later for binary expression
+Parsing</a> to parse the Kaleidoscope language (the latter for binary expression
 and the former for everything else).  Before we get to parsing though, lets talk
 about the output of the parser: the Abstract Syntax Tree.</p>
 
@@ -144,7 +144,8 @@ themselves:</p>
 <div class="doc_code">
 <pre>
 /// PrototypeAST - This class represents the "prototype" for a function,
-/// which captures its argument names as well as if it is an operator.
+/// which captures its name, and its argument names (thus implicitly the number
+/// of arguments the function takes).
 class PrototypeAST {
   std::string Name;
   std::vector&lt;std::string&gt; Args;
@@ -165,9 +166,9 @@ public:
 </div>
 
 <p>In Kaleidoscope, functions are typed with just a count of their arguments.
-Since all values are double precision floating point, this fact doesn't need to
-be captured anywhere.  In a more aggressive and realistic language, the
-"ExprAST" class would probably have a type field.</p>
+Since all values are double precision floating point, the type of each argument
+doesn't need to be stored anywhere.  In a more aggressive and realistic
+language, the "ExprAST" class would probably have a type field.</p>
 
 <p>With this scaffolding, we can now talk about parsing expressions and function
 bodies in Kaleidoscope.</p>
@@ -212,10 +213,6 @@ This implements a simple token buffer around the lexer.  This allows
 us to look one token ahead at what the lexer is returning.  Every function in
 our parser will assume that CurTok is the current token that needs to be
 parsed.</p>
-
-<p>Again, we define these with global variables; it would be better design to 
-wrap the entire parser in a class and use instance variables for these.
-</p>
 
 <div class="doc_code">
 <pre>
@@ -293,7 +290,7 @@ static ExprAST *ParseParenExpr() {
 <p>This function illustrates a number of interesting things about the parser:
 1) it shows how we use the Error routines.  When called, this function expects
 that the current token is a '(' token, but after parsing the subexpression, it
-is possible that there is not a ')' waiting.  For example, if the user types in
+is possible that there is no ')' waiting.  For example, if the user types in
 "(4 x" instead of "(4)", the parser should emit an error.  Because errors can
 occur, the parser needs a way to indicate that they happened: in our parser, we
 return null on an error.</p>
@@ -357,10 +354,11 @@ either a <tt>VariableExprAST</tt> or <tt>CallExprAST</tt> node as appropriate.
 </p>
 
 <p>Now that we have all of our simple expression parsing logic in place, we can
-define a helper function to wrap them up in a class.  We call this class of 
-expressions "primary" expressions, for reasons that will become more clear
-later.  In order to parse a primary expression, we need to determine what sort
-of expression it is:</p>
+define a helper function to wrap it together into one entry-point.  We call this
+class of expressions "primary" expressions, for reasons that will become more
+clear <a href="LangImpl6.html#unary">later in the tutorial</a>.  In order to
+parse an arbitrary primary expression, we need to determine what sort of
+specific expression it is:</p>
 
 <div class="doc_code">
 <pre>
@@ -438,12 +436,13 @@ int main() {
 </div>
 
 <p>For the basic form of Kaleidoscope, we will only support 4 binary operators
-(this can obviously be extended by you, the reader).  The
+(this can obviously be extended by you, our brave and intrepid reader).  The
 <tt>GetTokPrecedence</tt> function returns the precedence for the current token,
 or -1 if the token is not a binary operator.  Having a map makes it easy to add
 new operators and makes it clear that the algorithm doesn't depend on the
 specific operators involved, but it would be easy enough to eliminate the map
-and do the comparisons in the <tt>GetTokPrecedence</tt> function.</p>
+and do the comparisons in the <tt>GetTokPrecedence</tt> function (or just use
+a fixed-size array).</p>
 
 <p>With the helper above defined, we can now start parsing binary expressions.
 The basic idea of operator precedence parsing is to break down an expression
@@ -578,8 +577,8 @@ context):</p>
     // the pending operator take RHS as its LHS.
     int NextPrec = GetTokPrecedence();
     if (TokPrec &lt; NextPrec) {
-      RHS = ParseBinOpRHS(TokPrec+1, RHS);
-      if (RHS == 0) return 0;
+      <b>RHS = ParseBinOpRHS(TokPrec+1, RHS);
+      if (RHS == 0) return 0;</b>
     }
     // Merge LHS/RHS.
     LHS = new BinaryExprAST(BinOp, LHS, RHS);
@@ -600,6 +599,8 @@ of the '+' expression.</p>
 <p>Finally, on the next iteration of the while loop, the "+g" piece is parsed.
 and added to the AST.  With this little bit of code (14 non-trivial lines), we
 correctly handle fully general binary expression parsing in a very elegant way.
+This was a whirlwind tour of this code, and it is somewhat subtle.  I recommend
+running through it with a few tough examples to see how it works.
 </p>
 
 <p>This wraps up handling of expressions.  At this point, we can point the
@@ -616,7 +617,7 @@ handle function definitions etc.</p>
 <div class="doc_text">
 
 <p>
-The first basic thing missing is that of function prototypes.  In Kaleidoscope,
+The next thing missing is handling of function prototypes.  In Kaleidoscope,
 these are used both for 'extern' function declarations as well as function body
 definitions.  The code to do this is straight-forward and not very interesting
 (once you've survived expressions):
@@ -636,6 +637,7 @@ static PrototypeAST *ParsePrototype() {
   if (CurTok != '(')
     return ErrorP("Expected '(' in prototype");
   
+  // Read the list of argument names.
   std::vector&lt;std::string&gt; ArgNames;
   while (getNextToken() == tok_identifier)
     ArgNames.push_back(IdentifierStr);
@@ -750,25 +752,26 @@ type "4+5;" and the parser will know you are done.</p>
 
 <div class="doc_text">
 
-<p>With just under 400 lines of commented code, we fully defined our minimal
-language, including a lexer, parser and AST builder.  With this done, the
-executable will validate code and tell us if it is gramatically invalid.  For
+<p>With just under 400 lines of commented code (240 lines of non-comment, 
+non-blank code), we fully defined our minimal language, including a lexer,
+parser and AST builder.  With this done, the executable will validate 
+Kaleidoscope code and tell us if it is gramatically invalid.  For
 example, here is a sample interaction:</p>
 
 <div class="doc_code">
 <pre>
-$ ./a.out 
-ready&gt; def foo(x y) x+foo(y, 4.0);
-ready&gt; Parsed a function definition.
-ready&gt; def foo(x y) x+y y;
-ready&gt; Parsed a function definition.
-ready&gt; Parsed a top-level expr
-ready&gt; def foo(x y) x+y );
-ready&gt; Parsed a function definition.
-ready&gt; Error: unknown token when expecting an expression
-ready&gt; extern sin(a);
+$ <b>./a.out</b>
+ready&gt; <b>def foo(x y) x+foo(y, 4.0);</b>
+Parsed a function definition.
+ready&gt; <b>def foo(x y) x+y y;</b>
+Parsed a function definition.
+Parsed a top-level expr
+ready&gt; <b>def foo(x y) x+y );</b>
+Parsed a function definition.
+Error: unknown token when expecting an expression
+ready&gt; <b>extern sin(a);</b>
 ready&gt; Parsed an extern
-ready&gt; ^D
+ready&gt; <b>^D</b>
 $ 
 </pre>
 </div>
@@ -794,7 +797,7 @@ course).  To build this, just compile with:</p>
 <div class="doc_code">
 <pre>
    # Compile
-   g++ -g toy.cpp 
+   g++ -g -O3 toy.cpp 
    # Run
    ./a.out 
 </pre>
@@ -919,7 +922,8 @@ public:
 };
 
 /// PrototypeAST - This class represents the "prototype" for a function,
-/// which captures its argument names as well as if it is an operator.
+/// which captures its name, and its argument names (thus implicitly the number
+/// of arguments the function takes).
 class PrototypeAST {
   std::string Name;
   std::vector&lt; Args;
