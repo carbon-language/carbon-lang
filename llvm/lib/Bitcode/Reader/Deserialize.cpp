@@ -152,7 +152,7 @@ void Deserializer::RegisterPtr(unsigned PtrId, const void* Ptr) {
   SetPtr(E,Ptr);
 }
 
-void Deserializer::ReadUIntPtr(uintptr_t& PtrRef) {
+void Deserializer::ReadUIntPtr(uintptr_t& PtrRef, bool AllowBackpatch) {
   unsigned PtrId = ReadInt();
   
   if (PtrId == 0) {
@@ -169,6 +169,9 @@ void Deserializer::ReadUIntPtr(uintptr_t& PtrRef) {
   if (HasFinalPtr(E))
     PtrRef = GetFinalPtr(E);
   else {
+    assert (AllowBackpatch &&
+            "Client forbids backpatching for this pointer.");
+    
     // Register backpatch.  Check the freelist for a BPNode.
     BPNode* N;
 

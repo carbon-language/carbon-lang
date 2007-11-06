@@ -114,33 +114,36 @@ public:
   void ReadCStr(std::vector<char>& buff, bool isNullTerm=false);
 
   template <typename T>
-  inline T* ReadOwnedPtr() {    
+  inline T* ReadOwnedPtr(bool AutoRegister = true) {
     unsigned PtrId = ReadInt();
 
     if (PtrId == 0)
       return NULL;
     
     T* x = SerializeTrait<T>::Materialize(*this);
-    RegisterPtr(PtrId,x);
+    
+    if (AutoRegister)
+      RegisterPtr(PtrId,x);
+    
     return x;
   }
   
   template <typename T>
-  inline void ReadOwnedPtr(T*& Ptr) {
-    Ptr = ReadOwnedPtr<T>();
+  inline void ReadOwnedPtr(T*& Ptr, bool AutoRegister = true) {
+    Ptr = ReadOwnedPtr<T>(AutoRegister);
   }
   
   template <typename T>
-  void ReadPtr(T*& PtrRef) {
-    ReadUIntPtr(reinterpret_cast<uintptr_t&>(PtrRef));
+  void ReadPtr(T*& PtrRef, bool AllowBackpatch = true) {
+    ReadUIntPtr(reinterpret_cast<uintptr_t&>(PtrRef), AllowBackpatch);
   }
   
   template <typename T>
-  void ReadPtr(const T*& PtrRef) {
-    ReadPtr(const_cast<T*&>(PtrRef));
+  void ReadPtr(const T*& PtrRef, bool AllowBackpatch = true) {
+    ReadPtr(const_cast<T*&>(PtrRef), AllowBackpatch);
   }            
 
-  void ReadUIntPtr(uintptr_t& PtrRef);
+  void ReadUIntPtr(uintptr_t& PtrRef, bool AllowBackpatch = true);
   
   template <typename T>
   T& ReadRef() {
