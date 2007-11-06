@@ -47,6 +47,11 @@ namespace {
                 cl::desc("Coalesce copies (default=true)"),
                 cl::init(true));
 
+  static cl::opt<bool>
+  NewHeuristic("new-coalescer-heuristic",
+                cl::desc("Use new coalescer heuristic"),
+                cl::init(false));
+
   RegisterPass<SimpleRegisterCoalescing> 
   X("simple-register-coalescing", "Simple Register Coalescing");
 
@@ -177,9 +182,6 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
   if (UIdx != -1)
     ValLREndInst->getOperand(UIdx).unsetIsKill();
   
-  // Finally, delete the copy instruction.
-  li_->RemoveMachineInstrFromMaps(CopyMI);
-  CopyMI->eraseFromParent();
   ++numPeep;
   return true;
 }
@@ -195,22 +197,51 @@ void SimpleRegisterCoalescing::AddSubRegIdxPairs(unsigned Reg, unsigned SubIdx) 
   }
 }
 
+/// isBackEdgeCopy - Returns true if CopyMI is a back edge copy.
+///
+bool SimpleRegisterCoalescing::isBackEdgeCopy(MachineInstr *CopyMI,
+                                              unsigned DstReg) {
+  MachineBasicBlock *MBB = CopyMI->getParent();
+  const BasicBlock *BB = MBB->getBasicBlock();
+  const Loop *L = loopInfo->getLoopFor(BB);
+  if (!L)
+    return false;
+  if (BB != L->getLoopLatch())
+    return false;
+
+  DstReg = rep(DstReg);
+  LiveInterval &LI = li_->getInterval(DstReg);
+  unsigned DefIdx = li_->getInstructionIndex(CopyMI);
+  LiveInterval::const_iterator DstLR =
+    LI.FindLiveRangeContaining(li_->getDefIndex(DefIdx));
+  if (DstLR == LI.end())
+    return false;
+  unsigned KillIdx = li_->getInstructionIndex(&MBB->back()) + InstrSlots::NUM-1;
+  if (DstLR->valno->kills.size() == 1 && DstLR->valno->kills[0] == KillIdx)
+    return true;
+  return false;
+}
+
 /// JoinCopy - Attempt to join intervals corresponding to SrcReg/DstReg,
 /// which are the src/dst of the copy instruction CopyMI.  This returns true
 /// if the copy was successfully coalesced away. If it is not currently
 /// possible to coalesce this interval, but it may be possible if other
 /// things get coalesced, then it returns true by reference in 'Again'.
-bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
-                                        unsigned SrcReg, unsigned DstReg,
-                                        bool &Again) {
+bool SimpleRegisterCoalescing::JoinCopy(CopyRec TheCopy, bool &Again) {
+  MachineInstr *CopyMI = TheCopy.MI;
+
+  Again = false;
+  if (JoinedCopies.count(CopyMI))
+    return false; // Already done.
+
   DOUT << li_->getInstructionIndex(CopyMI) << '\t' << *CopyMI;
 
   // Get representative registers.
+  unsigned SrcReg = TheCopy.SrcReg;
+  unsigned DstReg = TheCopy.DstReg;
   unsigned repSrcReg = rep(SrcReg);
   unsigned repDstReg = rep(DstReg);
   
-  Again = false;
-
   // If they are already joined we continue.
   if (repSrcReg == repDstReg) {
     DOUT << "\tCopy already coalesced.\n";
@@ -362,6 +393,8 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
     unsigned JoinPReg = SrcIsPhys ? repSrcReg : repDstReg;
     const TargetRegisterClass *RC = mf_->getSSARegMap()->getRegClass(JoinVReg);
     unsigned Threshold = allocatableRCRegs_[RC].count();
+    if (TheCopy.isBackEdge)
+      Threshold *= 2; // Favors back edge copies.
 
     // If the virtual register live interval is long but it has low use desity,
     // do not join them, instead mark the physical register as its allocation
@@ -411,8 +444,10 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
     // Coalescing failed.
     
     // If we can eliminate the copy without merging the live ranges, do so now.
-    if (!isExtSubReg && AdjustCopiesBackFrom(SrcInt, DstInt, CopyMI))
+    if (!isExtSubReg && AdjustCopiesBackFrom(SrcInt, DstInt, CopyMI)) {
+      JoinedCopies.insert(CopyMI);
       return true;
+    }
 
     // Otherwise, we are unable to join the intervals.
     DOUT << "Interference!\n";
@@ -490,6 +525,24 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
     AddSubRegIdxPairs(repSrcReg, SubIdx);
   }
 
+  if (NewHeuristic) {
+    for (LiveInterval::const_vni_iterator i = ResSrcInt->vni_begin(),
+           e = ResSrcInt->vni_end(); i != e; ++i) {
+      const VNInfo *vni = *i;
+      if (vni->def && vni->def != ~1U && vni->def != ~0U) {
+        MachineInstr *CopyMI = li_->getInstructionFromIndex(vni->def);
+        unsigned SrcReg, DstReg;
+        if (CopyMI && tii_->isMoveInstr(*CopyMI, SrcReg, DstReg) &&
+            JoinedCopies.count(CopyMI) == 0) {
+          unsigned LoopDepth =
+            loopInfo->getLoopDepth(CopyMI->getParent()->getBasicBlock());
+          JoinQueue->push(CopyRec(CopyMI, SrcReg, DstReg, LoopDepth,
+                                  isBackEdgeCopy(CopyMI, DstReg)));
+        }
+      }
+    }
+  }
+
   DOUT << "\n\t\tJoined.  Result = "; ResDstInt->print(DOUT, mri_);
   DOUT << "\n";
 
@@ -500,8 +553,7 @@ bool SimpleRegisterCoalescing::JoinCopy(MachineInstr *CopyMI,
   r2rRevMap_[repDstReg].push_back(repSrcReg);
 
   // Finally, delete the copy instruction.
-  li_->RemoveMachineInstrFromMaps(CopyMI);
-  CopyMI->eraseFromParent();
+  JoinedCopies.insert(CopyMI);
   ++numPeep;
   ++numJoins;
   return true;
@@ -956,12 +1008,62 @@ namespace {
   };
 }
 
+/// getRepIntervalSize - Returns the size of the interval that represents the
+/// specified register.
+template<class SF>
+unsigned JoinPriorityQueue<SF>::getRepIntervalSize(unsigned Reg) {
+  return Rc->getRepIntervalSize(Reg);
+}
+
+/// CopyRecSort::operator - Join priority queue sorting function.
+///
+bool CopyRecSort::operator()(CopyRec left, CopyRec right) const {
+  // Inner loops first.
+  if (left.LoopDepth > right.LoopDepth)
+    return false;
+  else if (left.LoopDepth == right.LoopDepth) {
+    if (left.isBackEdge && !right.isBackEdge)
+      return false;
+    else if (left.isBackEdge == right.isBackEdge) {
+      // Join virtuals to physical registers first.
+      bool LDstIsPhys = MRegisterInfo::isPhysicalRegister(left.DstReg);
+      bool LSrcIsPhys = MRegisterInfo::isPhysicalRegister(left.SrcReg);
+      bool LIsPhys = LDstIsPhys || LSrcIsPhys;
+      bool RDstIsPhys = MRegisterInfo::isPhysicalRegister(right.DstReg);
+      bool RSrcIsPhys = MRegisterInfo::isPhysicalRegister(right.SrcReg);
+      bool RIsPhys = RDstIsPhys || RSrcIsPhys;
+      if (LIsPhys && !RIsPhys)
+        return false;
+      else if (LIsPhys == RIsPhys) {
+        // Join shorter intervals first.
+        unsigned LSize = 0;
+        unsigned RSize = 0;
+        if (LIsPhys) {
+          LSize =  LDstIsPhys ? 0 : JPQ->getRepIntervalSize(left.DstReg);
+          LSize += LSrcIsPhys ? 0 : JPQ->getRepIntervalSize(left.SrcReg);
+          RSize =  RDstIsPhys ? 0 : JPQ->getRepIntervalSize(right.DstReg);
+          RSize += RSrcIsPhys ? 0 : JPQ->getRepIntervalSize(right.SrcReg);
+        } else {
+          LSize =  std::min(JPQ->getRepIntervalSize(left.DstReg),
+                            JPQ->getRepIntervalSize(left.SrcReg));
+          RSize =  std::min(JPQ->getRepIntervalSize(right.DstReg),
+                            JPQ->getRepIntervalSize(right.SrcReg));
+        }
+        if (LSize < RSize)
+          return false;
+      }
+    }
+  }
+  return true;
+}
+
 void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
                                                std::vector<CopyRec> &TryAgain) {
   DOUT << ((Value*)MBB->getBasicBlock())->getName() << ":\n";
-  
+
   std::vector<CopyRec> VirtCopies;
   std::vector<CopyRec> PhysCopies;
+  unsigned LoopDepth = loopInfo->getLoopDepth(MBB->getBasicBlock());
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
        MII != E;) {
     MachineInstr *Inst = MII++;
@@ -978,24 +1080,32 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
     unsigned repDstReg = rep(DstReg);
     bool SrcIsPhys = MRegisterInfo::isPhysicalRegister(repSrcReg);
     bool DstIsPhys = MRegisterInfo::isPhysicalRegister(repDstReg);
-    if (SrcIsPhys || DstIsPhys)
-      PhysCopies.push_back(getCopyRec(Inst, SrcReg, DstReg));
-    else
-      VirtCopies.push_back(getCopyRec(Inst, SrcReg, DstReg));
+    if (NewHeuristic) {
+      JoinQueue->push(CopyRec(Inst, SrcReg, DstReg, LoopDepth,
+                              isBackEdgeCopy(Inst, DstReg)));
+    } else {
+      if (SrcIsPhys || DstIsPhys)
+        PhysCopies.push_back(CopyRec(Inst, SrcReg, DstReg, 0, false));
+      else
+        VirtCopies.push_back(CopyRec(Inst, SrcReg, DstReg, 0, false));
+    }
   }
+
+  if (NewHeuristic)
+    return;
 
   // Try coalescing physical register + virtual register first.
   for (unsigned i = 0, e = PhysCopies.size(); i != e; ++i) {
     CopyRec &TheCopy = PhysCopies[i];
     bool Again = false;
-    if (!JoinCopy(TheCopy.MI, TheCopy.SrcReg, TheCopy.DstReg, Again))
+    if (!JoinCopy(TheCopy, Again))
       if (Again)
         TryAgain.push_back(TheCopy);
   }
   for (unsigned i = 0, e = VirtCopies.size(); i != e; ++i) {
     CopyRec &TheCopy = VirtCopies[i];
     bool Again = false;
-    if (!JoinCopy(TheCopy.MI, TheCopy.SrcReg, TheCopy.DstReg, Again))
+    if (!JoinCopy(TheCopy, Again))
       if (Again)
         TryAgain.push_back(TheCopy);
   }
@@ -1004,12 +1114,14 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
 void SimpleRegisterCoalescing::joinIntervals() {
   DOUT << "********** JOINING INTERVALS ***********\n";
 
+  if (NewHeuristic)
+    JoinQueue = new JoinPriorityQueue<CopyRecSort>(this);
+
   JoinedLIs.resize(li_->getNumIntervals());
   JoinedLIs.reset();
 
   std::vector<CopyRec> TryAgainList;
-  const LoopInfo &LI = getAnalysis<LoopInfo>();
-  if (LI.begin() == LI.end()) {
+  if (loopInfo->begin() == loopInfo->end()) {
     // If there are no loops in the function, join intervals in function order.
     for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();
          I != E; ++I)
@@ -1023,7 +1135,8 @@ void SimpleRegisterCoalescing::joinIntervals() {
     // registers with virtual registers before the intervals got too long.
     std::vector<std::pair<unsigned, MachineBasicBlock*> > MBBs;
     for (MachineFunction::iterator I = mf_->begin(), E = mf_->end(); I != E;++I)
-      MBBs.push_back(std::make_pair(LI.getLoopDepth(I->getBasicBlock()), I));
+      MBBs.push_back(std::make_pair(loopInfo->
+                                    getLoopDepth(I->getBasicBlock()), I));
 
     // Sort by loop depth.
     std::sort(MBBs.begin(), MBBs.end(), DepthMBBCompare());
@@ -1035,18 +1148,42 @@ void SimpleRegisterCoalescing::joinIntervals() {
   
   // Joining intervals can allow other intervals to be joined.  Iteratively join
   // until we make no progress.
-  bool ProgressMade = true;
-  while (ProgressMade) {
-    ProgressMade = false;
-
-    for (unsigned i = 0, e = TryAgainList.size(); i != e; ++i) {
-      CopyRec &TheCopy = TryAgainList[i];
-      if (TheCopy.MI) {
+  if (NewHeuristic) {
+    SmallVector<CopyRec, 16> TryAgain;
+    bool ProgressMade = true;
+    while (ProgressMade) {
+      ProgressMade = false;
+      while (!JoinQueue->empty()) {
+        CopyRec R = JoinQueue->pop();
         bool Again = false;
-        bool Success = JoinCopy(TheCopy.MI,TheCopy.SrcReg,TheCopy.DstReg,Again);
-        if (Success || !Again) {
-          TheCopy.MI = 0;   // Mark this one as done.
+        bool Success = JoinCopy(R, Again);
+        if (Success)
           ProgressMade = true;
+        else if (Again)
+          TryAgain.push_back(R);
+      }
+
+      if (ProgressMade) {
+        while (!TryAgain.empty()) {
+          JoinQueue->push(TryAgain.back());
+          TryAgain.pop_back();
+        }
+      }
+    }
+  } else {
+    bool ProgressMade = true;
+    while (ProgressMade) {
+      ProgressMade = false;
+
+      for (unsigned i = 0, e = TryAgainList.size(); i != e; ++i) {
+        CopyRec &TheCopy = TryAgainList[i];
+        if (TheCopy.MI) {
+          bool Again = false;
+          bool Success = JoinCopy(TheCopy, Again);
+          if (Success || !Again) {
+            TheCopy.MI = 0;   // Mark this one as done.
+            ProgressMade = true;
+          }
         }
       }
     }
@@ -1072,6 +1209,9 @@ void SimpleRegisterCoalescing::joinIntervals() {
     }
     RegNum = JoinedLIs.find_next(RegNum);
   }
+
+  if (NewHeuristic)
+    delete JoinQueue;
   
   DOUT << "*** Register mapping ***\n";
   for (unsigned i = 0, e = r2rMap_.size(); i != e; ++i)
@@ -1213,6 +1353,7 @@ void SimpleRegisterCoalescing::releaseMemory() {
   r2rMap_.clear();
   JoinedLIs.clear();
   SubRegIdxes.clear();
+  JoinedCopies.clear();
 }
 
 static bool isZeroLengthInterval(LiveInterval *li) {
@@ -1230,6 +1371,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   tii_ = tm_->getInstrInfo();
   li_ = &getAnalysis<LiveIntervals>();
   lv_ = &getAnalysis<LiveVariables>();
+  loopInfo = &getAnalysis<LoopInfo>();
 
   DOUT << "********** SIMPLE REGISTER COALESCING **********\n"
        << "********** Function: "
@@ -1253,6 +1395,13 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       DOUT << "\n";
     }
 
+    // Delete all coalesced copies.
+    for (SmallPtrSet<MachineInstr*,32>::iterator I = JoinedCopies.begin(),
+           E = JoinedCopies.end(); I != E; ++I) {
+      li_->RemoveMachineInstrFromMaps(*I);
+      (*I)->eraseFromParent();
+    }
+
     // Transfer sub-registers info to SSARegMap now that coalescing information
     // is complete.
     while (!SubRegIdxes.empty()) {
@@ -1264,12 +1413,10 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 
   // perform a final pass over the instructions and compute spill
   // weights, coalesce virtual registers and remove identity moves.
-  const LoopInfo &loopInfo = getAnalysis<LoopInfo>();
-
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
        mbbi != mbbe; ++mbbi) {
     MachineBasicBlock* mbb = mbbi;
-    unsigned loopDepth = loopInfo.getLoopDepth(mbb->getBasicBlock());
+    unsigned loopDepth = loopInfo->getLoopDepth(mbb->getBasicBlock());
 
     for (MachineBasicBlock::iterator mii = mbb->begin(), mie = mbb->end();
          mii != mie; ) {

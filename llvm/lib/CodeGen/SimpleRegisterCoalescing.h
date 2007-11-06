@@ -20,13 +20,61 @@
 #include "llvm/CodeGen/RegisterCoalescer.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
+#include <queue>
 
 namespace llvm {
-
+  class SimpleRegisterCoalescing;
   class LiveVariables;
   class MRegisterInfo;
   class TargetInstrInfo;
   class VirtRegMap;
+  class LoopInfo;
+
+  /// CopyRec - Representation for copy instructions in coalescer queue.
+  ///
+  struct CopyRec {
+    MachineInstr *MI;
+    unsigned SrcReg, DstReg;
+    unsigned LoopDepth;
+    bool isBackEdge;
+    CopyRec(MachineInstr *mi, unsigned src, unsigned dst, unsigned depth,
+            bool be)
+      : MI(mi), SrcReg(src), DstReg(dst), LoopDepth(depth), isBackEdge(be) {};
+  };
+
+  template<class SF> class JoinPriorityQueue;
+
+  /// CopyRecSort - Sorting function for coalescer queue.
+  ///
+  struct CopyRecSort : public std::binary_function<CopyRec,CopyRec,bool> {
+    JoinPriorityQueue<CopyRecSort> *JPQ;
+    CopyRecSort(JoinPriorityQueue<CopyRecSort> *jpq) : JPQ(jpq) {}
+    CopyRecSort(const CopyRecSort &RHS) : JPQ(RHS.JPQ) {}
+    bool operator()(CopyRec left, CopyRec right) const;
+  };
+
+  /// JoinQueue - A priority queue of copy instructions the coalescer is
+  /// going to process.
+  template<class SF>
+  class JoinPriorityQueue {
+    SimpleRegisterCoalescing *Rc;
+    std::priority_queue<CopyRec, std::vector<CopyRec>, SF> Queue;
+
+  public:
+    JoinPriorityQueue(SimpleRegisterCoalescing *rc) : Rc(rc), Queue(SF(this)) {}
+
+    bool empty() const { return Queue.empty(); }
+    void push(CopyRec R) { Queue.push(R); }
+    CopyRec pop() {
+      if (empty()) return CopyRec(0, 0, 0, 0, false);
+      CopyRec R = Queue.top();
+      Queue.pop();
+      return R;
+    }
+
+    // Callbacks to SimpleRegisterCoalescing.
+    unsigned getRepIntervalSize(unsigned Reg);
+  };
 
   class SimpleRegisterCoalescing : public MachineFunctionPass,
                                    public RegisterCoalescer {
@@ -36,6 +84,7 @@ namespace llvm {
     const TargetInstrInfo* tii_;
     LiveIntervals *li_;
     LiveVariables *lv_;
+    const LoopInfo* loopInfo;
     
     BitVector allocatableRegs_;
     DenseMap<const TargetRegisterClass*, BitVector> allocatableRCRegs_;
@@ -47,6 +96,10 @@ namespace llvm {
     /// r2rRevMap_ - Reverse of r2rRevMap_, i.e. Map from register to all
     /// the registers it represent.
     IndexedMap<std::vector<unsigned> > r2rRevMap_;
+
+    /// JoinQueue - A priority queue of copy instructions the coalescer is
+    /// going to process.
+    JoinPriorityQueue<CopyRecSort> *JoinQueue;
 
     /// JoinedLIs - Keep track which register intervals have been coalesced
     /// with other intervals.
@@ -64,17 +117,6 @@ namespace llvm {
     static char ID; // Pass identifcation, replacement for typeid
     SimpleRegisterCoalescing() : MachineFunctionPass((intptr_t)&ID) {}
 
-    struct CopyRec {
-      MachineInstr *MI;
-      unsigned SrcReg, DstReg;
-    };
-    CopyRec getCopyRec(MachineInstr *MI, unsigned SrcReg, unsigned DstReg) {
-      CopyRec R;
-      R.MI = MI;
-      R.SrcReg = SrcReg;
-      R.DstReg = DstReg;
-      return R;
-    }
     struct InstrSlots {
       enum {
         LOAD  = 0,
@@ -93,8 +135,17 @@ namespace llvm {
 
     bool coalesceFunction(MachineFunction &mf, RegallocQuery &) {
       // This runs as an independent pass, so don't do anything.
-      return(false);
+      return false;
     };
+
+    /// getRepIntervalSize - Called from join priority queue sorting function.
+    /// It returns the size of the interval that represent the given register.
+    unsigned getRepIntervalSize(unsigned Reg) {
+      Reg = rep(Reg);
+      if (!li_->hasInterval(Reg))
+        return 0;
+      return li_->getInterval(Reg).getSize();
+    }
 
     /// print - Implement the dump method.
     virtual void print(std::ostream &O, const Module* = 0) const;
@@ -102,7 +153,7 @@ namespace llvm {
       if (O) print(*O, M);
     }
 
-  private:      
+  private:
     /// joinIntervals - join compatible live intervals
     void joinIntervals();
 
@@ -116,8 +167,7 @@ namespace llvm {
     /// if the copy was successfully coalesced away. If it is not currently
     /// possible to coalesce this interval, but it may be possible if other
     /// things get coalesced, then it returns true by reference in 'Again'.
-    bool JoinCopy(MachineInstr *CopyMI, unsigned SrcReg, unsigned DstReg,
-                  bool &Again);
+    bool JoinCopy(CopyRec TheCopy, bool &Again);
     
     /// JoinIntervals - Attempt to join these two intervals.  On failure, this
     /// returns false.  Otherwise, if one of the intervals being joined is a
@@ -145,6 +195,10 @@ namespace llvm {
     /// specified register as sub-registers. The recursion level is expected to be
     /// shallow.
     void AddSubRegIdxPairs(unsigned Reg, unsigned SubIdx);
+
+    /// isBackEdgeCopy - Returns true if CopyMI is a back edge copy.
+    ///
+    bool isBackEdgeCopy(MachineInstr *CopyMI, unsigned DstReg);
 
     /// lastRegisterUse - Returns the last use of the specific register between
     /// cycles Start and End. It also returns the use operand by reference. It
