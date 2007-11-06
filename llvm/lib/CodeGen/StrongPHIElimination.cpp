@@ -37,23 +37,22 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     StrongPHIElimination() : MachineFunctionPass((intptr_t)&ID) {}
 
-    bool runOnMachineFunction(MachineFunction &Fn) {
-      computeDFS(Fn);
-      
-      
-      return false;
-    }
-
+    bool runOnMachineFunction(MachineFunction &Fn);
+    
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<LiveVariables>();
       AU.addPreservedID(PHIEliminationID);
       AU.addRequired<MachineDominatorTree>();
+      AU.addRequired<LiveVariables>();
+      AU.setPreservesAll();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
     
     virtual void releaseMemory() {
       preorder.clear();
       maxpreorder.clear();
+      
+      waiting.clear();
     }
 
   private:
@@ -72,14 +71,22 @@ namespace {
           parent->addChild(this);
       }
       
-      MachineInstr* getInstr() { return instr; }
+      ~DomForestNode() {
+        for (iterator I = begin(), E = end(); I != E; ++I)
+          delete *I;
+      }
       
-      DomForestNode::iterator begin() { return children.begin(); }
-      DomForestNode::iterator end() { return children.end(); }
+      inline MachineInstr* getInstr() { return instr; }
+      
+      inline DomForestNode::iterator begin() { return children.begin(); }
+      inline DomForestNode::iterator end() { return children.end(); }
     };
     
     DenseMap<MachineBasicBlock*, unsigned> preorder;
     DenseMap<MachineBasicBlock*, unsigned> maxpreorder;
+    
+    DenseMap<MachineBasicBlock*, std::vector<MachineInstr*> > waiting;
+    
     
     void computeDFS(MachineFunction& MF);
     
@@ -197,4 +204,11 @@ StrongPHIElimination::computeDomForest(SmallPtrSet<MachineInstr*, 8>& instrs) {
   std::vector<DomForestNode*> ret;
   ret.insert(ret.end(), VirtualRoot->begin(), VirtualRoot->end());
   return ret;
+}
+
+bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
+  computeDFS(Fn);
+  
+  
+  return false;
 }
