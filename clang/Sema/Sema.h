@@ -531,7 +531,13 @@ public:
 
   virtual void ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl, 
 				         DeclTy **allMethods, unsigned allNum,
+                                         DeclTy **allProperties, unsigned pNum,
                                          SourceLocation AtEndLoc);
+  
+  virtual DeclTy *ActOnAddObjcProperties(SourceLocation AtLoc, 
+                                         DeclTy **allProperties,
+                                         unsigned NumProperties,
+                                         ObjcDeclSpec &DS);
   
   virtual DeclTy *ActOnMethodDeclaration(
     SourceLocation BeginLoc, // location of the + or -.

@@ -1916,6 +1916,7 @@ void Sema::AddFactoryMethodToGlobalPool(ObjcMethodDecl *Method) {
 
 void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
                                      DeclTy **allMethods, unsigned allNum,
+                                     DeclTy **allProperties, unsigned pNum,
                                      SourceLocation AtEndLoc) {
   Decl *ClassDecl = static_cast<Decl *>(classDecl);
 
@@ -1931,10 +1932,18 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
   llvm::DenseMap<Selector, const ObjcMethodDecl*> InsMap;
   llvm::DenseMap<Selector, const ObjcMethodDecl*> ClsMap;
   
-  bool checkDuplicateMethods = 
+  bool isInterfaceDeclKind = 
         (isa<ObjcInterfaceDecl>(ClassDecl) || isa<ObjcCategoryDecl>(ClassDecl)
          || isa<ObjcProtocolDecl>(ClassDecl));
   bool checkIdenticalMethods = isa<ObjcImplementationDecl>(ClassDecl);
+  
+  // TODO: property declaration in category and protocols.
+  if (pNum != 0 && isa<ObjcInterfaceDecl>(ClassDecl)) {
+    ObjcPropertyDecl **properties = new ObjcPropertyDecl*[pNum];
+    memcpy(properties, allProperties, pNum*sizeof(ObjcPropertyDecl*));
+    dyn_cast<ObjcInterfaceDecl>(ClassDecl)->setPropertyDecls(properties);
+    dyn_cast<ObjcInterfaceDecl>(ClassDecl)->setNumPropertyDecl(pNum);
+  }
   
   for (unsigned i = 0; i < allNum; i++ ) {
     ObjcMethodDecl *Method =
@@ -1946,7 +1955,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
       const ObjcMethodDecl *&PrevMethod = InsMap[Method->getSelector()];
       bool match = PrevMethod ? MatchTwoMethodDeclarations(Method, PrevMethod) 
                               : false;
-      if (checkDuplicateMethods && PrevMethod && !match 
+      if (isInterfaceDeclKind && PrevMethod && !match 
           || checkIdenticalMethods && match) {
           Diag(Method->getLocation(), diag::error_duplicate_method_decl,
                Method->getSelector().getName());
@@ -1963,7 +1972,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
       const ObjcMethodDecl *&PrevMethod = ClsMap[Method->getSelector()];
       bool match = PrevMethod ? MatchTwoMethodDeclarations(Method, PrevMethod) 
                               : false;
-      if (checkDuplicateMethods && PrevMethod && !match 
+      if (isInterfaceDeclKind && PrevMethod && !match 
           || checkIdenticalMethods && match) {
         Diag(Method->getLocation(), diag::error_duplicate_method_decl,
              Method->getSelector().getName());
@@ -2075,6 +2084,47 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   ObjcMethod->setObjcDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjcDeclQualifier()));
   return ObjcMethod;
+}
+
+Sema::DeclTy *Sema::ActOnAddObjcProperties(SourceLocation AtLoc, 
+  DeclTy **allProperties, unsigned NumProperties, ObjcDeclSpec &DS) {
+  ObjcPropertyDecl *PDecl = new ObjcPropertyDecl(AtLoc);
+  
+  if(DS.getPropertyAttributes() & ObjcDeclSpec::DQ_PR_readonly)
+    PDecl->setPropertyAttributes(ObjcPropertyDecl::OBJC_PR_readonly);
+  
+  if(DS.getPropertyAttributes() & ObjcDeclSpec::DQ_PR_getter) {
+    PDecl->setPropertyAttributes(ObjcPropertyDecl::OBJC_PR_getter);
+    PDecl->setGetterName(DS.getGetterName());
+  }
+  
+  if(DS.getPropertyAttributes() & ObjcDeclSpec::DQ_PR_setter) {
+    PDecl->setPropertyAttributes(ObjcPropertyDecl::OBJC_PR_setter);
+    PDecl->setSetterName(DS.getSetterName());
+  }
+  
+  if(DS.getPropertyAttributes() & ObjcDeclSpec::DQ_PR_assign)
+    PDecl->setPropertyAttributes(ObjcPropertyDecl::OBJC_PR_assign);
+  
+  if(DS.getPropertyAttributes() & ObjcDeclSpec::DQ_PR_readwrite)
+    PDecl->setPropertyAttributes(ObjcPropertyDecl::OBJC_PR_readwrite);
+  
+  if(DS.getPropertyAttributes() & ObjcDeclSpec::DQ_PR_retain)
+    PDecl->setPropertyAttributes(ObjcPropertyDecl::OBJC_PR_retain);
+  
+  if(DS.getPropertyAttributes() & ObjcDeclSpec::DQ_PR_copy)
+    PDecl->setPropertyAttributes(ObjcPropertyDecl::OBJC_PR_copy);
+  
+  if(DS.getPropertyAttributes() & ObjcDeclSpec::DQ_PR_nonatomic)
+    PDecl->setPropertyAttributes(ObjcPropertyDecl::OBJC_PR_nonatomic);
+  
+  PDecl->setNumPropertyDecls(NumProperties);
+  if (NumProperties != 0) {
+    ObjcIvarDecl **properties = new ObjcIvarDecl*[NumProperties];
+    memcpy(properties, allProperties, NumProperties*sizeof(ObjcIvarDecl*));
+    PDecl->setPropertyDecls(properties);
+  }
+  return PDecl;
 }
 
 Sema::DeclTy *Sema::ActOnEnumConstant(Scope *S, DeclTy *theEnumDecl,

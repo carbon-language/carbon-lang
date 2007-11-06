@@ -292,13 +292,48 @@ public:
     DQ_Oneway = 0x20
   };
   
-  ObjcDeclSpec() : objcDeclQualifier(DQ_None) {}
+  /// PrpoertyAttributeKind - list of property attributes.
+  enum ObjcPrpoertyAttributeKind { DQ_PR_noattr = 0x0, 
+    DQ_PR_readonly = 0x01, 
+    DQ_PR_getter = 0x02, 
+    DQ_PR_assign = 0x04, 
+    DQ_PR_readwrite = 0x08, 
+    DQ_PR_retain = 0x10,
+    DQ_PR_copy = 0x20, 
+    DQ_PR_nonatomic = 0x40,
+    DQ_PR_setter = 0x80
+  };
+  
+  
+  ObjcDeclSpec() : objcDeclQualifier(DQ_None), PropertyAttributes(DQ_PR_noattr) 
+  {}
   ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
   void setObjcDeclQualifier(ObjcDeclQualifier DQVal) 
     { objcDeclQualifier = (ObjcDeclQualifier) (objcDeclQualifier | DQVal); }
   
+  const ObjcPrpoertyAttributeKind getPropertyAttributes() const 
+    { return PropertyAttributes; }
+  void setPropertyAttributes(ObjcPrpoertyAttributeKind PRVal) { 
+    PropertyAttributes = 
+      (ObjcPrpoertyAttributeKind) (PropertyAttributes | PRVal);
+  }
+  
+  const IdentifierInfo *getGetterName() const { return GetterName; }
+  IdentifierInfo *getGetterName() { return GetterName; }
+  void setGetterName(IdentifierInfo *name) { GetterName = name; }
+  
+  const IdentifierInfo *getSetterName() const { return SetterName; }
+  IdentifierInfo *getSetterName() { return SetterName; }
+  void setSetterName(IdentifierInfo *name) { SetterName = name; }
 private:
+  // FIXME: These two are unrelated and mutially exclusive. So perhaps 
+  // we can put them in a union to reflect their mutual exclusiveness
+  // (space saving is negligible).
   ObjcDeclQualifier objcDeclQualifier : 6;
+  
+  ObjcPrpoertyAttributeKind PropertyAttributes : 8;
+  IdentifierInfo *GetterName;    // getter name of NULL if no getter
+  IdentifierInfo *SetterName;    // setter name of NULL if no setter
 };
   
 /// DeclaratorChunk - One instance of this struct is used for each type in a

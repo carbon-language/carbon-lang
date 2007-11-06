@@ -225,6 +225,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
 void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
 					tok::ObjCKeywordKind contextKey) {
   llvm::SmallVector<DeclTy*, 32>  allMethods;
+  llvm::SmallVector<DeclTy*, 16> allProperties;
   tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
   SourceLocation AtEndLoc;
   
@@ -247,7 +248,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
 	if (contextKey != tok::objc_protocol)
 	  Diag(AtLoc, diag::err_objc_protocol_optional);
       } else if (ocKind == tok::objc_property) {
-        ParseObjCPropertyDecl(interfaceDecl);
+        allProperties.push_back(ParseObjCPropertyDecl(interfaceDecl, AtLoc));
         continue;
       } else {
         Diag(Tok, diag::err_objc_illegal_interface_qual);
@@ -277,7 +278,9 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
   /// This action is executed even if we don't have any methods (so the @end
   /// can be recorded properly).
   Actions.ActOnAddMethodsToObjcDecl(CurScope, interfaceDecl, &allMethods[0], 
-                                    allMethods.size(), AtEndLoc);
+                                    allMethods.size(), 
+                                    &allProperties[0], allProperties.size(), 
+                                    AtEndLoc);
 }
 
 ///   Parse property attribute declarations.
@@ -296,7 +299,7 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
 ///     copy
 ///     nonatomic
 ///
-void Parser::ParseObjCPropertyAttribute (DeclTy *interfaceDecl) {
+void Parser::ParseObjCPropertyAttribute (ObjcDeclSpec &DS) {
   SourceLocation loc = ConsumeParen(); // consume '('
   while (isObjCPropertyAttribute()) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
@@ -309,12 +312,18 @@ void Parser::ParseObjCPropertyAttribute (DeclTy *interfaceDecl) {
         loc = ConsumeToken();
         if (Tok.is(tok::identifier)) {
           if (II == ObjcPropertyAttrs[objc_setter]) {
+            DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_setter);
+            DS.setSetterName(Tok.getIdentifierInfo());
             loc = ConsumeToken();  // consume method name
             if (Tok.isNot(tok::colon)) {
               Diag(loc, diag::err_expected_colon);
               SkipUntil(tok::r_paren,true,true);
               break;
             }
+          }
+          else {
+            DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_getter);
+            DS.setGetterName(Tok.getIdentifierInfo());
           }
         }
         else {
@@ -329,6 +338,20 @@ void Parser::ParseObjCPropertyAttribute (DeclTy *interfaceDecl) {
         break;
       }
     }
+    
+    else if (II == ObjcPropertyAttrs[objc_readonly])
+      DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_readonly);
+    else if (II == ObjcPropertyAttrs[objc_assign])
+      DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_assign);
+    else if (II == ObjcPropertyAttrs[objc_readwrite])
+        DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_readwrite);
+    else if (II == ObjcPropertyAttrs[objc_retain])
+      DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_retain);
+    else if (II == ObjcPropertyAttrs[objc_copy])
+      DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_copy);
+    else if (II == ObjcPropertyAttrs[objc_nonatomic])
+      DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_nonatomic);
+    
     ConsumeToken(); // consume last attribute token
     if (Tok.is(tok::comma)) {
       loc = ConsumeToken();
@@ -352,17 +375,19 @@ void Parser::ParseObjCPropertyAttribute (DeclTy *interfaceDecl) {
 ///
 ///   @property property-attr-decl[opt] property-component-decl ';'
 ///
-void Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl) {
+Parser::DeclTy *Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl, 
+                                              SourceLocation AtLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_property) &&
          "ParseObjCPropertyDecl(): Expected @property");
+  ObjcDeclSpec DS;
   ConsumeToken(); // the "property" identifier
   // Parse property attribute list, if any. 
   if (Tok.is(tok::l_paren)) {
     // property has attribute list.
-    ParseObjCPropertyAttribute(0/*FIXME*/);
+    ParseObjCPropertyAttribute(DS);
   }
   // Parse declaration portion of @property.
-  llvm::SmallVector<DeclTy*, 32> PropertyDecls;
+  llvm::SmallVector<DeclTy*, 8> PropertyDecls;
   ParseStructDeclaration(interfaceDecl, PropertyDecls);
   if (Tok.is(tok::semi)) 
     ConsumeToken();
@@ -370,6 +395,8 @@ void Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl) {
     Diag(Tok, diag::err_expected_semi_decl_list);
     SkipUntil(tok::r_brace, true, true);
   }
+  return Actions.ActOnAddObjcProperties(AtLoc, 
+           &PropertyDecls[0], PropertyDecls.size(), DS);
 }
 
 ///   objc-method-proto:
@@ -919,6 +946,7 @@ Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
     /// Insert collected methods declarations into the @interface object.
     Actions.ActOnAddMethodsToObjcDecl(CurScope, ObjcImpDecl,
                                       &AllImplMethods[0], AllImplMethods.size(),
+                                      (DeclTy **)0, 0,
                                       atLoc);
     ObjcImpDecl = 0;
     AllImplMethods.clear();

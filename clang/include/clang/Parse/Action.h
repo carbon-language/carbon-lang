@@ -565,9 +565,18 @@ public:
     DeclTy *ClassDecl,
     DeclTy **allMethods, 
     unsigned allNum,
+    DeclTy **allProperties,
+    unsigned NumProperties,
     SourceLocation AtEndLoc) {
     return;
   }
+  
+  // ActOnAddObjcProperties - called to build one property AST
+  virtual DeclTy *ActOnAddObjcProperties (SourceLocation AtLoc,
+    DeclTy **allProperties, unsigned NumProperties, ObjcDeclSpec &DS) {
+    return 0;
+  }
+                                     
   // ActOnClassMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from Sel.getNumArgs().

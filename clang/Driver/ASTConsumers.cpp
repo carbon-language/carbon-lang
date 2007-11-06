@@ -103,10 +103,78 @@ static void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
       fprintf(stderr, "\t%s %s;\n", Ivars[i]->getType().getAsString().c_str(),
               Ivars[i]->getName());
     }
-    fprintf(stderr, "}\n@end\n");
+    fprintf(stderr, "}\n");
   }
-  else
-    fprintf(stderr,"@end\n");
+  
+  int NumProperties = OID->getNumPropertyDecl();
+  if (NumProperties > 0) {
+    for (int i = 0; i < NumProperties; i++) {
+      ObjcPropertyDecl *PDecl = OID->getPropertyDecl()[i];
+      fprintf(stderr, "@property");
+      if (PDecl->getPropertyAttributes() != ObjcPropertyDecl::OBJC_PR_noattr) {
+        bool first = true;
+        fprintf(stderr, " (");
+        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_readonly)
+        {
+          fprintf(stderr, "%creadonly", first ? ' ' : ',');
+          first = false;
+        }
+        
+        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_getter)
+        {
+          fprintf(stderr, "%cgetter = %s", first ? ' ' : ','
+                  , PDecl->getGetterName()->getName());
+          first = false;
+        }
+        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_setter)
+        {
+          fprintf(stderr, "%csetter = %s:", first ? ' ' : ','
+                  , PDecl->getSetterName()->getName());
+          first = false;
+        }
+        
+        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_assign)
+        {
+          fprintf(stderr, "%cassign", first ? ' ' : ',');
+          first = false;
+        }
+        
+        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_readwrite)
+        {
+          fprintf(stderr, "%creadwrite", first ? ' ' : ',');
+          first = false;
+        }
+        
+        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_retain)
+        {
+          fprintf(stderr, "%cretain", first ? ' ' : ',');
+          first = false;
+        }
+        
+        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_copy)
+        {
+          fprintf(stderr, "%ccopy", first ? ' ' : ',');
+          first = false;
+        }
+        
+        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_nonatomic)
+        {
+          fprintf(stderr, "%cnonatomic", first ? ' ' : ',');
+          first = false;
+        }
+        fprintf(stderr, " )");
+      }
+      ObjcIvarDecl **IDecl = PDecl->getPropertyDecls();
+      fprintf(stderr, " %s %s", IDecl[0]->getType().getAsString().c_str(),
+              IDecl[0]->getName());
+
+      for (int j = 1; j < PDecl->getNumPropertyDecls(); j++) {
+        fprintf(stderr, ", %s", IDecl[j]->getName());
+      }
+      fprintf(stderr, ";\n");
+    }
+  }
+  fprintf(stderr,"@end\n");
   // FIXME: implement the rest...
 }
 

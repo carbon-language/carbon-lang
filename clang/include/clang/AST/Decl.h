@@ -48,6 +48,7 @@ public:
            ObjcCategoryImpl,
            ObjcImplementation,
            ObjcProtocol,
+           PropertyDecl,
     //     ScopedDecl
              CompatibleAlias,
     //       TypeDecl

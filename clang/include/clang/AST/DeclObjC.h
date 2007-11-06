@@ -26,6 +26,7 @@ class ObjcIvarDecl;
 class ObjcMethodDecl;
 class ObjcProtocolDecl;
 class ObjcCategoryDecl;
+class ObjcPropertyDecl;
 
 /// ObjcInterfaceDecl - Represents an ObjC class declaration. For example:
 ///
@@ -71,6 +72,10 @@ class ObjcInterfaceDecl : public TypeDecl {
   
   /// List of categories defined for this class.
   ObjcCategoryDecl *CategoryList;
+    
+  /// class properties
+  ObjcPropertyDecl **PropertyDecl;  // Null if no property
+  int NumPropertyDecl;  // -1 if no property
   
   bool ForwardDecl:1; // declared with @class.
   bool InternalInterface:1; // true - no @interface for @implementation
@@ -86,7 +91,8 @@ public:
       NumIvars(-1),
       InstanceMethods(0), NumInstanceMethods(-1), 
       ClassMethods(0), NumClassMethods(-1),
-      CategoryList(0), ForwardDecl(FD), InternalInterface(isInternal) {
+      CategoryList(0), PropertyDecl(0), NumPropertyDecl(-1),
+      ForwardDecl(FD), InternalInterface(isInternal) {
         AllocIntfRefProtocols(numRefProtos);
       }
   
@@ -146,6 +152,16 @@ public:
   
   // We also need to record the @end location.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
+  
+  const int getNumPropertyDecl() const { return NumPropertyDecl; }
+  int getNumPropertyDecl() { return NumPropertyDecl; }
+  void setNumPropertyDecl(int num) { NumPropertyDecl = num; }
+  
+  ObjcPropertyDecl **const getPropertyDecl() const { return PropertyDecl; }
+  ObjcPropertyDecl **getPropertyDecl() { return PropertyDecl; }
+  void setPropertyDecls(ObjcPropertyDecl **properties) { 
+    PropertyDecl = properties; 
+  }
 
   /// ImplicitInterfaceDecl - check that this is an implicitely declared
   /// ObjcInterfaceDecl node. This is for legacy objective-c @implementation
@@ -668,6 +684,61 @@ public:
   }
   static bool classof(const ObjcCompatibleAliasDecl *D) { return true; }
   
+};
+  
+class ObjcPropertyDecl : public Decl {
+public:
+  enum PrpoertyAttributeKind { OBJC_PR_noattr = 0x0, 
+                       OBJC_PR_readonly = 0x01, 
+                       OBJC_PR_getter = 0x02,
+                       OBJC_PR_assign = 0x04, 
+                       OBJC_PR_readwrite = 0x08, 
+                       OBJC_PR_retain = 0x10,
+                       OBJC_PR_copy = 0x20, 
+                       OBJC_PR_nonatomic = 0x40,
+                       OBJC_PR_setter = 0x80 };
+private:
+  // List of property name declarations
+  // FIXME: Property is not an ivar.
+  ObjcIvarDecl **PropertyDecls;
+  int NumPropertyDecls;
+  
+  PrpoertyAttributeKind PropertyAttributes : 8;
+  
+  IdentifierInfo *GetterName;    // getter name of NULL if no getter
+  IdentifierInfo *SetterName;    // setter name of NULL if no setter
+  
+public:
+  ObjcPropertyDecl(SourceLocation L)
+  : Decl(PropertyDecl, L),
+  PropertyDecls(0), NumPropertyDecls(-1), PropertyAttributes(OBJC_PR_noattr),
+  GetterName(0), SetterName(0) {}
+  
+  ObjcIvarDecl **const getPropertyDecls() const { return PropertyDecls; }
+  void setPropertyDecls(ObjcIvarDecl **property) { PropertyDecls = property; }
+  
+  const int getNumPropertyDecls() const { return NumPropertyDecls; }
+  void setNumPropertyDecls(int num) { NumPropertyDecls = num; }
+  
+  const PrpoertyAttributeKind getPropertyAttributes() const 
+    { return PropertyAttributes; }
+  void setPropertyAttributes(PrpoertyAttributeKind PRVal) { 
+    PropertyAttributes = 
+    (PrpoertyAttributeKind) (PropertyAttributes | PRVal);
+  }
+  
+  const IdentifierInfo *getGetterName() const { return GetterName; }
+  IdentifierInfo *getGetterName() { return GetterName; }
+  void setGetterName(IdentifierInfo *Id) { GetterName = Id; }
+  
+  const IdentifierInfo *getSetterName() const { return SetterName; }
+  IdentifierInfo *getSetterName() { return SetterName; }
+  void setSetterName(IdentifierInfo *Id) { SetterName = Id; }
+  
+  static bool classof(const Decl *D) {
+    return D->getKind() == PropertyDecl;
+  }
+  static bool classof(const ObjcPropertyDecl *D) { return true; }
 };
 
 }  // end namespace clang

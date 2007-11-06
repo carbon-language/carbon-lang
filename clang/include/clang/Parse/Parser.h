@@ -298,8 +298,8 @@ private:
    	    tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
   DeclTy *ParseObjCMethodDecl(SourceLocation mLoc, tok::TokenKind mType,
             tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
-  void ParseObjCPropertyAttribute(DeclTy *interfaceDecl);
-  void ParseObjCPropertyDecl(DeclTy *interfaceDecl);
+  void ParseObjCPropertyAttribute(ObjcDeclSpec &DS);
+  DeclTy *ParseObjCPropertyDecl(DeclTy *interfaceDecl, SourceLocation AtLoc);
   
   void ParseObjCInstanceMethodDefinition();
   void ParseObjCClassMethodDefinition();
