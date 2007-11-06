@@ -7732,8 +7732,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           NewPtrTy = PointerType::get(IntegerType::get(Size<<3));
 
         if (NewPtrTy) {
-          Value *Src = InsertCastBefore(Instruction::BitCast, CI.getOperand(2), NewPtrTy, CI);
-          Value *Dest = InsertCastBefore(Instruction::BitCast, CI.getOperand(1), NewPtrTy, CI);
+          Value *Src = InsertCastBefore(Instruction::BitCast, CI.getOperand(2),
+                                        NewPtrTy, CI);
+          Value *Dest = InsertCastBefore(Instruction::BitCast, CI.getOperand(1),
+                                         NewPtrTy, CI);
           Value *L = new LoadInst(Src, "tmp", false, Align, &CI);
           Value *NS = new StoreInst(L, Dest, false, Align, &CI);
           CI.replaceAllUsesWith(NS);
