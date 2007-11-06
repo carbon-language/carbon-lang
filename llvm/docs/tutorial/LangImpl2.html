@@ -42,8 +42,8 @@
 <div class="doc_text">
 
 <p>Welcome to Chapter 2 of the "<a href="index.html">Implementing a language
-with LLVM</a>" tutorial.  This chapter shows you how to use the <a 
-href="LangImpl1.html">Lexer built in Chapter 1</a> to build a full <a
+with LLVM</a>" tutorial.  This chapter shows you how to use the lexer, built in 
+<a href="LangImpl1.html">Chapter 1</a>, to build a full <a
 href="http://en.wikipedia.org/wiki/Parsing">parser</a> for
 our Kaleidoscope language.  Once we have a parser, we'll define and build an <a 
 href="http://en.wikipedia.org/wiki/Abstract_syntax_tree">Abstract Syntax 
@@ -53,9 +53,10 @@ Tree</a> (AST).</p>
 href="http://en.wikipedia.org/wiki/Recursive_descent_parser">Recursive Descent
 Parsing</a> and <a href=
 "http://en.wikipedia.org/wiki/Operator-precedence_parser">Operator-Precedence 
-Parsing</a> to parse the Kaleidoscope language (the latter for binary expression
-and the former for everything else).  Before we get to parsing though, lets talk
-about the output of the parser: the Abstract Syntax Tree.</p>
+Parsing</a> to parse the Kaleidoscope language (the latter for 
+binary expressions and the former for everything else).  Before we get to
+parsing though, lets talk about the output of the parser: the Abstract Syntax
+Tree.</p>
 
 </div>
 
@@ -65,7 +66,7 @@ about the output of the parser: the Abstract Syntax Tree.</p>
 
 <div class="doc_text">
 
-<p>The AST for a program captures its behavior in a way that it is easy for
+<p>The AST for a program captures its behavior in such a way that it is easy for
 later stages of the compiler (e.g. code generation) to interpret.  We basically
 want one object for each construct in the language, and the AST should closely
 model the language.  In Kaleidoscope, we have expressions, a prototype, and a
@@ -89,9 +90,10 @@ public:
 </div>
 
 <p>The code above shows the definition of the base ExprAST class and one
-subclass which we use for numeric literals.  The important thing about this is
-that the NumberExprAST class captures the numeric value of the literal in the
-class, so that later phases of the compiler can know what it is.</p>
+subclass which we use for numeric literals.  The important thing to note about
+this code is that the NumberExprAST class captures the numeric value of the
+literal as an instance variable. This allows later phases of the compiler to
+know what the stored numeric value is.</p>
 
 <p>Right now we only create the AST,  so there are no useful accessor methods on
 them.  It would be very easy to add a virtual method to pretty print the code,
@@ -130,10 +132,10 @@ public:
 
 <p>This is all (intentially) rather straight-forward: variables capture the
 variable name, binary operators capture their opcode (e.g. '+'), and calls
-capture a function name and list of argument expressions.  One thing that is 
-nice about our AST is that it captures the language features without talking
-about the syntax of the language.  Note that there is no discussion about 
-precedence of binary operators, lexical structure etc.</p>
+capture a function name as well as a list of any argument expressions.  One thing 
+that is nice about our AST is that it captures the language features without 
+talking about the syntax of the language.  Note that there is no discussion about 
+precedence of binary operators, lexical structure, etc.</p>
 
 <p>For our basic language, these are all of the expression nodes we'll define.
 Because it doesn't have conditional control flow, it isn't Turing-complete;
@@ -231,8 +233,8 @@ is not particular user-friendly, but it will be enough for our tutorial.  These
 routines make it easier to handle errors in routines that have various return
 types: they always return null.</p>
 
-<p>With these basic helper functions implemented, we can implement the first
-piece of our grammar: we'll start with numeric literals.</p>
+<p>With these basic helper functions, we can implement the first
+piece of our grammar: numeric literals.</p>
 
 </div>
 
@@ -261,10 +263,10 @@ static ExprAST *ParseNumberExpr() {
 
 <p>This routine is very simple: it expects to be called when the current token
 is a <tt>tok_number</tt> token.  It takes the current number value, creates 
-a <tt>NumberExprAST</tt> node, advances the lexer to the next token, then
+a <tt>NumberExprAST</tt> node, advances the lexer to the next token and finally
 returns.</p>
 
-<p>There are some interesting aspects of this.  The most important one is that
+<p>There are some interesting aspects to this.  The most important one is that
 this routine eats all of the tokens that correspond to the production, and
 returns the lexer buffer with the next token (which is not part of the grammar
 production) ready to go.  This is a fairly standard way to go for recursive
@@ -287,7 +289,10 @@ static ExprAST *ParseParenExpr() {
 </pre>
 </div>
 
-<p>This function illustrates a number of interesting things about the parser:
+<p>This function illustrates a number of interesting things about the 
+parser:</p>
+
+<p>
 1) it shows how we use the Error routines.  When called, this function expects
 that the current token is a '(' token, but after parsing the subexpression, it
 is possible that there is no ')' waiting.  For example, if the user types in
@@ -295,13 +300,14 @@ is possible that there is no ')' waiting.  For example, if the user types in
 occur, the parser needs a way to indicate that they happened: in our parser, we
 return null on an error.</p>
 
-<p>Another interesting aspect of this function is that it uses recursion by
+<p>2) Another interesting aspect of this function is that it uses recursion by
 calling <tt>ParseExpression</tt> (we will soon see that <tt>ParseExpression</tt> can call
 <tt>ParseParenExpr</tt>).  This is powerful because it allows us to handle 
 recursive grammars, and keeps each production very simple.  Note that
 parentheses do not cause construction of AST nodes themselves.  While we could
-do this, the most important role of parens are to guide the parser and provide
-grouping.  Once the parser constructs the AST, parens are not needed.</p>
+do it this way, the most important role of parens are to guide the parser and
+provide grouping.  Once the parser constructs the AST, parens are not 
+needed.</p>
 
 <p>The next simple production is for handling variable references and function
 calls:</p>
@@ -474,8 +480,8 @@ static ExprAST *ParseExpression() {
 </div>
 
 <p><tt>ParseBinOpRHS</tt> is the function that parses the sequence of pairs for
-us.  It takes a precedence and a pointer to an expression for the part parsed
-so far.   Note that "x" is a perfectly valid expression: As such, "binoprhs" is
+us.  It takes a precedence and a pointer to an expression for the part that has been
+parsed so far.   Note that "x" is a perfectly valid expression: As such, "binoprhs" is
 allowed to be empty, in which case it returns the expression that is passed into
 it. In our example above, the code passes the expression for "a" into
 <tt>ParseBinOpRHS</tt> and the current token is "+".</p>
@@ -522,7 +528,7 @@ operator and that it will be included in this expression:</p>
 </div>
 
 <p>As such, this code eats (and remembers) the binary operator and then parses
-the following primary expression.  This builds up the whole pair, the first of
+the primary expression that follows.  This builds up the whole pair, the first of
 which is [+, b] for the running example.</p>
 
 <p>Now that we parsed the left-hand side of an expression and one pair of the 
@@ -542,8 +548,8 @@ compare it to BinOp's precedence (which is '+' in this case):</p>
 
 <p>If the precedence of the binop to the right of "RHS" is lower or equal to the
 precedence of our current operator, then we know that the parentheses associate
-as "(a+b) binop ...".  In our example, since the next operator is "+" and so is
-our current one, we know that they have the same precedence.  In this case we'll
+as "(a+b) binop ...".  In our example, the current operator is "+" and the next 
+operator is "+", we know that they have the same precedence.  In this case we'll
 create the AST node for "a+b", and then continue parsing:</p>
 
 <div class="doc_code">
@@ -559,10 +565,10 @@ create the AST node for "a+b", and then continue parsing:</p>
 </div>
 
 <p>In our example above, this will turn "a+b+" into "(a+b)" and execute the next
-iteration of the loop, with "+" as the current token.  The code above will eat
-and remember it and parse "(c+d)" as the primary expression, which makes the
-current pair be [+, (c+d)].  It will then enter the 'if' above with "*" as the
-binop to the right of the primary.  In this case, the precedence of "*" is
+iteration of the loop, with "+" as the current token.  The code above will eat, 
+remember, and parse "(c+d)" as the primary expression, which makes the
+current pair equal to [+, (c+d)].  It will then evaluate the 'if' conditional above with 
+"*" as the binop to the right of the primary.  In this case, the precedence of "*" is
 higher than the precedence of "+" so the if condition will be entered.</p>
 
 <p>The critical question left here is "how can the if condition parse the right
@@ -596,7 +602,7 @@ precedence required for it to continue.  In our example above, this will cause
 it to return the AST node for "(c+d)*e*f" as RHS, which is then set as the RHS
 of the '+' expression.</p>
 
-<p>Finally, on the next iteration of the while loop, the "+g" piece is parsed.
+<p>Finally, on the next iteration of the while loop, the "+g" piece is parsed
 and added to the AST.  With this little bit of code (14 non-trivial lines), we
 correctly handle fully general binary expression parsing in a very elegant way.
 This was a whirlwind tour of this code, and it is somewhat subtle.  I recommend
@@ -604,9 +610,9 @@ running through it with a few tough examples to see how it works.
 </p>
 
 <p>This wraps up handling of expressions.  At this point, we can point the
-parser at an arbitrary token stream and build an expression from them, stopping
+parser at an arbitrary token stream and build an expression from it, stopping
 at the first token that is not part of the expression.  Next up we need to
-handle function definitions etc.</p>
+handle function definitions, etc.</p>
 
 </div>
 
@@ -671,7 +677,7 @@ static FunctionAST *ParseDefinition() {
 </div>
 
 <p>In addition, we support 'extern' to declare functions like 'sin' and 'cos' as
-well as to support forward declaration of user functions.  'externs' are just
+well as to support forward declaration of user functions.  These 'extern's are just
 prototypes with no body:</p>
 
 <div class="doc_code">
@@ -738,8 +744,8 @@ static void MainLoop() {
 
 <p>The most interesting part of this is that we ignore top-level semi colons.
 Why is this, you ask?  The basic reason is that if you type "4 + 5" at the
-command line, the parser doesn't know that that is the end of what you will
-type.  For example, on the next line you could type "def foo..." in which case
+command line, the parser doesn't know whether that is the end of what you will type
+or not.  For example, on the next line you could type "def foo..." in which case
 4+5 is the end of a top-level expression.  Alternatively you could type "* 6",
 which would continue the expression.  Having top-level semicolons allows you to
 type "4+5;" and the parser will know you are done.</p> 
@@ -778,7 +784,8 @@ $
 
 <p>There is a lot of room for extension here.  You can define new AST nodes,
 extend the language in many ways, etc.  In the <a href="LangImpl3.html">next
-installment</a>, we will describe how to generate LLVM IR from the AST.</p>
+installment</a>, we will describe how to generate LLVM Intermediate
+Representation (IR) from the AST.</p>
 
 </div>
 
