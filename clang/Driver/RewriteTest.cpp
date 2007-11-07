@@ -57,11 +57,18 @@ namespace {
       Rewrite.setSourceMgr(Context->SourceMgr);
       // declaring objc_selector outside the parameter list removes a silly
       // scope related warning...
-      const char *s = "struct objc_selector;\n"
+      const char *s = "struct objc_selector; struct objc_class;\n"
                       "extern struct objc_object *objc_msgSend"
                       "(struct objc_object *, struct objc_selector *, ...);\n"
                       "extern struct objc_object *objc_getClass"
-                      "(const char *);\n";
+                      "(const char *);\n"
+                      "extern void objc_exception_throw(struct objc_object *);\n"
+                      "extern void objc_exception_try_enter(void *);\n"
+                      "extern void objc_exception_try_exit(void *);\n"
+                      "extern struct objc_object *objc_exception_extract(void *);\n"
+                      "extern int objc_exception_match"
+                      "(struct objc_class *, struct objc_object *, ...);\n";
+
       Rewrite.InsertText(SourceLocation::getFileLoc(mainFileID, 0), 
                          s, strlen(s));
     }
@@ -455,7 +462,7 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
   buf += "char *pointers[4];} _stack;\n";
   buf += "id volatile _rethrow = 0;\n";
   buf += "objc_exception_try_enter(&_stack);\n";
-  buf += "if (!_setjmp(&_stack.buf)) /* @try block continue */\n";
+  buf += "if (!_setjmp(_stack.buf)) /* @try block continue */\n";
 
   Rewrite.ReplaceText(startLoc, 4, buf.c_str(), buf.size());
   
@@ -470,7 +477,7 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
   buf = " /* @catch begin */ else {\n";
   buf += " id _caught = objc_exception_extract(&_stack);\n";
   buf += " objc_exception_try_enter (&_stack);\n";
-  buf += " if (_setjmp(&_stack.buf))\n";
+  buf += " if (_setjmp(_stack.buf))\n";
   buf += "   _rethrow = objc_exception_extract(&_stack);\n";
   buf += " else { /* @catch continue */";
   
@@ -505,9 +512,9 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
         
         cls = dyn_cast<ObjcInterfaceType>(pType->getPointeeType().getTypePtr());
         if (cls) {
-          buf += "objc_exception_match(objc_getClass(\"";
+          buf += "objc_exception_match((struct objc_class *)objc_getClass(\"";
           buf += cls->getDecl()->getName();
-          buf += "\"), _caught)) { ";
+          buf += "\"), (struct objc_object *)_caught)) { ";
           Rewrite.ReplaceText(startLoc, lParenLoc-startBuf+1, 
                               buf.c_str(), buf.size());
         }
