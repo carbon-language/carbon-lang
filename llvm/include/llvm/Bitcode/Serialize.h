@@ -91,7 +91,7 @@ public:
       EmitPtr(Ptrs[i]);
 
     for (unsigned i = 0; i < NumPtrs; ++i)
-      if (Ptrs[i]) SerializeTrait<T>::Emit(*this,Ptrs[i]);
+      if (Ptrs[i]) SerializeTrait<T>::Emit(*this,*Ptrs[i]);
   }
   
   void FlushRecord() { if (inRecord()) EmitRecord(); }
