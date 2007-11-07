@@ -52,6 +52,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
     case DefaultStmtClass:
       return DefaultStmt::directMaterialize(D);
       
+    case IfStmtClass:
+      return IfStmt::directMaterialize(D);
+      
     case IntegerLiteralClass:
       return IntegerLiteral::directMaterialize(D);
       
@@ -180,6 +183,21 @@ DefaultStmt* DefaultStmt::directMaterialize(llvm::Deserializer& D) {
   stmt->setNextSwitchCase(D.ReadPtr<SwitchCase>());
   
   return stmt;
+}
+
+void IfStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(IfLoc);
+  S.EmitOwnedPtr(getCond());
+  S.EmitOwnedPtr(getThen());
+  S.EmitOwnedPtr(getElse());
+}
+
+IfStmt* IfStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation L = SourceLocation::ReadVal(D);
+  Expr* Cond = D.ReadOwnedPtr<Expr>();
+  Stmt* Then = D.ReadOwnedPtr<Stmt>();
+  Stmt* Else = D.ReadOwnedPtr<Stmt>();
+  return new IfStmt(L,Cond,Then,Else);
 }
 
 void IntegerLiteral::directEmit(llvm::Serializer& S) const {

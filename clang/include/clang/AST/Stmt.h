@@ -402,6 +402,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static IfStmt* directMaterialize(llvm::Deserializer& D);
 };
 
 /// SwitchStmt - This represents a 'switch' stmt.
@@ -448,7 +451,7 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  void directEmit(llvm::Serializer& S) const;
+  virtual void directEmit(llvm::Serializer& S) const;
   static SwitchStmt* directMaterialize(llvm::Deserializer& D);
 };
 
@@ -644,7 +647,7 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  void directEmit(llvm::Serializer& S) const;
+  virtual void directEmit(llvm::Serializer& S) const;
   static BreakStmt* directMaterialize(llvm::Deserializer& D);
 };
 
