@@ -76,6 +76,17 @@ class CodeGenTypes {
   /// field no. This info is populated by record organizer.
   llvm::DenseMap<const FieldDecl *, unsigned> FieldInfo;
 
+  class BitFieldInfo {
+  public:
+    explicit BitFieldInfo(unsigned N, unsigned B, unsigned E)
+      : No(N), Begin(B), End(E) {}
+  private:
+    unsigned No;
+    unsigned Begin;
+    unsigned End;
+  };
+  llvm::DenseMap<const FieldDecl *, BitFieldInfo> BitFields;
+
   /// RecordTypesToResolve - This keeps track of record types that are not 
   /// yet incomplete. One llvm::OpaqueType is associated with each incomplete
   /// record.
@@ -113,7 +124,8 @@ public:
   unsigned getLLVMFieldNo(const FieldDecl *FD);
 
   /// addFieldInfo - Assign field number to field FD.
-  void addFieldInfo(const FieldDecl *FD, unsigned No);
+  void addFieldInfo(const FieldDecl *FD, unsigned No, unsigned Begin, 
+                    unsigned End);
 };
 
 }  // end namespace CodeGen

@@ -33,14 +33,16 @@ namespace {
   class RecordOrganizer {
   public:
     explicit RecordOrganizer(CodeGenTypes &Types) : 
-      CGT(Types), STy(NULL), FieldNo(0), Cursor(0) {}
+      CGT(Types), STy(NULL), FieldNo(0), Cursor(0), ExtraBits(0) {}
     
     /// addField - Add new field.
     void addField(const FieldDecl *FD);
 
-    /// addLLVMField - Add llvm struct field that corresponds to llvm type Ty. Update
-    /// cursor and increment field count.
-    void addLLVMField(const llvm::Type *Ty, const FieldDecl *FD = NULL);
+    /// addLLVMField - Add llvm struct field that corresponds to llvm type Ty. 
+    /// Update cursor and increment field count.
+    void addLLVMField(const llvm::Type *Ty, uint64_t Size, 
+                      const FieldDecl *FD = NULL, unsigned Begin = 0, 
+                      unsigned End = 0);
 
     /// addPaddingFields - Current cursor is not suitable place to add next field.
     /// Add required padding fields.
@@ -67,6 +69,9 @@ namespace {
     llvm::Type *STy;
     unsigned FieldNo;
     uint64_t Cursor;
+    /* If last field is a bitfield then it may not have occupied all allocated 
+       bits. Use remaining bits for next field if it also a bitfield. */
+    uint64_t ExtraBits; 
     llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
     std::vector<const llvm::Type*> LLVMFields;
   };
@@ -328,6 +333,7 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
 /// getLLVMFieldNo - Return llvm::StructType element number
 /// that corresponds to the field FD.
 unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
+  // FIXME : Check bit fields also
   llvm::DenseMap<const FieldDecl *, unsigned>::iterator
     I = FieldInfo.find(FD);
   assert (I != FieldInfo.end()  && "Unable to find field info");
@@ -335,8 +341,13 @@ unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
 }
 
 /// addFieldInfo - Assign field number to field FD.
-void CodeGenTypes::addFieldInfo(const FieldDecl *FD, unsigned No) {
-  FieldInfo[FD] = No;
+void CodeGenTypes::addFieldInfo(const FieldDecl *FD, unsigned No,
+                                unsigned Begin, unsigned End) {
+  if (Begin == 0 && End == 0)
+    FieldInfo[FD] = No;
+  else
+    // FD is a bit field
+    BitFields.insert(std::make_pair(FD, BitFieldInfo(No, Begin, End)));
 }
 
 /// getCGRecordLayout - Return record layout info for the given llvm::Type.
@@ -372,17 +383,33 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
   for (llvm::SmallVector<const FieldDecl *, 8>::iterator I = FieldDecls.begin(),
          E = FieldDecls.end(); I != E; ++I) {
     const FieldDecl *FD = *I;
-    const llvm::Type *Ty = CGT.ConvertType(FD->getType());
 
-    unsigned AlignmentInBits = CGT.getTargetData().getABITypeAlignment(Ty) * 8;
-    if (Cursor % AlignmentInBits != 0)
-      // At the moment, insert padding fields even if target specific llvm 
-      // type alignment enforces implict padding fields for FD. Later on, 
-      // optimize llvm fields by removing implicit padding fields and 
-      // combining consequetive padding fields.
-      addPaddingFields(Cursor % AlignmentInBits);
-
-    addLLVMField(Ty, FD);
+    if (FD->isBitField()) {
+      Expr *BitWidth = FD->getBitWidth();
+      llvm::APSInt FieldSize(32);
+      bool isBitField = 
+        BitWidth->isIntegerConstantExpr(FieldSize, CGT.getContext());
+      assert (isBitField  && "Invalid BitField size expression");
+      uint64_t BitFieldSize =  FieldSize.getZExtValue();
+      if (ExtraBits == 0) {
+        const llvm::Type *Ty = CGT.ConvertType(FD->getType());
+        // Calculate extra bits available in this bitfield.
+        ExtraBits = CGT.getTargetData().getTypeSizeInBits(Ty) - BitFieldSize;
+        addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
+      } else  if (ExtraBits > BitFieldSize) {
+        // Reuse existing llvm field
+        ExtraBits = ExtraBits  - BitFieldSize;
+        Cursor = Cursor + BitFieldSize;
+        CGT.addFieldInfo(FD, FieldNo, Cursor /* FIXME : This is incorrect */, 
+                         ExtraBits);
+        ++FieldNo;
+      } else 
+        assert (!FD->isBitField() && "Bit fields are not yet supported");
+    } else {
+      ExtraBits = 0;
+      const llvm::Type *Ty = CGT.ConvertType(FD->getType());
+      addLLVMField(Ty, CGT.getTargetData().getTypeSizeInBits(Ty), FD, 0, 0);
+    }
   }
   STy = llvm::StructType::get(LLVMFields);
 }
@@ -393,17 +420,29 @@ void RecordOrganizer::addPaddingFields(unsigned RequiredBits) {
   assert ((RequiredBits % 8) == 0 && "FIXME Invalid struct layout");
   unsigned RequiredBytes = RequiredBits / 8;
   for (unsigned i = 0; i != RequiredBytes; ++i)
-    addLLVMField(llvm::Type::Int8Ty);
+    addLLVMField(llvm::Type::Int8Ty, 
+                 CGT.getTargetData().getTypeSizeInBits(llvm::Type::Int8Ty));
 }
 
 /// addLLVMField - Add llvm struct field that corresponds to llvm type Ty. Update
 /// cursor and increment field count. If field decl FD is available than update
 /// update field info at CodeGenTypes level.
-void RecordOrganizer::addLLVMField(const llvm::Type *Ty, const FieldDecl *FD) {
-  Cursor += CGT.getTargetData().getTypeSizeInBits(Ty);
+void RecordOrganizer::addLLVMField(const llvm::Type *Ty, uint64_t Size,
+                                   const FieldDecl *FD, unsigned Begin,
+                                   unsigned End) {
+
+  unsigned AlignmentInBits = CGT.getTargetData().getABITypeAlignment(Ty) * 8;
+  if (Cursor % AlignmentInBits != 0)
+    // At the moment, insert padding fields even if target specific llvm 
+    // type alignment enforces implict padding fields for FD. Later on, 
+    // optimize llvm fields by removing implicit padding fields and 
+    // combining consequetive padding fields.
+    addPaddingFields(Cursor % AlignmentInBits);
+
+  Cursor += Size;
   LLVMFields.push_back(Ty);
   if (FD)
-    CGT.addFieldInfo(FD, FieldNo);
+    CGT.addFieldInfo(FD, FieldNo, Begin, End);
   ++FieldNo;
 }
 
@@ -415,11 +454,12 @@ void RecordOrganizer::layoutUnionFields() {
   unsigned PrimaryEltNo = 0;
   std::pair<uint64_t, unsigned> PrimaryElt =
     CGT.getContext().getTypeInfo(FieldDecls[0]->getType(), SourceLocation());
-  CGT.addFieldInfo(FieldDecls[0], 0);
+  CGT.addFieldInfo(FieldDecls[0], 0, 0, 0);
 
   unsigned Size = FieldDecls.size();
   for(unsigned i = 1; i != Size; ++i) {
     const FieldDecl *FD = FieldDecls[i];
+    assert (!FD->isBitField() && "Bit fields are not yet supported");
     std::pair<uint64_t, unsigned> EltInfo = 
       CGT.getContext().getTypeInfo(FD->getType(), SourceLocation());
 
@@ -432,7 +472,7 @@ void RecordOrganizer::layoutUnionFields() {
     }
 
     // In union, each field gets first slot.
-    CGT.addFieldInfo(FD, 0);
+    CGT.addFieldInfo(FD, 0, 0, 0);
   }
 
   std::vector<const llvm::Type*> Fields;
