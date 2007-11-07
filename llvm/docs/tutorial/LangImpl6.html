@@ -52,9 +52,9 @@ One of the great things about creating your own language is that you get to
 decide what is good or bad.  In this tutorial we'll assume that it is okay and
 use this as a way to show some interesting parsing techniques.</p>
 
-<p>At the end of this tutorial, we'll <a href="#example">run through a nice
-little example</a> that shows an example application that you can build with
-Kaleidoscope and the feature set it now has.</p>
+<p>At the end of this tutorial, we'll run through an example Kaleidoscope 
+application that <a href="#example">renders the Mandelbrot set</a>.  This gives 
+an example of what you can build with Kaleidoscope and its feature set.</p>
 
 </div>
 
@@ -69,8 +69,8 @@ The "operator overloading" that we will add to Kaleidoscope is more general than
 languages like C++.  In C++, you are only allowed to redefine existing
 operators: you can't programatically change the grammar, introduce new
 operators, change precedence levels, etc.  In this chapter, we will add this
-capability to Kaleidoscope, which will allow us to round out the set of
-operators that are supported, culminating in a more interesting example app.</p>
+capability to Kaleidoscope, which will let the user round out the set of
+operators that are supported.</p>
 
 <p>The point of going into user-defined operators in a tutorial like this is to
 show the power and flexibility of using a hand-written parser.  The parser we
@@ -262,7 +262,7 @@ a lot of similar code in the past.  One interesting piece of this is the part
 that sets up <tt>FnName</tt> for binary operators.  This builds names like
 "binary@" for a newly defined "@" operator.  This takes advantage of the fact
 that symbol names in the LLVM symbol table are allowed to have any character in
-them, inluding embedded nul characters.</p>
+them, even including embedded nul characters.</p>
 
 <p>The next interesting piece is codegen support for these binary operators.
 Given our current structure, this is a simple addition of a default case for our
@@ -335,7 +335,7 @@ precedence parser, this is all we need to do to "extend the grammar".</p>
 
 <p>With that, we have useful user-defined binary operators.  This builds a lot
 on the previous framework we built for other operators.  Adding unary operators
-is a bit more challenging, because we don't have any framework for it yet, lets
+is a bit more challenging, because we don't have any framework for it yet - lets
 see what it takes.</p>
 
 </div>
@@ -347,7 +347,7 @@ see what it takes.</p>
 <div class="doc_text">
 
 <p>Since we don't currently support unary operators in the Kaleidoscope
-langugage, we'll need to add everything for them.  Above, we added simple
+language, we'll need to add everything for them.  Above, we added simple
 support for the 'unary' keyword to the lexer.  In addition to that, we need an
 AST node:</p>
 
@@ -530,8 +530,7 @@ def unary!(v)
 def unary-(v)
   0-v;
 
-# Define &gt; with the same precedence as &gt;.  We could also easily define
-# &lt;= etc.
+# Define &gt; with the same precedence as &gt;.
 def binary&gt; 10 (LHS RHS)
   !(LHS &lt; RHS);
 
@@ -615,13 +614,13 @@ href="http://en.wikipedia.org/wiki/Mandelbrot_set">Mandelbrot Set</a>.  Our
 <tt>mandelconverge</tt> function returns the number of iterations that it takes
 for a complex orbit to escape, saturating to 255.  This is not a very useful
 function by itself, but if you plot its value over a two-dimensional plane,
-you can see the mandelbrot set.  Given that we are limited to using putchard
+you can see the Mandelbrot set.  Given that we are limited to using putchard
 here, our amazing graphical output is limited, but we can whip together
 something using the density plotter above:</p>
 
 <div class="doc_code">
 <pre>
-# compute and plot the mandlebrot set with the specified 2 dimentional range
+# compute and plot the mandlebrot set with the specified 2 dimensional range
 # info.
 def mandelhelp(xmin xmax xstep   ymin ymax ystep)
   for y = ymin, y &lt; ymax, ystep in (
@@ -631,7 +630,7 @@ def mandelhelp(xmin xmax xstep   ymin ymax ystep)
   )
  
 # mandel - This is a convenient helper function for ploting the mandelbrot set
-# from the specified position with the specified magnification.
+# from the specified position with the specified Magnification.
 def mandel(realstart imagstart realmag imagmag) 
   mandelhelp(realstart, realstart+realmag*78, realmag,
              imagstart, imagstart+imagmag*40, imagmag);
@@ -782,12 +781,12 @@ plot things that are!</p>
 <p>With this, we conclude the "adding user-defined operators" chapter of the
 tutorial.  We successfully extended our language with the ability to extend the
 language in the library, and showed how this can be used to build a simple but
-interesting end user application in Kaleidoscope.  At this point, Kaleidoscope
+interesting end-user application in Kaleidoscope.  At this point, Kaleidoscope
 can build a variety of applications that are functional and can call functions
 with side-effects, but it can't actually define and mutate a variable itself.
 </p>
 
-<p>Strikingly, lack of this feature is an important limitation for some
+<p>Strikingly, variable mutation is an important feature of some
 languages, and it is not at all obvious how to <a href="LangImpl7.html">add
 support for mutable variables</a> without having to add an "SSA construction"
 phase to your front-end.  In the next chapter, we will describe how you can
