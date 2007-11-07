@@ -485,6 +485,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static WhileStmt* directMaterialize(llvm::Deserializer& D);
 };
 
 /// DoStmt - This represents a 'do/while' stmt.

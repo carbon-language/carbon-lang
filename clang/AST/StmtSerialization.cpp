@@ -72,6 +72,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
       
     case SwitchStmtClass:
       return SwitchStmt::directMaterialize(D);
+      
+    case WhileStmtClass:
+      return WhileStmt::directMaterialize(D);
   }
 }
 
@@ -283,4 +286,17 @@ SwitchStmt* SwitchStmt::directMaterialize(llvm::Deserializer& D) {
   stmt->FirstCase = FirstCase;
   
   return stmt;
+}
+
+void WhileStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(WhileLoc);
+  S.EmitOwnedPtr(getCond());
+  S.EmitOwnedPtr(getBody());
+}
+
+WhileStmt* WhileStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation WhileLoc = SourceLocation::ReadVal(D);
+  Expr* Cond = D.ReadOwnedPtr<Expr>();
+  Stmt* Body = D.ReadOwnedPtr<Stmt>();
+  return new WhileStmt(Cond,Body,WhileLoc);
 }
