@@ -263,6 +263,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static FloatingLiteral* directMaterialize(llvm::Deserializer& D);
 };
 
 /// ImaginaryLiteral - We support imaginary integer and floating point literals,
