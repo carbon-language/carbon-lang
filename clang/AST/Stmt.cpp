@@ -206,7 +206,7 @@ Stmt::child_iterator ObjcAtFinallyStmt::child_end() { return &AtFinallyStmt+1; }
 // ObjcAtTryStmt
 Stmt::child_iterator ObjcAtTryStmt::child_begin() { return &SubStmts[0]; }
 Stmt::child_iterator ObjcAtTryStmt::child_end()   { 
-  return &SubStmts[0]+END_TRY; 
+  return &SubStmts[0]+END_EXPR; 
 }
 
 // ObjcAtThrowStmt

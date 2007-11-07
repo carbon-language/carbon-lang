@@ -734,7 +734,6 @@ public:
   : Stmt(ObjcAtCatchStmtClass) {
       SubExprs[SELECTOR] = catchVarStmtDecl;
       SubExprs[BODY] = atCatchStmt;
-      SubExprs[END_EXPR] = NULL;
       if (!atCatchList)
         NextAtCatchStmt = NULL;
       else {
@@ -803,8 +802,8 @@ class ObjcAtFinallyStmt : public Stmt {
 /// @try ... @catch ... @finally statement.
 class ObjcAtTryStmt : public Stmt {
 private:
-  enum { TRY, CATCH, FINALLY, END_TRY };
-  Stmt* SubStmts[END_TRY]; 
+  enum { TRY, CATCH, FINALLY, END_EXPR };
+  Stmt* SubStmts[END_EXPR]; 
   
   SourceLocation AtTryLoc;
       
@@ -816,7 +815,6 @@ public:
       SubStmts[TRY] = atTryStmt;
       SubStmts[CATCH] = atCatchStmt;
       SubStmts[FINALLY] = atFinallyStmt;
-      SubStmts[END_TRY] = NULL;
       AtTryLoc = atTryLoc;
     }
     
