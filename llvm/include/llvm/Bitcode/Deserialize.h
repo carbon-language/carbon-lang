@@ -117,15 +117,15 @@ public:
 
   template <typename T>
   inline T* ReadOwnedPtr(bool AutoRegister = true) {
-    unsigned PtrId = ReadInt();
+    unsigned PtrID = ReadInt();    
 
-    if (PtrId == 0)
+    if (!PtrID)
       return NULL;
     
     T* x = SerializeTrait<T>::Materialize(*this);
-    
+
     if (AutoRegister)
-      RegisterPtr(PtrId,x);
+      RegisterPtr(PtrID,x);
     
     return x;
   }
@@ -134,6 +134,39 @@ public:
   inline void ReadOwnedPtr(T*& Ptr, bool AutoRegister = true) {
     Ptr = ReadOwnedPtr<T>(AutoRegister);
   }
+  
+  template <typename T1, typename T2>
+  void BatchReadOwnedPtrs(T1*& P1, T2*& P2,
+                          bool A1=true, bool A2=true) {
+
+    unsigned ID1 = ReadInt();
+    unsigned ID2 = ReadInt();
+
+    P1 = (ID1) ? SerializeTrait<T1>::Materialize(*this) : NULL;
+    if (ID1 && A1) RegisterPtr(ID1,P1);
+
+    P2 = (ID2) ? SerializeTrait<T2>::Materialize(*this) : NULL;
+    if (ID2 && A2) RegisterPtr(ID2,P2);
+  }
+
+  template <typename T1, typename T2, typename T3>
+  void BatchReadOwnedPtrs(T1*& P1, T2*& P2, T3*& P3,
+                          bool A1=true, bool A2=true, bool A3=true) {
+    
+    unsigned ID1 = ReadInt();
+    unsigned ID2 = ReadInt();
+    unsigned ID3 = ReadInt();
+    
+    P1 = (ID1) ? SerializeTrait<T1>::Materialize(*this) : NULL;
+    if (ID1 && A1) RegisterPtr(ID1,P1);    
+    
+    P2 = (ID2) ? SerializeTrait<T2>::Materialize(*this) : NULL;
+    if (ID2 && A2) RegisterPtr(ID2,P2);
+    
+    P3 = (ID3) ? SerializeTrait<T2>::Materialize(*this) : NULL;
+    if (ID3 && A3) RegisterPtr(ID3,P3);
+  }
+    
   
   template <typename T>
   void ReadPtr(T*& PtrRef, bool AllowBackpatch = true) {

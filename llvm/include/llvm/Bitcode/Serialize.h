@@ -54,6 +54,36 @@ public:
     EmitPtr(ptr);
     if (ptr) SerializeTrait<T>::Emit(*this,*ptr);
   }
+  
+  template <typename T1, typename T2>
+  void BatchEmitOwnedPtrs(T1* p1, T2* p2) {
+    EmitPtr(p1);
+    EmitPtr(p2);
+    if (p1) SerializeTrait<T1>::Emit(*this,*p1);
+    if (p2) SerializeTrait<T2>::Emit(*this,*p2);    
+  }
+
+  template <typename T1, typename T2, typename T3>
+  void BatchEmitOwnedPtrs(T1* p1, T2* p2, T3* p3) {
+    EmitPtr(p1);
+    EmitPtr(p2);
+    EmitPtr(p3);
+    if (p1) SerializeTrait<T1>::Emit(*this,*p1);
+    if (p2) SerializeTrait<T2>::Emit(*this,*p2);
+    if (p3) SerializeTrait<T3>::Emit(*this,*p3);
+  }
+  
+  template <typename T1, typename T2, typename T3, typename T4>
+  void BatchEmitOwnedPtrs(T1* p1, T2* p2, T3* p3, T4& p4) {
+    EmitPtr(p1);
+    EmitPtr(p2);
+    EmitPtr(p3);
+    EmitPtr(p4);
+    if (p1) SerializeTrait<T1>::Emit(*this,*p1);
+    if (p2) SerializeTrait<T2>::Emit(*this,*p2);
+    if (p3) SerializeTrait<T3>::Emit(*this,*p3);
+    if (p4) SerializeTrait<T4>::Emit(*this,*p4);
+  }
 
   void FlushRecord() { if (inRecord()) EmitRecord(); }
   
