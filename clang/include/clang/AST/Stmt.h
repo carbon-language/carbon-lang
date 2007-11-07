@@ -644,6 +644,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static ContinueStmt* directMaterialize(llvm::Deserializer& D);
 };
 
 /// BreakStmt - This represents a break.

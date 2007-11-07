@@ -43,6 +43,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
     case CompoundStmtClass:
       return CompoundStmt::directMaterialize(D);
       
+    case ContinueStmtClass:
+      return ContinueStmt::directMaterialize(D);
+      
     case DeclRefExprClass:
       return DeclRefExpr::directMaterialize(D);
       
@@ -158,6 +161,15 @@ CompoundStmt* CompoundStmt::directMaterialize(llvm::Deserializer& D) {
     stmt->Body.push_back(D.ReadOwnedPtr<Stmt>());
   
   return stmt;
+}
+
+void ContinueStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(ContinueLoc);
+}
+
+ContinueStmt* ContinueStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  return new ContinueStmt(Loc);
 }
 
 void DeclStmt::directEmit(llvm::Serializer& S) const {
