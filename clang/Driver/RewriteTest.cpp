@@ -80,6 +80,7 @@ namespace {
     void RewriteCategoryDecl(ObjcCategoryDecl *Dcl);
     void RewriteProtocolDecl(ObjcProtocolDecl *Dcl);
     void RewriteMethods(int nMethods, ObjcMethodDecl **Methods);
+    void RewriteProperties(int nProperties, ObjcPropertyDecl **Properties);
     void RewriteFunctionDecl(FunctionDecl *FD);
     void RewriteObjcQualifiedInterfaceTypes(
         const FunctionTypeProto *proto, FunctionDecl *FD);
@@ -311,6 +312,18 @@ void RewriteTest::RewriteMethods(int nMethods, ObjcMethodDecl **Methods) {
   }
 }
 
+void RewriteTest::RewriteProperties(int nProperties, ObjcPropertyDecl **Properties) 
+{
+  for (int i = 0; i < nProperties; i++) {
+    ObjcPropertyDecl *Property = Properties[i];
+    SourceLocation Loc = Property->getLocation();
+    
+    Rewrite.ReplaceText(Loc, 0, "// ", 3);
+    
+    // FIXME: handle properties that are declared across multiple lines.
+  }
+}
+
 void RewriteTest::RewriteCategoryDecl(ObjcCategoryDecl *CatDecl) {
   SourceLocation LocStart = CatDecl->getLocStart();
   
@@ -363,7 +376,8 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
     
   Rewrite.ReplaceText(LocStart, endBuf-startBuf, 
                       ResultStr.c_str(), ResultStr.size());
-  
+  RewriteProperties(ClassDecl->getNumPropertyDecl(),
+                    ClassDecl->getPropertyDecl());
   RewriteMethods(ClassDecl->getNumInstanceMethods(),
                  ClassDecl->getInstanceMethods());
   RewriteMethods(ClassDecl->getNumClassMethods(),
