@@ -39,8 +39,8 @@ Flow</li>
 <div class="doc_text">
 
 <p>Welcome to Chapter 4 of the "<a href="index.html">Implementing a language
-with LLVM</a>" tutorial.  Parts 1-3 described the implementation of a simple
-language and included support for generating LLVM IR.  This chapter describes
+with LLVM</a>" tutorial.  Chapters 1-3 described the implementation of a simple
+language and added support for generating LLVM IR.  This chapter describes
 two new techniques: adding optimizer support to your language, and adding JIT
 compiler support.  This shows how to get nice efficient code for your
 language.</p>
@@ -109,7 +109,7 @@ entry:
 </pre>
 </div>
 
-<p>Well, that was easy.  :)  In practice, we recommend always using
+<p>Well, that was easy :).  In practice, we recommend always using
 <tt>LLVMFoldingBuilder</tt> when generating code like this.  It has no
 "syntactic overhead" for its use (you don't have to uglify your compiler with
 constant checks everywhere) and it can dramatically reduce the amount of
@@ -166,7 +166,8 @@ at link time, this can be a substantial portion of the whole program).  It also
 supports and includes "per-function" passes which just operate on a single
 function at a time, without looking at other functions.  For more information
 on passes and how the get run, see the <a href="../WritingAnLLVMPass.html">How
-to Write a Pass</a> document.</p>
+to Write a Pass</a> document and the <a href="../Passes.html">List of LLVM 
+Passes</a>.</p>
 
 <p>For Kaleidoscope, we are currently generating functions on the fly, one at
 a time, as the user types them in.  We aren't shooting for the ultimate
@@ -212,7 +213,7 @@ add a set of optimizations to run.  The code looks like this:</p>
 that we're not going to take advantage of here, so I won't dive into what it is
 all about.</p>
 
-<p>The meat of the matter is the definition of the "<tt>OurFPM</tt>".  It
+<p>The meat of the matter is the definition of "<tt>OurFPM</tt>".  It
 requires a pointer to the <tt>Module</tt> (through the <tt>ModuleProvider</tt>)
 to construct itself.  Once it is set up, we use a series of "add" calls to add
 a bunch of LLVM passes.  The first pass is basically boilerplate, it adds a pass
@@ -222,10 +223,10 @@ which we will get to in the next section.</p>
 
 <p>In this case, we choose to add 4 optimization passes.  The passes we chose
 here are a pretty standard set of "cleanup" optimizations that are useful for
-a wide variety of code.  I won't delve into what they do, but believe that they
-are a good starting place.</p>
+a wide variety of code.  I won't delve into what they do, but believe me that
+they are a good starting place :).</p>
 
-<p>Once the passmanager, is set up, we need to make use of it.  We do this by
+<p>Once the PassManager is set up, we need to make use of it.  We do this by
 running it after our newly created function is constructed (in 
 <tt>FunctionAST::Codegen</tt>), but before it is returned to the client:</p>
 
@@ -238,8 +239,8 @@ running it after our newly created function is constructed (in
     // Validate the generated code, checking for consistency.
     verifyFunction(*TheFunction);
 
-    // Optimize the function.
-    TheFPM->run(*TheFunction);
+    <b>// Optimize the function.
+    TheFPM-&gt;run(*TheFunction);</b>
     
     return TheFunction;
   }
@@ -265,7 +266,7 @@ entry:
 </div>
 
 <p>As expected, we now get our nicely optimized code, saving a floating point
-add from the program.</p>
+add instruction from every execution of this function.</p>
 
 <p>LLVM provides a wide variety of optimizations that can be used in certain
 circumstances.  Some <a href="../Passes.html">documentation about the various 
@@ -286,15 +287,15 @@ executing it!</p>
 
 <div class="doc_text">
 
-<p>Once the code is available in LLVM IR form a wide variety of tools can be
+<p>Code that is available in LLVM IR can have a wide variety of tools 
 applied to it.  For example, you can run optimizations on it (as we did above),
 you can dump it out in textual or binary forms, you can compile the code to an
 assembly file (.s) for some target, or you can JIT compile it.  The nice thing
-about the LLVM IR representation is that it is the common currency between many
-different parts of the compiler.
+about the LLVM IR representation is that it is the "common currency" between
+many different parts of the compiler.
 </p>
 
-<p>In this chapter, we'll add JIT compiler support to our interpreter.  The
+<p>In this section, we'll add JIT compiler support to our interpreter.  The
 basic idea that we want for Kaleidoscope is to have the user enter function
 bodies as they do now, but immediately evaluate the top-level expressions they
 type in.  For example, if they type in "1 + 2;", we should evaluate and print
@@ -306,12 +307,12 @@ by adding a global variable and a call in <tt>main</tt>:</p>
 
 <div class="doc_code">
 <pre>
-static ExecutionEngine *TheExecutionEngine;
+<b>static ExecutionEngine *TheExecutionEngine;</b>
 ...
 int main() {
   ..
-  // Create the JIT.
-  TheExecutionEngine = ExecutionEngine::create(TheModule);
+  <b>// Create the JIT.
+  TheExecutionEngine = ExecutionEngine::create(TheModule);</b>
   ..
 }
 </pre>
@@ -337,13 +338,13 @@ static void HandleTopLevelExpression() {
     if (Function *LF = F-&gt;Codegen()) {
       LF->dump();  // Dump the function for exposition purposes.
     
-      // JIT the function, returning a function pointer.
+      <b>// JIT the function, returning a function pointer.
       void *FPtr = TheExecutionEngine-&gt;getPointerToFunction(LF);
       
       // Cast it to the right type (takes no arguments, returns a double) so we
       // can call it as a native function.
       double (*FP)() = (double (*)())FPtr;
-      fprintf(stderr, "Evaluated to %f\n", FP());
+      fprintf(stderr, "Evaluated to %f\n", FP());</b>
     }
 </pre>
 </div>
@@ -404,9 +405,9 @@ itself</em>.</p>
 <p>What actually happened here is that the anonymous function is
 JIT'd when requested.  When the Kaleidoscope app calls through the function
 pointer that is returned, the anonymous function starts executing.  It ends up
-making the call for the "testfunc" function, and ends up in a stub that invokes
+making the call to the "testfunc" function, and ends up in a stub that invokes
 the JIT, lazily, on testfunc.  Once the JIT finishes lazily compiling testfunc,
-it returns and the code reexecutes the call.</p>
+it returns and the code re-executes the call.</p>
 
 <p>In summary, the JIT will lazily JIT code on the fly as it is needed.  The
 JIT provides a number of other more advanced interfaces for things like freeing
@@ -445,11 +446,13 @@ ready&gt; <b>foo(4.0);</b>
 </pre>
 </div>
 
-<p>Whoa, how does the JIT know about sin and cos?  The answer is simple: in this
+<p>Whoa, how does the JIT know about sin and cos?  The answer is surprisingly
+simple: in this
 example, the JIT started execution of a function and got to a function call.  It
 realized that the function was not yet JIT compiled and invoked the standard set
 of routines to resolve the function.  In this case, there is no body defined
-for the function, so the JIT ended up calling "<tt>dlsym("sin")</tt>" on itself.
+for the function, so the JIT ended up calling "<tt>dlsym("sin")</tt>" on the
+Kaleidoscope process itself.
 Since "<tt>sin</tt>" is defined within the JIT's address space, it simply
 patches up calls in the module to call the libm version of <tt>sin</tt>
 directly.</p>
@@ -479,7 +482,7 @@ double putchard(double X) {
 
 <p>Now we can produce simple output to the console by using things like:
 "<tt>extern putchard(x); putchard(120);</tt>", which prints a lowercase 'x' on
-the console (120 is the ascii code for 'x').  Similar code could be used to 
+the console (120 is the ASCII code for 'x').  Similar code could be used to 
 implement file I/O, console input, and many other capabilities in
 Kaleidoscope.</p>
 
