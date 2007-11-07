@@ -193,8 +193,6 @@ RewriteTest::~RewriteTest() {
   // Rewrite Objective-c meta data*
   std::string ResultStr;
   WriteObjcMetaData(ResultStr);
-  // For now just print the string out.
-  printf("%s", ResultStr.c_str());
   
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
   // we are done.
@@ -206,7 +204,8 @@ RewriteTest::~RewriteTest() {
   } else {
     printf("No changes\n");
   }
-
+  // Emit metadata.
+  printf("%s", ResultStr.c_str());
 }
 
 //===----------------------------------------------------------------------===//
