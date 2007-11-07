@@ -175,6 +175,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static PreDefinedExpr* directMaterialize(llvm::Deserializer& D);
 };
 
 class IntegerLiteral : public Expr {

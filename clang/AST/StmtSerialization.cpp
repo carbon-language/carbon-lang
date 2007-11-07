@@ -82,6 +82,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
     case ParenExprClass:
       return ParenExpr::directMaterialize(D);
       
+    case PreDefinedExprClass:
+      return PreDefinedExpr::directMaterialize(D);
+      
     case ReturnStmtClass:
       return ReturnStmt::directMaterialize(D);
       
@@ -333,7 +336,20 @@ ParenExpr* ParenExpr::directMaterialize(llvm::Deserializer& D) {
   SourceLocation R = SourceLocation::ReadVal(D);
   Expr* val = D.ReadOwnedPtr<Expr>();  
   return new ParenExpr(L,R,val);
-}  
+}
+
+void PreDefinedExpr::directEmit(llvm::Serializer& S) const {
+  S.Emit(Loc);
+  S.EmitInt(getIdentType());
+  S.Emit(getType());  
+}
+
+PreDefinedExpr* PreDefinedExpr::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  IdentType it = static_cast<IdentType>(D.ReadInt());
+  QualType Q = QualType::ReadVal(D);
+  return new PreDefinedExpr(Loc,Q,it);
+}
 
 void ReturnStmt::directEmit(llvm::Serializer& S) const {
   S.Emit(RetLoc);
