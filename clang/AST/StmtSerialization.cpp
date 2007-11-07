@@ -19,6 +19,7 @@
 using namespace clang;
 
 void Stmt::Emit(llvm::Serializer& S) const {
+  S.FlushRecord();
   S.EmitInt(getStmtClass());
   directEmit(S);
 }  
@@ -112,16 +113,16 @@ void BinaryOperator::directEmit(llvm::Serializer& S) const {
   S.EmitInt(Opc);
   S.Emit(OpLoc);;
   S.Emit(getType());
-  S.EmitOwnedPtr(getLHS());
-  S.EmitOwnedPtr(getRHS());
+  S.BatchEmitOwnedPtrs(getLHS(),getRHS());
 }
 
 BinaryOperator* BinaryOperator::directMaterialize(llvm::Deserializer& D) {
   Opcode Opc = static_cast<Opcode>(D.ReadInt());
   SourceLocation OpLoc = SourceLocation::ReadVal(D);
   QualType Result = QualType::ReadVal(D);
-  Expr* LHS = D.ReadOwnedPtr<Expr>();
-  Expr* RHS = D.ReadOwnedPtr<Expr>();
+  Expr *LHS, *RHS;
+  D.BatchReadOwnedPtrs(LHS,RHS);
+
   return new BinaryOperator(LHS,RHS,Opc,Result,OpLoc);
 }
 
@@ -136,21 +137,18 @@ BreakStmt* BreakStmt::directMaterialize(llvm::Deserializer& D) {
   
 void CaseStmt::directEmit(llvm::Serializer& S) const {
   S.Emit(CaseLoc);
-  S.EmitOwnedPtr(getLHS());
-  S.EmitOwnedPtr(getRHS());
-  S.EmitOwnedPtr(getSubStmt());
   S.EmitPtr(getNextSwitchCase());
+  S.BatchEmitOwnedPtrs(getLHS(),getRHS(),getSubStmt());
 }
 
 CaseStmt* CaseStmt::directMaterialize(llvm::Deserializer& D) {
   SourceLocation CaseLoc = SourceLocation::ReadVal(D);
-  Expr* LHS = D.ReadOwnedPtr<Expr>();
-  Expr* RHS = D.ReadOwnedPtr<Expr>();
-  Stmt* SubStmt = D.ReadOwnedPtr<Stmt>();
+  Expr *LHS, *RHS;
+  Stmt* SubStmt;
+  D.BatchReadOwnedPtrs(LHS,RHS,SubStmt);
   
   CaseStmt* stmt = new CaseStmt(LHS,RHS,SubStmt,CaseLoc);
-  stmt->setNextSwitchCase(D.ReadPtr<SwitchCase>());
-  
+  stmt->setNextSwitchCase(D.ReadPtr<SwitchCase>());  
   return stmt;
 }
 
