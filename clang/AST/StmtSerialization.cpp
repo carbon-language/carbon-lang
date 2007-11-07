@@ -43,6 +43,9 @@ Stmt* Stmt::Materialize(Deserializer& D) {
       
     case BreakStmtClass:
       return BreakStmt::directMaterialize(D);
+     
+    case CallExprClass:
+      return CallExpr::directMaterialize(D);
       
     case CaseStmtClass:
       return CaseStmt::directMaterialize(D);
@@ -160,7 +163,24 @@ BreakStmt* BreakStmt::directMaterialize(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   return new BreakStmt(Loc);
 }
-  
+
+void CallExpr::directEmit(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(RParenLoc);
+  S.EmitInt(NumArgs);
+  S.BatchEmitOwnedPtrs(NumArgs+1,SubExprs);  
+}
+
+CallExpr* CallExpr::directMaterialize(Deserializer& D) {
+  QualType t = QualType::ReadVal(D);
+  SourceLocation L = SourceLocation::ReadVal(D);
+  unsigned NumArgs = D.ReadInt();
+  Expr** SubExprs = new Expr*[NumArgs+1];
+  D.BatchReadOwnedPtrs(NumArgs+1,SubExprs);
+
+  return new CallExpr(SubExprs,NumArgs,t,L);  
+}
+
 void CaseStmt::directEmit(Serializer& S) const {
   S.Emit(CaseLoc);
   S.EmitPtr(getNextSwitchCase());

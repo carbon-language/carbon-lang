@@ -533,6 +533,13 @@ class CallExpr : public Expr {
   Expr **SubExprs;
   unsigned NumArgs;
   SourceLocation RParenLoc;
+  
+  // This version of the ctor is for deserialization.
+  CallExpr(Expr** subexprs, unsigned numargs, QualType t, 
+           SourceLocation rparenloc)
+  : Expr(CallExprClass,t), SubExprs(subexprs), 
+    NumArgs(numargs), RParenLoc(rparenloc) {}
+  
 public:
   CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t, 
            SourceLocation rparenloc);
@@ -579,6 +586,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static CallExpr* directMaterialize(llvm::Deserializer& D);
 };
 
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.
