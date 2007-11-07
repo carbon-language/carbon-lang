@@ -166,6 +166,18 @@ public:
     P3 = (ID3) ? SerializeTrait<T2>::Materialize(*this) : NULL;
     if (ID3 && A3) RegisterPtr(ID3,P3);
   }
+  
+  template <typename T>
+  void BatchReadOwnedPtrs(unsigned NumPtrs, T** Ptrs) {
+    llvm::SmallVector<unsigned,20> PtrIDs;
+    PtrIDs.reserve(NumPtrs);
+    
+    for (unsigned i = 0; i < NumPtrs; ++i)
+      PtrIDs.push_back(ReadInt());
+    
+    for (unsigned i = 0; i < NumPtrs; ++i)
+      Ptrs[i] = PtrIDs[i] ? SerializeTrait<T>::Materialize(*this) : NULL;
+  }
     
   
   template <typename T>

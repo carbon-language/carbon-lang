@@ -85,6 +85,15 @@ public:
     if (p4) SerializeTrait<T4>::Emit(*this,*p4);
   }
 
+  template <typename T>
+  void BatchEmitOwnedPtrs(unsigned NumPtrs, T** Ptrs) {
+    for (unsigned i = 0; i < NumPtrs; ++i)
+      EmitPtr(Ptrs[i]);
+
+    for (unsigned i = 0; i < NumPtrs; ++i)
+      if (Ptrs[i]) SerializeTrait<T>::Emit(*this,Ptrs[i]);
+  }
+  
   void FlushRecord() { if (inRecord()) EmitRecord(); }
   
   void EnterBlock(unsigned BlockID = 8, unsigned CodeLen = 3);
