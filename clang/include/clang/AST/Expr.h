@@ -111,12 +111,8 @@ public:
   }
   static bool classof(const Expr *) { return true; }
   
-  void Emit(llvm::Serializer& S) const {
-    llvm::SerializeTrait<Stmt>::Emit(S,*this);
-  }
-  
   static inline Expr* Materialize(llvm::Deserializer& D) {
-    return cast<Expr>(llvm::SerializeTrait<Stmt>::Materialize(D));
+    return cast<Expr>(Stmt::Materialize(D));    
   }
 };
 
@@ -146,6 +142,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static DeclRefExpr* directMaterialize(llvm::Deserializer& D);
 };
 
 /// PreDefinedExpr - [C99 6.4.2.2] - A pre-defined identifier such as __func__.
@@ -199,6 +198,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static IntegerLiteral* directMaterialize(llvm::Deserializer& D);
 };
 
 class CharacterLiteral : public Expr {
@@ -799,6 +801,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static BinaryOperator* directMaterialize(llvm::Deserializer& D);
 
 protected:
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy,

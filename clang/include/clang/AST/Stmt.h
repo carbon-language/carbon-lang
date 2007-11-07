@@ -110,6 +110,14 @@ public:
   const_child_iterator child_end() const {
     return const_child_iterator(const_cast<Stmt*>(this)->child_end());
   }
+  
+  void Emit(llvm::Serializer& S) const;
+  static Stmt* Materialize(llvm::Deserializer& D);
+  
+  virtual void directEmit(llvm::Serializer& S) const {
+    // This method will eventually be a pure-virtual function.
+    assert (false && "Not implemented.");
+  }
 };
 
 /// DeclStmt - Adaptor class for mixing declarations with statements and
@@ -207,6 +215,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static CompoundStmt* directMaterialize(llvm::Deserializer& D);
 };
 
 // SwitchCase is the base class for CaseStmt and DefaultStmt,
@@ -636,6 +647,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static ReturnStmt* directMaterialize(llvm::Deserializer& D);
 };
 
 /// AsmStmt - This represents a GNU inline-assembly statement extension.
@@ -778,18 +792,5 @@ public:
 };
 
 }  // end namespace clang
-
-//===----------------------------------------------------------------------===//
-// For Stmt serialization.
-//===----------------------------------------------------------------------===//
-
-namespace llvm {
-  
-template<> struct SerializeTrait<clang::Stmt> {
-  static void Emit(Serializer& S, const clang::Stmt& stmt);
-  static clang::Stmt* Materialize(Deserializer& D);
-};
-  
-} // end namespace llvm
 
 #endif
