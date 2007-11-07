@@ -51,6 +51,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
       
     case DefaultStmtClass:
       return DefaultStmt::directMaterialize(D);
+    
+    case DoStmtClass:
+      return DoStmt::directMaterialize(D);
       
     case IfStmtClass:
       return IfStmt::directMaterialize(D);
@@ -186,6 +189,19 @@ DefaultStmt* DefaultStmt::directMaterialize(llvm::Deserializer& D) {
   stmt->setNextSwitchCase(D.ReadPtr<SwitchCase>());
   
   return stmt;
+}
+
+void DoStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(DoLoc);
+  S.EmitOwnedPtr(getCond());
+  S.EmitOwnedPtr(getBody());
+}
+
+DoStmt* DoStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation DoLoc = SourceLocation::ReadVal(D);
+  Expr* Cond = D.ReadOwnedPtr<Expr>();
+  Stmt* Body = D.ReadOwnedPtr<Stmt>();
+  return new DoStmt(Body,Cond,DoLoc);
 }
 
 void IfStmt::directEmit(llvm::Serializer& S) const {
