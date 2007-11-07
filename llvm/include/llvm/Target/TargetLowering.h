@@ -848,6 +848,7 @@ public:
 
   virtual const TargetSubtarget *getSubtarget() {
     assert(0 && "Not Implemented");
+    return NULL;    // this is here to silence compiler errors
   }
   //===--------------------------------------------------------------------===//
   // Lowering methods - These methods must be implemented by targets so that
@@ -891,6 +892,7 @@ public:
                                       SDOperand Source, unsigned Size,
                                       unsigned Align, SelectionDAG &DAG) {
     assert(0 && "Not Implemented");
+    return SDOperand();   // this is here to silence compiler errors
   }
 
 
