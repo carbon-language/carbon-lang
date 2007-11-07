@@ -77,6 +77,10 @@ public:
   /// register identifier.
   unsigned getX86RegNum(unsigned RegNo);
 
+  /// getDwarfRegNum - allows modification of X86GenRegisterInfo::getDwarfRegNum
+  /// (created by TableGen) for target dependencies.
+  int getDwarfRegNum(unsigned RegNum) const;
+
   /// Code Generation virtual methods...
   ///
   bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,

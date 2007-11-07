@@ -60,7 +60,7 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   OS << "struct " << ClassName << " : public MRegisterInfo {\n"
      << "  " << ClassName
      << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
-     << "  int getDwarfRegNum(unsigned RegNum) const;\n"
+     << "  virtual int getDwarfRegNum(unsigned RegNum) const;\n"
      << "  unsigned getSubReg(unsigned RegNo, unsigned Index) const;\n"
      << "};\n\n";
 

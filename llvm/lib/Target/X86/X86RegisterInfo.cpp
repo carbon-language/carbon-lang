@@ -654,6 +654,22 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
   assert(AmbEntries.empty() && "Duplicated entries in unfolding maps?");
 }
 
+// getDwarfRegNum - This function maps LLVM register identifiers to the
+// Dwarf specific numbering, used in debug info and exception tables.
+// The registers are given "basic" dwarf numbers in the .td files,
+// which are collected by TableGen into X86GenRegisterInfo::getDwarfRegNum.
+// This wrapper allows for target-specific overrides.
+int X86RegisterInfo::getDwarfRegNum(unsigned RegNo) const {
+  int n = X86GenRegisterInfo::getDwarfRegNum(RegNo);
+  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
+  if (Subtarget->isDarwin) {
+    // ESP and EBP are switched.
+    if (n==4) return 5;
+    if (n==5) return 4;
+  }
+  return n;
+}
+
 // getX86RegNum - This function maps LLVM register identifiers to their X86
 // specific numbering, which is used in various places encoding instructions.
 //
