@@ -172,7 +172,7 @@ declared with global variable definitions, they are declared with the
 
 <div class="doc_code">
 <pre>
-define i32 @test(i1 %Condition) {
+define i32 @example() {
 entry:
 	%X = alloca i32           ; type of %X is i32*.
 	...
@@ -261,7 +261,7 @@ cond_next:
 
 <p>The mem2reg pass implements the standard "iterated dominator frontier"
 algorithm for constructing SSA form and has a number of optimizations that speed
-up very common degenerate cases.  mem2reg really is the answer for dealing with
+up (very common) degenerate cases. mem2reg is the answer for dealing with
 mutable variables, and we highly recommend that you depend on it.  Note that
 mem2reg only works on variables in certain circumstances:</p>
 
@@ -337,7 +337,7 @@ add two features:</p>
 </ol>
 
 <p>While the first item is really what this is about, we only have variables
-for incoming arguments and for induction variables, and redefining them only
+for incoming arguments and for induction variables, and redefining those only
 goes so far :).  Also, the ability to define new variables is a
 useful thing regardless of whether you will be mutating them.  Here's a
 motivating example that shows how we could use these:</p>
@@ -358,7 +358,7 @@ def fib(x)
 # Iterative fib.
 def fibi(x)
   <b>var a = 1, b = 1, c in</b>
-  (for i = 3, i &;t; x in 
+  (for i = 3, i &lt; x in 
      <b>c = a + b</b> :
      <b>a = b</b> :
      <b>b = c</b>) :
@@ -446,8 +446,8 @@ Value *VariableExprAST::Codegen() {
   Value *V = NamedValues[Name];
   if (V == 0) return ErrorV("Unknown variable name");
 
-  // Load the value.
-  return Builder.CreateLoad(V, Name.c_str());
+  <b>// Load the value.
+  return Builder.CreateLoad(V, Name.c_str());</b>
 }
 </pre>
 </div>
@@ -688,7 +688,8 @@ Value *BinaryExprAST::Codegen() {
 <p>Unlike the rest of the binary operators, our assignment operator doesn't
 follow the "emit LHS, emit RHS, do computation" model.  As such, it is handled
 as a special case before the other binary operators are handled.  The other 
-strange thing about it is that it requires the LHS to be a variable directly.
+strange thing is that it requires the LHS to be a variable.  It is invalid to
+have "(x+1) = expr" - only things like "x = expr" are allowed.
 </p>
 
 <div class="doc_code">
@@ -775,7 +776,7 @@ static int gettok() {
 </div>
 
 <p>The next step is to define the AST node that we will construct.  For var/in,
-it will look like this:</p>
+it looks like this:</p>
 
 <div class="doc_code">
 <pre>
@@ -796,7 +797,7 @@ public:
 <p>var/in allows a list of names to be defined all at once, and each name can
 optionally have an initializer value.  As such, we capture this information in
 the VarNames vector.  Also, var/in has a body, this body is allowed to access
-the variables defined by the let/in.</p>
+the variables defined by the var/in.</p>
 
 <p>With this ready, we can define the parser pieces.  First thing we do is add
 it as a primary expression:</p>
