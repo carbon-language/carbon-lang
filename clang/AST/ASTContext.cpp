@@ -1182,6 +1182,10 @@ bool ASTContext::tagTypesAreCompatible(QualType lhs, QualType rhs) {
     if (ldecl->getIdentifier() == rdecl->getIdentifier())
       return true;
   }
+  // "Class" and "id" are compatible built-in structure types.
+  if (isObjcIdType(lhs) && isObjcClassType(rhs) ||
+      isObjcClassType(lhs) && isObjcIdType(rhs))
+    return true;
   return false;
 }
 
