@@ -141,7 +141,10 @@ public:
   template <typename T>
   void ReadPtr(const T*& PtrRef, bool AllowBackpatch = true) {
     ReadPtr(const_cast<T*&>(PtrRef), AllowBackpatch);
-  }            
+  }
+  
+  template <typename T>
+  T* ReadPtr() { T* x; ReadPtr<T>(x,false); return x; }
 
   void ReadUIntPtr(uintptr_t& PtrRef, bool AllowBackpatch = true);
   
