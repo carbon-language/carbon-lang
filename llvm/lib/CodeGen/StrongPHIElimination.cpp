@@ -89,7 +89,7 @@ namespace {
     
     
     void computeDFS(MachineFunction& MF);
-    void processPHI(MachineInstr* P);
+    void processBlock(MachineBasicBlock* MBB);
     
     std::vector<DomForestNode*> computeDomForest(std::set<unsigned>& instrs);
     
@@ -219,23 +219,85 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
   return ret;
 }
 
-/// processPHI - Eliminate the given PHI node
-void StrongPHIElimination::processPHI(MachineInstr* P) {
+/// isLiveIn - helper method that determines, from a VarInfo, if a register
+/// is live into a block
+bool isLiveIn(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
+  if (V.AliveBlocks.test(MBB->getNumber()))
+    return true;
   
+  for (std::vector<MachineInstr*>::iterator I = V.Kills.begin(),
+       E = V.Kills.end(); I != E; ++I)
+    if ((*I)->getParent() == MBB)
+      return true;
+  
+  return false;
+}
+
+/// isLiveOut - help method that determines, from a VarInfo, if a register is
+/// live out of a block.
+bool isLiveOut(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
+  if (V.AliveBlocks.test(MBB->getNumber()))
+    return true;
+  
+  if (V.DefInst->getParent() == MBB)
+    return true;
+  
+  return false;
+}
+
+/// processBlock - Eliminate PHIs in the given block
+void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
+  LiveVariables& LV = getAnalysis<LiveVariables>();
+  
+  // Holds names that have been added to a set in any PHI within this block
+  // before the current one.
+  std::set<unsigned> ProcessedNames;
+  
+  MachineBasicBlock::iterator P = MBB->begin();
+  while (P->getOpcode() == TargetInstrInfo::PHI) {
+    LiveVariables::VarInfo& PHIInfo = LV.getVarInfo(P->getOperand(0).getReg());
+
+    // Hold the names that are currently in the candidate set.
+    std::set<unsigned> PHIUnion;
+    std::set<MachineBasicBlock*> UnionedBlocks;
+  
+    for (int i = P->getNumOperands() - 1; i >= 2; i-=2) {
+      unsigned SrcReg = P->getOperand(i-1).getReg();
+      LiveVariables::VarInfo& SrcInfo = LV.getVarInfo(SrcReg);
+    
+      if (isLiveIn(SrcInfo, P->getParent())) {
+        // add a copy from a_i to p in Waiting[From[a_i]]
+      } else if (isLiveOut(PHIInfo, SrcInfo.DefInst->getParent())) {
+        // add a copy to Waiting[From[a_i]]
+      } else if (PHIInfo.DefInst->getOpcode() == TargetInstrInfo::PHI &&
+                 isLiveIn(PHIInfo, SrcInfo.DefInst->getParent())) {
+        // add a copy to Waiting[From[a_i]]
+      } else if (ProcessedNames.count(SrcReg)) {
+        // add a copy to Waiting[From[a_i]]
+      } else if (UnionedBlocks.count(SrcInfo.DefInst->getParent())) {
+        // add a copy to Waiting[From[a_i]]
+      } else {
+        PHIUnion.insert(SrcReg);
+        UnionedBlocks.insert(SrcInfo.DefInst->getParent());
+        
+        // DO STUFF HERE
+        
+      }
+      
+      ProcessedNames.insert(PHIUnion.begin(), PHIUnion.end());
+    }
+    
+    ++P;
+  }
 }
 
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   computeDFS(Fn);
   
-  for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
-    for (MachineBasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;
-         ++BI) {
-      if (BI->getOpcode() == TargetInstrInfo::PHI)
-        processPHI(BI);
-      else
-        break;
-    }
-  }
+  for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
+    if (!I->empty() &&
+        I->begin()->getOpcode() == TargetInstrInfo::PHI)
+      processBlock(I);
   
   return false;
 }
