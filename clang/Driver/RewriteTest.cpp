@@ -395,8 +395,11 @@ Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
   // Otherwise, just rewrite all children.
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
-    if (*CI)
-      *CI = RewriteFunctionBody(*CI);
+    if (*CI) {
+      Stmt *newStmt = RewriteFunctionBody(*CI);
+      if (newStmt) 
+        *CI = newStmt;
+    }
       
   // Handle specific things.
   if (ObjCEncodeExpr *AtEncode = dyn_cast<ObjCEncodeExpr>(S))
@@ -442,6 +445,139 @@ Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
 }
  
 Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
+  // Get the start location and compute the semi location.
+  SourceLocation startLoc = S->getLocStart();
+  const char *startBuf = SM->getCharacterData(startLoc);
+  
+  assert((*startBuf == '@') && "bogus @try location");
+
+  std::string buf;
+  // declare a new scope with two variables, _stack and _rethrow.
+  buf = "/* @try scope begin */ { struct _objc_exception_data {\n";
+  buf += "int buf[18/*32-bit i386*/];\n";
+  buf += "char *pointers[4];} _stack;\n";
+  buf += "id volatile _rethrow = 0;\n";
+  buf += "objc_exception_try_enter(&_stack);\n";
+  buf += "if (!_setjmp(&_stack.buf)) /* @try block continue */\n";
+
+  Rewrite.ReplaceText(startLoc, 4, buf.c_str(), buf.size());
+  
+  startLoc = S->getTryBody()->getLocEnd();
+  startBuf = SM->getCharacterData(startLoc);
+
+  assert((*startBuf == '}') && "bogus @try block");
+
+  SourceLocation lastCurlyLoc = startLoc;
+  
+  startLoc = startLoc.getFileLocWithOffset(1);
+  buf = " /* @catch begin */ else {\n";
+  buf += " id _caught = objc_exception_extract(&_stack);\n";
+  buf += " objc_exception_try_enter (&_stack);\n";
+  buf += " if (_setjmp(&_stack.buf))\n";
+  buf += "   _rethrow = objc_exception_extract(&_stack);\n";
+  buf += " else { /* @catch continue */";
+  
+  Rewrite.ReplaceText(startLoc, 0, buf.c_str(), buf.size());
+  
+  bool sawIdTypedCatch = false;
+  Stmt *lastCatchBody = 0;
+  ObjcAtCatchStmt *catchList = S->getCatchStmts();
+  while (catchList) {
+    Stmt *catchStmt = catchList->getCatchParamStmt();
+
+    if (catchList == S->getCatchStmts()) 
+      buf = "if ("; // we are generating code for the first catch clause
+    else
+      buf = "else if (";
+    startLoc = catchList->getLocStart();
+    startBuf = SM->getCharacterData(startLoc);
+    
+    assert((*startBuf == '@') && "bogus @catch location");
+    
+    const char *lParenLoc = strchr(startBuf, '(');
+
+    if (DeclStmt *declStmt = dyn_cast<DeclStmt>(catchStmt)) {
+      QualType t = dyn_cast<ValueDecl>(declStmt->getDecl())->getType();
+      if (t == Context->getObjcIdType()) {
+        buf += "1) { ";
+        Rewrite.ReplaceText(startLoc, lParenLoc-startBuf+1, 
+                            buf.c_str(), buf.size());
+        sawIdTypedCatch = true;
+      } else if (const PointerType *pType = t->getAsPointerType()) { 
+        ObjcInterfaceType *cls; // Should be a pointer to a class.
+        
+        cls = dyn_cast<ObjcInterfaceType>(pType->getPointeeType().getTypePtr());
+        if (cls) {
+          buf += "objc_exception_match(objc_getClass(\"";
+          buf += cls->getDecl()->getName();
+          buf += "\"), _caught)) { ";
+          Rewrite.ReplaceText(startLoc, lParenLoc-startBuf+1, 
+                              buf.c_str(), buf.size());
+        }
+      }
+      // Now rewrite the body...
+      lastCatchBody = catchList->getCatchBody();
+      SourceLocation rParenLoc = catchList->getRParenLoc();
+      SourceLocation bodyLoc = lastCatchBody->getLocStart();
+      const char *bodyBuf = SM->getCharacterData(bodyLoc);
+      const char *rParenBuf = SM->getCharacterData(rParenLoc);
+      assert((*rParenBuf == ')') && "bogus @catch paren location");
+      assert((*bodyBuf == '{') && "bogus @catch body location");
+        
+      buf = " = _caught;";
+      // Here we replace ") {" with "= _caught;" (which initializes and 
+      // declares the @catch parameter).
+      Rewrite.ReplaceText(rParenLoc, bodyBuf-rParenBuf+1, 
+                          buf.c_str(), buf.size());
+   } else if (NullStmt *nullStmt = dyn_cast<NullStmt>(catchStmt)) {
+   } else
+      assert(false && "@catch rewrite bug");
+      
+    catchList = catchList->getNextCatchStmt();
+  }
+  // Complete the catch list...
+  if (lastCatchBody) {
+    SourceLocation bodyLoc = lastCatchBody->getLocEnd();
+    const char *bodyBuf = SM->getCharacterData(bodyLoc);
+    assert((*bodyBuf == '}') && "bogus @catch body location");
+    bodyLoc = bodyLoc.getFileLocWithOffset(1);
+    buf = " } } /* @catch end */\n";
+  
+    Rewrite.ReplaceText(bodyLoc, 0, buf.c_str(), buf.size());
+    
+    // Set lastCurlyLoc
+    lastCurlyLoc = lastCatchBody->getLocEnd();
+  }
+  if (ObjcAtFinallyStmt *finalStmt = S->getFinallyStmt()) {
+    startLoc = finalStmt->getLocStart();
+    startBuf = SM->getCharacterData(startLoc);
+    assert((*startBuf == '@') && "bogus @finally start");
+    
+    buf = "/* @finally */";
+    Rewrite.ReplaceText(startLoc, 8, buf.c_str(), buf.size());
+    
+    Stmt *body = finalStmt->getFinallyBody();
+    SourceLocation startLoc = body->getLocStart();
+    SourceLocation endLoc = body->getLocEnd();
+    const char *startBuf = SM->getCharacterData(startLoc);
+    const char *endBuf = SM->getCharacterData(endLoc);
+    assert((*startBuf == '{') && "bogus @finally body location");
+    assert((*endBuf == '}') && "bogus @finally body location");
+  
+    startLoc = startLoc.getFileLocWithOffset(1);
+    buf = " if (!_rethrow) objc_exception_try_exit(&_stack);\n";
+    Rewrite.ReplaceText(startLoc, 0, buf.c_str(), buf.size());
+    endLoc = endLoc.getFileLocWithOffset(-1);
+    buf = " if (_rethrow) objc_exception_throw(_rethrow);\n";
+    Rewrite.ReplaceText(endLoc, 0, buf.c_str(), buf.size());
+    
+    // Set lastCurlyLoc
+    lastCurlyLoc = body->getLocEnd();
+  }
+  // Now emit the final closing curly brace...
+  lastCurlyLoc = lastCurlyLoc.getFileLocWithOffset(1);
+  buf = " } /* @try scope end */\n";
+  Rewrite.ReplaceText(lastCurlyLoc, 0, buf.c_str(), buf.size());
   return 0;
 }
 

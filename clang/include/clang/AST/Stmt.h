@@ -14,12 +14,15 @@
 #ifndef LLVM_CLANG_AST_STMT_H
 #define LLVM_CLANG_AST_STMT_H
 
+#include "llvm/Support/Casting.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/AST/StmtIterator.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator"
 #include "llvm/Bitcode/SerializationFwd.h"
 #include <iosfwd>
+
+using llvm::dyn_cast_or_null;
 
 namespace clang {
   class Expr;
@@ -693,8 +696,7 @@ private:
 public:
   ObjcAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
                   Stmt *catchVarStmtDecl, Stmt *atCatchStmt, Stmt *atCatchList)
-  : Stmt(ObjcAtCatchStmtClass),
-    AtCatchLoc(atCatchLoc), RParenLoc(rparenloc) {
+  : Stmt(ObjcAtCatchStmtClass) {
       SubExprs[SELECTOR] = catchVarStmtDecl;
       SubExprs[BODY] = atCatchStmt;
       SubExprs[END_EXPR] = NULL;
@@ -707,14 +709,18 @@ public:
           AtCatchList = AtCatchList->NextAtCatchStmt;
         AtCatchList->NextAtCatchStmt = this;
       }
+      AtCatchLoc = atCatchLoc;
+      RParenLoc = rparenloc;
     }
   
   const Stmt *getCatchBody() const { return SubExprs[BODY]; }
   Stmt *getCatchBody() { return SubExprs[BODY]; }
-  const Stmt *getNextCatchStmt() const { return NextAtCatchStmt; }
-  Stmt *getNextCatchStmt() { return NextAtCatchStmt; }
+  const ObjcAtCatchStmt *getNextCatchStmt() const { return NextAtCatchStmt; }
+  ObjcAtCatchStmt *getNextCatchStmt() { return NextAtCatchStmt; }
   const Stmt *getCatchParamStmt() const { return SubExprs[SELECTOR]; }
   Stmt *getCatchParamStmt() { return SubExprs[SELECTOR]; }
+  
+  SourceLocation getRParenLoc() const { return RParenLoc; }
   
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtCatchLoc, SubExprs[BODY]->getLocEnd()); 
@@ -781,11 +787,18 @@ public:
     
   const Stmt *getTryBody() const { return SubStmts[TRY]; }
   Stmt *getTryBody() { return SubStmts[TRY]; }
-  const Stmt *getCatchStmts() const { return SubStmts[CATCH]; }
-  Stmt *getCatchStmts() { return SubStmts[CATCH]; }
-  const Stmt *getFinallyStmt() const { return SubStmts[FINALLY]; }
-  Stmt *getFinallyStmt() { return SubStmts[FINALLY]; }
-  
+  const ObjcAtCatchStmt *getCatchStmts() const { 
+    return dyn_cast_or_null<ObjcAtCatchStmt>(SubStmts[CATCH]); 
+  }
+  ObjcAtCatchStmt *getCatchStmts() { 
+    return dyn_cast_or_null<ObjcAtCatchStmt>(SubStmts[CATCH]); 
+  }
+  const ObjcAtFinallyStmt *getFinallyStmt() const { 
+    return dyn_cast_or_null<ObjcAtFinallyStmt>(SubStmts[FINALLY]); 
+  }
+  ObjcAtFinallyStmt *getFinallyStmt() { 
+    return dyn_cast_or_null<ObjcAtFinallyStmt>(SubStmts[FINALLY]); 
+  }
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtTryLoc, SubStmts[TRY]->getLocEnd()); 
   }
