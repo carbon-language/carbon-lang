@@ -283,11 +283,13 @@ public:
   bool interfaceTypesAreCompatible(QualType, QualType);
   bool objcTypesAreCompatible(QualType, QualType);
   bool isObjcIdType(QualType T) const {
-    assert(IdStructType && "isObjcIdType used before 'id' type is built");
+    if (!IdStructType) // ObjC isn't enabled
+      return false;
     return T->getAsStructureType() == IdStructType;
   }
   bool isObjcClassType(QualType T) const {
-    assert(ClassStructType && "isObjcClassType used before 'Class' type is built");
+    if (!ClassStructType) // ObjC isn't enabled
+      return false;
     return T->getAsStructureType() == ClassStructType;
   }
   bool isObjcSelType(QualType T) const {
