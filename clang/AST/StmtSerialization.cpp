@@ -34,6 +34,12 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
     case BinaryOperatorClass:
       return BinaryOperator::directMaterialize(D);
       
+    case BreakStmtClass:
+      return BreakStmt::directMaterialize(D);
+      
+    case CaseStmtClass:
+      return CaseStmt::directMaterialize(D);
+      
     case CompoundStmtClass:
       return CompoundStmt::directMaterialize(D);
       
@@ -42,7 +48,10 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
       
     case DeclStmtClass:
       return DeclStmt::directMaterialize(D);
-            
+      
+    case DefaultStmtClass:
+      return DefaultStmt::directMaterialize(D);
+      
     case IntegerLiteralClass:
       return IntegerLiteral::directMaterialize(D);
       
@@ -52,8 +61,14 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
     case NullStmtClass:
       return NullStmt::directMaterialize(D);
       
+    case ParenExprClass:
+      return ParenExpr::directMaterialize(D);
+      
     case ReturnStmtClass:
-      return ReturnStmt::directMaterialize(D);        
+      return ReturnStmt::directMaterialize(D);
+      
+    case SwitchStmtClass:
+      return SwitchStmt::directMaterialize(D);
   }
 }
 
@@ -74,6 +89,34 @@ BinaryOperator* BinaryOperator::directMaterialize(llvm::Deserializer& D) {
   return new BinaryOperator(LHS,RHS,Opc,Result,OpLoc);
 }
 
+void BreakStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(BreakLoc);
+}
+
+BreakStmt* BreakStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  return new BreakStmt(Loc);
+}
+  
+void CaseStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(CaseLoc);
+  S.EmitOwnedPtr(getLHS());
+  S.EmitOwnedPtr(getRHS());
+  S.EmitOwnedPtr(getSubStmt());
+  S.EmitPtr(getNextSwitchCase());
+}
+
+CaseStmt* CaseStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation CaseLoc = SourceLocation::ReadVal(D);
+  Expr* LHS = D.ReadOwnedPtr<Expr>();
+  Expr* RHS = D.ReadOwnedPtr<Expr>();
+  Stmt* SubStmt = D.ReadOwnedPtr<Stmt>();
+  
+  CaseStmt* stmt = new CaseStmt(LHS,RHS,SubStmt,CaseLoc);
+  stmt->setNextSwitchCase(D.ReadPtr<SwitchCase>());
+  
+  return stmt;
+}
 
 void CompoundStmt::directEmit(llvm::Serializer& S) const {
   S.Emit(LBracLoc);
@@ -123,6 +166,21 @@ DeclStmt* DeclStmt::directMaterialize(llvm::Deserializer& D) {
   return new DeclStmt(decl);
 }
 
+void DefaultStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(DefaultLoc);
+  S.EmitOwnedPtr(getSubStmt());
+  S.EmitPtr(getNextSwitchCase());
+}
+
+DefaultStmt* DefaultStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  Stmt* SubStmt = D.ReadOwnedPtr<Stmt>();
+  
+  DefaultStmt* stmt = new DefaultStmt(Loc,SubStmt);
+  stmt->setNextSwitchCase(D.ReadPtr<SwitchCase>());
+  
+  return stmt;
+}
 
 void IntegerLiteral::directEmit(llvm::Serializer& S) const {
   S.Emit(Loc);
@@ -165,6 +223,19 @@ NullStmt* NullStmt::directMaterialize(llvm::Deserializer& D) {
   return new NullStmt(SemiLoc);
 }
 
+void ParenExpr::directEmit(llvm::Serializer& S) const {
+  S.Emit(L);
+  S.Emit(R);
+  S.EmitOwnedPtr(Val);
+}
+
+ParenExpr* ParenExpr::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation L = SourceLocation::ReadVal(D);
+  SourceLocation R = SourceLocation::ReadVal(D);
+  Expr* val = D.ReadOwnedPtr<Expr>();  
+  return new ParenExpr(L,R,val);
+}  
+
 void ReturnStmt::directEmit(llvm::Serializer& S) const {
   S.Emit(RetLoc);
   S.EmitOwnedPtr(RetExpr);
@@ -176,3 +247,22 @@ ReturnStmt* ReturnStmt::directMaterialize(llvm::Deserializer& D) {
   return new ReturnStmt(RetLoc,RetExpr);
 }
 
+void SwitchStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(SwitchLoc);
+  S.EmitOwnedPtr(getCond());
+  S.EmitOwnedPtr(getBody());
+  S.EmitPtr(FirstCase);  
+}
+
+SwitchStmt* SwitchStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  Stmt* Cond = D.ReadOwnedPtr<Stmt>();
+  Stmt* Body = D.ReadOwnedPtr<Stmt>();
+  SwitchCase* FirstCase = cast<SwitchCase>(D.ReadPtr<Stmt>());
+  
+  SwitchStmt* stmt = new SwitchStmt(cast<Expr>(Cond));
+  stmt->setBody(Body,Loc);
+  stmt->FirstCase = FirstCase;
+  
+  return stmt;
+}

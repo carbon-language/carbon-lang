@@ -339,6 +339,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  void directEmit(llvm::Serializer& S) const;
+  static ParenExpr* directMaterialize(llvm::Deserializer& D);
 };
 
 
