@@ -60,7 +60,7 @@ optimizations and a JIT compiler.  Unfortunately, as presented, Kaleidoscope is
 mostly useless: it has no control flow other than call and return.  This means
 that you can't have conditional branches in the code, significantly limiting its
 power.  In this episode of "build that compiler", we'll extend Kaleidoscope to
-have an if/then/else expression plus a simple looping construct.</p>
+have an if/then/else expression plus a simple 'for' loop.</p>
 
 </div>
 
@@ -98,7 +98,8 @@ conditional, then return the 'then' or 'else' value based on how the condition
 was resolved.  This is very similar to the C "?:" expression.</p>
 
 <p>The semantics of the if/then/else expression is that it first evaluates the
-condition to a boolean equality value: 0.0 is false and everything else is true.
+condition to a boolean equality value: 0.0 is considered to be false and
+everything else is considered to be true.
 If the condition is true, the first subexpression is evaluated and returned, if
 the condition is false, the second subexpression is evaluated and returned.
 Since Kaleidoscope allows side-effects, this behavior is important to nail down.
@@ -238,7 +239,7 @@ static ExprAST *ParsePrimary() {
 <p>Now that we have it parsing and building the AST, the final piece is adding
 LLVM code generation support.  This is the most interesting part of the
 if/then/else example, because this is where it starts to introduce new concepts.
-All of the code above has been described in previous chapters fairly thoroughly.
+All of the code above has been thoroughly described in previous chapters.
 </p>
 
 <p>To motivate the code we want to produce, lets take a look at a simple
@@ -298,12 +299,12 @@ debugger.  LLVM has many nice features for visualizing various graphs.</p>
 <p>Coming back to the generated code, it is fairly simple: the entry block 
 evaluates the conditional expression ("x" in our case here) and compares the
 result to 0.0 with the "<tt><a href="../LangRef.html#i_fcmp">fcmp</a> one</tt>"
-instruction ('one' is "ordered and not equal").  Based on the result of this
+instruction ('one' is "Ordered and Not Equal").  Based on the result of this
 expression, the code jumps to either the "then" or "else" blocks, which contain
-the expressions for the true/false case.</p>
+the expressions for the true/false cases.</p>
 
 <p>Once the then/else blocks is finished executing, they both branch back to the
-else block to execute the code that happens after the if/then/else.  In this
+'ifcont' block to execute the code that happens after the if/then/else.  In this
 case the only thing left to do is to return to the caller of the function.  The
 question then becomes: how does the code know which expression to return?</p>
 
@@ -388,7 +389,7 @@ value as a 1-bit (bool) value.</p>
 
 <p>This code creates the basic blocks that are related to the if/then/else
 statement, and correspond directly to the blocks in the example above.  The
-first line of this gets the current Function object that is being built.  It
+first line gets the current Function object that is being built.  It
 gets this by asking the builder for the current BasicBlock, and asking that
 block for its "parent" (the function it is currently embedded into).</p>
 
@@ -571,7 +572,7 @@ the 'for' Loop</a></div>
 <div class="doc_text">
 
 <p>The AST node is similarly simple.  It basically boils down to capturing
-the variable name and the consituent expressions in the node.</p>
+the variable name and the constituent expressions in the node.</p>
 
 <div class="doc_code">
 <pre>
@@ -658,8 +659,8 @@ the 'for' Loop</a></div>
 <div class="doc_text">
 
 <p>Now we get to the good part: the LLVM IR we want to generate for this thing.
-With the simple example above, we get this LLVM IR (note that this dump is
-generated with optimizations disabled):
+With the simple example above, we get this LLVM IR (note that I generated this
+dump is generated with optimizations disabled for clarity):
 </p>
 
 <div class="doc_code">
@@ -718,7 +719,7 @@ Value *ForExprAST::Codegen() {
 <p>With this out of the way, the next step is to set up the LLVM basic block
 for the start of the loop body.  In the case above, the whole loop body is one
 block, but remember that the body code itself could consist of multiple blocks
-(e.g. if it is a if/then/else expression).</p>
+(e.g. if it contains an if/then/else or a for/in expression).</p>
 
 <div class="doc_code">
 <pre>
@@ -751,7 +752,7 @@ create an unconditional branch for the fall-through between the two blocks.</p>
 
 <p>Now that the "preheader" for the loop is set up, we switch to emitting code
 for the loop body.  To begin with, we move the insertion point and create the
-PHI node for the loop induction variable.  SInce we already know the incoming
+PHI node for the loop induction variable.  Since we already know the incoming
 value for the starting value, we add it to the Phi node.  Note that the Phi will
 eventually get a second value for the backedge, but we can't set it up yet
 (because it doesn't exist!).</p>
