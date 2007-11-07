@@ -688,7 +688,7 @@ public:
   
 class ObjcPropertyDecl : public Decl {
 public:
-  enum PrpoertyAttributeKind { OBJC_PR_noattr = 0x0, 
+  enum PropertyAttributeKind { OBJC_PR_noattr = 0x0, 
                        OBJC_PR_readonly = 0x01, 
                        OBJC_PR_getter = 0x02,
                        OBJC_PR_assign = 0x04, 
@@ -703,7 +703,7 @@ private:
   ObjcIvarDecl **PropertyDecls;
   int NumPropertyDecls;
   
-  PrpoertyAttributeKind PropertyAttributes : 8;
+  PropertyAttributeKind PropertyAttributes : 8;
   
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
@@ -720,11 +720,11 @@ public:
   const int getNumPropertyDecls() const { return NumPropertyDecls; }
   void setNumPropertyDecls(int num) { NumPropertyDecls = num; }
   
-  const PrpoertyAttributeKind getPropertyAttributes() const 
+  const PropertyAttributeKind getPropertyAttributes() const 
     { return PropertyAttributes; }
-  void setPropertyAttributes(PrpoertyAttributeKind PRVal) { 
+  void setPropertyAttributes(PropertyAttributeKind PRVal) { 
     PropertyAttributes = 
-    (PrpoertyAttributeKind) (PropertyAttributes | PRVal);
+    (PropertyAttributeKind) (PropertyAttributes | PRVal);
   }
   
   const IdentifierInfo *getGetterName() const { return GetterName; }

@@ -292,8 +292,8 @@ public:
     DQ_Oneway = 0x20
   };
   
-  /// PrpoertyAttributeKind - list of property attributes.
-  enum ObjcPrpoertyAttributeKind { DQ_PR_noattr = 0x0, 
+  /// PropertyAttributeKind - list of property attributes.
+  enum ObjcPropertyAttributeKind { DQ_PR_noattr = 0x0, 
     DQ_PR_readonly = 0x01, 
     DQ_PR_getter = 0x02, 
     DQ_PR_assign = 0x04, 
@@ -311,11 +311,11 @@ public:
   void setObjcDeclQualifier(ObjcDeclQualifier DQVal) 
     { objcDeclQualifier = (ObjcDeclQualifier) (objcDeclQualifier | DQVal); }
   
-  const ObjcPrpoertyAttributeKind getPropertyAttributes() const 
+  const ObjcPropertyAttributeKind getPropertyAttributes() const 
     { return PropertyAttributes; }
-  void setPropertyAttributes(ObjcPrpoertyAttributeKind PRVal) { 
+  void setPropertyAttributes(ObjcPropertyAttributeKind PRVal) { 
     PropertyAttributes = 
-      (ObjcPrpoertyAttributeKind) (PropertyAttributes | PRVal);
+      (ObjcPropertyAttributeKind) (PropertyAttributes | PRVal);
   }
   
   const IdentifierInfo *getGetterName() const { return GetterName; }
@@ -331,7 +331,7 @@ private:
   // (space saving is negligible).
   ObjcDeclQualifier objcDeclQualifier : 6;
   
-  ObjcPrpoertyAttributeKind PropertyAttributes : 8;
+  ObjcPropertyAttributeKind PropertyAttributes : 8;
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
 };
