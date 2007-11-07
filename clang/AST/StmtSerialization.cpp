@@ -54,6 +54,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
     
     case DoStmtClass:
       return DoStmt::directMaterialize(D);
+
+    case ForStmtClass:
+      return ForStmt::directMaterialize(D);
       
     case IfStmtClass:
       return IfStmt::directMaterialize(D);
@@ -202,6 +205,23 @@ DoStmt* DoStmt::directMaterialize(llvm::Deserializer& D) {
   Expr* Cond = D.ReadOwnedPtr<Expr>();
   Stmt* Body = D.ReadOwnedPtr<Stmt>();
   return new DoStmt(Body,Cond,DoLoc);
+}
+
+void ForStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(ForLoc);
+  S.EmitOwnedPtr(getInit());
+  S.EmitOwnedPtr(getCond());
+  S.EmitOwnedPtr(getInc());
+  S.EmitOwnedPtr(getBody());
+}
+
+ForStmt* ForStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation ForLoc = SourceLocation::ReadVal(D);
+  Stmt* Init = D.ReadOwnedPtr<Stmt>();
+  Expr* Cond = D.ReadOwnedPtr<Expr>();
+  Expr* Inc = D.ReadOwnedPtr<Expr>();
+  Stmt* Body = D.ReadOwnedPtr<Stmt>();
+  return new ForStmt(Init,Cond,Inc,Body,ForLoc);
 }
 
 void IfStmt::directEmit(llvm::Serializer& S) const {
