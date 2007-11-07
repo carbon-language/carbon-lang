@@ -235,7 +235,7 @@ value.  In order to get these semantics, we combine the fcmp instruction with
 a <a href="../LangRef.html#i_uitofp">uitofp instruction</a>.  This instruction
 converts its input integer into a floating point value by treating the input
 as an unsigned value.  In contrast, if we used the <a 
-href="../LangRef.html#i_sitofp">sitofp instruction</a>, the Kaleidoscope '<'
+href="../LangRef.html#i_sitofp">sitofp instruction</a>, the Kaleidoscope '&lt;'
 operator would return 0.0 and -1.0, depending on the input value.</p>
 
 <div class="doc_code">
@@ -288,11 +288,11 @@ basic framework.</p>
 
 <div class="doc_text">
 
-<p>Code generation for prototypes and functions has to handle a number of
-details, which make their code less beautiful and elegant than expression code
-generation, but they illustrate some important points.  First, lets talk about
-code generation for prototypes: this is used both for function bodies as well
-as external function declarations.  The code starts with:</p>
+<p>Code generation for prototypes and functions must handle a number of
+details, which make their code less beautiful than expression code
+generation, but allows us to  illustrate some important points.  First, lets
+talk about code generation for prototypes: they are used both for function 
+bodies and external function declarations.  The code starts with:</p>
 
 <div class="doc_code">
 <pre>
@@ -306,15 +306,15 @@ Function *PrototypeAST::Codegen() {
 </div>
 
 <p>This code packs a lot of power into a few lines.  Note first that this 
-function returns a Function* instead of a Value*.  Because a "prototype" really
-talks about the external interface for a function (not the value computed by
-an expression), it makes sense for it to return the LLVM Function it corresponds
-to when codegen'd.</p>
+function returns a "Function*" instead of a "Value*".  Because a "prototype"
+really talks about the external interface for a function (not the value computed
+by an expression), it makes sense for it to return the LLVM Function it
+corresponds to when codegen'd.</p>
 
-<p>The next step is to create
+<p>The call to <tt>FunctionType::get</tt> creates
 the <tt>FunctionType</tt> that should be used for a given Prototype.  Since all
 function arguments in Kaleidoscope are of type double, the first line creates
-a vector of "N" LLVM Double types.  It then uses the <tt>FunctionType::get</tt>
+a vector of "N" LLVM double types.  It then uses the <tt>FunctionType::get</tt>
 method to create a function type that takes "N" doubles as arguments, returns
 one double as a result, and that is not vararg (the false parameter indicates
 this).  Note that Types in LLVM are uniqued just like Constants are, so you
@@ -347,7 +347,7 @@ Module.  The code above exploits this fact to tell if there was a previous
 definition of this function.</p>
 
 <p>In Kaleidoscope, I choose to allow redefinitions of functions in two cases:
-first, we want to allow 'extern'ing a function more than once, so long as the
+first, we want to allow 'extern'ing a function more than once, as long as the
 prototypes for the externs match (since all arguments have the same type, we
 just have to check that the number of arguments match).  Second, we want to
 allow 'extern'ing a function and then definining a body for it.  This is useful
@@ -378,9 +378,9 @@ it.  The "erase" form unlinks the object and then deletes it.</p>
 </pre>
 </div>
 
-<p>In order to verify the logic above, we first check to see if the preexisting
+<p>In order to verify the logic above, we first check to see if the pre-existing
 function is "empty".  In this case, empty means that it has no basic blocks in
-it, which means it has no body.  If it has no body, this means its a forward 
+it, which means it has no body.  If it has no body, it is a forward 
 declaration.  Since we don't allow anything after a full definition of the
 function, the code rejects this case.  If the previous reference to a function
 was an 'extern', we simply verify that the number of arguments for that
@@ -408,7 +408,7 @@ the arguments in the <tt>NamedValues</tt> map for future use by the
 <tt>VariableExprAST</tt> AST node.  Once this is set up, it returns the Function
 object to the caller.  Note that we don't check for conflicting 
 argument names here (e.g. "extern foo(a b a)").  Doing so would be very
-straight-forward.</p>
+straight-forward with the mechanics we have already used above.</p>
 
 <div class="doc_code">
 <pre>
@@ -445,7 +445,7 @@ the end of the new basic block.  Basic blocks in LLVM are an important part
 of functions that define the <a 
 href="http://en.wikipedia.org/wiki/Control_flow_graph">Control Flow Graph</a>.
 Since we don't have any control flow, our functions will only contain one 
-block so far.  We'll fix this in a future installment :).</p>
+block so far.  We'll fix this in <a href="LangImpl5.html">Chapter 5</a> :).</p>
 
 <div class="doc_code">
 <pre>
@@ -519,7 +519,7 @@ functions.  For example:
 <div class="doc_code">
 <pre>
 ready> <b>4+5</b>;
-ready> Read top-level expression:
+Read top-level expression:
 define double @""() {
 entry:
         %addtmp = add double 4.000000e+00, 5.000000e+00
@@ -529,14 +529,16 @@ entry:
 </div>
 
 <p>Note how the parser turns the top-level expression into anonymous functions
-for us.  This will be handy when we add JIT support in the next chapter.  Also
-note that the code is very literally transcribed, no optimizations are being
-performed.  We will add optimizations explicitly in the next chapter.</p>
+for us.  This will be handy when we add <a href="LangImpl4.html#jit">JIT 
+support</a> in the next chapter.  Also note that the code is very literally
+transcribed, no optimizations are being performed.  We will 
+<a href="LangImpl4.html#trivialconstfold">add optimizations</a> explicitly in
+the next chapter.</p>
 
 <div class="doc_code">
 <pre>
 ready&gt; <b>def foo(a b) a*a + 2*a*b + b*b;</b>
-ready&gt; Read function definition:
+Read function definition:
 define double @foo(double %a, double %b) {
 entry:
         %multmp = mul double %a, %a
@@ -556,7 +558,7 @@ LLVM builder calls that we use to create the instructions.</p>
 <div class="doc_code">
 <pre>
 ready&gt; <b>def bar(a) foo(a, 4.0) + bar(31337);</b>
-ready&gt; Read function definition:
+Read function definition:
 define double @bar(double %a) {
 entry:
         %calltmp = call double @foo( double %a, double 4.000000e+00 )
@@ -574,11 +576,11 @@ flow to make recursion actually be useful :).</p>
 <div class="doc_code">
 <pre>
 ready&gt; <b>extern cos(x);</b>
-ready&gt; Read extern: 
+Read extern: 
 declare double @cos(double)
 
 ready&gt; <b>cos(1.234);</b>
-ready&gt; Read top-level expression:
+Read top-level expression:
 define double @""() {
 entry:
         %calltmp = call double @cos( double 1.234000e+00 )
@@ -657,7 +659,7 @@ our makefile/command line about which options to use:</p>
 <div class="doc_code">
 <pre>
    # Compile
-   g++ -g toy.cpp `llvm-config --cppflags --ldflags --libs core` -o toy
+   g++ -g -O3 toy.cpp `llvm-config --cppflags --ldflags --libs core` -o toy
    # Run
    ./toy
 </pre>
