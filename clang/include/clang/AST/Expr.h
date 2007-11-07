@@ -748,6 +748,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static CastExpr* directMaterialize(llvm::Deserializer& D);
 };
 
 class BinaryOperator : public Expr {

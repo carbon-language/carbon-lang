@@ -41,6 +41,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
       
     case CaseStmtClass:
       return CaseStmt::directMaterialize(D);
+    
+    case CastExprClass:
+      return CastExpr::directMaterialize(D);
       
     case CharacterLiteralClass:
       return CharacterLiteral::directMaterialize(D);
@@ -155,6 +158,20 @@ CaseStmt* CaseStmt::directMaterialize(llvm::Deserializer& D) {
   stmt->setNextSwitchCase(D.ReadPtr<SwitchCase>());  
   return stmt;
 }
+
+void CastExpr::directEmit(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(Loc);
+  S.EmitOwnedPtr(Op);
+}
+
+CastExpr* CastExpr::directMaterialize(llvm::Deserializer& D) {
+  QualType t = QualType::ReadVal(D);
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  Expr* Op = D.ReadOwnedPtr<Expr>();
+  return new CastExpr(t,Op,Loc);
+}
+  
 
 void CharacterLiteral::directEmit(llvm::Serializer& S) const {
   S.Emit(Value);
