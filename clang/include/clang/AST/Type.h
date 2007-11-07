@@ -167,6 +167,12 @@ public:
   ///  exists, in place, within its containing object.
   void Read(llvm::Deserializer& D);
   
+  static inline QualType ReadVal(llvm::Deserializer& D) {
+    QualType Q;
+    Q.Read(D);
+    return Q;
+  }
+  
   /// EmitOwned - Serialize a QualType that owns the underlying Type*.
   void EmitOwned(llvm::Serializer& S) const;
   
