@@ -275,7 +275,6 @@ private:
   DeclTy *ParseObjCAtAliasDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCPropertySynthesize(SourceLocation atLoc);
   DeclTy *ParseObjCPropertyDynamic(SourceLocation atLoc);
-  DeclTy *ParseObjCThrowStmt(SourceLocation atLoc);
   
   IdentifierInfo *ParseObjCSelector(SourceLocation &MethodLocation);
   // Definitions for Objective-c context sensitive keywords recognition.
@@ -389,6 +388,7 @@ private:
   StmtResult ParseReturnStatement();
   StmtResult ParseAsmStatement();
   StmtResult ParseObjCTryStmt(SourceLocation atLoc);
+  StmtResult ParseObjCThrowStmt(SourceLocation atLoc);
   void ParseAsmOperandsOpt();
 
   //===--------------------------------------------------------------------===//

@@ -800,6 +800,33 @@ public:
     
 };
 
+/// ObjcAtThrowStmt - This represents objective-c's @throw statement.
+class ObjcAtThrowStmt : public Stmt {
+private:
+  Stmt *Throw;
+  SourceLocation AtThrowLoc;
+
+public:
+  ObjcAtThrowStmt(SourceLocation atThrowLoc, Stmt *throwExpr)
+  : Stmt(ObjcAtThrowStmtClass), Throw(throwExpr) {
+    AtThrowLoc = atThrowLoc;
+  }
+  
+  Expr *const getThrowExpr() const { return reinterpret_cast<Expr*>(Throw); }
+  
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(AtThrowLoc, Throw->getLocEnd()); 
+  }
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjcAtThrowStmtClass;
+  }
+  static bool classof(const ObjcAtThrowStmt *) { return true; }
+  
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+};
+
 }  // end namespace clang
 
 #endif

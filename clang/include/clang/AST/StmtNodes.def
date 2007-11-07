@@ -48,8 +48,9 @@ STMT(18, AsmStmt         , Stmt)
 STMT(19, ObjcAtTryStmt        , Stmt)
 STMT(20, ObjcAtCatchStmt      , Stmt)
 STMT(21, ObjcAtFinallyStmt    , Stmt)
+STMT(22, ObjcAtThrowStmt      , Stmt)
 
-LAST_STMT(21)
+LAST_STMT(22)
 
 FIRST_EXPR(31)
 // Expressions.

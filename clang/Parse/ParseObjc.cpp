@@ -1052,16 +1052,18 @@ Parser::DeclTy *Parser::ParseObjCPropertyDynamic(SourceLocation atLoc) {
 ///  objc-throw-statement:
 ///    throw expression[opt];
 ///
-Parser::DeclTy *Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
+Parser::StmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
+  ExprResult Res;
   ConsumeToken(); // consume throw
   if (Tok.isNot(tok::semi)) {
-    ExprResult Res = ParseExpression();
+    Res = ParseExpression();
     if (Res.isInvalid) {
       SkipUntil(tok::semi);
-      return 0;
+      return true;
     }
   }
-  return 0;
+  ConsumeToken(); // consume ';'
+  return Actions.ActOnObjcAtThrowStmt(atLoc, Res.Val);
 }
 
 ///  objc-try-catch-statement:

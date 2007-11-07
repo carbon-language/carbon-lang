@@ -361,6 +361,15 @@ void StmtPrinter::VisitObjcAtCatchStmt (ObjcAtCatchStmt *Node) {
   Indent() << "@catch (...) { /* todo */ } \n";
 }
 
+void StmtPrinter::VisitObjcAtThrowStmt (ObjcAtThrowStmt *Node) {
+  Indent() << "@throw";
+  if (Node->getThrowExpr()) {
+    OS << " ";
+    PrintExpr(Node->getThrowExpr());
+  }
+  OS << ";\n";
+}
+
 //===----------------------------------------------------------------------===//
 //  Expr printing methods.
 //===----------------------------------------------------------------------===//

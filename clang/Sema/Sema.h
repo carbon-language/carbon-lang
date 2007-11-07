@@ -350,6 +350,9 @@ public:
                                         StmtTy *Try, 
                                         StmtTy *Catch, StmtTy *Finally);
   
+  virtual StmtResult ActOnObjcAtThrowStmt(SourceLocation AtLoc, 
+                                          StmtTy *Throw);
+  
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks: SemaExpr.cpp.
 

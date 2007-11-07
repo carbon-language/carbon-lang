@@ -675,6 +675,11 @@ Sema::ActOnObjcAtTryStmt(SourceLocation AtLoc,
   return TS;
 }
 
+Action::StmtResult
+Sema::ActOnObjcAtThrowStmt(SourceLocation AtLoc, StmtTy *Throw) {
+  ObjcAtThrowStmt *TS = new ObjcAtThrowStmt(AtLoc, static_cast<Stmt*>(Throw));
+  return TS;
+}
 
 
 

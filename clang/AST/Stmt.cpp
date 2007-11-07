@@ -209,3 +209,11 @@ Stmt::child_iterator ObjcAtTryStmt::child_end()   {
   return &SubStmts[0]+END_TRY; 
 }
 
+// ObjcAtThrowStmt
+Stmt::child_iterator ObjcAtThrowStmt::child_begin() {
+  return &Throw;
+}
+
+Stmt::child_iterator ObjcAtThrowStmt::child_end() {
+  return &Throw+1;
+}

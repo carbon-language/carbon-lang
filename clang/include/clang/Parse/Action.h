@@ -305,6 +305,12 @@ public:
                                         StmtTy *Catch, StmtTy *Finally) {
     return 0;
   }
+  
+  virtual StmtResult ActOnObjcAtThrowStmt(SourceLocation AtLoc, 
+                                          StmtTy *Throw) {
+    return 0;
+  }
+  
   //===--------------------------------------------------------------------===//
   // Expression Parsing Callbacks.
   //===--------------------------------------------------------------------===//
