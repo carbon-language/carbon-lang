@@ -22,6 +22,7 @@ void Stmt::Emit(llvm::Serializer& S) const {
   S.FlushRecord();
   S.EmitInt(getStmtClass());
   directEmit(S);
+  S.FlushRecord();
 }  
 
 Stmt* Stmt::Materialize(llvm::Deserializer& D) {
@@ -76,6 +77,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
     
     case ImaginaryLiteralClass:
       return ImaginaryLiteral::directMaterialize(D);
+      
+    case ImplicitCastExprClass:
+      return ImplicitCastExpr::directMaterialize(D);
       
     case IndirectGotoStmtClass:
       return IndirectGotoStmt::directMaterialize(D);      
@@ -321,6 +325,17 @@ ImaginaryLiteral* ImaginaryLiteral::directMaterialize(llvm::Deserializer& D) {
   Expr* expr = D.ReadOwnedPtr<Expr>();
   assert (isa<FloatingLiteral>(expr) || isa<IntegerLiteral>(expr));
   return new ImaginaryLiteral(expr,t);
+}
+
+void ImplicitCastExpr::directEmit(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.EmitOwnedPtr(Op);
+}
+
+ImplicitCastExpr* ImplicitCastExpr::directMaterialize(llvm::Deserializer& D) {
+  QualType t = QualType::ReadVal(D);
+  Expr* Op = D.ReadOwnedPtr<Expr>();
+  return new ImplicitCastExpr(t,Op);
 }
 
 void IndirectGotoStmt::directEmit(llvm::Serializer& S) const {
