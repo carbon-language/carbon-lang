@@ -102,6 +102,7 @@
 
 // APInt contains static functions implementing bignum arithmetic.
 #include "llvm/ADT/APInt.h"
+#include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
@@ -181,6 +182,12 @@ namespace llvm {
     explicit APFloat(const APInt &, bool isIEEE = false);
     APFloat(const APFloat &);
     ~APFloat();
+    
+    /// @brief Used by the Bitcode serializer to emit APInts to Bitcode.
+    void Emit(Serializer& S) const;
+    
+    /// @brief Used by the Bitcode deserializer to deserialize APInts.
+    static APFloat ReadVal(Deserializer& D);
 
     /* Arithmetic.  */
     opStatus add(const APFloat &, roundingMode);
