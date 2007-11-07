@@ -346,11 +346,10 @@ void StmtPrinter::VisitObjcAtTryStmt(ObjcAtTryStmt *Node) {
       } 
   }
   
-  Indent() << "@finally";
-  if (CompoundStmt *FS = dyn_cast<CompoundStmt>(
-        static_cast<ObjcAtFinallyStmt *>(
-          Node->getFinallyStmt())->getFinallyBody())) {
-    PrintRawCompoundStmt(FS);
+  if (ObjcAtFinallyStmt *FS =static_cast<ObjcAtFinallyStmt *>(
+          Node->getFinallyStmt())) {
+    Indent() << "@finally";
+    PrintRawCompoundStmt(dyn_cast<CompoundStmt>(FS->getFinallyBody()));
     OS << "\n";
   }  
 }
