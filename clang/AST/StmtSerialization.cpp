@@ -72,6 +72,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
       
     case IfStmtClass:
       return IfStmt::directMaterialize(D);
+    
+    case ImaginaryLiteralClass:
+      return ImaginaryLiteral::directMaterialize(D);
       
     case IndirectGotoStmtClass:
       return IndirectGotoStmt::directMaterialize(D);      
@@ -305,6 +308,18 @@ IfStmt* IfStmt::directMaterialize(llvm::Deserializer& D) {
   Stmt* Then = D.ReadOwnedPtr<Stmt>();
   Stmt* Else = D.ReadOwnedPtr<Stmt>();
   return new IfStmt(L,Cond,Then,Else);
+}
+
+void ImaginaryLiteral::directEmit(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.EmitOwnedPtr(Val);    
+}
+
+ImaginaryLiteral* ImaginaryLiteral::directMaterialize(llvm::Deserializer& D) {
+  QualType t = QualType::ReadVal(D);
+  Expr* expr = D.ReadOwnedPtr<Expr>();
+  assert (isa<FloatingLiteral>(expr) || isa<IntegerLiteral>(expr));
+  return new ImaginaryLiteral(expr,t);
 }
 
 void IndirectGotoStmt::directEmit(llvm::Serializer& S) const {

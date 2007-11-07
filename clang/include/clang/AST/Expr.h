@@ -291,6 +291,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static ImaginaryLiteral* directMaterialize(llvm::Deserializer& D);
 };
 
 /// StringLiteral - This represents a string literal expression, e.g. "foo"
