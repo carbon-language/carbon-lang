@@ -95,6 +95,8 @@ public:
   ~Deserializer();
 
   uint64_t ReadInt();
+  int64_t ReadSInt();
+  
   bool ReadBool() {
     return ReadInt() ? true : false;
   }

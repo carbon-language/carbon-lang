@@ -50,6 +50,11 @@ SERIALIZE_INT_TRAIT(unsigned char)
 SERIALIZE_INT_TRAIT(unsigned short)
 SERIALIZE_INT_TRAIT(unsigned int)
 SERIALIZE_INT_TRAIT(unsigned long)
+  
+SERIALIZE_INT_TRAIT(signed char)
+SERIALIZE_INT_TRAIT(signed short)
+SERIALIZE_INT_TRAIT(signed int)
+SERIALIZE_INT_TRAIT(signed long)
 
 #undef SERIALIZE_INT_TRAIT
   

@@ -48,9 +48,16 @@ void Serializer::ExitBlock() {
   Stream.ExitBlock();
 }
 
-void Serializer::EmitInt(unsigned X) {
+void Serializer::EmitInt(uint64_t X) {
   assert (BlockLevel > 0);
   Record.push_back(X);
+}
+
+void Serializer::EmitSInt(int64_t X) {
+  if (X >= 0)
+    EmitInt(X << 1);
+  else
+    EmitInt((-X << 1) | 1);
 }
 
 void Serializer::EmitCStr(const char* s, const char* end) {
@@ -91,3 +98,11 @@ INT_EMIT(unsigned char)
 INT_EMIT(unsigned short)
 INT_EMIT(unsigned int)
 INT_EMIT(unsigned long)
+
+#define SINT_EMIT(TYPE)\
+void SerializeTrait<TYPE>::Emit(Serializer&S, TYPE X) { S.EmitSInt(X); }
+
+SINT_EMIT(signed char)
+SINT_EMIT(signed short)
+SINT_EMIT(signed int)
+SINT_EMIT(signed long)

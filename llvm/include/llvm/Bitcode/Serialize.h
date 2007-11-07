@@ -37,7 +37,9 @@ public:
   template <typename T>
   inline void Emit(const T& X) { SerializeTrait<T>::Emit(*this,X); }
   
-  void EmitInt(unsigned X);
+  void EmitInt(uint64_t X);
+  void EmitSInt(int64_t X);
+  
   void EmitBool(bool X) { EmitInt(X); }
   void EmitCStr(const char* beg, const char* end);
   void EmitCStr(const char* cstr);

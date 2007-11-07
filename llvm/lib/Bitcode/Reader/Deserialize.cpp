@@ -105,6 +105,12 @@ uint64_t Deserializer::ReadInt() {
   return Record[RecIdx++];
 }
 
+int64_t Deserializer::ReadSInt() {
+  uint64_t x = ReadInt();
+  int64_t magnitude = x >> 1;
+  return x & 0x1 ? -magnitude : magnitude;
+}
+
 char* Deserializer::ReadCStr(char* cstr, unsigned MaxLen, bool isNullTerm) {
   if (cstr == NULL)
     MaxLen = 0; // Zero this just in case someone does something funny.
@@ -226,3 +232,12 @@ INT_READ(unsigned char)
 INT_READ(unsigned short)
 INT_READ(unsigned int)
 INT_READ(unsigned long)
+
+#define SINT_READ(TYPE)\
+void SerializeTrait<TYPE>::Read(Deserializer& D, TYPE& X) {\
+  X = (TYPE) D.ReadSInt(); }
+
+INT_READ(signed char)
+INT_READ(signed short)
+INT_READ(signed int)
+INT_READ(signed long)
