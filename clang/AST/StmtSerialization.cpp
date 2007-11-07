@@ -96,6 +96,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
       
     case ReturnStmtClass:
       return ReturnStmt::directMaterialize(D);
+     
+    case StringLiteralClass:
+      return StringLiteral::directMaterialize(D);
       
     case SwitchStmtClass:
       return SwitchStmt::directMaterialize(D);
@@ -408,6 +411,36 @@ ReturnStmt* ReturnStmt::directMaterialize(llvm::Deserializer& D) {
   SourceLocation RetLoc = SourceLocation::ReadVal(D);
   Expr* RetExpr = D.ReadOwnedPtr<Expr>();  
   return new ReturnStmt(RetLoc,RetExpr);
+}
+
+void StringLiteral::directEmit(llvm::Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(firstTokLoc);
+  S.Emit(lastTokLoc);
+  S.EmitBool(isWide());
+  S.Emit(getByteLength());
+
+  for (unsigned i = 0 ; i < ByteLength; ++i)
+    S.EmitInt(StrData[i]);
+}
+
+StringLiteral* StringLiteral::directMaterialize(llvm::Deserializer& D) {
+  QualType t = QualType::ReadVal(D);
+  SourceLocation firstTokLoc = SourceLocation::ReadVal(D);
+  SourceLocation lastTokLoc = SourceLocation::ReadVal(D);
+  bool isWide = D.ReadBool();
+  unsigned ByteLength = D.ReadInt();
+  
+  StringLiteral* sl = new StringLiteral(NULL,0,isWide,t,firstTokLoc,lastTokLoc);
+
+  char* StrData = new char[ByteLength];
+  for (unsigned i = 0; i < ByteLength; ++i)
+    StrData[i] = (char) D.ReadInt();
+
+  sl->ByteLength = ByteLength;
+  sl->StrData = StrData;
+  
+  return sl;
 }
 
 void SwitchStmt::directEmit(llvm::Serializer& S) const {

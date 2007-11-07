@@ -328,6 +328,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static StringLiteral* directMaterialize(llvm::Deserializer& D);
 };
 
 /// ParenExpr - This represents a parethesized expression, e.g. "(1)".  This
