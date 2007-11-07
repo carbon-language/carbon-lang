@@ -207,7 +207,7 @@ public:
   
   /// Default constructor that creates an uninitialized APInt.  This is useful
   ///  for object deserialization (pair this with the static method Read).
-  explicit APInt() {}
+  explicit APInt() : BitWidth(1) {}
   
   /// @brief Used by the Bitcode serializer to emit APInts to Bitcode.
   void Emit(Serializer& S) const;
