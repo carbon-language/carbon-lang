@@ -64,6 +64,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
     case IfStmtClass:
       return IfStmt::directMaterialize(D);
       
+    case IndirectGotoStmtClass:
+      return IndirectGotoStmt::directMaterialize(D);      
+      
     case IntegerLiteralClass:
       return IntegerLiteral::directMaterialize(D);
       
@@ -254,6 +257,16 @@ IfStmt* IfStmt::directMaterialize(llvm::Deserializer& D) {
   Stmt* Then = D.ReadOwnedPtr<Stmt>();
   Stmt* Else = D.ReadOwnedPtr<Stmt>();
   return new IfStmt(L,Cond,Then,Else);
+}
+
+void IndirectGotoStmt::directEmit(llvm::Serializer& S) const {
+  S.EmitPtr(Target);  
+}
+
+IndirectGotoStmt* IndirectGotoStmt::directMaterialize(llvm::Deserializer& D) {
+  IndirectGotoStmt* stmt = new IndirectGotoStmt(NULL);
+  D.ReadPtr(stmt->Target); // The target may be backpatched.
+  return stmt;
 }
 
 void IntegerLiteral::directEmit(llvm::Serializer& S) const {

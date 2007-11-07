@@ -602,6 +602,8 @@ public:
 ///
 class IndirectGotoStmt : public Stmt {
   Expr *Target;
+  // FIXME: Add location information (e.g. SourceLocation objects).
+  //        When doing so, update the serialization routines.
 public:
   IndirectGotoStmt(Expr *target) : Stmt(IndirectGotoStmtClass), Target(target){}
   
@@ -618,6 +620,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static IndirectGotoStmt* directMaterialize(llvm::Deserializer& D);
 };
 
 
