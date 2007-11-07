@@ -520,6 +520,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static ArraySubscriptExpr* directMaterialize(llvm::Deserializer& D);
 };
 
 

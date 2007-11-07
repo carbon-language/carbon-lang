@@ -17,15 +17,17 @@
 #include "llvm/Bitcode/Deserialize.h"
 
 using namespace clang;
+using llvm::Serializer;
+using llvm::Deserializer;
 
-void Stmt::Emit(llvm::Serializer& S) const {
+void Stmt::Emit(Serializer& S) const {
   S.FlushRecord();
   S.EmitInt(getStmtClass());
   directEmit(S);
   S.FlushRecord();
 }  
 
-Stmt* Stmt::Materialize(llvm::Deserializer& D) {
+Stmt* Stmt::Materialize(Deserializer& D) {
   StmtClass SC = static_cast<StmtClass>(D.ReadInt());
   
   switch (SC) {
@@ -33,6 +35,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
       assert (false && "Not implemented.");
       return NULL;
     
+    case ArraySubscriptExprClass:
+      return ArraySubscriptExpr::directMaterialize(D);
+      
     case BinaryOperatorClass:
       return BinaryOperator::directMaterialize(D);
       
@@ -116,14 +121,28 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
   }
 }
 
-void BinaryOperator::directEmit(llvm::Serializer& S) const {
+void ArraySubscriptExpr::directEmit(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(RBracketLoc);
+  S.BatchEmitOwnedPtrs(getLHS(),getRHS());
+}
+
+ArraySubscriptExpr* ArraySubscriptExpr::directMaterialize(Deserializer& D) {
+  QualType t = QualType::ReadVal(D);
+  SourceLocation L = SourceLocation::ReadVal(D);
+  Expr *LHS, *RHS;
+  D.BatchReadOwnedPtrs(LHS,RHS);
+  return new ArraySubscriptExpr(LHS,RHS,t,L);  
+}
+
+void BinaryOperator::directEmit(Serializer& S) const {
   S.EmitInt(Opc);
   S.Emit(OpLoc);;
   S.Emit(getType());
   S.BatchEmitOwnedPtrs(getLHS(),getRHS());
 }
 
-BinaryOperator* BinaryOperator::directMaterialize(llvm::Deserializer& D) {
+BinaryOperator* BinaryOperator::directMaterialize(Deserializer& D) {
   Opcode Opc = static_cast<Opcode>(D.ReadInt());
   SourceLocation OpLoc = SourceLocation::ReadVal(D);
   QualType Result = QualType::ReadVal(D);
@@ -133,22 +152,22 @@ BinaryOperator* BinaryOperator::directMaterialize(llvm::Deserializer& D) {
   return new BinaryOperator(LHS,RHS,Opc,Result,OpLoc);
 }
 
-void BreakStmt::directEmit(llvm::Serializer& S) const {
+void BreakStmt::directEmit(Serializer& S) const {
   S.Emit(BreakLoc);
 }
 
-BreakStmt* BreakStmt::directMaterialize(llvm::Deserializer& D) {
+BreakStmt* BreakStmt::directMaterialize(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   return new BreakStmt(Loc);
 }
   
-void CaseStmt::directEmit(llvm::Serializer& S) const {
+void CaseStmt::directEmit(Serializer& S) const {
   S.Emit(CaseLoc);
   S.EmitPtr(getNextSwitchCase());
   S.BatchEmitOwnedPtrs(getLHS(),getRHS(),getSubStmt());
 }
 
-CaseStmt* CaseStmt::directMaterialize(llvm::Deserializer& D) {
+CaseStmt* CaseStmt::directMaterialize(Deserializer& D) {
   SourceLocation CaseLoc = SourceLocation::ReadVal(D);
   Expr *LHS, *RHS;
   Stmt* SubStmt;
@@ -159,13 +178,13 @@ CaseStmt* CaseStmt::directMaterialize(llvm::Deserializer& D) {
   return stmt;
 }
 
-void CastExpr::directEmit(llvm::Serializer& S) const {
+void CastExpr::directEmit(Serializer& S) const {
   S.Emit(getType());
   S.Emit(Loc);
   S.EmitOwnedPtr(Op);
 }
 
-CastExpr* CastExpr::directMaterialize(llvm::Deserializer& D) {
+CastExpr* CastExpr::directMaterialize(Deserializer& D) {
   QualType t = QualType::ReadVal(D);
   SourceLocation Loc = SourceLocation::ReadVal(D);
   Expr* Op = D.ReadOwnedPtr<Expr>();
@@ -173,20 +192,20 @@ CastExpr* CastExpr::directMaterialize(llvm::Deserializer& D) {
 }
   
 
-void CharacterLiteral::directEmit(llvm::Serializer& S) const {
+void CharacterLiteral::directEmit(Serializer& S) const {
   S.Emit(Value);
   S.Emit(Loc);
   S.Emit(getType());
 }
 
-CharacterLiteral* CharacterLiteral::directMaterialize(llvm::Deserializer& D) {
+CharacterLiteral* CharacterLiteral::directMaterialize(Deserializer& D) {
   unsigned value = D.ReadInt();
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType T = QualType::ReadVal(D);
   return new CharacterLiteral(value,T,Loc);
 }
 
-void CompoundStmt::directEmit(llvm::Serializer& S) const {
+void CompoundStmt::directEmit(Serializer& S) const {
   S.Emit(LBracLoc);
   S.Emit(RBracLoc);
   S.Emit(Body.size());
@@ -195,7 +214,7 @@ void CompoundStmt::directEmit(llvm::Serializer& S) const {
     S.EmitOwnedPtr(*I);
 }
 
-CompoundStmt* CompoundStmt::directMaterialize(llvm::Deserializer& D) {
+CompoundStmt* CompoundStmt::directMaterialize(Deserializer& D) {
   SourceLocation LB = SourceLocation::ReadVal(D);
   SourceLocation RB = SourceLocation::ReadVal(D);
   unsigned size = D.ReadInt();
@@ -210,27 +229,27 @@ CompoundStmt* CompoundStmt::directMaterialize(llvm::Deserializer& D) {
   return stmt;
 }
 
-void ContinueStmt::directEmit(llvm::Serializer& S) const {
+void ContinueStmt::directEmit(Serializer& S) const {
   S.Emit(ContinueLoc);
 }
 
-ContinueStmt* ContinueStmt::directMaterialize(llvm::Deserializer& D) {
+ContinueStmt* ContinueStmt::directMaterialize(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   return new ContinueStmt(Loc);
 }
 
-void DeclStmt::directEmit(llvm::Serializer& S) const {
+void DeclStmt::directEmit(Serializer& S) const {
   // FIXME: special handling for struct decls.
   S.EmitOwnedPtr(getDecl());  
 }
 
-void DeclRefExpr::directEmit(llvm::Serializer& S) const {
+void DeclRefExpr::directEmit(Serializer& S) const {
   S.Emit(Loc);
   S.Emit(getType());
   S.EmitPtr(getDecl());
 }
 
-DeclRefExpr* DeclRefExpr::directMaterialize(llvm::Deserializer& D) {
+DeclRefExpr* DeclRefExpr::directMaterialize(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType T = QualType::ReadVal(D);
   DeclRefExpr* dr = new DeclRefExpr(NULL,T,Loc);
@@ -238,18 +257,18 @@ DeclRefExpr* DeclRefExpr::directMaterialize(llvm::Deserializer& D) {
   return dr;
 }
 
-DeclStmt* DeclStmt::directMaterialize(llvm::Deserializer& D) {
+DeclStmt* DeclStmt::directMaterialize(Deserializer& D) {
   ScopedDecl* decl = cast<ScopedDecl>(D.ReadOwnedPtr<Decl>());
   return new DeclStmt(decl);
 }
 
-void DefaultStmt::directEmit(llvm::Serializer& S) const {
+void DefaultStmt::directEmit(Serializer& S) const {
   S.Emit(DefaultLoc);
   S.EmitOwnedPtr(getSubStmt());
   S.EmitPtr(getNextSwitchCase());
 }
 
-DefaultStmt* DefaultStmt::directMaterialize(llvm::Deserializer& D) {
+DefaultStmt* DefaultStmt::directMaterialize(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   Stmt* SubStmt = D.ReadOwnedPtr<Stmt>();
   
@@ -259,26 +278,26 @@ DefaultStmt* DefaultStmt::directMaterialize(llvm::Deserializer& D) {
   return stmt;
 }
 
-void DoStmt::directEmit(llvm::Serializer& S) const {
+void DoStmt::directEmit(Serializer& S) const {
   S.Emit(DoLoc);
   S.EmitOwnedPtr(getCond());
   S.EmitOwnedPtr(getBody());
 }
 
-DoStmt* DoStmt::directMaterialize(llvm::Deserializer& D) {
+DoStmt* DoStmt::directMaterialize(Deserializer& D) {
   SourceLocation DoLoc = SourceLocation::ReadVal(D);
   Expr* Cond = D.ReadOwnedPtr<Expr>();
   Stmt* Body = D.ReadOwnedPtr<Stmt>();
   return new DoStmt(Body,Cond,DoLoc);
 }
 
-void FloatingLiteral::directEmit(llvm::Serializer& S) const {
+void FloatingLiteral::directEmit(Serializer& S) const {
   S.Emit(Loc);
   S.Emit(getType());
   S.Emit(Value);
 }
 
-FloatingLiteral* FloatingLiteral::directMaterialize(llvm::Deserializer& D) {
+FloatingLiteral* FloatingLiteral::directMaterialize(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType t = QualType::ReadVal(D);
   llvm::APFloat Val = llvm::APFloat::ReadVal(D);
@@ -286,7 +305,7 @@ FloatingLiteral* FloatingLiteral::directMaterialize(llvm::Deserializer& D) {
   return expr;
 }
 
-void ForStmt::directEmit(llvm::Serializer& S) const {
+void ForStmt::directEmit(Serializer& S) const {
   S.Emit(ForLoc);
   S.EmitOwnedPtr(getInit());
   S.EmitOwnedPtr(getCond());
@@ -294,7 +313,7 @@ void ForStmt::directEmit(llvm::Serializer& S) const {
   S.EmitOwnedPtr(getBody());
 }
 
-ForStmt* ForStmt::directMaterialize(llvm::Deserializer& D) {
+ForStmt* ForStmt::directMaterialize(Deserializer& D) {
   SourceLocation ForLoc = SourceLocation::ReadVal(D);
   Stmt* Init = D.ReadOwnedPtr<Stmt>();
   Expr* Cond = D.ReadOwnedPtr<Expr>();
@@ -303,13 +322,13 @@ ForStmt* ForStmt::directMaterialize(llvm::Deserializer& D) {
   return new ForStmt(Init,Cond,Inc,Body,ForLoc);
 }
 
-void GotoStmt::directEmit(llvm::Serializer& S) const {
+void GotoStmt::directEmit(Serializer& S) const {
   S.Emit(GotoLoc);
   S.Emit(LabelLoc);
   S.EmitPtr(Label);
 }
 
-GotoStmt* GotoStmt::directMaterialize(llvm::Deserializer& D) {
+GotoStmt* GotoStmt::directMaterialize(Deserializer& D) {
   SourceLocation GotoLoc = SourceLocation::ReadVal(D);
   SourceLocation LabelLoc = SourceLocation::ReadVal(D);
   GotoStmt* stmt = new GotoStmt(NULL,GotoLoc,LabelLoc);
@@ -317,14 +336,14 @@ GotoStmt* GotoStmt::directMaterialize(llvm::Deserializer& D) {
   return stmt;  
 }
 
-void IfStmt::directEmit(llvm::Serializer& S) const {
+void IfStmt::directEmit(Serializer& S) const {
   S.Emit(IfLoc);
   S.EmitOwnedPtr(getCond());
   S.EmitOwnedPtr(getThen());
   S.EmitOwnedPtr(getElse());
 }
 
-IfStmt* IfStmt::directMaterialize(llvm::Deserializer& D) {
+IfStmt* IfStmt::directMaterialize(Deserializer& D) {
   SourceLocation L = SourceLocation::ReadVal(D);
   Expr* Cond = D.ReadOwnedPtr<Expr>();
   Stmt* Then = D.ReadOwnedPtr<Stmt>();
@@ -332,46 +351,46 @@ IfStmt* IfStmt::directMaterialize(llvm::Deserializer& D) {
   return new IfStmt(L,Cond,Then,Else);
 }
 
-void ImaginaryLiteral::directEmit(llvm::Serializer& S) const {
+void ImaginaryLiteral::directEmit(Serializer& S) const {
   S.Emit(getType());
   S.EmitOwnedPtr(Val);    
 }
 
-ImaginaryLiteral* ImaginaryLiteral::directMaterialize(llvm::Deserializer& D) {
+ImaginaryLiteral* ImaginaryLiteral::directMaterialize(Deserializer& D) {
   QualType t = QualType::ReadVal(D);
   Expr* expr = D.ReadOwnedPtr<Expr>();
   assert (isa<FloatingLiteral>(expr) || isa<IntegerLiteral>(expr));
   return new ImaginaryLiteral(expr,t);
 }
 
-void ImplicitCastExpr::directEmit(llvm::Serializer& S) const {
+void ImplicitCastExpr::directEmit(Serializer& S) const {
   S.Emit(getType());
   S.EmitOwnedPtr(Op);
 }
 
-ImplicitCastExpr* ImplicitCastExpr::directMaterialize(llvm::Deserializer& D) {
+ImplicitCastExpr* ImplicitCastExpr::directMaterialize(Deserializer& D) {
   QualType t = QualType::ReadVal(D);
   Expr* Op = D.ReadOwnedPtr<Expr>();
   return new ImplicitCastExpr(t,Op);
 }
 
-void IndirectGotoStmt::directEmit(llvm::Serializer& S) const {
+void IndirectGotoStmt::directEmit(Serializer& S) const {
   S.EmitPtr(Target);  
 }
 
-IndirectGotoStmt* IndirectGotoStmt::directMaterialize(llvm::Deserializer& D) {
+IndirectGotoStmt* IndirectGotoStmt::directMaterialize(Deserializer& D) {
   IndirectGotoStmt* stmt = new IndirectGotoStmt(NULL);
   D.ReadPtr(stmt->Target); // The target may be backpatched.
   return stmt;
 }
 
-void IntegerLiteral::directEmit(llvm::Serializer& S) const {
+void IntegerLiteral::directEmit(Serializer& S) const {
   S.Emit(Loc);
   S.Emit(getType());
   S.Emit(getValue());
 }
 
-IntegerLiteral* IntegerLiteral::directMaterialize(llvm::Deserializer& D) {
+IntegerLiteral* IntegerLiteral::directMaterialize(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType T = QualType::ReadVal(D);
   
@@ -384,66 +403,66 @@ IntegerLiteral* IntegerLiteral::directMaterialize(llvm::Deserializer& D) {
   return expr;
 }
 
-void LabelStmt::directEmit(llvm::Serializer& S) const {
+void LabelStmt::directEmit(Serializer& S) const {
   S.EmitPtr(Label);
   S.Emit(IdentLoc);
   S.EmitOwnedPtr(SubStmt);
 }
 
-LabelStmt* LabelStmt::directMaterialize(llvm::Deserializer& D) {
+LabelStmt* LabelStmt::directMaterialize(Deserializer& D) {
   IdentifierInfo* Label = D.ReadPtr<IdentifierInfo>();
   SourceLocation IdentLoc = SourceLocation::ReadVal(D);
   Stmt* SubStmt = D.ReadOwnedPtr<Stmt>();
   return new LabelStmt(IdentLoc,Label,SubStmt);
 }
 
-void NullStmt::directEmit(llvm::Serializer& S) const {
+void NullStmt::directEmit(Serializer& S) const {
   S.Emit(SemiLoc);
 }
 
-NullStmt* NullStmt::directMaterialize(llvm::Deserializer& D) {
+NullStmt* NullStmt::directMaterialize(Deserializer& D) {
   SourceLocation SemiLoc = SourceLocation::ReadVal(D);
   return new NullStmt(SemiLoc);
 }
 
-void ParenExpr::directEmit(llvm::Serializer& S) const {
+void ParenExpr::directEmit(Serializer& S) const {
   S.Emit(L);
   S.Emit(R);
   S.EmitOwnedPtr(Val);
 }
 
-ParenExpr* ParenExpr::directMaterialize(llvm::Deserializer& D) {
+ParenExpr* ParenExpr::directMaterialize(Deserializer& D) {
   SourceLocation L = SourceLocation::ReadVal(D);
   SourceLocation R = SourceLocation::ReadVal(D);
   Expr* val = D.ReadOwnedPtr<Expr>();  
   return new ParenExpr(L,R,val);
 }
 
-void PreDefinedExpr::directEmit(llvm::Serializer& S) const {
+void PreDefinedExpr::directEmit(Serializer& S) const {
   S.Emit(Loc);
   S.EmitInt(getIdentType());
   S.Emit(getType());  
 }
 
-PreDefinedExpr* PreDefinedExpr::directMaterialize(llvm::Deserializer& D) {
+PreDefinedExpr* PreDefinedExpr::directMaterialize(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   IdentType it = static_cast<IdentType>(D.ReadInt());
   QualType Q = QualType::ReadVal(D);
   return new PreDefinedExpr(Loc,Q,it);
 }
 
-void ReturnStmt::directEmit(llvm::Serializer& S) const {
+void ReturnStmt::directEmit(Serializer& S) const {
   S.Emit(RetLoc);
   S.EmitOwnedPtr(RetExpr);
 }
 
-ReturnStmt* ReturnStmt::directMaterialize(llvm::Deserializer& D) {
+ReturnStmt* ReturnStmt::directMaterialize(Deserializer& D) {
   SourceLocation RetLoc = SourceLocation::ReadVal(D);
   Expr* RetExpr = D.ReadOwnedPtr<Expr>();  
   return new ReturnStmt(RetLoc,RetExpr);
 }
 
-void StringLiteral::directEmit(llvm::Serializer& S) const {
+void StringLiteral::directEmit(Serializer& S) const {
   S.Emit(getType());
   S.Emit(firstTokLoc);
   S.Emit(lastTokLoc);
@@ -454,7 +473,7 @@ void StringLiteral::directEmit(llvm::Serializer& S) const {
     S.EmitInt(StrData[i]);
 }
 
-StringLiteral* StringLiteral::directMaterialize(llvm::Deserializer& D) {
+StringLiteral* StringLiteral::directMaterialize(Deserializer& D) {
   QualType t = QualType::ReadVal(D);
   SourceLocation firstTokLoc = SourceLocation::ReadVal(D);
   SourceLocation lastTokLoc = SourceLocation::ReadVal(D);
@@ -473,14 +492,14 @@ StringLiteral* StringLiteral::directMaterialize(llvm::Deserializer& D) {
   return sl;
 }
 
-void SwitchStmt::directEmit(llvm::Serializer& S) const {
+void SwitchStmt::directEmit(Serializer& S) const {
   S.Emit(SwitchLoc);
   S.EmitOwnedPtr(getCond());
   S.EmitOwnedPtr(getBody());
   S.EmitPtr(FirstCase);  
 }
 
-SwitchStmt* SwitchStmt::directMaterialize(llvm::Deserializer& D) {
+SwitchStmt* SwitchStmt::directMaterialize(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   Stmt* Cond = D.ReadOwnedPtr<Stmt>();
   Stmt* Body = D.ReadOwnedPtr<Stmt>();
@@ -493,13 +512,13 @@ SwitchStmt* SwitchStmt::directMaterialize(llvm::Deserializer& D) {
   return stmt;
 }
 
-void WhileStmt::directEmit(llvm::Serializer& S) const {
+void WhileStmt::directEmit(Serializer& S) const {
   S.Emit(WhileLoc);
   S.EmitOwnedPtr(getCond());
   S.EmitOwnedPtr(getBody());
 }
 
-WhileStmt* WhileStmt::directMaterialize(llvm::Deserializer& D) {
+WhileStmt* WhileStmt::directMaterialize(Deserializer& D) {
   SourceLocation WhileLoc = SourceLocation::ReadVal(D);
   Expr* Cond = D.ReadOwnedPtr<Expr>();
   Stmt* Body = D.ReadOwnedPtr<Stmt>();
