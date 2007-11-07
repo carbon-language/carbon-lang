@@ -88,9 +88,9 @@ of the variable in the symbol table along with its Value*.</li>
 extending the type system in all sorts of interesting ways.  Simple arrays are
 very easy and are quite useful for many different applications.  Adding them is
 mostly an exercise in learning how the LLVM <a 
-href="../LangRef.html#i_getelementptr">getelementptr</a> instruction works.
-The getelementptr instruction is so nifty/unconventional, it <a 
-href="../GetElementPtr.html">has its own FAQ</a>!).  If you add support
+href="../LangRef.html#i_getelementptr">getelementptr</a> instruction works: it
+is so nifty/unconventional, it <a 
+href="../GetElementPtr.html">has its own FAQ</a>!  If you add support
 for recursive types (e.g. linked lists), make sure to read the <a 
 href="../ProgrammersManual.html#TypeResolve">section in the LLVM
 Programmer's Manual</a> that describes how to construct them.</li>
@@ -160,8 +160,8 @@ IR</a></div>
 
 <div class="doc_text">
 
-<p>We have a couple common questions about code in the LLVM IR form, lets just
-get these out of the way right now shall we?</p>
+<p>We have a couple common questions about code in the LLVM IR form - lets just
+get these out of the way right now, shall we?</p>
 
 </div>
 
@@ -177,7 +177,7 @@ Kaleidoscope will work the same way on any target that it runs on.  Many other
 languages have this property, e.g. lisp, java, haskell, javascript, python, etc
 (note that while these languages are portable, not all their libraries are).</p>
 
-<p>One nice aspect of LLVM is that it is often capable of preserving language
+<p>One nice aspect of LLVM is that it is often capable of preserving target
 independence in the IR: you can take the LLVM IR for a Kaleidoscope-compiled 
 program and run it on any target that LLVM supports, even emitting C code and
 compiling that on targets that LLVM doesn't support natively.  You can trivially
@@ -215,7 +215,7 @@ the actual source code.</p>
 you are willing to fix primitive types to a fixed size (say int = 32-bits, 
 and long = 64-bits), don't care about ABI compatibility with existing binaries,
 and are willing to give up some other minor features, you can have portable
-code.  This can even make real sense for specialized domains such as an
+code.  This can make sense for specialized domains such as an
 in-kernel language.</p>
 
 </div>
@@ -227,7 +227,8 @@ in-kernel language.</p>
 <div class="doc_text">
 
 <p>Many of the languages above are also "safe" languages: it is impossible for
-a program written in Java to corrupt its address space and crash the process.
+a program written in Java to corrupt its address space and crash the process
+(assuming the JVM has no bugs).
 Safety is an interesting property that requires a combination of language
 design, runtime support, and often operating system support.</p>
 
@@ -277,13 +278,13 @@ whether an argument is sign or zero extended, information about pointers
 aliasing, etc.  Many of the enhancements are user-driven: people want LLVM to
 do some specific feature, so they go ahead and extend it to do so.</p>
 
-<p>Third, it <em>is certainly possible</em> to add language-specific
+<p>Third, it <em>is possible and easy</em> to add language-specific
 optimizations, and you have a number of choices in how to do it.  As one trivial
-example, it is possible to add language-specific optimization passes that
+example, it is easy to add language-specific optimization passes that
 "know" things about code compiled for a language.  In the case of the C family,
-there is an optimziation pass that "knows" about the standard C library
+there is an optimization pass that "knows" about the standard C library
 functions.  If you call "exit(0)" in main(), it knows that it is safe to
-optimize that into "return 0;" for example, because C specifies what the 'exit'
+optimize that into "return 0;" because C specifies what the 'exit'
 function does.</p>
 
 <p>In addition to simple library knowledge, it is possible to embed a variety of
