@@ -44,8 +44,8 @@ namespace {
                       const FieldDecl *FD = NULL, unsigned Begin = 0, 
                       unsigned End = 0);
 
-    /// addPaddingFields - Current cursor is not suitable place to add next field.
-    /// Add required padding fields.
+    /// addPaddingFields - Current cursor is not suitable place to add next 
+    /// field. Add required padding fields.
     void addPaddingFields(unsigned RequiredBits);
 
     /// layoutStructFields - Do the actual work and lay out all fields. Create
@@ -263,7 +263,8 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       RecordOrganizer RO(*this);
       for (unsigned i = 0, e = RD->getNumMembers(); i != e; ++i)
         RO.addField(RD->getMember(i));
-      const ASTRecordLayout &RL = Context.getASTRecordLayout(RD, SourceLocation());
+      const ASTRecordLayout &RL = Context.getASTRecordLayout(RD, 
+                                                             SourceLocation());
       RO.layoutStructFields(RL);
 
       // Get llvm::StructType.
@@ -424,8 +425,8 @@ void RecordOrganizer::addPaddingFields(unsigned RequiredBits) {
                  CGT.getTargetData().getTypeSizeInBits(llvm::Type::Int8Ty));
 }
 
-/// addLLVMField - Add llvm struct field that corresponds to llvm type Ty. Update
-/// cursor and increment field count. If field decl FD is available than update
+/// addLLVMField - Add llvm struct field that corresponds to llvm type Ty.
+/// Update cursor and increment field count. If field decl FD is available than 
 /// update field info at CodeGenTypes level.
 void RecordOrganizer::addLLVMField(const llvm::Type *Ty, uint64_t Size,
                                    const FieldDecl *FD, unsigned Begin,
