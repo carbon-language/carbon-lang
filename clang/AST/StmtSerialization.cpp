@@ -30,24 +30,43 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
     default:  
       assert (false && "Not implemented.");
       return NULL;
+    
+    case BinaryOperatorClass:
+      return BinaryOperator::directMaterialize(D);
       
     case CompoundStmtClass:
       return CompoundStmt::directMaterialize(D);
       
-    case ReturnStmtClass:
-      return ReturnStmt::directMaterialize(D);
-      
-    case BinaryOperatorClass:
-      return BinaryOperator::directMaterialize(D);
-      
     case DeclRefExprClass:
       return DeclRefExpr::directMaterialize(D);
       
+    case DeclStmtClass:
+      return DeclStmt::directMaterialize(D);
+            
     case IntegerLiteralClass:
-      return IntegerLiteral::directMaterialize(D);
+      return IntegerLiteral::directMaterialize(D);      
+      
+    case ReturnStmtClass:
+      return ReturnStmt::directMaterialize(D);        
   }
 }
 
+void BinaryOperator::directEmit(llvm::Serializer& S) const {
+  S.EmitInt(Opc);
+  S.Emit(OpLoc);;
+  S.Emit(getType());
+  S.EmitOwnedPtr(getLHS());
+  S.EmitOwnedPtr(getRHS());
+}
+
+BinaryOperator* BinaryOperator::directMaterialize(llvm::Deserializer& D) {
+  Opcode Opc = static_cast<Opcode>(D.ReadInt());
+  SourceLocation OpLoc = SourceLocation::ReadVal(D);
+  QualType Result = QualType::ReadVal(D);
+  Expr* LHS = D.ReadOwnedPtr<Expr>();
+  Expr* RHS = D.ReadOwnedPtr<Expr>();
+  return new BinaryOperator(LHS,RHS,Opc,Result,OpLoc);
+}
 
 
 void CompoundStmt::directEmit(llvm::Serializer& S) const {
@@ -74,34 +93,9 @@ CompoundStmt* CompoundStmt::directMaterialize(llvm::Deserializer& D) {
   return stmt;
 }
 
-
-void ReturnStmt::directEmit(llvm::Serializer& S) const {
-  S.Emit(RetLoc);
-  S.EmitOwnedPtr(RetExpr);
-}
-
-ReturnStmt* ReturnStmt::directMaterialize(llvm::Deserializer& D) {
-  SourceLocation RetLoc = SourceLocation::ReadVal(D);
-  Expr* RetExpr = D.ReadOwnedPtr<Expr>();  
-  return new ReturnStmt(RetLoc,RetExpr);
-}
-
-
-void BinaryOperator::directEmit(llvm::Serializer& S) const {
-  S.EmitInt(Opc);
-  S.Emit(OpLoc);;
-  S.Emit(getType());
-  S.EmitOwnedPtr(getLHS());
-  S.EmitOwnedPtr(getRHS());
-}
-
-BinaryOperator* BinaryOperator::directMaterialize(llvm::Deserializer& D) {
-  Opcode Opc = static_cast<Opcode>(D.ReadInt());
-  SourceLocation OpLoc = SourceLocation::ReadVal(D);
-  QualType Result = QualType::ReadVal(D);
-  Expr* LHS = D.ReadOwnedPtr<Expr>();
-  Expr* RHS = D.ReadOwnedPtr<Expr>();
-  return new BinaryOperator(LHS,RHS,Opc,Result,OpLoc);
+void DeclStmt::directEmit(llvm::Serializer& S) const {
+  // FIXME: special handling for struct decls.
+  S.EmitOwnedPtr(getDecl());  
 }
 
 void DeclRefExpr::directEmit(llvm::Serializer& S) const {
@@ -117,6 +111,12 @@ DeclRefExpr* DeclRefExpr::directMaterialize(llvm::Deserializer& D) {
   D.ReadPtr(dr->D,false);  
   return dr;
 }
+
+DeclStmt* DeclStmt::directMaterialize(llvm::Deserializer& D) {
+  ScopedDecl* decl = cast<ScopedDecl>(D.ReadOwnedPtr<Decl>());
+  return new DeclStmt(decl);
+}
+
 
 void IntegerLiteral::directEmit(llvm::Serializer& S) const {
   S.Emit(Loc);
@@ -136,4 +136,16 @@ IntegerLiteral* IntegerLiteral::directMaterialize(llvm::Deserializer& D) {
   
   return expr;
 }
-  
+
+
+void ReturnStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(RetLoc);
+  S.EmitOwnedPtr(RetExpr);
+}
+
+ReturnStmt* ReturnStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation RetLoc = SourceLocation::ReadVal(D);
+  Expr* RetExpr = D.ReadOwnedPtr<Expr>();  
+  return new ReturnStmt(RetLoc,RetExpr);
+}
+

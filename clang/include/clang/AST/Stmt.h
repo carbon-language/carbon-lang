@@ -143,6 +143,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static DeclStmt* directMaterialize(llvm::Deserializer& D);
 };
 
 /// NullStmt - This is the null statement ";": C99 6.8.3p3.
