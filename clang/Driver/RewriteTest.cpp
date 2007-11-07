@@ -95,6 +95,7 @@ namespace {
     Stmt *RewriteObjcTryStmt(ObjcAtTryStmt *S);
     Stmt *RewriteObjcCatchStmt(ObjcAtCatchStmt *S);
     Stmt *RewriteObjcFinallyStmt(ObjcAtFinallyStmt *S);
+    Stmt *RewriteObjcThrowStmt(ObjcAtThrowStmt *S);
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
     void SynthMsgSendFunctionDecl();
@@ -433,13 +434,10 @@ Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
   
   if (ObjcAtTryStmt *StmtTry = dyn_cast<ObjcAtTryStmt>(S))
     return RewriteObjcTryStmt(StmtTry);
-  
-  if (ObjcAtCatchStmt *StmtCatch = dyn_cast<ObjcAtCatchStmt>(S))
-    return RewriteObjcCatchStmt(StmtCatch);
-  
-  if (ObjcAtFinallyStmt *StmtFinally = dyn_cast<ObjcAtFinallyStmt>(S))
-    return RewriteObjcFinallyStmt(StmtFinally);
-  
+
+  if (ObjcAtThrowStmt *StmtThrow = dyn_cast<ObjcAtThrowStmt>(S))
+    return RewriteObjcThrowStmt(StmtThrow);
+    
   // Return this stmt unmodified.
   return S;
 }
@@ -529,10 +527,9 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
       // declares the @catch parameter).
       Rewrite.ReplaceText(rParenLoc, bodyBuf-rParenBuf+1, 
                           buf.c_str(), buf.size());
-   } else if (NullStmt *nullStmt = dyn_cast<NullStmt>(catchStmt)) {
-   } else
+    } else if (!isa<NullStmt>(catchStmt)) {
       assert(false && "@catch rewrite bug");
-      
+    }
     catchList = catchList->getNextCatchStmt();
   }
   // Complete the catch list...
@@ -589,6 +586,27 @@ Stmt *RewriteTest::RewriteObjcFinallyStmt(ObjcAtFinallyStmt *S) {
   return 0;
 }
 
+// This can't be done with Rewrite.ReplaceStmt(S, ThrowExpr), since 
+// the throw expression is typically a message expression that's already 
+// been rewritten! (which implies the SourceLocation's are invalid).
+Stmt *RewriteTest::RewriteObjcThrowStmt(ObjcAtThrowStmt *S) {
+  // Get the start location and compute the semi location.
+  SourceLocation startLoc = S->getLocStart();
+  const char *startBuf = SM->getCharacterData(startLoc);
+  
+  assert((*startBuf == '@') && "bogus @throw location");
+
+  std::string buf;
+  /* void objc_exception_throw(id) __attribute__((noreturn)); */
+  buf = "objc_exception_throw(";
+  Rewrite.ReplaceText(startLoc, 6, buf.c_str(), buf.size());
+  const char *semiBuf = strchr(startBuf, ';');
+  assert((*semiBuf == ';') && "@throw: can't find ';'");
+  SourceLocation semiLoc = startLoc.getFileLocWithOffset(semiBuf-startBuf);
+  buf = ");";
+  Rewrite.ReplaceText(semiLoc, 1, buf.c_str(), buf.size());
+  return 0;
+}
 
 Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   // Create a new string expression.
