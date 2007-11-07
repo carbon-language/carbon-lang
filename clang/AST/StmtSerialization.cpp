@@ -44,7 +44,10 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
       return DeclStmt::directMaterialize(D);
             
     case IntegerLiteralClass:
-      return IntegerLiteral::directMaterialize(D);      
+      return IntegerLiteral::directMaterialize(D);
+      
+    case NullStmtClass:
+      return NullStmt::directMaterialize(D);
       
     case ReturnStmtClass:
       return ReturnStmt::directMaterialize(D);        
@@ -137,6 +140,14 @@ IntegerLiteral* IntegerLiteral::directMaterialize(llvm::Deserializer& D) {
   return expr;
 }
 
+void NullStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(SemiLoc);
+}
+
+NullStmt* NullStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation SemiLoc = SourceLocation::ReadVal(D);
+  return new NullStmt(SemiLoc);
+}
 
 void ReturnStmt::directEmit(llvm::Serializer& S) const {
   S.Emit(RetLoc);

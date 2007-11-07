@@ -167,6 +167,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static NullStmt* directMaterialize(llvm::Deserializer& D);
 };
 
 /// CompoundStmt - This represents a group of statements like { stmt stmt }.
