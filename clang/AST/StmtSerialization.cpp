@@ -46,6 +46,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
     case IntegerLiteralClass:
       return IntegerLiteral::directMaterialize(D);
       
+    case LabelStmtClass:
+      return LabelStmt::directMaterialize(D);
+      
     case NullStmtClass:
       return NullStmt::directMaterialize(D);
       
@@ -138,6 +141,19 @@ IntegerLiteral* IntegerLiteral::directMaterialize(llvm::Deserializer& D) {
   D.Read(expr->Value);
   
   return expr;
+}
+
+void LabelStmt::directEmit(llvm::Serializer& S) const {
+  S.EmitPtr(Label);
+  S.Emit(IdentLoc);
+  S.EmitOwnedPtr(SubStmt);
+}
+
+LabelStmt* LabelStmt::directMaterialize(llvm::Deserializer& D) {
+  IdentifierInfo* Label = D.ReadPtr<IdentifierInfo>();
+  SourceLocation IdentLoc = SourceLocation::ReadVal(D);
+  Stmt* SubStmt = D.ReadOwnedPtr<Stmt>();
+  return new LabelStmt(IdentLoc,Label,SubStmt);
 }
 
 void NullStmt::directEmit(llvm::Serializer& S) const {
