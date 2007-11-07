@@ -657,15 +657,55 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
 // getDwarfRegNum - This function maps LLVM register identifiers to the
 // Dwarf specific numbering, used in debug info and exception tables.
 // The registers are given "basic" dwarf numbers in the .td files,
-// which are collected by TableGen into X86GenRegisterInfo::getDwarfRegNum.
-// This wrapper allows for target-specific overrides.
+// which are for the 64-bit target.  These are collected by TableGen 
+// into X86GenRegisterInfo::getDwarfRegNum and overridden here for
+// other targets.
+// FIXME:  Comments in gcc indicate that Darwin uses different numbering
+// for debug info and exception handling info:(  The numbering here is
+// for exception handling.
+
 int X86RegisterInfo::getDwarfRegNum(unsigned RegNo) const {
   int n = X86GenRegisterInfo::getDwarfRegNum(RegNo);
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-  if (Subtarget->isDarwin) {
-    // ESP and EBP are switched.
-    if (n==4) return 5;
-    if (n==5) return 4;
+  if (!Subtarget->is64Bit()) {
+    // Numbers are all different for 32-bit.  Further, some of them
+    // differ between Darwin and other targets.
+    switch (n) {
+    default: assert(0 && "Invalid argument to getDwarfRegNum"); 
+             return n;
+    case 0:  return 0;                              // ax
+    case 1:  return 2;                              // dx
+    case 2:  return 1;                              // cx
+    case 3:  return 3;                              // bx
+    case 4:  return 6;                              // si
+    case 5:  return 7;                              // di
+    case 6:  return (Subtarget->isDarwin) ? 4 : 5;  // bp
+    case 7:  return (Subtarget->isDarwin) ? 5 : 4;  // sp
+
+    case 8:  case 9:  case 10: case 11:             // r8..r15
+    case 12: case 13: case 14: case 15:
+      assert(0 && "Invalid register in 32-bit mode"); 
+      return n;
+
+    case 16: return 8;                              // ip
+
+    case 17: case 18: case 19: case 20:             // xmm0..xmm7  
+    case 21: case 22: case 23: case 24:  
+      return n+4;
+
+    case 25: case 26: case 27: case 28:             // xmm8..xmm15
+    case 29: case 30: case 31: case 32:
+      assert(0 && "Invalid register in 32-bit mode"); 
+      return n;
+
+    case 33: case 34: case 35: case 36:             // st0..st7
+    case 37: case 38: case 39: case 40:
+      return (Subtarget->isDarwin) ? n-21 : n-22;
+
+    case 41: case 42: case 43: case 44:             // mm0..mm7
+    case 45: case 46: case 47: case 48:
+      return n-12;
+    }
   }
   return n;
 }

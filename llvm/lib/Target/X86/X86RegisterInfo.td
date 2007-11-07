@@ -23,12 +23,17 @@ let Namespace = "X86" in {
   // because the register file generator is smart enough to figure out that
   // AL aliases AX if we tell it that AX aliased AL (for example).
 
-  // FIXME: X86-64 have different Dwarf numbers.
+  // Dwarf numbering is different for 32-bit and 64-bit, and there are
+  // variations by target as well.  The numbers here are for 64-bit.
+  // They are altered by X86RegisterInfo::getDwarfRegNum at runtime.  Note
+  // that we can't assign the same number here to different registers, as
+  // getDwarfRegNum has only the number here to work with.
+
   // 8-bit registers
   // Low registers
   def AL : Register<"AL">, DwarfRegNum<0>;
-  def CL : Register<"CL">, DwarfRegNum<1>;
-  def DL : Register<"DL">, DwarfRegNum<2>;
+  def DL : Register<"DL">, DwarfRegNum<1>;
+  def CL : Register<"CL">, DwarfRegNum<2>;
   def BL : Register<"BL">, DwarfRegNum<3>;
 
   // X86-64 only
@@ -47,20 +52,20 @@ let Namespace = "X86" in {
 
   // High registers X86-32 only
   def AH : Register<"AH">, DwarfRegNum<0>;
-  def CH : Register<"CH">, DwarfRegNum<1>;
-  def DH : Register<"DH">, DwarfRegNum<2>;
+  def DH : Register<"DH">, DwarfRegNum<1>;
+  def CH : Register<"CH">, DwarfRegNum<2>;
   def BH : Register<"BH">, DwarfRegNum<3>;
 
   // 16-bit registers
   def AX : RegisterWithSubRegs<"AX", [AH,AL]>, DwarfRegNum<0>;
-  def CX : RegisterWithSubRegs<"CX", [CH,CL]>, DwarfRegNum<1>;
-  def DX : RegisterWithSubRegs<"DX", [DH,DL]>, DwarfRegNum<2>;
+  def DX : RegisterWithSubRegs<"DX", [DH,DL]>, DwarfRegNum<1>;
+  def CX : RegisterWithSubRegs<"CX", [CH,CL]>, DwarfRegNum<2>;
   def BX : RegisterWithSubRegs<"BX", [BH,BL]>, DwarfRegNum<3>;
-  def SP : RegisterWithSubRegs<"SP", [SPL]>, DwarfRegNum<4>;
-  def BP : RegisterWithSubRegs<"BP", [BPL]>, DwarfRegNum<5>;
-  def SI : RegisterWithSubRegs<"SI", [SIL]>, DwarfRegNum<6>;
-  def DI : RegisterWithSubRegs<"DI", [DIL]>, DwarfRegNum<7>;
-  def IP : Register<"IP">, DwarfRegNum<8>;  
+  def SI : RegisterWithSubRegs<"SI", [SIL]>, DwarfRegNum<4>;
+  def DI : RegisterWithSubRegs<"DI", [DIL]>, DwarfRegNum<5>;
+  def BP : RegisterWithSubRegs<"BP", [BPL]>, DwarfRegNum<6>;
+  def SP : RegisterWithSubRegs<"SP", [SPL]>, DwarfRegNum<7>;
+  def IP : Register<"IP">, DwarfRegNum<16>;
   
   // X86-64 only
   def R8W  : RegisterWithSubRegs<"R8W", [R8B]>, DwarfRegNum<8>;
@@ -74,14 +79,14 @@ let Namespace = "X86" in {
 
   // 32-bit registers
   def EAX : RegisterWithSubRegs<"EAX", [AX]>, DwarfRegNum<0>;
-  def ECX : RegisterWithSubRegs<"ECX", [CX]>, DwarfRegNum<1>;
-  def EDX : RegisterWithSubRegs<"EDX", [DX]>, DwarfRegNum<2>;
+  def EDX : RegisterWithSubRegs<"EDX", [DX]>, DwarfRegNum<1>;
+  def ECX : RegisterWithSubRegs<"ECX", [CX]>, DwarfRegNum<2>;
   def EBX : RegisterWithSubRegs<"EBX", [BX]>, DwarfRegNum<3>;
-  def ESP : RegisterWithSubRegs<"ESP", [SP]>, DwarfRegNum<4>;
-  def EBP : RegisterWithSubRegs<"EBP", [BP]>, DwarfRegNum<5>;
-  def ESI : RegisterWithSubRegs<"ESI", [SI]>, DwarfRegNum<6>;
-  def EDI : RegisterWithSubRegs<"EDI", [DI]>, DwarfRegNum<7>;
-  def EIP : RegisterWithSubRegs<"EIP", [IP]>, DwarfRegNum<8>;  
+  def ESI : RegisterWithSubRegs<"ESI", [SI]>, DwarfRegNum<4>;
+  def EDI : RegisterWithSubRegs<"EDI", [DI]>, DwarfRegNum<5>;
+  def EBP : RegisterWithSubRegs<"EBP", [BP]>, DwarfRegNum<6>;
+  def ESP : RegisterWithSubRegs<"ESP", [SP]>, DwarfRegNum<7>;
+  def EIP : RegisterWithSubRegs<"EIP", [IP]>, DwarfRegNum<16>;  
   
   // X86-64 only
   def R8D  : RegisterWithSubRegs<"R8D", [R8W]>, DwarfRegNum<8>;
@@ -114,14 +119,14 @@ let Namespace = "X86" in {
   def RIP : RegisterWithSubRegs<"RIP", [EIP]>,  DwarfRegNum<16>;
 
   // MMX Registers. These are actually aliased to ST0 .. ST7
-  def MM0 : Register<"MM0">, DwarfRegNum<29>;
-  def MM1 : Register<"MM1">, DwarfRegNum<30>;
-  def MM2 : Register<"MM2">, DwarfRegNum<31>;
-  def MM3 : Register<"MM3">, DwarfRegNum<32>;
-  def MM4 : Register<"MM4">, DwarfRegNum<33>;
-  def MM5 : Register<"MM5">, DwarfRegNum<34>;
-  def MM6 : Register<"MM6">, DwarfRegNum<35>;
-  def MM7 : Register<"MM7">, DwarfRegNum<36>;
+  def MM0 : Register<"MM0">, DwarfRegNum<41>;
+  def MM1 : Register<"MM1">, DwarfRegNum<42>;
+  def MM2 : Register<"MM2">, DwarfRegNum<43>;
+  def MM3 : Register<"MM3">, DwarfRegNum<44>;
+  def MM4 : Register<"MM4">, DwarfRegNum<45>;
+  def MM5 : Register<"MM5">, DwarfRegNum<46>;
+  def MM6 : Register<"MM6">, DwarfRegNum<47>;
+  def MM7 : Register<"MM7">, DwarfRegNum<48>;
   
   // Pseudo Floating Point registers
   def FP0 : Register<"FP0">, DwarfRegNum<-1>;
@@ -153,14 +158,14 @@ let Namespace = "X86" in {
   def XMM15: Register<"XMM15">, DwarfRegNum<32>;
 
   // Floating point stack registers
-  def ST0 : Register<"ST(0)">, DwarfRegNum<11>;
-  def ST1 : Register<"ST(1)">, DwarfRegNum<12>;
-  def ST2 : Register<"ST(2)">, DwarfRegNum<13>;
-  def ST3 : Register<"ST(3)">, DwarfRegNum<14>;
-  def ST4 : Register<"ST(4)">, DwarfRegNum<15>;
-  def ST5 : Register<"ST(5)">, DwarfRegNum<16>;
-  def ST6 : Register<"ST(6)">, DwarfRegNum<17>;
-  def ST7 : Register<"ST(7)">, DwarfRegNum<18>; 
+  def ST0 : Register<"ST(0)">, DwarfRegNum<33>;
+  def ST1 : Register<"ST(1)">, DwarfRegNum<34>;
+  def ST2 : Register<"ST(2)">, DwarfRegNum<35>;
+  def ST3 : Register<"ST(3)">, DwarfRegNum<36>;
+  def ST4 : Register<"ST(4)">, DwarfRegNum<37>;
+  def ST5 : Register<"ST(5)">, DwarfRegNum<38>;
+  def ST6 : Register<"ST(6)">, DwarfRegNum<39>;
+  def ST7 : Register<"ST(7)">, DwarfRegNum<40>; 
 
   // Status flags register
   def EFLAGS : Register<"EFLAGS">;
