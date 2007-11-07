@@ -57,6 +57,9 @@ Stmt* Stmt::Materialize(llvm::Deserializer& D) {
 
     case ForStmtClass:
       return ForStmt::directMaterialize(D);
+    
+    case GotoStmtClass:
+      return GotoStmt::directMaterialize(D);
       
     case IfStmtClass:
       return IfStmt::directMaterialize(D);
@@ -222,6 +225,20 @@ ForStmt* ForStmt::directMaterialize(llvm::Deserializer& D) {
   Expr* Inc = D.ReadOwnedPtr<Expr>();
   Stmt* Body = D.ReadOwnedPtr<Stmt>();
   return new ForStmt(Init,Cond,Inc,Body,ForLoc);
+}
+
+void GotoStmt::directEmit(llvm::Serializer& S) const {
+  S.Emit(GotoLoc);
+  S.Emit(LabelLoc);
+  S.EmitPtr(Label);
+}
+
+GotoStmt* GotoStmt::directMaterialize(llvm::Deserializer& D) {
+  SourceLocation GotoLoc = SourceLocation::ReadVal(D);
+  SourceLocation LabelLoc = SourceLocation::ReadVal(D);
+  GotoStmt* stmt = new GotoStmt(NULL,GotoLoc,LabelLoc);
+  D.ReadPtr(stmt->Label); // This pointer may be backpatched later.
+  return stmt;  
 }
 
 void IfStmt::directEmit(llvm::Serializer& S) const {
