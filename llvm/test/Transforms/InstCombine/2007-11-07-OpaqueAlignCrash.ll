@@ -6,12 +6,15 @@ target triple = "i686-pc-linux-gnu"
 
 %opaque_t = type opaque
 
+%op_ts = type {opaque, i32}
+
 @g = external global %opaque_t
+@h = external global %op_ts
 
 define i32 @foo() {
 entry:
         %x = load i8* bitcast (%opaque_t* @g to i8*)
-        %y = load i32* bitcast (%opaque_t* @g to i32*)
+        %y = load i32* bitcast (%op_ts* @h to i32*)
 	%z = zext i8 %x to i32
 	%r = add i32 %y, %z
         ret i32 %r

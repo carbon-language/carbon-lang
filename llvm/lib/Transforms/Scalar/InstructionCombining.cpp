@@ -7582,7 +7582,7 @@ static unsigned GetOrEnforceKnownAlignment(Value *V, TargetData *TD,
                                            unsigned PrefAlign = 0) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
     unsigned Align = GV->getAlignment();
-    if (Align == 0 && TD && !isa<OpaqueType>(GV->getType()->getElementType())) 
+    if (Align == 0 && TD && GV->getType()->getElementType()->isSized()) 
       Align = TD->getPrefTypeAlignment(GV->getType()->getElementType());
 
     // If there is a large requested alignment and we can, bump up the alignment
