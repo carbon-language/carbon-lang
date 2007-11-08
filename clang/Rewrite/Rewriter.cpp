@@ -121,13 +121,6 @@ void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
   unsigned RealOffset = getMappedOffset(OrigOffset, true);
   assert(RealOffset+OrigLength <= Buffer.size() && "Invalid location");
 
-#if 0
-  Buffer.erase(Buffer.begin()+RealOffset, Buffer.begin()+RealOffset+OrigLength);
-  Buffer.insert(Buffer.begin()+RealOffset, NewStr, NewStr+NewLength);
-  AddDelta(OrigOffset, NewLength-OrigLength);
-  return;
-#endif
-  
   // Overwrite the common piece.
   unsigned CommonLength = std::min(OrigLength, NewLength);
   std::copy(NewStr, NewStr+CommonLength, Buffer.getAtOffset(RealOffset));
