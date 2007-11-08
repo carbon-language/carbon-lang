@@ -23,6 +23,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -213,7 +214,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   if (!UseSoftFloat && Subtarget->hasVFP2() && !Subtarget->isThumb())
     // Turn f64->i64 into FMRRD iff target supports vfp2.
     setOperationAction(ISD::BIT_CONVERT, MVT::i64, Custom);
-  
+
+  // We want to custom lower some of our intrinsics.
+  setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
+
   setOperationAction(ISD::SETCC    , MVT::i32, Expand);
   setOperationAction(ISD::SETCC    , MVT::f32, Expand);
   setOperationAction(ISD::SETCC    , MVT::f64, Expand);
@@ -882,6 +886,16 @@ SDOperand ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDOperand Op,
   return DAG.getNode(ARMISD::PIC_ADD, PtrVT, Result, PICLabel);
 }
 
+static SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG) {
+  MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getValue();
+  switch (IntNo) {
+  default: return SDOperand();    // Don't custom lower most intrinsics.
+  case Intrinsic::arm_thread_pointer:
+      return DAG.getNode(ARMISD::THREAD_POINTER, PtrVT);
+  }
+}
+
 static SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG,
                               unsigned VarArgsFrameIndex) {
   // vastart just stores the address of the VarArgsFrameIndex slot into the
@@ -1410,6 +1424,7 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FRAMEADDR:     break;
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
   case ISD::MEMCPY:        return LowerMEMCPY(Op, DAG);
+  case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
   }
   return SDOperand();
 }

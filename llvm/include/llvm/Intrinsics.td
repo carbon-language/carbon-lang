@@ -268,3 +268,4 @@ def int_init_trampoline : Intrinsic<[llvm_ptr_ty, llvm_ptr_ty, llvm_ptr_ty,
 
 include "llvm/IntrinsicsPowerPC.td"
 include "llvm/IntrinsicsX86.td"
+include "llvm/IntrinsicsARM.td"
