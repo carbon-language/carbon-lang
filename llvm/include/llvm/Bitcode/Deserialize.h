@@ -168,17 +168,20 @@ public:
   }
   
   template <typename T>
-  void BatchReadOwnedPtrs(unsigned NumPtrs, T** Ptrs) {
-    llvm::SmallVector<unsigned,20> PtrIDs;
-    PtrIDs.reserve(NumPtrs);
-    
+  void BatchReadOwnedPtrs(unsigned NumPtrs, T** Ptrs, bool AutoRegister=true) {
     for (unsigned i = 0; i < NumPtrs; ++i)
-      PtrIDs.push_back(ReadInt());
+      reinterpret_cast<uintptr_t&>(Ptrs[i]) = ReadInt();
     
-    for (unsigned i = 0; i < NumPtrs; ++i)
-      Ptrs[i] = PtrIDs[i] ? SerializeTrait<T>::Materialize(*this) : NULL;
-  }
-    
+    for (unsigned i = 0; i < NumPtrs; ++i) {
+      unsigned PtrID = reinterpret_cast<uintptr_t>(Ptrs[i]);
+      T* p = PtrID ? SerializeTrait<T>::Materialize(*this) : NULL;
+      
+      if (PtrID && AutoRegister)
+        RegisterPtr(PtrID,p);
+      
+      Ptrs[i] = p;
+    }
+  }    
   
   template <typename T>
   void ReadPtr(T*& PtrRef, bool AllowBackpatch = true) {
