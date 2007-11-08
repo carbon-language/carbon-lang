@@ -117,7 +117,7 @@ void RewriteBuffer::InsertText(unsigned OrigOffset,
 /// operation.
 void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
                                 const char *NewStr, unsigned NewLength) {
-  unsigned RealOffset = getMappedOffset(OrigOffset);
+  unsigned RealOffset = getMappedOffset(OrigOffset, true);
   assert(RealOffset+OrigLength <= Buffer.size() && "Invalid location");
 
   // Overwrite the common piece.
