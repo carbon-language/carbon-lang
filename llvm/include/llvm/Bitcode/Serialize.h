@@ -86,7 +86,7 @@ public:
   }
 
   template <typename T>
-  void BatchEmitOwnedPtrs(unsigned NumPtrs, T** Ptrs) {
+  void BatchEmitOwnedPtrs(unsigned NumPtrs, T* const * Ptrs) {
     for (unsigned i = 0; i < NumPtrs; ++i)
       EmitPtr(Ptrs[i]);
 
