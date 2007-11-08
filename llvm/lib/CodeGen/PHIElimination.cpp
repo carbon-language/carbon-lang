@@ -167,6 +167,8 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     // Realize that the destination register is defined by the PHI copy now, not
     // the PHI itself.
     LV->getVarInfo(DestReg).DefInst = PHICopy;
+
+    LV->getVarInfo(IncomingReg).UsedBlocks[MBB.getNumber()] = true;
   }
 
   // Adjust the VRegPHIUseCount map to account for the removal of this PHI
@@ -217,6 +219,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     // instruction kills the incoming value.
     //
     LiveVariables::VarInfo &InRegVI = LV->getVarInfo(SrcReg);
+    InRegVI.UsedBlocks[opBlock.getNumber()] = true;
 
     // Loop over all of the successors of the basic block, checking to see
     // if the value is either live in the block, or if it is killed in the
