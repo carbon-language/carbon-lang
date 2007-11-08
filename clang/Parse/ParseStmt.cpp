@@ -1030,3 +1030,21 @@ void Parser::ParseAsmOperandsOpt() {
     ConsumeToken();
   }
 }
+
+Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl, 
+                                           SourceLocation L, SourceLocation R) {
+  // Do not enter a scope for the brace, as the arguments are in the same scope
+  // (the function body) as the body itself.  Instead, just read the statement
+  // list and put it into a CompoundStmt for safe keeping.
+  StmtResult FnBody = ParseCompoundStatementBody();
+  
+  // If the function body could not be parsed, make a bogus compoundstmt.
+  if (FnBody.isInvalid)
+    FnBody = Actions.ActOnCompoundStmt(L, R, 0, 0, false);
+  
+  // Leave the function body scope.
+  ExitScope();
+  
+  // TODO: Pass argument information.
+  return Actions.ActOnFunctionDefBody(Decl, FnBody.Val);
+}

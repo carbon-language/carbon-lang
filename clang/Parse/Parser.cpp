@@ -462,21 +462,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   // specified Declarator for the function.
   DeclTy *Res = Actions.ActOnStartOfFunctionDef(CurScope, D);
   
-  
-  // Do not enter a scope for the brace, as the arguments are in the same scope
-  // (the function body) as the body itself.  Instead, just read the statement
-  // list and put it into a CompoundStmt for safe keeping.
-  StmtResult FnBody = ParseCompoundStatementBody();
-
-  // If the function body could not be parsed, make a bogus compoundstmt.
-  if (FnBody.isInvalid)
-    FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc, 0, 0, false);
-
-  // Leave the function body scope.
-  ExitScope();
-
-  // TODO: Pass argument information.
-  return Actions.ActOnFunctionDefBody(Res, FnBody.Val);
+  return ParseFunctionStatementBody(Res, BraceLoc, BraceLoc);  
 }
 
 /// ParseKNRParamDeclarations - Parse 'declaration-list[opt]' which provides

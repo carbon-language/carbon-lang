@@ -397,6 +397,8 @@ private:
   DeclTy *ParseDeclaration(unsigned Context);
   DeclTy *ParseSimpleDeclaration(unsigned Context);
   DeclTy *ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D);
+  DeclTy *ParseFunctionStatementBody(DeclTy *Decl, 
+                                     SourceLocation L, SourceLocation R);
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   void ParseSpecifierQualifierList(DeclSpec &DS);
   
