@@ -399,7 +399,12 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
       assert (isBitField  && "Invalid BitField size expression");
       uint64_t BitFieldSize =  FieldSize.getZExtValue();
       if (ExtraBits == 0) {
+        const llvm::Type *PrevTy = LLVMFields.back();
         const llvm::Type *Ty = CGT.ConvertType(FD->getType());
+        assert (CGT.getTargetData().getTypeSizeInBits(PrevTy) >=
+                CGT.getTargetData().getTypeSizeInBits(Ty) 
+                && "FIXME Unable to handle bit field. Reuse last field");
+                
         // Calculate extra bits available in this bitfield.
         ExtraBits = CGT.getTargetData().getTypeSizeInBits(Ty) - BitFieldSize;
         addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
