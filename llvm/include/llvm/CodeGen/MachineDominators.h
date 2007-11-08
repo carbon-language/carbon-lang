@@ -54,6 +54,11 @@ public:
     delete DT;
   }
   
+   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+     AU.setPreservesAll();
+     MachineFunctionPass::getAnalysisUsage(AU);
+   }
+  
   /// getRoots -  Return the root blocks of the current CFG.  This may include
   /// multiple blocks if we are computing post dominators.  For forward
   /// dominators, this will always be a single block (the entry node).
@@ -74,10 +79,6 @@ public:
     DT->recalculate(F);
     
     return false;
-  }
-  
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
   }
   
   inline bool dominates(MachineDomTreeNode* A, MachineDomTreeNode* B) const {
