@@ -57,7 +57,6 @@ class RewriteBuffer {
   /// string is a horribly inefficient way to do this, we should use a rope
   /// instead.
   typedef RewriteRope BufferTy;
-  //typedef std::vector<char> BufferTy;
   BufferTy Buffer;
 public:
   typedef BufferTy::const_iterator iterator;

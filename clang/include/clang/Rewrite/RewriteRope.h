@@ -87,10 +87,6 @@ public:
     return *this;
   }
  
-  inline RewriteRopeIterator operator++(int) { // Postincrement
-    RewriteRopeIterator tmp = *this; ++*this; return tmp;
-  }
-         
   RewriteRopeIterator operator+(int Offset) const {
     assert(Offset >= 0 && "FIXME: Only handle forward case so far!");
     
@@ -103,6 +99,10 @@ public:
     }
     Char += Offset;
     return RewriteRopeIterator(Piece, Char);
+  }
+  
+  inline RewriteRopeIterator operator++(int) { // Postincrement
+    RewriteRopeIterator tmp = *this; ++*this; return tmp;
   }
 };
 
@@ -146,6 +146,27 @@ public:
     CurSize = End-Start;
   }
   
+  iterator getAtOffset(unsigned Offset) {
+    assert(Offset <= CurSize && "Offset out of range!");
+    std::list<RopePiece>::iterator Piece = Chunks.begin();
+    while (Offset >= Piece->size()) {
+      Offset -= Piece->size();
+      ++Piece;
+    }
+    return iterator(Piece, Offset);
+  }
+
+  const_iterator getAtOffset(unsigned Offset) const {
+    assert(Offset <= CurSize && "Offset out of range!");
+    std::list<RopePiece>::const_iterator Piece = Chunks.begin();
+    while (Offset >= Piece->size()) {
+      Offset -= Piece->size();
+      ++Piece;
+    }
+    return const_iterator(Piece, Offset);
+  }
+  
+  
   void insert(iterator Loc, const char *Start, const char *End) {
     if (Start == End) return;
     Chunks.insert(SplitAt(Loc), MakeRopeString(Start, End));
@@ -154,9 +175,6 @@ public:
 
   void erase(iterator Start, iterator End) {
     if (Start == End) return;
-    
-    //unsigned StartChunkIdx = getChunkIdx(Start);
-    //unsigned EndChunkIdx   = getChunkIdx(End);
     
     // If erase is localized within the same chunk, this is a degenerate case.
     if (Start.CurPiece == End.CurPiece) {

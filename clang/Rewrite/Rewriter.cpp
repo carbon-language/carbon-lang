@@ -91,7 +91,8 @@ void RewriteBuffer::RemoveText(unsigned OrigOffset, unsigned Size) {
   assert(RealOffset+Size < Buffer.size() && "Invalid location");
   
   // Remove the dead characters.
-  Buffer.erase(Buffer.begin()+RealOffset, Buffer.begin()+RealOffset+Size);
+  RewriteRope::iterator I = Buffer.getAtOffset(RealOffset);
+  Buffer.erase(I, I+Size);
 
   // Add a delta so that future changes are offset correctly.
   AddDelta(OrigOffset, -Size);
@@ -106,7 +107,7 @@ void RewriteBuffer::InsertText(unsigned OrigOffset,
   assert(RealOffset <= Buffer.size() && "Invalid location");
 
   // Insert the new characters.
-  Buffer.insert(Buffer.begin()+RealOffset, StrData, StrData+StrLen);
+  Buffer.insert(Buffer.getAtOffset(RealOffset), StrData, StrData+StrLen);
   
   // Add a delta so that future changes are offset correctly.
   AddDelta(OrigOffset, StrLen);
@@ -120,14 +121,16 @@ void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
   unsigned RealOffset = getMappedOffset(OrigOffset, true);
   assert(RealOffset+OrigLength <= Buffer.size() && "Invalid location");
 
+#if 0
   Buffer.erase(Buffer.begin()+RealOffset, Buffer.begin()+RealOffset+OrigLength);
   Buffer.insert(Buffer.begin()+RealOffset, NewStr, NewStr+NewLength);
   AddDelta(OrigOffset, NewLength-OrigLength);
   return;
+#endif
   
   // Overwrite the common piece.
   unsigned CommonLength = std::min(OrigLength, NewLength);
-  std::copy(NewStr, NewStr+CommonLength, Buffer.begin()+RealOffset);
+  std::copy(NewStr, NewStr+CommonLength, Buffer.getAtOffset(RealOffset));
   
   // If replacing without shifting around, just overwrite the text.
   if (OrigLength == NewLength)
@@ -135,12 +138,12 @@ void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
 
   // If inserting more than existed before, this is like an insertion.
   if (NewLength > OrigLength) {
-    Buffer.insert(Buffer.begin()+RealOffset+OrigLength,
+    Buffer.insert(Buffer.getAtOffset(RealOffset+OrigLength),
                   NewStr+OrigLength, NewStr+NewLength);
   } else {
-    // If insertion less than existed before, this is like a removal.
-    Buffer.erase(Buffer.begin()+RealOffset+NewLength,
-                 Buffer.begin()+RealOffset+OrigLength);
+    // If inserting less than existed before, this is like a removal.
+    RewriteRope::iterator I = Buffer.getAtOffset(RealOffset+NewLength);
+    Buffer.erase(I, I+(OrigLength-NewLength));
   }
   AddDelta(OrigOffset, NewLength-OrigLength);
 }
