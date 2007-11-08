@@ -431,6 +431,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static UnaryOperator* directMaterialize(llvm::Deserializer& D);
 };
 
 /// SizeOfAlignOfTypeExpr - [C99 6.5.3.4] - This is only for sizeof/alignof of

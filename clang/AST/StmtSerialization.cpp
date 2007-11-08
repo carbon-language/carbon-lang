@@ -119,6 +119,9 @@ Stmt* Stmt::Materialize(Deserializer& D) {
     case SwitchStmtClass:
       return SwitchStmt::directMaterialize(D);
       
+    case UnaryOperatorClass:
+      return UnaryOperator::directMaterialize(D);
+      
     case WhileStmtClass:
       return WhileStmt::directMaterialize(D);
   }
@@ -530,6 +533,21 @@ SwitchStmt* SwitchStmt::directMaterialize(Deserializer& D) {
   stmt->FirstCase = FirstCase;
   
   return stmt;
+}
+
+void UnaryOperator::directEmit(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(Loc);
+  S.EmitInt(Opc);
+  S.EmitOwnedPtr(Val);
+}
+
+UnaryOperator* UnaryOperator::directMaterialize(Deserializer& D) {
+  QualType t = QualType::ReadVal(D);
+  SourceLocation L = SourceLocation::ReadVal(D);
+  Opcode Opc = static_cast<Opcode>(D.ReadInt());
+  Expr* Val = D.ReadOwnedPtr<Expr>();
+  return new UnaryOperator(Val,Opc,t,L);
 }
 
 void WhileStmt::directEmit(Serializer& S) const {
