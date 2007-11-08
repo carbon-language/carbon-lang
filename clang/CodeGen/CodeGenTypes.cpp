@@ -33,7 +33,8 @@ namespace {
   class RecordOrganizer {
   public:
     explicit RecordOrganizer(CodeGenTypes &Types) : 
-      CGT(Types), STy(NULL), FieldNo(0), Cursor(0), ExtraBits(0) {}
+      CGT(Types), STy(NULL), FieldNo(0), Cursor(0), ExtraBits(0),
+      CurrentFieldStart(0) {}
     
     /// addField - Add new field.
     void addField(const FieldDecl *FD);
@@ -72,6 +73,11 @@ namespace {
     /* If last field is a bitfield then it may not have occupied all allocated 
        bits. Use remaining bits for next field if it also a bitfield. */
     uint64_t ExtraBits; 
+    /* CurrentFieldStart - Indicates starting offset for current llvm field.
+       When current llvm field is shared by multiple bitfields, this is
+       used find starting bit offset for the bitfield from the beginning of
+       llvm field. */
+     uint64_t CurrentFieldStart;
     llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
     std::vector<const llvm::Type*> LLVMFields;
   };
@@ -397,12 +403,12 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
         // Calculate extra bits available in this bitfield.
         ExtraBits = CGT.getTargetData().getTypeSizeInBits(Ty) - BitFieldSize;
         addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
-      } else  if (ExtraBits > BitFieldSize) {
+      } else  if (ExtraBits >= BitFieldSize) {
         // Reuse existing llvm field
         ExtraBits = ExtraBits  - BitFieldSize;
-        Cursor = Cursor + BitFieldSize;
-        CGT.addFieldInfo(FD, FieldNo, Cursor /* FIXME : This is incorrect */, 
+        CGT.addFieldInfo(FD, FieldNo, Cursor - CurrentFieldStart,
                          ExtraBits);
+        Cursor = Cursor + BitFieldSize;
         ++FieldNo;
       } else 
         assert (!FD->isBitField() && "Bit fields are not yet supported");
@@ -440,6 +446,7 @@ void RecordOrganizer::addLLVMField(const llvm::Type *Ty, uint64_t Size,
     // combining consequetive padding fields.
     addPaddingFields(Cursor % AlignmentInBits);
 
+  CurrentFieldStart = Cursor;
   Cursor += Size;
   LLVMFields.push_back(Ty);
   if (FD)
