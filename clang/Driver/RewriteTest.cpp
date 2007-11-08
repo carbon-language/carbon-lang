@@ -195,7 +195,9 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
 
 RewriteTest::~RewriteTest() {
   // Get the top-level buffer that this corresponds to.
-  RewriteTabs();
+  
+  // Rewrite tabs if we care.
+  //RewriteTabs();
   
   // Rewrite Objective-c meta data*
   std::string ResultStr;

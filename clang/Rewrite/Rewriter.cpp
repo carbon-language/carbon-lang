@@ -121,7 +121,8 @@ void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
   assert(RealOffset+OrigLength <= Buffer.size() && "Invalid location");
 
   // Overwrite the common piece.
-  memcpy(&Buffer[RealOffset], NewStr, std::min(OrigLength, NewLength));
+  std::copy(NewStr, NewStr+std::min(OrigLength, NewLength),
+            Buffer.begin()+RealOffset);
   
   // If replacing without shifting around, just overwrite the text.
   if (OrigLength == NewLength)
