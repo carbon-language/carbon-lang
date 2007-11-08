@@ -38,6 +38,7 @@ namespace {
     FunctionDecl *MsgSendFunctionDecl;
     FunctionDecl *GetClassFunctionDecl;
     FunctionDecl *SelGetUidFunctionDecl;
+    FunctionDecl *CFStringFunctionDecl;
     
     // ObjC string constant support.
     FileVarDecl *ConstantStringClassReference;
@@ -52,6 +53,7 @@ namespace {
       MsgSendFunctionDecl = 0;
       GetClassFunctionDecl = 0;
       SelGetUidFunctionDecl = 0;
+      CFStringFunctionDecl = 0;
       ConstantStringClassReference = 0;
       NSStringRecord = 0;
       Rewrite.setSourceMgr(Context->SourceMgr);
@@ -107,7 +109,8 @@ namespace {
                                            Expr **args, unsigned nargs);
     void SynthMsgSendFunctionDecl();
     void SynthGetClassFunctionDecl();
-    
+    void SynthCFStringFunctionDecl();
+      
     // Metadata emission.
     void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
                                   std::string &Result);
@@ -780,7 +783,36 @@ void RewriteTest::SynthGetClassFunctionDecl() {
                                           FunctionDecl::Extern, false, 0);
 }
 
+// SynthCFStringFunctionDecl - id __builtin___CFStringMakeConstantString(const char *name);
+void RewriteTest::SynthCFStringFunctionDecl() {
+  IdentifierInfo *getClassIdent = &Context->Idents.get("__builtin___CFStringMakeConstantString");
+  llvm::SmallVector<QualType, 16> ArgTys;
+  ArgTys.push_back(Context->getPointerType(
+                     Context->CharTy.getQualifiedType(QualType::Const)));
+  QualType getClassType = Context->getFunctionType(Context->getObjcIdType(),
+                                                   &ArgTys[0], ArgTys.size(),
+                                                   false /*isVariadic*/);
+  CFStringFunctionDecl = new FunctionDecl(SourceLocation(), 
+                                          getClassIdent, getClassType,
+                                          FunctionDecl::Extern, false, 0);
+}
+
 Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
+#if 1
+  // This rewrite is specific to GCC, which has builtin support for CFString.
+  if (!CFStringFunctionDecl)
+    SynthCFStringFunctionDecl();
+  // Create a call to __builtin___CFStringMakeConstantString("cstr").
+  llvm::SmallVector<Expr*, 8> StrExpr;
+  StrExpr.push_back(Exp->getString());
+  CallExpr *call = SynthesizeCallToFunctionDecl(CFStringFunctionDecl,
+                                                &StrExpr[0], StrExpr.size());
+  // cast to NSConstantString *
+  CastExpr *cast = new CastExpr(Exp->getType(), call, SourceLocation());
+  Rewrite.ReplaceStmt(Exp, cast);
+  delete Exp;
+  return cast;
+#else
   assert(ConstantStringClassReference && "Can't find constant string reference");
   llvm::SmallVector<Expr*, 4> InitExprs;
   
@@ -818,6 +850,7 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   Rewrite.ReplaceStmt(Exp, cast);
   delete Exp;
   return cast;
+#endif
 }
 
 Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
