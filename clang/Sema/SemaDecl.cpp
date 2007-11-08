@@ -545,6 +545,42 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
 }
 
 Sema::DeclTy *
+Sema::ObjcActOnDeclarator(Scope *S, DeclTy *D, DeclTy *lastDecl) {
+  ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
+  
+  ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
+  const char *name = MDecl->getSelector().getName().c_str();
+  IdentifierInfo *II = &Context.Idents.get(name);
+  assert (II && "ObjcActOnDeclarator - selector name is missing");
+  
+  // The scope passed in may not be a decl scope.  Zip up the scope tree until
+  // we find one that is.
+  while ((S->getFlags() & Scope::DeclScope) == 0)
+    S = S->getParent();
+  
+  ScopedDecl *New;
+  QualType R = ObjcGetTypeForDeclarator(MDecl, S);
+  assert(!R.isNull() && "ObjcGetTypeForDeclarator() returned null type");
+    
+  FunctionDecl *NewFD = new FunctionDecl(MDecl->getLocation(), II, R, 
+                                         FunctionDecl::Static,
+                                         false, LastDeclarator);
+  New = NewFD;
+  
+  // If this has an identifier, add it to the scope stack.
+  if (II) {
+    New->setNext(II->getFETokenInfo<ScopedDecl>());
+    II->setFETokenInfo(New);
+    S->AddDecl(New);
+  }
+  
+  if (S->getParent() == 0)
+    AddTopLevelDecl(New, LastDeclarator);
+  
+  return New;
+}
+
+Sema::DeclTy *
 Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
   IdentifierInfo *II = D.getIdentifier();
@@ -853,7 +889,64 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
 
   return New;
 }
+
+// Called from Sema::ObjcParseStartOfFunctionDef().
+ParmVarDecl *
+Sema::ObjcParseParamDeclarator(ParmVarDecl *PI, Scope *FnScope) {
   
+  IdentifierInfo *II = PI->getIdentifier();
+  // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
+  // Can this happen for params?  We already checked that they don't conflict
+  // among each other.  Here they can only shadow globals, which is ok.
+  if (/*Decl *PrevDecl = */LookupScopedDecl(II, Decl::IDNS_Ordinary,
+                                            PI->getLocation(), FnScope)) {
+    
+  }
+  
+  // FIXME: Handle storage class (auto, register). No declarator?
+  // TODO: Chain to previous parameter with the prevdeclarator chain?
+  
+  // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
+  // Doing the promotion here has a win and a loss. The win is the type for
+  // both Decl's and DeclRefExpr's will match (a convenient invariant for the
+  // code generator). The loss is the orginal type isn't preserved. For example:
+  //
+  // void func(int parmvardecl[5]) { // convert "int [5]" to "int *"
+  //    int blockvardecl[5];
+  //    sizeof(parmvardecl);  // size == 4
+  //    sizeof(blockvardecl); // size == 20
+  // }
+  //
+  // For expressions, all implicit conversions are captured using the
+  // ImplicitCastExpr AST node (we have no such mechanism for Decl's).
+  //
+  // FIXME: If a source translation tool needs to see the original type, then
+  // we need to consider storing both types (in ParmVarDecl)...
+  // 
+  QualType parmDeclType = PI->getType();
+  if (const ArrayType *AT = parmDeclType->getAsArrayType())
+    parmDeclType = Context.getPointerType(AT->getElementType());
+  else if (parmDeclType->isFunctionType())
+    parmDeclType = Context.getPointerType(parmDeclType);
+  
+  ParmVarDecl *New = new ParmVarDecl(PI->getLocation(), II, parmDeclType, 
+                                     VarDecl::None, 0);
+  // FIXME: need to check for invalid type.
+  /**
+  if (PI.InvalidType)
+    New->setInvalidDecl();
+   */
+  
+  // If this has an identifier, add it to the scope stack.
+  if (II) {
+    New->setNext(II->getFETokenInfo<ScopedDecl>());
+    II->setFETokenInfo(New);
+    FnScope->AddDecl(New);
+  }
+  
+  return New;
+}
+
 
 Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   assert(CurFunctionDecl == 0 && "Function parsing confused");
@@ -938,6 +1031,30 @@ Sema::DeclTy *Sema::ActOnFunctionDefBody(DeclTy *D, StmtTy *Body) {
   return FD;
 }
 
+Sema::DeclTy *Sema::ObjcActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
+  assert(CurFunctionDecl == 0 && "Function parsing confused");
+  ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
+  
+  assert(MDecl != 0 && "Not a method declarator!");
+  
+  Scope *GlobalScope = FnBodyScope->getParent();
+  
+  FunctionDecl *FD =
+  static_cast<FunctionDecl*>(ObjcActOnDeclarator(GlobalScope, D, 0));
+  CurFunctionDecl = FD;
+  
+  // Create Decl objects for each parameter, adding them to the FunctionDecl.
+  llvm::SmallVector<ParmVarDecl*, 16> Params;
+  
+  for (int i = 0; i <  MDecl->getNumParams(); i++) {
+    ParmVarDecl *PDecl = MDecl->getParamDecl(i);
+    Params.push_back(ObjcParseParamDeclarator(PDecl, FnBodyScope));
+  }
+
+  FD->setParams(&Params[0], Params.size());
+  
+  return FD;
+}
 
 /// ImplicitlyDefineFunction - An undeclared identifier was used in a function
 /// call, forming a call to an implicitly defined function (per C99 6.5.1p2).

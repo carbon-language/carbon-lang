@@ -1146,38 +1146,37 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
 ///
-void Parser::ParseObjCInstanceMethodDefinition() {
+Parser::DeclTy *Parser::ParseObjCInstanceMethodDefinition() {
   assert(Tok.is(tok::minus) && "Method definitions should start with '-'");
-  
+  DeclTy *MDecl = ParseObjCMethodPrototype(ObjcImpDecl);
   // FIXME: @optional/@protocol??
-  AllImplMethods.push_back(ParseObjCMethodPrototype(ObjcImpDecl));
+  AllImplMethods.push_back(MDecl);
   // parse optional ';'
   if (Tok.is(tok::semi))
     ConsumeToken();
 
   if (Tok.isNot(tok::l_brace)) {
     Diag (Tok, diag::err_expected_lbrace);
-    return;
+    return 0;
   }
-    
-  StmtResult FnBody = ParseCompoundStatementBody();
+  return ObjcParseFunctionDefinition(MDecl);
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
 ///
-void Parser::ParseObjCClassMethodDefinition() {
+Parser::DeclTy *Parser::ParseObjCClassMethodDefinition() {
   assert(Tok.is(tok::plus) && "Class method definitions should start with '+'");
+  DeclTy *MDecl = ParseObjCMethodPrototype(ObjcImpDecl);
   // FIXME: @optional/@protocol??
-  AllImplMethods.push_back(ParseObjCMethodPrototype(ObjcImpDecl));
+  AllImplMethods.push_back(MDecl);
   // parse optional ';'
   if (Tok.is(tok::semi))
     ConsumeToken();
   if (Tok.isNot(tok::l_brace)) {
     Diag (Tok, diag::err_expected_lbrace);
-    return;
+    return 0;
   }
-  
-  StmtResult FnBody = ParseCompoundStatementBody();
+  return ObjcParseFunctionDefinition(MDecl);
 }
 
 Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {

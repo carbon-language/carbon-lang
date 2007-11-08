@@ -331,7 +331,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     return ParseObjCAtDirectives();
   case tok::minus:
     if (getLang().ObjC1) {
-      ParseObjCInstanceMethodDefinition();
+      return ParseObjCInstanceMethodDefinition();
     } else {
       Diag(Tok, diag::err_expected_external_declaration);
       ConsumeToken();
@@ -339,7 +339,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     return 0;
   case tok::plus:
     if (getLang().ObjC1) {
-      ParseObjCClassMethodDefinition();
+      return ParseObjCClassMethodDefinition();
     } else {
       Diag(Tok, diag::err_expected_external_declaration);
       ConsumeToken();
@@ -461,6 +461,31 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   // Tell the actions module that we have entered a function definition with the
   // specified Declarator for the function.
   DeclTy *Res = Actions.ActOnStartOfFunctionDef(CurScope, D);
+  
+  return ParseFunctionStatementBody(Res, BraceLoc, BraceLoc);  
+}
+
+Parser::DeclTy *Parser::ObjcParseFunctionDefinition(DeclTy *D) {
+  // We should have an opening brace now.
+  if (Tok.isNot(tok::l_brace)) {
+    Diag(Tok, diag::err_expected_fn_body);
+    
+    // Skip over garbage, until we get to '{'.  Don't eat the '{'.
+    SkipUntil(tok::l_brace, true, true);
+    
+    // If we didn't find the '{', bail out.
+    if (Tok.isNot(tok::l_brace))
+      return 0;
+  }
+  
+  SourceLocation BraceLoc = Tok.getLocation();
+  
+  // Enter a scope for the function body.
+  EnterScope(Scope::FnScope|Scope::DeclScope);
+  
+  // Tell the actions module that we have entered a function definition with the
+  // specified Declarator for the function.
+  DeclTy *Res = Actions.ObjcActOnStartOfFunctionDef(CurScope, D);
   
   return ParseFunctionStatementBody(Res, BraceLoc, BraceLoc);  
 }

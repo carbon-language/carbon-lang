@@ -172,6 +172,9 @@ public:
   //
   QualType GetTypeForDeclarator(Declarator &D, Scope *S);
   
+  QualType ObjcGetTypeForDeclarator(DeclTy *D, Scope *S);
+
+  
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
   
   virtual TypeResult ActOnParamDeclaratorType(Scope *S, Declarator &D);
@@ -181,10 +184,12 @@ private:
   //
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
   virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
+  virtual DeclTy *ObjcActOnDeclarator(Scope *S, DeclTy *D, DeclTy *LastInGroup);
   void AddInitializerToDecl(DeclTy *dcl, ExprTy *init);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
+  virtual DeclTy *ObjcActOnStartOfFunctionDef(Scope *S, DeclTy *D);
   virtual DeclTy *ActOnFunctionDefBody(DeclTy *Decl, StmtTy *Body);
   
   /// Scope actions.
@@ -226,6 +231,8 @@ private:
   /// More parsing and symbol table subroutines...
   ParmVarDecl *ParseParamDeclarator(DeclaratorChunk &FI, unsigned ArgNo,
                                     Scope *FnBodyScope);
+  ParmVarDecl *ObjcParseParamDeclarator(ParmVarDecl *param, Scope *FnBodyScope);
+  
   ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
                                SourceLocation IdLoc, Scope *S);
   ScopedDecl *LookupInterfaceDecl(IdentifierInfo *II);
