@@ -105,7 +105,7 @@ void RewriteBuffer::InsertText(unsigned OrigOffset,
   unsigned RealOffset = getMappedOffset(OrigOffset, true);
   assert(RealOffset <= Buffer.size() && "Invalid location");
 
-  // Remove the dead characters.
+  // Insert the new characters.
   Buffer.insert(Buffer.begin()+RealOffset, StrData, StrData+StrLen);
   
   // Add a delta so that future changes are offset correctly.
@@ -121,8 +121,8 @@ void RewriteBuffer::ReplaceText(unsigned OrigOffset, unsigned OrigLength,
   assert(RealOffset+OrigLength <= Buffer.size() && "Invalid location");
 
   // Overwrite the common piece.
-  std::copy(NewStr, NewStr+std::min(OrigLength, NewLength),
-            Buffer.begin()+RealOffset);
+  unsigned CommonLength = std::min(OrigLength, NewLength);
+  std::copy(NewStr, NewStr+CommonLength, Buffer.begin()+RealOffset);
   
   // If replacing without shifting around, just overwrite the text.
   if (OrigLength == NewLength)
