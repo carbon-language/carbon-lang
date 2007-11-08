@@ -15,7 +15,7 @@
 #define LLVM_CLANG_REWRITEROPE_H
 
 #include "llvm/ADT/iterator"
-#include <vector>
+#include <list>
 
 
 namespace clang {
@@ -56,18 +56,18 @@ struct RopePiece {
 
 class RewriteRope;
   
-template <typename CharType, typename PieceType>
+template <typename CharType, typename PieceIterType>
 class RewriteRopeIterator : 
-    public std::iterator<std::random_access_iterator_tag, CharType, ptrdiff_t> {
-  PieceType *CurPiece;
+             public bidirectional_iterator<CharType, ptrdiff_t> {
+  PieceIterType CurPiece;
   unsigned CurChar;
   friend class RewriteRope;
 public:
-  RewriteRopeIterator(PieceType *curPiece, unsigned curChar)
+  RewriteRopeIterator(const PieceIterType &curPiece, unsigned curChar)
     : CurPiece(curPiece), CurChar(curChar) {}
   
   CharType &operator*() const {
-    return (**CurPiece)[CurChar];
+    return (*CurPiece)[CurChar];
   }
       
   bool operator==(const RewriteRopeIterator &RHS) const {
@@ -78,7 +78,7 @@ public:
   }
 
   inline RewriteRopeIterator& operator++() {   // Preincrement
-    if (CurChar+1 < (*CurPiece)->size())
+    if (CurChar+1 < CurPiece->size())
       ++CurChar;
     else {
       CurChar = 0;
@@ -94,33 +94,15 @@ public:
   RewriteRopeIterator operator+(int Offset) const {
     assert(Offset >= 0 && "FIXME: Only handle forward case so far!");
     
-    PieceType *Piece = CurPiece;
+    PieceIterType Piece = CurPiece;
     unsigned Char = CurChar;
-    while (Char+Offset >= (*Piece)->size()) {
-      Offset -= (*Piece)->size()-Char;
+    while (Char+Offset >= Piece->size()) {
+      Offset -= Piece->size()-Char;
       ++Piece;
       Char = 0;
     }
     Char += Offset;
     return RewriteRopeIterator(Piece, Char);
-  }
-      
-  ptrdiff_t operator-(const RewriteRopeIterator &RHS) const {
-    if (CurPiece < RHS.CurPiece ||
-        (CurPiece == RHS.CurPiece && CurChar < RHS.CurChar))
-      return -RHS.operator-(*this);
-
-    PieceType *Piece = RHS.CurPiece;
-    unsigned Char = RHS.CurChar;
-
-    unsigned Offset = 0;
-    while (Piece != CurPiece) {
-      Offset += (*Piece)->size()-Char;
-      Char = 0;
-      ++Piece;
-    }
-    
-    return Offset + CurChar-Char;
   }
 };
 
@@ -128,7 +110,7 @@ public:
   
 /// RewriteRope - A powerful string class, todo generalize this.
 class RewriteRope {
-  std::vector<RopePiece*> Chunks;
+  std::list<RopePiece> Chunks;
   unsigned CurSize;
   
   /// We allocate space for string data out of a buffer of size AllocChunkSize.
@@ -140,123 +122,94 @@ public:
   RewriteRope() : CurSize(0), AllocBuffer(0), AllocOffs(AllocChunkSize) {}
   ~RewriteRope() { clear(); }
   
-  typedef RewriteRopeIterator<char, RopePiece*> iterator;
-  typedef RewriteRopeIterator<const char, RopePiece* const> const_iterator;
-  iterator begin() { 
-    if (Chunks.empty()) return iterator(0,0);
-    return iterator(&Chunks[0], 0);
-  }
-  iterator end() {
-    if (Chunks.empty()) return iterator(0,0);
-    return iterator(&Chunks[0]+Chunks.size(), 0);
-  }
-  
-  const_iterator begin() const { 
-    if (Chunks.empty()) return const_iterator(0,0);
-    return const_iterator(&Chunks[0], 0);
-  }
-  const_iterator end() const {
-    if (Chunks.empty()) return const_iterator(0,0);
-    return const_iterator(&Chunks[0]+Chunks.size(), 0);
-  }
-  
+  typedef RewriteRopeIterator<char, std::list<RopePiece>::iterator> iterator;
+  typedef RewriteRopeIterator<const char, 
+                           std::list<RopePiece>::const_iterator> const_iterator;
+
+  iterator begin() { return iterator(Chunks.begin(), 0); }
+  iterator end() { return iterator(Chunks.end(), 0); }
+  const_iterator begin() const { return const_iterator(Chunks.begin(), 0); }
+  const_iterator end() const { return const_iterator(Chunks.end(), 0); }
   
   unsigned size() const { return CurSize; }
   
   void clear() {
-    for (unsigned i = 0, e = Chunks.size(); i != e; ++i)
-      delete Chunks[i];
     Chunks.clear();
     CurSize = 0;
   }
   
   void assign(const char *Start, const char *End) {
     clear();
-    Chunks.push_back(new RopePiece(MakeRopeString(Start, End)));
+    Chunks.push_back(MakeRopeString(Start, End));
     CurSize = End-Start;
   }
   
   void insert(iterator Loc, const char *Start, const char *End) {
     if (Start == End) return;
-    
-    unsigned ChunkNo = SplitAt(Loc);
-    
-    Chunks.insert(Chunks.begin()+ChunkNo, 
-                  new RopePiece(MakeRopeString(Start, End)));
+    Chunks.insert(SplitAt(Loc), MakeRopeString(Start, End));
     CurSize += End-Start;
   }
 
   void erase(iterator Start, iterator End) {
     if (Start == End) return;
     
-    unsigned StartChunkIdx = getChunkIdx(Start);
-    unsigned EndChunkIdx   = getChunkIdx(End);
+    //unsigned StartChunkIdx = getChunkIdx(Start);
+    //unsigned EndChunkIdx   = getChunkIdx(End);
     
     // If erase is localized within the same chunk, this is a degenerate case.
-    if (StartChunkIdx == EndChunkIdx) {
-      RopePiece *Chunk = Chunks[StartChunkIdx];
+    if (Start.CurPiece == End.CurPiece) {
+      RopePiece &Chunk = *Start.CurPiece;
       unsigned NumDel = End.CurChar-Start.CurChar;
       CurSize -= NumDel;
 
       // If deleting from start of chunk, just adjust range.
       if (Start.CurChar == 0) {
-        if (Chunk->EndOffs != End.CurChar) {
-          Chunk->StartOffs += NumDel;
-        } else {
-          // Deleting entire chunk, remove it.
-          delete Chunk;
-          Chunks.erase(Chunks.begin()+StartChunkIdx);
-        }
+        if (Chunk.EndOffs != End.CurChar)
+          Chunk.StartOffs += NumDel;
+        else // Deleting entire chunk.
+          Chunks.erase(End.CurPiece);
         return;
       }
 
       // If deleting to the end of chunk, just adjust range.
-      if (End.CurChar == Chunk->size()) {
-        Chunk->EndOffs -= NumDel;
+      if (End.CurChar == Chunk.size()) {
+        Chunk.EndOffs -= NumDel;
         return;
       }
       
       // If deleting the middle of a chunk, split this chunk and adjust the end
       // piece.
-      unsigned NewIdx = SplitAt(Start);
-      Chunk = Chunks[NewIdx];
-      Chunk->StartOffs += End.CurChar-Start.CurChar;
-
+      SplitAt(Start)->StartOffs += NumDel;
       return;
     }
-
     
     // Otherwise, the start chunk and the end chunk are different.
-    
+    std::list<RopePiece>::iterator CurPiece = Start.CurPiece;
+      
     // Delete the end of the start chunk.  If it is the whole thing, remove it.
     {
-      RopePiece *StartChunk = Chunks[StartChunkIdx];
-      unsigned NumDel = StartChunk->size()-Start.CurChar;
+      RopePiece &StartChunk = *CurPiece;
+      unsigned NumDel = StartChunk.size()-Start.CurChar;
       CurSize -= NumDel;
       if (Start.CurChar == 0) {
         // Delete the whole chunk.
-        delete StartChunk;
-        Chunks.erase(Chunks.begin()+StartChunkIdx);
-        --EndChunkIdx;
+        Chunks.erase(CurPiece++);
       } else {
         // Otherwise, just move the end of chunk marker up.
-        StartChunk->EndOffs -= NumDel;
-        ++StartChunkIdx;
+        StartChunk.EndOffs -= NumDel;
+        ++CurPiece;
       }
     }
     
     // If deleting a span of chunks, nuke them all now.
-    while (StartChunkIdx != EndChunkIdx) {
-      CurSize -= Chunks[StartChunkIdx]->size();
-      delete Chunks[StartChunkIdx];
-      Chunks.erase(Chunks.begin()+StartChunkIdx);
-      --EndChunkIdx;
+    while (CurPiece != End.CurPiece) {
+      CurSize -= CurPiece->size();
+      Chunks.erase(CurPiece++);
     }
     
     // Finally, erase the start of the end chunk if appropriate.
     if (End.CurChar != 0) {
-      RopePiece *EndChunk = Chunks[EndChunkIdx];
-      EndChunk->StartOffs += End.CurChar;
+      End.CurPiece->StartOffs += End.CurChar;
       CurSize -= End.CurChar;
     }
   }
@@ -293,38 +246,29 @@ private:
     return RopePiece(AllocBuffer, 0, Len);
   }
   
-  unsigned getChunkIdx(iterator Loc) const {
-    // Return the loc idx of the specified chunk, handling empty ropes.
-    return Loc.CurPiece == 0 ? 0 : Loc.CurPiece - &Chunks[0];
-  }
-  
   /// SplitAt - If the specified iterator position has a non-zero character
   /// number, split the specified buffer up.  This guarantees that the specified
   /// iterator is at the start of a chunk.  Return the chunk it is at the start
   /// of.
-  unsigned SplitAt(iterator Loc) {
-    unsigned ChunkIdx = getChunkIdx(Loc);
+  std::list<RopePiece>::iterator SplitAt(iterator Loc) {
+    std::list<RopePiece>::iterator Chunk = Loc.CurPiece;
     
     // If the specified position is at the start of a piece, return it.
     if (Loc.CurChar == 0)
-      return ChunkIdx;
+      return Chunk;
     
     // Otherwise, we have to split the specified piece in half, inserting the 
-    // new piece into the vector of pieces.
-    RopePiece *CurPiece = *Loc.CurPiece;
+    // new piece into the list of pieces.
     
     // Make a new piece for the prefix part.
-    RopePiece *NewPiece = new RopePiece(CurPiece->StrData, CurPiece->StartOffs,
-                                        CurPiece->StartOffs+Loc.CurChar);
+    Chunks.insert(Chunk, RopePiece(Chunk->StrData, Chunk->StartOffs,
+                                   Chunk->StartOffs+Loc.CurChar));
     
     // Make the current piece refer the suffix part.
-    CurPiece->StartOffs += Loc.CurChar;
-    
-    // Insert the new piece.
-    Chunks.insert(Chunks.begin()+ChunkIdx, NewPiece);
+    Chunk->StartOffs += Loc.CurChar;
     
     // Return the old chunk, which is the suffix.
-    return ChunkIdx+1;
+    return Chunk;
   }
 };
   
