@@ -130,8 +130,14 @@ public:
 class RewriteRope {
   std::vector<RopePiece*> Chunks;
   unsigned CurSize;
+  
+  /// We allocate space for string data out of a buffer of size AllocChunkSize.
+  /// This keeps track of how much space is left.
+  RopeRefCountString *AllocBuffer;
+  unsigned AllocOffs;
+  enum { AllocChunkSize = 4080 };
 public:
-  RewriteRope() : CurSize(0) {}
+  RewriteRope() : CurSize(0), AllocBuffer(0), AllocOffs(AllocChunkSize) {}
   ~RewriteRope() { clear(); }
   
   typedef RewriteRopeIterator<char, RopePiece*> iterator;
@@ -257,12 +263,34 @@ public:
 
 private:
   RopePiece MakeRopeString(const char *Start, const char *End) {
-    unsigned Size = End-Start+sizeof(RopeRefCountString)-1;
-    RopeRefCountString *Res = 
-      reinterpret_cast<RopeRefCountString *>(new char[Size]);
-    Res->RefCount = 0;
-    memcpy(Res->Data, Start, End-Start);
-    return RopePiece(Res, 0, End-Start);
+    unsigned Len = End-Start;
+    
+    // If we have space for this string in the current alloc buffer, use it.
+    if (AllocOffs+Len <= AllocChunkSize) {
+      memcpy(AllocBuffer->Data+AllocOffs, Start, Len);
+      AllocOffs += Len;
+      return RopePiece(AllocBuffer, AllocOffs-Len, AllocOffs);
+    }
+
+    // If we don't have enough room because this specific allocation is huge,
+    // just allocate a new rope piece for it alone.
+    if (Len > AllocChunkSize) {
+      unsigned Size = End-Start+sizeof(RopeRefCountString)-1;
+      RopeRefCountString *Res = 
+        reinterpret_cast<RopeRefCountString *>(new char[Size]);
+      Res->RefCount = 0;
+      memcpy(Res->Data, Start, End-Start);
+      return RopePiece(Res, 0, End-Start);
+    }
+    
+    // Otherwise, this was a small request but we just don't have space for it
+    // Make a new chunk and share it with later allocations.
+    unsigned AllocSize = sizeof(RopeRefCountString)-1+AllocChunkSize;
+    AllocBuffer = reinterpret_cast<RopeRefCountString *>(new char[AllocSize]);
+    AllocBuffer->RefCount = 0;
+    memcpy(AllocBuffer->Data, Start, Len);
+    AllocOffs = Len;
+    return RopePiece(AllocBuffer, 0, Len);
   }
   
   unsigned getChunkIdx(iterator Loc) const {
