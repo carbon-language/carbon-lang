@@ -20,6 +20,8 @@ class Serializer;
 class Deserializer;  
 template <typename T> struct SerializeTrait;  
 
+typedef unsigned SerializedPtrID;
+
 } // end namespace llvm
 
 #endif

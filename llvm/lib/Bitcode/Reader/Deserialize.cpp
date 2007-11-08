@@ -63,15 +63,16 @@ void Deserializer::ReadRecord() {
     Code = Stream.ReadCode();
   
     if (Code == bitc::ENTER_SUBBLOCK) {
-      // No known subblocks, always skip them.
+      BlockLocs.push_back(Stream.GetCurrentBitNo());
       unsigned id = Stream.ReadSubBlockID();
       Stream.EnterSubBlock(id);
       continue;
     }
 
-    if (Code == bitc::END_BLOCK) {
+    if (Code == bitc::END_BLOCK) {      
       bool x = Stream.ReadBlockEnd();
       assert (!x && "Error at block end.");
+      BlockLocs.pop_back();
       continue;
     }
     
@@ -86,6 +87,26 @@ void Deserializer::ReadRecord() {
   assert (Record.size() == 0);  
   Stream.ReadRecord(Code,Record);  
   assert (Record.size() > 0 || Stream.AtEndOfStream());
+}
+
+Deserializer::Location Deserializer::GetCurrentBlockLocation() {
+  if (!inRecord())
+    ReadRecord();
+  
+  assert (!BlockLocs.empty());
+  return BlockLocs.back();
+}
+
+bool Deserializer::FinishedBlock(Location BlockLoc) {
+  if (!inRecord())
+    ReadRecord();
+  
+  for (llvm::SmallVector<Location,5>::reverse_iterator
+       I=BlockLocs.rbegin(), E=BlockLocs.rend(); I!=E; ++I)
+    if (*I == BlockLoc)
+      return false;
+  
+  return true;
 }
 
 bool Deserializer::AtEnd() {
@@ -159,7 +180,7 @@ void Deserializer::RegisterPtr(unsigned PtrId, const void* Ptr) {
 }
 
 void Deserializer::ReadUIntPtr(uintptr_t& PtrRef, bool AllowBackpatch) {
-  unsigned PtrId = ReadInt();
+  SerializedPtrID PtrId = ReadPtrID();
   
   if (PtrId == 0) {
     PtrRef = 0;
@@ -194,7 +215,7 @@ void Deserializer::ReadUIntPtr(uintptr_t& PtrRef, bool AllowBackpatch) {
 }
 
 uintptr_t Deserializer::ReadInternalRefPtr() {
-  unsigned PtrId = ReadInt();
+  SerializedPtrID PtrId = ReadPtrID();
   
   assert (PtrId != 0 && "References cannot refer the NULL address.");
 

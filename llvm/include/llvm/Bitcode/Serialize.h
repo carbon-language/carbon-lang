@@ -93,16 +93,17 @@ public:
     for (unsigned i = 0; i < NumPtrs; ++i)
       if (Ptrs[i]) SerializeTrait<T>::Emit(*this,*Ptrs[i]);
   }
+    
+  bool isRegistered(const void* p) const;
   
-  void FlushRecord() { if (inRecord()) EmitRecord(); }
-  
+  void FlushRecord() { if (inRecord()) EmitRecord(); }  
   void EnterBlock(unsigned BlockID = 8, unsigned CodeLen = 3);
   void ExitBlock();    
   
 private:
   void EmitRecord();
   inline bool inRecord() { return Record.size() > 0; }
-  unsigned getPtrId(const void* ptr);
+  SerializedPtrID getPtrId(const void* ptr);
 };
 
 } // end namespace llvm

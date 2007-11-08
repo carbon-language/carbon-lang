@@ -55,12 +55,12 @@ class Deserializer {
     unsigned Raw;
     
   public:
-    BPKey(unsigned PtrId) : Raw(PtrId << 1) { assert (PtrId > 0); }
+    BPKey(SerializedPtrID PtrId) : Raw(PtrId << 1) { assert (PtrId > 0); }
     BPKey(unsigned code, unsigned) : Raw(code) {}
     
     void MarkFinal() { Raw |= 0x1; }
     bool hasFinalPtr() const { return Raw & 0x1 ? true : false; }
-    unsigned getID() const { return Raw >> 1; }
+    SerializedPtrID getID() const { return Raw >> 1; }
     
     static inline BPKey getEmptyKey() { return BPKey(0,0); }
     static inline BPKey getTombstoneKey() { return BPKey(1,0); }
@@ -76,26 +76,37 @@ class Deserializer {
   typedef llvm::DenseMap<BPKey,BPEntry,BPKey,BPEntry> MapTy;
 
   //===----------------------------------------------------------===//
-  // Internal data members.
+  // Publicly visible types.
   //===----------------------------------------------------------===//
   
+public:  
+  typedef uint64_t Location;
+  
+  //===----------------------------------------------------------===//
+  // Internal data members.
+  //===----------------------------------------------------------===//
+
+private:
   BitstreamReader& Stream;
   SmallVector<uint64_t,10> Record;
   unsigned RecIdx;
   BumpPtrAllocator Allocator;
   BPNode* FreeList;
-  MapTy BPatchMap;  
+  MapTy BPatchMap;
+  llvm::SmallVector<uint64_t,5> BlockLocs;
   
   //===----------------------------------------------------------===//
   // Public Interface.
   //===----------------------------------------------------------===//
   
-public:
+public:  
   Deserializer(BitstreamReader& stream);
   ~Deserializer();
 
   uint64_t ReadInt();
   int64_t ReadSInt();
+  SerializedPtrID ReadPtrID() { return (SerializedPtrID) ReadInt(); }
+  
   
   bool ReadBool() {
     return ReadInt() ? true : false;
@@ -117,7 +128,7 @@ public:
 
   template <typename T>
   inline T* ReadOwnedPtr(bool AutoRegister = true) {
-    unsigned PtrID = ReadInt();    
+    SerializedPtrID PtrID = ReadPtrID();    
 
     if (!PtrID)
       return NULL;
@@ -139,8 +150,8 @@ public:
   void BatchReadOwnedPtrs(T1*& P1, T2*& P2,
                           bool A1=true, bool A2=true) {
 
-    unsigned ID1 = ReadInt();
-    unsigned ID2 = ReadInt();
+    SerializedPtrID ID1 = ReadPtrID();
+    SerializedPtrID ID2 = ReadPtrID();
 
     P1 = (ID1) ? SerializeTrait<T1>::Materialize(*this) : NULL;
     if (ID1 && A1) RegisterPtr(ID1,P1);
@@ -153,9 +164,9 @@ public:
   void BatchReadOwnedPtrs(T1*& P1, T2*& P2, T3*& P3,
                           bool A1=true, bool A2=true, bool A3=true) {
     
-    unsigned ID1 = ReadInt();
-    unsigned ID2 = ReadInt();
-    unsigned ID3 = ReadInt();
+    SerializedPtrID ID1 = ReadPtrID();
+    SerializedPtrID ID2 = ReadPtrID();
+    SerializedPtrID ID3 = ReadPtrID();
     
     P1 = (ID1) ? SerializeTrait<T1>::Materialize(*this) : NULL;
     if (ID1 && A1) RegisterPtr(ID1,P1);    
@@ -170,10 +181,10 @@ public:
   template <typename T>
   void BatchReadOwnedPtrs(unsigned NumPtrs, T** Ptrs, bool AutoRegister=true) {
     for (unsigned i = 0; i < NumPtrs; ++i)
-      reinterpret_cast<uintptr_t&>(Ptrs[i]) = ReadInt();
+      reinterpret_cast<SerializedPtrID&>(Ptrs[i]) = ReadPtrID();
     
     for (unsigned i = 0; i < NumPtrs; ++i) {
-      unsigned PtrID = reinterpret_cast<uintptr_t>(Ptrs[i]);
+      SerializedPtrID PtrID = reinterpret_cast<SerializedPtrID>(Ptrs[i]);
       T* p = PtrID ? SerializeTrait<T>::Materialize(*this) : NULL;
       
       if (PtrID && AutoRegister)
@@ -204,15 +215,28 @@ public:
     return *p;
   }
 
-  void RegisterPtr(unsigned PtrId, const void* Ptr);
+  void RegisterPtr(SerializedPtrID PtrId, const void* Ptr);
   
   void RegisterPtr(const void* Ptr) {
-    RegisterPtr(ReadInt(),Ptr);
+    RegisterPtr(ReadPtrID(),Ptr);
   }
   
+  template<typename T>
+  void RegisterRef(const T& x) {
+    RegisterPtr(&x);
+  }
+  
+  template<typename T>
+  void RegisterRef(SerializedPtrID PtrID, const T& x) {
+    RegisterPtr(PtrID,&x);
+  }  
+  
+  Location GetCurrentBlockLocation();
+  bool FinishedBlock(Location BlockLoc);
+  
   bool AtEnd();
-
   bool inRecord();
+  
 private:
   void ReadRecord();  
   uintptr_t ReadInternalRefPtr();

@@ -14,6 +14,10 @@
 #include "llvm/Bitcode/Serialize.h"
 #include "string.h"
 
+#ifdef DEBUG_BACKPATCH
+#include "llvm/Support/Streams.h"
+#endif
+
 using namespace llvm;
 
 Serializer::Serializer(BitstreamWriter& stream)
@@ -67,15 +71,13 @@ void Serializer::EmitCStr(const char* s, const char* end) {
     Record.push_back(*s);
     ++s;
   }
-
-  EmitRecord();
 }
 
 void Serializer::EmitCStr(const char* s) {
   EmitCStr(s,s+strlen(s));
 }
 
-unsigned Serializer::getPtrId(const void* ptr) {
+SerializedPtrID Serializer::getPtrId(const void* ptr) {
   if (!ptr)
     return 0;
   
@@ -83,10 +85,18 @@ unsigned Serializer::getPtrId(const void* ptr) {
   
   if (I == PtrMap.end()) {
     unsigned id = PtrMap.size()+1;
+#ifdef DEBUG_BACKPATCH
+    llvm::cerr << "Registered PTR: " << ptr << " => " << id << "\n";
+#endif
     PtrMap[ptr] = id;
     return id;
   }
   else return I->second;
+}
+
+bool Serializer::isRegistered(const void* ptr) const {
+  MapTy::const_iterator I = PtrMap.find(ptr);
+  return I != PtrMap.end();
 }
 
 
