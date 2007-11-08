@@ -225,10 +225,9 @@ bool isLiveIn(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
   if (V.AliveBlocks.test(MBB->getNumber()))
     return true;
   
-  for (std::vector<MachineInstr*>::iterator I = V.Kills.begin(),
-       E = V.Kills.end(); I != E; ++I)
-    if ((*I)->getParent() == MBB)
-      return true;
+  if (V.DefInst->getParent() != MBB &&
+      V.UsedBlocks.test(MBB->getNumber()))
+    return true;
   
   return false;
 }
@@ -236,11 +235,15 @@ bool isLiveIn(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
 /// isLiveOut - help method that determines, from a VarInfo, if a register is
 /// live out of a block.
 bool isLiveOut(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
-  if (V.AliveBlocks.test(MBB->getNumber()))
+  if (MBB == V.DefInst->getParent() ||
+      V.UsedBlocks.test(MBB->getNumber())) {
+    for (std::vector<MachineInstr*>::iterator I = V.Kills.begin(), 
+         E = V.Kills.end(); I != E; ++I)
+      if ((*I)->getParent() == MBB)
+        return false;
+    
     return true;
-  
-  if (V.DefInst->getParent() == MBB)
-    return true;
+  }
   
   return false;
 }
