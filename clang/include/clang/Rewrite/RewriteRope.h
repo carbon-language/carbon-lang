@@ -110,6 +110,8 @@ public:
   
 /// RewriteRope - A powerful string class, todo generalize this.
 class RewriteRope {
+  // FIXME: This could be significantly faster by using a balanced binary tree
+  // instead of a list.
   std::list<RopePiece> Chunks;
   unsigned CurSize;
   
