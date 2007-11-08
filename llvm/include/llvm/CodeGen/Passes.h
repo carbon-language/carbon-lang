@@ -58,6 +58,10 @@ namespace llvm {
   ///
   extern const PassInfo *SimpleRegisterCoalescingID;
 
+  /// BreakCriticalMachineEdges pass.  Breaks critical edges between
+  /// machine basic blocks.
+  extern const PassInfo *BreakCriticalMachineEdgesID;
+
   /// TwoAddressInstruction pass - This pass reduces two-address instructions to
   /// use two operands. This destroys SSA information but it is desired by
   /// register allocators.

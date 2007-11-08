@@ -41,7 +41,7 @@ namespace {
                                             "Break critical machine code edges");
 }
 
-//const PassInfo *llvm::BreakCriticalMachineEdgesID = X.getPassInfo();
+const PassInfo *llvm::BreakCriticalMachineEdgesID = X.getPassInfo();
 
 void BreakCriticalMachineEdges::splitCriticalEdge(MachineBasicBlock* src,
                                                   MachineBasicBlock* dst) {
