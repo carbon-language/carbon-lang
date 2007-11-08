@@ -315,7 +315,7 @@ void RewriteTest::RewriteMethods(int nMethods, ObjcMethodDecl **Methods) {
     ObjcMethodDecl *Method = Methods[i];
     SourceLocation Loc = Method->getLocStart();
 
-    Rewrite.ReplaceText(Loc, 0, "// ", 3);
+    Rewrite.InsertText(Loc, "// ", 3);
     
     // FIXME: handle methods that are declared across multiple lines.
   }
@@ -483,7 +483,7 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
   buf += "   _rethrow = objc_exception_extract(&_stack);\n";
   buf += " else { /* @catch continue */";
   
-  Rewrite.ReplaceText(startLoc, 0, buf.c_str(), buf.size());
+  Rewrite.InsertText(startLoc, buf.c_str(), buf.size());
   
   bool sawIdTypedCatch = false;
   Stmt *lastCatchBody = 0;
@@ -548,7 +548,7 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
     bodyLoc = bodyLoc.getFileLocWithOffset(1);
     buf = " } } /* @catch end */\n";
   
-    Rewrite.ReplaceText(bodyLoc, 0, buf.c_str(), buf.size());
+    Rewrite.InsertText(bodyLoc, buf.c_str(), buf.size());
     
     // Set lastCurlyLoc
     lastCurlyLoc = lastCatchBody->getLocEnd();
@@ -571,10 +571,10 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
   
     startLoc = startLoc.getFileLocWithOffset(1);
     buf = " if (!_rethrow) objc_exception_try_exit(&_stack);\n";
-    Rewrite.ReplaceText(startLoc, 0, buf.c_str(), buf.size());
+    Rewrite.InsertText(startLoc, buf.c_str(), buf.size());
     endLoc = endLoc.getFileLocWithOffset(-1);
     buf = " if (_rethrow) objc_exception_throw(_rethrow);\n";
-    Rewrite.ReplaceText(endLoc, 0, buf.c_str(), buf.size());
+    Rewrite.InsertText(endLoc, buf.c_str(), buf.size());
     
     // Set lastCurlyLoc
     lastCurlyLoc = body->getLocEnd();
@@ -582,7 +582,7 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
   // Now emit the final closing curly brace...
   lastCurlyLoc = lastCurlyLoc.getFileLocWithOffset(1);
   buf = " } /* @try scope end */\n";
-  Rewrite.ReplaceText(lastCurlyLoc, 0, buf.c_str(), buf.size());
+  Rewrite.InsertText(lastCurlyLoc, buf.c_str(), buf.size());
   return 0;
 }
 
@@ -707,8 +707,8 @@ void RewriteTest::RewriteObjcQualifiedInterfaceTypes(
       SourceLocation LessLoc = Loc.getFileLocWithOffset(startRef-endBuf);
       SourceLocation GreaterLoc = Loc.getFileLocWithOffset(endRef-endBuf+1);
       // Comment out the protocol references.
-      Rewrite.ReplaceText(LessLoc, 0, "/*", 2);
-      Rewrite.ReplaceText(GreaterLoc, 0, "*/", 2);
+      Rewrite.InsertText(LessLoc, "/*", 2);
+      Rewrite.InsertText(GreaterLoc, "*/", 2);
     }
   }
   // Now check arguments.
@@ -727,8 +727,8 @@ void RewriteTest::RewriteObjcQualifiedInterfaceTypes(
         SourceLocation LessLoc = Loc.getFileLocWithOffset(startRef-startBuf);
         SourceLocation GreaterLoc = Loc.getFileLocWithOffset(endRef-startBuf+1);
         // Comment out the protocol references.
-        Rewrite.ReplaceText(LessLoc, 0, "/*", 2);
-        Rewrite.ReplaceText(GreaterLoc, 0, "*/", 2);
+        Rewrite.InsertText(LessLoc, "/*", 2);
+        Rewrite.InsertText(GreaterLoc, "*/", 2);
       }
     } 
   }
