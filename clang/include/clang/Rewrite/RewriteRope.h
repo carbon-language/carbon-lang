@@ -32,7 +32,11 @@ struct RopePiece {
   
   RopePiece(RopeRefCountString *Str, unsigned Start, unsigned End)
     : StrData(Str), StartOffs(Start), EndOffs(End) {
-    StrData->RefCount++;
+    ++StrData->RefCount;
+  }
+  RopePiece(const RopePiece &RP)
+    : StrData(RP.StrData), StartOffs(RP.StartOffs), EndOffs(RP.EndOffs) {
+      ++StrData->RefCount;
   }
 
   ~RopePiece() {
@@ -162,8 +166,7 @@ public:
   
   void assign(const char *Start, const char *End) {
     clear();
-    Chunks.push_back(new RopePiece(MakeRopeString(Start, End), 0,
-                                   End-Start));
+    Chunks.push_back(new RopePiece(MakeRopeString(Start, End)));
     CurSize = End-Start;
   }
   
@@ -172,8 +175,8 @@ public:
     
     unsigned ChunkNo = SplitAt(Loc);
     
-    RopeRefCountString *Str = MakeRopeString(Start, End);
-    Chunks.insert(Chunks.begin()+ChunkNo, new RopePiece(Str, 0, End-Start));
+    Chunks.insert(Chunks.begin()+ChunkNo, 
+                  new RopePiece(MakeRopeString(Start, End)));
     CurSize += End-Start;
   }
 
@@ -253,13 +256,13 @@ public:
   }
 
 private:
-  RopeRefCountString *MakeRopeString(const char *Start, const char *End) {
+  RopePiece MakeRopeString(const char *Start, const char *End) {
     unsigned Size = End-Start+sizeof(RopeRefCountString)-1;
     RopeRefCountString *Res = 
       reinterpret_cast<RopeRefCountString *>(new char[Size]);
     Res->RefCount = 0;
     memcpy(Res->Data, Start, End-Start);
-    return Res;
+    return RopePiece(Res, 0, End-Start);
   }
   
   unsigned getChunkIdx(iterator Loc) const {
