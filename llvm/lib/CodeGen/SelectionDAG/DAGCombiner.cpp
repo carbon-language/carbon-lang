@@ -1420,7 +1420,8 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
 bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
                                              unsigned LoOp, unsigned HiOp) {
   // If the high half is not needed, just compute the low half.
-  if (!N->hasAnyUseOfValue(1) &&
+  bool HiExists = N->hasAnyUseOfValue(1);
+  if (!HiExists &&
       (!AfterLegalize ||
        TLI.isOperationLegal(LoOp, N->getValueType(0)))) {
     DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0),
@@ -1431,7 +1432,8 @@ bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
   }
 
   // If the low half is not needed, just compute the high half.
-  if (!N->hasAnyUseOfValue(0) &&
+  bool LoExists = N->hasAnyUseOfValue(0);
+  if (!LoExists &&
       (!AfterLegalize ||
        TLI.isOperationLegal(HiOp, N->getValueType(1)))) {
     DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1),
@@ -1441,36 +1443,35 @@ bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
     return true;
   }
 
-  // If the two computed results can be siplified separately, separate them.
-  SDOperand Lo = DAG.getNode(LoOp, N->getValueType(0),
-                             N->op_begin(), N->getNumOperands());
-  SDOperand Hi = DAG.getNode(HiOp, N->getValueType(1),
-                             N->op_begin(), N->getNumOperands());
-  unsigned LoExists = !Lo.use_empty();
-  unsigned HiExists = !Hi.use_empty();
-  SDOperand LoOpt = Lo;
-  SDOperand HiOpt = Hi;
-  if (!LoExists || !HiExists) {
-    SDOperand Pair = DAG.getNode(ISD::BUILD_PAIR, MVT::Other, Lo, Hi);
-    assert(Pair.use_empty() && "Pair with type MVT::Other already exists!");
-    LoOpt = combine(Lo.Val);
-    HiOpt = combine(Hi.Val);
-    if (!LoOpt.Val)
-      LoOpt = Pair.getOperand(0);
-    if (!HiOpt.Val)
-      HiOpt = Pair.getOperand(1);
-    DAG.DeleteNode(Pair.Val);
-  }
-  if ((LoExists || LoOpt != Lo) &&
-      (HiExists || HiOpt != Hi) &&
-      TLI.isOperationLegal(LoOpt.getOpcode(), LoOpt.getValueType()) &&
-      TLI.isOperationLegal(HiOpt.getOpcode(), HiOpt.getValueType())) {
-    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), LoOpt);
-    DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), HiOpt);
-    return true;
+  // If both halves are used, return as it is.
+  if (LoExists && HiExists)
+    return false;
+
+  // If the two computed results can be simplified separately, separate them.
+  bool RetVal = false;
+  if (LoExists) {
+    SDOperand Lo = DAG.getNode(LoOp, N->getValueType(0),
+                               N->op_begin(), N->getNumOperands());
+    SDOperand LoOpt = combine(Lo.Val);
+    if (LoOpt.Val && LoOpt != Lo &&
+        TLI.isOperationLegal(LoOpt.getOpcode(), LoOpt.getValueType())) {
+      RetVal = true;
+      DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), LoOpt);
+    }
   }
 
-  return false;
+  if (HiExists) {
+    SDOperand Hi = DAG.getNode(HiOp, N->getValueType(1),
+                               N->op_begin(), N->getNumOperands());
+    SDOperand HiOpt = combine(Hi.Val);
+    if (HiOpt.Val && HiOpt != Hi &&
+        TLI.isOperationLegal(HiOpt.getOpcode(), HiOpt.getValueType())) {
+      RetVal = true;
+      DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), HiOpt);
+    }
+  }
+
+  return RetVal;
 }
 
 SDOperand DAGCombiner::visitSMUL_LOHI(SDNode *N) {
