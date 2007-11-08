@@ -35,6 +35,9 @@ Stmt* Stmt::Materialize(Deserializer& D) {
       assert (false && "Not implemented.");
       return NULL;
     
+    case AddrLabelExprClass:
+      return AddrLabelExpr::directMaterialize(D);
+      
     case ArraySubscriptExprClass:
       return ArraySubscriptExpr::directMaterialize(D);
       
@@ -61,6 +64,9 @@ Stmt* Stmt::Materialize(Deserializer& D) {
       
     case CompoundStmtClass:
       return CompoundStmt::directMaterialize(D);
+    
+    case ConditionalOperatorClass:
+      return ConditionalOperator::directMaterialize(D);
       
     case ContinueStmtClass:
       return ContinueStmt::directMaterialize(D);
@@ -115,7 +121,10 @@ Stmt* Stmt::Materialize(Deserializer& D) {
       
     case ReturnStmtClass:
       return ReturnStmt::directMaterialize(D);
-     
+    
+    case StmtExprClass:
+      return StmtExpr::directMaterialize(D);
+      
     case StringLiteralClass:
       return StringLiteral::directMaterialize(D);
       
@@ -128,6 +137,22 @@ Stmt* Stmt::Materialize(Deserializer& D) {
     case WhileStmtClass:
       return WhileStmt::directMaterialize(D);
   }
+}
+
+void AddrLabelExpr::directEmit(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(AmpAmpLoc);
+  S.Emit(LabelLoc);
+  S.EmitPtr(Label);
+}
+
+AddrLabelExpr* AddrLabelExpr::directMaterialize(Deserializer& D) {
+  QualType t = QualType::ReadVal(D);
+  SourceLocation AALoc = SourceLocation::ReadVal(D);
+  SourceLocation LLoc = SourceLocation::ReadVal(D);
+  AddrLabelExpr* expr = new AddrLabelExpr(AALoc,LLoc,NULL,t);
+  D.ReadPtr(expr->Label); // Pointer may be backpatched.
+  return expr;
 }
 
 void ArraySubscriptExpr::directEmit(Serializer& S) const {
@@ -270,6 +295,18 @@ CompoundStmt* CompoundStmt::directMaterialize(Deserializer& D) {
     stmt->Body.push_back(D.ReadOwnedPtr<Stmt>());
   
   return stmt;
+}
+
+void ConditionalOperator::directEmit(Serializer& S) const {
+  S.Emit(getType());
+  S.BatchEmitOwnedPtrs((unsigned) END_EXPR, SubExprs);
+}
+
+ConditionalOperator* ConditionalOperator::directMaterialize(Deserializer& D) {
+  QualType t = QualType::ReadVal(D);
+  ConditionalOperator* c = new ConditionalOperator(NULL,NULL,NULL,t);
+  D.BatchReadOwnedPtrs((unsigned) END_EXPR, c->SubExprs);
+  return c;
 }
 
 void ContinueStmt::directEmit(Serializer& S) const {
@@ -418,13 +455,12 @@ ImplicitCastExpr* ImplicitCastExpr::directMaterialize(Deserializer& D) {
 }
 
 void IndirectGotoStmt::directEmit(Serializer& S) const {
-  S.EmitPtr(Target);  
+  S.EmitOwnedPtr(Target);  
 }
 
 IndirectGotoStmt* IndirectGotoStmt::directMaterialize(Deserializer& D) {
-  IndirectGotoStmt* stmt = new IndirectGotoStmt(NULL);
-  D.ReadPtr(stmt->Target); // The target may be backpatched.
-  return stmt;
+  Expr* Target = D.ReadOwnedPtr<Expr>();
+  return new IndirectGotoStmt(Target);
 }
 
 void IntegerLiteral::directEmit(Serializer& S) const {
@@ -503,6 +539,21 @@ ReturnStmt* ReturnStmt::directMaterialize(Deserializer& D) {
   SourceLocation RetLoc = SourceLocation::ReadVal(D);
   Expr* RetExpr = D.ReadOwnedPtr<Expr>();  
   return new ReturnStmt(RetLoc,RetExpr);
+}
+
+void StmtExpr::directEmit(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(LParenLoc);
+  S.Emit(RParenLoc);
+  S.EmitOwnedPtr(SubStmt);
+}
+
+StmtExpr* StmtExpr::directMaterialize(Deserializer& D) {
+  QualType t = QualType::ReadVal(D);
+  SourceLocation L = SourceLocation::ReadVal(D);
+  SourceLocation R = SourceLocation::ReadVal(D);
+  CompoundStmt* SubStmt = cast<CompoundStmt>(D.ReadOwnedPtr<Stmt>());
+  return new StmtExpr(SubStmt,t,L,R);
 }
 
 void StringLiteral::directEmit(Serializer& S) const {

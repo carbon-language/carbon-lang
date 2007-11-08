@@ -912,6 +912,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static ConditionalOperator* directMaterialize(llvm::Deserializer& D);
 };
 
 /// AddrLabelExpr - The GNU address of label extension, representing &&label.
@@ -937,6 +940,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static AddrLabelExpr* directMaterialize(llvm::Deserializer& D);
 };
 
 /// StmtExpr - This is the GNU Statement Expression extension: ({int X=4; X;}).
@@ -965,6 +971,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static StmtExpr* directMaterialize(llvm::Deserializer& D);
 };
 
 /// TypesCompatibleExpr - GNU builtin-in function __builtin_type_compatible_p.
