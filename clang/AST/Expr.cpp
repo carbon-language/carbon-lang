@@ -149,7 +149,7 @@ bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {
       else if (argType->isUnionType())
         Result = union_type_class;
       else  // FIXME: offset_type_class, method_type_class, & lang_type_class?
-        assert(1 && "CallExpr::isBuiltinClassifyType(): unimplemented type");
+        assert(0 && "CallExpr::isBuiltinClassifyType(): unimplemented type");
     }
     return true;
   }
