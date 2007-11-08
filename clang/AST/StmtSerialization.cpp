@@ -56,6 +56,9 @@ Stmt* Stmt::Materialize(Deserializer& D) {
     case CharacterLiteralClass:
       return CharacterLiteral::directMaterialize(D);
       
+    case CompoundAssignOperatorClass:
+      return CompoundAssignOperator::directMaterialize(D);
+      
     case CompoundStmtClass:
       return CompoundStmt::directMaterialize(D);
       
@@ -226,6 +229,26 @@ CharacterLiteral* CharacterLiteral::directMaterialize(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType T = QualType::ReadVal(D);
   return new CharacterLiteral(value,T,Loc);
+}
+
+void CompoundAssignOperator::directEmit(Serializer& S) const {
+  S.Emit(getType());
+  S.Emit(ComputationType);
+  S.Emit(getOperatorLoc());
+  S.EmitInt(getOpcode());
+  S.BatchEmitOwnedPtrs(getLHS(),getRHS());
+}
+
+CompoundAssignOperator* 
+CompoundAssignOperator::directMaterialize(Deserializer& D) {
+  QualType t = QualType::ReadVal(D);
+  QualType c = QualType::ReadVal(D);
+  SourceLocation L = SourceLocation::ReadVal(D);
+  Opcode Opc = static_cast<Opcode>(D.ReadInt());
+  Expr* LHS, *RHS;
+  D.BatchReadOwnedPtrs(LHS,RHS);
+  
+  return new CompoundAssignOperator(LHS,RHS,Opc,t,c,L);
 }
 
 void CompoundStmt::directEmit(Serializer& S) const {

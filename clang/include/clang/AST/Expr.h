@@ -878,6 +878,9 @@ public:
   static bool classof(const Stmt *S) { 
     return S->getStmtClass() == CompoundAssignOperatorClass; 
   }
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static CompoundAssignOperator* directMaterialize(llvm::Deserializer& D);
 };
 
 /// ConditionalOperator - The ?: operator.  Note that LHS may be null when the
