@@ -16,6 +16,7 @@
 #define LLVM_CLANG_REWRITER_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Rewrite/RewriteRope.h"
 #include <map>
 #include <vector>
 
@@ -55,15 +56,13 @@ class RewriteBuffer {
   /// Buffer - This is the actual buffer itself.  Note that using a vector or
   /// string is a horribly inefficient way to do this, we should use a rope
   /// instead.
-  typedef std::vector<char> BufferTy;
+  typedef RewriteRope BufferTy;
+  //typedef std::vector<char> BufferTy;
   BufferTy Buffer;
 public:
-
-  
   typedef BufferTy::const_iterator iterator;
   iterator begin() const { return Buffer.begin(); }
   iterator end() const { return Buffer.end(); }
-  
   
 private:  // Methods only usable by Rewriter.
   
