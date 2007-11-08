@@ -55,11 +55,12 @@ class RewriteBuffer {
   /// Buffer - This is the actual buffer itself.  Note that using a vector or
   /// string is a horribly inefficient way to do this, we should use a rope
   /// instead.
-  std::vector<char> Buffer;
+  typedef std::vector<char> BufferTy;
+  BufferTy Buffer;
 public:
 
   
-  typedef std::vector<char>::const_iterator iterator;
+  typedef BufferTy::const_iterator iterator;
   iterator begin() const { return Buffer.begin(); }
   iterator end() const { return Buffer.end(); }
   
