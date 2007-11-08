@@ -18,7 +18,7 @@
 #include "clang/Basic/TokenKinds.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Bitcode/Serialization.h"
+#include "llvm/Bitcode/SerializationFwd.h"
 #include <string> 
 #include <cassert> 
 
@@ -137,6 +137,12 @@ public:
   template<typename T>
   T *getFETokenInfo() const { return static_cast<T*>(FETokenInfo); }
   void setFETokenInfo(void *T) { FETokenInfo = T; }
+  
+  /// Emit - Serialize this IdentifierInfo to a bitstream.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Read - Deserialize an IdentifierInfo object from a bitstream.
+  void Read(llvm::Deserializer& D);  
 };
 
 /// IdentifierTable - This table implements an efficient mapping from strings to
@@ -182,12 +188,19 @@ public:
   
   void AddKeywords(const LangOptions &LangOpts);
 
+  /// Emit - Serialize this IdentifierTable to a bitstream.  This should
+  ///  be called AFTER objects that externally reference the identifiers in the 
+  ///  table have been serialized.  This is because only the identifiers that
+  ///  are actually referenced are serialized.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Materialize - Deserialize an IdentifierTable from a bitstream.
+  static IdentifierTable* Materialize(llvm::Deserializer& D);
+  
 private:  
   /// This ctor is not intended to be used by anyone except for object
   /// serialization.
-  IdentifierTable();
-  
-  friend struct llvm::SerializeTrait<IdentifierTable>;
+  IdentifierTable();  
 };
 
 /// Selector - This smart pointer class efficiently represents Objective-C
@@ -304,25 +317,6 @@ struct DenseMapInfo<clang::Selector> {
   
   static bool isPod() { return true; }
 };
-
-/// Define SerializeTrait to enable serialization for IdentifierInfos.
-template <>
-struct SerializeTrait<clang::IdentifierInfo> {
-  static void Emit(Serializer& S, const clang::IdentifierInfo& I);
-  static void Read(Deserializer& S, clang::IdentifierInfo& I);
-};
-
-/// Define SerializeTrait to enable serialization for IdentifierTables.  
-template <>
-struct SerializeTrait<clang::IdentifierTable> {
-  static void Emit(Serializer& S, const clang::IdentifierTable& X);
-  static void Read(Deserializer& S, clang::IdentifierTable& X);
-
-private:
-  static clang::IdentifierTable* Materialize(Deserializer& D);
-  friend class Deserializer;
-};
-
 }  // end namespace llvm
 
 #endif

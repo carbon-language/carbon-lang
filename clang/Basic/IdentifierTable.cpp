@@ -382,63 +382,81 @@ SelectorTable::~SelectorTable() {
 // Serialization for IdentifierInfo and IdentifierTable.
 //===----------------------------------------------------------------------===//
 
-void llvm::SerializeTrait<IdentifierInfo>::Emit(llvm::Serializer& S,
-                                                    const IdentifierInfo& I) {
-
-  S.EmitInt(I.getTokenID());
-  S.EmitInt(I.getBuiltinID());
-  S.EmitInt(I.getObjCKeywordID());  
-  S.EmitBool(I.hasMacroDefinition());
-  S.EmitBool(I.isExtensionToken());
-  S.EmitBool(I.isPoisoned());
-  S.EmitBool(I.isOtherTargetMacro());
-  S.EmitBool(I.isCPlusPlusOperatorKeyword());
-  S.EmitBool(I.isNonPortableBuiltin());   
+void IdentifierInfo::Emit(llvm::Serializer& S) const {
+  S.EmitInt(getTokenID());
+  S.EmitInt(getBuiltinID());
+  S.EmitInt(getObjCKeywordID());  
+  S.EmitBool(hasMacroDefinition());
+  S.EmitBool(isExtensionToken());
+  S.EmitBool(isPoisoned());
+  S.EmitBool(isOtherTargetMacro());
+  S.EmitBool(isCPlusPlusOperatorKeyword());
+  S.EmitBool(isNonPortableBuiltin());
+  // FIXME: FETokenInfo
 }
 
-void llvm::SerializeTrait<IdentifierInfo>::Read(llvm::Deserializer& D,
-                                                IdentifierInfo& I) {
-  I.setTokenID((tok::TokenKind) D.ReadInt());
-  I.setBuiltinID(D.ReadInt());  
-  I.setObjCKeywordID((tok::ObjCKeywordKind) D.ReadInt());  
-  I.setHasMacroDefinition(D.ReadBool());
-  I.setIsExtensionToken(D.ReadBool());
-  I.setIsPoisoned(D.ReadBool());
-  I.setIsOtherTargetMacro(D.ReadBool());
-  I.setIsCPlusPlusOperatorKeyword(D.ReadBool());
-  I.setNonPortableBuiltin(D.ReadBool());
+void IdentifierInfo::Read(llvm::Deserializer& D) {
+  setTokenID((tok::TokenKind) D.ReadInt());
+  setBuiltinID(D.ReadInt());  
+  setObjCKeywordID((tok::ObjCKeywordKind) D.ReadInt());  
+  setHasMacroDefinition(D.ReadBool());
+  setIsExtensionToken(D.ReadBool());
+  setIsPoisoned(D.ReadBool());
+  setIsOtherTargetMacro(D.ReadBool());
+  setIsCPlusPlusOperatorKeyword(D.ReadBool());
+  setNonPortableBuiltin(D.ReadBool());
+  // FIXME: FETokenInfo
 }
 
-void llvm::SerializeTrait<IdentifierTable>::Emit(llvm::Serializer& S,
-                                                 const IdentifierTable& T){
-  S.Emit<unsigned>(T.size());
+void IdentifierTable::Emit(llvm::Serializer& S) const {
+  S.EnterBlock();
   
-  for (clang::IdentifierTable::iterator I=T.begin(), E=T.end(); I != E; ++I) {
-    S.EmitCStr(I->getKeyData());
-    S.EmitPtr(&I->getValue());
-    S.Emit(I->getValue());
+  for (iterator I=begin(), E=end(); I != E; ++I) {
+    const char* Key = I->getKeyData();
+    const IdentifierInfo* Info = &I->getValue();
+    
+    bool KeyRegistered = true; // FIXME: S.isRegistered(Key);
+    bool InfoRegistered = true; // FIXME: S.isRegistered(Info);
+    
+    if (KeyRegistered || InfoRegistered) {
+      // These acrobatics are so that we don't incur the cost of registering
+      // a pointer with the backpatcher during deserialization if nobody
+      // references the object.
+      S.EmitPtr(InfoRegistered ? Info : NULL);
+      S.EmitPtr(KeyRegistered ? Key : NULL);
+      S.EmitCStr(Key);
+      S.Emit(*Info);
+    }
   }
+  
+  S.ExitBlock();
 }
 
-void llvm::SerializeTrait<IdentifierTable>::Read(llvm::Deserializer& D,
-                                                 IdentifierTable& T) {
-  unsigned len = D.ReadInt();
+IdentifierTable* IdentifierTable::Materialize(llvm::Deserializer& D) {
+  llvm::Deserializer::Location BLoc = D.GetCurrentBlockLocation();
+
   std::vector<char> buff;
   buff.reserve(200);
-  
-  for (unsigned i = 0; i < len; ++i) {
-    D.ReadCStr(buff);
-    IdentifierInfo& Info = T.get(&buff[0],&buff[0]+buff.size());
-    D.RegisterPtr(&Info);
-    D.Read(Info);
-  }
-}
 
-IdentifierTable*
-llvm::SerializeTrait<IdentifierTable>::Materialize(llvm::Deserializer& D)
-{
   IdentifierTable* t = new IdentifierTable();
-  D.Read(*t);
+  
+  while (!D.FinishedBlock(BLoc)) {
+    llvm::SerializedPtrID InfoPtrID = D.ReadPtrID();
+    llvm::SerializedPtrID KeyPtrID = D.ReadPtrID();
+    
+    D.ReadCStr(buff);
+    
+    llvm::StringMapEntry<IdentifierInfo>& Entry =
+      t->HashTable.GetOrCreateValue(&buff[0],&buff[0]+buff.size());
+    
+    D.Read(Entry.getValue());
+    
+    if (InfoPtrID)
+      D.RegisterRef(InfoPtrID,Entry.getValue());
+    
+    if (KeyPtrID)
+      D.RegisterPtr(KeyPtrID,Entry.getKeyData());
+  }
+  
   return t;
 }
-
