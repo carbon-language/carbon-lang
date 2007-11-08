@@ -231,10 +231,11 @@ public:
 
 // SwitchCase is the base class for CaseStmt and DefaultStmt,
 class SwitchCase : public Stmt {
+protected:
   // A pointer to the following CaseStmt or DefaultStmt class,
   // used by SwitchStmt.
   SwitchCase *NextSwitchCase;
-protected:
+
   SwitchCase(StmtClass SC) : Stmt(SC), NextSwitchCase(0) {}
   
 public:

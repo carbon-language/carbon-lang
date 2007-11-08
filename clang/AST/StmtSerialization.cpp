@@ -190,17 +190,14 @@ CallExpr* CallExpr::directMaterialize(Deserializer& D) {
 void CaseStmt::directEmit(Serializer& S) const {
   S.Emit(CaseLoc);
   S.EmitPtr(getNextSwitchCase());
-  S.BatchEmitOwnedPtrs(getLHS(),getRHS(),getSubStmt());
+  S.BatchEmitOwnedPtrs((unsigned) END_EXPR,&SubExprs[0]);
 }
 
 CaseStmt* CaseStmt::directMaterialize(Deserializer& D) {
   SourceLocation CaseLoc = SourceLocation::ReadVal(D);
-  Expr *LHS, *RHS;
-  Stmt* SubStmt;
-  D.BatchReadOwnedPtrs(LHS,RHS,SubStmt);
-  
-  CaseStmt* stmt = new CaseStmt(LHS,RHS,SubStmt,CaseLoc);
-  stmt->setNextSwitchCase(D.ReadPtr<SwitchCase>());  
+  CaseStmt* stmt = new CaseStmt(NULL,NULL,NULL,CaseLoc);  
+  D.ReadPtr(stmt->NextSwitchCase);
+  D.BatchReadOwnedPtrs((unsigned) END_EXPR,&stmt->SubExprs[0]);
   return stmt;
 }
 
