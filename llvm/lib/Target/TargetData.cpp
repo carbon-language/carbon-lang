@@ -211,7 +211,7 @@ void TargetData::init(const std::string &TargetDescription) {
     case 'f':
     case 'a':
     case 's': {
-      AlignTypeEnum align_type;
+      AlignTypeEnum align_type = STACK_ALIGN; // Dummy init, silence warning
       switch(*p) {
         case 'i': align_type = INTEGER_ALIGN; break;
         case 'v': align_type = VECTOR_ALIGN; break;
