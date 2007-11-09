@@ -170,6 +170,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\BreakCriticalMachineEdges.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\CollectorMetadata.cpp"
 				>
 			</File>

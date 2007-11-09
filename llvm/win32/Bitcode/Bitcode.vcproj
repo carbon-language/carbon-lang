@@ -177,6 +177,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\Bitcode\Reader\DeserializeAPFloat.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\Bitcode\Reader\DeserializeAPInt.cpp"
 					>
 				</File>
@@ -198,6 +202,10 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Bitcode\Writer\Serialize.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\Bitcode\Writer\SerializeAPFloat.cpp"
 					>
 				</File>
 				<File
