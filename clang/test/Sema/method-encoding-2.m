@@ -1,4 +1,5 @@
-// RUN: clang -rewrite-test %s
+// RUN: clang %s
+// TODO: We don't support rewrite of method definitions
 
 @interface Intf 
 - (in out bycopy id) address:(byref inout void *)location with:(out oneway unsigned **)arg2;

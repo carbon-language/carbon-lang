@@ -1045,9 +1045,26 @@ Sema::DeclTy *Sema::ObjcActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
   llvm::SmallVector<ParmVarDecl*, 16> Params;
+  ParmVarDecl *PDecl;
+  // Insert the invisible arguments!
+  if (MDecl->isInstance())
+    // FIXME: type is wrong.
+    PDecl = new ParmVarDecl(SourceLocation(/*FIXME*/), 
+                            &Context.Idents.get("self"),
+                            Context.getObjcIdType(), VarDecl::None, 0);
+  else
+    PDecl = new ParmVarDecl(SourceLocation(/*FIXME*/), 
+                            &Context.Idents.get("self"),
+                            Context.getObjcIdType(), VarDecl::None, 0);
+  Params.push_back(ObjcParseParamDeclarator(PDecl, FnBodyScope));
+  PDecl = new ParmVarDecl(SourceLocation(/*FIXME*/), 
+                          &Context.Idents.get("_cmd"),
+                          Context.getObjcSelType(), VarDecl::None, 0);
+  Params.push_back(ObjcParseParamDeclarator(PDecl, FnBodyScope));
   
+    
   for (int i = 0; i <  MDecl->getNumParams(); i++) {
-    ParmVarDecl *PDecl = MDecl->getParamDecl(i);
+    PDecl = MDecl->getParamDecl(i);
     Params.push_back(ObjcParseParamDeclarator(PDecl, FnBodyScope));
   }
 

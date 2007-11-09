@@ -325,13 +325,21 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   return T;
 }
 
-/// GetTypeForDeclarator - Convert the type for the specified declarator to Type
+/// ObjcGetTypeForDeclarator - Convert the type for the specified declarator to Type
 /// instances.
 QualType Sema::ObjcGetTypeForDeclarator(DeclTy *D, Scope *S) {
   ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
   QualType T = MDecl->getResultType();
   llvm::SmallVector<QualType, 16> ArgTys;
   
+  // Add the first two invisible argument types for self and _cmd.
+  if (MDecl->isInstance())
+    // FIXME: interface-name *
+    ArgTys.push_back(Context.getObjcIdType());
+  else
+    ArgTys.push_back(Context.getObjcIdType());
+  ArgTys.push_back(Context.getObjcSelType());
+      
   for (int i = 0; i <  MDecl->getNumParams(); i++) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
     QualType ArgTy = PDecl->getType();
