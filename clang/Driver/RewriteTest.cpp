@@ -96,7 +96,7 @@ namespace {
     bool needToScanForQualifiers(QualType T);
     
     // Expression Rewriting.
-    Stmt *RewriteFunctionBody(Stmt *S);
+    Stmt *RewriteFunctionBodyOrGlobalInitializer(Stmt *S);
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
     Stmt *RewriteAtSelector(ObjCSelectorExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
@@ -185,7 +185,7 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
 void RewriteTest::HandleDeclInMainFile(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     if (Stmt *Body = FD->getBody())
-      FD->setBody(RewriteFunctionBody(Body));
+      FD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
   
   if (ObjcImplementationDecl *CI = dyn_cast<ObjcImplementationDecl>(D))
     ClassImplementation.push_back(CI);
@@ -193,6 +193,10 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
     CategoryImplementation.push_back(CI);
   else if (ObjcClassDecl *CD = dyn_cast<ObjcClassDecl>(D))
     RewriteForwardClassDecl(CD);
+  else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (VD->getInit())
+      RewriteFunctionBodyOrGlobalInitializer(VD->getInit());
+  }
   // Nothing yet.
 }
 
@@ -414,12 +418,12 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
 // Function Body / Expression rewriting
 //===----------------------------------------------------------------------===//
 
-Stmt *RewriteTest::RewriteFunctionBody(Stmt *S) {
+Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   // Otherwise, just rewrite all children.
   for (Stmt::child_iterator CI = S->child_begin(), E = S->child_end();
        CI != E; ++CI)
     if (*CI) {
-      Stmt *newStmt = RewriteFunctionBody(*CI);
+      Stmt *newStmt = RewriteFunctionBodyOrGlobalInitializer(*CI);
       if (newStmt) 
         *CI = newStmt;
     }
