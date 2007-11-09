@@ -1,0 +1,221 @@
+#!/bin/sh
+# LLVM LOCAL file B&I
+
+set -x
+
+# -arch arguments are different than configure arguments. We need to
+# translate them.
+
+TRANSLATE_ARCH="sed -e s/ppc/powerpc/ -e s/i386/i686/"
+
+# Build LLVM the "Apple way".
+# Parameters:
+
+# The first parameter is a space-separated list of the architectures the
+# compilers will run on. For instance, "ppc i386". If the current machine
+# isn't in the list, it will (effectively) be added.
+HOSTS=`echo $1 | $TRANSLATE_ARCH `
+
+# The second parameter is a space-separated list of the architectures the
+# compilers will generate code for. If the current machine isn't in the list, a
+# compiler for it will get built anyway, but won't be installed.
+TARGETS=`echo $2 | $TRANSLATE_ARCH`
+
+# The third parameter is the path to the compiler sources. There should be a
+# shell script named 'configure' in this directory. This script makes a copy...
+ORIG_SRC_DIR="$3"
+
+# The fourth parameter is the location where the LLVM will be installed. You can
+# move it once it's built, so this mostly controls the layout of $DEST_DIR.
+DEST_ROOT="$4"
+
+# The fifth parameter is the place where the compiler will be copied once it's
+# built.
+DEST_DIR="$5"
+
+# The sixth parameter is a directory in which to place information (like
+# unstripped executables and generated source files) helpful in debugging the
+# resulting compiler.
+SYM_DIR="$6"
+
+# The seventh parameter is the version number of the submission, e.g. 1007.
+LLVM_SUBMIT_VERSION="$7"
+
+# The eighth parameter is the subversion number of the submission, e.g. 03.
+LLVM_SUBMIT_SUBVERSION="$8"
+
+# The nineth parameter is a yes/no that indicates whether assertions should be
+# enabled in the LLVM libs/tools.
+LLVM_ASSERTIONS="$9"
+
+# The current working directory is where the build will happen. It may already
+# contain a partial result of an interrupted build, in which case this script
+# will continue where it left off.
+DIR=`pwd`
+
+DARWIN_VERS=`uname -r | sed 's/\..*//'`
+echo DARWIN_VERS = $DARWIN_VERS
+
+# If the user has CC set in their environment unset it now
+unset CC
+
+# The B&I build srcript (~rc/bin/buildit) accepts an '-othercflags' command-line
+# flag, and captures the argument to that flag in $RC_NONARCH_CFLAGS (and
+# mysteriously prepends '-pipe' thereto). We will allow this to override the
+# default $CFLAGS and $CXXFLAGS.
+
+if [ "x$LLVM_DEBUG" == "x" ]; then
+    CFLAGS="-g -O2 ${RC_NONARCH_CFLAGS/-pipe/}"
+    OPTIMIZE_OPTS="ENABLE_OPTIMIZED=1"
+else
+    CFLAGS="-g"
+    OPTIMIZE_OPTS=
+fi
+
+################################################################################
+# Run the build.
+
+# Create the source tree we'll actually use to build, deleting
+# tcl since it doesn't actually build properly in a cross environment
+# and we don't really need it.
+SRC_DIR=$DIR/src
+rm -rf $SRC_DIR || exit 1
+mkdir $SRC_DIR || exit 1
+ln -s $ORIG_SRC_DIR/* $SRC_DIR/ || exit 1
+
+# Build the LLVM tree universal.
+mkdir -p $DIR/obj-llvm || exit 1
+cd $DIR/obj-llvm || exit 1
+
+if [ \! -f Makefile.config ]; then
+    $SRC_DIR/llvm/configure --prefix=$DEST_DIR$DEST_ROOT \
+        --enable-targets=x86,powerpc --enable-assertions=$LLVM_ASSERTIONS \
+        || exit 1
+fi
+
+if [ "x$LLVM_SUBMIT_SUBVERSION" = "x00" -o "x$LLVM_SUBMIT_SUBVERSION" = "x0" ]; then
+    LLVM_VERSION="$LLVM_SUBMIT_VERSION"
+else
+    LLVM_VERSION="$LLVM_SUBMIT_VERSION-$LLVM_SUBMIT_SUBVERSION"
+fi
+
+# Note: Don't pass -jN here.  Building universal already has parallelism and we
+# don't want to make the builders hit swap by firing off too many gcc's at the
+# same time.
+make $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$LLVM_ARCHS" \
+    CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_VERSION\"'"
+
+if ! test $? == 0 ; then
+    echo "error: LLVM 'make' failed!"
+    exit 1
+fi 
+
+# Figure out how many make processes to run.
+SYSCTL=`sysctl -n hw.activecpu`
+
+# hw.activecpu only available in 10.2.6 and later
+if [ -z "$SYSCTL" ]; then
+  SYSCTL=`sysctl -n hw.ncpu`
+fi
+
+# sysctl -n hw.* does not work when invoked via B&I chroot /BuildRoot. Builders
+# can default to 2, since even if they are single processor, nothing else is
+# running on the machine.
+if [ -z "$SYSCTL" ]; then
+  SYSCTL=2
+fi
+
+################################################################################
+# Construct the actual destination root, by copying stuff from $DIR/dst-* to
+# $DEST_DIR, with occasional 'lipo' commands.
+
+cd $DEST_DIR || exit 1
+
+# Clean out DEST_DIR in case -noclean was passed to buildit.
+rm -rf * || exit 1
+
+cd $DIR/obj-llvm || exit 1
+
+# Install the tree into the destination directory.
+make $LOCAL_MAKEFLAGS $OPTIMIZE_OPTS UNIVERSAL=1 OPTIMIZE_OPTION='-O2' install
+
+if ! test $? == 0 ; then
+    echo "error: LLVM 'make install' failed!"
+    exit 1
+fi 
+
+# Install Version.h
+if [ "x$LLVM_SUBMIT_SUBVERSION" = "x00" -o "x$LLVM_SUBMIT_SUBVERSION" = "x0" ]; then
+    RC_ProjectSourceSubversion=0
+else
+    case "$LLVM_SUBMIT_SUBVERSION" in
+        01) RC_ProjectSourceSubversion=1 ;;
+        02) RC_ProjectSourceSubversion=2 ;;
+        03) RC_ProjectSourceSubversion=3 ;;
+        04) RC_ProjectSourceSubversion=4 ;;
+        05) RC_ProjectSourceSubversion=5 ;;
+        06) RC_ProjectSourceSubversion=6 ;;
+        07) RC_ProjectSourceSubversion=7 ;;
+        08) RC_ProjectSourceSubversion=8 ;;
+        09) RC_ProjectSourceSubversion=9 ;;
+        *)  RC_ProjectSourceSubversion=$LLVM_SUBMIT_SUBVERSION ;;
+    esac
+fi
+
+echo "#define LLVM_VERSION ${RC_ProjectSourceVersion}" > $DEST_DIR$DEST_ROOT/include/llvm/Version.h
+echo "#define LLVM_MINOR_VERSION ${RC_ProjectSourceSubversion}" >> $DEST_DIR$DEST_ROOT/include/llvm/Version.h
+
+# Strip local symbols from llvm libraries.
+strip -S $DEST_DIR$DEST_ROOT/lib/*.[oa]
+strip -Sx $DEST_DIR$DEST_ROOT/lib/*.so
+
+# Remove .dir files 
+cd $DEST_DIR$DEST_ROOT
+rm bin/.dir etc/llvm/.dir lib/.dir
+
+# Remove PPC64 fat slices.
+cd $DEST_DIR$DEST_ROOT/bin
+
+if [ $MACOSX_DEPLOYMENT_TARGET = "10.4" ]; then
+    find . -perm 755 -type f -exec lipo -extract ppc -extract i386 {} -output {} \;
+else
+    find . -perm 755 -type f -exec lipo -extract ppc7400 -extract i386 {} -output {} \;
+fi
+
+cd $DEST_DIR$DEST_ROOT
+lipo -extract ppc -extract i386 lib/LLVMlto.0.0.0.so -output lib/LLVMlto.0.0.0.so
+
+################################################################################
+# Create SYM_DIR with information required for debugging.
+
+cd $SYM_DIR || exit 1
+
+# Clean out SYM_DIR in case -noclean was passed to buildit.
+rm -rf * || exit 1
+
+# Generate .dSYM files
+find $DEST_DIR -perm -0111 -type f -print | xargs -n 1 -P ${SYSCTL} dsymutil
+
+# Save .dSYM files and .a archives
+cd $DEST_DIR || exit 1
+find . \( -path \*.dSYM/\* -or -name \*.a \) -print \
+    | cpio -pdml $SYM_DIR || exit 1
+
+# Save source files.
+mkdir $SYM_DIR/src || exit 1
+cd $DIR || exit 1
+find obj-* -name \*.\[chy\] -o -name \*.cpp -print \
+    | cpio -pdml $SYM_DIR/src || exit 1
+
+################################################################################
+# Remove debugging information from DEST_DIR.
+
+find $DEST_DIR -name \*.a -print | xargs ranlib || exit 1
+find $DEST_DIR -name \*.dSYM -print | xargs rm -r || exit 1
+chgrp -h -R wheel $DEST_DIR
+chgrp -R wheel $DEST_DIR
+
+################################################################################
+# w00t! Done!
+
+exit 0
