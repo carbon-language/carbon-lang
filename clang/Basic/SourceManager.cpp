@@ -193,12 +193,12 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
     int PhysDelta = PhysLoc.getRawFilePos() -
                     LastOne.getPhysicalLoc().getRawFilePos();
     if (SourceLocation::isValidMacroPhysOffs(PhysDelta))
-      return SourceLocation::getMacroLoc(i, PhysDelta, 0);
+      return SourceLocation::getMacroLoc(i, PhysDelta, false, false);
   }
   
  
   MacroIDs.push_back(MacroIDInfo::get(InstantLoc, PhysLoc));
-  return SourceLocation::getMacroLoc(MacroIDs.size()-1, 0, 0);
+  return SourceLocation::getMacroLoc(MacroIDs.size()-1, 0, false, false);
 }
 
 /// getBufferData - Return a pointer to the start and end of the character

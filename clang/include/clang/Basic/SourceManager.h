@@ -291,8 +291,7 @@ public:
     // File locations are both physical and logical.
     if (Loc.isFileID()) return Loc;
 
-    SourceLocation ILoc = MacroIDs[Loc.getMacroID()].getInstantiationLoc();
-    return ILoc.getFileLocWithOffset(Loc.getMacroLogOffs());
+    return MacroIDs[Loc.getMacroID()].getInstantiationLoc();
   }
   
   /// getPhysicalLoc - Given a SourceLocation object, return the physical

@@ -26,13 +26,27 @@ class SourceLocation {
   unsigned ID;
 public:
   enum {
+    // FileID Layout:
+    // bit 31: 0 -> FileID, 1 -> MacroID (invalid for FileID)
+    //     30...17 -> FileID of source location, index into SourceManager table.
     FileIDBits  = 14,
+    //      0...16 -> Index into the chunk of the specified FileID.
     FilePosBits = 32-1-FileIDBits,
     
+    // MacroID Layout:
+    // bit 31: 1 -> MacroID, 0 -> FileID (invalid for MacroID)
+
+    // bit 30: 1 -> Start of macro expansion marker.
+    MacroStartOfExpansionBit = 30,
+    // bit 29: 1 -> End of macro expansion marker.
+    MacroEndOfExpansionBit = 29,
+    // bits 28...9 -> MacroID number.
     MacroIDBits       = 20,
+    // bits 8...0  -> Macro Physical offset
     MacroPhysOffsBits = 9,
-    MacroLogOffBits   = 2,
     
+    
+    // Useful constants.
     ChunkSize = (1 << FilePosBits)
   };
 
@@ -40,6 +54,13 @@ public:
   
   bool isFileID() const { return (ID >> 31) == 0; }
   bool isMacroID() const { return (ID >> 31) != 0; }
+  
+  /// isValid - Return true if this is a valid SourceLocation object.  Invalid
+  /// SourceLocations are often used when events have no corresponding location
+  /// in the source (e.g. a diagnostic is required for a command line option).
+  ///
+  bool isValid() const { return ID != 0; }
+  bool isInvalid() const { return ID == 0; }
   
   static SourceLocation getFileLoc(unsigned FileID, unsigned FilePos) {
     SourceLocation L;
@@ -65,27 +86,22 @@ public:
   }
   
   static SourceLocation getMacroLoc(unsigned MacroID, int PhysOffs,
-                                    unsigned LogOffs) {
+                                    bool isExpansionStart, bool isExpansionEnd){
     assert(MacroID < (1 << MacroIDBits) && "Too many macros!");
     assert(isValidMacroPhysOffs(PhysOffs) && "Physoffs too large!");
-    assert(LogOffs  < (1 << MacroLogOffBits) && "Logical offs too large!");
     
+    // Mask off sign bits.
     PhysOffs &= (1 << MacroPhysOffsBits)-1;
     
     SourceLocation L;
-    L.ID = (1 << 31) | (MacroID << (MacroPhysOffsBits+MacroLogOffBits)) |
-           (PhysOffs << MacroLogOffBits) |
-           LogOffs;
+    L.ID = (1 << 31) |
+           (isExpansionStart << MacroStartOfExpansionBit) |
+           (isExpansionEnd << MacroEndOfExpansionBit) |
+           (MacroID << MacroPhysOffsBits) |
+           PhysOffs;
     return L;
   }
   
-  
-  /// isValid - Return true if this is a valid SourceLocation object.  Invalid
-  /// SourceLocations are often used when events have no corresponding location
-  /// in the source (e.g. a diagnostic is required for a command line option).
-  ///
-  bool isValid() const { return ID != 0; }
-  bool isInvalid() const { return ID == 0; }
   
   /// getFileID - Return the file identifier for this SourceLocation.  This
   /// FileID can be used with the SourceManager object to obtain an entire
@@ -106,20 +122,15 @@ public:
 
   unsigned getMacroID() const {
     assert(isMacroID() && "Is not a macro id!");
-    return (ID >> (MacroPhysOffsBits+MacroLogOffBits)) & ((1 << MacroIDBits)-1);
+    return (ID >> MacroPhysOffsBits) & ((1 << MacroIDBits)-1);
   }
   
   int getMacroPhysOffs() const {
     assert(isMacroID() && "Is not a macro id!");
-    int Val = (ID >> MacroLogOffBits) & ((1 << MacroPhysOffsBits)-1);
+    int Val = ID & ((1 << MacroPhysOffsBits)-1);
     // Sign extend it properly.
     unsigned ShAmt = sizeof(int)*8 - MacroPhysOffsBits;
     return (Val << ShAmt) >> ShAmt;
-  }
-  
-  unsigned getMacroLogOffs() const {
-    assert(isMacroID() && "Is not a macro id!");
-    return ID & ((1 << MacroLogOffBits)-1);
   }
   
   /// getFileLocWithOffset - Return a source location with the specified offset
