@@ -156,7 +156,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
           continue;
 
         SDNode *OpN = SU->Node->getOperand(j).Val;
-        SUnit *OpSU = SUnitMap[OpN][SU->InstanceNo];
+        SUnit *OpSU = isPassiveNode(OpN) ? NULL : SUnitMap[OpN][SU->InstanceNo];
         if (OpSU && OperandSeen.count(OpSU) == 1) {
           // Ok, so SU is not the last use of OpSU, but SU is two-address so
           // it will clobber OpSU. Try to commute SU if no other source operands
@@ -165,7 +165,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
           for (unsigned k = 0; k < NumOps; ++k) {
             if (k != j) {
               OpN = SU->Node->getOperand(k).Val;
-              OpSU = SUnitMap[OpN][SU->InstanceNo];
+              OpSU = isPassiveNode(OpN) ? NULL : SUnitMap[OpN][SU->InstanceNo];
               if (OpSU && OperandSeen.count(OpSU) == 1) {
                 DoCommute = false;
                 break;
@@ -1252,7 +1252,8 @@ bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
     for (unsigned i = 0; i != NumOps; ++i) {
       if (TII->getOperandConstraint(Opc, i+NumRes, TOI::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(i).Val;
-        if (Op == (*SUnitMap)[DU][SU->InstanceNo])
+        if ((*SUnitMap).find(DU) != (*SUnitMap).end() &&
+            Op == (*SUnitMap)[DU][SU->InstanceNo])
           return true;
       }
     }
@@ -1298,6 +1299,8 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
     for (unsigned j = 0; j != NumOps; ++j) {
       if (TII->getOperandConstraint(Opc, j+NumRes, TOI::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(j).Val;
+        if ((*SUnitMap).find(DU) == (*SUnitMap).end())
+          continue;
         SUnit *DUSU = (*SUnitMap)[DU][SU->InstanceNo];
         if (!DUSU) continue;
         for (SUnit::succ_iterator I = DUSU->Succs.begin(),E = DUSU->Succs.end();
