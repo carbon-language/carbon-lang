@@ -20,14 +20,14 @@
 using namespace llvm;
 
 Deserializer::Deserializer(BitstreamReader& stream)
-  : Stream(stream), RecIdx(0), FreeList(NULL) {
+  : Stream(stream), RecIdx(0), FreeList(NULL), AbbrevNo(0), RecordCode(0) {
 }
 
 Deserializer::~Deserializer() {
   assert (RecIdx >= Record.size() && 
           "Still scanning bitcode record when deserialization completed.");
  
-#ifdef NDEBUG
+#ifdef DEBUG_BACKPATCH
   for (MapTy::iterator I=BPatchMap.begin(), E=BPatchMap.end(); I!=E; ++I)
     assert (I->first.hasFinalPtr() &&
             "Some pointers were not backpatched.");
@@ -40,82 +40,131 @@ bool Deserializer::inRecord() {
     if (RecIdx >= Record.size()) {
       RecIdx = 0;
       Record.clear();
+      AbbrevNo = 0;
       return false;
     }
-    else return true;
+    else
+      return true;
   }
-  else return false;
+
+  return false;
+}
+
+bool Deserializer::AdvanceStream() {
+  assert (!inRecord() && 
+          "Cannot advance stream.  Still processing a record.");
+  
+  if (AbbrevNo == bitc::ENTER_SUBBLOCK ||
+      AbbrevNo >= bitc::UNABBREV_RECORD)
+    return true;
+  
+  while (!Stream.AtEndOfStream()) {
+    
+    AbbrevNo = Stream.ReadCode();    
+  
+    switch (AbbrevNo) {        
+      case bitc::ENTER_SUBBLOCK: {
+        unsigned id = Stream.ReadSubBlockID();
+        BlockStack.push_back(std::make_pair(Stream.GetCurrentBitNo(),id));
+        break;
+      } 
+        
+      case bitc::END_BLOCK: {
+        bool x = Stream.ReadBlockEnd();
+        assert (!x && "Error at block end.");
+        BlockStack.pop_back();
+        continue;
+      }
+        
+      case bitc::DEFINE_ABBREV:
+        Stream.ReadAbbrevRecord();
+        continue;
+
+      default:
+        break;
+    }
+    
+    return true;
+  }
+  
+  return false;
 }
 
 void Deserializer::ReadRecord() {
-  // FIXME: Check if we haven't run off the edge of the stream.
-  // FIXME: Handle abbreviations.
-
-  assert (Record.size() == 0);
   
-  unsigned Code;
-
-  while (true) {
-    
-    if (Stream.AtEndOfStream())
-      return;
-    
-    Code = Stream.ReadCode();
-  
-    if (Code == bitc::ENTER_SUBBLOCK) {
-      BlockLocs.push_back(Stream.GetCurrentBitNo());
-      unsigned id = Stream.ReadSubBlockID();
-      Stream.EnterSubBlock(id);
-      continue;
-    }
-
-    if (Code == bitc::END_BLOCK) {      
-      bool x = Stream.ReadBlockEnd();
-      assert (!x && "Error at block end.");
-      BlockLocs.pop_back();
-      continue;
-    }
-    
-    if (Code == bitc::DEFINE_ABBREV) {
-      Stream.ReadAbbrevRecord();
-      continue;
-    }
-    
-    break;
+  while (AdvanceStream() && AbbrevNo == bitc::ENTER_SUBBLOCK) {
+    assert (!BlockStack.empty());
+    Stream.EnterSubBlock(BlockStack.back().second);
+    AbbrevNo = 0;
   }
+
+  if (Stream.AtEndOfStream())
+    return;
   
-  assert (Record.size() == 0);  
-  Stream.ReadRecord(Code,Record);  
-  assert (Record.size() > 0 || Stream.AtEndOfStream());
+  assert (Record.size() == 0);
+  assert (AbbrevNo >= bitc::UNABBREV_RECORD);
+  RecordCode = Stream.ReadRecord(AbbrevNo,Record);
+  assert (Record.size() > 0);
 }
 
-Deserializer::Location Deserializer::GetCurrentBlockLocation() {
+void Deserializer::SkipBlock() {
+  assert (!inRecord());
+  assert (AbbrevNo == bitc::ENTER_SUBBLOCK);  
+  Stream.SkipBlock();
+  AbbrevNo = 0;
+}
+
+Deserializer::Location Deserializer::getCurrentBlockLocation() {
   if (!inRecord())
-    ReadRecord();
+    AdvanceStream();
   
-  assert (!BlockLocs.empty());
-  return BlockLocs.back();
+  return BlockStack.back().first;
+}
+
+unsigned Deserializer::getCurrentBlockID() { 
+  if (!inRecord())
+    AdvanceStream();
+  
+  return BlockStack.back().second;
+}
+
+unsigned Deserializer::getRecordCode() {
+  if (!inRecord()) {
+    AdvanceStream();
+    assert (AbbrevNo >= bitc::UNABBREV_RECORD);
+    ReadRecord();
+  }
+  
+  return RecordCode;
 }
 
 bool Deserializer::FinishedBlock(Location BlockLoc) {
   if (!inRecord())
-    ReadRecord();
-  
-  for (llvm::SmallVector<Location,5>::reverse_iterator
-       I=BlockLocs.rbegin(), E=BlockLocs.rend(); I!=E; ++I)
-    if (*I == BlockLoc)
-      return false;
+    AdvanceStream();
+
+  for (llvm::SmallVector<std::pair<Location,unsigned>,5>::reverse_iterator
+        I=BlockStack.rbegin(), E=BlockStack.rend(); I!=E; ++I)
+      if (I->first == BlockLoc)
+        return false;
   
   return true;
+}
+
+unsigned Deserializer::getAbbrevNo() {
+  if (!inRecord())
+    AdvanceStream();
+  
+  return AbbrevNo;
 }
 
 bool Deserializer::AtEnd() {
   if (inRecord())
     return false;
   
-  ReadRecord();
+  if (!AdvanceStream())
+    return true;
   
-  return Stream.AtEndOfStream();
+  return false;
 }
 
 uint64_t Deserializer::ReadInt() {

@@ -88,12 +88,14 @@ public:
 
 private:
   BitstreamReader& Stream;
-  SmallVector<uint64_t,10> Record;
+  SmallVector<uint64_t,20> Record;
   unsigned RecIdx;
   BumpPtrAllocator Allocator;
   BPNode* FreeList;
   MapTy BPatchMap;
-  llvm::SmallVector<uint64_t,5> BlockLocs;
+  llvm::SmallVector<std::pair<Location,unsigned>,5> BlockStack;
+  unsigned AbbrevNo;
+  unsigned RecordCode;
   
   //===----------------------------------------------------------===//
   // Public Interface.
@@ -231,14 +233,22 @@ public:
     RegisterPtr(PtrID,&x);
   }  
   
-  Location GetCurrentBlockLocation();
+  Location getCurrentBlockLocation();
+  unsigned getCurrentBlockID();
+  unsigned getAbbrevNo();
+  
   bool FinishedBlock(Location BlockLoc);
   
   bool AtEnd();
   bool inRecord();
+  void SkipBlock();
+  
+  unsigned getRecordCode();
   
 private:
-  void ReadRecord();  
+  bool AdvanceStream();  
+  void ReadRecord();
+  
   uintptr_t ReadInternalRefPtr();
   
   static inline bool HasFinalPtr(MapTy::value_type& V) {
