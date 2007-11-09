@@ -177,7 +177,7 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
 
   // Otherwise, see if there is a #import in the main file that should be
   // rewritten.
-  RewriteInclude(Loc);
+  //RewriteInclude(Loc);
 }
 
 /// HandleDeclInMainFile - This is called for each top-level decl defined in the
@@ -299,10 +299,15 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
     ObjcInterfaceDecl *ForwardDecl = ForwardDecls[i];
     if (ObjcForwardDecls.count(ForwardDecl))
       continue;
+    typedefString += "#ifndef _REWRITER_typedef_";
+    typedefString += ForwardDecl->getName();
+    typedefString += "\n";
+    typedefString += "#define _REWRITER_typedef_";
+    typedefString += ForwardDecl->getName();
+    typedefString += "\n";
     typedefString += "typedef struct objc_object ";
     typedefString += ForwardDecl->getName();
-    typedefString += ";\n";
-    
+    typedefString += ";\n#endif\n";
     // Mark this typedef as having been generated.
     if (!ObjcForwardDecls.insert(ForwardDecl))
       assert(false && "typedef already output");
@@ -377,9 +382,15 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
   std::string ResultStr;
   if (!ObjcForwardDecls.count(ClassDecl)) {
     // we haven't seen a forward decl - generate a typedef.
+    ResultStr += "#ifndef _REWRITER_typedef_";
+    ResultStr += ClassDecl->getName();
+    ResultStr += "\n";
+    ResultStr += "#define _REWRITER_typedef_";
+    ResultStr += ClassDecl->getName();
+    ResultStr += "\n";
     ResultStr += "typedef struct objc_object ";
     ResultStr += ClassDecl->getName();
-    ResultStr += ";";
+    ResultStr += ";\n#endif\n";
     
     // Mark this typedef as having been generated.
     ObjcForwardDecls.insert(ClassDecl);
@@ -671,9 +682,11 @@ static bool scanForProtocolRefs(const char *startBuf, const char *endBuf,
     if (*startBuf == '<')
       startRef = startBuf; // mark the start.
     if (*startBuf == '>') {
-      assert((startRef && *startRef == '<') && "rewrite scanning error");
-      endRef = startBuf; // mark the end.
-      return true;
+      if (startRef && *startRef == '<') {
+        endRef = startBuf; // mark the end.
+        return true;
+      }
+      return false;
     }
     startBuf++;
   }
