@@ -1599,17 +1599,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       case 8: LD = DAG.getLoad(MVT::i64, Chain, Addr, NULL, 0); break;
       }
 
-      Addr = LD;
       if (TLI.getTargetMachine().getRelocationModel() == Reloc::PIC_) {
         // For PIC, the sequence is:
         // BRIND(load(Jumptable + index) + RelocBase)
-        // RelocBase can be JumpTable, GOT or some sort of global base.
-        if (PTy != MVT::i32)
-          Addr = DAG.getNode(ISD::SIGN_EXTEND, PTy, Addr);
-        Addr = DAG.getNode(ISD::ADD, PTy, Addr,
-                           TLI.getPICJumpTableRelocBase(Table, DAG));
+        // RelocBase is the JumpTable on PPC and X86, GOT on Alpha
+        SDOperand Reloc;
+        if (TLI.usesGlobalOffsetTable())
+          Reloc = DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, PTy);
+        else
+          Reloc = Table;
+        Addr = (PTy != MVT::i32) ? DAG.getNode(ISD::SIGN_EXTEND, PTy, LD) : LD;
+        Addr = DAG.getNode(ISD::ADD, PTy, Addr, Reloc);
+        Result = DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), Addr);
+      } else {
+        Result = DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), LD);
       }
-      Result = DAG.getNode(ISD::BRIND, MVT::Other, LD.getValue(1), Addr);
     }
     }
     break;
