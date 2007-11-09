@@ -416,7 +416,7 @@ Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *IDecl,
   tok::TokenKind methodType = Tok.getKind();  
   SourceLocation mLoc = ConsumeToken();
   
-  DeclTy *MDecl = ParseObjCMethodDecl(mLoc, methodType, MethodImplKind);
+  DeclTy *MDecl = ParseObjCMethodDecl(mLoc, methodType, IDecl, MethodImplKind);
   // Since this rule is used for both method declarations and definitions,
   // the caller is (optionally) responsible for consuming the ';'.
   return MDecl;
@@ -550,7 +550,8 @@ Parser::TypeTy *Parser::ParseObjCTypeName(ObjcDeclSpec &DS) {
 ///     __attribute__((unused))
 ///
 Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
-                                            tok::TokenKind mType, 
+                                            tok::TokenKind mType,
+                                            DeclTy *IDecl,
 					    tok::ObjCKeywordKind MethodImplKind)
 {
   // Parse the return type.
@@ -574,7 +575,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     
     Selector Sel = PP.getSelectorTable().getNullarySelector(SelIdent);
     return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
-                                          mType, DSRet, ReturnType, Sel,
+                                          mType, IDecl, DSRet, ReturnType, Sel,
                                           0, 0, 0, MethodAttrs, MethodImplKind);
   }
 
@@ -645,7 +646,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
                                                    &KeyIdents[0]);
   return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
-                                        mType, DSRet, ReturnType, Sel, 
+                                        mType, IDecl, DSRet, ReturnType, Sel, 
                                         &ArgTypeQuals[0], &KeyTypes[0], 
                                         &ArgNames[0],
                                         MethodAttrs, MethodImplKind);

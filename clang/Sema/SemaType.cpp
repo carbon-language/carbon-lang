@@ -333,9 +333,11 @@ QualType Sema::ObjcGetTypeForDeclarator(DeclTy *D, Scope *S) {
   llvm::SmallVector<QualType, 16> ArgTys;
   
   // Add the first two invisible argument types for self and _cmd.
-  if (MDecl->isInstance())
-    // FIXME: interface-name *
-    ArgTys.push_back(Context.getObjcIdType());
+  if (MDecl->isInstance()) {
+    QualType selfTy = Context.getObjcInterfaceType(MDecl->getClassInterface());
+    selfTy = Context.getPointerType(selfTy);
+    ArgTys.push_back(selfTy);
+  }
   else
     ArgTys.push_back(Context.getObjcIdType());
   ArgTys.push_back(Context.getObjcSelType());

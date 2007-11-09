@@ -561,6 +561,7 @@ public:
     SourceLocation BeginLoc,   // location of the + or -.
     SourceLocation EndLoc,     // location of the ; or {.
     tok::TokenKind MethodType, // tok::minus for instance, tok::plus for class.
+    DeclTy *ClassDecl,         // class this methods belongs to.
     ObjcDeclSpec &ReturnQT,    // for return type's in inout etc.
     TypeTy *ReturnType,        // the method return type.
     Selector Sel,              // a unique name for the method.

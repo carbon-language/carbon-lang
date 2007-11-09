@@ -239,6 +239,9 @@ private:
   /// in, inout, etc.
   ObjcDeclQualifier objcDeclQualifier : 6;
   
+  // @interface decl this Method belongs to.
+  ObjcInterfaceDecl *ClassInterface;
+  
   // A unigue name for this method.
   Selector SelName;
   
@@ -256,6 +259,7 @@ private:
 public:
   ObjcMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
                  Selector SelInfo, QualType T,
+                 ObjcInterfaceDecl *interfaceDecl,
                  ParmVarDecl **paramInfo = 0, int numParams=-1,
                  AttributeList *M = 0, bool isInstance = true,
                  ImplementationControl impControl = None,
@@ -263,6 +267,7 @@ public:
     : Decl(ObjcMethod, beginLoc),
       IsInstance(isInstance), DeclImplementation(impControl),
       objcDeclQualifier(OBJC_TQ_None),
+      ClassInterface(interfaceDecl),
       SelName(SelInfo), MethodDeclType(T), 
       ParamInfo(paramInfo), NumMethodParams(numParams),
       MethodAttrs(M), EndLoc(endLoc) {}
@@ -274,6 +279,8 @@ public:
   // Location information, modeled after the Stmt API.
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
+  
+  ObjcInterfaceDecl *const getClassInterface() const { return ClassInterface; }
   
   Selector getSelector() const { return SelName; }
   QualType getResultType() const { return MethodDeclType; }

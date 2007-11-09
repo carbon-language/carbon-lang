@@ -1047,11 +1047,14 @@ Sema::DeclTy *Sema::ObjcActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   llvm::SmallVector<ParmVarDecl*, 16> Params;
   ParmVarDecl *PDecl;
   // Insert the invisible arguments!
-  if (MDecl->isInstance())
-    // FIXME: type is wrong.
+  if (MDecl->isInstance()) {
+    QualType selfTy = Context.getObjcInterfaceType(MDecl->getClassInterface());
+    selfTy = Context.getPointerType(selfTy);
     PDecl = new ParmVarDecl(SourceLocation(/*FIXME*/), 
                             &Context.Idents.get("self"),
-                            Context.getObjcIdType(), VarDecl::None, 0);
+                            selfTy,
+                            VarDecl::None, 0);
+  }
   else
     PDecl = new ParmVarDecl(SourceLocation(/*FIXME*/), 
                             &Context.Idents.get("self"),
@@ -2179,7 +2182,8 @@ CvtQTToAstBitMask(ObjcDeclSpec::ObjcDeclQualifier PQTVal) {
 
 Sema::DeclTy *Sema::ActOnMethodDeclaration(
     SourceLocation MethodLoc, SourceLocation EndLoc,
-    tok::TokenKind MethodType, ObjcDeclSpec &ReturnQT, TypeTy *ReturnType,
+    tok::TokenKind MethodType, DeclTy *ClassDecl,
+    ObjcDeclSpec &ReturnQT, TypeTy *ReturnType,
     Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
@@ -2207,9 +2211,22 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     resultDeclType = QualType::getFromOpaquePtr(ReturnType);
   else // get the type for "id".
     resultDeclType = Context.getObjcIdType();
-
+  
+  Decl *CDecl = static_cast<Decl*>(ClassDecl);
+  ObjcInterfaceDecl *IDecl = 0;
+  if (isa<ObjcInterfaceDecl>(CDecl))
+    IDecl = cast<ObjcInterfaceDecl>(CDecl);
+  else if (isa<ObjcCategoryDecl>(CDecl))
+    IDecl = cast<ObjcCategoryDecl>(CDecl)->getClassInterface();
+  else if (isa<ObjcImplementationDecl>(CDecl))
+    IDecl = cast<ObjcImplementationDecl>(CDecl)->getClassInterface();
+  else if (isa<ObjcCategoryImplDecl>(CDecl))
+    IDecl = cast<ObjcCategoryImplDecl>(CDecl)->getClassInterface();
+  
   ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, EndLoc, Sel,
-                                      resultDeclType, 0, -1, AttrList, 
+                                      resultDeclType,
+                                      IDecl,
+                                      0, -1, AttrList, 
                                       MethodType == tok::minus,
                                       MethodDeclKind == tok::objc_optional ? 
                                       ObjcMethodDecl::Optional : 
