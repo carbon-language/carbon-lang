@@ -650,6 +650,17 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 }
 
 
+/// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
+/// jumptable.
+SDOperand X86TargetLowering::getPICJumpTableRelocBase(SDOperand Table,
+                                                      SelectionDAG &DAG) const {
+  if (usesGlobalOffsetTable())
+    return DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, getPointerTy());
+  if (!Subtarget->isPICStyleRIPRel())
+    return DAG.getNode(X86ISD::GlobalBaseReg, getPointerTy());
+  return Table;
+}
+
 //===----------------------------------------------------------------------===//
 //               Return Value Calling Convention Implementation
 //===----------------------------------------------------------------------===//

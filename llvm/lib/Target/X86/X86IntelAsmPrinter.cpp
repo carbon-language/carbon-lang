@@ -235,6 +235,17 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   O << "]";
 }
 
+void X86IntelAsmPrinter::printPICJumpTableSetLabel(unsigned uid, 
+                                           const MachineBasicBlock *MBB) const {
+  if (!TAI->getSetDirective())
+    return;
+  
+  O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
+    << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
+  printBasicBlockLabel(MBB, false, false);
+  O << '-' << "\"L" << getFunctionNumber() << "$pb\"'\n";
+}
+
 void X86IntelAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
   O << "\"L" << getFunctionNumber() << "$pb\"\n";
   O << "\"L" << getFunctionNumber() << "$pb\":";

@@ -393,6 +393,13 @@ unsigned TargetLowering::getVectorTypeBreakdown(MVT::ValueType VT,
   return 1;
 }
 
+SDOperand TargetLowering::getPICJumpTableRelocBase(SDOperand Table,
+                                                   SelectionDAG &DAG) const {
+  if (usesGlobalOffsetTable())
+    return DAG.getNode(ISD::GLOBAL_OFFSET_TABLE, getPointerTy());
+  return Table;
+}
+
 //===----------------------------------------------------------------------===//
 //  Optimization Methods
 //===----------------------------------------------------------------------===//

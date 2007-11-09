@@ -693,7 +693,7 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNo) {
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
     if (UseSet && JTSets.insert(MBB).second)
-      printSetLabel(JTI, MO2.getImmedValue(), MBB);
+      printPICJumpTableSetLabel(JTI, MO2.getImmedValue(), MBB);
 
     O << JTEntryDirective << ' ';
     if (UseSet)

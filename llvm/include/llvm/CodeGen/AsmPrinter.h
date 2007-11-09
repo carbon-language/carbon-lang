@@ -305,11 +305,12 @@ namespace llvm {
                                       bool printColon = false,
                                       bool printComment = true) const;
                                       
-    /// printSetLabel - This method prints a set label for the specified
-    /// MachineBasicBlock
-    void printSetLabel(unsigned uid, const MachineBasicBlock *MBB) const;
-    void printSetLabel(unsigned uid, unsigned uid2,
-                       const MachineBasicBlock *MBB) const;
+    /// printPICJumpTableSetLabel - This method prints a set label for the
+    /// specified MachineBasicBlock for a jumptable entry.
+    virtual void printPICJumpTableSetLabel(unsigned uid,
+                                           const MachineBasicBlock *MBB) const;
+    virtual void printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
+                                           const MachineBasicBlock *MBB) const;
 
     /// printDataDirective - This method prints the asm directive for the
     /// specified type.

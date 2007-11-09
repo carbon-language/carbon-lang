@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include <cerrno>
 using namespace llvm;
 
@@ -282,11 +283,11 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
     // For PIC codegen, if possible we want to use the SetDirective to reduce
     // the number of relocations the assembler will generate for the jump table.
     // Set directives are all printed before the jump table itself.
-    std::set<MachineBasicBlock*> EmittedSets;
+    SmallPtrSet<MachineBasicBlock*, 16> EmittedSets;
     if (TAI->getSetDirective() && IsPic)
       for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii)
-        if (EmittedSets.insert(JTBBs[ii]).second)
-          printSetLabel(i, JTBBs[ii]);
+        if (EmittedSets.insert(JTBBs[ii]))
+          printPICJumpTableSetLabel(i, JTBBs[ii]);
     
     // On some targets (e.g. darwin) we want to emit two consequtive labels
     // before each jump table.  The first label is never referenced, but tells
@@ -1256,10 +1257,10 @@ void AsmPrinter::printBasicBlockLabel(const MachineBasicBlock *MBB,
       << MBB->getBasicBlock()->getName();
 }
 
-/// printSetLabel - This method prints a set label for the specified
-/// MachineBasicBlock
-void AsmPrinter::printSetLabel(unsigned uid, 
-                               const MachineBasicBlock *MBB) const {
+/// printPICJumpTableSetLabel - This method prints a set label for the
+/// specified MachineBasicBlock for a jumptable entry.
+void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, 
+                                           const MachineBasicBlock *MBB) const {
   if (!TAI->getSetDirective())
     return;
   
@@ -1270,8 +1271,8 @@ void AsmPrinter::printSetLabel(unsigned uid,
     << '_' << uid << '\n';
 }
 
-void AsmPrinter::printSetLabel(unsigned uid, unsigned uid2,
-                               const MachineBasicBlock *MBB) const {
+void AsmPrinter::printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
+                                           const MachineBasicBlock *MBB) const {
   if (!TAI->getSetDirective())
     return;
   

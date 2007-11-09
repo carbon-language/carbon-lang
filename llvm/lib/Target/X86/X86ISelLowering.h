@@ -296,6 +296,11 @@ namespace llvm {
   public:
     explicit X86TargetLowering(TargetMachine &TM);
 
+    /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
+    /// jumptable.
+    SDOperand getPICJumpTableRelocBase(SDOperand Table,
+                                       SelectionDAG &DAG) const;
+
     // Return the number of bytes that a function should pop when it returns (in
     // addition to the space used by the return address).
     //

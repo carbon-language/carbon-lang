@@ -93,7 +93,7 @@ public:
   /// usesGlobalOffsetTable - Return true if this target uses a GOT for PIC
   /// codegen.
   bool usesGlobalOffsetTable() const { return UsesGlobalOffsetTable; }
-  
+
   /// isSelectExpensive - Return true if the select operation is expensive for
   /// this target.
   bool isSelectExpensive() const { return SelectIsExpensive; }
@@ -542,6 +542,11 @@ public:
                                           SelectionDAG &DAG) {
     return false;
   }
+  
+  /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
+  /// jumptable.
+  virtual SDOperand getPICJumpTableRelocBase(SDOperand Table,
+                                             SelectionDAG &DAG) const;
   
   //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods

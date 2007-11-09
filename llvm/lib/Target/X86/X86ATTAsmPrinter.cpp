@@ -498,6 +498,17 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   }
 }
 
+void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid, 
+                                           const MachineBasicBlock *MBB) const {
+  if (!TAI->getSetDirective())
+    return;
+  
+  O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
+    << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
+  printBasicBlockLabel(MBB, false, false);
+  O << '-' << computePICLabel(getFunctionNumber(), TAI, Subtarget) << '\n';
+}
+
 void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
   std::string label = computePICLabel(getFunctionNumber(), TAI, Subtarget);
   O << label << "\n" << label << ":";

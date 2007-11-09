@@ -77,6 +77,12 @@ struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public X86SharedAsmPrinter {
   void printSSECC(const MachineInstr *MI, unsigned Op);
   void printMemReference(const MachineInstr *MI, unsigned Op,
                          const char *Modifier=NULL);
+  void printPICJumpTableSetLabel(unsigned uid,
+                                 const MachineBasicBlock *MBB) const;
+  void printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
+                                 const MachineBasicBlock *MBB) const {
+    AsmPrinter::printPICJumpTableSetLabel(uid, uid2, MBB);
+  }
   void printPICLabel(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);
   
