@@ -1,7 +1,5 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -relocation-model=pic -march=x86 | not grep -F .text
-target endian = little
-target pointersize = 32
-target triple = "i386-linux-gnu"
+; RUN: llvm-upgrade < %s | llvm-as | llc -relocation-model=pic -mtriple=i386-linux-gnu | not grep -F .text
+; RUN: llvm-upgrade < %s | llvm-as | llc -relocation-model=pic -mtriple=i686-apple-darwin | not grep lea
 
 implementation   ; Functions:
 
