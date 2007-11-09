@@ -342,12 +342,17 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
         Changed = true;
       }
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
-      Constant *SubInit = 0;
-      ConstantExpr *CE = 
-        dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP));
-      if (Init && CE && CE->getOpcode() == Instruction::GetElementPtr)
-        SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
-      Changed |= CleanupConstantGlobalUsers(GEP, SubInit);
+      // Do not transform "gepinst (gep constexpr (GV))" here, because forming
+      // "gepconstexpr (gep constexpr (GV))" will cause the two gep's to fold
+      // and will invalidate our notion of what Init is.
+      if (!isa<ConstantExpr>(GEP->getOperand(0))) {
+        ConstantExpr *CE = 
+          dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP));
+        if (Init && CE && CE->getOpcode() == Instruction::GetElementPtr)
+          if (Constant *SubInit = 
+              ConstantFoldLoadThroughGEPConstantExpr(Init, CE))
+            Changed |= CleanupConstantGlobalUsers(GEP, SubInit);
+      }
 
       if (GEP->use_empty()) {
         GEP->eraseFromParent();
