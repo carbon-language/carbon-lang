@@ -433,7 +433,7 @@ void IdentifierTable::Emit(llvm::Serializer& S) const {
 }
 
 IdentifierTable* IdentifierTable::Materialize(llvm::Deserializer& D) {
-  llvm::Deserializer::Location BLoc = D.GetCurrentBlockLocation();
+  llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
 
   std::vector<char> buff;
   buff.reserve(200);
