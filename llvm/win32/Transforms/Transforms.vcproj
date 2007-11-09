@@ -508,10 +508,6 @@
 					RelativePath="..\..\lib\Transforms\Utils\ValueMapper.cpp"
 					>
 				</File>
-				<File
-					RelativePath="..\..\lib\Transforms\Utils\ValueMapper.h"
-					>
-				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -553,6 +549,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Transforms\Utils\UnifyFunctionExitNodes.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Transforms\Utils\ValueMapper.h"
 				>
 			</File>
 		</Filter>
