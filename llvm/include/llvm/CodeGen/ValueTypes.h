@@ -243,6 +243,13 @@ namespace MVT {  // MVT = Machine Value Types
     }
   }
 
+  /// MVT::getStoreSizeInBits - Return the number of bits overwritten by a
+  /// store of the specified value type.
+  ///
+  static inline unsigned getStoreSizeInBits(ValueType VT) {
+    return (getSizeInBits(VT) + 7)/8*8;
+  }
+
   /// MVT::getIntegerType - Returns the ValueType that represents an integer
   /// with the given number of bits.
   ///

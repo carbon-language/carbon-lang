@@ -1036,7 +1036,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
     // Big-endian - high bits are at low addresses.  Favor aligned loads at
     // the cost of some bit-fiddling.
     MVT::ValueType EVT = N->getLoadedVT();
-    unsigned EBytes = (MVT::getSizeInBits(EVT) + 7)/8;
+    unsigned EBytes = MVT::getStoreSizeInBits(EVT)/8;
     unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
     unsigned ExcessBits = (EBytes - IncrementSize)*8;
 
@@ -2069,7 +2069,7 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
     GetExpandedOp(N->getValue(), Lo, Hi);
 
     MVT::ValueType EVT = N->getStoredVT();
-    unsigned EBytes = (MVT::getSizeInBits(EVT) + 7)/8;
+    unsigned EBytes = MVT::getStoreSizeInBits(EVT)/8;
     unsigned IncrementSize = MVT::getSizeInBits(NVT)/8;
     unsigned ExcessBits = (EBytes - IncrementSize)*8;
     MVT::ValueType HiVT =

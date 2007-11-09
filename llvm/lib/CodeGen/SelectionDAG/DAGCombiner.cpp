@@ -1713,8 +1713,9 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
         // For big endian targets, we need to add an offset to the pointer to
         // load the correct bytes.  For little endian systems, we merely need to
         // read fewer bytes from the same pointer.
-        unsigned PtrOff =
-          (MVT::getSizeInBits(LoadedVT) - MVT::getSizeInBits(EVT)) / 8;
+        unsigned LVTStoreBytes = MVT::getStoreSizeInBits(LoadedVT)/8;
+        unsigned EVTStoreBytes = MVT::getStoreSizeInBits(EVT)/8;
+        unsigned PtrOff = LVTStoreBytes - EVTStoreBytes;
         unsigned Alignment = LN0->getAlignment();
         SDOperand NewPtr = LN0->getBasePtr();
         if (!TLI.isLittleEndian()) {
@@ -2991,8 +2992,11 @@ SDOperand DAGCombiner::ReduceLoadWidth(SDNode *N) {
     MVT::ValueType PtrType = N0.getOperand(1).getValueType();
     // For big endian targets, we need to adjust the offset to the pointer to
     // load the correct bytes.
-    if (!TLI.isLittleEndian())
-      ShAmt = MVT::getSizeInBits(N0.getValueType()) - ShAmt - EVTBits;
+    if (!TLI.isLittleEndian()) {
+      unsigned LVTStoreBits = MVT::getStoreSizeInBits(N0.getValueType());
+      unsigned EVTStoreBits = MVT::getStoreSizeInBits(EVT);
+      ShAmt = LVTStoreBits - EVTStoreBits - ShAmt;
+    }
     uint64_t PtrOff =  ShAmt / 8;
     unsigned NewAlign = MinAlign(LN0->getAlignment(), PtrOff);
     SDOperand NewPtr = DAG.getNode(ISD::ADD, PtrType, LN0->getBasePtr(),
