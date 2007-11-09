@@ -124,7 +124,7 @@ bool BreakCriticalMachineEdges::runOnMachineFunction(MachineFunction& F) {
     }
   }
 
-  for(unsigned u = 0; u < SourceBlocks.size() > 0; u++)
+  for(unsigned u = 0; u < SourceBlocks.size(); u++)
     splitCriticalEdge(SourceBlocks[u], DestBlocks[u]);
 
   return false;
