@@ -665,100 +665,47 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
 // for exception handling.
 
 int X86RegisterInfo::getDwarfRegNum(unsigned RegNo) const {
-  static const int dwarf_64bit[] = {
-  // none,   ah,   al,   ax,   bh,   bl,   bp,  bpl,   bx,   ch, 
-       -1,    0,    0,    0,    3,    3,    6,    6,    3,    2,      
-  //   cl,   cx,   dh,   di,  dil,   dl,   dx,  eax,  ebp,  ebx,
-        2,    2,    1,    5,    5,    1,    1,    0,    6,    3,
-  //  ecx,  edi,  edx,  efl,  eip,  esi,  esp,  fp0,  fp1,  fp2,
-        2,    5,    1,   -1,   16,    4,    7,   -1,   -1,   -1,
-  //  fp3,  fp4,  fp5,  fp6,   ip,  mm0,  mm1,  mm2,  mm3,  mm4,
-       -1,   -1,   -1,   -1,   16,   41,   42,   43,   44,   45,
-  //  mm5,  mm6,  mm7,  r10, r10b, r10d, r10w,  r11, r11b, r11d, 
-       46,   47,   48,   10,   10,   10,   10,   11,   11,   11,
-  // r11w,  r12, r12b, r12d, r12w,  r13, r13b, r13d, r13w,  r14,
-       11,   12,   12,   12,   12,   13,   13,   13,   13,   14,
-  // r14b, r14d, r14w,  r15, r15b, r15d, r15w,   r8,  r8b,  r8d,
-       14,   14,   14,   15,   15,   15,   15,    8,    8,    8,
-  //  r8w,   r9,  r9b,  r9d,  r9w,  rax,  rbp,  rbx,  rcx,  rdi,
-        8,    9,    9,    9,    9,    0,    6,    3,    2,    5,
-  //  rdx,  rip,  rsi,  rsp,   si,  sil,   sp,  spl,  st0,  st1,  
-        1,   16,    4,    7,    4,    4,    7,    7,   33,   34,
-  //  st2,  st3,  st4,  st5,  st6,  st7, xmm0, xmm1,xmm10,xmm11,
-       35,   36,   37,   38,   39,   40,   17,   18,   27,   28,  
-  //xmm12,xmm13,xmm14,xmm15, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, 
-       29,   30,   31,   32,   19,   20,   21,   22,   23,   24,
-  // xmm8, xmm9
-       25,   26 };
-
-  static const int dwarf_32bit_darwin[] = {
-  // none,   ah,   al,   ax,   bh,   bl,   bp,  bpl,   bx,   ch, 
-       -1,    0,    0,    0,    3,    3,    4,    4,    3,    1,      
-  //   cl,   cx,   dh,   di,  dil,   dl,   dx,  eax,  ebp,  ebx,
-        1,    1,    2,    7,    7,    2,    2,    0,    4,    3,
-  //  ecx,  edi,  edx,  efl,  eip,  esi,  esp,  fp0,  fp1,  fp2,
-        1,    7,    2,   -1,    8,    6,    5,   -1,   -1,   -1,
-  //  fp3,  fp4,  fp5,  fp6,   ip,  mm0,  mm1,  mm2,  mm3,  mm4,
-       -1,   -1,   -1,   -1,    8,   29,   30,   31,   32,   33,
-  //  mm5,  mm6,  mm7,  r10, r10b, r10d, r10w,  r11, r11b, r11d, 
-       34,   35,   36,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-  // r11w,  r12, r12b, r12d, r12w,  r13, r13b, r13d, r13w,  r14,
-       -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-  // r14b, r14d, r14w,  r15, r15b, r15d, r15w,   r8,  r8b,  r8d,
-       -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-  //  r8w,   r9,  r9b,  r9d,  r9w,  rax,  rbp,  rbx,  rcx,  rdi,
-       -1,   -1,   -1,   -1,   -1,    0,    4,    3,    1,    7,
-  //  rdx,  rip,  rsi,  rsp,   si,  sil,   sp,  spl,  st0,  st1,  
-        2,    8,    6,    5,    6,    6,    5,    5,   12,   13,
-  //  st2,  st3,  st4,  st5,  st6,  st7, xmm0, xmm1,xmm10,xmm11,
-       14,   15,   16,   17,   18,   19,   21,   22,   -1,   -1,  
-  //xmm12,xmm13,xmm14,xmm15, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, 
-       -1,   -1,   -1,   -1,   23,   24,   25,   26,   27,   28,
-  // xmm8, xmm9
-       -1,   -1 };
-
-  static const int dwarf_32bit_linux[] = {
-  // none,   ah,   al,   ax,   bh,   bl,   bp,  bpl,   bx,   ch, 
-       -1,    0,    0,    0,    3,    3,    5,    5,    3,    1,      
-  //   cl,   cx,   dh,   di,  dil,   dl,   dx,  eax,  ebp,  ebx,
-        1,    1,    2,    7,    7,    2,    2,    0,    5,    3,
-  //  ecx,  edi,  edx,  efl,  eip,  esi,  esp,  fp0,  fp1,  fp2,
-        1,    7,    2,   -1,    8,    6,    4,   -1,   -1,   -1,
-  //  fp3,  fp4,  fp5,  fp6,   ip,  mm0,  mm1,  mm2,  mm3,  mm4,
-       -1,   -1,   -1,   -1,    8,   29,   30,   31,   32,   33,
-  //  mm5,  mm6,  mm7,  r10, r10b, r10d, r10w,  r11, r11b, r11d, 
-       34,   35,   36,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-  // r11w,  r12, r12b, r12d, r12w,  r13, r13b, r13d, r13w,  r14,
-       -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-  // r14b, r14d, r14w,  r15, r15b, r15d, r15w,   r8,  r8b,  r8d,
-       -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
-  //  r8w,   r9,  r9b,  r9d,  r9w,  rax,  rbp,  rbx,  rcx,  rdi,
-       -1,   -1,   -1,   -1,   -1,    0,    5,    3,    1,    7,
-  //  rdx,  rip,  rsi,  rsp,   si,  sil,   sp,  spl,  st0,  st1,  
-        2,    8,    6,    4,    6,    6,    4,    4,   11,   12,
-  //  st2,  st3,  st4,  st5,  st6,  st7, xmm0, xmm1,xmm10,xmm11,
-       13,   14,   15,   16,   17,   18,   21,   22,   -1,   -1,  
-  //xmm12,xmm13,xmm14,xmm15, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, 
-       -1,   -1,   -1,   -1,   23,   24,   25,   26,   27,   28,
-  // xmm8, xmm9
-       -1,   -1 };
-
-  const unsigned nelts = sizeof(dwarf_64bit) / sizeof(int);
-  int n;
+  int n = X86GenRegisterInfo::getDwarfRegNum(RegNo);
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
-  if (RegNo >= nelts) {
-    assert(0 && "Invalid argument to getDwarfRegNum"); 
-    return -1;
-  }
-  if (Subtarget->is64Bit())
-    n = dwarf_64bit[RegNo];
-  else if (Subtarget->isDarwin)
-    n = dwarf_32bit_darwin[RegNo];
-  else
-    n = dwarf_32bit_linux[RegNo];
-  if (n == -1) {
-    assert(0 && "Invalid register in getDwarfRegNum");
-    return -1;
+  if (!Subtarget->is64Bit()) {
+    // Numbers are all different for 32-bit.  Further, some of them
+    // differ between Darwin and other targets.
+    switch (n) {
+    default: assert(0 && "Invalid argument to getDwarfRegNum"); 
+             return n;
+    case 0:  return 0;                              // ax
+    case 1:  return 2;                              // dx
+    case 2:  return 1;                              // cx
+    case 3:  return 3;                              // bx
+    case 4:  return 6;                              // si
+    case 5:  return 7;                              // di
+    case 6:  return (Subtarget->isDarwin) ? 4 : 5;  // bp
+    case 7:  return (Subtarget->isDarwin) ? 5 : 4;  // sp
+
+    case 8:  case 9:  case 10: case 11:             // r8..r15
+    case 12: case 13: case 14: case 15:
+      assert(0 && "Invalid register in 32-bit mode"); 
+      return n;
+
+    case 16: return 8;                              // ip
+
+    case 17: case 18: case 19: case 20:             // xmm0..xmm7  
+    case 21: case 22: case 23: case 24:  
+      return n+4;
+
+    case 25: case 26: case 27: case 28:             // xmm8..xmm15
+    case 29: case 30: case 31: case 32:
+      assert(0 && "Invalid register in 32-bit mode"); 
+      return n;
+
+    case 33: case 34: case 35: case 36:             // st0..st7
+    case 37: case 38: case 39: case 40:
+      return (Subtarget->isDarwin) ? n-21 : n-22;
+
+    case 41: case 42: case 43: case 44:             // mm0..mm7
+    case 45: case 46: case 47: case 48:
+      return n-12;
+    }
   }
   return n;
 }
