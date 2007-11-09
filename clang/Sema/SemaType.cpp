@@ -325,9 +325,9 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   return T;
 }
 
-/// ObjcGetTypeForDeclarator - Convert the type for the specified declarator to Type
-/// instances.
-QualType Sema::ObjcGetTypeForDeclarator(DeclTy *D, Scope *S) {
+/// ObjcGetTypeForMethodDefinition - Builds the type for a method definition
+/// declarator
+QualType Sema::ObjcGetTypeForMethodDefinition(DeclTy *D, Scope *S) {
   ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
   QualType T = MDecl->getResultType();
   llvm::SmallVector<QualType, 16> ArgTys;
@@ -346,20 +346,9 @@ QualType Sema::ObjcGetTypeForDeclarator(DeclTy *D, Scope *S) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
     QualType ArgTy = PDecl->getType();
     assert(!ArgTy.isNull() && "Couldn't parse type?");
-    //
     // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
     // This matches the conversion that is done in 
-    // Sema::ParseParamDeclarator(). Without this conversion, the
-    // argument type in the function prototype *will not* match the
-    // type in ParmVarDecl (which makes the code generator unhappy).
-    //
-    // FIXME: We still apparently need the conversion in 
-    // Sema::ParseParamDeclarator(). This doesn't make any sense, since
-    // it should be driving off the type being created here.
-    // 
-    // FIXME: If a source translation tool needs to see the original type,
-    // then we need to consider storing both types somewhere...
-    // 
+    // Sema::ObjcBuildMethodParameter(). 
     if (const ArrayType *AT = ArgTy->getAsArrayType())
       ArgTy = Context.getPointerType(AT->getElementType());
     else if (ArgTy->isFunctionType())

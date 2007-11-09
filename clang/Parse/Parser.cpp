@@ -465,7 +465,9 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   return ParseFunctionStatementBody(Res, BraceLoc, BraceLoc);  
 }
 
-Parser::DeclTy *Parser::ObjcParseFunctionDefinition(DeclTy *D) {
+/// ObjcParseMethodDefinition - This routine parses a method definition and
+/// returns its AST.
+Parser::DeclTy *Parser::ObjcParseMethodDefinition(DeclTy *D) {
   // We should have an opening brace now.
   if (Tok.isNot(tok::l_brace)) {
     Diag(Tok, diag::err_expected_fn_body);
@@ -480,12 +482,12 @@ Parser::DeclTy *Parser::ObjcParseFunctionDefinition(DeclTy *D) {
   
   SourceLocation BraceLoc = Tok.getLocation();
   
-  // Enter a scope for the function body.
+  // Enter a scope for the method body.
   EnterScope(Scope::FnScope|Scope::DeclScope);
   
-  // Tell the actions module that we have entered a function definition with the
-  // specified Declarator for the function.
-  DeclTy *Res = Actions.ObjcActOnStartOfFunctionDef(CurScope, D);
+  // Tell the actions module that we have entered a method definition with the
+  // specified Declarator for the method.
+  DeclTy *Res = Actions.ObjcActOnStartOfMethodDef(CurScope, D);
   
   return ParseFunctionStatementBody(Res, BraceLoc, BraceLoc);  
 }

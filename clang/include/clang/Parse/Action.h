@@ -107,7 +107,8 @@ public:
     return 0;
   }
 
-  virtual DeclTy *ObjcActOnDeclarator(Scope *S, DeclTy *D,DeclTy *LastInGroup) {
+  virtual DeclTy *ObjcActOnMethodDefinition(Scope *S, DeclTy *D,
+					    DeclTy *LastInGroup) {
     return 0;
   }
   /// AddInitializerToDecl - This action is called immediately after 
@@ -134,9 +135,9 @@ public:
     return ActOnDeclarator(FnBodyScope, D, 0);
   }
 
-  virtual DeclTy *ObjcActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
+  virtual DeclTy *ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     // Default to ActOnDeclarator.
-    return ObjcActOnDeclarator(FnBodyScope, D, 0);
+    return ObjcActOnMethodDefinition(FnBodyScope, D, 0);
   }
   
   /// ActOnFunctionDefBody - This is called when a function body has completed

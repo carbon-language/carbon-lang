@@ -1160,7 +1160,7 @@ Parser::DeclTy *Parser::ParseObjCInstanceMethodDefinition() {
     Diag (Tok, diag::err_expected_lbrace);
     return 0;
   }
-  return ObjcParseFunctionDefinition(MDecl);
+  return ObjcParseMethodDefinition(MDecl);
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
@@ -1177,7 +1177,7 @@ Parser::DeclTy *Parser::ParseObjCClassMethodDefinition() {
     Diag (Tok, diag::err_expected_lbrace);
     return 0;
   }
-  return ObjcParseFunctionDefinition(MDecl);
+  return ObjcParseMethodDefinition(MDecl);
 }
 
 Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {

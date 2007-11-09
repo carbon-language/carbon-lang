@@ -544,14 +544,16 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
   return hadError;
 }
 
+/// ObjcActOnMethodDefinition - Build the AST node for a method definition
+/// header. Return this AST.
 Sema::DeclTy *
-Sema::ObjcActOnDeclarator(Scope *S, DeclTy *D, DeclTy *lastDecl) {
+Sema::ObjcActOnMethodDefinition(Scope *S, DeclTy *D, DeclTy *lastDecl) {
   ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
   
   ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
   const char *name = MDecl->getSelector().getName().c_str();
   IdentifierInfo *II = &Context.Idents.get(name);
-  assert (II && "ObjcActOnDeclarator - selector name is missing");
+  assert (II && "ObjcActOnMethodDefinition - selector name is missing");
   
   // The scope passed in may not be a decl scope.  Zip up the scope tree until
   // we find one that is.
@@ -559,20 +561,17 @@ Sema::ObjcActOnDeclarator(Scope *S, DeclTy *D, DeclTy *lastDecl) {
     S = S->getParent();
   
   ScopedDecl *New;
-  QualType R = ObjcGetTypeForDeclarator(MDecl, S);
-  assert(!R.isNull() && "ObjcGetTypeForDeclarator() returned null type");
+  QualType R = ObjcGetTypeForMethodDefinition(MDecl, S);
+  assert(!R.isNull() && "ObjcGetTypeForMethodDefinition() returned null type");
     
   FunctionDecl *NewFD = new FunctionDecl(MDecl->getLocation(), II, R, 
                                          FunctionDecl::Static,
                                          false, LastDeclarator);
   New = NewFD;
   
-  // If this has an identifier, add it to the scope stack.
-  if (II) {
-    New->setNext(II->getFETokenInfo<ScopedDecl>());
-    II->setFETokenInfo(New);
-    S->AddDecl(New);
-  }
+  New->setNext(II->getFETokenInfo<ScopedDecl>());
+  II->setFETokenInfo(New);
+  S->AddDecl(New);
   
   if (S->getParent() == 0)
     AddTopLevelDecl(New, LastDeclarator);
@@ -890,18 +889,11 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   return New;
 }
 
-// Called from Sema::ObjcParseStartOfFunctionDef().
+// Called from Sema::ObjcParseStartOfMethodDef().
 ParmVarDecl *
-Sema::ObjcParseParamDeclarator(ParmVarDecl *PI, Scope *FnScope) {
+Sema::ObjcBuildMethodParameter(ParmVarDecl *PI, Scope *FnScope) {
   
   IdentifierInfo *II = PI->getIdentifier();
-  // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
-  // Can this happen for params?  We already checked that they don't conflict
-  // among each other.  Here they can only shadow globals, which is ok.
-  if (/*Decl *PrevDecl = */LookupScopedDecl(II, Decl::IDNS_Ordinary,
-                                            PI->getLocation(), FnScope)) {
-    
-  }
   
   // FIXME: Handle storage class (auto, register). No declarator?
   // TODO: Chain to previous parameter with the prevdeclarator chain?
@@ -1031,7 +1023,9 @@ Sema::DeclTy *Sema::ActOnFunctionDefBody(DeclTy *D, StmtTy *Body) {
   return FD;
 }
 
-Sema::DeclTy *Sema::ObjcActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
+/// ObjcActOnStartOfMethodDef - This routine sets up parameters; invisible
+/// and user declared, in the method definition's AST.
+Sema::DeclTy *Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   assert(CurFunctionDecl == 0 && "Function parsing confused");
   ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
   
@@ -1040,7 +1034,7 @@ Sema::DeclTy *Sema::ObjcActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
   Scope *GlobalScope = FnBodyScope->getParent();
   
   FunctionDecl *FD =
-  static_cast<FunctionDecl*>(ObjcActOnDeclarator(GlobalScope, D, 0));
+  static_cast<FunctionDecl*>(ObjcActOnMethodDefinition(GlobalScope, D, 0));
   CurFunctionDecl = FD;
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
@@ -1059,16 +1053,16 @@ Sema::DeclTy *Sema::ObjcActOnStartOfFunctionDef(Scope *FnBodyScope, DeclTy *D) {
     PDecl = new ParmVarDecl(SourceLocation(/*FIXME*/), 
                             &Context.Idents.get("self"),
                             Context.getObjcIdType(), VarDecl::None, 0);
-  Params.push_back(ObjcParseParamDeclarator(PDecl, FnBodyScope));
+  Params.push_back(ObjcBuildMethodParameter(PDecl, FnBodyScope));
   PDecl = new ParmVarDecl(SourceLocation(/*FIXME*/), 
                           &Context.Idents.get("_cmd"),
                           Context.getObjcSelType(), VarDecl::None, 0);
-  Params.push_back(ObjcParseParamDeclarator(PDecl, FnBodyScope));
+  Params.push_back(ObjcBuildMethodParameter(PDecl, FnBodyScope));
   
     
   for (int i = 0; i <  MDecl->getNumParams(); i++) {
     PDecl = MDecl->getParamDecl(i);
-    Params.push_back(ObjcParseParamDeclarator(PDecl, FnBodyScope));
+    Params.push_back(ObjcBuildMethodParameter(PDecl, FnBodyScope));
   }
 
   FD->setParams(&Params[0], Params.size());

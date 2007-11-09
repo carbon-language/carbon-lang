@@ -250,7 +250,7 @@ private:
   DeclTy *ParseExternalDeclaration();
   DeclTy *ParseDeclarationOrFunctionDefinition();
   DeclTy *ParseFunctionDefinition(Declarator &D);
-  DeclTy *ObjcParseFunctionDefinition(DeclTy *D);
+  DeclTy *ObjcParseMethodDefinition(DeclTy *D);
   void ParseKNRParamDeclarations(Declarator &D);
   void ParseSimpleAsm();
   void ParseAsmStringLiteral();
