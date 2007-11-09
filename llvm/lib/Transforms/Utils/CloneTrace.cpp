@@ -32,7 +32,7 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
   //them using CloneBasicBlock. Also fix the phi nodes during
   //this loop. To fix the phi nodes, we delete incoming branches
   //that are not in the trace.
-  for(std::vector<BasicBlock *>::const_iterator T = origTrace.begin(),
+  for (std::vector<BasicBlock *>::const_iterator T = origTrace.begin(),
     End = origTrace.end(); T != End; ++T) {
 
     //Clone Basic Block
@@ -48,7 +48,7 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
     //Loop over the phi instructions and delete operands
     //that are from blocks not in the trace
     //only do this if we are NOT the first block
-    if(T != origTrace.begin()) {
+    if (T != origTrace.begin()) {
       for (BasicBlock::iterator I = clonedBlock->begin();
            isa<PHINode>(I); ++I) {
         PHINode *PN = cast<PHINode>(I);
@@ -66,20 +66,19 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
   }
 
   //Second loop to do the remapping
-  for(std::vector<BasicBlock *>::const_iterator BB = clonedTrace.begin(),
+  for (std::vector<BasicBlock *>::const_iterator BB = clonedTrace.begin(),
     BE = clonedTrace.end(); BB != BE; ++BB) {
-    for(BasicBlock::iterator I = (*BB)->begin(); I != (*BB)->end(); ++I) {
-
+    for (BasicBlock::iterator I = (*BB)->begin(); I != (*BB)->end(); ++I) {
       //Loop over all the operands of the instruction
-      for(unsigned op=0, E = I->getNumOperands(); op != E; ++op) {
-    const Value *Op = I->getOperand(op);
+      for (unsigned op=0, E = I->getNumOperands(); op != E; ++op) {
+        const Value *Op = I->getOperand(op);
 
-    //Get it out of the value map
-    Value *V = ValueMap[Op];
+        //Get it out of the value map
+        Value *V = ValueMap[Op];
 
-    //If not in the value map, then its outside our trace so ignore
-    if(V != 0)
-      I->setOperand(op,V);
+        //If not in the value map, then its outside our trace so ignore
+        if (V != 0)
+          I->setOperand(op,V);
       }
     }
   }
