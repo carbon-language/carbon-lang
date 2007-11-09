@@ -18,9 +18,9 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/Alignment.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
