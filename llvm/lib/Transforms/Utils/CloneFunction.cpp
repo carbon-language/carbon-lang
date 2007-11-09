@@ -20,7 +20,7 @@
 #include "llvm/Function.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
-#include "ValueMapper.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/ADT/SmallVector.h"
 #include <map>

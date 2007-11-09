@@ -19,7 +19,7 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Instructions.h"
 #include "llvm/Function.h"
-#include "ValueMapper.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
 using namespace llvm;
 
 //Clones the trace (a vector of basic blocks)
