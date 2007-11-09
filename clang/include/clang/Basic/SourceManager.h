@@ -130,18 +130,18 @@ namespace SrcMgr {
   /// the token came from.  An actual macro SourceLocation stores deltas from
   /// these positions.
   class MacroIDInfo {
-    SourceLocation InstantiationLoc, PhysicalLoc;
+    SourceLocation VirtualLoc, PhysicalLoc;
   public:
-    SourceLocation getInstantiationLoc() const { return InstantiationLoc; }
+    SourceLocation getVirtualLoc() const { return VirtualLoc; }
     SourceLocation getPhysicalLoc() const { return PhysicalLoc; }
     
-    /// get - Return a MacroID for a macro expansion.  IL specifies
-    /// the instantiation location, and PL specifies the physical location
-    /// (where the characters from the token come from).  Both IL and PL refer
-    /// to normal File SLocs.
-    static MacroIDInfo get(SourceLocation IL, SourceLocation PL) {
+    /// get - Return a MacroID for a macro expansion.  VL specifies
+    /// the instantiation location (where the macro is expanded), and PL
+    /// specifies the physical location (where the characters from the token
+    /// come from).  Both VL and PL refer to normal File SLocs.
+    static MacroIDInfo get(SourceLocation VL, SourceLocation PL) {
       MacroIDInfo X;
-      X.InstantiationLoc = IL;
+      X.VirtualLoc = VL;
       X.PhysicalLoc = PL;
       return X;
     }
@@ -291,7 +291,7 @@ public:
     // File locations are both physical and logical.
     if (Loc.isFileID()) return Loc;
 
-    return MacroIDs[Loc.getMacroID()].getInstantiationLoc();
+    return MacroIDs[Loc.getMacroID()].getVirtualLoc();
   }
   
   /// getPhysicalLoc - Given a SourceLocation object, return the physical

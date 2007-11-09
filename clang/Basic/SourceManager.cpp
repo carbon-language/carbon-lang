@@ -185,7 +185,7 @@ SourceLocation SourceManager::getInstantiationLoc(SourceLocation PhysLoc,
     
     // The instanitation point and source physloc have to exactly match to reuse
     // (for now).  We could allow "nearby" instantiations in the future.
-    if (LastOne.getInstantiationLoc() != InstantLoc ||
+    if (LastOne.getVirtualLoc() != InstantLoc ||
         LastOne.getPhysicalLoc().getFileID() != PhysLoc.getFileID())
       continue;
   
