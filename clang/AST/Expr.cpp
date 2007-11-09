@@ -365,6 +365,7 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case ParenExprClass:
     return cast<ParenExpr>(this)->getSubExpr()->isConstantExpr(Ctx, Loc);
   case StringLiteralClass:
+  case ObjCStringLiteralClass:
   case FloatingLiteralClass:
   case IntegerLiteralClass:
   case CharacterLiteralClass:
