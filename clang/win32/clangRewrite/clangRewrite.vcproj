@@ -162,6 +162,10 @@
 				RelativePath="..\..\include\clang\Rewrite\Rewriter.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\include\clang\Rewrite\RewriteRope.h"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>
