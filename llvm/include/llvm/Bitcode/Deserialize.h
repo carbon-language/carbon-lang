@@ -213,6 +213,8 @@ public:
   
   template <typename T>
   void BatchReadOwnedPtrs(unsigned NumPtrs, T** Ptrs, bool AutoRegister=true) {
+    BatchIDVec.clear();
+    
     for (unsigned i = 0; i < NumPtrs; ++i)
       BatchIDVec.push_back(ReadPtrID());
     
