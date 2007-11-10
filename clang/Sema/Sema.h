@@ -192,6 +192,7 @@ private:
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
   virtual DeclTy *ObjcActOnStartOfMethodDef(Scope *S, DeclTy *D);
   virtual DeclTy *ActOnFunctionDefBody(DeclTy *Decl, StmtTy *Body);
+  virtual void ActOnMethodDefBody(DeclTy *Decl, StmtTy *Body);
   
   /// Scope actions.
   virtual void ActOnPopScope(SourceLocation Loc, Scope *S);

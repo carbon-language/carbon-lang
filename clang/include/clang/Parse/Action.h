@@ -136,7 +136,7 @@ public:
   }
 
   virtual DeclTy *ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
-    // Default to ActOnDeclarator.
+    // Default to ObjcActOnMethodDefinition.
     return ObjcActOnMethodDefinition(FnBodyScope, D, 0);
   }
   
@@ -146,6 +146,9 @@ public:
     return Decl;
   }
 
+  virtual void ActOnMethodDefBody(DeclTy *Decl, StmtTy *Body) {
+    return;
+  }
   
   /// ActOnPopScope - This callback is called immediately before the specified
   /// scope is popped and deleted.

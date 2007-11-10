@@ -330,17 +330,17 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     // @ is not a legal token unless objc is enabled, no need to check.
     return ParseObjCAtDirectives();
   case tok::minus:
-    if (getLang().ObjC1) {
-      return ParseObjCInstanceMethodDefinition();
-    } else {
+    if (getLang().ObjC1)
+      ParseObjCInstanceMethodDefinition();
+    else {
       Diag(Tok, diag::err_expected_external_declaration);
       ConsumeToken();
     }
     return 0;
   case tok::plus:
-    if (getLang().ObjC1) {
-      return ParseObjCClassMethodDefinition();
-    } else {
+    if (getLang().ObjC1)
+      ParseObjCClassMethodDefinition();
+    else {
       Diag(Tok, diag::err_expected_external_declaration);
       ConsumeToken();
     }
@@ -467,7 +467,7 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
 
 /// ObjcParseMethodDefinition - This routine parses a method definition and
 /// returns its AST.
-Parser::DeclTy *Parser::ObjcParseMethodDefinition(DeclTy *D) {
+void Parser::ObjcParseMethodDefinition(DeclTy *D) {
   // We should have an opening brace now.
   if (Tok.isNot(tok::l_brace)) {
     Diag(Tok, diag::err_expected_fn_body);
@@ -477,7 +477,7 @@ Parser::DeclTy *Parser::ObjcParseMethodDefinition(DeclTy *D) {
     
     // If we didn't find the '{', bail out.
     if (Tok.isNot(tok::l_brace))
-      return 0;
+      return;
   }
   
   SourceLocation BraceLoc = Tok.getLocation();
@@ -487,9 +487,19 @@ Parser::DeclTy *Parser::ObjcParseMethodDefinition(DeclTy *D) {
   
   // Tell the actions module that we have entered a method definition with the
   // specified Declarator for the method.
-  DeclTy *Res = Actions.ObjcActOnStartOfMethodDef(CurScope, D);
+  Actions.ObjcActOnStartOfMethodDef(CurScope, D);
   
-  return ParseFunctionStatementBody(Res, BraceLoc, BraceLoc);  
+  StmtResult FnBody = ParseCompoundStatementBody();
+  
+  // If the function body could not be parsed, make a bogus compoundstmt.
+  if (FnBody.isInvalid)
+    FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc, 0, 0, false);
+  
+  // Leave the function body scope.
+  ExitScope();
+  
+  // TODO: Pass argument information.
+  Actions.ActOnMethodDefBody(D, FnBody.Val);
 }
 
 /// ParseKNRParamDeclarations - Parse 'declaration-list[opt]' which provides

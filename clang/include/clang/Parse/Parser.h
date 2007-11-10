@@ -250,7 +250,7 @@ private:
   DeclTy *ParseExternalDeclaration();
   DeclTy *ParseDeclarationOrFunctionDefinition();
   DeclTy *ParseFunctionDefinition(Declarator &D);
-  DeclTy *ObjcParseMethodDefinition(DeclTy *D);
+  void ObjcParseMethodDefinition(DeclTy *D);
   void ParseKNRParamDeclarations(Declarator &D);
   void ParseSimpleAsm();
   void ParseAsmStringLiteral();
@@ -302,8 +302,8 @@ private:
   void ParseObjCPropertyAttribute(ObjcDeclSpec &DS);
   DeclTy *ParseObjCPropertyDecl(DeclTy *interfaceDecl, SourceLocation AtLoc);
   
-  DeclTy *ParseObjCInstanceMethodDefinition();
-  DeclTy *ParseObjCClassMethodDefinition();
+  void ParseObjCInstanceMethodDefinition();
+  void ParseObjCClassMethodDefinition();
   
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.

@@ -255,6 +255,8 @@ private:
   /// List of attributes for this method declaration.
   AttributeList *MethodAttrs;
   
+  Stmt *Body;  // Null if a prototype.
+  
   SourceLocation EndLoc; // the location of the ';' or '{'.
 public:
   ObjcMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
@@ -299,6 +301,9 @@ public:
          { DeclImplementation = ic; }
   ImplementationControl  getImplementationControl() const
                            { return DeclImplementation; }
+  
+  Stmt *const getBody() const { return Body; }
+  void setBody(Stmt *B) { Body = B; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjcMethod; }

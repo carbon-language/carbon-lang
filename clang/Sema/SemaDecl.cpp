@@ -1023,6 +1023,34 @@ Sema::DeclTy *Sema::ActOnFunctionDefBody(DeclTy *D, StmtTy *Body) {
   return FD;
 }
 
+void Sema::ActOnMethodDefBody(DeclTy *D, StmtTy *Body) {
+  ObjcMethodDecl *FD = static_cast<ObjcMethodDecl*>(D);
+  FD->setBody((Stmt*)Body);
+  CurFunctionDecl = 0;
+  
+  // Verify and clean out per-function state.
+  
+  // Check goto/label use.
+  for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
+       I = LabelMap.begin(), E = LabelMap.end(); I != E; ++I) {
+    // Verify that we have no forward references left.  If so, there was a goto
+    // or address of a label taken, but no definition of it.  Label fwd
+    // definitions are indicated with a null substmt.
+    if (I->second->getSubStmt() == 0) {
+      LabelStmt *L = I->second;
+      // Emit error.
+      Diag(L->getIdentLoc(), diag::err_undeclared_label_use, L->getName());
+      
+      // At this point, we have gotos that use the bogus label.  Stitch it into
+      // the function body so that they aren't leaked and that the AST is well
+      // formed.
+      L->setSubStmt(new NullStmt(L->getIdentLoc()));
+      cast<CompoundStmt>((Stmt*)Body)->push_back(L);
+    }
+  }
+  LabelMap.clear();
+}
+
 /// ObjcActOnStartOfMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
 Sema::DeclTy *Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
