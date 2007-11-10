@@ -1643,9 +1643,10 @@ SDOperand X86TargetLowering::LowerX86_TailCallTo(SDOperand Op,
  
         SDOperand AlignNode = DAG.getConstant(Align, MVT::i32);
         SDOperand  SizeNode = DAG.getConstant(Size, MVT::i32);
-        // Copy relative to framepointer.
-        MemOpChains2.push_back(DAG.getNode(ISD::MEMCPY, MVT::Other, Chain, FIN,
-                                           PtrOff, SizeNode, AlignNode));
+        SDOperand AlwaysInline = DAG.getConstant(1, MVT::i1);
+
+        MemOpChains2.push_back(DAG.getMemcpy(Chain, FIN, PtrOff, SizeNode, 
+                                             AlignNode,AlwaysInline));
       } else {
         SDOperand LoadedArg = DAG.getLoad(VA.getValVT(), Chain, PtrOff, NULL,0);
         // Store relative to framepointer.
