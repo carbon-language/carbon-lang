@@ -102,6 +102,19 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename) {
   llvm::Serializer Sezr(Stream);
   
   // ===---------------------------------------------------===/
+  //      Serialize the top-level decls.
+  // ===---------------------------------------------------===/  
+  
+  Sezr.EnterBlock(DeclBlock);
+  
+  for (std::list<Decl*>::iterator I=Decls.begin(), E=Decls.end(); I!=E; ++I) {
+    llvm::cerr << "Serializing: Decl.\n";    
+    Sezr.EmitOwnedPtr(*I);
+  }
+  
+  Sezr.ExitBlock();
+  
+  // ===---------------------------------------------------===/
   //      Serialize the "Translation Unit" metadata.
   // ===---------------------------------------------------===/
 
@@ -128,19 +141,6 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename) {
   Sezr.EmitOwnedPtr(Context);
   
   Sezr.ExitBlock();  
-  
-  // ===---------------------------------------------------===/
-  //      Serialize the top-level decls.
-  // ===---------------------------------------------------===/  
-  
-  Sezr.EnterBlock(DeclBlock);
-  
-  for (std::list<Decl*>::iterator I=Decls.begin(), E=Decls.end(); I!=E; ++I) {
-    llvm::cerr << "Serializing: Decl.\n";    
-    Sezr.EmitOwnedPtr(*I);
-  }
-
-  Sezr.ExitBlock();
   
   // ===---------------------------------------------------===/
   //      Finalize serialization: write the bits to disk.
@@ -191,14 +191,18 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename) {
   if (ReadPreamble(Stream)) {
     llvm::cerr << "ERROR: Invalid AST-bitcode signature.\n";
     return;
-  }  
-  
-  // Create the Dezr.
+  }
+    
+  // Create the deserializer.
   llvm::Deserializer Dezr(Stream);
   
   // ===---------------------------------------------------===/
   //      Deserialize the "Translation Unit" metadata.
   // ===---------------------------------------------------===/
+  
+  // Skip to the block that has the SourceManager, etc.
+  bool FoundBlock = Dezr.SkipToBlock(ContextBlock);
+  assert (FoundBlock);
   
   // "Fake" read the SourceManager.
   llvm::cerr << "Faux-Deserializing: SourceManager.\n";
@@ -224,8 +228,14 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename) {
   ASTConsumer* Printer = CreateASTPrinter();
   Janitor<ASTConsumer> PrinterJanitor(Printer);  
   
+  // "Rewind" the stream.  Find the block with the serialized top-level decls.
+  Dezr.Rewind();
+  FoundBlock = Dezr.SkipToBlock(DeclBlock);
+  assert (FoundBlock);
+  llvm::Deserializer::Location DeclBlockLoc = Dezr.getCurrentBlockLocation();
+  
   // The remaining objects in the file are top-level decls.
-  while (!Dezr.AtEnd()) {
+  while (!Dezr.FinishedBlock(DeclBlockLoc)) {
     llvm::cerr << "Deserializing: Decl.\n";
     Decl* decl = Dezr.ReadOwnedPtr<Decl>();
     Printer->HandleTopLevelDecl(decl);    
