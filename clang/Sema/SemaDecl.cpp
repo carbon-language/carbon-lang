@@ -551,8 +551,13 @@ Sema::ObjcActOnMethodDefinition(Scope *S, DeclTy *D, DeclTy *lastDecl) {
   ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
   
   ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
-  const char *name = MDecl->getSelector().getName().c_str();
-  IdentifierInfo *II = &Context.Idents.get(name);
+  // build [classname selector-name] for the name of method.
+  std::string Name = "[";
+  Name += MDecl->getClassInterface()->getName();
+  Name += " ";
+  Name += MDecl->getSelector().getName();
+  Name += "]";
+  IdentifierInfo *II = &Context.Idents.get(Name);
   assert (II && "ObjcActOnMethodDefinition - selector name is missing");
   
   // The scope passed in may not be a decl scope.  Zip up the scope tree until
