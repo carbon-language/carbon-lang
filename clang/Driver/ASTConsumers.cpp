@@ -73,6 +73,58 @@ static void PrintTypeDefDecl(TypedefDecl *TD) {
   fprintf(stderr, "typedef %s;\n", S.c_str());
 }
 
+static void PrintObjcMethodDecl(ObjcMethodDecl *OMD) {
+  if (OMD->isInstance())
+    fprintf(stderr, "\n- ");
+  else 
+    fprintf(stderr, "\n+ ");
+  if (!OMD->getResultType().isNull())
+    fprintf(stderr, "(%s) ", OMD->getResultType().getAsString().c_str());
+  // FIXME: just print original selector name!
+  fprintf(stderr, "%s ", OMD->getSelector().getName().c_str());
+  
+  for (int i = 0; i < OMD->getNumParams(); i++) {
+    ParmVarDecl *PDecl = OMD->getParamDecl(i);
+    // FIXME: selector is missing here!
+    fprintf(stderr, " :(%s) %s", PDecl->getType().getAsString().c_str(), 
+            PDecl->getName()); 
+  }
+}
+
+static void PrintObjcImplementationDecl(ObjcImplementationDecl *OID) {
+  std::string I = OID->getName();
+  ObjcInterfaceDecl *SID = OID->getSuperClass();
+  if (SID) {
+    std::string S = SID->getName();
+    fprintf(stderr, "@implementation %s : %s", I.c_str(), S.c_str());
+  }
+  else
+    fprintf(stderr, "@implementation %s", I.c_str());
+  
+  for (int i = 0; i < OID->getNumInstanceMethods(); i++) {
+    PrintObjcMethodDecl(OID->getInstanceMethods()[i]);
+    ObjcMethodDecl *OMD = OID->getInstanceMethods()[i];
+    if (OMD->getBody()) {
+      fprintf(stderr, " ");
+      OMD->getBody()->dumpPretty();
+      fprintf(stderr, "\n");
+    }
+  }
+  
+  for (int i = 0; i < OID->getNumClassMethods(); i++) {
+    PrintObjcMethodDecl(OID->getClassMethods()[i]);
+    ObjcMethodDecl *OMD = OID->getClassMethods()[i];
+    if (OMD->getBody()) {
+      fprintf(stderr, " ");
+      OMD->getBody()->dumpPretty();
+      fprintf(stderr, "\n");
+    }
+  }
+  
+  fprintf(stderr,"@end\n");
+}
+
+
 static void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
   std::string I = OID->getName();
   ObjcInterfaceDecl *SID = OID->getSuperClass();
@@ -232,8 +284,7 @@ namespace {
         fprintf(stderr, ";\n");
       } else if (ObjcImplementationDecl *OID = 
                    dyn_cast<ObjcImplementationDecl>(D)) {
-        fprintf(stderr, "@implementation %s  [printing todo]\n",
-                OID->getName());
+        PrintObjcImplementationDecl(OID);
       } else if (ObjcCategoryImplDecl *OID = 
                  dyn_cast<ObjcCategoryImplDecl>(D)) {
         PrintObjcCategoryImplDecl(OID);

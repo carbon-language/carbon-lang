@@ -38,7 +38,7 @@ Parser::DeclTy *Parser::ParseObjCAtDirectives() {
     case tok::objc_protocol:
       return ParseObjCAtProtocolDeclaration(AtLoc);
     case tok::objc_implementation:
-      return ObjcImpDecl = ParseObjCAtImplementationDeclaration(AtLoc);
+      return ParseObjCAtImplementationDeclaration(AtLoc);
     case tok::objc_end:
       return ParseObjCAtEndDeclaration(AtLoc);
     case tok::objc_compatibility_alias:
@@ -911,7 +911,8 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
     DeclTy *ImplCatType = Actions.ActOnStartCategoryImplementation(
                                     atLoc, nameId, nameLoc, categoryId, 
                                     categoryLoc);
-    return ImplCatType;
+    ObjcImpDecl = ImplCatType;
+    return 0;
   }
   // We have a class implementation
   SourceLocation superClassLoc;
@@ -932,8 +933,9 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
   
   if (Tok.is(tok::l_brace)) // we have ivars
     ParseObjCClassInstanceVariables(ImplClsType/*FIXME*/, atLoc);
+  ObjcImpDecl = ImplClsType;
   
-  return ImplClsType;
+  return 0;
 }
 
 Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
@@ -949,11 +951,10 @@ Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
                                       &AllImplMethods[0], AllImplMethods.size(),
                                       (DeclTy **)0, 0,
                                       atLoc);
-    ObjcImpDecl = 0;
     AllImplMethods.clear();
   }
 
-  return 0;
+  return ObjcImpDecl;
 }
 
 ///   compatibility-alias-decl:
