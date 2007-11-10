@@ -870,8 +870,8 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
   }
   // For conversion purposes, we ignore any qualifiers. 
   // For example, "const float" and "float" are equivalent.
-  QualType lhs = lhsExpr->getType().getUnqualifiedType();
-  QualType rhs = rhsExpr->getType().getUnqualifiedType();
+  QualType lhs = lhsExpr->getType().getCanonicalType().getUnqualifiedType();
+  QualType rhs = rhsExpr->getType().getCanonicalType().getUnqualifiedType();
   
   // If both types are identical, no conversion is needed.
   if (lhs == rhs)
