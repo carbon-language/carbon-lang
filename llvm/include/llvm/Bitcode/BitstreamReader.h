@@ -20,9 +20,12 @@
 
 namespace llvm {
   
+  class Deserializer;
+  
 class BitstreamReader {
   const unsigned char *NextChar;
   const unsigned char *LastChar;
+  friend class Deserializer;
   
   /// CurWord - This is the current data we have pulled from the stream but have
   /// not returned to the client.
@@ -269,8 +272,8 @@ public:
     return false;
   }
   
-  /// EnterSubBlock - Having read the ENTER_SUBBLOCK abbrevid, read and enter
-  /// the block, returning the BlockID of the block we just entered.
+  /// EnterSubBlock - Having read the ENTER_SUBBLOCK abbrevid, enter
+  /// the block, and return true if the block is valid.
   bool EnterSubBlock(unsigned BlockID, unsigned *NumWordsP = 0) {
     // Save the current block's state on BlockScope.
     BlockScope.push_back(Block(CurCodeSize));
@@ -303,6 +306,13 @@ public:
     // Block tail:
     //    [END_BLOCK, <align4bytes>]
     SkipToWord();
+    
+    PopBlockScope();
+    return false;
+  }
+  
+private:
+  void PopBlockScope() {
     CurCodeSize = BlockScope.back().PrevCodeSize;
     
     // Delete abbrevs from popped scope.
@@ -311,9 +321,8 @@ public:
     
     BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
     BlockScope.pop_back();
-    return false;
-  }
-  
+  }  
+    
   //===--------------------------------------------------------------------===//
   // Record Processing
   //===--------------------------------------------------------------------===//
