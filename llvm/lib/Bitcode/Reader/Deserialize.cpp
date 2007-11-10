@@ -324,7 +324,7 @@ void Deserializer::ReadCStr(std::vector<char>& buff, bool isNullTerm) {
     buff.push_back('\0');
 }
 
-void Deserializer::RegisterPtr(unsigned PtrId, const void* Ptr) {
+void Deserializer::RegisterPtr(SerializedPtrID PtrId, const void* Ptr) {
   MapTy::value_type& E = BPatchMap.FindAndConstruct(BPKey(PtrId));
   
   assert (!HasFinalPtr(E) && "Pointer already registered.");
