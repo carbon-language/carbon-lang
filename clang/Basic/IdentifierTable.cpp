@@ -415,8 +415,8 @@ void IdentifierTable::Emit(llvm::Serializer& S) const {
     const char* Key = I->getKeyData();
     const IdentifierInfo* Info = &I->getValue();
     
-    bool KeyRegistered = true; // FIXME: S.isRegistered(Key);
-    bool InfoRegistered = true; // FIXME: S.isRegistered(Info);
+    bool KeyRegistered = S.isRegistered(Key);
+    bool InfoRegistered = S.isRegistered(Info);
     
     if (KeyRegistered || InfoRegistered) {
       // These acrobatics are so that we don't incur the cost of registering
