@@ -126,6 +126,7 @@ private:
   unsigned AbbrevNo;
   unsigned RecordCode;
   Location StreamStart;
+  std::vector<SerializedPtrID> BatchIDVec;
   
   //===----------------------------------------------------------===//
   // Public Interface.
@@ -213,10 +214,11 @@ public:
   template <typename T>
   void BatchReadOwnedPtrs(unsigned NumPtrs, T** Ptrs, bool AutoRegister=true) {
     for (unsigned i = 0; i < NumPtrs; ++i)
-      reinterpret_cast<SerializedPtrID&>(Ptrs[i]) = ReadPtrID();
+      BatchIDVec.push_back(ReadPtrID());
     
     for (unsigned i = 0; i < NumPtrs; ++i) {
-      SerializedPtrID PtrID = reinterpret_cast<SerializedPtrID>(Ptrs[i]);
+      SerializedPtrID& PtrID = BatchIDVec[i];
+      
       T* p = PtrID ? SerializeTrait<T>::Materialize(*this) : NULL;
       
       if (PtrID && AutoRegister)
