@@ -1030,6 +1030,8 @@ void Sema::ActOnMethodDefBody(DeclTy *D, StmtTy *Body) {
   
   // Verify and clean out per-function state.
   
+  // TODO: This code block is common with ActOnFunctionDefBody and need be 
+  // refactored.
   // Check goto/label use.
   for (llvm::DenseMap<IdentifierInfo*, LabelStmt*>::iterator
        I = LabelMap.begin(), E = LabelMap.end(); I != E; ++I) {
@@ -1053,7 +1055,7 @@ void Sema::ActOnMethodDefBody(DeclTy *D, StmtTy *Body) {
 
 /// ObjcActOnStartOfMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
-Sema::DeclTy *Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
+void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   assert(CurFunctionDecl == 0 && "Function parsing confused");
   ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
   
@@ -1094,8 +1096,6 @@ Sema::DeclTy *Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   }
 
   FD->setParams(&Params[0], Params.size());
-  
-  return FD;
 }
 
 /// ImplicitlyDefineFunction - An undeclared identifier was used in a function

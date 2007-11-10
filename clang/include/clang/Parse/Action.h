@@ -135,9 +135,8 @@ public:
     return ActOnDeclarator(FnBodyScope, D, 0);
   }
 
-  virtual DeclTy *ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
-    // Default to ObjcActOnMethodDefinition.
-    return ObjcActOnMethodDefinition(FnBodyScope, D, 0);
+  virtual void ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
+    return;
   }
   
   /// ActOnFunctionDefBody - This is called when a function body has completed
