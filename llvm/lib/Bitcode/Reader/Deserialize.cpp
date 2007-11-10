@@ -21,6 +21,9 @@ using namespace llvm;
 
 Deserializer::Deserializer(BitstreamReader& stream)
   : Stream(stream), RecIdx(0), FreeList(NULL), AbbrevNo(0), RecordCode(0) {
+    
+  AdvanceStream();
+  if (!AtEnd()) StreamStart = BlockStack.back();
 }
 
 Deserializer::~Deserializer() {
@@ -60,12 +63,24 @@ bool Deserializer::AdvanceStream() {
   
   while (!Stream.AtEndOfStream()) {
     
+    uint64_t Pos = Stream.GetCurrentBitNo();
     AbbrevNo = Stream.ReadCode();    
   
     switch (AbbrevNo) {        
       case bitc::ENTER_SUBBLOCK: {
         unsigned id = Stream.ReadSubBlockID();
-        BlockStack.push_back(std::make_pair(Stream.GetCurrentBitNo(),id));
+        
+        // Determine the extent of the block.  This is useful for jumping around
+        // the stream.  This is hack: we read the header of the block, save
+        // the length, and then revert the bitstream to a location just before
+        // the block is entered.
+        uint64_t BPos = Stream.GetCurrentBitNo();
+        Stream.ReadVBR(bitc::CodeLenWidth); // Skip the code size.
+        Stream.SkipToWord();
+        unsigned NumWords = Stream.Read(bitc::BlockSizeWidth);
+        Stream.JumpToBit(BPos);
+                
+        BlockStack.push_back(Location(Pos,id,NumWords));
         break;
       } 
         
@@ -91,10 +106,10 @@ bool Deserializer::AdvanceStream() {
 }
 
 void Deserializer::ReadRecord() {
-  
+
   while (AdvanceStream() && AbbrevNo == bitc::ENTER_SUBBLOCK) {
     assert (!BlockStack.empty());
-    Stream.EnterSubBlock(BlockStack.back().second);
+    Stream.EnterSubBlock(BlockStack.back().BlockID);
     AbbrevNo = 0;
   }
 
@@ -109,23 +124,116 @@ void Deserializer::ReadRecord() {
 
 void Deserializer::SkipBlock() {
   assert (!inRecord());
-  assert (AbbrevNo == bitc::ENTER_SUBBLOCK);  
+
+  if (AtEnd())
+    return;
+
+  AdvanceStream();  
+
+  assert (AbbrevNo == bitc::ENTER_SUBBLOCK);
+  BlockStack.pop_back();
   Stream.SkipBlock();
+
   AbbrevNo = 0;
+  AdvanceStream();
+}
+
+bool Deserializer::SkipToBlock(unsigned BlockID) {
+  assert (!inRecord());
+  
+  AdvanceStream();
+  assert (AbbrevNo == bitc::ENTER_SUBBLOCK);
+  
+  unsigned BlockLevel = BlockStack.size();
+
+  while (!AtEnd() &&
+         BlockLevel == BlockStack.size() && 
+         getCurrentBlockID() != BlockID)
+    SkipBlock();
+
+  return !(AtEnd() || BlockLevel != BlockStack.size());
 }
 
 Deserializer::Location Deserializer::getCurrentBlockLocation() {
   if (!inRecord())
     AdvanceStream();
   
-  return BlockStack.back().first;
+  return BlockStack.back();
+}
+
+bool Deserializer::JumpTo(const Location& Loc) {
+    
+  assert (!inRecord());
+
+//  AdvanceStream();
+  
+//  assert (AbbrevNo == bitc::ENTER_SUBBLOCK);
+  assert (!BlockStack.empty());
+    
+  uint64_t LastBPos = StreamStart.BitNo;
+  
+  while (!BlockStack.empty()) {
+    
+    LastBPos = BlockStack.back().BitNo;
+    
+    // Determine of the current block contains the location of the block
+    // we are looking for.
+    if (BlockStack.back().contains(Loc)) {
+      // We found the enclosing block.  We must first POP it off to
+      // destroy any accumulated context within the block scope.  We then
+      // jump to the position of the block and enter it.
+      Stream.JumpToBit(LastBPos);
+      BlockStack.pop_back();
+      Stream.PopBlockScope();
+      
+      AbbrevNo = 0;
+      AdvanceStream();      
+      assert (AbbrevNo == bitc::ENTER_SUBBLOCK);
+      
+      Stream.EnterSubBlock(BlockStack.back().BlockID);
+      break;
+    }
+
+    // This block does not contain the block we are looking for.  Pop it.
+    BlockStack.pop_back();
+    Stream.PopBlockScope();
+  }
+
+  // Check if we have popped our way to the outermost scope.  If so,
+  // we need to adjust our position.
+  if (BlockStack.empty()) {
+    Stream.JumpToBit(Loc.BitNo < LastBPos ? StreamStart.BitNo : LastBPos);
+    AbbrevNo = 0;
+    AdvanceStream();
+  }
+
+  assert (AbbrevNo == bitc::ENTER_SUBBLOCK);
+  assert (!BlockStack.empty());
+  
+  while (!AtEnd() && BlockStack.back() != Loc) {
+    if (BlockStack.back().contains(Loc)) {
+      Stream.EnterSubBlock(BlockStack.back().BlockID);
+      AbbrevNo = 0;
+      AdvanceStream();
+      continue;
+    }
+    else
+      SkipBlock();
+  }
+  
+  if (AtEnd())
+    return false;
+  
+  assert (BlockStack.back() == Loc);
+
+  return true;
 }
 
 unsigned Deserializer::getCurrentBlockID() { 
   if (!inRecord())
     AdvanceStream();
   
-  return BlockStack.back().second;
+  return BlockStack.back().BlockID;
 }
 
 unsigned Deserializer::getRecordCode() {
@@ -142,9 +250,9 @@ bool Deserializer::FinishedBlock(Location BlockLoc) {
   if (!inRecord())
     AdvanceStream();
 
-  for (llvm::SmallVector<std::pair<Location,unsigned>,5>::reverse_iterator
+  for (llvm::SmallVector<Location,8>::reverse_iterator
         I=BlockStack.rbegin(), E=BlockStack.rend(); I!=E; ++I)
-      if (I->first == BlockLoc)
+      if (*I == BlockLoc)
         return false;
   
   return true;

@@ -80,7 +80,36 @@ class Deserializer {
   //===----------------------------------------------------------===//
   
 public:  
-  typedef uint64_t Location;
+  struct Location {
+    uint64_t BitNo;
+    unsigned BlockID;
+    unsigned NumWords;
+    
+    Location(uint64_t bit, unsigned bid, unsigned words) 
+    : BitNo(bit), BlockID(bid), NumWords(words) {}
+    
+    Location() : BitNo(0), BlockID(0), NumWords(0) {}
+
+    Location& operator=(Location& RHS) {
+      BitNo = RHS.BitNo;
+      BlockID = RHS.BlockID;
+      NumWords = RHS.NumWords;
+      return *this;
+    }
+    
+    bool operator==(const Location& RHS) const { return BitNo == RHS.BitNo; }    
+    bool operator!=(const Location& RHS) const { return BitNo != RHS.BitNo; }
+    
+    bool contains(const Location& RHS) const {
+      if (RHS.BitNo < BitNo)
+        return false;
+
+      if ((RHS.BitNo - BitNo) >> 5 < NumWords)
+        return true;
+      
+      return false;
+    }
+  };
   
   //===----------------------------------------------------------===//
   // Internal data members.
@@ -93,9 +122,10 @@ private:
   BumpPtrAllocator Allocator;
   BPNode* FreeList;
   MapTy BPatchMap;
-  llvm::SmallVector<std::pair<Location,unsigned>,5> BlockStack;
+  llvm::SmallVector<Location,8> BlockStack;
   unsigned AbbrevNo;
   unsigned RecordCode;
+  Location StreamStart;
   
   //===----------------------------------------------------------===//
   // Public Interface.
@@ -238,12 +268,17 @@ public:
   unsigned getAbbrevNo();
   
   bool FinishedBlock(Location BlockLoc);
+  bool JumpTo(const Location& BlockLoc);
+  void Rewind() { JumpTo(StreamStart); }
   
   bool AtEnd();
   bool inRecord();
   void SkipBlock();
+  bool SkipToBlock(unsigned BlockID);
   
   unsigned getRecordCode();
+  
+  BitstreamReader& getStream() { return Stream; }
   
 private:
   bool AdvanceStream();  
