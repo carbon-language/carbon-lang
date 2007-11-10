@@ -120,6 +120,15 @@ void CallingConvEmitter::EmitAction(Record *Action,
       O << IndentStr << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
         << Counter << ", LocVT, LocInfo));\n";
       O << IndentStr << "return false;\n";
+    } else if (Action->isSubClassOf("CCAssignToStackABISizeAlign")) {
+      O << IndentStr << "unsigned Offset" << ++Counter
+        << " = State.AllocateStack(State.getTarget().getTargetData()"
+           "->getABITypeSize(MVT::getTypeForValueType(LocVT)),\n";
+      O << IndentStr << "       State.getTarget().getTargetData()"
+           "->getABITypeAlignment(MVT::getTypeForValueType(LocVT)));\n";
+      O << IndentStr << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
+        << Counter << ", LocVT, LocInfo));\n";
+      O << IndentStr << "return false;\n";
     } else if (Action->isSubClassOf("CCPromoteToType")) {
       Record *DestTy = Action->getValueAsDef("DestTy");
       O << IndentStr << "LocVT = " << getEnumName(getValueType(DestTy)) <<";\n";

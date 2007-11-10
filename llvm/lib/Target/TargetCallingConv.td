@@ -66,6 +66,13 @@ class CCAssignToStack<int size, int align> : CCAction {
   int Align = align;
 }
 
+/// CCAssignToStackABISizeAlign - This action always matches: it assigns
+/// the value to a stack slot of the ABISize and ABIAlignment for the type,
+/// which may depend on the target or subtarget.
+/// "ignored" is here because an empty arg list does not work.
+class CCAssignToStackABISizeAlign<int ignored> : CCAction {
+}
+
 /// CCStructAssign - This action always matches: it will use the C ABI and
 /// the register availability to decided whether to assign to a set of
 /// registers or to a stack slot.
