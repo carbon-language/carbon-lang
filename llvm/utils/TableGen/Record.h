@@ -1042,11 +1042,17 @@ public:
   ListInit *getValueAsListInit(const std::string &FieldName) const;
 
   /// getValueAsListOfDefs - This method looks up the specified field and
-  /// returnsits value as a vector of records, throwing an exception if the
+  /// returns its value as a vector of records, throwing an exception if the
   /// field does not exist or if the value is not the right type.
   ///
   std::vector<Record*> getValueAsListOfDefs(const std::string &FieldName) const;
 
+  /// getValueAsListOfInts - This method looks up the specified field and returns
+  /// its value as a vector of integers, throwing an exception if the field does
+  /// not exist or if the value is not the right type.
+  ///
+  std::vector<int> getValueAsListOfInts(const std::string &FieldName) const;
+  
   /// getValueAsDef - This method looks up the specified field and returns its
   /// value as a Record, throwing an exception if the field does not exist or if
   /// the value is not the right type.

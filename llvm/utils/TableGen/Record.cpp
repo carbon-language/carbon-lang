@@ -866,6 +866,25 @@ int Record::getValueAsInt(const std::string &FieldName) const {
         "' does not have an int initializer!";
 }
 
+/// getValueAsListOfInts - This method looks up the specified field and returns
+/// its value as a vector of integers, throwing an exception if the field does
+/// not exist or if the value is not the right type.
+///
+std::vector<int> 
+Record::getValueAsListOfInts(const std::string &FieldName) const {
+  ListInit *List = getValueAsListInit(FieldName);
+  std::vector<int> Ints;
+  for (unsigned i = 0; i < List->getSize(); i++) {
+    if (IntInit *II = dynamic_cast<IntInit*>(List->getElement(i))) {
+      Ints.push_back(II->getValue());
+    } else {
+      throw "Record `" + getName() + "', field `" + FieldName +
+            "' does not have a list of ints initializer!";
+    }
+  }
+  return Ints;
+}
+
 /// getValueAsDef - This method looks up the specified field and returns its
 /// value as a Record, throwing an exception if the field does not exist or if
 /// the value is not the right type.
