@@ -510,4 +510,31 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
   return NULL;
 }
 
+// lookupInstanceMethod - This method returns an instance method by looking in
+// the class implementation. Unlike interfaces, we don't look outside the
+// implementation.
+ObjcMethodDecl *ObjcImplementationDecl::lookupInstanceMethod(Selector &Sel) {
+  ObjcMethodDecl **methods = getInstanceMethods();
+  int methodCount = getNumInstanceMethods();
+  for (int i = 0; i < methodCount; ++i) {
+    if (methods[i]->getSelector() == Sel) {
+      return methods[i];
+    }
+  }
+  return NULL;
+}
+
+// lookupClassMethod - This method returns an instance method by looking in
+// the class implementation. Unlike interfaces, we don't look outside the
+// implementation.
+ObjcMethodDecl *ObjcImplementationDecl::lookupClassMethod(Selector &Sel) {
+  ObjcMethodDecl **methods = getClassMethods();
+  int methodCount = getNumClassMethods();
+  for (int i = 0; i < methodCount; ++i) {
+    if (methods[i]->getSelector() == Sel) {
+      return methods[i];
+    }
+  }
+  return NULL;
+}
 

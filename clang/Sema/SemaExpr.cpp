@@ -2126,6 +2126,12 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     // idea is to add class info to InstanceMethodPool...
     Method = ClassDecl->lookupInstanceMethod(Sel);
     if (!Method) {
+      // If we have an implementation in scope, check "private" methods.
+      if (ObjcImplementationDecl *ImpDecl = 
+            ObjcImplementations[ClassDecl->getIdentifier()])
+        Method = ImpDecl->lookupInstanceMethod(Sel);
+    }
+    if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
       returnType = Context.getObjcIdType();

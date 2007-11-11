@@ -1477,9 +1477,10 @@ Sema::DeclTy *Sema::ActOnStartClassImplementation(
   new ObjcImplementationDecl(AtClassImplLoc, ClassName, IDecl, SDecl);
   
   // Check that there is no duplicate implementation of this class.
-  if (!ObjcImplementations.insert(ClassName))
+  if (ObjcImplementations[ClassName])
     Diag(ClassLoc, diag::err_dup_implementation_class, ClassName->getName());
-
+  else // add it to the list.
+    ObjcImplementations[ClassName] = IMPDecl;
   return IMPDecl;
 }
 

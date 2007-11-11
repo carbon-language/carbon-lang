@@ -85,7 +85,7 @@ class Sema : public Action {
 
   /// ObjcImplementations - Keep track of all of the classes with
   /// @implementation's, so that we can emit errors on duplicates.
-  llvm::SmallPtrSet<IdentifierInfo*, 8> ObjcImplementations;
+  llvm::DenseMap<IdentifierInfo*, ObjcImplementationDecl*> ObjcImplementations;
   
   /// ObjcProtocols - Keep track of all protocol declarations declared
   /// with @protocol keyword, so that we can emit errors on duplicates and

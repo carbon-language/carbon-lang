@@ -667,6 +667,9 @@ public:
   
   ObjcMethodDecl **getClassMethods() const { return ClassMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
+
+  ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
+  ObjcMethodDecl *lookupClassMethod(Selector &Sel);
   
   ObjcIvarDecl **getImplDeclIVars() const { return Ivars; }
   int getImplDeclNumIvars() const { return NumIvars; }
