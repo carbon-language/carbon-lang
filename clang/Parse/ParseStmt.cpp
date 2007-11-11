@@ -1046,5 +1046,5 @@ Parser::DeclTy *Parser::ParseFunctionStatementBody(DeclTy *Decl,
   ExitScope();
   
   // TODO: Pass argument information.
-  return Actions.ActOnFunctionDefBody(Decl, FnBody.Val);
+  return Actions.ActOnFinishFunctionBody(Decl, FnBody.Val);
 }

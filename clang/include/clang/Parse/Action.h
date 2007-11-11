@@ -141,14 +141,10 @@ public:
   
   /// ActOnFunctionDefBody - This is called when a function body has completed
   /// parsing.  Decl is the DeclTy returned by ParseStartOfFunctionDef.
-  virtual DeclTy *ActOnFunctionDefBody(DeclTy *Decl, StmtTy *Body) {
+  virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtTy *Body) {
     return Decl;
   }
 
-  virtual void ActOnMethodDefBody(DeclTy *Decl, StmtTy *Body) {
-    return;
-  }
-  
   /// ActOnPopScope - This callback is called immediately before the specified
   /// scope is popped and deleted.
   virtual void ActOnPopScope(SourceLocation Loc, Scope *S) {}

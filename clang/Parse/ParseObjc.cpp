@@ -1175,7 +1175,7 @@ void Parser::ParseObjCMethodDefinition() {
   ExitScope();
   
   // TODO: Pass argument information.
-  Actions.ActOnMethodDefBody(MDecl, FnBody.Val);
+  Actions.ActOnFinishFunctionBody(MDecl, FnBody.Val);
 }
 
 Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
