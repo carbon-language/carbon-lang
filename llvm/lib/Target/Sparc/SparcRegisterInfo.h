@@ -96,6 +96,8 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
   // Exception handling queries.
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;
+
+  int getDwarfRegNum(unsigned RegNum) const;
 };
 
 } // end namespace llvm

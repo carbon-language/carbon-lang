@@ -1277,5 +1277,10 @@ unsigned PPCRegisterInfo::getEHHandlerRegister() const {
   return !Subtarget.isPPC64() ? PPC::R4 : PPC::X4;
 }
 
+int PPCRegisterInfo::getDwarfRegNum(unsigned RegNum) const {
+  assert(0 && "What is the dwarf register number");
+  return -1;
+}
+
 #include "PPCGenRegisterInfo.inc"
 

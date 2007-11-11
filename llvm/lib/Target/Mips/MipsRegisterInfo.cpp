@@ -538,5 +538,11 @@ getEHHandlerRegister() const {
   return 0;
 }
 
+int MipsRegisterInfo::
+getDwarfRegNum(unsigned RegNum) const {
+  assert(0 && "What is the dwarf register number");
+  return -1;
+}
+
 #include "MipsGenRegisterInfo.inc"
 

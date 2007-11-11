@@ -480,6 +480,11 @@ unsigned AlphaRegisterInfo::getEHHandlerRegister() const {
   return 0;
 }
 
+int AlphaRegisterInfo::getDwarfRegNum(unsigned RegNum) const {
+  assert(0 && "What is the dwarf register number");
+  return -1;
+}
+
 #include "AlphaGenRegisterInfo.inc"
 
 std::string AlphaRegisterInfo::getPrettyName(unsigned reg)

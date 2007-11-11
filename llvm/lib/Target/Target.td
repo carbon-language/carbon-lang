@@ -49,12 +49,12 @@ class Register<string n> {
   // not [AX, AH, AL].
   list<Register> SubRegs = [];
 
-  // DwarfNumber - Number used internally by gcc/gdb to identify the register.
+  // DwarfNumbers - Numbers used internally by gcc/gdb to identify the register.
   // These values can be determined by locating the <target>.h file in the
   // directory llvmgcc/gcc/config/<target>/ and looking for REGISTER_NAMES.  The
   // order of these names correspond to the enumeration used by gcc.  A value of
   // -1 indicates that the gcc number is undefined.
-  int DwarfNumber = -1;
+  list<int> DwarfNumbers = [];
 }
 
 // RegisterWithSubRegs - This can be used to define instances of Register which
@@ -133,13 +133,13 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
 // to the register numbering used by gcc and gdb.  These values are used by a
 // debug information writer (ex. DwarfWriter) to describe where values may be
 // located during execution.
-class DwarfRegNum<int N> {
-  // DwarfNumber - Number used internally by gcc/gdb to identify the register.
+class DwarfRegNum<list<int> Numbers> {
+  // DwarfNumbers - Numbers used internally by gcc/gdb to identify the register.
   // These values can be determined by locating the <target>.h file in the
   // directory llvmgcc/gcc/config/<target>/ and looking for REGISTER_NAMES.  The
   // order of these names correspond to the enumeration used by gcc.  A value of
   // -1 indicates that the gcc number is undefined.
-  int DwarfNumber = N;
+  list<int> DwarfNumbers = Numbers;
 }
 
 //===----------------------------------------------------------------------===//

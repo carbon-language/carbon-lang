@@ -333,5 +333,10 @@ unsigned SparcRegisterInfo::getEHHandlerRegister() const {
   return 0;
 }
 
+int SparcRegisterInfo::getDwarfRegNum(unsigned RegNum) const {
+  assert(0 && "What is the dwarf register number");
+  return -1;
+}
+
 #include "SparcGenRegisterInfo.inc"
 

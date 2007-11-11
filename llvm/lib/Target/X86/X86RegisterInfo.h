@@ -32,6 +32,14 @@ namespace N86 {
   };
 }
 
+/// DWARFFlavour - Flavour of dwarf regnumbers
+///
+namespace DWARFFlavour {
+  enum {
+    X86_64 = 0, X86_32_Darwin = 1, X86_32_ELF = 2
+  };
+} 
+  
 class X86RegisterInfo : public X86GenRegisterInfo {
 public:
   X86TargetMachine &TM;

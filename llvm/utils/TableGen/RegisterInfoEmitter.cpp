@@ -60,7 +60,9 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   OS << "struct " << ClassName << " : public MRegisterInfo {\n"
      << "  " << ClassName
      << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
-     << "  virtual int getDwarfRegNum(unsigned RegNum) const;\n"
+     << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
+     << "unsigned Flavour) const;\n"
+     << "  virtual int getDwarfRegNum(unsigned RegNum) const = 0;\n"
      << "  unsigned getSubReg(unsigned RegNo, unsigned Index) const;\n"
      << "};\n\n";
 
@@ -406,6 +408,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   std::map<Record*, std::set<Record*> > RegisterSuperRegs;
   std::map<Record*, std::set<Record*> > RegisterAliases;
   std::map<Record*, std::vector<std::pair<int, Record*> > > SubRegVectors;
+  std::map<Record*, std::vector<int> > DwarfRegNums;
+  
   const std::vector<CodeGenRegister> &Regs = Target.getRegisters();
 
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
@@ -590,21 +594,56 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n "
      << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode) {}\n\n";
 
-  // Emit information about the dwarf register numbers.
-  OS << "int " << ClassName << "::getDwarfRegNum(unsigned RegNum) const {\n";
-  OS << "  static const int DwarfRegNums[] = { -1, // NoRegister";
+  // Collect all information about dwarf register numbers
+
+  // First, just pull all provided information to the map
+  unsigned maxLength = 0;
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
-    if (!(i % 16)) OS << "\n    ";
-    const CodeGenRegister &Reg = Registers[i];
-    int DwarfRegNum = Reg.TheDef->getValueAsInt("DwarfNumber");
-    OS << DwarfRegNum;
-    if ((i + 1) != e)  OS << ", ";
+    Record *Reg = Registers[i].TheDef;
+    std::vector<int> RegNums = Reg->getValueAsListOfInts("DwarfNumbers");
+    maxLength = std::max(maxLength, RegNums.size());
+    if (DwarfRegNums.count(Reg))
+      cerr << "Warning: DWARF numbers for register " << getQualifiedName(Reg)
+           << "specified multiple times\n";
+    DwarfRegNums[Reg] = RegNums;
   }
-  OS << "\n  };\n";
-  OS << "  assert(RegNum < (sizeof(DwarfRegNums)/sizeof(int)) &&\n";
-  OS << "         \"RegNum exceeds number of registers\");\n";
-  OS << "  return DwarfRegNums[RegNum];\n";
-  OS << "}\n\n";
+
+  // Now we know maximal length of number list. Append -1's, where needed
+  for (std::map<Record*, std::vector<int> >::iterator 
+        I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I)
+    for (unsigned i = I->second.size(), e = maxLength; i != e; ++i)
+      I->second.push_back(-1);
+
+  // Emit information about the dwarf register numbers.
+  OS << "int " << ClassName << "::getDwarfRegNumFull(unsigned RegNum, "
+     << "unsigned Flavour) const {\n"
+     << "  switch (Flavour) {\n"
+     << "  default:\n"
+     << "    assert(0 && \"Unknown DWARF flavour\");\n"
+     << "    return -1;\n";
+  
+  for (unsigned i = 0, e = maxLength; i != e; ++i) {
+    OS << "  case " << i << ":\n"
+       << "    switch (RegNum) {\n"
+       << "    default:\n"
+       << "      assert(0 && \"Invalid RegNum\");\n"
+       << "      return -1;\n";
+
+    for (std::map<Record*, std::vector<int> >::iterator 
+           I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
+      int RegNo = I->second[i];
+      if (RegNo != -2)
+        OS << "    case " << getQualifiedName(I->first) << ":\n"
+           << "      return " << RegNo << ";\n";
+      else
+        OS << "    case " << getQualifiedName(I->first) << ":\n"
+           << "      assert(0 && \"Invalid register for this mode\");\n"
+           << "      return -1;\n";
+    }
+    OS << "    };\n";
+  }
+    
+  OS << "  };\n}\n\n";
 
   OS << "} // End llvm namespace \n";
 }

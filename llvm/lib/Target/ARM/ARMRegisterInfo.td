@@ -25,22 +25,22 @@ class ARMFReg<bits<5> num, string n> : Register<n> {
 }
 
 // Integer registers
-def R0  : ARMReg< 0, "r0">,  DwarfRegNum<0>;
-def R1  : ARMReg< 1, "r1">,  DwarfRegNum<1>;
-def R2  : ARMReg< 2, "r2">,  DwarfRegNum<2>;
-def R3  : ARMReg< 3, "r3">,  DwarfRegNum<3>;
-def R4  : ARMReg< 4, "r4">,  DwarfRegNum<4>;
-def R5  : ARMReg< 5, "r5">,  DwarfRegNum<5>;
-def R6  : ARMReg< 6, "r6">,  DwarfRegNum<6>;
-def R7  : ARMReg< 7, "r7">,  DwarfRegNum<7>;
-def R8  : ARMReg< 8, "r8">,  DwarfRegNum<8>;
-def R9  : ARMReg< 9, "r9">,  DwarfRegNum<9>;
-def R10 : ARMReg<10, "r10">, DwarfRegNum<10>;
-def R11 : ARMReg<11, "r11">, DwarfRegNum<11>;
-def R12 : ARMReg<12, "r12">, DwarfRegNum<12>;
-def SP  : ARMReg<13, "sp">,  DwarfRegNum<13>;
-def LR  : ARMReg<14, "lr">,  DwarfRegNum<14>;
-def PC  : ARMReg<15, "pc">,  DwarfRegNum<15>;
+def R0  : ARMReg< 0, "r0">,  DwarfRegNum<[0]>;
+def R1  : ARMReg< 1, "r1">,  DwarfRegNum<[1]>;
+def R2  : ARMReg< 2, "r2">,  DwarfRegNum<[2]>;
+def R3  : ARMReg< 3, "r3">,  DwarfRegNum<[3]>;
+def R4  : ARMReg< 4, "r4">,  DwarfRegNum<[4]>;
+def R5  : ARMReg< 5, "r5">,  DwarfRegNum<[5]>;
+def R6  : ARMReg< 6, "r6">,  DwarfRegNum<[6]>;
+def R7  : ARMReg< 7, "r7">,  DwarfRegNum<[7]>;
+def R8  : ARMReg< 8, "r8">,  DwarfRegNum<[8]>;
+def R9  : ARMReg< 9, "r9">,  DwarfRegNum<[9]>;
+def R10 : ARMReg<10, "r10">, DwarfRegNum<[10]>;
+def R11 : ARMReg<11, "r11">, DwarfRegNum<[11]>;
+def R12 : ARMReg<12, "r12">, DwarfRegNum<[12]>;
+def SP  : ARMReg<13, "sp">,  DwarfRegNum<[13]>;
+def LR  : ARMReg<14, "lr">,  DwarfRegNum<[14]>;
+def PC  : ARMReg<15, "pc">,  DwarfRegNum<[15]>;
 
 // Float registers
 def S0  : ARMFReg< 0, "s0">;  def S1  : ARMFReg< 1, "s1">;
