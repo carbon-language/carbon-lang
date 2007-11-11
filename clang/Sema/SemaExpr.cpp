@@ -1414,7 +1414,7 @@ QualType Sema::CheckIncrementDecrementOperand(Expr *op, SourceLocation OpLoc) {
   assert(!resType.isNull() && "no type for increment/decrement expression");
 
   // C99 6.5.2.4p1: We allow complex as a GCC extension.
-  if (const PointerType *pt = dyn_cast<PointerType>(resType)) {
+  if (const PointerType *pt = resType->getAsPointerType()) {
     if (!pt->getPointeeType()->isObjectType()) { // C99 6.5.2.4p2, 6.5.6p2
       Diag(OpLoc, diag::err_typecheck_arithmetic_incomplete_type,
            resType.getAsString(), op->getSourceRange());
