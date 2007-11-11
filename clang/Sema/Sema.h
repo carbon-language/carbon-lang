@@ -541,10 +541,9 @@ public:
                                        llvm::SmallVector<DeclTy *, 8> & 
                                        Protocols);
 
-  virtual void ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *ClassDecl, 
-				         DeclTy **allMethods, unsigned allNum,
-                                         DeclTy **allProperties, unsigned pNum,
-                                         SourceLocation AtEndLoc);
+  virtual void ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
+                      DeclTy **allMethods = 0, unsigned allNum = 0,
+                      DeclTy **allProperties = 0, unsigned pNum = 0);
   
   virtual DeclTy *ActOnAddObjcProperties(SourceLocation AtLoc, 
                                          DeclTy **allProperties,

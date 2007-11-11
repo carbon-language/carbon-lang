@@ -1576,7 +1576,7 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
   llvm::DenseSet<Selector> InsMap;
   // Check and see if instance methods in class interface have been
   // implemented in the implementation class.
-  ObjcMethodDecl **methods = IMPDecl->getInstanceMethods();
+  ObjcMethodDecl *const*methods = IMPDecl->getInstanceMethods();
   for (int i=0; i < IMPDecl->getNumInstanceMethods(); i++) 
     InsMap.insert(methods[i]->getSelector());
   
@@ -2079,10 +2079,9 @@ void Sema::AddFactoryMethodToGlobalPool(ObjcMethodDecl *Method) {
   }
 }
 
-void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
-                                     DeclTy **allMethods, unsigned allNum,
-                                     DeclTy **allProperties, unsigned pNum,
-                                     SourceLocation AtEndLoc) {
+void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
+                      DeclTy **allMethods, unsigned allNum,
+                      DeclTy **allProperties, unsigned pNum) {
   Decl *ClassDecl = static_cast<Decl *>(classDecl);
 
   // FIXME: If we don't have a ClassDecl, we have an error. I (snaroff) would
@@ -2164,8 +2163,7 @@ void Sema::ActOnAddMethodsToObjcDecl(Scope* S, DeclTy *classDecl,
   }
   else if (ObjcImplementationDecl *IC = 
                 dyn_cast<ObjcImplementationDecl>(ClassDecl)) {
-    IC->addMethods(&insMethods[0], insMethods.size(),
-                   &clsMethods[0], clsMethods.size(), AtEndLoc);
+    IC->setLocEnd(AtEndLoc);
     if (ObjcInterfaceDecl* IDecl = getObjCInterfaceDecl(IC->getIdentifier()))
       ImplMethodsVsClassMethods(IC, IDecl);
   } else {
@@ -2242,14 +2240,15 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   
   Decl *CDecl = static_cast<Decl*>(ClassDecl);
   ObjcInterfaceDecl *IDecl = 0;
+  ObjcImplementationDecl *ImpDecl = 0;
   if (isa<ObjcInterfaceDecl>(CDecl))
     IDecl = cast<ObjcInterfaceDecl>(CDecl);
   else if (isa<ObjcCategoryDecl>(CDecl))
-    IDecl = cast<ObjcCategoryDecl>(CDecl)->getClassInterface();
-  else if (isa<ObjcImplementationDecl>(CDecl))
-    IDecl = cast<ObjcImplementationDecl>(CDecl)->getClassInterface();
+    IDecl = cast<ObjcCategoryDecl>(CDecl)->getClassInterface(); // FIXME: what is this? (talk to fariborz)
+  else if ((ImpDecl = dyn_cast<ObjcImplementationDecl>(CDecl)))
+    IDecl = ImpDecl->getClassInterface(); // FIXME: what is this? (talk to fariborz)
   else if (isa<ObjcCategoryImplDecl>(CDecl))
-    IDecl = cast<ObjcCategoryImplDecl>(CDecl)->getClassInterface();
+    IDecl = cast<ObjcCategoryImplDecl>(CDecl)->getClassInterface(); // FIXME: what is this? (talk to fariborz)
   
   ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, EndLoc, Sel,
                                       resultDeclType,
@@ -2262,6 +2261,27 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   ObjcMethod->setMethodParams(&Params[0], Sel.getNumArgs());
   ObjcMethod->setObjcDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjcDeclQualifier()));
+  if (ImpDecl) {
+    // For implementations (which can be very "coarse grain"), we add the 
+    // method now. This allows the AST to implement lookup methods that work 
+    // incrementally (without waiting until we parse the @end). It also allows 
+    // us to flag multiple declaration errors as they occur.
+    // FIXME: still need to do this for ObjcCategoryImplDecl.
+    const ObjcMethodDecl *PrevMethod = 0;
+    if (MethodType == tok::minus) {
+      PrevMethod = ImpDecl->lookupInstanceMethod(Sel);
+      ImpDecl->addInstanceMethod(ObjcMethod);
+    } else {
+      PrevMethod = ImpDecl->lookupClassMethod(Sel);
+      ImpDecl->addClassMethod(ObjcMethod);
+    }
+    if (PrevMethod) {
+      // You can never have two method definitions with the same name.
+      Diag(ObjcMethod->getLocation(), diag::error_duplicate_method_decl,
+          ObjcMethod->getSelector().getName());
+      Diag(PrevMethod->getLocation(), diag::err_previous_declaration);
+    } 
+  }
   return ObjcMethod;
 }
 

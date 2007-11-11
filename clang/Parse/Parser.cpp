@@ -23,7 +23,6 @@ Parser::Parser(Preprocessor &pp, Action &actions)
   NumCachedScopes = 0;
   ParenCount = BracketCount = BraceCount = 0;
   ObjcImpDecl = 0;
-  AllImplMethods.clear();
 }
 
 ///  Out-of-line virtual destructor to provide home for Action class.

@@ -408,26 +408,6 @@ void ObjcCategoryImplDecl::addMethods(ObjcMethodDecl **insMethods,
   }
 }
 
-/// ObjcAddImplMethods - Insert instance and methods declarations into
-/// ObjcImplementationDecl's InsMethods and ClsMethods fields.
-///
-void ObjcImplementationDecl::addMethods(ObjcMethodDecl **insMethods, 
-                                        unsigned numInsMembers,
-                                        ObjcMethodDecl **clsMethods,
-                                        unsigned numClsMembers,
-                                        SourceLocation AtEndLoc) {
-  NumInstanceMethods = numInsMembers;
-  if (numInsMembers) {
-    InstanceMethods = new ObjcMethodDecl*[numInsMembers];
-    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
-  }
-  NumClassMethods = numClsMembers;
-  if (numClsMembers) {
-    ClassMethods = new ObjcMethodDecl*[numClsMembers];
-    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
-  }
-}
-
 // lookupInstanceMethod - This method returns an instance method by looking in
 // the class, it's categories, and it's super classes (using a linear search).
 ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
@@ -514,7 +494,7 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
 ObjcMethodDecl *ObjcImplementationDecl::lookupInstanceMethod(Selector &Sel) {
-  ObjcMethodDecl **methods = getInstanceMethods();
+  ObjcMethodDecl *const*methods = getInstanceMethods();
   int methodCount = getNumInstanceMethods();
   for (int i = 0; i < methodCount; ++i) {
     if (methods[i]->getSelector() == Sel) {
@@ -528,7 +508,7 @@ ObjcMethodDecl *ObjcImplementationDecl::lookupInstanceMethod(Selector &Sel) {
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
 ObjcMethodDecl *ObjcImplementationDecl::lookupClassMethod(Selector &Sel) {
-  ObjcMethodDecl **methods = getClassMethods();
+  ObjcMethodDecl *const*methods = getClassMethods();
   int methodCount = getNumClassMethods();
   for (int i = 0; i < methodCount; ++i) {
     if (methods[i]->getSelector() == Sel) {

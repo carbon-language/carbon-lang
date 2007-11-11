@@ -576,19 +576,19 @@ public:
     tok::ObjCKeywordKind impKind) {
     return 0;
   }
-  // ActOnAddMethodsToObjcDecl - called to associate methods with an interface,
-  // protocol, category, or implementation. 
-  virtual void ActOnAddMethodsToObjcDecl(
-    Scope* S, 
-    DeclTy *ClassDecl,
-    DeclTy **allMethods, 
-    unsigned allNum,
-    DeclTy **allProperties,
-    unsigned NumProperties,
-    SourceLocation AtEndLoc) {
+  // ActOnAtEnd - called to mark the @end. For declarations (interfaces,
+  // protocols, categories), the parser passes all methods/properties. 
+  // For class implementations, these values default to 0. For implementations,
+  // methods are processed incrementally (by ActOnMethodDeclaration above).
+  virtual void ActOnAtEnd(
+    SourceLocation AtEndLoc, 
+    DeclTy *classDecl,
+    DeclTy **allMethods = 0, 
+    unsigned allNum = 0,
+    DeclTy **allProperties = 0, 
+    unsigned pNum = 0) {
     return;
   }
-  
   // ActOnAddObjcProperties - called to build one property AST
   virtual DeclTy *ActOnAddObjcProperties (SourceLocation AtLoc,
     DeclTy **allProperties, unsigned NumProperties, ObjcDeclSpec &DS) {

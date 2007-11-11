@@ -118,7 +118,7 @@ namespace {
     void RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *CDecl,
                                      std::string &Result);
     
-    void RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
+    void RewriteObjcMethodsMetaData(ObjcMethodDecl *const*Methods,
                                     int NumMethods,
                                     bool IsInstanceMethod,
                                     const char *prefix,
@@ -1039,7 +1039,7 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
 
 // RewriteObjcMethodsMetaData - Rewrite methods metadata for instance or
 /// class methods.
-void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl **Methods,
+void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl *const*Methods,
                                              int NumMethods,
                                              bool IsInstanceMethod,
                                              const char *prefix,

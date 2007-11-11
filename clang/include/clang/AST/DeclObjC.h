@@ -629,44 +629,53 @@ class ObjcImplementationDecl : public NamedDecl {
   /// Optional Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
   ObjcIvarDecl **Ivars;   // Null if not specified
   int NumIvars;   // -1 if not defined.
-    
+
   /// implemented instance methods
-  ObjcMethodDecl **InstanceMethods;  // Null if not defined
-  int NumInstanceMethods;  // -1 if not defined
-    
+  llvm::SmallVector<ObjcMethodDecl*, 32> InstanceMethods;
+  
   /// implemented class methods
-  ObjcMethodDecl **ClassMethods;  // Null if not defined
-  int NumClassMethods;  // -1 if not defined
-    
+  llvm::SmallVector<ObjcMethodDecl*, 32> ClassMethods;
+
+  SourceLocation EndLoc;
 public:
   ObjcImplementationDecl(SourceLocation L, IdentifierInfo *Id,
                          ObjcInterfaceDecl *classInterface,
                          ObjcInterfaceDecl *superDecl)
     : NamedDecl(ObjcImplementation, L, Id),
-      ClassInterface(classInterface),
-      SuperClass(superDecl),
-      Ivars(0), NumIvars(-1),
-      InstanceMethods(0), NumInstanceMethods(-1), 
-      ClassMethods(0), NumClassMethods(-1) {}
+      ClassInterface(classInterface), SuperClass(superDecl),
+      Ivars(0), NumIvars(-1) {}
   
   void ObjcAddInstanceVariablesToClassImpl(ObjcIvarDecl **ivars, 
                                            unsigned numIvars);
     
-  void addMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
-                  ObjcMethodDecl **clsMethods, unsigned numClsMembers,
-                  SourceLocation AtEndLoc);
-    
+  void addInstanceMethod(ObjcMethodDecl *method) {
+    InstanceMethods.push_back(method);
+  }
+  void addClassMethod(ObjcMethodDecl *method) {
+    ClassMethods.push_back(method);
+  }    
+  // Location information, modeled after the Stmt API. 
+  SourceLocation getLocStart() const { return getLocation(); }
+  SourceLocation getLocEnd() const { return EndLoc; }
+  void setLocEnd(SourceLocation LE) { EndLoc = LE; };
+  
   ObjcInterfaceDecl *getClassInterface() const { return ClassInterface; }
   ObjcInterfaceDecl *getSuperClass() const { return SuperClass; }
   
   void setSuperClass(ObjcInterfaceDecl * superCls) 
          { SuperClass = superCls; }
   
-  ObjcMethodDecl **getInstanceMethods() const { return InstanceMethods; }
-  int getNumInstanceMethods() const { return NumInstanceMethods; }
+  // FIXME: Figure out how to remove the const pointer below.
+  ObjcMethodDecl *const*getInstanceMethods() const {
+    return &InstanceMethods[0];
+  }
+  int getNumInstanceMethods() const { return InstanceMethods.size(); }
   
-  ObjcMethodDecl **getClassMethods() const { return ClassMethods; }
-  int getNumClassMethods() const { return NumClassMethods; }
+  // FIXME: Figure out how to remove the const pointer below.
+  ObjcMethodDecl *const*getClassMethods() const { 
+    return &ClassMethods[0];
+  }
+  int getNumClassMethods() const { return ClassMethods.size(); }
 
   ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
   ObjcMethodDecl *lookupClassMethod(Selector &Sel);

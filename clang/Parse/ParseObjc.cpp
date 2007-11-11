@@ -275,12 +275,8 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
     }
   }
   /// Insert collected methods declarations into the @interface object.
-  /// This action is executed even if we don't have any methods (so the @end
-  /// can be recorded properly).
-  Actions.ActOnAddMethodsToObjcDecl(CurScope, interfaceDecl, &allMethods[0], 
-                                    allMethods.size(), 
-                                    &allProperties[0], allProperties.size(), 
-                                    AtEndLoc);
+  Actions.ActOnAtEnd(AtEndLoc, interfaceDecl, &allMethods[0], allMethods.size(), 
+                     &allProperties[0], allProperties.size());
 }
 
 ///   Parse property attribute declarations.
@@ -946,12 +942,7 @@ Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
     // Checking is not necessary except that a parse error might have caused
     // @implementation not to have been parsed to completion and ObjcImpDecl 
     // could be 0.
-    /// Insert collected methods declarations into the @interface object.
-    Actions.ActOnAddMethodsToObjcDecl(CurScope, ObjcImpDecl,
-                                      &AllImplMethods[0], AllImplMethods.size(),
-                                      (DeclTy **)0, 0,
-                                      atLoc);
-    AllImplMethods.clear();
+    Actions.ActOnAtEnd(atLoc, ObjcImpDecl);
   }
 
   return ObjcImpDecl;
@@ -1151,8 +1142,6 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
 void Parser::ParseObjCInstanceMethodDefinition() {
   assert(Tok.is(tok::minus) && "Method definitions should start with '-'");
   DeclTy *MDecl = ParseObjCMethodPrototype(ObjcImpDecl);
-  // FIXME: @optional/@protocol??
-  AllImplMethods.push_back(MDecl);
   // parse optional ';'
   if (Tok.is(tok::semi))
     ConsumeToken();
@@ -1169,8 +1158,6 @@ void Parser::ParseObjCInstanceMethodDefinition() {
 void Parser::ParseObjCClassMethodDefinition() {
   assert(Tok.is(tok::plus) && "Class method definitions should start with '+'");
   DeclTy *MDecl = ParseObjCMethodPrototype(ObjcImpDecl);
-  // FIXME: @optional/@protocol??
-  AllImplMethods.push_back(MDecl);
   // parse optional ';'
   if (Tok.is(tok::semi))
     ConsumeToken();
