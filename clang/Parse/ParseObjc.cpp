@@ -1139,33 +1139,43 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
 ///
-void Parser::ParseObjCInstanceMethodDefinition() {
-  assert(Tok.is(tok::minus) && "Method definitions should start with '-'");
+void Parser::ParseObjCMethodDefinition() {
   DeclTy *MDecl = ParseObjCMethodPrototype(ObjcImpDecl);
   // parse optional ';'
   if (Tok.is(tok::semi))
     ConsumeToken();
 
+  // We should have an opening brace now.
   if (Tok.isNot(tok::l_brace)) {
-    Diag (Tok, diag::err_expected_lbrace);
-    return;
+    Diag(Tok, diag::err_expected_fn_body);
+    
+    // Skip over garbage, until we get to '{'.  Don't eat the '{'.
+    SkipUntil(tok::l_brace, true, true);
+    
+    // If we didn't find the '{', bail out.
+    if (Tok.isNot(tok::l_brace))
+      return;
   }
-  ObjcParseMethodDefinition(MDecl);
-}
-
-///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
-///
-void Parser::ParseObjCClassMethodDefinition() {
-  assert(Tok.is(tok::plus) && "Class method definitions should start with '+'");
-  DeclTy *MDecl = ParseObjCMethodPrototype(ObjcImpDecl);
-  // parse optional ';'
-  if (Tok.is(tok::semi))
-    ConsumeToken();
-  if (Tok.isNot(tok::l_brace)) {
-    Diag (Tok, diag::err_expected_lbrace);
-    return;
-  }
-  ObjcParseMethodDefinition(MDecl);
+  SourceLocation BraceLoc = Tok.getLocation();
+  
+  // Enter a scope for the method body.
+  EnterScope(Scope::FnScope|Scope::DeclScope);
+  
+  // Tell the actions module that we have entered a method definition with the
+  // specified Declarator for the method.
+  Actions.ObjcActOnStartOfMethodDef(CurScope, MDecl);
+  
+  StmtResult FnBody = ParseCompoundStatementBody();
+  
+  // If the function body could not be parsed, make a bogus compoundstmt.
+  if (FnBody.isInvalid)
+    FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc, 0, 0, false);
+  
+  // Leave the function body scope.
+  ExitScope();
+  
+  // TODO: Pass argument information.
+  Actions.ActOnMethodDefBody(MDecl, FnBody.Val);
 }
 
 Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {

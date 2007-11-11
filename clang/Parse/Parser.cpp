@@ -329,16 +329,9 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
     // @ is not a legal token unless objc is enabled, no need to check.
     return ParseObjCAtDirectives();
   case tok::minus:
-    if (getLang().ObjC1)
-      ParseObjCInstanceMethodDefinition();
-    else {
-      Diag(Tok, diag::err_expected_external_declaration);
-      ConsumeToken();
-    }
-    return 0;
   case tok::plus:
     if (getLang().ObjC1)
-      ParseObjCClassMethodDefinition();
+      ParseObjCMethodDefinition();
     else {
       Diag(Tok, diag::err_expected_external_declaration);
       ConsumeToken();
@@ -462,43 +455,6 @@ Parser::DeclTy *Parser::ParseFunctionDefinition(Declarator &D) {
   DeclTy *Res = Actions.ActOnStartOfFunctionDef(CurScope, D);
   
   return ParseFunctionStatementBody(Res, BraceLoc, BraceLoc);  
-}
-
-/// ObjcParseMethodDefinition - This routine parses a method definition and
-/// returns its AST.
-void Parser::ObjcParseMethodDefinition(DeclTy *D) {
-  // We should have an opening brace now.
-  if (Tok.isNot(tok::l_brace)) {
-    Diag(Tok, diag::err_expected_fn_body);
-    
-    // Skip over garbage, until we get to '{'.  Don't eat the '{'.
-    SkipUntil(tok::l_brace, true, true);
-    
-    // If we didn't find the '{', bail out.
-    if (Tok.isNot(tok::l_brace))
-      return;
-  }
-  
-  SourceLocation BraceLoc = Tok.getLocation();
-  
-  // Enter a scope for the method body.
-  EnterScope(Scope::FnScope|Scope::DeclScope);
-  
-  // Tell the actions module that we have entered a method definition with the
-  // specified Declarator for the method.
-  Actions.ObjcActOnStartOfMethodDef(CurScope, D);
-  
-  StmtResult FnBody = ParseCompoundStatementBody();
-  
-  // If the function body could not be parsed, make a bogus compoundstmt.
-  if (FnBody.isInvalid)
-    FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc, 0, 0, false);
-  
-  // Leave the function body scope.
-  ExitScope();
-  
-  // TODO: Pass argument information.
-  Actions.ActOnMethodDefBody(D, FnBody.Val);
 }
 
 /// ParseKNRParamDeclarations - Parse 'declaration-list[opt]' which provides
