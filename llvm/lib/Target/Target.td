@@ -53,7 +53,8 @@ class Register<string n> {
   // These values can be determined by locating the <target>.h file in the
   // directory llvmgcc/gcc/config/<target>/ and looking for REGISTER_NAMES.  The
   // order of these names correspond to the enumeration used by gcc.  A value of
-  // -1 indicates that the gcc number is undefined.
+  // -1 indicates that the gcc number is undefined and -2 that register number
+  // is invalid for this mode/flavour.
   list<int> DwarfNumbers = [];
 }
 
@@ -138,7 +139,8 @@ class DwarfRegNum<list<int> Numbers> {
   // These values can be determined by locating the <target>.h file in the
   // directory llvmgcc/gcc/config/<target>/ and looking for REGISTER_NAMES.  The
   // order of these names correspond to the enumeration used by gcc.  A value of
-  // -1 indicates that the gcc number is undefined.
+  // -1 indicates that the gcc number is undefined and -2 that register number is 
+  // invalid for this mode/flavour.
   list<int> DwarfNumbers = Numbers;
 }
 
