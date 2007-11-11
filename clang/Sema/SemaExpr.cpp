@@ -2097,7 +2097,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   QualType returnType;
   ObjcMethodDecl *Method;
   
-  if (receiverType == Context.getObjcIdType()) {
+  if (receiverType == Context.getObjcIdType() ||
+      receiverType == Context.getObjcClassType()) {
     Method = InstanceMethodPool[Sel].Method;
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
