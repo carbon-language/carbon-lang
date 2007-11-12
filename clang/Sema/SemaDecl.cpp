@@ -840,10 +840,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
 
 // Called from Sema::ParseStartOfFunctionDef().
 ParmVarDecl *
-Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
-                           Scope *FnScope) {
-  const DeclaratorChunk::ParamInfo &PI = FTI.Fun.ArgInfo[ArgNo];
-
+Sema::ParseParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, Scope *FnScope) 
+{
   IdentifierInfo *II = PI.Ident;
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
   // Can this happen for params?  We already checked that they don't conflict
@@ -894,57 +892,6 @@ Sema::ParseParamDeclarator(DeclaratorChunk &FTI, unsigned ArgNo,
   return New;
 }
 
-// Called from Sema::ObjcParseStartOfMethodDef().
-ParmVarDecl *
-Sema::ObjcBuildMethodParameter(ParmVarDecl *PI, Scope *FnScope) {
-  
-  IdentifierInfo *II = PI->getIdentifier();
-  
-  // FIXME: Handle storage class (auto, register). No declarator?
-  // TODO: Chain to previous parameter with the prevdeclarator chain?
-  
-  // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
-  // Doing the promotion here has a win and a loss. The win is the type for
-  // both Decl's and DeclRefExpr's will match (a convenient invariant for the
-  // code generator). The loss is the orginal type isn't preserved. For example:
-  //
-  // void func(int parmvardecl[5]) { // convert "int [5]" to "int *"
-  //    int blockvardecl[5];
-  //    sizeof(parmvardecl);  // size == 4
-  //    sizeof(blockvardecl); // size == 20
-  // }
-  //
-  // For expressions, all implicit conversions are captured using the
-  // ImplicitCastExpr AST node (we have no such mechanism for Decl's).
-  //
-  // FIXME: If a source translation tool needs to see the original type, then
-  // we need to consider storing both types (in ParmVarDecl)...
-  // 
-  QualType parmDeclType = PI->getType();
-  if (const ArrayType *AT = parmDeclType->getAsArrayType())
-    parmDeclType = Context.getPointerType(AT->getElementType());
-  else if (parmDeclType->isFunctionType())
-    parmDeclType = Context.getPointerType(parmDeclType);
-  
-  ParmVarDecl *New = new ParmVarDecl(PI->getLocation(), II, parmDeclType, 
-                                     VarDecl::None, 0);
-  // FIXME: need to check for invalid type.
-  /**
-  if (PI.InvalidType)
-    New->setInvalidDecl();
-   */
-  
-  // If this has an identifier, add it to the scope stack.
-  if (II) {
-    New->setNext(II->getFETokenInfo<ScopedDecl>());
-    II->setFETokenInfo(New);
-    FnScope->AddDecl(New);
-  }
-  
-  return New;
-}
-
-
 Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   assert(CurFunctionDecl == 0 && "Function parsing confused");
   assert(D.getTypeObject(0).Kind == DeclaratorChunk::Function &&
@@ -987,8 +934,10 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
       FTI.ArgInfo[0].TypeInfo == Context.VoidTy.getAsOpaquePtr()) {
     // empty arg list, don't push any params.
   } else {
-    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i)
-      Params.push_back(ParseParamDeclarator(D.getTypeObject(0), i,FnBodyScope));
+    for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
+      Params.push_back(ParseParamDeclarator(D.getTypeObject(0).Fun.ArgInfo[i],
+                                            FnBodyScope));
+    }
   }
   
   FD->setParams(&Params[0], Params.size());
@@ -1047,30 +996,32 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
   llvm::SmallVector<ParmVarDecl*, 16> Params;
-  ParmVarDecl *PDecl;
+  struct DeclaratorChunk::ParamInfo PI;
+
+  PI.Ident = &Context.Idents.get("self");
+  PI.IdentLoc = SourceLocation(/*FIXME*/);
+  
   // Insert the invisible arguments!
   if (MDecl->isInstance()) {
     QualType selfTy = Context.getObjcInterfaceType(MDecl->getClassInterface());
     selfTy = Context.getPointerType(selfTy);
-    PDecl = new ParmVarDecl(SourceLocation(/*FIXME*/), 
-                            &Context.Idents.get("self"),
-                            selfTy,
-                            VarDecl::None, 0);
-  }
-  else
-    PDecl = new ParmVarDecl(SourceLocation(/*FIXME*/), 
-                            &Context.Idents.get("self"),
-                            Context.getObjcIdType(), VarDecl::None, 0);
-  Params.push_back(ObjcBuildMethodParameter(PDecl, FnBodyScope));
-  PDecl = new ParmVarDecl(SourceLocation(/*FIXME*/), 
-                          &Context.Idents.get("_cmd"),
-                          Context.getObjcSelType(), VarDecl::None, 0);
-  Params.push_back(ObjcBuildMethodParameter(PDecl, FnBodyScope));
-  
+    PI.TypeInfo = selfTy.getAsOpaquePtr();
+  } else
+    PI.TypeInfo = Context.getObjcIdType().getAsOpaquePtr();
     
+  Params.push_back(ParseParamDeclarator(PI, FnBodyScope));
+  
+  PI.Ident = &Context.Idents.get("_cmd");
+  PI.IdentLoc = SourceLocation(/*FIXME*/);
+  PI.TypeInfo = Context.getObjcSelType().getAsOpaquePtr();
+  Params.push_back(ParseParamDeclarator(PI, FnBodyScope));
+  
   for (int i = 0; i <  MDecl->getNumParams(); i++) {
-    PDecl = MDecl->getParamDecl(i);
-    Params.push_back(ObjcBuildMethodParameter(PDecl, FnBodyScope));
+    ParmVarDecl *PDecl = MDecl->getParamDecl(i);
+    PI.Ident = PDecl->getIdentifier();
+    PI.IdentLoc = PDecl->getLocation();
+    PI.TypeInfo = PDecl->getType().getAsOpaquePtr();
+    Params.push_back(ParseParamDeclarator(PI, FnBodyScope));
   }
 
   FD->setParams(&Params[0], Params.size());

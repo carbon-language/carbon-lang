@@ -348,7 +348,7 @@ QualType Sema::ObjcGetTypeForMethodDefinition(DeclTy *D, Scope *S) {
     assert(!ArgTy.isNull() && "Couldn't parse type?");
     // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
     // This matches the conversion that is done in 
-    // Sema::ObjcBuildMethodParameter(). 
+    // Sema::ParseParamDeclarator(). 
     if (const ArrayType *AT = ArgTy->getAsArrayType())
       ArgTy = Context.getPointerType(AT->getElementType());
     else if (ArgTy->isFunctionType())

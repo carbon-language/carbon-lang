@@ -16,6 +16,7 @@
 #define LLVM_CLANG_AST_SEMA_H
 
 #include "clang/Parse/Action.h"
+#include "clang/Parse/DeclSpec.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -39,7 +40,6 @@ namespace clang {
   class FunctionDecl;
   class QualType;
   struct LangOptions;
-  struct DeclaratorChunk;
   class Token;
   class IntegerLiteral;
   class ArrayType;
@@ -231,10 +231,8 @@ private:
   void AddTopLevelDecl(Decl *current, Decl *last);
 
   /// More parsing and symbol table subroutines...
-  ParmVarDecl *ParseParamDeclarator(DeclaratorChunk &FI, unsigned ArgNo,
-                                    Scope *FnBodyScope);
-  ParmVarDecl *ObjcBuildMethodParameter(ParmVarDecl *param, Scope *FnBodyScope);
-  
+  ParmVarDecl *ParseParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, 
+                                    Scope *FnBodyScope);  
   ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
                                SourceLocation IdLoc, Scope *S);
   ScopedDecl *LookupInterfaceDecl(IdentifierInfo *II);
