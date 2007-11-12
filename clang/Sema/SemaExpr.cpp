@@ -2070,7 +2070,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   ObjcInterfaceDecl* ClassDecl = 0;
   if (!strcmp(receiverName->getName(), "super") && CurMethodDecl) {
     ClassDecl = CurMethodDecl->getClassInterface()->getSuperClass();
-    if (CurMethodDecl->isInstance()) {
+    if (ClassDecl && CurMethodDecl->isInstance()) {
       IdentifierInfo &II = Context.Idents.get("self");
       ExprResult ReceiverExpr = ActOnIdentifierExpr(S, lbrac, II, 
                                                     false);
