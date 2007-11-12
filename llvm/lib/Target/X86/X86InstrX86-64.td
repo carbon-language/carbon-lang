@@ -120,7 +120,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
                  []>;     
 
 // Branches
-let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
+let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def JMP64r     : I<0xFF, MRM4r, (outs), (ins GR64:$dst), "jmp{q}\t{*}$dst",
                      [(brind GR64:$dst)]>;
   def JMP64m     : I<0xFF, MRM4m, (outs), (ins i64mem:$dst), "jmp{q}\t{*}$dst",

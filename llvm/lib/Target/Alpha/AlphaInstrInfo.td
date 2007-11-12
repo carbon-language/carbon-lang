@@ -374,8 +374,7 @@ let isReturn = 1, isTerminator = 1, Ra = 31, Rb = 26, disp = 1, Uses = [R26] in 
   def RETDAGp : MbrpForm< 0x1A, 0x02, (ops), "ret $$31,($$26),1", [(retflag)], s_jsr>; //Return from subroutine
 }
 
-let isBranch = 1, isTerminator = 1, isBarrier = 1,
-Ra = 31, disp = 0 in
+let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1, Ra = 31, disp = 0 in
 def JMP : MbrpForm< 0x1A, 0x00, (ops GPRC:$RS), "jmp $$31,($RS),0", 
           [(brind GPRC:$RS)], s_jsr>; //Jump
 

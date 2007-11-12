@@ -773,7 +773,7 @@ let isBranch = 1, isTerminator = 1 in {
     def B : AXI<0xA, (outs), (ins brtarget:$target), Branch, "b $target",
                 [(br bb:$target)]>;
 
-  let isNotDuplicable = 1 in {
+  let isNotDuplicable = 1, isIndirectBranch = 1 in {
   def BR_JTr : JTI<0x0, (outs), (ins GPR:$target, jtblock_operand:$jt, i32imm:$id),
                     "mov pc, $target \n$jt",
                     [(ARMbrjt GPR:$target, tjumptable:$jt, imm:$id)]>;

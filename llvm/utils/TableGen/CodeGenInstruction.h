@@ -87,6 +87,7 @@ namespace llvm {
     // Various boolean values we track for the instruction.
     bool isReturn;
     bool isBranch;
+    bool isIndirectBranch;
     bool isBarrier;
     bool isCall;
     bool isLoad;

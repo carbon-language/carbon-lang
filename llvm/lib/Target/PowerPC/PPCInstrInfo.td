@@ -369,7 +369,8 @@ let isTerminator = 1, isBarrier = 1, PPC970_Unit = 7 in {
     def BLR : XLForm_2_br<19, 16, 0, (outs), (ins pred:$p),
                           "b${p:cc}lr ${p:reg}", BrB, 
                           [(retflag)]>;
-  def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>;
+  let isBranch = 1, isIndirectBranch = 1 in
+    def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (outs), (ins), "bctr", BrB, []>;
 }
 
 

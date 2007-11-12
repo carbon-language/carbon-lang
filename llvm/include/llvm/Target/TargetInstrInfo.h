@@ -48,6 +48,7 @@ const unsigned M_BARRIER_FLAG          = 1 << 3;
 const unsigned M_DELAY_SLOT_FLAG       = 1 << 4;
 const unsigned M_LOAD_FLAG             = 1 << 5;
 const unsigned M_STORE_FLAG            = 1 << 6;
+const unsigned M_INDIRECT_FLAG         = 1 << 7;
 
 // M_CONVERTIBLE_TO_3_ADDR - This is a 2-address instruction which can be
 // changed into a 3-address instruction if the first two operands cannot be
@@ -235,6 +236,10 @@ public:
   
   bool isBranch(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_BRANCH_FLAG;
+  }
+  
+  bool isIndirectBranch(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_INDIRECT_FLAG;
   }
   
   /// isBarrier - Returns true if the specified instruction stops control flow
