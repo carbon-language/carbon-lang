@@ -601,7 +601,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   for (unsigned i = 0, e = Registers.size(); i != e; ++i) {
     Record *Reg = Registers[i].TheDef;
     std::vector<int> RegNums = Reg->getValueAsListOfInts("DwarfNumbers");
-    maxLength = std::max(maxLength, RegNums.size());
+    maxLength = std::max((size_t)maxLength, RegNums.size());
     if (DwarfRegNums.count(Reg))
       cerr << "Warning: DWARF numbers for register " << getQualifiedName(Reg)
            << "specified multiple times\n";
