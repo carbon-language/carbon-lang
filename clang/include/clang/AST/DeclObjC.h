@@ -572,36 +572,47 @@ class ObjcCategoryImplDecl : public NamedDecl {
   /// Class interface for this category implementation
   ObjcInterfaceDecl *ClassInterface;
 
-  /// category instance methods being implemented
-  ObjcMethodDecl **InstanceMethods; // Null if category is not implementing any
-  int NumInstanceMethods;           // -1 if category is not implementing any
+  /// implemented instance methods
+  llvm::SmallVector<ObjcMethodDecl*, 32> InstanceMethods;
   
-  /// category class methods being implemented
-  ObjcMethodDecl **ClassMethods; // Null if category is not implementing any
-  int NumClassMethods;  // -1 if category is not implementing any
-  
-  public:
+  /// implemented class methods
+  llvm::SmallVector<ObjcMethodDecl*, 32> ClassMethods;
+
+  SourceLocation EndLoc;  
+public:
     ObjcCategoryImplDecl(SourceLocation L, IdentifierInfo *Id,
                          ObjcInterfaceDecl *classInterface)
     : NamedDecl(ObjcCategoryImpl, L, Id),
-    ClassInterface(classInterface),
-    InstanceMethods(0), NumInstanceMethods(-1),
-    ClassMethods(0), NumClassMethods(-1) {}
+    ClassInterface(classInterface) {}
         
-    ObjcInterfaceDecl *getClassInterface() const { 
-      return ClassInterface; 
-    }
+  ObjcInterfaceDecl *getClassInterface() const { return ClassInterface; }
   
-  ObjcMethodDecl **getInstanceMethods() const { return InstanceMethods; }
-  int getNumInstanceMethods() const { return NumInstanceMethods; }
+  // FIXME: Figure out how to remove the const pointer below.
+  ObjcMethodDecl *const*getInstanceMethods() const {
+    return &InstanceMethods[0];
+  }
+  int getNumInstanceMethods() const { return InstanceMethods.size(); }
   
-  ObjcMethodDecl **getClassMethods() const { return ClassMethods; }
-  int getNumClassMethods() const { return NumClassMethods; }
-  
-  void addMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
-                  ObjcMethodDecl **clsMethods, unsigned numClsMembers,
-                  SourceLocation AtEndLoc);
-  
+  // FIXME: Figure out how to remove the const pointer below.
+  ObjcMethodDecl *const*getClassMethods() const { 
+    return &ClassMethods[0];
+  }
+  int getNumClassMethods() const { return ClassMethods.size(); }
+
+  void addInstanceMethod(ObjcMethodDecl *method) {
+    InstanceMethods.push_back(method);
+  }
+  void addClassMethod(ObjcMethodDecl *method) {
+    ClassMethods.push_back(method);
+  }    
+  ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
+  ObjcMethodDecl *lookupClassMethod(Selector &Sel);
+
+  // Location information, modeled after the Stmt API. 
+  SourceLocation getLocStart() const { return getLocation(); }
+  SourceLocation getLocEnd() const { return EndLoc; }
+  void setLocEnd(SourceLocation LE) { EndLoc = LE; };
+    
   static bool classof(const Decl *D) { return D->getKind() == ObjcCategoryImpl;}
   static bool classof(const ObjcCategoryImplDecl *D) { return true; }
 };

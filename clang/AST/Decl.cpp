@@ -388,26 +388,6 @@ void ObjcCategoryDecl::addMethods(ObjcMethodDecl **insMethods,
   AtEndLoc = endLoc;
 }
 
-/// addMethods - Insert instance and methods declarations into
-/// ObjcCategoryImplDecl's CatInsMethods and CatClsMethods fields.
-///
-void ObjcCategoryImplDecl::addMethods(ObjcMethodDecl **insMethods, 
-                                      unsigned numInsMembers,
-                                      ObjcMethodDecl **clsMethods,
-                                      unsigned numClsMembers,
-                                      SourceLocation AtEndLoc) {
-  NumInstanceMethods = numInsMembers;
-  if (numInsMembers) {
-    InstanceMethods = new ObjcMethodDecl*[numInsMembers];
-    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
-  }
-  NumClassMethods = numClsMembers;
-  if (numClsMembers) {
-    ClassMethods = new ObjcMethodDecl*[numClsMembers];
-    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
-  }
-}
-
 ObjcIvarDecl *ObjcInterfaceDecl::lookupInstanceVariable(
   IdentifierInfo *ID, ObjcInterfaceDecl *&clsDeclared) {
   ObjcInterfaceDecl* ClassDecl = this;
@@ -535,3 +515,30 @@ ObjcMethodDecl *ObjcImplementationDecl::lookupClassMethod(Selector &Sel) {
   return NULL;
 }
 
+// lookupInstanceMethod - This method returns an instance method by looking in
+// the class implementation. Unlike interfaces, we don't look outside the
+// implementation.
+ObjcMethodDecl *ObjcCategoryImplDecl::lookupInstanceMethod(Selector &Sel) {
+  ObjcMethodDecl *const*methods = getInstanceMethods();
+  int methodCount = getNumInstanceMethods();
+  for (int i = 0; i < methodCount; ++i) {
+    if (methods[i]->getSelector() == Sel) {
+      return methods[i];
+    }
+  }
+  return NULL;
+}
+
+// lookupClassMethod - This method returns an instance method by looking in
+// the class implementation. Unlike interfaces, we don't look outside the
+// implementation.
+ObjcMethodDecl *ObjcCategoryImplDecl::lookupClassMethod(Selector &Sel) {
+  ObjcMethodDecl *const*methods = getClassMethods();
+  int methodCount = getNumClassMethods();
+  for (int i = 0; i < methodCount; ++i) {
+    if (methods[i]->getSelector() == Sel) {
+      return methods[i];
+    }
+  }
+  return NULL;
+}
