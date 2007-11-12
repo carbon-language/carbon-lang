@@ -1278,8 +1278,8 @@ unsigned PPCRegisterInfo::getEHHandlerRegister() const {
 }
 
 int PPCRegisterInfo::getDwarfRegNum(unsigned RegNum) const {
-  assert(0 && "What is the dwarf register number");
-  return -1;
+  // FIXME: Most probably dwarf numbers differs for Linux and Darwin
+  return PPCGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
 }
 
 #include "PPCGenRegisterInfo.inc"
