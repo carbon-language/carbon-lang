@@ -111,9 +111,9 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\Config\config.h"
-						CommandLine="copy $(InputPath)+$(SolutionDir)config.h  $(ProjectDir)..\llvm\Config\config.h&#x0D;&#x0A;"
-						AdditionalDependencies="$(SolutionDir)config.h"
-						Outputs="$(ProjectDir)..\llvm\Config\config.h"
+						CommandLine="copy &quot;$(InputPath)&quot;+&quot;$(SolutionDir)config.h&quot;  &quot;$(ProjectDir)..\llvm\Config\config.h&quot;&#x0D;&#x0A;"
+						AdditionalDependencies="&quot;$(SolutionDir)config.h&quot;"
+						Outputs="&quot;$(ProjectDir)..\llvm\Config\config.h&quot;"
 					/>
 				</FileConfiguration>
 			</File>
@@ -126,8 +126,8 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\Support\DataTypes.h"
-						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\Support\DataTypes.h&#x0D;&#x0A;"
-						Outputs="$(ProjectDir)..\llvm\Support\DataTypes.h"
+						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\Support\DataTypes.h&quot;&#x0D;&#x0A;"
+						Outputs="&quot;$(ProjectDir)..\llvm\Support\DataTypes.h&quot;"
 					/>
 				</FileConfiguration>
 			</File>
@@ -140,8 +140,8 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\hash_map"
-						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_map&#x0D;&#x0A;"
-						Outputs="$(ProjectDir)..\llvm\ADT\hash_map"
+						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\ADT\hash_map&quot;&#x0D;&#x0A;"
+						Outputs="&quot;$(ProjectDir)..\llvm\ADT\hash_map&quot;"
 					/>
 				</FileConfiguration>
 			</File>
@@ -154,8 +154,8 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\hash_set"
-						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_set&#x0D;&#x0A;"
-						Outputs="$(ProjectDir)..\llvm\ADT\hash_set"
+						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\ADT\hash_set&quot;&#x0D;&#x0A;"
+						Outputs="&quot;$(ProjectDir)..\llvm\ADT\hash_set&quot;"
 					/>
 				</FileConfiguration>
 			</File>
@@ -168,8 +168,8 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\iterator"
-						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\iterator&#x0D;&#x0A;"
-						Outputs="$(ProjectDir)..\llvm\ADT\iterator"
+						CommandLine="copy &quot;$(InputPath)&quot; &quot;$(ProjectDir)..\llvm\ADT\iterator&quot;&#x0D;&#x0A;"
+						Outputs="&quot;$(ProjectDir)..\llvm\ADT\iterator&quot;"
 					/>
 				</FileConfiguration>
 			</File>

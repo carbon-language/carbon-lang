@@ -170,10 +170,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\CodeGen\BreakCriticalMachineEdges.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\lib\CodeGen\CollectorMetadata.cpp"
 				>
 			</File>
@@ -365,6 +361,10 @@
 			>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\AsmPrinter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\BreakCriticalMachineEdge.h"
 				>
 			</File>
 			<File
