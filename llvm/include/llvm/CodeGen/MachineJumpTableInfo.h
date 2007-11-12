@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <iosfwd>
+#include <cassert>
 
 namespace llvm {
 
