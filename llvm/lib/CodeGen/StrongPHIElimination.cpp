@@ -93,6 +93,7 @@ namespace {
     void processBlock(MachineBasicBlock* MBB);
     
     std::vector<DomForestNode*> computeDomForest(std::set<unsigned>& instrs);
+    void breakCriticalEdges(MachineFunction &Fn);
     
   };
 
@@ -295,7 +296,32 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   }
 }
 
+void StrongPHIElimination::breakCriticalEdges(MachineFunction &Fn) {
+  typedef std::pair<MachineBasicBlock*, MachineBasicBlock*> MBB_pair;
+  
+  MachineDominatorTree& MDT = getAnalysis<MachineDominatorTree>();
+  //LiveVariables& LV = getAnalysis<LiveVariables>();
+  
+  std::vector<MBB_pair> criticals;
+  for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
+    if (!I->empty() &&
+        I->begin()->getOpcode() == TargetInstrInfo::PHI &&
+        I->pred_size() > 1)
+      for (MachineBasicBlock::pred_iterator PI = I->pred_begin(),
+           PE = I->pred_end(); PI != PE; ++PI)
+        if ((*PI)->succ_size() > 1)
+          criticals.push_back(std::make_pair(*PI, I));
+  
+  for (std::vector<MBB_pair>::iterator I = criticals.begin(),
+       E = criticals.end(); I != E; ++I) {
+    SplitCriticalMachineEdge(I->first, I->second);
+    
+    MDT.splitBlock(I->first);
+  }
+}
+
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
+  breakCriticalEdges(Fn);
   computeDFS(Fn);
   
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
