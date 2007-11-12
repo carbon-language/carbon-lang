@@ -544,46 +544,6 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
   return hadError;
 }
 
-/// ObjcActOnMethodDefinition - Build the AST node for a method definition
-/// header. Return this AST.
-Sema::DeclTy *
-Sema::ObjcActOnMethodDefinition(Scope *S, DeclTy *D, DeclTy *lastDecl) {
-  ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
-  
-  ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
-  // build [classname selector-name] for the name of method.
-  std::string Name = "[";
-  Name += MDecl->getClassInterface()->getName();
-  Name += " ";
-  Name += MDecl->getSelector().getName();
-  Name += "]";
-  IdentifierInfo *II = &Context.Idents.get(Name);
-  assert (II && "ObjcActOnMethodDefinition - selector name is missing");
-  
-  // The scope passed in may not be a decl scope.  Zip up the scope tree until
-  // we find one that is.
-  while ((S->getFlags() & Scope::DeclScope) == 0)
-    S = S->getParent();
-  
-  ScopedDecl *New;
-  QualType R = ObjcGetTypeForMethodDefinition(MDecl, S);
-  assert(!R.isNull() && "ObjcGetTypeForMethodDefinition() returned null type");
-    
-  FunctionDecl *NewFD = new FunctionDecl(MDecl->getLocation(), II, R, 
-                                         FunctionDecl::Static,
-                                         false, LastDeclarator);
-  New = NewFD;
-  
-  New->setNext(II->getFETokenInfo<ScopedDecl>());
-  II->setFETokenInfo(New);
-  S->AddDecl(New);
-  
-  if (S->getParent() == 0)
-    AddTopLevelDecl(New, LastDeclarator);
-  
-  return New;
-}
-
 Sema::DeclTy *
 Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   ScopedDecl *LastDeclarator = dyn_cast_or_null<ScopedDecl>((Decl *)lastDecl);
@@ -990,10 +950,26 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   
   Scope *GlobalScope = FnBodyScope->getParent();
   
-  FunctionDecl *FD =
-  static_cast<FunctionDecl*>(ObjcActOnMethodDefinition(GlobalScope, D, 0));
-  CurFunctionDecl = FD;
+  // build [classname selector-name] for the name of method.
+  std::string Name = "[";
+  Name += MDecl->getClassInterface()->getName();
+  Name += " ";
+  Name += MDecl->getSelector().getName();
+  Name += "]";
+  IdentifierInfo *II = &Context.Idents.get(Name);
+  assert (II && "ObjcActOnMethodDefinition - selector name is missing");
   
+  QualType R = ObjcGetTypeForMethodDefinition(MDecl, GlobalScope);
+  assert(!R.isNull() && "ObjcGetTypeForMethodDefinition() returned null type");
+    
+  FunctionDecl *NewFD = new FunctionDecl(MDecl->getLocation(), II, R, 
+                                         FunctionDecl::Static, false, 0);
+  NewFD->setNext(II->getFETokenInfo<ScopedDecl>());
+  II->setFETokenInfo(NewFD);
+  GlobalScope->AddDecl(NewFD);
+  AddTopLevelDecl(NewFD, 0);
+  CurFunctionDecl = NewFD;
+
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
   llvm::SmallVector<ParmVarDecl*, 16> Params;
   struct DeclaratorChunk::ParamInfo PI;
@@ -1023,8 +999,7 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     PI.TypeInfo = PDecl->getType().getAsOpaquePtr();
     Params.push_back(ParseParamDeclarator(PI, FnBodyScope));
   }
-
-  FD->setParams(&Params[0], Params.size());
+  NewFD->setParams(&Params[0], Params.size());
 }
 
 /// ImplicitlyDefineFunction - An undeclared identifier was used in a function

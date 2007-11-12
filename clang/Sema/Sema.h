@@ -184,8 +184,6 @@ private:
   //
   virtual DeclTy *isTypeName(const IdentifierInfo &II, Scope *S) const;
   virtual DeclTy *ActOnDeclarator(Scope *S, Declarator &D, DeclTy *LastInGroup);
-  virtual DeclTy *ObjcActOnMethodDefinition(Scope *S, DeclTy *D, 
-					    DeclTy *LastInGroup);
   void AddInitializerToDecl(DeclTy *dcl, ExprTy *init);
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
