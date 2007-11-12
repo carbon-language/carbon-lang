@@ -3,23 +3,19 @@
 
 set -x
 
-# -arch arguments are different than configure arguments. We need to
-# translate them.
-
-TRANSLATE_ARCH="sed -e s/ppc/powerpc/ -e s/i386/i686/"
-
 # Build LLVM the "Apple way".
 # Parameters:
 
 # The first parameter is a space-separated list of the architectures the
 # compilers will run on. For instance, "ppc i386". If the current machine
 # isn't in the list, it will (effectively) be added.
-HOSTS=`echo $1 | $TRANSLATE_ARCH `
+# FIXME: HOSTS is not used in this script. Use it or Remove it.
+HOSTS="$1"
 
 # The second parameter is a space-separated list of the architectures the
 # compilers will generate code for. If the current machine isn't in the list, a
 # compiler for it will get built anyway, but won't be installed.
-TARGETS=`echo $2 | $TRANSLATE_ARCH`
+TARGETS="$2"
 
 # The third parameter is the path to the compiler sources. There should be a
 # shell script named 'configure' in this directory. This script makes a copy...
@@ -102,7 +98,7 @@ fi
 # Note: Don't pass -jN here.  Building universal already has parallelism and we
 # don't want to make the builders hit swap by firing off too many gcc's at the
 # same time.
-make $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$LLVM_ARCHS" \
+make $OPTIMIZE_OPTS UNIVERSAL=1 UNIVERSAL_ARCH="$TARGETS" \
     CXXFLAGS="-DLLVM_VERSION_INFO='\" Apple Build #$LLVM_VERSION\"'"
 
 if ! test $? == 0 ; then
