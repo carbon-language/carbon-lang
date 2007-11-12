@@ -117,7 +117,7 @@ public:
   void Emit(llvm::Serializer& S) const;
   static Stmt* Materialize(llvm::Deserializer& D);
   
-  virtual void directEmit(llvm::Serializer& S) const {
+  virtual void EmitImpl(llvm::Serializer& S) const {
     // This method will eventually be a pure-virtual function.
     assert (false && "Not implemented.");
   }
@@ -147,8 +147,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static DeclStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static DeclStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 /// NullStmt - This is the null statement ";": C99 6.8.3p3.
@@ -171,8 +171,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static NullStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static NullStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 /// CompoundStmt - This represents a group of statements like { stmt stmt }.
@@ -225,8 +225,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static CompoundStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CompoundStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 // SwitchCase is the base class for CaseStmt and DefaultStmt,
@@ -297,8 +297,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static CaseStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CaseStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 class DefaultStmt : public SwitchCase {
@@ -326,8 +326,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static DefaultStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static DefaultStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 class LabelStmt : public Stmt {
@@ -360,8 +360,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static LabelStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static LabelStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 
@@ -404,8 +404,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static IfStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static IfStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 /// SwitchStmt - This represents a 'switch' stmt.
@@ -452,8 +452,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static SwitchStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static SwitchStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 
@@ -487,8 +487,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static WhileStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static WhileStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 /// DoStmt - This represents a 'do/while' stmt.
@@ -522,8 +522,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static DoStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static DoStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 
@@ -567,8 +567,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static ForStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ForStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 /// GotoStmt - This represents a direct goto.
@@ -595,8 +595,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static GotoStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static GotoStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 /// IndirectGotoStmt - This represents an indirect goto.
@@ -622,8 +622,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static IndirectGotoStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static IndirectGotoStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 
@@ -646,8 +646,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static ContinueStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ContinueStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 /// BreakStmt - This represents a break.
@@ -668,8 +668,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static BreakStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static BreakStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 
@@ -696,8 +696,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static ReturnStmt* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ReturnStmt* CreateImpl(llvm::Deserializer& D);
 };
 
 /// AsmStmt - This represents a GNU inline-assembly statement extension.

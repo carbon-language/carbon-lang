@@ -143,8 +143,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static DeclRefExpr* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static DeclRefExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 /// PreDefinedExpr - [C99 6.4.2.2] - A pre-defined identifier such as __func__.
@@ -176,8 +176,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static PreDefinedExpr* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static PreDefinedExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 class IntegerLiteral : public Expr {
@@ -202,8 +202,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static IntegerLiteral* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static IntegerLiteral* CreateImpl(llvm::Deserializer& D);
 };
 
 class CharacterLiteral : public Expr {
@@ -229,8 +229,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static CharacterLiteral* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CharacterLiteral* CreateImpl(llvm::Deserializer& D);
 };
 
 class FloatingLiteral : public Expr {
@@ -264,8 +264,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static FloatingLiteral* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static FloatingLiteral* CreateImpl(llvm::Deserializer& D);
 };
 
 /// ImaginaryLiteral - We support imaginary integer and floating point literals,
@@ -292,8 +292,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static ImaginaryLiteral* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ImaginaryLiteral* CreateImpl(llvm::Deserializer& D);
 };
 
 /// StringLiteral - This represents a string literal expression, e.g. "foo"
@@ -329,8 +329,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static StringLiteral* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static StringLiteral* CreateImpl(llvm::Deserializer& D);
 };
 
 /// ParenExpr - This represents a parethesized expression, e.g. "(1)".  This
@@ -355,8 +355,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static ParenExpr* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ParenExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 
@@ -432,8 +432,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static UnaryOperator* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static UnaryOperator* CreateImpl(llvm::Deserializer& D);
 };
 
 /// SizeOfAlignOfTypeExpr - [C99 6.5.3.4] - This is only for sizeof/alignof of
@@ -524,8 +524,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static ArraySubscriptExpr* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ArraySubscriptExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 
@@ -590,8 +590,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static CallExpr* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CallExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 /// MemberExpr - [C99 6.5.2.3] Structure and Union Members.
@@ -736,8 +736,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static ImplicitCastExpr* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ImplicitCastExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 /// CastExpr - [C99 6.5.4] Cast Operators.
@@ -765,8 +765,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static CastExpr* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CastExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 class BinaryOperator : public Expr {
@@ -842,8 +842,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static BinaryOperator* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static BinaryOperator* CreateImpl(llvm::Deserializer& D);
 
 protected:
   BinaryOperator(Expr *lhs, Expr *rhs, Opcode opc, QualType ResTy,
@@ -879,8 +879,8 @@ public:
     return S->getStmtClass() == CompoundAssignOperatorClass; 
   }
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static CompoundAssignOperator* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CompoundAssignOperator* CreateImpl(llvm::Deserializer& D);
 };
 
 /// ConditionalOperator - The ?: operator.  Note that LHS may be null when the
@@ -913,8 +913,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static ConditionalOperator* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ConditionalOperator* CreateImpl(llvm::Deserializer& D);
 };
 
 /// AddrLabelExpr - The GNU address of label extension, representing &&label.
@@ -941,8 +941,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static AddrLabelExpr* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static AddrLabelExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 /// StmtExpr - This is the GNU Statement Expression extension: ({int X=4; X;}).
@@ -972,8 +972,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static StmtExpr* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static StmtExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 /// TypesCompatibleExpr - GNU builtin-in function __builtin_type_compatible_p.
@@ -1251,8 +1251,8 @@ public:
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
-  virtual void directEmit(llvm::Serializer& S) const;
-  static ObjCIvarRefExpr* directMaterialize(llvm::Deserializer& D);
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCIvarRefExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 class ObjCMessageExpr : public Expr {
