@@ -240,10 +240,28 @@ public:
     ReadPtr(const_cast<T*&>(PtrRef), AllowBackpatch);
   }
   
+  
+  template <typename T>
+  void ReadPtr(T*& PtrRef, const SerializedPtrID& PtrID, bool AllowBackpatch = true) {
+    ReadUIntPtr(reinterpret_cast<uintptr_t&>(PtrRef), PtrID, AllowBackpatch);
+  }
+  
+  template <typename T>
+  void ReadPtr(const T*& PtrRef, const SerializedPtrID& PtrID, 
+               bool AllowBackpatch = true) {
+    
+    ReadPtr(const_cast<T*&>(PtrRef), PtrID, AllowBackpatch);
+  }
+  
   template <typename T>
   T* ReadPtr() { T* x; ReadPtr<T>(x,false); return x; }
 
-  void ReadUIntPtr(uintptr_t& PtrRef, bool AllowBackpatch = true);
+  void ReadUIntPtr(uintptr_t& PtrRef, const SerializedPtrID& PtrID, 
+                   bool AllowBackpatch = true);
+  
+  void ReadUIntPtr(uintptr_t& PtrRef, bool AllowBackpatch = true) {
+    ReadUIntPtr(PtrRef,ReadPtrID(),AllowBackpatch);
+  }
   
   template <typename T>
   T& ReadRef() {
@@ -251,7 +269,7 @@ public:
     return *p;
   }
 
-  void RegisterPtr(SerializedPtrID PtrId, const void* Ptr);
+  void RegisterPtr(const SerializedPtrID& PtrID, const void* Ptr);
   
   void RegisterPtr(const void* Ptr) {
     RegisterPtr(ReadPtrID(),Ptr);
@@ -263,7 +281,7 @@ public:
   }
   
   template<typename T>
-  void RegisterRef(SerializedPtrID PtrID, const T& x) {
+  void RegisterRef(const SerializedPtrID& PtrID, const T& x) {
     RegisterPtr(PtrID,&x);
   }  
   
