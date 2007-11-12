@@ -55,6 +55,9 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setSetCCResultType(MVT::i32);
   setSetCCResultContents(ZeroOrOneSetCCResult);
 
+  // JumpTable targets must use GOT when using PIC_
+  setUsesGlobalOffsetTable(true);
+
   // Set up the register classes
   addRegisterClass(MVT::i32, Mips::CPURegsRegisterClass);
 
@@ -62,6 +65,7 @@ MipsTargetLowering(MipsTargetMachine &TM): TargetLowering(TM)
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::GlobalTLSAddress, MVT::i32, Custom);
   setOperationAction(ISD::RET, MVT::Other, Custom);
+  setOperationAction(ISD::JumpTable, MVT::i32, Custom);
 
   // Load extented operations for i1 types must be promoted 
   setLoadXAction(ISD::EXTLOAD,  MVT::i1,  Promote);
@@ -119,6 +123,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG)
     case ISD::RET:              return LowerRET(Op, DAG);
     case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
     case ISD::GlobalTLSAddress: return LowerGlobalTLSAddress(Op, DAG);
+    case ISD::JumpTable:        return LowerJumpTable(Op, DAG);
   }
   return SDOperand();
 }
@@ -173,6 +178,29 @@ SDOperand MipsTargetLowering::
 LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG)
 {
   assert(0 && "TLS not implemented for MIPS.");
+}
+
+SDOperand MipsTargetLowering::
+LowerJumpTable(SDOperand Op, SelectionDAG &DAG) 
+{
+  SDOperand ResNode;
+  SDOperand HiPart; 
+
+  MVT::ValueType PtrVT = Op.getValueType();
+  JumpTableSDNode *JT  = cast<JumpTableSDNode>(Op);
+  SDOperand JTI = DAG.getTargetJumpTable(JT->getIndex(), PtrVT);
+
+  if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
+    const MVT::ValueType *VTs = DAG.getNodeValueTypes(MVT::i32);
+    SDOperand Ops[] = { JTI };
+    HiPart = DAG.getNode(MipsISD::Hi, VTs, 1, Ops, 1);
+  } else // Emit Load from Global Pointer
+    HiPart = DAG.getLoad(MVT::i32, DAG.getEntryNode(), JTI, NULL, 0);
+
+  SDOperand Lo = DAG.getNode(MipsISD::Lo, MVT::i32, JTI);
+  ResNode = DAG.getNode(ISD::ADD, MVT::i32, HiPart, Lo);
+
+  return ResNode;
 }
 
 //===----------------------------------------------------------------------===//
@@ -346,13 +374,11 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
   // location is used on function prologue to save GP and also after all 
   // emited CALL's to restore GP. 
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_) {
-
       // Function can have an arbitrary number of calls, so 
       // hold the LastStackLoc with the biggest offset.
       int FI;
       MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
       if (LastStackLoc >= MipsFI->getGPStackOffset()) {
-
         LastStackLoc = (!LastStackLoc) ? (16) : (LastStackLoc+4);
         // Create the frame index only once. SPOffset here can be anything 
         // (this will be fixed on processFunctionBeforeFrameFinalized)
@@ -362,7 +388,6 @@ LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC)
         }
         MipsFI->setGPStackOffset(LastStackLoc);
       }
-
 
       // Reload GP value.
       FI = MipsFI->getGPFI();
@@ -454,6 +479,10 @@ LowerCCCArguments(SDOperand Op, SelectionDAG &DAG)
   unsigned CC   = DAG.getMachineFunction().getFunction()->getCallingConv();
 
   unsigned StackReg = MF.getTarget().getRegisterInfo()->getFrameRegister(MF);
+
+  // GP holds the GOT address on PIC calls.
+  if (getTargetMachine().getRelocationModel() == Reloc::PIC_)
+    AddLiveIn(MF, Mips::GP, Mips::CPURegsRegisterClass);
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;

@@ -12,11 +12,27 @@
 //===----------------------------------------------------------------------===//
 
 #include "MipsTargetAsmInfo.h"
+#include "MipsTargetMachine.h"
 
 using namespace llvm;
 
 MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM) {
-  Data16bitsDirective = "\t.half\t";
-  Data32bitsDirective = "\t.word\t";
-  CommentString = "#";
+  AlignmentIsInBytes   = false;
+  Data16bitsDirective  = "\t.half\t";
+  Data32bitsDirective  = "\t.word\t";
+  PrivateGlobalPrefix  = "$";
+  JumpTableDataSection = "\t.rdata";
+  CommentString        = "#";
+  ReadOnlySection      = "\t.rdata";
+  ZeroDirective        = "\t.space\t";
+  BSSSection           = "\t.section\t.bss";
+  GlobalDirective      = "\t.globl\t";
+  LCOMMDirective       = "\t.lcomm\t";
+
+  if (TM.getRelocationModel() == Reloc::Static)
+    JumpTableDirective = "\t.word\t";
+  else    
+    JumpTableDirective = "\t.gpword\t";
+
+  COMMDirectiveTakesAlignment = true;
 }

@@ -76,6 +76,7 @@ namespace llvm {
     SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerGlobalAddress(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerGlobalTLSAddress(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerJumpTable(SDOperand Op, SelectionDAG &DAG);
 
     // Inline asm support
     ConstraintType getConstraintType(const std::string &Constraint) const;

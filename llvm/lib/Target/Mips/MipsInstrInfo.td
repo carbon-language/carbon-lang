@@ -274,13 +274,13 @@ class JumpFR<bits<6> op, bits<6> func, string instr_asm>:
       (outs),
       (ins CPURegs:$target),
       !strconcat(instr_asm, " $target"),
-      [], IIBranch>;
+      [(brind CPURegs:$target)], IIBranch>;
 
 // Jump and Link (Call)
 let isCall=1, hasDelaySlot=1,
   // All calls clobber the non-callee saved registers...
   Defs = [AT, V0, V1, A0, A1, A2, A3, T0, T1, T2,
-          T3, T4, T5, T6, T7, T8, T9, K0, K1] in {
+          T3, T4, T5, T6, T7, T8, T9, K0, K1], Uses = [GP] in {
   class JumpLink<bits<6> op, string instr_asm>:
     FJ< op,
         (outs),
@@ -518,6 +518,10 @@ def : Pat<(MipsHi tglobaladdr:$in), (LUi tglobaladdr:$in)>;
 def : Pat<(MipsLo tglobaladdr:$in), (ADDiu ZERO, tglobaladdr:$in)>;
 def : Pat<(add CPURegs:$hi, (MipsLo tglobaladdr:$lo)),
           (ADDiu CPURegs:$hi, tglobaladdr:$lo)>;
+def : Pat<(MipsHi tjumptable:$in), (LUi tjumptable:$in)>;
+def : Pat<(MipsLo tjumptable:$in), (ADDiu ZERO, tjumptable:$in)>;
+def : Pat<(add CPURegs:$hi, (MipsLo tjumptable:$lo)),
+          (ADDiu CPURegs:$hi, tjumptable:$lo)>;
 
 // Mips does not have not, so we increase the operation
 def : Pat<(not CPURegs:$in),

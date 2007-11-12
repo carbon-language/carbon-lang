@@ -29,6 +29,7 @@
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/SetVector.h"
@@ -237,9 +238,8 @@ emitFunctionStart(MachineFunction &MF)
   const Function *F = MF.getFunction();
   SwitchToTextSection(getSectionForFunction(*F).c_str(), F);
 
-  // On Mips GAS, if .align #n is present, #n means the number of bits 
-  // to be cleared. So, if we want 4 byte alignment, we must have .align 2
-  EmitAlignment(1, F);
+  // 2 bits aligned
+  EmitAlignment(2, F);
 
   O << "\t.globl\t"  << CurrentFnName << "\n";
   O << "\t.ent\t"    << CurrentFnName << "\n";
@@ -279,6 +279,9 @@ runOnMachineFunction(MachineFunction &MF)
 
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
+
+  // Print out jump tables referenced by the function
+  EmitJumpTableInfo(MF.getJumpTableInfo(), MF);
 
   O << "\n\n";
 
@@ -388,6 +391,11 @@ printOperand(const MachineInstr *MI, int opNum)
       O << MO.getSymbolName();
       break;
 
+    case MachineOperand::MO_JumpTableIndex:
+      O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
+      << '_' << MO.getJumpTableIndex();
+      break;
+
     // FIXME: Verify correct
     case MachineOperand::MO_ConstantPoolIndex:
       O << TAI->getPrivateGlobalPrefix() << "CPI"
@@ -450,19 +458,30 @@ doFinalization(Module &M)
       std::string name = Mang->getValueName(I);
       Constant *C      = I->getInitializer();
       unsigned Size    = TD->getABITypeSize(C->getType());
-      unsigned Align   = TD->getPrefTypeAlignment(C->getType());
+      unsigned Align   = TD->getPreferredAlignmentLog(I);
 
+      // Is this correct ?
       if (C->isNullValue() && (I->hasLinkOnceLinkage() || 
-        I->hasInternalLinkage() || I->hasWeakLinkage() 
-        /* FIXME: Verify correct */)) {
+          I->hasInternalLinkage() || I->hasWeakLinkage())) 
+      {
+        if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
 
-        SwitchToDataSection(".data", I);
-        if (I->hasInternalLinkage())
-          O << "\t.local " << name << "\n";
+        if (!NoZerosInBSS && TAI->getBSSSection())
+          SwitchToDataSection(TAI->getBSSSection(), I);
+        else
+          SwitchToDataSection(TAI->getDataSection(), I);
 
-        O << "\t.comm " << name << "," 
-          << TD->getABITypeSize(C->getType())
-          << "," << Align << "\n";
+        if (I->hasInternalLinkage()) {
+          if (TAI->getLCOMMDirective())
+            O << TAI->getLCOMMDirective() << name << "," << Size;
+          else            
+            O << "\t.local\t" << name << "\n";
+        } else {
+          O << TAI->getCOMMDirective() << name << "," << Size;
+          // The .comm alignment in bytes.
+          if (TAI->getCOMMDirectiveTakesAlignment())
+            O << "," << (1 << Align);
+        }
 
       } else {
 
@@ -483,24 +502,37 @@ doFinalization(Module &M)
             // something.  For now, just emit them as external.
           case GlobalValue::ExternalLinkage:
             // If external or appending, declare as a global symbol
-            O << "\t.globl " << name << "\n";
+            O << TAI->getGlobalDirective() << name << "\n";
+            // Fall Through
           case GlobalValue::InternalLinkage:
-            if (C->isNullValue())
-              SwitchToDataSection(".bss", I);
-            else
-              SwitchToDataSection(".data", I);
+            // FIXME: special handling for ".ctors" & ".dtors" sections
+            if (I->hasSection() && (I->getSection() == ".ctors" ||
+                I->getSection() == ".dtors")) {
+              std::string SectionName = ".section " + I->getSection();
+              SectionName += ",\"aw\",%progbits";
+              SwitchToDataSection(SectionName.c_str());
+            } else {
+              if (C->isNullValue() && !NoZerosInBSS && TAI->getBSSSection())
+                SwitchToDataSection(TAI->getBSSSection(), I);
+              else if (!I->isConstant())
+                SwitchToDataSection(TAI->getDataSection(), I);
+              else {
+                // Read-only data.
+                if (TAI->getReadOnlySection())
+                  SwitchToDataSection(TAI->getReadOnlySection(), I);
+                else
+                  SwitchToDataSection(TAI->getDataSection(), I);
+              }
+            }
             break;
           case GlobalValue::GhostLinkage:
-            cerr << "Should not have any" 
-                 << "unmaterialized functions!\n";
+            cerr << "Should not have any unmaterialized functions!\n";
             abort();
           case GlobalValue::DLLImportLinkage:
-            cerr << "DLLImport linkage is" 
-                 << "not supported by this target!\n";
+            cerr << "DLLImport linkage is not supported by this target!\n";
             abort();
           case GlobalValue::DLLExportLinkage:
-            cerr << "DLLExport linkage is" 
-                 << "not supported by this target!\n";
+            cerr << "DLLExport linkage is not supported by this target!\n";
             abort();
           default:
             assert(0 && "Unknown linkage type!");          
