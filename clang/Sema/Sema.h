@@ -565,6 +565,7 @@ public:
   // ArgExprs is optional - if it is present, the number of expressions
   // is obtained from Sel.getNumArgs().
   virtual ExprResult ActOnClassMessage(
+    Scope *S,
     IdentifierInfo *receivingClassName, Selector Sel,
     SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs);
 

@@ -2060,13 +2060,34 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
 // ArgExprs is optional - if it is present, the number of expressions
 // is obtained from Sel.getNumArgs().
 Sema::ExprResult Sema::ActOnClassMessage(
+  Scope *S,
   IdentifierInfo *receiverName, Selector Sel,
   SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args)
 {
   assert(receiverName && "missing receiver class name");
 
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
-  ObjcInterfaceDecl* ClassDecl = getObjCInterfaceDecl(receiverName);
+  ObjcInterfaceDecl* ClassDecl = 0;
+  if (!strcmp(receiverName->getName(), "super") && CurMethodDecl) {
+    ClassDecl = CurMethodDecl->getClassInterface()->getSuperClass();
+    if (CurMethodDecl->isInstance()) {
+      IdentifierInfo &II = Context.Idents.get("self");
+      ExprResult ReceiverExpr = ActOnIdentifierExpr(S, lbrac, II, 
+                                                    false);
+      QualType superTy = Context.getObjcInterfaceType(ClassDecl);
+      superTy = Context.getPointerType(superTy);
+      ReceiverExpr = ActOnCastExpr(SourceLocation(), superTy.getAsOpaquePtr(),
+                                   SourceLocation(), ReceiverExpr.Val);
+      
+      return ActOnInstanceMessage(ReceiverExpr.Val, Sel, lbrac, rbrac,
+                                  Args);
+    }
+    // class method
+    if (ClassDecl)
+      receiverName = ClassDecl->getIdentifier();
+  }
+  else
+    ClassDecl = getObjCInterfaceDecl(receiverName);
   ObjcMethodDecl *Method = ClassDecl->lookupClassMethod(Sel);
   QualType returnType;
   

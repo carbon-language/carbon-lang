@@ -1237,7 +1237,8 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   ExprTy *ReceiverExpr = 0;
   // Parse receiver
   if (Tok.is(tok::identifier) &&
-      Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)) {
+      (Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)
+       || !strcmp(Tok.getIdentifierInfo()->getName(), "super"))) {
     ReceiverName = Tok.getIdentifierInfo();
     ConsumeToken();
   } else {
@@ -1308,7 +1309,8 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   
   // We've just parsed a keyword message.
   if (ReceiverName) 
-    return Actions.ActOnClassMessage(ReceiverName, Sel, LBracloc, RBracloc,
+    return Actions.ActOnClassMessage(CurScope,
+                                     ReceiverName, Sel, LBracloc, RBracloc,
                                      &KeyExprs[0]);
   return Actions.ActOnInstanceMessage(ReceiverExpr, Sel, LBracloc, RBracloc,
                                       &KeyExprs[0]);
