@@ -1234,13 +1234,19 @@ class ObjCProtocolExpr : public Expr {
 class ObjCIvarRefExpr : public Expr {
   class ObjcIvarDecl *D; 
   SourceLocation Loc;
+  Expr *Base;
+  bool IsArrow;      // True if this is "X->F", false if this is "X.F".
+  
 public:
-  ObjCIvarRefExpr(ObjcIvarDecl *d, QualType t, SourceLocation l) : 
-    Expr(ObjCIvarRefExprClass, t), D(d), Loc(l) {}
+  ObjCIvarRefExpr(ObjcIvarDecl *d, QualType t, SourceLocation l, Expr *base=0, 
+                  bool arrow = false) : 
+    Expr(ObjCIvarRefExprClass, t), D(d), Loc(l), Base(base), IsArrow(arrow)  {}
   
   ObjcIvarDecl *getDecl() { return D; }
   const ObjcIvarDecl *getDecl() const { return D; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+  Expr *const getBase() const { return Base; }
+  const bool isArrow() const { return IsArrow; }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ObjCIvarRefExprClass; 

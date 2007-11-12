@@ -519,9 +519,20 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     if (ret.isNull())
       return true;
     return new OCUVectorElementExpr(ret, BaseExpr, Member, MemberLoc);
-  } else
-    return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
-                SourceRange(MemberLoc));
+  } else if (BaseType->isObjcInterfaceType()) {
+    ObjcInterfaceDecl *IFace;
+    if (isa<ObjcInterfaceType>(BaseType.getCanonicalType()))
+      IFace = dyn_cast<ObjcInterfaceType>(BaseType)->getDecl();
+    else
+      IFace = dyn_cast<ObjcQualifiedInterfaceType>(BaseType)
+                ->getInterfaceType()->getDecl();
+    ObjcInterfaceDecl *clsDeclared;
+    if (ObjcIvarDecl *IV = IFace->lookupInstanceVariable(&Member, clsDeclared))
+      return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
+                                 OpKind==tok::arrow);
+  }
+  return Diag(OpLoc, diag::err_typecheck_member_reference_structUnion,
+              SourceRange(MemberLoc));
 }
 
 /// ActOnCallExpr - Handle a call to Fn with the specified array of arguments.

@@ -383,6 +383,10 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
 }
 
 void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
+  if (Node->getBase()) {
+    PrintExpr(Node->getBase());
+    OS << (Node->isArrow() ? "->" : ".");
+  }
   OS << Node->getDecl()->getName();
 }
 
