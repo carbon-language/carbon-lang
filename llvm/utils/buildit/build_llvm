@@ -106,21 +106,6 @@ if ! test $? == 0 ; then
     exit 1
 fi 
 
-# Figure out how many make processes to run.
-SYSCTL=`sysctl -n hw.activecpu`
-
-# hw.activecpu only available in 10.2.6 and later
-if [ -z "$SYSCTL" ]; then
-  SYSCTL=`sysctl -n hw.ncpu`
-fi
-
-# sysctl -n hw.* does not work when invoked via B&I chroot /BuildRoot. Builders
-# can default to 2, since even if they are single processor, nothing else is
-# running on the machine.
-if [ -z "$SYSCTL" ]; then
-  SYSCTL=2
-fi
-
 ################################################################################
 # Construct the actual destination root, by copying stuff from $DIR/dst-* to
 # $DEST_DIR, with occasional 'lipo' commands.
@@ -183,6 +168,21 @@ lipo -extract ppc -extract i386 lib/LLVMlto.0.0.0.so -output lib/LLVMlto.0.0.0.s
 
 ################################################################################
 # Create SYM_DIR with information required for debugging.
+
+# Figure out how many make processes to run.
+SYSCTL=`sysctl -n hw.activecpu`
+
+# hw.activecpu only available in 10.2.6 and later
+if [ -z "$SYSCTL" ]; then
+  SYSCTL=`sysctl -n hw.ncpu`
+fi
+
+# sysctl -n hw.* does not work when invoked via B&I chroot /BuildRoot. Builders
+# can default to 2, since even if they are single processor, nothing else is
+# running on the machine.
+if [ -z "$SYSCTL" ]; then
+  SYSCTL=2
+fi
 
 cd $SYM_DIR || exit 1
 
