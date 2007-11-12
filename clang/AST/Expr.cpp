@@ -322,6 +322,8 @@ Expr::isLvalueResult Expr::isLvalue() const {
     if (cast<OCUVectorElementExpr>(this)->containsDuplicateElements())
       return LV_DuplicateVectorComponents;
     return LV_Valid;
+  case ObjCIvarRefExprClass: // ObjC instance variables are lvalues.
+    return LV_Valid;
   default:
     break;
   }
