@@ -21,6 +21,7 @@
 
 #define DEBUG_TYPE "strongphielim"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/BreakCriticalMachineEdge.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"

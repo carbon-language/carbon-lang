@@ -70,7 +70,6 @@ void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LiveVariables>();
   AU.addPreserved<LiveVariables>();
   AU.addPreservedID(PHIEliminationID);
-  AU.addPreservedID(BreakCriticalMachineEdgesID);
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 

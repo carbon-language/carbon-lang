@@ -1,4 +1,4 @@
-//===----------- BreakCriticalMachineEdges - Break critical edges ---------===//
+//===--------- BreakCriticalMachineEdges.h - Break critical edges ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,44 +7,23 @@
 //
 //===---------------------------------------------------------------------===//
 //
-// Break all of the critical edges in the CFG by inserting a dummy basic block. 
-// This pass may be "required" by passes that cannot deal with critical edges.
-// Notice that this pass invalidates the CFG, because the same BasicBlock is 
-// used as parameter for the src MachineBasicBlock and the new dummy
-// MachineBasicBlock.
+// Helper function to break a critical machine edge.
 //
 //===---------------------------------------------------------------------===//
 
-#include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
+#ifndef LLVM_CODEGEN_ASMPRINTER_H
+#define LLVM_CODEGEN_ASMPRINTER_H
+
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 
-using namespace llvm;
+namespace llvm {
 
-namespace {
-  struct VISIBILITY_HIDDEN BreakCriticalMachineEdges :
-                           public MachineFunctionPass {
-    static char ID; // Pass identification
-    BreakCriticalMachineEdges() : MachineFunctionPass((intptr_t)&ID) {}
-    
-    bool runOnMachineFunction(MachineFunction& Fn);
-    void splitCriticalEdge(MachineBasicBlock* A, MachineBasicBlock* B);
-  };
-  
-  char BreakCriticalMachineEdges::ID = 0;
-  RegisterPass<BreakCriticalMachineEdges> X("critical-machine-edges",
-                                            "Break critical machine code edges");
-}
-
-const PassInfo *llvm::BreakCriticalMachineEdgesID = X.getPassInfo();
-
-void BreakCriticalMachineEdges::splitCriticalEdge(MachineBasicBlock* src,
-                                                  MachineBasicBlock* dst) {
+MachineBasicBlock* SplitCriticalMachineEdge(MachineBasicBlock* src,
+                                            MachineBasicBlock* dst) {
   const BasicBlock* srcBB = src->getBasicBlock();
 
   MachineBasicBlock* crit_mbb = new MachineBasicBlock(srcBB);
@@ -106,26 +85,10 @@ void BreakCriticalMachineEdges::splitCriticalEdge(MachineBasicBlock* src,
           mii->getOperand(u).getMachineBasicBlock() == src)
         mii->getOperand(u).setMachineBasicBlock(crit_mbb);
   }
+  
+  return crit_mbb;
 }
 
-bool BreakCriticalMachineEdges::runOnMachineFunction(MachineFunction& F) {
-  std::vector<MachineBasicBlock *> SourceBlocks;
-  std::vector<MachineBasicBlock *> DestBlocks;
-
-  for(MachineFunction::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
-    for(MachineBasicBlock::succ_iterator SI = FI->succ_begin(),
-        SE = FI->succ_end(); SI != SE; ++SI) {
-      // predecessor with multiple successors, successor with multiple
-      // predecessors.
-      if (FI->succ_size() > 1 && (*SI)->pred_size() > 1) {
-        SourceBlocks.push_back(FI);
-        DestBlocks.push_back(*SI);
-      }
-    }
-  }
-
-  for(unsigned u = 0; u < SourceBlocks.size(); u++)
-    splitCriticalEdge(SourceBlocks[u], DestBlocks[u]);
-
-  return false;
 }
+
+#endif
