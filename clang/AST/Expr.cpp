@@ -923,6 +923,10 @@ bool ChooseExpr::isConditionTrue(ASTContext &C) const {
 Stmt::child_iterator DeclRefExpr::child_begin() { return child_iterator(); }
 Stmt::child_iterator DeclRefExpr::child_end() { return child_iterator(); }
 
+// ObjCIvarRefExpr
+Stmt::child_iterator ObjCIvarRefExpr::child_begin() { return child_iterator(); }
+Stmt::child_iterator ObjCIvarRefExpr::child_end() { return child_iterator(); }
+
 // PreDefinedExpr
 Stmt::child_iterator PreDefinedExpr::child_begin() { return child_iterator(); }
 Stmt::child_iterator PreDefinedExpr::child_end() { return child_iterator(); }

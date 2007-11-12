@@ -1229,7 +1229,32 @@ class ObjCProtocolExpr : public Expr {
   virtual child_iterator child_end();
     
 };
+
+/// ObjCIvarRefExpr - A reference to an ObjC instance variable.
+class ObjCIvarRefExpr : public Expr {
+  class ObjcIvarDecl *D; 
+  SourceLocation Loc;
+public:
+  ObjCIvarRefExpr(ObjcIvarDecl *d, QualType t, SourceLocation l) : 
+    Expr(ObjCIvarRefExprClass, t), D(d), Loc(l) {}
   
+  ObjcIvarDecl *getDecl() { return D; }
+  const ObjcIvarDecl *getDecl() const { return D; }
+  virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
+  
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ObjCIvarRefExprClass; 
+  }
+  static bool classof(const ObjCIvarRefExpr *) { return true; }
+  
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
+  virtual void directEmit(llvm::Serializer& S) const;
+  static ObjCIvarRefExpr* directMaterialize(llvm::Deserializer& D);
+};
+
 class ObjCMessageExpr : public Expr {
   enum { RECEIVER=0, ARGS_START=1 };
 

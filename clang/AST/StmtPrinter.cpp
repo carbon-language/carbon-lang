@@ -382,6 +382,10 @@ void StmtPrinter::VisitDeclRefExpr(DeclRefExpr *Node) {
   OS << Node->getDecl()->getName();
 }
 
+void StmtPrinter::VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node) {
+  OS << Node->getDecl()->getName();
+}
+
 void StmtPrinter::VisitPreDefinedExpr(PreDefinedExpr *Node) {
   switch (Node->getIdentType()) {
     default:

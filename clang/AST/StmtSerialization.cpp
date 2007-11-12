@@ -337,6 +337,20 @@ DeclRefExpr* DeclRefExpr::directMaterialize(Deserializer& D) {
   return dr;
 }
 
+void ObjCIvarRefExpr::directEmit(Serializer& S) const {
+  S.Emit(Loc);
+  S.Emit(getType());
+  S.EmitPtr(getDecl());
+}
+
+ObjCIvarRefExpr* ObjCIvarRefExpr::directMaterialize(Deserializer& D) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  QualType T = QualType::ReadVal(D);
+  ObjCIvarRefExpr* dr = new ObjCIvarRefExpr(NULL,T,Loc);
+  D.ReadPtr(dr->D,false);  
+  return dr;
+}
+
 DeclStmt* DeclStmt::directMaterialize(Deserializer& D) {
   ScopedDecl* decl = cast<ScopedDecl>(D.ReadOwnedPtr<Decl>());
   return new DeclStmt(decl);

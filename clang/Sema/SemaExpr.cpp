@@ -82,6 +82,12 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
         !getLangOptions().CPlusPlus)
       D = ImplicitlyDefineFunction(Loc, II, S);
     else {
+      if (CurMethodDecl) {
+        ObjcInterfaceDecl *IFace = CurMethodDecl->getClassInterface();
+        ObjcInterfaceDecl *clsDeclared;
+        if (ObjcIvarDecl *IV = IFace->lookupInstanceVariable(&II, clsDeclared))
+          return new ObjCIvarRefExpr(IV, IV->getType(), Loc);
+      }
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
       return Diag(Loc, diag::err_undeclared_var_use, II.getName());
