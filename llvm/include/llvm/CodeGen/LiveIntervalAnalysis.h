@@ -32,6 +32,7 @@ namespace llvm {
 
   class LiveVariables;
   class MRegisterInfo;
+  class SSARegMap;
   class TargetInstrInfo;
   class TargetRegisterClass;
   class VirtRegMap;
@@ -100,6 +101,10 @@ namespace llvm {
     }
     static unsigned getStoreIndex(unsigned index) {
       return getBaseIndex(index) + InstrSlots::STORE;
+    }
+
+    static float getSpillWeight(const MachineOperand &mop, unsigned loopDepth) {
+      return (mop.isUse()+mop.isDef()) * powf(10.0F, (float)loopDepth);
     }
 
     typedef Reg2IntervalMap::iterator iterator;
@@ -182,9 +187,6 @@ namespace llvm {
       return I->second;
     }
 
-    std::vector<LiveInterval*> addIntervalsForSpills(const LiveInterval& i,
-                                                 VirtRegMap& vrm, unsigned reg);
-
     // Interval removal
 
     void removeInterval(unsigned Reg) {
@@ -222,6 +224,11 @@ namespace llvm {
     void print(std::ostream *O, const Module* M = 0) const {
       if (O) print(*O, M);
     }
+
+    /// addIntervalsForSpills - Create new intervals for spilled defs / uses of
+    /// the given interval.
+    std::vector<LiveInterval*>
+      addIntervalsForSpills(const LiveInterval& i, VirtRegMap& vrm);
 
   private:      
     /// computeIntervals - Compute live intervals.
@@ -266,6 +273,23 @@ namespace llvm {
     bool tryFoldMemoryOperand(MachineInstr* &MI, VirtRegMap &vrm,
                               MachineInstr *DefMI, unsigned index, unsigned i,
                               bool isSS, int slot, unsigned reg);
+
+    /// rewriteInstructionForSpills, rewriteInstructionsForSpills - Helper functions
+    /// for addIntervalsForSpills to rewrite uses / defs for the given live range.
+    void rewriteInstructionForSpills(const LiveInterval &li,
+        unsigned id, unsigned index, unsigned end, MachineInstr *MI,
+        MachineInstr *OrigDefMI, MachineInstr *DefMI, unsigned Slot, int LdSlot,
+        bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
+        VirtRegMap &vrm, SSARegMap *RegMap, const TargetRegisterClass* rc,
+        SmallVector<int, 4> &ReMatIds,
+        std::vector<LiveInterval*> &NewLIs);
+    void rewriteInstructionsForSpills(const LiveInterval &li,
+        LiveInterval::Ranges::const_iterator &I,
+        MachineInstr *OrigDefMI, MachineInstr *DefMI, unsigned Slot, int LdSlot,
+        bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
+        VirtRegMap &vrm, SSARegMap *RegMap, const TargetRegisterClass* rc,
+        SmallVector<int, 4> &ReMatIds,
+        std::vector<LiveInterval*> &NewLIs);
 
     static LiveInterval createInterval(unsigned Reg);
 
