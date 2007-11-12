@@ -107,10 +107,6 @@ public:
     return 0;
   }
 
-  virtual DeclTy *ObjcActOnMethodDefinition(Scope *S, DeclTy *D,
-					    DeclTy *LastInGroup) {
-    return 0;
-  }
   /// AddInitializerToDecl - This action is called immediately after 
   /// ParseDeclarator (when an initializer is present). The code is factored 
   /// this way to make sure we are able to handle the following:
