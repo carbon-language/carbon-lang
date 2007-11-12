@@ -322,6 +322,8 @@ DIAG(err_parse_error, ERROR,
      "parse error")
 DIAG(err_expected_expression, ERROR,
      "expected expression")
+DIAG(err_invalid_receiver_to_message, ERROR,
+     "invalid receiver to message expression")
 DIAG(err_expected_external_declaration, ERROR,
      "expected external declaration")
 DIAG(err_expected_ident, ERROR,

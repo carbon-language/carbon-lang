@@ -1243,6 +1243,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   } else {
     ExprResult Res = ParseAssignmentExpression();
     if (Res.isInvalid) {
+      Diag(Tok, diag::err_invalid_receiver_to_message);
       SkipUntil(tok::identifier);
       return Res;
     }
