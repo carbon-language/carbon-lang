@@ -981,6 +981,7 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   // Insert the invisible arguments, self and _cmd!
   PI.Ident = &Context.Idents.get("self");
   PI.IdentLoc = SourceLocation(); // synthesized vars have a null location.
+  PI.InvalidType = false;
   if (MDecl->isInstance()) {
     QualType selfTy = Context.getObjcInterfaceType(MDecl->getClassInterface());
     selfTy = Context.getPointerType(selfTy);
