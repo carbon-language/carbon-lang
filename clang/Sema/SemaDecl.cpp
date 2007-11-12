@@ -1763,8 +1763,9 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
   
   if (isa<RecordDecl>(static_cast<Decl *>(TagDecl)))
     NewFD = new FieldDecl(Loc, II, T, BitWidth);
-  else if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(TagDecl))
-           || isa<ObjcImplementationDecl>(static_cast<Decl *>(TagDecl)))
+  else if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(TagDecl)) ||
+           isa<ObjcImplementationDecl>(static_cast<Decl *>(TagDecl)) ||
+           isa<ObjcCategoryDecl>(static_cast<Decl *>(TagDecl)))
     NewFD = new ObjcIvarDecl(Loc, II, T);
   else
     assert(0 && "Sema::ActOnField(): Unknown TagDecl");
