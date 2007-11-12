@@ -981,7 +981,7 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
     SynthesizeObjcInternalStruct(RCDecl, Result);
   }
   
-  int NumIvars = CDecl->getIntfDeclNumIvars();
+  int NumIvars = CDecl->getNumInstanceVariables();
   // If no ivars and no root or if its root, directly or indirectly,
   // have no ivars (thus not synthesized) then no need to synthesize this class.
   if (NumIvars <= 0 && (!RCDecl || !ObjcSynthesizedStructs.count(RCDecl)))
@@ -1391,7 +1391,7 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
   // Build _objc_ivar_list metadata for classes ivars if needed
   int NumIvars = IDecl->getImplDeclNumIvars() > 0 
                    ? IDecl->getImplDeclNumIvars() 
-                   : (CDecl ? CDecl->getIntfDeclNumIvars() : 0);
+                   : (CDecl ? CDecl->getNumInstanceVariables() : 0);
   
   SynthesizeObjcInternalStruct(CDecl, Result);
   
@@ -1430,7 +1430,7 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
           
     ObjcIvarDecl **Ivars = IDecl->getImplDeclIVars() 
                              ? IDecl->getImplDeclIVars() 
-                             : CDecl->getIntfDeclIvars();
+                             : CDecl->getInstanceVariables();
     Result += "\t,{{\"";
     Result += Ivars[0]->getName();
     Result += "\", \"";

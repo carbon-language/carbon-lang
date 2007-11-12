@@ -408,6 +408,23 @@ void ObjcCategoryImplDecl::addMethods(ObjcMethodDecl **insMethods,
   }
 }
 
+ObjcIvarDecl *ObjcInterfaceDecl::lookupInstanceVariable(
+  IdentifierInfo *ID, ObjcInterfaceDecl *&clsDeclared) {
+  ObjcInterfaceDecl* ClassDecl = this;
+  while (ClassDecl != NULL) {
+    ObjcIvarDecl **ivars = ClassDecl->getInstanceVariables();
+    int ivarCount = ClassDecl->getNumInstanceVariables();
+    for (int i = 0; i < ivarCount; ++i) {
+      if (ivars[i]->getIdentifier() == ID) {
+        clsDeclared = ClassDecl;
+        return ivars[i];
+      }
+    }
+    ClassDecl = ClassDecl->getSuperClass();
+  }
+  return NULL;
+}
+
 // lookupInstanceMethod - This method returns an instance method by looking in
 // the class, it's categories, and it's super classes (using a linear search).
 ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {

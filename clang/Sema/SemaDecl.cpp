@@ -912,7 +912,9 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
     assert(FD == CurFunctionDecl && "Function parsing confused");
   } else if (ObjcMethodDecl *MD = dyn_cast<ObjcMethodDecl>(dcl)) {
     MD->setBody((Stmt*)Body);
+    CurMethodDecl = 0;
   }
+  // This is unconditional, since methods have a corresponding function decl.
   CurFunctionDecl = 0;
   
   // Verify and clean out per-function state.
@@ -943,9 +945,8 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
 /// ObjcActOnStartOfMethodDef - This routine sets up parameters; invisible
 /// and user declared, in the method definition's AST.
 void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
-  assert(CurFunctionDecl == 0 && "Function parsing confused");
+  assert(CurFunctionDecl == 0 && "Method parsing confused");
   ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
-  
   assert(MDecl != 0 && "Not a method declarator!");
   
   Scope *GlobalScope = FnBodyScope->getParent();
@@ -957,10 +958,10 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   Name += MDecl->getSelector().getName();
   Name += "]";
   IdentifierInfo *II = &Context.Idents.get(Name);
-  assert (II && "ObjcActOnMethodDefinition - selector name is missing");
+  assert (II && "ObjcActOnStartOfMethodDef - selector name is missing");
   
   QualType R = ObjcGetTypeForMethodDefinition(MDecl, GlobalScope);
-  assert(!R.isNull() && "ObjcGetTypeForMethodDefinition() returned null type");
+  assert(!R.isNull() && "ObjcActOnStartOfMethodDef() returned null type");
     
   FunctionDecl *NewFD = new FunctionDecl(MDecl->getLocation(), II, R, 
                                          FunctionDecl::Static, false, 0);
@@ -968,34 +969,34 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   II->setFETokenInfo(NewFD);
   GlobalScope->AddDecl(NewFD);
   AddTopLevelDecl(NewFD, 0);
+  
+  // Allow all of Sema to see that we are entering a method definition.
+  CurMethodDecl = MDecl;
   CurFunctionDecl = NewFD;
 
   // Create Decl objects for each parameter, adding them to the FunctionDecl.
   llvm::SmallVector<ParmVarDecl*, 16> Params;
   struct DeclaratorChunk::ParamInfo PI;
 
+  // Insert the invisible arguments, self and _cmd!
   PI.Ident = &Context.Idents.get("self");
-  PI.IdentLoc = SourceLocation(/*FIXME*/);
-  
-  // Insert the invisible arguments!
+  PI.IdentLoc = SourceLocation(); // synthesized vars have a null location.
   if (MDecl->isInstance()) {
     QualType selfTy = Context.getObjcInterfaceType(MDecl->getClassInterface());
     selfTy = Context.getPointerType(selfTy);
     PI.TypeInfo = selfTy.getAsOpaquePtr();
   } else
     PI.TypeInfo = Context.getObjcIdType().getAsOpaquePtr();
-    
   Params.push_back(ParseParamDeclarator(PI, FnBodyScope));
   
   PI.Ident = &Context.Idents.get("_cmd");
-  PI.IdentLoc = SourceLocation(/*FIXME*/);
   PI.TypeInfo = Context.getObjcSelType().getAsOpaquePtr();
   Params.push_back(ParseParamDeclarator(PI, FnBodyScope));
   
   for (int i = 0; i <  MDecl->getNumParams(); i++) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
     PI.Ident = PDecl->getIdentifier();
-    PI.IdentLoc = PDecl->getLocation();
+    PI.IdentLoc = PDecl->getLocation(); // user vars have a real location.
     PI.TypeInfo = PDecl->getType().getAsOpaquePtr();
     Params.push_back(ParseParamDeclarator(PI, FnBodyScope));
   }
@@ -1406,8 +1407,8 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
   // Check interface's Ivar list against those in the implementation.
   // names and types must match.
   //
-  ObjcIvarDecl** IntfIvars = IDecl->getIntfDeclIvars();
-  int IntfNumIvars = IDecl->getIntfDeclNumIvars();
+  ObjcIvarDecl** IntfIvars = IDecl->getInstanceVariables();
+  int IntfNumIvars = IDecl->getNumInstanceVariables();
   unsigned j = 0;
   bool err = false;
   while (numIvars > 0 && IntfNumIvars > 0) {

@@ -111,8 +111,8 @@ public:
   }
   int getNumIntfRefProtocols() const { return NumReferencedProtocols; }
   
-  ObjcIvarDecl **getIntfDeclIvars() const { return Ivars; }
-  int getIntfDeclNumIvars() const { return NumIvars; }
+  ObjcIvarDecl **getInstanceVariables() const { return Ivars; }
+  int getNumInstanceVariables() const { return NumIvars; }
   
   ObjcMethodDecl** getInstanceMethods() const { return InstanceMethods; }
   int getNumInstanceMethods() const { return NumInstanceMethods; }
@@ -142,6 +142,8 @@ public:
   void setCategoryList(ObjcCategoryDecl *category) { 
          CategoryList = category; 
   }
+  ObjcIvarDecl *lookupInstanceVariable(IdentifierInfo *ivarName,
+                                       ObjcInterfaceDecl *&clsDeclared);
   ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
   ObjcMethodDecl *lookupClassMethod(Selector &Sel);
 

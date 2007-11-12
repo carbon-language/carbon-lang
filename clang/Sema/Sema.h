@@ -64,6 +64,10 @@ class Sema : public Action {
   /// CurFunctionDecl - If inside of a function body, this contains a pointer to
   /// the function decl for the function being parsed.
   FunctionDecl *CurFunctionDecl;
+
+  /// CurMethodDecl - If inside of a method body, this contains a pointer to
+  /// the method decl for the method being parsed.
+  ObjcMethodDecl *CurMethodDecl;
   
   /// LastInGroupList - This vector is populated when there are multiple
   /// declarators in a single decl group (e.g. "int A, B, C").  In this case,

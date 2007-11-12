@@ -147,9 +147,9 @@ static void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
   else
     fprintf(stderr, "\n");
   
-  int NumIvars = OID->getIntfDeclNumIvars();
+  int NumIvars = OID->getNumInstanceVariables();
   if (NumIvars > 0) {
-    ObjcIvarDecl **Ivars = OID->getIntfDeclIvars();
+    ObjcIvarDecl **Ivars = OID->getInstanceVariables();
     fprintf(stderr,"{");
     for (int i = 0; i < NumIvars; i++) {
       fprintf(stderr, "\t%s %s;\n", Ivars[i]->getType().getAsString().c_str(),
