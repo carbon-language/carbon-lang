@@ -1142,12 +1142,20 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // The only option for this is to custom lower it.
     Tmp3 = TLI.LowerOperation(Result.getValue(0), DAG);
     assert(Tmp3.Val && "Target didn't custom lower this node!");
-    assert(Tmp3.Val->getNumValues() == Result.Val->getNumValues() &&
+
+    // The number of incoming and outgoing values should match; unless the final
+    // outgoing value is a flag.
+    assert((Tmp3.Val->getNumValues() == Result.Val->getNumValues() ||
+            (Tmp3.Val->getNumValues() == Result.Val->getNumValues() + 1 &&
+             Tmp3.Val->getValueType(Tmp3.Val->getNumValues() - 1) ==
+               MVT::Flag)) &&
            "Lowering call/formal_arguments produced unexpected # results!");
     
     // Since CALL/FORMAL_ARGUMENTS nodes produce multiple values, make sure to
     // remember that we legalized all of them, so it doesn't get relegalized.
     for (unsigned i = 0, e = Tmp3.Val->getNumValues(); i != e; ++i) {
+      if (Tmp3.Val->getValueType(i) == MVT::Flag)
+        continue;
       Tmp1 = LegalizeOp(Tmp3.getValue(i));
       if (Op.ResNo == i)
         Tmp2 = Tmp1;
@@ -1472,6 +1480,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       assert(SPReg && "Target cannot require DYNAMIC_STACKALLOC expansion and"
              " not tell us which reg is the stack pointer!");
       SDOperand Chain = Tmp1.getOperand(0);
+
+      // Chain the dynamic stack allocation so that it doesn't modify the stack
+      // pointer when other instructions are using the stack.
+      Chain = DAG.getCALLSEQ_START(Chain,
+                                   DAG.getConstant(0, TLI.getPointerTy()));
+
       SDOperand Size  = Tmp2.getOperand(1);
       SDOperand SP = DAG.getCopyFromReg(Chain, SPReg, VT);
       Chain = SP.getValue(1);
@@ -1482,7 +1496,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         SP = DAG.getNode(ISD::AND, VT, SP,
                          DAG.getConstant(-(uint64_t)Align, VT));
       Tmp1 = DAG.getNode(ISD::SUB, VT, SP, Size);       // Value
-      Tmp2 = DAG.getCopyToReg(Chain, SPReg, Tmp1);      // Output chain
+      Chain = DAG.getCopyToReg(Chain, SPReg, Tmp1);     // Output chain
+
+      Tmp2 =
+        DAG.getCALLSEQ_END(Chain,
+                           DAG.getConstant(0, TLI.getPointerTy()),
+                           DAG.getConstant(0, TLI.getPointerTy()),
+                           SDOperand());
+
       Tmp1 = LegalizeOp(Tmp1);
       Tmp2 = LegalizeOp(Tmp2);
       break;

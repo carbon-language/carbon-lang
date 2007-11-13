@@ -1131,14 +1131,12 @@ SDOperand X86TargetLowering::LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG,
     // This is common for Darwin/X86, Linux & Mingw32 targets.
     NumBytesForCalleeToPush = isSRet ? 4 : 0;
   }
-  
-  NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
-  Ops.clear();
-  Ops.push_back(Chain);
-  Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
-  Ops.push_back(DAG.getConstant(NumBytesForCalleeToPush, getPointerTy()));
-  Ops.push_back(InFlag);
-  Chain = DAG.getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0], Ops.size());
+
+  Chain = DAG.getCALLSEQ_END(Chain,
+                             DAG.getConstant(NumBytes, getPointerTy()),
+                             DAG.getConstant(NumBytesForCalleeToPush,
+                                             getPointerTy()),
+                             InFlag);
   InFlag = Chain.getValue(1);
 
   // Handle result values, copying them out of physregs into vregs that we

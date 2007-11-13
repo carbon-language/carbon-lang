@@ -30,11 +30,14 @@ def retflag       : SDNode<"AlphaISD::RET_FLAG", SDTRet,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
 
 // These are target-independent nodes, but have target-specific formats.
-def SDT_AlphaCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
-def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_AlphaCallSeq,
+def SDT_AlphaCallSeq_start : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
+def SDT_AlphaCallSeq_end   : SDTypeProfile<0, 2, [ SDTCisVT<0, i64>,
+                                                   SDTCisVT<1, i64> ]>;
+
+def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_AlphaCallSeq_start,
     		           [SDNPHasChain, SDNPOutFlag]>;
-def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_AlphaCallSeq,
-                           [SDNPHasChain, SDNPOutFlag]>;
+def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_AlphaCallSeq_end,
+                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 //********************
 //Paterns for matching
@@ -148,11 +151,14 @@ def IDEF_F64 : PseudoInstAlpha<(outs F8RC:$RA), (ins), ";#idef $RA",
 def WTF : PseudoInstAlpha<(outs), (ins variable_ops), "#wtf", [], s_pseudo>;
 
 let isLoad = 1, hasCtrlDep = 1, Defs = [R30], Uses = [R30] in {
-def ADJUSTSTACKUP : PseudoInstAlpha<(outs), (ins s64imm:$amt), "; ADJUP $amt", 
+def ADJUSTSTACKUP : PseudoInstAlpha<(outs), (ins s64imm:$amt),
+                "; ADJUP $amt", 
                 [(callseq_start imm:$amt)], s_pseudo>;
-def ADJUSTSTACKDOWN : PseudoInstAlpha<(outs), (ins s64imm:$amt), "; ADJDOWN $amt", 
-                [(callseq_end imm:$amt)], s_pseudo>;
+def ADJUSTSTACKDOWN : PseudoInstAlpha<(outs), (ins s64imm:$amt1, s64imm:$amt2),
+                "; ADJDOWN $amt1",
+                [(callseq_end imm:$amt1, imm:$amt2)], s_pseudo>;
 }
+
 def ALTENT : PseudoInstAlpha<(outs), (ins s64imm:$TARGET), "$$$TARGET..ng:\n", [], s_pseudo>;
 def PCLABEL : PseudoInstAlpha<(outs), (ins s64imm:$num), "PCMARKER_$num:\n",[], s_pseudo>;
 def MEMLABEL : PseudoInstAlpha<(outs), (ins s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),

@@ -17,7 +17,9 @@
 //
 
 // Type profiles.
-def SDT_ARMCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
+def SDT_ARMCallSeq_start : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
+def SDT_ARMCallSeq_end   : SDTypeProfile<0, 2, [ SDTCisVT<0, i32>,
+                                                 SDTCisVT<1, i32> ]>;
 
 def SDT_ARMSaveCallPC : SDTypeProfile<0, 1, []>;
 
@@ -45,10 +47,10 @@ def SDT_ARMThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
 def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
 
-def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeq,
+def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeq_start,
     		              [SDNPHasChain, SDNPOutFlag]>;
-def ARMcallseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeq,
-    		              [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
+def ARMcallseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeq_end,
+    		              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def ARMcall          : SDNode<"ARMISD::CALL", SDT_ARMcall,
                               [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
@@ -663,9 +665,9 @@ PseudoInst<(outs), (ins cpinst_operand:$instid, cpinst_operand:$cpidx,
 
 let Defs = [SP], Uses = [SP] in {
 def ADJCALLSTACKUP :
-PseudoInst<(outs), (ins i32imm:$amt, pred:$p),
-           "@ ADJCALLSTACKUP $amt",
-           [(ARMcallseq_end imm:$amt)]>;
+PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2, pred:$p),
+           "@ ADJCALLSTACKUP $amt1",
+           [(ARMcallseq_end imm:$amt1, imm:$amt2)]>;
 
 def ADJCALLSTACKDOWN : 
 PseudoInst<(outs), (ins i32imm:$amt, pred:$p),

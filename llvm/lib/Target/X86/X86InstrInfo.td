@@ -253,7 +253,8 @@ def extloadi32i16  : PatFrag<(ops node:$ptr), (i32 (extloadi16 node:$ptr))>;
 // Pessimistically assume ADJCALLSTACKDOWN / ADJCALLSTACKUP will become sub / add
 // which can clobber EFLAGS.
 let Defs = [ESP, EFLAGS], Uses = [ESP] in {
-def ADJCALLSTACKDOWN : I<0, Pseudo, (outs), (ins i32imm:$amt), "#ADJCALLSTACKDOWN",
+def ADJCALLSTACKDOWN : I<0, Pseudo, (outs), (ins i32imm:$amt),
+                         "#ADJCALLSTACKDOWN",
                          [(X86callseq_start imm:$amt)]>;
 def ADJCALLSTACKUP   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
                          "#ADJCALLSTACKUP",

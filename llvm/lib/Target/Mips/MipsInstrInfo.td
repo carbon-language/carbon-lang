@@ -34,11 +34,14 @@ def MipsRet     : SDNode<"MipsISD::Ret", SDT_MipsRet, [SDNPHasChain,
                              SDNPOptInFlag]>;
 
 // These are target-independent nodes, but have target-specific formats.
-def SDT_MipsCallSeq : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
-def callseq_start   : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeq,
+def SDT_MipsCallSeq_start : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
+def SDT_MipsCallSeq_end   : SDTypeProfile<0, 2, [SDTCisVT<0, i32>,
+                                                 SDTCisVT<1, i32>]>;
+
+def callseq_start   : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeq_start,
                              [SDNPHasChain, SDNPOutFlag]>;
-def callseq_end     : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeq,
-                             [SDNPHasChain, SDNPOutFlag]>;
+def callseq_end     : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeq_end,
+                             [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
@@ -348,9 +351,9 @@ let Defs = [SP], Uses = [SP] in {
 def ADJCALLSTACKDOWN : PseudoInstMips<(outs), (ins uimm16:$amt),
                                       "!ADJCALLSTACKDOWN $amt",
                                       [(callseq_start imm:$amt)]>;
-def ADJCALLSTACKUP   : PseudoInstMips<(outs), (ins uimm16:$amt),
-                                      "!ADJCALLSTACKUP $amt",
-                                      [(callseq_end imm:$amt)]>;
+def ADJCALLSTACKUP   : PseudoInstMips<(outs), (ins uimm16:$amt1, uimm16:$amt2),
+                                      "!ADJCALLSTACKUP $amt1",
+                                      [(callseq_end imm:$amt1, imm:$amt2)]>;
 }
 
 def IMPLICIT_DEF_CPURegs : PseudoInstMips<(outs CPURegs:$dst), (ins),

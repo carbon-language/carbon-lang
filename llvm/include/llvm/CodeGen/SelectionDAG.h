@@ -275,6 +275,20 @@ public:
     return getNode(ISD::CALLSEQ_START, VTs, 2, Ops, 2);
   }
 
+  /// getCALLSEQ_END - Return a new CALLSEQ_END node, which always must have a
+  /// flag result (to ensure it's not CSE'd).
+  SDOperand getCALLSEQ_END(SDOperand Chain, SDOperand Op1, SDOperand Op2,
+                           SDOperand InFlag) {
+    SDVTList NodeTys = getVTList(MVT::Other, MVT::Flag);
+    SmallVector<SDOperand, 4> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Op1);
+    Ops.push_back(Op2);
+    Ops.push_back(InFlag);
+    return getNode(ISD::CALLSEQ_END, NodeTys, &Ops[0],
+                   Ops.size() - (InFlag.Val == 0 ? 1 : 0));
+  }
+
   /// getNode - Gets or creates the specified node.
   ///
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT);

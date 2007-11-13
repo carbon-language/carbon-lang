@@ -535,9 +535,10 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
     }
   }
   
-  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                      DAG.getConstant(NumBytes, getPointerTy()));
-  
+  Chain = DAG.getCALLSEQ_END(Chain,
+                             DAG.getConstant(NumBytes, getPointerTy()),
+                             DAG.getConstant(0, getPointerTy()),
+                             SDOperand());
   return std::make_pair(RetVal, Chain);
 }
 

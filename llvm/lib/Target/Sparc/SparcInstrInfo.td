@@ -114,11 +114,14 @@ def SPselecticc : SDNode<"SPISD::SELECT_ICC", SDTSPselectcc, [SDNPInFlag]>;
 def SPselectfcc : SDNode<"SPISD::SELECT_FCC", SDTSPselectcc, [SDNPInFlag]>;
 
 // These are target-independent nodes, but have target-specific formats.
-def SDT_SPCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
-def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeq,
+def SDT_SPCallSeq_start : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
+def SDT_SPCallSeq_end   : SDTypeProfile<0, 2, [ SDTCisVT<0, i32>,
+                                                SDTCisVT<1, i32> ]>;
+
+def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_SPCallSeq_start,
                            [SDNPHasChain, SDNPOutFlag]>;
-def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeq,
-                           [SDNPHasChain, SDNPOutFlag]>;
+def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_SPCallSeq_end,
+                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def SDT_SPCall    : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 def call          : SDNode<"SPISD::CALL", SDT_SPCall,
@@ -205,9 +208,9 @@ let Defs = [O6], Uses = [O6] in {
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
                                "!ADJCALLSTACKDOWN $amt",
                                [(callseq_start imm:$amt)]>;
-def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt),
-                            "!ADJCALLSTACKUP $amt",
-                            [(callseq_end imm:$amt)]>;
+def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
+                            "!ADJCALLSTACKUP $amt1",
+                            [(callseq_end imm:$amt1, imm:$amt2)]>;
 }
 def IMPLICIT_DEF_Int : Pseudo<(outs IntRegs:$dst), (ins),
                               "!IMPLICIT_DEF $dst",

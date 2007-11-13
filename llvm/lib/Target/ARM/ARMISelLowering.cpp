@@ -605,10 +605,10 @@ SDOperand ARMTargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
   Chain = DAG.getNode(CallOpc, NodeTys, &Ops[0], Ops.size());
   InFlag = Chain.getValue(1);
 
-  SDOperand CSOps[] = { Chain, DAG.getConstant(NumBytes, MVT::i32), InFlag };
-  Chain = DAG.getNode(ISD::CALLSEQ_END, 
-                      DAG.getNodeValueTypes(MVT::Other, MVT::Flag),
-                      ((RetVT != MVT::Other) ? 2 : 1), CSOps, 3);
+  Chain = DAG.getCALLSEQ_END(Chain,
+                             DAG.getConstant(NumBytes, MVT::i32),
+                             DAG.getConstant(0, MVT::i32),
+                             InFlag);
   if (RetVT != MVT::Other)
     InFlag = Chain.getValue(1);
 

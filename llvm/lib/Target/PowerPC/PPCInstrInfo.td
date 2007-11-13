@@ -23,8 +23,9 @@ def SDT_PPCstfiwx : SDTypeProfile<0, 2, [ // stfiwx
 def SDT_PPCShiftOp : SDTypeProfile<1, 2, [   // PPCshl, PPCsra, PPCsrl
   SDTCisVT<0, i32>, SDTCisVT<1, i32>, SDTCisVT<2, i32>
 ]>;
-def SDT_PPCCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
-
+def SDT_PPCCallSeq_start : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
+def SDT_PPCCallSeq_end   : SDTypeProfile<0, 2, [ SDTCisVT<0, i32>,
+                                                 SDTCisVT<1, i32> ]>;
 def SDT_PPCvperm   : SDTypeProfile<1, 3, [
   SDTCisVT<3, v16i8>, SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>
 ]>;
@@ -90,10 +91,10 @@ def PPCextsw_32   : SDNode<"PPCISD::EXTSW_32"  , SDTIntUnaryOp>;
 def PPCstd_32     : SDNode<"PPCISD::STD_32"    , SDTStore, [SDNPHasChain]>;
 
 // These are target-independent nodes, but have target-specific formats.
-def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeq,
+def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeq_start,
                            [SDNPHasChain, SDNPOutFlag]>;
-def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,
-                           [SDNPHasChain, SDNPOutFlag]>;
+def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq_end,
+                           [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def SDT_PPCCall   : SDTypeProfile<0, -1, [SDTCisInt<0>]>;
 def PPCcall_Macho : SDNode<"PPCISD::CALL_Macho", SDT_PPCCall,
@@ -318,9 +319,9 @@ let Defs = [R1], Uses = [R1] in {
 def ADJCALLSTACKDOWN : Pseudo<(outs), (ins u16imm:$amt),
                               "${:comment} ADJCALLSTACKDOWN",
                               [(callseq_start imm:$amt)]>;
-def ADJCALLSTACKUP   : Pseudo<(outs), (ins u16imm:$amt),
+def ADJCALLSTACKUP   : Pseudo<(outs), (ins u16imm:$amt1, u16imm:$amt2),
                               "${:comment} ADJCALLSTACKUP",
-                              [(callseq_end imm:$amt)]>;
+                              [(callseq_end imm:$amt1, imm:$amt2)]>;
 }
 
 def UPDATE_VRSAVE    : Pseudo<(outs GPRC:$rD), (ins GPRC:$rS),

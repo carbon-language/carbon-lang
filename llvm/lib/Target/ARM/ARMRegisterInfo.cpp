@@ -769,10 +769,13 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       bool isThumb = AFI->isThumbFunction();
       ARMCC::CondCodes Pred = isThumb
         ? ARMCC::AL : (ARMCC::CondCodes)Old->getOperand(1).getImmedValue();
-      unsigned PredReg = isThumb ? 0 : Old->getOperand(2).getReg();
       if (Opc == ARM::ADJCALLSTACKDOWN || Opc == ARM::tADJCALLSTACKDOWN) {
+        // Note: PredReg is operand 2 for ADJCALLSTACKDOWN.
+        unsigned PredReg = isThumb ? 0 : Old->getOperand(2).getReg();
         emitSPUpdate(MBB, I, -Amount, Pred, PredReg, isThumb, TII);
       } else {
+        // Note: PredReg is operand 3 for ADJCALLSTACKUP.
+        unsigned PredReg = isThumb ? 0 : Old->getOperand(3).getReg();
         assert(Opc == ARM::ADJCALLSTACKUP || Opc == ARM::tADJCALLSTACKUP);
         emitSPUpdate(MBB, I, Amount, Pred, PredReg, isThumb, TII);
       }

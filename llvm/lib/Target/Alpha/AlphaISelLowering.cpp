@@ -374,8 +374,10 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   Ops.insert(Ops.end(), args_to_use.begin(), args_to_use.end());
   SDOperand TheCall = DAG.getNode(AlphaISD::CALL, RetVals, &Ops[0], Ops.size());
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
-  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                      DAG.getConstant(NumBytes, getPointerTy()));
+  Chain = DAG.getCALLSEQ_END(Chain,
+                             DAG.getConstant(NumBytes, getPointerTy()),
+                             DAG.getConstant(0, getPointerTy()),
+                             SDOperand());
   SDOperand RetVal = TheCall;
 
   if (RetTyVT != ActualRetTyVT) {

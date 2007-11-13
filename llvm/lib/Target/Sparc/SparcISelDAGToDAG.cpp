@@ -675,9 +675,10 @@ SparcTargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     }
   }
   
-  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                      DAG.getConstant(ArgsSize, getPointerTy()));
-  
+  Chain = DAG.getCALLSEQ_END(Chain,
+                             DAG.getConstant(ArgsSize, getPointerTy()),
+                             DAG.getConstant(0, getPointerTy()),
+                             SDOperand());
   return std::make_pair(RetVal, Chain);
 }
 

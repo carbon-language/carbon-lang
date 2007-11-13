@@ -162,9 +162,9 @@ def t_addrmode_sp : Operand<i32>,
 
 let Defs = [SP], Uses = [SP] in {
 def tADJCALLSTACKUP :
-PseudoInst<(outs), (ins i32imm:$amt),
-           "@ tADJCALLSTACKUP $amt",
-           [(ARMcallseq_end imm:$amt)]>, Requires<[IsThumb]>;
+PseudoInst<(outs), (ins i32imm:$amt1, i32imm:$amt2),
+           "@ tADJCALLSTACKUP $amt1",
+           [(ARMcallseq_end imm:$amt1, imm:$amt2)]>, Requires<[IsThumb]>;
 
 def tADJCALLSTACKDOWN : 
 PseudoInst<(outs), (ins i32imm:$amt),
