@@ -137,7 +137,7 @@ namespace {
     void SynthesizeIvarOffsetComputation(ObjcImplementationDecl *IDecl, 
                                          ObjcIvarDecl *ivar, 
                                          std::string &Result);
-    void WriteObjcMetaData(std::string &Result);
+    void RewriteImplementations(std::string &Result);
   };
 }
 
@@ -172,9 +172,6 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
     RewriteCategoryDecl(CD);
   } else if (ObjcProtocolDecl *PD = dyn_cast<ObjcProtocolDecl>(D)) {
     RewriteProtocolDecl(PD);
-  }
-  else if (ObjcImplementationDecl *MD = dyn_cast<ObjcImplementationDecl>(D)) {
-    RewriteImplementationDecl(MD);
   }
   // If we have a decl in the main file, see if we should rewrite it.
   if (SM->getDecomposedFileLoc(Loc).first == MainFileID)
@@ -213,7 +210,7 @@ RewriteTest::~RewriteTest() {
   
   // Rewrite Objective-c meta data*
   std::string ResultStr;
-  WriteObjcMetaData(ResultStr);
+  RewriteImplementations(ResultStr);
   
   // Get the buffer corresponding to MainFileID.  If we haven't changed it, then
   // we are done.
@@ -380,6 +377,12 @@ void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
 
 void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD, 
                                         std::string &ResultStr) {
+  static bool includeObjc = false;
+  if (!includeObjc) {
+    ResultStr += "#include <Objc/objc.h>\n";
+    includeObjc = true;
+  }
+  
   ResultStr += "\nstatic ";
   ResultStr += OMD->getResultType().getAsString();
   ResultStr += "\n_";
@@ -419,6 +422,7 @@ void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD,
   if (OMD->isInstance()) {
     QualType selfTy = Context->getObjcInterfaceType(OMD->getClassInterface());
     selfTy = Context->getPointerType(selfTy);
+    ResultStr += "struct ";
     ResultStr += selfTy.getAsString();
   }
   else
@@ -1706,18 +1710,25 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
   Result += "};\n";
 }
 
-void RewriteTest::WriteObjcMetaData(std::string &Result) {
+/// RewriteImplementations - This routine rewrites all method implementations
+/// and emits meta-data.
+
+void RewriteTest::RewriteImplementations(std::string &Result) {
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
+  
   if (ClsDefCount == 0 && CatDefCount == 0)
     return;
+  // Rewrite implemented methods
+  for (int i = 0; i < ClsDefCount; i++)
+    RewriteImplementationDecl(ClassImplementation[i]);
   
   // TODO: This is temporary until we decide how to access objc types in a
   // c program
   Result += "#include <Objc/objc.h>\n";
   // This is needed for use of offsetof
   Result += "#include <stddef.h>\n";
-  
+    
   // For each implemented class, write out all its meta data.
   for (int i = 0; i < ClsDefCount; i++)
     RewriteObjcClassMetaData(ClassImplementation[i], Result);
@@ -1788,5 +1799,6 @@ void RewriteTest::WriteObjcMetaData(std::string &Result) {
   Result += "\t" + utostr(OBJC_ABI_VERSION) + 
   ", sizeof(struct _objc_module), \"\", &_OBJC_SYMBOLS\n";
   Result += "};\n\n";
+  
 }
 
