@@ -172,6 +172,11 @@ def SDTVecShuffle : SDTypeProfile<1, 3, [
   SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, SDTCisIntVectorOfSameSize<3, 0>
 ]>;
 
+class SDCallSeqStart<list<SDTypeConstraint> constraints> :
+        SDTypeProfile<0, 1, constraints>;
+class SDCallSeqEnd<list<SDTypeConstraint> constraints> :
+        SDTypeProfile<0, 2, constraints>;
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Node Properties.
 //

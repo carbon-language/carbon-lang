@@ -37,9 +37,9 @@ def SDTX86SetCC   : SDTypeProfile<1, 2,
 
 def SDTX86Ret     : SDTypeProfile<0, 1, [SDTCisVT<0, i16>]>;
 
-def SDT_X86CallSeqStart : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
-def SDT_X86CallSeqEnd   : SDTypeProfile<0, 2, [ SDTCisVT<0, i32>,
-                                                SDTCisVT<1, i32> ]>;
+def SDT_X86CallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
+def SDT_X86CallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>,
+                                         SDTCisVT<1, i32> ]>;
 
 def SDT_X86Call   : SDTypeProfile<0, 1, [SDTCisVT<0, iPTR>]>;
 

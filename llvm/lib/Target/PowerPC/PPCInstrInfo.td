@@ -23,9 +23,9 @@ def SDT_PPCstfiwx : SDTypeProfile<0, 2, [ // stfiwx
 def SDT_PPCShiftOp : SDTypeProfile<1, 2, [   // PPCshl, PPCsra, PPCsrl
   SDTCisVT<0, i32>, SDTCisVT<1, i32>, SDTCisVT<2, i32>
 ]>;
-def SDT_PPCCallSeq_start : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
-def SDT_PPCCallSeq_end   : SDTypeProfile<0, 2, [ SDTCisVT<0, i32>,
-                                                 SDTCisVT<1, i32> ]>;
+def SDT_PPCCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
+def SDT_PPCCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>,
+                                         SDTCisVT<1, i32> ]>;
 def SDT_PPCvperm   : SDTypeProfile<1, 3, [
   SDTCisVT<3, v16i8>, SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>
 ]>;
@@ -91,9 +91,9 @@ def PPCextsw_32   : SDNode<"PPCISD::EXTSW_32"  , SDTIntUnaryOp>;
 def PPCstd_32     : SDNode<"PPCISD::STD_32"    , SDTStore, [SDNPHasChain]>;
 
 // These are target-independent nodes, but have target-specific formats.
-def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeq_start,
+def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeqStart,
                            [SDNPHasChain, SDNPOutFlag]>;
-def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq_end,
+def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeqEnd,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def SDT_PPCCall   : SDTypeProfile<0, -1, [SDTCisInt<0>]>;

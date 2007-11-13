@@ -34,13 +34,13 @@ def MipsRet     : SDNode<"MipsISD::Ret", SDT_MipsRet, [SDNPHasChain,
                              SDNPOptInFlag]>;
 
 // These are target-independent nodes, but have target-specific formats.
-def SDT_MipsCallSeq_start : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
-def SDT_MipsCallSeq_end   : SDTypeProfile<0, 2, [SDTCisVT<0, i32>,
-                                                 SDTCisVT<1, i32>]>;
+def SDT_MipsCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
+def SDT_MipsCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>,
+                                         SDTCisVT<1, i32>]>;
 
-def callseq_start   : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeq_start,
+def callseq_start   : SDNode<"ISD::CALLSEQ_START", SDT_MipsCallSeqStart,
                              [SDNPHasChain, SDNPOutFlag]>;
-def callseq_end     : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeq_end,
+def callseq_end     : SDNode<"ISD::CALLSEQ_END", SDT_MipsCallSeqEnd,
                              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 //===----------------------------------------------------------------------===//

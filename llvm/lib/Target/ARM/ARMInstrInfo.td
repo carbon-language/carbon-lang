@@ -17,9 +17,8 @@
 //
 
 // Type profiles.
-def SDT_ARMCallSeq_start : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
-def SDT_ARMCallSeq_end   : SDTypeProfile<0, 2, [ SDTCisVT<0, i32>,
-                                                 SDTCisVT<1, i32> ]>;
+def SDT_ARMCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i32> ]>;
+def SDT_ARMCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i32>, SDTCisVT<1, i32> ]>;
 
 def SDT_ARMSaveCallPC : SDTypeProfile<0, 1, []>;
 
@@ -47,9 +46,9 @@ def SDT_ARMThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 def ARMWrapper       : SDNode<"ARMISD::Wrapper",     SDTIntUnaryOp>;
 def ARMWrapperJT     : SDNode<"ARMISD::WrapperJT",   SDTIntBinOp>;
 
-def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeq_start,
+def ARMcallseq_start : SDNode<"ISD::CALLSEQ_START", SDT_ARMCallSeqStart,
     		              [SDNPHasChain, SDNPOutFlag]>;
-def ARMcallseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeq_end,
+def ARMcallseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_ARMCallSeqEnd,
     		              [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def ARMcall          : SDNode<"ARMISD::CALL", SDT_ARMcall,

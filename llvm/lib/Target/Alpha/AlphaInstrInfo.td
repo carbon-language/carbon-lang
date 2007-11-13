@@ -30,13 +30,13 @@ def retflag       : SDNode<"AlphaISD::RET_FLAG", SDTRet,
 	                   [SDNPHasChain, SDNPOptInFlag]>;
 
 // These are target-independent nodes, but have target-specific formats.
-def SDT_AlphaCallSeq_start : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
-def SDT_AlphaCallSeq_end   : SDTypeProfile<0, 2, [ SDTCisVT<0, i64>,
-                                                   SDTCisVT<1, i64> ]>;
+def SDT_AlphaCallSeqStart : SDCallSeqStart<[ SDTCisVT<0, i64> ]>;
+def SDT_AlphaCallSeqEnd   : SDCallSeqEnd<[ SDTCisVT<0, i64>,
+                                           SDTCisVT<1, i64> ]>;
 
-def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_AlphaCallSeq_start,
+def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_AlphaCallSeqStart,
     		           [SDNPHasChain, SDNPOutFlag]>;
-def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_AlphaCallSeq_end,
+def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_AlphaCallSeqEnd,
                            [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 //********************
