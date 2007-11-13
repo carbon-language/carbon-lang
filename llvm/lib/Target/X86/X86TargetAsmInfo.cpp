@@ -101,7 +101,8 @@ X86TargetAsmInfo::X86TargetAsmInfo(const X86TargetMachine &TM) {
     DwarfMacInfoSection = ".section __DWARF,__debug_macinfo,regular,debug";
 
     // Exceptions handling
-    SupportsExceptionHandling = true;
+    if (!Subtarget->is64Bit())
+      SupportsExceptionHandling = true;
     AbsoluteEHSectionOffsets = false;
     DwarfEHFrameSection =
     ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
