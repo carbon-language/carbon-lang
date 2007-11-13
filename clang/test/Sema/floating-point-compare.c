@@ -13,7 +13,7 @@ int qux(float x) {
 }
 
 int baz(float x) {
-	return x == 0.0; // no-warning
+	return x == 0.0; // expected-warning {{comparing}}
 }
 
 int taz(float x) {
