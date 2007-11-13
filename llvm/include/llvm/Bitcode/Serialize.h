@@ -93,6 +93,23 @@ public:
     for (unsigned i = 0; i < NumPtrs; ++i)
       if (Ptrs[i]) SerializeTrait<T>::Emit(*this,*Ptrs[i]);
   }
+  
+  template <typename T1, typename T2, typename T3>
+  void BatchEmitOwnedPtrs(unsigned NumT1Ptrs, T1* const * Ptrs,
+                          T2* p2, T3* p3) {
+    
+    for (unsigned i = 0; i < NumT1Ptrs; ++i)
+      EmitPtr(Ptrs[i]);
+    
+    EmitPtr(p2);
+    EmitPtr(p3);
+    
+    for (unsigned i = 0; i < NumT1Ptrs; ++i)
+      if (Ptrs[i]) SerializeTrait<T1>::Emit(*this,*Ptrs[i]);
+    
+    if (p2) SerializeTrait<T2>::Emit(*this,*p2);
+    if (p3) SerializeTrait<T3>::Emit(*this,*p3);
+  }
     
   bool isRegistered(const void* p) const;
   

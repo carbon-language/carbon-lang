@@ -228,6 +228,37 @@ public:
       
       Ptrs[i] = p;
     }
+  }
+  
+  template <typename T1, typename T2, typename T3>
+  void BatchReadOwnedPtrs(unsigned NumT1Ptrs, T1** Ptrs, 
+                          T2*& P2, T3*& P3,
+                          bool A1=true, bool A2=true, bool A3=true) {
+    
+    BatchIDVec.clear();
+    
+    for (unsigned i = 0; i < NumT1Ptrs; ++i)
+      BatchIDVec.push_back(ReadPtrID());
+    
+    SerializedPtrID ID2 = ReadPtrID();
+    SerializedPtrID ID3 = ReadPtrID();    
+    
+    for (unsigned i = 0; i < NumT1Ptrs; ++i) {
+      SerializedPtrID& PtrID = BatchIDVec[i];
+      
+      T1* p = PtrID ? SerializeTrait<T1>::Materialize(*this) : NULL;
+      
+      if (PtrID && A1)
+        RegisterPtr(PtrID,p);
+      
+      Ptrs[i] = p;
+    }
+    
+    P2 = (ID2) ? SerializeTrait<T2>::Materialize(*this) : NULL;
+    if (ID2 && A2) RegisterPtr(ID2,P2);
+    
+    P3 = (ID3) ? SerializeTrait<T3>::Materialize(*this) : NULL;
+    if (ID3 && A3) RegisterPtr(ID3,P3);    
   }    
   
   template <typename T>
