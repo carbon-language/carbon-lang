@@ -657,7 +657,7 @@ X86RegisterInfo::X86RegisterInfo(X86TargetMachine &tm,
 // getDwarfRegNum - This function maps LLVM register identifiers to the
 // Dwarf specific numbering, used in debug info and exception tables.
 
-int X86RegisterInfo::getDwarfRegNum(unsigned RegNo) const {
+int X86RegisterInfo::getDwarfRegNum(unsigned RegNo, bool isEH) const {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   unsigned Flavour = DWARFFlavour::X86_64;
   if (!Subtarget->is64Bit()) {

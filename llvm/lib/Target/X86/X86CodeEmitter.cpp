@@ -384,7 +384,6 @@ static unsigned sizeOfImm(const TargetInstrDescriptor *Desc) {
 /// e.g. r8, xmm8, etc.
 bool Emitter::isX86_64ExtendedReg(const MachineOperand &MO) {
   if (!MO.isRegister()) return false;
-  unsigned RegNo = MO.getReg();
   switch (MO.getReg()) {
   default: break;
   case X86::R8:    case X86::R9:    case X86::R10:   case X86::R11:

@@ -539,7 +539,7 @@ getEHHandlerRegister() const {
 }
 
 int MipsRegisterInfo::
-getDwarfRegNum(unsigned RegNum) const {
+getDwarfRegNum(unsigned RegNum, bool isEH) const {
   assert(0 && "What is the dwarf register number");
   return -1;
 }

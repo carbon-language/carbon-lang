@@ -85,7 +85,7 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;
 
-  int getDwarfRegNum(unsigned RegNum) const;
+  int getDwarfRegNum(unsigned RegNum, bool isEH) const;
 };
 
 } // End llvm namespace

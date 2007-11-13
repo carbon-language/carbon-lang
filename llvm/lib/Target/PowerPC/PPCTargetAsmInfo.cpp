@@ -58,7 +58,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   UsedDirective = "\t.no_dead_strip\t";
   WeakRefDirective = "\t.weak_reference\t";
   HiddenDirective = "\t.private_extern\t";
-  SupportsExceptionHandling = false;
+  SupportsExceptionHandling = true;
   NeedsIndirectEncoding = true;
   BSSSection = 0;
 

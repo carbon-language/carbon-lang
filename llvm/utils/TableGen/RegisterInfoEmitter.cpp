@@ -62,7 +62,7 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
      << "(int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);\n"
      << "  virtual int getDwarfRegNumFull(unsigned RegNum, "
      << "unsigned Flavour) const;\n"
-     << "  virtual int getDwarfRegNum(unsigned RegNum) const = 0;\n"
+     << "  virtual int getDwarfRegNum(unsigned RegNum, bool isEH) const = 0;\n"
      << "  unsigned getSubReg(unsigned RegNo, unsigned Index) const;\n"
      << "};\n\n";
 

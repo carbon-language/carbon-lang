@@ -93,7 +93,7 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;
 
-  int getDwarfRegNum(unsigned RegNum) const;
+  int getDwarfRegNum(unsigned RegNum, bool isEH) const;
 
   static std::string getPrettyName(unsigned reg);
 };

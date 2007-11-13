@@ -87,7 +87,7 @@ public:
 
   /// getDwarfRegNum - allows modification of X86GenRegisterInfo::getDwarfRegNum
   /// (created by TableGen) for target dependencies.
-  int getDwarfRegNum(unsigned RegNum) const;
+  int getDwarfRegNum(unsigned RegNum, bool isEH) const;
 
   /// Code Generation virtual methods...
   ///

@@ -1277,7 +1277,7 @@ unsigned PPCRegisterInfo::getEHHandlerRegister() const {
   return !Subtarget.isPPC64() ? PPC::R4 : PPC::X4;
 }
 
-int PPCRegisterInfo::getDwarfRegNum(unsigned RegNum) const {
+int PPCRegisterInfo::getDwarfRegNum(unsigned RegNum, bool isEH) const {
   // FIXME: Most probably dwarf numbers differs for Linux and Darwin
   return PPCGenRegisterInfo::getDwarfRegNumFull(RegNum, 0);
 }

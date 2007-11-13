@@ -968,7 +968,7 @@ public:
   /// EmitFrameMoves - Emit frame instructions to describe the layout of the
   /// frame.
   void EmitFrameMoves(const char *BaseLabel, unsigned BaseLabelID,
-                      const std::vector<MachineMove> &Moves) {
+                      const std::vector<MachineMove> &Moves, bool isEH) {
     int stackGrowth =
         Asm->TM.getFrameInfo()->getStackGrowthDirection() ==
           TargetFrameInfo::StackGrowsUp ?
@@ -1010,7 +1010,7 @@ public:
           } else {
             Asm->EmitInt8(DW_CFA_def_cfa);
             Asm->EOL("DW_CFA_def_cfa");
-            Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister()));
+            Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Src.getRegister(), isEH));
             Asm->EOL("Register");
           }
           
@@ -1026,13 +1026,13 @@ public:
         if (Dst.isRegister()) {
           Asm->EmitInt8(DW_CFA_def_cfa_register);
           Asm->EOL("DW_CFA_def_cfa_register");
-          Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getRegister()));
+          Asm->EmitULEB128Bytes(RI->getDwarfRegNum(Dst.getRegister(), isEH));
           Asm->EOL("Register");
         } else {
           assert(0 && "Machine move no supported yet.");
         }
       } else {
-        unsigned Reg = RI->getDwarfRegNum(Src.getRegister());
+        unsigned Reg = RI->getDwarfRegNum(Src.getRegister(), isEH);
         int Offset = Dst.getOffset() / stackGrowth;
         
         if (Offset < 0) {
@@ -1340,7 +1340,7 @@ private:
   /// provided.
   void AddAddress(DIE *Die, unsigned Attribute,
                             const MachineLocation &Location) {
-    unsigned Reg = RI->getDwarfRegNum(Location.getRegister());
+    unsigned Reg = RI->getDwarfRegNum(Location.getRegister(), false);
     DIEBlock *Block = new DIEBlock();
     
     if (Location.isRegister()) {
@@ -2370,13 +2370,13 @@ private:
     Asm->EOL("CIE Code Alignment Factor");
     Asm->EmitSLEB128Bytes(stackGrowth);
     Asm->EOL("CIE Data Alignment Factor");   
-    Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister()));
+    Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), false));
     Asm->EOL("CIE RA Column");
     
     std::vector<MachineMove> Moves;
     RI->getInitialFrameState(Moves);
 
-    EmitFrameMoves(NULL, 0, Moves);
+    EmitFrameMoves(NULL, 0, Moves, false);
 
     Asm->EmitAlignment(2);
     EmitLabel("debug_frame_common_end", 0);
@@ -2409,7 +2409,7 @@ private:
                    "func_begin", DebugFrameInfo.Number);
     Asm->EOL("FDE address range");
     
-    EmitFrameMoves("func_begin", DebugFrameInfo.Number, DebugFrameInfo.Moves);
+    EmitFrameMoves("func_begin", DebugFrameInfo.Number, DebugFrameInfo.Moves, false);
     
     Asm->EmitAlignment(2);
     EmitLabel("debug_frame_end", DebugFrameInfo.Number);
@@ -2817,7 +2817,7 @@ private:
     Asm->EOL("CIE Code Alignment Factor");
     Asm->EmitSLEB128Bytes(stackGrowth);
     Asm->EOL("CIE Data Alignment Factor");   
-    Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister()));
+    Asm->EmitInt8(RI->getDwarfRegNum(RI->getRARegister(), true));
     Asm->EOL("CIE RA Column");
     
     // If there is a personality, we need to indicate the functions location.
@@ -2853,7 +2853,7 @@ private:
     // Indicate locations of general callee saved registers in frame.
     std::vector<MachineMove> Moves;
     RI->getInitialFrameState(Moves);
-    EmitFrameMoves(NULL, 0, Moves);
+    EmitFrameMoves(NULL, 0, Moves, true);
 
     Asm->EmitAlignment(2);
     EmitLabel("eh_frame_common_end", Index);
@@ -2915,7 +2915,7 @@ private:
       
       // Indicate locations of function specific  callee saved registers in
       // frame.
-      EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves);
+      EmitFrameMoves("eh_func_begin", EHFrameInfo.Number, EHFrameInfo.Moves, true);
       
       Asm->EmitAlignment(2);
       EmitLabel("eh_frame_end", EHFrameInfo.Number);
