@@ -511,7 +511,7 @@ namespace {
     llvm::Module *M;
     const llvm::TargetData *TD;
     ASTContext *Ctx;
-    CodeGen::BuilderTy *Builder;
+    CodeGen::CodeGenModule *Builder;
   public:
     LLVMEmitter(Diagnostic &diags) : Diags(diags) {}
     virtual void Initialize(ASTContext &Context, unsigned MainFileID) {

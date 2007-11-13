@@ -17,30 +17,30 @@ using namespace clang;
 
 
 /// Init - Create an ModuleBuilder with the specified ASTContext.
-clang::CodeGen::BuilderTy *
+clang::CodeGen::CodeGenModule *
 clang::CodeGen::Init(ASTContext &Context, llvm::Module &M,
                      const llvm::TargetData &TD) {
   return new CodeGenModule(Context, M, TD);
 }
 
-void clang::CodeGen::Terminate(BuilderTy *B) {
-  delete static_cast<CodeGenModule*>(B);
+void clang::CodeGen::Terminate(CodeGenModule *B) {
+  delete B;
 }
 
 /// CodeGenFunction - Convert the AST node for a FunctionDecl into LLVM.
 ///
-void clang::CodeGen::CodeGenFunction(BuilderTy *B, FunctionDecl *D) {
-  static_cast<CodeGenModule*>(B)->EmitFunction(D);
+void clang::CodeGen::CodeGenFunction(CodeGenModule *B, FunctionDecl *D) {
+  B->EmitFunction(D);
 }
 
 /// CodeGenGlobalVar - Emit the specified global variable to LLVM.
-void clang::CodeGen::CodeGenGlobalVar(BuilderTy *Builder, FileVarDecl *D) {
-  static_cast<CodeGenModule*>(Builder)->EmitGlobalVarDeclarator(D);
+void clang::CodeGen::CodeGenGlobalVar(CodeGenModule *Builder, FileVarDecl *D) {
+  Builder->EmitGlobalVarDeclarator(D);
 }
 
 
 /// PrintStats - Emit statistic information to stderr.
 ///
-void clang::CodeGen::PrintStats(BuilderTy *B) {
-  static_cast<CodeGenModule*>(B)->PrintStats();
+void clang::CodeGen::PrintStats(CodeGenModule *B) {
+  B->PrintStats();
 }

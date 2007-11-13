@@ -23,30 +23,28 @@ namespace clang {
   class ASTContext;
   class FunctionDecl;
   class FileVarDecl;
-  
+
 namespace CodeGen {
-  /// BuilderTy - This is an opaque type used to reference ModuleBuilder
-  /// objects.
-  typedef void BuilderTy;
+  class CodeGenModule;
   
   /// Init - Create an ModuleBuilder with the specified ASTContext.
-  BuilderTy *Init(ASTContext &Context, llvm::Module &M,
+  CodeGenModule *Init(ASTContext &Context, llvm::Module &M,
                   const llvm::TargetData &TD);
   
   /// CodeGenFunction - Convert the AST node for a FunctionDecl into LLVM.
   ///
-  void CodeGenFunction(BuilderTy *Builder, FunctionDecl *D);
+  void CodeGenFunction(CodeGenModule *Builder, FunctionDecl *D);
   
   /// CodeGenGlobalVar - Emit the specified global variable to LLVM.
-  void CodeGenGlobalVar(BuilderTy *Builder, FileVarDecl *D);
+  void CodeGenGlobalVar(CodeGenModule *Builder, FileVarDecl *D);
   
   /// PrintStats - Emit statistic information to stderr.
   ///
-  void PrintStats(BuilderTy *Builder);
+  void PrintStats(CodeGenModule *Builder);
   
   /// Terminate - Gracefully shut down the builder.
   ///
-  void Terminate(BuilderTy *Builder);
+  void Terminate(CodeGenModule *Builder);
 }  // end namespace CodeGen
 }  // end namespace clang
 
