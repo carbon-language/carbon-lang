@@ -356,6 +356,10 @@ static llvm::cl::opt<bool>
 WarnUnusedMacros("Wunused_macros",
          llvm::cl::desc("Warn for unused macros in the main translation unit"));
 
+static llvm::cl::opt<bool>
+WarnFloatEqual("Wfloat-equal",
+   llvm::cl::desc("Warn about equality comparisons of floating point values."));
+
 /// InitializeDiagnostics - Initialize the diagnostic object, based on the
 /// current command line option settings.
 static void InitializeDiagnostics(Diagnostic &Diags) {
@@ -366,6 +370,10 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
   // Silence the "macro is not used" warning unless requested.
   if (!WarnUnusedMacros)
     Diags.setDiagnosticMapping(diag::pp_macro_not_used, diag::MAP_IGNORE);
+               
+  // Silence "floating point comparison" warnings unless requested.
+  if (!WarnFloatEqual)
+    Diags.setDiagnosticMapping(diag::warn_floatingpoint_eq, diag::MAP_IGNORE);
 }
 
 //===----------------------------------------------------------------------===//
