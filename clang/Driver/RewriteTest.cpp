@@ -34,6 +34,7 @@ namespace {
     llvm::SmallVector<ObjcCategoryImplDecl *, 8> CategoryImplementation;
     llvm::SmallPtrSet<ObjcInterfaceDecl*, 8> ObjcSynthesizedStructs;
     llvm::SmallPtrSet<ObjcInterfaceDecl*, 8> ObjcForwardDecls;
+    llvm::DenseMap<ObjcMethodDecl*, std::string> MethodInternalNames;
     
     FunctionDecl *MsgSendFunctionDecl;
     FunctionDecl *GetClassFunctionDecl;
@@ -384,35 +385,40 @@ void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD,
   }
   ResultStr += "\nstatic ";
   ResultStr += OMD->getResultType().getAsString();
-  ResultStr += "\n_";
+  ResultStr += "\n";
   
   // Unique method name
-  if (OMD->isInstance())
-    ResultStr += "I_";
-  else
-    ResultStr += "C_";
+  std::string NameStr;
   
-  ResultStr += OMD->getClassInterface()->getName();
-  ResultStr += "_";
+  if (OMD->isInstance())
+    NameStr += "_I_";
+  else
+    NameStr += "_C_";
+  
+  NameStr += OMD->getClassInterface()->getName();
+  NameStr += "_";
   
   NamedDecl *MethodContext = OMD->getMethodContext();
   if (ObjcCategoryImplDecl *CID = 
       dyn_cast<ObjcCategoryImplDecl>(MethodContext)) {
-    ResultStr += CID->getName();
-    ResultStr += "_";
+    NameStr += CID->getName();
+    NameStr += "_";
   }
   // Append selector names, replacing ':' with '_'
   const char *selName = OMD->getSelector().getName().c_str();
   if (!strchr(selName, ':'))
-    ResultStr +=  OMD->getSelector().getName();
+    NameStr +=  OMD->getSelector().getName();
   else {
     std::string selString = OMD->getSelector().getName();
     int len = selString.size();
     for (int i = 0; i < len; i++)
       if (selString[i] == ':')
         selString[i] = '_';
-    ResultStr += selString;
+    NameStr += selString;
   }
+  // Remember this name for metadata emission
+  MethodInternalNames[OMD] = NameStr;
+  ResultStr += NameStr;
   
   // Rewrite arguments
   ResultStr += "(";
@@ -1211,7 +1217,9 @@ void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl *const*Methods,
     Context->getObjcEncodingForMethodDecl(Methods[0], MethodTypeString);
     Result += "\", \"";
     Result += MethodTypeString;
-    Result += "\", 0}\n";
+    Result += "\", ";
+    Result += MethodInternalNames[Methods[0]];
+    Result += "}\n";
     for (int i = 1; i < NumMethods; i++) {
       // TODO: Need method address as 3rd initializer.
       Result += "\t  ,{(SEL)\"";
@@ -1220,7 +1228,9 @@ void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl *const*Methods,
       Context->getObjcEncodingForMethodDecl(Methods[i], MethodTypeString);
       Result += "\", \"";
       Result += MethodTypeString;
-      Result += "\", 0}\n";
+      Result += "\", ";
+      Result += MethodInternalNames[Methods[i]];
+      Result += "}\n";
     }
     Result += "\t }\n};\n";
   }
