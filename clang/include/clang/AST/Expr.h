@@ -105,6 +105,10 @@ public:
   /// isConstantExpr - Return true if this expression is a valid constant expr.
   bool isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const;
   
+  /// hasStaticStorage - Return true if this expression has static storage
+  /// duration.
+  bool hasStaticStorage() const;
+
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() >= firstExprConstant &&
            T->getStmtClass() <= lastExprConstant; 

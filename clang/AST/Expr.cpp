@@ -359,6 +359,22 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() const {
   return MLV_Valid;    
 }
 
+bool Expr::hasStaticStorage() const {
+  switch (getStmtClass()) {
+  default:
+    return false;
+  case DeclRefExprClass: {
+    const Decl *D = cast<DeclRefExpr>(this)->getDecl();
+    if (const VarDecl *VD = dyn_cast<VarDecl>(D))
+      return VD->hasStaticStorage();
+    return false;
+  }
+  case MemberExprClass:
+    const MemberExpr *M = cast<MemberExpr>(this);
+    return !M->isArrow() && M->getBase()->hasStaticStorage();
+  }
+}
+
 bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   switch (getStmtClass()) {
   default:
@@ -391,11 +407,17 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     if (isa<EnumConstantDecl>(D) || isa<FunctionDecl>(D))
       return true;
     if (Loc) *Loc = getLocStart();
+    if (isa<VarDecl>(D))
+      return TR->isArrayType();
     return false;
   }
   case UnaryOperatorClass: {
     const UnaryOperator *Exp = cast<UnaryOperator>(this);
     
+    // C99 6.6p9
+    if (Exp->getOpcode() == UnaryOperator::AddrOf)
+      return Exp->getSubExpr()->hasStaticStorage();
+
     // Get the operand value.  If this is sizeof/alignof, do not evalute the
     // operand.  This affects C99 6.6p3.
     if (!Exp->isSizeOfAlignOfOp() &&
