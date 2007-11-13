@@ -91,7 +91,7 @@ namespace {
     void RewriteObjcMethodDecl(ObjcMethodDecl *MDecl, std::string &ResultStr);
     void RewriteCategoryDecl(ObjcCategoryDecl *Dcl);
     void RewriteProtocolDecl(ObjcProtocolDecl *Dcl);
-    void RewriteMethods(int nMethods, ObjcMethodDecl **Methods);
+    void RewriteMethodDeclarations(int nMethods, ObjcMethodDecl **Methods);
     void RewriteProperties(int nProperties, ObjcPropertyDecl **Properties);
     void RewriteFunctionDecl(FunctionDecl *FD);
     void RewriteObjcQualifiedInterfaceTypes(
@@ -189,7 +189,11 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     if (Stmt *Body = FD->getBody())
       FD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
-  
+	  
+  if (ObjcMethodDecl *MD = dyn_cast<ObjcMethodDecl>(D)) {
+    if (Stmt *Body = MD->getBody())
+      MD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
+  }
   if (ObjcImplementationDecl *CI = dyn_cast<ObjcImplementationDecl>(D))
     ClassImplementation.push_back(CI);
   else if (ObjcCategoryImplDecl *CI = dyn_cast<ObjcCategoryImplDecl>(D))
@@ -325,7 +329,7 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
                       typedefString.c_str(), typedefString.size());
 }
 
-void RewriteTest::RewriteMethods(int nMethods, ObjcMethodDecl **Methods) {
+void RewriteTest::RewriteMethodDeclarations(int nMethods, ObjcMethodDecl **Methods) {
   for (int i = 0; i < nMethods; i++) {
     ObjcMethodDecl *Method = Methods[i];
     SourceLocation Loc = Method->getLocStart();
@@ -354,10 +358,10 @@ void RewriteTest::RewriteCategoryDecl(ObjcCategoryDecl *CatDecl) {
   // FIXME: handle category headers that are declared across multiple lines.
   Rewrite.ReplaceText(LocStart, 0, "// ", 3);
   
-  RewriteMethods(CatDecl->getNumInstanceMethods(),
-                 CatDecl->getInstanceMethods());
-  RewriteMethods(CatDecl->getNumClassMethods(),
-                 CatDecl->getClassMethods());
+  RewriteMethodDeclarations(CatDecl->getNumInstanceMethods(),
+                            CatDecl->getInstanceMethods());
+  RewriteMethodDeclarations(CatDecl->getNumClassMethods(),
+                            CatDecl->getClassMethods());
   // Lastly, comment out the @end.
   Rewrite.ReplaceText(CatDecl->getAtEndLoc(), 0, "// ", 3);
 }
@@ -368,10 +372,10 @@ void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
   // FIXME: handle protocol headers that are declared across multiple lines.
   Rewrite.ReplaceText(LocStart, 0, "// ", 3);
   
-  RewriteMethods(PDecl->getNumInstanceMethods(),
-                 PDecl->getInstanceMethods());
-  RewriteMethods(PDecl->getNumClassMethods(),
-                 PDecl->getClassMethods());
+  RewriteMethodDeclarations(PDecl->getNumInstanceMethods(),
+                            PDecl->getInstanceMethods());
+  RewriteMethodDeclarations(PDecl->getNumClassMethods(),
+                            PDecl->getClassMethods());
   // Lastly, comment out the @end.
   Rewrite.ReplaceText(PDecl->getAtEndLoc(), 0, "// ", 3);
 }
@@ -533,10 +537,10 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
                       ResultStr.c_str(), ResultStr.size());
   RewriteProperties(ClassDecl->getNumPropertyDecl(),
                     ClassDecl->getPropertyDecl());
-  RewriteMethods(ClassDecl->getNumInstanceMethods(),
-                 ClassDecl->getInstanceMethods());
-  RewriteMethods(ClassDecl->getNumClassMethods(),
-                 ClassDecl->getClassMethods());
+  RewriteMethodDeclarations(ClassDecl->getNumInstanceMethods(),
+                            ClassDecl->getInstanceMethods());
+  RewriteMethodDeclarations(ClassDecl->getNumClassMethods(),
+                            ClassDecl->getClassMethods());
   
   // Lastly, comment out the @end.
   Rewrite.ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);

@@ -300,7 +300,7 @@ private:
   void ParseObjCPropertyAttribute(ObjcDeclSpec &DS);
   DeclTy *ParseObjCPropertyDecl(DeclTy *interfaceDecl, SourceLocation AtLoc);
   
-  void ParseObjCMethodDefinition();
+  DeclTy *ParseObjCMethodDefinition();
   
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.

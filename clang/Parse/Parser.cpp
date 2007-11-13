@@ -331,7 +331,7 @@ Parser::DeclTy *Parser::ParseExternalDeclaration() {
   case tok::minus:
   case tok::plus:
     if (getLang().ObjC1)
-      ParseObjCMethodDefinition();
+      return ParseObjCMethodDefinition();
     else {
       Diag(Tok, diag::err_expected_external_declaration);
       ConsumeToken();

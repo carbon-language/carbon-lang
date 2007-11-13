@@ -1139,7 +1139,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
 ///
-void Parser::ParseObjCMethodDefinition() {
+Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   DeclTy *MDecl = ParseObjCMethodPrototype(ObjcImpDecl);
   // parse optional ';'
   if (Tok.is(tok::semi))
@@ -1154,7 +1154,7 @@ void Parser::ParseObjCMethodDefinition() {
     
     // If we didn't find the '{', bail out.
     if (Tok.isNot(tok::l_brace))
-      return;
+      return 0;
   }
   SourceLocation BraceLoc = Tok.getLocation();
   
@@ -1176,6 +1176,7 @@ void Parser::ParseObjCMethodDefinition() {
   
   // TODO: Pass argument information.
   Actions.ActOnFinishFunctionBody(MDecl, FnBody.Val);
+  return MDecl;
 }
 
 Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
