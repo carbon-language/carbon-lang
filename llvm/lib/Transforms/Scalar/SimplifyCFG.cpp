@@ -27,6 +27,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Pass.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
@@ -50,9 +51,9 @@ FunctionPass *llvm::createCFGSimplificationPass() {
 }
 
 static bool MarkAliveBlocks(BasicBlock *BB,
-                            SmallPtrSet<BasicBlock*, 16> &Reachable) {
+                            SmallPtrSet<BasicBlock*, 128> &Reachable) {
   
-  std::vector<BasicBlock*> Worklist;
+  SmallVector<BasicBlock*, 128> Worklist;
   Worklist.push_back(BB);
   bool Changed = false;
   while (!Worklist.empty()) {
@@ -93,42 +94,46 @@ static bool MarkAliveBlocks(BasicBlock *BB,
   return Changed;
 }
 
-
-// It is possible that we may require multiple passes over the code to fully
-// simplify the CFG.
-//
-bool CFGSimplifyPass::runOnFunction(Function &F) {
-  SmallPtrSet<BasicBlock*, 16> Reachable;
+/// RemoveUnreachableBlocks - Remove blocks that are not reachable, even if they
+/// are in a dead cycle.  Return true if a change was made, false otherwise.
+static bool RemoveUnreachableBlocks(Function &F) {
+  SmallPtrSet<BasicBlock*, 128> Reachable;
   bool Changed = MarkAliveBlocks(F.begin(), Reachable);
-
+  
   // If there are unreachable blocks in the CFG...
-  if (Reachable.size() != F.size()) {
-    assert(Reachable.size() < F.size());
-    NumSimpl += F.size()-Reachable.size();
+  if (Reachable.size() == F.size())
+    return Changed;
+  
+  assert(Reachable.size() < F.size());
+  NumSimpl += F.size()-Reachable.size();
+  
+  // Loop over all of the basic blocks that are not reachable, dropping all of
+  // their internal references...
+  for (Function::iterator BB = ++F.begin(), E = F.end(); BB != E; ++BB)
+    if (!Reachable.count(BB)) {
+      for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI!=SE; ++SI)
+        if (Reachable.count(*SI))
+          (*SI)->removePredecessor(BB);
+      BB->dropAllReferences();
+    }
+  
+  for (Function::iterator I = ++F.begin(); I != F.end();)
+    if (!Reachable.count(I))
+      I = F.getBasicBlockList().erase(I);
+    else
+      ++I;
+  
+  return true;
+}
 
-    // Loop over all of the basic blocks that are not reachable, dropping all of
-    // their internal references...
-    for (Function::iterator BB = ++F.begin(), E = F.end(); BB != E; ++BB)
-      if (!Reachable.count(BB)) {
-        for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI!=SE; ++SI)
-          if (Reachable.count(*SI))
-            (*SI)->removePredecessor(BB);
-        BB->dropAllReferences();
-      }
-
-    for (Function::iterator I = ++F.begin(); I != F.end();)
-      if (!Reachable.count(I))
-        I = F.getBasicBlockList().erase(I);
-      else
-        ++I;
-
-    Changed = true;
-  }
-
+/// IterativeSimplifyCFG - Call SimplifyCFG on all the blocks in the function,
+/// iterating until no more changes are made.
+static bool IterativeSimplifyCFG(Function &F) {
+  bool Changed = false;
   bool LocalChange = true;
   while (LocalChange) {
     LocalChange = false;
-
+    
     // Loop over all of the basic blocks (except the first one) and remove them
     // if they are unneeded...
     //
@@ -140,6 +145,31 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
     }
     Changed |= LocalChange;
   }
-
   return Changed;
+}
+
+// It is possible that we may require multiple passes over the code to fully
+// simplify the CFG.
+//
+bool CFGSimplifyPass::runOnFunction(Function &F) {
+  bool EverChanged = RemoveUnreachableBlocks(F);
+  EverChanged |= IterativeSimplifyCFG(F);
+  
+  // If neither pass changed anything, we're done.
+  if (!EverChanged) return false;
+
+  // IterativeSimplifyCFG can (rarely) make some loops dead.  If this happens,
+  // RemoveUnreachableBlocks is needed to nuke them, which means we should
+  // iterate between the two optimizations.  We structure the code like this to
+  // avoid reruning IterativeSimplifyCFG if the second pass of 
+  // RemoveUnreachableBlocks doesn't do anything.
+  if (!RemoveUnreachableBlocks(F))
+    return true;
+  
+  do {
+    EverChanged = IterativeSimplifyCFG(F);
+    EverChanged |= RemoveUnreachableBlocks(F);
+  } while (EverChanged);
+  
+  return true;
 }
