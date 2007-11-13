@@ -310,7 +310,7 @@ private:
 
 public:
   void Emit(llvm::Serializer& S) const;
-  static ASTContext* Materialize(llvm::Deserializer& D);  
+  static ASTContext* Create(llvm::Deserializer& D);  
 };
   
 }  // end namespace clang

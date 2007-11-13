@@ -115,7 +115,7 @@ public:
   }
   
   void Emit(llvm::Serializer& S) const;
-  static Stmt* Materialize(llvm::Deserializer& D);
+  static Stmt* Create(llvm::Deserializer& D);
   
   virtual void EmitImpl(llvm::Serializer& S) const {
     // This method will eventually be a pure-virtual function.

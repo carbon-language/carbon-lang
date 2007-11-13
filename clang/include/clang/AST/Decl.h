@@ -166,9 +166,6 @@ public:
     
   /// Create - Deserialize a Decl from Bitcode.
   static Decl* Create(llvm::Deserializer& D);
-  
-  /// Materialize - Deserialize a Decl from Bitcode. (DEPRECATED)
-  static Decl* Materialize(llvm::Deserializer& D) { return Create(D); }
 
 protected:
   /// EmitImpl - Provides the subclass-specific serialization logic for

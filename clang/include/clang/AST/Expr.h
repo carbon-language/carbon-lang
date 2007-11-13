@@ -111,8 +111,8 @@ public:
   }
   static bool classof(const Expr *) { return true; }
   
-  static inline Expr* Materialize(llvm::Deserializer& D) {
-    return cast<Expr>(Stmt::Materialize(D));    
+  static inline Expr* Create(llvm::Deserializer& D) {
+    return cast<Expr>(Stmt::Create(D));    
   }
 };
 

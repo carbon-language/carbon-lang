@@ -1358,7 +1358,7 @@ void ReadVector(std::vector<T*>& V, std::vector<Type*>& Types,
   V.reserve(size);
   
   for (unsigned i = 0 ; i < size ; ++i) {
-    T* t = D.Materialize<T>();
+    T* t = D.Create<T>();
     V.push_back(t);
     Types.push_back(t);
   }
@@ -1511,7 +1511,7 @@ void ASTContext::Emit(llvm::Serializer& S) const {
   // FIXME: S.EmitOwnedPtr(CFConstantStringTypeDecl);
 }
 
-ASTContext* ASTContext::Materialize(llvm::Deserializer& D) {
+ASTContext* ASTContext::Create(llvm::Deserializer& D) {
   SourceManager &SM = D.ReadRef<SourceManager>();
   TargetInfo &t = D.ReadRef<TargetInfo>();
   IdentifierTable &idents = D.ReadRef<IdentifierTable>();

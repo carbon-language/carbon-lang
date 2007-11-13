@@ -399,7 +399,7 @@ public:
   static bool classof(const BuiltinType *) { return true; }
   
   void Emit(llvm::Serializer& S) const;
-  static BuiltinType* Materialize(llvm::Deserializer& D);
+  static BuiltinType* Create(llvm::Deserializer& D);
 };
 
 /// ComplexType - C99 6.2.5p11 - Complex values.  This supports the C99 complex
@@ -428,7 +428,7 @@ public:
   static bool classof(const ComplexType *) { return true; }
   
   void Emit(llvm::Serializer& S) const;
-  static ComplexType* Materialize(llvm::Deserializer& D);
+  static ComplexType* Create(llvm::Deserializer& D);
 };
 
 
@@ -458,7 +458,7 @@ public:
   static bool classof(const PointerType *) { return true; }
   
   void Emit(llvm::Serializer& S) const;
-  static PointerType* Materialize(llvm::Deserializer& D);
+  static PointerType* Create(llvm::Deserializer& D);
 };
 
 /// ReferenceType - C++ 8.3.2 - Reference Declarators.
@@ -485,7 +485,7 @@ public:
   static bool classof(const ReferenceType *) { return true; }
   
   void Emit(llvm::Serializer& S) const;
-  static ReferenceType* Materialize(llvm::Deserializer& D);
+  static ReferenceType* Create(llvm::Deserializer& D);
 };
 
 /// ArrayType - C99 6.7.5.2 - Array Declarators.
@@ -575,7 +575,7 @@ public:
   static bool classof(const ConstantArrayType *) { return true; }
   
   void Emit(llvm::Serializer& S) const;
-  static ConstantArrayType* Materialize(llvm::Deserializer& D);
+  static ConstantArrayType* Create(llvm::Deserializer& D);
 };
 
 // FIXME: VariableArrayType's aren't uniqued (since expressions aren't).
@@ -612,7 +612,7 @@ public:
   }
   
   void Emit(llvm::Serializer& S) const;
-  static VariableArrayType* Materialize(llvm::Deserializer& D);
+  static VariableArrayType* Create(llvm::Deserializer& D);
 };
 
 /// VectorType - GCC generic vector type. This type is created using
@@ -655,7 +655,7 @@ public:
   static bool classof(const VectorType *) { return true; }
   
   void Emit(llvm::Serializer& S) const;
-  static VectorType* Materialize(llvm::Deserializer& D);
+  static VectorType* Create(llvm::Deserializer& D);
 };
 
 /// OCUVectorType - Extended vector type. This type is created using
@@ -769,7 +769,7 @@ public:
   static bool classof(const FunctionTypeNoProto *) { return true; }
   
   void Emit(llvm::Serializer& S) const { EmitFunctionTypeInternal(S); }
-  static FunctionTypeNoProto* Materialize(llvm::Deserializer& D);
+  static FunctionTypeNoProto* Create(llvm::Deserializer& D);
 };
 
 /// FunctionTypeProto - Represents a prototype with argument type info, e.g.
@@ -820,7 +820,7 @@ public:
                       bool isVariadic);
   
   void Emit(llvm::Serializer& S) const;
-  static FunctionTypeProto* Materialize(llvm::Deserializer& D);
+  static FunctionTypeProto* Create(llvm::Deserializer& D);
   
 protected:
   // Used by deserialization.
@@ -853,7 +853,7 @@ public:
   static bool classof(const TypedefType *) { return true; }
   
   void Emit(llvm::Serializer& S) const;
-  static TypedefType* Materialize(llvm::Deserializer& D);
+  static TypedefType* Create(llvm::Deserializer& D);
 };
 
 /// TypeOfExpr (GCC extension).

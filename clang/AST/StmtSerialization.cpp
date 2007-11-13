@@ -27,7 +27,7 @@ void Stmt::Emit(Serializer& S) const {
   S.FlushRecord();
 }  
 
-Stmt* Stmt::Materialize(Deserializer& D) {
+Stmt* Stmt::Create(Deserializer& D) {
   StmtClass SC = static_cast<StmtClass>(D.ReadInt());
   
   switch (SC) {

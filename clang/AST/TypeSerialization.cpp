@@ -65,7 +65,7 @@ void BuiltinType::Emit(llvm::Serializer& S) const {
   S.EmitInt(TypeKind);
 }
 
-BuiltinType* BuiltinType::Materialize(llvm::Deserializer& D) {
+BuiltinType* BuiltinType::Create(llvm::Deserializer& D) {
   Kind k = static_cast<Kind>(D.ReadInt());
   BuiltinType* T = new BuiltinType(k);
   return T;
@@ -78,7 +78,7 @@ void ComplexType::Emit(llvm::Serializer& S) const {
   S.Emit(ElementType);
 }
 
-ComplexType* ComplexType::Materialize(llvm::Deserializer& D) {
+ComplexType* ComplexType::Create(llvm::Deserializer& D) {
   ComplexType* T = new ComplexType(QualType(),QualType());
   T->ReadTypeInternal(D);
   D.Read(T->ElementType);
@@ -90,7 +90,7 @@ void PointerType::Emit(llvm::Serializer& S) const {
   S.Emit(PointeeType);
 }
 
-PointerType* PointerType::Materialize(llvm::Deserializer& D) {
+PointerType* PointerType::Create(llvm::Deserializer& D) {
   PointerType* T = new PointerType(QualType(),QualType());
   T->ReadTypeInternal(D);
   D.Read(T->PointeeType);
@@ -102,7 +102,7 @@ void ReferenceType::Emit(llvm::Serializer& S) const {
   S.Emit(ReferenceeType);
 }
 
-ReferenceType* ReferenceType::Materialize(llvm::Deserializer& D) {
+ReferenceType* ReferenceType::Create(llvm::Deserializer& D) {
   ReferenceType* T = new ReferenceType(QualType(),QualType());
   T->ReadTypeInternal(D);
   D.Read(T->ReferenceeType);
@@ -128,7 +128,7 @@ void ConstantArrayType::Emit(llvm::Serializer& S) const {
   S.Emit(Size);
 }
 
-ConstantArrayType* ConstantArrayType::Materialize(llvm::Deserializer& D) {
+ConstantArrayType* ConstantArrayType::Create(llvm::Deserializer& D) {
   // "Default" construct the array type.
   ConstantArrayType* T =
     new ConstantArrayType(QualType(), QualType(), llvm::APInt(), 
@@ -146,7 +146,7 @@ void VariableArrayType::Emit(llvm::Serializer& S) const {
   S.EmitOwnedPtr(SizeExpr);
 }
 
-VariableArrayType* VariableArrayType::Materialize(llvm::Deserializer& D) {
+VariableArrayType* VariableArrayType::Create(llvm::Deserializer& D) {
   // "Default" construct the array type.
   VariableArrayType* T =
     new VariableArrayType(QualType(), QualType(), NULL, ArrayType::Normal, 0);
@@ -164,7 +164,7 @@ void VectorType::Emit(llvm::Serializer& S) const {
   S.EmitInt(NumElements);
 }
 
-VectorType* VectorType::Materialize(llvm::Deserializer& D) {
+VectorType* VectorType::Create(llvm::Deserializer& D) {
   VectorType* T = new VectorType(QualType(),0,QualType());
   T->ReadTypeInternal(D);
   D.Read(T->ElementType);
@@ -185,7 +185,7 @@ void FunctionType::ReadFunctionTypeInternal(llvm::Deserializer& D) {
 }
 
 
-FunctionTypeNoProto* FunctionTypeNoProto::Materialize(llvm::Deserializer& D) {
+FunctionTypeNoProto* FunctionTypeNoProto::Create(llvm::Deserializer& D) {
   FunctionTypeNoProto* T = new FunctionTypeNoProto(QualType(),QualType());
   T->ReadFunctionTypeInternal(D);
   return T;
@@ -199,7 +199,7 @@ void FunctionTypeProto::Emit(llvm::Serializer& S) const {
     S.Emit(*i);    
 }
 
-FunctionTypeProto* FunctionTypeProto::Materialize(llvm::Deserializer& D) {
+FunctionTypeProto* FunctionTypeProto::Create(llvm::Deserializer& D) {
   unsigned NumArgs = D.ReadInt();
   
   FunctionTypeProto *FTP = 
@@ -227,7 +227,7 @@ void TypedefType::Emit(llvm::Serializer& S) const {
   S.EmitPtr(Decl);
 }
 
-TypedefType* TypedefType::Materialize(llvm::Deserializer& D) {
+TypedefType* TypedefType::Create(llvm::Deserializer& D) {
   TypedefType* T = new TypedefType(NULL,QualType());
   T->ReadTypeInternal(D);
   D.ReadPtr(T->Decl);

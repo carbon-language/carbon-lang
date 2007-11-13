@@ -194,8 +194,8 @@ public:
   ///  are actually referenced are serialized.
   void Emit(llvm::Serializer& S) const;
   
-  /// Materialize - Deserialize an IdentifierTable from a bitstream.
-  static IdentifierTable* Materialize(llvm::Deserializer& D);
+  /// Create - Deserialize an IdentifierTable from a bitstream.
+  static IdentifierTable* Create(llvm::Deserializer& D);
   
 private:  
   /// This ctor is not intended to be used by anyone except for object
