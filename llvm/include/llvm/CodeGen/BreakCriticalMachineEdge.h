@@ -52,27 +52,16 @@ MachineBasicBlock* SplitCriticalMachineEdge(MachineBasicBlock* src,
       break;
     }
     
-    // Scan the operands of this branch, finding all uses of this MBB
-    std::vector<unsigned> toRemove;
-    unsigned reg = 0;
+    // Scan the operands of this branch, replacing any uses of dst with
+    // crit_mbb.
     for (unsigned i = 0, e = mii->getNumOperands(); i != e; ++i) {
       MachineOperand & mo = mii->getOperand(i);
       if (mo.isMachineBasicBlock() &&
-          mo.getMachineBasicBlock() == dst)
-        reg = mii->getOperand(i-1).getReg();
-        toRemove.push_back(i-1);
+          mo.getMachineBasicBlock() == dst) {
+        found_branch = true;
+        mo.setMachineBasicBlock(crit_mbb);
+      }
     }
-    
-    // Remove all uses of this MBB
-    for (std::vector<unsigned>::reverse_iterator I = toRemove.rbegin(),
-         E = toRemove.rend(); I != E; ++I) {
-      mii->RemoveOperand(*I+1);
-      mii->RemoveOperand(*I);
-    }
-    
-    // Add a single use corresponding to the new MBB
-    mii->addRegOperand(reg, false);
-    mii->addMachineBasicBlockOperand(crit_mbb);
   }
 
   // TODO: This is tentative. It may be necessary to fix this code. Maybe
@@ -89,10 +78,26 @@ MachineBasicBlock* SplitCriticalMachineEdge(MachineBasicBlock* src,
     if(mii->getOpcode() != TargetInstrInfo::PHI)
       break;
     
+    // Find the operands corresponding to the source block
+    std::vector<unsigned> toRemove;
+    unsigned reg = 0;
     for (unsigned u = 0; u != mii->getNumOperands(); ++u)
       if (mii->getOperand(u).isMachineBasicBlock() &&
-          mii->getOperand(u).getMachineBasicBlock() == src)
-        mii->getOperand(u).setMachineBasicBlock(crit_mbb);
+          mii->getOperand(u).getMachineBasicBlock() == src) {
+        reg = mii->getOperand(u-1).getReg();
+        toRemove.push_back(u-1);
+      }
+    
+    // Remove all uses of this MBB
+    for (std::vector<unsigned>::reverse_iterator I = toRemove.rbegin(),
+         E = toRemove.rend(); I != E; ++I) {
+      mii->RemoveOperand(*I+1);
+      mii->RemoveOperand(*I);
+    }
+    
+    // Add a single use corresponding to the new MBB
+    mii->addRegOperand(reg, false);
+    mii->addMachineBasicBlockOperand(crit_mbb);
   }
   
   return crit_mbb;
