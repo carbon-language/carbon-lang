@@ -28,3 +28,12 @@ int test_offsetof() {
   // FIXME: change into something that is semantically correct.
   __builtin_offsetof(int, a.b.c[4][5]);
 }
+
+void test_sizeof(){
+        int arr[10];
+        sizeof arr[0];
+        sizeof(arr[0]);
+        sizeof(arr)[0];
+}
+
+
