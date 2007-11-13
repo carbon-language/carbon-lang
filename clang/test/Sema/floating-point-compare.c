@@ -11,3 +11,11 @@ int bar(float x, float y) {
 int qux(float x) {
   return x == x; // no-warning
 }
+
+int baz(float x) {
+	return x == 0.0; // no-warning
+}
+
+int taz(float x) {
+	return x == __builtin_inf(); // no-warning
+}

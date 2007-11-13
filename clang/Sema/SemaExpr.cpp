@@ -1218,6 +1218,33 @@ static inline Expr* IgnoreParen(Expr* E) {
   return E;
 }
 
+// Utility method to plow through parenthesis and casts.
+static inline Expr* IgnoreParenCasts(Expr* E) {
+  while(true) {
+    if (ParenExpr* P = dyn_cast<ParenExpr>(E))
+      E = P->getSubExpr();
+    else if (CastExpr* P = dyn_cast<CastExpr>(E))
+      E = P->getSubExpr();
+    else if (ImplicitCastExpr* P = dyn_cast<ImplicitCastExpr>(E))
+      E = P->getSubExpr();
+    else
+      break;
+  }
+  
+  return E;
+}
+
+// Utility method to determine if a CallExpr is a call to a builtin.
+static inline bool isCallBuiltin(CallExpr* cexp) {
+  Expr* sub = IgnoreParenCasts(cexp->getCallee());
+  
+  if (DeclRefExpr* E = dyn_cast<DeclRefExpr>(sub))
+    if (E->getDecl()->getIdentifier()->getBuiltinID() > 0)
+      return true;
+
+  return false;
+}
+
 inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   Expr *&lex, Expr *&rex, SourceLocation loc, bool isRelational)
 {
@@ -1254,11 +1281,27 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
       // Special case: check for x == x (which is OK).
       bool EmitWarning = true;
       
-      if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(IgnoreParen(lex)))
-        if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(IgnoreParen(rex)))
+      Expr* LeftExprSansParen = IgnoreParen(lex);
+      Expr* RightExprSansParen = IgnoreParen(rex);
+      
+      // Look for x == x.  Do not emit warnings for such cases.
+      if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LeftExprSansParen))
+        if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RightExprSansParen))
           if (DRL->getDecl() == DRR->getDecl())
             EmitWarning = false;
+
+      // Check for comparisons with builtin types.
+      if (EmitWarning)           
+        if (CallExpr* CL = dyn_cast<CallExpr>(LeftExprSansParen))
+          if (isCallBuiltin(CL))
+            EmitWarning = false;
       
+      if (EmitWarning)            
+        if (CallExpr* CR = dyn_cast<CallExpr>(RightExprSansParen))
+          if (isCallBuiltin(CR))
+            EmitWarning = false;
+              
+      // Emit the diagnostic.
       if (EmitWarning)
         Diag(loc, diag::warn_floatingpoint_eq,
              lex->getSourceRange(),rex->getSourceRange());
