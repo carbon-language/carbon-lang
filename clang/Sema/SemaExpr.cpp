@@ -1260,7 +1260,8 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
             EmitWarning = false;
       
       if (EmitWarning)
-        Diag(loc, diag::warn_floatingpoint_eq);
+        Diag(loc, diag::warn_floatingpoint_eq,
+             lex->getSourceRange(),rex->getSourceRange());
     }
     
     if (lType->isArithmeticType() && rType->isArithmeticType())
