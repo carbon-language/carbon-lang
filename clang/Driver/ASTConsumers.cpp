@@ -267,6 +267,9 @@ namespace {
           FD->getBody()->dumpPretty();
           fprintf(stderr, "\n");
         }
+      } else if (isa<ObjcMethodDecl>(D)) {
+	    // Do nothing, methods definitions are printed in
+		// PrintObjcImplementationDecl.
       } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
         PrintTypeDefDecl(TD);
       } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
