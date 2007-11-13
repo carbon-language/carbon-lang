@@ -285,14 +285,15 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       } else {
         PHIUnion.insert(SrcReg);
         UnionedBlocks.insert(SrcInfo.DefInst->getParent());
-        
-        // DO STUFF HERE
-        
       }
-      
-      ProcessedNames.insert(PHIUnion.begin(), PHIUnion.end());
     }
     
+    std::vector<StrongPHIElimination::DomForestNode*> DF = 
+                                                     computeDomForest(PHIUnion);
+    
+    // DO STUFF HERE
+    
+    ProcessedNames.insert(PHIUnion.begin(), PHIUnion.end());
     ++P;
   }
 }
