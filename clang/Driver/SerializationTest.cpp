@@ -107,8 +107,15 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename) {
   
   Sezr.EnterBlock(DeclBlock);
   
+  // Create a printer to "consume" our deserialized ASTS.
+  ASTConsumer* Printer = CreateASTPrinter();
+  Janitor<ASTConsumer> PrinterJanitor(Printer);
+  
   for (std::list<Decl*>::iterator I=Decls.begin(), E=Decls.end(); I!=E; ++I) {
-    llvm::cerr << "Serializing: Decl.\n";    
+    llvm::cerr << "Serializing: Decl.\n";   
+    
+    Printer->HandleTopLevelDecl(*I);
+    
     Sezr.EmitOwnedPtr(*I);
   }
   
