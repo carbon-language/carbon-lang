@@ -41,6 +41,9 @@ Stmt* Stmt::Create(Deserializer& D) {
     case ArraySubscriptExprClass:
       return ArraySubscriptExpr::CreateImpl(D);
       
+    case AsmStmtClass:
+      return AsmStmt::CreateImpl(D);
+      
     case BinaryOperatorClass:
       return BinaryOperator::CreateImpl(D);
       
@@ -173,6 +176,18 @@ ArraySubscriptExpr* ArraySubscriptExpr::CreateImpl(Deserializer& D) {
   Expr *LHS, *RHS;
   D.BatchReadOwnedPtrs(LHS,RHS);
   return new ArraySubscriptExpr(LHS,RHS,t,L);  
+}
+
+void AsmStmt::EmitImpl(Serializer& S) const {
+  S.Emit(AsmLoc);
+  S.Emit(RParenLoc);  
+}
+
+AsmStmt* AsmStmt::CreateImpl(Deserializer& D) {
+  SourceLocation ALoc = SourceLocation::ReadVal(D);
+  SourceLocation PLoc = SourceLocation::ReadVal(D);
+  
+  return new AsmStmt(ALoc,PLoc);  
 }
 
 void BinaryOperator::EmitImpl(Serializer& S) const {

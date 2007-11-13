@@ -718,6 +718,9 @@ public:
   
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static AsmStmt* CreateImpl(llvm::Deserializer& D);
 };
   
 /// ObjcAtCatchStmt - This represents objective-c's @catch statement.
