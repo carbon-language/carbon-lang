@@ -466,6 +466,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static SizeOfAlignOfTypeExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 //===----------------------------------------------------------------------===//

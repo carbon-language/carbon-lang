@@ -125,6 +125,9 @@ Stmt* Stmt::Create(Deserializer& D) {
     case ReturnStmtClass:
       return ReturnStmt::CreateImpl(D);
     
+    case SizeOfAlignOfTypeExprClass:
+      return SizeOfAlignOfTypeExpr::CreateImpl(D);
+      
     case StmtExprClass:
       return StmtExpr::CreateImpl(D);
       
@@ -572,6 +575,24 @@ ReturnStmt* ReturnStmt::CreateImpl(Deserializer& D) {
   SourceLocation RetLoc = SourceLocation::ReadVal(D);
   Expr* RetExpr = D.ReadOwnedPtr<Expr>();  
   return new ReturnStmt(RetLoc,RetExpr);
+}
+
+void SizeOfAlignOfTypeExpr::EmitImpl(Serializer& S) const {
+  S.EmitBool(isSizeof);
+  S.Emit(Ty);
+  S.Emit(getType());
+  S.Emit(OpLoc);
+  S.Emit(RParenLoc);
+}
+
+SizeOfAlignOfTypeExpr* SizeOfAlignOfTypeExpr::CreateImpl(Deserializer& D) {
+  bool isSizeof = D.ReadBool();
+  QualType Ty = QualType::ReadVal(D);
+  QualType Res = QualType::ReadVal(D);
+  SourceLocation OpLoc = SourceLocation::ReadVal(D);
+  SourceLocation RParenLoc = SourceLocation::ReadVal(D);
+  
+  return new SizeOfAlignOfTypeExpr(isSizeof,Ty,Res,OpLoc,RParenLoc);  
 }
 
 void StmtExpr::EmitImpl(Serializer& S) const {
