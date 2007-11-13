@@ -271,7 +271,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
           //
           // Perform the default function/array conversion (C99 6.7.5.3p[7,8]).
           // This matches the conversion that is done in 
-          // Sema::ParseParamDeclarator(). Without this conversion, the
+          // Sema::ActOnParamDeclarator(). Without this conversion, the
           // argument type in the function prototype *will not* match the
           // type in ParmVarDecl (which makes the code generator unhappy).
           //

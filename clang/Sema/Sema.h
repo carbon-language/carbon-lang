@@ -233,7 +233,7 @@ private:
   void AddTopLevelDecl(Decl *current, Decl *last);
 
   /// More parsing and symbol table subroutines...
-  ParmVarDecl *ParseParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, 
+  ParmVarDecl *ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, 
                                     Scope *FnBodyScope);  
   ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
                                SourceLocation IdLoc, Scope *S);

@@ -800,7 +800,7 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
 
 // Called from Sema::ParseStartOfFunctionDef().
 ParmVarDecl *
-Sema::ParseParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, Scope *FnScope) 
+Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, Scope *FnScope) 
 {
   IdentifierInfo *II = PI.Ident;
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
@@ -895,7 +895,7 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
     // empty arg list, don't push any params.
   } else {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {
-      Params.push_back(ParseParamDeclarator(D.getTypeObject(0).Fun.ArgInfo[i],
+      Params.push_back(ActOnParamDeclarator(D.getTypeObject(0).Fun.ArgInfo[i],
                                             FnBodyScope));
     }
   }
@@ -988,18 +988,18 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     PI.TypeInfo = selfTy.getAsOpaquePtr();
   } else
     PI.TypeInfo = Context.getObjcIdType().getAsOpaquePtr();
-  Params.push_back(ParseParamDeclarator(PI, FnBodyScope));
+  Params.push_back(ActOnParamDeclarator(PI, FnBodyScope));
   
   PI.Ident = &Context.Idents.get("_cmd");
   PI.TypeInfo = Context.getObjcSelType().getAsOpaquePtr();
-  Params.push_back(ParseParamDeclarator(PI, FnBodyScope));
+  Params.push_back(ActOnParamDeclarator(PI, FnBodyScope));
   
   for (int i = 0; i <  MDecl->getNumParams(); i++) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
     PI.Ident = PDecl->getIdentifier();
     PI.IdentLoc = PDecl->getLocation(); // user vars have a real location.
     PI.TypeInfo = PDecl->getType().getAsOpaquePtr();
-    Params.push_back(ParseParamDeclarator(PI, FnBodyScope));
+    Params.push_back(ActOnParamDeclarator(PI, FnBodyScope));
   }
   NewFD->setParams(&Params[0], Params.size());
 }
