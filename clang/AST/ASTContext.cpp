@@ -1050,8 +1050,18 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     S += ']';
   } else if (T->getAsFunctionType()) {
     S += '?';
+  } else if (const RecordType *RTy = T->getAsRecordType()) {
+    RecordDecl *RDecl= RTy->getDecl();
+    S += '{';
+    S += RDecl->getName();
+    S += '=';
+    for (int i = 0; i < RDecl->getNumMembers(); i++) {
+      FieldDecl *field = RDecl->getMember(i);
+      getObjcEncodingForType(field->getType(), S);
+    }
+    S += '}';
   } else
-    assert(0 && "@encode for type not implemented!");
+      assert(0 && "@encode for type not implemented!");
 }
 
 void ASTContext::getObjcEncodingForTypeQualifier(Decl::ObjcDeclQualifier QT, 
