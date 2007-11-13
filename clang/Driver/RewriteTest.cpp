@@ -86,6 +86,8 @@ namespace {
     void RewriteTabs();
     void RewriteForwardClassDecl(ObjcClassDecl *Dcl);
     void RewriteInterfaceDecl(ObjcInterfaceDecl *Dcl);
+    void RewriteImplementationDecl(ObjcImplementationDecl *Dcl);
+    void RewriteObjcMethodDecl(ObjcMethodDecl *MDecl, std::string &ResultStr);
     void RewriteCategoryDecl(ObjcCategoryDecl *Dcl);
     void RewriteProtocolDecl(ObjcProtocolDecl *Dcl);
     void RewriteMethods(int nMethods, ObjcMethodDecl **Methods);
@@ -170,6 +172,9 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
     RewriteCategoryDecl(CD);
   } else if (ObjcProtocolDecl *PD = dyn_cast<ObjcProtocolDecl>(D)) {
     RewriteProtocolDecl(PD);
+  }
+  else if (ObjcImplementationDecl *MD = dyn_cast<ObjcImplementationDecl>(D)) {
+    RewriteImplementationDecl(MD);
   }
   // If we have a decl in the main file, see if we should rewrite it.
   if (SM->getDecomposedFileLoc(Loc).first == MainFileID)
@@ -371,6 +376,99 @@ void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
                  PDecl->getClassMethods());
   // Lastly, comment out the @end.
   Rewrite.ReplaceText(PDecl->getAtEndLoc(), 0, "// ", 3);
+}
+
+void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD, 
+                                        std::string &ResultStr) {
+  ResultStr += "\nstatic ";
+  ResultStr += OMD->getResultType().getAsString();
+  ResultStr += "\n_";
+  
+  // Unique method name
+  if (OMD->isInstance())
+    ResultStr += "I_";
+  else
+    ResultStr += "C_";
+  
+  ResultStr += OMD->getClassInterface()->getName();
+  ResultStr += "_";
+  
+  NamedDecl *MethodContext = OMD->getMethodContext();
+  if (ObjcCategoryImplDecl *CID = 
+      dyn_cast<ObjcCategoryImplDecl>(MethodContext)) {
+    ResultStr += CID->getName();
+    ResultStr += "_";
+  }
+  // Append selector names, replacing ':' with '_'
+  const char *selName = OMD->getSelector().getName().c_str();
+  if (!strchr(selName, ':'))
+    ResultStr +=  OMD->getSelector().getName();
+  else {
+    std::string selString = OMD->getSelector().getName();
+    int len = selString.size();
+    for (int i = 0; i < len; i++)
+      if (selString[i] == ':')
+        selString[i] = '_';
+    ResultStr += selString;
+  }
+  
+  // Rewrite arguments
+  ResultStr += "(";
+  
+  // invisible arguments
+  if (OMD->isInstance()) {
+    QualType selfTy = Context->getObjcInterfaceType(OMD->getClassInterface());
+    selfTy = Context->getPointerType(selfTy);
+    ResultStr += selfTy.getAsString();
+  }
+  else
+    ResultStr += Context->getObjcIdType().getAsString();
+  
+  ResultStr += " self, ";
+  ResultStr += Context->getObjcSelType().getAsString();
+  ResultStr += " _cmd";
+  
+  // Method arguments.
+  for (int i = 0; i < OMD->getNumParams(); i++) {
+    ParmVarDecl *PDecl = OMD->getParamDecl(i);
+    ResultStr += ", ";
+    ResultStr += PDecl->getType().getAsString();
+    ResultStr += " ";
+    ResultStr += PDecl->getName();
+  }
+  ResultStr += ")";
+  
+}
+void RewriteTest::RewriteImplementationDecl(ObjcImplementationDecl *OID) {
+  
+  Rewrite.InsertText(OID->getLocStart(), "// ", 3);
+  
+  for (int i = 0; i < OID->getNumInstanceMethods(); i++) {
+    std::string ResultStr;
+    ObjcMethodDecl *OMD = OID->getInstanceMethods()[i];
+    RewriteObjcMethodDecl(OMD, ResultStr);
+    SourceLocation LocStart = OMD->getLocStart();
+    SourceLocation LocEnd = OMD->getBody()->getLocStart();
+    
+    const char *startBuf = SM->getCharacterData(LocStart);
+    const char *endBuf = SM->getCharacterData(LocEnd);
+    Rewrite.ReplaceText(LocStart, endBuf-startBuf,
+                        ResultStr.c_str(), ResultStr.size());
+  }
+  
+  for (int i = 0; i < OID->getNumClassMethods(); i++) {
+    std::string ResultStr;
+    ObjcMethodDecl *OMD = OID->getClassMethods()[i];
+    RewriteObjcMethodDecl(OMD, ResultStr);
+    SourceLocation LocStart = OMD->getLocStart();
+    SourceLocation LocEnd = OMD->getBody()->getLocStart();
+    
+    const char *startBuf = SM->getCharacterData(LocStart);
+    const char *endBuf = SM->getCharacterData(LocEnd);
+    Rewrite.ReplaceText(LocStart, endBuf-startBuf,
+                        ResultStr.c_str(), ResultStr.size());    
+  }
+  Rewrite.InsertText(OID->getLocEnd(), "// ", 3);
 }
 
 void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
