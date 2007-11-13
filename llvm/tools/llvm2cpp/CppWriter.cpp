@@ -44,6 +44,7 @@ enum WhatToGenerate {
   GenModule,
   GenContents,
   GenFunction,
+  GenFunctions,
   GenInline,
   GenVariable,
   GenType
@@ -53,13 +54,14 @@ static cl::opt<WhatToGenerate> GenerationType(cl::Optional,
   cl::desc("Choose what kind of output to generate"),
   cl::init(GenProgram),
   cl::values(
-    clEnumValN(GenProgram, "gen-program",  "Generate a complete program"),
-    clEnumValN(GenModule,  "gen-module",   "Generate a module definition"),
-    clEnumValN(GenContents,"gen-contents", "Generate contents of a module"),
-    clEnumValN(GenFunction,"gen-function", "Generate a function definition"),
-    clEnumValN(GenInline,  "gen-inline",   "Generate an inline function"),
-    clEnumValN(GenVariable,"gen-variable", "Generate a variable definition"),
-    clEnumValN(GenType,    "gen-type",     "Generate a type definition"),
+    clEnumValN(GenProgram,  "gen-program",   "Generate a complete program"),
+    clEnumValN(GenModule,   "gen-module",    "Generate a module definition"),
+    clEnumValN(GenContents, "gen-contents",  "Generate contents of a module"),
+    clEnumValN(GenFunction, "gen-function",  "Generate a function definition"),
+    clEnumValN(GenFunctions,"gen-functions", "Generate all function definitions"),
+    clEnumValN(GenInline,   "gen-inline",    "Generate an inline function"),
+    clEnumValN(GenVariable, "gen-variable",  "Generate a variable definition"),
+    clEnumValN(GenType,     "gen-type",      "Generate a type definition"),
     clEnumValEnd
   )
 );
@@ -103,6 +105,7 @@ public:
   void printModule(const std::string& fname, const std::string& modName );
   void printContents(const std::string& fname, const std::string& modName );
   void printFunction(const std::string& fname, const std::string& funcName );
+  void printFunctions();
   void printInline(const std::string& fname, const std::string& funcName );
   void printVariable(const std::string& fname, const std::string& varName );
   void printType(const std::string& fname, const std::string& typeName );
@@ -1784,6 +1787,21 @@ void CppWriter::printFunction(
   Out << "}\n";
 }
 
+void CppWriter::printFunctions() {
+  const Module::FunctionListType &funcs = TheModule->getFunctionList();
+  Module::const_iterator I  = funcs.begin();
+  Module::const_iterator IE = funcs.end();
+
+  for (; I != IE; ++I) {
+    const Function &func = *I;
+    if (!func.isDeclaration()) {
+      std::string name("define_");
+      name += func.getName();
+      printFunction(name, func.getName());
+    }
+  }
+}
+
 void CppWriter::printVariable(
   const std::string& fname,  /// Name of generated function
   const std::string& varName // Name of variable to generate
@@ -1835,7 +1853,8 @@ void WriteModuleToCppFile(Module* mod, std::ostream& o) {
   std::string tgtname = NameToGenerate.getValue();
   if (GenerationType == GenModule || 
       GenerationType == GenContents || 
-      GenerationType == GenProgram) {
+      GenerationType == GenProgram ||
+      GenerationType == GenFunctions) {
     if (tgtname == "!bad!") {
       if (mod->getModuleIdentifier() == "-")
         tgtname = "<stdin>";
@@ -1866,6 +1885,9 @@ void WriteModuleToCppFile(Module* mod, std::ostream& o) {
       if (fname.empty())
         fname = "makeLLVMFunction";
       W.printFunction(fname,tgtname);
+      break;
+  case GenFunctions:
+      W.printFunctions();
       break;
     case GenInline:
       if (fname.empty())
