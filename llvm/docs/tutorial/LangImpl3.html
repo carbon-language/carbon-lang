@@ -41,7 +41,7 @@ Support</li>
 
 <p>Welcome to Chapter 3 of the "<a href="index.html">Implementing a language
 with LLVM</a>" tutorial.  This chapter shows you how to transform the <a 
-href="LangImpl2.html">Abstract Syntax Tree built in Chapter 2</a> into LLVM IR.
+href="LangImpl2.html">Abstract Syntax Tree</a>, built in Chapter 2, into LLVM IR.
 This will teach you a little bit about how LLVM does things, as well as
 demonstrate how easy it is to use.  It's much more work to build a lexer and
 parser than it is to generate LLVM IR code. :)
@@ -79,14 +79,14 @@ public:
 </pre>
 </div>
 
-<p>The Codegen() method says to emit IR for that AST node and all things it
+<p>The Codegen() method says to emit IR for that AST node along with all the things it
 depends on, and they all return an LLVM Value object. 
 "Value" is the class used to represent a "<a 
 href="http://en.wikipedia.org/wiki/Static_single_assignment_form">Static Single
 Assignment (SSA)</a> register" or "SSA value" in LLVM.  The most distinct aspect
 of SSA values is that their value is computed as the related instruction
 executes, and it does not get a new value until (and if) the instruction
-re-executes.  In order words, there is no way to "change" an SSA value.  For
+re-executes.  In other words, there is no way to "change" an SSA value.  For
 more information, please read up on <a 
 href="http://en.wikipedia.org/wiki/Static_single_assignment_form">Static Single
 Assignment</a> - the concepts are really quite natural once you grok them.</p>
@@ -97,7 +97,7 @@ this.  Again, this tutorial won't dwell on good software engineering practices:
 for our purposes, adding a virtual method is simplest.</p>
 
 <p>The
-second thing we want is an "Error" method like we used for parser, which will
+second thing we want is an "Error" method like we used for the parser, which will
 be used to report errors found during code generation (for example, use of an
 undeclared parameter):</p>
 
@@ -144,7 +144,7 @@ has already been done, and we'll just use it to emit code.
 
 <div class="doc_text">
 
-<p>Generating LLVM code for expression nodes is very straight-forward: less
+<p>Generating LLVM code for expression nodes is very straightforward: less
 than 45 lines of commented code for all four of our expression nodes.  First,
 we'll do numeric literals:</p>
 
@@ -174,7 +174,7 @@ Value *VariableExprAST::Codegen() {
 </pre>
 </div>
 
-<p>References to variables are also quite simple here.  In the simple version
+<p>References to variables are also quite simple using LLVM.  In the simple version
 of Kaleidoscope, we assume that the variable has already been emited somewhere
 and its value is available.  In practice, the only values that can be in the
 <tt>NamedValues</tt> map are function arguments.  This
@@ -211,9 +211,9 @@ right-hand side, then we compute the result of the binary expression.  In this
 code, we do a simple switch on the opcode to create the right LLVM instruction.
 </p>
 
-<p>In this example, the LLVM builder class is starting to show its value.  
-Because it knows where to insert the newly created instruction, you just have to
-specify what instruction to create (e.g. with <tt>CreateAdd</tt>), which
+<p>In the example above, the LLVM builder class is starting to show its value.  
+LLVMBuilder knows where to insert the newly created instruction, all you have to
+do is specify what instruction to create (e.g. with <tt>CreateAdd</tt>), which
 operands to use (<tt>L</tt> and <tt>R</tt> here) and optionally provide a name
 for the generated instruction.  One nice thing about LLVM is that the name is 
 just a hint: if there are multiple additions in a single function, the first
@@ -221,17 +221,16 @@ will be named "addtmp" and the second will be "autorenamed" by adding a suffix,
 giving it a name like "addtmp42".  Local value names for instructions are purely
 optional, but it makes it much easier to read the IR dumps.</p>
 
-<p><a href="../LangRef.html#instref">LLVM instructions</a> are constrained with
+<p><a href="../LangRef.html#instref">LLVM instructions</a> are constrained by
 strict rules: for example, the Left and Right operators of
-an <a href="../LangRef.html#i_add">add instruction</a> have to have the same
-type, and that the result type of the add must match the operand types.  Because
+an <a href="../LangRef.html#i_add">add instruction</a> must have the same
+type, and the result type of the add must match the operand types.  Because
 all values in Kaleidoscope are doubles, this makes for very simple code for add,
 sub and mul.</p>
 
 <p>On the other hand, LLVM specifies that the <a 
 href="../LangRef.html#i_fcmp">fcmp instruction</a> always returns an 'i1' value
-(a one bit integer).  However, Kaleidoscope wants the value to be a 0.0 or 1.0
-value.  In order to get these semantics, we combine the fcmp instruction with
+(a one bit integer).  The problem with this is that Kaleidoscope wants the value to be a 0.0 or 1.0 value.  In order to get these semantics, we combine the fcmp instruction with
 a <a href="../LangRef.html#i_uitofp">uitofp instruction</a>.  This instruction
 converts its input integer into a floating point value by treating the input
 as an unsigned value.  In contrast, if we used the <a 
@@ -261,8 +260,8 @@ Value *CallExprAST::Codegen() {
 </pre>
 </div>
 
-<p>Code generation for function calls is quite straight-forward with LLVM.  The
-code above first looks the name of the function up in the LLVM Module's symbol
+<p>Code generation for function calls is quite straightforward with LLVM.  The
+code above initially does a function name lookup in the LLVM Module's symbol
 table.  Recall that the LLVM Module is the container that holds all of the
 functions we are JIT'ing.  By giving each function the same name as what the
 user specifies, we can use the LLVM symbol table to resolve function names for
@@ -271,8 +270,8 @@ us.</p>
 <p>Once we have the function to call, we recursively codegen each argument that
 is to be passed in, and create an LLVM <a href="../LangRef.html#i_call">call
 instruction</a>.  Note that LLVM uses the native C calling conventions by
-default, allowing these calls to call into standard library functions like
-"sin" and "cos" with no additional effort.</p>
+default, allowing these calls to also call into standard library functions like
+"sin" and "cos", with no additional effort.</p>
 
 <p>This wraps up our handling of the four basic expressions that we have so far
 in Kaleidoscope.  Feel free to go in and add some more.  For example, by 
@@ -321,7 +320,7 @@ this).  Note that Types in LLVM are uniqued just like Constants are, so you
 don't "new" a type, you "get" it.</p>
 
 <p>The final line above actually creates the function that the prototype will
-correspond to.  This indicates which type, linkage, and name to use, and which
+correspond to.  This indicates the type, linkage and name to use, as well as which
 module to insert into.  "<a href="LangRef.html#linkage">external linkage</a>"
 means that the function may be defined outside the current module and/or that it
 is callable by functions outside the module.  The Name passed in is the name the
@@ -343,7 +342,7 @@ above.</p>
 <p>The Module symbol table works just like the Function symbol table when it
 comes to name conflicts: if a new function is created with a name was previously
 added to the symbol table, it will get implicitly renamed when added to the
-Module.  The code above exploits this fact to tell if there was a previous
+Module.  The code above exploits this fact to determine if there was a previous
 definition of this function.</p>
 
 <p>In Kaleidoscope, I choose to allow redefinitions of functions in two cases:
@@ -403,7 +402,7 @@ definition and this one match up.  If not, we emit an error.</p>
 </div>
 
 <p>The last bit of code for prototypes loops over all of the arguments in the
-function, setting the name of the LLVM Argument objects to match and registering
+function, setting the name of the LLVM Argument objects to match, and registering
 the arguments in the <tt>NamedValues</tt> map for future use by the
 <tt>VariableExprAST</tt> AST node.  Once this is set up, it returns the Function
 object to the caller.  Note that we don't check for conflicting 
@@ -421,8 +420,8 @@ Function *FunctionAST::Codegen() {
 </pre>
 </div>
 
-<p>Code generation for function definitions starts out simply enough: first we
-codegen the prototype (Proto) and verify that it is ok.  We also clear out the
+<p>Code generation for function definitions starts out simply enough: we just
+codegen the prototype (Proto) and verify that it is ok.  We then clear out the
 <tt>NamedValues</tt> map to make sure that there isn't anything in it from the
 last function we compiled.  Code generation of the prototype ensures that there
 is an LLVM Function object that is ready to go for us.</p>
@@ -445,7 +444,7 @@ the end of the new basic block.  Basic blocks in LLVM are an important part
 of functions that define the <a 
 href="http://en.wikipedia.org/wiki/Control_flow_graph">Control Flow Graph</a>.
 Since we don't have any control flow, our functions will only contain one 
-block so far.  We'll fix this in <a href="LangImpl5.html">Chapter 5</a> :).</p>
+block at this point.  We'll fix this in <a href="LangImpl5.html">Chapter 5</a> :).</p>
 
 <div class="doc_code">
 <pre>
@@ -465,7 +464,7 @@ the root expression of the function.  If no error happens, this emits code to
 compute the expression into the entry block and returns the value that was
 computed.  Assuming no error, we then create an LLVM <a 
 href="../LangRef.html#i_ret">ret instruction</a>, which completes the function.
-Once the function is built, we call the <tt>verifyFunction</tt> function, which
+Once the function is built, we call <tt>verifyFunction</tt>, which
 is provided by LLVM.  This function does a variety of consistency checks on the
 generated code, to determine if our compiler is doing everything right.  Using
 this is important: it can catch a lot of bugs.  Once the function is finished
@@ -481,13 +480,13 @@ and validated, we return it.</p>
 </div>
 
 <p>The only piece left here is handling of the error case.  For simplicity, we
-simply handle this by deleting the function we produced with the 
+handle this by merely deleting the function we produced with the 
 <tt>eraseFromParent</tt> method.  This allows the user to redefine a function
 that they incorrectly typed in before: if we didn't delete it, it would live in
 the symbol table, with a body, preventing future redefinition.</p>
 
-<p>This code does have a bug though.  Since the <tt>PrototypeAST::Codegen</tt>
-can return a previously defined forward declaration, this can actually delete
+<p>This code does have a bug, though.  Since the <tt>PrototypeAST::Codegen</tt>
+can return a previously defined forward declaration, our code can actually delete
 a forward declaration.  There are a number of ways to fix this bug, see what you
 can come up with!  Here is a testcase:</p>
 
@@ -571,7 +570,7 @@ entry:
 
 <p>This shows some function calls.  Note that this function will take a long
 time to execute if you call it.  In the future we'll add conditional control 
-flow to make recursion actually be useful :).</p>
+flow to actually make recursion useful :).</p>
 
 <div class="doc_code">
 <pre>
@@ -636,7 +635,7 @@ entry:
 generated.  Here you can see the big picture with all the functions referencing
 each other.</p>
 
-<p>This wraps up this chapter of the Kaleidoscope tutorial.  Up next we'll
+<p>This wraps up the third chapter of the Kaleidoscope tutorial.  Up next, we'll
 describe how to <a href="LangImpl4.html">add JIT codegen and optimizer
 support</a> to this so we can actually start running code!</p>
 
