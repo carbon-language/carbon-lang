@@ -152,8 +152,8 @@ public:
   }
 
   template <typename T>
-  inline T* Materialize() {
-    return SerializeTrait<T>::Materialize(*this);
+  inline T* Create() {
+    return SerializeTrait<T>::Create(*this);
   }
   
   char* ReadCStr(char* cstr = NULL, unsigned MaxLen=0, bool isNullTerm=true);
@@ -166,7 +166,7 @@ public:
     if (!PtrID)
       return NULL;
     
-    T* x = SerializeTrait<T>::Materialize(*this);
+    T* x = SerializeTrait<T>::Create(*this);
 
     if (AutoRegister)
       RegisterPtr(PtrID,x);
@@ -186,10 +186,10 @@ public:
     SerializedPtrID ID1 = ReadPtrID();
     SerializedPtrID ID2 = ReadPtrID();
 
-    P1 = (ID1) ? SerializeTrait<T1>::Materialize(*this) : NULL;
+    P1 = (ID1) ? SerializeTrait<T1>::Create(*this) : NULL;
     if (ID1 && A1) RegisterPtr(ID1,P1);
 
-    P2 = (ID2) ? SerializeTrait<T2>::Materialize(*this) : NULL;
+    P2 = (ID2) ? SerializeTrait<T2>::Create(*this) : NULL;
     if (ID2 && A2) RegisterPtr(ID2,P2);
   }
 
@@ -201,13 +201,13 @@ public:
     SerializedPtrID ID2 = ReadPtrID();
     SerializedPtrID ID3 = ReadPtrID();
     
-    P1 = (ID1) ? SerializeTrait<T1>::Materialize(*this) : NULL;
+    P1 = (ID1) ? SerializeTrait<T1>::Create(*this) : NULL;
     if (ID1 && A1) RegisterPtr(ID1,P1);    
     
-    P2 = (ID2) ? SerializeTrait<T2>::Materialize(*this) : NULL;
+    P2 = (ID2) ? SerializeTrait<T2>::Create(*this) : NULL;
     if (ID2 && A2) RegisterPtr(ID2,P2);
     
-    P3 = (ID3) ? SerializeTrait<T2>::Materialize(*this) : NULL;
+    P3 = (ID3) ? SerializeTrait<T2>::Create(*this) : NULL;
     if (ID3 && A3) RegisterPtr(ID3,P3);
   }
   
@@ -221,7 +221,7 @@ public:
     for (unsigned i = 0; i < NumPtrs; ++i) {
       SerializedPtrID& PtrID = BatchIDVec[i];
       
-      T* p = PtrID ? SerializeTrait<T>::Materialize(*this) : NULL;
+      T* p = PtrID ? SerializeTrait<T>::Create(*this) : NULL;
       
       if (PtrID && AutoRegister)
         RegisterPtr(PtrID,p);
@@ -246,7 +246,7 @@ public:
     for (unsigned i = 0; i < NumT1Ptrs; ++i) {
       SerializedPtrID& PtrID = BatchIDVec[i];
       
-      T1* p = PtrID ? SerializeTrait<T1>::Materialize(*this) : NULL;
+      T1* p = PtrID ? SerializeTrait<T1>::Create(*this) : NULL;
       
       if (PtrID && A1)
         RegisterPtr(PtrID,p);
@@ -254,10 +254,10 @@ public:
       Ptrs[i] = p;
     }
     
-    P2 = (ID2) ? SerializeTrait<T2>::Materialize(*this) : NULL;
+    P2 = (ID2) ? SerializeTrait<T2>::Create(*this) : NULL;
     if (ID2 && A2) RegisterPtr(ID2,P2);
     
-    P3 = (ID3) ? SerializeTrait<T3>::Materialize(*this) : NULL;
+    P3 = (ID3) ? SerializeTrait<T3>::Create(*this) : NULL;
     if (ID3 && A3) RegisterPtr(ID3,P3);    
   }    
   
@@ -273,7 +273,8 @@ public:
   
   
   template <typename T>
-  void ReadPtr(T*& PtrRef, const SerializedPtrID& PtrID, bool AllowBackpatch = true) {
+  void ReadPtr(T*& PtrRef, const SerializedPtrID& PtrID, 
+               bool AllowBackpatch = true) {
     ReadUIntPtr(reinterpret_cast<uintptr_t&>(PtrRef), PtrID, AllowBackpatch);
   }
   
