@@ -353,8 +353,6 @@ protected:
   /// EmitImpl - Subclasses must implement this method in order to
   ///  be serialized.
   virtual void EmitImpl(llvm::Serializer& S) const;  
-  
-  friend class ASTCotnext;
 };
 
 /// BuiltinType - This class is used for builtin types like 'int'.  Builtin
