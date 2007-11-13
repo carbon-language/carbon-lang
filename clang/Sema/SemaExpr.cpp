@@ -1231,7 +1231,6 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   QualType lType = lex->getType();
   QualType rType = rex->getType();
   
-  
   // For non-floating point types, check for self-comparisons of the form
   // x == x, x != x, x < x, etc.  These always evaluate to a constant, and
   // often indicate logic errors in the program.
@@ -1275,7 +1274,10 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   // when handling null pointer constants. One day, we can consider making them
   // errors (when -pedantic-errors is enabled).
   if (lType->isPointerType() && rType->isPointerType()) { // C99 6.5.8p2
-    if (!LHSIsNull && !RHSIsNull &&
+                                                        
+    if (!LHSIsNull && !RHSIsNull &&                       // C99 6.5.9p2
+        !lType->getAsPointerType()->getPointeeType()->isVoidType() &&
+        !rType->getAsPointerType()->getPointeeType()->isVoidType() &&
         !Context.pointerTypesAreCompatible(lType.getUnqualifiedType(),
                                            rType.getUnqualifiedType())) {
       Diag(loc, diag::ext_typecheck_comparison_of_distinct_pointers,
