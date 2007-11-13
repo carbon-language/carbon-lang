@@ -1221,7 +1221,6 @@ void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl *const*Methods,
     Result += MethodInternalNames[Methods[0]];
     Result += "}\n";
     for (int i = 1; i < NumMethods; i++) {
-      // TODO: Need method address as 3rd initializer.
       Result += "\t  ,{(SEL)\"";
       Result += Methods[i]->getSelector().getName().c_str();
       std::string MethodTypeString;
@@ -1415,8 +1414,7 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
        CDecl = CDecl->getNextClassCategory())
     if (CDecl->getIdentifier() == IDecl->getIdentifier())
       break;
-  assert(CDecl && "RewriteObjcCategoryImplDecl - bad category");
-  
+    
   char *FullCategoryName = (char*)alloca(
     strlen(ClassDecl->getName()) + strlen(IDecl->getName()) + 2);
   sprintf(FullCategoryName, "%s_%s", ClassDecl->getName(), IDecl->getName());
@@ -1434,10 +1432,12 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
                              "CATEGORY_", FullCategoryName, Result);
   
   // Protocols referenced in class declaration?
-  RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(),
-                               CDecl->getNumReferencedProtocols(),
-                               "CATEGORY",
-                               FullCategoryName, Result);
+  // Null CDecl is case of a category implementation with no category interface
+  if (CDecl)
+    RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(),
+                                 CDecl->getNumReferencedProtocols(),
+                                 "CATEGORY",
+                                 FullCategoryName, Result);
   
   /* struct _objc_category {
    char *category_name;
@@ -1490,7 +1490,7 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
   else
     Result += "\t, 0\n";
   
-  if (CDecl->getNumReferencedProtocols() > 0) {
+  if (CDecl && CDecl->getNumReferencedProtocols() > 0) {
     Result += "\t, (struct _objc_protocol_list *)&_OBJC_CATEGORY_PROTOCOLS_"; 
     Result += FullCategoryName;
     Result += "\n";
