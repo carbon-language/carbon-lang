@@ -86,7 +86,7 @@ namespace {
     void RewriteTabs();
     void RewriteForwardClassDecl(ObjcClassDecl *Dcl);
     void RewriteInterfaceDecl(ObjcInterfaceDecl *Dcl);
-    void RewriteImplementationDecl(ObjcImplementationDecl *Dcl);
+    void RewriteImplementationDecl(NamedDecl *Dcl);
     void RewriteObjcMethodDecl(ObjcMethodDecl *MDecl, std::string &ResultStr);
     void RewriteCategoryDecl(ObjcCategoryDecl *Dcl);
     void RewriteProtocolDecl(ObjcProtocolDecl *Dcl);
@@ -382,7 +382,6 @@ void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD,
     ResultStr += "#include <Objc/objc.h>\n";
     includeObjc = true;
   }
-  
   ResultStr += "\nstatic ";
   ResultStr += OMD->getResultType().getAsString();
   ResultStr += "\n_";
@@ -422,7 +421,8 @@ void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD,
   if (OMD->isInstance()) {
     QualType selfTy = Context->getObjcInterfaceType(OMD->getClassInterface());
     selfTy = Context->getPointerType(selfTy);
-    ResultStr += "struct ";
+    if (ObjcSynthesizedStructs.count(OMD->getClassInterface()))
+      ResultStr += "struct ";
     ResultStr += selfTy.getAsString();
   }
   else
@@ -443,13 +443,25 @@ void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD,
   ResultStr += ")";
   
 }
-void RewriteTest::RewriteImplementationDecl(ObjcImplementationDecl *OID) {
+void RewriteTest::RewriteImplementationDecl(NamedDecl *OID) {
+  ObjcImplementationDecl *IMD = dyn_cast<ObjcImplementationDecl>(OID);
+  ObjcCategoryImplDecl *CID = dyn_cast<ObjcCategoryImplDecl>(OID);
   
-  Rewrite.InsertText(OID->getLocStart(), "// ", 3);
+  if (IMD)
+    Rewrite.InsertText(IMD->getLocStart(), "// ", 3);
+  else
+    Rewrite.InsertText(CID->getLocStart(), "// ", 3);
   
-  for (int i = 0; i < OID->getNumInstanceMethods(); i++) {
+  int numMethods = IMD ? IMD->getNumInstanceMethods() 
+                       : CID->getNumInstanceMethods();
+  
+  for (int i = 0; i < numMethods; i++) {
     std::string ResultStr;
-    ObjcMethodDecl *OMD = OID->getInstanceMethods()[i];
+    ObjcMethodDecl *OMD;
+    if (IMD)
+      OMD = IMD->getInstanceMethods()[i];
+    else
+      OMD = CID->getInstanceMethods()[i];
     RewriteObjcMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
     SourceLocation LocEnd = OMD->getBody()->getLocStart();
@@ -460,9 +472,14 @@ void RewriteTest::RewriteImplementationDecl(ObjcImplementationDecl *OID) {
                         ResultStr.c_str(), ResultStr.size());
   }
   
-  for (int i = 0; i < OID->getNumClassMethods(); i++) {
+  numMethods = IMD ? IMD->getNumClassMethods() : CID->getNumClassMethods();
+  for (int i = 0; i < numMethods; i++) {
     std::string ResultStr;
-    ObjcMethodDecl *OMD = OID->getClassMethods()[i];
+    ObjcMethodDecl *OMD;
+    if (IMD)
+      OMD = IMD->getClassMethods()[i];
+    else
+      OMD = CID->getClassMethods()[i];
     RewriteObjcMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
     SourceLocation LocEnd = OMD->getBody()->getLocStart();
@@ -472,7 +489,10 @@ void RewriteTest::RewriteImplementationDecl(ObjcImplementationDecl *OID) {
     Rewrite.ReplaceText(LocStart, endBuf-startBuf,
                         ResultStr.c_str(), ResultStr.size());    
   }
-  Rewrite.InsertText(OID->getLocEnd(), "// ", 3);
+  if (IMD)
+    Rewrite.InsertText(IMD->getLocEnd(), "// ", 3);
+  else
+   Rewrite.InsertText(CID->getLocEnd(), "// ", 3); 
 }
 
 void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
@@ -1722,6 +1742,9 @@ void RewriteTest::RewriteImplementations(std::string &Result) {
   // Rewrite implemented methods
   for (int i = 0; i < ClsDefCount; i++)
     RewriteImplementationDecl(ClassImplementation[i]);
+  
+  for (int i = 0; i < CatDefCount; i++)
+    RewriteImplementationDecl(CategoryImplementation[i]);
   
   // TODO: This is temporary until we decide how to access objc types in a
   // c program
