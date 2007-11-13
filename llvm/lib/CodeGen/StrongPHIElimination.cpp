@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/Statistic.h"
@@ -296,12 +297,15 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   }
 }
 
+/// breakCriticalEdges - Break critical edges coming into blocks with PHI
+/// nodes, preserving dominator and livevariable info.
 void StrongPHIElimination::breakCriticalEdges(MachineFunction &Fn) {
   typedef std::pair<MachineBasicBlock*, MachineBasicBlock*> MBB_pair;
   
   MachineDominatorTree& MDT = getAnalysis<MachineDominatorTree>();
-  //LiveVariables& LV = getAnalysis<LiveVariables>();
+  LiveVariables& LV = getAnalysis<LiveVariables>();
   
+  // Find critical edges
   std::vector<MBB_pair> criticals;
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     if (!I->empty() &&
@@ -314,9 +318,16 @@ void StrongPHIElimination::breakCriticalEdges(MachineFunction &Fn) {
   
   for (std::vector<MBB_pair>::iterator I = criticals.begin(),
        E = criticals.end(); I != E; ++I) {
-    SplitCriticalMachineEdge(I->first, I->second);
+    // Split the edge
+    MachineBasicBlock* new_bb = SplitCriticalMachineEdge(I->first, I->second);
     
+    // Update dominators
     MDT.splitBlock(I->first);
+    
+    // Update livevariables
+    for (unsigned var = 1024; var < Fn.getSSARegMap()->getLastVirtReg(); ++var)
+      if (isLiveOut(LV.getVarInfo(var), I->first))
+        LV.getVarInfo(var).AliveBlocks.set(new_bb->getNumber());
   }
 }
 
