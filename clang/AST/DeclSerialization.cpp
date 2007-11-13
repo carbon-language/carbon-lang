@@ -16,39 +16,23 @@
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 
+using llvm::Serializer;
+using llvm::Deserializer;
+using llvm::SerializedPtrID;
+
 using namespace clang;
 
-void Decl::Emit(llvm::Serializer& S) const {
-  S.EmitInt(getKind());
+//===----------------------------------------------------------------------===//
+// Decl Serialization: Dispatch code to handle specialized decl types.
+//===----------------------------------------------------------------------===//
 
-  switch (getKind()) {
-    default:
-      assert (false && "Not implemented.");
-      break;
-      
-    case BlockVar:
-      cast<BlockVarDecl>(this)->Emit(S);
-      break;
-      
-    case FileVar:
-      cast<FileVarDecl>(this)->Emit(S);
-      break;
-      
-    case ParmVar:
-      cast<ParmVarDecl>(this)->Emit(S);
-      break;
-      
-    case Function:
-      cast<FunctionDecl>(this)->Emit(S);
-      break;
-      
-    case Typedef:
-      cast<TypedefDecl>(this)->Emit(S);
-      break;
-  }
+void Decl::Emit(Serializer& S) const {
+  S.EmitInt(getKind());
+  EmitImpl(S);
 }
 
-Decl* Decl::Materialize(llvm::Deserializer& D) {
+Decl* Decl::Create(Deserializer& D) {
+
   Kind k = static_cast<Kind>(D.ReadInt());
   
   switch (k) {
@@ -57,149 +41,239 @@ Decl* Decl::Materialize(llvm::Deserializer& D) {
       break;
       
     case BlockVar:
-      return BlockVarDecl::Materialize(D);
+      return BlockVarDecl::CreateImpl(D);
       
     case FileVar:
-      return FileVarDecl::Materialize(D);
+      return FileVarDecl::CreateImpl(D);
       
     case ParmVar:
-      return ParmVarDecl::Materialize(D);
+      return ParmVarDecl::CreateImpl(D);
       
     case Function:
-      return FunctionDecl::Materialize(D);
+      return FunctionDecl::CreateImpl(D);
       
     case Typedef:
-      return TypedefDecl::Materialize(D);
+      return TypedefDecl::CreateImpl(D);
   }
 }
 
-void NamedDecl::InternalEmit(llvm::Serializer& S) const {
-  S.EmitPtr(Identifier);
+//===----------------------------------------------------------------------===//
+//      Common serialization logic for subclasses of Decl.
+//===----------------------------------------------------------------------===//
+
+void Decl::EmitInRec(Serializer& S) const {
+  S.Emit(getLocation());                    // From Decl.
 }
 
-void NamedDecl::InternalRead(llvm::Deserializer& D) {
-  D.ReadPtr(Identifier);
+void Decl::ReadInRec(Deserializer& D) {
+  Loc = SourceLocation::ReadVal(D);                 // From Decl.
 }
 
-void ScopedDecl::InternalEmit(llvm::Serializer& S) const {
-  NamedDecl::InternalEmit(S);
-  S.EmitPtr(Next);
-  S.EmitOwnedPtr<Decl>(NextDeclarator);  
+//===----------------------------------------------------------------------===//
+//      Common serialization logic for subclasses of NamedDecl.
+//===----------------------------------------------------------------------===//
+
+void NamedDecl::EmitInRec(Serializer& S) const {
+  Decl::EmitInRec(S);
+  S.EmitPtr(getIdentifier());               // From NamedDecl.
 }
 
-void ScopedDecl::InternalRead(llvm::Deserializer& D) {
-  NamedDecl::InternalRead(D);
-  D.ReadPtr(Next);
-  NextDeclarator = cast_or_null<ScopedDecl>(D.ReadOwnedPtr<Decl>());
+void NamedDecl::ReadInRec(Deserializer& D) {
+  Decl::ReadInRec(D);
+  D.ReadPtr(Identifier);                            // From NamedDecl.  
 }
 
-void ValueDecl::InternalEmit(llvm::Serializer& S) const {
-  S.Emit(DeclType);
-  ScopedDecl::InternalEmit(S);
+//===----------------------------------------------------------------------===//
+//      Common serialization logic for subclasses of ScopedDecl.
+//===----------------------------------------------------------------------===//
+
+void ScopedDecl::EmitInRec(Serializer& S) const {
+  NamedDecl::EmitInRec(S);
+  S.EmitPtr(getNext());                     // From ScopedDecl.  
 }
 
-void ValueDecl::InternalRead(llvm::Deserializer& D) {
-  D.Read(DeclType);
-  ScopedDecl::InternalRead(D);
+void ScopedDecl::ReadInRec(Deserializer& D) {
+  NamedDecl::ReadInRec(D);
+  D.ReadPtr(Next);                                  // From ScopedDecl.
+}
+    
+  //===------------------------------------------------------------===//
+  // NOTE: Not all subclasses of ScopedDecl will use the "OutRec"     //
+  //   methods.  This is because owned pointers are usually "batched" //
+  //   together for efficiency.                                       //
+  //===------------------------------------------------------------===//
+
+void ScopedDecl::EmitOutRec(Serializer& S) const {
+  S.EmitOwnedPtr(getNextDeclarator());   // From ScopedDecl.
 }
 
-void VarDecl::InternalEmit(llvm::Serializer& S) const {
-  S.EmitInt(SClass);
-  S.EmitInt(objcDeclQualifier);
-  ValueDecl::InternalEmit(S);
-  S.EmitOwnedPtr(Init);
+void ScopedDecl::ReadOutRec(Deserializer& D) {
+  NextDeclarator = 
+    cast_or_null<ScopedDecl>(D.ReadOwnedPtr<Decl>()); // From ScopedDecl.
 }
 
-void VarDecl::InternalRead(llvm::Deserializer& D) {
-  SClass = D.ReadInt();
-  objcDeclQualifier = static_cast<ObjcDeclQualifier>(D.ReadInt());
-  ValueDecl::InternalRead(D);
-  D.ReadOwnedPtr(Init);
+//===----------------------------------------------------------------------===//
+//      Common serialization logic for subclasses of ValueDecl.
+//===----------------------------------------------------------------------===//
+
+void ValueDecl::EmitInRec(Serializer& S) const {
+  ScopedDecl::EmitInRec(S);
+  S.Emit(getType());                        // From ValueDecl.
+}
+
+void ValueDecl::ReadInRec(Deserializer& D) {
+  ScopedDecl::ReadInRec(D);
+  DeclType = QualType::ReadVal(D);          // From ValueDecl.
+}
+
+//===----------------------------------------------------------------------===//
+//      Common serialization logic for subclasses of VarDecl.
+//===----------------------------------------------------------------------===//
+
+void VarDecl::EmitInRec(Serializer& S) const {
+  ValueDecl::EmitInRec(S);
+  S.EmitInt(getStorageClass());             // From VarDecl.
+  S.EmitInt(getObjcDeclQualifier());        // From VarDecl.
+}
+
+void VarDecl::ReadInRec(Deserializer& D) {
+  ValueDecl::ReadInRec(D);
+  SClass = static_cast<StorageClass>(D.ReadInt());  // From VarDecl.  
+  objcDeclQualifier = static_cast<ObjcDeclQualifier>(D.ReadInt());  // VarDecl.
+}
+
+    //===------------------------------------------------------------===//
+    // NOTE: VarDecl has its own "OutRec" methods that doesn't use      //
+    //  the one define in ScopedDecl.  This is to batch emit the        //
+    //  owned pointers, which results in a smaller output.
+    //===------------------------------------------------------------===//
+
+void VarDecl::EmitOutRec(Serializer& S) const {
+  // Emit these last because they will create records of their own.
+  S.BatchEmitOwnedPtrs(getInit(),            // From VarDecl.
+                       getNextDeclarator()); // From ScopedDecl.  
+}
+
+void VarDecl::ReadOutRec(Deserializer& D) {
+  Decl* next_declarator;
+  
+  D.BatchReadOwnedPtrs(Init,                           // From VarDecl.
+                       next_declarator);  // From ScopedDecl.
+  
+  setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
 }
 
 
-void BlockVarDecl::Emit(llvm::Serializer& S) const {
-  S.Emit(getLocation());  
-  VarDecl::InternalEmit(S);  
+void VarDecl::EmitImpl(Serializer& S) const {
+  VarDecl::EmitInRec(S);
+  VarDecl::EmitOutRec(S);
 }
 
-BlockVarDecl* BlockVarDecl::Materialize(llvm::Deserializer& D) {
-  SourceLocation L = SourceLocation::ReadVal(D);
-  BlockVarDecl* decl = new BlockVarDecl(L,NULL,QualType(),None,NULL);
-  decl->VarDecl::InternalRead(D);
+void VarDecl::ReadImpl(Deserializer& D) {
+  ReadInRec(D);
+  ReadOutRec(D);
+}
+
+//===----------------------------------------------------------------------===//
+//      BlockVarDecl Serialization.
+//===----------------------------------------------------------------------===//
+
+BlockVarDecl* BlockVarDecl::CreateImpl(Deserializer& D) {  
+  BlockVarDecl* decl = 
+    new BlockVarDecl(SourceLocation(),NULL,QualType(),None,NULL);
+ 
+  decl->VarDecl::ReadImpl(D);
+  
   return decl;
 }
 
-void FileVarDecl::Emit(llvm::Serializer& S) const {
-  S.Emit(getLocation());  
-  VarDecl::InternalEmit(S);  
-}
+//===----------------------------------------------------------------------===//
+//      FileVarDecl Serialization.
+//===----------------------------------------------------------------------===//
 
-FileVarDecl* FileVarDecl::Materialize(llvm::Deserializer& D) {
-  SourceLocation L = SourceLocation::ReadVal(D);
-  FileVarDecl* decl = new FileVarDecl(L,NULL,QualType(),None,NULL);
-  decl->VarDecl::InternalRead(D);
+FileVarDecl* FileVarDecl::CreateImpl(Deserializer& D) {
+  FileVarDecl* decl =
+    new FileVarDecl(SourceLocation(),NULL,QualType(),None,NULL);
+  
+  decl->VarDecl::ReadImpl(D);
+
   return decl;
 }
 
-void ParmVarDecl::Emit(llvm::Serializer& S) const {
-  S.Emit(getLocation());  
-  VarDecl::InternalEmit(S);  
-}
+//===----------------------------------------------------------------------===//
+//      ParmDecl Serialization.
+//===----------------------------------------------------------------------===//
 
-ParmVarDecl* ParmVarDecl::Materialize(llvm::Deserializer& D) {
-  SourceLocation L = SourceLocation::ReadVal(D);
-  ParmVarDecl* decl = new ParmVarDecl(L,NULL,QualType(),None,NULL);
-  decl->VarDecl::InternalRead(D);
+ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D) {
+  ParmVarDecl* decl =
+    new ParmVarDecl(SourceLocation(),NULL,QualType(),None,NULL);
+  
+  decl->VarDecl::ReadImpl(D);
+  
   return decl;
 }
 
-void FunctionDecl::Emit(llvm::Serializer& S) const {
-  S.Emit(getLocation());
-  S.EmitInt(SClass);
-  S.EmitBool(IsInline);
-  
-  ValueDecl::InternalEmit(S);
+//===----------------------------------------------------------------------===//
+//      FunctionDecl Serialization.
+//===----------------------------------------------------------------------===//
 
-  unsigned NumParams = getNumParams();
-  S.EmitInt(NumParams);
+void FunctionDecl::EmitImpl(Serializer& S) const {
+  S.EmitInt(SClass);           // From FunctionDecl.
+  S.EmitBool(IsInline);        // From FunctionDecl.
+  ValueDecl::EmitInRec(S);
+  S.EmitPtr(DeclChain);
   
-  for (unsigned i = 0 ; i < NumParams; ++i)
-    S.EmitOwnedPtr(ParamInfo[i]);
+  // NOTE: We do not need to serialize out the number of parameters, because
+  //  that is encoded in the type (accessed via getNumParams()).
   
-  S.EmitOwnedPtr(Body);
+  S.BatchEmitOwnedPtrs(getNumParams(),&ParamInfo[0], // From FunctionDecl.
+                       Body, // From FunctionDecl.
+                       getNextDeclarator());  // From ScopedDecl.
 }
 
-FunctionDecl* FunctionDecl::Materialize(llvm::Deserializer& D) {
-  SourceLocation L = SourceLocation::ReadVal(D);
+FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D) {
   StorageClass SClass = static_cast<StorageClass>(D.ReadInt());
   bool IsInline = D.ReadBool();
-
-  FunctionDecl* decl = new FunctionDecl(L,NULL,QualType(),SClass,IsInline);
   
-  decl->ValueDecl::InternalRead(D);
-
-  unsigned NumParams = D.ReadInt();
-  decl->ParamInfo = NumParams ? new ParmVarDecl*[NumParams] : NULL;
+  FunctionDecl* decl =
+    new FunctionDecl(SourceLocation(),NULL,QualType(),SClass,IsInline);
   
-  for (unsigned i = 0 ; i < NumParams; ++i)
-    D.ReadOwnedPtr(decl->ParamInfo[i]);
-
-  D.ReadOwnedPtr(decl->Body);
+  decl->ValueDecl::ReadInRec(D);
+  D.ReadPtr(decl->DeclChain);
+  
+  decl->ParamInfo = decl->getNumParams()
+                    ? new ParmVarDecl*[decl->getNumParams()] 
+                    : NULL;
+  
+  Decl* next_declarator;
+  
+  D.BatchReadOwnedPtrs(decl->getNumParams(),
+                reinterpret_cast<Decl**>(&decl->ParamInfo[0]), // FunctionDecl.
+                decl->Body,  // From FunctionDecl.
+                next_declarator); // From ScopedDecl.
+  
+  decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
   
   return decl;
 }
 
-void TypedefDecl::Emit(llvm::Serializer& S) const {
-  S.Emit(getLocation());
+//===----------------------------------------------------------------------===//
+//      TypedefDecl Serialization.
+//===----------------------------------------------------------------------===//
+
+void TypedefDecl::EmitImpl(Serializer& S) const {
   S.Emit(UnderlyingType);
-  InternalEmit(S);
+  ScopedDecl::EmitInRec(S);
+  ScopedDecl::EmitOutRec(S);
 }
 
-TypedefDecl* TypedefDecl::Materialize(llvm::Deserializer& D) {
-  SourceLocation L = SourceLocation::ReadVal(D);
-  TypedefDecl* decl = new TypedefDecl(L,NULL,QualType(),NULL);
-  D.Read(decl->UnderlyingType);
-  decl->InternalRead(D);
+TypedefDecl* TypedefDecl::CreateImpl(Deserializer& D) {
+  QualType T = QualType::ReadVal(D);
+  
+  TypedefDecl* decl = new TypedefDecl(SourceLocation(),NULL,T,NULL);
+  
+  decl->ScopedDecl::ReadInRec(D);
+  decl->ScopedDecl::ReadOutRec(D);
+
   return decl;
 }
