@@ -2140,21 +2140,9 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     resultDeclType = Context.getObjcIdType();
   
   Decl *CDecl = static_cast<Decl*>(ClassDecl);
-  ObjcInterfaceDecl *IDecl = 0;
-  ObjcImplementationDecl *ImpDecl = 0;
-  ObjcCategoryImplDecl *CatImpDecl = 0;
-  if (isa<ObjcInterfaceDecl>(CDecl))
-    IDecl = cast<ObjcInterfaceDecl>(CDecl);
-  else if (isa<ObjcCategoryDecl>(CDecl))
-    IDecl = cast<ObjcCategoryDecl>(CDecl)->getClassInterface(); // FIXME: what is this? (talk to fariborz)
-  else if ((ImpDecl = dyn_cast<ObjcImplementationDecl>(CDecl)))
-    IDecl = ImpDecl->getClassInterface(); // FIXME: what is this? (talk to fariborz)
-  else if ((CatImpDecl = dyn_cast<ObjcCategoryImplDecl>(CDecl)))
-    IDecl = cast<ObjcCategoryImplDecl>(CDecl)->getClassInterface(); // FIXME: what is this? (talk to fariborz)
-  
   ObjcMethodDecl* ObjcMethod =  new ObjcMethodDecl(MethodLoc, EndLoc, Sel,
                                       resultDeclType,
-                                      IDecl,
+                                      CDecl,
                                       0, -1, AttrList, 
                                       MethodType == tok::minus,
                                       MethodDeclKind == tok::objc_optional ? 
@@ -2164,11 +2152,13 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   ObjcMethod->setObjcDeclQualifier(
     CvtQTToAstBitMask(ReturnQT.getObjcDeclQualifier()));
   const ObjcMethodDecl *PrevMethod = 0;
+ 
   // For implementations (which can be very "coarse grain"), we add the 
   // method now. This allows the AST to implement lookup methods that work 
   // incrementally (without waiting until we parse the @end). It also allows 
   // us to flag multiple declaration errors as they occur.
-  if (ImpDecl) {
+  if (ObjcImplementationDecl *ImpDecl = 
+        dyn_cast<ObjcImplementationDecl>(CDecl)) {
     if (MethodType == tok::minus) {
       PrevMethod = ImpDecl->lookupInstanceMethod(Sel);
       ImpDecl->addInstanceMethod(ObjcMethod);
@@ -2176,7 +2166,9 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
       PrevMethod = ImpDecl->lookupClassMethod(Sel);
       ImpDecl->addClassMethod(ObjcMethod);
     }
-  } else if (CatImpDecl) {
+  } 
+  else if (ObjcCategoryImplDecl *CatImpDecl = 
+            dyn_cast<ObjcCategoryImplDecl>(CDecl)) {
     if (MethodType == tok::minus) {
       PrevMethod = CatImpDecl->lookupInstanceMethod(Sel);
       CatImpDecl->addInstanceMethod(ObjcMethod);
