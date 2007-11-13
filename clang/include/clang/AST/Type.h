@@ -156,28 +156,11 @@ public:
   /// appropriate type qualifiers on it.
   inline QualType getCanonicalType() const;
   
-  /// Emit - Serialize a QualType using a Bitcode Serializer.
+  /// Emit - Serialize a QualType to Bitcode.
   void Emit(llvm::Serializer& S) const;
   
-  /// Read - Deserialize a QualType using a Bitcode Deserializer.  This
-  ///  deserialization requires that a QualType be default constructed
-  ///  first.  This is because internally the deserialization relies on
-  ///  pointer backpatching performed by the Deserializer.  Deserialization
-  ///  of a QualType should only be done on an instance of QualType that
-  ///  exists, in place, within its containing object.
-  void Read(llvm::Deserializer& D);
-  
-  static inline QualType ReadVal(llvm::Deserializer& D) {
-    QualType Q;
-    Q.Read(D);
-    return Q;
-  }
-  
-  /// EmitOwned - Serialize a QualType that owns the underlying Type*.
-  void EmitOwned(llvm::Serializer& S) const;
-  
-  /// ReadOwned - Deserialize a QualType that owns the underlying Thpe*.
-  void ReadOwned(llvm::Deserializer& S);
+  /// Read - Deserialize a QualType from Bitcode.
+  static QualType ReadVal(llvm::Deserializer& D);
 };
 
 } // end clang.
@@ -359,6 +342,19 @@ private:
 public:
   virtual void getAsStringInternal(std::string &InnerString) const = 0;
   static bool classof(const Type *) { return true; }
+  
+protected:  
+  /// Emit - Emit a Type to bitcode.  Used by ASTContext.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Create - Construct a Type from bitcode.  Used by ASTContext.
+  static void Create(ASTContext& Context, unsigned i, llvm::Deserializer& S);
+  
+  /// EmitImpl - Subclasses must implement this method in order to
+  ///  be serialized.
+  virtual void EmitImpl(llvm::Serializer& S) const;  
+  
+  friend class ASTCotnext;
 };
 
 /// BuiltinType - This class is used for builtin types like 'int'.  Builtin
@@ -397,9 +393,6 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == Builtin; }
   static bool classof(const BuiltinType *) { return true; }
-  
-  void Emit(llvm::Serializer& S) const;
-  static BuiltinType* Create(llvm::Deserializer& D);
 };
 
 /// ComplexType - C99 6.2.5p11 - Complex values.  This supports the C99 complex
@@ -415,8 +408,7 @@ public:
   QualType getElementType() const { return ElementType; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
-  
-  
+    
   void Profile(llvm::FoldingSetNodeID &ID) {
     Profile(ID, getElementType());
   }
@@ -427,8 +419,10 @@ public:
   static bool classof(const Type *T) { return T->getTypeClass() == Complex; }
   static bool classof(const ComplexType *) { return true; }
   
-  void Emit(llvm::Serializer& S) const;
-  static ComplexType* Create(llvm::Deserializer& D);
+protected:  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
+  friend class Type;
 };
 
 
@@ -456,9 +450,11 @@ public:
   
   static bool classof(const Type *T) { return T->getTypeClass() == Pointer; }
   static bool classof(const PointerType *) { return true; }
-  
-  void Emit(llvm::Serializer& S) const;
-  static PointerType* Create(llvm::Deserializer& D);
+
+protected:  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
+  friend class Type;
 };
 
 /// ReferenceType - C++ 8.3.2 - Reference Declarators.
@@ -483,9 +479,6 @@ public:
 
   static bool classof(const Type *T) { return T->getTypeClass() == Reference; }
   static bool classof(const ReferenceType *) { return true; }
-  
-  void Emit(llvm::Serializer& S) const;
-  static ReferenceType* Create(llvm::Deserializer& D);
 };
 
 /// ArrayType - C99 6.7.5.2 - Array Declarators.
@@ -532,10 +525,6 @@ public:
            T->getTypeClass() == VariableArray;
   }
   static bool classof(const ArrayType *) { return true; }
-  
-protected:
-  void EmitArrayTypeInternal(llvm::Serializer& S) const;
-  void ReadArrayTypeInternal(llvm::Deserializer& S);
 };
 
 class ConstantArrayType : public ArrayType {
@@ -573,9 +562,6 @@ public:
     return T->getTypeClass() == ConstantArray; 
   }
   static bool classof(const ConstantArrayType *) { return true; }
-  
-  void Emit(llvm::Serializer& S) const;
-  static ConstantArrayType* Create(llvm::Deserializer& D);
 };
 
 // FIXME: VariableArrayType's aren't uniqued (since expressions aren't).
@@ -610,9 +596,6 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ET) {
     ID.AddPointer(ET.getAsOpaquePtr());
   }
-  
-  void Emit(llvm::Serializer& S) const;
-  static VariableArrayType* Create(llvm::Deserializer& D);
 };
 
 /// VectorType - GCC generic vector type. This type is created using
@@ -653,9 +636,6 @@ public:
     return T->getTypeClass() == Vector || T->getTypeClass() == OCUVector; 
   }
   static bool classof(const VectorType *) { return true; }
-  
-  void Emit(llvm::Serializer& S) const;
-  static VectorType* Create(llvm::Deserializer& D);
 };
 
 /// OCUVectorType - Extended vector type. This type is created using
@@ -739,10 +719,6 @@ public:
            T->getTypeClass() == FunctionProto;
   }
   static bool classof(const FunctionType *) { return true; }
-  
-protected:
-  void EmitFunctionTypeInternal(llvm::Serializer& S) const;
-  void ReadFunctionTypeInternal(llvm::Deserializer& D);
 };
 
 /// FunctionTypeNoProto - Represents a K&R-style 'int foo()' function, which has
@@ -767,9 +743,6 @@ public:
     return T->getTypeClass() == FunctionNoProto;
   }
   static bool classof(const FunctionTypeNoProto *) { return true; }
-  
-  void Emit(llvm::Serializer& S) const { EmitFunctionTypeInternal(S); }
-  static FunctionTypeNoProto* Create(llvm::Deserializer& D);
 };
 
 /// FunctionTypeProto - Represents a prototype with argument type info, e.g.
@@ -818,14 +791,11 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType Result,
                       arg_type_iterator ArgTys, unsigned NumArgs,
                       bool isVariadic);
-  
-  void Emit(llvm::Serializer& S) const;
-  static FunctionTypeProto* Create(llvm::Deserializer& D);
-  
-protected:
-  // Used by deserialization.
-  FunctionTypeProto() 
-  : FunctionType(FunctionProto, QualType(), false, QualType()) {}
+
+protected:  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
+  friend class Type;
 };
 
 
@@ -851,9 +821,6 @@ public:
 
   static bool classof(const Type *T) { return T->getTypeClass() == TypeName; }
   static bool classof(const TypedefType *) { return true; }
-  
-  void Emit(llvm::Serializer& S) const;
-  static TypedefType* Create(llvm::Deserializer& D);
 };
 
 /// TypeOfExpr (GCC extension).

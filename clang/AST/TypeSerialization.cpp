@@ -13,223 +13,120 @@
 
 #include "clang/AST/Type.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ASTContext.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 
 using namespace clang;
+using llvm::Serializer;
+using llvm::Deserializer;
+using llvm::SerializedPtrID;
 
-void QualType::Emit(llvm::Serializer& S) const {
+
+void QualType::Emit(Serializer& S) const {
   S.EmitPtr(getAsOpaquePtr());
   S.EmitInt(getQualifiers());
 }
 
-void QualType::Read(llvm::Deserializer& D) {
-  D.ReadUIntPtr(ThePtr,false);
-  ThePtr |= D.ReadInt();
+QualType QualType::ReadVal(Deserializer& D) {
+  QualType Q;
+  D.ReadUIntPtr(Q.ThePtr,false);
+  Q.ThePtr |= D.ReadInt();
+  return Q;
 }
 
-void QualType::EmitOwned(llvm::Serializer& S) const {
-  S.EmitInt(getQualifiers());
-  S.EmitOwnedPtr(cast<BuiltinType>(getTypePtr()));
+//===----------------------------------------------------------------------===//
+// Type Serialization: Dispatch code to handle specific types.
+//===----------------------------------------------------------------------===//
+
+void Type::Emit(Serializer& S) const {
+  S.EmitInt(getTypeClass());
+  S.EmitPtr(this);
+  
+  if (!isa<BuiltinType>(this))
+    EmitImpl(S);
 }
 
-void QualType::ReadOwned(llvm::Deserializer& D) {
-  ThePtr = D.ReadInt();
-  ThePtr |= reinterpret_cast<uintptr_t>(D.ReadOwnedPtr<BuiltinType>());
+void Type::EmitImpl(Serializer& S) const {
+  assert (false && "Serializization for type not supported.");
 }
 
-/*  FIXME: Either remove this method or complete it.
-
-void Type::Emit(llvm::Serializer& S) {
-  switch (getTypeClass()) {
+void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
+  Type::TypeClass K = static_cast<Type::TypeClass>(D.ReadInt());
+  SerializedPtrID PtrID = D.ReadPtrID();  
+  
+  switch (K) {
     default:
-      assert (false && "Serialization for type class not implemented.");
+      assert (false && "Deserialization for type not supported.");
+      break;
+            
+    case Type::Builtin:
+      assert (i < Context.getTypes().size());
+      assert (isa<BuiltinType>(Context.getTypes()[i]));
+      D.RegisterPtr(PtrID,Context.getTypes()[i]); 
       break;
       
-    case Type::Builtin:
-      cast<BuiltinType>(this)->Emit(S);
+    case Type::Complex:
+      D.RegisterPtr(PtrID,ComplexType::CreateImpl(Context,D));
       break;
+      
+    case Type::FunctionProto:
+      D.RegisterPtr(PtrID,FunctionTypeProto::CreateImpl(Context,D));
+      break;
+      
+    case Type::Pointer:
+      D.RegisterPtr(PtrID,PointerType::CreateImpl(Context,D));
+      break;      
   }
 }
- */
 
-void Type::EmitTypeInternal(llvm::Serializer& S) const {
-  S.Emit(CanonicalType);
+//===----------------------------------------------------------------------===//
+// ComplexType
+//===----------------------------------------------------------------------===//
+
+void ComplexType::EmitImpl(Serializer& S) const {
+  S.Emit(getElementType());
 }
 
-void Type::ReadTypeInternal(llvm::Deserializer& D) {
-  D.Read(CanonicalType);
+Type* ComplexType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  return Context.getComplexType(QualType::ReadVal(D)).getTypePtr();
 }
 
-void BuiltinType::Emit(llvm::Serializer& S) const {
-  S.EmitInt(TypeKind);
-}
+//===----------------------------------------------------------------------===//
+// FunctionTypeProto
+//===----------------------------------------------------------------------===//
 
-BuiltinType* BuiltinType::Create(llvm::Deserializer& D) {
-  Kind k = static_cast<Kind>(D.ReadInt());
-  BuiltinType* T = new BuiltinType(k);
-  return T;
-}
-
-
-
-void ComplexType::Emit(llvm::Serializer& S) const {
-  EmitTypeInternal(S);
-  S.Emit(ElementType);
-}
-
-ComplexType* ComplexType::Create(llvm::Deserializer& D) {
-  ComplexType* T = new ComplexType(QualType(),QualType());
-  T->ReadTypeInternal(D);
-  D.Read(T->ElementType);
-  return T;
-}
-
-void PointerType::Emit(llvm::Serializer& S) const {
-  EmitTypeInternal(S);
-  S.Emit(PointeeType);
-}
-
-PointerType* PointerType::Create(llvm::Deserializer& D) {
-  PointerType* T = new PointerType(QualType(),QualType());
-  T->ReadTypeInternal(D);
-  D.Read(T->PointeeType);
-  return T;
-}
-
-void ReferenceType::Emit(llvm::Serializer& S) const {
-  EmitTypeInternal(S);
-  S.Emit(ReferenceeType);
-}
-
-ReferenceType* ReferenceType::Create(llvm::Deserializer& D) {
-  ReferenceType* T = new ReferenceType(QualType(),QualType());
-  T->ReadTypeInternal(D);
-  D.Read(T->ReferenceeType);
-  return T;
-}
-
-void ArrayType::EmitArrayTypeInternal(llvm::Serializer& S) const {
-  EmitTypeInternal(S);
-  S.Emit(ElementType);
-  S.EmitInt(SizeModifier);
-  S.EmitInt(IndexTypeQuals);
-}
-
-void ArrayType::ReadArrayTypeInternal(llvm::Deserializer& D) {
-  ReadTypeInternal(D);
-  D.Read(ElementType);
-  SizeModifier = static_cast<ArraySizeModifier>(D.ReadInt());
-  IndexTypeQuals = D.ReadInt();
-}
-
-void ConstantArrayType::Emit(llvm::Serializer& S) const {
-  EmitArrayTypeInternal(S);
-  S.Emit(Size);
-}
-
-ConstantArrayType* ConstantArrayType::Create(llvm::Deserializer& D) {
-  // "Default" construct the array type.
-  ConstantArrayType* T =
-    new ConstantArrayType(QualType(), QualType(), llvm::APInt(), 
-                          ArrayType::Normal, 0);
+void FunctionTypeProto::EmitImpl(Serializer& S) const {
+  S.Emit(getResultType());
+  S.EmitBool(isVariadic());
+  S.EmitInt(getNumArgs());
   
-  // Deserialize the internal values.
-  T->ReadArrayTypeInternal(D);  
-  D.Read(T->Size);
-
-  return T;
+  for (arg_type_iterator I=arg_type_begin(), E=arg_type_end(); I!=E; ++I)
+    S.Emit(*I);
 }
 
-void VariableArrayType::Emit(llvm::Serializer& S) const {
-  EmitArrayTypeInternal(S);
-  S.EmitOwnedPtr(SizeExpr);
-}
-
-VariableArrayType* VariableArrayType::Create(llvm::Deserializer& D) {
-  // "Default" construct the array type.
-  VariableArrayType* T =
-    new VariableArrayType(QualType(), QualType(), NULL, ArrayType::Normal, 0);
-  
-  // Deserialize the internal values.
-  T->ReadArrayTypeInternal(D);
-  T->SizeExpr = D.ReadOwnedPtr<Expr>();
-  
-  return T;
-}
-
-void VectorType::Emit(llvm::Serializer& S) const {
-  EmitTypeInternal(S);
-  S.Emit(ElementType);
-  S.EmitInt(NumElements);
-}
-
-VectorType* VectorType::Create(llvm::Deserializer& D) {
-  VectorType* T = new VectorType(QualType(),0,QualType());
-  T->ReadTypeInternal(D);
-  D.Read(T->ElementType);
-  T->NumElements = D.ReadInt();
-  return T;
-}
-
-void FunctionType::EmitFunctionTypeInternal(llvm::Serializer &S) const {
-  EmitTypeInternal(S);
-  S.EmitBool(SubClassData);
-  S.Emit(ResultType);
-}
-
-void FunctionType::ReadFunctionTypeInternal(llvm::Deserializer& D) {
-  ReadTypeInternal(D);
-  SubClassData = D.ReadBool();
-  D.Read(ResultType);
-}
-
-
-FunctionTypeNoProto* FunctionTypeNoProto::Create(llvm::Deserializer& D) {
-  FunctionTypeNoProto* T = new FunctionTypeNoProto(QualType(),QualType());
-  T->ReadFunctionTypeInternal(D);
-  return T;
-}
-
-void FunctionTypeProto::Emit(llvm::Serializer& S) const {
-  S.EmitInt(NumArgs);
-  EmitFunctionTypeInternal(S);
-  
-  for (arg_type_iterator i = arg_type_begin(), e = arg_type_end(); i!=e; ++i)
-    S.Emit(*i);    
-}
-
-FunctionTypeProto* FunctionTypeProto::Create(llvm::Deserializer& D) {
+Type* FunctionTypeProto::CreateImpl(ASTContext& Context, Deserializer& D) {
+  QualType ResultType = QualType::ReadVal(D);
+  bool isVariadic = D.ReadBool();
   unsigned NumArgs = D.ReadInt();
   
-  FunctionTypeProto *FTP = 
-  (FunctionTypeProto*)malloc(sizeof(FunctionTypeProto) + 
-                             NumArgs*sizeof(QualType));
-  
-  // Default construct.  Internal fields will be populated using
-  // deserialization.
-  new (FTP) FunctionTypeProto();
-  
-  FTP->NumArgs = NumArgs;
-  FTP->ReadFunctionTypeInternal(D);
-  
-  // Fill in the trailing argument array.
-  QualType *ArgInfo = reinterpret_cast<QualType *>(FTP+1);;
+  llvm::SmallVector<QualType,15> Args;
 
-  for (unsigned i = 0; i != NumArgs; ++i)
-    D.Read(ArgInfo[i]);
-  
-  return FTP;
+  for (unsigned j = 0; j < NumArgs; ++j)
+    Args.push_back(QualType::ReadVal(D));
+
+  return Context.getFunctionType(ResultType,&*Args.begin(), 
+                           NumArgs,isVariadic).getTypePtr();
 }
 
-void TypedefType::Emit(llvm::Serializer& S) const {
-  EmitTypeInternal(S);
-  S.EmitPtr(Decl);
+//===----------------------------------------------------------------------===//
+// PointerType
+//===----------------------------------------------------------------------===//
+
+void PointerType::EmitImpl(Serializer& S) const {
+  S.Emit(getPointeeType());
 }
 
-TypedefType* TypedefType::Create(llvm::Deserializer& D) {
-  TypedefType* T = new TypedefType(NULL,QualType());
-  T->ReadTypeInternal(D);
-  D.ReadPtr(T->Decl);
-  return T;
+Type* PointerType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  return Context.getPointerType(QualType::ReadVal(D)).getTypePtr();
 }

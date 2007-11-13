@@ -105,7 +105,8 @@ public:
   ~ASTContext();
   
   void PrintStats() const;
- 
+  const std::vector<Type*>& getTypes() const { return Types; }
+  
   //===--------------------------------------------------------------------===//
   //                           Type Constructors
   //===--------------------------------------------------------------------===//
