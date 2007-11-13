@@ -110,6 +110,9 @@ Stmt* Stmt::Create(Deserializer& D) {
     case LabelStmtClass:
       return LabelStmt::CreateImpl(D);
       
+    case MemberExprClass:
+      return MemberExpr::CreateImpl(D);
+      
     case NullStmtClass:
       return NullStmt::CreateImpl(D);
       
@@ -507,6 +510,22 @@ LabelStmt* LabelStmt::CreateImpl(Deserializer& D) {
   SourceLocation IdentLoc = SourceLocation::ReadVal(D);
   Stmt* SubStmt = D.ReadOwnedPtr<Stmt>();
   return new LabelStmt(IdentLoc,Label,SubStmt);
+}
+
+void MemberExpr::EmitImpl(Serializer& S) const {
+  S.Emit(MemberLoc);
+  S.EmitPtr(MemberDecl);
+  S.EmitBool(IsArrow);
+  S.EmitOwnedPtr(Base);
+}
+
+MemberExpr* MemberExpr::CreateImpl(Deserializer& D) {
+  SourceLocation L = SourceLocation::ReadVal(D);
+  FieldDecl* MemberDecl = cast<FieldDecl>(D.ReadPtr<Decl>());
+  bool IsArrow = D.ReadBool();
+  Expr* base = D.ReadOwnedPtr<Expr>();
+  
+  return new MemberExpr(base,IsArrow,MemberDecl,L); 
 }
 
 void NullStmt::EmitImpl(Serializer& S) const {

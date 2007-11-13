@@ -627,6 +627,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static MemberExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 /// OCUVectorElementExpr - This represents access to specific elements of a
