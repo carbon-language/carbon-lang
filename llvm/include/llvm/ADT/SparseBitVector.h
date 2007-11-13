@@ -800,7 +800,7 @@ public:
   }
 
   iterator end() const {
-    return iterator(this, ~0);
+    return iterator(this, true);
   }
 
   // Get a hash value for this bitmap.
