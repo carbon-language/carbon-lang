@@ -252,6 +252,7 @@ public:
     AttrList = alist;
   }
   AttributeList *getAttributes() const { return AttrList; }
+  void clearAttributes() { AttrList = 0; }
   
   llvm::SmallVector<Action::DeclTy *, 8> *getProtocolQualifiers() const {
     return ProtocolQualifiers;
@@ -388,12 +389,12 @@ struct DeclaratorChunk {
     SourceLocation IdentLoc;
     Action::TypeTy *TypeInfo;
     bool InvalidType;
-    // FIXME: this also needs an attribute list.
+    AttributeList *AttrList;
     ParamInfo() {}
     ParamInfo(IdentifierInfo *ident, SourceLocation iloc, Action::TypeTy *typ,
-              bool flag = false)
-      : Ident(ident), IdentLoc(iloc), TypeInfo(typ), InvalidType(flag) {
-    }
+              bool flag = false, AttributeList *AL = 0)
+      : Ident(ident), IdentLoc(iloc), TypeInfo(typ), InvalidType(flag),
+        AttrList(AL) {}
   };
   
   struct FunctionTypeInfo {
@@ -496,7 +497,7 @@ struct DeclaratorChunk {
 /// Instances of this class should be a transient object that lives on the
 /// stack, not objects that are allocated in large quantities on the heap.
 class Declarator {
-  const DeclSpec &DS;
+  DeclSpec &DS;
   IdentifierInfo *Identifier;
   SourceLocation IdentifierLoc;
   
@@ -527,7 +528,7 @@ private:
   // attributes.
   AttributeList *AttrList;
 public:
-  Declarator(const DeclSpec &ds, TheContext C)
+  Declarator(DeclSpec &ds, TheContext C)
     : DS(ds), Identifier(0), Context(C), InvalidType(false), AttrList(0) {
   }
   
@@ -537,7 +538,7 @@ public:
 
   /// getDeclSpec - Return the declaration-specifier that this declarator was
   /// declared with.
-  const DeclSpec &getDeclSpec() const { return DS; }
+  DeclSpec &getDeclSpec() const { return DS; }
   
   TheContext getContext() const { return Context; }
   

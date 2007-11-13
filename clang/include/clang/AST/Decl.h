@@ -14,8 +14,9 @@
 #ifndef LLVM_CLANG_AST_DECL_H
 #define LLVM_CLANG_AST_DECL_H
 
-#include "clang/Basic/SourceLocation.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/SourceLocation.h"
+#include "clang/Parse/AttributeList.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 
@@ -27,7 +28,6 @@ namespace clang {
 class Expr;
 class Stmt;
 class FunctionDecl;
-class AttributeList;
 class IdentifierInfo;
 
 /// Decl - This represents one declaration (or definition), e.g. a variable, 
@@ -249,13 +249,20 @@ protected:
 /// an enum constant. 
 class ValueDecl : public ScopedDecl {
   QualType DeclType;
+
+  /// Attributes - Linked list of attributes that are attached to this
+  /// function.
+  AttributeList *Attributes;
 protected:
   ValueDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
-            ScopedDecl *PrevDecl) : ScopedDecl(DK, L, Id, PrevDecl), DeclType(T) {}
+            ScopedDecl *PrevDecl, AttributeList *A = 0) 
+    : ScopedDecl(DK, L, Id, PrevDecl), DeclType(T), Attributes(A) {}
 public:
   QualType getType() const { return DeclType; }
   void setType(QualType newType) { DeclType = newType; }
   QualType getCanonicalType() const { return DeclType.getCanonicalType(); }
+  
+  AttributeList *getAttributes() const { return Attributes; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
@@ -323,8 +330,8 @@ public:
   static bool classof(const VarDecl *D) { return true; }
 protected:
   VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
-          StorageClass SC, ScopedDecl *PrevDecl)
-    : ValueDecl(DK, L, Id, T, PrevDecl), Init(0), 
+          StorageClass SC, ScopedDecl *PrevDecl, AttributeList *A = 0)
+    : ValueDecl(DK, L, Id, T, PrevDecl, A), Init(0), 
       objcDeclQualifier(OBJC_TQ_None) { SClass = SC; }
 private:
   Expr *Init;
@@ -354,8 +361,8 @@ protected:
 class BlockVarDecl : public VarDecl {
 public:
   BlockVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
-               ScopedDecl *PrevDecl)
-    : VarDecl(BlockVar, L, Id, T, S, PrevDecl) {}
+               ScopedDecl *PrevDecl, AttributeList *A = 0)
+    : VarDecl(BlockVar, L, Id, T, S, PrevDecl, A) {}
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == BlockVar; }
@@ -375,8 +382,8 @@ protected:
 class FileVarDecl : public VarDecl {
 public:
   FileVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
-              ScopedDecl *PrevDecl)
-    : VarDecl(FileVar, L, Id, T, S, PrevDecl) {}
+              ScopedDecl *PrevDecl, AttributeList *A = 0)
+    : VarDecl(FileVar, L, Id, T, S, PrevDecl, A) {}
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == FileVar; }
@@ -393,8 +400,8 @@ protected:
 class ParmVarDecl : public VarDecl {
 public:
   ParmVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
-              ScopedDecl *PrevDecl)
-    : VarDecl(ParmVar, L, Id, T, S, PrevDecl) {}
+              ScopedDecl *PrevDecl, AttributeList *A = 0)
+    : VarDecl(ParmVar, L, Id, T, S, PrevDecl, A) {}
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ParmVar; }
@@ -416,8 +423,8 @@ public:
   };
   FunctionDecl(SourceLocation L, IdentifierInfo *Id, QualType T,
                StorageClass S = None, bool isInline = false, 
-               ScopedDecl *PrevDecl = 0)
-    : ValueDecl(Function, L, Id, T, PrevDecl), 
+               ScopedDecl *PrevDecl = 0, AttributeList *Attrs = 0)
+    : ValueDecl(Function, L, Id, T, PrevDecl, Attrs), 
       ParamInfo(0), Body(0), DeclChain(0), SClass(S), IsInline(isInline) {}
   virtual ~FunctionDecl();
 

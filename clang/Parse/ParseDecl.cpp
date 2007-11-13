@@ -1393,7 +1393,11 @@ void Parser::ParseParenDeclarator(Declarator &D) {
       }
         
       ParamInfo.push_back(DeclaratorChunk::ParamInfo(ParmII, 
-        ParmDecl.getIdentifierLoc(), ParamTy.Val, ParmDecl.getInvalidType()));
+        ParmDecl.getIdentifierLoc(), ParamTy.Val, ParmDecl.getInvalidType(),
+        ParmDecl.getDeclSpec().getAttributes()));
+
+      // Ownership of DeclSpec has been handed off to ParamInfo.
+      DS.clearAttributes();
       
       // If the next token is a comma, consume it and keep reading arguments.
       if (Tok.isNot(tok::comma)) break;

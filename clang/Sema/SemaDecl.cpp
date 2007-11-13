@@ -615,7 +615,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
 
     FunctionDecl *NewFD = new FunctionDecl(D.getIdentifierLoc(), II, R, SC,
                                            D.getDeclSpec().isInlineSpecified(),
-                                           LastDeclarator);
+                                           LastDeclarator,
+                                           D.getDeclSpec().getAttributes());
+
+    // Transfer ownership of DeclSpec attributes to FunctionDecl
+    D.getDeclSpec().clearAttributes();
     
     // Merge the decl with the existing one if appropriate.
     if (PrevDecl) {
@@ -838,7 +842,7 @@ Sema::ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, Scope *FnScope
     parmDeclType = Context.getPointerType(parmDeclType);
   
   ParmVarDecl *New = new ParmVarDecl(PI.IdentLoc, II, parmDeclType, 
-                                     VarDecl::None, 0);
+                                     VarDecl::None, 0, PI.AttrList);
   if (PI.InvalidType)
     New->setInvalidDecl();
     
