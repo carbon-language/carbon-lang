@@ -226,9 +226,15 @@ void FunctionDecl::EmitImpl(Serializer& S) const {
   // NOTE: We do not need to serialize out the number of parameters, because
   //  that is encoded in the type (accessed via getNumParams()).
   
-  S.BatchEmitOwnedPtrs(getNumParams(),&ParamInfo[0], // From FunctionDecl.
-                       Body, // From FunctionDecl.
-                       getNextDeclarator());  // From ScopedDecl.
+  if (ParamInfo != NULL) {
+    S.EmitBool(true);
+    S.BatchEmitOwnedPtrs(getNumParams(),&ParamInfo[0], Body,
+                         getNextDeclarator());
+  }
+  else {
+    S.EmitBool(false);
+    S.BatchEmitOwnedPtrs(Body,getNextDeclarator());  
+  }
 }
 
 FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D) {
@@ -247,10 +253,14 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D) {
   
   Decl* next_declarator;
   
-  D.BatchReadOwnedPtrs(decl->getNumParams(),
-                reinterpret_cast<Decl**>(&decl->ParamInfo[0]), // FunctionDecl.
-                decl->Body,  // From FunctionDecl.
-                next_declarator); // From ScopedDecl.
+  bool hasParamDecls = D.ReadBool();
+  
+  if (hasParamDecls)
+    D.BatchReadOwnedPtrs(decl->getNumParams(),
+                         reinterpret_cast<Decl**>(&decl->ParamInfo[0]),
+                         decl->Body, next_declarator);
+  else
+    D.BatchReadOwnedPtrs(decl->Body, next_declarator);
   
   decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
   
