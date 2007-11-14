@@ -88,6 +88,10 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
     case Type::TypeName:
       D.RegisterPtr(PtrID,TypedefType::CreateImpl(Context,D));
       break;
+      
+    case Type::VariableArray:
+      D.RegisterPtr(PtrID,VariableArrayType::CreateImpl(Context,D));
+      break;
   }
 }
 
@@ -199,3 +203,22 @@ Type* TypedefType::CreateImpl(ASTContext& Context, Deserializer& D) {
   return T;
 }
   
+//===----------------------------------------------------------------------===//
+// VariableArrayType
+//===----------------------------------------------------------------------===//
+
+void VariableArrayType::EmitImpl(Serializer& S) const {
+  S.Emit(getElementType());
+  S.EmitInt(getSizeModifier());
+  S.EmitInt(getIndexTypeQualifier());
+  S.EmitOwnedPtr(SizeExpr);
+}
+
+Type* VariableArrayType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  QualType ElTy = QualType::ReadVal(D);
+  ArraySizeModifier am = static_cast<ArraySizeModifier>(D.ReadInt());
+  unsigned ITQ = D.ReadInt();  
+  Expr* SizeExpr = D.ReadOwnedPtr<Expr>();
+  
+  return Context.getVariableArrayType(ElTy,SizeExpr,am,ITQ).getTypePtr();
+}

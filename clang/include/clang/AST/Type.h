@@ -599,6 +599,11 @@ public:
   static void Profile(llvm::FoldingSetNodeID &ID, QualType ET) {
     ID.AddPointer(ET.getAsOpaquePtr());
   }
+  
+protected:  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
+  friend class Type;
 };
 
 /// VectorType - GCC generic vector type. This type is created using
