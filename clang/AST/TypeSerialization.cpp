@@ -228,7 +228,6 @@ Type* TypedefType::CreateImpl(ASTContext& Context, Deserializer& D) {
   Types.push_back(T);
   
   D.ReadPtr(T->Decl); // May be backpatched.
-  assert(false);
   return T;
 }
   
