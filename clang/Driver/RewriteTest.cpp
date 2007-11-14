@@ -313,8 +313,6 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
   typedefString += "\n";
   for (int i = 0; i < numDecls; i++) {
     ObjcInterfaceDecl *ForwardDecl = ForwardDecls[i];
-    if (ObjcForwardDecls.count(ForwardDecl))
-      continue;
     typedefString += "#ifndef _REWRITER_typedef_";
     typedefString += ForwardDecl->getName();
     typedefString += "\n";
@@ -324,9 +322,6 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
     typedefString += "typedef struct objc_object ";
     typedefString += ForwardDecl->getName();
     typedefString += ";\n#endif\n";
-    // Mark this typedef as having been generated.
-    if (!ObjcForwardDecls.insert(ForwardDecl))
-      assert(false && "typedef already output");
   }
   
   // Replace the @class with typedefs corresponding to the classes.
@@ -544,7 +539,7 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
   std::string ResultStr;
   if (!ObjcForwardDecls.count(ClassDecl)) {
     // we haven't seen a forward decl - generate a typedef.
-    ResultStr += "#ifndef _REWRITER_typedef_";
+    ResultStr = "#ifndef _REWRITER_typedef_";
     ResultStr += ClassDecl->getName();
     ResultStr += "\n";
     ResultStr += "#define _REWRITER_typedef_";
