@@ -27,7 +27,10 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/System/Path.h"
+#include "llvm/System/Signals.h"
 #include <set>
+#include <fstream>
 #include <iostream>
 using namespace llvm;
 
@@ -305,10 +308,51 @@ Module *llvm::SplitFunctionsOutOfModule(Module *M,
 Module *BugDriver::ExtractMappedBlocksFromModule(const
                                                  std::vector<BasicBlock*> &BBs,
                                                  Module *M) {
+  char *ExtraArg = NULL;
+
+  sys::Path uniqueFilename("bugpoint-extractblocks");
+  std::string ErrMsg;
+  if (uniqueFilename.createTemporaryFileOnDisk(true, &ErrMsg)) {
+    std::cout << "*** Basic Block extraction failed!\n";
+    std::cerr << "Error creating temporary file: " << ErrMsg << "\n";
+    M = swapProgramIn(M);
+    EmitProgressBitcode("basicblockextractfail", true);
+    swapProgramIn(M);
+    return 0;
+  }
+  sys::RemoveFileOnSignal(uniqueFilename);
+
+  std::ofstream BlocksToNotExtractFile(uniqueFilename.c_str());
+  if (!BlocksToNotExtractFile) {
+    std::cout << "*** Basic Block extraction failed!\n";
+    std::cerr << "Error writing list of blocks to not extract: " << ErrMsg
+              << "\n";
+    M = swapProgramIn(M);
+    EmitProgressBitcode("basicblockextractfail", true);
+    swapProgramIn(M);
+    return 0;
+  }
+  for (std::vector<BasicBlock*>::const_iterator I = BBs.begin(), E = BBs.end();
+       I != E; ++I) {
+    BasicBlock *BB = *I;
+    BlocksToNotExtractFile << BB->getParent()->getName() << " "
+                           << BB->getName() << "\n";
+  }
+  BlocksToNotExtractFile.close();
+
+  const char *uniqueFN = uniqueFilename.c_str();
+  ExtraArg = (char*)malloc(23 + strlen(uniqueFN));
+  strcat(strcpy(ExtraArg, "--extract-blocks-file="), uniqueFN);
+
   std::vector<const PassInfo*> PI;
-  // FIXME: BBs is actually ignored. See http://llvm.org/PR1775
-  PI.push_back(getPI(createBlockExtractorPass(BBs)));
-  Module *Ret = runPassesOn(M, PI);
+  std::vector<BasicBlock *> EmptyBBs; // This parameter is ignored.
+  PI.push_back(getPI(createBlockExtractorPass(EmptyBBs)));
+  Module *Ret = runPassesOn(M, PI, false, 1, &ExtraArg);
+
+  if (uniqueFilename.exists())
+    uniqueFilename.eraseFromDisk(); // Free disk space
+  free(ExtraArg);
+
   if (Ret == 0) {
     std::cout << "*** Basic Block extraction failed, please report a bug!\n";
     M = swapProgramIn(M);

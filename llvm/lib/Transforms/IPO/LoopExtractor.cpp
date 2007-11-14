@@ -21,10 +21,13 @@
 #include "llvm/Pass.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/FunctionUtils.h"
 #include "llvm/ADT/Statistic.h"
+#include <fstream>
+#include <set>
 using namespace llvm;
 
 STATISTIC(NumExtracted, "Number of loops extracted");
@@ -144,15 +147,28 @@ FunctionPass *llvm::createSingleLoopExtractorPass() {
 
 
 namespace {
+  // BlockFile - A file which contains a list of blocks that should not be
+  // extracted.
+  cl::opt<std::string>
+  BlockFile("extract-blocks-file", cl::value_desc("filename"),
+            cl::desc("A file containing list of basic blocks to not extract"),
+            cl::Hidden);
+
   /// BlockExtractorPass - This pass is used by bugpoint to extract all blocks
   /// from the module into their own functions except for those specified by the
   /// BlocksToNotExtract list.
   class BlockExtractorPass : public ModulePass {
+    void LoadFile(const char *Filename);
+
     std::vector<BasicBlock*> BlocksToNotExtract;
+    std::vector<std::pair<std::string, std::string> > BlocksToNotExtractByName;
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit BlockExtractorPass(const std::vector<BasicBlock*> &B) 
-      : ModulePass((intptr_t)&ID), BlocksToNotExtract(B) {}
+      : ModulePass((intptr_t)&ID), BlocksToNotExtract(B) {
+      if (!BlockFile.empty())
+        LoadFile(BlockFile.c_str());
+    }
     BlockExtractorPass() : ModulePass((intptr_t)&ID) {}
 
     bool runOnModule(Module &M);
@@ -171,6 +187,24 @@ ModulePass *llvm::createBlockExtractorPass(const std::vector<BasicBlock*> &BTNE)
   return new BlockExtractorPass(BTNE);
 }
 
+void BlockExtractorPass::LoadFile(const char *Filename) {
+  // Load the BlockFile...
+  std::ifstream In(Filename);
+  if (!In.good()) {
+    cerr << "WARNING: BlockExtractor couldn't load file '" << Filename
+         << "'!\n";
+    return;
+  }
+  while (In) {
+    std::string FunctionName, BlockName;
+    In >> FunctionName;
+    In >> BlockName;
+    if (!BlockName.empty())
+      BlocksToNotExtractByName.push_back(
+          std::make_pair(FunctionName, BlockName));
+  }
+}
+
 bool BlockExtractorPass::runOnModule(Module &M) {
   std::set<BasicBlock*> TranslatedBlocksToNotExtract;
   for (unsigned i = 0, e = BlocksToNotExtract.size(); i != e; ++i) {
@@ -185,6 +219,29 @@ bool BlockExtractorPass::runOnModule(Module &M) {
     Function::iterator BBI = MF->begin();
     std::advance(BBI, std::distance(F->begin(), Function::iterator(BB)));
     TranslatedBlocksToNotExtract.insert(BBI);
+  }
+
+  while (!BlocksToNotExtractByName.empty()) {
+    // There's no way to find BBs by name without looking at every BB inside
+    // every Function. Fortunately, this is always empty except when used by
+    // bugpoint in which case correctness is more important than performance.
+
+    std::string &FuncName  = BlocksToNotExtractByName.back().first;
+    std::string &BlockName = BlocksToNotExtractByName.back().second;
+
+    for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI) {
+      Function &F = *FI;
+      if (F.getName() != FuncName) continue;
+
+      for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
+        BasicBlock &BB = *BI;
+        if (BB.getName() != BlockName) continue;
+
+        TranslatedBlocksToNotExtract.insert(BI);
+      }
+    }
+
+    BlocksToNotExtractByName.pop_back();
   }
 
   // Now that we know which blocks to not extract, figure out which ones we WANT

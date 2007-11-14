@@ -234,7 +234,8 @@ public:
   /// automatically attempt to track down a crashing pass if one exists, and
   /// this method will never return null.
   Module *runPassesOn(Module *M, const std::vector<const PassInfo*> &Passes,
-                      bool AutoDebugCrashes = false);
+                      bool AutoDebugCrashes = false, unsigned NumExtraArgs = 0,
+                      const char * const *ExtraArgs = NULL);
 
   /// runPasses - Run the specified passes on Program, outputting a bitcode
   /// file and writting the filename into OutputFile if successful.  If the
@@ -242,11 +243,13 @@ public:
   /// otherwise return false.  If DeleteOutput is set to true, the bitcode is
   /// deleted on success, and the filename string is undefined.  This prints to
   /// cout a single line message indicating whether compilation was successful
-  /// or failed, unless Quiet is set.
+  /// or failed, unless Quiet is set.  ExtraArgs specifies additional arguments
+  /// to pass to the child bugpoint instance.
   ///
   bool runPasses(const std::vector<const PassInfo*> &PassesToRun,
                  std::string &OutputFilename, bool DeleteOutput = false,
-                 bool Quiet = false) const;
+                 bool Quiet = false, unsigned NumExtraArgs = 0,
+                 const char * const *ExtraArgs = NULL) const;
                  
   /// runManyPasses - Take the specified pass list and create different 
   /// combinations of passes to compile the program with. Compile the program with

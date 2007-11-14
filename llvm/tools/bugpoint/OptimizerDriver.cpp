@@ -124,7 +124,8 @@ int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
 ///
 bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
                           std::string &OutputFilename, bool DeleteOutput,
-                          bool Quiet) const {
+                          bool Quiet, unsigned NumExtraArgs,
+                          const char * const *ExtraArgs) const {
   // setup the output file name
   cout << std::flush;
   sys::Path uniqueFilename("bugpoint-output.bc");
@@ -156,7 +157,7 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
   // setup the child process' arguments
   const char** args = (const char**)
     alloca(sizeof(const char*) * 
-	   (Passes.size()+13+2*PluginLoader::getNumPlugins()));
+	   (Passes.size()+13+2*PluginLoader::getNumPlugins()+NumExtraArgs));
   int n = 0;
   sys::Path tool = sys::Program::FindProgramByName(ToolName);
   if (UseValgrind) {
@@ -182,6 +183,8 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
        E = pass_args.end(); I != E; ++I )
     args[n++] = I->c_str();
   args[n++] = inputFilename.c_str();
+  for (unsigned i = 0; i < NumExtraArgs; ++i)
+    args[n++] = *ExtraArgs;
   args[n++] = 0;
 
   sys::Path prog;
@@ -225,10 +228,12 @@ bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
 /// failure.
 Module *BugDriver::runPassesOn(Module *M,
                                const std::vector<const PassInfo*> &Passes,
-                               bool AutoDebugCrashes) {
+                               bool AutoDebugCrashes, unsigned NumExtraArgs,
+                               const char * const *ExtraArgs) {
   Module *OldProgram = swapProgramIn(M);
   std::string BitcodeResult;
-  if (runPasses(Passes, BitcodeResult, false/*delete*/, true/*quiet*/)) {
+  if (runPasses(Passes, BitcodeResult, false/*delete*/, true/*quiet*/,
+                NumExtraArgs, ExtraArgs)) {
     if (AutoDebugCrashes) {
       cerr << " Error running this sequence of passes"
            << " on the input program!\n";

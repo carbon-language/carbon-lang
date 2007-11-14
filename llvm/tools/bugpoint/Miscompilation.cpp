@@ -223,7 +223,7 @@ bool ReduceMiscompilingFunctions::TestFuncs(const std::vector<Function*>&Funcs){
   Module *ToNotOptimize = CloneModule(BD.getProgram());
   Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize, Funcs);
 
-  // Run the predicate, not that the predicate will delete both input modules.
+  // Run the predicate, note that the predicate will delete both input modules.
   return TestFn(BD, ToOptimize, ToNotOptimize);
 }
 
