@@ -45,7 +45,9 @@ class SerializationTest : public ASTConsumer {
   ASTContext* Context;
   std::list<Decl*> Decls;
   
-  enum { ContextBlock = 0x1, DeclBlock = 0x3 };
+  enum { BasicMetadataBlock,
+         ASTContextBlock,
+         DeclsBlock };
 
 public:  
   SerializationTest() : Context(NULL) {};
@@ -105,7 +107,7 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename) {
   //      Serialize the top-level decls.
   // ===---------------------------------------------------===/  
   
-  Sezr.EnterBlock(DeclBlock);
+  Sezr.EnterBlock(DeclsBlock);
   
   // Create a printer to "consume" our deserialized ASTS.
   ASTConsumer* Printer = CreateASTPrinter();
@@ -125,7 +127,14 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename) {
   //      Serialize the "Translation Unit" metadata.
   // ===---------------------------------------------------===/
 
-  Sezr.EnterBlock(ContextBlock);
+  // Emit ASTContext.
+  Sezr.EnterBlock(ASTContextBlock);  
+  llvm::cerr << "Serializing: ASTContext.\n";  
+  Sezr.EmitOwnedPtr(Context);  
+  Sezr.ExitBlock();  
+  
+  
+  Sezr.EnterBlock(BasicMetadataBlock);
 
   // "Fake" emit the SourceManager.
   llvm::cerr << "Faux-serializing: SourceManager.\n";
@@ -142,11 +151,7 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename) {
   // Emit the Identifier Table.
   llvm::cerr << "Serializing: IdentifierTable.\n";  
   Sezr.EmitOwnedPtr(&Context->Idents);
-  
-  // Emit the ASTContext.
-  llvm::cerr << "Serializing: ASTContext.\n";  
-  Sezr.EmitOwnedPtr(Context);
-  
+
   Sezr.ExitBlock();  
   
   // ===---------------------------------------------------===/
@@ -207,8 +212,16 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename) {
   //      Deserialize the "Translation Unit" metadata.
   // ===---------------------------------------------------===/
   
-  // Skip to the block that has the SourceManager, etc.
-  bool FoundBlock = Dezr.SkipToBlock(ContextBlock);
+  // Skip to the BasicMetaDataBlock.  First jump to ASTContextBlock
+  // (which will appear earlier) and record its location.
+  
+  bool FoundBlock = Dezr.SkipToBlock(ASTContextBlock);
+  assert (FoundBlock);
+
+  llvm::Deserializer::Location ASTContextBlockLoc =
+    Dezr.getCurrentBlockLocation();
+  
+  FoundBlock = Dezr.SkipToBlock(BasicMetadataBlock);
   assert (FoundBlock);
   
   // "Fake" read the SourceManager.
@@ -227,6 +240,9 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename) {
   llvm::cerr << "Deserializing: IdentifierTable\n";
   Dezr.ReadOwnedPtr<IdentifierTable>();
   
+  // Now jump back to ASTContextBlock and read the ASTContext.
+  Dezr.JumpTo(ASTContextBlockLoc);
+  
   // Read the ASTContext.  
   llvm::cerr << "Deserializing: ASTContext.\n";
   Dezr.ReadOwnedPtr<ASTContext>();
@@ -237,7 +253,7 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename) {
   
   // "Rewind" the stream.  Find the block with the serialized top-level decls.
   Dezr.Rewind();
-  FoundBlock = Dezr.SkipToBlock(DeclBlock);
+  FoundBlock = Dezr.SkipToBlock(DeclsBlock);
   assert (FoundBlock);
   llvm::Deserializer::Location DeclBlockLoc = Dezr.getCurrentBlockLocation();
   
