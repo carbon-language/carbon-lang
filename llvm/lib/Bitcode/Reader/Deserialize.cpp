@@ -13,8 +13,6 @@
 
 #include "llvm/Bitcode/Deserialize.h"
 
-#define DEBUG_BACKPATCH
-
 #ifdef DEBUG_BACKPATCH
 #include "llvm/Support/Streams.h"
 #endif
@@ -170,7 +168,7 @@ bool Deserializer::JumpTo(const Location& Loc) {
 //  AdvanceStream();
   
 //  assert (AbbrevNo == bitc::ENTER_SUBBLOCK);
-  assert (!BlockStack.empty());
+  assert (!BlockStack.empty() || AtEnd());
     
   uint64_t LastBPos = StreamStart.BitNo;
   
