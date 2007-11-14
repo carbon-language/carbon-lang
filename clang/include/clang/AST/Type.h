@@ -560,6 +560,11 @@ public:
     return T->getTypeClass() == ConstantArray; 
   }
   static bool classof(const ConstantArrayType *) { return true; }
+  
+protected:  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
+  friend class Type;
 };
 
 // FIXME: VariableArrayType's aren't uniqued (since expressions aren't).

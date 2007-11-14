@@ -70,6 +70,9 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       D.RegisterPtr(PtrID,ComplexType::CreateImpl(Context,D));
       break;
       
+    case Type::ConstantArray:
+      D.RegisterPtr(PtrID,ConstantArrayType::CreateImpl(Context,D));
+      
     case Type::FunctionProto:
       D.RegisterPtr(PtrID,FunctionTypeProto::CreateImpl(Context,D));
       break;
@@ -94,6 +97,28 @@ void ComplexType::EmitImpl(Serializer& S) const {
 
 Type* ComplexType::CreateImpl(ASTContext& Context, Deserializer& D) {
   return Context.getComplexType(QualType::ReadVal(D)).getTypePtr();
+}
+
+//===----------------------------------------------------------------------===//
+// ConstantArray
+//===----------------------------------------------------------------------===//
+
+void ConstantArrayType::EmitImpl(Serializer& S) const {
+  S.Emit(getElementType());
+  S.EmitInt(getSizeModifier());
+  S.EmitInt(getIndexTypeQualifier());
+  S.Emit(Size);
+}
+
+Type* ConstantArrayType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  QualType ElTy = QualType::ReadVal(D);
+  ArraySizeModifier am = static_cast<ArraySizeModifier>(D.ReadInt());
+  unsigned ITQ = D.ReadInt();
+
+  llvm::APInt Size;
+  D.Read(Size);
+
+  return Context.getConstantArrayType(ElTy,Size,am,ITQ).getTypePtr();
 }
 
 //===----------------------------------------------------------------------===//
