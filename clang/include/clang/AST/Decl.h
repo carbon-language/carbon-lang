@@ -701,6 +701,15 @@ public:
     return D->getKind() >= RecordFirst && D->getKind() <= RecordLast;
   }
   static bool classof(const RecordDecl *D) { return true; }
+
+protected:
+  /// EmitImpl - Serialize this TypedefDecl.  Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  
+  /// CreateImpl - Deserialize a TypedefDecl.  Called by Decl::Create.
+  static RecordDecl* CreateImpl(Kind DK, llvm::Deserializer& D);
+  
+  friend Decl* Decl::Create(llvm::Deserializer& D);
 };
 
 }  // end namespace clang

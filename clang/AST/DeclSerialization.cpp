@@ -52,6 +52,9 @@ Decl* Decl::Create(Deserializer& D) {
     case Function:
       return FunctionDecl::CreateImpl(D);
       
+    case Struct:
+      return RecordDecl::CreateImpl(k,D);
+      
     case Typedef:
       return TypedefDecl::CreateImpl(D);
   }
@@ -263,6 +266,46 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D) {
     D.BatchReadOwnedPtrs(decl->Body, next_declarator);
   
   decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
+  
+  return decl;
+}
+
+//===----------------------------------------------------------------------===//
+//      RecordDecl Serialization.
+//===----------------------------------------------------------------------===//
+
+void RecordDecl::EmitImpl(llvm::Serializer& S) const {
+  ScopedDecl::EmitInRec(S);
+  S.EmitBool(hasFlexibleArrayMember());
+  S.EmitSInt(getNumMembers());
+  if (getNumMembers() > 0) {
+    assert (Members);
+    S.BatchEmitOwnedPtrs((unsigned) getNumMembers(),
+                         (Decl**) &Members[0],getNextDeclarator());
+  }
+  else
+    ScopedDecl::EmitOutRec(S);
+}
+
+RecordDecl* RecordDecl::CreateImpl(Decl::Kind DK, Deserializer& D) {
+  RecordDecl* decl = new RecordDecl(DK,SourceLocation(),NULL,NULL);
+  
+  decl->ScopedDecl::ReadInRec(D);
+  decl->setHasFlexibleArrayMember(D.ReadBool());
+  decl->NumMembers = D.ReadSInt();
+  
+  if (decl->getNumMembers() > 0) {
+    Decl* next_declarator;
+    decl->Members = new FieldDecl*[(unsigned) decl->getNumMembers()];
+                              
+    D.BatchReadOwnedPtrs((unsigned) decl->getNumMembers(),
+                         (Decl**) &decl->Members[0],
+                         next_declarator);
+    
+    decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));                             
+  }
+  else
+    decl->ScopedDecl::ReadOutRec(D);
   
   return decl;
 }

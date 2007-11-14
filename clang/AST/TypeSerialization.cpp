@@ -86,7 +86,7 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       break;
       
     case Type::Tagged:
-      D.RegisterPtr(PtrID,TagType::CreateImpl(Context,D));
+      TagType::CreateImpl(Context,PtrID,D);
       break;
       
     case Type::TypeName:
@@ -189,12 +189,24 @@ Type* PointerType::CreateImpl(ASTContext& Context, Deserializer& D) {
 //===----------------------------------------------------------------------===//
 
 void TagType::EmitImpl(Serializer& S) const {
-  S.EmitPtr(Decl);
+  S.EmitOwnedPtr(getDecl());
 }
 
-Type* TagType::CreateImpl(ASTContext& Context, Deserializer& D) {
-  TagType* T = cast<TagType>(Context.getTagDeclType(NULL).getTypePtr());
-  D.ReadPtr(T->Decl); // May be backpatched.  
+Type* TagType::CreateImpl(ASTContext& Context, SerializedPtrID& PtrID,
+                          Deserializer& D) {
+  
+  std::vector<Type*>& Types = 
+    const_cast<std::vector<Type*>&>(Context.getTypes());
+  
+  TagType* T = new TagType(NULL,QualType());
+  Types.push_back(T);
+  
+  // Forward register the type pointer before deserializing the decl.
+  D.RegisterPtr(PtrID,T);
+
+  // Deserialize the decl.
+  T->decl = cast<TagDecl>(D.ReadOwnedPtr<Decl>());
+
   return T;
 }
 
@@ -215,7 +227,7 @@ Type* TypedefType::CreateImpl(ASTContext& Context, Deserializer& D) {
   Types.push_back(T);
   
   D.ReadPtr(T->Decl); // May be backpatched.
-  
+  assert(false);
   return T;
 }
   

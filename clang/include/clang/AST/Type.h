@@ -874,12 +874,12 @@ public:
 };
 
 class TagType : public Type {
-  TagDecl *Decl;
-  TagType(TagDecl *D, QualType can) : Type(Tagged, can), Decl(D) {}
+  TagDecl *decl;
+  TagType(TagDecl *D, QualType can) : Type(Tagged, can), decl(D) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
     
-  TagDecl *getDecl() const { return Decl; }
+  TagDecl *getDecl() const { return decl; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   
@@ -888,7 +888,8 @@ public:
   
 protected:  
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
+  static Type* CreateImpl(ASTContext& Context, llvm::SerializedPtrID& PtrID, 
+                          llvm::Deserializer& D);
   friend class Type;
 };
 
