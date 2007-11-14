@@ -224,7 +224,7 @@ NumericLiteralParser(const char *begin, const char *end,
       }
       // A binary exponent can appear with or with a '.'. If dotted, the
       // binary exponent is required. 
-      if (*s == 'p' || *s == 'P') { 
+      if ((*s == 'p' || *s == 'P') && PP.getLangOptions().HexFloats) { 
         s++;
         saw_exponent = true;
         if (*s == '+' || *s == '-')  s++; // sign
