@@ -24,6 +24,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Pass.h"
@@ -50,6 +51,46 @@ FunctionPass *llvm::createCFGSimplificationPass() {
   return new CFGSimplifyPass();
 }
 
+/// ChangeToUnreachable - Insert an unreachable instruction before the specified
+/// instruction, making it and the rest of the code in the block dead.
+static void ChangeToUnreachable(Instruction *I) {
+  BasicBlock *BB = I->getParent();
+  // Loop over all of the successors, removing BB's entry from any PHI
+  // nodes.
+  for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
+    (*SI)->removePredecessor(BB);
+  
+  new UnreachableInst(I);
+  
+  // All instructions after this are dead.
+  BasicBlock::iterator BBI = I, BBE = BB->end();
+  while (BBI != BBE) {
+    if (!BBI->use_empty())
+      BBI->replaceAllUsesWith(UndefValue::get(BBI->getType()));
+    BB->getInstList().erase(BBI++);
+  }
+}
+
+/// IsNoReturn - Return true if the specified call is to a no-return function.
+static bool IsNoReturn(const CallInst *CI) {
+  if (const ParamAttrsList *Attrs = CI->getParamAttrs())
+    if (Attrs->paramHasAttr(0, ParamAttr::NoReturn))
+      return true;
+  
+  if (const Function *Callee = CI->getCalledFunction()) {
+    if (const ParamAttrsList *Attrs = Callee->getParamAttrs())
+      if (Attrs->paramHasAttr(0, ParamAttr::NoReturn))
+        return true;
+  
+    const FunctionType *FT = Callee->getFunctionType();
+    if (const ParamAttrsList *Attrs = FT->getParamAttrs())
+      if (Attrs->paramHasAttr(0, ParamAttr::NoReturn))
+        return true;
+  }
+  return false;
+}
+
+
 static bool MarkAliveBlocks(BasicBlock *BB,
                             SmallPtrSet<BasicBlock*, 128> &Reachable) {
   
@@ -66,26 +107,29 @@ static bool MarkAliveBlocks(BasicBlock *BB,
     // Do a quick scan of the basic block, turning any obviously unreachable
     // instructions into LLVM unreachable insts.  The instruction combining pass
     // canonnicalizes unreachable insts into stores to null or undef.
-    for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ++BBI)
-      if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
-        if (isa<ConstantPointerNull>(SI->getOperand(1)) ||
-            isa<UndefValue>(SI->getOperand(1))) {
-          // Loop over all of the successors, removing BB's entry from any PHI
-          // nodes.
-          for (succ_iterator I = succ_begin(BB), SE = succ_end(BB); I != SE;++I)
-            (*I)->removePredecessor(BB);
-
-          new UnreachableInst(SI);
-
-          // All instructions after this are dead.
-          while (BBI != E) {
-            if (!BBI->use_empty())
-              BBI->replaceAllUsesWith(UndefValue::get(BBI->getType()));
-            BB->getInstList().erase(BBI++);
+    for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E;++BBI){
+      if (CallInst *CI = dyn_cast<CallInst>(BBI)) {
+        if (IsNoReturn(CI)) {
+          // If we found a call to a no-return function, insert an unreachable
+          // instruction after it.  Make sure there isn't *already* one there
+          // though.
+          ++BBI;
+          if (!isa<UnreachableInst>(BBI)) {
+            ChangeToUnreachable(BBI);
+            Changed = true;
           }
           break;
         }
-
+      }
+      
+      if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
+        if (isa<ConstantPointerNull>(SI->getOperand(1)) ||
+            isa<UndefValue>(SI->getOperand(1))) {
+          ChangeToUnreachable(SI);
+          Changed = true;
+          break;
+        }
+    }
 
     Changed |= ConstantFoldTerminator(BB);
     for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
