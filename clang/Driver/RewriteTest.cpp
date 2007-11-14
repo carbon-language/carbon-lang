@@ -390,29 +390,26 @@ void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
   // Lastly, comment out the @end.
   SourceLocation LocEnd = PDecl->getAtEndLoc();
   Rewrite.ReplaceText(LocEnd, 0, "// ", 3);
-#if 0  
+
   // Must comment out @optional/@required
   const char *startBuf = SM->getCharacterData(LocStart);
   const char *endBuf = SM->getCharacterData(LocEnd);
   for (const char *p = startBuf; p < endBuf; p++) {
     if (*p == '@' && !strncmp(p+1, "optional", strlen("optional"))) {
       std::string CommentedOptional = "/* @optional */";
-      SourceLocation OptionalLoc = SourceLocation::getFileLoc(MainFileID, 
-                                                              p-MainBufStart);
+      SourceLocation OptionalLoc = LocStart.getFileLocWithOffset(p-startBuf);
       Rewrite.ReplaceText(OptionalLoc, strlen("@optional"),
                           CommentedOptional.c_str(), CommentedOptional.size());
       
     }
     else if (*p == '@' && !strncmp(p+1, "required", strlen("required"))) {
       std::string CommentedRequired = "/* @required */";
-      SourceLocation OptionalLoc = SourceLocation::getFileLoc(MainFileID, 
-                                                              p-MainBufStart);
+      SourceLocation OptionalLoc = LocStart.getFileLocWithOffset(p-startBuf);
       Rewrite.ReplaceText(OptionalLoc, strlen("@required"),
                           CommentedRequired.c_str(), CommentedRequired.size());
       
     }
   }
-#endif
 }
 
 void RewriteTest::RewriteForwardProtocolDecl(ObjcForwardProtocolDecl *PDecl) {
