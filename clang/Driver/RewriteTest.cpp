@@ -91,6 +91,7 @@ namespace {
     void RewriteObjcMethodDecl(ObjcMethodDecl *MDecl, std::string &ResultStr);
     void RewriteCategoryDecl(ObjcCategoryDecl *Dcl);
     void RewriteProtocolDecl(ObjcProtocolDecl *Dcl);
+    void RewriteForwardProtocolDecl(ObjcForwardProtocolDecl *Dcl);
     void RewriteMethodDeclarations(int nMethods, ObjcMethodDecl **Methods);
     void RewriteProperties(int nProperties, ObjcPropertyDecl **Properties);
     void RewriteFunctionDecl(FunctionDecl *FD);
@@ -173,6 +174,9 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
     RewriteCategoryDecl(CD);
   } else if (ObjcProtocolDecl *PD = dyn_cast<ObjcProtocolDecl>(D)) {
     RewriteProtocolDecl(PD);
+  } else if (ObjcForwardProtocolDecl *FP = 
+             dyn_cast<ObjcForwardProtocolDecl>(D)){
+    RewriteForwardProtocolDecl(FP);
   }
   // If we have a decl in the main file, see if we should rewrite it.
   if (SM->getDecomposedFileLoc(Loc).first == MainFileID)
@@ -378,6 +382,12 @@ void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
                             PDecl->getClassMethods());
   // Lastly, comment out the @end.
   Rewrite.ReplaceText(PDecl->getAtEndLoc(), 0, "// ", 3);
+}
+
+void RewriteTest::RewriteForwardProtocolDecl(ObjcForwardProtocolDecl *PDecl) {
+  SourceLocation LocStart = PDecl->getLocation();
+  // FIXME: handle forward protocol that are declared across multiple lines.
+  Rewrite.ReplaceText(LocStart, 0, "// ", 3);
 }
 
 void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD, 
