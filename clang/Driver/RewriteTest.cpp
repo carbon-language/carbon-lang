@@ -371,6 +371,9 @@ void RewriteTest::RewriteCategoryDecl(ObjcCategoryDecl *CatDecl) {
 }
 
 void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
+  std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
+  const char *MainBufStart = MainBuf.first;
+  
   SourceLocation LocStart = PDecl->getLocStart();
   
   // FIXME: handle protocol headers that are declared across multiple lines.
@@ -381,7 +384,31 @@ void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
   RewriteMethodDeclarations(PDecl->getNumClassMethods(),
                             PDecl->getClassMethods());
   // Lastly, comment out the @end.
-  Rewrite.ReplaceText(PDecl->getAtEndLoc(), 0, "// ", 3);
+  SourceLocation LocEnd = PDecl->getAtEndLoc();
+  Rewrite.ReplaceText(LocEnd, 0, "// ", 3);
+  
+  // Must comment out @optional/@required
+  const char *startBuf = SM->getCharacterData(LocStart);
+  const char *endBuf = SM->getCharacterData(LocEnd);
+  for (const char *p = startBuf; p < endBuf; p++) {
+    if (*p == '@' && !strncmp(p+1, "optional", strlen("optional"))) {
+      std::string CommentedOptional = "/* @optional */";
+      SourceLocation OptionalLoc = SourceLocation::getFileLoc(MainFileID, 
+                                                              p-MainBufStart);
+      Rewrite.ReplaceText(OptionalLoc, strlen("@optional"),
+                          CommentedOptional.c_str(), CommentedOptional.size());
+      
+    }
+    else if (*p == '@' && !strncmp(p+1, "required", strlen("required"))) {
+      std::string CommentedRequired = "/* @required */";
+      SourceLocation OptionalLoc = SourceLocation::getFileLoc(MainFileID, 
+                                                              p-MainBufStart);
+      Rewrite.ReplaceText(OptionalLoc, strlen("@required"),
+                          CommentedRequired.c_str(), CommentedRequired.size());
+      
+    }
+  }
+
 }
 
 void RewriteTest::RewriteForwardProtocolDecl(ObjcForwardProtocolDecl *PDecl) {
