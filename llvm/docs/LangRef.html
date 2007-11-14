@@ -814,14 +814,14 @@ a power of 2.</p>
     <dd>This indicates that the parameter can be excised using the
     <a href="#int_trampoline">trampoline intrinsics</a>.</dd>
     <dt><tt>pure</tt></dt>
-    <dd>This function attribute indicates, that the function have no effects
-    except the return value and its return value depends only on the
-    arguments and/or global variables.</dd>
+    <dd>This function attribute indicates that the function has no side-effects
+    except for producing a return value.  The value returned must only depend on
+    the function arguments and/or global variables.  It may use values obtained
+    by dereferencing pointers.</dd>
     <dt><tt>const</tt></dt>
-    <dd>This function attribute is slightly more stricter version
-    of <tt>pure</tt> function attribute. <tt>const</tt> functions are not
-    allowed to read global memory, so such function only examines its arguments
-    and has no effects except return value.</dd>
+    <dd>A <tt>const</tt> function has the same restrictions as a <tt>pure</tt>
+    function, but in addition it is not allowed to dereference any pointer arguments
+    or global variables.
   </dl>
 
 </div>
