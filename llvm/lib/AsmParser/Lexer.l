@@ -275,6 +275,8 @@ noreturn        { return NORETURN; }
 noalias         { return NOALIAS; }
 byval           { return BYVAL; }
 nest            { return NEST; }
+pure            { return PURE; }
+const           { return CONST; }
 sext{WSNL}      { // For auto-upgrade only, drop in LLVM 3.0 
                   return SIGNEXT; } 
 zext{WSNL}      { // For auto-upgrade only, drop in LLVM 3.0

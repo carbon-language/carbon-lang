@@ -398,7 +398,8 @@ void Verifier::visitFunction(Function &F) {
     ParamAttr::Nest  | ParamAttr::StructRet;
 
   const uint16_t ParameterIncompatible =
-    ParamAttr::NoReturn | ParamAttr::NoUnwind;
+    ParamAttr::NoReturn | ParamAttr::NoUnwind |
+    ParamAttr::Const    | ParamAttr::Pure;
 
   const uint16_t MutuallyIncompatible =
     ParamAttr::ByVal | ParamAttr::InReg |
@@ -406,6 +407,9 @@ void Verifier::visitFunction(Function &F) {
 
   const uint16_t MutuallyIncompatible2 =
     ParamAttr::ZExt | ParamAttr::SExt;
+
+  const uint16_t MutuallyIncompatible3 =
+    ParamAttr::Pure | ParamAttr::Const;
 
   const uint16_t IntegerTypeOnly =
     ParamAttr::SExt | ParamAttr::ZExt;
@@ -423,9 +427,14 @@ void Verifier::visitFunction(Function &F) {
     uint16_t RetI = Attrs->getParamAttrs(0) & ReturnIncompatible;
     Assert1(!RetI, "Attribute " + Attrs->getParamAttrsText(RetI) +
             "should not apply to functions!", &F);
-    uint16_t MutI = Attrs->getParamAttrs(0) & MutuallyIncompatible2;
-    Assert1(MutI != MutuallyIncompatible2, "Attributes" + 
-            Attrs->getParamAttrsText(MutI) + "are incompatible!", &F);
+
+    uint16_t MutI2 = Attrs->getParamAttrs(0) & MutuallyIncompatible2;
+    Assert1(MutI2 != MutuallyIncompatible2, "Attributes" + 
+            Attrs->getParamAttrsText(MutI2) + "are incompatible!", &F);
+
+    uint16_t MutI3 = Attrs->getParamAttrs(0) & MutuallyIncompatible3;
+    Assert1(MutI3 != MutuallyIncompatible3, "Attributes" + 
+            Attrs->getParamAttrsText(MutI3) + "are incompatible!", &F);
 
     for (FunctionType::param_iterator I = FT->param_begin(), 
          E = FT->param_end(); I != E; ++I, ++Idx) {

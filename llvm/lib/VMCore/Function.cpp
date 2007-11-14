@@ -108,6 +108,10 @@ ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
     Result += "byval ";
   if (Attrs & ParamAttr::Nest)
     Result += "nest ";
+  if (Attrs & ParamAttr::Pure)
+    Result += "pure ";
+  if (Attrs & ParamAttr::Const)
+    Result += "const ";  
   return Result;
 }
 

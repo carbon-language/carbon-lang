@@ -1113,6 +1113,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 // Function Attributes
 %token SIGNEXT ZEROEXT NORETURN INREG SRET NOUNWIND NOALIAS BYVAL NEST
+%token CONST PURE
 
 // Visibility Styles
 %token DEFAULT HIDDEN PROTECTED
@@ -1256,6 +1257,8 @@ FuncAttr      : NORETURN { $$ = ParamAttr::NoReturn; }
               | NOUNWIND { $$ = ParamAttr::NoUnwind; }
               | ZEROEXT  { $$ = ParamAttr::ZExt;     }
               | SIGNEXT  { $$ = ParamAttr::SExt;     }
+              | PURE     { $$ = ParamAttr::Pure;     }
+              | CONST    { $$ = ParamAttr::Const;    }
               ;
 
 OptFuncAttrs  : /* empty */ { $$ = ParamAttr::None; }
