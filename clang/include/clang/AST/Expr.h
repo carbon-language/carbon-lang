@@ -1126,6 +1126,14 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static InitListExpr* CreateImpl(llvm::Deserializer& D);
+
+private:
+  // Used by serializer.
+  InitListExpr() : Expr(InitListExprClass, QualType()), 
+                   InitExprs(NULL), NumInits(0) {}
 };
 
 /// ObjCStringLiteral, used for Objective-C string literals

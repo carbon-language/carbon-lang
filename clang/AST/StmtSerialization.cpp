@@ -108,7 +108,10 @@ Stmt* Stmt::Create(Deserializer& D) {
       return ImplicitCastExpr::CreateImpl(D);
       
     case IndirectGotoStmtClass:
-      return IndirectGotoStmt::CreateImpl(D);      
+      return IndirectGotoStmt::CreateImpl(D);
+      
+    case InitListExprClass:
+      return InitListExpr::CreateImpl(D);
       
     case IntegerLiteralClass:
       return IntegerLiteral::CreateImpl(D);
@@ -510,6 +513,24 @@ void IndirectGotoStmt::EmitImpl(Serializer& S) const {
 IndirectGotoStmt* IndirectGotoStmt::CreateImpl(Deserializer& D) {
   Expr* Target = D.ReadOwnedPtr<Expr>();
   return new IndirectGotoStmt(Target);
+}
+
+void InitListExpr::EmitImpl(Serializer& S) const {
+  S.Emit(LBraceLoc);
+  S.Emit(RBraceLoc);
+  S.EmitInt(NumInits);
+  S.BatchEmitOwnedPtrs(NumInits,InitExprs);
+}
+
+InitListExpr* InitListExpr::CreateImpl(Deserializer& D) {
+  InitListExpr* expr = new InitListExpr();
+  expr->LBraceLoc = SourceLocation::ReadVal(D);
+  expr->RBraceLoc = SourceLocation::ReadVal(D);
+  expr->NumInits = D.ReadInt();
+  assert(expr->NumInits);
+  expr->InitExprs = new Expr*[expr->NumInits];
+  D.BatchReadOwnedPtrs(expr->NumInits,expr->InitExprs);
+  return expr;
 }
 
 void IntegerLiteral::EmitImpl(Serializer& S) const {
