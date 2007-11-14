@@ -720,6 +720,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static CompoundLiteralExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 /// ImplicitCastExpr - Allows us to explicitly represent implicit type 

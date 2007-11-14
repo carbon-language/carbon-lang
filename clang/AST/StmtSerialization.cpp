@@ -65,6 +65,9 @@ Stmt* Stmt::Create(Deserializer& D) {
     case CompoundAssignOperatorClass:
       return CompoundAssignOperator::CreateImpl(D);
       
+    case CompoundLiteralExprClass:
+      return CompoundLiteralExpr::CreateImpl(D);
+      
     case CompoundStmtClass:
       return CompoundStmt::CreateImpl(D);
     
@@ -292,6 +295,17 @@ CompoundAssignOperator::CreateImpl(Deserializer& D) {
   D.BatchReadOwnedPtrs(LHS,RHS);
   
   return new CompoundAssignOperator(LHS,RHS,Opc,t,c,L);
+}
+
+void CompoundLiteralExpr::EmitImpl(Serializer& S) const {
+  S.Emit(getType());
+  S.EmitOwnedPtr(Init);
+}
+
+CompoundLiteralExpr* CompoundLiteralExpr::CreateImpl(Deserializer& D) {
+  QualType Q = QualType::ReadVal(D);
+  Expr* Init = D.ReadOwnedPtr<Expr>();
+  return new CompoundLiteralExpr(Q,Init);
 }
 
 void CompoundStmt::EmitImpl(Serializer& S) const {
