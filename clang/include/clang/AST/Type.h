@@ -751,6 +751,11 @@ public:
     return T->getTypeClass() == FunctionNoProto;
   }
   static bool classof(const FunctionTypeNoProto *) { return true; }
+  
+protected:  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static Type* CreateImpl(ASTContext& Context,llvm::Deserializer& D);
+  friend class Type;
 };
 
 /// FunctionTypeProto - Represents a prototype with argument type info, e.g.
