@@ -376,7 +376,6 @@ void RewriteTest::RewriteCategoryDecl(ObjcCategoryDecl *CatDecl) {
 
 void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
   std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
-  const char *MainBufStart = MainBuf.first;
   
   SourceLocation LocStart = PDecl->getLocStart();
   
