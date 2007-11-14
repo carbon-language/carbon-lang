@@ -336,11 +336,15 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
 void RewriteTest::RewriteMethodDeclarations(int nMethods, ObjcMethodDecl **Methods) {
   for (int i = 0; i < nMethods; i++) {
     ObjcMethodDecl *Method = Methods[i];
-    SourceLocation Loc = Method->getLocStart();
-
-    Rewrite.InsertText(Loc, "// ", 3);
+    SourceLocation LocStart = Method->getLocStart();
+    SourceLocation LocEnd = Method->getLocEnd();
     
-    // FIXME: handle methods that are declared across multiple lines.
+    if (SM->getLineNumber(LocEnd) > SM->getLineNumber(LocStart)) {
+      Rewrite.InsertText(LocStart, "/* ", 3);
+      Rewrite.ReplaceText(LocEnd, 1, ";*/ ", 4);
+    } else {
+      Rewrite.InsertText(LocStart, "// ", 3);
+    }
   }
 }
 
