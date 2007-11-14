@@ -22,6 +22,7 @@
 #define LLVM_ANALYSIS_SCALAREVOLUTION_H
 
 #include "llvm/Pass.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
 #include <set>
@@ -32,8 +33,6 @@ namespace llvm {
   class Instruction;
   class Type;
   class ConstantRange;
-  class Loop;
-  class LoopInfo;
   class SCEVHandle;
   class ScalarEvolution;
 

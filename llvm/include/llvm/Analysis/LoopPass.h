@@ -23,7 +23,6 @@
 namespace llvm {
 
 class LPPassManager;
-class Loop;
 class Function;
 
 class LoopPass : public Pass {

@@ -20,13 +20,12 @@
 
 #include <vector>
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Analysis/LoopInfo.h"
 
 namespace llvm {
 
 class Module;
 class Function;
-class Loop;
-class LoopInfo;
 class Pass;
 class LPPassManager;
 class BasicBlock;
