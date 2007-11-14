@@ -545,15 +545,6 @@ void RewriteTest::RewriteImplementationDecl(NamedDecl *OID) {
 }
 
 void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
-
-  SourceLocation LocStart = ClassDecl->getLocStart();
-  SourceLocation LocEnd = ClassDecl->getLocEnd();
-
-  const char *startBuf = SM->getCharacterData(LocStart);
-  const char *endBuf = SM->getCharacterData(LocEnd);
-
-  endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
-
   std::string ResultStr;
   if (!ObjcForwardDecls.count(ClassDecl)) {
     // we haven't seen a forward decl - generate a typedef.
@@ -572,8 +563,6 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
   }
   SynthesizeObjcInternalStruct(ClassDecl, ResultStr);
     
-  Rewrite.ReplaceText(LocStart, endBuf-startBuf, 
-                      ResultStr.c_str(), ResultStr.size());
   RewriteProperties(ClassDecl->getNumPropertyDecl(),
                     ClassDecl->getPropertyDecl());
   RewriteMethodDeclarations(ClassDecl->getNumInstanceMethods(),
@@ -1158,51 +1147,62 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   if (NumIvars <= 0 && (!RCDecl || !ObjcSynthesizedStructs.count(RCDecl)))
     return;
   
-   Result += "\nstruct ";
-   Result += CDecl->getName();
-   if (RCDecl && ObjcSynthesizedStructs.count(RCDecl)) {
-     Result += " {\n    struct ";
-     Result += RCDecl->getName();
-     Result += " _";
-     Result += RCDecl->getName();
-     Result += ";\n";
-  }
-  else
-    Result += " {";
-    
+  Result += "\nstruct ";
+  Result += CDecl->getName();
+
+  SourceLocation LocStart = CDecl->getLocStart();
+  SourceLocation LocEnd = CDecl->getLocEnd();
+  
+  const char *startBuf = SM->getCharacterData(LocStart);
+  const char *endBuf = SM->getCharacterData(LocEnd);
+  
   if (NumIvars > 0) {
-    SourceLocation LocStart = CDecl->getLocStart();
-    SourceLocation LocEnd = CDecl->getLocEnd();
-    
-    const char *startBuf = SM->getCharacterData(LocStart);
-    const char *endBuf = SM->getCharacterData(LocEnd);
-    startBuf = strchr(startBuf, '{');
-    assert((startBuf && endBuf) 
+    const char *cursor = strchr(startBuf, '{');
+    assert((cursor && endBuf) 
            && "SynthesizeObjcInternalStruct - malformed @interface");
-    startBuf++; // past '{'
-    while (startBuf < endBuf) {
-      if (*startBuf == '@') {
-        startBuf = strchr(startBuf, 'p');
+    
+    // rewrite the original header *without* disturbing the '{'
+    Rewrite.ReplaceText(LocStart, cursor-startBuf-1, 
+                        Result.c_str(), Result.size());
+    if (RCDecl && ObjcSynthesizedStructs.count(RCDecl)) {
+      Result = "\n    struct ";
+      Result += RCDecl->getName();
+      Result += " _";
+      Result += RCDecl->getName();
+      Result += ";\n";
+      
+      // insert the super class structure definition.
+      SourceLocation OnePastCurly = LocStart.getFileLocWithOffset(cursor-startBuf+1);
+      Rewrite.InsertText(OnePastCurly, Result.c_str(), Result.size());
+    }
+    cursor++; // past '{'
+    
+    // Now comment out any visibility specifiers.
+    while (cursor < endBuf) {
+      if (*cursor == '@') {
+        SourceLocation atLoc = LocStart.getFileLocWithOffset(cursor-startBuf);
+        cursor = strchr(cursor, 'p');
         // FIXME: presence of @public, etc. inside comment results in
         // this transformation as well, which is still correct c-code.
-        if (!strncmp(startBuf, "public", strlen("public"))) {
-          startBuf += strlen("public");
-          Result += "/* @public */";
-        }
-        else if (!strncmp(startBuf, "private", strlen("private"))) {
-          startBuf += strlen("private");
-          Result += "/* @private */";
-        }
-        else if (!strncmp(startBuf, "protected", strlen("protected"))) {
-          startBuf += strlen("protected");
-          Result += "/* @protected */";
-        }
+        if (!strncmp(cursor, "public", strlen("public")) ||
+            !strncmp(cursor, "private", strlen("private")) ||
+            !strncmp(cursor, "protected", strlen("private")))
+          Rewrite.InsertText(atLoc, "// ", 3);
       }
-      Result += *startBuf++;
+      cursor++;
     }
+    // Don't forget to add a ';'!!
+    Rewrite.InsertText(LocEnd.getFileLocWithOffset(1), ";", 1);
+  } else { // we don't have any instance variables - insert super struct.
+    endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
+    Result += " {\n    struct ";
+    Result += RCDecl->getName();
+    Result += " _";
+    Result += RCDecl->getName();
+    Result += ";\n};\n";
+    Rewrite.ReplaceText(LocStart, endBuf-startBuf, 
+                        Result.c_str(), Result.size());
   }
-    
-  Result += "};\n";
   // Mark this struct as having been generated.
   if (!ObjcSynthesizedStructs.insert(CDecl))
   assert(false && "struct already synthesize- SynthesizeObjcInternalStruct");
