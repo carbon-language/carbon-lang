@@ -32,6 +32,7 @@ namespace clang {
   class TagDecl;
   class RecordDecl;
   class EnumDecl;
+  class FieldDecl;
   class ObjcInterfaceDecl;
   class ObjcProtocolDecl;
   class ObjcMethodDecl;
@@ -161,6 +162,10 @@ public:
   
   /// Read - Deserialize a QualType from Bitcode.
   static QualType ReadVal(llvm::Deserializer& D);
+  
+private:
+  void ReadBackpatch(llvm::Deserializer& D);
+  friend class FieldDecl;
 };
 
 } // end clang.
@@ -888,8 +893,7 @@ public:
   
 protected:  
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static Type* CreateImpl(ASTContext& Context, llvm::SerializedPtrID& PtrID, 
-                          llvm::Deserializer& D);
+  static Type* CreateImpl(ASTContext& Context, llvm::Deserializer& D);
   friend class Type;
 };
 

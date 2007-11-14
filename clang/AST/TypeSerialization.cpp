@@ -35,6 +35,11 @@ QualType QualType::ReadVal(Deserializer& D) {
   return Q;
 }
 
+void QualType::ReadBackpatch(Deserializer& D) {
+  D.ReadUIntPtr(ThePtr,true);
+  ThePtr |= D.ReadInt();
+}
+
 //===----------------------------------------------------------------------===//
 // Type Serialization: Dispatch code to handle specific types.
 //===----------------------------------------------------------------------===//
@@ -87,7 +92,7 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       break;
       
     case Type::Tagged:
-      TagType::CreateImpl(Context,PtrID,D);
+      D.RegisterPtr(PtrID,TagType::CreateImpl(Context,D));
       break;
       
     case Type::TypeName:
@@ -193,18 +198,13 @@ void TagType::EmitImpl(Serializer& S) const {
   S.EmitOwnedPtr(getDecl());
 }
 
-Type* TagType::CreateImpl(ASTContext& Context, SerializedPtrID& PtrID,
-                          Deserializer& D) {
-  
+Type* TagType::CreateImpl(ASTContext& Context, Deserializer& D) {
   std::vector<Type*>& Types = 
     const_cast<std::vector<Type*>&>(Context.getTypes());
   
   TagType* T = new TagType(NULL,QualType());
   Types.push_back(T);
   
-  // Forward register the type pointer before deserializing the decl.
-  D.RegisterPtr(PtrID,T);
-
   // Deserialize the decl.
   T->decl = cast<TagDecl>(D.ReadOwnedPtr<Decl>());
 
