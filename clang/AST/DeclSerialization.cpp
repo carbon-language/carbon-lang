@@ -266,7 +266,7 @@ void EnumConstantDecl::EmitImpl(Serializer& S) const {
 }
  
 EnumConstantDecl* EnumConstantDecl::CreateImpl(Deserializer& D) {
-  llvm::APSInt val(0);
+  llvm::APSInt val(1);
   D.Read(val);
   
   EnumConstantDecl* decl = 
@@ -279,7 +279,7 @@ EnumConstantDecl* EnumConstantDecl::CreateImpl(Deserializer& D) {
   
   D.BatchReadOwnedPtrs(next_declarator,decl->Init);
   
-  decl->setNextDeclarator(cast<ScopedDecl>(next_declarator));
+  decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
 
   return decl;    
 }
