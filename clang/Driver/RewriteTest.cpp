@@ -386,7 +386,7 @@ void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
   // Lastly, comment out the @end.
   SourceLocation LocEnd = PDecl->getAtEndLoc();
   Rewrite.ReplaceText(LocEnd, 0, "// ", 3);
-  
+#if 0  
   // Must comment out @optional/@required
   const char *startBuf = SM->getCharacterData(LocStart);
   const char *endBuf = SM->getCharacterData(LocEnd);
@@ -408,11 +408,13 @@ void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
       
     }
   }
-
+#endif
 }
 
 void RewriteTest::RewriteForwardProtocolDecl(ObjcForwardProtocolDecl *PDecl) {
   SourceLocation LocStart = PDecl->getLocation();
+  if (LocStart.isInvalid())
+    assert(false && "Invalid SourceLocation");
   // FIXME: handle forward protocol that are declared across multiple lines.
   Rewrite.ReplaceText(LocStart, 0, "// ", 3);
 }
