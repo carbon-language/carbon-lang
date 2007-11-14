@@ -72,6 +72,7 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       
     case Type::ConstantArray:
       D.RegisterPtr(PtrID,ConstantArrayType::CreateImpl(Context,D));
+      break;
       
     case Type::FunctionNoProto:
       D.RegisterPtr(PtrID,FunctionTypeNoProto::CreateImpl(Context,D));
@@ -137,6 +138,18 @@ Type* ConstantArrayType::CreateImpl(ASTContext& Context, Deserializer& D) {
 // FunctionTypeNoProto
 //===----------------------------------------------------------------------===//
 
+void FunctionTypeNoProto::EmitImpl(Serializer& S) const {
+  S.Emit(getResultType());
+}
+
+Type* FunctionTypeNoProto::CreateImpl(ASTContext& Context, Deserializer& D) {
+  return Context.getFunctionTypeNoProto(QualType::ReadVal(D)).getTypePtr();
+}
+
+//===----------------------------------------------------------------------===//
+// FunctionTypeProto
+//===----------------------------------------------------------------------===//
+
 void FunctionTypeProto::EmitImpl(Serializer& S) const {
   S.Emit(getResultType());
   S.EmitBool(isVariadic());
@@ -158,18 +171,6 @@ Type* FunctionTypeProto::CreateImpl(ASTContext& Context, Deserializer& D) {
   
   return Context.getFunctionType(ResultType,&*Args.begin(), 
                                  NumArgs,isVariadic).getTypePtr();
-}
-
-//===----------------------------------------------------------------------===//
-// FunctionTypeProto
-//===----------------------------------------------------------------------===//
-
-void FunctionTypeNoProto::EmitImpl(Serializer& S) const {
-  S.Emit(getResultType());
-}
-
-Type* FunctionTypeNoProto::CreateImpl(ASTContext& Context, Deserializer& D) {
-  return Context.getFunctionTypeNoProto(QualType::ReadVal(D)).getTypePtr();
 }
 
 //===----------------------------------------------------------------------===//
