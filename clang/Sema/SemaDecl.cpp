@@ -572,8 +572,11 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
   ScopedDecl *New;
   bool InvalidDecl = false;
   
+  QualType R = GetTypeForDeclarator(D, S);
+  assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
+
   if (D.getDeclSpec().getStorageClassSpec() == DeclSpec::SCS_typedef) {
-    TypedefDecl *NewTD = ParseTypedefDecl(S, D, LastDeclarator);
+    TypedefDecl *NewTD = ParseTypedefDecl(S, D, R, LastDeclarator);
     if (!NewTD) return 0;
 
     // Handle attributes prior to checking for duplicates in MergeVarDecl
@@ -595,10 +598,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
         InvalidDecl = true;
       }
     }
-  } else if (D.isFunctionDeclarator()) {
-    QualType R = GetTypeForDeclarator(D, S);
-    assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
-
+  } else if (R.getTypePtr()->isFunctionType()) {
     FunctionDecl::StorageClass SC = FunctionDecl::None;
     switch (D.getDeclSpec().getStorageClassSpec()) {
       default: assert(0 && "Unknown storage class!");
@@ -628,8 +628,6 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     }
     New = NewFD;
   } else {
-    QualType R = GetTypeForDeclarator(D, S);
-    assert(!R.isNull() && "GetTypeForDeclarator() returned null type");
     if (R.getTypePtr()->isObjcInterfaceType()) {
       Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object,
            D.getIdentifier()->getName());
@@ -1041,11 +1039,9 @@ ScopedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
 }
 
 
-TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D,
+TypedefDecl *Sema::ParseTypedefDecl(Scope *S, Declarator &D, QualType T,
                                     ScopedDecl *LastDeclarator) {
   assert(D.getIdentifier() && "Wrong callback for declspec without declarator");
-  
-  QualType T = GetTypeForDeclarator(D, S);
   assert(!T.isNull() && "GetTypeForDeclarator() returned null type");
   
   // Scope manipulation handled by caller.
