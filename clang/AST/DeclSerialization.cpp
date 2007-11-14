@@ -60,7 +60,8 @@ Decl* Decl::Create(Deserializer& D) {
       
     case Function:
       return FunctionDecl::CreateImpl(D);
-      
+     
+    case Union:
     case Struct:
       return RecordDecl::CreateImpl(k,D);
       
