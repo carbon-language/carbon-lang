@@ -717,12 +717,19 @@ QualType ASTContext::getTypeOfType(QualType tofType) {
 /// getTagDeclType - Return the unique reference to the type for the
 /// specified TagDecl (struct/union/class/enum) decl.
 QualType ASTContext::getTagDeclType(TagDecl *Decl) {
-  // The decl stores the type cache.
-  if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
+  // FIXME: This method currently accepts "Decl" to be NULL for use
+  //  by the deserializer.  This interface may wished to be changed
+  //  in the future.
   
-  Decl->TypeForDecl = new TagType(Decl, QualType());
-  Types.push_back(Decl->TypeForDecl);
-  return QualType(Decl->TypeForDecl, 0);
+  // The decl stores the type cache.
+  if (Decl && Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
+  
+  TagType* T = new TagType(Decl, QualType());
+  Types.push_back(T);
+  
+  if (Decl) Decl->TypeForDecl = T;
+
+  return QualType(T, 0);
 }
 
 /// getSizeType - Return the unique type for "size_t" (C99 7.17), the result 
