@@ -1043,9 +1043,17 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                  &ClsExprs[0], ClsExprs.size());
     MsgExprs.push_back(Cls);
-  } else // instance message.
-    MsgExprs.push_back(Exp->getReceiver());
+  } else { // instance message.
+    Expr *recExpr = Exp->getReceiver();
     
+    // Make sure we cast "self" to "id".
+    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(recExpr)) {
+      if (!strcmp(DRE->getDecl()->getName(), "self"))
+        recExpr = new CastExpr(Context->getObjcIdType(), recExpr, 
+                               SourceLocation());
+    }
+    MsgExprs.push_back(recExpr);
+  }
   // Create a call to sel_registerName("selName"), it will be the 2nd argument.
   llvm::SmallVector<Expr*, 8> SelExprs;
   QualType argType = Context->getPointerType(Context->CharTy);
@@ -1059,7 +1067,16 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   
   // Now push any user supplied arguments.
   for (unsigned i = 0; i < Exp->getNumArgs(); i++) {
-    MsgExprs.push_back(Exp->getArg(i));
+    Expr *userExpr = Exp->getArg(i);
+#if 0
+    // Make sure we cast "self" to "id".
+    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(userExpr)) {
+      if (!strcmp(DRE->getDecl()->getName(), "self"))
+        userExpr = new CastExpr(Context->getObjcIdType(), userExpr, 
+                                SourceLocation());
+    }
+#endif
+    MsgExprs.push_back(userExpr);
     // We've transferred the ownership to MsgExprs. Null out the argument in
     // the original expression, since we will delete it below.
     Exp->setArg(i, 0);
