@@ -13,6 +13,8 @@
 
 #include "llvm/Bitcode/Deserialize.h"
 
+#define DEBUG_BACKPATCH
+
 #ifdef DEBUG_BACKPATCH
 #include "llvm/Support/Streams.h"
 #endif
@@ -346,17 +348,23 @@ void Deserializer::ReadUIntPtr(uintptr_t& PtrRef,
     return;
   }
   
-#ifdef DEBUG_BACKPATCH
-  llvm::cerr << "ReadUintPtr: " << PtrId << "\n";
-#endif
-  
   MapTy::value_type& E = BPatchMap.FindAndConstruct(BPKey(PtrId));
   
-  if (HasFinalPtr(E))
+  if (HasFinalPtr(E)) {
     PtrRef = GetFinalPtr(E);
+
+#ifdef DEBUG_BACKPATCH
+    llvm::cerr << "ReadUintPtr: " << PtrId
+               << " <-- " <<  (void*) GetFinalPtr(E) << '\n';
+#endif    
+  }
   else {
     assert (AllowBackpatch &&
             "Client forbids backpatching for this pointer.");
+    
+#ifdef DEBUG_BACKPATCH
+    llvm::cerr << "ReadUintPtr: " << PtrId << " (NO PTR YET)\n";
+#endif
     
     // Register backpatch.  Check the freelist for a BPNode.
     BPNode* N;

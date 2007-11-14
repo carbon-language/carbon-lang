@@ -94,6 +94,20 @@ public:
       if (Ptrs[i]) SerializeTrait<T>::Emit(*this,*Ptrs[i]);
   }
   
+  template <typename T1, typename T2>
+  void BatchEmitOwnedPtrs(unsigned NumT1Ptrs, T1* const * Ptrs, T2* p2) {
+    
+    for (unsigned i = 0; i < NumT1Ptrs; ++i)
+      EmitPtr(Ptrs[i]);
+    
+    EmitPtr(p2);
+    
+    for (unsigned i = 0; i < NumT1Ptrs; ++i)
+      if (Ptrs[i]) SerializeTrait<T1>::Emit(*this,*Ptrs[i]);
+    
+    if (p2) SerializeTrait<T2>::Emit(*this,*p2);
+  }
+  
   template <typename T1, typename T2, typename T3>
   void BatchEmitOwnedPtrs(unsigned NumT1Ptrs, T1* const * Ptrs,
                           T2* p2, T3* p3) {

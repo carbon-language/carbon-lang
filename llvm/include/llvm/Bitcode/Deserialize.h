@@ -230,6 +230,32 @@ public:
     }
   }
   
+  template <typename T1, typename T2>
+  void BatchReadOwnedPtrs(unsigned NumT1Ptrs, T1** Ptrs, T2*& P2,
+                          bool A1=true, bool A2=true) {
+    
+    BatchIDVec.clear();
+    
+    for (unsigned i = 0; i < NumT1Ptrs; ++i)
+      BatchIDVec.push_back(ReadPtrID());
+    
+    SerializedPtrID ID2 = ReadPtrID();
+    
+    for (unsigned i = 0; i < NumT1Ptrs; ++i) {
+      SerializedPtrID& PtrID = BatchIDVec[i];
+      
+      T1* p = PtrID ? SerializeTrait<T1>::Create(*this) : NULL;
+      
+      if (PtrID && A1)
+        RegisterPtr(PtrID,p);
+      
+      Ptrs[i] = p;
+    }
+    
+    P2 = (ID2) ? SerializeTrait<T2>::Create(*this) : NULL;
+    if (ID2 && A2) RegisterPtr(ID2,P2);    
+  }    
+  
   template <typename T1, typename T2, typename T3>
   void BatchReadOwnedPtrs(unsigned NumT1Ptrs, T1** Ptrs, 
                           T2*& P2, T3*& P3,
