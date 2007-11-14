@@ -1387,6 +1387,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   r2rRevMap_.grow(RegMap->getLastVirtReg());
 
   // Join (coalesce) intervals if requested.
+  IndexedMap<unsigned, VirtReg2IndexFunctor> RegSubIdxMap;
   if (EnableJoining) {
     joinIntervals();
     DOUT << "********** INTERVALS POST JOINING **********\n";
@@ -1404,10 +1405,11 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 
     // Transfer sub-registers info to SSARegMap now that coalescing information
     // is complete.
+    RegSubIdxMap.grow(mf_->getSSARegMap()->getLastVirtReg()+1);
     while (!SubRegIdxes.empty()) {
       std::pair<unsigned, unsigned> RI = SubRegIdxes.back();
       SubRegIdxes.pop_back();
-      mf_->getSSARegMap()->setIsSubRegister(RI.first, rep(RI.first), RI.second);
+      RegSubIdxMap[RI.first] = RI.second;
     }
   }
 
@@ -1448,12 +1450,13 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
             // replace register with representative register
             unsigned OrigReg = mop.getReg();
             unsigned reg = rep(OrigReg);
-            // Don't rewrite if it is a sub-register of a virtual register.
-            if (!RegMap->isSubRegister(OrigReg))
+            unsigned SubIdx = RegSubIdxMap[OrigReg];
+            if (SubIdx && MRegisterInfo::isPhysicalRegister(reg))
+              mii->getOperand(i).setReg(mri_->getSubReg(reg, SubIdx));
+            else {
               mii->getOperand(i).setReg(reg);
-            else if (MRegisterInfo::isPhysicalRegister(reg))
-              mii->getOperand(i).setReg(mri_->getSubReg(reg,
-                                         RegMap->getSubRegisterIndex(OrigReg)));
+              mii->getOperand(i).setSubReg(SubIdx);
+            }
 
             // Multiple uses of reg by the same instruction. It should not
             // contribute to spill weight again.

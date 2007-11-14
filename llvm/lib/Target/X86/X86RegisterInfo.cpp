@@ -773,7 +773,8 @@ bool X86RegisterInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 static const MachineInstrBuilder &X86InstrAddOperand(MachineInstrBuilder &MIB,
                                                      MachineOperand &MO) {
   if (MO.isRegister())
-    MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
+    MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit(),
+                     false, false, MO.getSubReg());
   else if (MO.isImmediate())
     MIB = MIB.addImm(MO.getImm());
   else if (MO.isFrameIndex())
@@ -1498,8 +1499,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
           unsigned Opc = (Amount < 128) ?
             (Is64Bit ? X86::ADD64ri8 : X86::ADD32ri8) :
             (Is64Bit ? X86::ADD64ri32 : X86::ADD32ri);
-          New = BuildMI(TII.get(Opc),  StackPtr)
-                        .addReg(StackPtr).addImm(Amount);
+          New = BuildMI(TII.get(Opc), StackPtr).addReg(StackPtr).addImm(Amount);
         }
       }
 

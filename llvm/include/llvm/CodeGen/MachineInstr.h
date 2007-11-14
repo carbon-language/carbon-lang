@@ -76,6 +76,10 @@ private:
     /// offset - Offset to address of global or external, only valid for
     /// MO_GlobalAddress, MO_ExternalSym and MO_ConstantPoolIndex
     int offset;
+
+    /// subReg - SubRegister number, only valid for MO_Register.  A value of 0
+    /// indicates the MO_Register has no subReg.
+    unsigned subReg;
   } auxInfo;
   
   MachineOperand() {}
@@ -182,6 +186,10 @@ public:
         "Wrong MachineOperand accessor");
     return auxInfo.offset;
   }
+  unsigned getSubReg() const {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return auxInfo.subReg;
+  }
   const char *getSymbolName() const {
     assert(isExternalSymbol() && "Wrong MachineOperand accessor");
     return contents.SymbolName;
@@ -266,6 +274,10 @@ public:
             isJumpTableIndex()) &&
         "Wrong MachineOperand accessor");
     auxInfo.offset = Offset;
+  }
+  void setSubReg(unsigned subReg) {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    auxInfo.subReg = subReg;
   }
   void setConstantPoolIndex(unsigned Idx) {
     assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
@@ -451,7 +463,8 @@ public:
   /// addRegOperand - Add a register operand.
   ///
   void addRegOperand(unsigned Reg, bool IsDef, bool IsImp = false,
-                     bool IsKill = false, bool IsDead = false) {
+                     bool IsKill = false, bool IsDead = false,
+                     unsigned SubReg = 0) {
     MachineOperand &Op = AddNewOperand(IsImp);
     Op.opType = MachineOperand::MO_Register;
     Op.IsDef = IsDef;
@@ -459,6 +472,7 @@ public:
     Op.IsKill = IsKill;
     Op.IsDead = IsDead;
     Op.contents.RegNo = Reg;
+    Op.auxInfo.subReg = SubReg;
   }
 
   /// addImmOperand - Add a zero extended constant argument to the

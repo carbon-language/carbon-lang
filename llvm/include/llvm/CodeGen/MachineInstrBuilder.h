@@ -39,8 +39,8 @@ public:
   const
   MachineInstrBuilder &addReg(unsigned RegNo, bool isDef = false, 
                               bool isImp = false, bool isKill = false, 
-                              bool isDead = false) const {
-    MI->addRegOperand(RegNo, isDef, isImp, isKill, isDead);
+                              bool isDead = false, unsigned SubReg = 0) const {
+    MI->addRegOperand(RegNo, isDef, isImp, isKill, isDead, SubReg);
     return *this;
   }
 

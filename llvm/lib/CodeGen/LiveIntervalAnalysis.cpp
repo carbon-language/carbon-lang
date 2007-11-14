@@ -670,12 +670,8 @@ rewriteInstructionForSpills(const LiveInterval &li,
     unsigned RegI = Reg;
     if (Reg == 0 || MRegisterInfo::isPhysicalRegister(Reg))
       continue;
-    bool isSubReg = RegMap->isSubRegister(Reg);
-    unsigned SubIdx = 0;
-    if (isSubReg) {
-      SubIdx = RegMap->getSubRegisterIndex(Reg);
-      Reg = RegMap->getSuperRegister(Reg);
-    }
+    unsigned SubIdx = mop.getSubReg();
+    bool isSubReg = SubIdx != 0;
     if (Reg != li.reg)
       continue;
 
@@ -710,8 +706,6 @@ rewriteInstructionForSpills(const LiveInterval &li,
     // Create a new virtual register for the spill interval.
     unsigned NewVReg = RegMap->createVirtualRegister(rc);
     vrm.grow();
-    if (isSubReg)
-      RegMap->setIsSubRegister(NewVReg, NewVReg, SubIdx);
             
     // Scan all of the operands of this instruction rewriting operands
     // to use NewVReg instead of li.reg as appropriate.  We do this for
