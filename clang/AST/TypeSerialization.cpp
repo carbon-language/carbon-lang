@@ -24,7 +24,7 @@ using llvm::SerializedPtrID;
 
 
 void QualType::Emit(Serializer& S) const {
-  S.EmitPtr(getAsOpaquePtr());
+  S.EmitPtr(getTypePtr());
   S.EmitInt(getQualifiers());
 }
 
