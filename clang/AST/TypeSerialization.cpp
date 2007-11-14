@@ -84,6 +84,10 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
     case Type::Tagged:
       D.RegisterPtr(PtrID,TagType::CreateImpl(Context,D));
       break;
+      
+    case Type::TypeName:
+      D.RegisterPtr(PtrID,TypedefType::CreateImpl(Context,D));
+      break;
   }
 }
 
@@ -173,3 +177,25 @@ Type* TagType::CreateImpl(ASTContext& Context, Deserializer& D) {
   D.ReadPtr(T->Decl); // May be backpatched.  
   return T;
 }
+
+//===----------------------------------------------------------------------===//
+// TypedefType
+//===----------------------------------------------------------------------===//
+
+void TypedefType::EmitImpl(Serializer& S) const {
+  S.Emit(QualType((Type*)this,0).getCanonicalType());
+  S.EmitPtr(Decl);
+}
+
+Type* TypedefType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  std::vector<Type*>& Types = 
+    const_cast<std::vector<Type*>&>(Context.getTypes());
+  
+  TypedefType* T = new TypedefType(NULL,QualType::ReadVal(D));
+  Types.push_back(T);
+  
+  D.ReadPtr(T->Decl); // May be backpatched.
+  
+  return T;
+}
+  
