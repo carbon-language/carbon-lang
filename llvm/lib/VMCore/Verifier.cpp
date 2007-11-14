@@ -436,8 +436,7 @@ void Verifier::visitFunction(Function &F) {
 
       }
 
-      for (unsigned i = 0; i * sizeof MutuallyIncompatible[0] <
-           sizeof MutuallyIncompatible; ++i) {
+      for (unsigned i = 0; i < array_lengthof(MutuallyIncompatible); ++i) {
         uint16_t MutI = Attr & MutuallyIncompatible[i];
         Assert1(!(MutI & (MutI - 1)), "Attributes " +
                 Attrs->getParamAttrsText(MutI) + "are incompatible!", &F);
