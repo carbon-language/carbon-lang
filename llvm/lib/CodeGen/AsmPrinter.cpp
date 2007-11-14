@@ -245,16 +245,8 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
                                    MachineFunction &MF) {
   const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
   if (JT.empty()) return;
+
   bool IsPic = TM.getRelocationModel() == Reloc::PIC_;
-  
-  // Use JumpTableDirective otherwise honor the entry size from the jump table
-  // info.
-  const char *JTEntryDirective = TAI->getJumpTableDirective();
-  bool HadJTEntryDirective = JTEntryDirective != NULL;
-  if (!HadJTEntryDirective) {
-    JTEntryDirective = MJTI->getEntrySize() == 4 ?
-      TAI->getData32bitsDirective() : TAI->getData64bitsDirective();
-  }
   
   // Pick the directive to use to print the jump table entries, and switch to 
   // the appropriate section.
@@ -300,29 +292,50 @@ void AsmPrinter::EmitJumpTableInfo(MachineJumpTableInfo *MJTI,
       << '_' << i << ":\n";
     
     for (unsigned ii = 0, ee = JTBBs.size(); ii != ee; ++ii) {
-      O << JTEntryDirective << ' ';
-      // If we have emitted set directives for the jump table entries, print 
-      // them rather than the entries themselves.  If we're emitting PIC, then
-      // emit the table entries as differences between two text section labels.
-      // If we're emitting non-PIC code, then emit the entries as direct
-      // references to the target basic blocks.
-      if (!EmittedSets.empty()) {
-        O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
-          << '_' << i << "_set_" << JTBBs[ii]->getNumber();
-      } else if (IsPic) {
-        printBasicBlockLabel(JTBBs[ii], false, false);
-        // If the arch uses custom Jump Table directives, don't calc relative to
-        // JT
-        if (!HadJTEntryDirective) 
-          O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
-            << getFunctionNumber() << '_' << i;
-      } else {
-        printBasicBlockLabel(JTBBs[ii], false, false);
-      }
+      printPICJumpTableEntry(MJTI, JTBBs[ii], i);
       O << '\n';
     }
   }
 }
+
+void AsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
+                                        const MachineBasicBlock *MBB,
+                                        unsigned uid)  const {
+  bool IsPic = TM.getRelocationModel() == Reloc::PIC_;
+  
+  // Use JumpTableDirective otherwise honor the entry size from the jump table
+  // info.
+  const char *JTEntryDirective = TAI->getJumpTableDirective();
+  bool HadJTEntryDirective = JTEntryDirective != NULL;
+  if (!HadJTEntryDirective) {
+    JTEntryDirective = MJTI->getEntrySize() == 4 ?
+      TAI->getData32bitsDirective() : TAI->getData64bitsDirective();
+  }
+
+  O << JTEntryDirective << ' ';
+
+  // If we have emitted set directives for the jump table entries, print 
+  // them rather than the entries themselves.  If we're emitting PIC, then
+  // emit the table entries as differences between two text section labels.
+  // If we're emitting non-PIC code, then emit the entries as direct
+  // references to the target basic blocks.
+  if (IsPic) {
+    if (TAI->getSetDirective()) {
+      O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
+        << '_' << uid << "_set_" << MBB->getNumber();
+    } else {
+      printBasicBlockLabel(MBB, false, false);
+      // If the arch uses custom Jump Table directives, don't calc relative to
+      // JT
+      if (!HadJTEntryDirective) 
+        O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
+          << getFunctionNumber() << '_' << uid;
+    }
+  } else {
+    printBasicBlockLabel(MBB, false, false);
+  }
+}
+
 
 /// EmitSpecialLLVMGlobal - Check to see if the specified global is a
 /// special global used by LLVM.  If so, emit it and return true, otherwise

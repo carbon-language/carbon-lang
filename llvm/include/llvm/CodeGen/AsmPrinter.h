@@ -311,7 +311,10 @@ namespace llvm {
                                            const MachineBasicBlock *MBB) const;
     virtual void printPICJumpTableSetLabel(unsigned uid, unsigned uid2,
                                            const MachineBasicBlock *MBB) const;
-
+    virtual void printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
+                                        const MachineBasicBlock *MBB,
+                                        unsigned uid) const;
+    
     /// printDataDirective - This method prints the asm directive for the
     /// specified type.
     void printDataDirective(const Type *type);

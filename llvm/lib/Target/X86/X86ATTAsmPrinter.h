@@ -19,6 +19,8 @@
 
 namespace llvm {
 
+struct MachineJumpTableInfo;
+    
 struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public X86SharedAsmPrinter {
  X86ATTAsmPrinter(std::ostream &O, X86TargetMachine &TM, const TargetAsmInfo *T)
     : X86SharedAsmPrinter(O, TM, T) { }
@@ -83,6 +85,10 @@ struct VISIBILITY_HIDDEN X86ATTAsmPrinter : public X86SharedAsmPrinter {
                                  const MachineBasicBlock *MBB) const {
     AsmPrinter::printPICJumpTableSetLabel(uid, uid2, MBB);
   }
+  void printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
+                              const MachineBasicBlock *MBB,
+                              unsigned uid) const;
+  
   void printPICLabel(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);
   

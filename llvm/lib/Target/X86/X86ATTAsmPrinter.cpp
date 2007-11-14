@@ -22,6 +22,7 @@
 #include "X86TargetAsmInfo.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CallingConv.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Module.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -502,7 +503,11 @@ void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
                                            const MachineBasicBlock *MBB) const {
   if (!TAI->getSetDirective())
     return;
-  
+
+  // We don't need .set machinery if we have GOT-style relocations
+  if (Subtarget->isPICStyleGOT())
+    return;
+    
   O << TAI->getSetDirective() << ' ' << TAI->getPrivateGlobalPrefix()
     << getFunctionNumber() << '_' << uid << "_set_" << MBB->getNumber() << ',';
   printBasicBlockLabel(MBB, false, false);
@@ -518,6 +523,28 @@ void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
   O << label << "\n" << label << ":";
 }
 
+
+void X86ATTAsmPrinter::printPICJumpTableEntry(const MachineJumpTableInfo *MJTI,
+                                              const MachineBasicBlock *MBB,
+                                              unsigned uid) const 
+{  
+  const char *JTEntryDirective = MJTI->getEntrySize() == 4 ?
+    TAI->getData32bitsDirective() : TAI->getData64bitsDirective();
+
+  O << JTEntryDirective << ' ';
+
+  if (TM.getRelocationModel() == Reloc::PIC_) {
+    if (Subtarget->isPICStyleRIPRel() || Subtarget->isPICStyleStub()) {
+      O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
+        << '_' << uid << "_set_" << MBB->getNumber();
+    } else if (Subtarget->isPICStyleGOT()) {
+      printBasicBlockLabel(MBB, false, false);
+      O << "@GOTOFF";
+    } else
+      assert(0 && "Don't know how to print MBB label for this PIC mode");
+  } else
+    printBasicBlockLabel(MBB, false, false);
+}
 
 bool X86ATTAsmPrinter::printAsmMRegister(const MachineOperand &MO,
                                          const char Mode) {
