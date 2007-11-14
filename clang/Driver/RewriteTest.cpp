@@ -70,7 +70,8 @@ namespace {
                       "extern void objc_exception_try_exit(void *);\n"
                       "extern struct objc_object *objc_exception_extract(void *);\n"
                       "extern int objc_exception_match"
-                      "(struct objc_class *, struct objc_object *, ...);\n";
+                      "(struct objc_class *, struct objc_object *, ...);\n"
+                      "#include <Objc/objc.h>\n";
 
       Rewrite.InsertText(SourceLocation::getFileLoc(mainFileID, 0), 
                          s, strlen(s));
@@ -421,11 +422,6 @@ void RewriteTest::RewriteForwardProtocolDecl(ObjcForwardProtocolDecl *PDecl) {
 
 void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD, 
                                         std::string &ResultStr) {
-  static bool includeObjc = false;
-  if (!includeObjc) {
-    ResultStr += "#include <Objc/objc.h>\n";
-    includeObjc = true;
-  }
   ResultStr += "\nstatic ";
   ResultStr += OMD->getResultType().getAsString();
   ResultStr += "\n";
@@ -1146,7 +1142,8 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   // have no ivars (thus not synthesized) then no need to synthesize this class.
   if (NumIvars <= 0 && (!RCDecl || !ObjcSynthesizedStructs.count(RCDecl)))
     return;
-  
+  // FIXME: This has potential of causing problem. If 
+  // SynthesizeObjcInternalStruct is ever called recursively.
   Result += "\nstruct ";
   Result += CDecl->getName();
 
@@ -1186,8 +1183,19 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
         // this transformation as well, which is still correct c-code.
         if (!strncmp(cursor, "public", strlen("public")) ||
             !strncmp(cursor, "private", strlen("private")) ||
-            !strncmp(cursor, "protected", strlen("private")))
+            !strncmp(cursor, "protected", strlen("protected")))
           Rewrite.InsertText(atLoc, "// ", 3);
+      }
+      // FIXME: If there are cases where '<' is used in ivar declaration part
+      // of user code, then scan the ivar list and use needToScanForQualifiers
+      // for type checking.
+      else if (*cursor == '<') {
+        SourceLocation atLoc = LocStart.getFileLocWithOffset(cursor-startBuf);
+        Rewrite.InsertText(atLoc, "/* ", 3);
+        cursor = strchr(cursor, '>');
+        cursor++;
+        atLoc = LocStart.getFileLocWithOffset(cursor-startBuf);
+        Rewrite.InsertText(atLoc, " */", 3);
       }
       cursor++;
     }
@@ -1799,9 +1807,6 @@ void RewriteTest::RewriteImplementations(std::string &Result) {
   for (int i = 0; i < CatDefCount; i++)
     RewriteImplementationDecl(CategoryImplementation[i]);
   
-  // TODO: This is temporary until we decide how to access objc types in a
-  // c program
-  Result += "#include <Objc/objc.h>\n";
   // This is needed for use of offsetof
   Result += "#include <stddef.h>\n";
     
