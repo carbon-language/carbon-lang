@@ -76,7 +76,11 @@ void Type::Create(ASTContext& Context, unsigned i, Deserializer& D) {
       
     case Type::Pointer:
       D.RegisterPtr(PtrID,PointerType::CreateImpl(Context,D));
-      break;      
+      break;
+      
+    case Type::Tagged:
+      D.RegisterPtr(PtrID,TagType::CreateImpl(Context,D));
+      break;
   }
 }
 
@@ -129,4 +133,18 @@ void PointerType::EmitImpl(Serializer& S) const {
 
 Type* PointerType::CreateImpl(ASTContext& Context, Deserializer& D) {
   return Context.getPointerType(QualType::ReadVal(D)).getTypePtr();
+}
+
+//===----------------------------------------------------------------------===//
+// TagType
+//===----------------------------------------------------------------------===//
+
+void TagType::EmitImpl(Serializer& S) const {
+  S.EmitPtr(Decl);
+}
+
+Type* TagType::CreateImpl(ASTContext& Context, Deserializer& D) {
+  TagType* T = cast<TagType>(Context.getTagDeclType(NULL).getTypePtr());
+  D.ReadPtr(T->Decl); // May be backpatched.  
+  return T;
 }
