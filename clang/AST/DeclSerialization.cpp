@@ -43,6 +43,12 @@ Decl* Decl::Create(Deserializer& D) {
     case BlockVar:
       return BlockVarDecl::CreateImpl(D);
       
+    case Enum:
+      return EnumDecl::CreateImpl(D);
+      
+    case EnumConstant:
+      return EnumConstantDecl::CreateImpl(D);
+      
     case Field:
       return FieldDecl::CreateImpl(D);
       
@@ -220,6 +226,64 @@ ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D) {
 }
 
 //===----------------------------------------------------------------------===//
+//      EnumDecl Serialization.
+//===----------------------------------------------------------------------===//
+
+void EnumDecl::EmitImpl(Serializer& S) const {
+  ScopedDecl::EmitInRec(S);
+  S.EmitBool(isDefinition());
+  S.Emit(IntegerType);  
+  S.BatchEmitOwnedPtrs(ElementList,getNextDeclarator());
+}
+
+EnumDecl* EnumDecl::CreateImpl(Deserializer& D) {
+  EnumDecl* decl = new EnumDecl(SourceLocation(),NULL,NULL);
+  
+  decl->ScopedDecl::ReadInRec(D);
+  decl->setDefinition(D.ReadBool());
+  decl->IntegerType = QualType::ReadVal(D);
+  
+  Decl* next_declarator;
+  Decl* Elist;
+  
+  D.BatchReadOwnedPtrs(Elist,next_declarator);
+  
+  decl->ElementList = cast_or_null<EnumConstantDecl>(Elist);
+  decl->setNextDeclarator(cast_or_null<ScopedDecl>(next_declarator));
+  
+  return decl;
+}
+
+//===----------------------------------------------------------------------===//
+//      EnumConstantDecl Serialization.
+//===----------------------------------------------------------------------===//
+
+void EnumConstantDecl::EmitImpl(Serializer& S) const {
+  S.Emit(Val);
+  ValueDecl::EmitInRec(S);
+  S.BatchEmitOwnedPtrs(getNextDeclarator(),Init);
+}
+ 
+EnumConstantDecl* EnumConstantDecl::CreateImpl(Deserializer& D) {
+  llvm::APSInt val(0);
+  D.Read(val);
+  
+  EnumConstantDecl* decl = 
+    new EnumConstantDecl(SourceLocation(),NULL,QualType(),NULL,
+                         val,NULL);
+  
+  decl->ValueDecl::ReadInRec(D);
+  
+  Decl* next_declarator;
+  
+  D.BatchReadOwnedPtrs(next_declarator,decl->Init);
+  
+  decl->setNextDeclarator(cast<ScopedDecl>(next_declarator));
+
+  return decl;    
+}
+
+//===----------------------------------------------------------------------===//
 //      FieldDecl Serialization.
 //===----------------------------------------------------------------------===//
 
@@ -295,8 +359,9 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D) {
 //      RecordDecl Serialization.
 //===----------------------------------------------------------------------===//
 
-void RecordDecl::EmitImpl(llvm::Serializer& S) const {
+void RecordDecl::EmitImpl(Serializer& S) const {
   ScopedDecl::EmitInRec(S);
+  S.EmitBool(isDefinition());
   S.EmitBool(hasFlexibleArrayMember());
   S.EmitSInt(getNumMembers());
   if (getNumMembers() > 0) {
@@ -310,8 +375,9 @@ void RecordDecl::EmitImpl(llvm::Serializer& S) const {
 
 RecordDecl* RecordDecl::CreateImpl(Decl::Kind DK, Deserializer& D) {
   RecordDecl* decl = new RecordDecl(DK,SourceLocation(),NULL,NULL);
-  
+    
   decl->ScopedDecl::ReadInRec(D);
+  decl->setDefinition(D.ReadBool());
   decl->setHasFlexibleArrayMember(D.ReadBool());
   decl->NumMembers = D.ReadSInt();
   

@@ -540,6 +540,15 @@ public:
   static bool classof(const EnumConstantDecl *D) { return true; }
   
   friend class StmtIteratorBase;
+  
+protected:
+  /// EmitImpl - Serialize this EnumConstantDecl.  Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  
+  /// CreateImpl - Deserialize a EnumConstantDecl.  Called by Decl::Create.
+  static EnumConstantDecl* CreateImpl(llvm::Deserializer& D);
+  
+  friend Decl* Decl::Create(llvm::Deserializer& D);
 };
 
 
@@ -663,6 +672,15 @@ public:
   
   static bool classof(const Decl *D) { return D->getKind() == Enum; }
   static bool classof(const EnumDecl *D) { return true; }
+  
+protected:
+  /// EmitImpl - Serialize this EnumDecl.  Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  
+  /// CreateImpl - Deserialize a EnumDecl.  Called by Decl::Create.
+  static EnumDecl* CreateImpl(llvm::Deserializer& D);
+  
+  friend Decl* Decl::Create(llvm::Deserializer& D);
 };
 
 
@@ -712,10 +730,10 @@ public:
   static bool classof(const RecordDecl *D) { return true; }
 
 protected:
-  /// EmitImpl - Serialize this TypedefDecl.  Called by Decl::Emit.
+  /// EmitImpl - Serialize this RecordDecl.  Called by Decl::Emit.
   virtual void EmitImpl(llvm::Serializer& S) const;
   
-  /// CreateImpl - Deserialize a TypedefDecl.  Called by Decl::Create.
+  /// CreateImpl - Deserialize a RecordDecl.  Called by Decl::Create.
   static RecordDecl* CreateImpl(Kind DK, llvm::Deserializer& D);
   
   friend Decl* Decl::Create(llvm::Deserializer& D);
