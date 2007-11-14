@@ -114,19 +114,21 @@ void CallingConvEmitter::EmitAction(Record *Action,
     } else if (Action->isSubClassOf("CCAssignToStack")) {
       int Size = Action->getValueAsInt("Size");
       int Align = Action->getValueAsInt("Align");
-      
+
       O << IndentStr << "unsigned Offset" << ++Counter
-        << " = State.AllocateStack(" << Size << ", " << Align << ");\n";
-      O << IndentStr << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
-        << Counter << ", LocVT, LocInfo));\n";
-      O << IndentStr << "return false;\n";
-    } else if (Action->isSubClassOf("CCAssignToStackABISizeAlign")) {
-      O << IndentStr << "unsigned Offset" << ++Counter
-        << " = State.AllocateStack(State.getTarget().getTargetData()"
-           "->getABITypeSize(MVT::getTypeForValueType(LocVT)),\n";
-      O << IndentStr << "       State.getTarget().getTargetData()"
-           "->getABITypeAlignment(MVT::getTypeForValueType(LocVT)));\n";
-      O << IndentStr << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
+        << " = State.AllocateStack(";
+      if (Size)
+        O << Size << ", ";
+      else
+        O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
+          "->getABITypeSize(MVT::getTypeForValueType(LocVT)), ";
+      if (Align)
+        O << Align;
+      else
+        O << "\n" << IndentStr << "  State.getTarget().getTargetData()"
+          "->getABITypeAlignment(MVT::getTypeForValueType(LocVT))";
+      O << ");\n" << IndentStr
+        << "State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset"
         << Counter << ", LocVT, LocInfo));\n";
       O << IndentStr << "return false;\n";
     } else if (Action->isSubClassOf("CCPromoteToType")) {

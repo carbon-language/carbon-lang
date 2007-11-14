@@ -120,7 +120,7 @@ def CC_X86_64_C : CallingConv<[
   
   // Long doubles get stack slots whose size and alignment depends on the
   // subtarget.
-  CCIfType<[f80], CCAssignToStackABISizeAlign<0>>,
+  CCIfType<[f80], CCAssignToStack<0, 0>>,
 
   // Vectors get 16-byte stack slots that are 16-byte aligned.
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64], CCAssignToStack<16, 16>>,
@@ -181,7 +181,7 @@ def CC_X86_32_Common : CallingConv<[
 
   // Long doubles get slots whose size and alignment depends on the
   // subtarget.
-  CCIfType<[f80], CCAssignToStackABISizeAlign<0>>,
+  CCIfType<[f80], CCAssignToStack<0, 0>>,
 
   // The first 4 vector arguments are passed in XMM registers.
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],

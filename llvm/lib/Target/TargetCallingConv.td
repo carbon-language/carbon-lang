@@ -60,17 +60,12 @@ class CCAssignToReg<list<Register> regList> : CCAction {
 }
 
 /// CCAssignToStack - This action always matches: it assigns the value to a
-/// stack slot of the specified size and alignment on the stack.
+/// stack slot of the specified size and alignment on the stack.  If size is
+/// zero then the ABI size is used; if align is zero then the ABI alignment
+/// is used - these may depend on the target or subtarget.
 class CCAssignToStack<int size, int align> : CCAction {
   int Size = size;
   int Align = align;
-}
-
-/// CCAssignToStackABISizeAlign - This action always matches: it assigns
-/// the value to a stack slot of the ABISize and ABIAlignment for the type,
-/// which may depend on the target or subtarget.
-/// "ignored" is here because an empty arg list does not work.
-class CCAssignToStackABISizeAlign<int ignored> : CCAction {
 }
 
 /// CCStructAssign - This action always matches: it will use the C ABI and
