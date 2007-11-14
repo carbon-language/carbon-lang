@@ -1178,7 +1178,10 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
     while (cursor < endBuf) {
       if (*cursor == '@') {
         SourceLocation atLoc = LocStart.getFileLocWithOffset(cursor-startBuf);
-        cursor = strchr(cursor, 'p');
+        // Skip whitespace.
+        for (++cursor; cursor[0] == ' ' || cursor[0] == '\t'; ++cursor)
+          /*scan*/;
+
         // FIXME: presence of @public, etc. inside comment results in
         // this transformation as well, which is still correct c-code.
         if (!strncmp(cursor, "public", strlen("public")) ||
