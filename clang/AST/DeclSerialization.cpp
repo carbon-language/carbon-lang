@@ -43,6 +43,9 @@ Decl* Decl::Create(Deserializer& D) {
     case BlockVar:
       return BlockVarDecl::CreateImpl(D);
       
+    case Field:
+      return FieldDecl::CreateImpl(D);
+      
     case FileVar:
       return FileVarDecl::CreateImpl(D);
       
@@ -213,6 +216,24 @@ ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D) {
   
   decl->VarDecl::ReadImpl(D);
   
+  return decl;
+}
+
+//===----------------------------------------------------------------------===//
+//      FieldDecl Serialization.
+//===----------------------------------------------------------------------===//
+
+void FieldDecl::EmitImpl(Serializer& S) const {
+  S.Emit(getType());
+  NamedDecl::EmitInRec(S);
+  S.EmitOwnedPtr(BitWidth);  
+}
+
+FieldDecl* FieldDecl::CreateImpl(Deserializer& D) {
+  QualType DeclType = QualType::ReadVal(D);
+  FieldDecl* decl = new FieldDecl(SourceLocation(),NULL,DeclType);
+  decl->ReadInRec(D);
+  decl->BitWidth = D.ReadOwnedPtr<Expr>();
   return decl;
 }
 

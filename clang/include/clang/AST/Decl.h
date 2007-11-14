@@ -505,6 +505,15 @@ public:
     return D->getKind() >= FieldFirst && D->getKind() <= FieldLast;
   }
   static bool classof(const FieldDecl *D) { return true; }
+
+protected:
+  /// EmitImpl - Serialize this FieldDecl.  Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  
+  /// CreateImpl - Deserialize a FieldDecl.  Called by Decl::Create.
+  static FieldDecl* CreateImpl(llvm::Deserializer& D);
+  
+  friend Decl* Decl::Create(llvm::Deserializer& D);  
 };
 
 /// EnumConstantDecl - An instance of this object exists for each enum constant
