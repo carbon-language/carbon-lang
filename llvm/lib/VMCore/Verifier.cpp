@@ -401,15 +401,14 @@ void Verifier::visitFunction(Function &F) {
     ParamAttr::NoReturn | ParamAttr::NoUnwind |
     ParamAttr::Const    | ParamAttr::Pure;
 
-  const uint16_t MutuallyIncompatible =
+  const uint16_t MutuallyIncompatible[3] = {
     ParamAttr::ByVal | ParamAttr::InReg |
-    ParamAttr::Nest  | ParamAttr::StructRet;
+    ParamAttr::Nest  | ParamAttr::StructRet,
 
-  const uint16_t MutuallyIncompatible2 =
-    ParamAttr::ZExt | ParamAttr::SExt;
+    ParamAttr::ZExt | ParamAttr::SExt,
 
-  const uint16_t MutuallyIncompatible3 =
-    ParamAttr::Pure | ParamAttr::Const;
+    ParamAttr::Pure | ParamAttr::Const
+  };
 
   const uint16_t IntegerTypeOnly =
     ParamAttr::SExt | ParamAttr::ZExt;
@@ -421,37 +420,28 @@ void Verifier::visitFunction(Function &F) {
   bool SawSRet = false;
 
   if (const ParamAttrsList *Attrs = FT->getParamAttrs()) {
-    unsigned Idx = 1;
     bool SawNest = false;
 
-    uint16_t RetI = Attrs->getParamAttrs(0) & ReturnIncompatible;
-    Assert1(!RetI, "Attribute " + Attrs->getParamAttrsText(RetI) +
-            "should not apply to functions!", &F);
-
-    uint16_t MutI2 = Attrs->getParamAttrs(0) & MutuallyIncompatible2;
-    Assert1(MutI2 != MutuallyIncompatible2, "Attributes" + 
-            Attrs->getParamAttrsText(MutI2) + "are incompatible!", &F);
-
-    uint16_t MutI3 = Attrs->getParamAttrs(0) & MutuallyIncompatible3;
-    Assert1(MutI3 != MutuallyIncompatible3, "Attributes" + 
-            Attrs->getParamAttrsText(MutI3) + "are incompatible!", &F);
-
-    for (FunctionType::param_iterator I = FT->param_begin(), 
-         E = FT->param_end(); I != E; ++I, ++Idx) {
-
+    for (unsigned Idx = 0; Idx <= FT->getNumParams(); ++Idx) {
       uint16_t Attr = Attrs->getParamAttrs(Idx);
 
-      uint16_t ParmI = Attr & ParameterIncompatible;
-      Assert1(!ParmI, "Attribute " + Attrs->getParamAttrsText(ParmI) +
-              "should only be applied to function!", &F);
+      if (!Idx) {
+        uint16_t RetI = Attr & ReturnIncompatible;
+        Assert1(!RetI, "Attribute " + Attrs->getParamAttrsText(RetI) +
+                "should not apply to functions!", &F);
+      } else {
+        uint16_t ParmI = Attr & ParameterIncompatible;
+        Assert1(!ParmI, "Attribute " + Attrs->getParamAttrsText(ParmI) +
+                "should only be applied to function!", &F);
 
-      uint16_t MutI = Attr & MutuallyIncompatible;
-      Assert1(!(MutI & (MutI - 1)), "Attributes " +
-              Attrs->getParamAttrsText(MutI) + "are incompatible!", &F);
+      }
 
-      uint16_t MutI2 = Attr & MutuallyIncompatible2;
-      Assert1(MutI2 != MutuallyIncompatible2, "Attributes" + 
-              Attrs->getParamAttrsText(MutI2) + "are incompatible!", &F);
+      for (unsigned i = 0; i * sizeof MutuallyIncompatible[0] <
+           sizeof MutuallyIncompatible; ++i) {
+        uint16_t MutI = Attr & MutuallyIncompatible[i];
+        Assert1(!(MutI & (MutI - 1)), "Attributes " +
+                Attrs->getParamAttrsText(MutI) + "are incompatible!", &F);
+      }
 
       uint16_t IType = Attr & IntegerTypeOnly;
       Assert1(!IType || FT->getParamType(Idx-1)->isInteger(),
@@ -463,19 +453,19 @@ void Verifier::visitFunction(Function &F) {
               "Attribute " + Attrs->getParamAttrsText(PType) +
               "should only apply to Pointer type!", &F);
 
-      if (Attrs->paramHasAttr(Idx, ParamAttr::ByVal)) {
+      if (Attr & ParamAttr::ByVal) {
         const PointerType *Ty =
             dyn_cast<PointerType>(FT->getParamType(Idx-1));
         Assert1(!Ty || isa<StructType>(Ty->getElementType()),
                 "Attribute byval should only apply to pointer to structs!", &F);
       }
 
-      if (Attrs->paramHasAttr(Idx, ParamAttr::Nest)) {
+      if (Attr & ParamAttr::Nest) {
         Assert1(!SawNest, "More than one parameter has attribute nest!", &F);
         SawNest = true;
       }
 
-      if (Attrs->paramHasAttr(Idx, ParamAttr::StructRet)) {
+      if (Attr & ParamAttr::StructRet) {
         SawSRet = true;
         Assert1(Idx == 1, "Attribute sret not on first parameter!", &F);
       }
