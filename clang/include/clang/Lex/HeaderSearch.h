@@ -152,6 +152,12 @@ public:
     getFileInfo(File).DirInfo = DirectoryLookup::SystemHeaderDir;
   }
   
+  /// IncrementIncludeCount - Increment the count for the number of times the
+  /// specified FileEntry has been entered.
+  void IncrementIncludeCount(const FileEntry *File) {
+    ++getFileInfo(File).NumIncludes;
+  }
+  
   /// SetFileControllingMacro - Mark the specified file as having a controlling
   /// macro.  This is used by the multiple-include optimization to eliminate
   /// no-op #includes.
