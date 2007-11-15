@@ -1422,8 +1422,6 @@ Types
         GEN_ERROR("Unsigned result not equal to signed result");
      if (!ElemTy->isFloatingPoint() && !ElemTy->isInteger())
         GEN_ERROR("Element type of a VectorType must be primitive");
-     if (!isPowerOf2_32($2))
-       GEN_ERROR("Vector length should be a power of 2");
      $$ = new PATypeHolder(HandleUpRefs(VectorType::get(*$4, (unsigned)$2)));
      delete $4;
      CHECK_FOR_ERROR

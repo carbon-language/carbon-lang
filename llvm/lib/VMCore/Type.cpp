@@ -1209,7 +1209,6 @@ static ManagedStatic<TypeMap<VectorValType, VectorType> > VectorTypes;
 
 VectorType *VectorType::get(const Type *ElementType, unsigned NumElements) {
   assert(ElementType && "Can't get vector of null types!");
-  assert(isPowerOf2_32(NumElements) && "Vector length should be a power of 2!");
 
   VectorValType PVT(ElementType, NumElements);
   VectorType *PT = VectorTypes->get(PVT);

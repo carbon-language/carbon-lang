@@ -2158,7 +2158,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             break;
           } else {
             SplitVectorOp(Node->getOperand(1), Lo, Hi);
-            IncrementSize = NumElems/2 * MVT::getSizeInBits(EVT)/8;
+            IncrementSize = MVT::getVectorNumElements(Lo.Val->getValueType(0)) * 
+                            MVT::getSizeInBits(EVT)/8;
           }
         } else {
           ExpandOp(Node->getOperand(1), Lo, Hi);
@@ -6226,10 +6227,15 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
   SDNode *Node = Op.Val;
   unsigned NumElements = MVT::getVectorNumElements(Op.getValueType());
   assert(NumElements > 1 && "Cannot split a single element vector!");
-  unsigned NewNumElts = NumElements/2;
+
   MVT::ValueType NewEltVT = MVT::getVectorElementType(Op.getValueType());
-  MVT::ValueType NewVT = MVT::getVectorType(NewEltVT, NewNumElts);
-  
+
+  unsigned NewNumElts_Lo = 1 << Log2_32(NumElements-1);
+  unsigned NewNumElts_Hi = NumElements - NewNumElts_Lo;
+
+  MVT::ValueType NewVT_Lo = MVT::getVectorType(NewEltVT, NewNumElts_Lo);
+  MVT::ValueType NewVT_Hi = MVT::getVectorType(NewEltVT, NewNumElts_Hi);
+
   // See if we already split it.
   std::map<SDOperand, std::pair<SDOperand, SDOperand> >::iterator I
     = SplitNodes.find(Op);
@@ -6253,25 +6259,27 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     SplitVectorOp(Node->getOperand(0), Lo, Hi);
     unsigned Index = cast<ConstantSDNode>(Node->getOperand(2))->getValue();
     SDOperand ScalarOp = Node->getOperand(1);
-    if (Index < NewNumElts)
-      Lo = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT, Lo, ScalarOp,
+    if (Index < NewNumElts_Lo)
+      Lo = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT_Lo, Lo, ScalarOp,
                        DAG.getConstant(Index, TLI.getPointerTy()));
     else
-      Hi = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT, Hi, ScalarOp,
-                       DAG.getConstant(Index - NewNumElts, TLI.getPointerTy()));
+      Hi = DAG.getNode(ISD::INSERT_VECTOR_ELT, NewVT_Hi, Hi, ScalarOp,
+                       DAG.getConstant(Index - NewNumElts_Lo,
+                                       TLI.getPointerTy()));
     break;
   }
   case ISD::BUILD_VECTOR: {
     SmallVector<SDOperand, 8> LoOps(Node->op_begin(), 
-                                    Node->op_begin()+NewNumElts);
-    Lo = DAG.getNode(ISD::BUILD_VECTOR, NewVT, &LoOps[0], LoOps.size());
+                                    Node->op_begin()+NewNumElts_Lo);
+    Lo = DAG.getNode(ISD::BUILD_VECTOR, NewVT_Lo, &LoOps[0], LoOps.size());
 
-    SmallVector<SDOperand, 8> HiOps(Node->op_begin()+NewNumElts, 
+    SmallVector<SDOperand, 8> HiOps(Node->op_begin()+NewNumElts_Lo, 
                                     Node->op_end());
-    Hi = DAG.getNode(ISD::BUILD_VECTOR, NewVT, &HiOps[0], HiOps.size());
+    Hi = DAG.getNode(ISD::BUILD_VECTOR, NewVT_Hi, &HiOps[0], HiOps.size());
     break;
   }
   case ISD::CONCAT_VECTORS: {
+    // FIXME: Handle non-power-of-two vectors?
     unsigned NewNumSubvectors = Node->getNumOperands() / 2;
     if (NewNumSubvectors == 1) {
       Lo = Node->getOperand(0);
@@ -6279,11 +6287,11 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     } else {
       SmallVector<SDOperand, 8> LoOps(Node->op_begin(), 
                                       Node->op_begin()+NewNumSubvectors);
-      Lo = DAG.getNode(ISD::CONCAT_VECTORS, NewVT, &LoOps[0], LoOps.size());
+      Lo = DAG.getNode(ISD::CONCAT_VECTORS, NewVT_Lo, &LoOps[0], LoOps.size());
 
       SmallVector<SDOperand, 8> HiOps(Node->op_begin()+NewNumSubvectors, 
                                       Node->op_end());
-      Hi = DAG.getNode(ISD::CONCAT_VECTORS, NewVT, &HiOps[0], HiOps.size());
+      Hi = DAG.getNode(ISD::CONCAT_VECTORS, NewVT_Hi, &HiOps[0], HiOps.size());
     }
     break;
   }
@@ -6298,12 +6306,12 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
       // Handle a vector merge.
       SDOperand CL, CH;
       SplitVectorOp(Cond, CL, CH);
-      Lo = DAG.getNode(Node->getOpcode(), NewVT, CL, LL, RL);
-      Hi = DAG.getNode(Node->getOpcode(), NewVT, CH, LH, RH);
+      Lo = DAG.getNode(Node->getOpcode(), NewVT_Lo, CL, LL, RL);
+      Hi = DAG.getNode(Node->getOpcode(), NewVT_Hi, CH, LH, RH);
     } else {
       // Handle a simple select with vector operands.
-      Lo = DAG.getNode(Node->getOpcode(), NewVT, Cond, LL, RL);
-      Hi = DAG.getNode(Node->getOpcode(), NewVT, Cond, LH, RH);
+      Lo = DAG.getNode(Node->getOpcode(), NewVT_Lo, Cond, LL, RL);
+      Hi = DAG.getNode(Node->getOpcode(), NewVT_Hi, Cond, LH, RH);
     }
     break;
   }
@@ -6324,16 +6332,16 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     SplitVectorOp(Node->getOperand(0), LL, LH);
     SplitVectorOp(Node->getOperand(1), RL, RH);
     
-    Lo = DAG.getNode(Node->getOpcode(), NewVT, LL, RL);
-    Hi = DAG.getNode(Node->getOpcode(), NewVT, LH, RH);
+    Lo = DAG.getNode(Node->getOpcode(), NewVT_Lo, LL, RL);
+    Hi = DAG.getNode(Node->getOpcode(), NewVT_Hi, LH, RH);
     break;
   }
   case ISD::FPOWI: {
     SDOperand L, H;
     SplitVectorOp(Node->getOperand(0), L, H);
 
-    Lo = DAG.getNode(Node->getOpcode(), NewVT, L, Node->getOperand(1));
-    Hi = DAG.getNode(Node->getOpcode(), NewVT, H, Node->getOperand(1));
+    Lo = DAG.getNode(Node->getOpcode(), NewVT_Lo, L, Node->getOperand(1));
+    Hi = DAG.getNode(Node->getOpcode(), NewVT_Hi, H, Node->getOperand(1));
     break;
   }
   case ISD::CTTZ:
@@ -6347,8 +6355,8 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     SDOperand L, H;
     SplitVectorOp(Node->getOperand(0), L, H);
 
-    Lo = DAG.getNode(Node->getOpcode(), NewVT, L);
-    Hi = DAG.getNode(Node->getOpcode(), NewVT, H);
+    Lo = DAG.getNode(Node->getOpcode(), NewVT_Lo, L);
+    Hi = DAG.getNode(Node->getOpcode(), NewVT_Hi, H);
     break;
   }
   case ISD::LOAD: {
@@ -6360,13 +6368,13 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     unsigned Alignment = LD->getAlignment();
     bool isVolatile = LD->isVolatile();
 
-    Lo = DAG.getLoad(NewVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
-    unsigned IncrementSize = NewNumElts * MVT::getSizeInBits(NewEltVT)/8;
+    Lo = DAG.getLoad(NewVT_Lo, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
+    unsigned IncrementSize = NewNumElts_Lo * MVT::getSizeInBits(NewEltVT)/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                       getIntPtrConstant(IncrementSize));
     SVOffset += IncrementSize;
     Alignment = MinAlign(Alignment, IncrementSize);
-    Hi = DAG.getLoad(NewVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
+    Hi = DAG.getLoad(NewVT_Hi, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
     
     // Build a factor node to remember that this load is independent of the
     // other one.
@@ -6394,8 +6402,8 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     }
     // Split the vector and convert each of the pieces now.
     SplitVectorOp(InOp, Lo, Hi);
-    Lo = DAG.getNode(ISD::BIT_CONVERT, NewVT, Lo);
-    Hi = DAG.getNode(ISD::BIT_CONVERT, NewVT, Hi);
+    Lo = DAG.getNode(ISD::BIT_CONVERT, NewVT_Lo, Lo);
+    Hi = DAG.getNode(ISD::BIT_CONVERT, NewVT_Hi, Hi);
     break;
   }
   }
