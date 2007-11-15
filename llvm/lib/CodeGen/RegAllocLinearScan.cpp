@@ -342,7 +342,7 @@ void RALinScan::linearScan()
 
   // expire any remaining inactive intervals
   DEBUG(for (IntervalPtrs::reverse_iterator
-               i = inactive_.rbegin(); i != inactive_.rend(); )
+               i = inactive_.rbegin(); i != inactive_.rend(); ++i)
         DOUT << "\tinterval " << *i->first << " expired\n");
   inactive_.clear();
 
