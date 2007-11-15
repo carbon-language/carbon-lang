@@ -344,24 +344,6 @@ const Type *SCEVSDivExpr::getType() const {
   return LHS->getType();
 }
 
-// SCEVUDivs - Only allow the creation of one SCEVUDivExpr for any particular
-// input.  Don't use a SCEVHandle here, or else the object will never be
-// deleted!
-static ManagedStatic<std::map<std::pair<SCEV*, SCEV*>, 
-                     SCEVUDivExpr*> > SCEVUDivs;
-
-SCEVUDivExpr::~SCEVUDivExpr() {
-  SCEVUDivs->erase(std::make_pair(LHS, RHS));
-}
-
-void SCEVUDivExpr::print(std::ostream &OS) const {
-  OS << "(" << *LHS << " /u " << *RHS << ")";
-}
-
-const Type *SCEVUDivExpr::getType() const {
-  return LHS->getType();
-}
-
 // SCEVAddRecExprs - Only allow the creation of one SCEVAddRecExpr for any
 // particular input.  Don't use a SCEVHandle here, or else the object will never
 // be deleted!
@@ -591,7 +573,7 @@ SCEVHandle SCEVAddRecExpr::evaluateAtIteration(SCEVHandle It,
   for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
     SCEVHandle BC = PartialFact(It, i, SE);
     Divisor *= i;
-    SCEVHandle Val = SE.getUDivExpr(SE.getMulExpr(BC, getOperand(i)),
+    SCEVHandle Val = SE.getSDivExpr(SE.getMulExpr(BC, getOperand(i)),
                                     SE.getIntegerSCEV(Divisor,Ty));
     Result = SE.getAddExpr(Result, Val);
   }
@@ -1055,8 +1037,7 @@ SCEVHandle ScalarEvolution::getMulExpr(std::vector<SCEVHandle> &Ops) {
   return Result;
 }
 
-SCEVHandle ScalarEvolution::getSDivExpr(const SCEVHandle &LHS,
-                                        const SCEVHandle &RHS) {
+SCEVHandle ScalarEvolution::getSDivExpr(const SCEVHandle &LHS, const SCEVHandle &RHS) {
   if (SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
     if (RHSC->getValue()->equalsInt(1))
       return LHS;                            // X sdiv 1 --> x
@@ -1074,26 +1055,6 @@ SCEVHandle ScalarEvolution::getSDivExpr(const SCEVHandle &LHS,
 
   SCEVSDivExpr *&Result = (*SCEVSDivs)[std::make_pair(LHS, RHS)];
   if (Result == 0) Result = new SCEVSDivExpr(LHS, RHS);
-  return Result;
-}
-
-SCEVHandle ScalarEvolution::getUDivExpr(const SCEVHandle &LHS,
-                                        const SCEVHandle &RHS) {
-  if (SCEVConstant *RHSC = dyn_cast<SCEVConstant>(RHS)) {
-    if (RHSC->getValue()->equalsInt(1))
-      return LHS;                            // X udiv 1 --> x
-
-    if (SCEVConstant *LHSC = dyn_cast<SCEVConstant>(LHS)) {
-      Constant *LHSCV = LHSC->getValue();
-      Constant *RHSCV = RHSC->getValue();
-      return getUnknown(ConstantExpr::getUDiv(LHSCV, RHSCV));
-    }
-  }
-
-  // FIXME: implement folding of (X*4)/4 when we know X*4 doesn't overflow.
-
-  SCEVUDivExpr *&Result = (*SCEVUDivs)[std::make_pair(LHS, RHS)];
-  if (Result == 0) Result = new SCEVUDivExpr(LHS, RHS);
   return Result;
 }
 
@@ -1523,6 +1484,8 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
     case Instruction::SDiv:
       return SE.getSDivExpr(getSCEV(I->getOperand(0)),
                             getSCEV(I->getOperand(1)));
+      break;
+
     case Instruction::Sub:
       return SE.getMinusSCEV(getSCEV(I->getOperand(0)),
                              getSCEV(I->getOperand(1)));
@@ -2182,16 +2145,6 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
     return SE.getSDivExpr(LHS, RHS);
   }
 
-  if (SCEVUDivExpr *Div = dyn_cast<SCEVUDivExpr>(V)) {
-    SCEVHandle LHS = getSCEVAtScope(Div->getLHS(), L);
-    if (LHS == UnknownValue) return LHS;
-    SCEVHandle RHS = getSCEVAtScope(Div->getRHS(), L);
-    if (RHS == UnknownValue) return RHS;
-    if (LHS == Div->getLHS() && RHS == Div->getRHS())
-      return Div;   // must be loop invariant
-    return SE.getUDivExpr(LHS, RHS);
-  }
-
   // If this is a loop recurrence for a loop that does not contain L, then we
   // are dealing with the final value computed by the loop.
   if (SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(V)) {
@@ -2735,4 +2688,3 @@ void ScalarEvolution::print(std::ostream &OS, const Module* ) const {
   for (LoopInfo::iterator I = LI.begin(), E = LI.end(); I != E; ++I)
     PrintLoopInfo(OS, this, *I);
 }
-

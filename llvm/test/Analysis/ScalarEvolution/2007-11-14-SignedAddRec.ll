@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep printd | grep 1206807378
 ; PR1798
+; XFAIL: *
 
 declare void @printd(i32)
 

@@ -132,12 +132,6 @@ namespace llvm {
       return InsertBinop(Instruction::SDiv, LHS, RHS, InsertPt);
     }
 
-    Value *visitUDivExpr(SCEVUDivExpr *S) {
-      Value *LHS = expand(S->getLHS());
-      Value *RHS = expand(S->getRHS());
-      return InsertBinop(Instruction::UDiv, LHS, RHS, InsertPt);
-    }
-
     Value *visitAddRecExpr(SCEVAddRecExpr *S);
 
     Value *visitUnknown(SCEVUnknown *S) {
