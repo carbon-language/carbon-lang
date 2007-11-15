@@ -103,6 +103,7 @@ namespace {
     // Expression Rewriting.
     Stmt *RewriteFunctionBodyOrGlobalInitializer(Stmt *S);
     Stmt *RewriteAtEncode(ObjCEncodeExpr *Exp);
+    Stmt *RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV);
     Stmt *RewriteAtSelector(ObjCSelectorExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
@@ -565,6 +566,19 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
   Rewrite.ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);
 }
 
+Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
+  ObjcIvarDecl *D = IV->getDecl();
+  if (IV->isFreeIvar()) {
+    Expr *Replacement = new MemberExpr(IV->getBase(), true, D, 
+                                       IV->getLocation());
+    Rewrite.ReplaceStmt(IV, Replacement);
+    delete IV;
+    return Replacement;
+  }
+  else
+    return IV;
+}
+
 //===----------------------------------------------------------------------===//
 // Function Body / Expression rewriting
 //===----------------------------------------------------------------------===//
@@ -582,6 +596,9 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   // Handle specific things.
   if (ObjCEncodeExpr *AtEncode = dyn_cast<ObjCEncodeExpr>(S))
     return RewriteAtEncode(AtEncode);
+  
+  if (ObjCIvarRefExpr *IvarRefExpr = dyn_cast<ObjCIvarRefExpr>(S))
+    return RewriteObjCIvarRefExpr(IvarRefExpr);
 
   if (ObjCSelectorExpr *AtSelector = dyn_cast<ObjCSelectorExpr>(S))
     return RewriteAtSelector(AtSelector);
@@ -1063,14 +1080,11 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   // Now push any user supplied arguments.
   for (unsigned i = 0; i < Exp->getNumArgs(); i++) {
     Expr *userExpr = Exp->getArg(i);
-#if 0
-    // Make sure we cast "self" to "id".
-    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(userExpr)) {
-      if (!strcmp(DRE->getDecl()->getName(), "self"))
-        userExpr = new CastExpr(Context->getObjcIdType(), userExpr, 
-                                SourceLocation());
-    }
-#endif
+    // Make all implicit casts explicit...ICE comes in handy:-)
+    if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(userExpr)) {
+      // Reuse the ICE type, it is exactly what the doctor ordered.
+      userExpr = new CastExpr(ICE->getType(), userExpr, SourceLocation());
+    } 
     MsgExprs.push_back(userExpr);
     // We've transferred the ownership to MsgExprs. Null out the argument in
     // the original expression, since we will delete it below.
@@ -1088,8 +1102,6 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     // Push any user argument types.
     for (int i = 0; i < mDecl->getNumParams(); i++) {
       QualType t = mDecl->getParamDecl(i)->getType();
-      if (t == Context->getObjcClassType())
-        t = Context->getObjcIdType(); // Convert "Class"->"id"
       ArgTypes.push_back(t);
     }
     returnType = mDecl->getResultType();

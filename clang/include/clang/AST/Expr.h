@@ -1256,18 +1256,23 @@ class ObjCIvarRefExpr : public Expr {
   class ObjcIvarDecl *D; 
   SourceLocation Loc;
   Expr *Base;
-  bool IsArrow;      // True if this is "X->F", false if this is "X.F".
+  bool IsArrow:1;      // True if this is "X->F", false if this is "X.F".
+  bool IsFreeIvar:1;   // True if ivar reference has no base (self assumed).
   
 public:
   ObjCIvarRefExpr(ObjcIvarDecl *d, QualType t, SourceLocation l, Expr *base=0, 
-                  bool arrow = false) : 
-    Expr(ObjCIvarRefExprClass, t), D(d), Loc(l), Base(base), IsArrow(arrow)  {}
+                  bool arrow = false, bool freeIvar = false) : 
+    Expr(ObjCIvarRefExprClass, t), D(d), Loc(l), Base(base), IsArrow(arrow),
+    IsFreeIvar(freeIvar) {}
   
   ObjcIvarDecl *getDecl() { return D; }
   const ObjcIvarDecl *getDecl() const { return D; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   Expr *const getBase() const { return Base; }
   const bool isArrow() const { return IsArrow; }
+  const bool isFreeIvar() const { return IsFreeIvar; }
+  
+  SourceLocation getLocation() const { return Loc; }
   
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ObjCIvarRefExprClass; 

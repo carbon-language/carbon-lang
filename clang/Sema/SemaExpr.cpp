@@ -85,8 +85,12 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
       if (CurMethodDecl) {
         ObjcInterfaceDecl *IFace = CurMethodDecl->getClassInterface();
         ObjcInterfaceDecl *clsDeclared;
-        if (ObjcIvarDecl *IV = IFace->lookupInstanceVariable(&II, clsDeclared))
-          return new ObjCIvarRefExpr(IV, IV->getType(), Loc);
+        if (ObjcIvarDecl *IV = IFace->lookupInstanceVariable(&II, clsDeclared)) {
+          IdentifierInfo &II = Context.Idents.get("self");
+          ExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
+          return new ObjCIvarRefExpr(IV, IV->getType(), Loc, 
+                       static_cast<Expr*>(SelfExpr.Val), true, true);
+        }
       }
       // If this name wasn't predeclared and if this is not a function call,
       // diagnose the problem.
