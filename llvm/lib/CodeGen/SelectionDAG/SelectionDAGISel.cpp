@@ -4492,14 +4492,13 @@ LowerArguments(BasicBlock *LLVMBB, SelectionDAGLowering &SDL,
 
 static void copyCatchInfo(BasicBlock *SrcBB, BasicBlock *DestBB,
                           MachineModuleInfo *MMI, FunctionLoweringInfo &FLI) {
-  assert(!FLI.MBBMap[SrcBB]->isLandingPad() &&
-         "Copying catch info out of a landing pad!");
   for (BasicBlock::iterator I = SrcBB->begin(), E = --SrcBB->end(); I != E; ++I)
     if (isSelector(I)) {
       // Apply the catch info to DestBB.
       addCatchInfo(cast<CallInst>(*I), MMI, FLI.MBBMap[DestBB]);
 #ifndef NDEBUG
-      FLI.CatchInfoFound.insert(I);
+      if (!FLI.MBBMap[SrcBB]->isLandingPad())
+        FLI.CatchInfoFound.insert(I);
 #endif
     }
 }
