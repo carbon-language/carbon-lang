@@ -614,8 +614,10 @@ public:
 
     // Loop through, intersecting as we go, erasing elements when necessary.
     while (Iter2 != RHS.Elements.end()) {
-      if (Iter1 == Elements.end())
+      if (Iter1 == Elements.end()) {
+        CurrElementIter = Elements.begin();
         return changed;
+      }
 
       if (Iter1->index() > Iter2->index()) {
         ++Iter2;
@@ -654,8 +656,10 @@ public:
 
     // Loop through, intersecting as we go, erasing elements when necessary.
     while (Iter2 != RHS.Elements.end()) {
-      if (Iter1 == Elements.end())
+      if (Iter1 == Elements.end()) {
+        CurrElementIter = Elements.begin();
         return changed;
+      }
 
       if (Iter1->index() > Iter2->index()) {
         ++Iter2;
@@ -689,6 +693,7 @@ public:
                                const SparseBitVector<ElementSize> &RHS2)
   {
     Elements.clear();
+    CurrElementIter = Elements.begin();
     ElementListConstIter Iter1 = RHS1.Elements.begin();
     ElementListConstIter Iter2 = RHS2.Elements.begin();
 
@@ -732,7 +737,6 @@ public:
         ++Iter1;
       }
 
-    CurrElementIter = Elements.begin();
     return;
   }
 
