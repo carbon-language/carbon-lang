@@ -375,15 +375,40 @@ void DeclStmt::EmitImpl(Serializer& S) const {
 void DeclRefExpr::EmitImpl(Serializer& S) const {
   S.Emit(Loc);
   S.Emit(getType());
-  S.EmitPtr(getDecl());
+  
+  // Some DeclRefExprs can actually hold the owning reference to a decl.
+  // This occurs when an implicitly defined function is called, and
+  // the decl does not appear in the source file.  We thus check if the
+  // decl pointer has been registered, and if not, emit an owned pointer.
+
+  // FIXME: While this will work for serialization, it won't work for
+  //  memory management.  The only reason this works for serialization is
+  //  because we are tracking all serialized pointers.  Either DeclRefExpr
+  //  needs an explicit bit indicating that it owns the the object,
+  //  or we need a different ownership model.
+  
+  if (S.isRegistered(getDecl())) {
+    S.EmitBool(false);
+    S.EmitPtr(getDecl());
+  }
+  else {
+    S.EmitBool(true);
+    S.EmitOwnedPtr(cast<Decl>(getDecl()));
+  }    
 }
 
 DeclRefExpr* DeclRefExpr::CreateImpl(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
-  QualType T = QualType::ReadVal(D);
-  DeclRefExpr* dr = new DeclRefExpr(NULL,T,Loc);
-  D.ReadPtr(dr->D,false);  
-  return dr;
+  QualType T = QualType::ReadVal(D);  
+  bool OwnsDecl = D.ReadBool();
+  ValueDecl* decl;
+  
+  if (!OwnsDecl)
+    D.ReadPtr(decl,false); // No backpatching.
+  else
+    decl = cast<ValueDecl>(D.ReadOwnedPtr<Decl>());
+  
+  return new DeclRefExpr(decl,T,Loc);
 }
 
 
