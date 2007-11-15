@@ -126,7 +126,6 @@ private:
   unsigned AbbrevNo;
   unsigned RecordCode;
   Location StreamStart;
-  std::vector<SerializedPtrID> BatchIDVec;
   
   //===----------------------------------------------------------===//
   // Public Interface.
@@ -213,7 +212,7 @@ public:
   
   template <typename T>
   void BatchReadOwnedPtrs(unsigned NumPtrs, T** Ptrs, bool AutoRegister=true) {
-    BatchIDVec.clear();
+    llvm::SmallVector<SerializedPtrID,10> BatchIDVec;
     
     for (unsigned i = 0; i < NumPtrs; ++i)
       BatchIDVec.push_back(ReadPtrID());
@@ -234,8 +233,8 @@ public:
   void BatchReadOwnedPtrs(unsigned NumT1Ptrs, T1** Ptrs, T2*& P2,
                           bool A1=true, bool A2=true) {
     
-    BatchIDVec.clear();
-    
+    llvm::SmallVector<SerializedPtrID,10> BatchIDVec;
+
     for (unsigned i = 0; i < NumT1Ptrs; ++i)
       BatchIDVec.push_back(ReadPtrID());
     
@@ -261,7 +260,7 @@ public:
                           T2*& P2, T3*& P3,
                           bool A1=true, bool A2=true, bool A3=true) {
     
-    BatchIDVec.clear();
+    llvm::SmallVector<SerializedPtrID,10> BatchIDVec;
     
     for (unsigned i = 0; i < NumT1Ptrs; ++i)
       BatchIDVec.push_back(ReadPtrID());
