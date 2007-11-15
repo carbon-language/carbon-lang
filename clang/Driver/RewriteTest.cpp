@@ -594,9 +594,27 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
     Rewrite.ReplaceStmt(IV, Replacement);
     delete IV;
     return Replacement;
-  }
-  else
+  } else {
+    if (CurMethodDecl) {
+      if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
+        ObjcInterfaceType *intT = dyn_cast<ObjcInterfaceType>(pType->getPointeeType());
+        if (CurMethodDecl->getClassInterface() == intT->getDecl()) {
+          IdentifierInfo *II = intT->getDecl()->getIdentifier();
+          RecordDecl *RD = new RecordDecl(Decl::Struct, SourceLocation(),
+                                          II, 0);
+          QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
+          
+          CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
+          // Don't forget the parens to enforce the proper binding.
+          ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), castExpr);
+          Rewrite.ReplaceStmt(IV->getBase(), PE);
+          delete IV->getBase();
+          return PE;
+        }
+      }
+    }
     return IV;
+  }
 }
 
 //===----------------------------------------------------------------------===//
