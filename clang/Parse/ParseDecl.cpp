@@ -937,6 +937,7 @@ bool Parser::isTypeSpecifierQualifier() const {
   case tok::kw_int:
   case tok::kw_float:
   case tok::kw_double:
+  case tok::kw_bool:
   case tok::kw__Bool:
   case tok::kw__Decimal32:
   case tok::kw__Decimal64:
@@ -985,6 +986,7 @@ bool Parser::isDeclarationSpecifier() const {
   case tok::kw_int:
   case tok::kw_float:
   case tok::kw_double:
+  case tok::kw_bool:
   case tok::kw__Bool:
   case tok::kw__Decimal32:
   case tok::kw__Decimal64:

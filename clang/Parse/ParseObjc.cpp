@@ -467,6 +467,7 @@ IdentifierInfo *Parser::ParseObjCSelector(SourceLocation &SelectorLoc) {
   case tok::kw_void:                        
   case tok::kw_volatile:                    
   case tok::kw_while:                       
+  case tok::kw_bool:
   case tok::kw__Bool:
   case tok::kw__Complex:
     IdentifierInfo *II = Tok.getIdentifierInfo();
