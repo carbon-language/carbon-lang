@@ -68,10 +68,18 @@ IdentifierTable::IdentifierTable() : HashTable(8192) {}
 /// specified language.
 static void AddKeyword(const char *Keyword, unsigned KWLen,
                        tok::TokenKind TokenCode,
-                       int C90, int C99, int CXX, int CXX0x,
+                       int C90, int C99, int CXX, int CXX0x, int BoolSupport,
                        const LangOptions &LangOpts, IdentifierTable &Table) {
-  int Flags = LangOpts.CPlusPlus ? (LangOpts.CPlusPlus0x? CXX0x : CXX)
-                                 : (LangOpts.C99 ? C99 : C90);
+  int Flags = 0;
+  if (BoolSupport != 0) {
+    Flags = LangOpts.Boolean ? BoolSupport : 2;
+  } else if (LangOpts.CPlusPlus) {
+    Flags = LangOpts.CPlusPlus0x ? CXX0x : CXX;
+  } else if (LangOpts.C99) {
+    Flags = C99;
+  } else {
+    Flags = C90;
+  }
   
   // Don't add this keyword if disabled in this language or if an extension
   // and extensions are disabled.
@@ -126,6 +134,8 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
     CPP0xShift = 6,
     EXTCPP0x   = 1 << CPP0xShift,
     NOTCPP0x   = 2 << CPP0xShift,
+    BoolShift = 8,
+    BOOLSUPPORT = 1 << BoolShift,
     Mask     = 3
   };
   
@@ -135,7 +145,8 @@ void IdentifierTable::AddKeywords(const LangOptions &LangOpts) {
              ((FLAGS) >> C90Shift) & Mask, \
              ((FLAGS) >> C99Shift) & Mask, \
              ((FLAGS) >> CPPShift) & Mask, \
-             ((FLAGS) >> CPP0xShift) & Mask, LangOpts, *this);
+             ((FLAGS) >> CPP0xShift) & Mask, \
+             ((FLAGS) >> BoolShift) & Mask, LangOpts, *this);
 #define ALIAS(NAME, TOK) \
   AddAlias(NAME, strlen(NAME), #TOK, strlen(#TOK), LangOpts, *this);
 #define CXX_KEYWORD_OPERATOR(NAME, ALIAS) \
