@@ -1229,7 +1229,10 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   QualType returnType;
   
   // Push 'id' and 'SEL', the 2 implicit arguments.
-  ArgTypes.push_back(Context->getObjcIdType());
+  if (MsgSendFlavor == MsgSendSuperFunctionDecl)
+    ArgTypes.push_back(Context->getPointerType(getSuperStructType()));
+  else
+    ArgTypes.push_back(Context->getObjcIdType());
   ArgTypes.push_back(Context->getObjcSelType());
   if (ObjcMethodDecl *mDecl = Exp->getMethodDecl()) {
     // Push any user argument types.
