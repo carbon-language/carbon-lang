@@ -1046,12 +1046,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   } else { // instance message.
     Expr *recExpr = Exp->getReceiver();
     
-    // Make sure we cast "self" to "id".
-    if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(recExpr)) {
-      if (!strcmp(DRE->getDecl()->getName(), "self"))
-        recExpr = new CastExpr(Context->getObjcIdType(), recExpr, 
-                               SourceLocation());
-    }
+    recExpr = new CastExpr(Context->getObjcIdType(), recExpr, SourceLocation());
     MsgExprs.push_back(recExpr);
   }
   // Create a call to sel_registerName("selName"), it will be the 2nd argument.
