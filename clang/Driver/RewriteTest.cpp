@@ -20,6 +20,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "clang/Lex/Lexer.h"
+#include <sstream>
 using namespace clang;
 using llvm::utostr;
 
@@ -37,6 +38,7 @@ namespace {
     llvm::DenseMap<ObjcMethodDecl*, std::string> MethodInternalNames;
     
     FunctionDecl *MsgSendFunctionDecl;
+    FunctionDecl *MsgSendSuperFunctionDecl;
     FunctionDecl *GetClassFunctionDecl;
     FunctionDecl *SelGetUidFunctionDecl;
     FunctionDecl *CFStringFunctionDecl;
@@ -45,6 +47,10 @@ namespace {
     FileVarDecl *ConstantStringClassReference;
     RecordDecl *NSStringRecord;
     
+    // Needed for super.
+    ObjcMethodDecl *CurMethodDecl;
+    RecordDecl *SuperStructDecl;
+    
     static const int OBJC_ABI_VERSION =7 ;
   public:
     void Initialize(ASTContext &context, unsigned mainFileID) {
@@ -52,17 +58,24 @@ namespace {
       SM = &Context->SourceMgr;
       MainFileID = mainFileID;
       MsgSendFunctionDecl = 0;
+      MsgSendSuperFunctionDecl = 0;
       GetClassFunctionDecl = 0;
       SelGetUidFunctionDecl = 0;
       CFStringFunctionDecl = 0;
       ConstantStringClassReference = 0;
       NSStringRecord = 0;
+      CurMethodDecl = 0;
+      SuperStructDecl = 0;
+      
       Rewrite.setSourceMgr(Context->SourceMgr);
       // declaring objc_selector outside the parameter list removes a silly
       // scope related warning...
       const char *s = "struct objc_selector; struct objc_class;\n"
                       "extern struct objc_object *objc_msgSend"
                       "(struct objc_object *, struct objc_selector *, ...);\n"
+                      "struct objc_super { struct objc_object *receiver; struct objc_class *super; };\n"
+                      "extern struct objc_object *objc_msgSendSuper"
+                      "(struct objc_super *, struct objc_selector *, ...);\n"
                       "extern struct objc_object *objc_getClass"
                       "(const char *);\n"
                       "extern void objc_exception_throw(struct objc_object *);\n"
@@ -99,6 +112,8 @@ namespace {
     void RewriteObjcQualifiedInterfaceTypes(
         const FunctionTypeProto *proto, FunctionDecl *FD);
     bool needToScanForQualifiers(QualType T);
+    ObjcInterfaceDecl *isSuperReceiver(Expr *recExpr);
+    QualType getSuperStructType();
     
     // Expression Rewriting.
     Stmt *RewriteFunctionBodyOrGlobalInitializer(Stmt *S);
@@ -114,6 +129,7 @@ namespace {
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
     void SynthMsgSendFunctionDecl();
+    void SynthMsgSendSuperFunctionDecl();
     void SynthGetClassFunctionDecl();
     void SynthCFStringFunctionDecl();
       
@@ -197,8 +213,12 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
       FD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
 	  
   if (ObjcMethodDecl *MD = dyn_cast<ObjcMethodDecl>(D)) {
-    if (Stmt *Body = MD->getBody())
+    if (Stmt *Body = MD->getBody()) {
+      //Body->dump();
+      CurMethodDecl = MD;
       MD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
+      CurMethodDecl = 0;
+    }
   }
   if (ObjcImplementationDecl *CI = dyn_cast<ObjcImplementationDecl>(D))
     ClassImplementation.push_back(CI);
@@ -631,7 +651,20 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 
   if (ObjcAtThrowStmt *StmtThrow = dyn_cast<ObjcAtThrowStmt>(S))
     return RewriteObjcThrowStmt(StmtThrow);
-    
+#if 0
+  if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
+    CastExpr *Replacement = new CastExpr(ICE->getType(), ICE->getSubExpr(), SourceLocation());
+    // Get the new text.
+    std::ostringstream Buf;
+    Replacement->printPretty(Buf);
+    const std::string &Str = Buf.str();
+
+    printf("CAST = %s\n", &Str[0]);
+    Rewrite.InsertText(ICE->getSubExpr()->getLocStart(), &Str[0], Str.size());
+    delete S;
+    return Replacement;
+  }
+#endif
   // Return this stmt unmodified.
   return S;
 }
@@ -954,6 +987,26 @@ void RewriteTest::SynthMsgSendFunctionDecl() {
                                          FunctionDecl::Extern, false, 0);
 }
 
+// SynthMsgSendSuperFunctionDecl - id objc_msgSendSuper(struct objc_super *, SEL op, ...);
+void RewriteTest::SynthMsgSendSuperFunctionDecl() {
+  IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSendSuper");
+  llvm::SmallVector<QualType, 16> ArgTys;
+  RecordDecl *RD = new RecordDecl(Decl::Struct, SourceLocation(),
+                                  &Context->Idents.get("objc_super"), 0);
+  QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
+  assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
+  ArgTys.push_back(argT);
+  argT = Context->getObjcSelType();
+  assert(!argT.isNull() && "Can't find 'SEL' type");
+  ArgTys.push_back(argT);
+  QualType msgSendType = Context->getFunctionType(Context->getObjcIdType(),
+                                                  &ArgTys[0], ArgTys.size(),
+                                                  true /*isVariadic*/);
+  MsgSendSuperFunctionDecl = new FunctionDecl(SourceLocation(), 
+                                              msgSendIdent, msgSendType,
+                                              FunctionDecl::Extern, false, 0);
+}
+
 // SynthGetClassFunctionDecl - id objc_getClass(const char *name);
 void RewriteTest::SynthGetClassFunctionDecl() {
   IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getClass");
@@ -1038,13 +1091,62 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
 #endif
 }
 
+ObjcInterfaceDecl *RewriteTest::isSuperReceiver(Expr *recExpr) {
+  if (CurMethodDecl) { // check if we are sending a message to 'super'
+    if (CastExpr *CE = dyn_cast<CastExpr>(recExpr)) {
+      if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CE->getSubExpr())) {
+        if (ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(DRE->getDecl())) {
+          if (!strcmp(PVD->getName(), "self")) {
+            if (const PointerType *PT = CE->getType()->getAsPointerType()) {
+              if (ObjcInterfaceType *IT = 
+                    dyn_cast<ObjcInterfaceType>(PT->getPointeeType())) {
+                if (IT->getDecl() == 
+                    CurMethodDecl->getClassInterface()->getSuperClass())
+                  return IT->getDecl();
+              }
+            }
+          }
+        }
+      }
+    } 
+  }
+  return 0;
+}
+
+// struct objc_super { struct objc_object *receiver; struct objc_class *super; };
+QualType RewriteTest::getSuperStructType() {
+  if (!SuperStructDecl) {
+    SuperStructDecl = new RecordDecl(Decl::Struct, SourceLocation(), 
+                                     &Context->Idents.get("objc_super"), 0);
+    QualType FieldTypes[2];
+  
+    // struct objc_object *receiver;
+    FieldTypes[0] = Context->getObjcIdType();  
+    // struct objc_class *super;
+    FieldTypes[1] = Context->getObjcClassType();  
+    // Create fields
+    FieldDecl *FieldDecls[2];
+  
+    for (unsigned i = 0; i < 2; ++i)
+      FieldDecls[i] = new FieldDecl(SourceLocation(), 0, FieldTypes[i]);
+  
+    SuperStructDecl->defineBody(FieldDecls, 4);
+  }
+  return Context->getTagDeclType(SuperStructDecl);
+}
+
 Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   assert(SelGetUidFunctionDecl && "Can't find sel_registerName() decl");
   if (!MsgSendFunctionDecl)
     SynthMsgSendFunctionDecl();
+  if (!MsgSendSuperFunctionDecl)
+    SynthMsgSendSuperFunctionDecl();
   if (!GetClassFunctionDecl)
     SynthGetClassFunctionDecl();
 
+  // default to objc_msgSend().
+  FunctionDecl *MsgSendFlavor = MsgSendFunctionDecl; 
+  
   // Synthesize a call to objc_msgSend().
   llvm::SmallVector<Expr*, 8> MsgExprs;
   IdentifierInfo *clsName = Exp->getClassName();
@@ -1062,9 +1164,40 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     MsgExprs.push_back(Cls);
   } else { // instance message.
     Expr *recExpr = Exp->getReceiver();
-    
-    recExpr = new CastExpr(Context->getObjcIdType(), recExpr, SourceLocation());
-    MsgExprs.push_back(recExpr);
+
+    if (ObjcInterfaceDecl *ID = isSuperReceiver(recExpr)) {
+      MsgSendFlavor = MsgSendSuperFunctionDecl;
+      assert(MsgSendFlavor && "MsgSendFlavor is NULL!");
+      
+      llvm::SmallVector<Expr*, 4> InitExprs;
+      
+      InitExprs.push_back(recExpr); // set the 'receiver'.
+      
+      llvm::SmallVector<Expr*, 8> ClsExprs;
+      QualType argType = Context->getPointerType(Context->CharTy);
+      ClsExprs.push_back(new StringLiteral(ID->getIdentifier()->getName(), 
+                                           ID->getIdentifier()->getLength(),
+                                           false, argType, SourceLocation(),
+                                           SourceLocation()));
+      CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
+                                                   &ClsExprs[0], ClsExprs.size());
+      InitExprs.push_back(Cls); // set 'super class', using objc_getClass().
+      // struct objc_super
+      QualType superType = getSuperStructType();
+      // (struct objc_super) { <exprs from above> }
+      InitListExpr *ILE = new InitListExpr(SourceLocation(), 
+                                           &InitExprs[0], InitExprs.size(), 
+                                           SourceLocation());
+      CompoundLiteralExpr *SuperRep = new CompoundLiteralExpr(superType, ILE);
+      // struct objc_super *
+      Expr *Unop = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
+                               Context->getPointerType(SuperRep->getType()), 
+                               SourceLocation());
+      MsgExprs.push_back(Unop);
+    } else {
+      recExpr = new CastExpr(Context->getObjcIdType(), recExpr, SourceLocation());
+      MsgExprs.push_back(recExpr);
+    }
   }
   // Create a call to sel_registerName("selName"), it will be the 2nd argument.
   llvm::SmallVector<Expr*, 8> SelExprs;
@@ -1109,10 +1242,10 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     returnType = Context->getObjcIdType();
   }
   // Get the type, we will need to reference it in a couple spots.
-  QualType msgSendType = MsgSendFunctionDecl->getType();
+  QualType msgSendType = MsgSendFlavor->getType();
   
   // Create a reference to the objc_msgSend() declaration.
-  DeclRefExpr *DRE = new DeclRefExpr(MsgSendFunctionDecl, msgSendType, SourceLocation());
+  DeclRefExpr *DRE = new DeclRefExpr(MsgSendFlavor, msgSendType, SourceLocation());
 
   // Need to cast objc_msgSend to "void *" (to workaround a GCC bandaid). 
   // If we don't do this cast, we get the following bizarre warning/note:
