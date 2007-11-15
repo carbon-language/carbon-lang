@@ -3677,6 +3677,20 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 1), Tmp1);
     return Op.ResNo ? Tmp1 : Result;
   }
+   case ISD::FLT_ROUNDS: {
+    MVT::ValueType VT = Node->getValueType(0);
+    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
+    default: assert(0 && "This action not supported for this op yet!");
+    case TargetLowering::Custom:
+      Result = TLI.LowerOperation(Op, DAG);
+      if (Result.Val) break;
+      // Fall Thru
+    case TargetLowering::Legal:
+      // If this operation is not supported, lower it to constant 1
+      Result = DAG.getConstant(1, VT);
+      break;
+    }
+  }
   }
   
   assert(Result.getValueType() == Op.getValueType() &&

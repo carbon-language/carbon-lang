@@ -3739,6 +3739,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::SIGN_EXTEND_INREG: return "sign_extend_inreg";
   case ISD::TRUNCATE:    return "truncate";
   case ISD::FP_ROUND:    return "fp_round";
+  case ISD::FLT_ROUNDS:  return "flt_rounds";
   case ISD::FP_ROUND_INREG: return "fp_round_inreg";
   case ISD::FP_EXTEND:   return "fp_extend";
 

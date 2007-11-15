@@ -2930,6 +2930,10 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(Tmp.getValue(1));
     return 0;
   }
+  case Intrinsic::flt_rounds: {
+    setValue(&I, DAG.getNode(ISD::FLT_ROUNDS, MVT::i32));
+    return 0;
+  }
   }
 }
 

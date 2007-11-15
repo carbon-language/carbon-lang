@@ -390,6 +390,14 @@ namespace ISD {
     // precision down to the specified precision (currently always 64->32).
     FP_ROUND,
 
+    // FLT_ROUNDS - Returns current rounding mode:
+    // -1 Undefined
+    //  0 Round to 0
+    //  1 Round to nearest
+    //  2 Round to +inf
+    //  3 Round to -inf
+    FLT_ROUNDS,
+
     // FP_ROUND_INREG - This operator takes a floating point register, and
     // rounds it to a floating point value.  It then promotes it and returns it
     // in a register of the same size.  This operation effectively just discards

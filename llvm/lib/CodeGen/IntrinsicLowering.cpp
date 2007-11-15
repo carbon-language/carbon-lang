@@ -856,6 +856,11 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     }
     break;
   }
+  case Intrinsic::flt_rounds:
+     // Lower to "round to the nearest"
+     if (CI->getType() != Type::VoidTy)
+       CI->replaceAllUsesWith(ConstantInt::get(CI->getType(), 1));
+     break;
   }
 
   assert(CI->use_empty() &&
