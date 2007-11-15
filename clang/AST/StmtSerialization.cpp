@@ -151,8 +151,19 @@ Stmt* Stmt::Create(Deserializer& D) {
       
     case WhileStmtClass:
       return WhileStmt::CreateImpl(D);
+      
+    //==--------------------------------------==//
+    //    Objective C
+    //==--------------------------------------==//
+      
+    case ObjCIvarRefExprClass:
+      return ObjCIvarRefExpr::CreateImpl(D);      
   }
 }
+
+//===----------------------------------------------------------------------===//
+//   C Serialization
+//===----------------------------------------------------------------------===//
 
 void AddrLabelExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
@@ -375,19 +386,6 @@ DeclRefExpr* DeclRefExpr::CreateImpl(Deserializer& D) {
   return dr;
 }
 
-void ObjCIvarRefExpr::EmitImpl(Serializer& S) const {
-  S.Emit(Loc);
-  S.Emit(getType());
-  S.EmitPtr(getDecl());
-}
-
-ObjCIvarRefExpr* ObjCIvarRefExpr::CreateImpl(Deserializer& D) {
-  SourceLocation Loc = SourceLocation::ReadVal(D);
-  QualType T = QualType::ReadVal(D);
-  ObjCIvarRefExpr* dr = new ObjCIvarRefExpr(NULL,T,Loc);
-  D.ReadPtr(dr->D,false);  
-  return dr;
-}
 
 DeclStmt* DeclStmt::CreateImpl(Deserializer& D) {
   ScopedDecl* decl = cast<ScopedDecl>(D.ReadOwnedPtr<Decl>());
@@ -736,4 +734,22 @@ WhileStmt* WhileStmt::CreateImpl(Deserializer& D) {
   Expr* Cond = D.ReadOwnedPtr<Expr>();
   Stmt* Body = D.ReadOwnedPtr<Stmt>();
   return new WhileStmt(Cond,Body,WhileLoc);
+}
+
+//===----------------------------------------------------------------------===//
+//   Objective C Serialization
+//===----------------------------------------------------------------------===//
+
+void ObjCIvarRefExpr::EmitImpl(Serializer& S) const {
+  S.Emit(Loc);
+  S.Emit(getType());
+  S.EmitPtr(getDecl());
+}
+
+ObjCIvarRefExpr* ObjCIvarRefExpr::CreateImpl(Deserializer& D) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  QualType T = QualType::ReadVal(D);
+  ObjCIvarRefExpr* dr = new ObjCIvarRefExpr(NULL,T,Loc);
+  D.ReadPtr(dr->D,false);  
+  return dr;
 }
