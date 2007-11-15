@@ -416,7 +416,12 @@ void Preprocessor::EnterMainSourceFile(unsigned MainFileID) {
   // Enter the main file source buffer.
   EnterSourceFile(MainFileID, 0);
   
-  
+  // Tell the header info that the main file was entered.  If the file is later
+  // #imported, it won't be re-entered.
+  if (const FileEntry *FE = 
+        SourceMgr.getFileEntryForLoc(SourceLocation::getFileLoc(MainFileID, 0)))
+    HeaderInfo.IncrementIncludeCount(FE);
+    
   std::vector<char> PrologFile;
   PrologFile.reserve(4080);
   
