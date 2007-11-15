@@ -168,15 +168,22 @@ bool LiveIntervals::conflictsWithPhysRegDef(const LiveInterval &li,
       if (index == end) break;
 
       MachineInstr *MI = getInstructionFromIndex(index);
+      unsigned SrcReg, DstReg;
+      if (tii_->isMoveInstr(*MI, SrcReg, DstReg))
+        if (SrcReg == li.reg || DstReg == li.reg)
+          continue;
       for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
         MachineOperand& mop = MI->getOperand(i);
-        if (!mop.isRegister() || !mop.isDef())
+        if (!mop.isRegister())
           continue;
         unsigned PhysReg = mop.getReg();
-        if (PhysReg == 0)
+        if (PhysReg == 0 || PhysReg == li.reg)
           continue;
-        if (MRegisterInfo::isVirtualRegister(PhysReg))
+        if (MRegisterInfo::isVirtualRegister(PhysReg)) {
+          if (!vrm.hasPhys(PhysReg))
+            continue;
           PhysReg = vrm.getPhys(PhysReg);
+        }
         if (PhysReg && mri_->regsOverlap(PhysReg, reg))
           return true;
       }
