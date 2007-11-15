@@ -604,23 +604,28 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
 }
 
 bool DAE::runOnModule(Module &M) {
-  // First phase: loop through the module, determining which arguments are live.
+  bool Changed = false;
+  // First pass: Do a simple check to see if any functions can have their "..."
+  // removed.  We can do this if they never call va_start.  This loop cannot be
+  // fused with the next loop, because deleting a function invalidates
+  // information computed while surveying other functions.
+  DOUT << "DAE - Deleting dead varargs\n";
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
+    Function &F = *I++;
+    if (F.getFunctionType()->isVarArg())
+      Changed |= DeleteDeadVarargs(F);
+  }
+  
+  // Second phase:loop through the module, determining which arguments are live.
   // We assume all arguments are dead unless proven otherwise (allowing us to
   // determine that dead arguments passed into recursive functions are dead).
   //
   DOUT << "DAE - Determining liveness\n";
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ) {
-    Function &F = *I++;
-    if (F.getFunctionType()->isVarArg())
-      if (DeleteDeadVarargs(F))
-        continue;
-      
-    SurveyFunction(F);
-  }
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    SurveyFunction(*I);
 
   // Loop over the instructions to inspect, propagating liveness among arguments
   // and return values which are MaybeLive.
-
   while (!InstructionsToInspect.empty()) {
     Instruction *I = InstructionsToInspect.back();
     InstructionsToInspect.pop_back();
@@ -680,7 +685,7 @@ bool DAE::runOnModule(Module &M) {
   // to do.
   if (MaybeLiveArguments.empty() && DeadArguments.empty() &&
       MaybeLiveRetVal.empty() && DeadRetVal.empty())
-    return false;
+    return Changed;
 
   // Otherwise, compact into one set, and start eliminating the arguments from
   // the functions.
