@@ -1292,6 +1292,8 @@ class ObjCMessageExpr : public Expr {
 
   Expr **SubExprs;
   
+  unsigned NumArgs;
+  
   // A unigue name for this message.
   Selector SelName;
   
@@ -1309,12 +1311,12 @@ public:
   ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
                   QualType retType, ObjcMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
-                  Expr **ArgExprs);
+                  Expr **ArgExprs, unsigned NumArgs);
   // constructor for instance messages.
   ObjCMessageExpr(Expr *receiver, Selector selInfo,
                   QualType retType, ObjcMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
-                  Expr **ArgExprs);
+                  Expr **ArgExprs, unsigned NumArgs);
   ~ObjCMessageExpr() {
     delete [] SubExprs;
   }
@@ -1332,20 +1334,20 @@ public:
   IdentifierInfo *getClassName() { return ClassName; }
   
   /// getNumArgs - Return the number of actual arguments to this call.
-  unsigned getNumArgs() const { return SelName.getNumArgs(); }
+  unsigned getNumArgs() const { return NumArgs; }
 
 /// getArg - Return the specified argument.
   Expr *getArg(unsigned Arg) {
-    assert(Arg < SelName.getNumArgs() && "Arg access out of range!");
+    assert(Arg < NumArgs && "Arg access out of range!");
     return SubExprs[Arg+ARGS_START];
   }
   const Expr *getArg(unsigned Arg) const {
-    assert(Arg < SelName.getNumArgs() && "Arg access out of range!");
+    assert(Arg < NumArgs && "Arg access out of range!");
     return SubExprs[Arg+ARGS_START];
   }
   /// setArg - Set the specified argument.
   void setArg(unsigned Arg, Expr *ArgExpr) {
-    assert(Arg < SelName.getNumArgs() && "Arg access out of range!");
+    assert(Arg < NumArgs && "Arg access out of range!");
     SubExprs[Arg+ARGS_START] = ArgExpr;
   }
   SourceRange getSourceRange() const { return SourceRange(LBracloc, RBracloc); }

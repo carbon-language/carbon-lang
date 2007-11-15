@@ -898,14 +898,14 @@ unsigned OCUVectorElementExpr::getEncodedElementAccess() const {
 ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
                 QualType retType, ObjcMethodDecl *mproto,
                 SourceLocation LBrac, SourceLocation RBrac,
-                Expr **ArgExprs)
+                Expr **ArgExprs, unsigned nargs)
   : Expr(ObjCMessageExprClass, retType), SelName(selInfo), 
     MethodProto(mproto), ClassName(0) {
-  unsigned numArgs = selInfo.getNumArgs();
-  SubExprs = new Expr*[numArgs+1];
+  NumArgs = nargs;
+  SubExprs = new Expr*[NumArgs+1];
   SubExprs[RECEIVER] = receiver;
-  if (numArgs) {
-    for (unsigned i = 0; i != numArgs; ++i)
+  if (NumArgs) {
+    for (unsigned i = 0; i != NumArgs; ++i)
       SubExprs[i+ARGS_START] = static_cast<Expr *>(ArgExprs[i]);
   }
   LBracloc = LBrac;
@@ -917,14 +917,14 @@ ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
 ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
                 QualType retType, ObjcMethodDecl *mproto,
                 SourceLocation LBrac, SourceLocation RBrac,
-                Expr **ArgExprs)
+                Expr **ArgExprs, unsigned nargs)
   : Expr(ObjCMessageExprClass, retType), SelName(selInfo), 
     MethodProto(mproto), ClassName(clsName) {
-  unsigned numArgs = selInfo.getNumArgs();
-  SubExprs = new Expr*[numArgs+1];
+  NumArgs = nargs;
+  SubExprs = new Expr*[NumArgs+1];
   SubExprs[RECEIVER] = 0;
-  if (numArgs) {
-    for (unsigned i = 0; i != numArgs; ++i)
+  if (NumArgs) {
+    for (unsigned i = 0; i != NumArgs; ++i)
       SubExprs[i+ARGS_START] = static_cast<Expr *>(ArgExprs[i]);
   }
   LBracloc = LBrac;

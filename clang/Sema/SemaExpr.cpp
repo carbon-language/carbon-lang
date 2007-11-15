@@ -2124,7 +2124,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
 Sema::ExprResult Sema::ActOnClassMessage(
   Scope *S,
   IdentifierInfo *receiverName, Selector Sel,
-  SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args)
+  SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args, unsigned NumArgs)
 {
   assert(receiverName && "missing receiver class name");
 
@@ -2142,7 +2142,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
                                    SourceLocation(), ReceiverExpr.Val);
       
       return ActOnInstanceMessage(ReceiverExpr.Val, Sel, lbrac, rbrac,
-                                  Args);
+                                  Args, NumArgs);
     }
     // class method
     if (ClassDecl)
@@ -2168,7 +2168,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
     }
   }
   return new ObjCMessageExpr(receiverName, Sel, returnType, Method,
-                             lbrac, rbrac, ArgExprs);
+                             lbrac, rbrac, ArgExprs, NumArgs);
 }
 
 // ActOnInstanceMessage - used for both unary and keyword messages.
@@ -2176,7 +2176,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
 // is obtained from Sel.getNumArgs().
 Sema::ExprResult Sema::ActOnInstanceMessage(
   ExprTy *receiver, Selector Sel,
-  SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args) 
+  SourceLocation lbrac, SourceLocation rbrac, ExprTy **Args, unsigned NumArgs) 
 {
   assert(receiver && "missing receiver expression");
   
@@ -2250,5 +2250,5 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     }
   }
   return new ObjCMessageExpr(RExpr, Sel, returnType, Method, lbrac, rbrac, 
-                             ArgExprs);
+                             ArgExprs, NumArgs);
 }

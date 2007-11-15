@@ -590,22 +590,23 @@ public:
                                      
   // ActOnClassMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
-  // is obtained from Sel.getNumArgs().
+  // is obtained from NumArgs.
   virtual ExprResult ActOnClassMessage(
     Scope *S,
     IdentifierInfo *receivingClassName, 
     Selector Sel,
     SourceLocation lbrac, 
     SourceLocation rbrac, 
-    ExprTy **ArgExprs) {
+    ExprTy **ArgExprs, unsigned NumArgs) {
     return 0;
   }
   // ActOnInstanceMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions
-  // is obtained from Sel.getNumArgs().
+  // is obtained from NumArgs.
   virtual ExprResult ActOnInstanceMessage(
     ExprTy *receiver, Selector Sel,
-    SourceLocation lbrac, SourceLocation rbrac, ExprTy **ArgExprs) {
+    SourceLocation lbrac, SourceLocation rbrac, 
+    ExprTy **ArgExprs, unsigned NumArgs) {
     return 0;
   }
   virtual DeclTy *ActOnForwardClassDeclaration(

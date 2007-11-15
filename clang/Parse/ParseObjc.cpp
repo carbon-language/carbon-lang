@@ -1291,9 +1291,15 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
     }
     // Parse the, optional, argument list, comma separated.
     while (Tok.is(tok::comma)) {
-      ConsumeToken();
-      /// Parse the expression after ','
-      ParseAssignmentExpression();
+      ConsumeToken(); // Eat the ','.
+      ///  Parse the expression after ',' 
+      ExprResult Res = ParseAssignmentExpression();
+      if (Res.isInvalid) {
+        SkipUntil(tok::identifier);
+        return Res;
+      }
+      // We have a valid expression.
+      KeyExprs.push_back(Res.Val);
     }
   } else if (!selIdent) {
     Diag(Tok, diag::err_expected_ident); // missing selector name.
@@ -1317,9 +1323,9 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   if (ReceiverName) 
     return Actions.ActOnClassMessage(CurScope,
                                      ReceiverName, Sel, LBracloc, RBracloc,
-                                     &KeyExprs[0]);
+                                     &KeyExprs[0], KeyExprs.size());
   return Actions.ActOnInstanceMessage(ReceiverExpr, Sel, LBracloc, RBracloc,
-                                      &KeyExprs[0]);
+                                      &KeyExprs[0], KeyExprs.size());
 }
 
 Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
