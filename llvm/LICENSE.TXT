@@ -66,3 +66,6 @@ Compiler Driver     llvm/tools/llvmc
 Autoconf            llvm/autoconf
                     llvm/projects/ModuleMaker/autoconf
                     llvm/projects/sample/autoconf
+Boost C++ Libraries llvm/include : docs/BOOST_LICENSE_1_0.txt
+
+
