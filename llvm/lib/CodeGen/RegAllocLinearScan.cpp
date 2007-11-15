@@ -233,6 +233,7 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
 
   // Try to coalesce.
   if (!li_->conflictsWithPhysRegDef(cur, *vrm_, SrcReg)) {
+    DOUT << "Coalescing: " << cur << " -> " << mri_->getName(SrcReg) << '\n';
     vrm_->clearVirt(cur.reg);
     vrm_->assignVirt2Phys(cur.reg, SrcReg);
     ++NumCoalesce;
