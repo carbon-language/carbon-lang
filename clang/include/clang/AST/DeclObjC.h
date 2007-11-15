@@ -626,6 +626,8 @@ private:
   /// declared in class Decl.
   /// instance (true) or class (false) method.
   bool IsInstance : 1;
+  bool IsVariadic : 1;
+  
   /// @required/@optional
   ImplementationControl DeclImplementation : 2;
   
@@ -657,11 +659,12 @@ public:
                  Decl *contextDecl,
                  ParmVarDecl **paramInfo = 0, int numParams=-1,
                  AttributeList *M = 0, bool isInstance = true,
+                 bool isVariadic = false,
                  ImplementationControl impControl = None,
                  Decl *PrevDecl = 0)
   : Decl(ObjcMethod, beginLoc),
-    IsInstance(isInstance), DeclImplementation(impControl),
-    objcDeclQualifier(OBJC_TQ_None),
+    IsInstance(isInstance), IsVariadic(isVariadic),
+    DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     MethodContext(static_cast<NamedDecl*>(contextDecl)),
     SelName(SelInfo), MethodDeclType(T), 
     ParamInfo(paramInfo), NumMethodParams(numParams),
@@ -704,6 +707,8 @@ public:
   
   AttributeList *getMethodAttrs() const {return MethodAttrs;}
   bool isInstance() const { return IsInstance; }
+  bool isVariadic() const { return IsVariadic; }
+  
   // Related to protocols declared in  @protocol
   void setDeclImplementation(ImplementationControl ic) { 
     DeclImplementation = ic; 

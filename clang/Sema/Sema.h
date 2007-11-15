@@ -560,7 +560,8 @@ public:
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
     ObjcDeclSpec *ArgQT, TypeTy **ArgTypes, IdentifierInfo **ArgNames,
-    AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind);
+    AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind,
+    bool isVariadic = false);
 
   // ActOnClassMessage - used for both unary and keyword messages.
   // ArgExprs is optional - if it is present, the number of expressions

@@ -619,13 +619,17 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
     // We have a selector or a colon, continue parsing.
   }
   
+  bool isVariadic = false;
+  
   // Parse the (optional) parameter list.
   while (Tok.is(tok::comma)) {
     ConsumeToken();
     if (Tok.is(tok::ellipsis)) {
+      isVariadic = true;
       ConsumeToken();
       break;
     }
+    // FIXME: implement this...
     // Parse the c-style argument declaration-specifier.
     DeclSpec DS;
     ParseDeclarationSpecifiers(DS);
@@ -645,8 +649,8 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
   return Actions.ActOnMethodDeclaration(mLoc, Tok.getLocation(),
                                         mType, IDecl, DSRet, ReturnType, Sel, 
                                         &ArgTypeQuals[0], &KeyTypes[0], 
-                                        &ArgNames[0],
-                                        MethodAttrs, MethodImplKind);
+                                        &ArgNames[0], MethodAttrs, 
+                                        MethodImplKind, isVariadic);
 }
 
 /// CmpProtocolVals - Comparison predicate for sorting protocols.

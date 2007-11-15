@@ -565,7 +565,8 @@ public:
     IdentifierInfo **ArgNames, // non-zero when Sel.getNumArgs() > 0
     AttributeList *AttrList,   // optional
     // tok::objc_not_keyword, tok::objc_optional, tok::objc_required    
-    tok::ObjCKeywordKind impKind) {
+    tok::ObjCKeywordKind impKind,
+    bool isVariadic = false) {
     return 0;
   }
   // ActOnAtEnd - called to mark the @end. For declarations (interfaces,

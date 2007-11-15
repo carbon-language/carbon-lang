@@ -1274,11 +1274,11 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   // xx.m:13: note: if this code is reached, the program will abort
   cast = new CastExpr(Context->getPointerType(Context->VoidTy), DRE, 
                       SourceLocation());
-                                                   
+    
   // Now do the "normal" pointer to function cast.
   QualType castType = Context->getFunctionType(returnType, 
                                                &ArgTypes[0], ArgTypes.size(),
-                                               false/*FIXME:variadic*/);
+                                               Exp->getMethodDecl()->isVariadic());
   castType = Context->getPointerType(castType);
   cast = new CastExpr(castType, cast, SourceLocation());
 

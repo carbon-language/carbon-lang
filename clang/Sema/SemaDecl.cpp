@@ -2119,7 +2119,8 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
     ObjcDeclSpec *ArgQT, TypeTy **ArgTypes, IdentifierInfo **ArgNames,
-    AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind) {
+    AttributeList *AttrList, tok::ObjCKeywordKind MethodDeclKind,
+    bool isVariadic) {
   llvm::SmallVector<ParmVarDecl*, 16> Params;
   
   for (unsigned i = 0; i < Sel.getNumArgs(); i++) {
@@ -2148,7 +2149,7 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
                                       resultDeclType,
                                       CDecl,
                                       0, -1, AttrList, 
-                                      MethodType == tok::minus,
+                                      MethodType == tok::minus, isVariadic,
                                       MethodDeclKind == tok::objc_optional ? 
                                       ObjcMethodDecl::Optional : 
                                       ObjcMethodDecl::Required);
