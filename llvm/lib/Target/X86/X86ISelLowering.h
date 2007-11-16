@@ -188,7 +188,10 @@ namespace llvm {
       //   operand #1 callee (register or absolute)
       //   operand #2 stack adjustment
       //   operand #3 optional in flag
-      TC_RETURN
+      TC_RETURN,
+
+      // Store FP control world into i16 memory
+      FNSTCW16m
     };
   }
 
@@ -477,6 +480,7 @@ namespace llvm {
     SDOperand LowerFRAME_TO_ARGS_OFFSET(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerEH_RETURN(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerTRAMPOLINE(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerFLT_ROUNDS(SDOperand Op, SelectionDAG &DAG);
   };
 }
 

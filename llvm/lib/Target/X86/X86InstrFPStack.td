@@ -29,6 +29,8 @@ def SDTX86Fild      : SDTypeProfile<1, 2, [SDTCisFP<0>, SDTCisPtrTy<1>,
                                            SDTCisVT<2, OtherVT>]>;
 def SDTX86FpToIMem  : SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
 
+def SDTX86CwdStore  : SDTypeProfile<0, 1, [SDTCisPtrTy<0>]>;
+
 def X86fpget        : SDNode<"X86ISD::FP_GET_RESULT", SDTX86FpGet,
                         [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 def X86fpset        : SDNode<"X86ISD::FP_SET_RESULT", SDTX86FpSet,
@@ -46,6 +48,8 @@ def X86fp_to_i16mem : SDNode<"X86ISD::FP_TO_INT16_IN_MEM", SDTX86FpToIMem,
 def X86fp_to_i32mem : SDNode<"X86ISD::FP_TO_INT32_IN_MEM", SDTX86FpToIMem,
                         [SDNPHasChain]>;
 def X86fp_to_i64mem : SDNode<"X86ISD::FP_TO_INT64_IN_MEM", SDTX86FpToIMem,
+                        [SDNPHasChain]>;
+def X86fp_cwd_get16 : SDNode<"X86ISD::FNSTCW16m",          SDTX86CwdStore,
                         [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
@@ -524,7 +528,8 @@ def FNSTSW8r  : I<0xE0, RawFrm,                  // AX = fp flags
                   (outs), (ins), "fnstsw", []>, DF;
 
 def FNSTCW16m : I<0xD9, MRM7m,                   // [mem16] = X87 control world
-                  (outs), (ins i16mem:$dst), "fnstcw\t$dst", []>;
+                  (outs), (ins i16mem:$dst), "fnstcw\t$dst",
+                  [(X86fp_cwd_get16 addr:$dst)]>;
 def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
                   (outs), (ins i16mem:$dst), "fldcw\t$dst", []>;
 

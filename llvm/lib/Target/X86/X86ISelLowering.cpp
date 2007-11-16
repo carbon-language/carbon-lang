@@ -205,7 +205,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
   setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
   setOperationAction(ISD::FREM             , MVT::f64  , Expand);
-
+  setOperationAction(ISD::FLT_ROUNDS       , MVT::i32  , Custom);
+  
   setOperationAction(ISD::CTPOP            , MVT::i8   , Expand);
   setOperationAction(ISD::CTTZ             , MVT::i8   , Expand);
   setOperationAction(ISD::CTLZ             , MVT::i8   , Expand);
@@ -4940,6 +4941,66 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
   }
 }
 
+SDOperand X86TargetLowering::LowerFLT_ROUNDS(SDOperand Op, SelectionDAG &DAG) {
+  /*
+   The rounding mode is in bits 11:10 of FPSR, and has the following
+   settings:
+     00 Round to nearest
+     01 Round to -inf
+     10 Round to +inf
+     11 Round to 0
+
+  FLT_ROUNDS, on the other hand, expects the following:
+    -1 Undefined
+     0 Round to 0
+     1 Round to nearest
+     2 Round to +inf
+     3 Round to -inf
+
+  To perform the conversion, we do:
+    (((((FPSR & 0x800) >> 11) | ((FPSR & 0x400) >> 9)) + 1) & 3)
+  */
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  const TargetMachine &TM = MF.getTarget();
+  const TargetFrameInfo &TFI = *TM.getFrameInfo();
+  unsigned StackAlignment = TFI.getStackAlignment();
+  MVT::ValueType VT = Op.getValueType();
+
+  // Save FP Control Word to stack slot
+  int SSFI = MF.getFrameInfo()->CreateStackObject(2, StackAlignment);
+  SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+
+  SDOperand Chain = DAG.getNode(X86ISD::FNSTCW16m, MVT::Other,
+                                DAG.getEntryNode(), StackSlot);
+
+  // Load FP Control Word from stack slot
+  SDOperand CWD = DAG.getLoad(MVT::i16, Chain, StackSlot, NULL, 0);
+
+  // Transform as necessary
+  SDOperand CWD1 =
+    DAG.getNode(ISD::SRL, MVT::i16,
+                DAG.getNode(ISD::AND, MVT::i16,
+                            CWD, DAG.getConstant(0x800, MVT::i16)),
+                DAG.getConstant(11, MVT::i8));
+  SDOperand CWD2 =
+    DAG.getNode(ISD::SRL, MVT::i16,
+                DAG.getNode(ISD::AND, MVT::i16,
+                            CWD, DAG.getConstant(0x400, MVT::i16)),
+                DAG.getConstant(9, MVT::i8));
+
+  SDOperand RetVal =
+    DAG.getNode(ISD::AND, MVT::i16,
+                DAG.getNode(ISD::ADD, MVT::i16,
+                            DAG.getNode(ISD::OR, MVT::i16, CWD1, CWD2),
+                            DAG.getConstant(1, MVT::i16)),
+                DAG.getConstant(3, MVT::i16));
+
+
+  return DAG.getNode((MVT::getSizeInBits(VT) < 16 ?
+                      ISD::TRUNCATE : ISD::ZERO_EXTEND), VT, RetVal);
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -4982,6 +5043,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::DYNAMIC_STACKALLOC: return LowerDYNAMIC_STACKALLOC(Op, DAG);
   case ISD::EH_RETURN:          return LowerEH_RETURN(Op, DAG);
   case ISD::TRAMPOLINE:         return LowerTRAMPOLINE(Op, DAG);
+  case ISD::FLT_ROUNDS:         return LowerFLT_ROUNDS(Op, DAG);
   }
   return SDOperand();
 }
@@ -5029,6 +5091,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::THREAD_POINTER:     return "X86ISD::THREAD_POINTER";
   case X86ISD::EH_RETURN:          return "X86ISD::EH_RETURN";
   case X86ISD::TC_RETURN:          return "X86ISD::TC_RETURN";
+  case X86ISD::FNSTCW16m:          return "X86ISD::FNSTCW16m";
   }
 }
 
