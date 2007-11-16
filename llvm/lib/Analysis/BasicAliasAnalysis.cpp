@@ -929,6 +929,9 @@ BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
   }
   
   ValueName *Name = F->getValueName();
+  if (!Name)
+    return UnknownModRefBehavior;
+  
   unsigned NameLen = Name->getKeyLength();
   const char *NamePtr = Name->getKeyData();
   
