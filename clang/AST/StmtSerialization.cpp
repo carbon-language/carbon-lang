@@ -376,7 +376,7 @@ void DeclRefExpr::EmitImpl(Serializer& S) const {
   S.Emit(Loc);
   S.Emit(getType());
   
-  // Some DeclRefExprs can actually hold the owning reference to a decl.
+  // Some DeclRefExprs can actually hold the owning reference to a FunctionDecl.
   // This occurs when an implicitly defined function is called, and
   // the decl does not appear in the source file.  We thus check if the
   // decl pointer has been registered, and if not, emit an owned pointer.
@@ -387,14 +387,19 @@ void DeclRefExpr::EmitImpl(Serializer& S) const {
   //  needs an explicit bit indicating that it owns the the object,
   //  or we need a different ownership model.
   
-  if (S.isRegistered(getDecl())) {
-    S.EmitBool(false);
-    S.EmitPtr(getDecl());
+  const Decl* d = getDecl();
+  
+  if (!S.isRegistered(d)) {
+    assert (isa<FunctionDecl>(d) 
+     && "DeclRefExpr can only own FunctionDecls for implicitly def. funcs.");
+
+    S.EmitBool(true);
+    S.EmitOwnedPtr(d);
   }
   else {
-    S.EmitBool(true);
-    S.EmitOwnedPtr(cast<Decl>(getDecl()));
-  }    
+    S.EmitBool(false);
+    S.EmitPtr(d);
+  }
 }
 
 DeclRefExpr* DeclRefExpr::CreateImpl(Deserializer& D) {
