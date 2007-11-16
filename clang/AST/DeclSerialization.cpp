@@ -335,14 +335,14 @@ FunctionDecl* FunctionDecl::CreateImpl(Deserializer& D) {
   
   decl->ValueDecl::ReadInRec(D);
   D.ReadPtr(decl->DeclChain);
-  
-  decl->ParamInfo = decl->getNumParams()
-                    ? new ParmVarDecl*[decl->getNumParams()] 
-                    : NULL;
-  
+
   Decl* next_declarator;
   
   bool hasParamDecls = D.ReadBool();
+    
+  decl->ParamInfo = hasParamDecls
+                  ? new ParmVarDecl*[decl->getNumParams()] 
+                  : NULL;  
   
   if (hasParamDecls)
     D.BatchReadOwnedPtrs(decl->getNumParams(),
