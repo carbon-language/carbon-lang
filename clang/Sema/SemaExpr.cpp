@@ -1520,15 +1520,21 @@ static Decl *getPrimaryDeclaration(Expr *e) {
   case Stmt::DeclRefExprClass:
     return cast<DeclRefExpr>(e)->getDecl();
   case Stmt::MemberExprClass:
+    // Fields cannot be declared with a 'register' storage class.
+    // &X->f is always ok, even if X is declared register.
+    if (cast<MemberExpr>(e)->isArrow())
+      return 0;
     return getPrimaryDeclaration(cast<MemberExpr>(e)->getBase());
   case Stmt::ArraySubscriptExprClass:
+    // &X[4] and &4[X] is invalid if X is invalid.
     return getPrimaryDeclaration(cast<ArraySubscriptExpr>(e)->getBase());
-  case Stmt::CallExprClass:
-    return getPrimaryDeclaration(cast<CallExpr>(e)->getCallee());
   case Stmt::UnaryOperatorClass:
     return getPrimaryDeclaration(cast<UnaryOperator>(e)->getSubExpr());
   case Stmt::ParenExprClass:
     return getPrimaryDeclaration(cast<ParenExpr>(e)->getSubExpr());
+  case Stmt::ImplicitCastExprClass:
+    // &X[4] when X is an array, has an implicit cast from array to pointer.
+    return getPrimaryDeclaration(cast<ImplicitCastExpr>(e)->getSubExpr());
   default:
     return 0;
   }
@@ -1544,9 +1550,8 @@ QualType Sema::CheckAddressOfOperand(Expr *op, SourceLocation OpLoc) {
   Expr::isLvalueResult lval = op->isLvalue();
   
   if (lval != Expr::LV_Valid) { // C99 6.5.3.2p1
-    if (dcl && isa<FunctionDecl>(dcl)) // allow function designators
-      ;  
-    else { // FIXME: emit more specific diag...
+    if (!dcl || !isa<FunctionDecl>(dcl)) {// allow function designators
+      // FIXME: emit more specific diag...
       Diag(OpLoc, diag::err_typecheck_invalid_lvalue_addrof, 
            op->getSourceRange());
       return QualType();
