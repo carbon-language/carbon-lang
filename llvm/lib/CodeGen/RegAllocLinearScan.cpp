@@ -16,6 +16,7 @@
 #include "PhysRegTracker.h"
 #include "VirtRegMap.h"
 #include "llvm/Function.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/Passes.h"
@@ -66,6 +67,7 @@ namespace {
     SSARegMap *regmap_;
     BitVector allocatableRegs_;
     LiveIntervals* li_;
+    const LoopInfo *loopInfo;
 
     /// handled_ - Intervals are added to the handled_ set in the order of their
     /// start value.  This is uses for backtracking.
@@ -101,6 +103,7 @@ namespace {
       // Make sure PassManager knows which analyses to make available
       // to coalescing and which analyses coalescing invalidates.
       AU.addRequiredTransitive<RegisterCoalescer>();
+      AU.addRequired<LoopInfo>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
@@ -251,6 +254,7 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   regmap_ = mf_->getSSARegMap();
   allocatableRegs_ = mri_->getAllocatableSet(fn);
   li_ = &getAnalysis<LiveIntervals>();
+  loopInfo = &getAnalysis<LoopInfo>();
 
   // We don't run the coalescer here because we have no reason to
   // interact with it.  If the coalescer requires interaction, it
@@ -347,17 +351,21 @@ void RALinScan::linearScan()
         DOUT << "\tinterval " << *i->first << " expired\n");
   inactive_.clear();
 
-  // Add live-ins to every BB except for entry.
+  // Add live-ins to every BB except for entry. Also perform trivial coalescing.
   MachineFunction::iterator EntryMBB = mf_->begin();
   SmallVector<MachineBasicBlock*, 8> LiveInMBBs;
   for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i) {
     LiveInterval &cur = i->second;
     unsigned Reg = 0;
-    if (MRegisterInfo::isPhysicalRegister(cur.reg))
+    bool isPhys = MRegisterInfo::isPhysicalRegister(cur.reg);
+    if (isPhys)
       Reg = i->second.reg;
     else if (vrm_->isAssignedReg(cur.reg))
       Reg = attemptTrivialCoalescing(cur, vrm_->getPhys(cur.reg));
     if (!Reg)
+      continue;
+    // Ignore splited live intervals.
+    if (!isPhys && vrm_->getPreSplitReg(cur.reg))
       continue;
     for (LiveInterval::Ranges::const_iterator I = cur.begin(), E = cur.end();
          I != E; ++I) {
@@ -686,7 +694,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   if (cur->weight != HUGE_VALF && cur->weight <= minWeight) {
     DOUT << "\t\t\tspilling(c): " << *cur << '\n';
     std::vector<LiveInterval*> added =
-      li_->addIntervalsForSpills(*cur, *vrm_);
+      li_->addIntervalsForSpills(*cur, loopInfo, *vrm_);
     if (added.empty())
       return;  // Early exit if all spills were folded.
 
@@ -738,7 +746,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       DOUT << "\t\t\tspilling(a): " << *i->first << '\n';
       earliestStart = std::min(earliestStart, i->first->beginNumber());
       std::vector<LiveInterval*> newIs =
-        li_->addIntervalsForSpills(*i->first, *vrm_);
+        li_->addIntervalsForSpills(*i->first, loopInfo, *vrm_);
       std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
       spilled.insert(reg);
     }
@@ -751,7 +759,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       DOUT << "\t\t\tspilling(i): " << *i->first << '\n';
       earliestStart = std::min(earliestStart, i->first->beginNumber());
       std::vector<LiveInterval*> newIs =
-        li_->addIntervalsForSpills(*i->first, *vrm_);
+        li_->addIntervalsForSpills(*i->first, loopInfo, *vrm_);
       std::copy(newIs.begin(), newIs.end(), std::back_inserter(added));
       spilled.insert(reg);
     }

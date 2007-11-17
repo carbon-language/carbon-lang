@@ -1463,7 +1463,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
             if (UniqueUses.count(reg) != 0)
               continue;
             LiveInterval &RegInt = li_->getInterval(reg);
-            RegInt.weight += li_->getSpillWeight(mop, loopDepth);
+            RegInt.weight +=
+              li_->getSpillWeight(mop.isDef(), mop.isUse(), loopDepth);
             UniqueUses.insert(reg);
           }
         }

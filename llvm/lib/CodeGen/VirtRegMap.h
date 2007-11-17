@@ -18,7 +18,7 @@
 #define LLVM_CODEGEN_VIRTREGMAP_H
 
 #include "llvm/Target/MRegisterInfo.h"
-#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Support/Streams.h"
 #include <map>
@@ -50,22 +50,42 @@ namespace llvm {
     /// spilled register is the temporary used to load it from the
     /// stack).
     IndexedMap<unsigned, VirtReg2IndexFunctor> Virt2PhysMap;
+
     /// Virt2StackSlotMap - This is virtual register to stack slot
     /// mapping. Each spilled virtual register has an entry in it
     /// which corresponds to the stack slot this register is spilled
     /// at.
     IndexedMap<int, VirtReg2IndexFunctor> Virt2StackSlotMap;
+
+    /// Virt2StackSlotMap - This is virtual register to rematerialization id
+    /// mapping. Each spilled virtual register that should be remat'd has an
+    /// entry in it which corresponds to the remat id.
     IndexedMap<int, VirtReg2IndexFunctor> Virt2ReMatIdMap;
+
+    /// Virt2SplitMap - This is virtual register to splitted virtual register
+    /// mapping.
+    IndexedMap<unsigned, VirtReg2IndexFunctor> Virt2SplitMap;
+
+    /// ReMatMap - This is virtual register to re-materialized instruction
+    /// mapping. Each virtual register whose definition is going to be
+    /// re-materialized has an entry in it.
+    IndexedMap<MachineInstr*, VirtReg2IndexFunctor> ReMatMap;
+
     /// MI2VirtMap - This is MachineInstr to virtual register
     /// mapping. In the case of memory spill code being folded into
     /// instructions, we need to know which virtual register was
     /// read/written by this instruction.
     MI2VirtMapTy MI2VirtMap;
 
-    /// ReMatMap - This is virtual register to re-materialized instruction
-    /// mapping. Each virtual register whose definition is going to be
-    /// re-materialized has an entry in it.
-    IndexedMap<MachineInstr*, VirtReg2IndexFunctor> ReMatMap;
+    /// SpillPt2VirtMap - This records the virtual registers which should
+    /// be spilled right after the MachineInstr due to live interval
+    /// splitting.
+    DenseMap<MachineInstr*, std::vector<unsigned> > SpillPt2VirtMap;
+
+    /// Virt2SplitMap - This records the MachineInstrs where a virtual
+    /// register should be spilled due to live interval splitting.
+    IndexedMap<std::vector<MachineInstr*>, VirtReg2IndexFunctor>
+    Virt2SpillPtsMap;
 
     /// ReMatId - Instead of assigning a stack slot to a to be rematerialized
     /// virtual register, an unique id is being assigned. This keeps track of
@@ -120,11 +140,25 @@ namespace llvm {
       grow();
     }
 
+    /// @brief records virtReg is a split live interval from SReg.
+    void setIsSplitFromReg(unsigned virtReg, unsigned SReg) {
+      Virt2SplitMap[virtReg] = SReg;
+    }
+
+    /// @brief returns the live interval virtReg is split from.
+    unsigned getPreSplitReg(unsigned virtReg) {
+      return Virt2SplitMap[virtReg];
+    }
+
     /// @brief returns true is the specified virtual register is not
     /// mapped to a stack slot or rematerialized.
     bool isAssignedReg(unsigned virtReg) const {
-      return getStackSlot(virtReg) == NO_STACK_SLOT &&
-        getReMatId(virtReg) == NO_STACK_SLOT;
+      if (getStackSlot(virtReg) == NO_STACK_SLOT &&
+          getReMatId(virtReg) == NO_STACK_SLOT)
+        return true;
+      // Split register can be assigned a physical register as well as a
+      // stack slot or remat id.
+      return (Virt2SplitMap[virtReg] && Virt2PhysMap[virtReg] != NO_PHYS_REG);
     }
 
     /// @brief returns the stack slot mapped to the specified virtual
@@ -173,6 +207,62 @@ namespace llvm {
     /// registers are rematerialized and it's safe to delete the definition.
     void setVirtIsReMaterialized(unsigned virtReg, MachineInstr *def) {
       ReMatMap[virtReg] = def;
+    }
+
+    /// @brief returns the virtual registers that should be spilled due to
+    /// splitting right after the specified MachineInstr.
+    std::vector<unsigned> &getSpillPtSpills(MachineInstr *Pt) {
+      return SpillPt2VirtMap[Pt];
+    }
+
+    /// @brief records the specified MachineInstr as a spill point for virtReg.
+    void addSpillPoint(unsigned virtReg, MachineInstr *Pt) {
+      SpillPt2VirtMap[Pt].push_back(virtReg);
+      Virt2SpillPtsMap[virtReg].push_back(Pt);
+    }
+
+    /// @brief remove the virtReg from the list of registers that should be
+    /// spilled (due to splitting) right after the specified MachineInstr.
+    void removeRegFromSpillPt(MachineInstr *Pt, unsigned virtReg) {
+      std::vector<unsigned> &Regs = SpillPt2VirtMap[Pt];
+      if (Regs.back() == virtReg) // Most common case.
+        Regs.pop_back();
+      for (unsigned i = 0, e = Regs.size(); i != e; ++i)
+        if (Regs[i] == virtReg) {
+          Regs.erase(Regs.begin()+i-1);
+          break;
+        }
+    }
+
+    /// @brief specify virtReg is no longer being spilled due to splitting.
+    void removeAllSpillPtsForReg(unsigned virtReg) {
+      std::vector<MachineInstr*> &SpillPts = Virt2SpillPtsMap[virtReg];
+      for (unsigned i = 0, e = SpillPts.size(); i != e; ++i)
+        removeRegFromSpillPt(SpillPts[i], virtReg);
+      Virt2SpillPtsMap[virtReg].clear();
+    }
+
+    /// @brief remove the specified MachineInstr as a spill point for the
+    /// specified register.
+    void removeRegSpillPt(unsigned virtReg, MachineInstr *Pt) {
+      std::vector<MachineInstr*> &SpillPts = Virt2SpillPtsMap[virtReg];
+      if (SpillPts.back() == Pt) // Most common case.
+        SpillPts.pop_back();
+      for (unsigned i = 0, e = SpillPts.size(); i != e; ++i)
+        if (SpillPts[i] == Pt) {
+          SpillPts.erase(SpillPts.begin()+i-1);
+          break;
+        }
+    }
+
+    void transferSpillPts(MachineInstr *Old, MachineInstr *New) {
+      std::vector<unsigned> &OldRegs = SpillPt2VirtMap[Old];
+      while (!OldRegs.empty()) {
+        unsigned virtReg = OldRegs.back();
+        OldRegs.pop_back();
+        removeRegSpillPt(virtReg, Old);
+        addSpillPoint(virtReg, New);
+      }
     }
 
     /// @brief Updates information about the specified virtual register's value

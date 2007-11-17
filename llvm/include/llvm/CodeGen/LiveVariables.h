@@ -154,20 +154,6 @@ private:   // Intermediate data structures
 
   SmallVector<unsigned, 4> *PHIVarInfo;
 
-  /// addRegisterKilled - We have determined MI kills a register. Look for the
-  /// operand that uses it and mark it as IsKill. If AddIfNotFound is true,
-  /// add a implicit operand if it's not found. Returns true if the operand
-  /// exists / is added.
-  bool addRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
-                         bool AddIfNotFound = false);
-
-  /// addRegisterDead - We have determined MI defined a register without a use.
-  /// Look for the operand that defines it and mark it as IsDead. If
-  /// AddIfNotFound is true, add a implicit operand if it's not found. Returns
-  /// true if the operand exists / is added.
-  bool addRegisterDead(unsigned IncomingReg, MachineInstr *MI,
-                       bool AddIfNotFound = false);
-
   void addRegisterKills(unsigned Reg, MachineInstr *MI,
                         SmallSet<unsigned, 4> &SubKills);
 
@@ -210,15 +196,28 @@ public:
   /// the records for NewMI.
   void instructionChanged(MachineInstr *OldMI, MachineInstr *NewMI);
 
+  /// transferKillDeadInfo - Similar to instructionChanged except it does not
+  /// update live variables internal data structures.
+  static void transferKillDeadInfo(MachineInstr *OldMI, MachineInstr *NewMI,
+                                   const MRegisterInfo *RegInfo);
+
+  /// addRegisterKilled - We have determined MI kills a register. Look for the
+  /// operand that uses it and mark it as IsKill. If AddIfNotFound is true,
+  /// add a implicit operand if it's not found. Returns true if the operand
+  /// exists / is added.
+  static bool addRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
+                                const MRegisterInfo *RegInfo,
+                                bool AddIfNotFound = false);
+
   /// addVirtualRegisterKilled - Add information about the fact that the
   /// specified register is killed after being used by the specified
   /// instruction. If AddIfNotFound is true, add a implicit operand if it's
   /// not found.
   void addVirtualRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
                                 bool AddIfNotFound = false) {
-    if (addRegisterKilled(IncomingReg, MI, AddIfNotFound))
+    if (addRegisterKilled(IncomingReg, MI, RegInfo, AddIfNotFound))
       getVarInfo(IncomingReg).Kills.push_back(MI); 
- }
+  }
 
   /// removeVirtualRegisterKilled - Remove the specified virtual
   /// register from the live variable information. Returns true if the
@@ -248,12 +247,20 @@ public:
   /// instruction.
   void removeVirtualRegistersKilled(MachineInstr *MI);
   
+  /// addRegisterDead - We have determined MI defined a register without a use.
+  /// Look for the operand that defines it and mark it as IsDead. If
+  /// AddIfNotFound is true, add a implicit operand if it's not found. Returns
+  /// true if the operand exists / is added.
+  static bool addRegisterDead(unsigned IncomingReg, MachineInstr *MI,
+                              const MRegisterInfo *RegInfo,
+                              bool AddIfNotFound = false);
+
   /// addVirtualRegisterDead - Add information about the fact that the specified
   /// register is dead after being used by the specified instruction. If
   /// AddIfNotFound is true, add a implicit operand if it's not found.
   void addVirtualRegisterDead(unsigned IncomingReg, MachineInstr *MI,
                               bool AddIfNotFound = false) {
-    if (addRegisterDead(IncomingReg, MI, AddIfNotFound))
+    if (addRegisterDead(IncomingReg, MI, RegInfo, AddIfNotFound))
         getVarInfo(IncomingReg).Kills.push_back(MI);
   }
 
