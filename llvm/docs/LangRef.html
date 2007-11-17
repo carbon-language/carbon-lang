@@ -1511,23 +1511,31 @@ following is the syntax for constant expressions:</p>
 
   <dt><b><tt>fptoui ( CST to TYPE )</tt></b></dt>
   <dd>Convert a floating point constant to the corresponding unsigned integer
-  constant. TYPE must be an integer type. CST must be floating point. If the 
-  value won't fit in the integer type, the results are undefined.</dd>
+  constant. TYPE must be a scalar or vector integer type. CST must be of scalar
+  or vector floating point type. Both CST and TYPE must be scalars, or vectors
+  of the same number of elements. If the  value won't fit in the integer type,
+  the results are undefined.</dd>
 
   <dt><b><tt>fptosi ( CST to TYPE )</tt></b></dt>
   <dd>Convert a floating point constant to the corresponding signed integer
-  constant. TYPE must be an integer type. CST must be floating point. If the 
-  value won't fit in the integer type, the results are undefined.</dd>
+  constant.  TYPE must be a scalar or vector integer type. CST must be of scalar
+  or vector floating point type. Both CST and TYPE must be scalars, or vectors
+  of the same number of elements. If the  value won't fit in the integer type,
+  the results are undefined.</dd>
 
   <dt><b><tt>uitofp ( CST to TYPE )</tt></b></dt>
   <dd>Convert an unsigned integer constant to the corresponding floating point
-  constant. TYPE must be floating point. CST must be of integer type. If the
-  value won't fit in the floating point type, the results are undefined.</dd>
+  constant. TYPE must be a scalar or vector floating point type. CST must be of
+  scalar or vector integer type. Both CST and TYPE must be scalars, or vectors
+  of the same number of elements. If the value won't fit in the floating point 
+  type, the results are undefined.</dd>
 
   <dt><b><tt>sitofp ( CST to TYPE )</tt></b></dt>
   <dd>Convert a signed integer constant to the corresponding floating point
-  constant. TYPE must be floating point. CST must be of integer type. If the
-  value won't fit in the floating point type, the results are undefined.</dd>
+  constant. TYPE must be a scalar or vector floating point type. CST must be of
+  scalar or vector integer type. Both CST and TYPE must be scalars, or vectors
+  of the same number of elements. If the value won't fit in the floating point 
+  type, the results are undefined.</dd>
 
   <dt><b><tt>ptrtoint ( CST to TYPE )</tt></b></dt>
   <dd>Convert a pointer typed constant to the corresponding integer constant
@@ -3136,8 +3144,10 @@ unsigned integer equivalent of type <tt>ty2</tt>.
 
 <h5>Arguments:</h5>
 <p>The '<tt>fptoui</tt>' instruction takes a value to cast, which must be a 
-<a href="#t_floating">floating point</a> value, and a type to cast it to, which
-must be an <a href="#t_integer">integer</a> type.</p>
+scalar or vector <a href="#t_floating">floating point</a> value, and a type 
+to cast it to <tt>ty2</tt>, which must be an <a href="#t_integer">integer</a> 
+type. If <tt>ty</tt> is a vector floating point type, <tt>ty2</tt> must be a
+vector integer type with the same number of elements as <tt>ty</tt></p>
 
 <h5>Semantics:</h5>
 <p> The '<tt>fptoui</tt>' instruction converts its 
@@ -3169,11 +3179,12 @@ the results are undefined.</p>
 <a href="#t_floating">floating point</a> <tt>value</tt> to type <tt>ty2</tt>.
 </p>
 
-
 <h5>Arguments:</h5>
 <p> The '<tt>fptosi</tt>' instruction takes a value to cast, which must be a 
-<a href="#t_floating">floating point</a> value, and a type to cast it to, which 
-must also be an <a href="#t_integer">integer</a> type.</p>
+scalar or vector <a href="#t_floating">floating point</a> value, and a type 
+to cast it to <tt>ty2</tt>, which must be an <a href="#t_integer">integer</a> 
+type. If <tt>ty</tt> is a vector floating point type, <tt>ty2</tt> must be a
+vector integer type with the same number of elements as <tt>ty</tt></p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>fptosi</tt>' instruction converts its 
@@ -3204,17 +3215,17 @@ the results are undefined.</p>
 <p>The '<tt>uitofp</tt>' instruction regards <tt>value</tt> as an unsigned
 integer and converts that value to the <tt>ty2</tt> type.</p>
 
-
 <h5>Arguments:</h5>
-<p>The '<tt>uitofp</tt>' instruction takes a value to cast, which must be an
-<a href="#t_integer">integer</a> value, and a type to cast it to, which must 
-be a <a href="#t_floating">floating point</a> type.</p>
+<p>The '<tt>uitofp</tt>' instruction takes a value to cast, which must be a
+scalar or vector <a href="#t_integer">integer</a> value, and a type to cast it
+to <tt>ty2</tt>, which must be an <a href="#t_floating">floating point</a> 
+type. If <tt>ty</tt> is a vector integer type, <tt>ty2</tt> must be a vector
+floating point type with the same number of elements as <tt>ty</tt></p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>uitofp</tt>' instruction interprets its operand as an unsigned
 integer quantity and converts it to the corresponding floating point value. If
 the value cannot fit in the floating point value, the results are undefined.</p>
-
 
 <h5>Example:</h5>
 <pre>
@@ -3239,9 +3250,11 @@ the value cannot fit in the floating point value, the results are undefined.</p>
 integer and converts that value to the <tt>ty2</tt> type.</p>
 
 <h5>Arguments:</h5>
-<p>The '<tt>sitofp</tt>' instruction takes a value to cast, which must be an
-<a href="#t_integer">integer</a> value, and a type to cast it to, which must be
-a <a href="#t_floating">floating point</a> type.</p>
+<p>The '<tt>sitofp</tt>' instruction takes a value to cast, which must be a
+scalar or vector <a href="#t_integer">integer</a> value, and a type to cast it
+to <tt>ty2</tt>, which must be an <a href="#t_floating">floating point</a> 
+type. If <tt>ty</tt> is a vector integer type, <tt>ty2</tt> must be a vector
+floating point type with the same number of elements as <tt>ty</tt></p>
 
 <h5>Semantics:</h5>
 <p>The '<tt>sitofp</tt>' instruction interprets its operand as a signed

@@ -202,6 +202,15 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
       APInt Val(DestBitWidth, 2, x);
       return ConstantInt::get(Val);
     }
+    if (const ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
+      std::vector<Constant*> res;
+      const VectorType *DestVecTy = cast<VectorType>(DestTy);
+      const Type *DstEltTy = DestVecTy->getElementType();
+      for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
+        res.push_back(ConstantFoldCastInstruction(opc, V->getOperand(i),
+                                                  DstEltTy));
+      return ConstantVector::get(DestVecTy, res);
+    }
     return 0; // Can't fold.
   case Instruction::IntToPtr:   //always treated as unsigned
     if (V->isNullValue())       // Is it an integral null value?
@@ -223,6 +232,15 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
                                    opc==Instruction::SIToFP,
                                    APFloat::rmNearestTiesToEven);
       return ConstantFP::get(DestTy, apf);
+    }
+    if (const ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
+      std::vector<Constant*> res;
+      const VectorType *DestVecTy = cast<VectorType>(DestTy);
+      const Type *DstEltTy = DestVecTy->getElementType();
+      for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
+        res.push_back(ConstantFoldCastInstruction(opc, V->getOperand(i),
+                                                  DstEltTy));
+      return ConstantVector::get(DestVecTy, res);
     }
     return 0;
   case Instruction::ZExt:

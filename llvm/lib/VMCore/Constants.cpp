@@ -1643,26 +1643,38 @@ Constant *ConstantExpr::getFPExtend(Constant *C, const Type *Ty) {
 }
 
 Constant *ConstantExpr::getUIToFP(Constant *C, const Type *Ty) {
-  assert(C->getType()->isInteger() && Ty->isFloatingPoint() &&
-         "This is an illegal i32 to floating point cast!");
+  bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
+  bool toVec = Ty->getTypeID() == Type::VectorTyID;
+  assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
+  assert(C->getType()->isIntOrIntVector() && Ty->isFPOrFPVector() &&
+         "This is an illegal uint to floating point cast!");
   return getFoldedCast(Instruction::UIToFP, C, Ty);
 }
 
 Constant *ConstantExpr::getSIToFP(Constant *C, const Type *Ty) {
-  assert(C->getType()->isInteger() && Ty->isFloatingPoint() &&
+  bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
+  bool toVec = Ty->getTypeID() == Type::VectorTyID;
+  assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
+  assert(C->getType()->isIntOrIntVector() && Ty->isFPOrFPVector() &&
          "This is an illegal sint to floating point cast!");
   return getFoldedCast(Instruction::SIToFP, C, Ty);
 }
 
 Constant *ConstantExpr::getFPToUI(Constant *C, const Type *Ty) {
-  assert(C->getType()->isFloatingPoint() && Ty->isInteger() &&
-         "This is an illegal floating point to i32 cast!");
+  bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
+  bool toVec = Ty->getTypeID() == Type::VectorTyID;
+  assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
+  assert(C->getType()->isFPOrFPVector() && Ty->isIntOrIntVector() &&
+         "This is an illegal floating point to uint cast!");
   return getFoldedCast(Instruction::FPToUI, C, Ty);
 }
 
 Constant *ConstantExpr::getFPToSI(Constant *C, const Type *Ty) {
-  assert(C->getType()->isFloatingPoint() && Ty->isInteger() &&
-         "This is an illegal floating point to i32 cast!");
+  bool fromVec = C->getType()->getTypeID() == Type::VectorTyID;
+  bool toVec = Ty->getTypeID() == Type::VectorTyID;
+  assert((fromVec == toVec) && "Cannot convert from scalar to/from vector");
+  assert(C->getType()->isFPOrFPVector() && Ty->isIntOrIntVector() &&
+         "This is an illegal floating point to sint cast!");
   return getFoldedCast(Instruction::FPToSI, C, Ty);
 }
 

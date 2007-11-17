@@ -709,8 +709,16 @@ void Verifier::visitUIToFPInst(UIToFPInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  Assert1(SrcTy->isInteger(),"UInt2FP source must be integral", &I);
-  Assert1(DestTy->isFloatingPoint(),"UInt2FP result must be FP", &I);
+  bool SrcVec = SrcTy->getTypeID() == Type::VectorTyID;
+  bool DstVec = DestTy->getTypeID() == Type::VectorTyID;
+
+  Assert1(SrcVec == DstVec,"UIToFP source and dest must both be vector or scalar", &I);
+  Assert1(SrcTy->isIntOrIntVector(),"UIToFP source must be integer or integer vector", &I);
+  Assert1(DestTy->isFPOrFPVector(),"UIToFP result must be FP or FP vector", &I);
+
+  if (SrcVec && DstVec)
+    Assert1(cast<VectorType>(SrcTy)->getNumElements() == cast<VectorType>(DestTy)->getNumElements(),
+            "UIToFP source and dest vector length mismatch", &I);
 
   visitInstruction(I);
 }
@@ -720,8 +728,16 @@ void Verifier::visitSIToFPInst(SIToFPInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  Assert1(SrcTy->isInteger(),"SInt2FP source must be integral", &I);
-  Assert1(DestTy->isFloatingPoint(),"SInt2FP result must be FP", &I);
+  bool SrcVec = SrcTy->getTypeID() == Type::VectorTyID;
+  bool DstVec = DestTy->getTypeID() == Type::VectorTyID;
+
+  Assert1(SrcVec == DstVec,"SIToFP source and dest must both be vector or scalar", &I);
+  Assert1(SrcTy->isIntOrIntVector(),"SIToFP source must be integer or integer vector", &I);
+  Assert1(DestTy->isFPOrFPVector(),"SIToFP result must be FP or FP vector", &I);
+
+  if (SrcVec && DstVec)
+    Assert1(cast<VectorType>(SrcTy)->getNumElements() == cast<VectorType>(DestTy)->getNumElements(),
+            "SIToFP source and dest vector length mismatch", &I);
 
   visitInstruction(I);
 }
@@ -731,8 +747,16 @@ void Verifier::visitFPToUIInst(FPToUIInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  Assert1(SrcTy->isFloatingPoint(),"FP2UInt source must be FP", &I);
-  Assert1(DestTy->isInteger(),"FP2UInt result must be integral", &I);
+  bool SrcVec = SrcTy->getTypeID() == Type::VectorTyID;
+  bool DstVec = DestTy->getTypeID() == Type::VectorTyID;
+
+  Assert1(SrcVec == DstVec,"FPToUI source and dest must both be vector or scalar", &I);
+  Assert1(SrcTy->isFPOrFPVector(),"FPToUI source must be FP or FP vector", &I);
+  Assert1(DestTy->isIntOrIntVector(),"FPToUI result must be integer or integer vector", &I);
+
+  if (SrcVec && DstVec)
+    Assert1(cast<VectorType>(SrcTy)->getNumElements() == cast<VectorType>(DestTy)->getNumElements(),
+            "FPToUI source and dest vector length mismatch", &I);
 
   visitInstruction(I);
 }
@@ -742,8 +766,16 @@ void Verifier::visitFPToSIInst(FPToSIInst &I) {
   const Type *SrcTy = I.getOperand(0)->getType();
   const Type *DestTy = I.getType();
 
-  Assert1(SrcTy->isFloatingPoint(),"FPToSI source must be FP", &I);
-  Assert1(DestTy->isInteger(),"FP2ToI result must be integral", &I);
+  bool SrcVec = SrcTy->getTypeID() == Type::VectorTyID;
+  bool DstVec = DestTy->getTypeID() == Type::VectorTyID;
+
+  Assert1(SrcVec == DstVec,"FPToSI source and dest must both be vector or scalar", &I);
+  Assert1(SrcTy->isFPOrFPVector(),"FPToSI source must be FP or FP vector", &I);
+  Assert1(DestTy->isIntOrIntVector(),"FPToSI result must be integer or integer vector", &I);
+
+  if (SrcVec && DstVec)
+    Assert1(cast<VectorType>(SrcTy)->getNumElements() == cast<VectorType>(DestTy)->getNumElements(),
+            "FPToSI source and dest vector length mismatch", &I);
 
   visitInstruction(I);
 }

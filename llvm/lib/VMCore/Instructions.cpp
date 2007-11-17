@@ -1912,12 +1912,24 @@ CastInst::castIsValid(Instruction::CastOps op, Value *S, const Type *DstTy) {
     return SrcTy->isFloatingPoint() && DstTy->isFloatingPoint() && 
       SrcBitSize < DstBitSize;
   case Instruction::UIToFP:
-    return SrcTy->isInteger() && DstTy->isFloatingPoint();
   case Instruction::SIToFP:
+    if (const VectorType *SVTy = dyn_cast<VectorType>(SrcTy)) {
+      if (const VectorType *DVTy = dyn_cast<VectorType>(DstTy)) {
+        return SVTy->getElementType()->isInteger() &&
+               DVTy->getElementType()->isFloatingPoint() &&
+               SVTy->getNumElements() == DVTy->getNumElements();
+      }
+    }
     return SrcTy->isInteger() && DstTy->isFloatingPoint();
   case Instruction::FPToUI:
-    return SrcTy->isFloatingPoint() && DstTy->isInteger();
   case Instruction::FPToSI:
+    if (const VectorType *SVTy = dyn_cast<VectorType>(SrcTy)) {
+      if (const VectorType *DVTy = dyn_cast<VectorType>(DstTy)) {
+        return SVTy->getElementType()->isFloatingPoint() &&
+               DVTy->getElementType()->isInteger() &&
+               SVTy->getNumElements() == DVTy->getNumElements();
+      }
+    }
     return SrcTy->isFloatingPoint() && DstTy->isInteger();
   case Instruction::PtrToInt:
     return isa<PointerType>(SrcTy) && DstTy->isInteger();

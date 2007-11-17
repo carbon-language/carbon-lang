@@ -2967,6 +2967,12 @@ def : Pat<(v2i64 (and (xor VR128:$src1, (bc_v2i64 (v16i8 immAllOnesV))),
                   (memopv2i64 addr:$src2))),
           (PANDNrm VR128:$src1, addr:$src2)>, Requires<[HasSSE2]>;
 
+// vector -> vector casts
+def : Pat<(v4f32 (sint_to_fp (v4i32 VR128:$src))),
+          (Int_CVTDQ2PSrr VR128:$src)>, Requires<[HasSSE2]>;
+def : Pat<(v4i32 (fp_to_sint (v4f32 VR128:$src))),
+          (Int_CVTTPS2DQrr VR128:$src)>, Requires<[HasSSE2]>;
+
 // Use movaps / movups for SSE integer load / store (one byte shorter).
 def : Pat<(alignedloadv4i32 addr:$src),
           (MOVAPSrm addr:$src)>, Requires<[HasSSE1]>;
