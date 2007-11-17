@@ -45,28 +45,6 @@ public:
   void EmitCStr(const char* cstr);
   
   void EmitPtr(const void* ptr) { EmitInt(getPtrId(ptr)); }
-
-  SerializedPtrID EmitPtr(const void* ptr,bool) {
-    SerializedPtrID ptr_id = getPtrId(ptr);
-    EmitInt(ptr_id);
-    return ptr_id;
-  }
-  
-  SerializedPtrID EmitDiffPtrID(const void* ptr, SerializedPtrID PrevID) {
-    assert (!isRegistered(ptr));
-    SerializedPtrID ptr_id = getPtrId(ptr);
-
-    if (ptr_id == 0)
-      EmitBool(false);
-    else {
-      assert (ptr_id > PrevID);
-      assert (PrevID == 0 || ptr_id - PrevID == 1);
-      EmitBool(true);
-    }
-    
-    return ptr_id;    
-  }    
-    
   
   template <typename T>
   void EmitRef(const T& ref) { EmitPtr(&ref); }
@@ -79,21 +57,17 @@ public:
   
   template <typename T1, typename T2>
   void BatchEmitOwnedPtrs(T1* p1, T2* p2) {
-    // Optimization: Only emit the differences between the IDs.  Most of
-    // the time this difference will be "1", thus resulting in fewer bits.
-    assert (!isRegistered(p1));
-    assert (!isRegistered(p2));
-    
-    EmitDiffPtrID(p2,EmitPtr(p1,true));
-
+    EmitPtr(p1);
+    EmitPtr(p2);
     if (p1) SerializeTrait<T1>::Emit(*this,*p1);
     if (p2) SerializeTrait<T2>::Emit(*this,*p2);    
   }
 
   template <typename T1, typename T2, typename T3>
   void BatchEmitOwnedPtrs(T1* p1, T2* p2, T3* p3) {
-    EmitDiffPtrID(p3,EmitDiffPtrID(p2,EmitPtr(p1)));
-
+    EmitPtr(p1);
+    EmitPtr(p2);
+    EmitPtr(p3);
     if (p1) SerializeTrait<T1>::Emit(*this,*p1);
     if (p2) SerializeTrait<T2>::Emit(*this,*p2);
     if (p3) SerializeTrait<T3>::Emit(*this,*p3);
@@ -101,8 +75,10 @@ public:
   
   template <typename T1, typename T2, typename T3, typename T4>
   void BatchEmitOwnedPtrs(T1* p1, T2* p2, T3* p3, T4& p4) {
-    EmitDiffPtrID(p4,EmitDiffPtrID(p3,EmitDiffPtrID(p2,EmitPtr(p1))));
-
+    EmitPtr(p1);
+    EmitPtr(p2);
+    EmitPtr(p3);
+    EmitPtr(p4);
     if (p1) SerializeTrait<T1>::Emit(*this,*p1);
     if (p2) SerializeTrait<T2>::Emit(*this,*p2);
     if (p3) SerializeTrait<T3>::Emit(*this,*p3);
@@ -111,12 +87,8 @@ public:
 
   template <typename T>
   void BatchEmitOwnedPtrs(unsigned NumPtrs, T* const * Ptrs) {
-    SerializedPtrID ID;
-    
-    for (unsigned i = 0; i < NumPtrs; ++i) {
-      if (i == 0) ID = EmitPtr(Ptrs[i],true);
-      else ID = EmitDiffPtrID(Ptrs[i],ID);
-    }
+    for (unsigned i = 0; i < NumPtrs; ++i)
+      EmitPtr(Ptrs[i]);
 
     for (unsigned i = 0; i < NumPtrs; ++i)
       if (Ptrs[i]) SerializeTrait<T>::Emit(*this,*Ptrs[i]);
@@ -125,32 +97,32 @@ public:
   template <typename T1, typename T2>
   void BatchEmitOwnedPtrs(unsigned NumT1Ptrs, T1* const * Ptrs, T2* p2) {
     
-    SerializedPtrID ID = EmitPtr(p2,true);
-
     for (unsigned i = 0; i < NumT1Ptrs; ++i)
-      ID = EmitDiffPtrID(Ptrs[i],ID);
+      EmitPtr(Ptrs[i]);
+    
+    EmitPtr(p2);
+    
+    for (unsigned i = 0; i < NumT1Ptrs; ++i)
+      if (Ptrs[i]) SerializeTrait<T1>::Emit(*this,*Ptrs[i]);
     
     if (p2) SerializeTrait<T2>::Emit(*this,*p2);
-    
-    for (unsigned i = 0; i < NumT1Ptrs; ++i)
-      if (Ptrs[i]) SerializeTrait<T1>::Emit(*this,*Ptrs[i]);    
   }
   
   template <typename T1, typename T2, typename T3>
   void BatchEmitOwnedPtrs(unsigned NumT1Ptrs, T1* const * Ptrs,
                           T2* p2, T3* p3) {
     
-    SerializedPtrID TempID = EmitDiffPtrID(p3,EmitPtr(p2,true));
-    
     for (unsigned i = 0; i < NumT1Ptrs; ++i)
-      TempID = EmitDiffPtrID(Ptrs[i],TempID);
+      EmitPtr(Ptrs[i]);
     
-    if (p2) SerializeTrait<T2>::Emit(*this,*p2);
-    if (p3) SerializeTrait<T3>::Emit(*this,*p3);
+    EmitPtr(p2);
+    EmitPtr(p3);
     
     for (unsigned i = 0; i < NumT1Ptrs; ++i)
       if (Ptrs[i]) SerializeTrait<T1>::Emit(*this,*Ptrs[i]);
     
+    if (p2) SerializeTrait<T2>::Emit(*this,*p2);
+    if (p3) SerializeTrait<T3>::Emit(*this,*p3);
   }
     
   bool isRegistered(const void* p) const;
