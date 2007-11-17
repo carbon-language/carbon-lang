@@ -536,7 +536,7 @@ namespace {
       } else if (FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
         CodeGen::CodeGenGlobalVar(Builder, FVD);
       } else {
-        assert(isa<TypedefDecl>(D) && "Only expected typedefs here");
+        assert(isa<TypeDecl>(D) && "Only expected type decls here");
         // don't codegen for now, eventually pass down for debug info.
         //std::cerr << "Read top-level typedef decl: '" << D->getName() << "'\n";
       }

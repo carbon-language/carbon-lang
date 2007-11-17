@@ -133,8 +133,16 @@ void StmtPrinter::PrintRawDecl(Decl *D) {
         PrintExpr(V->getInit());
       }
     }
+  } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
+    // print a free standing tag decl (e.g. "struct x;"). 
+    OS << TD->getKindName();
+    OS << " ";
+    if (const IdentifierInfo *II = TD->getIdentifier())
+      OS << II->getName();
+    else
+      OS << "<anonymous>";
+    // FIXME: print tag bodies.
   } else {
-    // FIXME: "struct x;"
     assert(0 && "Unexpected decl");
   }
 }
