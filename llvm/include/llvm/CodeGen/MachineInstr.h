@@ -79,7 +79,7 @@ private:
 
     /// subReg - SubRegister number, only valid for MO_Register.  A value of 0
     /// indicates the MO_Register has no subReg.
-    unsigned subReg;
+    unsigned char subReg;
   } auxInfo;
   
   MachineOperand() {}
@@ -188,7 +188,7 @@ public:
   }
   unsigned getSubReg() const {
     assert(isRegister() && "Wrong MachineOperand accessor");
-    return auxInfo.subReg;
+    return (unsigned)auxInfo.subReg;
   }
   const char *getSymbolName() const {
     assert(isExternalSymbol() && "Wrong MachineOperand accessor");
@@ -277,7 +277,7 @@ public:
   }
   void setSubReg(unsigned subReg) {
     assert(isRegister() && "Wrong MachineOperand accessor");
-    auxInfo.subReg = subReg;
+    auxInfo.subReg = (unsigned char)subReg;
   }
   void setConstantPoolIndex(unsigned Idx) {
     assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
@@ -472,7 +472,7 @@ public:
     Op.IsKill = IsKill;
     Op.IsDead = IsDead;
     Op.contents.RegNo = Reg;
-    Op.auxInfo.subReg = SubReg;
+    Op.auxInfo.subReg = (unsigned char)SubReg;
   }
 
   /// addImmOperand - Add a zero extended constant argument to the
