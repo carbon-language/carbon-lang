@@ -57,10 +57,11 @@ public:
     SerializedPtrID ptr_id = getPtrId(ptr);
 
     if (ptr_id == 0)
-      EmitInt(0);
+      EmitBool(false);
     else {
       assert (ptr_id > PrevID);
-      EmitInt(ptr_id-PrevID);
+      assert (PrevID == 0 || ptr_id - PrevID == 1);
+      EmitBool(true);
     }
     
     return ptr_id;    

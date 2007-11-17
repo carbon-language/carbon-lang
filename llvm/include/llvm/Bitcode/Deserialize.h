@@ -141,8 +141,8 @@ public:
   SerializedPtrID ReadPtrID() { return (SerializedPtrID) ReadInt(); }
 
   SerializedPtrID ReadDiffPtrID(SerializedPtrID& PrevID) {
-    unsigned x = ReadInt();    
-    return (SerializedPtrID) (x ? (PrevID+x) : 0);
+    bool x = ReadBool();    
+    return (SerializedPtrID) (x ? (PrevID+1) : 0);
   }
   
   
