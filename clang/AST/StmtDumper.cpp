@@ -219,8 +219,16 @@ void StmtDumper::DumpDeclarator(Decl *D) {
       }
     }
     fprintf(F, "\"");
+  } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
+    // print a free standing tag decl (e.g. "struct x;").
+    const char *tagname;
+    if (const IdentifierInfo *II = TD->getIdentifier())
+      tagname = II->getName();
+    else
+      tagname = "<anonymous>";
+    fprintf(F, "\"%s %s;\"", TD->getKindName(), tagname);
+    // FIXME: print tag bodies.
   } else {
-    // FIXME: "struct x;"
     assert(0 && "Unexpected decl");
   }
 }

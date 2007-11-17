@@ -347,7 +347,7 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
   // TODO: emit error on 'typedef int;'
   // if (!DS.isMissingDeclaratorOk()) Diag(...);
   
-  return DS.getTypeRep();
+  return dyn_cast_or_null<TagDecl>(static_cast<Decl *>(DS.getTypeRep()));
 }
 
 bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic, 
