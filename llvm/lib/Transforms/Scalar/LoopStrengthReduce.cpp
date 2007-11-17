@@ -1028,8 +1028,12 @@ unsigned LoopStrengthReduce::CheckForIVReuse(bool HasBaseReg,
                                 const std::vector<BasedUser>& UsersToProcess) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride)) {
     int64_t SInt = SC->getValue()->getSExtValue();
-    for (std::map<SCEVHandle, IVsOfOneStride>::iterator SI= IVsByStride.begin(),
-           SE = IVsByStride.end(); SI != SE; ++SI) {
+    for (unsigned NewStride = 0, e = StrideOrder.size(); NewStride != e;
+         ++NewStride) {
+      std::map<SCEVHandle, IVsOfOneStride>::iterator SI = 
+                IVsByStride.find(StrideOrder[NewStride]);
+      if (SI == IVsByStride.end()) 
+        continue;
       int64_t SSInt = cast<SCEVConstant>(SI->first)->getValue()->getSExtValue();
       if (SI->first != Stride &&
           (unsigned(abs(SInt)) < SSInt || (SInt % SSInt) != 0))
