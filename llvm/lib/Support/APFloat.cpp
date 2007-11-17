@@ -2551,7 +2551,7 @@ APFloat::convertFloatAPFloatToAPInt() const
   if (category==fcNormal) {
     myexponent = exponent+127; //bias
     mysignificand = *significandParts();
-    if (myexponent == 1 && !(mysignificand & 0x400000))
+    if (myexponent == 1 && !(mysignificand & 0x800000))
       myexponent = 0;   // denormal
   } else if (category==fcZero) {
     myexponent = 0;
