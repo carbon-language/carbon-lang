@@ -137,7 +137,13 @@ public:
 
   uint64_t ReadInt();
   int64_t ReadSInt();
+  
   SerializedPtrID ReadPtrID() { return (SerializedPtrID) ReadInt(); }
+
+  SerializedPtrID ReadDiffPtrID(SerializedPtrID& PrevID) {
+    unsigned x = ReadInt();    
+    return (SerializedPtrID) (x ? (PrevID+x) : 0);
+  }
   
   
   bool ReadBool() {
@@ -183,7 +189,7 @@ public:
                           bool A1=true, bool A2=true) {
 
     SerializedPtrID ID1 = ReadPtrID();
-    SerializedPtrID ID2 = ReadPtrID();
+    SerializedPtrID ID2 = ReadDiffPtrID(ID2);
 
     P1 = (ID1) ? SerializeTrait<T1>::Create(*this) : NULL;
     if (ID1 && A1) RegisterPtr(ID1,P1);
@@ -197,8 +203,8 @@ public:
                           bool A1=true, bool A2=true, bool A3=true) {
     
     SerializedPtrID ID1 = ReadPtrID();
-    SerializedPtrID ID2 = ReadPtrID();
-    SerializedPtrID ID3 = ReadPtrID();
+    SerializedPtrID ID2 = ReadDiffPtrID(ID1);
+    SerializedPtrID ID3 = ReadDiffPtrID(ID2);
     
     P1 = (ID1) ? SerializeTrait<T1>::Create(*this) : NULL;
     if (ID1 && A1) RegisterPtr(ID1,P1);    
@@ -206,16 +212,41 @@ public:
     P2 = (ID2) ? SerializeTrait<T2>::Create(*this) : NULL;
     if (ID2 && A2) RegisterPtr(ID2,P2);
     
-    P3 = (ID3) ? SerializeTrait<T2>::Create(*this) : NULL;
+    P3 = (ID3) ? SerializeTrait<T3>::Create(*this) : NULL;
     if (ID3 && A3) RegisterPtr(ID3,P3);
+  }
+  
+  template <typename T1, typename T2, typename T3, typename T4>
+  void BatchReadOwnedPtrs(T1*& P1, T2*& P2, T3*& P3, T4*& P4,
+                     bool A1=true, bool A2=true, bool A3=true, bool A4=true) {
+    
+    SerializedPtrID ID1 = ReadPtrID();
+    SerializedPtrID ID2 = ReadDiffPtrID(ID1);
+    SerializedPtrID ID3 = ReadDiffPtrID(ID2);
+    SerializedPtrID ID4 = ReadDiffPtrID(ID3);
+    
+    P1 = (ID1) ? SerializeTrait<T1>::Create(*this) : NULL;
+    if (ID1 && A1) RegisterPtr(ID1,P1);    
+    
+    P2 = (ID2) ? SerializeTrait<T2>::Create(*this) : NULL;
+    if (ID2 && A2) RegisterPtr(ID2,P2);
+    
+    P3 = (ID3) ? SerializeTrait<T3>::Create(*this) : NULL;
+    if (ID3 && A3) RegisterPtr(ID3,P3);
+    
+    P4 = (ID4) ? SerializeTrait<T4>::Create(*this) : NULL;
+    if (ID4 && A4) RegisterPtr(ID4,P4);
   }
   
   template <typename T>
   void BatchReadOwnedPtrs(unsigned NumPtrs, T** Ptrs, bool AutoRegister=true) {
     llvm::SmallVector<SerializedPtrID,10> BatchIDVec;
+    SerializedPtrID TempPtrID;
     
-    for (unsigned i = 0; i < NumPtrs; ++i)
-      BatchIDVec.push_back(ReadPtrID());
+    for (unsigned i = 0; i < NumPtrs; ++i) {
+      TempPtrID = i ? ReadDiffPtrID(TempPtrID) : ReadPtrID();
+      BatchIDVec.push_back(TempPtrID);
+    }
     
     for (unsigned i = 0; i < NumPtrs; ++i) {
       SerializedPtrID& PtrID = BatchIDVec[i];
@@ -232,13 +263,19 @@ public:
   template <typename T1, typename T2>
   void BatchReadOwnedPtrs(unsigned NumT1Ptrs, T1** Ptrs, T2*& P2,
                           bool A1=true, bool A2=true) {
-    
-    llvm::SmallVector<SerializedPtrID,10> BatchIDVec;
 
-    for (unsigned i = 0; i < NumT1Ptrs; ++i)
-      BatchIDVec.push_back(ReadPtrID());
-    
     SerializedPtrID ID2 = ReadPtrID();
+    SerializedPtrID TempID = ID2;
+
+    llvm::SmallVector<SerializedPtrID,10> BatchIDVec;
+    
+    for (unsigned i = 0; i < NumT1Ptrs; ++i) {
+      TempID = ReadDiffPtrID(TempID);
+      BatchIDVec.push_back(TempID);
+    }
+    
+    P2 = (ID2) ? SerializeTrait<T2>::Create(*this) : NULL;
+    if (ID2 && A2) RegisterPtr(ID2,P2);    
     
     for (unsigned i = 0; i < NumT1Ptrs; ++i) {
       SerializedPtrID& PtrID = BatchIDVec[i];
@@ -249,24 +286,31 @@ public:
         RegisterPtr(PtrID,p);
       
       Ptrs[i] = p;
-    }
-    
-    P2 = (ID2) ? SerializeTrait<T2>::Create(*this) : NULL;
-    if (ID2 && A2) RegisterPtr(ID2,P2);    
+    }    
   }    
   
   template <typename T1, typename T2, typename T3>
   void BatchReadOwnedPtrs(unsigned NumT1Ptrs, T1** Ptrs, 
                           T2*& P2, T3*& P3,
                           bool A1=true, bool A2=true, bool A3=true) {
+
+    SerializedPtrID ID2 = ReadPtrID();
+    SerializedPtrID ID3 = ReadDiffPtrID(ID2);  
+    
+    SerializedPtrID TempID = ID3;
     
     llvm::SmallVector<SerializedPtrID,10> BatchIDVec;
     
-    for (unsigned i = 0; i < NumT1Ptrs; ++i)
-      BatchIDVec.push_back(ReadPtrID());
+    for (unsigned i = 0; i < NumT1Ptrs; ++i) {
+      TempID = ReadDiffPtrID(TempID);
+      BatchIDVec.push_back(TempID);
+    }
     
-    SerializedPtrID ID2 = ReadPtrID();
-    SerializedPtrID ID3 = ReadPtrID();    
+    P2 = (ID2) ? SerializeTrait<T2>::Create(*this) : NULL;
+    if (ID2 && A2) RegisterPtr(ID2,P2);
+    
+    P3 = (ID3) ? SerializeTrait<T3>::Create(*this) : NULL;
+    if (ID3 && A3) RegisterPtr(ID3,P3);  
     
     for (unsigned i = 0; i < NumT1Ptrs; ++i) {
       SerializedPtrID& PtrID = BatchIDVec[i];
@@ -278,12 +322,6 @@ public:
       
       Ptrs[i] = p;
     }
-    
-    P2 = (ID2) ? SerializeTrait<T2>::Create(*this) : NULL;
-    if (ID2 && A2) RegisterPtr(ID2,P2);
-    
-    P3 = (ID3) ? SerializeTrait<T3>::Create(*this) : NULL;
-    if (ID3 && A3) RegisterPtr(ID3,P3);    
   }    
   
   template <typename T>
