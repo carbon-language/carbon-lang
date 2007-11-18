@@ -56,7 +56,7 @@ int TGLexer::getNextChar() {
   char CurChar = *CurPtr++;
   switch (CurChar) {
   default:
-    return CurChar;
+    return (unsigned char)CurChar;
   case 0:
     // A nul character in the stream is either the end of the current buffer or
     // a random nul in the file.  Disambiguate that here.
@@ -84,7 +84,7 @@ int TGLexer::getNextChar() {
     // Only treat a \n\r or \r\n as a single line.
     if ((*CurPtr == '\n' || (*CurPtr == '\r')) &&
         *CurPtr != CurChar)
-      ++CurPtr;  // Each the two char newline sequence.
+      ++CurPtr;  // Eat the two char newline sequence.
       
     ++CurLineNo;
     return '\n';
