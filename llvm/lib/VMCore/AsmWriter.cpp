@@ -1287,8 +1287,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     case CallingConv::C: break;   // default
     case CallingConv::Fast:  Out << " fastcc"; break;
     case CallingConv::Cold:  Out << " coldcc"; break;
-    case CallingConv::X86_StdCall:  Out << "x86_stdcallcc "; break;
-    case CallingConv::X86_FastCall: Out << "x86_fastcallcc "; break; 
+    case CallingConv::X86_StdCall:  Out << " x86_stdcallcc"; break;
+    case CallingConv::X86_FastCall: Out << " x86_fastcallcc"; break; 
     default: Out << " cc" << CI->getCallingConv(); break;
     }
 
