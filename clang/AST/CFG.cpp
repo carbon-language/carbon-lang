@@ -332,11 +332,12 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
 ///  we must linearize declarations to handle arbitrary control-flow induced by
 /// those expressions.  
 CFGBlock* CFGBuilder::WalkAST_VisitDeclSubExprs(StmtIterator& I) {
+  if (I == StmtIterator())
+    return Block;
+  
   Stmt* S = *I;
   ++I;
-  
-  if (I != StmtIterator())
-    WalkAST_VisitDeclSubExprs(I);
+  WalkAST_VisitDeclSubExprs(I);
   
   Block = addStmt(S);
   return Block;
