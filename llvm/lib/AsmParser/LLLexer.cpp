@@ -93,7 +93,7 @@ static void HexToIntPair(const char *Buffer, const char *End, uint64_t Pair[2]){
     else if (C >= 'a' && C <= 'f')
       Pair[1] += C-'a'+10;
   }
-  if (*Buffer)
+  if (Buffer != End)
     GenerateError("constant bigger than 128 bits detected!");
 }
 
