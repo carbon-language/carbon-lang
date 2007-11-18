@@ -617,10 +617,18 @@ int LLLexer::LexIdentifier() {
     }
   }
   
-  // Finally, if this is "cc1234", return this as just "cc".
+  // If this is "cc1234", return this as just "cc".
   if (TokStart[0] == 'c' && TokStart[1] == 'c') {
     CurPtr = TokStart+2;
     return CC_TOK;
+  }
+  
+  // If this starts with "call", return it as CALL.  This is to support old
+  // broken .ll files.  FIXME: remove this with LLVM 3.0.
+  if (CurPtr-TokStart > 4 && !memcmp(TokStart, "call", 4)) {
+    CurPtr = TokStart+4;
+    llvmAsmlval.OtherOpVal = Instruction::Call;
+    return CALL;
   }
   
   // Finally, if this isn't known, return just a single character.
