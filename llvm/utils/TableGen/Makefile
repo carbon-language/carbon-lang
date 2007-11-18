@@ -11,8 +11,7 @@ LEVEL = ../..
 TOOLNAME = tblgen
 NO_INSTALL = 1;
 USEDLIBS = LLVMSupport.a LLVMSystem.a
-EXTRA_DIST = FileLexer.cpp.cvs FileLexer.l.cvs \
-	     FileParser.cpp.cvs FileParser.h.cvs FileParser.y.cvs
+EXTRA_DIST = FileParser.cpp.cvs FileParser.h.cvs FileParser.y.cvs
 REQUIRES_EH := 1
 REQUIRES_RTTI := 1
 
@@ -27,4 +26,5 @@ CompileCommonOpts := $(filter-out -Wno-long-long,$(CompileCommonOpts))
 # (which depend on the source file) won't get generated until bison is done
 # generating the C source and header files for the parser.
 #
-$(ObjDir)/FileLexer.o : $(PROJ_SRC_DIR)/FileParser.h 
+$(ObjDir)/TGLexer.o : $(PROJ_SRC_DIR)/FileParser.h 
+
