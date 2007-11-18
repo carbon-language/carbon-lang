@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "TGLexer.h"
 #include "Record.h"
 #include "llvm/Support/Streams.h"
 #include "Record.h"
-#include "TGLexer.h"
 #include "llvm/Support/MemoryBuffer.h"
 typedef std::pair<llvm::Record*, std::vector<llvm::Init*>*> SubClassRefTy;
 #include "FileParser.h"
