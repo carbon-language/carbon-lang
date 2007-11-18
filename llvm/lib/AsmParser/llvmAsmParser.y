@@ -29,9 +29,6 @@
 #include <list>
 #include <map>
 #include <utility>
-#ifndef NDEBUG
-#define YYDEBUG 1
-#endif
 
 // The following is a gross hack. In order to rid the libAsmParser library of
 // exceptions, we have to have a way of getting the yyparse function to go into
@@ -51,15 +48,6 @@ static bool TriggerError = false;
 int yyerror(const char *ErrorMsg); // Forward declarations to prevent "implicit
 int yylex();                       // declaration" of xxx warnings.
 int yyparse();
-
-namespace llvm {
-  std::string CurFilename;
-#if YYDEBUG
-static cl::opt<bool>
-Debug("debug-yacc", cl::desc("Print yacc debug state changes"), 
-      cl::Hidden, cl::init(false));
-#endif
-}
 using namespace llvm;
 
 static Module *ParserResult;
@@ -513,7 +501,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
   // Remember where this forward reference came from.  FIXME, shouldn't we try
   // to recycle these things??
   CurModule.PlaceHolderInfo.insert(std::make_pair(V, std::make_pair(ID,
-                                                               llvmAsmlineno)));
+                                                              LLLgetLineNo())));
 
   if (inFunctionScope())
     InsertValue(V, CurFun.LateResolveValues);
@@ -945,22 +933,11 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 //
 static Module* RunParser(Module * M);
 
-Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
-  set_scan_file(F);
-
-  CurFilename = Filename;
-  return RunParser(new Module(CurFilename));
-}
-
-Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
-  set_scan_string(AsmString);
-
-  CurFilename = "from_memory";
-  if (M == NULL) {
-    return RunParser(new Module (CurFilename));
-  } else {
-    return RunParser(M);
-  }
+Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
+  InitLLLexer(MB);
+  Module *M = RunParser(new Module(LLLgetFilename()));
+  FreeLexer();
+  return M;
 }
 
 %}
@@ -3118,13 +3095,7 @@ MemoryInst : MALLOC Types OptCAlign {
 
 // common code from the two 'RunVMAsmParser' functions
 static Module* RunParser(Module * M) {
-
-  llvmAsmlineno = 1;      // Reset the current line number...
   CurModule.CurrentModule = M;
-#if YYDEBUG
-  yydebug = Debug;
-#endif
-
   // Check to make sure the parser succeeded
   if (yyparse()) {
     if (ParserResult)
@@ -3176,21 +3147,21 @@ static Module* RunParser(Module * M) {
 }
 
 void llvm::GenerateError(const std::string &message, int LineNo) {
-  if (LineNo == -1) LineNo = llvmAsmlineno;
+  if (LineNo == -1) LineNo = LLLgetLineNo();
   // TODO: column number in exception
   if (TheParseError)
-    TheParseError->setError(CurFilename, message, LineNo);
+    TheParseError->setError(LLLgetFilename(), message, LineNo);
   TriggerError = 1;
 }
 
 int yyerror(const char *ErrorMsg) {
-  std::string where 
-    = std::string((CurFilename == "-") ? std::string("<stdin>") : CurFilename)
-                  + ":" + utostr((unsigned) llvmAsmlineno) + ": ";
+  std::string where = LLLgetFilename() + ":" + utostr(LLLgetLineNo()) + ": ";
   std::string errMsg = where + "error: " + std::string(ErrorMsg);
-  if (yychar != YYEMPTY && yychar != 0)
-    errMsg += " while reading token: '" + std::string(llvmAsmtext, llvmAsmleng)+
-              "'";
+  if (yychar != YYEMPTY && yychar != 0) {
+    errMsg += " while reading token: '";
+    errMsg += std::string(LLLgetTokenStart(), 
+                          LLLgetTokenStart()+LLLgetTokenLength()) + "'";
+  }
   GenerateError(errMsg);
   return 0;
 }

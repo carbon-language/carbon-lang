@@ -13,38 +13,37 @@
 
 #include "ParserInternals.h"
 #include "llvm/Module.h"
+#include "llvm/Support/MemoryBuffer.h"
 using namespace llvm;
 
 
 ParseError* TheParseError = 0; /// FIXME: Not threading friendly
 
 Module *llvm::ParseAssemblyFile(const std::string &Filename, ParseError* Err) {
-  FILE *F = stdin;
-
-  if (Filename != "-") {
-    F = fopen(Filename.c_str(), "r");
-
-    if (F == 0) {
-      if (Err)
-        Err->setError(Filename,"Could not open file '" + Filename + "'");
-      return 0;
-    }
+  std::string ErrorStr;
+  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(&Filename[0], Filename.size(),
+                                                 &ErrorStr);
+  if (F == 0) {
+    if (Err)
+      Err->setError(Filename, "Could not open input file '" + Filename + "'");
+    return 0;
   }
-
+  
   TheParseError = Err;
-  Module *Result = RunVMAsmParser(Filename, F);
-
-  if (F != stdin)
-    fclose(F);
-
+  Module *Result = RunVMAsmParser(F);
+  delete F;
   return Result;
 }
 
-Module *llvm::ParseAssemblyString(
-  const char * AsmString, Module * M, ParseError* Err) 
-{
+Module *llvm::ParseAssemblyString(const char *AsmString, Module *M, 
+                                  ParseError *Err) {
   TheParseError = Err;
-  return RunVMAsmParser(AsmString, M);
+  MemoryBuffer *F = MemoryBuffer::getMemBuffer(AsmString, 
+                                               AsmString+strlen(AsmString),
+                                               "<string>");
+  Module *Result = RunVMAsmParser(F);
+  delete F;
+  return Result;
 }
 
 
@@ -54,9 +53,8 @@ Module *llvm::ParseAssemblyString(
 
 
 void ParseError::setError(const std::string &filename,
-                         const std::string &message,
-                         int lineNo, int colNo)
-{
+                          const std::string &message,
+                          int lineNo, int colNo) {
   Filename = filename;
   Message = message;
   LineNo = lineNo;

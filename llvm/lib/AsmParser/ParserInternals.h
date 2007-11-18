@@ -23,37 +23,25 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/APFloat.h"
+namespace llvm { class MemoryBuffer; }
 
 // Global variables exported from the lexer...
 
-extern int llvmAsmlineno;         /// FIXME: Not threading friendly
 extern llvm::ParseError* TheParseError; /// FIXME: Not threading friendly
 
-extern std::string &llvmAsmTextin;
-
 // functions exported from the lexer
-void set_scan_file(FILE * F);
-void set_scan_string (const char * str);
-
-// Globals exported by the parser...
-extern char* llvmAsmtext;
-extern int   llvmAsmleng;
+void InitLLLexer(llvm::MemoryBuffer *MB);
+const char *LLLgetTokenStart();
+unsigned LLLgetTokenLength();
+std::string LLLgetFilename();
+unsigned LLLgetLineNo();
+void FreeLexer();
 
 namespace llvm {
 class Module;
 
-// Globals exported by the parser...
-extern std::string CurFilename;   /// FIXME: Not threading friendly
-
-// RunVMAsmParser - Parse a file and return Module
-Module *RunVMAsmParser(const std::string &Filename, FILE *F);
-
-// Parse a string directly
-Module *RunVMAsmParser(const char * AsmString, Module * M);
-
-// UnEscapeLexed - Run through the specified buffer and change \xx codes to the
-// appropriate character.  
-char *UnEscapeLexed(char *Buffer);
+// RunVMAsmParser - Parse a buffer and return Module
+Module *RunVMAsmParser(llvm::MemoryBuffer *MB);
 
 // GenerateError - Wrapper around the ParseException class that automatically
 // fills in file line number and column number and options info.
