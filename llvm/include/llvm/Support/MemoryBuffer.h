@@ -88,14 +88,11 @@ public:
   
   /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
   /// if the Filename is "-".  If an error occurs, this returns null and fills
-  /// in *ErrStr with a reason.
+  /// in *ErrStr with a reason.  If stdin is empty, this API (unlike getSTDIN)
+  /// returns an empty buffer.
   static MemoryBuffer *getFileOrSTDIN(const char *FilenameStart,unsigned FnSize,
                                       std::string *ErrStr = 0,
-                                      int64_t FileSize = -1) {
-    if (FnSize == 1 && FilenameStart[0] == '-')
-      return getSTDIN();
-    return getFile(FilenameStart, FnSize, ErrStr, FileSize);
-  }
+                                      int64_t FileSize = -1);
   
   /// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
   /// if the Filename is "-".  If an error occurs, this returns null and fills

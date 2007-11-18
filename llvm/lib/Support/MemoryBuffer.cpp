@@ -117,6 +117,24 @@ MemoryBuffer *MemoryBuffer::getNewMemBuffer(unsigned Size,
 }
 
 
+/// getFileOrSTDIN - Open the specified file as a MemoryBuffer, or open stdin
+/// if the Filename is "-".  If an error occurs, this returns null and fills
+/// in *ErrStr with a reason.  If stdin is empty, this API (unlike getSTDIN)
+/// returns an empty buffer.
+MemoryBuffer *MemoryBuffer::getFileOrSTDIN(const char *FilenameStart,
+                                           unsigned FnSize,
+                                           std::string *ErrStr,
+                                           int64_t FileSize) {
+  if (FnSize != 1 || FilenameStart[0] != '-')
+    return getFile(FilenameStart, FnSize, ErrStr, FileSize);
+  MemoryBuffer *M = getSTDIN();
+  if (M) return M;
+
+  // If stdin was empty, M is null.  Cons up an empty memory buffer now.
+  const char *EmptyStr = "";
+  return MemoryBuffer::getMemBuffer(EmptyStr, EmptyStr, "<stdin>");
+}
+
 //===----------------------------------------------------------------------===//
 // MemoryBufferMMapFile implementation.
 //===----------------------------------------------------------------------===//
