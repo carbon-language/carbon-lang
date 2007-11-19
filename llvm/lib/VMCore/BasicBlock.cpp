@@ -134,7 +134,7 @@ TerminatorInst *BasicBlock::getTerminator() {
   return dyn_cast<TerminatorInst>(&InstList.back());
 }
 
-const TerminatorInst *const BasicBlock::getTerminator() const {
+const TerminatorInst *BasicBlock::getTerminator() const {
   if (InstList.empty()) return 0;
   return dyn_cast<TerminatorInst>(&InstList.back());
 }

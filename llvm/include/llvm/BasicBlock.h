@@ -93,7 +93,7 @@ public:
   /// null pointer back.
   ///
   TerminatorInst *getTerminator();
-  const TerminatorInst *const getTerminator() const;
+  const TerminatorInst *getTerminator() const;
   
   /// Returns a pointer to the first instructon in this block that is not a 
   /// PHINode instruction. When adding instruction to the beginning of the

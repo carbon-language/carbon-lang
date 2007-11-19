@@ -345,7 +345,7 @@ public:
 
   /// isReachableFromEntry - Return true if A is dominated by the entry
   /// block of the function containing it.
-  const bool isReachableFromEntry(NodeT* A) {
+  bool isReachableFromEntry(NodeT* A) {
     assert (!this->isPostDominator() 
             && "This is not implemented for post dominators");
     return dominates(&A->getParent()->front(), A);
