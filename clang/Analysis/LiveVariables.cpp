@@ -162,7 +162,7 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
   
 void TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
   assert (AD.getCFG().isBlkExpr(E));
-  static_cast<CFGStmtVisitor<TransferFuncs>*>(this)->Visit(E);
+  VisitChildren(E);
 }
   
 } // end anonymous namespace
