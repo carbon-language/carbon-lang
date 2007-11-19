@@ -27,6 +27,7 @@ using namespace llvm;
 
 TGLexer::TGLexer(MemoryBuffer *StartBuf) : CurLineNo(1), CurBuf(StartBuf) {
   CurPtr = CurBuf->getBufferStart();
+  TokStart = 0;
 }
 
 TGLexer::~TGLexer() {
@@ -76,8 +77,7 @@ void TGLexer::PrintError(const char *ErrorLoc,  const std::string &Msg) const {
   // Print out the line.
   cerr << std::string(LineStart, LineEnd) << "\n";
   // Print out spaces before the carat.
-  const char *Pos = LineStart;
-  while (Pos != ErrorLoc)
+  for (const char *Pos = LineStart; Pos != ErrorLoc; ++Pos)
     cerr << (*Pos == '\t' ? '\t' : ' ');
   cerr << "^\n";
 }
@@ -122,6 +122,7 @@ int TGLexer::getNextChar() {
 }
 
 int TGLexer::LexToken() {
+  TokStart = CurPtr;
   // This always consumes at least one character.
   int CurChar = getNextChar();
 
@@ -238,11 +239,10 @@ int TGLexer::LexIdentifier() {
 /// comes next and enter the include.
 bool TGLexer::LexInclude() {
   // The token after the include must be a string.
-  const char *TokStart = CurPtr-7;
   int Tok = LexToken();
   if (Tok == YYERROR) return true;
   if (Tok != STRVAL) {
-    PrintError(TokStart, "Expected filename after include");
+    PrintError(getTokenStart(), "Expected filename after include");
     return true;
   }
 
@@ -260,7 +260,8 @@ bool TGLexer::LexInclude() {
   }
     
   if (NewBuf == 0) {
-    PrintError(TokStart, "Could not find include file '" + Filename + "'");
+    PrintError(getTokenStart(),
+               "Could not find include file '" + Filename + "'");
     return true;
   }
   
