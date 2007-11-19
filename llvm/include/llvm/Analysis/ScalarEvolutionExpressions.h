@@ -285,7 +285,7 @@ namespace llvm {
   class SCEVAddExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    SCEVAddExpr(const std::vector<SCEVHandle> &ops)
+    explicit SCEVAddExpr(const std::vector<SCEVHandle> &ops)
       : SCEVCommutativeExpr(scAddExpr, ops) {
     }
 
@@ -305,7 +305,7 @@ namespace llvm {
   class SCEVMulExpr : public SCEVCommutativeExpr {
     friend class ScalarEvolution;
 
-    SCEVMulExpr(const std::vector<SCEVHandle> &ops)
+    explicit SCEVMulExpr(const std::vector<SCEVHandle> &ops)
       : SCEVCommutativeExpr(scMulExpr, ops) {
     }
 
@@ -468,7 +468,7 @@ namespace llvm {
     friend class ScalarEvolution;
 
     Value *V;
-    SCEVUnknown(Value *v) : SCEV(scUnknown), V(v) {}
+    explicit SCEVUnknown(Value *v) : SCEV(scUnknown), V(v) {}
 
   protected:
     ~SCEVUnknown();

@@ -123,7 +123,7 @@ namespace {
     void operator=(const ConstantPlaceHolder &); // DO NOT IMPLEMENT
   public:
     Use Op;
-    ConstantPlaceHolder(const Type *Ty)
+    explicit ConstantPlaceHolder(const Type *Ty)
       : ConstantExpr(Ty, Instruction::UserOp1, &Op, 1),
         Op(UndefValue::get(Type::Int32Ty), this) {
     }

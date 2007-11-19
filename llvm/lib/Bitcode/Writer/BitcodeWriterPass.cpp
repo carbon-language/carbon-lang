@@ -20,7 +20,8 @@ namespace {
     std::ostream &Out;                 // ostream to print on
   public:
     static char ID; // Pass identifcation, replacement for typeid
-    WriteBitcodePass(std::ostream &o) : ModulePass((intptr_t) &ID), Out(o) {}
+    explicit WriteBitcodePass(std::ostream &o)
+      : ModulePass((intptr_t) &ID), Out(o) {}
     
     const char *getPassName() const { return "Bitcode Writer"; }
     

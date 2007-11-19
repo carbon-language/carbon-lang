@@ -31,7 +31,7 @@ class Serializer {
   MapTy PtrMap;
   
 public:
-  Serializer(BitstreamWriter& stream);
+  explicit Serializer(BitstreamWriter& stream);
   ~Serializer();
   
   template <typename T>

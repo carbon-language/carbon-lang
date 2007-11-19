@@ -28,7 +28,7 @@ namespace llvm {
 class StringMapEntryBase {
   unsigned StrLen;
 public:
-  StringMapEntryBase(unsigned Len) : StrLen(Len) {}
+  explicit StringMapEntryBase(unsigned Len) : StrLen(Len) {}
   
   unsigned getKeyLength() const { return StrLen; }
 };
@@ -55,7 +55,7 @@ protected:
   unsigned NumTombstones;
   unsigned ItemSize;
 protected:
-  StringMapImpl(unsigned itemSize) : ItemSize(itemSize) {
+  explicit StringMapImpl(unsigned itemSize) : ItemSize(itemSize) {
     // Initialize the map with zero buckets to allocation.
     TheTable = 0;
     NumBuckets = 0;
@@ -115,7 +115,7 @@ template<typename ValueTy>
 class StringMapEntry : public StringMapEntryBase {
   ValueTy Val;
 public:
-  StringMapEntry(unsigned StrLen)
+  explicit StringMapEntry(unsigned StrLen)
     : StringMapEntryBase(StrLen), Val() {}
   StringMapEntry(unsigned StrLen, const ValueTy &V)
     : StringMapEntryBase(StrLen), Val(V) {}
@@ -204,7 +204,7 @@ class StringMap : public StringMapImpl {
   typedef StringMapEntry<ValueTy> MapEntryTy;
 public:
   StringMap() : StringMapImpl(sizeof(MapEntryTy)) {}
-  StringMap(unsigned InitialSize)
+  explicit StringMap(unsigned InitialSize)
     : StringMapImpl(InitialSize, sizeof(MapEntryTy)) {}
   
   AllocatorTy &getAllocator() { return Allocator; }
@@ -314,8 +314,8 @@ class StringMapConstIterator {
 protected:
   StringMapImpl::ItemBucket *Ptr;
 public:
-  StringMapConstIterator(StringMapImpl::ItemBucket *Bucket,
-                         bool NoAdvance = false)
+  explicit StringMapConstIterator(StringMapImpl::ItemBucket *Bucket,
+                                  bool NoAdvance = false)
   : Ptr(Bucket) {
     if (!NoAdvance) AdvancePastEmptyBuckets();
   }

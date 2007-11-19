@@ -57,7 +57,7 @@ namespace {
     Value *Val;          // Relation to what value?
     unsigned Rel;        // SetCC or ICmp relation, or Add if no information
   public:
-    Relation(Value *V) : Val(V), Rel(Instruction::Add) {}
+    explicit Relation(Value *V) : Val(V), Rel(Instruction::Add) {}
     bool operator<(const Relation &R) const { return Val < R.Val; }
     Value *getValue() const { return Val; }
     unsigned getRelation() const { return Rel; }
@@ -112,7 +112,7 @@ namespace {
     //
     Value *Replacement;
   public:
-    ValueInfo(const Type *Ty)
+    explicit ValueInfo(const Type *Ty)
       : Bounds(Ty->isInteger() ? cast<IntegerType>(Ty)->getBitWidth()  : 32), 
                Replacement(0) {}
 
@@ -146,7 +146,7 @@ namespace {
         return *I;
 
       // Insert and return the new relationship...
-      return *Relationships.insert(I, V);
+      return *Relationships.insert(I, Relation(V));
     }
 
     const Relation *requestRelation(Value *V) const {
@@ -176,7 +176,7 @@ namespace {
     typedef std::map<Value*, ValueInfo> ValueMapTy;
     ValueMapTy ValueMap;
   public:
-    RegionInfo(BasicBlock *bb) : BB(bb) {}
+    explicit RegionInfo(BasicBlock *bb) : BB(bb) {}
 
     // getEntryBlock - Return the block that dominates all of the members of
     // this region.
