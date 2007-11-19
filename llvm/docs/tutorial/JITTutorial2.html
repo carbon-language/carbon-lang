@@ -47,7 +47,7 @@ unsigned gcd(unsigned x, unsigned y) {
 
 <p>The above is a graphical representation of a program in LLVM IR.  It places each basic block on a node of a graph, and uses directed edges to indicate flow control.  These blocks will be serialized when written to a text or bitcode file, but it is often useful conceptually to think of them as a graph.  Again, if you are unsure about the code in the diagram, you should skim through the <a href="../LangRef.html">LLVM Language Reference Manual</a> and convince yourself that it is, in fact, the GCD algorithm.</p>
 
-<p>The first part of our code is practically the same as from the first tutorial.  The same basic setup is required: creating a module, verifying it, and running the <code>PrintModulePass</code> on it.  Even the first segment of  <code>makeLLVMModule()</code> looks essentially the same, except that <code>gcd</code> takes one more parameter than <code>mul_add</code>.</p>
+<p>The first part of our code is practically the same as from the first tutorial.  The same basic setup is required: creating a module, verifying it, and running the <code>PrintModulePass</code> on it.  Even the first segment of  <code>makeLLVMModule()</code> looks essentially the same, except that <code>gcd</code> takes one fewer parameter than <code>mul_add</code>.</p>
 
 <div class="doc_code">
 <pre>
