@@ -870,18 +870,20 @@ QualType ASTContext::getCFConstantStringType() {
     CFConstantStringTypeDecl = new RecordDecl(Decl::Struct, SourceLocation(), 
                                               &Idents.get("NSConstantString"),
                                               0);
-    QualType FieldTypes[3];
+    QualType FieldTypes[4];
   
     // const int *isa;
     FieldTypes[0] = getPointerType(IntTy.getQualifiedType(QualType::Const));  
+    // int flags;
+    FieldTypes[1] = IntTy;
     // const char *str;
-    FieldTypes[1] = getPointerType(CharTy.getQualifiedType(QualType::Const));  
+    FieldTypes[2] = getPointerType(CharTy.getQualifiedType(QualType::Const));  
     // long length;
-    FieldTypes[2] = LongTy;  
+    FieldTypes[3] = LongTy;  
     // Create fields
-    FieldDecl *FieldDecls[3];
+    FieldDecl *FieldDecls[4];
   
-    for (unsigned i = 0; i < 3; ++i)
+    for (unsigned i = 0; i < 4; ++i)
       FieldDecls[i] = new FieldDecl(SourceLocation(), 0, FieldTypes[i]);
   
     CFConstantStringTypeDecl->defineBody(FieldDecls, 4);
