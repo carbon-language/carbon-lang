@@ -37,19 +37,49 @@ TGLexer::~TGLexer() {
   delete CurBuf;
 }
 
+/// ReturnError - Set the error to the specified string at the specified
+/// location.  This is defined to always return YYERROR.
+int TGLexer::ReturnError(const char *Loc, const std::string &Msg) {
+  PrintError(Loc, Msg);
+  return YYERROR;
+}
 
-std::ostream &TGLexer::err() {
+std::ostream &TGLexer::err() const {
   PrintIncludeStack(*cerr.stream());
   return *cerr.stream();
 }
 
 
-void TGLexer::PrintIncludeStack(std::ostream &OS) {
+void TGLexer::PrintIncludeStack(std::ostream &OS) const {
   for (unsigned i = 0, e = IncludeStack.size(); i != e; ++i)
     OS << "Included from " << IncludeStack[i].Buffer->getBufferIdentifier()
        << ":" << IncludeStack[i].LineNo << ":\n";
   OS << "Parsing " << CurBuf->getBufferIdentifier() << ":"
      << CurLineNo << ": ";
+}
+
+/// PrintError - Print the error at the specified location.
+void TGLexer::PrintError(const char *ErrorLoc,  const std::string &Msg) const {
+  err() << Msg << "\n";
+  assert(ErrorLoc && "Location not specified!");
+  
+  // Scan backward to find the start of the line.
+  const char *LineStart = ErrorLoc;
+  while (LineStart != CurBuf->getBufferStart() && 
+         LineStart[-1] != '\n' && LineStart[-1] != '\r')
+    --LineStart;
+  // Get the end of the line.
+  const char *LineEnd = ErrorLoc;
+  while (LineEnd != CurBuf->getBufferEnd() && 
+         LineEnd[0] != '\n' && LineEnd[0] != '\r')
+    ++LineEnd;
+  // Print out the line.
+  cerr << std::string(LineStart, LineEnd) << "\n";
+  // Print out spaces before the carat.
+  const char *Pos = LineStart;
+  while (Pos != ErrorLoc)
+    cerr << (*Pos == '\t' ? '\t' : ' ');
+  cerr << "^\n";
 }
 
 int TGLexer::getNextChar() {
@@ -139,13 +169,11 @@ int TGLexer::LexString() {
   
   while (*CurPtr != '"') {
     // If we hit the end of the buffer, report an error.
-    if (*CurPtr == 0 && CurPtr == CurBuf->getBufferEnd()) {
-      TheError = "End of file in string literal";
-      return YYERROR;
-    } else if (*CurPtr == '\n' || *CurPtr == '\r') {
-      TheError = "End of line in string literal";
-      return YYERROR;
-    }
+    if (*CurPtr == 0 && CurPtr == CurBuf->getBufferEnd())
+      return ReturnError(StrStart, "End of file in string literal");
+    
+    if (*CurPtr == '\n' || *CurPtr == '\r')
+      return ReturnError(StrStart, "End of line in string literal");
     
     ++CurPtr;
   }
@@ -210,10 +238,11 @@ int TGLexer::LexIdentifier() {
 /// comes next and enter the include.
 bool TGLexer::LexInclude() {
   // The token after the include must be a string.
+  const char *TokStart = CurPtr-7;
   int Tok = LexToken();
   if (Tok == YYERROR) return true;
   if (Tok != STRVAL) {
-    TheError = "Expected filename after include";
+    PrintError(TokStart, "Expected filename after include");
     return true;
   }
 
@@ -231,7 +260,7 @@ bool TGLexer::LexInclude() {
   }
     
   if (NewBuf == 0) {
-    TheError = "Could not find include file '" + Filename + "'";
+    PrintError(TokStart, "Could not find include file '" + Filename + "'");
     return true;
   }
   
@@ -265,6 +294,7 @@ void TGLexer::SkipBCPLComment() {
 /// SkipCComment - This skips C-style /**/ comments.  The only difference from C
 /// is that we allow nesting.
 bool TGLexer::SkipCComment() {
+  const char *CommentStart = CurPtr-1;
   ++CurPtr;  // skip the star.
   unsigned CommentDepth = 1;
   
@@ -272,7 +302,7 @@ bool TGLexer::SkipCComment() {
     int CurChar = getNextChar();
     switch (CurChar) {
     case EOF:
-      TheError = "Unterminated comment!";
+      PrintError(CommentStart, "Unterminated comment!");
       return true;
     case '*':
       // End of the comment?
@@ -306,10 +336,10 @@ int TGLexer::LexNumber() {
       while (isxdigit(CurPtr[0]))
         ++CurPtr;
       
-      if (CurPtr == NumStart) {
-        TheError = "Invalid hexadecimal number";
-        return YYERROR;
-      }
+      // Requires at least one hex digit.
+      if (CurPtr == NumStart)
+        return ReturnError(CurPtr-2, "Invalid hexadecimal number");
+
       Filelval.IntVal = strtoll(NumStart, 0, 16);
       return INTVAL;
     } else if (CurPtr[0] == 'b') {
@@ -317,11 +347,10 @@ int TGLexer::LexNumber() {
       NumStart = CurPtr;
       while (CurPtr[0] == '0' || CurPtr[0] == '1')
         ++CurPtr;
-      
-      if (CurPtr == NumStart) {
-        TheError = "Invalid binary number";
-        return YYERROR;
-      }
+
+      // Requires at least one binary digit.
+      if (CurPtr == NumStart)
+        return ReturnError(CurPtr-2, "Invalid binary number");
       Filelval.IntVal = strtoll(NumStart, 0, 2);
       return INTVAL;
     }
@@ -360,8 +389,7 @@ int TGLexer::LexBracket() {
     }
   }
   
-  TheError = "Invalid Code Block";
-  return YYERROR;
+  return ReturnError(CodeStart-2, "Unterminated Code Block");
 }
 
 /// LexExclaim - Lex '!' and '![a-zA-Z]+'.
@@ -382,8 +410,7 @@ int TGLexer::LexExclaim() {
   if (Len == 3 && !memcmp(Start, "shl", 3)) return SHLTOK;
   if (Len == 9 && !memcmp(Start, "strconcat", 9)) return STRCONCATTOK;
   
-  TheError = "Unknown operator";
-  return YYERROR;
+  return ReturnError(Start-1, "Unknown operator");
 }
 
 //===----------------------------------------------------------------------===//
@@ -431,9 +458,7 @@ void ParseFile(const std::string &Filename,
 int Filelex() {
   assert(TheLexer && "No lexer setup yet!");
   int Tok = TheLexer->LexToken();
-  if (Tok == YYERROR) {
-    err() << TheLexer->getError() << "\n";
+  if (Tok == YYERROR)
     exit(1);
-  }
   return Tok;
 }

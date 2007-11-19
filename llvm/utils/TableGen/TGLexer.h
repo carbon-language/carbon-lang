@@ -40,8 +40,6 @@ class TGLexer {
   // IncludeDirectories - This is the list of directories we should search for
   // include files in.
   std::vector<std::string> IncludeDirectories;
-  
-  std::string TheError;
 public:
   TGLexer(MemoryBuffer *StartBuf);
   ~TGLexer();
@@ -52,11 +50,14 @@ public:
   
   int LexToken();
 
-  const std::string getError() const { return TheError; }
+  void PrintError(const char *Loc, const std::string &Msg) const;
   
-  std::ostream &err();
-  void PrintIncludeStack(std::ostream &OS);
+  std::ostream &err() const;
+  void PrintIncludeStack(std::ostream &OS) const;
+  
 private:
+  int ReturnError(const char *Loc, const std::string &Msg);
+  
   int getNextChar();
   void SkipBCPLComment();
   bool SkipCComment();
