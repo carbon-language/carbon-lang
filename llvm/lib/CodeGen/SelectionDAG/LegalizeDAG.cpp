@@ -6341,7 +6341,10 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
   case ISD::FPOW:
   case ISD::AND:
   case ISD::OR:
-  case ISD::XOR: {
+  case ISD::XOR:
+  case ISD::UREM:
+  case ISD::SREM:
+  case ISD::FREM: {
     SDOperand LL, LH, RL, RH;
     SplitVectorOp(Node->getOperand(0), LL, LH);
     SplitVectorOp(Node->getOperand(1), RL, RH);
