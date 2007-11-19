@@ -6265,6 +6265,10 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
     Node->dump(&DAG);
 #endif
     assert(0 && "Unhandled operation in SplitVectorOp!");
+  case ISD::UNDEF:
+    Lo = DAG.getNode(ISD::UNDEF, NewVT_Lo);
+    Hi = DAG.getNode(ISD::UNDEF, NewVT_Hi);
+    break;
   case ISD::BUILD_PAIR:
     Lo = Node->getOperand(0);
     Hi = Node->getOperand(1);
