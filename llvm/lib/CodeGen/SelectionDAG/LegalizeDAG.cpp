@@ -6286,6 +6286,41 @@ void SelectionDAGLegalize::SplitVectorOp(SDOperand Op, SDOperand &Lo,
                                        TLI.getPointerTy()));
     break;
   }
+  case ISD::VECTOR_SHUFFLE: {
+    // Build the low part.
+    SDOperand Mask = Node->getOperand(2);
+    SmallVector<SDOperand, 8> Ops;
+    MVT::ValueType PtrVT = TLI.getPointerTy();
+    
+    // Insert all of the elements from the input that are needed.  We use 
+    // buildvector of extractelement here because the input vectors will have
+    // to be legalized, so this makes the code simpler.
+    for (unsigned i = 0; i != NewNumElts_Lo; ++i) {
+      unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getValue();
+      SDOperand InVec = Node->getOperand(0);
+      if (Idx >= NumElements) {
+        InVec = Node->getOperand(1);
+        Idx -= NumElements;
+      }
+      Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, NewEltVT, InVec,
+                                DAG.getConstant(Idx, PtrVT)));
+    }
+    Lo = DAG.getNode(ISD::BUILD_VECTOR, NewVT_Lo, &Ops[0], Ops.size());
+    Ops.clear();
+    
+    for (unsigned i = NewNumElts_Lo; i != NumElements; ++i) {
+      unsigned Idx = cast<ConstantSDNode>(Mask.getOperand(i))->getValue();
+      SDOperand InVec = Node->getOperand(0);
+      if (Idx >= NumElements) {
+        InVec = Node->getOperand(1);
+        Idx -= NumElements;
+      }
+      Ops.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, NewEltVT, InVec,
+                                DAG.getConstant(Idx, PtrVT)));
+    }
+    Hi = DAG.getNode(ISD::BUILD_VECTOR, NewVT_Lo, &Ops[0], Ops.size());
+    break;
+  }
   case ISD::BUILD_VECTOR: {
     SmallVector<SDOperand, 8> LoOps(Node->op_begin(), 
                                     Node->op_begin()+NewNumElts_Lo);
