@@ -619,13 +619,13 @@ SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
   SDOperand Ptr = LD->getBasePtr();
   MVT::ValueType VT = LD->getValueType(0);
   MVT::ValueType LoadedVT = LD->getLoadedVT();
-  if (MVT::isFloatingPoint(VT)) {
+  if (MVT::isFloatingPoint(VT) && !MVT::isVector(VT)) {
     // Expand to a (misaligned) integer load of the same size,
     // then bitconvert to floating point.
     MVT::ValueType intVT;
-    if (LoadedVT==MVT::f64)
+    if (LoadedVT == MVT::f64)
       intVT = MVT::i64;
-    else if (LoadedVT==MVT::f32)
+    else if (LoadedVT == MVT::f32)
       intVT = MVT::i32;
     else
       assert(0 && "Unaligned load of unsupported floating point type");
@@ -641,11 +641,25 @@ SDOperand ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
     return DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other), 
                        Ops, 2);
   }
-  assert(MVT::isInteger(LoadedVT) && "Unaligned load of unsupported type.");
-  MVT::ValueType NewLoadedVT = LoadedVT - 1;
-  int NumBits = MVT::getSizeInBits(NewLoadedVT);
-  int Alignment = LD->getAlignment();
-  int IncrementSize = NumBits / 8;
+  assert((MVT::isInteger(LoadedVT) || MVT::isVector(LoadedVT)) &&
+         "Unaligned load of unsupported type.");
+
+  // Compute the new VT that is half the size of the old one.  We either have an
+  // integer MVT or we have a vector MVT.
+  unsigned NumBits = MVT::getSizeInBits(LoadedVT);
+  MVT::ValueType NewLoadedVT;
+  if (!MVT::isVector(LoadedVT)) {
+    NewLoadedVT = MVT::getIntegerType(NumBits/2);
+  } else {
+    // FIXME: This is not right for <1 x anything> it is also not right for
+    // non-power-of-two vectors.
+    NewLoadedVT = MVT::getVectorType(MVT::getVectorElementType(LoadedVT),
+                                     MVT::getVectorNumElements(LoadedVT)/2);
+  }
+  NumBits >>= 1;
+  
+  unsigned Alignment = LD->getAlignment();
+  unsigned IncrementSize = NumBits / 8;
   ISD::LoadExtType HiExtType = LD->getExtensionType();
 
   // If the original load is NON_EXTLOAD, the hi part load must be ZEXTLOAD.
