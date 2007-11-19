@@ -180,7 +180,7 @@ namespace ISD {
 
     // CopyFromReg - This node indicates that the input value is a virtual or
     // physical register that is defined outside of the scope of this
-    // SelectionDAG.  The register is available from the RegSDNode object.
+    // SelectionDAG.  The register is available from the RegisterSDNode object.
     CopyFromReg,
 
     // UNDEF - An undefined node
