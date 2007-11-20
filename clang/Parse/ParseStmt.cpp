@@ -943,8 +943,10 @@ Parser::StmtResult Parser::ParseAsmStatement() {
   }
   Loc = ConsumeParen();
   
-  ParseAsmStringLiteral();
-  
+  ExprResult AsmString = ParseAsmStringLiteral();
+  if (AsmString.isInvalid)
+    return true;
+    
   // Parse Outputs, if present.
   ParseAsmOperandsOpt();
   
@@ -969,7 +971,7 @@ Parser::StmtResult Parser::ParseAsmStatement() {
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, Loc);
   
   // FIXME: Pass all the details down to the action.
-  return Actions.ActOnAsmStmt(AsmLoc, RParenLoc);
+  return Actions.ActOnAsmStmt(AsmLoc, AsmString.Val, RParenLoc);
 }
 
 /// ParseAsmOperands - Parse the asm-operands production as used by

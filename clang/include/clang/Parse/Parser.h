@@ -244,7 +244,10 @@ private:
   }
   bool SkipUntil(const tok::TokenKind *Toks, unsigned NumToks,
                  bool StopAtSemi = true, bool DontConsume = false);
-   
+ 
+  typedef Action::ExprResult ExprResult;
+  typedef Action::StmtResult StmtResult;
+    
   //===--------------------------------------------------------------------===//
   // C99 6.9: External Definitions.
   DeclTy *ParseExternalDeclaration();
@@ -252,7 +255,7 @@ private:
   DeclTy *ParseFunctionDefinition(Declarator &D);
   void ParseKNRParamDeclarations(Declarator &D);
   void ParseSimpleAsm();
-  void ParseAsmStringLiteral();
+  ExprResult ParseAsmStringLiteral();
 
   // Objective-C External Declarations
   DeclTy *ParseObjCAtDirectives(); 
@@ -305,9 +308,6 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
 
-  typedef Action::ExprResult ExprResult;
-  typedef Action::StmtResult StmtResult;
-  
   ExprResult ParseExpression();
   ExprResult ParseConstantExpression();
   ExprResult ParseAssignmentExpression();  // Expr that doesn't include commas.

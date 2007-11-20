@@ -326,7 +326,9 @@ void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {
 
 
 void StmtPrinter::VisitAsmStmt(AsmStmt *Node) {
-  Indent() << "asm (/*todo*/);\n";
+  Indent() << "asm (";
+  VisitStringLiteral(Node->getAsmString());
+  OS << ");\n";
 }
 
 void StmtPrinter::VisitObjcAtTryStmt(ObjcAtTryStmt *Node) {

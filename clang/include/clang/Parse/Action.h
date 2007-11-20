@@ -286,7 +286,8 @@ public:
                                      ExprTy *RetValExp) {
     return 0;
   }
-  virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc, 
+  virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
+                                  ExprTy *AsmString,
                                   SourceLocation RParenLoc) {
     return 0;
   }

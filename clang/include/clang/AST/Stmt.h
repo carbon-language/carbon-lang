@@ -30,6 +30,7 @@ namespace clang {
   class ScopedDecl;
   class IdentifierInfo;
   class SourceManager;
+  class StringLiteral;
   class SwitchStmt;
   class PrinterHelper;
     
@@ -704,11 +705,17 @@ public:
 ///
 class AsmStmt : public Stmt {
   SourceLocation AsmLoc, RParenLoc;
+  StringLiteral *AsmStr;
   // FIXME: This doesn't capture most of the interesting pieces.
 public:
-  AsmStmt(SourceLocation asmloc, SourceLocation rparenloc)
-    : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc) {}
+  AsmStmt(SourceLocation asmloc, StringLiteral *asmstr, 
+          SourceLocation rparenloc)
+    : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc),
+      AsmStr(asmstr) {}
   
+  const StringLiteral *getAsmString() const { return AsmStr; }
+  StringLiteral *getAsmString() { return AsmStr; }
+
   virtual SourceRange getSourceRange() const {
     return SourceRange(AsmLoc, RParenLoc);
   }

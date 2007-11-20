@@ -197,14 +197,16 @@ ArraySubscriptExpr* ArraySubscriptExpr::CreateImpl(Deserializer& D) {
 
 void AsmStmt::EmitImpl(Serializer& S) const {
   S.Emit(AsmLoc);
+  getAsmString()->EmitImpl(S);
   S.Emit(RParenLoc);  
 }
 
 AsmStmt* AsmStmt::CreateImpl(Deserializer& D) {
   SourceLocation ALoc = SourceLocation::ReadVal(D);
+  StringLiteral *AsmStr = StringLiteral::CreateImpl(D);
   SourceLocation PLoc = SourceLocation::ReadVal(D);
   
-  return new AsmStmt(ALoc,PLoc);  
+  return new AsmStmt(ALoc, AsmStr, PLoc);  
 }
 
 void BinaryOperator::EmitImpl(Serializer& S) const {

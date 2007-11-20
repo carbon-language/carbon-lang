@@ -346,7 +346,8 @@ public:
   virtual StmtResult ActOnReturnStmt(SourceLocation ReturnLoc,
                                      ExprTy *RetValExp);
   
-  virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc, 
+  virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
+                                  ExprTy *AsmString,
                                   SourceLocation RParenLoc);
   
   virtual StmtResult ActOnObjcAtCatchStmt(SourceLocation AtLoc, 

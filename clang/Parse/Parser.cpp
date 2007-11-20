@@ -575,16 +575,18 @@ void Parser::ParseKNRParamDeclarations(Declarator &D) {
 /// [GNU] asm-string-literal:
 ///         string-literal
 ///
-void Parser::ParseAsmStringLiteral() {
+Parser::ExprResult Parser::ParseAsmStringLiteral() {
   if (!isTokenStringLiteral()) {
     Diag(Tok, diag::err_expected_string_literal);
-    return;
+    return true;
   }
   
   ExprResult Res = ParseStringLiteralExpression();
-  if (Res.isInvalid) return;
+  if (Res.isInvalid) return true;
   
   // TODO: Diagnose: wide string literal in 'asm'
+    
+  return Res;
 }
 
 /// ParseSimpleAsm
