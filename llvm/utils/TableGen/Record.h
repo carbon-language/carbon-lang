@@ -62,6 +62,7 @@ class RecordVal;
 struct RecTy {
   virtual ~RecTy() {}
 
+  virtual std::string getAsString() const = 0;
   virtual void print(std::ostream &OS) const = 0;
   void dump() const;
 
@@ -127,6 +128,7 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
+  std::string getAsString() const { return "bit"; }
   void print(std::ostream &OS) const { OS << "bit"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
@@ -169,7 +171,7 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
-
+  std::string getAsString() const;
   void print(std::ostream &OS) const { OS << "bits<" << Size << ">"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
@@ -208,7 +210,7 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
-
+  std::string getAsString() const { return "int"; }
   void print(std::ostream &OS) const { OS << "int"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
@@ -245,6 +247,7 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
+  std::string getAsString() const { return "string"; }
   void print(std::ostream &OS) const { OS << "string"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
@@ -288,6 +291,7 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
+  std::string getAsString() const;
   void print(std::ostream &OS) const;
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
@@ -325,7 +329,7 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
-
+  std::string getAsString() const { return "code"; }
   void print(std::ostream &OS) const { OS << "code"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
@@ -360,6 +364,7 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
+  std::string getAsString() const { return "dag"; }
   void print(std::ostream &OS) const { OS << "dag"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
@@ -402,6 +407,7 @@ public:
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
+  std::string getAsString() const;
   void print(std::ostream &OS) const;
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {

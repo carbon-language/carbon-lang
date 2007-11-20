@@ -14,6 +14,7 @@
 #include "Record.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Streams.h"
+#include "llvm/ADT/StringExtras.h"
 #include <ios>
 
 using namespace llvm;
@@ -44,6 +45,10 @@ Init *BitRecTy::convertValue(TypedInit *VI) {
   if (dynamic_cast<BitRecTy*>(VI->getType()))
     return VI;  // Accept variable if it is already of bit type!
   return 0;
+}
+
+std::string BitsRecTy::getAsString() const {
+  return "bits<" + utostr(Size) + ">";
 }
 
 Init *BitsRecTy::convertValue(UnsetInit *UI) {
@@ -146,6 +151,10 @@ Init *StringRecTy::convertValue(TypedInit *TI) {
   return 0;
 }
 
+std::string ListRecTy::getAsString() const {
+  return "list<" + Ty->getAsString() + ">";
+}
+
 void ListRecTy::print(std::ostream &OS) const {
   OS << "list<" << *Ty << ">";
 }
@@ -196,6 +205,9 @@ Init *DagRecTy::convertValue(BinOpInit *BO) {
   return 0;
 }
 
+std::string RecordRecTy::getAsString() const {
+  return Rec->getName();
+}
 
 void RecordRecTy::print(std::ostream &OS) const {
   OS << Rec->getName();
