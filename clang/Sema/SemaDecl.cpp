@@ -238,16 +238,23 @@ FunctionDecl *Sema::MergeFunctionDecl(FunctionDecl *New, ScopedDecl *OldD) {
     return New;
   }
   
-  // This is not right, but it's a start.  If 'Old' is a function prototype with
-  // the same type as 'New', silently allow this.  FIXME: We should link up decl
-  // objects here.
-  if (Old->getBody() == 0 && 
-      Old->getCanonicalType() == New->getCanonicalType()) {
-    return New;
+  QualType OldQType = Old->getCanonicalType();
+  QualType NewQType = New->getCanonicalType();
+  
+  // This is not right, but it's a start.
+  // If Old is a function prototype with no defined arguments we only compare 
+  // the return type;  If arguments are defined on the prototype we validate the
+  // entire function type.
+  // FIXME: We should link up decl objects here.
+  if (Old->getBody() == 0) {
+    if (OldQType.getTypePtr()->getTypeClass() == Type::FunctionNoProto && 
+        Old->getResultType() == New->getResultType())
+      return New;
+    if (OldQType == NewQType)
+      return New;
   }
 
-  if (New->getBody() == 0 && 
-      Old->getCanonicalType() == New->getCanonicalType()) {
+  if (New->getBody() == 0 && OldQType == NewQType) {
     return 0;
   }
   
