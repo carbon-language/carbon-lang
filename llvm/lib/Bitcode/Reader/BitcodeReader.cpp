@@ -232,17 +232,15 @@ bool BitcodeReader::ParseParamAttrBlock() {
       if (Record.size() & 1)
         return Error("Invalid ENTRY record");
 
-      ParamAttrsWithIndex PAWI;
       for (unsigned i = 0, e = Record.size(); i != e; i += 2) {
-        PAWI.index = Record[i];
-        PAWI.attrs = Record[i+1];
-        Attrs.push_back(PAWI);
+        if (Record[i+1] != ParamAttr::None)
+          Attrs.push_back(ParamAttrsWithIndex::get(Record[i], Record[i+1]));
       }
-      ParamAttrs.push_back(ParamAttrsList::get(Attrs));
+      ParamAttrs.push_back(Attrs.empty() ? NULL : ParamAttrsList::get(Attrs));
       Attrs.clear();
       break;
     }
-    }    
+    }
   }
 }
 
