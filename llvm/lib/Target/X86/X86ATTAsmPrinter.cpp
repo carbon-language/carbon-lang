@@ -124,7 +124,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       // FIXME: This should be parameterized somewhere.
       EmitAlignment(4, F, 0, true, 0x90);
       O << "\t.globl\t" << CurrentFnName << "\n";
-      O << "\t.weak_definition\t" << CurrentFnName << "\n";
+      O << TAI->getWeakDefDirective() << CurrentFnName << "\n";
     } else if (Subtarget->isTargetCygMing()) {
       EmitAlignment(4, F);     // FIXME: This should be parameterized somewhere.
       O << "\t.globl\t" << CurrentFnName << "\n";

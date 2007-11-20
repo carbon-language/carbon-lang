@@ -2764,12 +2764,15 @@ private:
     bool hasCalls;
     bool hasLandingPads;
     std::vector<MachineMove> Moves;
+    Function::LinkageTypes linkage;
 
     FunctionEHFrameInfo(const std::string &FN, unsigned Num, unsigned P,
                         bool hC, bool hL,
-                        const std::vector<MachineMove> &M):
+                        const std::vector<MachineMove> &M,
+                        Function::LinkageTypes l):
       FnName(FN), Number(Num), PersonalityIndex(P),
-      hasCalls(hC), hasLandingPads(hL), Moves(M) { }
+      hasCalls(hC), hasLandingPads(hL), Moves(M),
+      linkage(l) { }
   };
 
   std::vector<FunctionEHFrameInfo> EHFrames;
@@ -2867,15 +2870,25 @@ private:
     Asm->SwitchToTextSection(TAI->getDwarfEHFrameSection());
 
     // Externally visible entry into the functions eh frame info.
-    if (const char *GlobalDirective = TAI->getGlobalDirective())
-      O << GlobalDirective << EHFrameInfo.FnName << "\n";
-    
+    // If the corresponding function is static, this should not be
+    // externally visible.
+    if (EHFrameInfo.linkage != Function::InternalLinkage) {
+      if (const char *GlobalEHDirective = TAI->getGlobalEHDirective())
+        O << GlobalEHDirective << EHFrameInfo.FnName << "\n";
+    }
+
     // If there are no calls then you can't unwind.
     if (!EHFrameInfo.hasCalls) { 
       O << EHFrameInfo.FnName << " = 0\n";
     } else {
       O << EHFrameInfo.FnName << ":\n";
-      
+
+      // If corresponding function is weak definition, this should be too.
+      if ((EHFrameInfo.linkage == Function::WeakLinkage || 
+           EHFrameInfo.linkage == Function::LinkOnceLinkage) &&
+          TAI->getWeakDefDirective())
+        O << TAI->getWeakDefDirective() << EHFrameInfo.FnName << "\n";
+
       // EH frame header.
       EmitDifference("eh_frame_end", EHFrameInfo.Number,
                      "eh_frame_begin", EHFrameInfo.Number, true);
@@ -3362,7 +3375,8 @@ public:
                                     MMI->getPersonalityIndex(),
                                     MF->getFrameInfo()->hasCalls(),
                                     !MMI->getLandingPads().empty(),
-                                    MMI->getFrameMoves()));
+                                    MMI->getFrameMoves(),
+                                    MF->getFunction()->getLinkage()));
   }
 };
 

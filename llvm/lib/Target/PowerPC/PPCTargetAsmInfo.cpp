@@ -43,7 +43,6 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   PrivateGlobalPrefix = "L";
   ConstantPoolSection = "\t.const\t";
   JumpTableDataSection = ".const";
-  GlobalDirective = "\t.globl\t";
   CStringSection = "\t.cstring";
   FourByteConstantSection = "\t.literal4\n";
   EightByteConstantSection = "\t.literal8\n";
@@ -56,6 +55,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
     StaticDtorsSection = ".mod_term_func";
   }
   UsedDirective = "\t.no_dead_strip\t";
+  WeakDefDirective = "\t.weak_definition\t";
   WeakRefDirective = "\t.weak_reference\t";
   HiddenDirective = "\t.private_extern\t";
   SupportsExceptionHandling = false;
@@ -66,6 +66,7 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
   DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
   DwarfFrameSection = ".section __DWARF,__debug_frame,regular,debug";
+  GlobalEHDirective = "\t.globl\t";
   DwarfPubNamesSection = ".section __DWARF,__debug_pubnames,regular,debug";
   DwarfPubTypesSection = ".section __DWARF,__debug_pubtypes,regular,debug";
   DwarfStrSection = ".section __DWARF,__debug_str,regular,debug";

@@ -214,7 +214,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     case GlobalValue::WeakLinkage:
       if (Subtarget->isTargetDarwin()) {
         O << "\t.globl\t" << name << "\n"
-          << "\t.weak_definition " << name << "\n";
+          << TAI->getWeakDefDirective() << name << "\n";
         SwitchToDataSection(".section __DATA,__const_coal,coalesced", I);
       } else if (Subtarget->isTargetCygMing()) {
         std::string SectionName(".section\t.data$linkonce." +

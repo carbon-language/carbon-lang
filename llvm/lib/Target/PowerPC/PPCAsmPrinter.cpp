@@ -322,10 +322,11 @@ namespace {
   struct VISIBILITY_HIDDEN DarwinAsmPrinter : public PPCAsmPrinter {
   
     DwarfWriter DW;
+    MachineModuleInfo *MMI;
 
     DarwinAsmPrinter(std::ostream &O, PPCTargetMachine &TM,
                      const TargetAsmInfo *T)
-      : PPCAsmPrinter(O, TM, T), DW(O, this, T) {
+      : PPCAsmPrinter(O, TM, T), DW(O, this, T), MMI(0) {
     }
 
     virtual const char *getPassName() const {
@@ -774,11 +775,13 @@ std::string DarwinAsmPrinter::getSectionForFunction(const Function &F) const {
 /// method to print assembly for each instruction.
 ///
 bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  DW.SetModuleInfo(&getAnalysis<MachineModuleInfo>());
+  // We need this for Personality functions.
+  MMI = &getAnalysis<MachineModuleInfo>();
+  DW.SetModuleInfo(MMI);
 
   SetupMachineFunction(MF);
   O << "\n\n";
-  
+
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 
@@ -1053,6 +1056,15 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   }
 
   O << "\n";
+
+  if (ExceptionHandling && TAI->doesSupportExceptionHandling() && MMI) {
+    // Add the (possibly multiple) personalities to the set of global values.
+    const std::vector<Function *>& Personalities = MMI->getPersonalities();
+
+    for (std::vector<Function *>::const_iterator I = Personalities.begin(),
+           E = Personalities.end(); I != E; ++I)
+      if (*I) GVStubs.insert("_" + (*I)->getName());
+  }
 
   // Output stubs for external and common global variables.
   if (!GVStubs.empty()) {
