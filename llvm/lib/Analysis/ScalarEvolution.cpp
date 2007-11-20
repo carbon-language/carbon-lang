@@ -1484,25 +1484,27 @@ SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
     case Instruction::SDiv:
       return SE.getSDivExpr(getSCEV(I->getOperand(0)),
                             getSCEV(I->getOperand(1)));
-      break;
-
     case Instruction::Sub:
       return SE.getMinusSCEV(getSCEV(I->getOperand(0)),
                              getSCEV(I->getOperand(1)));
     case Instruction::Or:
       // If the RHS of the Or is a constant, we may have something like:
-      // X*4+1 which got turned into X*4|1.  Handle this as an add so loop
+      // X*4+1 which got turned into X*4|1.  Handle this as an Add so loop
       // optimizations will transparently handle this case.
+      //
+      // In order for this transformation to be safe, the LHS must be of the
+      // form X*(2^n) and the Or constant must be less than 2^n.
+
       if (ConstantInt *CI = dyn_cast<ConstantInt>(I->getOperand(1))) {
         SCEVHandle LHS = getSCEV(I->getOperand(0));
         APInt CommonFact(GetConstantFactor(LHS));
         assert(!CommonFact.isMinValue() &&
                "Common factor should at least be 1!");
-        if (CommonFact.ugt(CI->getValue())) {
-          // If the LHS is a multiple that is larger than the RHS, use +.
+        const APInt &CIVal = CI->getValue();
+        if (CommonFact.countTrailingZeros() >=
+            (CIVal.getBitWidth() - CIVal.countLeadingZeros()))
           return SE.getAddExpr(LHS,
                                getSCEV(I->getOperand(1)));
-        }
       }
       break;
     case Instruction::Xor:
