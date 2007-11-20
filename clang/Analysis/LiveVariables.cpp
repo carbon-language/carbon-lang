@@ -35,6 +35,7 @@ class RegisterDecls : public CFGRecStmtDeclVisitor<RegisterDecls> {
 public:
   RegisterDecls(LiveVariables::AnalysisDataTy& ad) : AD(ad) {}  
   void VisitVarDecl(VarDecl* VD) { AD.Register(VD); }
+  CFG& getCFG() { return AD.getCFG(); }
 };
 } // end anonymous namespace
 
@@ -52,34 +53,25 @@ namespace {
 static const bool Alive = true;
 static const bool Dead = false;  
 
-class TransferFuncs : public CFGStmtVisitor<TransferFuncs> {
+class TransferFuncs : public CFGRecStmtVisitor<TransferFuncs> {
   LiveVariables::AnalysisDataTy& AD;
   LiveVariables::ValTy LiveState;
 public:
   TransferFuncs(LiveVariables::AnalysisDataTy& ad) : AD(ad) {}
 
   LiveVariables::ValTy& getVal() { return LiveState; }
+  CFG& getCFG() { return AD.getCFG(); }
   
   void VisitDeclRefExpr(DeclRefExpr* DR);
   void VisitBinaryOperator(BinaryOperator* B);
   void VisitAssign(BinaryOperator* B);
   void VisitDeclStmt(DeclStmt* DS);
   void VisitUnaryOperator(UnaryOperator* U);
-  void VisitStmt(Stmt* S);
-  void VisitExpr(Expr* E);
-  void BlockStmt_VisitExpr(Expr *E);    
   void Visit(Stmt *S);
   
   DeclRefExpr* FindDeclRef(Stmt *S);
 };
-
-void TransferFuncs::VisitExpr(Expr * E) {
-  if (AD.getCFG().isBlkExpr(E)) return;
-  else VisitStmt(E);
-}
       
-void TransferFuncs::VisitStmt(Stmt* S) { VisitChildren(S); }
-
 void TransferFuncs::Visit(Stmt *S) {
   if (AD.Observer)
     AD.Observer->ObserveStmt(S,AD,LiveState);
@@ -158,11 +150,6 @@ void TransferFuncs::VisitDeclStmt(DeclStmt* DS) {
   // possibly be live before they are declared.
   for (ScopedDecl* D = DS->getDecl(); D != NULL; D = D->getNextDeclarator())
     LiveState(D,AD) = Dead;
-}
-  
-void TransferFuncs::BlockStmt_VisitExpr(Expr* E) {
-  assert (AD.getCFG().isBlkExpr(E));
-  VisitChildren(E);
 }
   
 } // end anonymous namespace

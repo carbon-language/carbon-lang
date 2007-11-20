@@ -34,6 +34,7 @@ public:
   RegisterDecls(UninitializedValues::AnalysisDataTy& ad) :  AD(ad) {}
   
   void VisitBlockVarDecl(BlockVarDecl* VD) { AD.Register(VD); }
+  CFG& getCFG() { return AD.getCFG(); }
 };
   
 } // end anonymous namespace
@@ -58,6 +59,7 @@ public:
   }
   
   UninitializedValues::ValTy& getVal() { return V; }
+  CFG& getCFG() { return AD.getCFG(); }
   
   bool VisitDeclRefExpr(DeclRefExpr* DR);
   bool VisitBinaryOperator(BinaryOperator* B);

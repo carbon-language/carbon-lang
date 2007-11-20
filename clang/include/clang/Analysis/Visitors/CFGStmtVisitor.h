@@ -33,14 +33,36 @@ static_cast<ImplClass*>(this)->BlockStmt_Visit ## CLASS(static_cast<CLASS*>(S));
 
 template <typename ImplClass, typename RetTy=void>
 class CFGStmtVisitor : public StmtVisitor<ImplClass,RetTy> {
-public:
+  Stmt* CurrentBlkExpr;
+
+  struct NullifyStmt {
+    Stmt*& S;  
+    
+    NullifyStmt(Stmt*& s) : S(s) {}
+    ~NullifyStmt() { S = NULL; }
+  };
+  
+public:  
+  CFGStmtVisitor() : CurrentBlkExpr(NULL) {}  
+  
+  RetTy Visit(Stmt* S) {
+    if (S == CurrentBlkExpr || 
+        !static_cast<ImplClass*>(this)->getCFG().isBlkExpr(S))
+      return StmtVisitor<ImplClass,RetTy>::Visit(S);
+    else
+      return RetTy();
+  }
+  
   /// BlockVisit_XXX - Visitor methods for visiting the "root" statements in
   /// CFGBlocks.  Root statements are the statements that appear explicitly in 
   /// the list of statements in a CFGBlock.  For substatements, or when there
   /// is no implementation provided for a BlockStmt_XXX method, we default
   /// to using StmtVisitor's Visit method.
   RetTy BlockStmt_Visit(Stmt* S) {
-    switch (S->getStmtClass()) {    
+    CurrentBlkExpr = S;
+    NullifyStmt cleanup(CurrentBlkExpr);
+    
+    switch (S->getStmtClass()) {
       DISPATCH_CASE(CallExpr)
       DISPATCH_CASE(StmtExpr)
       DISPATCH_CASE(ConditionalOperator)
