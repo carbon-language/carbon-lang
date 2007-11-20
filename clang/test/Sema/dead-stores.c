@@ -11,3 +11,11 @@ void a(void *b) {
  char *d = b+1; // expected-warning {{value stored to variable is never used}}
  printf("%s", c);
 }
+
+void z() {
+	int r;
+	if ((r = f()) != 0) { // no-warning
+		int y = r; // no-warning
+		printf("the error is: %d\n", y);
+	}
+}
