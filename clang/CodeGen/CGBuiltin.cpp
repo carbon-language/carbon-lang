@@ -85,6 +85,18 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     
     return RValue::get(llvm::ConstantInt::get(Result));
   }
+  case Builtin::BI__builtin_abs: {
+    llvm::Value *ArgValue = EmitScalarExpr(E->getArg(0));   
+    
+    llvm::BinaryOperator *NegOp = 
+      Builder.CreateNeg(ArgValue, (ArgValue->getName() + "neg").c_str());
+    llvm::Value *CmpResult = 
+      Builder.CreateICmpSGE(ArgValue, NegOp->getOperand(0), "abscond");
+    llvm::Value *Result = 
+      Builder.CreateSelect(CmpResult, ArgValue, NegOp, "abs");
+    
+    return RValue::get(Result);
+  }
   }
   
   return RValue::get(0);

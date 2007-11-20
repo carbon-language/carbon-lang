@@ -55,6 +55,7 @@
 BUILTIN(__builtin_inf  , "d"   , "ncF")
 BUILTIN(__builtin_inff , "f"   , "ncF")
 BUILTIN(__builtin_infl , "Ld"  , "ncF")
+BUILTIN(__builtin_abs  , "ii"  , "ncF")
 BUILTIN(__builtin_fabs , "dd"  , "ncF")
 BUILTIN(__builtin_fabsf, "ff"  , "ncF")
 BUILTIN(__builtin_fabsl, "LdLd", "ncF")
