@@ -260,6 +260,10 @@ namespace llvm {
     /// global as being a weak undefined symbol.
     const char *WeakRefDirective;         // Defaults to null.
     
+    /// WeakDefDirective - This directive, if non-null, is used to declare a
+    /// global as being a weak defined symbol.
+    const char *WeakDefDirective;         // Defaults to null.
+    
     /// HiddenDirective - This directive, if non-null, is used to declare a
     /// global or function as having hidden visibility.
     const char *HiddenDirective;          // Defaults to "\t.hidden\t".
@@ -299,6 +303,11 @@ namespace llvm {
     /// RequiresFrameSection - true if the Dwarf2 output needs a frame section
     ///
     bool DwarfRequiresFrameSection; // Defaults to true.
+
+    /// GlobalEHDirective - This is the directive used to make exception frame
+    /// tables globally visible.
+    ///
+    const char *GlobalEHDirective;          // Defaults to NULL.
 
     /// DwarfSectionOffsetDirective - Special section offset directive.
     const char* DwarfSectionOffsetDirective; // Defaults to NULL
@@ -543,6 +552,9 @@ namespace llvm {
     const char *getWeakRefDirective() const {
       return WeakRefDirective;
     }
+    const char *getWeakDefDirective() const {
+      return WeakDefDirective;
+    }
     const char *getHiddenDirective() const {
       return HiddenDirective;
     }
@@ -569,6 +581,9 @@ namespace llvm {
     }
     bool doesDwarfRequireFrameSection() const {
       return DwarfRequiresFrameSection;
+    }
+    const char *getGlobalEHDirective() const {
+      return GlobalEHDirective;
     }
     const char *getDwarfSectionOffsetDirective() const {
       return DwarfSectionOffsetDirective;
