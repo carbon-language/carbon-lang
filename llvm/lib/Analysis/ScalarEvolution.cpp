@@ -1207,7 +1207,7 @@ namespace {
     SCEVHandle ComputeIterationCount(const Loop *L);
 
     /// ComputeLoadConstantCompareIterationCount - Given an exit condition of
-    /// 'setcc load X, cst', try to see if we can compute the trip count.
+    /// 'icmp op load X, cst', try to see if we can compute the trip count.
     SCEVHandle ComputeLoadConstantCompareIterationCount(LoadInst *LI,
                                                         Constant *RHS,
                                                         const Loop *L,
@@ -1418,13 +1418,12 @@ static APInt GetConstantFactor(SCEVHandle S) {
     if (!V.isMinValue())
       return V;
     else   // Zero is a multiple of everything.
-      return APInt(C->getBitWidth(), 1).shl(C->getBitWidth()-1);
+      return APInt::getHighBitsSet(C->getBitWidth(), 1);
   }
 
-  if (SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(S)) {
+  if (SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(S))
     return GetConstantFactor(T->getOperand()).trunc(
                                cast<IntegerType>(T->getType())->getBitWidth());
-  }
   if (SCEVZeroExtendExpr *E = dyn_cast<SCEVZeroExtendExpr>(S))
     return GetConstantFactor(E->getOperand()).zext(
                                cast<IntegerType>(E->getType())->getBitWidth());
@@ -1787,7 +1786,7 @@ GetAddressedElementFromGlobal(GlobalVariable *GV,
 }
 
 /// ComputeLoadConstantCompareIterationCount - Given an exit condition of
-/// 'setcc load X, cst', try to se if we can compute the trip count.
+/// 'icmp op load X, cst', try to se if we can compute the trip count.
 SCEVHandle ScalarEvolutionsImpl::
 ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
                                          const Loop *L, 
