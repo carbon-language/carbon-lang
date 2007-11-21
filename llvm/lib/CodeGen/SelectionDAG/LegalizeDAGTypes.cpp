@@ -92,7 +92,11 @@ class VISIBILITY_HIDDEN DAGTypeLegalizer {
   /// ExpandedNodes - For nodes that need to be expanded this map indicates
   /// which operands are the expanded version of the input.
   DenseMap<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedNodes;
-  
+
+  /// ReplacedNodes - For nodes that have been replaced with another,
+  /// indicates the replacement node to use.
+  DenseMap<SDOperand, SDOperand> ReplacedNodes;
+
   /// Worklist - This defines a worklist of nodes to process.  In order to be
   /// pushed onto this worklist, all operands of a node must have already been
   /// processed.
@@ -112,12 +116,15 @@ private:
   void MarkNewNodes(SDNode *N);
   
   void ReplaceLegalValueWith(SDOperand From, SDOperand To);
-  
+
+  void RemapNode(SDOperand &N);
+
   SDOperand GetPromotedOp(SDOperand Op) {
-    Op = PromotedNodes[Op];
-    assert(Op.Val && "Operand wasn't promoted?");
-    return Op;
-  }    
+    SDOperand &PromotedOp = PromotedNodes[Op];
+    RemapNode(PromotedOp);
+    assert(PromotedOp.Val && "Operand wasn't promoted?");
+    return PromotedOp;
+  }
   void SetPromotedOp(SDOperand Op, SDOperand Result);
 
   /// GetPromotedZExtOp - Get a promoted operand and zero extend it to the final
@@ -397,7 +404,11 @@ void DAGTypeLegalizer::ReplaceLegalValueWith(SDOperand From, SDOperand To) {
   // Anything that used the old node should now use the new one.  Note that this
   // can potentially cause recursive merging.
   DAG.ReplaceAllUsesOfValueWith(From, To);
-  
+
+  // The old node may still be present in ExpandedNodes or PromotedNodes.
+  // Inform them about the replacement.
+  ReplacedNodes[From] = To;
+
   // Since we just made an unstructured update to the DAG, which could wreak
   // general havoc on anything that once used N and now uses Res, walk all users
   // of the result, updating their flags.
@@ -414,6 +425,16 @@ void DAGTypeLegalizer::ReplaceLegalValueWith(SDOperand From, SDOperand To) {
   }
 }
 
+/// RemapNode - If the specified value was already legalized to another value,
+/// replace it by that value.
+void DAGTypeLegalizer::RemapNode(SDOperand &N) {
+  DenseMap<SDOperand, SDOperand>::iterator I = ReplacedNodes.find(N);
+  if (I != ReplacedNodes.end()) {
+    RemapNode(I->second);
+    N = I->second;
+  }
+}
+
 void DAGTypeLegalizer::SetPromotedOp(SDOperand Op, SDOperand Result) {
   if (Result.Val->getNodeId() == NewNode) 
     MarkNewNodes(Result.Val);
@@ -426,6 +447,8 @@ void DAGTypeLegalizer::SetPromotedOp(SDOperand Op, SDOperand Result) {
 void DAGTypeLegalizer::GetExpandedOp(SDOperand Op, SDOperand &Lo, 
                                      SDOperand &Hi) {
   std::pair<SDOperand, SDOperand> &Entry = ExpandedNodes[Op];
+  RemapNode(Entry.first);
+  RemapNode(Entry.second);
   assert(Entry.first.Val && "Operand isn't expanded");
   Lo = Entry.first;
   Hi = Entry.second;
