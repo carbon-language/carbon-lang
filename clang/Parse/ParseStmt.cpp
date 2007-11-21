@@ -957,14 +957,12 @@ Parser::StmtResult Parser::ParseAsmStatement() {
   if (Tok.is(tok::colon)) {
     ConsumeToken();
     
-    if (isTokenStringLiteral()) {
-      // Parse the asm-string list for clobbers.
-      while (1) {
-        ParseAsmStringLiteral();
+    // Parse the asm-string list for clobbers.
+    while (1) {
+      ParseAsmStringLiteral();
 
-        if (Tok.isNot(tok::comma)) break;
-        ConsumeToken();
-      }
+      if (Tok.isNot(tok::comma)) break;
+      ConsumeToken();
     }
   }
   
