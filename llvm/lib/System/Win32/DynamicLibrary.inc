@@ -37,9 +37,15 @@ using namespace sys;
 
 static std::vector<HMODULE> OpenedHandles;
 
+#ifdef _WIN64
+  typedef DWORD64 ModuleBaseType;
+#else
+  typedef ULONG ModuleBaseType;
+#endif
+
 extern "C" {
   static BOOL CALLBACK ELM_Callback(PSTR  ModuleName,
-                                    ULONG ModuleBase,
+                                    ModuleBaseType ModuleBase,
                                     ULONG ModuleSize,
                                     PVOID UserContext)
   {

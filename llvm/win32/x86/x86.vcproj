@@ -11,14 +11,17 @@
 		<Platform
 			Name="Win32"
 		/>
+		<Platform
+			Name="x64"
+		/>
 	</Platforms>
 	<ToolFiles>
 	</ToolFiles>
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -87,9 +90,81 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories=".;..\..\include;.."
+				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;_DEBUG;_LIB;__STDC_LIMIT_MACROS"
+				StringPooling="true"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
+				BrowseInformation="1"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/x86.lib"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
+		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\Release"
-			IntermediateDirectory="Release"
+			OutputDirectory="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -153,6 +228,74 @@
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			OutputDirectory="$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories=".;..\..\include;.."
+				PreprocessorDefinitions="_CRT_SECURE_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_WARNINGS;WIN32;NDEBUG;_LIB;__STDC_LIMIT_MACROS"
+				StringPooling="true"
+				RuntimeLibrary="2"
+				ForceConformanceInForLoopScope="true"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4355,4146,4800"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)/x86.lib"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+			/>
+		</Configuration>
 	</Configurations>
 	<References>
 	</References>
@@ -171,7 +314,18 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing TableGen Step"
-						CommandLine="echo Building $(InputFileName) register names with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-register-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterNames.inc&#x0D;&#x0A;echo Building $(InputFileName) register information header with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.h.inc&#x0D;&#x0A;echo Building $(InputFileName) register information implementation with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-register-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction names with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrNames.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction information with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer #1 with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter1.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction selector implementation with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc&#x0D;&#x0A;echo Building $(InputFileName) subtarget information with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc&#x0D;&#x0A;echo Building $(InputFileName) calling convention information with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-callingconv -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenCallingConv.inc&#x0D;&#x0A;"
+						CommandLine="echo Building $(InputFileName) register names with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterNames.inc&#x0D;&#x0A;echo Building $(InputFileName) register information header with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.h.inc&#x0D;&#x0A;echo Building $(InputFileName) register information implementation with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction names with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrNames.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer #1 with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter1.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction selector implementation with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc&#x0D;&#x0A;echo Building $(InputFileName) subtarget information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-subtarget -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc&#x0D;&#x0A;echo Building $(InputFileName) calling convention information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-callingconv -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenCallingConv.inc&#x0D;&#x0A;"
+						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)X86InstrFPStack.td;$(InputDir)X86InstrMMX.td;$(InputDir)X86InstrSSE.td;$(InputDir)X86CallingConv.td;$(InputDir)..\Target.td;$(InputDir)..\TargetSchedule.td;$(InputDir)..\TargetScheduleDAG.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
+						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc;X86GenDAGISel.inc;X86GenSubtarget.inc;X86GenCallingConv.inc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Performing TableGen Step"
+						CommandLine="echo Building $(InputFileName) register names with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterNames.inc&#x0D;&#x0A;echo Building $(InputFileName) register information header with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.h.inc&#x0D;&#x0A;echo Building $(InputFileName) register information implementation with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction names with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrNames.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer #1 with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter1.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction selector implementation with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc&#x0D;&#x0A;echo Building $(InputFileName) subtarget information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-subtarget -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc&#x0D;&#x0A;echo Building $(InputFileName) calling convention information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-callingconv -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenCallingConv.inc&#x0D;&#x0A;"
 						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)X86InstrFPStack.td;$(InputDir)X86InstrMMX.td;$(InputDir)X86InstrSSE.td;$(InputDir)X86CallingConv.td;$(InputDir)..\Target.td;$(InputDir)..\TargetSchedule.td;$(InputDir)..\TargetScheduleDAG.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc;X86GenDAGISel.inc;X86GenSubtarget.inc;X86GenCallingConv.inc"
 					/>
@@ -182,7 +336,18 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Performing TableGen Step"
-						CommandLine="echo Building $(InputFileName) register names with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-register-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterNames.inc&#x0D;&#x0A;echo Building $(InputFileName) register information header with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.h.inc&#x0D;&#x0A;echo Building $(InputFileName) register information implementation with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-register-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction names with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrNames.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction information with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer #1 with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter1.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction selector implementation with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc&#x0D;&#x0A;echo Building $(InputFileName) subtarget information with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-subtarget -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc&#x0D;&#x0A;echo Building $(InputFileName) calling convention information with tblgen&#x0D;&#x0A;..\$(IntDir)\TableGen.exe -gen-callingconv -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenCallingConv.inc&#x0D;&#x0A;"
+						CommandLine="echo Building $(InputFileName) register names with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterNames.inc&#x0D;&#x0A;echo Building $(InputFileName) register information header with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.h.inc&#x0D;&#x0A;echo Building $(InputFileName) register information implementation with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction names with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrNames.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer #1 with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter1.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction selector implementation with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc&#x0D;&#x0A;echo Building $(InputFileName) subtarget information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-subtarget -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc&#x0D;&#x0A;echo Building $(InputFileName) calling convention information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-callingconv -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenCallingConv.inc&#x0D;&#x0A;"
+						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)X86InstrFPStack.td;$(InputDir)X86InstrMMX.td;$(InputDir)X86InstrSSE.td;$(InputDir)X86CallingConv.td;$(InputDir)..\Target.td;$(InputDir)..\TargetSchedule.td;$(InputDir)..\TargetScheduleDAG.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
+						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc;X86GenDAGISel.inc;X86GenSubtarget.inc;X86GenCallingConv.inc"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|x64"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						Description="Performing TableGen Step"
+						CommandLine="echo Building $(InputFileName) register names with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterNames.inc&#x0D;&#x0A;echo Building $(InputFileName) register information header with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-desc-header -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.h.inc&#x0D;&#x0A;echo Building $(InputFileName) register information implementation with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-register-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenRegisterInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction names with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrNames.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenInstrInfo.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter.inc&#x0D;&#x0A;echo Building $(InputFileName) assembly writer #1 with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenAsmWriter1.inc&#x0D;&#x0A;echo Building $(InputFileName) instruction selector implementation with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-dag-isel -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenDAGISel.inc&#x0D;&#x0A;echo Building $(InputFileName) subtarget information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-subtarget -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenSubtarget.inc&#x0D;&#x0A;echo Building $(InputFileName) calling convention information with tblgen&#x0D;&#x0A;$(SolutionDir)\bin\$(PlatformName)\$(ConfigurationName)\TableGen.exe -gen-callingconv -I ..\..\lib\Target -I ..\..\lib\Target\X86 -I ..\..\include $(InputPath) -o X86GenCallingConv.inc&#x0D;&#x0A;"
 						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)X86InstrFPStack.td;$(InputDir)X86InstrMMX.td;$(InputDir)X86InstrSSE.td;$(InputDir)X86CallingConv.td;$(InputDir)..\Target.td;$(InputDir)..\TargetSchedule.td;$(InputDir)..\TargetScheduleDAG.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc;X86GenDAGISel.inc;X86GenSubtarget.inc;X86GenCallingConv.inc"
 					/>

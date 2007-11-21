@@ -177,7 +177,11 @@ static void Cleanup() {
 static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
   try {
     Cleanup();
-
+    
+#ifdef _WIN64
+  // TODO: provide a x64 friendly version of the following
+#else
+    
     // Initialize the STACKFRAME structure.
     STACKFRAME StackFrame;
     memset(&StackFrame, 0, sizeof(StackFrame));
@@ -251,6 +255,9 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 
       fputc('\n', stderr);
     }
+
+#endif
+
   } catch (...) {
       assert(!"Crashed in LLVMUnhandledExceptionFilter");
   }

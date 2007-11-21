@@ -341,7 +341,8 @@ int TGLexer::LexNumber() {
       if (CurPtr == NumStart)
         return ReturnError(CurPtr-2, "Invalid hexadecimal number");
 
-      Filelval.IntVal = strtoll(NumStart, 0, 16);
+      Filelval.IntVal = strtol(NumStart, 0, 16);
+
       return INTVAL;
     } else if (CurPtr[0] == 'b') {
       ++CurPtr;
@@ -352,7 +353,8 @@ int TGLexer::LexNumber() {
       // Requires at least one binary digit.
       if (CurPtr == NumStart)
         return ReturnError(CurPtr-2, "Invalid binary number");
-      Filelval.IntVal = strtoll(NumStart, 0, 2);
+
+      Filelval.IntVal = strtol(NumStart, 0, 2);
       return INTVAL;
     }
   }
@@ -365,7 +367,8 @@ int TGLexer::LexNumber() {
   
   while (isdigit(CurPtr[0]))
     ++CurPtr;
-  Filelval.IntVal = strtoll(NumStart, 0, 10);
+
+  Filelval.IntVal = strtol(NumStart, 0, 10);
   return INTVAL;
 }
 
