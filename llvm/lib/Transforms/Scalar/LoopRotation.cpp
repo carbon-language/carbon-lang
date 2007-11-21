@@ -151,7 +151,7 @@ bool LoopRotate::rotateLoop(Loop *Lp, LPPassManager &LPM) {
   BranchInst *BI = dyn_cast<BranchInst>(OrigHeader->getTerminator());
   if (!BI)
     return false;
-  assert (BI->isConditional() && "Branch Instruction is not condiitional");
+  assert (BI->isConditional() && "Branch Instruction is not conditional");
 
   // Updating PHInodes in loops with multiple exits adds complexity. 
   // Keep it simple, and restrict loop rotation to loops with one exit only.
