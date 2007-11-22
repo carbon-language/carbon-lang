@@ -63,7 +63,7 @@ struct RecTy {
   virtual ~RecTy() {}
 
   virtual std::string getAsString() const = 0;
-  virtual void print(std::ostream &OS) const = 0;
+  void print(std::ostream &OS) const { OS << getAsString(); }
   void dump() const;
 
   /// typeIsConvertibleTo - Return true if all values of 'this' type can be
@@ -129,7 +129,6 @@ public:
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
   std::string getAsString() const { return "bit"; }
-  void print(std::ostream &OS) const { OS << "bit"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
@@ -172,7 +171,6 @@ public:
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
   std::string getAsString() const;
-  void print(std::ostream &OS) const { OS << "bits<" << Size << ">"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
@@ -211,7 +209,6 @@ public:
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
   std::string getAsString() const { return "int"; }
-  void print(std::ostream &OS) const { OS << "int"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
@@ -248,7 +245,6 @@ public:
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
   std::string getAsString() const { return "string"; }
-  void print(std::ostream &OS) const { OS << "string"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
@@ -292,7 +288,6 @@ public:
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
   std::string getAsString() const;
-  void print(std::ostream &OS) const;
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
@@ -330,7 +325,6 @@ public:
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
   std::string getAsString() const { return "code"; }
-  void print(std::ostream &OS) const { OS << "code"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
@@ -365,7 +359,6 @@ public:
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
   std::string getAsString() const { return "dag"; }
-  void print(std::ostream &OS) const { OS << "dag"; }
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
@@ -408,7 +401,6 @@ public:
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
   std::string getAsString() const;
-  void print(std::ostream &OS) const;
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);

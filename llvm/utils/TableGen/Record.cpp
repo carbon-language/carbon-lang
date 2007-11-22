@@ -155,10 +155,6 @@ std::string ListRecTy::getAsString() const {
   return "list<" + Ty->getAsString() + ">";
 }
 
-void ListRecTy::print(std::ostream &OS) const {
-  OS << "list<" << *Ty << ">";
-}
-
 Init *ListRecTy::convertValue(ListInit *LI) {
   std::vector<Init*> Elements;
 
@@ -207,10 +203,6 @@ Init *DagRecTy::convertValue(BinOpInit *BO) {
 
 std::string RecordRecTy::getAsString() const {
   return Rec->getName();
-}
-
-void RecordRecTy::print(std::ostream &OS) const {
-  OS << Rec->getName();
 }
 
 Init *RecordRecTy::convertValue(DefInit *DI) {
