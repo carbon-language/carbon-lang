@@ -668,6 +668,14 @@ void Andersens::IdentifyObjects(Module &M) {
         if (AllocationInst *AI = dyn_cast<AllocationInst>(&*II))
           ObjectNodes[AI] = NumObjects++;
       }
+
+      // Calls to inline asm need to be added as well because the callee isn't
+      // referenced anywhere else.
+      if (CallInst *CI = dyn_cast<CallInst>(&*II)) {
+        Value *Callee = CI->getCalledValue();
+        if (isa<InlineAsm>(Callee))
+          ValueNodes[Callee] = NumObjects++;
+      }
     }
   }
 
