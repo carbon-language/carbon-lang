@@ -1,13 +1,15 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce | llvm-dis | not grep null
+; RUN: llvm-as < %s | opt -adce | llvm-dis | grep null
 
-declare int %strlen(sbyte*)
+declare i32 @strlen(i8*) readnone
 
-int %test() {
-	;; Dead call should be deleted!
-	invoke int %strlen(sbyte *null) to label %Cont unwind label %Other
-Cont:
-	ret int 0
-Other:
-	ret int 1
+define i32 @test() {
+	; invoke of pure function should not be deleted!
+	invoke i32 @strlen( i8* null ) readnone
+			to label %Cont unwind label %Other		; <i32>:1 [#uses=0]
+
+Cont:		; preds = %0
+	ret i32 0
+
+Other:		; preds = %0
+	ret i32 1
 }
-

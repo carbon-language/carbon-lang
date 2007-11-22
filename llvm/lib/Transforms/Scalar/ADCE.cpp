@@ -34,7 +34,7 @@ using namespace llvm;
 
 STATISTIC(NumBlockRemoved, "Number of basic blocks removed");
 STATISTIC(NumInstRemoved , "Number of instructions removed");
-STATISTIC(NumCallRemoved , "Number of calls and invokes removed");
+STATISTIC(NumCallRemoved , "Number of calls removed");
 
 namespace {
 //===----------------------------------------------------------------------===//
@@ -183,32 +183,6 @@ bool ADCE::doADCE() {
   bool MadeChanges = false;
 
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-
-
-  // Iterate over all invokes in the function, turning invokes into calls if
-  // they cannot throw.
-  for (Function::iterator BB = Func->begin(), E = Func->end(); BB != E; ++BB)
-    if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
-      if (Function *F = II->getCalledFunction())
-        if (AA.onlyReadsMemory(F)) {
-          // The function cannot unwind.  Convert it to a call with a branch
-          // after it to the normal destination.
-          SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
-          CallInst *NewCall = new CallInst(F, Args.begin(), Args.end(), "", II);
-          NewCall->takeName(II);
-          NewCall->setCallingConv(II->getCallingConv());
-          II->replaceAllUsesWith(NewCall);
-          new BranchInst(II->getNormalDest(), II);
-
-          // Update PHI nodes in the unwind destination
-          II->getUnwindDest()->removePredecessor(BB);
-          BB->getInstList().erase(II);
-
-          if (NewCall->use_empty()) {
-            BB->getInstList().erase(NewCall);
-            ++NumCallRemoved;
-          }
-        }
 
   // Iterate over all of the instructions in the function, eliminating trivially
   // dead instructions, and marking instructions live that are known to be
