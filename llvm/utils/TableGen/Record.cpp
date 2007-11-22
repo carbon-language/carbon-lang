@@ -244,20 +244,20 @@ Init *BitsInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   return BI;
 }
 
-void BitsInit::print(std::ostream &OS) const {
+std::string BitsInit::getAsString() const {
   //if (!printInHex(OS)) return;
   //if (!printAsVariable(OS)) return;
   //if (!printAsUnset(OS)) return;
 
-  OS << "{ ";
+  std::string Result = "{ ";
   for (unsigned i = 0, e = getNumBits(); i != e; ++i) {
-    if (i) OS << ", ";
+    if (i) Result += ", ";
     if (Init *Bit = getBit(e-i-1))
-      Bit->print(OS);
+      Result += Bit->getAsString();
     else
-      OS << "*";
+      Result += "*";
   }
-  OS << " }";
+  return Result + " }";
 }
 
 bool BitsInit::printInHex(std::ostream &OS) const {
@@ -330,6 +330,10 @@ Init *BitsInit::resolveReferences(Record &R, const RecordVal *RV) {
   return this;
 }
 
+std::string IntInit::getAsString() const {
+  return itostr(Value);
+}
+
 Init *IntInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
   BitsInit *BI = new BitsInit(Bits.size());
 
@@ -382,13 +386,13 @@ Init *ListInit::resolveReferences(Record &R, const RecordVal *RV) {
   return this;
 }
 
-void ListInit::print(std::ostream &OS) const {
-  OS << "[";
+std::string ListInit::getAsString() const {
+  std::string Result = "[";
   for (unsigned i = 0, e = Values.size(); i != e; ++i) {
-    if (i) OS << ", ";
-    OS << *Values[i];
+    if (i) Result += ", ";
+    Result += Values[i]->getAsString();
   }
-  OS << "]";
+  return Result + "]";
 }
 
 Init *BinOpInit::Fold() {
@@ -464,19 +468,16 @@ Init *BinOpInit::resolveReferences(Record &R, const RecordVal *RV) {
   return Fold();
 }
 
-void BinOpInit::print(std::ostream &OS) const {
+std::string BinOpInit::getAsString() const {
+  std::string Result;
   switch (Opc) {
-  case CONCAT: OS << "!con"; break;
-  case SHL: OS << "!shl"; break;
-  case SRA: OS << "!sra"; break;
-  case SRL: OS << "!srl"; break;
-  case STRCONCAT: OS << "!strconcat"; break;
+  case CONCAT: Result = "!con"; break;
+  case SHL: Result = "!shl"; break;
+  case SRA: Result = "!sra"; break;
+  case SRL: Result = "!srl"; break;
+  case STRCONCAT: Result = "!strconcat"; break;
   }
-  OS << "(";
-  LHS->print(OS);
-  OS << ", ";
-  RHS->print(OS);
-  OS << ")";
+  return Result + "(" + LHS->getAsString() + ", " + RHS->getAsString() + ")";
 }
 
 Init *TypedInit::convertInitializerBitRange(const std::vector<unsigned> &Bits) {
@@ -579,11 +580,18 @@ Init *VarInit::resolveReferences(Record &R, const RecordVal *RV) {
   return this;
 }
 
+std::string VarBitInit::getAsString() const {
+   return TI->getAsString() + "{" + utostr(Bit) + "}";
+}
 
 Init *VarBitInit::resolveReferences(Record &R, const RecordVal *RV) {
   if (Init *I = getVariable()->resolveBitReference(R, RV, getBitNum()))
     return I;
   return this;
+}
+
+std::string VarListElementInit::getAsString() const {
+  return TI->getAsString() + "[" + utostr(Element) + "]";
 }
 
 Init *VarListElementInit::resolveReferences(Record &R, const RecordVal *RV) {
@@ -618,8 +626,8 @@ Init *DefInit::getFieldInit(Record &R, const std::string &FieldName) const {
 }
 
 
-void DefInit::print(std::ostream &OS) const {
-  OS << Def->getName();
+std::string DefInit::getAsString() const {
+  return Def->getName();
 }
 
 Init *FieldInit::resolveBitReference(Record &R, const RecordVal *RV,
@@ -679,17 +687,17 @@ Init *DagInit::resolveReferences(Record &R, const RecordVal *RV) {
 }
 
 
-void DagInit::print(std::ostream &OS) const {
-  OS << "(" << *Val;
+std::string DagInit::getAsString() const {
+  std::string Result = "(" + Val->getAsString();
   if (Args.size()) {
-    OS << " " << *Args[0];
-    if (!ArgNames[0].empty()) OS << ":$" << ArgNames[0];
+    Result += " " + Args[0]->getAsString();
+    if (!ArgNames[0].empty()) Result += ":$" + ArgNames[0];
     for (unsigned i = 1, e = Args.size(); i != e; ++i) {
-      OS << ", " << *Args[i];
-      if (!ArgNames[i].empty()) OS << ":$" << ArgNames[i];
+      Result += ", " + Args[i]->getAsString();
+      if (!ArgNames[i].empty()) Result += ":$" + ArgNames[i];
     }
   }
-  OS << ")";
+  return Result + ")";
 }
 
 

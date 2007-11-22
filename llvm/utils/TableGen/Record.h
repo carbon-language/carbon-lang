@@ -429,7 +429,10 @@ struct Init {
   virtual bool isComplete() const { return true; }
 
   /// print - Print out this value.
-  virtual void print(std::ostream &OS) const = 0;
+  void print(std::ostream &OS) const { OS << getAsString(); }
+
+  /// getAsString - Convert this value to a string form.
+  virtual std::string getAsString() const = 0;
 
   /// dump - Debugging method that may be called through a debugger, just
   /// invokes print on cerr.
@@ -497,7 +500,7 @@ public:
   }
 
   virtual bool isComplete() const { return false; }
-  virtual void print(std::ostream &OS) const { OS << "?"; }
+  virtual std::string getAsString() const { return "?"; }
 };
 
 
@@ -514,7 +517,7 @@ public:
     return Ty->convertValue(this);
   }
 
-  virtual void print(std::ostream &OS) const { OS << (Value ? "1" : "0"); }
+  virtual std::string getAsString() const { return Value ? "1" : "0"; }
 };
 
 /// BitsInit - { a, b, c } - Represents an initializer for a BitsRecTy value.
@@ -547,7 +550,7 @@ public:
       if (!getBit(i)->isComplete()) return false;
     return true;
   }
-  virtual void print(std::ostream &OS) const;
+  virtual std::string getAsString() const;
 
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
@@ -573,7 +576,7 @@ public:
   }
   virtual Init *convertInitializerBitRange(const std::vector<unsigned> &Bits);
 
-  virtual void print(std::ostream &OS) const { OS << Value; }
+  virtual std::string getAsString() const;
 };
 
 
@@ -590,7 +593,7 @@ public:
     return Ty->convertValue(this);
   }
 
-  virtual void print(std::ostream &OS) const { OS << "\"" << Value << "\""; }
+  virtual std::string getAsString() const { return "\"" + Value + "\""; }
 };
 
 /// CodeInit - "[{...}]" - Represent a code fragment.
@@ -606,7 +609,7 @@ public:
     return Ty->convertValue(this);
   }
 
-  virtual void print(std::ostream &OS) const { OS << "[{" << Value << "}]"; }
+  virtual std::string getAsString() const { return "[{" + Value + "}]"; }
 };
 
 /// ListInit - [AL, AH, CL] - Represent a list of defs
@@ -639,7 +642,7 @@ public:
   ///
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
-  virtual void print(std::ostream &OS) const;
+  virtual std::string getAsString() const;
 };
 
 /// BinOpInit - !op (X, Y) - Combine two inits.
@@ -668,7 +671,7 @@ public:
   
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
   
-  virtual void print(std::ostream &OS) const;
+  virtual std::string getAsString() const;
 };
 
 
@@ -728,7 +731,7 @@ public:
   ///
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
-  virtual void print(std::ostream &OS) const { OS << VarName; }
+  virtual std::string getAsString() const { return VarName; }
 };
 
 
@@ -751,9 +754,7 @@ public:
   TypedInit *getVariable() const { return TI; }
   unsigned getBitNum() const { return Bit; }
 
-  virtual void print(std::ostream &OS) const {
-    TI->print(OS); OS << "{" << Bit << "}";
-  }
+  virtual std::string getAsString() const;
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 };
 
@@ -786,9 +787,7 @@ public:
   virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                             unsigned Elt);
 
-  virtual void print(std::ostream &OS) const {
-    TI->print(OS); OS << "[" << Element << "]";
-  }
+  virtual std::string getAsString() const;
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 };
 
@@ -810,7 +809,7 @@ public:
   virtual RecTy *getFieldType(const std::string &FieldName) const;
   virtual Init *getFieldInit(Record &R, const std::string &FieldName) const;
 
-  virtual void print(std::ostream &OS) const;
+  virtual std::string getAsString() const;
 };
 
 
@@ -836,8 +835,8 @@ public:
 
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
-  virtual void print(std::ostream &OS) const {
-    Rec->print(OS); OS << "." << FieldName;
+  virtual std::string getAsString() const {
+    return Rec->getAsString() + "." + FieldName;
   }
 };
 
@@ -887,7 +886,7 @@ public:
   
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 
-  virtual void print(std::ostream &OS) const;
+  virtual std::string getAsString() const;
 };
 
 //===----------------------------------------------------------------------===//
