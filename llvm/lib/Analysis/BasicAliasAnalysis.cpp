@@ -952,6 +952,12 @@ BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
   if (Ptr != OnlyReadsMemoryTable->end() && strcmp(*Ptr, NamePtr) == 0)
     return OnlyReadsMemory;
 
+  const ParamAttrsList *Attrs = F->getFunctionType()->getParamAttrs();
+  if (Attrs && Attrs->paramHasAttr(0, ParamAttr::ReadNone))
+    return DoesNotAccessMemory;
+  if (Attrs && Attrs->paramHasAttr(0, ParamAttr::ReadOnly))
+    return OnlyReadsMemory;
+
   return UnknownModRefBehavior;
 }
 
