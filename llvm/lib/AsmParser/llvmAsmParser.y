@@ -1090,7 +1090,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 
 // Function Attributes
 %token SIGNEXT ZEROEXT NORETURN INREG SRET NOUNWIND NOALIAS BYVAL NEST
-%token CONST PURE
+%token READNONE READONLY
 
 // Visibility Styles
 %token DEFAULT HIDDEN PROTECTED
@@ -1234,8 +1234,8 @@ FuncAttr      : NORETURN { $$ = ParamAttr::NoReturn; }
               | NOUNWIND { $$ = ParamAttr::NoUnwind; }
               | ZEROEXT  { $$ = ParamAttr::ZExt;     }
               | SIGNEXT  { $$ = ParamAttr::SExt;     }
-              | PURE     { $$ = ParamAttr::Pure;     }
-              | CONST    { $$ = ParamAttr::Const;    }
+              | READNONE { $$ = ParamAttr::ReadNone; }
+              | READONLY { $$ = ParamAttr::ReadOnly; }
               ;
 
 OptFuncAttrs  : /* empty */ { $$ = ParamAttr::None; }

@@ -813,13 +813,13 @@ a power of 2.</p>
     <dt><tt>nest</tt></dt>
     <dd>This indicates that the parameter can be excised using the
     <a href="#int_trampoline">trampoline intrinsics</a>.</dd>
-    <dt><tt>pure</tt></dt>
+    <dt><tt>readonly</tt></dt>
     <dd>This function attribute indicates that the function has no side-effects
-    except for producing a return value.  The value returned must only depend on
-    the function arguments and/or global variables.  It may use values obtained
-    by dereferencing pointers.</dd>
-    <dt><tt>const</tt></dt>
-    <dd>A <tt>const</tt> function has the same restrictions as a <tt>pure</tt>
+    except for producing a return value or throwing an exception.  The value
+    returned must only depend on the function arguments and/or global variables.
+    It may use values obtained by dereferencing pointers.</dd>
+    <dt><tt>readnone</tt></dt>
+    <dd>A <tt>readnone</tt> function has the same restrictions as a <tt>readonly</tt>
     function, but in addition it is not allowed to dereference any pointer arguments
     or global variables.
   </dl>

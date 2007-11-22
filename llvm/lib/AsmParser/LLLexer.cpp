@@ -484,8 +484,8 @@ int LLLexer::LexIdentifier() {
   KEYWORD("noalias", NOALIAS);
   KEYWORD("byval", BYVAL);
   KEYWORD("nest", NEST);
-  KEYWORD("pure", PURE);
-  KEYWORD("const", CONST);
+  KEYWORD("readnone", READNONE);
+  KEYWORD("readonly", READONLY);
   
   KEYWORD("type", TYPE);
   KEYWORD("opaque", OPAQUE);

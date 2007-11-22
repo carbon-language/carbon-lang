@@ -399,7 +399,7 @@ void Verifier::visitFunction(Function &F) {
 
   const uint16_t ParameterIncompatible =
     ParamAttr::NoReturn | ParamAttr::NoUnwind |
-    ParamAttr::Const    | ParamAttr::Pure;
+    ParamAttr::ReadNone | ParamAttr::ReadOnly;
 
   const uint16_t MutuallyIncompatible[3] = {
     ParamAttr::ByVal | ParamAttr::InReg |
@@ -407,7 +407,7 @@ void Verifier::visitFunction(Function &F) {
 
     ParamAttr::ZExt | ParamAttr::SExt,
 
-    ParamAttr::Pure | ParamAttr::Const
+    ParamAttr::ReadNone | ParamAttr::ReadOnly
   };
 
   const uint16_t IntegerTypeOnly =

@@ -39,8 +39,8 @@ enum Attributes {
   NoAlias    = 1 << 6,  ///< Considered to not alias after call
   ByVal      = 1 << 7,  ///< Pass structure by value
   Nest       = 1 << 8,  ///< Nested function static chain
-  Pure       = 1 << 9,  ///< Function is pure
-  Const      = 1 << 10  ///< Function is const
+  ReadNone   = 1 << 9,  ///< Function does not access memory
+  ReadOnly   = 1 << 10  ///< Function only reads from memory
 };
 
 }
