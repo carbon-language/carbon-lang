@@ -116,7 +116,7 @@ bool TGParser::SetValue(Record *CurRec, LocTy Loc, const std::string &ValName,
   if (RV->setValue(V))
    return Error(Loc, "Value '" + ValName + "' of type '" + 
                 RV->getType()->getAsString() + 
-                "' is incompatible with initializer ''"); // FIXME: Add init!
+                "' is incompatible with initializer '" + V->getAsString() +"'");
   return false;
 }
 
@@ -586,9 +586,8 @@ Init *TGParser::ParseSimpleValue(Record *CurRec) {
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
       Init *Bit = Vals[i]->convertInitializerTo(new BitRecTy());
       if (Bit == 0) {
-        // FIXME: Include value in error.
-        Error(BraceLoc, "Element #" + utostr(i) + " ("/* << *Vals[i]
-             <<*/ ") is not convertable to a bit");
+        Error(BraceLoc, "Element #" + utostr(i) + " (" + Vals[i]->getAsString()+
+              ") is not convertable to a bit");
         return 0;
       }
       Result->setBit(Vals.size()-i-1, Bit);
@@ -737,9 +736,8 @@ Init *TGParser::ParseValue(Record *CurRec) {
         return 0;
       }
       if (!Result->getFieldType(Lex.getCurStrVal())) {
-        // FIXME INCLUDE VALUE IN ERROR.
         TokError("Cannot access field '" + Lex.getCurStrVal() + "' of value '" +
-                 /*<< *$1 <<*/ "'");
+                 Result->getAsString() + "'");
         return 0;
       }
       Result = new FieldInit(Result, Lex.getCurStrVal());
