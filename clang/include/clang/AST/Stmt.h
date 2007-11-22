@@ -706,16 +706,47 @@ public:
 class AsmStmt : public Stmt {
   SourceLocation AsmLoc, RParenLoc;
   StringLiteral *AsmStr;
-  // FIXME: This doesn't capture most of the interesting pieces.
+
+  unsigned NumOutputs;
+  unsigned NumInputs;
+  
+  llvm::SmallVector<std::string, 4> Names;
+  llvm::SmallVector<StringLiteral*, 4> Constraints;
+  llvm::SmallVector<Expr*, 4> Exprs;
+
+  llvm::SmallVector<StringLiteral*, 4> Clobbers;
 public:
-  AsmStmt(SourceLocation asmloc, StringLiteral *asmstr, 
-          SourceLocation rparenloc)
-    : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc),
-      AsmStr(asmstr) {}
+  AsmStmt(SourceLocation asmloc, 
+          unsigned numoutputs,
+          unsigned numinputs,
+          std::string *names,
+          StringLiteral **constraints,
+          Expr **exprs,
+          StringLiteral *asmstr,
+          unsigned numclobbers,
+          StringLiteral **clobbers,
+          SourceLocation rparenloc);
+
+  unsigned getNumOutputs() const { return NumOutputs; }
+  const std::string &getOutputName(unsigned i) const
+    { return Names[i]; }
+  StringLiteral *getOutputConstraint(unsigned i)
+    { return Constraints[i]; }
+  Expr *getOutputExpr(unsigned i) { return Exprs[i]; }
+  
+  unsigned getNumInputs() const { return NumInputs; }  
+  const std::string &getInputName(unsigned i) const
+    { return Names[i + NumOutputs]; }
+  StringLiteral *getInputConstraint(unsigned i) 
+    { return Constraints[i + NumOutputs]; }
+  Expr *getInputExpr(unsigned i) { return Exprs[i + NumOutputs]; }
   
   const StringLiteral *getAsmString() const { return AsmStr; }
   StringLiteral *getAsmString() { return AsmStr; }
 
+  unsigned getNumClobbers() const { return Clobbers.size(); }
+  StringLiteral *getClobber(unsigned i) { return Clobbers[i]; }
+  
   virtual SourceRange getSourceRange() const {
     return SourceRange(AsmLoc, RParenLoc);
   }

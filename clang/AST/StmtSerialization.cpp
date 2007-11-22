@@ -197,8 +197,27 @@ ArraySubscriptExpr* ArraySubscriptExpr::CreateImpl(Deserializer& D) {
 
 void AsmStmt::EmitImpl(Serializer& S) const {
   S.Emit(AsmLoc);
+  
   getAsmString()->EmitImpl(S);
   S.Emit(RParenLoc);  
+
+  S.EmitInt(NumOutputs);
+  S.EmitInt(NumInputs);
+
+  unsigned size = NumOutputs + NumInputs;
+
+  for (unsigned i = 0; i < size; ++i)
+    S.EmitCStr(Names[i].c_str());
+  
+  for (unsigned i = 0; i < size; ++i)
+    Constraints[i]->EmitImpl(S);
+
+  for (unsigned i = 0; i < size; ++i)
+    S.EmitOwnedPtr(Exprs[i]);
+  
+  S.EmitInt(Clobbers.size());
+  for (unsigned i = 0, e = Clobbers.size(); i != e; ++i)
+    Clobbers[i]->EmitImpl(S);
 }
 
 AsmStmt* AsmStmt::CreateImpl(Deserializer& D) {
@@ -206,7 +225,37 @@ AsmStmt* AsmStmt::CreateImpl(Deserializer& D) {
   StringLiteral *AsmStr = StringLiteral::CreateImpl(D);
   SourceLocation PLoc = SourceLocation::ReadVal(D);
   
-  return new AsmStmt(ALoc, AsmStr, PLoc);  
+  AsmStmt *Stmt = new AsmStmt(ALoc, 0, 0, 0, 0, 0,  
+                              AsmStr, 
+                              0, 0, PLoc);  
+
+  Stmt->NumOutputs = D.ReadInt();
+  Stmt->NumInputs = D.ReadInt();
+  
+  unsigned size = Stmt->NumOutputs + Stmt->NumInputs;
+
+  Stmt->Names.reserve(size);
+  for (unsigned i = 0; i < size; ++i) {
+    std::vector<char> data;
+    D.ReadCStr(data, false);
+    
+    Stmt->Names.push_back(std::string(&data[0], data.size()));
+  }    
+
+  Stmt->Constraints.reserve(size);
+  for (unsigned i = 0; i < size; ++i)
+    Stmt->Constraints.push_back(StringLiteral::CreateImpl(D));
+  
+  Stmt->Exprs.reserve(size);
+  for (unsigned i = 0; i < size; ++i)
+    Stmt->Exprs.push_back(D.ReadOwnedPtr<Expr>());
+  
+  unsigned NumClobbers = D.ReadInt();
+  Stmt->Clobbers.reserve(NumClobbers);
+  for (unsigned i = 0; i < NumClobbers; ++i)
+    Stmt->Clobbers.push_back(StringLiteral::CreateImpl(D));
+  
+  return Stmt;
 }
 
 void BinaryOperator::EmitImpl(Serializer& S) const {

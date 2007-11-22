@@ -946,12 +946,25 @@ Parser::StmtResult Parser::ParseAsmStatement() {
   ExprResult AsmString = ParseAsmStringLiteral();
   if (AsmString.isInvalid)
     return true;
-    
-  // Parse Outputs, if present.
-  ParseAsmOperandsOpt();
+  
+  llvm::SmallVector<std::string, 4> Names;
+  llvm::SmallVector<ExprTy*, 4> Constraints;
+  llvm::SmallVector<ExprTy*, 4> Exprs;
+  
+  // Parse Outputs, if present. 
+  ParseAsmOperandsOpt(Names, Constraints, Exprs);
+  
+  unsigned NumOutputs = Names.size();
   
   // Parse Inputs, if present.
-  ParseAsmOperandsOpt();
+  ParseAsmOperandsOpt(Names, Constraints, Exprs);
+  assert(Names.size() == Constraints.size() &&
+         Constraints.size() == Exprs.size() 
+         && "Input operand size mismatch!");
+
+  unsigned NumInputs = Names.size() - NumOutputs;
+  
+  llvm::SmallVector<ExprTy*, 4> Clobbers;
   
   // Parse the clobbers, if present.
   if (Tok.is(tok::colon)) {
@@ -959,8 +972,13 @@ Parser::StmtResult Parser::ParseAsmStatement() {
     
     // Parse the asm-string list for clobbers.
     while (1) {
-      ParseAsmStringLiteral();
+      ExprResult Clobber = ParseAsmStringLiteral();
 
+      if (Clobber.isInvalid)
+        break;
+      
+      Clobbers.push_back(Clobber.Val);
+      
       if (Tok.isNot(tok::comma)) break;
       ConsumeToken();
     }
@@ -968,8 +986,11 @@ Parser::StmtResult Parser::ParseAsmStatement() {
   
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, Loc);
   
-  // FIXME: Pass all the details down to the action.
-  return Actions.ActOnAsmStmt(AsmLoc, AsmString.Val, RParenLoc);
+  return Actions.ActOnAsmStmt(AsmLoc, NumOutputs, NumInputs,
+                              &Names[0], &Constraints[0], &Exprs[0],
+                              AsmString.Val,
+                              Clobbers.size(), &Clobbers[0],
+                              RParenLoc);
 }
 
 /// ParseAsmOperands - Parse the asm-operands production as used by
@@ -984,7 +1005,9 @@ Parser::StmtResult Parser::ParseAsmStatement() {
 ///         asm-string-literal '(' expression ')'
 ///         '[' identifier ']' asm-string-literal '(' expression ')'
 ///
-void Parser::ParseAsmOperandsOpt() {
+void Parser::ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
+                                 llvm::SmallVectorImpl<ExprTy*> &Constraints,
+                                 llvm::SmallVectorImpl<ExprTy*> &Exprs) {
   // Only do anything if this operand is present.
   if (Tok.isNot(tok::colon)) return;
   ConsumeToken();
@@ -993,7 +1016,7 @@ void Parser::ParseAsmOperandsOpt() {
   if (!isTokenStringLiteral() && Tok.isNot(tok::l_square))
     return;
   
-  while (1) {
+  while (1) {   
     // Read the [id] if present.
     if (Tok.is(tok::l_square)) {
       SourceLocation Loc = ConsumeBracket();
@@ -1004,13 +1027,20 @@ void Parser::ParseAsmOperandsOpt() {
         return;
       }
       
-      // Eat the identifier, FIXME: capture it.
+      IdentifierInfo *II = Tok.getIdentifierInfo();
       ConsumeToken();
-      
+
+      Names.push_back(std::string(II->getName(), II->getLength()));
       MatchRHSPunctuation(tok::r_square, Loc);
-    }
+    } else
+      Names.push_back(std::string());
     
-    ParseAsmStringLiteral();
+    ExprResult Constraint = ParseAsmStringLiteral();
+    if (Constraint.isInvalid) {
+        SkipUntil(tok::r_paren);
+        return;
+    }
+    Constraints.push_back(Constraint.Val);
 
     if (Tok.isNot(tok::l_paren)) {
       Diag(Tok, diag::err_expected_lparen_after, "asm operand");
@@ -1024,7 +1054,7 @@ void Parser::ParseAsmOperandsOpt() {
       SkipUntil(tok::r_paren);
       return;
     }
-
+    Exprs.push_back(Res.Val);
     // Eat the comma and continue parsing if it exists.
     if (Tok.isNot(tok::comma)) return;
     ConsumeToken();

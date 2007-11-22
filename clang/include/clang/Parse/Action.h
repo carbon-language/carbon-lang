@@ -287,7 +287,14 @@ public:
     return 0;
   }
   virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
+                                  unsigned NumOutputs,
+                                  unsigned NumInputs,
+                                  std::string *Names,
+                                  ExprTy **Constraints,
+                                  ExprTy **Exprs,
                                   ExprTy *AsmString,
+                                  unsigned NumClobbers,
+                                  ExprTy **Clobbers,
                                   SourceLocation RParenLoc) {
     return 0;
   }

@@ -645,11 +645,29 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
 }
 
 Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
+                                    unsigned NumOutputs,
+                                    unsigned NumInputs,
+                                    std::string *Names,
+                                    ExprTy **Constraints,
+                                    ExprTy **Exprs,
                                     ExprTy *AsmString,
+                                    unsigned NumClobbers,
+                                    ExprTy **Clobbers,
                                     SourceLocation RParenLoc) {
   Expr *E = (Expr *)AsmString;
     
-  return new AsmStmt(AsmLoc, cast<StringLiteral>(E), RParenLoc);
+  // FIXME: Make sure that the expressions are valid.
+  
+  return new AsmStmt(AsmLoc,
+                     NumOutputs,
+                     NumInputs, 
+                     Names,
+                     reinterpret_cast<StringLiteral**>(Constraints),
+                     reinterpret_cast<Expr**>(Exprs),
+                     cast<StringLiteral>(E),
+                     NumClobbers,
+                     reinterpret_cast<StringLiteral**>(Clobbers),
+                     RParenLoc);
 }
 
 Action::StmtResult

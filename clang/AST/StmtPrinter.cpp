@@ -328,6 +328,57 @@ void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {
 void StmtPrinter::VisitAsmStmt(AsmStmt *Node) {
   Indent() << "asm (";
   VisitStringLiteral(Node->getAsmString());
+  
+  // Outputs
+  if (Node->getNumOutputs() != 0 || Node->getNumInputs() != 0 ||
+      Node->getNumClobbers() != 0)
+    OS << " : ";
+  
+  for (unsigned i = 0, e = Node->getNumOutputs(); i != e; ++i) {
+    if (i != 0)
+      OS << ", ";
+    
+    if (!Node->getOutputName(i).empty()) {
+      OS << '[';
+      OS << Node->getOutputName(i);
+      OS << "] ";
+    }
+    
+    VisitStringLiteral(Node->getOutputConstraint(i));
+    OS << " ";
+    Visit(Node->getOutputExpr(i));
+  }
+  
+  // Inputs
+  if (Node->getNumInputs() != 0 || Node->getNumClobbers() != 0)
+    OS << " : ";
+  
+  for (unsigned i = 0, e = Node->getNumInputs(); i != e; ++i) {
+    if (i != 0)
+      OS << ", ";
+    
+    if (!Node->getInputName(i).empty()) {
+      OS << '[';
+      OS << Node->getInputName(i);
+      OS << "] ";
+    }
+    
+    VisitStringLiteral(Node->getInputConstraint(i));
+    OS << " ";
+    Visit(Node->getInputExpr(i));
+  }
+  
+  // Clobbers
+  if (Node->getNumClobbers() != 0)
+    OS << " : ";
+    
+  for (unsigned i = 0, e = Node->getNumClobbers(); i != e; ++i) {
+    if (i != 0)
+      OS << ", ";
+      
+    VisitStringLiteral(Node->getClobber(i));
+  }
+  
   OS << ");\n";
 }
 

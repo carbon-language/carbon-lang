@@ -347,7 +347,14 @@ public:
                                      ExprTy *RetValExp);
   
   virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
+                                  unsigned NumOutputs,
+                                  unsigned NumInputs,
+                                  std::string *Names,
+                                  ExprTy **Constraints,
+                                  ExprTy **Exprs,
                                   ExprTy *AsmString,
+                                  unsigned NumClobbers,
+                                  ExprTy **Clobbers,
                                   SourceLocation RParenLoc);
   
   virtual StmtResult ActOnObjcAtCatchStmt(SourceLocation AtLoc, 

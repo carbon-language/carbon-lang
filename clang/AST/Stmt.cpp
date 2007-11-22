@@ -111,6 +111,29 @@ bool Stmt::hasImplicitControlFlow() const {
   }
 }
 
+AsmStmt::AsmStmt(SourceLocation asmloc, 
+                 unsigned numoutputs,
+                 unsigned numinputs,
+                 std::string *names,
+                 StringLiteral **constraints,
+                 Expr **exprs,
+                 StringLiteral *asmstr,
+                 unsigned numclobbers,
+                 StringLiteral **clobbers,                 
+                 SourceLocation rparenloc)
+  : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)
+  , NumOutputs(numoutputs), NumInputs(numinputs)
+{
+  for (unsigned i = 0, e = numinputs + numoutputs; i != e; i++) {
+    Names.push_back(names[i]);
+    Exprs.push_back(exprs[i]);
+    Constraints.push_back(constraints[i]);    
+  }
+  
+  for (unsigned i = 0; i != numclobbers; i++)
+    Clobbers.push_back(clobbers[i]);
+}
+
 //===----------------------------------------------------------------------===//
 //  Child Iterators for iterating over subexpressions/substatements
 //===----------------------------------------------------------------------===//

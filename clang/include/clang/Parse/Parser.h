@@ -388,7 +388,10 @@ private:
   StmtResult ParseAsmStatement();
   StmtResult ParseObjCTryStmt(SourceLocation atLoc);
   StmtResult ParseObjCThrowStmt(SourceLocation atLoc);
-  void ParseAsmOperandsOpt();
+  void ParseAsmOperandsOpt(llvm::SmallVectorImpl<std::string> &Names,
+                           llvm::SmallVectorImpl<ExprTy*> &Constraints,
+                           llvm::SmallVectorImpl<ExprTy*> &Exprs);
+
 
   //===--------------------------------------------------------------------===//
   // C99 6.7: Declarations.
