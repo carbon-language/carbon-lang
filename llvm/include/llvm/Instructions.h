@@ -640,24 +640,34 @@ public:
   /// @brief Return the signed version of the predicate.
   static Predicate getSignedPredicate(Predicate pred);
 
-  /// This also tests for commutativity. If isEquality() returns true then
-  /// the predicate is also commutative. 
-  /// @returns true if the predicate of this instruction is EQ or NE.
-  /// @brief Determine if this is an equality predicate.
+  /// isEquality - Return true if this predicate is either EQ or NE.  This also
+  /// tests for commutativity.
+  static bool isEquality(Predicate P) {
+    return P == ICMP_EQ || P == ICMP_NE;
+  }
+  
+  /// isEquality - Return true if this predicate is either EQ or NE.  This also
+  /// tests for commutativity.
   bool isEquality() const {
-    return SubclassData == ICMP_EQ || SubclassData == ICMP_NE;
+    return isEquality(getPredicate());
   }
 
   /// @returns true if the predicate of this ICmpInst is commutative
   /// @brief Determine if this relation is commutative.
   bool isCommutative() const { return isEquality(); }
 
-  /// @returns true if the predicate is relational (not EQ or NE). 
-  /// @brief Determine if this a relational predicate.
+  /// isRelational - Return true if the predicate is relational (not EQ or NE). 
+  ///
   bool isRelational() const {
     return !isEquality();
   }
 
+  /// isRelational - Return true if the predicate is relational (not EQ or NE). 
+  ///
+  static bool isRelational(Predicate P) {
+    return !isEquality(P);
+  }
+  
   /// @returns true if the predicate of this ICmpInst is signed, false otherwise
   /// @brief Determine if this instruction's predicate is signed.
   bool isSignedPredicate() const { return isSignedPredicate(getPredicate()); }
