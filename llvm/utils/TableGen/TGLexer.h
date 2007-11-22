@@ -17,6 +17,7 @@
 #include <vector>
 #include <string>
 #include <iosfwd>
+#include <cassert>
 
 namespace llvm {
 class MemoryBuffer;
