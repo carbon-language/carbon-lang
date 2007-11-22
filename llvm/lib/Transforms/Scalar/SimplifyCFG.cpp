@@ -71,6 +71,28 @@ static void ChangeToUnreachable(Instruction *I) {
   }
 }
 
+/// ChangeToCall - Convert the specified invoke into a normal call.
+static void ChangeToCall(InvokeInst *II) {
+  BasicBlock *BB = II->getParent();
+  SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
+  CallInst *NewCall = new CallInst(II->getCalledValue(), Args.begin(),
+                                   Args.end(), "", II);
+  NewCall->takeName(II);
+  NewCall->setCallingConv(II->getCallingConv());
+  NewCall->setParamAttrs(II->getParamAttrs());
+  II->replaceAllUsesWith(NewCall);
+
+  // Follow the call by a branch to the normal destination.
+  new BranchInst(II->getNormalDest(), II);
+
+  // Update PHI nodes in the unwind destination
+  II->getUnwindDest()->removePredecessor(BB);
+  BB->getInstList().erase(II);
+
+  if (NewCall->use_empty())
+    BB->getInstList().erase(NewCall);
+}
+
 /// IsNoReturn - Return true if the specified call is to a no-return function.
 static bool IsNoReturn(const CallInst *CI) {
   if (const ParamAttrsList *Attrs = CI->getParamAttrs())
@@ -85,6 +107,25 @@ static bool IsNoReturn(const CallInst *CI) {
     const FunctionType *FT = Callee->getFunctionType();
     if (const ParamAttrsList *Attrs = FT->getParamAttrs())
       if (Attrs->paramHasAttr(0, ParamAttr::NoReturn))
+        return true;
+  }
+  return false;
+}
+
+/// IsNoUnwind - Return true if the specified invoke is to a no-unwind function.
+static bool IsNoUnwind(const InvokeInst *II) {
+  if (const ParamAttrsList *Attrs = II->getParamAttrs())
+    if (Attrs->paramHasAttr(0, ParamAttr::NoUnwind))
+      return true;
+  
+  if (const Function *Callee = II->getCalledFunction()) {
+    if (const ParamAttrsList *Attrs = Callee->getParamAttrs())
+      if (Attrs->paramHasAttr(0, ParamAttr::NoUnwind))
+        return true;
+  
+    const FunctionType *FT = Callee->getFunctionType();
+    if (const ParamAttrsList *Attrs = FT->getParamAttrs())
+      if (Attrs->paramHasAttr(0, ParamAttr::NoUnwind))
         return true;
   }
   return false;
@@ -106,7 +147,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
 
     // Do a quick scan of the basic block, turning any obviously unreachable
     // instructions into LLVM unreachable insts.  The instruction combining pass
-    // canonnicalizes unreachable insts into stores to null or undef.
+    // canonicalizes unreachable insts into stores to null or undef.
     for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E;++BBI){
       if (CallInst *CI = dyn_cast<CallInst>(BBI)) {
         if (IsNoReturn(CI)) {
@@ -130,6 +171,13 @@ static bool MarkAliveBlocks(BasicBlock *BB,
           break;
         }
     }
+
+    // Turn invokes that call 'nounwind' functions into ordinary calls.
+    if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
+      if (IsNoUnwind(II)) {
+        ChangeToCall(II);
+        Changed = true;
+      }
 
     Changed |= ConstantFoldTerminator(BB);
     for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
