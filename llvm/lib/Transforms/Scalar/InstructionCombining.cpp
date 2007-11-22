@@ -3463,7 +3463,12 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             LHSCC != ICmpInst::ICMP_UGE && LHSCC != ICmpInst::ICMP_ULE &&
             RHSCC != ICmpInst::ICMP_UGE && RHSCC != ICmpInst::ICMP_ULE &&
             LHSCC != ICmpInst::ICMP_SGE && LHSCC != ICmpInst::ICMP_SLE &&
-            RHSCC != ICmpInst::ICMP_SGE && RHSCC != ICmpInst::ICMP_SLE) {
+            RHSCC != ICmpInst::ICMP_SGE && RHSCC != ICmpInst::ICMP_SLE &&
+            
+            // Don't try to fold ICMP_SLT + ICMP_ULT.
+            (ICmpInst::isEquality(LHSCC) || ICmpInst::isEquality(RHSCC) ||
+             ICmpInst::isSignedPredicate(LHSCC) == 
+                 ICmpInst::isSignedPredicate(RHSCC))) {
           // Ensure that the larger constant is on the RHS.
           ICmpInst::Predicate GT = ICmpInst::isSignedPredicate(LHSCC) ? 
             ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
