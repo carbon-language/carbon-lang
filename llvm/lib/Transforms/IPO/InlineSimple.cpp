@@ -59,6 +59,10 @@ bool SimpleInliner::doInitialization(CallGraph &CG) {
   if (GV == 0)
     return false;
 
+  // Don't crash on invalid code
+  if (!GV->hasInitializer())
+    return false;
+  
   const ConstantArray *InitList = dyn_cast<ConstantArray>(GV->getInitializer());
   
   if (InitList == 0)
