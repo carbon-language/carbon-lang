@@ -12,19 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "TGLexer.h"
-#include "Record.h"
 #include "llvm/Support/Streams.h"
-#include "Record.h"
 #include "llvm/Support/MemoryBuffer.h"
-typedef std::pair<llvm::Record*, std::vector<llvm::Init*>*> SubClassRefTy;
-#include "FileParser.h"
+#include <ostream>
 #include "llvm/Config/config.h"
 #include <cctype>
 using namespace llvm;
-
-// FIXME: REMOVE THIS.
-#define YYEOF 0
-#define YYERROR -2
 
 TGLexer::TGLexer(MemoryBuffer *StartBuf) : CurLineNo(1), CurBuf(StartBuf) {
   CurPtr = CurBuf->getBufferStart();
@@ -40,17 +33,11 @@ TGLexer::~TGLexer() {
 }
 
 /// ReturnError - Set the error to the specified string at the specified
-/// location.  This is defined to always return YYERROR.
-int TGLexer::ReturnError(const char *Loc, const std::string &Msg) {
+/// location.  This is defined to always return tgtok::Error.
+tgtok::TokKind TGLexer::ReturnError(const char *Loc, const std::string &Msg) {
   PrintError(Loc, Msg);
-  return YYERROR;
+  return tgtok::Error;
 }
-
-std::ostream &TGLexer::err() const {
-  PrintIncludeStack(*cerr.stream());
-  return *cerr.stream();
-}
-
 
 void TGLexer::PrintIncludeStack(std::ostream &OS) const {
   for (unsigned i = 0, e = IncludeStack.size(); i != e; ++i)
@@ -62,7 +49,8 @@ void TGLexer::PrintIncludeStack(std::ostream &OS) const {
 
 /// PrintError - Print the error at the specified location.
 void TGLexer::PrintError(const char *ErrorLoc,  const std::string &Msg) const {
-  err() << Msg << "\n";
+  PrintIncludeStack(*cerr.stream());
+  cerr << Msg << "\n";
   assert(ErrorLoc && "Location not specified!");
   
   // Scan backward to find the start of the line.
@@ -122,7 +110,7 @@ int TGLexer::getNextChar() {
   }  
 }
 
-int TGLexer::LexToken() {
+tgtok::TokKind TGLexer::LexToken() {
   TokStart = CurPtr;
   // This always consumes at least one character.
   int CurChar = getNextChar();
@@ -133,9 +121,23 @@ int TGLexer::LexToken() {
     if (isalpha(CurChar) || CurChar == '_')
       return LexIdentifier();
       
-    // Unknown character, return the char itself.
-    return (unsigned char)CurChar;
-  case EOF: return YYEOF;
+    // Unknown character, emit an error.
+    return ReturnError(TokStart, "Unexpected character");
+  case EOF: return tgtok::Eof;
+  case ':': return tgtok::colon;
+  case ';': return tgtok::semi;
+  case '.': return tgtok::period;
+  case ',': return tgtok::comma;
+  case '<': return tgtok::less;
+  case '>': return tgtok::greater;
+  case ']': return tgtok::r_square;
+  case '{': return tgtok::l_brace;
+  case '}': return tgtok::r_brace;
+  case '(': return tgtok::l_paren;
+  case ')': return tgtok::r_paren;
+  case '=': return tgtok::equal;
+  case '?': return tgtok::question;
+      
   case 0:
   case ' ':
   case '\t':
@@ -150,9 +152,9 @@ int TGLexer::LexToken() {
       SkipBCPLComment();
     else if (*CurPtr == '*') {
       if (SkipCComment())
-        return YYERROR;
-    } else // Otherwise, return this / as a token.
-      return CurChar;
+        return tgtok::Error;
+    } else // Otherwise, this is an error.
+      return ReturnError(TokStart, "Unexpected character");
     return LexToken();
   case '-': case '+':
   case '0': case '1': case '2': case '3': case '4': case '5': case '6':
@@ -166,7 +168,7 @@ int TGLexer::LexToken() {
 }
 
 /// LexString - Lex "[^"]*"
-int TGLexer::LexString() {
+tgtok::TokKind TGLexer::LexString() {
   const char *StrStart = CurPtr;
   
   while (*CurPtr != '"') {
@@ -180,14 +182,14 @@ int TGLexer::LexString() {
     ++CurPtr;
   }
   
-  Filelval.StrVal = new std::string(StrStart, CurPtr);
+  CurStrVal.assign(StrStart, CurPtr);
   ++CurPtr;
-  return STRVAL;
+  return tgtok::StrVal;
 }
 
-int TGLexer::LexVarName() {
+tgtok::TokKind TGLexer::LexVarName() {
   if (!isalpha(CurPtr[0]) && CurPtr[0] != '_')
-    return '$'; // Invalid varname.
+    return ReturnError(TokStart, "Invalid variable name");
   
   // Otherwise, we're ok, consume the rest of the characters.
   const char *VarNameStart = CurPtr++;
@@ -195,14 +197,14 @@ int TGLexer::LexVarName() {
   while (isalpha(*CurPtr) || isdigit(*CurPtr) || *CurPtr == '_')
     ++CurPtr;
 
-  Filelval.StrVal = new std::string(VarNameStart, CurPtr);
-  return VARNAME;
+  CurStrVal.assign(VarNameStart, CurPtr);
+  return tgtok::VarName;
 }
 
 
-int TGLexer::LexIdentifier() {
+tgtok::TokKind TGLexer::LexIdentifier() {
   // The first letter is [a-zA-Z_].
-  const char *IdentStart = CurPtr-1;
+  const char *IdentStart = TokStart;
   
   // Match the rest of the identifier regex: [0-9a-zA-Z_]*
   while (isalpha(*CurPtr) || isdigit(*CurPtr) || *CurPtr == '_')
@@ -211,45 +213,45 @@ int TGLexer::LexIdentifier() {
   // Check to see if this identifier is a keyword.
   unsigned Len = CurPtr-IdentStart;
   
-  if (Len == 3 && !memcmp(IdentStart, "int", 3)) return INT;
-  if (Len == 3 && !memcmp(IdentStart, "bit", 3)) return BIT;
-  if (Len == 4 && !memcmp(IdentStart, "bits", 4)) return BITS;
-  if (Len == 6 && !memcmp(IdentStart, "string", 6)) return STRING;
-  if (Len == 4 && !memcmp(IdentStart, "list", 4)) return LIST;
-  if (Len == 4 && !memcmp(IdentStart, "code", 4)) return CODE;
-  if (Len == 3 && !memcmp(IdentStart, "dag", 3)) return DAG;
+  if (Len == 3 && !memcmp(IdentStart, "int", 3)) return tgtok::Int;
+  if (Len == 3 && !memcmp(IdentStart, "bit", 3)) return tgtok::Bit;
+  if (Len == 4 && !memcmp(IdentStart, "bits", 4)) return tgtok::Bits;
+  if (Len == 6 && !memcmp(IdentStart, "string", 6)) return tgtok::String;
+  if (Len == 4 && !memcmp(IdentStart, "list", 4)) return tgtok::List;
+  if (Len == 4 && !memcmp(IdentStart, "code", 4)) return tgtok::Code;
+  if (Len == 3 && !memcmp(IdentStart, "dag", 3)) return tgtok::Dag;
   
-  if (Len == 5 && !memcmp(IdentStart, "class", 5)) return CLASS;
-  if (Len == 3 && !memcmp(IdentStart, "def", 3)) return DEF;
-  if (Len == 4 && !memcmp(IdentStart, "defm", 4)) return DEFM;
-  if (Len == 10 && !memcmp(IdentStart, "multiclass", 10)) return MULTICLASS;
-  if (Len == 5 && !memcmp(IdentStart, "field", 5)) return FIELD;
-  if (Len == 3 && !memcmp(IdentStart, "let", 3)) return LET;
-  if (Len == 2 && !memcmp(IdentStart, "in", 2)) return IN;
+  if (Len == 5 && !memcmp(IdentStart, "class", 5)) return tgtok::Class;
+  if (Len == 3 && !memcmp(IdentStart, "def", 3)) return tgtok::Def;
+  if (Len == 4 && !memcmp(IdentStart, "defm", 4)) return tgtok::Defm;
+  if (Len == 10 && !memcmp(IdentStart, "multiclass", 10))
+    return tgtok::MultiClass;
+  if (Len == 5 && !memcmp(IdentStart, "field", 5)) return tgtok::Field;
+  if (Len == 3 && !memcmp(IdentStart, "let", 3)) return tgtok::Let;
+  if (Len == 2 && !memcmp(IdentStart, "in", 2)) return tgtok::In;
   
   if (Len == 7 && !memcmp(IdentStart, "include", 7)) {
-    if (LexInclude()) return YYERROR;
-    return LexToken();
+    if (LexInclude()) return tgtok::Error;
+    return Lex();
   }
     
-  Filelval.StrVal = new std::string(IdentStart, CurPtr);
-  return ID;
+  CurStrVal.assign(IdentStart, CurPtr);
+  return tgtok::Id;
 }
 
 /// LexInclude - We just read the "include" token.  Get the string token that
 /// comes next and enter the include.
 bool TGLexer::LexInclude() {
   // The token after the include must be a string.
-  int Tok = LexToken();
-  if (Tok == YYERROR) return true;
-  if (Tok != STRVAL) {
-    PrintError(getTokenStart(), "Expected filename after include");
+  tgtok::TokKind Tok = LexToken();
+  if (Tok == tgtok::Error) return true;
+  if (Tok != tgtok::StrVal) {
+    PrintError(getLoc(), "Expected filename after include");
     return true;
   }
 
   // Get the string.
-  std::string Filename = *Filelval.StrVal;
-  delete Filelval.StrVal;
+  std::string Filename = CurStrVal;
 
   // Try to find the file.
   MemoryBuffer *NewBuf = MemoryBuffer::getFile(&Filename[0], Filename.size());
@@ -261,8 +263,7 @@ bool TGLexer::LexInclude() {
   }
     
   if (NewBuf == 0) {
-    PrintError(getTokenStart(),
-               "Could not find include file '" + Filename + "'");
+    PrintError(getLoc(), "Could not find include file '" + Filename + "'");
     return true;
   }
   
@@ -296,7 +297,6 @@ void TGLexer::SkipBCPLComment() {
 /// SkipCComment - This skips C-style /**/ comments.  The only difference from C
 /// is that we allow nesting.
 bool TGLexer::SkipCComment() {
-  const char *CommentStart = CurPtr-1;
   ++CurPtr;  // skip the star.
   unsigned CommentDepth = 1;
   
@@ -304,7 +304,7 @@ bool TGLexer::SkipCComment() {
     int CurChar = getNextChar();
     switch (CurChar) {
     case EOF:
-      PrintError(CommentStart, "Unterminated comment!");
+      PrintError(TokStart, "Unterminated comment!");
       return true;
     case '*':
       // End of the comment?
@@ -328,13 +328,11 @@ bool TGLexer::SkipCComment() {
 ///    [-+]?[0-9]+
 ///    0x[0-9a-fA-F]+
 ///    0b[01]+
-int TGLexer::LexNumber() {
-  const char *NumStart = CurPtr-1;
-  
+tgtok::TokKind TGLexer::LexNumber() {
   if (CurPtr[-1] == '0') {
     if (CurPtr[0] == 'x') {
       ++CurPtr;
-      NumStart = CurPtr;
+      const char *NumStart = CurPtr;
       while (isxdigit(CurPtr[0]))
         ++CurPtr;
       
@@ -342,42 +340,41 @@ int TGLexer::LexNumber() {
       if (CurPtr == NumStart)
         return ReturnError(CurPtr-2, "Invalid hexadecimal number");
 
-      Filelval.IntVal = strtoll(NumStart, 0, 16);
-
-      return INTVAL;
+      CurIntVal = strtoll(NumStart, 0, 16);
+      return tgtok::IntVal;
     } else if (CurPtr[0] == 'b') {
       ++CurPtr;
-      NumStart = CurPtr;
+      const char *NumStart = CurPtr;
       while (CurPtr[0] == '0' || CurPtr[0] == '1')
         ++CurPtr;
 
       // Requires at least one binary digit.
       if (CurPtr == NumStart)
         return ReturnError(CurPtr-2, "Invalid binary number");
-
-      Filelval.IntVal = strtoll(NumStart, 0, 2);
-      return INTVAL;
+      CurIntVal = strtoll(NumStart, 0, 2);
+      return tgtok::IntVal;
     }
   }
 
   // Check for a sign without a digit.
-  if (CurPtr[-1] == '-' || CurPtr[-1] == '+') {
-    if (!isdigit(CurPtr[0]))
-      return CurPtr[-1];
+  if (!isdigit(CurPtr[0])) {
+    if (CurPtr[-1] == '-')
+      return tgtok::minus;
+    else if (CurPtr[-1] == '+')
+      return tgtok::plus;
   }
   
   while (isdigit(CurPtr[0]))
     ++CurPtr;
-
-  Filelval.IntVal = strtoll(NumStart, 0, 10);
-  return INTVAL;
+  CurIntVal = strtoll(TokStart, 0, 10);
+  return tgtok::IntVal;
 }
 
 /// LexBracket - We just read '['.  If this is a code block, return it,
 /// otherwise return the bracket.  Match: '[' and '[{ ( [^}]+ | }[^]] )* }]'
-int TGLexer::LexBracket() {
+tgtok::TokKind TGLexer::LexBracket() {
   if (CurPtr[0] != '{')
-    return '[';
+    return tgtok::l_square;
   ++CurPtr;
   const char *CodeStart = CurPtr;
   while (1) {
@@ -389,8 +386,8 @@ int TGLexer::LexBracket() {
     Char = getNextChar();
     if (Char == EOF) break;
     if (Char == ']') {
-      Filelval.StrVal = new std::string(CodeStart, CurPtr-2);
-      return CODEFRAGMENT;
+      CurStrVal.assign(CodeStart, CurPtr-2);
+      return tgtok::CodeFragment;
     }
   }
   
@@ -398,9 +395,9 @@ int TGLexer::LexBracket() {
 }
 
 /// LexExclaim - Lex '!' and '![a-zA-Z]+'.
-int TGLexer::LexExclaim() {
+tgtok::TokKind TGLexer::LexExclaim() {
   if (!isalpha(*CurPtr))
-    return '!';
+    return ReturnError(CurPtr-1, "Invalid \"!operator\"");
   
   const char *Start = CurPtr++;
   while (isalpha(*CurPtr))
@@ -409,61 +406,12 @@ int TGLexer::LexExclaim() {
   // Check to see which operator this is.
   unsigned Len = CurPtr-Start;
   
-  if (Len == 3 && !memcmp(Start, "con", 3)) return CONCATTOK;
-  if (Len == 3 && !memcmp(Start, "sra", 3)) return SRATOK;
-  if (Len == 3 && !memcmp(Start, "srl", 3)) return SRLTOK;
-  if (Len == 3 && !memcmp(Start, "shl", 3)) return SHLTOK;
-  if (Len == 9 && !memcmp(Start, "strconcat", 9)) return STRCONCATTOK;
+  if (Len == 3 && !memcmp(Start, "con", 3)) return tgtok::XConcat;
+  if (Len == 3 && !memcmp(Start, "sra", 3)) return tgtok::XSRA;
+  if (Len == 3 && !memcmp(Start, "srl", 3)) return tgtok::XSRL;
+  if (Len == 3 && !memcmp(Start, "shl", 3)) return tgtok::XSHL;
+  if (Len == 9 && !memcmp(Start, "strconcat", 9)) return tgtok::XStrConcat;
   
   return ReturnError(Start-1, "Unknown operator");
 }
 
-//===----------------------------------------------------------------------===//
-//  Interfaces used by the Bison parser.
-//===----------------------------------------------------------------------===//
-
-int Fileparse();
-static TGLexer *TheLexer;
-
-namespace llvm {
-  
-std::ostream &err() {
-  return TheLexer->err();
-}
-
-/// ParseFile - this function begins the parsing of the specified tablegen
-/// file.
-///
-void ParseFile(const std::string &Filename, 
-               const std::vector<std::string> &IncludeDirs) {
-  std::string ErrorStr;
-  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(&Filename[0], Filename.size(),
-                                                 &ErrorStr);
-  if (F == 0) {
-    cerr << "Could not open input file '" + Filename + "': " << ErrorStr <<"\n";
-    exit(1);
-  }
-  
-  assert(!TheLexer && "Lexer isn't reentrant yet!");
-  TheLexer = new TGLexer(F);
-  
-  // Record the location of the include directory so that the lexer can find
-  // it later.
-  TheLexer->setIncludeDirs(IncludeDirs);
-  
-  Fileparse();
-  
-  // Cleanup
-  delete TheLexer;
-  TheLexer = 0;
-}
-} // End llvm namespace
-
-
-int Filelex() {
-  assert(TheLexer && "No lexer setup yet!");
-  int Tok = TheLexer->LexToken();
-  if (Tok == YYERROR)
-    exit(1);
-  return Tok;
-}

@@ -16,10 +16,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "Record.h"
+#include "TGParser.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "CallingConvEmitter.h"
 #include "CodeEmitterGen.h"
 #include "RegisterInfoEmitter.h"
@@ -93,16 +95,35 @@ namespace {
               cl::value_desc("directory"), cl::Prefix);
 }
 
-namespace llvm {
-  void ParseFile(const std::string &Filename,
-                 const std::vector<std::string> &IncludeDirs);
-}
-
 RecordKeeper llvm::Records;
+
+/// ParseFile - this function begins the parsing of the specified tablegen
+/// file.
+static bool ParseFile(const std::string &Filename, 
+                      const std::vector<std::string> &IncludeDirs) {
+  std::string ErrorStr;
+  MemoryBuffer *F = MemoryBuffer::getFileOrSTDIN(&Filename[0], Filename.size(),
+                                                 &ErrorStr);
+  if (F == 0) {
+    cerr << "Could not open input file '" + Filename + "': " << ErrorStr <<"\n";
+    return true;
+  }
+  
+  TGParser Parser(F);
+  
+  // Record the location of the include directory so that the lexer can find
+  // it later.
+  Parser.setIncludeDirs(IncludeDirs);
+  
+  return Parser.ParseFile();
+}
 
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv);
-  ParseFile(InputFilename, IncludeDirs);
+
+  // Parse the input file.
+  if (ParseFile(InputFilename, IncludeDirs))
+    return 1;
 
   std::ostream *Out = cout.stream();
   if (OutputFilename != "-") {
