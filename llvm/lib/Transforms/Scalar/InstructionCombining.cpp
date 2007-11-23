@@ -2660,7 +2660,7 @@ static Constant *GetFactor(Value *V) {
     if (ConstantInt *RHS = dyn_cast<ConstantInt>(I->getOperand(1))) {
       // X & 0xFFF0 is known to be a multiple of 16.
       uint32_t Zeros = RHS->getValue().countTrailingZeros();
-      if (Zeros != V->getType()->getPrimitiveSizeInBits())
+      if (Zeros != V->getType()->getPrimitiveSizeInBits())// don't shift by "32"
         return ConstantExpr::getShl(Result, 
                                     ConstantInt::get(Result->getType(), Zeros));
     }
