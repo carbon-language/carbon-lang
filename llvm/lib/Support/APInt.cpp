@@ -782,14 +782,14 @@ uint32_t APInt::countLeadingOnes() const {
 
 uint32_t APInt::countTrailingZeros() const {
   if (isSingleWord())
-    return CountTrailingZeros_64(VAL);
+    return std::min(CountTrailingZeros_64(VAL), BitWidth);
   uint32_t Count = 0;
   uint32_t i = 0;
   for (; i < getNumWords() && pVal[i] == 0; ++i)
     Count += APINT_BITS_PER_WORD;
   if (i < getNumWords())
     Count += CountTrailingZeros_64(pVal[i]);
-  return Count;
+  return std::min(Count, BitWidth);
 }
 
 uint32_t APInt::countPopulation() const {
