@@ -1470,6 +1470,9 @@ static uint32_t GetMinTrailingZeros(SCEVHandle S) {
 /// Analyze the expression.
 ///
 SCEVHandle ScalarEvolutionsImpl::createSCEV(Value *V) {
+  if (!isa<IntegerType>(V->getType()))
+    return SE.getUnknown(V);
+    
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     switch (I->getOpcode()) {
     case Instruction::Add:
@@ -2076,6 +2079,11 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
           if (Constant *C = dyn_cast<Constant>(Op)) {
             Operands.push_back(C);
           } else {
+            // If any of the operands is non-constant and if they are
+            // non-integer, don't even try to analyze them with scev techniques.
+            if (!isa<IntegerType>(Op->getType()))
+              return V;
+              
             SCEVHandle OpV = getSCEVAtScope(getSCEV(Op), L);
             if (SCEVConstant *SC = dyn_cast<SCEVConstant>(OpV))
               Operands.push_back(ConstantExpr::getIntegerCast(SC->getValue(), 
