@@ -1416,11 +1416,7 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForPHI(PHINode *PN) {
 /// it returns 2.  If S is guaranteed to be 0, it returns the bitwidth of S.
 static uint32_t GetMinTrailingZeros(SCEVHandle S) {
   if (SCEVConstant *C = dyn_cast<SCEVConstant>(S))
-    // APInt::countTrailingZeros() returns the number of trailing zeros in its
-    // internal representation, which length may be greater than the represented
-    // value bitwidth. This is why we use a min operation here.
-    return std::min(C->getValue()->getValue().countTrailingZeros(),
-                    C->getBitWidth());
+    return C->getValue()->getValue().countTrailingZeros();
 
   if (SCEVTruncateExpr *T = dyn_cast<SCEVTruncateExpr>(S))
     return std::min(GetMinTrailingZeros(T->getOperand()), T->getBitWidth());
