@@ -56,45 +56,245 @@ void CodeGenModule::EmitFunction(const FunctionDecl *FD) {
     CodeGenFunction(*this).GenerateCode(FD);
 }
 
-llvm::Constant *CodeGenModule::EmitGlobalInit(const FileVarDecl *D,
-                                              llvm::GlobalVariable *GV) {
+static llvm::Constant *GenerateConstantExpr(const Expr *Expression, 
+                                            CodeGenModule& CGModule);
 
-  const InitListExpr *ILE = dyn_cast<InitListExpr>(D->getInit());
-  if (!ILE)
-    return 0;
+/// GenerateConversionToBool - Generate comparison to zero for conversion to 
+/// bool
+static llvm::Constant *GenerateConversionToBool(llvm::Constant *Expression, 
+                                            QualType Source) {
+  if (Source->isRealFloatingType()) {
+    // Compare against 0.0 for fp scalars.
+    llvm::Constant *Zero = llvm::Constant::getNullValue(Expression->getType());
+    return llvm::ConstantExpr::getFCmp(llvm::FCmpInst::FCMP_UNE, Expression, 
+                                       Zero);
+  }
+
+  assert((Source->isIntegerType() || Source->isPointerType()) &&
+         "Unknown scalar type to convert");
+
+  // Compare against an integer or pointer null.
+  llvm::Constant *Zero = llvm::Constant::getNullValue(Expression->getType());
+  return llvm::ConstantExpr::getICmp(llvm::ICmpInst::ICMP_NE, Expression, Zero);
+}
+
+/// GenerateConstantCast - Generates a constant cast to convert the Expression
+/// into the Target type.
+static llvm::Constant *GenerateConstantCast(const Expr *Expression, 
+                                                QualType Target, 
+                                                CodeGenModule& CGModule) {
+  CodeGenTypes& Types = CGModule.getTypes(); 
+  QualType Source = Expression->getType().getCanonicalType();
+  Target = Target.getCanonicalType();
+
+  assert (!Target->isVoidType());
+
+  llvm::Constant *SubExpr = GenerateConstantExpr(Expression, CGModule);
+
+  if (Source == Target)
+      return SubExpr;
+
+  // Handle conversions to bool first, they are special: comparisons against 0.
+  if (Target->isBooleanType())
+    return GenerateConversionToBool(SubExpr, Source);
+    
+  const llvm::Type *SourceType = Types.ConvertType(Source);
+  const llvm::Type *TargetType = Types.ConvertType(Target);
+
+  // Ignore conversions like int -> uint.
+  if (SubExpr->getType() == TargetType)
+    return SubExpr;
+
+  // Handle pointer conversions next: pointers can only be converted to/from
+  // other pointers and integers.
+  if (isa<llvm::PointerType>(TargetType)) {
+    // The source value may be an integer, or a pointer.
+    if (isa<llvm::PointerType>(SubExpr->getType()))
+      return llvm::ConstantExpr::getBitCast(SubExpr, TargetType);
+    assert(Source->isIntegerType() && "Not ptr->ptr or int->ptr conversion?");
+    return llvm::ConstantExpr::getIntToPtr(SubExpr, TargetType);
+  }
+
+  if (isa<llvm::PointerType>(SourceType)) {
+    // Must be an ptr to int cast.
+    assert(isa<llvm::IntegerType>(TargetType) && "not ptr->int?");
+    return llvm::ConstantExpr::getPtrToInt(SubExpr, TargetType);
+  }
+
+  if (Source->isRealFloatingType() && Target->isRealFloatingType()) {
+    return llvm::ConstantExpr::getFPCast(SubExpr, TargetType);
+  }
+
+  // Finally, we have the arithmetic types: real int/float.
+  if (isa<llvm::IntegerType>(SourceType)) {
+    bool InputSigned = Source->isSignedIntegerType();
+    if (isa<llvm::IntegerType>(TargetType))
+      return llvm::ConstantExpr::getIntegerCast(SubExpr, TargetType, 
+                                                InputSigned);
+    else if (InputSigned)
+      return llvm::ConstantExpr::getSIToFP(SubExpr, TargetType);
+    else
+      return llvm::ConstantExpr::getUIToFP(SubExpr, TargetType);
+  }
+
+  assert(SubExpr->getType()->isFloatingPoint() && "Unknown real conversion");
+  if (isa<llvm::IntegerType>(TargetType)) {
+    if (Target->isSignedIntegerType())
+      return llvm::ConstantExpr::getFPToSI(SubExpr, TargetType);
+    else
+      return llvm::ConstantExpr::getFPToUI(SubExpr, TargetType);
+  }
+
+  assert(TargetType->isFloatingPoint() && "Unknown real conversion");
+  if (TargetType->getTypeID() < SubExpr->getType()->getTypeID())
+    return llvm::ConstantExpr::getFPTrunc(SubExpr, TargetType);
+  else
+    return llvm::ConstantExpr::getFPExtend(SubExpr, TargetType);
+
+  assert (!"Unsupported cast type in global intialiser.");
+  return 0;
+}
+
+/// GenerateStringLiteral -- returns a pointer to the first element of a 
+/// character array containing the literal.
+static llvm::Constant *GenerateStringLiteral(const StringLiteral* E, 
+                                            CodeGenModule& CGModule) {
+  assert(!E->isWide() && "FIXME: Wide strings not supported yet!");
+  const char *StrData = E->getStrData();
+  unsigned Len = E->getByteLength();
+
+  // FIXME: Can cache/reuse these within the module.
+  llvm::Constant *C=llvm::ConstantArray::get(std::string(StrData, StrData+Len));
+
+  // Create a global variable for this.
+  C = new llvm::GlobalVariable(C->getType(), true, 
+                               llvm::GlobalValue::InternalLinkage,
+                               C, ".str", &CGModule.getModule());
+  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+  llvm::Constant *Zeros[] = { Zero, Zero };
+  C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
+  return C;
+}
+
+/// GenerateAggregateInit - Generate a Constant initaliser for global array or
+/// struct typed variables.
+static llvm::Constant *GenerateAggregateInit(const InitListExpr *ILE, 
+                                             CodeGenModule& CGModule) {
+  assert (ILE->getType()->isArrayType() || ILE->getType()->isStructureType());
+  CodeGenTypes& Types = CGModule.getTypes();
 
   unsigned NumInitElements = ILE->getNumInits();
 
-  assert ( ILE->getType()->isArrayType() 
-           && "FIXME: Only Array initializers are supported");
-  
-  std::vector<llvm::Constant*> ArrayElts;
-  const llvm::PointerType *APType = cast<llvm::PointerType>(GV->getType());
-  const llvm::ArrayType *AType = 
-    cast<llvm::ArrayType>(APType->getElementType());
-
+  const llvm::CompositeType *CType = 
+    cast<llvm::CompositeType>(Types.ConvertType(ILE->getType()));
+  assert(CType);
+  std::vector<llvm::Constant*> Elts;    
+    
   // Copy initializer elements.
   unsigned i = 0;
   for (i = 0; i < NumInitElements; ++i) {
-    assert (ILE->getInit(i)->getType()->isIntegerType() 
-            && "Only IntegerType global array initializers are supported");
-    llvm::APSInt 
-      Value(static_cast<uint32_t>
-            (getContext().getTypeSize(ILE->getInit(i)->getType(), 
-                                      SourceLocation())));
-    if (ILE->getInit(i)->isIntegerConstantExpr(Value, Context)) {
-      llvm::Constant *C = llvm::ConstantInt::get(Value);
-      ArrayElts.push_back(C);
-    }
+    llvm::Constant *C = GenerateConstantExpr(ILE->getInit(i), CGModule);
+    assert (C && "Failed to create initialiser expression");
+    Elts.push_back(C);
   }
 
-  // Initialize remaining array elements.
-  unsigned NumArrayElements = AType->getNumElements();
+  if (ILE->getType()->isStructureType())
+    return llvm::ConstantStruct::get(cast<llvm::StructType>(CType), Elts);
+    
+  // Initialising an array requires us to automatically initialise any 
+  // elements that have not been initialised explicitly
+  const llvm::ArrayType *AType = cast<llvm::ArrayType>(CType);
+  assert(AType);
   const llvm::Type *AElemTy = AType->getElementType();
+  unsigned NumArrayElements = AType->getNumElements();
+  // Initialize remaining array elements.
   for (; i < NumArrayElements; ++i)
-    ArrayElts.push_back(llvm::Constant::getNullValue(AElemTy));
+    Elts.push_back(llvm::Constant::getNullValue(AElemTy));
 
-  return llvm::ConstantArray::get(AType, ArrayElts);
+  return llvm::ConstantArray::get(AType, Elts);    
+}
+
+/// GenerateConstantExpr - Recursively builds a constant initialiser for the
+/// given expression.
+static llvm::Constant *GenerateConstantExpr(const Expr* Expression, 
+                                            CodeGenModule& CGModule) {
+  CodeGenTypes& Types = CGModule.getTypes(); 
+  ASTContext& Context = CGModule.getContext();
+  assert ((Expression->isConstantExpr(Context, 0) ||
+           Expression->getStmtClass() == Stmt::InitListExprClass) &&
+          "Only constant global initialisers are supported.");
+
+  QualType type = Expression->getType().getCanonicalType();
+
+  if (type->isIntegerType()) {
+    llvm::APSInt
+      Value(static_cast<uint32_t>(Context.getTypeSize(type, SourceLocation())));
+    if (Expression->isIntegerConstantExpr(Value, Context)) {
+      return llvm::ConstantInt::get(Value);
+    } 
+  }
+
+  switch (Expression->getStmtClass()) {
+  // Generate constant for floating point literal values.
+  case Stmt::FloatingLiteralClass: {
+    const FloatingLiteral *FLiteral = cast<FloatingLiteral>(Expression);
+    return llvm::ConstantFP::get(Types.ConvertType(type), FLiteral->getValue());
+  }
+
+  // Generate constant for string literal values.
+  case Stmt::StringLiteralClass: {
+    const StringLiteral *SLiteral = cast<StringLiteral>(Expression);
+    return GenerateStringLiteral(SLiteral, CGModule);
+  }
+
+  // Elide parenthesis.
+  case Stmt::ParenExprClass:
+    return GenerateConstantExpr(cast<ParenExpr>(Expression)->getSubExpr(),
+                                CGModule);
+        
+  // Generate constant for sizeof operator.
+  // FIXME: Need to support AlignOf
+  case Stmt::SizeOfAlignOfTypeExprClass: {
+    const SizeOfAlignOfTypeExpr *SOExpr = 
+      cast<SizeOfAlignOfTypeExpr>(Expression);
+    assert (SOExpr->isSizeOf());
+    return llvm::ConstantExpr::getSizeOf(Types.ConvertType(type));
+  }
+
+  // Generate constant cast expressions.
+  case Stmt::CastExprClass:
+    return GenerateConstantCast(cast<CastExpr>(Expression)->getSubExpr(), type,
+                                CGModule);
+
+  case Stmt::ImplicitCastExprClass: {
+    const ImplicitCastExpr *ICExpr = cast<ImplicitCastExpr>(Expression);
+    return GenerateConstantCast(ICExpr->getSubExpr(), type, CGModule);
+  }
+
+  // Generate a constant array access expression
+  // FIXME: Clang's semantic analysis incorrectly prevents array access in 
+  // global initialisers, preventing us from testing this.
+  case Stmt::ArraySubscriptExprClass: {
+    const ArraySubscriptExpr* ASExpr = cast<ArraySubscriptExpr>(Expression);
+    llvm::Constant *Base = GenerateConstantExpr(ASExpr->getBase(), CGModule);
+    llvm::Constant *Index = GenerateConstantExpr(ASExpr->getIdx(), CGModule);
+    return llvm::ConstantExpr::getExtractElement(Base, Index);
+  }
+
+  // Generate a constant expression to initialise an aggregate type, such as 
+  // an array or struct.
+  case Stmt::InitListExprClass: 
+    return GenerateAggregateInit(cast<InitListExpr>(Expression), CGModule);
+
+  default:
+    assert (!"Unsupported expression in global initialiser.");
+  }
+  return 0;
+}
+
+llvm::Constant *CodeGenModule::EmitGlobalInit(const FileVarDecl *D,
+                                              llvm::GlobalVariable *GV) {
+  return GenerateConstantExpr(D->getInit(), *this);
 }
 
 void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
