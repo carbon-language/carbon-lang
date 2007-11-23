@@ -941,6 +941,16 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
         // If this is a comment token in the argument list and we're just in
         // -C mode (not -CC mode), discard the comment.
         continue;
+      } else if (Tok.is(tok::identifier)) {
+        // Reading macro arguments can cause macros that we are currently
+        // expanding from to be popped off the expansion stack.  Doing so causes
+        // them to be reenabled for expansion.  Here we record whether any
+        // identifiers we lex as macro arguments correspond to disabled macros.
+        // If so, we mark the token as noexpand.  This is a subtle aspect of 
+        // C99 6.10.3.4p2.
+        if (MacroInfo *MI = getMacroInfo(Tok.getIdentifierInfo()))
+          if (!MI->isEnabled())
+            Tok.setFlag(Token::DisableExpand);
       }
   
       ArgTokens.push_back(Tok);
