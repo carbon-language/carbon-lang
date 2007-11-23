@@ -896,10 +896,9 @@ public:
   /// countLeadingZeros - This function is an APInt version of the
   /// countLeadingZeros_{32,64} functions in MathExtras.h. It counts the number
   /// of zeros from the most significant bit to the first one bit.
-  /// @returns getNumWords() * APINT_BITS_PER_WORD if the value is zero.
+  /// @returns BitWidth if the value is zero.
   /// @returns the number of zeros from the most significant bit to the first
   /// one bits.
-  /// @brief Count the number of leading one bits.
   uint32_t countLeadingZeros() const;
 
   /// countLeadingOnes - This function counts the number of contiguous 1 bits
@@ -911,8 +910,8 @@ public:
 
   /// countTrailingZeros - This function is an APInt version of the 
   /// countTrailingZoers_{32,64} functions in MathExtras.h. It counts 
-  /// the number of zeros from the least significant bit to the first one bit.
-  /// @returns getNumWords() * APINT_BITS_PER_WORD if the value is zero.
+  /// the number of zeros from the least significant bit to the first set bit.
+  /// @returns BitWidth if the value is zero.
   /// @returns the number of zeros from the least significant bit to the first
   /// one bit.
   /// @brief Count the number of trailing zero bits.

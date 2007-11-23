@@ -745,7 +745,7 @@ uint32_t APInt::countLeadingZeros() const {
   uint32_t remainder = BitWidth % APINT_BITS_PER_WORD;
   if (remainder)
     Count -= APINT_BITS_PER_WORD - remainder;
-  return Count;
+  return std::min(Count, BitWidth);
 }
 
 static uint32_t countLeadingOnes_64(uint64_t V, uint32_t skip) {
