@@ -287,6 +287,7 @@ public:
     return 0;
   }
   virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
+                                  bool IsVolatile,
                                   unsigned NumOutputs,
                                   unsigned NumInputs,
                                   std::string *Names,

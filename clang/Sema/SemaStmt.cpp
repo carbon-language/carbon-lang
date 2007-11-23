@@ -645,6 +645,7 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
 }
 
 Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
+                                    bool IsVolatile,
                                     unsigned NumOutputs,
                                     unsigned NumInputs,
                                     std::string *Names,
@@ -655,7 +656,7 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                                     ExprTy **Clobbers,
                                     SourceLocation RParenLoc) {
   Expr *E = (Expr *)AsmString;
-
+ 
   // Check that the output exprs are valid lvalues.
   for (unsigned i = 0; i < NumOutputs; i++) {
     Expr *OutputExpr = (Expr *)Exprs[i];
@@ -691,6 +692,7 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
   }
   
   return new AsmStmt(AsmLoc,
+                     IsVolatile,
                      NumOutputs,
                      NumInputs, 
                      Names,

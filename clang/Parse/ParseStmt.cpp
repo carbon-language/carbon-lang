@@ -934,7 +934,7 @@ Parser::StmtResult Parser::ParseAsmStatement() {
     Diag(Loc, diag::w_asm_qualifier_ignored, "restrict");
   
   // Remember if this was a volatile asm.
-  //bool isVolatile = DS.TypeQualifiers & DeclSpec::TQ_volatile;
+  bool isVolatile = DS.getTypeQualifiers() & DeclSpec::TQ_volatile;
   
   if (Tok.isNot(tok::l_paren)) {
     Diag(Tok, diag::err_expected_lparen_after, "asm");
@@ -986,7 +986,7 @@ Parser::StmtResult Parser::ParseAsmStatement() {
   
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, Loc);
   
-  return Actions.ActOnAsmStmt(AsmLoc, NumOutputs, NumInputs,
+  return Actions.ActOnAsmStmt(AsmLoc, isVolatile, NumOutputs, NumInputs,
                               &Names[0], &Constraints[0], &Exprs[0],
                               AsmString.Val,
                               Clobbers.size(), &Clobbers[0],

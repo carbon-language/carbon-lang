@@ -112,6 +112,7 @@ bool Stmt::hasImplicitControlFlow() const {
 }
 
 AsmStmt::AsmStmt(SourceLocation asmloc, 
+                 bool isvolatile,
                  unsigned numoutputs,
                  unsigned numinputs,
                  std::string *names,
@@ -122,7 +123,7 @@ AsmStmt::AsmStmt(SourceLocation asmloc,
                  StringLiteral **clobbers,                 
                  SourceLocation rparenloc)
   : Stmt(AsmStmtClass), AsmLoc(asmloc), RParenLoc(rparenloc), AsmStr(asmstr)
-  , NumOutputs(numoutputs), NumInputs(numinputs)
+  , IsVolatile(isvolatile), NumOutputs(numoutputs), NumInputs(numinputs)
 {
   for (unsigned i = 0, e = numinputs + numoutputs; i != e; i++) {
     Names.push_back(names[i]);

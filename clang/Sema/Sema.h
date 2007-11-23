@@ -347,6 +347,7 @@ public:
                                      ExprTy *RetValExp);
   
   virtual StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
+                                  bool IsVolatile,
                                   unsigned NumOutputs,
                                   unsigned NumInputs,
                                   std::string *Names,

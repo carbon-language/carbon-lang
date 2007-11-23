@@ -326,7 +326,12 @@ void StmtPrinter::VisitReturnStmt(ReturnStmt *Node) {
 
 
 void StmtPrinter::VisitAsmStmt(AsmStmt *Node) {
-  Indent() << "asm (";
+  Indent() << "asm ";
+  
+  if (Node->isVolatile())
+    OS << "volatile ";
+  
+  OS << "(";
   VisitStringLiteral(Node->getAsmString());
   
   // Outputs
