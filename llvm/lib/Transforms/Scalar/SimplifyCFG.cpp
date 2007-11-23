@@ -88,9 +88,6 @@ static void ChangeToCall(InvokeInst *II) {
   // Update PHI nodes in the unwind destination
   II->getUnwindDest()->removePredecessor(BB);
   BB->getInstList().erase(II);
-
-  if (NewCall->use_empty())
-    BB->getInstList().erase(NewCall);
 }
 
 /// IsNoReturn - Return true if the specified call is to a no-return function.
