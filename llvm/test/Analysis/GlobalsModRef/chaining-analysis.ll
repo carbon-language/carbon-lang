@@ -1,20 +1,20 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -globalsmodref-aa -load-vn -gcse | llvm-dis | not grep load
+; RUN: llvm-as < %s | opt -globalsmodref-aa -load-vn -gcse | llvm-dis | not grep load
 
-; This test requires the use of previous analyses to determine that 
+; This test requires the use of previous analyses to determine that
 ; doesnotmodX does not modify X (because 'sin' doesn't).
 
-%X = internal global int 4
+@X = internal global i32 4		; <i32*> [#uses=2]
 
-declare double %sin(double)
+declare double @sin(double) readnone
 
-int %test(int *%P) {
-  store int 12,  int* %X
-  call double %doesnotmodX(double 1.0)
-  %V = load int* %X
-  ret int %V
+define i32 @test(i32* %P) {
+	store i32 12, i32* @X
+	call double @doesnotmodX( double 1.000000e+00 )		; <double>:1 [#uses=0]
+	%V = load i32* @X		; <i32> [#uses=1]
+	ret i32 %V
 }
 
-double %doesnotmodX(double %V) {
-  %V2 = call double %sin(double %V)
-  ret double %V2
+define double @doesnotmodX(double %V) {
+	%V2 = call double @sin( double %V ) readnone		; <double> [#uses=1]
+	ret double %V2
 }

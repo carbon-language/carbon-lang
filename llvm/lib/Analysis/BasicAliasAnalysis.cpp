@@ -810,84 +810,8 @@ BasicAliasAnalysis::CheckGEPInstructions(
   return MayAlias;
 }
 
-namespace {
-  struct VISIBILITY_HIDDEN StringCompare {
-    bool operator()(const char *LHS, const char *RHS) {
-      return strcmp(LHS, RHS) < 0;
-    }
-  };
-}
-
-// Note that this list cannot contain libm functions (such as acos and sqrt)
-// that set errno on a domain or other error.
-static const char *DoesntAccessMemoryFns[] = {
-  "abs", "labs", "llabs", "imaxabs", "fabs", "fabsf", "fabsl",
-  "trunc", "truncf", "truncl", "ldexp",
-
-  "atan", "atanf", "atanl",   "atan2", "atan2f", "atan2l",
-  "cbrt",
-  "cos", "cosf", "cosl",
-  "exp", "expf", "expl",
-  "hypot",
-  "sin", "sinf", "sinl",
-  "tan", "tanf", "tanl",      "tanh", "tanhf", "tanhl",
-  
-  "floor", "floorf", "floorl", "ceil", "ceilf", "ceill",
-
-  // ctype.h
-  "isalnum", "isalpha", "iscntrl", "isdigit", "isgraph", "islower", "isprint"
-  "ispunct", "isspace", "isupper", "isxdigit", "tolower", "toupper",
-
-  // wctype.h"
-  "iswalnum", "iswalpha", "iswcntrl", "iswdigit", "iswgraph", "iswlower",
-  "iswprint", "iswpunct", "iswspace", "iswupper", "iswxdigit",
-
-  "iswctype", "towctrans", "towlower", "towupper",
-
-  "btowc", "wctob",
-
-  "isinf", "isnan", "finite",
-
-  // C99 math functions
-  "copysign", "copysignf", "copysignd",
-  "nexttoward", "nexttowardf", "nexttowardd",
-  "nextafter", "nextafterf", "nextafterd",
-
-  // ISO C99:
-  "__signbit", "__signbitf", "__signbitl",
-};
-
-
-static const char *OnlyReadsMemoryFns[] = {
-  "atoi", "atol", "atof", "atoll", "atoq", "a64l",
-  "bcmp", "memcmp", "memchr", "memrchr", "wmemcmp", "wmemchr",
-
-  // Strings
-  "strcmp", "strcasecmp", "strcoll", "strncmp", "strncasecmp",
-  "strchr", "strcspn", "strlen", "strpbrk", "strrchr", "strspn", "strstr",
-  "index", "rindex",
-
-  // Wide char strings
-  "wcschr", "wcscmp", "wcscoll", "wcscspn", "wcslen", "wcsncmp", "wcspbrk",
-  "wcsrchr", "wcsspn", "wcsstr",
-
-  // glibc
-  "alphasort", "alphasort64", "versionsort", "versionsort64",
-
-  // C99
-  "nan", "nanf", "nand",
-
-  // File I/O
-  "feof", "ferror", "fileno",
-  "feof_unlocked", "ferror_unlocked", "fileno_unlocked"
-};
-
-static ManagedStatic<std::vector<const char*> > NoMemoryTable;
-static ManagedStatic<std::vector<const char*> > OnlyReadsMemoryTable;
-
 static ManagedStatic<BitVector> NoMemoryIntrinsics;
 static ManagedStatic<BitVector> OnlyReadsMemoryIntrinsics;
-
 
 AliasAnalysis::ModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
@@ -896,19 +820,6 @@ BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
 
   static bool Initialized = false;
   if (!Initialized) {
-    NoMemoryTable->insert(NoMemoryTable->end(),
-                          DoesntAccessMemoryFns, 
-                          array_endof(DoesntAccessMemoryFns));
-
-    OnlyReadsMemoryTable->insert(OnlyReadsMemoryTable->end(),
-                                 OnlyReadsMemoryFns, 
-                                 array_endof(OnlyReadsMemoryFns));
-
-    // Sort the table the first time through.
-    std::sort(NoMemoryTable->begin(), NoMemoryTable->end(), StringCompare());
-    std::sort(OnlyReadsMemoryTable->begin(), OnlyReadsMemoryTable->end(),
-              StringCompare());
-    
     NoMemoryIntrinsics->resize(Intrinsic::num_intrinsics);
     OnlyReadsMemoryIntrinsics->resize(Intrinsic::num_intrinsics);
 #define GET_MODREF_BEHAVIOR
@@ -927,30 +838,6 @@ BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
 
     return UnknownModRefBehavior;
   }
-  
-  ValueName *Name = F->getValueName();
-  if (!Name)
-    return UnknownModRefBehavior;
-  
-  unsigned NameLen = Name->getKeyLength();
-  const char *NamePtr = Name->getKeyData();
-  
-  // If there is an embedded nul character in the function name, we can never
-  // match it.
-  if (strlen(NamePtr) != NameLen)
-    return UnknownModRefBehavior;
-
-  std::vector<const char*>::iterator Ptr =
-    std::lower_bound(NoMemoryTable->begin(), NoMemoryTable->end(),
-                     NamePtr, StringCompare());
-  if (Ptr != NoMemoryTable->end() && strcmp(*Ptr, NamePtr) == 0)
-    return DoesNotAccessMemory;
-
-  Ptr = std::lower_bound(OnlyReadsMemoryTable->begin(),
-                         OnlyReadsMemoryTable->end(),
-                         NamePtr, StringCompare());
-  if (Ptr != OnlyReadsMemoryTable->end() && strcmp(*Ptr, NamePtr) == 0)
-    return OnlyReadsMemory;
 
   const ParamAttrsList *Attrs = F->getFunctionType()->getParamAttrs();
   if (Attrs && Attrs->paramHasAttr(0, ParamAttr::ReadNone))

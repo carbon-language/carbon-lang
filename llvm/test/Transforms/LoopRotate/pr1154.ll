@@ -1,13 +1,12 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -std-compile-opts | llvm-dis | \
+; RUN: llvm-as < %s | opt -std-compile-opts | llvm-dis | \
 ; RUN:   %prcontext strstr 2 | grep -v declare | grep bb36.outer:
-; END.
 
 @str = internal constant [68 x i8] c"Dot. date. datum. 123. Some more doubtful demonstration dummy data.\00"		; <[68 x i8]*> [#uses=1]
 @str1 = internal constant [5 x i8] c"ummy\00"		; <[5 x i8]*> [#uses=1]
 @str2 = internal constant [6 x i8] c" data\00"		; <[6 x i8]*> [#uses=1]
 @str3 = internal constant [3 x i8] c"by\00"		; <[3 x i8]*> [#uses=1]
 
-i32 @stringSearch_Clib(i32 %count) {
+define i32 @stringSearch_Clib(i32 %count) {
 entry:
 	%count_addr = alloca i32		; <i32*> [#uses=2]
 	%retval = alloca i32, align 4		; <i32*> [#uses=2]
@@ -17,11 +16,11 @@ entry:
 	%j = alloca i32, align 4		; <i32*> [#uses=4]
 	%p = alloca i8*, align 4		; <i8**> [#uses=6]
 	%b = alloca [68 x i8], align 16		; <[68 x i8]*> [#uses=6]
-	"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
+	%"alloca point" = bitcast i32 0 to i32		; <i32> [#uses=0]
 	store i32 %count, i32* %count_addr
 	store i32 0, i32* %c
 	%b1 = bitcast [68 x i8]* %b to i8*		; <i8*> [#uses=1]
-	%tmp2 = getelementptr [68 x i8]* @str, i32 0, i32 0		; <i8*> [#uses=1]
+	%tmp2 = getelementptr [68 x i8]* @str, i64 0, i64 0		; <i8*> [#uses=1]
 	call void @llvm.memcpy.i32( i8* %b1, i8* %tmp2, i32 68, i32 1 )
 	store i32 0, i32* %j
 	br label %bb41
@@ -34,13 +33,13 @@ bb:		; preds = %bb41
 
 bb4:		; preds = %bb36
 	%b5 = bitcast [68 x i8]* %b to i8*		; <i8*> [#uses=1]
-	%tmp6 = getelementptr [5 x i8]* @str1, i32 0, i32 0		; <i8*> [#uses=1]
-	%tmp7 = call i8* @strstr( i8* %b5, i8* %tmp6 )		; <i8*> [#uses=1]
+	%tmp6 = getelementptr [5 x i8]* @str1, i64 0, i64 0		; <i8*> [#uses=1]
+	%tmp7 = call i8* @strstr( i8* %b5, i8* %tmp6 ) readonly		; <i8*> [#uses=1]
 	store i8* %tmp7, i8** %p
 	%tmp8 = load i8** %p		; <i8*> [#uses=1]
-	%ttmp8 = icmp ne i8* %tmp8, null		; <i1>:0 [#uses=1]
-	%ttmp10 = zext i1 %ttmp8 to i8		; <i8>:1 [#uses=1]
-	%ttmp7 = icmp ne i8 %ttmp10, 0		; <i1>:2 [#uses=1]
+	%ttmp8 = icmp ne i8* %tmp8, null		; <i1> [#uses=1]
+	%ttmp10 = zext i1 %ttmp8 to i8		; <i8> [#uses=1]
+	%ttmp7 = icmp ne i8 %ttmp10, 0		; <i1> [#uses=1]
 	br i1 %ttmp7, label %cond_true, label %cond_next
 
 cond_true:		; preds = %bb4
@@ -56,13 +55,13 @@ cond_true:		; preds = %bb4
 
 cond_next:		; preds = %cond_true, %bb4
 	%b16 = bitcast [68 x i8]* %b to i8*		; <i8*> [#uses=1]
-	%tmp17 = getelementptr [6 x i8]* @str2, i32 0, i32 0		; <i8*> [#uses=1]
-	%tmp18 = call i8* @strstr( i8* %b16, i8* %tmp17 )		; <i8*> [#uses=1]
+	%tmp17 = getelementptr [6 x i8]* @str2, i64 0, i64 0		; <i8*> [#uses=1]
+	%tmp18 = call i8* @strstr( i8* %b16, i8* %tmp17 ) readonly		; <i8*> [#uses=1]
 	store i8* %tmp18, i8** %p
 	%tmp19 = load i8** %p		; <i8*> [#uses=1]
-	%ttmp6 = icmp ne i8* %tmp19, null		; <i1>:3 [#uses=1]
-	%ttmp9 = zext i1 %ttmp6 to i8		; <i8>:4 [#uses=1]
-	%ttmp4 = icmp ne i8 %ttmp9, 0		; <i1>:5 [#uses=1]
+	%ttmp6 = icmp ne i8* %tmp19, null		; <i1> [#uses=1]
+	%ttmp9 = zext i1 %ttmp6 to i8		; <i8> [#uses=1]
+	%ttmp4 = icmp ne i8 %ttmp9, 0		; <i1> [#uses=1]
 	br i1 %ttmp4, label %cond_true20, label %cond_next28
 
 cond_true20:		; preds = %cond_next
@@ -78,8 +77,8 @@ cond_true20:		; preds = %cond_next
 
 cond_next28:		; preds = %cond_true20, %cond_next
 	%b29 = bitcast [68 x i8]* %b to i8*		; <i8*> [#uses=1]
-	%tmp30 = getelementptr [3 x i8]* @str3, i32 0, i32 0		; <i8*> [#uses=1]
-	%tmp31 = call i32 @strcspn( i8* %b29, i8* %tmp30 )		; <i32> [#uses=1]
+	%tmp30 = getelementptr [3 x i8]* @str3, i64 0, i64 0		; <i8*> [#uses=1]
+	%tmp31 = call i32 @strcspn( i8* %b29, i8* %tmp30 ) readonly		; <i32> [#uses=1]
 	%tmp32 = load i32* %c		; <i32> [#uses=1]
 	%tmp33 = add i32 %tmp31, %tmp32		; <i32> [#uses=1]
 	store i32 %tmp33, i32* %c
@@ -90,9 +89,9 @@ cond_next28:		; preds = %cond_true20, %cond_next
 
 bb36:		; preds = %cond_next28, %bb
 	%tmp37 = load i32* %i		; <i32> [#uses=1]
-	%ttmp3= icmp sle i32 %tmp37, 249		; <i1>:6 [#uses=1]
-	%ttmp12 = zext i1 %ttmp3 to i8		; <i8>:7 [#uses=1]
-	%ttmp1 = icmp ne i8 %ttmp12, 0		; <i1>:8 [#uses=1]
+	%ttmp3 = icmp sle i32 %tmp37, 249		; <i1> [#uses=1]
+	%ttmp12 = zext i1 %ttmp3 to i8		; <i8> [#uses=1]
+	%ttmp1 = icmp ne i8 %ttmp12, 0		; <i1> [#uses=1]
 	br i1 %ttmp1, label %bb4, label %bb38
 
 bb38:		; preds = %bb36
@@ -104,9 +103,9 @@ bb38:		; preds = %bb36
 bb41:		; preds = %bb38, %entry
 	%tmp42 = load i32* %j		; <i32> [#uses=1]
 	%tmp43 = load i32* %count_addr		; <i32> [#uses=1]
-	%ttmp2 = icmp slt i32 %tmp42, %tmp43		; <i1>:9 [#uses=1]
-	%ttmp11 = zext i1 %ttmp2 to i8		; <i8>:10 [#uses=1]
-	%ttmp5 = icmp ne i8 %ttmp11, 0		; <i1>:11 [#uses=1]
+	%ttmp2 = icmp slt i32 %tmp42, %tmp43		; <i1> [#uses=1]
+	%ttmp11 = zext i1 %ttmp2 to i8		; <i8> [#uses=1]
+	%ttmp5 = icmp ne i8 %ttmp11, 0		; <i1> [#uses=1]
 	br i1 %ttmp5, label %bb, label %bb44
 
 bb44:		; preds = %bb41
@@ -123,6 +122,6 @@ return:		; preds = %bb44
 
 declare void @llvm.memcpy.i32(i8*, i8*, i32, i32)
 
-declare i8* @strstr(i8*, i8*)
+declare i8* @strstr(i8*, i8*) readonly
 
-declare i32 @strcspn(i8*, i8*)
+declare i32 @strcspn(i8*, i8*) readonly

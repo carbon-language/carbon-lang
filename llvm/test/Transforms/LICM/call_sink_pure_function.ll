@@ -1,14 +1,16 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -licm | llvm-dis | %prcontext strlen 1 | grep Out: 
-declare int %strlen(sbyte*)
-declare void %foo()
+; RUN: llvm-as < %s | opt -basicaa -licm | llvm-dis | %prcontext strlen 1 | grep Out:
 
-int %test(sbyte* %P) {
+declare i32 @strlen(i8*) readonly
+
+declare void @foo()
+
+define i32 @test(i8* %P) {
 	br label %Loop
 
-Loop:
-	%A = call int %strlen(sbyte* %P)   ;; Can hoist/sink call
-	br bool false, label %Loop, label %Out
+Loop:		; preds = %Loop, %0
+	%A = call i32 @strlen( i8* %P ) readonly		; <i32> [#uses=1]
+	br i1 false, label %Loop, label %Out
 
-Out:
-	ret int %A
+Out:		; preds = %Loop
+	ret i32 %A
 }

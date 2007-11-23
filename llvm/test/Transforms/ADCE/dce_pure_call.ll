@@ -1,9 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -adce | llvm-dis | not grep call
+; RUN: llvm-as < %s | opt -adce | llvm-dis | not grep call
 
-declare int %strlen(sbyte*)
+declare i32 @strlen(i8*) readonly
 
-void %test() {
-	;; Dead call should be deleted!
-	call int %strlen(sbyte *null)
+define void @test() {
+	call i32 @strlen( i8* null ) readonly		; <i32>:1 [#uses=0]
 	ret void
 }

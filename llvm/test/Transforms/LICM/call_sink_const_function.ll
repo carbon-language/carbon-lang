@@ -1,16 +1,17 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -basicaa -licm | llvm-dis | %prcontext sin 1 | grep Out: 
-declare double %sin(double)
-declare void %foo()
+; RUN: llvm-as < %s | opt -basicaa -licm | llvm-dis | %prcontext sin 1 | grep Out:
 
-double %test(double %X) {
+declare double @sin(double) readnone
+
+declare void @foo()
+
+define double @test(double %X) {
 	br label %Loop
 
-Loop:
-	call void %foo()    ;; Unknown effects!
+Loop:		; preds = %Loop, %0
+	call void @foo( )
+	%A = call double @sin( double %X ) readnone		; <double> [#uses=1]
+	br i1 true, label %Loop, label %Out
 
-	%A = call double %sin(double %X)   ;; Can still hoist/sink call
-	br bool true, label %Loop, label %Out
-
-Out:
+Out:		; preds = %Loop
 	ret double %A
 }
