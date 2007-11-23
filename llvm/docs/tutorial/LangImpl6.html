@@ -97,7 +97,7 @@ def unary!(v)
 
 # Define &gt; with the same precedence as &lt;.
 def binary&gt; 10 (LHS RHS)
-  !(LHS &lt; RHS);     # alternatively, could just use "RHS &lt; LHS"
+  RHS &lt; LHS;
 
 # Binary "logical or", (note that it does not "short circuit")
 def binary| 5 (LHS RHS)
@@ -532,7 +532,7 @@ def unary-(v)
 
 # Define &gt; with the same precedence as &gt;.
 def binary&gt; 10 (LHS RHS)
-  !(LHS &lt; RHS);
+  RHS &lt; LHS;
 
 # Binary logical or, which does not short circuit. 
 def binary| 5 (LHS RHS)
