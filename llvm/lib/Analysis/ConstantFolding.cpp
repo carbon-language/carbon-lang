@@ -516,18 +516,14 @@ llvm::ConstantFoldCall(Function *F, Constant** Operands, unsigned NumOperands) {
         break;
       }
     } else if (ConstantInt *Op = dyn_cast<ConstantInt>(Operands[0])) {
-      if (Len > 11 && !memcmp(Str, "llvm.bswap", 10)) {
+      if (Len > 11 && !memcmp(Str, "llvm.bswap", 10))
         return ConstantInt::get(Op->getValue().byteSwap());
-      } else if (Len > 11 && !memcmp(Str, "llvm.ctpop", 10)) {
-        uint64_t ctpop = Op->getValue().countPopulation();
-        return ConstantInt::get(Ty, ctpop);
-      } else if (Len > 10 && !memcmp(Str, "llvm.cttz", 9)) {
-        uint64_t cttz = Op->getValue().countTrailingZeros();
-        return ConstantInt::get(Ty, cttz);
-      } else if (Len > 10 && !memcmp(Str, "llvm.ctlz", 9)) {
-        uint64_t ctlz = Op->getValue().countLeadingZeros();
-        return ConstantInt::get(Ty, ctlz);
-      }
+      else if (Len > 11 && !memcmp(Str, "llvm.ctpop", 10))
+        return ConstantInt::get(Ty, Op->getValue().countPopulation());
+      else if (Len > 10 && !memcmp(Str, "llvm.cttz", 9))
+        return ConstantInt::get(Ty, Op->getValue().countTrailingZeros());
+      else if (Len > 10 && !memcmp(Str, "llvm.ctlz", 9))
+        return ConstantInt::get(Ty, Op->getValue().countLeadingZeros());
     }
   } else if (NumOperands == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {
