@@ -655,8 +655,40 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                                     ExprTy **Clobbers,
                                     SourceLocation RParenLoc) {
   Expr *E = (Expr *)AsmString;
+
+  // Check that the output exprs are valid lvalues.
+  for (unsigned i = 0; i < NumOutputs; i++) {
+    Expr *OutputExpr = (Expr *)Exprs[i];
+    Expr::isLvalueResult Result = OutputExpr->isLvalue();
     
-  // FIXME: Make sure that the expressions are valid.
+    if (Result != Expr::LV_Valid) {
+      ParenExpr *PE = cast<ParenExpr>(OutputExpr);
+      
+      Diag(PE->getSubExpr()->getLocStart(), 
+           diag::err_invalid_lvalue_in_asm_output,
+           PE->getSubExpr()->getSourceRange());
+      
+      // FIXME: We currently leak memory here.
+      return true;
+    }
+  }
+  
+  // Check that the input exprs aren't of type void.
+  for (unsigned i = NumOutputs, e = NumOutputs + NumInputs; i != e; i++) {
+    Expr *InputExpr = (Expr *)Exprs[i];
+    
+    if (InputExpr->getType()->isVoidType()) {
+      ParenExpr *PE = cast<ParenExpr>(InputExpr);
+      
+      Diag(PE->getSubExpr()->getLocStart(),
+           diag::err_invalid_type_in_asm_input,
+           PE->getType().getAsString(), 
+           PE->getSubExpr()->getSourceRange());
+      
+      // FIXME: We currently leak memory here.
+      return true;
+    }
+  }
   
   return new AsmStmt(AsmLoc,
                      NumOutputs,

@@ -789,6 +789,10 @@ DIAG(warn_unused_expr, WARNING,
      "expression result unused")
 DIAG(err_pascal_string_too_long, ERROR,
     "Pascal string is too long")
+DIAG(err_invalid_lvalue_in_asm_output, ERROR,
+    "invalid lvalue in asm output")
+DIAG(err_invalid_type_in_asm_input, ERROR,
+    "invalid type '%0' in asm input")
 
 // CHECK: printf format string errors
 DIAG(warn_printf_not_string_constant, WARNING,
