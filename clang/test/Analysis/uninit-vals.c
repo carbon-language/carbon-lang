@@ -27,3 +27,18 @@ int f5() {
   int a;
   a = 30; // no-warning
 }
+
+void f6(int i) {
+  int x;
+  for (i = 0 ; i < 10; i++)
+    printf("%d",x++); // expected-warning {use of uninitialized variable}
+}
+
+void f7(int i) {
+  int x = i;
+  int y;
+  for (i = 0; i < 10; i++ ) {
+    printf("%d",x++); // no-warning
+    x += y; // expected-warning {use of uninitialized variable}
+  }
+}
