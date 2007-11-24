@@ -405,13 +405,16 @@ def immAllOnes : PatLeaf<(imm), [{ return N->isAllOnesValue(); }]>;
 def immAllOnesV: PatLeaf<(build_vector), [{
   return ISD::isBuildVectorAllOnes(N);
 }]>;
-def immAllZerosV: PatLeaf<(build_vector), [{
-  return ISD::isBuildVectorAllZeros(N);
-}]>;
-
 def immAllOnesV_bc: PatLeaf<(bitconvert), [{
   return ISD::isBuildVectorAllOnes(N);
 }]>;
+def immAllZerosV: PatLeaf<(build_vector), [{
+  return ISD::isBuildVectorAllZeros(N);
+}]>;
+def immAllZerosV_bc: PatLeaf<(bitconvert), [{
+  return ISD::isBuildVectorAllZeros(N);
+}]>;
+
 
 
 // Other helper fragments.
