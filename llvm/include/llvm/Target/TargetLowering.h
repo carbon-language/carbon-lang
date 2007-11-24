@@ -910,12 +910,16 @@ public:
 
   /// ExpandOperationResult - This callback is invoked for operations that are 
   /// unsupported by the target, which are registered to use 'custom' lowering,
-  /// and whose result type needs to be expanded.
+  /// and whose result type needs to be expanded.  This must return a node whose
+  /// results precisely match the results of the input node.  This typically
+  /// involves a MERGE_VALUES node and/or BUILD_PAIR.
   ///
   /// If the target has no operations that require custom lowering, it need not
   /// implement this.  The default implementation of this aborts.
-  virtual std::pair<SDOperand,SDOperand> 
-    ExpandOperationResult(SDNode *N, SelectionDAG &DAG);
+  virtual SDNode *ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
+    assert(0 && "ExpandOperationResult not implemented for this target!");
+    return 0;
+  }
   
   /// IsEligibleForTailCallOptimization - Check whether the call is eligible for
   /// tail call optimization. Targets which want to do tail call optimization

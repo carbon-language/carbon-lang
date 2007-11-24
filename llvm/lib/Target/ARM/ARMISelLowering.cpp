@@ -949,10 +949,8 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
     vRegs[NumGPRs+1] = VReg;
     SDOperand ArgValue2 = DAG.getCopyFromReg(Root, VReg, MVT::i32);
 
-    if (ObjectVT == MVT::i64)
-      ArgValue = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, ArgValue, ArgValue2);
-    else
-      ArgValue = DAG.getNode(ARMISD::FMDRR, MVT::f64, ArgValue, ArgValue2);
+    assert(ObjectVT != MVT::i64 && "i64 should already be lowered");
+    ArgValue = DAG.getNode(ARMISD::FMDRR, MVT::f64, ArgValue, ArgValue2);
   }
   NumGPRs += ObjGPRs;
 
@@ -966,12 +964,9 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
       if (ObjGPRs == 0)
         ArgValue = DAG.getLoad(ObjectVT, Root, FIN, NULL, 0);
       else {
-        SDOperand ArgValue2 =
-          DAG.getLoad(MVT::i32, Root, FIN, NULL, 0);
-        if (ObjectVT == MVT::i64)
-          ArgValue= DAG.getNode(ISD::BUILD_PAIR, MVT::i64, ArgValue, ArgValue2);
-        else
-          ArgValue= DAG.getNode(ARMISD::FMDRR, MVT::f64, ArgValue, ArgValue2);
+        SDOperand ArgValue2 = DAG.getLoad(MVT::i32, Root, FIN, NULL, 0);
+        assert(ObjectVT != MVT::i64 && "i64 should already be lowered");
+        ArgValue = DAG.getNode(ARMISD::FMDRR, MVT::f64, ArgValue, ArgValue2);
       }
     } else {
       // Don't emit a dead load.
@@ -1256,51 +1251,6 @@ static SDOperand LowerFCOPYSIGN(SDOperand Op, SelectionDAG &DAG) {
   return DAG.getNode(ARMISD::CNEG, VT, AbsVal, AbsVal, ARMCC, CCR, Cmp);
 }
 
-static SDOperand LowerBIT_CONVERT(SDOperand Op, SelectionDAG &DAG) {
-  // Turn f64->i64 into FMRRD.
-  assert(Op.getValueType() == MVT::i64 &&
-         Op.getOperand(0).getValueType() == MVT::f64);
-
-  Op = Op.getOperand(0);
-  SDOperand Cvt = DAG.getNode(ARMISD::FMRRD, DAG.getVTList(MVT::i32, MVT::i32),
-                              &Op, 1);
-  
-  // Merge the pieces into a single i64 value.
-  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Cvt, Cvt.getValue(1));
-}
-
-static SDOperand LowerSRx(SDOperand Op, SelectionDAG &DAG,
-                          const ARMSubtarget *ST) {
-  assert(Op.getValueType() == MVT::i64 &&
-         (Op.getOpcode() == ISD::SRL || Op.getOpcode() == ISD::SRA) &&
-         "Unknown shift to lower!");
-  
-  // We only lower SRA, SRL of 1 here, all others use generic lowering.
-  if (!isa<ConstantSDNode>(Op.getOperand(1)) ||
-      cast<ConstantSDNode>(Op.getOperand(1))->getValue() != 1)
-    return SDOperand();
-  
-  // If we are in thumb mode, we don't have RRX.
-  if (ST->isThumb()) return SDOperand();
-  
-  // Okay, we have a 64-bit SRA or SRL of 1.  Lower this to an RRX expr.
-  SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                             DAG.getConstant(0, MVT::i32));
-  SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
-                             DAG.getConstant(1, MVT::i32));
-
-  // First, build a SRA_FLAG/SRL_FLAG op, which shifts the top part by one and
-  // captures the result into a carry flag.
-  unsigned Opc = Op.getOpcode() == ISD::SRL ? ARMISD::SRL_FLAG:ARMISD::SRA_FLAG;
-  Hi = DAG.getNode(Opc, DAG.getVTList(MVT::i32, MVT::Flag), &Hi, 1);
-  
-  // The low part is an ARMISD::RRX operand, which shifts the carry in.
-  Lo = DAG.getNode(ARMISD::RRX, MVT::i32, Lo, Hi.getValue(1));
-  
-  // Merge the pieces into a single i64 value.
-  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
-}
-
 SDOperand ARMTargetLowering::LowerMEMCPYInline(SDOperand Chain,
                                                SDOperand Dest,
                                                SDOperand Source,
@@ -1396,6 +1346,51 @@ SDOperand ARMTargetLowering::LowerMEMCPYInline(SDOperand Chain,
   return DAG.getNode(ISD::TokenFactor, MVT::Other, &TFOps[0], i);
 }
 
+static SDNode *ExpandBIT_CONVERT(SDNode *N, SelectionDAG &DAG) {
+  // Turn f64->i64 into FMRRD.
+  assert(N->getValueType(0) == MVT::i64 &&
+         N->getOperand(0).getValueType() == MVT::f64);
+  
+  SDOperand Op = N->getOperand(0);
+  SDOperand Cvt = DAG.getNode(ARMISD::FMRRD, DAG.getVTList(MVT::i32, MVT::i32),
+                              &Op, 1);
+  
+  // Merge the pieces into a single i64 value.
+  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Cvt, Cvt.getValue(1)).Val;
+}
+
+static SDNode *ExpandSRx(SDNode *N, SelectionDAG &DAG, const ARMSubtarget *ST) {
+  assert(N->getValueType(0) == MVT::i64 &&
+         (N->getOpcode() == ISD::SRL || N->getOpcode() == ISD::SRA) &&
+         "Unknown shift to lower!");
+  
+  // We only lower SRA, SRL of 1 here, all others use generic lowering.
+  if (!isa<ConstantSDNode>(N->getOperand(1)) ||
+      cast<ConstantSDNode>(N->getOperand(1))->getValue() != 1)
+    return 0;
+  
+  // If we are in thumb mode, we don't have RRX.
+  if (ST->isThumb()) return 0;
+  
+  // Okay, we have a 64-bit SRA or SRL of 1.  Lower this to an RRX expr.
+  SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, N->getOperand(0),
+                             DAG.getConstant(0, MVT::i32));
+  SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, N->getOperand(0),
+                             DAG.getConstant(1, MVT::i32));
+  
+  // First, build a SRA_FLAG/SRL_FLAG op, which shifts the top part by one and
+  // captures the result into a carry flag.
+  unsigned Opc = N->getOpcode() == ISD::SRL ? ARMISD::SRL_FLAG:ARMISD::SRA_FLAG;
+  Hi = DAG.getNode(Opc, DAG.getVTList(MVT::i32, MVT::Flag), &Hi, 1);
+  
+  // The low part is an ARMISD::RRX operand, which shifts the carry in.
+  Lo = DAG.getNode(ARMISD::RRX, MVT::i32, Lo, Hi.getValue(1));
+  
+  // Merge the pieces into a single i64 value.
+ return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi).Val;
+}
+
+
 SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Don't know how to custom lower this!"); abort();
@@ -1415,19 +1410,34 @@ SDOperand ARMTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:    return LowerFP_TO_INT(Op, DAG);
   case ISD::FCOPYSIGN:     return LowerFCOPYSIGN(Op, DAG);
-  case ISD::BIT_CONVERT:   return LowerBIT_CONVERT(Op, DAG);
-  case ISD::SRL:
-  case ISD::SRA:           return LowerSRx(Op, DAG, Subtarget);
-  case ISD::FORMAL_ARGUMENTS:
-    return LowerFORMAL_ARGUMENTS(Op, DAG);
+  case ISD::FORMAL_ARGUMENTS: return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::RETURNADDR:    break;
   case ISD::FRAMEADDR:     break;
   case ISD::GLOBAL_OFFSET_TABLE: return LowerGLOBAL_OFFSET_TABLE(Op, DAG);
   case ISD::MEMCPY:        return LowerMEMCPY(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
+      
+      
+  // FIXME: Remove these when LegalizeDAGTypes lands.
+  case ISD::BIT_CONVERT:   return SDOperand(ExpandBIT_CONVERT(Op.Val, DAG), 0);
+  case ISD::SRL:
+  case ISD::SRA:           return SDOperand(ExpandSRx(Op.Val, DAG,Subtarget),0);
   }
   return SDOperand();
 }
+
+
+/// ExpandOperationResult - Provide custom lowering hooks for expanding
+/// operations.
+SDNode *ARMTargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
+  switch (N->getOpcode()) {
+  default: assert(0 && "Don't know how to custom expand this!"); abort();
+  case ISD::BIT_CONVERT:   return ExpandBIT_CONVERT(N, DAG);
+  case ISD::SRL:
+  case ISD::SRA:           return ExpandSRx(N, DAG, Subtarget);
+  }
+}
+  
 
 //===----------------------------------------------------------------------===//
 //                           ARM Scheduler Hooks

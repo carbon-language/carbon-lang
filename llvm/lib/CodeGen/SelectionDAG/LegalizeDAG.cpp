@@ -5187,10 +5187,21 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
     // Otherwise, try a larger type.
   }
 
-  // Okay, we found the operation and type to use.  Truncate the result of the
-  // extended FP_TO_*INT operation to the desired size.
-  return DAG.getNode(ISD::TRUNCATE, DestVT,
-                     DAG.getNode(OpToUse, NewOutTy, LegalOp));
+  
+  // Okay, we found the operation and type to use.
+  SDOperand Operation = DAG.getNode(OpToUse, NewOutTy, LegalOp);
+  
+  // If the operation produces an invalid type, it must be custom lowered.  Use
+  // the target lowering hooks to expand it.  Just keep the low part of the
+  // expanded operation, we know that we're truncating anyway.
+  if (getTypeAction(NewOutTy) == Expand) {
+    Operation = SDOperand(TLI.ExpandOperationResult(Operation.Val, DAG), 0);
+    assert(Operation.Val && "Didn't return anything");
+  }
+  
+  // Truncate the result of the extended FP_TO_*INT operation to the desired
+  // size.
+  return DAG.getNode(ISD::TRUNCATE, DestVT, Operation);
 }
 
 /// ExpandBSWAP - Open code the operations for BSWAP of the specified operation.
@@ -5387,6 +5398,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // Return the operands.
     Lo = Node->getOperand(0);
     Hi = Node->getOperand(1);
+    break;
+      
+  case ISD::MERGE_VALUES:
+    // FIXME: For now only expand i64,chain = MERGE_VALUES (x, y)
+    assert(Op.ResNo == 0 && Node->getNumValues() == 2 &&
+           Op.getValue(1).getValueType() == MVT::Other &&
+           "unhandled MERGE_VALUES");
+    ExpandOp(Op.getOperand(0), Lo, Hi);
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(Op.getValue(1), LegalizeOp(Op.getOperand(1)));
     break;
     
   case ISD::SIGN_EXTEND_INREG:
@@ -5652,16 +5673,17 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
 
-  case ISD::READCYCLECOUNTER:
+  case ISD::READCYCLECOUNTER: {
     assert(TLI.getOperationAction(ISD::READCYCLECOUNTER, VT) == 
                  TargetLowering::Custom &&
            "Must custom expand ReadCycleCounter");
-    Lo = TLI.LowerOperation(Op, DAG);
-    assert(Lo.Val && "Node must be custom expanded!");
-    Hi = Lo.getValue(1);
+    SDOperand Tmp = TLI.LowerOperation(Op, DAG);
+    assert(Tmp.Val && "Node must be custom expanded!");
+    ExpandOp(Tmp.getValue(0), Lo, Hi);
     AddLegalizedOperand(SDOperand(Node, 1), // Remember we legalized the chain.
-                        LegalizeOp(Lo.getValue(2)));
+                        LegalizeOp(Tmp.getValue(1)));
     break;
+  }
 
     // These operators cannot be expanded directly, emit them as calls to
     // library functions.

@@ -115,7 +115,8 @@ public:
 private:
   void MarkNewNodes(SDNode *N);
   
-  void ReplaceLegalValueWith(SDOperand From, SDOperand To);
+  void ReplaceValueWith(SDOperand From, SDOperand To);
+  void ReplaceNodeWith(SDNode *From, SDNode *To);
 
   void RemapNode(SDOperand &N);
 
@@ -167,6 +168,7 @@ private:
   void ExpandResult_UNDEF      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_Constant   (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_BUILD_PAIR (SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void ExpandResult_MERGE_VALUES(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_ANY_EXTEND (SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_ZERO_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void ExpandResult_SIGN_EXTEND(SDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -391,10 +393,10 @@ void DAGTypeLegalizer::MarkNewNodes(SDNode *N) {
     Worklist.push_back(N);
 }
 
-/// ReplaceLegalValueWith - The specified value with a legal type was legalized
-/// to the specified other value.  If they are different, update the DAG and
-/// NodeIDs replacing any uses of From to use To instead.
-void DAGTypeLegalizer::ReplaceLegalValueWith(SDOperand From, SDOperand To) {
+/// ReplaceValueWith - The specified value was legalized to the specified other
+/// value.  If they are different, update the DAG and NodeIDs replacing any uses
+/// of From to use To instead.
+void DAGTypeLegalizer::ReplaceValueWith(SDOperand From, SDOperand To) {
   if (From == To) return;
   
   // If expansion produced new nodes, make sure they are properly marked.
@@ -410,8 +412,8 @@ void DAGTypeLegalizer::ReplaceLegalValueWith(SDOperand From, SDOperand To) {
   ReplacedNodes[From] = To;
 
   // Since we just made an unstructured update to the DAG, which could wreak
-  // general havoc on anything that once used N and now uses Res, walk all users
-  // of the result, updating their flags.
+  // general havoc on anything that once used From and now uses To, walk all
+  // users of the result, updating their flags.
   for (SDNode::use_iterator I = To.Val->use_begin(), E = To.Val->use_end();
        I != E; ++I) {
     SDNode *User = *I;
@@ -425,14 +427,51 @@ void DAGTypeLegalizer::ReplaceLegalValueWith(SDOperand From, SDOperand To) {
   }
 }
 
+/// ReplaceNodeWith - Replace uses of the 'from' node's results with the 'to'
+/// node's results.  The from and to node must define identical result types.
+void DAGTypeLegalizer::ReplaceNodeWith(SDNode *From, SDNode *To) {
+  if (From == To) return;
+  assert(From->getNumValues() == To->getNumValues() &&
+         "Node results don't match");
+  
+  // If expansion produced new nodes, make sure they are properly marked.
+  if (To->getNodeId() == NewNode)
+    MarkNewNodes(To);
+  
+  // Anything that used the old node should now use the new one.  Note that this
+  // can potentially cause recursive merging.
+  DAG.ReplaceAllUsesWith(From, To);
+  
+  // The old node may still be present in ExpandedNodes or PromotedNodes.
+  // Inform them about the replacement.
+  for (unsigned i = 0, e = From->getNumValues(); i != e; ++i) {
+    assert(From->getValueType(i) == To->getValueType(i) &&
+           "Node results don't match");
+    ReplacedNodes[SDOperand(From, i)] = SDOperand(To, i);
+  }
+  
+  // Since we just made an unstructured update to the DAG, which could wreak
+  // general havoc on anything that once used From and now uses To, walk all
+  // users of the result, updating their flags.
+  for (SDNode::use_iterator I = To->use_begin(), E = To->use_end();I != E; ++I){
+    SDNode *User = *I;
+    // If the node isn't already processed or in the worklist, mark it as new,
+    // then use MarkNewNodes to recompute its ID.
+    int NodeId = User->getNodeId();
+    if (NodeId != ReadyToProcess && NodeId != Processed) {
+      User->setNodeId(NewNode);
+      MarkNewNodes(User);
+    }
+  }
+}
+
+
 /// RemapNode - If the specified value was already legalized to another value,
 /// replace it by that value.
 void DAGTypeLegalizer::RemapNode(SDOperand &N) {
-  DenseMap<SDOperand, SDOperand>::iterator I = ReplacedNodes.find(N);
-  if (I != ReplacedNodes.end()) {
-    RemapNode(I->second);
+  for (DenseMap<SDOperand, SDOperand>::iterator I = ReplacedNodes.find(N);
+       I != ReplacedNodes.end(); I = ReplacedNodes.find(N))
     N = I->second;
-  }
 }
 
 void DAGTypeLegalizer::SetPromotedOp(SDOperand Op, SDOperand Result) {
@@ -712,7 +751,7 @@ SDOperand DAGTypeLegalizer::PromoteResult_LOAD(LoadSDNode *N) {
 
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
-  ReplaceLegalValueWith(SDOperand(N, 1), Res.getValue(1));
+  ReplaceValueWith(SDOperand(N, 1), Res.getValue(1));
   return Res;
 }
 
@@ -798,15 +837,14 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   SDOperand Lo, Hi;
   Lo = Hi = SDOperand();
 
-  // If this is a single-result node, see if the target wants to custom expand
-  // it.
-  if (N->getNumValues() == 1 &&
-      TLI.getOperationAction(N->getOpcode(),
-                             N->getValueType(0)) == TargetLowering::Custom) {
+  // See if the target wants to custom expand this node.
+  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) == 
+          TargetLowering::Custom) {
     // If the target wants to, allow it to lower this itself.
-    std::pair<SDOperand,SDOperand> P = TLI.ExpandOperationResult(N, DAG);
-    if (P.first.Val) {
-      SetExpandedOp(SDOperand(N, ResNo), P.first, P.second);
+    if (SDNode *P = TLI.ExpandOperationResult(N, DAG)) {
+      // Everything that once used N now uses P.  P had better not require
+      // custom expansion.
+      ReplaceNodeWith(N, P);
       return;
     }
   }
@@ -817,12 +855,13 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
     cerr << "ExpandResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to expand this operator!");
+    assert(0 && "Do not know how to expand the result of this operator!");
     abort();
       
   case ISD::UNDEF:       ExpandResult_UNDEF(N, Lo, Hi); break;
   case ISD::Constant:    ExpandResult_Constant(N, Lo, Hi); break;
   case ISD::BUILD_PAIR:  ExpandResult_BUILD_PAIR(N, Lo, Hi); break;
+  case ISD::MERGE_VALUES: ExpandResult_MERGE_VALUES(N, Lo, Hi); break;
   case ISD::ANY_EXTEND:  ExpandResult_ANY_EXTEND(N, Lo, Hi); break;
   case ISD::ZERO_EXTEND: ExpandResult_ZERO_EXTEND(N, Lo, Hi); break;
   case ISD::SIGN_EXTEND: ExpandResult_SIGN_EXTEND(N, Lo, Hi); break;
@@ -846,7 +885,6 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:         ExpandResult_Shift(N, Lo, Hi); break;
-
   }
   
   // If Lo/Hi is null, the sub-method took care of registering results etc.
@@ -873,6 +911,27 @@ void DAGTypeLegalizer::ExpandResult_BUILD_PAIR(SDNode *N,
   // Return the operands.
   Lo = N->getOperand(0);
   Hi = N->getOperand(1);
+}
+
+void DAGTypeLegalizer::ExpandResult_MERGE_VALUES(SDNode *N,
+                                                 SDOperand &Lo, SDOperand &Hi) {
+  // A MERGE_VALUES node can produce any number of values.  We know that the
+  // first illegal one needs to be expanded into Lo/Hi.
+  unsigned i;
+  
+  // The string of legal results gets turns into the input operands, which have
+  // the same type.
+  for (i = 0; isTypeLegal(N->getValueType(i)); ++i)
+    ReplaceValueWith(SDOperand(N, i), SDOperand(N->getOperand(i)));
+
+  // The first illegal result must be the one that needs to be expanded.
+  GetExpandedOp(N->getOperand(i), Lo, Hi);
+
+  // Legalize the rest of the results into the input operands whether they are
+  // legal or not.
+  unsigned e = N->getNumValues();
+  for (++i; i != e; ++i)
+    ReplaceValueWith(SDOperand(N, i), SDOperand(N->getOperand(i)));
 }
 
 void DAGTypeLegalizer::ExpandResult_ANY_EXTEND(SDNode *N,
@@ -1096,7 +1155,7 @@ void DAGTypeLegalizer::ExpandResult_LOAD(LoadSDNode *N,
 
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
-  ReplaceLegalValueWith(SDOperand(N, 1), Ch);
+  ReplaceValueWith(SDOperand(N, 1), Ch);
 }
 
 void DAGTypeLegalizer::ExpandResult_Logical(SDNode *N,
@@ -1184,7 +1243,7 @@ void DAGTypeLegalizer::ExpandResult_ADDSUBC(SDNode *N,
 
   // Legalized the flag result - switch anything that used the old flag to
   // use the new one.
-  ReplaceLegalValueWith(SDOperand(N, 1), Hi.getValue(1));
+  ReplaceValueWith(SDOperand(N, 1), Hi.getValue(1));
 }
 
 void DAGTypeLegalizer::ExpandResult_ADDSUBE(SDNode *N,
@@ -1203,7 +1262,7 @@ void DAGTypeLegalizer::ExpandResult_ADDSUBE(SDNode *N,
 
   // Legalized the flag result - switch anything that used the old flag to
   // use the new one.
-  ReplaceLegalValueWith(SDOperand(N, 1), Hi.getValue(1));
+  ReplaceValueWith(SDOperand(N, 1), Hi.getValue(1));
 }
 
 void DAGTypeLegalizer::ExpandResult_MUL(SDNode *N,
@@ -1537,7 +1596,7 @@ bool DAGTypeLegalizer::PromoteOperand(SDNode *N, unsigned OpNo) {
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");
   
-  ReplaceLegalValueWith(SDOperand(N, 0), Res);
+  ReplaceValueWith(SDOperand(N, 0), Res);
   return false;
 }
 
@@ -1759,7 +1818,7 @@ bool DAGTypeLegalizer::ExpandOperand(SDNode *N, unsigned OpNo) {
   assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
          "Invalid operand expansion");
   
-  ReplaceLegalValueWith(SDOperand(N, 0), Res);
+  ReplaceValueWith(SDOperand(N, 0), Res);
   return false;
 }
 

@@ -321,6 +321,12 @@ namespace llvm {
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
+    /// ExpandOperation - Custom lower the specified operation, splitting the
+    /// value into two pieces.
+    ///
+    virtual SDNode *ExpandOperationResult(SDNode *N, SelectionDAG &DAG);
+
+    
     virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
 
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
@@ -444,6 +450,9 @@ namespace llvm {
     SDOperand LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC);
 
+    std::pair<SDOperand,SDOperand> FP_TO_SINTHelper(SDOperand Op, 
+                                                    SelectionDAG &DAG);
+    
     SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG);
@@ -471,7 +480,6 @@ namespace llvm {
     SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerDYNAMIC_STACKALLOC(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVASTART(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerVACOPY(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerINTRINSIC_WO_CHAIN(SDOperand Op, SelectionDAG &DAG);
@@ -481,6 +489,8 @@ namespace llvm {
     SDOperand LowerEH_RETURN(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerTRAMPOLINE(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFLT_ROUNDS(SDOperand Op, SelectionDAG &DAG);
+    SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);
+    SDNode *ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG);
   };
 }
 

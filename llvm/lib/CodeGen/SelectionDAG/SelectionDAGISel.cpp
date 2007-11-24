@@ -1921,7 +1921,7 @@ unsigned SelectionDAGLowering::Clusterify(CaseVector& Cases,
   if (Cases.size()>=2)
     // Must recompute end() each iteration because it may be
     // invalidated by erase if we hold on to it
-    for (CaseItr I=Cases.begin(), J=next(Cases.begin()); J!=Cases.end(); ) {
+    for (CaseItr I=Cases.begin(), J=++(Cases.begin()); J!=Cases.end(); ) {
       int64_t nextValue = cast<ConstantInt>(J->Low)->getSExtValue();
       int64_t currentValue = cast<ConstantInt>(I->High)->getSExtValue();
       MachineBasicBlock* nextBB = J->BB;
@@ -4143,14 +4143,6 @@ SDOperand TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   abort();
   return SDOperand();
 }
-
-std::pair<SDOperand,SDOperand>
-TargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
-  assert(0 && "ExpandOperation not implemented for this target!");
-  abort();
-  return std::pair<SDOperand,SDOperand>();
-}
-
 
 SDOperand TargetLowering::CustomPromoteOperation(SDOperand Op,
                                                  SelectionDAG &DAG) {

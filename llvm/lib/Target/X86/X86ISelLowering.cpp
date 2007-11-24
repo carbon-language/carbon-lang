@@ -1258,7 +1258,7 @@ X86TargetLowering::LowerMemOpCallTo(SDOperand Op, SelectionDAG &DAG,
 
     SDOperand AlignNode = DAG.getConstant(Align, MVT::i32);
     SDOperand  SizeNode = DAG.getConstant(Size, MVT::i32);
-    SDOperand AlwaysInline = DAG.getConstant(1, MVT::i1);
+    SDOperand AlwaysInline = DAG.getConstant(1, MVT::i32);
 
     return DAG.getMemcpy(Chain, PtrOff, Arg, SizeNode, AlignNode,
                          AlwaysInline);
@@ -3918,22 +3918,22 @@ SDOperand X86TargetLowering::LowerSINT_TO_FP(SDOperand Op, SelectionDAG &DAG) {
   return Result;
 }
 
-SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
+std::pair<SDOperand,SDOperand> X86TargetLowering::
+FP_TO_SINTHelper(SDOperand Op, SelectionDAG &DAG) {
   assert(Op.getValueType() <= MVT::i64 && Op.getValueType() >= MVT::i16 &&
          "Unknown FP_TO_SINT to lower!");
-  SDOperand Result;
 
   // These are really Legal.
   if (Op.getValueType() == MVT::i32 && 
       X86ScalarSSEf32 && Op.getOperand(0).getValueType() == MVT::f32)
-    return Result;
+    return std::make_pair(SDOperand(), SDOperand());
   if (Op.getValueType() == MVT::i32 && 
       X86ScalarSSEf64 && Op.getOperand(0).getValueType() == MVT::f64)
-    return Result;
+    return std::make_pair(SDOperand(), SDOperand());
   if (Subtarget->is64Bit() &&
       Op.getValueType() == MVT::i64 &&
       Op.getOperand(0).getValueType() != MVT::f80)
-    return Result;
+    return std::make_pair(SDOperand(), SDOperand());
 
   // We lower FP->sint64 into FISTP64, followed by a load, all to a temporary
   // stack slot.
@@ -3943,10 +3943,10 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
   unsigned Opc;
   switch (Op.getValueType()) {
-    default: assert(0 && "Invalid FP_TO_SINT to lower!");
-    case MVT::i16: Opc = X86ISD::FP_TO_INT16_IN_MEM; break;
-    case MVT::i32: Opc = X86ISD::FP_TO_INT32_IN_MEM; break;
-    case MVT::i64: Opc = X86ISD::FP_TO_INT64_IN_MEM; break;
+  default: assert(0 && "Invalid FP_TO_SINT to lower!");
+  case MVT::i16: Opc = X86ISD::FP_TO_INT16_IN_MEM; break;
+  case MVT::i32: Opc = X86ISD::FP_TO_INT32_IN_MEM; break;
+  case MVT::i64: Opc = X86ISD::FP_TO_INT64_IN_MEM; break;
   }
 
   SDOperand Chain = DAG.getEntryNode();
@@ -3969,19 +3969,32 @@ SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   SDOperand Ops[] = { Chain, Value, StackSlot };
   SDOperand FIST = DAG.getNode(Opc, MVT::Other, Ops, 3);
 
-  // Load the result.  If this is an i64 load on an x86-32 host, expand the
-  // load.
-  if (Op.getValueType() != MVT::i64 || Subtarget->is64Bit())
-    return DAG.getLoad(Op.getValueType(), FIST, StackSlot, NULL, 0);
-  
-  SDOperand Lo = DAG.getLoad(MVT::i32, FIST, StackSlot, NULL, 0);
-  StackSlot = DAG.getNode(ISD::ADD, StackSlot.getValueType(), StackSlot,
-                          DAG.getConstant(StackSlot.getValueType(), 4));
-  SDOperand Hi = DAG.getLoad(MVT::i32, FIST, StackSlot, NULL, 0);
-  
-  
-  return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
+  return std::make_pair(FIST, StackSlot);
 }
+
+SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
+  assert((Op.getValueType() != MVT::i64 || Subtarget->is64Bit()) &&
+         "This FP_TO_SINT must be expanded!");
+
+  std::pair<SDOperand,SDOperand> Vals = FP_TO_SINTHelper(Op, DAG);
+  SDOperand FIST = Vals.first, StackSlot = Vals.second;
+  if (FIST.Val == 0) return SDOperand();
+  
+  // Load the result.
+  return DAG.getLoad(Op.getValueType(), FIST, StackSlot, NULL, 0);
+}
+
+SDNode *X86TargetLowering::ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG) {
+  std::pair<SDOperand,SDOperand> Vals = FP_TO_SINTHelper(SDOperand(N, 0), DAG);
+  SDOperand FIST = Vals.first, StackSlot = Vals.second;
+  if (FIST.Val == 0) return 0;
+  
+  // Return an i64 load from the stack slot.
+  SDOperand Res = DAG.getLoad(MVT::i64, FIST, StackSlot, NULL, 0);
+
+  // Use a MERGE_VALUES node to drop the chain result value.
+  return DAG.getNode(ISD::MERGE_VALUES, MVT::i64, Res).Val;
+}  
 
 SDOperand X86TargetLowering::LowerFABS(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType VT = Op.getValueType();
@@ -4587,32 +4600,36 @@ SDOperand X86TargetLowering::LowerMEMCPYInline(SDOperand Chain,
   return Chain;
 }
 
-SDOperand
-X86TargetLowering::LowerREADCYCLCECOUNTER(SDOperand Op, SelectionDAG &DAG) {
+/// Expand the result of: i64,outchain = READCYCLECOUNTER inchain
+SDNode *X86TargetLowering::ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG){
   SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Flag);
-  SDOperand TheOp = Op.getOperand(0);
-  SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, &TheOp, 1);
+  SDOperand TheChain = N->getOperand(0);
+  SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, &TheChain, 1);
   if (Subtarget->is64Bit()) {
-    SDOperand Copy1 = 
-      DAG.getCopyFromReg(rd, X86::RAX, MVT::i64, rd.getValue(1));
-    SDOperand Copy2 = DAG.getCopyFromReg(Copy1.getValue(1), X86::RDX,
-                                         MVT::i64, Copy1.getValue(2));
-    SDOperand Tmp = DAG.getNode(ISD::SHL, MVT::i64, Copy2,
+    SDOperand rax = DAG.getCopyFromReg(rd, X86::RAX, MVT::i64, rd.getValue(1));
+    SDOperand rdx = DAG.getCopyFromReg(rax.getValue(1), X86::RDX,
+                                       MVT::i64, rax.getValue(2));
+    SDOperand Tmp = DAG.getNode(ISD::SHL, MVT::i64, rdx,
                                 DAG.getConstant(32, MVT::i8));
     SDOperand Ops[] = {
-      DAG.getNode(ISD::OR, MVT::i64, Copy1, Tmp), Copy2.getValue(1)
+      DAG.getNode(ISD::OR, MVT::i64, rax, Tmp), rdx.getValue(1)
     };
     
     Tys = DAG.getVTList(MVT::i64, MVT::Other);
-    return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops, 2);
+    return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops, 2).Val;
   }
   
-  SDOperand Copy1 = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
-  SDOperand Copy2 = DAG.getCopyFromReg(Copy1.getValue(1), X86::EDX,
-                                       MVT::i32, Copy1.getValue(2));
-  SDOperand Ops[] = { Copy1, Copy2, Copy2.getValue(1) };
-  Tys = DAG.getVTList(MVT::i32, MVT::i32, MVT::Other);
-  return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops, 3);
+  SDOperand eax = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
+  SDOperand edx = DAG.getCopyFromReg(eax.getValue(1), X86::EDX,
+                                       MVT::i32, eax.getValue(2));
+  // Use a buildpair to merge the two 32-bit values into a 64-bit one. 
+  SDOperand Ops[] = { eax, edx };
+  Ops[0] = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Ops, 2);
+
+  // Use a MERGE_VALUES to return the value and chain.
+  Ops[1] = edx.getValue(1);
+  Tys = DAG.getVTList(MVT::i64, MVT::Other);
+  return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops, 2).Val;
 }
 
 SDOperand X86TargetLowering::LowerVASTART(SDOperand Op, SelectionDAG &DAG) {
@@ -5032,7 +5049,6 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::FORMAL_ARGUMENTS:   return LowerFORMAL_ARGUMENTS(Op, DAG);
   case ISD::MEMSET:             return LowerMEMSET(Op, DAG);
   case ISD::MEMCPY:             return LowerMEMCPY(Op, DAG);
-  case ISD::READCYCLECOUNTER:   return LowerREADCYCLCECOUNTER(Op, DAG);
   case ISD::VASTART:            return LowerVASTART(Op, DAG);
   case ISD::VACOPY:             return LowerVACOPY(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
@@ -5044,8 +5060,21 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::EH_RETURN:          return LowerEH_RETURN(Op, DAG);
   case ISD::TRAMPOLINE:         return LowerTRAMPOLINE(Op, DAG);
   case ISD::FLT_ROUNDS:         return LowerFLT_ROUNDS(Op, DAG);
+      
+      
+  // FIXME: REMOVE THIS WHEN LegalizeDAGTypes lands.
+  case ISD::READCYCLECOUNTER:
+    return SDOperand(ExpandREADCYCLECOUNTER(Op.Val, DAG), 0);
   }
-  return SDOperand();
+}
+
+/// ExpandOperation - Provide custom lowering hooks for expanding operations.
+SDNode *X86TargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
+  switch (N->getOpcode()) {
+  default: assert(0 && "Should not custom lower this!");
+  case ISD::FP_TO_SINT:         return ExpandFP_TO_SINT(N, DAG);
+  case ISD::READCYCLECOUNTER:   return ExpandREADCYCLECOUNTER(N, DAG);
+  }
 }
 
 const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
