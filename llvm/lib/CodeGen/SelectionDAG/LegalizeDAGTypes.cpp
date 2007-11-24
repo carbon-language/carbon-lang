@@ -469,9 +469,13 @@ void DAGTypeLegalizer::ReplaceNodeWith(SDNode *From, SDNode *To) {
 /// RemapNode - If the specified value was already legalized to another value,
 /// replace it by that value.
 void DAGTypeLegalizer::RemapNode(SDOperand &N) {
-  for (DenseMap<SDOperand, SDOperand>::iterator I = ReplacedNodes.find(N);
-       I != ReplacedNodes.end(); I = ReplacedNodes.find(N))
+  DenseMap<SDOperand, SDOperand>::iterator I = ReplacedNodes.find(N);
+  if (I != ReplacedNodes.end()) {
+    // Use path compression to speed up future lookups if values get multiply
+    // replaced with other values.
+    RemapNode(I->second);
     N = I->second;
+  }
 }
 
 void DAGTypeLegalizer::SetPromotedOp(SDOperand Op, SDOperand Result) {
@@ -842,8 +846,8 @@ void DAGTypeLegalizer::ExpandResult(SDNode *N, unsigned ResNo) {
           TargetLowering::Custom) {
     // If the target wants to, allow it to lower this itself.
     if (SDNode *P = TLI.ExpandOperationResult(N, DAG)) {
-      // Everything that once used N now uses P.  P had better not require
-      // custom expansion.
+      // Everything that once used N now uses P.  We are guaranteed that the
+      // result value types of N and the result value types of P match.
       ReplaceNodeWith(N, P);
       return;
     }
@@ -1774,32 +1778,41 @@ SDOperand DAGTypeLegalizer::PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo){
 /// need promotion or expansion as well as the specified one.
 bool DAGTypeLegalizer::ExpandOperand(SDNode *N, unsigned OpNo) {
   DEBUG(cerr << "Expand node operand: "; N->dump(&DAG); cerr << "\n");
-  SDOperand Res;
-  switch (N->getOpcode()) {
-  default:
-#ifndef NDEBUG
-    cerr << "ExpandOperand Op #" << OpNo << ": ";
-    N->dump(&DAG); cerr << "\n";
-#endif
-    assert(0 && "Do not know how to expand this operator's operand!");
-    abort();
-    
-  case ISD::TRUNCATE:        Res = ExpandOperand_TRUNCATE(N); break;
-  case ISD::BIT_CONVERT:     Res = ExpandOperand_BIT_CONVERT(N); break;
+  SDOperand Res(0, 0);
+  
+  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) == 
+      TargetLowering::Custom)
+    Res = TLI.LowerOperation(SDOperand(N, 0), DAG);
+  
+  if (Res.Val == 0) {
+    switch (N->getOpcode()) {
+    default:
+  #ifndef NDEBUG
+      cerr << "ExpandOperand Op #" << OpNo << ": ";
+      N->dump(&DAG); cerr << "\n";
+  #endif
+      assert(0 && "Do not know how to expand this operator's operand!");
+      abort();
+      
+    case ISD::TRUNCATE:        Res = ExpandOperand_TRUNCATE(N); break;
+    case ISD::BIT_CONVERT:     Res = ExpandOperand_BIT_CONVERT(N); break;
 
-  case ISD::SINT_TO_FP:
-    Res = ExpandOperand_SINT_TO_FP(N->getOperand(0), N->getValueType(0));
-    break;
-  case ISD::UINT_TO_FP:
-    Res = ExpandOperand_UINT_TO_FP(N->getOperand(0), N->getValueType(0)); 
-    break;
-  case ISD::EXTRACT_ELEMENT: Res = ExpandOperand_EXTRACT_ELEMENT(N); break;
-  case ISD::SETCC:           Res = ExpandOperand_SETCC(N); break;
+    case ISD::SINT_TO_FP:
+      Res = ExpandOperand_SINT_TO_FP(N->getOperand(0), N->getValueType(0));
+      break;
+    case ISD::UINT_TO_FP:
+      Res = ExpandOperand_UINT_TO_FP(N->getOperand(0), N->getValueType(0)); 
+      break;
+    case ISD::EXTRACT_ELEMENT: Res = ExpandOperand_EXTRACT_ELEMENT(N); break;
+    case ISD::SETCC:           Res = ExpandOperand_SETCC(N); break;
 
-  case ISD::STORE: Res = ExpandOperand_STORE(cast<StoreSDNode>(N), OpNo); break;
-  case ISD::MEMSET:
-  case ISD::MEMCPY:
-  case ISD::MEMMOVE:     Res = HandleMemIntrinsic(N); break;
+    case ISD::STORE:
+      Res = ExpandOperand_STORE(cast<StoreSDNode>(N), OpNo);
+      break;
+    case ISD::MEMSET:
+    case ISD::MEMCPY:
+    case ISD::MEMMOVE:     Res = HandleMemIntrinsic(N); break;
+    }
   }
   
   // If the result is null, the sub-method took care of registering results etc.
