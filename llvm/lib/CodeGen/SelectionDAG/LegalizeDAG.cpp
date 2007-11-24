@@ -5401,6 +5401,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
       
   case ISD::MERGE_VALUES:
+    if (Node->getNumValues() == 1) {
+      ExpandOp(Op.getOperand(0), Lo, Hi);
+      break;
+    }
     // FIXME: For now only expand i64,chain = MERGE_VALUES (x, y)
     assert(Op.ResNo == 0 && Node->getNumValues() == 2 &&
            Op.getValue(1).getValueType() == MVT::Other &&
