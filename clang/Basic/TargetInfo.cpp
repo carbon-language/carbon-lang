@@ -266,3 +266,10 @@ const char *TargetInfo::getVAListDeclaration() const {
   return PrimaryTarget->getVAListDeclaration();
 }
 
+/// isValidGCCRegisterName - Returns whether the passed in string
+/// is a valid register name according to GCC. This is used by Sema for
+/// inline asm statements.
+bool TargetInfo::isValidGCCRegisterName(const char *Name) const {
+  // FIXME: Implement this.
+  return false;
+}

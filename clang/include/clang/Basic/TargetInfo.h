@@ -187,6 +187,11 @@ public:
   /// __builtin_va_list, which is target-specific.
   const char *getVAListDeclaration() const;
 
+  /// isValidGCCRegisterName - Returns whether the passed in string
+  /// is a valid register name according to GCC. This is used by Sema for
+  /// inline asm statements.
+  bool isValidGCCRegisterName(const char *Name) const;
+    
   ///===---- Some helper methods ------------------------------------------===//
 
   unsigned getCharWidth(SourceLocation Loc) {
@@ -256,14 +261,14 @@ public:
   /// getVAListDeclaration - Return the declaration to use for
   /// __builtin_va_list, which is target-specific.
   virtual const char *getVAListDeclaration() const = 0;
-  
+    
   /// getWCharWidth - Return the size of wchar_t in bits.
   ///
   void getWCharInfo(unsigned &Size, unsigned &Align) const {
     Size = WCharWidth;
     Align = WCharAlign;
   }
-  
+    
   /// getTargetBuiltins - Return information about target-specific builtins for
   /// the target.
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
@@ -271,6 +276,17 @@ public:
     Records = 0;
     NumRecords = 0;
   }
+  
+  virtual void getGCCRegNames(const char * const *&Names, 
+                                   unsigned &NumNames) const = 0;
+
+  struct GCCRegAlias {
+    const char * const Aliases[5];
+    const char * const Register;
+  };
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                unsigned &NumAliases) const = 0;
+  
 private:
   virtual void ANCHOR(); // out-of-line virtual method for class.
 };

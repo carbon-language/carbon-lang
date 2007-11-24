@@ -16,6 +16,7 @@
 #include "clang/AST/Builtins.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 using namespace clang;
 
@@ -327,6 +328,77 @@ namespace PPC {
     Records = BuiltinInfo;
     NumRecords = LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
+
+  static const char * const GCCRegNames[] = {
+    "0", "1", "2", "3", "4", "5", "6", "7",
+    "8", "9", "10", "11", "12", "13", "14", "15",
+    "16", "17", "18", "19", "20", "21", "22", "23",
+    "24", "25", "26", "27", "28", "29", "30", "31",
+    "0", "1", "2", "3", "4", "5", "6", "7",
+    "8", "9", "10", "11", "12", "13", "14", "15",
+    "16", "17", "18", "19", "20", "21", "22", "23",
+    "24", "25", "26", "27", "28", "29", "30", "31",
+    "mq", "lr", "ctr", "ap",
+    "0", "1", "2", "3", "4", "5", "6", "7",
+    "xer",
+    "0", "1", "2", "3", "4", "5", "6", "7",
+    "8", "9", "10", "11", "12", "13", "14", "15",
+    "16", "17", "18", "19", "20", "21", "22", "23",
+    "24", "25", "26", "27", "28", "29", "30", "31",
+    "vrsave", "vscr",
+    "spe_acc", "spefscr",
+    "sfp"
+  };
+
+  static void getGCCRegNames(const char * const *&Names, 
+                                  unsigned &NumNames) {
+    Names = GCCRegNames;
+    NumNames = llvm::array_lengthof(GCCRegNames);
+  }
+
+  static const TargetInfoImpl::GCCRegAlias GCCRegAliases[] = {
+    // While some of these aliases do map to different registers
+    // they still share the same register name.
+    { { "cc", "cr0", "fr0", "r0", "v0"}, "0" }, 
+    { { "cr1", "fr1", "r1", "sp", "v1"}, "1" }, 
+    { { "cr2", "fr2", "r2", "toc", "v2"}, "2" }, 
+    { { "cr3", "fr3", "r3", "v3"}, "3" }, 
+    { { "cr4", "fr4", "r4", "v4"}, "4" }, 
+    { { "cr5", "fr5", "r5", "v5"}, "5" }, 
+    { { "cr6", "fr6", "r6", "v6"}, "6" }, 
+    { { "cr7", "fr7", "r7", "v7"}, "7" }, 
+    { { "fr8", "r8", "v8"}, "8" }, 
+    { { "fr9", "r9", "v9"}, "9" }, 
+    { { "fr10", "r10", "v10"}, "10" }, 
+    { { "fr11", "r11", "v11"}, "11" }, 
+    { { "fr12", "r12", "v12"}, "12" }, 
+    { { "fr13", "r13", "v13"}, "13" }, 
+    { { "fr14", "r14", "v14"}, "14" }, 
+    { { "fr15", "r15", "v15"}, "15" }, 
+    { { "fr16", "r16", "v16"}, "16" }, 
+    { { "fr17", "r17", "v17"}, "17" }, 
+    { { "fr18", "r18", "v18"}, "18" }, 
+    { { "fr19", "r19", "v19"}, "19" }, 
+    { { "fr20", "r20", "v20"}, "20" }, 
+    { { "fr21", "r21", "v21"}, "21" }, 
+    { { "fr22", "r22", "v22"}, "22" }, 
+    { { "fr23", "r23", "v23"}, "23" }, 
+    { { "fr24", "r24", "v24"}, "24" }, 
+    { { "fr25", "r25", "v25"}, "25" }, 
+    { { "fr26", "r26", "v26"}, "26" }, 
+    { { "fr27", "r27", "v27"}, "27" }, 
+    { { "fr28", "r28", "v28"}, "28" }, 
+    { { "fr29", "r29", "v29"}, "29" }, 
+    { { "fr30", "r30", "v30"}, "30" }, 
+    { { "fr31", "r31", "v31"}, "31" }, 
+  };
+  
+  static void getGCCRegAliases(const TargetInfoImpl::GCCRegAlias *&Aliases, 
+                               unsigned &NumAliases) {
+    Aliases = GCCRegAliases;
+    NumAliases = llvm::array_lengthof(GCCRegAliases);
+  }  
+  
 } // End namespace PPC
 
 
@@ -343,11 +415,44 @@ namespace X86 {
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
 #include "X86Builtins.def"
   };
+    
 
   static void getBuiltins(const Builtin::Info *&Records, unsigned &NumRecords) {
     Records = BuiltinInfo;
     NumRecords = LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
+    
+  static const char *GCCRegNames[] = {
+    "ax", "dx", "cx", "bx", "si", "di", "bp", "sp",
+    "st", "st(1)", "st(2)", "st(3)", "st(4)", "st(5)", "st(6)", "st(7)",
+    "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7",
+    "mm0", "mm1", "mm2", "mm3", "mm4", "mm5", "mm6", "mm7",
+    "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
+    "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"
+  };
+  
+  static void getGCCRegNames(const char * const *&Names, 
+                                  unsigned &NumNames) {
+    Names = GCCRegNames;
+    NumNames = llvm::array_lengthof(GCCRegNames);
+  }
+  
+  static const TargetInfoImpl::GCCRegAlias GCCRegAliases[] = {
+    { { "al", "ah", "eax", "rax" }, "ax" },
+    { { "bl", "bh", "ebx", "rbx" }, "bx" },
+    { { "cl", "ch", "ecx", "rcx" }, "cx" },
+    { { "dl", "dh", "edx", "rdx" }, "dx" },
+    { { "esi", "rsi" }, "si" },
+    { { "esp", "rsp" }, "sp" },
+    { { "ebp", "rbp" }, "bp" },
+  };
+
+  static void getGCCRegAliases(const TargetInfoImpl::GCCRegAlias *&Aliases, 
+                               unsigned &NumAliases) {
+    Aliases = GCCRegAliases;
+    NumAliases = llvm::array_lengthof(GCCRegAliases);
+  }  
+  
 } // End namespace X86
 
 //===----------------------------------------------------------------------===//
@@ -368,7 +473,15 @@ public:
   }
   virtual const char *getVAListDeclaration() const {
     return getPPCVAListDeclaration();
-  }  
+  }
+  virtual void getGCCRegNames(const char * const *&Names, 
+                              unsigned &NumNames) const {
+    PPC::getGCCRegNames(Names, NumNames);
+  }
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                unsigned &NumAliases) const {
+    PPC::getGCCRegAliases(Aliases, NumAliases);
+  }
 };
 } // end anonymous namespace.
 
@@ -386,6 +499,14 @@ public:
   virtual const char *getVAListDeclaration() const {
     return getPPCVAListDeclaration();
   }  
+  virtual void getGCCRegNames(const char * const *&Names, 
+                                   unsigned &NumNames) const {
+    PPC::getGCCRegNames(Names, NumNames);
+  }    
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                unsigned &NumAliases) const {
+    PPC::getGCCRegAliases(Aliases, NumAliases);
+  }
 };
 } // end anonymous namespace.
 
@@ -400,9 +521,16 @@ public:
                                  unsigned &NumRecords) const {
     X86::getBuiltins(Records, NumRecords);
   }
-  
   virtual const char *getVAListDeclaration() const {
     return getI386VAListDeclaration();
+  }  
+  virtual void getGCCRegNames(const char * const *&Names, 
+                                   unsigned &NumNames) const {
+    X86::getGCCRegNames(Names, NumNames);
+  }
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                unsigned &NumAliases) const {
+    X86::getGCCRegAliases(Aliases, NumAliases);
   }
 };
 } // end anonymous namespace.
@@ -420,7 +548,15 @@ public:
   }
   virtual const char *getVAListDeclaration() const {
     return getX86_64VAListDeclaration();
+  }
+  virtual void getGCCRegNames(const char * const *&Names, 
+                                   unsigned &NumNames) const {
+    X86::getGCCRegNames(Names, NumNames);
   }  
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                unsigned &NumAliases) const {
+    X86::getGCCRegAliases(Aliases, NumAliases);
+  }
 };
 } // end anonymous namespace.
 
@@ -443,7 +579,15 @@ public:
   }
   virtual const char *getVAListDeclaration() const {
     return getI386VAListDeclaration();
+  }
+  virtual void getGCCRegNames(const char * const *&Names, 
+                                   unsigned &NumNames) const {
+    X86::getGCCRegNames(Names, NumNames);
   }  
+  virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
+                                unsigned &NumAliases) const {
+    X86::getGCCRegAliases(Aliases, NumAliases);
+  }
 };
 } // end anonymous namespace.
 
