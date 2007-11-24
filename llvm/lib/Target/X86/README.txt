@@ -1511,3 +1511,24 @@ LBB1_4:	# cond_true
         cmpl    $262144, %eax
 
 //===---------------------------------------------------------------------===//
+
+define i64 @test(double %X) {
+	%Y = fptosi double %X to i64
+	ret i64 %Y
+}
+
+compiles to:
+
+_test:
+	subl	$20, %esp
+	movsd	24(%esp), %xmm0
+	movsd	%xmm0, 8(%esp)
+	fldl	8(%esp)
+	fisttpll	(%esp)
+	movl	4(%esp), %edx
+	movl	(%esp), %eax
+	addl	$20, %esp
+	#FP_REG_KILL
+	ret
+
+This should just fldl directly from the input stack slot.
