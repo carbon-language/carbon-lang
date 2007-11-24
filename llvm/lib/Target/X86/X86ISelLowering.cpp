@@ -3973,9 +3973,6 @@ FP_TO_SINTHelper(SDOperand Op, SelectionDAG &DAG) {
 }
 
 SDOperand X86TargetLowering::LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
-  assert((Op.getValueType() != MVT::i64 || Subtarget->is64Bit()) &&
-         "This FP_TO_SINT must be expanded!");
-
   std::pair<SDOperand,SDOperand> Vals = FP_TO_SINTHelper(Op, DAG);
   SDOperand FIST = Vals.first, StackSlot = Vals.second;
   if (FIST.Val == 0) return SDOperand();
