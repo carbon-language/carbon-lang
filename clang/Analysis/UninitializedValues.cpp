@@ -101,6 +101,8 @@ BlockVarDecl* TransferFuncs::FindBlockVarDecl(Stmt *S) {
     else if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(S)) {
       if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(DR->getDecl()))
         return VD;
+      else
+        return NULL;
     }
     else return NULL;
 }
@@ -108,16 +110,10 @@ BlockVarDecl* TransferFuncs::FindBlockVarDecl(Stmt *S) {
 bool TransferFuncs::VisitBinaryOperator(BinaryOperator* B) {
   if (BlockVarDecl* VD = FindBlockVarDecl(B->getLHS()))
     if (B->isAssignmentOp()) {
-      if (AD.FullUninitTaint) {
-        if (B->getOpcode() == BinaryOperator::Assign)
-          return V(VD,AD) = Visit(B->getRHS());
-        else // Handle +=, -=, *=, etc.  We do want '&', not '&&'.
-          return V(VD,AD) = Visit(B->getLHS()) & Visit(B->getRHS());
-      }
-      else {
-        Visit(B->getLHS()); Visit(B->getRHS());
-        return Initialized;
-      }
+      if (B->getOpcode() == BinaryOperator::Assign)
+        return V(VD,AD) = Visit(B->getRHS());
+      else // Handle +=, -=, *=, etc.  We do want '&', not '&&'.
+        return V(VD,AD) = Visit(B->getLHS()) & Visit(B->getRHS());
     }
 
   return VisitStmt(B);
