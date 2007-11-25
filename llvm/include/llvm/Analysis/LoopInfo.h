@@ -834,7 +834,7 @@ public:
     LI = new LoopInfoBase<BasicBlock>();
   }
   
-  ~LoopInfo() { LI->releaseMemory(); }
+  ~LoopInfo() { delete LI; }
 
   /// iterator/begin/end - The interface to the top-level loops in the current
   /// function.
