@@ -1,8 +1,7 @@
 ; This test makes sure that these instructions are properly eliminated.
+; PR1822
 
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:    not grep select
-; END.
+; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | not grep select
 
 implementation
 
@@ -180,3 +179,12 @@ short %test22(int %x) {
         ret short %retval
 }
 
+bool %test23(bool %a, bool %b) {
+	%c = select bool %a, bool %b, bool %a
+	ret bool %c
+}
+
+bool %test24(bool %a, bool %b) {
+	%c = select bool %a, bool %a, bool %b
+	ret bool %c
+}
