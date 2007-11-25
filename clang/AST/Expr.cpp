@@ -589,7 +589,7 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       // Get information about the size or align.
       if (Exp->getOpcode() == UnaryOperator::SizeOf)
         Result = Ctx.getTypeSize(Exp->getSubExpr()->getType(),
-                                 Exp->getOperatorLoc());
+                                 Exp->getOperatorLoc()) / 8;
       else
         Result = Ctx.getTypeAlign(Exp->getSubExpr()->getType(),
                                   Exp->getOperatorLoc());
