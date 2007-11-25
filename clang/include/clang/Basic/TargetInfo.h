@@ -278,7 +278,7 @@ public:
   }
   
   virtual void getGCCRegNames(const char * const *&Names, 
-                                   unsigned &NumNames) const = 0;
+                              unsigned &NumNames) const = 0;
 
   struct GCCRegAlias {
     const char * const Aliases[5];

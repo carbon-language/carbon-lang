@@ -793,7 +793,9 @@ DIAG(err_invalid_lvalue_in_asm_output, ERROR,
     "invalid lvalue in asm output")
 DIAG(err_invalid_type_in_asm_input, ERROR,
     "invalid type '%0' in asm input")
-
+DIAG(err_unknown_register_name_in_asm, ERROR,
+    "unknown register name '%0' in asm")
+    
 // CHECK: printf format string errors
 DIAG(warn_printf_not_string_constant, WARNING,
      "format string is not a string literal (potentially insecure)")

@@ -16,8 +16,10 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/Stmt.h"
 #include "clang/Parse/Scope.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
+#include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 Sema::StmtResult Sema::ActOnExprStmt(ExprTy *expr) {
@@ -685,6 +687,25 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
            diag::err_invalid_type_in_asm_input,
            PE->getType().getAsString(), 
            PE->getSubExpr()->getSourceRange());
+      
+      // FIXME: We currently leak memory here.
+      return true;
+    }
+  }
+  
+  // Check that the clobbers are valid.
+  for (unsigned i = 0; i < NumClobbers; i++) {
+    StringLiteral *Literal = cast<StringLiteral>((Expr *)Clobbers[i]);
+    assert(!Literal->isWide() && "Clobber strings should not be wide!");
+    
+    llvm::SmallString<16> Clobber(Literal->getStrData(), 
+                                  Literal->getStrData() + 
+                                  Literal->getByteLength());
+    
+    if (!Context.Target.isValidGCCRegisterName(Clobber.c_str())) {
+      Diag(Literal->getLocStart(),
+           diag::err_unknown_register_name_in_asm,
+           Clobber.c_str());
       
       // FIXME: We currently leak memory here.
       return true;

@@ -14,8 +14,9 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/Builtins.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/STLExtras.h"
 #include <set>
 using namespace clang;
 
@@ -270,6 +271,46 @@ const char *TargetInfo::getVAListDeclaration() const {
 /// is a valid register name according to GCC. This is used by Sema for
 /// inline asm statements.
 bool TargetInfo::isValidGCCRegisterName(const char *Name) const {
-  // FIXME: Implement this.
+  const char * const *Names;
+  unsigned NumNames;
+  
+  // Get rid of any register prefix.
+  if (Name[0] == '%' || Name[0] == '#')
+    Name++;
+  
+  if (strcmp(Name, "memory") == 0 ||
+      strcmp(Name, "cc") == 0)
+    return true;
+  
+  PrimaryTarget->getGCCRegNames(Names, NumNames);
+  
+  // If we have a number it maps to an entry in the register name array.
+  if (isdigit(Name[0])) {
+    char *End;
+    int n = (int)strtol(Name, &End, 0);
+    if (*End == 0)
+      return n >= 0 && (unsigned)n < NumNames;
+  }
+
+  // Check register names.
+  for (unsigned i = 0; i < NumNames; i++) {
+    if (strcmp(Name, Names[i]) == 0)
+      return true;
+  }
+  
+  // Now check aliases.
+  const TargetInfoImpl::GCCRegAlias *Aliases;
+  unsigned NumAliases;
+  
+  PrimaryTarget->getGCCRegAliases(Aliases, NumAliases);
+  for (unsigned i = 0; i < NumAliases; i++) {
+    for (unsigned j = 0 ; j < llvm::array_lengthof(Aliases[i].Aliases); j++) {
+      if (!Aliases[i].Aliases[j])
+        break;
+      if (strcmp(Aliases[i].Aliases[j], Name) == 0)
+        return true;
+    }
+  }
+  
   return false;
 }
