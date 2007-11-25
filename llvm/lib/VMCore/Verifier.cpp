@@ -393,30 +393,6 @@ void Verifier::visitFunction(Function &F) {
   Assert1(!FT->isStructReturn() || FT->getReturnType() == Type::VoidTy,
           "Invalid struct-return function!", &F);
 
-  const uint16_t ReturnIncompatible =
-    ParamAttr::ByVal | ParamAttr::InReg |
-    ParamAttr::Nest  | ParamAttr::StructRet;
-
-  const uint16_t ParameterIncompatible =
-    ParamAttr::NoReturn | ParamAttr::NoUnwind |
-    ParamAttr::ReadNone | ParamAttr::ReadOnly;
-
-  const uint16_t MutuallyIncompatible[3] = {
-    ParamAttr::ByVal | ParamAttr::InReg |
-    ParamAttr::Nest  | ParamAttr::StructRet,
-
-    ParamAttr::ZExt | ParamAttr::SExt,
-
-    ParamAttr::ReadNone | ParamAttr::ReadOnly
-  };
-
-  const uint16_t IntegerTypeOnly =
-    ParamAttr::SExt | ParamAttr::ZExt;
-
-  const uint16_t PointerTypeOnly =
-    ParamAttr::ByVal   | ParamAttr::Nest |
-    ParamAttr::NoAlias | ParamAttr::StructRet;
-
   bool SawSRet = false;
 
   if (const ParamAttrsList *Attrs = FT->getParamAttrs()) {
@@ -426,28 +402,29 @@ void Verifier::visitFunction(Function &F) {
       uint16_t Attr = Attrs->getParamAttrs(Idx);
 
       if (!Idx) {
-        uint16_t RetI = Attr & ReturnIncompatible;
+        uint16_t RetI = Attr & ParamAttr::ParameterOnly;
         Assert1(!RetI, "Attribute " + Attrs->getParamAttrsText(RetI) +
                 "should not apply to functions!", &F);
       } else {
-        uint16_t ParmI = Attr & ParameterIncompatible;
+        uint16_t ParmI = Attr & ParamAttr::ReturnOnly;
         Assert1(!ParmI, "Attribute " + Attrs->getParamAttrsText(ParmI) +
                 "should only be applied to function!", &F);
 
       }
 
-      for (unsigned i = 0; i < array_lengthof(MutuallyIncompatible); ++i) {
-        uint16_t MutI = Attr & MutuallyIncompatible[i];
+      for (unsigned i = 0;
+           i < array_lengthof(ParamAttr::MutuallyIncompatible); ++i) {
+        uint16_t MutI = Attr & ParamAttr::MutuallyIncompatible[i];
         Assert1(!(MutI & (MutI - 1)), "Attributes " +
                 Attrs->getParamAttrsText(MutI) + "are incompatible!", &F);
       }
 
-      uint16_t IType = Attr & IntegerTypeOnly;
+      uint16_t IType = Attr & ParamAttr::IntegerTypeOnly;
       Assert1(!IType || FT->getParamType(Idx-1)->isInteger(),
               "Attribute " + Attrs->getParamAttrsText(IType) +
               "should only apply to Integer type!", &F);
 
-      uint16_t PType = Attr & PointerTypeOnly;
+      uint16_t PType = Attr & ParamAttr::PointerTypeOnly;
       Assert1(!PType || isa<PointerType>(FT->getParamType(Idx-1)),
               "Attribute " + Attrs->getParamAttrsText(PType) +
               "should only apply to Pointer type!", &F);

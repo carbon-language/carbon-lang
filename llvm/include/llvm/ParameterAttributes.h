@@ -43,6 +43,34 @@ enum Attributes {
   ReadOnly   = 1 << 10  ///< Function only reads from memory
 };
 
+/// These attributes can safely be dropped from a function or a function call:
+/// doing so may reduce the number of optimizations performed, but it will not
+/// change a correct program into an incorrect one.
+/// @brief Attributes that do not change the calling convention.
+const uint16_t Informative = NoReturn | NoUnwind | NoAlias |
+                             ReadNone | ReadOnly;
+
+/// The following attribute sets are used by the verifier:
+
+/// @brief Attributes that only apply to function parameters.
+const uint16_t ParameterOnly = ByVal | InReg | Nest | StructRet;
+
+/// @brief Attributes that only apply to function return values.
+const uint16_t ReturnOnly = NoReturn | NoUnwind | ReadNone | ReadOnly;
+
+/// @brief Attributes that only apply to integers.
+const uint16_t IntegerTypeOnly = SExt | ZExt;
+
+/// @brief Attributes that only apply to pointers.
+const uint16_t PointerTypeOnly = ByVal | Nest | NoAlias | StructRet;
+
+/// @brief Attributes that are mutually incompatible.
+const uint16_t MutuallyIncompatible[3] = {
+  ByVal | InReg | Nest  | StructRet,
+  ZExt  | SExt,
+  ReadNone | ReadOnly
+};
+
 }
 
 /// This is just a pair of values to associate a set of parameter attributes
@@ -109,6 +137,11 @@ class ParamAttrsList : public FoldingSetNode {
     /// exists, it will be returned instead of creating a new instance.
     /// @brief Get a ParamAttrsList instance.
     static ParamAttrsList *get(const ParamAttrsVector &attrVec);
+
+    /// Returns whether each of the specified lists of attributes can be safely
+    /// replaced with the other in a function or a function call.
+    /// @brief Whether one attribute list can safely replace the other.
+    static bool areCompatible(const ParamAttrsList *A, const ParamAttrsList *B);
 
   /// @}
   /// @name Accessors

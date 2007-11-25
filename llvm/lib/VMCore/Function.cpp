@@ -86,7 +86,6 @@ ParamAttrsList::getParamAttrs(uint16_t Index) const {
   return ParamAttr::None;
 }
 
-
 std::string 
 ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
   std::string Result;
@@ -113,6 +112,50 @@ ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
   if (Attrs & ParamAttr::ReadOnly)
     Result += "readonly ";
   return Result;
+}
+
+/// onlyInformative - Returns whether only informative attributes are set.
+static inline bool onlyInformative(uint16_t attrs) {
+  return !(attrs & ~ParamAttr::Informative);
+}
+
+bool
+ParamAttrsList::areCompatible(const ParamAttrsList *A, const ParamAttrsList *B){
+  if (A == B)
+    return true;
+  unsigned ASize = A ? A->size() : 0;
+  unsigned BSize = B ? B->size() : 0;
+  unsigned AIndex = 0;
+  unsigned BIndex = 0;
+
+  while (AIndex < ASize && BIndex < BSize) {
+    uint16_t AIdx = A->getParamIndex(AIndex);
+    uint16_t BIdx = B->getParamIndex(BIndex);
+    uint16_t AAttrs = A->getParamAttrsAtIndex(AIndex);
+    uint16_t BAttrs = B->getParamAttrsAtIndex(AIndex);
+
+    if (AIdx < BIdx) {
+      if (!onlyInformative(AAttrs))
+        return false;
+      ++AIndex;
+    } else if (BIdx < AIdx) {
+      if (!onlyInformative(BAttrs))
+        return false;
+      ++BIndex;
+    } else {
+      if (!onlyInformative(AAttrs ^ BAttrs))
+        return false;
+      ++AIndex;
+      ++BIndex;
+    }
+  }
+  for (; AIndex < ASize; ++AIndex)
+    if (!onlyInformative(A->getParamAttrsAtIndex(AIndex)))
+      return false;
+  for (; BIndex < BSize; ++BIndex)
+    if (!onlyInformative(B->getParamAttrsAtIndex(AIndex)))
+      return false;
+  return true;
 }
 
 void 
