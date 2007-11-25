@@ -486,14 +486,13 @@ def MMX_MASKMOVQ : MMXI<0xF7, MRMDestMem, (outs), (ins VR64:$src, VR64:$mask),
 //===----------------------------------------------------------------------===//
 
 // Alias instructions that map zero vector to pxor.
-// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 let isReMaterializable = 1 in {
   def MMX_V_SET0       : MMXI<0xEF, MRMInitReg, (outs VR64:$dst), (ins),
                               "pxor\t$dst, $dst",
-                              [(set VR64:$dst, (v1i64 immAllZerosV))]>;
+                              [(set VR64:$dst, (v2i32 immAllZerosV))]>;
   def MMX_V_SETALLONES : MMXI<0x76, MRMInitReg, (outs VR64:$dst), (ins),
                               "pcmpeqd\t$dst, $dst",
-                              [(set VR64:$dst, (v1i64 immAllOnesV))]>;
+                              [(set VR64:$dst, (v2i32 immAllOnesV))]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -509,18 +508,6 @@ def : Pat<(store (v2i32 VR64:$src), addr:$dst),
           (MMX_MOVQ64mr addr:$dst, VR64:$src)>;
 def : Pat<(store (v1i64 VR64:$src), addr:$dst),
           (MMX_MOVQ64mr addr:$dst, VR64:$src)>;
-
-// 64-bit vector all zero's.
-def : Pat<(v8i8  immAllZerosV), (MMX_V_SET0)>;
-def : Pat<(v4i16 immAllZerosV), (MMX_V_SET0)>;
-def : Pat<(v2i32 immAllZerosV), (MMX_V_SET0)>;
-def : Pat<(v1i64 immAllZerosV), (MMX_V_SET0)>;
-
-// 64-bit vector all one's.
-def : Pat<(v8i8  immAllOnesV), (MMX_V_SETALLONES)>;
-def : Pat<(v4i16 immAllOnesV), (MMX_V_SETALLONES)>;
-def : Pat<(v2i32 immAllOnesV), (MMX_V_SETALLONES)>;
-def : Pat<(v1i64 immAllOnesV), (MMX_V_SETALLONES)>;
 
 // Bit convert.
 def : Pat<(v8i8  (bitconvert (v1i64 VR64:$src))), (v8i8  VR64:$src)>;
@@ -551,10 +538,10 @@ def MMX_X86s2vec : SDNode<"X86ISD::S2VEC",  SDTypeProfile<1, 1, []>, []>;
 // Move scalar to XMM zero-extended
 // movd to XMM register zero-extends
 let AddedComplexity = 15 in {
-  def : Pat<(v8i8 (vector_shuffle immAllZerosV,
+  def : Pat<(v8i8 (vector_shuffle immAllZerosV_bc,
                     (v8i8 (MMX_X86s2vec GR32:$src)), MMX_MOVL_shuffle_mask)),
             (MMX_MOVZDI2PDIrr GR32:$src)>;
-  def : Pat<(v4i16 (vector_shuffle immAllZerosV,
+  def : Pat<(v4i16 (vector_shuffle immAllZerosV_bc,
                     (v4i16 (MMX_X86s2vec GR32:$src)), MMX_MOVL_shuffle_mask)),
             (MMX_MOVZDI2PDIrr GR32:$src)>;
   def : Pat<(v2i32 (vector_shuffle immAllZerosV,
@@ -606,19 +593,19 @@ let AddedComplexity = 20 in {
 def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v2i32 immAllOnesV))),
                   VR64:$src2)),
           (MMX_PANDNrr VR64:$src1, VR64:$src2)>;
-def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v4i16 immAllOnesV))),
+def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v4i16 immAllOnesV_bc))),
                   VR64:$src2)),
           (MMX_PANDNrr VR64:$src1, VR64:$src2)>;
-def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v8i8  immAllOnesV))),
+def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v8i8  immAllOnesV_bc))),
                   VR64:$src2)),
           (MMX_PANDNrr VR64:$src1, VR64:$src2)>;
 
 def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v2i32 immAllOnesV))),
                   (load addr:$src2))),
           (MMX_PANDNrm VR64:$src1, addr:$src2)>;
-def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v4i16 immAllOnesV))),
+def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v4i16 immAllOnesV_bc))),
                   (load addr:$src2))),
           (MMX_PANDNrm VR64:$src1, addr:$src2)>;
-def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v8i8  immAllOnesV))),
+def : Pat<(v1i64 (and (xor VR64:$src1, (bc_v1i64 (v8i8  immAllOnesV_bc))),
                   (load addr:$src2))),
           (MMX_PANDNrm VR64:$src1, addr:$src2)>;

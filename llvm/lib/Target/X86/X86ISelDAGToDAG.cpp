@@ -842,20 +842,15 @@ bool X86DAGToDAGISel::SelectScalarSSELoad(SDOperand Op, SDOperand Pred,
   // Also handle the case where we explicitly require zeros in the top
   // elements.  This is a vector shuffle from the zero vector.
   if (N.getOpcode() == ISD::VECTOR_SHUFFLE && N.Val->hasOneUse() &&
-      N.getOperand(0).getOpcode() == ISD::BUILD_VECTOR &&
+      // Check to see if the top elements are all zeros (or bitcast of zeros).
+      ISD::isBuildVectorAllZeros(N.getOperand(0).Val) &&
       N.getOperand(1).getOpcode() == ISD::SCALAR_TO_VECTOR && 
       N.getOperand(1).Val->hasOneUse() &&
       ISD::isNON_EXTLoad(N.getOperand(1).getOperand(0).Val) &&
       N.getOperand(1).getOperand(0).hasOneUse()) {
-    // Check to see if the BUILD_VECTOR is building a zero vector.
-    SDOperand BV = N.getOperand(0);
-    for (unsigned i = 0, e = BV.getNumOperands(); i != e; ++i)
-      if (!isZeroNode(BV.getOperand(i)) &&
-          BV.getOperand(i).getOpcode() != ISD::UNDEF)
-        return false;  // Not a zero/undef vector.
     // Check to see if the shuffle mask is 4/L/L/L or 2/L, where L is something
     // from the LHS.
-    unsigned VecWidth = BV.getNumOperands();
+    unsigned VecWidth=MVT::getVectorNumElements(N.getOperand(0).getValueType());
     SDOperand ShufMask = N.getOperand(2);
     assert(ShufMask.getOpcode() == ISD::BUILD_VECTOR && "Invalid shuf mask!");
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(ShufMask.getOperand(0))) {

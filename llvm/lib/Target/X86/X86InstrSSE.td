@@ -939,11 +939,10 @@ def STMXCSR : PSI<0xAE, MRM3m, (outs), (ins i32mem:$dst),
                   "stmxcsr\t$dst", [(int_x86_sse_stmxcsr addr:$dst)]>;
 
 // Alias instructions that map zero vector to pxor / xorp* for sse.
-// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 let isReMaterializable = 1 in
 def V_SET0 : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins),
                  "xorps\t$dst, $dst",
-                 [(set VR128:$dst, (v4f32 immAllZerosV))]>;
+                 [(set VR128:$dst, (v4i32 immAllZerosV))]>;
 
 // FR32 to 128-bit vector conversion.
 def MOVSS2PSrr : SSI<0x10, MRMSrcReg, (outs VR128:$dst), (ins FR32:$src),
@@ -991,7 +990,7 @@ let isTwoAddress = 1 in {
 let AddedComplexity = 20 in
 def MOVZSS2PSrm : SSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f32mem:$src),
                       "movss\t{$src, $dst|$dst, $src}",
-                      [(set VR128:$dst, (v4f32 (vector_shuffle immAllZerosV,
+                      [(set VR128:$dst, (v4f32 (vector_shuffle immAllZerosV_bc,
                                  (v4f32 (scalar_to_vector (loadf32 addr:$src))),
                                                 MOVL_shuffle_mask)))]>;
 
@@ -2119,11 +2118,10 @@ def MFENCE : I<0xAE, MRM6m, (outs), (ins),
 
 
 // Alias instructions that map zero vector to pxor / xorp* for sse.
-// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 let isReMaterializable = 1 in
   def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins),
                          "pcmpeqd\t$dst, $dst",
-                         [(set VR128:$dst, (v2f64 immAllOnesV))]>;
+                         [(set VR128:$dst, (v4i32 immAllOnesV))]>;
 
 // FR64 to 128-bit vector conversion.
 def MOVSD2PDrr : SDI<0x10, MRMSrcReg, (outs VR128:$dst), (ins FR64:$src),
@@ -2220,7 +2218,7 @@ let AddedComplexity = 20 in
   def MOVZSD2PDrm : SDI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                         "movsd\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst,
-                          (v2f64 (vector_shuffle immAllZerosV,
+                          (v2f64 (vector_shuffle immAllZerosV_bc,
                                   (v2f64 (scalar_to_vector
                                           (loadf64 addr:$src))),
                                   MOVL_shuffle_mask)))]>;
@@ -2692,21 +2690,6 @@ def : Pat<(v8i16 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v4i32 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 def : Pat<(v2i64 (undef)), (IMPLICIT_DEF_VR128)>, Requires<[HasSSE2]>;
 
-// 128-bit vector all zero's.
-def : Pat<(v16i8 immAllZerosV), (V_SET0)>, Requires<[HasSSE2]>;
-def : Pat<(v8i16 immAllZerosV), (V_SET0)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 immAllZerosV), (V_SET0)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 immAllZerosV), (V_SET0)>, Requires<[HasSSE2]>;
-def : Pat<(v2f64 immAllZerosV), (V_SET0)>, Requires<[HasSSE2]>;
-
-// 128-bit vector all one's.
-def : Pat<(v16i8 immAllOnesV), (V_SETALLONES)>, Requires<[HasSSE2]>;
-def : Pat<(v8i16 immAllOnesV), (V_SETALLONES)>, Requires<[HasSSE2]>;
-def : Pat<(v4i32 immAllOnesV), (V_SETALLONES)>, Requires<[HasSSE2]>;
-def : Pat<(v2i64 immAllOnesV), (V_SETALLONES)>, Requires<[HasSSE2]>;
-def : Pat<(v4f32 immAllOnesV), (V_SETALLONES)>, Requires<[HasSSE1]>;
-
-
 // Scalar to v8i16 / v16i8. The source may be a GR32, but only the lower 8 or
 // 16-bits matter.
 def : Pat<(v8i16 (X86s2vec GR32:$src)), (MOVDI2PDIrr GR32:$src)>,
@@ -2751,17 +2734,17 @@ let Predicates = [HasSSE2] in {
 // Move scalar to XMM zero-extended
 // movd to XMM register zero-extends
 let AddedComplexity = 15 in {
-def : Pat<(v8i16 (vector_shuffle immAllZerosV,
+def : Pat<(v8i16 (vector_shuffle immAllZerosV_bc,
                   (v8i16 (X86s2vec GR32:$src)), MOVL_shuffle_mask)),
           (MOVZDI2PDIrr GR32:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v16i8 (vector_shuffle immAllZerosV,
+def : Pat<(v16i8 (vector_shuffle immAllZerosV_bc,
                   (v16i8 (X86s2vec GR32:$src)), MOVL_shuffle_mask)),
           (MOVZDI2PDIrr GR32:$src)>, Requires<[HasSSE2]>;
 // Zeroing a VR128 then do a MOVS{S|D} to the lower bits.
-def : Pat<(v2f64 (vector_shuffle immAllZerosV,
+def : Pat<(v2f64 (vector_shuffle immAllZerosV_bc,
                   (v2f64 (scalar_to_vector FR64:$src)), MOVL_shuffle_mask)),
           (MOVLSD2PDrr (V_SET0), FR64:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v4f32 (vector_shuffle immAllZerosV,
+def : Pat<(v4f32 (vector_shuffle immAllZerosV_bc,
                   (v4f32 (scalar_to_vector FR32:$src)), MOVL_shuffle_mask)),
           (MOVLSS2PSrr (V_SET0), FR32:$src)>, Requires<[HasSSE2]>;
 }
@@ -2911,7 +2894,7 @@ def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
 
 // Set lowest element and zero upper elements.
 let AddedComplexity = 20 in
-def : Pat<(bc_v2i64 (vector_shuffle immAllZerosV,
+def : Pat<(bc_v2i64 (vector_shuffle immAllZerosV_bc,
                      (v2f64 (scalar_to_vector (loadf64 addr:$src))),
                      MOVL_shuffle_mask)),
           (MOVZQI2PQIrm addr:$src)>, Requires<[HasSSE2]>;
