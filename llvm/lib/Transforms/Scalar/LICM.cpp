@@ -84,6 +84,11 @@ namespace {
     }
 
     bool doFinalization() {
+      // Free the values stored in the map
+      for (std::map<Loop *, AliasSetTracker *>::iterator
+             I = LoopToAliasMap.begin(), E = LoopToAliasMap.end(); I != E; ++I)
+        delete I->second;
+
       LoopToAliasMap.clear();
       return false;
     }

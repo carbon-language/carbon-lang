@@ -263,6 +263,7 @@ public:
   /// the specified alias analysis object to disambiguate load and store
   /// addresses.
   explicit AliasSetTracker(AliasAnalysis &aa) : AA(aa) {}
+  ~AliasSetTracker() { clear(); }
 
   /// add methods - These methods are used to add different types of
   /// instructions to the alias sets.  Adding a new instruction can result in
