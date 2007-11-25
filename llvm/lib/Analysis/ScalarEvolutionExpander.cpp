@@ -208,6 +208,16 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   return expand(V);
 }
 
+Value *SCEVExpander::visitSMaxExpr(SCEVSMaxExpr *S) {
+  Value *LHS = expand(S->getOperand(0));
+  for (unsigned i = 1; i < S->getNumOperands(); ++i) {
+    Value *RHS = expand(S->getOperand(i));
+    Value *ICmp = new ICmpInst(ICmpInst::ICMP_SGT, LHS, RHS, "tmp", InsertPt);
+    LHS = new SelectInst(ICmp, LHS, RHS, "smax", InsertPt);
+  }
+  return LHS;
+}
+
 Value *SCEVExpander::expand(SCEV *S) {
   // Check to see if we already expanded this.
   std::map<SCEVHandle, Value*>::iterator I = InsertedExpressions.find(S);

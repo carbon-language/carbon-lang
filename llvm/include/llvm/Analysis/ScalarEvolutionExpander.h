@@ -134,6 +134,8 @@ namespace llvm {
 
     Value *visitAddRecExpr(SCEVAddRecExpr *S);
 
+    Value *visitSMaxExpr(SCEVSMaxExpr *S);
+
     Value *visitUnknown(SCEVUnknown *S) {
       return S->getValue();
     }

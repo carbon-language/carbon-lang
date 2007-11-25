@@ -25,7 +25,7 @@ namespace llvm {
     // These should be ordered in terms of increasing complexity to make the
     // folders simpler.
     scConstant, scTruncate, scZeroExtend, scSignExtend, scAddExpr, scMulExpr,
-    scSDivExpr, scAddRecExpr, scUnknown, scCouldNotCompute
+    scSDivExpr, scAddRecExpr, scSMaxExpr, scUnknown, scCouldNotCompute
   };
 
   //===--------------------------------------------------------------------===//
@@ -274,7 +274,8 @@ namespace llvm {
     static inline bool classof(const SCEVCommutativeExpr *S) { return true; }
     static inline bool classof(const SCEV *S) {
       return S->getSCEVType() == scAddExpr ||
-             S->getSCEVType() == scMulExpr;
+             S->getSCEVType() == scMulExpr ||
+             S->getSCEVType() == scSMaxExpr;
     }
   };
 
@@ -459,6 +460,28 @@ namespace llvm {
     }
   };
 
+
+  //===--------------------------------------------------------------------===//
+  /// SCEVSMaxExpr - This class represents a signed maximum selection.
+  ///
+  class SCEVSMaxExpr : public SCEVCommutativeExpr {
+    friend class ScalarEvolution;
+
+    explicit SCEVSMaxExpr(const std::vector<SCEVHandle> &ops)
+      : SCEVCommutativeExpr(scSMaxExpr, ops) {
+    }
+
+  public:
+    virtual const char *getOperationStr() const { return " smax "; }
+
+    /// Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const SCEVSMaxExpr *S) { return true; }
+    static inline bool classof(const SCEV *S) {
+      return S->getSCEVType() == scSMaxExpr;
+    }
+  };
+
+
   //===--------------------------------------------------------------------===//
   /// SCEVUnknown - This means that we are dealing with an entirely unknown SCEV
   /// value, and only represent it as it's LLVM Value.  This is the "bottom"
@@ -521,6 +544,8 @@ namespace llvm {
         return ((SC*)this)->visitSDivExpr((SCEVSDivExpr*)S);
       case scAddRecExpr:
         return ((SC*)this)->visitAddRecExpr((SCEVAddRecExpr*)S);
+      case scSMaxExpr:
+        return ((SC*)this)->visitSMaxExpr((SCEVSMaxExpr*)S);
       case scUnknown:
         return ((SC*)this)->visitUnknown((SCEVUnknown*)S);
       case scCouldNotCompute:

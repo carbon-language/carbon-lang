@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | llvm-dis | grep select
-; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | llvm-dis | not grep br
+; RUN: llvm-as < %s | opt -indvars -adce -simplifycfg | opt \
+; RUN:     -analyze -loops | not grep "^Loop Containing" 
 ; PR1179
 
 define i32 @ltst(i32 %x) {
