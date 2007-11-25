@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Sema.h"
+#include "SemaUtil.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -1213,42 +1214,6 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
   return QualType();
 }
 
-// Utility method to plow through parentheses to get the first nested
-// non-ParenExpr expr.
-static inline Expr* IgnoreParen(Expr* E) {
-  while (ParenExpr* P = dyn_cast<ParenExpr>(E))
-    E = P->getSubExpr();
-  
-  return E;
-}
-
-// Utility method to plow through parenthesis and casts.
-static inline Expr* IgnoreParenCasts(Expr* E) {
-  while(true) {
-    if (ParenExpr* P = dyn_cast<ParenExpr>(E))
-      E = P->getSubExpr();
-    else if (CastExpr* P = dyn_cast<CastExpr>(E))
-      E = P->getSubExpr();
-    else if (ImplicitCastExpr* P = dyn_cast<ImplicitCastExpr>(E))
-      E = P->getSubExpr();
-    else
-      break;
-  }
-  
-  return E;
-}
-
-// Utility method to determine if a CallExpr is a call to a builtin.
-static inline bool isCallBuiltin(CallExpr* cexp) {
-  Expr* sub = IgnoreParenCasts(cexp->getCallee());
-  
-  if (DeclRefExpr* E = dyn_cast<DeclRefExpr>(sub))
-    if (E->getDecl()->getIdentifier()->getBuiltinID() > 0)
-      return true;
-
-  return false;
-}
-
 inline QualType Sema::CheckCompareOperands( // C99 6.5.8
   Expr *&lex, Expr *&rex, SourceLocation loc, bool isRelational)
 {
@@ -1277,38 +1242,9 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
       return Context.IntTy;
   } else {
     // Check for comparisons of floating point operands using != and ==.
-    // Issue a warning if these are no self-comparisons, as they are not likely
-    // to do what the programmer intended.
     if (lType->isFloatingType()) {
       assert (rType->isFloatingType());
-      
-      // Special case: check for x == x (which is OK).
-      bool EmitWarning = true;
-      
-      Expr* LeftExprSansParen = IgnoreParen(lex);
-      Expr* RightExprSansParen = IgnoreParen(rex);
-      
-      // Look for x == x.  Do not emit warnings for such cases.
-      if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LeftExprSansParen))
-        if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RightExprSansParen))
-          if (DRL->getDecl() == DRR->getDecl())
-            EmitWarning = false;
-
-      // Check for comparisons with builtin types.
-      if (EmitWarning)           
-        if (CallExpr* CL = dyn_cast<CallExpr>(LeftExprSansParen))
-          if (isCallBuiltin(CL))
-            EmitWarning = false;
-      
-      if (EmitWarning)            
-        if (CallExpr* CR = dyn_cast<CallExpr>(RightExprSansParen))
-          if (isCallBuiltin(CR))
-            EmitWarning = false;
-              
-      // Emit the diagnostic.
-      if (EmitWarning)
-        Diag(loc, diag::warn_floatingpoint_eq,
-             lex->getSourceRange(),rex->getSourceRange());
+      CheckFloatComparison(loc,lex,rex);
     }
     
     if (lType->isArithmeticType() && rType->isArithmeticType())

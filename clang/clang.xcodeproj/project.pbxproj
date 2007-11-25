@@ -242,6 +242,7 @@
 		35839B0A0CDF845F006ED061 /* TypeSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeSerialization.cpp; path = AST/TypeSerialization.cpp; sourceTree = "<group>"; };
 		35847BE30CC7DB9000C40FFF /* StmtIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StmtIterator.h; path = clang/AST/StmtIterator.h; sourceTree = "<group>"; };
 		35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtIterator.cpp; path = AST/StmtIterator.cpp; sourceTree = "<group>"; };
+		35A2B8610CF8FFA300E6C317 /* SemaUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaUtil.h; path = Sema/SemaUtil.h; sourceTree = "<group>"; };
 		35AE0F660C9B4CA300CC1279 /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/UninitializedValues.h; sourceTree = "<group>"; };
 		35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTConsumer.h; path = clang/AST/ASTConsumer.h; sourceTree = "<group>"; };
 		35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtViz.cpp; path = AST/StmtViz.cpp; sourceTree = "<group>"; };
@@ -516,6 +517,7 @@
 			children = (
 				DE67E7190C020F4F00F66BC5 /* ASTStreamer.cpp */,
 				DE67E7140C020EDF00F66BC5 /* Sema.h */,
+				35A2B8610CF8FFA300E6C317 /* SemaUtil.h */,
 				DE67E7160C020EE400F66BC5 /* Sema.cpp */,
 				DEF2F00F0C6CFED5000C4259 /* SemaChecking.cpp */,
 				DE67E7120C020ED900F66BC5 /* SemaDecl.cpp */,

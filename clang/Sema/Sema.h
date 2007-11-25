@@ -729,6 +729,8 @@ private:
 
   
   bool CheckBuiltinCFStringArgument(Expr* Arg);
+  
+  void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
 };
 
 

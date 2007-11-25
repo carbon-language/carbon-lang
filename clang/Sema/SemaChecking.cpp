@@ -25,6 +25,8 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
+#include "SemaUtil.h"
+
 using namespace clang;
 
 /// CheckFunctionCall - Check a direct function call for various correctness
@@ -693,4 +695,39 @@ static DeclRefExpr* EvalVal(Expr *E) {
   default:
     return NULL;
   }
+}
+
+//===--- CHECK: Floating-Point comparisons (-Wfloat-equal) ---------------===//
+
+/// Check for comparisons of floating point operands using != and ==.
+/// Issue a warning if these are no self-comparisons, as they are not likely
+/// to do what the programmer intended.
+void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
+  bool EmitWarning = true;
+  
+  Expr* LeftExprSansParen = IgnoreParen(lex);
+  Expr* RightExprSansParen = IgnoreParen(rex);
+
+  // Special case: check for x == x (which is OK).
+  // Do not emit warnings for such cases.
+  if (DeclRefExpr* DRL = dyn_cast<DeclRefExpr>(LeftExprSansParen))
+    if (DeclRefExpr* DRR = dyn_cast<DeclRefExpr>(RightExprSansParen))
+      if (DRL->getDecl() == DRR->getDecl())
+        EmitWarning = false;
+  
+  // Check for comparisons with builtin types.
+  if (EmitWarning)           
+    if (CallExpr* CL = dyn_cast<CallExpr>(LeftExprSansParen))
+      if (isCallBuiltin(CL))
+        EmitWarning = false;
+  
+  if (EmitWarning)            
+    if (CallExpr* CR = dyn_cast<CallExpr>(RightExprSansParen))
+      if (isCallBuiltin(CR))
+        EmitWarning = false;
+  
+  // Emit the diagnostic.
+  if (EmitWarning)
+    Diag(loc, diag::warn_floatingpoint_eq,
+         lex->getSourceRange(),rex->getSourceRange());
 }
