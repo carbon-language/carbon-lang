@@ -1318,8 +1318,6 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   // If no ivars and no root or if its root, directly or indirectly,
   // have no ivars (thus not synthesized) then no need to synthesize this class.
   if (NumIvars <= 0 && (!RCDecl || !ObjcSynthesizedStructs.count(RCDecl))) {
-    //FIXME: This does not replace @interface class-name with the 
-    //Result text. Could be a bug in ReplaceText API.
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
     Rewrite.ReplaceText(LocStart, endBuf-startBuf, 
                         Result.c_str(), Result.size());
@@ -1756,8 +1754,12 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
   int NumIvars = IDecl->getImplDeclNumIvars() > 0 
                    ? IDecl->getImplDeclNumIvars() 
                    : (CDecl ? CDecl->getNumInstanceVariables() : 0);
-  
-  SynthesizeObjcInternalStruct(CDecl, Result);
+  // Explictly declared @interface's are already synthesized.
+  if (CDecl->ImplicitInterfaceDecl()) {
+    // FIXME: Implementation of a class with no @interface (legacy) doese not 
+    // produce correct synthesis as yet.
+    SynthesizeObjcInternalStruct(CDecl, Result);
+  }
   
   if (NumIvars > 0) {
     static bool objc_ivar = false;
