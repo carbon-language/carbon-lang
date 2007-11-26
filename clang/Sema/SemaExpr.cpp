@@ -738,6 +738,8 @@ static void promoteExprToType(Expr *&expr, QualType type) {
   return;
 }
 
+/// Note that lex is not null here, even if this is the gnu "x ?: y" extension.
+/// In that case, lex = cond.
 inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   Expr *&cond, Expr *&lex, Expr *&rex, SourceLocation questionLoc) {
   UsualUnaryConversions(cond);
@@ -760,8 +762,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
   }
   if (const RecordType *LHSRT = lexT->getAsRecordType()) {    // C99 6.5.15p3
     if (const RecordType *RHSRT = rexT->getAsRecordType()) {
-      
-      if (LHSRT->getDecl()->getIdentifier() ==RHSRT->getDecl()->getIdentifier())
+      if (LHSRT->getDecl() == RHSRT->getDecl())
         return lexT;
       
       Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
@@ -826,11 +827,19 @@ Action::ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
                                             ExprTy *RHS) {
   Expr *CondExpr = (Expr *) Cond;
   Expr *LHSExpr = (Expr *) LHS, *RHSExpr = (Expr *) RHS;
+
+  // If this is the gnu "x ?: y" extension, analyze the types as though the LHS
+  // was the condition.
+  bool isLHSNull = LHSExpr == 0;
+  if (isLHSNull)
+    LHSExpr = CondExpr;
+  
   QualType result = CheckConditionalOperands(CondExpr, LHSExpr, 
                                              RHSExpr, QuestionLoc);
   if (result.isNull())
     return true;
-  return new ConditionalOperator(CondExpr, LHSExpr, RHSExpr, result);
+  return new ConditionalOperator(CondExpr, isLHSNull ? 0 : LHSExpr,
+                                 RHSExpr, result);
 }
 
 /// DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that

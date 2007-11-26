@@ -884,13 +884,23 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   llvm::BasicBlock *RHSBlock = new llvm::BasicBlock("cond.:");
   llvm::BasicBlock *ContBlock = new llvm::BasicBlock("cond.cont");
   
-  Value *Cond = CGF.EvaluateExprAsBool(E->getCond());
-  Builder.CreateCondBr(Cond, LHSBlock, RHSBlock);
+  // Evaluate the conditional, then convert it to bool.  We do this explicitly
+  // because we need the unconverted value if this is a GNU ?: expression with
+  // missing middle value.
+  Value *CondVal = CGF.EmitScalarExpr(E->getCond());
+  Value *CondBoolVal = CGF.EmitScalarConversion(CondVal, E->getCond()->getType(), 
+                                                CGF.getContext().BoolTy);
+  Builder.CreateCondBr(CondBoolVal, LHSBlock, RHSBlock);
   
   CGF.EmitBlock(LHSBlock);
   
   // Handle the GNU extension for missing LHS.
-  Value *LHS = E->getLHS() ? Visit(E->getLHS()) : Cond;
+  Value *LHS;
+  if (E->getLHS())
+    LHS = Visit(E->getLHS());
+  else    // Perform promotions, to handle cases like "short ?: int"
+    LHS = EmitScalarConversion(CondVal, E->getCond()->getType(), E->getType());
+  
   Builder.CreateBr(ContBlock);
   LHSBlock = Builder.GetInsertBlock();
   
