@@ -1310,20 +1310,26 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   }
   
   int NumIvars = CDecl->getNumInstanceVariables();
-  // If no ivars and no root or if its root, directly or indirectly,
-  // have no ivars (thus not synthesized) then no need to synthesize this class.
-  if (NumIvars <= 0 && (!RCDecl || !ObjcSynthesizedStructs.count(RCDecl)))
-    return;
-  // FIXME: This has potential of causing problem. If 
-  // SynthesizeObjcInternalStruct is ever called recursively.
-  Result += "\nstruct ";
-  Result += CDecl->getName();
-
   SourceLocation LocStart = CDecl->getLocStart();
   SourceLocation LocEnd = CDecl->getLocEnd();
   
   const char *startBuf = SM->getCharacterData(LocStart);
   const char *endBuf = SM->getCharacterData(LocEnd);
+  // If no ivars and no root or if its root, directly or indirectly,
+  // have no ivars (thus not synthesized) then no need to synthesize this class.
+  if (NumIvars <= 0 && (!RCDecl || !ObjcSynthesizedStructs.count(RCDecl))) {
+    //FIXME: This does not replace @interface class-name with the 
+    //Result text. Could be a bug in ReplaceText API.
+    endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
+    Rewrite.ReplaceText(LocStart, endBuf-startBuf, 
+                        Result.c_str(), Result.size());
+    return;
+  }
+  
+  // FIXME: This has potential of causing problem. If 
+  // SynthesizeObjcInternalStruct is ever called recursively.
+  Result += "\nstruct ";
+  Result += CDecl->getName();
   
   if (NumIvars > 0) {
     const char *cursor = strchr(startBuf, '{');
