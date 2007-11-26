@@ -410,17 +410,27 @@ bool NumericLiteralParser::GetIntegerValue(llvm::APInt &Val) {
 }
 
 llvm::APFloat NumericLiteralParser::
-GetFloatValue(const llvm::fltSemantics &Format) {
+GetFloatValue(const llvm::fltSemantics &Format, bool* isExact) {
+  using llvm::APFloat;
+  
   char floatChars[256];
   strncpy(floatChars, ThisTokBegin, ThisTokEnd-ThisTokBegin);
   floatChars[ThisTokEnd-ThisTokBegin] = '\0';
-#if 0
-  // This doesn't work yet.
-  return llvm::APFloat(Format, floatChars);
+
+#if 1
+  APFloat V (Format, APFloat::fcZero, false);
+
+  APFloat::opStatus status;
+  status = V.convertFromString(floatChars,APFloat::rmTowardZero);
+  
+  if (isExact)
+    *isExact = status == APFloat::opOK;
+  
+  return V;
 #else
   // FIXME: this is horrible!
-  llvm::APFloat V(strtod(floatChars, 0));
-  V.convert(Format, llvm::APFloat::rmTowardZero);
+  APFloat V(strtod(floatChars, 0));
+  V.convert(Format, APFloat::rmTowardZero);
   return V;
 #endif
 }

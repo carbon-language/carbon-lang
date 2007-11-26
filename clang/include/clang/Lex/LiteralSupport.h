@@ -77,8 +77,11 @@ public:
   
   /// GetFloatValue - Convert this numeric literal to a floating value, using
   /// the specified APFloat fltSemantics (specifying float, double, etc).
-  ///
-  llvm::APFloat GetFloatValue(const llvm::fltSemantics &Format);
+  /// The optional bool isExact (passed-by-reference) has its value
+  /// set to true if the returned APFloat can represent the number in the
+  /// literal exactly, and false otherwise.
+  llvm::APFloat GetFloatValue(const llvm::fltSemantics &Format, 
+                              bool* isExact = NULL);
 
 private:  
   void Diag(SourceLocation Loc, unsigned DiagID, 
