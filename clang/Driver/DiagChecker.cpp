@@ -57,7 +57,7 @@ static void FindDiagnostics(const std::string &Comment,
     ColNo = Comment.find(ExpectedStr, ColNo);
     if (ColNo == std::string::npos) break;
 
-    size_type OpenDiag = Comment.find_first_of("{{", ColNo);
+    size_type OpenDiag = Comment.find("{{", ColNo);
 
     if (OpenDiag == std::string::npos) {
       fprintf(stderr,
@@ -67,7 +67,7 @@ static void FindDiagnostics(const std::string &Comment,
     }
 
     OpenDiag += 2;
-    size_type CloseDiag = Comment.find_first_of("}}", OpenDiag);
+    size_type CloseDiag = Comment.find("}}", OpenDiag);
 
     if (CloseDiag == std::string::npos) {
       fprintf(stderr,
