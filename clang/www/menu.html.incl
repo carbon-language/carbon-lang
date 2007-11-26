@@ -7,7 +7,6 @@ HTML 4.01 specs: http://www.w3.org/TR/html401/
 			<a href="http://www.llvm.org/">LLVM Home</a>
 			<label>Clang Info</label>
 			<a href="index.html">About</a>
-			<a href="status.html">Status</a>
 			<a href="features.html">Features</a>
 			<a href="get_involved.html">Get Involved</a>
 			<a href="http://clang.llvm.org/docs/InternalsManual.html">Manual</a>
