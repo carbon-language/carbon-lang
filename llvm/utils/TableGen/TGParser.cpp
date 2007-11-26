@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <algorithm>
+
 #include "TGParser.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"

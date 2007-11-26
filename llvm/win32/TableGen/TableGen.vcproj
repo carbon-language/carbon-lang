@@ -388,50 +388,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\utils\TableGen\FileParser.y"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Bisoning $(InputFileName)"
-						CommandLine="..\dobison.cmd File debug $(InputName) $(InputPath) ..\..\utils\TableGen&#x0D;&#x0A;"
-						Outputs="$(InputName).cpp;$(InputName).h;$(InputName).output;..\..\utils\TableGen\$(InputName).h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Bisoning $(InputFileName)"
-						CommandLine="..\dobison.cmd File release $(InputName) $(InputPath) ..\..\utils\TableGen&#x0D;&#x0A;"
-						Outputs="$(InputName).cpp;$(InputName).h;$(InputName).output;..\..\utils\TableGen\$(InputName).h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Bisoning $(InputFileName)"
-						CommandLine="..\dobison.cmd File debug $(InputName) $(InputPath) ..\..\utils\TableGen&#x0D;&#x0A;"
-						Outputs="$(InputName).cpp;$(InputName).h;$(InputName).output;..\..\utils\TableGen\$(InputName).h"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description="Bisoning $(InputFileName)"
-						CommandLine="..\dobison.cmd File release $(InputName) $(InputPath) ..\..\utils\TableGen&#x0D;&#x0A;"
-						Outputs="$(InputName).cpp;$(InputName).h;$(InputName).output;..\..\utils\TableGen\$(InputName).h"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\utils\TableGen\InstrInfoEmitter.cpp"
 				>
 			</File>
@@ -461,6 +417,14 @@
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\TGLexer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\utils\TableGen\TGLexer.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\utils\TableGen\TGParser.cpp"
 				>
 			</File>
 		</Filter>
@@ -526,51 +490,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\utils\TableGen\TGLexer.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Generated Files"
-			>
-			<File
-				RelativePath="fileparser.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						DisableSpecificWarnings="4065"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						DisableSpecificWarnings="4065"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						DisableSpecificWarnings="4065"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						DisableSpecificWarnings="4065"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="fileparser.h"
+				RelativePath="..\..\utils\TableGen\TGParser.h"
 				>
 			</File>
 		</Filter>
