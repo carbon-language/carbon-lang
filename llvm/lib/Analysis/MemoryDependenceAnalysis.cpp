@@ -79,9 +79,6 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
     if (StoreInst* S = dyn_cast<StoreInst>(QI)) {
       pointer = S->getPointerOperand();
       pointerSize = TD.getTypeStoreSize(S->getOperand(0)->getType());
-    } else if (LoadInst* L = dyn_cast<LoadInst>(QI)) {
-      pointer = L->getPointerOperand();
-      pointerSize = TD.getTypeStoreSize(L->getType());
     } else if (AllocationInst* AI = dyn_cast<AllocationInst>(QI)) {
       pointer = AI;
       if (ConstantInt* C = dyn_cast<ConstantInt>(AI->getArraySize()))
@@ -98,7 +95,11 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
       // FreeInsts erase the entire structure
       pointerSize = ~0UL;
     } else if (CallSite::get(QI).getInstruction() != 0) {
-      if (AA.getModRefInfo(C, CallSite::get(QI)) != AliasAnalysis::NoModRef) {
+      AliasAnalysis::ModRefBehavior result =
+                   AA.getModRefBehavior(cast<CallInst>(QI)->getCalledFunction(),
+                                        CallSite::get(QI));
+      if (result != AliasAnalysis::DoesNotAccessMemory &&
+          result != AliasAnalysis::OnlyReadsMemory) {
         if (!start && !block) {
           depGraphLocal.insert(std::make_pair(C.getInstruction(),
                                               std::make_pair(QI, true)));

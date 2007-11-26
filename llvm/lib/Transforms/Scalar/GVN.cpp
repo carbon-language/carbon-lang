@@ -476,7 +476,8 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
   
   if (CallInst* C = dyn_cast<CallInst>(V)) {
     if (C->getCalledFunction() &&
-        AA->doesNotAccessMemory(C->getCalledFunction())) {
+        (AA->doesNotAccessMemory(C->getCalledFunction()) ||
+         AA->onlyReadsMemory(C->getCalledFunction()))) {
       Expression e = create_expression(C);
     
       DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
@@ -1037,6 +1038,22 @@ bool GVN::processInstruction(Instruction* I,
   // Perform value-number based elimination
   } else if (currAvail.test(num)) {
     Value* repl = find_leader(currAvail, num);
+    
+    if (CallInst* CI = dyn_cast<CallInst>(I)) {
+      AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
+      if (CI->getCalledFunction() &&
+          !AA.doesNotAccessMemory(CI->getCalledFunction())) {
+        MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+        if (MD.getDependency(CI) != MD.getDependency(cast<CallInst>(repl))) {
+          // There must be an intervening may-alias store, so nothing from
+          // this point on will be able to be replaced with the preceding call
+          currAvail.erase(repl);
+          currAvail.insert(I);
+          
+          return false;
+        }
+      }
+    }
     
     VN.erase(I);
     I->replaceAllUsesWith(repl);
