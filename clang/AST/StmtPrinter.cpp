@@ -673,9 +673,16 @@ void StmtPrinter::VisitCompoundAssignOperator(CompoundAssignOperator *Node) {
 }
 void StmtPrinter::VisitConditionalOperator(ConditionalOperator *Node) {
   PrintExpr(Node->getCond());
-  OS << " ? ";
-  PrintExpr(Node->getLHS());
-  OS << " : ";
+  
+  if (Node->getLHS()) {
+    OS << " ? ";
+    PrintExpr(Node->getLHS());
+    OS << " : ";
+  }
+  else { // Handle GCC extention where LHS can be NULL.
+    OS << " ?: ";
+  }
+  
   PrintExpr(Node->getRHS());
 }
 
