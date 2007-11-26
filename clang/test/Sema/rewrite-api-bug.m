@@ -1,6 +1,6 @@
 // RUN: clang -rewrite-test %s
 
-#include <Objc/objc.h>
+#include <objc/objc.h>
 
 @interface MyDerived
 - (void) instanceMethod;
