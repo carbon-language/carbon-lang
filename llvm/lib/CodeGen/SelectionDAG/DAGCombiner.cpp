@@ -1306,15 +1306,17 @@ SDOperand DAGCombiner::visitSREM(SDNode *N) {
       DAG.MaskedValueIsZero(N0, SignBit))
     return DAG.getNode(ISD::UREM, VT, N0, N1);
   
-  // Unconditionally lower X%C -> X-X/C*C.  This allows the X/C logic to hack on
-  // the remainder operation.
+  // If X/C can be simplified by the division-by-constant logic, lower
+  // X%C to the equivalent of X-X/C*C.
   if (N1C && !N1C->isNullValue()) {
     SDOperand Div = DAG.getNode(ISD::SDIV, VT, N0, N1);
-    SDOperand Mul = DAG.getNode(ISD::MUL, VT, Div, N1);
-    SDOperand Sub = DAG.getNode(ISD::SUB, VT, N0, Mul);
-    AddToWorkList(Div.Val);
-    AddToWorkList(Mul.Val);
-    return Sub;
+    SDOperand OptimizedDiv = combine(Div.Val);
+    if (OptimizedDiv.Val && OptimizedDiv.Val != Div.Val) {
+      SDOperand Mul = DAG.getNode(ISD::MUL, VT, OptimizedDiv, N1);
+      SDOperand Sub = DAG.getNode(ISD::SUB, VT, N0, Mul);
+      AddToWorkList(Mul.Val);
+      return Sub;
+    }
   }
   
   // undef % X -> 0
@@ -1351,15 +1353,17 @@ SDOperand DAGCombiner::visitUREM(SDNode *N) {
     }
   }
   
-  // Unconditionally lower X%C -> X-X/C*C.  This allows the X/C logic to hack on
-  // the remainder operation.
+  // If X/C can be simplified by the division-by-constant logic, lower
+  // X%C to the equivalent of X-X/C*C.
   if (N1C && !N1C->isNullValue()) {
     SDOperand Div = DAG.getNode(ISD::UDIV, VT, N0, N1);
-    SDOperand Mul = DAG.getNode(ISD::MUL, VT, Div, N1);
-    SDOperand Sub = DAG.getNode(ISD::SUB, VT, N0, Mul);
-    AddToWorkList(Div.Val);
-    AddToWorkList(Mul.Val);
-    return Sub;
+    SDOperand OptimizedDiv = combine(Div.Val);
+    if (OptimizedDiv.Val && OptimizedDiv.Val != Div.Val) {
+      SDOperand Mul = DAG.getNode(ISD::MUL, VT, OptimizedDiv, N1);
+      SDOperand Sub = DAG.getNode(ISD::SUB, VT, N0, Mul);
+      AddToWorkList(Mul.Val);
+      return Sub;
+    }
   }
   
   // undef % X -> 0
