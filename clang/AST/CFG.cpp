@@ -220,24 +220,53 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
   switch (S->getStmtClass()) {
     case Stmt::ConditionalOperatorClass: {
       ConditionalOperator* C = cast<ConditionalOperator>(S);
-      
+
+      // Create the confluence block that will "merge" the results
+      // of the ternary expression.
       CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();  
       ConfluenceBlock->appendStmt(C);
       FinishBlock(ConfluenceBlock);
       
+
+      // Create a block for the LHS expression if there is an LHS expression.
+      // A GCC extension allows LHS to be NULL, causing the condition to
+      // be the value that is returned instead.
+      //  e.g: x ?: y is shorthand for: x ? x : y;
       Succ = ConfluenceBlock;
       Block = NULL;
-      CFGBlock* LHSBlock = Visit(C->getLHS());
-      FinishBlock(LHSBlock);
+      CFGBlock* LHSBlock = NULL;
+      if (C->getLHS()) {
+        LHSBlock = Visit(C->getLHS());
+        FinishBlock(LHSBlock);
+        Block = NULL;
+      }
       
+      // Create the block for the RHS expression.
       Succ = ConfluenceBlock;
-      Block = NULL;
       CFGBlock* RHSBlock = Visit(C->getRHS());
       FinishBlock(RHSBlock);
       
+      // Create the block that will contain the condition.
       Block = createBlock(false);
-      Block->addSuccessor(LHSBlock);
+      
+      if (LHSBlock)
+        Block->addSuccessor(LHSBlock);
+      else {
+        // If we have no LHS expression, add the ConfluenceBlock as a direct
+        // successor for the block containing the condition.  Moreover,
+        // we need to reverse the order of the predecessors in the
+        // ConfluenceBlock because the RHSBlock will have been added to
+        // the succcessors already, and we want the first predecessor to the
+        // the block containing the expression for the case when the ternary
+        // expression evaluates to true.
+        Block->addSuccessor(ConfluenceBlock);
+        assert (ConfluenceBlock->pred_size() == 2);
+        std::reverse(ConfluenceBlock->pred_begin(), 
+                     ConfluenceBlock->pred_end());
+      }
+      
       Block->addSuccessor(RHSBlock);
+      
       Block->setTerminator(C);
       return addStmt(C->getCond());
     }
