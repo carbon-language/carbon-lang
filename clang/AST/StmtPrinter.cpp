@@ -19,7 +19,7 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/Support/Compiler.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
 #include <iomanip>
 using namespace clang;
 
@@ -788,8 +788,7 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
 //===----------------------------------------------------------------------===//
 
 void Stmt::dumpPretty() const {
-  // FIXME: eliminate use of <iostream>
-  printPretty(std::cerr);
+  printPretty(*llvm::cerr.stream());
 }
 
 void Stmt::printPretty(std::ostream &OS, PrinterHelper* Helper) const {
