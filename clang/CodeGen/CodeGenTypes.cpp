@@ -223,7 +223,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       isVarArg = true;
     }
     
-    return llvm::FunctionType::get(ResultType, ArgTys, isVarArg, 0);
+    return llvm::FunctionType::get(ResultType, ArgTys, isVarArg);
   }
 
   case Type::ObjcInterface:
