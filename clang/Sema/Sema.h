@@ -696,6 +696,9 @@ private:
                              QualType ElementType, bool isStatic, 
                              int &nInitializers, bool &hadError);
                              
+  // returns true if the cast is invalid
+  bool CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty);
+  
   // returns true if there were any incompatible arguments.                           
   bool CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
                                  ObjcMethodDecl *Method);

@@ -799,7 +799,14 @@ DIAG(err_invalid_type_in_asm_input, ERROR,
     "invalid type '%0' in asm input")
 DIAG(err_unknown_register_name_in_asm, ERROR,
     "unknown register name '%0' in asm")
-    
+DIAG(err_invalid_conversion_between_vectors, ERROR,
+    "invalid conversion between vector type '%0' and '%1' of different size")
+DIAG(err_invalid_conversion_between_vector_and_integer, ERROR,
+    "invalid conversion between vector type '%0' and integer type '%1' "
+    "of different size")
+DIAG(err_invalid_conversion_between_vector_and_scalar, ERROR,
+    "invalid conversion between vector type '%0' and scalar type '%1'")
+
 // CHECK: printf format string errors
 DIAG(warn_printf_not_string_constant, WARNING,
      "format string is not a string literal (potentially insecure)")

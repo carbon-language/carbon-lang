@@ -703,6 +703,28 @@ ActOnInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
   return e;
 }
 
+bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty)
+{
+  assert(VectorTy->isVectorType() && "Not a vector type!");
+  
+  if (Ty->isVectorType() || Ty->isIntegerType()) {
+    if (Context.getTypeSize(VectorTy, SourceLocation()) !=
+        Context.getTypeSize(Ty, SourceLocation()))
+      return Diag(R.getBegin(),
+                  Ty->isVectorType() ? 
+                  diag::err_invalid_conversion_between_vectors :
+                  diag::err_invalid_conversion_between_vector_and_integer,
+                  VectorTy.getAsString().c_str(),
+                  Ty.getAsString().c_str(), R);
+  } else
+    return Diag(R.getBegin(),
+                diag::err_invalid_conversion_between_vector_and_scalar,
+                VectorTy.getAsString().c_str(),
+                Ty.getAsString().c_str(), R);
+  
+  return false;
+}
+
 Action::ExprResult Sema::
 ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
               SourceLocation RParenLoc, ExprTy *Op) {
@@ -719,10 +741,19 @@ ActOnCastExpr(SourceLocation LParenLoc, TypeTy *Ty,
     if (!castType->isScalarType())
       return Diag(LParenLoc, diag::err_typecheck_cond_expect_scalar, 
                   castType.getAsString(), SourceRange(LParenLoc, RParenLoc));
-    if (!castExpr->getType()->isScalarType()) {
+    if (!castExpr->getType()->isScalarType())
       return Diag(castExpr->getLocStart(), 
                   diag::err_typecheck_expect_scalar_operand, 
                   castExpr->getType().getAsString(),castExpr->getSourceRange());
+
+    if (castExpr->getType()->isVectorType()) {
+      if (CheckVectorCast(SourceRange(LParenLoc, RParenLoc), 
+                          castExpr->getType(), castType))
+        return true;
+    } else if (castType->isVectorType()) {
+      if (CheckVectorCast(SourceRange(LParenLoc, RParenLoc), 
+                          castType, castExpr->getType()))
+        return true;
     }
   }
   return new CastExpr(castType, castExpr, LParenLoc);
