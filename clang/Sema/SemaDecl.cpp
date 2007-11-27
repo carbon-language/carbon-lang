@@ -391,13 +391,9 @@ bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic,
          Init->getSourceRange());
     return true;
   case PointerFromInt:
-    // check for null pointer constant (C99 6.3.2.3p3)
-    if (!Init->isNullPointerConstant(Context)) {
-      Diag(loc, diag::ext_typecheck_assign_pointer_int,
-           DeclType.getAsString(), rhsType.getAsString(), 
-           Init->getSourceRange());
-      return true;
-    }
+    Diag(loc, diag::ext_typecheck_assign_pointer_int,
+         DeclType.getAsString(), rhsType.getAsString(), 
+         Init->getSourceRange());
     break;
   case IntFromPointer: 
     Diag(loc, diag::ext_typecheck_assign_pointer_int, 

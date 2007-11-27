@@ -617,12 +617,9 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
          RetValExp->getSourceRange());
     break;
   case PointerFromInt:
-    // check for null pointer constant (C99 6.3.2.3p3)
-    if (!RetValExp->isNullPointerConstant(Context)) {
-      Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,
-           lhsType.getAsString(), rhsType.getAsString(),
-           RetValExp->getSourceRange());
-    }
+    Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,
+         lhsType.getAsString(), rhsType.getAsString(),
+         RetValExp->getSourceRange());
     break;
   case IntFromPointer:
     Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,

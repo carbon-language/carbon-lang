@@ -613,12 +613,9 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
       case Compatible:
         break;
       case PointerFromInt:
-        // check for null pointer constant (C99 6.3.2.3p3)
-        if (!argExpr->isNullPointerConstant(Context)) {
-          Diag(l, diag::ext_typecheck_passing_pointer_int, 
-               lhsType.getAsString(), rhsType.getAsString(),
-               Fn->getSourceRange(), argExpr->getSourceRange());
-        }
+        Diag(l, diag::ext_typecheck_passing_pointer_int, 
+             lhsType.getAsString(), rhsType.getAsString(),
+             Fn->getSourceRange(), argExpr->getSourceRange());
         break;
       case IntFromPointer:
         Diag(l, diag::ext_typecheck_passing_pointer_int, 
@@ -1125,6 +1122,12 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
 Sema::AssignmentCheckResult
 Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
+  // C99 6.5.16.1p1: the left operand is a pointer and the right is
+  // a null pointer constant.
+  if (lhsType->isPointerType() && rExpr->isNullPointerConstant(Context)) {
+    promoteExprToType(rExpr, lhsType);
+    return Compatible;
+  }
   // This check seems unnatural, however it is necessary to ensure the proper
   // conversion of functions/arrays. If the conversion were done for all
   // DeclExpr's (created by ActOnIdentifierExpr), it would mess up the unary
@@ -1412,12 +1415,9 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
     hadError = true;
     break;
   case PointerFromInt:
-    // check for null pointer constant (C99 6.3.2.3p3)
-    if (compoundType.isNull() && !rex->isNullPointerConstant(Context)) {
-      Diag(loc, diag::ext_typecheck_assign_pointer_int,
-           lhsType.getAsString(), rhsType.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
-    }
+    Diag(loc, diag::ext_typecheck_assign_pointer_int,
+         lhsType.getAsString(), rhsType.getAsString(),
+         lex->getSourceRange(), rex->getSourceRange());
     break;
   case IntFromPointer: 
     Diag(loc, diag::ext_typecheck_assign_pointer_int, 
@@ -2067,12 +2067,9 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     case Compatible:
       break;
     case PointerFromInt:
-      // check for null pointer constant (C99 6.3.2.3p3)
-      if (!argExpr->isNullPointerConstant(Context)) {
-        Diag(l, diag::ext_typecheck_sending_pointer_int, 
-             lhsType.getAsString(), rhsType.getAsString(),
-             argExpr->getSourceRange());
-      }
+      Diag(l, diag::ext_typecheck_sending_pointer_int, 
+           lhsType.getAsString(), rhsType.getAsString(),
+           argExpr->getSourceRange());
       break;
     case IntFromPointer:
       Diag(l, diag::ext_typecheck_sending_pointer_int, 
