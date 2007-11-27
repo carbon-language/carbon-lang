@@ -8,7 +8,11 @@
 //
 // XFAIL: sparc
 
-#include <complex.h>
+#ifdef __CYGWIN__
+  #include <mingw/complex.h>
+#else
+  #include <complex.h>
+#endif
 
 int foo(complex float c) {
     return creal(c);
