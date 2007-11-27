@@ -107,9 +107,14 @@ void *JIT::getPointerToNamedFunction(const std::string &Name) {
   // we have one of these, strip off $LDBLStub and try again.
 #if defined(__APPLE__) && defined(__ppc__)
   if (Name.size() > 9 && Name[Name.size()-9] == '$' &&
-      memcmp(&Name[Name.size()-8], "LDBLStub", 8) == 0)
-    return getPointerToNamedFunction(std::string(Name.begin(),
-                                                 Name.end()-9));
+      memcmp(&Name[Name.size()-8], "LDBLStub", 8) == 0) {
+    // First try turning $LDBLStub into $LDBL128.  If that fails, strip it off.
+    // This mirrors logic in libSystemStubs.a.
+    std::string Prefix = std::string(Name.begin(), Name.end()-9);
+    if (void *Ptr = getPointerToNamedFunction(Prefix+"$LDBL128"))
+      return Ptr;
+    return getPointerToNamedFunction(Prefix);
+  }
 #endif
   
   /// If a LazyFunctionCreator is installed, use it to get/create the function. 
