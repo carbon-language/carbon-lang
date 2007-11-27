@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -analyze -scalar-evolution 2>&1 | grep "Loop bb:  100 iterations"
+; RUN: llvm-as < %s | opt -analyze -scalar-evolution |& grep {Loop bb:  100 iterations}
 ; PR1533
 
 @array = weak global [101 x i32] zeroinitializer, align 32		; <[100 x i32]*> [#uses=1]
