@@ -17,23 +17,45 @@
 #include "clang/AST/CFG.h"
 #include "clang/Analysis/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
+
 using namespace clang;
 
+//===----------------------------------------------------------------------===//
+/// DeclPrinter - Utility class for printing top-level decls.
 
-static void PrintFunctionDeclStart(FunctionDecl *FD) {
+namespace {
+  class DeclPrinter {
+  public:
+    FILE* FP;
+
+    DeclPrinter(FILE* fp) : FP(fp ? fp : stderr) {}
+    
+    void PrintFunctionDeclStart(FunctionDecl *FD);    
+    void PrintTypeDefDecl(TypedefDecl *TD);    
+    void PrintObjcMethodDecl(ObjcMethodDecl *OMD);    
+    void PrintObjcImplementationDecl(ObjcImplementationDecl *OID);
+    void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID);
+    void PrintObjcProtocolDecl(ObjcProtocolDecl *PID);  
+    void PrintObjcCategoryImplDecl(ObjcCategoryImplDecl *PID);    
+    void PrintObjcCategoryDecl(ObjcCategoryDecl *PID);    
+    void PrintObjcCompatibleAliasDecl(ObjcCompatibleAliasDecl *AID);
+  };
+} // end anonymous namespace
+
+void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
   bool HasBody = FD->getBody();
   
-  fprintf(stderr, "\n");
+  fprintf(FP, "\n");
 
   switch (FD->getStorageClass()) {
   default: assert(0 && "Unknown storage class");
   case FunctionDecl::None: break;
-  case FunctionDecl::Extern: fprintf(stderr, "extern "); break;
-  case FunctionDecl::Static: fprintf(stderr, "static "); break;
+  case FunctionDecl::Extern: fprintf(FP, "extern "); break;
+  case FunctionDecl::Static: fprintf(FP, "static "); break;
   }
   
   if (FD->isInline())
-    fprintf(stderr, "inline ");
+    fprintf(FP, "inline ");
   
   std::string Proto = FD->getName();
   FunctionType *AFT = cast<FunctionType>(FD->getType());
@@ -60,54 +82,54 @@ static void PrintFunctionDeclStart(FunctionDecl *FD) {
   }
 
   AFT->getResultType().getAsStringInternal(Proto);
-  fprintf(stderr, "%s", Proto.c_str());
+  fprintf(FP, "%s", Proto.c_str());
   
   if (!FD->getBody())
-    fprintf(stderr, ";\n");
+    fprintf(FP, ";\n");
   // Doesn't print the body.
 }
 
-static void PrintTypeDefDecl(TypedefDecl *TD) {
+void DeclPrinter::PrintTypeDefDecl(TypedefDecl *TD) {
   std::string S = TD->getName();
   TD->getUnderlyingType().getAsStringInternal(S);
-  fprintf(stderr, "typedef %s;\n", S.c_str());
+  fprintf(FP, "typedef %s;\n", S.c_str());
 }
 
-static void PrintObjcMethodDecl(ObjcMethodDecl *OMD) {
+void DeclPrinter::PrintObjcMethodDecl(ObjcMethodDecl *OMD) {
   if (OMD->isInstance())
-    fprintf(stderr, "\n- ");
+    fprintf(FP, "\n- ");
   else 
-    fprintf(stderr, "\n+ ");
+    fprintf(FP, "\n+ ");
   if (!OMD->getResultType().isNull())
-    fprintf(stderr, "(%s) ", OMD->getResultType().getAsString().c_str());
+    fprintf(FP, "(%s) ", OMD->getResultType().getAsString().c_str());
   // FIXME: just print original selector name!
-  fprintf(stderr, "%s ", OMD->getSelector().getName().c_str());
+  fprintf(FP, "%s ", OMD->getSelector().getName().c_str());
   
   for (int i = 0; i < OMD->getNumParams(); i++) {
     ParmVarDecl *PDecl = OMD->getParamDecl(i);
     // FIXME: selector is missing here!
-    fprintf(stderr, " :(%s) %s", PDecl->getType().getAsString().c_str(), 
+    fprintf(FP, " :(%s) %s", PDecl->getType().getAsString().c_str(), 
             PDecl->getName()); 
   }
 }
 
-static void PrintObjcImplementationDecl(ObjcImplementationDecl *OID) {
+void DeclPrinter::PrintObjcImplementationDecl(ObjcImplementationDecl *OID) {
   std::string I = OID->getName();
   ObjcInterfaceDecl *SID = OID->getSuperClass();
   if (SID) {
     std::string S = SID->getName();
-    fprintf(stderr, "@implementation %s : %s", I.c_str(), S.c_str());
+    fprintf(FP, "@implementation %s : %s", I.c_str(), S.c_str());
   }
   else
-    fprintf(stderr, "@implementation %s", I.c_str());
+    fprintf(FP, "@implementation %s", I.c_str());
   
   for (int i = 0; i < OID->getNumInstanceMethods(); i++) {
     PrintObjcMethodDecl(OID->getInstanceMethods()[i]);
     ObjcMethodDecl *OMD = OID->getInstanceMethods()[i];
     if (OMD->getBody()) {
-      fprintf(stderr, " ");
+      fprintf(FP, " ");
       OMD->getBody()->dumpPretty();
-      fprintf(stderr, "\n");
+      fprintf(FP, "\n");
     }
   }
   
@@ -115,157 +137,163 @@ static void PrintObjcImplementationDecl(ObjcImplementationDecl *OID) {
     PrintObjcMethodDecl(OID->getClassMethods()[i]);
     ObjcMethodDecl *OMD = OID->getClassMethods()[i];
     if (OMD->getBody()) {
-      fprintf(stderr, " ");
+      fprintf(FP, " ");
       OMD->getBody()->dumpPretty();
-      fprintf(stderr, "\n");
+      fprintf(FP, "\n");
     }
   }
   
-  fprintf(stderr,"@end\n");
+  fprintf(FP,"@end\n");
 }
 
 
-static void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
+void DeclPrinter::PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
   std::string I = OID->getName();
   ObjcInterfaceDecl *SID = OID->getSuperClass();
   if (SID) {
     std::string S = SID->getName();
-    fprintf(stderr, "@interface %s : %s", I.c_str(), S.c_str());
+    fprintf(FP, "@interface %s : %s", I.c_str(), S.c_str());
   }
   else
-    fprintf(stderr, "@interface %s", I.c_str());
+    fprintf(FP, "@interface %s", I.c_str());
   // Protocols?
   int count = OID->getNumIntfRefProtocols();
   if (count > 0) {
     ObjcProtocolDecl **refProtocols = OID->getReferencedProtocols();
     for (int i = 0; i < count; i++)
-      fprintf(stderr, "%c%s", (i == 0 ? '<' : ','), 
+      fprintf(FP, "%c%s", (i == 0 ? '<' : ','), 
               refProtocols[i]->getName());
   }
   if (count > 0)
-    fprintf(stderr, ">\n");
+    fprintf(FP, ">\n");
   else
-    fprintf(stderr, "\n");
+    fprintf(FP, "\n");
   
   int NumIvars = OID->getNumInstanceVariables();
   if (NumIvars > 0) {
     ObjcIvarDecl **Ivars = OID->getInstanceVariables();
-    fprintf(stderr,"{");
+    fprintf(FP,"{");
     for (int i = 0; i < NumIvars; i++) {
-      fprintf(stderr, "\t%s %s;\n", Ivars[i]->getType().getAsString().c_str(),
+      fprintf(FP, "\t%s %s;\n", Ivars[i]->getType().getAsString().c_str(),
               Ivars[i]->getName());
     }
-    fprintf(stderr, "}\n");
+    fprintf(FP, "}\n");
   }
   
   int NumProperties = OID->getNumPropertyDecl();
   if (NumProperties > 0) {
     for (int i = 0; i < NumProperties; i++) {
       ObjcPropertyDecl *PDecl = OID->getPropertyDecl()[i];
-      fprintf(stderr, "@property");
+      fprintf(FP, "@property");
       if (PDecl->getPropertyAttributes() != ObjcPropertyDecl::OBJC_PR_noattr) {
         bool first = true;
-        fprintf(stderr, " (");
+        fprintf(FP, " (");
         if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_readonly)
         {
-          fprintf(stderr, "%creadonly", first ? ' ' : ',');
+          fprintf(FP, "%creadonly", first ? ' ' : ',');
           first = false;
         }
         
         if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_getter)
         {
-          fprintf(stderr, "%cgetter = %s", first ? ' ' : ','
+          fprintf(FP, "%cgetter = %s", first ? ' ' : ','
                   , PDecl->getGetterName()->getName());
           first = false;
         }
         if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_setter)
         {
-          fprintf(stderr, "%csetter = %s:", first ? ' ' : ','
+          fprintf(FP, "%csetter = %s:", first ? ' ' : ','
                   , PDecl->getSetterName()->getName());
           first = false;
         }
         
         if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_assign)
         {
-          fprintf(stderr, "%cassign", first ? ' ' : ',');
+          fprintf(FP, "%cassign", first ? ' ' : ',');
           first = false;
         }
         
         if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_readwrite)
         {
-          fprintf(stderr, "%creadwrite", first ? ' ' : ',');
+          fprintf(FP, "%creadwrite", first ? ' ' : ',');
           first = false;
         }
         
         if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_retain)
         {
-          fprintf(stderr, "%cretain", first ? ' ' : ',');
+          fprintf(FP, "%cretain", first ? ' ' : ',');
           first = false;
         }
         
         if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_copy)
         {
-          fprintf(stderr, "%ccopy", first ? ' ' : ',');
+          fprintf(FP, "%ccopy", first ? ' ' : ',');
           first = false;
         }
         
         if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_nonatomic)
         {
-          fprintf(stderr, "%cnonatomic", first ? ' ' : ',');
+          fprintf(FP, "%cnonatomic", first ? ' ' : ',');
           first = false;
         }
-        fprintf(stderr, " )");
+        fprintf(FP, " )");
       }
       ObjcIvarDecl **IDecl = PDecl->getPropertyDecls();
-      fprintf(stderr, " %s %s", IDecl[0]->getType().getAsString().c_str(),
+      fprintf(FP, " %s %s", IDecl[0]->getType().getAsString().c_str(),
               IDecl[0]->getName());
 
       for (int j = 1; j < PDecl->getNumPropertyDecls(); j++) {
-        fprintf(stderr, ", %s", IDecl[j]->getName());
+        fprintf(FP, ", %s", IDecl[j]->getName());
       }
-      fprintf(stderr, ";\n");
+      fprintf(FP, ";\n");
     }
   }
-  fprintf(stderr,"@end\n");
+  fprintf(FP,"@end\n");
   // FIXME: implement the rest...
 }
 
-static void PrintObjcProtocolDecl(ObjcProtocolDecl *PID) {
+void DeclPrinter::PrintObjcProtocolDecl(ObjcProtocolDecl *PID) {
   std::string S = PID->getName();
-  fprintf(stderr, "@protocol %s;\n", S.c_str());
+  fprintf(FP, "@protocol %s;\n", S.c_str());
   // FIXME: implement the rest...
 }
 
-static void PrintObjcCategoryImplDecl(ObjcCategoryImplDecl *PID) {
-  std::string S = PID->getName();
-  std::string I = PID->getClassInterface()->getName();
-  fprintf(stderr, "@implementation %s(%s);\n", I.c_str(), S.c_str());
-  // FIXME: implement the rest...
-}
-
-static void PrintObjcCategoryDecl(ObjcCategoryDecl *PID) {
+void DeclPrinter::PrintObjcCategoryImplDecl(ObjcCategoryImplDecl *PID) {
   std::string S = PID->getName();
   std::string I = PID->getClassInterface()->getName();
-  fprintf(stderr, "@interface %s(%s);\n", I.c_str(), S.c_str());
+  fprintf(FP, "@implementation %s(%s);\n", I.c_str(), S.c_str());
   // FIXME: implement the rest...
 }
 
-static void PrintObjcCompatibleAliasDecl(ObjcCompatibleAliasDecl *AID) {
+void DeclPrinter::PrintObjcCategoryDecl(ObjcCategoryDecl *PID) {
+  std::string S = PID->getName();
+  std::string I = PID->getClassInterface()->getName();
+  fprintf(FP, "@interface %s(%s);\n", I.c_str(), S.c_str());
+  // FIXME: implement the rest...
+}
+
+void DeclPrinter::PrintObjcCompatibleAliasDecl(ObjcCompatibleAliasDecl *AID) {
   std::string A = AID->getName();
   std::string I = AID->getClassInterface()->getName();
-  fprintf(stderr, "@compatibility_alias %s %s;\n", A.c_str(), I.c_str());
+  fprintf(FP, "@compatibility_alias %s %s;\n", A.c_str(), I.c_str());
 }
 
+//===----------------------------------------------------------------------===//
+/// ASTPrinter - Pretty-printer of ASTs
+
 namespace {
-  class ASTPrinter : public ASTConsumer {
+  class ASTPrinter : public ASTConsumer, public DeclPrinter {
+  public:
+    ASTPrinter(FILE* F = NULL) : DeclPrinter(F) {}
+    
     virtual void HandleTopLevelDecl(Decl *D) {
       if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
         PrintFunctionDeclStart(FD);
         
         if (FD->getBody()) {
-          fprintf(stderr, " ");
+          fprintf(FP, " ");
           FD->getBody()->dumpPretty();
-          fprintf(stderr, "\n");
+          fprintf(FP, "\n");
         }
       } else if (isa<ObjcMethodDecl>(D)) {
 	    // Do nothing, methods definitions are printed in
@@ -278,13 +306,13 @@ namespace {
         PrintObjcProtocolDecl(PID);
       } else if (ObjcForwardProtocolDecl *OFPD = 
                      dyn_cast<ObjcForwardProtocolDecl>(D)) {
-        fprintf(stderr, "@protocol ");
+        fprintf(FP, "@protocol ");
         for (unsigned i = 0, e = OFPD->getNumForwardDecls(); i != e; ++i) {
           const ObjcProtocolDecl *D = OFPD->getForwardProtocolDecl(i);
-          if (i) fprintf(stderr, ", ");
-          fprintf(stderr, "%s", D->getName());
+          if (i) fprintf(FP, ", ");
+          fprintf(FP, "%s", D->getName());
         }
-        fprintf(stderr, ";\n");
+        fprintf(FP, ";\n");
       } else if (ObjcImplementationDecl *OID = 
                    dyn_cast<ObjcImplementationDecl>(D)) {
         PrintObjcImplementationDecl(OID);
@@ -298,9 +326,9 @@ namespace {
                  dyn_cast<ObjcCompatibleAliasDecl>(D)) {
         PrintObjcCompatibleAliasDecl(OID);
       } else if (isa<ObjcClassDecl>(D)) {
-        fprintf(stderr, "@class [printing todo]\n");
+        fprintf(FP, "@class [printing todo]\n");
       } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-        fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
+        fprintf(FP, "Read top-level variable decl: '%s'\n", SD->getName());
       } else {
         assert(0 && "Unknown decl type!");
       }
@@ -308,12 +336,17 @@ namespace {
   };
 }
 
-ASTConsumer *clang::CreateASTPrinter() { return new ASTPrinter(); }
+ASTConsumer *clang::CreateASTPrinter(FILE* fp) { return new ASTPrinter(fp); }
+
+//===----------------------------------------------------------------------===//
+/// ASTDumper - Low-level dumper of ASTs
 
 namespace {
-  class ASTDumper : public ASTConsumer {
+  class ASTDumper : public ASTConsumer, public DeclPrinter {
     SourceManager *SM;
   public:
+    ASTDumper(FILE* fp = NULL) : DeclPrinter(fp) {}
+    
     void Initialize(ASTContext &Context, unsigned MainFileID) {
       SM = &Context.SourceMgr;
     }
@@ -323,24 +356,24 @@ namespace {
         PrintFunctionDeclStart(FD);
         
         if (FD->getBody()) {
-          fprintf(stderr, "\n");
+          fprintf(FP, "\n");
           FD->getBody()->dumpAll(*SM);
-          fprintf(stderr, "\n");
+          fprintf(FP, "\n");
         }
       } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
         PrintTypeDefDecl(TD);
       } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-        fprintf(stderr, "Read top-level variable decl: '%s'\n", SD->getName());
+        fprintf(FP, "Read top-level variable decl: '%s'\n", SD->getName());
       } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
-        fprintf(stderr, "Read objc interface '%s'\n", OID->getName());
+        fprintf(FP, "Read objc interface '%s'\n", OID->getName());
       } else if (ObjcProtocolDecl *OPD = dyn_cast<ObjcProtocolDecl>(D)) {
-        fprintf(stderr, "Read objc protocol '%s'\n", OPD->getName());
+        fprintf(FP, "Read objc protocol '%s'\n", OPD->getName());
       } else if (ObjcCategoryDecl *OCD = dyn_cast<ObjcCategoryDecl>(D)) {
-        fprintf(stderr, "Read objc category '%s'\n", OCD->getName());
+        fprintf(FP, "Read objc category '%s'\n", OCD->getName());
       } else if (isa<ObjcForwardProtocolDecl>(D)) {
-        fprintf(stderr, "Read objc fwd protocol decl\n");
+        fprintf(FP, "Read objc fwd protocol decl\n");
       } else if (isa<ObjcClassDecl>(D)) {
-        fprintf(stderr, "Read objc fwd class decl\n");
+        fprintf(FP, "Read objc fwd class decl\n");
       } else {
         assert(0 && "Unknown decl type!");
       }
@@ -349,6 +382,9 @@ namespace {
 }
 
 ASTConsumer *clang::CreateASTDumper() { return new ASTDumper(); }
+
+//===----------------------------------------------------------------------===//
+/// ASTViewer - AST Visualization
 
 namespace {
   class ASTViewer : public ASTConsumer {
@@ -360,7 +396,7 @@ namespace {
     
     virtual void HandleTopLevelDecl(Decl *D) {
       if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        PrintFunctionDeclStart(FD);
+        DeclPrinter(stderr).PrintFunctionDeclStart(FD);
         
         if (FD->getBody()) {
           fprintf(stderr, "\n");
@@ -398,7 +434,7 @@ void CFGVisitor::HandleTopLevelDecl(Decl *D) {
     return;
       
   if (printFuncDeclStart()) {
-    PrintFunctionDeclStart(FD);          
+    DeclPrinter(stderr).PrintFunctionDeclStart(FD);          
     fprintf(stderr,"\n");
   }
     

@@ -14,12 +14,14 @@
 #ifndef DRIVER_ASTCONSUMERS_H
 #define DRIVER_ASTCONSUMERS_H
 
+#include <stdio.h>
+
 namespace clang {
 
 class ASTConsumer;
 class Diagnostic;
 
-ASTConsumer *CreateASTPrinter();
+ASTConsumer *CreateASTPrinter(FILE* FP = NULL);
 ASTConsumer *CreateASTDumper();
 ASTConsumer *CreateASTViewer();
 ASTConsumer *CreateCFGDumper(bool ViewGraphs = false);
