@@ -574,21 +574,3 @@ __Z11no_overflowjj:
 
 //===---------------------------------------------------------------------===//
 
-Easy ARM microoptimization (with -mattr=+vfp2):
-
-define i64 @i(double %X) {
-        %Y = bitcast double %X to i64
-        ret i64 %Y
-}
-
-compiles into:
-
-_i:
-        fmdrr d0, r0, r1
-        fmrrd r0, r1, d0
-        bx lr
-
-This just needs a target-specific dag combine to merge the two ARMISD nodes.
-
-
-//===---------------------------------------------------------------------===//

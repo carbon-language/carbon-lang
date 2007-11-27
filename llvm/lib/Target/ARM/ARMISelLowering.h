@@ -78,6 +78,8 @@ namespace llvm {
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
     virtual SDNode *ExpandOperationResult(SDNode *N, SelectionDAG &DAG);
         
+    SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+    
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,

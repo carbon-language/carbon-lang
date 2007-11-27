@@ -262,6 +262,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_UINT, MVT::i32, Custom);
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
 
+  // We have target-specific dag combine patterns for the following nodes:
+  // ARMISD::FMRRD  - No need to call setTargetDAGCombine
+  
   setStackPointerRegisterToSaveRestore(ARM::SP);
   setSchedulingPreference(SchedulingForRegPressure);
   setIfCvtBlockSizeLimit(Subtarget->isThumb() ? 0 : 10);
@@ -1509,6 +1512,27 @@ ARMTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 //===----------------------------------------------------------------------===//
 //                           ARM Optimization Hooks
 //===----------------------------------------------------------------------===//
+
+/// PerformFMRRDCombine - Target-specific dag combine xforms for ARMISD::FMRRD.
+static SDOperand PerformFMRRDCombine(SDNode *N, 
+                                     TargetLowering::DAGCombinerInfo &DCI) {
+  // fmrrd(fmdrr x, y) -> x,y
+  SDOperand InDouble = N->getOperand(0);
+  if (InDouble.getOpcode() == ARMISD::FMDRR)
+    return DCI.CombineTo(N, InDouble.getOperand(0), InDouble.getOperand(1));
+  return SDOperand();
+}
+
+SDOperand ARMTargetLowering::PerformDAGCombine(SDNode *N,
+                                               DAGCombinerInfo &DCI) const {
+  switch (N->getOpcode()) {
+  default: break;
+  case ARMISD::FMRRD: return PerformFMRRDCombine(N, DCI);
+  }
+  
+  return SDOperand();
+}
+
 
 /// isLegalAddressImmediate - Return true if the integer value can be used
 /// as the offset of the target addressing mode for load / store of the
