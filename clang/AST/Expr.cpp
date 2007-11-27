@@ -360,10 +360,17 @@ Expr::isModifiableLvalueResult Expr::isModifiableLvalue() const {
   return MLV_Valid;    
 }
 
+/// hasStaticStorage - Return true if this expression has static storage
+/// duration.  This means that the address of this expression is a link-time
+/// constant.
 bool Expr::hasStaticStorage() const {
   switch (getStmtClass()) {
   default:
     return false;
+  case ParenExprClass:
+    return cast<ParenExpr>(this)->getSubExpr()->hasStaticStorage();
+  case ImplicitCastExprClass:
+    return cast<ImplicitCastExpr>(this)->getSubExpr()->hasStaticStorage();
   case DeclRefExprClass: {
     const Decl *D = cast<DeclRefExpr>(this)->getDecl();
     if (const VarDecl *VD = dyn_cast<VarDecl>(D))
@@ -373,6 +380,8 @@ bool Expr::hasStaticStorage() const {
   case MemberExprClass:
     const MemberExpr *M = cast<MemberExpr>(this);
     return !M->isArrow() && M->getBase()->hasStaticStorage();
+  case ArraySubscriptExprClass:
+    return cast<ArraySubscriptExpr>(this)->getBase()->hasStaticStorage();
   }
 }
 

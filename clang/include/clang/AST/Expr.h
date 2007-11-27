@@ -106,7 +106,8 @@ public:
   bool isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const;
   
   /// hasStaticStorage - Return true if this expression has static storage
-  /// duration.
+  /// duration.  This means that the address of this expression is a link-time
+  /// constant.
   bool hasStaticStorage() const;
 
   static bool classof(const Stmt *T) { 
