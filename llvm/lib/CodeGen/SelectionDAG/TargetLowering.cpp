@@ -364,6 +364,13 @@ unsigned TargetLowering::getVectorTypeBreakdown(MVT::ValueType VT,
   
   unsigned NumVectorRegs = 1;
   
+  // FIXME: We don't support non-power-of-2-sized vectors for now.  Ideally we 
+  // could break down into LHS/RHS like LegalizeDAG does.
+  if (!isPowerOf2_32(NumElts)) {
+    NumVectorRegs = NumElts;
+    NumElts = 1;
+  }
+  
   // Divide the input until we get to a supported size.  This will always
   // end with a scalar if the target doesn't support vectors.
   while (NumElts > 1 &&

@@ -52,10 +52,12 @@ def RetCC_X86_32_C : CallingConv<[
 
 // X86-32 FastCC return-value convention.
 def RetCC_X86_32_Fast : CallingConv<[
-  // The X86-32 fastcc returns FP values in XMM0 if the target has SSE2,
-  // otherwise it is the the C calling conventions.
-  CCIfType<[f32], CCIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0]>>>,
-  CCIfType<[f64], CCIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0]>>>,
+  // The X86-32 fastcc returns 1, 2, or 3 FP values in XMM0-2 if the target has
+  // SSE2, otherwise it is the the C calling conventions.
+  // This can happen when a float, 2 x float, or 3 x float vector is split by
+  // target lowering, and is returned in 1-3 sse regs.
+  CCIfType<[f32], CCIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0,XMM1,XMM2]>>>,
+  CCIfType<[f64], CCIfSubtarget<"hasSSE2()", CCAssignToReg<[XMM0,XMM1,XMM2]>>>,
   CCDelegateTo<RetCC_X86Common>
 ]>;
 
