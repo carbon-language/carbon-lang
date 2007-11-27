@@ -420,10 +420,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\utils\TableGen\TGLexer.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\utils\TableGen\TGParser.cpp"
 				>
 			</File>
@@ -487,6 +483,10 @@
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\TableGenBackend.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\utils\TableGen\TGLexer.h"
 				>
 			</File>
 			<File
