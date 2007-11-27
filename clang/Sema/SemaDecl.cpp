@@ -359,7 +359,7 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
 
 bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic, 
                                   QualType DeclType) {
-  SourceLocation loc;
+  SourceLocation loc = Init->getLocStart();
   
   // FIXME: Remove the isReferenceType check and handle assignment
   // to a reference.
@@ -370,7 +370,6 @@ bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic,
   }
   
   AssignmentCheckResult result;
-  loc = Init->getLocStart();
   // Get the type before calling CheckSingleAssignmentConstraints(), since
   // it can promote the expression.
   QualType rhsType = Init->getType(); 
