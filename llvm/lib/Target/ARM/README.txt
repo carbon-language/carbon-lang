@@ -186,24 +186,19 @@ double bar(double x) {
 }
 
 _bar:
-	sub sp, sp, #16
-	str r4, [sp, #+12]
-	str r5, [sp, #+8]
-	str lr, [sp, #+4]
-	mov r4, r0
-	mov r5, r1
-	ldr r0, LCPI2_0
-	bl _foo
-	fmsr f0, r0
-	fcvtsd d0, f0
-	fmdrr d1, r4, r5
-	faddd d0, d0, d1
-	fmrrd r0, r1, d0
-	ldr lr, [sp, #+4]
-	ldr r5, [sp, #+8]
-	ldr r4, [sp, #+12]
-	add sp, sp, #16
-	bx lr
+        stmfd sp!, {r4, r5, r7, lr}
+        add r7, sp, #8
+        mov r4, r0
+        mov r5, r1
+        fldd d0, LCPI1_0
+        fmrrd r0, r1, d0
+        bl _foo
+        fmdrr d0, r4, r5
+        fmsr s2, r0
+        fsitod d1, s2
+        faddd d0, d1, d0
+        fmrrd r0, r1, d0
+        ldmfd sp!, {r4, r5, r7, pc}
 
 Ignore the prologue and epilogue stuff for a second. Note 
 	mov r4, r0
@@ -501,31 +496,14 @@ Should compile to use SMLAL (Signed Multiply Accumulate Long) which multiplies
 two signed 32-bit values to produce a 64-bit value, and accumulates this with 
 a 64-bit value.
 
-We currently get this with v6:
+We currently get this with both v4 and v6:
 
 _foo:
-        mul r12, r1, r0
-        smmul r1, r1, r0
-        smmul r0, r3, r2
-        mul r3, r3, r2
-        adds r3, r3, r12
-        adc r0, r0, r1
+        smull r1, r0, r1, r0
+        smull r3, r2, r3, r2
+        adds r3, r3, r1
+        adc r0, r2, r0
         bx lr
-
-and this with v4:
-
-_foo:
-        stmfd sp!, {r7, lr}
-        mov r7, sp
-        mul r12, r1, r0
-        smull r0, r1, r1, r0
-        smull lr, r0, r3, r2
-        mul r3, r3, r2
-        adds r3, r3, r12
-        adc r0, r0, r1
-        ldmfd sp!, {r7, pc}
-
-This apparently occurs in real code.
 
 //===---------------------------------------------------------------------===//
 
