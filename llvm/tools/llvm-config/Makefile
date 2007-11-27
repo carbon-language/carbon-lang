@@ -36,7 +36,7 @@ GenLibDeps   = $(PROJ_SRC_ROOT)/utils/GenLibDeps.pl
 
 $(LibDepsTemp): $(GenLibDeps) $(LibDir) $(wildcard $(LibDir)/*.a $(LibDir)/*.o)
 	$(Echo) "Regenerating LibDeps.txt.tmp"
-	$(Verb) $(PERL) $(GenLibDeps) -flat $(LibDir) $(NM_PATH) > $(LibDepsTemp)
+	$(Verb) $(PERL) $(GenLibDeps) -flat $(LibDir) "$(NM_PATH)" > $(LibDepsTemp)
 
 $(LibDeps): $(LibDepsTemp)
 	$(Verb) $(CMP) -s $@ $< || ( $(CP) $< $@ && \
