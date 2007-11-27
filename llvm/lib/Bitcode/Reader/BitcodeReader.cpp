@@ -329,14 +329,15 @@ bool BitcodeReader::ParseTypeTable() {
       ResultTy = PointerType::get(getTypeByID(Record[0], true));
       break;
     case bitc::TYPE_CODE_FUNCTION: {
-      // FUNCTION: [vararg, retty, paramty x N]
-      if (Record.size() < 2)
+      // FIXME: attrid is dead, remove it in LLVM 3.0
+      // FUNCTION: [vararg, attrid, retty, paramty x N]
+      if (Record.size() < 3)
         return Error("Invalid FUNCTION type record");
       std::vector<const Type*> ArgTys;
-      for (unsigned i = 2, e = Record.size(); i != e; ++i)
+      for (unsigned i = 3, e = Record.size(); i != e; ++i)
         ArgTys.push_back(getTypeByID(Record[i], true));
       
-      ResultTy = FunctionType::get(getTypeByID(Record[1], true), ArgTys,
+      ResultTy = FunctionType::get(getTypeByID(Record[2], true), ArgTys,
                                    Record[0]);
       break;
     }
