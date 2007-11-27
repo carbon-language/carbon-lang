@@ -31,7 +31,8 @@
 //  d -> double
 //  z -> size_t
 //  F -> constant CFString
-//  V -> __builtin_va_list
+//  a -> __builtin_va_list
+//  V -> Vector, following num elements and a base type.
 //  . -> "...".  This may only occur at the end of the function list.
 //
 // Types maybe prefixed with the following modifiers:
@@ -62,9 +63,9 @@ BUILTIN(__builtin_fabsl, "LdLd", "ncF")
 BUILTIN(__builtin_constant_p, "UsUs", "nc")
 BUILTIN(__builtin_classify_type, "i.", "nc")
 BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
-BUILTIN(__builtin_va_start, "vV&.", "n")
-BUILTIN(__builtin_va_end, "vV&", "n")
-BUILTIN(__builtin_va_copy, "vV&V", "n")
+BUILTIN(__builtin_va_start, "va&.", "n")
+BUILTIN(__builtin_va_end, "va&", "n")
+BUILTIN(__builtin_va_copy, "va&a", "n")
 BUILTIN(__builtin_memcpy, "v*v*vC*z", "n")
 
 #undef BUILTIN

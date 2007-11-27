@@ -112,10 +112,10 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
       Type = Context.ShortTy;
       break;
   case 'i':
-    if (Long)
-      Type = Unsigned ? Context.UnsignedLongTy : Context.LongTy;
-    else if (LongLong)
+    if (LongLong)
       Type = Unsigned ? Context.UnsignedLongLongTy : Context.LongLongTy;
+    else if (Long)
+      Type = Unsigned ? Context.UnsignedLongTy : Context.LongTy;
     else if (Unsigned)
       Type = Context.UnsignedIntTy;
     else 
@@ -137,10 +137,22 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
   case 'F':
     Type = Context.getCFConstantStringType();
     break;
-  case 'V':
+  case 'a':
     Type = Context.getBuiltinVaListType();
     assert(!Type.isNull() && "builtin va list type not initialized!");
     break;
+  case 'V': {
+    char *End;
+    
+    unsigned NumElements = strtoul(Str, &End, 10);
+    assert(End != Str && "Missing vector size");
+    
+    Str = End;
+    
+    QualType ElementType = DecodeTypeFromStr(Str, Context);
+    Type = Context.getVectorType(ElementType, NumElements);
+    break;
+  }
   }
   
   Done = false;
