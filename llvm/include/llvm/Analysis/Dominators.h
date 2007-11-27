@@ -670,6 +670,8 @@ public:
     delete DT;
   }
   
+  DominatorTreeBase<BasicBlock>& getBase() { return *DT; }
+  
   /// getRoots -  Return the root blocks of the current CFG.  This may include
   /// multiple blocks if we are computing post dominators.  For forward
   /// dominators, this will always be a single block (the entry node).

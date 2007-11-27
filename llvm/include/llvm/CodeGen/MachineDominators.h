@@ -54,10 +54,12 @@ public:
     delete DT;
   }
   
-   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-     AU.setPreservesAll();
-     MachineFunctionPass::getAnalysisUsage(AU);
-   }
+  DominatorTreeBase<MachineBasicBlock>& getBase() { return *DT; }
+  
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    MachineFunctionPass::getAnalysisUsage(AU);
+  }
   
   /// getRoots -  Return the root blocks of the current CFG.  This may include
   /// multiple blocks if we are computing post dominators.  For forward
