@@ -60,8 +60,14 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   CurFn = cast<llvm::Function>(CGM.GetAddrOfGlobalDecl(FD));
   CurFuncDecl = FD;
   
-  // TODO: Set up linkage and many other things.
   assert(CurFn->isDeclaration() && "Function already has body?");
+  
+  // TODO: Set up linkage and many other things.  Note, this is a simple 
+  // approximation of what we really want.
+  if (FD->getStorageClass() == FunctionDecl::Static)
+    CurFn->setLinkage(llvm::Function::InternalLinkage);
+  else if (FD->isInline())
+    CurFn->setLinkage(llvm::Function::WeakLinkage);
   
   llvm::BasicBlock *EntryBB = new llvm::BasicBlock("entry", CurFn);
   
