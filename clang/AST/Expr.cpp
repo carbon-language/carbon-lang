@@ -15,6 +15,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/TargetInfo.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -587,12 +588,14 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
                                               Exp->getOperatorLoc())));
 
       // Get information about the size or align.
-      if (Exp->getOpcode() == UnaryOperator::SizeOf)
-        Result = Ctx.getTypeSize(Exp->getSubExpr()->getType(),
-                                 Exp->getOperatorLoc()) / 8;
-      else
+      if (Exp->getOpcode() == UnaryOperator::AlignOf) {
         Result = Ctx.getTypeAlign(Exp->getSubExpr()->getType(),
                                   Exp->getOperatorLoc());
+      } else {
+        unsigned CharSize = Ctx.Target.getCharWidth(Exp->getOperatorLoc());
+        Result = Ctx.getTypeSize(Exp->getSubExpr()->getType(),
+                                 Exp->getOperatorLoc()) / CharSize;
+      }
       break;
     case UnaryOperator::LNot: {
       bool Val = Result != 0;
