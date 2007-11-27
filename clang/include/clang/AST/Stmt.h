@@ -735,8 +735,11 @@ public:
   unsigned getNumOutputs() const { return NumOutputs; }
   const std::string &getOutputName(unsigned i) const
     { return Names[i]; }
+  const StringLiteral *getOutputConstraint(unsigned i) const
+  { return Constraints[i]; }
   StringLiteral *getOutputConstraint(unsigned i)
     { return Constraints[i]; }
+  const Expr *getOutputExpr(unsigned i) const { return Exprs[i]; }
   Expr *getOutputExpr(unsigned i) { return Exprs[i]; }
   
   unsigned getNumInputs() const { return NumInputs; }  
@@ -744,13 +747,17 @@ public:
     { return Names[i + NumOutputs]; }
   StringLiteral *getInputConstraint(unsigned i) 
     { return Constraints[i + NumOutputs]; }
+  const StringLiteral *getInputConstraint(unsigned i) const
+    { return Constraints[i + NumOutputs]; }
   Expr *getInputExpr(unsigned i) { return Exprs[i + NumOutputs]; }
-  
+  const Expr *getInputExpr(unsigned i) const { return Exprs[i + NumOutputs]; }
+
   const StringLiteral *getAsmString() const { return AsmStr; }
   StringLiteral *getAsmString() { return AsmStr; }
 
   unsigned getNumClobbers() const { return Clobbers.size(); }
   StringLiteral *getClobber(unsigned i) { return Clobbers[i]; }
+  const StringLiteral *getClobber(unsigned i) const { return Clobbers[i]; }
   
   virtual SourceRange getSourceRange() const {
     return SourceRange(AsmLoc, RParenLoc);

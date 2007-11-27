@@ -397,8 +397,25 @@ namespace PPC {
                                unsigned &NumAliases) {
     Aliases = GCCRegAliases;
     NumAliases = llvm::array_lengthof(GCCRegAliases);
-  }  
+  }
   
+  static bool validateAsmConstraint(char c, 
+                                    TargetInfo::ConstraintInfo &info) {
+    switch (c) {
+    default: return false;
+    case 'O': // Zero
+      return true;
+    case 'b': // Base register
+    case 'f': // Floating point register
+      info = (TargetInfo::ConstraintInfo)(info|TargetInfo::CI_AllowsRegister);
+      return true;
+    }
+  }
+  
+  const char *getClobbers() {
+    return 0;
+  }
+
 } // End namespace PPC
 
 
@@ -454,6 +471,29 @@ namespace X86 {
     NumAliases = llvm::array_lengthof(GCCRegAliases);
   }  
   
+  static bool validateAsmConstraint(char c, 
+                                    TargetInfo::ConstraintInfo &info) {
+    switch (c) {
+    default: return false;
+    case 'a': // eax.
+    case 'b': // ebx.
+    case 'c': // ecx.
+    case 'd': // edx.
+    case 'S': // esi.
+    case 'D': // edi.
+    case 'A': // edx:eax.
+    case 't': // top of floating point stack.
+    case 'u': // second from top of floating point stack.
+    case 'q': // a, b, c, d registers or any integer register in 64-bit.
+      info = (TargetInfo::ConstraintInfo)(info|TargetInfo::CI_AllowsRegister);
+      return true;
+    }
+  }
+
+  const char *getClobbers() {
+    return "~{dirflag},~{fpsr},~{flags}";
+  }
+  
 } // End namespace X86
 
 //===----------------------------------------------------------------------===//
@@ -483,6 +523,13 @@ public:
                                 unsigned &NumAliases) const {
     PPC::getGCCRegAliases(Aliases, NumAliases);
   }
+  virtual bool validateAsmConstraint(char c,
+                                     TargetInfo::ConstraintInfo &info) const {
+    return PPC::validateAsmConstraint(c, info);
+  }
+  virtual const char *getClobbers() const {
+    return PPC::getClobbers();
+  }
 };
 } // end anonymous namespace.
 
@@ -508,6 +555,13 @@ public:
                                 unsigned &NumAliases) const {
     PPC::getGCCRegAliases(Aliases, NumAliases);
   }
+  virtual bool validateAsmConstraint(char c,
+                                     TargetInfo::ConstraintInfo &info) const {
+    return PPC::validateAsmConstraint(c, info);
+  }
+  virtual const char *getClobbers() const {
+    return PPC::getClobbers();
+  }  
 };
 } // end anonymous namespace.
 
@@ -533,6 +587,13 @@ public:
                                 unsigned &NumAliases) const {
     X86::getGCCRegAliases(Aliases, NumAliases);
   }
+  virtual bool validateAsmConstraint(char c,
+                                     TargetInfo::ConstraintInfo &info) const {
+    return X86::validateAsmConstraint(c, info);
+  }
+  virtual const char *getClobbers() const {
+    return X86::getClobbers();
+  }  
 };
 } // end anonymous namespace.
 
@@ -558,6 +619,13 @@ public:
                                 unsigned &NumAliases) const {
     X86::getGCCRegAliases(Aliases, NumAliases);
   }
+  virtual bool validateAsmConstraint(char c,
+                                     TargetInfo::ConstraintInfo &info) const {
+    return X86::validateAsmConstraint(c, info);
+  }  
+  virtual const char *getClobbers() const {
+    return X86::getClobbers();
+  }    
 };
 } // end anonymous namespace.
 
@@ -589,6 +657,13 @@ public:
                                 unsigned &NumAliases) const {
     X86::getGCCRegAliases(Aliases, NumAliases);
   }
+  virtual bool validateAsmConstraint(char c,
+                                     TargetInfo::ConstraintInfo &info) const {
+    return X86::validateAsmConstraint(c, info);
+  }
+  virtual const char *getClobbers() const {
+    return X86::getClobbers();
+  }  
 };
 } // end anonymous namespace.
 

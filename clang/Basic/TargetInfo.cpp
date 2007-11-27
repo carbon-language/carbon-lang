@@ -314,3 +314,127 @@ bool TargetInfo::isValidGCCRegisterName(const char *Name) const {
   
   return false;
 }
+
+const char *TargetInfo::getNormalizedGCCRegisterName(const char *Name) const
+{
+  assert(isValidGCCRegisterName(Name) && "Invalid register passed in");
+  
+  const char * const *Names;
+  unsigned NumNames;
+
+  PrimaryTarget->getGCCRegNames(Names, NumNames);
+
+  // First, check if we have a number.
+  if (isdigit(Name[0])) {
+    char *End;
+    int n = (int)strtol(Name, &End, 0);
+    if (*End == 0) {
+      assert(n >= 0 && (unsigned)n < NumNames && 
+             "Out of bounds register number!");
+      return Names[n];
+    }
+  }
+  
+  // Now check aliases.
+  const TargetInfoImpl::GCCRegAlias *Aliases;
+  unsigned NumAliases;
+  
+  PrimaryTarget->getGCCRegAliases(Aliases, NumAliases);
+  for (unsigned i = 0; i < NumAliases; i++) {
+    for (unsigned j = 0 ; j < llvm::array_lengthof(Aliases[i].Aliases); j++) {
+      if (!Aliases[i].Aliases[j])
+        break;
+      if (strcmp(Aliases[i].Aliases[j], Name) == 0)
+        return Aliases[i].Register;
+    }
+  }
+  
+  return Name;
+}
+
+bool TargetInfo::validateOutputConstraint(const char *Name, 
+                                          ConstraintInfo &info) const
+{
+  // An output constraint must start with '=' or '+'
+  if (*Name != '=' && *Name != '+')
+    return false;
+
+  if (*Name == '+')
+    info = CI_ReadWrite;
+  else
+    info = CI_None;
+
+  Name++;
+  while (*Name) {
+    switch (*Name) {
+    default:
+      if (!PrimaryTarget->validateAsmConstraint(*Name, info)) {
+        // FIXME: This assert is in place temporarily 
+        // so we can add more constraints as we hit it.
+        // Eventually, an unknown constraint should just be treated as 'g'.
+        assert(0 && "Unknown output constraint type!");
+      }
+    case '&': // early clobber.
+      break;
+    case 'r': // general register.
+      info = (ConstraintInfo)(info|CI_AllowsRegister);
+      break;
+    case 'm': // memory operand.
+      info = (ConstraintInfo)(info|CI_AllowsMemory);
+      break;
+    case 'g': // general register, memory operand or immediate integer.
+      info = (ConstraintInfo)(info|CI_AllowsMemory|CI_AllowsRegister);
+      break;
+    }
+    
+    Name++;
+  }
+  
+  return true;
+}
+
+bool TargetInfo::validateInputConstraint(const char *Name,
+                                         unsigned NumOutputs,
+                                         ConstraintInfo &info) const
+{
+  while (*Name) {
+    switch (*Name) {
+    default:
+      // Check if we have a matching constraint
+      if (*Name >= '0' && *Name <= '9') {
+        unsigned i = *Name - '0';
+        
+        // Check if matching constraint is out of bounds.
+        if (i >= NumOutputs)
+          return false;
+      } else if (!PrimaryTarget->validateAsmConstraint(*Name, info)) {
+        // FIXME: This assert is in place temporarily 
+        // so we can add more constraints as we hit it.
+        // Eventually, an unknown constraint should just be treated as 'g'.
+        assert(0 && "Unknown input constraint type!");
+      }        
+    case 'i': // immediate integer.
+      break;
+    case 'r': // general register.
+      info = (ConstraintInfo)(info|CI_AllowsRegister);
+      break;
+    case 'm': // memory operand.
+      info = (ConstraintInfo)(info|CI_AllowsMemory);
+      break;
+    case 'g': // general register, memory operand or immediate integer.
+      info = (ConstraintInfo)(info|CI_AllowsMemory|CI_AllowsRegister);
+      break;
+    }
+    
+    Name++;
+  }
+  
+  return true;
+}
+
+const char *TargetInfo::getClobbers() const
+{
+  return PrimaryTarget->getClobbers();
+}
+
+

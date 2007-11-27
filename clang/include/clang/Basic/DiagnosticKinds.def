@@ -791,6 +791,10 @@ DIAG(err_pascal_string_too_long, ERROR,
     "Pascal string is too long")
 DIAG(err_invalid_lvalue_in_asm_output, ERROR,
     "invalid lvalue in asm output")
+DIAG(err_invalid_output_constraint_in_asm, ERROR,
+    "invalid output constraint in asm")
+DIAG(err_invalid_input_constraint_in_asm, ERROR,
+    "invalid input constraint in asm")
 DIAG(err_invalid_type_in_asm_input, ERROR,
     "invalid type '%0' in asm input")
 DIAG(err_unknown_register_name_in_asm, ERROR,

@@ -659,11 +659,26 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
                                     SourceLocation RParenLoc) {
   Expr *E = (Expr *)AsmString;
  
-  // Check that the output exprs are valid lvalues.
   for (unsigned i = 0; i < NumOutputs; i++) {
+    StringLiteral *Literal = cast<StringLiteral>((Expr *)Constraints[i]);
+    assert(!Literal->isWide() && 
+           "Output constraint strings should not be wide!");
+
+    std::string OutputConstraint(Literal->getStrData(), 
+                                 Literal->getByteLength());
+    
+    TargetInfo::ConstraintInfo info;
+    if (!Context.Target.validateOutputConstraint(OutputConstraint.c_str(),
+                                                 info)) {
+      // FIXME: We currently leak memory here.
+      Diag(Literal->getLocStart(),
+           diag::err_invalid_output_constraint_in_asm);
+      return true;
+    }
+    
+    // Check that the output exprs are valid lvalues.
     Expr *OutputExpr = (Expr *)Exprs[i];
     Expr::isLvalueResult Result = OutputExpr->isLvalue();
-    
     if (Result != Expr::LV_Valid) {
       ParenExpr *PE = cast<ParenExpr>(OutputExpr);
       
@@ -676,10 +691,26 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
     }
   }
   
-  // Check that the input exprs aren't of type void.
   for (unsigned i = NumOutputs, e = NumOutputs + NumInputs; i != e; i++) {
-    Expr *InputExpr = (Expr *)Exprs[i];
+    StringLiteral *Literal = cast<StringLiteral>((Expr *)Constraints[i]);
+    assert(!Literal->isWide() && 
+           "Output constraint strings should not be wide!");
     
+    std::string InputConstraint(Literal->getStrData(), 
+                                Literal->getByteLength());
+    
+    TargetInfo::ConstraintInfo info;
+    if (!Context.Target.validateInputConstraint(InputConstraint.c_str(),
+                                                NumOutputs,                                                
+                                                info)) {
+      // FIXME: We currently leak memory here.
+      Diag(Literal->getLocStart(),
+           diag::err_invalid_input_constraint_in_asm);
+      return true;
+    }
+    
+    // Check that the input exprs aren't of type void.
+    Expr *InputExpr = (Expr *)Exprs[i];    
     if (InputExpr->getType()->isVoidType()) {
       ParenExpr *PE = cast<ParenExpr>(InputExpr);
       

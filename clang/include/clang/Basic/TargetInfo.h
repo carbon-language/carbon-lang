@@ -191,7 +191,28 @@ public:
   /// is a valid register name according to GCC. This is used by Sema for
   /// inline asm statements.
   bool isValidGCCRegisterName(const char *Name) const;
-    
+
+  // getNormalizedGCCRegisterName - Returns the "normalized" GCC register name.
+  // For example, on x86 it will return "ax" when "eax" is passed in.
+  const char *getNormalizedGCCRegisterName(const char *Name) const;
+  
+  enum ConstraintInfo {
+    CI_None = 0x00,
+    CI_AllowsMemory = 0x01,
+    CI_AllowsRegister = 0x02,
+    CI_ReadWrite = 0x03
+  };
+
+  // validateOutputConstraint, validateInputConstraint - Checks that
+  // a constraint is valid and provides information about it.
+  // FIXME: These should return a real error instead of just true/false.
+  bool validateOutputConstraint(const char *Name, ConstraintInfo &Info) const;
+  bool validateInputConstraint (const char *Name, unsigned NumOutputs,
+                                ConstraintInfo &info) const;
+  
+  // Returns a string of target-specific clobbers, in LLVM format.
+  const char *getClobbers() const;
+  
   ///===---- Some helper methods ------------------------------------------===//
 
   unsigned getCharWidth(SourceLocation Loc) {
@@ -287,6 +308,10 @@ public:
   virtual void getGCCRegAliases(const GCCRegAlias *&Aliases, 
                                 unsigned &NumAliases) const = 0;
   
+  virtual bool validateAsmConstraint(char c, 
+                                     TargetInfo::ConstraintInfo &info) const= 0;
+  
+  virtual const char *getClobbers() const = 0;
 private:
   virtual void ANCHOR(); // out-of-line virtual method for class.
 };
