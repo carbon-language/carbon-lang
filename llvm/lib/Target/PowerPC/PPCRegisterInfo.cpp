@@ -779,35 +779,40 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // to Offset to get the correct offset.
   Offset += MFI->getStackSize();
 
-  if (isInt16(Offset)) {
-    if (isIXAddr) {
-      assert((Offset & 3) == 0 && "Invalid frame offset!");
+  // If we can, encode the offset directly into the instruction.  If this is a
+  // normal PPC "ri" instruction, any 16-bit value can be safely encoded.  If
+  // this is a PPC64 "ix" instruction, only a 16-bit value with the low two bits
+  // clear can be encoded.  This is extremely uncommon, because normally you
+  // only "std" to a stack slot that is at least 4-byte aligned, but it can
+  // happen in invalid code.
+  if (isInt16(Offset) && (!isIXAddr || (isIXAddr & 3) == 0)) {
+    if (isIXAddr)
       Offset >>= 2;    // The actual encoded value has the low two bits zero.
-    }
     MI.getOperand(OffsetOperandNo).ChangeToImmediate(Offset);
-  } else {
-    // Insert a set of r0 with the full offset value before the ld, st, or add
-    BuildMI(MBB, II, TII.get(PPC::LIS), PPC::R0).addImm(Offset >> 16);
-    BuildMI(MBB, II, TII.get(PPC::ORI), PPC::R0).addReg(PPC::R0).addImm(Offset);
-    
-    // Convert into indexed form of the instruction
-    // sth 0:rA, 1:imm 2:(rB) ==> sthx 0:rA, 2:rB, 1:r0
-    // addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
-    unsigned OperandBase;
-    if (OpC != TargetInstrInfo::INLINEASM) {
-      assert(ImmToIdxMap.count(OpC) &&
-             "No indexed form of load or store available!");
-      unsigned NewOpcode = ImmToIdxMap.find(OpC)->second;
-      MI.setInstrDescriptor(TII.get(NewOpcode));
-      OperandBase = 1;
-    } else {
-      OperandBase = OffsetOperandNo;
-    }
-      
-    unsigned StackReg = MI.getOperand(FIOperandNo).getReg();
-    MI.getOperand(OperandBase).ChangeToRegister(StackReg, false);
-    MI.getOperand(OperandBase+1).ChangeToRegister(PPC::R0, false);
+    return;
   }
+  
+  // Insert a set of r0 with the full offset value before the ld, st, or add
+  BuildMI(MBB, II, TII.get(PPC::LIS), PPC::R0).addImm(Offset >> 16);
+  BuildMI(MBB, II, TII.get(PPC::ORI), PPC::R0).addReg(PPC::R0).addImm(Offset);
+  
+  // Convert into indexed form of the instruction
+  // sth 0:rA, 1:imm 2:(rB) ==> sthx 0:rA, 2:rB, 1:r0
+  // addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
+  unsigned OperandBase;
+  if (OpC != TargetInstrInfo::INLINEASM) {
+    assert(ImmToIdxMap.count(OpC) &&
+           "No indexed form of load or store available!");
+    unsigned NewOpcode = ImmToIdxMap.find(OpC)->second;
+    MI.setInstrDescriptor(TII.get(NewOpcode));
+    OperandBase = 1;
+  } else {
+    OperandBase = OffsetOperandNo;
+  }
+    
+  unsigned StackReg = MI.getOperand(FIOperandNo).getReg();
+  MI.getOperand(OperandBase).ChangeToRegister(StackReg, false);
+  MI.getOperand(OperandBase+1).ChangeToRegister(PPC::R0, false);
 }
 
 /// VRRegNo - Map from a numbered VR register to its enum value.
