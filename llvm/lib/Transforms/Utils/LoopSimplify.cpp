@@ -380,7 +380,7 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 
   // We know that we have loop information to update... update it now.
   if (Loop *Parent = L->getParentLoop())
-    Parent->addBasicBlockToLoop(NewBB, *LI);
+    Parent->addBasicBlockToLoop(NewBB, LI->getBase());
 
   DT->splitBlock(NewBB);
   if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>())
@@ -412,7 +412,7 @@ BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   while (SuccLoop && !SuccLoop->contains(L->getHeader()))
     SuccLoop = SuccLoop->getParentLoop();
   if (SuccLoop)
-    SuccLoop->addBasicBlockToLoop(NewBB, *LI);
+    SuccLoop->addBasicBlockToLoop(NewBB, LI->getBase());
 
   // Update Dominator Information
   DT->splitBlock(NewBB);
@@ -558,7 +558,7 @@ Loop *LoopSimplify::SeparateNestedLoop(Loop *L) {
 
   // This block is going to be our new header block: add it to this loop and all
   // parent loops.
-  NewOuter->addBasicBlockToLoop(NewBB, *LI);
+  NewOuter->addBasicBlockToLoop(NewBB, LI->getBase());
 
   // L is now a subloop of our outer loop.
   NewOuter->addChildLoop(L);
@@ -693,7 +693,7 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
 
   // Update Loop Information - we know that this block is now in the current
   // loop and all parent loops.
-  L->addBasicBlockToLoop(BEBlock, *LI);
+  L->addBasicBlockToLoop(BEBlock, LI->getBase());
 
   // Update dominator information
   DT->splitBlock(BEBlock);

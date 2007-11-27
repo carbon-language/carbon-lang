@@ -451,7 +451,7 @@ void LoopRotate::preserveCanonicalLoopForm(LPPassManager &LPM) {
                                 NewHeader);
   LoopInfo &LI = LPM.getAnalysis<LoopInfo>();
   if (Loop *PL = LI.getLoopFor(OrigPreHeader))
-    PL->addBasicBlockToLoop(NewPreHeader, LI);
+    PL->addBasicBlockToLoop(NewPreHeader, LI.getBase());
   new BranchInst(NewHeader, NewPreHeader);
   
   BranchInst *OrigPH_BI = cast<BranchInst>(OrigPreHeader->getTerminator());

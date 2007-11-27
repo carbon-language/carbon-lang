@@ -542,7 +542,7 @@ static Loop *CloneLoop(Loop *L, Loop *PL, DenseMap<const Value*, Value*> &VM,
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I)
     if (LI->getLoopFor(*I) == L)
-      New->addBasicBlockToLoop(cast<BasicBlock>(VM[*I]), *LI);
+      New->addBasicBlockToLoop(cast<BasicBlock>(VM[*I]), LI->getBase());
 
   // Add all of the subloops to the new loop.
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
@@ -793,14 +793,14 @@ void LoopUnswitch::UnswitchNontrivialCondition(Value *LIC, Constant *Val,
   if (ParentLoop) {
     // Make sure to add the cloned preheader and exit blocks to the parent loop
     // as well.
-    ParentLoop->addBasicBlockToLoop(NewBlocks[0], *LI);
+    ParentLoop->addBasicBlockToLoop(NewBlocks[0], LI->getBase());
   }
   
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i) {
     BasicBlock *NewExit = cast<BasicBlock>(ValueMap[ExitBlocks[i]]);
     // The new exit block should be in the same loop as the old one.
     if (Loop *ExitBBLoop = LI->getLoopFor(ExitBlocks[i]))
-      ExitBBLoop->addBasicBlockToLoop(NewExit, *LI);
+      ExitBBLoop->addBasicBlockToLoop(NewExit, LI->getBase());
     
     assert(NewExit->getTerminator()->getNumSuccessors() == 1 &&
            "Exit block should have been split to have one successor!");

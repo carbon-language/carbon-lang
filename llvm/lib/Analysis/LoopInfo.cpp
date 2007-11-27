@@ -43,7 +43,7 @@ X("loops", "Natural Loop Construction", true);
 //
 bool LoopInfo::runOnFunction(Function &) {
   releaseMemory();
-  LI->Calculate(getAnalysis<DominatorTree>());    // Update
+  LI->Calculate(getAnalysis<DominatorTree>().getBase());    // Update
   return false;
 }
 

@@ -109,7 +109,7 @@ Loop *llvm::CloneLoop(Loop *OrigL, LPPassManager  *LPM, LoopInfo *LI,
       ValueMap[BB] = NewBB;
       if (P)
         LPM->cloneBasicBlockSimpleAnalysis(BB, NewBB, L);
-      NewLoop->addBasicBlockToLoop(NewBB, *LI);
+      NewLoop->addBasicBlockToLoop(NewBB, LI->getBase());
       NewBlocks.push_back(NewBB);
     }
 

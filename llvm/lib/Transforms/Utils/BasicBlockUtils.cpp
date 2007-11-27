@@ -163,7 +163,7 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
 
   // The new block lives in whichever loop the old one did.
   if (Loop *L = LI.getLoopFor(Old))
-    L->addBasicBlockToLoop(New, LI);
+    L->addBasicBlockToLoop(New, LI.getBase());
 
   if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>()) 
     {

@@ -358,7 +358,7 @@ bool LoopUnroll::unrollLoop(Loop *L, unsigned Count, unsigned Threshold) {
            VI != VE; ++VI)
         LastValueMap[VI->first] = VI->second;
 
-      L->addBasicBlockToLoop(New, *LI);
+      L->addBasicBlockToLoop(New, LI->getBase());
 
       // Add phi entries for newly created values to all exit blocks except
       // the successor of the latch block.  The successor of the exit block will

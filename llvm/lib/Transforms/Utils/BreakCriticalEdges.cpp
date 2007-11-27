@@ -250,13 +250,13 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
       if (Loop *DestLoop = LI->getLoopFor(DestBB)) {
         if (TIL == DestLoop) {
           // Both in the same loop, the NewBB joins loop.
-          DestLoop->addBasicBlockToLoop(NewBB, *LI);
+          DestLoop->addBasicBlockToLoop(NewBB, LI->getBase());
         } else if (TIL->contains(DestLoop->getHeader())) {
           // Edge from an outer loop to an inner loop.  Add to the outer loop.
-          TIL->addBasicBlockToLoop(NewBB, *LI);
+          TIL->addBasicBlockToLoop(NewBB, LI->getBase());
         } else if (DestLoop->contains(TIL->getHeader())) {
           // Edge from an inner loop to an outer loop.  Add to the outer loop.
-          DestLoop->addBasicBlockToLoop(NewBB, *LI);
+          DestLoop->addBasicBlockToLoop(NewBB, LI->getBase());
         } else {
           // Edge from two loops with no containment relation.  Because these
           // are natural loops, we know that the destination block must be the
@@ -265,7 +265,7 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P,
           assert(DestLoop->getHeader() == DestBB &&
                  "Should not create irreducible loops!");
           if (Loop *P = DestLoop->getParentLoop())
-            P->addBasicBlockToLoop(NewBB, *LI);
+            P->addBasicBlockToLoop(NewBB, LI->getBase());
         }
       }
   }

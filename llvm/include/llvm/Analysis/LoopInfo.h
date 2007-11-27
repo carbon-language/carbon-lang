@@ -65,7 +65,7 @@ template<class N> class LoopInfoBase;
 template<class BlockT>
 class LoopBase {
   LoopBase<BlockT> *ParentLoop;
-  std::vector<LoopBase<BlockT>*> SubLoops;       // Loops contained entirely within this one
+  std::vector<LoopBase<BlockT>*> SubLoops; // Loops contained entirely within this one
   std::vector<BlockT*> Blocks;   // First entry is the header node
 
   LoopBase(const LoopBase<BlockT> &);                  // DO NOT IMPLEMENT
@@ -113,8 +113,10 @@ public:
   /// that is outside of the current loop.
   ///
   bool isLoopExit(const BlockT *BB) const {
-    for (succ_const_iterator SI = succ_begin(BB), SE = succ_end(BB);
-         SI != SE; ++SI) {
+    typedef GraphTraits<BlockT*> BlockTraits;
+    for (typename BlockTraits::ChildIteratorType SI =
+         BlockTraits::child_begin(const_cast<BlockT*>(BB)),
+         SE = BlockTraits::child_end(const_cast<BlockT*>(BB)); SI != SE; ++SI) {
       if (!contains(*SI))
         return true;
     }
@@ -127,7 +129,10 @@ public:
     unsigned NumBackEdges = 0;
     BlockT *H = getHeader();
 
-    for (pred_iterator I = pred_begin(H), E = pred_end(H); I != E; ++I)
+    typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
+    for (typename InvBlockTraits::ChildIteratorType I =
+         InvBlockTraits::child_begin(const_cast<BlockT*>(H)),
+         E = InvBlockTraits::child_end(const_cast<BlockT*>(H)); I != E; ++I)
       if (contains(*I))
         ++NumBackEdges;
 
@@ -160,9 +165,12 @@ public:
     SmallVector<BlockT*, 128> LoopBBs(block_begin(), block_end());
     std::sort(LoopBBs.begin(), LoopBBs.end());
 
+    typedef GraphTraits<BlockT*> BlockTraits;
     for (typename std::vector<BlockT*>::const_iterator BI = Blocks.begin(),
          BE = Blocks.end(); BI != BE; ++BI)
-      for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I)
+      for (typename BlockTraits::ChildIteratorType I =
+          BlockTraits::child_begin(*BI), E = BlockTraits::child_end(*BI);
+          I != E; ++I)
         if (!std::binary_search(LoopBBs.begin(), LoopBBs.end(), *I)) {
           // Not in current loop? It must be an exit block.
           ExitingBlocks.push_back(*BI);
@@ -179,9 +187,12 @@ public:
     SmallVector<BlockT*, 128> LoopBBs(block_begin(), block_end());
     std::sort(LoopBBs.begin(), LoopBBs.end());
 
+    typedef GraphTraits<BlockT*> BlockTraits;
     for (typename std::vector<BlockT*>::const_iterator BI = Blocks.begin(),
          BE = Blocks.end(); BI != BE; ++BI)
-      for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I)
+      for (typename BlockTraits::ChildIteratorType I =
+           BlockTraits::child_begin(*BI), E = BlockTraits::child_end(*BI);
+           I != E; ++I)
         if (!std::binary_search(LoopBBs.begin(), LoopBBs.end(), *I))
           // Not in current loop? It must be an exit block.
           ExitBlocks.push_back(*I);
@@ -205,12 +216,17 @@ public:
       BlockT *current = *BI;
       switchExitBlocks.clear();
 
-      for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I) {
+      typedef GraphTraits<BlockT*> BlockTraits;
+      typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
+      for (typename BlockTraits::ChildIteratorType I =
+           BlockTraits::child_begin(*BI), E = BlockTraits::child_end(*BI);
+           I != E; ++I) {
         if (std::binary_search(LoopBBs.begin(), LoopBBs.end(), *I))
       // If block is inside the loop then it is not a exit block.
           continue;
-
-        pred_iterator PI = pred_begin(*I);
+      
+        typename InvBlockTraits::ChildIteratorType PI =
+                                                InvBlockTraits::child_begin(*I);
         BlockT *firstPred = *PI;
 
         // If current basic block is this exit block's first predecessor
@@ -223,7 +239,8 @@ public:
         // If a terminator has more then two successors, for example SwitchInst,
         // then it is possible that there are multiple edges from current block 
         // to one exit block. 
-        if (current->getTerminator()->getNumSuccessors() <= 2) {
+        if (std::distance(BlockTraits::child_begin(current),
+                          BlockTraits::child_end(current)) <= 2) {
           ExitBlocks.push_back(*I);
           continue;
         }
@@ -253,8 +270,11 @@ public:
 
     // Loop over the predecessors of the header node...
     BlockT *Header = getHeader();
-    for (pred_iterator PI = pred_begin(Header), PE = pred_end(Header);
-         PI != PE; ++PI)
+    typedef GraphTraits<BlockT*> BlockTraits;
+    typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
+    for (typename InvBlockTraits::ChildIteratorType PI =
+         InvBlockTraits::child_begin(Header),
+         PE = InvBlockTraits::child_end(Header); PI != PE; ++PI)
       if (!contains(*PI)) {     // If the block is not in the loop...
         if (Out && Out != *PI)
           return 0;             // Multiple predecessors outside the loop
@@ -263,9 +283,9 @@ public:
 
     // Make sure there is only one exit out of the preheader.
     assert(Out && "Header of loop has no predecessors from outside loop?");
-    succ_iterator SI = succ_begin(Out);
+    typename BlockTraits::ChildIteratorType SI = BlockTraits::child_begin(Out);
     ++SI;
-    if (SI != succ_end(Out))
+    if (SI != BlockTraits::child_end(Out))
       return 0;  // Multiple exits from the block, must not be a preheader.
 
     // If there is exactly one preheader, return it.  If there was zero, then Out
@@ -279,7 +299,11 @@ public:
   /// block.
   BlockT *getLoopLatch() const {
     BlockT *Header = getHeader();
-    pred_iterator PI = pred_begin(Header), PE = pred_end(Header);
+    typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
+    typename InvBlockTraits::ChildIteratorType PI =
+                                            InvBlockTraits::child_begin(Header);
+    typename InvBlockTraits::ChildIteratorType PE =
+                                              InvBlockTraits::child_end(Header);
     if (PI == PE) return 0;  // no preds?
 
     BlockT *Latch = 0;
@@ -307,12 +331,15 @@ public:
     BlockT *H = getHeader();
 
     BlockT *Incoming = 0, *Backedge = 0;
-    pred_iterator PI = pred_begin(H);
-    assert(PI != pred_end(H) && "Loop must have at least one backedge!");
+    typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
+    typename InvBlockTraits::ChildIteratorType PI =
+                                                 InvBlockTraits::child_begin(H);
+    assert(PI != InvBlockTraits::child_end(H) &&
+           "Loop must have at least one backedge!");
     Backedge = *PI++;
-    if (PI == pred_end(H)) return 0;  // dead loop
+    if (PI == InvBlockTraits::child_end(H)) return 0;  // dead loop
     Incoming = *PI++;
-    if (PI != pred_end(H)) return 0;  // multiple backedges?
+    if (PI != InvBlockTraits::child_end(H)) return 0;  // multiple backedges?
 
     if (contains(Incoming)) {
       if (contains(Backedge))
@@ -414,7 +441,7 @@ public:
   /// to the specified LoopInfo object as being in the current basic block.  It
   /// is not valid to replace the loop header with this method.
   ///
-  void addBasicBlockToLoop(BlockT *NewBB, LoopInfo &LI);
+  void addBasicBlockToLoop(BlockT *NewBB, LoopInfoBase<BlockT> &LI);
 
   /// replaceChildLoopWith - This is used when splitting loops up.  It replaces
   /// the OldChild entry in our children list with NewChild, and updates the
@@ -533,7 +560,7 @@ typedef LoopBase<BasicBlock> Loop;
 template<class BlockT>
 class LoopInfoBase {
   // BBMap - Mapping of basic blocks to the inner most loop they occur in
-  std::map<BlockT*, Loop*> BBMap;
+  std::map<BlockT*, LoopBase<BlockT>*> BBMap;
   std::vector<LoopBase<BlockT>*> TopLevelLoops;
   friend class LoopBase<BlockT>;
   
@@ -562,7 +589,7 @@ public:
   ///
   LoopBase<BlockT> *getLoopFor(const BlockT *BB) const {
     typename std::map<BlockT *, LoopBase<BlockT>*>::const_iterator I=
-      BBMap.find(const_cast<BasicBlock*>(BB));
+      BBMap.find(const_cast<BlockT*>(BB));
     return I != BBMap.end() ? I->second : 0;
   }
   
@@ -575,13 +602,13 @@ public:
   /// getLoopDepth - Return the loop nesting level of the specified block...
   ///
   unsigned getLoopDepth(const BlockT *BB) const {
-    const Loop *L = getLoopFor(BB);
+    const LoopBase<BlockT> *L = getLoopFor(BB);
     return L ? L->getLoopDepth() : 0;
   }
 
   // isLoopHeader - True if the block is a loop header node
   bool isLoopHeader(BlockT *BB) const {
-    const Loop *L = getLoopFor(BB);
+    const LoopBase<BlockT> *L = getLoopFor(BB);
     return L && L->getHeader() == BB;
   }
   
@@ -630,7 +657,7 @@ public:
   void removeBlock(BlockT *BB) {
     typename std::map<BlockT *, LoopBase<BlockT>*>::iterator I = BBMap.find(BB);
     if (I != BBMap.end()) {
-      for (Loop *L = I->second; L; L = L->getParentLoop())
+      for (LoopBase<BlockT> *L = I->second; L; L = L->getParentLoop())
         L->removeBlockFromLoop(BB);
 
       BBMap.erase(I);
@@ -639,13 +666,14 @@ public:
   
   // Internals
   
-  static bool isNotAlreadyContainedIn(Loop *SubLoop, Loop *ParentLoop) {
+  static bool isNotAlreadyContainedIn(LoopBase<BlockT> *SubLoop,
+                                      LoopBase<BlockT> *ParentLoop) {
     if (SubLoop == 0) return true;
     if (SubLoop == ParentLoop) return false;
     return isNotAlreadyContainedIn(SubLoop->getParentLoop(), ParentLoop);
   }
   
-  void Calculate(DominatorTree &DT) {
+  void Calculate(DominatorTreeBase<BlockT> &DT) {
     BlockT *RootNode = DT.getRootNode()->getBlock();
 
     for (df_iterator<BlockT*> NI = df_begin(RootNode),
@@ -654,14 +682,17 @@ public:
         TopLevelLoops.push_back(L);
   }
   
-  LoopBase<BlockT> *ConsiderForLoop(BlockT *BB, DominatorTree &DT) {
+  LoopBase<BlockT> *ConsiderForLoop(BlockT *BB, DominatorTreeBase<BlockT> &DT) {
     if (BBMap.find(BB) != BBMap.end()) return 0;// Haven't processed this node?
 
     std::vector<BlockT *> TodoStack;
 
     // Scan the predecessors of BB, checking to see if BB dominates any of
     // them.  This identifies backedges which target this node...
-    for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I)
+    typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
+    for (typename InvBlockTraits::ChildIteratorType I =
+         InvBlockTraits::child_begin(BB), E = InvBlockTraits::child_end(BB);
+         I != E; ++I)
       if (DT.dominates(BB, *I))   // If BB dominates it's predecessor...
         TodoStack.push_back(*I);
 
@@ -702,9 +733,12 @@ public:
 
         // Normal case, add the block to our loop...
         L->Blocks.push_back(X);
-
+        
+        typedef GraphTraits<Inverse<BlockT*> > InvBlockTraits;
+        
         // Add all of the predecessors of X to the end of the work stack...
-        TodoStack.insert(TodoStack.end(), pred_begin(X), pred_end(X));
+        TodoStack.insert(TodoStack.end(), InvBlockTraits::child_begin(X),
+                         InvBlockTraits::child_end(X));
       }
     }
 
@@ -826,7 +860,6 @@ class LoopInfo : public FunctionPass {
   LoopInfoBase<BasicBlock>* LI;
   friend class LoopBase<BasicBlock>;
   
-  LoopInfoBase<BasicBlock>& getBase() { return *LI; }
 public:
   static char ID; // Pass identification, replacement for typeid
 
@@ -835,6 +868,8 @@ public:
   }
   
   ~LoopInfo() { delete LI; }
+
+  LoopInfoBase<BasicBlock>& getBase() { return *LI; }
 
   /// iterator/begin/end - The interface to the top-level loops in the current
   /// function.
@@ -941,13 +976,11 @@ template <> struct GraphTraits<Loop*> {
 
 template<class BlockT>
 void LoopBase<BlockT>::addBasicBlockToLoop(BlockT *NewBB,
-                                           LoopInfo &LI) {
-  assert((Blocks.empty() || LI[getHeader()] == this) &&
+                                           LoopInfoBase<BlockT> &LIB) {
+  assert((Blocks.empty() || LIB[getHeader()] == this) &&
          "Incorrect LI specified for this loop!");
   assert(NewBB && "Cannot add a null basic block to the loop!");
-  assert(LI[NewBB] == 0 && "BasicBlock already in the loop!");
-
-  LoopInfoBase<BasicBlock>& LIB = LI.getBase();
+  assert(LIB[NewBB] == 0 && "BasicBlock already in the loop!");
 
   // Add the loop mapping to the LoopInfo object...
   LIB.BBMap[NewBB] = this;
