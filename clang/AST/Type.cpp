@@ -687,7 +687,7 @@ void VariableArrayType::getAsStringInternal(std::string &S) const {
 }
 
 void VectorType::getAsStringInternal(std::string &S) const {
-  S += " __attribute__((vector_size(";
+  S += " __attribute__((__vector_size__(";
   // FIXME: should multiply by element size somehow.
   S += llvm::utostr_32(NumElements*4); // convert back to bytes.
   S += ")))";

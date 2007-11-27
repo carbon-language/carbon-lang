@@ -2470,7 +2470,8 @@ void Sema::AddTopLevelDecl(Decl *current, Decl *last) {
 }
 
 void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
-  if (strcmp(rawAttr->getAttributeName()->getName(), "vector_size") == 0) {
+  if (!strcmp(rawAttr->getAttributeName()->getName(), "vector_size") ||
+      !strcmp(rawAttr->getAttributeName()->getName(), "__vector_size__")) {
     if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
       QualType newType = HandleVectorTypeAttribute(vDecl->getType(), rawAttr);
       if (!newType.isNull()) // install the new vector type into the decl
@@ -2483,7 +2484,8 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
         tDecl->setUnderlyingType(newType);
     }
   }
-  if (strcmp(rawAttr->getAttributeName()->getName(), "ocu_vector_type") == 0) {
+  if (!strcmp(rawAttr->getAttributeName()->getName(), "ocu_vector_type") ||
+      !strcmp(rawAttr->getAttributeName()->getName(), "__ocu_vector_type__")) {
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New))
       HandleOCUVectorTypeAttribute(tDecl, rawAttr);
     else
