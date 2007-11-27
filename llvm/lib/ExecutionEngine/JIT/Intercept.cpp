@@ -102,6 +102,16 @@ void *JIT::getPointerToNamedFunction(const std::string &Name) {
     if (Ptr) return Ptr;
   }
   
+  // darwin/ppc adds $LDBLStub suffixes to various symbols like printf.  These
+  // are references to hidden visibility symbols that dlsym cannot resolve.  If
+  // we have one of these, strip off $LDBLStub and try again.
+#if defined(__APPLE__) && defined(__ppc__)
+  if (Name.size() > 9 && Name[Name.size()-9] == '$' &&
+      memcmp(&Name[Name.size()-8], "LDBLStub", 8) == 0)
+    return getPointerToNamedFunction(std::string(Name.begin(),
+                                                 Name.end()-9));
+#endif
+  
   /// If a LazyFunctionCreator is installed, use it to get/create the function. 
   if (LazyFunctionCreator)
     if (void *RP = LazyFunctionCreator(Name))
