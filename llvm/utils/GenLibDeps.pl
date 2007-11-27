@@ -8,6 +8,7 @@
 #
 # Syntax:   GenLibDeps.pl [-flat] <directory_with_libraries_in_it> [path_to_nm_binary]
 #
+use strict;
 
 # Parse arguments... 
 my $FLAT = 0;
@@ -47,8 +48,8 @@ if (!defined($nmPath) || $nmPath eq "") {
 opendir DIR,$Directory;
 my @files = readdir DIR;
 closedir DIR;
-@libs = grep(/libLLVM.*\.a$/,sort(@files));
-@objs = grep(/LLVM.*\.o$/,sort(@files));
+my @libs = grep(/libLLVM.*\.a$/,sort(@files));
+my @objs = grep(/LLVM.*\.o$/,sort(@files));
 
 # Declare the hashes we will use to keep track of the library and object file
 # symbol definitions.
@@ -56,10 +57,11 @@ my %libdefs;
 my %objdefs;
 
 # Gather definitions from the libraries
-foreach $lib (@libs ) {
-  open DEFS, 
-    "$nmPath -g $Directory/$lib | grep ' [ABCDGRST] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRST] //' | sort | uniq |";
+foreach my $lib (@libs ) {
+  open DEFS, "$nmPath -g $Directory/$lib|";
   while (<DEFS>) {
+    next if (! / [ABCDGRST] /);
+    s/^[^ ]* [ABCDGRST] //;    
     chomp($_);
     $libdefs{$_} = $lib;
   }
@@ -67,10 +69,11 @@ foreach $lib (@libs ) {
 }
 
 # Gather definitions from the object files.
-foreach $obj (@objs ) {
-  open DEFS, 
-    "$nmPath -g $Directory/$obj | grep ' [ABCDGRST] ' | sed -e 's/^[0-9A-Fa-f]* [ABCDGRST] //' | sort | uniq |";
+foreach my $obj (@objs ) {
+  open DEFS, "$nmPath -g $Directory/$obj |";
   while (<DEFS>) {
+    next if (! / [ABCDGRST] /);
+    s/^[^ ]* [ABCDGRST] //;
     chomp($_);
     $objdefs{$_} = $obj;
   }
@@ -100,7 +103,7 @@ sub gen_one_entry {
       $DepLibs{$libdefs{$_}} = [] unless exists $DepLibs{$libdefs{$_}};
       push(@{$DepLibs{$libdefs{$_}}}, $_);
     } elsif (defined($objdefs{$_}) && $objdefs{$_} ne $lib) {
-      $libroot = $lib;
+      my $libroot = $lib;
       $libroot =~ s/lib(.*).a/$1/;
       if ($objdefs{$_} ne "$libroot.o") {
         $DepLibs{$objdefs{$_}} = [] unless exists $DepLibs{$objdefs{$_}};
@@ -115,14 +118,14 @@ sub gen_one_entry {
       if ($WHY) {
         print "\n";
         my @syms = @{$DepLibs{$key}};
-        foreach $sym (@syms) {
+        foreach my $sym (@syms) {
           print "  $sym\n";
         }
       }
     } else {
       print "    <li>$key</li>\n";
     }
-    $suffix = substr($key,length($key)-1,1);
+    my $suffix = substr($key,length($key)-1,1);
     $key =~ s/(.*)\.[oa]/$1/;
     if ($suffix eq "a") {
       if (!$FLAT) { print DOT "$lib_ns -> $key [ weight=0 ];\n" };
@@ -169,7 +172,7 @@ if (!$FLAT) {
 }
 
 # Print libraries first
-foreach $lib (@libs) {
+foreach my $lib (@libs) {
   gen_one_entry($lib);
 }
 
@@ -196,7 +199,7 @@ if (!$FLAT) {
 }
 
 # Print objects second
-foreach $obj (@objs) {
+foreach my $obj (@objs) {
   gen_one_entry($obj);
 }
 
