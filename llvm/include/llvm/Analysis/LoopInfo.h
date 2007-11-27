@@ -702,7 +702,7 @@ public:
     LoopBase<BlockT> *L = new LoopBase<BlockT>(BB);
     BBMap[BB] = L;
 
-    BlockT *EntryBlock = &BB->getParent()->getEntryBlock();
+    BlockT *EntryBlock = BB->getParent()->begin();
 
     while (!TodoStack.empty()) {  // Process all the nodes in the loop
       BlockT *X = TodoStack.back();
