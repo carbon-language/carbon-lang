@@ -1086,16 +1086,18 @@ def : Pat<(mul GPRC:$RA, immRemP2:$imm),
           (ADDQr (SLr GPRC:$RA, (nearP2X immRemP2:$imm)), (SLi GPRC:$RA, (nearP2RemX immRemP2:$imm)))>;
 
 //n is below a power of 2
-def : Pat<(mul GPRC:$RA, immRem1n:$imm), 
-          (SUBQr (SLr GPRC:$RA, (nearP2X immRem1n:$imm)), GPRC:$RA)>;
-def : Pat<(mul GPRC:$RA, immRem2n:$imm), 
-          (SUBQr (SLr GPRC:$RA, (nearP2X immRem2n:$imm)), (ADDQr GPRC:$RA, GPRC:$RA))>;
-def : Pat<(mul GPRC:$RA, immRem3n:$imm),
-          (SUBQr (SLr GPRC:$RA, (nearP2X immRem3n:$imm)), (S4SUBQr GPRC:$RA, GPRC:$RA))>;
-def : Pat<(mul GPRC:$RA, immRem4n:$imm),
-          (SUBQr (SLr GPRC:$RA, (nearP2X immRem4n:$imm)), (SLi GPRC:$RA, 2))>;
-def : Pat<(mul GPRC:$RA, immRem5n:$imm),
-          (SUBQr (SLr GPRC:$RA, (nearP2X immRem5n:$imm)), (S4ADDQr GPRC:$RA, GPRC:$RA))>;
-def : Pat<(mul GPRC:$RA, immRemP2n:$imm),
-          (SUBQr (SLr GPRC:$RA, (nearP2X immRemP2n:$imm)), (SLi GPRC:$RA, (nearP2RemX immRemP2n:$imm)))>;
+//FIXME: figure out why something is truncating the imm to 32bits
+// this will fix 2007-11-27-mulneg3
+//def : Pat<(mul GPRC:$RA, immRem1n:$imm), 
+//          (SUBQr (SLr GPRC:$RA, (nearP2X immRem1n:$imm)), GPRC:$RA)>;
+//def : Pat<(mul GPRC:$RA, immRem2n:$imm), 
+//          (SUBQr (SLr GPRC:$RA, (nearP2X immRem2n:$imm)), (ADDQr GPRC:$RA, GPRC:$RA))>;
+//def : Pat<(mul GPRC:$RA, immRem3n:$imm),
+//          (SUBQr (SLr GPRC:$RA, (nearP2X immRem3n:$imm)), (S4SUBQr GPRC:$RA, GPRC:$RA))>;
+//def : Pat<(mul GPRC:$RA, immRem4n:$imm),
+//          (SUBQr (SLr GPRC:$RA, (nearP2X immRem4n:$imm)), (SLi GPRC:$RA, 2))>;
+//def : Pat<(mul GPRC:$RA, immRem5n:$imm),
+//          (SUBQr (SLr GPRC:$RA, (nearP2X immRem5n:$imm)), (S4ADDQr GPRC:$RA, GPRC:$RA))>;
+//def : Pat<(mul GPRC:$RA, immRemP2n:$imm),
+//          (SUBQr (SLr GPRC:$RA, (nearP2X immRemP2n:$imm)), (SLi GPRC:$RA, (nearP2RemX immRemP2n:$imm)))>;
 } //Added complexity
