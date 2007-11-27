@@ -499,11 +499,11 @@ public:
                             unsigned Opc);
   bool isExportableFromCurrentBlock(Value *V, const BasicBlock *FromBB);
   void ExportFromCurrentBlock(Value *V);
-  void LowerCallTo(Instruction &I,
-                   const Type *CalledValueTy, unsigned CallingConv,
+  void LowerCallTo(Instruction &I, const Type *CalledValueTy,
+                   const ParamAttrsList *PAL, unsigned CallingConv,
                    bool IsTailCall, SDOperand Callee, unsigned OpIdx,
                    MachineBasicBlock *LandingPad = NULL);
-  
+
   // Terminator instructions.
   void visitRet(ReturnInst &I);
   void visitBr(BranchInst &I);
@@ -934,12 +934,11 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
         TmpVT = TLI.getTypeToTransformTo(MVT::i32);
       else
         TmpVT = MVT::i32;
-      const FunctionType *FTy = I.getParent()->getParent()->getFunctionType();
-      const ParamAttrsList *Attrs = FTy->getParamAttrs();
+      const ParamAttrsList *PAL = I.getParent()->getParent()->getParamAttrs();
       ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
-      if (Attrs && Attrs->paramHasAttr(0, ParamAttr::SExt))
+      if (PAL && PAL->paramHasAttr(0, ParamAttr::SExt))
         ExtendKind = ISD::SIGN_EXTEND;
-      if (Attrs && Attrs->paramHasAttr(0, ParamAttr::ZExt))
+      if (PAL && PAL->paramHasAttr(0, ParamAttr::ZExt))
         ExtendKind = ISD::ZERO_EXTEND;
       RetOp = DAG.getNode(ExtendKind, TmpVT, RetOp);
       NewValues.push_back(RetOp);
@@ -1450,7 +1449,7 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
   MachineBasicBlock *Return = FuncInfo.MBBMap[I.getSuccessor(0)];
   MachineBasicBlock *LandingPad = FuncInfo.MBBMap[I.getSuccessor(1)];
 
-  LowerCallTo(I, I.getCalledValue()->getType(),
+  LowerCallTo(I, I.getCalledValue()->getType(), I.getParamAttrs(),
               I.getCallingConv(),
               false,
               getValue(I.getOperand(0)),
@@ -2940,13 +2939,13 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 
 void SelectionDAGLowering::LowerCallTo(Instruction &I,
                                        const Type *CalledValueTy,
+                                       const ParamAttrsList *Attrs,
                                        unsigned CallingConv,
                                        bool IsTailCall,
                                        SDOperand Callee, unsigned OpIdx,
                                        MachineBasicBlock *LandingPad) {
   const PointerType *PT = cast<PointerType>(CalledValueTy);
   const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
-  const ParamAttrsList *Attrs = FTy->getParamAttrs();
   MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
   unsigned BeginLabel = 0, EndLabel = 0;
     
@@ -3073,7 +3072,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
   else
     Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
 
-  LowerCallTo(I, I.getCalledValue()->getType(),
+  LowerCallTo(I, I.getCalledValue()->getType(), I.getParamAttrs(),
               I.getCallingConv(),
               I.isTailCall(),
               Callee,
@@ -3893,8 +3892,7 @@ void SelectionDAGLowering::visitVACopy(CallInst &I) {
 /// integrated into SDISel.
 std::vector<SDOperand> 
 TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
-  const FunctionType *FTy = F.getFunctionType();
-  const ParamAttrsList *Attrs = FTy->getParamAttrs();
+  const ParamAttrsList *Attrs = F.getParamAttrs();
   // Add CC# and isVararg as operands to the FORMAL_ARGUMENTS node.
   std::vector<SDOperand> Ops;
   Ops.push_back(DAG.getRoot());

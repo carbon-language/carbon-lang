@@ -114,6 +114,7 @@ public:
 
 private:
   void printLinkageType(GlobalValue::LinkageTypes LT);
+  void printVisibilityType(GlobalValue::VisibilityTypes VisTypes);
   void printCallingConv(unsigned cc);
   void printEscapedString(const std::string& str);
   void printCFP(const ConstantFP* CFP);
@@ -124,6 +125,7 @@ private:
   std::string getCppName(const Value* val);
   inline void printCppName(const Value* val);
 
+  void printParamAttrs(const ParamAttrsList* PAL, const std::string &name);
   bool printTypeInternal(const Type* Ty);
   inline void printType(const Type* Ty);
   void printTypes(const Module* M);
@@ -302,6 +304,22 @@ CppWriter::printLinkageType(GlobalValue::LinkageTypes LT) {
   }
 }
 
+void
+CppWriter::printVisibilityType(GlobalValue::VisibilityTypes VisType) {
+  switch (VisType) {
+    default: assert(0 && "Unknown GVar visibility");
+    case GlobalValue::DefaultVisibility:
+      Out << "GlobalValue::DefaultVisibility";
+      break;
+    case GlobalValue::HiddenVisibility:
+      Out << "GlobalValue::HiddenVisibility";
+      break;
+    case GlobalValue::ProtectedVisibility:
+      Out << "GlobalValue::ProtectedVisibility";
+      break;
+  }
+}
+
 // printEscapedString - Print each character of the specified string, escaping
 // it if it is not printable or if it is an escape char.
 void 
@@ -419,6 +437,42 @@ CppWriter::printCppName(const Value* val) {
   printEscapedString(getCppName(val));
 }
 
+void
+CppWriter::printParamAttrs(const ParamAttrsList* PAL, const std::string &name) {
+  Out << "ParamAttrsList *" << name << "_PAL = 0;";
+  nl(Out);
+  if (PAL) {
+    Out << '{'; in(); nl(Out);
+    Out << "ParamAttrsVector Attrs;"; nl(Out);
+    Out << "ParamAttrsWithIndex PAWI;"; nl(Out);
+    for (unsigned i = 0; i < PAL->size(); ++i) {
+      uint16_t index = PAL->getParamIndex(i);
+      uint16_t attrs = PAL->getParamAttrs(index);
+      Out << "PAWI.index = " << index << "; PAWI.attrs = 0 ";
+      if (attrs & ParamAttr::SExt)
+        Out << " | ParamAttr::SExt";
+      if (attrs & ParamAttr::ZExt)
+        Out << " | ParamAttr::ZExt";
+      if (attrs & ParamAttr::StructRet)
+        Out << " | ParamAttr::StructRet";
+      if (attrs & ParamAttr::InReg)
+        Out << " | ParamAttr::InReg";
+      if (attrs & ParamAttr::NoReturn)
+        Out << " | ParamAttr::NoReturn";
+      if (attrs & ParamAttr::NoUnwind)
+        Out << " | ParamAttr::NoUnwind";
+      Out << ";";
+      nl(Out);
+      Out << "Attrs.push_back(PAWI);";
+      nl(Out);
+    }
+    Out << name << "_PAL = ParamAttrsList::get(Attrs);";
+    nl(Out);
+    out(); nl(Out);
+    Out << '}'; nl(Out);
+  }
+}
+
 bool
 CppWriter::printTypeInternal(const Type* Ty) {
   // We don't print definitions for primitive types
@@ -471,41 +525,6 @@ CppWriter::printTypeInternal(const Type* Ty) {
         Out << ");";
         nl(Out);
       }
-      const ParamAttrsList *PAL = FT->getParamAttrs();
-      Out << "ParamAttrsList *" << typeName << "_PAL = 0;";
-      nl(Out);
-      if (PAL) {
-        Out << '{'; in(); nl(Out);
-        Out << "ParamAttrsVector Attrs;"; nl(Out);
-        Out << "ParamAttrsWithIndex PAWI;"; nl(Out);
-        for (unsigned i = 0; i < PAL->size(); ++i) {
-          uint16_t index = PAL->getParamIndex(i);
-          uint16_t attrs = PAL->getParamAttrs(index);
-          Out << "PAWI.index = " << index << "; PAWI.attrs = 0 ";
-          if (attrs & ParamAttr::SExt)
-            Out << " | ParamAttr::SExt";
-          if (attrs & ParamAttr::ZExt)
-            Out << " | ParamAttr::ZExt";
-          if (attrs & ParamAttr::NoAlias)
-            Out << " | ParamAttr::NoAlias";
-          if (attrs & ParamAttr::StructRet)
-            Out << " | ParamAttr::StructRet";
-          if (attrs & ParamAttr::InReg)
-            Out << " | ParamAttr::InReg";
-          if (attrs & ParamAttr::NoReturn)
-            Out << " | ParamAttr::NoReturn";
-          if (attrs & ParamAttr::NoUnwind)
-            Out << " | ParamAttr::NoUnwind";
-          Out << ";";
-          nl(Out);
-          Out << "Attrs.push_back(PAWI);";
-          nl(Out);
-        }
-        Out << typeName << "_PAL = ParamAttrsList::get(Attrs);";
-        nl(Out);
-        out(); nl(Out);
-        Out << '}'; nl(Out);
-      }
       bool isForward = printTypeInternal(FT->getReturnType());
       std::string retTypeName(getCppName(FT->getReturnType()));
       Out << "FunctionType* " << typeName << " = FunctionType::get(";
@@ -514,8 +533,7 @@ CppWriter::printTypeInternal(const Type* Ty) {
         Out << "_fwd";
       Out << ",";
       nl(Out) << "/*Params=*/" << typeName << "_args,";
-      nl(Out) << "/*isVarArg=*/" << (FT->isVarArg() ? "true," : "false,") ;
-      nl(Out) << "/*ParamAttrs=*/" << typeName << "_PAL" << ");";
+      nl(Out) << "/*isVarArg=*/" << (FT->isVarArg() ? "true" : "false") << ");";
       out(); 
       nl(Out);
       break;
@@ -992,6 +1010,13 @@ void CppWriter::printVariableHead(const GlobalVariable *GV) {
     Out << "->setAlignment(" << utostr(GV->getAlignment()) << ");";
     nl(Out);
   };
+  if (GV->getVisibility() != GlobalValue::DefaultVisibility) {
+    printCppName(GV);
+    Out << "->setVisibility(";
+    printVisibilityType(GV->getVisibility());
+    Out << ");";
+    nl(Out);
+  }
   if (is_inline) {
     out(); Out << "}"; nl(Out);
   }
@@ -1102,6 +1127,9 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
       nl(Out) << iName << "->setCallingConv(";
       printCallingConv(inv->getCallingConv());
       Out << ");";
+      printParamAttrs(inv->getParamAttrs(), iName);
+      Out << iName << "->setParamAttrs(" << iName << "_PAL);";
+      nl(Out);
       break;
     }
     case Instruction::Unwind: {
@@ -1362,6 +1390,9 @@ CppWriter::printInstruction(const Instruction *I, const std::string& bbname) {
       nl(Out) << iName << "->setTailCall(" 
           << (call->isTailCall() ? "true":"false");
       Out << ");";
+      printParamAttrs(call->getParamAttrs(), iName);
+      Out << iName << "->setParamAttrs(" << iName << "_PAL);";
+      nl(Out);
       break;
     }
     case Instruction::Select: {
@@ -1533,10 +1564,21 @@ void CppWriter::printFunctionHead(const Function* F) {
     Out << "->setAlignment(" << F->getAlignment() << ");";
     nl(Out);
   }
+  if (F->getVisibility() != GlobalValue::DefaultVisibility) {
+    printCppName(F);
+    Out << "->setVisibility(";
+    printVisibilityType(F->getVisibility());
+    Out << ");";
+    nl(Out);
+  }
   if (is_inline) {
     Out << "}";
     nl(Out);
   }
+  printParamAttrs(F->getParamAttrs(), getCppName(F));
+  printCppName(F);
+  Out << "->setParamAttrs(" << getCppName(F) << "_PAL);";
+  nl(Out);
 }
 
 void CppWriter::printFunctionBody(const Function *F) {

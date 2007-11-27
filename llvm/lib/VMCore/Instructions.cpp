@@ -35,6 +35,18 @@ void CallSite::setCallingConv(unsigned CC) {
   else
     cast<InvokeInst>(I)->setCallingConv(CC);
 }
+const ParamAttrsList* CallSite::getParamAttrs() const {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    return CI->getParamAttrs();
+  else
+    return cast<InvokeInst>(I)->getParamAttrs();
+}
+void CallSite::setParamAttrs(const ParamAttrsList *PAL) {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    CI->setParamAttrs(PAL);
+  else
+    cast<InvokeInst>(I)->setParamAttrs(PAL);
+}
 
 
 
@@ -341,8 +353,9 @@ CallInst::CallInst(Value *Func, const std::string &Name,
 
 CallInst::CallInst(const CallInst &CI)
   : Instruction(CI.getType(), Instruction::Call, new Use[CI.getNumOperands()],
-                CI.getNumOperands()) {
-  ParamAttrs = 0;
+                CI.getNumOperands()),
+    ParamAttrs(0) {
+  setParamAttrs(CI.getParamAttrs());
   SubclassData = CI.SubclassData;
   Use *OL = OperandList;
   Use *InOL = CI.OperandList;
@@ -350,7 +363,10 @@ CallInst::CallInst(const CallInst &CI)
     OL[i].init(InOL[i], this);
 }
 
-void CallInst::setParamAttrs(ParamAttrsList *newAttrs) {
+void CallInst::setParamAttrs(const ParamAttrsList *newAttrs) {
+  if (ParamAttrs == newAttrs)
+    return;
+
   if (ParamAttrs)
     ParamAttrs->dropRef();
 
@@ -358,6 +374,12 @@ void CallInst::setParamAttrs(ParamAttrsList *newAttrs) {
     newAttrs->addRef();
 
   ParamAttrs = newAttrs; 
+}
+
+bool CallInst::isStructReturn() const {
+  if (ParamAttrs)
+    return ParamAttrs->paramHasAttr(1, ParamAttr::StructRet);
+  return false;
 }
 
 //===----------------------------------------------------------------------===//
@@ -397,8 +419,9 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
 
 InvokeInst::InvokeInst(const InvokeInst &II)
   : TerminatorInst(II.getType(), Instruction::Invoke,
-                   new Use[II.getNumOperands()], II.getNumOperands()) {
-  ParamAttrs = 0;
+                   new Use[II.getNumOperands()], II.getNumOperands()),
+    ParamAttrs(0) {
+  setParamAttrs(II.getParamAttrs());
   SubclassData = II.SubclassData;
   Use *OL = OperandList, *InOL = II.OperandList;
   for (unsigned i = 0, e = II.getNumOperands(); i != e; ++i)
@@ -415,7 +438,10 @@ void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
   return setSuccessor(idx, B);
 }
 
-void InvokeInst::setParamAttrs(ParamAttrsList *newAttrs) {
+void InvokeInst::setParamAttrs(const ParamAttrsList *newAttrs) {
+  if (ParamAttrs == newAttrs)
+    return;
+
   if (ParamAttrs)
     ParamAttrs->dropRef();
 
@@ -423,6 +449,12 @@ void InvokeInst::setParamAttrs(ParamAttrsList *newAttrs) {
     newAttrs->addRef();
 
   ParamAttrs = newAttrs; 
+}
+
+bool InvokeInst::isStructReturn() const {
+  if (ParamAttrs)
+    return ParamAttrs->paramHasAttr(1, ParamAttr::StructRet);
+  return false;
 }
 
 //===----------------------------------------------------------------------===//

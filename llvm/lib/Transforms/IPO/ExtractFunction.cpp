@@ -95,6 +95,7 @@ namespace {
           Function *New = new Function(I->getFunctionType(),
                                        GlobalValue::ExternalLinkage);
           New->setCallingConv(I->getCallingConv());
+          New->setParamAttrs(I->getParamAttrs());
 
           // If it's not the named function, delete the body of the function
           I->dropAllReferences();

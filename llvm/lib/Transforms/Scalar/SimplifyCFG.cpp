@@ -96,16 +96,11 @@ static bool IsNoReturn(const CallInst *CI) {
     if (Attrs->paramHasAttr(0, ParamAttr::NoReturn))
       return true;
   
-  if (const Function *Callee = CI->getCalledFunction()) {
+  if (const Function *Callee = CI->getCalledFunction())
     if (const ParamAttrsList *Attrs = Callee->getParamAttrs())
       if (Attrs->paramHasAttr(0, ParamAttr::NoReturn))
         return true;
-  
-    const FunctionType *FT = Callee->getFunctionType();
-    if (const ParamAttrsList *Attrs = FT->getParamAttrs())
-      if (Attrs->paramHasAttr(0, ParamAttr::NoReturn))
-        return true;
-  }
+
   return false;
 }
 
@@ -115,16 +110,11 @@ static bool IsNoUnwind(const InvokeInst *II) {
     if (Attrs->paramHasAttr(0, ParamAttr::NoUnwind))
       return true;
   
-  if (const Function *Callee = II->getCalledFunction()) {
+  if (const Function *Callee = II->getCalledFunction())
     if (const ParamAttrsList *Attrs = Callee->getParamAttrs())
       if (Attrs->paramHasAttr(0, ParamAttr::NoUnwind))
         return true;
-  
-    const FunctionType *FT = Callee->getFunctionType();
-    if (const ParamAttrsList *Attrs = FT->getParamAttrs())
-      if (Attrs->paramHasAttr(0, ParamAttr::NoUnwind))
-        return true;
-  }
+
   return false;
 }
 

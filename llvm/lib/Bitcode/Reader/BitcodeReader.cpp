@@ -329,15 +329,15 @@ bool BitcodeReader::ParseTypeTable() {
       ResultTy = PointerType::get(getTypeByID(Record[0], true));
       break;
     case bitc::TYPE_CODE_FUNCTION: {
-      // FUNCTION: [vararg, attrid, retty, paramty x N]
-      if (Record.size() < 3)
+      // FUNCTION: [vararg, retty, paramty x N]
+      if (Record.size() < 2)
         return Error("Invalid FUNCTION type record");
       std::vector<const Type*> ArgTys;
-      for (unsigned i = 3, e = Record.size(); i != e; ++i)
+      for (unsigned i = 2, e = Record.size(); i != e; ++i)
         ArgTys.push_back(getTypeByID(Record[i], true));
       
-      ResultTy = FunctionType::get(getTypeByID(Record[2], true), ArgTys,
-                                   Record[0], getParamAttrs(Record[1]));
+      ResultTy = FunctionType::get(getTypeByID(Record[1], true), ArgTys,
+                                   Record[0]);
       break;
     }
     case bitc::TYPE_CODE_STRUCT: {  // STRUCT: [ispacked, eltty x N]
@@ -1033,9 +1033,8 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       Func->setCallingConv(Record[1]);
       bool isProto = Record[2];
       Func->setLinkage(GetDecodedLinkage(Record[3]));
-      
-      assert(Func->getFunctionType()->getParamAttrs() == 
-             getParamAttrs(Record[4]));
+      const ParamAttrsList *PAL = getParamAttrs(Record[4]);
+      Func->setParamAttrs(PAL);
       
       Func->setAlignment((1 << Record[5]) >> 1);
       if (Record[6]) {
@@ -1360,8 +1359,10 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       break;
     }
       
-    case bitc::FUNC_CODE_INST_INVOKE: { // INVOKE: [cc,fnty, op0,op1,op2, ...]
+    case bitc::FUNC_CODE_INST_INVOKE: {
+      // INVOKE: [attrs, cc, normBB, unwindBB, fnty, op0,op1,op2, ...]
       if (Record.size() < 4) return Error("Invalid INVOKE record");
+      const ParamAttrsList *PAL = getParamAttrs(Record[0]);
       unsigned CCInfo = Record[1];
       BasicBlock *NormalBB = getBasicBlock(Record[2]);
       BasicBlock *UnwindBB = getBasicBlock(Record[3]);
@@ -1380,8 +1381,6 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
           Record.size() < OpNum+FTy->getNumParams())
         return Error("Invalid INVOKE record");
       
-      assert(FTy->getParamAttrs() == getParamAttrs(Record[0]));
-
       SmallVector<Value*, 16> Ops;
       for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i, ++OpNum) {
         Ops.push_back(getFnValueByID(Record[OpNum], FTy->getParamType(i)));
@@ -1403,6 +1402,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       
       I = new InvokeInst(Callee, NormalBB, UnwindBB, Ops.begin(), Ops.end());
       cast<InvokeInst>(I)->setCallingConv(CCInfo);
+      cast<InvokeInst>(I)->setParamAttrs(PAL);
       break;
     }
     case bitc::FUNC_CODE_INST_UNWIND: // UNWIND
@@ -1482,10 +1482,12 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = new StoreInst(Val, Ptr, Record[OpNum+1], (1 << Record[OpNum]) >> 1);
       break;
     }
-    case bitc::FUNC_CODE_INST_CALL: { // CALL: [cc, fnty, fnid, arg0, arg1...]
-      if (Record.size() < 2)
+    case bitc::FUNC_CODE_INST_CALL: {
+      // CALL: [paramattrs, cc, fnty, fnid, arg0, arg1...]
+      if (Record.size() < 3)
         return Error("Invalid CALL record");
       
+      const ParamAttrsList *PAL = getParamAttrs(Record[0]);
       unsigned CCInfo = Record[1];
       
       unsigned OpNum = 2;
@@ -1498,8 +1500,6 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       if (OpTy) FTy = dyn_cast<FunctionType>(OpTy->getElementType());
       if (!FTy || Record.size() < FTy->getNumParams()+OpNum)
         return Error("Invalid CALL record");
-      
-      assert(FTy->getParamAttrs() == getParamAttrs(Record[0]));
       
       SmallVector<Value*, 16> Args;
       // Read the fixed params.
@@ -1527,6 +1527,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = new CallInst(Callee, Args.begin(), Args.end());
       cast<CallInst>(I)->setCallingConv(CCInfo>>1);
       cast<CallInst>(I)->setTailCall(CCInfo & 1);
+      cast<CallInst>(I)->setParamAttrs(PAL);
       break;
     }
     case bitc::FUNC_CODE_INST_VAARG: { // VAARG: [valistty, valist, instty]

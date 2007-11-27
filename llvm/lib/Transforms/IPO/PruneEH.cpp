@@ -156,6 +156,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
                                         Args.begin(), Args.end(), "", II);
           Call->takeName(II);
           Call->setCallingConv(II->getCallingConv());
+          Call->setParamAttrs(II->getParamAttrs());
 
           // Anything that used the value produced by the invoke instruction
           // now uses the value produced by the call instruction.

@@ -339,6 +339,8 @@ bool LowerGC::runOnFunction(Function &F) {
 
       Value *II = new InvokeInst(CI->getCalledValue(), NewBB, Cleanup,
                                  Args.begin(), Args.end(), CI->getName(), CBB);
+      cast<InvokeInst>(II)->setCallingConv(CI->getCallingConv());
+      cast<InvokeInst>(II)->setParamAttrs(CI->getParamAttrs());
       CI->replaceAllUsesWith(II);
       delete CI;
     }

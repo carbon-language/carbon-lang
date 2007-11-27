@@ -77,7 +77,7 @@ const uint16_t MutuallyIncompatible[3] = {
 /// with a parameter index. 
 /// @brief ParameterAttributes with a parameter index.
 struct ParamAttrsWithIndex {
-  uint16_t attrs; ///< The attributes that are set, |'d together
+  uint16_t attrs; ///< The attributes that are set, or'd together
   uint16_t index; ///< Index of the parameter for which the attributes apply
   
   static ParamAttrsWithIndex get(uint16_t idx, uint16_t attrs) {
@@ -219,6 +219,13 @@ class ParamAttrsList : public FoldingSetNode {
     /// @brief Return the number of parameter attributes this type has.
     unsigned size() const { return attrs.size(); }
 
+    /// @brief Return the number of references to this ParamAttrsList.
+    unsigned numRefs() const { return refCount; }
+
+  /// @}
+  /// @name Mutators
+  /// @{
+  public:
     /// Classes retaining references to ParamAttrsList objects should call this
     /// method to increment the reference count. This ensures that the
     /// ParamAttrsList object will not disappear until the class drops it.

@@ -88,6 +88,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
                            InvokeArgs.begin(), InvokeArgs.end(),
                            CI->getName(), BB->getTerminator());
           II->setCallingConv(CI->getCallingConv());
+          II->setParamAttrs(CI->getParamAttrs());
           
           // Make sure that anything using the call now uses the invoke!
           CI->replaceAllUsesWith(II);

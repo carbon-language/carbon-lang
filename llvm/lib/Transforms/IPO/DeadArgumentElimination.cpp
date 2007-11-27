@@ -26,6 +26,7 @@
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
@@ -157,6 +158,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   // Create the new function body and insert it into the module...
   Function *NF = new Function(NFTy, Fn.getLinkage());
   NF->setCallingConv(Fn.getCallingConv());
+  NF->setParamAttrs(Fn.getParamAttrs());
   Fn.getParent()->getFunctionList().insert(&Fn, NF);
   NF->takeName(&Fn);
   
@@ -176,9 +178,11 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
+      cast<InvokeInst>(New)->setParamAttrs(NF->getParamAttrs());
     } else {
       New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
+      cast<CallInst>(New)->setParamAttrs(NF->getParamAttrs());
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }
@@ -233,10 +237,10 @@ static inline bool CallPassesValueThoughVararg(Instruction *Call,
 // (used in a computation), MaybeLive (only passed as an argument to a call), or
 // Dead (not used).
 DAE::Liveness DAE::getArgumentLiveness(const Argument &A) {
-  const FunctionType *FTy = A.getParent()->getFunctionType();
+  const Function *F = A.getParent();
   
   // If this is the return value of a struct function, it's not really dead.
-  if (FTy->isStructReturn() && &*A.getParent()->arg_begin() == &A)
+  if (F->isStructReturn() && &*(F->arg_begin()) == &A)
     return Live;
   
   if (A.use_empty())  // First check, directly dead?
@@ -488,10 +492,32 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   const FunctionType *FTy = F->getFunctionType();
   std::vector<const Type*> Params;
 
-  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
-    if (!DeadArguments.count(I))
-      Params.push_back(I->getType());
+  // Set up to build a new list of parameter attributes
+  ParamAttrsVector ParamAttrsVec;
+  const ParamAttrsList *PAL = F->getParamAttrs();
 
+  // Construct the new parameter list from non-dead arguments. Also construct
+  // a new set of parameter attributes to correspond.
+  unsigned index = 1;
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
+       ++I, ++index)
+    if (!DeadArguments.count(I)) {
+      Params.push_back(I->getType());
+      if (PAL) {
+        uint16_t Attrs = PAL->getParamAttrs(index);
+        if (Attrs != ParamAttr::None)
+          ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(),
+                                  Attrs));
+      }
+    }
+
+  // Reconstruct the ParamAttrsList based on the vector we constructed.
+  if (ParamAttrsVec.empty())
+    PAL = 0;
+  else
+    PAL = ParamAttrsList::get(ParamAttrsVec);
+
+  // Make the function return void if the return value is dead.
   const Type *RetTy = FTy->getReturnType();
   if (DeadRetVal.count(F)) {
     RetTy = Type::VoidTy;
@@ -507,11 +533,13 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
     Params.push_back(Type::Int32Ty);
   }
 
+  // Create the new function type based on the recomputed parameters.
   FunctionType *NFTy = FunctionType::get(RetTy, Params, FTy->isVarArg());
 
   // Create the new function body and insert it into the module...
   Function *NF = new Function(NFTy, F->getLinkage());
   NF->setCallingConv(F->getCallingConv());
+  NF->setParamAttrs(PAL);
   F->getParent()->getFunctionList().insert(F, NF);
   NF->takeName(F);
 
@@ -542,9 +570,11 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
+      cast<InvokeInst>(New)->setParamAttrs(PAL);
     } else {
       New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
+      cast<CallInst>(New)->setParamAttrs(PAL);
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }

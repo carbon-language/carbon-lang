@@ -4927,7 +4927,7 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
 
       // Check that ECX wasn't needed by an 'inreg' parameter.
       const FunctionType *FTy = Func->getFunctionType();
-      const ParamAttrsList *Attrs = FTy->getParamAttrs();
+      const ParamAttrsList *Attrs = Func->getParamAttrs();
 
       if (Attrs && !Func->isVarArg()) {
         unsigned InRegCount = 0;

@@ -79,6 +79,9 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
     assert(ValueMap.count(I) && "No mapping from source argument specified!");
 #endif
 
+  // Clone the parameter attributes
+  NewFunc->setParamAttrs(OldFunc->getParamAttrs());
+
   // Loop over all of the basic blocks in the function, cloning them as
   // appropriate.  Note that we save BE this way in order to handle cloning of
   // recursive functions into themselves.
@@ -304,7 +307,7 @@ ConstantFoldMappedInstruction(const Instruction *I) {
 /// effect of this is to copy significantly less code in cases where (for
 /// example) a function call with constant arguments is inlined, and those
 /// constant arguments cause a significant amount of code in the callee to be
-/// dead.  Since this doesn't produce an exactly copy of the input, it can't be
+/// dead.  Since this doesn't produce an exact copy of the input, it can't be
 /// used for things like CloneFunction or CloneModule.
 void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
                                      DenseMap<const Value*, Value*> &ValueMap,

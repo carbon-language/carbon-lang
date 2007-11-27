@@ -127,9 +127,6 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
 
   Function *F = CI->getCalledFunction();
   assert(F && "CallInst has no function associated with it.");
-
-  const FunctionType *FTy = F->getFunctionType();
-  const FunctionType *NewFnTy = NewFn->getFunctionType();
   
   switch(NewFn->getIntrinsicID()) {
   default:  assert(0 && "Unknown function for CallInst upgrade.");
@@ -149,10 +146,10 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
     //  Handle any uses of the old CallInst.
     if (!CI->use_empty()) {
       //  Check for sign extend parameter attributes on the return values.
-      bool SrcSExt = NewFnTy->getParamAttrs() &&
-                     NewFnTy->getParamAttrs()->paramHasAttr(0,ParamAttr::SExt);
-      bool DestSExt = FTy->getParamAttrs() &&
-                      FTy->getParamAttrs()->paramHasAttr(0,ParamAttr::SExt);
+      bool SrcSExt = NewFn->getParamAttrs() &&
+                     NewFn->getParamAttrs()->paramHasAttr(0,ParamAttr::SExt);
+      bool DestSExt = F->getParamAttrs() &&
+                      F->getParamAttrs()->paramHasAttr(0,ParamAttr::SExt);
       
       //  Construct an appropriate cast from the new return type to the old.
       CastInst *RetCast = CastInst::create(

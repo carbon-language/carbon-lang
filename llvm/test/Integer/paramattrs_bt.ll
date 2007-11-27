@@ -11,7 +11,7 @@ declare i8  @"test2" (i16 zeroext %a2) zeroext
 
 define i33 @main(i33 %argc, i8 **%argv) {
     %val = trunc i33 %argc to i16
-    %res = call i16 (i16 signext) signext *@test(i16 %val)
+    %res = call i16 (i16 signext) signext *@test(i16 signext %val) signext
     %two = add i16 %res, %res
     %res2 = call i8 @test2(i16 %two zeroext) zeroext 
     %retVal = sext i16 %two to i33

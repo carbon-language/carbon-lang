@@ -373,78 +373,6 @@ static Signedness getElementSign(const ConstInfo& CI,
   return result;
 }
 
-/// This function determines if two function types differ only in their use of
-/// the sret parameter attribute in the first argument. If they are identical 
-/// in all other respects, it returns true. Otherwise, it returns false.
-static bool FuncTysDifferOnlyBySRet(const FunctionType *F1, 
-                                    const FunctionType *F2) {
-  if (F1->getReturnType() != F2->getReturnType() ||
-      F1->getNumParams() != F2->getNumParams())
-    return false;
-  const ParamAttrsList *PAL1 = F1->getParamAttrs();
-  const ParamAttrsList *PAL2 = F2->getParamAttrs();
-  if (PAL1 && !PAL2 || PAL2 && !PAL1)
-    return false;
-  if (PAL1 && PAL2 && ((PAL1->size() != PAL2->size()) ||
-      (PAL1->getParamAttrs(0) != PAL2->getParamAttrs(0)))) 
-    return false;
-  unsigned SRetMask = ~unsigned(ParamAttr::StructRet);
-  for (unsigned i = 0; i < F1->getNumParams(); ++i) {
-    if (F1->getParamType(i) != F2->getParamType(i) || (PAL1 && PAL2 &&
-        (unsigned(PAL1->getParamAttrs(i+1)) & SRetMask !=
-         unsigned(PAL2->getParamAttrs(i+1)) & SRetMask)))
-      return false;
-  }
-  return true;
-}
-
-/// This function determines if the type of V and Ty differ only by the SRet
-/// parameter attribute. This is a more generalized case of
-/// FuncTysDIfferOnlyBySRet since it doesn't require FunctionType arguments.
-static bool TypesDifferOnlyBySRet(Value *V, const Type* Ty) {
-  if (V->getType() == Ty)
-    return true;
-  const PointerType *PF1 = dyn_cast<PointerType>(Ty);
-  const PointerType *PF2 = dyn_cast<PointerType>(V->getType());
-  if (PF1 && PF2) {
-    const FunctionType* FT1 = dyn_cast<FunctionType>(PF1->getElementType());
-    const FunctionType* FT2 = dyn_cast<FunctionType>(PF2->getElementType());
-    if (FT1 && FT2)
-      return FuncTysDifferOnlyBySRet(FT1, FT2);
-  }
-  return false;
-}
-
-// The upgrade of csretcc to sret param attribute may have caused a function 
-// to not be found because the param attribute changed the type of the called 
-// function. This helper function, used in getExistingValue, detects that
-// situation and bitcasts the function to the correct type.
-static Value* handleSRetFuncTypeMerge(Value *V, const Type* Ty) {
-  // Handle degenerate cases
-  if (!V)
-    return 0;
-  if (V->getType() == Ty)
-    return V;
-
-  const PointerType *PF1 = dyn_cast<PointerType>(Ty);
-  const PointerType *PF2 = dyn_cast<PointerType>(V->getType());
-  if (PF1 && PF2) {
-    const FunctionType *FT1 = dyn_cast<FunctionType>(PF1->getElementType());
-    const FunctionType *FT2 = dyn_cast<FunctionType>(PF2->getElementType());
-    if (FT1 && FT2 && FuncTysDifferOnlyBySRet(FT1, FT2)) {
-      const ParamAttrsList *PAL2 = FT2->getParamAttrs();
-      if (PAL2 && PAL2->paramHasAttr(1, ParamAttr::StructRet))
-        return V;
-      else if (Constant *C = dyn_cast<Constant>(V))
-        return ConstantExpr::getBitCast(C, PF1);
-      else
-        return new BitCastInst(V, PF1, "upgrd.cast", CurBB);
-    }
-      
-  }
-  return 0;
-}
-
 // getExistingValue - Look up the value specified by the provided type and
 // the provided ValID.  If the value exists and has already been defined, return
 // it.  Otherwise return null.
@@ -491,8 +419,7 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
       ValueSymbolTable &SymTab = CurFun.CurrentFunction->getValueSymbolTable();
       V = SymTab.lookup(LookupName);
       if (V && V->getType() != Ty)
-        V = handleSRetFuncTypeMerge(V, Ty);
-      assert((!V || TypesDifferOnlyBySRet(V, Ty)) && "Found wrong type");
+        V = 0;
     }
     if (!V) {
       RenameMapType::const_iterator I = CurModule.RenameMap.find(Key);
@@ -503,8 +430,7 @@ static Value *getExistingValue(const Type *Ty, const ValID &D) {
         LookupName = D.Name;
       V = CurModule.CurrentModule->getValueSymbolTable().lookup(LookupName);
       if (V && V->getType() != Ty)
-        V = handleSRetFuncTypeMerge(V, Ty);
-      assert((!V || TypesDifferOnlyBySRet(V, Ty)) && "Found wrong type");
+        V = 0;
     }
     if (!V) 
       return 0;
@@ -2139,7 +2065,7 @@ UpRTypes
     }
 
     const FunctionType *FTy =
-      FunctionType::get($1.PAT->get(), Params, isVarArg, PAL);
+      FunctionType::get($1.PAT->get(), Params, isVarArg);
 
     $$.PAT = new PATypeHolder( HandleUpRefs(FTy, $$.S) );
     delete $1.PAT;  // Delete the return type handle
@@ -2925,19 +2851,7 @@ FunctionHeaderH
     if (isVarArg) 
       ParamTyList.pop_back();
 
-    // Convert the CSRet calling convention into the corresponding parameter
-    // attribute.
-    ParamAttrsList *PAL = 0;
-    if ($1 == OldCallingConv::CSRet) {
-      ParamAttrsVector Attrs;
-      ParamAttrsWithIndex PAWI;
-      PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
-      Attrs.push_back(PAWI);
-      PAL = ParamAttrsList::get(Attrs);
-    }
-
-    const FunctionType *FT = 
-      FunctionType::get(RetTy, ParamTyList, isVarArg, PAL);
+    const FunctionType *FT = FunctionType::get(RetTy, ParamTyList, isVarArg);
     const PointerType *PFT = PointerType::get(FT);
     delete $2.PAT;
 
@@ -3053,6 +2967,16 @@ FunctionHeaderH
     if ($7) {
       Fn->setSection($7);
       free($7);
+    }
+
+    // Convert the CSRet calling convention into the corresponding parameter
+    // attribute.
+    if ($1 == OldCallingConv::CSRet) {
+      ParamAttrsVector Attrs;
+      ParamAttrsWithIndex PAWI;
+      PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
+      Attrs.push_back(PAWI);
+      Fn->setParamAttrs(ParamAttrsList::get(Attrs));
     }
 
     // Add all of the arguments we parsed to the function...
@@ -3324,17 +3248,9 @@ BBTerminatorInst
           FTySign.add(I->S);
         }
       }
-      ParamAttrsList *PAL = 0;
-      if ($2 == OldCallingConv::CSRet) {
-        ParamAttrsVector Attrs;
-        ParamAttrsWithIndex PAWI;
-        PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
-        Attrs.push_back(PAWI);
-        PAL = ParamAttrsList::get(Attrs);
-      }
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
-      Ty = FunctionType::get($3.PAT->get(), ParamTypes, isVarArg, PAL);
+      Ty = FunctionType::get($3.PAT->get(), ParamTypes, isVarArg);
       PFTy = PointerType::get(Ty);
       $$.S.copy($3.S);
     } else {
@@ -3376,6 +3292,13 @@ BBTerminatorInst
       $$.TI = new InvokeInst(V, Normal, Except, Args.begin(), Args.end());
     }
     cast<InvokeInst>($$.TI)->setCallingConv(upgradeCallingConv($2));
+    if ($2 == OldCallingConv::CSRet) {
+      ParamAttrsVector Attrs;
+      ParamAttrsWithIndex PAWI;
+      PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
+      Attrs.push_back(PAWI);
+      cast<InvokeInst>($$.TI)->setParamAttrs(ParamAttrsList::get(Attrs));
+    }
     delete $3.PAT;
     delete $6;
     lastCallingConv = OldCallingConv::C;
@@ -3732,17 +3655,7 @@ InstVal
       if (!RetTy->isFirstClassType() && RetTy != Type::VoidTy)
         error("Functions cannot return aggregate types");
 
-      // Deal with CSRetCC
-      ParamAttrsList *PAL = 0;
-      if ($2 == OldCallingConv::CSRet) {
-        ParamAttrsVector Attrs;
-        ParamAttrsWithIndex PAWI;
-        PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
-        Attrs.push_back(PAWI);
-        PAL = ParamAttrsList::get(Attrs);
-      }
-
-      FTy = FunctionType::get(RetTy, ParamTypes, isVarArg, PAL);
+      FTy = FunctionType::get(RetTy, ParamTypes, isVarArg);
       PFTy = PointerType::get(FTy);
       $$.S.copy($3.S);
     } else {
@@ -3794,7 +3707,16 @@ InstVal
       CallInst *CI = new CallInst(V, Args.begin(), Args.end());
       CI->setTailCall($1);
       CI->setCallingConv(upgradeCallingConv($2));
+
       $$.I = CI;
+    }
+    // Deal with CSRetCC
+    if ($2 == OldCallingConv::CSRet) {
+      ParamAttrsVector Attrs;
+      ParamAttrsWithIndex PAWI;
+      PAWI.index = 1;  PAWI.attrs = ParamAttr::StructRet; // first arg
+      Attrs.push_back(PAWI);
+      cast<CallInst>($$.I)->setParamAttrs(ParamAttrsList::get(Attrs));
     }
     delete $3.PAT;
     delete $6;
@@ -3874,17 +3796,11 @@ MemoryInst
     Value *StoreVal = $3.V;
     Value* tmpVal = getVal(PTy, $6);
     if (ElTy != $3.V->getType()) {
-      StoreVal = handleSRetFuncTypeMerge($3.V, ElTy);
-      if (!StoreVal)
-        error("Can't store '" + $3.V->getType()->getDescription() +
-              "' into space of type '" + ElTy->getDescription() + "'");
-      else {
-        PTy = PointerType::get(StoreVal->getType());
-        if (Constant *C = dyn_cast<Constant>(tmpVal))
-          tmpVal = ConstantExpr::getBitCast(C, PTy);
-        else
-          tmpVal = new BitCastInst(tmpVal, PTy, "upgrd.cast", CurBB);
-      }
+      PTy = PointerType::get(StoreVal->getType());
+      if (Constant *C = dyn_cast<Constant>(tmpVal))
+        tmpVal = ConstantExpr::getBitCast(C, PTy);
+      else
+        tmpVal = new BitCastInst(tmpVal, PTy, "upgrd.cast", CurBB);
     }
     $$.I = new StoreInst(StoreVal, tmpVal, $1);
     $$.S.makeSignless();

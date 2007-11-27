@@ -358,6 +358,7 @@ static void CopyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
   if (const Function *SrcF = dyn_cast<Function>(SrcGV)) {
     Function *DestF = cast<Function>(DestGV);
     DestF->setCallingConv(SrcF->getCallingConv());
+    DestF->setParamAttrs(SrcF->getParamAttrs());
   }
 }
 

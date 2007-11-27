@@ -161,7 +161,7 @@ ParamAttrsList::areCompatible(const ParamAttrsList *A, const ParamAttrsList *B){
 void 
 ParamAttrsList::Profile(FoldingSetNodeID &ID) const {
   for (unsigned i = 0; i < attrs.size(); ++i) {
-    unsigned val = attrs[i].attrs << 16 | attrs[i].index;
+    uint32_t val = uint32_t(attrs[i].attrs) << 16 | attrs[i].index;
     ID.AddInteger(val);
   }
 }
@@ -170,7 +170,10 @@ static ManagedStatic<FoldingSet<ParamAttrsList> > ParamAttrsLists;
 
 ParamAttrsList *
 ParamAttrsList::get(const ParamAttrsVector &attrVec) {
-  assert(!attrVec.empty() && "Illegal to create empty ParamAttrsList");
+  // If there are no attributes then return a null ParamAttrsList pointer.
+  if (attrVec.empty())
+    return 0;
+
 #ifndef NDEBUG
   for (unsigned i = 0, e = attrVec.size(); i < e; ++i) {
     assert(attrVec[i].attrs != ParamAttr::None
@@ -179,15 +182,22 @@ ParamAttrsList::get(const ParamAttrsVector &attrVec) {
            && "Misordered ParamAttrsList!");
   }
 #endif
+
+  // Otherwise, build a key to look up the existing attributes.
   ParamAttrsList key(attrVec);
   FoldingSetNodeID ID;
   key.Profile(ID);
   void *InsertPos;
   ParamAttrsList* PAL = ParamAttrsLists->FindNodeOrInsertPos(ID, InsertPos);
+
+  // If we didn't find any existing attributes of the same shape then
+  // create a new one and insert it.
   if (!PAL) {
     PAL = new ParamAttrsList(attrVec);
     ParamAttrsLists->InsertNode(PAL, InsertPos);
   }
+
+  // Return the ParamAttrsList that we found or created.
   return PAL;
 }
 
@@ -201,8 +211,8 @@ ParamAttrsList::~ParamAttrsList() {
 
 Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
                    const std::string &name, Module *ParentModule)
-  : GlobalValue(PointerType::get(Ty), Value::FunctionVal, 0, 0, Linkage, name) {
-  ParamAttrs = 0;
+  : GlobalValue(PointerType::get(Ty), Value::FunctionVal, 0, 0, Linkage, name),
+    ParamAttrs(0) {
   SymTab = new ValueSymbolTable();
 
   assert((getReturnType()->isFirstClassType() ||getReturnType() == Type::VoidTy)
@@ -259,14 +269,28 @@ void Function::setParent(Module *parent) {
     LeakDetector::removeGarbageObject(this);
 }
 
-void Function::setParamAttrs(ParamAttrsList *attrs) { 
+void Function::setParamAttrs(const ParamAttrsList *attrs) {
+  // Avoid deleting the ParamAttrsList if they are setting the
+  // attributes to the same list.
+  if (ParamAttrs == attrs)
+    return;
+
+  // Drop reference on the old ParamAttrsList
   if (ParamAttrs)
     ParamAttrs->dropRef();
 
+  // Add reference to the new ParamAttrsList
   if (attrs)
     attrs->addRef();
 
+  // Set the new ParamAttrsList.
   ParamAttrs = attrs; 
+}
+
+bool Function::isStructReturn() const {
+  if (ParamAttrs)
+    return ParamAttrs->paramHasAttr(1, ParamAttr::StructRet);
+  return false;
 }
 
 const FunctionType *Function::getFunctionType() const {

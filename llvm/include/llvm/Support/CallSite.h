@@ -27,6 +27,7 @@ namespace llvm {
 
 class CallInst;
 class InvokeInst;
+class ParamAttrsList;
 
 class CallSite {
   Instruction *I;
@@ -56,6 +57,11 @@ public:
   /// call.
   unsigned getCallingConv() const;
   void setCallingConv(unsigned CC);
+
+  /// getParamAttrs/setParamAttrs - get or set the parameter attributes of
+  /// the call.
+  const ParamAttrsList *getParamAttrs() const;
+  void setParamAttrs(const ParamAttrsList *PAL);
 
   /// getType - Return the type of the instruction that generated this call site
   ///

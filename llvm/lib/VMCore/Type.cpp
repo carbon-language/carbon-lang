@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DerivedTypes.h"
-#include "llvm/ParameterAttributes.h"
 #include "llvm/Constants.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/StringExtras.h"
@@ -307,15 +306,10 @@ static std::string getTypeDescription(const Type *Ty,
     if (!Result.empty())
       Result += " ";
     Result += getTypeDescription(FTy->getReturnType(), TypeStack) + " (";
-    unsigned Idx = 1;
-    const ParamAttrsList *Attrs = FTy->getParamAttrs();
     for (FunctionType::param_iterator I = FTy->param_begin(),
-           E = FTy->param_end(); I != E; ++I) {
+         E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         Result += ", ";
-      if (Attrs && Attrs->getParamAttrs(Idx) != ParamAttr::None)
-        Result += Attrs->getParamAttrsTextByIndex(Idx);
-      Idx++;
       Result += getTypeDescription(*I, TypeStack);
     }
     if (FTy->isVarArg()) {
@@ -323,9 +317,6 @@ static std::string getTypeDescription(const Type *Ty,
       Result += "...";
     }
     Result += ")";
-    if (Attrs && Attrs->getParamAttrs(0) != ParamAttr::None) {
-      Result += " " + Attrs->getParamAttrsTextByIndex(0);
-    }
     break;
   }
   case Type::StructTyID: {
@@ -444,8 +435,8 @@ const IntegerType *Type::Int64Ty = new BuiltinIntegerType(64);
 
 FunctionType::FunctionType(const Type *Result,
                            const std::vector<const Type*> &Params,
-                           bool IsVarArgs, const ParamAttrsList *Attrs) 
-  : DerivedType(FunctionTyID), isVarArgs(IsVarArgs), ParamAttrs(Attrs) {
+                           bool IsVarArgs)
+  : DerivedType(FunctionTyID), isVarArgs(IsVarArgs) {
   ContainedTys = reinterpret_cast<PATypeHandle*>(this+1);
   NumContainedTys = Params.size() + 1; // + 1 for result type
   assert((Result->isFirstClassType() || Result == Type::VoidTy ||
@@ -667,16 +658,7 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
         FTy->getNumParams() != FTy2->getNumParams() ||
         !TypesEqual(FTy->getReturnType(), FTy2->getReturnType(), EqTypes))
       return false;
-    const ParamAttrsList *Attrs1 = FTy->getParamAttrs();
-    const ParamAttrsList *Attrs2 = FTy2->getParamAttrs();
-    if ((!Attrs1 && Attrs2) || (!Attrs2 && Attrs1) ||
-        (Attrs1 && Attrs2 && (Attrs1->size() != Attrs2->size() ||
-         (Attrs1->getParamAttrs(0) != Attrs2->getParamAttrs(0)))))
-      return false;
-
     for (unsigned i = 0, e = FTy2->getNumParams(); i != e; ++i) {
-      if (Attrs1 && Attrs1->getParamAttrs(i+1) != Attrs2->getParamAttrs(i+1))
-        return false;
       if (!TypesEqual(FTy->getParamType(i), FTy2->getParamType(i), EqTypes))
         return false;
     }
@@ -1055,12 +1037,10 @@ namespace llvm {
 class FunctionValType {
   const Type *RetTy;
   std::vector<const Type*> ArgTypes;
-  const ParamAttrsList *ParamAttrs;
   bool isVarArg;
 public:
   FunctionValType(const Type *ret, const std::vector<const Type*> &args,
-                  bool IVA, const ParamAttrsList *attrs) 
-    : RetTy(ret), ParamAttrs(attrs), isVarArg(IVA) {
+                  bool isVA) : RetTy(ret), isVarArg(isVA) {
     for (unsigned i = 0; i < args.size(); ++i)
       ArgTypes.push_back(args[i]);
   }
@@ -1068,9 +1048,7 @@ public:
   static FunctionValType get(const FunctionType *FT);
 
   static unsigned hashTypeStructure(const FunctionType *FT) {
-    unsigned Result = FT->getNumParams()*64 + FT->isVarArg();
-    if (FT->getParamAttrs())
-      Result += FT->getParamAttrs()->size()*2;
+    unsigned Result = FT->getNumParams()*2 + FT->isVarArg();
     return Result;
   }
 
@@ -1081,13 +1059,6 @@ public:
     if (isVarArg > MTV.isVarArg) return false;
     if (ArgTypes < MTV.ArgTypes) return true;
     if (ArgTypes > MTV.ArgTypes) return false;
-    if (ParamAttrs)
-      if (MTV.ParamAttrs)
-        return *ParamAttrs < *MTV.ParamAttrs;
-      else
-        return false;
-    else if (MTV.ParamAttrs)
-      return true;
     return false;
   }
 };
@@ -1102,18 +1073,15 @@ FunctionValType FunctionValType::get(const FunctionType *FT) {
   ParamTypes.reserve(FT->getNumParams());
   for (unsigned i = 0, e = FT->getNumParams(); i != e; ++i)
     ParamTypes.push_back(FT->getParamType(i));
-  return FunctionValType(FT->getReturnType(), ParamTypes, FT->isVarArg(),
-                         FT->getParamAttrs());
+  return FunctionValType(FT->getReturnType(), ParamTypes, FT->isVarArg());
 }
 
 
 // FunctionType::get - The factory function for the FunctionType class...
 FunctionType *FunctionType::get(const Type *ReturnType,
                                 const std::vector<const Type*> &Params,
-                                bool isVarArg,
-                                const ParamAttrsList *Attrs) {
-
-  FunctionValType VT(ReturnType, Params, isVarArg, Attrs);
+                                bool isVarArg) {
+  FunctionValType VT(ReturnType, Params, isVarArg);
   FunctionType *FT = FunctionTypes->get(VT);
   if (FT) { 
     return FT;
@@ -1121,19 +1089,13 @@ FunctionType *FunctionType::get(const Type *ReturnType,
 
   FT = (FunctionType*) new char[sizeof(FunctionType) + 
                                 sizeof(PATypeHandle)*(Params.size()+1)];
-  new (FT) FunctionType(ReturnType, Params, isVarArg, Attrs);
+  new (FT) FunctionType(ReturnType, Params, isVarArg);
   FunctionTypes->add(VT, FT);
 
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << FT << "\n";
 #endif
   return FT;
-}
-
-bool FunctionType::isStructReturn() const {
-  if (ParamAttrs)
-    return ParamAttrs->paramHasAttr(1, ParamAttr::StructRet);
-  return false;
 }
 
 //===----------------------------------------------------------------------===//

@@ -68,7 +68,7 @@ private:
   BasicBlockListType  BasicBlocks;        ///< The basic blocks
   mutable ArgumentListType ArgumentList;  ///< The formal arguments
   ValueSymbolTable *SymTab;               ///< Symbol table of args/instructions
-  ParamAttrsList *ParamAttrs;             ///< Parameter attributes
+  const ParamAttrsList *ParamAttrs;       ///< Parameter attributes
   
   // The Calling Convention is stored in Value::SubclassData.
   /*unsigned CallingConvention;*/
@@ -150,7 +150,10 @@ public:
   /// Sets the parameter attributes for this Function. To construct a 
   /// ParamAttrsList, see ParameterAttributes.h
   /// @brief Set the parameter attributes.
-  void setParamAttrs(ParamAttrsList *attrs);
+  void setParamAttrs(const ParamAttrsList *attrs);
+
+  /// @brief Determine if the function returns a structure.
+  bool isStructReturn() const;
 
   /// deleteBody - This method deletes the body of the function, and converts
   /// the linkage to external.

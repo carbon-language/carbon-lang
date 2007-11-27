@@ -35,6 +35,7 @@
 #include "llvm/Module.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Instructions.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Target/TargetData.h"
@@ -139,10 +140,10 @@ bool ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   // No promotable pointer arguments.
   if (PointerArgs.empty()) return false;
 
-  // Okay, promote all of the arguments are rewrite the callees!
+  // Okay, promote all of the arguments and rewrite the callees!
   Function *NewF = DoPromotion(F, PointerArgs);
 
-  // Update the call graph to know that the old function is gone.
+  // Update the call graph to know that the function has been transformed.
   getAnalysis<CallGraph>().changeFunction(F, NewF);
   return true;
 }
@@ -349,9 +350,23 @@ Function *ArgPromotion::DoPromotion(Function *F,
   // what the new GEP/Load instructions we are inserting look like.
   std::map<std::vector<Value*>, LoadInst*> OriginalLoads;
 
-  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+  // ParamAttrs - Keep track of the parameter attributes for the arguments
+  // that we are *not* promoting. For the ones that we do promote, the parameter
+  // attributes are lost
+  ParamAttrsVector ParamAttrsVec;
+  const ParamAttrsList *PAL = F->getParamAttrs();
+
+  unsigned index = 1;
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E;
+       ++I, ++index)
     if (!ArgsToPromote.count(I)) {
       Params.push_back(I->getType());
+      if (PAL) {
+        unsigned attrs = PAL->getParamAttrs(index);
+        if (attrs)
+          ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(),
+                                  attrs));
+      }
     } else if (I->use_empty()) {
       ++NumArgumentsDead;
     } else {
@@ -387,6 +402,13 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
   const Type *RetTy = FTy->getReturnType();
 
+  // Recompute the parameter attributes list based on the new arguments for
+  // the function.
+  if (ParamAttrsVec.empty())
+    PAL = 0;
+  else
+    PAL = ParamAttrsList::get(ParamAttrsVec);
+
   // Work around LLVM bug PR56: the CWriter cannot emit varargs functions which
   // have zero fixed arguments.
   bool ExtraArgHack = false;
@@ -394,11 +416,14 @@ Function *ArgPromotion::DoPromotion(Function *F,
     ExtraArgHack = true;
     Params.push_back(Type::Int32Ty);
   }
+
+  // Construct the new function type using the new arguments.
   FunctionType *NFTy = FunctionType::get(RetTy, Params, FTy->isVarArg());
 
-   // Create the new function body and insert it into the module...
+  // Create the new function body and insert it into the module...
   Function *NF = new Function(NFTy, F->getLinkage(), F->getName());
   NF->setCallingConv(F->getCallingConv());
+  NF->setParamAttrs(PAL);
   F->getParent()->getFunctionList().insert(F, NF);
 
   // Get the alias analysis information that we need to update to reflect our
@@ -449,9 +474,11 @@ Function *ArgPromotion::DoPromotion(Function *F,
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
+      cast<InvokeInst>(New)->setParamAttrs(PAL);
     } else {
       New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
+      cast<CallInst>(New)->setParamAttrs(PAL);
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }

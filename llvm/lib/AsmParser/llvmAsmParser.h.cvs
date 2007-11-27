@@ -179,8 +179,8 @@
      NOALIAS = 395,
      BYVAL = 396,
      NEST = 397,
-     CONST = 398,
-     PURE = 399,
+     READNONE = 398,
+     READONLY = 399,
      DEFAULT = 400,
      HIDDEN = 401,
      PROTECTED = 402
@@ -327,8 +327,8 @@
 #define NOALIAS 395
 #define BYVAL 396
 #define NEST 397
-#define CONST 398
-#define PURE 399
+#define READNONE 398
+#define READONLY 399
 #define DEFAULT 400
 #define HIDDEN 401
 #define PROTECTED 402
@@ -338,7 +338,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 968 "/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 945 "/home/duncan/LLVM/llvm.top/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -385,7 +385,7 @@ typedef union YYSTYPE
   llvm::ICmpInst::Predicate         IPredicate;
   llvm::FCmpInst::Predicate         FPredicate;
 }
-/* Line 1529 of yacc.c.  */
+/* Line 1489 of yacc.c.  */
 #line 390 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

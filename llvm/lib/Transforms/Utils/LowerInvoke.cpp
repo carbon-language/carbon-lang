@@ -212,9 +212,10 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       std::vector<Value*> CallArgs(II->op_begin()+3, II->op_end());
       // Insert a normal call instruction...
       CallInst *NewCall = new CallInst(II->getCalledValue(),
-                                       CallArgs.begin(), CallArgs.end(), "", II);
+                                       CallArgs.begin(), CallArgs.end(), "",II);
       NewCall->takeName(II);
       NewCall->setCallingConv(II->getCallingConv());
+      NewCall->setParamAttrs(II->getParamAttrs());
       II->replaceAllUsesWith(NewCall);
 
       // Insert an unconditional branch to the normal destination.
@@ -273,6 +274,7 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
                                    II);
   NewCall->takeName(II);
   NewCall->setCallingConv(II->getCallingConv());
+  NewCall->setParamAttrs(II->getParamAttrs());
   II->replaceAllUsesWith(NewCall);
   
   // Replace the invoke with an uncond branch.

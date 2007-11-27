@@ -390,12 +390,12 @@ void Verifier::visitFunction(Function &F) {
           F.getReturnType() == Type::VoidTy,
           "Functions cannot return aggregate values!", &F);
 
-  Assert1(!FT->isStructReturn() || FT->getReturnType() == Type::VoidTy,
+  Assert1(!F.isStructReturn() || FT->getReturnType() == Type::VoidTy,
           "Invalid struct-return function!", &F);
 
   bool SawSRet = false;
 
-  if (const ParamAttrsList *Attrs = FT->getParamAttrs()) {
+  if (const ParamAttrsList *Attrs = F.getParamAttrs()) {
     bool SawNest = false;
 
     for (unsigned Idx = 0; Idx <= FT->getNumParams(); ++Idx) {
@@ -448,7 +448,7 @@ void Verifier::visitFunction(Function &F) {
     }
   }
 
-  Assert1(SawSRet == FT->isStructReturn(),
+  Assert1(SawSRet == F.isStructReturn(),
           "StructReturn function with no sret attribute!", &F);
 
   // Check that this function meets the restrictions on this calling convention.

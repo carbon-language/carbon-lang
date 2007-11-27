@@ -14,7 +14,7 @@ declare void @exit(i32) noreturn nounwind
 
 define i32 @main(i32 inreg %argc, i8 ** inreg %argv) nounwind {
     %val = trunc i32 %argc to i16
-    %res1 = call i16 (i16 signext) signext *@test(i16 %val)
+    %res1 = call i16 (i16 signext) signext *@test(i16 signext %val) signext
     %two = add i16 %res1, %res1
     %res2 = call i8 @test2(i16 %two zeroext) zeroext 
     %retVal = sext i16 %two to i32

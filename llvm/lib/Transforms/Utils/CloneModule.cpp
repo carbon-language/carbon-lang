@@ -66,6 +66,7 @@ Module *llvm::CloneModule(const Module *M,
       new Function(cast<FunctionType>(I->getType()->getElementType()),
                    GlobalValue::ExternalLinkage, I->getName(), New);
     NF->setCallingConv(I->getCallingConv());
+    NF->setParamAttrs(I->getParamAttrs());
     ValueMap[I]= NF;
   }
 
@@ -120,5 +121,3 @@ Module *llvm::CloneModule(const Module *M,
   
   return New;
 }
-
-// vim: sw=2

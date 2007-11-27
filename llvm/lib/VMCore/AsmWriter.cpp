@@ -305,28 +305,17 @@ static void calcTypeName(const Type *Ty,
     const FunctionType *FTy = cast<FunctionType>(Ty);
     calcTypeName(FTy->getReturnType(), TypeStack, TypeNames, Result);
     Result += " (";
-    unsigned Idx = 1;
-    const ParamAttrsList *Attrs = FTy->getParamAttrs();
     for (FunctionType::param_iterator I = FTy->param_begin(),
-           E = FTy->param_end(); I != E; ++I) {
+         E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         Result += ", ";
       calcTypeName(*I, TypeStack, TypeNames, Result);
-      if (Attrs && Attrs->getParamAttrs(Idx) != ParamAttr::None) {
-        Result += + " ";
-        Result += Attrs->getParamAttrsTextByIndex(Idx);
-      }
-      Idx++;
     }
     if (FTy->isVarArg()) {
       if (FTy->getNumParams()) Result += ", ";
       Result += "...";
     }
     Result += ")";
-    if (Attrs && Attrs->getParamAttrs(0) != ParamAttr::None) {
-      Result += " ";
-      Result += Attrs->getParamAttrsTextByIndex(0);
-    }
     break;
   }
   case Type::StructTyID: {
@@ -749,6 +738,7 @@ public:
   inline void write(const Type *Ty)          { printType(Ty);        }
 
   void writeOperand(const Value *Op, bool PrintType);
+  void writeParamOperand(const Value *Operand, uint16_t Attrs);
 
   const Module* getModule() { return TheModule; }
 
@@ -789,25 +779,17 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
   else if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty)) {
     printType(FTy->getReturnType());
     Out << " (";
-    unsigned Idx = 1;
-    const ParamAttrsList *Attrs = FTy->getParamAttrs();
     for (FunctionType::param_iterator I = FTy->param_begin(),
            E = FTy->param_end(); I != E; ++I) {
       if (I != FTy->param_begin())
         Out << ", ";
       printType(*I);
-      if (Attrs && Attrs->getParamAttrs(Idx) != ParamAttr::None) {
-        Out << " " << Attrs->getParamAttrsTextByIndex(Idx);
-      }
-      Idx++;
     }
     if (FTy->isVarArg()) {
       if (FTy->getNumParams()) Out << ", ";
       Out << "...";
     }
     Out << ')';
-    if (Attrs && Attrs->getParamAttrs(0) != ParamAttr::None)
-      Out << ' ' << Attrs->getParamAttrsTextByIndex(0);
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     if (STy->isPacked())
       Out << '<';
@@ -850,6 +832,20 @@ void AssemblyWriter::writeOperand(const Value *Operand, bool PrintType) {
   }
 }
 
+void AssemblyWriter::writeParamOperand(const Value *Operand, uint16_t Attrs) {
+  if (Operand == 0) {
+    Out << "<null operand!>";
+  } else {
+    Out << ' ';
+    // Print the type
+    printType(Operand->getType());
+    // Print parameter attributes list
+    if (Attrs != ParamAttr::None)
+      Out << ' ' << ParamAttrsList::getParamAttrsText(Attrs);
+    // Print the operand
+    WriteAsOperandInternal(Out, Operand, TypeNames, &Machine);
+  }
+}
 
 void AssemblyWriter::printModule(const Module *M) {
   if (!M->getModuleIdentifier().empty() &&
@@ -1066,7 +1062,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   }
 
   const FunctionType *FT = F->getFunctionType();
-  const ParamAttrsList *Attrs = FT->getParamAttrs();
+  const ParamAttrsList *Attrs = F->getParamAttrs();
   printType(F->getReturnType()) << ' ';
   if (!F->getName().empty())
     Out << getLLVMName(F->getName(), GlobalPrefix);
@@ -1139,6 +1135,7 @@ void AssemblyWriter::printArgument(const Argument *Arg, uint16_t Attrs) {
   // Output type...
   printType(Arg->getType());
 
+  // Output parameter attributes list
   if (Attrs != ParamAttr::None)
     Out << ' ' << ParamAttrsList::getParamAttrsText(Attrs);
 
@@ -1295,7 +1292,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     const PointerType    *PTy = cast<PointerType>(Operand->getType());
     const FunctionType   *FTy = cast<FunctionType>(PTy->getElementType());
     const Type         *RetTy = FTy->getReturnType();
-    const ParamAttrsList *PAL = FTy->getParamAttrs();
+    const ParamAttrsList *PAL = CI->getParamAttrs();
 
     // If possible, print out the short form of the call instruction.  We can
     // only do this if the first argument is a pointer to a nonvararg function,
@@ -1313,9 +1310,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     for (unsigned op = 1, Eop = I.getNumOperands(); op < Eop; ++op) {
       if (op > 1)
         Out << ',';
-      writeOperand(I.getOperand(op), true);
-      if (PAL && PAL->getParamAttrs(op) != ParamAttr::None)
-        Out << " " << PAL->getParamAttrsTextByIndex(op);
+      writeParamOperand(I.getOperand(op), PAL ? PAL->getParamAttrs(op) : 0);
     }
     Out << " )";
     if (PAL && PAL->getParamAttrs(0) != ParamAttr::None)
@@ -1324,7 +1319,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     const PointerType    *PTy = cast<PointerType>(Operand->getType());
     const FunctionType   *FTy = cast<FunctionType>(PTy->getElementType());
     const Type         *RetTy = FTy->getReturnType();
-    const ParamAttrsList *PAL = FTy->getParamAttrs();
+    const ParamAttrsList *PAL = II->getParamAttrs();
 
     // Print the calling convention being used.
     switch (II->getCallingConv()) {
@@ -1353,9 +1348,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     for (unsigned op = 3, Eop = I.getNumOperands(); op < Eop; ++op) {
       if (op > 3)
         Out << ',';
-      writeOperand(I.getOperand(op), true);
-      if (PAL && PAL->getParamAttrs(op-2) != ParamAttr::None)
-        Out << " " << PAL->getParamAttrsTextByIndex(op-2);
+      writeParamOperand(I.getOperand(op), PAL ? PAL->getParamAttrs(op-2) : 0);
     }
 
     Out << " )";

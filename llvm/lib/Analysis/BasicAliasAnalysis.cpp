@@ -268,7 +268,7 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 
 static bool isNoAliasArgument(const Argument *Arg) {
   const Function *Func = Arg->getParent();
-  const ParamAttrsList *Attr = Func->getFunctionType()->getParamAttrs();
+  const ParamAttrsList *Attr = Func->getParamAttrs();
   if (Attr) {
     unsigned Idx = 1;
     for (Function::const_arg_iterator I = Func->arg_begin(), 
@@ -839,7 +839,7 @@ BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
     return UnknownModRefBehavior;
   }
 
-  const ParamAttrsList *Attrs = F->getFunctionType()->getParamAttrs();
+  const ParamAttrsList *Attrs = F->getParamAttrs();
   if (Attrs && Attrs->paramHasAttr(0, ParamAttr::ReadNone))
     return DoesNotAccessMemory;
   if (Attrs && Attrs->paramHasAttr(0, ParamAttr::ReadOnly))

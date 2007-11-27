@@ -1387,8 +1387,7 @@ void MSILWriter::printStaticInitializerList() {
 
 
 void MSILWriter::printFunction(const Function& F) {
-  const FunctionType* FTy = F.getFunctionType();
-  const ParamAttrsList *Attrs = FTy->getParamAttrs();
+  const ParamAttrsList *Attrs = F.getParamAttrs();
   bool isSigned = Attrs && Attrs->paramHasAttr(0, ParamAttr::SExt);
   Out << "\n.method static ";
   Out << (F.hasInternalLinkage() ? "private " : "public ");

@@ -17,6 +17,7 @@
 #include "llvm/Module.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ValueSymbolTable.h"
+#include "llvm/Instructions.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -44,8 +45,10 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
     EnumerateValue(I);
 
   // Enumerate the functions.
-  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
+  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I) {
     EnumerateValue(I);
+    EnumerateParamAttrs(cast<Function>(I)->getParamAttrs());
+  }
 
   // Enumerate the aliases.
   for (Module::const_alias_iterator I = M->alias_begin(), E = M->alias_end();
@@ -86,6 +89,10 @@ ValueEnumerator::ValueEnumerator(const Module *M) {
              OI != E; ++OI)
           EnumerateOperandType(*OI);
         EnumerateType(I->getType());
+        if (const CallInst *CI = dyn_cast<CallInst>(I))
+          EnumerateParamAttrs(CI->getParamAttrs());
+        else if (const InvokeInst *II = dyn_cast<InvokeInst>(I))
+          EnumerateParamAttrs(II->getParamAttrs());
       }
   }
   
@@ -220,10 +227,6 @@ void ValueEnumerator::EnumerateType(const Type *Ty) {
   for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
        I != E; ++I)
     EnumerateType(*I);
-  
-  // If this is a function type, enumerate the param attrs.
-  if (const FunctionType *FTy = dyn_cast<FunctionType>(Ty))
-    EnumerateParamAttrs(FTy->getParamAttrs());
 }
 
 // Enumerate the types for the specified value.  If the value is a constant,
@@ -296,6 +299,10 @@ void ValueEnumerator::incorporateFunction(const Function &F) {
   // Optimize the constant layout.
   OptimizeConstants(FirstFuncConstantID, Values.size());
   
+  // Add the function's parameter attributes so they are available for use in
+  // the function's instruction.
+  EnumerateParamAttrs(F.getParamAttrs());
+
   FirstInstID = Values.size();
   
   // Add all of the instructions.

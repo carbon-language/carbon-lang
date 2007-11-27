@@ -764,9 +764,9 @@ a power of 2.</p>
   <p>The return type and each parameter of a function type may have a set of
   <i>parameter attributes</i> associated with them. Parameter attributes are
   used to communicate additional information about the result or parameters of
-  a function. Parameter attributes are considered to be part of the function
-  type so two functions types that differ only by the parameter attributes 
-  are different function types.</p>
+  a function. Parameter attributes are considered to be part of the function,
+  not of the function type, so functions with different parameter attributes
+  can have the same function type.</p>
 
   <p>Parameter attributes are simple keywords that follow the type specified. If
   multiple parameter attributes are needed, they are space separated. For 
@@ -774,15 +774,13 @@ a power of 2.</p>
 
 <div class="doc_code">
 <pre>
-%someFunc = i16 (i8 signext %someParam) zeroext
-%someFunc = i16 (i8 zeroext %someParam) zeroext
+declare i32 @printf(i8* noalias , ...) nounwind
+declare i32 @atoi(i8*) nounwind readonly
 </pre>
 </div>
 
-  <p>Note that the two function types above are unique because the parameter has
-  a different attribute (<tt>signext</tt> in the first one, <tt>zeroext</tt> in
-  the second).  Also note that the attribute for the function result 
-  (<tt>zeroext</tt>) comes immediately after the argument list.</p>
+  <p>Note that any attributes for the function result (<tt>nounwind</tt>,
+  <tt>readonly</tt>) come immediately after the argument list.</p>
 
   <p>Currently, only the following parameter attributes are defined:</p>
   <dl>
