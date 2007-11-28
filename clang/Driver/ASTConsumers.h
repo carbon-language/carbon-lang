@@ -14,7 +14,7 @@
 #ifndef DRIVER_ASTCONSUMERS_H
 #define DRIVER_ASTCONSUMERS_H
 
-#include <stdio.h>
+#include <iosfwd>
 
 namespace clang {
 
@@ -22,7 +22,7 @@ class ASTConsumer;
 class Diagnostic;
 struct LangOptions;
 
-ASTConsumer *CreateASTPrinter(FILE* FP = NULL);
+ASTConsumer *CreateASTPrinter(std::ostream* OS = NULL);
 ASTConsumer *CreateASTDumper();
 ASTConsumer *CreateASTViewer();
 ASTConsumer *CreateCFGDumper(bool ViewGraphs = false);

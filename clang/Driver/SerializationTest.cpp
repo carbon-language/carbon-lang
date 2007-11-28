@@ -23,11 +23,11 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
+#include <fstream>
 #include <stdio.h>
 #include <list>
 
 using namespace clang;
-using llvm::sys::TimeValue;
 
 //===----------------------------------------------------------------------===//
 // Utility classes
@@ -42,20 +42,6 @@ public:
   ~Janitor() { delete Obj; }
   operator T*() const { return Obj; }
   T* operator->() { return Obj; }
-};
-
-class FileSP {
-  FILE* f;
-public:
-  FileSP(const llvm::sys::Path& fname, const char* mode = "wb")
-    : f(fopen(fname.c_str(),mode)) {}
-  
-  ~FileSP() { if (f) fclose(f); }
-  
-  operator FILE*() const { return f; }
-private:
-  void operator=(const FileSP& RHS) {}
-  FileSP(const FileSP& RHS) {}
 };
   
 //===----------------------------------------------------------------------===//
@@ -134,9 +120,9 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename,
   { // Create a printer to "consume" our deserialized ASTS.
 
     Janitor<ASTConsumer> Printer(CreateASTPrinter());
-    FileSP DeclFP(FNameDeclPrint,"w");
-    assert (DeclFP && "Could not open file for printing out decls.");
-    Janitor<ASTConsumer> FilePrinter(CreateASTPrinter(DeclFP));
+    std::ofstream DeclPP(FNameDeclPrint.c_str());
+    assert (DeclPP && "Could not open file for printing out decls.");
+    Janitor<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
     
     for (std::list<Decl*>::iterator I=Decls.begin(), E=Decls.end(); I!=E; ++I) {
       llvm::cerr << "Serializing: Decl.\n";   
@@ -183,15 +169,13 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename,
   
   // ===---------------------------------------------------===/
   // Finalize serialization: write the bits to disk.
-  { 
-    FileSP fp(Filename);
-
-    if (fp)
-      fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
-    else { 
-      llvm::cerr << "Error: Cannot open " << Filename.c_str() << "\n";
-      return;
-    }
+  if (FILE* fp = fopen(Filename.c_str(),"wb")) {
+    fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
+    fclose(fp);
+  }
+  else { 
+    llvm::cerr << "Error: Cannot open " << Filename.c_str() << "\n";
+    return;
   }
   
   llvm::cerr << "Commited bitstream to disk: " << Filename.c_str() << "\n";
@@ -280,9 +264,9 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename,
   // Create a printer to "consume" our deserialized ASTS.
   ASTConsumer* Printer = CreateASTPrinter();
   Janitor<ASTConsumer> PrinterJanitor(Printer);  
-  FileSP DeclFP(FNameDeclPrint,"w");
-  assert (DeclFP && "Could not open file for printing out decls.");
-  Janitor<ASTConsumer> FilePrinter(CreateASTPrinter(DeclFP));
+  std::ofstream DeclPP(FNameDeclPrint.c_str());
+  assert (DeclPP && "Could not open file for printing out decls.");
+  Janitor<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
   
   // The remaining objects in the file are top-level decls.
   while (!Dezr.FinishedBlock(DeclBlockLoc)) {
