@@ -55,7 +55,8 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
 
 /// DecodeTypeFromStr - This decodes one type descriptor from Str, advancing the
 /// pointer over the consumed characters.  This returns the resultant type.
-static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
+static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context, 
+                                  bool AllowTypeModifiers = true) {
   // Modifiers.
   bool Long = false, LongLong = false, Signed = false, Unsigned = false;
   
@@ -149,16 +150,19 @@ static QualType DecodeTypeFromStr(const char *&Str, ASTContext &Context) {
     
     Str = End;
     
-    QualType ElementType = DecodeTypeFromStr(Str, Context);
+    QualType ElementType = DecodeTypeFromStr(Str, Context, false);
     Type = Context.getVectorType(ElementType, NumElements);
     break;
   }
   }
   
+  if (!AllowTypeModifiers)
+    return Type;
+  
   Done = false;
   while (!Done) {
     switch (*Str++) {
-      default: Done = true; --Str; break; 
+      default: Done = true; --Str; break;
       case '*':
         Type = Context.getPointerType(Type);
         break;
@@ -183,8 +187,8 @@ QualType Builtin::Context::GetBuiltinType(unsigned id,
   
   QualType ResType = DecodeTypeFromStr(TypeStr, Context);
   while (TypeStr[0] && TypeStr[0] != '.')
-    ArgTypes.push_back(DecodeTypeFromStr(TypeStr, Context));
-  
+    ArgTypes.push_back(DecodeTypeFromStr(TypeStr, Context)); 
+
   assert((TypeStr[0] != '.' || TypeStr[1] == 0) &&
          "'.' should only occur at end of builtin type list!");
 
