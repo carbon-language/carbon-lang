@@ -550,15 +550,18 @@ namespace {
     llvm::Module *M;
     const llvm::TargetData *TD;
     ASTContext *Ctx;
+    const LangOptions &Features;
     CodeGen::CodeGenModule *Builder;
   public:
-    LLVMEmitter(Diagnostic &diags) : Diags(diags) {}
+    LLVMEmitter(Diagnostic &diags, const LangOptions &LO) 
+      : Diags(diags)
+      , Features(LO) {}
     virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
       Ctx = &Context;
       M = new llvm::Module("foo");
       M->setTargetTriple(Ctx->Target.getTargetTriple());
       TD = new llvm::TargetData(Ctx->Target.getTargetDescription());
-      Builder = CodeGen::Init(Context, *M, *TD);
+      Builder = CodeGen::Init(Context, Features, *M, *TD);
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {
@@ -588,7 +591,7 @@ namespace {
   }; 
 } // end anonymous namespace
 
-ASTConsumer *clang::CreateLLVMEmitter(Diagnostic &Diags) {
-  return new LLVMEmitter(Diags);
+ASTConsumer *clang::CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Features) {
+  return new LLVMEmitter(Diags, Features);
 }
 

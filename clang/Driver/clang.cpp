@@ -278,6 +278,10 @@ static llvm::cl::opt<bool>
 PascalStrings("fpascal-strings",
               llvm::cl::desc("Recognize and construct Pascal-style "
                              "string literals"));
+
+static llvm::cl::opt<bool>
+WritableStrings("fwritable-strings",
+              llvm::cl::desc("Store string literals as writable data."));
 // FIXME: add:
 //   -ansi
 //   -trigraphs
@@ -335,6 +339,7 @@ static void InitializeLanguageStandard(LangOptions &Options) {
   Options.Trigraphs = 1; // -trigraphs or -ansi
   Options.DollarIdents = 1;  // FIXME: Really a target property.
   Options.PascalStrings = PascalStrings;
+  Options.WritableStrings = WritableStrings;
 }
 
 //===----------------------------------------------------------------------===//
@@ -820,7 +825,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     break;
       
   case EmitLLVM:
-    Consumer = CreateLLVMEmitter(PP.getDiagnostics());
+    Consumer = CreateLLVMEmitter(PP.getDiagnostics(), PP.getLangOptions());
     break;
     
   case RewriteTest:

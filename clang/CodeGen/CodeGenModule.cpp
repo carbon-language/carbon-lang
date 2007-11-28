@@ -15,6 +15,7 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -24,9 +25,9 @@ using namespace clang;
 using namespace CodeGen;
 
 
-CodeGenModule::CodeGenModule(ASTContext &C, llvm::Module &M,
-                             const llvm::TargetData &TD)
-  : Context(C), TheModule(M), TheTargetData(TD),
+CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
+                             llvm::Module &M, const llvm::TargetData &TD)
+  : Context(C), Features(LO), TheModule(M), TheTargetData(TD),
     Types(C, M, TD), MemCpyFn(0), CFConstantStringClassRef(0) {}
 
 llvm::Constant *CodeGenModule::GetAddrOfGlobalDecl(const ValueDecl *D) {
@@ -155,27 +156,6 @@ static llvm::Constant *GenerateConstantCast(const Expr *Expression,
   return 0;
 }
 
-/// GenerateStringLiteral -- returns a pointer to the first element of a 
-/// character array containing the literal.
-static llvm::Constant *GenerateStringLiteral(const StringLiteral* E, 
-                                            CodeGenModule& CGModule) {
-  assert(!E->isWide() && "FIXME: Wide strings not supported yet!");
-  const char *StrData = E->getStrData();
-  unsigned Len = E->getByteLength();
-
-  // FIXME: Can cache/reuse these within the module.
-  llvm::Constant *C=llvm::ConstantArray::get(std::string(StrData, StrData+Len));
-
-  // Create a global variable for this.
-  C = new llvm::GlobalVariable(C->getType(), true, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, ".str", &CGModule.getModule());
-  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
-  llvm::Constant *Zeros[] = { Zero, Zero };
-  C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
-  return C;
-}
-
 /// GenerateAggregateInit - Generate a Constant initaliser for global array or
 /// struct typed variables.
 static llvm::Constant *GenerateAggregateInit(const InitListExpr *ILE, 
@@ -244,7 +224,10 @@ static llvm::Constant *GenerateConstantExpr(const Expr* Expression,
   // Generate constant for string literal values.
   case Stmt::StringLiteralClass: {
     const StringLiteral *SLiteral = cast<StringLiteral>(Expression);
-    return GenerateStringLiteral(SLiteral, CGModule);
+    const char *StrData = SLiteral->getStrData();
+    unsigned Len = SLiteral->getByteLength();
+    return CGModule.GetAddrOfConstantString(std::string(StrData, 
+                                                        StrData + Len));
   }
 
   // Elide parenthesis.
@@ -454,4 +437,40 @@ GetAddrOfConstantCFString(const std::string &str) {
   GV->setSection("__DATA,__cfstring");
   Entry.setValue(GV);
   return GV;
+}
+
+/// GenerateWritableString -- Creates storage for a string literal
+static llvm::Constant *GenerateStringLiteral(const std::string &str, 
+                                             bool constant,
+                                             CodeGenModule& CGModule) {
+  // Create Constant for this string literal
+  llvm::Constant *C=llvm::ConstantArray::get(str);
+  
+  // Create a global variable for this string
+  C = new llvm::GlobalVariable(C->getType(), constant, 
+                               llvm::GlobalValue::InternalLinkage,
+                               C, ".str", &CGModule.getModule());
+  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
+  llvm::Constant *Zeros[] = { Zero, Zero };
+  C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
+  return C;
+}
+
+/// CodeGenModule::GetAddrOfConstantString -- returns a pointer to the first 
+/// element of a character array containing the literal.
+llvm::Constant *CodeGenModule::GetAddrOfConstantString(const std::string &str) {
+  // Don't share any string literals if writable-strings is turned on.
+  if (Features.WritableStrings)
+    return GenerateStringLiteral(str, false, *this);
+  
+  llvm::StringMapEntry<llvm::Constant *> &Entry = 
+  ConstantStringMap.GetOrCreateValue(&str[0], &str[str.length()]);
+
+  if (Entry.getValue())
+      return Entry.getValue();
+
+  // Create a global variable for this.
+  llvm::Constant *C = GenerateStringLiteral(str, true, *this);
+  Entry.setValue(C);
+  return C;
 }

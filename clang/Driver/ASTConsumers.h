@@ -20,6 +20,7 @@ namespace clang {
 
 class ASTConsumer;
 class Diagnostic;
+struct LangOptions;
 
 ASTConsumer *CreateASTPrinter(FILE* FP = NULL);
 ASTConsumer *CreateASTDumper();
@@ -28,7 +29,7 @@ ASTConsumer *CreateCFGDumper(bool ViewGraphs = false);
 ASTConsumer *CreateLiveVarAnalyzer();
 ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
 ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
-ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags);
+ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Features);
 ASTConsumer *CreateCodeRewriterTest();
 ASTConsumer *CreateSerializationTest();
 

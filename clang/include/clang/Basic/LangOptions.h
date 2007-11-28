@@ -36,12 +36,13 @@ struct LangOptions {
   
   unsigned PascalStrings     : 1;  // Allow Pascal strings
   unsigned Boolean           : 1;  // Allow bool/true/false
+  unsigned WritableStrings   : 1;  // Allow writable strings
   
   LangOptions() {
     Trigraphs = BCPLComment = DollarIdents = Digraphs = HexFloats = 0;
     ObjC1 = ObjC2 = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
-    CXXOperatorNames = PascalStrings = Boolean = 0;
+    CXXOperatorNames = PascalStrings = Boolean = WritableStrings = 0;
   }
 };
 

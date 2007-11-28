@@ -32,6 +32,7 @@ namespace clang {
   class Decl;
   class ValueDecl;
   class FileVarDecl;
+  struct LangOptions;
     
 namespace CodeGen {
 
@@ -39,21 +40,25 @@ namespace CodeGen {
 /// while generating LLVM code.
 class CodeGenModule {
   ASTContext &Context;
+  const LangOptions &Features;
   llvm::Module &TheModule;
   const llvm::TargetData &TheTargetData;
   CodeGenTypes Types;
 
   llvm::Function *MemCpyFn;
   llvm::DenseMap<const Decl*, llvm::Constant*> GlobalDeclMap;
-  
+    
   llvm::StringMap<llvm::Constant*> CFConstantStringMap;
+  llvm::StringMap<llvm::Constant*> ConstantStringMap;
   llvm::Constant *CFConstantStringClassRef;
   
   std::vector<llvm::Function *> BuiltinFunctions;
 public:
-  CodeGenModule(ASTContext &C, llvm::Module &M, const llvm::TargetData &TD);
+  CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M, 
+                const llvm::TargetData &TD);
   
   ASTContext &getContext() const { return Context; }
+  const LangOptions &getLangOptions() const { return Features; }
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
   
@@ -64,6 +69,7 @@ public:
   ///
   llvm::Function *getBuiltinLibFunction(unsigned BuiltinID);
   llvm::Constant *GetAddrOfConstantCFString(const std::string& str);
+  llvm::Constant *GetAddrOfConstantString(const std::string& str);
   llvm::Function *getMemCpyFn();
   
   

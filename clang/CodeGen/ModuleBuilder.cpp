@@ -18,9 +18,9 @@ using namespace clang;
 
 /// Init - Create an ModuleBuilder with the specified ASTContext.
 clang::CodeGen::CodeGenModule *
-clang::CodeGen::Init(ASTContext &Context, llvm::Module &M,
-                     const llvm::TargetData &TD) {
-  return new CodeGenModule(Context, M, TD);
+clang::CodeGen::Init(ASTContext &Context, const LangOptions &Features, 
+                     llvm::Module &M, const llvm::TargetData &TD) {
+  return new CodeGenModule(Context, Features, M, TD);
 }
 
 void clang::CodeGen::Terminate(CodeGenModule *B) {

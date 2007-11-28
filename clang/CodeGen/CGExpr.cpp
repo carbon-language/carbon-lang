@@ -304,18 +304,8 @@ LValue CodeGenFunction::EmitStringLiteralLValue(const StringLiteral *E) {
   assert(!E->isWide() && "FIXME: Wide strings not supported yet!");
   const char *StrData = E->getStrData();
   unsigned Len = E->getByteLength();
-  
-  // FIXME: Can cache/reuse these within the module.
-  llvm::Constant *C=llvm::ConstantArray::get(std::string(StrData, StrData+Len));
-  
-  // Create a global variable for this.
-  C = new llvm::GlobalVariable(C->getType(), true, 
-                               llvm::GlobalValue::InternalLinkage,
-                               C, ".str", CurFn->getParent());
-  llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
-  llvm::Constant *Zeros[] = { Zero, Zero };
-  C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
-  return LValue::MakeAddr(C);
+  std::string StringLiteral(StrData, StrData+Len);
+  return LValue::MakeAddr(CGM.GetAddrOfConstantString(StringLiteral));
 }
 
 LValue CodeGenFunction::EmitPreDefinedLValue(const PreDefinedExpr *E) {
