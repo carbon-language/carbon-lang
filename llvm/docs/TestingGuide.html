@@ -152,8 +152,9 @@ programs), run the <tt>llvm-test</tt> tests:</p>
 <pre>
 % cd llvm/projects
 % svn co http://llvm.org/svn/llvm-project/test-suite/trunk llvm-test
-% cd llvm-test
-% ./configure --with-llvmsrc=$LLVM_SRC_ROOT --with-llvmobj=$LLVM_OBJ_ROOT
+% cd ..
+% ./configure --with-llvmgccdir=$LLVM_GCC_DIR
+% cd projects/llvm-test
 % gmake
 </pre>
 </div>
@@ -694,37 +695,20 @@ directory to run them.</p>
 
       <p>This will get the test suite into <tt>llvm/projects/llvm-test</tt></p>
 
-  <li><p>Configure the test suite. You can do this one of two ways:</p>
-
-  <ol>
-    <li>Use the regular llvm configure:<br/><br/>
-
+  <li><p>Configure the test suite using llvm configure. This will automatically configure llvm-test. 
+         You must do it from the top level otherwise llvm-gcc will not be set which is required to 
+        run llvm-test.:</p>
 <div class="doc_code">
 <pre>
-% cd $LLVM_OBJ_ROOT ; $LLVM_SRC_ROOT/configure
+% cd $LLVM_OBJ_ROOT ; $LLVM_SRC_ROOT/configure --with-llvmgccdir=$LLVM_GCC_DIR
 </pre>
 </div>
-
-        <p>This will ensure that the <tt>projects/llvm-test</tt> directory is
-           also properly configured.</p></li>
-
-    <li><p>Use the <tt>configure</tt> script found in the <tt>llvm-test</tt>
-        source directory:</p>
-
-<div class="doc_code">
-<pre>
-% $LLVM_SRC_ROOT/projects/llvm-test/configure \
-  --with-llvmsrc=$LLVM_SRC_ROOT               \
-  --with-llvmobj=$LLVM_OBJ_ROOT
-</pre>
-</div>
-    </li>
-  </ol>
   <li><tt>gmake</tt></li>
 </ol>
 <p>Note that the second and third steps only need to be done once. After you
 have the suite checked out and configured, you don't need to do it again (unless
-the test code or configure script changes).</p>
+the test code or configure script changes). $LLVM_GCC_DIR is the path to the LLVM 
+C/C++ FrontEnd</p>
 
 <p>To make a specialized test (use one of the
 <tt>llvm-test/TEST.&lt;type&gt;.Makefile</tt>s), just run:</p>
