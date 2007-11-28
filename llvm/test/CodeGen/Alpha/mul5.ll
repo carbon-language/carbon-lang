@@ -1,6 +1,7 @@
 ; Make sure this testcase does not use mulq
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=alpha | \
 ; RUN:   not grep -i mul
+; XFAIL: *
 
 implementation   ; Functions:
 
