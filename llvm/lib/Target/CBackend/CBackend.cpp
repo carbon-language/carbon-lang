@@ -2573,6 +2573,12 @@ void CWriter::visitCallInst(CallInst &I) {
         writeOperand(I.getOperand(3));
         Out << ")";
         return;
+      case Intrinsic::stacksave:
+        // Emit this as: Val = 0; *((void**)&Val) = __builtin_stack_save()
+        // to work around GCC bugs (see PR1809).
+        Out << "0; *((void**)&" << GetValueName(&I)
+            << ") = __builtin_stack_save()";
+        return;
       case Intrinsic::dbg_stoppoint: {
         // If we use writeOperand directly we get a "u" suffix which is rejected
         // by gcc.
