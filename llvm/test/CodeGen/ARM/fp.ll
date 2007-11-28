@@ -3,13 +3,12 @@
 ; RUN: grep fsitos %t
 ; RUN: grep fmrs %t | count 2
 ; RUN: grep fsitod %t
-; RUN: grep fmrrd %t | count 5
-; RUN: grep fmdrr %t | count 2
+; RUN: grep fmrrd %t | count 3
+; RUN: not grep fmdrr %t 
 ; RUN: grep fldd %t
 ; RUN: grep fuitod %t
 ; RUN: grep fuitos %t
 ; RUN: grep 1065353216 %t
-; XFAIL: *
 
 float %f(int %a) {
 entry:
