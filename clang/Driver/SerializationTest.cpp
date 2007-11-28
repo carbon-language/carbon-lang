@@ -26,20 +26,41 @@
 #include <stdio.h>
 #include <list>
 
-//===----------------------------------------------------------------------===//
-// Driver code.
-//===----------------------------------------------------------------------===//
-
 using namespace clang;
 using llvm::sys::TimeValue;
 
+//===----------------------------------------------------------------------===//
+// Utility classes
+//===----------------------------------------------------------------------===//
+
 namespace {
 
-template<typename T> struct Janitor {
+template<typename T> class Janitor {
   T* Obj;
-  Janitor(T* obj) : Obj(obj) {}
+public:
+  explicit Janitor(T* obj) : Obj(obj) {}
   ~Janitor() { delete Obj; }
+  operator T*() const { return Obj; }
+  T* operator->() { return Obj; }
 };
+
+class FileSP {
+  FILE* f;
+public:
+  FileSP(const llvm::sys::Path& fname, const char* mode = "wb")
+    : f(fopen(fname.c_str(),mode)) {}
+  
+  ~FileSP() { if (f) fclose(f); }
+  
+  operator FILE*() const { return f; }
+private:
+  void operator=(const FileSP& RHS) {}
+  FileSP(const FileSP& RHS) {}
+};
+  
+//===----------------------------------------------------------------------===//
+// Driver code.
+//===----------------------------------------------------------------------===//
 
 class SerializationTest : public ASTConsumer {
   ASTContext* Context;
@@ -62,8 +83,8 @@ public:
   }
 
 private:
-  void Serialize(llvm::sys::Path& Filename);
-  void Deserialize(llvm::sys::Path& Filename);
+  void Serialize(llvm::sys::Path& Filename, llvm::sys::Path& FNameDeclPrint);
+  void Deserialize(llvm::sys::Path& Filename, llvm::sys::Path& FNameDeclPrint);
 };
   
 } // end anonymous namespace
@@ -90,7 +111,8 @@ static bool ReadPreamble(llvm::BitstreamReader& Stream) {
          Stream.Read(4) != 0x0;
 }
 
-void SerializationTest::Serialize(llvm::sys::Path& Filename) {
+void SerializationTest::Serialize(llvm::sys::Path& Filename,
+                                  llvm::sys::Path& FNameDeclPrint) {
   
   // Reserve 256K for bitstream buffer.
   std::vector<unsigned char> Buffer;
@@ -108,17 +130,22 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename) {
   // ===---------------------------------------------------===/  
   
   Sezr.EnterBlock(DeclsBlock);
-  
-  // Create a printer to "consume" our deserialized ASTS.
-  ASTConsumer* Printer = CreateASTPrinter();
-  Janitor<ASTConsumer> PrinterJanitor(Printer);
-  
-  for (std::list<Decl*>::iterator I=Decls.begin(), E=Decls.end(); I!=E; ++I) {
-    llvm::cerr << "Serializing: Decl.\n";   
     
-    Printer->HandleTopLevelDecl(*I);
+  { // Create a printer to "consume" our deserialized ASTS.
+
+    Janitor<ASTConsumer> Printer(CreateASTPrinter());
+    FileSP DeclFP(FNameDeclPrint,"w");
+    assert (DeclFP && "Could not open file for printing out decls.");
+    Janitor<ASTConsumer> FilePrinter(CreateASTPrinter(DeclFP));
     
-    Sezr.EmitOwnedPtr(*I);
+    for (std::list<Decl*>::iterator I=Decls.begin(), E=Decls.end(); I!=E; ++I) {
+      llvm::cerr << "Serializing: Decl.\n";   
+      
+      Printer->HandleTopLevelDecl(*I);
+      FilePrinter->HandleTopLevelDecl(*I);
+      
+      Sezr.EmitOwnedPtr(*I);
+    }
   }
   
   Sezr.ExitBlock();
@@ -155,39 +182,36 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename) {
   Sezr.ExitBlock();  
   
   // ===---------------------------------------------------===/
-  //      Finalize serialization: write the bits to disk.
-  // ===---------------------------------------------------===/ 
-  
-  if (FILE *fp = fopen(Filename.c_str(),"wb")) {
-    fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
-    fclose(fp);
-  }
-  else { 
-    llvm::cerr << "Error: Cannot open " << Filename.c_str() << "\n";
-    return;
+  // Finalize serialization: write the bits to disk.
+  { 
+    FileSP fp(Filename);
+
+    if (fp)
+      fwrite((char*)&Buffer.front(), sizeof(char), Buffer.size(), fp);
+    else { 
+      llvm::cerr << "Error: Cannot open " << Filename.c_str() << "\n";
+      return;
+    }
   }
   
   llvm::cerr << "Commited bitstream to disk: " << Filename.c_str() << "\n";
 }
 
 
-void SerializationTest::Deserialize(llvm::sys::Path& Filename) {
+void SerializationTest::Deserialize(llvm::sys::Path& Filename,
+                                    llvm::sys::Path& FNameDeclPrint) {
   
   // Create the memory buffer that contains the contents of the file.
   
   using llvm::MemoryBuffer;
   
-  MemoryBuffer* MBuffer = MemoryBuffer::getFile(Filename.c_str(),
-                                                strlen(Filename.c_str()));
+  Janitor<MemoryBuffer> MBuffer(MemoryBuffer::getFile(Filename.c_str(),
+                                              strlen(Filename.c_str())));
   
   if(!MBuffer) {
     llvm::cerr << "ERROR: Cannot read file for deserialization.\n";
     return;
   }
-  
-  // Create an "autocollector" object to release the memory buffer upon
-  // termination of the current scope.
-  Janitor<MemoryBuffer> AutoReleaseBuffer(MBuffer);
   
   // Check if the file is of the proper length.
   if (MBuffer->getBufferSize() & 0x3) {
@@ -246,43 +270,115 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename) {
   // Read the ASTContext.  
   llvm::cerr << "Deserializing: ASTContext.\n";
   Dezr.ReadOwnedPtr<ASTContext>();
-  
-  // Create a printer to "consume" our deserialized ASTS.
-  ASTConsumer* Printer = CreateASTPrinter();
-  Janitor<ASTConsumer> PrinterJanitor(Printer);  
-  
+    
   // "Rewind" the stream.  Find the block with the serialized top-level decls.
   Dezr.Rewind();
   FoundBlock = Dezr.SkipToBlock(DeclsBlock);
   assert (FoundBlock);
   llvm::Deserializer::Location DeclBlockLoc = Dezr.getCurrentBlockLocation();
   
+  // Create a printer to "consume" our deserialized ASTS.
+  ASTConsumer* Printer = CreateASTPrinter();
+  Janitor<ASTConsumer> PrinterJanitor(Printer);  
+  FileSP DeclFP(FNameDeclPrint,"w");
+  assert (DeclFP && "Could not open file for printing out decls.");
+  Janitor<ASTConsumer> FilePrinter(CreateASTPrinter(DeclFP));
+  
   // The remaining objects in the file are top-level decls.
   while (!Dezr.FinishedBlock(DeclBlockLoc)) {
     llvm::cerr << "Deserializing: Decl.\n";
     Decl* decl = Dezr.ReadOwnedPtr<Decl>();
-    Printer->HandleTopLevelDecl(decl);    
+    Printer->HandleTopLevelDecl(decl);
+    FilePrinter->HandleTopLevelDecl(decl);
   }
 }
   
+namespace {
+  class TmpDirJanitor {
+    llvm::sys::Path& Dir;
+  public:
+    explicit TmpDirJanitor(llvm::sys::Path& dir) : Dir(dir) {}
+
+    ~TmpDirJanitor() { 
+      llvm::cerr << "Removing: " << Dir.c_str() << '\n';
+      Dir.eraseFromDisk(true); 
+    }
+  };
+}
 
 SerializationTest::~SerializationTest() {
-    
+
   std::string ErrMsg;
-  llvm::sys::Path Filename = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
+  llvm::sys::Path Dir = llvm::sys::Path::GetTemporaryDirectory(&ErrMsg);
   
-  if (Filename.isEmpty()) {
+  if (Dir.isEmpty()) {
     llvm::cerr << "Error: " << ErrMsg << "\n";
     return;
   }
   
-  Filename.appendComponent("test.ast");
-  
-  if (Filename.makeUnique(true,&ErrMsg)) {
+  TmpDirJanitor RemoveTmpOnExit(Dir);
+    
+  llvm::sys::Path FNameDeclBefore = Dir;
+  FNameDeclBefore.appendComponent("test.decl_before.txt");
+
+  if (FNameDeclBefore.makeUnique(true,&ErrMsg)) {
     llvm::cerr << "Error: " << ErrMsg << "\n";
     return;
   }
   
-  Serialize(Filename);
-  Deserialize(Filename);
+  llvm::sys::Path FNameDeclAfter = Dir;
+  FNameDeclAfter.appendComponent("test.decl_after.txt");
+  
+  if (FNameDeclAfter.makeUnique(true,&ErrMsg)) {
+    llvm::cerr << "Error: " << ErrMsg << "\n";
+    return;
+  }
+
+  llvm::sys::Path ASTFilename = Dir;
+  ASTFilename.appendComponent("test.ast");
+  
+  if (ASTFilename.makeUnique(true,&ErrMsg)) {
+    llvm::cerr << "Error: " << ErrMsg << "\n";
+    return;
+  }
+  
+  // Serialize and then deserialize the ASTs.
+  Serialize(ASTFilename, FNameDeclBefore);
+  Deserialize(ASTFilename, FNameDeclAfter);
+  
+  // Read both pretty-printed files and compare them.
+  
+  using llvm::MemoryBuffer;
+  
+  Janitor<MemoryBuffer>
+    MBufferSer(MemoryBuffer::getFile(FNameDeclBefore.c_str(),
+                                     strlen(FNameDeclBefore.c_str())));
+  
+  if(!MBufferSer) {
+    llvm::cerr << "ERROR: Cannot read pretty-printed file (pre-pickle).\n";
+    return;
+  }
+  
+  Janitor<MemoryBuffer>
+    MBufferDSer(MemoryBuffer::getFile(FNameDeclAfter.c_str(),
+                                      strlen(FNameDeclAfter.c_str())));
+  
+  if(!MBufferDSer) {
+    llvm::cerr << "ERROR: Cannot read pretty-printed file (post-pickle).\n";
+    return;
+  }
+  
+  const char *p1 = MBufferSer->getBufferStart();
+  const char *e1 = MBufferSer->getBufferEnd();
+  const char *p2 = MBufferDSer->getBufferStart();
+  const char *e2 = MBufferDSer->getBufferEnd();
+
+  if (MBufferSer->getBufferSize() == MBufferDSer->getBufferSize())
+    for ( ; p1 != e1 ; ++p1, ++p2  )
+      if (*p1 != *p2) break;
+  
+  if (p1 != e1 || p2 != e2 )
+    llvm::cerr << "ERROR: Pretty-printed files are not the same.\n";
+  else
+    llvm::cerr << "SUCCESS: Pretty-printed files are the same.\n";
 }
