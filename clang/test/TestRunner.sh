@@ -16,11 +16,11 @@
 FILENAME=$1
 TESTNAME=$1
 SUBST=$1
-FILENAME_ONLY=`basename $1`
-OUTPUT=Output/$FILENAME_ONLY.out
+
+OUTPUT=Output/$1.out
 
 # create the output directory if it does not already exist
-mkdir Output > /dev/null 2>&1
+mkdir -p `dirname $OUTPUT` > /dev/null 2>&1
 
 if test $# != 1; then
   # If more than one parameter is passed in, there must be three parameters:
