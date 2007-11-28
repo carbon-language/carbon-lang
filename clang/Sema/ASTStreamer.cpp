@@ -24,10 +24,10 @@ ASTConsumer::~ASTConsumer() {}
 namespace {
   class ASTStreamer {
     Parser P;
-    std::vector<Decl*> LastInGroupList;
+    std::vector<Decl*> TopLevelDeclList;
   public:
     ASTStreamer(Preprocessor &pp, ASTContext &ctxt, unsigned MainFileID)
-      : P(pp, *new Sema(pp, ctxt, LastInGroupList)) {
+      : P(pp, *new Sema(pp, ctxt, TopLevelDeclList)) {
       pp.EnterMainSourceFile(MainFileID);
       
       // Initialize the parser.
@@ -53,29 +53,28 @@ Decl *ASTStreamer::ReadTopLevelDecl() {
   
   /// If the previous time through we read something like 'int X, Y', return
   /// the next declarator.
-  if (!LastInGroupList.empty()) {
-    Result = LastInGroupList.back();
-    LastInGroupList.pop_back();
+  if (!TopLevelDeclList.empty()) {
+    Result = TopLevelDeclList.back();
+    TopLevelDeclList.pop_back();
     return static_cast<Decl*>(Result);
   }
   
   do {
-    if (P.ParseTopLevelDecl(Result))
+    if (P.ParseTopLevelDecl())
       return 0;  // End of file.
     
     // If we got a null return and something *was* parsed, try again.  This
     // is due to a top-level semicolon, an action override, or a parse error
     // skipping something.
-  } while (Result == 0);
+  } while (TopLevelDeclList.size() == 0);
   
   // If we parsed a declspec with multiple declarators, reverse the list and
   // return the first one.
-  if (!LastInGroupList.empty()) {
-    LastInGroupList.push_back((Decl*)Result);
-    std::reverse(LastInGroupList.begin(), LastInGroupList.end());
-    Result = LastInGroupList.back();
-    LastInGroupList.pop_back();
-  }
+  if (TopLevelDeclList.size() > 1)
+    std::reverse(TopLevelDeclList.begin(), TopLevelDeclList.end());
+
+  Result = TopLevelDeclList.back();
+  TopLevelDeclList.pop_back();
   
   return static_cast<Decl*>(Result);
 }

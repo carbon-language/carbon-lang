@@ -69,11 +69,9 @@ class Sema : public Action {
   /// the method decl for the method being parsed.
   ObjcMethodDecl *CurMethodDecl;
   
-  /// LastInGroupList - This vector is populated when there are multiple
-  /// declarators in a single decl group (e.g. "int A, B, C").  In this case,
-  /// all but the last decl will be entered into this.  This is used by the
-  /// ASTStreamer.
-  std::vector<Decl*> &LastInGroupList;
+  /// TopLevelDeclList - This vector is populated with all declarators from
+  /// a top-level declaration. This is used by the ASTStreamer.
+  std::vector<Decl*> &TopLevelDeclList;
   
   /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
   /// it (which acts like the label decl in some ways).  Forward referenced
@@ -231,7 +229,7 @@ private:
   VarDecl *MergeVarDecl(VarDecl *New, ScopedDecl *Old);
   /// AddTopLevelDecl - called after the decl has been fully processed.
   /// Allows for bookkeeping and post-processing of each declaration.
-  void AddTopLevelDecl(Decl *current, Decl *last);
+  void AddTopLevelDecl(Decl *current);
 
   /// More parsing and symbol table subroutines...
   ParmVarDecl *ActOnParamDeclarator(struct DeclaratorChunk::ParamInfo &PI, 

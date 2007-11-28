@@ -331,6 +331,8 @@ namespace {
         PrintObjcCompatibleAliasDecl(OID);
       } else if (isa<ObjcClassDecl>(D)) {
         Out << "@class [printing todo]\n";
+      } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
+        Out << "Read top-level tag decl: '" << TD->getName() << "'\n";
       } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
         Out << "Read top-level variable decl: '" << SD->getName() << "'\n";
       } else {

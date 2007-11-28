@@ -74,9 +74,9 @@ public:
   ///
   void Initialize();
   
-  /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the
-  /// action tells us to.  This returns true if the EOF was encountered.
-  bool ParseTopLevelDecl(DeclTy*& Result);
+  /// ParseTopLevelDecl - Parse one top-level declaration. Returns true if 
+  /// the EOF was encountered.
+  bool ParseTopLevelDecl();
   
   /// Finalize - Shut down the parser.
   ///
