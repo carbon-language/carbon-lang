@@ -895,7 +895,8 @@ Sema::DeclTy *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Declarator &D) {
   // Check for C99 6.7.5.3p10 - foo(void) is a non-varargs function that takes
   // no arguments, not a function that takes a single void argument.
   if (FTI.NumArgs == 1 && !FTI.isVariadic && FTI.ArgInfo[0].Ident == 0 &&
-      FTI.ArgInfo[0].TypeInfo == Context.VoidTy.getAsOpaquePtr()) {
+      !QualType::getFromOpaquePtr(FTI.ArgInfo[0].TypeInfo).getQualifiers() &&
+      QualType::getFromOpaquePtr(FTI.ArgInfo[0].TypeInfo)->isVoidType()) {
     // empty arg list, don't push any params.
   } else {
     for (unsigned i = 0, e = FTI.NumArgs; i != e; ++i) {

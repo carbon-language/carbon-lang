@@ -19,3 +19,7 @@ void foo() {
   X = sizeof(int (Void));
 }
 
+// this is ok.
+void bar(Void) {
+}
+
