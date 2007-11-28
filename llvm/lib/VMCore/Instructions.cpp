@@ -47,6 +47,12 @@ void CallSite::setParamAttrs(const ParamAttrsList *PAL) {
   else
     cast<InvokeInst>(I)->setParamAttrs(PAL);
 }
+bool CallSite::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    return CI->paramHasAttr(i, attr);
+  else
+    return cast<InvokeInst>(I)->paramHasAttr(i, attr);
+}
 
 
 
@@ -376,11 +382,13 @@ void CallInst::setParamAttrs(const ParamAttrsList *newAttrs) {
   ParamAttrs = newAttrs; 
 }
 
-bool CallInst::isStructReturn() const {
-  if (ParamAttrs)
-    return ParamAttrs->paramHasAttr(1, ParamAttr::StructRet);
-  return false;
+bool CallInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
+  if (ParamAttrs && ParamAttrs->paramHasAttr(i, attr))
+    return true;
+  const Function *F = getCalledFunction();
+  return F && F->getParamAttrs() && F->getParamAttrs()->paramHasAttr(i, attr);
 }
+
 
 //===----------------------------------------------------------------------===//
 //                        InvokeInst Implementation
@@ -451,11 +459,13 @@ void InvokeInst::setParamAttrs(const ParamAttrsList *newAttrs) {
   ParamAttrs = newAttrs; 
 }
 
-bool InvokeInst::isStructReturn() const {
-  if (ParamAttrs)
-    return ParamAttrs->paramHasAttr(1, ParamAttr::StructRet);
-  return false;
+bool InvokeInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
+  if (ParamAttrs && ParamAttrs->paramHasAttr(i, attr))
+    return true;
+  const Function *F = getCalledFunction();
+  return F && F->getParamAttrs() && F->getParamAttrs()->paramHasAttr(i, attr);
 }
+
 
 //===----------------------------------------------------------------------===//
 //                        ReturnInst Implementation

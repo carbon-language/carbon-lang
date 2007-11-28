@@ -21,6 +21,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Argument.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/Support/Annotation.h"
 
 namespace llvm {
@@ -152,8 +153,15 @@ public:
   /// @brief Set the parameter attributes.
   void setParamAttrs(const ParamAttrsList *attrs);
 
+  /// @brief Determine whether the function has the given attribute.
+  bool paramHasAttr(uint16_t i, ParameterAttributes attr) const {
+    return ParamAttrs && ParamAttrs->paramHasAttr(i, attr);
+  }
+
   /// @brief Determine if the function returns a structure.
-  bool isStructReturn() const;
+  bool isStructReturn() const {
+    return paramHasAttr(1, ParamAttr::StructRet);
+  }
 
   /// deleteBody - This method deletes the body of the function, and converts
   /// the linkage to external.

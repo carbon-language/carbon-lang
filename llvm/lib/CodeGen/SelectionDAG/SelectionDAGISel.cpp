@@ -934,11 +934,11 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
         TmpVT = TLI.getTypeToTransformTo(MVT::i32);
       else
         TmpVT = MVT::i32;
-      const ParamAttrsList *PAL = I.getParent()->getParent()->getParamAttrs();
+      const Function *F = I.getParent()->getParent();
       ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
-      if (PAL && PAL->paramHasAttr(0, ParamAttr::SExt))
+      if (F->paramHasAttr(0, ParamAttr::SExt))
         ExtendKind = ISD::SIGN_EXTEND;
-      if (PAL && PAL->paramHasAttr(0, ParamAttr::ZExt))
+      if (F->paramHasAttr(0, ParamAttr::ZExt))
         ExtendKind = ISD::ZERO_EXTEND;
       RetOp = DAG.getNode(ExtendKind, TmpVT, RetOp);
       NewValues.push_back(RetOp);
@@ -3892,7 +3892,6 @@ void SelectionDAGLowering::visitVACopy(CallInst &I) {
 /// integrated into SDISel.
 std::vector<SDOperand> 
 TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
-  const ParamAttrsList *Attrs = F.getParamAttrs();
   // Add CC# and isVararg as operands to the FORMAL_ARGUMENTS node.
   std::vector<SDOperand> Ops;
   Ops.push_back(DAG.getRoot());
@@ -3911,15 +3910,15 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
     // FIXME: Distinguish between a formal with no [sz]ext attribute from one
     // that is zero extended!
-    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::ZExt))
+    if (F.paramHasAttr(j, ParamAttr::ZExt))
       Flags &= ~(ISD::ParamFlags::SExt);
-    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::SExt))
+    if (F.paramHasAttr(j, ParamAttr::SExt))
       Flags |= ISD::ParamFlags::SExt;
-    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::InReg))
+    if (F.paramHasAttr(j, ParamAttr::InReg))
       Flags |= ISD::ParamFlags::InReg;
-    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::StructRet))
+    if (F.paramHasAttr(j, ParamAttr::StructRet))
       Flags |= ISD::ParamFlags::StructReturn;
-    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::ByVal)) {
+    if (F.paramHasAttr(j, ParamAttr::ByVal)) {
       Flags |= ISD::ParamFlags::ByVal;
       const PointerType *Ty = cast<PointerType>(I->getType());
       const StructType *STy = cast<StructType>(Ty->getElementType());
@@ -3929,7 +3928,7 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       Flags |= (StructAlign << ISD::ParamFlags::ByValAlignOffs);
       Flags |= (StructSize  << ISD::ParamFlags::ByValSizeOffs);
     }
-    if (Attrs && Attrs->paramHasAttr(j, ParamAttr::Nest))
+    if (F.paramHasAttr(j, ParamAttr::Nest))
       Flags |= ISD::ParamFlags::Nest;
     Flags |= (OriginalAlignment << ISD::ParamFlags::OrigAlignmentOffs);
     
@@ -3986,10 +3985,10 @@ TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     case Promote: {
       SDOperand Op(Result, i++);
       if (MVT::isInteger(VT)) {
-        if (Attrs && Attrs->paramHasAttr(Idx, ParamAttr::SExt))
+        if (F.paramHasAttr(Idx, ParamAttr::SExt))
           Op = DAG.getNode(ISD::AssertSext, Op.getValueType(), Op,
                            DAG.getValueType(VT));
-        else if (Attrs && Attrs->paramHasAttr(Idx, ParamAttr::ZExt))
+        else if (F.paramHasAttr(Idx, ParamAttr::ZExt))
           Op = DAG.getNode(ISD::AssertZext, Op.getValueType(), Op,
                            DAG.getValueType(VT));
         Op = DAG.getNode(ISD::TRUNCATE, VT, Op);

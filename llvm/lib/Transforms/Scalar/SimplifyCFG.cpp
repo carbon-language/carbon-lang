@@ -90,35 +90,6 @@ static void ChangeToCall(InvokeInst *II) {
   BB->getInstList().erase(II);
 }
 
-/// IsNoReturn - Return true if the specified call is to a no-return function.
-static bool IsNoReturn(const CallInst *CI) {
-  if (const ParamAttrsList *Attrs = CI->getParamAttrs())
-    if (Attrs->paramHasAttr(0, ParamAttr::NoReturn))
-      return true;
-  
-  if (const Function *Callee = CI->getCalledFunction())
-    if (const ParamAttrsList *Attrs = Callee->getParamAttrs())
-      if (Attrs->paramHasAttr(0, ParamAttr::NoReturn))
-        return true;
-
-  return false;
-}
-
-/// IsNoUnwind - Return true if the specified invoke is to a no-unwind function.
-static bool IsNoUnwind(const InvokeInst *II) {
-  if (const ParamAttrsList *Attrs = II->getParamAttrs())
-    if (Attrs->paramHasAttr(0, ParamAttr::NoUnwind))
-      return true;
-  
-  if (const Function *Callee = II->getCalledFunction())
-    if (const ParamAttrsList *Attrs = Callee->getParamAttrs())
-      if (Attrs->paramHasAttr(0, ParamAttr::NoUnwind))
-        return true;
-
-  return false;
-}
-
-
 static bool MarkAliveBlocks(BasicBlock *BB,
                             SmallPtrSet<BasicBlock*, 128> &Reachable) {
   
@@ -137,7 +108,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
     // canonicalizes unreachable insts into stores to null or undef.
     for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E;++BBI){
       if (CallInst *CI = dyn_cast<CallInst>(BBI)) {
-        if (IsNoReturn(CI)) {
+        if (CI->paramHasAttr(0, ParamAttr::NoReturn)) {
           // If we found a call to a no-return function, insert an unreachable
           // instruction after it.  Make sure there isn't *already* one there
           // though.
@@ -161,7 +132,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
 
     // Turn invokes that call 'nounwind' functions into ordinary calls.
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
-      if (IsNoUnwind(II)) {
+      if (II->paramHasAttr(0, ParamAttr::NoUnwind)) {
         ChangeToCall(II);
         Changed = true;
       }

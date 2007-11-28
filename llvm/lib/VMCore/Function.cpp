@@ -13,7 +13,6 @@
 
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ParameterAttributes.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/LeakDetector.h"
@@ -285,12 +284,6 @@ void Function::setParamAttrs(const ParamAttrsList *attrs) {
 
   // Set the new ParamAttrsList.
   ParamAttrs = attrs; 
-}
-
-bool Function::isStructReturn() const {
-  if (ParamAttrs)
-    return ParamAttrs->paramHasAttr(1, ParamAttr::StructRet);
-  return false;
 }
 
 const FunctionType *Function::getFunctionType() const {

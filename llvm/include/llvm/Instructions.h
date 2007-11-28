@@ -20,6 +20,7 @@
 
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/ParameterAttributes.h"
 
 namespace llvm {
 
@@ -923,8 +924,14 @@ public:
   /// @brief Set the parameter attributes.
   void setParamAttrs(const ParamAttrsList *attrs);
 
+  /// @brief Determine whether the call or the callee has the given attribute.
+  bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
+
   /// @brief Determine if the call returns a structure.
-  bool isStructReturn() const;
+  bool isStructReturn() const {
+    // Be friendly and also check the callee.
+    return paramHasAttr(1, ParamAttr::StructRet);
+  }
 
   /// getCalledFunction - Return the function being called by this instruction
   /// if it is a direct call.  If it is a call through a function pointer,
@@ -1701,8 +1708,14 @@ public:
   /// @brief Set the parameter attributes.
   void setParamAttrs(const ParamAttrsList *attrs);
 
+  /// @brief Determine whether the call or the callee has the given attribute.
+  bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
+
   /// @brief Determine if the call returns a structure.
-  bool isStructReturn() const;
+  bool isStructReturn() const {
+    // Be friendly and also check the callee.
+    return paramHasAttr(1, ParamAttr::StructRet);
+  }
 
   /// getCalledFunction - Return the function called, or null if this is an
   /// indirect function invocation.

@@ -22,6 +22,7 @@
 
 #include "llvm/Instruction.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/ParameterAttributes.h"
 
 namespace llvm {
 
@@ -62,6 +63,9 @@ public:
   /// the call.
   const ParamAttrsList *getParamAttrs() const;
   void setParamAttrs(const ParamAttrsList *PAL);
+
+  /// paramHasAttr - whether the call or the callee has the given attribute.
+  bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
 
   /// getType - Return the type of the instruction that generated this call site
   ///
