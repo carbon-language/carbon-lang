@@ -377,9 +377,10 @@ bool Expr::hasStaticStorage() const {
       return VD->hasStaticStorage();
     return false;
   }
-  case MemberExprClass:
+  case MemberExprClass: {
     const MemberExpr *M = cast<MemberExpr>(this);
     return !M->isArrow() && M->getBase()->hasStaticStorage();
+  }
   case ArraySubscriptExprClass:
     return cast<ArraySubscriptExpr>(this)->getBase()->hasStaticStorage();
   }
