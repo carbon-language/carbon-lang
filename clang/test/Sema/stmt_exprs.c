@@ -1,4 +1,4 @@
-// clang %s -fsyntax-only
+// RUN: clang %s -fsyntax-only
 
 typedef unsigned __uint32_t;
 
