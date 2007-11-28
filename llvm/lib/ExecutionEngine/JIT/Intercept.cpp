@@ -113,7 +113,8 @@ void *JIT::getPointerToNamedFunction(const std::string &Name) {
     std::string Prefix = std::string(Name.begin(), Name.end()-9);
     if (void *Ptr = getPointerToNamedFunction(Prefix+"$LDBL128"))
       return Ptr;
-    return getPointerToNamedFunction(Prefix);
+    if (void *Ptr = getPointerToNamedFunction(Prefix))
+      return Ptr;
   }
 #endif
   
