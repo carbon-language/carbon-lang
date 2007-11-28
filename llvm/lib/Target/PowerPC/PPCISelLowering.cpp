@@ -2076,6 +2076,7 @@ static SDOperand LowerSELECT_CC(SDOperand Op, SelectionDAG &DAG) {
   return SDOperand();
 }
 
+// FIXME: Split this code up when LegalizeDAGTypes lands.
 static SDOperand LowerFP_TO_SINT(SDOperand Op, SelectionDAG &DAG) {
   assert(MVT::isFloatingPoint(Op.getOperand(0).getValueType()));
   SDOperand Src = Op.getOperand(0);
@@ -3041,6 +3042,14 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   return SDOperand();
 }
+
+SDNode *PPCTargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
+  switch (N->getOpcode()) {
+  default: assert(0 && "Wasn't expecting to be able to lower this!");
+  case ISD::FP_TO_SINT: return LowerFP_TO_SINT(SDOperand(N, 0), DAG).Val;
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 //  Other Lowering Code

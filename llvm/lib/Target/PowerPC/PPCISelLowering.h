@@ -248,6 +248,8 @@ namespace llvm {
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+
+    virtual SDNode *ExpandOperationResult(SDNode *N, SelectionDAG &DAG);
     
     virtual SDOperand PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
     
