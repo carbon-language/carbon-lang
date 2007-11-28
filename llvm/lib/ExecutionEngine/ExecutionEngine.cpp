@@ -712,13 +712,17 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
     break;
   case Type::X86_FP80TyID: {
     // This is endian dependent, but it will only work on x86 anyway.
-    uint16_t x[8], *p = (uint16_t*)Ptr;
+    uint16_t *p = (uint16_t*)Ptr;
+    union {
+      uint16_t x[8];
+      uint64_t y[2];
+    };
     x[0] = p[1];
     x[1] = p[2];
     x[2] = p[3];
     x[3] = p[4];
     x[4] = p[0];
-    Result.IntVal = APInt(80, 2, x);
+    Result.IntVal = APInt(80, 2, y);
     break;
   }
   default:
