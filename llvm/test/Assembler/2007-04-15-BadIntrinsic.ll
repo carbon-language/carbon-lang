@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s -o /dev/null -f |& grep {Call to invalid LLVM intrinsic}
+; RUN: not llvm-as < %s -o /dev/null -f |& grep {Call to invalid LLVM intrinsic}
 
 declare i32 @llvm.foobar(i32 %foo)
 

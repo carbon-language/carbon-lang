@@ -1,9 +1,8 @@
-; RUN: llvm-upgrade < %s | llvm-as | llvm-dis | \
-; RUN:    grep {tail call void.*sret  null}
+; RUN: llvm-as < %s | llvm-dis | grep {tail call void.*sret  null}
 
-declare csretcc void %foo({}*, ...)
+declare void @foo({  }* sret , ...)
 
-void %bar() {
-  tail call csretcc void({}*, ...)* %foo({}* null, int 0)
-  ret void
+define void @bar() {
+        tail call void ({  }* sret , ...)* @foo( {  }* null sret , i32 0 )
+        ret void
 }

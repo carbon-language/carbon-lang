@@ -1,4 +1,4 @@
-; RUN: llvm-as %s -o - | opt -basicaa -aa-eval -print-all-alias-modref-info -disable-output &| grep 'MayAlias:     i32* %y, i32* %x'
+; RUN: llvm-as %s -o - | opt -basicaa -aa-eval -print-all-alias-modref-info -disable-output |& grep {MayAlias:.*i32\\* %y, i32\\* %x}
 
 declare i32* @unclear(i32* %a)
 

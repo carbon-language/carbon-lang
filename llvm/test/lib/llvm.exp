@@ -126,8 +126,8 @@ proc RunLLVMTests { test_source_files } {
         set runline "$runline$oneline "
 
       # if its a terminating RUN: line then do substitution on the whole line
-      # and then save the line.
-      } elseif {[regexp {RUN: *([^&]+)(&&)?} $line match oneline suffix]} {
+      # and then save the line. 
+      } elseif {[regexp {RUN: *(.+)$} $line match oneline suffix]} {
         set runline "$runline$oneline"
         set runline [ substitute $runline $test $tmpFile ]
         set lines($numLines) $runline

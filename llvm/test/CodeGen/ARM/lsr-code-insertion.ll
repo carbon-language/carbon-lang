@@ -7,7 +7,7 @@
 ;        add r8, r0, r6
 ;        str r10, [r8, #+4]
 ;
-
+; XFAIL: *
 target triple = "arm-apple-darwin8"
 
 define void @foo(i32* %mc, i32* %mpp, i32* %ip, i32* %dpp, i32* %tpmm, i32 %M, i32* %tpim, i32* %tpdm, i32* %bp, i32* %ms, i32 %xmb) {

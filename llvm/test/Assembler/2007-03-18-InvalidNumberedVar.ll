@@ -1,5 +1,5 @@
 ; PR 1258
-; RUN: llvm-as < %s >/dev/null -f |& grep {Numbered.*does not match}
+; RUN: not llvm-as < %s >/dev/null -f |& grep {Numbered.*does not match}
 
 define i32 @test1(i32 %a, i32 %b) {
 entry:

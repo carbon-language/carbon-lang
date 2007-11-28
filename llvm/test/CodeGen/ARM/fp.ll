@@ -9,6 +9,7 @@
 ; RUN: grep fuitod %t
 ; RUN: grep fuitos %t
 ; RUN: grep 1065353216 %t
+; XFAIL: *
 
 float %f(int %a) {
 entry:
