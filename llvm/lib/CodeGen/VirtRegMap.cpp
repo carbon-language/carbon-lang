@@ -74,7 +74,6 @@ void VirtRegMap::grow() {
   Virt2StackSlotMap.grow(LastVirtReg);
   Virt2ReMatIdMap.grow(LastVirtReg);
   Virt2SplitMap.grow(LastVirtReg);
-  Virt2SpillPtsMap.grow(LastVirtReg);
   ReMatMap.grow(LastVirtReg);
 }
 
@@ -837,7 +836,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
           VRM.assignVirt2Phys(UnfoldVR, UnfoldPR);
         VRM.virtFolded(VirtReg, FoldedMI, VirtRegMap::isRef);
         MII = MBB.insert(MII, FoldedMI);
-        VRM.RemoveFromFoldedVirtMap(&MI);
+        VRM.RemoveMachineInstrFromMaps(&MI);
         MBB.erase(&MI);
         return true;
       }
@@ -886,7 +885,7 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
     if (CheckDef)
       --PrevMII;
     MBB.erase(LastStore);
-    VRM.RemoveFromFoldedVirtMap(LastStore);
+    VRM.RemoveMachineInstrFromMaps(LastStore);
     if (CheckDef) {
       // Look at defs of killed registers on the store. Mark the defs
       // as dead since the store has been deleted and they aren't
@@ -899,7 +898,7 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
             // FIXME: This assumes a remat def does not have side
             // effects.
             MBB.erase(DeadDef);
-            VRM.RemoveFromFoldedVirtMap(DeadDef);
+            VRM.RemoveMachineInstrFromMaps(DeadDef);
             ++NumDRM;
           }
         }
@@ -965,15 +964,19 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     const TargetInstrDescriptor *TID = MI.getInstrDescriptor();
 
     // Insert spills here if asked to.
-    std::vector<unsigned> SpillRegs = VRM.getSpillPtSpills(&MI);
-    for (unsigned i = 0, e = SpillRegs.size(); i != e; ++i) {
-      unsigned VirtReg = SpillRegs[i];
-      const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
-      unsigned Phys = VRM.getPhys(VirtReg);
-      int StackSlot = VRM.getStackSlot(VirtReg);
-      MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
-      SpillRegToStackSlot(MBB, MII, i, Phys, StackSlot, RC,
-                          LastStore, Spills, ReMatDefs, RegKills, KillOps, VRM);
+    if (VRM.isSpillPt(&MI)) {
+      std::vector<unsigned> &SpillRegs = VRM.getSpillPtSpills(&MI);
+      for (unsigned i = 0, e = SpillRegs.size(); i != e; ++i) {
+        unsigned VirtReg = SpillRegs[i];
+        if (!VRM.getPreSplitReg(VirtReg))
+          continue; // Split interval spilled again.
+        const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
+        unsigned Phys = VRM.getPhys(VirtReg);
+        int StackSlot = VRM.getStackSlot(VirtReg);
+        MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
+        SpillRegToStackSlot(MBB, MII, i, Phys, StackSlot, RC,
+                            LastStore, Spills, ReMatDefs, RegKills, KillOps, VRM);
+      }
     }
 
     /// ReusedOperands - Keep track of operand reuse in case we need to undo
@@ -1142,7 +1145,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             if (DeadStore) {
               DOUT << "Removed dead store:\t" << *DeadStore;
               InvalidateKills(*DeadStore, RegKills, KillOps);
-              VRM.RemoveFromFoldedVirtMap(DeadStore);
+              VRM.RemoveMachineInstrFromMaps(DeadStore);
               MBB.erase(DeadStore);
               MaybeDeadStores[ReuseSlot] = NULL;
               ++NumDSE;
@@ -1295,7 +1298,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             } else
               DOUT << "Removing now-noop copy: " << MI;
 
-            VRM.RemoveFromFoldedVirtMap(&MI);
+            VRM.RemoveMachineInstrFromMaps(&MI);
             MBB.erase(&MI);
             Erased = true;
             goto ProcessNextInst;
@@ -1306,7 +1309,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           if (PhysReg &&
               MRI->unfoldMemoryOperand(MF, &MI, PhysReg, false, false, NewMIs)) {
             MBB.insert(MII, NewMIs[0]);
-            VRM.RemoveFromFoldedVirtMap(&MI);
+            VRM.RemoveMachineInstrFromMaps(&MI);
             MBB.erase(&MI);
             Erased = true;
             --NextMII;  // backtrack to the unfolded instruction.
@@ -1331,7 +1334,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             MBB.insert(MII, NewMIs[0]);
             NewStore = NewMIs[1];
             MBB.insert(MII, NewStore);
-            VRM.RemoveFromFoldedVirtMap(&MI);
+            VRM.RemoveMachineInstrFromMaps(&MI);
             MBB.erase(&MI);
             Erased = true;
             --NextMII;
@@ -1345,7 +1348,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           // If we get here, the store is dead, nuke it now.
           DOUT << "Removed dead store:\t" << *DeadStore;
           InvalidateKills(*DeadStore, RegKills, KillOps);
-          VRM.RemoveFromFoldedVirtMap(DeadStore);
+          VRM.RemoveMachineInstrFromMaps(DeadStore);
           MBB.erase(DeadStore);
           if (!NewStore)
             ++NumDSE;
@@ -1405,7 +1408,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           DOUT << "Removing now-noop copy: " << MI;
           MBB.erase(&MI);
           Erased = true;
-          VRM.RemoveFromFoldedVirtMap(&MI);
+          VRM.RemoveMachineInstrFromMaps(&MI);
           Spills.disallowClobberPhysReg(VirtReg);
           goto ProcessNextInst;
         }
@@ -1480,7 +1483,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             DOUT << "Removing now-noop copy: " << MI;
             MBB.erase(&MI);
             Erased = true;
-            VRM.RemoveFromFoldedVirtMap(&MI);
+            VRM.RemoveMachineInstrFromMaps(&MI);
             UpdateKills(*LastStore, RegKills, KillOps);
             goto ProcessNextInst;
           }
@@ -1494,7 +1497,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
     MII = NextMII;
   }
 }
-
 
 llvm::Spiller* llvm::createSpiller() {
   switch (SpillerOpt) {

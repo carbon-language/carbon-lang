@@ -292,7 +292,7 @@ namespace llvm {
         VirtRegMap &vrm, SSARegMap *RegMap, const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds,
         unsigned &NewVReg, bool &HasDef, bool &HasUse, const LoopInfo *loopInfo,
-        std::vector<unsigned> &NewVRegs,
+        std::map<unsigned,unsigned> &NewVRegs,
         std::vector<LiveInterval*> &NewLIs);
     void rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
         LiveInterval::Ranges::const_iterator &I,
@@ -301,8 +301,8 @@ namespace llvm {
         VirtRegMap &vrm, SSARegMap *RegMap, const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds, const LoopInfo *loopInfo,
         BitVector &SpillMBBs,
-        std::vector<std::pair<int, unsigned> > &SpillIdxes,
-        std::vector<unsigned> &NewVRegs,
+        std::map<unsigned, std::pair<int, unsigned> > &SpillIdxes,
+        std::map<unsigned,unsigned> &NewVRegs,
         std::vector<LiveInterval*> &NewLIs);
 
     static LiveInterval createInterval(unsigned Reg);

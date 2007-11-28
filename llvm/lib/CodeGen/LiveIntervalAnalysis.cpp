@@ -707,7 +707,8 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
                  const TargetRegisterClass* rc,
                  SmallVector<int, 4> &ReMatIds,
                  unsigned &NewVReg, bool &HasDef, bool &HasUse,
-                 const LoopInfo *loopInfo, std::vector<unsigned> &NewVRegs,
+                 const LoopInfo *loopInfo,
+                 std::map<unsigned,unsigned> &NewVRegs,
                  std::vector<LiveInterval*> &NewLIs) {
  RestartInstruction:
   for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
@@ -731,6 +732,7 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
       // all of its uses are rematerialized, simply delete it.
       if (MI == ReMatOrigDefMI && CanDelete) {
         RemoveMachineInstrFromMaps(MI);
+        vrm.RemoveMachineInstrFromMaps(MI);
         MI->eraseFromParent();
         break;
       }
@@ -823,7 +825,7 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
     LiveInterval &nI = getOrCreateInterval(NewVReg);
     if (CreatedNewVReg) {
       NewLIs.push_back(&nI);
-      NewVRegs[MI->getParent()->getNumber()] = NewVReg;
+      NewVRegs.insert(std::make_pair(MI->getParent()->getNumber(), NewVReg));
       if (TrySplit)
         vrm.setIsSplitFromReg(NewVReg, li.reg);
     }
@@ -893,8 +895,8 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                     SmallVector<int, 4> &ReMatIds,
                     const LoopInfo *loopInfo,
                     BitVector &SpillMBBs,
-                    std::vector<std::pair<int, unsigned> > &SpillIdxes,
-                    std::vector<unsigned> &NewVRegs,
+                    std::map<unsigned, std::pair<int, unsigned> > &SpillIdxes,
+                    std::map<unsigned,unsigned> &NewVRegs,
                     std::vector<LiveInterval*> &NewLIs) {
   unsigned NewVReg = 0;
   unsigned index = getBaseIndex(I->start);
@@ -908,7 +910,13 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
 
     MachineInstr *MI = getInstructionFromIndex(index);
     MachineBasicBlock *MBB = MI->getParent();
-    NewVReg = !TrySplitMI ? 0 : NewVRegs[MBB->getNumber()];
+    NewVReg = 0;
+    if (TrySplitMI) {
+      std::map<unsigned,unsigned>::const_iterator NVI =
+        NewVRegs.find(MBB->getNumber());
+      if (NVI != NewVRegs.end())
+        NewVReg = NVI->second;
+    }
     bool IsNew = NewVReg == 0;
     bool HasDef = false;
     bool HasUse = false;
@@ -936,9 +944,11 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
             : anyKillInMBBAfterIdx(li, MBB, getDefIndex(index), I->valno);
           if (!HasKill) {
             unsigned MBBId = MBB->getNumber();
-            if ((int)index > SpillIdxes[MBBId].first)
-              // High bit specify whether this spill ought to be folded if
-              // possible.
+            // High bit specify whether this spill ought to be folded if
+            // possible.
+            std::map<unsigned, std::pair<int,unsigned> >::iterator SII =
+              SpillIdxes.find(MBBId);
+            if (SII == SpillIdxes.end() || (int)index > SII->second.first)
               SpillIdxes[MBBId] = std::make_pair(index, NewVReg | (1 << 31));
             SpillMBBs.set(MBBId);
           }
@@ -955,8 +965,11 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
       } else if (HasUse) {
         // Use(s) following the last def, it's not safe to fold the spill.
         unsigned MBBId = MBB->getNumber();
-        if ((SpillIdxes[MBBId].second & ((1<<31)-1)) == NewVReg &&
-            (int)getUseIndex(index) > SpillIdxes[MBBId].first)
+        std::map<unsigned, std::pair<int,unsigned> >::iterator SII =
+          SpillIdxes.find(MBBId);
+        if (SII != SpillIdxes.end() &&
+            (SII->second.second & ((1<<31)-1)) == NewVReg &&
+            (int)getUseIndex(index) > SII->second.first)
           SpillIdxes[MBBId].second &= (1<<31)-1;
       }
 
@@ -985,9 +998,8 @@ addIntervalsForSpills(const LiveInterval &li,
 
   // Each bit specify whether it a spill is required in the MBB.
   BitVector SpillMBBs(mf_->getNumBlockIDs());
-  std::vector<std::pair<int, unsigned> > SpillIdxes(mf_->getNumBlockIDs(),
-                                                    std::make_pair(-1,0));
-  std::vector<unsigned> NewVRegs(mf_->getNumBlockIDs(), 0);
+  std::map<unsigned, std::pair<int, unsigned> > SpillIdxes;
+  std::map<unsigned,unsigned> NewVRegs;
   std::vector<LiveInterval*> NewLIs;
   SSARegMap *RegMap = mf_->getSSARegMap();
   const TargetRegisterClass* rc = RegMap->getRegClass(li.reg);
@@ -1015,7 +1027,6 @@ addIntervalsForSpills(const LiveInterval &li,
     bool isLoadSS = DefIsReMat && tii_->isLoadFromStackSlot(ReMatDefMI, LdSlot);
     bool isLoad = isLoadSS ||
       (DefIsReMat && (ReMatDefMI->getInstrDescriptor()->Flags & M_LOAD_FLAG));
-    vrm.removeAllSpillPtsForReg(li.reg);
     bool IsFirstRange = true;
     for (LiveInterval::Ranges::const_iterator
            I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
@@ -1086,7 +1097,6 @@ addIntervalsForSpills(const LiveInterval &li,
   // One stack slot per live interval.
   if (NeedStackSlot && vrm.getPreSplitReg(li.reg) == 0)
     Slot = vrm.assignVirt2StackSlot(li.reg);
-
 
   // Create new intervals and rewrite defs and uses.
   for (LiveInterval::Ranges::const_iterator

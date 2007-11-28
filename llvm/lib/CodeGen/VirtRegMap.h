@@ -80,12 +80,7 @@ namespace llvm {
     /// SpillPt2VirtMap - This records the virtual registers which should
     /// be spilled right after the MachineInstr due to live interval
     /// splitting.
-    DenseMap<MachineInstr*, std::vector<unsigned> > SpillPt2VirtMap;
-
-    /// Virt2SplitMap - This records the MachineInstrs where a virtual
-    /// register should be spilled due to live interval splitting.
-    IndexedMap<std::vector<MachineInstr*>, VirtReg2IndexFunctor>
-    Virt2SpillPtsMap;
+    std::map<MachineInstr*, std::vector<unsigned> > SpillPt2VirtMap;
 
     /// ReMatId - Instead of assigning a stack slot to a to be rematerialized
     /// virtual register, an unique id is being assigned. This keeps track of
@@ -209,6 +204,11 @@ namespace llvm {
       ReMatMap[virtReg] = def;
     }
 
+    /// @brief returns true if the specified MachineInstr is a spill point.
+    bool isSpillPt(MachineInstr *Pt) const {
+      return SpillPt2VirtMap.find(Pt) != SpillPt2VirtMap.end();
+    }
+
     /// @brief returns the virtual registers that should be spilled due to
     /// splitting right after the specified MachineInstr.
     std::vector<unsigned> &getSpillPtSpills(MachineInstr *Pt) {
@@ -217,52 +217,26 @@ namespace llvm {
 
     /// @brief records the specified MachineInstr as a spill point for virtReg.
     void addSpillPoint(unsigned virtReg, MachineInstr *Pt) {
-      SpillPt2VirtMap[Pt].push_back(virtReg);
-      Virt2SpillPtsMap[virtReg].push_back(Pt);
-    }
-
-    /// @brief remove the virtReg from the list of registers that should be
-    /// spilled (due to splitting) right after the specified MachineInstr.
-    void removeRegFromSpillPt(MachineInstr *Pt, unsigned virtReg) {
-      std::vector<unsigned> &Regs = SpillPt2VirtMap[Pt];
-      if (Regs.back() == virtReg) // Most common case.
-        Regs.pop_back();
-      for (unsigned i = 0, e = Regs.size(); i != e; ++i)
-        if (Regs[i] == virtReg) {
-          Regs.erase(Regs.begin()+i-1);
-          break;
-        }
-    }
-
-    /// @brief specify virtReg is no longer being spilled due to splitting.
-    void removeAllSpillPtsForReg(unsigned virtReg) {
-      std::vector<MachineInstr*> &SpillPts = Virt2SpillPtsMap[virtReg];
-      for (unsigned i = 0, e = SpillPts.size(); i != e; ++i)
-        removeRegFromSpillPt(SpillPts[i], virtReg);
-      Virt2SpillPtsMap[virtReg].clear();
-    }
-
-    /// @brief remove the specified MachineInstr as a spill point for the
-    /// specified register.
-    void removeRegSpillPt(unsigned virtReg, MachineInstr *Pt) {
-      std::vector<MachineInstr*> &SpillPts = Virt2SpillPtsMap[virtReg];
-      if (SpillPts.back() == Pt) // Most common case.
-        SpillPts.pop_back();
-      for (unsigned i = 0, e = SpillPts.size(); i != e; ++i)
-        if (SpillPts[i] == Pt) {
-          SpillPts.erase(SpillPts.begin()+i-1);
-          break;
-        }
+      if (SpillPt2VirtMap.find(Pt) != SpillPt2VirtMap.end())
+        SpillPt2VirtMap[Pt].push_back(virtReg);
+      else {
+        std::vector<unsigned> Virts;
+        Virts.push_back(virtReg);
+        SpillPt2VirtMap.insert(std::make_pair(Pt, Virts));
+      }
     }
 
     void transferSpillPts(MachineInstr *Old, MachineInstr *New) {
-      std::vector<unsigned> &OldRegs = SpillPt2VirtMap[Old];
-      while (!OldRegs.empty()) {
-        unsigned virtReg = OldRegs.back();
-        OldRegs.pop_back();
-        removeRegSpillPt(virtReg, Old);
+      std::map<MachineInstr*,std::vector<unsigned> >::iterator I =
+        SpillPt2VirtMap.find(Old);
+      if (I == SpillPt2VirtMap.end())
+        return;
+      while (!I->second.empty()) {
+        unsigned virtReg = I->second.back();
+        I->second.pop_back();
         addSpillPoint(virtReg, New);
       }
+      SpillPt2VirtMap.erase(I);
     }
 
     /// @brief Updates information about the specified virtual register's value
@@ -282,10 +256,11 @@ namespace llvm {
       return MI2VirtMap.equal_range(MI);
     }
     
-    /// RemoveFromFoldedVirtMap - If the specified machine instruction is in
-    /// the folded instruction map, remove its entry from the map.
-    void RemoveFromFoldedVirtMap(MachineInstr *MI) {
+    /// RemoveMachineInstrFromMaps - MI is being erased, remove it from the
+    /// the folded instruction map and spill point map.
+    void RemoveMachineInstrFromMaps(MachineInstr *MI) {
       MI2VirtMap.erase(MI);
+      SpillPt2VirtMap.erase(MI);
     }
 
     void print(std::ostream &OS) const;
