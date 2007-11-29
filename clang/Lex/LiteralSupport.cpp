@@ -261,7 +261,7 @@ NumericLiteralParser(const char *begin, const char *end,
       s = SkipOctalDigits(s);
       if (s == ThisTokEnd) {
         // Done.
-      } else if (isxdigit(*s)) {
+      } else if (isxdigit(*s) && !(*s == 'e' || *s == 'E')) {
         TokLoc = PP.AdvanceToTokenCharacter(TokLoc, s-begin);
         Diag(TokLoc, diag::err_invalid_octal_digit, std::string(s, s+1));
         return;
@@ -290,7 +290,7 @@ NumericLiteralParser(const char *begin, const char *end,
     s = SkipDigits(s);
     if (s == ThisTokEnd) {
       // Done.
-    } else if (isxdigit(*s)) {
+    } else if (isxdigit(*s) && !(*s == 'e' || *s == 'E')) {
       Diag(TokLoc, diag::err_invalid_decimal_digit, std::string(s, s+1));
       return;
     } else if (*s == '.') {
