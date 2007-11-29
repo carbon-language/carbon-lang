@@ -259,10 +259,11 @@ void Parser::Initialize() {
 
 /// ParseTopLevelDecl - Parse one top-level declaration, return whatever the
 /// action tells us to.  This returns true if the EOF was encountered.
-bool Parser::ParseTopLevelDecl() {
+bool Parser::ParseTopLevelDecl(DeclTy*& Result) {
+  Result = 0;
   if (Tok.is(tok::eof)) return true;
   
-  ParseExternalDeclaration();
+  Result = ParseExternalDeclaration();
   return false;
 }
 
@@ -280,7 +281,8 @@ void Parser::Finalize() {
 void Parser::ParseTranslationUnit() {
   Initialize();
   
-  while (!ParseTopLevelDecl())
+  DeclTy *Res;
+  while (!ParseTopLevelDecl(Res))
     /*parse them all*/;
   
   Finalize();

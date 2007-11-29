@@ -63,8 +63,8 @@ QualType Sema::GetObjcProtoType(SourceLocation Loc) {
   return Context.getObjcProtoType();
 }
 
-Sema::Sema(Preprocessor &pp, ASTContext &ctxt, std::vector<Decl*> &prevInGroup)
-  : PP(pp), Context(ctxt), CurFunctionDecl(0), TopLevelDeclList(prevInGroup) {
+Sema::Sema(Preprocessor &pp, ASTContext &ctxt)
+  : PP(pp), Context(ctxt), CurFunctionDecl(0) {
   
   // Get IdentifierInfo objects for known functions for which we
   // do extra checking.  

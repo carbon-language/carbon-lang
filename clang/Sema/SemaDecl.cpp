@@ -191,9 +191,6 @@ ScopedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
   } else {
     II->setFETokenInfo(New);
   }    
-  // Make sure clients iterating over decls see this.
-  AddTopLevelDecl(New);
-  
   return New;
 }
 
@@ -676,10 +673,6 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     II->setFETokenInfo(New);
     S->AddDecl(New);
   }
-  
-  if (S->getParent() == 0)
-    AddTopLevelDecl(New);
-
   // If any semantic error occurred, mark the decl as invalid.
   if (D.getInvalidType() || InvalidDecl)
     New->setInvalidDecl();
@@ -975,7 +968,6 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   NewFD->setNext(II->getFETokenInfo<ScopedDecl>());
   II->setFETokenInfo(NewFD);
   GlobalScope->AddDecl(NewFD);
-  AddTopLevelDecl(NewFD);
   
   // Allow all of Sema to see that we are entering a method definition.
   CurMethodDecl = MDecl;
@@ -1685,12 +1677,6 @@ Sema::DeclTy *Sema::ActOnTag(Scope *S, unsigned TagType, TagKind TK,
     break;
   }    
   
-  // For top-level tag definitions, make sure we chain the the tag decl to
-  // the vardecl. This enables the AST streamer to see both X and D in the
-  // following example: struct X { int A; } D; 
-  if (S->getParent() == 0)
-    AddTopLevelDecl(New);
-
   // If this has an identifier, add it to the scope stack.
   if (Name) {
     // The scope passed in may not be a decl scope.  Zip up the scope tree until
@@ -2462,14 +2448,6 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   }
   
   Enum->defineElements(EltList, BestType);
-}
-
-void Sema::AddTopLevelDecl(Decl *current) {
-  if (!current) return;
-
-  // If this is a top-level decl that is chained to some other (e.g. int A,B,C;)
-  // remember this in the TopLevelDeclList list.
-  TopLevelDeclList.push_back((Decl*)current);
 }
 
 void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {

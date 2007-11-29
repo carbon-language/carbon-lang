@@ -76,7 +76,7 @@ public:
   
   /// ParseTopLevelDecl - Parse one top-level declaration. Returns true if 
   /// the EOF was encountered.
-  bool ParseTopLevelDecl();
+  bool ParseTopLevelDecl(DeclTy*& Result);
   
   /// Finalize - Shut down the parser.
   ///
