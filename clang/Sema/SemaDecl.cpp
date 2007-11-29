@@ -727,8 +727,10 @@ void Sema::AddInitializerToDecl(DeclTy *dcl, ExprTy *init) {
   // completed by the initializer. For example: 
   //   int ary[] = { 1, 3, 5 };
   // "ary" transitions from a VariableArrayType to a ConstantArrayType.
-  if (!VDecl->isInvalidDecl() && (DclT != SavT))
+  if (!VDecl->isInvalidDecl() && (DclT != SavT)) {
     VDecl->setType(DclT);
+    Init->setType(DclT);
+  }
     
   // Attach the initializer to the decl.
   VDecl->setInit(Init);
