@@ -413,26 +413,21 @@ llvm::APFloat NumericLiteralParser::
 GetFloatValue(const llvm::fltSemantics &Format, bool* isExact) {
   using llvm::APFloat;
   
-  char floatChars[256];
-  strncpy(floatChars, ThisTokBegin, ThisTokEnd-ThisTokBegin);
-  floatChars[ThisTokEnd-ThisTokBegin] = '\0';
-
-#if 1
+  llvm::SmallVector<char,256> floatChars;
+  for (unsigned i = 0, n = ThisTokEnd-ThisTokBegin; i != n; ++i)
+    floatChars.push_back(ThisTokBegin[i]);
+  
+  floatChars.push_back('\0');
+  
   APFloat V (Format, APFloat::fcZero, false);
-
   APFloat::opStatus status;
-  status = V.convertFromString(floatChars,APFloat::rmTowardZero);
+  
+  status = V.convertFromString(&floatChars[0],APFloat::rmNearestTiesToEven);
   
   if (isExact)
     *isExact = status == APFloat::opOK;
   
   return V;
-#else
-  // FIXME: this is horrible!
-  APFloat V(strtod(floatChars, 0));
-  V.convert(Format, APFloat::rmTowardZero);
-  return V;
-#endif
 }
 
 void NumericLiteralParser::Diag(SourceLocation Loc, unsigned DiagID, 
