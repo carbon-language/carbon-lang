@@ -16,6 +16,7 @@
 
 namespace clang {
   class ASTContext;
+  class Decl;
   
 /// ASTConsumer - This is an abstract interface that should be implemented by
 /// clients that read ASTs.  This abstraction layer allows the client to be
@@ -26,13 +27,19 @@ public:
   
   /// Initialize - This is called to initialize the consumer, providing the
   /// ASTContext and the file ID of the primary file.
-  virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
-  }
+  virtual void Initialize(ASTContext &Context, unsigned MainFileID) {}
   
-  /// HandleTopLevelDecl - Handle the specified top-level declaration.
-  ///
-  virtual void HandleTopLevelDecl(Decl *D) {
-  }
+  /// HandleTopLevelDecl - Handle the specified top-level declaration.  This is
+  ///  called by HandleTopLevelDeclaration to process every top-level Decl*.
+  virtual void HandleTopLevelDecl(Decl *D) {};
+    
+  
+  /// HandleTopLevelDeclaration - Handle the specified top-level declaration.
+  ///  This is called only for Decl* that are the head of a chain of
+  ///  Decl's (in the case that the Decl* is a ScopedDecl*).  Subclasses
+  ///  can override its behavior; by default it calls HandleTopLevelDecl
+  ///  for every Decl* in a decl chain.
+  virtual void HandleTopLevelDeclaration(Decl *D);
   
   /// PrintStats - If desired, print any statistics.
   virtual void PrintStats() {
