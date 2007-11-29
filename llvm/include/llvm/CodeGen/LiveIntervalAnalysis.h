@@ -277,10 +277,13 @@ namespace llvm {
                               MachineInstr *DefMI, unsigned index, unsigned i,
                               bool isSS, int slot, unsigned reg);
 
-    bool anyKillInMBBAfterIdx(const LiveInterval &li,
-                              MachineBasicBlock *MBB, unsigned Idx,
-                              const VNInfo *VNI = NULL) const;
+    /// anyKillInMBBAfterIdx - Returns true if there is a kill of the specified
+    /// VNInfo that's after the specified index but is within the basic block.
+    bool anyKillInMBBAfterIdx(const LiveInterval &li, const VNInfo *VNI,
+                              MachineBasicBlock *MBB, unsigned Idx) const;
 
+    /// intervalIsInOneMBB - Returns true if the specified interval is entirely
+    /// within a single basic block.
     bool intervalIsInOneMBB(const LiveInterval &li) const;
 
     /// rewriteInstructionForSpills, rewriteInstructionsForSpills - Helper functions
@@ -301,7 +304,9 @@ namespace llvm {
         VirtRegMap &vrm, SSARegMap *RegMap, const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds, const LoopInfo *loopInfo,
         BitVector &SpillMBBs,
-        std::map<unsigned, std::pair<int, unsigned> > &SpillIdxes,
+        std::map<unsigned, std::pair<int, bool> > &SpillIdxes,
+        BitVector &RestoreMBBs,
+        std::map<unsigned, std::pair<int, bool> > &RestoreIdxes,
         std::map<unsigned,unsigned> &NewVRegs,
         std::vector<LiveInterval*> &NewLIs);
 

@@ -940,10 +940,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
   // ReMatDefs - These are rematerializable def MIs which are not deleted.
   SmallSet<MachineInstr*, 4> ReMatDefs;
 
-  // ReloadedSplits - Splits must be reloaded once per MBB. This keeps track
-  // which have been reloaded.
-  SmallSet<unsigned, 8> ReloadedSplits;
-
   // Keep track of kill information.
   BitVector RegKills(MRI->getNumRegs());
   std::vector<MachineOperand*>  KillOps;
@@ -962,6 +958,31 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
     MachineInstr &MI = *MII;
     const TargetInstrDescriptor *TID = MI.getInstrDescriptor();
+
+    // Insert restores here if asked to.
+    if (VRM.isRestorePt(&MI)) {
+      std::vector<unsigned> &RestoreRegs = VRM.getRestorePtRestores(&MI);
+      for (unsigned i = 0, e = RestoreRegs.size(); i != e; ++i) {
+        unsigned VirtReg = RestoreRegs[i];
+        if (!VRM.getPreSplitReg(VirtReg))
+          continue; // Split interval spilled again.
+        unsigned Phys = VRM.getPhys(VirtReg);
+        MF.setPhysRegUsed(Phys);
+        if (VRM.isReMaterialized(VirtReg)) {
+          MRI->reMaterialize(MBB, &MI, Phys,
+                             VRM.getReMaterializedMI(VirtReg));
+          ++NumReMats;
+        } else {
+          const TargetRegisterClass* RC = RegMap->getRegClass(VirtReg);
+          MRI->loadRegFromStackSlot(MBB, &MI, Phys, VRM.getStackSlot(VirtReg), RC);
+          ++NumLoads;
+        }
+        // This invalidates Phys.
+        Spills.ClobberPhysReg(Phys);
+        UpdateKills(*prior(MII), RegKills, KillOps);
+        DOUT << '\t' << *prior(MII);
+      }
+    }
 
     // Insert spills here if asked to.
     if (VRM.isSpillPt(&MI)) {
@@ -1006,43 +1027,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         MF.setPhysRegUsed(Phys);
         if (MO.isDef())
           ReusedOperands.markClobbered(Phys);
-
-        // If it's a split live interval, insert a reload for the first use
-        // unless it's previously defined in the MBB.
-        unsigned SplitReg = VRM.getPreSplitReg(VirtReg);
-        if (SplitReg) {
-          if (ReloadedSplits.insert(VirtReg)) {
-            bool HasUse = MO.isUse();
-            // If it's a def, we don't need to reload the value unless it's
-            // a two-address code.
-            if (!HasUse) {
-              for (unsigned j = i+1; j != e; ++j) {
-                MachineOperand &MOJ = MI.getOperand(j);
-                if (MOJ.isRegister() && MOJ.getReg() == VirtReg) {
-                  HasUse = true;
-                  break;
-                }
-              }
-            }
-
-            if (HasUse) {
-              if (VRM.isReMaterialized(VirtReg)) {
-                MRI->reMaterialize(MBB, &MI, Phys,
-                                   VRM.getReMaterializedMI(VirtReg));
-                ++NumReMats;
-              } else {
-                const TargetRegisterClass* RC = RegMap->getRegClass(VirtReg);
-                MRI->loadRegFromStackSlot(MBB, &MI, Phys, VRM.getStackSlot(VirtReg), RC);
-                ++NumLoads;
-              }
-              // This invalidates Phys.
-              Spills.ClobberPhysReg(Phys);
-              UpdateKills(*prior(MII), RegKills, KillOps);
-              DOUT << '\t' << *prior(MII);
-            }
-          }
-        }
-
         unsigned RReg = SubIdx ? MRI->getSubReg(Phys, SubIdx) : Phys;
         MI.getOperand(i).setReg(RReg);
         continue;
@@ -1263,12 +1247,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       unsigned VirtReg = I->second.first;
       VirtRegMap::ModRef MR = I->second.second;
       DOUT << "Folded vreg: " << VirtReg << "  MR: " << MR;
-
-      // If this is a split live interval, remember we have seen this so
-      // we do not need to reload it for later uses.
-      unsigned SplitReg = VRM.getPreSplitReg(VirtReg);
-      if (SplitReg)
-        ReloadedSplits.insert(VirtReg);
 
       int SS = VRM.getStackSlot(VirtReg);
       if (SS == VirtRegMap::NO_STACK_SLOT)

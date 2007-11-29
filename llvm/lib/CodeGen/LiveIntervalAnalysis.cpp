@@ -42,12 +42,15 @@ namespace {
                               cl::init(false), cl::Hidden);
 
   cl::opt<bool> SplitAtBB("split-intervals-at-bb", 
-                              cl::init(false), cl::Hidden);
+                          cl::init(false), cl::Hidden);
+  cl::opt<int> SplitLimit("split-limit",
+                          cl::init(-1), cl::Hidden);
 }
 
 STATISTIC(numIntervals, "Number of original intervals");
 STATISTIC(numIntervalsAfter, "Number of intervals after coalescing");
-STATISTIC(numFolded   , "Number of loads/stores folded into instructions");
+STATISTIC(numFolds    , "Number of loads/stores folded into instructions");
+STATISTIC(numSplits   , "Number of intervals split");
 
 char LiveIntervals::ID = 0;
 namespace {
@@ -389,7 +392,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       unsigned killIndex = getInstructionIndex(&mbb->back()) + InstrSlots::NUM;
       LiveRange LR(defIndex, killIndex, ValNo);
       interval.addRange(LR);
-      interval.addKill(ValNo, killIndex-1); // odd # means phi node
+      interval.addKill(ValNo, killIndex+1); // odd # means phi node
       DOUT << " +" << LR;
     }
   }
@@ -652,13 +655,17 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
     else
       LiveVariables::transferKillDeadInfo(MI, fmi, mri_);
     MachineBasicBlock &MBB = *MI->getParent();
-    vrm.virtFolded(reg, MI, i, fmi);
+    if (isSS) {
+      if (!mf_->getFrameInfo()->isFixedObjectIndex(slot))
+        vrm.virtFolded(reg, MI, i, fmi);
+    }
     vrm.transferSpillPts(MI, fmi);
+    vrm.transferRestorePts(MI, fmi);
     mi2iMap_.erase(MI);
     i2miMap_[index/InstrSlots::NUM] = fmi;
     mi2iMap_[fmi] = index;
     MI = MBB.insert(MBB.erase(MI), fmi);
-    ++numFolded;
+    ++numFolds;
     return true;
   }
   return false;
@@ -679,20 +686,6 @@ bool LiveIntervals::intervalIsInOneMBB(const LiveInterval &li) const {
       return false;
   }
   return true;
-}
-
-static
-bool hasALaterUse(MachineBasicBlock *MBB, MachineInstr *MI, unsigned Reg) {
-  MachineBasicBlock::iterator I = MI;
-  if (I == MBB->end())
-    return false;
-  ++I;
-  while (I != MBB->end()) {
-    if (I->findRegisterUseOperandIdx(Reg) != -1)
-      return true;
-    ++I;
-  }
-  return false;
 }
 
 /// rewriteInstructionForSpills, rewriteInstructionsForSpills - Helper functions
@@ -738,6 +731,7 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
       }
 
       // If def for this use can't be rematerialized, then try folding.
+      // If def is rematerializable and it's a load, also try folding.
       TryFold = !ReMatOrigDefMI ||
         (ReMatOrigDefMI && (MI == ReMatOrigDefMI || isLoad));
       if (isLoad) {
@@ -747,15 +741,10 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
       }
     }
 
-    // If we are splitting live intervals, only fold if it's 1) the first
-    // use and it's a kill or 2) there isn't another use later in this MBB.
-    TryFold &= NewVReg == 0;
-    if (TryFold && TrySplit)
-      // Do not fold store into def here if we are splitting. We'll find an
-      // optimal point to insert a store later.
-      if (HasDef || mop.isDef() ||
-          (!mop.isKill() && hasALaterUse(MI->getParent(), MI, li.reg)))
-        TryFold = false;
+    // Do not fold load / store here if we are splitting. We'll find an
+    // optimal point to insert a load / store later.
+    if (TryFold)
+      TryFold = !TrySplit && NewVReg == 0;
 
     // FIXME: fold subreg use
     if (!isSubReg && TryFold &&
@@ -859,27 +848,13 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
 }
 
 bool LiveIntervals::anyKillInMBBAfterIdx(const LiveInterval &li,
-                                         MachineBasicBlock *MBB, unsigned Idx,
-                                         const VNInfo *VNI) const {
+                                   const VNInfo *VNI,
+                                   MachineBasicBlock *MBB, unsigned Idx) const {
   unsigned End = getMBBEndIdx(MBB);
-  if (VNI) {
-    for (unsigned j = 0, ee = VNI->kills.size(); j != ee; ++j) {
-      unsigned KillIdx = VNI->kills[j];
-      if (KillIdx > Idx && KillIdx < End)
-        return true;
-    }
-    return false;
-  }
-
-  // Look at all the VNInfo's.
-  for (LiveInterval::const_vni_iterator i = li.vni_begin(), e = li.vni_end();
-       i != e; ++i) {
-    const VNInfo *VNI = *i;
-    for (unsigned j = 0, ee = VNI->kills.size(); j != ee; ++j) {
-      unsigned KillIdx = VNI->kills[j];
-      if (KillIdx > Idx && KillIdx < End)
-        return true;
-    }
+  for (unsigned j = 0, ee = VNI->kills.size(); j != ee; ++j) {
+    unsigned KillIdx = VNI->kills[j];
+    if (KillIdx > Idx && KillIdx < End)
+      return true;
   }
   return false;
 }
@@ -895,7 +870,9 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                     SmallVector<int, 4> &ReMatIds,
                     const LoopInfo *loopInfo,
                     BitVector &SpillMBBs,
-                    std::map<unsigned, std::pair<int, unsigned> > &SpillIdxes,
+                    std::map<unsigned, std::pair<int, bool> > &SpillIdxes,
+                    BitVector &RestoreMBBs,
+                    std::map<unsigned, std::pair<int, bool> > &RestoreIdxes,
                     std::map<unsigned,unsigned> &NewVRegs,
                     std::vector<LiveInterval*> &NewLIs) {
   unsigned NewVReg = 0;
@@ -930,53 +907,79 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
 
     // Update weight of spill interval.
     LiveInterval &nI = getOrCreateInterval(NewVReg);
-    if (!TrySplitMI)
+    if (!TrySplitMI) {
       // The spill weight is now infinity as it cannot be spilled again.
       nI.weight = HUGE_VALF;
-    else {
-      // Keep track of the last def in each MBB.
-      if (HasDef) {
-        if (MI != ReMatOrigDefMI || !CanDelete) {
-          // If this is a two-address code, then this index probably starts a
-          // VNInfo so we should examine all the VNInfo's.
-          bool HasKill = HasUse
-            ? anyKillInMBBAfterIdx(li, MBB, getDefIndex(index))
-            : anyKillInMBBAfterIdx(li, MBB, getDefIndex(index), I->valno);
-          if (!HasKill) {
-            unsigned MBBId = MBB->getNumber();
-            // High bit specify whether this spill ought to be folded if
-            // possible.
-            std::map<unsigned, std::pair<int,unsigned> >::iterator SII =
-              SpillIdxes.find(MBBId);
-            if (SII == SpillIdxes.end() || (int)index > SII->second.first)
-              SpillIdxes[MBBId] = std::make_pair(index, NewVReg | (1 << 31));
-            SpillMBBs.set(MBBId);
-          }
-        }
-        if (!IsNew) {
-          // It this interval hasn't been assigned a stack slot
-          // (because earlier def is remat), do it now.
-          int SS = vrm.getStackSlot(NewVReg);
-          if (SS != (int)Slot) {
-            assert(SS == VirtRegMap::NO_STACK_SLOT);
-            vrm.assignVirt2StackSlot(NewVReg, Slot);
-          }
-        }
-      } else if (HasUse) {
-        // Use(s) following the last def, it's not safe to fold the spill.
-        unsigned MBBId = MBB->getNumber();
-        std::map<unsigned, std::pair<int,unsigned> >::iterator SII =
-          SpillIdxes.find(MBBId);
-        if (SII != SpillIdxes.end() &&
-            (SII->second.second & ((1<<31)-1)) == NewVReg &&
-            (int)getUseIndex(index) > SII->second.first)
-          SpillIdxes[MBBId].second &= (1<<31)-1;
-      }
-
-      // Update spill weight.
-      unsigned loopDepth = loopInfo->getLoopDepth(MBB->getBasicBlock());
-      nI.weight += getSpillWeight(HasDef, HasUse, loopDepth);
+      continue;
     }
+
+    // Keep track of the last def and first use in each MBB.
+    unsigned MBBId = MBB->getNumber();
+    if (HasDef) {
+      if (MI != ReMatOrigDefMI || !CanDelete) {
+        // If this is a two-address code, then this index probably starts a
+        // VNInfo so we should examine all the VNInfo's.
+        bool HasKill = false;
+        if (!HasUse)
+          HasKill = anyKillInMBBAfterIdx(li, I->valno, MBB, getDefIndex(index));
+        else {
+          const VNInfo *VNI = NULL;
+          for (LiveInterval::const_vni_iterator i = li.vni_begin(),
+                 e = li.vni_end(); i != e; ++i)
+            if ((*i)->def == getDefIndex(index)) {
+              VNI = *i;
+              break;
+            }
+          if (VNI)
+            HasKill = anyKillInMBBAfterIdx(li, VNI, MBB, getDefIndex(index));
+        }
+        if (!HasKill) {
+          std::map<unsigned, std::pair<int, bool> >::iterator SII =
+            SpillIdxes.find(MBBId);
+          if (SII == SpillIdxes.end())
+            SpillIdxes[MBBId] = std::make_pair(index, true);
+          else if ((int)index > SII->second.first) {
+            // If there is an earlier def and this is a two-address
+            // instruction, then it's not possible to fold the store (which
+            // would also fold the load).
+            SpillIdxes[MBBId] = std::make_pair(index, !HasUse);
+          }
+          SpillMBBs.set(MBBId);
+        }
+      }
+      if (!IsNew) {
+        // It this interval hasn't been assigned a stack slot
+        // (because earlier def is remat), do it now.
+        int SS = vrm.getStackSlot(NewVReg);
+        if (SS != (int)Slot) {
+          assert(SS == VirtRegMap::NO_STACK_SLOT);
+          vrm.assignVirt2StackSlot(NewVReg, Slot);
+        }
+      }
+    }
+
+    if (HasUse) {
+      std::map<unsigned, std::pair<int, bool> >::iterator SII =
+        SpillIdxes.find(MBBId);
+      if (SII != SpillIdxes.end() && (int)index > SII->second.first)
+        // Use(s) following the last def, it's not safe to fold the spill.
+        SII->second.second = false;
+      std::map<unsigned, std::pair<int, bool> >::iterator RII =
+        RestoreIdxes.find(MBBId);
+      if (RII != RestoreIdxes.end())
+        // If we are splitting live intervals, only fold if it's the first
+        // use and there isn't another use later in the MBB.
+        RII->second.second = false;
+      else if (IsNew) {
+        // Only need a reload if there isn't an earlier def / use.
+        RestoreIdxes[MBBId] = std::make_pair(index, true);
+        RestoreMBBs.set(MBBId);
+      }
+    }
+
+    // Update spill weight.
+    unsigned loopDepth = loopInfo->getLoopDepth(MBB->getBasicBlock());
+    nI.weight += getSpillWeight(HasDef, HasUse, loopDepth);
   }
 }
 
@@ -998,7 +1001,9 @@ addIntervalsForSpills(const LiveInterval &li,
 
   // Each bit specify whether it a spill is required in the MBB.
   BitVector SpillMBBs(mf_->getNumBlockIDs());
-  std::map<unsigned, std::pair<int, unsigned> > SpillIdxes;
+  std::map<unsigned, std::pair<int, bool> > SpillIdxes;
+  BitVector RestoreMBBs(mf_->getNumBlockIDs());
+  std::map<unsigned, std::pair<int, bool> > RestoreIdxes;
   std::map<unsigned,unsigned> NewVRegs;
   std::vector<LiveInterval*> NewLIs;
   SSARegMap *RegMap = mf_->getSSARegMap();
@@ -1036,13 +1041,15 @@ addIntervalsForSpills(const LiveInterval &li,
       if (IsFirstRange) {
         rewriteInstructionsForSpills(li, false, I, NULL, ReMatDefMI,
                              Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
-                             false, vrm, RegMap, rc, ReMatIds,
-                             loopInfo, SpillMBBs, SpillIdxes, NewVRegs, NewLIs);
+                             false, vrm, RegMap, rc, ReMatIds, loopInfo,
+                             SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
+                             NewVRegs, NewLIs);
       } else {
         rewriteInstructionsForSpills(li, false, I, NULL, 0,
                              Slot, 0, false, false, false,
-                             false, vrm, RegMap, rc, ReMatIds,
-                             loopInfo, SpillMBBs, SpillIdxes, NewVRegs, NewLIs);
+                             false, vrm, RegMap, rc, ReMatIds, loopInfo,
+                             SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
+                             NewVRegs, NewLIs);
       }
       IsFirstRange = false;
     }
@@ -1050,6 +1057,10 @@ addIntervalsForSpills(const LiveInterval &li,
   }
 
   bool TrySplit = SplitAtBB && !intervalIsInOneMBB(li);
+  if (SplitLimit != -1 && (int)numSplits >= SplitLimit)
+    TrySplit = false;
+  if (TrySplit)
+    ++numSplits;
   bool NeedStackSlot = false;
   for (LiveInterval::const_vni_iterator i = li.vni_begin(), e = li.vni_end();
        i != e; ++i) {
@@ -1110,39 +1121,118 @@ addIntervalsForSpills(const LiveInterval &li,
     bool isLoad = isLoadSS ||
       (DefIsReMat && (ReMatDefMI->getInstrDescriptor()->Flags & M_LOAD_FLAG));
     rewriteInstructionsForSpills(li, TrySplit, I, ReMatOrigDefMI, ReMatDefMI,
-                                 Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
-                                 CanDelete, vrm, RegMap, rc, ReMatIds,
-                                 loopInfo, SpillMBBs, SpillIdxes, NewVRegs, NewLIs);
+                               Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
+                               CanDelete, vrm, RegMap, rc, ReMatIds, loopInfo,
+                               SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
+                               NewVRegs, NewLIs);
   }
 
-  // Insert spills if we are splitting.
-  if (TrySplit && NeedStackSlot) {
-    int Id = SpillMBBs.find_first();
+  // Insert spills / restores if we are splitting.
+  if (TrySplit) {
+    if (NeedStackSlot) {
+      int Id = SpillMBBs.find_first();
+      while (Id != -1) {
+        unsigned VReg = NewVRegs[Id];
+        int index = SpillIdxes[Id].first;
+        bool DoFold = SpillIdxes[Id].second;
+        bool isReMat = vrm.isReMaterialized(VReg);
+        MachineInstr *MI = getInstructionFromIndex(index);
+        int OpIdx = -1;
+        bool FoldedLoad = false;
+        if (DoFold) {
+          for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
+            MachineOperand &MO = MI->getOperand(j);
+            if (!MO.isRegister() || MO.getReg() != VReg)
+              continue;
+            if (MO.isUse()) {
+              // Can't fold if it's two-address code and the use isn't the
+              // first and only use.
+              // If there are more than one uses, a load is still needed.
+              if (!isReMat && !FoldedLoad &&
+                  RestoreMBBs[Id] && RestoreIdxes[Id].first == index &&
+                  RestoreIdxes[Id].second) {
+                FoldedLoad = true;
+                continue;
+              } else {
+                OpIdx = -1;
+                break;
+              }
+            }
+            OpIdx = (int)j;
+          }
+        }
+        // Fold the store into the def if possible.
+        if (OpIdx == -1)
+          DoFold = false;
+        if (DoFold) {
+          if (tryFoldMemoryOperand(MI, vrm, NULL, index, OpIdx, true, Slot,
+                                   VReg)) {
+            if (FoldedLoad) {
+              // Folded a two-address instruction, do not issue a load.
+              RestoreMBBs.reset(Id);
+              RestoreIdxes.erase(Id);
+            }
+          } else
+            DoFold = false;
+        }
+
+        // Else tell the spiller to issue a store for us.
+        if (!DoFold)
+          vrm.addSpillPoint(VReg, MI);
+        Id = SpillMBBs.find_next(Id);
+      }
+    }
+
+    int Id = RestoreMBBs.find_first();
     while (Id != -1) {
-      unsigned index = SpillIdxes[Id].first;
-      unsigned VReg = SpillIdxes[Id].second & ((1 << 31)-1);
-      bool TryFold = SpillIdxes[Id].second & (1 << 31);
+      unsigned VReg = NewVRegs[Id];
+      int index = RestoreIdxes[Id].first;
+      bool DoFold = RestoreIdxes[Id].second;
       MachineInstr *MI = getInstructionFromIndex(index);
       int OpIdx = -1;
-      if (TryFold) {
+      if (DoFold) {
         for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
           MachineOperand &MO = MI->getOperand(j);
           if (!MO.isRegister() || MO.getReg() != VReg)
             continue;
-          if (MO.isUse()) {
+          if (MO.isDef()) {
             // Can't fold if it's two-address code.            
+            OpIdx = -1;
+            break;
+          }
+          if (OpIdx != -1) {
+            // Multiple uses, do not fold!
             OpIdx = -1;
             break;
           }
           OpIdx = (int)j;
         }
       }
-      // Fold the store into the def if possible.
-      if (OpIdx == -1 ||
-          !tryFoldMemoryOperand(MI, vrm, NULL, index, OpIdx, true, Slot, VReg))
-        // Else tell the spiller to issue a store for us.
-        vrm.addSpillPoint(VReg, MI);
-      Id = SpillMBBs.find_next(Id);
+
+      // Fold the load into the use if possible.
+      if (OpIdx == -1)
+        DoFold = false;
+      if (DoFold) {
+        if (vrm.isReMaterialized(VReg)) {
+          MachineInstr *ReMatDefMI = vrm.getReMaterializedMI(VReg);
+          int LdSlot = 0;
+          bool isLoadSS = tii_->isLoadFromStackSlot(ReMatDefMI, LdSlot);
+          // If the rematerializable def is a load, also try to fold it.
+          if (isLoadSS ||
+              (ReMatDefMI->getInstrDescriptor()->Flags & M_LOAD_FLAG))
+            DoFold = tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index, OpIdx,
+                                          isLoadSS, LdSlot, VReg);
+          else
+            DoFold = false;
+        } else
+          DoFold = tryFoldMemoryOperand(MI, vrm, NULL, index, OpIdx,
+                                        true, Slot, VReg);
+      }
+      // If folding is not possible / failed, then tell the spiller to issue a
+      // load / rematerialization for us.
+      if (!DoFold)
+        vrm.addRestorePoint(VReg, MI);
+      Id = RestoreMBBs.find_next(Id);
     }
   }
 

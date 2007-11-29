@@ -82,6 +82,11 @@ namespace llvm {
     /// splitting.
     std::map<MachineInstr*, std::vector<unsigned> > SpillPt2VirtMap;
 
+    /// RestorePt2VirtMap - This records the virtual registers which should
+    /// be restored right before the MachineInstr due to live interval
+    /// splitting.
+    std::map<MachineInstr*, std::vector<unsigned> > RestorePt2VirtMap;
+
     /// ReMatId - Instead of assigning a stack slot to a to be rematerialized
     /// virtual register, an unique id is being assigned. This keeps track of
     /// the highest id used so far. Note, this starts at (1<<18) to avoid
@@ -239,6 +244,41 @@ namespace llvm {
       SpillPt2VirtMap.erase(I);
     }
 
+    /// @brief returns true if the specified MachineInstr is a restore point.
+    bool isRestorePt(MachineInstr *Pt) const {
+      return RestorePt2VirtMap.find(Pt) != RestorePt2VirtMap.end();
+    }
+
+    /// @brief returns the virtual registers that should be restoreed due to
+    /// splitting right after the specified MachineInstr.
+    std::vector<unsigned> &getRestorePtRestores(MachineInstr *Pt) {
+      return RestorePt2VirtMap[Pt];
+    }
+
+    /// @brief records the specified MachineInstr as a restore point for virtReg.
+    void addRestorePoint(unsigned virtReg, MachineInstr *Pt) {
+      if (RestorePt2VirtMap.find(Pt) != RestorePt2VirtMap.end())
+        RestorePt2VirtMap[Pt].push_back(virtReg);
+      else {
+        std::vector<unsigned> Virts;
+        Virts.push_back(virtReg);
+        RestorePt2VirtMap.insert(std::make_pair(Pt, Virts));
+      }
+    }
+
+    void transferRestorePts(MachineInstr *Old, MachineInstr *New) {
+      std::map<MachineInstr*,std::vector<unsigned> >::iterator I =
+        RestorePt2VirtMap.find(Old);
+      if (I == RestorePt2VirtMap.end())
+        return;
+      while (!I->second.empty()) {
+        unsigned virtReg = I->second.back();
+        I->second.pop_back();
+        addRestorePoint(virtReg, New);
+      }
+      RestorePt2VirtMap.erase(I);
+    }
+
     /// @brief Updates information about the specified virtual register's value
     /// folded into newMI machine instruction.  The OpNum argument indicates the
     /// operand number of OldMI that is folded.
@@ -261,6 +301,7 @@ namespace llvm {
     void RemoveMachineInstrFromMaps(MachineInstr *MI) {
       MI2VirtMap.erase(MI);
       SpillPt2VirtMap.erase(MI);
+      RestorePt2VirtMap.erase(MI);
     }
 
     void print(std::ostream &OS) const;
