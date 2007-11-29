@@ -22,6 +22,8 @@ namespace llvm {
   class StringMapConstIterator;
   template<typename ValueT>
   class StringMapIterator;
+  template<typename ValueTy>
+  class StringMapEntry;
 
 /// StringMapEntryInitializer - This datatype can be partially specialized for
 /// various datatypes in a stringmap to allow them to be initialized when an 
@@ -30,7 +32,7 @@ template<typename ValueTy>
 class StringMapEntryInitializer {
 public:
   template <typename InitTy>
-  static void Initialize(ValueTy &T, InitTy InitVal) {
+  static void Initialize(StringMapEntry<ValueTy> &T, InitTy InitVal) {
   }
 };
   
@@ -168,7 +170,7 @@ public:
     StrBuffer[KeyLength] = 0;  // Null terminate for convenience of clients.
     
     // Initialize the value if the client wants to.
-    StringMapEntryInitializer<ValueTy>::Initialize(NewItem->getValue(),InitVal);
+    StringMapEntryInitializer<ValueTy>::Initialize(*NewItem, InitVal);
     return NewItem;
   }
   
