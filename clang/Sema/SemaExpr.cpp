@@ -188,8 +188,12 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       Context.Target.getDoubleInfo(Size, Align, Format, Tok.getLocation());
     }
     
-    Res = new FloatingLiteral(Literal.GetFloatValue(*Format), Ty,
-                              Tok.getLocation());
+    // isExact will be set by GetFloatValue().
+    bool isExact = false;
+    
+    Res = new FloatingLiteral(Literal.GetFloatValue(*Format,&isExact), &isExact, 
+                              Ty, Tok.getLocation());
+    
   } else if (!Literal.isIntegerLiteral()) {
     return ExprResult(true);
   } else {

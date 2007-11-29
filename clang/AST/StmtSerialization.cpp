@@ -507,14 +507,16 @@ DoStmt* DoStmt::CreateImpl(Deserializer& D) {
 void FloatingLiteral::EmitImpl(Serializer& S) const {
   S.Emit(Loc);
   S.Emit(getType());
+  S.EmitBool(isExact());
   S.Emit(Value);
 }
 
 FloatingLiteral* FloatingLiteral::CreateImpl(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType t = QualType::ReadVal(D);
+  bool isExact = D.ReadBool();
   llvm::APFloat Val = llvm::APFloat::ReadVal(D);
-  FloatingLiteral* expr = new FloatingLiteral(Val,t,Loc);
+  FloatingLiteral* expr = new FloatingLiteral(Val,&isExact,t,Loc);
   return expr;
 }
 

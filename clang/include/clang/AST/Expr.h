@@ -240,12 +240,16 @@ public:
 
 class FloatingLiteral : public Expr {
   llvm::APFloat Value;
+  bool IsExact : 1;
   SourceLocation Loc;
 public:
-  FloatingLiteral(const llvm::APFloat &V, QualType Type, SourceLocation L)
-    : Expr(FloatingLiteralClass, Type), Value(V), Loc(L) {} 
+  FloatingLiteral(const llvm::APFloat &V, bool* isexact, 
+                  QualType Type, SourceLocation L)
+    : Expr(FloatingLiteralClass, Type), Value(V), IsExact(*isexact), Loc(L) {} 
 
   const llvm::APFloat &getValue() const { return Value; }
+  
+  bool isExact() const { return IsExact; }
 
   /// getValueAsDouble - This returns the value as an inaccurate double.  Note
   /// that this may cause loss of precision, but is useful for debugging dumps
