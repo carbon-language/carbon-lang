@@ -385,8 +385,9 @@ void CallInst::setParamAttrs(const ParamAttrsList *newAttrs) {
 bool CallInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
   if (ParamAttrs && ParamAttrs->paramHasAttr(i, attr))
     return true;
-  const Function *F = getCalledFunction();
-  return F && F->getParamAttrs() && F->getParamAttrs()->paramHasAttr(i, attr);
+  if (const Function *F = getCalledFunction())
+    return F->paramHasAttr(i, attr);
+  return false;
 }
 
 
@@ -462,8 +463,9 @@ void InvokeInst::setParamAttrs(const ParamAttrsList *newAttrs) {
 bool InvokeInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
   if (ParamAttrs && ParamAttrs->paramHasAttr(i, attr))
     return true;
-  const Function *F = getCalledFunction();
-  return F && F->getParamAttrs() && F->getParamAttrs()->paramHasAttr(i, attr);
+  if (const Function *F = getCalledFunction())
+    return F->paramHasAttr(i, attr);
+  return false;
 }
 
 
