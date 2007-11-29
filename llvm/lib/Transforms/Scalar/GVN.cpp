@@ -1054,7 +1054,8 @@ bool GVN::processInstruction(Instruction* I,
       if (CI->getCalledFunction() &&
           !AA.doesNotAccessMemory(CI->getCalledFunction())) {
         MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
-        if (MD.getDependency(CI) != MD.getDependency(cast<CallInst>(repl))) {
+        if (cast<Instruction>(repl)->getParent() != CI->getParent() ||
+            MD.getDependency(CI) != MD.getDependency(cast<CallInst>(repl))) {
           // There must be an intervening may-alias store, so nothing from
           // this point on will be able to be replaced with the preceding call
           currAvail.erase(repl);
