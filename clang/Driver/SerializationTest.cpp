@@ -18,6 +18,7 @@
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/CFG.h"
 #include "llvm/System/Path.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -130,6 +131,14 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename,
       Printer->HandleTopLevelDecl(*I);
       FilePrinter->HandleTopLevelDecl(*I);
       
+      if (FunctionDecl* FD = dyn_cast<FunctionDecl>(*I))
+        if (FD->getBody()) {
+          // Construct and print a CFG.
+          Janitor<CFG> cfg(CFG::buildCFG(FD->getBody()));
+          cfg->print(DeclPP);
+        }
+      
+      // Serialize the decl.
       Sezr.EmitOwnedPtr(*I);
     }
   }
@@ -274,6 +283,13 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename,
     Decl* decl = Dezr.ReadOwnedPtr<Decl>();
     Printer->HandleTopLevelDecl(decl);
     FilePrinter->HandleTopLevelDecl(decl);
+    
+    if (FunctionDecl* FD = dyn_cast<FunctionDecl>(decl))
+      if (FD->getBody()) {
+        // Construct and print a CFG.
+        Janitor<CFG> cfg(CFG::buildCFG(FD->getBody()));
+        cfg->print(DeclPP);
+      }
   }
 }
   
