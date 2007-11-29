@@ -715,6 +715,24 @@ void Sema::CheckFloatComparison(SourceLocation loc, Expr* lex, Expr *rex) {
       if (DRL->getDecl() == DRR->getDecl())
         EmitWarning = false;
   
+  
+  // Special case: check for comparisons against literals that can be exactly
+  //  represented by APFloat.  In such cases, do not emit a warning.  This
+  //  is a heuristic: often comparison against such literals are used to
+  //  detect if a value in a variable has not changed.  This clearly can
+  //  lead to false negatives.
+  if (EmitWarning) {
+    if (FloatingLiteral* FLL = dyn_cast<FloatingLiteral>(LeftExprSansParen)) {
+      if (FLL->isExact())
+        EmitWarning = false;
+    }
+    else
+      if (FloatingLiteral* FLR = dyn_cast<FloatingLiteral>(RightExprSansParen)){
+        if (FLR->isExact())
+          EmitWarning = false;
+    }
+  }
+  
   // Check for comparisons with builtin types.
   if (EmitWarning)           
     if (CallExpr* CL = dyn_cast<CallExpr>(LeftExprSansParen))
