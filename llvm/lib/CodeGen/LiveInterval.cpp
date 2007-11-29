@@ -206,6 +206,9 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
         // endpoint as well.
         if (End > it->end)
           extendIntervalEndTo(it, End);
+        else
+          // Overlapping intervals, there might have been a kill here.
+          removeKill(it->valno, End);
         return it;
       }
     } else {
