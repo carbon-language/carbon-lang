@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin 
-; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -stats -info-output-file - | grep "re-materializable defs elided"
+; RUN: llvm-as < %s | llc -mtriple=arm-apple-darwin -stats -info-output-file - | grep "Number of re-materialization" | grep 5
 
 	%struct.CONTENTBOX = type { i32, i32, i32, i32, i32 }
 	%struct.LOCBOX = type { i32, i32, i32, i32 }
