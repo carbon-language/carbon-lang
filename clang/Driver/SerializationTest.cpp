@@ -128,18 +128,23 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename,
     for (std::list<Decl*>::iterator I=Decls.begin(), E=Decls.end(); I!=E; ++I) {
       llvm::cerr << "Serializing: Decl.\n";   
       
-      Printer->HandleTopLevelDecl(*I);
-      FilePrinter->HandleTopLevelDecl(*I);
-      
-      if (FunctionDecl* FD = dyn_cast<FunctionDecl>(*I))
-        if (FD->getBody()) {
-          // Construct and print a CFG.
-          Janitor<CFG> cfg(CFG::buildCFG(FD->getBody()));
-          cfg->print(DeclPP);
-        }
-      
-      // Serialize the decl.
-      Sezr.EmitOwnedPtr(*I);
+      // Only serialize the head of a decl chain.  The ASTConsumer interfaces
+      // provides us with each top-level decl, including those nested in
+      // a decl chain, so we may be passed decls that are already serialized.
+      if (!Sezr.isRegistered(*I)) {
+        Printer->HandleTopLevelDecl(*I);
+        FilePrinter->HandleTopLevelDecl(*I);
+        
+        if (FunctionDecl* FD = dyn_cast<FunctionDecl>(*I))
+          if (FD->getBody()) {
+            // Construct and print a CFG.
+            Janitor<CFG> cfg(CFG::buildCFG(FD->getBody()));
+            cfg->print(DeclPP);
+          }
+        
+        // Serialize the decl.
+        Sezr.EmitOwnedPtr(*I);
+      }
     }
   }
   
