@@ -720,7 +720,7 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
       continue;
 
     bool TryFold = !DefIsReMat;
-    bool FoldSS = true;
+    bool FoldSS = true; // Default behavior unless it's a remat.
     int FoldSlot = Slot;
     if (DefIsReMat) {
       // If this is the rematerializable definition MI itself and
@@ -734,8 +734,7 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
 
       // If def for this use can't be rematerialized, then try folding.
       // If def is rematerializable and it's a load, also try folding.
-      TryFold = !ReMatOrigDefMI ||
-        (ReMatOrigDefMI && (MI == ReMatOrigDefMI || isLoad));
+      TryFold = !ReMatDefMI || (ReMatDefMI && (MI == ReMatOrigDefMI || isLoad));
       if (isLoad) {
         // Try fold loads (from stack slot, constant pool, etc.) into uses.
         FoldSS = isLoadSS;
@@ -810,6 +809,12 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
       } else {
         vrm.assignVirt2StackSlot(NewVReg, Slot);
       }
+    } else if (HasUse && HasDef &&
+               vrm.getStackSlot(NewVReg) == VirtRegMap::NO_STACK_SLOT) {
+      // If this interval hasn't been assigned a stack slot (because earlier
+      // def is a deleted remat def), do it now.
+      assert(Slot != VirtRegMap::NO_STACK_SLOT);
+      vrm.assignVirt2StackSlot(NewVReg, Slot);
     }
 
     // create a new register interval for this spill / remat.
@@ -984,17 +989,6 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
           SpillMBBs.set(MBBId);
         }
       }
-
-      /// FIXME: Move this else where.
-      if (!IsNew) {
-        // It this interval hasn't been assigned a stack slot
-        // (because earlier def is remat), do it now.
-        int SS = vrm.getStackSlot(NewVReg);
-        if (SS != (int)Slot) {
-          assert(SS == VirtRegMap::NO_STACK_SLOT);
-          vrm.assignVirt2StackSlot(NewVReg, Slot);
-        }
-      }
     }
 
     if (HasUse) {
@@ -1110,6 +1104,7 @@ addIntervalsForSpills(const LiveInterval &li,
       // are two-address instructions that re-defined the value. Only the
       // first def can be rematerialized!
       if (IsFirstRange) {
+        // Note ReMatOrigDefMI has already been deleted.
         rewriteInstructionsForSpills(li, false, I, NULL, ReMatDefMI,
                              Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
                              false, vrm, RegMap, rc, ReMatIds, loopInfo,
