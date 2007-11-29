@@ -286,6 +286,21 @@ namespace llvm {
     /// within a single basic block.
     bool intervalIsInOneMBB(const LiveInterval &li) const;
 
+    /// SRInfo - Spill / restore info.
+    struct SRInfo {
+      int index;
+      unsigned vreg;
+      bool canFold;
+      SRInfo(int i, unsigned vr, bool f) : index(i), vreg(vr), canFold(f) {};
+    };
+
+    bool alsoFoldARestore(int Id, int index, unsigned vr,
+                          BitVector &RestoreMBBs,
+                          std::map<unsigned,std::vector<SRInfo> > &RestoreIdxes);
+    void eraseRestoreInfo(int Id, int index, unsigned vr,
+                          BitVector &RestoreMBBs,
+                          std::map<unsigned,std::vector<SRInfo> > &RestoreIdxes);
+
     /// rewriteInstructionForSpills, rewriteInstructionsForSpills - Helper functions
     /// for addIntervalsForSpills to rewrite uses / defs for the given live range.
     void rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
@@ -295,7 +310,7 @@ namespace llvm {
         VirtRegMap &vrm, SSARegMap *RegMap, const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds,
         unsigned &NewVReg, bool &HasDef, bool &HasUse, const LoopInfo *loopInfo,
-        std::map<unsigned,unsigned> &NewVRegs,
+        std::map<unsigned,unsigned> &MBBVRegsMap,
         std::vector<LiveInterval*> &NewLIs);
     void rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
         LiveInterval::Ranges::const_iterator &I,
@@ -304,10 +319,10 @@ namespace llvm {
         VirtRegMap &vrm, SSARegMap *RegMap, const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds, const LoopInfo *loopInfo,
         BitVector &SpillMBBs,
-        std::map<unsigned, std::pair<int, bool> > &SpillIdxes,
+        std::map<unsigned,std::vector<SRInfo> > &SpillIdxes,
         BitVector &RestoreMBBs,
-        std::map<unsigned, std::pair<int, bool> > &RestoreIdxes,
-        std::map<unsigned,unsigned> &NewVRegs,
+        std::map<unsigned,std::vector<SRInfo> > &RestoreIdxes,
+        std::map<unsigned,unsigned> &MBBVRegsMap,
         std::vector<LiveInterval*> &NewLIs);
 
     static LiveInterval createInterval(unsigned Reg);
