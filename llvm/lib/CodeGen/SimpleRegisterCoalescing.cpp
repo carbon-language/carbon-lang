@@ -490,6 +490,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec TheCopy, bool &Again) {
         if (CopiedValNos.insert(DstValNo)) {
           VNInfo *ValNo = RealDstInt.getNextValue(DstValNo->def, DstValNo->reg,
                                                   li_->getVNInfoAllocator());
+          ValNo->hasPHIKill = DstValNo->hasPHIKill;
           RealDstInt.addKills(ValNo, DstValNo->kills);
           RealDstInt.MergeValueInAsValue(*ResDstInt, DstValNo, ValNo);
         }
@@ -734,6 +735,7 @@ bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) 
   
   // Okay, the final step is to loop over the RHS live intervals, adding them to
   // the LHS.
+  LHSValNo->hasPHIKill |= VNI->hasPHIKill;
   LHS.addKills(LHSValNo, VNI->kills);
   LHS.MergeRangesInAsValue(RHS, LHSValNo);
   LHS.weight += RHS.weight;
@@ -969,6 +971,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     VNInfo *VNI = I->first;
     unsigned LHSValID = LHSValNoAssignments[VNI->id];
     LiveInterval::removeKill(NewVNInfo[LHSValID], VNI->def);
+    NewVNInfo[LHSValID]->hasPHIKill |= VNI->hasPHIKill;
     RHS.addKills(NewVNInfo[LHSValID], VNI->kills);
   }
 
@@ -978,6 +981,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
     VNInfo *VNI = I->first;
     unsigned RHSValID = RHSValNoAssignments[VNI->id];
     LiveInterval::removeKill(NewVNInfo[RHSValID], VNI->def);
+    NewVNInfo[RHSValID]->hasPHIKill |= VNI->hasPHIKill;
     LHS.addKills(NewVNInfo[RHSValID], VNI->kills);
   }
 

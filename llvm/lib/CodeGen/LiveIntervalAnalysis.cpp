@@ -362,7 +362,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
         DOUT << " Removing [" << Start << "," << End << "] from: ";
         interval.print(DOUT, mri_); DOUT << "\n";
         interval.removeRange(Start, End);
-        interval.addKill(VNI, Start+1); // odd # means phi node
+        interval.addKill(VNI, Start);
+        VNI->hasPHIKill = true;
         DOUT << " RESULT: "; interval.print(DOUT, mri_);
 
         // Replace the interval with one of a NEW value number.  Note that this
@@ -392,7 +393,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
       unsigned killIndex = getInstructionIndex(&mbb->back()) + InstrSlots::NUM;
       LiveRange LR(defIndex, killIndex, ValNo);
       interval.addRange(LR);
-      interval.addKill(ValNo, killIndex+1); // odd # means phi node
+      interval.addKill(ValNo, killIndex);
+      ValNo->hasPHIKill = true;
       DOUT << " +" << LR;
     }
   }
@@ -1081,21 +1083,14 @@ addIntervalsForSpills(const LiveInterval &li,
       vrm.setVirtIsReMaterialized(li.reg, ReMatDefMI);
 
       bool CanDelete = true;
-      for (unsigned j = 0, ee = VNI->kills.size(); j != ee; ++j) {
-        unsigned KillIdx = VNI->kills[j];
-        MachineInstr *KillMI = (KillIdx & 1)
-          ? NULL : getInstructionFromIndex(KillIdx);
-        // Kill is a phi node, not all of its uses can be rematerialized.
+      if (VNI->hasPHIKill) {
+        // A kill is a phi node, not all of its uses can be rematerialized.
         // It must not be deleted.
-        if (!KillMI) {
-          CanDelete = false;
-          // Need a stack slot if there is any live range where uses cannot be
-          // rematerialized.
-          NeedStackSlot = true;
-          break;
-        }
+        CanDelete = false;
+        // Need a stack slot if there is any live range where uses cannot be
+        // rematerialized.
+        NeedStackSlot = true;
       }
-
       if (CanDelete)
         ReMatDelete.set(VN);
     } else {

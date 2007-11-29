@@ -38,16 +38,18 @@ namespace llvm {
   /// contains ~1u,x to indicate that the value # is not used. 
   ///   def   - Instruction # of the definition.
   ///   reg   - Source reg iff val# is defined by a copy; zero otherwise.
+  ///   hasPHIKill - One or more of the kills are PHI nodes.
   ///   kills - Instruction # of the kills. If a kill is an odd #, it means
   ///           the kill is a phi join point.
   struct VNInfo {
     unsigned id;
     unsigned def;
     unsigned reg;
+    bool hasPHIKill;
     SmallVector<unsigned, 4> kills;
-    VNInfo() : id(~1U), def(~1U), reg(0) {}
+    VNInfo() : id(~1U), def(~1U), reg(0), hasPHIKill(false) {}
     VNInfo(unsigned i, unsigned d, unsigned r)
-      : id(i), def(d), reg(r) {}
+      : id(i), def(d), reg(r), hasPHIKill(false) {}
   };
 
   /// LiveRange structure - This represents a simple register range in the
@@ -158,6 +160,7 @@ namespace llvm {
     void copyValNumInfo(VNInfo *DstValNo, const VNInfo *SrcValNo) {
       DstValNo->def = SrcValNo->def;
       DstValNo->reg = SrcValNo->reg;
+      DstValNo->hasPHIKill = SrcValNo->hasPHIKill;
       DstValNo->kills = SrcValNo->kills;
     }
 

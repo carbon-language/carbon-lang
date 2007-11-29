@@ -206,7 +206,7 @@ LiveInterval::addRangeFrom(LiveRange LR, iterator From) {
         // endpoint as well.
         if (End > it->end)
           extendIntervalEndTo(it, End);
-        else
+        else if (End < it->end)
           // Overlapping intervals, there might have been a kill here.
           removeKill(it->valno, End);
         return it;
@@ -631,6 +631,8 @@ void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
             if (j != ee-1)
               OS << " ";
           }
+          if (vni->hasPHIKill)
+            OS << " phi";
           OS << ")";
         }
       }
