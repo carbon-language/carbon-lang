@@ -23,6 +23,17 @@ namespace llvm {
   template<typename ValueT>
   class StringMapIterator;
 
+/// StringMapEntryInitializer - This datatype can be partially specialized for
+/// various datatypes in a stringmap to allow them to be initialized when an 
+/// entry is default constructed for the map.
+template<typename ValueTy>
+class StringMapEntryInitializer {
+public:
+  template <typename InitTy>
+  static void Initialize(ValueTy &T, InitTy InitVal) {
+  }
+};
+  
   
 /// StringMapEntryBase - Shared base class of StringMapEntry instances.
 class StringMapEntryBase {
@@ -132,9 +143,10 @@ public:
   
   /// Create - Create a StringMapEntry for the specified key and default
   /// construct the value.
-  template<typename AllocatorTy>
+  template<typename AllocatorTy, typename InitType>
   static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd,
-                                AllocatorTy &Allocator) {
+                                AllocatorTy &Allocator,
+                                InitType InitVal) {
     unsigned KeyLength = KeyEnd-KeyStart;
     
     // Okay, the item doesn't already exist, and 'Bucket' is the bucket to fill
@@ -154,15 +166,30 @@ public:
     char *StrBuffer = const_cast<char*>(NewItem->getKeyData());
     memcpy(StrBuffer, KeyStart, KeyLength);
     StrBuffer[KeyLength] = 0;  // Null terminate for convenience of clients.
+    
+    // Initialize the value if the client wants to.
+    StringMapEntryInitializer<ValueTy>::Initialize(NewItem->getValue(),InitVal);
     return NewItem;
   }
   
-  /// Create - Create a StringMapEntry with normal malloc/free.
-  static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd) {
-    MallocAllocator A;
-    return Create(KeyStart, KeyEnd, A);
+  template<typename AllocatorTy>
+  static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd,
+                                AllocatorTy &Allocator) {
+    return Create(KeyStart, KeyEnd, Allocator, (void*)0);
   }
+    
   
+  /// Create - Create a StringMapEntry with normal malloc/free.
+  template<typename InitType>
+  static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd,
+                                InitType InitVal) {
+    MallocAllocator A;
+    return Create(KeyStart, KeyEnd, A, InitVal);
+  }
+
+  static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd) {
+    return Create(KeyStart, KeyEnd, (void*)0);
+  }
   
   /// GetStringMapEntryFromValue - Given a value that is known to be embedded
   /// into a StringMapEntry, return the StringMapEntry itself.
@@ -262,14 +289,16 @@ public:
   /// GetOrCreateValue - Look up the specified key in the table.  If a value
   /// exists, return it.  Otherwise, default construct a value, insert it, and
   /// return.
+  template <typename InitTy>
   StringMapEntry<ValueTy> &GetOrCreateValue(const char *KeyStart, 
-                                            const char *KeyEnd) {
+                                            const char *KeyEnd,
+                                            InitTy Val) {
     unsigned BucketNo = LookupBucketFor(KeyStart, KeyEnd);
     ItemBucket &Bucket = TheTable[BucketNo];
     if (Bucket.Item && Bucket.Item != getTombstoneVal())
       return *static_cast<MapEntryTy*>(Bucket.Item);
     
-    MapEntryTy *NewItem = MapEntryTy::Create(KeyStart, KeyEnd, Allocator);
+    MapEntryTy *NewItem = MapEntryTy::Create(KeyStart, KeyEnd, Allocator, Val);
     
     if (Bucket.Item == getTombstoneVal())
       --NumTombstones;
@@ -282,6 +311,11 @@ public:
     if (ShouldRehash())
       RehashTable();
     return *NewItem;
+  }
+  
+  StringMapEntry<ValueTy> &GetOrCreateValue(const char *KeyStart, 
+                                            const char *KeyEnd) {
+    return GetOrCreateValue(KeyStart, KeyEnd, (void*)0);
   }
   
   /// remove - Remove the specified key/value pair from the map, but do not
