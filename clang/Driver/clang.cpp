@@ -282,6 +282,12 @@ PascalStrings("fpascal-strings",
 static llvm::cl::opt<bool>
 WritableStrings("fwritable-strings",
               llvm::cl::desc("Store string literals as writable data."));
+
+static llvm::cl::opt<bool>
+LaxVectorConversions("flax-vector-conversions",
+                     llvm::cl::desc("Allow implicit conversions between vectors"
+                                    " with a different number of elements or "
+                                    "different element types."));
 // FIXME: add:
 //   -ansi
 //   -trigraphs
@@ -340,6 +346,7 @@ static void InitializeLanguageStandard(LangOptions &Options) {
   Options.DollarIdents = 1;  // FIXME: Really a target property.
   Options.PascalStrings = PascalStrings;
   Options.WritableStrings = WritableStrings;
+  Options.LaxVectorConversions = LaxVectorConversions;
 }
 
 //===----------------------------------------------------------------------===//

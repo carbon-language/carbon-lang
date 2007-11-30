@@ -37,7 +37,8 @@ struct LangOptions {
   unsigned PascalStrings     : 1;  // Allow Pascal strings
   unsigned Boolean           : 1;  // Allow bool/true/false
   unsigned WritableStrings   : 1;  // Allow writable strings
-  
+  unsigned LaxVectorConversions : 1;
+    
   LangOptions() {
     Trigraphs = BCPLComment = DollarIdents = Digraphs = HexFloats = 0;
     ObjC1 = ObjC2 = 0;

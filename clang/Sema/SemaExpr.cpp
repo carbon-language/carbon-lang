@@ -1100,9 +1100,22 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       return Compatible;
   } else if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
     if (lhsType->isVectorType() || rhsType->isVectorType()) {
-      if (lhsType.getCanonicalType() != rhsType.getCanonicalType())
+      if (!getLangOptions().LaxVectorConversions) {
+        if (lhsType.getCanonicalType() != rhsType.getCanonicalType())
+          return Incompatible;
+      } else {
+        if (lhsType->isVectorType() && rhsType->isVectorType()) {
+          if ((lhsType->isIntegerType() && rhsType->isIntegerType()) ||
+              (lhsType->isRealFloatingType() && 
+               rhsType->isRealFloatingType())) {
+            if (Context.getTypeSize(lhsType, SourceLocation()) == 
+                Context.getTypeSize(rhsType, SourceLocation()))
+              return Compatible;
+          }
+        }
         return Incompatible;
-    }
+      }
+    }      
     return Compatible;
   } else if (lhsType->isPointerType()) {
     if (rhsType->isIntegerType())
