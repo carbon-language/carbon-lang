@@ -44,6 +44,7 @@ struct LangOptions {
     ObjC1 = ObjC2 = 0;
     C99 = Microsoft = CPlusPlus = CPlusPlus0x = NoExtensions = 0;
     CXXOperatorNames = PascalStrings = Boolean = WritableStrings = 0;
+    LaxVectorConversions = 0;
   }
 };
 
