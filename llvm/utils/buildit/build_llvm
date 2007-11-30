@@ -166,6 +166,15 @@ fi
 cd $DEST_DIR$DEST_ROOT
 lipo -extract ppc -extract i386 lib/LLVMlto.0.0.0.so -output lib/LLVMlto.0.0.0.so
 
+# LTO is part of developer tools
+LTO_HOME=$DEST_DIR//Developer/usr/lib
+if [ "x$DEVELOPER_BIN" != "x" ]; then
+LTO_HOME=$DEST_DIR/$DEVELOPER_DIR/usr/lib
+fi
+
+mkdir -p $LTO_HOME
+mv lib/LLVMlto* $LTO_HOME/.
+
 ################################################################################
 # Create SYM_DIR with information required for debugging.
 
