@@ -122,6 +122,7 @@ public:
     // Move the cursor to the right word.
     NextChar = FirstChar+ByteNo;
     BitsInCurWord = 0;
+    CurWord = 0;
     
     // Skip over any bits that are already consumed.
     if (WordBitNo) {
