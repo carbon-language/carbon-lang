@@ -548,7 +548,10 @@ void GlobalsModRef::deleteValue(Value *V) {
   // Otherwise, if this is an allocation related to an indirect global, remove
   // it.
   AllocsForIndirectGlobals.erase(V);
+  
+  AliasAnalysis::deleteValue(V);
 }
 
 void GlobalsModRef::copyValue(Value *From, Value *To) {
+  AliasAnalysis::copyValue(From, To);
 }
