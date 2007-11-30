@@ -274,8 +274,9 @@ namespace llvm {
     /// MI. If it is successul, MI is updated with the newly created MI and
     /// returns true.
     bool tryFoldMemoryOperand(MachineInstr* &MI, VirtRegMap &vrm,
-                              MachineInstr *DefMI, unsigned index, unsigned i,
-                              bool isSS, int slot, unsigned reg);
+                              MachineInstr *DefMI, unsigned InstrIdx,
+                              unsigned OpIdx, unsigned NumUses,
+                              bool isSS, int Slot, unsigned Reg);
 
     /// anyKillInMBBAfterIdx - Returns true if there is a kill of the specified
     /// VNInfo that's after the specified index but is within the basic block.
