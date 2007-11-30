@@ -2055,7 +2055,7 @@ UpRTypes
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    ParamAttrsList *PAL = 0;
+    const ParamAttrsList *PAL = 0;
     if (lastCallingConv == OldCallingConv::CSRet) {
       ParamAttrsVector Attrs;
       ParamAttrsWithIndex PAWI;

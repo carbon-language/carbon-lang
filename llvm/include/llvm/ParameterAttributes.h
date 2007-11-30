@@ -130,13 +130,24 @@ class ParamAttrsList : public FoldingSetNode {
       : attrs(attrVec), refCount(0) {}
 
   public:
-    /// This method ensures the uniqueness of ParamAttrsList instances. The
+    /// This method ensures the uniqueness of ParamAttrsList instances.  The
     /// argument is a vector of attribute/index pairs as represented by the
-    /// ParamAttrsWithIndex structure. The vector is used in the construction of
-    /// the ParamAttrsList instance. If an instance with identical vector pairs
-    /// exists, it will be returned instead of creating a new instance.
+    /// ParamAttrsWithIndex structure.  The index values must be in strictly
+    /// increasing order and ParamAttr::None is not allowed.  The vector is
+    /// used to construct the ParamAttrsList instance.  If an instance with
+    /// identical vector pairs exists, it will be returned instead of creating
+    /// a new instance.
     /// @brief Get a ParamAttrsList instance.
-    static ParamAttrsList *get(const ParamAttrsVector &attrVec);
+    static const ParamAttrsList *get(const ParamAttrsVector &attrVec);
+
+    /// Returns the ParamAttrsList obtained by modifying PAL using the supplied
+    /// list of attribute/index pairs.  Any existing attributes for the given
+    /// index are replaced by the given attributes.  If there were no attributes
+    /// then the new ones are inserted.  Attributes can be deleted by replacing
+    /// them with ParamAttr::None.  Index values must be strictly increasing.
+    /// @brief Get a new ParamAttrsList instance by modifying an existing one.
+    static const ParamAttrsList *getModified(const ParamAttrsList *PAL,
+                                             const ParamAttrsVector &modVec);
 
     /// Returns whether each of the specified lists of attributes can be safely
     /// replaced with the other in a function or a function call.

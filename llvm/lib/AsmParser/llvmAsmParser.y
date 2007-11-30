@@ -2243,7 +2243,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
 
-  ParamAttrsList *PAL = 0;
+  const ParamAttrsList *PAL = 0;
   if (!Attrs.empty())
     PAL = ParamAttrsList::get(Attrs);
 
@@ -2645,7 +2645,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
         GEN_ERROR("Invalid number of parameters detected");
     }
 
-    ParamAttrsList *PAL = 0;
+    const ParamAttrsList *PAL = 0;
     if (!Attrs.empty())
       PAL = ParamAttrsList::get(Attrs);
 
@@ -2977,7 +2977,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     }
 
     // Finish off the ParamAttrs and check them
-    ParamAttrsList *PAL = 0;
+    const ParamAttrsList *PAL = 0;
     if (!Attrs.empty())
       PAL = ParamAttrsList::get(Attrs);
 

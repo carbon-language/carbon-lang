@@ -167,7 +167,7 @@ ParamAttrsList::Profile(FoldingSetNodeID &ID) const {
 
 static ManagedStatic<FoldingSet<ParamAttrsList> > ParamAttrsLists;
 
-ParamAttrsList *
+const ParamAttrsList *
 ParamAttrsList::get(const ParamAttrsVector &attrVec) {
   // If there are no attributes then return a null ParamAttrsList pointer.
   if (attrVec.empty())
@@ -198,6 +198,64 @@ ParamAttrsList::get(const ParamAttrsVector &attrVec) {
 
   // Return the ParamAttrsList that we found or created.
   return PAL;
+}
+
+const ParamAttrsList *
+ParamAttrsList::getModified(const ParamAttrsList *PAL,
+                            const ParamAttrsVector &modVec) {
+  if (modVec.empty())
+    return PAL;
+
+#ifndef NDEBUG
+  for (unsigned i = 0, e = modVec.size(); i < e; ++i)
+    assert((!i || modVec[i-1].index < modVec[i].index)
+           && "Misordered ParamAttrsList!");
+#endif
+
+  if (!PAL) {
+    // Strip any instances of ParamAttr::None from modVec before calling 'get'.
+    ParamAttrsVector newVec;
+    for (unsigned i = 0, e = modVec.size(); i < e; ++i)
+      if (modVec[i].attrs != ParamAttr::None)
+        newVec.push_back(modVec[i]);
+    return get(newVec);
+  }
+
+  const ParamAttrsVector &oldVec = PAL->attrs;
+
+  ParamAttrsVector newVec;
+  unsigned oldI = 0;
+  unsigned modI = 0;
+  unsigned oldE = oldVec.size();
+  unsigned modE = modVec.size();
+
+  while (oldI < oldE && modI < modE) {
+    uint16_t oldIndex = oldVec[oldI].index;
+    uint16_t modIndex = modVec[modI].index;
+
+    if (oldIndex < modIndex) {
+      newVec.push_back(oldVec[oldI]);
+      ++oldI;
+    } else if (modIndex < oldIndex) {
+      if (modVec[modI].attrs != ParamAttr::None)
+        newVec.push_back(modVec[modI]);
+      ++modI;
+    } else {
+      // Same index - overwrite or delete existing attributes.
+      if (modVec[modI].attrs != ParamAttr::None)
+        newVec.push_back(modVec[modI]);
+      ++oldI;
+      ++modI;
+    }
+  }
+
+  for (; oldI < oldE; ++oldI)
+    newVec.push_back(oldVec[oldI]);
+  for (; modI < modE; ++modI)
+    if (modVec[modI].attrs != ParamAttr::None)
+      newVec.push_back(modVec[modI]);
+
+  return get(newVec);
 }
 
 ParamAttrsList::~ParamAttrsList() {
