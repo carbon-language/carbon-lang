@@ -27,6 +27,7 @@ using llvm::utostr;
 namespace {
   class RewriteTest : public ASTConsumer {
     Rewriter Rewrite;
+    Diagnostic &Diags;
     ASTContext *Context;
     SourceManager *SM;
     unsigned MainFileID;
@@ -92,6 +93,7 @@ namespace {
     // Top Level Driver code.
     virtual void HandleTopLevelDecl(Decl *D);
     void HandleDeclInMainFile(Decl *D);
+    RewriteTest(Diagnostic &D) : Diags(D) {}
     ~RewriteTest();
 
     // Syntactic Rewriting.
@@ -160,7 +162,9 @@ namespace {
   };
 }
 
-ASTConsumer *clang::CreateCodeRewriterTest() { return new RewriteTest(); }
+ASTConsumer *clang::CreateCodeRewriterTest(Diagnostic &Diags) {
+  return new RewriteTest(Diags);
+}
 
 //===----------------------------------------------------------------------===//
 // Top Level Driver Code
@@ -860,7 +864,11 @@ Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   Expr *Replacement = new StringLiteral(StrEncoding.c_str(),
                                         StrEncoding.length(), false, StrType, 
                                         SourceLocation(), SourceLocation());
-  Rewrite.ReplaceStmt(Exp, Replacement);
+  if (Rewrite.ReplaceStmt(Exp, Replacement)) {
+    // replacement failed.
+    return Exp;
+  }
+  
   delete Exp;
   return Replacement;
 }

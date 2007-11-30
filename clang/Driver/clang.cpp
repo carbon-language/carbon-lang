@@ -836,7 +836,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     break;
     
   case RewriteTest:
-    Consumer = CreateCodeRewriterTest();
+    Consumer = CreateCodeRewriterTest(PP.getDiagnostics());
     break;
   }
   
