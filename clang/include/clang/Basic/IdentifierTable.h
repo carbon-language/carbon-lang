@@ -195,7 +195,7 @@ public:
   void Emit(llvm::Serializer& S) const;
   
   /// Create - Deserialize an IdentifierTable from a bitstream.
-  static IdentifierTable* Create(llvm::Deserializer& D);
+  static IdentifierTable* CreateAndRegister(llvm::Deserializer& D);
   
 private:  
   /// This ctor is not intended to be used by anyone except for object
@@ -227,7 +227,7 @@ class Selector {
     InfoPtr = reinterpret_cast<uintptr_t>(SI);
     assert((InfoPtr & ArgFlags) == 0 &&"Insufficiently aligned IdentifierInfo");
   }
-  Selector(intptr_t V) : InfoPtr(V) {}
+  Selector(uintptr_t V) : InfoPtr(V) {}
 public:
   friend class SelectorTable; // only the SelectorTable can create these.
   
@@ -269,6 +269,12 @@ public:
   static Selector getTombstoneMarker() {
     return Selector(uintptr_t(-2));
   }
+  
+  // Emit - Emit a selector to bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  // ReadVal - Read a selector from bitcode.
+  static Selector ReadVal(llvm::Deserializer& D);
 };
 
 /// SelectorTable - This table allows us to fully hide how we implement
@@ -292,6 +298,12 @@ public:
   Selector getNullarySelector(IdentifierInfo *ID) {
     return Selector(ID, 0);
   }
+  
+  // Emit - Emit a SelectorTable to bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  // Create - Reconstitute a SelectorTable from bitcode.
+  static SelectorTable* CreateAndRegister(llvm::Deserializer& D);
 };
 
 }  // end namespace clang

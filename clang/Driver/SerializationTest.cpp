@@ -53,9 +53,9 @@ class SerializationTest : public ASTConsumer {
   ASTContext* Context;
   std::list<Decl*> Decls;
   
-  enum { BasicMetadataBlock,
-         ASTContextBlock,
-         DeclsBlock };
+  enum { BasicMetadataBlock = 1,
+         ASTContextBlock = 2,
+         DeclsBlock = 3 };
 
 public:  
   SerializationTest() : Context(NULL) {};
@@ -163,6 +163,10 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename,
   
   Sezr.EnterBlock(BasicMetadataBlock);
 
+  // Block for SourceManager and Target.  Allows easy skipping around
+  // to the Selectors during deserialization.
+  Sezr.EnterBlock();
+
   // "Fake" emit the SourceManager.
   llvm::cerr << "Faux-serializing: SourceManager.\n";
   Sezr.EmitPtr(&Context->SourceMgr);
@@ -171,13 +175,15 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename,
   llvm::cerr << "Faux-serializing: Target.\n";
   Sezr.EmitPtr(&Context->Target);
 
-  // "Fake" emit Selectors.
-  llvm::cerr << "Faux-serializing: Selectors.\n";
-  Sezr.EmitPtr(&Context->Selectors);
+  Sezr.ExitBlock();
+
+  // Emit the Selectors.
+  llvm::cerr << "Serializing: Selectors.\n";
+  Sezr.Emit(Context->Selectors);
   
   // Emit the Identifier Table.
   llvm::cerr << "Serializing: IdentifierTable.\n";  
-  Sezr.EmitOwnedPtr(&Context->Idents);
+  Sezr.Emit(Context->Idents);
 
   Sezr.ExitBlock();  
   
@@ -254,19 +260,23 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename,
   llvm::cerr << "Faux-Deserializing: Target.\n";
   Dezr.RegisterPtr(&Context->Target);
 
-  // "Fake" read the Selectors.
-  llvm::cerr << "Faux-Deserializing: Selectors.\n";
-  Dezr.RegisterPtr(&Context->Selectors);  
+  // For Selectors, we must read the identifier table first because the
+  //  SelectorTable depends on the identifiers being already deserialized.
+  llvm::Deserializer::Location SelectorBlockLoc = Dezr.getCurrentBlockLocation();
+  Dezr.SkipBlock();
   
   // Read the identifier table.
   llvm::cerr << "Deserializing: IdentifierTable\n";
-  Dezr.ReadOwnedPtr<IdentifierTable>();
+  IdentifierTable::CreateAndRegister(Dezr);
+  
+  // Now jump back and read the selectors.
+  llvm::cerr << "Deserializing: Selectors\n";
+  Dezr.JumpTo(SelectorBlockLoc);
+  SelectorTable::CreateAndRegister(Dezr);
   
   // Now jump back to ASTContextBlock and read the ASTContext.
-  Dezr.JumpTo(ASTContextBlockLoc);
-  
-  // Read the ASTContext.  
   llvm::cerr << "Deserializing: ASTContext.\n";
+  Dezr.JumpTo(ASTContextBlockLoc);
   Dezr.ReadOwnedPtr<ASTContext>();
     
   // "Rewind" the stream.  Find the block with the serialized top-level decls.

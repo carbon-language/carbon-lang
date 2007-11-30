@@ -258,6 +258,8 @@ unsigned llvm::DenseMapInfo<clang::Selector>::getHashValue(clang::Selector S) {
 /// this class is provided strictly through Selector.
 namespace clang {
 class MultiKeywordSelector : public llvm::FoldingSetNode {
+  friend SelectorTable* SelectorTable::CreateAndRegister(llvm::Deserializer&);
+  MultiKeywordSelector(unsigned nKeys) : NumArgs(nKeys) {}
 public:  
   unsigned NumArgs;
 
@@ -265,11 +267,13 @@ public:
   MultiKeywordSelector(unsigned nKeys, IdentifierInfo **IIV) {
     assert((nKeys > 1) && "not a multi-keyword selector");
     NumArgs = nKeys;
+    
     // Fill in the trailing keyword array.
     IdentifierInfo **KeyInfo = reinterpret_cast<IdentifierInfo **>(this+1);
     for (unsigned i = 0; i != nKeys; ++i)
       KeyInfo[i] = IIV[i];
-  }
+  }  
+  
   // getName - Derive the full selector name and return it.
   std::string getName() const;
     
@@ -422,6 +426,8 @@ void IdentifierInfo::Read(llvm::Deserializer& D) {
 void IdentifierTable::Emit(llvm::Serializer& S) const {
   S.EnterBlock();
   
+  S.EmitPtr(this);
+  
   for (iterator I=begin(), E=end(); I != E; ++I) {
     const char* Key = I->getKeyData();
     const IdentifierInfo* Info = &I->getValue();
@@ -443,13 +449,14 @@ void IdentifierTable::Emit(llvm::Serializer& S) const {
   S.ExitBlock();
 }
 
-IdentifierTable* IdentifierTable::Create(llvm::Deserializer& D) {
+IdentifierTable* IdentifierTable::CreateAndRegister(llvm::Deserializer& D) {
   llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
 
   std::vector<char> buff;
   buff.reserve(200);
 
   IdentifierTable* t = new IdentifierTable();
+  D.RegisterPtr(t);  
   
   while (!D.FinishedBlock(BLoc)) {
     llvm::SerializedPtrID InfoPtrID = D.ReadPtrID();
@@ -467,6 +474,74 @@ IdentifierTable* IdentifierTable::Create(llvm::Deserializer& D) {
     
     if (KeyPtrID)
       D.RegisterPtr(KeyPtrID,Entry.getKeyData());
+  }
+  
+  return t;
+}
+
+//===----------------------------------------------------------------------===//
+// Serialization for Selector and SelectorTable.
+//===----------------------------------------------------------------------===//
+
+void Selector::Emit(llvm::Serializer& S) const {
+  S.EmitInt(getIdentifierInfoFlag());
+  S.EmitPtr(reinterpret_cast<void*>(InfoPtr & ~ArgFlags));
+}
+
+Selector Selector::ReadVal(llvm::Deserializer& D) {
+  unsigned flag = D.ReadInt();
+  
+  uintptr_t ptr;  
+  D.ReadUIntPtr(ptr,false); // No backpatching.
+  
+  return Selector(ptr | flag);
+}
+
+void SelectorTable::Emit(llvm::Serializer& S) const {
+  typedef llvm::FoldingSet<MultiKeywordSelector>::iterator iterator;
+  llvm::FoldingSet<MultiKeywordSelector> *SelTab;
+  SelTab = static_cast<llvm::FoldingSet<MultiKeywordSelector> *>(Impl);
+  
+  S.EnterBlock();
+  
+  S.EmitPtr(this);
+  
+  for (iterator I=SelTab->begin(), E=SelTab->end(); I != E; ++I) {
+    S.FlushRecord(); // Start a new record.
+    S.EmitInt(I->getNumArgs());
+
+    for (MultiKeywordSelector::keyword_iterator KI = I->keyword_begin(),
+         KE = I->keyword_end(); KI != KE; ++KI)
+      S.EmitPtr(*KI);
+  }
+  
+  S.ExitBlock();
+}
+
+SelectorTable* SelectorTable::CreateAndRegister(llvm::Deserializer& D) {
+  llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
+  
+  SelectorTable* t = new SelectorTable();
+  D.RegisterPtr(t);
+  
+  llvm::FoldingSet<MultiKeywordSelector>& SelTab =
+    *static_cast<llvm::FoldingSet<MultiKeywordSelector>*>(t->Impl);
+
+  while (!D.FinishedBlock(BLoc)) {
+    unsigned nKeys = D.ReadInt();
+    
+    MultiKeywordSelector *SI = 
+      (MultiKeywordSelector*)malloc(sizeof(MultiKeywordSelector) + 
+                                    nKeys*sizeof(IdentifierInfo *));
+
+    new (SI) MultiKeywordSelector(nKeys);
+
+    IdentifierInfo **KeyInfo = reinterpret_cast<IdentifierInfo **>(SI+1);
+
+    for (unsigned i = 0; i != nKeys; ++i)
+      D.ReadPtr(KeyInfo[i],false);
+    
+    SelTab.GetOrInsertNode(SI);
   }
   
   return t;
