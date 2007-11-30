@@ -1364,6 +1364,12 @@ GlobalVariable *DISerializer::Serialize(DebugInfoDesc *DD) {
   return GV;
 }
 
+/// addDescriptor - Directly connect DD with existing GV.
+void DISerializer::addDescriptor(DebugInfoDesc *DD,
+                                 GlobalVariable *GV) {
+  DescGlobals[DD] = GV;
+}
+
 //===----------------------------------------------------------------------===//
 
 /// Verify - Return true if the GlobalVariable appears to be a valid

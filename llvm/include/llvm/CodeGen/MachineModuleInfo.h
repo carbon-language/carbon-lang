@@ -755,6 +755,10 @@ public:
   DIDeserializer() {}
   ~DIDeserializer() {}
   
+  const std::map<GlobalVariable *, DebugInfoDesc *> &getGlobalDescs() const {
+    return GlobalDescs;
+  }
+
   /// Deserialize - Reconstitute a GlobalVariable into it's component
   /// DebugInfoDesc objects.
   DebugInfoDesc *Deserialize(Value *V);
@@ -810,6 +814,9 @@ public:
   /// Serialize - Recursively cast the specified descriptor into a
   /// GlobalVariable so that it can be serialized to a .bc or .ll file.
   GlobalVariable *Serialize(DebugInfoDesc *DD);
+
+  /// addDescriptor - Directly connect DD with existing GV.
+  void addDescriptor(DebugInfoDesc *DD, GlobalVariable *GV);
 };
 
 //===----------------------------------------------------------------------===//
@@ -1164,7 +1171,7 @@ public:
     std::vector<T *> AnchoredDescs;
     for (unsigned i = 0, N = Globals.size(); i < N; ++i) {
       GlobalVariable *GV = Globals[i];
-      
+
       // FIXME - In the short term, changes are too drastic to continue.
       if (DebugInfoDesc::TagFromGlobal(GV) == Desc.getTag() &&
           DebugInfoDesc::VersionFromGlobal(GV) == LLVMDebugVersion) {
@@ -1276,6 +1283,7 @@ public:
   /// of one is required to emit exception handling info.
   Function *getPersonality() const;
 
+  DIDeserializer *getDIDeserializer() { return &DR; }
 }; // End class MachineModuleInfo
 
 } // End llvm namespace
