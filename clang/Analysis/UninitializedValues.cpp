@@ -145,7 +145,13 @@ bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   
 bool TransferFuncs::VisitConditionalOperator(ConditionalOperator* C) {
   Visit(C->getCond());
-  return Visit(C->getLHS()) & Visit(C->getRHS());  // Yes: we want &, not &&.
+
+  bool rhsResult = Visit(C->getRHS());
+  // Handle the GNU extension for missing LHS.
+  if (Expr *lhs = C->getLHS())
+    return Visit(lhs) & rhsResult; // Yes: we want &, not &&.
+  else
+    return rhsResult;
 }
 
 bool TransferFuncs::VisitStmt(Stmt* S) {

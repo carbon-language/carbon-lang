@@ -564,10 +564,12 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     case Stmt::ConditionalOperatorClass: {
       ConditionalOperator *C = cast<ConditionalOperator>(E);
       
-      if (DeclRefExpr* LHS = EvalAddr(C->getLHS()))
-        return LHS;
-      else
-        return EvalAddr(C->getRHS());
+      // Handle the GNU extension for missing LHS.
+      if (Expr *lhsExpr = C->getLHS())
+        if (DeclRefExpr* LHS = EvalAddr(lhsExpr))
+          return LHS;
+
+       return EvalAddr(C->getRHS());
     }
       
     // For implicit casts, we need to handle conversions from arrays to
@@ -674,10 +676,12 @@ static DeclRefExpr* EvalVal(Expr *E) {
     // non-NULL DeclRefExpr's.  If one is non-NULL, we return it.
     ConditionalOperator *C = cast<ConditionalOperator>(E);
 
-    if (DeclRefExpr *LHS = EvalVal(C->getLHS()))
-      return LHS;
-    else
-      return EvalVal(C->getRHS());
+    // Handle the GNU extension for missing LHS.
+    if (Expr *lhsExpr = C->getLHS())
+      if (DeclRefExpr *LHS = EvalVal(lhsExpr))
+        return LHS;
+
+    return EvalVal(C->getRHS());
   }
   
   // Accesses to members are potential references to data on the stack.

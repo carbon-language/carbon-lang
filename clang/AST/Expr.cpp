@@ -494,7 +494,8 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case ConditionalOperatorClass: {
     const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
     if (!Exp->getCond()->isConstantExpr(Ctx, Loc) ||
-        !Exp->getLHS()->isConstantExpr(Ctx, Loc) ||
+        // Handle the GNU extension for missing LHS.
+        !(Exp->getLHS() && Exp->getLHS()->isConstantExpr(Ctx, Loc)) ||
         !Exp->getRHS()->isConstantExpr(Ctx, Loc))
       return false;
     return true;
@@ -809,10 +810,11 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     if (Result == 0) std::swap(TrueExp, FalseExp);
     
     // Evaluate the false one first, discard the result.
-    if (!FalseExp->isIntegerConstantExpr(Result, Ctx, Loc, false))
+    if (FalseExp && !FalseExp->isIntegerConstantExpr(Result, Ctx, Loc, false))
       return false;
     // Evalute the true one, capture the result.
-    if (!TrueExp->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
+    if (TrueExp && 
+        !TrueExp->isIntegerConstantExpr(Result, Ctx, Loc, isEvaluated))
       return false;
     break;
   }
