@@ -492,6 +492,11 @@ RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, const CallExpr *E) {
   else if (hasAggregateLLVMType(E->getType()))
     // Struct return.
     return RValue::getAggregate(Args[0]);
+  else {
+    // void return.
+    assert(E->getType()->isVoidType() && "Should only have a void expr here");
+    V = 0;
+  }
       
   return RValue::get(V);
 }

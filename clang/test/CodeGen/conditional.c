@@ -8,3 +8,10 @@ double test2(int cond, float a, double b)
 {
   return cond ? a : b;
 }
+
+void f();
+
+void test3(){
+   1 ? f() : (void)0;
+}
+

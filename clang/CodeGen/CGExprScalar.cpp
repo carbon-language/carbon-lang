@@ -912,6 +912,11 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   
   CGF.EmitBlock(ContBlock);
   
+  if (!LHS) {
+    assert(E->getType()->isVoidType() && "Non-void value should have a value");
+    return 0;
+  }
+  
   // Create a PHI node for the real part.
   llvm::PHINode *PN = Builder.CreatePHI(LHS->getType(), "cond");
   PN->reserveOperandSpace(2);
@@ -926,16 +931,14 @@ Value *ScalarExprEmitter::VisitChooseExpr(ChooseExpr *E) {
     Visit(E->isConditionTrue(CGF.getContext()) ? E->getLHS() : E->getRHS());
 }
 
-Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE)
-{
+Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
   llvm::Value *ArgValue = EmitLValue(VE->getSubExpr()).getAddress();
 
   llvm::Value *V = Builder.CreateVAArg(ArgValue, ConvertType(VE->getType()));  
   return V;
 }
 
-Value *ScalarExprEmitter::VisitObjCEncodeExpr(const ObjCEncodeExpr *E)
-{
+Value *ScalarExprEmitter::VisitObjCEncodeExpr(const ObjCEncodeExpr *E) {
   std::string str;
   
   CGF.getContext().getObjcEncodingForType(E->getEncodedType(), str);
