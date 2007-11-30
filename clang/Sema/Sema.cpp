@@ -64,7 +64,7 @@ QualType Sema::GetObjcProtoType(SourceLocation Loc) {
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt)
-  : PP(pp), Context(ctxt), CurFunctionDecl(0) {
+  : PP(pp), Context(ctxt), CurFunctionDecl(0), CurMethodDecl(0) {
   
   // Get IdentifierInfo objects for known functions for which we
   // do extra checking.  
