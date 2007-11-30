@@ -393,10 +393,11 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     BaseValue = BaseLV.getAddress();
     
     if (E->isArrow()) {
-      QualType PTy = cast<PointerType>(BaseExpr->getType())->getPointeeType();
+      QualType Ty = BaseExpr->getType();
+      Ty = cast<PointerType>(Ty.getCanonicalType())->getPointeeType();
       BaseValue =  
         Builder.CreateBitCast(BaseValue, 
-                              llvm::PointerType::get(ConvertType(PTy)), "tmp");
+                              llvm::PointerType::get(ConvertType(Ty)), "tmp");
     }
   } else
     BaseValue = EmitScalarExpr(BaseExpr);
