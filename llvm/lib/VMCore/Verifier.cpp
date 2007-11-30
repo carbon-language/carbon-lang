@@ -396,6 +396,10 @@ void Verifier::visitFunction(Function &F) {
   bool SawSRet = false;
 
   if (const ParamAttrsList *Attrs = F.getParamAttrs()) {
+    Assert1(Attrs->size() &&
+            Attrs->getParamIndex(Attrs->size()-1) <= FT->getNumParams(),
+            "Function has excess attributes!", &F);
+
     bool SawNest = false;
 
     for (unsigned Idx = 0; Idx <= FT->getNumParams(); ++Idx) {
