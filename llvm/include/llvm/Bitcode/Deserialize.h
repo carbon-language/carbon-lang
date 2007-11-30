@@ -125,7 +125,7 @@ private:
   llvm::SmallVector<Location,8> BlockStack;
   unsigned AbbrevNo;
   unsigned RecordCode;
-  Location StreamStart;
+  uint64_t StreamStart;
   
   //===----------------------------------------------------------===//
   // Public Interface.
@@ -348,7 +348,7 @@ public:
   
   bool FinishedBlock(Location BlockLoc);
   bool JumpTo(const Location& BlockLoc);
-  void Rewind() { JumpTo(StreamStart); }
+  void Rewind();
   
   bool AtEnd();
   bool inRecord();

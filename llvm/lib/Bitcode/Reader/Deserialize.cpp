@@ -21,9 +21,8 @@ using namespace llvm;
 
 Deserializer::Deserializer(BitstreamReader& stream)
   : Stream(stream), RecIdx(0), FreeList(NULL), AbbrevNo(0), RecordCode(0) {
-    
-  AdvanceStream();
-  if (!AtEnd()) StreamStart = BlockStack.back();
+
+    StreamStart = Stream.GetCurrentBitNo();
 }
 
 Deserializer::~Deserializer() {
@@ -165,12 +164,11 @@ bool Deserializer::JumpTo(const Location& Loc) {
     
   assert (!inRecord());
 
-//  AdvanceStream();
+  AdvanceStream();
   
-//  assert (AbbrevNo == bitc::ENTER_SUBBLOCK);
   assert (!BlockStack.empty() || AtEnd());
     
-  uint64_t LastBPos = StreamStart.BitNo;
+  uint64_t LastBPos = StreamStart;
   
   while (!BlockStack.empty()) {
     
@@ -183,8 +181,11 @@ bool Deserializer::JumpTo(const Location& Loc) {
       // destroy any accumulated context within the block scope.  We then
       // jump to the position of the block and enter it.
       Stream.JumpToBit(LastBPos);
+      
+      if (BlockStack.size() == Stream.BlockScope.size())
+        Stream.PopBlockScope();
+
       BlockStack.pop_back();
-      Stream.PopBlockScope();
       
       AbbrevNo = 0;
       AdvanceStream();      
@@ -195,14 +196,19 @@ bool Deserializer::JumpTo(const Location& Loc) {
     }
 
     // This block does not contain the block we are looking for.  Pop it.
+    if (BlockStack.size() == Stream.BlockScope.size())
+      Stream.PopBlockScope();
+    
     BlockStack.pop_back();
-    Stream.PopBlockScope();
+
   }
 
   // Check if we have popped our way to the outermost scope.  If so,
   // we need to adjust our position.
   if (BlockStack.empty()) {
-    Stream.JumpToBit(Loc.BitNo < LastBPos ? StreamStart.BitNo : LastBPos);
+    assert (Stream.BlockScope.empty());
+    
+    Stream.JumpToBit(Loc.BitNo < LastBPos ? StreamStart : LastBPos);
     AbbrevNo = 0;
     AdvanceStream();
   }
@@ -228,6 +234,18 @@ bool Deserializer::JumpTo(const Location& Loc) {
 
   return true;
 }
+
+void Deserializer::Rewind() {
+  while (!Stream.BlockScope.empty())
+    Stream.PopBlockScope();
+  
+  while (!BlockStack.empty())
+    BlockStack.pop_back();
+  
+  Stream.JumpToBit(StreamStart);
+  AbbrevNo = 0;
+}
+  
 
 unsigned Deserializer::getCurrentBlockID() { 
   if (!inRecord())
