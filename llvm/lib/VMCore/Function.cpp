@@ -79,7 +79,7 @@ void Argument::setParent(Function *parent) {
 uint16_t
 ParamAttrsList::getParamAttrs(uint16_t Index) const {
   unsigned limit = attrs.size();
-  for (unsigned i = 0; i < limit; ++i)
+  for (unsigned i = 0; i < limit && attrs[i].index <= Index; ++i)
     if (attrs[i].index == Index)
       return attrs[i].attrs;
   return ParamAttr::None;
