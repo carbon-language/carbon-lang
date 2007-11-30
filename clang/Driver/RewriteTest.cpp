@@ -17,6 +17,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "clang/Lex/Lexer.h"
@@ -869,6 +870,7 @@ Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
     return Exp;
   }
   
+  // Replace this subexpr in the parent.
   delete Exp;
   return Replacement;
 }

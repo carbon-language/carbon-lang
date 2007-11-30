@@ -36,8 +36,9 @@ static unsigned char DiagnosticFlags[] = {
 
 /// getDiagClass - Return the class field of the diagnostic.
 ///
-static unsigned getDiagClass(unsigned DiagID) {
-  assert(DiagID < diag::NUM_DIAGNOSTICS && "Diagnostic ID out of range!");
+static unsigned getBuiltinDiagClass(unsigned DiagID) {
+  assert(DiagID < diag::NUM_BUILTIN_DIAGNOSTICS &&
+         "Diagnostic ID out of range!");
   return DiagnosticFlags[DiagID] & class_mask;
 }
 
@@ -61,25 +62,34 @@ Diagnostic::Diagnostic(DiagnosticClient &client) : Client(client) {
   NumErrors = 0;
 }
 
-/// isNoteWarningOrExtension - Return true if the unmapped diagnostic level of
-/// the specified diagnostic ID is a Note, Warning, or Extension.
-bool Diagnostic::isNoteWarningOrExtension(unsigned DiagID) {
-  return getDiagClass(DiagID) < ERROR;
+/// isBuiltinNoteWarningOrExtension - Return true if the unmapped diagnostic
+/// level of the specified diagnostic ID is a Note, Warning, or Extension.
+/// Note that this only works on builtin diagnostics, not custom ones.
+bool Diagnostic::isBuiltinNoteWarningOrExtension(unsigned DiagID) {
+  return DiagID < diag::NUM_BUILTIN_DIAGNOSTICS && 
+         getBuiltinDiagClass(DiagID) < ERROR;
 }
 
 
 /// getDescription - Given a diagnostic ID, return a description of the
 /// issue.
 const char *Diagnostic::getDescription(unsigned DiagID) {
-  assert(DiagID < diag::NUM_DIAGNOSTICS && "Diagnostic ID out of range!");
-  return DiagnosticText[DiagID];
+  if (DiagID < diag::NUM_BUILTIN_DIAGNOSTICS)
+    return DiagnosticText[DiagID];
+  else 
+    assert(0 && "FIXME: IMPLEMENT");
 }
 
 /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
 /// object, classify the specified diagnostic ID into a Level, consumable by
 /// the DiagnosticClient.
 Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
-  unsigned DiagClass = getDiagClass(DiagID);
+  if (DiagID >= diag::NUM_BUILTIN_DIAGNOSTICS) {
+    // FIXME: HAndle custom here.
+    assert(0 && "unimp");
+  }
+  
+  unsigned DiagClass = getBuiltinDiagClass(DiagID);
   
   // Specific non-error diagnostics may be mapped to various levels from ignored
   // to error.
@@ -137,8 +147,8 @@ void Diagnostic::Report(SourceLocation Pos, unsigned DiagID,
     return;
 
   // Finally, report it.
-  Client.HandleDiagnostic(DiagLevel, Pos, (diag::kind)DiagID, Strs, NumStrs,
-                          Ranges, NumRanges);
+  Client.HandleDiagnostic(*this, DiagLevel, Pos, (diag::kind)DiagID,
+                          Strs, NumStrs, Ranges, NumRanges);
   ++NumDiagnostics;
 }
 

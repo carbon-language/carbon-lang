@@ -17,7 +17,8 @@ using namespace clang;
 
 /// HandleDiagnostic - Store the errors & warnings that are reported.
 /// 
-void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic::Level Level,
+void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic &Diags,
+                                            Diagnostic::Level Level,
                                             SourceLocation Pos,
                                             diag::kind ID,
                                             const std::string *Strs,
@@ -27,12 +28,12 @@ void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic::Level Level,
   switch (Level) {
   default: assert(0 && "Diagnostic not handled during diagnostic buffering!");
   case Diagnostic::Warning:
-    Warnings.push_back(std::make_pair(Pos, FormatDiagnostic(Level, ID, Strs,
-                                                            NumStrs)));
+    Warnings.push_back(std::make_pair(Pos, FormatDiagnostic(Diags, Level, ID, 
+                                                            Strs, NumStrs)));
     break;
   case Diagnostic::Error:
-    Errors.push_back(std::make_pair(Pos, FormatDiagnostic(Level, ID, Strs,
-                                                          NumStrs)));
+    Errors.push_back(std::make_pair(Pos, FormatDiagnostic(Diags, Level, ID,
+                                                          Strs, NumStrs)));
     break;
   }
 }

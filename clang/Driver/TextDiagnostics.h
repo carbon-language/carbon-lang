@@ -26,7 +26,7 @@ class TextDiagnostics : public DiagnosticClient {
 protected:
   SourceManager &SourceMgr;
 
-  std::string FormatDiagnostic(Diagnostic::Level Level,
+  std::string FormatDiagnostic(Diagnostic &Diags, Diagnostic::Level Level,
                                diag::kind ID,
                                const std::string *Strs,
                                unsigned NumStrs);
@@ -38,7 +38,7 @@ public:
 
   virtual bool IgnoreDiagnostic(Diagnostic::Level Level, 
                                 SourceLocation Pos);
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+  virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
                                 diag::kind ID, const std::string *Strs,
                                 unsigned NumStrs,

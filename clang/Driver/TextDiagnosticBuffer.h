@@ -38,7 +38,7 @@ public:
   const_iterator warn_begin() const { return Warnings.begin(); }
   const_iterator warn_end() const   { return Warnings.end(); }
 
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+  virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
                                 diag::kind ID, const std::string *Strs,
                                 unsigned NumStrs,

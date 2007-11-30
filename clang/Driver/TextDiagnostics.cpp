@@ -19,11 +19,12 @@ using namespace clang;
 
 TextDiagnostics:: ~TextDiagnostics() {}
 
-std::string TextDiagnostics::FormatDiagnostic(Diagnostic::Level Level,
+std::string TextDiagnostics::FormatDiagnostic(Diagnostic &Diags,
+                                              Diagnostic::Level Level,
                                               diag::kind ID,
                                               const std::string *Strs,
                                               unsigned NumStrs) {
-  std::string Msg = Diagnostic::getDescription(ID);
+  std::string Msg = Diags.getDescription(ID);
   
   // Replace all instances of %0 in Msg with 'Extra'.
   for (unsigned i = 0; i < Msg.size() - 1; ++i) {
@@ -43,8 +44,7 @@ bool TextDiagnostics::IgnoreDiagnostic(Diagnostic::Level Level,
   if (Pos.isValid()) {
     // If this is a warning or note, and if it a system header, suppress the
     // diagnostic.
-    if (Level == Diagnostic::Warning ||
-        Level == Diagnostic::Note) {
+    if (Level == Diagnostic::Warning || Level == Diagnostic::Note) {
       if (const FileEntry *F = SourceMgr.getFileEntryForLoc(Pos)) {
         DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
         if (DirInfo == DirectoryLookup::SystemHeaderDir ||

@@ -97,7 +97,8 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
     CaratLine[i] = '~';
 }
 
-void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level, 
+void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
+                                             Diagnostic::Level Level, 
                                              SourceLocation Pos,
                                              diag::kind ID,
                                              const std::string *Strs,
@@ -149,7 +150,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic::Level Level,
     break;
   }
   
-  std::cerr << FormatDiagnostic(Level, ID, Strs, NumStrs) << "\n";
+  std::cerr << FormatDiagnostic(Diags, Level, ID, Strs, NumStrs) << "\n";
   
   if (!NoCaretDiagnostics && Pos.isValid()) {
     // Get the line of the source file.

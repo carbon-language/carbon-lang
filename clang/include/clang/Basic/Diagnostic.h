@@ -28,7 +28,7 @@ namespace clang {
     enum kind {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
 #include "DiagnosticKinds.def"
-      NUM_DIAGNOSTICS
+      NUM_BUILTIN_DIAGNOSTICS
     };
     
     /// Enum values that allow the client to map NOTEs, WARNINGs, and EXTENSIONs
@@ -54,7 +54,7 @@ class Diagnostic {
 
   /// DiagMappings - Mapping information for diagnostics.  Mapping info is
   /// packed into two bits per diagnostic.
-  unsigned char DiagMappings[(diag::NUM_DIAGNOSTICS+3)/4];
+  unsigned char DiagMappings[(diag::NUM_BUILTIN_DIAGNOSTICS+3)/4];
   
   /// ErrorOccurred - This is set to true when an error is emitted, and is
   /// sticky.
@@ -88,7 +88,9 @@ public:
   /// setDiagnosticMapping - This allows the client to specify that certain
   /// warnings are ignored.  Only NOTEs, WARNINGs, and EXTENSIONs can be mapped.
   void setDiagnosticMapping(diag::kind Diag, diag::Mapping Map) {
-    assert(isNoteWarningOrExtension(Diag) && "Cannot map errors!");
+    assert(Diag < diag::NUM_BUILTIN_DIAGNOSTICS &&
+           "Can only map builtin diagnostics");
+    assert(isBuiltinNoteWarningOrExtension(Diag) && "Cannot map errors!");
     unsigned char &Slot = DiagMappings[Diag/4];
     unsigned Bits = (Diag & 3)*2;
     Slot &= ~(3 << Bits);
@@ -112,16 +114,17 @@ public:
 
   /// getDescription - Given a diagnostic ID, return a description of the
   /// issue.
-  static const char *getDescription(unsigned DiagID);
+  const char *getDescription(unsigned DiagID);
   
-  /// Level - The level of the diagnostic 
+  /// Level - The level of the diagnostic, after it has been through mapping.
   enum Level {
     Ignored, Note, Warning, Error, Fatal
   };
   
-  /// isNoteWarningOrExtension - Return true if the unmapped diagnostic level of
-  /// the specified diagnostic ID is a Note, Warning, or Extension.
-  static bool isNoteWarningOrExtension(unsigned DiagID);
+  /// isBuiltinNoteWarningOrExtension - Return true if the unmapped diagnostic
+  /// level of the specified diagnostic ID is a Note, Warning, or Extension.
+  /// Note that this only works on builtin diagnostics, not custom ones.
+  static bool isBuiltinNoteWarningOrExtension(unsigned DiagID);
 
   /// getDiagnosticLevel - Based on the way the client configured the Diagnostic
   /// object, classify the specified diagnostic ID into a Level, consumable by
@@ -148,7 +151,8 @@ public:
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel, SourceLocation Pos,
+  virtual void HandleDiagnostic(Diagnostic &Diags, 
+                                Diagnostic::Level DiagLevel, SourceLocation Pos,
                                 diag::kind ID, const std::string *Strs,
                                 unsigned NumStrs, const SourceRange *Ranges, 
                                 unsigned NumRanges) = 0;

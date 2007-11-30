@@ -304,13 +304,13 @@ SourceLocation Lexer::getSourceLocation(const char *Loc) const {
 /// position in the current buffer into a SourceLocation object for rendering.
 void Lexer::Diag(const char *Loc, unsigned DiagID,
                  const std::string &Msg) const {
-  if (LexingRawMode && Diagnostic::isNoteWarningOrExtension(DiagID))
+  if (LexingRawMode && Diagnostic::isBuiltinNoteWarningOrExtension(DiagID))
     return;
   PP->Diag(getSourceLocation(Loc), DiagID, Msg);
 }
 void Lexer::Diag(SourceLocation Loc, unsigned DiagID,
                  const std::string &Msg) const {
-  if (LexingRawMode && Diagnostic::isNoteWarningOrExtension(DiagID))
+  if (LexingRawMode && Diagnostic::isBuiltinNoteWarningOrExtension(DiagID))
     return;
   PP->Diag(Loc, DiagID, Msg);
 }

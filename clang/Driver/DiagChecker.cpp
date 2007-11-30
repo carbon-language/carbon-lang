@@ -96,8 +96,8 @@ static void FindExpectedDiags(Preprocessor &PP, unsigned MainFileID,
   // Turn off all warnings from relexing or preprocessing.
   PP.getDiagnostics().setWarnOnExtensions(false);
   PP.getDiagnostics().setErrorOnExtensions(false);
-  for (unsigned i = 0; i != diag::NUM_DIAGNOSTICS; ++i)
-    if (PP.getDiagnostics().isNoteWarningOrExtension((diag::kind)i))
+  for (unsigned i = 0; i != diag::NUM_BUILTIN_DIAGNOSTICS; ++i)
+    if (PP.getDiagnostics().isBuiltinNoteWarningOrExtension((diag::kind)i))
       PP.getDiagnostics().setDiagnosticMapping((diag::kind)i, diag::MAP_IGNORE);
   
   Token Tok;

@@ -32,7 +32,7 @@ public:
                       std::string &CaratLine,
                       const std::string &SourceLine);
 
-  virtual void HandleDiagnostic(Diagnostic::Level DiagLevel,
+  virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
                                 diag::kind ID, const std::string *Strs,
                                 unsigned NumStrs,
