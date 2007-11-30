@@ -444,7 +444,9 @@ void CodeGenFunction::EmitCaseStmt(const CaseStmt &S) {
     
   StartBlock("sw.bb");
   llvm::BasicBlock *CaseDest = Builder.GetInsertBlock();
-  llvm::ConstantInt *LV = cast<llvm::ConstantInt>(EmitScalarExpr(S.getLHS()));
+  llvm::APSInt CaseVal(32);
+  S.getLHS()->isIntegerConstantExpr(CaseVal, getContext());
+  llvm::ConstantInt *LV = llvm::ConstantInt::get(CaseVal);
   SwitchInsn->addCase(LV, CaseDest);
   EmitStmt(S.getSubStmt());
 }

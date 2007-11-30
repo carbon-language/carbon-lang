@@ -3,6 +3,8 @@
 int foo(int i) {
   int j = 0;
   switch (i) {
+  case -1:
+    j = 1; break;
   case 1 : 
     j = 2; break;
   case 2:
