@@ -114,15 +114,13 @@ void AliasSet::addPointer(AliasSetTracker &AST, HashNodePair &Entry,
 void AliasSet::addCallSite(CallSite CS, AliasAnalysis &AA) {
   CallSites.push_back(CS);
 
-  if (Function *F = CS.getCalledFunction()) {
-    AliasAnalysis::ModRefBehavior Behavior = AA.getModRefBehavior(F, CS);
-    if (Behavior == AliasAnalysis::DoesNotAccessMemory)
-      return;
-    else if (Behavior == AliasAnalysis::OnlyReadsMemory) {
-      AliasTy = MayAlias;
-      AccessTy |= Refs;
-      return;
-    }
+  AliasAnalysis::ModRefBehavior Behavior = AA.getModRefBehavior(CS);
+  if (Behavior == AliasAnalysis::DoesNotAccessMemory)
+    return;
+  else if (Behavior == AliasAnalysis::OnlyReadsMemory) {
+    AliasTy = MayAlias;
+    AccessTy |= Refs;
+    return;
   }
 
   // FIXME: This should use mod/ref information to make this not suck so bad
@@ -166,9 +164,8 @@ bool AliasSet::aliasesPointer(const Value *Ptr, unsigned Size,
 }
 
 bool AliasSet::aliasesCallSite(CallSite CS, AliasAnalysis &AA) const {
-  if (Function *F = CS.getCalledFunction())
-    if (AA.doesNotAccessMemory(F))
-      return false;
+  if (AA.doesNotAccessMemory(CS))
+    return false;
 
   if (AA.hasNoModRefInfoForCalls())
     return true;
@@ -297,9 +294,8 @@ bool AliasSetTracker::add(FreeInst *FI) {
 
 
 bool AliasSetTracker::add(CallSite CS) {
-  if (Function *F = CS.getCalledFunction())
-    if (AA.doesNotAccessMemory(F))
-      return true; // doesn't alias anything
+  if (AA.doesNotAccessMemory(CS))
+    return true; // doesn't alias anything
 
   AliasSet *AS = findAliasSetForCallSite(CS);
   if (!AS) {
@@ -419,9 +415,8 @@ bool AliasSetTracker::remove(FreeInst *FI) {
 }
 
 bool AliasSetTracker::remove(CallSite CS) {
-  if (Function *F = CS.getCalledFunction())
-    if (AA.doesNotAccessMemory(F))
-      return false; // doesn't alias anything
+  if (AA.doesNotAccessMemory(CS))
+    return false; // doesn't alias anything
 
   AliasSet *AS = findAliasSetForCallSite(CS);
   if (!AS) return false;
@@ -455,13 +450,10 @@ void AliasSetTracker::deleteValue(Value *PtrVal) {
   // If this is a call instruction, remove the callsite from the appropriate
   // AliasSet.
   CallSite CS = CallSite::get(PtrVal);
-  if (CS.getInstruction()) {
-    Function *F = CS.getCalledFunction();
-    if (!F || !AA.doesNotAccessMemory(F)) {
+  if (CS.getInstruction())
+    if (!AA.doesNotAccessMemory(CS))
       if (AliasSet *AS = findAliasSetForCallSite(CS))
         AS->removeCallSite(CS);
-    }
-  }
 
   // First, look up the PointerRec for this pointer.
   hash_map<Value*, AliasSet::PointerRec>::iterator I = PointerMap.find(PtrVal);

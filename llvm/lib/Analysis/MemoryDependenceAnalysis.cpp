@@ -94,11 +94,9 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
       
       // FreeInsts erase the entire structure
       pointerSize = ~0UL;
-    } else if (CallSite::get(QI).getInstruction() != 0 &&
-               cast<CallInst>(QI)->getCalledFunction()) {
+    } else if (isa<CallInst>(QI)) {
       AliasAnalysis::ModRefBehavior result =
-                   AA.getModRefBehavior(cast<CallInst>(QI)->getCalledFunction(),
-                                        CallSite::get(QI));
+                   AA.getModRefBehavior(CallSite::get(QI));
       if (result != AliasAnalysis::DoesNotAccessMemory &&
           result != AliasAnalysis::OnlyReadsMemory) {
         if (!start && !block) {

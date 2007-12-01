@@ -375,24 +375,22 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
     return !pointerInvalidatedByLoop(LI->getOperand(0), Size);
   } else if (CallInst *CI = dyn_cast<CallInst>(&I)) {
     // Handle obvious cases efficiently.
-    if (Function *Callee = CI->getCalledFunction()) {
-      AliasAnalysis::ModRefBehavior Behavior =AA->getModRefBehavior(Callee, CI);
-      if (Behavior == AliasAnalysis::DoesNotAccessMemory)
-        return true;
-      else if (Behavior == AliasAnalysis::OnlyReadsMemory) {
-        // If this call only reads from memory and there are no writes to memory
-        // in the loop, we can hoist or sink the call as appropriate.
-        bool FoundMod = false;
-        for (AliasSetTracker::iterator I = CurAST->begin(), E = CurAST->end();
-             I != E; ++I) {
-          AliasSet &AS = *I;
-          if (!AS.isForwardingAliasSet() && AS.isMod()) {
-            FoundMod = true;
-            break;
-          }
+    AliasAnalysis::ModRefBehavior Behavior = AA->getModRefBehavior(CI);
+    if (Behavior == AliasAnalysis::DoesNotAccessMemory)
+      return true;
+    else if (Behavior == AliasAnalysis::OnlyReadsMemory) {
+      // If this call only reads from memory and there are no writes to memory
+      // in the loop, we can hoist or sink the call as appropriate.
+      bool FoundMod = false;
+      for (AliasSetTracker::iterator I = CurAST->begin(), E = CurAST->end();
+           I != E; ++I) {
+        AliasSet &AS = *I;
+        if (!AS.isForwardingAliasSet() && AS.isMod()) {
+          FoundMod = true;
+          break;
         }
-        if (!FoundMod) return true;
       }
+      if (!FoundMod) return true;
     }
 
     // FIXME: This should use mod/ref information to see if we can hoist or sink

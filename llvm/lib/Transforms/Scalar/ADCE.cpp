@@ -198,8 +198,7 @@ bool ADCE::doADCE() {
     for (BasicBlock::iterator II = BB->begin(), EI = BB->end(); II != EI; ) {
       Instruction *I = II++;
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
-        Function *F = CI->getCalledFunction();
-        if (F && AA.onlyReadsMemory(F)) {
+        if (AA.onlyReadsMemory(CI)) {
           if (CI->use_empty()) {
             BB->getInstList().erase(CI);
             ++NumCallRemoved;

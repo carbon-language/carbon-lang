@@ -341,8 +341,7 @@ Expression::ExpressionOpcode
 
 uint32_t ValueTable::hash_operand(Value* v) {
   if (CallInst* CI = dyn_cast<CallInst>(v))
-    if (CI->getCalledFunction() &&
-        !AA->doesNotAccessMemory(CI->getCalledFunction()))
+    if (!AA->doesNotAccessMemory(CI))
       return nextValueNumber++;
   
   return lookup_or_add(v);
@@ -485,9 +484,7 @@ uint32_t ValueTable::lookup_or_add(Value* V) {
     return VI->second;
   
   if (CallInst* C = dyn_cast<CallInst>(V)) {
-    if (C->getCalledFunction() &&
-        (AA->doesNotAccessMemory(C->getCalledFunction()) ||
-         AA->onlyReadsMemory(C->getCalledFunction()))) {
+    if (AA->onlyReadsMemory(C)) { // includes doesNotAccessMemory
       Expression e = create_expression(C);
     
       DenseMap<Expression, uint32_t>::iterator EI = expressionNumbering.find(e);
@@ -1051,8 +1048,7 @@ bool GVN::processInstruction(Instruction* I,
     
     if (CallInst* CI = dyn_cast<CallInst>(I)) {
       AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
-      if (CI->getCalledFunction() &&
-          !AA.doesNotAccessMemory(CI->getCalledFunction())) {
+      if (!AA.doesNotAccessMemory(CI)) {
         MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
         if (cast<Instruction>(repl)->getParent() != CI->getParent() ||
             MD.getDependency(CI) != MD.getDependency(cast<CallInst>(repl))) {

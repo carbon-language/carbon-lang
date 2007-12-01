@@ -306,8 +306,7 @@ bool DSE::handleEndBlock(BasicBlock& BB,
       // If this call does not access memory, it can't
       // be undeadifying any of our pointers.
       CallSite CS = CallSite::get(BBI);
-      if (CS.getCalledFunction() &&
-          AA.doesNotAccessMemory(CS.getCalledFunction()))
+      if (AA.doesNotAccessMemory(CS))
         continue;
       
       unsigned modRef = 0;

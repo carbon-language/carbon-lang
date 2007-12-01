@@ -27,6 +27,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"
 #include "llvm/BasicBlock.h"
+#include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
 #include "llvm/Target/TargetData.h"
@@ -112,16 +113,40 @@ AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
   return pointsToConstantMemory(P) ? NoModRef : Mod;
 }
 
+AliasAnalysis::ModRefBehavior
+AliasAnalysis::getModRefBehavior(CallSite CS,
+                                 std::vector<PointerAccessInfo> *Info) {
+  if (CS.paramHasAttr(0, ParamAttr::ReadNone))
+    // Can't do better than this.
+    return DoesNotAccessMemory;
+  ModRefBehavior MRB = UnknownModRefBehavior;
+  if (Function *F = CS.getCalledFunction())
+    MRB = getModRefBehavior(F, CS, Info);
+  if (MRB != DoesNotAccessMemory && CS.paramHasAttr(0, ParamAttr::ReadOnly))
+    return OnlyReadsMemory;
+  return MRB;
+}
+
+AliasAnalysis::ModRefBehavior
+AliasAnalysis::getModRefBehavior(Function *F,
+                                 std::vector<PointerAccessInfo> *Info) {
+  if (F->paramHasAttr(0, ParamAttr::ReadNone))
+    // Can't do better than this.
+    return DoesNotAccessMemory;
+  ModRefBehavior MRB = getModRefBehavior(F, CallSite(), Info);
+  if (MRB != DoesNotAccessMemory && F->paramHasAttr(0, ParamAttr::ReadOnly))
+    return OnlyReadsMemory;
+  return MRB;
+}
+
 AliasAnalysis::ModRefResult
 AliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   ModRefResult Mask = ModRef;
-  if (Function *F = CS.getCalledFunction()) {
-    ModRefBehavior MRB = getModRefBehavior(F, CallSite());
-    if (MRB == OnlyReadsMemory)
-      Mask = Ref;
-    else if (MRB == DoesNotAccessMemory)
-      return NoModRef;
-  }
+  ModRefBehavior MRB = getModRefBehavior(CS);
+  if (MRB == OnlyReadsMemory)
+    Mask = Ref;
+  else if (MRB == DoesNotAccessMemory)
+    return NoModRef;
 
   if (!AA) return Mask;
 

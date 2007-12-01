@@ -148,7 +148,7 @@ void LoadVN::getCallEqualNumberNodes(CallInst *CI,
   Function *CF = CI->getCalledFunction();
   if (CF == 0) return;  // Indirect call.
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  AliasAnalysis::ModRefBehavior MRB = AA.getModRefBehavior(CF, CI);
+  AliasAnalysis::ModRefBehavior MRB = AA.getModRefBehavior(CI);
   if (MRB != AliasAnalysis::DoesNotAccessMemory &&
       MRB != AliasAnalysis::OnlyReadsMemory)
     return;  // Nothing we can do for now.
@@ -227,8 +227,7 @@ void LoadVN::getCallEqualNumberNodes(CallInst *CI,
               CantEqual = true;
               break;
             } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
-              if (CI->getCalledFunction() == 0 ||
-                  !AA.onlyReadsMemory(CI->getCalledFunction())) {
+              if (!AA.onlyReadsMemory(CI)) {
                 CantEqual = true;
                 break;
               }

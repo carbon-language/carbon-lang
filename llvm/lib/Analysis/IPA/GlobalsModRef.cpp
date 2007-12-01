@@ -394,7 +394,7 @@ void GlobalsModRef::AnalyzeSCC(std::vector<CallGraphNode *> &SCC) {
           // Okay, if we can't say anything about it, maybe some other alias
           // analysis can.
           ModRefBehavior MRB =
-            AliasAnalysis::getModRefBehavior(Callee, CallSite());
+            AliasAnalysis::getModRefBehavior(Callee);
           if (MRB != DoesNotAccessMemory) {
             // FIXME: could make this more aggressive for functions that just
             // read memory.  We should just say they read all globals.

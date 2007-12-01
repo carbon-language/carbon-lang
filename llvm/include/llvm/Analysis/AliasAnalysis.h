@@ -186,40 +186,57 @@ public:
     };
   };
 
-  /// getModRefBehavior - Return the behavior of the specified function if
-  /// called from the specified call site.  The call site may be null in which
-  /// case the most generic behavior of this function should be returned.
-  virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
-                                     std::vector<PointerAccessInfo> *Info = 0);
+  /// getModRefBehavior - Return the behavior when calling the given call site.
+  ModRefBehavior getModRefBehavior(CallSite CS,
+                                   std::vector<PointerAccessInfo> *Info = 0);
 
-  /// doesNotAccessMemory - If the specified function is known to never read or
-  /// write memory, return true.  If the function only reads from known-constant
-  /// memory, it is also legal to return true.  Functions that unwind the stack
-  /// are not legal for this predicate.
+  /// getModRefBehavior - Return the behavior when calling the given function.
+  /// For use when the call site is not known.
+  ModRefBehavior getModRefBehavior(Function *F,
+                                   std::vector<PointerAccessInfo> *Info = 0);
+
+  /// doesNotAccessMemory - If the specified call is known to never read or
+  /// write memory, return true.  If the call only reads from known-constant
+  /// memory, it is also legal to return true.  Calls that unwind the stack
+  /// are legal for this predicate.
   ///
-  /// Many optimizations (such as CSE and LICM) can be performed on calls to it,
-  /// without worrying about aliasing properties, and many functions have this
-  /// property (e.g. 'sin' and 'cos').
+  /// Many optimizations (such as CSE and LICM) can be performed on such calls
+  /// without worrying about aliasing properties, and many calls have this
+  /// property (e.g. calls to 'sin' and 'cos').
   ///
   /// This property corresponds to the GCC 'const' attribute.
   ///
-  bool doesNotAccessMemory(Function *F) {
-    return getModRefBehavior(F, CallSite()) == DoesNotAccessMemory;
+  bool doesNotAccessMemory(CallSite CS) {
+    return getModRefBehavior(CS) == DoesNotAccessMemory;
   }
 
-  /// onlyReadsMemory - If the specified function is known to only read from
-  /// non-volatile memory (or not access memory at all), return true.  Functions
-  /// that unwind the stack are not legal for this predicate.
+  /// doesNotAccessMemory - If the specified function is known to never read or
+  /// write memory, return true.  For use when the call site is not known.
+  ///
+  bool doesNotAccessMemory(Function *F) {
+    return getModRefBehavior(F) == DoesNotAccessMemory;
+  }
+
+  /// onlyReadsMemory - If the specified call is known to only read from
+  /// non-volatile memory (or not access memory at all), return true.  Calls
+  /// that unwind the stack are legal for this predicate.
   ///
   /// This property allows many common optimizations to be performed in the
   /// absence of interfering store instructions, such as CSE of strlen calls.
   ///
   /// This property corresponds to the GCC 'pure' attribute.
   ///
+  bool onlyReadsMemory(CallSite CS) {
+    ModRefBehavior MRB = getModRefBehavior(CS);
+    return MRB == DoesNotAccessMemory || MRB == OnlyReadsMemory;
+  }
+
+  /// onlyReadsMemory - If the specified function is known to only read from
+  /// non-volatile memory (or not access memory at all), return true.  For use
+  /// when the call site is not known.
+  ///
   bool onlyReadsMemory(Function *F) {
-    /// FIXME: If the analysis returns more precise info, we can reduce it to
-    /// this.
-    ModRefBehavior MRB = getModRefBehavior(F, CallSite());
+    ModRefBehavior MRB = getModRefBehavior(F);
     return MRB == DoesNotAccessMemory || MRB == OnlyReadsMemory;
   }
 
@@ -250,6 +267,14 @@ public:
   ///
   virtual bool hasNoModRefInfoForCalls() const;
 
+protected:
+  /// getModRefBehavior - Return the behavior of the specified function if
+  /// called from the specified call site.  The call site may be null in which
+  /// case the most generic behavior of this function should be returned.
+  virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
+                                     std::vector<PointerAccessInfo> *Info = 0);
+
+public:
   /// Convenience functions...
   ModRefResult getModRefInfo(LoadInst *L, Value *P, unsigned Size);
   ModRefResult getModRefInfo(StoreInst *S, Value *P, unsigned Size);

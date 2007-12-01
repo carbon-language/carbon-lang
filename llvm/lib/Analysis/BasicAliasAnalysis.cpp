@@ -839,11 +839,6 @@ BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
     return UnknownModRefBehavior;
   }
 
-  if (F->paramHasAttr(0, ParamAttr::ReadNone))
-    return DoesNotAccessMemory;
-  if (F->paramHasAttr(0, ParamAttr::ReadOnly))
-    return OnlyReadsMemory;
-
   return UnknownModRefBehavior;
 }
 
