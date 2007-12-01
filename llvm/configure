@@ -34161,6 +34161,11 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+cat >>confdefs.h <<_ACEOF
+#define LLVM_HOSTTRIPLE "$host"
+_ACEOF
+
+
 # Determine which bindings to build.
 if test "$BINDINGS_TO_BUILD" = auto ; then
   BINDINGS_TO_BUILD=""
@@ -35780,5 +35785,4 @@ echo "$as_me: error: $ac_sub_configure failed for $ac_dir" >&2;}
     cd "$ac_popdir"
   done
 fi
-
 

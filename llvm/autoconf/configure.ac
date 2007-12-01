@@ -3,10 +3,10 @@ dnl                     The LLVM Compiler Infrastructure
 dnl
 dnl This file was developed by the LLVM research group and is distributed under
 dnl the University of Illinois Open Source License. See LICENSE.TXT for details.
-dnl 
+dnl
 dnl===-----------------------------------------------------------------------===
 dnl This is the LLVM configuration script. It is processed by the autoconf
-dnl program to produce a script named configure. This script contains the 
+dnl program to produce a script named configure. This script contains the
 dnl configuration checks that LLVM needs in order to support multiple platforms.
 dnl This file is composed of 10 sections per the recommended organization of
 dnl autoconf input defined in the autoconf documentation. As this file evolves,
@@ -46,8 +46,8 @@ dnl Verify that the source directory is valid. This makes sure that we are
 dnl configuring LLVM and not some other package (it validates --srcdir argument)
 AC_CONFIG_SRCDIR([lib/VMCore/Module.cpp])
 
-dnl Place all of the extra autoconf files into the config subdirectory. Tell 
-dnl various tools where the m4 autoconf macros are. 
+dnl Place all of the extra autoconf files into the config subdirectory. Tell
+dnl various tools where the m4 autoconf macros are.
 AC_CONFIG_AUX_DIR([autoconf])
 
 dnl Quit if the source directory has already been configured.
@@ -78,7 +78,7 @@ do
       llvm-poolalloc) AC_CONFIG_SUBDIRS([projects/llvm-poolalloc]) ;;
       poolalloc)    AC_CONFIG_SUBDIRS([projects/poolalloc]) ;;
       llvm-kernel)  AC_CONFIG_SUBDIRS([projects/llvm-kernel]) ;;
-      *)              
+      *)
         AC_MSG_WARN([Unknown project (${i}) won't be configured automatically])
         ;;
     esac
@@ -92,8 +92,8 @@ dnl===
 dnl===-----------------------------------------------------------------------===
 
 dnl Check the target for which we're compiling and the host that will do the
-dnl compilations. This will tell us which LLVM compiler will be used for 
-dnl compiling SSA into object code. This needs to be done early because 
+dnl compilations. This will tell us which LLVM compiler will be used for
+dnl compiling SSA into object code. This needs to be done early because
 dnl following tests depend on it.
 AC_CANONICAL_TARGET
 
@@ -102,75 +102,75 @@ dnl the System library to the correct build platform.
 AC_CACHE_CHECK([type of operating system we're going to host on],
                [llvm_cv_os_type],
 [case $host in
-  *-*-aix*) 
+  *-*-aix*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
-    llvm_cv_os_type="AIX" 
+    llvm_cv_os_type="AIX"
     llvm_cv_platform_type="Unix" ;;
-  *-*-irix*) 
+  *-*-irix*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
-    llvm_cv_os_type="IRIX" 
+    llvm_cv_os_type="IRIX"
     llvm_cv_platform_type="Unix" ;;
-  *-*-cygwin*) 
+  *-*-cygwin*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
-    llvm_cv_os_type="Cygwin" 
+    llvm_cv_os_type="Cygwin"
     llvm_cv_platform_type="Unix" ;;
-  *-*-darwin*) 
+  *-*-darwin*)
     llvm_cv_link_all_option="-Wl,-all_load"
     llvm_cv_link_all_option="-Wl,-noall_load"
     llvm_cv_os_type="Darwin"
     llvm_cv_platform_type="Unix" ;;
-  *-*-freebsd*) 
+  *-*-freebsd*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
-    llvm_cv_os_type="FreeBSD" 
+    llvm_cv_os_type="FreeBSD"
     llvm_cv_platform_type="Unix" ;;
-  *-*-openbsd*) 
+  *-*-openbsd*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
-    llvm_cv_os_type="OpenBSD" 
+    llvm_cv_os_type="OpenBSD"
     llvm_cv_platform_type="Unix" ;;
-  *-*-netbsd*) 
+  *-*-netbsd*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
-    llvm_cv_os_type="NetBSD" 
+    llvm_cv_os_type="NetBSD"
     llvm_cv_platform_type="Unix" ;;
-  *-*-hpux*) 
+  *-*-hpux*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
-    llvm_cv_os_type="HP-UX" 
+    llvm_cv_os_type="HP-UX"
     llvm_cv_platform_type="Unix" ;;
-  *-*-interix*) 
+  *-*-interix*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="Interix"
     llvm_cv_platform_type="Unix" ;;
-  *-*-linux*) 
+  *-*-linux*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="Linux"
     llvm_cv_platform_type="Unix" ;;
-  *-*-solaris*) 
+  *-*-solaris*)
     llvm_cv_link_all_option="-Wl,-z,allextract"
     llvm_cv_no_link_all_option="-Wl,-z,defaultextract"
     llvm_cv_os_type="SunOS"
     llvm_cv_platform_type="Unix" ;;
-  *-*-win32*) 
+  *-*-win32*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
     llvm_cv_os_type="Win32"
     llvm_cv_platform_type="Win32" ;;
-  *-*-mingw*) 
+  *-*-mingw*)
     llvm_cv_link_all_option="-Wl,--whole-archive"
     llvm_cv_no_link_all_option="-Wl,--no-whole-archive"
-    llvm_cv_os_type="MingW" 
+    llvm_cv_os_type="MingW"
     llvm_cv_platform_type="Win32" ;;
-  *) 
-    llvm_cv_link_all_option="" 
+  *)
+    llvm_cv_link_all_option=""
     llvm_cv_no_link_all_option=""
-    llvm_cv_os_type="Unknown" 
+    llvm_cv_os_type="Unknown"
     llvm_cv_platform_type="Unknown" ;;
 esac])
 
@@ -191,13 +191,13 @@ dnl Set the "LLVM_ON_*" variables based on llvm_cvs_platform_type
 dnl This is used by lib/System to determine the basic kind of implementation
 dnl to use.
 case $llvm_cv_platform_type in
-  Unix)  
-    AC_DEFINE([LLVM_ON_UNIX],[1],[Define if this is Unixish platform]) 
+  Unix)
+    AC_DEFINE([LLVM_ON_UNIX],[1],[Define if this is Unixish platform])
     AC_SUBST(LLVM_ON_UNIX,[1])
     AC_SUBST(LLVM_ON_WIN32,[0])
     ;;
-  Win32) 
-    AC_DEFINE([LLVM_ON_WIN32],[1],[Define if this is Win32ish platform]) 
+  Win32)
+    AC_DEFINE([LLVM_ON_WIN32],[1],[Define if this is Win32ish platform])
     AC_SUBST(LLVM_ON_UNIX,[0])
     AC_SUBST(LLVM_ON_WIN32,[1])
     ;;
@@ -231,15 +231,15 @@ AC_C_BIGENDIAN(AC_SUBST([ENDIAN],[big]),AC_SUBST([ENDIAN],[little]))
 
 dnl Check for build platform executable suffix if we're crosscompiling
 if test "$cross_compiling" = yes; then
-  AC_SUBST(LLVM_CROSS_COMPILING, [1])  
+  AC_SUBST(LLVM_CROSS_COMPILING, [1])
   AC_BUILD_EXEEXT
 else
   AC_SUBST(LLVM_CROSS_COMPILING, [0])
 fi
 
-dnl Check to see if there's a "CVS" (or .svn) directory indicating that this 
+dnl Check to see if there's a "CVS" (or .svn) directory indicating that this
 dnl build is being done from a checkout. This sets up several defaults for the
-dnl command line switches. When we build with a CVS directory, we get a 
+dnl command line switches. When we build with a CVS directory, we get a
 dnl debug with assertions turned on. Without, we assume a source release and we
 dnl get an optimized build without assertions. See --enable-optimized and
 dnl --enable-assertions below
@@ -375,7 +375,7 @@ case "$enableval" in
       ARM)     TARGETS_TO_BUILD="ARM" ;;
       Mips)    TARGETS_TO_BUILD="Mips" ;;
       *)       AC_MSG_ERROR([Can not set target to build]) ;;
-    esac 
+    esac
     ;;
   *)for a_target in `echo $enableval|sed -e 's/,/ /g' ` ; do
       case "$a_target" in
@@ -389,7 +389,7 @@ case "$enableval" in
         mips)    TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
         *) AC_MSG_ERROR([Unrecognized target $a_target]) ;;
       esac
-  done 
+  done
   ;;
 esac
 TARGETS_TO_BUILD="CBackend MSIL $TARGETS_TO_BUILD"
@@ -446,7 +446,7 @@ case "$enableval" in
         ocaml) BINDINGS_TO_BUILD="ocaml $BINDINGS_TO_BUILD" ;;
         *) AC_MSG_ERROR([Unrecognized binding $a_binding]) ;;
       esac
-  done 
+  done
   ;;
 esac
 
@@ -553,8 +553,8 @@ AC_PROG_INSTALL
 
 dnl Checks for documentation and testing tools that we can do without. If these
 dnl are not found then they are set to "true" which always succeeds but does
-dnl nothing. This just lets the build output show that we could have done 
-dnl something if the tool was available. 
+dnl nothing. This just lets the build output show that we could have done
+dnl something if the tool was available.
 AC_PATH_PROG(BZIP2,[bzip2],[echo "Skipped: bzip2 not found"])
 AC_PATH_PROG(DOXYGEN,[doxygen],[echo "Skipped: doxygen not found"])
 AC_PATH_PROG(GROFF,[groff],[echo "Skipped: groff not found"])
@@ -594,7 +594,7 @@ else
   AC_SUBST(LLVMGCC,$LLVMGCC)
   AC_SUBST(LLVMGXX,$LLVMGXX)
 fi
-  
+
 AC_MSG_CHECKING([tool compatibility])
 
 dnl Ensure that compilation tools are GCC or a GNU compatible compiler such as
@@ -605,7 +605,7 @@ dnl "icc -no-gcc" emits no gcc signature BUT is still compatible
 ICC=no
 IXX=no
 case $CC in
-  icc*|icpc*) 
+  icc*|icpc*)
     ICC=yes
     IXX=yes
     ;;
@@ -627,7 +627,7 @@ fi
 dnl Verify that GCC is version 3.0 or higher
 if test "$GCC" = "yes"
 then
-  gccmajor=`$CC --version | head -n 1 | sed 's/[[^0-9]]*\([[0-9.]]\).*/\1/'` 
+  gccmajor=`$CC --version | head -n 1 | sed 's/[[^0-9]]*\([[0-9.]]\).*/\1/'`
   if test "$gccmajor" -lt "3"
   then
     AC_MSG_ERROR([gcc 3.x required, but you have a lower version])
@@ -660,7 +660,7 @@ fi
 dnl lt_dlopen may be required for plugin support.
 AC_SEARCH_LIBS(lt_dlopen,ltdl,AC_DEFINE([HAVE_LT_DLOPEN],[1],
               [Define if lt_dlopen() is available on this platform]),
-              AC_MSG_WARN([lt_dlopen() not found - plugin support might 
+              AC_MSG_WARN([lt_dlopen() not found - plugin support might
                            not be available]))
 
 dnl dlopen() is required for plugin support.
@@ -773,11 +773,11 @@ AC_CXX_HAVE_FWD_ITERATOR
 AC_FUNC_ISNAN
 AC_FUNC_ISINF
 
-dnl Check for mmap support.We also need to know if /dev/zero is required to 
-dnl be opened for allocating RWX memory.  
+dnl Check for mmap support.We also need to know if /dev/zero is required to
+dnl be opened for allocating RWX memory.
 dnl Make sure we aren't attempting to configure for an unknown system
 if test "$llvm_cv_platform_type" = "Unix" ; then
-  AC_FUNC_MMAP 
+  AC_FUNC_MMAP
   AC_FUNC_MMAP_FILE
   AC_NEED_DEV_ZERO_FOR_MMAP
 
@@ -813,7 +813,7 @@ if test -x "$LLVMGCC" ; then
   rm conftest.c
 fi])
 
-dnl Since we have a sane llvm-gcc, identify it and its sub-tools 
+dnl Since we have a sane llvm-gcc, identify it and its sub-tools
 if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   AC_MSG_CHECKING([llvm-gcc component support])
   llvmcc1path=`"$LLVMGCC" --print-prog-name=cc1`
@@ -833,12 +833,12 @@ if test "$llvm_cv_llvmgcc_sanity" = "yes" ; then
   AC_MSG_RESULT([ok])
 fi
 
-dnl Propagate the shared library extension that the libltdl checks did to 
+dnl Propagate the shared library extension that the libltdl checks did to
 dnl the Makefiles so we can use it there too
 AC_SUBST(SHLIBEXT,$libltdl_cv_shlibext)
 
 # Translate the various configuration directories and other basic
-# information into substitutions that will end up in Makefile.config.in 
+# information into substitutions that will end up in Makefile.config.in
 # that these configured values can be used by the makefiles
 if test "${prefix}" = "NONE" ; then
   prefix="/usr/local"
@@ -866,26 +866,28 @@ AC_SUBST(LLVM_CONFIGTIME)
 
 # Place the various directores into the config.h file as #defines so that we
 # can know about the installation paths within LLVM.
-AC_DEFINE_UNQUOTED(LLVM_PREFIX,"$LLVM_PREFIX", 
+AC_DEFINE_UNQUOTED(LLVM_PREFIX,"$LLVM_PREFIX",
                    [Installation prefix directory])
-AC_DEFINE_UNQUOTED(LLVM_BINDIR, "$LLVM_BINDIR", 
+AC_DEFINE_UNQUOTED(LLVM_BINDIR, "$LLVM_BINDIR",
                    [Installation directory for binary executables])
-AC_DEFINE_UNQUOTED(LLVM_LIBDIR, "$LLVM_LIBDIR", 
+AC_DEFINE_UNQUOTED(LLVM_LIBDIR, "$LLVM_LIBDIR",
                    [Installation directory for libraries])
-AC_DEFINE_UNQUOTED(LLVM_DATADIR, "$LLVM_DATADIR", 
+AC_DEFINE_UNQUOTED(LLVM_DATADIR, "$LLVM_DATADIR",
                    [Installation directory for data files])
-AC_DEFINE_UNQUOTED(LLVM_DOCSDIR, "$LLVM_DOCSDIR", 
+AC_DEFINE_UNQUOTED(LLVM_DOCSDIR, "$LLVM_DOCSDIR",
                    [Installation directory for documentation])
-AC_DEFINE_UNQUOTED(LLVM_ETCDIR, "$LLVM_ETCDIR", 
+AC_DEFINE_UNQUOTED(LLVM_ETCDIR, "$LLVM_ETCDIR",
                    [Installation directory for config files])
-AC_DEFINE_UNQUOTED(LLVM_INCLUDEDIR, "$LLVM_INCLUDEDIR", 
+AC_DEFINE_UNQUOTED(LLVM_INCLUDEDIR, "$LLVM_INCLUDEDIR",
                    [Installation directory for include files])
-AC_DEFINE_UNQUOTED(LLVM_INFODIR, "$LLVM_INFODIR", 
+AC_DEFINE_UNQUOTED(LLVM_INFODIR, "$LLVM_INFODIR",
                    [Installation directory for .info files])
-AC_DEFINE_UNQUOTED(LLVM_MANDIR, "$LLVM_MANDIR", 
+AC_DEFINE_UNQUOTED(LLVM_MANDIR, "$LLVM_MANDIR",
                    [Installation directory for man pages])
-AC_DEFINE_UNQUOTED(LLVM_CONFIGTIME, "$LLVM_CONFIGTIME", 
+AC_DEFINE_UNQUOTED(LLVM_CONFIGTIME, "$LLVM_CONFIGTIME",
                    [Time at which LLVM was configured])
+AC_DEFINE_UNQUOTED(LLVM_HOSTTRIPLE, "$host",
+	 	   [Host triple we were built on])
 
 # Determine which bindings to build.
 if test "$BINDINGS_TO_BUILD" = auto ; then
@@ -915,7 +917,7 @@ for a_binding in $BINDINGS_TO_BUILD ; do
     fi
     if test "x$OCAMLOPT" = x ; then
       AC_MSG_WARN([--enable-bindings=ocaml specified, but ocamlopt not found. Try configure OCAMLOPT=/path/to/ocamlopt])
-      dnl ocamlopt is optional! 
+      dnl ocamlopt is optional!
     fi
     if test "x$with_ocaml_libdir" != xauto ; then
       AC_SUBST(OCAML_LIBDIR,$with_ocaml_libdir)
@@ -984,4 +986,3 @@ AC_CONFIG_MAKEFILE(bindings/ocaml/Makefile.ocaml)
 
 dnl Finally, crank out the output
 AC_OUTPUT
-

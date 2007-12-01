@@ -458,6 +458,9 @@
 /* Installation directory for config files */
 #undef LLVM_ETCDIR
 
+/* Host triple we were built on */
+#undef LLVM_HOSTTRIPLE
+
 /* Installation directory for include files */
 #undef LLVM_INCLUDEDIR
 
