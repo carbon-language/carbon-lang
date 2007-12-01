@@ -64,3 +64,13 @@ int foo4(int i) {
   }
   return j;
 }
+
+void foo5(){
+    switch(0){
+    default:
+        if (0) {
+
+        }
+    }
+}
+

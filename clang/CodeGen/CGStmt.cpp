@@ -468,7 +468,7 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
 
   // Create basic block to hold stuff that comes after switch statement.
   // Initially use it to hold DefaultStmt.
-  llvm::BasicBlock *NextBlock = new llvm::BasicBlock("after.sw", CurFn);
+  llvm::BasicBlock *NextBlock = new llvm::BasicBlock("after.sw");
   SwitchInsn = Builder.CreateSwitch(CondV, NextBlock);
 
   // All break statements jump to NextBlock. If BreakContinueStack is non empty
@@ -492,8 +492,11 @@ void CodeGenFunction::EmitSwitchStmt(const SwitchStmt &S) {
   llvm::BasicBlock *BB = Builder.GetInsertBlock();
   if (isDummyBlock(BB))
     BB->eraseFromParent();
+  else  // Otherwise, branch to continuation.
+    Builder.CreateBr(NextBlock);
 
   // Place NextBlock as the new insert point.
+  CurFn->getBasicBlockList().push_back(NextBlock);
   Builder.SetInsertPoint(NextBlock);
   SwitchInsn = SavedSwitchInsn;
   CaseRangeBlock = SavedCRBlock;
