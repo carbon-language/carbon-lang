@@ -313,9 +313,12 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     
     // Name the codegen type after the typedef name
     // if there is no tag type name available
-    if (TD->getName() == "" && T->getTypeClass() == Type::TypeName) {
-      const TypedefType *TdT = cast<TypedefType>(T);
-      TypeName += TdT->getDecl()->getName();
+    if (TD->getName() == "") {
+      if (T->getTypeClass() == Type::TypeName) {
+        const TypedefType *TdT = cast<TypedefType>(T);
+        TypeName += TdT->getDecl()->getName();
+      } else
+        TypeName += "anon";
     } else 
       TypeName += TD->getName();
           
