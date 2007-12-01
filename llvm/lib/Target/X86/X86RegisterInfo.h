@@ -141,11 +141,24 @@ public:
                                   unsigned OpNum,
                                   int FrameIndex) const;
 
+  /// foldMemoryOperand - Same as previous except it tries to fold instruction
+  /// with multiple uses of the same register.
+  MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                  SmallVectorImpl<unsigned> &UseOps,
+                                  int FrameIndex) const;
+
   /// foldMemoryOperand - Same as the previous version except it allows folding
   /// of any load and store from / to any address, not just from a specific
   /// stack slot.
   MachineInstr* foldMemoryOperand(MachineInstr* MI,
                                   unsigned OpNum,
+                                  MachineInstr* LoadMI) const;
+
+  /// foldMemoryOperand - Same as the previous version except it allows folding
+  /// of any load and store from / to any address, not just from a specific
+  /// stack slot.
+  MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                  SmallVectorImpl<unsigned> &UseOps,
                                   MachineInstr* LoadMI) const;
 
   /// getOpcodeAfterMemoryFold - Returns the opcode of the would be new

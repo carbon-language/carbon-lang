@@ -275,7 +275,8 @@ namespace llvm {
     /// returns true.
     bool tryFoldMemoryOperand(MachineInstr* &MI, VirtRegMap &vrm,
                               MachineInstr *DefMI, unsigned InstrIdx,
-                              unsigned OpIdx, unsigned NumUses,
+                              unsigned OpIdx,
+                              SmallVector<unsigned, 2> &UseOps,
                               bool isSS, int Slot, unsigned Reg);
 
     /// anyKillInMBBAfterIdx - Returns true if there is a kill of the specified

@@ -543,11 +543,27 @@ public:
     return 0;
   }
 
+  /// foldMemoryOperand - Same as previous except it tries to fold instruction
+  /// with multiple uses of the same register.
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &UseOps,
+                                          int FrameIndex) const {
+    return 0;
+  }
+
   /// foldMemoryOperand - Same as the previous version except it allows folding
   /// of any load and store from / to any address, not just from a specific
   /// stack slot.
   virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
                                           unsigned OpNum,
+                                          MachineInstr* LoadMI) const {
+    return 0;
+  }
+
+  /// foldMemoryOperand - Same as previous except it tries to fold instruction
+  /// with multiple uses of the same register.
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &UseOps,
                                           MachineInstr* LoadMI) const {
     return 0;
   }

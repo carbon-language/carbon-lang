@@ -77,7 +77,19 @@ public:
   MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
                                   int FrameIndex) const;
 
+  MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                  SmallVectorImpl<unsigned> &UseOps,
+                                  int FrameIndex) const {
+    return 0;
+  }
+
   MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
+                                  MachineInstr* LoadMI) const {
+    return 0;
+  }
+
+  MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                  SmallVectorImpl<unsigned> &UseOps,
                                   MachineInstr* LoadMI) const {
     return 0;
   }

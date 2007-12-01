@@ -1149,6 +1149,31 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned OpNu
   return foldMemoryOperand(MI, OpNum, MOs);
 }
 
+MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
+                                              SmallVectorImpl<unsigned> &UseOps,
+                                              int FrameIndex) const {
+  // Check switch flag 
+  if (NoFusing) return NULL;
+
+  if (UseOps.size() == 1)
+    return foldMemoryOperand(MI, UseOps[0], FrameIndex);
+  else if (UseOps.size() != 2 || UseOps[0] != 0 && UseOps[1] != 1)
+    return NULL;
+
+  unsigned NewOpc = 0;
+  switch (MI->getOpcode()) {
+  default: return NULL;
+  case X86::TEST8rr:  NewOpc = X86::CMP8ri; break;
+  case X86::TEST16rr: NewOpc = X86::CMP16ri; break;
+  case X86::TEST32rr: NewOpc = X86::CMP32ri; break;
+  case X86::TEST64rr: NewOpc = X86::CMP64ri32; break;
+  }
+  // Change to CMPXXri r, 0 first.
+  MI->setInstrDescriptor(TII.get(NewOpc));
+  MI->getOperand(1).ChangeToImmediate(0);
+  return foldMemoryOperand(MI, 0, FrameIndex);
+}
+
 MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned OpNum,
                                                  MachineInstr *LoadMI) const {
   // Check switch flag 
@@ -1159,6 +1184,31 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned OpNu
     MOs.push_back(LoadMI->getOperand(i));
   return foldMemoryOperand(MI, OpNum, MOs);
 }
+
+MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
+                                                 SmallVectorImpl<unsigned> &UseOps,
+                                                 MachineInstr *LoadMI) const {
+  // Check switch flag 
+  if (NoFusing) return NULL;
+
+  if (UseOps.size() == 1)
+    return foldMemoryOperand(MI, UseOps[0], LoadMI);
+  else if (UseOps.size() != 2 || UseOps[0] != 0 && UseOps[1] != 1)
+    return NULL;
+  unsigned NewOpc = 0;
+  switch (MI->getOpcode()) {
+  default: return NULL;
+  case X86::TEST8rr:  NewOpc = X86::CMP8ri; break;
+  case X86::TEST16rr: NewOpc = X86::CMP16ri; break;
+  case X86::TEST32rr: NewOpc = X86::CMP32ri; break;
+  case X86::TEST64rr: NewOpc = X86::CMP64ri32; break;
+  }
+  // Change to CMPXXri r, 0 first.
+  MI->setInstrDescriptor(TII.get(NewOpc));
+  MI->getOperand(1).ChangeToImmediate(0);
+  return foldMemoryOperand(MI, 0, LoadMI);
+}
+
 
 unsigned X86RegisterInfo::getOpcodeAfterMemoryFold(unsigned Opc,
                                                    unsigned OpNum) const {
@@ -1270,7 +1320,30 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     MachineOperand &MO = ImpOps[i];
     MIB.addReg(MO.getReg(), MO.isDef(), true, MO.isKill(), MO.isDead());
   }
-  NewMIs.push_back(MIB);
+  // Change CMP32ri r, 0 back to TEST32rr r, r, etc.
+  unsigned NewOpc = 0;
+  switch (DataMI->getOpcode()) {
+  default: break;
+  case X86::CMP64ri32:
+  case X86::CMP32ri:
+  case X86::CMP16ri:
+  case X86::CMP8ri: {
+    MachineOperand &MO0 = DataMI->getOperand(0);
+    MachineOperand &MO1 = DataMI->getOperand(1);
+    if (MO1.getImm() == 0) {
+      switch (DataMI->getOpcode()) {
+      default: break;
+      case X86::CMP64ri32: NewOpc = X86::TEST64rr; break;
+      case X86::CMP32ri:   NewOpc = X86::TEST32rr; break;
+      case X86::CMP16ri:   NewOpc = X86::TEST16rr; break;
+      case X86::CMP8ri:    NewOpc = X86::TEST8rr; break;
+      }
+      DataMI->setInstrDescriptor(TII.get(NewOpc));
+      MO1.ChangeToRegister(MO0.getReg(), false);
+    }
+  }
+  }
+  NewMIs.push_back(DataMI);
 
   // Emit the store instruction.
   if (UnfoldStore) {

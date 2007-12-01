@@ -63,7 +63,19 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
                                           int FrameIndex) const;
 
   virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &UseOps,
+                                          int FrameIndex) const {
+    return 0;
+  }
+
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
                                           unsigned OpNum,
+                                          MachineInstr* LoadMI) const {
+    return 0;
+  }
+
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &UseOps,
                                           MachineInstr* LoadMI) const {
     return 0;
   }

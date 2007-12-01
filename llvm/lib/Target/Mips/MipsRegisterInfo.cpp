@@ -203,12 +203,6 @@ foldMemoryOperand(MachineInstr* MI, unsigned OpNum, int FI) const
   return NewMI;
 }
 
-MachineInstr *MipsRegisterInfo::
-foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
-                                MachineInstr* LoadMI) const {
-  return NULL;
-}
-
 //===----------------------------------------------------------------------===//
 //
 // Callee Saved Registers methods 

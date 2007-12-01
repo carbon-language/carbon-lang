@@ -644,20 +644,27 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
 bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
                                          VirtRegMap &vrm, MachineInstr *DefMI,
                                          unsigned InstrIdx, unsigned OpIdx,
-                                         unsigned NumUses,
+                                         SmallVector<unsigned, 2> &UseOps,
                                          bool isSS, int Slot, unsigned Reg) {
   // FIXME: fold subreg use
   if (MI->getOperand(OpIdx).getSubReg())
     return false;
 
-  // FIXME: It may be possible to fold load when there are multiple uses.
-  // e.g. On x86, TEST32rr r, r -> CMP32rm [mem], 0
-  if (NumUses > 1)
-    return false;
+  MachineInstr *fmi = NULL;
 
-  MachineInstr *fmi = isSS
-    ? mri_->foldMemoryOperand(MI, OpIdx, Slot)
-    : mri_->foldMemoryOperand(MI, OpIdx, DefMI);
+  if (UseOps.size() < 2)
+    fmi = isSS ? mri_->foldMemoryOperand(MI, OpIdx, Slot)
+               : mri_->foldMemoryOperand(MI, OpIdx, DefMI);
+  else {
+    if (OpIdx != UseOps[0])
+      // Must be two-address instruction + one more use. Not going to fold.
+      return false;
+    // It may be possible to fold load when there are multiple uses.
+    // e.g. On x86, TEST32rr r, r -> CMP32rm [mem], 0
+    fmi = isSS ? mri_->foldMemoryOperand(MI, UseOps, Slot)
+               : mri_->foldMemoryOperand(MI, UseOps, DefMI);
+  }
+
   if (fmi) {
     // Attempt to fold the memory reference into the instruction. If
     // we can do this, we don't need to insert spill code.
@@ -768,7 +775,9 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
 
     HasUse = mop.isUse();
     HasDef = mop.isDef();
-    unsigned NumUses = HasUse;
+    SmallVector<unsigned, 2> UseOps;
+    if (HasUse)
+      UseOps.push_back(i);
     std::vector<unsigned> UpdateOps;
     for (unsigned j = i+1, e = MI->getNumOperands(); j != e; ++j) {
       if (!MI->getOperand(j).isRegister())
@@ -779,7 +788,7 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
       if (RegJ == RegI) {
         UpdateOps.push_back(j);
         if (MI->getOperand(j).isUse())
-          ++NumUses;
+          UseOps.push_back(j);
         HasUse |= MI->getOperand(j).isUse();
         HasDef |= MI->getOperand(j).isDef();
       }
@@ -787,7 +796,7 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
 
     if (TryFold &&
         tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index, i,
-                             NumUses, FoldSS, FoldSlot, Reg)) {
+                             UseOps, FoldSS, FoldSlot, Reg)) {
       // Folding the load/store can completely change the instruction in
       // unpredictable ways, rescan it from the beginning.
       HasUse = false;
@@ -1207,6 +1216,7 @@ addIntervalsForSpills(const LiveInterval &li,
   if (!TrySplit)
     return NewLIs;
 
+  SmallVector<unsigned, 2> UseOps;
   if (NeedStackSlot) {
     int Id = SpillMBBs.find_first();
     while (Id != -1) {
@@ -1217,7 +1227,7 @@ addIntervalsForSpills(const LiveInterval &li,
         bool isReMat = vrm.isReMaterialized(VReg);
         MachineInstr *MI = getInstructionFromIndex(index);
         int OpIdx = -1;
-        unsigned NumUses = 0;
+        UseOps.clear();
         if (spills[i].canFold) {
           for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
             MachineOperand &MO = MI->getOperand(j);
@@ -1230,20 +1240,20 @@ addIntervalsForSpills(const LiveInterval &li,
             // Can't fold if it's two-address code and the use isn't the
             // first and only use.
             if (isReMat ||
-                (NumUses == 0 && !alsoFoldARestore(Id, index, VReg, RestoreMBBs,
-                                                   RestoreIdxes))) {
+                (UseOps.empty() && !alsoFoldARestore(Id, index, VReg,
+                                                  RestoreMBBs, RestoreIdxes))) {
               OpIdx = -1;
               break;
             }
-            ++NumUses;
+            UseOps.push_back(j);
           }
         }
         // Fold the store into the def if possible.
         bool Folded = false;
         if (OpIdx != -1) {
-          if (tryFoldMemoryOperand(MI, vrm, NULL, index, OpIdx, NumUses,
+          if (tryFoldMemoryOperand(MI, vrm, NULL, index, OpIdx, UseOps,
                                    true, Slot, VReg)) {
-            if (NumUses)
+            if (!UseOps.empty())
               // Folded a two-address instruction, do not issue a load.
               eraseRestoreInfo(Id, index, VReg, RestoreMBBs, RestoreIdxes);
             Folded = true;
@@ -1267,8 +1277,8 @@ addIntervalsForSpills(const LiveInterval &li,
         continue;
       unsigned VReg = restores[i].vreg;
       MachineInstr *MI = getInstructionFromIndex(index);
-      unsigned NumUses = 0;
       int OpIdx = -1;
+      UseOps.clear();
       if (restores[i].canFold) {
         for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
           MachineOperand &MO = MI->getOperand(j);
@@ -1280,10 +1290,10 @@ addIntervalsForSpills(const LiveInterval &li,
             OpIdx = -1;
             break;
           }
-          if (NumUses == 0)
+          if (UseOps.empty())
             // Use the first use index.
             OpIdx = (int)j;
-          ++NumUses;
+          UseOps.push_back(j);
         }
       }
 
@@ -1298,9 +1308,9 @@ addIntervalsForSpills(const LiveInterval &li,
           if (isLoadSS ||
               (ReMatDefMI->getInstrDescriptor()->Flags & M_LOAD_FLAG))
             Folded = tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index, OpIdx,
-                                          NumUses, isLoadSS, LdSlot, VReg);
+                                          UseOps, isLoadSS, LdSlot, VReg);
         } else
-          Folded = tryFoldMemoryOperand(MI, vrm, NULL, index, OpIdx, NumUses,
+          Folded = tryFoldMemoryOperand(MI, vrm, NULL, index, OpIdx, UseOps,
                                         true, Slot, VReg);
       }
       // If folding is not possible / failed, then tell the spiller to issue a
