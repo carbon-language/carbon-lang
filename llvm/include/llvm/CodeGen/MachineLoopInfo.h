@@ -39,14 +39,13 @@
 namespace llvm {
 
 // Provide overrides for Loop methods that don't make sense for machine loops.
-template<>
+template<> inline
 PHINode *LoopBase<MachineBasicBlock>::getCanonicalInductionVariable() const {
   assert(0 && "getCanonicalInductionVariable not supported for machine loops!");
   return 0;
 }
 
-template<>
-Instruction*
+template<> inline Instruction*
 LoopBase<MachineBasicBlock>::getCanonicalInductionVariableIncrement() const {
   assert(0 &&
      "getCanonicalInductionVariableIncrement not supported for machine loops!");
@@ -54,19 +53,19 @@ LoopBase<MachineBasicBlock>::getCanonicalInductionVariableIncrement() const {
 }
 
 template<>
-bool LoopBase<MachineBasicBlock>::isLoopInvariant(Value *V) const {
+inline bool LoopBase<MachineBasicBlock>::isLoopInvariant(Value *V) const {
   assert(0 && "isLoopInvariant not supported for machine loops!");
   return false;
 }
 
 template<>
-Value *LoopBase<MachineBasicBlock>::getTripCount() const {
+inline Value *LoopBase<MachineBasicBlock>::getTripCount() const {
   assert(0 && "getTripCount not supported for machine loops!");
   return 0;
 }
 
 template<>
-bool LoopBase<MachineBasicBlock>::isLCSSAForm() const {
+inline bool LoopBase<MachineBasicBlock>::isLCSSAForm() const {
   assert(0 && "isLCSSAForm not supported for machine loops");
   return false;
 }
@@ -128,10 +127,6 @@ public:
   bool runOnFunction(Function& F) { return false; }
 
   virtual void releaseMemory() { LI->releaseMemory(); }
-
-  virtual void print(std::ostream &O, const Module* M = 0) const {
-    if (O) LI->print(O, M);
-  }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 

@@ -141,7 +141,7 @@ public:
 
   /// isLoopInvariant - Return true if the specified value is loop invariant
   ///
-  bool isLoopInvariant(Value *V) const {
+  inline bool isLoopInvariant(Value *V) const {
     if (Instruction *I = dyn_cast<Instruction>(V))
       return !contains(I->getParent());
     return true;  // All non-instructions are loop invariant
@@ -327,7 +327,7 @@ public:
   /// by one each time through the loop.  If so, return the phi node that
   /// corresponds to it.
   ///
-  PHINode *getCanonicalInductionVariable() const {
+  inline PHINode *getCanonicalInductionVariable() const {
     BlockT *H = getHeader();
 
     BlockT *Incoming = 0, *Backedge = 0;
@@ -365,7 +365,7 @@ public:
   /// the canonical induction variable value for the "next" iteration of the
   /// loop.  This always succeeds if getCanonicalInductionVariable succeeds.
   ///
-  Instruction *getCanonicalInductionVariableIncrement() const {
+  inline Instruction *getCanonicalInductionVariableIncrement() const {
     if (PHINode *PN = getCanonicalInductionVariable()) {
       bool P1InLoop = contains(PN->getIncomingBlock(1));
       return cast<Instruction>(PN->getIncomingValue(P1InLoop));
@@ -378,7 +378,7 @@ public:
   /// of the loop executes N-1 times.  If the trip-count cannot be determined,
   /// this returns null.
   ///
-  Value *getTripCount() const {
+  inline Value *getTripCount() const {
     // Canonical loops will end with a 'cmp ne I, V', where I is the incremented
     // canonical induction variable and V is the trip count of the loop.
     Instruction *Inc = getCanonicalInductionVariableIncrement();
@@ -405,7 +405,7 @@ public:
   }
   
   /// isLCSSAForm - Return true if the Loop is in LCSSA form
-  bool isLCSSAForm() const {
+  inline bool isLCSSAForm() const {
     // Sort the blocks vector so that we can use binary search to do quick
     // lookups.
     SmallPtrSet<BlockT*, 16> LoopBBs(block_begin(), block_end());
