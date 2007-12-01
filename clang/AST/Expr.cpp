@@ -243,8 +243,15 @@ bool Expr::hasLocalSideEffect() const {
       return UO->getSubExpr()->hasLocalSideEffect();
     }
   }
-  case BinaryOperatorClass:
-    return cast<BinaryOperator>(this)->isAssignmentOp();
+  case BinaryOperatorClass: {
+    const BinaryOperator *BinOp = cast<BinaryOperator>(this);
+    // Consider comma to have side effects if the LHS and RHS both do.
+    if (BinOp->getOpcode() == BinaryOperator::Comma)
+      return BinOp->getLHS()->hasLocalSideEffect() &&
+             BinOp->getRHS()->hasLocalSideEffect();
+      
+    return BinOp->isAssignmentOp();
+  }
   case CompoundAssignOperatorClass:
     return true;
 
