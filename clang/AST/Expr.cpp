@@ -255,6 +255,13 @@ bool Expr::hasLocalSideEffect() const {
   case CompoundAssignOperatorClass:
     return true;
 
+  case ConditionalOperatorClass: {
+    const ConditionalOperator *Exp = cast<ConditionalOperator>(this);
+    return Exp->getCond()->hasLocalSideEffect()
+           || (Exp->getLHS() && Exp->getLHS()->hasLocalSideEffect())
+           || (Exp->getRHS() && Exp->getRHS()->hasLocalSideEffect());
+  }
+
   case MemberExprClass:
   case ArraySubscriptExprClass:
     // If the base pointer or element is to a volatile pointer/field, accessing
