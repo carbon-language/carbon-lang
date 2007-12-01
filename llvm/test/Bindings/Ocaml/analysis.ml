@@ -23,9 +23,10 @@ let _ =
   
   
   (* Test that valid constructs verify. *)
-  match verify_module m with
+  begin match verify_module m with
     Some msg -> bomb "valid module failed verification!"
-  | None -> ();
+  | None -> ()
+  end;
   
   if not (verify_function fn) then bomb "valid function failed verification!";
   
@@ -34,9 +35,10 @@ let _ =
      A basic block can contain only one terminator instruction. *)
   ignore (build_ret_void at_entry);
   
-  match verify_module m with
+  begin match verify_module m with
     Some msg -> ()
-  | None -> bomb "invalid module passed verification!";
+  | None -> bomb "invalid module passed verification!"
+  end;
   
   if verify_function fn then bomb "invalid function passed verification!";
   
