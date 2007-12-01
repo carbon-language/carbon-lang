@@ -507,7 +507,12 @@ void SelectorTable::Emit(llvm::Serializer& S) const {
   S.EmitPtr(this);
   
   for (iterator I=SelTab->begin(), E=SelTab->end(); I != E; ++I) {
+    if (!S.isRegistered(&*I))
+      continue;
+    
     S.FlushRecord(); // Start a new record.
+
+    S.EmitPtr(&*I);
     S.EmitInt(I->getNumArgs());
 
     for (MultiKeywordSelector::keyword_iterator KI = I->keyword_begin(),
@@ -528,6 +533,8 @@ SelectorTable* SelectorTable::CreateAndRegister(llvm::Deserializer& D) {
     *static_cast<llvm::FoldingSet<MultiKeywordSelector>*>(t->Impl);
 
   while (!D.FinishedBlock(BLoc)) {
+
+    llvm::SerializedPtrID PtrID = D.ReadPtrID();
     unsigned nKeys = D.ReadInt();
     
     MultiKeywordSelector *SI = 
@@ -535,6 +542,8 @@ SelectorTable* SelectorTable::CreateAndRegister(llvm::Deserializer& D) {
                                     nKeys*sizeof(IdentifierInfo *));
 
     new (SI) MultiKeywordSelector(nKeys);
+    
+    D.RegisterPtr(PtrID,SI);
 
     IdentifierInfo **KeyInfo = reinterpret_cast<IdentifierInfo **>(SI+1);
 
