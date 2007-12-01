@@ -5,21 +5,14 @@
  * This file was developed by Gordon Henriksen and is distributed under the
  * University of Illinois Open Source License. See LICENSE.TXT for details.
  *
- *===----------------------------------------------------------------------===
- *
- * This interface provides an ocaml API for the LLVM intermediate
- * representation, the classes in the VMCore library.
- *
  *===----------------------------------------------------------------------===*)
 
 
-(* These abstract types correlate directly to the LLVM VMCore classes. *)
 type llmodule
 type lltype
 type lltypehandle
 type llvalue
-type llbasicblock (* These are actually values, but
-                     benefit from type checking. *)
+type llbasicblock
 type llbuilder
 
 type type_kind =
@@ -93,19 +86,10 @@ type real_predicate =
 
 (*===-- Modules -----------------------------------------------------------===*)
 
-(* Creates a module with the supplied module ID. Modules are not garbage
-   collected; it is mandatory to call dispose_module to free memory. *)
 external create_module : string -> llmodule = "llvm_create_module"
-
-(* Disposes a module. All references to subordinate objects are invalidated;
-   referencing them will invoke undefined behavior. *)
 external dispose_module : llmodule -> unit = "llvm_dispose_module"
-
-(* Adds a named type to the module's symbol table. Returns true if successful.
-   If such a name already exists, then no entry is added and returns false. *)
 external define_type_name : string -> lltype -> llmodule -> bool
                           = "llvm_add_type_name"
-
 external delete_type_name : string -> llmodule -> unit
                           = "llvm_delete_type_name"
 
@@ -113,8 +97,6 @@ external delete_type_name : string -> llmodule -> unit
 (*===-- Types -------------------------------------------------------------===*)
 
 external classify_type : lltype -> type_kind = "llvm_classify_type"
-external refine_abstract_type : lltype -> lltype -> unit
-                              = "llvm_refine_abstract_type"
 
 (*--... Operations on integer types ........................................--*)
 external _i1_type : unit -> lltype = "llvm_i1_type"
@@ -146,7 +128,6 @@ let fp128_type = _fp128_type ()
 let ppc_fp128_type = _ppc_fp128_type ()
 
 (*--... Operations on function types .......................................--*)
-(* FIXME: handle parameter attributes *)
 external function_type : lltype -> lltype array -> lltype = "llvm_function_type"
 external var_arg_function_type : lltype -> lltype array -> lltype
                                = "llvm_var_arg_function_type"
@@ -280,6 +261,7 @@ external define_global : string -> llvalue -> llmodule -> llvalue
 external lookup_global : string -> llmodule -> llvalue option
                        = "llvm_lookup_global"
 external delete_global : llvalue -> unit = "llvm_delete_global"
+external has_initializer : llvalue -> bool = "llvm_has_initializer"
 external global_initializer : llvalue -> llvalue = "LLVMGetInitializer"
 external set_initializer : llvalue -> llvalue -> unit = "llvm_set_initializer"
 external remove_initializer : llvalue -> unit = "llvm_remove_initializer"
@@ -457,6 +439,7 @@ let concat2 sep arr =
   !s
 
 let rec string_of_lltype ty =
+  (* FIXME: stop infinite recursion! :) *)
   match classify_type ty with
     Integer_type -> "i" ^ string_of_int (integer_bitwidth ty)
   | Pointer_type -> (string_of_lltype (element_type ty)) ^ "*"

@@ -13,6 +13,7 @@
  *===----------------------------------------------------------------------===*)
 
 
-(* Writes the bitcode for module the given path. Returns true if successful. *)
+(** [write_bitcode_file m path] writes the bitcode for module [m] to the file at
+    [path]. Returns [true] if successful, [false] otherwise. **)
 external write_bitcode_file : Llvm.llmodule -> string -> bool
                             = "llvm_write_bitcode_file"

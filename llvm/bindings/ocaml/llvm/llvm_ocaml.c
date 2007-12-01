@@ -57,13 +57,6 @@ CAMLprim value llvm_classify_type(LLVMTypeRef Ty) {
   return Val_int(LLVMGetTypeKind(Ty));
 }
 
-/* lltype -> lltype -> unit */
-CAMLprim value llvm_refine_abstract_type(LLVMTypeRef ConcreteTy,
-                                         LLVMTypeRef AbstractTy) {
-  LLVMRefineAbstractType(AbstractTy, ConcreteTy);
-  return Val_unit;
-}
-
 /*--... Operations on integer types ........................................--*/
 
 /* unit -> lltype */
