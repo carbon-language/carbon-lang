@@ -310,7 +310,14 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
           
     std::string TypeName(TD->getKindName());
     TypeName += '.';
-    TypeName += TD->getName();
+    
+    // Name the codegen type after the typedef name
+    // if there is no tag type name available
+    if (TD->getName() == "" && T->getTypeClass() == Type::TypeName) {
+      const TypedefType *TdT = cast<TypedefType>(T);
+      TypeName += TdT->getDecl()->getName();
+    } else 
+      TypeName += TD->getName();
           
     TheModule.addTypeName(TypeName, ResultType);  
     return ResultType;
