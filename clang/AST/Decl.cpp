@@ -242,7 +242,8 @@ FunctionDecl::~FunctionDecl() {
 }
 
 unsigned FunctionDecl::getNumParams() const {
-  return cast<FunctionTypeProto>(getType().getTypePtr())->getNumArgs();
+  if (isa<FunctionTypeNoProto>(getType())) return 0;
+  return cast<FunctionTypeProto>(getType())->getNumArgs();
 }
 
 void FunctionDecl::setParams(ParmVarDecl **NewParamInfo, unsigned NumParams) {
