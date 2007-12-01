@@ -995,9 +995,9 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
           if (VNI)
             HasKill = anyKillInMBBAfterIdx(li, VNI, MBB, getDefIndex(index));
         }
+        std::map<unsigned, std::vector<SRInfo> >::iterator SII =
+          SpillIdxes.find(MBBId);
         if (!HasKill) {
-          std::map<unsigned, std::vector<SRInfo> >::iterator SII =
-            SpillIdxes.find(MBBId);
           if (SII == SpillIdxes.end()) {
             std::vector<SRInfo> S;
             S.push_back(SRInfo(index, NewVReg, true));
@@ -1013,6 +1013,16 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
             Info.canFold = !HasUse;
           }
           SpillMBBs.set(MBBId);
+        } else if (SII != SpillIdxes.end() &&
+                   SII->second.back().vreg == NewVReg &&
+                   (int)index > SII->second.back().index) {
+          // There is an earlier def that's not killed (must be two-address).
+          // The spill is no longer needed.
+          SII->second.pop_back();
+          if (SII->second.empty()) {
+            SpillIdxes.erase(MBBId);
+            SpillMBBs.reset(MBBId);
+          }
         }
       }
     }
