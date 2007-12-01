@@ -21,6 +21,7 @@
 #include "llvm/ADT/iterator"
 #include "llvm/Bitcode/SerializationFwd.h"
 #include <iosfwd>
+#include <string>
 
 using llvm::dyn_cast_or_null;
 
