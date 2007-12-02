@@ -372,8 +372,7 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
     // If this is due to array->pointer conversion, emit the array expression as
     // an l-value.
     if (ICExpr->getSubExpr()->getType()->isArrayType()) {
-      // FIXME: For now we assume that all source arrays map to LLVM arrays.
-      // This will not true when we add support for VLAs.
+      // Note that VLAs can't exist for global variables.
       // The only thing that can have array type like this is a
       // DeclRefExpr(FileVarDecl)?
       const DeclRefExpr *DRE = cast<DeclRefExpr>(ICExpr->getSubExpr());
@@ -381,8 +380,7 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
       llvm::Constant *C = CGM.GetAddrOfFileVarDecl(FVD, false);
       assert(isa<llvm::PointerType>(C->getType()) &&
              isa<llvm::ArrayType>(cast<llvm::PointerType>(C->getType())
-                                  ->getElementType()) &&
-             "Doesn't support VLAs yet!");
+                                  ->getElementType()));
       llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
       
       llvm::Constant *Ops[] = {Idx0, Idx0};
