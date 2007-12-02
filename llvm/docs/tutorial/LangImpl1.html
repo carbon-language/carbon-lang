@@ -293,7 +293,7 @@ if you typed in "1.23".  Feel free to extend it :).  Next we handle comments:
   if (LastChar == '#') {
     // Comment until end of line.
     do LastChar = getchar();
-    while (LastChar != EOF &amp;&amp; LastChar != '\n' &amp; LastChar != '\r');
+    while (LastChar != EOF &amp;&amp; LastChar != '\n' &amp;&amp; LastChar != '\r');
     
     if (LastChar != EOF)
       return gettok();

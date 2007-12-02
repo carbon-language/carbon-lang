@@ -899,7 +899,7 @@ static int gettok() {
   if (LastChar == '#') {
     // Comment until end of line.
     do LastChar = getchar();
-    while (LastChar != EOF &amp;&amp; LastChar != '\n' &amp; LastChar != '\r');
+    while (LastChar != EOF &amp;&amp; LastChar != '\n' &amp;&amp; LastChar != '\r');
     
     if (LastChar != EOF)
       return gettok();
