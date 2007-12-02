@@ -40,6 +40,13 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalDecl(const ValueDecl *D) {
   const llvm::Type *Ty = getTypes().ConvertType(ASTTy);
   if (isa<FunctionDecl>(D)) {
     const llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
+    
+    // Check to see if the function already exists.
+    if (llvm::Function *F = getModule().getFunction(D->getName())) {
+      // If so, make sure it is the correct type.
+      return llvm::ConstantExpr::getBitCast(F, llvm::PointerType::get(FTy));
+    }
+    
     // FIXME: param attributes for sext/zext etc.
     return Entry = new llvm::Function(FTy, llvm::Function::ExternalLinkage,
                                       D->getName(), &getModule());
