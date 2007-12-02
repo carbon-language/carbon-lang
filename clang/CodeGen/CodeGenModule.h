@@ -30,6 +30,7 @@ namespace clang {
   class ASTContext;
   class FunctionDecl;
   class Decl;
+  class Expr;
   class ValueDecl;
   class FileVarDecl;
   struct LangOptions;
@@ -76,8 +77,7 @@ public:
   void EmitFunction(const FunctionDecl *FD);
   void EmitGlobalVar(const FileVarDecl *D);
   void EmitGlobalVarDeclarator(const FileVarDecl *D);
-  llvm::Constant *EmitGlobalInit(const FileVarDecl *D, 
-                                 llvm::GlobalVariable *GV);
+  llvm::Constant *EmitGlobalInit(const Expr *Expression);
   
   void PrintStats() {}
 };

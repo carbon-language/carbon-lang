@@ -75,14 +75,11 @@ void CodeGenFunction::EmitStaticBlockVarDecl(const BlockVarDecl &D) {
   llvm::Constant *Init = 0;
   if (D.getInit() == 0) {
     Init = llvm::Constant::getNullValue(LTy);
-  } else if (D.getType()->isIntegerType()) {
-    llvm::APSInt Value(static_cast<uint32_t>(
-      getContext().getTypeSize(D.getInit()->getType(), SourceLocation())));
-    if (D.getInit()->isIntegerConstantExpr(Value, getContext()))
-      Init = llvm::ConstantInt::get(Value);
+  } else {
+    Init = CGM.EmitGlobalInit(D.getInit());
   }
 
-  assert(Init && "FIXME: Support initializers");
+  assert(Init && "Unable to create initialiser for static decl");
   
   DMEntry = 
     new llvm::GlobalVariable(LTy, false, 

@@ -275,9 +275,8 @@ static llvm::Constant *GenerateConstantExpr(const Expr* Expression,
   return 0;
 }
 
-llvm::Constant *CodeGenModule::EmitGlobalInit(const FileVarDecl *D,
-                                              llvm::GlobalVariable *GV) {
-  return GenerateConstantExpr(D->getInit(), *this);
+llvm::Constant *CodeGenModule::EmitGlobalInit(const Expr *Expression) {
+  return GenerateConstantExpr(Expression, *this);
 }
 
 void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
@@ -300,7 +299,7 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
   }
 
   if (!Init)
-    Init = EmitGlobalInit(D, GV);
+    Init = EmitGlobalInit(D->getInit());
 
   assert(Init && "FIXME: Global variable initializers unimp!");
 
