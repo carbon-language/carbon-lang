@@ -24,6 +24,8 @@ namespace clang {
   
   // Import the diagnostic enums themselves.
   namespace diag {
+    class CustomDiagInfo;
+    
     /// diag::kind - All of the diagnostics that can be emitted by the frontend.
     enum kind {
 #define DIAG(ENUM,FLAGS,DESC) ENUM,
@@ -47,6 +49,13 @@ namespace clang {
 /// "report warnings as errors" and passes them off to the DiagnosticClient for
 /// reporting to the user.
 class Diagnostic {
+public:
+  /// Level - The level of the diagnostic, after it has been through mapping.
+  enum Level {
+    Ignored, Note, Warning, Error, Fatal
+  };
+  
+private:  
   bool WarningsAsErrors;      // Treat warnings like errors: 
   bool WarnOnExtensions;      // Enables warnings for gcc extensions: -pedantic.
   bool ErrorOnExtensions;     // Error on extensions: -pedantic-errors.
@@ -62,8 +71,12 @@ class Diagnostic {
 
   unsigned NumDiagnostics;    // Number of diagnostics reported
   unsigned NumErrors;         // Number of diagnostics that are errors
+
+  /// CustomDiagInfo - Information for uniquing and looking up custom diags.
+  diag::CustomDiagInfo *CustomDiagInfo;
 public:
   explicit Diagnostic(DiagnosticClient &client);
+  ~Diagnostic();
   
   //===--------------------------------------------------------------------===//
   //  Diagnostic characterization methods, used by a client to customize how
@@ -108,6 +121,11 @@ public:
   unsigned getNumErrors() const { return NumErrors; }
   unsigned getNumDiagnostics() const { return NumDiagnostics; }
   
+  /// getCustomDiagID - Return an ID for a diagnostic with the specified message
+  /// and level.  If this is the first request for this diagnosic, it is
+  /// registered and created, otherwise the existing ID is returned.
+  unsigned getCustomDiagID(Level L, const char *Message);
+  
   //===--------------------------------------------------------------------===//
   // Diagnostic classification and reporting interfaces.
   //
@@ -115,11 +133,6 @@ public:
   /// getDescription - Given a diagnostic ID, return a description of the
   /// issue.
   const char *getDescription(unsigned DiagID);
-  
-  /// Level - The level of the diagnostic, after it has been through mapping.
-  enum Level {
-    Ignored, Note, Warning, Error, Fatal
-  };
   
   /// isBuiltinNoteWarningOrExtension - Return true if the unmapped diagnostic
   /// level of the specified diagnostic ID is a Note, Warning, or Extension.

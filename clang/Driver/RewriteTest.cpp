@@ -867,6 +867,11 @@ Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
                                         SourceLocation(), SourceLocation());
   if (Rewrite.ReplaceStmt(Exp, Replacement)) {
     // replacement failed.
+    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error, 
+                     "rewriter could not replace sub-expression due to macros");
+    SourceRange Range = Exp->getSourceRange();
+    Diags.Report(Exp->getAtLoc(), DiagID, 0, 0, &Range, 1);
+    delete Replacement;
     return Exp;
   }
   
