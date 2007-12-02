@@ -38,7 +38,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
       else
         EmitAggExpr(E, 0, false);
     } else {
-      printf("Unimplemented stmt!\n");
+      fprintf(stderr, "Unimplemented stmt!\n");
       S->dump(getContext().SourceMgr);
     }
     break;

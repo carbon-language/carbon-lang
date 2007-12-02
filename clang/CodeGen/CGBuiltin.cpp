@@ -97,6 +97,10 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     
     return RValue::get(Result);
   }
+  case Builtin::BI__builtin_expect: {
+    llvm::Value *Condition = EmitScalarExpr(E->getArg(0));   
+    return RValue::get(Condition);
+  }
   }
   
   return RValue::get(0);
