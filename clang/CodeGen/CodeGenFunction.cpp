@@ -145,6 +145,10 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   assert(BreakContinueStack.empty() &&
          "mismatched push/pop in break/continue stack!");
   
+  // Remove the AllocaInsertPt instruction, which is just a convenience for us.
+  AllocaInsertPt->eraseFromParent();
+  AllocaInsertPt = 0;
+  
   // Verify that the function is well formed.
   assert(!verifyFunction(*CurFn));
 }
