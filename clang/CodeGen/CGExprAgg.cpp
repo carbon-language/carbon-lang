@@ -54,8 +54,7 @@ public:
   //===--------------------------------------------------------------------===//
   
   void VisitStmt(Stmt *S) {
-    fprintf(stderr, "Unimplemented agg expr!\n");
-    S->dump(CGF.getContext().SourceMgr);
+    CGF.WarnUnsupported(S, "aggregate expression");
   }
   void VisitParenExpr(ParenExpr *PE) { Visit(PE->getSubExpr()); }
 
@@ -152,8 +151,7 @@ void AggExprEmitter::VisitStmtExpr(const StmtExpr *E) {
 }
 
 void AggExprEmitter::VisitBinaryOperator(const BinaryOperator *E) {
-  fprintf(stderr, "Unimplemented aggregate binary expr!\n");
-  E->dump(CGF.getContext().SourceMgr);
+  CGF.WarnUnsupported(E, "aggregate binary expression");
 }
 
 void AggExprEmitter::VisitBinAssign(const BinaryOperator *E) {
@@ -201,9 +199,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   unsigned NumInitElements = E->getNumInits();
 
   if (!E->getType()->isArrayType()) {
-    fprintf(stderr, "Unimplemented  aggregate expr! ");
-    fprintf(stderr, "Only Array initializers are implemneted\n");
-    E->dump(CGF.getContext().SourceMgr);
+    CGF.WarnUnsupported(E, "aggregate init-list expression");
     return;
   }
 

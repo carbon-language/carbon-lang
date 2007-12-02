@@ -82,8 +82,7 @@ RValue CodeGenFunction::EmitAnyExpr(const Expr *E, llvm::Value *AggLoc,
 LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
   default: {
-    fprintf(stderr, "Unimplemented lvalue expr!\n");
-    E->dump(getContext().SourceMgr);
+    WarnUnsupported(E, "l-value expression");
     llvm::Type *Ty = llvm::PointerType::get(ConvertType(E->getType()));
     return LValue::MakeAddr(llvm::UndefValue::get(Ty));
   }

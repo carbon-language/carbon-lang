@@ -29,8 +29,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     if (getContext().BuiltinInfo.isLibFunction(BuiltinID))
       return EmitCallExpr(CGM.getBuiltinLibFunction(BuiltinID), E);
     
-    fprintf(stderr, "Unimplemented builtin!!\n");
-    E->dump(getContext().SourceMgr);
+    WarnUnsupported(E, "builtin function");
 
     // Unknown builtin, for now just dump it out and return undef.
     if (hasAggregateLLVMType(E->getType()))

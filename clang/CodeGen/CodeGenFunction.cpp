@@ -147,10 +147,11 @@ const CGRecordLayout *CodeGenFunction::getCGRecordLayout(CodeGenTypes &CGT,
 
 /// WarnUnsupported - Print out a warning that codegen doesn't support the
 /// specified stmt yet.
-void CodeGenFunction::WarnUnsupported(const Stmt *S) {
+void CodeGenFunction::WarnUnsupported(const Stmt *S, const char *Type) {
   unsigned DiagID = CGM.getDiags().getCustomDiagID(Diagnostic::Warning, 
-                                                   "cannot codegen this yet");
+                                                  "cannot codegen this %0 yet");
   SourceRange Range = S->getSourceRange();
-  CGM.getDiags().Report(S->getLocStart(), DiagID, 0, 0, &Range, 1);
+  std::string Msg = Type;
+  CGM.getDiags().Report(S->getLocStart(), DiagID, &Msg, 1, &Range, 1);
 }
 
