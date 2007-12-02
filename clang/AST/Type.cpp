@@ -61,13 +61,13 @@ bool Type::isDerivedType() const {
 }
 
 bool Type::isStructureType() const {
-  if (const RecordType *RT = dyn_cast<RecordType>(this))
+  if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType))
     if (RT->getDecl()->getKind() == Decl::Struct)
       return true;
   return false;
 }
 bool Type::isUnionType() const {
-  if (const RecordType *RT = dyn_cast<RecordType>(this))
+  if (const RecordType *RT = dyn_cast<RecordType>(CanonicalType))
     if (RT->getDecl()->getKind() == Decl::Union)
       return true;
   return false;

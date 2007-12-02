@@ -16,3 +16,9 @@ int f2( float __x ) {
   }__u;
   return (int)(__u.__u >> 31); 
 }
+
+typedef union { int i; int *j; } value;
+
+int f3(value v) {
+  return *v.j;
+}
