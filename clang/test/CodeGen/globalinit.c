@@ -9,6 +9,6 @@ int x[10];
 void bar() { x[0] = 1; }
 
 
-extern int x[];
-void *g = x;
+extern int y[];
+void *g = y;
 
