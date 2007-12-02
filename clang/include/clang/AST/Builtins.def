@@ -53,6 +53,7 @@
 //  c -> const
 //  F -> this is a libc/libm function with a '__builtin_' prefix added.
 
+// Standard libc/libm functions:
 BUILTIN(__builtin_inf  , "d"   , "ncF")
 BUILTIN(__builtin_inff , "f"   , "ncF")
 BUILTIN(__builtin_infl , "Ld"  , "ncF")
@@ -60,6 +61,19 @@ BUILTIN(__builtin_abs  , "ii"  , "ncF")
 BUILTIN(__builtin_fabs , "dd"  , "ncF")
 BUILTIN(__builtin_fabsf, "ff"  , "ncF")
 BUILTIN(__builtin_fabsl, "LdLd", "ncF")
+
+// Builtins for arithmetic.
+BUILTIN(__builtin_clz  , "iUi"  , "nc")
+BUILTIN(__builtin_clzl , "iULi" , "nc")
+BUILTIN(__builtin_clzll, "iULLi", "nc")
+// fixme: int clzimax(uintmax_t)
+BUILTIN(__builtin_ctz  , "iUi"  , "nc")
+BUILTIN(__builtin_ctzl , "iULi" , "nc")
+BUILTIN(__builtin_ctzll, "iULLi", "nc")
+// fixme: int ctzimax(uintmax_t)
+
+
+// Random GCC builtins
 BUILTIN(__builtin_constant_p, "UsUs", "nc")
 BUILTIN(__builtin_classify_type, "i.", "nc")
 BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
