@@ -51,20 +51,27 @@ llvm::Constant *CodeGenModule::GetAddrOfGlobalDecl(const ValueDecl *D) {
   QualType ASTTy = cast<ValueDecl>(D)->getType();
   const llvm::Type *Ty = getTypes().ConvertType(ASTTy);
   if (isa<FunctionDecl>(D)) {
-    const llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
-    
     // Check to see if the function already exists.
     if (llvm::Function *F = getModule().getFunction(D->getName())) {
       // If so, make sure it is the correct type.
-      return llvm::ConstantExpr::getBitCast(F, llvm::PointerType::get(FTy));
+      return Entry = llvm::ConstantExpr::getBitCast(F,
+                                                    llvm::PointerType::get(Ty));
     }
     
     // FIXME: param attributes for sext/zext etc.
+    const llvm::FunctionType *FTy = cast<llvm::FunctionType>(Ty);
     return Entry = new llvm::Function(FTy, llvm::Function::ExternalLinkage,
                                       D->getName(), &getModule());
   }
   
   assert(isa<FileVarDecl>(D) && "Unknown global decl!");
+  
+  if (llvm::GlobalVariable *GV = getModule().getGlobalVariable(D->getName())) {
+    // If so, make sure it is the correct type.
+    return Entry = llvm::ConstantExpr::getBitCast(GV,
+                                                  llvm::PointerType::get(Ty));
+    
+  }
   
   return Entry = new llvm::GlobalVariable(Ty, false, 
                                           llvm::GlobalValue::ExternalLinkage,
