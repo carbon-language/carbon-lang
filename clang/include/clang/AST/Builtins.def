@@ -66,16 +66,18 @@ BUILTIN(__builtin_fabsl, "LdLd", "ncF")
 BUILTIN(__builtin_clz  , "iUi"  , "nc")
 BUILTIN(__builtin_clzl , "iULi" , "nc")
 BUILTIN(__builtin_clzll, "iULLi", "nc")
-// fixme: int clzimax(uintmax_t)
+// TODO: int clzimax(uintmax_t)
 BUILTIN(__builtin_ctz  , "iUi"  , "nc")
 BUILTIN(__builtin_ctzl , "iULi" , "nc")
 BUILTIN(__builtin_ctzll, "iULLi", "nc")
-// fixme: int ctzimax(uintmax_t)
+// TODO: int ctzimax(uintmax_t)
 
-
-// Random GCC builtins
+// FIXME: These type signatures are not correct for targets with int != 32-bits
+// or with ULL != 64-bits.
 BUILTIN(__builtin_bswap32, "UiUi", "nc")
 BUILTIN(__builtin_bswap64, "ULLiULLi", "nc")
+
+// Random GCC builtins
 BUILTIN(__builtin_constant_p, "UsUs", "nc")
 BUILTIN(__builtin_classify_type, "i.", "nc")
 BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
