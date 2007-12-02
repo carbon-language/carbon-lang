@@ -8,3 +8,8 @@ int myArray[5] = {1, 2, 3, 4, 5};
 int *myPointer2 = myArray;
 int *myPointer = &(myArray[2]);
 
+
+extern int x;
+void *g = &x;
+int *h = &x;
+

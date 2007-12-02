@@ -304,8 +304,8 @@ public:
   //  function) that lack a storage keyword are implicitly "static,"
   //  but are represented internally with a storage class of "None".
   bool hasStaticStorage() const {
-    return getStorageClass() == Static ||
-          (getStorageClass() == None && getKind() == FileVar);
+    if (getStorageClass() == Static) return true;
+    return getKind() == FileVar;
   }
       
   // hasLocalStorage - Returns true if a variable with function scope
