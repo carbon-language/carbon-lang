@@ -100,6 +100,18 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     llvm::Value *Condition = EmitScalarExpr(E->getArg(0));   
     return RValue::get(Condition);
   }
+  case Builtin::BI__builtin_bswap32:
+  case Builtin::BI__builtin_bswap64: {
+    llvm::Value *ArgValue = EmitScalarExpr(E->getArg(0));
+    const llvm::Type *ArgType = ArgValue->getType();
+    llvm::Value *F = 
+      llvm::Intrinsic::getDeclaration(&CGM.getModule(), 
+                                      llvm::Intrinsic::bswap,
+                                      &ArgType, 1);
+    llvm::Value *V = Builder.CreateCall(F, ArgValue, "tmp");
+      
+    return RValue::get(V);      
+  }
   }
   
   return RValue::get(0);
