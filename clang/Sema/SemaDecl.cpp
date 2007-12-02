@@ -773,8 +773,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
     // no linkage (C99 6.2.2p6), the type for the object shall be complete...
     if (BVD && IDecl->getStorageClass() != VarDecl::Extern) {
       if (T->isIncompleteType()) {
-        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
-             T.getAsString());
+        //Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
+        //     T.getAsString());
         IDecl->setInvalidDecl();
       }
     }
@@ -788,8 +788,8 @@ Sema::DeclTy *Sema::FinalizeDeclaratorGroup(Scope *S, DeclTy *group) {
       // a tentative definition and has internal linkage (C99 6.2.2p3), the  
       // declared type shall not be an incomplete type.
       if (T->isIncompleteType()) {
-        Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
-             T.getAsString());
+        //Diag(IDecl->getLocation(), diag::err_typecheck_decl_incomplete_type,
+        //     T.getAsString());
         IDecl->setInvalidDecl();
       }
     }

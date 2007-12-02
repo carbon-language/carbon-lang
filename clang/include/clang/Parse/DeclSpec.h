@@ -101,14 +101,14 @@ public:
 private:
     
   // storage-class-specifier
-  SCS StorageClassSpec : 3;
+  /*SCS*/unsigned StorageClassSpec : 3;
   bool SCS_thread_specified : 1;
 
   // type-specifier
-  TSW TypeSpecWidth : 2;
-  TSC TypeSpecComplex : 2;
-  TSS TypeSpecSign : 2;
-  TST TypeSpecType : 4;
+  /*TSW*/unsigned TypeSpecWidth : 2;
+  /*TSC*/unsigned TypeSpecComplex : 2;
+  /*TSS*/unsigned TypeSpecSign : 2;
+  /*TST*/unsigned TypeSpecType : 4;
   
   // type-qualifiers
   unsigned TypeQualifiers : 3;  // Bitwise OR of TQ.
@@ -153,7 +153,7 @@ public:
     delete ProtocolQualifiers;
   }
   // storage-class-specifier
-  SCS getStorageClassSpec() const { return StorageClassSpec; }
+  SCS getStorageClassSpec() const { return (SCS)StorageClassSpec; }
   bool isThreadSpecified() const { return SCS_thread_specified; }
   
   SourceLocation getStorageClassSpecLoc() const { return StorageClassSpecLoc; }
@@ -168,10 +168,10 @@ public:
   }
   
   // type-specifier
-  TSW getTypeSpecWidth() const { return TypeSpecWidth; }
-  TSC getTypeSpecComplex() const { return TypeSpecComplex; }
-  TSS getTypeSpecSign() const { return TypeSpecSign; }
-  TST getTypeSpecType() const { return TypeSpecType; }
+  TSW getTypeSpecWidth() const { return (TSW)TypeSpecWidth; }
+  TSC getTypeSpecComplex() const { return (TSC)TypeSpecComplex; }
+  TSS getTypeSpecSign() const { return (TSS)TypeSpecSign; }
+  TST getTypeSpecType() const { return (TST)TypeSpecType; }
   void *getTypeRep() const { return TypeRep; }
   
   SourceLocation getTypeSpecWidthLoc() const { return TSWLoc; }
