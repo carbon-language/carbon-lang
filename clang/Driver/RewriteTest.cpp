@@ -18,9 +18,10 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Lex/Lexer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "clang/Lex/Lexer.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <sstream>
 using namespace clang;
 using llvm::utostr;
@@ -32,6 +33,7 @@ namespace {
     ASTContext *Context;
     SourceManager *SM;
     unsigned MainFileID;
+    const char *MainFileStart, *MainFileEnd;
     SourceLocation LastIncLoc;
     llvm::SmallVector<ObjcImplementationDecl *, 8> ClassImplementation;
     llvm::SmallVector<ObjcCategoryImplDecl *, 8> CategoryImplementation;
@@ -58,7 +60,6 @@ namespace {
     void Initialize(ASTContext &context, unsigned mainFileID) {
       Context = &context;
       SM = &Context->SourceMgr;
-      MainFileID = mainFileID;
       MsgSendFunctionDecl = 0;
       MsgSendSuperFunctionDecl = 0;
       GetClassFunctionDecl = 0;
@@ -68,6 +69,13 @@ namespace {
       NSStringRecord = 0;
       CurMethodDecl = 0;
       SuperStructDecl = 0;
+      
+      // Get the ID and start/end of the main file.
+      MainFileID = mainFileID;
+      const llvm::MemoryBuffer *MainBuf = SM->getBuffer(MainFileID);
+      MainFileStart = MainBuf->getBufferStart();
+      MainFileEnd = MainBuf->getBufferEnd();
+      
       
       Rewrite.setSourceMgr(Context->SourceMgr);
       // declaring objc_selector outside the parameter list removes a silly
@@ -952,7 +960,7 @@ void RewriteTest::RewriteObjcQualifiedInterfaceTypes(
     
     const char *endBuf = SM->getCharacterData(Loc);
     const char *startBuf = endBuf;
-    while (*startBuf != ';')
+    while (*startBuf != ';' && startBuf != MainFileStart)
       startBuf--; // scan backward (from the decl location) for return type.
     const char *startRef = 0, *endRef = 0;
     if (scanForProtocolRefs(startBuf, endBuf, startRef, endRef)) {
