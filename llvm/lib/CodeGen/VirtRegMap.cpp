@@ -115,25 +115,13 @@ void VirtRegMap::assignVirtReMatId(unsigned virtReg, int id) {
 }
 
 void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
-                            unsigned OpNo, MachineInstr *NewMI) {
+                            MachineInstr *NewMI, ModRef MRInfo) {
   // Move previous memory references folded to new instruction.
   MI2VirtMapTy::iterator IP = MI2VirtMap.lower_bound(NewMI);
   for (MI2VirtMapTy::iterator I = MI2VirtMap.lower_bound(OldMI),
          E = MI2VirtMap.end(); I != E && I->first == OldMI; ) {
     MI2VirtMap.insert(IP, std::make_pair(NewMI, I->second));
     MI2VirtMap.erase(I++);
-  }
-
-  ModRef MRInfo;
-  const TargetInstrDescriptor *TID = OldMI->getInstrDescriptor();
-  if (TID->getOperandConstraint(OpNo, TOI::TIED_TO) != -1 ||
-      TID->findTiedToSrcOperand(OpNo) != -1) {
-    // Folded a two-address operand.
-    MRInfo = isModRef;
-  } else if (OldMI->getOperand(OpNo).isDef()) {
-    MRInfo = isMod;
-  } else {
-    MRInfo = isRef;
   }
 
   // add new memory reference
@@ -830,7 +818,9 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
       NewMIs.clear();
       int Idx = NewMI->findRegisterUseOperandIdx(VirtReg);
       assert(Idx != -1);
-      MachineInstr *FoldedMI = MRI->foldMemoryOperand(NewMI, Idx, SS);
+      SmallVector<unsigned, 2> Ops;
+      Ops.push_back(Idx);
+      MachineInstr *FoldedMI = MRI->foldMemoryOperand(NewMI, Ops, SS);
       if (FoldedMI) {
         if (!VRM.hasPhys(UnfoldVR))
           VRM.assignVirt2Phys(UnfoldVR, UnfoldPR);

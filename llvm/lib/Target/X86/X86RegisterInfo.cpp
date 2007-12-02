@@ -1140,73 +1140,58 @@ X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
 }
 
 
-MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned OpNum,
-                                                 int FrameIndex) const {
-  // Check switch flag 
-  if (NoFusing) return NULL;
-  SmallVector<MachineOperand,4> MOs;
-  MOs.push_back(MachineOperand::CreateFrameIndex(FrameIndex));
-  return foldMemoryOperand(MI, OpNum, MOs);
-}
-
 MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
-                                              SmallVectorImpl<unsigned> &UseOps,
+                                              SmallVectorImpl<unsigned> &Ops,
                                               int FrameIndex) const {
   // Check switch flag 
   if (NoFusing) return NULL;
 
-  if (UseOps.size() == 1)
-    return foldMemoryOperand(MI, UseOps[0], FrameIndex);
-  else if (UseOps.size() != 2 || UseOps[0] != 0 && UseOps[1] != 1)
+  if (Ops.size() == 2 && Ops[0] == 0 && Ops[1] == 1) {
+    unsigned NewOpc = 0;
+    switch (MI->getOpcode()) {
+    default: return NULL;
+    case X86::TEST8rr:  NewOpc = X86::CMP8ri; break;
+    case X86::TEST16rr: NewOpc = X86::CMP16ri; break;
+    case X86::TEST32rr: NewOpc = X86::CMP32ri; break;
+    case X86::TEST64rr: NewOpc = X86::CMP64ri32; break;
+    }
+    // Change to CMPXXri r, 0 first.
+    MI->setInstrDescriptor(TII.get(NewOpc));
+    MI->getOperand(1).ChangeToImmediate(0);
+  } else if (Ops.size() != 1)
     return NULL;
 
-  unsigned NewOpc = 0;
-  switch (MI->getOpcode()) {
-  default: return NULL;
-  case X86::TEST8rr:  NewOpc = X86::CMP8ri; break;
-  case X86::TEST16rr: NewOpc = X86::CMP16ri; break;
-  case X86::TEST32rr: NewOpc = X86::CMP32ri; break;
-  case X86::TEST64rr: NewOpc = X86::CMP64ri32; break;
-  }
-  // Change to CMPXXri r, 0 first.
-  MI->setInstrDescriptor(TII.get(NewOpc));
-  MI->getOperand(1).ChangeToImmediate(0);
-  return foldMemoryOperand(MI, 0, FrameIndex);
+  SmallVector<MachineOperand,4> MOs;
+  MOs.push_back(MachineOperand::CreateFrameIndex(FrameIndex));
+  return foldMemoryOperand(MI, Ops[0], MOs);
 }
 
-MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI, unsigned OpNum,
+MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
+                                                 SmallVectorImpl<unsigned> &Ops,
                                                  MachineInstr *LoadMI) const {
   // Check switch flag 
   if (NoFusing) return NULL;
+
+  if (Ops.size() == 2 && Ops[0] == 0 && Ops[1] == 1) {
+    unsigned NewOpc = 0;
+    switch (MI->getOpcode()) {
+    default: return NULL;
+    case X86::TEST8rr:  NewOpc = X86::CMP8ri; break;
+    case X86::TEST16rr: NewOpc = X86::CMP16ri; break;
+    case X86::TEST32rr: NewOpc = X86::CMP32ri; break;
+    case X86::TEST64rr: NewOpc = X86::CMP64ri32; break;
+    }
+    // Change to CMPXXri r, 0 first.
+    MI->setInstrDescriptor(TII.get(NewOpc));
+    MI->getOperand(1).ChangeToImmediate(0);
+  } else if (Ops.size() != 1)
+    return NULL;
+
   SmallVector<MachineOperand,4> MOs;
   unsigned NumOps = TII.getNumOperands(LoadMI->getOpcode());
   for (unsigned i = NumOps - 4; i != NumOps; ++i)
     MOs.push_back(LoadMI->getOperand(i));
-  return foldMemoryOperand(MI, OpNum, MOs);
-}
-
-MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
-                                                 SmallVectorImpl<unsigned> &UseOps,
-                                                 MachineInstr *LoadMI) const {
-  // Check switch flag 
-  if (NoFusing) return NULL;
-
-  if (UseOps.size() == 1)
-    return foldMemoryOperand(MI, UseOps[0], LoadMI);
-  else if (UseOps.size() != 2 || UseOps[0] != 0 && UseOps[1] != 1)
-    return NULL;
-  unsigned NewOpc = 0;
-  switch (MI->getOpcode()) {
-  default: return NULL;
-  case X86::TEST8rr:  NewOpc = X86::CMP8ri; break;
-  case X86::TEST16rr: NewOpc = X86::CMP16ri; break;
-  case X86::TEST32rr: NewOpc = X86::CMP32ri; break;
-  case X86::TEST64rr: NewOpc = X86::CMP64ri32; break;
-  }
-  // Change to CMPXXri r, 0 first.
-  MI->setInstrDescriptor(TII.get(NewOpc));
-  MI->getOperand(1).ChangeToImmediate(0);
-  return foldMemoryOperand(MI, 0, LoadMI);
+  return foldMemoryOperand(MI, Ops[0], MOs);
 }
 
 

@@ -59,23 +59,11 @@ struct SparcRegisterInfo : public SparcGenRegisterInfo {
                      unsigned DestReg, const MachineInstr *Orig) const;
 
   virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                          unsigned OpNum,
+                                          SmallVectorImpl<unsigned> &Ops,
                                           int FrameIndex) const;
 
   virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                          SmallVectorImpl<unsigned> &UseOps,
-                                          int FrameIndex) const {
-    return 0;
-  }
-
-  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                          unsigned OpNum,
-                                          MachineInstr* LoadMI) const {
-    return 0;
-  }
-
-  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                          SmallVectorImpl<unsigned> &UseOps,
+                                          SmallVectorImpl<unsigned> &Ops,
                                           MachineInstr* LoadMI) const {
     return 0;
   }

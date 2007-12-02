@@ -347,7 +347,11 @@ static bool isLowRegister(unsigned Reg) {
 }
 
 MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
-                                                 unsigned OpNum, int FI) const {
+                                                 SmallVectorImpl<unsigned> &Ops,
+                                                 int FI) const {
+  if (Ops.size() != 1) return NULL;
+
+  unsigned OpNum = Ops[0];
   unsigned Opc = MI->getOpcode();
   MachineInstr *NewMI = NULL;
   switch (Opc) {

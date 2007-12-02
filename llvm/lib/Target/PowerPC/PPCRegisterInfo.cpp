@@ -555,11 +555,14 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 /// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
 /// copy instructions, turning them into load/store instructions.
 MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
-                                                 unsigned OpNum,
-                                                 int FrameIndex) const {
+                                              SmallVectorImpl<unsigned> &Ops,
+                                              int FrameIndex) const {
+  if (Ops.size() != 1) return NULL;
+
   // Make sure this is a reg-reg copy.  Note that we can't handle MCRF, because
   // it takes more than one instruction to store it.
   unsigned Opc = MI->getOpcode();
+  unsigned OpNum = Ops[0];
 
   MachineInstr *NewMI = NULL;
   if ((Opc == PPC::OR &&

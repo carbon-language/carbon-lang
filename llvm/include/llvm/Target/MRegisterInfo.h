@@ -533,20 +533,13 @@ public:
                              const MachineInstr *Orig) const = 0;
 
   /// foldMemoryOperand - Attempt to fold a load or store of the specified stack
-  /// slot into the specified machine instruction for the specified operand.  If
-  /// this is possible, a new instruction is returned with the specified operand
-  /// folded, otherwise NULL is returned. The client is responsible for removing
-  /// the old instruction and adding the new one in the instruction stream
+  /// slot into the specified machine instruction for the specified operand(s).
+  /// If this is possible, a new instruction is returned with the specified
+  /// operand folded, otherwise NULL is returned. The client is responsible for
+  /// removing the old instruction and adding the new one in the instruction
+  /// stream.
   virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                          unsigned OpNum,
-                                          int FrameIndex) const {
-    return 0;
-  }
-
-  /// foldMemoryOperand - Same as previous except it tries to fold instruction
-  /// with multiple uses of the same register.
-  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                          SmallVectorImpl<unsigned> &UseOps,
+                                          SmallVectorImpl<unsigned> &Ops,
                                           int FrameIndex) const {
     return 0;
   }
@@ -555,15 +548,7 @@ public:
   /// of any load and store from / to any address, not just from a specific
   /// stack slot.
   virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                          unsigned OpNum,
-                                          MachineInstr* LoadMI) const {
-    return 0;
-  }
-
-  /// foldMemoryOperand - Same as previous except it tries to fold instruction
-  /// with multiple uses of the same register.
-  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                          SmallVectorImpl<unsigned> &UseOps,
+                                          SmallVectorImpl<unsigned> &Ops,
                                           MachineInstr* LoadMI) const {
     return 0;
   }

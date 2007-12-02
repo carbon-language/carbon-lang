@@ -280,10 +280,9 @@ namespace llvm {
     }
 
     /// @brief Updates information about the specified virtual register's value
-    /// folded into newMI machine instruction.  The OpNum argument indicates the
-    /// operand number of OldMI that is folded.
-    void virtFolded(unsigned VirtReg, MachineInstr *OldMI, unsigned OpNum,
-                    MachineInstr *NewMI);
+    /// folded into newMI machine instruction.
+    void virtFolded(unsigned VirtReg, MachineInstr *OldMI, MachineInstr *NewMI,
+                    ModRef MRInfo);
 
     /// @brief Updates information about the specified virtual register's value
     /// folded into the specified machine instruction.

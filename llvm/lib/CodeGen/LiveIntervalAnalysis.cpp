@@ -643,28 +643,32 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
 /// returns true.
 bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
                                          VirtRegMap &vrm, MachineInstr *DefMI,
-                                         unsigned InstrIdx, unsigned OpIdx,
-                                         SmallVector<unsigned, 2> &UseOps,
+                                         unsigned InstrIdx,
+                                         SmallVector<unsigned, 2> &Ops,
                                          bool isSS, int Slot, unsigned Reg) {
-  // FIXME: fold subreg use
-  if (MI->getOperand(OpIdx).getSubReg())
-    return false;
-
-  MachineInstr *fmi = NULL;
-
-  if (UseOps.size() < 2)
-    fmi = isSS ? mri_->foldMemoryOperand(MI, OpIdx, Slot)
-               : mri_->foldMemoryOperand(MI, OpIdx, DefMI);
-  else {
-    if (OpIdx != UseOps[0])
-      // Must be two-address instruction + one more use. Not going to fold.
+  unsigned MRInfo = 0;
+  const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+  SmallVector<unsigned, 2> FoldOps;
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+    unsigned OpIdx = Ops[i];
+    // FIXME: fold subreg use.
+    if (MI->getOperand(OpIdx).getSubReg())
       return false;
-    // It may be possible to fold load when there are multiple uses.
-    // e.g. On x86, TEST32rr r, r -> CMP32rm [mem], 0
-    fmi = isSS ? mri_->foldMemoryOperand(MI, UseOps, Slot)
-               : mri_->foldMemoryOperand(MI, UseOps, DefMI);
+    if (MI->getOperand(OpIdx).isDef())
+      MRInfo |= (unsigned)VirtRegMap::isMod;
+    else {
+      // Filter out two-address use operand(s).
+      if (TID->getOperandConstraint(OpIdx, TOI::TIED_TO) != -1) {
+        MRInfo = VirtRegMap::isModRef;
+        continue;
+      }
+      MRInfo |= (unsigned)VirtRegMap::isRef;
+    }
+    FoldOps.push_back(OpIdx);
   }
 
+  MachineInstr *fmi = isSS ? mri_->foldMemoryOperand(MI, FoldOps, Slot)
+                           : mri_->foldMemoryOperand(MI, FoldOps, DefMI);
   if (fmi) {
     // Attempt to fold the memory reference into the instruction. If
     // we can do this, we don't need to insert spill code.
@@ -674,7 +678,7 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
       LiveVariables::transferKillDeadInfo(MI, fmi, mri_);
     MachineBasicBlock &MBB = *MI->getParent();
     if (isSS && !mf_->getFrameInfo()->isFixedObjectIndex(Slot))
-      vrm.virtFolded(Reg, MI, OpIdx, fmi);
+      vrm.virtFolded(Reg, MI, fmi, (VirtRegMap::ModRef)MRInfo);
     vrm.transferSpillPts(MI, fmi);
     vrm.transferRestorePts(MI, fmi);
     mi2iMap_.erase(MI);
@@ -775,28 +779,25 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
 
     HasUse = mop.isUse();
     HasDef = mop.isDef();
-    SmallVector<unsigned, 2> UseOps;
-    if (HasUse)
-      UseOps.push_back(i);
-    std::vector<unsigned> UpdateOps;
+    SmallVector<unsigned, 2> Ops;
+    Ops.push_back(i);
     for (unsigned j = i+1, e = MI->getNumOperands(); j != e; ++j) {
-      if (!MI->getOperand(j).isRegister())
+      const MachineOperand &MOj = MI->getOperand(j);
+      if (!MOj.isRegister())
         continue;
-      unsigned RegJ = MI->getOperand(j).getReg();
+      unsigned RegJ = MOj.getReg();
       if (RegJ == 0 || MRegisterInfo::isPhysicalRegister(RegJ))
         continue;
       if (RegJ == RegI) {
-        UpdateOps.push_back(j);
-        if (MI->getOperand(j).isUse())
-          UseOps.push_back(j);
-        HasUse |= MI->getOperand(j).isUse();
-        HasDef |= MI->getOperand(j).isDef();
+        Ops.push_back(j);
+        HasUse |= MOj.isUse();
+        HasDef |= MOj.isDef();
       }
     }
 
     if (TryFold &&
-        tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index, i,
-                             UseOps, FoldSS, FoldSlot, Reg)) {
+        tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index,
+                             Ops, FoldSS, FoldSlot, Reg)) {
       // Folding the load/store can completely change the instruction in
       // unpredictable ways, rescan it from the beginning.
       HasUse = false;
@@ -814,8 +815,8 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
     mop.setReg(NewVReg);
 
     // Reuse NewVReg for other reads.
-    for (unsigned j = 0, e = UpdateOps.size(); j != e; ++j)
-      MI->getOperand(UpdateOps[j]).setReg(NewVReg);
+    for (unsigned j = 0, e = Ops.size(); j != e; ++j)
+      MI->getOperand(Ops[j]).setReg(NewVReg);
             
     if (CreatedNewVReg) {
       if (DefIsReMat) {
@@ -1226,7 +1227,7 @@ addIntervalsForSpills(const LiveInterval &li,
   if (!TrySplit)
     return NewLIs;
 
-  SmallVector<unsigned, 2> UseOps;
+  SmallVector<unsigned, 2> Ops;
   if (NeedStackSlot) {
     int Id = SpillMBBs.find_first();
     while (Id != -1) {
@@ -1236,41 +1237,43 @@ addIntervalsForSpills(const LiveInterval &li,
         unsigned VReg = spills[i].vreg;
         bool isReMat = vrm.isReMaterialized(VReg);
         MachineInstr *MI = getInstructionFromIndex(index);
-        int OpIdx = -1;
-        UseOps.clear();
+        bool CanFold = false;
+        bool FoundUse = false;
+        Ops.clear();
         if (spills[i].canFold) {
+          CanFold = true;
           for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
             MachineOperand &MO = MI->getOperand(j);
             if (!MO.isRegister() || MO.getReg() != VReg)
               continue;
-            if (MO.isDef()) {
-              OpIdx = (int)j;
+
+            Ops.push_back(j);
+            if (MO.isDef())
               continue;
-            }
-            // Can't fold if it's two-address code and the use isn't the
-            // first and only use.
-            if (isReMat ||
-                (UseOps.empty() && !alsoFoldARestore(Id, index, VReg,
-                                                  RestoreMBBs, RestoreIdxes))) {
-              OpIdx = -1;
+            if (isReMat || 
+                (!FoundUse && !alsoFoldARestore(Id, index, VReg,
+                                                RestoreMBBs, RestoreIdxes))) {
+              // MI has two-address uses of the same register. If the use
+              // isn't the first and only use in the BB, then we can't fold
+              // it. FIXME: Move this to rewriteInstructionsForSpills.
+              CanFold = false;
               break;
             }
-            UseOps.push_back(j);
+            FoundUse = true;
           }
         }
         // Fold the store into the def if possible.
         bool Folded = false;
-        if (OpIdx != -1) {
-          if (tryFoldMemoryOperand(MI, vrm, NULL, index, OpIdx, UseOps,
-                                   true, Slot, VReg)) {
-            if (!UseOps.empty())
-              // Folded a two-address instruction, do not issue a load.
-              eraseRestoreInfo(Id, index, VReg, RestoreMBBs, RestoreIdxes);
+        if (CanFold && !Ops.empty()) {
+          if (tryFoldMemoryOperand(MI, vrm, NULL, index, Ops, true, Slot,VReg)){
             Folded = true;
+            if (FoundUse > 0)
+              // Also folded uses, do not issue a load.
+              eraseRestoreInfo(Id, index, VReg, RestoreMBBs, RestoreIdxes);
           }
         }
 
-        // Else tell the spiller to issue a store for us.
+        // Else tell the spiller to issue a spill.
         if (!Folded)
           vrm.addSpillPoint(VReg, MI);
       }
@@ -1287,41 +1290,40 @@ addIntervalsForSpills(const LiveInterval &li,
         continue;
       unsigned VReg = restores[i].vreg;
       MachineInstr *MI = getInstructionFromIndex(index);
-      int OpIdx = -1;
-      UseOps.clear();
+      bool CanFold = false;
+      Ops.clear();
       if (restores[i].canFold) {
+        CanFold = true;
         for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
           MachineOperand &MO = MI->getOperand(j);
           if (!MO.isRegister() || MO.getReg() != VReg)
             continue;
+
           if (MO.isDef()) {
-            // Can't fold if it's two-address code and it hasn't already
-            // been folded.
-            OpIdx = -1;
+            // If this restore were to be folded, it would have been folded
+            // already.
+            CanFold = false;
             break;
           }
-          if (UseOps.empty())
-            // Use the first use index.
-            OpIdx = (int)j;
-          UseOps.push_back(j);
+          Ops.push_back(j);
         }
       }
 
       // Fold the load into the use if possible.
       bool Folded = false;
-      if (OpIdx != -1) {
-        if (vrm.isReMaterialized(VReg)) {
+      if (CanFold && !Ops.empty()) {
+        if (!vrm.isReMaterialized(VReg))
+          Folded = tryFoldMemoryOperand(MI, vrm, NULL,index,Ops,true,Slot,VReg);
+        else {
           MachineInstr *ReMatDefMI = vrm.getReMaterializedMI(VReg);
           int LdSlot = 0;
           bool isLoadSS = tii_->isLoadFromStackSlot(ReMatDefMI, LdSlot);
           // If the rematerializable def is a load, also try to fold it.
           if (isLoadSS ||
               (ReMatDefMI->getInstrDescriptor()->Flags & M_LOAD_FLAG))
-            Folded = tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index, OpIdx,
-                                          UseOps, isLoadSS, LdSlot, VReg);
-        } else
-          Folded = tryFoldMemoryOperand(MI, vrm, NULL, index, OpIdx, UseOps,
-                                        true, Slot, VReg);
+            Folded = tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index,
+                                          Ops, isLoadSS, LdSlot, VReg);
+        }
       }
       // If folding is not possible / failed, then tell the spiller to issue a
       // load / rematerialization for us.

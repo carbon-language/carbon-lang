@@ -148,8 +148,11 @@ void SparcRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
 }
 
 MachineInstr *SparcRegisterInfo::foldMemoryOperand(MachineInstr* MI,
-                                                   unsigned OpNum,
-                                                   int FI) const {
+                                                 SmallVectorImpl<unsigned> &Ops,
+                                                 int FI) const {
+  if (Ops.size() != 1) return NULL;
+
+  unsigned OpNum = Ops[0];
   bool isFloat = false;
   MachineInstr *NewMI = NULL;
   switch (MI->getOpcode()) {

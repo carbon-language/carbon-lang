@@ -55,22 +55,12 @@ struct MipsRegisterInfo : public MipsGenRegisterInfo {
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;
 
-  MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
+  MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                  SmallVectorImpl<unsigned> &Ops,
                                   int FrameIndex) const;
 
   MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                  SmallVectorImpl<unsigned> &UseOps,
-                                  int FrameIndex) const {
-    return 0;
-  }
-
-  MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
-                                  MachineInstr* LoadMI) const {
-    return 0;
-  }
-
-  MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                  SmallVectorImpl<unsigned> &UseOps,
+                                  SmallVectorImpl<unsigned> &Ops,
                                   MachineInstr* LoadMI) const {
     return 0;
   }

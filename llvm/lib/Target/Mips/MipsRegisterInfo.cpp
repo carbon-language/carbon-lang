@@ -176,8 +176,11 @@ void MipsRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
 }
 
 MachineInstr *MipsRegisterInfo::
-foldMemoryOperand(MachineInstr* MI, unsigned OpNum, int FI) const 
+foldMemoryOperand(MachineInstr* MI,
+                  SmallVectorImpl<unsigned> &Ops, int FI) const 
 {
+  if (Ops.size() != 1) return NULL;
+
   MachineInstr *NewMI = NULL;
 
   switch (MI->getOpcode()) 
@@ -188,10 +191,10 @@ foldMemoryOperand(MachineInstr* MI, unsigned OpNum, int FI) const
         (MI->getOperand(1).getReg() == Mips::ZERO) &&
         (MI->getOperand(2).isRegister())) 
       {
-        if (OpNum == 0)    // COPY -> STORE
+        if (Ops[0] == 0)    // COPY -> STORE
           NewMI = BuildMI(TII.get(Mips::SW)).addFrameIndex(FI)
                   .addImm(0).addReg(MI->getOperand(2).getReg());
-        else               // COPY -> LOAD
+        else                   // COPY -> LOAD
           NewMI = BuildMI(TII.get(Mips::LW), MI->getOperand(0)
                   .getReg()).addImm(0).addFrameIndex(FI);
       }

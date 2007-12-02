@@ -520,7 +520,9 @@ MachineInstr *RABigBlock::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI
     assignVirtToPhysReg(VirtReg, PhysReg);
   } else {  // no free registers available.
     // try to fold the spill into the instruction
-    if(MachineInstr* FMI = RegInfo->foldMemoryOperand(MI, OpNum, FrameIndex)) {
+    SmallVector<unsigned, 2> Ops;
+    Ops.push_back(OpNum);
+    if(MachineInstr* FMI = RegInfo->foldMemoryOperand(MI, Ops, FrameIndex)) {
       ++NumFolded;
       // Since we changed the address of MI, make sure to update live variables
       // to know that the new instruction has the properties of the old one.

@@ -153,8 +153,10 @@ void AlphaRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 }
 
 MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,
-                                                 unsigned OpNum,
+                                                 SmallVectorImpl<unsigned> &Ops,
                                                  int FrameIndex) const {
+   if (Ops.size() != 1) return NULL;
+
    // Make sure this is a reg-reg copy.
    unsigned Opc = MI->getOpcode();
 
@@ -166,7 +168,7 @@ MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,
    case Alpha::CPYSS:
    case Alpha::CPYST:
      if (MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
-       if (OpNum == 0) {  // move -> store
+       if (Ops[0] == 0) {  // move -> store
          unsigned InReg = MI->getOperand(1).getReg();
          Opc = (Opc == Alpha::BISr) ? Alpha::STQ : 
            ((Opc == Alpha::CPYSS) ? Alpha::STS : Alpha::STT);
