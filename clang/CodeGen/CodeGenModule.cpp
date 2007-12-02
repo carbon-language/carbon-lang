@@ -26,8 +26,9 @@ using namespace CodeGen;
 
 
 CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
-                             llvm::Module &M, const llvm::TargetData &TD)
-  : Context(C), Features(LO), TheModule(M), TheTargetData(TD),
+                             llvm::Module &M, const llvm::TargetData &TD,
+                             Diagnostic &diags)
+  : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
     Types(C, M, TD), MemCpyFn(0), CFConstantStringClassRef(0) {}
 
 llvm::Constant *CodeGenModule::GetAddrOfGlobalDecl(const ValueDecl *D) {

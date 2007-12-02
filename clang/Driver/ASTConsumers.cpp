@@ -570,7 +570,7 @@ namespace {
       M = new llvm::Module("foo");
       M->setTargetTriple(Ctx->Target.getTargetTriple());
       TD = new llvm::TargetData(Ctx->Target.getTargetDescription());
-      Builder = CodeGen::Init(Context, Features, *M, *TD);
+      Builder = CodeGen::Init(Context, Features, *M, *TD, Diags);
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {

@@ -24,13 +24,15 @@ namespace clang {
   class FunctionDecl;
   class FileVarDecl;
   struct LangOptions;
+  class Diagnostic;
 
 namespace CodeGen {
   class CodeGenModule;
   
   /// Init - Create an ModuleBuilder with the specified ASTContext.
   CodeGenModule *Init(ASTContext &Context, const LangOptions &Features,
-                      llvm::Module &M, const llvm::TargetData &TD);
+                      llvm::Module &M, const llvm::TargetData &TD,
+                      Diagnostic &Diags);
   
   /// CodeGenFunction - Convert the AST node for a FunctionDecl into LLVM.
   ///

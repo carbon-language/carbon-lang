@@ -34,6 +34,7 @@ namespace clang {
   class ValueDecl;
   class FileVarDecl;
   struct LangOptions;
+  class Diagnostic;
     
 namespace CodeGen {
 
@@ -44,6 +45,7 @@ class CodeGenModule {
   const LangOptions &Features;
   llvm::Module &TheModule;
   const llvm::TargetData &TheTargetData;
+  Diagnostic &Diags;
   CodeGenTypes Types;
 
   llvm::Function *MemCpyFn;
@@ -56,12 +58,13 @@ class CodeGenModule {
   std::vector<llvm::Function *> BuiltinFunctions;
 public:
   CodeGenModule(ASTContext &C, const LangOptions &Features, llvm::Module &M, 
-                const llvm::TargetData &TD);
+                const llvm::TargetData &TD, Diagnostic &Diags);
   
   ASTContext &getContext() const { return Context; }
   const LangOptions &getLangOptions() const { return Features; }
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
+  Diagnostic &getDiags() const { return Diags; }
   
   llvm::Constant *GetAddrOfGlobalDecl(const ValueDecl *D);
   
