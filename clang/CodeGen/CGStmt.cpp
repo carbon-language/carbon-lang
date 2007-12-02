@@ -19,9 +19,6 @@
 using namespace clang;
 using namespace CodeGen;
 
-#include "clang/Basic/Diagnostic.h"
-#include "CodeGenModule.h"
-
 //===----------------------------------------------------------------------===//
 //                              Statement Emission
 //===----------------------------------------------------------------------===//
@@ -41,11 +38,7 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
       else
         EmitAggExpr(E, 0, false);
     } else {
-      
-      unsigned DiagID = CGM.getDiags().getCustomDiagID(Diagnostic::Warning, 
-                                                  "cannot codegen this yet");
-      SourceRange Range = S->getSourceRange();
-      CGM.getDiags().Report(S->getLocStart(), DiagID, 0, 0, &Range, 1);
+      WarnUnsupported(S);
     }
     break;
   case Stmt::NullStmtClass: break;

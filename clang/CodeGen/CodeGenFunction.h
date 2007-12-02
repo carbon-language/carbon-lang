@@ -269,6 +269,10 @@ public:
   
   
   void EmitBlock(llvm::BasicBlock *BB);
+  
+  /// WarnUnsupported - Print out a warning that codegen doesn't support the
+  /// specified stmt yet.
+  void WarnUnsupported(const Stmt *S);
 
   //===--------------------------------------------------------------------===//
   //                                  Helpers

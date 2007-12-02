@@ -14,6 +14,7 @@
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/AST/AST.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -143,3 +144,13 @@ const CGRecordLayout *CodeGenFunction::getCGRecordLayout(CodeGenTypes &CGT,
   
   return CGT.getCGRecordLayout(Ty);
 }
+
+/// WarnUnsupported - Print out a warning that codegen doesn't support the
+/// specified stmt yet.
+void CodeGenFunction::WarnUnsupported(const Stmt *S) {
+  unsigned DiagID = CGM.getDiags().getCustomDiagID(Diagnostic::Warning, 
+                                                   "cannot codegen this yet");
+  SourceRange Range = S->getSourceRange();
+  CGM.getDiags().Report(S->getLocStart(), DiagID, 0, 0, &Range, 1);
+}
+
