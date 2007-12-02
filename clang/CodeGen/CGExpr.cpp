@@ -268,8 +268,10 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     llvm::Value *V = LocalDeclMap[D];
     assert(V && "BlockVarDecl not entered in LocalDeclMap?");
     return LValue::MakeAddr(V);
-  } else if (isa<FunctionDecl>(D) || isa<FileVarDecl>(D)) {
-    return LValue::MakeAddr(CGM.GetAddrOfGlobalDecl(D));
+  } else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    return LValue::MakeAddr(CGM.GetAddrOfFunctionDecl(FD, false));
+  } else if (const FileVarDecl *FVD = dyn_cast<FileVarDecl>(D)) {
+    return LValue::MakeAddr(CGM.GetAddrOfFileVarDecl(FVD, false));
   }
   assert(0 && "Unimp declref");
   //an invalid LValue, but the assert will

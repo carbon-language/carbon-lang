@@ -66,16 +66,11 @@ public:
   CodeGenTypes &getTypes() { return Types; }
   Diagnostic &getDiags() const { return Diags; }
   
-  llvm::Constant *GetAddrOfGlobalDecl(const ValueDecl *D);
+  llvm::Constant *GetAddrOfFunctionDecl(const FunctionDecl *D,
+                                        bool isDefinition);
+  llvm::Constant *GetAddrOfFileVarDecl(const FileVarDecl *D,
+                                       bool isDefinition);
   
-  void ChangeGlobalDeclMap(const Decl *Decl, llvm::Constant *NewVal) {
-    GlobalDeclMap[Decl] = NewVal;
-  }
-  
-  /// ReplaceMapValuesWith - This is a really slow and bad function that
-  /// searches for any entries in GlobalDeclMap that point to OldVal, changing
-  /// them to point to NewVal.  This is badbadbad, FIXME!
-  void ReplaceMapValuesWith(llvm::Constant *OldVal, llvm::Constant *NewVal);
   
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
@@ -92,6 +87,13 @@ public:
   llvm::Constant *EmitGlobalInit(const Expr *Expression);
   
   void PrintStats() {}
+  
+private:
+  /// ReplaceMapValuesWith - This is a really slow and bad function that
+  /// searches for any entries in GlobalDeclMap that point to OldVal, changing
+  /// them to point to NewVal.  This is badbadbad, FIXME!
+  void ReplaceMapValuesWith(llvm::Constant *OldVal, llvm::Constant *NewVal);
+  
 };
 }  // end namespace CodeGen
 }  // end namespace clang
