@@ -31,6 +31,7 @@ namespace clang {
   class FunctionDecl;
   class Decl;
   class Expr;
+  class Stmt;
   class ValueDecl;
   class FileVarDecl;
   struct LangOptions;
@@ -87,6 +88,10 @@ public:
   llvm::Constant *EmitGlobalInit(const Expr *Expression);
   
   void PrintStats() {}
+  
+  /// WarnUnsupported - Print out a warning that codegen doesn't support the
+  /// specified stmt yet.
+  void WarnUnsupported(const Stmt *S, const char *Type);
   
 private:
   /// ReplaceMapValuesWith - This is a really slow and bad function that

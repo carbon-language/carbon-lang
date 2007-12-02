@@ -15,6 +15,7 @@
 #include "CodeGenFunction.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Constants.h"
@@ -31,6 +32,15 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
   : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
     Types(C, M, TD), MemCpyFn(0), CFConstantStringClassRef(0) {}
 
+/// WarnUnsupported - Print out a warning that codegen doesn't support the
+/// specified stmt yet.
+void CodeGenModule::WarnUnsupported(const Stmt *S, const char *Type) {
+  unsigned DiagID = getDiags().getCustomDiagID(Diagnostic::Warning, 
+                                               "cannot codegen this %0 yet");
+  SourceRange Range = S->getSourceRange();
+  std::string Msg = Type;
+  getDiags().Report(S->getLocStart(), DiagID, &Msg, 1, &Range, 1);
+}
 
 /// ReplaceMapValuesWith - This is a really slow and bad function that
 /// searches for any entries in GlobalDeclMap that point to OldVal, changing
@@ -167,7 +177,7 @@ void CodeGenModule::EmitFunction(const FunctionDecl *FD) {
 }
 
 static llvm::Constant *GenerateConstantExpr(const Expr *Expression, 
-                                            CodeGenModule& CGModule);
+                                            CodeGenModule &CGM);
 
 /// GenerateConversionToBool - Generate comparison to zero for conversion to 
 /// bool
@@ -192,14 +202,14 @@ static llvm::Constant *GenerateConversionToBool(llvm::Constant *Expression,
 /// into the Target type.
 static llvm::Constant *GenerateConstantCast(const Expr *Expression, 
                                                 QualType Target, 
-                                                CodeGenModule& CGModule) {
-  CodeGenTypes& Types = CGModule.getTypes(); 
+                                                CodeGenModule &CGM) {
+  CodeGenTypes& Types = CGM.getTypes(); 
   QualType Source = Expression->getType().getCanonicalType();
   Target = Target.getCanonicalType();
 
   assert (!Target->isVoidType());
 
-  llvm::Constant *SubExpr = GenerateConstantExpr(Expression, CGModule);
+  llvm::Constant *SubExpr = GenerateConstantExpr(Expression, CGM);
 
   if (Source == Target)
       return SubExpr;
@@ -268,9 +278,9 @@ static llvm::Constant *GenerateConstantCast(const Expr *Expression,
 /// GenerateAggregateInit - Generate a Constant initaliser for global array or
 /// struct typed variables.
 static llvm::Constant *GenerateAggregateInit(const InitListExpr *ILE, 
-                                             CodeGenModule& CGModule) {
+                                             CodeGenModule &CGM) {
   assert (ILE->getType()->isArrayType() || ILE->getType()->isStructureType());
-  CodeGenTypes& Types = CGModule.getTypes();
+  CodeGenTypes& Types = CGM.getTypes();
 
   unsigned NumInitElements = ILE->getNumInits();
 
@@ -282,7 +292,7 @@ static llvm::Constant *GenerateAggregateInit(const InitListExpr *ILE,
   // Copy initializer elements.
   unsigned i = 0;
   for (i = 0; i < NumInitElements; ++i) {
-    llvm::Constant *C = GenerateConstantExpr(ILE->getInit(i), CGModule);
+    llvm::Constant *C = GenerateConstantExpr(ILE->getInit(i), CGM);
     assert (C && "Failed to create initialiser expression");
     Elts.push_back(C);
   }
@@ -305,10 +315,10 @@ static llvm::Constant *GenerateAggregateInit(const InitListExpr *ILE,
 
 /// GenerateConstantExpr - Recursively builds a constant initialiser for the
 /// given expression.
-static llvm::Constant *GenerateConstantExpr(const Expr* Expression, 
-                                            CodeGenModule& CGModule) {
-  CodeGenTypes& Types = CGModule.getTypes(); 
-  ASTContext& Context = CGModule.getContext();
+static llvm::Constant *GenerateConstantExpr(const Expr *Expression, 
+                                            CodeGenModule &CGM) {
+  CodeGenTypes& Types = CGM.getTypes(); 
+  ASTContext& Context = CGM.getContext();
   assert ((Expression->isConstantExpr(Context, 0) ||
            Expression->getStmtClass() == Stmt::InitListExprClass) &&
           "Only constant global initialisers are supported.");
@@ -335,14 +345,12 @@ static llvm::Constant *GenerateConstantExpr(const Expr* Expression,
     const StringLiteral *SLiteral = cast<StringLiteral>(Expression);
     const char *StrData = SLiteral->getStrData();
     unsigned Len = SLiteral->getByteLength();
-    return CGModule.GetAddrOfConstantString(std::string(StrData, 
-                                                        StrData + Len));
+    return CGM.GetAddrOfConstantString(std::string(StrData, StrData + Len));
   }
 
   // Elide parenthesis.
   case Stmt::ParenExprClass:
-    return GenerateConstantExpr(cast<ParenExpr>(Expression)->getSubExpr(),
-                                CGModule);
+    return GenerateConstantExpr(cast<ParenExpr>(Expression)->getSubExpr(), CGM);
         
   // Generate constant for sizeof operator.
   // FIXME: Need to support AlignOf
@@ -356,11 +364,11 @@ static llvm::Constant *GenerateConstantExpr(const Expr* Expression,
   // Generate constant cast expressions.
   case Stmt::CastExprClass:
     return GenerateConstantCast(cast<CastExpr>(Expression)->getSubExpr(), type,
-                                CGModule);
+                                CGM);
 
   case Stmt::ImplicitCastExprClass: {
     const ImplicitCastExpr *ICExpr = cast<ImplicitCastExpr>(Expression);
-    return GenerateConstantCast(ICExpr->getSubExpr(), type, CGModule);
+    return GenerateConstantCast(ICExpr->getSubExpr(), type, CGM);
   }
 
   // Generate a constant array access expression
@@ -368,20 +376,20 @@ static llvm::Constant *GenerateConstantExpr(const Expr* Expression,
   // global initialisers, preventing us from testing this.
   case Stmt::ArraySubscriptExprClass: {
     const ArraySubscriptExpr* ASExpr = cast<ArraySubscriptExpr>(Expression);
-    llvm::Constant *Base = GenerateConstantExpr(ASExpr->getBase(), CGModule);
-    llvm::Constant *Index = GenerateConstantExpr(ASExpr->getIdx(), CGModule);
+    llvm::Constant *Base = GenerateConstantExpr(ASExpr->getBase(), CGM);
+    llvm::Constant *Index = GenerateConstantExpr(ASExpr->getIdx(), CGM);
     return llvm::ConstantExpr::getExtractElement(Base, Index);
   }
 
   // Generate a constant expression to initialise an aggregate type, such as 
   // an array or struct.
   case Stmt::InitListExprClass: 
-    return GenerateAggregateInit(cast<InitListExpr>(Expression), CGModule);
+    return GenerateAggregateInit(cast<InitListExpr>(Expression), CGM);
 
   default:
-    assert (!"Unsupported expression in global initialiser.");
+    CGM.WarnUnsupported(Expression, "initializer");
+    return llvm::UndefValue::get(Types.ConvertType(type));
   }
-  return 0;
 }
 
 llvm::Constant *CodeGenModule::EmitGlobalInit(const Expr *Expression) {
@@ -552,14 +560,14 @@ GetAddrOfConstantCFString(const std::string &str) {
 /// GenerateWritableString -- Creates storage for a string literal
 static llvm::Constant *GenerateStringLiteral(const std::string &str, 
                                              bool constant,
-                                             CodeGenModule& CGModule) {
+                                             CodeGenModule &CGM) {
   // Create Constant for this string literal
   llvm::Constant *C=llvm::ConstantArray::get(str);
   
   // Create a global variable for this string
   C = new llvm::GlobalVariable(C->getType(), constant, 
                                llvm::GlobalValue::InternalLinkage,
-                               C, ".str", &CGModule.getModule());
+                               C, ".str", &CGM.getModule());
   llvm::Constant *Zero = llvm::Constant::getNullValue(llvm::Type::Int32Ty);
   llvm::Constant *Zeros[] = { Zero, Zero };
   C = llvm::ConstantExpr::getGetElementPtr(C, Zeros, 2);
