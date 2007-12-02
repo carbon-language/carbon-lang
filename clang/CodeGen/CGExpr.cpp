@@ -389,19 +389,15 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 
   Expr *BaseExpr = E->getBase();
   llvm::Value *BaseValue = NULL;
-  if (BaseExpr->isLvalue() == Expr::LV_Valid) {
-    LValue BaseLV = EmitLValue(BaseExpr);
-    BaseValue = BaseLV.getAddress();
-    
-    if (E->isArrow()) {
-      QualType Ty = BaseExpr->getType();
-      Ty = cast<PointerType>(Ty.getCanonicalType())->getPointeeType();
-      BaseValue =  
-        Builder.CreateBitCast(BaseValue, 
-                              llvm::PointerType::get(ConvertType(Ty)), "tmp");
-    }
-  } else
+  
+  // If this is s.x, emit s as an lvalue.  If it is s->x, emit s as a scalar.
+  if (E->isArrow())
     BaseValue = EmitScalarExpr(BaseExpr);
+  else {
+    LValue BaseLV = EmitLValue(BaseExpr);
+    // FIXME: this isn't right for bitfields.
+    BaseValue = BaseLV.getAddress();
+  }
 
   FieldDecl *Field = E->getMemberDecl();
   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
