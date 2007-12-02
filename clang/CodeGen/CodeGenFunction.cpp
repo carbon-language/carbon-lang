@@ -58,8 +58,42 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
     getContext().getTypeSize(getContext().getPointerType(getContext().VoidTy),
                              SourceLocation()));
   
-  CurFn = cast<llvm::Function>(CGM.GetAddrOfGlobalDecl(FD));
   CurFuncDecl = FD;
+  llvm::Constant *CurFnC = CGM.GetAddrOfGlobalDecl(FD);
+  if (!(CurFn = dyn_cast<llvm::Function>(CurFnC))) {
+    // If CurFnC is not a constant, it must be a bitcast of another function.
+    llvm::ConstantExpr *CurFnCE = cast<llvm::ConstantExpr>(CurFnC);
+    assert(CurFnCE->getOpcode() == llvm::Instruction::BitCast &&
+           "Unexpected name collision");
+    llvm::Function *OtherFunc = cast<llvm::Function>(CurFnCE->getOperand(0));
+    
+    // This happens if there is a prototype for a function (e.g. "int f()") and
+    // then a definition of a different type (e.g. "int f(int x)").  Start by
+    // making a new function of the correct type, RAUW, then steal the name.
+    const llvm::PointerType *PTy = cast<llvm::PointerType>(CurFnC->getType());
+    const llvm::FunctionType *FTy =
+      cast<llvm::FunctionType>(PTy->getElementType());
+    CurFn = new llvm::Function(FTy, llvm::Function::ExternalLinkage, "",
+                               &CGM.getModule());
+    CurFn->takeName(OtherFunc);
+    
+    // Replace uses of OtherFunc with the Function we will endow with a body.
+    llvm::Constant *NewPtrForOldDecl = 
+      llvm::ConstantExpr::getBitCast(CurFn, OtherFunc->getType());
+    OtherFunc->replaceAllUsesWith(NewPtrForOldDecl);
+    
+    // Make sure the GlobalDecl map for FD is up-to-date.
+    CGM.ChangeGlobalDeclMap(FD, CurFn);
+    
+    // FIXME: Update the globaldeclmap for the previous decl of this name.  We
+    // really want a way to walk all of these, but we don't have it yet.  This
+    // is incredibly slow!
+    CGM.ReplaceMapValuesWith(OtherFunc, NewPtrForOldDecl);
+    
+    // Ok, delete the old function now, which is dead.
+    assert(OtherFunc->isDeclaration() && "Shouldn't replace non-declaration");
+    OtherFunc->eraseFromParent();
+  }
   
   assert(CurFn->isDeclaration() && "Function already has body?");
   

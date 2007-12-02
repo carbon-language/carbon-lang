@@ -31,6 +31,18 @@ CodeGenModule::CodeGenModule(ASTContext &C, const LangOptions &LO,
   : Context(C), Features(LO), TheModule(M), TheTargetData(TD), Diags(diags),
     Types(C, M, TD), MemCpyFn(0), CFConstantStringClassRef(0) {}
 
+
+/// ReplaceMapValuesWith - This is a really slow and bad function that
+/// searches for any entries in GlobalDeclMap that point to OldVal, changing
+/// them to point to NewVal.  This is badbadbad, FIXME!
+void CodeGenModule::ReplaceMapValuesWith(llvm::Constant *OldVal,
+                                         llvm::Constant *NewVal) {
+  for (llvm::DenseMap<const Decl*, llvm::Constant*>::iterator 
+       I = GlobalDeclMap.begin(), E = GlobalDeclMap.end(); I != E; ++I)
+    if (I->second == OldVal) I->second = NewVal;
+}
+
+
 llvm::Constant *CodeGenModule::GetAddrOfGlobalDecl(const ValueDecl *D) {
   // See if it is already in the map.
   llvm::Constant *&Entry = GlobalDeclMap[D];

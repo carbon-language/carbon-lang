@@ -68,6 +68,15 @@ public:
   
   llvm::Constant *GetAddrOfGlobalDecl(const ValueDecl *D);
   
+  void ChangeGlobalDeclMap(const Decl *Decl, llvm::Constant *NewVal) {
+    GlobalDeclMap[Decl] = NewVal;
+  }
+  
+  /// ReplaceMapValuesWith - This is a really slow and bad function that
+  /// searches for any entries in GlobalDeclMap that point to OldVal, changing
+  /// them to point to NewVal.  This is badbadbad, FIXME!
+  void ReplaceMapValuesWith(llvm::Constant *OldVal, llvm::Constant *NewVal);
+  
   /// getBuiltinLibFunction - Given a builtin id for a function like
   /// "__builtin_fabsf", return a Function* for "fabsf".
   ///
