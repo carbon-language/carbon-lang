@@ -22,6 +22,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Intrinsics.h"
+#include <algorithm>
 using namespace clang;
 using namespace CodeGen;
 
@@ -283,15 +284,29 @@ static llvm::Constant *GenerateAggregateInit(const InitListExpr *ILE,
   CodeGenTypes& Types = CGM.getTypes();
 
   unsigned NumInitElements = ILE->getNumInits();
+  unsigned NumInitableElts = NumInitElements;
 
   const llvm::CompositeType *CType = 
     cast<llvm::CompositeType>(Types.ConvertType(ILE->getType()));
   assert(CType);
   std::vector<llvm::Constant*> Elts;    
     
+  // Initialising an array requires us to automatically initialise any 
+  // elements that have not been initialised explicitly
+  const llvm::ArrayType *AType = 0; 
+  const llvm::Type *AElemTy = 0;
+  unsigned NumArrayElements = 0;
+  
+  // If this is an array, we may have to truncate the initializer
+  if ((AType = dyn_cast<llvm::ArrayType>(CType))) {
+    NumArrayElements = AType->getNumElements();
+    AElemTy = AType->getElementType();
+    NumInitableElts = std::min(NumInitableElts, NumArrayElements);
+  }
+    
   // Copy initializer elements.
   unsigned i = 0;
-  for (i = 0; i < NumInitElements; ++i) {
+  for (i = 0; i < NumInitableElts; ++i) {
     llvm::Constant *C = GenerateConstantExpr(ILE->getInit(i), CGM);
     assert (C && "Failed to create initialiser expression");
     Elts.push_back(C);
@@ -299,17 +314,14 @@ static llvm::Constant *GenerateAggregateInit(const InitListExpr *ILE,
 
   if (ILE->getType()->isStructureType())
     return llvm::ConstantStruct::get(cast<llvm::StructType>(CType), Elts);
-    
-  // Initialising an array requires us to automatically initialise any 
-  // elements that have not been initialised explicitly
-  const llvm::ArrayType *AType = cast<llvm::ArrayType>(CType);
+
+  // Make sure we have an array at this point
   assert(AType);
-  const llvm::Type *AElemTy = AType->getElementType();
-  unsigned NumArrayElements = AType->getNumElements();
+
   // Initialize remaining array elements.
   for (; i < NumArrayElements; ++i)
     Elts.push_back(llvm::Constant::getNullValue(AElemTy));
-
+    
   return llvm::ConstantArray::get(AType, Elts);    
 }
 

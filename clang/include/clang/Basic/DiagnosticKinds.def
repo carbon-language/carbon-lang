@@ -611,7 +611,7 @@ DIAG(warn_extern_init, WARNING,
      "'extern' variable has an initializer")
 DIAG(err_variable_object_no_init, ERROR,
      "variable-sized object may not be initialized")
-DIAG(warn_excess_initializers, WARNING,
+DIAG(warn_excess_initializers, EXTENSION,
      "excess elements in array initializer")
 DIAG(warn_braces_around_scalar_init, WARNING,
      "braces around scalar initializer")
