@@ -923,7 +923,6 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
   unsigned NewVReg = 0;
   unsigned index = getBaseIndex(I->start);
   unsigned end = getBaseIndex(I->end-1) + InstrSlots::NUM;
-  bool TrySplitMI = TrySplit && vrm.getPreSplitReg(li.reg) == 0;
   for (; index != end; index += InstrSlots::NUM) {
     // skip deleted instructions
     while (index != end && !getInstructionFromIndex(index))
@@ -933,7 +932,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     MachineInstr *MI = getInstructionFromIndex(index);
     MachineBasicBlock *MBB = MI->getParent();
     NewVReg = 0;
-    if (TrySplitMI) {
+    if (TrySplit) {
       std::map<unsigned,unsigned>::const_iterator NVI =
         MBBVRegsMap.find(MBB->getNumber());
       if (NVI != MBBVRegsMap.end()) {
@@ -977,7 +976,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
 
     // Update weight of spill interval.
     LiveInterval &nI = getOrCreateInterval(NewVReg);
-    if (!TrySplitMI) {
+    if (!TrySplit) {
       // The spill weight is now infinity as it cannot be spilled again.
       nI.weight = HUGE_VALF;
       continue;
