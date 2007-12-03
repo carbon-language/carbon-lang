@@ -18,8 +18,6 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
-#include <algorithm>
-#include <cctype>
 
 using namespace clang;
 
@@ -688,17 +686,8 @@ static TargetInfoImpl *CreateTarget(const std::string& T) {
     else if (T.find("bogusW16W16-") == 0) // For testing portability.
       return new LinuxTargetInfo(T);
   }
-  else { 
-    // Make a copy of the triple that is all lowercase.
-    std::string T_lower(T);    
-    std::transform(T_lower.begin(), T_lower.end(),
-                   T_lower.begin(), (int(*)(int)) std::tolower);
 
-    if (T_lower.find("linux") != std::string::npos && IsX86(T))
-      return new LinuxTargetInfo(T);
-  }
-  
-  assert (false && "Unknown target!");
+  return NULL;
 }
 
 /// CreateTargetInfo - Return the set of target info objects as specified by
@@ -709,11 +698,25 @@ TargetInfo *clang::CreateTargetInfo(const std::vector<std::string>& triples,
   assert (!triples.empty() && "No target triple.");
   
   // Create the primary target and target info.
-  TargetInfo *TI = new TargetInfo(CreateTarget(triples[0]), &Diags);
+  TargetInfoImpl* PrimaryTarget = CreateTarget(triples[0]);
+
+  if (!PrimaryTarget)
+    return NULL;
+  
+  TargetInfo *TI = new TargetInfo(PrimaryTarget, &Diags);
   
   // Add all secondary targets.
-  for (unsigned i = 1, e = triples.size(); i != e; ++i)
+  for (unsigned i = 1, e = triples.size(); i != e; ++i) {
+    TargetInfoImpl* SecondaryTarget = CreateTarget(triples[i]);
+
+    if (!SecondaryTarget) {
+      fprintf (stderr, "Warning: secondary target '%s' unrecognized.\n",
+               triples[i].c_str());
+      continue;
+    }
+
     TI->AddSecondaryTarget(CreateTarget(triples[i]));
+  }
   
   return TI;
 }

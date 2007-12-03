@@ -424,8 +424,14 @@ static void CreateTargetTriples(std::vector<std::string>& triples) {
   
   // Initialize base triple.  If a -triple option has been specified, use
   // that triple.  Otherwise, default to the host triple.
-  if (TargetTriple.getValue().empty())
-    base_triple = LLVM_HOSTTRIPLE;
+  if (TargetTriple.getValue().empty()) {
+    // HACK: For non-darwin systems, we don't have any real target support
+    //  yet.  For these systems, set the target to darwin.
+    if (!strstr("darwin",LLVM_HOSTTRIPLE))
+      base_triple = "i386-apple-darwin";
+    else
+      base_triple = LLVM_HOSTTRIPLE;
+  }
   else
     base_triple = TargetTriple.getValue();
   
@@ -991,12 +997,13 @@ int main(int argc, char **argv) {
     std::vector<std::string> triples;
     CreateTargetTriples(triples);
     Target = CreateTargetInfo(triples,Diags);
-  }
   
-  if (Target == 0) {
-    fprintf(stderr,
-            "Sorry, don't know what target this is, please use -arch.\n");
-    exit(1);
+    if (Target == 0) {
+      fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
+              triples[0].c_str());
+      fprintf(stderr, "Please use -triple or -arch.\n");
+      exit(1);
+    }
   }
   
   // Process the -I options and set them in the HeaderInfo.
