@@ -966,7 +966,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     bool IsNew = NewVReg == 0;
     bool HasDef = false;
     bool HasUse = false;
-    rewriteInstructionForSpills(li, TrySplitMI, I->valno->id, index, end,
+    rewriteInstructionForSpills(li, TrySplit, I->valno->id, index, end,
                                 MI, ReMatOrigDefMI, ReMatDefMI, Slot, LdSlot,
                                 isLoad, isLoadSS, DefIsReMat, CanDelete, vrm,
                                 RegMap, rc, ReMatIds, NewVReg, HasDef, HasUse,
