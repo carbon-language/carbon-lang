@@ -697,11 +697,11 @@ Value *ScalarExprEmitter::VisitBinSub(const BinaryOperator *E) {
   Value *LHS = Visit(E->getLHS());
   Value *RHS = Visit(E->getRHS());
   
-  const PointerType *LHSPtrType = E->getLHS()->getType()->getAsPointerType();
-  assert(LHSPtrType == E->getRHS()->getType()->getAsPointerType() &&
-         "Can't subtract different pointer types");
+  const QualType LHSType = E->getLHS()->getType().getCanonicalType();
+  const QualType RHSType = E->getRHS()->getType().getCanonicalType();
+  assert(LHSType == RHSType && "Can't subtract different pointer types");
   
-  QualType LHSElementType = LHSPtrType->getPointeeType();
+  QualType LHSElementType = cast<PointerType>(LHSType)->getPointeeType();
   uint64_t ElementSize = CGF.getContext().getTypeSize(LHSElementType,
                                                       SourceLocation()) / 8;
   
