@@ -1330,6 +1330,23 @@ void LoopIndexSplit::calculateLoopBounds(SplitInfo &SD) {
   //      A_ExitValue = min(SplitValue, OrignalLoopExitValue)
   //      B_StartValue = max(SplitValue, OriginalLoopStartValue)
   Instruction *InsertPt = L->getHeader()->getFirstNonPHI();
+
+  // If ExitValue operand is also defined in Loop header then
+  // insert new ExitValue after this operand definition.
+  if (Instruction *EVN = 
+      dyn_cast<Instruction>(ExitCondition->getOperand(ExitValueNum))) {
+    if (!isa<PHINode>(EVN))
+      if (InsertPt->getParent() == EVN->getParent()) {
+        BasicBlock::iterator LHBI = L->getHeader()->begin();
+        BasicBlock::iterator LHBE = L->getHeader()->end();  
+        for(;LHBI != LHBE; ++LHBI) {
+          Instruction *I = LHBI;
+          if (I == EVN) 
+            break;
+        }
+        InsertPt = ++LHBI;
+      }
+  }
   Value *C1 = new ICmpInst(Sign ?
                            ICmpInst::ICMP_SLT : ICmpInst::ICMP_ULT,
                            AEV,
