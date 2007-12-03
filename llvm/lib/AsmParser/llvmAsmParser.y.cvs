@@ -1331,21 +1331,25 @@ Types
     // Allow but ignore attributes on function types; this permits auto-upgrade.
     // FIXME: remove in LLVM 3.0.
     const Type* RetTy = *$1;
-    if (!(RetTy->isFirstClassType() || isa<OpaqueType>(RetTy)))
+    if (!(RetTy->isFirstClassType() || RetTy == Type::VoidTy ||
+          isa<OpaqueType>(RetTy)))
       GEN_ERROR("LLVM Functions cannot return aggregates");
 
     std::vector<const Type*> Params;
     TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
     for (; I != E; ++I ) {
       const Type *Ty = I->Ty->get();
-      if (!(Ty->isFirstClassType() || isa<OpaqueType>(Ty)))
-        GEN_ERROR("Function arguments must be value types!");
       Params.push_back(Ty);
     }
-    CHECK_FOR_ERROR
 
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
+
+    for (unsigned i = 0; i != Params.size(); ++i)
+      if (!(Params[i]->isFirstClassType() || isa<OpaqueType>(Params[i])))
+        GEN_ERROR("Function arguments must be value types!");
+
+    CHECK_FOR_ERROR
 
     FunctionType *FT = FunctionType::get(RetTy, Params, isVarArg);
     delete $3;   // Delete the argument list
@@ -1360,14 +1364,17 @@ Types
     TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
     for ( ; I != E; ++I ) {
       const Type* Ty = I->Ty->get();
-      if (!(Ty->isFirstClassType() || isa<OpaqueType>(Ty)))
-        GEN_ERROR("Function arguments must be value types!");
       Params.push_back(Ty);
     }
-    CHECK_FOR_ERROR
 
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
+
+    for (unsigned i = 0; i != Params.size(); ++i)
+      if (!(Params[i]->isFirstClassType() || isa<OpaqueType>(Params[i])))
+        GEN_ERROR("Function arguments must be value types!");
+
+    CHECK_FOR_ERROR
 
     FunctionType *FT = FunctionType::get($1, Params, isVarArg);
     delete $3;      // Delete the argument list
