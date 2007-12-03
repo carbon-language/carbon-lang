@@ -45,6 +45,7 @@ namespace {
     FunctionDecl *MsgSendSuperFunctionDecl;
     FunctionDecl *MsgSendStretFunctionDecl;
     FunctionDecl *MsgSendSuperStretFunctionDecl;
+    FunctionDecl *MsgSendFpretFunctionDecl;
     FunctionDecl *GetClassFunctionDecl;
     FunctionDecl *SelGetUidFunctionDecl;
     FunctionDecl *CFStringFunctionDecl;
@@ -66,6 +67,7 @@ namespace {
       MsgSendSuperFunctionDecl = 0;
       MsgSendStretFunctionDecl = 0;
       MsgSendSuperStretFunctionDecl = 0;
+      MsgSendFpretFunctionDecl = 0;
       GetClassFunctionDecl = 0;
       SelGetUidFunctionDecl = 0;
       CFStringFunctionDecl = 0;
@@ -93,6 +95,8 @@ namespace {
                       "(struct objc_object *, struct objc_selector *, ...);\n"
                       "extern struct objc_object *objc_msgSendSuper_stret"
                       "(struct objc_super *, struct objc_selector *, ...);\n"
+                      "extern struct objc_object *objc_msgSend_fpret"
+                      "(struct objc_object *, struct objc_selector *, ...);\n"
                       "extern struct objc_object *objc_getClass"
                       "(const char *);\n"
                       "extern void objc_exception_throw(struct objc_object *);\n"
@@ -149,6 +153,7 @@ namespace {
     void SynthMsgSendFunctionDecl();
     void SynthMsgSendSuperFunctionDecl();
     void SynthMsgSendStretFunctionDecl();
+    void SynthMsgSendFpretFunctionDecl();
     void SynthMsgSendSuperStretFunctionDecl();
     void SynthGetClassFunctionDecl();
     void SynthCFStringFunctionDecl();
@@ -1097,6 +1102,24 @@ void RewriteTest::SynthMsgSendSuperStretFunctionDecl() {
                                               FunctionDecl::Extern, false, 0);
 }
 
+// SynthMsgSendFpretFunctionDecl - id objc_msgSend_fpret(id self, SEL op, ...);
+void RewriteTest::SynthMsgSendFpretFunctionDecl() {
+  IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSend_fpret");
+  llvm::SmallVector<QualType, 16> ArgTys;
+  QualType argT = Context->getObjcIdType();
+  assert(!argT.isNull() && "Can't find 'id' type");
+  ArgTys.push_back(argT);
+  argT = Context->getObjcSelType();
+  assert(!argT.isNull() && "Can't find 'SEL' type");
+  ArgTys.push_back(argT);
+  QualType msgSendType = Context->getFunctionType(Context->getObjcIdType(),
+                                                  &ArgTys[0], ArgTys.size(),
+                                                  true /*isVariadic*/);
+  MsgSendFpretFunctionDecl = new FunctionDecl(SourceLocation(), 
+                                              msgSendIdent, msgSendType,
+                                              FunctionDecl::Extern, false, 0);
+}
+
 // SynthGetClassFunctionDecl - id objc_getClass(const char *name);
 void RewriteTest::SynthGetClassFunctionDecl() {
   IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getClass");
@@ -1235,6 +1258,8 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     SynthMsgSendStretFunctionDecl();
   if (!MsgSendSuperStretFunctionDecl)
     SynthMsgSendSuperStretFunctionDecl();
+  if (!MsgSendFpretFunctionDecl)
+    SynthMsgSendFpretFunctionDecl();
   if (!GetClassFunctionDecl)
     SynthGetClassFunctionDecl();
   
@@ -1247,6 +1272,8 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     if (resultType.getCanonicalType()->isStructureType() 
         || resultType.getCanonicalType()->isUnionType())
       MsgSendStretFlavor = MsgSendStretFunctionDecl;
+    else if (resultType.getCanonicalType()->isRealFloatingType())
+      MsgSendFlavor = MsgSendFpretFunctionDecl;
   }
   
   // Synthesize a call to objc_msgSend().
