@@ -35,8 +35,10 @@ int LLVMWriteBitcodeToFile(LLVMModuleRef M, const char *Path) {
 // libSystem? As is, the user will just get a linker error if they use this on 
 // non-GCC. Some C++ stdlibs even have ofstream::ofstream(int fd).
 int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int FileHandle) {
-  __gnu_cxx::stdio_filebuf<char> Buffer(FileHandle, std::ios_base::out);
-  std::ostream OS(&Buffer, std::ios::out | std::ios::trunc | std::ios::binary);
+  __gnu_cxx::stdio_filebuf<char> Buffer(FileHandle, std::ios_base::out |
+                                                    std::ios::trunc |
+                                                    std::ios::binary);
+  std::ostream OS(&Buffer);
   
   if (!OS.fail())
     WriteBitcodeToFile(unwrap(M), OS);
