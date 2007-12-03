@@ -899,7 +899,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     break;
 
   case TestSerialization:
-    Consumer = CreateSerializationTest();
+    Consumer = CreateSerializationTest(PP.getDiagnostics());
     break;
       
   case EmitLLVM:

@@ -15,10 +15,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTConsumers.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CFG.h"
+#include "clang.h"
 #include "llvm/System/Path.h"
 #include "llvm/Support/Streams.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -51,6 +53,7 @@ public:
 
 class SerializationTest : public ASTConsumer {
   ASTContext* Context;
+  Diagnostic &Diags;
   std::list<Decl*> Decls;
   
   enum { BasicMetadataBlock = 1,
@@ -58,7 +61,7 @@ class SerializationTest : public ASTConsumer {
          DeclsBlock = 3 };
 
 public:  
-  SerializationTest() : Context(NULL) {};
+  SerializationTest(Diagnostic &d) : Context(NULL), Diags(d) {};
   ~SerializationTest();
 
   virtual void Initialize(ASTContext& context, unsigned) {
@@ -76,8 +79,8 @@ private:
   
 } // end anonymous namespace
 
-ASTConsumer* clang::CreateSerializationTest() {  
-  return new SerializationTest();
+ASTConsumer* clang::CreateSerializationTest(Diagnostic &Diags) {  
+  return new SerializationTest(Diags);
 }
 
 static void WritePreamble(llvm::BitstreamWriter& Stream) {
@@ -171,9 +174,10 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename,
   llvm::cerr << "Faux-serializing: SourceManager.\n";
   Sezr.EmitPtr(&Context->SourceMgr);
   
-  // "Fake" emit the Target.
-  llvm::cerr << "Faux-serializing: Target.\n";
+  // Emit the Target.
+  llvm::cerr << "Serializing: Target.\n";
   Sezr.EmitPtr(&Context->Target);
+  Sezr.EmitCStr(Context->Target.getTargetTriple());
 
   Sezr.ExitBlock();
 
@@ -256,13 +260,21 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename,
   llvm::cerr << "Faux-Deserializing: SourceManager.\n";
   Dezr.RegisterPtr(&Context->SourceMgr);
 
-  // "Fake" read the TargetInfo.
-  llvm::cerr << "Faux-Deserializing: Target.\n";
-  Dezr.RegisterPtr(&Context->Target);
-
+  { // Read the TargetInfo.
+    llvm::cerr << "Deserializing: Target.\n";
+    llvm::SerializedPtrID PtrID = Dezr.ReadPtrID();
+    char* triple = Dezr.ReadCStr(NULL,0,true);
+    std::vector<std::string> triples;
+    triples.push_back(triple);
+    delete [] triple;
+    Dezr.RegisterPtr(PtrID,CreateTargetInfo(triples,Diags));
+  }
+    
   // For Selectors, we must read the identifier table first because the
   //  SelectorTable depends on the identifiers being already deserialized.
-  llvm::Deserializer::Location SelectorBlockLoc = Dezr.getCurrentBlockLocation();
+  llvm::Deserializer::Location SelectorBlockLoc =
+    Dezr.getCurrentBlockLocation();
+    
   Dezr.SkipBlock();
   
   // Read the identifier table.
