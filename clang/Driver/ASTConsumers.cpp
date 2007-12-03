@@ -60,9 +60,9 @@ void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
     Out << "inline ";
   
   std::string Proto = FD->getName();
-  FunctionType *AFT = cast<FunctionType>(FD->getType());
+  const FunctionType *AFT = FD->getType()->getAsFunctionType();
 
-  if (FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(AFT)) {
+  if (const FunctionTypeProto *FT = dyn_cast<FunctionTypeProto>(AFT)) {
     Proto += "(";
     for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i) {
       if (i) Proto += ", ";
