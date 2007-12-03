@@ -120,6 +120,47 @@ TODO: New language feature: Configuration queries:
     allowing a single index to be used for all fat slices.
 
 //===---------------------------------------------------------------------===//
+// Specifying targets:  -triple and -arch
+===---------------------------------------------------------------------===//
+
+The clang supports "-triple" and "-arch" options. At most one -triple option may
+be specified, while multiple -arch options can be specified. Both are optional.
+
+The "selection of target" behavior is defined as follows:
+
+(1) If the user does not specify -triple:
+
+  (a) If no -arch options are specified, the target triple used is the host
+      triple (in llvm/Config/config.h).
+
+  (b) If one or more -arch's are specified (and no -triple), then there is
+      one triple for each -arch, where the specified arch is substituted
+      for the arch in the host triple.  Example:
+
+         host triple = i686-apple-darwin9
+         command: clang  -arch ppc -arch ppc64 ...
+         triples used: ppc-apple-darwin9  ppc64-apple-darwin9
+
+(2) The user does specify a -triple (only one allowed):
+
+  (a) If no -arch options are specified, the triple specified by -triple
+      is used.  E.g clang -triple i686-apple-darwin9
+
+  (b) If one or more -arch options are specified, then the triple specified
+      by -triple is used as the primary target, and the arch's specified
+      by -arch are used to create secondary targets.  For example:
+
+      clang -triple i686-apple-darwin9 -arch ppc -arch ppc64
+
+      has the following targets:
+
+         i686-apple-darwin9  (primary target)
+         ppc-apple-darwin9   (secondary target)
+         ppc64-apple-darwin9 (secondary target)
+
+The secondary targets are used in the 'portability' model (see below).
+
+//===---------------------------------------------------------------------===//
 
 The 'portability' model in clang is sufficient to catch translation units (or
 their parts) that are not portable, but it doesn't help if the system headers
