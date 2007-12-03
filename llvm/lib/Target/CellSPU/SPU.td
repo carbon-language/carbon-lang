@@ -1,0 +1,61 @@
+//===- SPU.td - Describe the STI Cell SPU Target Machine ----*- tablegen -*-===//
+// 
+//                     The LLVM Compiler Infrastructure
+//
+//
+// This file was developed by a team from the Computer Systems Research
+// Department at The Aerospace Corporation.
+//
+// See README.txt for details.
+//===----------------------------------------------------------------------===//
+//
+// This is the top level entry point for the STI Cell SPU target machine.
+//
+//===----------------------------------------------------------------------===//
+
+// Get the target-independent interfaces which we are implementing.
+//
+include "../Target.td"
+
+//===----------------------------------------------------------------------===//
+// Register File Description
+//===----------------------------------------------------------------------===//
+
+include "SPURegisterInfo.td"
+
+//===----------------------------------------------------------------------===//
+// Instruction formats, instructions
+//===----------------------------------------------------------------------===//
+
+include "SPUNodes.td"
+include "SPUOperands.td"
+include "SPUSchedule.td"
+include "SPUInstrFormats.td"
+include "SPUInstrInfo.td"
+
+//===----------------------------------------------------------------------===//
+// Subtarget features:
+//===----------------------------------------------------------------------===//
+
+def DefaultProc: SubtargetFeature<"", "ProcDirective", "SPU::DEFAULT_PROC", "">;
+def LargeMemFeature:
+  SubtargetFeature<"large_mem","UseLargeMem", "true",
+                   "Use large (>256) LSA memory addressing [default = false]">;
+
+def SPURev0 : Processor<"v0", SPUItineraries, [DefaultProc]>;
+
+//===----------------------------------------------------------------------===//
+// Calling convention:
+//===----------------------------------------------------------------------===//
+
+include "SPUCallingConv.td"
+
+// Target:
+
+def SPUInstrInfo : InstrInfo {
+  let isLittleEndianEncoding = 1;
+}
+
+def SPU : Target {
+  let InstructionSet = SPUInstrInfo;
+}
