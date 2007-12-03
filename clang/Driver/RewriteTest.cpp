@@ -105,7 +105,7 @@ namespace {
                       "extern struct objc_object *objc_exception_extract(void *);\n"
                       "extern int objc_exception_match"
                       "(struct objc_class *, struct objc_object *, ...);\n"
-                      "#include <Objc/objc.h>\n";
+                      "#include <objc/objc.h>\n";
 
       Rewrite.InsertText(SourceLocation::getFileLoc(mainFileID, 0), 
                          s, strlen(s));
