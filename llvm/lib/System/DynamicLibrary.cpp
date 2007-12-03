@@ -138,14 +138,15 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
       return ptr;
   }
 
+#define EXPLICIT_SYMBOL(SYM) \
+   extern void *SYM; if (!strcmp(symbolName, #SYM)) return &SYM
+
   // If this is darwin, it has some funky issues, try to solve them here.  Some
   // important symbols are marked 'private external' which doesn't allow
   // SearchForAddressOfSymbol to find them.  As such, we special case them here,
   // there is only a small handful of them.
 
 #ifdef __APPLE__
-#define EXPLICIT_SYMBOL(SYM) \
-   extern void *SYM; if (!strcmp(symbolName, #SYM)) return &SYM
   {
     EXPLICIT_SYMBOL(__ashldi3);
     EXPLICIT_SYMBOL(__ashrdi3);
@@ -163,8 +164,15 @@ void* DynamicLibrary::SearchForAddressOfSymbol(const char* symbolName) {
     EXPLICIT_SYMBOL(__udivdi3);
     EXPLICIT_SYMBOL(__umoddi3);
   }
-#undef EXPLICIT_SYMBOL
 #endif
+
+#ifdef __CYGWIN__
+  {
+    EXPLICIT_SYMBOL(_alloca);
+  }
+#endif
+
+#undef EXPLICIT_SYMBOL
 
 // This macro returns the address of a well-known, explicit symbol
 #define EXPLICIT_SYMBOL(SYM) \
