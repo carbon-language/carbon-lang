@@ -276,7 +276,7 @@ namespace {
                              SmallSet<MachineInstr*, 4> &ReMatDefs,
                              BitVector &RegKills,
                              std::vector<MachineOperand*> &KillOps,
-                             VirtRegMap &VRM, bool StoreMaybeDead);
+                             VirtRegMap &VRM);
     void RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM);
   };
 }
@@ -860,7 +860,7 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
                                   SmallSet<MachineInstr*, 4> &ReMatDefs,
                                   BitVector &RegKills,
                                   std::vector<MachineOperand*> &KillOps,
-                                  VirtRegMap &VRM, bool StoreMaybeDead) {
+                                  VirtRegMap &VRM) {
   MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
   DOUT << "Store:\t" << *next(MII);
 
@@ -896,15 +896,14 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
     }
   }
 
-  MachineInstr *NewStore = next(MII);
-  LastStore = StoreMaybeDead ? NewStore : NULL;
+  LastStore = next(MII);
 
   // If the stack slot value was previously available in some other
   // register, change it now.  Otherwise, make the register available,
   // in PhysReg.
   Spills.ModifyStackSlotOrReMat(StackSlot);
   Spills.ClobberPhysReg(PhysReg);
-  Spills.addAvailable(StackSlot, NewStore, PhysReg);
+  Spills.addAvailable(StackSlot, LastStore, PhysReg);
   ++NumStores;
 }
 
@@ -987,8 +986,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         int StackSlot = VRM.getStackSlot(VirtReg);
         MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
         SpillRegToStackSlot(MBB, MII, i, Phys, StackSlot, RC, LastStore,
-                            Spills, ReMatDefs, RegKills, KillOps, VRM, false);
+                            Spills, ReMatDefs, RegKills, KillOps, VRM);
       }
+      NextMII = next(MII);
     }
 
     /// ReusedOperands - Keep track of operand reuse in case we need to undo
@@ -1447,7 +1447,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       if (!MO.isDead()) {
         MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
         SpillRegToStackSlot(MBB, MII, -1, PhysReg, StackSlot, RC, LastStore,
-                            Spills, ReMatDefs, RegKills, KillOps, VRM, true);
+                            Spills, ReMatDefs, RegKills, KillOps, VRM);
+        NextMII = next(MII);
 
         // Check to see if this is a noop copy.  If so, eliminate the
         // instruction before considering the dest reg to be changed.
