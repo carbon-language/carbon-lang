@@ -13,8 +13,8 @@
 
 #include "llvm/Type.h"
 #include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/LeakDetector.h"
 using namespace llvm;
 
@@ -197,31 +197,18 @@ bool Instruction::isSameOperationAs(Instruction *I) const {
   return true;
 }
 
-// IntrinsicOnlyReadsMemory - Return true if the specified intrinsic doesn't
-// have any side-effects or if it only reads memory.
-static bool IntrinsicOnlyReadsMemory(unsigned IntrinsicID) {
-#define GET_SIDE_EFFECT_INFO
-#include "llvm/Intrinsics.gen"
-#undef GET_SIDE_EFFECT_INFO
-  return false;
-}
-
 /// mayWriteToMemory - Return true if this instruction may modify memory.
 ///
 bool Instruction::mayWriteToMemory() const {
   switch (getOpcode()) {
   default: return false;
   case Instruction::Free:
-  case Instruction::Store:
   case Instruction::Invoke:
+  case Instruction::Store:
   case Instruction::VAArg:
     return true;
   case Instruction::Call:
-    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(this)) {
-      // If the intrinsic doesn't write memory, it is safe.
-      return !IntrinsicOnlyReadsMemory(II->getIntrinsicID());
-    }
-    return true;
+    return !cast<CallInst>(this)->onlyReadsMemory();
   case Instruction::Load:
     return cast<LoadInst>(this)->isVolatile();
   }

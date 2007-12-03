@@ -136,7 +136,7 @@ private:
 
     // If this function is not defined in this translation unit, it could call
     // anything.
-    if (F->isDeclaration() && !F->getIntrinsicID())
+    if (F->isDeclaration() && !F->isIntrinsic())
       Node->addCalledFunction(CallSite(), CallsExternalNode);
 
     // Loop over all of the users of the function... looking for callers...

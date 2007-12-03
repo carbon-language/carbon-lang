@@ -116,13 +116,13 @@ AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getModRefBehavior(CallSite CS,
                                  std::vector<PointerAccessInfo> *Info) {
-  if (CS.paramHasAttr(0, ParamAttr::ReadNone))
+  if (CS.doesNotAccessMemory())
     // Can't do better than this.
     return DoesNotAccessMemory;
   ModRefBehavior MRB = UnknownModRefBehavior;
   if (Function *F = CS.getCalledFunction())
     MRB = getModRefBehavior(F, CS, Info);
-  if (MRB != DoesNotAccessMemory && CS.paramHasAttr(0, ParamAttr::ReadOnly))
+  if (MRB != DoesNotAccessMemory && CS.onlyReadsMemory())
     return OnlyReadsMemory;
   return MRB;
 }
@@ -130,11 +130,11 @@ AliasAnalysis::getModRefBehavior(CallSite CS,
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getModRefBehavior(Function *F,
                                  std::vector<PointerAccessInfo> *Info) {
-  if (F->paramHasAttr(0, ParamAttr::ReadNone))
+  if (F->doesNotAccessMemory())
     // Can't do better than this.
     return DoesNotAccessMemory;
   ModRefBehavior MRB = getModRefBehavior(F, CallSite(), Info);
-  if (MRB != DoesNotAccessMemory && F->paramHasAttr(0, ParamAttr::ReadOnly))
+  if (MRB != DoesNotAccessMemory && F->onlyReadsMemory())
     return OnlyReadsMemory;
   return MRB;
 }

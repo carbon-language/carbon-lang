@@ -135,7 +135,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
 
     // Turn invokes that call 'nounwind' functions into ordinary calls.
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
-      if (II->paramHasAttr(0, ParamAttr::NoUnwind)) {
+      if (II->isNoUnwind()) {
         ChangeToCall(II);
         Changed = true;
       }

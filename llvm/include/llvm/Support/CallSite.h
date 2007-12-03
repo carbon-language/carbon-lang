@@ -67,6 +67,12 @@ public:
   /// paramHasAttr - whether the call or the callee has the given attribute.
   bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
 
+  /// @brief Determine if the call does not access memory.
+  bool doesNotAccessMemory() const;
+
+  /// @brief Determine if the call does not access or only reads memory.
+  bool onlyReadsMemory() const;
+
   /// getType - Return the type of the instruction that generated this call site
   ///
   const Type *getType() const { return I->getType(); }

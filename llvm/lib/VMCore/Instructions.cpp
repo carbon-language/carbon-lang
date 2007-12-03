@@ -53,7 +53,18 @@ bool CallSite::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
   else
     return cast<InvokeInst>(I)->paramHasAttr(i, attr);
 }
-
+bool CallSite::doesNotAccessMemory() const {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    return CI->doesNotAccessMemory();
+  else
+    return cast<InvokeInst>(I)->doesNotAccessMemory();
+}
+bool CallSite::onlyReadsMemory() const {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    return CI->onlyReadsMemory();
+  else
+    return cast<InvokeInst>(I)->onlyReadsMemory();
+}
 
 
 

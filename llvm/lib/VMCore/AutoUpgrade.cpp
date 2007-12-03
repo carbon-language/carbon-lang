@@ -20,7 +20,7 @@
 using namespace llvm;
 
 
-Function* llvm::UpgradeIntrinsicFunction(Function *F) {
+static Function* UpgradeIntrinsicFunction1(Function *F) {
   assert(F && "Illegal to upgrade a non-existent Function.");
 
   // Get the Function's name.
@@ -117,6 +117,17 @@ Function* llvm::UpgradeIntrinsicFunction(Function *F) {
   //  upgraded form of the intrinsic. We should perhaps have two separate 
   //  functions for this.
   return 0;
+}
+
+Function* llvm::UpgradeIntrinsicFunction(Function *F) {
+  Function *Upgraded = UpgradeIntrinsicFunction1(F);
+
+  // Upgrade intrinsic attributes.  This does not change the function.
+  if (Upgraded)
+    F = Upgraded;
+  if (unsigned id = F->getIntrinsicID(true))
+    F->setParamAttrs(Intrinsic::getParamAttrs((Intrinsic::ID)id));
+  return Upgraded;
 }
 
 // UpgradeIntrinsicCall - Upgrade a call to an old intrinsic to be a call the 

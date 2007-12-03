@@ -1586,7 +1586,7 @@ void MSILWriter::printExternals() {
   // Functions.
   for (I=ModulePtr->begin(),E=ModulePtr->end(); I!=E; ++I) {
     // Skip intrisics
-    if (I->getIntrinsicID()) continue;
+    if (I->isIntrinsic()) continue;
     if (I->isDeclaration()) {
       const Function* F = I; 
       std::string Name = getConvModopt(F->getCallingConv())+getValueName(F);

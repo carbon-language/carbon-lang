@@ -135,7 +135,7 @@ std::string Mangler::getValueName(const GlobalValue *GV, const char * Suffix) {
   // Name mangling occurs as follows:
   // - If V is an intrinsic function, do not change name at all
   // - Otherwise, mangling occurs if global collides with existing name.
-  if (isa<Function>(GV) && cast<Function>(GV)->getIntrinsicID()) {
+  if (isa<Function>(GV) && cast<Function>(GV)->isIntrinsic()) {
     Name = GV->getName(); // Is an intrinsic function
   } else if (!GV->hasName()) {
     // Must mangle the global into a unique ID.

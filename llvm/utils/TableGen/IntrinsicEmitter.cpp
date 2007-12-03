@@ -42,14 +42,8 @@ void IntrinsicEmitter::run(std::ostream &OS) {
   // Emit the intrinsic declaration generator.
   EmitGenerator(Ints, OS);
   
-  // Emit mod/ref info for each function.
-  EmitModRefInfo(Ints, OS);
-  
-  // Emit table of non-memory accessing intrinsics.
-  EmitNoMemoryInfo(Ints, OS);
-  
-  // Emit side effect info for each intrinsic.
-  EmitSideEffectInfo(Ints, OS);
+  // Emit the intrinsic parameter attributes.
+  EmitAttributes(Ints, OS);
 
   // Emit a list of intrinsics with corresponding GCC builtins.
   EmitGCCBuiltinList(Ints, OS);
@@ -297,30 +291,11 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "#endif\n\n";
 }
 
-void IntrinsicEmitter::EmitModRefInfo(const std::vector<CodeGenIntrinsic> &Ints,
-                                      std::ostream &OS) {
-  OS << "// BasicAliasAnalysis code.\n";
-  OS << "#ifdef GET_MODREF_BEHAVIOR\n";
-  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
-    switch (Ints[i].ModRef) {
-    default: break;
-    case CodeGenIntrinsic::NoMem:
-      OS << "  NoMemoryIntrinsics->set(Intrinsic::" << Ints[i].EnumName << ");\n";
-      break;
-    case CodeGenIntrinsic::ReadArgMem:
-    case CodeGenIntrinsic::ReadMem:
-      OS << "  OnlyReadsMemoryIntrinsics->set(Intrinsic::" << Ints[i].EnumName << ");\n";
-      break;
-    }
-  }
-  OS << "#endif\n\n";
-}
-
 void IntrinsicEmitter::
-EmitNoMemoryInfo(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
-  OS << "// SelectionDAGIsel code.\n";
-  OS << "#ifdef GET_NO_MEMORY_INTRINSICS\n";
-  OS << "  switch (IntrinsicID) {\n";
+EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
+  OS << "// Add parameter attributes that are not common to all intrinsics.\n";
+  OS << "#ifdef GET_INTRINSIC_ATTRIBUTES\n";
+  OS << "  switch (id) {\n";
   OS << "  default: break;\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     switch (Ints[i].ModRef) {
@@ -330,28 +305,19 @@ EmitNoMemoryInfo(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS) {
       break;
     }
   }
-  OS << "    return true; // These intrinsics do not reference memory.\n";
-  OS << "  }\n";
-  OS << "#endif\n\n";
-}
-
-void IntrinsicEmitter::
-EmitSideEffectInfo(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS){
-  OS << "// Return true if doesn't access or only reads memory.\n";
-  OS << "#ifdef GET_SIDE_EFFECT_INFO\n";
-  OS << "  switch (IntrinsicID) {\n";
-  OS << "  default: break;\n";
+  OS << "    Attr |= ParamAttr::ReadNone; // These do not access memory.\n";
+  OS << "    break;\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     switch (Ints[i].ModRef) {
     default: break;
-    case CodeGenIntrinsic::NoMem:
     case CodeGenIntrinsic::ReadArgMem:
     case CodeGenIntrinsic::ReadMem:
       OS << "  case Intrinsic::" << Ints[i].EnumName << ":\n";
       break;
     }
   }
-  OS << "    return true; // These intrinsics have no side effects.\n";
+  OS << "    Attr |= ParamAttr::ReadOnly; // These do not write memory.\n";
+  OS << "    break;\n";
   OS << "  }\n";
   OS << "#endif\n\n";
 }

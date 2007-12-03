@@ -69,13 +69,11 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
           if (!isa<CallInst>(I)) continue;
           CallInst *CI = cast<CallInst>(I);
 
-          // If this is an intrinsic function call or an inline asm, don't
+          // If this call cannot unwind or is an inline asm, don't
           // convert it to an invoke.
-          if ((CI->getCalledFunction() &&
-               CI->getCalledFunction()->getIntrinsicID()) ||
-              isa<InlineAsm>(CI->getCalledValue()))
+          if (CI->isNoUnwind() || isa<InlineAsm>(CI->getCalledValue()))
             continue;
-          
+
           // Convert this function call into an invoke instruction.
           // First, split the basic block.
           BasicBlock *Split = BB->splitBasicBlock(CI, CI->getName()+".noexc");

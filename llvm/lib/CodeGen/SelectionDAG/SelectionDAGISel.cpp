@@ -2417,31 +2417,13 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
                            I.isVolatile(), I.getAlignment()));
 }
 
-/// IntrinsicCannotAccessMemory - Return true if the specified intrinsic cannot
-/// access memory and has no other side effects at all.
-static bool IntrinsicCannotAccessMemory(unsigned IntrinsicID) {
-#define GET_NO_MEMORY_INTRINSICS
-#include "llvm/Intrinsics.gen"
-#undef GET_NO_MEMORY_INTRINSICS
-  return false;
-}
-
-// IntrinsicOnlyReadsMemory - Return true if the specified intrinsic doesn't
-// have any side-effects or if it only reads memory.
-static bool IntrinsicOnlyReadsMemory(unsigned IntrinsicID) {
-#define GET_SIDE_EFFECT_INFO
-#include "llvm/Intrinsics.gen"
-#undef GET_SIDE_EFFECT_INFO
-  return false;
-}
-
 /// visitTargetIntrinsic - Lower a call of a target intrinsic to an INTRINSIC
 /// node.
 void SelectionDAGLowering::visitTargetIntrinsic(CallInst &I, 
                                                 unsigned Intrinsic) {
-  bool HasChain = !IntrinsicCannotAccessMemory(Intrinsic);
-  bool OnlyLoad = HasChain && IntrinsicOnlyReadsMemory(Intrinsic);
-  
+  bool HasChain = !I.doesNotAccessMemory();
+  bool OnlyLoad = HasChain && I.onlyReadsMemory();
+
   // Build the operand list.
   SmallVector<SDOperand, 8> Ops;
   if (HasChain) {  // If this intrinsic has side-effects, chainify it.

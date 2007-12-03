@@ -927,6 +927,21 @@ public:
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
 
+  /// @brief Determine if the call does not access memory.
+  bool doesNotAccessMemory() const {
+    return paramHasAttr(0, ParamAttr::ReadNone);
+  }
+
+  /// @brief Determine if the call does not access or only reads memory.
+  bool onlyReadsMemory() const {
+    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+  }
+
+  /// @brief Determine if the call cannot unwind.
+  bool isNoUnwind() const {
+    return paramHasAttr(0, ParamAttr::NoUnwind);
+  }
+
   /// @brief Determine if the call returns a structure.
   bool isStructReturn() const {
     // Be friendly and also check the callee.
@@ -1710,6 +1725,21 @@ public:
 
   /// @brief Determine whether the call or the callee has the given attribute.
   bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
+
+  /// @brief Determine if the call does not access memory.
+  bool doesNotAccessMemory() const {
+    return paramHasAttr(0, ParamAttr::ReadNone);
+  }
+
+  /// @brief Determine if the call does not access or only reads memory.
+  bool onlyReadsMemory() const {
+    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+  }
+
+  /// @brief Determine if the call cannot unwind.
+  bool isNoUnwind() const {
+    return paramHasAttr(0, ParamAttr::NoUnwind);
+  }
 
   /// @brief Determine if the call returns a structure.
   bool isStructReturn() const {

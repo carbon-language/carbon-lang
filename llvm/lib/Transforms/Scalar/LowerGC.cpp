@@ -177,7 +177,7 @@ bool LowerGC::runOnFunction(Function &F) {
     for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E;)
       if (CallInst *CI = dyn_cast<CallInst>(II++)) {
         if (!CI->getCalledFunction() ||
-            !CI->getCalledFunction()->getIntrinsicID())
+            !CI->getCalledFunction()->isIntrinsic())
           NormalCalls.push_back(CI);   // Remember all normal function calls.
 
         if (Function *F = CI->getCalledFunction())

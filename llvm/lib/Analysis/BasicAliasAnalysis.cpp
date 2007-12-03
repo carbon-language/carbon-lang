@@ -25,8 +25,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -115,9 +113,6 @@ namespace {
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.
     bool pointsToConstantMemory(const Value *P);
-
-    virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
-                                          std::vector<PointerAccessInfo> *Info);
 
   private:
     // CheckGEPInstructions - Check two GEP instructions with known
@@ -808,38 +803,6 @@ BasicAliasAnalysis::CheckGEPInstructions(
     }
   }
   return MayAlias;
-}
-
-static ManagedStatic<BitVector> NoMemoryIntrinsics;
-static ManagedStatic<BitVector> OnlyReadsMemoryIntrinsics;
-
-AliasAnalysis::ModRefBehavior
-BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
-                                      std::vector<PointerAccessInfo> *Info) {
-  if (!F->isDeclaration()) return UnknownModRefBehavior;
-
-  static bool Initialized = false;
-  if (!Initialized) {
-    NoMemoryIntrinsics->resize(Intrinsic::num_intrinsics);
-    OnlyReadsMemoryIntrinsics->resize(Intrinsic::num_intrinsics);
-#define GET_MODREF_BEHAVIOR
-#include "llvm/Intrinsics.gen"
-#undef GET_MODREF_BEHAVIOR
-    
-    Initialized = true;
-  }
-
-  // If this is an intrinsic, we can use lookup tables
-  if (unsigned id = F->getIntrinsicID()) {
-    if (NoMemoryIntrinsics->test(id))
-      return DoesNotAccessMemory;
-    if (OnlyReadsMemoryIntrinsics->test(id))
-      return OnlyReadsMemory;
-
-    return UnknownModRefBehavior;
-  }
-
-  return UnknownModRefBehavior;
 }
 
 // Make sure that anything that uses AliasAnalysis pulls in this file...

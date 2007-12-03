@@ -18,6 +18,7 @@
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "SymbolTableListTraitsImpl.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
@@ -435,12 +436,36 @@ const FunctionType *Intrinsic::getType(ID id, const Type **Tys,
   return FunctionType::get(ResultTy, ArgTys, IsVarArg); 
 }
 
+const ParamAttrsList *Intrinsic::getParamAttrs(ID id) {
+  static const ParamAttrsList *IntrinsicAttributes[Intrinsic::num_intrinsics];
+
+  if (IntrinsicAttributes[id])
+    return IntrinsicAttributes[id];
+
+  ParamAttrsVector Attrs;
+  uint16_t Attr = ParamAttr::None;
+
+#define GET_INTRINSIC_ATTRIBUTES
+#include "llvm/Intrinsics.gen"
+#undef GET_INTRINSIC_ATTRIBUTES
+
+  // Intrinsics cannot throw exceptions.
+  Attr |= ParamAttr::NoUnwind;
+
+  Attrs.push_back(ParamAttrsWithIndex::get(0, Attr));
+  IntrinsicAttributes[id] = ParamAttrsList::get(Attrs);
+  return IntrinsicAttributes[id];
+}
+
 Function *Intrinsic::getDeclaration(Module *M, ID id, const Type **Tys, 
                                     unsigned numTys) {
-// There can never be multiple globals with the same name of different types,
-// because intrinsics must be a specific type.
-  return cast<Function>(M->getOrInsertFunction(getName(id, Tys, numTys), 
-                                               getType(id, Tys, numTys)));
+  // There can never be multiple globals with the same name of different types,
+  // because intrinsics must be a specific type.
+  Function *F =
+    cast<Function>(M->getOrInsertFunction(getName(id, Tys, numTys),
+                                          getType(id, Tys, numTys)));
+  F->setParamAttrs(getParamAttrs(id));
+  return F;
 }
 
 Value *IntrinsicInst::StripPointerCasts(Value *Ptr) {

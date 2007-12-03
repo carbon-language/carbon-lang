@@ -158,6 +158,16 @@ public:
     return ParamAttrs && ParamAttrs->paramHasAttr(i, attr);
   }
 
+  /// @brief Determine if the function does not access memory.
+  bool doesNotAccessMemory() const {
+    return paramHasAttr(0, ParamAttr::ReadNone);
+  }
+
+  /// @brief Determine if the function does not access or only reads memory.
+  bool onlyReadsMemory() const {
+    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+  }
+
   /// @brief Determine if the function returns a structure.
   bool isStructReturn() const {
     return paramHasAttr(1, ParamAttr::StructRet);

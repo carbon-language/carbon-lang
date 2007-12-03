@@ -284,7 +284,7 @@ void DAE::SurveyFunction(Function &F) {
   Liveness RetValLiveness = F.getReturnType() == Type::VoidTy ? Live : Dead;
 
   if (!F.hasInternalLinkage() &&
-      (!ShouldHackArguments() || F.getIntrinsicID()))
+      (!ShouldHackArguments() || F.isIntrinsic()))
     FunctionIntrinsicallyLive = true;
   else
     for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
