@@ -593,7 +593,9 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
     ResultStr += "#define _REWRITER_typedef_";
     ResultStr += ClassDecl->getName();
     ResultStr += "\n";
-    ResultStr += "typedef struct objc_object ";
+    ResultStr += "typedef struct ";
+    ResultStr += ClassDecl->getName();
+    ResultStr += " ";
     ResultStr += ClassDecl->getName();
     ResultStr += ";\n#endif\n";
     
