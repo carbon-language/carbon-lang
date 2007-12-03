@@ -70,11 +70,13 @@ OutputCMA  := $(LibraryCMA:$(ObjDir)/%.cma=$(OcamlDir)/%.cma)
 OutputCMXA := $(LibraryCMXA:$(ObjDir)/%.cmxa=$(OcamlDir)/%.cmxa)
 OutputsCMI := $(ObjectsCMI:$(ObjDir)/%.cmi=$(OcamlDir)/%.cmi)
 OutputsCMX := $(ObjectsCMX:$(ObjDir)/%.cmx=$(OcamlDir)/%.cmx)
+OutputLibs := $(UsedLibNames:%=$(OcamlDir)/%)
 
 # Installation targets
 DestA    := $(PROJ_libocamldir)/lib$(LIBRARYNAME).a
 DestCMA  := $(PROJ_libocamldir)/$(LIBRARYNAME).cma
 DestCMXA := $(PROJ_libocamldir)/$(LIBRARYNAME).cmxa
+DestLibs := $(UsedLibNames:%=$(PROJ_libocamldir)/%)
 
 
 ##===- Dependencies -------------------------------------------------------===##
@@ -121,6 +123,30 @@ install-a:: $(LibraryA)
 uninstall-a::
 	$(Echo) "Uninstalling $(DestA)"
 	-$(Verb) $(RM) -f $(DestA)
+
+
+##===- Deposit dependent libraries adjacent to Ocaml libs -----------------===##
+
+all-local:: build-deplibs
+clean-local:: clean-deplibs
+install-local:: install-deplibs
+uninstall-local:: uninstall-deplibs
+
+build-deplibs: $(OutputLibs)
+
+$(OcamlDir)/%.a: $(LibDir)/%.a
+	$(Verb) ln -sf $< $@
+
+clean-deplibs:
+	$(Verb) rm -f $(OutputLibs)
+
+install-deplibs:
+	$(Verb) for i in $(DestLibs:$(PROJ_libocamldir)/%=%); do \
+	  ln -sf "$(PROJ_libdir)/$$i" "$(PROJ_libocamldir)/$$i"; \
+	done
+
+uninstall-deplibs:
+	$(Verb) rm -f $(DestLibs)
 
 
 ##===- Build ocaml interfaces (.mli's -> .cmi's) --------------------------===##
@@ -178,9 +204,6 @@ $(OutputCMA): $(LibraryCMA) $(OcamlDir)/.dir
 $(LibraryCMA): $(ObjectsCMO) $(OcamlDir)/.dir
 	$(Echo) "Archiving $(notdir $@) for $(BuildMode) build"
 	$(Verb) $(Archive.CMA) $@ $(ObjectsCMO)
-	$(Verb) for i in $(UsedLibNames); do \
-	  ln -sf "$(LibDir)/$$i" "$(OcamlDir)/$$i"; \
-	done
 
 $(ObjDir)/%.cmo: $(ObjDir)/%.ml
 	$(Echo) "Compiling $(notdir $<) for $(BuildMode) build"
@@ -193,16 +216,10 @@ install-cma:: $(OutputCMA)
 	$(Echo) "Installing $(BuildMode) $(DestCMA)"
 	$(Verb) $(MKDIR) $(PROJ_libocamldir)
 	$(Verb) $(DataInstall) $(OutputCMA) "$(DestCMA)"
-	$(Verb) for i in $(UsedLibNames); do \
-	  ln -sf "$(PROJ_libdir)/$$i" "$(PROJ_libocamldir)/$$i"; \
-	done
 
 uninstall-cma::
 	$(Echo) "Uninstalling $(DestCMA)"
 	-$(Verb) $(RM) -f $(DestCMA)
-	$(Verb) for i in $(UsedLibNames); do \
-	  $(RM) -f "$(PROJ_libocamldir)/$$i"; \
-	done
 
 
 ##===- Build optimized ocaml archive (.ml's -> .cmx's -> .cmxa, .a) -------===##
