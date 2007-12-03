@@ -1217,7 +1217,7 @@ bool ASTContext::pointerTypesAreCompatible(QualType lhs, QualType rhs) {
   return typesAreCompatible(ltype, rtype);
 }
 
-// C++ 5.17p6: When the left opperand of an assignment operator denotes a
+// C++ 5.17p6: When the left operand of an assignment operator denotes a
 // reference to T, the operation assigns to the object of type T denoted by the
 // reference.
 bool ASTContext::referenceTypesAreCompatible(QualType lhs, QualType rhs) {
@@ -1299,6 +1299,15 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
   // If two types are identical, they are are compatible
   if (lcanon == rcanon)
     return true;
+
+  // C++ [expr]: If an expression initially has the type "reference to T", the
+  // type is adjusted to "T" prior to any further analysis, the expression
+  // designates the object or function denoted by the reference, and the
+  // expression is an lvalue.
+  if (lcanon->getTypeClass() == Type::Reference)
+    lcanon = cast<ReferenceType>(lcanon)->getReferenceeType();
+  if (rcanon->getTypeClass() == Type::Reference)
+    rcanon = cast<ReferenceType>(rcanon)->getReferenceeType();
   
   // If the canonical type classes don't match, they can't be compatible
   if (lcanon->getTypeClass() != rcanon->getTypeClass()) {
@@ -1312,8 +1321,6 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
   switch (lcanon->getTypeClass()) {
     case Type::Pointer:
       return pointerTypesAreCompatible(lcanon, rcanon);
-    case Type::Reference:
-      return referenceTypesAreCompatible(lcanon, rcanon);
     case Type::ConstantArray:
     case Type::VariableArray:
       return arrayTypesAreCompatible(lcanon, rcanon);

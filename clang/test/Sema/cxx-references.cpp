@@ -5,9 +5,7 @@ void f() {
   int i;
   int &r = i;
   r = 1;
-#if 0  // FIXME: &ref not right yet
   int *p = &r;
-#endif
   int &rr = r;
   int (&rg)(int) = g;
   rg(i);
