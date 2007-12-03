@@ -43,10 +43,12 @@ namespace {
     
     FunctionDecl *MsgSendFunctionDecl;
     FunctionDecl *MsgSendSuperFunctionDecl;
+    FunctionDecl *MsgSendStretFunctionDecl;
+    FunctionDecl *MsgSendSuperStretFunctionDecl;
     FunctionDecl *GetClassFunctionDecl;
     FunctionDecl *SelGetUidFunctionDecl;
     FunctionDecl *CFStringFunctionDecl;
-    
+      
     // ObjC string constant support.
     FileVarDecl *ConstantStringClassReference;
     RecordDecl *NSStringRecord;
@@ -62,6 +64,8 @@ namespace {
       SM = &Context->SourceMgr;
       MsgSendFunctionDecl = 0;
       MsgSendSuperFunctionDecl = 0;
+      MsgSendStretFunctionDecl = 0;
+      MsgSendSuperStretFunctionDecl = 0;
       GetClassFunctionDecl = 0;
       SelGetUidFunctionDecl = 0;
       CFStringFunctionDecl = 0;
@@ -84,6 +88,10 @@ namespace {
                       "extern struct objc_object *objc_msgSend"
                       "(struct objc_object *, struct objc_selector *, ...);\n"
                       "extern struct objc_object *objc_msgSendSuper"
+                      "(struct objc_super *, struct objc_selector *, ...);\n"
+                      "extern struct objc_object *objc_msgSend_stret"
+                      "(struct objc_object *, struct objc_selector *, ...);\n"
+                      "extern struct objc_object *objc_msgSendSuper_stret"
                       "(struct objc_super *, struct objc_selector *, ...);\n"
                       "extern struct objc_object *objc_getClass"
                       "(const char *);\n"
@@ -140,6 +148,8 @@ namespace {
                                            Expr **args, unsigned nargs);
     void SynthMsgSendFunctionDecl();
     void SynthMsgSendSuperFunctionDecl();
+    void SynthMsgSendStretFunctionDecl();
+    void SynthMsgSendSuperStretFunctionDecl();
     void SynthGetClassFunctionDecl();
     void SynthCFStringFunctionDecl();
       
@@ -1047,6 +1057,46 @@ void RewriteTest::SynthMsgSendSuperFunctionDecl() {
                                               FunctionDecl::Extern, false, 0);
 }
 
+// SynthMsgSendStretFunctionDecl - id objc_msgSend_stret(id self, SEL op, ...);
+void RewriteTest::SynthMsgSendStretFunctionDecl() {
+  IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSend_stret");
+  llvm::SmallVector<QualType, 16> ArgTys;
+  QualType argT = Context->getObjcIdType();
+  assert(!argT.isNull() && "Can't find 'id' type");
+  ArgTys.push_back(argT);
+  argT = Context->getObjcSelType();
+  assert(!argT.isNull() && "Can't find 'SEL' type");
+  ArgTys.push_back(argT);
+  QualType msgSendType = Context->getFunctionType(Context->getObjcIdType(),
+                                                  &ArgTys[0], ArgTys.size(),
+                                                  true /*isVariadic*/);
+  MsgSendStretFunctionDecl = new FunctionDecl(SourceLocation(), 
+                                         msgSendIdent, msgSendType,
+                                         FunctionDecl::Extern, false, 0);
+}
+
+// SynthMsgSendSuperStretFunctionDecl - 
+// id objc_msgSendSuper_stret(struct objc_super *, SEL op, ...);
+void RewriteTest::SynthMsgSendSuperStretFunctionDecl() {
+  IdentifierInfo *msgSendIdent = 
+    &Context->Idents.get("objc_msgSendSuper_stret");
+  llvm::SmallVector<QualType, 16> ArgTys;
+  RecordDecl *RD = new RecordDecl(Decl::Struct, SourceLocation(),
+                                  &Context->Idents.get("objc_super"), 0);
+  QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
+  assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
+  ArgTys.push_back(argT);
+  argT = Context->getObjcSelType();
+  assert(!argT.isNull() && "Can't find 'SEL' type");
+  ArgTys.push_back(argT);
+  QualType msgSendType = Context->getFunctionType(Context->getObjcIdType(),
+                                                  &ArgTys[0], ArgTys.size(),
+                                                  true /*isVariadic*/);
+  MsgSendSuperStretFunctionDecl = new FunctionDecl(SourceLocation(), 
+                                              msgSendIdent, msgSendType,
+                                              FunctionDecl::Extern, false, 0);
+}
+
 // SynthGetClassFunctionDecl - id objc_getClass(const char *name);
 void RewriteTest::SynthGetClassFunctionDecl() {
   IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getClass");
@@ -1181,11 +1231,23 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     SynthMsgSendFunctionDecl();
   if (!MsgSendSuperFunctionDecl)
     SynthMsgSendSuperFunctionDecl();
+  if (!MsgSendStretFunctionDecl)
+    SynthMsgSendStretFunctionDecl();
+  if (!MsgSendSuperStretFunctionDecl)
+    SynthMsgSendSuperStretFunctionDecl();
   if (!GetClassFunctionDecl)
     SynthGetClassFunctionDecl();
-
+  
   // default to objc_msgSend().
-  FunctionDecl *MsgSendFlavor = MsgSendFunctionDecl; 
+  FunctionDecl *MsgSendFlavor = MsgSendFunctionDecl;
+  // May need to use objc_msgSend_stret() as well.
+  FunctionDecl *MsgSendStretFlavor = 0;
+  if (ObjcMethodDecl *mDecl = Exp->getMethodDecl()) {
+    QualType resultType = mDecl->getResultType();
+    if (resultType.getCanonicalType()->isStructureType() 
+        || resultType.getCanonicalType()->isUnionType())
+      MsgSendStretFlavor = MsgSendStretFunctionDecl;
+  }
   
   // Synthesize a call to objc_msgSend().
   llvm::SmallVector<Expr*, 8> MsgExprs;
@@ -1207,6 +1269,8 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
 
     if (ObjcInterfaceDecl *ID = isSuperReceiver(recExpr)) {
       MsgSendFlavor = MsgSendSuperFunctionDecl;
+      if (MsgSendStretFlavor)
+        MsgSendStretFlavor = MsgSendSuperStretFunctionDecl;
       assert(MsgSendFlavor && "MsgSendFlavor is NULL!");
       
       llvm::SmallVector<Expr*, 4> InitExprs;
@@ -1288,7 +1352,8 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   QualType msgSendType = MsgSendFlavor->getType();
   
   // Create a reference to the objc_msgSend() declaration.
-  DeclRefExpr *DRE = new DeclRefExpr(MsgSendFlavor, msgSendType, SourceLocation());
+  DeclRefExpr *DRE = new DeclRefExpr(MsgSendFlavor, msgSendType, 
+                                     SourceLocation());
 
   // Need to cast objc_msgSend to "void *" (to workaround a GCC bandaid). 
   // If we don't do this cast, we get the following bizarre warning/note:
@@ -1310,6 +1375,59 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   const FunctionType *FT = msgSendType->getAsFunctionType();
   CallExpr *CE = new CallExpr(PE, &MsgExprs[0], MsgExprs.size(), 
                               FT->getResultType(), SourceLocation());
+  if (MsgSendStretFlavor) {
+    // We have the method which returns a struct/union. Must also generate
+    // call to objc_msgSend_stret and hang both varieties on a conditional
+    // expression which dictate which one to envoke depending on size of
+    // method's return type.
+    
+    // Create a reference to the objc_msgSend_stret() declaration.
+    DeclRefExpr *STDRE = new DeclRefExpr(MsgSendStretFlavor, msgSendType, 
+                                         SourceLocation());
+    // Need to cast objc_msgSend_stret to "void *" (see above comment).
+    cast = new CastExpr(Context->getPointerType(Context->VoidTy), STDRE, 
+                        SourceLocation());
+    // Now do the "normal" pointer to function cast.
+    castType = Context->getFunctionType(returnType, 
+                                        &ArgTypes[0], ArgTypes.size(),
+                                        Exp->getMethodDecl()->isVariadic());
+    castType = Context->getPointerType(castType);
+    cast = new CastExpr(castType, cast, SourceLocation());
+    
+    // Don't forget the parens to enforce the proper binding.
+    PE = new ParenExpr(SourceLocation(), SourceLocation(), cast);
+    
+    FT = msgSendType->getAsFunctionType();
+    CallExpr *STCE = new CallExpr(PE, &MsgExprs[0], MsgExprs.size(), 
+                                  FT->getResultType(), SourceLocation());
+    
+    // Build sizeof(returnType)
+    SizeOfAlignOfTypeExpr *sizeofExpr = new SizeOfAlignOfTypeExpr(true, 
+                                          returnType, Context->getSizeType(), 
+                                          SourceLocation(), SourceLocation());
+    // (sizeof(returnType) <= 8 ? objc_msgSend(...) : objc_msgSend_stret(...))
+    // FIXME: Value of 8 is base on ppc32/x86 ABI for the most common cases.
+    // For X86 it is more complicated and some kind of target specific routine
+    // is needed to decide what to do.
+    unsigned IntSize = static_cast<unsigned>(
+      Context->getTypeSize(Context->IntTy, SourceLocation()));
+
+    IntegerLiteral *limit = new IntegerLiteral(llvm::APInt(IntSize, 8), 
+                                               Context->IntTy,
+                                               SourceLocation());
+    BinaryOperator *lessThanExpr = new BinaryOperator(sizeofExpr, limit, 
+                                                      BinaryOperator::LE, 
+                                                      Context->IntTy, 
+                                                      SourceLocation());
+    // (sizeof(returnType) <= 8 ? objc_msgSend(...) : objc_msgSend_stret(...))
+    ConditionalOperator *CondExpr = 
+      new ConditionalOperator(lessThanExpr, CE, STCE, returnType);
+    ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), CondExpr);
+    // Now do the actual rewrite.
+    Rewrite.ReplaceStmt(Exp, PE);
+    delete Exp;
+    return PE;
+  }
   // Now do the actual rewrite.
   Rewrite.ReplaceStmt(Exp, CE);
   
@@ -1327,11 +1445,6 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   if (ObjcSynthesizedStructs.count(CDecl))
     return;
   ObjcInterfaceDecl *RCDecl = CDecl->getSuperClass();
-  if (RCDecl && !ObjcSynthesizedStructs.count(RCDecl)) {
-    // Do it for the root
-    SynthesizeObjcInternalStruct(RCDecl, Result);
-  }
-  
   int NumIvars = CDecl->getNumInstanceVariables();
   SourceLocation LocStart = CDecl->getLocStart();
   SourceLocation LocEnd = CDecl->getLocEnd();
