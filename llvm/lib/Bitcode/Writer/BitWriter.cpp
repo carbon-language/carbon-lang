@@ -36,7 +36,7 @@ int LLVMWriteBitcodeToFile(LLVMModuleRef M, const char *Path) {
 // non-GCC. Some C++ stdlibs even have ofstream::ofstream(int fd).
 int LLVMWriteBitcodeToFileHandle(LLVMModuleRef M, int FileHandle) {
   __gnu_cxx::stdio_filebuf<char> Buffer(FileHandle, std::ios_base::out);
-  std::ostream OS(&Buffer);
+  std::ostream OS(&Buffer, std::ios::out | std::ios::trunc | std::ios::binary);
   
   if (!OS.fail())
     WriteBitcodeToFile(unwrap(M), OS);
