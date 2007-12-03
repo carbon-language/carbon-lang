@@ -1742,7 +1742,7 @@ parameters. For example, an <tt>AllocaInst</tt> only <i>requires</i> a
 
 <div class="doc_code">
 <pre>
-AllocaInst* ai = new AllocaInst(Type::IntTy);
+AllocaInst* ai = new AllocaInst(Type::Int32Ty);
 </pre>
 </div>
 
@@ -1770,7 +1770,7 @@ used as some kind of index by some other code.  To accomplish this, I place an
 
 <div class="doc_code">
 <pre>
-AllocaInst* pa = new AllocaInst(Type::IntTy, 0, "indexLoc");
+AllocaInst* pa = new AllocaInst(Type::Int32Ty, 0, "indexLoc");
 </pre>
 </div>
 
@@ -1922,7 +1922,7 @@ AllocaInst* instToReplace = ...;
 BasicBlock::iterator ii(instToReplace);
 
 ReplaceInstWithValue(instToReplace-&gt;getParent()-&gt;getInstList(), ii,
-                     Constant::getNullValue(PointerType::get(Type::IntTy)));
+                     Constant::getNullValue(PointerType::get(Type::Int32Ty)));
 </pre></div></li>
 
   <li><tt>ReplaceInstWithInst</tt> 
@@ -1937,7 +1937,7 @@ AllocaInst* instToReplace = ...;
 BasicBlock::iterator ii(instToReplace);
 
 ReplaceInstWithInst(instToReplace-&gt;getParent()-&gt;getInstList(), ii,
-                    new AllocaInst(Type::IntTy, 0, "ptrToReplacedInt"));
+                    new AllocaInst(Type::Int32Ty, 0, "ptrToReplacedInt"));
 </pre></div></li>
 </ul>
 
@@ -2056,7 +2056,7 @@ To build this, use the following LLVM APIs:
 <a href="#PATypeHolder">PATypeHolder</a> StructTy = OpaqueType::get();
 std::vector&lt;const Type*&gt; Elts;
 Elts.push_back(PointerType::get(StructTy));
-Elts.push_back(Type::IntTy);
+Elts.push_back(Type::Int32Ty);
 StructType *NewSTy = StructType::get(Elts);
 
 // <i>At this point, NewSTy = "{ opaque*, i32 }". Tell VMCore that</i>
