@@ -459,13 +459,18 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
     // Set DeclType, used below to recurse (for multi-dimensional arrays).
     DeclType = CAT->getElementType();
   } else if (DeclType->isScalarType()) {
-    Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
-         IList->getSourceRange());
-    maxElementsAtThisLevel = 1;
+    if (const VectorType *VT = DeclType->getAsVectorType())
+      maxElementsAtThisLevel = VT->getNumElements();
+    else {
+      Diag(IList->getLocStart(), diag::warn_braces_around_scalar_init, 
+           IList->getSourceRange());
+      maxElementsAtThisLevel = 1;
+    }
   } 
   // The empty init list "{ }" is treated specially below.
   unsigned numInits = IList->getNumInits();
   if (numInits) {
+    bool DidWarn = false;
     for (unsigned i = 0; i < numInits; i++) {
       Expr *expr = IList->getInit(i);
       
@@ -478,9 +483,12 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
         totalInits--;    // decrement the total number of initializers.
         
         // Check if we have space for another initializer.
-        if ((nInitsAtLevel > maxElementsAtThisLevel) || (totalInits < 0))
+        if (((nInitsAtLevel > maxElementsAtThisLevel) || (totalInits < 0)) &&
+            !DidWarn) {
           Diag(expr->getLocStart(), diag::warn_excess_initializers, 
                expr->getSourceRange());
+          DidWarn = true;
+        }
       }
     }
     if (nInitsAtLevel < maxElementsAtThisLevel) // fill the remaining elements.
@@ -530,6 +538,12 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
   if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
     int maxElements = CAT->getMaximumElements();
     CheckConstantInitList(DeclType, InitList, CAT->getBaseType(), 
+                          isStatic, maxElements, hadError);
+    return hadError;
+  }
+  if (const VectorType *VT = DeclType->getAsVectorType()) {
+    int maxElements = VT->getNumElements();
+    CheckConstantInitList(DeclType, InitList, VT->getElementType(),
                           isStatic, maxElements, hadError);
     return hadError;
   }
