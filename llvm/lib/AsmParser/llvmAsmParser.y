@@ -1330,16 +1330,24 @@ Types
   | Types '(' ArgTypeListI ')' OptFuncAttrs {
     // Allow but ignore attributes on function types; this permits auto-upgrade.
     // FIXME: remove in LLVM 3.0.
+    const Type* RetTy = *$1;
+    if (!(RetTy->isFirstClassType() || isa<OpaqueType>(RetTy)))
+      GEN_ERROR("LLVM Functions cannot return aggregates");
+
     std::vector<const Type*> Params;
     TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
     for (; I != E; ++I ) {
       const Type *Ty = I->Ty->get();
+      if (!(Ty->isFirstClassType() || isa<OpaqueType>(Ty)))
+        GEN_ERROR("Function arguments must be value types!");
       Params.push_back(Ty);
     }
+    CHECK_FOR_ERROR
+
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
-    FunctionType *FT = FunctionType::get(*$1, Params, isVarArg);
+    FunctionType *FT = FunctionType::get(RetTy, Params, isVarArg);
     delete $3;   // Delete the argument list
     delete $1;   // Delete the return type handle
     $$ = new PATypeHolder(HandleUpRefs(FT)); 
@@ -1352,8 +1360,12 @@ Types
     TypeWithAttrsList::iterator I = $3->begin(), E = $3->end();
     for ( ; I != E; ++I ) {
       const Type* Ty = I->Ty->get();
+      if (!(Ty->isFirstClassType() || isa<OpaqueType>(Ty)))
+        GEN_ERROR("Function arguments must be value types!");
       Params.push_back(Ty);
     }
+    CHECK_FOR_ERROR
+
     bool isVarArg = Params.size() && Params.back() == Type::VoidTy;
     if (isVarArg) Params.pop_back();
 
