@@ -18,24 +18,10 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include <algorithm>
+#include <cctype>
+
 using namespace clang;
-
-/// Note: a hard coded list of targets is clearly silly, these should be
-/// dynamicly registered and loadable with "-load".
-enum SupportedTargets {
-  target_ppc, target_ppc64,
-  target_i386, target_x86_64,
-  target_linux_i386
-};
-
-static llvm::cl::list<SupportedTargets>
-Archs("arch", llvm::cl::desc("Architectures to compile for"),
-llvm::cl::values(clEnumValN(target_ppc,       "ppc",   "32-bit Darwin PowerPC"),
-                 clEnumValN(target_ppc64,     "ppc64", "64-bit Darwin PowerPC"),
-                 clEnumValN(target_i386,      "i386",  "32-bit Darwin X86"),
-                 clEnumValN(target_x86_64,    "x86_64","64-bit Darwin X86"),
-                 clEnumValN(target_linux_i386,"linux", "Linux i386"),
-                 clEnumValEnd));
 
 //===----------------------------------------------------------------------===//
 //  Common code shared among targets.
@@ -55,6 +41,8 @@ static void Define(std::vector<char> &Buf, const char *Macro,
 namespace {
 class DarwinTargetInfo : public TargetInfoImpl {
 public:
+  DarwinTargetInfo(const std::string& triple) : TargetInfoImpl(triple) {}
+  
   virtual void getTargetDefines(std::vector<char> &Defs) const {
 // FIXME: we need a real target configuration system.  For now, only define
 // __APPLE__ if the host has it.
@@ -504,6 +492,8 @@ namespace X86 {
 namespace {
 class DarwinPPCTargetInfo : public DarwinTargetInfo {
 public:
+  DarwinPPCTargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {}
+  
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
     getPowerPCDefines(Defines, false);
@@ -536,6 +526,8 @@ public:
 namespace {
 class DarwinPPC64TargetInfo : public DarwinTargetInfo {
 public:
+  DarwinPPC64TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {}
+  
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
     getPowerPCDefines(Defines, true);
@@ -568,6 +560,8 @@ public:
 namespace {
 class DarwinI386TargetInfo : public DarwinTargetInfo {
 public:
+  DarwinI386TargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {}
+  
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
     getX86Defines(Defines, false);
@@ -600,6 +594,8 @@ public:
 namespace {
 class DarwinX86_64TargetInfo : public DarwinTargetInfo {
 public:
+  DarwinX86_64TargetInfo(const std::string& triple) :DarwinTargetInfo(triple) {}
+  
   virtual void getTargetDefines(std::vector<char> &Defines) const {
     DarwinTargetInfo::getTargetDefines(Defines);
     getX86Defines(Defines, true);
@@ -632,7 +628,7 @@ public:
 namespace {
 class LinuxTargetInfo : public DarwinTargetInfo {
 public:
-  LinuxTargetInfo() {
+  LinuxTargetInfo(const std::string& triple) : DarwinTargetInfo(triple) {
     // Note: I have no idea if this is right, just for testing.
     WCharWidth = 16;
     WCharAlign = 16;
@@ -672,48 +668,52 @@ public:
 // Driver code
 //===----------------------------------------------------------------------===//
 
+static bool IsX86(const std::string& TT) {
+  return (TT.size() >= 5 && TT[0] == 'i' && TT[2] == '8' && TT[3] == '6' &&
+          TT[4] == '-' && TT[1] - '3' < 6);
+}
+
 /// CreateTarget - Create the TargetInfoImpl object for the specified target
 /// enum value.
-static TargetInfoImpl *CreateTarget(SupportedTargets T) {
-  switch (T) {
-  default: assert(0 && "Unknown target!");
-  case target_ppc:        return new DarwinPPCTargetInfo();
-  case target_ppc64:      return new DarwinPPC64TargetInfo();
-  case target_i386:       return new DarwinI386TargetInfo();
-  case target_x86_64:     return new DarwinX86_64TargetInfo();
-  case target_linux_i386: return new LinuxTargetInfo();
+static TargetInfoImpl *CreateTarget(const std::string& T) {
+  if (T.find("darwin") != std::string::npos) {
+    if (T.find("ppc-") == 0)
+      return new DarwinPPCTargetInfo(T);
+    else if (T.find("ppc64-") == 0)
+      return new DarwinPPC64TargetInfo(T);
+    else if (T.find("x86_64-") == 0)
+      return new DarwinX86_64TargetInfo(T);
+    else if (IsX86(T))
+      return new DarwinI386TargetInfo(T);
+    else if (T.find("bogusW16W16-") == 0) // For testing portability.
+      return new LinuxTargetInfo(T);
   }
+  else { 
+    // Make a copy of the triple that is all lowercase.
+    std::string T_lower(T);    
+    std::transform(T_lower.begin(), T_lower.end(),
+                   T_lower.begin(), (int(*)(int)) std::tolower);
+
+    if (T_lower.find("linux") != std::string::npos && IsX86(T))
+      return new LinuxTargetInfo(T);
+  }
+  
+  assert (false && "Unknown target!");
 }
 
 /// CreateTargetInfo - Return the set of target info objects as specified by
 /// the -arch command line option.
-TargetInfo *clang::CreateTargetInfo(Diagnostic &Diags) {
-  // If the user didn't specify at least one architecture, auto-sense the
-  // current host.  TODO: This is a hack. :)
-  if (Archs.empty()) {
-#ifndef __APPLE__
-    // Assume non-apple = i386 for now.
-    Archs.push_back(target_i386);
-#elif (defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)) && \
-      defined(__ppc64__)
-    Archs.push_back(target_ppc64);
-#elif defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
-    Archs.push_back(target_ppc);
-#elif defined(__x86_64__)
-    Archs.push_back(target_x86_64);
-#elif defined(__i386__) || defined(i386) || defined(_M_IX86)
-    Archs.push_back(target_i386);
-#else
-    // Don't know what this is!
-    return 0;
-#endif
-  }
+TargetInfo *clang::CreateTargetInfo(const std::vector<std::string>& triples, 
+                                    Diagnostic &Diags) {
 
+  assert (!triples.empty() && "No target triple.");
+  
   // Create the primary target and target info.
-  TargetInfo *TI = new TargetInfo(CreateTarget(Archs[0]), &Diags);
+  TargetInfo *TI = new TargetInfo(CreateTarget(triples[0]), &Diags);
   
   // Add all secondary targets.
-  for (unsigned i = 1, e = Archs.size(); i != e; ++i)
-    TI->AddSecondaryTarget(CreateTarget(Archs[i]));
+  for (unsigned i = 1, e = triples.size(); i != e; ++i)
+    TI->AddSecondaryTarget(CreateTarget(triples[i]));
+  
   return TI;
 }

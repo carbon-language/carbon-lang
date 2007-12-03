@@ -245,11 +245,10 @@ public:
     return static_cast<unsigned>(Size);
   }
 
-  const char *getTargetTriple() {
-    // FIXME !
-    return "i686-apple-darwin9";
-  }
-  const char *getTargetDescription() {
+  /// getTargetTriple - Return the target triple of the primary target.
+  const char *getTargetTriple() const;
+  
+  const char *getTargetDescription() const {
     // FIXME !
     // Hard code darwin-x86 for now.
     return "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:\
@@ -270,9 +269,16 @@ class TargetInfoImpl {
 protected:
   unsigned WCharWidth;    /// sizeof(wchar_t) in bits.  Default value is 32.
   unsigned WCharAlign;    /// alignof(wchar_t) in bits.  Default value is 32.
+  std::string Triple;
 public:
-  TargetInfoImpl() : WCharWidth(32), WCharAlign(32) {}
+  TargetInfoImpl(const std::string& triple) 
+    : WCharWidth(32), WCharAlign(32), Triple(triple) {}
+  
   virtual ~TargetInfoImpl() {}
+  
+  /// getTargetTriple - Return the string representing the target triple this
+  ///  TargetInfoImpl object was created from.
+  const char* getTargetTriple() const { return Triple.c_str(); }
   
   /// getTargetDefines - Return a list of the target-specific #define values set
   /// when compiling to this target.  Each string should be of the form

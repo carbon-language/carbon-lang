@@ -52,6 +52,10 @@ void TargetInfo::getLongDoubleInfo(uint64_t &Size, unsigned &Align,
 
 //===----------------------------------------------------------------------===//
 
+const char* TargetInfo::getTargetTriple() const {
+  return PrimaryTarget->getTargetTriple();
+}
+
 /// DiagnoseNonPortability - When a use of a non-portable target feature is
 /// used, this method emits the diagnostic and marks the translation unit as
 /// non-portable.

@@ -36,6 +36,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
+#include "llvm/Config/config.h"
 #include <memory>
 using namespace clang;
 
@@ -387,6 +388,67 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
   // Silence "floating point comparison" warnings unless requested.
   if (!WarnFloatEqual)
     Diags.setDiagnosticMapping(diag::warn_floatingpoint_eq, diag::MAP_IGNORE);
+}
+
+//===----------------------------------------------------------------------===//
+// Target Triple Processing.
+//===----------------------------------------------------------------------===//
+
+static llvm::cl::opt<std::string>
+TargetTriple("triple",
+  llvm::cl::desc("Specify target triple (e.g. i686-apple-darwin9)."));
+
+static llvm::cl::list<std::string>
+Archs("arch",
+  llvm::cl::desc("Specify target architecture (e.g. i686)."));
+
+namespace {
+  class TripleProcessor {
+    llvm::StringMap<char> TriplesProcessed;
+    std::vector<std::string>& triples;
+  public:
+    TripleProcessor(std::vector<std::string>& t) :  triples(t) {}
+    
+    void addTriple(const std::string& t) {
+      if (TriplesProcessed.find(t.c_str(),t.c_str()+t.size()) ==
+          TriplesProcessed.end()) {
+        triples.push_back(t);
+        TriplesProcessed.GetOrCreateValue(t.c_str(),t.c_str()+t.size());
+      }
+    }
+  };
+}
+
+static void CreateTargetTriples(std::vector<std::string>& triples) {
+  std::string base_triple;
+  
+  // Initialize base triple.  If a -triple option has been specified, use
+  // that triple.  Otherwise, default to the host triple.
+  if (TargetTriple.getValue().empty())
+    base_triple = LLVM_HOSTTRIPLE;
+  else
+    base_triple = TargetTriple.getValue();
+  
+  // Decompose the base triple into "arch" and suffix.
+  std::string::size_type firstDash = base_triple.find("-");
+  
+  // FIXME: Make this a diagnostic.
+  assert (firstDash != std::string::npos);
+  
+  std::string suffix(base_triple,firstDash+1);
+  // FIXME: Make this a diagnostic.
+  assert (!suffix.empty());
+
+  // Create triple cacher.
+  TripleProcessor tp(triples);
+
+  // Add the primary triple to our set of triples if we are using the
+  // host-triple with no archs or using a specified target triple.
+  if (!TargetTriple.getValue().empty() || Archs.empty())
+    tp.addTriple(base_triple);
+           
+  for (unsigned i = 0, e = Archs.size(); i !=e; ++i)
+    tp.addTriple(Archs[i] + "-" + suffix);
 }
 
 //===----------------------------------------------------------------------===//
@@ -914,7 +976,19 @@ int main(int argc, char **argv) {
   // Get information about the targets being compiled for.  Note that this
   // pointer and the TargetInfoImpl objects are never deleted by this toy
   // driver.
-  TargetInfo *Target = CreateTargetInfo(Diags);
+  TargetInfo *Target;
+  
+  { // Create triples, and create the TargetInfo.
+    std::vector<std::string> triples;
+    CreateTargetTriples(triples);
+    fprintf(stderr, "Targets:");
+    for (std::vector<std::string>::iterator I = triples.begin(), E = triples.end(); I !=E ; ++I)
+      fprintf (stderr, " %s", I->c_str());
+    fprintf(stderr,"\n");
+      
+    Target = CreateTargetInfo(triples,Diags);
+  }
+  
   if (Target == 0) {
     fprintf(stderr,
             "Sorry, don't know what target this is, please use -arch.\n");
