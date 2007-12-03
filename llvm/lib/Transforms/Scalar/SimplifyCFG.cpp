@@ -7,14 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements dead code elimination and basic block merging.
-// Specifically:
+// This file implements dead code elimination and basic block merging, along
+// with a collection of other peephole control flow optimizations.  For example:
 //
 //   * Removes basic blocks with no predecessors.
 //   * Merges a basic block into its predecessor if there is only one and the
 //     predecessor only has one successor.
 //   * Eliminates PHI nodes for basic blocks with a single predecessor.
 //   * Eliminates a basic block that only contains an unconditional branch.
+//   * Changes invoke instructions to nounwind functions to be calls.
+//   * Change things like "if (x) if (y)" into "if (x&y)".
+//   * etc..
 //
 //===----------------------------------------------------------------------===//
 
