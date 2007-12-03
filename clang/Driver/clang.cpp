@@ -432,12 +432,21 @@ static void CreateTargetTriples(std::vector<std::string>& triples) {
   // Decompose the base triple into "arch" and suffix.
   std::string::size_type firstDash = base_triple.find("-");
   
-  // FIXME: Make this a diagnostic.
-  assert (firstDash != std::string::npos);
+  if (firstDash == std::string::npos) {
+    fprintf(stderr, 
+            "Malformed target triple: \"%s\" ('-' could not be found).\n",
+            base_triple.c_str());
+    exit (1);
+  }
   
   std::string suffix(base_triple,firstDash+1);
-  // FIXME: Make this a diagnostic.
-  assert (!suffix.empty());
+  
+  if (suffix.empty()) {
+    fprintf(stderr,
+            "Malformed target triple: \"%s\" (no vendor or OS).\n",
+            base_triple.c_str());
+    exit (1);
+  }
 
   // Create triple cacher.
   TripleProcessor tp(triples);
@@ -981,11 +990,6 @@ int main(int argc, char **argv) {
   { // Create triples, and create the TargetInfo.
     std::vector<std::string> triples;
     CreateTargetTriples(triples);
-    fprintf(stderr, "Targets:");
-    for (std::vector<std::string>::iterator I = triples.begin(), E = triples.end(); I !=E ; ++I)
-      fprintf (stderr, " %s", I->c_str());
-    fprintf(stderr,"\n");
-      
     Target = CreateTargetInfo(triples,Diags);
   }
   
