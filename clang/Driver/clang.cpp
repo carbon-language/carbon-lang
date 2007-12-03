@@ -427,7 +427,7 @@ static void CreateTargetTriples(std::vector<std::string>& triples) {
   if (TargetTriple.getValue().empty()) {
     // HACK: For non-darwin systems, we don't have any real target support
     //  yet.  For these systems, set the target to darwin.
-    if (!strstr("darwin",LLVM_HOSTTRIPLE))
+    if (!strstr(LLVM_HOSTTRIPLE,"darwin"))
       base_triple = "i386-apple-darwin";
     else
       base_triple = LLVM_HOSTTRIPLE;
