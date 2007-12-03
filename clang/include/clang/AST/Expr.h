@@ -915,7 +915,24 @@ public:
     SubExprs[RHS] = rhs;
   }
 
+  // getCond - Return the expression representing the condition for
+  //  the ?: operator.
   Expr *getCond() const { return SubExprs[COND]; }
+
+  // getTrueExpr - Return the subexpression representing the value of the ?:
+  //  expression if the condition evaluates to true.  In most cases this value
+  //  will be the same as getLHS() except a GCC extension allows the left
+  //  subexpression to be omitted, and instead of the condition be returned.
+  //  e.g: x ?: y is shorthand for x ? x : y, except that the expression "x"
+  //  is only evaluated once.  
+  Expr *getTrueExpr() const {
+    return SubExprs[LHS] ? SubExprs[COND] : SubExprs[LHS];
+  }
+  
+  // getTrueExpr - Return the subexpression representing the value of the ?:
+  // expression if the condition evaluates to false. This is the same as getRHS.
+  Expr *getFalseExpr() const { return SubExprs[RHS]; }
+  
   Expr *getLHS() const { return SubExprs[LHS]; }
   Expr *getRHS() const { return SubExprs[RHS]; }
 
