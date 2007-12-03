@@ -17,7 +17,7 @@ using namespace llvm;
 /*===-- Operations on modules ---------------------------------------------===*/
 
 int LLVMWriteBitcodeToFile(LLVMModuleRef M, const char *Path) {
-  std::ofstream OS(Path);
+  std::ofstream OS(Path, std::ios_base::out|std::ios::trunc|std::ios::binary);
   
   if (!OS.fail())
     WriteBitcodeToFile(unwrap(M), OS);
