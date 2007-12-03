@@ -15,6 +15,7 @@
     <li><a href="#informed">Stay Informed</a></li>
     <li><a href="#patches">Making a Patch</a></li>
     <li><a href="#reviews">Code Reviews</a></li>
+    <li><a href="#owners">Code Owners</a></li>
     <li><a href="#testcases">Test Cases</a></li>
     <li><a href="#quality">Quality</a></li>
     <li><a href="#commitaccess">Obtaining Commit Access</a></li>
@@ -144,6 +145,50 @@
     can approve it.</p>
 
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"> <a name="owners">Code Owners</a></div>
+<div class="doc_text">
+
+  <p>The LLVM Project relies on two features of its process to maintain rapid
+     development in addition to the high quality of its source base: the
+     combination of code review plus post-commit review for trusted maintainers.
+     Having both is a great way for the project to take advantage of the fact
+     that most people do the right thing most of the time, and only commit
+     patches without pre-commit review when they are confident they are
+     right.</p>
+     
+  <p>The trick to this is that the project has to guarantee that all patches 
+     that are committed are reviewed after they go in: you don't want everyone
+     to assume someone else will review it, allowing the patch to go unreviewed.
+     To solve this problem, we have a notion of an 'owner' for a piece of the
+     code.  The sole responsibility of a code owner is to ensure that a commit
+     to their area of the code is appropriately reviewed, either by themself or
+     by someone else.  The current code owners are:</p>
+  
+  <ol>
+    <li><b>Anton Korobeynikov</b>: Exception handling, debug information, and
+        Windows codegen.</li>
+    <li><b>Duncan Sands</b>: llvm-gcc 4.2.</li>
+    <li><b>Evan Cheng</b>: Code generator and all targets.</li>
+    <li><b>Chris Lattner</b>: Everything else.</li>
+  </ol>
+  
+  <p>Note that code ownership is completely different than reviewers: anyone can
+     review a piece of code, and we welcome code review from anyone who is
+     interested.  Code owners are the "last line of defense" to guarantee that
+     all patches that are committed are actually reviewed.</p>
+
+  <p>Being a code owner is a somewhat unglamorous position, but it is incredibly
+     important for the ongoing success of the project.  Because people get busy,
+     interests change, and unexpected things happen, code ownership is purely
+     opt-in, and anyone can choose to resign their "title" at any time. For now,
+     we do not have an official policy on how one gets elected to be a code 
+     owner.
+  </p>
+
+</div>
+
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"> <a name="testcases">Test Cases</a></div>
