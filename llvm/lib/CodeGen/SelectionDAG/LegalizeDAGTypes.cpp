@@ -85,14 +85,18 @@ class VISIBILITY_HIDDEN DAGTypeLegalizer {
     return DAG.getConstant(Val, TLI.getPointerTy());
   }
   
-  /// PromotedNodes - For nodes that are below legal width, and that have more
-  /// than one use, this map indicates what promoted value to use.
+  /// PromotedNodes - For nodes that are below legal width, this map indicates
+  /// what promoted value to use.
   DenseMap<SDOperand, SDOperand> PromotedNodes;
   
   /// ExpandedNodes - For nodes that need to be expanded this map indicates
   /// which operands are the expanded version of the input.
   DenseMap<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedNodes;
 
+  /// ScalarizedNodes - For nodes that are <1 x ty>, this map indicates the
+  /// scalar value of type 'ty' to use.
+  DenseMap<SDOperand, SDOperand> ScalarizedNodes;
+  
   /// ReplacedNodes - For nodes that have been replaced with another,
   /// indicates the replacement node to use.
   DenseMap<SDOperand, SDOperand> ReplacedNodes;
@@ -138,6 +142,14 @@ private:
   
   void GetExpandedOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
   void SetExpandedOp(SDOperand Op, SDOperand Lo, SDOperand Hi);
+  
+  SDOperand GetScalarizedOp(SDOperand Op) {
+    SDOperand &ScalarOp = ScalarizedNodes[Op];
+    RemapNode(ScalarOp);
+    assert(ScalarOp.Val && "Operand wasn't scalarized?");
+    return ScalarOp;
+  }
+  void SetScalarizedOp(SDOperand Op, SDOperand Result);
   
   // Common routines.
   SDOperand CreateStackStoreLoad(SDOperand Op, MVT::ValueType DestVT);
@@ -219,6 +231,11 @@ private:
 
   void ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
                            ISD::CondCode &CCCode);
+  
+  // Operand Vector Scalarization <1 x ty> -> ty.
+  bool ScalarizeOperand(SDNode *N, unsigned OpNo);
+  SDOperand ScalarizeOp_EXTRACT_VECTOR_ELT(SDNode *N, unsigned OpNo);
+
 };
 }  // end anonymous namespace
 
@@ -279,12 +296,26 @@ void DAGTypeLegalizer::run() {
     unsigned NumOperands = N->getNumOperands();
     bool NeedsRevisit = false;
     for (i = 0; i != NumOperands; ++i) {
-      LegalizeAction Action = getTypeAction(N->getOperand(i).getValueType());
+      MVT::ValueType OpVT = N->getOperand(i).getValueType();
+      LegalizeAction Action = getTypeAction(OpVT);
       if (Action == Promote) {
         NeedsRevisit = PromoteOperand(N, i);
         break;
       } else if (Action == Expand) {
-        NeedsRevisit = ExpandOperand(N, i);
+        // Expand can mean 1) split integer in half 2) scalarize single-element
+        // vector 3) split vector in half.
+        if (!MVT::isVector(OpVT)) {
+          NeedsRevisit = ExpandOperand(N, i);
+        } else {
+          unsigned NumElts = MVT::getVectorNumElements(OpVT);
+          if (NumElts == 1) {
+            // Scalarize the single-element vector.
+            NeedsRevisit = ScalarizeOperand(N, i);
+          } else {
+            // Split the vector in half.
+            assert(0 && "Vector splitting not implemented");
+          }
+        }
         break;
       } else {
         assert(Action == Legal && "Unknown action!");
@@ -486,6 +517,16 @@ void DAGTypeLegalizer::SetPromotedOp(SDOperand Op, SDOperand Result) {
   assert(OpEntry.Val == 0 && "Node is already promoted!");
   OpEntry = Result;
 }
+
+void DAGTypeLegalizer::SetScalarizedOp(SDOperand Op, SDOperand Result) {
+  if (Result.Val->getNodeId() == NewNode) 
+    MarkNewNodes(Result.Val);
+  
+  SDOperand &OpEntry = ScalarizedNodes[Op];
+  assert(OpEntry.Val == 0 && "Node is already scalarized!");
+  OpEntry = Result;
+}
+
 
 void DAGTypeLegalizer::GetExpandedOp(SDOperand Op, SDOperand &Lo, 
                                      SDOperand &Hi) {
@@ -2195,6 +2236,67 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
                            isVolatile, MinAlign(Alignment, IncrementSize));
     return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
   }
+}
+
+//===----------------------------------------------------------------------===//
+//  Operand Vector Scalarization <1 x ty> -> ty.
+//===----------------------------------------------------------------------===//
+
+bool DAGTypeLegalizer::ScalarizeOperand(SDNode *N, unsigned OpNo) {
+  DEBUG(cerr << "Scalarize node operand " << OpNo << ": "; N->dump(&DAG); 
+        cerr << "\n");
+  SDOperand Res(0, 0);
+  
+  // FIXME: Should we support custom lowering for scalarization?
+#if 0
+  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) == 
+      TargetLowering::Custom)
+    Res = TLI.LowerOperation(SDOperand(N, 0), DAG);
+#endif
+  
+  if (Res.Val == 0) {
+    switch (N->getOpcode()) {
+    default:
+#ifndef NDEBUG
+      cerr << "ScalarizeOperand Op #" << OpNo << ": ";
+      N->dump(&DAG); cerr << "\n";
+#endif
+      assert(0 && "Do not know how to scalarize this operator's operand!");
+      abort();
+      
+    case ISD::EXTRACT_VECTOR_ELT:
+      Res = ScalarizeOp_EXTRACT_VECTOR_ELT(N, OpNo);
+      break;
+    }
+  }
+  
+  // If the result is null, the sub-method took care of registering results etc.
+  if (!Res.Val) return false;
+  
+  // If the result is N, the sub-method updated N in place.  Check to see if any
+  // operands are new, and if so, mark them.
+  if (Res.Val == N) {
+    // Mark N as new and remark N and its operands.  This allows us to correctly
+    // revisit N if it needs another step of promotion and allows us to visit
+    // any new operands to N.
+    N->setNodeId(NewNode);
+    MarkNewNodes(N);
+    return true;
+  }
+  
+  assert(Res.getValueType() == N->getValueType(0) && N->getNumValues() == 1 &&
+         "Invalid operand expansion");
+  
+  ReplaceValueWith(SDOperand(N, 0), Res);
+  return false;
+}
+
+/// ScalarizeOp_EXTRACT_VECTOR_ELT - If the input is a vector that needs to be
+/// scalarized, it must be <1 x ty>, just return the operand, ignoring the
+/// index.
+SDOperand DAGTypeLegalizer::ScalarizeOp_EXTRACT_VECTOR_ELT(SDNode *N, 
+                                                           unsigned OpNo) {
+  return GetScalarizedOp(N->getOperand(0));
 }
 
 
