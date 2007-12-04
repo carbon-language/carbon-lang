@@ -1,4 +1,4 @@
-//===--- FileManager.cpp - File System Probing and Caching ----------------===//
+///===--- FileManager.cpp - File System Probing and Caching ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -172,34 +172,3 @@ void FileManager::PrintStats() const {
   
   //std::cerr << PagesMapped << BytesOfPagesMapped << FSLookups;
 }
-
-//===----------------------------------------------------------------------===//
-//  Serialization.
-//===----------------------------------------------------------------------===//
-
-void DirectoryEntry::Emit(llvm::Serializer& S) const {
-  S.EmitCStr(Name);
-}
-
-void DirectoryEntry::Read(llvm::Deserializer& D) {
-  Name = D.ReadCStr();
-}
-
-void FileEntry::Emit(llvm::Serializer& S) const {
-  S.FlushRecord();
-  S.EmitInt(Size);
-  S.EmitInt(ModTime);
-  S.EmitInt(UID);
-  S.EmitPtr(Dir);
-  S.EmitCStr(Name);  
-}
-
-void FileEntry::Read(llvm::Deserializer& D) {
-  Size = (off_t) D.ReadInt();
-  ModTime = (time_t) D.ReadInt();
-  D.ReadPtr<DirectoryEntry>(const_cast<DirectoryEntry*&>(Dir));
-  Name = D.ReadCStr();
-}
-
-
-
