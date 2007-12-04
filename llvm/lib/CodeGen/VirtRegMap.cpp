@@ -1040,14 +1040,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
       // Check to see if this stack slot is available.
       unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SSorRMId);
-      if (!PhysReg && DoReMat) {
-        // This use is rematerializable. But perhaps the value is available in
-        // a register if the definition is not deleted. If so, check if we can
-        // reuse the value.
-        ReuseSlot = VRM.getStackSlot(VirtReg);
-        if (ReuseSlot != VirtRegMap::NO_STACK_SLOT)
-          PhysReg = Spills.getSpillSlotOrReMatPhysReg(ReuseSlot);
-      }
 
       // If this is a sub-register use, make sure the reuse register is in the
       // right register class. For example, for x86 not all of the 32-bit
