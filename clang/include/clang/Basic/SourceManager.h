@@ -43,15 +43,15 @@ namespace SrcMgr {
     const FileEntry* Entry;
     
     /// Buffer - The actual buffer containing the characters from the input
-    /// file.  This is owned by the FileInfo object.
+    /// file.  This is owned by the ContentCache object.
     const llvm::MemoryBuffer* Buffer;
     
     /// SourceLineCache - A new[]'d array of offsets for each source line.  This
-    /// is lazily computed.  This is owned by the FileInfo object.
+    /// is lazily computed.  This is owned by the ContentCache object.
     unsigned* SourceLineCache;
     
-    /// NumLines - The number of lines in this FileInfo.  This is only valid if
-    /// SourceLineCache is non-null.
+    /// NumLines - The number of lines in this ContentCache.  This is only valid
+    /// if SourceLineCache is non-null.
     unsigned NumLines;
         
     ContentCache(const FileEntry* e = NULL)
@@ -181,7 +181,7 @@ class SourceManager {
   
   /// MemBufferInfos - Information about various memory buffers that we have
   /// read in.  This is a list, instead of a vector, because we need pointers to
-  /// the FileInfo objects to be stable.  All FileEntry* within the
+  /// the ContentCache objects to be stable.  All FileEntry* within the
   /// stored ContentCache objects are NULL, as they do not refer to a file.
   std::list<SrcMgr::ContentCache> MemBufferInfos;
   
