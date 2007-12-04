@@ -271,7 +271,7 @@ namespace {
                              MachineBasicBlock::iterator &MII,
                              int Idx, unsigned PhysReg, int StackSlot,
                              const TargetRegisterClass *RC,
-                             MachineInstr *&LastStore,
+                             bool isAvailable, MachineInstr *&LastStore,
                              AvailableSpills &Spills,
                              SmallSet<MachineInstr*, 4> &ReMatDefs,
                              BitVector &RegKills,
@@ -357,7 +357,7 @@ public:
            "Value not available!");
     return SpillSlotsOrReMatsAvailable.find(SlotOrReMat)->second & 1;
   }
-  
+
   /// disallowClobberPhysReg - Unset the CanClobber bit of the specified
   /// stackslot register. The register is still available but is no longer
   /// allowed to be modifed.
@@ -855,7 +855,7 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator &MII,
                                   int Idx, unsigned PhysReg, int StackSlot,
                                   const TargetRegisterClass *RC,
-                                  MachineInstr *&LastStore,
+                                  bool isAvailable, MachineInstr *&LastStore,
                                   AvailableSpills &Spills,
                                   SmallSet<MachineInstr*, 4> &ReMatDefs,
                                   BitVector &RegKills,
@@ -903,7 +903,7 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
   // in PhysReg.
   Spills.ModifyStackSlotOrReMat(StackSlot);
   Spills.ClobberPhysReg(PhysReg);
-  Spills.addAvailable(StackSlot, LastStore, PhysReg);
+  Spills.addAvailable(StackSlot, LastStore, PhysReg, isAvailable);
   ++NumStores;
 }
 
@@ -984,9 +984,9 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
         unsigned Phys = VRM.getPhys(VirtReg);
         int StackSlot = VRM.getStackSlot(VirtReg);
-        MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
-        SpillRegToStackSlot(MBB, MII, i, Phys, StackSlot, RC, LastStore,
-                            Spills, ReMatDefs, RegKills, KillOps, VRM);
+        MRI->storeRegToStackSlot(MBB, next(MII), Phys, StackSlot, RC);
+        DOUT << "Store:\t" << *next(MII);
+        VRM.virtFolded(VirtReg, next(MII), VirtRegMap::isMod);
       }
       NextMII = next(MII);
     }
@@ -1303,7 +1303,12 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         if (MR & VirtRegMap::isModRef) {
           unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SS);
           SmallVector<MachineInstr*, 4> NewMIs;
+          // We can reuse this physreg as long as we are allowed to clobber
+          // the value and there isn't an earlier def that has already clobbered the
+          // physreg.
           if (PhysReg &&
+              Spills.canClobberPhysReg(SS) &&
+              !ReusedOperands.isClobbered(PhysReg) &&
               DeadStore->findRegisterUseOperandIdx(PhysReg, true) != -1 &&
               MRI->unfoldMemoryOperand(MF, &MI, PhysReg, false, true, NewMIs)) {
             MBB.insert(MII, NewMIs[0]);
@@ -1446,8 +1451,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
       if (!MO.isDead()) {
         MachineInstr *&LastStore = MaybeDeadStores[StackSlot];
-        SpillRegToStackSlot(MBB, MII, -1, PhysReg, StackSlot, RC, LastStore,
-                            Spills, ReMatDefs, RegKills, KillOps, VRM);
+        SpillRegToStackSlot(MBB, MII, -1, PhysReg, StackSlot, RC, true,
+                          LastStore, Spills, ReMatDefs, RegKills, KillOps, VRM);
         NextMII = next(MII);
 
         // Check to see if this is a noop copy.  If so, eliminate the
@@ -1467,9 +1472,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       }    
     }
   ProcessNextInst:
-    if (!Erased && !BackTracked)
+    if (!Erased && !BackTracked) {
       for (MachineBasicBlock::iterator II = MI; II != NextMII; ++II)
         UpdateKills(*II, RegKills, KillOps);
+    }
     MII = NextMII;
   }
 }
