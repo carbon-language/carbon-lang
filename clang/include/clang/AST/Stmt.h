@@ -833,30 +833,30 @@ public:
   
 /// ObjcAtFinallyStmt - This represent objective-c's @finally Statement 
 class ObjcAtFinallyStmt : public Stmt {
-  private:
-    Stmt *AtFinallyStmt;
-    SourceLocation AtFinallyLoc;
-    
-  public:
-    ObjcAtFinallyStmt(SourceLocation atFinallyLoc, Stmt *atFinallyStmt)
-    : Stmt(ObjcAtFinallyStmtClass), 
-      AtFinallyStmt(atFinallyStmt), AtFinallyLoc(atFinallyLoc) {}
-    
-    const Stmt *getFinallyBody () const { return AtFinallyStmt; }
-    Stmt *getFinallyBody () { return AtFinallyStmt; }
+  Stmt *AtFinallyStmt;
+  SourceLocation AtFinallyLoc;    
+public:
+  ObjcAtFinallyStmt(SourceLocation atFinallyLoc, Stmt *atFinallyStmt)
+  : Stmt(ObjcAtFinallyStmtClass), 
+    AtFinallyStmt(atFinallyStmt), AtFinallyLoc(atFinallyLoc) {}
   
-    virtual SourceRange getSourceRange() const { 
-      return SourceRange(AtFinallyLoc, AtFinallyStmt->getLocEnd()); 
-    }
-    
-    static bool classof(const Stmt *T) {
-      return T->getStmtClass() == ObjcAtFinallyStmtClass;
-    }
-    static bool classof(const ObjcAtFinallyStmt *) { return true; }
-    
-    virtual child_iterator child_begin();
-    virtual child_iterator child_end();
-    
+  const Stmt *getFinallyBody () const { return AtFinallyStmt; }
+  Stmt *getFinallyBody () { return AtFinallyStmt; }
+
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(AtFinallyLoc, AtFinallyStmt->getLocEnd()); 
+  }
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjcAtFinallyStmtClass;
+  }
+  static bool classof(const ObjcAtFinallyStmt *) { return true; }
+  
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjcAtFinallyStmt* CreateImpl(llvm::Deserializer& D);    
 };
   
 /// ObjcAtTryStmt - This represent objective-c's over-all 

@@ -159,6 +159,9 @@ Stmt* Stmt::Create(Deserializer& D) {
     case ObjcAtCatchStmtClass:
       return ObjcAtCatchStmt::CreateImpl(D);
       
+    case ObjcAtFinallyStmtClass:
+      return ObjcAtFinallyStmt::CreateImpl(D);
+      
     case ObjCIvarRefExprClass:
       return ObjCIvarRefExpr::CreateImpl(D);      
   }
@@ -845,6 +848,17 @@ ObjcAtCatchStmt* ObjcAtCatchStmt::CreateImpl(Deserializer& D) {
   D.BatchReadOwnedPtrs((unsigned) END_EXPR, &stmt->SubExprs[0]);
 
   return stmt;
+}
+
+void ObjcAtFinallyStmt::EmitImpl(Serializer& S) const {
+  S.Emit(AtFinallyLoc);
+  S.EmitOwnedPtr(AtFinallyStmt);
+}
+
+ObjcAtFinallyStmt* ObjcAtFinallyStmt::CreateImpl(Deserializer& D) {
+  SourceLocation Loc = SourceLocation::ReadVal(D);
+  Stmt* AtFinallyStmt = D.ReadOwnedPtr<Stmt>();
+  return new ObjcAtFinallyStmt(Loc,AtFinallyStmt);  
 }
 
 void ObjCIvarRefExpr::EmitImpl(Serializer& S) const {
