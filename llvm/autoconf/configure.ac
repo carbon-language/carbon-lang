@@ -421,6 +421,28 @@ case "$withval" in
   *) AC_MSG_ERROR([Invalid path for --with-llvmgccdir. Provide full path]) ;;
 esac
 
+dnl Allow a specific llvm-gcc compiler to be used with this LLVM config.
+AC_ARG_WITH(llvmgcc,
+  AS_HELP_STRING([--with-llvmgcc],
+    [Specify location of llvm-gcc driver (default searches PATH)]),
+    LLVMGCC=$with_llvmgcc
+      WITH_LLVMGCCDIR="",)
+
+dnl Allow a specific llvm-g++ compiler to be used with this LLVM config.
+AC_ARG_WITH(llvmgxx,
+  AS_HELP_STRING([--with-llvmgxx],
+    [Specify location of llvm-g++ driver (default searches PATH)]),
+    LLVMGXX=$with_llvmgxx
+    WITH_LLVMGCCDIR="",)
+
+if test -n "$LLVMGCC" && test -z "$LLVMGXX"; then
+   AC_MSG_ERROR([Invalid llvm-g++. Use --with-llvmgxx when --with-llvmgcc is used]);
+fi
+
+if test -n "$LLVMGXX" && test -z "$LLVMGCC"; then
+   AC_MSG_ERROR([Invalid llvm-gcc. Use --with-llvmgcc when --with-llvmgxx is used]);
+fi
+
 dnl Specify extra build options
 AC_ARG_WITH(extra-options,
   AS_HELP_STRING([--with-extra-options],
@@ -589,8 +611,12 @@ if test "$WITH_LLVMGCCDIR" = "default" ; then
   AC_PATH_PROG(LLVMGCC, $LLVMGCC, [])
   AC_PATH_PROG(LLVMGXX, $LLVMGXX, [])
 else
-  LLVMGCC="$WITH_LLVMGCCDIR/bin/llvm-gcc${EXEEXT}"
-  LLVMGXX="$WITH_LLVMGCCDIR/bin/llvm-g++${EXEEXT}"
+  if test -z "$LLVMGCC"; then
+    LLVMGCC="$WITH_LLVMGCCDIR/bin/llvm-gcc${EXEEXT}"
+  fi
+  if test -z "$LLVMGXX"; then
+    LLVMGXX="$WITH_LLVMGCCDIR/bin/llvm-g++${EXEEXT}"
+  fi
   AC_SUBST(LLVMGCC,$LLVMGCC)
   AC_SUBST(LLVMGXX,$LLVMGXX)
 fi
