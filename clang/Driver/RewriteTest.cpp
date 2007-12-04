@@ -1320,7 +1320,9 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
       
       llvm::SmallVector<Expr*, 4> InitExprs;
       
-      InitExprs.push_back(recExpr); // set the 'receiver'.
+      InitExprs.push_back(
+        new CastExpr(Context->getObjcIdType(), 
+                     recExpr, SourceLocation())); // set the 'receiver'.
       
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
@@ -1329,8 +1331,12 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
                                            false, argType, SourceLocation(),
                                            SourceLocation()));
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
-                                                   &ClsExprs[0], ClsExprs.size());
-      InitExprs.push_back(Cls); // set 'super class', using objc_getClass().
+                                                   &ClsExprs[0], 
+                                                   ClsExprs.size());
+      // To turn off a warning, type-cast to 'Class'
+      InitExprs.push_back(
+        new CastExpr(Context->getObjcClassType(), 
+        Cls, SourceLocation())); // set 'super class', using objc_getClass().
       // struct objc_super
       QualType superType = getSuperStructType();
       // (struct objc_super) { <exprs from above> }
