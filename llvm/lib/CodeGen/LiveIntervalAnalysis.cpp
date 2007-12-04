@@ -1234,6 +1234,7 @@ addIntervalsForSpills(const LiveInterval &li,
       for (unsigned i = 0, e = spills.size(); i != e; ++i) {
         int index = spills[i].index;
         unsigned VReg = spills[i].vreg;
+        LiveInterval &nI = getOrCreateInterval(VReg);
         bool isReMat = vrm.isReMaterialized(VReg);
         MachineInstr *MI = getInstructionFromIndex(index);
         bool CanFold = false;
@@ -1269,6 +1270,7 @@ addIntervalsForSpills(const LiveInterval &li,
             if (FoundUse > 0)
               // Also folded uses, do not issue a load.
               eraseRestoreInfo(Id, index, VReg, RestoreMBBs, RestoreIdxes);
+            nI.removeRange(getDefIndex(index), getStoreIndex(index));
           }
         }
 
@@ -1288,6 +1290,7 @@ addIntervalsForSpills(const LiveInterval &li,
       if (index == -1)
         continue;
       unsigned VReg = restores[i].vreg;
+      LiveInterval &nI = getOrCreateInterval(VReg);
       MachineInstr *MI = getInstructionFromIndex(index);
       bool CanFold = false;
       Ops.clear();
@@ -1326,15 +1329,23 @@ addIntervalsForSpills(const LiveInterval &li,
       }
       // If folding is not possible / failed, then tell the spiller to issue a
       // load / rematerialization for us.
-      if (!Folded)
+      if (Folded)
+        nI.removeRange(getLoadIndex(index), getUseIndex(index)+1);
+      else
         vrm.addRestorePoint(VReg, MI);
     }
     Id = RestoreMBBs.find_next(Id);
   }
 
-  // Finalize spill weights.
-  for (unsigned i = 0, e = NewLIs.size(); i != e; ++i)
-    NewLIs[i]->weight /= NewLIs[i]->getSize();
+  // Finalize spill weights and filter out dead intervals.
+  std::vector<LiveInterval*> RetNewLIs;
+  for (unsigned i = 0, e = NewLIs.size(); i != e; ++i) {
+    LiveInterval *LI = NewLIs[i];
+    if (!LI->empty()) {
+      LI->weight /= LI->getSize();
+      RetNewLIs.push_back(LI);
+    }
+  }
 
-  return NewLIs;
+  return RetNewLIs;
 }
