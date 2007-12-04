@@ -666,7 +666,7 @@ public:
 // Driver code
 //===----------------------------------------------------------------------===//
 
-static bool IsX86(const std::string& TT) {
+static inline bool IsX86(const std::string& TT) {
   return (TT.size() >= 5 && TT[0] == 'i' && TT[2] == '8' && TT[3] == '6' &&
           TT[4] == '-' && TT[1] - '3' < 6);
 }
@@ -674,20 +674,18 @@ static bool IsX86(const std::string& TT) {
 /// CreateTarget - Create the TargetInfoImpl object for the specified target
 /// enum value.
 static TargetInfoImpl *CreateTarget(const std::string& T) {
-  if (T.find("darwin") != std::string::npos) {
-    if (T.find("ppc-") == 0)
-      return new DarwinPPCTargetInfo(T);
-    else if (T.find("ppc64-") == 0)
-      return new DarwinPPC64TargetInfo(T);
-    else if (T.find("x86_64-") == 0)
-      return new DarwinX86_64TargetInfo(T);
-    else if (IsX86(T))
-      return new DarwinI386TargetInfo(T);
-    else if (T.find("bogusW16W16-") == 0) // For testing portability.
-      return new LinuxTargetInfo(T);
-  }
-
-  return NULL;
+  if (T.find("ppc-") == 0)
+    return new DarwinPPCTargetInfo(T);
+  else if (T.find("ppc64-") == 0)
+    return new DarwinPPC64TargetInfo(T);
+  else if (T.find("x86_64-") == 0)
+    return new DarwinX86_64TargetInfo(T);
+  else if (IsX86(T))
+    return new DarwinI386TargetInfo(T);
+  else if (T.find("bogusW16W16-") == 0) // For testing portability.
+    return new LinuxTargetInfo(T);
+  else
+    return NULL;
 }
 
 /// CreateTargetInfo - Return the set of target info objects as specified by
