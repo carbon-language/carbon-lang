@@ -406,3 +406,57 @@ void SourceManager::PrintStats() const {
   std::cerr << NumFileBytesMapped << " bytes of files mapped, "
             << NumLineNumsComputed << " files with line #'s computed.\n";
 }
+
+//===----------------------------------------------------------------------===//
+// Serialization.
+//===----------------------------------------------------------------------===//
+
+void SrcMgr::ContentCache::Emit(llvm::Serializer& S,
+                                bool StoreBufferName,
+                                bool StoreBufferContents) const {
+  S.FlushRecord();
+  S.EmitPtr(this);
+  
+  if (StoreBufferName)
+    S.EmitCStr(Buffer->getBufferIdentifier());
+  
+  if (StoreBufferContents) {
+    // Emit the contents of the memory buffer.
+    // FIXME: use abbreviations to optimize this.
+    S.FlushRecord();
+
+    const char* p = Buffer->getBufferStart();
+    const char* e = Buffer->getBufferEnd();
+    
+    S.EmitInt(p-e);    
+
+    for ( ; p != e; ++p)
+      S.EmitInt(*p);
+
+    S.FlushRecord();
+  }
+}
+
+void SrcMgr::ContentCache::Read(llvm::Deserializer& D,
+                                std::vector<char>* BufferNameBuf,
+                                bool ReadBufferContents) {
+  D.RegisterPtr(this);
+  const char* BufferName = "";
+  
+  if (BufferNameBuf) {
+    D.ReadCStr(*BufferNameBuf);
+    BufferName = &(*BufferNameBuf)[0];
+  }
+  
+  if (ReadBufferContents) {
+    char *BufferName = D.ReadCStr();    
+    unsigned Size = D.ReadInt();    
+    Buffer = MemoryBuffer::getNewUninitMemBuffer(Size,BufferName);
+    char* p = const_cast<char*>(Buffer->getBufferStart());
+    const char* e = Buffer->getBufferEnd();
+    for ( ; p != e ; ++p )
+      *p = (char) D.ReadInt();    
+  }
+  else
+    Buffer = MemoryBuffer::getNewUninitMemBuffer(0,BufferName);
+}

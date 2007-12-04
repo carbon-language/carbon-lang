@@ -71,6 +71,14 @@ namespace SrcMgr {
       NumLines = RHS.NumLines;      
     }
     
+    /// Emit - Emit this ContentCache to Bitcode.
+    void Emit(llvm::Serializer& S, bool StoreBufferName,
+              bool StoreBufferContents) const;
+    
+    /// Read - Reconstitute a ContentCache from Bitcode.
+    void Read(llvm::Deserializer& D, std::vector<char>* BufferNameBuf,
+              bool ReadBufferContents);
+
   private:
     // Disable assignments.
     ContentCache& operator=(const ContentCache& RHS);    
