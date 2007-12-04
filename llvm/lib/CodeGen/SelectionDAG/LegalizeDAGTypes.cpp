@@ -202,6 +202,11 @@ private:
                              SDOperand &Lo, SDOperand &Hi);
   bool ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
+  // Result Vector Scalarization: <1 x ty> -> ty.
+  void ScalarizeResult(SDNode *N, unsigned OpNo);
+  SDOperand ScalarizeRes_UNDEF(SDNode *N);
+  SDOperand ScalarizeRes_LOAD(LoadSDNode *N);
+  
   // Operand Promotion.
   bool PromoteOperand(SDNode *N, unsigned OperandNo);
   SDOperand PromoteOperand_ANY_EXTEND(SDNode *N);
@@ -232,7 +237,7 @@ private:
   void ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
                            ISD::CondCode &CCCode);
   
-  // Operand Vector Scalarization <1 x ty> -> ty.
+  // Operand Vector Scalarization: <1 x ty> -> ty.
   bool ScalarizeOperand(SDNode *N, unsigned OpNo);
   SDOperand ScalarizeOp_EXTRACT_VECTOR_ELT(SDNode *N, unsigned OpNo);
 
@@ -278,12 +283,20 @@ void DAGTypeLegalizer::run() {
     unsigned i = 0;
     unsigned NumResults = N->getNumValues();
     do {
-      LegalizeAction Action = getTypeAction(N->getValueType(i));
+      MVT::ValueType ResultVT = N->getValueType(i);
+      LegalizeAction Action = getTypeAction(ResultVT);
       if (Action == Promote) {
         PromoteResult(N, i);
         goto NodeDone;
       } else if (Action == Expand) {
-        ExpandResult(N, i);
+        // Expand can mean 1) split integer in half 2) scalarize single-element
+        // vector 3) split vector in half.
+        if (!MVT::isVector(ResultVT))
+          ExpandResult(N, i);
+        else if (MVT::getVectorNumElements(ResultVT) == 1)
+          ScalarizeResult(N, i);     // Scalarize the single-element vector.
+        else         // Split the vector in half.
+          assert(0 && "Vector splitting not implemented");
         goto NodeDone;
       } else {
         assert(Action == Legal && "Unknown action!");
@@ -306,15 +319,12 @@ void DAGTypeLegalizer::run() {
         // vector 3) split vector in half.
         if (!MVT::isVector(OpVT)) {
           NeedsRevisit = ExpandOperand(N, i);
+        } else if (MVT::getVectorNumElements(OpVT) == 1) {
+          // Scalarize the single-element vector.
+          NeedsRevisit = ScalarizeOperand(N, i);
         } else {
-          unsigned NumElts = MVT::getVectorNumElements(OpVT);
-          if (NumElts == 1) {
-            // Scalarize the single-element vector.
-            NeedsRevisit = ScalarizeOperand(N, i);
-          } else {
-            // Split the vector in half.
-            assert(0 && "Vector splitting not implemented");
-          }
+          // Split the vector in half.
+          assert(0 && "Vector splitting not implemented");
         }
         break;
       } else {
@@ -1582,6 +1592,65 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
                    DAG.getNode(Op1, NVT, InH, Amt),
                    DAG.getNode(Op2, NVT, InL, Amt2));
   return true;
+}
+
+//===----------------------------------------------------------------------===//
+//  Result Vector Scalarization: <1 x ty> -> ty.
+//===----------------------------------------------------------------------===//
+
+
+void DAGTypeLegalizer::ScalarizeResult(SDNode *N, unsigned ResNo) {
+  DEBUG(cerr << "Scalarize node result " << ResNo << ": "; N->dump(&DAG); 
+        cerr << "\n");
+  SDOperand R = SDOperand();
+  
+  // FIXME: Custom lowering for scalarization?
+#if 0
+  // See if the target wants to custom expand this node.
+  if (TLI.getOperationAction(N->getOpcode(), N->getValueType(0)) == 
+      TargetLowering::Custom) {
+    // If the target wants to, allow it to lower this itself.
+    if (SDNode *P = TLI.ExpandOperationResult(N, DAG)) {
+      // Everything that once used N now uses P.  We are guaranteed that the
+      // result value types of N and the result value types of P match.
+      ReplaceNodeWith(N, P);
+      return;
+    }
+  }
+#endif
+  
+  switch (N->getOpcode()) {
+  default:
+#ifndef NDEBUG
+    cerr << "ScalarizeResult #" << ResNo << ": ";
+    N->dump(&DAG); cerr << "\n";
+#endif
+    assert(0 && "Do not know how to expand the result of this operator!");
+    abort();
+    
+  case ISD::UNDEF:       R = ScalarizeRes_UNDEF(N); break;
+  case ISD::LOAD:        R = ScalarizeRes_LOAD(cast<LoadSDNode>(N)); break;
+  }
+  
+  // If R is null, the sub-method took care of registering the resul.
+  if (R.Val)
+    SetScalarizedOp(SDOperand(N, ResNo), R);
+}
+
+SDOperand DAGTypeLegalizer::ScalarizeRes_UNDEF(SDNode *N) {
+  return DAG.getNode(ISD::UNDEF, MVT::getVectorElementType(N->getValueType(0)));
+}
+
+SDOperand DAGTypeLegalizer::ScalarizeRes_LOAD(LoadSDNode *N) {
+  SDOperand Result = DAG.getLoad(MVT::getVectorElementType(N->getValueType(0)),
+                                 N->getChain(), N->getBasePtr(), 
+                                 N->getSrcValue(), N->getSrcValueOffset(),
+                                 N->isVolatile(), N->getAlignment());
+  
+  // Legalized the chain result - switch anything that used the old chain to
+  // use the new one.
+  ReplaceValueWith(SDOperand(N, 1), Result.getValue(1));
+  return Result;
 }
 
 
