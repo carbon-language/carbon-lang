@@ -2068,7 +2068,7 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
     Result += CDecl->getName();
     Result += "\"";
   }
-  // TODO: 'ivars' field for root class is currently set to 0.
+  // Set 'ivars' field for root class to 0. Objc1 runtime does not use it.
   // 'info' field is initialized to CLS_META(2) for metaclass
   Result += ", 0,2, sizeof(struct _objc_class), 0";
   if (CDecl->getNumClassMethods() > 0) {
