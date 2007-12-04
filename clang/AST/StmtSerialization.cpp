@@ -162,6 +162,9 @@ Stmt* Stmt::Create(Deserializer& D) {
     case ObjcAtFinallyStmtClass:
       return ObjcAtFinallyStmt::CreateImpl(D);
       
+    case ObjcAtTryStmtClass:
+      return ObjcAtTryStmt::CreateImpl(D);
+      
     case ObjCIvarRefExprClass:
       return ObjCIvarRefExpr::CreateImpl(D);      
   }
@@ -861,12 +864,24 @@ ObjcAtFinallyStmt* ObjcAtFinallyStmt::CreateImpl(Deserializer& D) {
   return new ObjcAtFinallyStmt(Loc,AtFinallyStmt);  
 }
 
+void ObjcAtTryStmt::EmitImpl(Serializer& S) const {
+  S.Emit(AtTryLoc);
+  S.BatchEmitOwnedPtrs((unsigned) END_EXPR, &SubStmts[0]);
+}
+
+ObjcAtTryStmt* ObjcAtTryStmt::CreateImpl(Deserializer& D) {
+  SourceLocation L = SourceLocation::ReadVal(D);
+  ObjcAtTryStmt* stmt = new ObjcAtTryStmt(L,NULL,NULL,NULL);
+  D.BatchReadOwnedPtrs((unsigned) END_EXPR, &stmt->SubStmts[0]);
+  return stmt;
+}
+
 void ObjCIvarRefExpr::EmitImpl(Serializer& S) const {
   S.Emit(Loc);
   S.Emit(getType());
   S.EmitPtr(getDecl());
 }
-
+  
 ObjCIvarRefExpr* ObjCIvarRefExpr::CreateImpl(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   QualType T = QualType::ReadVal(D);

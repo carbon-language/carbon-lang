@@ -866,8 +866,7 @@ private:
   enum { TRY, CATCH, FINALLY, END_EXPR };
   Stmt* SubStmts[END_EXPR]; 
   
-  SourceLocation AtTryLoc;
-      
+  SourceLocation AtTryLoc;      
 public:
   ObjcAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt, 
                 Stmt *atCatchStmt, 
@@ -904,7 +903,9 @@ public:
     
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-    
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjcAtTryStmt* CreateImpl(llvm::Deserializer& D);     
 };
 
 /// ObjcAtThrowStmt - This represents objective-c's @throw statement.
