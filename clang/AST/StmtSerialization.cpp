@@ -169,7 +169,10 @@ Stmt* Stmt::Create(Deserializer& D) {
       return ObjcAtTryStmt::CreateImpl(D);
       
     case ObjCIvarRefExprClass:
-      return ObjCIvarRefExpr::CreateImpl(D);      
+      return ObjCIvarRefExpr::CreateImpl(D);
+      
+    case ObjCStringLiteralClass:
+      return ObjCStringLiteral::CreateImpl(D);
   }
 }
 
@@ -902,4 +905,17 @@ ObjCIvarRefExpr* ObjCIvarRefExpr::CreateImpl(Deserializer& D) {
   ObjCIvarRefExpr* dr = new ObjCIvarRefExpr(NULL,T,Loc);
   D.ReadPtr(dr->D,false);  
   return dr;
+}
+
+void ObjCStringLiteral::EmitImpl(Serializer& S) const {
+  S.Emit(AtLoc);
+  S.Emit(getType());
+  S.EmitOwnedPtr(String);
+}
+
+ObjCStringLiteral* ObjCStringLiteral::CreateImpl(Deserializer& D) {
+  SourceLocation L = SourceLocation::ReadVal(D);
+  QualType T = QualType::ReadVal(D);
+  StringLiteral* String = cast<StringLiteral>(D.ReadOwnedPtr<Stmt>());
+  return new ObjCStringLiteral(String,T,L);
 }

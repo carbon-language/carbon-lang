@@ -1183,6 +1183,9 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCStringLiteral* CreateImpl(llvm::Deserializer& D);
 };
   
 /// ObjCEncodeExpr, used for @encode in Objective-C.
