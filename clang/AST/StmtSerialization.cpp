@@ -155,6 +155,9 @@ Stmt* Stmt::Create(Deserializer& D) {
     //==--------------------------------------==//
     //    Objective C
     //==--------------------------------------==//
+    
+    case ObjcAtCatchStmtClass:
+      return ObjcAtCatchStmt::CreateImpl(D);
       
     case ObjCIvarRefExprClass:
       return ObjCIvarRefExpr::CreateImpl(D);      
@@ -824,6 +827,25 @@ WhileStmt* WhileStmt::CreateImpl(Deserializer& D) {
 //===----------------------------------------------------------------------===//
 //   Objective C Serialization
 //===----------------------------------------------------------------------===//
+
+void ObjcAtCatchStmt::EmitImpl(Serializer& S) const {
+  S.Emit(AtCatchLoc);
+  S.Emit(RParenLoc);
+  S.EmitPtr(NextAtCatchStmt);
+  S.BatchEmitOwnedPtrs((unsigned) END_EXPR,&SubExprs[0]);
+}
+
+ObjcAtCatchStmt* ObjcAtCatchStmt::CreateImpl(Deserializer& D) {
+  SourceLocation AtCatchLoc = SourceLocation::ReadVal(D);
+  SourceLocation RParenLoc = SourceLocation::ReadVal(D);
+  
+  ObjcAtCatchStmt* stmt = new ObjcAtCatchStmt(AtCatchLoc,RParenLoc);
+  
+  D.ReadPtr(stmt->NextAtCatchStmt); // Allows backpatching.
+  D.BatchReadOwnedPtrs((unsigned) END_EXPR, &stmt->SubExprs[0]);
+
+  return stmt;
+}
 
 void ObjCIvarRefExpr::EmitImpl(Serializer& S) const {
   S.Emit(Loc);

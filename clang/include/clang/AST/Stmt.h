@@ -782,7 +782,11 @@ private:
   enum { SELECTOR, BODY, END_EXPR };
   Stmt *SubExprs[END_EXPR];
   SourceLocation AtCatchLoc, RParenLoc;
-  
+
+  // Used by deserialization.
+  ObjcAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc)
+  : Stmt(ObjcAtCatchStmtClass), AtCatchLoc(atCatchLoc), RParenLoc(rparenloc) {}
+
 public:
   ObjcAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
                   Stmt *catchVarStmtDecl, Stmt *atCatchStmt, Stmt *atCatchList)
@@ -822,7 +826,9 @@ public:
   
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-                  
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjcAtCatchStmt* CreateImpl(llvm::Deserializer& D);
 };
   
 /// ObjcAtFinallyStmt - This represent objective-c's @finally Statement 
