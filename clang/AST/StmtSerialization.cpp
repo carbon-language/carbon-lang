@@ -162,6 +162,9 @@ Stmt* Stmt::Create(Deserializer& D) {
     case ObjcAtFinallyStmtClass:
       return ObjcAtFinallyStmt::CreateImpl(D);
       
+    case ObjcAtThrowStmtClass:
+      return ObjcAtThrowStmt::CreateImpl(D);
+      
     case ObjcAtTryStmtClass:
       return ObjcAtTryStmt::CreateImpl(D);
       
@@ -864,6 +867,17 @@ ObjcAtFinallyStmt* ObjcAtFinallyStmt::CreateImpl(Deserializer& D) {
   return new ObjcAtFinallyStmt(Loc,AtFinallyStmt);  
 }
 
+void ObjcAtThrowStmt::EmitImpl(Serializer& S) const {
+  S.Emit(AtThrowLoc);
+  S.EmitOwnedPtr(Throw);
+}
+
+ObjcAtThrowStmt* ObjcAtThrowStmt::CreateImpl(Deserializer& D) {
+  SourceLocation L = SourceLocation::ReadVal(D);
+  Stmt* Throw = D.ReadOwnedPtr<Stmt>();
+  return new ObjcAtThrowStmt(L,Throw);  
+}
+  
 void ObjcAtTryStmt::EmitImpl(Serializer& S) const {
   S.Emit(AtTryLoc);
   S.BatchEmitOwnedPtrs((unsigned) END_EXPR, &SubStmts[0]);

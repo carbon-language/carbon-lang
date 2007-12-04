@@ -910,10 +910,8 @@ public:
 
 /// ObjcAtThrowStmt - This represents objective-c's @throw statement.
 class ObjcAtThrowStmt : public Stmt {
-private:
   Stmt *Throw;
   SourceLocation AtThrowLoc;
-
 public:
   ObjcAtThrowStmt(SourceLocation atThrowLoc, Stmt *throwExpr)
   : Stmt(ObjcAtThrowStmtClass), Throw(throwExpr) {
@@ -933,6 +931,9 @@ public:
   
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjcAtThrowStmt* CreateImpl(llvm::Deserializer& D); 
 };
 
 }  // end namespace clang
