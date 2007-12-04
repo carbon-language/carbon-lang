@@ -86,7 +86,11 @@ namespace {
       Rewrite.setSourceMgr(Context->SourceMgr);
       // declaring objc_selector outside the parameter list removes a silly
       // scope related warning...
-      const char *s = "struct objc_selector; struct objc_class; struct objc_super;\n"
+      const char *s = "struct objc_selector; struct objc_class;\n"
+					  "#ifndef OBJC_SUPER\n"
+					  "struct objc_super { struct objc_object *o; struct objc_object *superClass; };\n"
+					  "#define OBJC_SUPER\n"
+					  "#endif\n"
                       "extern struct objc_object *objc_msgSend"
                       "(struct objc_object *, struct objc_selector *, ...);\n"
                       "extern struct objc_object *objc_msgSendSuper"
