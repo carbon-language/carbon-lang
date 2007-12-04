@@ -157,6 +157,7 @@ namespace {
     void SynthMsgSendSuperStretFunctionDecl();
     void SynthGetClassFunctionDecl();
     void SynthCFStringFunctionDecl();
+    void SynthSelGetUidFunctionDecl();
       
     // Metadata emission.
     void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
@@ -1012,6 +1013,20 @@ void RewriteTest::RewriteObjcQualifiedInterfaceTypes(
   }
 }
 
+// SynthSelGetUidFunctionDecl - SEL sel_registerName(const char *str);
+void RewriteTest::SynthSelGetUidFunctionDecl() {
+  IdentifierInfo *SelGetUidIdent = &Context->Idents.get("sel_registerName");
+  llvm::SmallVector<QualType, 16> ArgTys;
+  ArgTys.push_back(Context->getPointerType(
+    Context->CharTy.getQualifiedType(QualType::Const)));
+  QualType getFuncType = Context->getFunctionType(Context->getObjcSelType(),
+                                                   &ArgTys[0], ArgTys.size(),
+                                                   false /*isVariadic*/);
+  SelGetUidFunctionDecl = new FunctionDecl(SourceLocation(), 
+                                           SelGetUidIdent, getFuncType,
+                                           FunctionDecl::Extern, false, 0);
+}
+
 void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
   // declared in <objc/objc.h>
   if (strcmp(FD->getName(), "sel_registerName") == 0) {
@@ -1251,7 +1266,8 @@ QualType RewriteTest::getSuperStructType() {
 }
 
 Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
-  assert(SelGetUidFunctionDecl && "Can't find sel_registerName() decl");
+  if (!SelGetUidFunctionDecl)
+    SynthSelGetUidFunctionDecl();
   if (!MsgSendFunctionDecl)
     SynthMsgSendFunctionDecl();
   if (!MsgSendSuperFunctionDecl)
