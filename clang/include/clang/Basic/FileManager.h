@@ -15,6 +15,7 @@
 #define LLVM_CLANG_FILEMANAGER_H
 
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Bitcode/SerializationFwd.h"
 #include <map>
 #include <string>
 // FIXME: Enhance libsystem to support inode and other fields in stat.
@@ -31,6 +32,12 @@ class DirectoryEntry {
 public:
   DirectoryEntry() : Name(0) {}
   const char *getName() const { return Name; }
+  
+  /// Emit - Emit this DirectoryEntry to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Create - Reconsitute a DirectoryEntry object from Bitcode.
+  void Read(llvm::Deserializer& D); 
 };
 
 /// FileEntry - Cached information about one file on the disk.
@@ -53,6 +60,13 @@ public:
   /// getDir - Return the directory the file lives in.
   ///
   const DirectoryEntry *getDir() const { return Dir; }
+  
+  
+  /// Emit - Emit this FileEntry to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Read - Reconsitute a FileEntry object from Bitcode.
+  void Read(llvm::Deserializer& D);  
 };
 
  
