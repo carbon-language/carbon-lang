@@ -170,7 +170,7 @@ public:
   //
   QualType GetTypeForDeclarator(Declarator &D, Scope *S);
   
-  QualType ObjcGetTypeForMethodDefinition(DeclTy *D, Scope *S);
+  QualType ObjcGetTypeForMethodDefinition(DeclTy *D);
 
   
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);

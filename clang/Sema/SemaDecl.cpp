@@ -963,32 +963,11 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
   assert(MDecl != 0 && "Not a method declarator!");
   
-  Scope *GlobalScope = FnBodyScope->getParent();
-  
-  // build [classname selector-name] for the name of method.
-  std::string Name = "[";
-  Name += MDecl->getClassInterface()->getName();
-  Name += " ";
-  Name += MDecl->getSelector().getName();
-  Name += "]";
-  IdentifierInfo *II = &Context.Idents.get(Name);
-  assert (II && "ObjcActOnStartOfMethodDef - selector name is missing");
-  
-  QualType R = ObjcGetTypeForMethodDefinition(MDecl, GlobalScope);
-  assert(!R.isNull() && "ObjcActOnStartOfMethodDef() returned null type");
-    
-  FunctionDecl *NewFD = new FunctionDecl(MDecl->getLocation(), II, R, 
-                                         FunctionDecl::Static, false, 0);
-  NewFD->setNext(II->getFETokenInfo<ScopedDecl>());
-  II->setFETokenInfo(NewFD);
-  GlobalScope->AddDecl(NewFD);
-  
   // Allow all of Sema to see that we are entering a method definition.
   CurMethodDecl = MDecl;
-  CurFunctionDecl = NewFD;
 
-  // Create Decl objects for each parameter, adding them to the FunctionDecl.
-  llvm::SmallVector<ParmVarDecl*, 16> Params;
+  // Create Decl objects for each parameter, entrring them in the scope for
+  // binding to their use.
   struct DeclaratorChunk::ParamInfo PI;
 
   // Insert the invisible arguments, self and _cmd!
@@ -1001,20 +980,19 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     PI.TypeInfo = selfTy.getAsOpaquePtr();
   } else
     PI.TypeInfo = Context.getObjcIdType().getAsOpaquePtr();
-  Params.push_back(ActOnParamDeclarator(PI, FnBodyScope));
+  ActOnParamDeclarator(PI, FnBodyScope);
   
   PI.Ident = &Context.Idents.get("_cmd");
   PI.TypeInfo = Context.getObjcSelType().getAsOpaquePtr();
-  Params.push_back(ActOnParamDeclarator(PI, FnBodyScope));
+  ActOnParamDeclarator(PI, FnBodyScope);
   
   for (int i = 0; i <  MDecl->getNumParams(); i++) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);
     PI.Ident = PDecl->getIdentifier();
     PI.IdentLoc = PDecl->getLocation(); // user vars have a real location.
     PI.TypeInfo = PDecl->getType().getAsOpaquePtr();
-    Params.push_back(ActOnParamDeclarator(PI, FnBodyScope));
+    ActOnParamDeclarator(PI, FnBodyScope);
   }
-  NewFD->setParams(&Params[0], Params.size());
 }
 
 /// ImplicitlyDefineFunction - An undeclared identifier was used in a function

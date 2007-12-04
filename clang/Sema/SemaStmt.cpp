@@ -580,17 +580,21 @@ Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
 Action::StmtResult
 Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
   Expr *RetValExp = static_cast<Expr *>(rex);
-  QualType lhsType = CurFunctionDecl->getResultType();
+  QualType lhsType = CurFunctionDecl ? CurFunctionDecl->getResultType() : 
+                                       CurMethodDecl->getResultType();
 
   if (lhsType->isVoidType()) {
     if (RetValExp) // C99 6.8.6.4p1 (ext_ since GCC warns)
-      Diag(ReturnLoc, diag::ext_return_has_expr, 
-           CurFunctionDecl->getIdentifier()->getName(),
+      Diag(ReturnLoc, diag::ext_return_has_expr,
+           (CurFunctionDecl ? CurFunctionDecl->getIdentifier()->getName() :
+            CurMethodDecl->getSelector().getName()),
            RetValExp->getSourceRange());
     return new ReturnStmt(ReturnLoc, RetValExp);
   } else {
     if (!RetValExp) {
-      const char *funcName = CurFunctionDecl->getIdentifier()->getName();
+      const char *funcName = CurFunctionDecl ? 
+                               CurFunctionDecl->getIdentifier()->getName() : 
+                               CurMethodDecl->getSelector().getName().c_str();
       if (getLangOptions().C99)  // C99 6.8.6.4p1 (ext_ since GCC warns)
         Diag(ReturnLoc, diag::ext_return_missing_expr, funcName);
       else  // C90 6.6.6.4p4

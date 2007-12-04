@@ -17,6 +17,7 @@
 #include "clang/AST/Stmt.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"

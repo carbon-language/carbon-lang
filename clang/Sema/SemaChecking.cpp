@@ -54,8 +54,9 @@ Sema::CheckFunctionCall(Expr *Fn,
       return true;
     }
     
-    FunctionTypeProto* proto = 
-      cast<FunctionTypeProto>(CurFunctionDecl->getType());      
+    FunctionTypeProto* proto = CurFunctionDecl ? 
+      cast<FunctionTypeProto>(CurFunctionDecl->getType()) : 
+      cast<FunctionTypeProto>(ObjcGetTypeForMethodDefinition(CurMethodDecl));
     if (!proto->isVariadic()) {
       Diag(Fn->getLocStart(),
            diag::err_va_start_used_in_non_variadic_function);
@@ -65,9 +66,10 @@ Sema::CheckFunctionCall(Expr *Fn,
     bool SecondArgIsLastNamedArgument = false;
     if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Args[1])) {
       if (ParmVarDecl *PV = dyn_cast<ParmVarDecl>(DR->getDecl())) {
-        ParmVarDecl *LastNamedArg = 
-          CurFunctionDecl->getParamDecl(CurFunctionDecl->getNumParams() - 1);
-              
+        ParmVarDecl *LastNamedArg = CurFunctionDecl ?
+          CurFunctionDecl->getParamDecl(CurFunctionDecl->getNumParams() - 1) :
+          CurMethodDecl->getParamDecl(CurMethodDecl->getNumParams() - 1);
+        
         if (PV == LastNamedArg)
           SecondArgIsLastNamedArgument = true;
       }

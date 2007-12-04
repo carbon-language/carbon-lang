@@ -327,7 +327,7 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
 
 /// ObjcGetTypeForMethodDefinition - Builds the type for a method definition
 /// declarator
-QualType Sema::ObjcGetTypeForMethodDefinition(DeclTy *D, Scope *S) {
+QualType Sema::ObjcGetTypeForMethodDefinition(DeclTy *D) {
   ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
   QualType T = MDecl->getResultType();
   llvm::SmallVector<QualType, 16> ArgTys;
