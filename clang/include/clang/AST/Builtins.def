@@ -54,9 +54,9 @@
 //  F -> this is a libc/libm function with a '__builtin_' prefix added.
 
 // Standard libc/libm functions:
-BUILTIN(__builtin_inf  , "d"   , "ncF")
-BUILTIN(__builtin_inff , "f"   , "ncF")
-BUILTIN(__builtin_infl , "Ld"  , "ncF")
+BUILTIN(__builtin_inf  , "d"   , "nc")
+BUILTIN(__builtin_inff , "f"   , "nc")
+BUILTIN(__builtin_infl , "Ld"  , "nc")
 BUILTIN(__builtin_abs  , "ii"  , "ncF")
 BUILTIN(__builtin_fabs , "dd"  , "ncF")
 BUILTIN(__builtin_fabsf, "ff"  , "ncF")
