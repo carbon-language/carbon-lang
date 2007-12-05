@@ -470,7 +470,6 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
   // The empty init list "{ }" is treated specially below.
   unsigned numInits = IList->getNumInits();
   if (numInits) {
-    bool DidWarn = false;
     for (unsigned i = 0; i < numInits; i++) {
       Expr *expr = IList->getInit(i);
       
@@ -483,12 +482,9 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
         totalInits--;    // decrement the total number of initializers.
         
         // Check if we have space for another initializer.
-        if (((nInitsAtLevel > maxElementsAtThisLevel) || (totalInits < 0)) &&
-            !DidWarn) {
+        if (((nInitsAtLevel > maxElementsAtThisLevel) || (totalInits < 0)))
           Diag(expr->getLocStart(), diag::warn_excess_initializers, 
                expr->getSourceRange());
-          DidWarn = true;
-        }
       }
     }
     if (nInitsAtLevel < maxElementsAtThisLevel) // fill the remaining elements.
