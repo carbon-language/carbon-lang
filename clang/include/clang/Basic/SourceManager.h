@@ -366,7 +366,8 @@ public:
   void Emit(llvm::Serializer& S) const;
   
   /// Read - Reconstitute a SourceManager from Bitcode.
-  void Read(llvm::Deserializer& S, FileManager &FMgr);
+  static SourceManager* CreateAndRegister(llvm::Deserializer& S,
+                                          FileManager &FMgr);
   
 private:
   friend class SrcMgr::ContentCache; // Used for deserialization.

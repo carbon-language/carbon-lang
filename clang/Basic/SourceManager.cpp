@@ -490,6 +490,9 @@ MacroIDInfo MacroIDInfo::ReadVal(llvm::Deserializer& D) {
 }
 
 void SourceManager::Emit(llvm::Serializer& S) const {
+  S.EnterBlock();
+  S.EmitPtr(this);
+  
   // Emit: FileInfos.  Just emit the file name.
   S.EnterBlock();    
 
@@ -513,32 +516,40 @@ void SourceManager::Emit(llvm::Serializer& S) const {
   // Emit: MacroIDs
   S.EmitInt(MacroIDs.size());  
   std::for_each(MacroIDs.begin(), MacroIDs.end(), S.MakeEmitter<MacroIDInfo>());
+  
+  S.ExitBlock();
 }
 
-void SourceManager::Read(llvm::Deserializer& D, FileManager& FMgr) {
+SourceManager*
+SourceManager::CreateAndRegister(llvm::Deserializer& D, FileManager& FMgr){
+  SourceManager *M = new SourceManager();
+  D.RegisterPtr(M);
+  
   std::vector<char> Buf;
     
   { // Read: FileInfos.
     llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
     while (!D.FinishedBlock(BLoc))
-    ContentCache::ReadToSourceManager(D,*this,&FMgr,Buf);
+    ContentCache::ReadToSourceManager(D,*M,&FMgr,Buf);
   }
     
   { // Read: MemBufferInfos.
     llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
     while (!D.FinishedBlock(BLoc))
-    ContentCache::ReadToSourceManager(D,*this,NULL,Buf);
+    ContentCache::ReadToSourceManager(D,*M,NULL,Buf);
   }
   
   // Read: FileIDs.
   unsigned Size = D.ReadInt();
-  FileIDs.reserve(Size);
+  M->FileIDs.reserve(Size);
   for (; Size > 0 ; --Size)
-    FileIDs.push_back(FileIDInfo::ReadVal(D));
+    M->FileIDs.push_back(FileIDInfo::ReadVal(D));
   
   // Read: MacroIDs.
   Size = D.ReadInt();
-  MacroIDs.reserve(Size);
+  M->MacroIDs.reserve(Size);
   for (; Size > 0 ; --Size)
-    MacroIDs.push_back(MacroIDInfo::ReadVal(D));
+    M->MacroIDs.push_back(MacroIDInfo::ReadVal(D));
+  
+  return M;
 }
