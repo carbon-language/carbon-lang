@@ -660,20 +660,14 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList) {
 /// InitializeIncludePaths - Process the -I options and set them in the
 /// HeaderSearch object.
 static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
-                                   Diagnostic &Diags, const LangOptions &Lang) {
+                                   const LangOptions &Lang) {
   // Handle -F... options.
   for (unsigned i = 0, e = F_dirs.size(); i != e; ++i)
     AddPath(F_dirs[i], Angled, false, true, true, FM);
   
   // Handle -I... options.
-  for (unsigned i = 0, e = I_dirs.size(); i != e; ++i) {
-    if (I_dirs[i] == "-") {
-      // -I- is a deprecated GCC feature.
-      Diags.Report(SourceLocation(), diag::err_pp_I_dash_not_supported);
-    } else {
-      AddPath(I_dirs[i], Angled, false, true, false, FM);
-    }
-  }
+  for (unsigned i = 0, e = I_dirs.size(); i != e; ++i)
+    AddPath(I_dirs[i], Angled, false, true, false, FM);
   
   // Handle -idirafter... options.
   for (unsigned i = 0, e = idirafter_dirs.size(); i != e; ++i)
@@ -1014,10 +1008,19 @@ int main(int argc, char **argv) {
     }
   }
   
+  // -I- is a deprecated GCC feature, scan for it and reject it.
+  for (unsigned i = 0, e = I_dirs.size(); i != e; ++i) {
+    if (I_dirs[i] == "-") {
+      Diags.Report(SourceLocation(), diag::err_pp_I_dash_not_supported);
+      I_dirs.erase(I_dirs.begin()+i);
+      --i;
+    }
+  }
+  
   // Process the -I options and set them in the HeaderInfo.
   HeaderSearch HeaderInfo(FileMgr);
   DiagClient->setHeaderSearch(HeaderInfo);
-  InitializeIncludePaths(HeaderInfo, FileMgr, Diags, LangInfo);
+  InitializeIncludePaths(HeaderInfo, FileMgr, LangInfo);
   
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     // Set up the preprocessor with these options.
