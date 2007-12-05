@@ -1532,3 +1532,23 @@ _test:
 	ret
 
 This should just fldl directly from the input stack slot.
+
+//===---------------------------------------------------------------------===//
+
+This code:
+int foo (int x) { return (x & 65535) | 255; }
+
+Should compile into:
+
+_foo:
+        movzwl  4(%esp), %eax
+        orb     $-1, %al           ;; 'orl 255' is also fine :)
+        ret
+
+instead of:
+_foo:
+        movl    $255, %eax
+        orl     4(%esp), %eax
+        andl    $65535, %eax
+        ret
+
