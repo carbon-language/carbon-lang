@@ -16,6 +16,7 @@
 		3513BD550C9F207900FA56C6 /* UninitializedValues.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3513BD540C9F207900FA56C6 /* UninitializedValues.cpp */; };
 		35260CA50C7F75C000D66CE9 /* ExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */; };
 		352981090CC58344008B5E84 /* SerializationTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352981080CC58344008B5E84 /* SerializationTest.cpp */; };
+		353612DA0D075174002E3541 /* TranslationUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 353612D80D075174002E3541 /* TranslationUnit.cpp */; };
 		355CF6840C90A8D400A08AA3 /* DeadStores.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 355CF6830C90A8D400A08AA3 /* DeadStores.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
@@ -233,6 +234,8 @@
 		352C19DD0CA321C80045DB98 /* CFGRecStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGRecStmtVisitor.h; path = clang/Analysis/Visitors/CFGRecStmtVisitor.h; sourceTree = "<group>"; };
 		352C19DE0CA321C80045DB98 /* CFGStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGStmtVisitor.h; path = clang/Analysis/Visitors/CFGStmtVisitor.h; sourceTree = "<group>"; };
 		352C19DF0CA321C80045DB98 /* CFGVarDeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGVarDeclVisitor.h; path = clang/Analysis/Visitors/CFGVarDeclVisitor.h; sourceTree = "<group>"; };
+		353612D80D075174002E3541 /* TranslationUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TranslationUnit.cpp; path = Driver/TranslationUnit.cpp; sourceTree = "<group>"; };
+		353612D90D075174002E3541 /* TranslationUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TranslationUnit.h; path = Driver/TranslationUnit.h; sourceTree = "<group>"; };
 		3547129D0C88881300B3E1D5 /* PrettyPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PrettyPrinter.h; path = clang/AST/PrettyPrinter.h; sourceTree = "<group>"; };
 		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
 		355CF6830C90A8D400A08AA3 /* DeadStores.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeadStores.cpp; path = Analysis/DeadStores.cpp; sourceTree = "<group>"; };
@@ -572,6 +575,8 @@
 		DEAEECAE0A5AF0FA0045101B /* Driver */ = {
 			isa = PBXGroup;
 			children = (
+				353612D80D075174002E3541 /* TranslationUnit.cpp */,
+				353612D90D075174002E3541 /* TranslationUnit.h */,
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
 				DE3985780CB8ADC800223765 /* ASTConsumers.h */,
@@ -863,6 +868,7 @@
 				35839B0B0CDF845F006ED061 /* StmtSerialization.cpp in Sources */,
 				35839B0C0CDF845F006ED061 /* TypeSerialization.cpp in Sources */,
 				3580CC0C0D072E5C00C5E4F4 /* LangOptions.cpp in Sources */,
+				353612DA0D075174002E3541 /* TranslationUnit.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
