@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_EXECUTION_ENGINE_JIT_H
-#define LLVM_EXECUTION_ENGINE_JIT_H
+#ifndef LLVM_EXECUTION_ENGINE_JIT_MEMMANAGER_H
+#define LLVM_EXECUTION_ENGINE_JIT_MEMMANAGER_H
 
 #include "llvm/Support/DataTypes.h"
 
