@@ -80,7 +80,8 @@ namespace llvm {
     /// SpillPt2VirtMap - This records the virtual registers which should
     /// be spilled right after the MachineInstr due to live interval
     /// splitting.
-    std::map<MachineInstr*, std::vector<unsigned> > SpillPt2VirtMap;
+    std::map<MachineInstr*, std::vector<std::pair<unsigned,bool> > >
+    SpillPt2VirtMap;
 
     /// RestorePt2VirtMap - This records the virtual registers which should
     /// be restored right before the MachineInstr due to live interval
@@ -216,30 +217,31 @@ namespace llvm {
 
     /// @brief returns the virtual registers that should be spilled due to
     /// splitting right after the specified MachineInstr.
-    std::vector<unsigned> &getSpillPtSpills(MachineInstr *Pt) {
+    std::vector<std::pair<unsigned,bool> > &getSpillPtSpills(MachineInstr *Pt) {
       return SpillPt2VirtMap[Pt];
     }
 
     /// @brief records the specified MachineInstr as a spill point for virtReg.
-    void addSpillPoint(unsigned virtReg, MachineInstr *Pt) {
+    void addSpillPoint(unsigned virtReg, bool isKill, MachineInstr *Pt) {
       if (SpillPt2VirtMap.find(Pt) != SpillPt2VirtMap.end())
-        SpillPt2VirtMap[Pt].push_back(virtReg);
+        SpillPt2VirtMap[Pt].push_back(std::make_pair(virtReg, isKill));
       else {
-        std::vector<unsigned> Virts;
-        Virts.push_back(virtReg);
+        std::vector<std::pair<unsigned,bool> > Virts;
+        Virts.push_back(std::make_pair(virtReg, isKill));
         SpillPt2VirtMap.insert(std::make_pair(Pt, Virts));
       }
     }
 
     void transferSpillPts(MachineInstr *Old, MachineInstr *New) {
-      std::map<MachineInstr*,std::vector<unsigned> >::iterator I =
-        SpillPt2VirtMap.find(Old);
+      std::map<MachineInstr*,std::vector<std::pair<unsigned,bool> > >::iterator
+        I = SpillPt2VirtMap.find(Old);
       if (I == SpillPt2VirtMap.end())
         return;
       while (!I->second.empty()) {
-        unsigned virtReg = I->second.back();
+        unsigned virtReg = I->second.back().first;
+        bool isKill = I->second.back().second;
         I->second.pop_back();
-        addSpillPoint(virtReg, New);
+        addSpillPoint(virtReg, isKill, New);
       }
       SpillPt2VirtMap.erase(I);
     }

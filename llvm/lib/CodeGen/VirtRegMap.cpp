@@ -977,15 +977,17 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
     // Insert spills here if asked to.
     if (VRM.isSpillPt(&MI)) {
-      std::vector<unsigned> &SpillRegs = VRM.getSpillPtSpills(&MI);
+      std::vector<std::pair<unsigned,bool> > &SpillRegs =
+        VRM.getSpillPtSpills(&MI);
       for (unsigned i = 0, e = SpillRegs.size(); i != e; ++i) {
-        unsigned VirtReg = SpillRegs[i];
+        unsigned VirtReg = SpillRegs[i].first;
+        bool isKill = SpillRegs[i].second;
         if (!VRM.getPreSplitReg(VirtReg))
           continue; // Split interval spilled again.
         const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
         unsigned Phys = VRM.getPhys(VirtReg);
         int StackSlot = VRM.getStackSlot(VirtReg);
-        MRI->storeRegToStackSlot(MBB, next(MII), Phys, false, StackSlot, RC);
+        MRI->storeRegToStackSlot(MBB, next(MII), Phys, isKill, StackSlot, RC);
         MachineInstr *StoreMI = next(MII);
         DOUT << "Store:\t" << StoreMI;
         VRM.virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);

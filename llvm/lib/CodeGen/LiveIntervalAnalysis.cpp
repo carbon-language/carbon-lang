@@ -1267,6 +1267,7 @@ addIntervalsForSpills(const LiveInterval &li,
   if (!TrySplit)
     return NewLIs;
 
+  SmallPtrSet<LiveInterval*, 4> AddedKill;
   SmallVector<unsigned, 2> Ops;
   if (NeedStackSlot) {
     int Id = SpillMBBs.find_first();
@@ -1316,8 +1317,13 @@ addIntervalsForSpills(const LiveInterval &li,
         }
 
         // Else tell the spiller to issue a spill.
-        if (!Folded)
-          vrm.addSpillPoint(VReg, MI);
+        if (!Folded) {
+          LiveRange *LR = &nI.ranges[nI.ranges.size()-1];
+          bool isKill = LR->end == getStoreIndex(index);
+          vrm.addSpillPoint(VReg, isKill, MI);
+          if (isKill)
+            AddedKill.insert(&nI);
+        }
       }
       Id = SpillMBBs.find_next(Id);
     }
@@ -1372,24 +1378,28 @@ addIntervalsForSpills(const LiveInterval &li,
       // load / rematerialization for us.
       if (Folded)
         nI.removeRange(getLoadIndex(index), getUseIndex(index)+1);
-      else {
+      else
         vrm.addRestorePoint(VReg, MI);
-        LiveRange *LR = &nI.ranges[nI.ranges.size()-1];
-        MachineInstr *LastUse = getInstructionFromIndex(getBaseIndex(LR->end));
-        int UseIdx = LastUse->findRegisterUseOperandIdx(VReg);
-        assert(UseIdx != -1);
-        LastUse->getOperand(UseIdx).setIsKill();
-      }
     }
     Id = RestoreMBBs.find_next(Id);
   }
 
-  // Finalize spill weights and filter out dead intervals.
+  // Finalize intervals: add kills, finalize spill weights, and filter out
+  // dead intervals.
   std::vector<LiveInterval*> RetNewLIs;
   for (unsigned i = 0, e = NewLIs.size(); i != e; ++i) {
     LiveInterval *LI = NewLIs[i];
     if (!LI->empty()) {
       LI->weight /= LI->getSize();
+      if (!AddedKill.count(LI)) {
+        LiveRange *LR = &LI->ranges[LI->ranges.size()-1];
+        MachineInstr *LastUse = getInstructionFromIndex(getBaseIndex(LR->end));
+        int UseIdx = LastUse->findRegisterUseOperandIdx(LI->reg);
+        assert(UseIdx != -1);
+        if (LastUse->getInstrDescriptor()->
+            getOperandConstraint(UseIdx, TOI::TIED_TO) == -1)
+          LastUse->getOperand(UseIdx).setIsKill();
+      }
       RetNewLIs.push_back(LI);
     }
   }
