@@ -613,6 +613,26 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
   return NewMI;
 }
 
+bool PPCRegisterInfo::canFoldMemoryOperand(MachineInstr *MI,
+                                         SmallVectorImpl<unsigned> &Ops) const {
+  if (Ops.size() != 1) return NULL;
+
+  // Make sure this is a reg-reg copy.  Note that we can't handle MCRF, because
+  // it takes more than one instruction to store it.
+  unsigned Opc = MI->getOpcode();
+
+  if ((Opc == PPC::OR &&
+       MI->getOperand(1).getReg() == MI->getOperand(2).getReg()))
+    return true;
+  else if ((Opc == PPC::OR8 &&
+              MI->getOperand(1).getReg() == MI->getOperand(2).getReg()))
+    return true;
+  else if (Opc == PPC::FMRD || Opc == PPC::FMRS)
+    return true;
+
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//

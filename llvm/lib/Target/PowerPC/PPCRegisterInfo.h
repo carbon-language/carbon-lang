@@ -75,6 +75,9 @@ public:
     return 0;
   }
 
+  virtual bool canFoldMemoryOperand(MachineInstr *MI,
+                                    SmallVectorImpl<unsigned> &Ops) const;
+
   const unsigned *getCalleeSavedRegs(const MachineFunction* MF = 0) const;
 
   const TargetRegisterClass* const*
