@@ -1401,17 +1401,18 @@ Parser::ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc)
   SourceLocation sLoc;
   IdentifierInfo *SelIdent = ParseObjCSelector(sLoc);
   if (!SelIdent && Tok.isNot(tok::colon)) {
-    
     Diag(Tok, diag::err_expected_ident); // missing selector name.
     return 0;
   }
   KeyIdents.push_back(SelIdent);
-  if (Tok.isNot(tok::r_paren))
+  unsigned nColons = 0;
+  if (Tok.isNot(tok::r_paren)) {
     while (1) {
       if (Tok.isNot(tok::colon)) {
         Diag(Tok, diag::err_expected_colon);
         break;
       }
+	  nColons++;
       ConsumeToken(); // Eat the ':'.
       if (Tok.is(tok::r_paren))
         break;
@@ -1422,9 +1423,9 @@ Parser::ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc)
       if (!SelIdent && Tok.isNot(tok::colon))
         break;
     }
+  }
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
-  Selector Sel = PP.getSelectorTable().getSelector(KeyIdents.size(),
-                                                   &KeyIdents[0]);
+  Selector Sel = PP.getSelectorTable().getSelector(nColons, &KeyIdents[0]);
   return Actions.ParseObjCSelectorExpression(Sel, AtLoc, SelectorLoc, LParenLoc, 
                                              RParenLoc);
  }
