@@ -106,6 +106,8 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   }
   if (isa<TypedefDecl>(D))
     return Diag(Loc, diag::err_unexpected_typedef, II.getName());
+  if (isa<ObjcInterfaceDecl>(D))
+    return Diag(Loc, diag::err_unexpected_interface, II.getName());
 
   assert(0 && "Invalid decl");
   abort();
