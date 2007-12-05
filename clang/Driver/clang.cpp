@@ -159,50 +159,56 @@ static llvm::cl::opt<bool>
 LangObjCXX("ObjC++", llvm::cl::desc("Set base language to Objective-C++"),
            llvm::cl::Hidden);
 
-/// InitializeBaseLanguage - Handle the -x foo options or infer a base language
-/// from the input filename.
-static void InitializeBaseLanguage(LangOptions &Options,
-                                   const std::string &Filename) {
-  if (BaseLang == langkind_unspecified) {
-    std::string::size_type DotPos = Filename.rfind('.');
-    if (LangObjC) {
-      BaseLang = langkind_objc;
-    } else if (LangObjCXX) {
-      BaseLang = langkind_objcxx;
-    } else if (DotPos == std::string::npos) {
-      BaseLang = langkind_c;  // Default to C if no extension.
-    } else {
-      std::string Ext = std::string(Filename.begin()+DotPos+1, Filename.end());
-      // C header: .h
-      // C++ header: .hh or .H;
-      // assembler no preprocessing: .s
-      // assembler: .S
-      if (Ext == "c")
-        BaseLang = langkind_c;
-      else if (Ext == "i")
-        BaseLang = langkind_c_cpp;
-      else if (Ext == "ii")
-        BaseLang = langkind_cxx_cpp;
-      else if (Ext == "m")
-        BaseLang = langkind_objc;
-      else if (Ext == "mi")
-        BaseLang = langkind_objc_cpp;
-      else if (Ext == "mm" || Ext == "M")
-        BaseLang = langkind_objcxx;
-      else if (Ext == "mii")
-        BaseLang = langkind_objcxx_cpp;
-      else if (Ext == "C" || Ext == "cc" || Ext == "cpp" || Ext == "CPP" ||
-               Ext == "c++" || Ext == "cp" || Ext == "cxx")
-        BaseLang = langkind_cxx;
-      else
-        BaseLang = langkind_c;
-    }
+/// InitializeBaseLanguage - Handle the -x foo options.
+static void InitializeBaseLanguage() {
+  if (LangObjC)
+    BaseLang = langkind_objc;
+  else if (LangObjCXX)
+    BaseLang = langkind_objcxx;
+}
+
+static LangKind GetLanguage(const std::string &Filename) {
+  if (BaseLang != langkind_unspecified)
+    return BaseLang;
+  
+  std::string::size_type DotPos = Filename.rfind('.');
+
+  if (DotPos == std::string::npos) {
+    BaseLang = langkind_c;  // Default to C if no extension.
   }
   
+  std::string Ext = std::string(Filename.begin()+DotPos+1, Filename.end());
+  // C header: .h
+  // C++ header: .hh or .H;
+  // assembler no preprocessing: .s
+  // assembler: .S
+  if (Ext == "c")
+    return langkind_c;
+  else if (Ext == "i")
+    return langkind_c_cpp;
+  else if (Ext == "ii")
+    return langkind_cxx_cpp;
+  else if (Ext == "m")
+    return langkind_objc;
+  else if (Ext == "mi")
+    return langkind_objc_cpp;
+  else if (Ext == "mm" || Ext == "M")
+    return langkind_objcxx;
+  else if (Ext == "mii")
+    return langkind_objcxx_cpp;
+  else if (Ext == "C" || Ext == "cc" || Ext == "cpp" || Ext == "CPP" ||
+           Ext == "c++" || Ext == "cp" || Ext == "cxx")
+    return langkind_cxx;
+  else
+    return langkind_c;
+}
+
+
+static void InitializeLangOptions(LangOptions &Options, LangKind LK) {
   // FIXME: implement -fpreprocessed mode.
   bool NoPreprocess = false;
   
-  switch (BaseLang) {
+  switch (LK) {
   default: assert(0 && "Unknown language kind!");
   case langkind_c_cpp:
     NoPreprocess = true;
@@ -294,10 +300,10 @@ LaxVectorConversions("flax-vector-conversions",
 //   -trigraphs
 //   -fdollars-in-identifiers
 //   -fpascal-strings
-static void InitializeLanguageStandard(LangOptions &Options) {
+static void InitializeLanguageStandard(LangOptions &Options, LangKind LK) {
   if (LangStd == lang_unspecified) {
     // Based on the base language, pick one.
-    switch (BaseLang) {
+    switch (LK) {
     default: assert(0 && "Unknown base language");
     case langkind_c:
     case langkind_c_cpp:
@@ -968,8 +974,10 @@ int main(int argc, char **argv) {
   // FIXME: This infers info from the first file, we should clump by language
   // to handle 'x.c y.c a.cpp b.cpp'.
   LangOptions LangInfo;
-  InitializeBaseLanguage(LangInfo, InputFilenames[0]);
-  InitializeLanguageStandard(LangInfo);
+  InitializeBaseLanguage();
+  LangKind LK = GetLanguage(InputFilenames[0]);
+  InitializeLangOptions(LangInfo, LK);
+  InitializeLanguageStandard(LangInfo, LK);
 
   std::auto_ptr<TextDiagnostics> DiagClient;
   if (!VerifyDiagnostics) {
