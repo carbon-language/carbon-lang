@@ -1165,6 +1165,15 @@ addIntervalsForSpills(const LiveInterval &li,
   // it's also guaranteed to be a single val# / range interval.
   if (vrm.getPreSplitReg(li.reg)) {
     vrm.setIsSplitFromReg(li.reg, 0);
+    // Unset the split kill marker on the last use.
+    unsigned KillIdx = vrm.getKillPoint(li.reg);
+    if (KillIdx) {
+      MachineInstr *KillMI = getInstructionFromIndex(KillIdx);
+      assert(KillMI && "Last use disappeared?");
+      int KillOp = KillMI->findRegisterUseOperandIdx(li.reg, true);
+      assert(KillOp != -1 && "Last use disappeared?");
+      KillMI->getOperand(KillOp).unsetIsKill();
+    }
     vrm.removeKillPoint(li.reg);
     bool DefIsReMat = vrm.isReMaterialized(li.reg);
     Slot = vrm.getStackSlot(li.reg);
@@ -1395,13 +1404,14 @@ addIntervalsForSpills(const LiveInterval &li,
       LI->weight /= LI->getSize();
       if (!AddedKill.count(LI)) {
         LiveRange *LR = &LI->ranges[LI->ranges.size()-1];
-        MachineInstr *LastUse = getInstructionFromIndex(getBaseIndex(LR->end));
+        unsigned LastUseIdx = getBaseIndex(LR->end);
+        MachineInstr *LastUse = getInstructionFromIndex(LastUseIdx);
         int UseIdx = LastUse->findRegisterUseOperandIdx(LI->reg);
         assert(UseIdx != -1);
         if (LastUse->getInstrDescriptor()->
             getOperandConstraint(UseIdx, TOI::TIED_TO) == -1) {
           LastUse->getOperand(UseIdx).setIsKill();
-          vrm.addKillPoint(LI->reg, &LastUse->getOperand(UseIdx));
+          vrm.addKillPoint(LI->reg, LastUseIdx);
         }
       }
       RetNewLIs.push_back(LI);

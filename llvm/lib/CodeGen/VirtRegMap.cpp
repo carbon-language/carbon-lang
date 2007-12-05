@@ -64,7 +64,7 @@ VirtRegMap::VirtRegMap(MachineFunction &mf)
   : TII(*mf.getTarget().getInstrInfo()), MF(mf), 
     Virt2PhysMap(NO_PHYS_REG), Virt2StackSlotMap(NO_STACK_SLOT),
     Virt2ReMatIdMap(NO_STACK_SLOT), Virt2SplitMap(0),
-    Virt2SplitKillMap(NULL), ReMatMap(NULL), ReMatId(MAX_STACK_SLOT+1) {
+    Virt2SplitKillMap(0), ReMatMap(NULL), ReMatId(MAX_STACK_SLOT+1) {
   grow();
 }
 
