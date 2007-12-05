@@ -19,6 +19,7 @@
 		355CF6840C90A8D400A08AA3 /* DeadStores.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 355CF6830C90A8D400A08AA3 /* DeadStores.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
+		3580CC0C0D072E5C00C5E4F4 /* LangOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */; };
 		35839B0B0CDF845F006ED061 /* StmtSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35839B090CDF845F006ED061 /* StmtSerialization.cpp */; };
 		35839B0C0CDF845F006ED061 /* TypeSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35839B0A0CDF845F006ED061 /* TypeSerialization.cpp */; };
 		35847BE50CC7DBAF00C40FFF /* StmtIterator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */; };
@@ -238,6 +239,7 @@
 		356EF9B20C8F7DBA006650F5 /* LiveVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LiveVariables.h; path = clang/Analysis/LiveVariables.h; sourceTree = "<group>"; };
 		356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LiveVariables.cpp; path = Analysis/LiveVariables.cpp; sourceTree = "<group>"; };
 		35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SourceLocation.cpp; sourceTree = "<group>"; };
+		3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LangOptions.cpp; sourceTree = "<group>"; };
 		35839B090CDF845F006ED061 /* StmtSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtSerialization.cpp; path = AST/StmtSerialization.cpp; sourceTree = "<group>"; };
 		35839B0A0CDF845F006ED061 /* TypeSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TypeSerialization.cpp; path = AST/TypeSerialization.cpp; sourceTree = "<group>"; };
 		35847BE30CC7DB9000C40FFF /* StmtIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StmtIterator.h; path = clang/AST/StmtIterator.h; sourceTree = "<group>"; };
@@ -695,13 +697,14 @@
 		DED7D7500A5242C7003AD0FB /* Basic */ = {
 			isa = PBXGroup;
 			children = (
-				35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */,
 				DED7D75D0A5242C7003AD0FB /* Diagnostic.cpp */,
 				DED7D75E0A5242C7003AD0FB /* FileManager.cpp */,
 				DE3986F30CB8D50C00223765 /* IdentifierTable.cpp */,
+				3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */,
+				35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */,
 				DED7D76D0A5242C7003AD0FB /* SourceManager.cpp */,
-				DED7D76E0A5242C7003AD0FB /* TokenKinds.cpp */,
 				DED626C80AE0C065001E80A4 /* TargetInfo.cpp */,
+				DED7D76E0A5242C7003AD0FB /* TokenKinds.cpp */,
 			);
 			path = Basic;
 			sourceTree = "<group>";
@@ -859,6 +862,7 @@
 				351318600CD14468006B66F7 /* DeclSerialization.cpp in Sources */,
 				35839B0B0CDF845F006ED061 /* StmtSerialization.cpp in Sources */,
 				35839B0C0CDF845F006ED061 /* TypeSerialization.cpp in Sources */,
+				3580CC0C0D072E5C00C5E4F4 /* LangOptions.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
