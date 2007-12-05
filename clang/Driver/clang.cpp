@@ -816,6 +816,48 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA, unsigned MainFileID){
 // Main driver
 //===----------------------------------------------------------------------===//
 
+/// CreateASTConsumer - Create the ASTConsumer for the corresponding program
+///  action.  These consumers can operate on both ASTs that are freshly
+///  parsed from source files as well as those deserialized from Bitcode.
+static ASTConsumer* CreateASTConsumer(Diagnostic& Diag, FileManager& FileMgr, 
+                                      const LangOptions& LangOpts) {
+  switch (ProgAction) {
+    default:
+      return NULL;
+      
+    case ASTPrint:
+      return CreateASTPrinter();
+      
+    case ASTDump:
+      return CreateASTDumper();
+      
+    case ASTView:
+      return CreateASTViewer();      
+      
+    case ParseCFGDump:
+    case ParseCFGView:
+      return CreateCFGDumper(ProgAction == ParseCFGView);
+      
+    case AnalysisLiveVariables:
+      return CreateLiveVarAnalyzer();
+      
+    case WarnDeadStores:    
+      return CreateDeadStoreChecker(Diag);
+      
+    case WarnUninitVals:
+      return CreateUnitValsChecker(Diag);
+      
+    case TestSerialization:
+      return CreateSerializationTest(Diag, FileMgr);
+      
+    case EmitLLVM:
+      return CreateLLVMEmitter(Diag, LangOpts);
+      
+    case RewriteTest:
+      return CreateCodeRewriterTest(Diag);
+  }
+}
+
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
 static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
@@ -830,8 +872,15 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   
   switch (ProgAction) {
   default:
-    fprintf(stderr, "Unexpected program action!\n");
-    return;
+    Consumer = CreateASTConsumer(PP.getDiagnostics(), HeaderInfo.getFileMgr(),
+                                 PP.getLangOptions());
+    
+    if (!Consumer) {      
+      fprintf(stderr, "Unexpected program action!\n");
+      return;
+    }
+    break;
+      
   case DumpTokens: {                 // Token dump mode.
     Token Tok;
     // Start parsing the specified input file.
@@ -873,48 +922,6 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
       
   case ParseSyntaxOnly:              // -fsyntax-only
     Consumer = new ASTConsumer();
-    break;
-
-  case ASTPrint:
-    Consumer = CreateASTPrinter();
-    break;
-
-  case ASTDump:
-    Consumer = CreateASTDumper();
-    break;
-
-  case ASTView:
-    Consumer = CreateASTViewer();      
-    break;
-
-  case ParseCFGDump:
-  case ParseCFGView:
-    Consumer = CreateCFGDumper(ProgAction == ParseCFGView);
-    break;
-      
-  case AnalysisLiveVariables:
-    Consumer = CreateLiveVarAnalyzer();
-    break;
-
-  case WarnDeadStores:    
-    Consumer = CreateDeadStoreChecker(PP.getDiagnostics());
-    break;
-      
-  case WarnUninitVals:
-    Consumer = CreateUnitValsChecker(PP.getDiagnostics());
-    break;
-
-  case TestSerialization:
-    Consumer = CreateSerializationTest(PP.getDiagnostics(),
-                                       HeaderInfo.getFileMgr());
-    break;
-      
-  case EmitLLVM:
-    Consumer = CreateLLVMEmitter(PP.getDiagnostics(), PP.getLangOptions());
-    break;
-    
-  case RewriteTest:
-    Consumer = CreateCodeRewriterTest(PP.getDiagnostics());
     break;
   }
   
