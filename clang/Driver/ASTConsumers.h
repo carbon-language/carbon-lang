@@ -20,6 +20,7 @@ namespace clang {
 
 class ASTConsumer;
 class Diagnostic;
+class FileManager;
 struct LangOptions;
 
 ASTConsumer *CreateASTPrinter(std::ostream* OS = NULL);
@@ -31,7 +32,7 @@ ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
 ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
 ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Features);
 ASTConsumer *CreateCodeRewriterTest(Diagnostic &Diags);
-ASTConsumer *CreateSerializationTest(Diagnostic &Diags);
+ASTConsumer *CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr);
 
 } // end clang namespace
 

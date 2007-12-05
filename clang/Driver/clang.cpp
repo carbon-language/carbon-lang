@@ -905,7 +905,8 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     break;
 
   case TestSerialization:
-    Consumer = CreateSerializationTest(PP.getDiagnostics());
+    Consumer = CreateSerializationTest(PP.getDiagnostics(),
+                                       HeaderInfo.getFileMgr());
     break;
       
   case EmitLLVM:

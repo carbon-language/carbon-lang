@@ -16,6 +16,7 @@
 
 #include "ASTConsumers.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -54,6 +55,7 @@ public:
 class SerializationTest : public ASTConsumer {
   ASTContext* Context;
   Diagnostic &Diags;
+  FileManager &FMgr;
   std::list<Decl*> Decls;
   
   enum { BasicMetadataBlock = 1,
@@ -61,7 +63,9 @@ class SerializationTest : public ASTConsumer {
          DeclsBlock = 3 };
 
 public:  
-  SerializationTest(Diagnostic &d) : Context(NULL), Diags(d) {};
+  SerializationTest(Diagnostic &d, FileManager& fmgr)
+    : Context(NULL), Diags(d), FMgr(fmgr) {};
+  
   ~SerializationTest();
 
   virtual void Initialize(ASTContext& context, unsigned) {
@@ -79,8 +83,9 @@ private:
   
 } // end anonymous namespace
 
-ASTConsumer* clang::CreateSerializationTest(Diagnostic &Diags) {  
-  return new SerializationTest(Diags);
+ASTConsumer*
+clang::CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr) {  
+  return new SerializationTest(Diags,FMgr);
 }
 
 static void WritePreamble(llvm::BitstreamWriter& Stream) {
@@ -171,8 +176,8 @@ void SerializationTest::Serialize(llvm::sys::Path& Filename,
   Sezr.EnterBlock();
 
   // "Fake" emit the SourceManager.
-  llvm::cerr << "Faux-serializing: SourceManager.\n";
-  Sezr.EmitPtr(&Context->SourceMgr);
+  llvm::cerr << "Serializing: SourceManager.\n";
+  Sezr.Emit(Context->SourceMgr);
   
   // Emit the Target.
   llvm::cerr << "Serializing: Target.\n";
@@ -256,9 +261,9 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename,
   FoundBlock = Dezr.SkipToBlock(BasicMetadataBlock);
   assert (FoundBlock);
   
-  // "Fake" read the SourceManager.
-  llvm::cerr << "Faux-Deserializing: SourceManager.\n";
-  Dezr.RegisterPtr(&Context->SourceMgr);
+  // Read the SourceManager.
+  llvm::cerr << "Deserializing: SourceManager.\n";
+  SourceManager::CreateAndRegister(Dezr,FMgr);
 
   { // Read the TargetInfo.
     llvm::cerr << "Deserializing: Target.\n";
