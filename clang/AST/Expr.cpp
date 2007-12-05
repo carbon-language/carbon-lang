@@ -334,6 +334,8 @@ Expr::isLvalueResult Expr::isLvalue() const {
     break;
   case ParenExprClass: // C99 6.5.1p5
     return cast<ParenExpr>(this)->getSubExpr()->isLvalue();
+  case CompoundLiteralExprClass: // C99 6.5.2.5p5
+    return LV_Valid;
   case OCUVectorElementExprClass:
     if (cast<OCUVectorElementExpr>(this)->containsDuplicateElements())
       return LV_DuplicateVectorComponents;

@@ -553,7 +553,8 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
                           hadError);
     return hadError;
   }
-  // FIXME: Handle struct/union types.
+  // FIXME: Handle struct/union types, including those appearing in a 
+  // CompoundLiteralExpr...
   return hadError;
 }
 
