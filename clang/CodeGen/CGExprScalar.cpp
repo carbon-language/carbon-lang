@@ -125,14 +125,57 @@ public:
   Value *VisitPreDefinedExpr(Expr *E) { return EmitLValue(E).getAddress(); }
 
   Value *VisitInitListExpr(InitListExpr *E) {
-    unsigned N = E->getNumInits();
-    QualType T = E->getInit(0)->getType();
-    Value *V = llvm::UndefValue::get(llvm::VectorType::get(ConvertType(T), N));
-    for (unsigned i = 0; i < N; ++i) {
+    unsigned NumInitElements = E->getNumInits();
+    
+    std::vector<llvm::Constant*> VectorElts;
+    const llvm::VectorType *VType = 
+      cast<llvm::VectorType>(ConvertType(E->getType()));
+    
+    // Copy initializer elements.
+    bool AllConstElements = true;
+    unsigned i = 0;
+    for (i = 0; i < NumInitElements; ++i) {
+      if (llvm::Constant *C = dyn_cast<llvm::Constant>(Visit(E->getInit(i)))) 
+        VectorElts.push_back(C);
+      else {
+        AllConstElements = false;
+        break;
+      }
+    }
+    
+    unsigned NumVectorElements = VType->getNumElements();
+    const llvm::Type *ElementType = VType->getElementType();
+    if (AllConstElements) {
+      // Initialize remaining array elements.
+      for (/*Do not initialize i*/; i < NumVectorElements; ++i)
+        VectorElts.push_back(llvm::Constant::getNullValue(ElementType));
+      
+      return llvm::ConstantVector::get(VectorElts);
+    }
+
+    // Emit individual vector element stores.
+    llvm::Value *V = llvm::UndefValue::get(VType);
+    
+    // Emit already seen constants initializers.
+    for (i = 0; i < VectorElts.size(); i++) {
+      Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
+      V = Builder.CreateInsertElement(V, VectorElts[i], Idx);
+    }
+    
+    // Emit remaining initializers
+    for (/*Do not initialize i*/; i < NumInitElements; ++i) {
       Value *NewV = Visit(E->getInit(i));
       Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
       V = Builder.CreateInsertElement(V, NewV, Idx);
     }
+    
+    // Emit remaining default initializers
+    for (/* Do not initialize i*/; i < NumVectorElements; ++i) {
+      Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
+      llvm::Value *NewV = llvm::Constant::getNullValue(ElementType);
+      V = Builder.CreateInsertElement(V, NewV, Idx);
+    }
+    
     return V;
   }
 
@@ -340,30 +383,58 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     return Builder.CreatePtrToInt(Src, DstTy, "conv");
   }
   
+  if (isa<llvm::VectorType>(Src->getType()) ||
+      isa<llvm::VectorType>(DstTy)) {
+    return Builder.CreateBitCast(Src, DstTy, "conv");
+  }
+      
   // Finally, we have the arithmetic types: real int/float.
   if (isa<llvm::IntegerType>(Src->getType())) {
     bool InputSigned = SrcType->isSignedIntegerType();
-    if (isa<llvm::IntegerType>(DstTy))
-      return Builder.CreateIntCast(Src, DstTy, InputSigned, "conv");
-    else if (InputSigned)
-      return Builder.CreateSIToFP(Src, DstTy, "conv");
-    else
-      return Builder.CreateUIToFP(Src, DstTy, "conv");
+    if (llvm::Constant *C = dyn_cast<llvm::Constant>(Src)) {
+        if (isa<llvm::IntegerType>(DstTy))
+          return llvm::ConstantExpr::getIntegerCast(C, DstTy, InputSigned);
+        else if (InputSigned)
+          return llvm::ConstantExpr::getSIToFP(C, DstTy);
+        else 
+          return llvm::ConstantExpr::getUIToFP(C, DstTy);
+    } else {
+      if (isa<llvm::IntegerType>(DstTy))
+        return Builder.CreateIntCast(Src, DstTy, InputSigned, "conv");
+      else if (InputSigned)
+        return Builder.CreateSIToFP(Src, DstTy, "conv");
+      else
+        return Builder.CreateUIToFP(Src, DstTy, "conv");
+    }
   }
   
   assert(Src->getType()->isFloatingPoint() && "Unknown real conversion");
   if (isa<llvm::IntegerType>(DstTy)) {
-    if (DstType->isSignedIntegerType())
-      return Builder.CreateFPToSI(Src, DstTy, "conv");
-    else
-      return Builder.CreateFPToUI(Src, DstTy, "conv");
+    if (llvm::Constant *C = dyn_cast<llvm::Constant>(Src)) {
+      if (DstType->isSignedIntegerType())
+        return llvm::ConstantExpr::getFPToSI(C, DstTy);
+      else
+        return llvm::ConstantExpr::getFPToUI(C, DstTy);
+    } else {
+      if (DstType->isSignedIntegerType())
+        return Builder.CreateFPToSI(Src, DstTy, "conv");
+      else
+        return Builder.CreateFPToUI(Src, DstTy, "conv");
+    }
   }
 
   assert(DstTy->isFloatingPoint() && "Unknown real conversion");
-  if (DstTy->getTypeID() < Src->getType()->getTypeID())
-    return Builder.CreateFPTrunc(Src, DstTy, "conv");
-  else
-    return Builder.CreateFPExt(Src, DstTy, "conv");
+  if (llvm::Constant *C = dyn_cast<llvm::Constant>(Src)) {
+    if (DstTy->getTypeID() < Src->getType()->getTypeID())
+      return llvm::ConstantExpr::getFPTrunc(C, DstTy);
+    else
+      return llvm::ConstantExpr::getFPExtend(C, DstTy);
+  } else {
+    if (DstTy->getTypeID() < Src->getType()->getTypeID())
+      return Builder.CreateFPTrunc(Src, DstTy, "conv");
+    else
+      return Builder.CreateFPExt(Src, DstTy, "conv");
+  }
 }
 
 /// EmitComplexToScalarConversion - Emit a conversion from the specified
