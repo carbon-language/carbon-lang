@@ -231,8 +231,8 @@ namespace {
      is taken to have the decimal point after a single leading
      non-zero digit.
 
-     If the value is zero, V->firstSigDigit points to a zero, and the
-     return exponent is zero.
+     If the value is zero, V->firstSigDigit points to a non-digit, and
+     the return exponent is zero.
   */
   struct decimalInfo {
     const char *firstSigDigit;
@@ -263,7 +263,7 @@ namespace {
     }
 
     /* If number is all zerooes accept any exponent.  */
-    if (p != D->firstSigDigit) {
+    if (decDigitValue(*p) >= 10U) {
       if (*p == 'e' || *p == 'E')
         D->exponent = readExponent(p + 1);
 
