@@ -1337,9 +1337,9 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
                                                    &ClsExprs[0], 
                                                    ClsExprs.size());
-      // To turn off a warning, type-cast to 'Class'
+      // To turn off a warning, type-cast to 'id'
       InitExprs.push_back(
-        new CastExpr(Context->getObjcClassType(), 
+        new CastExpr(Context->getObjcIdType(), 
         Cls, SourceLocation())); // set 'super class', using objc_getClass().
       // struct objc_super
       QualType superType = getSuperStructType();
