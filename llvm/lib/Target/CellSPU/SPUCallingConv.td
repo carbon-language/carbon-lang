@@ -48,7 +48,6 @@ def CC_SPU : CallingConv<[
   // The first 12 Vector arguments are passed in altivec registers.
   CCIfType<[v16i8, v8i16, v4i32, v4f32],
               CCAssignToReg<[V2, V3, V4, V5, V6, V7, V8, V9, V10,V11,V12,V13]>>
- */
 /*
   // Integer/FP values get stored in stack slots that are 8 bytes in size and
   // 8-byte aligned if there are no more registers to hold them.
@@ -56,6 +55,6 @@ def CC_SPU : CallingConv<[
   
   // Vectors get 16-byte stack slots that are 16-byte aligned.
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-              CCAssignToStack<16, 16>>
+              CCAssignToStack<16, 16>>*/
 ]>;
  */

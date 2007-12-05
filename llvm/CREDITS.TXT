@@ -257,3 +257,7 @@ W: http://web.mac.com/bwendling/
 D: Darwin exception handling
 D: MMX & SSSE3 instructions
 D: SPEC2006 support
+
+N: Scott Michel
+E: scottm@aero.org
+D: Added STI Cell SPU backend.
