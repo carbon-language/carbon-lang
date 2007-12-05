@@ -363,6 +363,7 @@ AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all,host-only,{target-name} (default=all)]),,
     enableval=all)
 case "$enableval" in
+  # Note: Add "CellSPU" to all when fully functional.
   all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips" ;;
   host-only)
     case "$llvm_cv_target_arch" in
@@ -374,6 +375,7 @@ case "$enableval" in
       IA64)    TARGETS_TO_BUILD="IA64" ;;
       ARM)     TARGETS_TO_BUILD="ARM" ;;
       Mips)    TARGETS_TO_BUILD="Mips" ;;
+      CellSPU|SPU) TARGETS_TO_BUILD="CellSPU" ;;
       *)       AC_MSG_ERROR([Can not set target to build]) ;;
     esac
     ;;
@@ -387,6 +389,7 @@ case "$enableval" in
         ia64)    TARGETS_TO_BUILD="IA64 $TARGETS_TO_BUILD" ;;
         arm)     TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
         mips)    TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
+        spu)     TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
         *) AC_MSG_ERROR([Unrecognized target $a_target]) ;;
       esac
   done

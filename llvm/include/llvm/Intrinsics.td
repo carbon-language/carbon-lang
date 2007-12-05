@@ -274,3 +274,4 @@ def int_flt_rounds : Intrinsic<[llvm_i32_ty]>,
 include "llvm/IntrinsicsPowerPC.td"
 include "llvm/IntrinsicsX86.td"
 include "llvm/IntrinsicsARM.td"
+include "llvm/IntrinsicsCellSPU.td"
