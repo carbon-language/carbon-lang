@@ -1165,6 +1165,7 @@ addIntervalsForSpills(const LiveInterval &li,
   // it's also guaranteed to be a single val# / range interval.
   if (vrm.getPreSplitReg(li.reg)) {
     vrm.setIsSplitFromReg(li.reg, 0);
+    vrm.removeKillPoint(li.reg);
     bool DefIsReMat = vrm.isReMaterialized(li.reg);
     Slot = vrm.getStackSlot(li.reg);
     assert(Slot != VirtRegMap::MAX_STACK_SLOT);
@@ -1398,8 +1399,10 @@ addIntervalsForSpills(const LiveInterval &li,
         int UseIdx = LastUse->findRegisterUseOperandIdx(LI->reg);
         assert(UseIdx != -1);
         if (LastUse->getInstrDescriptor()->
-            getOperandConstraint(UseIdx, TOI::TIED_TO) == -1)
+            getOperandConstraint(UseIdx, TOI::TIED_TO) == -1) {
           LastUse->getOperand(UseIdx).setIsKill();
+          vrm.addKillPoint(LI->reg, &LastUse->getOperand(UseIdx));
+        }
       }
       RetNewLIs.push_back(LI);
     }

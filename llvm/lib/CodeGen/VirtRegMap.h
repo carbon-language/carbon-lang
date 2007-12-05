@@ -66,6 +66,10 @@ namespace llvm {
     /// mapping.
     IndexedMap<unsigned, VirtReg2IndexFunctor> Virt2SplitMap;
 
+    /// Virt2SplitKillMap - This is splitted virtual register to its last use
+    /// (kill) mapping.
+    IndexedMap<MachineOperand*> Virt2SplitKillMap;
+
     /// ReMatMap - This is virtual register to re-materialized instruction
     /// mapping. Each virtual register whose definition is going to be
     /// re-materialized has an entry in it.
@@ -208,6 +212,21 @@ namespace llvm {
     /// registers are rematerialized and it's safe to delete the definition.
     void setVirtIsReMaterialized(unsigned virtReg, MachineInstr *def) {
       ReMatMap[virtReg] = def;
+    }
+
+    /// @brief record the last use (kill) of a split virtual register.
+    void addKillPoint(unsigned virtReg, MachineOperand *Op) {
+      Virt2SplitKillMap[virtReg] = Op;
+    }
+
+    /// @brief reset and remove the last use (kill) of a split virtual register.
+    void removeKillPoint(unsigned virtReg) {
+      MachineOperand *MO = Virt2SplitKillMap[virtReg];
+      if (MO) {
+        assert(MO->isKill() && "Split last use is not marked kill?");
+        MO->unsetIsKill();
+        Virt2SplitKillMap[virtReg] = NULL;
+      }
     }
 
     /// @brief returns true if the specified MachineInstr is a spill point.
