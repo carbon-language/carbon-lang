@@ -56,6 +56,6 @@ def CC_SPU : CallingConv<[
   
   // Vectors get 16-byte stack slots that are 16-byte aligned.
   CCIfType<[v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
-              CCAssignToStack<16, 16>>*/
+              CCAssignToStack<16, 16>>
 ]>;
  */
