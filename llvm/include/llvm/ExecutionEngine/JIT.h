@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef EXECUTION_ENGINE_JIT_H
-#define EXECUTION_ENGINE_JIT_H
+#ifndef LLVM_EXECUTION_ENGINE_JIT_H
+#define LLVM_EXECUTION_ENGINE_JIT_H
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include <cstdlib>
