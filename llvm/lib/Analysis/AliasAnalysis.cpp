@@ -116,13 +116,17 @@ AliasAnalysis::getModRefInfo(StoreInst *S, Value *P, unsigned Size) {
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getModRefBehavior(CallSite CS,
                                  std::vector<PointerAccessInfo> *Info) {
-  if (CS.doesNotAccessMemory())
+  if (CS.doesNotAccessMemory() &&
+      // FIXME: workaround gcc bootstrap breakage
+      CS.getCalledFunction() && CS.getCalledFunction()->isDeclaration())
     // Can't do better than this.
     return DoesNotAccessMemory;
   ModRefBehavior MRB = UnknownModRefBehavior;
   if (Function *F = CS.getCalledFunction())
     MRB = getModRefBehavior(F, CS, Info);
-  if (MRB != DoesNotAccessMemory && CS.onlyReadsMemory())
+  if (MRB != DoesNotAccessMemory && CS.onlyReadsMemory() &&
+      // FIXME: workaround gcc bootstrap breakage
+      CS.getCalledFunction() && CS.getCalledFunction()->isDeclaration())
     return OnlyReadsMemory;
   return MRB;
 }
@@ -130,11 +134,15 @@ AliasAnalysis::getModRefBehavior(CallSite CS,
 AliasAnalysis::ModRefBehavior
 AliasAnalysis::getModRefBehavior(Function *F,
                                  std::vector<PointerAccessInfo> *Info) {
-  if (F->doesNotAccessMemory())
+  if (F->doesNotAccessMemory() &&
+      // FIXME: workaround gcc bootstrap breakage
+      F->isDeclaration())
     // Can't do better than this.
     return DoesNotAccessMemory;
   ModRefBehavior MRB = getModRefBehavior(F, CallSite(), Info);
-  if (MRB != DoesNotAccessMemory && F->onlyReadsMemory())
+  if (MRB != DoesNotAccessMemory && F->onlyReadsMemory() &&
+      // FIXME: workaround gcc bootstrap breakage
+      F->isDeclaration())
     return OnlyReadsMemory;
   return MRB;
 }

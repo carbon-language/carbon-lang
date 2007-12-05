@@ -13,6 +13,7 @@
 
 #include "llvm/Type.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h" // FIXME: remove
 #include "llvm/Function.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/LeakDetector.h"
@@ -208,6 +209,8 @@ bool Instruction::mayWriteToMemory() const {
   case Instruction::VAArg:
     return true;
   case Instruction::Call:
+    if (!isa<IntrinsicInst>(this))
+      return true; // FIXME: workaround gcc bootstrap breakage
     return !cast<CallInst>(this)->onlyReadsMemory();
   case Instruction::Load:
     return cast<LoadInst>(this)->isVolatile();
