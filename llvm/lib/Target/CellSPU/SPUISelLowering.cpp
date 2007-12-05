@@ -659,8 +659,8 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   MVT::ValueType StVT = (!SN->isTruncatingStore() ? VT : SN->getStoredVT());
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
   SDOperand the_chain = SN->getChain();
-  unsigned alignment = SN->getAlignment();
-  const valtype_map_s *vtm = getValueTypeMapEntry(VT);
+  //unsigned alignment = SN->getAlignment();
+  //const valtype_map_s *vtm = getValueTypeMapEntry(VT);
 
   switch (SN->getAddressingMode()) {
   case ISD::UNINDEXED: {
