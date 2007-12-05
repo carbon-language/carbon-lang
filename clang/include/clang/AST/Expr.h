@@ -1213,13 +1213,14 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
+  
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCEncodeExpr* CreateImpl(llvm::Deserializer& D);
 };
 
 /// ObjCSelectorExpr used for @selector in Objective-C.
 class ObjCSelectorExpr : public Expr {
-
   Selector SelName;
-  
   SourceLocation AtLoc, RParenLoc;
 public:
   ObjCSelectorExpr(QualType T, Selector selInfo,
@@ -1245,16 +1246,16 @@ public:
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-  
+
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjCSelectorExpr* CreateImpl(llvm::Deserializer& D);
 };
   
 /// ObjCProtocolExpr used for protocol in Objective-C.
-class ObjCProtocolExpr : public Expr {
-    
-  ObjcProtocolDecl *Protocol;
-    
+class ObjCProtocolExpr : public Expr {    
+  ObjcProtocolDecl *Protocol;    
   SourceLocation AtLoc, RParenLoc;
-  public:
+public:
   ObjCProtocolExpr(QualType T, ObjcProtocolDecl *protocol,
                    SourceLocation at, SourceLocation rp)
   : Expr(ObjCProtocolExprClass, T), Protocol(protocol), 
@@ -1274,7 +1275,6 @@ class ObjCProtocolExpr : public Expr {
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
-    
 };
 
 /// ObjCIvarRefExpr - A reference to an ObjC instance variable.

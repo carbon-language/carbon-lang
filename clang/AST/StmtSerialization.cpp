@@ -167,9 +167,15 @@ Stmt* Stmt::Create(Deserializer& D) {
       
     case ObjcAtTryStmtClass:
       return ObjcAtTryStmt::CreateImpl(D);
+    
+    case ObjCEncodeExprClass:
+      return ObjCEncodeExpr::CreateImpl(D);
       
     case ObjCIvarRefExprClass:
       return ObjCIvarRefExpr::CreateImpl(D);
+      
+    case ObjCSelectorExprClass:
+      return ObjCSelectorExpr::CreateImpl(D);
       
     case ObjCStringLiteralClass:
       return ObjCStringLiteral::CreateImpl(D);
@@ -893,6 +899,21 @@ ObjcAtTryStmt* ObjcAtTryStmt::CreateImpl(Deserializer& D) {
   return stmt;
 }
 
+void ObjCEncodeExpr::EmitImpl(Serializer& S) const {
+  S.Emit(AtLoc);
+  S.Emit(RParenLoc);
+  S.Emit(getType());
+  S.Emit(EncType);
+}
+
+ObjCEncodeExpr* ObjCEncodeExpr::CreateImpl(Deserializer& D) {
+  SourceLocation AtLoc = SourceLocation::ReadVal(D);
+  SourceLocation RParenLoc = SourceLocation::ReadVal(D);  
+  QualType T = QualType::ReadVal(D);
+  QualType ET = QualType::ReadVal(D);
+  return new ObjCEncodeExpr(T,ET,AtLoc,RParenLoc);
+}
+
 void ObjCIvarRefExpr::EmitImpl(Serializer& S) const {
   S.Emit(Loc);
   S.Emit(getType());
@@ -905,6 +926,22 @@ ObjCIvarRefExpr* ObjCIvarRefExpr::CreateImpl(Deserializer& D) {
   ObjCIvarRefExpr* dr = new ObjCIvarRefExpr(NULL,T,Loc);
   D.ReadPtr(dr->D,false);  
   return dr;
+}
+
+void ObjCSelectorExpr::EmitImpl(Serializer& S) const {
+  S.Emit(AtLoc);
+  S.Emit(RParenLoc);
+  S.Emit(getType());
+  S.Emit(SelName);
+}
+
+ObjCSelectorExpr* ObjCSelectorExpr::CreateImpl(Deserializer& D) {
+  SourceLocation AtLoc = SourceLocation::ReadVal(D);
+  SourceLocation RParenLoc = SourceLocation::ReadVal(D);
+  QualType T = QualType::ReadVal(D);
+  Selector SelName = Selector::ReadVal(D);
+  
+  return new ObjCSelectorExpr(T,SelName,AtLoc,RParenLoc);
 }
 
 void ObjCStringLiteral::EmitImpl(Serializer& S) const {
