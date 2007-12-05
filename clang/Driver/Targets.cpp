@@ -674,9 +674,9 @@ static inline bool IsX86(const std::string& TT) {
 /// CreateTarget - Create the TargetInfoImpl object for the specified target
 /// enum value.
 static TargetInfoImpl *CreateTarget(const std::string& T) {
-  if (T.find("ppc-") == 0)
+  if (T.find("ppc-") == 0 || T.find("powerpc-") == 0)
     return new DarwinPPCTargetInfo(T);
-  else if (T.find("ppc64-") == 0)
+  else if (T.find("ppc64-") == 0 || T.find("powerpc64-") == 0)
     return new DarwinPPC64TargetInfo(T);
   else if (T.find("x86_64-") == 0)
     return new DarwinX86_64TargetInfo(T);
