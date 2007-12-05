@@ -2145,7 +2145,7 @@ APFloat::convertFromDecimalString(const char *p, roundingMode rounding_mode)
            42039/12655 < L < 28738/8651  [ numerator <= 65536 ]
   */
 
-  if (*D.firstSigDigit == '0') {
+  if (*D.firstSigDigit == 0) {
     category = fcZero;
     fs = opOK;
   } else if ((D.normalizedExponent + 1) * 28738
