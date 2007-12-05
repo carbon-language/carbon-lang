@@ -834,14 +834,15 @@ static unsigned getStoreRegOpcode(const TargetRegisterClass *RC,
 
 void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
-                                          unsigned SrcReg, int FrameIdx,
+                                          unsigned SrcReg, bool isKill, int FrameIdx,
                                           const TargetRegisterClass *RC) const {
   unsigned Opc = getStoreRegOpcode(RC, StackAlign);
   addFrameReference(BuildMI(MBB, MI, TII.get(Opc)), FrameIdx)
-    .addReg(SrcReg, false, false, true);
+    .addReg(SrcReg, false, false, isKill);
 }
 
 void X86RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                     bool isKill,
                                      SmallVectorImpl<MachineOperand> &Addr,
                                      const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
@@ -849,7 +850,7 @@ void X86RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   MachineInstrBuilder MIB = BuildMI(TII.get(Opc));
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, Addr[i]);
-  MIB.addReg(SrcReg, false, false, true);
+  MIB.addReg(SrcReg, false, false, isKill);
   NewMIs.push_back(MIB);
 }
 
@@ -1195,11 +1196,27 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
 }
 
 
-unsigned X86RegisterInfo::getOpcodeAfterMemoryFold(unsigned Opc,
-                                                   unsigned OpNum) const {
+bool X86RegisterInfo::canFoldMemoryOperand(MachineInstr *MI,
+                                         SmallVectorImpl<unsigned> &Ops) const {
   // Check switch flag 
   if (NoFusing) return 0;
-  const DenseMap<unsigned*, unsigned> *OpcodeTablePtr = NULL;
+
+  if (Ops.size() == 2 && Ops[0] == 0 && Ops[1] == 1) {
+    switch (MI->getOpcode()) {
+    default: return false;
+    case X86::TEST8rr: 
+    case X86::TEST16rr:
+    case X86::TEST32rr:
+    case X86::TEST64rr:
+      return true;
+    }
+  }
+
+  if (Ops.size() != 1)
+    return false;
+
+  unsigned OpNum = Ops[0];
+  unsigned Opc = MI->getOpcode();
   unsigned NumOps = TII.getNumOperands(Opc);
   bool isTwoAddr = NumOps > 1 &&
     TII.getOperandConstraint(Opc, 1, TOI::TIED_TO) != -1;
@@ -1207,18 +1224,16 @@ unsigned X86RegisterInfo::getOpcodeAfterMemoryFold(unsigned Opc,
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
   // replacing the *two* registers with the memory location.
+  const DenseMap<unsigned*, unsigned> *OpcodeTablePtr = NULL;
   if (isTwoAddr && NumOps >= 2 && OpNum < 2) { 
     OpcodeTablePtr = &RegOp2MemOpTable2Addr;
   } else if (OpNum == 0) { // If operand 0
     switch (Opc) {
     case X86::MOV16r0:
-      return X86::MOV16mi;
     case X86::MOV32r0:
-      return X86::MOV32mi;
     case X86::MOV64r0:
-      return X86::MOV64mi32;
     case X86::MOV8r0:
-      return X86::MOV8mi;
+      return true;
     default: break;
     }
     OpcodeTablePtr = &RegOp2MemOpTable0;
@@ -1233,9 +1248,9 @@ unsigned X86RegisterInfo::getOpcodeAfterMemoryFold(unsigned Opc,
     DenseMap<unsigned*, unsigned>::iterator I =
       OpcodeTablePtr->find((unsigned*)Opc);
     if (I != OpcodeTablePtr->end())
-      return I->second;
+      return true;
   }
-  return 0;
+  return false;
 }
 
 bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
@@ -1335,7 +1350,7 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     const TargetOperandInfo &DstTOI = TID.OpInfo[0];
     const TargetRegisterClass *DstRC = (DstTOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
       ? TII.getPointerRegClass() : getRegClass(DstTOI.RegClass);
-    storeRegToAddr(MF, Reg, AddrOps, DstRC, NewMIs);
+    storeRegToAddr(MF, Reg, true, AddrOps, DstRC, NewMIs);
   }
 
   return true;

@@ -85,24 +85,25 @@ getRegisterNumbering(unsigned RegEnum)
 
 void MipsRegisterInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-          unsigned SrcReg, int FI, 
+          unsigned SrcReg, bool isKill, int FI, 
           const TargetRegisterClass *RC) const 
 {
   if (RC == Mips::CPURegsRegisterClass)
-    BuildMI(MBB, I, TII.get(Mips::SW)).addReg(SrcReg, false, false, true)
+    BuildMI(MBB, I, TII.get(Mips::SW)).addReg(SrcReg, false, false, isKill)
           .addImm(0).addFrameIndex(FI);
   else
     assert(0 && "Can't store this register to stack slot");
 }
 
 void MipsRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                      bool isKill,
                                       SmallVectorImpl<MachineOperand> &Addr,
                                       const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   if (RC != Mips::CPURegsRegisterClass)
     assert(0 && "Can't store this register");
   MachineInstrBuilder MIB = BuildMI(TII.get(Mips::SW))
-    .addReg(SrcReg, false, false, true);
+    .addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isRegister())

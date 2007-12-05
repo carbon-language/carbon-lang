@@ -493,10 +493,10 @@ public:
 
   virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
-                                   unsigned SrcReg, int FrameIndex,
+                                   unsigned SrcReg, bool isKill, int FrameIndex,
                                    const TargetRegisterClass *RC) const = 0;
 
-  virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+  virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
                               SmallVectorImpl<MachineOperand> &Addr,
                               const TargetRegisterClass *RC,
                               SmallVectorImpl<MachineInstr*> &NewMIs) const = 0;
@@ -553,12 +553,12 @@ public:
     return 0;
   }
 
-  /// getOpcodeAfterMemoryFold - Returns the opcode of the would be new
-  /// instruction after load / store is folded into an instruction of the
-  /// specified opcode. It returns zero if the specified unfolding is not
-  /// possible.
-  virtual unsigned getOpcodeAfterMemoryFold(unsigned Opc, unsigned OpNum) const{
-    return 0;
+  /// canFoldMemoryOperand - Returns true if the specified load / store is
+  /// folding is possible.
+  virtual
+  bool canFoldMemoryOperand(MachineInstr *MI,
+                            SmallVectorImpl<unsigned> &Ops) const{
+    return false;
   }
 
   /// unfoldMemoryOperand - Separate a single instruction which folded a load or

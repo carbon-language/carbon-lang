@@ -104,39 +104,39 @@ PPCRegisterInfo::PPCRegisterInfo(const PPCSubtarget &ST,
 }
 
 static void StoreRegToStackSlot(const TargetInstrInfo &TII,
-                                unsigned SrcReg, int FrameIdx,
+                                unsigned SrcReg, bool isKill, int FrameIdx,
                                 const TargetRegisterClass *RC,
                                 SmallVectorImpl<MachineInstr*> &NewMIs) {
   if (RC == PPC::GPRCRegisterClass) {
     if (SrcReg != PPC::LR) {
       NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STW))
-                                .addReg(SrcReg, false, false, true), FrameIdx));
+                                .addReg(SrcReg, false, false, isKill), FrameIdx));
     } else {
       // FIXME: this spills LR immediately to memory in one step.  To do this,
       // we use R11, which we know cannot be used in the prolog/epilog.  This is
       // a hack.
       NewMIs.push_back(BuildMI(TII.get(PPC::MFLR), PPC::R11));
       NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STW))
-                              .addReg(PPC::R11, false, false, true), FrameIdx));
+                              .addReg(PPC::R11, false, false, isKill), FrameIdx));
     }
   } else if (RC == PPC::G8RCRegisterClass) {
     if (SrcReg != PPC::LR8) {
       NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STD))
-                                .addReg(SrcReg, false, false, true), FrameIdx));
+                                .addReg(SrcReg, false, false, isKill), FrameIdx));
     } else {
       // FIXME: this spills LR immediately to memory in one step.  To do this,
       // we use R11, which we know cannot be used in the prolog/epilog.  This is
       // a hack.
       NewMIs.push_back(BuildMI(TII.get(PPC::MFLR8), PPC::X11));
       NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STD))
-                              .addReg(PPC::X11, false, false, true), FrameIdx));
+                              .addReg(PPC::X11, false, false, isKill), FrameIdx));
     }
   } else if (RC == PPC::F8RCRegisterClass) {
     NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STFD))
-                                .addReg(SrcReg, false, false, true), FrameIdx));
+                                .addReg(SrcReg, false, false, isKill), FrameIdx));
   } else if (RC == PPC::F4RCRegisterClass) {
     NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STFS))
-                                .addReg(SrcReg, false, false, true), FrameIdx));
+                                .addReg(SrcReg, false, false, isKill), FrameIdx));
   } else if (RC == PPC::CRRCRegisterClass) {
     // FIXME: We use R0 here, because it isn't available for RA.
     // We need to store the CR in the low 4-bits of the saved value.  First,
@@ -153,7 +153,7 @@ static void StoreRegToStackSlot(const TargetInstrInfo &TII,
     }
     
     NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::STW))
-                               .addReg(PPC::R0, false, false, true), FrameIdx));
+                               .addReg(PPC::R0, false, false, isKill), FrameIdx));
   } else if (RC == PPC::VRRCRegisterClass) {
     // We don't have indexed addressing for vector loads.  Emit:
     // R0 = ADDI FI#
@@ -163,7 +163,7 @@ static void StoreRegToStackSlot(const TargetInstrInfo &TII,
     NewMIs.push_back(addFrameReference(BuildMI(TII.get(PPC::ADDI), PPC::R0),
                                        FrameIdx, 0, 0));
     NewMIs.push_back(BuildMI(TII.get(PPC::STVX))
-           .addReg(SrcReg, false, false, true).addReg(PPC::R0).addReg(PPC::R0));
+           .addReg(SrcReg, false, false, isKill).addReg(PPC::R0).addReg(PPC::R0));
   } else {
     assert(0 && "Unknown regclass!");
     abort();
@@ -173,20 +173,22 @@ static void StoreRegToStackSlot(const TargetInstrInfo &TII,
 void
 PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI,
-                                     unsigned SrcReg, int FrameIdx,
+                                     unsigned SrcReg, bool isKill, int FrameIdx,
                                      const TargetRegisterClass *RC) const {
   SmallVector<MachineInstr*, 4> NewMIs;
-  StoreRegToStackSlot(TII, SrcReg, FrameIdx, RC, NewMIs);
+  StoreRegToStackSlot(TII, SrcReg, isKill, FrameIdx, RC, NewMIs);
   for (unsigned i = 0, e = NewMIs.size(); i != e; ++i)
     MBB.insert(MI, NewMIs[i]);
 }
 
 void PPCRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                     bool isKill,
                                      SmallVectorImpl<MachineOperand> &Addr,
                                      const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   if (Addr[0].isFrameIndex()) {
-    StoreRegToStackSlot(TII, SrcReg, Addr[0].getFrameIndex(), RC, NewMIs);
+    StoreRegToStackSlot(TII, SrcReg, isKill, Addr[0].getFrameIndex(), RC,
+                        NewMIs);
     return;
   }
 
@@ -206,7 +208,7 @@ void PPCRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     abort();
   }
   MachineInstrBuilder MIB = BuildMI(TII.get(Opc))
-    .addReg(SrcReg, false, false, true);
+    .addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isRegister())

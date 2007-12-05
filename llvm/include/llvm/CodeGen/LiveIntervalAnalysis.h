@@ -278,6 +278,9 @@ namespace llvm {
                               SmallVector<unsigned, 2> &Ops,
                               bool isSS, int Slot, unsigned Reg);
 
+    bool canFoldMemoryOperand(MachineInstr *MI,
+                              SmallVector<unsigned, 2> &Ops) const;
+
     /// anyKillInMBBAfterIdx - Returns true if there is a kill of the specified
     /// VNInfo that's after the specified index but is within the basic block.
     bool anyKillInMBBAfterIdx(const LiveInterval &li, const VNInfo *VNI,
@@ -304,7 +307,7 @@ namespace llvm {
 
     /// rewriteInstructionForSpills, rewriteInstructionsForSpills - Helper functions
     /// for addIntervalsForSpills to rewrite uses / defs for the given live range.
-    void rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
+    bool rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
         unsigned id, unsigned index, unsigned end, MachineInstr *MI,
         MachineInstr *OrigDefMI, MachineInstr *DefMI, unsigned Slot, int LdSlot,
         bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,

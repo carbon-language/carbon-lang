@@ -61,28 +61,29 @@ AlphaRegisterInfo::AlphaRegisterInfo(const TargetInstrInfo &tii)
 void
 AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
-                                       unsigned SrcReg, int FrameIdx,
-                                       const TargetRegisterClass *RC) const {
+                                     unsigned SrcReg, bool isKill, int FrameIdx,
+                                     const TargetRegisterClass *RC) const {
   //cerr << "Trying to store " << getPrettyName(SrcReg) << " to "
   //     << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
   if (RC == Alpha::F4RCRegisterClass)
     BuildMI(MBB, MI, TII.get(Alpha::STS))
-      .addReg(SrcReg, false, false, true)
+      .addReg(SrcReg, false, false, isKill)
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::F8RCRegisterClass)
     BuildMI(MBB, MI, TII.get(Alpha::STT))
-      .addReg(SrcReg, false, false, true)
+      .addReg(SrcReg, false, false, isKill)
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (RC == Alpha::GPRCRegisterClass)
     BuildMI(MBB, MI, TII.get(Alpha::STQ))
-      .addReg(SrcReg, false, false, true)
+      .addReg(SrcReg, false, false, isKill)
       .addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
     abort();
 }
 
 void AlphaRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                       bool isKill,
                                        SmallVectorImpl<MachineOperand> &Addr,
                                        const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
@@ -96,7 +97,7 @@ void AlphaRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
   else
     abort();
   MachineInstrBuilder MIB = 
-    BuildMI(TII.get(Opc)).addReg(SrcReg, false, false, true);
+    BuildMI(TII.get(Opc)).addReg(SrcReg, false, false, isKill);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
     if (MO.isRegister())

@@ -208,7 +208,8 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
               }
 
               if (MO.isDef()) {
-                MRI.storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
+                MRI.storeRegToStackSlot(MBB, next(MII), PhysReg, true,
+                                        StackSlot, RC);
                 ++NumStores;
               }
             }
@@ -861,7 +862,7 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
                                   BitVector &RegKills,
                                   std::vector<MachineOperand*> &KillOps,
                                   VirtRegMap &VRM) {
-  MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
+  MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, true, StackSlot, RC);
   DOUT << "Store:\t" << *next(MII);
 
   // If there is a dead store to this stack slot, nuke it now.
@@ -984,9 +985,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
         unsigned Phys = VRM.getPhys(VirtReg);
         int StackSlot = VRM.getStackSlot(VirtReg);
-        MRI->storeRegToStackSlot(MBB, next(MII), Phys, StackSlot, RC);
-        DOUT << "Store:\t" << *next(MII);
-        VRM.virtFolded(VirtReg, next(MII), VirtRegMap::isMod);
+        MRI->storeRegToStackSlot(MBB, next(MII), Phys, false, StackSlot, RC);
+        MachineInstr *StoreMI = next(MII);
+        DOUT << "Store:\t" << StoreMI;
+        VRM.virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
       }
       NextMII = next(MII);
     }
@@ -1010,12 +1012,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       
       assert(MRegisterInfo::isVirtualRegister(VirtReg) &&
              "Not a virtual or a physical register?");
-
-      // Assumes this is the last use of a split interval. IsKill will be unset
-      // if reg is use later unless it's a two-address operand.
-      if (MO.isUse() && VRM.getPreSplitReg(VirtReg) &&
-          TID->getOperandConstraint(i, TOI::TIED_TO) == -1)
-        MI.getOperand(i).setIsKill();
 
       unsigned SubIdx = MO.getSubReg();
       if (VRM.isAssignedReg(VirtReg)) {

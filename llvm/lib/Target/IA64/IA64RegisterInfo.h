@@ -31,10 +31,10 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MI,
-                           unsigned SrcReg, int FrameIndex,
+                           unsigned SrcReg, bool isKill, int FrameIndex,
                            const TargetRegisterClass *RC) const;
 
-  void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+  void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
                       SmallVectorImpl<MachineOperand> &Addr,
                       const TargetRegisterClass *RC,
                       SmallVectorImpl<MachineInstr*> &NewMIs) const;

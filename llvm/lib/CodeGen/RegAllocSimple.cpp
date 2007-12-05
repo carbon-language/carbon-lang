@@ -156,7 +156,7 @@ void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
 
   // Add move instruction(s)
   ++NumStores;
-  RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIdx, RC);
+  RegInfo->storeRegToStackSlot(MBB, I, PhysReg, true, FrameIdx, RC);
 }
 
 

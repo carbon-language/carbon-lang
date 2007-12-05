@@ -253,7 +253,7 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
       MBB->addLiveIn(CSI[i].getReg());
 
       // Insert the spill to the stack frame.
-      RegInfo->storeRegToStackSlot(*MBB, I, CSI[i].getReg(),
+      RegInfo->storeRegToStackSlot(*MBB, I, CSI[i].getReg(), true,
                                    CSI[i].getFrameIdx(), CSI[i].getRegClass());
     }
   }

@@ -329,7 +329,7 @@ void RABigBlock::spillVirtReg(MachineBasicBlock &MBB,
     const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
     int FrameIndex = getStackSpaceFor(VirtReg, RC);
     DOUT << " to stack slot #" << FrameIndex;
-    RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIndex, RC);
+    RegInfo->storeRegToStackSlot(MBB, I, PhysReg, true, FrameIndex, RC);
     ++NumStores;   // Update statistics
   }
 

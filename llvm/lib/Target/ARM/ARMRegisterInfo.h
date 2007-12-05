@@ -48,10 +48,10 @@ public:
 
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI,
-                           unsigned SrcReg, int FrameIndex,
+                           unsigned SrcReg, bool isKill, int FrameIndex,
                            const TargetRegisterClass *RC) const;
 
-  void storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+  void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
                       SmallVectorImpl<MachineOperand> &Addr,
                       const TargetRegisterClass *RC,
                       SmallVectorImpl<MachineInstr*> &NewMIs) const;
@@ -83,6 +83,9 @@ public:
                                   MachineInstr* LoadMI) const {
     return 0;
   }
+
+  bool canFoldMemoryOperand(MachineInstr *MI,
+                            SmallVectorImpl<unsigned> &Ops) const;
 
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 

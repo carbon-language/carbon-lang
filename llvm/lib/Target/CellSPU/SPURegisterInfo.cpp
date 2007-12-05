@@ -194,7 +194,7 @@ SPURegisterInfo::SPURegisterInfo(const SPUSubtarget &subtarget,
 void
 SPURegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI,
-                                     unsigned SrcReg, int FrameIdx,
+                                     unsigned SrcReg, bool isKill, int FrameIdx,
                                      const TargetRegisterClass *RC) const
 {
   MachineOpCode opc;
@@ -227,10 +227,12 @@ SPURegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     abort();
   }
 
-  addFrameReference(BuildMI(MBB, MI, TII.get(opc)).addReg(SrcReg), FrameIdx);
+  addFrameReference(BuildMI(MBB, MI, TII.get(opc))
+                    .addReg(SrcReg, false, false, isKill), FrameIdx);
 }
 
 void SPURegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                     bool isKill,
                                      SmallVectorImpl<MachineOperand> &Addr,
                                      const TargetRegisterClass *RC,
                                      SmallVectorImpl<MachineInstr*> &NewMIs) const {
@@ -258,7 +260,7 @@ void SPURegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
       abort();
     }
     MachineInstrBuilder MIB = BuildMI(TII.get(Opc))
-      .addReg(SrcReg, false, false, true);
+      .addReg(SrcReg, false, false, isKill);
     for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
       MachineOperand &MO = Addr[i];
       if (MO.isRegister())

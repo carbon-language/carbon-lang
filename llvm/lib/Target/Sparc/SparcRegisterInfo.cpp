@@ -32,23 +32,24 @@ SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st,
 
 void SparcRegisterInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                    unsigned SrcReg, int FI,
+                    unsigned SrcReg, bool isKill, int FI,
                     const TargetRegisterClass *RC) const {
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
   if (RC == SP::IntRegsRegisterClass)
     BuildMI(MBB, I, TII.get(SP::STri)).addFrameIndex(FI).addImm(0)
-      .addReg(SrcReg, false, false, true);
+      .addReg(SrcReg, false, false, isKill);
   else if (RC == SP::FPRegsRegisterClass)
     BuildMI(MBB, I, TII.get(SP::STFri)).addFrameIndex(FI).addImm(0)
-      .addReg(SrcReg, false, false, true);
+      .addReg(SrcReg, false, false, isKill);
   else if (RC == SP::DFPRegsRegisterClass)
     BuildMI(MBB, I, TII.get(SP::STDFri)).addFrameIndex(FI).addImm(0)
-      .addReg(SrcReg, false, false, true);
+      .addReg(SrcReg, false, false, isKill);
   else
     assert(0 && "Can't store this register to stack slot");
 }
 
 void SparcRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                       bool isKill,
                                        SmallVectorImpl<MachineOperand> &Addr,
                                        const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
@@ -71,7 +72,7 @@ void SparcRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     else
       MIB.addFrameIndex(MO.getFrameIndex());
   }
-  MIB.addReg(SrcReg, false, false, true);
+  MIB.addReg(SrcReg, false, false, isKill);
   NewMIs.push_back(MIB);
   return;
 }

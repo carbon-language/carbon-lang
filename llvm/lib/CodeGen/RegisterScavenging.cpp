@@ -282,7 +282,7 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
     RegInfo->eliminateFrameIndex(II, SPAdj, this);
   }
 
-  RegInfo->storeRegToStackSlot(*MBB, I, SReg, ScavengingFrameIndex, RC);
+  RegInfo->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC);
   MachineBasicBlock::iterator II = prior(I);
   RegInfo->eliminateFrameIndex(II, SPAdj, this);
   ScavengedReg = SReg;

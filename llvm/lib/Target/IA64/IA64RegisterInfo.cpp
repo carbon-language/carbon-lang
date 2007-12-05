@@ -38,22 +38,23 @@ IA64RegisterInfo::IA64RegisterInfo(const TargetInstrInfo &tii)
 
 void IA64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
-                                           unsigned SrcReg, int FrameIdx,
+                                           unsigned SrcReg, bool isKill,
+                                           int FrameIdx,
                                            const TargetRegisterClass *RC) const{
 
   if (RC == IA64::FPRegisterClass) {
     BuildMI(MBB, MI, TII.get(IA64::STF_SPILL)).addFrameIndex(FrameIdx)
-      .addReg(SrcReg, false, false, true);
+      .addReg(SrcReg, false, false, isKill);
   } else if (RC == IA64::GRRegisterClass) {
     BuildMI(MBB, MI, TII.get(IA64::ST8)).addFrameIndex(FrameIdx)
-      .addReg(SrcReg, false, false, true);
+      .addReg(SrcReg, false, false, isKill);
   } else if (RC == IA64::PRRegisterClass) {
     /* we use IA64::r2 as a temporary register for doing this hackery. */
     // first we load 0:
     BuildMI(MBB, MI, TII.get(IA64::MOV), IA64::r2).addReg(IA64::r0);
     // then conditionally add 1:
     BuildMI(MBB, MI, TII.get(IA64::CADDIMM22), IA64::r2).addReg(IA64::r2)
-      .addImm(1).addReg(SrcReg, false, false, true);
+      .addImm(1).addReg(SrcReg, false, false, isKill);
     // and then store it to the stack
     BuildMI(MBB, MI, TII.get(IA64::ST8)).addFrameIndex(FrameIdx).addReg(IA64::r2);
   } else assert(0 &&
@@ -61,6 +62,7 @@ void IA64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 void IA64RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                      bool isKill,
                                       SmallVectorImpl<MachineOperand> &Addr,
                                       const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
@@ -86,7 +88,7 @@ void IA64RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     else
       MIB.addFrameIndex(MO.getFrameIndex());
   }
-  MIB.addReg(SrcReg, false, false, true);
+  MIB.addReg(SrcReg, false, false, isKill);
   NewMIs.push_back(MIB);
   return;
 
