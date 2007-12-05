@@ -32,7 +32,8 @@ ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
 ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
 ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Features);
 ASTConsumer *CreateCodeRewriterTest(Diagnostic &Diags);
-ASTConsumer *CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr);
+ASTConsumer *CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr, 
+                                     const LangOptions &LOpts);
 
 } // end clang namespace
 

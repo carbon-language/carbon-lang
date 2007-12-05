@@ -37,7 +37,7 @@ MinimalAction *CreatePrintParserActionsAction(IdentifierTable &);
 /// CreateTargetInfo - Return the set of target info objects as specified by
 /// the -arch command line option.
 TargetInfo *CreateTargetInfo(const std::vector<std::string>& triples,
-                             Diagnostic &Diags);
+                             Diagnostic *Diags);
 
 /// EmitLLVMFromASTs - Implement -emit-llvm, which generates llvm IR from C.
 void EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,

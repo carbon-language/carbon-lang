@@ -848,7 +848,7 @@ static ASTConsumer* CreateASTConsumer(Diagnostic& Diag, FileManager& FileMgr,
       return CreateUnitValsChecker(Diag);
       
     case TestSerialization:
-      return CreateSerializationTest(Diag, FileMgr);
+      return CreateSerializationTest(Diag, FileMgr, LangOpts);
       
     case EmitLLVM:
       return CreateLLVMEmitter(Diag, LangOpts);
@@ -1004,7 +1004,7 @@ int main(int argc, char **argv) {
   { // Create triples, and create the TargetInfo.
     std::vector<std::string> triples;
     CreateTargetTriples(triples);
-    Target = CreateTargetInfo(triples,Diags);
+    Target = CreateTargetInfo(triples,&Diags);
   
     if (Target == 0) {
       fprintf(stderr, "Sorry, I don't know what target this is: %s\n",

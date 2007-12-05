@@ -691,7 +691,7 @@ static TargetInfoImpl *CreateTarget(const std::string& T) {
 /// CreateTargetInfo - Return the set of target info objects as specified by
 /// the -arch command line option.
 TargetInfo *clang::CreateTargetInfo(const std::vector<std::string>& triples, 
-                                    Diagnostic &Diags) {
+                                    Diagnostic *Diags) {
 
   assert (!triples.empty() && "No target triple.");
   
@@ -701,7 +701,7 @@ TargetInfo *clang::CreateTargetInfo(const std::vector<std::string>& triples,
   if (!PrimaryTarget)
     return NULL;
   
-  TargetInfo *TI = new TargetInfo(PrimaryTarget, &Diags);
+  TargetInfo *TI = new TargetInfo(PrimaryTarget, Diags);
   
   // Add all secondary targets.
   for (unsigned i = 1, e = triples.size(); i != e; ++i) {

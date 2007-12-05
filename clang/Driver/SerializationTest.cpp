@@ -56,6 +56,7 @@ class SerializationTest : public ASTConsumer {
   ASTContext* Context;
   Diagnostic &Diags;
   FileManager &FMgr;
+  const LangOptions& LangOpts;
   std::list<Decl*> Decls;
   
   enum { BasicMetadataBlock = 1,
@@ -63,8 +64,8 @@ class SerializationTest : public ASTConsumer {
          DeclsBlock = 3 };
 
 public:  
-  SerializationTest(Diagnostic &d, FileManager& fmgr)
-    : Context(NULL), Diags(d), FMgr(fmgr) {};
+  SerializationTest(Diagnostic &d, FileManager& fmgr, const LangOptions& LOpts)
+    : Context(NULL), Diags(d), FMgr(fmgr), LangOpts(LOpts) {};
   
   ~SerializationTest();
 
@@ -84,8 +85,9 @@ private:
 } // end anonymous namespace
 
 ASTConsumer*
-clang::CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr) {  
-  return new SerializationTest(Diags,FMgr);
+clang::CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr,
+                               const LangOptions &LOpts) {  
+  return new SerializationTest(Diags,FMgr,LOpts);
 }
 
 static void WritePreamble(llvm::BitstreamWriter& Stream) {
@@ -272,7 +274,7 @@ void SerializationTest::Deserialize(llvm::sys::Path& Filename,
     std::vector<std::string> triples;
     triples.push_back(triple);
     delete [] triple;
-    Dezr.RegisterPtr(PtrID,CreateTargetInfo(triples,Diags));
+    Dezr.RegisterPtr(PtrID,CreateTargetInfo(triples,&Diags));
   }
     
   // For Selectors, we must read the identifier table first because the
