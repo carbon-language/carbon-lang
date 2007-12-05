@@ -263,7 +263,7 @@ namespace {
     }
 
     /* If number is all zerooes accept any exponent.  */
-    if (decDigitValue(*p) >= 10U) {
+    if (p != D->firstSigDigit) {
       if (*p == 'e' || *p == 'E')
         D->exponent = readExponent(p + 1);
 
@@ -2145,7 +2145,7 @@ APFloat::convertFromDecimalString(const char *p, roundingMode rounding_mode)
            42039/12655 < L < 28738/8651  [ numerator <= 65536 ]
   */
 
-  if (*D.firstSigDigit == 0) {
+  if (decDigitValue(*D.firstSigDigit) >= 10U) {
     category = fcZero;
     fs = opOK;
   } else if ((D.normalizedExponent + 1) * 28738
