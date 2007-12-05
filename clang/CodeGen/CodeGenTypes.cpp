@@ -313,7 +313,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     
     // Name the codegen type after the typedef name
     // if there is no tag type name available
-    if (TD->getName() == "") {
+    if (TD->getIdentifier() == 0) {
       if (T->getTypeClass() == Type::TypeName) {
         const TypedefType *TdT = cast<TypedefType>(T);
         TypeName += TdT->getDecl()->getName();
