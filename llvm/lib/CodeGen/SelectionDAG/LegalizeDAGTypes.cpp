@@ -206,6 +206,7 @@ private:
   void ScalarizeResult(SDNode *N, unsigned OpNo);
   SDOperand ScalarizeRes_UNDEF(SDNode *N);
   SDOperand ScalarizeRes_LOAD(LoadSDNode *N);
+  SDOperand ScalarizeRes_BinOp(SDNode *N);
   
   // Operand Promotion.
   bool PromoteOperand(SDNode *N, unsigned OperandNo);
@@ -1625,11 +1626,27 @@ void DAGTypeLegalizer::ScalarizeResult(SDNode *N, unsigned ResNo) {
     cerr << "ScalarizeResult #" << ResNo << ": ";
     N->dump(&DAG); cerr << "\n";
 #endif
-    assert(0 && "Do not know how to expand the result of this operator!");
+    assert(0 && "Do not know how to scalarize the result of this operator!");
     abort();
     
   case ISD::UNDEF:       R = ScalarizeRes_UNDEF(N); break;
   case ISD::LOAD:        R = ScalarizeRes_LOAD(cast<LoadSDNode>(N)); break;
+  case ISD::ADD:
+  case ISD::FADD:
+  case ISD::SUB:
+  case ISD::FSUB:
+  case ISD::MUL:
+  case ISD::FMUL:
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::FDIV:
+  case ISD::SREM:
+  case ISD::UREM:
+  case ISD::FREM:
+  case ISD::FPOW:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:         R = ScalarizeRes_BinOp(N); break;
   }
   
   // If R is null, the sub-method took care of registering the resul.
@@ -1651,6 +1668,12 @@ SDOperand DAGTypeLegalizer::ScalarizeRes_LOAD(LoadSDNode *N) {
   // use the new one.
   ReplaceValueWith(SDOperand(N, 1), Result.getValue(1));
   return Result;
+}
+
+SDOperand DAGTypeLegalizer::ScalarizeRes_BinOp(SDNode *N) {
+  SDOperand LHS = GetScalarizedOp(N->getOperand(0));
+  SDOperand RHS = GetScalarizedOp(N->getOperand(1));
+  return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
 }
 
 
