@@ -37,6 +37,17 @@ public:
   template <typename T>
   inline void Emit(const T& X) { SerializeTrait<T>::Emit(*this,X); }
   
+  template <typename T>
+  struct Emitter {
+    Serializer &S;
+    
+    Emitter(Serializer& s) : S(s) {}
+    void operator()(const T& x) const { S.Emit(x); }
+  };
+  
+  template <typename T>
+  Emitter<T> MakeEmitter() { return Emitter<T>(*this); }
+  
   void EmitInt(uint64_t X);
   void EmitSInt(int64_t X);
   
