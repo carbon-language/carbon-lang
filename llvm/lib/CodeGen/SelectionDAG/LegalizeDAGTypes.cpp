@@ -207,6 +207,10 @@ private:
   SDOperand ScalarizeRes_UNDEF(SDNode *N);
   SDOperand ScalarizeRes_LOAD(LoadSDNode *N);
   SDOperand ScalarizeRes_BinOp(SDNode *N);
+  SDOperand ScalarizeRes_UnaryOp(SDNode *N);
+  SDOperand ScalarizeRes_FPOWI(SDNode *N);
+  SDOperand ScalarizeRes_BUILD_VECTOR(SDNode *N);
+  SDOperand ScalarizeRes_INSERT_VECTOR_ELT(SDNode *N);
   
   // Operand Promotion.
   bool PromoteOperand(SDNode *N, unsigned OperandNo);
@@ -1647,6 +1651,14 @@ void DAGTypeLegalizer::ScalarizeResult(SDNode *N, unsigned ResNo) {
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR:         R = ScalarizeRes_BinOp(N); break;
+  case ISD::FNEG:
+  case ISD::FABS:
+  case ISD::FSQRT:
+  case ISD::FSIN:
+  case ISD::FCOS:        R = ScalarizeRes_UnaryOp(N); break;
+  case ISD::FPOWI:       R = ScalarizeRes_FPOWI(N); break;
+  case ISD::BUILD_VECTOR: R = ScalarizeRes_BUILD_VECTOR(N); break;
+  case ISD::INSERT_VECTOR_ELT: R = ScalarizeRes_INSERT_VECTOR_ELT(N); break;
   }
   
   // If R is null, the sub-method took care of registering the resul.
@@ -1674,6 +1686,24 @@ SDOperand DAGTypeLegalizer::ScalarizeRes_BinOp(SDNode *N) {
   SDOperand LHS = GetScalarizedOp(N->getOperand(0));
   SDOperand RHS = GetScalarizedOp(N->getOperand(1));
   return DAG.getNode(N->getOpcode(), LHS.getValueType(), LHS, RHS);
+}
+
+SDOperand DAGTypeLegalizer::ScalarizeRes_UnaryOp(SDNode *N) {
+  SDOperand Op = GetScalarizedOp(N->getOperand(0));
+  return DAG.getNode(N->getOpcode(), Op.getValueType(), Op);
+}
+
+SDOperand DAGTypeLegalizer::ScalarizeRes_FPOWI(SDNode *N) {
+  SDOperand Op = GetScalarizedOp(N->getOperand(0));
+  return DAG.getNode(ISD::FPOWI, Op.getValueType(), Op, N->getOperand(1));
+}
+
+SDOperand DAGTypeLegalizer::ScalarizeRes_BUILD_VECTOR(SDNode *N) {
+  return N->getOperand(0);
+}
+
+SDOperand DAGTypeLegalizer::ScalarizeRes_INSERT_VECTOR_ELT(SDNode *N) {
+  return N->getOperand(1);   // Returning the inserted scalar element.
 }
 
 
