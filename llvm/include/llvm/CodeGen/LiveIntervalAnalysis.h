@@ -278,6 +278,8 @@ namespace llvm {
                               SmallVector<unsigned, 2> &Ops,
                               bool isSS, int Slot, unsigned Reg);
 
+    /// canFoldMemoryOperand - Returns true if the specified load / store
+    /// folding is possible.
     bool canFoldMemoryOperand(MachineInstr *MI,
                               SmallVector<unsigned, 2> &Ops) const;
 

@@ -691,6 +691,22 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
   return false;
 }
 
+/// canFoldMemoryOperand - Returns true if the specified load / store
+/// folding is possible.
+bool LiveIntervals::canFoldMemoryOperand(MachineInstr *MI,
+                                         SmallVector<unsigned, 2> &Ops) const {
+  SmallVector<unsigned, 2> FoldOps;
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+    unsigned OpIdx = Ops[i];
+    // FIXME: fold subreg use.
+    if (MI->getOperand(OpIdx).getSubReg())
+      return false;
+    FoldOps.push_back(OpIdx);
+  }
+
+  return mri_->canFoldMemoryOperand(MI, FoldOps);
+}
+
 bool LiveIntervals::intervalIsInOneMBB(const LiveInterval &li) const {
   SmallPtrSet<MachineBasicBlock*, 4> MBBs;
   for (LiveInterval::Ranges::const_iterator
@@ -710,7 +726,7 @@ bool LiveIntervals::intervalIsInOneMBB(const LiveInterval &li) const {
 
 /// rewriteInstructionForSpills, rewriteInstructionsForSpills - Helper functions
 /// for addIntervalsForSpills to rewrite uses / defs for the given live range.
-void LiveIntervals::
+bool LiveIntervals::
 rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
                  unsigned id, unsigned index, unsigned end,  MachineInstr *MI,
                  MachineInstr *ReMatOrigDefMI, MachineInstr *ReMatDefMI,
@@ -723,6 +739,7 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
                  const LoopInfo *loopInfo,
                  std::map<unsigned,unsigned> &MBBVRegsMap,
                  std::vector<LiveInterval*> &NewLIs) {
+  bool CanFold = false;
  RestartInstruction:
   for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
     MachineOperand& mop = MI->getOperand(i);
@@ -760,11 +777,6 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
       }
     }
 
-    // Do not fold load / store here if we are splitting. We'll find an
-    // optimal point to insert a load / store later.
-    if (TryFold)
-      TryFold = !TrySplit && NewVReg == 0;
-
     // Scan all of the operands of this instruction rewriting operands
     // to use NewVReg instead of li.reg as appropriate.  We do this for
     // two reasons:
@@ -795,15 +807,23 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
       }
     }
 
-    if (TryFold &&
-        tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index,
-                             Ops, FoldSS, FoldSlot, Reg)) {
-      // Folding the load/store can completely change the instruction in
-      // unpredictable ways, rescan it from the beginning.
-      HasUse = false;
-      HasDef = false;
-      goto RestartInstruction;
-    }
+    if (TryFold) {
+      // Do not fold load / store here if we are splitting. We'll find an
+      // optimal point to insert a load / store later.
+      if (!TrySplit) {
+        if (tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index,
+                                 Ops, FoldSS, FoldSlot, Reg)) {
+          // Folding the load/store can completely change the instruction in
+          // unpredictable ways, rescan it from the beginning.
+          HasUse = false;
+          HasDef = false;
+          CanFold = false;
+          goto RestartInstruction;
+        }
+      } else {
+        CanFold = canFoldMemoryOperand(MI, Ops);
+      }
+    } else CanFold = false;
 
     // Create a new virtual register for the spill interval.
     bool CreatedNewVReg = false;
@@ -879,8 +899,8 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
     nI.print(DOUT, mri_);
     DOUT << '\n';
   }
+  return CanFold;
 }
-
 bool LiveIntervals::anyKillInMBBAfterIdx(const LiveInterval &li,
                                    const VNInfo *VNI,
                                    MachineBasicBlock *MBB, unsigned Idx) const {
@@ -920,6 +940,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                     std::map<unsigned, std::vector<SRInfo> > &RestoreIdxes,
                     std::map<unsigned,unsigned> &MBBVRegsMap,
                     std::vector<LiveInterval*> &NewLIs) {
+  bool AllCanFold = true;
   unsigned NewVReg = 0;
   unsigned index = getBaseIndex(I->start);
   unsigned end = getBaseIndex(I->end-1) + InstrSlots::NUM;
@@ -931,12 +952,12 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
 
     MachineInstr *MI = getInstructionFromIndex(index);
     MachineBasicBlock *MBB = MI->getParent();
-    NewVReg = 0;
+    unsigned ThisVReg = 0;
     if (TrySplit) {
       std::map<unsigned,unsigned>::const_iterator NVI =
         MBBVRegsMap.find(MBB->getNumber());
       if (NVI != MBBVRegsMap.end()) {
-        NewVReg = NVI->second;
+        ThisVReg = NVI->second;
         // One common case:
         // x = use
         // ...
@@ -959,20 +980,34 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
         }
         if (MIHasDef && !MIHasUse) {
           MBBVRegsMap.erase(MBB->getNumber());
-          NewVReg = 0;
+          ThisVReg = 0;
         }
       }
     }
-    bool IsNew = NewVReg == 0;
+
+    bool IsNew = ThisVReg == 0;
+    if (IsNew) {
+      // This ends the previous live interval. If all of its def / use
+      // can be folded, give it a low spill weight.
+      if (NewVReg && TrySplit && AllCanFold) {
+        LiveInterval &nI = getOrCreateInterval(NewVReg);
+        nI.weight /= 10.0F;
+      }
+      AllCanFold = true;
+    }
+    NewVReg = ThisVReg;
+
     bool HasDef = false;
     bool HasUse = false;
-    rewriteInstructionForSpills(li, TrySplit, I->valno->id, index, end,
-                                MI, ReMatOrigDefMI, ReMatDefMI, Slot, LdSlot,
-                                isLoad, isLoadSS, DefIsReMat, CanDelete, vrm,
-                                RegMap, rc, ReMatIds, NewVReg, HasDef, HasUse,
-                                loopInfo, MBBVRegsMap, NewLIs);
+    bool CanFold = rewriteInstructionForSpills(li, TrySplit, I->valno->id,
+                                index, end, MI, ReMatOrigDefMI, ReMatDefMI,
+                                Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
+                                CanDelete, vrm, RegMap, rc, ReMatIds, NewVReg,
+                                HasDef, HasUse, loopInfo, MBBVRegsMap, NewLIs);
     if (!HasDef && !HasUse)
       continue;
+
+    AllCanFold &= CanFold;
 
     // Update weight of spill interval.
     LiveInterval &nI = getOrCreateInterval(NewVReg);
@@ -1057,6 +1092,12 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     // Update spill weight.
     unsigned loopDepth = loopInfo->getLoopDepth(MBB->getBasicBlock());
     nI.weight += getSpillWeight(HasDef, HasUse, loopDepth);
+  }
+
+  if (NewVReg && TrySplit && AllCanFold) {
+    // If all of its def / use can be folded, give it a low spill weight.
+    LiveInterval &nI = getOrCreateInterval(NewVReg);
+    nI.weight /= 10.0F;
   }
 }
 
@@ -1331,8 +1372,14 @@ addIntervalsForSpills(const LiveInterval &li,
       // load / rematerialization for us.
       if (Folded)
         nI.removeRange(getLoadIndex(index), getUseIndex(index)+1);
-      else
+      else {
         vrm.addRestorePoint(VReg, MI);
+        LiveRange *LR = &nI.ranges[nI.ranges.size()-1];
+        MachineInstr *LastUse = getInstructionFromIndex(getBaseIndex(LR->end));
+        int UseIdx = LastUse->findRegisterUseOperandIdx(VReg);
+        assert(UseIdx != -1);
+        LastUse->getOperand(UseIdx).setIsKill();
+      }
     }
     Id = RestoreMBBs.find_next(Id);
   }

@@ -1295,8 +1295,6 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           // the value and there isn't an earlier def that has already clobbered the
           // physreg.
           if (PhysReg &&
-              Spills.canClobberPhysReg(SS) &&
-              !ReusedOperands.isClobbered(PhysReg) &&
               DeadStore->findRegisterUseOperandIdx(PhysReg, true) != -1 &&
               MRI->unfoldMemoryOperand(MF, &MI, PhysReg, false, true, NewMIs)) {
             MBB.insert(MII, NewMIs[0]);
