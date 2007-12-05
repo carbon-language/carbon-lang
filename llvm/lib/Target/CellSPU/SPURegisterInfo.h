@@ -76,11 +76,13 @@ namespace llvm {
 		       unsigned DestReg, const MachineInstr *Orig) const;
 
     //! Fold spills into load/store instructions
-    virtual MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
+    virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                            SmallVectorImpl<unsigned> &Ops,
                                             int FrameIndex) const;
 
     //! Fold any load/store to an operand
-    virtual MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
+    virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                            SmallVectorImpl<unsigned> &Ops,
                                             MachineInstr* LoadMI) const;
     
     //! Return the array of callee-saved registers
