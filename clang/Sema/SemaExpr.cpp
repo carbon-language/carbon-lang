@@ -686,8 +686,11 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
   // FIXME: put back this assert when initializers are worked out.
   //assert((InitExpr != 0) && "ActOnCompoundLiteral(): missing expression");
   Expr *literalExpr = static_cast<Expr*>(InitExpr);
-  
-  // FIXME: add semantic analysis (C99 6.5.2.5).
+
+  // FIXME: add more semantic analysis (C99 6.5.2.5).
+  if (CheckInitializer(literalExpr, literalType, false))
+    return 0;
+
   return new CompoundLiteralExpr(literalType, literalExpr);
 }
 
