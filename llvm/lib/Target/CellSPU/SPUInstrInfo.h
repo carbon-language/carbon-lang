@@ -3,13 +3,12 @@
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by a team from the Computer Systems Research
-// Department at The Aerospace Corporation.
-//
-// See README.txt for details.
+// Department at The Aerospace Corporation and is distributed under the
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the PowerPC implementation of the TargetInstrInfo class.
+// This file contains the CellSPU implementation of the TargetInstrInfo class.
 //
 //===----------------------------------------------------------------------===//
 

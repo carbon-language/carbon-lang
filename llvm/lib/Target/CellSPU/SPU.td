@@ -2,11 +2,10 @@
 // 
 //                     The LLVM Compiler Infrastructure
 //
-//
 // This file was developed by a team from the Computer Systems Research
-// Department at The Aerospace Corporation.
+// Department at The Aerospace Corporation and is distributed under the
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 //
-// See README.txt for details.
 //===----------------------------------------------------------------------===//
 //
 // This is the top level entry point for the STI Cell SPU target machine.

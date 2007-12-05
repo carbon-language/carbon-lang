@@ -2,8 +2,9 @@
 // 
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by The Aerospace Corporation. No distribution rights
-// yet determined...
+// This file was developed by a team from the Computer Systems Research
+// Department at The Aerospace Corporation and is distributed under the
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
 //
