@@ -1221,7 +1221,6 @@ addIntervalsForSpills(const LiveInterval &li,
       // Original def may be modified so we have to make a copy here. vrm must
       // delete these!
       ReMatDefs[VN] = ReMatDefMI = ReMatDefMI->clone();
-      vrm.setVirtIsReMaterialized(li.reg, ReMatDefMI);
 
       bool CanDelete = true;
       if (VNI->hasPHIKill) {
@@ -1309,9 +1308,11 @@ addIntervalsForSpills(const LiveInterval &li,
         if (CanFold && !Ops.empty()) {
           if (tryFoldMemoryOperand(MI, vrm, NULL, index, Ops, true, Slot,VReg)){
             Folded = true;
-            if (FoundUse > 0)
+            if (FoundUse > 0) {
               // Also folded uses, do not issue a load.
               eraseRestoreInfo(Id, index, VReg, RestoreMBBs, RestoreIdxes);
+              nI.removeRange(getLoadIndex(index), getUseIndex(index)+1);
+            }
             nI.removeRange(getDefIndex(index), getStoreIndex(index));
           }
         }
