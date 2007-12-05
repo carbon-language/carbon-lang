@@ -28,10 +28,16 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/Support/Debug.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 using namespace llvm;
+
+namespace {
+  cl::opt<bool> OptExtUses("optimize-ext-uses",
+                           cl::init(false), cl::Hidden);
+}
 
 namespace {  
   class VISIBILITY_HIDDEN CodeGenPrepare : public FunctionPass {
@@ -52,6 +58,7 @@ namespace {
     bool OptimizeLoadStoreInst(Instruction *I, Value *Addr,
                                const Type *AccessTy,
                                DenseMap<Value*,Value*> &SunkAddrs);
+    bool OptimizeExtUses(Instruction *I);
   };
 }
 
@@ -913,6 +920,61 @@ bool CodeGenPrepare::OptimizeLoadStoreInst(Instruction *LdStInst, Value *Addr,
   return true;
 }
 
+bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
+  BasicBlock *DefBB = I->getParent();
+
+  // If both result of the {s|z}xt and its source are live out, rewrite all
+  // other uses of the source with result of extension.
+  Value *Src = I->getOperand(0);
+  if (Src->hasOneUse())
+    return false;
+
+  bool DefIsLiveOut = false;
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); 
+       UI != E; ++UI) {
+    Instruction *User = cast<Instruction>(*UI);
+
+    // Figure out which BB this ext is used in.
+    BasicBlock *UserBB = User->getParent();
+    if (UserBB == DefBB) continue;
+    DefIsLiveOut = true;
+    break;
+  }
+  if (!DefIsLiveOut)
+    return false;
+
+  // InsertedTruncs - Only insert one trunc in each block once.
+  DenseMap<BasicBlock*, Instruction*> InsertedTruncs;
+
+  bool MadeChange = false;
+  for (Value::use_iterator UI = Src->use_begin(), E = Src->use_end(); 
+       UI != E; ++UI) {
+    Use &TheUse = UI.getUse();
+    Instruction *User = cast<Instruction>(*UI);
+
+    // Figure out which BB this ext is used in.
+    BasicBlock *UserBB = User->getParent();
+    if (UserBB == DefBB) continue;
+
+    // Both src and def are live in this block. Rewrite the use.
+    Instruction *&InsertedTrunc = InsertedTruncs[UserBB];
+
+    if (!InsertedTrunc) {
+      BasicBlock::iterator InsertPt = UserBB->begin();
+      while (isa<PHINode>(InsertPt)) ++InsertPt;
+      
+      InsertedTrunc = new TruncInst(I, Src->getType(), "", InsertPt);
+    }
+
+    // Replace a use of the {s|z}ext source with a use of the result.
+    TheUse = InsertedTrunc;
+
+    MadeChange = true;
+  }
+
+  return MadeChange;
+}
+
 // In this pass we look for GEP and cast instructions that are used
 // across basic blocks and rewrite them to improve basic-block-at-a-time
 // selection.
@@ -948,8 +1010,14 @@ bool CodeGenPrepare::OptimizeBlock(BasicBlock &BB) {
       if (isa<Constant>(CI->getOperand(0)))
         continue;
       
-      if (TLI)
-        MadeChange |= OptimizeNoopCopyExpression(CI, *TLI);
+      bool Change = false;
+      if (TLI) {
+        Change = OptimizeNoopCopyExpression(CI, *TLI);
+        MadeChange |= Change;
+      }
+
+      if (OptExtUses && !Change && (isa<ZExtInst>(I) || isa<SExtInst>(I)))
+        MadeChange |= OptimizeExtUses(I);
     } else if (CmpInst *CI = dyn_cast<CmpInst>(I)) {
       MadeChange |= OptimizeCmpExpression(CI);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
