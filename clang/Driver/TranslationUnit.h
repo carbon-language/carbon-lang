@@ -35,10 +35,15 @@ class TranslationUnit {
 
   explicit TranslationUnit() : Context(NULL) {}
   
-public:  
+public:
+  explicit TranslationUnit(const LangOptions& lopt)
+    : LangOpts(lopt), Context(NULL) {}
+  
   explicit TranslationUnit(const LangOptions& lopt, ASTContext& context)
     : LangOpts(lopt), Context(&context) {}
 
+  void setContext(ASTContext* context) { Context = context; }
+  
   /// EmitBitcodeFile - Emit the translation unit to a bitcode file.
   bool EmitBitcodeFile(llvm::sys::Path& Filename) const;
   
