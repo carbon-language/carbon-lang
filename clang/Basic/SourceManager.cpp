@@ -19,8 +19,8 @@
 #include "llvm/System/Path.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
+#include "llvm/Support/Streams.h"
 #include <algorithm>
-#include <iostream>
 #include <fcntl.h>
 using namespace clang;
 using namespace SrcMgr;
@@ -388,12 +388,12 @@ unsigned SourceManager::getLineNumber(SourceLocation Loc) {
 /// PrintStats - Print statistics to stderr.
 ///
 void SourceManager::PrintStats() const {
-  std::cerr << "\n*** Source Manager Stats:\n";
-  std::cerr << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
-            << " mem buffers mapped, " << FileIDs.size() 
-            << " file ID's allocated.\n";
-  std::cerr << "  " << FileIDs.size() << " normal buffer FileID's, "
-            << MacroIDs.size() << " macro expansion FileID's.\n";
+  llvm::cerr << "\n*** Source Manager Stats:\n";
+  llvm::cerr << FileInfos.size() << " files mapped, " << MemBufferInfos.size()
+             << " mem buffers mapped, " << FileIDs.size() 
+             << " file ID's allocated.\n";
+  llvm::cerr << "  " << FileIDs.size() << " normal buffer FileID's, "
+             << MacroIDs.size() << " macro expansion FileID's.\n";
     
   unsigned NumLineNumsComputed = 0;
   unsigned NumFileBytesMapped = 0;
@@ -403,8 +403,8 @@ void SourceManager::PrintStats() const {
     NumFileBytesMapped  += I->Buffer->getBufferSize();
   }
   
-  std::cerr << NumFileBytesMapped << " bytes of files mapped, "
-            << NumLineNumsComputed << " files with line #'s computed.\n";
+  llvm::cerr << NumFileBytesMapped << " bytes of files mapped, "
+             << NumLineNumsComputed << " files with line #'s computed.\n";
 }
 
 //===----------------------------------------------------------------------===//
