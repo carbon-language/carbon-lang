@@ -28,6 +28,7 @@ class MemoryBuffer;
 namespace clang {
   
 class SourceManager;
+class FileManager;
 class FileEntry;
 class IdentifierTokenInfo;
 
@@ -72,13 +73,13 @@ namespace SrcMgr {
     }
     
     /// Emit - Emit this ContentCache to Bitcode.
-    void Emit(llvm::Serializer& S, bool StoreBufferName,
-              bool StoreBufferContents) const;
+    void Emit(llvm::Serializer& S) const;
     
-    /// Read - Reconstitute a ContentCache from Bitcode.
-    void Read(llvm::Deserializer& D, std::vector<char>* BufferNameBuf,
-              bool ReadBufferContents);
-
+    /// ReadToSourceManager - Reconstitute a ContentCache from Bitcode
+    //   and store it in the specified SourceManager.
+    static void ReadToSourceManager(llvm::Deserializer& D, SourceManager& SMgr,
+                                    FileManager* FMgr, std::vector<char>&  Buf);
+    
   private:
     // Disable assignments.
     ContentCache& operator=(const ContentCache& RHS);    
@@ -130,6 +131,12 @@ namespace SrcMgr {
     SourceLocation getIncludeLoc() const { return IncludeLoc; }
     unsigned getChunkNo() const { return ChunkNo; }
     const ContentCache* getContentCache() const { return Content; }
+    
+    /// Emit - Emit this FileIDInfo to Bitcode.
+    void Emit(llvm::Serializer& S) const;
+    
+    /// ReadVal - Reconstitute a FileIDInfo from Bitcode.
+    static FileIDInfo ReadVal(llvm::Deserializer& S);
   };
   
   /// MacroIDInfo - Macro SourceLocations refer to these records by their ID.
@@ -153,6 +160,12 @@ namespace SrcMgr {
       X.PhysicalLoc = PL;
       return X;
     }
+    
+    /// Emit - Emit this MacroIDInfo to Bitcode.
+    void Emit(llvm::Serializer& S) const;
+    
+    /// ReadVal - Reconstitute a MacroIDInfo from Bitcode.
+    static MacroIDInfo ReadVal(llvm::Deserializer& S);
   };
 }  // end SrcMgr namespace.
 } // end clang namespace
@@ -349,7 +362,15 @@ public:
   ///
   void PrintStats() const;
 
+  /// Emit - Emit this SourceManager to Bitcode.
+  void Emit(llvm::Serializer& S) const;
+  
+  /// Read - Reconstitute a SourceManager from Bitcode.
+  void Read(llvm::Deserializer& S, FileManager &FMgr);
+  
 private:
+  friend class SrcMgr::ContentCache; // Used for deserialization.
+  
   /// createFileID - Create a new fileID for the specified ContentCache and
   ///  include position.  This works regardless of whether the ContentCache
   ///  corresponds to a file or some other input source.

@@ -410,53 +410,135 @@ void SourceManager::PrintStats() const {
 //===----------------------------------------------------------------------===//
 // Serialization.
 //===----------------------------------------------------------------------===//
-
-void SrcMgr::ContentCache::Emit(llvm::Serializer& S,
-                                bool StoreBufferName,
-                                bool StoreBufferContents) const {
+  
+void ContentCache::Emit(llvm::Serializer& S) const {
   S.FlushRecord();
   S.EmitPtr(this);
-  
-  if (StoreBufferName)
-    S.EmitCStr(Buffer->getBufferIdentifier());
-  
-  if (StoreBufferContents) {
-    // Emit the contents of the memory buffer.
-    // FIXME: use abbreviations to optimize this.
-    S.FlushRecord();
 
+  if (Entry) S.EmitCStr(Buffer->getBufferIdentifier());
+  else {
     const char* p = Buffer->getBufferStart();
     const char* e = Buffer->getBufferEnd();
     
-    S.EmitInt(p-e);    
-
+    S.EmitInt(e-p);
+    
     for ( ; p != e; ++p)
-      S.EmitInt(*p);
-
-    S.FlushRecord();
+      S.EmitInt(*p);    
   }
+  
+  S.FlushRecord();  
 }
 
-void SrcMgr::ContentCache::Read(llvm::Deserializer& D,
-                                std::vector<char>* BufferNameBuf,
-                                bool ReadBufferContents) {
-  D.RegisterPtr(this);
-  const char* BufferName = "";
+void ContentCache::ReadToSourceManager(llvm::Deserializer& D,
+                                       SourceManager& SMgr,
+                                       FileManager* FMgr,
+                                       std::vector<char>& Buf) {
+  if (FMgr) {
+    llvm::SerializedPtrID PtrID = D.ReadPtrID();    
+    D.ReadCStr(Buf,false);
+    
+    // Create/fetch the FileEntry.
+    const char* start = &Buf[0];
+    const FileEntry* E = FMgr->getFile(start,start+Buf.size());
+    
+    assert (E && "Not yet supported: missing files.");
+    
+    // Get the ContextCache object and register it with the deserializer.
+    D.RegisterPtr(PtrID,SMgr.getContentCache(E));
+  }
+  else {
+    // Register the ContextCache object with the deserializer.
+    SMgr.MemBufferInfos.push_back(ContentCache());
+    ContentCache& Entry = const_cast<ContentCache&>(SMgr.MemBufferInfos.back());    
+    D.RegisterPtr(&Entry);
+    
+    // Create the buffer.
+    unsigned Size = D.ReadInt();
+    Entry.Buffer = MemoryBuffer::getNewUninitMemBuffer(Size);
+    
+    // Read the contents of the buffer.
+    char* p = const_cast<char*>(Entry.Buffer->getBufferStart());
+    for (unsigned i = 0; i < Size ; ++i)
+      p[i] = D.ReadInt();    
+  }    
+}
+
+void FileIDInfo::Emit(llvm::Serializer& S) const {
+  S.Emit(IncludeLoc);
+  S.EmitInt(ChunkNo);
+  S.EmitPtr(Content);  
+}
+
+FileIDInfo FileIDInfo::ReadVal(llvm::Deserializer& D) {
+  FileIDInfo I;
+  I.IncludeLoc = SourceLocation::ReadVal(D);
+  I.ChunkNo = D.ReadInt();
+  D.ReadPtr(I.Content,false);
+  return I;
+}
+
+void MacroIDInfo::Emit(llvm::Serializer& S) const {
+  S.Emit(VirtualLoc);
+  S.Emit(PhysicalLoc);
+}
+
+MacroIDInfo MacroIDInfo::ReadVal(llvm::Deserializer& D) {
+  MacroIDInfo I;
+  I.VirtualLoc = SourceLocation::ReadVal(D);
+  I.PhysicalLoc = SourceLocation::ReadVal(D);
+  return I;
+}
+
+void SourceManager::Emit(llvm::Serializer& S) const {
+  // Emit: FileInfos.  Just emit the file name.
+  S.EnterBlock();    
+
+  std::for_each(FileInfos.begin(),FileInfos.end(),
+                S.MakeEmitter<ContentCache>());
   
-  if (BufferNameBuf) {
-    D.ReadCStr(*BufferNameBuf);
-    BufferName = &(*BufferNameBuf)[0];
+  S.ExitBlock();
+  
+  // Emit: MemBufferInfos
+  S.EnterBlock();
+
+  std::for_each(MemBufferInfos.begin(), MemBufferInfos.end(),
+                S.MakeEmitter<ContentCache>());
+  
+  S.ExitBlock();
+  
+  // Emit: FileIDs  
+  S.EmitInt(FileIDs.size());  
+  std::for_each(FileIDs.begin(), FileIDs.end(), S.MakeEmitter<FileIDInfo>());
+  
+  // Emit: MacroIDs
+  S.EmitInt(MacroIDs.size());  
+  std::for_each(MacroIDs.begin(), MacroIDs.end(), S.MakeEmitter<MacroIDInfo>());
+}
+
+void SourceManager::Read(llvm::Deserializer& D, FileManager& FMgr) {
+  std::vector<char> Buf;
+    
+  { // Read: FileInfos.
+    llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
+    while (!D.FinishedBlock(BLoc))
+    ContentCache::ReadToSourceManager(D,*this,&FMgr,Buf);
+  }
+    
+  { // Read: MemBufferInfos.
+    llvm::Deserializer::Location BLoc = D.getCurrentBlockLocation();
+    while (!D.FinishedBlock(BLoc))
+    ContentCache::ReadToSourceManager(D,*this,NULL,Buf);
   }
   
-  if (ReadBufferContents) {
-    char *BufferName = D.ReadCStr();    
-    unsigned Size = D.ReadInt();    
-    Buffer = MemoryBuffer::getNewUninitMemBuffer(Size,BufferName);
-    char* p = const_cast<char*>(Buffer->getBufferStart());
-    const char* e = Buffer->getBufferEnd();
-    for ( ; p != e ; ++p )
-      *p = (char) D.ReadInt();    
-  }
-  else
-    Buffer = MemoryBuffer::getNewUninitMemBuffer(0,BufferName);
+  // Read: FileIDs.
+  unsigned Size = D.ReadInt();
+  FileIDs.reserve(Size);
+  for (; Size > 0 ; --Size)
+    FileIDs.push_back(FileIDInfo::ReadVal(D));
+  
+  // Read: MacroIDs.
+  Size = D.ReadInt();
+  MacroIDs.reserve(Size);
+  for (; Size > 0 ; --Size)
+    MacroIDs.push_back(MacroIDInfo::ReadVal(D));
 }
