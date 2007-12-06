@@ -209,8 +209,9 @@ private:
   SDOperand ScalarizeRes_BinOp(SDNode *N);
   SDOperand ScalarizeRes_UnaryOp(SDNode *N);
   SDOperand ScalarizeRes_FPOWI(SDNode *N);
-  SDOperand ScalarizeRes_BUILD_VECTOR(SDNode *N);
-  SDOperand ScalarizeRes_INSERT_VECTOR_ELT(SDNode *N);
+  SDOperand ScalarizeRes_VECTOR_SHUFFLE(SDNode *N);
+  SDOperand ScalarizeRes_BIT_CONVERT(SDNode *N);
+  SDOperand ScalarizeRes_SELECT(SDNode *N);
   
   // Operand Promotion.
   bool PromoteOperand(SDNode *N, unsigned OperandNo);
@@ -1655,10 +1656,13 @@ void DAGTypeLegalizer::ScalarizeResult(SDNode *N, unsigned ResNo) {
   case ISD::FABS:
   case ISD::FSQRT:
   case ISD::FSIN:
-  case ISD::FCOS:        R = ScalarizeRes_UnaryOp(N); break;
-  case ISD::FPOWI:       R = ScalarizeRes_FPOWI(N); break;
-  case ISD::BUILD_VECTOR: R = ScalarizeRes_BUILD_VECTOR(N); break;
-  case ISD::INSERT_VECTOR_ELT: R = ScalarizeRes_INSERT_VECTOR_ELT(N); break;
+  case ISD::FCOS:              R = ScalarizeRes_UnaryOp(N); break;
+  case ISD::FPOWI:             R = ScalarizeRes_FPOWI(N); break;
+  case ISD::BUILD_VECTOR:      R = N->getOperand(0); break;
+  case ISD::INSERT_VECTOR_ELT: R = N->getOperand(1); break;
+  case ISD::VECTOR_SHUFFLE:    R = ScalarizeRes_VECTOR_SHUFFLE(N); break;
+  case ISD::BIT_CONVERT:       R = ScalarizeRes_BIT_CONVERT(N); break;
+  case ISD::SELECT:            R = ScalarizeRes_SELECT(N); break;
   }
   
   // If R is null, the sub-method took care of registering the resul.
@@ -1698,12 +1702,22 @@ SDOperand DAGTypeLegalizer::ScalarizeRes_FPOWI(SDNode *N) {
   return DAG.getNode(ISD::FPOWI, Op.getValueType(), Op, N->getOperand(1));
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeRes_BUILD_VECTOR(SDNode *N) {
-  return N->getOperand(0);
+SDOperand DAGTypeLegalizer::ScalarizeRes_VECTOR_SHUFFLE(SDNode *N) {
+  // Figure out if the scalar is the LHS or RHS and return it.
+  SDOperand EltNum = N->getOperand(2).getOperand(0);
+  unsigned Op = cast<ConstantSDNode>(EltNum)->getValue() != 0;
+  return GetScalarizedOp(N->getOperand(Op));
 }
 
-SDOperand DAGTypeLegalizer::ScalarizeRes_INSERT_VECTOR_ELT(SDNode *N) {
-  return N->getOperand(1);   // Returning the inserted scalar element.
+SDOperand DAGTypeLegalizer::ScalarizeRes_BIT_CONVERT(SDNode *N) {
+  MVT::ValueType NewVT = MVT::getVectorElementType(N->getValueType(0));
+  return DAG.getNode(ISD::BIT_CONVERT, NewVT, N->getOperand(0));
+}
+
+SDOperand DAGTypeLegalizer::ScalarizeRes_SELECT(SDNode *N) {
+  SDOperand LHS = GetScalarizedOp(N->getOperand(1));
+  return DAG.getNode(ISD::SELECT, LHS.getValueType(), N->getOperand(0), LHS,
+                     GetScalarizedOp(N->getOperand(2)));
 }
 
 
