@@ -94,7 +94,7 @@ class Interpreter : public ExecutionEngine, public InstVisitor<Interpreter> {
   std::vector<Function*> AtExitHandlers;
 
 public:
-  explicit Interpreter(Module *M);
+  explicit Interpreter(ModuleProvider *M);
   ~Interpreter();
 
   /// runAtExitHandlers - Run any functions registered by the program's calls to

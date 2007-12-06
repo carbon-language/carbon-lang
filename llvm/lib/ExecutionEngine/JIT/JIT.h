@@ -121,7 +121,7 @@ public:
   /// getCodeEmitter - Return the code emitter this JIT is emitting into.
   MachineCodeEmitter *getCodeEmitter() const { return MCE; }
 private:
-  static MachineCodeEmitter *createEmitter(JIT &J);
+  static MachineCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM);
   void runJITOnFunction (Function *F);
 };
 

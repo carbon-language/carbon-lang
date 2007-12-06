@@ -33,26 +33,18 @@ namespace llvm {
 ///
 ExecutionEngine *Interpreter::create(ModuleProvider *MP, std::string* ErrStr) {
   // Tell this ModuleProvide to materialize and release the module
-  Module *M = MP->releaseModule(ErrStr);
-  if (!M)
+  if (!MP->materializeModule(ErrStr))
     // We got an error, just return 0
     return 0;
 
-  // This is a bit nasty, but the ExecutionEngine won't be able to delete the
-  // module due to use/def issues if we don't delete this MP here. Below we
-  // construct a new Interpreter with the Module we just got. This creates a
-  // new ExistingModuleProvider in the EE instance. Consequently, MP is left
-  // dangling and it contains references into the module which cause problems
-  // when the module is deleted via the ExistingModuleProvide via EE.
-  delete MP;
-  
-  return new Interpreter(M);
+  return new Interpreter(MP);
 }
 
 //===----------------------------------------------------------------------===//
 // Interpreter ctor - Initialize stuff
 //
-Interpreter::Interpreter(Module *M) : ExecutionEngine(M), TD(M) {
+Interpreter::Interpreter(ModuleProvider *M)
+  : ExecutionEngine(M), TD(M->getModule()) {
       
   memset(&ExitValue.Untyped, 0, sizeof(ExitValue.Untyped));
   setTargetData(&TD);

@@ -39,12 +39,6 @@ ExecutionEngine::ExecutionEngine(ModuleProvider *P) : LazyFunctionCreator(0) {
   assert(P && "ModuleProvider is null?");
 }
 
-ExecutionEngine::ExecutionEngine(Module *M) : LazyFunctionCreator(0) {
-  LazyCompilationDisabled = false;
-  assert(M && "Module is null?");
-  Modules.push_back(new ExistingModuleProvider(M));
-}
-
 ExecutionEngine::~ExecutionEngine() {
   clearAllGlobalMappings();
   for (unsigned i = 0, e = Modules.size(); i != e; ++i)

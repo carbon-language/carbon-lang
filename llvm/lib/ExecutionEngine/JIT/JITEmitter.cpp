@@ -312,8 +312,8 @@ namespace {
     /// Resolver - This contains info about the currently resolved functions.
     JITResolver Resolver;
   public:
-    JITEmitter(JIT &jit) : Resolver(jit) {
-      MemMgr = JITMemoryManager::CreateDefaultMemManager();
+    JITEmitter(JIT &jit, JITMemoryManager *JMM) : Resolver(jit) {
+      MemMgr = JMM ? JMM : JITMemoryManager::CreateDefaultMemManager();
       if (jit.getJITInfo().needsGOT()) {
         MemMgr->AllocateGOT();
         DOUT << "JIT is managing a GOT\n";
@@ -637,8 +637,8 @@ intptr_t JITEmitter::getJumpTableEntryAddress(unsigned Index) const {
 //  Public interface to this file
 //===----------------------------------------------------------------------===//
 
-MachineCodeEmitter *JIT::createEmitter(JIT &jit) {
-  return new JITEmitter(jit);
+MachineCodeEmitter *JIT::createEmitter(JIT &jit, JITMemoryManager *JMM) {
+  return new JITEmitter(jit, JMM);
 }
 
 // getPointerToNamedFunction - This function is used as a global wrapper to

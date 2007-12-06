@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef EXECUTION_ENGINE_H
-#define EXECUTION_ENGINE_H
+#ifndef LLVM_EXECUTION_ENGINE_H
+#define LLVM_EXECUTION_ENGINE_H
 
 #include <vector>
 #include <map>
@@ -34,6 +34,7 @@ class ModuleProvider;
 class TargetData;
 class Type;
 class MutexGuard;
+class JITMemoryManager;
 
 class ExecutionEngineState {
 private:
@@ -90,18 +91,36 @@ public:
   /// any of those classes.
   sys::Mutex lock; // Used to make this class and subclasses thread-safe
 
-  ExecutionEngine(ModuleProvider *P);
-  ExecutionEngine(Module *M);
+  //===----------------------------------------------------------------------===//
+  //  ExecutionEngine Startup
+  //===----------------------------------------------------------------------===//
+
   virtual ~ExecutionEngine();
 
-  const TargetData *getTargetData() const { return TD; }
-
+  /// create - This is the factory method for creating an execution engine which
+  /// is appropriate for the current machine.  This takes ownership of the
+  /// module provider.
+  static ExecutionEngine *create(ModuleProvider *MP,
+                                 bool ForceInterpreter = false,
+                                 std::string *ErrorStr = 0);
+  
+  /// create - This is the factory method for creating an execution engine which
+  /// is appropriate for the current machine.  This takes ownership of the
+  /// module.
+  static ExecutionEngine *create(Module *M);
+  
+  
   /// addModuleProvider - Add a ModuleProvider to the list of modules that we
   /// can JIT from.  Note that this takes ownership of the ModuleProvider: when
   /// the ExecutionEngine is destroyed, it destroys the MP as well.
   void addModuleProvider(ModuleProvider *P) {
     Modules.push_back(P);
   }
+  
+  //===----------------------------------------------------------------------===//
+
+  const TargetData *getTargetData() const { return TD; }
+
 
   /// removeModuleProvider - Remove a ModuleProvider from the list of modules.
   /// Release module from ModuleProvider.
@@ -111,18 +130,6 @@ public:
   /// defines FnName.  This is very slow operation and shouldn't be used for
   /// general code.
   Function *FindFunctionNamed(const char *FnName);
-  
-  /// create - This is the factory method for creating an execution engine which
-  /// is appropriate for the current machine.  This takes ownership of the
-  /// module provider.
-  static ExecutionEngine *create(ModuleProvider *MP,
-                                 bool ForceInterpreter = false,
-                                 std::string *ErrorStr = 0);
-
-  /// create - This is the factory method for creating an execution engine which
-  /// is appropriate for the current machine.  This takes ownership of the
-  /// module.
-  static ExecutionEngine *create(Module *M);
   
   /// runFunction - Execute the specified function with the specified arguments,
   /// and return the result.
@@ -233,6 +240,8 @@ public:
   }
 
 protected:
+  ExecutionEngine(ModuleProvider *P);
+
   void emitGlobals();
 
   // EmitGlobalVariable - This method emits the specified global variable to the

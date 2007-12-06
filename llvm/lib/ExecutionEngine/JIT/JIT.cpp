@@ -66,7 +66,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
   setTargetData(TM.getTargetData());
 
   // Initialize MCE
-  MCE = createEmitter(*this);
+  MCE = createEmitter(*this, 0);
 
   // Add target data
   MutexGuard locked(lock);
