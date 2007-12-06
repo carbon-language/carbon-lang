@@ -359,12 +359,13 @@ unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
 
 /// addFieldInfo - Assign field number to field FD.
 void CodeGenTypes::addFieldInfo(const FieldDecl *FD, unsigned No,
-                                unsigned Begin, unsigned End) {
+                                unsigned Begin, unsigned End,
+                                unsigned AccessNo) {
   if (Begin == 0 && End == 0)
     FieldInfo[FD] = No;
   else
     // FD is a bit field
-    BitFields.insert(std::make_pair(FD, BitFieldInfo(No, Begin, End)));
+    BitFields.insert(std::make_pair(FD, BitFieldInfo(No, Begin, End, AccessNo)));
 }
 
 /// getCGRecordLayout - Return record layout info for the given llvm::Type.
@@ -409,24 +410,52 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
       assert (isBitField  && "Invalid BitField size expression");
       uint64_t BitFieldSize =  FieldSize.getZExtValue();
       if (ExtraBits == 0) {
-        const llvm::Type *PrevTy = LLVMFields.back();
+        // CurrentField is a bit-field and structure is in one of the
+        // following form.
+        // struct { char CurrentField:2; char B:4; }
+        // struct { char A; char CurrentField:2; };
+        // struct { char A; short CurrentField:2; };
         const llvm::Type *Ty = CGT.ConvertType(FD->getType());
-        assert (CGT.getTargetData().getTypeSizeInBits(PrevTy) >=
-                CGT.getTargetData().getTypeSizeInBits(Ty) 
-                && "FIXME Unable to handle bit field. Reuse last field");
-                
         // Calculate extra bits available in this bitfield.
         ExtraBits = CGT.getTargetData().getTypeSizeInBits(Ty) - BitFieldSize;
-        addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
+
+        if (LLVMFields.empty()) 
+          // Ths is - struct { char CurrentField:2; char B:4; }
+          addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
+        else {
+          const llvm::Type *PrevTy = LLVMFields.back();
+          if (CGT.getTargetData().getTypeSizeInBits(PrevTy) >=
+              CGT.getTargetData().getTypeSizeInBits(Ty)) 
+            // This is - struct { char A; char CurrentField:2; };
+            addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
+          else {
+            // This is - struct { char A; short CurrentField:2; };
+            // Use one of the previous filed to access current field.
+            assert(0 
+                   && "Incomplete support for struct { char a; short b:2;}; ");
+          }
+        }
       } else  if (ExtraBits >= BitFieldSize) {
         // Reuse existing llvm field
         ExtraBits = ExtraBits  - BitFieldSize;
         CGT.addFieldInfo(FD, FieldNo, Cursor - CurrentFieldStart,
-                         ExtraBits);
+                         ExtraBits, FieldNo);
         Cursor = Cursor + BitFieldSize;
         ++FieldNo;
-      } else 
-        assert (!FD->isBitField() && "Bit fields are not yet supported");
+      } else {
+        //ExtraBits are not enough to hold entire FD.
+        const llvm::Type *Ty = CGT.ConvertType(FD->getType());
+        const llvm::Type *PrevTy = LLVMFields.back();
+        uint64_t TySize = CGT.getTargetData().getTypeSizeInBits(Ty);
+        if (CGT.getTargetData().getTypeSizeInBits(PrevTy) >= TySize) {
+          // Previous field does not allow sharing of ExtraBits. Use new field.
+          // struct { char a; char b:5; char c:4; } where c is current FD.
+          Cursor += ExtraBits;
+          ExtraBits = 0;
+          addLLVMField(Ty, TySize, FD, 0, BitFieldSize);
+        } else
+          assert (!FD->isBitField() && "Bit fields are not yet supported");
+      }
     } else {
       ExtraBits = 0;
       const llvm::Type *Ty = CGT.ConvertType(FD->getType());
@@ -465,7 +494,7 @@ void RecordOrganizer::addLLVMField(const llvm::Type *Ty, uint64_t Size,
   Cursor += Size;
   LLVMFields.push_back(Ty);
   if (FD)
-    CGT.addFieldInfo(FD, FieldNo, Begin, End);
+    CGT.addFieldInfo(FD, FieldNo, Begin, End, FieldNo);
   ++FieldNo;
 }
 
@@ -477,7 +506,7 @@ void RecordOrganizer::layoutUnionFields() {
   unsigned PrimaryEltNo = 0;
   std::pair<uint64_t, unsigned> PrimaryElt =
     CGT.getContext().getTypeInfo(FieldDecls[0]->getType(), SourceLocation());
-  CGT.addFieldInfo(FieldDecls[0], 0, 0, 0);
+  CGT.addFieldInfo(FieldDecls[0], 0, 0, 0, 0);
 
   unsigned Size = FieldDecls.size();
   for(unsigned i = 1; i != Size; ++i) {
@@ -495,7 +524,7 @@ void RecordOrganizer::layoutUnionFields() {
     }
 
     // In union, each field gets first slot.
-    CGT.addFieldInfo(FD, 0, 0, 0);
+    CGT.addFieldInfo(FD, 0, 0, 0, 0);
   }
 
   std::vector<const llvm::Type*> Fields;
