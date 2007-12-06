@@ -1485,6 +1485,20 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       // it and hope it will be easier to allocate for this li.
       if (isZeroLengthInterval(&LI))
         LI.weight = HUGE_VALF;
+      else {
+        bool isLoad = false;
+        if (li_->isReMaterializable(LI, isLoad)) {
+          // If all of the definitions of the interval are re-materializable,
+          // it is a preferred candidate for spilling. If non of the defs are
+          // loads, then it's potentially very cheap to re-materialize.
+          // FIXME: this gets much more complicated once we support non-trivial
+          // re-materialization.
+          if (isLoad)
+            LI.weight *= 0.9F;
+          else
+            LI.weight *= 0.5F;
+        }
+      }
 
       // Slightly prefer live interval that has been assigned a preferred reg.
       if (LI.preference)

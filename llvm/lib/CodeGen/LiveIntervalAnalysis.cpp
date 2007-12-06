@@ -607,12 +607,16 @@ LiveInterval LiveIntervals::createInterval(unsigned reg) {
 /// isReMaterializable - Returns true if the definition MI of the specified
 /// val# of the specified interval is re-materializable.
 bool LiveIntervals::isReMaterializable(const LiveInterval &li,
-                                       const VNInfo *ValNo, MachineInstr *MI) {
+                                       const VNInfo *ValNo, MachineInstr *MI,
+                                       bool &isLoad) {
   if (DisableReMat)
     return false;
 
-  if (tii_->isTriviallyReMaterializable(MI))
+  isLoad = false;
+  if (tii_->isTriviallyReMaterializable(MI)) {
+    isLoad = MI->getInstrDescriptor()->Flags & M_LOAD_FLAG;
     return true;
+  }
 
   int FrameIdx = 0;
   if (!tii_->isLoadFromStackSlot(MI, FrameIdx) ||
@@ -621,6 +625,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
 
   // This is a load from fixed stack slot. It can be rematerialized unless it's
   // re-defined by a two-address instruction.
+  isLoad = true;
   for (LiveInterval::const_vni_iterator i = li.vni_begin(), e = li.vni_end();
        i != e; ++i) {
     const VNInfo *VNI = *i;
@@ -631,8 +636,32 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
       continue; // Dead val#.
     MachineInstr *DefMI = (DefIdx == ~0u)
       ? NULL : getInstructionFromIndex(DefIdx);
-    if (DefMI && DefMI->isRegReDefinedByTwoAddr(li.reg))
+    if (DefMI && DefMI->isRegReDefinedByTwoAddr(li.reg)) {
+      isLoad = false;
       return false;
+    }
+  }
+  return true;
+}
+
+/// isReMaterializable - Returns true if every definition of MI of every
+/// val# of the specified interval is re-materializable.
+bool LiveIntervals::isReMaterializable(const LiveInterval &li, bool &isLoad) {
+  isLoad = false;
+  for (LiveInterval::const_vni_iterator i = li.vni_begin(), e = li.vni_end();
+       i != e; ++i) {
+    const VNInfo *VNI = *i;
+    unsigned DefIdx = VNI->def;
+    if (DefIdx == ~1U)
+      continue; // Dead val#.
+    // Is the def for the val# rematerializable?
+    if (DefIdx == ~0u)
+      return false;
+    MachineInstr *ReMatDefMI = getInstructionFromIndex(DefIdx);
+    bool DefIsLoad = false;
+    if (!ReMatDefMI || !isReMaterializable(li, VNI, ReMatDefMI, DefIsLoad))
+      return false;
+    isLoad |= DefIsLoad;
   }
   return true;
 }
@@ -1225,7 +1254,8 @@ addIntervalsForSpills(const LiveInterval &li,
     // Is the def for the val# rematerializable?
     MachineInstr *ReMatDefMI = (DefIdx == ~0u)
       ? 0 : getInstructionFromIndex(DefIdx);
-    if (ReMatDefMI && isReMaterializable(li, VNI, ReMatDefMI)) {
+    bool dummy;
+    if (ReMatDefMI && isReMaterializable(li, VNI, ReMatDefMI, dummy)) {
       // Remember how to remat the def of this val#.
       ReMatOrigDefs[VN] = ReMatDefMI;
       // Original def may be modified so we have to make a copy here. vrm must

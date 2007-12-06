@@ -233,6 +233,11 @@ namespace llvm {
     addIntervalsForSpills(const LiveInterval& i,
                           const LoopInfo *loopInfo, VirtRegMap& vrm);
 
+    /// isReMaterializable - Returns true if every definition of MI of every
+    /// val# of the specified interval is re-materializable. Also returns true
+    /// by reference if all of the defs are load instructions.
+    bool isReMaterializable(const LiveInterval &li, bool &isLoad);
+
   private:      
     /// computeIntervals - Compute live intervals.
     void computeIntervals();
@@ -265,9 +270,10 @@ namespace llvm {
                               LiveInterval &interval, bool isAlias = false);
 
     /// isReMaterializable - Returns true if the definition MI of the specified
-    /// val# of the specified interval is re-materializable.
+    /// val# of the specified interval is re-materializable. Also returns true
+    /// by reference if the def is a load.
     bool isReMaterializable(const LiveInterval &li, const VNInfo *ValNo,
-                            MachineInstr *MI);
+                            MachineInstr *MI, bool &isLoad);
 
     /// tryFoldMemoryOperand - Attempts to fold either a spill / restore from
     /// slot / to reg or any rematerialized load into ith operand of specified
