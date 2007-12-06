@@ -2134,12 +2134,6 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
 /// visitShiftByConstant - Handle transforms common to the three shifts, when
 /// the shift amount is a constant.
 SDOperand DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
-  // FIXME: disable this for now.  This pessimizes some common cases like:
-  //
-  //void foo(int *X, int i) { X[i & 1235] = 1; }
-  //int bar(int *X, int i) { return X[i & 255]; }
-  return SDOperand();
-  
   SDNode *LHS = N->getOperand(0).Val;
   if (!LHS->hasOneUse()) return SDOperand();
   
@@ -2168,6 +2162,19 @@ SDOperand DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
   // We require the RHS of the binop to be a constant as well.
   ConstantSDNode *BinOpCst = dyn_cast<ConstantSDNode>(LHS->getOperand(1));
   if (!BinOpCst) return SDOperand();
+  
+  
+  // FIXME: disable this for unless the input to the binop is a shift by a
+  // constant.  If it is not a shift, it pessimizes some common cases like:
+  //
+  //void foo(int *X, int i) { X[i & 1235] = 1; }
+  //int bar(int *X, int i) { return X[i & 255]; }
+  SDNode *BinOpLHSVal = LHS->getOperand(0).Val;
+  if ((BinOpLHSVal->getOpcode() != ISD::SHL && 
+       BinOpLHSVal->getOpcode() != ISD::SRA &&
+       BinOpLHSVal->getOpcode() != ISD::SRL) ||
+      !isa<ConstantSDNode>(BinOpLHSVal->getOperand(1)))
+    return SDOperand();
   
   MVT::ValueType VT = N->getValueType(0);
   
