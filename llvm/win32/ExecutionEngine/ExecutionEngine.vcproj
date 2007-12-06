@@ -335,11 +335,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\ExecutionEngine\JIT.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\ExecutionEngine\Jit\JIT.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\lib\ExecutionEngine\Jit\JITEmitter.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\ExecutionEngine\JIT\JITMemoryManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\ExecutionEngine\JITMemoryManager.h"
 				>
 			</File>
 			<File

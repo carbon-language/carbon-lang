@@ -16,6 +16,7 @@
 #include "llvm/System/Memory.h"
 #include <map>
 #include <vector>
+#include <cassert>
 using namespace llvm;
 
 
