@@ -2396,6 +2396,10 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType VT0 = N0.getValueType();
 
+
+  // Some targets have SETCC types bigger than 1 bit, but do not set all the
+  // bits to 1; identified by getSetCCResultContents.  Watch out for these.
+
   // fold select C, X, X -> X
   if (N1 == N2)
     return N1;
@@ -2420,14 +2424,22 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
     return DAG.getNode(ISD::TRUNCATE, VT, XORNode);
   }
   // fold select C, 0, X -> ~C & X
-  if (VT == VT0 && N1C && N1C->isNullValue()) {
-    SDOperand XORNode = DAG.getNode(ISD::XOR, VT, N0, DAG.getConstant(1, VT));
+  if (VT == VT0 && N1C && N1C->isNullValue() &&
+      (N0.Val->getOpcode()!=ISD::SETCC || VT==MVT::i1 ||
+       TLI.getSetCCResultContents()==
+          TargetLowering::ZeroOrNegativeOneSetCCResult)) {
+    SDOperand XORNode;
+    XORNode = DAG.getNode(ISD::XOR, VT, N0, DAG.getConstant(~0UL, VT));
     AddToWorkList(XORNode.Val);
     return DAG.getNode(ISD::AND, VT, XORNode, N2);
   }
   // fold select C, X, 1 -> ~C | X
-  if (VT == VT0 && N2C && N2C->getValue() == 1) {
-    SDOperand XORNode = DAG.getNode(ISD::XOR, VT, N0, DAG.getConstant(1, VT));
+  if (VT == VT0 && N2C && N2C->getValue() == 1 &&
+      (N0.Val->getOpcode()!=ISD::SETCC || VT==MVT::i1 ||
+       TLI.getSetCCResultContents()==
+          TargetLowering::ZeroOrNegativeOneSetCCResult)) {
+    SDOperand XORNode;
+    XORNode = DAG.getNode(ISD::XOR, VT, N0, DAG.getConstant(~0UL, VT));
     AddToWorkList(XORNode.Val);
     return DAG.getNode(ISD::OR, VT, XORNode, N1);
   }
