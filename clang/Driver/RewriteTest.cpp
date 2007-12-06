@@ -1419,8 +1419,8 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     
   // Now do the "normal" pointer to function cast.
   QualType castType = Context->getFunctionType(returnType, 
-                                               &ArgTypes[0], ArgTypes.size(),
-                                               Exp->getMethodDecl()->isVariadic());
+    &ArgTypes[0], ArgTypes.size(),
+    Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : false);
   castType = Context->getPointerType(castType);
   cast = new CastExpr(castType, cast, SourceLocation());
 
@@ -1444,8 +1444,8 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
                         SourceLocation());
     // Now do the "normal" pointer to function cast.
     castType = Context->getFunctionType(returnType, 
-                                        &ArgTypes[0], ArgTypes.size(),
-                                        Exp->getMethodDecl()->isVariadic());
+      &ArgTypes[0], ArgTypes.size(),
+      Exp->getMethodDecl() ? Exp->getMethodDecl()->isVariadic() : false);
     castType = Context->getPointerType(castType);
     cast = new CastExpr(castType, cast, SourceLocation());
     

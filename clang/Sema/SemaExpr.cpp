@@ -2242,10 +2242,6 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
       returnType = Context.getObjcIdType();
-      // Must have a dummy method declaration, so clients work as expected
-      Method = new ObjcMethodDecl(SourceLocation(), SourceLocation(), Sel, 
-                                  returnType, ClassDecl, 0, -1, 0, true, false, 
-                                  ObjcMethodDecl::None);
     } else {
       returnType = Method->getResultType();
       if (Sel.getNumArgs())
