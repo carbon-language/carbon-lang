@@ -5872,7 +5872,22 @@ Instruction *InstCombiner::visitLShr(BinaryOperator &I) {
 }
 
 Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
-  return commonShiftTransforms(I);
+  if (Instruction *R = commonShiftTransforms(I))
+    return R;
+  
+  Value *Op0 = I.getOperand(0);
+  
+  // ashr int -1, X = -1   (for any arithmetic shift rights of ~0)
+  if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0))
+    if (CSI->isAllOnesValue())
+      return ReplaceInstUsesWith(I, CSI);
+  
+  // See if we can turn a signed shr into an unsigned shr.
+  if (MaskedValueIsZero(Op0, 
+                      APInt::getSignBit(I.getType()->getPrimitiveSizeInBits())))
+    return BinaryOperator::createLShr(Op0, I.getOperand(1));
+  
+  return 0;
 }
 
 Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
@@ -5898,25 +5913,11 @@ Instruction *InstCombiner::commonShiftTransforms(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
   }
 
-  // ashr int -1, X = -1   (for any arithmetic shift rights of ~0)
-  if (I.getOpcode() == Instruction::AShr)
-    if (ConstantInt *CSI = dyn_cast<ConstantInt>(Op0))
-      if (CSI->isAllOnesValue())
-        return ReplaceInstUsesWith(I, CSI);
-
   // Try to fold constant and into select arguments.
   if (isa<Constant>(Op0))
     if (SelectInst *SI = dyn_cast<SelectInst>(Op1))
       if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
-
-  // See if we can turn a signed shr into an unsigned shr.
-  if (I.isArithmeticShift()) {
-    if (MaskedValueIsZero(Op0, 
-          APInt::getSignBit(I.getType()->getPrimitiveSizeInBits()))) {
-      return BinaryOperator::createLShr(Op0, Op1, I.getName());
-    }
-  }
 
   if (ConstantInt *CUI = dyn_cast<ConstantInt>(Op1))
     if (Instruction *Res = FoldShiftByConstant(Op0, CUI, I))
