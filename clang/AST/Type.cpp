@@ -579,7 +579,7 @@ bool RecordType::classof(const Type *T) {
 //===----------------------------------------------------------------------===//
 
 void QualType::dump(const char *msg) const {
-  std::string R = "foo";
+  std::string R = "identifier";
   getAsStringInternal(R);
   if (msg)
     fprintf(stderr, "%s: %s\n", msg, R.c_str());
