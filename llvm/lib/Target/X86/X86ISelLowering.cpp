@@ -2462,7 +2462,7 @@ bool X86::isUNPCKH_v_undef_Mask(SDNode *N) {
 /// specifies a shuffle of elements that is suitable for input to MOVSS,
 /// MOVSD, and MOVD, i.e. setting the lowest element.
 static bool isMOVLMask(const SDOperand *Elts, unsigned NumElts) {
-  if (NumElts != 2 && NumElts != 4 && NumElts != 8 && NumElts != 16)
+  if (NumElts != 2 && NumElts != 4)
     return false;
 
   if (!isUndefOrEqual(Elts[0], NumElts))

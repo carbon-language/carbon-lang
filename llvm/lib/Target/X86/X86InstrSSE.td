@@ -2734,12 +2734,6 @@ let Predicates = [HasSSE2] in {
 // Move scalar to XMM zero-extended
 // movd to XMM register zero-extends
 let AddedComplexity = 15 in {
-def : Pat<(v8i16 (vector_shuffle immAllZerosV_bc,
-                  (v8i16 (X86s2vec GR32:$src)), MOVL_shuffle_mask)),
-          (MOVZDI2PDIrr GR32:$src)>, Requires<[HasSSE2]>;
-def : Pat<(v16i8 (vector_shuffle immAllZerosV_bc,
-                  (v16i8 (X86s2vec GR32:$src)), MOVL_shuffle_mask)),
-          (MOVZDI2PDIrr GR32:$src)>, Requires<[HasSSE2]>;
 // Zeroing a VR128 then do a MOVS{S|D} to the lower bits.
 def : Pat<(v2f64 (vector_shuffle immAllZerosV_bc,
                   (v2f64 (scalar_to_vector FR64:$src)), MOVL_shuffle_mask)),
