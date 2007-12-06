@@ -108,6 +108,14 @@ public:
   /// is appropriate for the current machine.  This takes ownership of the
   /// module.
   static ExecutionEngine *create(Module *M);
+
+  /// createJIT - This is the factory method for creating a JIT for the current
+  /// machine, it does not fall back to the interpreter.  This takes ownership
+  /// of the ModuleProvider and JITMemoryManager if successful.
+  static ExecutionEngine *createJIT(ModuleProvider *MP,
+                                    std::string *ErrorStr = 0,
+                                    JITMemoryManager *JMM = 0);
+  
   
   
   /// addModuleProvider - Add a ModuleProvider to the list of modules that we

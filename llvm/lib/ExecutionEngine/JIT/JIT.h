@@ -56,7 +56,8 @@ class JIT : public ExecutionEngine {
 
   JITState jitstate;
 
-  JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji);
+  JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji, 
+      JITMemoryManager *JMM);
 public:
   ~JIT();
 
@@ -71,7 +72,9 @@ public:
   /// create - Create an return a new JIT compiler if there is one available
   /// for the current target.  Otherwise, return null.
   ///
-  static ExecutionEngine *create(ModuleProvider *MP, std::string* = 0);
+  static ExecutionEngine *create(ModuleProvider *MP, std::string *Err) {
+    return createJIT(MP, Err, 0);
+  }
 
   /// run - Start execution with the specified function and arguments.
   ///
@@ -120,6 +123,10 @@ public:
 
   /// getCodeEmitter - Return the code emitter this JIT is emitting into.
   MachineCodeEmitter *getCodeEmitter() const { return MCE; }
+  
+  static ExecutionEngine *createJIT(ModuleProvider *MP, std::string *Err,
+                                    JITMemoryManager *JMM);
+  
 private:
   static MachineCodeEmitter *createEmitter(JIT &J, JITMemoryManager *JMM);
   void runJITOnFunction (Function *F);

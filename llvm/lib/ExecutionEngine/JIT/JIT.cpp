@@ -61,12 +61,29 @@ namespace llvm {
   }
 }
 
-JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
+/// createJIT - This is the factory method for creating a JIT for the current
+/// machine, it does not fall back to the interpreter.  This takes ownership
+/// of the module provider.
+ExecutionEngine *ExecutionEngine::createJIT(ModuleProvider *MP,
+                                            std::string *ErrorStr,
+                                            JITMemoryManager *JMM) {
+  ExecutionEngine *EE = JIT::createJIT(MP, ErrorStr, JMM);
+  if (!EE) return 0;
+  
+  
+  // Make sure we can resolve symbols in the program as well. The zero arg
+  // to the function tells DynamicLibrary to load the program, not a library.
+  sys::DynamicLibrary::LoadLibraryPermanently(0, ErrorStr);
+  return EE;
+}
+
+JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji,
+         JITMemoryManager *JMM)
   : ExecutionEngine(MP), TM(tm), TJI(tji), jitstate(MP) {
   setTargetData(TM.getTargetData());
 
   // Initialize MCE
-  MCE = createEmitter(*this, 0);
+  MCE = createEmitter(*this, JMM);
 
   // Add target data
   MutexGuard locked(lock);

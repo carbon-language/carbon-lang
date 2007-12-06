@@ -36,10 +36,11 @@ MAttrs("mattr",
   cl::desc("Target specific attributes (-mattr=help for details)"),
   cl::value_desc("a1,+a2,-a3,..."));
 
-/// create - Create an return a new JIT compiler if there is one available
-/// for the current target.  Otherwise, return null.
+/// createInternal - Create an return a new JIT compiler if there is one
+/// available for the current target.  Otherwise, return null.
 ///
-ExecutionEngine *JIT::create(ModuleProvider *MP, std::string *ErrorStr) {
+ExecutionEngine *JIT::createJIT(ModuleProvider *MP, std::string *ErrorStr,
+                                JITMemoryManager *JMM) {
   const TargetMachineRegistry::entry *TheArch = MArch;
   if (TheArch == 0) {
     std::string Error;
@@ -71,7 +72,7 @@ ExecutionEngine *JIT::create(ModuleProvider *MP, std::string *ErrorStr) {
 
   // If the target supports JIT code generation, return a new JIT now.
   if (TargetJITInfo *TJ = Target->getJITInfo())
-    return new JIT(MP, *Target, *TJ);
+    return new JIT(MP, *Target, *TJ, JMM);
 
   if (ErrorStr)
     *ErrorStr = "target does not support JIT code generation";
