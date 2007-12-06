@@ -6082,9 +6082,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         // the constant which would cause it to be modified for this
         // operation.
         //
-        if (isValid && !isLeftShift && I.getOpcode() == Instruction::AShr) {
+        if (isValid && I.getOpcode() == Instruction::AShr)
           isValid = Op0C->getValue()[TypeBits-1] == highBitSet;
-        }
         
         if (isValid) {
           Constant *NewRHS = ConstantExpr::get(I.getOpcode(), Op0C, Op1);
