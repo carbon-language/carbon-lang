@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llc -march=x86 -stats |& \
-; RUN:   grep {2 .*folded into instructions}
+; RUN:   grep {1 .*folded into instructions}
 ; RUN: llvm-as < %s | llc -march=x86 | grep cmp | count 3
 
 	%struct.quad_struct = type { i32, i32, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct*, %struct.quad_struct* }

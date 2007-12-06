@@ -42,7 +42,7 @@ namespace {
                               cl::init(false), cl::Hidden);
 
   cl::opt<bool> SplitAtBB("split-intervals-at-bb", 
-                          cl::init(false), cl::Hidden);
+                          cl::init(true), cl::Hidden);
   cl::opt<int> SplitLimit("split-limit",
                           cl::init(-1), cl::Hidden);
 }
