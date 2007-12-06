@@ -9,22 +9,6 @@
 //
 // This pass combines dag nodes to form fewer, simpler DAG nodes.  It can be run
 // both before and after the DAG is legalized.
-//
-// FIXME: Missing folds
-// sdiv, udiv, srem, urem (X, const) where X is an integer can be expanded into
-//  a sequence of multiplies, shifts, and adds.  This should be controlled by
-//  some kind of hint from the target that int div is expensive.
-// various folds of mulh[s,u] by constants such as -1, powers of 2, etc.
-//
-// FIXME: select C, pow2, pow2 -> something smart
-// FIXME: trunc(select X, Y, Z) -> select X, trunc(Y), trunc(Z)
-// FIXME: Dead stores -> nuke
-// FIXME: shr X, (and Y,31) -> shr X, Y   (TRICKY!)
-// FIXME: mul (x, const) -> shifts + adds
-// FIXME: undef values
-// FIXME: divide by zero is currently left unfolded.  do we want to turn this
-//        into an undef?
-// FIXME: select ne (select cc, 1, 0), 0, true, false -> select cc, true, false
 // 
 //===----------------------------------------------------------------------===//
 
@@ -280,6 +264,8 @@ namespace {
     SDOperand XformToShuffleWithZero(SDNode *N);
     SDOperand ReassociateOps(unsigned Opc, SDOperand LHS, SDOperand RHS);
     
+    SDOperand visitShiftByConstant(SDNode *N, unsigned Amt);
+
     bool SimplifySelectOps(SDNode *SELECT, SDOperand LHS, SDOperand RHS);
     SDOperand SimplifyBinOpWithSameOpcodeHands(SDNode *N);
     SDOperand SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2);
@@ -2145,6 +2131,64 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   return SDOperand();
 }
 
+/// visitShiftByConstant - Handle transforms common to the three shifts, when
+/// the shift amount is a constant.
+SDOperand DAGCombiner::visitShiftByConstant(SDNode *N, unsigned Amt) {
+  SDNode *LHS = N->getOperand(0).Val;
+  if (!LHS->hasOneUse()) return SDOperand();
+  
+  // We want to pull some binops through shifts, so that we have (and (shift))
+  // instead of (shift (and)), likewise for add, or, xor, etc.  This sort of
+  // thing happens with address calculations, so it's important to canonicalize
+  // it.
+  bool HighBitSet = false;  // Can we transform this if the high bit is set?
+  
+  switch (LHS->getOpcode()) {
+  default: return SDOperand();
+  case ISD::OR:
+  case ISD::XOR:
+    HighBitSet = false; // We can only transform sra if the high bit is clear.
+    break;
+  case ISD::AND:
+    HighBitSet = true;  // We can only transform sra if the high bit is set.
+    break;
+  case ISD::ADD:
+    if (N->getOpcode() != ISD::SHL) 
+      return SDOperand(); // only shl(add) not sr[al](add).
+    HighBitSet = false; // We can only transform sra if the high bit is clear.
+    break;
+  }
+  
+  // We require the RHS of the binop to be a constant as well.
+  ConstantSDNode *BinOpCst = dyn_cast<ConstantSDNode>(LHS->getOperand(1));
+  if (!BinOpCst) return SDOperand();
+  
+  MVT::ValueType VT = N->getValueType(0);
+  
+  // If this is a signed shift right, and the high bit is modified
+  // by the logical operation, do not perform the transformation.
+  // The highBitSet boolean indicates the value of the high bit of
+  // the constant which would cause it to be modified for this
+  // operation.
+  if (N->getOpcode() == ISD::SRA) {
+    uint64_t BinOpRHSSign = BinOpCst->getValue() >> MVT::getSizeInBits(VT)-1;
+    if ((bool)BinOpRHSSign != HighBitSet)
+      return SDOperand();
+  }
+  
+  // Fold the constants, shifting the binop RHS by the shift amount.
+  SDOperand NewRHS = DAG.getNode(N->getOpcode(), N->getValueType(0),
+                                 LHS->getOperand(1), N->getOperand(1));
+
+  // Create the new shift.
+  SDOperand NewShift = DAG.getNode(N->getOpcode(), VT, LHS->getOperand(0),
+                                   N->getOperand(1));
+
+  // Create the new binop.
+  return DAG.getNode(LHS->getOpcode(), VT, NewShift, NewRHS);
+}
+
+
 SDOperand DAGCombiner::visitSHL(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
@@ -2199,7 +2243,8 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   if (N1C && N0.getOpcode() == ISD::SRA && N1 == N0.getOperand(1))
     return DAG.getNode(ISD::AND, VT, N0.getOperand(0),
                        DAG.getConstant(~0ULL << N1C->getValue(), VT));
-  return SDOperand();
+  
+  return N1C ? visitShiftByConstant(N, N1C->getValue()) : SDOperand();
 }
 
 SDOperand DAGCombiner::visitSRA(SDNode *N) {
@@ -2259,7 +2304,8 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
   // If the sign bit is known to be zero, switch this to a SRL.
   if (DAG.MaskedValueIsZero(N0, MVT::getIntVTSignBit(VT)))
     return DAG.getNode(ISD::SRL, VT, N0, N1);
-  return SDOperand();
+
+  return N1C ? visitShiftByConstant(N, N1C->getValue()) : SDOperand();
 }
 
 SDOperand DAGCombiner::visitSRL(SDNode *N) {
@@ -2353,7 +2399,7 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
   if (N1C && SimplifyDemandedBits(SDOperand(N, 0)))
     return SDOperand(N, 0);
   
-  return SDOperand();
+  return N1C ? visitShiftByConstant(N, N1C->getValue()) : SDOperand();
 }
 
 SDOperand DAGCombiner::visitCTLZ(SDNode *N) {
