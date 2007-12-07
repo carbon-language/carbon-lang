@@ -453,6 +453,9 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
   int maxElementsAtThisLevel = 0;
   int nInitsAtLevel = 0;
 
+  if (ElementType->isRecordType()) // FIXME: until we support structures...
+    return;
+    
   if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
     // We have a constant array type, compute maxElements *at this level*.
     maxElementsAtThisLevel = CAT->getMaximumElements();
