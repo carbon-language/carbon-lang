@@ -52,6 +52,11 @@ namespace {
                 cl::desc("Use new coalescer heuristic"),
                 cl::init(false));
 
+  static cl::opt<bool>
+  ReMatSpillWeight("tweak-remat-spill-weight",
+                   cl::desc("Tweak spill weight of re-materializable intervals"),
+                   cl::init(true));
+
   RegisterPass<SimpleRegisterCoalescing> 
   X("simple-register-coalescing", "Simple Register Coalescing");
 
@@ -1487,7 +1492,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
         LI.weight = HUGE_VALF;
       else {
         bool isLoad = false;
-        if (li_->isReMaterializable(LI, isLoad)) {
+        if (ReMatSpillWeight && li_->isReMaterializable(LI, isLoad)) {
           // If all of the definitions of the interval are re-materializable,
           // it is a preferred candidate for spilling. If non of the defs are
           // loads, then it's potentially very cheap to re-materialize.
