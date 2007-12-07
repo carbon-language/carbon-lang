@@ -135,6 +135,10 @@ namespace llvm {
   /// for the Sparc.
   FunctionPass *getRegisterAllocator(TargetMachine &T);
 
+  /// createMachineLICMPass - This pass performs LICM on machine instructions.
+  /// 
+  FunctionPass *createMachineLICMPass();
+
 } // End llvm namespace
 
 #endif

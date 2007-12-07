@@ -66,7 +66,9 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   // Print the instruction selected machine code...
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
-  
+
+  PM.add(createMachineLICMPass());
+
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());
   
@@ -92,7 +94,7 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (!Fast)
     PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
-    
+
   // Fold redundant debug labels.
   PM.add(createDebugLabelFoldingPass());
   
@@ -175,7 +177,9 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   // Print the instruction selected machine code...
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
-  
+
+  PM.add(createMachineLICMPass());
+
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());
   
@@ -204,7 +208,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (!Fast)
     PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
-  
+
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 

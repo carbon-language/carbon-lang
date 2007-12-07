@@ -684,12 +684,15 @@ def MULLI  : DForm_2< 7, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
 def SUBFIC : DForm_2< 8, (outs GPRC:$rD), (ins GPRC:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm", IntGeneral,
                      [(set GPRC:$rD, (subc immSExt16:$imm, GPRC:$rA))]>;
-def LI  : DForm_2_r0<14, (outs GPRC:$rD), (ins symbolLo:$imm),
-                     "li $rD, $imm", IntGeneral,
-                     [(set GPRC:$rD, immSExt16:$imm)]>;
-def LIS : DForm_2_r0<15, (outs GPRC:$rD), (ins symbolHi:$imm),
-                     "lis $rD, $imm", IntGeneral,
-                     [(set GPRC:$rD, imm16ShiftedSExt:$imm)]>;
+
+let isReMaterializable = 1 in {
+  def LI  : DForm_2_r0<14, (outs GPRC:$rD), (ins symbolLo:$imm),
+                       "li $rD, $imm", IntGeneral,
+                       [(set GPRC:$rD, immSExt16:$imm)]>;
+  def LIS : DForm_2_r0<15, (outs GPRC:$rD), (ins symbolHi:$imm),
+                       "lis $rD, $imm", IntGeneral,
+                       [(set GPRC:$rD, imm16ShiftedSExt:$imm)]>;
+}
 }
 
 let PPC970_Unit = 1 in {  // FXU Operations.
