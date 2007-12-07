@@ -1648,8 +1648,11 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
     if (RCDecl && ObjcSynthesizedStructs.count(RCDecl)) {
       Result = "\n    struct ";
       Result += RCDecl->getName();
-      Result += " _";
-      Result += RCDecl->getName();
+	  // Note: We don't name the field decl. This simplifies the "codegen" for
+	  // accessing a superclasses instance variables (and is similar to what gcc
+	  // does internally). The unnamed struct field feature is enabled with
+	  // -fms-extensions. If the struct definition were "inlined", we wouldn't
+	  // need to use this switch. That said, I don't want to inline the def.
       Result += ";\n";
       
       // insert the super class structure definition.
@@ -1692,8 +1695,11 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
     Result += " {\n    struct ";
     Result += RCDecl->getName();
-    Result += " _";
-    Result += RCDecl->getName();
+	// Note: We don't name the field decl. This simplifies the "codegen" for
+	// accessing a superclasses instance variables (and is similar to what gcc
+	// does internally). The unnamed struct field feature is enabled with
+	// -fms-extensions. If the struct definition were "inlined", we wouldn't
+	// need to use this switch. That said, I don't want to inline the def.
     Result += ";\n};\n";
     Rewrite.ReplaceText(LocStart, endBuf-startBuf, 
                         Result.c_str(), Result.size());
