@@ -50,6 +50,7 @@ namespace {
     FunctionDecl *GetMetaClassFunctionDecl;
     FunctionDecl *SelGetUidFunctionDecl;
     FunctionDecl *CFStringFunctionDecl;
+    FunctionDecl *GetProtocolFunctionDecl;
       
     // ObjC string constant support.
     FileVarDecl *ConstantStringClassReference;
@@ -73,6 +74,7 @@ namespace {
       GetMetaClassFunctionDecl = 0;
       SelGetUidFunctionDecl = 0;
       CFStringFunctionDecl = 0;
+      GetProtocolFunctionDecl = 0;
       ConstantStringClassReference = 0;
       NSStringRecord = 0;
       CurMethodDecl = 0;
@@ -89,10 +91,15 @@ namespace {
       // declaring objc_selector outside the parameter list removes a silly
       // scope related warning...
       const char *s = "struct objc_selector; struct objc_class;\n"
-					  "#ifndef OBJC_SUPER\n"
-					  "struct objc_super { struct objc_object *o; struct objc_object *superClass; };\n"
-					  "#define OBJC_SUPER\n"
-					  "#endif\n"
+                      "#ifndef OBJC_SUPER\n"
+                      "struct objc_super { struct objc_object *o; "
+                      "struct objc_object *superClass; };\n"
+                      "#define OBJC_SUPER\n"
+                      "#endif\n"
+                      "#ifndef _REWRITER_typedef_Protocol\n"
+                      "typedef struct objc_object Protocol;\n"
+                      "#define _REWRITER_typedef_Protocol\n"
+                      "#endif\n"
                       "extern struct objc_object *objc_msgSend"
                       "(struct objc_object *, struct objc_selector *, ...);\n"
                       "extern struct objc_object *objc_msgSendSuper"
@@ -113,6 +120,7 @@ namespace {
                       "extern struct objc_object *objc_exception_extract(void *);\n"
                       "extern int objc_exception_match"
                       "(struct objc_class *, struct objc_object *, ...);\n"
+                      "extern Protocol *objc_getProtocol(const char *);\n"
                       "#include <objc/objc.h>\n";
 
       Rewrite.InsertText(SourceLocation::getFileLoc(mainFileID, 0), 
@@ -152,6 +160,7 @@ namespace {
     Stmt *RewriteAtSelector(ObjCSelectorExpr *Exp);
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
+    Stmt *RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp);
     Stmt *RewriteObjcTryStmt(ObjcAtTryStmt *S);
     Stmt *RewriteObjcCatchStmt(ObjcAtCatchStmt *S);
     Stmt *RewriteObjcFinallyStmt(ObjcAtFinallyStmt *S);
@@ -167,6 +176,7 @@ namespace {
     void SynthGetMetaClassFunctionDecl();
     void SynthCFStringFunctionDecl();
     void SynthSelGetUidFunctionDecl();
+    void SynthGetProtocolFunctionDecl();
       
     // Metadata emission.
     void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
@@ -708,6 +718,9 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
 
   if (ObjcAtThrowStmt *StmtThrow = dyn_cast<ObjcAtThrowStmt>(S))
     return RewriteObjcThrowStmt(StmtThrow);
+  
+  if (ObjCProtocolExpr *ProtocolExp = dyn_cast<ObjCProtocolExpr>(S))
+    return RewriteObjCProtocolExpr(ProtocolExp);
 #if 0
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
     CastExpr *Replacement = new CastExpr(ICE->getType(), ICE->getSubExpr(), SourceLocation());
@@ -1034,6 +1047,20 @@ void RewriteTest::SynthSelGetUidFunctionDecl() {
   SelGetUidFunctionDecl = new FunctionDecl(SourceLocation(), 
                                            SelGetUidIdent, getFuncType,
                                            FunctionDecl::Extern, false, 0);
+}
+
+// SynthGetProtocolFunctionDecl - Protocol objc_getProtocol(const char *proto);
+void RewriteTest::SynthGetProtocolFunctionDecl() {
+  IdentifierInfo *SelGetProtoIdent = &Context->Idents.get("objc_getProtocol");
+  llvm::SmallVector<QualType, 16> ArgTys;
+  ArgTys.push_back(Context->getPointerType(
+    Context->CharTy.getQualifiedType(QualType::Const)));
+  QualType getFuncType = Context->getFunctionType(Context->getObjcProtoType(),
+                                                  &ArgTys[0], ArgTys.size(),
+                                                  false /*isVariadic*/);
+  GetProtocolFunctionDecl = new FunctionDecl(SourceLocation(), 
+                                             SelGetProtoIdent, getFuncType,
+                                             FunctionDecl::Extern, false, 0);
 }
 
 void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
@@ -1553,6 +1580,27 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   
   delete Exp;
   return CE;
+}
+
+/// RewriteObjCProtocolExpr - Rewrite a protocol expression into
+/// call to objc_getProtocol("proto-name").
+Stmt *RewriteTest::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
+  if (!GetProtocolFunctionDecl)
+    SynthGetProtocolFunctionDecl();
+  // Create a call to objc_getProtocol("ProtocolName").
+  llvm::SmallVector<Expr*, 8> ProtoExprs;
+  QualType argType = Context->getPointerType(Context->CharTy);
+  ProtoExprs.push_back(new StringLiteral(Exp->getProtocol()->getName(),
+                                       strlen(Exp->getProtocol()->getName()),
+                                       false, argType, SourceLocation(),
+                                       SourceLocation()));
+  CallExpr *ProtoExp = SynthesizeCallToFunctionDecl(GetProtocolFunctionDecl,
+                                                    &ProtoExprs[0], 
+                                                    ProtoExprs.size());
+  Rewrite.ReplaceStmt(Exp, ProtoExp);
+  delete Exp;
+  return ProtoExp;
+  
 }
 
 /// SynthesizeObjcInternalStruct - Rewrite one internal struct corresponding to
