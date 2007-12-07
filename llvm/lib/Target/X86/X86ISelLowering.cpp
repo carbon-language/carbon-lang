@@ -2758,6 +2758,8 @@ static SDOperand CommuteVectorShuffle(SDOperand Op, SDOperand &V1,
   return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, V1, V2, Mask);
 }
 
+/// CommuteVectorShuffleMask - Change values in a shuffle permute mask assuming
+/// the two vector operands have swapped position.
 static
 SDOperand CommuteVectorShuffleMask(SDOperand Mask, SelectionDAG &DAG) {
   MVT::ValueType MaskVT = Mask.getValueType();
