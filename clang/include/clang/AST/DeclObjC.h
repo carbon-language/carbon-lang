@@ -283,6 +283,9 @@ public:
   ObjcMethodDecl** getClassMethods() const { return ClassMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
   
+  ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
+  ObjcMethodDecl *lookupClassMethod(Selector &Sel);
+  
   bool isForwardDecl() const { return isForwardProtoDecl; }
   void setForwardDecl(bool val) { isForwardProtoDecl = val; }
 

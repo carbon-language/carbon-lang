@@ -2232,14 +2232,32 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
         static_cast<PointerType*>(receiverType.getTypePtr());
       receiverType = pointerType->getPointeeType();
     }
-    assert(ObjcInterfaceType::classof(receiverType.getTypePtr()) &&
-           "bad receiver type");
-    ObjcInterfaceDecl* ClassDecl = static_cast<ObjcInterfaceType*>(
-                                     receiverType.getTypePtr())->getDecl();
-    // FIXME: consider using InstanceMethodPool, since it will be faster
-    // than the following method (which can do *many* linear searches). The
-    // idea is to add class info to InstanceMethodPool...
-    Method = ClassDecl->lookupInstanceMethod(Sel);
+    ObjcInterfaceDecl* ClassDecl;
+    if (ObjcQualifiedInterfaceType *QIT = 
+        dyn_cast<ObjcQualifiedInterfaceType>(receiverType)) {
+      ObjcInterfaceType * OITypePtr = QIT->getInterfaceType();
+      
+      ClassDecl = OITypePtr->getDecl();
+      Method = ClassDecl->lookupInstanceMethod(Sel);
+      if (!Method) {
+        // search protocols
+        for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
+          ObjcProtocolDecl *PDecl = QIT->getProtocols(i);
+          if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
+            break;
+        }
+      }
+    }
+    else {
+      assert(ObjcInterfaceType::classof(receiverType.getTypePtr()) &&
+             "bad receiver type");
+      ClassDecl = static_cast<ObjcInterfaceType*>(
+                    receiverType.getTypePtr())->getDecl();
+      // FIXME: consider using InstanceMethodPool, since it will be faster
+      // than the following method (which can do *many* linear searches). The
+      // idea is to add class info to InstanceMethodPool...
+      Method = ClassDecl->lookupInstanceMethod(Sel);
+    }
     if (!Method) {
       // If we have an implementation in scope, check "private" methods.
       if (ObjcImplementationDecl *ImpDecl = 

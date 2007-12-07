@@ -543,3 +543,45 @@ ObjcMethodDecl *ObjcCategoryImplDecl::lookupClassMethod(Selector &Sel) {
   }
   return NULL;
 }
+
+// lookupInstanceMethod - Lookup a instance method in the protocol and protocols
+// it inherited.
+ObjcMethodDecl *ObjcProtocolDecl::lookupInstanceMethod(Selector &Sel) {
+  ObjcMethodDecl *const*methods = getInstanceMethods();
+  int methodCount = getNumInstanceMethods();
+  for (int i = 0; i < methodCount; ++i) {
+    if (methods[i]->getSelector() == Sel) {
+      return methods[i];
+    }
+  }
+  if (getNumReferencedProtocols() > 0) {
+    ObjcProtocolDecl **RefPDecl = getReferencedProtocols();
+    
+    for (int i = 0; i < getNumReferencedProtocols(); i++) {
+      if (ObjcMethodDecl *Method = RefPDecl[i]->lookupInstanceMethod(Sel))
+        return Method;
+    }
+  }
+  return NULL;
+}
+
+// lookupInstanceMethod - Lookup a class method in the protocol and protocols
+// it inherited.
+ObjcMethodDecl *ObjcProtocolDecl::lookupClassMethod(Selector &Sel) {
+  ObjcMethodDecl *const*methods = getClassMethods();
+  int methodCount = getNumClassMethods();
+  for (int i = 0; i < methodCount; ++i) {
+    if (methods[i]->getSelector() == Sel) {
+      return methods[i];
+    }
+  }
+  if (getNumReferencedProtocols() > 0) {
+    ObjcProtocolDecl **RefPDecl = getReferencedProtocols();
+    
+    for (int i = 0; i < getNumReferencedProtocols(); i++) {
+      if (ObjcMethodDecl *Method = RefPDecl[i]->lookupClassMethod(Sel))
+        return Method;
+    }
+  }
+  return NULL;
+}

@@ -1446,6 +1446,10 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
                                SourceLocation());
       MsgExprs.push_back(Unop);
     } else {
+      // Remove all type-casts because it may contain objc-style types; e.g.
+      // Foo<Proto> *.
+      while (CastExpr *CE = dyn_cast<CastExpr>(recExpr))
+        recExpr = CE->getSubExpr();
       recExpr = new CastExpr(Context->getObjcIdType(), recExpr, SourceLocation());
       MsgExprs.push_back(recExpr);
     }
