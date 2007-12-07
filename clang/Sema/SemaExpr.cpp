@@ -2245,6 +2245,10 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
       if (ObjcImplementationDecl *ImpDecl = 
             ObjcImplementations[ClassDecl->getIdentifier()])
         Method = ImpDecl->lookupInstanceMethod(Sel);
+	  // If we still haven't found a method, look in the global pool. 
+	  // I am not fond of this behavior, however we conform to what gcc does.
+	  if (!Method)
+	    Method = InstanceMethodPool[Sel].Method;
     }
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
