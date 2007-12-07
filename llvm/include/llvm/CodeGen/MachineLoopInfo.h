@@ -123,8 +123,6 @@ public:
   /// runOnFunction - Calculate the natural loop information.
   ///
   virtual bool runOnMachineFunction(MachineFunction &F);
-  
-  bool runOnFunction(Function& F) { return false; }
 
   virtual void releaseMemory() { LI->releaseMemory(); }
 
