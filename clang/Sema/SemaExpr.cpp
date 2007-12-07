@@ -2140,23 +2140,24 @@ Sema::ExprResult Sema::ActOnClassMessage(
   if (!strcmp(receiverName->getName(), "super") && CurMethodDecl) {
     ClassDecl = CurMethodDecl->getClassInterface()->getSuperClass();
     if (ClassDecl && CurMethodDecl->isInstance()) {
+      // Synthesize a cast to the super class. This hack allows us to loosely
+      // represent super without creating a special expression node.
       IdentifierInfo &II = Context.Idents.get("self");
-      ExprResult ReceiverExpr = ActOnIdentifierExpr(S, lbrac, II, 
-                                                    false);
+      ExprResult ReceiverExpr = ActOnIdentifierExpr(S, lbrac, II, false);
       QualType superTy = Context.getObjcInterfaceType(ClassDecl);
       superTy = Context.getPointerType(superTy);
       ReceiverExpr = ActOnCastExpr(SourceLocation(), superTy.getAsOpaquePtr(),
                                    SourceLocation(), ReceiverExpr.Val);
-      
+      // We are really in an instance method, redirect.
       return ActOnInstanceMessage(ReceiverExpr.Val, Sel, lbrac, rbrac,
                                   Args, NumArgs);
     }
-    // class method
-    if (ClassDecl)
-      receiverName = ClassDecl->getIdentifier();
-  }
-  else
+    // We are sending a message to 'super' within a class method. Do nothing,
+    // the receiver will pass through as 'super' (how convenient:-).
+  } else
     ClassDecl = getObjCInterfaceDecl(receiverName);
+  
+  // FIXME: can ClassDecl ever be null?
   ObjcMethodDecl *Method = ClassDecl->lookupClassMethod(Sel);
   QualType returnType;
   

@@ -977,7 +977,7 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     PI.TypeInfo = selfTy.getAsOpaquePtr();
   } else
     PI.TypeInfo = Context.getObjcIdType().getAsOpaquePtr();
-  ActOnParamDeclarator(PI, FnBodyScope);
+  CurMethodDecl->setSelfDecl(ActOnParamDeclarator(PI, FnBodyScope));
   
   PI.Ident = &Context.Idents.get("_cmd");
   PI.TypeInfo = Context.getObjcSelType().getAsOpaquePtr();

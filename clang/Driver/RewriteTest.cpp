@@ -47,6 +47,7 @@ namespace {
     FunctionDecl *MsgSendSuperStretFunctionDecl;
     FunctionDecl *MsgSendFpretFunctionDecl;
     FunctionDecl *GetClassFunctionDecl;
+    FunctionDecl *GetMetaClassFunctionDecl;
     FunctionDecl *SelGetUidFunctionDecl;
     FunctionDecl *CFStringFunctionDecl;
       
@@ -69,6 +70,7 @@ namespace {
       MsgSendSuperStretFunctionDecl = 0;
       MsgSendFpretFunctionDecl = 0;
       GetClassFunctionDecl = 0;
+      GetMetaClassFunctionDecl = 0;
       SelGetUidFunctionDecl = 0;
       CFStringFunctionDecl = 0;
       ConstantStringClassReference = 0;
@@ -102,6 +104,8 @@ namespace {
                       "extern struct objc_object *objc_msgSend_fpret"
                       "(struct objc_object *, struct objc_selector *, ...);\n"
                       "extern struct objc_object *objc_getClass"
+                      "(const char *);\n"
+                      "extern struct objc_object *objc_getMetaClass"
                       "(const char *);\n"
                       "extern void objc_exception_throw(struct objc_object *);\n"
                       "extern void objc_exception_try_enter(void *);\n"
@@ -160,6 +164,7 @@ namespace {
     void SynthMsgSendFpretFunctionDecl();
     void SynthMsgSendSuperStretFunctionDecl();
     void SynthGetClassFunctionDecl();
+    void SynthGetMetaClassFunctionDecl();
     void SynthCFStringFunctionDecl();
     void SynthSelGetUidFunctionDecl();
       
@@ -1155,6 +1160,20 @@ void RewriteTest::SynthGetClassFunctionDecl() {
                                           FunctionDecl::Extern, false, 0);
 }
 
+// SynthGetMetaClassFunctionDecl - id objc_getClass(const char *name);
+void RewriteTest::SynthGetMetaClassFunctionDecl() {
+  IdentifierInfo *getClassIdent = &Context->Idents.get("objc_getMetaClass");
+  llvm::SmallVector<QualType, 16> ArgTys;
+  ArgTys.push_back(Context->getPointerType(
+                     Context->CharTy.getQualifiedType(QualType::Const)));
+  QualType getClassType = Context->getFunctionType(Context->getObjcIdType(),
+                                                   &ArgTys[0], ArgTys.size(),
+                                                   false /*isVariadic*/);
+  GetMetaClassFunctionDecl = new FunctionDecl(SourceLocation(), 
+                                              getClassIdent, getClassType,
+                                              FunctionDecl::Extern, false, 0);
+}
+
 // SynthCFStringFunctionDecl - id __builtin___CFStringMakeConstantString(const char *name);
 void RewriteTest::SynthCFStringFunctionDecl() {
   IdentifierInfo *getClassIdent = &Context->Idents.get("__builtin___CFStringMakeConstantString");
@@ -1226,7 +1245,8 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
 }
 
 ObjcInterfaceDecl *RewriteTest::isSuperReceiver(Expr *recExpr) {
-  if (CurMethodDecl) { // check if we are sending a message to 'super'
+  // check if we are sending a message to 'super'
+  if (CurMethodDecl && CurMethodDecl->isInstance()) {
     if (CastExpr *CE = dyn_cast<CastExpr>(recExpr)) {
       if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(CE->getSubExpr())) {
         if (ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(DRE->getDecl())) {
@@ -1242,7 +1262,7 @@ ObjcInterfaceDecl *RewriteTest::isSuperReceiver(Expr *recExpr) {
           }
         }
       }
-    } 
+    }
   }
   return 0;
 }
@@ -1284,6 +1304,8 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     SynthMsgSendFpretFunctionDecl();
   if (!GetClassFunctionDecl)
     SynthGetClassFunctionDecl();
+  if (!GetMetaClassFunctionDecl)
+    SynthGetMetaClassFunctionDecl();
   
   // default to objc_msgSend().
   FunctionDecl *MsgSendFlavor = MsgSendFunctionDecl;
@@ -1304,19 +1326,62 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   
   // Derive/push the receiver/selector, 2 implicit arguments to objc_msgSend().
   if (clsName) { // class message.
-    llvm::SmallVector<Expr*, 8> ClsExprs;
-    QualType argType = Context->getPointerType(Context->CharTy);
-    ClsExprs.push_back(new StringLiteral(clsName->getName(), 
-                                         clsName->getLength(),
-                                         false, argType, SourceLocation(),
-                                         SourceLocation()));
-    CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
-                                                 &ClsExprs[0], ClsExprs.size());
-    MsgExprs.push_back(Cls);
+    if (!strcmp(clsName->getName(), "super")) {
+      MsgSendFlavor = MsgSendSuperFunctionDecl;
+      if (MsgSendStretFlavor)
+        MsgSendStretFlavor = MsgSendSuperStretFunctionDecl;
+      assert(MsgSendFlavor && "MsgSendFlavor is NULL!");
+      
+      ObjcInterfaceDecl *SuperDecl = 
+        CurMethodDecl->getClassInterface()->getSuperClass();
+
+      llvm::SmallVector<Expr*, 4> InitExprs;
+      
+      // set the receiver to self, the first argument to all methods.
+      InitExprs.push_back(new DeclRefExpr(CurMethodDecl->getSelfDecl(), 
+                                          Context->getObjcIdType(),
+                                          SourceLocation())); 
+      llvm::SmallVector<Expr*, 8> ClsExprs;
+      QualType argType = Context->getPointerType(Context->CharTy);
+      ClsExprs.push_back(new StringLiteral(SuperDecl->getIdentifier()->getName(), 
+                                           SuperDecl->getIdentifier()->getLength(),
+                                           false, argType, SourceLocation(),
+                                           SourceLocation()));
+      CallExpr *Cls = SynthesizeCallToFunctionDecl(GetMetaClassFunctionDecl,
+                                                   &ClsExprs[0], 
+                                                   ClsExprs.size());
+      // To turn off a warning, type-cast to 'id'
+      InitExprs.push_back(
+        new CastExpr(Context->getObjcIdType(), 
+        Cls, SourceLocation())); // set 'super class', using objc_getClass().
+      // struct objc_super
+      QualType superType = getSuperStructType();
+      // (struct objc_super) { <exprs from above> }
+      InitListExpr *ILE = new InitListExpr(SourceLocation(), 
+                                           &InitExprs[0], InitExprs.size(), 
+                                           SourceLocation());
+      CompoundLiteralExpr *SuperRep = new CompoundLiteralExpr(superType, ILE);
+      // struct objc_super *
+      Expr *Unop = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
+                               Context->getPointerType(SuperRep->getType()), 
+                               SourceLocation());
+      MsgExprs.push_back(Unop);
+    } else {
+      llvm::SmallVector<Expr*, 8> ClsExprs;
+      QualType argType = Context->getPointerType(Context->CharTy);
+      ClsExprs.push_back(new StringLiteral(clsName->getName(), 
+                                           clsName->getLength(),
+                                           false, argType, SourceLocation(),
+                                           SourceLocation()));
+      CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,
+                                                   &ClsExprs[0], 
+                                                   ClsExprs.size());
+      MsgExprs.push_back(Cls);
+    }
   } else { // instance message.
     Expr *recExpr = Exp->getReceiver();
 
-    if (ObjcInterfaceDecl *ID = isSuperReceiver(recExpr)) {
+    if (ObjcInterfaceDecl *SuperDecl = isSuperReceiver(recExpr)) {
       MsgSendFlavor = MsgSendSuperFunctionDecl;
       if (MsgSendStretFlavor)
         MsgSendStretFlavor = MsgSendSuperStretFunctionDecl;
@@ -1330,8 +1395,8 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
       
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
-      ClsExprs.push_back(new StringLiteral(ID->getIdentifier()->getName(), 
-                                           ID->getIdentifier()->getLength(),
+      ClsExprs.push_back(new StringLiteral(SuperDecl->getIdentifier()->getName(), 
+                                           SuperDecl->getIdentifier()->getLength(),
                                            false, argType, SourceLocation(),
                                            SourceLocation()));
       CallExpr *Cls = SynthesizeCallToFunctionDecl(GetClassFunctionDecl,

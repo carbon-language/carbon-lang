@@ -650,9 +650,12 @@ private:
   /// List of attributes for this method declaration.
   AttributeList *MethodAttrs;
   
-  Stmt *Body;  // Null if a prototype.
-  
   SourceLocation EndLoc; // the location of the ';' or '{'.
+  
+  // The following are only used for method definitions, null otherwise.
+  // FIXME: space savings opportunity, consider a sub-class.
+  Stmt *Body;
+  ParmVarDecl *SelfDecl;
 public:
   ObjcMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
                  Selector SelInfo, QualType T,
@@ -668,7 +671,7 @@ public:
     MethodContext(static_cast<NamedDecl*>(contextDecl)),
     SelName(SelInfo), MethodDeclType(T), 
     ParamInfo(paramInfo), NumMethodParams(numParams),
-    MethodAttrs(M), EndLoc(endLoc) {}
+    MethodAttrs(M), EndLoc(endLoc), Body(0), SelfDecl(0) {}
   virtual ~ObjcMethodDecl();
   
   ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
@@ -718,6 +721,9 @@ public:
   }
   Stmt *const getBody() const { return Body; }
   void setBody(Stmt *B) { Body = B; }
+
+  ParmVarDecl *const getSelfDecl() const { return SelfDecl; }
+  void setSelfDecl(ParmVarDecl *PVD) { SelfDecl = PVD; }
   
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ObjcMethod; }
