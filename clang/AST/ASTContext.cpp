@@ -1121,15 +1121,10 @@ void ASTContext::setObjcSelType(TypedefDecl *TD)
   SelStructType = rec;
 }
 
-void ASTContext::setObjcProtoType(TypedefDecl *TD)
+void ASTContext::setObjcProtoType(QualType QT)
 {
   assert(ObjcProtoType.isNull() && "'Protocol' type already set!");
-  
-  // typedef struct Protocol Protocol;
-  ObjcProtoType = TD->getUnderlyingType();
-  // Protocol * type
-  ObjcProtoType = getPointerType(ObjcProtoType);  
-  ProtoStructType = TD->getUnderlyingType()->getAsStructureType();
+  ObjcProtoType = QT;
 }
 
 void ASTContext::setObjcClassType(TypedefDecl *TD)

@@ -212,7 +212,7 @@ public:
   void setObjcSelType(TypedefDecl *Decl);
   QualType getObjcSelType() const { return ObjcSelType; }
   
-  void setObjcProtoType(TypedefDecl *Decl);
+  void setObjcProtoType(QualType QT);
   QualType getObjcProtoType() const { return ObjcProtoType; }
   
   void setObjcClassType(TypedefDecl *Decl);

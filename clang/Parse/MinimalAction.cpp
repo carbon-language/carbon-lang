@@ -43,6 +43,9 @@ void MinimalAction:: ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   II = &Idents.get("Class");
   TI = new TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
   II->setFETokenInfo(TI);
+  II = &Idents.get("Protocol");
+  TI = new TypeNameInfo(1, II->getFETokenInfo<TypeNameInfo>());
+  II->setFETokenInfo(TI);
 }
 
 /// isTypeName - This looks at the IdentifierInfo::FETokenInfo field to

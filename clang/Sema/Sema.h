@@ -277,10 +277,8 @@ private:
   bool MatchTwoMethodDeclarations(const ObjcMethodDecl *Method, 
                                   const ObjcMethodDecl *PrevMethod); 
 
-  /// GetObjcSelType - Getter for the build-in "Protocol *" type.
-  QualType GetObjcProtoType(SourceLocation Loc = SourceLocation());
-  
-  /// isBuiltinObjcType - Returns true of the type is "id", "SEL", "Class".
+  /// isBuiltinObjcType - Returns true of the type is "id", "SEL", "Class"
+  /// or "Protocol".
   bool isBuiltinObjcType(TypedefDecl *TD);
 
   /// AddInstanceMethodToGlobalPool - All instance methods in a translation

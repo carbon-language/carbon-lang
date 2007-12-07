@@ -23,7 +23,7 @@ using namespace clang;
 bool Sema::isBuiltinObjcType(TypedefDecl *TD) {
   const char *typeName = TD->getIdentifier()->getName();
   return strcmp(typeName, "id") == 0 || strcmp(typeName, "Class") == 0 ||
-         strcmp(typeName, "SEL") == 0;
+         strcmp(typeName, "SEL") == 0 || strcmp(typeName, "Protocol") == 0;
 }
 
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
@@ -38,29 +38,14 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
     t = dyn_cast<TypedefType>(Context.getObjcClassType().getTypePtr());
     t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
     TUScope->AddDecl(t->getDecl());
+    ObjcInterfaceType *it = dyn_cast<ObjcInterfaceType>(Context.getObjcProtoType());
+    ObjcInterfaceDecl *IDecl = it->getDecl();
+    IDecl->getIdentifier()->setFETokenInfo(IDecl);
+    TUScope->AddDecl(IDecl);
     t = dyn_cast<TypedefType>(Context.getObjcSelType().getTypePtr());
     t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
     TUScope->AddDecl(t->getDecl());
   }
-}
-
-/// FIXME: remove this.
-/// GetObjcProtoType - See comments for Sema::GetObjcIdType above; replace "id"
-/// with "Protocol".
-QualType Sema::GetObjcProtoType(SourceLocation Loc) {
-  assert(TUScope && "GetObjcProtoType(): Top-level scope is null");
-  if (Context.getObjcProtoType().isNull()) {
-    IdentifierInfo *ProtoIdent = &Context.Idents.get("Protocol");
-    ScopedDecl *ProtoDecl = LookupScopedDecl(ProtoIdent, Decl::IDNS_Ordinary, 
-                                           SourceLocation(), TUScope);
-    TypedefDecl *ObjcProtoTypedef = dyn_cast_or_null<TypedefDecl>(ProtoDecl);
-    if (!ObjcProtoTypedef) {
-      Diag(Loc, diag::err_missing_proto_definition);
-      return QualType();
-    }
-    Context.setObjcProtoType(ObjcProtoTypedef);
-  }
-  return Context.getObjcProtoType();
 }
 
 Sema::Sema(Preprocessor &pp, ASTContext &ctxt)
@@ -91,6 +76,11 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt)
                                                 ClassT, 0);
     Context.setObjcClassType(ClassTypedef);
     
+    // Synthesize "@class Protocol;
+    ObjcInterfaceDecl *ProtocolDecl = new ObjcInterfaceDecl(SourceLocation(), 0, 
+                                        &Context.Idents.get("Protocol"), true);
+    Context.setObjcProtoType(Context.getObjcInterfaceType(ProtocolDecl));
+    
     // Synthesize "typedef struct objc_object { Class isa; } *id;"
     RecordDecl *ObjectTag = new RecordDecl(Decl::Struct, SourceLocation(), 
                                           &IT.get("objc_object"), 0);
@@ -111,6 +101,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt)
                                               &Context.Idents.get("SEL"),
                                               SelT, 0);
     Context.setObjcSelType(SelTypedef);
+    
   }
   TUScope = 0;
 }

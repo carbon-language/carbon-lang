@@ -1,7 +1,5 @@
 // RUN: clang -fsyntax-only -verify %s
 
-typedef struct Protocol Protocol;
-
 @protocol fproto;
 
 @protocol p1 

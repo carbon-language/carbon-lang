@@ -2061,9 +2061,10 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
     return true;
   }
   
-  QualType t = GetObjcProtoType(AtLoc);
+  QualType t = Context.getObjcProtoType();
   if (t.isNull())
     return true;
+  t = Context.getPointerType(t);
   return new ObjCProtocolExpr(t, PDecl, AtLoc, RParenLoc);
 }
 
