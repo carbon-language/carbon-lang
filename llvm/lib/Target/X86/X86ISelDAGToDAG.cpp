@@ -562,7 +562,7 @@ void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 
 /// MatchAddress - Add the specified node to the specified addressing mode,
 /// returning true if it cannot be done.  This just pattern matches for the
-/// addressing mode
+/// addressing mode.
 bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
                                    bool isRoot, unsigned Depth) {
   // Limit recursion.
@@ -653,33 +653,35 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
 
   case ISD::SHL:
-    if (!Available && AM.IndexReg.Val == 0 && AM.Scale == 1)
-      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1))) {
-        unsigned Val = CN->getValue();
-        if (Val == 1 || Val == 2 || Val == 3) {
-          AM.Scale = 1 << Val;
-          SDOperand ShVal = N.Val->getOperand(0);
+    if (Available || AM.IndexReg.Val != 0 || AM.Scale != 1)
+      break;
+      
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1))) {
+      unsigned Val = CN->getValue();
+      if (Val == 1 || Val == 2 || Val == 3) {
+        AM.Scale = 1 << Val;
+        SDOperand ShVal = N.Val->getOperand(0);
 
-          // Okay, we know that we have a scale by now.  However, if the scaled
-          // value is an add of something and a constant, we can fold the
-          // constant into the disp field here.
-          if (ShVal.Val->getOpcode() == ISD::ADD && ShVal.hasOneUse() &&
-              isa<ConstantSDNode>(ShVal.Val->getOperand(1))) {
-            AM.IndexReg = ShVal.Val->getOperand(0);
-            ConstantSDNode *AddVal =
-              cast<ConstantSDNode>(ShVal.Val->getOperand(1));
-            uint64_t Disp = AM.Disp + (AddVal->getValue() << Val);
-            if (isInt32(Disp))
-              AM.Disp = Disp;
-            else
-              AM.IndexReg = ShVal;
-          } else {
+        // Okay, we know that we have a scale by now.  However, if the scaled
+        // value is an add of something and a constant, we can fold the
+        // constant into the disp field here.
+        if (ShVal.Val->getOpcode() == ISD::ADD && ShVal.hasOneUse() &&
+            isa<ConstantSDNode>(ShVal.Val->getOperand(1))) {
+          AM.IndexReg = ShVal.Val->getOperand(0);
+          ConstantSDNode *AddVal =
+            cast<ConstantSDNode>(ShVal.Val->getOperand(1));
+          uint64_t Disp = AM.Disp + (AddVal->getValue() << Val);
+          if (isInt32(Disp))
+            AM.Disp = Disp;
+          else
             AM.IndexReg = ShVal;
-          }
-          return false;
+        } else {
+          AM.IndexReg = ShVal;
         }
+        return false;
       }
     break;
+    }
 
   case ISD::SMUL_LOHI:
   case ISD::UMUL_LOHI:
@@ -738,22 +740,22 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
 
   case ISD::OR:
     // Handle "X | C" as "X + C" iff X is known to have C bits clear.
-    if (!Available) {
-      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-        X86ISelAddressMode Backup = AM;
-        // Start with the LHS as an addr mode.
-        if (!MatchAddress(N.getOperand(0), AM, false) &&
-            // Address could not have picked a GV address for the displacement.
-            AM.GV == NULL &&
-            // On x86-64, the resultant disp must fit in 32-bits.
-            isInt32(AM.Disp + CN->getSignExtended()) &&
-            // Check to see if the LHS & C is zero.
-            CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getValue())) {
-          AM.Disp += CN->getValue();
-          return false;
-        }
-        AM = Backup;
+    if (Available) break;
+      
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      X86ISelAddressMode Backup = AM;
+      // Start with the LHS as an addr mode.
+      if (!MatchAddress(N.getOperand(0), AM, false) &&
+          // Address could not have picked a GV address for the displacement.
+          AM.GV == NULL &&
+          // On x86-64, the resultant disp must fit in 32-bits.
+          isInt32(AM.Disp + CN->getSignExtended()) &&
+          // Check to see if the LHS & C is zero.
+          CurDAG->MaskedValueIsZero(N.getOperand(0), CN->getValue())) {
+        AM.Disp += CN->getValue();
+        return false;
       }
+      AM = Backup;
     }
     break;
   }
