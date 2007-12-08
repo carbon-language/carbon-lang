@@ -631,7 +631,6 @@
 		DE66EE8408ABEE3500323D32 /* Program.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = Program.inc; sourceTree = "<group>"; };
 		DE66EE8508ABEE3500323D32 /* README.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = README.txt; sourceTree = "<group>"; };
 		DE66EE8608ABEE3500323D32 /* Signals.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = Signals.inc; sourceTree = "<group>"; };
-		DE66EE8808ABEE3500323D32 /* Process.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Process.cpp; sourceTree = "<group>"; };
 		DE66EE8908ABEE3500323D32 /* TimeValue.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = TimeValue.inc; sourceTree = "<group>"; };
 		DE66EE8A08ABEE3500323D32 /* Unix.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Unix.h; sourceTree = "<group>"; };
 		DE66EE8C08ABEE3500323D32 /* DynamicLibrary.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = DynamicLibrary.inc; sourceTree = "<group>"; };
@@ -1088,8 +1087,16 @@
 				DE66F38C08ABF35300323D32 /* CREDITS.TXT */,
 				CFD99AA80AFE827B0068D19C /* LICENSE.TXT */,
 				CFD99AAD0AFE827B0068D19C /* README.txt */,
+				721CA1750D0B44D200D5004F /* Products */,
 			);
 			name = LLVM;
+			sourceTree = "<group>";
+		};
+		721CA1750D0B44D200D5004F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 		9F68EB030C77AD2C004AA152 /* lib/Bitcode */ = {
@@ -1683,19 +1690,10 @@
 				DE66EE8408ABEE3500323D32 /* Program.inc */,
 				DE66EE8508ABEE3500323D32 /* README.txt */,
 				DE66EE8608ABEE3500323D32 /* Signals.inc */,
-				DE66EE8708ABEE3500323D32 /* SUS */,
 				DE66EE8908ABEE3500323D32 /* TimeValue.inc */,
 				DE66EE8A08ABEE3500323D32 /* Unix.h */,
 			);
 			path = Unix;
-			sourceTree = "<group>";
-		};
-		DE66EE8708ABEE3500323D32 /* SUS */ = {
-			isa = PBXGroup;
-			children = (
-				DE66EE8808ABEE3500323D32 /* Process.cpp */,
-			);
-			path = SUS;
 			sourceTree = "<group>";
 		};
 		DE66EE8B08ABEE3500323D32 /* Win32 */ = {
@@ -2735,7 +2733,7 @@
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = /llvm/llvm/utils/TableGen;
+			buildWorkingDirectory = "${SRCROOT}/../utils/TableGen";
 			dependencies = (
 			);
 			name = "LLVM TableGen";
@@ -2777,7 +2775,7 @@
 			buildPhases = (
 			);
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = /Volumes/Big2/llvm/llvm;
+			buildWorkingDirectory = "$(SRCROOT)/../";
 			dependencies = (
 			);
 			name = LLVM;
@@ -2793,6 +2791,7 @@
 			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* LLVM */;
+			productRefGroup = 721CA1750D0B44D200D5004F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -2870,23 +2869,6 @@
 			};
 			name = Release;
 		};
-		CF0329BA08D1BE530030FD33 /* Default */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OPTIMIZATION_CFLAGS = "-O0";
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = "LLVM lib";
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-				);
-			};
-			name = Default;
-		};
 		CF0329C408D1BEC40030FD33 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2924,23 +2906,6 @@
 				);
 			};
 			name = Release;
-		};
-		CF0329C608D1BEC40030FD33 /* Default */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OPTIMIZATION_CFLAGS = "-O0";
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = "LLVM llc";
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-				);
-			};
-			name = Default;
 		};
 		CF0329C808D1BEC40030FD33 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -2980,23 +2945,6 @@
 			};
 			name = Release;
 		};
-		CF0329CA08D1BEC40030FD33 /* Default */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OPTIMIZATION_CFLAGS = "-O0";
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = "LLVM full llc";
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-				);
-			};
-			name = Default;
-		};
 		CF490E850907CDAB0072DB1C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -3034,23 +2982,6 @@
 				);
 			};
 			name = Release;
-		};
-		CF490E870907CDAB0072DB1C /* Default */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OPTIMIZATION_CFLAGS = "-O0";
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = "LLVM llc";
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-				);
-			};
-			name = Default;
 		};
 		CFDF86BF0ADE819D00D40A3D /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -3090,23 +3021,6 @@
 			};
 			name = Release;
 		};
-		CFDF86C10ADE819D00D40A3D /* Default */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OPTIMIZATION_CFLAGS = "-O0";
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = "LLVM lib";
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-				);
-			};
-			name = Default;
-		};
 		CFDF86C80ADE81D000D40A3D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -3144,23 +3058,6 @@
 				);
 			};
 			name = Release;
-		};
-		CFDF86CA0ADE81D000D40A3D /* Default */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OPTIMIZATION_CFLAGS = "-O0";
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = "LLVM llc";
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-				);
-			};
-			name = Default;
 		};
 		CFDF86D60ADE820000D40A3D /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -3200,23 +3097,6 @@
 			};
 			name = Release;
 		};
-		CFDF86D80ADE820000D40A3D /* Default */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OPTIMIZATION_CFLAGS = "-O0";
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				OTHER_REZFLAGS = "";
-				PRODUCT_NAME = "LLVM full llc";
-				SECTORDER_FLAGS = "";
-				WARNING_CFLAGS = (
-					"-Wmost",
-					"-Wno-four-char-constants",
-					"-Wno-unknown-pragmas",
-				);
-			};
-			name = Default;
-		};
 		DE66EC4D08ABE78900323D32 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -3247,32 +3127,22 @@
 			};
 			name = Release;
 		};
-		DE66EC4F08ABE78900323D32 /* Default */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				OTHER_CFLAGS = "";
-				OTHER_LDFLAGS = "";
-				PRODUCT_NAME = LLVM;
-			};
-			name = Default;
-		};
 		DE66EC5108ABE78900323D32 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				USER_HEADER_SEARCH_PATHS = "../include/**";
 			};
 			name = Debug;
 		};
 		DE66EC5208ABE78900323D32 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				USER_HEADER_SEARCH_PATHS = "../include/**";
 			};
 			name = Release;
-		};
-		DE66EC5308ABE78900323D32 /* Default */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-			};
-			name = Default;
 		};
 /* End XCBuildConfiguration section */
 
@@ -3282,90 +3152,81 @@
 			buildConfigurations = (
 				CF0329B808D1BE530030FD33 /* Debug */,
 				CF0329B908D1BE530030FD33 /* Release */,
-				CF0329BA08D1BE530030FD33 /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Default;
+			defaultConfigurationName = Debug;
 		};
 		CF0329C308D1BEC40030FD33 /* Build configuration list for PBXLegacyTarget "LLVM llc" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CF0329C408D1BEC40030FD33 /* Debug */,
 				CF0329C508D1BEC40030FD33 /* Release */,
-				CF0329C608D1BEC40030FD33 /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Default;
+			defaultConfigurationName = Debug;
 		};
 		CF0329C708D1BEC40030FD33 /* Build configuration list for PBXAggregateTarget "LLVM full llc" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CF0329C808D1BEC40030FD33 /* Debug */,
 				CF0329C908D1BEC40030FD33 /* Release */,
-				CF0329CA08D1BEC40030FD33 /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Default;
+			defaultConfigurationName = Debug;
 		};
 		CF490E840907CDAB0072DB1C /* Build configuration list for PBXLegacyTarget "LLVM TableGen" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CF490E850907CDAB0072DB1C /* Debug */,
 				CF490E860907CDAB0072DB1C /* Release */,
-				CF490E870907CDAB0072DB1C /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Default;
+			defaultConfigurationName = Debug;
 		};
 		CFDF86BE0ADE819D00D40A3D /* Build configuration list for PBXLegacyTarget "LLVM lib release" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CFDF86BF0ADE819D00D40A3D /* Debug */,
 				CFDF86C00ADE819D00D40A3D /* Release */,
-				CFDF86C10ADE819D00D40A3D /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Default;
+			defaultConfigurationName = Debug;
 		};
 		CFDF86C70ADE81D000D40A3D /* Build configuration list for PBXLegacyTarget "LLVM llc release" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CFDF86C80ADE81D000D40A3D /* Debug */,
 				CFDF86C90ADE81D000D40A3D /* Release */,
-				CFDF86CA0ADE81D000D40A3D /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Default;
+			defaultConfigurationName = Debug;
 		};
 		CFDF86D50ADE820000D40A3D /* Build configuration list for PBXAggregateTarget "LLVM full llc release" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CFDF86D60ADE820000D40A3D /* Debug */,
 				CFDF86D70ADE820000D40A3D /* Release */,
-				CFDF86D80ADE820000D40A3D /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Default;
+			defaultConfigurationName = Debug;
 		};
 		DE66EC4C08ABE78900323D32 /* Build configuration list for PBXLegacyTarget "LLVM" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DE66EC4D08ABE78900323D32 /* Debug */,
 				DE66EC4E08ABE78900323D32 /* Release */,
-				DE66EC4F08ABE78900323D32 /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Default;
+			defaultConfigurationName = Debug;
 		};
 		DE66EC5008ABE78900323D32 /* Build configuration list for PBXProject "LLVM" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DE66EC5108ABE78900323D32 /* Debug */,
 				DE66EC5208ABE78900323D32 /* Release */,
-				DE66EC5308ABE78900323D32 /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Default;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 	};
