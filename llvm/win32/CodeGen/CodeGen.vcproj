@@ -377,6 +377,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\MachineLICM.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\lib\CodeGen\MachineLoopInfo.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\MachineModuleInfo.cpp"
 				>
 			</File>
@@ -600,6 +608,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\MachineLocation.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\MachineLoopInfo.h"
 				>
 			</File>
 			<File
