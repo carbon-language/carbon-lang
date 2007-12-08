@@ -281,6 +281,7 @@ private:
   // Operand Vector Scalarization: <128 x ty> -> 2 x <64 x ty>.
   bool SplitOperand(SDNode *N, unsigned OpNo);
   
+  SDOperand SplitOperand_STORE(StoreSDNode *N, unsigned OpNo);
 };
 
 } // end namespace llvm.

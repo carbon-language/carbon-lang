@@ -172,11 +172,9 @@ bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
 #endif
       assert(0 && "Do not know how to split this operator's operand!");
       abort();
-#if 0
     case ISD::STORE:
-      Res = ExpandOperand_STORE(cast<StoreSDNode>(N), OpNo);
+      Res = SplitOperand_STORE(cast<StoreSDNode>(N), OpNo);
       break;
-#endif
     }
   }
   
@@ -200,3 +198,28 @@ bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
   ReplaceValueWith(SDOperand(N, 0), Res);
   return false;
 }
+
+SDOperand DAGTypeLegalizer::SplitOperand_STORE(StoreSDNode *N, unsigned OpNo) {
+  assert(OpNo == 1 && "Can only split the stored value");
+  
+  SDOperand Ch  = N->getChain();
+  SDOperand Ptr = N->getBasePtr();
+  int SVOffset = N->getSrcValueOffset();
+  unsigned Alignment = N->getAlignment();
+  bool isVol = N->isVolatile();
+  SDOperand Lo, Hi;
+  GetSplitOp(N->getOperand(1), Lo, Hi);
+
+  unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
+
+  Lo = DAG.getStore(Ch, Lo, Ptr, N->getSrcValue(), SVOffset, isVol, Alignment);
+  
+  // Increment the pointer to the other half.
+  Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                    getIntPtrConstant(IncrementSize));
+  
+  Hi = DAG.getStore(Ch, Hi, Ptr, N->getSrcValue(), SVOffset+IncrementSize,
+                    isVol, MinAlign(Alignment, IncrementSize));
+  return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
+}
+
