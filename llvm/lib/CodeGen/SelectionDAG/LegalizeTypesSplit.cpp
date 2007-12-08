@@ -17,6 +17,24 @@
 #include "LegalizeTypes.h"
 using namespace llvm;
 
+/// GetSplitDestVTs - Compute the VTs needed for the low/hi parts of a vector
+/// type that needs to be split.  This handles non-power of two vectors.
+static void GetSplitDestVTs(MVT::ValueType InVT,
+                            MVT::ValueType &Lo, MVT::ValueType &Hi) {
+  MVT::ValueType NewEltVT = MVT::getVectorElementType(InVT);
+  unsigned NumElements = MVT::getVectorNumElements(InVT);
+  if ((NumElements & (NumElements-1)) == 0) {  // Simple power of two vector.
+    NumElements >>= 1;
+    Lo = Hi =  MVT::getVectorType(NewEltVT, NumElements);
+  } else {                                     // Non-power-of-two vectors.
+    unsigned NewNumElts_Lo = 1 << Log2_32(NumElements-1);
+    unsigned NewNumElts_Hi = NumElements - NewNumElts_Lo;
+    Lo = MVT::getVectorType(NewEltVT, NewNumElts_Lo);
+    Hi = MVT::getVectorType(NewEltVT, NewNumElts_Hi);
+  }
+}
+
+
 //===----------------------------------------------------------------------===//
 //  Result Vector Splitting
 //===----------------------------------------------------------------------===//
@@ -29,7 +47,6 @@ using namespace llvm;
 void DAGTypeLegalizer::SplitResult(SDNode *N, unsigned ResNo) {
   DEBUG(cerr << "Expand node result: "; N->dump(&DAG); cerr << "\n");
   SDOperand Lo, Hi;
-  Lo = Hi = SDOperand();
   
 #if 0
   // See if the target wants to custom expand this node.
@@ -54,14 +71,77 @@ void DAGTypeLegalizer::SplitResult(SDNode *N, unsigned ResNo) {
     assert(0 && "Do not know how to split the result of this operator!");
     abort();
     
-#if 0
-  case ISD::UNDEF:       SplitResult_UNDEF(N, Lo, Hi); break;
-#endif
+  case ISD::UNDEF:       SplitRes_UNDEF(N, Lo, Hi); break;
+  case ISD::LOAD:        SplitRes_LOAD(cast<LoadSDNode>(N), Lo, Hi); break;
+  case ISD::ADD:
+  case ISD::SUB:
+  case ISD::MUL:
+  case ISD::FADD:
+  case ISD::FSUB:
+  case ISD::FMUL:
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::FDIV:
+  case ISD::FPOW:
+  case ISD::AND:
+  case ISD::OR:
+  case ISD::XOR:
+  case ISD::UREM:
+  case ISD::SREM:
+  case ISD::FREM:        SplitRes_BinOp(N, Lo, Hi); break;
   }
   
   // If Lo/Hi is null, the sub-method took care of registering results etc.
   if (Lo.Val)
     SetSplitOp(SDOperand(N, ResNo), Lo, Hi);
+}
+
+void DAGTypeLegalizer::SplitRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
+  MVT::ValueType LoVT, HiVT;
+  GetSplitDestVTs(N->getValueType(0), LoVT, HiVT);
+
+  Lo = DAG.getNode(ISD::UNDEF, LoVT);
+  Hi = DAG.getNode(ISD::UNDEF, HiVT);
+}
+
+void DAGTypeLegalizer::SplitRes_LOAD(LoadSDNode *LD, 
+                                     SDOperand &Lo, SDOperand &Hi) {
+  MVT::ValueType LoVT, HiVT;
+  GetSplitDestVTs(LD->getValueType(0), LoVT, HiVT);
+  
+  SDOperand Ch = LD->getChain();
+  SDOperand Ptr = LD->getBasePtr();
+  const Value *SV = LD->getSrcValue();
+  int SVOffset = LD->getSrcValueOffset();
+  unsigned Alignment = LD->getAlignment();
+  bool isVolatile = LD->isVolatile();
+  
+  Lo = DAG.getLoad(LoVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
+  unsigned IncrementSize = MVT::getSizeInBits(LoVT)/8;
+  Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
+                    getIntPtrConstant(IncrementSize));
+  SVOffset += IncrementSize;
+  Alignment = MinAlign(Alignment, IncrementSize);
+  Hi = DAG.getLoad(HiVT, Ch, Ptr, SV, SVOffset, isVolatile, Alignment);
+  
+  // Build a factor node to remember that this load is independent of the
+  // other one.
+  SDOperand TF = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
+                             Hi.getValue(1));
+  
+  // Legalized the chain result - switch anything that used the old chain to
+  // use the new one.
+  ReplaceValueWith(SDOperand(LD, 1), TF);
+}
+
+void DAGTypeLegalizer::SplitRes_BinOp(SDNode *N, SDOperand &Lo, SDOperand &Hi) {
+  SDOperand LHSLo, LHSHi;
+  GetSplitOp(N->getOperand(0), LHSLo, LHSHi);
+  SDOperand RHSLo, RHSHi;
+  GetSplitOp(N->getOperand(1), RHSLo, RHSHi);
+  
+  Lo = DAG.getNode(N->getOpcode(), LHSLo.getValueType(), LHSLo, RHSLo);
+  Hi = DAG.getNode(N->getOpcode(), LHSHi.getValueType(), LHSHi, RHSHi);
 }
 
 

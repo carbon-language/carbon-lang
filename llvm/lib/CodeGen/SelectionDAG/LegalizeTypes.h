@@ -273,6 +273,10 @@ private:
   
   // Result Vector Splitting: <128 x ty> -> 2 x <64 x ty>.
   void SplitResult(SDNode *N, unsigned OpNo);
+
+  void SplitRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_LOAD(LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_BinOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   
   // Operand Vector Scalarization: <128 x ty> -> 2 x <64 x ty>.
   bool SplitOperand(SDNode *N, unsigned OpNo);
