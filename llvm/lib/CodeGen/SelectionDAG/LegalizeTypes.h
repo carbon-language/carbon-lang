@@ -125,6 +125,15 @@ private:
 
   void RemapNode(SDOperand &N);
 
+  // Common routines.
+  SDOperand CreateStackStoreLoad(SDOperand Op, MVT::ValueType DestVT);
+  SDOperand HandleMemIntrinsic(SDNode *N);
+  void SplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
+
+  //===--------------------------------------------------------------------===//
+  // Promotion Support: LegalizeTypesPromote.cpp
+  //===--------------------------------------------------------------------===//
+  
   SDOperand GetPromotedOp(SDOperand Op) {
     SDOperand &PromotedOp = PromotedNodes[Op];
     RemapNode(PromotedOp);
@@ -132,7 +141,7 @@ private:
     return PromotedOp;
   }
   void SetPromotedOp(SDOperand Op, SDOperand Result);
-
+  
   /// GetPromotedZExtOp - Get a promoted operand and zero extend it to the final
   /// size.
   SDOperand GetPromotedZExtOp(SDOperand Op) {
@@ -140,23 +149,7 @@ private:
     Op = GetPromotedOp(Op);
     return DAG.getZeroExtendInReg(Op, OldVT);
   }    
-  
-  void GetExpandedOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
-  void SetExpandedOp(SDOperand Op, SDOperand Lo, SDOperand Hi);
-  
-  SDOperand GetScalarizedOp(SDOperand Op) {
-    SDOperand &ScalarOp = ScalarizedNodes[Op];
-    RemapNode(ScalarOp);
-    assert(ScalarOp.Val && "Operand wasn't scalarized?");
-    return ScalarOp;
-  }
-  void SetScalarizedOp(SDOperand Op, SDOperand Result);
-  
-  // Common routines.
-  SDOperand CreateStackStoreLoad(SDOperand Op, MVT::ValueType DestVT);
-  SDOperand HandleMemIntrinsic(SDNode *N);
-  void SplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
-
+    
   // Result Promotion.
   void PromoteResult(SDNode *N, unsigned ResNo);
   SDOperand PromoteResult_UNDEF(SDNode *N);
@@ -176,6 +169,30 @@ private:
   SDOperand PromoteResult_SELECT   (SDNode *N);
   SDOperand PromoteResult_SELECT_CC(SDNode *N);
   
+  // Operand Promotion.
+  bool PromoteOperand(SDNode *N, unsigned OperandNo);
+  SDOperand PromoteOperand_ANY_EXTEND(SDNode *N);
+  SDOperand PromoteOperand_ZERO_EXTEND(SDNode *N);
+  SDOperand PromoteOperand_SIGN_EXTEND(SDNode *N);
+  SDOperand PromoteOperand_TRUNCATE(SDNode *N);
+  SDOperand PromoteOperand_FP_EXTEND(SDNode *N);
+  SDOperand PromoteOperand_FP_ROUND(SDNode *N);
+  SDOperand PromoteOperand_INT_TO_FP(SDNode *N);
+  SDOperand PromoteOperand_SELECT(SDNode *N, unsigned OpNo);
+  SDOperand PromoteOperand_BRCOND(SDNode *N, unsigned OpNo);
+  SDOperand PromoteOperand_BR_CC(SDNode *N, unsigned OpNo);
+  SDOperand PromoteOperand_SETCC(SDNode *N, unsigned OpNo);
+  SDOperand PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo);
+  
+  void PromoteSetCCOperands(SDOperand &LHS,SDOperand &RHS, ISD::CondCode Code);
+
+  //===--------------------------------------------------------------------===//
+  // Expansion Support: LegalizeTypesExpand.cpp
+  //===--------------------------------------------------------------------===//
+  
+  void GetExpandedOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
+  void SetExpandedOp(SDOperand Op, SDOperand Lo, SDOperand Hi);
+    
   // Result Expansion.
   void ExpandResult(SDNode *N, unsigned ResNo);
   void ExpandResult_UNDEF      (SDNode *N, SDOperand &Lo, SDOperand &Hi);
@@ -203,6 +220,31 @@ private:
                              SDOperand &Lo, SDOperand &Hi);
   bool ExpandShiftWithKnownAmountBit(SDNode *N, SDOperand &Lo, SDOperand &Hi);
 
+  // Operand Expansion.
+  bool ExpandOperand(SDNode *N, unsigned OperandNo);
+  SDOperand ExpandOperand_TRUNCATE(SDNode *N);
+  SDOperand ExpandOperand_BIT_CONVERT(SDNode *N);
+  SDOperand ExpandOperand_UINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
+  SDOperand ExpandOperand_SINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
+  SDOperand ExpandOperand_EXTRACT_ELEMENT(SDNode *N);
+  SDOperand ExpandOperand_SETCC(SDNode *N);
+  SDOperand ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo);
+  
+  void ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
+                           ISD::CondCode &CCCode);
+  
+  //===--------------------------------------------------------------------===//
+  // Scalarization Support: LegalizeTypesScalarize.cpp
+  //===--------------------------------------------------------------------===//
+  
+  SDOperand GetScalarizedOp(SDOperand Op) {
+    SDOperand &ScalarOp = ScalarizedNodes[Op];
+    RemapNode(ScalarOp);
+    assert(ScalarOp.Val && "Operand wasn't scalarized?");
+    return ScalarOp;
+  }
+  void SetScalarizedOp(SDOperand Op, SDOperand Result);
+    
   // Result Vector Scalarization: <1 x ty> -> ty.
   void ScalarizeResult(SDNode *N, unsigned OpNo);
   SDOperand ScalarizeRes_UNDEF(SDNode *N);
@@ -213,36 +255,6 @@ private:
   SDOperand ScalarizeRes_VECTOR_SHUFFLE(SDNode *N);
   SDOperand ScalarizeRes_BIT_CONVERT(SDNode *N);
   SDOperand ScalarizeRes_SELECT(SDNode *N);
-  
-  // Operand Promotion.
-  bool PromoteOperand(SDNode *N, unsigned OperandNo);
-  SDOperand PromoteOperand_ANY_EXTEND(SDNode *N);
-  SDOperand PromoteOperand_ZERO_EXTEND(SDNode *N);
-  SDOperand PromoteOperand_SIGN_EXTEND(SDNode *N);
-  SDOperand PromoteOperand_TRUNCATE(SDNode *N);
-  SDOperand PromoteOperand_FP_EXTEND(SDNode *N);
-  SDOperand PromoteOperand_FP_ROUND(SDNode *N);
-  SDOperand PromoteOperand_INT_TO_FP(SDNode *N);
-  SDOperand PromoteOperand_SELECT(SDNode *N, unsigned OpNo);
-  SDOperand PromoteOperand_BRCOND(SDNode *N, unsigned OpNo);
-  SDOperand PromoteOperand_BR_CC(SDNode *N, unsigned OpNo);
-  SDOperand PromoteOperand_SETCC(SDNode *N, unsigned OpNo);
-  SDOperand PromoteOperand_STORE(StoreSDNode *N, unsigned OpNo);
-
-  void PromoteSetCCOperands(SDOperand &LHS,SDOperand &RHS, ISD::CondCode Code);
-
-  // Operand Expansion.
-  bool ExpandOperand(SDNode *N, unsigned OperandNo);
-  SDOperand ExpandOperand_TRUNCATE(SDNode *N);
-  SDOperand ExpandOperand_BIT_CONVERT(SDNode *N);
-  SDOperand ExpandOperand_UINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
-  SDOperand ExpandOperand_SINT_TO_FP(SDOperand Source, MVT::ValueType DestTy);
-  SDOperand ExpandOperand_EXTRACT_ELEMENT(SDNode *N);
-  SDOperand ExpandOperand_SETCC(SDNode *N);
-  SDOperand ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo);
-
-  void ExpandSetCCOperands(SDOperand &NewLHS, SDOperand &NewRHS,
-                           ISD::CondCode &CCCode);
   
   // Operand Vector Scalarization: <1 x ty> -> ty.
   bool ScalarizeOperand(SDNode *N, unsigned OpNo);
