@@ -410,7 +410,7 @@ CAMLprim value llvm_lookup_global(value Name, LLVMModuleRef M) {
   CAMLparam1(Name);
   LLVMValueRef GlobalVar;
   if ((GlobalVar = LLVMGetNamedGlobal(M, String_val(Name)))) {
-    value Option = alloc(1, 1);
+    value Option = alloc(1, 0);
     Field(Option, 0) = (value) GlobalVar;
     CAMLreturn(Option);
   }
@@ -487,7 +487,7 @@ CAMLprim value llvm_lookup_function(value Name, LLVMModuleRef M) {
   CAMLparam1(Name);
   LLVMValueRef Fn;
   if ((Fn = LLVMGetNamedFunction(M, String_val(Name)))) {
-    value Option = alloc(1, 1);
+    value Option = alloc(1, 0);
     Field(Option, 0) = (value) Fn;
     CAMLreturn(Option);
   }
