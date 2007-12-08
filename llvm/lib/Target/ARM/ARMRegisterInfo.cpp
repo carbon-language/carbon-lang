@@ -429,7 +429,7 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
 
 bool ARMRegisterInfo::canFoldMemoryOperand(MachineInstr *MI,
                                          SmallVectorImpl<unsigned> &Ops) const {
-  if (Ops.size() != 1) return 0;
+  if (Ops.size() != 1) return false;
 
   unsigned OpNum = Ops[0];
   unsigned Opc = MI->getOpcode();
