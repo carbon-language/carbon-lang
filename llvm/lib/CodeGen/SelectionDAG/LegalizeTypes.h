@@ -260,6 +260,19 @@ private:
   bool ScalarizeOperand(SDNode *N, unsigned OpNo);
   SDOperand ScalarizeOp_EXTRACT_VECTOR_ELT(SDNode *N, unsigned OpNo);
 
+  //===--------------------------------------------------------------------===//
+  // Vector Splitting Support: LegalizeTypesSplit.cpp
+  //===--------------------------------------------------------------------===//
+  
+  void GetSplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi);
+  void SetSplitOp(SDOperand Op, SDOperand Lo, SDOperand Hi);
+  
+  // Result Vector Splitting: <128 x ty> -> 2 x <64 x ty>.
+  void SplitResult(SDNode *N, unsigned OpNo);
+  
+  // Operand Vector Scalarization: <128 x ty> -> 2 x <64 x ty>.
+  bool SplitOperand(SDNode *N, unsigned OpNo);
+  
 };
 
 } // end namespace llvm.

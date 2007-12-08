@@ -68,8 +68,8 @@ void DAGTypeLegalizer::run() {
           ExpandResult(N, i);
         else if (MVT::getVectorNumElements(ResultVT) == 1)
           ScalarizeResult(N, i);     // Scalarize the single-element vector.
-        else         // Split the vector in half.
-          assert(0 && "Vector splitting not implemented");
+        else
+          SplitResult(N, i);         // Split the vector in half.
         goto NodeDone;
       } else {
         assert(Action == Legal && "Unknown action!");
@@ -96,8 +96,7 @@ void DAGTypeLegalizer::run() {
           // Scalarize the single-element vector.
           NeedsRevisit = ScalarizeOperand(N, i);
         } else {
-          // Split the vector in half.
-          assert(0 && "Vector splitting not implemented");
+          NeedsRevisit = SplitOperand(N, i); // Split the vector in half.
         }
         break;
       } else {
