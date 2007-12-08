@@ -14,6 +14,7 @@
 #include "LLLexer.h"
 #include "ParserInternals.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/MathExtras.h"
 
 #include <list>
 #include "llvmAsmParser.h"
