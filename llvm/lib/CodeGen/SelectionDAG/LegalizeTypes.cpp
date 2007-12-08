@@ -320,8 +320,7 @@ void DAGTypeLegalizer::GetExpandedOp(SDOperand Op, SDOperand &Lo,
   Hi = Entry.second;
 }
 
-void DAGTypeLegalizer::SetExpandedOp(SDOperand Op, SDOperand Lo, 
-                                     SDOperand Hi) {
+void DAGTypeLegalizer::SetExpandedOp(SDOperand Op, SDOperand Lo, SDOperand Hi) {
   // Remember that this is the result of the node.
   std::pair<SDOperand, SDOperand> &Entry = ExpandedNodes[Op];
   assert(Entry.first.Val == 0 && "Node already expanded");
@@ -334,6 +333,30 @@ void DAGTypeLegalizer::SetExpandedOp(SDOperand Op, SDOperand Lo,
   if (Hi.Val->getNodeId() == NewNode) 
     MarkNewNodes(Hi.Val);
 }
+
+void DAGTypeLegalizer::GetSplitOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi) {
+  std::pair<SDOperand, SDOperand> &Entry = SplitNodes[Op];
+  RemapNode(Entry.first);
+  RemapNode(Entry.second);
+  assert(Entry.first.Val && "Operand isn't split");
+  Lo = Entry.first;
+  Hi = Entry.second;
+}
+
+void DAGTypeLegalizer::SetSplitOp(SDOperand Op, SDOperand Lo, SDOperand Hi) {
+  // Remember that this is the result of the node.
+  std::pair<SDOperand, SDOperand> &Entry = SplitNodes[Op];
+  assert(Entry.first.Val == 0 && "Node already split");
+  Entry.first = Lo;
+  Entry.second = Hi;
+  
+  // Lo/Hi may have been newly allocated, if so, add nodeid's as relevant.
+  if (Lo.Val->getNodeId() == NewNode) 
+    MarkNewNodes(Lo.Val);
+  if (Hi.Val->getNodeId() == NewNode) 
+    MarkNewNodes(Hi.Val);
+}
+
 
 SDOperand DAGTypeLegalizer::CreateStackStoreLoad(SDOperand Op, 
                                                  MVT::ValueType DestVT) {

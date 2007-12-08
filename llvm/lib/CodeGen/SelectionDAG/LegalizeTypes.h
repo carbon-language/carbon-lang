@@ -97,6 +97,10 @@ class VISIBILITY_HIDDEN DAGTypeLegalizer {
   /// ScalarizedNodes - For nodes that are <1 x ty>, this map indicates the
   /// scalar value of type 'ty' to use.
   DenseMap<SDOperand, SDOperand> ScalarizedNodes;
+
+  /// SplitNodes - For nodes that need to be split this map indicates
+  /// which operands are the expanded version of the input.
+  DenseMap<SDOperand, std::pair<SDOperand, SDOperand> > SplitNodes;
   
   /// ReplacedNodes - For nodes that have been replaced with another,
   /// indicates the replacement node to use.
