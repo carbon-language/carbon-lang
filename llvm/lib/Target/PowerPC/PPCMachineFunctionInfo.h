@@ -39,8 +39,12 @@ public:
   int getFramePointerSaveIndex() const { return FramePointerSaveIndex; }
   void setFramePointerSaveIndex(int Idx) { FramePointerSaveIndex = Idx; }
   
+  /// UsesLR - This is set when the prolog/epilog inserter does its initial scan
+  /// of the function, it is true if the LR/LR8 register is ever explicitly
+  /// accessed/clobbered in the machine function (e.g. by calls and movpctolr,
+  /// which is used in PIC generation).
   void setUsesLR(bool U) { UsesLR = U; }
-  bool usesLR()          { return UsesLR; }
+  bool usesLR() const    { return UsesLR; }
 
 };
 

@@ -96,10 +96,6 @@ public:
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
 
-  /// usesLR - Returns if the link registers (LR) has been used in the function.
-  ///
-  bool usesLR(MachineFunction &MF) const;
-  
   void lowerDynamicAlloc(MachineBasicBlock::iterator II) const;
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, RegScavenger *RS = NULL) const;

@@ -645,11 +645,13 @@ bool PPCRegisterInfo::hasFP(const MachineFunction &MF) const {
   return MFI->getStackSize() && needsFP(MF);
 }
 
-/// usesLR - Returns if the link registers (LR) has been used in the function.
-///
-bool PPCRegisterInfo::usesLR(MachineFunction &MF) const {
-  PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
-  return FI->usesLR();
+/// MustSaveLR - Return true if this function requires that we save the LR
+/// register onto the stack in the prolog and restore it in the epilog of the function.
+static bool MustSaveLR(const MachineFunction &MF) {
+  return MF.getInfo<PPCFunctionInfo>()->usesLR() || 
+         // FIXME: Anything that has a call should clobber the LR register,
+         // isn't this redundant??
+         MF.getFrameInfo()->hasCalls();
 }
 
 void PPCRegisterInfo::
@@ -1062,7 +1064,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Get operating system
   bool IsMachoABI = Subtarget.isMachoABI();
   // Check if the link register (LR) has been used.
-  bool UsesLR = MFI->hasCalls() || usesLR(MF);
+  bool UsesLR = MustSaveLR(MF);
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF) && FrameSize;
   
@@ -1226,7 +1228,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   // Get operating system
   bool IsMachoABI = Subtarget.isMachoABI();
   // Check if the link register (LR) has been used.
-  bool UsesLR = MFI->hasCalls() || usesLR(MF);
+  bool UsesLR = MustSaveLR(MF);
   // Do we have a frame pointer for this function?
   bool HasFP = hasFP(MF) && FrameSize;
   
