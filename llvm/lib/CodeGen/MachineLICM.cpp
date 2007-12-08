@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "machine-licm"
+#include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -27,7 +28,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include <map>
 
 using namespace llvm;
 
@@ -35,8 +35,11 @@ namespace {
   // Hidden options to help debugging
   cl::opt<bool>
   PerformLICM("machine-licm",
-              cl::init(false), cl::Hidden);
+              cl::init(false), cl::Hidden,
+              cl::desc("Perform loop-invariant code motion on machine code"));
 }
+
+STATISTIC(NumHoisted, "Number of machine instructions hoisted out of loop");
 
 namespace {
   class VISIBILITY_HIDDEN MachineLICM : public MachineFunctionPass {
@@ -51,7 +54,7 @@ namespace {
     MachineLoop *CurLoop;       // The current loop we are working on.
 
     // Map the def of a virtual register to the machine instruction.
-    std::map<unsigned, const MachineInstr*> VRegDefs;
+    IndexedMap<const MachineInstr*, VirtReg2IndexFunctor> VRegDefs;
   public:
     static char ID; // Pass identification, replacement for typeid
     MachineLICM() : MachineFunctionPass((intptr_t)&ID) {}
@@ -66,16 +69,23 @@ namespace {
       AU.addRequired<MachineDominatorTree>();
     }
   private:
-    /// GatherAllLoops - Get all loops in depth first order.
+    /// VisitAllLoops - Visit all of the loops in depth first order and try to
+    /// hoist invariant instructions from them.
     /// 
-    void GatherAllLoops(MachineLoop *L, SmallVectorImpl<MachineLoop*> &Loops) {
+    void VisitAllLoops(MachineLoop *L) {
       const std::vector<MachineLoop*> &SubLoops = L->getSubLoops();
 
       for (MachineLoop::iterator
-             I = SubLoops.begin(), E = SubLoops.end(); I != E; ++I)
-        GatherAllLoops(*I, Loops);
+             I = SubLoops.begin(), E = SubLoops.end(); I != E; ++I) {
+        MachineLoop *ML = *I;
 
-      Loops.push_back(L);
+        // Traverse the body of the loop in depth first order on the dominator
+        // tree so that we are guaranteed to see definitions before we see uses.
+        VisitAllLoops(ML);
+        HoistRegion(DT->getNode(ML->getHeader()));
+      }
+
+      HoistRegion(DT->getNode(L->getHeader()));
     }
 
     /// MapVirtualRegisterDefs - Create a map of which machine instruction
@@ -104,8 +114,12 @@ namespace {
     ///
     bool CanHoistInst(MachineInstr &I) const {
       const TargetInstrDescriptor *TID = I.getInstrDescriptor();
-      MachineOpCode Opcode = TID->Opcode;
 
+      // Don't hoist if this instruction implicitly reads physical registers or
+      // doesn't take any operands.
+      if (TID->ImplicitUses || !I.getNumOperands()) return false;
+
+      MachineOpCode Opcode = TID->Opcode;
       return TII->isTriviallyReMaterializable(&I) &&
         // FIXME: Below necessary?
         !(TII->isReturn(Opcode) ||
@@ -137,12 +151,13 @@ namespace {
           Preds.push_back(*I);
     }
 
-    /// MoveInstToBlock - Moves the machine instruction to the bottom of the
-    /// predecessor basic block (but before the terminator instructions).
+    /// MoveInstToEndOfBlock - Moves the machine instruction to the bottom of
+    /// the predecessor basic block (but before the terminator instructions).
     /// 
-    void MoveInstToBlock(MachineBasicBlock *MBB, MachineInstr *MI) {
+    void MoveInstToEndOfBlock(MachineBasicBlock *MBB, MachineInstr *MI) {
       MachineBasicBlock::iterator Iter = MBB->getFirstTerminator();
       MBB->insert(Iter, MI);
+      ++NumHoisted;
     }
 
     /// HoistRegion - Walk the specified region of the CFG (defined by all
@@ -156,7 +171,7 @@ namespace {
     /// Hoist - When an instruction is found to only use loop invariant operands
     /// that is safe to hoist, this instruction is called to do the dirty work.
     ///
-    bool Hoist(MachineInstr &MI);
+    void Hoist(MachineInstr &MI);
   };
 
   char MachineLICM::ID = 0;
@@ -188,17 +203,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
     // Visit all of the instructions of the loop. We want to visit the subloops
     // first, though, so that we can hoist their invariants first into their
     // containing loop before we process that loop.
-    SmallVector<MachineLoop*, 16> Loops;
-    GatherAllLoops(L, Loops);
-
-    for (SmallVector<MachineLoop*, 8>::iterator
-           II = Loops.begin(), IE = Loops.end(); II != IE; ++II) {
-      L = *II;
-
-      // Traverse the body of the loop in depth first order on the dominator
-      // tree so that we are guaranteed to see definitions before we see uses.
-      HoistRegion(DT->getNode(L->getHeader()));
-    }
+    VisitAllLoops(L);
   }
 
   return Changed;
@@ -216,7 +221,7 @@ void MachineLICM::MapVirtualRegisterDefs(const MachineFunction &MF) {
            II = MBB.begin(), IE = MBB.end(); II != IE; ++II) {
       const MachineInstr &MI = *II;
 
-      if (MI.getNumOperands() > 0) {
+      for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
         const MachineOperand &MO = MI.getOperand(0);
 
         if (MO.isRegister() && MO.isDef() &&
@@ -249,9 +254,7 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
       // Try hoisting the instruction out of the loop. We can only do this if
       // all of the operands of the instruction are loop invariant and if it is
       // safe to hoist the instruction.
-      if (Hoist(MI))
-        // Hoisting was successful! Remove bothersome instruction now.
-        MI.getParent()->remove(&MI);
+      Hoist(MI);
     }
 
   const std::vector<MachineDomTreeNode*> &Children = N->getChildren();
@@ -266,12 +269,6 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
 /// instruction is hoistable.
 /// 
 bool MachineLICM::isLoopInvariantInst(MachineInstr &I) {
-  const TargetInstrDescriptor *TID = I.getInstrDescriptor();
-
-  // Don't hoist if this instruction implicitly reads physical registers or
-  // doesn't take any operands.
-  if (TID->ImplicitUses || !I.getNumOperands()) return false;
-
   if (!CanHoistInst(I)) return false;
 
   // The instruction is loop invariant if all of its operands are loop-invariant
@@ -287,7 +284,7 @@ bool MachineLICM::isLoopInvariantInst(MachineInstr &I) {
     if (!MRegisterInfo::isVirtualRegister(Reg))
       return false;
 
-    assert(VRegDefs[Reg] && "Machine instr not mapped for this vreg?!");
+    assert(VRegDefs[Reg] && "Machine instr not mapped for this vreg?");
 
     // If the loop contains the definition of an operand, then the instruction
     // isn't loop invariant.
@@ -302,35 +299,34 @@ bool MachineLICM::isLoopInvariantInst(MachineInstr &I) {
 /// Hoist - When an instruction is found to only use loop invariant operands
 /// that is safe to hoist, this instruction is called to do the dirty work.
 ///
-bool MachineLICM::Hoist(MachineInstr &MI) {
-  if (!isLoopInvariantInst(MI)) return false;
+void MachineLICM::Hoist(MachineInstr &MI) {
+  if (!isLoopInvariantInst(MI)) return;
 
   std::vector<MachineBasicBlock*> Preds;
 
   // Non-back-edge predecessors.
   FindPredecessors(Preds);
-  if (Preds.empty()) return false;
 
-  // Check that the predecessors are qualified to take the hoisted
-  // instruction. I.e., there is only one edge from each predecessor, and it's
-  // to the loop header.
-  for (std::vector<MachineBasicBlock*>::iterator
-         I = Preds.begin(), E = Preds.end(); I != E; ++I) {
-    MachineBasicBlock *MBB = *I;
+  // Either we don't have any predecessors(?!) or we have more than one, which
+  // is forbidden.
+  if (Preds.empty() || Preds.size() != 1) return;
 
-    // FIXME: We are assuming at first that the basic blocks coming into this
-    // loop have only one successor each. This isn't the case in general because
-    // we haven't broken critical edges or added preheaders.
-    if (MBB->succ_size() != 1) return false;
-    assert(*MBB->succ_begin() == CurLoop->getHeader() &&
-           "The predecessor doesn't feed directly into the loop header!");
-  }
+  // Check that the predecessor is qualified to take the hoisted
+  // instruction. I.e., there is only one edge from the predecessor, and it's to
+  // the loop header.
+  MachineBasicBlock *MBB = Preds.front();
 
-  // Now move the instructions to the predecessors.
-  for (std::vector<MachineBasicBlock*>::iterator
-         I = Preds.begin(), E = Preds.end(); I != E; ++I)
-    MoveInstToBlock(*I, MI.clone());
+  // FIXME: We are assuming at first that the basic blocks coming into this loop
+  // have only one successor each. This isn't the case in general because we
+  // haven't broken critical edges or added preheaders.
+  if (MBB->succ_size() != 1) return;
+  assert(*MBB->succ_begin() == CurLoop->getHeader() &&
+         "The predecessor doesn't feed directly into the loop header!");
 
+  // Now move the instructions to the predecessor.
+  MoveInstToEndOfBlock(MBB, MI.clone());
+
+  // Hoisting was successful! Remove bothersome instruction now.
+  MI.getParent()->remove(&MI);
   Changed = true;
-  return true;
 }
