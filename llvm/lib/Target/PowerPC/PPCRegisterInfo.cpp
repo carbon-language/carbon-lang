@@ -615,7 +615,7 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
 
 bool PPCRegisterInfo::canFoldMemoryOperand(MachineInstr *MI,
                                          SmallVectorImpl<unsigned> &Ops) const {
-  if (Ops.size() != 1) return NULL;
+  if (Ops.size() != 1) return false;
 
   // Make sure this is a reg-reg copy.  Note that we can't handle MCRF, because
   // it takes more than one instruction to store it.
