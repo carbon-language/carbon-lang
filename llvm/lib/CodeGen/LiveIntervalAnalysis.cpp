@@ -613,7 +613,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
     return false;
 
   isLoad = false;
-  if (tii_->hasNoSideEffects(MI)) {
+  if (tii_->isTriviallyReMaterializable(MI)) {
     isLoad = MI->getInstrDescriptor()->Flags & M_LOAD_FLAG;
     return true;
   }

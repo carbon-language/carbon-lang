@@ -39,7 +39,7 @@ namespace {
               cl::desc("Perform loop-invariant code motion on machine code"));
 }
 
-STATISTIC(NumHoisted, "Number of machine instructions hoisted out of loop");
+STATISTIC(NumHoisted, "Number of machine instructions hoisted out of loops");
 
 namespace {
   class VISIBILITY_HIDDEN MachineLICM : public MachineFunctionPass {
@@ -93,11 +93,11 @@ namespace {
     /// 
     void MapVirtualRegisterDefs(const MachineFunction &MF);
 
-    /// isInSubLoop - A little predicate that returns true if the specified
+    /// IsInSubLoop - A little predicate that returns true if the specified
     /// basic block is in a subloop of the current one, not the current one
     /// itself.
     ///
-    bool isInSubLoop(MachineBasicBlock *BB) {
+    bool IsInSubLoop(MachineBasicBlock *BB) {
       assert(CurLoop->contains(BB) && "Only valid if BB is IN the loop");
 
       for (MachineLoop::iterator
@@ -120,7 +120,7 @@ namespace {
       if (TID->ImplicitUses || !I.getNumOperands()) return false;
 
       MachineOpCode Opcode = TID->Opcode;
-      return TII->hasNoSideEffects(&I) &&
+      return TII->isTriviallyReMaterializable(&I) &&
         // FIXME: Below necessary?
         !(TII->isReturn(Opcode) ||
           TII->isTerminatorInstr(Opcode) ||
@@ -132,12 +132,12 @@ namespace {
           TII->isStore(Opcode));
     }
 
-    /// isLoopInvariantInst - Returns true if the instruction is loop
+    /// IsLoopInvariantInst - Returns true if the instruction is loop
     /// invariant. I.e., all virtual register operands are defined outside of
     /// the loop, physical registers aren't accessed (explicitly or implicitly),
     /// and the instruction is hoistable.
     /// 
-    bool isLoopInvariantInst(MachineInstr &I);
+    bool IsLoopInvariantInst(MachineInstr &I);
 
     /// FindPredecessors - Get all of the predecessors of the loop that are not
     /// back-edges.
@@ -246,7 +246,7 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
 
   // Only need to process the contents of this block if it is not part of a
   // subloop (which would already have been processed).
-  if (!isInSubLoop(BB))
+  if (!IsInSubLoop(BB))
     for (MachineBasicBlock::iterator
            I = BB->begin(), E = BB->end(); I != E; ) {
       MachineInstr &MI = *I++;
@@ -263,12 +263,12 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
     HoistRegion(Children[I]);
 }
 
-/// isLoopInvariantInst - Returns true if the instruction is loop
+/// IsLoopInvariantInst - Returns true if the instruction is loop
 /// invariant. I.e., all virtual register operands are defined outside of the
 /// loop, physical registers aren't accessed (explicitly or implicitly), and the
 /// instruction is hoistable.
 /// 
-bool MachineLICM::isLoopInvariantInst(MachineInstr &I) {
+bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   if (!CanHoistInst(I)) return false;
 
   // The instruction is loop invariant if all of its operands are loop-invariant
@@ -300,7 +300,7 @@ bool MachineLICM::isLoopInvariantInst(MachineInstr &I) {
 /// that is safe to hoist, this instruction is called to do the dirty work.
 ///
 void MachineLICM::Hoist(MachineInstr &MI) {
-  if (!isLoopInvariantInst(MI)) return;
+  if (!IsLoopInvariantInst(MI)) return;
 
   std::vector<MachineBasicBlock*> Preds;
 
@@ -316,9 +316,9 @@ void MachineLICM::Hoist(MachineInstr &MI) {
   // the loop header.
   MachineBasicBlock *MBB = Preds.front();
 
-  // FIXME: We are assuming at first that the basic blocks coming into this loop
-  // have only one successor each. This isn't the case in general because we
-  // haven't broken critical edges or added preheaders.
+  // FIXME: We are assuming at first that the basic block coming into this loop
+  // has only one successor. This isn't the case in general because we haven't
+  // broken critical edges or added preheaders.
   if (MBB->succ_size() != 1) return;
   assert(*MBB->succ_begin() == CurLoop->getHeader() &&
          "The predecessor doesn't feed directly into the loop header!");

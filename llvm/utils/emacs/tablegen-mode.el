@@ -16,7 +16,7 @@
 
 (defvar tablegen-font-lock-keywords
   (let ((kw (mapconcat 'identity
-                       '("class" "def" "defm" "field" "in" "include"
+                       '("class" "defm" "def" "field" "include" "in"
                          "let" "multiclass")
                        "\\|"))
         (type-kw (mapconcat 'identity
@@ -49,15 +49,16 @@
 
 ;; ---------------------- Syntax table ---------------------------
 ;; Shamelessly ripped from jasmin.el
-;; URL: http://www.neilvandyke.org/jasmin-emacs/jasmin.el.html
+;; URL: http://www.neilvandyke.org/jasmin-emacs/jasmin.el
 
 (if (not tablegen-mode-syntax-table)
     (progn
       (setq tablegen-mode-syntax-table (make-syntax-table))
-      (mapcar (function (lambda (n)
-                          (modify-syntax-entry (aref n 0)
-                                               (aref n 1)
-                                               tablegen-mode-syntax-table)))
+      (mapcar (function
+               (lambda (n)
+                 (modify-syntax-entry (aref n 0)
+                                      (aref n 1)
+                                      tablegen-mode-syntax-table)))
               '(
                 ;; whitespace (` ')
                 [?\^m " "]
@@ -66,8 +67,6 @@
                 [?\t  " "]
                 [?\   " "]
                 ;; word constituents (`w')
-                ;;[?<  "w"]
-                ;;[?>  "w"]
                 [?\%  "w"]
                 ;;[?_  "w  "]
                 ;; comments
@@ -78,15 +77,17 @@
                 ;; symbol constituents (`_')
                 ;; punctuation (`.')
                 ;; open paren (`(')
-                [?\( "("]
-                [?\[ "("]
-                [?\{ "("]
+                [?\(  "("]
+                [?\[  "("]
+                [?\{  "("]
+                [?\<  "("]
                 ;; close paren (`)')
-                [?\) ")"]
-                [?\] ")"]
-                [?\} ")"]
+                [?\)  ")"]
+                [?\]  ")"]
+                [?\}  ")"]
+                [?\>  ")"]
                 ;; string quote ('"')
-                [?\" "\""]
+                [?\"  "\""]
                 ))))
 
 ;; --------------------- Abbrev table -----------------------------
@@ -101,10 +102,9 @@
 (if (not tablegen-mode-map)
     ()  ; Do not change the keymap if it is already set up.
   (setq tablegen-mode-map (make-sparse-keymap))
-  (define-key tablegen-mode-map "\t" 'tab-to-tab-stop)
+  (define-key tablegen-mode-map "\t"  'tab-to-tab-stop)
   (define-key tablegen-mode-map "\es" 'center-line)
   (define-key tablegen-mode-map "\eS" 'center-paragraph))
-
 
 (defun tablegen-mode ()
   "Major mode for editing TableGen description files.
@@ -115,10 +115,10 @@
   (use-local-map tablegen-mode-map)         ; Provides the local keymap.
   (setq major-mode 'tablegen-mode)          
 
-  (make-local-variable	'font-lock-defaults)
+  (make-local-variable 'font-lock-defaults)
   (setq major-mode 'tablegen-mode           ; This is how describe-mode
                                             ;   finds the doc string to print.
-	mode-name "TableGen"                      ; This name goes into the modeline.
+	mode-name "TableGen"                ; This name goes into the modeline.
 	font-lock-defaults `(tablegen-font-lock-keywords))
 
   (setq local-abbrev-table tablegen-mode-abbrev-table)
