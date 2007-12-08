@@ -108,6 +108,20 @@ public:
     Op = Val;
   }
   unsigned getNumOperands() const { return 1; }
+  
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const UnaryInstruction *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::Malloc ||
+           I->getOpcode() == Instruction::Alloca ||
+           I->getOpcode() == Instruction::Free ||
+           I->getOpcode() == Instruction::Load ||
+           I->getOpcode() == Instruction::VAArg ||
+           (I->getOpcode() >= CastOpsBegin && I->getOpcode() < CastOpsEnd);
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
 };
 
 //===----------------------------------------------------------------------===//
