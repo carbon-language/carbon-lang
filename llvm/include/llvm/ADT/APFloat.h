@@ -102,7 +102,6 @@
 
 // APInt contains static functions implementing bignum arithmetic.
 #include "llvm/ADT/APInt.h"
-#include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
