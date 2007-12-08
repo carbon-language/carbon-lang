@@ -276,7 +276,17 @@ private:
 
   void SplitRes_UNDEF(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void SplitRes_LOAD(LoadSDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_BUILD_PAIR(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_INSERT_VECTOR_ELT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_VECTOR_SHUFFLE(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+
+  void SplitRes_BUILD_VECTOR(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_CONCAT_VECTORS(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_BIT_CONVERT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_UnOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   void SplitRes_BinOp(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_FPOWI(SDNode *N, SDOperand &Lo, SDOperand &Hi);
+  void SplitRes_SELECT(SDNode *N, SDOperand &Lo, SDOperand &Hi);
   
   // Operand Vector Scalarization: <128 x ty> -> 2 x <64 x ty>.
   bool SplitOperand(SDNode *N, unsigned OpNo);
