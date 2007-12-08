@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/APFloat.h"
 #include <cassert>
 #include <cstring>
-#include "llvm/ADT/APFloat.h"
 #include "llvm/Support/MathExtras.h"
 
 using namespace llvm;
