@@ -16,14 +16,15 @@
 #define LLVM_APINT_H
 
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Bitcode/SerializationFwd.h"
 #include <cassert>
 #include <string>
 
 #define COMPILE_TIME_ASSERT(cond) extern int CTAssert[(cond) ? 1 : -1]
 
 namespace llvm {
-
+  class Serializer;
+  class Deserializer;
+  
   /* An unsigned host type used as a single part of a multi-part
      bignum.  */
   typedef uint64_t integerPart;
