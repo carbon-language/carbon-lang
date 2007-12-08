@@ -41,6 +41,8 @@ namespace llvm {
   /// string. Strings are removed automatically as PooledStringPtrs are
   /// destroyed.
   class StringPool {
+    /// PooledString - This is the value of an entry in the pool's interning
+    /// table.
     struct PooledString {
       StringPool *Pool;  ///< So the string can remove itself.
       unsigned Refcount; ///< Number of referencing PooledStringPtrs.
@@ -59,7 +61,14 @@ namespace llvm {
     StringPool();
     ~StringPool();
     
+    /// intern - Adds a string to the pool and returns a reference-counted
+    /// pointer to it. No additional memory is allocated if the string already
+    /// exists in the pool.
     PooledStringPtr intern(const char *Begin, const char *End);
+    
+    /// intern - Adds a null-terminated string to the pool and returns a
+    /// reference-counted pointer to it. No additional memory is allocated if
+    /// the string already exists in the pool.
     inline PooledStringPtr intern(const char *Str);
   };
   
