@@ -245,6 +245,10 @@ public:
     return static_cast<unsigned>(Size);
   }
 
+  /// getTargetPrefix - Return the target prefix used for identifying
+  /// llvm intrinsics.
+  const char *getTargetPrefix() const;
+    
   /// getTargetTriple - Return the target triple of the primary target.
   const char *getTargetTriple() const;
   
@@ -280,6 +284,8 @@ public:
   ///  TargetInfoImpl object was created from.
   const char* getTargetTriple() const { return Triple.c_str(); }
   
+  virtual const char *getTargetPrefix() const = 0;
+
   /// getTargetDefines - Return a list of the target-specific #define values set
   /// when compiling to this target.  Each string should be of the form
   /// "#define X Y\n".

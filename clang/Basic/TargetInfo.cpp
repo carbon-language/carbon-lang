@@ -56,6 +56,10 @@ const char* TargetInfo::getTargetTriple() const {
   return PrimaryTarget->getTargetTriple();
 }
 
+const char *TargetInfo::getTargetPrefix() const {
+ return PrimaryTarget->getTargetPrefix();
+}
+
 /// DiagnoseNonPortability - When a use of a non-portable target feature is
 /// used, this method emits the diagnostic and marks the translation unit as
 /// non-portable.
@@ -417,6 +421,9 @@ bool TargetInfo::validateInputConstraint(const char *Name,
         // Eventually, an unknown constraint should just be treated as 'g'.
         assert(0 && "Unknown input constraint type!");
       }        
+    case '%': // commutative
+      // FIXME: Fail if % is used with the last operand.
+      break;
     case 'i': // immediate integer.
       break;
     case 'r': // general register.

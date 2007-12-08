@@ -402,6 +402,10 @@ namespace PPC {
     return 0;
   }
 
+  const char *getTargetPrefix() {
+    return "ppc";
+  }
+  
 } // End namespace PPC
 
 
@@ -480,6 +484,10 @@ namespace X86 {
     return "~{dirflag},~{fpsr},~{flags}";
   }
   
+  const char *getTargetPrefix() {
+    return "x86";
+  }
+  
 } // End namespace X86
 
 //===----------------------------------------------------------------------===//
@@ -502,6 +510,9 @@ public:
   }
   virtual const char *getVAListDeclaration() const {
     return getPPCVAListDeclaration();
+  }
+  virtual const char *getTargetPrefix() const {
+    return PPC::getTargetPrefix();
   }
   virtual void getGCCRegNames(const char * const *&Names, 
                               unsigned &NumNames) const {
@@ -537,6 +548,9 @@ public:
   virtual const char *getVAListDeclaration() const {
     return getPPCVAListDeclaration();
   }  
+  virtual const char *getTargetPrefix() const {
+    return PPC::getTargetPrefix();
+  }  
   virtual void getGCCRegNames(const char * const *&Names, 
                                    unsigned &NumNames) const {
     PPC::getGCCRegNames(Names, NumNames);
@@ -571,6 +585,9 @@ public:
   virtual const char *getVAListDeclaration() const {
     return getI386VAListDeclaration();
   }  
+  virtual const char *getTargetPrefix() const {
+    return X86::getTargetPrefix();
+  }  
   virtual void getGCCRegNames(const char * const *&Names, 
                                    unsigned &NumNames) const {
     X86::getGCCRegNames(Names, NumNames);
@@ -604,6 +621,9 @@ public:
   }
   virtual const char *getVAListDeclaration() const {
     return getX86_64VAListDeclaration();
+  }
+  virtual const char *getTargetPrefix() const {
+    return X86::getTargetPrefix();
   }
   virtual void getGCCRegNames(const char * const *&Names, 
                                    unsigned &NumNames) const {
@@ -643,6 +663,9 @@ public:
   virtual const char *getVAListDeclaration() const {
     return getI386VAListDeclaration();
   }
+  virtual const char *getTargetPrefix() const {
+    return X86::getTargetPrefix();
+  }  
   virtual void getGCCRegNames(const char * const *&Names, 
                                    unsigned &NumNames) const {
     X86::getGCCRegNames(Names, NumNames);
