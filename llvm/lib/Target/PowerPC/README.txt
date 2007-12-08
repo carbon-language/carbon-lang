@@ -3,7 +3,6 @@
 TODO:
 * gpr0 allocation
 * implement do-loop -> bdnz transform
-* __builtin_return_address not supported on PPC
 
 ===-------------------------------------------------------------------------===
 

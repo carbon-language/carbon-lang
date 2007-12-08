@@ -3036,8 +3036,8 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::SCALAR_TO_VECTOR:   return LowerSCALAR_TO_VECTOR(Op, DAG);
   case ISD::MUL:                return LowerMUL(Op, DAG);
   
-  // Frame & Return address.  Currently unimplemented
-  case ISD::RETURNADDR:         break;
+  // Frame & Return address.
+  case ISD::RETURNADDR:         return LowerRETURNADDR(Op, DAG);
   case ISD::FRAMEADDR:          return LowerFRAMEADDR(Op, DAG);
   }
   return SDOperand();
@@ -3576,8 +3576,36 @@ bool PPCTargetLowering::isLegalAddressImmediate(llvm::GlobalValue* GV) const {
   return false; 
 }
 
-SDOperand PPCTargetLowering::LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG)
-{
+SDOperand PPCTargetLowering::LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG) {
+  // Depths > 0 not supported yet! 
+  if (cast<ConstantSDNode>(Op.getOperand(0))->getValue() > 0)
+    return SDOperand();
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  PPCFunctionInfo *FuncInfo = MF.getInfo<PPCFunctionInfo>();
+  int RAIdx = FuncInfo->getReturnAddrSaveIndex();
+  if (RAIdx == 0) {
+    bool isPPC64 = PPCSubTarget.isPPC64();
+    int Offset = 
+      PPCFrameInfo::getReturnSaveOffset(isPPC64, PPCSubTarget.isMachoABI());
+
+    // Set up a frame object for the return address.
+    RAIdx = MF.getFrameInfo()->CreateFixedObject(isPPC64 ? 8 : 4, Offset);
+    
+    // Remember it for next time.
+    FuncInfo->setReturnAddrSaveIndex(RAIdx);
+    
+    // Make sure the function really does not optimize away the store of the RA
+    // to the stack.
+    FuncInfo->setLRStoreRequired();
+  }
+  
+  // Just load the return address off the stack.
+  SDOperand RetAddrFI =  DAG.getFrameIndex(RAIdx, getPointerTy());
+  return DAG.getLoad(getPointerTy(), DAG.getEntryNode(), RetAddrFI, NULL, 0);
+}
+
+SDOperand PPCTargetLowering::LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG) {
   // Depths > 0 not supported yet! 
   if (cast<ConstantSDNode>(Op.getOperand(0))->getValue() > 0)
     return SDOperand();

@@ -288,6 +288,7 @@ namespace llvm {
     /// the offset of the target addressing mode.
     virtual bool isLegalAddressImmediate(GlobalValue *GV) const;
 
+    SDOperand LowerRETURNADDR(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFRAMEADDR(SDOperand Op, SelectionDAG &DAG);
   };
 }

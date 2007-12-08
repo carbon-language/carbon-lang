@@ -646,9 +646,14 @@ bool PPCRegisterInfo::hasFP(const MachineFunction &MF) const {
 }
 
 /// MustSaveLR - Return true if this function requires that we save the LR
-/// register onto the stack in the prolog and restore it in the epilog of the function.
+/// register onto the stack in the prolog and restore it in the epilog of the
+/// function.
 static bool MustSaveLR(const MachineFunction &MF) {
-  return MF.getInfo<PPCFunctionInfo>()->usesLR() || 
+  const PPCFunctionInfo *MFI = MF.getInfo<PPCFunctionInfo>();
+  
+  // We need an save/restore of LR if there is any use/def of LR explicitly, or
+  // if there is some use of the LR stack slot (e.g. for builtin_return_address.
+  return MFI->usesLR() || MFI->isLRStoreRequired() ||
          // FIXME: Anything that has a call should clobber the LR register,
          // isn't this redundant??
          MF.getFrameInfo()->hasCalls();
