@@ -52,6 +52,8 @@ class MemoryDependenceAnalysis : public FunctionPass {
     reverseDepMapType reverseDepNonLocal;
     
   public:
+    void ping(Instruction* D);
+
     // Special marker indicating that the query has no dependency
     // in the specified block.
     static Instruction* const NonLocal;

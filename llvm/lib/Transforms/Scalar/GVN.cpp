@@ -1062,6 +1062,10 @@ bool GVN::processInstruction(Instruction* I,
       }
     }
     
+    // Remove it!
+    MemoryDependenceAnalysis& MD = getAnalysis<MemoryDependenceAnalysis>();
+    MD.removeInstruction(I);
+    
     VN.erase(I);
     I->replaceAllUsesWith(repl);
     toErase.push_back(I);
@@ -1128,11 +1132,11 @@ bool GVN::iterateOnFunction(Function &F) {
       
       // Avoid iterator invalidation
       ++BI;
-      
+
       for (SmallVector<Instruction*, 4>::iterator I = toErase.begin(),
            E = toErase.end(); I != E; ++I)
         (*I)->eraseFromParent();
-      
+
       toErase.clear();
     }
   }

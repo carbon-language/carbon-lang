@@ -40,6 +40,31 @@ Instruction* const MemoryDependenceAnalysis::Dirty = (Instruction*)-5;
 static RegisterPass<MemoryDependenceAnalysis> X("memdep",
                                                 "Memory Dependence Analysis");
 
+void MemoryDependenceAnalysis::ping(Instruction *D) {
+  for (depMapType::iterator I = depGraphLocal.begin(), E = depGraphLocal.end();
+       I != E; ++I) {
+    assert(I->first != D);
+    assert(I->second.first != D);
+  }
+
+  for (nonLocalDepMapType::iterator I = depGraphNonLocal.begin(), E = depGraphNonLocal.end();
+       I != E; ++I) {
+    assert(I->first != D);
+  }
+
+  for (reverseDepMapType::iterator I = reverseDep.begin(), E = reverseDep.end();
+       I != E; ++I)
+    for (SmallPtrSet<Instruction*, 4>::iterator II = I->second.begin(), EE = I->second.end();
+         II != EE; ++II)
+      assert(*II != D);
+
+  for (reverseDepMapType::iterator I = reverseDepNonLocal.begin(), E = reverseDepNonLocal.end();
+       I != E; ++I)
+    for (SmallPtrSet<Instruction*, 4>::iterator II = I->second.begin(), EE = I->second.end();
+         II != EE; ++II)
+      assert(*II != D);
+}
+
 /// getAnalysisUsage - Does not modify anything.  It uses Alias Analysis.
 ///
 void MemoryDependenceAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -54,6 +79,8 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
                                                            Instruction* start,
                                                             BasicBlock* block) {
   
+  std::pair<Instruction*, bool>& cachedResult =
+                                              depGraphLocal[C.getInstruction()];
   AliasAnalysis& AA = getAnalysis<AliasAnalysis>();
   TargetData& TD = getAnalysis<TargetData>();
   BasicBlock::iterator blockBegin = C.getInstruction()->getParent()->begin();
@@ -100,8 +127,8 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
       if (result != AliasAnalysis::DoesNotAccessMemory &&
           result != AliasAnalysis::OnlyReadsMemory) {
         if (!start && !block) {
-          depGraphLocal.insert(std::make_pair(C.getInstruction(),
-                                              std::make_pair(QI, true)));
+          cachedResult.first = QI;
+          cachedResult.second = true;
           reverseDep[QI].insert(C.getInstruction());
         }
         return QI;
@@ -113,8 +140,8 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
     
     if (AA.getModRefInfo(C, pointer, pointerSize) != AliasAnalysis::NoModRef) {
       if (!start && !block) {
-        depGraphLocal.insert(std::make_pair(C.getInstruction(),
-                                            std::make_pair(QI, true)));
+        cachedResult.first = QI;
+        cachedResult.second = true;
         reverseDep[QI].insert(C.getInstruction());
       }
       return QI;
@@ -122,8 +149,8 @@ Instruction* MemoryDependenceAnalysis::getCallSiteDependency(CallSite C,
   }
   
   // No dependence found
-  depGraphLocal.insert(std::make_pair(C.getInstruction(),
-                                      std::make_pair(NonLocal, true)));
+  cachedResult.first = NonLocal;
+  cachedResult.second = true;
   reverseDep[NonLocal].insert(C.getInstruction());
   return NonLocal;
 }
@@ -265,13 +292,15 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   BasicBlock::iterator QI = query;
   
   // Check for a cached result
-  std::pair<Instruction*, bool> cachedResult = depGraphLocal[query];
+  std::pair<Instruction*, bool>& cachedResult = depGraphLocal[query];
   // If we have a _confirmed_ cached entry, return it
-  if (cachedResult.second)
-    return cachedResult.first;
-  else if (cachedResult.first && cachedResult.first != NonLocal)
-  // If we have an unconfirmed cached entry, we can start our search from there
-    QI = cachedResult.first;
+  if (!block && !start) {
+    if (cachedResult.second)
+      return cachedResult.first;
+    else if (cachedResult.first && cachedResult.first != NonLocal)
+      // If we have an unconfirmed cached entry, we can start our search from there
+      QI = cachedResult.first;
+  }
   
   if (start)
     QI = start;
@@ -322,7 +351,8 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
       // All volatile loads/stores depend on each other
       if (queryIsVolatile && S->isVolatile()) {
         if (!start && !block) {
-          depGraphLocal.insert(std::make_pair(query, std::make_pair(S, true)));
+          cachedResult.first = S;
+          cachedResult.second = true;
           reverseDep[S].insert(query);
         }
         
@@ -335,7 +365,8 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
       // All volatile loads/stores depend on each other
       if (queryIsVolatile && L->isVolatile()) {
         if (!start && !block) {
-          depGraphLocal.insert(std::make_pair(query, std::make_pair(L, true)));
+          cachedResult.first = L;
+          cachedResult.second = true;
           reverseDep[L].insert(query);
         }
         
@@ -370,8 +401,8 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
           continue;
         
         if (!start && !block) {
-          depGraphLocal.insert(std::make_pair(query,
-                                              std::make_pair(QI, true)));
+          cachedResult.first = QI;
+          cachedResult.second = true;
           reverseDep[QI].insert(query);
         }
         
@@ -393,8 +424,8 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
           continue;
         
         if (!start && !block) {
-          depGraphLocal.insert(std::make_pair(query,
-                                              std::make_pair(QI, true)));
+          cachedResult.first = QI;
+          cachedResult.second = true;
           reverseDep[QI].insert(query);
         }
         
@@ -405,8 +436,8 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
   
   // If we found nothing, return the non-local flag
   if (!start && !block) {
-    depGraphLocal.insert(std::make_pair(query,
-                                        std::make_pair(NonLocal, true)));
+    cachedResult.first = NonLocal;
+    cachedResult.second = true;
     reverseDep[NonLocal].insert(query);
   }
   
@@ -419,6 +450,14 @@ Instruction* MemoryDependenceAnalysis::getDependency(Instruction* query,
 void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
   // Figure out the new dep for things that currently depend on rem
   Instruction* newDep = NonLocal;
+
+  reverseDep[depGraphLocal[rem].first].erase(rem);
+
+  for (DenseMap<BasicBlock*, Value*>::iterator DI =
+       depGraphNonLocal[rem].begin(), DE = depGraphNonLocal[rem].end();
+       DI != DE; ++DI)
+    if (DI->second != None)
+      reverseDepNonLocal[DI->second].erase(rem);
 
   depMapType::iterator depGraphEntry = depGraphLocal.find(rem);
 
@@ -449,9 +488,10 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
       // Mark it as unconfirmed as long as it is not the non-local flag
       depGraphLocal[*I] = std::make_pair(newDep, !newDep);
     }
-    
-    reverseDep.erase(rem);
   }
+  
+  depGraphLocal.erase(rem);
+  reverseDep.erase(rem);
   
   if (reverseDepNonLocal.count(rem)) {
     SmallPtrSet<Instruction*, 4>& set = reverseDepNonLocal[rem];
@@ -463,8 +503,12 @@ void MemoryDependenceAnalysis::removeInstruction(Instruction* rem) {
         if (DI->second == rem)
           DI->second = Dirty;
     
-    reverseDepNonLocal.erase(rem);
   }
+  
+  reverseDepNonLocal.erase(rem);
+  nonLocalDepMapType::iterator I = depGraphNonLocal.find(rem);
+  if (I != depGraphNonLocal.end())
+    depGraphNonLocal.erase(I);
 
   getAnalysis<AliasAnalysis>().deleteValue(rem);
 }
