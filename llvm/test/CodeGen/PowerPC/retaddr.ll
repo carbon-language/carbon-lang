@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep mflr
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep lwz
+; RUN: llvm-as < %s | llc -march=ppc64 | grep {ld r., 16(r1)}
 
 target triple = "powerpc-apple-darwin8"
 
