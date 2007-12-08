@@ -288,24 +288,24 @@ public:
     return get(Opcode).Flags & M_HAS_OPTIONAL_DEF;
   }
 
-  /// isTriviallyReMaterializable - Return true if the instruction is trivially
+  /// hasNoSideEffects - Return true if the instruction is trivially
   /// rematerializable, meaning it has no side effects and requires no operands
   /// that aren't always available.
-  bool isTriviallyReMaterializable(MachineInstr *MI) const {
+  bool hasNoSideEffects(MachineInstr *MI) const {
     return (MI->getInstrDescriptor()->Flags & M_REMATERIALIZIBLE) &&
-           isReallyTriviallyReMaterializable(MI);
+           isTriviallyReMaterializable(MI);
   }
 
 protected:
-  /// isReallyTriviallyReMaterializable - For instructions with opcodes for
-  /// which the M_REMATERIALIZABLE flag is set, this function tests whether the
-  /// instruction itself is actually trivially rematerializable, considering
-  /// its operands.  This is used for targets that have instructions that are
-  /// only trivially rematerializable for specific uses.  This predicate must
-  /// return false if the instruction has any side effects other than
-  /// producing a value, or if it requres any address registers that are not
-  /// always available.
-  virtual bool isReallyTriviallyReMaterializable(MachineInstr *MI) const {
+  /// isTriviallyReMaterializable - For instructions with opcodes for which the
+  /// M_REMATERIALIZABLE flag is set, this function tests whether the
+  /// instruction itself is actually trivially rematerializable, considering its
+  /// operands.  This is used for targets that have instructions that are only
+  /// trivially rematerializable for specific uses.  This predicate must return
+  /// false if the instruction has any side effects other than producing a
+  /// value, or if it requres any address registers that are not always
+  /// available.
+  virtual bool isTriviallyReMaterializable(MachineInstr *MI) const {
     return true;
   }
 

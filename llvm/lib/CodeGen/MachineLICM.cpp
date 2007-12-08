@@ -120,7 +120,7 @@ namespace {
       if (TID->ImplicitUses || !I.getNumOperands()) return false;
 
       MachineOpCode Opcode = TID->Opcode;
-      return TII->isTriviallyReMaterializable(&I) &&
+      return TII->hasNoSideEffects(&I) &&
         // FIXME: Below necessary?
         !(TII->isReturn(Opcode) ||
           TII->isTerminatorInstr(Opcode) ||

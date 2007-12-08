@@ -116,7 +116,7 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
 }
 
 
-bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
+bool X86InstrInfo::isTriviallyReMaterializable(MachineInstr *MI) const {
   switch (MI->getOpcode()) {
   default: break;
   case X86::MOV8rm:
