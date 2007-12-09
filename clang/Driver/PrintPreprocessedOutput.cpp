@@ -188,8 +188,8 @@ void PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
     else {
       const char *NewLines = "\n\n\n\n\n\n\n\n";
       OutputString(NewLines, LineNo-CurLine);
-      CurLine = LineNo;
     }
+    CurLine = LineNo;
   } else {
     if (EmittedTokensOnThisLine) {
       OutputChar('\n');
