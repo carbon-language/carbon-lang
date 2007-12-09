@@ -38,14 +38,16 @@ protected:
                  Use *Ops, unsigned NumOps, BasicBlock *InsertAtEnd)
     : Instruction(Ty, iType, Ops, NumOps, InsertAtEnd) {}
 
-  // Out of line virtual method, so the vtable, etc has a home.
-  ~TerminatorInst();
-
   /// Virtual methods - Terminators should overload these and provide inline
   /// overrides of non-V methods.
   virtual BasicBlock *getSuccessorV(unsigned idx) const = 0;
   virtual unsigned getNumSuccessorsV() const = 0;
   virtual void setSuccessorV(unsigned idx, BasicBlock *B) = 0;
+
+  static void destroyThis(TerminatorInst* v) {
+    Instruction::destroyThis(v);
+  }
+  friend class Value;
 public:
 
   virtual Instruction *clone() const = 0;
@@ -94,10 +96,12 @@ protected:
   UnaryInstruction(const Type *Ty, unsigned iType, Value *V, BasicBlock *IAE)
     : Instruction(Ty, iType, &Op, 1, IAE), Op(V, this_()) {
   }
-public:
-  // Out of line virtual method, so the vtable, etc has a home.
-  ~UnaryInstruction();
 
+  static void destroyThis(UnaryInstruction* v) {
+    Instruction::destroyThis(v);
+  }
+  friend class Value;
+public:
   // Transparently provide more efficient getOperand methods.
   Value *getOperand(unsigned i) const {
     assert(i == 0 && "getOperand() out of range!");
@@ -136,6 +140,11 @@ protected:
                  const std::string &Name, Instruction *InsertBefore);
   BinaryOperator(BinaryOps iType, Value *S1, Value *S2, const Type *Ty,
                  const std::string &Name, BasicBlock *InsertAtEnd);
+
+  static void destroyThis(BinaryOperator* v) {
+    Instruction::destroyThis(v);
+  }
+  friend class Value;
 public:
 
   /// Transparently provide more efficient getOperand methods.
@@ -272,6 +281,12 @@ protected:
     : UnaryInstruction(Ty, iType, S, InsertAtEnd) {
     setName(Name);
   }
+
+protected:
+  static void destroyThis(CastInst* v) {
+    UnaryInstruction::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// Provides a way to construct any of the CastInst subclasses using an 
   /// opcode instead of the subclass's constructor. The opcode must be in the
@@ -493,6 +508,10 @@ protected:
 
   Use Ops[2]; // CmpInst instructions always have 2 operands, optimize
 
+  static void destroyThis(CmpInst* v) {
+    Instruction::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// Construct a compare instruction, given the opcode, the predicate and 
   /// the two operands.  Optionally (if InstBefore is specified) insert the 

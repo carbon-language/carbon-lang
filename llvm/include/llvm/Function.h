@@ -53,6 +53,9 @@ template<> struct ilist_traits<Argument>
 };
 
 class Function : public GlobalValue, public Annotable {
+protected:
+  static void destroyThis(Function*v);
+  friend class Value;
 public:
   typedef iplist<Argument> ArgumentListType;
   typedef iplist<BasicBlock> BasicBlockListType;
@@ -109,7 +112,6 @@ public:
   ///
   Function(const FunctionType *Ty, LinkageTypes Linkage,
            const std::string &N = "", Module *M = 0);
-  ~Function();
 
   const Type *getReturnType() const;           // Return the type of the ret val
   const FunctionType *getFunctionType() const; // Return the FunctionType for me

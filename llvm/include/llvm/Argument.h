@@ -35,6 +35,11 @@ class Argument : public Value {  // Defined in the Function.cpp file
   friend class SymbolTableListTraits<Argument, Function>;
   void setParent(Function *parent);
 
+protected:
+  static void destroyThis(Argument*v) {
+    Value::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// Argument ctor - If Function argument is specified, this argument is
   /// inserted at the end of the argument list for the function.

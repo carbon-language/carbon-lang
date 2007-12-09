@@ -38,6 +38,11 @@ namespace llvm {
     IntrinsicInst();                      // DO NOT IMPLEMENT
     IntrinsicInst(const IntrinsicInst&);  // DO NOT IMPLEMENT
     void operator=(const IntrinsicInst&); // DO NOT IMPLEMENT
+  protected:
+    static void destroyThis(IntrinsicInst* v) {
+      CallInst::destroyThis(v);
+    }
+    friend class Value;
   public:
 
     /// StripPointerCasts - This static method strips off any unneeded pointer
@@ -85,6 +90,11 @@ namespace llvm {
     }
     
     static Value *StripCast(Value *C);
+  protected:
+    static void destroyThis(DbgInfoIntrinsic* v) {
+      IntrinsicInst::destroyThis(v);
+    }
+    friend class Value;
   };
 
   /// DbgStopPointInst - This represents the llvm.dbg.stoppoint instruction.
@@ -114,6 +124,11 @@ namespace llvm {
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
     }
+  protected:
+    static void destroyThis(DbgStopPointInst* v) {
+      DbgInfoIntrinsic::destroyThis(v);
+    }
+    friend class Value;  
   };
   
   /// DbgFuncStartInst - This represents the llvm.dbg.func.start instruction.
@@ -129,6 +144,11 @@ namespace llvm {
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
     }
+  protected:
+    static void destroyThis(DbgFuncStartInst* v) {
+      DbgInfoIntrinsic::destroyThis(v);
+    }
+    friend class Value;  
   };
 
   /// DbgRegionStartInst - This represents the llvm.dbg.region.start
@@ -144,6 +164,11 @@ namespace llvm {
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
     }
+  protected:
+    static void destroyThis(DbgRegionStartInst* v) {
+      DbgInfoIntrinsic::destroyThis(v);
+    }
+    friend class Value;  
   };
 
   /// DbgRegionEndInst - This represents the llvm.dbg.region.end instruction.
@@ -175,6 +200,11 @@ namespace llvm {
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
     }
+  protected:
+    static void destroyThis(DbgDeclareInst* v) {
+      DbgInfoIntrinsic::destroyThis(v);
+    }
+    friend class Value;
   };
 
   /// MemIntrinsic - This is the common base class for memset/memcpy/memmove.
@@ -228,6 +258,11 @@ namespace llvm {
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
     }
+  protected:
+    static void destroyThis(MemIntrinsic* v) {
+      IntrinsicInst::destroyThis(v);
+    }
+    friend class Value;  
   };
 
 
@@ -259,6 +294,11 @@ namespace llvm {
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
     }
+  protected:
+    static void destroyThis(MemCpyInst* v) {
+      MemIntrinsic::destroyThis(v);
+    }
+    friend class Value;  
   };
 
   /// MemMoveInst - This class wraps the llvm.memmove intrinsic.
@@ -288,6 +328,11 @@ namespace llvm {
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
     }
+  protected:
+    static void destroyThis(MemMoveInst* v) {
+      MemIntrinsic::destroyThis(v);
+    }
+    friend class Value;  
   };
 
   /// MemSetInst - This class wraps the llvm.memset intrinsic.
@@ -312,6 +357,11 @@ namespace llvm {
     static inline bool classof(const Value *V) {
       return isa<IntrinsicInst>(V) && classof(cast<IntrinsicInst>(V));
     }
+  protected:
+    static void destroyThis(MemSetInst* v) {
+      MemIntrinsic::destroyThis(v);
+    }
+    friend class Value;  
   };
 
 }

@@ -67,20 +67,6 @@ bool CallSite::onlyReadsMemory() const {
 }
 
 
-
-//===----------------------------------------------------------------------===//
-//                            TerminatorInst Class
-//===----------------------------------------------------------------------===//
-
-// Out of line virtual method, so the vtable, etc has a home.
-TerminatorInst::~TerminatorInst() {
-}
-
-// Out of line virtual method, so the vtable, etc has a home.
-UnaryInstruction::~UnaryInstruction() {
-}
-
-
 //===----------------------------------------------------------------------===//
 //                               PHINode Class
 //===----------------------------------------------------------------------===//
@@ -96,8 +82,9 @@ PHINode::PHINode(const PHINode &PN)
   }
 }
 
-PHINode::~PHINode() {
-  delete [] OperandList;
+void PHINode::destroyThis(PHINode*v) {
+  delete [] v->OperandList;
+  Instruction::destroyThis(v);
 }
 
 // removeIncomingValue - Remove an incoming value.  This is useful if a
@@ -214,10 +201,11 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
 //                        CallInst Implementation
 //===----------------------------------------------------------------------===//
 
-CallInst::~CallInst() {
-  delete [] OperandList;
-  if (ParamAttrs)
-    ParamAttrs->dropRef();
+void CallInst::destroyThis(CallInst*v) {
+  delete [] v->OperandList;
+  if (v->ParamAttrs)
+    v->ParamAttrs->dropRef();
+  Instruction::destroyThis(v);
 }
 
 void CallInst::init(Value *Func, Value* const *Params, unsigned NumParams) {
@@ -406,10 +394,11 @@ bool CallInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
 //                        InvokeInst Implementation
 //===----------------------------------------------------------------------===//
 
-InvokeInst::~InvokeInst() {
-  delete [] OperandList;
-  if (ParamAttrs)
-    ParamAttrs->dropRef();
+void InvokeInst::destroyThis(InvokeInst*v) {
+  delete [] v->OperandList;
+  if (v->ParamAttrs)
+    v->ParamAttrs->dropRef();
+  TerminatorInst::destroyThis(v);
 }
 
 void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
@@ -683,10 +672,6 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
   setName(Name);
 }
 
-// Out of line virtual method, so the vtable, etc has a home.
-AllocationInst::~AllocationInst() {
-}
-
 bool AllocationInst::isArrayAllocation() const {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(getOperand(0)))
     return CI->getZExtValue() != 1;
@@ -951,8 +936,8 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
   setName(Name);
 }
 
-GetElementPtrInst::~GetElementPtrInst() {
-  delete[] OperandList;
+void GetElementPtrInst::destroyThis(GetElementPtrInst*v) {
+  delete[] v->OperandList;
 }
 
 // getIndexedType - Returns the type of the element that would be loaded with
@@ -2469,8 +2454,9 @@ SwitchInst::SwitchInst(const SwitchInst &SI)
   }
 }
 
-SwitchInst::~SwitchInst() {
-  delete [] OperandList;
+void SwitchInst::destroyThis(SwitchInst*v) {
+  delete [] v->OperandList;
+  TerminatorInst::destroyThis(v);
 }
 
 

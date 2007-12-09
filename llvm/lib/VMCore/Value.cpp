@@ -18,6 +18,11 @@
 #include "llvm/ValueSymbolTable.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/LeakDetector.h"
+#include "llvm/Constants.h"
+#include "llvm/InlineAsm.h"
+#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/InstrTypes.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -39,7 +44,233 @@ Value::Value(const Type *ty, unsigned scid)
            "Cannot create non-first-class values except for constants!");
 }
 
-Value::~Value() {
+Value::~Value() 
+{
+  switch(SubclassID)
+  {
+  case ArgumentVal:
+    Argument::destroyThis(cast<Argument>(this));
+    break;
+  case BasicBlockVal:
+    BasicBlock::destroyThis(cast<BasicBlock>(this));
+    break;
+  case FunctionVal:
+    Function::destroyThis(cast<Function>(this));
+    break;
+  case GlobalAliasVal:
+    GlobalAlias::destroyThis(cast<GlobalAlias>(this));
+    break;
+  case GlobalVariableVal:
+    GlobalVariable::destroyThis(cast<GlobalVariable>(this));
+    break;
+  case UndefValueVal:
+    UndefValue::destroyThis(cast<UndefValue>(this));
+    break;
+  case ConstantExprVal:
+    {
+      ConstantExpr* CE = dyn_cast<ConstantExpr>(this);
+      if(CE->getOpcode() == Instruction::GetElementPtr)
+      {
+        GetElementPtrConstantExpr* GECE = 
+          dyn_cast<GetElementPtrConstantExpr>(CE);
+        GetElementPtrConstantExpr::destroyThis(GECE);
+      }
+      else if(CE->getOpcode() == Instruction::ExtractElement)
+      {
+        ExtractElementConstantExpr* EECE = 
+          dyn_cast<ExtractElementConstantExpr>(CE);
+        ExtractElementConstantExpr::destroyThis(EECE);
+      }
+      else if(CE->getOpcode() == Instruction::InsertElement)
+      {
+        InsertElementConstantExpr* IECE = 
+          dyn_cast<InsertElementConstantExpr>(CE);
+        InsertElementConstantExpr::destroyThis(IECE);
+      }
+      else if(CE->getOpcode() == Instruction::Select)
+      {
+        SelectConstantExpr* SCE = dyn_cast<SelectConstantExpr>(CE);
+        SelectConstantExpr::destroyThis(SCE);
+      }
+      else if(CE->getOpcode() == Instruction::ShuffleVector)
+      {
+        ShuffleVectorConstantExpr* SVCE = 
+          dyn_cast<ShuffleVectorConstantExpr>(CE);
+        ShuffleVectorConstantExpr::destroyThis(SVCE);
+      }
+      else if(BinaryConstantExpr* BCE = dyn_cast<BinaryConstantExpr>(this))
+        BinaryConstantExpr::destroyThis(BCE);
+      else if(UnaryConstantExpr* UCE = dyn_cast<UnaryConstantExpr>(this))
+        UnaryConstantExpr::destroyThis(UCE);
+      else if(CompareConstantExpr* CCE = dyn_cast<CompareConstantExpr>(this))
+        CompareConstantExpr::destroyThis(CCE);
+      else
+        assert(0 && "Unknown ConstantExpr-inherited class in ~Value.");
+    }
+    break;
+  case ConstantAggregateZeroVal:
+    ConstantAggregateZero::destroyThis(cast<ConstantAggregateZero>(this));
+    break;
+  case ConstantIntVal:          
+    ConstantInt::destroyThis(cast<ConstantInt>(this));
+    break;
+  case ConstantFPVal:         
+    ConstantFP::destroyThis(cast<ConstantFP>(this));
+    break;
+  case ConstantArrayVal:      
+    ConstantArray::destroyThis(cast<ConstantArray>(this));
+    break;
+  case ConstantStructVal:       
+    ConstantStruct::destroyThis(cast<ConstantStruct>(this));
+    break;
+  case ConstantVectorVal:     
+    ConstantVector::destroyThis(cast<ConstantVector>(this));
+    break;
+  case ConstantPointerNullVal:   
+    ConstantPointerNull::destroyThis(cast<ConstantPointerNull>(this));
+    break;
+  case InlineAsmVal:         
+    InlineAsm::destroyThis(cast<InlineAsm>(this));
+    break;
+
+  default:
+    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(this))
+      BinaryOperator::destroyThis(BO);
+    else if (CallInst *CI = dyn_cast<CallInst>(this))
+    {
+      if(IntrinsicInst* II = dyn_cast<IntrinsicInst>(this))
+      {
+        if(DbgInfoIntrinsic* DII = dyn_cast<DbgInfoIntrinsic>(this))
+        {
+          if(DbgDeclareInst* DDI = dyn_cast<DbgDeclareInst>(this))
+            DbgDeclareInst::destroyThis(DDI);
+          else if(DbgFuncStartInst* DFSI = dyn_cast<DbgFuncStartInst>(this))
+            DbgFuncStartInst::destroyThis(DFSI);
+          else if(DbgRegionEndInst* DREI = dyn_cast<DbgRegionEndInst>(this))
+            DbgRegionEndInst::destroyThis(DREI);
+          else if(DbgRegionStartInst* DRSI = dyn_cast<DbgRegionStartInst>(this))
+            DbgRegionStartInst::destroyThis(DRSI);
+          else if(DbgStopPointInst* DSPI = dyn_cast<DbgStopPointInst>(this))
+            DbgStopPointInst::destroyThis(DSPI);
+          else
+            assert(0 && "Unknown DbgInfo-inherited class in ~Value.");
+        }
+        else if(MemIntrinsic* MI = dyn_cast<MemIntrinsic>(this))
+        {
+          if(MemCpyInst* MCI = dyn_cast<MemCpyInst>(this))
+            MemCpyInst::destroyThis(MCI);
+          else if(MemMoveInst* MMI = dyn_cast<MemMoveInst>(this))
+            MemMoveInst::destroyThis(MMI);
+          else if(MemSetInst* MSI = dyn_cast<MemSetInst>(this))
+            MemSetInst::destroyThis(MSI);
+          else
+            assert(0 && "Unknown MemIntrinsic-inherited class in ~Value.");
+        }
+        else
+          assert(0 && "Unknown IntrinsicInst-inherited class in ~Value.");
+      }
+      else
+        assert(0 && "Unknown CallInst-inherited class in ~Value.");
+    }
+    else if (CmpInst *CI = dyn_cast<CmpInst>(this))
+    {
+      if (FCmpInst *FCI = dyn_cast<FCmpInst>(this))
+        FCmpInst::destroyThis(FCI);
+      else if (ICmpInst *ICI = dyn_cast<ICmpInst>(this))
+        ICmpInst::destroyThis(ICI);
+      else
+        assert(0 && "Unknown CmpInst-inherited class in ~Value.");
+    }
+    else if (ExtractElementInst *EEI = dyn_cast<ExtractElementInst>(this))
+      ExtractElementInst::destroyThis(EEI);
+    else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(this))
+      GetElementPtrInst::destroyThis(GEP);
+    else if (InsertElementInst* IE = dyn_cast<InsertElementInst>(this))
+      InsertElementInst::destroyThis(IE);
+    else if (PHINode *PN = dyn_cast<PHINode>(this))
+      PHINode::destroyThis(PN);
+    else if (SelectInst *SI = dyn_cast<SelectInst>(this))
+      SelectInst::destroyThis(SI);
+    else if (ShuffleVectorInst *SVI = dyn_cast<ShuffleVectorInst>(this))
+      ShuffleVectorInst::destroyThis(SVI);
+    else if (StoreInst *SI = dyn_cast<StoreInst>(this))
+      StoreInst::destroyThis(SI);
+    else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(this))
+    {
+      if (BranchInst* BI = dyn_cast<BranchInst>(this))
+        BranchInst::destroyThis(BI);
+      else if (InvokeInst* II = dyn_cast<InvokeInst>(this))
+        InvokeInst::destroyThis(II);
+      else if (ReturnInst* RI = dyn_cast<ReturnInst>(this))
+        ReturnInst::destroyThis(RI);
+      else if (SwitchInst *SI = dyn_cast<SwitchInst>(this))
+        SwitchInst::destroyThis(SI);
+      else if (UnreachableInst *UI = dyn_cast<UnreachableInst>(this))
+        UnreachableInst::destroyThis(UI);
+      else if (UnwindInst *UI = dyn_cast<UnwindInst>(this))
+        UnwindInst::destroyThis(UI);
+      else
+        assert(0 && "Unknown TerminatorInst-inherited class in ~Value.");
+    }
+    else if(UnaryInstruction* UI = dyn_cast<UnaryInstruction>(this))
+    {
+      if(AllocationInst* AI = dyn_cast<AllocationInst>(this))
+      {
+        if(AllocaInst* AI = dyn_cast<AllocaInst>(this))
+          AllocaInst::destroyThis(AI);
+        else if(MallocInst* MI = dyn_cast<MallocInst>(this))
+          MallocInst::destroyThis(MI);
+        else
+          assert(0 && "Unknown AllocationInst-inherited class in ~Value.");
+      }
+      else if(CastInst* CI = dyn_cast<CastInst>(this))
+      {
+        if(BitCastInst* BCI = dyn_cast<BitCastInst>(this))
+          BitCastInst::destroyThis(BCI);
+        else if(FPExtInst* FPEI = dyn_cast<FPExtInst>(this))
+          FPExtInst::destroyThis(FPEI);
+        else if(FPToSIInst* FPSII = dyn_cast<FPToSIInst>(this))
+          FPToSIInst::destroyThis(FPSII);
+        else if(FPToUIInst* FPUII = dyn_cast<FPToUIInst>(this))
+          FPToUIInst::destroyThis(FPUII);
+        else if(FPTruncInst* FPTI = dyn_cast<FPTruncInst>(this))
+          FPTruncInst::destroyThis(FPTI);
+        else if(IntToPtrInst* I2PI = dyn_cast<IntToPtrInst>(this))
+          IntToPtrInst::destroyThis(I2PI);
+        else if(PtrToIntInst* P2II = dyn_cast<PtrToIntInst>(this))
+          PtrToIntInst::destroyThis(P2II);
+        else if(SExtInst* SEI = dyn_cast<SExtInst>(this))
+          SExtInst::destroyThis(SEI);
+        else if(SIToFPInst* SIFPI = dyn_cast<SIToFPInst>(this))
+          SIToFPInst::destroyThis(SIFPI);
+        else if(TruncInst* TI = dyn_cast<TruncInst>(this))
+          TruncInst::destroyThis(TI);
+        else if(UIToFPInst* UIFPI = dyn_cast<UIToFPInst>(this))
+          UIToFPInst::destroyThis(UIFPI);
+        else if(ZExtInst* ZEI = dyn_cast<ZExtInst>(this))
+          ZExtInst::destroyThis(ZEI);
+        else
+          assert(0 && "Unknown CastInst-inherited class in ~Value.");
+      }
+      else if(FreeInst* FI = dyn_cast<FreeInst>(this))
+        FreeInst::destroyThis(FI);
+      else if(LoadInst* LI = dyn_cast<LoadInst>(this))
+        LoadInst::destroyThis(LI);
+      else if(VAArgInst* VAI = dyn_cast<VAArgInst>(this))
+        VAArgInst::destroyThis(VAI);
+      else
+        assert(0 && "Unknown UnaryInstruction-inherited class in ~Value.");
+    }
+    else if (DummyInst *DI = dyn_cast<DummyInst>(this))
+      DummyInst::destroyThis(DI);
+    else
+      assert(0 && "Unknown Instruction-inherited class in ~Value.");
+    break;
+  }
+}
+
+void Value::destroyThis(Value*v)
+{
 #ifndef NDEBUG      // Only in -g mode...
   // Check to make sure that there are no uses of this value that are still
   // around when the value is destroyed.  If there are, then we have a dangling
@@ -47,22 +278,22 @@ Value::~Value() {
   // still being referenced.  The value in question should be printed as
   // a <badref>
   //
-  if (!use_empty()) {
-    DOUT << "While deleting: " << *Ty << " %" << Name << "\n";
-    for (use_iterator I = use_begin(), E = use_end(); I != E; ++I)
+  if (!v->use_empty()) {
+    DOUT << "While deleting: " << *v->Ty << " %" << v->Name << "\n";
+    for (use_iterator I = v->use_begin(), E = v->use_end(); I != E; ++I)
       DOUT << "Use still stuck around after Def is destroyed:"
            << **I << "\n";
   }
 #endif
-  assert(use_empty() && "Uses remain when a value is destroyed!");
+  assert(v->use_empty() && "Uses remain when a value is destroyed!");
 
   // If this value is named, destroy the name.  This should not be in a symtab
   // at this point.
-  if (Name)
-    Name->Destroy();
+  if (v->Name)
+    v->Name->Destroy();
   
   // There should be no uses of this object anymore, remove it.
-  LeakDetector::removeGarbageObject(this);
+  LeakDetector::removeGarbageObject(v);
 }
 
 /// hasNUses - Return true if this Value has exactly N users.

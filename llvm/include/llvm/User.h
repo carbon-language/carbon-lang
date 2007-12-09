@@ -37,6 +37,10 @@ protected:
   ///
   unsigned NumOperands;
 
+  static void destroyThis(User*v) {
+    Value::destroyThis(v);
+  }
+  friend class Value;
 public:
   User(const Type *Ty, unsigned vty, Use *OpList, unsigned NumOps)
     : Value(Ty, vty), OperandList(OpList), NumOperands(NumOps) {}

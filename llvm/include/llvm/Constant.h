@@ -43,6 +43,10 @@ protected:
     : User(Ty, vty, Ops, NumOps) {}
 
   void destroyConstantImpl();
+  static void destroyThis(Constant*v) {
+    User::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// Static constructor to get a '0' constant of arbitrary type...
   ///

@@ -42,10 +42,10 @@ protected:
               Instruction *InsertBefore = 0);
   Instruction(const Type *Ty, unsigned iType, Use *Ops, unsigned NumOps,
               BasicBlock *InsertAtEnd);
+
+  static void destroyThis(Instruction*v);
+  friend class Value;
 public:
-  // Out of line virtual method, so the vtable, etc has a home.
-  ~Instruction();
-  
   /// mayWriteToMemory - Return true if this instruction may modify memory.
   ///
   bool mayWriteToMemory() const;

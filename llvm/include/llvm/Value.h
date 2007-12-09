@@ -66,8 +66,11 @@ private:
   friend class SymbolTable;      // Allow SymbolTable to directly poke Name.
   ValueName *Name;
 
+private:
   void operator=(const Value &);     // Do not implement
   Value(const Value &);              // Do not implement
+protected:
+  static void destroyThis(Value*);
 
 public:
   Value(const Type *Ty, unsigned scid);

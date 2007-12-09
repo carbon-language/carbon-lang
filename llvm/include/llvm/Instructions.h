@@ -47,9 +47,6 @@ protected:
   AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, unsigned Align,
                  const std::string &Name, BasicBlock *InsertAtEnd);
 public:
-  // Out of line virtual method, so the vtable, etc has a home.
-  virtual ~AllocationInst();
-
   /// isArrayAllocation - Return true if there is an allocation size parameter
   /// to the allocation instruction that is not 1.
   ///
@@ -190,6 +187,11 @@ public:
 ///
 class FreeInst : public UnaryInstruction {
   void AssertOK();
+protected:
+  static void destroyThis(FreeInst* v) {
+    UnaryInstruction::destroyThis(v);
+  }
+  friend class Value;
 public:
   explicit FreeInst(Value *Ptr, Instruction *InsertBefore = 0);
   FreeInst(Value *Ptr, BasicBlock *InsertAfter);
@@ -230,6 +232,11 @@ class LoadInst : public UnaryInstruction {
 #endif
   }
   void AssertOK();
+protected:
+  static void destroyThis(LoadInst* v) {
+    UnaryInstruction::destroyThis(v);
+  }
+  friend class Value;
 public:
   LoadInst(Value *Ptr, const std::string &Name, Instruction *InsertBefore);
   LoadInst(Value *Ptr, const std::string &Name, BasicBlock *InsertAtEnd);
@@ -305,6 +312,11 @@ class StoreInst : public Instruction {
 #endif
   }
   void AssertOK();
+protected:
+  static void destroyThis(StoreInst* v) {
+    Instruction::destroyThis(v);
+  }
+  friend class Value;
 public:
   StoreInst(Value *Val, Value *Ptr, Instruction *InsertBefore);
   StoreInst(Value *Val, Value *Ptr, BasicBlock *InsertAtEnd);
@@ -443,6 +455,9 @@ class GetElementPtrInst : public Instruction {
     }
   }
 
+protected:
+  static void destroyThis(GetElementPtrInst*v);
+  friend class Value;
 public:
   /// Constructors - Create a getelementptr instruction with a base pointer an
   /// list of indices.  The first ctor can optionally insert before an existing
@@ -477,7 +492,6 @@ public:
                     const std::string &Name = "", Instruction *InsertBefore =0);
   GetElementPtrInst(Value *Ptr, Value *Idx,
                     const std::string &Name, BasicBlock *InsertAtEnd);
-  ~GetElementPtrInst();
 
   virtual GetElementPtrInst *clone() const;
 
@@ -556,6 +570,11 @@ public:
 /// vectors of integrals. The two operands must be the same type.
 /// @brief Represent an integer comparison operator.
 class ICmpInst: public CmpInst {
+protected:
+  static void destroyThis(ICmpInst* v) {
+    CmpInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// This enumeration lists the possible predicates for the ICmpInst. The
   /// values in the range 0-31 are reserved for FCmpInst while values in the
@@ -712,6 +731,11 @@ public:
 /// vectors of floating point values. The operands must be identical types.
 /// @brief Represents a floating point comparison operator.
 class FCmpInst: public CmpInst {
+protected:
+  static void destroyThis(FCmpInst* v) {
+    CmpInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// This enumeration lists the possible predicates for the FCmpInst. Values
   /// in the range 0-31 are reserved for FCmpInst.
@@ -857,6 +881,9 @@ class CallInst : public Instruction {
     setName(Name);
   }
 
+protected:
+  static void destroyThis(CallInst*v);
+  friend class Value;
 public:
   /// Construct a CallInst given a range of arguments.  InputIterator
   /// must be a random-access iterator pointing to contiguous storage
@@ -897,7 +924,6 @@ public:
   explicit CallInst(Value *F, const std::string &Name = "",
                     Instruction *InsertBefore = 0);
   CallInst(Value *F, const std::string &Name, BasicBlock *InsertAtEnd);
-  ~CallInst();
 
   virtual CallInst *clone() const;
   
@@ -989,6 +1015,11 @@ class SelectInst : public Instruction {
     : Instruction(SI.getType(), SI.getOpcode(), Ops, 3) {
     init(SI.Ops[0], SI.Ops[1], SI.Ops[2]);
   }
+protected:
+  static void destroyThis(SelectInst* v) {
+    Instruction::destroyThis(v);
+  }
+  friend class Value;
 public:
   SelectInst(Value *C, Value *S1, Value *S2, const std::string &Name = "",
              Instruction *InsertBefore = 0)
@@ -1044,6 +1075,11 @@ public:
 class VAArgInst : public UnaryInstruction {
   VAArgInst(const VAArgInst &VAA)
     : UnaryInstruction(VAA.getType(), VAArg, VAA.getOperand(0)) {}
+protected:
+  static void destroyThis(VAArgInst* v) {
+    UnaryInstruction::destroyThis(v);
+  }
+  friend class Value;
 public:
   VAArgInst(Value *List, const Type *Ty, const std::string &Name = "",
              Instruction *InsertBefore = 0)
@@ -1083,6 +1119,11 @@ class ExtractElementInst : public Instruction {
     Ops[1].init(EE.Ops[1], this);
   }
 
+protected:
+  static void destroyThis(ExtractElementInst* v) {
+    Instruction::destroyThis(v);
+  }
+  friend class Value;
 public:
   ExtractElementInst(Value *Vec, Value *Idx, const std::string &Name = "",
                      Instruction *InsertBefore = 0);
@@ -1130,6 +1171,11 @@ public:
 class InsertElementInst : public Instruction {
   Use Ops[3];
   InsertElementInst(const InsertElementInst &IE);
+protected:
+  static void destroyThis(InsertElementInst* v) {
+    Instruction::destroyThis(v);
+  }
+  friend class Value;
 public:
   InsertElementInst(Value *Vec, Value *NewElt, Value *Idx,
                     const std::string &Name = "",Instruction *InsertBefore = 0);
@@ -1184,6 +1230,11 @@ public:
 class ShuffleVectorInst : public Instruction {
   Use Ops[3];
   ShuffleVectorInst(const ShuffleVectorInst &IE);
+protected:
+  static void destroyThis(ShuffleVectorInst* v) {
+    Instruction::destroyThis(v);
+  }
+  friend class Value;
 public:
   ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
                     const std::string &Name = "", Instruction *InsertBefor = 0);
@@ -1238,6 +1289,9 @@ class PHINode : public Instruction {
   /// the number actually in use.
   unsigned ReservedSpace;
   PHINode(const PHINode &PN);
+protected:
+  static void destroyThis(PHINode*);
+  friend class Value;
 public:
   explicit PHINode(const Type *Ty, const std::string &Name = "",
                    Instruction *InsertBefore = 0)
@@ -1251,8 +1305,6 @@ public:
       ReservedSpace(0) {
     setName(Name);
   }
-
-  ~PHINode();
 
   /// reserveOperandSpace - This method can be used to avoid repeated
   /// reallocation of PHI operand lists by reserving space for the correct
@@ -1522,6 +1574,9 @@ class SwitchInst : public TerminatorInst {
   SwitchInst(const SwitchInst &RI);
   void init(Value *Value, BasicBlock *Default, unsigned NumCases);
   void resizeOperands(unsigned No);
+protected:
+  static void destroyThis(SwitchInst*v);
+  friend class Value;
 public:
   /// SwitchInst ctor - Create a new switch instruction, specifying a value to
   /// switch on and a default destination.  The number of additional cases can
@@ -1536,7 +1591,6 @@ public:
   /// constructor also autoinserts at the end of the specified BasicBlock.
   SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
              BasicBlock *InsertAtEnd);
-  ~SwitchInst();
 
 
   // Accessor Methods for Switch stmt
@@ -1664,6 +1718,9 @@ class InvokeInst : public TerminatorInst {
     setName(Name);
   }
 
+protected:
+  static void destroyThis(InvokeInst*v);
+  friend class Value;
 public:
   /// Construct an InvokeInst given a range of arguments.
   /// InputIterator must be a random-access iterator pointing to
@@ -1700,8 +1757,6 @@ public:
     init(Func, IfNormal, IfException, ArgBegin, ArgEnd, Name,
          typename std::iterator_traits<InputIterator>::iterator_category());
   }
-
-  ~InvokeInst();
 
   virtual InvokeInst *clone() const;
 
@@ -1872,6 +1927,11 @@ class TruncInst : public CastInst {
   TruncInst(const TruncInst &CI)
     : CastInst(CI.getType(), Trunc, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(TruncInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   TruncInst(
@@ -1912,6 +1972,11 @@ class ZExtInst : public CastInst {
   ZExtInst(const ZExtInst &CI)
     : CastInst(CI.getType(), ZExt, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(ZExtInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   ZExtInst(
@@ -1952,6 +2017,11 @@ class SExtInst : public CastInst {
   SExtInst(const SExtInst &CI)
     : CastInst(CI.getType(), SExt, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(SExtInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   SExtInst(
@@ -1991,6 +2061,11 @@ class FPTruncInst : public CastInst {
   FPTruncInst(const FPTruncInst &CI)
     : CastInst(CI.getType(), FPTrunc, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(FPTruncInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   FPTruncInst(
@@ -2030,6 +2105,11 @@ class FPExtInst : public CastInst {
   FPExtInst(const FPExtInst &CI)
     : CastInst(CI.getType(), FPExt, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(FPExtInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   FPExtInst(
@@ -2069,6 +2149,11 @@ class UIToFPInst : public CastInst {
   UIToFPInst(const UIToFPInst &CI)
     : CastInst(CI.getType(), UIToFP, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(UIToFPInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   UIToFPInst(
@@ -2108,6 +2193,11 @@ class SIToFPInst : public CastInst {
   SIToFPInst(const SIToFPInst &CI)
     : CastInst(CI.getType(), SIToFP, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(SIToFPInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   SIToFPInst(
@@ -2147,6 +2237,11 @@ class FPToUIInst  : public CastInst {
   FPToUIInst(const FPToUIInst &CI)
     : CastInst(CI.getType(), FPToUI, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(FPToUIInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   FPToUIInst(
@@ -2186,6 +2281,11 @@ class FPToSIInst  : public CastInst {
   FPToSIInst(const FPToSIInst &CI)
     : CastInst(CI.getType(), FPToSI, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(FPToSIInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   FPToSIInst(
@@ -2225,6 +2325,11 @@ class IntToPtrInst : public CastInst {
   IntToPtrInst(const IntToPtrInst &CI)
     : CastInst(CI.getType(), IntToPtr, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(IntToPtrInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   IntToPtrInst(
@@ -2264,6 +2369,11 @@ class PtrToIntInst : public CastInst {
   PtrToIntInst(const PtrToIntInst &CI)
     : CastInst(CI.getType(), PtrToInt, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(PtrToIntInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   PtrToIntInst(
@@ -2303,6 +2413,11 @@ class BitCastInst : public CastInst {
   BitCastInst(const BitCastInst &CI)
     : CastInst(CI.getType(), BitCast, CI.getOperand(0)) {
   }
+protected:
+  static void destroyThis(BitCastInst* v) {
+    CastInst::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// @brief Constructor with insert-before-instruction semantics
   BitCastInst(

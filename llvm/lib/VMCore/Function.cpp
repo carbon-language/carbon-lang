@@ -287,16 +287,17 @@ Function::Function(const FunctionType *Ty, LinkageTypes Linkage,
     ParentModule->getFunctionList().push_back(this);
 }
 
-Function::~Function() {
-  dropAllReferences();    // After this it is safe to delete instructions.
+void Function::destroyThis(Function*v) {
+  v->dropAllReferences();    // After this it is safe to delete instructions.
 
   // Delete all of the method arguments and unlink from symbol table...
-  ArgumentList.clear();
-  delete SymTab;
+  v->ArgumentList.clear();
+  delete v->SymTab;
 
   // Drop our reference to the parameter attributes, if any.
-  if (ParamAttrs)
-    ParamAttrs->dropRef();
+  if (v->ParamAttrs)
+    v->ParamAttrs->dropRef();
+  GlobalValue::destroyThis(v);
 }
 
 void Function::BuildLazyArguments() const {

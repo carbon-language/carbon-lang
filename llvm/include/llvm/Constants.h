@@ -46,6 +46,11 @@ class ConstantInt : public Constant {
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
   ConstantInt(const IntegerType *Ty, const APInt& V);
   APInt Val;
+protected:
+  static void destroyThis(ConstantInt*v) {
+    Constant::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// Return the constant as an APInt value reference. This allows clients to
   /// obtain a copy of the value, with all its precision in tact.
@@ -218,6 +223,10 @@ class ConstantFP : public Constant {
   ConstantFP(const ConstantFP &);      // DO NOT IMPLEMENT
 protected:
   ConstantFP(const Type *Ty, const APFloat& V);
+  static void destroyThis(ConstantFP*v) {
+    Constant::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static ConstantFP *get(const Type *Ty, const APFloat& V);
@@ -266,6 +275,11 @@ class ConstantAggregateZero : public Constant {
 protected:
   explicit ConstantAggregateZero(const Type *Ty)
     : Constant(Ty, ConstantAggregateZeroVal, 0, 0) {}
+
+  static void destroyThis(ConstantAggregateZero*v) {
+    Constant::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// get() - static factory method for creating a null aggregate.  It is
   /// illegal to call this method with a non-aggregate type.
@@ -295,7 +309,8 @@ class ConstantArray : public Constant {
   ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
 protected:
   ConstantArray(const ArrayType *T, const std::vector<Constant*> &Val);
-  ~ConstantArray();
+  static void destroyThis(ConstantArray*);
+  friend class Value;
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
@@ -361,7 +376,8 @@ class ConstantStruct : public Constant {
   ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
 protected:
   ConstantStruct(const StructType *T, const std::vector<Constant*> &Val);
-  ~ConstantStruct();
+  static void destroyThis(ConstantStruct*);
+  friend class Value;
 public:
   /// get() - Static factory methods - Return objects of the specified value
   ///
@@ -405,7 +421,8 @@ class ConstantVector : public Constant {
   ConstantVector(const ConstantVector &);      // DO NOT IMPLEMENT
 protected:
   ConstantVector(const VectorType *T, const std::vector<Constant*> &Val);
-  ~ConstantVector();
+  static void destroyThis(ConstantVector*v);
+  friend class Value;
 public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const VectorType *T, const std::vector<Constant*> &);
@@ -462,7 +479,10 @@ protected:
   explicit ConstantPointerNull(const PointerType *T)
     : Constant(reinterpret_cast<const Type*>(T),
                Value::ConstantPointerNullVal, 0, 0) {}
-
+  static void destroyThis(ConstantPointerNull*v) {
+    Constant::destroyThis(v);
+  }
+  friend class Value;
 public:
 
   /// get() - Static factory methods - Return objects of the specified value
@@ -524,6 +544,10 @@ protected:
   static Constant *getShuffleVectorTy(const Type *Ty, Constant *V1,
                                       Constant *V2, Constant *Mask);
 
+  static void destroyThis(ConstantExpr* v) {
+    Constant::destroyThis(v);
+  }
+  friend class Value;
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
   // these methods may return a object that is not an instance of the
@@ -709,6 +733,10 @@ class UndefValue : public Constant {
   UndefValue(const UndefValue &);      // DO NOT IMPLEMENT
 protected:
   explicit UndefValue(const Type *T) : Constant(T, UndefValueVal, 0, 0) {}
+  static void destroyThis(UndefValue*v) {
+    Constant::destroyThis(v);
+  }
+  friend class Value;
 public:
   /// get() - Static factory methods - Return an 'undef' object of the specified
   /// type.
@@ -726,6 +754,120 @@ public:
   static bool classof(const Value *V) {
     return V->getValueID() == UndefValueVal;
   }
+};
+
+/// GetElementPtrConstantExpr - Helper class for Constants.cpp, 
+/// used behind the scenes to implement getelementpr constant exprs.
+class GetElementPtrConstantExpr : public ConstantExpr {
+protected:
+  static void destroyThis(GetElementPtrConstantExpr*v) {
+    delete [] v->OperandList;
+    ConstantExpr::destroyThis(v);
+  }
+  friend class Value;
+public:
+  GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
+							const Type *DestTy);
+};
+
+/// UnaryConstantExpr - Helper class for Constants.cpp, used
+/// behind the scenes to implement unary constant exprs.
+class UnaryConstantExpr : public ConstantExpr {
+  Use Op;
+protected:
+  static void destroyThis(UnaryConstantExpr*v) {
+    ConstantExpr::destroyThis(v);
+  }
+  friend class Value;
+public:
+  UnaryConstantExpr(unsigned Opcode, Constant *C, const Type *Ty);
+};
+
+/// BinaryConstantExpr - Helper class for Constants.cpp, used
+/// behind the scenes to implement binary constant exprs.
+class BinaryConstantExpr : public ConstantExpr {
+  Use Ops[2];
+protected:
+  static void destroyThis(BinaryConstantExpr*v) {
+    ConstantExpr::destroyThis(v);
+  }
+  friend class Value;
+public:
+  BinaryConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
+    : ConstantExpr(C1->getType(), Opcode, Ops, 2) {
+    Ops[0].init(C1, this);
+    Ops[1].init(C2, this);
+  }
+};
+
+/// SelectConstantExpr - Helper class for Constants.cpp, used
+/// behind the scenes to implement select constant exprs.
+class SelectConstantExpr : public ConstantExpr {
+  Use Ops[3];
+protected:
+  static void destroyThis(SelectConstantExpr*v) {
+    ConstantExpr::destroyThis(v);
+  }
+  friend class Value;
+public:
+  SelectConstantExpr(Constant *C1, Constant *C2, Constant *C3);
+};
+
+/// ExtractElementConstantExpr - Helper class for Constants.cpp, used 
+/// behind the scenes to implement extractelement constant exprs.
+class ExtractElementConstantExpr : public ConstantExpr {
+  Use Ops[2];
+protected:
+  static void destroyThis(ExtractElementConstantExpr*v) {
+    ConstantExpr::destroyThis(v);
+  }
+  friend class Value;
+public:
+  ExtractElementConstantExpr(Constant *C1, Constant *C2);
+};
+
+/// InsertElementConstantExpr - Helper class for Constants.cpp, used 
+/// behind the scenes to implement insertelement constant exprs.
+class InsertElementConstantExpr : public ConstantExpr {
+  Use Ops[3];
+protected:
+  static void destroyThis(InsertElementConstantExpr*v) {
+    ConstantExpr::destroyThis(v);
+  }
+  friend class Value;
+public:
+  InsertElementConstantExpr(Constant *C1, Constant *C2, Constant *C3);
+};
+
+/// ShuffleVectorConstantExpr - Helper class for Constants.cpp, used 
+/// behind the scenes to implement shufflevector constant exprs.
+class ShuffleVectorConstantExpr : public ConstantExpr {
+  Use Ops[3];
+protected:
+  static void destroyThis(ShuffleVectorConstantExpr*v) {
+    ConstantExpr::destroyThis(v);
+  }
+  friend class Value;
+public:
+  ShuffleVectorConstantExpr(Constant *C1, Constant *C2, Constant *C3);
+};
+
+
+
+// CompareConstantExpr - Helper class for Constants.cpp, used
+// behind the scenes to implement ICmp and FCmp constant expressions. This is
+// needed in order to store the predicate value for these instructions.
+class CompareConstantExpr : public ConstantExpr {
+protected:
+  static void destroyThis(CompareConstantExpr*v) {
+    ConstantExpr::destroyThis(v);
+  }
+  friend class Value;
+public:
+  unsigned short predicate;
+  Use Ops[2];
+  CompareConstantExpr(unsigned opc, unsigned short pred, 
+                      Constant* LHS, Constant* RHS);
 };
 
 } // End llvm namespace
