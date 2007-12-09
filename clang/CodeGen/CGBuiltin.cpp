@@ -13,6 +13,7 @@
 
 #include "CodeGenFunction.h"
 #include "CodeGenModule.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Expr.h"
@@ -23,11 +24,61 @@
 using namespace clang;
 using namespace CodeGen;
 
+using namespace llvm;
+
 RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   switch (BuiltinID) {
-  default:
+  default: {
     if (getContext().BuiltinInfo.isLibFunction(BuiltinID))
       return EmitCallExpr(CGM.getBuiltinLibFunction(BuiltinID), E);
+  
+    // See if we have a target specific intrinsic.
+    llvm::Intrinsic::ID IntrinsicID;
+    const char *TargetPrefix = Target.getTargetPrefix();
+    const char *BuiltinName = getContext().BuiltinInfo.GetName(BuiltinID);
+#define GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
+#include "llvm/Intrinsics.gen"
+#undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
+    
+    if (IntrinsicID != Intrinsic::not_intrinsic) {
+      llvm::SmallVector<llvm::Value*, 16> Args;
+      
+      llvm::Function *F = llvm::Intrinsic::getDeclaration(&CGM.getModule(), 
+                                                          IntrinsicID);
+      
+      const llvm::FunctionType *FTy = F->getFunctionType();
+      
+      for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
+        llvm::Value *ArgValue = EmitScalarExpr(E->getArg(i));
+  
+        // If the intrinsic arg type is different from the builtin arg type
+        // we need to do a bit cast.
+        const llvm::Type *PTy = FTy->getParamType(i);
+        if (PTy != ArgValue->getType()) {
+          assert(PTy->canLosslesslyBitCastTo(FTy->getParamType(i)) &&
+                 "Must be able to losslessly bit cast to param");
+          ArgValue = Builder.CreateBitCast(ArgValue, PTy);
+        }
+
+        Args.push_back(ArgValue);
+      }
+            
+      llvm::Value *V = Builder.CreateCall(F, &Args[0], &Args[0] + Args.size());
+
+      QualType BuiltinRetType = E->getType();
+      
+      const llvm::Type *RetTy = BuiltinRetType->isVoidType() ? 
+        llvm::Type::VoidTy : ConvertType(BuiltinRetType);
+
+      if (RetTy != V->getType()) {
+        assert(V->getType()->canLosslesslyBitCastTo(RetTy) &&
+               "Must be able to losslessly bit cast result type");
+        
+        V = Builder.CreateBitCast(V, RetTy);
+      }
+      
+      return RValue::get(V);
+    }
     
     WarnUnsupported(E, "builtin function");
 
@@ -35,7 +86,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     if (hasAggregateLLVMType(E->getType()))
       return RValue::getAggregate(CreateTempAlloca(ConvertType(E->getType())));
     return RValue::get(llvm::UndefValue::get(ConvertType(E->getType())));
-    
+  }    
   case Builtin::BI__builtin___CFStringMakeConstantString: {
     const Expr *Arg = E->getArg(0);
     
