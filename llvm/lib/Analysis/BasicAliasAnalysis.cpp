@@ -730,8 +730,8 @@ BasicAliasAnalysis::CheckGEPInstructions(
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty)) {
             if (Op1C->getZExtValue() >= AT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
-          } else if (const VectorType *PT = dyn_cast<VectorType>(BasePtr1Ty)) {
-            if (Op1C->getZExtValue() >= PT->getNumElements())
+          } else if (const VectorType *VT = dyn_cast<VectorType>(BasePtr1Ty)) {
+            if (Op1C->getZExtValue() >= VT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
           }
           
@@ -756,10 +756,10 @@ BasicAliasAnalysis::CheckGEPInstructions(
       if (Op2) {
         if (const ConstantInt *Op2C = dyn_cast<ConstantInt>(Op2)) {
           // If this is an array index, make sure the array element is in range.
-          if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty)) {
+          if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr2Ty)) {
             if (Op2C->getZExtValue() >= AT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
-          } else if (const VectorType *VT = dyn_cast<VectorType>(BasePtr1Ty)) {
+          } else if (const VectorType *VT = dyn_cast<VectorType>(BasePtr2Ty)) {
             if (Op2C->getZExtValue() >= VT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
           }
