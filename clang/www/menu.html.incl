@@ -4,7 +4,7 @@ HTML 4.01 specs: http://www.w3.org/TR/html401/
 -->
 	<div id="menu">
 		<div id="main_menu">
-			<a href="http://www.llvm.org/">LLVM Home</a>
+			<a href="http://www.llvm.org/">LLVM Home</a><br>
 			<label>Clang Info</label>
 			<a href="index.html">About</a>
 			<a href="features.html">Features</a>
