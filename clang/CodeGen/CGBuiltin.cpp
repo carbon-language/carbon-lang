@@ -80,6 +80,15 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
       return RValue::get(V);
     }
     
+    if (strcmp(TargetPrefix, "x86") == 0) {
+      if (strcmp(BuiltinName, "__builtin_ia32_mulps") == 0) {
+        llvm::Value *V = Builder.CreateMul(EmitScalarExpr(E->getArg(0)),
+                                           EmitScalarExpr(E->getArg(1)),
+                                           "result");
+        return RValue::get(V);
+      }
+    }
+      
     WarnUnsupported(E, "builtin function");
 
     // Unknown builtin, for now just dump it out and return undef.
@@ -179,6 +188,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     llvm::Value *V = llvm::ConstantFP::get(llvm::Type::DoubleTy, f);
     return RValue::get(V);
   }
+    
   }
   
   return RValue::get(0);
