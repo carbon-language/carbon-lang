@@ -310,6 +310,7 @@ public:
   /// DumpToken - Print the token to stderr, used for debugging.
   ///
   void DumpToken(const Token &Tok, bool DumpFlags = false) const;
+  void DumpLocation(SourceLocation Loc) const;
   void DumpMacro(const MacroInfo &MI) const;
   
   /// AdvanceToTokenCharacter - Given a location that specifies the start of a

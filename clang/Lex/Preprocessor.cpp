@@ -133,6 +133,7 @@ void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
             << getSpelling(Tok) << "'";
   
   if (!DumpFlags) return;
+  
   std::cerr << "\t";
   if (Tok.isAtStartOfLine())
     std::cerr << " [StartOfLine]";
@@ -144,6 +145,24 @@ void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
     const char *Start = SourceMgr.getCharacterData(Tok.getLocation());
     std::cerr << " [UnClean='" << std::string(Start, Start+Tok.getLength())
               << "']";
+  }
+  
+  std::cerr << "\tLoc=<";
+  DumpLocation(Tok.getLocation());
+  std::cerr << ">";
+}
+
+void Preprocessor::DumpLocation(SourceLocation Loc) const {
+  SourceLocation LogLoc = SourceMgr.getLogicalLoc(Loc);
+  std::cerr << SourceMgr.getSourceName(LogLoc) << ':'
+            << SourceMgr.getLineNumber(LogLoc) << ':'
+            << SourceMgr.getLineNumber(LogLoc);
+  
+  SourceLocation PhysLoc = SourceMgr.getPhysicalLoc(Loc);
+  if (PhysLoc != LogLoc) {
+    std::cerr << " <PhysLoc=";
+    DumpLocation(PhysLoc);
+    std::cerr << ">";
   }
 }
 
@@ -1140,7 +1159,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     Tok.setLocation(CreateString(TmpBuffer, Len, Tok.getLocation()));
   } else {
     assert(0 && "Unknown identifier!");
-  }  
+  }
 }
 
 //===----------------------------------------------------------------------===//
