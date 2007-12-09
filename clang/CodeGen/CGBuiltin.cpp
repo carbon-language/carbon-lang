@@ -17,6 +17,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/TargetBuiltins.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
@@ -79,16 +80,18 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
       
       return RValue::get(V);
     }
+
+    // See if we have a target specific builtin that needs to be lowered.
+    llvm::Value *V = 0;
     
-    if (strcmp(TargetPrefix, "x86") == 0) {
-      if (strcmp(BuiltinName, "__builtin_ia32_mulps") == 0) {
-        llvm::Value *V = Builder.CreateMul(EmitScalarExpr(E->getArg(0)),
-                                           EmitScalarExpr(E->getArg(1)),
-                                           "result");
-        return RValue::get(V);
-      }
-    }
-      
+    if (strcmp(TargetPrefix, "x86") == 0)
+      V = EmitX86BuiltinExpr(BuiltinID, E);
+    else if (strcmp(TargetPrefix, "ppc") == 0)
+      V = EmitPPCBuiltinExpr(BuiltinID, E);
+
+    if (V)
+      return RValue::get(V);
+    
     WarnUnsupported(E, "builtin function");
 
     // Unknown builtin, for now just dump it out and return undef.
@@ -188,8 +191,26 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     llvm::Value *V = llvm::ConstantFP::get(llvm::Type::DoubleTy, f);
     return RValue::get(V);
   }
-    
   }
-  
   return RValue::get(0);
 }
+
+llvm::Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID, 
+                                                 const CallExpr *E)
+{
+  switch (BuiltinID) {
+    default: return 0;
+    case X86::BI__builtin_ia32_mulps:
+      return Builder.CreateMul(EmitScalarExpr(E->getArg(0)),
+                               EmitScalarExpr(E->getArg(1)),
+                               "result");
+  }
+}
+
+llvm::Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID, 
+                                                 const CallExpr *E)
+{
+  switch (BuiltinID) {
+    default: return 0;
+  }
+}  

@@ -388,6 +388,9 @@ public:
   RValue EmitCallExpr(llvm::Value *Callee, const CallExpr *E);
   RValue EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
 
+  llvm::Value *EmitX86BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
+  llvm::Value *EmitPPCBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
+  
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
 
   //===--------------------------------------------------------------------===//

@@ -14,8 +14,10 @@
 
 #include "clang.h"
 #include "clang/AST/Builtins.h"
+#include "clang/AST/TargetBuiltins.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/CommandLine.h"
 
@@ -298,16 +300,10 @@ static const char* getPPCVAListDeclaration() {
 
 /// PPC builtin info.
 namespace PPC {
-  enum {
-    LastTIBuiltin = Builtin::FirstTSBuiltin-1,
-#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
-#include "PPCBuiltins.def"
-    LastTSBuiltin
-  };
   
   static const Builtin::Info BuiltinInfo[] = {
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
-#include "PPCBuiltins.def"
+#include "clang/AST/PPCBuiltins.def"
   };
   
   static void getBuiltins(const Builtin::Info *&Records, unsigned &NumRecords) {
@@ -411,18 +407,10 @@ namespace PPC {
 
 /// X86 builtin info.
 namespace X86 {
-  enum {
-    LastTIBuiltin = Builtin::FirstTSBuiltin-1,
-#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
-#include "X86Builtins.def"
-    LastTSBuiltin
-  };
-
   static const Builtin::Info BuiltinInfo[] = {
 #define BUILTIN(ID, TYPE, ATTRS) { #ID, TYPE, ATTRS },
-#include "X86Builtins.def"
+#include "clang/AST/X86Builtins.def"
   };
-    
 
   static void getBuiltins(const Builtin::Info *&Records, unsigned &NumRecords) {
     Records = BuiltinInfo;
