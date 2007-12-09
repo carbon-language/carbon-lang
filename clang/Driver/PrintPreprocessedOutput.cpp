@@ -145,8 +145,8 @@ public:
   virtual void Ident(SourceLocation Loc, const std::string &str);
   
 
-  void HandleFirstTokOnLine(Token &Tok);
-  void MoveToLine(SourceLocation Loc);
+  bool HandleFirstTokOnLine(Token &Tok);
+  bool MoveToLine(SourceLocation Loc);
   bool AvoidConcat(const Token &PrevTok, const Token &Tok);
 };
 }
@@ -168,14 +168,21 @@ static char *UToStr(unsigned N, char *EndPtr) {
 
 /// MoveToLine - Move the output to the source line specified by the location
 /// object.  We can do this by emitting some number of \n's, or be emitting a
-/// #line directive.
-void PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
+/// #line directive.  This returns false if already at the specified line, true
+/// if some newlines were emitted.
+bool PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
   if (DisableLineMarkers) {
-    if (EmittedTokensOnThisLine) {
-      OutputChar('\n');
-      EmittedTokensOnThisLine = false;
-    }
-    return;
+    unsigned LineNo = PP.getSourceManager().getLogicalLineNumber(Loc);
+    if (LineNo == CurLine) return false;
+    
+    CurLine = LineNo;
+    
+    if (!EmittedTokensOnThisLine)
+      return true;
+    
+    OutputChar('\n');
+    EmittedTokensOnThisLine = false;
+    return true;
   }
   
   unsigned LineNo = PP.getSourceManager().getLogicalLineNumber(Loc);
@@ -185,6 +192,8 @@ void PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
   if (LineNo-CurLine < 8) {
     if (LineNo-CurLine == 1)
       OutputChar('\n');
+    else if (LineNo == CurLine)
+      return false;    // Phys line moved, but logical line didn't.
     else {
       const char *NewLines = "\n\n\n\n\n\n\n\n";
       OutputString(NewLines, LineNo-CurLine);
@@ -214,6 +223,7 @@ void PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
       OutputString(" 3 4", 4);
     OutputChar('\n');
   } 
+  return true;
 }
 
 
@@ -223,8 +233,6 @@ void PrintPPOutputPPCallbacks::MoveToLine(SourceLocation Loc) {
 void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
                                            FileChangeReason Reason,
                                            DirectoryLookup::DirType FileType) {
-  if (DisableLineMarkers) return;
-
   // Unless we are exiting a #include, make sure to skip ahead to the line the
   // #include directive was at.
   SourceManager &SourceMgr = PP.getSourceManager();
@@ -240,6 +248,9 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   
   Loc = SourceMgr.getLogicalLoc(Loc);
   CurLine = SourceMgr.getLineNumber(Loc);
+  
+  if (DisableLineMarkers) return;
+
   CurFilename.clear();
   CurFilename += SourceMgr.getSourceName(Loc);
   Lexer::Stringify(CurFilename);
@@ -291,11 +302,15 @@ void PrintPPOutputPPCallbacks::Ident(SourceLocation Loc, const std::string &S) {
 }
 
 /// HandleFirstTokOnLine - When emitting a preprocessed file in -E mode, this
-/// is called for the first token on each new line.
-void PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
+/// is called for the first token on each new line.  If this really is the start
+/// of a new logical line, handle it and return true, otherwise return false.
+/// This may not be the start of a logical line because the "start of line"
+/// marker is set for physical lines, not logical ones.
+bool PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
   // Figure out what line we went to and insert the appropriate number of
   // newline characters.
-  MoveToLine(Tok.getLocation());
+  if (!MoveToLine(Tok.getLocation()))
+    return false;
   
   // Print out space characters so that the first token on a line is
   // indented for easy reading.
@@ -314,6 +329,8 @@ void PrintPPOutputPPCallbacks::HandleFirstTokOnLine(Token &Tok) {
   // Otherwise, indent the appropriate number of spaces.
   for (; ColNo > 1; --ColNo)
     OutputChar(' ');
+  
+  return true;
 }
 
 namespace {
@@ -547,8 +564,8 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
   while (1) {
     
     // If this token is at the start of a line, emit newlines if needed.
-    if (Tok.isAtStartOfLine()) {
-      Callbacks->HandleFirstTokOnLine(Tok);
+    if (Tok.isAtStartOfLine() && Callbacks->HandleFirstTokOnLine(Tok)) {
+      // done.
     } else if (Tok.hasLeadingSpace() || 
                // If we haven't emitted a token on this line yet, PrevTok isn't
                // useful to look at and no concatenation could happen anyway.
