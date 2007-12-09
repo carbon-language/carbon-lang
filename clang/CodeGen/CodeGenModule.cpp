@@ -407,6 +407,27 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
       return llvm::ConstantExpr::getGetElementPtr(C, Ops, 2);
     }
     
+    // If this is an implicit cast of a string literal to an array type, this
+    // must be a string initializing an array.  Don't emit it as the address of
+    // the string, emit the string data itself as an inline array.
+    if (const StringLiteral *String =
+            dyn_cast<StringLiteral>(ICExpr->getSubExpr()))
+      if (const ArrayType *AT = ICExpr->getType()->getAsArrayType()) {
+        // Verify that this is an array of char or wchar.  Array of const char*
+        // can be initialized with a string literal, which does not expand the
+        // characters inline.
+        // FIXME: What about wchar_t??
+        if (AT->getElementType()->isCharType()) {
+          const char *StrData = String->getStrData();
+          unsigned Len = String->getByteLength();
+          llvm::Constant *C =
+            llvm::ConstantArray::get(std::string(StrData, StrData + Len));
+          // FIXME: This should return a string of the proper type: this
+          // mishandles things like 'char x[4] = "1234567";
+          return C;
+        }
+      }
+    
     return GenerateConstantCast(ICExpr->getSubExpr(), type, CGM);
   }
 

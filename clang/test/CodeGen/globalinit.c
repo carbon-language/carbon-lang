@@ -15,3 +15,6 @@ void *g = y;
 int latin_ptr2len (char *p);
 int (*mb_ptr2len) (char *p) = latin_ptr2len;
 
+
+char string[8] = "string";
+
