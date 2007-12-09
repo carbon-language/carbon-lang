@@ -622,10 +622,17 @@ static std::vector<DirectoryLookup> IncludeGroup[4];
 static void AddPath(const std::string &Path, IncludeDirGroup Group,
                     bool isCXXAware, bool isUserSupplied,
                     bool isFramework, FileManager &FM) {
+  assert(!Path.empty() && "can't handle empty path here");
+  
   const DirectoryEntry *DE;
-  if (Group == System)
-    DE = FM.getDirectory(isysroot + "/" + Path);
-  else
+  if (Group == System) {
+    if (isysroot != "/")
+      DE = FM.getDirectory(isysroot + "/" + Path);
+    else if (Path[0] == '/')
+      DE = FM.getDirectory(Path);
+    else
+      DE = FM.getDirectory("/" + Path);
+  } else
     DE = FM.getDirectory(Path);
   
   if (DE == 0) {
