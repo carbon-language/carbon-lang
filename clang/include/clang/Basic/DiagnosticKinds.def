@@ -297,7 +297,9 @@ DIAG(ext_c99_compound_literal, EXTENSION,
      "compound literals are a C99-specific feature")
 DIAG(ext_c99_enumerator_list_comma, EXTENSION,
      "commas at the end of enumerator lists are a C99-specific feature")
-     
+
+DIAG(ext_gnu_void_ptr, EXTENSION,
+     "use of GNU void* extension")
 DIAG(ext_gnu_indirect_goto, EXTENSION,
      "use of GNU indirect-goto extension")
 DIAG(ext_gnu_address_of_label, EXTENSION,
@@ -733,6 +735,10 @@ DIAG(ext_typecheck_deref_ptr_to_void, WARNING,
      "dereferencing '%0' pointer")
 DIAG(err_typecheck_invalid_operands, ERROR,
      "invalid operands to binary expression ('%0' and '%1')")
+DIAG(err_typecheck_sub_ptr_object, ERROR,
+     "'%0' is not a complete object type")
+DIAG(err_typecheck_sub_ptr_compatible, ERROR,
+     "'%0' and '%1' are not pointers to compatible types")
 DIAG(ext_typecheck_comparison_of_pointer_integer, WARNING,
      "comparison between pointer and integer ('%0' and '%1')")
 DIAG(ext_typecheck_comparison_of_distinct_pointers, WARNING,

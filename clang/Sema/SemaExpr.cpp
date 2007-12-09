@@ -1259,14 +1259,60 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
     
   QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
   
-  // handle the common case first (both operands are arithmetic).
+  // Enforce type constraints: C99 6.5.6p3.
+  
+  // Handle the common case first (both operands are arithmetic).
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
     return compType;
+  
+  // Either ptr - int   or   ptr - ptr.
+  if (const PointerType *LHSPTy = lex->getType()->getAsPointerType()) {
+    // The LHS must be an object type, not incomplete, function, etc.
+    if (!LHSPTy->getPointeeType()->isObjectType()) {
+      // Handle the GNU void* extension.
+      if (LHSPTy->getPointeeType()->isVoidType()) {
+        Diag(loc, diag::ext_gnu_void_ptr, 
+             lex->getSourceRange(), rex->getSourceRange());
+      } else {
+        Diag(loc, diag::err_typecheck_sub_ptr_object,
+             lex->getType().getAsString(), lex->getSourceRange());
+        return QualType();
+      }
+    }
+
+    // The result type of a pointer-int computation is the pointer type.
+    if (rex->getType()->isIntegerType())
+      return lex->getType();
     
-  if (lex->getType()->isPointerType() && rex->getType()->isIntegerType())
-    return compType;
-  if (lex->getType()->isPointerType() && rex->getType()->isPointerType())
-    return Context.getPointerDiffType();
+    // Handle pointer-pointer subtractions.
+    if (const PointerType *RHSPTy = rex->getType()->getAsPointerType()) {
+      // RHS must be an object type, unless void (GNU).
+      if (!RHSPTy->getPointeeType()->isObjectType()) {
+        // Handle the GNU void* extension.
+        if (RHSPTy->getPointeeType()->isVoidType()) {
+          if (!LHSPTy->getPointeeType()->isVoidType())
+            Diag(loc, diag::ext_gnu_void_ptr, 
+                 lex->getSourceRange(), rex->getSourceRange());
+        } else {
+          Diag(loc, diag::err_typecheck_sub_ptr_object,
+               rex->getType().getAsString(), rex->getSourceRange());
+          return QualType();
+        }
+      }
+      
+      // Pointee types must be compatible.
+      if (!Context.typesAreCompatible(LHSPTy->getPointeeType(), 
+                                      RHSPTy->getPointeeType())) {
+        Diag(loc, diag::err_typecheck_sub_ptr_compatible,
+             lex->getType().getAsString(), rex->getType().getAsString(),
+             lex->getSourceRange(), rex->getSourceRange());
+        return QualType();
+      }
+      
+      return Context.getPointerDiffType();
+    }
+  }
+  
   InvalidOperands(loc, lex, rex);
   return QualType();
 }
