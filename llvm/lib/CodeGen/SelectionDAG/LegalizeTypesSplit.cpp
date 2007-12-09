@@ -27,7 +27,7 @@ static void GetSplitDestVTs(MVT::ValueType InVT,
     NumElements >>= 1;
     Lo = Hi =  MVT::getVectorType(NewEltVT, NumElements);
   } else {                                     // Non-power-of-two vectors.
-    unsigned NewNumElts_Lo = 1 << Log2_32(NumElements-1);
+    unsigned NewNumElts_Lo = 1 << Log2_32(NumElements);
     unsigned NewNumElts_Hi = NumElements - NewNumElts_Lo;
     Lo = MVT::getVectorType(NewEltVT, NewNumElts_Lo);
     Hi = MVT::getVectorType(NewEltVT, NewNumElts_Hi);
