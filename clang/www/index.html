@@ -11,53 +11,85 @@
 <body>
   <!--#include virtual="menu.html.incl"-->
   <div id="content">
-  
     <h1>clang: a C language family frontend for LLVM</h1>
     
-    <h2>About</h2>
-    
-    <p>The goal of the Clang project is to create a new <a
-    href="http://llvm.org/svn/llvm-project/cfe/trunk/LICENSE.TXT">BSD
-    licensed</a> C, C++, &amp; ObjC front-end for the <a 
-    href="http://www.llvm.org/">LLVM</a> compiler.</p>
-    
-    <p>In the context of this website, the term Clang actually refers to two 
-    things:</p>
-    
-    <ol>
-    <li> A "code name" for the LLVM compiler front-end.</li>
-    <li> A specific library in the LLVM front-end -- in particular the
-        "driver" that makes all the other libraries work together.</li>
-    </ol>
-
-    <p>The developers of Clang include contributers from Apple and numerous
-       other volunteers.</p>
+    <p>The goal of the Clang project is to create a new C, C++, Objective C and
+    Objective C++ front-end for the <a href="http://www.llvm.org/">LLVM</a>
+    compiler.</p>
     
     <h2>Why?</h2>
-    <p>The development of a new front-end was started out of a need -- a need for a compiler that allows better diagnostics, better integration with IDEs, a license that is compatible with commercial products, and a compiler that is easier to develop and maintain.  All of these were motivations for starting work on a new C/C++/ObjC front-end that could meet these needs.
-    <p>An excellent introduction to Clang can be found in the following video lectures:
+    
+    <p>The development of a new front-end was started out of a need -- a need
+       for a compiler that allows better diagnostics, better integration with
+       IDEs, a license that is compatible with commercial products, and a
+       compiler that is easier to develop and maintain.  All of these were
+       motivations for starting work on a new front-end that could
+       meet these needs.</p>
+       
+    <p>An good (but quite dated) introduction to Clang can be found in the
+       following video lectures:</p>
+       
     <ul>
       <li><a href="clang_video-05-25-2007.html">Clang Introduction</a>
-      <li><a href="clang_video-07-25-2007.html">Features and Performance of Clang</a>
+          (May 2007)</li>
+      <li><a href="clang_video-07-25-2007.html">Features and Performance of 
+          Clang</a>  (July 2007)</li>
     </ul>
+    
     <h2>Features/Goals</h2>
-    Some of the goals for the project include the following:
+    
+    <p>Some of the goals for the project include the following:</p>
+    
     <ul>
-      <li>Real-world, production quality compiler.</li>
-      <li>A single unified parser for C/ObjC/C++</li>
-      <li>Language conformance with C, ObjC, C++ (including variants, like C90, C99, etc)</li>
-      <li>GCC compatibility (supports GCC extensions, but allow them to be disabled)</li>
-      <li>Library based architecture with finely crafted C++ APIs</li>
-      <li>High performance</li>
-      <li>Design for integration with IDEs as well as code generation with <a href="http://llvm.org">LLVM</a>.</li>
-      <li><a href="features.html#expressivediags">Expressive diagnostics</a></li>
-      <li>BSD License</li>
+    <li>Real-world, production quality compiler.</li>
+    <li>A single unified parser for C, Objective C, C++, and Objective
+        C++.</li>
+    <li>Language conformance with these languages and  their variants, like
+        C90, C99, etc.</li>
+    <li>GCC compatibility: support GCC extensions, but allow them to be
+        disabled.</li>
+    <li>Library based architecture with finely crafted APIs.</li>
+    <li>Support many clients, such as refactoring, static analysis, as well as
+        code generation.</li>
+    <li>High performance.</li>
+    <li>Design for integration with IDEs as well as code generation with the
+        <a href="http://llvm.org">LLVM Optimizer and Code Generator</a>.</li>
+    <li><a href="features.html#expressivediags">Expressive diagnostics</a>:
+        warnings and errors that are actually helpful and make sense.</li>
+    <li>Use the LLVM <a
+        href="http://llvm.org/svn/llvm-project/cfe/trunk/LICENSE.TXT">'BSD'
+        License</a>.</li>
     </ul>
-    Of course this is only a rough outline of the goals and features of Clang.  To get a true sense of what the new LLVM front-end is all about, as well as why you might want to considering using it, see the <a href="features.html">Features</a> section.
-    <h2>Try Clang</h2>
-    If you are a compiler developer and want to try out Clang, then build instructions are available on the <a href="get_involved.html#build">Get Involved</a> page.  Note that clang is still early in development.  If you are looking for source analysis or source-to-source transformation tools, clang is probably a great solution for you.  If you want to use it as a drop in C compiler, it is not yet ready.
+    
+    <p>Of course this is only a rough outline of the goals and features of
+       Clang.  To get a true sense of what the new LLVM front-end is all about,
+       as well as why you might want to considering using it, see the <a 
+       href="features.html">Features</a> section.</p>
+       
+       
+    <h2>Current Status</h2>
+    
+    <p>Clang is still in early development stages.  If you are looking for
+    source analysis or source-to-source transformation tools, clang is probably
+    a great solution for you.  If you want to use it as a drop in C compiler, it
+    is not yet ready.</p>
+
+    <p>Clang currently has pretty good parsing and semantic analysis support for
+       C and Objective-C right now, and bugs are usually quickly fixed once
+       reported.  C++ support is still very early, and we don't expect to have
+       respectable C++ support for another 2 years or so.</p>
+    
     <h2>Get Involved</h2>
-    If you are interested in working on Clang, then check out the <a href="get_involved.html">Get Involved</a> section.
+    
+    <p>The developers of Clang include contributers from Apple and numerous
+       other volunteers.  If you are interested in joining the community or
+       learning more, please consider joining the <a 
+       href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a>
+       mailing list, or start by browsing its archives.</p>
+
+    <p>If you are interested in trying out Clang, please see the build
+       instructions on the <ahref="get_involved.html#build">Get Involved</a> 
+       page.</p>    
   </div>
 </body>
 </html>
