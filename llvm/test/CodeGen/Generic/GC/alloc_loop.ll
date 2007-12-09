@@ -1,54 +1,53 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc
+; RUN: llvm-as < %s | llc
 
-implementation
 
-declare sbyte* %llvm_gc_allocate(uint)
-declare void %llvm_gc_initialize(uint)
+declare i8* @llvm_gc_allocate(i32)
+declare void @llvm_gc_initialize(i32)
 
-declare void %llvm.gcroot(sbyte**, sbyte*)
-declare void %llvm.gcwrite(sbyte*, sbyte*, sbyte**)
+declare void @llvm.gcroot(i8**, i8*)
+declare void @llvm.gcwrite(i8*, i8*, i8**)
 
-int %main() {
+define i32 @main() {
 entry:
-	%A = alloca sbyte*
-	%B = alloca sbyte**
+	%A = alloca i8*
+	%B = alloca i8**
 
-	call void %llvm_gc_initialize(uint 1048576)  ; Start with 1MB heap
+	call void @llvm_gc_initialize(i32 1048576)  ; Start with 1MB heap
 
         ;; void *A;
-	call void %llvm.gcroot(sbyte** %A, sbyte* null)
+	call void @llvm.gcroot(i8** %A, i8* null)
 
         ;; A = gcalloc(10);
-	%Aptr = call sbyte* %llvm_gc_allocate(uint 10)
-	store sbyte* %Aptr, sbyte** %A
+	%Aptr = call i8* @llvm_gc_allocate(i32 10)
+	store i8* %Aptr, i8** %A
 
         ;; void **B;
-	%tmp.1 = cast sbyte*** %B to sbyte **
-	call void %llvm.gcroot(sbyte** %tmp.1, sbyte* null)
+	%tmp.1 = bitcast i8*** %B to i8**
+	call void @llvm.gcroot(i8** %tmp.1, i8* null)
 
 	;; B = gcalloc(4);
-	%B = call sbyte* %llvm_gc_allocate(uint 8)
-	%tmp.2 = cast sbyte* %B to sbyte**
-	store sbyte** %tmp.2, sbyte*** %B
+	%B.upgrd.1 = call i8* @llvm_gc_allocate(i32 8)
+	%tmp.2 = bitcast i8* %B.upgrd.1 to i8**
+	store i8** %tmp.2, i8*** %B
 
 	;; *B = A;
-	%B.1 = load sbyte*** %B
-	%A.1 = load sbyte** %A
-	call void %llvm.gcwrite(sbyte* %A.1, sbyte* %B, sbyte** %B.1)
+	%B.1 = load i8*** %B
+	%A.1 = load i8** %A
+	call void @llvm.gcwrite(i8* %A.1, i8* %B.upgrd.1, i8** %B.1)
 	
 	br label %AllocLoop
 
 AllocLoop:
-	%i = phi uint [ 0, %entry ], [ %indvar.next, %AllocLoop ]
+	%i = phi i32 [ 0, %entry ], [ %indvar.next, %AllocLoop ]
         ;; Allocated mem: allocated memory is immediately dead.
-	call sbyte* %llvm_gc_allocate(uint 100)
+	call i8* @llvm_gc_allocate(i32 100)
 	
-	%indvar.next = add uint %i, 1
-	%exitcond = seteq uint %indvar.next, 10000000
-	br bool %exitcond, label %Exit, label %AllocLoop
+	%indvar.next = add i32 %i, 1
+	%exitcond = icmp eq i32 %indvar.next, 10000000
+	br i1 %exitcond, label %Exit, label %AllocLoop
 
 Exit:
-	ret int 0
+	ret i32 0
 }
 
-declare void %__main()
+declare void @__main()
