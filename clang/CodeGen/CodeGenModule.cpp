@@ -202,8 +202,8 @@ static llvm::Constant *GenerateConversionToBool(llvm::Constant *Expression,
 /// GenerateConstantCast - Generates a constant cast to convert the Expression
 /// into the Target type.
 static llvm::Constant *GenerateConstantCast(const Expr *Expression, 
-                                                QualType Target, 
-                                                CodeGenModule &CGM) {
+                                            QualType Target, 
+                                            CodeGenModule &CGM) {
   CodeGenTypes& Types = CGM.getTypes(); 
   QualType Source = Expression->getType().getCanonicalType();
   Target = Target.getCanonicalType();
@@ -346,6 +346,14 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
   }
 
   switch (Expression->getStmtClass()) {
+  default: break; // default emits a warning and returns bogus value.
+  case Stmt::DeclRefExprClass:  {
+    const ValueDecl *Decl = cast<DeclRefExpr>(Expression)->getDecl();
+    if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
+      return CGM.GetAddrOfFunctionDecl(FD, false);
+    break;
+  }
+      
   // Generate constant for floating point literal values.
   case Stmt::FloatingLiteralClass: {
     const FloatingLiteral *FLiteral = cast<FloatingLiteral>(Expression);
@@ -416,11 +424,10 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
   // an array or struct.
   case Stmt::InitListExprClass: 
     return GenerateAggregateInit(cast<InitListExpr>(Expression), CGM);
-
-  default:
-    CGM.WarnUnsupported(Expression, "initializer");
-    return llvm::UndefValue::get(Types.ConvertType(type));
   }
+        
+  CGM.WarnUnsupported(Expression, "initializer");
+  return llvm::UndefValue::get(Types.ConvertType(type));
 }
 
 llvm::Constant *CodeGenModule::EmitGlobalInit(const Expr *Expression) {
