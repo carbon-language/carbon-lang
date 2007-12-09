@@ -199,11 +199,11 @@ llvm::Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                                                  const CallExpr *E)
 {
   switch (BuiltinID) {
-    default: return 0;
-    case X86::BI__builtin_ia32_mulps:
-      return Builder.CreateMul(EmitScalarExpr(E->getArg(0)),
-                               EmitScalarExpr(E->getArg(1)),
-                               "result");
+  default: return 0;
+  case X86::BI__builtin_ia32_mulps:
+    return Builder.CreateMul(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)),
+                             "mulps");
   }
 }
 
@@ -211,6 +211,6 @@ llvm::Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
                                                  const CallExpr *E)
 {
   switch (BuiltinID) {
-    default: return 0;
+  default: return 0;
   }
 }  
