@@ -1,9 +1,3 @@
-/*
-	Consulted:
-	http://www.w3.org/TR/CSS1 &
-	http://www.w3.org/TR/CSS21/
-*/
-
 /***************/
 /* page layout */
 /***************/
@@ -21,44 +15,34 @@
 	position:fixed;
 }
 [id=content] {
-	padding-left:16ex;	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
-}
-
-/****************/
-/* menu display */
-/****************/
-label, #menu a {
-	display:block;
-	padding:.05em .3em;
-}
-#menu * {
-	display:block;
-}
-#quick_links {
-	padding-top:1em;
-}
-a {
-	margin:.05em;
+	/* *****  EDIT THIS VALUE IF CONTENT OVERLAPS MENU ***** */
+	padding-left:16ex;
 }
 
 /**************/
 /* menu style */
 /**************/
-label {
-	font-size:.8em;
+
+#menu {
+	padding-left: .3em;
+}
+
+#menu .submenu {
+	padding-top:1em;
+	display:block;
+}
+
+#menu label {
+	display:block;
+	font-weight: bold;
+	text-align: center;
+	background-color: rgb(192,192,192);
 }
 #menu a {
-	background-color:rgb(244,250,255);
-}
-#menu label {
-	background-color:rgb(244,255,250);
-}
-#menu {
-	padding: 0 .2em .2em 0;
-	border-color: rgb(240,240,240);
-	border-width: 0 .1em 0 0;
-	border-style: solid;
+	display:block;
+	text-align: center;
+	background-color: rgb(235,235,235);
 }
 #menu a:visited {
-	color:rgb(130,50,100);
+	color:rgb(100,50,100);
 }
