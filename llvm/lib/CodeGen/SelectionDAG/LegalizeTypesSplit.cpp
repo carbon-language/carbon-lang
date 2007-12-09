@@ -337,9 +337,8 @@ bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
 #endif
       assert(0 && "Do not know how to split this operator's operand!");
       abort();
-    case ISD::STORE:
-      Res = SplitOperand_STORE(cast<StoreSDNode>(N), OpNo);
-      break;
+    case ISD::STORE: Res = SplitOp_STORE(cast<StoreSDNode>(N), OpNo); break;
+    case ISD::RET:   Res = SplitOp_RET(N, OpNo); break;
     }
   }
   
@@ -364,7 +363,7 @@ bool DAGTypeLegalizer::SplitOperand(SDNode *N, unsigned OpNo) {
   return false;
 }
 
-SDOperand DAGTypeLegalizer::SplitOperand_STORE(StoreSDNode *N, unsigned OpNo) {
+SDOperand DAGTypeLegalizer::SplitOp_STORE(StoreSDNode *N, unsigned OpNo) {
   assert(OpNo == 1 && "Can only split the stored value");
   
   SDOperand Ch  = N->getChain();
@@ -388,3 +387,15 @@ SDOperand DAGTypeLegalizer::SplitOperand_STORE(StoreSDNode *N, unsigned OpNo) {
   return DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
 }
 
+SDOperand DAGTypeLegalizer::SplitOp_RET(SDNode *N, unsigned OpNo) {
+  assert(N->getNumOperands() == 3 &&"Can only handle ret of one vector so far");
+  // FIXME: Returns of gcc generic vectors larger than a legal vector
+  // type should be returned by reference!
+  SDOperand Lo, Hi;
+  GetSplitOp(N->getOperand(1), Lo, Hi);
+
+  SDOperand Chain = N->getOperand(0);  // The chain.
+  SDOperand Sign = N->getOperand(2);  // Signness
+  
+  return DAG.getNode(ISD::RET, MVT::Other, Chain, Lo, Sign, Hi, Sign);
+}

@@ -1043,58 +1043,14 @@ SDOperand DAGTypeLegalizer::ExpandOperand_STORE(StoreSDNode *N, unsigned OpNo) {
 
   if (!N->isTruncatingStore()) {
     unsigned IncrementSize = 0;
+    GetExpandedOp(N->getValue(), Lo, Hi);
+    IncrementSize = MVT::getSizeInBits(Hi.getValueType())/8;
 
-    // If this is a vector type, then we have to calculate the increment as
-    // the product of the element size in bytes, and the number of elements
-    // in the high half of the vector.
-    if (MVT::isVector(N->getValue().getValueType())) {
-      assert(0 && "Vectors not supported yet");
-  #if 0
-      SDNode *InVal = ST->getValue().Val;
-      unsigned NumElems = MVT::getVectorNumElements(InVal->getValueType(0));
-      MVT::ValueType EVT = MVT::getVectorElementType(InVal->getValueType(0));
-
-      // Figure out if there is a simple type corresponding to this Vector
-      // type.  If so, convert to the vector type.
-      MVT::ValueType TVT = MVT::getVectorType(EVT, NumElems);
-      if (TLI.isTypeLegal(TVT)) {
-        // Turn this into a normal store of the vector type.
-        Tmp3 = LegalizeOp(Node->getOperand(1));
-        Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                              SVOffset, isVolatile, Alignment);
-        Result = LegalizeOp(Result);
-        break;
-      } else if (NumElems == 1) {
-        // Turn this into a normal store of the scalar type.
-        Tmp3 = ScalarizeVectorOp(Node->getOperand(1));
-        Result = DAG.getStore(Tmp1, Tmp3, Tmp2, ST->getSrcValue(),
-                              SVOffset, isVolatile, Alignment);
-        // The scalarized value type may not be legal, e.g. it might require
-        // promotion or expansion.  Relegalize the scalar store.
-        return LegalizeOp(Result);
-      } else {
-        SplitVectorOp(Node->getOperand(1), Lo, Hi);
-        IncrementSize = NumElems/2 * MVT::getSizeInBits(EVT)/8;
-      }
-  #endif
-    } else {
-      GetExpandedOp(N->getValue(), Lo, Hi);
-      IncrementSize = Hi.Val ? MVT::getSizeInBits(Hi.getValueType())/8 : 0;
-
-      if (!TLI.isLittleEndian())
-        std::swap(Lo, Hi);
-    }
+    if (!TLI.isLittleEndian())
+      std::swap(Lo, Hi);
 
     Lo = DAG.getStore(Ch, Lo, Ptr, N->getSrcValue(),
                       SVOffset, isVolatile, Alignment);
-
-    assert(Hi.Val && "FIXME: int <-> float should be handled with promote!");
-  #if 0
-    if (Hi.Val == NULL) {
-      // Must be int <-> float one-to-one expansion.
-      return Lo;
-    }
-  #endif
 
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                       getIntPtrConstant(IncrementSize));
