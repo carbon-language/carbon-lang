@@ -17,7 +17,40 @@
     Objective C++ front-end for the <a href="http://www.llvm.org/">LLVM</a>
     compiler.</p>
     
-    <h2>Why?</h2>
+    <h2>Features/Goals</h2>
+    
+    <p>Some of the goals for the project include the following:</p>
+    
+    <ul>
+    <li>Real-world, production quality compiler.</li>
+    <li>A single unified parser for C, Objective C, C++, and Objective
+        C++.</li>
+    <li>Language conformance with these languages and  their variants, like
+        C90, C99, etc.</li>
+    <li>GCC compatibility: support GCC extensions, but allow them to be
+        disabled.</li>
+    <li><a href="features.html#performance">High performance and low memory
+         use</a>.</li>
+    <li>Build a library-based architecture with finely crafted APIs, allowing
+        the code to be reused in many ways.</li>
+    <li>Support many clients such as refactoring, static analysis, as well as
+        code generation.</li>
+    <li>Design for integration with IDEs as well as code generation with the
+        <a href="http://llvm.org">LLVM Optimizer and Code Generator</a>.</li>
+    <li><a href="features.html#expressivediags">Expressive diagnostics</a>:
+        warnings and errors that are actually helpful and make sense.</li>
+    <li>Use the LLVM <a
+        href="http://llvm.org/svn/llvm-project/cfe/trunk/LICENSE.TXT">'BSD'
+        License</a>.</li>
+    </ul>
+    
+    <p>Of course this is only a rough outline of the goals and features of
+       Clang.  To get a true sense of what the new LLVM front-end is all about,
+       as well as why you might want to considering using it, see the <a 
+       href="features.html">Features</a> section.</p>
+       
+       
+     <h2>Why?</h2>
     
     <p>The development of a new front-end was started out of a need -- a need
        for a compiler that allows better diagnostics, better integration with
@@ -36,41 +69,10 @@
           Clang</a>  (July 2007)</li>
     </ul>
     
-    <p>For a more detailed comparison about Clang and other compilers, please
+    <p>For a more detailed comparison between Clang and other compilers, please
        see the <a href="comparison.html">clang comparison page</a>.</p>
     
-    <h2>Features/Goals</h2>
-    
-    <p>Some of the goals for the project include the following:</p>
-    
-    <ul>
-    <li>Real-world, production quality compiler.</li>
-    <li>A single unified parser for C, Objective C, C++, and Objective
-        C++.</li>
-    <li>Language conformance with these languages and  their variants, like
-        C90, C99, etc.</li>
-    <li>GCC compatibility: support GCC extensions, but allow them to be
-        disabled.</li>
-    <li>Library based architecture with finely crafted APIs.</li>
-    <li>Support many clients, such as refactoring, static analysis, as well as
-        code generation.</li>
-    <li>High performance.</li>
-    <li>Design for integration with IDEs as well as code generation with the
-        <a href="http://llvm.org">LLVM Optimizer and Code Generator</a>.</li>
-    <li><a href="features.html#expressivediags">Expressive diagnostics</a>:
-        warnings and errors that are actually helpful and make sense.</li>
-    <li>Use the LLVM <a
-        href="http://llvm.org/svn/llvm-project/cfe/trunk/LICENSE.TXT">'BSD'
-        License</a>.</li>
-    </ul>
-    
-    <p>Of course this is only a rough outline of the goals and features of
-       Clang.  To get a true sense of what the new LLVM front-end is all about,
-       as well as why you might want to considering using it, see the <a 
-       href="features.html">Features</a> section.</p>
-       
-       
-    <h2>Current Status</h2>
+   <h2>Current Status</h2>
     
     <p>Clang is still in early development stages.  If you are looking for
     source analysis or source-to-source transformation tools, clang is probably
@@ -91,7 +93,7 @@
        mailing list, or start by browsing its archives.</p>
 
     <p>If you are interested in trying out Clang, please see the build
-       instructions on the <ahref="get_involved.html#build">Get Involved</a> 
+       instructions on the <a href="get_involved.html#build">Get Involved</a> 
        page.</p>    
   </div>
 </body>
