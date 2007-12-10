@@ -23,6 +23,7 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Config/config.h"
 #include <string>
 
 namespace llvm {
@@ -141,6 +142,16 @@ public:
   /// Target endianness...
   bool          isLittleEndian()       const { return     LittleEndian; }
   bool          isBigEndian()          const { return    !LittleEndian; }
+
+  /// Host endianness...
+  bool hostIsLittleEndian() const {
+#ifdef LSB_FIRST
+    return true;
+#else
+    return false;
+#endif
+  }
+  bool hostIsBigEndian() const { return !hostIsLittleEndian(); }
 
   /// getStringRepresentation - Return the string representation of the
   /// TargetData.  This representation is in the same format accepted by the

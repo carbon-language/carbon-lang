@@ -633,20 +633,27 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val, GenericValue *
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID: {
     unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-    GenericValue TmpVal = Val;
-    if (BitWidth <= 8)
-      *((uint8_t*)Ptr) = uint8_t(Val.IntVal.getZExtValue());
-    else if (BitWidth <= 16) {
-      *((uint16_t*)Ptr) = uint16_t(Val.IntVal.getZExtValue());
-    } else if (BitWidth <= 32) {
-      *((uint32_t*)Ptr) = uint32_t(Val.IntVal.getZExtValue());
-    } else if (BitWidth <= 64) {
-      *((uint64_t*)Ptr) = uint64_t(Val.IntVal.getZExtValue());
-    } else {
-      uint64_t *Dest = (uint64_t*)Ptr;
-      const uint64_t *Src = Val.IntVal.getRawData();
-      for (uint32_t i = 0; i < Val.IntVal.getNumWords(); ++i)
-        Dest[i] = Src[i];
+    unsigned StoreBytes = (BitWidth + 7)/8;
+    uint8_t *Src = (uint8_t *)Val.IntVal.getRawData();
+    uint8_t *Dst = (uint8_t *)Ptr;
+
+    if (getTargetData()->hostIsLittleEndian())
+      // Little-endian host - the source is ordered from LSB to MSB.
+      // Order the destination from LSB to MSB: Do a straight copy.
+      memcpy(Dst, Src, StoreBytes);
+    else {
+      // Big-endian host - the source is an array of 64 bit words ordered from
+      // LSW to MSW.  Each word is ordered from MSB to LSB.
+      // Order the destination from MSB to LSB: Reverse the word order, but not
+      // the bytes in a word.
+      while (StoreBytes > sizeof(uint64_t)) {
+        StoreBytes -= sizeof(uint64_t);
+        // May not be aligned so use memcpy.
+        memcpy(Dst + StoreBytes, Src, sizeof(uint64_t));
+        Src += sizeof(uint64_t);
+      }
+
+      memcpy(Dst, Src + sizeof(uint64_t) - StoreBytes, StoreBytes);
     }
     break;
   }
@@ -683,16 +690,32 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
   switch (Ty->getTypeID()) {
   case Type::IntegerTyID: {
     unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-    if (BitWidth <= 8)
-      Result.IntVal = APInt(BitWidth, *((uint8_t*)Ptr));
-    else if (BitWidth <= 16) {
-      Result.IntVal = APInt(BitWidth, *((uint16_t*)Ptr));
-    } else if (BitWidth <= 32) {
-      Result.IntVal = APInt(BitWidth, *((uint32_t*)Ptr));
-    } else if (BitWidth <= 64) {
-      Result.IntVal = APInt(BitWidth, *((uint64_t*)Ptr));
-    } else
-      Result.IntVal = APInt(BitWidth, (BitWidth+63)/64, (uint64_t*)Ptr);
+    unsigned LoadBytes = (BitWidth + 7)/8;
+
+    // An APInt with all words initially zero.
+    Result.IntVal = APInt(BitWidth, 0);
+
+    uint8_t *Src = (uint8_t *)Ptr;
+    uint8_t *Dst = (uint8_t *)Result.IntVal.getRawData();
+
+    if (getTargetData()->hostIsLittleEndian())
+      // Little-endian host - the destination must be ordered from LSB to MSB.
+      // The source is ordered from LSB to MSB: Do a straight copy.
+      memcpy(Dst, Src, LoadBytes);
+    else {
+      // Big-endian - the destination is an array of 64 bit words ordered from
+      // LSW to MSW.  Each word must be ordered from MSB to LSB.  The source is
+      // ordered from MSB to LSB: Reverse the word order, but not the bytes in
+      // a word.
+      while (LoadBytes > sizeof(uint64_t)) {
+        LoadBytes -= sizeof(uint64_t);
+        // May not be aligned so use memcpy.
+        memcpy(Dst, Src + LoadBytes, sizeof(uint64_t));
+        Dst += sizeof(uint64_t);
+      }
+
+      memcpy(Dst + sizeof(uint64_t) - LoadBytes, Src, LoadBytes);
+    }
     break;
   }
   case Type::FloatTyID:
