@@ -7,18 +7,13 @@
     <label>Clang Info</label>
     <a href="index.html">About</a>
     <a href="features.html">Features</a>
+    <a href="comparison.html">Comparisons</a>
     <a href="get_involved.html">Get Involved</a>
     <a href="http://clang.llvm.org/docs/InternalsManual.html">Manual</a>
   </div>
   
   <div class="submenu">
     <label>Quick Links</label>
-    <!-- This section is for special links to areas that,
-            organizationally, are deep within another section,
-            but are still important enough to warrant a link.
-            It's for those things that you have to do a lot, but don't
-            want to have to wade through several pages to go there
-            every time. -->
     <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a>
     <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits</a>
     <a href="http://llvm.org/bugs/">Bug Reports</a>

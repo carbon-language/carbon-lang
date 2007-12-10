@@ -66,13 +66,16 @@
         custom garbage collector, uses global variables extensively, is not
         reentrant or multi-threadable, etc.  Clang has none of these problems.
         </li>
-    <li>GCC does not track information about macro instantiations when parsing
-        source code, this makes it very difficult for static analysis and
-        refactoring tools to work in the presense of (even simple) macros.</li>
-    <li>GCC simplifies code as it parses it.  As one simple example, if you
-        write "x-x" in your source code, the GCC AST will contain "0", with no
-        mention of x.  This is extremely bad for a refactoring tool that wants
-        to rename 'x'.</li>
+    <li>For every token, clang tracks information about where it was written and
+        where it was ultimately expanded into if was involved in a macro.
+        GCC does not track information about macro instantiations when parsing
+        source code.  This makes it very difficult for static analysis and
+        refactoring tools to work in the presence of (even simple) macros.</li>
+    <li>Clang does not implicitly simplify code as it parses it like GCC does.
+        This causes many problems for source analysis tools: as one simple
+        example, if you write "x-x" in your source code, the GCC AST will
+        contain "0", with no mention of 'x'.  This is extremely bad for a
+        refactoring tool that wants to rename 'x'.</li>
     <li>GCC does not have a way to serialize the AST of a file out to disk and 
         read it back into another program.  Its PCH mechanism is architecturally
         only able to read the dump back into the exact same executable as the
