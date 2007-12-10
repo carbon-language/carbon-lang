@@ -27,16 +27,17 @@ These features are:
 <ul>
 <li><a href="#performance">High Performance and Low Memory Use</a></li>
 <li><a href="#expressivediags">Expressive Diagnostics</a></a></li>
+<li><a href="#gcccompat">GCC compatibility</a></li>
 </ul>
 
 <p>Driving Goals and Internal Design:</p>
 <ul>
 <li><a href="#real">A real-world, production quality compiler</a></li>
+<li><a href="#simplecode">A simple and hackable code base</a></li>
 <li><a href="#unifiedparser">A single unified parser for C, Objective C, C++,
     and Objective C++</a></li>
 <li><a href="#conformance">Conformance with C/C++/ObjC and their
     variants</a></li>
-<li><a href="#gcccompat">GCC compatibility</a></li>
 </ul>
 
 <!--=======================================================================-->
@@ -147,6 +148,26 @@ std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;</tt>"!), but it is
 also very useful in C code in some cases as well (e.g. "<tt>__m128"</tt> vs
 "<tt>float __attribute__((__vector_size__(16)))</tt>").</p>
 
+<!--=======================================================================-->
+<h2><a name="gcccompat">GCC Compatibility</a></h2>
+<!--=======================================================================-->
+
+<p>GCC is currently the defacto-standard open source compiler today, and it
+routinely compiles a huge volume of code.  GCC supports a huge number of
+extensions and features (many of which are undocumented) and a lot of 
+code and header files depend on these features in order to build.</p>
+
+<p>While it would be nice to be able to ignore these extensions and focus on
+implementing the language standards to the letter, pragmatics force us to
+support the GCC extensions that see the most use.  Many users just want their
+code to compile, they don't care to argue about whether it is pedantically C99
+or not.</p>
+
+<p>As mentioned above, all
+extensions are explicitly recognized as such and marked with extension
+diagnostics, which can be mapped to warnings, errors, or just ignored.
+</p>
+
 
 <!--=======================================================================-->
 <h1>Driving Goals and Internal Design</h1>
@@ -169,6 +190,23 @@ performance, being solid and (relatively) bug free, and it means eventually
 being used and depended on by a broad range of people.  While we are still in
 the early development stages, we strongly believe that this will become a
 reality.</p>
+
+<!--=======================================================================-->
+<h2><a name="simplecode">A simple and hackable code base</a></h2>
+<!--=======================================================================-->
+
+<p>Our goal is to make it possible for anyone with a basic understanding
+of compilers and working knowledge of the C/C++/ObjC languages to understand and
+extend the clang source base.  A large part of this falls out of our decision to
+make the AST mirror the languages as closely as possible: you have your friendly
+if statement, for statement, parenthesis expression, structs, unions, etc, all
+represented in a simple and explicit way.</p>
+
+<p>In addition to a simple design, we work to make the source base approachable
+by commenting it well, including citations of the language standards where
+appropriate, and designing the code for simplicity.  Beyond that, clang offers
+a set of AST dumpers, printers, and visualizers that make it easy to put code in
+and see how it is represented.</p>
 
 <!--=======================================================================-->
 <h2><a name="unifiedparser">A single unified parser for C, Objective C, C++,
@@ -208,22 +246,6 @@ clang in "strict" mode if you desire.</p>
 
 <p>We also intend to support "dialects" of these languages, such as C89, K&amp;R
 C, C++'03, Objective-C 2, etc.</p>
-
-<!--=======================================================================-->
-<h2><a name="gcccompat">GCC Compatibility</a></h2>
-<!--=======================================================================-->
-
-<p>GCC is currently the defacto-standard open source compiler today, and it
-routinely compiles a huge volume of code.  GCC supports a huge number of
-extensions and features (many of which are undocumented) and a lot of 
-code and header files depend on these features in order to build.</p>
-
-<p>While it would be nice to be able to ignore these extensions and focus on
-implementing the language standards to the letter, pragmatics force us to
-support the GCC extensions that see the most use.  As mentioned above, all
-extensions are explicitly recognized as such and marked with extension
-diagnostics, which can be mapped to warnings, errors, or just ignored.
-</p>
 
 
 <!--=======================================================================-->
