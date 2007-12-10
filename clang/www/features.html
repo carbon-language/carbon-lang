@@ -3,7 +3,7 @@
 <html>
 <head>
   <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
-  <title>Clang - Features</title>
+  <title>Clang - Features and Goals</title>
   <link type="text/css" rel="stylesheet" href="menu.css" />
   <link type="text/css" rel="stylesheet" href="content.css" />
   <style type="text/css">
@@ -15,35 +15,97 @@
 
 <div id="content">
 
-  <h1>Features of Clang</h1>
-  <p>
-  This page outlines the main goals of Clang, as well as some compelling reasons
-  why you should consider using Clang. In the Goals section below, you will find
-  a brief, bulleted overview of the goals and features that we are striving for
-  in the development of Clang.  However, in the <a href="#keyfeatures">Key
-  Features</a> section you will find a more detailed presentation on what we
-  believe are some key drawing points for the Clang front-end.</p>
+<h1>Clang - Features and Goals</h1>
+<p>
+This page describes the <a href="index.html#goals">features and goals</a> of
+Clang in more detail and gives a more broad explanation about what we mean.
+These features are:
+</p>
 
-<h1><a name="keyfeatures">Key Features</a></h1>
+<ul>
+<li><a href="#real">A real-world, production quality compiler</a></li>
+<li><a href="#unifiedparser">A single unified parser for C, Objective C, C++,
+    and Objective C++</a></li>
+<li><a href="#conformance">Conformance with C/C++/ObjC and their
+    variants</a></li>
+</ul>
 
-There are several key features which we believe make Clang an exciting front-end.  These features are designed to make things easier for both the compiler developer (people working on Clang and derivative products) and the application developer (those who use Clang/LLVM).
+<!--=======================================================================-->
+<h2><a name="real">A real-world, production quality compiler</a></h2>
+<!--=======================================================================-->
 
+<p>
+Clang is designed and built by experienced commercial compiler developers who
+are increasingly frustrated with the problems that <a 
+href="comparison.html">existing open source compilers</a> have.  Clang is
+carefully and thoughtfully designed and built to provide the foundation of a
+whole new generation of C/C++/Objective C development tools, and we intend for
+it to be commercial quality.</p>
+
+<p>Being a production quality compiler means many things: it means being high
+performance, being solid and (relatively) bug free, and it means eventually
+being used and depended on by a broad range of people.  While we are still in
+the early development stages, we strongly believe that this will become a
+reality.</p>
+
+<!--=======================================================================-->
+<h2><a name="unifiedparser">A single unified parser for C, Objective C, C++,
+and Objective C++</a></h2>
+<!--=======================================================================-->
+
+<p>Clang is the "C Language Family Front-end", which means we intend to support
+the most popular members of the C family.  We are convinced that the right
+parsing technology for this class of languages is a hand-built recursive-descent
+parser.  Because it is plain C++ code, recursive descent makes it very easy for
+new developers to understand the code, it easily supports ad-hoc rules and other
+strange hacks required by C/C++, and makes it straight-forward to implement
+excellent diagnostics and error recovery.</p>
+
+<p>We believe that implementing C/C++/ObjC in a single unified parser makes the
+end result easier to maintain and evolve than maintaining a separate C and C++
+parser which must be bugfixed and maintained independently of each other.</p>
+
+<!--=======================================================================-->
+<h2><a name="conformance">Conformance with C/C++/ObjC and their
+ variants</a></h2>
+<!--=======================================================================-->
+
+<p>When you start work on implementing a language, you find out that there is a
+huge gap between how the language works and how most people understand it to
+work.  This gap is the difference between a normal programmer and a (scary?
+super-natural?) "language lawyer", who knows the ins and outs of the language
+and can grok standardese with ease.</p>
+
+<p>In practice, being conformant with the languages means that we aim to support
+the full language, including the dark and dusty corners (like trigraphs,
+preprocessor arcana, C99 VLAs, etc).  Where we support extensions above and
+beyond what the standard officially allows, we make an effort to explicitly call
+this out in the code and emit warnings about it (which are disabled by default,
+but can optionally be mapped to either warnings or errors), allowing you to use
+clang in "strict" mode if you desire.</p>
+
+<p>We also intend to support "dialects" of these languages, such as C89, K&amp;R
+C, C++'03, Objective-C 2, etc.</p>
+
+<!--=======================================================================-->
 <h2>Library based architecture</h2>
+<!--=======================================================================-->
+
 A major design concept for the LLVM front-end involves using a library based architecture.  In this library based architecture, various parts of the front-end can be cleanly divided into separate libraries which can then be mixed up for different needs and uses.  In addition, the library based approach makes it much easier for new developers to get involved and extend LLVM to do new and unique things.  In the words of Chris,
 <div class="quote">"The world needs better compiler tools, tools which are built as libraries. This design point allows reuse of the tools in new and novel ways. However, building the tools as libraries isn't enough: they must have clean APIs, be as decoupled from each other as possible, and be easy to modify/extend. This requires clean layering, decent design, and keeping the libraries independent of any specific client."</div>
 Currently, the LLVM front-end is divided into the following libraries:
 <ul>
-	<li>libsupport - Basic support library, reused from LLVM.
-	<li>libsystem - System abstraction library, reused from LLVM.
-	<li>libbasic - Diagnostics, SourceLocations, SourceBuffer abstraction, file system caching for input source files. <span class="weak_txt">(depends on above libraries)</span>
-	<li>libast - Provides classes to represent the C AST, the C type system, builtin functions, and various helpers for analyzing and manipulating the AST (visitors, pretty printers, etc). <span class="weak_txt">(depends on above libraries)</span>
-	<li>liblex - C/C++/ObjC lexing and preprocessing, identifier hash table, pragma handling, tokens, and macros. <span class="weak_txt">(depends on above libraries)</span>
-	<li>libparse - Parsing and local semantic analysis. This library invokes coarse-grained 'Actions' provided by the client to do stuff (e.g. libsema builds ASTs). <span class="weak_txt">(depends on above libraries)</span>
-	<li>libsema - Provides a set of parser actions to build a standardized AST for programs. AST's are 'streamed' out a top-level declaration at a time, allowing clients to use decl-at-a-time processing, build up entire translation units, or even build 'whole program' ASTs depending on how they use the APIs. <span class="weak_txt">(depends on libast and libparse)</span>
-	<li>libcodegen - Lower the AST to LLVM IR for optimization &amp; codegen. <span class="weak_txt">(depends on libast)</span>
-        <li>librewrite - Editing of text buffers, depends on libast.</li>
-        <li>libanalysis - Static analysis support, depends on libast.</li>
-	<li><b>clang</b> - An example driver, client of the libraries at various levels. <span class="weak_txt">(depends on above libraries, and LLVM VMCore)</span>
+<li>libsupport - Basic support library, reused from LLVM.
+<li>libsystem - System abstraction library, reused from LLVM.
+<li>libbasic - Diagnostics, SourceLocations, SourceBuffer abstraction, file system caching for input source files. <span class="weak_txt">(depends on above libraries)</span>
+<li>libast - Provides classes to represent the C AST, the C type system, builtin functions, and various helpers for analyzing and manipulating the AST (visitors, pretty printers, etc). <span class="weak_txt">(depends on above libraries)</span>
+<li>liblex - C/C++/ObjC lexing and preprocessing, identifier hash table, pragma handling, tokens, and macros. <span class="weak_txt">(depends on above libraries)</span>
+<li>libparse - Parsing and local semantic analysis. This library invokes coarse-grained 'Actions' provided by the client to do stuff (e.g. libsema builds ASTs). <span class="weak_txt">(depends on above libraries)</span>
+<li>libsema - Provides a set of parser actions to build a standardized AST for programs. AST's are 'streamed' out a top-level declaration at a time, allowing clients to use decl-at-a-time processing, build up entire translation units, or even build 'whole program' ASTs depending on how they use the APIs. <span class="weak_txt">(depends on libast and libparse)</span>
+<li>libcodegen - Lower the AST to LLVM IR for optimization &amp; codegen. <span class="weak_txt">(depends on libast)</span>
+<li>librewrite - Editing of text buffers, depends on libast.</li>
+<li>libanalysis - Static analysis support, depends on libast.</li>
+<li><b>clang</b> - An example driver, client of the libraries at various levels. <span class="weak_txt">(depends on above libraries, and LLVM VMCore)</span>
 </ul>
 As an example of the power of this library based design....  If you wanted to build a preprocessor, you would take the Basic and Lexer libraries. If you want an indexer, you would take the previous two and add the Parser library and some actions for indexing. If you want a refactoring, static analysis, or source-to-source compiler tool, you would then add the AST building and semantic analyzer libraries.
 In the end, LLVM's library based design will provide developers with many more possibilities.
