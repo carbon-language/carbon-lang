@@ -9,8 +9,8 @@
 //
 // This file implements a simple interprocedural pass which walks the
 // call-graph, turning invoke instructions into calls, iff the callee cannot
-// throw an exception.  It implements this as a bottom-up traversal of the
-// call-graph.
+// throw an exception, and marking functions 'nounwind' if they cannot throw.
+// It implements this as a bottom-up traversal of the call-graph.
 //
 //===----------------------------------------------------------------------===//
 
@@ -19,7 +19,6 @@
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
-#include "llvm/Intrinsics.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/ADT/SmallVector.h"
@@ -37,14 +36,6 @@ namespace {
   struct VISIBILITY_HIDDEN PruneEH : public CallGraphSCCPass {
     static char ID; // Pass identification, replacement for typeid
     PruneEH() : CallGraphSCCPass((intptr_t)&ID) {}
-
-    /// DoesNotUnwind - This set contains all of the functions which we have
-    /// determined cannot unwind.
-    std::set<CallGraphNode*> DoesNotUnwind;
-
-    /// DoesNotReturn - This set contains all of the functions which we have
-    /// determined cannot return normally (but might unwind).
-    std::set<CallGraphNode*> DoesNotReturn;
 
     // runOnSCC - Analyze the SCC, performing the transformation if possible.
     bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
@@ -79,33 +70,41 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   for (unsigned i = 0, e = SCC.size();
        (!SCCMightUnwind || !SCCMightReturn) && i != e; ++i) {
     Function *F = SCC[i]->getFunction();
-    if (F == 0 || (F->isDeclaration() && !F->getIntrinsicID())) {
+    if (F == 0) {
       SCCMightUnwind = true;
       SCCMightReturn = true;
+    } else if (F->isDeclaration()) {
+      SCCMightUnwind |= !F->isNoUnwind();
+      SCCMightReturn |= !F->isNoReturn();
     } else {
-      if (F->isDeclaration())
-        SCCMightReturn = true;
+      bool CheckUnwind = !SCCMightUnwind && !F->isNoUnwind();
+      bool CheckReturn = !SCCMightReturn && !F->isNoReturn();
+
+      if (!CheckUnwind && !CheckReturn)
+        continue;
 
       // Check to see if this function performs an unwind or calls an
       // unwinding function.
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
-        if (isa<UnwindInst>(BB->getTerminator())) {  // Uses unwind!
+        if (CheckUnwind && isa<UnwindInst>(BB->getTerminator())) {
+          // Uses unwind!
           SCCMightUnwind = true;
-        } else if (isa<ReturnInst>(BB->getTerminator())) {
+        } else if (CheckReturn && isa<ReturnInst>(BB->getTerminator())) {
           SCCMightReturn = true;
         }
 
         // Invoke instructions don't allow unwinding to continue, so we are
         // only interested in call instructions.
-        if (!SCCMightUnwind)
+        if (CheckUnwind && !SCCMightUnwind)
           for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
             if (CallInst *CI = dyn_cast<CallInst>(I)) {
-              if (Function *Callee = CI->getCalledFunction()) {
+              if (CI->isNoUnwind()) {
+                // This call cannot throw.
+              } else if (Function *Callee = CI->getCalledFunction()) {
                 CallGraphNode *CalleeNode = CG[Callee];
-                // If the callee is outside our current SCC, or if it is not
-                // known to throw, then we might throw also.
-                if (std::find(SCC.begin(), SCC.end(), CalleeNode) == SCC.end()&&
-                    !DoesNotUnwind.count(CalleeNode)) {
+                // If the callee is outside our current SCC then we may
+                // throw because it might.
+                if (std::find(SCC.begin(), SCC.end(), CalleeNode) == SCC.end()){
                   SCCMightUnwind = true;
                   break;
                 }
@@ -121,12 +120,21 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   }
 
   // If the SCC doesn't unwind or doesn't throw, note this fact.
-  if (!SCCMightUnwind)
-    for (unsigned i = 0, e = SCC.size(); i != e; ++i)
-      DoesNotUnwind.insert(SCC[i]);
-  if (!SCCMightReturn)
-    for (unsigned i = 0, e = SCC.size(); i != e; ++i)
-      DoesNotReturn.insert(SCC[i]);
+  if (!SCCMightUnwind || !SCCMightReturn)
+    for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
+      const ParamAttrsList *PAL = SCC[i]->getFunction()->getParamAttrs();
+      uint16_t RAttributes = PAL ? PAL->getParamAttrs(0) : 0;
+
+      if (!SCCMightUnwind)
+        RAttributes |= ParamAttr::NoUnwind;
+      if (!SCCMightReturn)
+        RAttributes |= ParamAttr::NoReturn;
+
+      ParamAttrsVector modVec;
+      modVec.push_back(ParamAttrsWithIndex::get(0, RAttributes));
+      PAL = ParamAttrsList::getModified(PAL, modVec);
+      SCC[i]->getFunction()->setParamAttrs(PAL);
+    }
 
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
     // Convert any invoke instructions to non-throwing functions in this node
@@ -144,60 +152,57 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
 // function if we have invokes to non-unwinding functions or code after calls to
 // no-return functions.
 bool PruneEH::SimplifyFunction(Function *F) {
-  CallGraph &CG = getAnalysis<CallGraph>();
   bool MadeChange = false;
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
-      if (Function *F = II->getCalledFunction())
-        if (DoesNotUnwind.count(CG[F])) {
-          SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
-          // Insert a call instruction before the invoke.
-          CallInst *Call = new CallInst(II->getCalledValue(),
-                                        Args.begin(), Args.end(), "", II);
-          Call->takeName(II);
-          Call->setCallingConv(II->getCallingConv());
-          Call->setParamAttrs(II->getParamAttrs());
+      if (II->isNoUnwind()) {
+        SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
+        // Insert a call instruction before the invoke.
+        CallInst *Call = new CallInst(II->getCalledValue(),
+                                      Args.begin(), Args.end(), "", II);
+        Call->takeName(II);
+        Call->setCallingConv(II->getCallingConv());
+        Call->setParamAttrs(II->getParamAttrs());
 
-          // Anything that used the value produced by the invoke instruction
-          // now uses the value produced by the call instruction.
-          II->replaceAllUsesWith(Call);
-          BasicBlock *UnwindBlock = II->getUnwindDest();
-          UnwindBlock->removePredecessor(II->getParent());
+        // Anything that used the value produced by the invoke instruction
+        // now uses the value produced by the call instruction.
+        II->replaceAllUsesWith(Call);
+        BasicBlock *UnwindBlock = II->getUnwindDest();
+        UnwindBlock->removePredecessor(II->getParent());
 
-          // Insert a branch to the normal destination right before the
-          // invoke.
-          new BranchInst(II->getNormalDest(), II);
+        // Insert a branch to the normal destination right before the
+        // invoke.
+        new BranchInst(II->getNormalDest(), II);
 
-          // Finally, delete the invoke instruction!
-          BB->getInstList().pop_back();
+        // Finally, delete the invoke instruction!
+        BB->getInstList().pop_back();
 
-          // If the unwind block is now dead, nuke it.
-          if (pred_begin(UnwindBlock) == pred_end(UnwindBlock))
-            DeleteBasicBlock(UnwindBlock);  // Delete the new BB.
+        // If the unwind block is now dead, nuke it.
+        if (pred_begin(UnwindBlock) == pred_end(UnwindBlock))
+          DeleteBasicBlock(UnwindBlock);  // Delete the new BB.
 
-          ++NumRemoved;
-          MadeChange = true;
-        }
+        ++NumRemoved;
+        MadeChange = true;
+      }
 
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
       if (CallInst *CI = dyn_cast<CallInst>(I++))
-        if (Function *Callee = CI->getCalledFunction())
-          if (DoesNotReturn.count(CG[Callee]) && !isa<UnreachableInst>(I)) {
-            // This call calls a function that cannot return.  Insert an
-            // unreachable instruction after it and simplify the code.  Do this
-            // by splitting the BB, adding the unreachable, then deleting the
-            // new BB.
-            BasicBlock *New = BB->splitBasicBlock(I);
+        if (CI->isNoReturn() && !isa<UnreachableInst>(I)) {
+          // This call calls a function that cannot return.  Insert an
+          // unreachable instruction after it and simplify the code.  Do this
+          // by splitting the BB, adding the unreachable, then deleting the
+          // new BB.
+          BasicBlock *New = BB->splitBasicBlock(I);
 
-            // Remove the uncond branch and add an unreachable.
-            BB->getInstList().pop_back();
-            new UnreachableInst(BB);
+          // Remove the uncond branch and add an unreachable.
+          BB->getInstList().pop_back();
+          new UnreachableInst(BB);
 
-            DeleteBasicBlock(New);  // Delete the new BB.
-            MadeChange = true;
-            ++NumUnreach;
-            break;
-          }
+          DeleteBasicBlock(New);  // Delete the new BB.
+          MadeChange = true;
+          ++NumUnreach;
+          break;
+        }
 
   }
   return MadeChange;

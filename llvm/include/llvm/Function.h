@@ -165,6 +165,16 @@ public:
     return ParamAttrs && ParamAttrs->paramHasAttr(i, attr);
   }
 
+  /// @brief Determine if the function cannot return.
+  bool isNoReturn() const {
+    return paramHasAttr(0, ParamAttr::NoReturn);
+  }
+
+  /// @brief Determine if the function cannot unwind.
+  bool isNoUnwind() const {
+    return paramHasAttr(0, ParamAttr::NoUnwind);
+  }
+
   /// @brief Determine if the function does not access memory.
   bool doesNotAccessMemory() const {
     return paramHasAttr(0, ParamAttr::ReadNone);

@@ -1,17 +1,13 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -prune-eh | llvm-dis | \
-; RUN:   not grep {ret i32}
+; RUN: llvm-as < %s | opt -prune-eh | llvm-dis | not grep {ret i32}
 
-void %noreturn() {
-	unwind
+declare void @noreturn() noreturn;
+
+define i32 @caller() {
+	call void @noreturn( )
+	ret i32 17
 }
 
-int %caller() {
-	 ; noreturn never returns, so the ret is unreachable.
-	call void %noreturn()
-	ret int 17
-}
-
-int %caller2() {
-	%T = call int %caller()
-	ret int %T            ;; this is also unreachable!
+define i32 @caller2() {
+	%T = call i32 @caller( )		; <i32> [#uses=1]
+	ret i32 %T
 }

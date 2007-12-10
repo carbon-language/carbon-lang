@@ -111,7 +111,7 @@ static bool MarkAliveBlocks(BasicBlock *BB,
     // canonicalizes unreachable insts into stores to null or undef.
     for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E;++BBI){
       if (CallInst *CI = dyn_cast<CallInst>(BBI)) {
-        if (CI->paramHasAttr(0, ParamAttr::NoReturn)) {
+        if (CI->isNoReturn()) {
           // If we found a call to a no-return function, insert an unreachable
           // instruction after it.  Make sure there isn't *already* one there
           // though.

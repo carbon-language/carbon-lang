@@ -937,6 +937,11 @@ public:
     return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
   }
 
+  /// @brief Determine if the call cannot return.
+  bool isNoReturn() const {
+    return paramHasAttr(0, ParamAttr::NoReturn);
+  }
+
   /// @brief Determine if the call cannot unwind.
   bool isNoUnwind() const {
     return paramHasAttr(0, ParamAttr::NoUnwind);
@@ -1734,6 +1739,11 @@ public:
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const {
     return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+  }
+
+  /// @brief Determine if the call cannot return.
+  bool isNoReturn() const {
+    return paramHasAttr(0, ParamAttr::NoReturn);
   }
 
   /// @brief Determine if the call cannot unwind.
