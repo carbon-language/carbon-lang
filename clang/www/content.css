@@ -17,11 +17,6 @@ table,tr,td {
 	padding:.4ex;
 }
 
-.weak_txt {
-	font-size:.9em;
-	color:rgb(100,100,100);
-}
-
 .code {
 	font:Courier,Arial;
 }

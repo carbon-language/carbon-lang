@@ -15,7 +15,10 @@
 
 <div id="content">
 
+<!--*************************************************************************-->
 <h1>Clang - Features and Goals</h1>
+<!--*************************************************************************-->
+
 <p>
 This page describes the <a href="index.html#goals">features and goals</a> of
 Clang in more detail and gives a more broad explanation about what we mean.
@@ -25,12 +28,22 @@ These features are:
 <p>End-User Features:</p>
 
 <ul>
-<li><a href="#performance">High Performance and Low Memory Use</a></li>
-<li><a href="#expressivediags">Expressive Diagnostics</a></a></li>
+<li><a href="#performance">High performance and low memory use</a></li>
+<li><a href="#expressivediags">Expressive diagnostics</a></a></li>
 <li><a href="#gcccompat">GCC compatibility</a></li>
 </ul>
 
-<p>Driving Goals and Internal Design:</p>
+<p>Utility and Applications:</p>
+
+<ul>
+<li><a href="#libraryarch">Library based architecture</a></li>
+<li><a href="#diverseclients">Support diverse clients</a></li>
+<li><a href="#ideintegration">Integration with IDEs</a></li>
+<li><a href="#license">Use the LLVM 'BSD' License</a></li>
+</ul>
+
+<p>Internal Design and Implementation:</p>
+
 <ul>
 <li><a href="#real">A real-world, production quality compiler</a></li>
 <li><a href="#simplecode">A simple and hackable code base</a></li>
@@ -40,9 +53,9 @@ These features are:
     variants</a></li>
 </ul>
 
-<!--=======================================================================-->
+<!--*************************************************************************-->
 <h1>End-User Features</h1>
-<!--=======================================================================-->
+<!--*************************************************************************-->
 
 
 <!--=======================================================================-->
@@ -169,9 +182,164 @@ diagnostics, which can be mapped to warnings, errors, or just ignored.
 </p>
 
 
+<!--*************************************************************************-->
+<h1>Utility and Applications</h1>
+<!--*************************************************************************-->
+
 <!--=======================================================================-->
-<h1>Driving Goals and Internal Design</h1>
+<h2><a name="libraryarch">Library Based Architecture</a></h2>
 <!--=======================================================================-->
+
+<p>A major design concept for clang is its use of a library-based
+architecture.  In this design, various parts of the front-end can be cleanly
+divided into separate libraries which can then be mixed up for different needs
+and uses.  In addition, the library-based approach encourages good interfaces
+and makes it easier for new developers to get involved (because they only need
+to understand small pieces of the big picture).</p>
+
+<blockquote>
+"The world needs better compiler tools, tools which are built as libraries.
+This design point allows reuse of the tools in new and novel ways. However,
+building the tools as libraries isn't enough: they must have clean APIs, be as
+decoupled from each other as possible, and be easy to modify/extend. This
+requires clean layering, decent design, and keeping the libraries independent of
+any specific client."</blockquote>
+
+<p>
+Currently, clang is divided into the following libraries and tool:
+</p>
+
+<ul>
+<li><b>libsupport</b> - Basic support library, from LLVM.</li>
+<li><b>libsystem</b> - System abstraction library, from LLVM.</li>
+<li><b>libbasic</b> - Diagnostics, SourceLocations, SourceBuffer abstraction,
+    file system caching for input source files.</li>
+<li><b>libast</b> - Provides classes to represent the C AST, the C type system,
+    builtin functions, and various helpers for analyzing and manipulating the
+    AST (visitors, pretty printers, etc).</li>
+<li><b>liblex</b> - Lexing and preprocessing, identifier hash table, pragma
+    handling, tokens, and macro expansion.</li>
+<li><b>libparse</b> - Parsing. This library invokes coarse-grained 'Actions'
+    provided by the client (e.g. libsema builds ASTs) but knows nothing about
+    ASTs or other client-specific data structures.</li>
+<li><b>libsema</b> - Semantic Analysis.  This provides a set of parser actions
+    to build a standardized AST for programs.</li>
+<li><b>libcodegen</b> - Lower the AST to LLVM IR for optimization &amp; code
+    generation.</li>
+<li><b>librewrite</b> - Editing of text buffers (important for code rewriting
+    transformation, like refactoring).</li>
+<li><b>libanalysis</b> - Static analysis support.</li>
+<li><b>clang</b> - A driver program, client of the libraries at various
+    levels.</li>
+</ul>
+
+<p>As an example of the power of this library based design....  If you wanted to
+build a preprocessor, you would take the Basic and Lexer libraries. If you want
+an indexer, you would take the previous two and add the Parser library and
+some actions for indexing. If you want a refactoring, static analysis, or
+source-to-source compiler tool, you would then add the AST building and
+semantic analyzer libraries.</p>
+
+<p>For more information about the low-level implementation details of the
+various clang libraries, please see the <a href="docs/InternalsManual.html">
+clang Internals Manual</a>.</p>
+
+<!--=======================================================================-->
+<h2><a name="diverseclients">Support Diverse Clients</a></h2>
+<!--=======================================================================-->
+
+<p>Clang is designed and built with many grand plans for how we can use it.  The
+driving force is the fact that we use C and C++ daily, and have to suffer due to
+a lack of good tools available for it.  We believe that the C and C++ tools
+ecosystem has been significantly limited by how difficult it is to parse and
+represent the source code for these languages, and we aim to rectify this
+problem in clang.</p>
+
+<p>The problem with this goal is that different clients have very different
+requirements.  Consider code generation, for example: a simple front-end that
+parses for code generation must analyze the code for validity and emit code
+in some intermediate form to pass off to a optimizer or backend.  Because
+validity analysis and code generation can largely be done on the fly, there is
+not hard requirement that the front-end actually build up a full AST for all
+the expressions and statements in the code.  TCC and GCC are examples of
+compilers that either build no real AST (in the former case) or build a stripped
+down and simplified AST (in the later case) because they focus primarily on
+codegen.</p>
+
+<p>On the opposite side of the spectrum, some clients (like refactoring) want
+highly detailed information about the original source code and want a complete
+AST to describe it with.  Refactoring wants to have information about macro
+expansions, the location of every paren expression '(((x)))' vs 'x', full
+position information, and much more.  Further, refactoring wants to look
+<em>across the whole program</em> to ensure that it is making transformations
+that are safe.  Making this efficient and getting this right requires a
+significant amount of engineering and algorithmic work that simply are
+unnecessary for a simple static compiler.</p>
+
+<p>The beauty of the clang approach is that it does not restrict how you use it.
+In particular, it is possible to use the clang preprocessor and parser to build
+an extremely quick and light-weight on-the-fly code generator (similar to TCC)
+that does not build an AST at all.   As an intermediate step, clang supports
+using the current AST generation and semantic analysis code and having a code 
+generation client free the AST for each function after code generation. Finally,
+clang provides support for building and retaining fully-fledged ASTs, and even
+supports writing them out to disk.</p>
+
+<p>Designing the libraries with clean and simple APIs allows these high-level
+policy decisions to be determined in the client, instead of forcing "one true
+way" in the implementation of any of these libraries.  Getting this right is
+hard, and we don't always get it right the first time, but we fix any problems
+when we realize we made a mistake.</p>
+
+<!--=======================================================================-->
+<h2><a name="ideintegration">Integration with IDEs</h2>
+<!--=======================================================================-->
+
+<p>
+We believe that Integrated Development Environments (IDE's) are a great way
+to pull together various pieces of the development puzzle, and aim to make clang
+work well in such an environment.  The chief advantage of an IDE is that they
+typically have visibility across your entire project and are long-lived
+processes, whereas stand-alone compiler tools are typically invoked on each
+individual file in the project, and thus have limited scope.</p>
+
+<p>There are many implications of this difference, but a significant one has to
+do with efficiency and caching: sharing an address space across different files
+in a project, means that you can use intelligent caching and other techniques to
+dramatically reduce analysis/compilation time.</p>
+
+<p>A further difference between IDEs and batch compiler is that they often
+impose very different requirements on the front-end: they depend on high
+performance in order to provide a "snappy" experience, and thus really want
+techniques like "incremental compilation", "fuzzy parsing", etc.  Finally, IDEs
+often have very different requirements than code generation, often requiring
+information that a codegen-only frontend can throw away.  Clang is
+specifically designed and built to capture this information.
+</p>
+
+
+<!--=======================================================================-->
+<h2><a name="license">Use the LLVM 'BSD' License</a></h2>
+<!--=======================================================================-->
+
+<p>We actively indend for clang (and a LLVM as a whole) to be used for
+commercial projects, and the BSD license is the simplest way to allow this.  We
+feel that the license encourages contributors to pick up the source and work
+with it, and believe that those individuals and organizations will contribute
+back their work if they do not want to have to maintain a fork forever (which is
+time consuming and expensive when merges are involved).  Further, nobody makes
+money on compilers these days, but many people need them to get bigger goals
+accomplished: it makes sense for everyone to work together.</p>
+
+<p>For more information about the LLVM/clang license, please see the <a 
+href="http://llvm.org/docs/DeveloperPolicy.html#license">LLVM License 
+Description</a> for more information.</p>
+
+
+
+<!--*************************************************************************-->
+<h1>Internal Design and Implementation</h1>
+<!--*************************************************************************-->
 
 <!--=======================================================================-->
 <h2><a name="real">A real-world, production quality compiler</a></h2>
@@ -247,40 +415,6 @@ clang in "strict" mode if you desire.</p>
 <p>We also intend to support "dialects" of these languages, such as C89, K&amp;R
 C, C++'03, Objective-C 2, etc.</p>
 
-
-<!--=======================================================================-->
-<h2><a name="libraryarch">Library based architecture</a></h2>
-<!--=======================================================================-->
-
-A major design concept for the LLVM front-end involves using a library based architecture.  In this library based architecture, various parts of the front-end can be cleanly divided into separate libraries which can then be mixed up for different needs and uses.  In addition, the library based approach makes it much easier for new developers to get involved and extend LLVM to do new and unique things.  In the words of Chris,
-
-<blockquote>
-"The world needs better compiler tools, tools which are built as libraries.
-This design point allows reuse of the tools in new and novel ways. However,
-building the tools as libraries isn't enough: they must have clean APIs, be as
-decoupled from each other as possible, and be easy to modify/extend. This
-requires clean layering, decent design, and keeping the libraries independent of
-any specific client."</blockquote>
-
-Currently, the LLVM front-end is divided into the following libraries:
-<ul>
-<li>libsupport - Basic support library, reused from LLVM.
-<li>libsystem - System abstraction library, reused from LLVM.
-<li>libbasic - Diagnostics, SourceLocations, SourceBuffer abstraction, file system caching for input source files. <span class="weak_txt">(depends on above libraries)</span>
-<li>libast - Provides classes to represent the C AST, the C type system, builtin functions, and various helpers for analyzing and manipulating the AST (visitors, pretty printers, etc). <span class="weak_txt">(depends on above libraries)</span>
-<li>liblex - C/C++/ObjC lexing and preprocessing, identifier hash table, pragma handling, tokens, and macros. <span class="weak_txt">(depends on above libraries)</span>
-<li>libparse - Parsing and local semantic analysis. This library invokes coarse-grained 'Actions' provided by the client to do stuff (e.g. libsema builds ASTs). <span class="weak_txt">(depends on above libraries)</span>
-<li>libsema - Provides a set of parser actions to build a standardized AST for programs. AST's are 'streamed' out a top-level declaration at a time, allowing clients to use decl-at-a-time processing, build up entire translation units, or even build 'whole program' ASTs depending on how they use the APIs. <span class="weak_txt">(depends on libast and libparse)</span>
-<li>libcodegen - Lower the AST to LLVM IR for optimization &amp; codegen. <span class="weak_txt">(depends on libast)</span>
-<li>librewrite - Editing of text buffers, depends on libast.</li>
-<li>libanalysis - Static analysis support, depends on libast.</li>
-<li><b>clang</b> - An example driver, client of the libraries at various levels. <span class="weak_txt">(depends on above libraries, and LLVM VMCore)</span>
-</ul>
-As an example of the power of this library based design....  If you wanted to build a preprocessor, you would take the Basic and Lexer libraries. If you want an indexer, you would take the previous two and add the Parser library and some actions for indexing. If you want a refactoring, static analysis, or source-to-source compiler tool, you would then add the AST building and semantic analyzer libraries.
-In the end, LLVM's library based design will provide developers with many more possibilities.
-
-<h2>Better Integration with IDEs</h2>
-Another design goal of Clang is to integrate extremely well with IDEs. IDEs often have very different requirements than code generation, often requiring information that a codegen-only frontend can throw away.  Clang is specifically designed and built to capture this information.
 </div>
 </body>
 </html>
