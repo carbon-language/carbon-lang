@@ -102,31 +102,28 @@ public:
   /// one of the enums that is coming soon (down below)...
   ///
   unsigned getOpcode() const { return getValueID() - InstructionVal; }
-  const char *getOpcodeName() const {
-    return getOpcodeName(getOpcode());
-  }
+  const char *getOpcodeName() const { return getOpcodeName(getOpcode()); }
+  bool isTerminator() const { return isTerminator(getOpcode()); }
+  bool isBinaryOp() const { return isBinaryOp(getOpcode()); }
+  bool isShift() { return isShift(getOpcode()); }
+  bool isCast() const { return isCast(getOpcode()); }
+  
+  
+  
   static const char* getOpcodeName(unsigned OpCode);
 
   static inline bool isTerminator(unsigned OpCode) {
     return OpCode >= TermOpsBegin && OpCode < TermOpsEnd;
   }
 
-  inline bool isTerminator() const {   // Instance of TerminatorInst?
-    return isTerminator(getOpcode());
-  }
-
-  inline bool isBinaryOp() const {
-    return getOpcode() >= BinaryOpsBegin && getOpcode() < BinaryOpsEnd;
+  static inline bool isBinaryOp(unsigned Opcode) {
+    return Opcode >= BinaryOpsBegin && Opcode < BinaryOpsEnd;
   }
 
   /// @brief Determine if the Opcode is one of the shift instructions.
   static inline bool isShift(unsigned Opcode) {
     return Opcode >= Shl && Opcode <= AShr;
   }
-
-  /// @brief Determine if the instruction's opcode is one of the shift 
-  /// instructions.
-  inline bool isShift() { return isShift(getOpcode()); }
 
   /// isLogicalShift - Return true if this is a logical shift left or a logical
   /// shift right.
@@ -143,11 +140,6 @@ public:
   /// @brief Determine if the OpCode is one of the CastInst instructions.
   static inline bool isCast(unsigned OpCode) {
     return OpCode >= CastOpsBegin && OpCode < CastOpsEnd;
-  }
-
-  /// @brief Determine if this is one of the CastInst instructions.
-  inline bool isCast() const {
-    return isCast(getOpcode());
   }
 
   /// isAssociative - Return true if the instruction is associative:
