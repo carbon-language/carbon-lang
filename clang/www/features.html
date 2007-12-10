@@ -1,52 +1,29 @@
-<!-- Consulted: http://www.w3.org/TR/CSS1 & http://www.w3.org/TR/CSS21/ -->
-<!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-	<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
-	<title>Clang - Features</title>
-	<link type="text/css" rel="stylesheet" href="menu.css" />
-	<link type="text/css" rel="stylesheet" href="content.css" />
-	<style type="text/css">
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Clang - Features</title>
+  <link type="text/css" rel="stylesheet" href="menu.css" />
+  <link type="text/css" rel="stylesheet" href="content.css" />
+  <style type="text/css">
 </style>
 </head>
 <body>
+
 <!--#include virtual="menu.html.incl"-->
+
 <div id="content">
-	<h1>Features of Clang</h1>
-<p>
-This page outlines the main goals of Clang, as well as some compelling reasons why you should consider using Clang. In the <a href="#goals">Goals</a> section below, you will find a brief, bulleted overview of the goals and features that we are striving for in the development of Clang.  However, in the <a href="#keyfeatures">Key Features</a> section you will find a more detailed presentation on what we believe are some key drawing points for the Clang front-end.</p>
 
-<p><em>If you are new to the Clang front-end and you want a reason for considering working on or using the new front-end, then make sure you check out the <a href="#keyfeatures">Key Features</a> section.</em></p>
+  <h1>Features of Clang</h1>
+  <p>
+  This page outlines the main goals of Clang, as well as some compelling reasons
+  why you should consider using Clang. In the Goals section below, you will find
+  a brief, bulleted overview of the goals and features that we are striving for
+  in the development of Clang.  However, in the <a href="#keyfeatures">Key
+  Features</a> section you will find a more detailed presentation on what we
+  believe are some key drawing points for the Clang front-end.</p>
 
-<h1><a name="goals">Goals</a></h1>
-	<ul>
-		<li>Real-world, production quality compiler</li>
-		<li>Unified parser for C-based languages</li>
-                 <div class="li_desc">We are only focusing on the C family of languages (C, C++, ObjC); however, if someone wants to work on another language, they are free to take charge of such a project.</div>
-		<li>Language conformance with C, ObjC, C++, including dialects (C99, C90, ObjC2, etc)</li>
-		<li>GCC compatibility (GCC extensions and 'quirks', where it makes sense)</li>
-		<li>Library based architecture with finely crafted C++ APIs</li>
-			<div class="li_desc">Makes Clang easier to work with and more flexible.</div>
-			<div class="li_weak_desc">(more details on this in the "Key Features" section)</div>
-		<li>Easy to extend</li>
-			<div class="li_weak_desc">(because of the library based architecture)</div>
-		<li>Multipurpose</li>
-			<div class="li_desc">Can be used for:
-			Indexing, static analysis, code generation,
-			source to source tools, refactoring</div>
-			<div class="li_weak_desc">(because of library based architecture)</div>
-		<li>High performance</li>
-			<div class="li_desc">Extremely fast (much faster than GCC), low memory footprint, use lazy evaluation and multithreading</div>
-			<div class="li_weak_desc">(more details in the "Key Features" section)</div>
-		<li>Better integration with IDEs</li>
-			<div class="li_weak_desc">(more details in the "Key Features" section)</div>
-		<li><a href="#expressivediags">Expressive diagnostics</a></li>
-			<div class="li_desc">Error reporting and diagnostic messages are more detailed an accurate than GCC.</div>
-			<div class="li_weak_desc">(more details in the "Key Features" section)</div>
-		<li>BSD License</li>
-			<div class="li_desc">Fewer restrictions on developers; allows for use in commercial products.</div>
-	</ul>
 <h1><a name="keyfeatures">Key Features</a></h1>
 
 There are several key features which we believe make Clang an exciting front-end.  These features are designed to make things easier for both the compiler developer (people working on Clang and derivative products) and the application developer (those who use Clang/LLVM).

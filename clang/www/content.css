@@ -10,13 +10,6 @@ table,tr,td {
 	padding:.4ex;
 }
 
-.li_desc, .li_weak_desc { /* layout + formatting */
-	margin: 0 3ex;
-	font-size:.9em;
-}
-.li_weak_desc { /* color */
-	color:rgb(100,100,100);
-}
 .weak_txt {
 	font-size:.9em;
 	color:rgb(100,100,100);
