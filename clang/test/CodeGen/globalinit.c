@@ -10,7 +10,7 @@ void bar() { x[0] = 1; }
 
 
 extern int y[];
-//void *g = y;
+void *g = y;
 
 int latin_ptr2len (char *p);
 int (*mb_ptr2len) (char *p) = latin_ptr2len;

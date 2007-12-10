@@ -404,7 +404,14 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
       llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
       
       llvm::Constant *Ops[] = {Idx0, Idx0};
-      return llvm::ConstantExpr::getGetElementPtr(C, Ops, 2);
+      C = llvm::ConstantExpr::getGetElementPtr(C, Ops, 2);
+      
+      // The resultant pointer type can be implicitly casted to other pointer
+      // types as well, for example void*.
+      const llvm::Type *DestPTy = Types.ConvertType(type);
+      assert(isa<llvm::PointerType>(DestPTy) &&
+             "Only expect implicit cast to pointer");
+      return llvm::ConstantExpr::getBitCast(C, DestPTy);
     }
     
     // If this is an implicit cast of a string literal to an array type, this
