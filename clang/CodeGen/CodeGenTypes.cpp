@@ -417,15 +417,15 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
         // struct { char A; short CurrentField:2; };
         const llvm::Type *Ty = CGT.ConvertType(FD->getType());
         // Calculate extra bits available in this bitfield.
-        ExtraBits = CGT.getTargetData().getTypeSizeInBits(Ty) - BitFieldSize;
+        ExtraBits = CGT.getTargetData().getABITypeSizeInBits(Ty) - BitFieldSize;
 
         if (LLVMFields.empty()) 
           // Ths is - struct { char CurrentField:2; char B:4; }
           addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
         else {
           const llvm::Type *PrevTy = LLVMFields.back();
-          if (CGT.getTargetData().getTypeSizeInBits(PrevTy) >=
-              CGT.getTargetData().getTypeSizeInBits(Ty)) 
+          if (CGT.getTargetData().getABITypeSizeInBits(PrevTy) >=
+              CGT.getTargetData().getABITypeSizeInBits(Ty)) 
             // This is - struct { char A; char CurrentField:2; };
             addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
           else {
@@ -446,8 +446,8 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
         //ExtraBits are not enough to hold entire FD.
         const llvm::Type *Ty = CGT.ConvertType(FD->getType());
         const llvm::Type *PrevTy = LLVMFields.back();
-        uint64_t TySize = CGT.getTargetData().getTypeSizeInBits(Ty);
-        if (CGT.getTargetData().getTypeSizeInBits(PrevTy) >= TySize) {
+        uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
+        if (CGT.getTargetData().getABITypeSizeInBits(PrevTy) >= TySize) {
           // Previous field does not allow sharing of ExtraBits. Use new field.
           // struct { char a; char b:5; char c:4; } where c is current FD.
           Cursor += ExtraBits;
@@ -472,7 +472,7 @@ void RecordOrganizer::addPaddingFields(unsigned RequiredBits) {
   unsigned RequiredBytes = RequiredBits / 8;
   for (unsigned i = 0; i != RequiredBytes; ++i)
     addLLVMField(llvm::Type::Int8Ty, 
-                 CGT.getTargetData().getTypeSizeInBits(llvm::Type::Int8Ty));
+                 CGT.getTargetData().getABITypeSizeInBits(llvm::Type::Int8Ty));
 }
 
 /// addLLVMField - Add llvm struct field that corresponds to llvm type Ty.
