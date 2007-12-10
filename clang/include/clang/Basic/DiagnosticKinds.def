@@ -605,6 +605,10 @@ DIAG(err_typecheck_negative_array_size, ERROR,
      "array size is negative")
 DIAG(ext_typecheck_zero_array_size, EXTENSION,
      "zero size arrays are an extension")
+DIAG(err_at_least_one_initializer_needed_to_size_array, ERROR,
+    "at least one initializer value required to size array")
+DIAG(array_of_wrong_type_initialized_from_string, ERROR,
+    "array of wrong type '%0' initialized from string constant")
 DIAG(err_array_size_non_int, ERROR,
      "size of array has non-integer type '%0'")
 DIAG(err_init_element_not_constant, ERROR,
@@ -617,6 +621,10 @@ DIAG(err_variable_object_no_init, ERROR,
      "variable-sized object may not be initialized")
 DIAG(warn_excess_initializers, EXTENSION,
      "excess elements in array initializer")
+DIAG(err_excess_initializers_in_char_array_initializer, ERROR,
+    "excess elements in char array initializer")
+DIAG(warn_initializer_string_for_char_array_too_long, WARNING,
+    "initializer-string for char array is too long")
 DIAG(warn_braces_around_scalar_init, WARNING,
      "braces around scalar initializer")
 DIAG(err_illegal_initializer, ERROR,

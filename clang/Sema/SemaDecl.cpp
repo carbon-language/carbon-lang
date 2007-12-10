@@ -429,21 +429,75 @@ bool Sema::CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
 void Sema::CheckVariableInitList(QualType DeclType, InitListExpr *IList, 
                                  QualType ElementType, bool isStatic, 
                                  int &nInitializers, bool &hadError) {
-  for (unsigned i = 0; i < IList->getNumInits(); i++) {
-    Expr *expr = IList->getInit(i);
+  unsigned numInits = IList->getNumInits();
+
+  if (numInits) {
+    if (CheckForCharArrayInitializer(IList, ElementType, nInitializers,
+                                     false, hadError))
+      return;
+        
+    for (unsigned i = 0; i < numInits; i++) {
+      Expr *expr = IList->getInit(i);
     
-    if (InitListExpr *InitList = dyn_cast<InitListExpr>(expr)) {
-      if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
-        int maxElements = CAT->getMaximumElements();
-        CheckConstantInitList(DeclType, InitList, ElementType, isStatic, 
-                              maxElements, hadError);
+      if (InitListExpr *InitList = dyn_cast<InitListExpr>(expr)) {
+        if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {
+          int maxElements = CAT->getMaximumElements();
+          CheckConstantInitList(DeclType, InitList, ElementType, isStatic, 
+                                maxElements, hadError);
+        }
+      } else {
+        hadError = CheckInitExpr(expr, IList, i, isStatic, ElementType);
+      }
+      nInitializers++;
+    }
+  } else {
+    Diag(IList->getLocStart(),
+         diag::err_at_least_one_initializer_needed_to_size_array);
+    hadError = true;
+  }
+}
+
+bool Sema::CheckForCharArrayInitializer(InitListExpr *IList, 
+                                        QualType ElementType,
+                                        int &nInitializers, bool isConstant,
+                                        bool &hadError)
+{
+  if (ElementType->isPointerType())
+    return false;
+  
+  if (StringLiteral *literal = dyn_cast<StringLiteral>(IList->getInit(0))) {
+    // FIXME: Handle wide strings
+    if (ElementType->isCharType()) {
+      if (isConstant) {
+        if (literal->getByteLength() > (unsigned)nInitializers) {
+          Diag(literal->getSourceRange().getBegin(),
+               diag::warn_initializer_string_for_char_array_too_long,
+               literal->getSourceRange());
+        }
+      } else {
+        nInitializers = literal->getByteLength() + 1;
       }
     } else {
-      hadError = CheckInitExpr(expr, IList, i, isStatic, ElementType);
+      // FIXME: It might be better if we could point to the declaration
+      // here, instead of the string literal.
+      Diag(literal->getSourceRange().getBegin(), 
+           diag::array_of_wrong_type_initialized_from_string,
+           ElementType.getAsString());
+      hadError = true;
     }
-    nInitializers++;
+    
+    // Check for excess initializers
+    for (unsigned i = 1; i < IList->getNumInits(); i++) {
+      Expr *expr = IList->getInit(i);
+      Diag(expr->getLocStart(), 
+           diag::err_excess_initializers_in_char_array_initializer, 
+           expr->getSourceRange());
+    }
+    
+    return true;
   }
-  return;
+
+  return false;
 }
 
 // FIXME: Doesn't deal with arrays of structures yet.
@@ -473,6 +527,11 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
   // The empty init list "{ }" is treated specially below.
   unsigned numInits = IList->getNumInits();
   if (numInits) {
+    if (CheckForCharArrayInitializer(IList, ElementType, 
+                                     maxElementsAtThisLevel,
+                                     true, hadError))
+      return;
+    
     for (unsigned i = 0; i < numInits; i++) {
       Expr *expr = IList->getInit(i);
       
@@ -499,19 +558,42 @@ void Sema::CheckConstantInitList(QualType DeclType, InitListExpr *IList,
       Diag(IList->getLocStart(), diag::warn_excess_initializers, 
            IList->getSourceRange());
   }
-  return;
 }
 
 bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
-  InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
-  if (!InitList)
-    return CheckSingleInitializer(Init, isStatic, DeclType);
+  bool hadError = false;
   
+  InitListExpr *InitList = dyn_cast<InitListExpr>(Init);
+  if (!InitList) {
+    if (StringLiteral *strLiteral = dyn_cast<StringLiteral>(Init)) {
+      const VariableArrayType *VAT = DeclType->getAsVariableArrayType();
+      // FIXME: Handle wide strings
+      if (VAT && VAT->getElementType()->isCharType()) {
+        // C99 6.7.8p14. We have an array of character type with unknown size 
+        // being initialized to a string literal.
+        llvm::APSInt ConstVal(32);
+        ConstVal = strLiteral->getByteLength() + 1;
+        // Return a new array type (C99 6.7.8p22).
+        DeclType = Context.getConstantArrayType(VAT->getElementType(), ConstVal, 
+                                                ArrayType::Normal, 0);
+        return hadError;
+      }
+      const ConstantArrayType *CAT = DeclType->getAsConstantArrayType();
+      if (CAT && CAT->getElementType()->isCharType()) {
+        // C99 6.7.8p14. We have an array of character type with known size.
+        if (strLiteral->getByteLength() > (unsigned)CAT->getMaximumElements()) {
+          Diag(strLiteral->getSourceRange().getBegin(),
+               diag::warn_initializer_string_for_char_array_too_long,
+               strLiteral->getSourceRange());
+        }
+        return hadError;
+      }
+    }
+    return CheckSingleInitializer(Init, isStatic, DeclType);
+  }
   // We have an InitListExpr, make sure we set the type.
   Init->setType(DeclType);
 
-  bool hadError = false;
-  
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
   if (const VariableArrayType *VAT = DeclType->getAsVariableArrayType()) { 
@@ -525,13 +607,19 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
     int numInits = 0;
     CheckVariableInitList(VAT->getElementType(), InitList, VAT->getBaseType(), 
                           isStatic, numInits, hadError);
-    if (!hadError) {
-      // Return a new array type from the number of initializers (C99 6.7.8p22).
-      llvm::APSInt ConstVal(32);
+    llvm::APSInt ConstVal(32);
+    
+    if (!hadError)
       ConstVal = numInits;
-      DeclType = Context.getConstantArrayType(VAT->getElementType(), ConstVal, 
-                                              ArrayType::Normal, 0);
-    }
+    
+    // Return a new array type from the number of initializers (C99 6.7.8p22).
+
+    // Note that if there was an error, we will still set the decl type,
+    // to an array type with 0 elements. 
+    // This is to avoid "incomplete type foo[]" errors when we've already
+    // reported the real cause of the error.
+    DeclType = Context.getConstantArrayType(VAT->getElementType(), ConstVal, 
+                                            ArrayType::Normal, 0);      
     return hadError;
   }
   if (const ConstantArrayType *CAT = DeclType->getAsConstantArrayType()) {

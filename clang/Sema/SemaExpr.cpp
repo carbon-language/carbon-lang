@@ -689,15 +689,9 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
   //assert((InitExpr != 0) && "ActOnCompoundLiteral(): missing expression");
   Expr *literalExpr = static_cast<Expr*>(InitExpr);
 
-  // FIXME: This is just a temporary workaround to get 
-  // test/Parser/compound_literal.c passing. (CheckInitializer does not support
-  // initializing a char array from a single string literal).
-  if (!literalType->isArrayType() || 
-      !literalType->getAsArrayType()->getElementType()->isCharType()) {
-    // FIXME: add more semantic analysis (C99 6.5.2.5).
-    if (CheckInitializer(literalExpr, literalType, false))
-      return 0;
-  }
+  // FIXME: add more semantic analysis (C99 6.5.2.5).
+  if (CheckInitializer(literalExpr, literalType, false))
+    return 0;
 
   return new CompoundLiteralExpr(literalType, literalExpr);
 }

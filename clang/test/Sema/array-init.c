@@ -137,3 +137,28 @@ void testTypedef()
   AryT a = { 1, 2 }, b = { 3, 4, 5 };
 }
 
+static char const xx[] = "test";
+static char const yy[5] = "test";
+static char const zz[3] = "test"; // expected-warning{{initializer-string for char array is too long}}
+
+void charArrays()
+{
+	static char const test[] = "test";
+	static char const test2[] = { "weird stuff" };
+	static char const test3[] = { "test", "excess stuff" }; // expected-error{{excess elements in char array initializer}}
+
+  char* cp[] = { "Hello" };
+
+  char c[] = { "Hello" };
+  int l[sizeof(c) == 6 ? 1 : -1];
+  
+  int i[] = { "Hello "}; // expected-error{{array of wrong type 'int' initialized from string constant}}
+  char c2[] = { "Hello", "Good bye" }; //expected-error{{excess elements in char array initializer}}
+
+  int i2[1] = { "Hello" }; //expected-error{{array of wrong type 'int' initialized from string constant}}
+  char c3[5] = { "Hello" };
+  char c4[4] = { "Hello" }; //expected-warning{{initializer-string for char array is too long}}
+
+  int i3[] = {}; //expected-error{{at least one initializer value required to size array}} expected-warning{{use of GNU empty initializer extension}}
+}
+

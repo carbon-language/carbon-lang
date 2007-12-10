@@ -684,7 +684,10 @@ private:
   void CheckConstantInitList(QualType DeclType, InitListExpr *IList, 
                              QualType ElementType, bool isStatic, 
                              int &nInitializers, bool &hadError);
-                             
+  bool CheckForCharArrayInitializer(InitListExpr *IList, QualType ElementType,
+                                    int &nInitializers, bool isConstant,
+                                    bool &hadError);
+  
   // CheckVectorCast - check type constraints for vectors. 
   // Since vectors are an extension, there are no C standard reference for this.
   // We allow casting between vectors and integer datatypes of the same size.

@@ -45,7 +45,7 @@ typedef int TA[I]; // expected-error {{variable length array declared outside of
 void strFunc(char *);
 const char staticAry[] = "test";
 int checkStaticAry() { 
-  strFunc(staticAry); // expected-warning{{passing 'char const []' to 'char *' discards qualifiers}}
+  strFunc(staticAry); // expected-warning{{passing 'char const [5]' to 'char *' discards qualifiers}}
 }
 
 
