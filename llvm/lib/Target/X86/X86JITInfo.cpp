@@ -162,14 +162,24 @@ extern "C" {
     ".align 8\n"
     ".globl " ASMPREFIX  "X86CompilationCallback_SSE\n"
   ASMPREFIX "X86CompilationCallback_SSE:\n"
+    ".cfi_startproc\n"
     "pushl   %ebp\n"
+    ".cfi_def_cfa_offset 8\n"
+    ".cfi_offset ebp, -8\n"
     "movl    %esp, %ebp\n"    // Standard prologue
+    ".cfi_def_cfa_register ebp\n"
     "pushl   %eax\n"
+    ".cfi_rel_offset eax, 0\n"
     "pushl   %edx\n"          // Save EAX/EDX/ECX
+    ".cfi_rel_offset edx, 4\n"
     "pushl   %ecx\n"
+    ".cfi_rel_offset ecx, 8\n"
     "andl    $-16, %esp\n"    // Align ESP on 16-byte boundary
     // Save all XMM arg registers
     "subl    $64, %esp\n"
+    // FIXME: provide frame move information for xmm registers.
+    // This can be tricky, because CFA register is ebp (unaligned)
+    // and we need to produce offsets relative to it.
     "movaps  %xmm0, (%esp)\n"
     "movaps  %xmm1, 16(%esp)\n"
     "movaps  %xmm2, 32(%esp)\n"
@@ -181,16 +191,31 @@ extern "C" {
     "call    " ASMPREFIX "X86CompilationCallback2\n"
     "addl    $16, %esp\n"
     "movaps  48(%esp), %xmm3\n"
+    ".cfi_restore xmm3\n"
     "movaps  32(%esp), %xmm2\n"
+    ".cfi_restore xmm2\n"
     "movaps  16(%esp), %xmm1\n"
+    ".cfi_restore xmm1\n"
     "movaps  (%esp), %xmm0\n"
+    ".cfi_restore xmm0\n"
     "movl    %ebp, %esp\n"    // Restore ESP
+    ".cfi_def_cfa_register esp\n"
     "subl    $12, %esp\n"
+    ".cfi_adjust_cfa_offset 12\n"
     "popl    %ecx\n"
+    ".cfi_adjust_cfa_offset -4\n"
+    ".cfi_restore ecx\n"
     "popl    %edx\n"
+    ".cfi_adjust_cfa_offset -4\n"
+    ".cfi_restore edx\n"
     "popl    %eax\n"
+    ".cfi_adjust_cfa_offset -4\n"
+    ".cfi_restore eax\n"
     "popl    %ebp\n"
-    "ret\n");
+    ".cfi_adjust_cfa_offset -4\n"
+    ".cfi_restore ebp\n"
+    "ret\n"
+    ".cfi_endproc\n");
 #else
   void X86CompilationCallback2(void);
 
