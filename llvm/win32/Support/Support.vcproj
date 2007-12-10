@@ -409,6 +409,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\Support\StringPool.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\Support\SystemUtils.cpp"
 				>
 			</File>
@@ -564,6 +568,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Support\Streams.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Support\StringPool.h"
 				>
 			</File>
 			<File
