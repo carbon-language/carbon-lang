@@ -70,6 +70,10 @@ namespace llvm {
     /// reference-counted pointer to it. No additional memory is allocated if
     /// the string already exists in the pool.
     inline PooledStringPtr intern(const char *Str);
+    
+    /// empty - Checks whether the pool is empty. Returns true if so.
+    /// 
+    inline bool empty() const { return InternTable.empty(); }
   };
   
   /// PooledStringPtr - A pointer to an interned string. Use operator bool to

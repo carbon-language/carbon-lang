@@ -414,6 +414,10 @@ void Function::clearCollector() {
     if (CollectorNames->empty()) {
       delete CollectorNames;
       CollectorNames = 0;
+      if (CollectorNamePool->empty()) {
+        delete CollectorNamePool;
+        CollectorNamePool = 0;
+      }
     }
   }
 }
