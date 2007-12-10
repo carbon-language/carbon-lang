@@ -17,8 +17,10 @@
        always clear to people why we decided to do this.  Here we compare clang
        and its goals to other open source compiler front-ends that are
        available.  We restrict the discussion to very specific technical points
-       to avoid controversy where possible.  Also, software is infinitely
-       mutable, so we avoid mentioning anything that would be easy to fix.</p>
+       to avoid controversy where possible.  Also, since software is infinitely
+       mutable, so focus on architectural issues that are impractical to fix
+       without a major rewrite, instead of talking about little details that
+       can be fixed with a reasonable amount of effort.</p>
        
     <p>The goal of this list is to describe how differences in goals lead to
        different strengths and weaknesses, not to make some compiler look bad.
@@ -32,7 +34,7 @@
     <h2><a name="gcc">Clang vs GCC (GNU Compiler Collection)</a></h2>
     <!--=====================================================================-->
     
-    <p>Pros of GCC vs clang:</p>
+    <p>Pro's of GCC vs clang:</p>
     
     <ul>
     <li>GCC supports languages that clang does not aim to, such as Java, Ada,
@@ -44,7 +46,7 @@
     <li>GCC does not require a C++ compiler to build it.</li>
     </ul>
     
-    <p>Pros of clang vs GCC:</p>
+    <p>Pro's of clang vs GCC:</p>
     
     <ul>
     <li>The Clang ASTs and design are intended to be easily understandable to
@@ -67,12 +69,13 @@
         reentrant or multi-threadable, etc.  Clang has none of these problems.
         </li>
     <li>For every token, clang tracks information about where it was written and
-        where it was ultimately expanded into if was involved in a macro.
+        where it was ultimately expanded into if it was involved in a macro.
         GCC does not track information about macro instantiations when parsing
-        source code.  This makes it very difficult for static analysis and
-        refactoring tools to work in the presence of (even simple) macros.</li>
+        source code.  This makes it very difficult for source rewriting tools
+        (e.g. for refactoring) to work in the presence of (even simple) 
+        macros.</li>
     <li>Clang does not implicitly simplify code as it parses it like GCC does.
-        This causes many problems for source analysis tools: as one simple
+        Doing so causes many problems for source analysis tools: as one simple
         example, if you write "x-x" in your source code, the GCC AST will
         contain "0", with no mention of 'x'.  This is extremely bad for a
         refactoring tool that wants to rename 'x'.</li>
@@ -101,7 +104,7 @@
     <h2><a name="elsa">Clang vs Elsa (Elkhound-based C++ Parser)</a></h2>
     <!--=====================================================================-->
     
-    <p>Pros of Elsa vs clang:</p>
+    <p>Pro's of Elsa vs clang:</p>
     
     <ul>
     <li>Elsa's support for C++ is far beyond what clang provides.  If you need
@@ -109,12 +112,12 @@
         Elsa is missing important support for templates and other pieces: for 
         example, it is not capable of compiling the GCC STL headers from any
         version newer than GCC 3.4.</li>
-    <li>Elsa's parser and AST is designed to be easily composable by adding
-        grammar rules.  Clang has a very simple and easily extensible parser,
-        but requires you to write C++ code to extend it.</li>
+    <li>Elsa's parser and AST is designed to be easily extensible by adding
+        grammar rules.  Clang has a very simple and easily hackable parser,
+        but requires you to write C++ code to do it.</li>
     </ul>
     
-    <p>Pros of clang vs Elsa:</p>
+    <p>Pro's of clang vs Elsa:</p>
     
     <ul>
     <li>The Elsa community is extremely small and major development work seems
@@ -128,7 +131,7 @@
         AST.</li>
     <li>Elsa does not have an integrated preprocessor, which makes it extremely
         difficult to accurately map from a source location in the AST back to
-        its original position before preprocessing.  Likewise, it does not keep
+        its original position before preprocessing.  Like GCC, it does not keep
         track of macro expansions.</li>
     <li>Elsa is slower and uses more memory than GCC, which requires far more
         space and time than clang.</li>
@@ -144,14 +147,14 @@
     <h2><a name="pcc">Clang vs PCC (Portable C Compiler)</a></h2>
     <!--=====================================================================-->
     
-    <p>Pros of PCC vs clang:</p>
+    <p>Pro's of PCC vs clang:</p>
     
     <ul>
     <li>The PCC source base is very small and builds quickly with just a C
         compiler.</li>
     </ul>
     
-    <p>Pros of clang vs PCC:</p>
+    <p>Pro's of clang vs PCC:</p>
     
     <ul>
     <li>PCC dates from the 1970's and has been dormant for most of that time.
@@ -160,8 +163,8 @@
         C++.</li>
     <li>PCC's code generation is very limited compared to LLVM, it produces very
         inefficient code and does not support many important targets.</li>
-    <li>PCC's does not have an integrated preprocessor, so it is extremely
-        difficult to use it for source analysis tools.</li>
+    <li>Like Elsa, PCC's does not have an integrated preprocessor, making it
+        extremely difficult to use it for source analysis tools.</li>
   </div>
 </body>
 </html>

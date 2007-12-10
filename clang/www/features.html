@@ -71,7 +71,7 @@ Currently, the LLVM front-end is divided into the following libraries:
 As an example of the power of this library based design....  If you wanted to build a preprocessor, you would take the Basic and Lexer libraries. If you want an indexer, you would take the previous two and add the Parser library and some actions for indexing. If you want a refactoring, static analysis, or source-to-source compiler tool, you would then add the AST building and semantic analyzer libraries.
 In the end, LLVM's library based design will provide developers with many more possibilities.
 
-<h2>Speed and Memory</h2>
+<h2><a name="performance">Speed and Memory</a></h2>
 Another major focus of LLVM's frontend is speed (for all libraries).  Even at this early stage, the clang front-end is quicker than gcc and uses less memory.<br>
 <div class="img_container">
 	<div class="img_title">Memory:</div>
