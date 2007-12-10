@@ -245,10 +245,12 @@ public:
 
   // Indexing.
   reference operator[](unsigned Idx) {
+    assert (Idx < Size && "Out-of-bounds Bit access.");
     return reference(*this, Idx);
   }
 
   bool operator[](unsigned Idx) const {
+    assert (Idx < Size && "Out-of-bounds Bit access.");   
     BitWord Mask = 1L << (Idx % BITWORD_SIZE);
     return (Bits[Idx / BITWORD_SIZE] & Mask) != 0;
   }
@@ -375,6 +377,8 @@ private:
     // Destroy the old bits.
     delete[] Bits;
     Bits = NewBits;
+    
+    clear_unused_bits();
   }
 
   void init_words(BitWord *B, unsigned NumWords, bool t) {
