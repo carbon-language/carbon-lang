@@ -25,7 +25,11 @@
     <p>The goal of this list is to describe how differences in goals lead to
        different strengths and weaknesses, not to make some compiler look bad.
        This will hopefully help you to evaluate whether using clang is a good
-       idea for your specific goals.</p>
+       idea for your personal goals.  Because we don't know specifically what
+       <em>you</em> want to do, we describe the features of these compilers in
+       terms of <em>our</em> goals: if you are only interested in static
+       analysis, you may not care that something lacks codegen support, for
+       example.</p>
        
     <p>Please email cfe-dev if you think we should add another compiler to this
        list or if you think some characterization is unfair here.</p>
@@ -130,7 +134,10 @@
     <li>The Elsa community is extremely small and major development work seems
         to have ceased in 2005, though it continues to be used by other projects
         (e.g. Oink).  Clang has a vibrant community including developers that
-        are paid to work on it full time.</li>
+        are paid to work on it full time.  In practice this means that you can
+        file bugs against Clang and they will often be fixed for you.  If you
+        use Elsa, you are (mostly) on your own for bug fixes and feature
+        enhancements.</li>
     <li>Elsa is not built as a stack of reusable libraries like clang is.  It is
         very difficult to use part of elsa without the whole front-end.  For
         example, you cannot use Elsa to parse C/ObjC code without building an
