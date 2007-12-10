@@ -12,8 +12,6 @@
 
 #include "clang/AST/Builtins.h"
 
-namespace clang {
-
 /// X86 builtins
 namespace X86 {
     enum {
@@ -32,8 +30,6 @@ namespace PPC {
 #include "PPCBuiltins.def"
         LastTSBuiltin
     };
-}
-
 }
 
 #endif
