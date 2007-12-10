@@ -39,6 +39,9 @@ namespace {
     static char ID; // Pass identification, replacement for typeid
     StrongPHIElimination() : MachineFunctionPass((intptr_t)&ID) {}
 
+    DenseMap<MachineBasicBlock*,
+             SmallVector<std::pair<unsigned, unsigned>, 2> > Waiting;
+
     bool runOnMachineFunction(MachineFunction &Fn);
     
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -263,6 +266,8 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   while (P->getOpcode() == TargetInstrInfo::PHI) {
     LiveVariables::VarInfo& PHIInfo = LV.getVarInfo(P->getOperand(0).getReg());
 
+    unsigned DestReg = P->getOperand(0).getReg();
+
     // Hold the names that are currently in the candidate set.
     std::set<unsigned> PHIUnion;
     std::set<MachineBasicBlock*> UnionedBlocks;
@@ -271,17 +276,17 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
       unsigned SrcReg = P->getOperand(i-1).getReg();
       LiveVariables::VarInfo& SrcInfo = LV.getVarInfo(SrcReg);
     
-      if (isLiveIn(SrcInfo, P->getParent())) {
+      // Check for trivial interferences
+      if (isLiveIn(SrcInfo, P->getParent()) ||
+          isLiveOut(PHIInfo, SrcInfo.DefInst->getParent()) ||
+          ( PHIInfo.DefInst->getOpcode() == TargetInstrInfo::PHI &&
+            isLiveIn(PHIInfo, SrcInfo.DefInst->getParent()) ) ||
+          ProcessedNames.count(SrcReg) ||
+          UnionedBlocks.count(SrcInfo.DefInst->getParent())) {
+        
         // add a copy from a_i to p in Waiting[From[a_i]]
-      } else if (isLiveOut(PHIInfo, SrcInfo.DefInst->getParent())) {
-        // add a copy to Waiting[From[a_i]]
-      } else if (PHIInfo.DefInst->getOpcode() == TargetInstrInfo::PHI &&
-                 isLiveIn(PHIInfo, SrcInfo.DefInst->getParent())) {
-        // add a copy to Waiting[From[a_i]]
-      } else if (ProcessedNames.count(SrcReg)) {
-        // add a copy to Waiting[From[a_i]]
-      } else if (UnionedBlocks.count(SrcInfo.DefInst->getParent())) {
-        // add a copy to Waiting[From[a_i]]
+        MachineBasicBlock* From = P->getOperand(i).getMachineBasicBlock();
+        Waiting[From].push_back(std::make_pair(SrcReg, DestReg));
       } else {
         PHIUnion.insert(SrcReg);
         UnionedBlocks.insert(SrcInfo.DefInst->getParent());
@@ -291,7 +296,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     std::vector<StrongPHIElimination::DomForestNode*> DF = 
                                                      computeDomForest(PHIUnion);
     
-    // DO STUFF HERE
+    // Walk DomForest to resolve interferences
     
     ProcessedNames.insert(PHIUnion.begin(), PHIUnion.end());
     ++P;
