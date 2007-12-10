@@ -73,7 +73,7 @@ struct DeclBitVector_Types {
   public:
     
     void resetValues(AnalysisDataTy& AD) {
-      DeclBV.resize(AD.getNumDecls()+1); 
+      DeclBV.resize(AD.getNumDecls()); 
       DeclBV.reset();
     }
     
@@ -172,7 +172,7 @@ struct ExprDeclBitVector_Types {
     
     void resetValues(AnalysisDataTy& AD) {
       ParentRef(*this).resetValues(AD);
-      ExprBV.resize(AD.getNumExprs()+1);
+      ExprBV.resize(AD.getNumExprs());
       ExprBV.reset();
     }
     

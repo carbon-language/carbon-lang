@@ -969,8 +969,10 @@ static BlkExprMapTy* PopulateBlkExprMap(CFG& cfg) {
   
   for (CFG::iterator I=cfg.begin(), E=cfg.end(); I != E; ++I)
     for (CFGBlock::iterator BI=I->begin(), EI=I->end(); BI != EI; ++BI)
-      if (const Expr* E = dyn_cast<Expr>(*BI))
-        (*M)[E] = M->size();
+      if (const Expr* E = dyn_cast<Expr>(*BI)) {
+        unsigned x = M->size();
+        (*M)[E] = x;
+      }
   
   return M;
 }
