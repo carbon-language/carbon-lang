@@ -24,6 +24,3 @@ global bool setlt (int* getelementptr (%Ty* %B, long 0, uint 0),
                    int* getelementptr (%Ty* %B, long 0, uint 1))            ; true
 ;global bool setne (long* %A, long* cast (%Ty* %B to long*))                 ; true
 
-global bool seteq ({ short }* cast (int 1 to { short }*), { short }* null)
-global  bool setlt ({ short }* cast (int 1 to { short }*), { short }* cast (int 2 to { short }*))
-

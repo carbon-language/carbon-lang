@@ -985,20 +985,19 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
 
     case Instruction::UIToFP:
     case Instruction::SIToFP:
-    case Instruction::IntToPtr:
     case Instruction::BitCast:
     case Instruction::ZExt:
     case Instruction::SExt:
-    case Instruction::PtrToInt:
       // If the cast is not actually changing bits, and the second operand is a
       // null pointer, do the comparison with the pre-casted value.
       if (V2->isNullValue() &&
           (isa<PointerType>(CE1->getType()) || CE1->getType()->isInteger())) {
-        bool sgnd = CE1->getOpcode() == Instruction::ZExt ? false :
-          (CE1->getOpcode() == Instruction::SExt ? true :
-           (CE1->getOpcode() == Instruction::PtrToInt ? false : isSigned));
-        return evaluateICmpRelation(
-            CE1Op0, Constant::getNullValue(CE1Op0->getType()), sgnd);
+        bool sgnd = isSigned;
+        if (CE1->getOpcode() == Instruction::ZExt) isSigned = false;
+        if (CE1->getOpcode() == Instruction::SExt) isSigned = true;
+        return evaluateICmpRelation(CE1Op0,
+                                    Constant::getNullValue(CE1Op0->getType()), 
+                                    sgnd);
       }
 
       // If the dest type is a pointer type, and the RHS is a constantexpr cast
@@ -1009,11 +1008,11 @@ static ICmpInst::Predicate evaluateICmpRelation(const Constant *V1,
         if (CE2->isCast() && isa<PointerType>(CE1->getType()) &&
             CE1->getOperand(0)->getType() == CE2->getOperand(0)->getType() &&
             CE1->getOperand(0)->getType()->isInteger()) {
-          bool sgnd = CE1->getOpcode() == Instruction::ZExt ? false :
-            (CE1->getOpcode() == Instruction::SExt ? true :
-             (CE1->getOpcode() == Instruction::PtrToInt ? false : isSigned));
+          bool sgnd = isSigned;
+          if (CE1->getOpcode() == Instruction::ZExt) isSigned = false;
+          if (CE1->getOpcode() == Instruction::SExt) isSigned = true;
           return evaluateICmpRelation(CE1->getOperand(0), CE2->getOperand(0),
-              sgnd);
+                                      sgnd);
         }
       break;
 

@@ -299,7 +299,13 @@ ConstantFoldMappedInstruction(const Instruction *I) {
     else
       return 0;  // All operands not constant!
 
-  return ConstantFoldInstOperands(I, &Ops[0], Ops.size(), TD);
+  
+  if (const CmpInst *CI = dyn_cast<CmpInst>(I))
+    return ConstantFoldCompareInstOperands(CI->getPredicate(),
+                                           &Ops[0], Ops.size(), TD);
+  else
+    return ConstantFoldInstOperands(I->getOpcode(), I->getType(),
+                                    &Ops[0], Ops.size(), TD);
 }
 
 /// CloneAndPruneFunctionInto - This works exactly like CloneFunctionInto,

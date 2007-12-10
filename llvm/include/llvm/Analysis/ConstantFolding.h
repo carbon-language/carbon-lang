@@ -21,6 +21,7 @@ namespace llvm {
   class Instruction;
   class TargetData;
   class Function;
+  class Type;
 
 /// ConstantFoldInstruction - Attempt to constant fold the specified
 /// instruction.  If successful, the constant result is returned, if not, null
@@ -35,12 +36,17 @@ Constant *ConstantFoldInstruction(Instruction *I, const TargetData *TD = 0);
 /// fold instructions like loads and stores, which have no constant expression 
 /// form.
 ///
-Constant *ConstantFoldInstOperands(
-  const Instruction *I, ///< The model instruction
-  Constant** Ops,       ///< The array of constant operands to use.
-  unsigned NumOps,      ///< The number of operands provided.
-  const TargetData *TD = 0 ///< Optional target information.
-);
+Constant *ConstantFoldInstOperands(unsigned Opcode, const Type *DestTy,
+                                   Constant*const * Ops, unsigned NumOps,
+                                   const TargetData *TD = 0);
+
+/// ConstantFoldCompareInstOperands - Attempt to constant fold a compare
+/// instruction (icmp/fcmp) with the specified operands.  If it fails, it
+/// returns a constant expression of the specified operands.
+///
+Constant *ConstantFoldCompareInstOperands(unsigned Predicate,
+                                          Constant*const * Ops, unsigned NumOps,
+                                          const TargetData *TD = 0);
 
 
 /// ConstantFoldLoadThroughGEPConstantExpr - Given a constant and a
@@ -55,7 +61,7 @@ bool canConstantFoldCallTo(Function *F);
 /// ConstantFoldCall - Attempt to constant fold a call to the specified function
 /// with the specified arguments, returning null if unsuccessful.
 Constant *
-ConstantFoldCall(Function *F, Constant** Operands, unsigned NumOperands);
+ConstantFoldCall(Function *F, Constant* const* Operands, unsigned NumOperands);
 }
 
 #endif
