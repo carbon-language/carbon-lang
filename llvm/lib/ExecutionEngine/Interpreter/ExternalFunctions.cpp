@@ -246,14 +246,14 @@ GenericValue lle_X_drand48(FunctionType *FT, const vector<GenericValue> &Args) {
 GenericValue lle_X_lrand48(FunctionType *FT, const vector<GenericValue> &Args) {
   assert(Args.size() == 0);
   GenericValue GV;
-  GV.Int32Val = lrand48();
+  GV.IntVal = APInt(32, lrand48());
   return GV;
 }
 
 // void srand48(long)
 GenericValue lle_X_srand48(FunctionType *FT, const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
-  srand48(Args[0].Int32Val);
+  srand48(Args[0].IntVal.getZExtValue());
   return GenericValue();
 }
 
