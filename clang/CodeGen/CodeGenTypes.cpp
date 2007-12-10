@@ -459,7 +459,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
     } else {
       ExtraBits = 0;
       const llvm::Type *Ty = CGT.ConvertType(FD->getType());
-      addLLVMField(Ty, CGT.getTargetData().getTypeSizeInBits(Ty), FD, 0, 0);
+      addLLVMField(Ty, CGT.getTargetData().getABITypeSizeInBits(Ty), FD, 0, 0);
     }
   }
   STy = llvm::StructType::get(LLVMFields);

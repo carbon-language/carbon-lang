@@ -90,3 +90,16 @@ void f8()
 }
 
 
+/* _Bool types */
+
+struct _w
+{
+  short a,b;
+  short c,d;
+  short e,f;
+  short g;
+
+  unsigned int h,i;
+
+  _Bool j,k;
+} ws;
