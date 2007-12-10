@@ -137,41 +137,7 @@ Value::~Value()
     if (BinaryOperator *BO = dyn_cast<BinaryOperator>(this))
       BinaryOperator::destroyThis(BO);
     else if (CallInst *CI = dyn_cast<CallInst>(this))
-    {
-      if(IntrinsicInst* II = dyn_cast<IntrinsicInst>(this))
-      {
-        if(DbgInfoIntrinsic* DII = dyn_cast<DbgInfoIntrinsic>(this))
-        {
-          if(DbgDeclareInst* DDI = dyn_cast<DbgDeclareInst>(this))
-            DbgDeclareInst::destroyThis(DDI);
-          else if(DbgFuncStartInst* DFSI = dyn_cast<DbgFuncStartInst>(this))
-            DbgFuncStartInst::destroyThis(DFSI);
-          else if(DbgRegionEndInst* DREI = dyn_cast<DbgRegionEndInst>(this))
-            DbgRegionEndInst::destroyThis(DREI);
-          else if(DbgRegionStartInst* DRSI = dyn_cast<DbgRegionStartInst>(this))
-            DbgRegionStartInst::destroyThis(DRSI);
-          else if(DbgStopPointInst* DSPI = dyn_cast<DbgStopPointInst>(this))
-            DbgStopPointInst::destroyThis(DSPI);
-          else
-            assert(0 && "Unknown DbgInfo-inherited class in ~Value.");
-        }
-        else if(MemIntrinsic* MI = dyn_cast<MemIntrinsic>(this))
-        {
-          if(MemCpyInst* MCI = dyn_cast<MemCpyInst>(this))
-            MemCpyInst::destroyThis(MCI);
-          else if(MemMoveInst* MMI = dyn_cast<MemMoveInst>(this))
-            MemMoveInst::destroyThis(MMI);
-          else if(MemSetInst* MSI = dyn_cast<MemSetInst>(this))
-            MemSetInst::destroyThis(MSI);
-          else
-            assert(0 && "Unknown MemIntrinsic-inherited class in ~Value.");
-        }
-        else
-          assert(0 && "Unknown IntrinsicInst-inherited class in ~Value.");
-      }
-      else
-        assert(0 && "Unknown CallInst-inherited class in ~Value.");
-    }
+      CallInst::destroyThis(CI);
     else if (CmpInst *CI = dyn_cast<CmpInst>(this))
     {
       if (FCmpInst *FCI = dyn_cast<FCmpInst>(this))
@@ -222,32 +188,30 @@ Value::~Value()
           MallocInst::destroyThis(MI);
         else
           assert(0 && "Unknown AllocationInst-inherited class in ~Value.");
-      }
-      else if(CastInst* CI = dyn_cast<CastInst>(this))
-      {
-        if(BitCastInst* BCI = dyn_cast<BitCastInst>(this))
+      } else if(CastInst* CI = dyn_cast<CastInst>(this)) {
+        if(BitCastInst* BCI = dyn_cast<BitCastInst>(CI))
           BitCastInst::destroyThis(BCI);
-        else if(FPExtInst* FPEI = dyn_cast<FPExtInst>(this))
+        else if(FPExtInst* FPEI = dyn_cast<FPExtInst>(CI))
           FPExtInst::destroyThis(FPEI);
-        else if(FPToSIInst* FPSII = dyn_cast<FPToSIInst>(this))
+        else if(FPToSIInst* FPSII = dyn_cast<FPToSIInst>(CI))
           FPToSIInst::destroyThis(FPSII);
-        else if(FPToUIInst* FPUII = dyn_cast<FPToUIInst>(this))
+        else if(FPToUIInst* FPUII = dyn_cast<FPToUIInst>(CI))
           FPToUIInst::destroyThis(FPUII);
-        else if(FPTruncInst* FPTI = dyn_cast<FPTruncInst>(this))
+        else if(FPTruncInst* FPTI = dyn_cast<FPTruncInst>(CI))
           FPTruncInst::destroyThis(FPTI);
-        else if(IntToPtrInst* I2PI = dyn_cast<IntToPtrInst>(this))
+        else if(IntToPtrInst* I2PI = dyn_cast<IntToPtrInst>(CI))
           IntToPtrInst::destroyThis(I2PI);
-        else if(PtrToIntInst* P2II = dyn_cast<PtrToIntInst>(this))
+        else if(PtrToIntInst* P2II = dyn_cast<PtrToIntInst>(CI))
           PtrToIntInst::destroyThis(P2II);
-        else if(SExtInst* SEI = dyn_cast<SExtInst>(this))
+        else if(SExtInst* SEI = dyn_cast<SExtInst>(CI))
           SExtInst::destroyThis(SEI);
-        else if(SIToFPInst* SIFPI = dyn_cast<SIToFPInst>(this))
+        else if(SIToFPInst* SIFPI = dyn_cast<SIToFPInst>(CI))
           SIToFPInst::destroyThis(SIFPI);
-        else if(TruncInst* TI = dyn_cast<TruncInst>(this))
+        else if(TruncInst* TI = dyn_cast<TruncInst>(CI))
           TruncInst::destroyThis(TI);
-        else if(UIToFPInst* UIFPI = dyn_cast<UIToFPInst>(this))
+        else if(UIToFPInst* UIFPI = dyn_cast<UIToFPInst>(CI))
           UIToFPInst::destroyThis(UIFPI);
-        else if(ZExtInst* ZEI = dyn_cast<ZExtInst>(this))
+        else if(ZExtInst* ZEI = dyn_cast<ZExtInst>(CI))
           ZExtInst::destroyThis(ZEI);
         else
           assert(0 && "Unknown CastInst-inherited class in ~Value.");
