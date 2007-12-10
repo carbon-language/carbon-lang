@@ -775,6 +775,11 @@ static bool IsBetterFallthrough(MachineBasicBlock *MBB1,
   // optimize branches that branch to either a return block or an assert block
   // into a fallthrough to the return.
   if (MBB1->empty() || MBB2->empty()) return false;
+ 
+  // If there is a clear successor ordering we make sure that one block
+  // will fall through to the next
+  if (MBB1->isSuccessor(MBB2)) return true;
+  if (MBB2->isSuccessor(MBB1)) return false;
 
   MachineInstr *MBB1I = --MBB1->end();
   MachineInstr *MBB2I = --MBB2->end();

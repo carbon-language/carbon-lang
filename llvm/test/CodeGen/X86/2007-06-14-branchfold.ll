@@ -1,7 +1,5 @@
-; RUN: llvm-as < %s | llc -mcpu=i686 | grep jmp | count 1
+; RUN: llvm-as < %s | llc -mcpu=i686 | not grep jmp
 ; check that branch folding understands FP_REG_KILL is not a branch
-; the remaining jmp can be removed if we take advantage of knowing
-; abort does not return
 
 ; ModuleID = 'g.bc'
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64"
