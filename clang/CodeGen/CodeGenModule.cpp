@@ -419,12 +419,21 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
         // FIXME: What about wchar_t??
         if (AT->getElementType()->isCharType()) {
           const char *StrData = String->getStrData();
-          unsigned Len = String->getByteLength();
-          llvm::Constant *C =
-            llvm::ConstantArray::get(std::string(StrData, StrData + Len));
-          // FIXME: This should return a string of the proper type: this
-          // mishandles things like 'char x[4] = "1234567";
-          return C;
+          std::string Str(StrData, StrData + String->getByteLength());
+          // Null terminate the string before potentially truncating it.
+          Str.push_back(0);
+
+          // FIXME: The size of the cast is not always specified yet, fix this
+          // in sema.
+          if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
+            uint64_t RealLen = CAT->getSize().getZExtValue();
+            // String or grow the initializer to the required size.
+            if (RealLen != Str.size())
+              Str.resize(RealLen);
+          }
+          
+          
+          return llvm::ConstantArray::get(Str, false);
         }
       }
     
