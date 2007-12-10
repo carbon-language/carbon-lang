@@ -400,6 +400,9 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
   }
 
   FieldDecl *Field = E->getMemberDecl();
+
+  assert (!Field->isBitField() && "Bit-field access is not yet implmented");
+
   unsigned idx = CGM.getTypes().getLLVMFieldNo(Field);
   llvm::Value *Idxs[2] = { llvm::Constant::getNullValue(llvm::Type::Int32Ty), 
                            llvm::ConstantInt::get(llvm::Type::Int32Ty, idx) };
