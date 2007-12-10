@@ -391,6 +391,8 @@ public:
   llvm::Value *EmitX86BuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   llvm::Value *EmitPPCBuiltinExpr(unsigned BuiltinID, const CallExpr *E);
   
+  llvm::Value *EmitShuffleVector(llvm::Value* V1, llvm::Value *V2, ...);
+                                 
   llvm::Value *EmitObjCStringLiteral(const ObjCStringLiteral *E);
 
   //===--------------------------------------------------------------------===//

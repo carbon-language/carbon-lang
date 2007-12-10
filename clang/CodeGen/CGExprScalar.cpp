@@ -1057,3 +1057,33 @@ Value *CodeGenFunction::EmitComplexToScalarConversion(ComplexPairTy Src,
   return ScalarExprEmitter(*this).EmitComplexToScalarConversion(Src, SrcTy,
                                                                 DstTy);
 }
+
+Value *CodeGenFunction::EmitShuffleVector(Value* V1, Value *V2, ...) {
+  assert(V1->getType() == V2->getType() &&
+         "Vector operands must be of the same type");
+  
+  unsigned NumElements = 
+    cast<llvm::VectorType>(V1->getType())->getNumElements();
+  
+  va_list va;
+  va_start(va, V2);
+  
+  llvm::SmallVector<llvm::Constant*, 16> Args;
+  
+  for (unsigned i = 0; i < NumElements; i++) {
+    int n = va_arg(va, int);
+    
+    assert(n >= 0 && n < (int)NumElements * 2 && 
+           "Vector shuffle index out of bounds!");
+    
+    Args.push_back(llvm::ConstantInt::get(llvm::Type::Int32Ty, n));
+  }
+  
+  const char *Name = va_arg(va, const char *);
+  va_end(va);
+  
+  llvm::Constant *Mask = llvm::ConstantVector::get(&Args[0], NumElements);
+  
+  return Builder.CreateShuffleVector(V1, V2, Mask, Name);
+}
+
