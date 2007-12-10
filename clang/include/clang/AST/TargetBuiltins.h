@@ -1,13 +1,18 @@
-//===--- Targets.cpp - Implement -arch option and targets -----------------===//
+//===--- TargetBuiltins.h - Target specific builtin IDs -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Chris Lattner and is distributed under
+// This file was developed by Anders Carlsson and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_AST_TARGET_BUILTINS_H
+#define LLVM_CLANG_AST_TARGET_BUILTINS_H
+
 #include "clang/AST/Builtins.h"
+
+namespace clang {
 
 /// X86 builtins
 namespace X86 {
@@ -28,3 +33,7 @@ namespace PPC {
         LastTSBuiltin
     };
 }
+
+}
+
+#endif
