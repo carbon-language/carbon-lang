@@ -619,6 +619,19 @@ void LLVMSetFunctionCallConv(LLVMValueRef Fn, unsigned CC) {
   return unwrap<Function>(Fn)->setCallingConv(CC);
 }
 
+const char *LLVMGetCollector(LLVMValueRef Fn) {
+  Function *F = unwrap<Function>(Fn);
+  return F->hasCollector()? F->getCollector() : 0;
+}
+
+void LLVMSetCollector(LLVMValueRef Fn, const char *Coll) {
+  Function *F = unwrap<Function>(Fn);
+  if (Coll)
+    F->setCollector(Coll);
+  else
+    F->clearCollector();
+}
+
 /*--.. Operations on basic blocks ..........................................--*/
 
 LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef Bb) {

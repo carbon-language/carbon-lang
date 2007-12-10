@@ -282,6 +282,8 @@ external is_intrinsic : llvalue -> bool = "llvm_is_intrinsic"
 external function_call_conv : llvalue -> int = "llvm_function_call_conv"
 external set_function_call_conv : int -> llvalue -> unit
                                 = "llvm_set_function_call_conv"
+external collector : llvalue -> string option = "llvm_collector"
+external set_collector : string option -> llvalue -> unit = "llvm_set_collector"
 
 (* TODO: param attrs *)
 

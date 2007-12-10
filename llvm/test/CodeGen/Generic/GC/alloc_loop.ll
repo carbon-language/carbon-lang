@@ -7,7 +7,7 @@ declare void @llvm_gc_initialize(i32)
 declare void @llvm.gcroot(i8**, i8*)
 declare void @llvm.gcwrite(i8*, i8*, i8**)
 
-define i32 @main() {
+define i32 @main() gc "shadow-stack" {
 entry:
 	%A = alloca i8*
 	%B = alloca i8**

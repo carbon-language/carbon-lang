@@ -17,8 +17,10 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/StringPool.h"
 #include "SymbolTableListTraitsImpl.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
@@ -297,6 +299,9 @@ Function::~Function() {
   // Drop our reference to the parameter attributes, if any.
   if (ParamAttrs)
     ParamAttrs->dropRef();
+  
+  // Remove the function from the on-the-side collector table.
+  clearCollector();
 }
 
 void Function::BuildLazyArguments() const {
@@ -377,6 +382,40 @@ void Function::dropAllReferences() {
   for (iterator I = begin(), E = end(); I != E; ++I)
     I->dropAllReferences();
   BasicBlocks.clear();    // Delete all basic blocks...
+}
+
+// Maintain the collector name for each function in an on-the-side table. This
+// saves allocating an additional word in Function for programs which do not use
+// GC (i.e., most programs) at the cost of increased overhead for clients which
+// do use GC.
+static DenseMap<const Function*,PooledStringPtr> *CollectorNames;
+static StringPool *CollectorNamePool;
+
+bool Function::hasCollector() const {
+  return CollectorNames && CollectorNames->count(this);
+}
+
+const char *Function::getCollector() const {
+  assert(hasCollector() && "Function has no collector");
+  return *(*CollectorNames)[this];
+}
+
+void Function::setCollector(const char *Str) {
+  if (!CollectorNamePool)
+    CollectorNamePool = new StringPool();
+  if (!CollectorNames)
+    CollectorNames = new DenseMap<const Function*,PooledStringPtr>();
+  (*CollectorNames)[this] = CollectorNamePool->intern(Str);
+}
+
+void Function::clearCollector() {
+  if (CollectorNames) {
+    CollectorNames->erase(this);
+    if (CollectorNames->empty()) {
+      delete CollectorNames;
+      CollectorNames = 0;
+    }
+  }
 }
 
 /// getIntrinsicID - This method returns the ID number of the specified

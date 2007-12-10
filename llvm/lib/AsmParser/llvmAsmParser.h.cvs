@@ -181,9 +181,10 @@
      NEST = 397,
      READNONE = 398,
      READONLY = 399,
-     DEFAULT = 400,
-     HIDDEN = 401,
-     PROTECTED = 402
+     GC = 400,
+     DEFAULT = 401,
+     HIDDEN = 402,
+     PROTECTED = 403
    };
 #endif
 /* Tokens.  */
@@ -329,16 +330,17 @@
 #define NEST 397
 #define READNONE 398
 #define READONLY 399
-#define DEFAULT 400
-#define HIDDEN 401
-#define PROTECTED 402
+#define GC 400
+#define DEFAULT 401
+#define HIDDEN 402
+#define PROTECTED 403
 
 
 
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 945 "/home/asl/proj/llvm/src/lib/AsmParser/llvmAsmParser.y"
+#line 945 "/Users/malichus/Source/llvm/src/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   llvm::Module                           *ModuleVal;
   llvm::Function                         *FunctionVal;
@@ -385,8 +387,8 @@ typedef union YYSTYPE
   llvm::ICmpInst::Predicate         IPredicate;
   llvm::FCmpInst::Predicate         FPredicate;
 }
-/* Line 1489 of yacc.c.  */
-#line 390 "llvmAsmParser.tab.h"
+/* Line 1529 of yacc.c.  */
+#line 392 "llvmAsmParser.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

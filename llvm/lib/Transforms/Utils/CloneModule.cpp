@@ -67,6 +67,8 @@ Module *llvm::CloneModule(const Module *M,
                    GlobalValue::ExternalLinkage, I->getName(), New);
     NF->setCallingConv(I->getCallingConv());
     NF->setParamAttrs(I->getParamAttrs());
+    if (I->hasCollector())
+      NF->setCollector(I->getCollector());
     ValueMap[I]= NF;
   }
 

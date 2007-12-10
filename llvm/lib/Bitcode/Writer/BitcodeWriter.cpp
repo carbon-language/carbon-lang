@@ -297,9 +297,10 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     WriteStringRecord(bitc::MODULE_CODE_ASM, M->getModuleInlineAsm(),
                       0/*TODO*/, Stream);
 
-  // Emit information about sections, computing how many there are.  Also
-  // compute the maximum alignment value.
+  // Emit information about sections and collectors, computing how many there
+  // are.  Also compute the maximum alignment value.
   std::map<std::string, unsigned> SectionMap;
+  std::map<std::string, unsigned> CollectorMap;
   unsigned MaxAlignment = 0;
   unsigned MaxGlobalType = 0;
   for (Module::const_global_iterator GV = M->global_begin(),E = M->global_end();
@@ -317,13 +318,24 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
   }
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F) {
     MaxAlignment = std::max(MaxAlignment, F->getAlignment());
-    if (!F->hasSection()) continue;
-    // Give section names unique ID's.
-    unsigned &Entry = SectionMap[F->getSection()];
-    if (Entry != 0) continue;
-    WriteStringRecord(bitc::MODULE_CODE_SECTIONNAME, F->getSection(),
-                      0/*TODO*/, Stream);
-    Entry = SectionMap.size();
+    if (F->hasSection()) {
+      // Give section names unique ID's.
+      unsigned &Entry = SectionMap[F->getSection()];
+      if (!Entry) {
+        WriteStringRecord(bitc::MODULE_CODE_SECTIONNAME, F->getSection(),
+                          0/*TODO*/, Stream);
+        Entry = SectionMap.size();
+      }
+    }
+    if (F->hasCollector()) {
+      // Same for collector names.
+      unsigned &Entry = CollectorMap[F->getCollector()];
+      if (!Entry) {
+        WriteStringRecord(bitc::MODULE_CODE_COLLECTORNAME, F->getCollector(),
+                          0/*TODO*/, Stream);
+        Entry = CollectorMap.size();
+      }
+    }
   }
   
   // Emit abbrev for globals, now that we know # sections and max alignment.
@@ -383,7 +395,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
   // Emit the function proto information.
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F) {
     // FUNCTION:  [type, callingconv, isproto, paramattr,
-    //             linkage, alignment, section, visibility]
+    //             linkage, alignment, section, visibility, collector]
     Vals.push_back(VE.getTypeID(F->getType()));
     Vals.push_back(F->getCallingConv());
     Vals.push_back(F->isDeclaration());
@@ -392,6 +404,7 @@ static void WriteModuleInfo(const Module *M, const ValueEnumerator &VE,
     Vals.push_back(Log2_32(F->getAlignment())+1);
     Vals.push_back(F->hasSection() ? SectionMap[F->getSection()] : 0);
     Vals.push_back(getEncodedVisibility(F));
+    Vals.push_back(F->hasCollector() ? CollectorMap[F->getCollector()] : 0);
     
     unsigned AbbrevToUse = 0;
     Stream.EmitRecord(bitc::MODULE_CODE_FUNCTION, Vals, AbbrevToUse);

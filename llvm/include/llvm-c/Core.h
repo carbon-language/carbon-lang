@@ -339,6 +339,8 @@ LLVMValueRef LLVMGetParam(LLVMValueRef Fn, unsigned Index);
 unsigned LLVMGetIntrinsicID(LLVMValueRef Fn);
 unsigned LLVMGetFunctionCallConv(LLVMValueRef Fn);
 void LLVMSetFunctionCallConv(LLVMValueRef Fn, unsigned CC);
+const char *LLVMGetCollector(LLVMValueRef Fn);
+void LLVMSetCollector(LLVMValueRef Fn, const char *Coll);
 
 /* Operations on basic blocks */
 LLVMValueRef LLVMBasicBlockAsValue(LLVMBasicBlockRef Bb);

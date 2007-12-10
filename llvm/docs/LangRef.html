@@ -26,6 +26,7 @@
       <li><a href="#functionstructure">Functions</a></li>
       <li><a href="#aliasstructure">Aliases</a>
       <li><a href="#paramattrs">Parameter Attributes</a></li>
+      <li><a href="#gc">Garbage Collector Names</a></li>
       <li><a href="#moduleasm">Module-Level Inline Assembly</a></li>
       <li><a href="#datalayout">Data Layout</a></li>
     </ol>
@@ -702,15 +703,16 @@ an optional <a href="#linkage">linkage type</a>, an optional
 <a href="#paramattrs">parameter attribute</a> for the return type, a function 
 name, a (possibly empty) argument list (each with optional 
 <a href="#paramattrs">parameter attributes</a>), an optional section, an
-optional alignment, an opening curly brace, a list of basic blocks, and a
-closing curly brace.  
+optional alignment, an optional <a href="gc">garbage collector name</a>, an
+opening curly brace, a list of basic blocks, and a closing curly brace.
 
 LLVM function declarations consist of the "<tt>declare</tt>" keyword, an
 optional <a href="#linkage">linkage type</a>, an optional
 <a href="#visibility">visibility style</a>, an optional 
 <a href="#callingconv">calling convention</a>, a return type, an optional
 <a href="#paramattrs">parameter attribute</a> for the return type, a function 
-name, a possibly empty list of arguments, and an optional alignment.</p>
+name, a possibly empty list of arguments, an optional alignment, and an optional
+<a href="gc">garbage collector name</a>.</p>
 
 <p>A function definition contains a list of basic blocks, forming the CFG for
 the function.  Each basic block may optionally start with a label (giving the
@@ -822,6 +824,23 @@ declare i32 @atoi(i8*) nounwind readonly
     or global variables.
   </dl>
 
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="gc">Garbage Collector Names</a>
+</div>
+
+<div class="doc_text">
+<p>Each function may specify a garbage collector name, which is simply a
+string.</p>
+
+<div class="doc_code"><pre
+>define void @f() gc "name" { ...</pre></div>
+
+<p>The compiler declares the supported values of <i>name</i>. Specifying a
+collector which will cause the compiler to alter its output in order to support
+the named garbage collection algorithm.</p>
 </div>
 
 <!-- ======================================================================= -->

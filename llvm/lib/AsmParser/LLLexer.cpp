@@ -468,6 +468,7 @@ int LLLexer::LexIdentifier() {
   KEYWORD("module", MODULE);
   KEYWORD("asm", ASM_TOK);
   KEYWORD("sideeffect", SIDEEFFECT);
+  KEYWORD("gc", GC);
   
   KEYWORD("cc", CC_TOK);
   KEYWORD("ccc", CCC_TOK);

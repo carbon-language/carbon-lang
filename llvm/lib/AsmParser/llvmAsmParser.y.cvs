@@ -1046,7 +1046,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token<StrVal> STRINGCONSTANT ATSTRINGCONSTANT PCTSTRINGCONSTANT
 %type <StrVal> LocalName OptLocalName OptLocalAssign
 %type <StrVal> GlobalName OptGlobalAssign GlobalAssign
-%type <StrVal> OptSection SectionString
+%type <StrVal> OptSection SectionString OptGC
 
 %type <UIntVal> OptAlign OptCAlign
 
@@ -1090,7 +1090,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 
 // Function Attributes
 %token SIGNEXT ZEROEXT NORETURN INREG SRET NOUNWIND NOALIAS BYVAL NEST
-%token READNONE READONLY
+%token READNONE READONLY GC
 
 // Visibility Styles
 %token DEFAULT HIDDEN PROTECTED
@@ -1241,6 +1241,12 @@ FuncAttr      : NORETURN { $$ = ParamAttr::NoReturn; }
 OptFuncAttrs  : /* empty */ { $$ = ParamAttr::None; }
               | OptFuncAttrs FuncAttr {
                 $$ = $1 | $2;
+              }
+              ;
+
+OptGC         : /* empty */ { $$ = 0; }
+              | GC STRINGCONSTANT {
+                $$ = $2;
               }
               ;
 
@@ -2225,7 +2231,7 @@ ArgList : ArgListH {
   };
 
 FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')' 
-                  OptFuncAttrs OptSection OptAlign {
+                  OptFuncAttrs OptSection OptAlign OptGC {
   std::string FunctionName(*$3);
   delete $3;  // Free strdup'd memory!
   
@@ -2327,6 +2333,10 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
   if ($8) {
     Fn->setSection(*$8);
     delete $8;
+  }
+  if ($10) {
+    Fn->setCollector($10->c_str());
+    delete $10;
   }
 
   // Add all of the arguments we parsed to the function...

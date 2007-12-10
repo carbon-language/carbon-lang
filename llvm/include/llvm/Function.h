@@ -153,6 +153,13 @@ public:
   /// @brief Set the parameter attributes.
   void setParamAttrs(const ParamAttrsList *attrs);
 
+  /// hasCollector/getCollector/setCollector/clearCollector - The name of the
+  /// garbage collection algorithm to use during code generation.
+  bool hasCollector() const;
+  const char *getCollector() const;
+  void setCollector(const char *Str);
+  void clearCollector();
+
   /// @brief Determine whether the function has the given attribute.
   bool paramHasAttr(uint16_t i, ParameterAttributes attr) const {
     return ParamAttrs && ParamAttrs->paramHasAttr(i, attr);

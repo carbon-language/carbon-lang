@@ -25,7 +25,8 @@ let insist cond =
     exit_status := 10;
     "    FAIL "
   end in
-  prerr_endline (msg ^ (string_of_int !case_num))
+  prerr_endline ("    " ^ (string_of_int !case_num) ^ if cond then ""
+                                                              else " FAIL")
 
 let suite name f =
   prerr_endline (name ^ ":");
@@ -490,7 +491,20 @@ let test_functions () =
   insist (ccc = function_call_conv fn);
   set_function_call_conv fastcc fn;
   insist (fastcc = function_call_conv fn);
-  ignore (build_unreachable (builder_at_end (entry_block fn)))
+  ignore (build_unreachable (builder_at_end (entry_block fn)));
+  
+  begin group "collector";
+    (* RUN: grep {Fn6.*gc.*shadowstack} < %t.ll
+     *)
+    let fn = define_function "Fn6" ty m in
+    insist (None = collector fn);
+    set_collector (Some "ocaml") fn;
+    insist (Some "ocaml" = collector fn);
+    set_collector None fn;
+    insist (None = collector fn);
+    set_collector (Some "shadowstack") fn;
+    ignore (build_unreachable (builder_at_end (entry_block fn)));
+  end
 
 
 (*===-- Basic Blocks ------------------------------------------------------===*)
@@ -749,7 +763,6 @@ let test_builder () =
     let t3 = const_vector [| one; one; zero; zero |] in
     let vec1 = build_insertelement t1 p1 p2 "Vec1" atentry in
     let vec2 = build_insertelement t2 p1 p2 "Vec2" atentry in
-    let vec3 = build_insertelement t3 p1 p2 "Vec3" atentry in
     
     ignore (build_extractelement vec1 p2 "Inst49" atentry);
     ignore (build_insertelement vec1 p1 p2 "Inst50" atentry);

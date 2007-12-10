@@ -754,6 +754,15 @@ external function_call_conv : llvalue -> int = "llvm_function_call_conv"
 external set_function_call_conv : int -> llvalue -> unit
                                 = "llvm_set_function_call_conv"
 
+(** [collector f] returns [Some name] if the function [f] has a garbage
+    collection algorithm specified and [None] otherwise.
+    See the method [llvm::Function::getCollector]. **)
+external collector : llvalue -> string option = "llvm_collector"
+
+(** [set_collector gc f] sets the collection algorithm for the function [f] to
+    [gc]. See the method [llvm::Function::setCollector]. **)
+external set_collector : string option -> llvalue -> unit = "llvm_set_collector"
+
 (*--... Operations on basic blocks .........................................--*)
 
 (** [basic_blocks fn] returns the basic blocks of the function [f].
