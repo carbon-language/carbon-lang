@@ -170,11 +170,10 @@ Traditional Preprocessor:
 Parser:
  * C90/K&R modes are only partially implemented.
  * __extension__ is currently just skipped and ignored.
- * "initializers", GCC inline asm.
  
 Semantic Analysis:
- * Perhaps 75% done.
+ * Perhaps 85% done.
 
 LLVM Code Gen:
- * Still very early.
+ * Most of the easy stuff is done, probably 64.9% done so far.
 
