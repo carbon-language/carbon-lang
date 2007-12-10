@@ -488,8 +488,8 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
   if (!Init)
     Init = EmitGlobalInit(D->getInit());
 
-  assert(Init && "FIXME: Global variable initializers unimp!");
-
+  assert(GV->getType()->getElementType() == Init->getType() &&
+         "Initializer codegen type mismatch!");
   GV->setInitializer(Init);
   
   // Set the llvm linkage type as appropriate.
