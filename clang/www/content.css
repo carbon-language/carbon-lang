@@ -1,7 +1,14 @@
 html, body {
-	margin:0px;
 	padding:0px;
 }
+
+/* Slides */
+IMG.img_slide {
+    display: block;
+    margin-left: auto;
+    margin-right: auto 
+}
+
 
 /* FIXME: This is only for the status page */
 table,tr,td {
@@ -18,46 +25,7 @@ table,tr,td {
 .code {
 	font:Courier,Arial;
 }
-.quote {
-	display: block;
-	margin: 0 5em;
-}
-.key_point {
-	color:rgb(200,0,0);
-}
 .simple_list { /* simple lists that don't need to stand out */
 	margin-left:0;
 }
 
-
-/* ****************** */
-/* Performance images */
-.img_container {
-	display:inline;
-	background-color:rgb(250,250,250);
-	width:400px;
-	vertical-align:top;
-	margin:.1em;
-}
-[class=img_container] {
-	display:inline-block;
-}
-.img_container img {
-	display:block;
-}
-
-.img_title {
-	display:block;
-	font-weight:bold;
-	color:rgb(20,50,150);
-}
-.img_desc .img-notes {
-	display:block;
-	padding:.3em;
-}
-.img_notes {
-	font-style:italic;
-	color:rgb(50,50,50);
-	font-size:.9em;
-}
-/* ****************** */

@@ -23,10 +23,6 @@
 /* menu style */
 /**************/
 
-#menu {
-	padding-left: .3em;
-}
-
 #menu .submenu {
 	padding-top:1em;
 	display:block;

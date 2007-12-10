@@ -22,13 +22,135 @@ Clang in more detail and gives a more broad explanation about what we mean.
 These features are:
 </p>
 
+<p>End-User Features:</p>
+
+<ul>
+<li><a href="#performance">High Performance and Low Memory Use</a></li>
+<li><a href="#expressivediags">Expressive Diagnostics</a></a></li>
+</ul>
+
+<p>Driving Goals and Internal Design:</p>
 <ul>
 <li><a href="#real">A real-world, production quality compiler</a></li>
 <li><a href="#unifiedparser">A single unified parser for C, Objective C, C++,
     and Objective C++</a></li>
 <li><a href="#conformance">Conformance with C/C++/ObjC and their
     variants</a></li>
+<li><a href="#gcccompat">GCC compatibility</a></li>
 </ul>
+
+<!--=======================================================================-->
+<h1>End-User Features</h1>
+<!--=======================================================================-->
+
+
+<!--=======================================================================-->
+<h2><a name="performance">High Performance and Low Memory Use</a></h2>
+<!--=======================================================================-->
+
+<p>A major focus of our work on clang is to make it fast, light and scalable.
+The library-based architecture of clang makes it straight-forward to time and
+profile the cost of each layer of the stack, and the driver has a number of
+options for performance analysis.</p>
+
+<p>While there is still much that can be done, we find that the clang front-end
+is significantly quicker than gcc and uses less memory  For example, when
+compiling "Carbon.h" on Mac OS/X, we see that clang is 2.5x faster than GCC:</p>
+
+<img class="img_slide" src="feature-compile1.png" width="400" height="300" />
+
+<p>Carbon.h is a monster: it transitively includes 558 files, 12.3M of code,
+declares 10000 functions, has 2000 struct definitions, 8000 fields, 20000 enum
+constants, etc (see slide 25+ of the <a href="clang_video-07-25-2007.html">clang 
+talk</a> for more information). It is also #include'd into almost every C file
+in a GUI app on the Mac, so its compile time is very important.</p>
+
+<p>From the slide above, you can see that we can measure the time to preprocess
+the file independently from the time to parse it, and independently from the
+time to build the ASTs for the code.  GCC doesn't provide a way to measure the
+parser without AST building (it only provides -fsyntax-only).  In our
+measurements, we find that clang's preprocessor is consistently 40% faster than
+GCCs, and the parser + AST builder is ~4x faster than GCC's.  If you have
+sources that do not depend as heavily on the preprocessor (or if you 
+use Precompiled Headers) you may see a much bigger speedup from clang.
+</p>
+
+<p>Compile time performance is important, but when using clang as an API, often
+memory use is even moreso: the less memory the code takes the more code you can
+fit into memory at a time (useful for whole program analysis tools, for
+example).</p>
+
+<img class="img_slide" src="feature-memory1.png" width="400" height="300" />
+
+<p>Here we see a huge advantage of clang: its ASTs take <b>5x less memory</b>
+than GCC's syntax trees, despite the fact that clang's ASTs capture far more 
+source-level information than GCC's trees do.  This feat is accomplished through
+the use of carefully designed APIs and efficient representations.</p>
+
+<p>In addition to being efficient when pitted head-to-head against GCC in batch
+mode, clang is built with a <a href="#libraryarch">library based 
+architecture</a> that makes it relatively easy to adapt it and build new tools
+with it.  This means that it is often possible to apply out-of-the-box thinking
+and novel techniques to improve compilation in various ways.</p> 
+  
+<img class="img_slide" src="feature-compile2.png" width="400" height="300" />
+
+<p>This slide shows how the clang preprocessor can be used to make "distcc"
+parallelization <b>3x</b> more scalable than when using the GCC preprocessor.
+"distcc" quickly bottlenecks on the preprocessor running on the central driver
+machine, so a fast preprocessor is very useful.  Comparing the first two bars
+of each group shows how a ~40% faster preprocessor can reduce preprocessing time
+of these large C++ apps by about 40% (shocking!).</p>
+
+<p>The third bar on the slide is the interesting part: it shows how trivial
+caching of file system accesses across invocations of the preprocessor allows 
+clang to reduce time spent in the kernel by 10x, making distcc over 3x more
+scalable.  This is obviously just one simple hack, doing more interesting things
+(like caching tokens across preprocessed files) would yield another substantial
+speedup.</p>
+
+<p>The clean framework-based design of clang means that many things are possible
+that would be very difficult in other systems, for example incremental
+compilation, multithreading, intelligent caching, etc.  We are only starting
+to tap the full potential of the clang design.</p>
+
+
+<!--=======================================================================-->
+<h2><a name="expressivediags">Expressive Diagnostics</a></h2>
+<!--=======================================================================-->
+
+<p>Clang is designed to efficiently capture range information for expressions
+and statements, which allows it to emit very useful and detailed diagnostic
+information (e.g. warnings and errors) when a problem is detected.</p>
+
+<p>For example, this slide compares the diagnostics emitted by clang (top) to
+the diagnostics emitted by GCC (middle) for a simple example:</p>
+
+<img class="img_slide" src="feature-diagnostics1.png" width="400" height="300"/>
+
+<p>As you can see, clang goes beyond tracking just column number information: it
+is able to highlight the subexpressions involved in a problem, making it much
+easier to understand the source of the problem in many cases.  For example, in
+the first problem, it tells you <em>why</em> the operand is invalid (it
+requires a pointer) and what type it really is.</p>
+
+<p>In the second error, you can see how clang uses column number information to
+identify exactly which "+" out of the four on that line is causing the problem.
+Further, it highlights the subexpressions involved, which can be very useful
+when a complex subexpression that relies on tricky precedence rules.</p>
+
+<p>The example doesn't show it, but clang works very hard to retain typedef
+information, ensuring that diagnostics print the user types, not the fully
+expanded (and often huge) types.  This is clearly important for C++ code (tell
+me about "<tt>std::string</tt>", not about "<tt>std::basic_string&lt;char, 
+std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;</tt>"!), but it is
+also very useful in C code in some cases as well (e.g. "<tt>__m128"</tt> vs
+"<tt>float __attribute__((__vector_size__(16)))</tt>").</p>
+
+
+<!--=======================================================================-->
+<h1>Driving Goals and Internal Design</h1>
+<!--=======================================================================-->
 
 <!--=======================================================================-->
 <h2><a name="real">A real-world, production quality compiler</a></h2>
@@ -88,11 +210,36 @@ clang in "strict" mode if you desire.</p>
 C, C++'03, Objective-C 2, etc.</p>
 
 <!--=======================================================================-->
-<h2>Library based architecture</h2>
+<h2><a name="gcccompat">GCC Compatibility</a></h2>
+<!--=======================================================================-->
+
+<p>GCC is currently the defacto-standard open source compiler today, and it
+routinely compiles a huge volume of code.  GCC supports a huge number of
+extensions and features (many of which are undocumented) and a lot of 
+code and header files depend on these features in order to build.</p>
+
+<p>While it would be nice to be able to ignore these extensions and focus on
+implementing the language standards to the letter, pragmatics force us to
+support the GCC extensions that see the most use.  As mentioned above, all
+extensions are explicitly recognized as such and marked with extension
+diagnostics, which can be mapped to warnings, errors, or just ignored.
+</p>
+
+
+<!--=======================================================================-->
+<h2><a name="libraryarch">Library based architecture</a></h2>
 <!--=======================================================================-->
 
 A major design concept for the LLVM front-end involves using a library based architecture.  In this library based architecture, various parts of the front-end can be cleanly divided into separate libraries which can then be mixed up for different needs and uses.  In addition, the library based approach makes it much easier for new developers to get involved and extend LLVM to do new and unique things.  In the words of Chris,
-<div class="quote">"The world needs better compiler tools, tools which are built as libraries. This design point allows reuse of the tools in new and novel ways. However, building the tools as libraries isn't enough: they must have clean APIs, be as decoupled from each other as possible, and be easy to modify/extend. This requires clean layering, decent design, and keeping the libraries independent of any specific client."</div>
+
+<blockquote>
+"The world needs better compiler tools, tools which are built as libraries.
+This design point allows reuse of the tools in new and novel ways. However,
+building the tools as libraries isn't enough: they must have clean APIs, be as
+decoupled from each other as possible, and be easy to modify/extend. This
+requires clean layering, decent design, and keeping the libraries independent of
+any specific client."</blockquote>
+
 Currently, the LLVM front-end is divided into the following libraries:
 <ul>
 <li>libsupport - Basic support library, reused from LLVM.
@@ -110,41 +257,6 @@ Currently, the LLVM front-end is divided into the following libraries:
 As an example of the power of this library based design....  If you wanted to build a preprocessor, you would take the Basic and Lexer libraries. If you want an indexer, you would take the previous two and add the Parser library and some actions for indexing. If you want a refactoring, static analysis, or source-to-source compiler tool, you would then add the AST building and semantic analyzer libraries.
 In the end, LLVM's library based design will provide developers with many more possibilities.
 
-<h2><a name="performance">Speed and Memory</a></h2>
-Another major focus of LLVM's frontend is speed (for all libraries).  Even at this early stage, the clang front-end is quicker than gcc and uses less memory.<br>
-<div class="img_container">
-	<div class="img_title">Memory:</div>
-	<img src="feature-memory1.png" />
-	<div class="img_desc">This test was run using Mac OS X's Carbon.h header, which is 12.3MB spread across 558 files!
-	Although large headers are one of the worst case scenarios for GCC, they are very common and it shows how clang's implemenation is significantly more memory efficient.
-	</div>
-</div>
-<div class="img_container">
-	<div class="img_title">Performance:</div>
-	<img src="feature-compile1.png" />
-	<div class="img_desc">Even at this early stage, the C parser for Clang is able to achieve significantly better performance.  Many optimizations are still possible of course.
-	</div>
-</div>
-<div class="img_container">
-	<div class="img_title">Performance:</div>
-	<img src="feature-compile2.png" />
-	<div class="img_desc">By using very trivial file-system caching, clang can significantly speed up preprocessing-bound applications like distcc.	<span class="img_notes">(<a href="clang_video-07-25-2007.html">more details</a>)</span>
-</div>
-</div>
-
-<h2><a name="expressivediags">Expressive Diagnostics</a></h2>
-Clang is designed to efficiently capture range information for expressions and statements, which allows it to emit very detailed diagnostic information when a problem is detected.<br>
-<div class="img_container">
-	<div class="img_title">Clang vs GCC:</div>
-	<img src="feature-diagnostics1.png" />
-	<div class="img_desc">There are several things to take note of in this example:
-	<ul>
-		<li>The error messages from Clang are more detailed.
-		<li>Clang shows you exactly where the error is, plus the range it has a problem with.
-	</ul>
-	</div>
-	<div class="img_notes"><span>Notes:</span>The first results are from clang; the second results are from gcc.</div>
-</div>
 <h2>Better Integration with IDEs</h2>
 Another design goal of Clang is to integrate extremely well with IDEs. IDEs often have very different requirements than code generation, often requiring information that a codegen-only frontend can throw away.  Clang is specifically designed and built to capture this information.
 </div>
