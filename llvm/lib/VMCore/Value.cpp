@@ -140,9 +140,9 @@ Value::~Value()
       CallInst::destroyThis(CI);
     else if (CmpInst *CI = dyn_cast<CmpInst>(this))
     {
-      if (FCmpInst *FCI = dyn_cast<FCmpInst>(this))
+      if (FCmpInst *FCI = dyn_cast<FCmpInst>(CI))
         FCmpInst::destroyThis(FCI);
-      else if (ICmpInst *ICI = dyn_cast<ICmpInst>(this))
+      else if (ICmpInst *ICI = dyn_cast<ICmpInst>(CI))
         ICmpInst::destroyThis(ICI);
       else
         assert(0 && "Unknown CmpInst-inherited class in ~Value.");
@@ -163,28 +163,25 @@ Value::~Value()
       StoreInst::destroyThis(SI);
     else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(this))
     {
-      if (BranchInst* BI = dyn_cast<BranchInst>(this))
+      if (BranchInst* BI = dyn_cast<BranchInst>(TI))
         BranchInst::destroyThis(BI);
-      else if (InvokeInst* II = dyn_cast<InvokeInst>(this))
+      else if (InvokeInst* II = dyn_cast<InvokeInst>(TI))
         InvokeInst::destroyThis(II);
-      else if (ReturnInst* RI = dyn_cast<ReturnInst>(this))
+      else if (ReturnInst* RI = dyn_cast<ReturnInst>(TI))
         ReturnInst::destroyThis(RI);
-      else if (SwitchInst *SI = dyn_cast<SwitchInst>(this))
+      else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI))
         SwitchInst::destroyThis(SI);
-      else if (UnreachableInst *UI = dyn_cast<UnreachableInst>(this))
+      else if (UnreachableInst *UI = dyn_cast<UnreachableInst>(TI))
         UnreachableInst::destroyThis(UI);
-      else if (UnwindInst *UI = dyn_cast<UnwindInst>(this))
+      else if (UnwindInst *UI = dyn_cast<UnwindInst>(TI))
         UnwindInst::destroyThis(UI);
       else
         assert(0 && "Unknown TerminatorInst-inherited class in ~Value.");
-    }
-    else if(UnaryInstruction* UI = dyn_cast<UnaryInstruction>(this))
-    {
-      if(AllocationInst* AI = dyn_cast<AllocationInst>(this))
-      {
-        if(AllocaInst* AI = dyn_cast<AllocaInst>(this))
+    } else if(UnaryInstruction* UI = dyn_cast<UnaryInstruction>(this)) {
+      if(AllocationInst* AI = dyn_cast<AllocationInst>(UI)) {
+        if(AllocaInst* AI = dyn_cast<AllocaInst>(UI))
           AllocaInst::destroyThis(AI);
-        else if(MallocInst* MI = dyn_cast<MallocInst>(this))
+        else if(MallocInst* MI = dyn_cast<MallocInst>(UI))
           MallocInst::destroyThis(MI);
         else
           assert(0 && "Unknown AllocationInst-inherited class in ~Value.");
