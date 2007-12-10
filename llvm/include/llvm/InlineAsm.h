@@ -36,12 +36,9 @@ class InlineAsm : public Value {
   
   InlineAsm(const FunctionType *Ty, const std::string &AsmString,
             const std::string &Constraints, bool hasSideEffects);
-protected:
-  static void destroyThis(InlineAsm*v) {
-    Value::destroyThis(v);
-  }
-  friend class Value;
+  virtual ~InlineAsm();
 public:
+
   /// InlineAsm::get - Return the the specified uniqued inline asm string.
   ///
   static InlineAsm *get(const FunctionType *Ty, const std::string &AsmString,

@@ -46,8 +46,8 @@ Instruction::Instruction(const Type *ty, unsigned it, Use *Ops, unsigned NumOps,
 
 
 // Out of line virtual method, so the vtable, etc has a home.
-void Instruction::destroyThis(Instruction*v) {
-  assert(v->Parent == 0 && "Instruction still linked in the program!");
+Instruction::~Instruction() {
+  assert(Parent == 0 && "Instruction still linked in the program!");
 }
 
 

@@ -65,9 +65,6 @@ private :
   BasicBlock(const BasicBlock &);     // Do not implement
   void operator=(const BasicBlock &); // Do not implement
 
-protected:
-  static void destroyThis(BasicBlock*);
-  friend class Value;
 public:
   /// Instruction iterators...
   typedef InstListType::iterator                              iterator;
@@ -79,6 +76,7 @@ public:
   ///
   explicit BasicBlock(const std::string &Name = "", Function *Parent = 0,
                       BasicBlock *InsertBefore = 0);
+  ~BasicBlock();
 
   /// getParent - Return the enclosing method, or null if none
   ///
@@ -206,33 +204,6 @@ private:
   const BasicBlock *getNext() const { return Next; }
   BasicBlock *getPrev()       { return Prev; }
   const BasicBlock *getPrev() const { return Prev; }
-};
-
-/// DummyInst - An instance of this class is used to mark the end of the
-/// instruction list.  This is not a real instruction.
-class DummyInst : public Instruction {
-protected:
-  static void destroyThis(DummyInst* v) {
-    Instruction::destroyThis(v);
-  }
-  friend class Value;
-public:
-  DummyInst();
-
-  Instruction *clone() const {
-    assert(0 && "Cannot clone EOL");abort();
-    return 0;
-  }
-  const char *getOpcodeName() const { return "*end-of-list-inst*"; }
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast...
-  static inline bool classof(const DummyInst *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == OtherOpsEnd;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
 };
 
 inline int 

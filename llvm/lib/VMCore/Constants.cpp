@@ -356,9 +356,8 @@ ConstantArray::ConstantArray(const ArrayType *T,
   }
 }
 
-void ConstantArray::destroyThis(ConstantArray*v) {
-  delete [] v->OperandList;
-  Constant::destroyThis(v);
+ConstantArray::~ConstantArray() {
+  delete [] OperandList;
 }
 
 ConstantStruct::ConstantStruct(const StructType *T,
@@ -380,9 +379,8 @@ ConstantStruct::ConstantStruct(const StructType *T,
   }
 }
 
-void ConstantStruct::destroyThis(ConstantStruct*v) {
-  delete [] v->OperandList;
-  Constant::destroyThis(v);
+ConstantStruct::~ConstantStruct() {
+  delete [] OperandList;
 }
 
 
@@ -401,67 +399,124 @@ ConstantVector::ConstantVector(const VectorType *T,
   }
 }
 
-void ConstantVector::destroyThis(ConstantVector*v) {
-  delete [] v->OperandList;
-  Constant::destroyThis(v);
+ConstantVector::~ConstantVector() {
+  delete [] OperandList;
 }
 
-UnaryConstantExpr::UnaryConstantExpr(unsigned Opcode, 
-                                     Constant *C, const Type *Ty)
-  : ConstantExpr(Ty, Opcode, &Op, 1), Op(C, this) {
-}
+// We declare several classes private to this file, so use an anonymous
+// namespace
+namespace {
 
-SelectConstantExpr::SelectConstantExpr(Constant *C1, 
-                                       Constant *C2, Constant *C3)
-  : ConstantExpr(C2->getType(), Instruction::Select, Ops, 3) {
-  Ops[0].init(C1, this);
-  Ops[1].init(C2, this);
-  Ops[2].init(C3, this);
-}
+/// UnaryConstantExpr - This class is private to Constants.cpp, and is used
+/// behind the scenes to implement unary constant exprs.
+class VISIBILITY_HIDDEN UnaryConstantExpr : public ConstantExpr {
+  Use Op;
+public:
+  UnaryConstantExpr(unsigned Opcode, Constant *C, const Type *Ty)
+    : ConstantExpr(Ty, Opcode, &Op, 1), Op(C, this) {}
+};
 
-ExtractElementConstantExpr::ExtractElementConstantExpr(Constant *C1, 
-                                                       Constant *C2)
-  : ConstantExpr(cast<VectorType>(C1->getType())->getElementType(), 
-                 Instruction::ExtractElement, Ops, 2) {
-  Ops[0].init(C1, this);
-  Ops[1].init(C2, this);
-}
+/// BinaryConstantExpr - This class is private to Constants.cpp, and is used
+/// behind the scenes to implement binary constant exprs.
+class VISIBILITY_HIDDEN BinaryConstantExpr : public ConstantExpr {
+  Use Ops[2];
+public:
+  BinaryConstantExpr(unsigned Opcode, Constant *C1, Constant *C2)
+    : ConstantExpr(C1->getType(), Opcode, Ops, 2) {
+    Ops[0].init(C1, this);
+    Ops[1].init(C2, this);
+  }
+};
 
-InsertElementConstantExpr::InsertElementConstantExpr(Constant *C1, 
-                                                     Constant *C2, 
-                                                     Constant *C3)
-  : ConstantExpr(C1->getType(), Instruction::InsertElement, Ops, 3) {
-  Ops[0].init(C1, this);
-  Ops[1].init(C2, this);
-  Ops[2].init(C3, this);
-}
+/// SelectConstantExpr - This class is private to Constants.cpp, and is used
+/// behind the scenes to implement select constant exprs.
+class VISIBILITY_HIDDEN SelectConstantExpr : public ConstantExpr {
+  Use Ops[3];
+public:
+  SelectConstantExpr(Constant *C1, Constant *C2, Constant *C3)
+    : ConstantExpr(C2->getType(), Instruction::Select, Ops, 3) {
+    Ops[0].init(C1, this);
+    Ops[1].init(C2, this);
+    Ops[2].init(C3, this);
+  }
+};
 
-ShuffleVectorConstantExpr::ShuffleVectorConstantExpr(Constant *C1, 
-                                                     Constant *C2, 
-                                                     Constant *C3)
-  : ConstantExpr(C1->getType(), Instruction::ShuffleVector, Ops, 3) {
-  Ops[0].init(C1, this);
-  Ops[1].init(C2, this);
-  Ops[2].init(C3, this);
-}
+/// ExtractElementConstantExpr - This class is private to
+/// Constants.cpp, and is used behind the scenes to implement
+/// extractelement constant exprs.
+class VISIBILITY_HIDDEN ExtractElementConstantExpr : public ConstantExpr {
+  Use Ops[2];
+public:
+  ExtractElementConstantExpr(Constant *C1, Constant *C2)
+    : ConstantExpr(cast<VectorType>(C1->getType())->getElementType(), 
+                   Instruction::ExtractElement, Ops, 2) {
+    Ops[0].init(C1, this);
+    Ops[1].init(C2, this);
+  }
+};
 
-CompareConstantExpr::CompareConstantExpr(unsigned opc, unsigned short pred, 
-                                         Constant* LHS, Constant* RHS)
-  : ConstantExpr(Type::Int1Ty, opc, Ops, 2), predicate(pred) {
-  OperandList[0].init(LHS, this);
-  OperandList[1].init(RHS, this);
-}
+/// InsertElementConstantExpr - This class is private to
+/// Constants.cpp, and is used behind the scenes to implement
+/// insertelement constant exprs.
+class VISIBILITY_HIDDEN InsertElementConstantExpr : public ConstantExpr {
+  Use Ops[3];
+public:
+  InsertElementConstantExpr(Constant *C1, Constant *C2, Constant *C3)
+    : ConstantExpr(C1->getType(), Instruction::InsertElement, 
+                   Ops, 3) {
+    Ops[0].init(C1, this);
+    Ops[1].init(C2, this);
+    Ops[2].init(C3, this);
+  }
+};
 
-GetElementPtrConstantExpr::GetElementPtrConstantExpr(Constant *C, 
-                                                const std::vector<Constant*> 
-                                                &IdxList, const Type *DestTy)
-: ConstantExpr(DestTy, Instruction::GetElementPtr,
-			   new Use[IdxList.size()+1], IdxList.size()+1) 
-{
-  OperandList[0].init(C, this);
-  for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
-    OperandList[i+1].init(IdxList[i], this);
-}
+/// ShuffleVectorConstantExpr - This class is private to
+/// Constants.cpp, and is used behind the scenes to implement
+/// shufflevector constant exprs.
+class VISIBILITY_HIDDEN ShuffleVectorConstantExpr : public ConstantExpr {
+  Use Ops[3];
+public:
+  ShuffleVectorConstantExpr(Constant *C1, Constant *C2, Constant *C3)
+  : ConstantExpr(C1->getType(), Instruction::ShuffleVector, 
+                 Ops, 3) {
+    Ops[0].init(C1, this);
+    Ops[1].init(C2, this);
+    Ops[2].init(C3, this);
+  }
+};
+
+/// GetElementPtrConstantExpr - This class is private to Constants.cpp, and is
+/// used behind the scenes to implement getelementpr constant exprs.
+struct VISIBILITY_HIDDEN GetElementPtrConstantExpr : public ConstantExpr {
+  GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
+                            const Type *DestTy)
+    : ConstantExpr(DestTy, Instruction::GetElementPtr,
+                   new Use[IdxList.size()+1], IdxList.size()+1) {
+    OperandList[0].init(C, this);
+    for (unsigned i = 0, E = IdxList.size(); i != E; ++i)
+      OperandList[i+1].init(IdxList[i], this);
+  }
+  ~GetElementPtrConstantExpr() {
+    delete [] OperandList;
+  }
+};
+
+// CompareConstantExpr - This class is private to Constants.cpp, and is used
+// behind the scenes to implement ICmp and FCmp constant expressions. This is
+// needed in order to store the predicate value for these instructions.
+struct VISIBILITY_HIDDEN CompareConstantExpr : public ConstantExpr {
+  unsigned short predicate;
+  Use Ops[2];
+  CompareConstantExpr(Instruction::OtherOps opc, unsigned short pred, 
+                      Constant* LHS, Constant* RHS)
+    : ConstantExpr(Type::Int1Ty, opc, Ops, 2), predicate(pred) {
+    OperandList[0].init(LHS, this);
+    OperandList[1].init(RHS, this);
+  }
+};
+
+} // end anonymous namespace
+
 
 // Utility function for determining if a ConstantExpr is a CastOp or not. This
 // can't be inline because we don't want to #include Instruction.h into

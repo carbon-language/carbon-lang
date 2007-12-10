@@ -17,6 +17,12 @@
 #include <cctype>
 using namespace llvm;
 
+// Implement the first virtual method in this class in this file so the
+// InlineAsm vtable is emitted here.
+InlineAsm::~InlineAsm() {
+}
+
+
 // NOTE: when memoizing the function type, we have to be careful to handle the
 // case when the type gets refined.
 

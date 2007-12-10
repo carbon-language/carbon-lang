@@ -45,11 +45,6 @@ class GlobalVariable : public GlobalValue {
   bool isThreadLocalSymbol : 1;        // Is this symbol "Thread Local"?
   Use Initializer;
 
-protected:
-  static void destroyThis(GlobalVariable*v) {
-    GlobalValue::destroyThis(v);
-  }
-  friend class Value;
 public:
   /// GlobalVariable ctor - If a parent module is specified, the global is
   /// automatically inserted into the end of the specified modules global list.

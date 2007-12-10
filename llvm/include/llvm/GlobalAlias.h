@@ -43,11 +43,6 @@ class GlobalAlias : public GlobalValue {
   const GlobalAlias *getPrev() const { return Prev; }
 
   Use Aliasee;
-protected:
-  static void destroyThis(GlobalAlias*v) {
-    GlobalValue::destroyThis(v);
-  }
-  friend class Value;
 public:
   /// GlobalAlias ctor - If a parent module is specified, the alias is
   /// automatically inserted into the end of the specified module's alias list.

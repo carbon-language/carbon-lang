@@ -30,9 +30,31 @@ ilist_traits<Instruction>::getSymTab(BasicBlock *BB) {
   return 0;
 }
 
-DummyInst::DummyInst() : Instruction(Type::VoidTy, OtherOpsEnd, 0, 0) {
-  // This should not be garbage monitored.
-  LeakDetector::removeGarbageObject(this);
+
+namespace {
+  /// DummyInst - An instance of this class is used to mark the end of the
+  /// instruction list.  This is not a real instruction.
+  struct VISIBILITY_HIDDEN DummyInst : public Instruction {
+    DummyInst() : Instruction(Type::VoidTy, OtherOpsEnd, 0, 0) {
+      // This should not be garbage monitored.
+      LeakDetector::removeGarbageObject(this);
+    }
+
+    Instruction *clone() const {
+      assert(0 && "Cannot clone EOL");abort();
+      return 0;
+    }
+    const char *getOpcodeName() const { return "*end-of-list-inst*"; }
+
+    // Methods for support type inquiry through isa, cast, and dyn_cast...
+    static inline bool classof(const DummyInst *) { return true; }
+    static inline bool classof(const Instruction *I) {
+      return I->getOpcode() == OtherOpsEnd;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<Instruction>(V) && classof(cast<Instruction>(V));
+    }
+  };
 }
 
 Instruction *ilist_traits<Instruction>::createSentinel() {
@@ -66,12 +88,10 @@ BasicBlock::BasicBlock(const std::string &Name, Function *NewParent,
 }
 
 
-void BasicBlock::destroyThis(BasicBlock*v)
-{
-  assert(v->getParent() == 0 && "BasicBlock still linked into the program!");
-  v->dropAllReferences();
-  v->InstList.clear();
-  Value::destroyThis(v);	
+BasicBlock::~BasicBlock() {
+  assert(getParent() == 0 && "BasicBlock still linked into the program!");
+  dropAllReferences();
+  InstList.clear();
 }
 
 void BasicBlock::setParent(Function *parent) {

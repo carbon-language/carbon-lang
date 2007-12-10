@@ -63,12 +63,11 @@ protected:
   unsigned Visibility : 2;    // The visibility style of this global
   unsigned Alignment : 16;    // Alignment of this symbol, must be power of two
   std::string Section;        // Section to emit this into, empty mean default
-
-  static void destroyThis(GlobalValue*v) {
-    v->removeDeadConstantUsers();   // remove any dead constants using this.
-    Constant::destroyThis(v);
-  }
 public:
+  ~GlobalValue() {
+    removeDeadConstantUsers();   // remove any dead constants using this.
+  }
+
   unsigned getAlignment() const { return Alignment; }
   void setAlignment(unsigned Align) {
     assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
