@@ -41,23 +41,25 @@
         the variants we are interested in.  clang's support for C++ in
         particular is nowhere near what GCC supports.</li>
     <li>GCC is popular and widely adopted.</li>
+    <li>GCC does not require a C++ compiler to build it.</li>
     </ul>
     
     <p>Pros of clang vs GCC:</p>
     
     <ul>
-    <li>GCC has a very old codebase which presents a steep learning curve to new
-        developers.  The Clang ASTs and design are intended to be easily
-        understandable to anyone who is familiar with the languages involved
-        and have a basic understanding of how a compiler works.</li>
-    <li>GCC is built as a monolithic static compiler, which makes it extremely
-        difficult to use as an API and integrate into other tools (e.g. an IDE).
-        Its historic design and <a 
+    <li>The Clang ASTs and design are intended to be easily understandable to
+        anyone who is familiar with the languages involved and who have a basic
+        understanding of how a compiler works.  GCC has a very old codebase
+        which presents a steep learning curve to new developers.</li>
+    <li>Clang is designed as an API from its inception, allowing it to be reused
+        by source analysis tools, refactoring, IDEs (etc) as well as for code
+        generation.  GCC is built as a monolithic static compiler, which makes
+        it extremely difficult to use as an API and integrate into other tools.
+        Further, its historic design and <a 
         href="http://gcc.gnu.org/ml/gcc/2007-11/msg00460.html">current</a>
         <a href="http://gcc.gnu.org/ml/gcc/2004-12/msg00888.html">policy</a> 
-        makes it difficult to decouple the front-end from
-        the rest of the compiler. Clang is designed as an API from its
-        inception.</li>
+        makes it difficult to decouple the front-end from the rest of the
+        compiler. </li>
     <li>Various GCC design decisions make it very difficult to reuse: its build
         system is difficult to modify, you can't link multiple targets into one
         binary, you can't link multiple front-ends into one binary, it uses a
@@ -70,18 +72,26 @@
     <li>GCC simplifies code as it parses it.  As one simple example, if you
         write "x-x" in your source code, the GCC AST will contain "0", with no
         mention of x.  This is extremely bad for a refactoring tool that wants
-        to rename 'x' for example.</li>
+        to rename 'x'.</li>
     <li>GCC does not have a way to serialize the AST of a file out to disk and 
         read it back into another program.  Its PCH mechanism is architecturally
-        only able to read the dump back into the exact same binary.</li>
-    <li>GCC is <a href="features.html#performance">very slow and uses a large 
-        amount of memory</a>.</li>
-    <li>The diagnostics produced by GCC are acceptable, but are often confusing
-        and it does not support <a 
-        href="features.html#expressivediags">expressive diagnostics</a>.</li>
+        only able to read the dump back into the exact same executable as the
+        one that produced it.</li>
+    <li>Clang is <a href="features.html#performance">much faster and uses far
+        less memory</a> than GCC.</li>
+    <li>Clang aims to provide extremely clear and concise diagnostics (error and
+        warning messages), and includes support for <a
+        href="features.html#expressivediags">expressive diagnostics</a>.  GCC's
+        warnings are acceptable, but are often confusing and it does not support
+        expressive diagnostics.  Clang also preserves typedefs in diagnostics
+        consistently.</li>
     <li>GCC is licensed under the GPL license.  clang uses a BSD license, which
         allows it to be used by projects that do not themselves want to be
         GPL.</li>
+    <li>Clang inherits a number of features from its use of LLVM as a backend,
+        including support for a bytecode representation for intermediate code,
+        pluggable optimizers, link-time optimization support, Just-In-Time
+        compilation, etc.</li>
     </ul>
 
     <!--=====================================================================-->
@@ -143,7 +153,8 @@
     <ul>
     <li>PCC dates from the 1970's and has been dormant for most of that time.
         The clang + llvm community are very active.</li>
-    <li>PCC doesn't support Objective-C and doesn't aim to support C++.</li>
+    <li>PCC doesn't support C99, Objective-C, and doesn't aim to support
+        C++.</li>
     <li>PCC's code generation is very limited compared to LLVM, it produces very
         inefficient code and does not support many important targets.</li>
     <li>PCC's does not have an integrated preprocessor, so it is extremely
