@@ -47,6 +47,9 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 #define GETASMPREFIX(X) GETASMPREFIX2(X)
 #define ASMPREFIX GETASMPREFIX(__USER_LABEL_PREFIX__)
 
+// Provide a convenient way for disable usage of CFI directives.
+// This is needed for old/broken assemblers (for example, gas on
+// Darwin is pretty old and doesn't support these directives)
 #if defined(__APPLE__)
 # define CFI(x)
 #else
