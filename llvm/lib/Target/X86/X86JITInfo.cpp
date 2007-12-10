@@ -116,11 +116,18 @@ extern "C" {
     ".align 8\n"
     ".globl " ASMPREFIX  "X86CompilationCallback\n"
   ASMPREFIX "X86CompilationCallback:\n"
+    ".cfi_startproc\n"
     "pushl   %ebp\n"
+    ".cfi_def_cfa_offset 8\n"
+    ".cfi_offset ebp, -8\n"
     "movl    %esp, %ebp\n"    // Standard prologue
+    ".cfi_def_cfa_register ebp\n"
     "pushl   %eax\n"
+    ".cfi_rel_offset eax, 0\n"
     "pushl   %edx\n"          // Save EAX/EDX/ECX
+    ".cfi_rel_offset edx, 4\n"
     "pushl   %ecx\n"
+    ".cfi_rel_offset ecx, 8\n"
 #if defined(__APPLE__)
     "andl    $-16, %esp\n"    // Align ESP on 16-byte boundary
 #endif
@@ -130,12 +137,23 @@ extern "C" {
     "movl    %ebp, (%esp)\n"
     "call    " ASMPREFIX "X86CompilationCallback2\n"
     "movl    %ebp, %esp\n"    // Restore ESP
+    ".cfi_def_cfa_register esp\n"
     "subl    $12, %esp\n"
+    ".cfi_adjust_cfa_offset 12\n"
     "popl    %ecx\n"
+    ".cfi_adjust_cfa_offset -4\n"
+    ".cfi_restore ecx\n"
     "popl    %edx\n"
+    ".cfi_adjust_cfa_offset -4\n"
+    ".cfi_restore edx\n"
     "popl    %eax\n"
+    ".cfi_adjust_cfa_offset -4\n"
+    ".cfi_restore eax\n"
     "popl    %ebp\n"
-    "ret\n");
+    ".cfi_adjust_cfa_offset -4\n"
+    ".cfi_restore ebp\n"
+    "ret\n"
+    ".cfi_endproc\n");
 
   // Same as X86CompilationCallback but also saves XMM argument registers.
   void X86CompilationCallback_SSE(void);
