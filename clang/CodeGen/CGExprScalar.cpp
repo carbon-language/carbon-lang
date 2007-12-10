@@ -19,6 +19,8 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Compiler.h"
+#include <stdarg.h>                                                                                                              
+
 using namespace clang;
 using namespace CodeGen;
 using llvm::Value;
