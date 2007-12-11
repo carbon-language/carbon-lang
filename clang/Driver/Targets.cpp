@@ -299,6 +299,7 @@ static const char* getPPCVAListDeclaration() {
 
 
 /// PPC builtin info.
+namespace clang {
 namespace PPC {
   
   static const Builtin::Info BuiltinInfo[] = {
@@ -404,7 +405,6 @@ namespace PPC {
   
 } // End namespace PPC
 
-
 /// X86 builtin info.
 namespace X86 {
   static const Builtin::Info BuiltinInfo[] = {
@@ -477,6 +477,7 @@ namespace X86 {
   }
   
 } // End namespace X86
+} // end namespace clang.
 
 //===----------------------------------------------------------------------===//
 // Specific target implementations.

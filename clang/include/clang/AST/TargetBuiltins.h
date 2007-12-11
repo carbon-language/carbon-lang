@@ -12,24 +12,26 @@
 
 #include "clang/AST/Builtins.h"
 
-/// X86 builtins
-namespace X86 {
+namespace clang {
+  /// X86 builtins
+  namespace X86 {
     enum {
         LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
 #include "X86Builtins.def"
         LastTSBuiltin
     };
-}
+  }
 
-/// PPC builtins
-namespace PPC {
+  /// PPC builtins
+  namespace PPC {
     enum {
         LastTIBuiltin = clang::Builtin::FirstTSBuiltin-1,
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
 #include "PPCBuiltins.def"
         LastTSBuiltin
     };
-}
+  }
+} // end namespace clang.
 
 #endif
