@@ -78,6 +78,9 @@ namespace {
     /// or last record field is a bit-field.
     void fixCursorPosition(const ASTRecordLayout &RL);
 
+    /// placeBitField - Find a place for FD, which is a bit-field. 
+    void placeBitField(const FieldDecl *FD);
+
   private:
     CodeGenTypes &CGT;
     llvm::Type *STy;
@@ -415,75 +418,9 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
          E = FieldDecls.end(); I != E; ++I) {
     const FieldDecl *FD = *I;
 
-    if (FD->isBitField()) {
-      Expr *BitWidth = FD->getBitWidth();
-      llvm::APSInt FieldSize(32);
-      bool isBitField = 
-        BitWidth->isIntegerConstantExpr(FieldSize, CGT.getContext());
-      assert (isBitField  && "Invalid BitField size expression");
-      uint64_t BitFieldSize =  FieldSize.getZExtValue();
-      if (ExtraBits == 0) {
-        // CurrentField is a bit-field and structure is in one of the
-        // following form.
-        // struct { char CurrentField:2; char B:4; }
-        // struct { char A; char CurrentField:2; };
-        // struct { char A; short CurrentField:2; };
-        const llvm::Type *Ty = CGT.ConvertType(FD->getType());
-        // Calculate extra bits available in this bitfield.
-        ExtraBits = CGT.getTargetData().getABITypeSizeInBits(Ty) - BitFieldSize;
-
-        if (LLVMFields.empty()) 
-          // Ths is - struct { char CurrentField:2; char B:4; }
-          addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
-        else {
-          const llvm::Type *PrevTy = LLVMFields.back();
-          if (CGT.getTargetData().getABITypeSizeInBits(PrevTy) >=
-              CGT.getTargetData().getABITypeSizeInBits(Ty)) 
-            // This is - struct { char A; char CurrentField:2; };
-            addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
-          else {
-            // This is - struct { char A; short CurrentField:2; };
-            // Use one of the previous filed to access current field.
-            bool FoundPrevField = false;
-            unsigned TotalOffsets = Offsets.size();
-            uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
-            for (unsigned i = TotalOffsets; i != 0; --i) {
-              uint64_t O = Offsets[i - 1];
-              if (O % TySize == 0) {
-                // This is appropriate llvm field to share access.
-                FoundPrevField = true;
-                CurrentFieldStart = O % TySize;
-                unsigned FieldBegin = Cursor - (O % TySize);
-                unsigned FieldEnd = TySize - (FieldBegin + BitFieldSize);
-                Cursor += BitFieldSize;
-                CGT.addFieldInfo(FD, i, FieldBegin, FieldEnd);
-              }
-            }
-            assert(FoundPrevField && 
-                   "Unable to find a place for bitfield in struct layout");
-          }
-        }
-      } else  if (ExtraBits >= BitFieldSize) {
-        // Reuse existing llvm field
-        ExtraBits = ExtraBits  - BitFieldSize;
-        CGT.addFieldInfo(FD, FieldNo, Cursor - CurrentFieldStart, ExtraBits);
-        Cursor = Cursor + BitFieldSize;
-        ++FieldNo;
-      } else {
-        //ExtraBits are not enough to hold entire FD.
-        const llvm::Type *Ty = CGT.ConvertType(FD->getType());
-        const llvm::Type *PrevTy = LLVMFields.back();
-        uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
-        if (CGT.getTargetData().getABITypeSizeInBits(PrevTy) >= TySize) {
-          // Previous field does not allow sharing of ExtraBits. Use new field.
-          // struct { char a; char b:5; char c:4; } where c is current FD.
-          Cursor += ExtraBits;
-          ExtraBits = 0;
-          addLLVMField(Ty, TySize, FD, 0, BitFieldSize);
-        } else
-          assert (!FD->isBitField() && "Bit fields are not yet supported");
-      }
-    } else {
+    if (FD->isBitField()) 
+      placeBitField(FD);
+    else {
       ExtraBits = 0;
       // FD is not a bitfield. If prev field was a bit field then it may have
       // positioned cursor such that it needs adjustment now.
@@ -595,5 +532,85 @@ void RecordOrganizer::fixCursorPosition(const ASTRecordLayout &RL) {
   if (llvmSizeBytes % StructAlign) {
     unsigned StructPadding = StructAlign - (llvmSizeBytes % StructAlign);
     addPaddingFields(StructPadding*8);
+  }
+}
+
+/// placeBitField - Find a place for FD, which is a bit-field. 
+/// There are three separate cases to handle
+/// 1) Cursor starts at byte boundry and there are no extra
+///    bits are available in last llvm struct field. 
+/// 2) Extra bits from previous last llvm struct field are
+///    available and have enough space to hold entire FD.
+/// 3) Extra bits from previous last llvm struct field are
+///    available but they are not enough to hold FD entirly.
+void RecordOrganizer::placeBitField(const FieldDecl *FD) {
+
+  assert (FD->isBitField() && "FD is not a bit-field");
+  Expr *BitWidth = FD->getBitWidth();
+  llvm::APSInt FieldSize(32);
+  bool isBitField = 
+    BitWidth->isIntegerConstantExpr(FieldSize, CGT.getContext());
+  assert (isBitField  && "Invalid BitField size expression");
+  uint64_t BitFieldSize =  FieldSize.getZExtValue();
+  if (ExtraBits == 0) {
+    // CurrentField is a bit-field and structure is in one of the
+    // following form.
+    // struct { char CurrentField:2; char B:4; }
+    // struct { char A; char CurrentField:2; };
+    // struct { char A; short CurrentField:2; };
+    const llvm::Type *Ty = CGT.ConvertType(FD->getType());
+    // Calculate extra bits available in this bitfield.
+    ExtraBits = CGT.getTargetData().getABITypeSizeInBits(Ty) - BitFieldSize;
+    
+    if (LLVMFields.empty()) 
+      // Ths is - struct { char CurrentField:2; char B:4; }
+      addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
+    else {
+      const llvm::Type *PrevTy = LLVMFields.back();
+      if (CGT.getTargetData().getABITypeSizeInBits(PrevTy) >=
+          CGT.getTargetData().getABITypeSizeInBits(Ty)) 
+        // This is - struct { char A; char CurrentField:2; };
+        addLLVMField(Ty, BitFieldSize, FD, 0, ExtraBits);
+      else {
+        // This is - struct { char A; short CurrentField:2; };
+        // Use one of the previous filed to access current field.
+        bool FoundPrevField = false;
+        unsigned TotalOffsets = Offsets.size();
+        uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
+        for (unsigned i = TotalOffsets; i != 0; --i) {
+          uint64_t O = Offsets[i - 1];
+          if (O % TySize == 0) {
+            // This is appropriate llvm field to share access.
+            FoundPrevField = true;
+            CurrentFieldStart = O % TySize;
+            unsigned FieldBegin = Cursor - (O % TySize);
+            unsigned FieldEnd = TySize - (FieldBegin + BitFieldSize);
+            Cursor += BitFieldSize;
+            CGT.addFieldInfo(FD, i, FieldBegin, FieldEnd);
+          }
+        }
+        assert(FoundPrevField && 
+               "Unable to find a place for bitfield in struct layout");
+      }
+    }
+  } else  if (ExtraBits >= BitFieldSize) {
+    // Reuse existing llvm field
+    ExtraBits = ExtraBits  - BitFieldSize;
+    CGT.addFieldInfo(FD, FieldNo, Cursor - CurrentFieldStart, ExtraBits);
+    Cursor = Cursor + BitFieldSize;
+    ++FieldNo;
+  } else {
+    //ExtraBits are not enough to hold entire FD.
+    const llvm::Type *Ty = CGT.ConvertType(FD->getType());
+    const llvm::Type *PrevTy = LLVMFields.back();
+    uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
+    if (CGT.getTargetData().getABITypeSizeInBits(PrevTy) >= TySize) {
+      // Previous field does not allow sharing of ExtraBits. Use new field.
+      // struct { char a; char b:5; char c:4; } where c is current FD.
+      Cursor += ExtraBits;
+      ExtraBits = 0;
+      addLLVMField(Ty, TySize, FD, 0, BitFieldSize);
+    } else
+      assert (!FD->isBitField() && "Bit fields are not yet supported");
   }
 }
