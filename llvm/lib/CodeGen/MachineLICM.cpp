@@ -215,7 +215,7 @@ void MachineLICM::MapVirtualRegisterDefs(const MachineFunction &MF) {
       const MachineInstr &MI = *II;
 
       for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
-        const MachineOperand &MO = MI.getOperand(0);
+        const MachineOperand &MO = MI.getOperand(i);
 
         if (MO.isRegister() && MO.isDef() &&
             MRegisterInfo::isVirtualRegister(MO.getReg()))
@@ -317,7 +317,17 @@ void MachineLICM::Hoist(MachineInstr &MI) {
          "The predecessor doesn't feed directly into the loop header!");
 
   // Now move the instructions to the predecessor.
-  MoveInstToEndOfBlock(MBB, MI.clone());
+  MachineInstr *NewMI = MI.clone();
+  MoveInstToEndOfBlock(MBB, NewMI);
+
+  // Update VRegDefs.
+  for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = NewMI->getOperand(i);
+
+    if (MO.isRegister() && MO.isDef() &&
+        MRegisterInfo::isVirtualRegister(MO.getReg()))
+      VRegDefs[MO.getReg()] = NewMI;
+  }
 
   // Hoisting was successful! Remove bothersome instruction now.
   MI.getParent()->remove(&MI);
