@@ -387,16 +387,24 @@ EmitOCUVectorElementExpr(const OCUVectorElementExpr *E) {
 
 LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 
+  bool isUnion = false;
   Expr *BaseExpr = E->getBase();
   llvm::Value *BaseValue = NULL;
   
   // If this is s.x, emit s as an lvalue.  If it is s->x, emit s as a scalar.
-  if (E->isArrow())
+  if (E->isArrow()) {
     BaseValue = EmitScalarExpr(BaseExpr);
+    const PointerType *PTy = 
+      cast<PointerType>(BaseExpr->getType().getCanonicalType());
+    if (PTy->getPointeeType()->isUnionType())
+      isUnion = true;
+  }
   else {
     LValue BaseLV = EmitLValue(BaseExpr);
     // FIXME: this isn't right for bitfields.
     BaseValue = BaseLV.getAddress();
+    if (BaseExpr->getType()->isUnionType())
+      isUnion = true;
   }
 
   FieldDecl *Field = E->getMemberDecl();
@@ -409,7 +417,7 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
 
   llvm::Value *V = Builder.CreateGEP(BaseValue,Idxs, Idxs + 2, "tmp");
   // Match union field type.
-  if (BaseExpr->getType()->isUnionType()) {
+  if (isUnion) {
     const llvm::Type * FieldTy = ConvertType(Field->getType());
     const llvm::PointerType * BaseTy = 
       cast<llvm::PointerType>(BaseValue->getType());

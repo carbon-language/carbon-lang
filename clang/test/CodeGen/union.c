@@ -1,12 +1,16 @@
 // RUN: clang %s -emit-llvm
 
-union {
+union u_tag {
   int a;
   float b;
 } u;
 
 void f() {
   u.b = 11;
+}
+
+float get_b(union u_tag *my_u) {
+  return my_u->b;
 }
 
 int f2( float __x ) { 
