@@ -65,6 +65,15 @@ namespace {
       return STy;
     }
 
+    /// fixCursorPosition - When bit-field is followed by a normal field
+    /// then cursor position may require some adjustments. For example,
+    /// struct { char a; short b:2;  char c; }; 
+    /// At the beginning of 'c' during layout, cursor position is 10.
+    /// However, only one llvm struct field is allocated and it is i8.
+    /// This happens because 'b' shares llvm field with 'a'.
+    /// Similar adjustment may be required if bit-field is last field.
+    void fixCursorPosition(const ASTRecordLayout &RL);
+
   private:
     CodeGenTypes &CGT;
     llvm::Type *STy;
@@ -80,6 +89,7 @@ namespace {
      uint64_t CurrentFieldStart;
     llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
     std::vector<const llvm::Type*> LLVMFields;
+    llvm::SmallVector<uint64_t, 8> Offsets;
   };
 }
 
@@ -431,8 +441,23 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
           else {
             // This is - struct { char A; short CurrentField:2; };
             // Use one of the previous filed to access current field.
-            assert(0 
-                   && "Incomplete support for struct { char a; short b:2;}; ");
+            bool FoundPrevField = false;
+            unsigned TotalOffsets = Offsets.size();
+            uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
+            for (unsigned i = TotalOffsets; i != 0; --i) {
+              uint64_t O = Offsets[i - 1];
+              if (O % TySize == 0) {
+                // This is appropriate llvm field to share access.
+                FoundPrevField = true;
+                CurrentFieldStart = O % TySize;
+                unsigned FieldBegin = Cursor - (O % TySize);
+                unsigned FieldEnd = TySize - (FieldBegin + BitFieldSize);
+                Cursor += BitFieldSize;
+                CGT.addFieldInfo(FD, FieldNo, FieldBegin, FieldEnd, i);
+              }
+            }
+            assert(FoundPrevField && 
+                   "Unable to find a place for bitfield in struct layout");
           }
         }
       } else  if (ExtraBits >= BitFieldSize) {
@@ -458,10 +483,20 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
       }
     } else {
       ExtraBits = 0;
+      // FD is not a bitfield. If prev field was a bit field then it may have
+      // positioned cursor such that it needs adjustment now.
+      if (Cursor % 8 != 0)
+        fixCursorPosition(RL);
+
       const llvm::Type *Ty = CGT.ConvertType(FD->getType());
       addLLVMField(Ty, CGT.getTargetData().getABITypeSizeInBits(Ty), FD, 0, 0);
     }
   }
+
+  // At the end of structure, cursor should point to end of the strucutre.
+  // This may not happen automatically if last field is a bit-field.
+  fixCursorPosition(RL);
+
   STy = llvm::StructType::get(LLVMFields);
 }
 
@@ -490,6 +525,7 @@ void RecordOrganizer::addLLVMField(const llvm::Type *Ty, uint64_t Size,
     // combining consequetive padding fields.
     addPaddingFields(Cursor % AlignmentInBits);
 
+  Offsets.push_back(Cursor);
   CurrentFieldStart = Cursor;
   Cursor += Size;
   LLVMFields.push_back(Ty);
@@ -533,3 +569,25 @@ void RecordOrganizer::layoutUnionFields() {
   STy = llvm::StructType::get(Fields);
 }
 
+/// fixCursorPosition - When bit-field is followed by a normal field
+/// then cursor position may require some adjustments. For example,
+/// struct { char a; short b:2;  char c; }; 
+/// At the beginning of 'c' during layout, cursor position is 10.
+/// However, only one llvm struct field is allocated so far  is i8.
+/// This happens because 'b' shares llvm field with 'a'.
+/// Similar adjustment may be required if last record field is a bit-field.
+void RecordOrganizer::fixCursorPosition(const ASTRecordLayout &RL) {
+  uint64_t llvmSize = 0;
+  for(std::vector<const llvm::Type*>::iterator LI = LLVMFields.begin(), 
+        LE = LLVMFields.end(); LI != LE; ++LI) {
+    const llvm::Type *Ty = *LI;
+    llvmSize += CGT.getTargetData().getABITypeSizeInBits(Ty);
+  }
+  Cursor = llvmSize;
+  unsigned llvmSizeBytes = llvmSize/8;
+  unsigned StructAlign = RL.getAlignment() / 8;
+  if (llvmSizeBytes % StructAlign) {
+    unsigned StructPadding = StructAlign - (llvmSizeBytes % StructAlign);
+    addPaddingFields(StructPadding*8);
+  }
+}
