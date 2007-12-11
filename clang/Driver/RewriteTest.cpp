@@ -273,6 +273,7 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
   else if (ObjcClassDecl *CD = dyn_cast<ObjcClassDecl>(D))
     RewriteForwardClassDecl(CD);
   else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    RewriteObjcQualifiedInterfaceTypes(VD);
     if (VD->getInit())
       RewriteFunctionBodyOrGlobalInitializer(VD->getInit());
   }
@@ -978,6 +979,17 @@ static bool scanForProtocolRefs(const char *startBuf, const char *endBuf,
   return false;
 }
 
+static void scanToNextArgument(const char *&argRef) {
+  int angle = 0;
+  while (*argRef != ')' && (*argRef != ',' || angle > 0)) {
+    if (*argRef == '<')
+      angle++;
+    else if (*argRef == '>')
+      angle--;
+    argRef++;
+  }
+  assert(angle == 0 && "scanToNextArgument - bad protocol type syntax");
+}
 bool RewriteTest::needToScanForQualifiers(QualType T) {
   // FIXME: we don't currently represent "id <Protocol>" in the type system.
   if (T == Context->getObjcIdType())
@@ -992,20 +1004,29 @@ bool RewriteTest::needToScanForQualifiers(QualType T) {
 }
 
 void RewriteTest::RewriteObjcQualifiedInterfaceTypes(Decl *Dcl) {
+  SourceLocation Loc;
+  QualType Type;
+  const FunctionTypeProto *proto = 0;
+  if (VarDecl *VD = dyn_cast<VarDecl>(Dcl)) {
+    Loc = VD->getLocation();
+    Type = VD->getType();
+  }
+  else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(Dcl)) {
+    Loc = FD->getLocation();
+    // Check for ObjC 'id' and class types that have been adorned with protocol
+    // information (id<p>, C<p>*). The protocol references need to be rewritten!
+    const FunctionType *funcType = FD->getType()->getAsFunctionType();
+    assert(funcType && "missing function type");
+    proto = dyn_cast<FunctionTypeProto>(funcType);
+    if (!proto)
+      return;
+    Type = proto->getResultType();
+  }
+  else
+    return;
   
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(Dcl);
-  if (!FD)
-    return;
-  // Check for ObjC 'id' and class types that have been adorned with protocol
-  // information (id<p>, C<p>*). The protocol references need to be rewritten!
-  const FunctionType *funcType = FD->getType()->getAsFunctionType();
-  assert(funcType && "missing function type");
-  const FunctionTypeProto *proto = dyn_cast<FunctionTypeProto>(funcType);
-  if (!proto)
-    return;
-  if (needToScanForQualifiers(proto->getResultType())) {
+  if (needToScanForQualifiers(Type)) {
     // Since types are unique, we need to scan the buffer.
-    SourceLocation Loc = FD->getLocation();
     
     const char *endBuf = SM->getCharacterData(Loc);
     const char *startBuf = endBuf;
@@ -1021,26 +1042,34 @@ void RewriteTest::RewriteObjcQualifiedInterfaceTypes(Decl *Dcl) {
       Rewrite.InsertText(GreaterLoc, "*/", 2);
     }
   }
+  if (!proto)
+      return; // most likely, was a variable
   // Now check arguments.
+  const char *startBuf = SM->getCharacterData(Loc);
+  const char *startFuncBuf = startBuf;
   for (unsigned i = 0; i < proto->getNumArgs(); i++) {
     if (needToScanForQualifiers(proto->getArgType(i))) {
       // Since types are unique, we need to scan the buffer.
-      SourceLocation Loc = FD->getLocation();
       
-      const char *startBuf = SM->getCharacterData(Loc);
       const char *endBuf = startBuf;
-      while (*endBuf != ';')
-        endBuf++; // scan forward (from the decl location) for argument types.
+      // scan forward (from the decl location) for argument types.
+      scanToNextArgument(endBuf);
       const char *startRef = 0, *endRef = 0;
       if (scanForProtocolRefs(startBuf, endBuf, startRef, endRef)) {
         // Get the locations of the startRef, endRef.
-        SourceLocation LessLoc = Loc.getFileLocWithOffset(startRef-startBuf);
-        SourceLocation GreaterLoc = Loc.getFileLocWithOffset(endRef-startBuf+1);
+        SourceLocation LessLoc = Loc.getFileLocWithOffset(startRef-startFuncBuf);
+        SourceLocation GreaterLoc = Loc.getFileLocWithOffset(endRef-startFuncBuf+1);
         // Comment out the protocol references.
         Rewrite.InsertText(LessLoc, "/*", 2);
         Rewrite.InsertText(GreaterLoc, "*/", 2);
       }
-    } 
+      startBuf = ++endBuf;
+    }
+    else {
+      while (*startBuf != ')' && *startBuf != ',')
+        startBuf++; // scan forward (from the decl location) for argument types.
+      startBuf++;
+    }
   }
 }
 
