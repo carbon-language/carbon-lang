@@ -204,6 +204,44 @@ llvm::Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return Builder.CreateMul(EmitScalarExpr(E->getArg(0)),
                              EmitScalarExpr(E->getArg(1)),
                              "mulps");
+  case X86::BI__builtin_ia32_pand:
+    return Builder.CreateAnd(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)),
+                             "pand");
+  case X86::BI__builtin_ia32_por:
+    return Builder.CreateAnd(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)),
+                             "por");
+  case X86::BI__builtin_ia32_pxor:
+    return Builder.CreateAnd(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)),
+                             "pxor");
+  case X86::BI__builtin_ia32_pandn:
+    llvm::Value *V1 = Builder.CreateNot(EmitScalarExpr(E->getArg(0)), "tmp");
+    return Builder.CreateAnd(V1, EmitScalarExpr(E->getArg(1)), "pandn");
+  case X86::BI__builtin_ia32_paddb:
+  case X86::BI__builtin_ia32_paddd:
+  case X86::BI__builtin_ia32_paddq:
+  case X86::BI__builtin_ia32_paddw:
+    return Builder.CreateAdd(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)), "padd");
+  case X86::BI__builtin_ia32_psubb:
+  case X86::BI__builtin_ia32_psubd:
+  case X86::BI__builtin_ia32_psubq:
+  case X86::BI__builtin_ia32_psubw:
+    return Builder.CreateSub(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)), "psub");
+  case X86::BI__builtin_ia32_pshufd: {
+    llvm::Value *V = EmitScalarExpr(E->getArg(0));
+    llvm::ConstantInt *I = 
+      cast<llvm::ConstantInt>(EmitScalarExpr(E->getArg(1)));
+    int i = I->getZExtValue();
+    
+    return EmitShuffleVector(V, V, 
+                             i & 0x3, (i & 0xc) >> 2,
+                             (i & 0x30) >> 4, (i & 0xc0) >> 6,
+                             "pshufd");
+  }
   }
 }
 
