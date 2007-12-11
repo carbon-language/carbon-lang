@@ -713,21 +713,21 @@ unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) {
   case X86::ST4: case X86::ST5: case X86::ST6: case X86::ST7:
     return RegNo-X86::ST0;
 
-  case X86::XMM0: case X86::XMM8:
+  case X86::XMM0: case X86::XMM8: case X86::MM0:
     return 0;
-  case X86::XMM1: case X86::XMM9:
+  case X86::XMM1: case X86::XMM9: case X86::MM1:
     return 1;
-  case X86::XMM2: case X86::XMM10:
+  case X86::XMM2: case X86::XMM10: case X86::MM2:
     return 2;
-  case X86::XMM3: case X86::XMM11:
+  case X86::XMM3: case X86::XMM11: case X86::MM3:
     return 3;
-  case X86::XMM4: case X86::XMM12:
+  case X86::XMM4: case X86::XMM12: case X86::MM4:
     return 4;
-  case X86::XMM5: case X86::XMM13:
+  case X86::XMM5: case X86::XMM13: case X86::MM5:
     return 5;
-  case X86::XMM6: case X86::XMM14:
+  case X86::XMM6: case X86::XMM14: case X86::MM6:
     return 6;
-  case X86::XMM7: case X86::XMM15:
+  case X86::XMM7: case X86::XMM15: case X86::MM7:
     return 7;
 
   default:
