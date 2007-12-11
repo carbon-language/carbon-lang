@@ -79,6 +79,16 @@
 		84115FFF0B66D89B00E1293E /* PPCMachOWriterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PPCMachOWriterInfo.cpp; sourceTree = "<group>"; };
 		841160000B66D8AC00E1293E /* PPCMachOWriterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCMachOWriterInfo.h; sourceTree = "<group>"; };
 		8443EF210B66B62D00959964 /* TargetMachOWriterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TargetMachOWriterInfo.h; sourceTree = "<group>"; };
+		9F4B0E5E0D0E02580061F270 /* bitreader_ocaml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = bitreader_ocaml.c; sourceTree = "<group>"; };
+		9F4B0E5F0D0E02580061F270 /* llvm_bitreader.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = llvm_bitreader.ml; sourceTree = "<group>"; };
+		9F4B0E600D0E02580061F270 /* llvm_bitreader.mli */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = llvm_bitreader.mli; sourceTree = "<group>"; };
+		9F4B0E8C0D0E05ED0061F270 /* BitReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BitReader.cpp; sourceTree = "<group>"; };
+		9F4B0E8D0D0E05ED0061F270 /* DeserializeAPFloat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DeserializeAPFloat.cpp; sourceTree = "<group>"; };
+		9F5B90CB0D0CE87100CDFDEA /* StringPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StringPool.cpp; sourceTree = "<group>"; };
+		9F5B90CE0D0CE89300CDFDEA /* AlignOf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlignOf.h; sourceTree = "<group>"; };
+		9F5B90CF0D0CE89300CDFDEA /* Registry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Registry.h; sourceTree = "<group>"; };
+		9F5B90D00D0CE89300CDFDEA /* StringPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = StringPool.h; sourceTree = "<group>"; };
+		9F5B90E70D0DF19100CDFDEA /* BitReader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BitReader.h; sourceTree = "<group>"; };
 		9F68EB010C77AD02004AA152 /* LoopPass.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LoopPass.cpp; sourceTree = "<group>"; };
 		9F68EB020C77AD02004AA152 /* MemoryDependenceAnalysis.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = MemoryDependenceAnalysis.cpp; sourceTree = "<group>"; };
 		9F68EB060C77AD2C004AA152 /* BitcodeReader.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = BitcodeReader.cpp; sourceTree = "<group>"; };
@@ -1099,6 +1109,16 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		9F4B0E5D0D0E02580061F270 /* bitreader */ = {
+			isa = PBXGroup;
+			children = (
+				9F4B0E5E0D0E02580061F270 /* bitreader_ocaml.c */,
+				9F4B0E5F0D0E02580061F270 /* llvm_bitreader.ml */,
+				9F4B0E600D0E02580061F270 /* llvm_bitreader.mli */,
+			);
+			path = bitreader;
+			sourceTree = "<group>";
+		};
 		9F68EB030C77AD2C004AA152 /* lib/Bitcode */ = {
 			isa = PBXGroup;
 			children = (
@@ -1112,10 +1132,12 @@
 		9F68EB050C77AD2C004AA152 /* Reader */ = {
 			isa = PBXGroup;
 			children = (
-				354CF6D10CD299440059AF3E /* DeserializeAPInt.cpp */,
 				35A9CDF00CD0F6D5008ABC1D /* Deserialize.cpp */,
+				9F4B0E8D0D0E05ED0061F270 /* DeserializeAPFloat.cpp */,
+				354CF6D10CD299440059AF3E /* DeserializeAPInt.cpp */,
 				9F68EB060C77AD2C004AA152 /* BitcodeReader.cpp */,
 				9F68EB070C77AD2C004AA152 /* BitcodeReader.h */,
+				9F4B0E8C0D0E05ED0061F270 /* BitReader.cpp */,
 			);
 			path = Reader;
 			sourceTree = "<group>";
@@ -1245,6 +1267,7 @@
 			isa = PBXGroup;
 			children = (
 				9F7C240B0CB81ECD00498408 /* analysis */,
+				9F4B0E5D0D0E02580061F270 /* bitreader */,
 				9FD3E5700CA0116100E54D15 /* bitwriter */,
 				9FD3E57A0CA0116100E54D15 /* llvm */,
 			);
@@ -1287,6 +1310,7 @@
 			isa = PBXGroup;
 			children = (
 				9F7C23E50CB81C2100498408 /* Analysis.h */,
+				9F5B90E70D0DF19100CDFDEA /* BitReader.h */,
 				9FD3E58D0CA0125F00E54D15 /* BitWriter.h */,
 				9FD3E58E0CA0125F00E54D15 /* Core.h */,
 				CF8F1B490B64F7AB00BB4199 /* LinkTimeOptimizer.h */,
@@ -1644,6 +1668,7 @@
 				DE66EE4408ABEDE600323D32 /* Statistic.cpp */,
 				CF8F1B510B64F86A00BB4199 /* Streams.cpp */,
 				DE66EE4508ABEDE700323D32 /* StringExtras.cpp */,
+				9F5B90CB0D0CE87100CDFDEA /* StringPool.cpp */,
 				DE66EE4608ABEDE700323D32 /* SystemUtils.cpp */,
 				DE66EE4708ABEDE700323D32 /* Timer.cpp */,
 			);
@@ -2342,6 +2367,7 @@
 			isa = PBXGroup;
 			children = (
 				DE66F27008ABF03200323D32 /* AIXDataTypesFix.h */,
+				9F5B90CE0D0CE89300CDFDEA /* AlignOf.h */,
 				CF8F1B430B64F74400BB4199 /* Allocator.h */,
 				DE66F27108ABF03200323D32 /* Annotation.h */,
 				DE66F27208ABF03200323D32 /* CallSite.h */,
@@ -2373,9 +2399,11 @@
 				DE66F28708ABF03200323D32 /* PassNameParser.h */,
 				DE66F28808ABF03200323D32 /* PatternMatch.h */,
 				DE66F28908ABF03200323D32 /* PluginLoader.h */,
+				9F5B90CF0D0CE89300CDFDEA /* Registry.h */,
 				DE66F28A08ABF03200323D32 /* SlowOperationInformer.h */,
 				DE66F28B08ABF03200323D32 /* StableBasicBlockNumbering.h */,
 				9F7794890C73D51000551F9C /* Streams.h */,
+				9F5B90D00D0CE89300CDFDEA /* StringPool.h */,
 				DE66F28C08ABF03200323D32 /* SystemUtils.h */,
 				DE66F28E08ABF03200323D32 /* Timer.h */,
 				DE66F29008ABF03200323D32 /* type_traits.h */,
