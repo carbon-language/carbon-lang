@@ -138,6 +138,101 @@ foldConstantCastPair(
                                         Type::Int64Ty);
 }
 
+static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
+  const Type *SrcTy = V->getType();
+  if (SrcTy == DestTy)
+    return V; // no-op cast
+  
+  // Check to see if we are casting a pointer to an aggregate to a pointer to
+  // the first element.  If so, return the appropriate GEP instruction.
+  if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
+    if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy)) {
+      SmallVector<Value*, 8> IdxList;
+      IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
+      const Type *ElTy = PTy->getElementType();
+      while (ElTy != DPTy->getElementType()) {
+        if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
+          if (STy->getNumElements() == 0) break;
+          ElTy = STy->getElementType(0);
+          IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
+        } else if (const SequentialType *STy = dyn_cast<SequentialType>(ElTy)) {
+          if (isa<PointerType>(ElTy)) break;  // Can't index into pointers!
+          ElTy = STy->getElementType();
+          IdxList.push_back(IdxList[0]);
+        } else {
+          break;
+        }
+      }
+      
+      if (ElTy == DPTy->getElementType())
+        return ConstantExpr::getGetElementPtr(V, &IdxList[0], IdxList.size());
+    }
+  
+  // Handle casts from one vector constant to another.  We know that the src 
+  // and dest type have the same size (otherwise its an illegal cast).
+  if (const VectorType *DestPTy = dyn_cast<VectorType>(DestTy)) {
+    if (const VectorType *SrcTy = dyn_cast<VectorType>(V->getType())) {
+      assert(DestPTy->getBitWidth() == SrcTy->getBitWidth() &&
+             "Not cast between same sized vectors!");
+      // First, check for null.  Undef is already handled.
+      if (isa<ConstantAggregateZero>(V))
+        return Constant::getNullValue(DestTy);
+      
+      if (const ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
+        // This is a cast from a ConstantVector of one type to a 
+        // ConstantVector of another type.  Check to see if all elements of 
+        // the input are simple.
+        bool AllSimpleConstants = true;
+        for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i) {
+          if (!isa<ConstantInt>(CV->getOperand(i)) &&
+              !isa<ConstantFP>(CV->getOperand(i))) {
+            AllSimpleConstants = false;
+            break;
+          }
+        }
+        
+        // If all of the elements are simple constants, we can fold this.
+        if (AllSimpleConstants)
+          return CastConstantVector(const_cast<ConstantVector*>(CV), DestPTy);
+      }
+    }
+  }
+  
+  // Finally, implement bitcast folding now.   The code below doesn't handle
+  // bitcast right.
+  if (isa<ConstantPointerNull>(V))  // ptr->ptr cast.
+    return ConstantPointerNull::get(cast<PointerType>(DestTy));
+  
+  // Handle integral constant input.
+  if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
+    if (DestTy->isInteger())
+      // Integral -> Integral. This is a no-op because the bit widths must
+      // be the same. Consequently, we just fold to V.
+      return V;
+    
+    if (DestTy->isFloatingPoint()) {
+      assert((DestTy == Type::DoubleTy || DestTy == Type::FloatTy) && 
+             "Unknown FP type!");
+      return ConstantFP::get(DestTy, APFloat(CI->getValue()));
+    }
+    // Otherwise, can't fold this (vector?)
+    return 0;
+  }
+  
+  // Handle ConstantFP input.
+  if (const ConstantFP *FP = dyn_cast<ConstantFP>(V)) {
+    // FP -> Integral.
+    if (DestTy == Type::Int32Ty) {
+      return ConstantInt::get(FP->getValueAPF().convertToAPInt());
+    } else {
+      assert(DestTy == Type::Int64Ty && "only support f32/f64 for now!");
+      return ConstantInt::get(FP->getValueAPF().convertToAPInt());
+    }
+  }
+  return 0;
+}
+
+
 Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
                                             const Type *DestTy) {
   const Type *SrcTy = V->getType();
@@ -268,100 +363,7 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, const Constant *V,
     }
     return 0;
   case Instruction::BitCast:
-    if (SrcTy == DestTy) 
-      return (Constant*)V; // no-op cast
-    
-    // Check to see if we are casting a pointer to an aggregate to a pointer to
-    // the first element.  If so, return the appropriate GEP instruction.
-    if (const PointerType *PTy = dyn_cast<PointerType>(V->getType()))
-      if (const PointerType *DPTy = dyn_cast<PointerType>(DestTy)) {
-        SmallVector<Value*, 8> IdxList;
-        IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
-        const Type *ElTy = PTy->getElementType();
-        while (ElTy != DPTy->getElementType()) {
-          if (const StructType *STy = dyn_cast<StructType>(ElTy)) {
-            if (STy->getNumElements() == 0) break;
-            ElTy = STy->getElementType(0);
-            IdxList.push_back(Constant::getNullValue(Type::Int32Ty));
-          } else if (const SequentialType *STy = 
-                     dyn_cast<SequentialType>(ElTy)) {
-            if (isa<PointerType>(ElTy)) break;  // Can't index into pointers!
-            ElTy = STy->getElementType();
-            IdxList.push_back(IdxList[0]);
-          } else {
-            break;
-          }
-        }
-
-        if (ElTy == DPTy->getElementType())
-          return ConstantExpr::getGetElementPtr(
-              const_cast<Constant*>(V), &IdxList[0], IdxList.size());
-      }
-        
-    // Handle casts from one vector constant to another.  We know that the src 
-    // and dest type have the same size (otherwise its an illegal cast).
-    if (const VectorType *DestPTy = dyn_cast<VectorType>(DestTy)) {
-      if (const VectorType *SrcTy = dyn_cast<VectorType>(V->getType())) {
-        assert(DestPTy->getBitWidth() == SrcTy->getBitWidth() &&
-               "Not cast between same sized vectors!");
-        // First, check for null and undef
-        if (isa<ConstantAggregateZero>(V))
-          return Constant::getNullValue(DestTy);
-        if (isa<UndefValue>(V))
-          return UndefValue::get(DestTy);
-
-        if (const ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
-          // This is a cast from a ConstantVector of one type to a 
-          // ConstantVector of another type.  Check to see if all elements of 
-          // the input are simple.
-          bool AllSimpleConstants = true;
-          for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i) {
-            if (!isa<ConstantInt>(CV->getOperand(i)) &&
-                !isa<ConstantFP>(CV->getOperand(i))) {
-              AllSimpleConstants = false;
-              break;
-            }
-          }
-              
-          // If all of the elements are simple constants, we can fold this.
-          if (AllSimpleConstants)
-            return CastConstantVector(const_cast<ConstantVector*>(CV), DestPTy);
-        }
-      }
-    }
-
-    // Finally, implement bitcast folding now.   The code below doesn't handle
-    // bitcast right.
-    if (isa<ConstantPointerNull>(V))  // ptr->ptr cast.
-      return ConstantPointerNull::get(cast<PointerType>(DestTy));
-
-    // Handle integral constant input.
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-      if (DestTy->isInteger())
-        // Integral -> Integral. This is a no-op because the bit widths must
-        // be the same. Consequently, we just fold to V.
-        return const_cast<Constant*>(V);
-
-      if (DestTy->isFloatingPoint()) {
-        assert((DestTy == Type::DoubleTy || DestTy == Type::FloatTy) && 
-               "Unknown FP type!");
-        return ConstantFP::get(DestTy, APFloat(CI->getValue()));
-      }
-      // Otherwise, can't fold this (vector?)
-      return 0;
-    }
-      
-    // Handle ConstantFP input.
-    if (const ConstantFP *FP = dyn_cast<ConstantFP>(V)) {
-      // FP -> Integral.
-      if (DestTy == Type::Int32Ty) {
-        return ConstantInt::get(FP->getValueAPF().convertToAPInt());
-      } else {
-        assert(DestTy == Type::Int64Ty && "only support f32/f64 for now!");
-        return ConstantInt::get(FP->getValueAPF().convertToAPInt());
-      }
-    }
-    return 0;
+    return FoldBitCast(const_cast<Constant*>(V), DestTy);
   default:
     assert(!"Invalid CE CastInst opcode");
     break;
