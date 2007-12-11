@@ -197,10 +197,14 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       TypeVals.push_back(cast<IntegerType>(T)->getBitWidth());
       break;
     case Type::PointerTyID:
-      // POINTER: [pointee type]
+      const PointerType *PTy = cast<PointerType>(T);
+      // POINTER: [pointee type] or [pointee type, address space]
       Code = bitc::TYPE_CODE_POINTER;
-      TypeVals.push_back(VE.getTypeID(cast<PointerType>(T)->getElementType()));
-      AbbrevToUse = PtrAbbrev;
+      TypeVals.push_back(VE.getTypeID(PTy->getElementType()));
+      if (unsigned AddressSpace = PTy->getAddressSpace())
+        TypeVals.push_back(AddressSpace);
+      else
+        AbbrevToUse = PtrAbbrev;
       break;
 
     case Type::FunctionTyID: {
@@ -829,9 +833,9 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     Vals.push_back(cast<LoadInst>(I).isVolatile());
     break;
   case Instruction::Store:
-    Code = bitc::FUNC_CODE_INST_STORE;
-    PushValueAndType(I.getOperand(0), InstID, Vals, VE);  // val.
-    Vals.push_back(VE.getValueID(I.getOperand(1)));       // ptr.
+    Code = bitc::FUNC_CODE_INST_STORE2;
+    PushValueAndType(I.getOperand(1), InstID, Vals, VE);  // ptrty + ptr
+    Vals.push_back(VE.getValueID(I.getOperand(0)));       // val.
     Vals.push_back(Log2_32(cast<StoreInst>(I).getAlignment())+1);
     Vals.push_back(cast<StoreInst>(I).isVolatile());
     break;

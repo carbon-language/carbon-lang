@@ -463,6 +463,7 @@ int LLLexer::LexIdentifier() {
   KEYWORD("datalayout", DATALAYOUT);
   KEYWORD("volatile", VOLATILE);
   KEYWORD("align", ALIGN);
+  KEYWORD("addrspace", ADDRSPACE);
   KEYWORD("section", SECTION);
   KEYWORD("alias", ALIAS);
   KEYWORD("module", MODULE);

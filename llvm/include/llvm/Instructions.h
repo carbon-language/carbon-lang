@@ -455,7 +455,8 @@ public:
                     Instruction *InsertBefore =0)
       : Instruction(PointerType::get(
                       checkType(getIndexedType(Ptr->getType(),
-                                               IdxBegin, IdxEnd, true))),
+                                               IdxBegin, IdxEnd, true)),
+                      cast<PointerType>(Ptr->getType())->getAddressSpace()),
                     GetElementPtr, 0, 0, InsertBefore) {
     init(Ptr, IdxBegin, IdxEnd, Name,
          typename std::iterator_traits<InputIterator>::iterator_category());
@@ -465,7 +466,8 @@ public:
                     const std::string &Name, BasicBlock *InsertAtEnd)
       : Instruction(PointerType::get(
                       checkType(getIndexedType(Ptr->getType(),
-                                               IdxBegin, IdxEnd, true))),
+                                               IdxBegin, IdxEnd, true)),
+                      cast<PointerType>(Ptr->getType())->getAddressSpace()),
                     GetElementPtr, 0, 0, InsertAtEnd) {
     init(Ptr, IdxBegin, IdxEnd, Name,
          typename std::iterator_traits<InputIterator>::iterator_category());

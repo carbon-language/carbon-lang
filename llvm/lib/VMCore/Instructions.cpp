@@ -937,7 +937,8 @@ void GetElementPtrInst::init(Value *Ptr, Value *Idx) {
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const std::string &Name, Instruction *InBe)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx))),
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx)),
+                      cast<PointerType>(Ptr->getType())->getAddressSpace()),
                 GetElementPtr, 0, 0, InBe) {
   init(Ptr, Idx);
   setName(Name);
@@ -945,7 +946,8 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
 
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const std::string &Name, BasicBlock *IAE)
-  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx))),
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx)),
+                      cast<PointerType>(Ptr->getType())->getAddressSpace()),
                 GetElementPtr, 0, 0, IAE) {
   init(Ptr, Idx);
   setName(Name);

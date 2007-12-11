@@ -46,7 +46,7 @@ namespace bitc {
     MODULE_CODE_SECTIONNAME = 5,    // SECTIONNAME: [strchr x N]
     MODULE_CODE_DEPLIB      = 6,    // DEPLIB:      [strchr x N]
 
-    // GLOBALVAR: [type, isconst, initid, 
+    // GLOBALVAR: [pointer type, isconst, initid, 
     //             linkage, alignment, section, visibility, threadlocal]
     MODULE_CODE_GLOBALVAR   = 7,
 
@@ -194,9 +194,13 @@ namespace bitc {
     FUNC_CODE_INST_FREE        = 18, // FREE:       [opty, op]
     FUNC_CODE_INST_ALLOCA      = 19, // ALLOCA:     [instty, op, align]
     FUNC_CODE_INST_LOAD        = 20, // LOAD:       [opty, op, align, vol]
-    FUNC_CODE_INST_STORE       = 21, // STORE:      [ptrty,val,ptr, align, vol]
+    FUNC_CODE_INST_STORE       = 21, // STORE:      [valty,val,ptr, align, vol]
     FUNC_CODE_INST_CALL        = 22, // CALL:       [attr, fnty, fnid, args...]
-    FUNC_CODE_INST_VAARG       = 23  // VAARG:      [valistty, valist, instty]
+    FUNC_CODE_INST_VAARG       = 23, // VAARG:      [valistty, valist, instty]
+    // This store code encodes the pointer type, rather than the value type
+    // this is so information only available in the pointer type (e.g. address
+    // spaces) is retained.
+    FUNC_CODE_INST_STORE2      = 24 // STORE:      [ptrty,ptr,val, align, vol]
   };
 } // End bitc namespace
 } // End llvm namespace

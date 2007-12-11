@@ -363,12 +363,17 @@ public:
 ///
 class PointerType : public SequentialType {
   friend class TypeMap<PointerValType, PointerType>;
+  unsigned AddressSpace;
+  
   PointerType(const PointerType &);                   // Do not implement
   const PointerType &operator=(const PointerType &);  // Do not implement
-  explicit PointerType(const Type *ElType);
+  explicit PointerType(const Type *ElType, unsigned AddrSpace);
 public:
   /// PointerType::get - This is the only way to construct a new pointer type.
-  static PointerType *get(const Type *ElementType);
+  static PointerType *get(const Type *ElementType, unsigned AddressSpace = 0);
+  
+  /// @brief Return the address space of the Pointer type.
+  inline unsigned getAddressSpace() const { return AddressSpace; }
 
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);

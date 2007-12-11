@@ -85,8 +85,9 @@ void GlobalValue::destroyConstant() {
 
 GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
                                Constant *InitVal, const std::string &Name,
-                               Module *ParentModule, bool ThreadLocal)
-  : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal,
+                               Module *ParentModule, bool ThreadLocal, 
+                               unsigned AddressSpace)
+  : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
                 &Initializer, InitVal != 0, Link, Name),
     isConstantGlobal(constant), isThreadLocalSymbol(ThreadLocal) {
   if (InitVal) {
@@ -105,8 +106,9 @@ GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
 
 GlobalVariable::GlobalVariable(const Type *Ty, bool constant, LinkageTypes Link,
                                Constant *InitVal, const std::string &Name,
-                               GlobalVariable *Before, bool ThreadLocal)
-  : GlobalValue(PointerType::get(Ty), Value::GlobalVariableVal,
+                               GlobalVariable *Before, bool ThreadLocal,
+                               unsigned AddressSpace)
+  : GlobalValue(PointerType::get(Ty, AddressSpace), Value::GlobalVariableVal,
                 &Initializer, InitVal != 0, Link, Name), 
     isConstantGlobal(constant), isThreadLocalSymbol(ThreadLocal) {
   if (InitVal) {

@@ -338,7 +338,10 @@ static std::string getTypeDescription(const Type *Ty,
   }
   case Type::PointerTyID: {
     const PointerType *PTy = cast<PointerType>(Ty);
-    Result = getTypeDescription(PTy->getElementType(), TypeStack) + " *";
+    Result = getTypeDescription(PTy->getElementType(), TypeStack);
+    if (unsigned AddressSpace = PTy->getAddressSpace())
+      Result += " addrspace(" + utostr(AddressSpace) + ")";
+    Result += " *";
     break;
   }
   case Type::ArrayTyID: {
@@ -492,7 +495,9 @@ VectorType::VectorType(const Type *ElType, unsigned NumEl)
 }
 
 
-PointerType::PointerType(const Type *E) : SequentialType(PointerTyID, E) {
+PointerType::PointerType(const Type *E, unsigned AddrSpace)
+  : SequentialType(PointerTyID, E) {
+  AddressSpace = AddrSpace;
   // Calculate whether or not this type is abstract
   setAbstract(E->isAbstract());
 }
@@ -634,8 +639,9 @@ static bool TypesEqual(const Type *Ty, const Type *Ty2,
     const IntegerType *ITy2 = cast<IntegerType>(Ty2);
     return ITy->getBitWidth() == ITy2->getBitWidth();
   } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-    return TypesEqual(PTy->getElementType(),
-                      cast<PointerType>(Ty2)->getElementType(), EqTypes);
+    const PointerType *PTy2 = cast<PointerType>(Ty2);
+    return PTy->getAddressSpace() == PTy2->getAddressSpace() &&
+           TypesEqual(PTy->getElementType(), PTy2->getElementType(), EqTypes);
   } else if (const StructType *STy = dyn_cast<StructType>(Ty)) {
     const StructType *STy2 = cast<StructType>(Ty2);
     if (STy->getNumElements() != STy2->getNumElements()) return false;
@@ -755,6 +761,9 @@ static unsigned getSubElementHash(const Type *Ty) {
       break;
     case Type::StructTyID:
       HashVal ^= cast<StructType>(SubTy)->getNumElements();
+      break;
+    case Type::PointerTyID:
+      HashVal ^= cast<PointerType>(SubTy)->getAddressSpace();
       break;
     }
   }
@@ -1251,11 +1260,12 @@ StructType *StructType::get(const std::vector<const Type*> &ETypes,
 namespace llvm {
 class PointerValType {
   const Type *ValTy;
+  unsigned AddressSpace;
 public:
-  PointerValType(const Type *val) : ValTy(val) {}
+  PointerValType(const Type *val, unsigned as) : ValTy(val), AddressSpace(as) {}
 
   static PointerValType get(const PointerType *PT) {
-    return PointerValType(PT->getElementType());
+    return PointerValType(PT->getElementType(), PT->getAddressSpace());
   }
 
   static unsigned hashTypeStructure(const PointerType *PT) {
@@ -1263,25 +1273,26 @@ public:
   }
 
   bool operator<(const PointerValType &MTV) const {
-    return ValTy < MTV.ValTy;
+    if (AddressSpace < MTV.AddressSpace) return true;
+    return AddressSpace == MTV.AddressSpace && ValTy < MTV.ValTy;
   }
 };
 }
 
 static ManagedStatic<TypeMap<PointerValType, PointerType> > PointerTypes;
 
-PointerType *PointerType::get(const Type *ValueType) {
+PointerType *PointerType::get(const Type *ValueType, unsigned AddressSpace) {
   assert(ValueType && "Can't get a pointer to <null> type!");
   assert(ValueType != Type::VoidTy &&
          "Pointer to void is not valid, use sbyte* instead!");
   assert(ValueType != Type::LabelTy && "Pointer to label is not valid!");
-  PointerValType PVT(ValueType);
+  PointerValType PVT(ValueType, AddressSpace);
 
   PointerType *PT = PointerTypes->get(PVT);
   if (PT) return PT;
 
   // Value not found.  Derive a new type!
-  PointerTypes->add(PVT, PT = new PointerType(ValueType));
+  PointerTypes->add(PVT, PT = new PointerType(ValueType, AddressSpace));
 
 #ifdef DEBUG_MERGE_TYPES
   DOUT << "Derived new type: " << *PT << "\n";

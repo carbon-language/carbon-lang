@@ -491,7 +491,8 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
    if (const FunctionType *FTy = dyn_cast<FunctionType>(ElTy))
      V = new Function(FTy, GlobalValue::ExternalLinkage);
    else
-     V = new GlobalVariable(ElTy, false, GlobalValue::ExternalLinkage);
+     V = new GlobalVariable(ElTy, false, GlobalValue::ExternalLinkage, 0, "",
+                            (Module*)0, false, PTy->getAddressSpace());
    break;
   }
   default:
@@ -722,13 +723,14 @@ ParseGlobalVariable(std::string *NameStr,
                     GlobalValue::LinkageTypes Linkage,
                     GlobalValue::VisibilityTypes Visibility,
                     bool isConstantGlobal, const Type *Ty,
-                    Constant *Initializer, bool IsThreadLocal) {
+                    Constant *Initializer, bool IsThreadLocal,
+                    unsigned AddressSpace = 0) {
   if (isa<FunctionType>(Ty)) {
     GenerateError("Cannot declare global vars of function type");
     return 0;
   }
 
-  const PointerType *PTy = PointerType::get(Ty);
+  const PointerType *PTy = PointerType::get(Ty, AddressSpace);
 
   std::string Name;
   if (NameStr) {
@@ -780,7 +782,7 @@ ParseGlobalVariable(std::string *NameStr,
   // Otherwise there is no existing GV to use, create one now.
   GlobalVariable *GV =
     new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name,
-                       CurModule.CurrentModule, IsThreadLocal);
+                       CurModule.CurrentModule, IsThreadLocal, AddressSpace);
   GV->setVisibility(Visibility);
   InsertValue(GV, CurModule.Values);
   return GV;
@@ -1054,7 +1056,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %token DECLARE DEFINE GLOBAL CONSTANT SECTION ALIAS VOLATILE THREAD_LOCAL
 %token TO DOTDOTDOT NULL_TOK UNDEF INTERNAL LINKONCE WEAK APPENDING
 %token DLLIMPORT DLLEXPORT EXTERN_WEAK
-%token OPAQUE EXTERNAL TARGET TRIPLE ALIGN
+%token OPAQUE EXTERNAL TARGET TRIPLE ALIGN ADDRSPACE
 %token DEPLIBS CALL TAIL ASM_TOK MODULE SIDEEFFECT
 %token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK X86_STDCALLCC_TOK X86_FASTCALLCC_TOK
 %token DATALAYOUT
@@ -1268,6 +1270,7 @@ OptCAlign : /*empty*/            { $$ = 0; } |
 };
 
 
+
 SectionString : SECTION STRINGCONSTANT {
   for (unsigned i = 0, e = $2->length(); i != e; ++i)
     if ((*$2)[i] == '"' || (*$2)[i] == '\\')
@@ -1317,6 +1320,13 @@ Types
     if (*$1 == Type::LabelTy)
       GEN_ERROR("Cannot form a pointer to a basic block");
     $$ = new PATypeHolder(HandleUpRefs(PointerType::get(*$1)));
+    delete $1;
+    CHECK_FOR_ERROR
+  }
+  | Types ADDRSPACE '(' EUINT64VAL ')' '*' {             // Pointer type?
+    if (*$1 == Type::LabelTy)
+      GEN_ERROR("Cannot form a pointer to a basic block");
+    $$ = new PATypeHolder(HandleUpRefs(PointerType::get(*$1, $4)));
     delete $1;
     CHECK_FOR_ERROR
   }
@@ -2069,6 +2079,17 @@ Definition
       GEN_ERROR("Global value initializer is not a constant");
     CurGV = ParseGlobalVariable($1, GlobalValue::ExternalLinkage,
                                 $2, $4, $5->getType(), $5, $3);
+    CHECK_FOR_ERROR
+  } GlobalVarAttributes {
+    CurGV = 0;
+  }
+  | OptGlobalAssign GVVisibilityStyle ThreadLocal GlobalType ConstVal
+    ADDRSPACE '(' EUINT64VAL ')' { 
+    /* "Externally Visible" Linkage with address space qualifier */
+    if ($5 == 0) 
+      GEN_ERROR("Global value initializer is not a constant");
+    CurGV = ParseGlobalVariable($1, GlobalValue::ExternalLinkage,
+                                $2, $4, $5->getType(), $5, $3, $8);
     CHECK_FOR_ERROR
   } GlobalVarAttributes {
     CurGV = 0;

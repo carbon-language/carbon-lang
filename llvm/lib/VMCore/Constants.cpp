@@ -1860,7 +1860,8 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C, Value* const *Idxs,
   const Type *Ty = 
     GetElementPtrInst::getIndexedType(C->getType(), Idxs, Idxs+NumIdx, true);
   assert(Ty && "GEP indices invalid!");
-  return getGetElementPtrTy(PointerType::get(Ty), C, Idxs, NumIdx);
+  unsigned As = cast<PointerType>(C->getType())->getAddressSpace();
+  return getGetElementPtrTy(PointerType::get(Ty, As), C, Idxs, NumIdx);
 }
 
 Constant *ConstantExpr::getGetElementPtr(Constant *C, Constant* const *Idxs,

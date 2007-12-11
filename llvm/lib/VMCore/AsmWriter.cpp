@@ -334,11 +334,15 @@ static void calcTypeName(const Type *Ty,
       Result += '>';
     break;
   }
-  case Type::PointerTyID:
-    calcTypeName(cast<PointerType>(Ty)->getElementType(),
+  case Type::PointerTyID: {
+    const PointerType *PTy = cast<PointerType>(Ty);
+    calcTypeName(PTy->getElementType(),
                           TypeStack, TypeNames, Result);
+    if (unsigned AddressSpace = PTy->getAddressSpace())
+      Result += " addrspace(" + utostr(AddressSpace) + ")";
     Result += "*";
     break;
+  }
   case Type::ArrayTyID: {
     const ArrayType *ATy = cast<ArrayType>(Ty);
     Result += "[" + utostr(ATy->getNumElements()) + " x ";
@@ -951,6 +955,9 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     writeOperand(GV->getInitializer(), false);
   }
 
+  if (unsigned AddressSpace = GV->getType()->getAddressSpace())
+    Out << " addrspace(" << AddressSpace << ") ";
+    
   if (GV->hasSection())
     Out << ", section \"" << GV->getSection() << '"';
   if (GV->getAlignment())

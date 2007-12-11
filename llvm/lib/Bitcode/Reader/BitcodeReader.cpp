@@ -323,11 +323,16 @@ bool BitcodeReader::ParseTypeTable() {
       
       ResultTy = IntegerType::get(Record[0]);
       break;
-    case bitc::TYPE_CODE_POINTER:   // POINTER: [pointee type]
+    case bitc::TYPE_CODE_POINTER: { // POINTER: [pointee type] or 
+                                    //          [pointee type, address space]
       if (Record.size() < 1)
         return Error("Invalid POINTER type record");
-      ResultTy = PointerType::get(getTypeByID(Record[0], true));
+      unsigned AddressSpace = 0;
+      if (Record.size() == 2)
+        AddressSpace = Record[1];
+      ResultTy = PointerType::get(getTypeByID(Record[0], true), AddressSpace);
       break;
+    }
     case bitc::TYPE_CODE_FUNCTION: {
       // FIXME: attrid is dead, remove it in LLVM 3.0
       // FUNCTION: [vararg, attrid, retty, paramty x N]
@@ -982,7 +987,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       CollectorTable.push_back(S);
       break;
     }
-    // GLOBALVAR: [type, isconst, initid, 
+    // GLOBALVAR: [pointer type, isconst, initid,
     //             linkage, alignment, section, visibility, threadlocal]
     case bitc::MODULE_CODE_GLOBALVAR: {
       if (Record.size() < 6)
@@ -990,6 +995,7 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       const Type *Ty = getTypeByID(Record[0]);
       if (!isa<PointerType>(Ty))
         return Error("Global not a pointer type!");
+      unsigned AddressSpace = cast<PointerType>(Ty)->getAddressSpace();
       Ty = cast<PointerType>(Ty)->getElementType();
       
       bool isConstant = Record[1];
@@ -1009,7 +1015,8 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
         isThreadLocal = Record[7];
 
       GlobalVariable *NewGV =
-        new GlobalVariable(Ty, isConstant, Linkage, 0, "", TheModule);
+        new GlobalVariable(Ty, isConstant, Linkage, 0, "", TheModule, 
+                           isThreadLocal, AddressSpace);
       NewGV->setAlignment(Alignment);
       if (!Section.empty())
         NewGV->setSection(Section);
@@ -1485,7 +1492,20 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       I = new LoadInst(Op, "", Record[OpNum+1], (1 << Record[OpNum]) >> 1);
       break;
     }
+    case bitc::FUNC_CODE_INST_STORE2: { // STORE2:[ptrty, ptr, val, align, vol]
+      unsigned OpNum = 0;
+      Value *Val, *Ptr;
+      if (getValueTypePair(Record, OpNum, NextValueNo, Ptr) ||
+          getValue(Record, OpNum, 
+                    cast<PointerType>(Ptr->getType())->getElementType(), Val) ||
+          OpNum+2 != Record.size())
+        return Error("Invalid STORE record");
+      
+      I = new StoreInst(Val, Ptr, Record[OpNum+1], (1 << Record[OpNum]) >> 1);
+      break;
+    }
     case bitc::FUNC_CODE_INST_STORE: { // STORE:[val, valty, ptr, align, vol]
+      // FIXME: Legacy form of store instruction. Should be removed in LLVM 3.0.
       unsigned OpNum = 0;
       Value *Val, *Ptr;
       if (getValueTypePair(Record, OpNum, NextValueNo, Val) ||
