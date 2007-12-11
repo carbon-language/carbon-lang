@@ -66,12 +66,16 @@ namespace {
     }
 
     /// fixCursorPosition - When bit-field is followed by a normal field
-    /// then cursor position may require some adjustments. For example,
-    /// struct { char a; short b:2;  char c; }; 
-    /// At the beginning of 'c' during layout, cursor position is 10.
-    /// However, only one llvm struct field is allocated and it is i8.
-    /// This happens because 'b' shares llvm field with 'a'.
-    /// Similar adjustment may be required if bit-field is last field.
+    /// cursor position may require some adjustments. 
+    ///
+    /// For example,          struct { char a; short b:2;  char c; }; 
+    ///
+    /// At the beginning of field 'c' layout, cursor position is 10.
+    /// However, only llvm struct field allocated so far is of type i8.
+    /// This happens because 'b' shares llvm field with 'a'. Add padding
+    /// field of i8 type and reposition cursor to point at 16. This 
+    /// should be done only if next field (i.e. 'c' here) is not a bit-field
+    /// or last record field is a bit-field.
     void fixCursorPosition(const ASTRecordLayout &RL);
 
   private:
@@ -570,12 +574,16 @@ void RecordOrganizer::layoutUnionFields() {
 }
 
 /// fixCursorPosition - When bit-field is followed by a normal field
-/// then cursor position may require some adjustments. For example,
-/// struct { char a; short b:2;  char c; }; 
-/// At the beginning of 'c' during layout, cursor position is 10.
-/// However, only one llvm struct field is allocated so far  is i8.
-/// This happens because 'b' shares llvm field with 'a'.
-/// Similar adjustment may be required if last record field is a bit-field.
+/// cursor position may require some adjustments. 
+///
+/// For example,          struct { char a; short b:2;  char c; }; 
+///
+/// At the beginning of field 'c' layout, cursor position is 10.
+/// However, only llvm struct field allocated so far is of type i8.
+/// This happens because 'b' shares llvm field with 'a'. Add padding
+/// field of i8 type and reposition cursor to point at 16. This 
+/// should be done only if next field (i.e. 'c' here) is not a bit-field
+/// or last record field is a bit-field.
 void RecordOrganizer::fixCursorPosition(const ASTRecordLayout &RL) {
   uint64_t llvmSize = 0;
   for(std::vector<const llvm::Type*>::iterator LI = LLVMFields.begin(), 
