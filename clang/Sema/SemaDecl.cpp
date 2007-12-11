@@ -356,12 +356,12 @@ Sema::DeclTy *Sema::ParsedFreeStandingDeclSpec(Scope *S, DeclSpec &DS) {
 
 bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic, 
                                   QualType DeclType) {
-  SourceLocation loc = Init->getLocStart();
-  
   // FIXME: Remove the isReferenceType check and handle assignment
   // to a reference.
+  SourceLocation loc;
   if (isStatic && !DeclType->isReferenceType() &&
       !Init->isConstantExpr(Context, &loc)) { // C99 6.7.8p4.
+    assert(loc.isValid() && "isConstantExpr didn't return a loc!");
     Diag(loc, diag::err_init_element_not_constant, Init->getSourceRange());
     return true;
   }
@@ -382,27 +382,27 @@ bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic,
     // char s[] = "abc", which is identical to char s[] = { 'a', 'b', 'c' };
     if (rhsType == Context.getPointerType(Context.CharTy))
       break;
-    Diag(loc, diag::err_typecheck_assign_incompatible, 
+    Diag(Init->getLocStart(), diag::err_typecheck_assign_incompatible, 
          DeclType.getAsString(), rhsType.getAsString(), 
          Init->getSourceRange());
     return true;
   case PointerFromInt:
-    Diag(loc, diag::ext_typecheck_assign_pointer_int,
+    Diag(Init->getLocStart(), diag::ext_typecheck_assign_pointer_int,
          DeclType.getAsString(), rhsType.getAsString(), 
          Init->getSourceRange());
     break;
   case IntFromPointer: 
-    Diag(loc, diag::ext_typecheck_assign_pointer_int, 
+    Diag(Init->getLocStart(), diag::ext_typecheck_assign_pointer_int, 
          DeclType.getAsString(), rhsType.getAsString(), 
          Init->getSourceRange());
     break;
   case IncompatiblePointer:
-    Diag(loc, diag::ext_typecheck_assign_incompatible_pointer,
+    Diag(Init->getLocStart(), diag::ext_typecheck_assign_incompatible_pointer,
          DeclType.getAsString(), rhsType.getAsString(), 
          Init->getSourceRange());
     break;
   case CompatiblePointerDiscardsQualifiers:
-    Diag(loc, diag::ext_typecheck_assign_discards_qualifiers,
+    Diag(Init->getLocStart(), diag::ext_typecheck_assign_discards_qualifiers,
          DeclType.getAsString(), rhsType.getAsString(), 
          Init->getSourceRange());
     break;
@@ -413,14 +413,16 @@ bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic,
 bool Sema::CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,
                          bool isStatic, QualType ElementType) {
   SourceLocation loc;
-  Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
-
   if (isStatic && !expr->isConstantExpr(Context, &loc)) { // C99 6.7.8p4.
+    assert(loc.isValid() && "isConstantExpr didn't return a loc!");
     Diag(loc, diag::err_init_element_not_constant, expr->getSourceRange());
     return true;
-  } else if (CheckSingleInitializer(expr, isStatic, ElementType)) {
-    return true; // types weren't compatible.
   }
+    
+  Expr *savExpr = expr; // Might be promoted by CheckSingleInitializer.
+  if (CheckSingleInitializer(expr, isStatic, ElementType))
+    return true; // types weren't compatible.
+  
   if (savExpr != expr) // The type was promoted, update initializer list.
     IList->setInit(slot, expr);
   return false;
