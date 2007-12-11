@@ -183,6 +183,8 @@ FunctionPass *llvm::createMachineLICMPass() { return new MachineLICM(); }
 bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   if (!PerformLICM) return false; // For debugging.
 
+  DOUT << "******** Machine LICM ********\n";
+
   Changed = false;
   CurMF = &MF;
   TII = CurMF->getTarget().getInstrInfo();
@@ -195,13 +197,12 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
 
   for (MachineLoopInfo::iterator
          I = LI->begin(), E = LI->end(); I != E; ++I) {
-    MachineLoop *L = *I;
-    CurLoop = L;
+    CurLoop = *I;
 
     // Visit all of the instructions of the loop. We want to visit the subloops
     // first, though, so that we can hoist their invariants first into their
     // containing loop before we process that loop.
-    VisitAllLoops(L);
+    VisitAllLoops(CurLoop);
   }
 
   return Changed;
