@@ -373,13 +373,12 @@ unsigned CodeGenTypes::getLLVMFieldNo(const FieldDecl *FD) {
 
 /// addFieldInfo - Assign field number to field FD.
 void CodeGenTypes::addFieldInfo(const FieldDecl *FD, unsigned No,
-                                unsigned Begin, unsigned End,
-                                unsigned AccessNo) {
+                                unsigned Begin, unsigned End) {
   if (Begin == 0 && End == 0)
     FieldInfo[FD] = No;
   else
     // FD is a bit field
-    BitFields.insert(std::make_pair(FD, BitFieldInfo(No, Begin, End, AccessNo)));
+    BitFields.insert(std::make_pair(FD, BitFieldInfo(No, Begin, End)));
 }
 
 /// getCGRecordLayout - Return record layout info for the given llvm::Type.
@@ -457,7 +456,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
                 unsigned FieldBegin = Cursor - (O % TySize);
                 unsigned FieldEnd = TySize - (FieldBegin + BitFieldSize);
                 Cursor += BitFieldSize;
-                CGT.addFieldInfo(FD, FieldNo, FieldBegin, FieldEnd, i);
+                CGT.addFieldInfo(FD, i, FieldBegin, FieldEnd);
               }
             }
             assert(FoundPrevField && 
@@ -467,8 +466,7 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
       } else  if (ExtraBits >= BitFieldSize) {
         // Reuse existing llvm field
         ExtraBits = ExtraBits  - BitFieldSize;
-        CGT.addFieldInfo(FD, FieldNo, Cursor - CurrentFieldStart,
-                         ExtraBits, FieldNo);
+        CGT.addFieldInfo(FD, FieldNo, Cursor - CurrentFieldStart, ExtraBits);
         Cursor = Cursor + BitFieldSize;
         ++FieldNo;
       } else {
@@ -534,7 +532,7 @@ void RecordOrganizer::addLLVMField(const llvm::Type *Ty, uint64_t Size,
   Cursor += Size;
   LLVMFields.push_back(Ty);
   if (FD)
-    CGT.addFieldInfo(FD, FieldNo, Begin, End, FieldNo);
+    CGT.addFieldInfo(FD, FieldNo, Begin, End);
   ++FieldNo;
 }
 
@@ -546,7 +544,7 @@ void RecordOrganizer::layoutUnionFields() {
   unsigned PrimaryEltNo = 0;
   std::pair<uint64_t, unsigned> PrimaryElt =
     CGT.getContext().getTypeInfo(FieldDecls[0]->getType(), SourceLocation());
-  CGT.addFieldInfo(FieldDecls[0], 0, 0, 0, 0);
+  CGT.addFieldInfo(FieldDecls[0], 0, 0, 0);
 
   unsigned Size = FieldDecls.size();
   for(unsigned i = 1; i != Size; ++i) {
@@ -564,7 +562,7 @@ void RecordOrganizer::layoutUnionFields() {
     }
 
     // In union, each field gets first slot.
-    CGT.addFieldInfo(FD, 0, 0, 0, 0);
+    CGT.addFieldInfo(FD, 0, 0, 0);
   }
 
   std::vector<const llvm::Type*> Fields;
