@@ -36,8 +36,10 @@
     </ul>
   </li>
 
-  <li><a href="#intrinsics">Collection intrinsics</a>
+  <li><a href="#core">Core support</a>
     <ul>
+    <li><a href="#gcattr">Specifying GC code generation:
+      <tt>gc "..."</tt></a></li>
     <li><a href="#gcroot">Identifying GC roots on the stack:
       <tt>llvm.gcroot</tt></a></li>
     <li><a href="#barriers">Reading and writing references in the heap</a>
@@ -198,11 +200,12 @@ garbage collector implementations in two manners:</p>
 
 <ul>
   <li>Emitting compatible code, including initialization in the main
-      program.</li>
+      program if necessary.</li>
   <li>Loading a compiler plugin if the collector is not statically linked with
       your compiler. For <tt>llc</tt>, use the <tt>-load</tt> option.</li>
-  <li>Selecting the collection algorithm with <tt>llc -gc=</tt> or by setting 
-      <tt>llvm::TheCollector</tt>.</li>
+  <li>Selecting the collection algorithm by applying the <tt>gc "..."</tt> 
+      attribute to your garbage collected functions, or equivalently with
+      the <tt>setCollector</tt> method.</li>
   <li>Linking your final executable with the garbage collector runtime.</li>
 </ul>
 
@@ -211,7 +214,7 @@ garbage collector implementations in two manners:</p>
 <table>
   <tr>
     <th>Collector</th>
-    <th><tt>llc</tt> arguments</th>
+    <th><tt>gc</tt> attribute</th>
     <th>Linkage</th>
     <th><tt>gcroot</tt></th>
     <th><tt>gcread</tt></th>
@@ -219,7 +222,7 @@ garbage collector implementations in two manners:</p>
   </tr>
   <tr valign="baseline">
     <td><a href="#semispace">SemiSpace</a></td>
-    <td><tt>-gc=shadow-stack</tt></td>
+    <td><tt>gc "shadow-stack"</tt></td>
     <td>TODO FIXME</td>
     <td>required</td>
     <td>optional</td>
@@ -227,7 +230,7 @@ garbage collector implementations in two manners:</p>
   </tr>
   <tr valign="baseline">
     <td><a href="#ocaml">Ocaml</a></td>
-    <td><tt>-gc=ocaml</tt></td>
+    <td><tt>gc "ocaml"</tt></td>
     <td><i>provided by ocamlopt</i></td>
     <td>required</td>
     <td>optional</td>
@@ -252,11 +255,12 @@ collectors may require user programs to utilize.</p>
 
 <div class="doc_text">
 
-<p>The ShadowStack collector is invoked with <tt>llc -gc=shadow-stack</tt>.
+<p>The ShadowStack backend is invoked with the <tt>gc "shadow-stack"</tt>
+function attribute.
 Unlike many collectors which rely on a cooperative code generator to generate
 stack maps, this algorithm carefully maintains a linked list of stack root
 descriptors [<a href="#henderson02">Henderson2002</a>]. This so-called "shadow
-stack," mirrors the machine stack. Maintaining this data structure is slower
+stack" mirrors the machine stack. Maintaining this data structure is slower
 than using stack maps, but has a significant portability advantage because it
 requires no special support from the target code generator.</p>
 
@@ -264,7 +268,7 @@ requires no special support from the target code generator.</p>
 program may use <tt>load</tt> and <tt>store</tt> instead of <tt>llvm.gcread</tt>
 and <tt>llvm.gcwrite</tt>.</p>
 
-<p>The ShadowStack collector is a compiler plugin only. It must be paired with a
+<p>ShadowStack is a code generator plugin only. It must be paired with a
 compatible runtime.</p>
 
 </div>
@@ -277,8 +281,7 @@ compatible runtime.</p>
 <div class="doc_text">
 
 <p>The SemiSpace runtime implements with the <a href="runtime">suggested
-runtime interface</a> and is compatible the ShadowStack collector's code
-generation.</p>
+runtime interface</a> and is compatible the ShadowStack backend.</p>
 
 <p>SemiSpace is a very simple copying collector. When it starts up, it
 allocates two blocks of memory for the heap. It uses a simple bump-pointer
@@ -302,7 +305,8 @@ Enhancements would be welcomed.</p>
 
 <div class="doc_text">
 
-<p>The ocaml collector is invoked with <tt>llc -gc=ocaml</tt>. It supports the
+<p>The ocaml backend is invoked with the <tt>gc "ocaml"</tt> function attribute.
+It supports the
 <a href="http://caml.inria.fr/">Objective Caml</a> language runtime by emitting
 a type-accurate stack map in the form of an ocaml 3.10.0-compatible frametable.
 The linkage requirements are satisfied automatically by the <tt>ocamlopt</tt>
@@ -317,7 +321,7 @@ may use <tt>load</tt> and <tt>store</tt> instead of <tt>llvm.gcread</tt> and
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="intrinsics">Collection intrinsics</a>
+  <a name="core">Core support</a>
 </div>
 <!-- *********************************************************************** -->
 
@@ -332,6 +336,27 @@ Notably, heap allocation is not among the supplied primitives. A user program
 will also need to interface with the runtime, using either the
 <a href="#runtime">suggested runtime interface</a> or another interface
 specified by the runtime.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="gcattr">Specifying GC code generation: <tt>gc "..."</tt></a>
+</div>
+
+<div class="doc_code"><tt>
+  define <i>ty</i> @<i>name</i>(...) <u>gc "<i>collector</i>"</u> { ...
+</tt></div>
+
+<div class="doc_text">
+
+<p>The <tt>gc</tt> function attribute is used to specify the desired collector
+algorithm to the compiler. It is equivalent to specify the collector name
+programmatically using the <tt>setCollector</tt> method of
+<tt>Function</tt>.</p>
+
+<p>Specifying the collector on a per-function basis allows LLVM to link together
+programs which use different garbage collection algorithms.</p>
 
 </div>
 
@@ -591,6 +616,10 @@ TODO
 
 <div class="doc_text">
 
+<p>User code specifies which collector plugin to use with the <tt>gc</tt>
+function attribute or, equivalently, with the <tt>setCollector</tt> method of
+<tt>Function</tt>.</p>
+
 <p>To implement a collector plugin, it is necessary to subclass
 <tt>llvm::Collector</tt>, which can be accomplished in a few lines of
 boilerplate code. LLVM's infrastructure provides access to several important
@@ -616,7 +645,7 @@ namespace {
   };
   
   CollectorRegistry::Add&lt;MyCollector&gt;
-  X("mygc", "My custom garbage collector.");
+  X("mygc", "My bespoke garbage collector.");
 }</pre></blockquote>
 
 <p>Using the LLVM makefiles (like the <a
@@ -632,20 +661,20 @@ LOADABLE_MODULE = 1
 
 include $(LEVEL)/Makefile.common</pre></blockquote>
 
-<blockquote><pre
-></pre></blockquote>
-
-<p>Once the plugin is compiled, user code may be compiled using <tt>llc
--load=<var>MyGC.so</var> -gc=mygc</tt> (though <var>MyGC.so</var> may have some
-other platform-specific extension).</p>
-
-<!-- BEGIN FIXME: Gross -->
-<p>To use a collector in a tool other than <tt>llc</tt>, simply assign a
-<tt>Collector</tt> to the <tt>llvm::TheCollector</tt> variable:</p>
+<p>Once the plugin is compiled, code using it may be compiled using <tt>llc
+-load=<var>MyGC.so</var></tt> (though <var>MyGC.so</var> may have some other
+platform-specific extension):</p>
 
 <blockquote><pre
->TheCollector = new MyGC();</pre></blockquote>
-<!-- /FIXME GROSS -->
+>$ cat sample.ll
+define void @f() gc "mygc" {
+entry:
+        ret void
+}
+$ llvm-as &lt; sample.ll | llc -load=MyGC.so</pre></blockquote>
+
+<p>It is also possible to statically link the collector plugin into tools, such
+as a language-specific compiler front-end.</p>
 
 </div>
 
@@ -956,15 +985,18 @@ interest.</p>
 <div class="doc_text">
 
 <blockquote><pre
->CollectorMetadata &amp;MD = ...;
-unsigned FrameSize = MD.getFrameSize();
-size_t RootCount = MD.roots_size();
+>for (iterator I = begin(), E = end(); I != E; ++I) {
+  CollectorMetadata *MD = *I;
+  unsigned FrameSize = MD-&gt;getFrameSize();
+  size_t RootCount = MD-&gt;roots_size();
 
-for (CollectorMetadata::roots_iterator RI = MD.roots_begin(),
-                                       RE = MD.roots_end(); RI != RE; ++RI) {
-  int RootNum = RI->Num;
-  int RootStackOffset = RI->StackOffset;
-  Constant *RootMetadata = RI->Metadata;
+  for (CollectorMetadata::roots_iterator RI = MD-&gt;roots_begin(),
+                                         RE = MD-&gt;roots_end();
+                                         RI != RE; ++RI) {
+    int RootNum = RI->Num;
+    int RootStackOffset = RI->StackOffset;
+    Constant *RootMetadata = RI->Metadata;
+  }
 }</pre></blockquote>
 
 <p>LLVM automatically computes a stack map. All a <tt>Collector</tt> needs to do
@@ -1021,10 +1053,8 @@ public:
     CustomWriteBarriers = true;
   }
   
-protected:
-  virtual Pass *createCustomLoweringPass() const {
-    return new MyGCLoweringFunctionPass();
-  }
+  virtual bool initializeCustomLowering(Module &amp;M);
+  virtual bool performCustomLowering(Function &amp;F);
 };</pre></blockquote>
 
 <p>If any of these flags are set, then LLVM suppresses its default lowering for
@@ -1041,56 +1071,53 @@ pass specified by the collector.</p>
 </ul>
 
 <p>If <tt>CustomReadBarriers</tt> or <tt>CustomWriteBarriers</tt> are specified,
-the custom lowering pass <strong>must</strong> eliminate the corresponding
-barriers.</p>
+then <tt>performCustomLowering</tt> <strong>must</strong> eliminate the
+corresponding barriers.</p>
 
-<p>This template can be used as a starting point for a lowering pass:</p>
+<p><tt>performCustomLowering</tt>, must comply with the same restrictions as <a
+href="WritingAnLLVMPass.html#runOnFunction"><tt>runOnFunction</tt></a>, and
+that <tt>initializeCustomLowering</tt> has the same semantics as <a
+href="WritingAnLLVMPass.html#doInitialization_mod"><tt>doInitialization(Module
+&amp;)</tt></a>.</p>
+
+<p>The following can be used as a template:</p>
 
 <blockquote><pre
->#include "llvm/Function.h"
-#include "llvm/Module.h"
+>#include "llvm/Module.h"
 #include "llvm/Instructions.h"
 
-namespace {
-  class VISIBILITY_HIDDEN MyGCLoweringFunctionPass : public FunctionPass {
-    static char ID;
-  public:
-    MyGCLoweringFunctionPass() : FunctionPass(intptr_t(&amp;ID)) {}
-    
-    const char *getPassName() const { return "Lower GC Intrinsics"; }
-    
-    bool runOnFunction(Function &amp;F) {
-      Module *M = F.getParent();
-      
-      Function *GCReadInt  = M-&gt;getFunction("llvm.gcread"),
-               *GCWriteInt = M-&gt;getFunction("llvm.gcwrite"),
-               *GCRootInt  = M-&gt;getFunction("llvm.gcroot");
-      
-      bool MadeChange = false;
-      
-      for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-        for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E;)
-          if (CallInst *CI = dyn_cast&lt;CallInst&gt;(II++))
-            if (Function *F = CI->getCalledFunction())
-              if (F == GCWriteInt) {
-                // Handle llvm.gcwrite.
-                CI->eraseFromParent();
-                MadeChange = true;
-              } else if (F == GCReadInt) {
-                // Handle llvm.gcread.
-                CI->eraseFromParent();
-                MadeChange = true;
-              } else if (F == GCRootInt) {
-                // Handle llvm.gcroot.
-                CI->eraseFromParent();
-                MadeChange = true;
-              }
-      
-      return MadeChange;
-    }
-  };
+bool MyCollector::initializeCustomLowering(Module &amp;M) {
+  return false;
+}
 
-  char MyGCLoweringFunctionPass::ID = 0;
+bool MyCollector::performCustomLowering(Function &amp;F) {
+  const Module *M = F.getParent();
+  
+  Function *GCReadInt  = M-&gt;getFunction("llvm.gcread"),
+           *GCWriteInt = M-&gt;getFunction("llvm.gcwrite"),
+           *GCRootInt  = M-&gt;getFunction("llvm.gcroot");
+  
+  bool MadeChange = false;
+  
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E;)
+      if (CallInst *CI = dyn_cast&lt;CallInst&gt;(II++))
+        if (Function *F = CI->getCalledFunction())
+          if (F == GCWriteInt) {
+            // Handle llvm.gcwrite.
+            CI->eraseFromParent();
+            MadeChange = true;
+          } else if (F == GCReadInt) {
+            // Handle llvm.gcread.
+            CI->eraseFromParent();
+            MadeChange = true;
+          } else if (F == GCRootInt) {
+            // Handle llvm.gcroot.
+            CI->eraseFromParent();
+            MadeChange = true;
+          }
+  
+  return MadeChange;
 }</pre></blockquote>
 
 </div>
@@ -1130,15 +1157,18 @@ namespace {
 
 <p>It can then use the following routines to access safe points.</p>
 
-<blockquote><pre>
-CollectorMetadata &amp;MD = ...;
-size_t PointCount = MD.size();
+<blockquote><pre
+>for (iterator I = begin(), E = end(); I != E; ++I) {
+  CollectorMetadata *MD = *I;
+  size_t PointCount = MD-&gt;size();
 
-for (CollectorMetadata::iterator PI = MD.begin(),
-                                 PE = MD.end(); PI != PE; ++PI) {
-  GC::PointKind PointKind = PI-&gt;Kind;
-  unsigned PointNum = PI-&gt;Num;
-}</pre></blockquote>
+  for (CollectorMetadata::iterator PI = MD-&gt;begin(),
+                                   PE = MD-&gt;end(); PI != PE; ++PI) {
+    GC::PointKind PointKind = PI-&gt;Kind;
+    unsigned PointNum = PI-&gt;Num;
+  }
+}
+</pre></blockquote>
 
 <p>Almost every collector requires <tt>PostCall</tt> safe points, since these
 correspond to the moments when the function is suspended during a call to a
@@ -1167,40 +1197,45 @@ safe point (because only the topmost function has been patched).</p>
 
 <p>LLVM allows a collector to print arbitrary assembly code before and after
 the rest of a module's assembly code. From the latter callback, the collector
-can print stack maps from <tt>CollectorModuleMetadata</tt> populated by the code
-generator.</p>
+can print stack maps built by the code generator.</p>
 
-<p>Note that LLVM does not currently support garbage collection code generation
-in the JIT, nor using the object writers.</p>
+<p>Note that LLVM does not currently have analogous APIs to support code
+generation in the JIT, nor using the object writers.</p>
 
 <blockquote><pre
 >class MyCollector : public Collector {
-  virtual void beginAssembly(Module &amp;M, std::ostream &amp;OS, AsmPrinter &amp;AP,
-                             const TargetAsmInfo &amp;TAI) const;
+public:
+  virtual void beginAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
+                             const TargetAsmInfo &amp;TAI);
 
-  virtual void finishAssembly(Module &amp;M, CollectorModuleMetadata &amp;MMD,
-                              std::ostream &amp;OS, AsmPrinter &amp;AP,
-                              const TargetAsmInfo &amp;TAI) const;
+  virtual void finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
+                              const TargetAsmInfo &amp;TAI);
 }</pre></blockquote>
 
 <p>The collector should use <tt>AsmPrinter</tt> and <tt>TargetAsmInfo</tt> to
-print portable assembly code to the <tt>std::ostream</tt>. The collector may
-access the stack maps for the entire module using the methods of
-<tt>CollectorModuleMetadata</tt>. Here's a realistic example:</p>
+print portable assembly code to the <tt>std::ostream</tt>. The collector itself
+contains the stack map for the entire module, and may access the
+<tt>CollectorMetadata</tt> using its own <tt>begin()</tt> and <tt>end()</tt>
+methods. Here's a realistic example:</p>
 
 <blockquote><pre
 >#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Function.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetAsmInfo.h"
 
-void MyCollector::finishAssembly(Module &amp;M,
-                                 CollectorModuleMetadata &amp;MMD,
-                                 std::ostream &amp;OS, AsmPrinter &amp;AP,
-                                 const TargetAsmInfo &amp;TAI) const {
+void MyCollector::beginAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
+                                const TargetAsmInfo &amp;TAI) {
+  // Nothing to do.
+}
+
+void MyCollector::finishAssembly(std::ostream &amp;OS, AsmPrinter &amp;AP,
+                                 const TargetAsmInfo &amp;TAI) {
   // Set up for emitting addresses.
   const char *AddressDirective;
   int AddressAlignLog;
-  if (TAI.getAddressSize() == sizeof(int32_t)) {
+  if (AP.TM.getTargetData()->getPointerSize() == sizeof(int32_t)) {
     AddressDirective = TAI.getData32bitsDirective();
     AddressAlignLog = 2;
   } else {
@@ -1212,8 +1247,7 @@ void MyCollector::finishAssembly(Module &amp;M,
   AP.SwitchToDataSection(TAI.getDataSection());
   
   // For each function...
-  for (CollectorModuleMetadata::iterator FI = MMD.begin(),
-                                         FE = MMD.end(); FI != FE; ++FI) {
+  for (iterator FI = begin(), FE = end(); FI != FE; ++FI) {
     CollectorMetadata &amp;MD = **FI;
     
     // Emit this data structure:

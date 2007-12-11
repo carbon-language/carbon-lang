@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/Collector.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
@@ -29,38 +30,40 @@ using namespace llvm;
 
 namespace {
   
-  /// This pass rewrites calls to the llvm.gcread or llvm.gcwrite intrinsics,
-  /// replacing them with simple loads and stores as directed by the Collector.
-  /// This is useful for most garbage collectors.
+  /// LowerIntrinsics - This pass rewrites calls to the llvm.gcread or
+  /// llvm.gcwrite intrinsics, replacing them with simple loads and stores as 
+  /// directed by the Collector. It also performs automatic root initialization
+  /// and custom intrinsic lowering.
   class VISIBILITY_HIDDEN LowerIntrinsics : public FunctionPass {
-    const Collector &Coll;
-    
     /// GCRootInt, GCReadInt, GCWriteInt - The function prototypes for the
     /// llvm.gc* intrinsics.
     Function *GCRootInt, *GCReadInt, *GCWriteInt;
     
+    static bool NeedsDefaultLoweringPass(const Collector &C);
+    static bool NeedsCustomLoweringPass(const Collector &C);
     static bool CouldBecomeSafePoint(Instruction *I);
-    static void InsertRootInitializers(Function &F,
+    bool PerformDefaultLowering(Function &F, Collector &Coll);
+    static bool InsertRootInitializers(Function &F,
                                        AllocaInst **Roots, unsigned Count);
     
   public:
     static char ID;
     
-    LowerIntrinsics(const Collector &GC);
+    LowerIntrinsics();
     const char *getPassName() const;
+    void getAnalysisUsage(AnalysisUsage &AU) const;
     
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
   };
   
   
-  /// This is a target-independent pass over the machine function representation
-  /// to identify safe points for the garbage collector in the machine code. It 
-  /// inserts labels at safe points and populates the GCInfo class.
+  /// MachineCodeAnalysis - This is a target-independent pass over the machine 
+  /// function representation to identify safe points for the garbage collector
+  /// in the machine code. It inserts labels at safe points and populates a
+  /// CollectorMetadata record for each function.
   class VISIBILITY_HIDDEN MachineCodeAnalysis : public MachineFunctionPass {
-    const Collector &Coll;
-    const TargetMachine &Targ;
-    
+    const TargetMachine *TM;
     CollectorMetadata *MD;
     MachineModuleInfo *MMI;
     const TargetInstrInfo *TII;
@@ -76,7 +79,7 @@ namespace {
   public:
     static char ID;
     
-    MachineCodeAnalysis(const Collector &C, const TargetMachine &T);
+    MachineCodeAnalysis();
     const char *getPassName() const;
     void getAnalysisUsage(AnalysisUsage &AU) const;
     
@@ -87,8 +90,6 @@ namespace {
 
 // -----------------------------------------------------------------------------
 
-const Collector *llvm::TheCollector = 0;
-
 Collector::Collector() :
   NeededSafePoints(0),
   CustomReadBarriers(false),
@@ -97,85 +98,85 @@ Collector::Collector() :
   InitRoots(true)
 {}
 
-Collector::~Collector() {}
-
-void Collector::addLoweringPasses(FunctionPassManager &PM) const {
-  if (NeedsDefaultLoweringPass())
-    PM.add(new LowerIntrinsics(*this));
-
-  if (NeedsCustomLoweringPass())
-    PM.add(createCustomLoweringPass());
+Collector::~Collector() {
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    delete *I;
+  
+  Functions.clear();
 }
-
-void Collector::addLoweringPasses(PassManager &PM) const {
-  if (NeedsDefaultLoweringPass())
-    PM.add(new LowerIntrinsics(*this));
-
-  if (NeedsCustomLoweringPass())
-    PM.add(createCustomLoweringPass());
-}
-
-void Collector::addGenericMachineCodePass(FunctionPassManager &PM,
-                                          const TargetMachine &TM,
-                                          bool Fast) const {
-  if (needsSafePoints())
-    PM.add(new MachineCodeAnalysis(*this, TM));
-}
-
-bool Collector::NeedsDefaultLoweringPass() const {
-  // Default lowering is necessary only if read or write barriers have a default
-  // action. The default for roots is no action.
-  return !customWriteBarrier()
-      || !customReadBarrier()
-      || initializeRoots();
-}
-
-bool Collector::NeedsCustomLoweringPass() const {
-  // Custom lowering is only necessary if enabled for some action.
-  return customWriteBarrier()
-      || customReadBarrier()
-      || customRoots();
-}
-
-Pass *Collector::createCustomLoweringPass() const {
-  cerr << "Collector must override createCustomLoweringPass.\n";
+ 
+bool Collector::initializeCustomLowering(Module &M) { return false; }
+ 
+bool Collector::performCustomLowering(Function &F) {
+  cerr << "gc " << getName() << " must override performCustomLowering.\n";
   abort();
   return 0;
 }
     
-void Collector::beginAssembly(Module &M, std::ostream &OS, AsmPrinter &AP,
-                              const TargetAsmInfo &TAI) const {
+void Collector::beginAssembly(std::ostream &OS, AsmPrinter &AP,
+                              const TargetAsmInfo &TAI) {
   // Default is no action.
 }
     
-void Collector::finishAssembly(Module &M, CollectorModuleMetadata &CMM,
-                               std::ostream &OS, AsmPrinter &AP,
-                               const TargetAsmInfo &TAI) const {
+void Collector::finishAssembly(std::ostream &OS, AsmPrinter &AP,
+                               const TargetAsmInfo &TAI) {
   // Default is no action.
 }
+ 
+CollectorMetadata *Collector::insertFunctionMetadata(const Function &F) {
+  CollectorMetadata *CM = new CollectorMetadata(F, *this);
+  Functions.push_back(CM);
+  return CM;
+} 
 
 // -----------------------------------------------------------------------------
 
+FunctionPass *llvm::createGCLoweringPass() {
+  return new LowerIntrinsics();
+}
+ 
 char LowerIntrinsics::ID = 0;
 
-LowerIntrinsics::LowerIntrinsics(const Collector &C)
-  : FunctionPass((intptr_t)&ID), Coll(C),
+LowerIntrinsics::LowerIntrinsics()
+  : FunctionPass((intptr_t)&ID),
     GCRootInt(0), GCReadInt(0), GCWriteInt(0) {}
 
 const char *LowerIntrinsics::getPassName() const {
   return "Lower Garbage Collection Instructions";
 }
     
-/// doInitialization - If this module uses the GC intrinsics, find them now. If
-/// not, this pass does not do anything.
+void LowerIntrinsics::getAnalysisUsage(AnalysisUsage &AU) const {
+  FunctionPass::getAnalysisUsage(AU);
+  AU.addRequired<CollectorModuleMetadata>();
+}
+
+/// doInitialization - If this module uses the GC intrinsics, find them now.
 bool LowerIntrinsics::doInitialization(Module &M) {
   GCReadInt  = M.getFunction("llvm.gcread");
   GCWriteInt = M.getFunction("llvm.gcwrite");
   GCRootInt  = M.getFunction("llvm.gcroot");
-  return false;
+  
+  // FIXME: This is rather antisocial in the context of a JIT since it performs
+  //        work against the entire module. But this cannot be done at
+  //        runFunction time (initializeCustomLowering likely needs to change
+  //        the module).
+  CollectorModuleMetadata *CMM = getAnalysisToUpdate<CollectorModuleMetadata>();
+  assert(CMM && "LowerIntrinsics didn't require CollectorModuleMetadata!?");
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (I->hasCollector())
+      CMM->get(*I); // Instantiate the Collector.
+  
+  bool MadeChange = false;
+  for (CollectorModuleMetadata::iterator I = CMM->begin(),
+                                         E = CMM->end(); I != E; ++I)
+    if (NeedsCustomLoweringPass(**I))
+      if ((*I)->initializeCustomLowering(M))
+        MadeChange = true;
+  
+  return MadeChange;
 }
 
-void LowerIntrinsics::InsertRootInitializers(Function &F, AllocaInst **Roots, 
+bool LowerIntrinsics::InsertRootInitializers(Function &F, AllocaInst **Roots, 
                                                           unsigned Count) {
   // Scroll past alloca instructions.
   BasicBlock::iterator IP = F.getEntryBlock().begin();
@@ -190,11 +191,32 @@ void LowerIntrinsics::InsertRootInitializers(Function &F, AllocaInst **Roots,
         InitedRoots.insert(AI);
   
   // Add root initializers.
+  bool MadeChange = false;
+  
   for (AllocaInst **I = Roots, **E = Roots + Count; I != E; ++I)
-    if (!InitedRoots.count(*I))
+    if (!InitedRoots.count(*I)) {
       new StoreInst(ConstantPointerNull::get(cast<PointerType>(
                       cast<PointerType>((*I)->getType())->getElementType())),
                     *I, IP);
+      MadeChange = true;
+    }
+  
+  return MadeChange;
+}
+
+bool LowerIntrinsics::NeedsDefaultLoweringPass(const Collector &C) {
+  // Default lowering is necessary only if read or write barriers have a default
+  // action. The default for roots is no action.
+  return !C.customWriteBarrier()
+      || !C.customReadBarrier()
+      || C.initializeRoots();
+}
+
+bool LowerIntrinsics::NeedsCustomLoweringPass(const Collector &C) {
+  // Custom lowering is only necessary if enabled for some action.
+  return C.customWriteBarrier()
+      || C.customReadBarrier()
+      || C.customRoots();
 }
 
 /// CouldBecomeSafePoint - Predicate to conservatively determine whether the
@@ -228,9 +250,24 @@ bool LowerIntrinsics::CouldBecomeSafePoint(Instruction *I) {
 /// runOnFunction - Replace gcread/gcwrite intrinsics with loads and stores.
 /// Leave gcroot intrinsics; the code generator needs to see those.
 bool LowerIntrinsics::runOnFunction(Function &F) {
-  // Quick exit for programs that do not declare the intrinsics.
-  if (!GCReadInt && !GCWriteInt && !GCRootInt) return false;
+  // Quick exit for functions that do not use GC.
+  if (!F.hasCollector()) return false;
   
+  CollectorMetadata &MD = getAnalysis<CollectorModuleMetadata>().get(F);
+  Collector &Coll = MD.getCollector();
+  
+  bool MadeChange = false;
+  
+  if (NeedsDefaultLoweringPass(Coll))
+    MadeChange |= PerformDefaultLowering(F, Coll);
+  
+  if (NeedsCustomLoweringPass(Coll))
+    MadeChange |= Coll.performCustomLowering(F);
+  
+  return MadeChange;
+}
+
+bool LowerIntrinsics::PerformDefaultLowering(Function &F, Collector &Coll) {
   bool LowerWr = !Coll.customWriteBarrier();
   bool LowerRd = !Coll.customReadBarrier();
   bool InitRoots = Coll.initializeRoots();
@@ -268,17 +305,21 @@ bool LowerIntrinsics::runOnFunction(Function &F) {
   }
   
   if (Roots.size())
-    InsertRootInitializers(F, Roots.begin(), Roots.size());
+    MadeChange |= InsertRootInitializers(F, Roots.begin(), Roots.size());
   
   return MadeChange;
 }
 
 // -----------------------------------------------------------------------------
 
+FunctionPass *llvm::createGCMachineCodeAnalysisPass() {
+  return new MachineCodeAnalysis();
+}
+
 char MachineCodeAnalysis::ID = 0;
 
-MachineCodeAnalysis::MachineCodeAnalysis(const Collector &C, const TargetMachine &T)
-  : MachineFunctionPass(intptr_t(&ID)), Coll(C), Targ(T) {}
+MachineCodeAnalysis::MachineCodeAnalysis()
+  : MachineFunctionPass(intptr_t(&ID)) {}
 
 const char *MachineCodeAnalysis::getPassName() const {
   return "Analyze Machine Code For Garbage Collection";
@@ -304,10 +345,10 @@ void MachineCodeAnalysis::VisitCallPoint(MachineBasicBlock::iterator CI) {
   MachineBasicBlock::iterator RAI = CI; 
   ++RAI;                                
   
-  if (Coll.needsSafePoint(GC::PreCall))
+  if (MD->getCollector().needsSafePoint(GC::PreCall))
     MD->addSafePoint(GC::PreCall, InsertLabel(*CI->getParent(), CI));
   
-  if (Coll.needsSafePoint(GC::PostCall))
+  if (MD->getCollector().needsSafePoint(GC::PostCall))
     MD->addSafePoint(GC::PostCall, InsertLabel(*CI->getParent(), RAI));
 }
 
@@ -323,7 +364,7 @@ void MachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
 void MachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
   uint64_t StackSize = MFI->getStackSize();
   uint64_t OffsetAdjustment = MFI->getOffsetAdjustment();
-  uint64_t OffsetOfLocalArea = Targ.getFrameInfo()->getOffsetOfLocalArea();
+  uint64_t OffsetOfLocalArea = TM->getFrameInfo()->getOffsetOfLocalArea();
   
   for (CollectorMetadata::roots_iterator RI = MD->roots_begin(),
                                          RE = MD->roots_end(); RI != RE; ++RI)
@@ -332,12 +373,16 @@ void MachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
 }
 
 bool MachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {
-  if (!Coll.needsSafePoints())
+  // Quick exit for functions that do not use GC.
+  if (!MF.getFunction()->hasCollector()) return false;
+  
+  MD = &getAnalysis<CollectorModuleMetadata>().get(*MF.getFunction());
+  if (!MD->getCollector().needsSafePoints())
     return false;
   
-  MD = getAnalysis<CollectorModuleMetadata>().get(MF.getFunction());
+  TM = &MF.getTarget();
   MMI = &getAnalysis<MachineModuleInfo>();
-  TII = MF.getTarget().getInstrInfo();
+  TII = TM->getInstrInfo();
   MFI = MF.getFrameInfo();
   
   // Find the size of the stack frame.

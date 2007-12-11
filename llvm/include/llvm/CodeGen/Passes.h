@@ -135,6 +135,24 @@ namespace llvm {
   /// for the Sparc.
   FunctionPass *getRegisterAllocator(TargetMachine &T);
 
+  /// IntrinsicLowering Pass - Performs target-independent LLVM IR
+  /// transformations for highly portable collectors.
+  FunctionPass *createGCLoweringPass();
+  
+  /// MachineCodeAnalysis Pass - Target-independent pass to mark safe points in
+  /// machine code. Must be added very late during code generation, just prior
+  /// to output, and importantly after all CFG transformations (such as branch
+  /// folding).
+  FunctionPass *createGCMachineCodeAnalysisPass();
+  
+  /// Deleter Pass - Releases collector metadata.
+  /// 
+  FunctionPass *createCollectorMetadataDeleter();
+  
+  /// Creates a pass to print collector metadata.
+  /// 
+  FunctionPass *createCollectorMetadataPrinter(std::ostream &OS);
+  
   /// createMachineLICMPass - This pass performs LICM on machine instructions.
   /// 
   FunctionPass *createMachineLICMPass();

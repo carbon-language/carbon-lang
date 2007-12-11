@@ -9,7 +9,7 @@
 //
 // This file declares the CollectorMetadata and CollectorModuleMetadata classes,
 // which are used as a communication channel from the target code generator
-// to the target garbage collector. This interface allows code generators and
+// to the target garbage collectors. This interface allows code generators and
 // garbage collectors to be developed independently.
 //
 // The CollectorMetadata class records the data necessary to build a type
@@ -37,19 +37,14 @@
 
 #include "llvm/Pass.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringMap.h"
 
 namespace llvm {
   
+  class AsmPrinter;
+  class Collector;
   class Constant;
-  
-  
-  /// Creates a pass to print collector metadata.
-  /// 
-  Pass *createCollectorMetadataPrinter(std::ostream &OS);
-  
-  /// Creates a pass to destroy collector metadata.
-  /// 
-  Pass *createCollectorMetadataDeleter();
+  class TargetAsmInfo;
   
   
   namespace GC {
@@ -77,7 +72,7 @@ namespace llvm {
   struct GCRoot {
     int Num;            //< Usually a frame index.
     int StackOffset;    //< Offset from the stack pointer.
-    Constant *Metadata; //< From the call to llvm.gcroot.
+    Constant *Metadata; //< Metadata straight from the call to llvm.gcroot.
     
     GCRoot(int N, Constant *MD) : Num(N), StackOffset(-1), Metadata(MD) {}
   };
@@ -93,6 +88,7 @@ namespace llvm {
     
   private:
     const Function &F;
+    Collector &C;
     uint64_t FrameSize;
     std::vector<GCRoot> Roots;
     std::vector<GCPoint> SafePoints;
@@ -107,13 +103,17 @@ namespace llvm {
     // The bit vector is the more compact representation where >3.2% of roots
     // are live per safe point (1.5% on 64-bit hosts).
     
-    friend class CollectorModuleMetadata;
-    CollectorMetadata(const Function &F);
-    
   public:
+    CollectorMetadata(const Function &F, Collector &C);
     ~CollectorMetadata();
     
+    /// getFunction - Return the function to which this metadata applies.
+    /// 
     const Function &getFunction() const { return F; }
+    
+    /// getCollector - Return the collector for the function.
+    /// 
+    Collector &getCollector() { return C; }
     
     /// addStackRoot - Registers a root that lives on the stack. Num is the
     /// stack object ID for the alloca (if the code generator is using 
@@ -157,37 +157,36 @@ namespace llvm {
   /// CollectorModuleMetadata - Garbage collection metadata for a whole module.
   /// 
   class CollectorModuleMetadata : public ImmutablePass {
-    typedef std::vector<CollectorMetadata*> list_type;
-    typedef DenseMap<const Function*,CollectorMetadata*> map_type;
+    typedef StringMap<Collector*> collector_map_type;
+    typedef std::vector<Collector*> list_type;
+    typedef DenseMap<const Function*,CollectorMetadata*> function_map_type;
     
-    Module *Mod;
-    list_type Functions;
-    map_type Map;
+    collector_map_type NameMap;
+    list_type Collectors;
+    function_map_type Map;
+    
+    Collector *getOrCreateCollector(const Module *M, const std::string &Name);
     
   public:
-    typedef list_type::iterator iterator;
+    typedef list_type::const_iterator iterator;
     
     static char ID;
     
     CollectorModuleMetadata();
     ~CollectorModuleMetadata();
     
-    /// clear - Used to delete module metadata. Collector invokes this as
-    /// necessary.
+    /// clear - Used to delete module metadata. The metadata deleter pass calls
+    /// this.
     void clear();
     
-    /// begin/end - Iterators for function metadata.
+    /// begin/end - Iterators for collectors.
     /// 
-    iterator begin() { return Functions.begin(); }
-    iterator end()   { return Functions.end();   }
+    iterator begin() const { return Collectors.begin(); }
+    iterator end()   const { return Collectors.end();   }
     
-    /// insert - Creates metadata for a function.
+    /// get - Look up function metadata.
     /// 
-    CollectorMetadata& insert(const Function *F);
-    
-    /// get - Looks up existing function metadata.
-    /// 
-    CollectorMetadata* get(const Function *F) const;
+    CollectorMetadata &get(const Function &F);
   };
   
 }

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// GCInfo records sufficient information about a machine function to enable
+// Collector records sufficient information about a machine function to enable
 // accurate garbage collectors. Specifically:
 // 
 // - Safe points
@@ -25,8 +25,8 @@
 // This generic information should used by ABI-specific passes to emit support
 // tables for the runtime garbage collector.
 //
-// GCSafePointPass identifies the GC safe points in the machine code. (Roots are
-// identified in SelectionDAGISel.)
+// MachineCodeAnalysis identifies the GC safe points in the machine code. (Roots
+// are identified in SelectionDAGISel.)
 //
 //===----------------------------------------------------------------------===//
 
@@ -35,19 +35,25 @@
 
 #include "llvm/CodeGen/CollectorMetadata.h"
 #include <iosfwd>
+#include <string>
 
 namespace llvm {
-  
-  class AsmPrinter;
-  class FunctionPassManager;
-  class PassManager;
-  class TargetAsmInfo;
-  
   
   /// Collector describes a garbage collector's code generation requirements,
   /// and provides overridable hooks for those needs which cannot be abstractly
   /// described.
   class Collector {
+  public:
+    typedef std::vector<CollectorMetadata*> list_type;
+    typedef list_type::iterator iterator;
+    
+  private:
+    friend class CollectorModuleMetadata;
+    const Module *M;
+    std::string Name;
+    
+    list_type Functions;
+    
   protected:
     unsigned NeededSafePoints; //< Bitmask of required safe points.
     bool CustomReadBarriers;   //< Default is to insert loads.
@@ -55,16 +61,20 @@ namespace llvm {
     bool CustomRoots;          //< Default is to pass through to backend.
     bool InitRoots;            //< If set, roots are nulled during lowering.
     
-    /// If any of the actions are set to Custom, this is expected to be
-    /// overriden to create a transform to lower those actions to LLVM IR.
-    virtual Pass *createCustomLoweringPass() const;
-    
   public:
     Collector();
     
     virtual ~Collector();
     
     
+    /// getName - The name of the collector, for debugging.
+    /// 
+    const std::string &getName() const { return Name; }
+
+    /// getModule - The module upon which the collector is operating.
+    /// 
+    const Module &getModule() const { return *M; }
+
     /// True if this collector requires safe points of any kind. By default,
     /// none are recorded.
     bool needsSafePoints() const { return NeededSafePoints != 0; }
@@ -94,39 +104,29 @@ namespace llvm {
     bool initializeRoots() const { return InitRoots; }
     
     
-    /// Adds LLVM IR transforms to handle collection intrinsics. By default,
-    /// read- and write barriers are replaced with direct memory accesses, and
-    /// roots are passed on to the code generator.
-    void addLoweringPasses(FunctionPassManager &PM) const;
-    
-    /// Same as addLoweringPasses(FunctionPassManager &), except uses a
-    /// PassManager for compatibility with unusual backends (such as MSIL or
-    /// CBackend).
-    void addLoweringPasses(PassManager &PM) const;
-    
-    /// Adds target-independent MachineFunction pass to mark safe points. This 
-    /// is added very late during code generation, just prior to output, and
-    /// importantly after all CFG transformations (like branch folding).
-    void addGenericMachineCodePass(FunctionPassManager &PM,
-                                   const TargetMachine &TM, bool Fast) const;
-    
     /// beginAssembly/finishAssembly - Emit module metadata as assembly code.
-    virtual void beginAssembly(Module &M, std::ostream &OS, AsmPrinter &AP,
-                               const TargetAsmInfo &TAI) const;
-    virtual void finishAssembly(Module &M, CollectorModuleMetadata &CMM,
-                                std::ostream &OS, AsmPrinter &AP,
-                                const TargetAsmInfo &TAI) const;
+    virtual void beginAssembly(std::ostream &OS, AsmPrinter &AP,
+                               const TargetAsmInfo &TAI);
+    virtual void finishAssembly(std::ostream &OS, AsmPrinter &AP,
+                                const TargetAsmInfo &TAI);
     
-  private:
-    bool NeedsDefaultLoweringPass() const;
-    bool NeedsCustomLoweringPass() const;
-    
+    /// begin/end - Iterators for function metadata.
+    /// 
+    iterator begin() { return Functions.begin(); }
+    iterator end()   { return Functions.end();   }
+
+    /// insertFunctionMetadata - Creates metadata for a function.
+    /// 
+    CollectorMetadata *insertFunctionMetadata(const Function &F);
+
+    /// initializeCustomLowering/performCustomLowering - If any of the actions
+    /// are set to custom, performCustomLowering must be overriden to create a
+    /// transform to lower those actions to LLVM IR. initializeCustomLowering
+    /// is optional to override. These are the only Collector methods through
+    /// which the LLVM IR can be modified.
+    virtual bool initializeCustomLowering(Module &F);
+    virtual bool performCustomLowering(Function &F);
   };
-  
-  
-  /// If set, the code generator should generate garbage collection as specified
-  /// by the collector properties.
-  extern const Collector *TheCollector;  // FIXME: Find a better home!
   
 }
 

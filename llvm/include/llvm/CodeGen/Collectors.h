@@ -25,6 +25,9 @@ namespace llvm {
   /// 
   typedef Registry<Collector> CollectorRegistry;
   
+  /// FIXME: Collector instances are not useful on their own. These no longer
+  ///        serve any purpose except to link in the plugins.
+  
   /// Creates an ocaml-compatible garbage collector.
   Collector *createOcamlCollector();
   

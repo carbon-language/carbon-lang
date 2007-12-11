@@ -13,8 +13,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/CollectorMetadata.h"
+#include "llvm/CodeGen/Collector.h"
+#include "llvm/CodeGen/Collectors.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/Pass.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Function.h"
 #include "llvm/Support/Compiler.h"
 
@@ -22,7 +25,7 @@ using namespace llvm;
 
 namespace {
   
-  class VISIBILITY_HIDDEN Printer : public MachineFunctionPass {
+  class VISIBILITY_HIDDEN Printer : public FunctionPass {
     static char ID;
     std::ostream &OS;
     
@@ -32,10 +35,10 @@ namespace {
     const char *getPassName() const;
     void getAnalysisUsage(AnalysisUsage &AU) const;
     
-    bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnFunction(Function &F);
   };
   
-  class VISIBILITY_HIDDEN Deleter : public MachineFunctionPass {
+  class VISIBILITY_HIDDEN Deleter : public FunctionPass {
     static char ID;
     
   public:
@@ -44,7 +47,7 @@ namespace {
     const char *getPassName() const;
     void getAnalysisUsage(AnalysisUsage &AU) const;
     
-    bool runOnMachineFunction(MachineFunction &MF);
+    bool runOnFunction(Function &F);
     bool doFinalization(Module &M);
   };
   
@@ -55,8 +58,8 @@ namespace {
 
 // -----------------------------------------------------------------------------
 
-CollectorMetadata::CollectorMetadata(const Function &F)
-  : F(F), FrameSize(~0LL) {}
+CollectorMetadata::CollectorMetadata(const Function &F, Collector &C)
+  : F(F), C(C), FrameSize(~0LL) {}
 
 CollectorMetadata::~CollectorMetadata() {}
 
@@ -71,46 +74,71 @@ CollectorModuleMetadata::~CollectorModuleMetadata() {
   clear();
 }
 
-CollectorMetadata& CollectorModuleMetadata::insert(const Function *F) {
-  assert(Map.find(F) == Map.end() && "Function GC metadata already exists!");
-  CollectorMetadata *FMD = new CollectorMetadata(*F);
-  Functions.push_back(FMD);
-  Map[F] = FMD;
-  return *FMD;
+Collector *CollectorModuleMetadata::
+getOrCreateCollector(const Module *M, const std::string &Name) {
+  const char *Start = Name.c_str();
+  
+  collector_map_type::iterator NMI = NameMap.find(Start, Start + Name.size());
+  if (NMI != NameMap.end())
+    return NMI->getValue();
+  
+  for (CollectorRegistry::iterator I = CollectorRegistry::begin(),
+                                   E = CollectorRegistry::end(); I != E; ++I) {
+    if (strcmp(Start, I->getName()) == 0) {
+      Collector *C = I->instantiate();
+      C->M = M;
+      C->Name = Name;
+      NameMap.GetOrCreateValue(Start, Start + Name.size()).setValue(C);
+      Collectors.push_back(C);
+      return C;
+    }
+  }
+  
+  cerr << "unsupported collector: " << Name << "\n";
+  abort();
 }
 
-CollectorMetadata* CollectorModuleMetadata::get(const Function *F) const {
-  map_type::iterator I = Map.find(F);
-  if (I == Map.end())
-    return 0;
-  return I->second;
+CollectorMetadata &CollectorModuleMetadata::get(const Function &F) {
+  assert(F.hasCollector());
+  function_map_type::iterator I = Map.find(&F);
+  if (I != Map.end())
+    return *I->second;
+    
+  Collector *C = getOrCreateCollector(F.getParent(), F.getCollector());
+  CollectorMetadata *MD = C->insertFunctionMetadata(F);
+  Map[&F] = MD;
+  return *MD;
 }
 
 void CollectorModuleMetadata::clear() {
+  Map.clear();
+  
+  // TODO: StringMap should provide a clear method.
+  while (!NameMap.empty())
+    NameMap.erase(NameMap.begin());
+  
   for (iterator I = begin(), E = end(); I != E; ++I)
     delete *I;
-  
-  Functions.clear();
-  Map.clear();
+  Collectors.clear();
 }
 
 // -----------------------------------------------------------------------------
 
 char Printer::ID = 0;
 
-Pass *llvm::createCollectorMetadataPrinter(std::ostream &OS) {
+FunctionPass *llvm::createCollectorMetadataPrinter(std::ostream &OS) {
   return new Printer(OS);
 }
 
 Printer::Printer(std::ostream &OS)
-  : MachineFunctionPass(intptr_t(&ID)), OS(OS) {}
+  : FunctionPass(intptr_t(&ID)), OS(OS) {}
 
 const char *Printer::getPassName() const {
   return "Print Garbage Collector Information";
 }
 
 void Printer::getAnalysisUsage(AnalysisUsage &AU) const {
-  MachineFunctionPass::getAnalysisUsage(AU);
+  FunctionPass::getAnalysisUsage(AU);
   AU.setPreservesAll();
   AU.addRequired<CollectorModuleMetadata>();
 }
@@ -125,9 +153,9 @@ static const char *DescKind(GC::PointKind Kind) {
   }
 }
 
-bool Printer::runOnMachineFunction(MachineFunction &MF) {
-  if (CollectorMetadata *FD =
-                 getAnalysis<CollectorModuleMetadata>().get(MF.getFunction())) {
+bool Printer::runOnFunction(Function &F) {
+  if (F.hasCollector()) {
+    CollectorMetadata *FD = &getAnalysis<CollectorModuleMetadata>().get(F);
     
     OS << "GC roots for " << FD->getFunction().getNameStart() << ":\n";
     for (CollectorMetadata::roots_iterator RI = FD->roots_begin(),
@@ -160,11 +188,11 @@ bool Printer::runOnMachineFunction(MachineFunction &MF) {
 
 char Deleter::ID = 0;
 
-Pass *llvm::createCollectorMetadataDeleter() {
+FunctionPass *llvm::createCollectorMetadataDeleter() {
   return new Deleter();
 }
 
-Deleter::Deleter() : MachineFunctionPass(intptr_t(&ID)) {}
+Deleter::Deleter() : FunctionPass(intptr_t(&ID)) {}
 
 const char *Deleter::getPassName() const {
   return "Delete Garbage Collector Information";
@@ -175,11 +203,13 @@ void Deleter::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<CollectorModuleMetadata>();
 }
 
-bool Deleter::runOnMachineFunction(MachineFunction &MF) {
+bool Deleter::runOnFunction(Function &MF) {
   return false;
 }
 
 bool Deleter::doFinalization(Module &M) {
-  getAnalysis<CollectorModuleMetadata>().clear();
+  CollectorModuleMetadata *CMM = getAnalysisToUpdate<CollectorModuleMetadata>();
+  assert(CMM && "Deleter didn't require CollectorModuleMetadata?!");
+  CMM->clear();
   return false;
 }
