@@ -86,7 +86,7 @@ struct GraphTraits<Inverse<Inverse<T> > > {
   typedef typename GraphTraits<T>::ChildIteratorType ChildIteratorType;
   
   static NodeType *getEntryNode(Inverse<Inverse<T> > *G) {
-    return GraphTraits<T>::getEntryNode(G.Graph.Graph);
+    return GraphTraits<T>::getEntryNode(G->Graph.Graph);
   }
   
   static ChildIteratorType child_begin(NodeType* N) {
