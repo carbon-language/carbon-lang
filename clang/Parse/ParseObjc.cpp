@@ -264,6 +264,9 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
       ExpectAndConsume(tok::semi, diag::err_expected_semi_after,"method proto");
       continue;
     }
+    else if (Tok.is(tok::at))
+      continue;
+    
     if (Tok.is(tok::semi))
       ConsumeToken();
     else if (Tok.is(tok::eof))
