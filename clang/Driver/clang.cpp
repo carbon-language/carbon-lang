@@ -969,23 +969,12 @@ int main(int argc, char **argv) {
   // If no input was specified, read from stdin.
   if (InputFilenames.empty())
     InputFilenames.push_back("-");
-  
-  /// Create a SourceManager object.  This tracks and owns all the file buffers
-  /// allocated to the program.
-  SourceManager SourceMgr;
-  
+    
   // Create a file manager object to provide access to and cache the filesystem.
   FileManager FileMgr;
   
-  // Initialize language options, inferring file types from input filenames.
-  // FIXME: This infers info from the first file, we should clump by language
-  // to handle 'x.c y.c a.cpp b.cpp'.
-  LangOptions LangInfo;
-  InitializeBaseLanguage();
-  LangKind LK = GetLanguage(InputFilenames[0]);
-  InitializeLangOptions(LangInfo, LK);
-  InitializeLanguageStandard(LangInfo, LK);
-
+  // Create the diagnostic client for reporting errors or for
+  // implementing -verify.
   std::auto_ptr<TextDiagnostics> DiagClient;
   if (!VerifyDiagnostics) {
     // Print diagnostics to stderr by default.
@@ -1003,26 +992,8 @@ int main(int argc, char **argv) {
   
   // Configure our handling of diagnostics.
   Diagnostic Diags(*DiagClient);
-  InitializeDiagnostics(Diags);
-  
-  // Get information about the targets being compiled for.  Note that this
-  // pointer and the TargetInfoImpl objects are never deleted by this toy
-  // driver.
-  TargetInfo *Target;
-  
-  { // Create triples, and create the TargetInfo.
-    std::vector<std::string> triples;
-    CreateTargetTriples(triples);
-    Target = CreateTargetInfo(SourceMgr,triples,&Diags);
-  
-    if (Target == 0) {
-      fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
-              triples[0].c_str());
-      fprintf(stderr, "Please use -triple or -arch.\n");
-      exit(1);
-    }
-  }
-  
+  InitializeDiagnostics(Diags);  
+
   // -I- is a deprecated GCC feature, scan for it and reject it.
   for (unsigned i = 0, e = I_dirs.size(); i != e; ++i) {
     if (I_dirs[i] == "-") {
@@ -1032,15 +1003,45 @@ int main(int argc, char **argv) {
     }
   }
   
-  // Process the -I options and set them in the HeaderInfo.
-  HeaderSearch HeaderInfo(FileMgr);
-  DiagClient->setHeaderSearch(HeaderInfo);
-  InitializeIncludePaths(HeaderInfo, FileMgr, LangInfo);
-  
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
+    const std::string &InFile = InputFilenames[i];
+
+    /// Create a SourceManager object.  This tracks and owns all the file
+    /// buffers allocated to a translation unit.
+    SourceManager SourceMgr;
+    
+    // Initialize language options, inferring file types from input filenames.
+    LangOptions LangInfo;
+    InitializeBaseLanguage();
+    LangKind LK = GetLanguage(InFile);
+    InitializeLangOptions(LangInfo, LK);
+    InitializeLanguageStandard(LangInfo, LK);
+    
+    // Process the -I options and set them in the HeaderInfo.
+    HeaderSearch HeaderInfo(FileMgr);
+    DiagClient->setHeaderSearch(HeaderInfo);
+    InitializeIncludePaths(HeaderInfo, FileMgr, LangInfo);
+    
+    // Get information about the targets being compiled for.  Note that this
+    // pointer and the TargetInfoImpl objects are never deleted by this toy
+    // driver.
+    TargetInfo *Target;
+    
+    // Create triples, and create the TargetInfo.
+    std::vector<std::string> triples;
+    CreateTargetTriples(triples);
+    Target = CreateTargetInfo(SourceMgr,triples,&Diags);
+      
+    if (Target == 0) {
+      fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
+              triples[0].c_str());
+      fprintf(stderr, "Please use -triple or -arch.\n");
+      exit(1);
+    }
+    
     // Set up the preprocessor with these options.
     Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
-    const std::string &InFile = InputFilenames[i];
+    
     std::vector<char> PredefineBuffer;
     unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,
                                                  HeaderInfo, LangInfo,
@@ -1050,7 +1051,11 @@ int main(int argc, char **argv) {
 
     ProcessInputFile(PP, MainFileID, InFile, SourceMgr,
                      *DiagClient, HeaderInfo, LangInfo);
+    
     HeaderInfo.ClearFileInfo();
+    
+    if (Stats)
+      SourceMgr.PrintStats();
   }
   
   unsigned NumDiagnostics = Diags.getNumDiagnostics();
@@ -1060,8 +1065,6 @@ int main(int argc, char **argv) {
             (NumDiagnostics == 1 ? "" : "s"));
   
   if (Stats) {
-    // Printed from high-to-low level.
-    SourceMgr.PrintStats();
     FileMgr.PrintStats();
     fprintf(stderr, "\n");
   }
