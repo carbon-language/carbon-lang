@@ -216,9 +216,10 @@ llvm::Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return Builder.CreateAnd(EmitScalarExpr(E->getArg(0)),
                              EmitScalarExpr(E->getArg(1)),
                              "pxor");
-  case X86::BI__builtin_ia32_pandn:
+  case X86::BI__builtin_ia32_pandn: {
     llvm::Value *V1 = Builder.CreateNot(EmitScalarExpr(E->getArg(0)), "tmp");
     return Builder.CreateAnd(V1, EmitScalarExpr(E->getArg(1)), "pandn");
+  }
   case X86::BI__builtin_ia32_paddb:
   case X86::BI__builtin_ia32_paddd:
   case X86::BI__builtin_ia32_paddq:
