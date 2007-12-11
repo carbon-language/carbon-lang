@@ -668,6 +668,11 @@ variables always define a pointer to their "content" type because they
 describe a region of memory, and all memory objects in LLVM are
 accessed through pointers.</p>
 
+<p>A global variable may be declared to reside in a target-specifc numbered 
+address space. For targets that support them, address spaces may affect how
+optimizations are performed and/or what target instructions are used to access 
+the variable. The default address space is zero.</p>
+
 <p>LLVM allows an explicit section to be specified for globals.  If the target
 supports it, it will emit globals to the section specified.</p>
 
@@ -677,12 +682,12 @@ to whatever it feels convenient.  If an explicit alignment is specified, the
 global is forced to have at least that much alignment.  All alignments must be
 a power of 2.</p>
 
-<p>For example, the following defines a global with an initializer, section,
-   and alignment:</p>
+<p>For example, the following defines a global in a numbered address space with 
+an initializer, section, and alignment:</p>
 
 <div class="doc_code">
 <pre>
-@G = constant float 1.0, section "foo", align 4
+@G = constant float 1.0 addrspace(5), section "foo", align 4
 </pre>
 </div>
 
@@ -1256,7 +1261,10 @@ instruction.</p>
 <div class="doc_text">
 <h5>Overview:</h5>
 <p>As in many languages, the pointer type represents a pointer or
-reference to another object, which must live in memory.</p>
+reference to another object, which must live in memory. Pointer types may have 
+an optional address space attribute defining the target-specific numbered 
+address space where the pointed-to object resides. The default address space is 
+zero.</p>
 <h5>Syntax:</h5>
 <pre>  &lt;type&gt; *<br></pre>
 <h5>Examples:</h5>
@@ -1265,6 +1273,7 @@ reference to another object, which must live in memory.</p>
     <td class="left">
       <tt>[4x i32]*</tt><br/>
       <tt>i32 (i32 *) *</tt><br/>
+			<tt>i32 addrspace(5)*</tt><br/>
     </td>
     <td class="left">
       A <a href="#t_pointer">pointer</a> to <a href="#t_array">array</a> of
@@ -1272,6 +1281,8 @@ reference to another object, which must live in memory.</p>
       A <a href="#t_pointer">pointer</a> to a <a
       href="#t_function">function</a> that takes an <tt>i32*</tt>, returning an
       <tt>i32</tt>.<br/>
+			A <a href="#t_pointer">pointer</a> to an <tt>i32</tt> value that resides 
+			in address space 5.<br/>
     </td>
   </tr>
 </table>
