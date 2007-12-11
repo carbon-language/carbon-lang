@@ -990,6 +990,7 @@ static void scanToNextArgument(const char *&argRef) {
   }
   assert(angle == 0 && "scanToNextArgument - bad protocol type syntax");
 }
+
 bool RewriteTest::needToScanForQualifiers(QualType T) {
   // FIXME: we don't currently represent "id <Protocol>" in the type system.
   if (T == Context->getObjcIdType())
@@ -1057,8 +1058,10 @@ void RewriteTest::RewriteObjcQualifiedInterfaceTypes(Decl *Dcl) {
       const char *startRef = 0, *endRef = 0;
       if (scanForProtocolRefs(startBuf, endBuf, startRef, endRef)) {
         // Get the locations of the startRef, endRef.
-        SourceLocation LessLoc = Loc.getFileLocWithOffset(startRef-startFuncBuf);
-        SourceLocation GreaterLoc = Loc.getFileLocWithOffset(endRef-startFuncBuf+1);
+        SourceLocation LessLoc = 
+          Loc.getFileLocWithOffset(startRef-startFuncBuf);
+        SourceLocation GreaterLoc = 
+          Loc.getFileLocWithOffset(endRef-startFuncBuf+1);
         // Comment out the protocol references.
         Rewrite.InsertText(LessLoc, "/*", 2);
         Rewrite.InsertText(GreaterLoc, "*/", 2);
