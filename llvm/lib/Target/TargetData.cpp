@@ -25,6 +25,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Config/config.h"
 #include <algorithm>
 #include <cstdlib>
 #include <sstream>
@@ -131,6 +132,14 @@ const TargetAlignElem TargetData::InvalidAlignmentElem =
 //===----------------------------------------------------------------------===//
 //                       TargetData Class Implementation
 //===----------------------------------------------------------------------===//
+
+bool TargetData::hostIsLittleEndian() const {
+#ifdef LSB_FIRST
+  return true;
+#else
+  return false;
+#endif
+}
 
 /*!
  A TargetDescription string consists of a sequence of hyphen-delimited
