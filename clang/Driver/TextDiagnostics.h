@@ -36,12 +36,12 @@ public:
 
   virtual bool IgnoreDiagnostic(Diagnostic::Level Level, 
                                 SourceLocation Pos,
-                                SourceManager& SrcMgr);
+                                SourceManager* SrcMgr);
 
   virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
                                 diag::kind ID,
-                                SourceManager& SrcMgr,
+                                SourceManager* SrcMgr,
                                 const std::string *Strs,
                                 unsigned NumStrs,
                                 const SourceRange *Ranges, 

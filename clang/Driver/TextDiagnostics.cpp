@@ -41,12 +41,12 @@ std::string TextDiagnostics::FormatDiagnostic(Diagnostic &Diags,
 
 bool TextDiagnostics::IgnoreDiagnostic(Diagnostic::Level Level,
                                        SourceLocation Pos,
-                                       SourceManager& SourceMgr) {
+                                       SourceManager* SourceMgr) {
   if (Pos.isValid()) {
     // If this is a warning or note, and if it a system header, suppress the
     // diagnostic.
     if (Level == Diagnostic::Warning || Level == Diagnostic::Note) {
-      if (const FileEntry *F = SourceMgr.getFileEntryForLoc(Pos)) {
+      if (const FileEntry *F = SourceMgr->getFileEntryForLoc(Pos)) {
         DirectoryLookup::DirType DirInfo = TheHeaderSearch->getFileDirFlavor(F);
         if (DirInfo == DirectoryLookup::SystemHeaderDir ||
             DirInfo == DirectoryLookup::ExternCSystemHeaderDir)

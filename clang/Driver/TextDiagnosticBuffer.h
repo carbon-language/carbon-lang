@@ -41,7 +41,7 @@ public:
   virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
                                 diag::kind ID,
-                                SourceManager& SrcMgr,
+                                SourceManager* SrcMgr,
                                 const std::string *Strs,
                                 unsigned NumStrs,
                                 const SourceRange *Ranges, 

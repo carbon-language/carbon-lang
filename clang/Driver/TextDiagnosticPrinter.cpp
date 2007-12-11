@@ -47,24 +47,24 @@ PrintIncludeStack(SourceLocation Pos, SourceManager& SourceMgr) {
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
 /// any characters in LineNo that intersect the SourceRange.
 void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
-                                           SourceManager& SourceMgr,
+                                           SourceManager* SourceMgr,
                                            unsigned LineNo,
                                            std::string &CaratLine,
-                                           const std::string &SourceLine) {
+                                           const std::string &SourceLine) {  
   assert(CaratLine.size() == SourceLine.size() &&
          "Expect a correspondence between source and carat line!");
   if (!R.isValid()) return;
 
-  unsigned StartLineNo = SourceMgr.getLogicalLineNumber(R.getBegin());
+  unsigned StartLineNo = SourceMgr->getLogicalLineNumber(R.getBegin());
   if (StartLineNo > LineNo) return;  // No intersection.
   
-  unsigned EndLineNo = SourceMgr.getLogicalLineNumber(R.getEnd());
+  unsigned EndLineNo = SourceMgr->getLogicalLineNumber(R.getEnd());
   if (EndLineNo < LineNo) return;  // No intersection.
   
   // Compute the column number of the start.
   unsigned StartColNo = 0;
   if (StartLineNo == LineNo) {
-    StartColNo = SourceMgr.getLogicalColumnNumber(R.getBegin());
+    StartColNo = SourceMgr->getLogicalColumnNumber(R.getBegin());
     if (StartColNo) --StartColNo;  // Zero base the col #.
   }
 
@@ -76,12 +76,12 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   // Compute the column number of the end.
   unsigned EndColNo = CaratLine.size();
   if (EndLineNo == LineNo) {
-    EndColNo = SourceMgr.getLogicalColumnNumber(R.getEnd());
+    EndColNo = SourceMgr->getLogicalColumnNumber(R.getEnd());
     if (EndColNo) {
       --EndColNo;  // Zero base the col #.
       
       // Add in the length of the token, so that we cover multi-char tokens.
-      EndColNo += Lexer::MeasureTokenLength(R.getEnd(), SourceMgr);
+      EndColNo += Lexer::MeasureTokenLength(R.getEnd(), *SourceMgr);
     } else {
       EndColNo = CaratLine.size();
     }
@@ -102,7 +102,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
                                              Diagnostic::Level Level, 
                                              SourceLocation Pos,
                                              diag::kind ID,
-                                             SourceManager& SourceMgr,
+                                             SourceManager* SourceMgr,
                                              const std::string *Strs,
                                              unsigned NumStrs,
                                              const SourceRange *Ranges,
@@ -111,25 +111,25 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
   const char *LineStart = 0, *LineEnd = 0;
   
   if (Pos.isValid()) {
-    SourceLocation LPos = SourceMgr.getLogicalLoc(Pos);
-    LineNo = SourceMgr.getLineNumber(LPos);
+    SourceLocation LPos = SourceMgr->getLogicalLoc(Pos);
+    LineNo = SourceMgr->getLineNumber(LPos);
     
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.
-    if (LastWarningLoc != SourceMgr.getIncludeLoc(LPos)) {
-      LastWarningLoc = SourceMgr.getIncludeLoc(LPos);
-      PrintIncludeStack(LastWarningLoc,SourceMgr);
+    if (LastWarningLoc != SourceMgr->getIncludeLoc(LPos)) {
+      LastWarningLoc = SourceMgr->getIncludeLoc(LPos);
+      PrintIncludeStack(LastWarningLoc,*SourceMgr);
     }
   
     // Compute the column number.  Rewind from the current position to the start
     // of the line.
-    ColNo = SourceMgr.getColumnNumber(LPos);
-    const char *TokLogicalPtr = SourceMgr.getCharacterData(LPos);
+    ColNo = SourceMgr->getColumnNumber(LPos);
+    const char *TokLogicalPtr = SourceMgr->getCharacterData(LPos);
     LineStart = TokLogicalPtr-ColNo+1;  // Column # is 1-based
   
     // Compute the line end.  Scan forward from the error position to the end of
     // the line.
-    const llvm::MemoryBuffer *Buffer = SourceMgr.getBuffer(LPos.getFileID());
+    const llvm::MemoryBuffer *Buffer = SourceMgr->getBuffer(LPos.getFileID());
     const char *BufEnd = Buffer->getBufferEnd();
     LineEnd = TokLogicalPtr;
     while (LineEnd != BufEnd && 

@@ -28,7 +28,7 @@ public:
 
   void PrintIncludeStack(SourceLocation Pos, SourceManager& SrcMgr);
   void HighlightRange(const SourceRange &R,
-                      SourceManager& SrcMgr,
+                      SourceManager* SrcMgr,
                       unsigned LineNo,
                       std::string &CaratLine,
                       const std::string &SourceLine);
@@ -36,7 +36,7 @@ public:
   virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
                                 diag::kind ID,
-                                SourceManager& SrcMgr,
+                                SourceManager* SrcMgr,
                                 const std::string *Strs,
                                 unsigned NumStrs,
                                 const SourceRange *Ranges, 

@@ -198,7 +198,7 @@ Diagnostic::Level Diagnostic::getDiagnosticLevel(unsigned DiagID) const {
 /// compilation, return true, otherwise return false.  DiagID is a member of
 /// the diag::kind enum.  
 void Diagnostic::Report(SourceLocation Pos, unsigned DiagID,
-                        SourceManager& SrcMgr,
+                        SourceManager* SrcMgr,
                         const std::string *Strs, unsigned NumStrs,
                         const SourceRange *Ranges, unsigned NumRanges) {
   // Figure out the diagnostic level of this message.
