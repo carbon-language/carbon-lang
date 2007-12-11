@@ -19,10 +19,10 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "VirtRegMap.h"
 #include "llvm/Value.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -765,7 +765,7 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
                  const TargetRegisterClass* rc,
                  SmallVector<int, 4> &ReMatIds,
                  unsigned &NewVReg, bool &HasDef, bool &HasUse,
-                 const LoopInfo *loopInfo,
+                 const MachineLoopInfo *loopInfo,
                  std::map<unsigned,unsigned> &MBBVRegsMap,
                  std::vector<LiveInterval*> &NewLIs) {
   bool CanFold = false;
@@ -962,7 +962,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                     VirtRegMap &vrm, SSARegMap *RegMap,
                     const TargetRegisterClass* rc,
                     SmallVector<int, 4> &ReMatIds,
-                    const LoopInfo *loopInfo,
+                    const MachineLoopInfo *loopInfo,
                     BitVector &SpillMBBs,
                     std::map<unsigned, std::vector<SRInfo> > &SpillIdxes,
                     BitVector &RestoreMBBs,
@@ -1119,7 +1119,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     }
 
     // Update spill weight.
-    unsigned loopDepth = loopInfo->getLoopDepth(MBB->getBasicBlock());
+    unsigned loopDepth = loopInfo->getLoopDepth(MBB);
     nI.weight += getSpillWeight(HasDef, HasUse, loopDepth);
   }
 
@@ -1158,7 +1158,7 @@ void LiveIntervals::eraseRestoreInfo(int Id, int index, unsigned vr,
 
 std::vector<LiveInterval*> LiveIntervals::
 addIntervalsForSpills(const LiveInterval &li,
-                      const LoopInfo *loopInfo, VirtRegMap &vrm) {
+                      const MachineLoopInfo *loopInfo, VirtRegMap &vrm) {
   // Since this is called after the analysis is done we don't know if
   // LiveVariables is available
   lv_ = getAnalysisToUpdate<LiveVariables>();

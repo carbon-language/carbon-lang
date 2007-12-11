@@ -16,9 +16,9 @@
 #include "PhysRegTracker.h"
 #include "VirtRegMap.h"
 #include "llvm/Function.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/RegisterCoalescer.h"
@@ -67,7 +67,7 @@ namespace {
     SSARegMap *regmap_;
     BitVector allocatableRegs_;
     LiveIntervals* li_;
-    const LoopInfo *loopInfo;
+    const MachineLoopInfo *loopInfo;
 
     /// handled_ - Intervals are added to the handled_ set in the order of their
     /// start value.  This is uses for backtracking.
@@ -103,7 +103,7 @@ namespace {
       // Make sure PassManager knows which analyses to make available
       // to coalescing and which analyses coalescing invalidates.
       AU.addRequiredTransitive<RegisterCoalescer>();
-      AU.addRequired<LoopInfo>();
+      AU.addRequired<MachineLoopInfo>();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
@@ -254,7 +254,7 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   regmap_ = mf_->getSSARegMap();
   allocatableRegs_ = mri_->getAllocatableSet(fn);
   li_ = &getAnalysis<LiveIntervals>();
-  loopInfo = &getAnalysis<LoopInfo>();
+  loopInfo = &getAnalysis<MachineLoopInfo>();
 
   // We don't run the coalescer here because we have no reason to
   // interact with it.  If the coalescer requires interaction, it

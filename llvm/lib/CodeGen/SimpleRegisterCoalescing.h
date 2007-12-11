@@ -28,7 +28,7 @@ namespace llvm {
   class MRegisterInfo;
   class TargetInstrInfo;
   class VirtRegMap;
-  class LoopInfo;
+  class MachineLoopInfo;
 
   /// CopyRec - Representation for copy instructions in coalescer queue.
   ///
@@ -84,7 +84,7 @@ namespace llvm {
     const TargetInstrInfo* tii_;
     LiveIntervals *li_;
     LiveVariables *lv_;
-    const LoopInfo* loopInfo;
+    const MachineLoopInfo* loopInfo;
     
     BitVector allocatableRegs_;
     DenseMap<const TargetRegisterClass*, BitVector> allocatableRCRegs_;

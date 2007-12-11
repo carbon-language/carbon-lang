@@ -17,10 +17,10 @@
 #include "VirtRegMap.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/Value.h"
-#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/RegisterCoalescer.h"
@@ -72,7 +72,7 @@ void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreservedID(TwoAddressInstructionPassID);
   AU.addRequired<LiveVariables>();
   AU.addRequired<LiveIntervals>();
-  AU.addRequired<LoopInfo>();
+  AU.addRequired<MachineLoopInfo>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -207,11 +207,10 @@ void SimpleRegisterCoalescing::AddSubRegIdxPairs(unsigned Reg, unsigned SubIdx) 
 bool SimpleRegisterCoalescing::isBackEdgeCopy(MachineInstr *CopyMI,
                                               unsigned DstReg) {
   MachineBasicBlock *MBB = CopyMI->getParent();
-  const BasicBlock *BB = MBB->getBasicBlock();
-  const Loop *L = loopInfo->getLoopFor(BB);
+  const MachineLoop *L = loopInfo->getLoopFor(MBB);
   if (!L)
     return false;
-  if (BB != L->getLoopLatch())
+  if (MBB != L->getLoopLatch())
     return false;
 
   DstReg = rep(DstReg);
@@ -540,8 +539,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec TheCopy, bool &Again) {
         unsigned SrcReg, DstReg;
         if (CopyMI && tii_->isMoveInstr(*CopyMI, SrcReg, DstReg) &&
             JoinedCopies.count(CopyMI) == 0) {
-          unsigned LoopDepth =
-            loopInfo->getLoopDepth(CopyMI->getParent()->getBasicBlock());
+          unsigned LoopDepth = loopInfo->getLoopDepth(CopyMI->getParent());
           JoinQueue->push(CopyRec(CopyMI, SrcReg, DstReg, LoopDepth,
                                   isBackEdgeCopy(CopyMI, DstReg)));
         }
@@ -1072,7 +1070,7 @@ void SimpleRegisterCoalescing::CopyCoalesceInMBB(MachineBasicBlock *MBB,
 
   std::vector<CopyRec> VirtCopies;
   std::vector<CopyRec> PhysCopies;
-  unsigned LoopDepth = loopInfo->getLoopDepth(MBB->getBasicBlock());
+  unsigned LoopDepth = loopInfo->getLoopDepth(MBB);
   for (MachineBasicBlock::iterator MII = MBB->begin(), E = MBB->end();
        MII != E;) {
     MachineInstr *Inst = MII++;
@@ -1143,9 +1141,10 @@ void SimpleRegisterCoalescing::joinIntervals() {
     // Join intervals in the function prolog first. We want to join physical
     // registers with virtual registers before the intervals got too long.
     std::vector<std::pair<unsigned, MachineBasicBlock*> > MBBs;
-    for (MachineFunction::iterator I = mf_->begin(), E = mf_->end(); I != E;++I)
-      MBBs.push_back(std::make_pair(loopInfo->
-                                    getLoopDepth(I->getBasicBlock()), I));
+    for (MachineFunction::iterator I = mf_->begin(), E = mf_->end();I != E;++I){
+      MachineBasicBlock *MBB = I;
+      MBBs.push_back(std::make_pair(loopInfo->getLoopDepth(MBB), I));
+    }
 
     // Sort by loop depth.
     std::sort(MBBs.begin(), MBBs.end(), DepthMBBCompare());
@@ -1380,7 +1379,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   tii_ = tm_->getInstrInfo();
   li_ = &getAnalysis<LiveIntervals>();
   lv_ = &getAnalysis<LiveVariables>();
-  loopInfo = &getAnalysis<LoopInfo>();
+  loopInfo = &getAnalysis<MachineLoopInfo>();
 
   DOUT << "********** SIMPLE REGISTER COALESCING **********\n"
        << "********** Function: "
@@ -1427,7 +1426,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
        mbbi != mbbe; ++mbbi) {
     MachineBasicBlock* mbb = mbbi;
-    unsigned loopDepth = loopInfo->getLoopDepth(mbb->getBasicBlock());
+    unsigned loopDepth = loopInfo->getLoopDepth(mbb);
 
     for (MachineBasicBlock::iterator mii = mbb->begin(), mie = mbb->end();
          mii != mie; ) {

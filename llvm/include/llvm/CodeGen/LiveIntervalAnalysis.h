@@ -32,7 +32,7 @@
 namespace llvm {
 
   class LiveVariables;
-  class LoopInfo;
+  class MachineLoopInfo;
   class MRegisterInfo;
   class SSARegMap;
   class TargetInstrInfo;
@@ -231,7 +231,7 @@ namespace llvm {
     /// the given interval.
     std::vector<LiveInterval*>
     addIntervalsForSpills(const LiveInterval& i,
-                          const LoopInfo *loopInfo, VirtRegMap& vrm);
+                          const MachineLoopInfo *loopInfo, VirtRegMap& vrm);
 
     /// isReMaterializable - Returns true if every definition of MI of every
     /// val# of the specified interval is re-materializable. Also returns true
@@ -321,7 +321,8 @@ namespace llvm {
         bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
         VirtRegMap &vrm, SSARegMap *RegMap, const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds,
-        unsigned &NewVReg, bool &HasDef, bool &HasUse, const LoopInfo *loopInfo,
+        unsigned &NewVReg, bool &HasDef, bool &HasUse,
+        const MachineLoopInfo *loopInfo,
         std::map<unsigned,unsigned> &MBBVRegsMap,
         std::vector<LiveInterval*> &NewLIs);
     void rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
@@ -329,7 +330,7 @@ namespace llvm {
         MachineInstr *OrigDefMI, MachineInstr *DefMI, unsigned Slot, int LdSlot,
         bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
         VirtRegMap &vrm, SSARegMap *RegMap, const TargetRegisterClass* rc,
-        SmallVector<int, 4> &ReMatIds, const LoopInfo *loopInfo,
+        SmallVector<int, 4> &ReMatIds, const MachineLoopInfo *loopInfo,
         BitVector &SpillMBBs,
         std::map<unsigned,std::vector<SRInfo> > &SpillIdxes,
         BitVector &RestoreMBBs,
