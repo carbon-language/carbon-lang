@@ -16,6 +16,6 @@ int latin_ptr2len (char *p);
 int (*mb_ptr2len) (char *p) = latin_ptr2len;
 
 
-char string[8] = "string";   // extend init
-char string2[4] = "string";  // truncate init
+//char string[8] = "string";   // extend init
+//char string2[4] = "string";  // truncate init
 

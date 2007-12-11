@@ -576,6 +576,8 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
         // Return a new array type (C99 6.7.8p22).
         DeclType = Context.getConstantArrayType(VAT->getElementType(), ConstVal, 
                                                 ArrayType::Normal, 0);
+        // set type from "char *" to "constant array of char".
+        strLiteral->setType(DeclType); 
         return hadError;
       }
       const ConstantArrayType *CAT = DeclType->getAsConstantArrayType();
@@ -586,6 +588,8 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
                diag::warn_initializer_string_for_char_array_too_long,
                strLiteral->getSourceRange());
         }
+        // set type from "char *" to "constant array of char".
+        strLiteral->setType(DeclType); 
         return hadError;
       }
     }
