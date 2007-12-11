@@ -231,6 +231,39 @@ llvm::Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_psubw:
     return Builder.CreateSub(EmitScalarExpr(E->getArg(0)),
                              EmitScalarExpr(E->getArg(1)), "psub");
+  case X86::BI__builtin_ia32_pmullw:
+    return Builder.CreateMul(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)), "pmul");
+  case X86::BI__builtin_ia32_punpckhbw:
+    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)),
+                             4, 12, 5, 13, 6, 14, 7, 15,
+                             "punpckhbw");
+  case X86::BI__builtin_ia32_punpckhwd:
+    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)),
+                             2, 6, 3, 7,
+                             "punpckhwd");
+  case X86::BI__builtin_ia32_punpckhdq:
+    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)),
+                             1, 3,
+                             "punpckhdq");
+  case X86::BI__builtin_ia32_punpcklbw:
+    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)),
+                             0, 8, 1, 9, 2, 10, 3, 11,
+                             "punpcklbw");
+  case X86::BI__builtin_ia32_punpcklwd:
+    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)),
+                             0, 4, 1, 5,
+                             "punpcklwd");
+  case X86::BI__builtin_ia32_punpckldq:
+    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
+                             EmitScalarExpr(E->getArg(1)),
+                             0, 2,
+                             "punpckldq");
   case X86::BI__builtin_ia32_pshufd: {
     llvm::Value *V = EmitScalarExpr(E->getArg(0));
     llvm::ConstantInt *I = 
