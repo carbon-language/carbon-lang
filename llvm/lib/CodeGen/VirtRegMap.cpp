@@ -474,6 +474,17 @@ static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
   }
 }
 
+/// InvalidateKill - A MI that defines the specified register is being deleted,
+/// invalidate the register kill information.
+static void InvalidateKill(unsigned Reg, BitVector &RegKills,
+                           std::vector<MachineOperand*> &KillOps) {
+  if (RegKills[Reg]) {
+    KillOps[Reg]->unsetIsKill();
+    KillOps[Reg] = NULL;
+    RegKills.reset(Reg);
+  }
+}
+
 /// InvalidateRegDef - If the def operand of the specified def MI is now dead
 /// (since it's spill instruction is removed), mark it isDead. Also checks if
 /// the def MI has other definition operands that are not dead. Returns it by
@@ -537,12 +548,13 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
       // That can't be right. Register is killed but not re-defined and it's
       // being reused. Let's fix that.
       KillOps[Reg]->unsetIsKill();
+      KillOps[Reg] = NULL;
+      RegKills.reset(Reg);
       if (i < TID->numOperands &&
           TID->getOperandConstraint(i, TOI::TIED_TO) == -1)
         // Unless it's a two-address operand, this is the new kill.
         MO.setIsKill();
     }
-
     if (MO.isKill()) {
       RegKills.set(Reg);
       KillOps[Reg] = &MO;
@@ -1261,8 +1273,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
               NextMII = &MI;
               --NextMII;  // backtrack to the copy.
               BackTracked = true;
-            } else
+            } else {
               DOUT << "Removing now-noop copy: " << MI;
+              // Unset last kill since it's being reused.
+              InvalidateKill(InReg, RegKills, KillOps);
+            }
 
             VRM.RemoveMachineInstrFromMaps(&MI);
             MBB.erase(&MI);
@@ -1298,6 +1313,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           // the value and there isn't an earlier def that has already clobbered the
           // physreg.
           if (PhysReg &&
+              !TII->isStoreToStackSlot(&MI, SS) && // Not profitable!
               DeadStore->findRegisterUseOperandIdx(PhysReg, true) != -1 &&
               MRI->unfoldMemoryOperand(MF, &MI, PhysReg, false, true, NewMIs)) {
             MBB.insert(MII, NewMIs[0]);
