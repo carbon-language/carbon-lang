@@ -196,7 +196,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       Code = bitc::TYPE_CODE_INTEGER;
       TypeVals.push_back(cast<IntegerType>(T)->getBitWidth());
       break;
-    case Type::PointerTyID:
+    case Type::PointerTyID: {
       const PointerType *PTy = cast<PointerType>(T);
       // POINTER: [pointee type] or [pointee type, address space]
       Code = bitc::TYPE_CODE_POINTER;
@@ -206,6 +206,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       else
         AbbrevToUse = PtrAbbrev;
       break;
+    }
 
     case Type::FunctionTyID: {
       const FunctionType *FT = cast<FunctionType>(T);
