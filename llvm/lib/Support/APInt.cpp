@@ -14,7 +14,6 @@
 
 #define DEBUG_TYPE "apint"
 #include "llvm/ADT/APInt.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <math.h>
@@ -24,6 +23,16 @@
 #include <iomanip>
 
 using namespace llvm;
+
+
+/// This enumeration just provides for internal constants used in this
+/// translation unit. 
+enum {
+  MIN_INT_BITS = 1,        ///< Minimum number of bits that can be specified
+  ///< Note that this must remain synchronized with IntegerType::MIN_INT_BITS
+  MAX_INT_BITS = (1<<23)-1 ///< Maximum number of bits that can be specified
+  ///< Note that this must remain synchronized with IntegerType::MAX_INT_BITS
+};
 
 /// A utility function for allocating memory, checking for allocation failures,
 /// and ensuring the contents are zeroed.
@@ -44,8 +53,8 @@ inline static uint64_t* getMemory(uint32_t numWords) {
 
 APInt::APInt(uint32_t numBits, uint64_t val, bool isSigned) 
   : BitWidth(numBits), VAL(0) {
-  assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
-  assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
+  assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
+  assert(BitWidth <= MAX_INT_BITS && "bitwidth too large");
   if (isSingleWord())
     VAL = val;
   else {
@@ -60,8 +69,8 @@ APInt::APInt(uint32_t numBits, uint64_t val, bool isSigned)
 
 APInt::APInt(uint32_t numBits, uint32_t numWords, const uint64_t bigVal[])
   : BitWidth(numBits), VAL(0)  {
-  assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
-  assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
+  assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
+  assert(BitWidth <= MAX_INT_BITS && "bitwidth too large");
   assert(bigVal && "Null pointer detected!");
   if (isSingleWord())
     VAL = bigVal[0];
@@ -80,23 +89,23 @@ APInt::APInt(uint32_t numBits, uint32_t numWords, const uint64_t bigVal[])
 APInt::APInt(uint32_t numbits, const char StrStart[], uint32_t slen, 
              uint8_t radix) 
   : BitWidth(numbits), VAL(0) {
-  assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
-  assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
+  assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
+  assert(BitWidth <= MAX_INT_BITS && "bitwidth too large");
   fromString(numbits, StrStart, slen, radix);
 }
 
 APInt::APInt(uint32_t numbits, const std::string& Val, uint8_t radix)
   : BitWidth(numbits), VAL(0) {
-  assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
-  assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
+  assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
+  assert(BitWidth <= MAX_INT_BITS && "bitwidth too large");
   assert(!Val.empty() && "String empty?");
   fromString(numbits, Val.c_str(), Val.size(), radix);
 }
 
 APInt::APInt(const APInt& that)
   : BitWidth(that.BitWidth), VAL(0) {
-  assert(BitWidth >= IntegerType::MIN_INT_BITS && "bitwidth too small");
-  assert(BitWidth <= IntegerType::MAX_INT_BITS && "bitwidth too large");
+  assert(BitWidth >= MIN_INT_BITS && "bitwidth too small");
+  assert(BitWidth <= MAX_INT_BITS && "bitwidth too large");
   if (isSingleWord()) 
     VAL = that.VAL;
   else {
@@ -943,7 +952,7 @@ double APInt::roundToDouble(bool isSigned) const {
 // Truncate to new width.
 APInt &APInt::trunc(uint32_t width) {
   assert(width < BitWidth && "Invalid APInt Truncate request");
-  assert(width >= IntegerType::MIN_INT_BITS && "Can't truncate to 0 bits");
+  assert(width >= MIN_INT_BITS && "Can't truncate to 0 bits");
   uint32_t wordsBefore = getNumWords();
   BitWidth = width;
   uint32_t wordsAfter = getNumWords();
@@ -966,7 +975,7 @@ APInt &APInt::trunc(uint32_t width) {
 // Sign extend to a new width.
 APInt &APInt::sext(uint32_t width) {
   assert(width > BitWidth && "Invalid APInt SignExtend request");
-  assert(width <= IntegerType::MAX_INT_BITS && "Too many bits");
+  assert(width <= MAX_INT_BITS && "Too many bits");
   // If the sign bit isn't set, this is the same as zext.
   if (!isNegative()) {
     zext(width);
@@ -1014,7 +1023,7 @@ APInt &APInt::sext(uint32_t width) {
 //  Zero extend to a new width.
 APInt &APInt::zext(uint32_t width) {
   assert(width > BitWidth && "Invalid APInt ZeroExtend request");
-  assert(width <= IntegerType::MAX_INT_BITS && "Too many bits");
+  assert(width <= MAX_INT_BITS && "Too many bits");
   uint32_t wordsBefore = getNumWords();
   BitWidth = width;
   uint32_t wordsAfter = getNumWords();
