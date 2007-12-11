@@ -600,6 +600,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
     // Custom lower build_vector, vector_shuffle, and extract_vector_elt.
     for (unsigned VT = (unsigned)MVT::v16i8; VT != (unsigned)MVT::v2i64; VT++) {
+      // Do not attempt to custom lower non-power-of-2 vectors
+      if (!isPowerOf2_32(MVT::getVectorNumElements(VT)))
+        continue;
       setOperationAction(ISD::BUILD_VECTOR,        (MVT::ValueType)VT, Custom);
       setOperationAction(ISD::VECTOR_SHUFFLE,      (MVT::ValueType)VT, Custom);
       setOperationAction(ISD::EXTRACT_VECTOR_ELT,  (MVT::ValueType)VT, Custom);
