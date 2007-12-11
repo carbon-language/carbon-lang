@@ -24,19 +24,14 @@ namespace llvm {
 // - Labels are usually small, maybe it's better to use SmallString
 // - Something efficient for child storage
 // - Should we use char* during construction?
+// - Should we templatize Empty with traits-like interface?
 // - GraphTraits interface
-// - Eliminate Edge class, which is ok for debugging, but not for end code
 
 template<class Payload>
 class Trie {
-  class Edge;
-  class Node;
+  class Node {
+    friend class Trie;
 
-  class Edge {
-    std::string Label;
-    Node *Parent, *Child;
-
-  public:
     typedef enum {
       Same           = -3,
       StringIsPrefix = -2,
@@ -45,26 +40,50 @@ class Trie {
       HaveCommonPart
     } QueryResult;
 
-    inline explicit Edge(std::string label = "",
-                         Node* parent = NULL, Node* child = NULL):
-      Label(label), Parent(parent), Child(child) { }
+    std::string Label;
+    Payload Data;
+    std::map<char, Node*> Children;
+  public:
+    inline explicit Node(const Payload& data, const std::string& label = ""):
+        Label(label), Data(data) { }
 
-    inline void setParent(Node* parent) { Parent = parent; }
-    inline Node* getParent() const { return Parent; }
-    inline void setChild(Node* child) { Child = child; }
-    inline Node* getChild() const { return Child; }
+    inline Node(const Node& n) {
+      Data = n.Data;
+      Children = n.Children;
+      Label = n.Label;
+    }
+    inline Node& operator=(const Node& n) {
+      if (&n != this) {
+        Data = n.Data;
+        Children = n.Children;
+        Label = n.Label;
+      }
+
+      return *this;
+    }
+
+    inline bool isLeaf() const { return Children.empty(); }
+
+    inline const Payload& getData() const { return Data; }
+    inline void setData(const Payload& data) { Data = data; }
+
     inline void setLabel(const std::string& label) { Label = label; }
     inline const std::string& getLabel() const { return Label; }
 
-    QueryResult query(const std::string& string) const {
+    inline bool addEdge(Node* N) {
+      const std::string& Label = N->getLabel();
+      return Children.insert(std::make_pair(Label[0], N)).second;
+    }
+
+    QueryResult query(const std::string& s) const {
       unsigned i, l;
-      unsigned l1 = string.length();
+      unsigned l1 = s.length();
       unsigned l2 = Label.length();
 
       // Find the length of common part
       l = std::min(l1, l2);
       i = 0;
-      while ((i < l) && (string[i] == Label[i]))
+      while ((i < l) && (s[i] == Label[i]))
         ++i;
 
       if (i == l) { // One is prefix of another, find who is who
@@ -74,67 +93,36 @@ class Trie {
           return StringIsPrefix;
         else
           return LabelIsPrefix;
-      } else // String and Label just have common part, return its length
+      } else // s and Label have common (possible empty) part, return its length
         return (QueryResult)i;
-    }
-  };
-
-  class Node {
-    friend class Trie;
-
-    std::map<char, Edge> Edges;
-    Payload Data;
-  public:
-    inline explicit Node(const Payload& data):Data(data) { }
-    inline Node(const Node& n) {
-      Data = n.Data;
-      Edges = n.Edges;
-    }
-    inline Node& operator=(const Node& n) {
-      if (&n != this) {
-        Data = n.Data;
-        Edges = n.Edges;
-      }
-
-      return *this;
-    }
-
-    inline bool isLeaf() const { return Edges.empty(); }
-
-    inline const Payload& getData() const { return Data; }
-    inline void setData(const Payload& data) { Data = data; }
-
-    inline Edge* addEdge(const std::string& Label) {
-      if (!Edges.insert(std::make_pair(Label[0],
-                                       Edge(Label, this))).second) {
-        assert(0 && "Edge already exists!");
-        return NULL;
-      } else
-        return &Edges[Label[0]];
     }
   };
 
   std::vector<Node*> Nodes;
   Payload Empty;
 
-  inline Node* addNode(const Payload& data) {
-    Node* N = new Node(data);
+  inline Node* addNode(const Payload& data, const std::string label = "") {
+    Node* N = new Node(data, label);
     Nodes.push_back(N);
     return N;
   }
 
-  inline Node* splitEdge(Edge& cEdge, size_t index) {
-    const std::string& l = cEdge.getLabel();
-    assert(index < l.length() && "Trying to split too far!");
+  inline Node* splitEdge(Node* N, char Id, size_t index) {
+    assert(N->Children.count(Id) && "Node doesn't exist");
 
+    Node* eNode = N->Children[Id];
+
+    const std::string &l = eNode->Label;
+    assert(index > 0 && index < l.length() && "Trying to split too far!");
     std::string l1 = l.substr(0, index);
     std::string l2 = l.substr(index);
 
-    Node* nNode = addNode(Empty);
-    Edge* nEdge = nNode->addEdge(l2);
-    nEdge->setChild(cEdge.getChild());
-    cEdge.setChild(nNode);
-    cEdge.setLabel(l1);
+    eNode->Label = l2;
+
+    Node* nNode = addNode(Empty, l1);
+    nNode->addEdge(eNode);
+
+    N->Children[Id] = nNode;
 
     return nNode;
   }
@@ -152,33 +140,39 @@ public:
 
   bool addString(const std::string& s, const Payload& data) {
     Node* cNode = getRoot();
-    Edge* nEdge = NULL;
+    Node* tNode = NULL;
     std::string s1(s);
 
-    while (nEdge == NULL) {
-      if (cNode->Edges.count(s1[0])) {
-        Edge& cEdge = cNode->Edges[s1[0]];
-        typename Edge::QueryResult r = cEdge.query(s1);
+    while (tNode == NULL) {
+      char Id = s1[0];
+      if (cNode->Children.count(Id)) {
+        Node* nNode = cNode->Children[Id];
+        typename Node::QueryResult r = nNode->query(s1);
 
         switch (r) {
-        case Edge::Same:
-        case Edge::StringIsPrefix:
-        case Edge::DontMatch:
+        case Node::Same:
+        case Node::StringIsPrefix:
+          // Currently we don't allow to have two strings in the trie one
+          // being a prefix of another. This should be fixed.
+          assert(0 && "FIXME!");
+          return false;
+        case Node::DontMatch:
           assert(0 && "Impossible!");
           return false;
-        case Edge::LabelIsPrefix:
-          s1 = s1.substr(cEdge.getLabel().length());
-          cNode = cEdge.getChild();
+        case Node::LabelIsPrefix:
+          s1 = s1.substr(nNode->getLabel().length());
+          cNode = nNode;
           break;
         default:
-          nEdge = splitEdge(cEdge, r)->addEdge(s1.substr(r));
+         nNode = splitEdge(cNode, Id, r);
+         tNode = addNode(data, s1.substr(r));
+         nNode->addEdge(tNode);
         }
-      } else
-        nEdge = cNode->addEdge(s1);
+      } else {
+        tNode = addNode(data, s1);
+        cNode->addEdge(tNode);
+      }
     }
-
-    Node* tNode = addNode(data);
-    nEdge->setChild(tNode);
 
     return true;
   }
@@ -189,22 +183,22 @@ public:
     std::string s1(s);
 
     while (tNode == NULL) {
-      if (cNode->Edges.count(s1[0])) {
-        Edge& cEdge = cNode->Edges[s1[0]];
-        typename Edge::QueryResult r = cEdge.query(s1);
+      if (cNode->Children.count(s1[0])) {
+        Node* nNode = cNode->Children[s1[0]];
+        typename Node::QueryResult r = nNode->query(s1);
 
         switch (r) {
-        case Edge::Same:
-          tNode = cEdge.getChild();
+        case Node::Same:
+          tNode = nNode;
           break;
-        case Edge::StringIsPrefix:
+        case Node::StringIsPrefix:
           return Empty;
-        case Edge::DontMatch:
+        case Node::DontMatch:
           assert(0 && "Impossible!");
           return Empty;
-        case Edge::LabelIsPrefix:
-          s1 = s1.substr(cEdge.getLabel().length());
-          cNode = cEdge.getChild();
+        case Node::LabelIsPrefix:
+          s1 = s1.substr(nNode->getLabel().length());
+          cNode = nNode;
           break;
         default:
           return Empty;
