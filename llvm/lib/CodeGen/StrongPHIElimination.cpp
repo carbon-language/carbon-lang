@@ -97,6 +97,9 @@ namespace {
     void processBlock(MachineBasicBlock* MBB);
     
     std::vector<DomForestNode*> computeDomForest(std::set<unsigned>& instrs);
+    void processPHIUnion(MachineInstr* Inst,
+                         std::set<unsigned>& PHIUnion,
+                         std::vector<StrongPHIElimination::DomForestNode*>& DF);
     void breakCriticalEdges(MachineFunction &Fn);
     
   };
@@ -300,6 +303,92 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     
     ProcessedNames.insert(PHIUnion.begin(), PHIUnion.end());
     ++P;
+  }
+}
+
+void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
+                                           std::set<unsigned>& PHIUnion,
+                        std::vector<StrongPHIElimination::DomForestNode*>& DF) {
+  
+  std::vector<DomForestNode*> worklist(DF.begin(), DF.end());
+  SmallPtrSet<DomForestNode*, 4> visited;
+  
+  LiveVariables& LV = getAnalysis<LiveVariables>();
+  unsigned DestReg = Inst->getOperand(0).getReg();
+  
+  while (!worklist.empty()) {
+    DomForestNode* DFNode = worklist.back();
+    
+    LiveVariables::VarInfo& Info = LV.getVarInfo(DFNode->getReg());
+    visited.insert(DFNode);
+    
+    bool inserted = false;
+    SmallPtrSet<DomForestNode*, 4> interferences;
+    for (DomForestNode::iterator CI = DFNode->begin(), CE = DFNode->end();
+         CI != CE; ++CI) {
+      DomForestNode* child = *CI;   
+      LiveVariables::VarInfo& CInfo = LV.getVarInfo(child->getReg());
+        
+      if (isLiveOut(Info, CInfo.DefInst->getParent())) {
+        interferences.insert(child);
+      } else if (isLiveIn(Info, CInfo.DefInst->getParent()) ||
+                 Info.DefInst->getParent() == CInfo.DefInst->getParent()) {
+        // FIXME: Add (p, c) to possible local interferences
+      }
+        
+      if (!visited.count(child)) {
+        worklist.push_back(child);
+        inserted = true;
+      }
+    }
+    
+    if (interferences.size() == 1) {
+      DomForestNode* child = *interferences.begin();
+      
+      unsigned numParentCopies = 0;
+      unsigned numChildCopies = 0;
+      for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
+        unsigned SrcReg = Inst->getOperand(i-1).getReg();
+        if (SrcReg == DFNode->getReg()) numParentCopies++;
+        else if (SrcReg == child->getReg()) numChildCopies++;
+      }
+      
+      if (numParentCopies < numChildCopies) {
+        // Insert copies for child
+        for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
+          if (Inst->getOperand(i-1).getReg() == child->getReg()) {
+            unsigned SrcReg = Inst->getOperand(i-1).getReg();
+            MachineBasicBlock* From = Inst->getOperand(i).getMBB();
+            
+            Waiting[From].push_back(std::make_pair(SrcReg, DestReg));
+          }
+        }
+        
+        // FIXME: Make child's children parent's children
+      } else {
+        // Insert copies for parent
+        for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
+          if (Inst->getOperand(i-1).getReg() == DFNode->getReg()) {
+            unsigned SrcReg = Inst->getOperand(i-1).getReg();
+            MachineBasicBlock* From = Inst->getOperand(i).getMBB();
+            
+            Waiting[From].push_back(std::make_pair(SrcReg, DestReg));
+          }
+        }
+      }
+    } else if (interferences.size() > 1) {
+      // Insert copies for parent
+      for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
+        if (Inst->getOperand(i-1).getReg() == DFNode->getReg()) {
+          unsigned SrcReg = Inst->getOperand(i-1).getReg();
+          MachineBasicBlock* From = Inst->getOperand(i).getMBB();
+          
+          Waiting[From].push_back(std::make_pair(SrcReg, DestReg));
+        }
+      }
+    }
+    
+    if (!inserted) worklist.pop_back();
   }
 }
 
