@@ -24,23 +24,25 @@ class Preprocessor;
 class TextDiagnostics : public DiagnosticClient {
   HeaderSearch *TheHeaderSearch;
 protected:
-  SourceManager &SourceMgr;
-
   std::string FormatDiagnostic(Diagnostic &Diags, Diagnostic::Level Level,
                                diag::kind ID,
                                const std::string *Strs,
                                unsigned NumStrs);
 public:
-  TextDiagnostics(SourceManager &sourceMgr) : SourceMgr(sourceMgr) {}
+  TextDiagnostics() {}
   virtual ~TextDiagnostics();
 
   void setHeaderSearch(HeaderSearch &HS) { TheHeaderSearch = &HS; }
 
   virtual bool IgnoreDiagnostic(Diagnostic::Level Level, 
-                                SourceLocation Pos);
+                                SourceLocation Pos,
+                                SourceManager& SrcMgr);
+
   virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
-                                diag::kind ID, const std::string *Strs,
+                                diag::kind ID,
+                                SourceManager& SrcMgr,
+                                const std::string *Strs,
                                 unsigned NumStrs,
                                 const SourceRange *Ranges, 
                                 unsigned NumRanges) = 0;

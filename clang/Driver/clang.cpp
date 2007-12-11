@@ -989,10 +989,10 @@ int main(int argc, char **argv) {
   std::auto_ptr<TextDiagnostics> DiagClient;
   if (!VerifyDiagnostics) {
     // Print diagnostics to stderr by default.
-    DiagClient.reset(new TextDiagnosticPrinter(SourceMgr));
+    DiagClient.reset(new TextDiagnosticPrinter());
   } else {
     // When checking diagnostics, just buffer them up.
-    DiagClient.reset(new TextDiagnosticBuffer(SourceMgr));
+    DiagClient.reset(new TextDiagnosticBuffer());
    
     if (InputFilenames.size() != 1) {
       fprintf(stderr,
@@ -1013,7 +1013,7 @@ int main(int argc, char **argv) {
   { // Create triples, and create the TargetInfo.
     std::vector<std::string> triples;
     CreateTargetTriples(triples);
-    Target = CreateTargetInfo(triples,&Diags);
+    Target = CreateTargetInfo(SourceMgr,triples,&Diags);
   
     if (Target == 0) {
       fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
@@ -1026,7 +1026,9 @@ int main(int argc, char **argv) {
   // -I- is a deprecated GCC feature, scan for it and reject it.
   for (unsigned i = 0, e = I_dirs.size(); i != e; ++i) {
     if (I_dirs[i] == "-") {
-      Diags.Report(SourceLocation(), diag::err_pp_I_dash_not_supported);
+      Diags.Report(SourceLocation(), diag::err_pp_I_dash_not_supported,
+                   SourceMgr);
+      
       I_dirs.erase(I_dirs.begin()+i);
       --i;
     }

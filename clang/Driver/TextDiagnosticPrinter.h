@@ -24,17 +24,20 @@ class SourceManager;
 class TextDiagnosticPrinter : public TextDiagnostics {
   SourceLocation LastWarningLoc;
 public:
-  TextDiagnosticPrinter(SourceManager &sourceMgr)
-    : TextDiagnostics(sourceMgr) {}
+  TextDiagnosticPrinter() {}
 
-  void PrintIncludeStack(SourceLocation Pos);
-  void HighlightRange(const SourceRange &R, unsigned LineNo,
+  void PrintIncludeStack(SourceLocation Pos, SourceManager& SrcMgr);
+  void HighlightRange(const SourceRange &R,
+                      SourceManager& SrcMgr,
+                      unsigned LineNo,
                       std::string &CaratLine,
                       const std::string &SourceLine);
 
   virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
-                                diag::kind ID, const std::string *Strs,
+                                diag::kind ID,
+                                SourceManager& SrcMgr,
+                                const std::string *Strs,
                                 unsigned NumStrs,
                                 const SourceRange *Ranges, 
                                 unsigned NumRanges);

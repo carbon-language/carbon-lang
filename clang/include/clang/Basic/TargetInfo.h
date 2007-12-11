@@ -25,6 +25,8 @@ namespace clang {
 
 class TargetInfoImpl;
 class Diagnostic;
+class SourceManager;
+  
 namespace Builtin { struct Info; }
   
 /// TargetInfo - This class exposes information about the current target set.
@@ -40,6 +42,9 @@ namespace Builtin { struct Info; }
 /// diagnostic info, but does expect them to be alive for as long as it is.
 ///
 class TargetInfo {
+  /// SrcMgr - The SourceManager associated with this TargetInfo.
+  SourceManager& SrcMgr;
+  
   /// Primary - This tracks the primary target in the target set.
   ///
   const TargetInfoImpl *PrimaryTarget;
@@ -61,7 +66,8 @@ class TargetInfo {
   unsigned WCharWidth, WCharAlign;
   
 public:
-  TargetInfo(const TargetInfoImpl *Primary, Diagnostic *D = 0) {
+  TargetInfo(SourceManager& SMgr, const TargetInfoImpl *Primary,
+             Diagnostic *D = 0) : SrcMgr(SMgr) {
     PrimaryTarget = Primary;
     Diag = D;
     NonPortable = false;

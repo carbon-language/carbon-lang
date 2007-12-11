@@ -209,7 +209,8 @@ bool DeclSpec::SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec){
 /// "_Imaginary" (lacking an FP type).  This returns a diagnostic to issue or
 /// diag::NUM_DIAGNOSTICS if there is no error.  After calling this method,
 /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-void DeclSpec::Finish(Diagnostic &D, const LangOptions &Lang) {
+void DeclSpec::Finish(Diagnostic &D, SourceManager& SrcMgr, 
+                      const LangOptions &Lang) {
   // Check the type specifier components first.
 
   // signed/unsigned are only valid with int/char.
@@ -217,7 +218,7 @@ void DeclSpec::Finish(Diagnostic &D, const LangOptions &Lang) {
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int; // unsigned -> unsigned int, signed -> signed int.
     else if (TypeSpecType != TST_int && TypeSpecType != TST_char) {
-      Diag(D, TSSLoc, diag::err_invalid_sign_spec,
+      Diag(D, TSSLoc, SrcMgr, diag::err_invalid_sign_spec,
            getSpecifierName( (TST)TypeSpecType));
       // signed double -> double.
       TypeSpecSign = TSS_unspecified;
@@ -232,7 +233,7 @@ void DeclSpec::Finish(Diagnostic &D, const LangOptions &Lang) {
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int; // short -> short int, long long -> long long int.
     else if (TypeSpecType != TST_int) {
-      Diag(D, TSWLoc,
+      Diag(D, TSWLoc, SrcMgr,
            TypeSpecWidth == TSW_short ? diag::err_invalid_short_spec
                                       : diag::err_invalid_longlong_spec,
            getSpecifierName( (TST)TypeSpecType));
@@ -243,7 +244,7 @@ void DeclSpec::Finish(Diagnostic &D, const LangOptions &Lang) {
     if (TypeSpecType == TST_unspecified)
       TypeSpecType = TST_int;  // long -> long int.
     else if (TypeSpecType != TST_int && TypeSpecType != TST_double) {
-      Diag(D, TSWLoc, diag::err_invalid_long_spec,
+      Diag(D, TSWLoc, SrcMgr, diag::err_invalid_long_spec,
            getSpecifierName( (TST)TypeSpecType));
       TypeSpecType = TST_int;
     }
@@ -254,13 +255,13 @@ void DeclSpec::Finish(Diagnostic &D, const LangOptions &Lang) {
   // disallow their use.  Need information about the backend.
   if (TypeSpecComplex != TSC_unspecified) {
     if (TypeSpecType == TST_unspecified) {
-      Diag(D, TSCLoc, diag::ext_plain_complex);
+      Diag(D, TSCLoc, SrcMgr, diag::ext_plain_complex);
       TypeSpecType = TST_double;   // _Complex -> _Complex double.
     } else if (TypeSpecType == TST_int || TypeSpecType == TST_char) {
       // Note that this intentionally doesn't include _Complex _Bool.
-      Diag(D, TSTLoc, diag::ext_integer_complex);
+      Diag(D, TSTLoc, SrcMgr, diag::ext_integer_complex);
     } else if (TypeSpecType != TST_float && TypeSpecType != TST_double) {
-      Diag(D, TSCLoc, diag::err_invalid_complex_spec, 
+      Diag(D, TSCLoc, SrcMgr, diag::err_invalid_complex_spec, 
            getSpecifierName( (TST)TypeSpecType));
       TypeSpecComplex = TSC_unspecified;
     }
@@ -272,7 +273,7 @@ void DeclSpec::Finish(Diagnostic &D, const LangOptions &Lang) {
       StorageClassSpec = SCS_extern; // '__thread int' -> 'extern __thread int'
     } else if (StorageClassSpec != SCS_extern &&
                StorageClassSpec != SCS_static) {
-      Diag(D, getStorageClassSpecLoc(), diag::err_invalid_thread_spec,
+      Diag(D, getStorageClassSpecLoc(), SrcMgr, diag::err_invalid_thread_spec,
            getSpecifierName( (SCS)StorageClassSpec));
       SCS_thread_specified = false;
     }

@@ -424,7 +424,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
     default:
       // If this is not a declaration specifier token, we're done reading decl
       // specifiers.  First verify that DeclSpec's are consistent.
-      DS.Finish(Diags, getLang());
+      DS.Finish(Diags, PP.getSourceManager(), getLang());
       return;
     
     // GNU attributes support.
@@ -1037,7 +1037,7 @@ void Parser::ParseTypeQualifierListOpt(DeclSpec &DS) {
     default:
       // If this is not a type-qualifier token, we're done reading type
       // qualifiers.  First verify that DeclSpec's are consistent.
-      DS.Finish(Diags, getLang());
+      DS.Finish(Diags, PP.getSourceManager(), getLang());
       return;
     case tok::kw_const:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_const   , Loc, PrevSpec,

@@ -24,8 +24,8 @@ namespace clang {
   class IdentifierInfo;
   
 /// DeclSpec - This class captures information about "declaration specifiers",
-/// which encompasses storage-class-specifiers, type-specifiers, type-qualifiers,
-/// and function-specifiers.
+/// which encompasses storage-class-specifiers, type-specifiers,
+/// type-qualifiers, and function-specifiers.
 class DeclSpec {
 public:
   SourceRange Range;
@@ -266,15 +266,17 @@ public:
   /// Finish - This does final analysis of the declspec, issuing diagnostics for
   /// things like "_Imaginary" (lacking an FP type).  After calling this method,
   /// DeclSpec is guaranteed self-consistent, even if an error occurred.
-  void Finish(Diagnostic &D, const LangOptions &Lang);
+  void Finish(Diagnostic &D, SourceManager& SrcMgr, const LangOptions &Lang);
   
 private:
-  void Diag(Diagnostic &D, SourceLocation Loc, unsigned DiagID) {
-    D.Report(Loc, DiagID);
+  void Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr, 
+            unsigned DiagID) {
+    D.Report(Loc, DiagID, SrcMgr);
   }
-  void Diag(Diagnostic &D, SourceLocation Loc, unsigned DiagID,
-            const std::string &info) {
-    D.Report(Loc, DiagID, &info, 1);
+  
+  void Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr,
+            unsigned DiagID, const std::string &info) {
+    D.Report(Loc, DiagID, SrcMgr, &info, 1);
   }
 };
 

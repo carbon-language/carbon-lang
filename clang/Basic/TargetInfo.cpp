@@ -65,7 +65,7 @@ const char *TargetInfo::getTargetPrefix() const {
 /// non-portable.
 void TargetInfo::DiagnoseNonPortability(SourceLocation Loc, unsigned DiagKind) {
   NonPortable = true;
-  if (Diag && Loc.isValid()) Diag->Report(Loc, DiagKind);
+  if (Diag && Loc.isValid()) Diag->Report(Loc, DiagKind, SrcMgr);
 }
 
 /// GetTargetDefineMap - Get the set of target #defines in an associative

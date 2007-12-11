@@ -69,12 +69,14 @@ class ASTContext {
   
   QualType ObjcConstantStringType;
   RecordDecl *CFConstantStringTypeDecl;
-public:
-  
+
   SourceManager &SourceMgr;
+public:
   TargetInfo &Target;
   IdentifierTable &Idents;
   SelectorTable &Selectors;
+  
+  SourceManager& getSourceManager() { return SourceMgr; }
   
   /// This is intentionally not serialized.  It is populated by the
   /// ASTContext ctor, and there are no external pointers/references to

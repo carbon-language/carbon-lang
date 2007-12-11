@@ -30,7 +30,7 @@ public:
 private:
   DiagList Errors, Warnings;
 public:
-  TextDiagnosticBuffer(SourceManager &SM) : TextDiagnostics(SM) {}
+  TextDiagnosticBuffer() {}
 
   const_iterator err_begin() const  { return Errors.begin(); }
   const_iterator err_end() const    { return Errors.end(); }
@@ -40,7 +40,9 @@ public:
 
   virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
                                 SourceLocation Pos,
-                                diag::kind ID, const std::string *Strs,
+                                diag::kind ID,
+                                SourceManager& SrcMgr,
+                                const std::string *Strs,
                                 unsigned NumStrs,
                                 const SourceRange *Ranges, 
                                 unsigned NumRanges);

@@ -64,7 +64,7 @@ namespace {
   public:
     void Initialize(ASTContext &context, unsigned mainFileID) {
       Context = &context;
-      SM = &Context->SourceMgr;
+      SM = &Context->getSourceManager();
       MsgSendFunctionDecl = 0;
       MsgSendSuperFunctionDecl = 0;
       MsgSendStretFunctionDecl = 0;
@@ -87,7 +87,7 @@ namespace {
       MainFileEnd = MainBuf->getBufferEnd();
       
       
-      Rewrite.setSourceMgr(Context->SourceMgr);
+      Rewrite.setSourceMgr(Context->getSourceManager());
       // declaring objc_selector outside the parameter list removes a silly
       // scope related warning...
       const char *s = "struct objc_selector; struct objc_class;\n"
@@ -917,7 +917,8 @@ Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
     unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error, 
                      "rewriter could not replace sub-expression due to macros");
     SourceRange Range = Exp->getSourceRange();
-    Diags.Report(Exp->getAtLoc(), DiagID, 0, 0, &Range, 1);
+    Diags.Report(Exp->getAtLoc(), DiagID, Context->getSourceManager(),
+                 0, 0, &Range, 1);
     delete Replacement;
     return Exp;
   }

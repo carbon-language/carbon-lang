@@ -356,7 +356,7 @@ namespace {
     ASTDumper() : DeclPrinter() {}
     
     void Initialize(ASTContext &Context, unsigned MainFileID) {
-      SM = &Context.SourceMgr;
+      SM = &Context.getSourceManager();
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {
@@ -400,7 +400,7 @@ namespace {
     SourceManager *SM;
   public:
     void Initialize(ASTContext &Context, unsigned MainFileID) {
-      SM = &Context.SourceMgr;
+      SM = &Context.getSourceManager();
     }
     
     virtual void HandleTopLevelDecl(Decl *D) {
@@ -482,7 +482,7 @@ namespace {
     SourceManager *SM;
   public:
     virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
-      SM = &Context.SourceMgr;
+      SM = &Context.getSourceManager();
     }
 
     virtual void VisitCFG(CFG& C) {

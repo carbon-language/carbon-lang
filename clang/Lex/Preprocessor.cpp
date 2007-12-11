@@ -120,12 +120,12 @@ PPCallbacks::~PPCallbacks() {
 /// the specified Token's location, translating the token's start
 /// position in the current buffer into a SourcePosition object for rendering.
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID) {
-  Diags.Report(Loc, DiagID);
+  Diags.Report(Loc, DiagID, SourceMgr);
 }
 
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID, 
                         const std::string &Msg) {
-  Diags.Report(Loc, DiagID, &Msg, 1);
+  Diags.Report(Loc, DiagID, SourceMgr, &Msg, 1);
 }
 
 void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {

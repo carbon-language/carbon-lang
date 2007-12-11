@@ -41,7 +41,7 @@ public:
           if (VD->hasLocalStorage() && !Live(VD,AD)) {
             SourceRange R = B->getRHS()->getSourceRange();
             Diags.Report(DR->getSourceRange().getBegin(), diag::warn_dead_store,
-                         0, 0, &R, 1);                                                                        
+                         Ctx.getSourceManager(), 0, 0, &R, 1);                                                                        
         }
     }
     else if(DeclStmt* DS = dyn_cast<DeclStmt>(S))
@@ -62,8 +62,8 @@ public:
               if (!E->isConstantExpr(Ctx,NULL)) {
                 // Flag a warning.
                 SourceRange R = E->getSourceRange();
-                Diags.Report(V->getLocation(), diag::warn_dead_store, 0, 0,
-                             &R,1);
+                Diags.Report(V->getLocation(), diag::warn_dead_store,
+                             Ctx.getSourceManager(), 0, 0, &R, 1);
               }
             }
           }

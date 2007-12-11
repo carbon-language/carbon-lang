@@ -21,6 +21,7 @@ namespace clang {
   class DiagnosticClient;
   class SourceLocation;
   class SourceRange;
+  class SourceManager;
   
   // Import the diagnostic enums themselves.
   namespace diag {
@@ -146,7 +147,7 @@ public:
   
   /// Report - Issue the message to the client.  DiagID is a member of the
   /// diag::kind enum.  
-  void Report(SourceLocation Pos, unsigned DiagID,
+  void Report(SourceLocation Pos, unsigned DiagID, SourceManager& SrcMgr,
               const std::string *Strs = 0, unsigned NumStrs = 0,
               const SourceRange *Ranges = 0, unsigned NumRanges = 0);
 };
@@ -160,13 +161,15 @@ public:
   /// IgnoreDiagnostic - If the client wants to ignore this diagnostic, then
   /// return true.
   virtual bool IgnoreDiagnostic(Diagnostic::Level DiagLevel,
-                                SourceLocation Pos) = 0;
+                                SourceLocation Pos,
+                                SourceManager& SrcMgr) = 0;
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.
   virtual void HandleDiagnostic(Diagnostic &Diags, 
                                 Diagnostic::Level DiagLevel, SourceLocation Pos,
-                                diag::kind ID, const std::string *Strs,
+                                diag::kind ID, SourceManager& SrcMgr,
+                                const std::string *Strs,
                                 unsigned NumStrs, const SourceRange *Ranges, 
                                 unsigned NumRanges) = 0;
 };

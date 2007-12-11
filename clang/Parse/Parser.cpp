@@ -31,7 +31,7 @@ Action::~Action() {}
 
 void Parser::Diag(SourceLocation Loc, unsigned DiagID,
                   const std::string &Msg) {
-  Diags.Report(Loc, DiagID, &Msg, 1);
+  Diags.Report(Loc, DiagID, PP.getSourceManager(), &Msg, 1);
 }
 
 /// MatchRHSPunctuation - For punctuation with a LHS and RHS (e.g. '['/']'),

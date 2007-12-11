@@ -25,6 +25,7 @@ class TargetInfo;
 class Diagnostic;
 class ASTConsumer;
 class IdentifierTable;
+class SourceManager;
 
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
@@ -36,7 +37,8 @@ MinimalAction *CreatePrintParserActionsAction(IdentifierTable &);
 
 /// CreateTargetInfo - Return the set of target info objects as specified by
 /// the -arch command line option.
-TargetInfo *CreateTargetInfo(const std::vector<std::string>& triples,
+TargetInfo *CreateTargetInfo(SourceManager& SrcMgr,
+                             const std::vector<std::string>& triples,
                              Diagnostic *Diags);
 
 /// EmitLLVMFromASTs - Implement -emit-llvm, which generates llvm IR from C.

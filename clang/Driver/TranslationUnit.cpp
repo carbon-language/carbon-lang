@@ -102,7 +102,7 @@ void TranslationUnit::Emit(llvm::Serializer& Sezr) const {
   Sezr.EnterBlock();
   
   // Emit the SourceManager.
-  Sezr.Emit(Context->SourceMgr);
+  Sezr.Emit(Context->getSourceManager());
   
   // Emit the LangOptions.
   Sezr.Emit(LangOpts);
@@ -184,7 +184,7 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
   assert (FoundBlock);
 
   // Read the SourceManager.
-  SourceManager::CreateAndRegister(Dezr,FMgr);
+  SourceManager& SrcMgr = *SourceManager::CreateAndRegister(Dezr,FMgr);
   
   // Read the LangOptions.
   TU->LangOpts.Read(Dezr);
@@ -196,7 +196,7 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
     std::vector<std::string> triples;
     triples.push_back(triple);
     delete [] triple;
-    Dezr.RegisterPtr(PtrID,CreateTargetInfo(triples,NULL));
+    Dezr.RegisterPtr(PtrID,CreateTargetInfo(SrcMgr,triples,NULL));
   }
   
   // For Selectors, we must read the identifier table first because the

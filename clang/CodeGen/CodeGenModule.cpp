@@ -40,7 +40,8 @@ void CodeGenModule::WarnUnsupported(const Stmt *S, const char *Type) {
                                                "cannot codegen this %0 yet");
   SourceRange Range = S->getSourceRange();
   std::string Msg = Type;
-  getDiags().Report(S->getLocStart(), DiagID, &Msg, 1, &Range, 1);
+  getDiags().Report(S->getLocStart(), DiagID, Context.getSourceManager(),
+                    &Msg, 1, &Range, 1);
 }
 
 /// ReplaceMapValuesWith - This is a really slow and bad function that

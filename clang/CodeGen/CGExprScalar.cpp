@@ -85,7 +85,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   Value *VisitStmt(Stmt *S) {
-    S->dump(CGF.getContext().SourceMgr);
+    S->dump(CGF.getContext().getSourceManager());
     assert(0 && "Stmt can't have complex result type!");
     return 0;
   }

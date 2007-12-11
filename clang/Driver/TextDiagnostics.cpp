@@ -40,7 +40,8 @@ std::string TextDiagnostics::FormatDiagnostic(Diagnostic &Diags,
 }
 
 bool TextDiagnostics::IgnoreDiagnostic(Diagnostic::Level Level,
-                                       SourceLocation Pos) {
+                                       SourceLocation Pos,
+                                       SourceManager& SourceMgr) {
   if (Pos.isValid()) {
     // If this is a warning or note, and if it a system header, suppress the
     // diagnostic.

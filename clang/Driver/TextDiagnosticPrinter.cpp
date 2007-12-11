@@ -31,13 +31,13 @@ NoCaretDiagnostics("fno-caret-diagnostics",
                                   " diagnostics"));
 
 void TextDiagnosticPrinter::
-PrintIncludeStack(SourceLocation Pos) {
+PrintIncludeStack(SourceLocation Pos, SourceManager& SourceMgr) {
   if (Pos.isInvalid()) return;
 
   Pos = SourceMgr.getLogicalLoc(Pos);
 
   // Print out the other include frames first.
-  PrintIncludeStack(SourceMgr.getIncludeLoc(Pos));
+  PrintIncludeStack(SourceMgr.getIncludeLoc(Pos),SourceMgr);
   unsigned LineNo = SourceMgr.getLineNumber(Pos);
   
   std::cerr << "In file included from " << SourceMgr.getSourceName(Pos)
@@ -46,7 +46,8 @@ PrintIncludeStack(SourceLocation Pos) {
 
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
 /// any characters in LineNo that intersect the SourceRange.
-void TextDiagnosticPrinter::HighlightRange(const SourceRange &R, 
+void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
+                                           SourceManager& SourceMgr,
                                            unsigned LineNo,
                                            std::string &CaratLine,
                                            const std::string &SourceLine) {
@@ -101,6 +102,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
                                              Diagnostic::Level Level, 
                                              SourceLocation Pos,
                                              diag::kind ID,
+                                             SourceManager& SourceMgr,
                                              const std::string *Strs,
                                              unsigned NumStrs,
                                              const SourceRange *Ranges,
@@ -116,7 +118,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
     // "included from" lines.
     if (LastWarningLoc != SourceMgr.getIncludeLoc(LPos)) {
       LastWarningLoc = SourceMgr.getIncludeLoc(LPos);
-      PrintIncludeStack(LastWarningLoc);
+      PrintIncludeStack(LastWarningLoc,SourceMgr);
     }
   
     // Compute the column number.  Rewind from the current position to the start
@@ -162,7 +164,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
     
     // Highlight all of the characters covered by Ranges with ~ characters.
     for (unsigned i = 0; i != NumRanges; ++i)
-      HighlightRange(Ranges[i], LineNo, CaratLine, SourceLine);
+      HighlightRange(Ranges[i], SourceMgr, LineNo, CaratLine, SourceLine);
     
     // Next, insert the carat itself.
     if (ColNo-1 < CaratLine.size())
