@@ -362,10 +362,32 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
 
   // Generate constant for string literal values.
   case Stmt::StringLiteralClass: {
-    const StringLiteral *SLiteral = cast<StringLiteral>(Expression);
-    const char *StrData = SLiteral->getStrData();
-    unsigned Len = SLiteral->getByteLength();
-    return CGM.GetAddrOfConstantString(std::string(StrData, StrData + Len));
+    const StringLiteral *String = cast<StringLiteral>(Expression);
+    const char *StrData = String->getStrData();
+    unsigned Len = String->getByteLength();
+
+    // If the string has a pointer type, emit it as a global and use the pointer
+    // to the global as its value.
+    if (String->getType()->isPointerType()) 
+      return CGM.GetAddrOfConstantString(std::string(StrData, StrData + Len));
+
+    // Otherwise this must be a string initializing an array in a static
+    // initializer.  Don't emit it as the address of the string, emit the string
+    // data itself as an inline array.
+    const ConstantArrayType *CAT = String->getType()->getAsConstantArrayType();
+    assert(CAT && "String isn't pointer or array!");
+    
+    std::string Str(StrData, StrData + Len);
+    // Null terminate the string before potentially truncating it.
+    // FIXME: What about wchar_t strings?
+    Str.push_back(0);
+          
+    uint64_t RealLen = CAT->getSize().getZExtValue();
+    // String or grow the initializer to the required size.
+    if (RealLen != Str.size())
+      Str.resize(RealLen);
+    
+    return llvm::ConstantArray::get(Str, false);
   }
 
   // Elide parenthesis.
@@ -413,36 +435,6 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
              "Only expect implicit cast to pointer");
       return llvm::ConstantExpr::getBitCast(C, DestPTy);
     }
-    
-    // If this is an implicit cast of a string literal to an array type, this
-    // must be a string initializing an array.  Don't emit it as the address of
-    // the string, emit the string data itself as an inline array.
-    if (const StringLiteral *String =
-            dyn_cast<StringLiteral>(ICExpr->getSubExpr()))
-      if (const ArrayType *AT = ICExpr->getType()->getAsArrayType()) {
-        // Verify that this is an array of char or wchar.  Array of const char*
-        // can be initialized with a string literal, which does not expand the
-        // characters inline.
-        // FIXME: What about wchar_t??
-        if (AT->getElementType()->isCharType()) {
-          const char *StrData = String->getStrData();
-          std::string Str(StrData, StrData + String->getByteLength());
-          // Null terminate the string before potentially truncating it.
-          Str.push_back(0);
-
-          // FIXME: The size of the cast is not always specified yet, fix this
-          // in sema.
-          if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
-            uint64_t RealLen = CAT->getSize().getZExtValue();
-            // String or grow the initializer to the required size.
-            if (RealLen != Str.size())
-              Str.resize(RealLen);
-          }
-          
-          
-          return llvm::ConstantArray::get(Str, false);
-        }
-      }
     
     return GenerateConstantCast(ICExpr->getSubExpr(), type, CGM);
   }
