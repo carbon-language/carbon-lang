@@ -147,8 +147,7 @@ namespace {
     void RewriteMethodDeclarations(int nMethods, ObjcMethodDecl **Methods);
     void RewriteProperties(int nProperties, ObjcPropertyDecl **Properties);
     void RewriteFunctionDecl(FunctionDecl *FD);
-    void RewriteObjcQualifiedInterfaceTypes(
-        const FunctionTypeProto *proto, FunctionDecl *FD);
+    void RewriteObjcQualifiedInterfaceTypes(Decl *Dcl);
     bool needToScanForQualifiers(QualType T);
     ObjcInterfaceDecl *isSuperReceiver(Expr *recExpr);
     QualType getSuperStructType();
@@ -991,9 +990,18 @@ bool RewriteTest::needToScanForQualifiers(QualType T) {
   return false;
 }
 
-void RewriteTest::RewriteObjcQualifiedInterfaceTypes(
-  const FunctionTypeProto *proto, FunctionDecl *FD) {
+void RewriteTest::RewriteObjcQualifiedInterfaceTypes(Decl *Dcl) {
   
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(Dcl);
+  if (!FD)
+    return;
+  // Check for ObjC 'id' and class types that have been adorned with protocol
+  // information (id<p>, C<p>*). The protocol references need to be rewritten!
+  const FunctionType *funcType = FD->getType()->getAsFunctionType();
+  assert(funcType && "missing function type");
+  const FunctionTypeProto *proto = dyn_cast<FunctionTypeProto>(funcType);
+  if (!proto)
+    return;
   if (needToScanForQualifiers(proto->getResultType())) {
     // Since types are unique, we need to scan the buffer.
     SourceLocation Loc = FD->getLocation();
@@ -1069,12 +1077,7 @@ void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
     SelGetUidFunctionDecl = FD;
     return;
   }
-  // Check for ObjC 'id' and class types that have been adorned with protocol
-  // information (id<p>, C<p>*). The protocol references need to be rewritten!
-  const FunctionType *funcType = FD->getType()->getAsFunctionType();
-  assert(funcType && "missing function type");
-  if (const FunctionTypeProto *proto = dyn_cast<FunctionTypeProto>(funcType))
-    RewriteObjcQualifiedInterfaceTypes(proto, FD);
+  RewriteObjcQualifiedInterfaceTypes(FD);
 }
 
 // SynthMsgSendFunctionDecl - id objc_msgSend(id self, SEL op, ...);
