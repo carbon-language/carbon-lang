@@ -1532,7 +1532,8 @@ void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
   // check unimplemented instance methods.
   ObjcMethodDecl** methods = PDecl->getInstanceMethods();
   for (int j = 0; j < PDecl->getNumInstanceMethods(); j++) {
-    if (!InsMap.count(methods[j]->getSelector())) {
+    if (!InsMap.count(methods[j]->getSelector()) && 
+        methods[j]->getImplementationControl() != ObjcMethodDecl::Optional) {
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName());
       IncompleteImpl = true;
@@ -1541,7 +1542,8 @@ void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
   // check unimplemented class methods
   methods = PDecl->getClassMethods();
   for (int j = 0; j < PDecl->getNumClassMethods(); j++)
-    if (!ClsMap.count(methods[j]->getSelector())) {
+    if (!ClsMap.count(methods[j]->getSelector()) &&
+        methods[j]->getImplementationControl() != ObjcMethodDecl::Optional) {
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
            methods[j]->getSelector().getName());
       IncompleteImpl = true;
