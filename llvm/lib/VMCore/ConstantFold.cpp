@@ -36,81 +36,31 @@ using namespace llvm;
 //                ConstantFold*Instruction Implementations
 //===----------------------------------------------------------------------===//
 
-/// CastConstantVector - Convert the specified ConstantVector node to the
+/// BitCastConstantVector - Convert the specified ConstantVector node to the
 /// specified vector type.  At this point, we know that the elements of the
 /// input vector constant are all simple integer or FP values.
-static Constant *CastConstantVector(ConstantVector *CV,
-                                    const VectorType *DstTy) {
-  unsigned SrcNumElts = CV->getType()->getNumElements();
-  unsigned DstNumElts = DstTy->getNumElements();
-  const Type *SrcEltTy = CV->getType()->getElementType();
-  const Type *DstEltTy = DstTy->getElementType();
+static Constant *BitCastConstantVector(ConstantVector *CV,
+                                       const VectorType *DstTy) {
+  // If this cast changes element count then we can't handle it here:
+  // doing so requires endianness information.  This should be handled by
+  // Analysis/ConstantFolding.cpp
+  unsigned NumElts = DstTy->getNumElements();
+  if (NumElts != CV->getNumOperands())
+    return 0;
   
-  // If both vectors have the same number of elements (thus, the elements
-  // are the same size), perform the conversion now.
-  if (SrcNumElts == DstNumElts) {
-    std::vector<Constant*> Result;
-    
-    // If the src and dest elements are both integers, or both floats, we can 
-    // just BitCast each element because the elements are the same size.
-    if ((SrcEltTy->isInteger() && DstEltTy->isInteger()) ||
-        (SrcEltTy->isFloatingPoint() && DstEltTy->isFloatingPoint())) {
-      for (unsigned i = 0; i != SrcNumElts; ++i)
-        Result.push_back(
-          ConstantExpr::getBitCast(CV->getOperand(i), DstEltTy));
-      return ConstantVector::get(Result);
-    }
-    
-    // If this is an int-to-fp cast ..
-    if (SrcEltTy->isInteger()) {
-      // Ensure that it is int-to-fp cast
-      assert(DstEltTy->isFloatingPoint());
-      if (DstEltTy->getTypeID() == Type::DoubleTyID) {
-        for (unsigned i = 0; i != SrcNumElts; ++i) {
-          ConstantInt *CI = cast<ConstantInt>(CV->getOperand(i));
-          double V = CI->getValue().bitsToDouble();
-          Result.push_back(ConstantFP::get(Type::DoubleTy, APFloat(V)));
-        }
-        return ConstantVector::get(Result);
-      }
-      assert(DstEltTy == Type::FloatTy && "Unknown fp type!");
-      for (unsigned i = 0; i != SrcNumElts; ++i) {
-        ConstantInt *CI = cast<ConstantInt>(CV->getOperand(i));
-        float V = CI->getValue().bitsToFloat();
-        Result.push_back(ConstantFP::get(Type::FloatTy, APFloat(V)));
-      }
-      return ConstantVector::get(Result);
-    }
-    
-    // Otherwise, this is an fp-to-int cast.
-    assert(SrcEltTy->isFloatingPoint() && DstEltTy->isInteger());
-    
-    if (SrcEltTy->getTypeID() == Type::DoubleTyID) {
-      for (unsigned i = 0; i != SrcNumElts; ++i) {
-        uint64_t V = cast<ConstantFP>(CV->getOperand(i))->
-                       getValueAPF().convertToAPInt().getZExtValue();
-        Constant *C = ConstantInt::get(Type::Int64Ty, V);
-        Result.push_back(ConstantExpr::getBitCast(C, DstEltTy ));
-      }
-      return ConstantVector::get(Result);
-    }
-
-    assert(SrcEltTy->getTypeID() == Type::FloatTyID);
-    for (unsigned i = 0; i != SrcNumElts; ++i) {
-      uint32_t V = (uint32_t)cast<ConstantFP>(CV->getOperand(i))->
-                               getValueAPF().convertToAPInt().getZExtValue();
-      Constant *C = ConstantInt::get(Type::Int32Ty, V);
-      Result.push_back(ConstantExpr::getBitCast(C, DstEltTy));
-    }
-    return ConstantVector::get(Result);
+  // Check to verify that all elements of the input are simple.
+  for (unsigned i = 0; i != NumElts; ++i) {
+    if (!isa<ConstantInt>(CV->getOperand(i)) &&
+        !isa<ConstantFP>(CV->getOperand(i)))
+      return 0;
   }
-  
-  // Otherwise, this is a cast that changes element count and size.  Handle
-  // casts which shrink the elements here.
-  
-  // FIXME: We need to know endianness to do this!
-  
-  return 0;
+
+  // Bitcast each element now.
+  std::vector<Constant*> Result;
+  const Type *DstEltTy = DstTy->getElementType();
+  for (unsigned i = 0; i != NumElts; ++i)
+    Result.push_back(ConstantExpr::getBitCast(CV->getOperand(i), DstEltTy));
+  return ConstantVector::get(Result);
 }
 
 /// This function determines which opcode to use to fold two constant cast 
@@ -178,23 +128,8 @@ static Constant *FoldBitCast(Constant *V, const Type *DestTy) {
       if (isa<ConstantAggregateZero>(V))
         return Constant::getNullValue(DestTy);
       
-      if (const ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
-        // This is a cast from a ConstantVector of one type to a 
-        // ConstantVector of another type.  Check to see if all elements of 
-        // the input are simple.
-        bool AllSimpleConstants = true;
-        for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i) {
-          if (!isa<ConstantInt>(CV->getOperand(i)) &&
-              !isa<ConstantFP>(CV->getOperand(i))) {
-            AllSimpleConstants = false;
-            break;
-          }
-        }
-        
-        // If all of the elements are simple constants, we can fold this.
-        if (AllSimpleConstants)
-          return CastConstantVector(const_cast<ConstantVector*>(CV), DestPTy);
-      }
+      if (ConstantVector *CV = dyn_cast<ConstantVector>(V))
+        return BitCastConstantVector(CV, DestPTy);
     }
   }
   
