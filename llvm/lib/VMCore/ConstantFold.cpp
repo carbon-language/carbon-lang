@@ -396,11 +396,54 @@ Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
   return 0;
 }
 
+/// GetVectorElement - If C is a ConstantVector, ConstantAggregateZero or Undef
+/// return the specified element value.  Otherwise return null.
+static Constant *GetVectorElement(const Constant *C, unsigned EltNo) {
+  if (const ConstantVector *CV = dyn_cast<ConstantVector>(C))
+    return const_cast<Constant*>(CV->getOperand(EltNo));
+  
+  const Type *EltTy = cast<VectorType>(C->getType())->getElementType();
+  if (isa<ConstantAggregateZero>(C))
+    return Constant::getNullValue(EltTy);
+  if (isa<UndefValue>(C))
+    return UndefValue::get(EltTy);
+  return 0;
+}
+
 Constant *llvm::ConstantFoldShuffleVectorInstruction(const Constant *V1,
                                                      const Constant *V2,
                                                      const Constant *Mask) {
-  // TODO:
-  return 0;
+  // Undefined shuffle mask -> undefined value.
+  if (isa<UndefValue>(Mask)) return UndefValue::get(V1->getType());
+  
+  unsigned NumElts = cast<VectorType>(V1->getType())->getNumElements();
+  const Type *EltTy = cast<VectorType>(V1->getType())->getElementType();
+  
+  // Loop over the shuffle mask, evaluating each element.
+  SmallVector<Constant*, 32> Result;
+  for (unsigned i = 0; i != NumElts; ++i) {
+    Constant *InElt = GetVectorElement(Mask, i);
+    if (InElt == 0) return 0;
+    
+    if (isa<UndefValue>(InElt))
+      InElt = UndefValue::get(EltTy);
+    else if (ConstantInt *CI = dyn_cast<ConstantInt>(InElt)) {
+      unsigned Elt = CI->getZExtValue();
+      if (Elt >= NumElts*2)
+        InElt = UndefValue::get(EltTy);
+      else if (Elt >= NumElts)
+        InElt = GetVectorElement(V2, Elt-NumElts);
+      else
+        InElt = GetVectorElement(V1, Elt);
+      if (InElt == 0) return 0;
+    } else {
+      // Unknown value.
+      return 0;
+    }
+    Result.push_back(InElt);
+  }
+  
+  return ConstantVector::get(&Result[0], Result.size());
 }
 
 /// EvalVectorOp - Given two vector constants and a function pointer, apply the
