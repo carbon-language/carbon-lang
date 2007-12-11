@@ -1202,7 +1202,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
     for (unsigned int i = 0; i != NumProtocols; i++) {
       ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtocolNames[i]];
       if (!RefPDecl || RefPDecl->isForwardDecl())
-        Diag(ClassLoc, diag::err_undef_protocolref,
+        Diag(ClassLoc, diag::warn_undef_protocolref,
              ProtocolNames[i]->getName(),
              ClassName->getName());
       IDecl->setIntfRefProtocols((int)i, RefPDecl);
@@ -1283,7 +1283,7 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
     for (unsigned int i = 0; i != NumProtoRefs; i++) {
       ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtoRefNames[i]];
       if (!RefPDecl || RefPDecl->isForwardDecl())
-        Diag(ProtocolLoc, diag::err_undef_protocolref,
+        Diag(ProtocolLoc, diag::warn_undef_protocolref,
              ProtoRefNames[i]->getName(),
              ProtocolName->getName());
       PDecl->setReferencedProtocols((int)i, RefPDecl);
@@ -1366,7 +1366,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
     for (unsigned int i = 0; i != NumProtoRefs; i++) {
       ObjcProtocolDecl* RefPDecl = ObjcProtocols[ProtoRefNames[i]];
       if (!RefPDecl || RefPDecl->isForwardDecl()) {
-        Diag(CategoryLoc, diag::err_undef_protocolref,
+        Diag(CategoryLoc, diag::warn_undef_protocolref,
              ProtoRefNames[i]->getName(),
              CategoryName->getName());
       }
