@@ -43,6 +43,8 @@ STATISTIC(NumHoisted, "Number of machine instructions hoisted out of loops");
 
 namespace {
   class VISIBILITY_HIDDEN MachineLICM : public MachineFunctionPass {
+    MachineFunction      *CurMF;// Current MachineFunction
+
     // Various analyses that we use...
     MachineLoopInfo      *LI;   // Current MachineLoopInfo
     MachineDominatorTree *DT;   // Machine dominator tree for the current Loop
@@ -91,7 +93,7 @@ namespace {
     /// MapVirtualRegisterDefs - Create a map of which machine instruction
     /// defines a virtual register.
     /// 
-    void MapVirtualRegisterDefs(const MachineFunction &MF);
+    void MapVirtualRegisterDefs();
 
     /// IsInSubLoop - A little predicate that returns true if the specified
     /// basic block is in a subloop of the current one, not the current one
@@ -182,11 +184,14 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   if (!PerformLICM) return false; // For debugging.
 
   Changed = false;
-  TII = MF.getTarget().getInstrInfo();
+  CurMF = &MF;
+  TII = CurMF->getTarget().getInstrInfo();
 
   // Get our Loop information...
   LI = &getAnalysis<MachineLoopInfo>();
   DT = &getAnalysis<MachineDominatorTree>();
+
+  MapVirtualRegisterDefs();
 
   for (MachineLoopInfo::iterator
          I = LI->begin(), E = LI->end(); I != E; ++I) {
@@ -205,9 +210,9 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
 /// MapVirtualRegisterDefs - Create a map of which machine instruction defines a
 /// virtual register.
 /// 
-void MachineLICM::MapVirtualRegisterDefs(const MachineFunction &MF) {
+void MachineLICM::MapVirtualRegisterDefs() {
   for (MachineFunction::const_iterator
-         I = MF.begin(), E = MF.end(); I != E; ++I) {
+         I = CurMF->begin(), E = CurMF->end(); I != E; ++I) {
     const MachineBasicBlock &MBB = *I;
 
     for (MachineBasicBlock::const_iterator
