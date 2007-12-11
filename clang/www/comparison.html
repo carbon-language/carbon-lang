@@ -94,10 +94,11 @@
         example, if you write "x-x" in your source code, the GCC AST will
         contain "0", with no mention of 'x'.  This is extremely bad for a
         refactoring tool that wants to rename 'x'.</li>
-    <li>GCC does not have a way to serialize the AST of a file out to disk and 
-        read it back into another program.  Its PCH mechanism is architecturally
-        only able to read the dump back into the exact same executable as the
-        one that produced it.</li>
+    <li>Clang can serialize it's AST out to disk and read it back into another 
+        program, which is useful for whole program analysis.  GCC does not have
+        this, but its current PCH mechanism is close.  However, GCC's current 
+        PCH support is architecturally only able to read the dump back into 
+        the exact same executable as the one that produced it.</li>
     <li>Clang is <a href="features.html#performance">much faster and uses far
         less memory</a> than GCC.</li>
     <li>Clang aims to provide extremely clear and concise diagnostics (error and
