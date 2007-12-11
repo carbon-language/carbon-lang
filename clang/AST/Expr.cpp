@@ -443,8 +443,13 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     const UnaryOperator *Exp = cast<UnaryOperator>(this);
     
     // C99 6.6p9
-    if (Exp->getOpcode() == UnaryOperator::AddrOf)
-      return Exp->getSubExpr()->hasStaticStorage();
+    if (Exp->getOpcode() == UnaryOperator::AddrOf) {
+      if (!Exp->getSubExpr()->hasStaticStorage()) {
+        if (Loc) *Loc = getLocStart();
+        return false;
+      }
+      return true;
+    }
 
     // Get the operand value.  If this is sizeof/alignof, do not evalute the
     // operand.  This affects C99 6.6p3.
