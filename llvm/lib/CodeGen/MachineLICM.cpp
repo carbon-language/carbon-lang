@@ -99,13 +99,7 @@ namespace {
     ///
     bool IsInSubLoop(MachineBasicBlock *BB) {
       assert(CurLoop->contains(BB) && "Only valid if BB is IN the loop");
-
-      for (MachineLoop::iterator
-             I = CurLoop->begin(), E = CurLoop->end(); I != E; ++I)
-        if ((*I)->contains(BB))
-          return true;  // A subloop actually contains this block!
-
-      return false;
+      return LI->getLoopFor(BB) != CurLoop;
     }
 
     /// CanHoistInst - Checks that this instructions is one that can be hoisted
@@ -115,9 +109,8 @@ namespace {
     bool CanHoistInst(MachineInstr &I) const {
       const TargetInstrDescriptor *TID = I.getInstrDescriptor();
 
-      // Don't hoist if this instruction implicitly reads physical registers or
-      // doesn't take any operands.
-      if (TID->ImplicitUses || !I.getNumOperands()) return false;
+      // Don't hoist if this instruction implicitly reads physical registers.
+      if (TID->ImplicitUses) return false;
 
       MachineOpCode Opcode = TID->Opcode;
       return TII->isTriviallyReMaterializable(&I) &&
@@ -142,7 +135,7 @@ namespace {
     /// FindPredecessors - Get all of the predecessors of the loop that are not
     /// back-edges.
     /// 
-    void FindPredecessors(std::vector<MachineBasicBlock*> &Preds){
+    void FindPredecessors(std::vector<MachineBasicBlock*> &Preds) {
       const MachineBasicBlock *Header = CurLoop->getHeader();
 
       for (MachineBasicBlock::const_pred_iterator
