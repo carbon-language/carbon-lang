@@ -2303,8 +2303,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
       if (ObjcImplementationDecl *ImpDecl = 
             ObjcImplementations[ClassDecl->getIdentifier()])
         Method = ImpDecl->lookupInstanceMethod(Sel);
-	  // If we still haven't found a method, look in the global pool. 
-	  // I am not fond of this behavior, however we conform to what gcc does.
+	  // If we still haven't found a method, look in the global pool. This
+	  // behavior isn't very desirable, however we need it for GCC compatibility.
 	  if (!Method)
 	    Method = InstanceMethodPool[Sel].Method;
     }
