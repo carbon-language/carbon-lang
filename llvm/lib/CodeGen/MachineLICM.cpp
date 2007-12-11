@@ -21,12 +21,12 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
@@ -43,13 +43,12 @@ STATISTIC(NumHoisted, "Number of machine instructions hoisted out of loops");
 
 namespace {
   class VISIBILITY_HIDDEN MachineLICM : public MachineFunctionPass {
-    MachineFunction      *CurMF;// Current MachineFunction
+    const TargetInstrInfo *TII;
+    MachineFunction       *CurMF; // Current MachineFunction
 
     // Various analyses that we use...
     MachineLoopInfo      *LI;   // Current MachineLoopInfo
     MachineDominatorTree *DT;   // Machine dominator tree for the current Loop
-
-    const TargetInstrInfo *TII;
 
     // State that is updated as we process loops
     bool         Changed;       // True if a loop is changed.
@@ -109,22 +108,18 @@ namespace {
     /// instr, etc.
     ///
     bool CanHoistInst(MachineInstr &I) const {
-      const TargetInstrDescriptor *TID = I.getInstrDescriptor();
-
+#ifndef NDEBUG
+      DEBUG({
+          DOUT << "--- Checking if we can hoist " << I << "\n";
+          if (I.getInstrDescriptor()->ImplicitUses)
+            DOUT << "  * Instruction has implicit uses.\n";
+          else if (!TII->isTriviallyReMaterializable(&I))
+            DOUT << "  * Instruction has side effects.\n";
+        });
+#endif
       // Don't hoist if this instruction implicitly reads physical registers.
-      if (TID->ImplicitUses) return false;
-
-      MachineOpCode Opcode = TID->Opcode;
-      return TII->isTriviallyReMaterializable(&I) &&
-        // FIXME: Below necessary?
-        !(TII->isReturn(Opcode) ||
-          TII->isTerminatorInstr(Opcode) ||
-          TII->isBranch(Opcode) ||
-          TII->isIndirectBranch(Opcode) ||
-          TII->isBarrier(Opcode) ||
-          TII->isCall(Opcode) ||
-          TII->isLoad(Opcode) || // TODO: Do loads and stores.
-          TII->isStore(Opcode));
+      if (I.getInstrDescriptor()->ImplicitUses) return false;
+      return TII->isTriviallyReMaterializable(&I);
     }
 
     /// IsLoopInvariantInst - Returns true if the instruction is loop
@@ -150,6 +145,13 @@ namespace {
     /// the predecessor basic block (but before the terminator instructions).
     /// 
     void MoveInstToEndOfBlock(MachineBasicBlock *MBB, MachineInstr *MI) {
+      DEBUG({
+          DOUT << "Hoisting " << *MI;
+          if (MBB->getBasicBlock())
+            DOUT << " to MachineBasicBlock "
+                 << MBB->getBasicBlock()->getName();
+          DOUT << "\n";
+        });
       MachineBasicBlock::iterator Iter = MBB->getFirstTerminator();
       MBB->insert(Iter, MI);
       ++NumHoisted;
@@ -224,8 +226,10 @@ void MachineLICM::MapVirtualRegisterDefs() {
         const MachineOperand &MO = MI.getOperand(i);
 
         if (MO.isRegister() && MO.isDef() &&
-            MRegisterInfo::isVirtualRegister(MO.getReg()))
+            MRegisterInfo::isVirtualRegister(MO.getReg())) {
+          VRegDefs.grow(MO.getReg());
           VRegDefs[MO.getReg()] = &MI;
+        }
       }
     }
   }
@@ -331,8 +335,10 @@ void MachineLICM::Hoist(MachineInstr &MI) {
     const MachineOperand &MO = NewMI->getOperand(i);
 
     if (MO.isRegister() && MO.isDef() &&
-        MRegisterInfo::isVirtualRegister(MO.getReg()))
+        MRegisterInfo::isVirtualRegister(MO.getReg())) {
+      VRegDefs.grow(MO.getReg());
       VRegDefs[MO.getReg()] = NewMI;
+    }
   }
 
   // Hoisting was successful! Remove bothersome instruction now.
