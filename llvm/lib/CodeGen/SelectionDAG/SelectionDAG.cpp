@@ -3855,6 +3855,19 @@ void SDNode::dump(const SelectionDAG *G) const {
       cerr << ":" << RN;
   }
 
+  if (!isTargetOpcode() && getOpcode() == ISD::VECTOR_SHUFFLE) {
+    SDNode *Mask = getOperand(2).Val;
+    cerr << "<";
+    for (unsigned i = 0, e = Mask->getNumOperands(); i != e; ++i) {
+      if (i) cerr << ",";
+      if (Mask->getOperand(i).getOpcode() == ISD::UNDEF)
+        cerr << "u";
+      else
+        cerr << cast<ConstantSDNode>(Mask->getOperand(i))->getValue();
+    }
+    cerr << ">";
+  }
+
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(this)) {
     cerr << "<" << CSDN->getValue() << ">";
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(this)) {
