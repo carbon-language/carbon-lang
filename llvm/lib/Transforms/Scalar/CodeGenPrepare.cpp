@@ -929,6 +929,11 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   if (Src->hasOneUse())
     return false;
 
+  // Only safe to perform the optimization if the source is also defined in
+  // this block. 
+  if (DefBB != cast<Instruction>(Src)->getParent())
+    return false;
+
   bool DefIsLiveOut = false;
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); 
        UI != E; ++UI) {
