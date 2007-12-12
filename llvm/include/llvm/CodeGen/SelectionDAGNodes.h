@@ -872,6 +872,9 @@ public:
   ///
   int getNodeId() const { return NodeId; }
 
+  /// setNodeId - Set unique node id.
+  void setNodeId(int Id) { NodeId = Id; }
+
   typedef SmallVector<SDNode*,3>::const_iterator use_iterator;
   use_iterator use_begin() const { return Uses.begin(); }
   use_iterator use_end() const { return Uses.end(); }
@@ -951,10 +954,6 @@ public:
   ///
   void Profile(FoldingSetNodeID &ID);
 
-  void setNodeId(int Id) {
-    NodeId = Id;
-  }
-  
 protected:
   friend class SelectionDAG;
   
