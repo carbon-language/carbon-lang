@@ -43,6 +43,8 @@ public:
     : LangOpts(lopt), Context(&context) {}
 
   void setContext(ASTContext* context) { Context = context; }
+  ASTContext* getContext() const { return Context; }
+  const LangOptions& getLangOpts() const { return LangOpts; }
   
   /// EmitBitcodeFile - Emit the translation unit to a bitcode file.
   bool EmitBitcodeFile(llvm::sys::Path& Filename) const;

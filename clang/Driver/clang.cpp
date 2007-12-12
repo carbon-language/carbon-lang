@@ -26,6 +26,7 @@
 #include "ASTConsumers.h"
 #include "TextDiagnosticBuffer.h"
 #include "TextDiagnosticPrinter.h"
+#include "TranslationUnit.h"
 #include "clang/Sema/ASTStreamer.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Parse/Parser.h"
@@ -947,8 +948,53 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   }
 }
 
+static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
+                                  FileManager& FileMgr) {
+  
+  if (VerifyDiagnostics) {
+    fprintf(stderr, "-verify does not yet work with serialized ASTs.\n");
+    exit (1);
+  }
+  
+  llvm::sys::Path Filename(InFile);
+  
+  if (!Filename.isValid()) {
+    fprintf(stderr, "serialized file '%s' not available.\n",InFile.c_str());
+    exit (1);
+  }
+  
+  TranslationUnit* TU = TranslationUnit::ReadBitcodeFile(Filename,FileMgr);  
+  ASTConsumer* Consumer = CreateASTConsumer(Diag,FileMgr,TU->getLangOpts());
+  
+  if (!Consumer) {      
+    fprintf(stderr, "Unsupported program action with serialized ASTs!\n");
+    exit (1);
+  }
+  
+  // FIXME: only work on consumers that do not require MainFileID.
+  Consumer->Initialize(*TU->getContext(),0);
+  
+  for (TranslationUnit::iterator I=TU->begin(), E=TU->end(); I!=E; ++I)
+    Consumer->HandleTopLevelDecl(*I);
+
+  delete Consumer;
+}
+
+
 static llvm::cl::list<std::string>
 InputFilenames(llvm::cl::Positional, llvm::cl::desc("<input files>"));
+
+static bool isSerializedFile(const std::string& InFile) {
+  if (InFile.size() < 4)
+    return false;
+  
+  const char* s = InFile.c_str()+InFile.size()-4;
+  
+  return s[0] == '.' &&
+         s[1] == 'a' &&
+         s[2] == 's' &&
+         s[3] == 't';    
+}
 
 
 int main(int argc, char **argv) {
@@ -994,59 +1040,63 @@ int main(int argc, char **argv) {
   
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
-
-    /// Create a SourceManager object.  This tracks and owns all the file
-    /// buffers allocated to a translation unit.
-    SourceManager SourceMgr;
     
-    // Initialize language options, inferring file types from input filenames.
-    LangOptions LangInfo;
-    InitializeBaseLanguage();
-    LangKind LK = GetLanguage(InFile);
-    InitializeLangOptions(LangInfo, LK);
-    InitializeLanguageStandard(LangInfo, LK);
-    
-    // Process the -I options and set them in the HeaderInfo.
-    HeaderSearch HeaderInfo(FileMgr);
-    DiagClient->setHeaderSearch(HeaderInfo);
-    InitializeIncludePaths(HeaderInfo, FileMgr, LangInfo);
-    
-    // Get information about the targets being compiled for.  Note that this
-    // pointer and the TargetInfoImpl objects are never deleted by this toy
-    // driver.
-    TargetInfo *Target;
-    
-    // Create triples, and create the TargetInfo.
-    std::vector<std::string> triples;
-    CreateTargetTriples(triples);
-    Target = TargetInfo::CreateTargetInfo(&triples[0],
-                                          &triples[0]+triples.size(),
-                                          &Diags);
+    if (isSerializedFile(InFile))
+      ProcessSerializedFile(InFile,Diags,FileMgr);
+    else {            
+      /// Create a SourceManager object.  This tracks and owns all the file
+      /// buffers allocated to a translation unit.
+      SourceManager SourceMgr;
       
-    if (Target == 0) {
-      fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
-              triples[0].c_str());
-      fprintf(stderr, "Please use -triple or -arch.\n");
-      exit(1);
-    }
-    
-    // Set up the preprocessor with these options.
-    Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
-    
-    std::vector<char> PredefineBuffer;
-    unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,
-                                                 HeaderInfo, LangInfo,
-                                                 PredefineBuffer);
-    
-    if (!MainFileID) continue;
+      // Initialize language options, inferring file types from input filenames.
+      LangOptions LangInfo;
+      InitializeBaseLanguage();
+      LangKind LK = GetLanguage(InFile);
+      InitializeLangOptions(LangInfo, LK);
+      InitializeLanguageStandard(LangInfo, LK);
+      
+      // Process the -I options and set them in the HeaderInfo.
+      HeaderSearch HeaderInfo(FileMgr);
+      DiagClient->setHeaderSearch(HeaderInfo);
+      InitializeIncludePaths(HeaderInfo, FileMgr, LangInfo);
+      
+      // Get information about the targets being compiled for.  Note that this
+      // pointer and the TargetInfoImpl objects are never deleted by this toy
+      // driver.
+      TargetInfo *Target;
+      
+      // Create triples, and create the TargetInfo.
+      std::vector<std::string> triples;
+      CreateTargetTriples(triples);
+      Target = TargetInfo::CreateTargetInfo(&triples[0],
+                                            &triples[0]+triples.size(),
+                                            &Diags);
+        
+      if (Target == 0) {
+        fprintf(stderr, "Sorry, I don't know what target this is: %s\n",
+                triples[0].c_str());
+        fprintf(stderr, "Please use -triple or -arch.\n");
+        exit(1);
+      }
+      
+      // Set up the preprocessor with these options.
+      Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
+      
+      std::vector<char> PredefineBuffer;
+      unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,
+                                                   HeaderInfo, LangInfo,
+                                                   PredefineBuffer);
+      
+      if (!MainFileID) continue;
 
-    ProcessInputFile(PP, MainFileID, InFile, SourceMgr,
-                     *DiagClient, HeaderInfo, LangInfo);
-    
-    HeaderInfo.ClearFileInfo();
-    
-    if (Stats)
-      SourceMgr.PrintStats();
+      ProcessInputFile(PP, MainFileID, InFile, SourceMgr,
+                       *DiagClient, HeaderInfo, LangInfo);
+      
+      HeaderInfo.ClearFileInfo();
+      
+      if (Stats)
+        SourceMgr.PrintStats();
+    }
   }
   
   unsigned NumDiagnostics = Diags.getNumDiagnostics();
