@@ -406,7 +406,7 @@ ObjcIvarDecl *ObjcInterfaceDecl::lookupInstanceVariable(
 }
 
 /// lookupInstanceMethod - This method returns an instance method by looking in
-/// the class, it's categories, and it's super classes (using a linear search).
+/// the class, its categories, and its super classes (using a linear search).
 ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
   ObjcInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
@@ -447,7 +447,7 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
 }
 
 // lookupClassMethod - This method returns a class method by looking in the
-// class, it's categories, and it's super classes (using a linear search).
+// class, its categories, and its super classes (using a linear search).
 ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
   ObjcInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
