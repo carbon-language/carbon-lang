@@ -54,42 +54,42 @@ const unsigned M_INDIRECT_FLAG         = 1 << 7;
 // changed into a 3-address instruction if the first two operands cannot be
 // assigned to the same register.  The target must implement the
 // TargetInstrInfo::convertToThreeAddress method for this instruction.
-const unsigned M_CONVERTIBLE_TO_3_ADDR = 1 << 7;
+const unsigned M_CONVERTIBLE_TO_3_ADDR = 1 << 8;
 
 // This M_COMMUTABLE - is a 2- or 3-address instruction (of the form X = op Y,
 // Z), which produces the same result if Y and Z are exchanged.
-const unsigned M_COMMUTABLE            = 1 << 8;
+const unsigned M_COMMUTABLE            = 1 << 9;
 
 // M_TERMINATOR_FLAG - Is this instruction part of the terminator for a basic
 // block?  Typically this is things like return and branch instructions.
 // Various passes use this to insert code into the bottom of a basic block, but
 // before control flow occurs.
-const unsigned M_TERMINATOR_FLAG       = 1 << 9;
+const unsigned M_TERMINATOR_FLAG       = 1 << 10;
 
 // M_USES_CUSTOM_DAG_SCHED_INSERTION - Set if this instruction requires custom
 // insertion support when the DAG scheduler is inserting it into a machine basic
 // block.
-const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 10;
+const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 11;
 
 // M_VARIABLE_OPS - Set if this instruction can have a variable number of extra
 // operands in addition to the minimum number operands specified.
-const unsigned M_VARIABLE_OPS = 1 << 11;
+const unsigned M_VARIABLE_OPS          = 1 << 12;
 
 // M_PREDICABLE - Set if this instruction has a predicate operand that
 // controls execution. It may be set to 'always'.
-const unsigned M_PREDICABLE = 1 << 12;
+const unsigned M_PREDICABLE            = 1 << 13;
 
 // M_REMATERIALIZIBLE - Set if this instruction can be trivally re-materialized
 // at any time, e.g. constant generation, load from constant pool.
-const unsigned M_REMATERIALIZIBLE = 1 << 13;
+const unsigned M_REMATERIALIZIBLE      = 1 << 14;
 
 // M_NOT_DUPLICABLE - Set if this instruction cannot be safely duplicated.
 // (e.g. instructions with unique labels attached).
-const unsigned M_NOT_DUPLICABLE = 1 << 14;
+const unsigned M_NOT_DUPLICABLE        = 1 << 15;
 
 // M_HAS_OPTIONAL_DEF - Set if this instruction has an optional definition, e.g.
 // ARM instructions which can set condition code if 's' bit is set.
-const unsigned M_HAS_OPTIONAL_DEF = 1 << 15;
+const unsigned M_HAS_OPTIONAL_DEF      = 1 << 16;
 
 // Machine operand flags
 // M_LOOK_UP_PTR_REG_CLASS - Set if this operand is a pointer value and it
