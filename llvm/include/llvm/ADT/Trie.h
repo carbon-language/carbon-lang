@@ -22,7 +22,6 @@ namespace llvm {
 
 // FIXME:
 // - Labels are usually small, maybe it's better to use SmallString
-// - Something efficient for child storage
 // - Should we use char* during construction?
 // - Should we templatize Empty with traits-like interface?
 // - GraphTraits interface
@@ -39,10 +38,21 @@ class Trie {
       DontMatch      = 0,
       HaveCommonPart
     } QueryResult;
+    typedef std::vector<Node*> NodeVector;
+    typedef typename std::vector<Node*>::iterator NodeVectorIter;
+
+    struct NodeCmp {
+      bool operator() (Node* N1, Node* N2) {
+        return (N1->Label[0] < N2->Label[0]);
+      }
+      bool operator() (Node* N, char Id) {
+        return (N->Label[0] < Id);
+      }
+    };
 
     std::string Label;
     Payload Data;
-    std::map<char, Node*> Children;
+    NodeVector Children;
   public:
     inline explicit Node(const Payload& data, const std::string& label = ""):
         Label(label), Data(data) { }
@@ -70,9 +80,44 @@ class Trie {
     inline void setLabel(const std::string& label) { Label = label; }
     inline const std::string& getLabel() const { return Label; }
 
-    inline bool addEdge(Node* N) {
-      const std::string& Label = N->getLabel();
-      return Children.insert(std::make_pair(Label[0], N)).second;
+#if 0
+    inline void dump() {
+      std::cerr << "Node: " << this << "\n"
+                << "Label: " << Label << "\n"
+                << "Children:\n";
+
+      for (NodeVectorIter I = Children.begin(), E = Children.end(); I != E; ++I)
+        std::cerr << (*I)->Label << "\n";
+    }
+#endif
+
+    inline void addEdge(Node* N) {
+      if (Children.empty())
+        Children.push_back(N);
+      else {
+        NodeVectorIter I = std::lower_bound(Children.begin(), Children.end(),
+                                            N, NodeCmp());
+        // FIXME: no dups are allowed
+        Children.insert(I, N);
+      }
+    }
+
+    inline Node* getEdge(char Id) {
+      Node* fNode = NULL;
+      NodeVectorIter I = std::lower_bound(Children.begin(), Children.end(),
+                                          Id, NodeCmp());
+      if (I != Children.end() && (*I)->Label[0] == Id)
+        fNode = *I;
+
+      return fNode;
+    }
+
+    inline void setEdge(Node* N) {
+      char Id = N->Label[0];
+      NodeVectorIter I = std::lower_bound(Children.begin(), Children.end(),
+                                          Id, NodeCmp());
+      assert(I != Children.end() && "Node does not exists!");
+      *I = N;
     }
 
     QueryResult query(const std::string& s) const {
@@ -101,6 +146,8 @@ class Trie {
   std::vector<Node*> Nodes;
   Payload Empty;
 
+  inline Node* getRoot() const { return Nodes[0]; }
+
   inline Node* addNode(const Payload& data, const std::string label = "") {
     Node* N = new Node(data, label);
     Nodes.push_back(N);
@@ -108,21 +155,19 @@ class Trie {
   }
 
   inline Node* splitEdge(Node* N, char Id, size_t index) {
-    assert(N->Children.count(Id) && "Node doesn't exist");
-
-    Node* eNode = N->Children[Id];
+    Node* eNode = N->getEdge(Id);
+    assert(eNode && "Node doesn't exist");
 
     const std::string &l = eNode->Label;
     assert(index > 0 && index < l.length() && "Trying to split too far!");
     std::string l1 = l.substr(0, index);
     std::string l2 = l.substr(index);
 
-    eNode->Label = l2;
-
     Node* nNode = addNode(Empty, l1);
-    nNode->addEdge(eNode);
+    N->setEdge(nNode);
 
-    N->Children[Id] = nNode;
+    eNode->Label = l2;
+    nNode->addEdge(eNode);
 
     return nNode;
   }
@@ -136,8 +181,6 @@ public:
       delete Nodes[i];
   }
 
-  inline Node* getRoot() const { return Nodes[0]; }
-
   bool addString(const std::string& s, const Payload& data) {
     Node* cNode = getRoot();
     Node* tNode = NULL;
@@ -145,8 +188,7 @@ public:
 
     while (tNode == NULL) {
       char Id = s1[0];
-      if (cNode->Children.count(Id)) {
-        Node* nNode = cNode->Children[Id];
+      if (Node* nNode = cNode->getEdge(Id)) {
         typename Node::QueryResult r = nNode->query(s1);
 
         switch (r) {
@@ -167,7 +209,7 @@ public:
          nNode = splitEdge(cNode, Id, r);
          tNode = addNode(data, s1.substr(r));
          nNode->addEdge(tNode);
-        }
+       }
       } else {
         tNode = addNode(data, s1);
         cNode->addEdge(tNode);
@@ -183,8 +225,8 @@ public:
     std::string s1(s);
 
     while (tNode == NULL) {
-      if (cNode->Children.count(s1[0])) {
-        Node* nNode = cNode->Children[s1[0]];
+      char Id = s1[0];
+      if (Node* nNode = cNode->getEdge(Id)) {
         typename Node::QueryResult r = nNode->query(s1);
 
         switch (r) {
