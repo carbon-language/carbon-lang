@@ -71,12 +71,20 @@
 #include <list>
 #include <stack>
 #include <vector>
+#include <queue>
+
+// Determining the actual set of nodes the universal set can consist of is very
+// expensive because it means propagating around very large sets.  We rely on
+// other analysis being able to determine which nodes can never be pointed to in
+// order to disambiguate further than "points-to anything".
+#define FULL_UNIVERSAL 0
 
 using namespace llvm;
 STATISTIC(NumIters      , "Number of iterations to reach convergence");
 STATISTIC(NumConstraints, "Number of constraints");
 STATISTIC(NumNodes      , "Number of nodes");
 STATISTIC(NumUnified    , "Number of variables unified");
+STATISTIC(NumErased     , "Number of redundant constraints erased");
 
 namespace {
   const unsigned SelfRep = (unsigned)-1;
@@ -157,6 +165,24 @@ namespace {
       }
     };
 
+    // Information DenseSet requires implemented in order to be able to do
+    // it's thing
+    struct PairKeyInfo {
+      static inline std::pair<unsigned, unsigned> getEmptyKey() {
+        return std::make_pair(~0UL, ~0UL);
+      }
+      static inline std::pair<unsigned, unsigned> getTombstoneKey() {
+        return std::make_pair(~0UL - 1, ~0UL - 1);
+      }
+      static unsigned getHashValue(const std::pair<unsigned, unsigned> &P) {
+        return P.first ^ P.second;
+      }
+      static unsigned isEqual(const std::pair<unsigned, unsigned> &LHS,
+                              const std::pair<unsigned, unsigned> &RHS) {
+        return LHS == RHS;
+      }
+    };
+    
     struct ConstraintKeyInfo {
       static inline Constraint getEmptyKey() {
         return Constraint(Constraint::Copy, ~0UL, ~0UL, ~0UL);
@@ -180,11 +206,14 @@ namespace {
     // artificial Node's that represent the set of pointed-to variables shared
     // for each location equivalent Node.
     struct Node {
+    private:
+      static unsigned Counter;
+
+    public:
       Value *Val;
       SparseBitVector<> *Edges;
       SparseBitVector<> *PointsTo;
       SparseBitVector<> *OldPointsTo;
-      bool Changed;
       std::list<Constraint> Constraints;
 
       // Pointer and location equivalence labels
@@ -212,14 +241,17 @@ namespace {
       // standard union-find representation with path compression.  NodeRep
       // gives the index into GraphNodes for the representative Node.
       unsigned NodeRep;
-    public:
+
+      // Modification timestamp.  Assigned from Counter.
+      // Used for work list prioritization.
+      unsigned Timestamp;
 
       Node(bool direct = true) :
-        Val(0), Edges(0), PointsTo(0), OldPointsTo(0), Changed(false),
+        Val(0), Edges(0), PointsTo(0), OldPointsTo(0), 
         PointerEquivLabel(0), LocationEquivLabel(0), PredEdges(0),
         ImplicitPredEdges(0), PointedToBy(0), NumInEdges(0),
         StoredInHash(false), Direct(direct), AddressTaken(false),
-        NodeRep(SelfRep) { }
+        NodeRep(SelfRep), Timestamp(0) { }
 
       Node *setValue(Value *V) {
         assert(Val == 0 && "Value already set for this node!");
@@ -246,6 +278,60 @@ namespace {
       /// intersects with the points-to set of the specified node on any nodes
       /// except for the specified node to ignore.
       bool intersectsIgnoring(Node *N, unsigned) const;
+
+      // Timestamp a node (used for work list prioritization)
+      void Stamp() {
+        Timestamp = Counter++;
+      }
+
+      bool isRep() {
+        return( (int) NodeRep < 0 );
+      }
+    };
+
+    struct WorkListElement {
+      Node* node;
+      unsigned Timestamp;
+      WorkListElement(Node* n, unsigned t) : node(n), Timestamp(t) {}
+
+      // Note that we reverse the sense of the comparison because we
+      // actually want to give low timestamps the priority over high,
+      // whereas priority is typically interpreted as a greater value is
+      // given high priority.
+      bool operator<(const WorkListElement& that) const {
+        return( this->Timestamp > that.Timestamp );
+      }
+    };
+
+    // Priority-queue based work list specialized for Nodes.
+    class WorkList {
+      std::priority_queue<WorkListElement> Q;
+
+    public:
+      void insert(Node* n) {
+        Q.push( WorkListElement(n, n->Timestamp) );
+      }
+
+      // We automatically discard non-representative nodes and nodes
+      // that were in the work list twice (we keep a copy of the
+      // timestamp in the work list so we can detect this situation by
+      // comparing against the node's current timestamp).
+      Node* pop() {
+        while( !Q.empty() ) {
+          WorkListElement x = Q.top(); Q.pop();
+          Node* INode = x.node;
+
+          if( INode->isRep() &&
+              INode->Timestamp == x.Timestamp ) {
+            return(x.node);
+          }
+        }
+        return(0);
+      }
+
+      bool empty() {
+        return Q.empty();
+      }
     };
 
     /// GraphNodes - This vector is populated as part of the object
@@ -290,17 +376,20 @@ namespace {
     };
     // Stack for Tarjan's
     std::stack<unsigned> SCCStack;
-    // Topological Index -> Graph node
-    std::vector<unsigned> Topo2Node;
-    // Graph Node -> Topological Index;
-    std::vector<unsigned> Node2Topo;
     // Map from Graph Node to DFS number
     std::vector<unsigned> Node2DFS;
     // Map from Graph Node to Deleted from graph.
     std::vector<bool> Node2Deleted;
-    // Current DFS and RPO numbers
+    // Same as Node Maps, but implemented as std::map because it is faster to
+    // clear 
+    std::map<unsigned, unsigned> Tarjan2DFS;
+    std::map<unsigned, bool> Tarjan2Deleted;
+    // Current DFS number
     unsigned DFSNumber;
-    unsigned RPONumber;
+
+    // Work lists.
+    WorkList w1, w2;
+    WorkList *CurrWL, *NextWL; // "current" and "next" work lists
 
     // Offline variable substitution related things
 
@@ -443,7 +532,8 @@ namespace {
       return Index;
     }
 
-    unsigned UniteNodes(unsigned First, unsigned Second);
+    unsigned UniteNodes(unsigned First, unsigned Second,
+                        bool UnionByRank = true);
     unsigned FindNode(unsigned Node);
 
     void IdentifyObjects(Module &M);
@@ -458,7 +548,7 @@ namespace {
     void HVN();
     void UnitePointerEquivalences();
     void SolveConstraints();
-    void QueryNode(unsigned Node);
+    bool QueryNode(unsigned Node);
     void Condense(unsigned Node);
     void HUValNum(unsigned Node);
     void HVNValNum(unsigned Node);
@@ -503,6 +593,9 @@ namespace {
   RegisterPass<Andersens> X("anders-aa",
                             "Andersen's Interprocedural Alias Analysis");
   RegisterAnalysisGroup<AliasAnalysis> Y(X);
+
+  // Initialize Timestamp Counter (static).
+  unsigned Andersens::Node::Counter = 0;
 }
 
 ModulePass *llvm::createAndersensPass() { return new Andersens(); }
@@ -981,9 +1074,15 @@ void Andersens::CollectConstraints(Module &M) {
                                            UniversalSet));
           // Memory objects passed into external function calls can have the
           // universal set point to them.
+#if FULL_UNIVERSAL
           Constraints.push_back(Constraint(Constraint::Copy,
                                            UniversalSet,
                                            getNode(I)));
+#else
+          Constraints.push_back(Constraint(Constraint::Copy,
+                                           getNode(I),
+                                           UniversalSet));
+#endif
         }
 
       // If this is an external varargs function, it can also store pointers
@@ -1139,9 +1238,17 @@ void Andersens::AddConstraintsForCall(CallSite CS, Function *F) {
                                        UniversalSet));
     }
   } else if (F && isa<PointerType>(F->getFunctionType()->getReturnType())) {
+#if FULL_UNIVERSAL
     Constraints.push_back(Constraint(Constraint::Copy,
                                      UniversalSet,
                                      getNode(CallValue) + CallReturnPos));
+#else
+    Constraints.push_back(Constraint(Constraint::Copy,
+                                      getNode(CallValue) + CallReturnPos,
+                                      UniversalSet));
+#endif
+                          
+    
   }
 
   CallSite::arg_iterator ArgI = CS.arg_begin(), ArgE = CS.arg_end();
@@ -1159,9 +1266,15 @@ void Andersens::AddConstraintsForCall(CallSite CS, Function *F) {
                                            UniversalSet));
         }
       } else if (isa<PointerType>((*ArgI)->getType())) {
+#if FULL_UNIVERSAL
         Constraints.push_back(Constraint(Constraint::Copy,
                                          UniversalSet,
                                          getNode(*ArgI)));
+#else
+        Constraints.push_back(Constraint(Constraint::Copy,
+                                         getNode(*ArgI),
+                                         UniversalSet));
+#endif
       }
   } else {
     //Indirect Call
@@ -1837,7 +1950,9 @@ unsigned Andersens::FindEquivalentNode(unsigned NodeIndex,
   if (!GraphNodes[NodeIndex].AddressTaken) {
     if (PEClass2Node[NodeLabel] != -1) {
       // We found an existing node with the same pointer label, so unify them.
-      return UniteNodes(PEClass2Node[NodeLabel], NodeIndex);
+      // We specifically request that Union-By-Rank not be used so that
+      // PEClass2Node[NodeLabel] U= NodeIndex and not the other way around.
+      return UniteNodes(PEClass2Node[NodeLabel], NodeIndex, false);
     } else {
       PEClass2Node[NodeLabel] = NodeIndex;
       PENLEClass2Node[NodeLabel] = NodeIndex;
@@ -1952,7 +2067,7 @@ void Andersens::OptimizeConstraints() {
 void Andersens::UnitePointerEquivalences() {
   DOUT << "Uniting remaining pointer equivalences\n";
   for (unsigned i = 0; i < GraphNodes.size(); ++i) {
-    if (GraphNodes[i].AddressTaken && GraphNodes[i].NodeRep == SelfRep) {
+    if (GraphNodes[i].AddressTaken && GraphNodes[i].isRep()) {
       unsigned Label = GraphNodes[i].PointerEquivLabel;
 
       if (Label && PENLEClass2Node[Label] != -1)
@@ -1982,37 +2097,43 @@ void Andersens::CreateConstraintGraph() {
   }
 }
 
-// Perform cycle detection, DFS, and RPO finding.
-void Andersens::QueryNode(unsigned Node) {
-  assert(GraphNodes[Node].NodeRep == SelfRep && "Querying a non-rep node");
+// Perform DFS and cycle detection.
+bool Andersens::QueryNode(unsigned Node) {
+  assert(GraphNodes[Node].isRep() && "Querying a non-rep node");
   unsigned OurDFS = ++DFSNumber;
   SparseBitVector<> ToErase;
   SparseBitVector<> NewEdges;
-  Node2DFS[Node] = OurDFS;
+  Tarjan2DFS[Node] = OurDFS;
+
+  // Changed denotes a change from a recursive call that we will bubble up.
+  // Merged is set if we actually merge a node ourselves.
+  bool Changed = false, Merged = false;
 
   for (SparseBitVector<>::iterator bi = GraphNodes[Node].Edges->begin();
        bi != GraphNodes[Node].Edges->end();
        ++bi) {
     unsigned RepNode = FindNode(*bi);
-    // If we are going to add an edge to repnode, we have no need for the edge
-    // to e anymore.
+    // If this edge points to a non-representative node but we are
+    // already planning to add an edge to its representative, we have no
+    // need for this edge anymore.
     if (RepNode != *bi && NewEdges.test(RepNode)){
       ToErase.set(*bi);
       continue;
     }
 
     // Continue about our DFS.
-    if (!Node2Deleted[RepNode]){
-      if (Node2DFS[RepNode] == 0) {
-        QueryNode(RepNode);
-        // May have been changed by query
+    if (!Tarjan2Deleted[RepNode]){
+      if (Tarjan2DFS[RepNode] == 0) {
+        Changed |= QueryNode(RepNode);
+        // May have been changed by QueryNode
         RepNode = FindNode(RepNode);
       }
-      if (Node2DFS[RepNode] < Node2DFS[Node])
-        Node2DFS[Node] = Node2DFS[RepNode];
+      if (Tarjan2DFS[RepNode] < Tarjan2DFS[Node])
+        Tarjan2DFS[Node] = Tarjan2DFS[RepNode];
     }
-    // We may have just discovered that e belongs to a cycle, in which case we
-    // can also erase it.
+
+    // We may have just discovered that this node is part of a cycle, in
+    // which case we can also erase it.
     if (RepNode != *bi) {
       ToErase.set(*bi);
       NewEdges.set(RepNode);
@@ -2022,36 +2143,46 @@ void Andersens::QueryNode(unsigned Node) {
   GraphNodes[Node].Edges->intersectWithComplement(ToErase);
   GraphNodes[Node].Edges |= NewEdges;
 
-  // If this node is a root of a non-trivial SCC, place it on our worklist to be
-  // processed
-  if (OurDFS == Node2DFS[Node]) {
-    bool Changed = false;
-    while (!SCCStack.empty() && Node2DFS[SCCStack.top()] >= OurDFS) {
-      Node = UniteNodes(Node, FindNode(SCCStack.top()));
+  // If this node is a root of a non-trivial SCC, place it on our 
+  // worklist to be processed.
+  if (OurDFS == Tarjan2DFS[Node]) {
+    while (!SCCStack.empty() && Tarjan2DFS[SCCStack.top()] >= OurDFS) {
+      Node = UniteNodes(Node, SCCStack.top());
 
       SCCStack.pop();
-      Changed = true;
+      Merged = true;
     }
-    Node2Deleted[Node] = true;
-    RPONumber++;
+    Tarjan2Deleted[Node] = true;
 
-    Topo2Node.at(GraphNodes.size() - RPONumber) = Node;
-    Node2Topo[Node] = GraphNodes.size() - RPONumber;
-    if (Changed)
-      GraphNodes[Node].Changed = true;
+    if (Merged)
+      NextWL->insert(&GraphNodes[Node]);
   } else {
     SCCStack.push(Node);
   }
-}
 
+  return(Changed | Merged);
+}
 
 /// SolveConstraints - This stage iteratively processes the constraints list
 /// propagating constraints (adding edges to the Nodes in the points-to graph)
 /// until a fixed point is reached.
 ///
+/// We use a variant of the technique called "Lazy Cycle Detection", which is
+/// described in "The Ant and the Grasshopper: Fast and Accurate Pointer
+/// Analysis for Millions of Lines of Code. In Programming Language Design and
+/// Implementation (PLDI), June 2007."
+/// The paper describes performing cycle detection one node at a time, which can
+/// be expensive if there are no cycles, but there are long chains of nodes that
+/// it heuristically believes are cycles (because it will DFS from each node
+/// without state from previous nodes).
+/// Instead, we use the heuristic to build a worklist of nodes to check, then
+/// cycle detect them all at the same time to do this more cheaply.  This
+/// catches cycles slightly later than the original technique did, but does it
+/// make significantly cheaper.
+
 void Andersens::SolveConstraints() {
-  bool Changed = true;
-  unsigned Iteration = 0;
+  CurrWL = &w1;
+  NextWL = &w2;
 
   OptimizeConstraints();
 #undef DEBUG_TYPE
@@ -2069,55 +2200,66 @@ void Andersens::SolveConstraints() {
   CreateConstraintGraph();
   UnitePointerEquivalences();
   assert(SCCStack.empty() && "SCC Stack should be empty by now!");
-  Topo2Node.insert(Topo2Node.begin(), GraphNodes.size(), Unvisited);
-  Node2Topo.insert(Node2Topo.begin(), GraphNodes.size(), Unvisited);
   Node2DFS.clear();
   Node2Deleted.clear();
   Node2DFS.insert(Node2DFS.begin(), GraphNodes.size(), 0);
   Node2Deleted.insert(Node2Deleted.begin(), GraphNodes.size(), false);
   DFSNumber = 0;
-  RPONumber = 0;
-  // Order graph and mark starting nodes as changed.
+  DenseSet<Constraint, ConstraintKeyInfo> Seen;
+  DenseSet<std::pair<unsigned,unsigned>, PairKeyInfo> EdgesChecked;
+
+  // Order graph and add initial nodes to work list.
   for (unsigned i = 0; i < GraphNodes.size(); ++i) {
-    unsigned N = FindNode(i);
     Node *INode = &GraphNodes[i];
-    if (Node2DFS[N] == 0) {
-      QueryNode(N);
-      // Mark as changed if it's a representation and can contribute to the
-      // calculation right now.
-      if (INode->NodeRep == SelfRep && !INode->PointsTo->empty()
-          && (!INode->Edges->empty() || !INode->Constraints.empty()))
-        INode->Changed = true;
+
+    // Add to work list if it's a representative and can contribute to the
+    // calculation right now.
+    if (INode->isRep() && !INode->PointsTo->empty()
+        && (!INode->Edges->empty() || !INode->Constraints.empty())) {
+      INode->Stamp();
+      CurrWL->insert(INode);
     }
   }
+  std::queue<unsigned int> TarjanWL;
+  while( !CurrWL->empty() ) {
+    DOUT << "Starting iteration #" << ++NumIters << "\n";
 
-  do {
-    Changed = false;
-    ++NumIters;
-    DOUT << "Starting iteration #" << Iteration++ << "\n";
-    // TODO: In the microoptimization category, we could just make Topo2Node
-    // a fast map and thus only contain the visited nodes.
-    for (unsigned i = 0; i < GraphNodes.size(); ++i) {
-      unsigned CurrNodeIndex = Topo2Node[i];
-      Node *CurrNode;
+    Node* CurrNode;
+    unsigned CurrNodeIndex;
 
-      // We may not revisit all nodes on every iteration
-      if (CurrNodeIndex == Unvisited)
-        continue;
-      CurrNode = &GraphNodes[CurrNodeIndex];
-      // See if this is a node we need to process on this iteration
-      if (!CurrNode->Changed || CurrNode->NodeRep != SelfRep)
-        continue;
-      CurrNode->Changed = false;
-
+    // Actual cycle checking code.  We cycle check all of the lazy cycle
+    // candidates from the last iteration in one go.
+    if (!TarjanWL.empty()) {
+      DFSNumber = 0;
+      
+      Tarjan2DFS.clear();
+      Tarjan2Deleted.clear();
+      while (!TarjanWL.empty()) {
+        unsigned int ToTarjan = TarjanWL.front();
+        TarjanWL.pop();
+        if (!Tarjan2Deleted[ToTarjan]
+            && GraphNodes[ToTarjan].isRep()
+            && Tarjan2DFS[ToTarjan] == 0)
+          QueryNode(ToTarjan);
+      }
+    }
+    
+    // Add to work list if it's a representative and can contribute to the
+    // calculation right now.
+    while( (CurrNode = CurrWL->pop()) != NULL ) {
+      CurrNodeIndex = CurrNode - &GraphNodes[0];
+      CurrNode->Stamp();
+      
+          
       // Figure out the changed points to bits
       SparseBitVector<> CurrPointsTo;
       CurrPointsTo.intersectWithComplement(CurrNode->PointsTo,
                                            CurrNode->OldPointsTo);
-      if (CurrPointsTo.empty()){
+      if (CurrPointsTo.empty())
         continue;
-      }
+
       *(CurrNode->OldPointsTo) |= CurrPointsTo;
+      Seen.clear();
 
       /* Now process the constraints for this node.  */
       for (std::list<Constraint>::iterator li = CurrNode->Constraints.begin();
@@ -2125,7 +2267,16 @@ void Andersens::SolveConstraints() {
         li->Src = FindNode(li->Src);
         li->Dest = FindNode(li->Dest);
 
-        // TODO: We could delete redundant constraints here.
+        // Delete redundant constraints
+        if( Seen.count(*li) ) {
+          std::list<Constraint>::iterator lk = li; li++;
+
+          CurrNode->Constraints.erase(lk);
+          ++NumErased;
+          continue;
+        }
+        Seen.insert(*li);
+
         // Src and Dest will be the vars we are going to process.
         // This may look a bit ugly, but what it does is allow us to process
         // both store and load constraints with the same code.
@@ -2173,15 +2324,14 @@ void Andersens::SolveConstraints() {
 
           // Add an edge to the graph, so we can just do regular bitmap ior next
           // time.  It may also let us notice a cycle.
-          if (GraphNodes[*Src].Edges->test_and_set(*Dest)) {
-            if (GraphNodes[*Dest].PointsTo |= *(GraphNodes[*Src].PointsTo)) {
-              GraphNodes[*Dest].Changed = true;
-              // If we changed a node we've already processed, we need another
-              // iteration.
-              if (Node2Topo[*Dest] <= i)
-                Changed = true;
-            }
-          }
+#if !FULL_UNIVERSAL
+          if (*Dest < NumberSpecialNodes)
+            continue;
+#endif
+          if (GraphNodes[*Src].Edges->test_and_set(*Dest))
+            if (GraphNodes[*Dest].PointsTo |= *(GraphNodes[*Src].PointsTo))
+              NextWL->insert(&GraphNodes[*Dest]);
+
         }
         li++;
       }
@@ -2190,8 +2340,6 @@ void Andersens::SolveConstraints() {
 
       // Now all we have left to do is propagate points-to info along the
       // edges, erasing the redundant edges.
-
-
       for (SparseBitVector<>::iterator bi = CurrNode->Edges->begin();
            bi != CurrNode->Edges->end();
            ++bi) {
@@ -2199,18 +2347,31 @@ void Andersens::SolveConstraints() {
         unsigned DestVar = *bi;
         unsigned Rep = FindNode(DestVar);
 
-        // If we ended up with this node as our destination, or we've already
-        // got an edge for the representative, delete the current edge.
-        if (Rep == CurrNodeIndex ||
-            (Rep != DestVar && NewEdges.test(Rep))) {
-          ToErase.set(DestVar);
-          continue;
+	// If we ended up with this node as our destination, or we've already
+	// got an edge for the representative, delete the current edge.
+	if (Rep == CurrNodeIndex ||
+	    (Rep != DestVar && NewEdges.test(Rep))) {
+	    ToErase.set(DestVar);
+	    continue;
+	}
+        
+	std::pair<unsigned,unsigned> edge(CurrNodeIndex,Rep);
+        
+        // This is where we do lazy cycle detection.
+        // If this is a cycle candidate (equal points-to sets and this
+        // particular edge has not been cycle-checked previously), add to the
+        // list to check for cycles on the next iteration.
+        if (!EdgesChecked.count(edge) &&
+            *(GraphNodes[Rep].PointsTo) == *(CurrNode->PointsTo)) {
+          EdgesChecked.insert(edge);
+          TarjanWL.push(Rep);
         }
         // Union the points-to sets into the dest
+#if !FULL_UNIVERSAL
+        if (Rep >= NumberSpecialNodes)
+#endif
         if (GraphNodes[Rep].PointsTo |= CurrPointsTo) {
-          GraphNodes[Rep].Changed = true;
-          if (Node2Topo[Rep] <= i)
-            Changed = true;
+          NextWL->insert(&GraphNodes[Rep]);
         }
         // If this edge's destination was collapsed, rewrite the edge.
         if (Rep != DestVar) {
@@ -2221,28 +2382,12 @@ void Andersens::SolveConstraints() {
       CurrNode->Edges->intersectWithComplement(ToErase);
       CurrNode->Edges |= NewEdges;
     }
-    if (Changed) {
-      DFSNumber = RPONumber = 0;
-      Node2Deleted.clear();
-      Topo2Node.clear();
-      Node2Topo.clear();
-      Node2DFS.clear();
-      Topo2Node.insert(Topo2Node.begin(), GraphNodes.size(), Unvisited);
-      Node2Topo.insert(Node2Topo.begin(), GraphNodes.size(), Unvisited);
-      Node2DFS.insert(Node2DFS.begin(), GraphNodes.size(), 0);
-      Node2Deleted.insert(Node2Deleted.begin(), GraphNodes.size(), false);
-      // Rediscover the DFS/Topo ordering, and cycle detect.
-      for (unsigned j = 0; j < GraphNodes.size(); j++) {
-        unsigned JRep = FindNode(j);
-        if (Node2DFS[JRep] == 0)
-          QueryNode(JRep);
-      }
-    }
 
-  } while (Changed);
+    // Switch to other work list.
+    WorkList* t = CurrWL; CurrWL = NextWL; NextWL = t;
+  }
 
-  Node2Topo.clear();
-  Topo2Node.clear();
+
   Node2DFS.clear();
   Node2Deleted.clear();
   for (unsigned i = 0; i < GraphNodes.size(); ++i) {
@@ -2258,25 +2403,42 @@ void Andersens::SolveConstraints() {
 
 // Unite nodes First and Second, returning the one which is now the
 // representative node.  First and Second are indexes into GraphNodes
-unsigned Andersens::UniteNodes(unsigned First, unsigned Second) {
+unsigned Andersens::UniteNodes(unsigned First, unsigned Second,
+                               bool UnionByRank) {
   assert (First < GraphNodes.size() && Second < GraphNodes.size() &&
           "Attempting to merge nodes that don't exist");
-  // TODO: implement union by rank
+
   Node *FirstNode = &GraphNodes[First];
   Node *SecondNode = &GraphNodes[Second];
 
-  assert (SecondNode->NodeRep == SelfRep && FirstNode->NodeRep == SelfRep &&
+  assert (SecondNode->isRep() && FirstNode->isRep() &&
           "Trying to unite two non-representative nodes!");
   if (First == Second)
     return First;
 
+  if (UnionByRank) {
+    int RankFirst  = (int) FirstNode ->NodeRep;
+    int RankSecond = (int) SecondNode->NodeRep;
+
+    // Rank starts at -1 and gets decremented as it increases.
+    // Translation: higher rank, lower NodeRep value, which is always negative.
+    if (RankFirst > RankSecond) {
+      unsigned t = First; First = Second; Second = t;
+      Node* tp = FirstNode; FirstNode = SecondNode; SecondNode = tp;
+    } else if (RankFirst == RankSecond) {
+      FirstNode->NodeRep = (unsigned) (RankFirst - 1);
+    }
+  }
+
   SecondNode->NodeRep = First;
-  FirstNode->Changed |= SecondNode->Changed;
+#if !FULL_UNIVERSAL
+  if (First >= NumberSpecialNodes)
+#endif
   if (FirstNode->PointsTo && SecondNode->PointsTo)
     FirstNode->PointsTo |= *(SecondNode->PointsTo);
   if (FirstNode->Edges && SecondNode->Edges)
     FirstNode->Edges |= *(SecondNode->Edges);
-  if (!FirstNode->Constraints.empty() && !SecondNode->Constraints.empty())
+  if (!SecondNode->Constraints.empty())
     FirstNode->Constraints.splice(FirstNode->Constraints.begin(),
                                   SecondNode->Constraints);
   if (FirstNode->OldPointsTo) {
@@ -2309,7 +2471,7 @@ unsigned Andersens::FindNode(unsigned NodeIndex) {
   assert (NodeIndex < GraphNodes.size()
           && "Attempting to find a node that can't exist");
   Node *N = &GraphNodes[NodeIndex];
-  if (N->NodeRep == SelfRep)
+  if (N->isRep())
     return NodeIndex;
   else
     return (N->NodeRep = FindNode(N->NodeRep));
