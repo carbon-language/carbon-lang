@@ -8,10 +8,12 @@
 //===----------------------------------------------------------------------===//
 //
 //  This file defines serialization methods for the SourceLocation class.
+//  This file defines accessor methods for the FullSourceLoc class.
 //
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/Bitcode/Serialize.h"
 #include "llvm/Bitcode/Deserialize.h"
 
@@ -34,4 +36,44 @@ SourceRange SourceRange::ReadVal(llvm::Deserializer& D) {
   SourceLocation A = SourceLocation::ReadVal(D);
   SourceLocation B = SourceLocation::ReadVal(D);
   return SourceRange(A,B);
+}
+
+FullSourceLoc FullSourceLoc::getLogicalLoc() {
+  assert (isValid());
+  return FullSourceLoc(SrcMgr->getLogicalLoc(Loc),*SrcMgr);
+}
+
+FullSourceLoc FullSourceLoc::getIncludeLoc() {
+  assert (isValid());
+  return FullSourceLoc(SrcMgr->getIncludeLoc(Loc),*SrcMgr);
+}
+
+unsigned FullSourceLoc::getLineNumber() {
+  assert (isValid());
+  return SrcMgr->getLineNumber(Loc);
+}
+
+unsigned FullSourceLoc::getColumnNumber() {
+  assert (isValid());
+  return SrcMgr->getColumnNumber(Loc);
+}
+
+const char* FullSourceLoc::getSourceName() const {
+  assert (isValid());
+  return SrcMgr->getSourceName(Loc);
+}
+
+const FileEntry* FullSourceLoc::getFileEntryForLoc() const { 
+  assert (isValid());
+  return SrcMgr->getFileEntryForLoc(Loc);
+}
+
+const char * FullSourceLoc::getCharacterData() const {
+  assert (isValid());
+  return SrcMgr->getCharacterData(Loc);
+}
+
+const llvm::MemoryBuffer* FullSourceLoc::getBuffer() const {
+  assert (isValid());
+  return SrcMgr->getBuffer(Loc.getFileID());
 }

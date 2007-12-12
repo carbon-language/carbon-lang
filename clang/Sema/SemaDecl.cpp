@@ -135,7 +135,7 @@ ScopedDecl *Sema::LookupScopedDecl(IdentifierInfo *II, unsigned NSI,
     if (II->isNonPortableBuiltin()) {
       // Only emit this diagnostic once for this builtin.
       II->setNonPortableBuiltin(false);
-      Context.Target.DiagnoseNonPortability(IdLoc,
+      Context.Target.DiagnoseNonPortability(Context.getFullLoc(IdLoc),
                                             diag::port_target_builtin_use);
     }
     // If this is a builtin on this (or all) targets, create the decl.
@@ -1506,7 +1506,8 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
   // TODO: If the result value doesn't fit in an int, it must be a long or long
   // long value.  ISO C does not support this, but GCC does as an extension,
   // emit a warning.
-  unsigned IntWidth = Context.Target.getIntWidth(Enum->getLocation());
+  unsigned IntWidth =
+    Context.Target.getIntWidth(Context.getFullLoc(Enum->getLocation()));
   
   
   // Verify that all the values are okay, compute the size of the values, and
@@ -1562,11 +1563,15 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
       BestType = Context.IntTy;
       BestWidth = IntWidth;
     } else {
-      BestWidth = Context.Target.getLongWidth(Enum->getLocation());
+      BestWidth = 
+        Context.Target.getLongWidth(Context.getFullLoc(Enum->getLocation()));
+      
       if (NumNegativeBits <= BestWidth && NumPositiveBits < BestWidth)
         BestType = Context.LongTy;
       else {
-        BestWidth = Context.Target.getLongLongWidth(Enum->getLocation());
+        BestWidth = Context.Target.getLongLongWidth(
+                       Context.getFullLoc(Enum->getLocation()));
+        
         if (NumNegativeBits > BestWidth || NumPositiveBits >= BestWidth)
           Diag(Enum->getLocation(), diag::warn_enum_too_large);
         BestType = Context.LongLongTy;
@@ -1579,10 +1584,14 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
       BestType = Context.UnsignedIntTy;
       BestWidth = IntWidth;
     } else if (NumPositiveBits <=
-               (BestWidth = Context.Target.getLongWidth(Enum->getLocation())))
+               (BestWidth = Context.Target.getLongWidth(
+                              Context.getFullLoc(Enum->getLocation()))))
+
       BestType = Context.UnsignedLongTy;
     else {
-      BestWidth = Context.Target.getLongLongWidth(Enum->getLocation());
+      BestWidth =
+       Context.Target.getLongLongWidth(Context.getFullLoc(Enum->getLocation()));
+      
       assert(NumPositiveBits <= BestWidth &&
              "How could an initializer get larger than ULL?");
       BestType = Context.UnsignedLongLongTy;

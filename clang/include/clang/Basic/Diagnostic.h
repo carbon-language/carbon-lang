@@ -147,25 +147,17 @@ public:
   
   /// Report - Issue the message to the client.  DiagID is a member of the
   /// diag::kind enum.  
-  void Report(SourceLocation Pos, unsigned DiagID, SourceManager& SrcMgr,
+  void Report(FullSourceLoc Pos, unsigned DiagID,
               const std::string *Strs = 0, unsigned NumStrs = 0,
-              const SourceRange *Ranges = 0, unsigned NumRanges = 0) {
-    Report(Pos,DiagID,&SrcMgr,Strs,NumStrs,Ranges,NumRanges);
-  }
-    
+              const SourceRange *Ranges = 0, unsigned NumRanges = 0);
   
   /// Report - Issue the message to the client.  DiagID is a member of the
   /// diag::kind enum.  
-  void Report(unsigned DiagID, const std::string *Strs = 0,
-              unsigned NumStrs = 0, const SourceRange *Ranges = 0,
-              unsigned NumRanges = 0) {
-    Report(SourceLocation(),DiagID,NULL,Strs,NumStrs,Ranges,NumRanges);
+  void Report(unsigned DiagID,
+              const std::string *Strs = 0, unsigned NumStrs = 0,
+              const SourceRange *Ranges = 0, unsigned NumRanges = 0) {
+    Report(FullSourceLoc(),DiagID,Strs,NumStrs,Ranges,NumRanges);
   }
-  
-private:
-  void Report(SourceLocation Pos, unsigned DiagID, SourceManager* SrcMgr,
-              const std::string *Strs, unsigned NumStrs,
-              const SourceRange *Ranges, unsigned NumRanges);
 };
 
 /// DiagnosticClient - This is an abstract interface implemented by clients of
@@ -177,16 +169,17 @@ public:
   /// IgnoreDiagnostic - If the client wants to ignore this diagnostic, then
   /// return true.
   virtual bool IgnoreDiagnostic(Diagnostic::Level DiagLevel,
-                                SourceLocation Pos,
-                                SourceManager* SrcMgr) = 0;
+                                FullSourceLoc Pos) = 0;
 
   /// HandleDiagnostic - Handle this diagnostic, reporting it to the user or
   /// capturing it to a log as needed.
   virtual void HandleDiagnostic(Diagnostic &Diags, 
-                                Diagnostic::Level DiagLevel, SourceLocation Pos,
-                                diag::kind ID, SourceManager* SrcMgr,
+                                Diagnostic::Level DiagLevel,
+                                FullSourceLoc Pos,
+                                diag::kind ID,
                                 const std::string *Strs,
-                                unsigned NumStrs, const SourceRange *Ranges, 
+                                unsigned NumStrs,
+                                const SourceRange *Ranges, 
                                 unsigned NumRanges) = 0;
 };
 

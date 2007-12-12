@@ -22,21 +22,22 @@ namespace clang {
 class SourceManager;
 
 class TextDiagnosticPrinter : public TextDiagnostics {
-  SourceLocation LastWarningLoc;
+  FullSourceLoc LastWarningLoc;
 public:
   TextDiagnosticPrinter() {}
 
-  void PrintIncludeStack(SourceLocation Pos, SourceManager& SrcMgr);
+  void PrintIncludeStack(FullSourceLoc Pos);
+
   void HighlightRange(const SourceRange &R,
-                      SourceManager* SrcMgr,
+                      SourceManager& SrcMgr,
                       unsigned LineNo,
                       std::string &CaratLine,
                       const std::string &SourceLine);
 
-  virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
-                                SourceLocation Pos,
+  virtual void HandleDiagnostic(Diagnostic &Diags,
+                                Diagnostic::Level DiagLevel,
+                                FullSourceLoc Pos,
                                 diag::kind ID,
-                                SourceManager* SrcMgr,
                                 const std::string *Strs,
                                 unsigned NumStrs,
                                 const SourceRange *Ranges, 

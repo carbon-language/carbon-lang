@@ -38,10 +38,10 @@ public:
   const_iterator warn_begin() const { return Warnings.begin(); }
   const_iterator warn_end() const   { return Warnings.end(); }
 
-  virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
-                                SourceLocation Pos,
+  virtual void HandleDiagnostic(Diagnostic &Diags,
+                                Diagnostic::Level DiagLevel,
+                                FullSourceLoc Pos,
                                 diag::kind ID,
-                                SourceManager* SrcMgr,
                                 const std::string *Strs,
                                 unsigned NumStrs,
                                 const SourceRange *Ranges, 

@@ -77,6 +77,10 @@ public:
   SelectorTable &Selectors;
   
   SourceManager& getSourceManager() { return SourceMgr; }
+
+  FullSourceLoc getFullLoc(SourceLocation Loc) const { 
+    return FullSourceLoc(Loc,SourceMgr);
+  }
   
   /// This is intentionally not serialized.  It is populated by the
   /// ASTContext ctor, and there are no external pointers/references to

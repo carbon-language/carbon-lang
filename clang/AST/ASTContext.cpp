@@ -128,7 +128,7 @@ void ASTContext::InitBuiltinTypes() {
   // C99 6.2.5p2.
   InitBuiltinType(BoolTy,              BuiltinType::Bool);
   // C99 6.2.5p3.
-  if (Target.isCharSigned(SourceLocation()))
+  if (Target.isCharSigned(FullSourceLoc()))
     InitBuiltinType(CharTy,            BuiltinType::Char_S);
   else
     InitBuiltinType(CharTy,            BuiltinType::Char_U);
@@ -213,26 +213,47 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     default: assert(0 && "Unknown builtin type!");
     case BuiltinType::Void:
       assert(0 && "Incomplete types have no size!");
-    case BuiltinType::Bool:       Target.getBoolInfo(Size, Align, L); break;
+    case BuiltinType::Bool:       Target.getBoolInfo(Size,Align,getFullLoc(L));
+                                  break;
+        
     case BuiltinType::Char_S:
     case BuiltinType::Char_U:
     case BuiltinType::UChar:
-    case BuiltinType::SChar:      Target.getCharInfo(Size, Align, L); break;
+    case BuiltinType::SChar:      Target.getCharInfo(Size,Align,getFullLoc(L));
+                                  break;
+        
     case BuiltinType::UShort:
-    case BuiltinType::Short:      Target.getShortInfo(Size, Align, L); break;
+    case BuiltinType::Short:      Target.getShortInfo(Size,Align,getFullLoc(L));
+                                  break;
+        
     case BuiltinType::UInt:
-    case BuiltinType::Int:        Target.getIntInfo(Size, Align, L); break;
+    case BuiltinType::Int:        Target.getIntInfo(Size,Align,getFullLoc(L));
+                                  break;
+        
     case BuiltinType::ULong:
-    case BuiltinType::Long:       Target.getLongInfo(Size, Align, L); break;
+    case BuiltinType::Long:       Target.getLongInfo(Size,Align,getFullLoc(L));
+                                  break;
+        
     case BuiltinType::ULongLong:
-    case BuiltinType::LongLong:   Target.getLongLongInfo(Size, Align, L); break;
-    case BuiltinType::Float:      Target.getFloatInfo(Size, Align, F, L); break;
-    case BuiltinType::Double:     Target.getDoubleInfo(Size, Align, F, L);break;
-    case BuiltinType::LongDouble:Target.getLongDoubleInfo(Size,Align,F,L);break;
+    case BuiltinType::LongLong:   Target.getLongLongInfo(Size,Align,
+                                                         getFullLoc(L));
+                                  break;
+        
+      case BuiltinType::Float:    Target.getFloatInfo(Size,Align,F,
+                                                      getFullLoc(L));
+                                  break;
+        
+    case BuiltinType::Double:     Target.getDoubleInfo(Size,Align,F,
+                                                       getFullLoc(L));
+                                  break;
+        
+    case BuiltinType::LongDouble: Target.getLongDoubleInfo(Size,Align,F,
+                                                           getFullLoc(L));
+                                  break;
     }
     break;
   }
-  case Type::Pointer: Target.getPointerInfo(Size, Align, L); break;
+  case Type::Pointer: Target.getPointerInfo(Size, Align, getFullLoc(L)); break;
   case Type::Reference:
     // "When applied to a reference or a reference type, the result is the size
     // of the referenced type." C++98 5.3.3p2: expr.sizeof.

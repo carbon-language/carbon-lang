@@ -35,13 +35,11 @@ public:
   void setHeaderSearch(HeaderSearch &HS) { TheHeaderSearch = &HS; }
 
   virtual bool IgnoreDiagnostic(Diagnostic::Level Level, 
-                                SourceLocation Pos,
-                                SourceManager* SrcMgr);
+                                FullSourceLoc Pos);
 
   virtual void HandleDiagnostic(Diagnostic &Diags, Diagnostic::Level DiagLevel,
-                                SourceLocation Pos,
+                                FullSourceLoc Pos,
                                 diag::kind ID,
-                                SourceManager* SrcMgr,
                                 const std::string *Strs,
                                 unsigned NumStrs,
                                 const SourceRange *Ranges, 

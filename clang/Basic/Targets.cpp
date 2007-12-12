@@ -699,8 +699,7 @@ static TargetInfoImpl *CreateTarget(const std::string& T) {
 
 /// CreateTargetInfo - Return the set of target info objects as specified by
 /// the -arch command line option.
-TargetInfo* TargetInfo::CreateTargetInfo(SourceManager& SrcMgr,
-                                         const std::string* TriplesStart,
+TargetInfo* TargetInfo::CreateTargetInfo(const std::string* TriplesStart,
                                          const std::string* TriplesEnd,
                                          Diagnostic *Diags) {
 
@@ -710,7 +709,7 @@ TargetInfo* TargetInfo::CreateTargetInfo(SourceManager& SrcMgr,
   if (!PrimaryTarget)
     return NULL;
   
-  TargetInfo *TI = new TargetInfo(SrcMgr, PrimaryTarget, Diags);
+  TargetInfo *TI = new TargetInfo(PrimaryTarget, Diags);
   
   // Add all secondary targets.
   for (const std::string* I=TriplesStart+1; I != TriplesEnd; ++I) {

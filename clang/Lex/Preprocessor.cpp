@@ -120,12 +120,12 @@ PPCallbacks::~PPCallbacks() {
 /// the specified Token's location, translating the token's start
 /// position in the current buffer into a SourcePosition object for rendering.
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID) {
-  Diags.Report(Loc, DiagID, SourceMgr);
+  Diags.Report(getFullLoc(Loc), DiagID);
 }
 
 void Preprocessor::Diag(SourceLocation Loc, unsigned DiagID, 
                         const std::string &Msg) {
-  Diags.Report(Loc, DiagID, SourceMgr, &Msg, 1);
+  Diags.Report(getFullLoc(Loc), DiagID, &Msg, 1);
 }
 
 void Preprocessor::DumpToken(const Token &Tok, bool DumpFlags) const {
@@ -791,7 +791,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
   // If this is the first use of a target-specific macro, warn about it.
   if (MI->isTargetSpecific()) {
     MI->setIsTargetSpecific(false);  // Don't warn on second use.
-    getTargetInfo().DiagnoseNonPortability(Identifier.getLocation(),
+    getTargetInfo().DiagnoseNonPortability(getFullLoc(Identifier.getLocation()),
                                            diag::port_target_macro_use);
   }
   
@@ -1227,7 +1227,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
     // This diagnosic is only emitted when macro expansion is enabled, because
     // the macro would not have been expanded for the other target either.
     II.setIsOtherTargetMacro(false);  // Don't warn on second use.
-    getTargetInfo().DiagnoseNonPortability(Identifier.getLocation(),
+    getTargetInfo().DiagnoseNonPortability(getFullLoc(Identifier.getLocation()),
                                            diag::port_target_macro_use);
     
   }
@@ -2337,15 +2337,17 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
     // If this is the first use of a target-specific macro, warn about it.
     if (MI->isTargetSpecific()) {
       MI->setIsTargetSpecific(false);  // Don't warn on second use.
-      getTargetInfo().DiagnoseNonPortability(MacroNameTok.getLocation(),
-                                             diag::port_target_macro_use);
+      getTargetInfo().DiagnoseNonPortability(
+        getFullLoc(MacroNameTok.getLocation()),
+        diag::port_target_macro_use);
     }
   } else {
     // Use of a target-specific macro for some other target?  If so, warn.
     if (MII->isOtherTargetMacro()) {
       MII->setIsOtherTargetMacro(false);  // Don't warn on second use.
-      getTargetInfo().DiagnoseNonPortability(MacroNameTok.getLocation(),
-                                             diag::port_target_macro_use);
+      getTargetInfo().DiagnoseNonPortability(
+        getFullLoc(MacroNameTok.getLocation()),
+        diag::port_target_macro_use);
     }
   }
   

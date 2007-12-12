@@ -112,15 +112,17 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
       if (Macro->isTargetSpecific()) {
         // Don't warn on second use.
         Macro->setIsTargetSpecific(false);
-        PP.getTargetInfo().DiagnoseNonPortability(PeekTok.getLocation(),
-                                                  diag::port_target_macro_use);
+        PP.getTargetInfo().DiagnoseNonPortability(
+          PP.getFullLoc(PeekTok.getLocation()),
+          diag::port_target_macro_use);
       }
     } else if (ValueLive) {
       // Use of a target-specific macro for some other target?  If so, warn.
       if (II->isOtherTargetMacro()) {
         II->setIsOtherTargetMacro(false);  // Don't warn on second use.
-        PP.getTargetInfo().DiagnoseNonPortability(PeekTok.getLocation(),
-                                                  diag::port_target_macro_use);
+        PP.getTargetInfo().DiagnoseNonPortability(
+          PP.getFullLoc(PeekTok.getLocation()),
+          diag::port_target_macro_use);
       }
     }
 
@@ -211,16 +213,16 @@ static bool EvaluateValue(llvm::APSInt &Result, Token &PeekTok,
     TargetInfo &TI = PP.getTargetInfo();
     unsigned NumBits;
     if (Literal.isWide())
-      NumBits = TI.getWCharWidth(PeekTok.getLocation());
+      NumBits = TI.getWCharWidth(PP.getFullLoc(PeekTok.getLocation()));
     else
-      NumBits = TI.getCharWidth(PeekTok.getLocation());
+      NumBits = TI.getCharWidth(PP.getFullLoc(PeekTok.getLocation()));
     
     // Set the width.
     llvm::APSInt Val(NumBits);
     // Set the value.
     Val = Literal.getValue();
     // Set the signedness.
-    Val.setIsUnsigned(!TI.isCharSigned(PeekTok.getLocation()));
+    Val.setIsUnsigned(!TI.isCharSigned(PP.getFullLoc(PeekTok.getLocation())));
     
     if (Result.getBitWidth() > Val.getBitWidth()) {
       if (Val.isSigned())
@@ -617,7 +619,9 @@ EvaluateDirectiveExpression(IdentifierInfo *&IfNDefMacro) {
   Lex(Tok);
   
   // C99 6.10.1p3 - All expressions are evaluated as intmax_t or uintmax_t.
-  unsigned BitWidth = getTargetInfo().getIntMaxTWidth(Tok.getLocation());
+  unsigned BitWidth = 
+    getTargetInfo().getIntMaxTWidth(getFullLoc(Tok.getLocation()));
+    
   llvm::APSInt ResVal(BitWidth);
   DefinedTracker DT;
   if (EvaluateValue(ResVal, Tok, DT, true, *this)) {

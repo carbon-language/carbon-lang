@@ -17,9 +17,14 @@
 #include <cassert>
 #include "llvm/Bitcode/SerializationFwd.h"
 
+namespace llvm {
+class MemoryBuffer;
+}
+
 namespace clang {
   
 class SourceManager;
+class FileEntry;
     
 /// SourceLocation - This is a carefully crafted 32-bit identifier that encodes
 /// a full include stack, line and column number information for a position in
@@ -206,25 +211,50 @@ public:
 ///  that expect both objects.
 class FullSourceLoc {
   SourceLocation Loc;
-  const SourceManager* SrcMgr;
+  SourceManager* SrcMgr;
 public:
   // Creates a FullSourceLoc where isValid() returns false.
   explicit FullSourceLoc() 
     : Loc(SourceLocation()), SrcMgr((SourceManager*) 0) {}
 
-  explicit FullSourceLoc(SourceLocation loc, const SourceManager& smgr) 
-    : Loc(loc), SrcMgr(&smgr) {
-    assert (loc.isValid() && "SourceLocation must be valid!");
-  }
+  explicit FullSourceLoc(SourceLocation loc, SourceManager& smgr) 
+    : Loc(loc), SrcMgr(&smgr) {}
     
   bool isValid() const { return Loc.isValid(); }
+  bool isInvalid() const { return Loc.isInvalid(); }
   
-  SourceLocation getSourceLocation() const { return Loc; }
+  SourceLocation getLocation() const { return Loc; }
+  
+  SourceManager& getManager() {
+    assert (SrcMgr && "SourceManager is NULL.");
+    return *SrcMgr;
+  }
   
   const SourceManager& getManager() const {
     assert (SrcMgr && "SourceManager is NULL.");
     return *SrcMgr;
   }
+  
+  FullSourceLoc getLogicalLoc();
+  FullSourceLoc getIncludeLoc();
+
+  unsigned getLineNumber();
+  unsigned getColumnNumber();
+
+  const char *getCharacterData() const;
+  
+  const llvm::MemoryBuffer* getBuffer() const;
+  
+  const char* getSourceName() const;
+  const FileEntry* getFileEntryForLoc() const;
+  
+  bool operator==(const FullSourceLoc& RHS) const {
+    return SrcMgr == RHS.SrcMgr && Loc == RHS.Loc;
+  }
+  
+  bool operator!=(const FullSourceLoc& RHS) const {
+    return SrcMgr != RHS.SrcMgr || Loc != RHS.Loc;
+  }    
 };
 
 }  // end namespace clang

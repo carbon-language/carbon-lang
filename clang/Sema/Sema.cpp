@@ -118,54 +118,51 @@ void Sema::DeleteStmt(StmtTy *S) {
 //===----------------------------------------------------------------------===//
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID) {
-  PP.getDiagnostics().Report(Loc, DiagID, PP.getSourceManager());
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID);
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg) {
-  PP.getDiagnostics().Report(Loc, DiagID, PP.getSourceManager(), &Msg, 1);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID,  &Msg, 1);
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
                 const std::string &Msg2) {
   std::string MsgArr[] = { Msg1, Msg2 };
-  PP.getDiagnostics().Report(Loc, DiagID, PP.getSourceManager(), MsgArr, 2);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID,  MsgArr, 2);
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, SourceRange Range) {
-  PP.getDiagnostics().Report(Loc, DiagID, PP.getSourceManager(), 0,0, &Range,1);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID, 0, 0, &Range,1);
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
                 SourceRange Range) {
-  PP.getDiagnostics().Report(Loc,DiagID,PP.getSourceManager(),&Msg,1,&Range,1);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID, &Msg, 1, &Range,1);
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg1,
                 const std::string &Msg2, SourceRange Range) {
   std::string MsgArr[] = { Msg1, Msg2 };
-  PP.getDiagnostics().Report(Loc,DiagID,PP.getSourceManager(),
-                             MsgArr,2,&Range,1);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID, MsgArr, 2, &Range, 1);
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID,
                 SourceRange R1, SourceRange R2) {
   SourceRange RangeArr[] = { R1, R2 };
-  PP.getDiagnostics().Report(Loc, DiagID, PP.getSourceManager(),
-                             0, 0, RangeArr, 2);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID, 0, 0, RangeArr, 2);
   return true;
 }
 
 bool Sema::Diag(SourceLocation Loc, unsigned DiagID, const std::string &Msg,
                 SourceRange R1, SourceRange R2) {
   SourceRange RangeArr[] = { R1, R2 };
-  PP.getDiagnostics().Report(Loc, DiagID, PP.getSourceManager(), &Msg,
-                             1, RangeArr, 2);
+  PP.getDiagnostics().Report(PP.getFullLoc(Loc), DiagID,  &Msg, 1, RangeArr, 2);
   return true;
 }
 
@@ -173,8 +170,7 @@ bool Sema::Diag(SourceLocation Range, unsigned DiagID, const std::string &Msg1,
                 const std::string &Msg2, SourceRange R1, SourceRange R2) {
   std::string MsgArr[] = { Msg1, Msg2 };
   SourceRange RangeArr[] = { R1, R2 };
-  PP.getDiagnostics().Report(Range, DiagID, PP.getSourceManager(), MsgArr, 2,
-                             RangeArr, 2);
+  PP.getDiagnostics().Report(PP.getFullLoc(Range),DiagID, MsgArr,2,RangeArr, 2);
   return true;
 }
 

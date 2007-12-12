@@ -181,13 +181,17 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
 
     if (Literal.isFloat) {
       Ty = Context.FloatTy;
-      Context.Target.getFloatInfo(Size, Align, Format, Tok.getLocation());
+      Context.Target.getFloatInfo(Size, Align, Format,
+                                  Context.getFullLoc(Tok.getLocation()));
+      
     } else if (Literal.isLong) {
       Ty = Context.LongDoubleTy;
-      Context.Target.getLongDoubleInfo(Size, Align, Format, Tok.getLocation());
+      Context.Target.getLongDoubleInfo(Size, Align, Format,
+                                       Context.getFullLoc(Tok.getLocation()));
     } else {
       Ty = Context.DoubleTy;
-      Context.Target.getDoubleInfo(Size, Align, Format, Tok.getLocation());
+      Context.Target.getDoubleInfo(Size, Align, Format,
+                                   Context.getFullLoc(Tok.getLocation()));
     }
     
     // isExact will be set by GetFloatValue().
@@ -207,7 +211,8 @@ Action::ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
       Diag(Tok.getLocation(), diag::ext_longlong);
 
     // Get the value in the widest-possible width.
-    llvm::APInt ResultVal(Context.Target.getIntMaxTWidth(Tok.getLocation()), 0);
+    llvm::APInt ResultVal(Context.Target.getIntMaxTWidth(
+                            Context.getFullLoc(Tok.getLocation())), 0);
    
     if (Literal.GetIntegerValue(ResultVal)) {
       // If this value didn't fit into uintmax_t, warn and force to ull.

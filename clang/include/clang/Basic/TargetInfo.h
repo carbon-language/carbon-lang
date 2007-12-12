@@ -42,9 +42,6 @@ namespace Builtin { struct Info; }
 /// diagnostic info, but does expect them to be alive for as long as it is.
 ///
 class TargetInfo {
-  /// SrcMgr - The SourceManager associated with this TargetInfo.
-  SourceManager& SrcMgr;
-  
   /// Primary - This tracks the primary target in the target set.
   ///
   const TargetInfoImpl *PrimaryTarget;
@@ -69,8 +66,7 @@ class TargetInfo {
   //                  TargetInfo Construction.
   //==----------------------------------------------------------------==/  
   
-  TargetInfo(SourceManager& SMgr, const TargetInfoImpl *Primary,
-             Diagnostic *D = 0) : SrcMgr(SMgr) {
+  TargetInfo(const TargetInfoImpl *Primary, Diagnostic *D = 0) {
     PrimaryTarget = Primary;
     Diag = D;
     NonPortable = false;
@@ -83,8 +79,7 @@ public:
   /// CreateTargetInfo - Create a TargetInfo object from a group of
   ///  target triples.  The first target triple is considered the primary
   ///  target.
-  static TargetInfo* CreateTargetInfo(SourceManager& SrcMgr,
-                                      const std::string* TriplesBeg,
+  static TargetInfo* CreateTargetInfo(const std::string* TriplesBeg,
                                       const std::string* TripledEnd,
                                       Diagnostic* Diags = NULL);
 
@@ -114,7 +109,7 @@ public:
   /// DiagnoseNonPortability - Emit a diagnostic indicating that the current
   /// translation unit is non-portable due to a construct at the specified
   /// location.  DiagKind indicates what went wrong.
-  void DiagnoseNonPortability(SourceLocation Loc, unsigned DiagKind);
+  void DiagnoseNonPortability(FullSourceLoc Loc, unsigned DiagKind);
 
   /// getTargetDefines - Appends the target-specific #define values for this
   /// target set to the specified buffer.
@@ -123,70 +118,71 @@ public:
   /// isCharSigned - Return true if 'char' is 'signed char' or false if it is
   /// treated as 'unsigned char'.  This is implementation defined according to
   /// C99 6.2.5p15.  In our implementation, this is target-specific.
-  bool isCharSigned(SourceLocation Loc) {
+  bool isCharSigned(FullSourceLoc Loc) {
     // FIXME: implement correctly.
     return true;
   }
   
   /// getPointerWidth - Return the width of pointers on this target, we
   /// currently assume one pointer type.
-  void getPointerInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+  void getPointerInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
     Size = 32;  // FIXME: implement correctly.
     Align = 32;
   }
   
   /// getBoolInfo - Return the size of '_Bool' and C++ 'bool' for this target,
   /// in bits.  
-  void getBoolInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+  void getBoolInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
     Size = Align = 8;    // FIXME: implement correctly: wrong for ppc32.
   }
   
   /// getCharInfo - Return the size of 'char', 'signed char' and
   /// 'unsigned char' for this target, in bits.  
-  void getCharInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+  void getCharInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
     Size = Align = 8; // FIXME: implement correctly.
   }
   
   /// getShortInfo - Return the size of 'signed short' and 'unsigned short' for
   /// this target, in bits.  
-  void getShortInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+  void getShortInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
     Size = Align = 16; // FIXME: implement correctly.
   }
   
   /// getIntInfo - Return the size of 'signed int' and 'unsigned int' for this
   /// target, in bits.  
-  void getIntInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+  void getIntInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
     Size = Align = 32; // FIXME: implement correctly.
   }
   
   /// getLongInfo - Return the size of 'signed long' and 'unsigned long' for
   /// this target, in bits.  
-  void getLongInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+  void getLongInfo(uint64_t &Size, unsigned &Align, FullSourceLoc Loc) {
     Size = Align = 32;  // FIXME: implement correctly: wrong for ppc64/x86-64
   }
 
   /// getLongLongInfo - Return the size of 'signed long long' and
   /// 'unsigned long long' for this target, in bits.  
   void getLongLongInfo(uint64_t &Size, unsigned &Align, 
-                            SourceLocation Loc) {
+                            FullSourceLoc Loc) {
     Size = Align = 64; // FIXME: implement correctly.
   }
   
   /// getFloatInfo - Characterize 'float' for this target.  
   void getFloatInfo(uint64_t &Size, unsigned &Align,
-                    const llvm::fltSemantics *&Format, SourceLocation Loc);
+                    const llvm::fltSemantics *&Format, FullSourceLoc Loc);
 
   /// getDoubleInfo - Characterize 'double' for this target.
   void getDoubleInfo(uint64_t &Size, unsigned &Align,
-                     const llvm::fltSemantics *&Format,  SourceLocation Loc);
+                     const llvm::fltSemantics *&Format,  FullSourceLoc Loc);
 
   /// getLongDoubleInfo - Characterize 'long double' for this target.
   void getLongDoubleInfo(uint64_t &Size, unsigned &Align,
-                         const llvm::fltSemantics *&Format, SourceLocation Loc);
+                         const llvm::fltSemantics *&Format, FullSourceLoc Loc);
   
   /// getWCharInfo - Return the size of wchar_t in bits.
   ///
-  void getWCharInfo(uint64_t &Size, unsigned &Align, SourceLocation Loc) {
+  void getWCharInfo(uint64_t &Size, unsigned &Align,
+                    FullSourceLoc Loc) {
     if (!WCharWidth) ComputeWCharInfo(Loc);
     Size = WCharWidth;
     Align = WCharAlign;
@@ -194,7 +190,7 @@ public:
   
   /// getIntMaxTWidth - Return the size of intmax_t and uintmax_t for this
   /// target, in bits.  
-  unsigned getIntMaxTWidth(SourceLocation Loc) {
+  unsigned getIntMaxTWidth(FullSourceLoc Loc) {
     // FIXME: implement correctly.
     return 64;
   }
@@ -237,31 +233,31 @@ public:
   
   ///===---- Some helper methods ------------------------------------------===//
 
-  unsigned getCharWidth(SourceLocation Loc) {
+  unsigned getCharWidth(FullSourceLoc Loc) {
     uint64_t Size; unsigned Align;
     getCharInfo(Size, Align, Loc);
     return static_cast<unsigned>(Size);
   }
   
-  unsigned getWCharWidth(SourceLocation Loc) {
+  unsigned getWCharWidth(FullSourceLoc Loc) {
     uint64_t Size; unsigned Align;
     getWCharInfo(Size, Align, Loc);
     return static_cast<unsigned>(Size);
   }
   
-  unsigned getIntWidth(SourceLocation Loc) {
+  unsigned getIntWidth(FullSourceLoc Loc) {
     uint64_t Size; unsigned Align;
     getIntInfo(Size, Align, Loc);
     return static_cast<unsigned>(Size);
   }
   
-  unsigned getLongWidth(SourceLocation Loc) {
+  unsigned getLongWidth(FullSourceLoc Loc) {
     uint64_t Size; unsigned Align;
     getLongInfo(Size, Align, Loc);
     return static_cast<unsigned>(Size);
   }
 
-  unsigned getLongLongWidth(SourceLocation Loc) {
+  unsigned getLongLongWidth(FullSourceLoc Loc) {
     uint64_t Size; unsigned Align;
     getLongLongInfo(Size, Align, Loc);
     return static_cast<unsigned>(Size);
@@ -281,7 +277,7 @@ public:
 32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128";
   }
 private:
-  void ComputeWCharInfo(SourceLocation Loc);
+  void ComputeWCharInfo(FullSourceLoc Loc);
 };
 
 

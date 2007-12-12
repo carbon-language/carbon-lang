@@ -1019,8 +1019,7 @@ int main(int argc, char **argv) {
     // Create triples, and create the TargetInfo.
     std::vector<std::string> triples;
     CreateTargetTriples(triples);
-    Target = TargetInfo::CreateTargetInfo(SourceMgr,
-                                          &triples[0],
+    Target = TargetInfo::CreateTargetInfo(&triples[0],
                                           &triples[0]+triples.size(),
                                           &Diags);
       

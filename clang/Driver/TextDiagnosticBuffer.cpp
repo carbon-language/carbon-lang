@@ -19,9 +19,8 @@ using namespace clang;
 /// 
 void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic &Diags,
                                             Diagnostic::Level Level,
-                                            SourceLocation Pos,
+                                            FullSourceLoc Pos,
                                             diag::kind ID,
-                                            SourceManager* SrcMgr,
                                             const std::string *Strs,
                                             unsigned NumStrs,
                                             const SourceRange *,
@@ -29,12 +28,14 @@ void TextDiagnosticBuffer::HandleDiagnostic(Diagnostic &Diags,
   switch (Level) {
   default: assert(0 && "Diagnostic not handled during diagnostic buffering!");
   case Diagnostic::Warning:
-    Warnings.push_back(std::make_pair(Pos, FormatDiagnostic(Diags, Level, ID, 
-                                                            Strs, NumStrs)));
+    Warnings.push_back(std::make_pair(Pos.getLocation(),
+                                      FormatDiagnostic(Diags, Level, ID, 
+                                                       Strs, NumStrs)));
     break;
   case Diagnostic::Error:
-    Errors.push_back(std::make_pair(Pos, FormatDiagnostic(Diags, Level, ID,
-                                                          Strs, NumStrs)));
+    Errors.push_back(std::make_pair(Pos.getLocation(),
+                                    FormatDiagnostic(Diags, Level, ID,
+                                                     Strs, NumStrs)));
     break;
   }
 }

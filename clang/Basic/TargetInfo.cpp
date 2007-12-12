@@ -29,20 +29,20 @@ void TargetInfoImpl::ANCHOR() {} // out-of-line virtual method for class.
 
 void TargetInfo::getFloatInfo(uint64_t &Size, unsigned &Align,
                               const llvm::fltSemantics *&Format,
-                              SourceLocation Loc) {
+                              FullSourceLoc Loc) {
   Align = 32;  // FIXME: implement correctly.
   Size = 32;
   Format = &llvm::APFloat::IEEEsingle;
 }
 void TargetInfo::getDoubleInfo(uint64_t &Size, unsigned &Align,
                                const llvm::fltSemantics *&Format,
-                               SourceLocation Loc) {
+                               FullSourceLoc Loc) {
   Size = Align = 64;  // FIXME: implement correctly.
   Format = &llvm::APFloat::IEEEdouble;
 }
 void TargetInfo::getLongDoubleInfo(uint64_t &Size, unsigned &Align,
                                    const llvm::fltSemantics *&Format,
-                                   SourceLocation Loc) {
+                                   FullSourceLoc Loc) {
   Size = Align = 64;  // FIXME: implement correctly.
   Format = &llvm::APFloat::IEEEdouble;
   //Size = 80; Align = 32;  // FIXME: implement correctly.
@@ -63,9 +63,10 @@ const char *TargetInfo::getTargetPrefix() const {
 /// DiagnoseNonPortability - When a use of a non-portable target feature is
 /// used, this method emits the diagnostic and marks the translation unit as
 /// non-portable.
-void TargetInfo::DiagnoseNonPortability(SourceLocation Loc, unsigned DiagKind) {
+void TargetInfo::DiagnoseNonPortability(FullSourceLoc Loc,
+                                        unsigned DiagKind) {
   NonPortable = true;
-  if (Diag && Loc.isValid()) Diag->Report(Loc, DiagKind, SrcMgr);
+  if (Diag && Loc.isValid()) Diag->Report(Loc, DiagKind);
 }
 
 /// GetTargetDefineMap - Get the set of target #defines in an associative
@@ -196,7 +197,7 @@ void TargetInfo::getTargetDefines(std::vector<char> &Buffer) {
 /// ComputeWCharWidth - Determine the width of the wchar_t type for the primary
 /// target, diagnosing whether this is non-portable across the secondary
 /// targets.
-void TargetInfo::ComputeWCharInfo(SourceLocation Loc) {
+void TargetInfo::ComputeWCharInfo(FullSourceLoc Loc) {
   PrimaryTarget->getWCharInfo(WCharWidth, WCharAlign);
   
   // Check whether this is portable across the secondary targets if the T-U is

@@ -271,12 +271,12 @@ public:
 private:
   void Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr, 
             unsigned DiagID) {
-    D.Report(Loc, DiagID, SrcMgr);
+    D.Report(FullSourceLoc(Loc,SrcMgr), DiagID);
   }
   
   void Diag(Diagnostic &D, SourceLocation Loc, SourceManager& SrcMgr,
             unsigned DiagID, const std::string &info) {
-    D.Report(Loc, DiagID, SrcMgr, &info, 1);
+    D.Report(FullSourceLoc(Loc,SrcMgr), DiagID, &info, 1);
   }
 };
 

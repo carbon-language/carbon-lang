@@ -184,7 +184,7 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
   assert (FoundBlock);
 
   // Read the SourceManager.
-  SourceManager& SrcMgr = *SourceManager::CreateAndRegister(Dezr,FMgr);
+  SourceManager::CreateAndRegister(Dezr,FMgr);
   
   // Read the LangOptions.
   TU->LangOpts.Read(Dezr);
@@ -193,8 +193,7 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
     llvm::SerializedPtrID PtrID = Dezr.ReadPtrID();
     char* triple = Dezr.ReadCStr(NULL,0,true);
     std::string Triple(triple);
-    Dezr.RegisterPtr(PtrID,TargetInfo::CreateTargetInfo(SrcMgr,
-                                                        &Triple,
+    Dezr.RegisterPtr(PtrID,TargetInfo::CreateTargetInfo(&Triple,
                                                         &Triple+1));
     delete [] triple;
   }

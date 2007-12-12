@@ -40,7 +40,7 @@ void CodeGenModule::WarnUnsupported(const Stmt *S, const char *Type) {
                                                "cannot codegen this %0 yet");
   SourceRange Range = S->getSourceRange();
   std::string Msg = Type;
-  getDiags().Report(S->getLocStart(), DiagID, Context.getSourceManager(),
+  getDiags().Report(Context.getFullLoc(S->getLocStart()), DiagID,
                     &Msg, 1, &Range, 1);
 }
 
@@ -559,7 +559,7 @@ llvm::Function *CodeGenModule::getMemCpyFn() {
   if (MemCpyFn) return MemCpyFn;
   llvm::Intrinsic::ID IID;
   uint64_t Size; unsigned Align;
-  Context.Target.getPointerInfo(Size, Align, SourceLocation());
+  Context.Target.getPointerInfo(Size, Align, FullSourceLoc());
   switch (Size) {
   default: assert(0 && "Unknown ptr width");
   case 32: IID = llvm::Intrinsic::memcpy_i32; break;

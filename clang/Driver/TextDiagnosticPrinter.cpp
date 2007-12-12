@@ -31,23 +31,23 @@ NoCaretDiagnostics("fno-caret-diagnostics",
                                   " diagnostics"));
 
 void TextDiagnosticPrinter::
-PrintIncludeStack(SourceLocation Pos, SourceManager& SourceMgr) {
+PrintIncludeStack(FullSourceLoc Pos) {
   if (Pos.isInvalid()) return;
 
-  Pos = SourceMgr.getLogicalLoc(Pos);
+  Pos = Pos.getLogicalLoc();
 
   // Print out the other include frames first.
-  PrintIncludeStack(SourceMgr.getIncludeLoc(Pos),SourceMgr);
-  unsigned LineNo = SourceMgr.getLineNumber(Pos);
+  PrintIncludeStack(Pos.getIncludeLoc());
+  unsigned LineNo = Pos.getLineNumber();
   
-  std::cerr << "In file included from " << SourceMgr.getSourceName(Pos)
+  std::cerr << "In file included from " << Pos.getSourceName()
             << ":" << LineNo << ":\n";
 }
 
 /// HighlightRange - Given a SourceRange and a line number, highlight (with ~'s)
 /// any characters in LineNo that intersect the SourceRange.
 void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
-                                           SourceManager* SourceMgr,
+                                          SourceManager& SourceMgr,
                                            unsigned LineNo,
                                            std::string &CaratLine,
                                            const std::string &SourceLine) {  
@@ -55,16 +55,16 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
          "Expect a correspondence between source and carat line!");
   if (!R.isValid()) return;
 
-  unsigned StartLineNo = SourceMgr->getLogicalLineNumber(R.getBegin());
+  unsigned StartLineNo = SourceMgr.getLogicalLineNumber(R.getBegin());
   if (StartLineNo > LineNo) return;  // No intersection.
   
-  unsigned EndLineNo = SourceMgr->getLogicalLineNumber(R.getEnd());
+  unsigned EndLineNo = SourceMgr.getLogicalLineNumber(R.getEnd());
   if (EndLineNo < LineNo) return;  // No intersection.
   
   // Compute the column number of the start.
   unsigned StartColNo = 0;
   if (StartLineNo == LineNo) {
-    StartColNo = SourceMgr->getLogicalColumnNumber(R.getBegin());
+    StartColNo = SourceMgr.getLogicalColumnNumber(R.getBegin());
     if (StartColNo) --StartColNo;  // Zero base the col #.
   }
 
@@ -76,12 +76,12 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
   // Compute the column number of the end.
   unsigned EndColNo = CaratLine.size();
   if (EndLineNo == LineNo) {
-    EndColNo = SourceMgr->getLogicalColumnNumber(R.getEnd());
+    EndColNo = SourceMgr.getLogicalColumnNumber(R.getEnd());
     if (EndColNo) {
       --EndColNo;  // Zero base the col #.
       
       // Add in the length of the token, so that we cover multi-char tokens.
-      EndColNo += Lexer::MeasureTokenLength(R.getEnd(), *SourceMgr);
+      EndColNo += Lexer::MeasureTokenLength(R.getEnd(), SourceMgr);
     } else {
       EndColNo = CaratLine.size();
     }
@@ -100,9 +100,8 @@ void TextDiagnosticPrinter::HighlightRange(const SourceRange &R,
 
 void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
                                              Diagnostic::Level Level, 
-                                             SourceLocation Pos,
+                                             FullSourceLoc Pos,
                                              diag::kind ID,
-                                             SourceManager* SourceMgr,
                                              const std::string *Strs,
                                              unsigned NumStrs,
                                              const SourceRange *Ranges,
@@ -111,25 +110,25 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
   const char *LineStart = 0, *LineEnd = 0;
   
   if (Pos.isValid()) {
-    SourceLocation LPos = SourceMgr->getLogicalLoc(Pos);
-    LineNo = SourceMgr->getLineNumber(LPos);
+    FullSourceLoc LPos = Pos.getLogicalLoc();
+    LineNo = LPos.getLineNumber();
     
     // First, if this diagnostic is not in the main file, print out the
     // "included from" lines.
-    if (LastWarningLoc != SourceMgr->getIncludeLoc(LPos)) {
-      LastWarningLoc = SourceMgr->getIncludeLoc(LPos);
-      PrintIncludeStack(LastWarningLoc,*SourceMgr);
+    if (LastWarningLoc != LPos.getIncludeLoc()) {
+      LastWarningLoc = LPos.getIncludeLoc();
+      PrintIncludeStack(LastWarningLoc);
     }
   
     // Compute the column number.  Rewind from the current position to the start
     // of the line.
-    ColNo = SourceMgr->getColumnNumber(LPos);
-    const char *TokLogicalPtr = SourceMgr->getCharacterData(LPos);
+    ColNo = LPos.getColumnNumber();
+    const char *TokLogicalPtr = LPos.getCharacterData();
     LineStart = TokLogicalPtr-ColNo+1;  // Column # is 1-based
   
     // Compute the line end.  Scan forward from the error position to the end of
     // the line.
-    const llvm::MemoryBuffer *Buffer = SourceMgr->getBuffer(LPos.getFileID());
+    const llvm::MemoryBuffer *Buffer = LPos.getBuffer();
     const char *BufEnd = Buffer->getBufferEnd();
     LineEnd = TokLogicalPtr;
     while (LineEnd != BufEnd && 
@@ -164,7 +163,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(Diagnostic &Diags,
     
     // Highlight all of the characters covered by Ranges with ~ characters.
     for (unsigned i = 0; i != NumRanges; ++i)
-      HighlightRange(Ranges[i], SourceMgr, LineNo, CaratLine, SourceLine);
+      HighlightRange(Ranges[i], Pos.getManager(),LineNo, CaratLine, SourceLine);
     
     // Next, insert the carat itself.
     if (ColNo-1 < CaratLine.size())
