@@ -2046,9 +2046,14 @@ Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
 }
 
 // TODO: Move this to SemaObjC.cpp
-Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation AtLoc, 
-                                              ExprTy *string) {
-  StringLiteral* S = static_cast<StringLiteral *>(string);
+Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs, 
+                                              ExprTy **Strings,
+                                              unsigned NumStrings) {
+  
+  // FIXME: This is passed in an ARRAY of strings which need to be concatenated.
+  // Handle this case here.  For now we just ignore all but the first one.
+  SourceLocation AtLoc = AtLocs[0];
+  StringLiteral* S = static_cast<StringLiteral *>(Strings[0]);
   
   if (CheckBuiltinCFStringArgument(S))
     return true;

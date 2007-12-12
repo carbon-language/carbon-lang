@@ -465,8 +465,9 @@ public:
                                          tok::TokenKind Kind);
   
   // ParseObjCStringLiteral - Parse Objective-C string literals.
-  virtual ExprResult ParseObjCStringLiteral(SourceLocation AtLoc,
-                                            ExprTy *string);
+  virtual ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs, 
+                                            ExprTy **Strings,
+                                            unsigned NumStrings);
   virtual ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc,
                                                SourceLocation EncodeLoc,
                                                SourceLocation LParenLoc,

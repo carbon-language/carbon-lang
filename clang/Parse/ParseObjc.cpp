@@ -1190,11 +1190,11 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
 Parser::ExprResult Parser::ParseObjCAtExpression(SourceLocation AtLoc) {
 
   switch (Tok.getKind()) {
-    case tok::string_literal:    // primary-expression: string-literal
-    case tok::wide_string_literal:
-      return ParsePostfixExpressionSuffix(ParseObjCStringLiteral(AtLoc));
-    default:
-      break;
+  case tok::string_literal:    // primary-expression: string-literal
+  case tok::wide_string_literal:
+    return ParsePostfixExpressionSuffix(ParseObjCStringLiteral(AtLoc));
+  default:
+    break;
   }
   
   switch (Tok.getIdentifierInfo()->getObjCKeywordID()) {
@@ -1333,10 +1333,38 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
 
 Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
   ExprResult Res = ParseStringLiteralExpression();
-
   if (Res.isInvalid) return Res;
+  
+  // @"foo" @"bar" is a valid concatenated string.  Eat any subsequent string
+  // expressions.  At this point, we know that the only valid thing that starts
+  // with '@' is an @"".
+  llvm::SmallVector<SourceLocation, 4> AtLocs;
+  llvm::SmallVector<ExprTy*, 4> AtStrings;
+  AtLocs.push_back(AtLoc);
+  AtStrings.push_back(Res.Val);
+  
+  while (Tok.is(tok::at)) {
+    AtLocs.push_back(ConsumeToken()); // eat the @.
 
-  return Actions.ParseObjCStringLiteral(AtLoc, Res.Val);
+    ExprResult Res(true);  // Invalid unless there is a string literal.
+    if (isTokenStringLiteral())
+      Res = ParseStringLiteralExpression();
+    else
+      Diag(Tok, diag::err_objc_concat_string);
+    
+    if (Res.isInvalid) {
+      while (!AtStrings.empty()) {
+        Actions.DeleteExpr(AtStrings.back());
+        AtStrings.pop_back();
+      }
+      return Res;
+    }
+
+    AtStrings.push_back(Res.Val);
+  }
+
+  return Actions.ParseObjCStringLiteral(&AtLocs[0], &AtStrings[0],
+                                        AtStrings.size());
 }
 
 ///    objc-encode-expression:

@@ -414,6 +414,8 @@ DIAG(err_objc_protocol_optional, ERROR,
      "@optional may be specified in protocols only")
 DIAG(err_missing_catch_finally, ERROR,
      "@try statment without a @catch and @finally clause")
+DIAG(err_objc_concat_string, ERROR,
+     "unexpected token after Objective-C string")
 DIAG(err_undef_superclass, ERROR,
      "cannot find interface declaration for '%0', superclass of '%1'")
 DIAG(err_duplicate_class_def, ERROR,
@@ -465,7 +467,7 @@ DIAG(warn_previous_declaration, WARNING,
 DIAG(err_conflicting_aliasing_type, ERROR,
      "conflicting types for alias %0'")
 DIAG(err_statically_allocated_object, ERROR,
-     "statically allocated Objective-c object '%0'")
+     "statically allocated Objective-C object '%0'")
 DIAG(warn_method_not_found, WARNING,
      "method '%0%1' not found (return type defaults to 'id')")
 
