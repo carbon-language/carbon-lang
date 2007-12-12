@@ -413,13 +413,13 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
   // Check interface's Ivar list against those in the implementation.
   // names and types must match.
   //
-  ObjcIvarDecl** IntfIvars = IDecl->getInstanceVariables();
-  int IntfNumIvars = IDecl->getNumInstanceVariables();
   unsigned j = 0;
   bool err = false;
-  while (numIvars > 0 && IntfNumIvars > 0) {
+  ObjcInterfaceDecl::ivar_iterator 
+    IVI = IDecl->ivar_begin(), IVE = IDecl->ivar_end();
+  for (; numIvars > 0 && IVI != IVE; ++IVI) {
     ObjcIvarDecl* ImplIvar = ivars[j];
-    ObjcIvarDecl* ClsIvar = IntfIvars[j++];
+    ObjcIvarDecl* ClsIvar = *IVI;
     assert (ImplIvar && "missing implementation ivar");
     assert (ClsIvar && "missing class ivar");
     if (ImplIvar->getCanonicalType() != ClsIvar->getCanonicalType()) {
@@ -439,10 +439,9 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
       break;
     }
     --numIvars;
-    --IntfNumIvars;
   }
-  if (!err && (numIvars > 0 || IntfNumIvars > 0))
-    Diag(numIvars > 0 ? ivars[j]->getLocation() : IntfIvars[j]->getLocation(), 
+  if (!err && (numIvars > 0 || IVI != IVE))
+    Diag(numIvars > 0 ? ivars[j]->getLocation() : (*IVI)->getLocation(), 
          diag::err_inconsistant_ivar);
       
 }
@@ -484,30 +483,31 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
   llvm::DenseSet<Selector> InsMap;
   // Check and see if instance methods in class interface have been
   // implemented in the implementation class.
-  ObjcMethodDecl *const*methods = IMPDecl->getInstanceMethods();
-  for (int i=0; i < IMPDecl->getNumInstanceMethods(); i++) 
-    InsMap.insert(methods[i]->getSelector());
+  for (ObjcImplementationDecl::instmeth_iterator I = IMPDecl->instmeth_begin(),
+       E = IMPDecl->instmeth_end(); I != E; ++I)
+    InsMap.insert((*I)->getSelector());
   
   bool IncompleteImpl = false;
-  methods = IDecl->getInstanceMethods();
-  for (int j = 0; j < IDecl->getNumInstanceMethods(); j++)
-    if (!InsMap.count(methods[j]->getSelector())) {
-      Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           methods[j]->getSelector().getName());
+  for (ObjcInterfaceDecl::instmeth_iterator I = IDecl->instmeth_begin(),
+       E = IDecl->instmeth_end(); I != E; ++I)
+    if (!InsMap.count((*I)->getSelector())) {
+      Diag((*I)->getLocation(), diag::warn_undef_method_impl,
+           (*I)->getSelector().getName());
       IncompleteImpl = true;
     }
+      
   llvm::DenseSet<Selector> ClsMap;
   // Check and see if class methods in class interface have been
   // implemented in the implementation class.
-  methods = IMPDecl->getClassMethods();
-  for (int i=0; i < IMPDecl->getNumClassMethods(); i++)
-    ClsMap.insert(methods[i]->getSelector());
+  for (ObjcImplementationDecl::classmeth_iterator I =IMPDecl->classmeth_begin(),
+       E = IMPDecl->classmeth_end(); I != E; ++I)
+    ClsMap.insert((*I)->getSelector());
   
-  methods = IDecl->getClassMethods();
-  for (int j = 0; j < IDecl->getNumClassMethods(); j++)
-    if (!ClsMap.count(methods[j]->getSelector())) {
-      Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
-           methods[j]->getSelector().getName());
+  for (ObjcInterfaceDecl::classmeth_iterator I = IDecl->classmeth_begin(),
+       E = IDecl->classmeth_end(); I != E; ++I)
+    if (!ClsMap.count((*I)->getSelector())) {
+      Diag((*I)->getLocation(), diag::warn_undef_method_impl,
+           (*I)->getSelector().getName());
       IncompleteImpl = true;
     }
   
@@ -529,12 +529,12 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
   llvm::DenseSet<Selector> InsMap;
   // Check and see if instance methods in category interface have been
   // implemented in its implementation class.
-  ObjcMethodDecl *const*methods = CatImplDecl->getInstanceMethods();
-  for (int i=0; i < CatImplDecl->getNumInstanceMethods(); i++)
-    InsMap.insert(methods[i]->getSelector());
+  for (ObjcCategoryImplDecl::instmeth_iterator I =CatImplDecl->instmeth_begin(),
+       E = CatImplDecl->instmeth_end(); I != E; ++I)
+    InsMap.insert((*I)->getSelector());
   
   bool IncompleteImpl = false;
-  methods = CatClassDecl->getInstanceMethods();
+  ObjcMethodDecl *const* methods = CatClassDecl->getInstanceMethods();
   for (int j = 0; j < CatClassDecl->getNumInstanceMethods(); j++)
     if (!InsMap.count(methods[j]->getSelector())) {
       Diag(methods[j]->getLocation(), diag::warn_undef_method_impl,
@@ -544,9 +544,10 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
   llvm::DenseSet<Selector> ClsMap;
   // Check and see if class methods in category interface have been
   // implemented in its implementation class.
-  methods = CatImplDecl->getClassMethods();
-  for (int i=0; i < CatImplDecl->getNumClassMethods(); i++)
-    ClsMap.insert(methods[i]->getSelector());
+  for (ObjcCategoryImplDecl::classmeth_iterator
+       I = CatImplDecl->classmeth_begin(), E = CatImplDecl->classmeth_end();
+       I != E; ++I)
+    ClsMap.insert((*I)->getSelector());
   
   methods = CatClassDecl->getClassMethods();
   for (int j = 0; j < CatClassDecl->getNumClassMethods(); j++)

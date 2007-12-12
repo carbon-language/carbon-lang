@@ -123,6 +123,18 @@ public:
   ObjcMethodDecl** getClassMethods() const { return ClassMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
   
+  typedef ObjcMethodDecl * const * instmeth_iterator;
+  instmeth_iterator instmeth_begin() const { return InstanceMethods; }
+  instmeth_iterator instmeth_end() const {
+    return InstanceMethods+NumInstanceMethods;
+  }
+  
+  typedef ObjcMethodDecl * const * classmeth_iterator;
+  classmeth_iterator classmeth_begin() const { return ClassMethods; }
+  classmeth_iterator classmeth_end() const {
+    return ClassMethods+NumClassMethods;
+  }
+  
   void addInstanceVariablesToClass(ObjcIvarDecl **ivars, unsigned numIvars,
                                    SourceLocation RBracLoc);
 
