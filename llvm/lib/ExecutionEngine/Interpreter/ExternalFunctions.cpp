@@ -29,6 +29,7 @@
 #include <csignal>
 #include <map>
 #include <cmath>
+#include <cxxabi.h>
 using std::vector;
 
 using namespace llvm;
@@ -197,6 +198,22 @@ GenericValue lle_X_pow(FunctionType *FT, const vector<GenericValue> &Args) {
   assert(Args.size() == 2);
   GenericValue GV;
   GV.DoubleVal = pow(Args[0].DoubleVal, Args[1].DoubleVal);
+  return GV;
+}
+
+// double sin(double)
+GenericValue lle_X_sin(FunctionType *FT, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+  GV.DoubleVal = sin(Args[0].DoubleVal);
+  return GV;
+}
+
+// double cos(double)
+GenericValue lle_X_cos(FunctionType *FT, const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+  GV.DoubleVal = cos(Args[0].DoubleVal);
   return GV;
 }
 
@@ -705,6 +722,24 @@ GenericValue lle_X_fprintf(FunctionType *FT, const vector<GenericValue> &Args) {
   return GV;
 }
 
+// int __cxa_guard_acquire (__guard *g);
+GenericValue lle_X___cxa_guard_acquire(FunctionType *FT, 
+                                       const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  GenericValue GV;
+  GV.IntVal = APInt(32, __cxxabiv1::__cxa_guard_acquire (
+                          (__cxxabiv1::__guard*)GVTOP(Args[0])));
+  return GV;
+}
+
+// void __cxa_guard_release (__guard *g);
+GenericValue lle_X___cxa_guard_release(FunctionType *FT, 
+                                       const vector<GenericValue> &Args) {
+  assert(Args.size() == 1);
+  __cxxabiv1::__cxa_guard_release ((__cxxabiv1::__guard*)GVTOP(Args[0]));
+  return GenericValue();
+}
+
 } // End extern "C"
 
 
@@ -719,6 +754,8 @@ void Interpreter::initializeExternalFunctions() {
   FuncNames["lle_X_free"]         = lle_X_free;
   FuncNames["lle_X_atoi"]         = lle_X_atoi;
   FuncNames["lle_X_pow"]          = lle_X_pow;
+  FuncNames["lle_X_sin"]          = lle_X_sin;
+  FuncNames["lle_X_cos"]          = lle_X_cos;
   FuncNames["lle_X_exp"]          = lle_X_exp;
   FuncNames["lle_X_log"]          = lle_X_log;
   FuncNames["lle_X_floor"]        = lle_X_floor;
@@ -759,5 +796,8 @@ void Interpreter::initializeExternalFunctions() {
   FuncNames["lle_X_ungetc"]       = lle_X_ungetc;
   FuncNames["lle_X_fprintf"]      = lle_X_fprintf;
   FuncNames["lle_X_freopen"]      = lle_X_freopen;
+
+  FuncNames["lle_X___cxa_guard_acquire"] = lle_X___cxa_guard_acquire;
+  FuncNames["lle_X____cxa_guard_release"] = lle_X___cxa_guard_release;
 }
 
