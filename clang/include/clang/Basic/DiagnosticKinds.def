@@ -436,8 +436,8 @@ DIAG(err_conflicting_super_class, ERROR,
      "conflicting super class name '%0'")
 DIAG(err_conflicting_ivar_name, ERROR,
      "conflicting instance variable name '%0'")
-DIAG(err_inconsistant_ivar, ERROR,
-     "inconsistent instance variable specification")
+DIAG(err_inconsistant_ivar_count, ERROR,
+     "inconsistent number of instance variables specified")
 DIAG(err_conflicting_ivar_type, ERROR,
      "conflicting instance variable type")
 DIAG(warn_undef_method_impl, WARNING,

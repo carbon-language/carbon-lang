@@ -440,9 +440,9 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
   }
   
   if (numIvars > 0)
-    Diag(ivars[j]->getLocation(), diag::err_inconsistant_ivar);
+    Diag(ivars[j]->getLocation(), diag::err_inconsistant_ivar_count);
   else if (IVI != IVE)
-    Diag((*IVI)->getLocation(), diag::err_inconsistant_ivar);
+    Diag((*IVI)->getLocation(), diag::err_inconsistant_ivar_count);
 }
 
 /// CheckProtocolMethodDefs - This routine checks unimpletented methods
