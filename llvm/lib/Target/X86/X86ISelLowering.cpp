@@ -483,6 +483,12 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::CTPOP, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::CTTZ, (MVT::ValueType)VT, Expand);
     setOperationAction(ISD::CTLZ, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::SHL, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::SRA, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::SRL, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::ROTL, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::ROTR, (MVT::ValueType)VT, Expand);
+    setOperationAction(ISD::BSWAP, (MVT::ValueType)VT, Expand);
   }
 
   if (Subtarget->hasMMX()) {

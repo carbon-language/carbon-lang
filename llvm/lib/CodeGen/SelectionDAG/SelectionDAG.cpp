@@ -687,22 +687,35 @@ SDOperand SelectionDAG::getString(const std::string &Val) {
 
 SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT, bool isT) {
   assert(MVT::isInteger(VT) && "Cannot create FP integer constant!");
-  assert(!MVT::isVector(VT) && "Cannot create Vector ConstantSDNodes!");
+
+  MVT::ValueType EltVT =
+    MVT::isVector(VT) ? MVT::getVectorElementType(VT) : VT;
   
   // Mask out any bits that are not valid for this constant.
-  Val &= MVT::getIntVTBitMask(VT);
+  Val &= MVT::getIntVTBitMask(EltVT);
 
   unsigned Opc = isT ? ISD::TargetConstant : ISD::Constant;
   FoldingSetNodeID ID;
-  AddNodeIDNode(ID, Opc, getVTList(VT), 0, 0);
+  AddNodeIDNode(ID, Opc, getVTList(EltVT), 0, 0);
   ID.AddInteger(Val);
   void *IP = 0;
-  if (SDNode *E = CSEMap.FindNodeOrInsertPos(ID, IP))
-    return SDOperand(E, 0);
-  SDNode *N = new ConstantSDNode(isT, Val, VT);
-  CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  SDNode *N = NULL;
+  if ((N = CSEMap.FindNodeOrInsertPos(ID, IP)))
+    if (!MVT::isVector(VT))
+      return SDOperand(N, 0);
+  if (!N) {
+    N = new ConstantSDNode(isT, Val, EltVT);
+    CSEMap.InsertNode(N, IP);
+    AllNodes.push_back(N);
+  }
+
+  SDOperand Result(N, 0);
+  if (MVT::isVector(VT)) {
+    SmallVector<SDOperand, 8> Ops;
+    Ops.assign(MVT::getVectorNumElements(VT), Result);
+    Result = getNode(ISD::BUILD_VECTOR, VT, &Ops[0], Ops.size());
+  }
+  return Result;
 }
 
 SDOperand SelectionDAG::getConstantFP(const APFloat& V, MVT::ValueType VT,
