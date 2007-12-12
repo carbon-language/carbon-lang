@@ -519,7 +519,7 @@ void CodeGenModule::EmitGlobalVarDeclarator(const FileVarDecl *D) {
 /// getBuiltinLibFunction
 llvm::Function *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
   if (BuiltinFunctions.size() <= BuiltinID)
-    BuiltinFunctions.resize(BuiltinID);
+    BuiltinFunctions.resize(BuiltinID+1);
   
   // Already available?
   llvm::Function *&FunctionSlot = BuiltinFunctions[BuiltinID];
