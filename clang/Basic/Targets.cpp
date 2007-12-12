@@ -7,19 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the -arch command line option and creates a TargetInfo
-// that represents them.
+// This file implements construction of a TargetInfo object from a 
+// target triple.
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang.h"
 #include "clang/AST/Builtins.h"
 #include "clang/AST/TargetBuiltins.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
-
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/CommandLine.h"
 
 using namespace clang;
 
@@ -702,14 +699,13 @@ static TargetInfoImpl *CreateTarget(const std::string& T) {
 
 /// CreateTargetInfo - Return the set of target info objects as specified by
 /// the -arch command line option.
-TargetInfo *clang::CreateTargetInfo(SourceManager& SrcMgr,
-                                    const std::vector<std::string>& triples, 
-                                    Diagnostic *Diags) {
+TargetInfo* TargetInfo::CreateTargetInfo(SourceManager& SrcMgr,
+                                         const std::string* TriplesStart,
+                                         const std::string* TriplesEnd,
+                                         Diagnostic *Diags) {
 
-  assert (!triples.empty() && "No target triple.");
-  
   // Create the primary target and target info.
-  TargetInfoImpl* PrimaryTarget = CreateTarget(triples[0]);
+  TargetInfoImpl* PrimaryTarget = CreateTarget(*TriplesStart);
 
   if (!PrimaryTarget)
     return NULL;
@@ -717,16 +713,18 @@ TargetInfo *clang::CreateTargetInfo(SourceManager& SrcMgr,
   TargetInfo *TI = new TargetInfo(SrcMgr, PrimaryTarget, Diags);
   
   // Add all secondary targets.
-  for (unsigned i = 1, e = triples.size(); i != e; ++i) {
-    TargetInfoImpl* SecondaryTarget = CreateTarget(triples[i]);
+  for (const std::string* I=TriplesStart+1; I != TriplesEnd; ++I) {
+    TargetInfoImpl* SecondaryTarget = CreateTarget(*I);
 
     if (!SecondaryTarget) {
-      fprintf (stderr, "Warning: secondary target '%s' unrecognized.\n",
-               triples[i].c_str());
+      fprintf (stderr,
+               "Warning: secondary target '%s' unrecognized.\n", 
+               I->c_str());
+
       continue;
     }
 
-    TI->AddSecondaryTarget(CreateTarget(triples[i]));
+    TI->AddSecondaryTarget(SecondaryTarget);
   }
   
   return TI;

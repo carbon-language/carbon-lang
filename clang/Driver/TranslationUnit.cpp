@@ -189,14 +189,14 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
   // Read the LangOptions.
   TU->LangOpts.Read(Dezr);
   
-  { 
-    // Read the TargetInfo.
+  { // Read the TargetInfo.
     llvm::SerializedPtrID PtrID = Dezr.ReadPtrID();
     char* triple = Dezr.ReadCStr(NULL,0,true);
-    std::vector<std::string> triples;
-    triples.push_back(triple);
+    std::string Triple(triple);
+    Dezr.RegisterPtr(PtrID,TargetInfo::CreateTargetInfo(SrcMgr,
+                                                        &Triple,
+                                                        &Triple+1));
     delete [] triple;
-    Dezr.RegisterPtr(PtrID,CreateTargetInfo(SrcMgr,triples,NULL));
   }
   
   // For Selectors, we must read the identifier table first because the

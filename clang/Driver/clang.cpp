@@ -1019,7 +1019,10 @@ int main(int argc, char **argv) {
     // Create triples, and create the TargetInfo.
     std::vector<std::string> triples;
     CreateTargetTriples(triples);
-    Target = CreateTargetInfo(SourceMgr,triples,&Diags);
+    Target = TargetInfo::CreateTargetInfo(SourceMgr,
+                                          &triples[0],
+                                          &triples[0]+triples.size(),
+                                          &Diags);
       
     if (Target == 0) {
       fprintf(stderr, "Sorry, I don't know what target this is: %s\n",

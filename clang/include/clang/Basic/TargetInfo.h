@@ -64,8 +64,11 @@ class TargetInfo {
 
   /// These are all caches for target values.
   unsigned WCharWidth, WCharAlign;
+
+  //==----------------------------------------------------------------==/
+  //                  TargetInfo Construction.
+  //==----------------------------------------------------------------==/  
   
-public:
   TargetInfo(SourceManager& SMgr, const TargetInfoImpl *Primary,
              Diagnostic *D = 0) : SrcMgr(SMgr) {
     PrimaryTarget = Primary;
@@ -75,6 +78,19 @@ public:
     // Initialize Cache values to uncomputed.
     WCharWidth = 0;
   }
+
+public:  
+  /// CreateTargetInfo - Create a TargetInfo object from a group of
+  ///  target triples.  The first target triple is considered the primary
+  ///  target.
+  static TargetInfo* CreateTargetInfo(SourceManager& SrcMgr,
+                                      const std::string* TriplesBeg,
+                                      const std::string* TripledEnd,
+                                      Diagnostic* Diags = NULL);
+
+  //==----------------------------------------------------------------==/
+  //                       Accessors.
+  //==----------------------------------------------------------------==/  
   
   /// isNonPortable - Return true if the current translation unit has used a
   /// target property that is non-portable across the secondary targets.

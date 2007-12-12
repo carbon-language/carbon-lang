@@ -35,12 +35,6 @@ void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
 /// implements the -parse-print-callbacks option.
 MinimalAction *CreatePrintParserActionsAction(IdentifierTable &);
 
-/// CreateTargetInfo - Return the set of target info objects as specified by
-/// the -arch command line option.
-TargetInfo *CreateTargetInfo(SourceManager& SrcMgr,
-                             const std::vector<std::string>& triples,
-                             Diagnostic *Diags);
-
 /// EmitLLVMFromASTs - Implement -emit-llvm, which generates llvm IR from C.
 void EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
                       bool PrintStats);
