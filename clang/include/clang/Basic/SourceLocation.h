@@ -18,6 +18,8 @@
 #include "llvm/Bitcode/SerializationFwd.h"
 
 namespace clang {
+  
+class SourceManager;
     
 /// SourceLocation - This is a carefully crafted 32-bit identifier that encodes
 /// a full include stack, line and column number information for a position in
@@ -199,6 +201,35 @@ public:
   static SourceRange ReadVal(llvm::Deserializer& D);
 };
   
+/// FullContextSourceLocation - A tuple containing both a SourceLocation
+///  and its associated SourceManager.  Useful for argument passing to functions
+///  that expect both objects.
+class FullContextSourceLocation {
+  SourceLocation Loc;
+  SourceManager* SrcMgr;
+public:
+  explicit FullContextSourceLocation(SourceLocation loc)
+    : Loc(loc), SrcMgr(NULL) {}
+
+  explicit FullContextSourceLocation(SourceLocation loc, SourceManager& smgr) 
+    : Loc(loc), SrcMgr(&smgr) {}
+  
+  bool isValid() { return Loc.isValid(); }
+  
+  SourceLocation getSourceLocation() const { return Loc; }
+  operator SourceLocation() const { return Loc; }
+  
+  SourceManager& getSourceManager() {
+    assert (SrcMgr && "SourceManager is NULL.");
+    return *SrcMgr;
+  }
+  
+  const SourceManager& getSourceManager() const {
+    assert (SrcMgr && "SourceManager is NULL.");
+    return *SrcMgr;
+  }
+};
+
 }  // end namespace clang
 
 #endif
