@@ -284,6 +284,7 @@ public:
   
   /// Objective-C specific type checking.
   bool interfaceTypesAreCompatible(QualType, QualType);
+  bool QualifiedInterfaceTypesAreCompatible(QualType, QualType);
   bool objcTypesAreCompatible(QualType, QualType);
   bool isObjcIdType(QualType T) const {
     if (!IdStructType) // ObjC isn't enabled

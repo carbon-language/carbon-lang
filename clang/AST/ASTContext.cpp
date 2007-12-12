@@ -1168,6 +1168,34 @@ bool ASTContext::interfaceTypesAreCompatible(QualType lhs, QualType rhs) {
   return true; // FIXME: IMPLEMENT.
 }
 
+bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs, 
+                                                      QualType rhs) {
+  ObjcQualifiedInterfaceType *lhsQI = 
+    dyn_cast<ObjcQualifiedInterfaceType>(lhs.getCanonicalType().getTypePtr());
+  assert(lhsQI && "QualifiedInterfaceTypesAreCompatible - bad lhs type");
+  ObjcQualifiedInterfaceType *rhsQI = 
+    dyn_cast<ObjcQualifiedInterfaceType>(rhs.getCanonicalType().getTypePtr());
+  assert(rhsQI && "QualifiedInterfaceTypesAreCompatible - bad rhs type");
+  if (!interfaceTypesAreCompatible(QualType(lhsQI->getInterfaceType(), 0), 
+			           QualType(rhsQI->getInterfaceType(), 0)))
+    return false;
+  /* All protocols in lhs must have a presense in rhs. */
+  for (unsigned i =0; i < lhsQI->getNumProtocols(); i++) {
+    bool match = false;
+    ObjcProtocolDecl *lhsProto = lhsQI->getProtocols(i);
+    for (unsigned j = 0; j < rhsQI->getNumProtocols(); j++) {
+      ObjcProtocolDecl *rhsProto = rhsQI->getProtocols(j);
+      if (lhsProto == rhsProto) {
+        match = true;
+        break;
+      }
+    }
+    if (!match)
+      return false;
+  }
+  return true;
+}
+
 bool ASTContext::vectorTypesAreCompatible(QualType lhs, QualType rhs) {
   const VectorType *lVector = lhs->getAsVectorType();
   const VectorType *rVector = rhs->getAsVectorType();
@@ -1331,6 +1359,8 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
     case Type::Vector:
     case Type::OCUVector:
       return vectorTypesAreCompatible(lcanon, rcanon);
+    case Type::ObjcQualifiedInterface:
+      return QualifiedInterfaceTypesAreCompatible(lcanon, rcanon);
     default:
       assert(0 && "unexpected type");
   }
