@@ -1,3 +1,5 @@
+// RUN: clang -fsyntax-only %s
+
 @interface foo
 - (int)meth;
 @end
