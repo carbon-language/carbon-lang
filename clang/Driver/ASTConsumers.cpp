@@ -123,9 +123,10 @@ void DeclPrinter::PrintObjcImplementationDecl(ObjcImplementationDecl *OID) {
   else
     Out << "@implementation " << I;
   
-  for (int i = 0; i < OID->getNumInstanceMethods(); i++) {
-    PrintObjcMethodDecl(OID->getInstanceMethods()[i]);
-    ObjcMethodDecl *OMD = OID->getInstanceMethods()[i];
+  for (ObjcImplementationDecl::instmeth_iterator I = OID->instmeth_begin(),
+       E = OID->instmeth_end(); I != E; ++I) {
+    ObjcMethodDecl *OMD = *I;
+    PrintObjcMethodDecl(OMD);
     if (OMD->getBody()) {
       Out << ' ';
       OMD->getBody()->printPretty(Out);
@@ -133,9 +134,10 @@ void DeclPrinter::PrintObjcImplementationDecl(ObjcImplementationDecl *OID) {
     }
   }
   
-  for (int i = 0; i < OID->getNumClassMethods(); i++) {
-    PrintObjcMethodDecl(OID->getClassMethods()[i]);
-    ObjcMethodDecl *OMD = OID->getClassMethods()[i];
+  for (ObjcImplementationDecl::classmeth_iterator I = OID->classmeth_begin(),
+       E = OID->classmeth_end(); I != E; ++I) {
+    ObjcMethodDecl *OMD = *I;
+    PrintObjcMethodDecl(OMD);
     if (OMD->getBody()) {
       Out << ' ';
       OMD->getBody()->printPretty(Out);

@@ -502,13 +502,10 @@ ObjcMethodDecl *ObjcImplementationDecl::lookupInstanceMethod(Selector Sel) {
 /// the class implementation. Unlike interfaces, we don't look outside the
 /// implementation.
 ObjcMethodDecl *ObjcImplementationDecl::lookupClassMethod(Selector Sel) {
-  ObjcMethodDecl *const*methods = getClassMethods();
-  int methodCount = getNumClassMethods();
-  for (int i = 0; i < methodCount; ++i) {
-    if (methods[i]->getSelector() == Sel) {
-      return methods[i];
-    }
-  }
+  for (classmeth_iterator I = classmeth_begin(), E = classmeth_end();
+       I != E; ++I)
+    if ((*I)->getSelector() == Sel)
+      return *I;
   return NULL;
 }
 
@@ -516,13 +513,9 @@ ObjcMethodDecl *ObjcImplementationDecl::lookupClassMethod(Selector Sel) {
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
 ObjcMethodDecl *ObjcCategoryImplDecl::lookupInstanceMethod(Selector &Sel) {
-  ObjcMethodDecl *const*methods = getInstanceMethods();
-  int methodCount = getNumInstanceMethods();
-  for (int i = 0; i < methodCount; ++i) {
-    if (methods[i]->getSelector() == Sel) {
-      return methods[i];
-    }
-  }
+  for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); I != E; ++I)
+    if ((*I)->getSelector() == Sel)
+      return *I;
   return NULL;
 }
 
@@ -530,13 +523,10 @@ ObjcMethodDecl *ObjcCategoryImplDecl::lookupInstanceMethod(Selector &Sel) {
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
 ObjcMethodDecl *ObjcCategoryImplDecl::lookupClassMethod(Selector &Sel) {
-  ObjcMethodDecl *const*methods = getClassMethods();
-  int methodCount = getNumClassMethods();
-  for (int i = 0; i < methodCount; ++i) {
-    if (methods[i]->getSelector() == Sel) {
-      return methods[i];
-    }
-  }
+  for (classmeth_iterator I = classmeth_begin(), E = classmeth_end();
+       I != E; ++I)
+    if ((*I)->getSelector() == Sel)
+      return *I;
   return NULL;
 }
 

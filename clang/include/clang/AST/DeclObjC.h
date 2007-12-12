@@ -155,8 +155,7 @@ public:
   // We also need to record the @end location.
   SourceLocation getAtEndLoc() const { return AtEndLoc; }
   
-  const int getNumPropertyDecl() const { return NumPropertyDecl; }
-  int getNumPropertyDecl() { return NumPropertyDecl; }
+  int getNumPropertyDecl() const { return NumPropertyDecl; }
   void setNumPropertyDecl(int num) { NumPropertyDecl = num; }
   
   ObjcPropertyDecl **const getPropertyDecl() const { return PropertyDecl; }
@@ -479,24 +478,14 @@ class ObjcCategoryImplDecl : public NamedDecl {
 
   SourceLocation EndLoc;  
 public:
-    ObjcCategoryImplDecl(SourceLocation L, IdentifierInfo *Id,
-                         ObjcInterfaceDecl *classInterface)
-    : NamedDecl(ObjcCategoryImpl, L, Id),
-    ClassInterface(classInterface) {}
+  ObjcCategoryImplDecl(SourceLocation L, IdentifierInfo *Id,
+                       ObjcInterfaceDecl *classInterface)
+    : NamedDecl(ObjcCategoryImpl, L, Id), ClassInterface(classInterface) {}
         
   ObjcInterfaceDecl *getClassInterface() const { return ClassInterface; }
   
-  // FIXME: Figure out how to remove the const pointer below.
-  ObjcMethodDecl *const*getInstanceMethods() const {
-    return &InstanceMethods[0];
-  }
-  int getNumInstanceMethods() const { return InstanceMethods.size(); }
-  
-  // FIXME: Figure out how to remove the const pointer below.
-  ObjcMethodDecl *const*getClassMethods() const { 
-    return &ClassMethods[0];
-  }
-  int getNumClassMethods() const { return ClassMethods.size(); }
+  unsigned getNumInstanceMethods() const { return InstanceMethods.size(); }
+  unsigned getNumClassMethods() const { return ClassMethods.size(); }
 
   void addInstanceMethod(ObjcMethodDecl *method) {
     InstanceMethods.push_back(method);
@@ -507,6 +496,17 @@ public:
   ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
   ObjcMethodDecl *lookupClassMethod(Selector &Sel);
 
+  typedef llvm::SmallVector<ObjcMethodDecl*, 32>::const_iterator
+    instmeth_iterator;
+  instmeth_iterator instmeth_begin() const { return InstanceMethods.begin(); }
+  instmeth_iterator instmeth_end() const { return InstanceMethods.end(); }
+  
+  typedef llvm::SmallVector<ObjcMethodDecl*, 32>::const_iterator
+    classmeth_iterator;
+  classmeth_iterator classmeth_begin() const { return ClassMethods.begin(); }
+  classmeth_iterator classmeth_end() const { return ClassMethods.end(); }
+  
+  
   // Location information, modeled after the Stmt API. 
   SourceLocation getLocStart() const { return getLocation(); }
   SourceLocation getLocEnd() const { return EndLoc; }
@@ -577,20 +577,11 @@ public:
   void setSuperClass(ObjcInterfaceDecl * superCls) 
          { SuperClass = superCls; }
   
-  // FIXME: Figure out how to remove the const pointer below.
-  ObjcMethodDecl *const*getInstanceMethods() const {
-    return &InstanceMethods[0];
-  }
-  int getNumInstanceMethods() const { return InstanceMethods.size(); }
-  
-  // FIXME: Figure out how to remove the const pointer below.
-  ObjcMethodDecl *const*getClassMethods() const { 
-    return &ClassMethods[0];
-  }
-  int getNumClassMethods() const { return ClassMethods.size(); }
+  unsigned getNumInstanceMethods() const { return InstanceMethods.size(); }
+  unsigned getNumClassMethods() const { return ClassMethods.size(); }
 
   ObjcIvarDecl **getImplDeclIVars() const { return Ivars; }
-  int getImplDeclNumIvars() const { return NumIvars; }
+  unsigned getImplDeclNumIvars() const { return NumIvars; }
   
   
   typedef llvm::SmallVector<ObjcMethodDecl*, 32>::const_iterator

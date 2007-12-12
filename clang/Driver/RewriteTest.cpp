@@ -184,8 +184,9 @@ namespace {
     void RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *CDecl,
                                      std::string &Result);
     
-    void RewriteObjcMethodsMetaData(ObjcMethodDecl *const*Methods,
-                                    int NumMethods,
+    typedef ObjcCategoryImplDecl::instmeth_iterator instmeth_iterator;
+    void RewriteObjcMethodsMetaData(instmeth_iterator MethodBegin,
+                                    instmeth_iterator MethodEnd,
                                     bool IsInstanceMethod,
                                     const char *prefix,
                                     const char *ClassName,
@@ -560,16 +561,11 @@ void RewriteTest::RewriteImplementationDecl(NamedDecl *OID) {
   else
     Rewrite.InsertText(CID->getLocStart(), "// ", 3);
   
-  int numMethods = IMD ? IMD->getNumInstanceMethods() 
-                       : CID->getNumInstanceMethods();
-  
-  for (int i = 0; i < numMethods; i++) {
+  for (ObjcCategoryImplDecl::instmeth_iterator
+       I = IMD ? IMD->instmeth_begin() : CID->instmeth_begin(),
+       E = IMD ? IMD->instmeth_end() : CID->instmeth_end(); I != E; ++I) {
     std::string ResultStr;
-    ObjcMethodDecl *OMD;
-    if (IMD)
-      OMD = IMD->getInstanceMethods()[i];
-    else
-      OMD = CID->getInstanceMethods()[i];
+    ObjcMethodDecl *OMD = *I;
     RewriteObjcMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
     SourceLocation LocEnd = OMD->getBody()->getLocStart();
@@ -580,14 +576,11 @@ void RewriteTest::RewriteImplementationDecl(NamedDecl *OID) {
                         ResultStr.c_str(), ResultStr.size());
   }
   
-  numMethods = IMD ? IMD->getNumClassMethods() : CID->getNumClassMethods();
-  for (int i = 0; i < numMethods; i++) {
+  for (ObjcCategoryImplDecl::classmeth_iterator
+       I = IMD ? IMD->classmeth_begin() : CID->classmeth_begin(),
+       E = IMD ? IMD->classmeth_end() : CID->classmeth_end(); I != E; ++I) {
     std::string ResultStr;
-    ObjcMethodDecl *OMD;
-    if (IMD)
-      OMD = IMD->getClassMethods()[i];
-    else
-      OMD = CID->getClassMethods()[i];
+    ObjcMethodDecl *OMD = *I;
     RewriteObjcMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
     SourceLocation LocEnd = OMD->getBody()->getLocStart();
@@ -1747,14 +1740,16 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
 
 // RewriteObjcMethodsMetaData - Rewrite methods metadata for instance or
 /// class methods.
-void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl *const*Methods,
-                                             int NumMethods,
+void RewriteTest::RewriteObjcMethodsMetaData(instmeth_iterator MethodBegin,
+                                             instmeth_iterator MethodEnd,
                                              bool IsInstanceMethod,
                                              const char *prefix,
                                              const char *ClassName,
                                              std::string &Result) {
+  if (MethodBegin == MethodEnd) return;
+  
   static bool objc_impl_method = false;
-  if (NumMethods > 0 && !objc_impl_method) {
+  if (!objc_impl_method) {
     /* struct _objc_method {
        SEL _cmd;
        char *method_types;
@@ -1779,40 +1774,39 @@ void RewriteTest::RewriteObjcMethodsMetaData(ObjcMethodDecl *const*Methods,
     Result += "\tstruct _objc_method method_list[];\n};\n";
     objc_impl_method = true;
   }
+  
   // Build _objc_method_list for class's methods if needed
-  if (NumMethods > 0) {
-    Result += "\nstatic struct _objc_method_list _OBJC_";
-    Result += prefix;
-    Result += IsInstanceMethod ? "INSTANCE" : "CLASS";
-    Result += "_METHODS_";
-    Result += ClassName;
-    Result += " __attribute__ ((section (\"__OBJC, __";
-    Result += IsInstanceMethod ? "inst" : "cls";
-    Result += "_meth\")))= ";
-    Result += "{\n\t0, " + utostr(NumMethods) + "\n";
+  Result += "\nstatic struct _objc_method_list _OBJC_";
+  Result += prefix;
+  Result += IsInstanceMethod ? "INSTANCE" : "CLASS";
+  Result += "_METHODS_";
+  Result += ClassName;
+  Result += " __attribute__ ((section (\"__OBJC, __";
+  Result += IsInstanceMethod ? "inst" : "cls";
+  Result += "_meth\")))= ";
+  Result += "{\n\t0, " + utostr(MethodEnd-MethodBegin) + "\n";
 
-    Result += "\t,{{(SEL)\"";
-    Result += Methods[0]->getSelector().getName().c_str();
+  Result += "\t,{{(SEL)\"";
+  Result += (*MethodBegin)->getSelector().getName().c_str();
+  std::string MethodTypeString;
+  Context->getObjcEncodingForMethodDecl(*MethodBegin, MethodTypeString);
+  Result += "\", \"";
+  Result += MethodTypeString;
+  Result += "\", ";
+  Result += MethodInternalNames[*MethodBegin];
+  Result += "}\n";
+  for (++MethodBegin; MethodBegin != MethodEnd; ++MethodBegin) {
+    Result += "\t  ,{(SEL)\"";
+    Result += (*MethodBegin)->getSelector().getName().c_str();
     std::string MethodTypeString;
-    Context->getObjcEncodingForMethodDecl(Methods[0], MethodTypeString);
+    Context->getObjcEncodingForMethodDecl(*MethodBegin, MethodTypeString);
     Result += "\", \"";
     Result += MethodTypeString;
     Result += "\", ";
-    Result += MethodInternalNames[Methods[0]];
+    Result += MethodInternalNames[*MethodBegin];
     Result += "}\n";
-    for (int i = 1; i < NumMethods; i++) {
-      Result += "\t  ,{(SEL)\"";
-      Result += Methods[i]->getSelector().getName().c_str();
-      std::string MethodTypeString;
-      Context->getObjcEncodingForMethodDecl(Methods[i], MethodTypeString);
-      Result += "\", \"";
-      Result += MethodTypeString;
-      Result += "\", ";
-      Result += MethodInternalNames[Methods[i]];
-      Result += "}\n";
-    }
-    Result += "\t }\n};\n";
   }
+  Result += "\t }\n};\n";
 }
 
 /// RewriteObjcProtocolsMetaData - Rewrite protocols meta-data.
@@ -2000,16 +1994,12 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
   sprintf(FullCategoryName, "%s_%s", ClassDecl->getName(), IDecl->getName());
   
   // Build _objc_method_list for class's instance methods if needed
-  RewriteObjcMethodsMetaData(IDecl->getInstanceMethods(),
-                             IDecl->getNumInstanceMethods(),
-                             true,
-                             "CATEGORY_", FullCategoryName, Result);
+  RewriteObjcMethodsMetaData(IDecl->instmeth_begin(), IDecl->instmeth_end(),
+                             true, "CATEGORY_", FullCategoryName, Result);
   
   // Build _objc_method_list for class's class methods if needed
-  RewriteObjcMethodsMetaData(IDecl->getClassMethods(),
-                             IDecl->getNumClassMethods(),
-                             false,
-                             "CATEGORY_", FullCategoryName, Result);
+  RewriteObjcMethodsMetaData(IDecl->classmeth_begin(), IDecl->classmeth_end(),
+                             false, "CATEGORY_", FullCategoryName, Result);
   
   // Protocols referenced in class declaration?
   // Null CDecl is case of a category implementation with no category interface
@@ -2172,22 +2162,17 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
   }
   
   // Build _objc_method_list for class's instance methods if needed
-  RewriteObjcMethodsMetaData(IDecl->getInstanceMethods(), 
-                             IDecl->getNumInstanceMethods(), 
-                             true,
-                             "", IDecl->getName(), Result);
+  RewriteObjcMethodsMetaData(IDecl->instmeth_begin(), IDecl->instmeth_end(), 
+                             true, "", IDecl->getName(), Result);
   
   // Build _objc_method_list for class's class methods if needed
-  RewriteObjcMethodsMetaData(IDecl->getClassMethods(), 
-                             IDecl->getNumClassMethods(),
-                             false,
-                             "", IDecl->getName(), Result);
+  RewriteObjcMethodsMetaData(IDecl->classmeth_begin(), IDecl->classmeth_end(),
+                             false, "", IDecl->getName(), Result);
     
   // Protocols referenced in class declaration?
   RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(), 
                                CDecl->getNumIntfRefProtocols(),
-                               "CLASS",
-                               CDecl->getName(), Result);
+                               "CLASS", CDecl->getName(), Result);
     
   
   // Declaration of class/meta-class metadata
