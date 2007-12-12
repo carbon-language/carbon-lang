@@ -212,6 +212,8 @@ def ADJCALLSTACKUP : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
                             "!ADJCALLSTACKUP $amt1",
                             [(callseq_end imm:$amt1, imm:$amt2)]>;
 }
+
+let isImplicitDef = 1 in {
 def IMPLICIT_DEF_Int : Pseudo<(outs IntRegs:$dst), (ins),
                               "!IMPLICIT_DEF $dst",
                               [(set IntRegs:$dst, (undef))]>;
@@ -219,6 +221,7 @@ def IMPLICIT_DEF_FP  : Pseudo<(outs FPRegs:$dst), (ins), "!IMPLICIT_DEF $dst",
                               [(set FPRegs:$dst, (undef))]>;
 def IMPLICIT_DEF_DFP : Pseudo<(outs DFPRegs:$dst), (ins), "!IMPLICIT_DEF $dst",
                               [(set DFPRegs:$dst, (undef))]>;
+}
                               
 // FpMOVD/FpNEGD/FpABSD - These are lowered to single-precision ops by the 
 // fpmover pass.

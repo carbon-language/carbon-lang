@@ -613,8 +613,10 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
     return false;
 
   isLoad = false;
-  if (tii_->isTriviallyReMaterializable(MI)) {
-    isLoad = MI->getInstrDescriptor()->Flags & M_LOAD_FLAG;
+  const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+  if ((TID->Flags & M_IMPLICIT_DEF_FLAG) ||
+      tii_->isTriviallyReMaterializable(MI)) {
+    isLoad = TID->Flags & M_LOAD_FLAG;
     return true;
   }
 
@@ -677,6 +679,15 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
                                          bool isSS, int Slot, unsigned Reg) {
   unsigned MRInfo = 0;
   const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+  // If it is an implicit def instruction, just delete it.
+  if (TID->Flags & M_IMPLICIT_DEF_FLAG) {
+    RemoveMachineInstrFromMaps(MI);
+    vrm.RemoveMachineInstrFromMaps(MI);
+    MI->eraseFromParent();
+    ++numFolds;
+    return true;
+  }
+
   SmallVector<unsigned, 2> FoldOps;
   for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
     unsigned OpIdx = Ops[i];
@@ -852,7 +863,8 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
       } else {
         CanFold = canFoldMemoryOperand(MI, Ops);
       }
-    } else CanFold = false;
+    } else
+      CanFold = false;
 
     // Create a new virtual register for the spill interval.
     bool CreatedNewVReg = false;

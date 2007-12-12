@@ -356,6 +356,7 @@ def ADJCALLSTACKUP   : PseudoInstMips<(outs), (ins uimm16:$amt1, uimm16:$amt2),
                                       [(callseq_end imm:$amt1, imm:$amt2)]>;
 }
 
+let isImplicitDef = 1 in
 def IMPLICIT_DEF_CPURegs : PseudoInstMips<(outs CPURegs:$dst), (ins),
                                           "!IMPLICIT_DEF $dst",
                                           [(set CPURegs:$dst, (undef))]>;

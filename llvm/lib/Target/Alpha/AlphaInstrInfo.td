@@ -141,12 +141,14 @@ class CmpOpFrag<dag res> : PatFrag<(ops node:$R), res>;
 
 //Pseudo ops for selection
 
+let isImplicitDef = 1 in {
 def IDEF_I : PseudoInstAlpha<(outs GPRC:$RA), (ins), ";#idef $RA",
              [(set GPRC:$RA, (undef))], s_pseudo>;
 def IDEF_F32 : PseudoInstAlpha<(outs F4RC:$RA), (ins), ";#idef $RA",
              [(set F4RC:$RA, (undef))], s_pseudo>;
 def IDEF_F64 : PseudoInstAlpha<(outs F8RC:$RA), (ins), ";#idef $RA",
              [(set F8RC:$RA, (undef))], s_pseudo>;
+}
 
 def WTF : PseudoInstAlpha<(outs), (ins variable_ops), "#wtf", [], s_pseudo>;
 

@@ -457,6 +457,7 @@ def : Pat<(i1  0), (CMPNE r0, r0)>; // TODO: any instruction actually *using*
 // TODO: support postincrement (reg, imm9) loads+stores - this needs more
 // tablegen support
 
+let isImplicitDef = 1 in {
 def IDEF : PseudoInstIA64<(outs variable_ops), (ins), "// IDEF">;
 
 def IDEF_GR_D : PseudoInstIA64_DAG<(outs GR:$reg), (ins), "// $reg = IDEF",
@@ -465,6 +466,7 @@ def IDEF_FP_D : PseudoInstIA64_DAG<(outs FP:$reg), (ins), "// $reg = IDEF",
     [(set FP:$reg, (undef))]>;
 def IDEF_PR_D : PseudoInstIA64_DAG<(outs PR:$reg), (ins), "// $reg = IDEF",
     [(set PR:$reg, (undef))]>;
+}
 
 def IUSE : PseudoInstIA64<(outs), (ins variable_ops), "// IUSE">;
 def ADJUSTCALLSTACKUP : PseudoInstIA64<(outs), (ins variable_ops),

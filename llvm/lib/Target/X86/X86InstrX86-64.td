@@ -80,6 +80,7 @@ def extloadi64i32  : PatFrag<(ops node:$ptr), (i64 (extloadi32 node:$ptr))>;
 // Instruction list...
 //
 
+let isImplicitDef = 1 in
 def IMPLICIT_DEF_GR64  : I<0, Pseudo, (outs GR64:$dst), (ins),
                          "#IMPLICIT_DEF $dst",
                          [(set GR64:$dst, (undef))]>;

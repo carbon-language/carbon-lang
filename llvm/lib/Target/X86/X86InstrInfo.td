@@ -262,6 +262,7 @@ def ADJCALLSTACKUP   : I<0, Pseudo, (outs), (ins i32imm:$amt1, i32imm:$amt2),
 }
 def IMPLICIT_USE     : I<0, Pseudo, (outs), (ins variable_ops),
                          "#IMPLICIT_USE", []>;
+let isImplicitDef = 1 in {
 def IMPLICIT_DEF     : I<0, Pseudo, (outs variable_ops), (ins),
                           "#IMPLICIT_DEF", []>;
 def IMPLICIT_DEF_GR8  : I<0, Pseudo, (outs GR8:$dst), (ins),
@@ -273,6 +274,7 @@ def IMPLICIT_DEF_GR16  : I<0, Pseudo, (outs GR16:$dst), (ins),
 def IMPLICIT_DEF_GR32  : I<0, Pseudo, (outs GR32:$dst), (ins),
                          "#IMPLICIT_DEF $dst",
                          [(set GR32:$dst, (undef))]>;
+}
 
 // Nop
 def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", []>;

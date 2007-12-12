@@ -42,6 +42,7 @@ def X86pinsrw  : SDNode<"X86ISD::PINSRW", SDTypeProfile<1, 3, []>, []>;
 // SSE 'Special' Instructions
 //===----------------------------------------------------------------------===//
 
+let isImplicitDef = 1 in
 def IMPLICIT_DEF_VR128 : I<0, Pseudo, (outs VR128:$dst), (ins),
                            "#IMPLICIT_DEF $dst",
                            [(set VR128:$dst, (v4f32 (undef)))]>,

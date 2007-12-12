@@ -251,12 +251,14 @@ def FSQRTS  : ASI<(outs SPR:$dst), (ins SPR:$a),
 // FP <-> GPR Copies.  Int <-> FP Conversions.
 //
 
+let isImplicitDef = 1 in {
 def IMPLICIT_DEF_SPR : PseudoInst<(outs SPR:$rD), (ins pred:$p),
                                   "@ IMPLICIT_DEF_SPR $rD",
                                   [(set SPR:$rD, (undef))]>;
 def IMPLICIT_DEF_DPR : PseudoInst<(outs DPR:$rD), (ins pred:$p),
                                   "@ IMPLICIT_DEF_DPR $rD",
                                   [(set DPR:$rD, (undef))]>;
+}
 
 def FMRS   : ASI<(outs GPR:$dst), (ins SPR:$src),
                  "fmrs", " $dst, $src",

@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 // Some 'special' instructions
+let isImplicitDef = 1 in
 def IMPLICIT_DEF_VR64 : I<0, Pseudo, (outs VR64:$dst), (ins),
                           "#IMPLICIT_DEF $dst",
                           [(set VR64:$dst, (v8i8 (undef)))]>,

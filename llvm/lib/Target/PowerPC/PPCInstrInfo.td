@@ -334,6 +334,7 @@ def DYNALLOC : Pseudo<(outs GPRC:$result), (ins GPRC:$negsize, memri:$fpsi),
                        [(set GPRC:$result,
                              (PPCdynalloc GPRC:$negsize, iaddr:$fpsi))]>;
                          
+let isImplicitDef = 1 in {
 def IMPLICIT_DEF_GPRC: Pseudo<(outs GPRC:$rD), (ins),
                               "${:comment}IMPLICIT_DEF_GPRC $rD",
                               [(set GPRC:$rD, (undef))]>;
@@ -343,6 +344,7 @@ def IMPLICIT_DEF_F8  : Pseudo<(outs F8RC:$rD), (ins),
 def IMPLICIT_DEF_F4  : Pseudo<(outs F4RC:$rD), (ins),
                               "${:comment} IMPLICIT_DEF_F4 $rD",
                               [(set F4RC:$rD, (undef))]>;
+}
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
 // scheduler into a branch sequence.

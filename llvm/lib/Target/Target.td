@@ -192,6 +192,7 @@ class Instruction {
   bit isCall       = 0;     // Is this instruction a call instruction?
   bit isLoad       = 0;     // Is this instruction a load instruction?
   bit isStore      = 0;     // Is this instruction a store instruction?
+  bit isImplicitDef = 0;    // Is this instruction an implicit def instruction?
   bit isTwoAddress = 0;     // Is this a two address instruction?
   bit isConvertibleToThreeAddress = 0;  // Can this 2-addr instruction promote?
   bit isCommutable = 0;     // Is this 3 operand instruction commutable?

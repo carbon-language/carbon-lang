@@ -646,6 +646,7 @@ multiclass AsXI1_bin_c_irs<bits<4> opcod, string opc, PatFrag opnode> {
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions.
 //
+let isImplicitDef = 1 in
 def IMPLICIT_DEF_GPR : 
 PseudoInst<(outs GPR:$rD), (ins pred:$p),
            "@ IMPLICIT_DEF_GPR $rD",
