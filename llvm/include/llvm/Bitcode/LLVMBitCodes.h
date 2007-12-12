@@ -194,6 +194,7 @@ namespace bitc {
     FUNC_CODE_INST_FREE        = 18, // FREE:       [opty, op]
     FUNC_CODE_INST_ALLOCA      = 19, // ALLOCA:     [instty, op, align]
     FUNC_CODE_INST_LOAD        = 20, // LOAD:       [opty, op, align, vol]
+    // FIXME: Remove STORE in favor of STORE2 in LLVM 3.0
     FUNC_CODE_INST_STORE       = 21, // STORE:      [valty,val,ptr, align, vol]
     FUNC_CODE_INST_CALL        = 22, // CALL:       [attr, fnty, fnid, args...]
     FUNC_CODE_INST_VAARG       = 23, // VAARG:      [valistty, valist, instty]

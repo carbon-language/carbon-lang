@@ -141,6 +141,7 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   Abbv->Add(BitCodeAbbrevOp(bitc::TYPE_CODE_POINTER));
   Abbv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed,
                             Log2_32_Ceil(VE.getTypes().size()+1)));
+  Abbv->Add(BitCodeAbbrevOp(0));  // Addrspace = 0
   unsigned PtrAbbrev = Stream.EmitAbbrev(Abbv);
   
   // Abbrev for TYPE_CODE_FUNCTION.
@@ -198,16 +199,14 @@ static void WriteTypeTable(const ValueEnumerator &VE, BitstreamWriter &Stream) {
       break;
     case Type::PointerTyID: {
       const PointerType *PTy = cast<PointerType>(T);
-      // POINTER: [pointee type] or [pointee type, address space]
+      // POINTER: [pointee type, address space]
       Code = bitc::TYPE_CODE_POINTER;
       TypeVals.push_back(VE.getTypeID(PTy->getElementType()));
-      if (unsigned AddressSpace = PTy->getAddressSpace())
-        TypeVals.push_back(AddressSpace);
-      else
-        AbbrevToUse = PtrAbbrev;
+      unsigned AddressSpace = PTy->getAddressSpace();
+      TypeVals.push_back(AddressSpace);
+      if (AddressSpace == 0) AbbrevToUse = PtrAbbrev;
       break;
     }
-
     case Type::FunctionTyID: {
       const FunctionType *FT = cast<FunctionType>(T);
       // FUNCTION: [isvararg, attrid, retty, paramty x N]

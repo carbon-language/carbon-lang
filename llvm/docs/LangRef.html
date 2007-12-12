@@ -671,7 +671,8 @@ accessed through pointers.</p>
 <p>A global variable may be declared to reside in a target-specifc numbered 
 address space. For targets that support them, address spaces may affect how
 optimizations are performed and/or what target instructions are used to access 
-the variable. The default address space is zero.</p>
+the variable. The default address space is zero. The address space qualifier 
+must precede any other attributes.</p>
 
 <p>LLVM allows an explicit section to be specified for globals.  If the target
 supports it, it will emit globals to the section specified.</p>

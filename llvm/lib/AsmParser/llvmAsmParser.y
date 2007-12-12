@@ -1050,7 +1050,7 @@ Module *llvm::RunVMAsmParser(llvm::MemoryBuffer *MB) {
 %type <StrVal> GlobalName OptGlobalAssign GlobalAssign
 %type <StrVal> OptSection SectionString OptGC
 
-%type <UIntVal> OptAlign OptCAlign
+%type <UIntVal> OptAlign OptCAlign OptAddrSpace
 
 %token ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE DEFINE GLOBAL CONSTANT SECTION ALIAS VOLATILE THREAD_LOCAL
@@ -1136,6 +1136,9 @@ FPType   : FLOAT | DOUBLE | PPC_FP128 | FP128 | X86_FP80;
 
 LocalName : LOCALVAR | STRINGCONSTANT | PCTSTRINGCONSTANT ;
 OptLocalName : LocalName | /*empty*/ { $$ = 0; };
+
+OptAddrSpace : ADDRSPACE '(' EUINT64VAL ')' { $$=$3; }
+             | /*empty*/                    { $$=0; };
 
 /// OptLocalAssign - Value producing statements have an optional assignment
 /// component.
@@ -1316,17 +1319,10 @@ Types
     $$ = new PATypeHolder($1);
     CHECK_FOR_ERROR
   }
-  | Types '*' {                             // Pointer type?
+  | Types OptAddrSpace '*' {                             // Pointer type?
     if (*$1 == Type::LabelTy)
       GEN_ERROR("Cannot form a pointer to a basic block");
-    $$ = new PATypeHolder(HandleUpRefs(PointerType::get(*$1)));
-    delete $1;
-    CHECK_FOR_ERROR
-  }
-  | Types ADDRSPACE '(' EUINT64VAL ')' '*' {             // Pointer type?
-    if (*$1 == Type::LabelTy)
-      GEN_ERROR("Cannot form a pointer to a basic block");
-    $$ = new PATypeHolder(HandleUpRefs(PointerType::get(*$1, $4)));
+    $$ = new PATypeHolder(HandleUpRefs(PointerType::get(*$1, $2)));
     delete $1;
     CHECK_FOR_ERROR
   }
@@ -2073,41 +2069,31 @@ Definition
     }
     CHECK_FOR_ERROR
   }
-  | OptGlobalAssign GVVisibilityStyle ThreadLocal GlobalType ConstVal { 
+  | OptGlobalAssign GVVisibilityStyle ThreadLocal GlobalType ConstVal 
+    OptAddrSpace { 
     /* "Externally Visible" Linkage */
     if ($5 == 0) 
       GEN_ERROR("Global value initializer is not a constant");
     CurGV = ParseGlobalVariable($1, GlobalValue::ExternalLinkage,
-                                $2, $4, $5->getType(), $5, $3);
-    CHECK_FOR_ERROR
-  } GlobalVarAttributes {
-    CurGV = 0;
-  }
-  | OptGlobalAssign GVVisibilityStyle ThreadLocal GlobalType ConstVal
-    ADDRSPACE '(' EUINT64VAL ')' { 
-    /* "Externally Visible" Linkage with address space qualifier */
-    if ($5 == 0) 
-      GEN_ERROR("Global value initializer is not a constant");
-    CurGV = ParseGlobalVariable($1, GlobalValue::ExternalLinkage,
-                                $2, $4, $5->getType(), $5, $3, $8);
+                                $2, $4, $5->getType(), $5, $3, $6);
     CHECK_FOR_ERROR
   } GlobalVarAttributes {
     CurGV = 0;
   }
   | OptGlobalAssign GVInternalLinkage GVVisibilityStyle ThreadLocal GlobalType
-    ConstVal {
+    ConstVal OptAddrSpace {
     if ($6 == 0) 
       GEN_ERROR("Global value initializer is not a constant");
-    CurGV = ParseGlobalVariable($1, $2, $3, $5, $6->getType(), $6, $4);
+    CurGV = ParseGlobalVariable($1, $2, $3, $5, $6->getType(), $6, $4, $7);
     CHECK_FOR_ERROR
   } GlobalVarAttributes {
     CurGV = 0;
   }
   | OptGlobalAssign GVExternalLinkage GVVisibilityStyle ThreadLocal GlobalType
-    Types {
+    Types OptAddrSpace {
     if (!UpRefs.empty())
       GEN_ERROR("Invalid upreference in type: " + (*$6)->getDescription());
-    CurGV = ParseGlobalVariable($1, $2, $3, $5, *$6, 0, $4);
+    CurGV = ParseGlobalVariable($1, $2, $3, $5, *$6, 0, $4, $7);
     CHECK_FOR_ERROR
     delete $6;
   } GlobalVarAttributes {
