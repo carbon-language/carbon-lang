@@ -3922,53 +3922,35 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
 
 SDOperand
 X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
-  // Transform it so it match pinsrw which expects a 16-bit value in a GR32
-  // as its second argument.
   MVT::ValueType VT = Op.getValueType();
-  MVT::ValueType BaseVT = MVT::getVectorElementType(VT);
+  MVT::ValueType EVT = MVT::getVectorElementType(VT);
+  if (EVT == MVT::i8)
+    return SDOperand();
+
   SDOperand N0 = Op.getOperand(0);
   SDOperand N1 = Op.getOperand(1);
   SDOperand N2 = Op.getOperand(2);
-  if (MVT::getSizeInBits(BaseVT) == 16) {
+
+  if (MVT::getSizeInBits(EVT) == 16) {
+    // Transform it so it match pinsrw which expects a 16-bit value in a GR32
+    // as its second argument.
     if (N1.getValueType() != MVT::i32)
       N1 = DAG.getNode(ISD::ANY_EXTEND, MVT::i32, N1);
     if (N2.getValueType() != MVT::i32)
       N2 = DAG.getConstant(cast<ConstantSDNode>(N2)->getValue(),getPointerTy());
     return DAG.getNode(X86ISD::PINSRW, VT, N0, N1, N2);
-  } else if (MVT::getSizeInBits(BaseVT) == 32) {
-    unsigned Idx = cast<ConstantSDNode>(N2)->getValue();
-    if (Idx == 0) {
-      // Use a movss.
-      N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, N1);
-      MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
-      MVT::ValueType BaseVT = MVT::getVectorElementType(MaskVT);
-      SmallVector<SDOperand, 8> MaskVec;
-      MaskVec.push_back(DAG.getConstant(4, BaseVT));
-      for (unsigned i = 1; i <= 3; ++i)
-        MaskVec.push_back(DAG.getConstant(i, BaseVT));
-      return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, N0, N1,
-                         DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
-                                     &MaskVec[0], MaskVec.size()));
-    } else {
-      // Use two pinsrw instructions to insert a 32 bit value.
-      Idx <<= 1;
-      if (MVT::isFloatingPoint(N1.getValueType())) {
-        N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, MVT::v4f32, N1);
-        N1 = DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, N1);
-        N1 = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, MVT::i32, N1,
-                         DAG.getConstant(0, getPointerTy()));
-      }
-      N0 = DAG.getNode(ISD::BIT_CONVERT, MVT::v8i16, N0);
-      N0 = DAG.getNode(X86ISD::PINSRW, MVT::v8i16, N0, N1,
-                       DAG.getConstant(Idx, getPointerTy()));
-      N1 = DAG.getNode(ISD::SRL, MVT::i32, N1, DAG.getConstant(16, MVT::i8));
-      N0 = DAG.getNode(X86ISD::PINSRW, MVT::v8i16, N0, N1,
-                       DAG.getConstant(Idx+1, getPointerTy()));
-      return DAG.getNode(ISD::BIT_CONVERT, VT, N0);
-    }
   }
 
-  return SDOperand();
+  N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, N1);
+  unsigned Idx = cast<ConstantSDNode>(N2)->getValue();
+  MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
+  MVT::ValueType MaskEVT = MVT::getVectorElementType(MaskVT);
+  SmallVector<SDOperand, 4> MaskVec;
+  for (unsigned i = 0; i < 4; ++i)
+    MaskVec.push_back(DAG.getConstant((i == Idx) ? i+4 : i, MaskEVT));
+  return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, N0, N1,
+                     DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                 &MaskVec[0], MaskVec.size()));
 }
 
 SDOperand
