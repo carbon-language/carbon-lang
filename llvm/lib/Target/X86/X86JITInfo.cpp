@@ -116,7 +116,7 @@ extern "C" {
     "movaps  (%rsp), %xmm0\n"
     // Restore RSP
     "movq    %rbp, %rsp\n"
-    CFI(".cfi_def_cfa_register esp\n")
+    CFI(".cfi_def_cfa_register %rsp\n")
     // Restore all int arg registers
     "subq    $48, %rsp\n"
     CFI(".cfi_adjust_cfa_offset 48\n")
