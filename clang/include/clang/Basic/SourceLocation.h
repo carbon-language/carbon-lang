@@ -201,21 +201,21 @@ public:
   static SourceRange ReadVal(llvm::Deserializer& D);
 };
   
-/// FullContextSourceLocation - A tuple containing both a SourceLocation
+/// FullSourceLoc - A tuple containing both a SourceLocation
 ///  and its associated SourceManager.  Useful for argument passing to functions
 ///  that expect both objects.
-class FullContextSourceLocation {
+class FullSourceLoc {
   SourceLocation Loc;
   SourceManager* SrcMgr;
 public:
-  explicit FullContextSourceLocation(SourceLocation loc)
+  explicit FullSourceLoc(SourceLocation loc)
     : Loc(loc), SrcMgr(NULL) {}
 
-  explicit FullContextSourceLocation(SourceLocation loc, SourceManager& smgr) 
+  explicit FullSourceLoc(SourceLocation loc, SourceManager& smgr) 
     : Loc(loc), SrcMgr(&smgr) {}
   
-  static FullContextSourceLocation CreateInvalidLocation() {
-    return FullContextSourceLocation(SourceLocation());
+  static FullSourceLoc CreateInvalidLocation() {
+    return FullSourceLoc(SourceLocation());
   }
   
   bool isValid() const { return Loc.isValid(); }
