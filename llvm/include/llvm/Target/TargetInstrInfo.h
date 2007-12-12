@@ -24,7 +24,6 @@ namespace llvm {
 
 class MachineInstr;
 class TargetMachine;
-class MachineCodeForInstruction;
 class TargetRegisterClass;
 class LiveVariables;
 
