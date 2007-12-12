@@ -102,7 +102,6 @@ namespace  {
     
     // Stmts.
     void VisitStmt(Stmt *Node);
-    void VisitDeclStmt(DeclStmt *Node);
     void VisitLabelStmt(LabelStmt *Node);
     void VisitGotoStmt(GotoStmt *Node);
     
@@ -230,20 +229,6 @@ void StmtDumper::DumpDeclarator(Decl *D) {
     // FIXME: print tag bodies.
   } else {
     assert(0 && "Unexpected decl");
-  }
-}
-
-void StmtDumper::VisitDeclStmt(DeclStmt *Node) {
-  DumpStmt(Node);
-  fprintf(F, "\n");
-  for (ScopedDecl *D = Node->getDecl(); D; D = D->getNextDeclarator()) {
-    ++IndentLevel;
-    Indent();
-    fprintf(F, "%p ", (void*)D);
-    DumpDeclarator(D);
-    if (D->getNextDeclarator())
-      fprintf(F, "\n");
-    --IndentLevel;
   }
 }
 
