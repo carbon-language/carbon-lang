@@ -1397,7 +1397,7 @@ Parser::ExprResult Parser::ParseObjCStringLiteral(SourceLocation AtLoc) {
 
     AtStrings.push_back(Res.Val);
   }
-
+  
   return Actions.ParseObjCStringLiteral(&AtLocs[0], &AtStrings[0],
                                         AtStrings.size());
 }

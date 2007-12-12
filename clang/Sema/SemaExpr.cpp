@@ -2049,11 +2049,30 @@ Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
 Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs, 
                                               ExprTy **Strings,
                                               unsigned NumStrings) {
-  
-  // FIXME: This is passed in an ARRAY of strings which need to be concatenated.
-  // Handle this case here.  For now we just ignore all but the first one.
   SourceLocation AtLoc = AtLocs[0];
   StringLiteral* S = static_cast<StringLiteral *>(Strings[0]);
+  if (NumStrings > 1) {
+    // Concatenate objc strings.
+    StringLiteral* ES = static_cast<StringLiteral *>(Strings[NumStrings-1]);
+    SourceLocation EndLoc = ES->getSourceRange().getEnd();
+    unsigned Length = 0;
+    for (unsigned i = 0; i < NumStrings; i++)
+      Length += static_cast<StringLiteral *>(Strings[i])->getByteLength();
+    char *strBuf = new char [Length];
+    char *p = strBuf;
+    bool isWide = false;
+    for (unsigned i = 0; i < NumStrings; i++) {
+      S = static_cast<StringLiteral *>(Strings[i]);
+      if (S->isWide())
+        isWide = true;
+      memcpy(p, S->getStrData(), S->getByteLength());
+      p += S->getByteLength();
+      delete S;
+    }
+    S = new StringLiteral(strBuf, Length,
+                          isWide, Context.getPointerType(Context.CharTy),
+                          AtLoc, EndLoc);
+  }
   
   if (CheckBuiltinCFStringArgument(S))
     return true;
