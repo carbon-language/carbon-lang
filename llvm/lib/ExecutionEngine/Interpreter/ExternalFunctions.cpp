@@ -29,7 +29,11 @@
 #include <csignal>
 #include <map>
 #include <cmath>
+
+#ifdef __linux__
 #include <cxxabi.h>
+#endif
+
 using std::vector;
 
 using namespace llvm;
@@ -727,8 +731,12 @@ GenericValue lle_X___cxa_guard_acquire(FunctionType *FT,
                                        const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
   GenericValue GV;
+#ifdef __linux__
   GV.IntVal = APInt(32, __cxxabiv1::__cxa_guard_acquire (
                           (__cxxabiv1::__guard*)GVTOP(Args[0])));
+#else
+  assert(0 && "Can't call __cxa_guard_acquire on this platform");
+#endif
   return GV;
 }
 
@@ -736,7 +744,11 @@ GenericValue lle_X___cxa_guard_acquire(FunctionType *FT,
 GenericValue lle_X___cxa_guard_release(FunctionType *FT, 
                                        const vector<GenericValue> &Args) {
   assert(Args.size() == 1);
+#ifdef __linux__
   __cxxabiv1::__cxa_guard_release ((__cxxabiv1::__guard*)GVTOP(Args[0]));
+#else
+  assert(0 && "Can't call __cxa_guard_release on this platform");
+#endif
   return GenericValue();
 }
 
