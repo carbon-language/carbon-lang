@@ -8879,8 +8879,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     if (!isa<PointerType>(X->getType())) {
       // Not interesting.  Source pointer must be a cast from pointer.
     } else if (HasZeroPointerIndex) {
-      // transform: GEP (cast [10 x ubyte]* X to [0 x ubyte]*), long 0, ...
-      // into     : GEP [10 x ubyte]* X, long 0, ...
+      // transform: GEP (bitcast [10 x i8]* X to [0 x i8]*), i32 0, ...
+      // into     : GEP [10 x i8]* X, i32 0, ...
       //
       // This occurs when the program declares an array extern like "int X[];"
       //
@@ -8900,8 +8900,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           }
     } else if (GEP.getNumOperands() == 2) {
       // Transform things like:
-      // %t = getelementptr ubyte* cast ([2 x int]* %str to uint*), uint %V
-      // into:  %t1 = getelementptr [2 x int*]* %str, int 0, uint %V; cast
+      // %t = getelementptr i32* bitcast ([2 x i32]* %str to i32*), i32 %V
+      // into:  %t1 = getelementptr [2 x i32]* %str, i32 0, i32 %V; bitcast
       const Type *SrcElTy = cast<PointerType>(X->getType())->getElementType();
       const Type *ResElTy=cast<PointerType>(PtrOp->getType())->getElementType();
       if (isa<ArrayType>(SrcElTy) &&
@@ -8917,12 +8917,11 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       }
       
       // Transform things like:
-      // getelementptr sbyte* cast ([100 x double]* X to sbyte*), int %tmp
+      // getelementptr i8* bitcast ([100 x double]* X to i8*), i32 %tmp
       //   (where tmp = 8*tmp2) into:
-      // getelementptr [100 x double]* %arr, int 0, int %tmp.2
+      // getelementptr [100 x double]* %arr, i32 0, i32 %tmp2; bitcast
       
-      if (isa<ArrayType>(SrcElTy) &&
-          (ResElTy == Type::Int8Ty || ResElTy == Type::Int8Ty)) {
+      if (isa<ArrayType>(SrcElTy) && ResElTy == Type::Int8Ty) {
         uint64_t ArrayEltSize =
             TD->getABITypeSize(cast<ArrayType>(SrcElTy)->getElementType());
         
@@ -8949,16 +8948,18 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             NewIdx = Inst->getOperand(0);
           }
         }
-
+        
         // If the index will be to exactly the right offset with the scale taken
-        // out, perform the transformation.
-        if (Scale && Scale->getZExtValue() % ArrayEltSize == 0) {
-          if (isa<ConstantInt>(Scale))
-            Scale = ConstantInt::get(Scale->getType(),
-                                      Scale->getZExtValue() / ArrayEltSize);
+        // out, perform the transformation. Note, we don't know whether Scale is
+        // signed or not. We'll use unsigned version of division/modulo
+        // operation after making sure Scale doesn't have the sign bit set.
+        if (Scale && Scale->getSExtValue() >= 0LL &&
+            Scale->getZExtValue() % ArrayEltSize == 0) {
+          Scale = ConstantInt::get(Scale->getType(),
+                                   Scale->getZExtValue() / ArrayEltSize);
           if (Scale->getZExtValue() != 1) {
             Constant *C = ConstantExpr::getIntegerCast(Scale, NewIdx->getType(),
-                                                       true /*SExt*/);
+                                                       false /*ZExt*/);
             Instruction *Sc = BinaryOperator::createMul(NewIdx, C, "idxscale");
             NewIdx = InsertNewInstBefore(Sc, GEP);
           }
