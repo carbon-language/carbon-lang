@@ -930,8 +930,8 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
     return false;
 
   // Only safe to perform the optimization if the source is also defined in
-  // this block. 
-  if (DefBB != cast<Instruction>(Src)->getParent())
+  // this block.
+  if (!isa<Instruction>(Src) || DefBB != cast<Instruction>(Src)->getParent())
     return false;
 
   bool DefIsLiveOut = false;
@@ -947,6 +947,15 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   }
   if (!DefIsLiveOut)
     return false;
+
+  // Make sure non of the uses are PHI nodes.
+  for (Value::use_iterator UI = Src->use_begin(), E = Src->use_end(); 
+       UI != E; ++UI) {
+    Instruction *User = cast<Instruction>(*UI);
+    if (User->getParent() == DefBB) continue;
+    if (isa<PHINode>(User))
+      return false;
+  }
 
   // InsertedTruncs - Only insert one trunc in each block once.
   DenseMap<BasicBlock*, Instruction*> InsertedTruncs;
