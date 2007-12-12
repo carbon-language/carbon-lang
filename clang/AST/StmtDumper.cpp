@@ -54,17 +54,21 @@ namespace  {
       
       ++IndentLevel;
       if (S) {
-        Visit(S);
-        
-        // Print out children.
-        Stmt::child_iterator CI = S->child_begin(), CE = S->child_end();
-        if (CI != CE) {
-          while (CI != CE) {
-            fprintf(F, "\n");
-            DumpSubTree(*CI++);
+        if (DeclStmt* DS = dyn_cast<DeclStmt>(S))
+          VisitDeclStmt(DS);
+        else {        
+          Visit(S);
+          
+          // Print out children.
+          Stmt::child_iterator CI = S->child_begin(), CE = S->child_end();
+          if (CI != CE) {
+            while (CI != CE) {
+              fprintf(F, "\n");
+              DumpSubTree(*CI++);
+            }
           }
+          fprintf(F, ")");
         }
-        fprintf(F, ")");
       } else {
         Indent();
         fprintf(F, "<<<NULL>>>");
@@ -102,6 +106,7 @@ namespace  {
     
     // Stmts.
     void VisitStmt(Stmt *Node);
+    void VisitDeclStmt(DeclStmt *Node);
     void VisitLabelStmt(LabelStmt *Node);
     void VisitGotoStmt(GotoStmt *Node);
     
@@ -229,6 +234,20 @@ void StmtDumper::DumpDeclarator(Decl *D) {
     // FIXME: print tag bodies.
   } else {
     assert(0 && "Unexpected decl");
+  }
+}
+
+void StmtDumper::VisitDeclStmt(DeclStmt *Node) {
+  DumpStmt(Node);
+  fprintf(F,"\n");
+  for (ScopedDecl *D = Node->getDecl(); D; D = D->getNextDeclarator()) {
+    ++IndentLevel;
+    Indent();
+    fprintf(F, "%p ", (void*) D);
+    DumpDeclarator(D);
+    if (D->getNextDeclarator())
+      fprintf(F,"\n");
+    --IndentLevel;
   }
 }
 
