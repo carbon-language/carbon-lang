@@ -1071,8 +1071,10 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
       getObjcEncodingForType(field->getType(), S);
     }
     S += '}';
+  } else if (T->isEnumeralType()) {
+    S += 'i';
   } else
-      assert(0 && "@encode for type not implemented!");
+	assert(0 && "@encode for type not implemented!");
 }
 
 void ASTContext::getObjcEncodingForTypeQualifier(Decl::ObjcDeclQualifier QT, 
