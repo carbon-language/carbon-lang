@@ -790,6 +790,14 @@ let test_builder () =
   end
 
 
+(*===-- Module Provider ---------------------------------------------------===*)
+
+let test_module_provider () =
+  let m = create_module "test" in
+  let mp = create_module_provider m in
+  dispose_module_provider mp
+
+
 (*===-- Writer ------------------------------------------------------------===*)
 
 let test_writer () =
@@ -814,5 +822,6 @@ let _ =
   suite "functions"        test_functions;
   suite "basic blocks"     test_basic_blocks;
   suite "builder"          test_builder;
+  suite "module provider"  test_module_provider;
   suite "writer"           test_writer;
   exit !exit_status

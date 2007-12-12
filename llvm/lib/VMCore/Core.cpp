@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/TypeSymbolTable.h"
+#include "llvm/ModuleProvider.h"
 #include <cassert>
 
 using namespace llvm;
@@ -1030,3 +1031,16 @@ LLVMValueRef LLVMBuildShuffleVector(LLVMBuilderRef B, LLVMValueRef V1,
   return wrap(unwrap(B)->CreateShuffleVector(unwrap(V1), unwrap(V2),
                                              unwrap(Mask), Name));
 }
+
+
+/*===-- Module providers --------------------------------------------------===*/
+
+LLVMModuleProviderRef
+LLVMCreateModuleProviderForExistingModule(LLVMModuleRef M) {
+  return wrap(new ExistingModuleProvider(unwrap(M)));
+}
+
+void LLVMDisposeModuleProvider(LLVMModuleProviderRef MP) {
+  delete unwrap(MP);
+}
+

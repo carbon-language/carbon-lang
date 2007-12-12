@@ -14,6 +14,7 @@ type lltypehandle
 type llvalue
 type llbasicblock
 type llbuilder
+type llmoduleprovider
 
 type type_kind =
   Void_type
@@ -425,6 +426,13 @@ external build_insertelement : llvalue -> llvalue -> llvalue -> string ->
                                llbuilder -> llvalue = "llvm_build_insertelement"
 external build_shufflevector : llvalue -> llvalue -> llvalue -> string ->
                                llbuilder -> llvalue = "llvm_build_shufflevector"
+
+
+(*===-- Module providers --------------------------------------------------===*)
+external create_module_provider : llmodule -> llmoduleprovider
+                                = "LLVMCreateModuleProviderForExistingModule"
+external dispose_module_provider : llmoduleprovider -> unit
+                                 = "llvm_dispose_module_provider"
 
 
 (*===-- Non-Externs -------------------------------------------------------===*)

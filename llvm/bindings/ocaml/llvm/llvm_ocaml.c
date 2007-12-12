@@ -1047,3 +1047,11 @@ CAMLprim LLVMValueRef llvm_build_shufflevector(LLVMValueRef V1, LLVMValueRef V2,
   return LLVMBuildShuffleVector(Builder_val(B), V1, V2, Mask, String_val(Name));
 }
 
+
+/*===-- Module Providers --------------------------------------------------===*/
+
+/* llmoduleprovider -> unit */
+CAMLprim value llvm_dispose_module_provider(LLVMModuleProviderRef MP) {
+  LLVMDisposeModuleProvider(MP);
+  return Val_unit;
+}

@@ -32,6 +32,13 @@ extern "C" {
 int LLVMReadBitcodeFromFile(const char *Path, LLVMModuleRef *OutModule,
                             char **OutMessage);
 
+/* Reads a module from the specified path, returning a reference to a lazy
+   module provider via the OutModule parameter. Returns 0 on success. Optionally
+   returns a human-readable error message. */ 
+int LLVMCreateModuleProviderFromFile(const char *Path,
+                                     LLVMModuleProviderRef *OutMP,
+                                     char **OutMessage);
+
 /* Disposes of the message allocated by the bitcode reader, if any. */ 
 void LLVMDisposeBitcodeReaderMessage(char *Message);
 

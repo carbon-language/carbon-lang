@@ -40,6 +40,9 @@ type llbasicblock
     class. **)
 type llbuilder
 
+(** Used to provide a module to JIT or interpreter. **)
+type llmoduleprovider
+
 (** The kind of an [lltype], the result of [classify_type ty]. See the 
     [llvm::Type::TypeID] enumeration. **)
 type type_kind =
@@ -1217,3 +1220,17 @@ external build_insertelement : llvalue -> llvalue -> llvalue -> string ->
     See the method [llvm::LLVMBuilder::CreateShuffleVector]. **)
 external build_shufflevector : llvalue -> llvalue -> llvalue -> string ->
                                llbuilder -> llvalue = "llvm_build_shufflevector"
+
+
+(*===-- Module providers --------------------------------------------------===*)
+
+(** [create_module_provider m] encapsulates [m] in a module provider and takes
+    ownership of the module. See the constructor 
+    [llvm::ExistingModuleProvider::ExistingModuleProvider]. **)
+external create_module_provider : llmodule -> llmoduleprovider
+                                = "LLVMCreateModuleProviderForExistingModule"
+
+(** [dispose_module_provider mp] destroys the module provider [mp] as well as
+    the contained module. **)
+external dispose_module_provider : llmoduleprovider -> unit
+                                 = "llvm_dispose_module_provider"

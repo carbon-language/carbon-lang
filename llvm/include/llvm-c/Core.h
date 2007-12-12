@@ -51,6 +51,7 @@ typedef struct LLVMOpaqueTypeHandle *LLVMTypeHandleRef;
 typedef struct LLVMOpaqueValue *LLVMValueRef;
 typedef struct LLVMOpaqueBasicBlock *LLVMBasicBlockRef;
 typedef struct LLVMOpaqueBuilder *LLVMBuilderRef;
+typedef struct LLVMOpaqueModuleProvider *LLVMModuleProviderRef;
 
 typedef enum {
   LLVMVoidTypeKind,        /* type with no size */
@@ -489,10 +490,26 @@ LLVMValueRef LLVMBuildShuffleVector(LLVMBuilderRef, LLVMValueRef V1,
                                     LLVMValueRef V2, LLVMValueRef Mask,
                                     const char *Name);
 
+/*===-- Module providers --------------------------------------------------===*/
+
+/* Encapsulates the module M in a module provider, taking ownership of the
+ * module.
+ * See the constructor llvm::ExistingModuleProvider::ExistingModuleProvider.
+ */
+LLVMModuleProviderRef
+LLVMCreateModuleProviderForExistingModule(LLVMModuleRef M);
+
+/* Destroys the module provider MP as well as the contained module.
+ * See the destructor llvm::ModuleProvider::~ModuleProvider.
+ */
+void LLVMDisposeModuleProvider(LLVMModuleProviderRef MP);
+
 #ifdef __cplusplus
 }
 
 namespace llvm {
+  class ModuleProvider;
+  
   /* Opaque module conversions
    */ 
   inline Module *unwrap(LLVMModuleRef M) {
@@ -586,6 +603,16 @@ namespace llvm {
   
   inline LLVMTypeHandleRef wrap(PATypeHolder *B) {
     return reinterpret_cast<LLVMTypeHandleRef>(B);
+  }
+  
+  /* Opaque module provider conversions.
+   */ 
+  inline ModuleProvider *unwrap(LLVMModuleProviderRef P) {
+    return reinterpret_cast<ModuleProvider*>(P);
+  }
+  
+  inline LLVMModuleProviderRef wrap(ModuleProvider *P) {
+    return reinterpret_cast<LLVMModuleProviderRef>(P);
   }
 }
 
