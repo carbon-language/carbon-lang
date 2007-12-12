@@ -2090,10 +2090,6 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
                                            std::string &Result) {
   ObjcInterfaceDecl *CDecl = IDecl->getClassInterface();
   
-  // Build _objc_ivar_list metadata for classes ivars if needed
-  int NumIvars = IDecl->getImplDeclNumIvars() > 0 
-                   ? IDecl->getImplDeclNumIvars() 
-                   : (CDecl ? CDecl->getNumInstanceVariables() : 0);
   // Explictly declared @interface's are already synthesized.
   if (CDecl->ImplicitInterfaceDecl()) {
     // FIXME: Implementation of a class with no @interface (legacy) doese not 
@@ -2101,6 +2097,10 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
     SynthesizeObjcInternalStruct(CDecl, Result);
   }
   
+  // Build _objc_ivar_list metadata for classes ivars if needed
+  int NumIvars = IDecl->getImplDeclNumIvars() > 0 
+                   ? IDecl->getImplDeclNumIvars() 
+                   : (CDecl ? CDecl->getNumInstanceVariables() : 0);
   if (NumIvars > 0) {
     static bool objc_ivar = false;
     if (!objc_ivar) {
@@ -2133,28 +2133,33 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
       "{\n\t";
     Result += utostr(NumIvars);
     Result += "\n";
-          
-    ObjcIvarDecl **Ivars = IDecl->getImplDeclIVars() 
-                             ? IDecl->getImplDeclIVars() 
-                             : CDecl->getInstanceVariables();
+    
+    ObjcInterfaceDecl::ivar_iterator IVI, IVE;
+    if (IDecl->getImplDeclNumIvars() > 0) {
+      IVI = IDecl->ivar_begin();
+      IVE = IDecl->ivar_end();
+    } else {
+      IVI = CDecl->ivar_begin();
+      IVE = CDecl->ivar_end();
+    }
     Result += "\t,{{\"";
-    Result += Ivars[0]->getName();
+    Result += (*IVI)->getName();
     Result += "\", \"";
     std::string StrEncoding;
-    Context->getObjcEncodingForType(Ivars[0]->getType(), StrEncoding);
+    Context->getObjcEncodingForType((*IVI)->getType(), StrEncoding);
     Result += StrEncoding;
     Result += "\", ";
-    SynthesizeIvarOffsetComputation(IDecl, Ivars[0], Result);
+    SynthesizeIvarOffsetComputation(IDecl, *IVI, Result);
     Result += "}\n";
-    for (int i = 1; i < NumIvars; i++) {
+    for (++IVI; IVI != IVE; ++IVI) {
       Result += "\t  ,{\"";
-      Result += Ivars[i]->getName();
+      Result += (*IVI)->getName();
       Result += "\", \"";
       std::string StrEncoding;
-      Context->getObjcEncodingForType(Ivars[i]->getType(), StrEncoding);
+      Context->getObjcEncodingForType((*IVI)->getType(), StrEncoding);
       Result += StrEncoding;
       Result += "\", ";
-      SynthesizeIvarOffsetComputation(IDecl, Ivars[i], Result);
+      SynthesizeIvarOffsetComputation(IDecl, (*IVI), Result);
       Result += "}\n";
     }
     

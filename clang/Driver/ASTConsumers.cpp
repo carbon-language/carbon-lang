@@ -172,14 +172,12 @@ void DeclPrinter::PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
   else
     Out << '\n';
   
-  int NumIvars = OID->getNumInstanceVariables();
-  if (NumIvars > 0) {
-    ObjcIvarDecl **Ivars = OID->getInstanceVariables();
+  if (OID->getNumInstanceVariables() > 0) {
     Out << '{';
-    for (int i = 0; i < NumIvars; i++) {
-      Out << '\t' << Ivars[i]->getType().getAsString()
-          << ' '  << Ivars[i]->getName()
-          << ";\n";      
+    for (ObjcInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
+         E = OID->ivar_end(); I != E; ++I) {
+      Out << '\t' << (*I)->getType().getAsString()
+          << ' '  << (*I)->getName() << ";\n";      
     }
     Out << "}\n";
   }

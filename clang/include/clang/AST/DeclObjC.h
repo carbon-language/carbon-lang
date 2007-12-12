@@ -111,8 +111,11 @@ public:
   }
   int getNumIntfRefProtocols() const { return NumReferencedProtocols; }
   
-  ObjcIvarDecl **getInstanceVariables() const { return Ivars; }
   int getNumInstanceVariables() const { return NumIvars; }
+  
+  typedef ObjcIvarDecl * const *ivar_iterator;
+  ivar_iterator ivar_begin() const { return Ivars; }
+  ivar_iterator ivar_end() const { return Ivars+(NumIvars == -1 ?0 : NumIvars);}
   
   ObjcMethodDecl** getInstanceMethods() const { return InstanceMethods; }
   int getNumInstanceMethods() const { return NumInstanceMethods; }
@@ -580,7 +583,6 @@ public:
   unsigned getNumInstanceMethods() const { return InstanceMethods.size(); }
   unsigned getNumClassMethods() const { return ClassMethods.size(); }
 
-  ObjcIvarDecl **getImplDeclIVars() const { return Ivars; }
   unsigned getImplDeclNumIvars() const { return NumIvars; }
   
   

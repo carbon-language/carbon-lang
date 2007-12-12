@@ -393,12 +393,11 @@ ObjcIvarDecl *ObjcInterfaceDecl::lookupInstanceVariable(
   IdentifierInfo *ID, ObjcInterfaceDecl *&clsDeclared) {
   ObjcInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
-    ObjcIvarDecl **ivars = ClassDecl->getInstanceVariables();
-    int ivarCount = ClassDecl->getNumInstanceVariables();
-    for (int i = 0; i < ivarCount; ++i) {
-      if (ivars[i]->getIdentifier() == ID) {
+    for (ivar_iterator I = ClassDecl->ivar_begin(), E = ClassDecl->ivar_end();
+         I != E; ++I) {
+      if ((*I)->getIdentifier() == ID) {
         clsDeclared = ClassDecl;
-        return ivars[i];
+        return *I;
       }
     }
     ClassDecl = ClassDecl->getSuperClass();
