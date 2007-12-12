@@ -126,13 +126,13 @@ public:
   typedef ObjcMethodDecl * const * instmeth_iterator;
   instmeth_iterator instmeth_begin() const { return InstanceMethods; }
   instmeth_iterator instmeth_end() const {
-    return InstanceMethods+NumInstanceMethods;
+    return InstanceMethods+(NumInstanceMethods == -1 ? 0 : NumInstanceMethods);
   }
   
   typedef ObjcMethodDecl * const * classmeth_iterator;
   classmeth_iterator classmeth_begin() const { return ClassMethods; }
   classmeth_iterator classmeth_end() const {
-    return ClassMethods+NumClassMethods;
+    return ClassMethods+(NumClassMethods == -1 ? 0 : NumClassMethods);
   }
   
   void addInstanceVariablesToClass(ObjcIvarDecl **ivars, unsigned numIvars,
@@ -620,7 +620,7 @@ public:
   
   typedef ObjcIvarDecl * const *ivar_iterator;
   ivar_iterator ivar_begin() const { return Ivars; }
-  ivar_iterator ivar_end() const { return Ivars+NumIvars; }
+  ivar_iterator ivar_end() const {return Ivars+(NumIvars == -1 ? 0 : NumIvars);}
   
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcImplementation;
