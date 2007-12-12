@@ -589,12 +589,34 @@ public:
   }
   int getNumClassMethods() const { return ClassMethods.size(); }
 
-  ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
-  ObjcMethodDecl *lookupClassMethod(Selector &Sel);
-  
   ObjcIvarDecl **getImplDeclIVars() const { return Ivars; }
   int getImplDeclNumIvars() const { return NumIvars; }
-    
+  
+  
+  typedef llvm::SmallVector<ObjcMethodDecl*, 32>::const_iterator
+       instmeth_iterator;
+  instmeth_iterator instmeth_begin() const { return InstanceMethods.begin(); }
+  instmeth_iterator instmeth_end() const { return InstanceMethods.end(); }
+
+  typedef llvm::SmallVector<ObjcMethodDecl*, 32>::const_iterator
+    classmeth_iterator;
+  classmeth_iterator classmeth_begin() const { return ClassMethods.begin(); }
+  classmeth_iterator classmeth_end() const { return ClassMethods.end(); }
+  
+  /// lookupInstanceMethod - This method returns an instance method by looking
+  /// in the class implementation. Unlike interfaces, we don't look outside the
+  /// implementation.
+  ObjcMethodDecl *lookupInstanceMethod(Selector Sel);
+  
+  /// lookupClassMethod - This method returns a class method by looking in
+  /// the class implementation. Unlike interfaces, we don't look outside the
+  /// implementation.
+  ObjcMethodDecl *lookupClassMethod(Selector Sel);
+  
+  typedef ObjcIvarDecl * const *ivar_iterator;
+  ivar_iterator ivar_begin() const { return Ivars; }
+  ivar_iterator ivar_end() const { return Ivars+NumIvars; }
+  
   static bool classof(const Decl *D) {
     return D->getKind() == ObjcImplementation;
   }

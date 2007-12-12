@@ -406,8 +406,8 @@ ObjcIvarDecl *ObjcInterfaceDecl::lookupInstanceVariable(
   return NULL;
 }
 
-// lookupInstanceMethod - This method returns an instance method by looking in
-// the class, it's categories, and it's super classes (using a linear search).
+/// lookupInstanceMethod - This method returns an instance method by looking in
+/// the class, it's categories, and it's super classes (using a linear search).
 ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
   ObjcInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
@@ -488,24 +488,20 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
   return NULL;
 }
 
-// lookupInstanceMethod - This method returns an instance method by looking in
-// the class implementation. Unlike interfaces, we don't look outside the
-// implementation.
-ObjcMethodDecl *ObjcImplementationDecl::lookupInstanceMethod(Selector &Sel) {
-  ObjcMethodDecl *const*methods = getInstanceMethods();
-  int methodCount = getNumInstanceMethods();
-  for (int i = 0; i < methodCount; ++i) {
-    if (methods[i]->getSelector() == Sel) {
-      return methods[i];
-    }
-  }
+/// lookupInstanceMethod - This method returns an instance method by looking in
+/// the class implementation. Unlike interfaces, we don't look outside the
+/// implementation.
+ObjcMethodDecl *ObjcImplementationDecl::lookupInstanceMethod(Selector Sel) {
+  for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); I != E; ++I)
+    if ((*I)->getSelector() == Sel)
+      return *I;
   return NULL;
 }
 
-// lookupClassMethod - This method returns an instance method by looking in
-// the class implementation. Unlike interfaces, we don't look outside the
-// implementation.
-ObjcMethodDecl *ObjcImplementationDecl::lookupClassMethod(Selector &Sel) {
+/// lookupClassMethod - This method returns a class method by looking in
+/// the class implementation. Unlike interfaces, we don't look outside the
+/// implementation.
+ObjcMethodDecl *ObjcImplementationDecl::lookupClassMethod(Selector Sel) {
   ObjcMethodDecl *const*methods = getClassMethods();
   int methodCount = getNumClassMethods();
   for (int i = 0; i < methodCount; ++i) {
