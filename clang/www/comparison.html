@@ -94,7 +94,7 @@
         example, if you write "x-x" in your source code, the GCC AST will
         contain "0", with no mention of 'x'.  This is extremely bad for a
         refactoring tool that wants to rename 'x'.</li>
-    <li>Clang can serialize it's AST out to disk and read it back into another 
+    <li>Clang can serialize its AST out to disk and read it back into another 
         program, which is useful for whole program analysis.  GCC does not have
         this, but its current PCH mechanism is close.  However, GCC's current 
         PCH support is architecturally only able to read the dump back into 
