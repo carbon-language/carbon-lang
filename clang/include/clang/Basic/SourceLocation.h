@@ -206,29 +206,21 @@ public:
 ///  that expect both objects.
 class FullSourceLoc {
   SourceLocation Loc;
-  SourceManager* SrcMgr;
+  const SourceManager* SrcMgr;
 public:
-  explicit FullSourceLoc(SourceLocation loc)
-    : Loc(loc), SrcMgr(NULL) {}
+  // Creates a FullSourceLoc where isValid() returns false.
+  explicit FullSourceLoc() : Loc(SourceLocation()), SrcMgr(NULL) {}
 
-  explicit FullSourceLoc(SourceLocation loc, SourceManager& smgr) 
-    : Loc(loc), SrcMgr(&smgr) {}
-  
-  static FullSourceLoc CreateInvalidLocation() {
-    return FullSourceLoc(SourceLocation());
+  explicit FullSourceLoc(SourceLocation loc, const SourceManager& smgr) 
+    : Loc(loc), SrcMgr(&smgr) {
+    assert (loc.isValid() && "SourceLocation must be valid!");
   }
-  
+    
   bool isValid() const { return Loc.isValid(); }
   
   SourceLocation getSourceLocation() const { return Loc; }
-  operator SourceLocation() const { return Loc; }
   
-  SourceManager& getSourceManager() {
-    assert (SrcMgr && "SourceManager is NULL.");
-    return *SrcMgr;
-  }
-  
-  const SourceManager& getSourceManager() const {
+  const SourceManager& getManager() const {
     assert (SrcMgr && "SourceManager is NULL.");
     return *SrcMgr;
   }
