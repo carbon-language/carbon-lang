@@ -114,8 +114,9 @@ public:
   int getNumInstanceVariables() const { return NumIvars; }
   
   typedef ObjcIvarDecl * const *ivar_iterator;
+  unsigned ivar_size() const { return NumIvars == -1 ?0 : NumIvars; }
   ivar_iterator ivar_begin() const { return Ivars; }
-  ivar_iterator ivar_end() const { return Ivars+(NumIvars == -1 ?0 : NumIvars);}
+  ivar_iterator ivar_end() const { return Ivars + ivar_size();}
   
   ObjcMethodDecl** getInstanceMethods() const { return InstanceMethods; }
   int getNumInstanceMethods() const { return NumInstanceMethods; }
