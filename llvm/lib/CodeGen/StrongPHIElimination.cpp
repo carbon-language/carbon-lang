@@ -357,10 +357,11 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
         // Insert copies for child
         for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
           if (Inst->getOperand(i-1).getReg() == child->getReg()) {
-            unsigned SrcReg = Inst->getOperand(i-1).getReg();
+            unsigned SrcReg = child->getReg();
             MachineBasicBlock* From = Inst->getOperand(i).getMBB();
             
             Waiting[From].push_back(std::make_pair(SrcReg, DestReg));
+            PHIUnion.erase(SrcReg);
           }
         }
         
@@ -369,10 +370,11 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
         // Insert copies for parent
         for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
           if (Inst->getOperand(i-1).getReg() == DFNode->getReg()) {
-            unsigned SrcReg = Inst->getOperand(i-1).getReg();
+            unsigned SrcReg = DFNode->getReg();
             MachineBasicBlock* From = Inst->getOperand(i).getMBB();
             
             Waiting[From].push_back(std::make_pair(SrcReg, DestReg));
+            PHIUnion.erase(SrcReg);
           }
         }
       }
@@ -380,10 +382,11 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
       // Insert copies for parent
       for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
         if (Inst->getOperand(i-1).getReg() == DFNode->getReg()) {
-          unsigned SrcReg = Inst->getOperand(i-1).getReg();
+          unsigned SrcReg = DFNode->getReg();
           MachineBasicBlock* From = Inst->getOperand(i).getMBB();
           
           Waiting[From].push_back(std::make_pair(SrcReg, DestReg));
+          PHIUnion.erase(SrcReg);
         }
       }
     }
