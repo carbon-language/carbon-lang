@@ -214,7 +214,7 @@ public:
   explicit FullContextSourceLocation(SourceLocation loc, SourceManager& smgr) 
     : Loc(loc), SrcMgr(&smgr) {}
   
-  bool isValid() { return Loc.isValid(); }
+  bool isValid() const { return Loc.isValid(); }
   
   SourceLocation getSourceLocation() const { return Loc; }
   operator SourceLocation() const { return Loc; }
