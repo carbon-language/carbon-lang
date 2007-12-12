@@ -152,7 +152,7 @@ public:
   IdentifierTable &getIdentifierTable() { return Identifiers; }
   SelectorTable &getSelectorTable() { return Selectors; }
   
-  inline FullSourceLoc getFullSourceLoc(SourceLocation Loc) {
+  inline FullSourceLoc getFullLoc(SourceLocation Loc) {
     return FullSourceLoc(Loc,getSourceManager());
   }
   
