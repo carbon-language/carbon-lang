@@ -3157,21 +3157,21 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   unsigned NumZero  = 0;
   unsigned NumNonZero = 0;
   unsigned NonZeros = 0;
-  unsigned NumNonZeroImms = 0;
+  bool HasNonImms = false;
   SmallSet<SDOperand, 8> Values;
   for (unsigned i = 0; i < NumElems; ++i) {
     SDOperand Elt = Op.getOperand(i);
-    if (Elt.getOpcode() != ISD::UNDEF) {
-      Values.insert(Elt);
-      if (isZeroNode(Elt))
-        NumZero++;
-      else {
-        NonZeros |= (1 << i);
-        NumNonZero++;
-        if (Elt.getOpcode() == ISD::Constant ||
-            Elt.getOpcode() == ISD::ConstantFP)
-          NumNonZeroImms++;
-      }
+    if (Elt.getOpcode() == ISD::UNDEF)
+      continue;
+    Values.insert(Elt);
+    if (Elt.getOpcode() != ISD::Constant &&
+        Elt.getOpcode() != ISD::ConstantFP)
+      HasNonImms = true;
+    if (isZeroNode(Elt))
+      NumZero++;
+    else {
+      NonZeros |= (1 << i);
+      NumNonZero++;
     }
   }
 
@@ -3185,7 +3185,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
     return SDOperand();
 
   // Special case for single non-zero element.
-  if (NumNonZero == 1) {
+  if (NumNonZero == 1 && NumElems <= 4) {
     unsigned Idx = CountTrailingZeros_32(NonZeros);
     SDOperand Item = Op.getOperand(Idx);
     Item = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, Item);
@@ -3193,6 +3193,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
       // Turn it into a MOVL (i.e. movss, movsd, or movd) to a zero vector.
       return getShuffleVectorZeroOrUndef(Item, VT, NumElems, Idx,
                                          NumZero > 0, DAG);
+    else if (!HasNonImms) // Otherwise, it's better to do a constpool load.
+      return SDOperand();
 
     if (EVTBits == 32) {
       // Turn it into a shuffle of zero and zero-extended scalar to vector.
@@ -3212,7 +3214,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
 
   // A vector full of immediates; various special cases are already
   // handled, so this is best done with a single constant-pool load.
-  if (NumNonZero == NumNonZeroImms)
+  if (!HasNonImms)
     return SDOperand();
 
   // Let legalizer expand 2-wide build_vectors.
