@@ -552,40 +552,6 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
   }
 }
 
-/// ParseObjcTypeQualifierList - This routine parses the objective-c's type
-/// qualifier list and builds their bitmask representation in the input
-/// argument.
-void Parser::ParseObjcTypeQualifierList(ObjcDeclSpec &DS) {
-  while (1) {
-    if (!Tok.is(tok::identifier))
-      return;
-    
-    const IdentifierInfo *II = Tok.getIdentifierInfo();
-    for (unsigned i = 0; i != objc_NumQuals; ++i) {
-      if (II != ObjcTypeQuals[i])
-        continue;
-      
-      ObjcDeclSpec::ObjcDeclQualifier Qual;
-      switch (i) {
-      default: assert(0 && "Unknown decl qualifier");
-      case objc_in:     Qual = ObjcDeclSpec::DQ_In; break;
-      case objc_out:    Qual = ObjcDeclSpec::DQ_Out; break;
-      case objc_inout:  Qual = ObjcDeclSpec::DQ_Inout; break;
-      case objc_oneway: Qual = ObjcDeclSpec::DQ_Oneway; break;
-      case objc_bycopy: Qual = ObjcDeclSpec::DQ_Bycopy; break;
-      case objc_byref:  Qual = ObjcDeclSpec::DQ_Byref; break;
-      }
-      DS.setObjcDeclQualifier(Qual);
-      ConsumeToken();
-      II = 0;
-      break;
-    }
-    
-    // If this wasn't a recognized qualifier, bail out.
-    if (II) return;
-  }
-}
-
 /// ParseTag - Parse "struct-or-union-or-class-or-enum identifier[opt]", where
 /// the first token has already been read and has been turned into an instance
 /// of DeclSpec::TST (TagType).  This returns true if there is an error parsing,

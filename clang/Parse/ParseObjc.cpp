@@ -491,13 +491,48 @@ bool Parser::isObjCPropertyAttribute() {
   return false;
 } 
 
-///   objc-type-name:
-///     '(' objc-type-qualifiers[opt] type-name ')'
-///     '(' objc-type-qualifiers[opt] ')'
+/// ParseObjcTypeQualifierList - This routine parses the objective-c's type
+/// qualifier list and builds their bitmask representation in the input
+/// argument.
 ///
 ///   objc-type-qualifiers:
 ///     objc-type-qualifier
 ///     objc-type-qualifiers objc-type-qualifier
+///
+void Parser::ParseObjcTypeQualifierList(ObjcDeclSpec &DS) {
+  while (1) {
+    if (!Tok.is(tok::identifier))
+      return;
+    
+    const IdentifierInfo *II = Tok.getIdentifierInfo();
+    for (unsigned i = 0; i != objc_NumQuals; ++i) {
+      if (II != ObjcTypeQuals[i])
+        continue;
+      
+      ObjcDeclSpec::ObjcDeclQualifier Qual;
+      switch (i) {
+      default: assert(0 && "Unknown decl qualifier");
+      case objc_in:     Qual = ObjcDeclSpec::DQ_In; break;
+      case objc_out:    Qual = ObjcDeclSpec::DQ_Out; break;
+      case objc_inout:  Qual = ObjcDeclSpec::DQ_Inout; break;
+      case objc_oneway: Qual = ObjcDeclSpec::DQ_Oneway; break;
+      case objc_bycopy: Qual = ObjcDeclSpec::DQ_Bycopy; break;
+      case objc_byref:  Qual = ObjcDeclSpec::DQ_Byref; break;
+      }
+      DS.setObjcDeclQualifier(Qual);
+      ConsumeToken();
+      II = 0;
+      break;
+    }
+    
+    // If this wasn't a recognized qualifier, bail out.
+    if (II) return;
+  }
+}
+
+///   objc-type-name:
+///     '(' objc-type-qualifiers[opt] type-name ')'
+///     '(' objc-type-qualifiers[opt] ')'
 ///
 Parser::TypeTy *Parser::ParseObjCTypeName(ObjcDeclSpec &DS) {
   assert(Tok.is(tok::l_paren) && "expected (");
