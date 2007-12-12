@@ -33,8 +33,14 @@ fi
 
 ulimit -t 40
 
+# Verify the script contains a run line.
+grep -q 'RUN:' $FILENAME || ( 
+   echo "******************** TEST '$TESTNAME' HAS NO RUN LINE! ********************"
+   exit 1
+)
+
 SCRIPT=$OUTPUT.script
-grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g;s|%llvmgcc|llvm-gcc -emit-llvm|g;s|%llvmgxx|llvm-g++ -emit-llvm|g;s|%prcontext|prcontext.tcl|g" > $SCRIPT
+grep 'RUN:' $FILENAME | sed "s|^.*RUN:\(.*\)$|\1|g;s|%s|$SUBST|g;s|%llvmgcc|llvm-gcc -emit-llvm|g;s|%llvmgxx|llvm-g++ -emit-llvm|g;s|%prcontext|prcontext.tcl|g" > $SCRIPT  
 
 grep -q XFAIL $FILENAME && (printf "XFAILED '$TESTNAME': "; grep XFAIL $FILENAME)
 
