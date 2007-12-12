@@ -48,7 +48,7 @@ void ASTContext::PrintStats() const {
   unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0, NumReference = 0;
   
   unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
-  unsigned NumObjcInterfaces = 0;
+  unsigned NumObjcInterfaces = 0, NumObjcQualifiedInterfaces = 0;
   
   for (unsigned i = 0, e = Types.size(); i != e; ++i) {
     Type *T = Types[i];
@@ -81,7 +81,10 @@ void ASTContext::PrintStats() const {
       }
     } else if (isa<ObjcInterfaceType>(T))
       ++NumObjcInterfaces;
+    else if (isa<ObjcQualifiedInterfaceType>(T))
+      ++NumObjcQualifiedInterfaces;
     else {
+      QualType(T, 0).dump();
       assert(0 && "Unknown type!");
     }
   }
@@ -101,6 +104,8 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "      %d class types\n", NumTagClass);
   fprintf(stderr, "      %d enum types\n", NumTagEnum);
   fprintf(stderr, "    %d interface types\n", NumObjcInterfaces);
+  fprintf(stderr, "    %d protocol qualified interface types\n",
+          NumObjcQualifiedInterfaces);
   fprintf(stderr, "Total bytes = %d\n", int(NumBuiltin*sizeof(BuiltinType)+
     NumPointer*sizeof(PointerType)+NumArray*sizeof(ArrayType)+
     NumComplex*sizeof(ComplexType)+NumVector*sizeof(VectorType)+
