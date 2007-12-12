@@ -209,7 +209,8 @@ class FullSourceLoc {
   const SourceManager* SrcMgr;
 public:
   // Creates a FullSourceLoc where isValid() returns false.
-  explicit FullSourceLoc() : Loc(SourceLocation()), SrcMgr(NULL) {}
+  explicit FullSourceLoc() 
+    : Loc(SourceLocation()), SrcMgr((SourceManager*) 0) {}
 
   explicit FullSourceLoc(SourceLocation loc, const SourceManager& smgr) 
     : Loc(loc), SrcMgr(&smgr) {
