@@ -414,11 +414,10 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
   // names and types must match.
   //
   unsigned j = 0;
-  bool err = false;
   ObjcInterfaceDecl::ivar_iterator 
     IVI = IDecl->ivar_begin(), IVE = IDecl->ivar_end();
   for (; numIvars > 0 && IVI != IVE; ++IVI) {
-    ObjcIvarDecl* ImplIvar = ivars[j];
+    ObjcIvarDecl* ImplIvar = ivars[j++];
     ObjcIvarDecl* ClsIvar = *IVI;
     assert (ImplIvar && "missing implementation ivar");
     assert (ClsIvar && "missing class ivar");
@@ -435,15 +434,15 @@ void Sema::CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
            ImplIvar->getIdentifier()->getName());
       Diag(ClsIvar->getLocation(), diag::err_previous_definition,
            ClsIvar->getIdentifier()->getName());
-      err = true;
-      break;
+      return;
     }
     --numIvars;
   }
-  if (!err && (numIvars > 0 || IVI != IVE))
-    Diag(numIvars > 0 ? ivars[j]->getLocation() : (*IVI)->getLocation(), 
-         diag::err_inconsistant_ivar);
-      
+  
+  if (numIvars > 0)
+    Diag(ivars[j]->getLocation(), diag::err_inconsistant_ivar);
+  else if (IVI != IVE)
+    Diag((*IVI)->getLocation(), diag::err_inconsistant_ivar);
 }
 
 /// CheckProtocolMethodDefs - This routine checks unimpletented methods
