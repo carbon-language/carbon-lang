@@ -23,6 +23,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/System/DynamicLibrary.h"
+#include "llvm/System/Host.h"
 #include "llvm/Target/TargetData.h"
 #include <math.h>
 using namespace llvm;
@@ -637,7 +638,7 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val, GenericValue *
     uint8_t *Src = (uint8_t *)Val.IntVal.getRawData();
     uint8_t *Dst = (uint8_t *)Ptr;
 
-    if (getTargetData()->hostIsLittleEndian())
+    if (sys::littleEndianHost())
       // Little-endian host - the source is ordered from LSB to MSB.
       // Order the destination from LSB to MSB: Do a straight copy.
       memcpy(Dst, Src, StoreBytes);
@@ -698,7 +699,7 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
     uint8_t *Src = (uint8_t *)Ptr;
     uint8_t *Dst = (uint8_t *)Result.IntVal.getRawData();
 
-    if (getTargetData()->hostIsLittleEndian())
+    if (sys::littleEndianHost())
       // Little-endian host - the destination must be ordered from LSB to MSB.
       // The source is ordered from LSB to MSB: Do a straight copy.
       memcpy(Dst, Src, LoadBytes);

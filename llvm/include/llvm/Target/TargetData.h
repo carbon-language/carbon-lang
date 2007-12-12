@@ -142,10 +142,6 @@ public:
   bool          isLittleEndian()       const { return     LittleEndian; }
   bool          isBigEndian()          const { return    !LittleEndian; }
 
-  /// Host endianness.
-  bool hostIsLittleEndian() const;
-  bool hostIsBigEndian() const { return !hostIsLittleEndian(); }
-
   /// getStringRepresentation - Return the string representation of the
   /// TargetData.  This representation is in the same format accepted by the
   /// string constructor above.

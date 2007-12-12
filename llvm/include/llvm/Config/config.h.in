@@ -494,9 +494,6 @@
 /* Installation prefix directory */
 #undef LLVM_PREFIX
 
-/* Define if this target is little endian */
-#undef LSB_FIRST
-
 /* Define if the OS needs help to load dependent libraries for dlopen(). */
 #undef LTDL_DLOPEN_DEPLIBS
 
@@ -513,9 +510,6 @@
 
 /* Define to the system default library search path. */
 #undef LTDL_SYSSEARCHPATH
-
-/* Define if this target is big endian */
-#undef MSB_FIRST
 
 /* Define if /dev/zero should be used when mapping RWX memory, or undefine if
    its not necessary */

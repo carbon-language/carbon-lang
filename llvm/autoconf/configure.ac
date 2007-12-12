@@ -227,10 +227,7 @@ dnl Define a substitution, ARCH, for the target architecture
 AC_SUBST(ARCH,$llvm_cv_target_arch)
 
 dnl Check for the endianness of the target
-AC_C_BIGENDIAN([AC_SUBST([ENDIAN],[big]),
-                AC_DEFINE([MSB_FIRST], [1], [Define if this target is big endian])],
-               [AC_SUBST([ENDIAN],[little]),
-                AC_DEFINE([LSB_FIRST], [1], [Define if this target is little endian])])
+AC_C_BIGENDIAN(AC_SUBST([ENDIAN],[big]),AC_SUBST([ENDIAN],[little]))
 
 dnl Check for build platform executable suffix if we're crosscompiling
 if test "$cross_compiling" = yes; then
