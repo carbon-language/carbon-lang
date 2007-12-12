@@ -512,7 +512,17 @@ Value *ScalarExprEmitter::VisitImplicitCastExpr(const ImplicitCastExpr *E) {
     llvm::Constant *Idx0 = llvm::ConstantInt::get(llvm::Type::Int32Ty, 0);
     
     llvm::Value *Ops[] = {Idx0, Idx0};
-    return Builder.CreateGEP(V, Ops, Ops+2, "arraydecay");
+    V = Builder.CreateGEP(V, Ops, Ops+2, "arraydecay");
+    
+    // The resultant pointer type can be implicitly casted to other pointer
+    // types as well, for example void*.
+    const llvm::Type *DestPTy = ConvertType(E->getType());
+    assert(isa<llvm::PointerType>(DestPTy) &&
+           "Only expect implicit cast to pointer");
+    if (V->getType() != DestPTy)
+      V = Builder.CreateBitCast(V, DestPTy, "ptrconv");
+    return V;
+    
   } else if (E->getType()->isReferenceType()) {
     assert(cast<ReferenceType>(E->getType().getCanonicalType())->
            getReferenceeType() == 
