@@ -556,51 +556,33 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
 /// qualifier list and builds their bitmask representation in the input
 /// argument.
 void Parser::ParseObjcTypeQualifierList(ObjcDeclSpec &DS) {
-  bool found = true;
-  while (found) {
-    found = false;
-    if (Tok.is(tok::identifier)) {
-      const IdentifierInfo *II = Tok.getIdentifierInfo();
-      unsigned i;
-      for (i = 0; i < objc_NumQuals; ++i) {
-        if (II == ObjcTypeQuals[i]) {
-          switch (i) {
-            case objc_in:
-              DS.setObjcDeclQualifier(ObjcDeclSpec::DQ_In);
-              ConsumeToken();
-              found = true;
-              break;
-            case objc_out:
-              DS.setObjcDeclQualifier(ObjcDeclSpec::DQ_Out);
-              ConsumeToken();
-              found = true;
-              break;
-            case objc_inout:
-              DS.setObjcDeclQualifier(ObjcDeclSpec::DQ_Inout);
-              ConsumeToken();
-              found = true;
-              break;
-            case objc_oneway:
-              DS.setObjcDeclQualifier(ObjcDeclSpec::DQ_Oneway);
-              ConsumeToken();
-              found = true;
-              break;
-            case objc_bycopy:
-              DS.setObjcDeclQualifier(ObjcDeclSpec::DQ_Bycopy);
-              ConsumeToken();
-              found = true;
-              break;
-            case objc_byref:
-              DS.setObjcDeclQualifier(ObjcDeclSpec::DQ_Byref);
-              ConsumeToken();
-              found = true;
-              break;
-          }
-          if (found)
-            break;
-        }
+  while (1) {
+    if (!Tok.is(tok::identifier))
+      return;
+    
+    const IdentifierInfo *II = Tok.getIdentifierInfo();
+    for (unsigned i = 0; i != objc_NumQuals; ++i) {
+      if (II != ObjcTypeQuals[i])
+        continue;
+      
+      ObjcDeclSpec::ObjcDeclQualifier Qual;
+      switch (i) {
+      default: assert(0 && "Unknown decl qualifier");
+      case objc_in:     Qual = ObjcDeclSpec::DQ_In; break;
+      case objc_out:    Qual = ObjcDeclSpec::DQ_Out; break;
+      case objc_inout:  Qual = ObjcDeclSpec::DQ_Inout; break;
+      case objc_oneway: Qual = ObjcDeclSpec::DQ_Oneway; break;
+      case objc_bycopy: Qual = ObjcDeclSpec::DQ_Bycopy; break;
+      case objc_byref:  Qual = ObjcDeclSpec::DQ_Byref; break;
       }
+      DS.setObjcDeclQualifier(Qual);
+      ConsumeToken();
+      II = 0;
+      break;
     }
+    
+    // If this wasn't a recognized qualifier, bail out.
+    if (II) return;
   }
 }
 
