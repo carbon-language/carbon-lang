@@ -631,7 +631,7 @@ private:
   /// or a null QualType (indicating an error diagnostic was issued).
     
   /// type checking binary operators (subroutines of ActOnBinOp).
-  inline void InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
+  inline QualType InvalidOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   inline QualType CheckVectorOperands(SourceLocation l, Expr *&lex, Expr *&rex);
   inline QualType CheckMultiplyDivideOperands( // C99 6.5.5
     Expr *&lex, Expr *&rex, SourceLocation OpLoc, bool isCompAssign = false); 

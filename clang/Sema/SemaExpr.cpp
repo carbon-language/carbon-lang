@@ -1176,10 +1176,11 @@ Sema::CheckCompoundAssignmentConstraints(QualType lhsType, QualType rhsType) {
   return CheckAssignmentConstraints(lhsType, rhsType);
 }
 
-inline void Sema::InvalidOperands(SourceLocation loc, Expr *&lex, Expr *&rex) {
+QualType Sema::InvalidOperands(SourceLocation loc, Expr *&lex, Expr *&rex) {
   Diag(loc, diag::err_typecheck_invalid_operands, 
        lex->getType().getAsString(), rex->getType().getAsString(),
        lex->getSourceRange(), rex->getSourceRange());
+  return QualType();
 }
 
 inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex, 
@@ -1208,8 +1209,7 @@ inline QualType Sema::CheckMultiplyDivideOperands(
   
   if (lex->getType()->isArithmeticType() && rex->getType()->isArithmeticType())
     return compType;
-  InvalidOperands(loc, lex, rex);
-  return QualType();
+  return InvalidOperands(loc, lex, rex);
 }
 
 inline QualType Sema::CheckRemainderOperands(
@@ -1221,8 +1221,7 @@ inline QualType Sema::CheckRemainderOperands(
   
   if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
     return compType;
-  InvalidOperands(loc, lex, rex);
-  return QualType();
+  return InvalidOperands(loc, lex, rex);
 }
 
 inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
@@ -1241,8 +1240,7 @@ inline QualType Sema::CheckAdditionOperands( // C99 6.5.6
     return lex->getType();
   if (lex->getType()->isIntegerType() && rex->getType()->isPointerType())
     return rex->getType();
-  InvalidOperands(loc, lex, rex);
-  return QualType();
+  return InvalidOperands(loc, lex, rex);
 }
 
 inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
@@ -1307,22 +1305,22 @@ inline QualType Sema::CheckSubtractionOperands( // C99 6.5.6
     }
   }
   
-  InvalidOperands(loc, lex, rex);
-  return QualType();
+  return InvalidOperands(loc, lex, rex);
 }
 
 inline QualType Sema::CheckShiftOperands( // C99 6.5.7
-  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign)
-{
-  // FIXME: Shifts don't perform usual arithmetic conversions.  This is wrong
-  // for int << longlong -> the result type should be int, not long long.
-  QualType compType = UsualArithmeticConversions(lex, rex, isCompAssign);
+  Expr *&lex, Expr *&rex, SourceLocation loc, bool isCompAssign) {
+  // C99 6.5.7p2: Each of the operands shall have integer type.
+  if (!lex->getType()->isIntegerType() || !rex->getType()->isIntegerType())
+    return InvalidOperands(loc, lex, rex);
   
-  // handle the common case first (both operands are arithmetic).
-  if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
-    return compType;
-  InvalidOperands(loc, lex, rex);
-  return QualType();
+  // Shifts don't perform usual arithmetic conversions, they just do integer
+  // promotions on each operand. C99 6.5.7p3
+  UsualUnaryConversions(lex);
+  UsualUnaryConversions(rex);
+  
+  // "The type of the result is that of the promoted left operand."
+  return lex->getType();
 }
 
 inline QualType Sema::CheckCompareOperands( // C99 6.5.8
@@ -1398,8 +1396,7 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
     promoteExprToType(lex, rType); // promote the integer to pointer
     return Context.IntTy;
   }
-  InvalidOperands(loc, lex, rex);
-  return QualType();
+  return InvalidOperands(loc, lex, rex);
 }
 
 inline QualType Sema::CheckBitwiseOperands(
@@ -1412,8 +1409,7 @@ inline QualType Sema::CheckBitwiseOperands(
   
   if (lex->getType()->isIntegerType() && rex->getType()->isIntegerType())
     return compType;
-  InvalidOperands(loc, lex, rex);
-  return QualType();
+  return InvalidOperands(loc, lex, rex);
 }
 
 inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
@@ -1424,8 +1420,7 @@ inline QualType Sema::CheckLogicalOperands( // C99 6.5.[13,14]
   
   if (lex->getType()->isScalarType() || rex->getType()->isScalarType())
     return Context.IntTy;
-  InvalidOperands(loc, lex, rex);
-  return QualType();
+  return InvalidOperands(loc, lex, rex);
 }
 
 inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
