@@ -427,10 +427,10 @@ Constant *llvm::ConstantFoldCompareInstOperands(unsigned Predicate,
       // there is a truncation or extension that we aren't modeling.
       if ((CE0->getOpcode() == Instruction::IntToPtr &&
            CE0->getOperand(0)->getType() == IntPtrTy &&
-           CE0->getOperand(1)->getType() == IntPtrTy) ||
+           Ops[1]->getOperand(0)->getType() == IntPtrTy) ||
           (CE0->getOpcode() == Instruction::PtrToInt &&
            CE0->getType() == IntPtrTy &&
-           CE0->getOperand(0)->getType() == CE0->getOperand(1)->getType())) {
+           CE0->getOperand(0)->getType() == Ops[1]->getOperand(0)->getType())) {
         Constant *NewOps[] = { 
           CE0->getOperand(0), cast<ConstantExpr>(Ops[1])->getOperand(0) 
         };
