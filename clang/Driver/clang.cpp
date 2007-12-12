@@ -426,38 +426,27 @@ namespace {
 }
 
 static void CreateTargetTriples(std::vector<std::string>& triples) {
-  std::string base_triple;
-  
   // Initialize base triple.  If a -triple option has been specified, use
   // that triple.  Otherwise, default to the host triple.
-  if (TargetTriple.getValue().empty()) {
-    // HACK: For non-darwin systems, we don't have any real target support
-    //  yet.  For these systems, set the target to darwin.
-    if (!strstr(LLVM_HOSTTRIPLE,"darwin"))
-      base_triple = "i386-apple-darwin";
-    else
-      base_triple = LLVM_HOSTTRIPLE;
-  }
-  else
-    base_triple = TargetTriple.getValue();
+  std::string Triple = TargetTriple;
+  if (Triple.empty()) Triple = LLVM_HOSTTRIPLE;
   
   // Decompose the base triple into "arch" and suffix.
-  std::string::size_type firstDash = base_triple.find("-");
+  std::string::size_type firstDash = Triple.find("-");
   
   if (firstDash == std::string::npos) {
     fprintf(stderr, 
             "Malformed target triple: \"%s\" ('-' could not be found).\n",
-            base_triple.c_str());
-    exit (1);
+            Triple.c_str());
+    exit(1);
   }
   
-  std::string suffix(base_triple,firstDash+1);
+  std::string suffix(Triple, firstDash+1);
   
   if (suffix.empty()) {
-    fprintf(stderr,
-            "Malformed target triple: \"%s\" (no vendor or OS).\n",
-            base_triple.c_str());
-    exit (1);
+    fprintf(stderr, "Malformed target triple: \"%s\" (no vendor or OS).\n",
+            Triple.c_str());
+    exit(1);
   }
 
   // Create triple cacher.
@@ -466,7 +455,7 @@ static void CreateTargetTriples(std::vector<std::string>& triples) {
   // Add the primary triple to our set of triples if we are using the
   // host-triple with no archs or using a specified target triple.
   if (!TargetTriple.getValue().empty() || Archs.empty())
-    tp.addTriple(base_triple);
+    tp.addTriple(Triple);
            
   for (unsigned i = 0, e = Archs.size(); i !=e; ++i)
     tp.addTriple(Archs[i] + "-" + suffix);
