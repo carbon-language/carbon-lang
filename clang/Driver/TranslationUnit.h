@@ -16,7 +16,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/System/Path.h"
-#include <list>
+#include <vector>
 
 namespace clang {
  
@@ -31,7 +31,7 @@ class Decl;
 class TranslationUnit {
   LangOptions LangOpts;
   ASTContext* Context;
-  std::list<Decl*> TopLevelDecls;
+  std::vector<Decl*> TopLevelDecls;
 
   explicit TranslationUnit() : Context(NULL) {}
   
@@ -68,11 +68,11 @@ public:
     TopLevelDecls.push_back(d);
   }
   
-  typedef std::list<Decl*>::iterator iterator;  
+  typedef std::vector<Decl*>::iterator iterator;  
   iterator begin() { return TopLevelDecls.begin(); }
   iterator end() { return TopLevelDecls.end(); }
   
-  typedef std::list<Decl*>::const_iterator const_iterator;  
+  typedef std::vector<Decl*>::const_iterator const_iterator;  
   const_iterator begin() const { return TopLevelDecls.begin(); }
   const_iterator end() const { return TopLevelDecls.end(); }  
 };

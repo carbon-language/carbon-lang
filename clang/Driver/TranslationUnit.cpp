@@ -1,4 +1,4 @@
-//===--- TranslationUnit.cpp - Abstraccction for Translation Units --------===//
+//===--- TranslationUnit.cpp - Abstraction for Translation Units ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
