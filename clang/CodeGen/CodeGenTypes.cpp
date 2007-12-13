@@ -594,6 +594,11 @@ void RecordOrganizer::placeBitField(const FieldDecl *FD) {
       }
     }
   } else  if (ExtraBits >= BitFieldSize) {
+    const llvm::Type *Ty = CGT.ConvertType(FD->getType());
+    uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
+    assert ( Cursor - CurrentFieldStart + BitFieldSize <= TySize
+             && "Incomplete layout. struct {char a; int b:10; int c:18;};");
+
     // Reuse existing llvm field
     ExtraBits = ExtraBits  - BitFieldSize;
     CGT.addFieldInfo(FD, FieldNo, Cursor - CurrentFieldStart, ExtraBits);
@@ -604,13 +609,13 @@ void RecordOrganizer::placeBitField(const FieldDecl *FD) {
     const llvm::Type *Ty = CGT.ConvertType(FD->getType());
     const llvm::Type *PrevTy = LLVMFields.back();
     uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
-    if (CGT.getTargetData().getABITypeSizeInBits(PrevTy) >= TySize) {
-      // Previous field does not allow sharing of ExtraBits. Use new field.
-      // struct { char a; char b:5; char c:4; } where c is current FD.
-      Cursor += ExtraBits;
-      ExtraBits = 0;
-      addLLVMField(Ty, TySize, FD, 0, BitFieldSize);
-    } else
-      assert (!FD->isBitField() && "Bit fields are not yet supported");
+    assert (CGT.getTargetData().getABITypeSizeInBits(PrevTy) >= TySize
+            && "Unable to handle bit field");
+
+    // Previous field does not allow sharing of ExtraBits. Use new field.
+    // struct { char a; char b:5; char c:4; } where c is current FD.
+    Cursor += ExtraBits;
+    ExtraBits = 0;
+    addLLVMField(Ty, TySize, FD, 0, BitFieldSize);
   }
 }
