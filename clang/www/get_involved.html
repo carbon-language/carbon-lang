@@ -1,99 +1,152 @@
-<!-- Consulted: http://www.w3.org/TR/CSS1 & http://www.w3.org/TR/CSS21/ & http://www.w3.org/TR/html401/ -->
-<!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+          "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-	<META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
-	<title>Clang - Get Involved</title>
-	<link type="text/css" rel="stylesheet" href="menu.css" />
-	<link type="text/css" rel="stylesheet" href="content.css" />
+  <META http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+  <title>Clang - Get Involved</title>
+  <link type="text/css" rel="stylesheet" href="menu.css" />
+  <link type="text/css" rel="stylesheet" href="content.css" />
 </head>
 <body>
+
 <!--#include virtual="menu.html.incl"-->
+
 <div id="content">
+
 <h1>Getting Involved</h1>
-There are many tasks that are open to new developers who want to get involved with the Clang project.  Below, you will find details on how to get started with Clang, plus a few tasks that we need help with.<br>
-<br>
-Please note that the information provided here is not completely thorough.  This is intentional. If you plan to work on Clang, we would like you to get involved with the other developers. This will allow us to work together better and will give you a better feel for how things are done.
-You can talk with other developers at the following mailing list: <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev mailing list</a>.  
-The clang mailing list is a very friendly place.  You can see the archives for records of past discussion.  Note that a significant amount of design discussion takes place on the <a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits mailing list</a>. 
+
+<p>There are many tasks that are open to new developers who want to get involved
+with the Clang project.  Below, you will find details on how to get started with
+Clang, plus a few tasks that we need help with.</p>
+
+<p>Please note that the information provided here is not completely thorough.
+This is intentional. If you plan to work on Clang, we would like you to get
+involved with the other developers. This will allow us to work together better
+and will give you a better feel for how things are done.</p>
+
+<p>You can talk with other developers at the following mailing list: <a
+href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev mailing
+list</a>.  The clang mailing list is a very friendly place.  You can see the
+archives for records of past discussion.  Note that a significant amount of
+design discussion takes place on the <a 
+href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits mailing
+list</a>. </p>
 
 <h2>Getting Started</h2>
+
 <h3>A word of warning</h3>
-While this work aims to provide a fully functional C/C++/ObjC front-end, it is <em>still very early work</em> and is under heavy development. In particular, there is no real C++ support yet (this is obviously a big project), and C/ObjC support is still missing some features. Some of the more notable missing pieces of C support are:
+
+<p>While this work aims to provide a fully functional C/C++/ObjC front-end, it
+is <em>still very early work</em> and is under heavy development. In particular,
+there is no real C++ support yet (this is obviously a big project), and C/ObjC
+support is still missing some features. Some of the more notable missing pieces
+of C support are:</p>
+
 <ol>
-	<li>The semantic analyzer does not produce all of the warnings and errors it should.
-	<li>The LLVM code generator is still very early on. It does not support many important things, like any support for structs and unions. That said, it does handle scalar operations and vectors.  clang is not ready to be used as a general purpose C code generator yet.
-	<li>We don't consider the API to be stable yet, and reserve the right to change fundamental things :)
+  <li>The semantic analyzer does not produce all of the warnings and errors it
+      should.</li>
+  <li>The LLVM code generator is still very early on. It does not support many
+      important things, like any support for structs and unions. That said, it
+      does handle scalar operations and vectors.  clang is not ready to be used
+      as a general purpose C code generator yet.</li>
+  <li>We don't consider the API to be stable yet, and reserve the right to
+      change fundamental things. :)</li>
 </ol>
-Our plan is to continue chipping away at these issues until C works really well, but we'd love help from other interested contributors.
+
+<p>Our plan is to continue chipping away at these issues until C works really
+well, but we'd love help from other interested contributors.</p>
 
 <h3>Follow what's going on</h3>
 
-Clang is a subproject of the <a href="http://llvm.org">LLVM Project</a>, but has
-its own mailing lists because the communities have people with different
+<p>Clang is a subproject of the <a href="http://llvm.org">LLVM Project</a>, but
+has its own mailing lists because the communities have people with different
 interests.  If you are interested in clang only, these two lists should be all
 you need.  If you are interested in the LLVM optimizer and code generator,
 please consider signing up for <a 
 href="http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev">llvmdev</a> and <a
 href="http://lists.cs.uiuc.edu/mailman/listinfo/llvm-commits">llvm-commits</a>
-as well.<br>
+as well.</p>
+
 <ul>
-<li><a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits</a> - This list is for patch submission/discussion.
-<li><a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a> - This list is for everything else clang related.
+<li><a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-commits">cfe-commits
+</a> - This list is for patch submission/discussion.</li>
+
+<li><a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">cfe-dev</a> - 
+This list is for everything else clang related.</li>
 </ul>
-<h3>Building clang / working with the code<a name="build">&nbsp;</a></h3>
-If you would like to check out and build the project, the current scheme is:<br><br>
+
+<h3><a name="build">Building clang / working with the code</a></h3>
+
+<p>If you would like to check out and build the project, the current scheme
+is:</p>
 
 <ol>
-	<li>Checkout and build LLVM
-	(<a href="http://www.llvm.org/docs/GettingStarted.html#checkout">latest
-	instructions for SVN access</a>)</li>
-	<ul>
-	  <li><tt>svn co http://llvm.org/svn/llvm-project/llvm/trunk
-	  llvm</tt></li>
-	  <li><tt>cd llvm</tt></li>
-          <li><tt>./configure; make</tt></li>
-        </ul>
-        <li>Checkout clang</li>
-        <ul>
-           <li>From within the <tt>llvm</tt> directory (where you
-           built llvm):</li>
-	   <li><tt>cd llvm/tools</tt>
-	   <li><tt>svn co
-		http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
-           
-	</ul>
-	<li>Non-mac users: Paths to system header files are currently hard coded
-            into clang; as a result, if clang can't find your system headers,
-            please follow these instructions:
-	<ul>
-		<li>'<tt>touch empty.c; gcc -v empty.c -fsyntax-only</tt>' to get the path.
-		<li>Look for the comment "FIXME: temporary hack:
-		hard-coded paths" in <tt>clang/Driver/clang.cpp</tt> and
-		change the lines below to include that path.
-	</ul>
-	<li>Build clang</li>
-	<ul>
-	  <li><tt>cd clang</tt> (assuming that you are in <tt>llvm/tools</tt>)</li>
-	  <li><tt>make</tt></li>
-	</ul>
+  <li><a href="http://www.llvm.org/docs/GettingStarted.html#checkout">Checkout
+   and build LLVM</a> from SVN head:</li>
+  
+  <ul>
+    <li><tt>svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm</tt></li>
+    <li><tt>cd llvm</tt></li>
+    <li><tt>./configure; make</tt></li>
+  </ul>
+  <li>Checkout clang:</li>
+  <ul>
+     <li>From within the <tt>llvm</tt> directory (where you
+     built llvm):</li>
+     <li><tt>cd llvm/tools</tt>
+     <li><tt>svn co
+          http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
+     
+  </ul>
+  <li>Non-mac users: Paths to system header files are currently hard coded
+      into clang; as a result, if clang can't find your system headers,
+      please follow these instructions:</li>
+      
+  <ul>
+    <li>'<tt>touch empty.c; gcc -v empty.c -fsyntax-only</tt>' to get the 
+    path.</li>
+    <li>Look for the comment "FIXME: temporary hack:
+    hard-coded paths" in <tt>clang/Driver/clang.cpp</tt> and
+    change the lines below to include that path.</li>
+  </ul>
+  
+  <li>Build clang:</li>
+  <ul>
+    <li><tt>cd clang</tt> (assuming that you are in <tt>llvm/tools</tt>)</li>
+    <li><tt>make</tt></li>
+  </ul>
+  
+  <li>Try it out (assuming you add llvm/Debug/bin to your path):</li>
+  <ul>
+    <li><tt>clang --help</tt></li>
+    <li><tt>clang file.c -fsyntax-only</tt> (check for correctness)</li>
+    <li><tt>clang file.c -ast-dump</tt> (internal debug dump of ast)</li>
+    <li><tt>clang file.c -ast-view</tt> (<a 
+    href="http://llvm.org/docs/ProgrammersManual.html#ViewGraph">set up graphviz
+     and rebuild llvm first</a>)</li>
+    <li><tt>clang file.c -emit-llvm</tt> (print out unoptimized llvm code)</li>
+    <li><tt>clang file.c -emit-llvm | llvm-as | opt -std-compile-opts | 
+         llvm-dis</tt> (print out optimized llvm code)</li>
+    <li><tt>clang file.c -emit-llvm | llvm-as | opt -std-compile-opts | llc
+         &gt; file.s</tt> (output native machine code)</li>
+  </ul>
 </ol>
-<br>
 
 <p>Note that the C front-end uses LLVM, but does not depend on
   llvm-gcc.  If you encounter problems with building clang, make
   sure you have the latest SVN version of LLVM.  LLVM contains
   support libraries for clang that will be updated as well as
-  development on clang progresses.</p><br>
-
-<p>We will eventually integrate this better as a sub-project, but for now it builds a single tool named 'clang'.<br>
-Once llvm is built in this way, you can compile C code.
+  development on clang progresses.</p>
+  
 <h3>Examples of using clang</h3>
-The clang driver takes a lot of GCC compatible options, which you can see with 'clang --help'. Here are a few examples:
-<!-- Thanks to http://shiflett.org/blog/2006/oct/formatting-and-highlighting-php-code-listings
-	Site suggested using pre in CSS, but doesn't work in IE, so went for the <pre> tag.
--->
+
+<p>The clang driver takes a lot of GCC compatible options, which you can see
+with 'clang --help'. Here are a few examples:</p>
+<!-- Thanks to
+ http://shiflett.org/blog/2006/oct/formatting-and-highlighting-php-code-listings
+Site suggested using pre in CSS, but doesn't work in IE, so went for the <pre>
+tag. -->
+
 <pre class="code">
 $ cat ~/t.c
 
@@ -133,13 +186,11 @@ V foo(V a, V b) {
 
 LLVM code generation:
 $ clang ~/t.c -emit-llvm | llvm-as | opt -std-compile-opts | llvm-dis
-define <4 x float> @foo(<4 x float> %a, <4 x float> %b) {
+define &lt;4 x float&gt; @foo(&lt;4 x float&gt; %a, &lt;4 x float&gt; %b) {
 entry:
-         %mul = mul <4 x float> %b, %a           ; <<4 x float>>  
-[#uses=1]
-         %add = add <4 x float> %mul, %a         ; <<4 x float>>  
-[#uses=1]
-         ret <4 x float> %add
+         %mul = mul &lt;4 x float&gt; %b, %a
+         %add = add &lt;4 x float&gt; %mul, %a
+         ret &lt;4 x float&gt; %add
 }
 $ clang ~/t.c -emit-llvm | llvm-as | opt -std-compile-opts | llc - 
 march=ppc32 -mcpu=g5
