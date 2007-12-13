@@ -391,17 +391,19 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
   if (isGEP(V1) && isGEP(V2)) {
     // Drill down into the first non-gep value, to test for must-aliasing of
     // the base pointers.
-    const Value *BasePtr1 = V1, *BasePtr2 = V2;
-    do {
-      BasePtr1 = cast<User>(BasePtr1)->getOperand(0);
-    } while (isGEP(BasePtr1) &&
-             cast<User>(BasePtr1)->getOperand(1) ==
-       Constant::getNullValue(cast<User>(BasePtr1)->getOperand(1)->getType()));
-    do {
-      BasePtr2 = cast<User>(BasePtr2)->getOperand(0);
-    } while (isGEP(BasePtr2) &&
-             cast<User>(BasePtr2)->getOperand(1) ==
-       Constant::getNullValue(cast<User>(BasePtr2)->getOperand(1)->getType()));
+    const User *G = cast<User>(V1);
+    while (isGEP(G->getOperand(0)) &&
+           G->getOperand(1) ==
+           Constant::getNullValue(G->getOperand(1)->getType()))
+      G = cast<User>(G->getOperand(0));
+    const Value *BasePtr1 = G->getOperand(0);
+
+    G = cast<User>(V2);
+    while (isGEP(G->getOperand(0)) &&
+           G->getOperand(1) ==
+           Constant::getNullValue(G->getOperand(1)->getType()))
+      G = cast<User>(G->getOperand(0));
+    const Value *BasePtr2 = G->getOperand(0);
 
     // Do the base pointers alias?
     AliasResult BaseAlias = alias(BasePtr1, ~0U, BasePtr2, ~0U);
