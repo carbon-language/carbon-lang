@@ -410,6 +410,9 @@ private:
   ObjcDeclQualifier objcDeclQualifier : 6;
   
 protected:
+  /// EmitImpl - Serialize this ParmVarDecl. Called by Decl::Emit.
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  
   /// CreateImpl - Deserialize a ParmVarDecl.  Called by Decl::Create.
   static ParmVarDecl* CreateImpl(llvm::Deserializer& D);
 

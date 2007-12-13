@@ -146,15 +146,11 @@ void ValueDecl::ReadInRec(Deserializer& D) {
 void VarDecl::EmitInRec(Serializer& S) const {
   ValueDecl::EmitInRec(S);
   S.EmitInt(getStorageClass());             // From VarDecl.
-  // FIXME: This is now in ParmVarDecl
-  // S.EmitInt(getObjcDeclQualifier());        // From VarDecl.
 }
 
 void VarDecl::ReadInRec(Deserializer& D) {
   ValueDecl::ReadInRec(D);
   SClass = static_cast<StorageClass>(D.ReadInt());  // From VarDecl. 
-  // FIXME: This is now in ParmVarDecl
-  // objcDeclQualifier = static_cast<ObjcDeclQualifier>(D.ReadInt());  // VarDecl.
 }
 
     //===------------------------------------------------------------===//
@@ -219,12 +215,18 @@ FileVarDecl* FileVarDecl::CreateImpl(Deserializer& D) {
 //      ParmDecl Serialization.
 //===----------------------------------------------------------------------===//
 
+void ParmVarDecl::EmitImpl(llvm::Serializer& S) const {
+  VarDecl::EmitImpl(S);
+  S.EmitInt(getObjcDeclQualifier());        // From ParmVarDecl.
+}
+
 ParmVarDecl* ParmVarDecl::CreateImpl(Deserializer& D) {
   ParmVarDecl* decl =
     new ParmVarDecl(SourceLocation(),NULL,QualType(),None,NULL);
   
   decl->VarDecl::ReadImpl(D);
-  
+  decl->objcDeclQualifier = static_cast<ObjcDeclQualifier>(D.ReadInt());
+
   return decl;
 }
 
