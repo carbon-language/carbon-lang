@@ -57,16 +57,10 @@ discussions or follow the list development on the web if you prefer.</p>
 
 <h2>Open Projects</h2>
 
-<p>Here are a few tasks that are available for newcomers to work on.  This list
-is provided to generate ideas, it is not intended to be comprehensive.  Please
-ask on cfe-dev for more specifics or to verify that one of these isn't already
-completed. :)</p>
-
-<p>Please note that the information provided here is not completely thorough.
-This is intentional. If you plan to work on Clang, we would like you to get
-involved with the other developers. This will allow us to work together better
-and will give you a better feel for how things are done.</p>
-
+<p>Here are a few tasks that are available for newcomers to work on, depending
+on what your interests are.  This list is provided to generate ideas, it is not
+intended to be comprehensive.  Please ask on cfe-dev for more specifics or to
+verify that one of these isn't already completed. :)</p>
 
 <ul>
 <li><b>Compile your favorite C/ObjC project with "clang -fsyntax-only"</b>:
@@ -75,10 +69,52 @@ free!) for C and Objective C.  We appreciate all reports of code that is
 rejected by the front-end, and if you notice invalid code that is not rejected
 by clang, that is also very important to us.</li>
 
-<li>
+<li><b>Compile your favorite C project with "clang -emit-llvm"</b>:
+The clang to LLVM converter is getting more mature, so you may be able to
+compile it.  If not, please let us know.  Once it compiles it should run.  If
+not, that's a bug :)</li>
 
- </li>
+<li><b>Working on code generation for Objective C</b>: -emit-llvm support for
+Objective C is basically non-existant at the time of this writing, this is a
+nice open project that can be tackled incrementally (one language feature at a
+time).</li>
+
+<li><b>Continue work on C++ support</b>: Implementing all of C++ is a very big
+job, but there are lots of little things that can be done.  Right now we support
+some small things like references and bool.  We also support parsing of
+namespace's, but don't build ASTs for it.  It would be straight-forward to
+implement support for representing namespaces, then add support for things like
+foo::bar::baz.  Likewise, lots of other little pieces can be picked off and
+implemented.</li>
+
+<li><b>Improve target support</b>: The current target interfaces are heavily
+stubbed out and need to be implemented fully.  See the FIXME's in TargetInfo.
+Additionally, the actual target implementations (instances of TargetInfoImpl)
+also need to be completed.  This includes defining builtin macros for linux
+targets and other stuff like that.</li>
+
+<li><b>Implement 'builtin' headers</b>: GCC provides a bunch of builtin headers,
+such as stdbool.h, iso646.h, float.h, limits.h, etc.  It also provides a bunch
+of target-specific headers like altivec.h and xmmintrin.h.  clang will
+eventually need to provide its own copies of these (and there is a <a href=
+"http://lists.cs.uiuc.edu/pipermail/cfe-dev/2007-December/000560.html">lot of 
+improvement</a> that can be made to the GCC ones!) that are clean-room
+implemented to avoid GPL taint.</li>
+
+<li><b>Implement a clang 'libgcc'</b>: As with the headers, clang (or a another
+related subproject of llvm) will need to implement the features that libgcc
+provides. libgcc provides a bunch of routines the code generator uses for
+"fallback" when the chip doesn't support some operation (e.g. 64-bit divide on
+a 32-bit chip).  It also provides software floating point support and many other
+things.  I don't think that there is a specific licensing reason to reimplement
+libgcc, but there is a lot of room for improvement in it in many 
+dimensions.</li>
+
 </ul>
+
+<p>If you hit a bug with clang, it is very useful for us if you reduce the code
+that demonstrates the problem down to something small.  There are many ways to
+do this, ask on cfe-dev for advise.</p>
 
 </div>
 </body>
