@@ -441,10 +441,14 @@ void ContentCache::ReadToSourceManager(llvm::Deserializer& D,
     const char* start = &Buf[0];
     const FileEntry* E = FMgr->getFile(start,start+Buf.size());
     
-    assert (E && "Not yet supported: missing files.");
-    
-    // Get the ContextCache object and register it with the deserializer.
-    D.RegisterPtr(PtrID,SMgr.getContentCache(E));
+    // FIXME: Ideally we want a lazy materialization of the ContentCache
+    //  anyway, because we don't want to read in source files unless this
+    //  is absolutely needed.
+    if (!E)
+      D.RegisterPtr(PtrID,NULL);
+    else    
+      // Get the ContextCache object and register it with the deserializer.
+      D.RegisterPtr(PtrID,SMgr.getContentCache(E));
   }
   else {
     // Register the ContextCache object with the deserializer.
