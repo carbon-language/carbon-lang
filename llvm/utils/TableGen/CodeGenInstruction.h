@@ -92,6 +92,7 @@ namespace llvm {
     bool isCall;
     bool isLoad;
     bool isStore;
+    bool isImplicitDef;
     bool isPredicable;
     bool isConvertibleToThreeAddress;
     bool isCommutable;

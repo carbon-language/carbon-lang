@@ -384,6 +384,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isCall       = R->getValueAsBit("isCall");
   isLoad       = R->getValueAsBit("isLoad");
   isStore      = R->getValueAsBit("isStore");
+  isImplicitDef= R->getValueAsBit("isImplicitDef");
   bool isTwoAddress = R->getValueAsBit("isTwoAddress");
   isPredicable = R->getValueAsBit("isPredicable");
   isConvertibleToThreeAddress = R->getValueAsBit("isConvertibleToThreeAddress");
