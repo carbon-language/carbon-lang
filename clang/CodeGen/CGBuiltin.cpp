@@ -127,18 +127,14 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   }
   case Builtin::BI__builtin_classify_type: {
     APSInt Result(32);
-    
     if (!E->isBuiltinClassifyType(Result))
       assert(0 && "Expr not __builtin_classify_type!");
-    
     return RValue::get(ConstantInt::get(Result));
   }
   case Builtin::BI__builtin_constant_p: {
     APSInt Result(32);
-
     // FIXME: Analyze the parameter and check if it is a constant.
     Result = 0;
-    
     return RValue::get(ConstantInt::get(Result));
   }
   case Builtin::BI__builtin_abs: {
