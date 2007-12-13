@@ -124,7 +124,22 @@ bool TransferFuncs::VisitDeclStmt(DeclStmt* S) {
     if (BlockVarDecl* VD = dyn_cast<BlockVarDecl>(D)) {
       if (Stmt* I = VD->getInit()) 
         V(VD,AD) = AD.FullUninitTaint ? V(cast<Expr>(I),AD) : Initialized;
-      else V(VD,AD) = Uninitialized;
+      else {
+        // Special case for declarations of array types.  For things like:
+        //
+        //  char x[10];
+        //
+        // we should treat "x" as being initialized, because the variable
+        // "x" really refers to the memory block.  Clearly x[1] is
+        // uninitialized, but expressions like "(char *) x" really do refer to 
+        // an initialized value.  This simple dataflow analysis does not reason 
+        // about the contents of arrays, although it could be potentially
+        // extended to do so if the array were of constant size.
+        if (VD->getType()->isArrayType())
+          V(VD,AD) = Initialized;
+        else        
+          V(VD,AD) = Uninitialized;
+      }
     }
       
   return Uninitialized; // Value is never consumed.
