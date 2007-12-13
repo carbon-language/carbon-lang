@@ -1016,13 +1016,11 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(dcl)) {
     FD->setBody((Stmt*)Body);
     assert(FD == CurFunctionDecl && "Function parsing confused");
+    CurFunctionDecl = 0;
   } else if (ObjcMethodDecl *MD = dyn_cast<ObjcMethodDecl>(dcl)) {
     MD->setBody((Stmt*)Body);
     CurMethodDecl = 0;
-  }
-  // This is unconditional, since methods have a corresponding function decl.
-  CurFunctionDecl = 0;
-  
+  }  
   // Verify and clean out per-function state.
   
   // Check goto/label use.
