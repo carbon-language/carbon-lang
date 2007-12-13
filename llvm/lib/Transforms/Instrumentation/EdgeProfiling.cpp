@@ -84,7 +84,7 @@ bool EdgeProfiler::runOnModule(Module &M) {
           // Okay, we are guaranteed that the edge is no longer critical.  If we
           // only have a single successor, insert the counter in this block,
           // otherwise insert it in the successor block.
-          if (TI->getNumSuccessors() == 0) {
+          if (TI->getNumSuccessors() == 1) {
             // Insert counter at the start of the block
             IncrementCounterInBlock(BB, i++, Counters);
           } else {
