@@ -37,6 +37,11 @@ ifeq ($(MAKECMDGOALS),libs-only)
   OPTIONAL_DIRS :=
 endif
 
+ifeq ($(MAKECMDGOALS),install-libs)
+  DIRS := $(filter-out tools runtime docs, $(DIRS))
+  OPTIONAL_DIRS := $(filter bindings, $(OPTIONAL_DIRS))
+endif
+
 ifeq ($(MAKECMDGOALS),tools-only)
   DIRS := $(filter-out runtime docs, $(DIRS))
   OPTIONAL_DIRS :=
@@ -81,6 +86,7 @@ dist-hook::
 
 tools-only: all
 libs-only: all
+install-libs: install
 
 #------------------------------------------------------------------------
 # Make sure the generated headers are up-to-date. This must be kept in
