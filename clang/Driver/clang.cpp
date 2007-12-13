@@ -984,7 +984,14 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
     exit (1);
   }
   
-  TranslationUnit* TU = TranslationUnit::ReadBitcodeFile(Filename,FileMgr);  
+  TranslationUnit* TU = TranslationUnit::ReadBitcodeFile(Filename,FileMgr);
+  
+  if (!TU) {
+    fprintf(stderr, "error: file '%s' could not be deserialized\n", 
+            InFile.c_str());
+    exit (1);
+  }
+  
   ASTConsumer* Consumer = CreateASTConsumer(InFile,Diag,
                                             FileMgr,TU->getLangOpts());
   
