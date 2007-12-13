@@ -363,7 +363,7 @@ AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-targets],
     [Build specific host targets: all,host-only,{target-name} (default=all)]),,
     enableval=all)
 case "$enableval" in
-  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips CellSPU" ;;
+  all) TARGETS_TO_BUILD="X86 Sparc PowerPC Alpha IA64 ARM Mips CellSPU CBackend MSIL" ;;
   host-only)
     case "$llvm_cv_target_arch" in
       x86)     TARGETS_TO_BUILD="X86" ;;
@@ -389,12 +389,13 @@ case "$enableval" in
         arm)     TARGETS_TO_BUILD="ARM $TARGETS_TO_BUILD" ;;
         mips)    TARGETS_TO_BUILD="Mips $TARGETS_TO_BUILD" ;;
         spu)     TARGETS_TO_BUILD="CellSPU $TARGETS_TO_BUILD" ;;
+        cbe)     TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD" ;;
+        msil)    TARGETS_TO_BUILD="MSIL $TARGETS_TO_BUILD" ;;
         *) AC_MSG_ERROR([Unrecognized target $a_target]) ;;
       esac
   done
   ;;
 esac
-TARGETS_TO_BUILD="CBackend MSIL $TARGETS_TO_BUILD"
 AC_SUBST(TARGETS_TO_BUILD,$TARGETS_TO_BUILD)
 
 dnl Prevent the CBackend from using printf("%a") for floating point so older
