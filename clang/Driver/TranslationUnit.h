@@ -47,7 +47,7 @@ public:
   const LangOptions& getLangOpts() const { return LangOpts; }
   
   /// EmitBitcodeFile - Emit the translation unit to a bitcode file.
-  bool EmitBitcodeFile(llvm::sys::Path& Filename) const;
+  bool EmitBitcodeFile(const llvm::sys::Path& Filename) const;
   
   /// Emit - Emit the translation unit to an arbitray bitcode stream.
   void Emit(llvm::Serializer& S) const;
@@ -56,7 +56,7 @@ public:
   static TranslationUnit* Create(llvm::Deserializer& D, FileManager& FMgr);
   
   /// ReadBitcodeFile - Reconsitute a translation unit from a bitcode file.
-  static TranslationUnit* ReadBitcodeFile(llvm::sys::Path& Filename,
+  static TranslationUnit* ReadBitcodeFile(const llvm::sys::Path& Filename,
                                           FileManager& FMgr); 
   
   // Accessors

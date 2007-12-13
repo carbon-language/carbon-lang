@@ -16,6 +16,8 @@
 
 #include <iosfwd>
 
+namespace llvm { namespace sys { class Path; }}
+
 namespace clang {
 
 class ASTConsumer;
@@ -34,6 +36,9 @@ ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Features);
 ASTConsumer *CreateCodeRewriterTest(Diagnostic &Diags);
 ASTConsumer *CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr, 
                                      const LangOptions &LOpts);
+  
+ASTConsumer *CreateASTSerializer(const llvm::sys::Path& FName,
+                                 Diagnostic &Diags, const LangOptions &LOpts);
 
 } // end clang namespace
 

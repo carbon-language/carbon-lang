@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTConsumers.h"
+#include "TranslationUnit.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/CFG.h"
@@ -604,3 +605,40 @@ ASTConsumer *clang::CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Feat
   return new LLVMEmitter(Diags, Features);
 }
 
+//===----------------------------------------------------------------------===//
+// AST Serializer
+
+namespace {
+  class ASTSerializer : public ASTConsumer {
+    Diagnostic &Diags;
+    TranslationUnit TU;
+    const llvm::sys::Path FName;
+  public:
+    ASTSerializer(const llvm::sys::Path& F, Diagnostic &diags,
+                  const LangOptions &LO)
+    : Diags(diags), TU(LO), FName(F) {}
+
+    
+    virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
+      TU.setContext(&Context);
+    }
+    
+    virtual void HandleTopLevelDecl(Decl *D) {
+      // If an error occurred, stop code generation, but continue parsing and
+      // semantic analysis (to ensure all warnings and errors are emitted).
+      if (Diags.hasErrorOccurred())
+        return;
+      
+      TU.AddTopLevelDecl(D);
+    }
+    
+    ~ASTSerializer() { TU.EmitBitcodeFile(FName); }
+  }; 
+} // end anonymous namespace
+
+
+ASTConsumer *clang::CreateASTSerializer(const llvm::sys::Path& FName,
+                                        Diagnostic &Diags,
+                                        const LangOptions &Features) {
+  return new ASTSerializer(FName, Diags, Features);
+}

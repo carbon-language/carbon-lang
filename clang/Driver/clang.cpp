@@ -53,6 +53,7 @@ Stats("stats", llvm::cl::desc("Print performance metrics and statistics"));
 enum ProgActions {
   RewriteTest,                  // Rewriter testing stuff.
   EmitLLVM,                     // Emit a .ll file.
+  SerializeAST,                 // Emit a .ast file.
   ASTPrint,                     // Parse ASTs and print them.
   ASTDump,                      // Parse ASTs and dump them.
   ASTView,                      // Parse ASTs and view them in Graphviz.
@@ -107,6 +108,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run prototype serializtion code."),
              clEnumValN(EmitLLVM, "emit-llvm",
                         "Build ASTs then convert to LLVM, emit .ll file"),
+             clEnumValN(SerializeAST, "serialize-ast",
+                        "Build ASTs and emit .ast file"),
              clEnumValN(RewriteTest, "rewrite-test",
                         "Playground for the code rewriter"),
              clEnumValEnd));
@@ -816,7 +819,8 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA, unsigned MainFileID){
 /// CreateASTConsumer - Create the ASTConsumer for the corresponding program
 ///  action.  These consumers can operate on both ASTs that are freshly
 ///  parsed from source files as well as those deserialized from Bitcode.
-static ASTConsumer* CreateASTConsumer(Diagnostic& Diag, FileManager& FileMgr, 
+static ASTConsumer* CreateASTConsumer(const std::string& InFile,
+                                      Diagnostic& Diag, FileManager& FileMgr, 
                                       const LangOptions& LangOpts) {
   switch (ProgAction) {
     default:
@@ -850,6 +854,21 @@ static ASTConsumer* CreateASTConsumer(Diagnostic& Diag, FileManager& FileMgr,
     case EmitLLVM:
       return CreateLLVMEmitter(Diag, LangOpts);
       
+    case SerializeAST: {
+      // FIXME: Allow user to tailor where the file is written.
+      llvm::sys::Path FName = llvm::sys::Path::GetTemporaryDirectory(NULL);
+      FName.appendComponent((InFile + ".ast").c_str());
+      
+      if (FName.makeUnique(true,NULL)) {
+        fprintf (stderr, "error: cannot create serialized file: '%s'\n",
+                 FName.c_str());
+        
+        return NULL;
+      }
+      
+      return CreateASTSerializer(FName, Diag, LangOpts);
+    }
+      
     case RewriteTest:
       return CreateCodeRewriterTest(Diag);
   }
@@ -869,7 +888,8 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   
   switch (ProgAction) {
   default:
-    Consumer = CreateASTConsumer(PP.getDiagnostics(), HeaderInfo.getFileMgr(),
+    Consumer = CreateASTConsumer(InFile, PP.getDiagnostics(),
+                                 HeaderInfo.getFileMgr(),
                                  PP.getLangOptions());
     
     if (!Consumer) {      
@@ -964,7 +984,8 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
   }
   
   TranslationUnit* TU = TranslationUnit::ReadBitcodeFile(Filename,FileMgr);  
-  ASTConsumer* Consumer = CreateASTConsumer(Diag,FileMgr,TU->getLangOpts());
+  ASTConsumer* Consumer = CreateASTConsumer(InFile,Diag,
+                                            FileMgr,TU->getLangOpts());
   
   if (!Consumer) {      
     fprintf(stderr, "Unsupported program action with serialized ASTs!\n");

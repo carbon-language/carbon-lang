@@ -33,7 +33,7 @@ namespace {
 
 using namespace clang;
 
-bool TranslationUnit::EmitBitcodeFile(llvm::sys::Path& Filename) const {  
+bool TranslationUnit::EmitBitcodeFile(const llvm::sys::Path& Filename) const {  
 
   // Reserve 256K for bitstream buffer.
   std::vector<unsigned char> Buffer;
@@ -122,8 +122,9 @@ void TranslationUnit::Emit(llvm::Serializer& Sezr) const {
   Sezr.ExitBlock();  // exit "ASTContextBlock"
 }
 
-TranslationUnit* TranslationUnit::ReadBitcodeFile(llvm::sys::Path& Filename,
-                                                  FileManager& FMgr) {
+TranslationUnit*
+TranslationUnit::ReadBitcodeFile(const llvm::sys::Path& Filename,
+                                 FileManager& FMgr) {
   
   // Create the memory buffer that contains the contents of the file.  
   llvm::scoped_ptr<llvm::MemoryBuffer> 
