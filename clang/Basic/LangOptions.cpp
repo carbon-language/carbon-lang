@@ -1,4 +1,4 @@
-//===--- SourceManager.cpp - Track and cache source files -----------------===//
+//===--- LangOptions.cpp - Language feature info --------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
