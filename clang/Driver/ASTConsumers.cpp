@@ -570,6 +570,7 @@ namespace {
       Ctx = &Context;
       M = new llvm::Module("foo");
       M->setTargetTriple(Ctx->Target.getTargetTriple());
+      M->setDataLayout(Ctx->Target.getTargetDescription());
       TD = new llvm::TargetData(Ctx->Target.getTargetDescription());
       Builder = CodeGen::Init(Context, Features, *M, *TD, Diags);
     }
