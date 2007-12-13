@@ -8,8 +8,9 @@
     <a href="index.html">About</a>
     <a href="features.html">Features</a>
     <a href="comparison.html">Comparisons</a>
-    <a href="get_involved.html">Get Involved</a>
-    <a href="http://clang.llvm.org/docs/InternalsManual.html">Manual</a>
+    <a href="get_started.html">Get&nbsp;Started</a>
+    <a href="get_involved.html">Get&nbsp;Involved</a>
+    <a href="http://clang.llvm.org/docs/InternalsManual.html">clang&nbsp;Internals</a>
   </div>
   
   <div class="submenu">
