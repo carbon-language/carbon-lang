@@ -1282,7 +1282,7 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   // Parse receiver
   if (Tok.is(tok::identifier) &&
       (Actions.isTypeName(*Tok.getIdentifierInfo(), CurScope)
-       || !strcmp(Tok.getIdentifierInfo()->getName(), "super"))) {
+       || Tok.isNamedIdentifier("super"))) {
     ReceiverName = Tok.getIdentifierInfo();
     ConsumeToken();
   } else {
