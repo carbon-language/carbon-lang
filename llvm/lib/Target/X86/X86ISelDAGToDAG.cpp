@@ -582,7 +582,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
   }
 
   int id = N.Val->getNodeId();
-  bool Available = isSelected(id);
+  bool AlreadySelected = isSelected(id); // Already selected, not yet replaced.
 
   switch (N.getOpcode()) {
   default: break;
@@ -605,7 +605,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     // If value is available in a register both base and index components have
     // been picked, we can't fit the result available in the register in the
     // addressing mode. Duplicate GlobalAddress or ConstantPool as displacement.
-    if (!Available || (AM.Base.Reg.Val && AM.IndexReg.Val)) {
+    if (!AlreadySelected || (AM.Base.Reg.Val && AM.IndexReg.Val)) {
       bool isStatic = TM.getRelocationModel() == Reloc::Static;
       SDOperand N0 = N.getOperand(0);
       // Mac OS X X86-64 lower 4G address is not available.
@@ -653,7 +653,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
 
   case ISD::SHL:
-    if (Available || AM.IndexReg.Val != 0 || AM.Scale != 1)
+    if (AlreadySelected || AM.IndexReg.Val != 0 || AM.Scale != 1)
       break;
       
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1))) {
@@ -690,7 +690,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     // FALL THROUGH
   case ISD::MUL:
     // X*[3,5,9] -> X+X*[2,4,8]
-    if (!Available &&
+    if (!AlreadySelected &&
         AM.BaseType == X86ISelAddressMode::RegBase &&
         AM.Base.Reg.Val == 0 &&
         AM.IndexReg.Val == 0) {
@@ -725,7 +725,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
     break;
 
   case ISD::ADD:
-    if (!Available) {
+    if (!AlreadySelected) {
       X86ISelAddressMode Backup = AM;
       if (!MatchAddress(N.Val->getOperand(0), AM, false, Depth+1) &&
           !MatchAddress(N.Val->getOperand(1), AM, false, Depth+1))
@@ -740,7 +740,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
 
   case ISD::OR:
     // Handle "X | C" as "X + C" iff X is known to have C bits clear.
-    if (Available) break;
+    if (AlreadySelected) break;
       
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       X86ISelAddressMode Backup = AM;
@@ -758,6 +758,44 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM,
       AM = Backup;
     }
     break;
+      
+  case ISD::AND: {
+    // Handle "(x << C1) & C2" as "(X & (C2>>C1)) << C1" if safe and if this
+    // allows us to fold the shift into this addressing mode.
+    if (AlreadySelected) break;
+    SDOperand Shift = N.getOperand(0);
+    if (Shift.getOpcode() != ISD::SHL) break;
+    
+    // Scale must not be used already.
+    if (AM.IndexReg.Val != 0 || AM.Scale != 1) break;
+      
+    ConstantSDNode *C2 = dyn_cast<ConstantSDNode>(N.getOperand(1));
+    ConstantSDNode *C1 = dyn_cast<ConstantSDNode>(Shift.getOperand(1));
+    if (!C1 || !C2) break;
+
+    // Not likely to be profitable if either the AND or SHIFT node has more
+    // than one use (unless all uses are for address computation). Besides,
+    // isel mechanism requires their node ids to be reused.
+    if (!N.hasOneUse() || !Shift.hasOneUse())
+      break;
+    
+    // Verify that the shift amount is something we can fold.
+    unsigned ShiftCst = C1->getValue();
+    if (ShiftCst != 1 && ShiftCst != 2 && ShiftCst != 3)
+      break;
+    
+    // Get the new AND mask, this folds to a constant.
+    SDOperand NewANDMask = CurDAG->getNode(ISD::SRL, N.getValueType(),
+                                           SDOperand(C2, 0), SDOperand(C1, 0));
+    SDOperand NewAND = CurDAG->getNode(ISD::AND, N.getValueType(),
+                                       Shift.getOperand(0), NewANDMask);
+    NewANDMask.Val->setNodeId(Shift.Val->getNodeId());
+    NewAND.Val->setNodeId(N.Val->getNodeId());
+    
+    AM.Scale = 1 << ShiftCst;
+    AM.IndexReg = NewAND;
+    return false;
+  }
   }
 
   return MatchAddressBase(N, AM, isRoot, Depth);
