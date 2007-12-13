@@ -99,7 +99,8 @@ namespace {
     std::vector<DomForestNode*> computeDomForest(std::set<unsigned>& instrs);
     void processPHIUnion(MachineInstr* Inst,
                          std::set<unsigned>& PHIUnion,
-                         std::vector<StrongPHIElimination::DomForestNode*>& DF);
+                         std::vector<StrongPHIElimination::DomForestNode*>& DF,
+                         std::vector<std::pair<unsigned, unsigned> >& locals);
     void breakCriticalEdges(MachineFunction &Fn);
     
   };
@@ -300,6 +301,10 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
                                                      computeDomForest(PHIUnion);
     
     // Walk DomForest to resolve interferences
+    std::vector<std::pair<unsigned, unsigned> > localInterferences;
+    processPHIUnion(P, PHIUnion, DF, localInterferences);
+    
+    // FIXME: Check for local interferences
     
     ProcessedNames.insert(PHIUnion.begin(), PHIUnion.end());
     ++P;
@@ -308,7 +313,8 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
 
 void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
                                            std::set<unsigned>& PHIUnion,
-                        std::vector<StrongPHIElimination::DomForestNode*>& DF) {
+                        std::vector<StrongPHIElimination::DomForestNode*>& DF,
+                        std::vector<std::pair<unsigned, unsigned> >& locals) {
   
   std::vector<DomForestNode*> worklist(DF.begin(), DF.end());
   SmallPtrSet<DomForestNode*, 4> visited;
@@ -323,7 +329,6 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
     visited.insert(DFNode);
     
     bool inserted = false;
-    SmallPtrSet<DomForestNode*, 4> interferences;
     for (DomForestNode::iterator CI = DFNode->begin(), CE = DFNode->end();
          CI != CE; ++CI) {
       DomForestNode* child = *CI;   
@@ -342,7 +347,8 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
         }
       } else if (isLiveIn(Info, CInfo.DefInst->getParent()) ||
                  Info.DefInst->getParent() == CInfo.DefInst->getParent()) {
-        // FIXME: Add (p, c) to possible local interferences
+        // Add (p, c) to possible local interferences
+        locals.push_back(std::make_pair(DFNode->getReg(), child->getReg()));
       }
         
       if (!visited.count(child)) {
