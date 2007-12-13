@@ -1321,7 +1321,8 @@ inline QualType Sema::CheckShiftOperands( // C99 6.5.7
   
   // Shifts don't perform usual arithmetic conversions, they just do integer
   // promotions on each operand. C99 6.5.7p3
-  UsualUnaryConversions(lex);
+  if (!isCompAssign)
+    UsualUnaryConversions(lex);
   UsualUnaryConversions(rex);
   
   // "The type of the result is that of the promoted left operand."
