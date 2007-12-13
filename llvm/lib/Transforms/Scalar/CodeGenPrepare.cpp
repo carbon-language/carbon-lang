@@ -36,7 +36,7 @@ using namespace llvm;
 
 namespace {
   cl::opt<bool> OptExtUses("optimize-ext-uses",
-                           cl::init(false), cl::Hidden);
+                           cl::init(true), cl::Hidden);
 }
 
 namespace {  
@@ -929,6 +929,10 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   if (Src->hasOneUse())
     return false;
 
+  // Only do this xform is truncating is free.
+  if (!TLI->isTruncateFree(I->getType(), Src->getType()))
+    return false;
+
   // Only safe to perform the optimization if the source is also defined in
   // this block.
   if (!isa<Instruction>(Src) || DefBB != cast<Instruction>(Src)->getParent())
@@ -952,8 +956,11 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   for (Value::use_iterator UI = Src->use_begin(), E = Src->use_end(); 
        UI != E; ++UI) {
     Instruction *User = cast<Instruction>(*UI);
-    if (User->getParent() == DefBB) continue;
-    if (isa<PHINode>(User))
+    BasicBlock *UserBB = User->getParent();
+    if (UserBB == DefBB) continue;
+    // Be conservative. We don't want this xform to end up introducing
+    // reloads just before load / store instructions.
+    if (isa<PHINode>(User) || isa<LoadInst>(User) || isa<StoreInst>(User))
       return false;
   }
 

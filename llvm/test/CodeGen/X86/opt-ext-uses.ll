@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -optimize-ext-uses=true | grep movw | count 1
+; RUN: llvm-as < %s | llc -march=x86 | grep movw | count 1
 
 define i16 @t() signext  {
 entry:
