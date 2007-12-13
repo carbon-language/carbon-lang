@@ -62,6 +62,14 @@ BUILTIN(__builtin_fabs , "dd"  , "ncF")
 BUILTIN(__builtin_fabsf, "ff"  , "ncF")
 BUILTIN(__builtin_fabsl, "LdLd", "ncF")
 
+// FP Comparisons.
+BUILTIN(__builtin_isgreater     , "i.", "nc")
+BUILTIN(__builtin_isgreaterequal, "i.", "nc")
+BUILTIN(__builtin_isless        , "i.", "nc")
+BUILTIN(__builtin_islessequal   , "i.", "nc")
+BUILTIN(__builtin_islessgreater , "i.", "nc")
+BUILTIN(__builtin_isunordered   , "i.", "nc")
+
 // Builtins for arithmetic.
 BUILTIN(__builtin_clz  , "iUi"  , "nc")
 BUILTIN(__builtin_clzl , "iULi" , "nc")
