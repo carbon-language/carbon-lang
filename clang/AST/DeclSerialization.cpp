@@ -146,13 +146,15 @@ void ValueDecl::ReadInRec(Deserializer& D) {
 void VarDecl::EmitInRec(Serializer& S) const {
   ValueDecl::EmitInRec(S);
   S.EmitInt(getStorageClass());             // From VarDecl.
-  S.EmitInt(getObjcDeclQualifier());        // From VarDecl.
+  // FIXME: This is now in ParmVarDecl
+  // S.EmitInt(getObjcDeclQualifier());        // From VarDecl.
 }
 
 void VarDecl::ReadInRec(Deserializer& D) {
   ValueDecl::ReadInRec(D);
-  SClass = static_cast<StorageClass>(D.ReadInt());  // From VarDecl.  
-  objcDeclQualifier = static_cast<ObjcDeclQualifier>(D.ReadInt());  // VarDecl.
+  SClass = static_cast<StorageClass>(D.ReadInt());  // From VarDecl. 
+  // FIXME: This is now in ParmVarDecl
+  // objcDeclQualifier = static_cast<ObjcDeclQualifier>(D.ReadInt());  // VarDecl.
 }
 
     //===------------------------------------------------------------===//

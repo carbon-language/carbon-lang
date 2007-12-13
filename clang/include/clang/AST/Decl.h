@@ -319,10 +319,6 @@ public:
   //  as static variables declared within a function.
   bool hasGlobalStorage() const { return !hasAutoStorage(); }
   
-  ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
-  void setObjcDeclQualifier(ObjcDeclQualifier QTVal) 
-    { objcDeclQualifier = QTVal; }
-  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) {
     return D->getKind() >= VarFirst && D->getKind() <= VarLast;
@@ -331,16 +327,12 @@ public:
 protected:
   VarDecl(Kind DK, SourceLocation L, IdentifierInfo *Id, QualType T,
           StorageClass SC, ScopedDecl *PrevDecl, AttributeList *A = 0)
-    : ValueDecl(DK, L, Id, T, PrevDecl, A), Init(0), 
-      objcDeclQualifier(OBJC_TQ_None) { SClass = SC; }
+    : ValueDecl(DK, L, Id, T, PrevDecl, A), Init(0) { SClass = SC; }
 private:
   Expr *Init;
   // FIXME: This can be packed into the bitfields in Decl.
   unsigned SClass : 3;
-  /// FIXME: Also can be paced into the bitfields in Decl.
-  /// in, inout, etc.
-  ObjcDeclQualifier objcDeclQualifier : 6;
-  
+    
   friend class StmtIteratorBase;
   
 protected:
@@ -401,11 +393,21 @@ class ParmVarDecl : public VarDecl {
 public:
   ParmVarDecl(SourceLocation L, IdentifierInfo *Id, QualType T, StorageClass S,
               ScopedDecl *PrevDecl, AttributeList *A = 0)
-    : VarDecl(ParmVar, L, Id, T, S, PrevDecl, A) {}
+    : VarDecl(ParmVar, L, Id, T, S, PrevDecl, A), 
+    objcDeclQualifier(OBJC_TQ_None) {}
   
+  ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
+  void setObjcDeclQualifier(ObjcDeclQualifier QTVal) 
+  { objcDeclQualifier = QTVal; }
+    
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return D->getKind() == ParmVar; }
   static bool classof(const ParmVarDecl *D) { return true; }
+  
+private:
+  /// FIXME: Also can be paced into the bitfields in Decl.
+  /// in, inout, etc.
+  ObjcDeclQualifier objcDeclQualifier : 6;
   
 protected:
   /// CreateImpl - Deserialize a ParmVarDecl.  Called by Decl::Create.
