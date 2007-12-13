@@ -225,8 +225,7 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
       // of the ternary expression.
       CFGBlock* ConfluenceBlock = (Block) ? Block : createBlock();  
       ConfluenceBlock->appendStmt(C);
-      FinishBlock(ConfluenceBlock);
-      
+      FinishBlock(ConfluenceBlock);      
 
       // Create a block for the LHS expression if there is an LHS expression.
       // A GCC extension allows LHS to be NULL, causing the condition to
@@ -317,6 +316,20 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
     case Stmt::StmtExprClass:
       return WalkAST_VisitStmtExpr(cast<StmtExpr>(S));
 
+    case Stmt::UnaryOperatorClass: {
+      UnaryOperator* U = cast<UnaryOperator>(S);
+      
+      // sizeof(expressions).  For such expressions,
+      // the subexpression is not really evaluated, so
+      // we don't care about control-flow within the sizeof.
+      if (U->getOpcode() == UnaryOperator::SizeOf) {
+        Block->appendStmt(S);
+        return Block;
+      }
+      
+      break;
+    }
+      
     case Stmt::BinaryOperatorClass: {
       BinaryOperator* B = cast<BinaryOperator>(S);
 
@@ -345,14 +358,16 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
         addStmt(B->getRHS());
         return addStmt(B->getLHS());
       }
-
-      // Fall through to the default case.
+      
+      break;
     }
     
     default:
-      if (AlwaysAddStmt) Block->appendStmt(S);
-      return WalkAST_VisitChildren(S);
+      break;
   };
+      
+  if (AlwaysAddStmt) Block->appendStmt(S);
+  return WalkAST_VisitChildren(S);
 }
 
 /// WalkAST_VisitDeclSubExprs - Utility method to handle Decls contained in
