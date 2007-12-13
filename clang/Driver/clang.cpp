@@ -856,15 +856,16 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case SerializeAST: {
       // FIXME: Allow user to tailor where the file is written.
-      llvm::sys::Path FName = llvm::sys::Path::GetTemporaryDirectory(NULL);
-      FName.appendComponent((InFile + ".ast").c_str());
+      // FIXME: This is a hack: "/" separator not portable.
+      std::string::size_type idx = InFile.rfind("/");
       
-      if (FName.makeUnique(true,NULL)) {
-        fprintf (stderr, "error: cannot create serialized file: '%s'\n",
-                 FName.c_str());
-        
+      if (idx != std::string::npos && idx == InFile.size()-1)
         return NULL;
-      }
+      
+      std::string TargetPrefix( idx == std::string::npos ?
+                                InFile : InFile.substr(idx+1));
+
+      llvm::sys::Path FName = llvm::sys::Path((TargetPrefix + ".ast").c_str());
       
       return CreateASTSerializer(FName, Diag, LangOpts);
     }

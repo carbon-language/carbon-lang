@@ -552,7 +552,6 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include <iostream>
 
 namespace {
   class LLVMEmitter : public ASTConsumer {
@@ -596,7 +595,7 @@ namespace {
       CodeGen::Terminate(Builder);
       
       // Print the generated code.
-      M->print(std::cout);
+      M->print(llvm::cout.stream());
       delete M;
     }
   }; 
