@@ -21,7 +21,7 @@
 {
 @public
 	int IVAR;
-	int IVAR1; // expected-error {{inconsistent instance variable specification}}
+	int IVAR1; // expected-error {{inconsistent number of instance variables specified}}
 }
 @end
 
@@ -46,7 +46,7 @@
 @private
 
         int IVAR;
-	int IVAR1; // expected-error {{inconsistent instance variable specification}}
+	int IVAR1; // expected-error {{inconsistent number of instance variables specified}}
 }
 @end
 
