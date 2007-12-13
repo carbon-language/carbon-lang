@@ -136,9 +136,19 @@ bool TransferFuncs::VisitCallExpr(CallExpr* C) {
 }
 
 bool TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
-  if (U->getOpcode() == UnaryOperator::AddrOf)
-    if (BlockVarDecl* VD = FindBlockVarDecl(U->getSubExpr()))
-      return V(VD,AD) = Initialized;
+  switch (U->getOpcode()) {
+    case UnaryOperator::AddrOf:
+      if (BlockVarDecl* VD = FindBlockVarDecl(U->getSubExpr()))
+        return V(VD,AD) = Initialized;
+      
+      break;
+    
+    case UnaryOperator::SizeOf:
+      return Initialized;
+      
+    default:
+      break;
+  }
 
   return Visit(U->getSubExpr());
 }

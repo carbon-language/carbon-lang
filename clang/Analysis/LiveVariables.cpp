@@ -93,6 +93,7 @@ void TransferFuncs::VisitUnaryOperator(UnaryOperator* U) {
   Stmt *S = U->getSubExpr();
   
   switch (U->getOpcode()) {
+  case UnaryOperator::SizeOf: return;      
   case UnaryOperator::PostInc:
   case UnaryOperator::PostDec:
   case UnaryOperator::PreInc:
