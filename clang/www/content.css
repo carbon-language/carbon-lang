@@ -8,19 +8,3 @@ IMG.img_slide {
     margin-left: auto;
     margin-right: auto 
 }
-
-
-/* FIXME: This is only for the status page */
-table,tr,td {
-	border:.3ex solid black;
-	border-collapse:collapse;
-	padding:.4ex;
-}
-
-.code {
-	font:Courier,Arial;
-}
-.simple_list { /* simple lists that don't need to stand out */
-	margin-left:0;
-}
-
