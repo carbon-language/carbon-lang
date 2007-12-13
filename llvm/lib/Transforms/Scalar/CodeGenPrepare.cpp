@@ -929,7 +929,7 @@ bool CodeGenPrepare::OptimizeExtUses(Instruction *I) {
   if (Src->hasOneUse())
     return false;
 
-  // Only do this xform is truncating is free.
+  // Only do this xform if truncating is free.
   if (!TLI->isTruncateFree(I->getType(), Src->getType()))
     return false;
 
