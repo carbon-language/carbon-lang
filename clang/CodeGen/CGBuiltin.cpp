@@ -21,10 +21,8 @@
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
-
 using namespace clang;
 using namespace CodeGen;
-
 using namespace llvm;
 
 RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
@@ -34,7 +32,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
       return EmitCallExpr(CGM.getBuiltinLibFunction(BuiltinID), E);
   
     // See if we have a target specific intrinsic.
-    llvm::Intrinsic::ID IntrinsicID;
+    Intrinsic::ID IntrinsicID;
     const char *TargetPrefix = Target.getTargetPrefix();
     const char *BuiltinName = getContext().BuiltinInfo.GetName(BuiltinID);
 #define GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
@@ -42,15 +40,13 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
 #undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
     
     if (IntrinsicID != Intrinsic::not_intrinsic) {
-      llvm::SmallVector<llvm::Value*, 16> Args;
+      SmallVector<Value*, 16> Args;
       
-      llvm::Function *F = llvm::Intrinsic::getDeclaration(&CGM.getModule(), 
-                                                          IntrinsicID);
-      
+      Function *F = Intrinsic::getDeclaration(&CGM.getModule(), IntrinsicID);
       const llvm::FunctionType *FTy = F->getFunctionType();
       
       for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
-        llvm::Value *ArgValue = EmitScalarExpr(E->getArg(i));
+        Value *ArgValue = EmitScalarExpr(E->getArg(i));
   
         // If the intrinsic arg type is different from the builtin arg type
         // we need to do a bit cast.
@@ -64,17 +60,15 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
         Args.push_back(ArgValue);
       }
             
-      llvm::Value *V = Builder.CreateCall(F, &Args[0], &Args[0] + Args.size());
-
+      Value *V = Builder.CreateCall(F, &Args[0], &Args[0] + Args.size());
       QualType BuiltinRetType = E->getType();
       
-      const llvm::Type *RetTy = BuiltinRetType->isVoidType() ? 
-        llvm::Type::VoidTy : ConvertType(BuiltinRetType);
+      const llvm::Type *RetTy = llvm::Type::VoidTy;
+      if (!BuiltinRetType->isVoidType()) RetTy = ConvertType(BuiltinRetType);
 
       if (RetTy != V->getType()) {
         assert(V->getType()->canLosslesslyBitCastTo(RetTy) &&
                "Must be able to losslessly bit cast result type");
-        
         V = Builder.CreateBitCast(V, RetTy);
       }
       
@@ -82,7 +76,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     }
 
     // See if we have a target specific builtin that needs to be lowered.
-    llvm::Value *V = 0;
+    Value *V = 0;
     
     if (strcmp(TargetPrefix, "x86") == 0)
       V = EmitX86BuiltinExpr(BuiltinID, E);
@@ -97,7 +91,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     // Unknown builtin, for now just dump it out and return undef.
     if (hasAggregateLLVMType(E->getType()))
       return RValue::getAggregate(CreateTempAlloca(ConvertType(E->getType())));
-    return RValue::get(llvm::UndefValue::get(ConvertType(E->getType())));
+    return RValue::get(UndefValue::get(ConvertType(E->getType())));
   }    
   case Builtin::BI__builtin___CFStringMakeConstantString: {
     const Expr *Arg = E->getArg(0);
@@ -118,86 +112,73 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   }
   case Builtin::BI__builtin_va_start:
   case Builtin::BI__builtin_va_end: {
-    llvm::Value *ArgValue = EmitScalarExpr(E->getArg(0));
+    Value *ArgValue = EmitScalarExpr(E->getArg(0));
     const llvm::Type *DestType = llvm::PointerType::get(llvm::Type::Int8Ty);
     if (ArgValue->getType() != DestType)
       ArgValue = Builder.CreateBitCast(ArgValue, DestType, 
                                        ArgValue->getNameStart());
 
-    llvm::Intrinsic::ID inst = (BuiltinID == Builtin::BI__builtin_va_start) ? 
-      llvm::Intrinsic::vastart : llvm::Intrinsic::vaend;
-    llvm::Value *F = llvm::Intrinsic::getDeclaration(&CGM.getModule(), inst);
-    llvm::Value *V = Builder.CreateCall(F, ArgValue);
+    Intrinsic::ID inst = (BuiltinID == Builtin::BI__builtin_va_start) ? 
+      Intrinsic::vastart : Intrinsic::vaend;
+    Value *F = Intrinsic::getDeclaration(&CGM.getModule(), inst);
+    Value *V = Builder.CreateCall(F, ArgValue);
 
     return RValue::get(V);
   }
   case Builtin::BI__builtin_classify_type: {
-    llvm::APSInt Result(32);
+    APSInt Result(32);
     
     if (!E->isBuiltinClassifyType(Result))
       assert(0 && "Expr not __builtin_classify_type!");
     
-    return RValue::get(llvm::ConstantInt::get(Result));
+    return RValue::get(ConstantInt::get(Result));
   }
   case Builtin::BI__builtin_constant_p: {
-    llvm::APSInt Result(32);
+    APSInt Result(32);
 
     // FIXME: Analyze the parameter and check if it is a constant.
     Result = 0;
     
-    return RValue::get(llvm::ConstantInt::get(Result));
+    return RValue::get(ConstantInt::get(Result));
   }
   case Builtin::BI__builtin_abs: {
-    llvm::Value *ArgValue = EmitScalarExpr(E->getArg(0));   
+    Value *ArgValue = EmitScalarExpr(E->getArg(0));   
     
     llvm::BinaryOperator *NegOp = 
       Builder.CreateNeg(ArgValue, (ArgValue->getName() + "neg").c_str());
-    llvm::Value *CmpResult = 
+    Value *CmpResult = 
       Builder.CreateICmpSGE(ArgValue, NegOp->getOperand(0), "abscond");
-    llvm::Value *Result = 
+    Value *Result = 
       Builder.CreateSelect(CmpResult, ArgValue, NegOp, "abs");
     
     return RValue::get(Result);
   }
-  case Builtin::BI__builtin_expect: {
-    llvm::Value *Condition = EmitScalarExpr(E->getArg(0));   
-    return RValue::get(Condition);
-  }
+  case Builtin::BI__builtin_expect:
+    return RValue::get(EmitScalarExpr(E->getArg(0)));
   case Builtin::BI__builtin_bswap32:
   case Builtin::BI__builtin_bswap64: {
-    llvm::Value *ArgValue = EmitScalarExpr(E->getArg(0));
+    Value *ArgValue = EmitScalarExpr(E->getArg(0));
     const llvm::Type *ArgType = ArgValue->getType();
-    llvm::Value *F = 
-      llvm::Intrinsic::getDeclaration(&CGM.getModule(), 
-                                      llvm::Intrinsic::bswap,
-                                      &ArgType, 1);
-    llvm::Value *V = Builder.CreateCall(F, ArgValue, "tmp");
-      
-    return RValue::get(V);      
+    Value *F = Intrinsic::getDeclaration(&CGM.getModule(), Intrinsic::bswap,
+                                         &ArgType, 1);
+    return RValue::get(Builder.CreateCall(F, ArgValue, "tmp"));
   }
   case Builtin::BI__builtin_inff: {
-    llvm::APFloat f(llvm::APFloat::IEEEsingle,
-                    llvm::APFloat::fcInfinity, false);
-    
-    llvm::Value *V = llvm::ConstantFP::get(llvm::Type::FloatTy, f);
-    return RValue::get(V);
+    APFloat f(APFloat::IEEEsingle, APFloat::fcInfinity, false);
+    return RValue::get(ConstantFP::get(llvm::Type::FloatTy, f));
   }
   case Builtin::BI__builtin_inf:
   // FIXME: mapping long double onto double.      
   case Builtin::BI__builtin_infl: {
-    llvm::APFloat f(llvm::APFloat::IEEEdouble,
-                    llvm::APFloat::fcInfinity, false);
-    
-    llvm::Value *V = llvm::ConstantFP::get(llvm::Type::DoubleTy, f);
-    return RValue::get(V);
+    APFloat f(APFloat::IEEEdouble, APFloat::fcInfinity, false);
+    return RValue::get(ConstantFP::get(llvm::Type::DoubleTy, f));
   }
   }
   return RValue::get(0);
 }
 
-llvm::Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID, 
-                                                 const CallExpr *E)
-{
+Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID, 
+                                           const CallExpr *E) {
   switch (BuiltinID) {
   default: return 0;
   case X86::BI__builtin_ia32_mulps:
@@ -217,7 +198,7 @@ llvm::Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                              EmitScalarExpr(E->getArg(1)),
                              "pxor");
   case X86::BI__builtin_ia32_pandn: {
-    llvm::Value *V1 = Builder.CreateNot(EmitScalarExpr(E->getArg(0)), "tmp");
+    Value *V1 = Builder.CreateNot(EmitScalarExpr(E->getArg(0)), "tmp");
     return Builder.CreateAnd(V1, EmitScalarExpr(E->getArg(1)), "pandn");
   }
   case X86::BI__builtin_ia32_paddb:
@@ -266,9 +247,9 @@ llvm::Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                              0, 2,
                              "punpckldq");
   case X86::BI__builtin_ia32_pshufd: {
-    llvm::Value *V = EmitScalarExpr(E->getArg(0));
-    llvm::ConstantInt *I = 
-      cast<llvm::ConstantInt>(EmitScalarExpr(E->getArg(1)));
+    Value *V = EmitScalarExpr(E->getArg(0));
+    ConstantInt *I = 
+      cast<ConstantInt>(EmitScalarExpr(E->getArg(1)));
     int i = I->getZExtValue();
     
     return EmitShuffleVector(V, V, 
@@ -279,9 +260,8 @@ llvm::Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   }
 }
 
-llvm::Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID, 
-                                                 const CallExpr *E)
-{
+Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID, 
+                                           const CallExpr *E) {
   switch (BuiltinID) {
   default: return 0;
   }
