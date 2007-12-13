@@ -330,43 +330,6 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
       LiveVariables::VarInfo& CInfo = LV.getVarInfo(child->getReg());
         
       if (isLiveOut(Info, CInfo.DefInst->getParent())) {
-        interferences.insert(child);
-      } else if (isLiveIn(Info, CInfo.DefInst->getParent()) ||
-                 Info.DefInst->getParent() == CInfo.DefInst->getParent()) {
-        // FIXME: Add (p, c) to possible local interferences
-      }
-        
-      if (!visited.count(child)) {
-        worklist.push_back(child);
-        inserted = true;
-      }
-    }
-    
-    if (interferences.size() == 1) {
-      DomForestNode* child = *interferences.begin();
-      
-      unsigned numParentCopies = 0;
-      unsigned numChildCopies = 0;
-      for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
-        unsigned SrcReg = Inst->getOperand(i-1).getReg();
-        if (SrcReg == DFNode->getReg()) numParentCopies++;
-        else if (SrcReg == child->getReg()) numChildCopies++;
-      }
-      
-      if (numParentCopies < numChildCopies) {
-        // Insert copies for child
-        for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
-          if (Inst->getOperand(i-1).getReg() == child->getReg()) {
-            unsigned SrcReg = child->getReg();
-            MachineBasicBlock* From = Inst->getOperand(i).getMBB();
-            
-            Waiting[From].push_back(std::make_pair(SrcReg, DestReg));
-            PHIUnion.erase(SrcReg);
-          }
-        }
-        
-        // FIXME: Make child's children parent's children
-      } else {
         // Insert copies for parent
         for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
           if (Inst->getOperand(i-1).getReg() == DFNode->getReg()) {
@@ -377,17 +340,14 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
             PHIUnion.erase(SrcReg);
           }
         }
+      } else if (isLiveIn(Info, CInfo.DefInst->getParent()) ||
+                 Info.DefInst->getParent() == CInfo.DefInst->getParent()) {
+        // FIXME: Add (p, c) to possible local interferences
       }
-    } else if (interferences.size() > 1) {
-      // Insert copies for parent
-      for (int i = Inst->getNumOperands() - 1; i >= 2; i-=2) {
-        if (Inst->getOperand(i-1).getReg() == DFNode->getReg()) {
-          unsigned SrcReg = DFNode->getReg();
-          MachineBasicBlock* From = Inst->getOperand(i).getMBB();
-          
-          Waiting[From].push_back(std::make_pair(SrcReg, DestReg));
-          PHIUnion.erase(SrcReg);
-        }
+        
+      if (!visited.count(child)) {
+        worklist.push_back(child);
+        inserted = true;
       }
     }
     
