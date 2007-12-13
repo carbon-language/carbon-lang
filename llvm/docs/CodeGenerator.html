@@ -754,7 +754,8 @@ instruction selector.
 
 <p>Portions of the DAG instruction selector are generated from the target 
 description (<tt>*.td</tt>) files.  Our goal is for the entire instruction
-selector to be generated from these <tt>.td</tt> files.</p>
+selector to be generated from these <tt>.td</tt> files, though currently
+there are still things that require custom C++ code.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -1112,7 +1113,8 @@ primarily because it is a work in progress and is not yet finished:</p>
 <li>There is no great way to support matching complex addressing modes yet.  In
     the future, we will extend pattern fragments to allow them to define
     multiple values (e.g. the four operands of the <a href="#x86_memory">X86
-    addressing mode</a>).  In addition, we'll extend fragments so that a
+    addressing mode</a>, which are currently matched with custom C++ code).
+    In addition, we'll extend fragments so that a
     fragment can match multiple different patterns.</li>
 <li>We don't automatically infer flags like isStore/isLoad yet.</li>
 <li>We don't automatically generate the set of supported registers and
@@ -1629,11 +1631,9 @@ are specific to the code generator for a particular target.</p>
 <div class="doc_text">
 
 <p>The X86 code generator lives in the <tt>lib/Target/X86</tt> directory.  This
-code generator currently targets a generic P6-like processor.  As such, it
-produces a few P6-and-above instructions (like conditional moves), but it does
-not make use of newer features like MMX or SSE.  In the future, the X86 backend
-will have sub-target support added for specific processor families and 
-implementations.</p>
+code generator is capable of targeting a variety of x86-32 and x86-64
+processors, and includes support for ISA extensions such as MMX and SSE.
+</p>
 
 </div>
 
