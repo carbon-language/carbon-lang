@@ -899,9 +899,9 @@ protected:
 
 class ObjcInterfaceType : public Type {
   ObjcInterfaceDecl *Decl;
-  
-  ObjcInterfaceType(ObjcInterfaceDecl *D) : 
-    Type(ObjcInterface, QualType()), Decl(D) { }
+protected:
+  ObjcInterfaceType(TypeClass tc, ObjcInterfaceDecl *D) : 
+    Type(tc, QualType()), Decl(D) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
   
@@ -919,22 +919,19 @@ public:
 /// conforming to a list of protocols; such as, INTF<Proto1, Proto2, Proto1>.
 /// Duplicate protocols are removed and protocol list is canonicalized to be in
 /// alphabetical order.
-class ObjcQualifiedInterfaceType : public Type, public llvm::FoldingSetNode {
-  // Interface type for this protocol conforming object type
-  ObjcInterfaceType *InterfaceType;
-
+class ObjcQualifiedInterfaceType : public ObjcInterfaceType, 
+                                   public llvm::FoldingSetNode {
+                                     
   // List of protocols for this protocol conforming object type
   // List is sorted on protocol name. No protocol is enterred more than once.
   llvm::SmallVector<ObjcProtocolDecl*, 8> Protocols;
 
-  ObjcQualifiedInterfaceType(ObjcInterfaceType *T,
+  ObjcQualifiedInterfaceType(ObjcInterfaceDecl *D,
                              ObjcProtocolDecl **Protos,  unsigned NumP) : 
-    Type(ObjcQualifiedInterface, QualType()), InterfaceType(T),
+    ObjcInterfaceType(ObjcQualifiedInterface, D), 
     Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
-  
-  ObjcInterfaceType *getInterfaceType() const { return InterfaceType; }
   
   ObjcProtocolDecl *getProtocols(unsigned i) const {
     return Protocols[i];
@@ -947,7 +944,6 @@ public:
   
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, 
-                      ObjcInterfaceType *interfaceType, 
                       ObjcProtocolDecl **protocols, unsigned NumProtocols);
  
   static bool classof(const Type *T) { 

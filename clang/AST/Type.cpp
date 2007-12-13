@@ -529,16 +529,14 @@ void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID) {
 }
 
 void ObjcQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
-                                         ObjcInterfaceType *interfaceType, 
                                          ObjcProtocolDecl **protocols, 
                                          unsigned NumProtocols) {
-  ID.AddPointer(interfaceType);
   for (unsigned i = 0; i != NumProtocols; i++)
     ID.AddPointer(protocols[i]);
 }
 
 void ObjcQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID) {
-  Profile(ID, getInterfaceType(), &Protocols[0], getNumProtocols());
+  Profile(ID, &Protocols[0], getNumProtocols());
 }
 
 /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
@@ -770,7 +768,7 @@ void ObjcQualifiedInterfaceType::getAsStringInternal(
                                   std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
-  std::string ObjcQIString = getInterfaceType()->getDecl()->getName();
+  std::string ObjcQIString = getDecl()->getName();
   ObjcQIString += '<';
   int num = getNumProtocols();
   for (int i = 0; i < num; i++) {

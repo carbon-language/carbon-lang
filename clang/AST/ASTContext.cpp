@@ -687,7 +687,7 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
 QualType ASTContext::getObjcInterfaceType(ObjcInterfaceDecl *Decl) {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
-  Decl->TypeForDecl = new ObjcInterfaceType(Decl);
+  Decl->TypeForDecl = new ObjcInterfaceType(Type::ObjcInterface, Decl);
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
 }
@@ -697,11 +697,8 @@ QualType ASTContext::getObjcInterfaceType(ObjcInterfaceDecl *Decl) {
 /// the conforming protocol list.
 QualType ASTContext::getObjcQualifiedInterfaceType(ObjcInterfaceDecl *Decl,
                        ObjcProtocolDecl **Protocols, unsigned NumProtocols) {
-  ObjcInterfaceType *IType = 
-    cast<ObjcInterfaceType>(getObjcInterfaceType(Decl));
-  
   llvm::FoldingSetNodeID ID;
-  ObjcQualifiedInterfaceType::Profile(ID, IType, Protocols, NumProtocols);
+  ObjcQualifiedInterfaceType::Profile(ID, Protocols, NumProtocols);
   
   void *InsertPos = 0;
   if (ObjcQualifiedInterfaceType *QT =
@@ -710,7 +707,7 @@ QualType ASTContext::getObjcQualifiedInterfaceType(ObjcInterfaceDecl *Decl,
   
   // No Match;
   ObjcQualifiedInterfaceType *QType =
-    new ObjcQualifiedInterfaceType(IType, Protocols, NumProtocols);
+    new ObjcQualifiedInterfaceType(Decl, Protocols, NumProtocols);
   Types.push_back(QType);
   ObjcQualifiedInterfaceTypes.InsertNode(QType, InsertPos);
   return QualType(QType, 0);
@@ -1204,8 +1201,8 @@ bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs,
   ObjcQualifiedInterfaceType *rhsQI = 
     dyn_cast<ObjcQualifiedInterfaceType>(rhs.getCanonicalType().getTypePtr());
   assert(rhsQI && "QualifiedInterfaceTypesAreCompatible - bad rhs type");
-  if (!interfaceTypesAreCompatible(QualType(lhsQI->getInterfaceType(), 0), 
-			           QualType(rhsQI->getInterfaceType(), 0)))
+  if (!interfaceTypesAreCompatible(getObjcInterfaceType(lhsQI->getDecl()), 
+                                   getObjcInterfaceType(rhsQI->getDecl())))
     return false;
   /* All protocols in lhs must have a presense in rhs. */
   for (unsigned i =0; i < lhsQI->getNumProtocols(); i++) {
