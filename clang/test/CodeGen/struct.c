@@ -94,6 +94,11 @@ void f9(range *p)
   range r = *p;
 }
 
+void f10(range *p)
+{
+  range r = p[0];
+}
+
 /* _Bool types */
 
 struct _w

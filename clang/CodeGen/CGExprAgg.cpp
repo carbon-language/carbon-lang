@@ -59,11 +59,13 @@ public:
   void VisitParenExpr(ParenExpr *PE) { Visit(PE->getSubExpr()); }
 
   // l-values.
-  void VisitDeclRefExpr(DeclRefExpr *DRE) { return EmitAggLoadOfLValue(DRE); }
-  void VisitMemberExpr(MemberExpr *ME) { return EmitAggLoadOfLValue(ME); }
-  void VisitUnaryDeref(UnaryOperator *E) { return EmitAggLoadOfLValue(E); }
-  
-  //  case Expr::ArraySubscriptExprClass:
+  void VisitDeclRefExpr(DeclRefExpr *DRE) { EmitAggLoadOfLValue(DRE); }
+  void VisitMemberExpr(MemberExpr *ME) { EmitAggLoadOfLValue(ME); }
+  void VisitUnaryDeref(UnaryOperator *E) { EmitAggLoadOfLValue(E); }
+
+  void VisitArraySubscriptExpr(ArraySubscriptExpr *E) {
+    EmitAggLoadOfLValue(E);
+  }
 
   // Operators.
   //  case Expr::UnaryOperatorClass:
