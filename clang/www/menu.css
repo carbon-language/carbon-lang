@@ -2,15 +2,6 @@
 /* page layout */
 /***************/
 
-/***IE***/
-#menu {
-	float:left;
-}
-#content {
-	float:left;
-	margin-left:1ex;
-}
-/***W3C***/
 [id=menu] {
 	position:fixed;
 }
@@ -35,6 +26,7 @@
 	background-color: rgb(192,192,192);
 }
 #menu a {
+	padding:0 .2em;
 	display:block;
 	text-align: center;
 	background-color: rgb(235,235,235);
