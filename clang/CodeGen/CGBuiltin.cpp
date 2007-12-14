@@ -175,80 +175,120 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
 
 Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID, 
                                            const CallExpr *E) {
+  
+  llvm::SmallVector<Value*, 4> Ops;
+
+  for (unsigned i = 0, e = E->getNumArgs(); i != e; i++)
+    Ops.push_back(EmitScalarExpr(E->getArg(i)));
+
   switch (BuiltinID) {
   default: return 0;
   case X86::BI__builtin_ia32_mulps:
-    return Builder.CreateMul(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)),
-                             "mulps");
+    return Builder.CreateMul(Ops[0], Ops[1], "mulps");
   case X86::BI__builtin_ia32_pand:
-    return Builder.CreateAnd(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)),
-                             "pand");
+    return Builder.CreateAnd(Ops[0], Ops[1], "pand");
   case X86::BI__builtin_ia32_por:
-    return Builder.CreateAnd(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)),
-                             "por");
+    return Builder.CreateAnd(Ops[0], Ops[1], "por");
   case X86::BI__builtin_ia32_pxor:
-    return Builder.CreateAnd(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)),
-                             "pxor");
+    return Builder.CreateAnd(Ops[0], Ops[1], "pxor");
   case X86::BI__builtin_ia32_pandn: {
-    Value *V1 = Builder.CreateNot(EmitScalarExpr(E->getArg(0)), "tmp");
-    return Builder.CreateAnd(V1, EmitScalarExpr(E->getArg(1)), "pandn");
+    Ops[0] = Builder.CreateNot(Ops[0], "tmp");
+    return Builder.CreateAnd(Ops[0], Ops[1], "pandn");
   }
   case X86::BI__builtin_ia32_paddb:
   case X86::BI__builtin_ia32_paddd:
   case X86::BI__builtin_ia32_paddq:
   case X86::BI__builtin_ia32_paddw:
-    return Builder.CreateAdd(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)), "padd");
+    return Builder.CreateAdd(Ops[0], Ops[1], "padd");
   case X86::BI__builtin_ia32_psubb:
   case X86::BI__builtin_ia32_psubd:
   case X86::BI__builtin_ia32_psubq:
   case X86::BI__builtin_ia32_psubw:
-    return Builder.CreateSub(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)), "psub");
+    return Builder.CreateSub(Ops[0], Ops[1], "psub");
   case X86::BI__builtin_ia32_pmullw:
-    return Builder.CreateMul(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)), "pmul");
+    return Builder.CreateMul(Ops[0], Ops[1], "pmul");
   case X86::BI__builtin_ia32_punpckhbw:
-    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)),
+    return EmitShuffleVector(Ops[0], Ops[1],
                              4, 12, 5, 13, 6, 14, 7, 15,
                              "punpckhbw");
   case X86::BI__builtin_ia32_punpckhwd:
-    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)),
+    return EmitShuffleVector(Ops[0], Ops[1],
                              2, 6, 3, 7,
                              "punpckhwd");
   case X86::BI__builtin_ia32_punpckhdq:
-    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)),
+    return EmitShuffleVector(Ops[0], Ops[1],
                              1, 3,
                              "punpckhdq");
   case X86::BI__builtin_ia32_punpcklbw:
-    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)),
+    return EmitShuffleVector(Ops[0], Ops[1],
                              0, 8, 1, 9, 2, 10, 3, 11,
                              "punpcklbw");
   case X86::BI__builtin_ia32_punpcklwd:
-    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)),
+    return EmitShuffleVector(Ops[0], Ops[1],
                              0, 4, 1, 5,
                              "punpcklwd");
   case X86::BI__builtin_ia32_punpckldq:
-    return EmitShuffleVector(EmitScalarExpr(E->getArg(0)),
-                             EmitScalarExpr(E->getArg(1)),
+    return EmitShuffleVector(Ops[0], Ops[1],
                              0, 2,
                              "punpckldq");
-  case X86::BI__builtin_ia32_pshufd: {
-    Value *V = EmitScalarExpr(E->getArg(0));
-    ConstantInt *I = 
-      cast<ConstantInt>(EmitScalarExpr(E->getArg(1)));
-    int i = I->getZExtValue();
+  case X86::BI__builtin_ia32_pslldi: 
+  case X86::BI__builtin_ia32_psllqi:
+  case X86::BI__builtin_ia32_psllwi: 
+  case X86::BI__builtin_ia32_psradi:
+  case X86::BI__builtin_ia32_psrawi:
+  case X86::BI__builtin_ia32_psrldi:
+  case X86::BI__builtin_ia32_psrlqi:
+  case X86::BI__builtin_ia32_psrlwi: {
+    Ops[1] = Builder.CreateZExt(Ops[1], llvm::Type::Int64Ty, "zext");
+    const llvm::Type *Ty = llvm::VectorType::get(llvm::Type::Int64Ty, 1);
+    Ops[1] = Builder.CreateBitCast(Ops[1], Ty, "bitcast");
     
-    return EmitShuffleVector(V, V, 
+    const char *name = 0;
+    Intrinsic::ID ID = Intrinsic::not_intrinsic;
+    
+    switch (BuiltinID) {
+    default: assert(0 && "Unsupported shift intrinsic!");
+    case X86::BI__builtin_ia32_pslldi:
+      name = "pslldi";
+      ID = Intrinsic::x86_mmx_psll_d;
+      break;
+    case X86::BI__builtin_ia32_psllqi:
+      name = "psllqi";
+      ID = Intrinsic::x86_mmx_psll_q;
+      break;
+    case X86::BI__builtin_ia32_psllwi:
+      name = "psllwi";
+      ID = Intrinsic::x86_mmx_psll_w;
+      break;
+    case X86::BI__builtin_ia32_psradi:
+      name = "psradi";
+      ID = Intrinsic::x86_mmx_psra_d;
+      break;
+    case X86::BI__builtin_ia32_psrawi:
+      name = "psrawi";
+      ID = Intrinsic::x86_mmx_psra_w;
+      break;
+    case X86::BI__builtin_ia32_psrldi:
+      name = "psrldi";
+      ID = Intrinsic::x86_mmx_psrl_d;
+      break;
+    case X86::BI__builtin_ia32_psrlqi:
+      name = "psrlqi";
+      ID = Intrinsic::x86_mmx_psrl_q;
+      break;
+    case X86::BI__builtin_ia32_psrlwi:
+      name = "psrlwi";
+      ID = Intrinsic::x86_mmx_psrl_w;
+      break;
+    }
+    
+    llvm::Function *F = Intrinsic::getDeclaration(&CGM.getModule(), ID);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);  
+  }
+  case X86::BI__builtin_ia32_pshufd: {
+    int i = cast<ConstantInt>(Ops[1])->getZExtValue();
+   
+    return EmitShuffleVector(Ops[0], Ops[0], 
                              i & 0x3, (i & 0xc) >> 2,
                              (i & 0x30) >> 4, (i & 0xc0) >> 6,
                              "pshufd");
