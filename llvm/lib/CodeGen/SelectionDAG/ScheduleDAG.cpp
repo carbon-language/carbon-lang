@@ -326,7 +326,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
     } else {
       for (unsigned i = 0, e = Use->getNumOperands(); i != e; ++i) {
         SDOperand Op = Use->getOperand(i);
-        if (Op.Val != Node)
+        if (Op.Val != Node || Op.ResNo != ResNo)
           continue;
         MVT::ValueType VT = Node->getValueType(Op.ResNo);
         if (VT != MVT::Other && VT != MVT::Flag)
