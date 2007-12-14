@@ -1036,10 +1036,15 @@ Stmt::child_iterator UnaryOperator::child_end() {
 
 // SizeOfAlignOfTypeExpr
 Stmt::child_iterator SizeOfAlignOfTypeExpr::child_begin() { 
-  return child_iterator(); 
+  // If the type is a VLA type (and not a typedef), the size expression of the
+  // VLA needs to be treated as an executable expression.
+  if (VariableArrayType* T = dyn_cast<VariableArrayType>(Ty.getTypePtr()))
+    return child_iterator(T);
+  else
+    return child_iterator(); 
 }
 Stmt::child_iterator SizeOfAlignOfTypeExpr::child_end() {
-  return child_iterator();
+  return child_iterator(); 
 }
 
 // ArraySubscriptExpr

@@ -31,19 +31,21 @@ static inline VariableArrayType* FindVA(Type* t) {
 
 void StmtIteratorBase::NextVA() {
   assert (getVAPtr());
-  assert (decl);
 
   VariableArrayType* p = getVAPtr();
   p = FindVA(p->getElementType().getTypePtr());
   setVAPtr(p);
 
-  if (!p) {
+  if (!p && decl) {
     if (VarDecl* VD = dyn_cast<VarDecl>(decl)) 
       if (VD->Init)
         return;
       
     NextDecl();
   }
+  else {
+    RawVAPtr = 0;
+  }    
 }
 
 void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
@@ -93,6 +95,12 @@ StmtIteratorBase::StmtIteratorBase(ScopedDecl* d)
   assert (decl);
   NextDecl(false);
 }
+
+StmtIteratorBase::StmtIteratorBase(VariableArrayType* t)
+: decl(NULL), RawVAPtr(VASizeMode) {
+  RawVAPtr |= reinterpret_cast<uintptr_t>(t);
+}
+
 
 Stmt*& StmtIteratorBase::GetDeclExpr() const {
   if (VariableArrayType* VAPtr = getVAPtr()) {

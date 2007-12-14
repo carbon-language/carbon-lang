@@ -25,21 +25,21 @@ class VariableArrayType;
   
 class StmtIteratorBase {
 protected:
-  enum { DeclMode = 0x1 };
+  enum { DeclMode = 0x1, VASizeMode = 0x2, Flags = 0x3 };
   union { Stmt** stmt; ScopedDecl* decl; };
   uintptr_t RawVAPtr;
 
-  bool inDeclMode() const { 
-    return RawVAPtr & DeclMode ? true : false;
-  }
+  bool inDeclMode() const { return RawVAPtr & DeclMode ? true : false; }  
+  bool inVASizeMode() const { return RawVAPtr & VASizeMode ? true : false; }  
+  bool hasFlags() const { return RawVAPtr & Flags ? true : false; }
   
   VariableArrayType* getVAPtr() const {
-    return reinterpret_cast<VariableArrayType*>(RawVAPtr & ~DeclMode);
+    return reinterpret_cast<VariableArrayType*>(RawVAPtr & ~Flags);
   }
   
   void setVAPtr(VariableArrayType* P) {
-    assert (inDeclMode());
-    RawVAPtr = reinterpret_cast<uintptr_t>(P) | DeclMode;
+    assert (inDeclMode() || inVASizeMode());    
+    RawVAPtr = reinterpret_cast<uintptr_t>(P) | (RawVAPtr & Flags);
   }
   
   void NextDecl(bool ImmediateAdvance = true);
@@ -49,6 +49,7 @@ protected:
 
   StmtIteratorBase(Stmt** s) : stmt(s), RawVAPtr(0) {}
   StmtIteratorBase(ScopedDecl* d);
+  StmtIteratorBase(VariableArrayType* t);
   StmtIteratorBase() : stmt(NULL), RawVAPtr(0) {}
 };
   
@@ -64,14 +65,17 @@ public:
   StmtIteratorImpl() {}                                                
   StmtIteratorImpl(Stmt** s) : StmtIteratorBase(s) {}
   StmtIteratorImpl(ScopedDecl* d) : StmtIteratorBase(d) {}
-
+  StmtIteratorImpl(VariableArrayType* t) : StmtIteratorBase(t) {}
   
   DERIVED& operator++() {
     if (inDeclMode()) {
       if (getVAPtr()) NextVA();
       else NextDecl();
     }
-    else ++stmt;
+    else if (inVASizeMode())
+      NextVA();            
+    else
+      ++stmt;
       
     return static_cast<DERIVED&>(*this);
   }
@@ -91,7 +95,7 @@ public:
   }
   
   REFERENCE operator*() const { 
-    return (REFERENCE) (inDeclMode() ? GetDeclExpr() : *stmt);
+    return (REFERENCE) (hasFlags() ? GetDeclExpr() : *stmt);
   }
   
   REFERENCE operator->() const { return operator*(); }   
@@ -100,6 +104,7 @@ public:
 struct StmtIterator : public StmtIteratorImpl<StmtIterator,Stmt*&> {
   explicit StmtIterator() : StmtIteratorImpl<StmtIterator,Stmt*&>() {}
   StmtIterator(Stmt** S) : StmtIteratorImpl<StmtIterator,Stmt*&>(S) {}
+  StmtIterator(VariableArrayType* t):StmtIteratorImpl<StmtIterator,Stmt*&>(t) {}
   StmtIterator(ScopedDecl* D) : StmtIteratorImpl<StmtIterator,Stmt*&>(D) {}
 };
 
@@ -107,7 +112,7 @@ struct ConstStmtIterator : public StmtIteratorImpl<ConstStmtIterator,
                                                    const Stmt*> {
   explicit ConstStmtIterator() : 
     StmtIteratorImpl<ConstStmtIterator,const Stmt*>() {}
-
+                                                     
   ConstStmtIterator(const StmtIterator& RHS) : 
     StmtIteratorImpl<ConstStmtIterator,const Stmt*>(RHS) {}
 };
