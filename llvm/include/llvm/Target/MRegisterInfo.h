@@ -562,7 +562,7 @@ public:
   }
 
   /// unfoldMemoryOperand - Separate a single instruction which folded a load or
-  /// a a store or a load and a store into two or more instruction. If this is
+  /// a store or a load and a store into two or more instruction. If this is
   /// possible, returns true as well as the new instructions by reference.
   virtual bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
                                 unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
