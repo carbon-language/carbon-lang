@@ -5352,15 +5352,26 @@ SDOperand X86TargetLowering::LowerCTLZ(SDOperand Op, SelectionDAG &DAG) {
 
   Op = Op.getOperand(0);
   if (VT == MVT::i8) {
+    // Zero extend to i32 since there is not an i8 bsr.
     OpVT = MVT::i32;
     Op = DAG.getNode(ISD::ZERO_EXTEND, OpVT, Op);
   }
-  if (VT == MVT::i32 || VT == MVT::i64)
-    return DAG.getNode(ISD::XOR, OpVT, DAG.getNode(X86ISD::BSR, OpVT, Op),
-                       DAG.getConstant(NumBits-1, OpVT));
 
-  Op = DAG.getNode(ISD::SUB, OpVT, DAG.getConstant(NumBits-1, OpVT),
-                   DAG.getNode(X86ISD::BSR, OpVT, Op));
+  // Issue a bsr (scan bits in reverse) which also sets EFLAGS.
+  SDVTList VTs = DAG.getVTList(OpVT, MVT::i32);
+  Op = DAG.getNode(X86ISD::BSR, VTs, Op);
+
+  // If src is zero (i.e. bsr sets ZF), returns NumBits.
+  SmallVector<SDOperand, 4> Ops;
+  Ops.push_back(Op);
+  Ops.push_back(DAG.getConstant(NumBits+NumBits-1, OpVT));
+  Ops.push_back(DAG.getConstant(X86::COND_E, MVT::i8));
+  Ops.push_back(Op.getValue(1));
+  Op = DAG.getNode(X86ISD::CMOV, OpVT, &Ops[0], 4);
+
+  // Finally xor with NumBits-1.
+  Op = DAG.getNode(ISD::XOR, OpVT, Op, DAG.getConstant(NumBits-1, OpVT));
+
   if (VT == MVT::i8)
     Op = DAG.getNode(ISD::TRUNCATE, MVT::i8, Op);
   return Op;
@@ -5369,13 +5380,26 @@ SDOperand X86TargetLowering::LowerCTLZ(SDOperand Op, SelectionDAG &DAG) {
 SDOperand X86TargetLowering::LowerCTTZ(SDOperand Op, SelectionDAG &DAG) {
   MVT::ValueType VT = Op.getValueType();
   MVT::ValueType OpVT = VT;
+  unsigned NumBits = MVT::getSizeInBits(VT);
 
   Op = Op.getOperand(0);
   if (VT == MVT::i8) {
     OpVT = MVT::i32;
     Op = DAG.getNode(ISD::ZERO_EXTEND, OpVT, Op);
   }
-  Op = DAG.getNode(X86ISD::BSF, OpVT, Op);
+
+  // Issue a bsf (scan bits forward) which also sets EFLAGS.
+  SDVTList VTs = DAG.getVTList(OpVT, MVT::i32);
+  Op = DAG.getNode(X86ISD::BSF, VTs, Op);
+
+  // If src is zero (i.e. bsf sets ZF), returns NumBits.
+  SmallVector<SDOperand, 4> Ops;
+  Ops.push_back(Op);
+  Ops.push_back(DAG.getConstant(NumBits, OpVT));
+  Ops.push_back(DAG.getConstant(X86::COND_E, MVT::i8));
+  Ops.push_back(Op.getValue(1));
+  Op = DAG.getNode(X86ISD::CMOV, OpVT, &Ops[0], 4);
+
   if (VT == MVT::i8)
     Op = DAG.getNode(ISD::TRUNCATE, MVT::i8, Op);
   return Op;

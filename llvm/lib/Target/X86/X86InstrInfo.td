@@ -451,29 +451,33 @@ def XCHG32rm : I<0x87, MRMSrcMem,
 let Defs = [EFLAGS] in {
 def BSF16rr  : I<0xBC, AddRegFrm, (outs GR16:$dst), (ins GR16:$src),
                  "bsf{w}\t{$src, $dst||$dst, $src}",
-                 [(set GR16:$dst, (X86bsf GR16:$src))]>, TB;
+                 [(set GR16:$dst, (X86bsf GR16:$src)), (implicit EFLAGS)]>, TB;
 def BSF16rm  : I<0xBC, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                  "bsf{w}\t{$src, $dst||$dst, $src}",
-                 [(set GR16:$dst, (X86bsf (loadi16 addr:$src)))]>, TB;
+                 [(set GR16:$dst, (X86bsf (loadi16 addr:$src))),
+                  (implicit EFLAGS)]>, TB;
 def BSF32rr  : I<0xBC, AddRegFrm, (outs GR32:$dst), (ins GR32:$src),
                  "bsf{l}\t{$src, $dst||$dst, $src}",
-                 [(set GR32:$dst, (X86bsf GR32:$src))]>, TB;
+                 [(set GR32:$dst, (X86bsf GR32:$src)), (implicit EFLAGS)]>, TB;
 def BSF32rm  : I<0xBC, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                  "bsf{l}\t{$src, $dst||$dst, $src}",
-                 [(set GR32:$dst, (X86bsf (loadi32 addr:$src)))]>, TB;
+                 [(set GR32:$dst, (X86bsf (loadi32 addr:$src))),
+                  (implicit EFLAGS)]>, TB;
 
 def BSR16rr  : I<0xBD, AddRegFrm, (outs GR16:$dst), (ins GR16:$src),
                  "bsr{w}\t{$src, $dst||$dst, $src}",
-                 [(set GR16:$dst, (X86bsr GR16:$src))]>, TB;
+                 [(set GR16:$dst, (X86bsr GR16:$src)), (implicit EFLAGS)]>, TB;
 def BSR16rm  : I<0xBD, MRMSrcMem, (outs GR16:$dst), (ins i16mem:$src),
                  "bsr{w}\t{$src, $dst||$dst, $src}",
-                 [(set GR16:$dst, (X86bsr (loadi16 addr:$src)))]>, TB;
+                 [(set GR16:$dst, (X86bsr (loadi16 addr:$src))),
+                  (implicit EFLAGS)]>, TB;
 def BSR32rr  : I<0xBD, AddRegFrm, (outs GR32:$dst), (ins GR32:$src),
                  "bsr{l}\t{$src, $dst||$dst, $src}",
-                 [(set GR32:$dst, (X86bsr GR32:$src))]>, TB;
+                 [(set GR32:$dst, (X86bsr GR32:$src)), (implicit EFLAGS)]>, TB;
 def BSR32rm  : I<0xBD, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                  "bsr{l}\t{$src, $dst||$dst, $src}",
-                 [(set GR32:$dst, (X86bsr (loadi32 addr:$src)))]>, TB;
+                 [(set GR32:$dst, (X86bsr (loadi32 addr:$src))),
+                  (implicit EFLAGS)]>, TB;
 } // Defs = [EFLAGS]
 
 def LEA16r   : I<0x8D, MRMSrcMem,
