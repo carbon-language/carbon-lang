@@ -89,6 +89,10 @@ void f8()
   range r = p.range1;
 }
 
+void f9(range *p)
+{
+  range r = *p;
+}
 
 /* _Bool types */
 
