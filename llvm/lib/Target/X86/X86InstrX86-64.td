@@ -1256,19 +1256,10 @@ def MOV64toPQIrr : RPDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
                         "mov{d|q}\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst,
                           (v2i64 (scalar_to_vector GR64:$src)))]>;
-def MOV64toPQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
-                     "movq\t{$src, $dst|$dst, $src}",
-                     [(set VR128:$dst,
-                          (v2i64 (scalar_to_vector (loadi64 addr:$src))))]>, XS;
-
 def MOVPQIto64rr  : RPDI<0x7E, MRMDestReg, (outs GR64:$dst), (ins VR128:$src),
                          "mov{d|q}\t{$src, $dst|$dst, $src}",
                          [(set GR64:$dst, (vector_extract (v2i64 VR128:$src),
                                            (iPTR 0)))]>;
-def MOVPQIto64mr  : PDI<0xD6, MRMDestMem, (outs), (ins i64mem:$dst, VR128:$src),
-                        "movq\t{$src, $dst|$dst, $src}",
-                        [(store (i64 (vector_extract (v2i64 VR128:$src),
-                                      (iPTR 0))), addr:$dst)]>;
 
 def MOV64toSDrr : RPDI<0x6E, MRMSrcReg, (outs FR64:$dst), (ins GR64:$src),
                        "mov{d|q}\t{$src, $dst|$dst, $src}",
