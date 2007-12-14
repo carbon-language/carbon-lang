@@ -57,6 +57,6 @@ public:
   void PrintStats() const;
 };
 
-}  // end namespace clang
+}  // end namespace llvm
 
 #endif
