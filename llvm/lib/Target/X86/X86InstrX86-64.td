@@ -169,7 +169,7 @@ def XCHG64rm : RI<0x87, MRMSrcMem, (outs), (ins GR64:$src1, i64mem:$src2),
 
 // Bit scan instructions.
 let Defs = [EFLAGS] in {
-def BSF64rr  : RI<0xBC, AddRegFrm, (outs GR64:$dst), (ins GR64:$src),
+def BSF64rr  : RI<0xBC, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                   "bsf{q}\t{$src, $dst|$dst, $src}",
                   [(set GR64:$dst, (X86bsf GR64:$src)), (implicit EFLAGS)]>, TB;
 def BSF64rm  : RI<0xBC, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
@@ -177,7 +177,7 @@ def BSF64rm  : RI<0xBC, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
                   [(set GR64:$dst, (X86bsf (loadi64 addr:$src))),
                    (implicit EFLAGS)]>, TB;
 
-def BSR64rr  : RI<0xBD, AddRegFrm, (outs GR64:$dst), (ins GR64:$src),
+def BSR64rr  : RI<0xBD, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src),
                   "bsr{q}\t{$src, $dst|$dst, $src}",
                   [(set GR64:$dst, (X86bsr GR64:$src)), (implicit EFLAGS)]>, TB;
 def BSR64rm  : RI<0xBD, MRMSrcMem, (outs GR64:$dst), (ins i64mem:$src),
