@@ -49,7 +49,7 @@ void StmtIteratorBase::NextVA() {
 }
 
 void StmtIteratorBase::NextDecl(bool ImmediateAdvance) {
-  assert (inDeclMode());
+  assert (inDecl());
   assert (getVAPtr() == NULL);
   assert (decl);
   
@@ -97,7 +97,7 @@ StmtIteratorBase::StmtIteratorBase(ScopedDecl* d)
 }
 
 StmtIteratorBase::StmtIteratorBase(VariableArrayType* t)
-: decl(NULL), RawVAPtr(VASizeMode) {
+: decl(NULL), RawVAPtr(SizeOfTypeVAMode) {
   RawVAPtr |= reinterpret_cast<uintptr_t>(t);
 }
 

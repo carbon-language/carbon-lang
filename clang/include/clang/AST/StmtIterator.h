@@ -25,20 +25,30 @@ class VariableArrayType;
   
 class StmtIteratorBase {
 protected:
-  enum { DeclMode = 0x1, VASizeMode = 0x2, Flags = 0x3 };
+  enum { DeclMode = 0x1, SizeOfTypeVAMode = 0x2,
+         SizeExprMode = 0x3, Flags = 0x3 };
+  
   union { Stmt** stmt; ScopedDecl* decl; };
   uintptr_t RawVAPtr;
 
-  bool inDeclMode() const { return RawVAPtr & DeclMode ? true : false; }  
-  bool inVASizeMode() const { return RawVAPtr & VASizeMode ? true : false; }  
-  bool hasFlags() const { return RawVAPtr & Flags ? true : false; }
+  bool inDecl() const {
+    return RawVAPtr & DeclMode ? true : false;
+  }
+  
+  bool inSizeOfTypeVA() const { 
+    return RawVAPtr & SizeOfTypeVAMode ? true : false;
+  }
+  
+  bool inSizeOfExpr() const {
+    return RawVAPtr & SizeExprMode ? true : false;
+  }
   
   VariableArrayType* getVAPtr() const {
     return reinterpret_cast<VariableArrayType*>(RawVAPtr & ~Flags);
   }
   
   void setVAPtr(VariableArrayType* P) {
-    assert (inDeclMode() || inVASizeMode());    
+    assert (inDecl() || inSizeOfTypeVA());    
     RawVAPtr = reinterpret_cast<uintptr_t>(P) | (RawVAPtr & Flags);
   }
   
@@ -47,7 +57,10 @@ protected:
   
   Stmt*& GetDeclExpr() const;
 
-  StmtIteratorBase(Stmt** s) : stmt(s), RawVAPtr(0) {}
+  StmtIteratorBase(Stmt** s, bool inSizeOfExpr) : stmt(s), RawVAPtr(0) {
+    if (inSizeOfExpr) RawVAPtr = SizeExprMode;
+  }
+    
   StmtIteratorBase(ScopedDecl* d);
   StmtIteratorBase(VariableArrayType* t);
   StmtIteratorBase() : stmt(NULL), RawVAPtr(0) {}
@@ -63,16 +76,16 @@ protected:
   StmtIteratorImpl(const StmtIteratorBase& RHS) : StmtIteratorBase(RHS) {}
 public:
   StmtIteratorImpl() {}                                                
-  StmtIteratorImpl(Stmt** s) : StmtIteratorBase(s) {}
+  StmtIteratorImpl(Stmt** s, bool inSizeOfExpr) : StmtIteratorBase(s,inSizeOfExpr){}
   StmtIteratorImpl(ScopedDecl* d) : StmtIteratorBase(d) {}
   StmtIteratorImpl(VariableArrayType* t) : StmtIteratorBase(t) {}
   
   DERIVED& operator++() {
-    if (inDeclMode()) {
+    if (inDecl()) {
       if (getVAPtr()) NextVA();
       else NextDecl();
     }
-    else if (inVASizeMode())
+    else if (inSizeOfTypeVA())
       NextVA();            
     else
       ++stmt;
@@ -95,7 +108,7 @@ public:
   }
   
   REFERENCE operator*() const { 
-    return (REFERENCE) (hasFlags() ? GetDeclExpr() : *stmt);
+    return (REFERENCE) (inDecl() || inSizeOfTypeVA() ? GetDeclExpr() : *stmt);
   }
   
   REFERENCE operator->() const { return operator*(); }   
@@ -103,7 +116,10 @@ public:
 
 struct StmtIterator : public StmtIteratorImpl<StmtIterator,Stmt*&> {
   explicit StmtIterator() : StmtIteratorImpl<StmtIterator,Stmt*&>() {}
-  StmtIterator(Stmt** S) : StmtIteratorImpl<StmtIterator,Stmt*&>(S) {}
+
+  StmtIterator(Stmt** S, bool inSizeOfExpr=false) 
+    : StmtIteratorImpl<StmtIterator,Stmt*&>(S,inSizeOfExpr) {}
+  
   StmtIterator(VariableArrayType* t):StmtIteratorImpl<StmtIterator,Stmt*&>(t) {}
   StmtIterator(ScopedDecl* D) : StmtIteratorImpl<StmtIterator,Stmt*&>(D) {}
 };
