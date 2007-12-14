@@ -27,6 +27,125 @@ class ObjcMethodDecl;
 class ObjcProtocolDecl;
 class ObjcCategoryDecl;
 class ObjcPropertyDecl;
+
+/// ObjcMethodDecl - Represents an instance or class method declaration.
+/// ObjC methods can be declared within 4 contexts: class interfaces,
+/// categories, protocols, and class implementations. While C++ member
+/// functions leverage C syntax, Objective-C method syntax is modeled after 
+/// Smalltalk (using colons to specify argument types/expressions). 
+/// Here are some brief examples:
+///
+/// Setter/getter instance methods:
+/// - (void)setMenu:(NSMenu *)menu;
+/// - (NSMenu *)menu; 
+/// 
+/// Instance method that takes 2 NSView arguments:
+/// - (void)replaceSubview:(NSView *)oldView with:(NSView *)newView;
+///
+/// Getter class method:
+/// + (NSMenu *)defaultMenu;
+///
+/// A selector represents a unique name for a method. The selector names for
+/// the above methods are setMenu:, menu, replaceSubview:with:, and defaultMenu.
+///
+class ObjcMethodDecl : public Decl {
+public:
+  enum ImplementationControl { None, Required, Optional };
+private:
+  /// Bitfields must be first fields in this class so they pack with those
+  /// declared in class Decl.
+  /// instance (true) or class (false) method.
+  bool IsInstance : 1;
+  bool IsVariadic : 1;
+  
+  /// @required/@optional
+  ImplementationControl DeclImplementation : 2;
+  
+  /// in, inout, etc.
+  ObjcDeclQualifier objcDeclQualifier : 6;
+  
+  // Context this method is declared in.
+  NamedDecl *MethodContext;
+  
+  // A unigue name for this method.
+  Selector SelName;
+  
+  // Type of this method.
+  QualType MethodDeclType;
+  /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
+  /// parameters of this Method.  This is null if there are no formals.  
+  ParmVarDecl **ParamInfo;
+  int NumMethodParams;  // -1 if no parameters
+  
+  /// List of attributes for this method declaration.
+  AttributeList *MethodAttrs;
+  
+  SourceLocation EndLoc; // the location of the ';' or '{'.
+  
+  // The following are only used for method definitions, null otherwise.
+  // FIXME: space savings opportunity, consider a sub-class.
+  Stmt *Body;
+  ParmVarDecl *SelfDecl;
+public:
+  ObjcMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
+                 Selector SelInfo, QualType T,
+                 Decl *contextDecl,
+                 ParmVarDecl **paramInfo = 0, int numParams=-1,
+                 AttributeList *M = 0, bool isInstance = true,
+                 bool isVariadic = false,
+                 ImplementationControl impControl = None,
+                 Decl *PrevDecl = 0)
+  : Decl(ObjcMethod, beginLoc),
+    IsInstance(isInstance), IsVariadic(isVariadic),
+    DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
+    MethodContext(static_cast<NamedDecl*>(contextDecl)),
+    SelName(SelInfo), MethodDeclType(T), 
+    ParamInfo(paramInfo), NumMethodParams(numParams),
+    MethodAttrs(M), EndLoc(endLoc), Body(0), SelfDecl(0) {}
+  virtual ~ObjcMethodDecl();
+  
+  ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
+  void setObjcDeclQualifier(ObjcDeclQualifier QV) { objcDeclQualifier = QV; }
+  
+  // Location information, modeled after the Stmt API.
+  SourceLocation getLocStart() const { return getLocation(); }
+  SourceLocation getLocEnd() const { return EndLoc; }
+  
+  NamedDecl *getMethodContext() const { return MethodContext; }
+  
+  ObjcInterfaceDecl *const getClassInterface() const;
+  
+  Selector getSelector() const { return SelName; }
+  QualType getResultType() const { return MethodDeclType; }
+  
+  int getNumParams() const { return NumMethodParams; }
+  ParmVarDecl *getParamDecl(int i) const {
+    assert(i < getNumParams() && "Illegal param #");
+    return ParamInfo[i];
+  }  
+  void setMethodParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
+  
+  AttributeList *getMethodAttrs() const {return MethodAttrs;}
+  bool isInstance() const { return IsInstance; }
+  bool isVariadic() const { return IsVariadic; }
+  
+  // Related to protocols declared in  @protocol
+  void setDeclImplementation(ImplementationControl ic) { 
+    DeclImplementation = ic; 
+  }
+  ImplementationControl getImplementationControl() const { 
+    return DeclImplementation; 
+  }
+  Stmt *const getBody() const { return Body; }
+  void setBody(Stmt *B) { Body = B; }
+
+  ParmVarDecl *const getSelfDecl() const { return SelfDecl; }
+  void setSelfDecl(ParmVarDecl *PVD) { SelfDecl = PVD; }
+  
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return D->getKind() == ObjcMethod; }
+  static bool classof(const ObjcMethodDecl *D) { return true; }
+};
   
 /// ObjcInterfaceDecl - Represents an ObjC class declaration. For example:
 ///
@@ -118,10 +237,7 @@ public:
   ivar_iterator ivar_begin() const { return Ivars; }
   ivar_iterator ivar_end() const { return Ivars + ivar_size();}
   
-  ObjcMethodDecl** getInstanceMethods() const { return InstanceMethods; }
   int getNumInstanceMethods() const { return NumInstanceMethods; }
-  
-  ObjcMethodDecl** getClassMethods() const { return ClassMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
   
   typedef ObjcMethodDecl * const * instmeth_iterator;
@@ -160,6 +276,28 @@ public:
   }
   ObjcIvarDecl *lookupInstanceVariable(IdentifierInfo *ivarName,
                                        ObjcInterfaceDecl *&clsDeclared);
+									   
+  // Get the local instance method declared in this interface.
+  ObjcMethodDecl *getInstanceMethodForSelector(Selector &Sel) {
+    for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
+	     I != E; ++I) {
+      if ((*I)->getSelector() == Sel)
+        return *I;
+    }
+	return 0;
+  }
+  // Get the local class method declared in this interface.
+  ObjcMethodDecl *getClassMethodForSelector(Selector &Sel) {
+    for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
+	     I != E; ++I) {
+      if ((*I)->getSelector() == Sel)
+        return *I;
+    }
+	return 0;
+  }
+  // Lookup the instance method. First, we search locally. If a method isn't
+  // found, we look through the reference protocols. Lastly, we look categories
+  // defined for this class.
   ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
   ObjcMethodDecl *lookupClassMethod(Selector &Sel);
 
@@ -291,12 +429,39 @@ public:
     return ReferencedProtocols; 
   }
   int getNumReferencedProtocols() const { return NumReferencedProtocols; }
-  
-  ObjcMethodDecl** getInstanceMethods() const { return InstanceMethods; }
   int getNumInstanceMethods() const { return NumInstanceMethods; }
-  
-  ObjcMethodDecl** getClassMethods() const { return ClassMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
+
+  typedef ObjcMethodDecl * const * instmeth_iterator;
+  instmeth_iterator instmeth_begin() const { return InstanceMethods; }
+  instmeth_iterator instmeth_end() const {
+    return InstanceMethods+(NumInstanceMethods == -1 ? 0 : NumInstanceMethods);
+  }
+  
+  typedef ObjcMethodDecl * const * classmeth_iterator;
+  classmeth_iterator classmeth_begin() const { return ClassMethods; }
+  classmeth_iterator classmeth_end() const {
+    return ClassMethods+(NumClassMethods == -1 ? 0 : NumClassMethods);
+  }
+
+  // Get the local instance method declared in this interface.
+  ObjcMethodDecl *getInstanceMethodForSelector(Selector &Sel) {
+    for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
+	     I != E; ++I) {
+      if ((*I)->getSelector() == Sel)
+        return *I;
+    }
+	return 0;
+  }
+  // Get the local class method declared in this interface.
+  ObjcMethodDecl *getClassMethodForSelector(Selector &Sel) {
+    for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
+	     I != E; ++I) {
+      if ((*I)->getSelector() == Sel)
+        return *I;
+    }
+	return 0;
+  }
   
   ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
   ObjcMethodDecl *lookupClassMethod(Selector &Sel);
@@ -452,12 +617,39 @@ public:
     return ReferencedProtocols; 
   }
   int getNumReferencedProtocols() const { return NumReferencedProtocols; }
-  
-  ObjcMethodDecl **getInstanceMethods() const { return InstanceMethods; }
   int getNumInstanceMethods() const { return NumInstanceMethods; }
-  
-  ObjcMethodDecl **getClassMethods() const { return ClassMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
+
+  typedef ObjcMethodDecl * const * instmeth_iterator;
+  instmeth_iterator instmeth_begin() const { return InstanceMethods; }
+  instmeth_iterator instmeth_end() const {
+    return InstanceMethods+(NumInstanceMethods == -1 ? 0 : NumInstanceMethods);
+  }
+  
+  typedef ObjcMethodDecl * const * classmeth_iterator;
+  classmeth_iterator classmeth_begin() const { return ClassMethods; }
+  classmeth_iterator classmeth_end() const {
+    return ClassMethods+(NumClassMethods == -1 ? 0 : NumClassMethods);
+  }
+
+  // Get the local instance method declared in this interface.
+  ObjcMethodDecl *getInstanceMethodForSelector(Selector &Sel) {
+    for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
+	     I != E; ++I) {
+      if ((*I)->getSelector() == Sel)
+        return *I;
+    }
+	return 0;
+  }
+  // Get the local class method declared in this interface.
+  ObjcMethodDecl *getClassMethodForSelector(Selector &Sel) {
+    for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
+	     I != E; ++I) {
+      if ((*I)->getSelector() == Sel)
+        return *I;
+    }
+	return 0;
+  }
   
   void addMethods(ObjcMethodDecl **insMethods, unsigned numInsMembers,
                   ObjcMethodDecl **clsMethods, unsigned numClsMembers,
@@ -629,138 +821,6 @@ public:
   static bool classof(const ObjcImplementationDecl *D) { return true; }
 };
 
-/// ObjcMethodDecl - Represents an instance or class method declaration.
-/// ObjC methods can be declared within 4 contexts: class interfaces,
-/// categories, protocols, and class implementations. While C++ member
-/// functions leverage C syntax, Objective-C method syntax is modeled after 
-/// Smalltalk (using colons to specify argument types/expressions). 
-/// Here are some brief examples:
-///
-/// Setter/getter instance methods:
-/// - (void)setMenu:(NSMenu *)menu;
-/// - (NSMenu *)menu; 
-/// 
-/// Instance method that takes 2 NSView arguments:
-/// - (void)replaceSubview:(NSView *)oldView with:(NSView *)newView;
-///
-/// Getter class method:
-/// + (NSMenu *)defaultMenu;
-///
-/// A selector represents a unique name for a method. The selector names for
-/// the above methods are setMenu:, menu, replaceSubview:with:, and defaultMenu.
-///
-class ObjcMethodDecl : public Decl {
-public:
-  enum ImplementationControl { None, Required, Optional };
-private:
-  /// Bitfields must be first fields in this class so they pack with those
-  /// declared in class Decl.
-  /// instance (true) or class (false) method.
-  bool IsInstance : 1;
-  bool IsVariadic : 1;
-  
-  /// @required/@optional
-  ImplementationControl DeclImplementation : 2;
-  
-  /// in, inout, etc.
-  ObjcDeclQualifier objcDeclQualifier : 6;
-  
-  // Context this method is declared in.
-  NamedDecl *MethodContext;
-  
-  // A unigue name for this method.
-  Selector SelName;
-  
-  // Type of this method.
-  QualType MethodDeclType;
-  /// ParamInfo - new[]'d array of pointers to VarDecls for the formal
-  /// parameters of this Method.  This is null if there are no formals.  
-  ParmVarDecl **ParamInfo;
-  int NumMethodParams;  // -1 if no parameters
-  
-  /// List of attributes for this method declaration.
-  AttributeList *MethodAttrs;
-  
-  SourceLocation EndLoc; // the location of the ';' or '{'.
-  
-  // The following are only used for method definitions, null otherwise.
-  // FIXME: space savings opportunity, consider a sub-class.
-  Stmt *Body;
-  ParmVarDecl *SelfDecl;
-public:
-  ObjcMethodDecl(SourceLocation beginLoc, SourceLocation endLoc,
-                 Selector SelInfo, QualType T,
-                 Decl *contextDecl,
-                 ParmVarDecl **paramInfo = 0, int numParams=-1,
-                 AttributeList *M = 0, bool isInstance = true,
-                 bool isVariadic = false,
-                 ImplementationControl impControl = None,
-                 Decl *PrevDecl = 0)
-  : Decl(ObjcMethod, beginLoc),
-    IsInstance(isInstance), IsVariadic(isVariadic),
-    DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
-    MethodContext(static_cast<NamedDecl*>(contextDecl)),
-    SelName(SelInfo), MethodDeclType(T), 
-    ParamInfo(paramInfo), NumMethodParams(numParams),
-    MethodAttrs(M), EndLoc(endLoc), Body(0), SelfDecl(0) {}
-  virtual ~ObjcMethodDecl();
-  
-  ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
-  void setObjcDeclQualifier(ObjcDeclQualifier QV) { objcDeclQualifier = QV; }
-  
-  // Location information, modeled after the Stmt API.
-  SourceLocation getLocStart() const { return getLocation(); }
-  SourceLocation getLocEnd() const { return EndLoc; }
-  
-  NamedDecl *getMethodContext() const { return MethodContext; }
-  
-  ObjcInterfaceDecl *const getClassInterface() const {
-    if (ObjcInterfaceDecl *ID = dyn_cast<ObjcInterfaceDecl>(MethodContext))
-      return ID;
-    if (ObjcCategoryDecl *CD = dyn_cast<ObjcCategoryDecl>(MethodContext))
-      return CD->getClassInterface();
-    if (ObjcImplementationDecl *IMD = 
-        dyn_cast<ObjcImplementationDecl>(MethodContext))
-      return IMD->getClassInterface();
-    if (ObjcCategoryImplDecl *CID = 
-        dyn_cast<ObjcCategoryImplDecl>(MethodContext))
-      return CID->getClassInterface();
-    assert(false && "unknown method context");
-    return 0;
-  }
-  
-  Selector getSelector() const { return SelName; }
-  QualType getResultType() const { return MethodDeclType; }
-  
-  int getNumParams() const { return NumMethodParams; }
-  ParmVarDecl *getParamDecl(int i) const {
-    assert(i < getNumParams() && "Illegal param #");
-    return ParamInfo[i];
-  }  
-  void setMethodParams(ParmVarDecl **NewParamInfo, unsigned NumParams);
-  
-  AttributeList *getMethodAttrs() const {return MethodAttrs;}
-  bool isInstance() const { return IsInstance; }
-  bool isVariadic() const { return IsVariadic; }
-  
-  // Related to protocols declared in  @protocol
-  void setDeclImplementation(ImplementationControl ic) { 
-    DeclImplementation = ic; 
-  }
-  ImplementationControl getImplementationControl() const { 
-    return DeclImplementation; 
-  }
-  Stmt *const getBody() const { return Body; }
-  void setBody(Stmt *B) { Body = B; }
-
-  ParmVarDecl *const getSelfDecl() const { return SelfDecl; }
-  void setSelfDecl(ParmVarDecl *PVD) { SelfDecl = PVD; }
-  
-  // Implement isa/cast/dyncast/etc.
-  static bool classof(const Decl *D) { return D->getKind() == ObjcMethod; }
-  static bool classof(const ObjcMethodDecl *D) { return true; }
-};
-  
 /// ObjcCompatibleAliasDecl - Represents alias of a class. This alias is 
 /// declared as @compatibility_alias alias class.
 class ObjcCompatibleAliasDecl : public ScopedDecl {

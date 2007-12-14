@@ -144,7 +144,7 @@ namespace {
     void RewriteCategoryDecl(ObjcCategoryDecl *Dcl);
     void RewriteProtocolDecl(ObjcProtocolDecl *Dcl);
     void RewriteForwardProtocolDecl(ObjcForwardProtocolDecl *Dcl);
-    void RewriteMethodDeclarations(int nMethods, ObjcMethodDecl **Methods);
+    void RewriteMethodDeclaration(ObjcMethodDecl *Method);
     void RewriteProperties(int nProperties, ObjcPropertyDecl **Properties);
     void RewriteFunctionDecl(FunctionDecl *FD);
     void RewriteObjcQualifiedInterfaceTypes(Decl *Dcl);
@@ -398,18 +398,15 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
                       typedefString.c_str(), typedefString.size());
 }
 
-void RewriteTest::RewriteMethodDeclarations(int nMethods, ObjcMethodDecl **Methods) {
-  for (int i = 0; i < nMethods; i++) {
-    ObjcMethodDecl *Method = Methods[i];
-    SourceLocation LocStart = Method->getLocStart();
-    SourceLocation LocEnd = Method->getLocEnd();
+void RewriteTest::RewriteMethodDeclaration(ObjcMethodDecl *Method) {
+  SourceLocation LocStart = Method->getLocStart();
+  SourceLocation LocEnd = Method->getLocEnd();
     
-    if (SM->getLineNumber(LocEnd) > SM->getLineNumber(LocStart)) {
-      Rewrite.InsertText(LocStart, "/* ", 3);
-      Rewrite.ReplaceText(LocEnd, 1, ";*/ ", 4);
-    } else {
-      Rewrite.InsertText(LocStart, "// ", 3);
-    }
+  if (SM->getLineNumber(LocEnd) > SM->getLineNumber(LocStart)) {
+	Rewrite.InsertText(LocStart, "/* ", 3);
+	Rewrite.ReplaceText(LocEnd, 1, ";*/ ", 4);
+  } else {
+	Rewrite.InsertText(LocStart, "// ", 3);
   }
 }
 
@@ -431,10 +428,13 @@ void RewriteTest::RewriteCategoryDecl(ObjcCategoryDecl *CatDecl) {
   // FIXME: handle category headers that are declared across multiple lines.
   Rewrite.ReplaceText(LocStart, 0, "// ", 3);
   
-  RewriteMethodDeclarations(CatDecl->getNumInstanceMethods(),
-                            CatDecl->getInstanceMethods());
-  RewriteMethodDeclarations(CatDecl->getNumClassMethods(),
-                            CatDecl->getClassMethods());
+  for (ObjcCategoryDecl::instmeth_iterator I = CatDecl->instmeth_begin(), 
+       E = CatDecl->instmeth_end(); I != E; ++I)
+    RewriteMethodDeclaration(*I);
+  for (ObjcCategoryDecl::classmeth_iterator I = CatDecl->classmeth_begin(), 
+       E = CatDecl->classmeth_end(); I != E; ++I)
+    RewriteMethodDeclaration(*I);
+
   // Lastly, comment out the @end.
   Rewrite.ReplaceText(CatDecl->getAtEndLoc(), 0, "// ", 3);
 }
@@ -447,10 +447,13 @@ void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
   // FIXME: handle protocol headers that are declared across multiple lines.
   Rewrite.ReplaceText(LocStart, 0, "// ", 3);
   
-  RewriteMethodDeclarations(PDecl->getNumInstanceMethods(),
-                            PDecl->getInstanceMethods());
-  RewriteMethodDeclarations(PDecl->getNumClassMethods(),
-                            PDecl->getClassMethods());
+  for (ObjcProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(), 
+       E = PDecl->instmeth_end(); I != E; ++I)
+    RewriteMethodDeclaration(*I);
+  for (ObjcProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(), 
+       E = PDecl->classmeth_end(); I != E; ++I)
+    RewriteMethodDeclaration(*I);
+
   // Lastly, comment out the @end.
   SourceLocation LocEnd = PDecl->getAtEndLoc();
   Rewrite.ReplaceText(LocEnd, 0, "// ", 3);
@@ -619,11 +622,13 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
     
   RewriteProperties(ClassDecl->getNumPropertyDecl(),
                     ClassDecl->getPropertyDecl());
-  RewriteMethodDeclarations(ClassDecl->getNumInstanceMethods(),
-                            ClassDecl->getInstanceMethods());
-  RewriteMethodDeclarations(ClassDecl->getNumClassMethods(),
-                            ClassDecl->getClassMethods());
-  
+  for (ObjcInterfaceDecl::instmeth_iterator I = ClassDecl->instmeth_begin(), 
+       E = ClassDecl->instmeth_end(); I != E; ++I)
+    RewriteMethodDeclaration(*I);
+  for (ObjcInterfaceDecl::classmeth_iterator I = ClassDecl->classmeth_begin(), 
+       E = ClassDecl->classmeth_end(); I != E; ++I)
+    RewriteMethodDeclaration(*I);
+
   // Lastly, comment out the @end.
   Rewrite.ReplaceText(ClassDecl->getAtEndLoc(), 0, "// ", 3);
 }
@@ -1843,31 +1848,27 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
         objc_protocol_methods = true;
       }
       
-      // Output instance methods declared in this protocol.
-      int NumMethods = PDecl->getNumInstanceMethods();
-      if (NumMethods > 0) {
+	  int NumMethods = PDecl->getNumInstanceMethods();
+	  if(NumMethods > 0) {
         Result += "\nstatic struct _objc_protocol_method_list "
                "_OBJC_PROTOCOL_INSTANCE_METHODS_";
         Result += PDecl->getName();
         Result += " __attribute__ ((section (\"__OBJC, __cat_inst_meth\")))= "
           "{\n\t" + utostr(NumMethods) + "\n";
         
-        ObjcMethodDecl **Methods = PDecl->getInstanceMethods();
-        Result += "\t,{{(SEL)\"";
-        Result += Methods[0]->getSelector().getName().c_str();
-        Result += "\", \"\"}\n";
-                       
-        for (int i = 1; i < NumMethods; i++) {
-          Result += "\t  ,{(SEL)\"";
-          Result += Methods[i]->getSelector().getName().c_str();
-          std::string MethodTypeString;
-          Context->getObjcEncodingForMethodDecl(Methods[i], MethodTypeString);
-          Result += "\", \"";
-          Result += MethodTypeString;
-          Result += "\"}\n";
-        }
-        Result += "\t }\n};\n";
-      }
+		// Output instance methods declared in this protocol.
+		for (ObjcProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(), 
+			 E = PDecl->instmeth_end(); I != E; ++I) {
+		  Result += "\t  ,{(SEL)\"";
+		  Result += (*I)->getSelector().getName().c_str();
+		  std::string MethodTypeString;
+		  Context->getObjcEncodingForMethodDecl((*I), MethodTypeString);
+		  Result += "\", \"";
+		  Result += MethodTypeString;
+		  Result += "\"}\n";
+		}
+		Result += "\t }\n};\n";
+	  }
       
       // Output class methods declared in this protocol.
       NumMethods = PDecl->getNumClassMethods();
@@ -1880,16 +1881,13 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
         Result += utostr(NumMethods);
         Result += "\n";
         
-        ObjcMethodDecl **Methods = PDecl->getClassMethods();
-        Result += "\t,{{(SEL)\"";
-        Result += Methods[0]->getSelector().getName().c_str();
-        Result += "\", \"\"}\n";
-            
-        for (int i = 1; i < NumMethods; i++) {
+		// Output instance methods declared in this protocol.
+		for (ObjcProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(), 
+			 E = PDecl->classmeth_end(); I != E; ++I) {
           Result += "\t  ,{(SEL)\"";
-          Result += Methods[i]->getSelector().getName().c_str();
+          Result += (*I)->getSelector().getName().c_str();
           std::string MethodTypeString;
-          Context->getObjcEncodingForMethodDecl(Methods[i], MethodTypeString);
+          Context->getObjcEncodingForMethodDecl((*I), MethodTypeString);
           Result += "\", \"";
           Result += MethodTypeString;
           Result += "\"}\n";
@@ -1936,14 +1934,14 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
         "{\n\t0, \"";
       Result += PDecl->getName();
       Result += "\", 0, ";
-      if (PDecl->getInstanceMethods() > 0) {
+      if (PDecl->getNumInstanceMethods() > 0) {
         Result += "&_OBJC_PROTOCOL_INSTANCE_METHODS_";
         Result += PDecl->getName();
         Result += ", ";
       }
       else
         Result += "0, ";
-      if (PDecl->getClassMethods() > 0) {
+      if (PDecl->getNumClassMethods() > 0) {
         Result += "&_OBJC_PROTOCOL_CLASS_METHODS_";
         Result += PDecl->getName();
         Result += "\n";

@@ -409,36 +409,24 @@ ObjcIvarDecl *ObjcInterfaceDecl::lookupInstanceVariable(
 /// the class, its categories, and its super classes (using a linear search).
 ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
   ObjcInterfaceDecl* ClassDecl = this;
+  ObjcMethodDecl *MethodDecl = 0;
+  
   while (ClassDecl != NULL) {
-    ObjcMethodDecl **methods = ClassDecl->getInstanceMethods();
-    int methodCount = ClassDecl->getNumInstanceMethods();
-    for (int i = 0; i < methodCount; ++i) {
-      if (methods[i]->getSelector() == Sel) {
-        return methods[i];
-      }
-    }
+    if ((MethodDecl = ClassDecl->getInstanceMethodForSelector(Sel)))
+      return MethodDecl;
+      
     // Didn't find one yet - look through protocols.
     ObjcProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
     int numProtocols = ClassDecl->getNumIntfRefProtocols();
     for (int pIdx = 0; pIdx < numProtocols; pIdx++) {
-      ObjcMethodDecl **methods = protocols[pIdx]->getInstanceMethods();
-      int methodCount = protocols[pIdx]->getNumInstanceMethods();
-      for (int i = 0; i < methodCount; ++i) {
-        if (methods[i]->getSelector() == Sel) {
-          return methods[i];
-        }
-      }
+      if ((MethodDecl = protocols[pIdx]->getInstanceMethodForSelector(Sel)))
+        return MethodDecl;
     }
     // Didn't find one yet - now look through categories.
     ObjcCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
-      ObjcMethodDecl **methods = CatDecl->getInstanceMethods();
-      int methodCount = CatDecl->getNumInstanceMethods();
-      for (int i = 0; i < methodCount; ++i) {
-        if (methods[i]->getSelector() == Sel) {
-          return methods[i];
-        }
-      }
+      if ((MethodDecl = CatDecl->getInstanceMethodForSelector(Sel)))
+        return MethodDecl;
       CatDecl = CatDecl->getNextClassCategory();
     }
     ClassDecl = ClassDecl->getSuperClass();
@@ -450,36 +438,24 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
 // class, its categories, and its super classes (using a linear search).
 ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
   ObjcInterfaceDecl* ClassDecl = this;
+  ObjcMethodDecl *MethodDecl = 0;
+
   while (ClassDecl != NULL) {
-    ObjcMethodDecl **methods = ClassDecl->getClassMethods();
-    int methodCount = ClassDecl->getNumClassMethods();
-    for (int i = 0; i < methodCount; ++i) {
-      if (methods[i]->getSelector() == Sel) {
-        return methods[i];
-      }
-    }
+    if ((MethodDecl = ClassDecl->getClassMethodForSelector(Sel)))
+      return MethodDecl;
+
     // Didn't find one yet - look through protocols.
     ObjcProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
     int numProtocols = ClassDecl->getNumIntfRefProtocols();
     for (int pIdx = 0; pIdx < numProtocols; pIdx++) {
-      ObjcMethodDecl **methods = protocols[pIdx]->getClassMethods();
-      int methodCount = protocols[pIdx]->getNumClassMethods();
-      for (int i = 0; i < methodCount; ++i) {
-        if (methods[i]->getSelector() == Sel) {
-          return methods[i];
-        }
-      }
+      if ((MethodDecl = protocols[pIdx]->getClassMethodForSelector(Sel)))
+        return MethodDecl;
     }
     // Didn't find one yet - now look through categories.
     ObjcCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
-      ObjcMethodDecl **methods = CatDecl->getClassMethods();
-      int methodCount = CatDecl->getNumClassMethods();
-      for (int i = 0; i < methodCount; ++i) {
-        if (methods[i]->getSelector() == Sel) {
-          return methods[i];
-        }
-      }
+      if ((MethodDecl = CatDecl->getClassMethodForSelector(Sel)))
+        return MethodDecl;
       CatDecl = CatDecl->getNextClassCategory();
     }
     ClassDecl = ClassDecl->getSuperClass();
@@ -532,19 +508,17 @@ ObjcMethodDecl *ObjcCategoryImplDecl::lookupClassMethod(Selector &Sel) {
 // lookupInstanceMethod - Lookup a instance method in the protocol and protocols
 // it inherited.
 ObjcMethodDecl *ObjcProtocolDecl::lookupInstanceMethod(Selector &Sel) {
-  ObjcMethodDecl *const*methods = getInstanceMethods();
-  int methodCount = getNumInstanceMethods();
-  for (int i = 0; i < methodCount; ++i) {
-    if (methods[i]->getSelector() == Sel) {
-      return methods[i];
-    }
-  }
+  ObjcMethodDecl *MethodDecl = NULL;
+  
+  if ((MethodDecl = getInstanceMethodForSelector(Sel)))
+    return MethodDecl;
+    
   if (getNumReferencedProtocols() > 0) {
     ObjcProtocolDecl **RefPDecl = getReferencedProtocols();
     
     for (int i = 0; i < getNumReferencedProtocols(); i++) {
-      if (ObjcMethodDecl *Method = RefPDecl[i]->lookupInstanceMethod(Sel))
-        return Method;
+      if ((MethodDecl = RefPDecl[i]->getInstanceMethodForSelector(Sel)))
+        return MethodDecl;
     }
   }
   return NULL;
@@ -553,20 +527,33 @@ ObjcMethodDecl *ObjcProtocolDecl::lookupInstanceMethod(Selector &Sel) {
 // lookupInstanceMethod - Lookup a class method in the protocol and protocols
 // it inherited.
 ObjcMethodDecl *ObjcProtocolDecl::lookupClassMethod(Selector &Sel) {
-  ObjcMethodDecl *const*methods = getClassMethods();
-  int methodCount = getNumClassMethods();
-  for (int i = 0; i < methodCount; ++i) {
-    if (methods[i]->getSelector() == Sel) {
-      return methods[i];
-    }
-  }
+  ObjcMethodDecl *MethodDecl = NULL;
+
+  if ((MethodDecl = getClassMethodForSelector(Sel)))
+    return MethodDecl;
+    
   if (getNumReferencedProtocols() > 0) {
     ObjcProtocolDecl **RefPDecl = getReferencedProtocols();
     
     for (int i = 0; i < getNumReferencedProtocols(); i++) {
-      if (ObjcMethodDecl *Method = RefPDecl[i]->lookupClassMethod(Sel))
-        return Method;
+      if ((MethodDecl = RefPDecl[i]->getClassMethodForSelector(Sel)))
+        return MethodDecl;
     }
   }
   return NULL;
+}
+
+ObjcInterfaceDecl *const ObjcMethodDecl::getClassInterface() const {
+  if (ObjcInterfaceDecl *ID = dyn_cast<ObjcInterfaceDecl>(MethodContext))
+    return ID;
+  if (ObjcCategoryDecl *CD = dyn_cast<ObjcCategoryDecl>(MethodContext))
+    return CD->getClassInterface();
+  if (ObjcImplementationDecl *IMD = 
+      dyn_cast<ObjcImplementationDecl>(MethodContext))
+    return IMD->getClassInterface();
+  if (ObjcCategoryImplDecl *CID = 
+      dyn_cast<ObjcCategoryImplDecl>(MethodContext))
+    return CID->getClassInterface();
+  assert(false && "unknown method context");
+  return 0;
 }
