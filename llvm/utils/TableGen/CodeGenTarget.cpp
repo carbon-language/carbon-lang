@@ -395,9 +395,15 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   usesCustomDAGSchedInserter = R->getValueAsBit("usesCustomDAGSchedInserter");
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   isNotDuplicable = R->getValueAsBit("isNotDuplicable");
+  mayHaveSideEffects = R->getValueAsBit("mayHaveSideEffects");
+  neverHasSideEffects = R->getValueAsBit("neverHasSideEffects");
   hasOptionalDef = false;
   hasVariableNumberOfOperands = false;
-  
+
+  if (mayHaveSideEffects && neverHasSideEffects)
+    throw R->getName() +
+      ": cannot have both 'mayHaveSideEffects' and 'neverHasSideEffects' set!";
+
   DagInit *DI;
   try {
     DI = R->getValueAsDag("OutOperandList");

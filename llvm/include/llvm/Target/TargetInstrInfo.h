@@ -91,6 +91,18 @@ const unsigned M_NOT_DUPLICABLE        = 1 << 16;
 // ARM instructions which can set condition code if 's' bit is set.
 const unsigned M_HAS_OPTIONAL_DEF      = 1 << 17;
 
+// M_MAY_HAVE_SIDE_EFFECTS - Set if this instruction *might* have side effects,
+// e.g. load instructions. Note: This and M_NEVER_HAS_SIDE_EFFECTS are mutually
+// exclusive. You can't set both! If neither flag is set, then the instruction
+// *always* has side effects.
+const unsigned M_MAY_HAVE_SIDE_EFFECTS = 1 << 18;
+
+// M_NEVER_HAS_SIDE_EFFECTS - Set if this instruction *never* has side effects,
+// e.g., xor on X86.  Note: This and M_MAY_HAVE_SIDE_EFFECTS are mutually
+// exclusive. You can't set both! If neither flag is set, then the instruction
+// *always* has side effects.
+const unsigned M_NEVER_HAS_SIDE_EFFECTS = 1 << 19;
+
 // Machine operand flags
 // M_LOOK_UP_PTR_REG_CLASS - Set if this operand is a pointer value and it
 // requires a callback to look up its register class.

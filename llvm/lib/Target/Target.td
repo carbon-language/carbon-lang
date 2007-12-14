@@ -203,6 +203,11 @@ class Instruction {
   bit usesCustomDAGSchedInserter = 0; // Pseudo instr needing special help.
   bit hasCtrlDep   = 0;     // Does this instruction r/w ctrl-flow chains?
   bit isNotDuplicable = 0;  // Is it unsafe to duplicate this instruction?
+
+  // Side effect flags - If neither of these flags is set, then the instruction
+  // *always* has side effects. Otherwise, it's one or the other.
+  bit mayHaveSideEffects = 0;  // This instruction *may* have side effects.
+  bit neverHasSideEffects = 0; // This instruction never has side effects.
   
   InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
 
