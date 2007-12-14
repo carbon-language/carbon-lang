@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Config/alloca.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/Support/Debug.h"
@@ -232,6 +233,15 @@ void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
   }
 }
 
+/// isTargetNullPtr - Return whether the target pointer stored at Loc is null.
+static bool isTargetNullPtr(ExecutionEngine *EE, void *Loc) {
+  unsigned PtrSize = EE->getTargetData()->getPointerSize();
+  for (unsigned i = 0; i < PtrSize; ++i)
+    if (*(i + (uint8_t*)Loc))
+      return false;
+  return true;
+}
+
 /// runFunctionAsMain - This is a helper function which wraps runFunction to
 /// handle the common task of starting up main with the specified argc, argv,
 /// and envp parameters.
@@ -281,7 +291,7 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
     GVArgs.push_back(GVArgc); // Arg #0 = argc.
     if (NumArgs > 1) {
       GVArgs.push_back(PTOGV(CreateArgv(this, argv))); // Arg #1 = argv.
-      assert(((char **)GVTOP(GVArgs[1]))[0] &&
+      assert(!isTargetNullPtr(this, GVTOP(GVArgs[1])) &&
              "argv[0] was null after CreateArgv");
       if (NumArgs > 2) {
         std::vector<std::string> EnvVars;
@@ -624,40 +634,44 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   return Result;
 }
 
+/// StoreIntToMemory - Fills the StoreBytes bytes of memory starting from Dst
+/// with the integer held in IntVal.
+static void StoreIntToMemory(const APInt &IntVal, uint8_t *Dst,
+                             unsigned StoreBytes) {
+  assert((IntVal.getBitWidth()+7)/8 >= StoreBytes && "Integer too small!");
+  uint8_t *Src = (uint8_t *)IntVal.getRawData();
+
+  if (sys::littleEndianHost())
+    // Little-endian host - the source is ordered from LSB to MSB.  Order the
+    // destination from LSB to MSB: Do a straight copy.
+    memcpy(Dst, Src, StoreBytes);
+  else {
+    // Big-endian host - the source is an array of 64 bit words ordered from
+    // LSW to MSW.  Each word is ordered from MSB to LSB.  Order the destination
+    // from MSB to LSB: Reverse the word order, but not the bytes in a word.
+    while (StoreBytes > sizeof(uint64_t)) {
+      StoreBytes -= sizeof(uint64_t);
+      // May not be aligned so use memcpy.
+      memcpy(Dst + StoreBytes, Src, sizeof(uint64_t));
+      Src += sizeof(uint64_t);
+    }
+
+    memcpy(Dst, Src + sizeof(uint64_t) - StoreBytes, StoreBytes);
+  }
+}
+
 /// StoreValueToMemory - Stores the data in Val of type Ty at address Ptr.  Ptr
 /// is the address of the memory at which to store Val, cast to GenericValue *.
 /// It is not a pointer to a GenericValue containing the address at which to
 /// store Val.
-///
 void ExecutionEngine::StoreValueToMemory(const GenericValue &Val, GenericValue *Ptr,
                                          const Type *Ty) {
+  const unsigned StoreBytes = getTargetData()->getTypeStoreSize(Ty);
+
   switch (Ty->getTypeID()) {
-  case Type::IntegerTyID: {
-    unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-    unsigned StoreBytes = (BitWidth + 7)/8;
-    uint8_t *Src = (uint8_t *)Val.IntVal.getRawData();
-    uint8_t *Dst = (uint8_t *)Ptr;
-
-    if (sys::littleEndianHost())
-      // Little-endian host - the source is ordered from LSB to MSB.
-      // Order the destination from LSB to MSB: Do a straight copy.
-      memcpy(Dst, Src, StoreBytes);
-    else {
-      // Big-endian host - the source is an array of 64 bit words ordered from
-      // LSW to MSW.  Each word is ordered from MSB to LSB.
-      // Order the destination from MSB to LSB: Reverse the word order, but not
-      // the bytes in a word.
-      while (StoreBytes > sizeof(uint64_t)) {
-        StoreBytes -= sizeof(uint64_t);
-        // May not be aligned so use memcpy.
-        memcpy(Dst + StoreBytes, Src, sizeof(uint64_t));
-        Src += sizeof(uint64_t);
-      }
-
-      memcpy(Dst, Src + sizeof(uint64_t) - StoreBytes, StoreBytes);
-    }
+  case Type::IntegerTyID:
+    StoreIntToMemory(Val.IntVal, (uint8_t*)Ptr, StoreBytes);
     break;
-  }
   case Type::FloatTyID:
     *((float*)Ptr) = Val.FloatVal;
     break;
@@ -675,61 +689,82 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val, GenericValue *
       Dest[4] = Src[3];
       break;
     }
-  case Type::PointerTyID: 
+  case Type::PointerTyID:
+    // Ensure 64 bit target pointers are fully initialized on 32 bit hosts.
+    if (StoreBytes != sizeof(PointerTy))
+      memset(Ptr, 0, StoreBytes);
+
     *((PointerTy*)Ptr) = Val.PointerVal;
     break;
   default:
     cerr << "Cannot store value of type " << *Ty << "!\n";
   }
+
+  if (sys::littleEndianHost() != getTargetData()->isLittleEndian())
+    // Host and target are different endian - reverse the stored bytes.
+    std::reverse((uint8_t*)Ptr, StoreBytes + (uint8_t*)Ptr);
+}
+
+/// LoadIntFromMemory - Loads the integer stored in the LoadBytes bytes starting
+/// from Src into IntVal, which is assumed to be wide enough and to hold zero.
+static void LoadIntFromMemory(APInt &IntVal, uint8_t *Src, unsigned LoadBytes) {
+  assert((IntVal.getBitWidth()+7)/8 >= LoadBytes && "Integer too small!");
+  uint8_t *Dst = (uint8_t *)IntVal.getRawData();
+
+  if (sys::littleEndianHost())
+    // Little-endian host - the destination must be ordered from LSB to MSB.
+    // The source is ordered from LSB to MSB: Do a straight copy.
+    memcpy(Dst, Src, LoadBytes);
+  else {
+    // Big-endian - the destination is an array of 64 bit words ordered from
+    // LSW to MSW.  Each word must be ordered from MSB to LSB.  The source is
+    // ordered from MSB to LSB: Reverse the word order, but not the bytes in
+    // a word.
+    while (LoadBytes > sizeof(uint64_t)) {
+      LoadBytes -= sizeof(uint64_t);
+      // May not be aligned so use memcpy.
+      memcpy(Dst, Src + LoadBytes, sizeof(uint64_t));
+      Dst += sizeof(uint64_t);
+    }
+
+    memcpy(Dst + sizeof(uint64_t) - LoadBytes, Src, LoadBytes);
+  }
 }
 
 /// FIXME: document
 ///
-void ExecutionEngine::LoadValueFromMemory(GenericValue &Result, 
+void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
                                                   GenericValue *Ptr,
                                                   const Type *Ty) {
-  switch (Ty->getTypeID()) {
-  case Type::IntegerTyID: {
-    unsigned BitWidth = cast<IntegerType>(Ty)->getBitWidth();
-    unsigned LoadBytes = (BitWidth + 7)/8;
+  const unsigned LoadBytes = getTargetData()->getTypeStoreSize(Ty);
 
-    // An APInt with all words initially zero.
-    Result.IntVal = APInt(BitWidth, 0);
-
-    uint8_t *Src = (uint8_t *)Ptr;
-    uint8_t *Dst = (uint8_t *)Result.IntVal.getRawData();
-
-    if (sys::littleEndianHost())
-      // Little-endian host - the destination must be ordered from LSB to MSB.
-      // The source is ordered from LSB to MSB: Do a straight copy.
-      memcpy(Dst, Src, LoadBytes);
-    else {
-      // Big-endian - the destination is an array of 64 bit words ordered from
-      // LSW to MSW.  Each word must be ordered from MSB to LSB.  The source is
-      // ordered from MSB to LSB: Reverse the word order, but not the bytes in
-      // a word.
-      while (LoadBytes > sizeof(uint64_t)) {
-        LoadBytes -= sizeof(uint64_t);
-        // May not be aligned so use memcpy.
-        memcpy(Dst, Src + LoadBytes, sizeof(uint64_t));
-        Dst += sizeof(uint64_t);
-      }
-
-      memcpy(Dst + sizeof(uint64_t) - LoadBytes, Src, LoadBytes);
-    }
-    break;
+  if (sys::littleEndianHost() != getTargetData()->isLittleEndian()) {
+    // Host and target are different endian - reverse copy the stored
+    // bytes into a buffer, and load from that.
+    uint8_t *Src = (uint8_t*)Ptr;
+    uint8_t *Buf = (uint8_t*)alloca(LoadBytes);
+    std::reverse_copy(Src, Src + LoadBytes, Buf);
+    Ptr = (GenericValue*)Buf;
   }
+
+  switch (Ty->getTypeID()) {
+  case Type::IntegerTyID:
+    // An APInt with all words initially zero.
+    Result.IntVal = APInt(cast<IntegerType>(Ty)->getBitWidth(), 0);
+    LoadIntFromMemory(Result.IntVal, (uint8_t*)Ptr, LoadBytes);
+    break;
   case Type::FloatTyID:
     Result.FloatVal = *((float*)Ptr);
     break;
   case Type::DoubleTyID:
-    Result.DoubleVal = *((double*)Ptr); 
+    Result.DoubleVal = *((double*)Ptr);
     break;
-  case Type::PointerTyID: 
+  case Type::PointerTyID:
     Result.PointerVal = *((PointerTy*)Ptr);
     break;
   case Type::X86_FP80TyID: {
     // This is endian dependent, but it will only work on x86 anyway.
+    // FIXME: Does not trap if loading a trapping NaN.
     uint16_t *p = (uint16_t*)Ptr;
     union {
       uint16_t x[8];
