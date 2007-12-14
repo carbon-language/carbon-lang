@@ -6,6 +6,8 @@
 ; RUN:   not grep {llvm\\.part\\.select\\.i\[0-9\]*\\.i\[0-9\]*}
 ; RUN: llvm-as < %s | llvm-dis | \
 ; RUN:   not grep {llvm\\.bswap\\.i\[0-9\]*\\.i\[0-9\]*}
+; RUN: llvm-as < %s | llvm-dis | \
+; RUN:   grep {llvm\\.x86\\.mmx\\.ps} | grep {2 x i32> | count 6
 
 declare i32 @llvm.ctpop.i28(i28 %val)
 declare i32 @llvm.cttz.i29(i29 %val)
@@ -50,3 +52,30 @@ define i32 @test_bswap(i32 %A, i16 %B) {
   ret i32 %d
 }
 
+declare <4 x i16> @llvm.x86.mmx.psra.w(<4 x i16>, <2 x i32>) nounwind readnone 
+declare <4 x i16> @llvm.x86.mmx.psll.w(<4 x i16>, <2 x i32>) nounwind readnone 
+declare <4 x i16> @llvm.x86.mmx.psrl.w(<4 x i16>, <2 x i32>) nounwind readnone 
+define void @sh16(<4 x i16> %A, <2 x i32> %B) {
+	%r1 = call <4 x i16> @llvm.x86.mmx.psra.w( <4 x i16> %A, <2 x i32> %B )		; <<4 x i16>> [#uses=0]
+	%r2 = call <4 x i16> @llvm.x86.mmx.psll.w( <4 x i16> %A, <2 x i32> %B )		; <<4 x i16>> [#uses=0]
+	%r3 = call <4 x i16> @llvm.x86.mmx.psrl.w( <4 x i16> %A, <2 x i32> %B )		; <<4 x i16>> [#uses=0]
+	ret void
+}
+
+declare <2 x i32> @llvm.x86.mmx.psra.d(<2 x i32>, <2 x i32>) nounwind readnone 
+declare <2 x i32> @llvm.x86.mmx.psll.d(<2 x i32>, <2 x i32>) nounwind readnone 
+declare <2 x i32> @llvm.x86.mmx.psrl.d(<2 x i32>, <2 x i32>) nounwind readnone 
+define void @sh32(<2 x i32> %A, <2 x i32> %B) {
+	%r1 = call <2 x i32> @llvm.x86.mmx.psra.d( <2 x i32> %A, <2 x i32> %B )		; <<2 x i32>> [#uses=0]
+	%r2 = call <2 x i32> @llvm.x86.mmx.psll.d( <2 x i32> %A, <2 x i32> %B )		; <<2 x i32>> [#uses=0]
+	%r3 = call <2 x i32> @llvm.x86.mmx.psrl.d( <2 x i32> %A, <2 x i32> %B )		; <<2 x i32>> [#uses=0]
+	ret void
+}
+
+declare <1 x i64> @llvm.x86.mmx.psll.q(<1 x i64>, <2 x i32>) nounwind readnone 
+declare <1 x i64> @llvm.x86.mmx.psrl.q(<1 x i64>, <2 x i32>) nounwind readnone 
+define void @sh64(<1 x i64> %A, <2 x i32> %B) {
+	%r1 = call <1 x i64> @llvm.x86.mmx.psll.q( <1 x i64> %A, <2 x i32> %B )		; <<1 x i64>> [#uses=0]
+	%r2 = call <1 x i64> @llvm.x86.mmx.psrl.q( <1 x i64> %A, <2 x i32> %B )		; <<1 x i64>> [#uses=0]
+	ret void
+}

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/AutoUpgrade.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
@@ -110,6 +111,39 @@ static Function* UpgradeIntrinsicFunction1(Function *F) {
     }
 
     break;
+  case 'x': 
+    // This fixes all MMX shift intrinsic instructions to take a
+    // v1i64 instead of a v2i32 as the second parameter.
+    if (Name.compare(5,10,"x86.mmx.ps",10) == 0 &&
+        (Name.compare(13,4,"psll", 4) == 0 ||
+         Name.compare(13,4,"psra", 4) == 0 ||
+         Name.compare(13,4,"psrl", 4) == 0)) {
+      
+      const llvm::Type *VT = VectorType::get(IntegerType::get(64), 1);
+      
+      // We don't have to do anything if the parameter already has
+      // the correct type.
+      if (FTy->getParamType(1) == VT)
+        break;
+      
+      //  We first need to change the name of the old (bad) intrinsic, because 
+      //  its type is incorrect, but we cannot overload that name. We 
+      //  arbitrarily unique it here allowing us to construct a correctly named 
+      //  and typed function below.
+      F->setName("");
+
+      assert(FTy->getNumParams() == 2 && "MMX shift intrinsics take 2 args!");
+      
+      //  Now construct the new intrinsic with the correct name and type. We 
+      //  leave the old function around in order to query its type, whatever it 
+      //  may be, and correctly convert up to the new type.
+      return cast<Function>(M->getOrInsertFunction(Name, 
+                                                   FTy->getReturnType(),
+                                                   FTy->getParamType(0),
+                                                   VT,
+                                                   (Type *)0));
+    }
+    break;
   }
 
   //  This may not belong here. This function is effectively being overloaded 
@@ -141,6 +175,40 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   
   switch(NewFn->getIntrinsicID()) {
   default:  assert(0 && "Unknown function for CallInst upgrade.");
+  case Intrinsic::x86_mmx_psll_d:
+  case Intrinsic::x86_mmx_psll_q:
+  case Intrinsic::x86_mmx_psll_w:
+  case Intrinsic::x86_mmx_psra_d:
+  case Intrinsic::x86_mmx_psra_w:
+  case Intrinsic::x86_mmx_psrl_d:
+  case Intrinsic::x86_mmx_psrl_q:
+  case Intrinsic::x86_mmx_psrl_w: {
+    SmallVector<Value*, 2> Operands;
+    
+    Operands.push_back(CI->getOperand(1));
+    
+    // Cast the second parameter to the correct type.
+    BitCastInst *BC = new BitCastInst(CI->getOperand(2), 
+                                      NewFn->getFunctionType()->getParamType(1),
+                                      "upgraded", CI);
+    Operands.push_back(BC);
+    
+    //  Construct a new CallInst
+    CallInst *NewCI = new CallInst(NewFn, Operands.begin(), Operands.end(), 
+                                   "upgraded."+CI->getName(), CI);
+    NewCI->setTailCall(CI->isTailCall());
+    NewCI->setCallingConv(CI->getCallingConv());
+    
+    //  Handle any uses of the old CallInst.
+    if (!CI->use_empty())
+      //  Replace all uses of the old call with the new cast which has the 
+      //  correct type.
+      CI->replaceAllUsesWith(NewCI);
+    
+    //  Clean up the old call now that it has been completely upgraded.
+    CI->eraseFromParent();
+    break;
+  }        
   case Intrinsic::ctlz:
   case Intrinsic::ctpop:
   case Intrinsic::cttz:
