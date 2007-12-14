@@ -28,6 +28,11 @@ namespace llvm {
       // Start the numbering where the builtin ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END+X86::INSTRUCTION_LIST_END,
 
+      /// BSF - Bit scan forward.
+      /// BSR - Bit scan reverse.
+      BSF,
+      BSR,
+
       /// SHLD, SHRD - Double shift instructions. These correspond to
       /// X86::SHLDxx and X86::SHRDxx instructions.
       SHLD,
@@ -489,6 +494,8 @@ namespace llvm {
     SDOperand LowerEH_RETURN(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerTRAMPOLINE(SDOperand Op, SelectionDAG &DAG);
     SDOperand LowerFLT_ROUNDS(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerCTLZ(SDOperand Op, SelectionDAG &DAG);
+    SDOperand LowerCTTZ(SDOperand Op, SelectionDAG &DAG);
     SDNode *ExpandFP_TO_SINT(SDNode *N, SelectionDAG &DAG);
     SDNode *ExpandREADCYCLECOUNTER(SDNode *N, SelectionDAG &DAG);
   };

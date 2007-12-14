@@ -210,18 +210,18 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FLT_ROUNDS       , MVT::i32  , Custom);
   
   setOperationAction(ISD::CTPOP            , MVT::i8   , Expand);
-  setOperationAction(ISD::CTTZ             , MVT::i8   , Expand);
-  setOperationAction(ISD::CTLZ             , MVT::i8   , Expand);
+  setOperationAction(ISD::CTTZ             , MVT::i8   , Custom);
+  setOperationAction(ISD::CTLZ             , MVT::i8   , Custom);
   setOperationAction(ISD::CTPOP            , MVT::i16  , Expand);
-  setOperationAction(ISD::CTTZ             , MVT::i16  , Expand);
-  setOperationAction(ISD::CTLZ             , MVT::i16  , Expand);
+  setOperationAction(ISD::CTTZ             , MVT::i16  , Custom);
+  setOperationAction(ISD::CTLZ             , MVT::i16  , Custom);
   setOperationAction(ISD::CTPOP            , MVT::i32  , Expand);
-  setOperationAction(ISD::CTTZ             , MVT::i32  , Expand);
-  setOperationAction(ISD::CTLZ             , MVT::i32  , Expand);
+  setOperationAction(ISD::CTTZ             , MVT::i32  , Custom);
+  setOperationAction(ISD::CTLZ             , MVT::i32  , Custom);
   if (Subtarget->is64Bit()) {
     setOperationAction(ISD::CTPOP          , MVT::i64  , Expand);
-    setOperationAction(ISD::CTTZ           , MVT::i64  , Expand);
-    setOperationAction(ISD::CTLZ           , MVT::i64  , Expand);
+    setOperationAction(ISD::CTTZ           , MVT::i64  , Custom);
+    setOperationAction(ISD::CTLZ           , MVT::i64  , Custom);
   }
 
   setOperationAction(ISD::READCYCLECOUNTER , MVT::i64  , Custom);
@@ -5345,6 +5345,42 @@ SDOperand X86TargetLowering::LowerFLT_ROUNDS(SDOperand Op, SelectionDAG &DAG) {
                       ISD::TRUNCATE : ISD::ZERO_EXTEND), VT, RetVal);
 }
 
+SDOperand X86TargetLowering::LowerCTLZ(SDOperand Op, SelectionDAG &DAG) {
+  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType OpVT = VT;
+  unsigned NumBits = MVT::getSizeInBits(VT);
+
+  Op = Op.getOperand(0);
+  if (VT == MVT::i8) {
+    OpVT = MVT::i32;
+    Op = DAG.getNode(ISD::ZERO_EXTEND, OpVT, Op);
+  }
+  if (VT == MVT::i32 || VT == MVT::i64)
+    return DAG.getNode(ISD::XOR, OpVT, DAG.getNode(X86ISD::BSR, OpVT, Op),
+                       DAG.getConstant(NumBits-1, OpVT));
+
+  Op = DAG.getNode(ISD::SUB, OpVT, DAG.getConstant(NumBits-1, OpVT),
+                   DAG.getNode(X86ISD::BSR, OpVT, Op));
+  if (VT == MVT::i8)
+    Op = DAG.getNode(ISD::TRUNCATE, MVT::i8, Op);
+  return Op;
+}
+
+SDOperand X86TargetLowering::LowerCTTZ(SDOperand Op, SelectionDAG &DAG) {
+  MVT::ValueType VT = Op.getValueType();
+  MVT::ValueType OpVT = VT;
+
+  Op = Op.getOperand(0);
+  if (VT == MVT::i8) {
+    OpVT = MVT::i32;
+    Op = DAG.getNode(ISD::ZERO_EXTEND, OpVT, Op);
+  }
+  Op = DAG.getNode(X86ISD::BSF, OpVT, Op);
+  if (VT == MVT::i8)
+    Op = DAG.getNode(ISD::TRUNCATE, MVT::i8, Op);
+  return Op;
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -5387,7 +5423,8 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   case ISD::EH_RETURN:          return LowerEH_RETURN(Op, DAG);
   case ISD::TRAMPOLINE:         return LowerTRAMPOLINE(Op, DAG);
   case ISD::FLT_ROUNDS:         return LowerFLT_ROUNDS(Op, DAG);
-      
+  case ISD::CTLZ:               return LowerCTLZ(Op, DAG);
+  case ISD::CTTZ:               return LowerCTTZ(Op, DAG);
       
   // FIXME: REMOVE THIS WHEN LegalizeDAGTypes lands.
   case ISD::READCYCLECOUNTER:
@@ -5407,6 +5444,8 @@ SDNode *X86TargetLowering::ExpandOperationResult(SDNode *N, SelectionDAG &DAG) {
 const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return NULL;
+  case X86ISD::BSF:                return "X86ISD::BSF";
+  case X86ISD::BSR:                return "X86ISD::BSR";
   case X86ISD::SHLD:               return "X86ISD::SHLD";
   case X86ISD::SHRD:               return "X86ISD::SHRD";
   case X86ISD::FAND:               return "X86ISD::FAND";
