@@ -653,7 +653,7 @@ GenericValue lle_X_fwrite(FunctionType *FT, const vector<GenericValue> &Args) {
 // char *fgets(char *s, int n, FILE *stream);
 GenericValue lle_X_fgets(FunctionType *FT, const vector<GenericValue> &Args) {
   assert(Args.size() == 3);
-  return GVTOP(fgets((char*)GVTOP(Args[0]), Args[1].IntVal.getZExtValue(),
+  return PTOGV(fgets((char*)GVTOP(Args[0]), Args[1].IntVal.getZExtValue(),
                      getFILE(GVTOP(Args[2]))));
 }
 

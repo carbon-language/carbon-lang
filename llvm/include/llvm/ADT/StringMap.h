@@ -389,8 +389,8 @@ private:
 template<typename ValueTy>
 class StringMapIterator : public StringMapConstIterator<ValueTy> {
 public:  
-  StringMapIterator(StringMapImpl::ItemBucket *Bucket,
-                    bool NoAdvance = false)
+  explicit StringMapIterator(StringMapImpl::ItemBucket *Bucket,
+                             bool NoAdvance = false)
     : StringMapConstIterator<ValueTy>(Bucket, NoAdvance) {
   }
   StringMapEntry<ValueTy> &operator*() const {

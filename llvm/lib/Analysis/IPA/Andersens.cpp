@@ -246,7 +246,7 @@ namespace {
       // Used for work list prioritization.
       unsigned Timestamp;
 
-      Node(bool direct = true) :
+      explicit Node(bool direct = true) :
         Val(0), Edges(0), PointsTo(0), OldPointsTo(0), 
         PointerEquivLabel(0), LocationEquivLabel(0), PredEdges(0),
         ImplicitPredEdges(0), PointedToBy(0), NumInEdges(0),

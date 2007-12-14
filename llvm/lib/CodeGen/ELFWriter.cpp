@@ -72,7 +72,7 @@ namespace llvm {
     std::vector<unsigned char> *OutBuffer;
     size_t FnStart;
   public:
-    ELFCodeEmitter(ELFWriter &ew) : EW(ew), TM(EW.TM), OutBuffer(0) {}
+    explicit ELFCodeEmitter(ELFWriter &ew) : EW(ew), TM(EW.TM), OutBuffer(0) {}
 
     void startFunction(MachineFunction &F);
     bool finishFunction(MachineFunction &F);

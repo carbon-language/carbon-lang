@@ -248,7 +248,7 @@ public:
   }
 
 protected:
-  ExecutionEngine(ModuleProvider *P);
+  explicit ExecutionEngine(ModuleProvider *P);
 
   void emitGlobals();
 

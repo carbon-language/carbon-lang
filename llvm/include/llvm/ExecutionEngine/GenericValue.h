@@ -34,7 +34,7 @@ struct GenericValue {
   APInt IntVal;   // also used for long doubles
 
   GenericValue() : DoubleVal(0.0), IntVal(1,0) {}
-  GenericValue(void *V) : PointerVal(V), IntVal(1,0) { }
+  explicit GenericValue(void *V) : PointerVal(V), IntVal(1,0) { }
 };
 
 inline GenericValue PTOGV(void *P) { return GenericValue(P); }

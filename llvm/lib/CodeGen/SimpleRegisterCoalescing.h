@@ -48,7 +48,7 @@ namespace llvm {
   ///
   struct CopyRecSort : public std::binary_function<CopyRec,CopyRec,bool> {
     JoinPriorityQueue<CopyRecSort> *JPQ;
-    CopyRecSort(JoinPriorityQueue<CopyRecSort> *jpq) : JPQ(jpq) {}
+    explicit CopyRecSort(JoinPriorityQueue<CopyRecSort> *jpq) : JPQ(jpq) {}
     CopyRecSort(const CopyRecSort &RHS) : JPQ(RHS.JPQ) {}
     bool operator()(CopyRec left, CopyRec right) const;
   };
@@ -61,7 +61,8 @@ namespace llvm {
     std::priority_queue<CopyRec, std::vector<CopyRec>, SF> Queue;
 
   public:
-    JoinPriorityQueue(SimpleRegisterCoalescing *rc) : Rc(rc), Queue(SF(this)) {}
+    explicit JoinPriorityQueue(SimpleRegisterCoalescing *rc)
+      : Rc(rc), Queue(SF(this)) {}
 
     bool empty() const { return Queue.empty(); }
     void push(CopyRec R) { Queue.push(R); }
