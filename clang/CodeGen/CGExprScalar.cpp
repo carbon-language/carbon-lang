@@ -1099,3 +1099,37 @@ Value *CodeGenFunction::EmitShuffleVector(Value* V1, Value *V2, ...) {
   return Builder.CreateShuffleVector(V1, V2, Mask, Name);
 }
 
+llvm::Value *CodeGenFunction::EmitVector(llvm::Value * const *Vals, 
+                                         unsigned NumVals)
+{
+  bool AllConstElements = true;
+  
+  for (unsigned i = 0; i < NumVals; i++) {
+    if (!isa<llvm::Constant>(Vals[i])) {
+      AllConstElements = false;
+      break;
+    }
+  }
+  
+  assert(!(NumVals & NumVals - 1) &&
+         "Number of elements must be power of two!");
+  
+  if (AllConstElements) {
+    llvm::SmallVector<llvm::Constant*, 16> Constants;
+    
+    for (unsigned i = 0, e = NumVals; i != e; ++i)
+      Constants.push_back(cast<llvm::Constant>(Vals[i]));
+    
+    return llvm::ConstantVector::get(&Constants[0], Constants.size());
+  }
+  
+  llvm::Value *Vec
+  = llvm::UndefValue::get(llvm::VectorType::get(Vals[0]->getType(), NumVals));
+  
+  for (unsigned i = 0, e = NumVals ; i != e; ++i) {
+    llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
+    Vec = Builder.CreateInsertElement(Vec, Vals[i], Idx, "tmp");
+  }
+  
+  return Vec;  
+}

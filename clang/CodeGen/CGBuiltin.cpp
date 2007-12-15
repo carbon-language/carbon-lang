@@ -293,6 +293,12 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
                              (i & 0x30) >> 4, (i & 0xc0) >> 6,
                              "pshufd");
   }
+  case X86::BI__builtin_ia32_vec_init_v4hi:
+  case X86::BI__builtin_ia32_vec_init_v8qi:
+  case X86::BI__builtin_ia32_vec_init_v2si:
+    return EmitVector(&Ops[0], Ops.size());
+  case X86::BI__builtin_ia32_vec_ext_v2si:
+    return Builder.CreateExtractElement(Ops[0], Ops[1], "result");
   }
 }
 
