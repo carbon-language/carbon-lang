@@ -1028,10 +1028,10 @@ Stmt::child_iterator ParenExpr::child_end() {
 
 // UnaryOperator
 Stmt::child_iterator UnaryOperator::child_begin() {
-  return child_iterator(reinterpret_cast<Stmt**>(&Val),Opc==SizeOf);
+  return reinterpret_cast<Stmt**>(&Val);
 }
 Stmt::child_iterator UnaryOperator::child_end() {
-  return child_iterator(reinterpret_cast<Stmt**>(&Val)+1,Opc==SizeOf);
+  return reinterpret_cast<Stmt**>(&Val+1);
 }
 
 // SizeOfAlignOfTypeExpr
