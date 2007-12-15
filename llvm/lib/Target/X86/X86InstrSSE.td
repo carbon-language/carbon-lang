@@ -2224,35 +2224,56 @@ let AddedComplexity = 20 in
                                           (loadf64 addr:$src))),
                                   MOVL_shuffle_mask)))]>;
 
-let AddedComplexity = 15 in
 // movd / movq to XMM register zero-extends
+let AddedComplexity = 15 in {
 def MOVZDI2PDIrr : PDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR32:$src),
                        "movd\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst,
                          (v4i32 (vector_shuffle immAllZerosV,
                                  (v4i32 (scalar_to_vector GR32:$src)),
                                  MOVL_shuffle_mask)))]>;
-let AddedComplexity = 20 in
+// This is X86-64 only.
+def MOVZQI2PQIrr : RPDI<0x6E, MRMSrcReg, (outs VR128:$dst), (ins GR64:$src),
+                       "mov{d|q}\t{$src, $dst|$dst, $src}",
+                       [(set VR128:$dst,
+                         (v2i64 (vector_shuffle immAllZerosV_bc,
+                                 (v2i64 (scalar_to_vector GR64:$src)),
+                                 MOVL_shuffle_mask)))]>;
+}
+
+let AddedComplexity = 20 in {
 def MOVZDI2PDIrm : PDI<0x6E, MRMSrcMem, (outs VR128:$dst), (ins i32mem:$src),
                        "movd\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst,
                          (v4i32 (vector_shuffle immAllZerosV,
                                  (v4i32 (scalar_to_vector (loadi32 addr:$src))),
                                  MOVL_shuffle_mask)))]>;
-
-// Moving from XMM to XMM but still clear upper 64 bits.
-let AddedComplexity = 15 in
-def MOVZQI2PQIrr : I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                     "movq\t{$src, $dst|$dst, $src}",
-                     [(set VR128:$dst, (int_x86_sse2_movl_dq VR128:$src))]>,
-                   XS, Requires<[HasSSE2]>;
-let AddedComplexity = 20 in
 def MOVZQI2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i64mem:$src),
                      "movq\t{$src, $dst|$dst, $src}",
-                     [(set VR128:$dst, (int_x86_sse2_movl_dq
-                                        (bitconvert (memopv2i64 addr:$src))))]>,
-                   XS, Requires<[HasSSE2]>;
+                     [(set VR128:$dst,
+                       (v2i64 (vector_shuffle immAllZerosV_bc,
+                              (v2i64 (scalar_to_vector (loadi64 addr:$src))),
+                              MOVL_shuffle_mask)))]>, XS,
+                   Requires<[HasSSE2]>;
+}
 
+// Moving from XMM to XMM and clear upper 64 bits. Note, there is a bug in
+// IA32 document. movq xmm1, xmm2 does clear the high bits.
+let AddedComplexity = 15 in
+def MOVZPQILo2PQIrr : I<0x7E, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                        "movq\t{$src, $dst|$dst, $src}",
+                    [(set VR128:$dst, (v2i64 (vector_shuffle immAllZerosV_bc,
+                                             VR128:$src,
+                                             MOVL_shuffle_mask)))]>,
+                      XS, Requires<[HasSSE2]>;
+
+let AddedComplexity = 20 in
+def MOVZPQILo2PQIrm : I<0x7E, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
+                        "movq\t{$src, $dst|$dst, $src}",
+                    [(set VR128:$dst, (v2i64 (vector_shuffle immAllZerosV_bc,
+                                             (memopv2i64 addr:$src),
+                                             MOVL_shuffle_mask)))]>,
+                      XS, Requires<[HasSSE2]>;
 
 //===----------------------------------------------------------------------===//
 // SSE3 Instructions
@@ -2763,13 +2784,13 @@ def : Pat<(vector_shuffle (v4f32 VR128:$src), (undef), SSE_splat_mask:$sm),
 
 // Special unary SHUFPSrri case.
 // FIXME: when we want non two-address code, then we should use PSHUFD?
-def : Pat<(vector_shuffle (v4f32 VR128:$src1), (undef),
-           SHUFP_unary_shuffle_mask:$sm),
+def : Pat<(v4f32 (vector_shuffle VR128:$src1, (undef),
+           SHUFP_unary_shuffle_mask:$sm)),
           (SHUFPSrri VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm)>,
       Requires<[HasSSE1]>;
 // Special unary SHUFPDrri case.
-def : Pat<(vector_shuffle (v2f64 VR128:$src1), (undef),
-           SHUFP_unary_shuffle_mask:$sm),
+def : Pat<(v2f64 (vector_shuffle VR128:$src1, (undef),
+           SHUFP_unary_shuffle_mask:$sm)),
           (SHUFPDrri VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm)>,
       Requires<[HasSSE2]>;
 // Unary v4f32 shuffle with PSHUF* in order to fold a load.
@@ -2778,14 +2799,24 @@ def : Pat<(vector_shuffle (memopv4f32 addr:$src1), (undef),
           (PSHUFDmi addr:$src1, SHUFP_unary_shuffle_mask:$sm)>,
       Requires<[HasSSE2]>;
 // Special binary v4i32 shuffle cases with SHUFPS.
-def : Pat<(vector_shuffle (v4i32 VR128:$src1), (v4i32 VR128:$src2),
-           PSHUFD_binary_shuffle_mask:$sm),
+def : Pat<(v4i32 (vector_shuffle VR128:$src1, (v4i32 VR128:$src2),
+           PSHUFD_binary_shuffle_mask:$sm)),
           (SHUFPSrri VR128:$src1, VR128:$src2, PSHUFD_binary_shuffle_mask:$sm)>,
            Requires<[HasSSE2]>;
-def : Pat<(vector_shuffle (v4i32 VR128:$src1),
-           (bc_v4i32 (memopv2i64 addr:$src2)), PSHUFD_binary_shuffle_mask:$sm),
+def : Pat<(v4i32 (vector_shuffle VR128:$src1,
+           (bc_v4i32 (memopv2i64 addr:$src2)), PSHUFD_binary_shuffle_mask:$sm)),
           (SHUFPSrmi VR128:$src1, addr:$src2, PSHUFD_binary_shuffle_mask:$sm)>,
            Requires<[HasSSE2]>;
+// Special binary v2i64 shuffle cases using SHUFPDrri.
+def : Pat<(v2i64 (vector_shuffle VR128:$src1, VR128:$src2,
+                 SHUFP_shuffle_mask:$sm)),
+          (SHUFPDrri VR128:$src1, VR128:$src2, SHUFP_shuffle_mask:$sm)>,
+          Requires<[HasSSE2]>;
+// Special unary SHUFPDrri case.
+def : Pat<(v2i64 (vector_shuffle VR128:$src1, (undef),
+           SHUFP_unary_shuffle_mask:$sm)),
+          (SHUFPDrri VR128:$src1, VR128:$src1, SHUFP_unary_shuffle_mask:$sm)>,
+      Requires<[HasSSE2]>;
 
 // vector_shuffle v1, <undef>, <0, 0, 1, 1, ...>
 let AddedComplexity = 10 in {
@@ -2888,11 +2919,11 @@ def : Pat<(v4i32 (vector_shuffle VR128:$src1, VR128:$src2,
 }
 
 // Set lowest element and zero upper elements.
-let AddedComplexity = 20 in
-def : Pat<(bc_v2i64 (vector_shuffle immAllZerosV_bc,
-                     (v2f64 (scalar_to_vector (loadf64 addr:$src))),
-                     MOVL_shuffle_mask)),
-          (MOVZQI2PQIrm addr:$src)>, Requires<[HasSSE2]>;
+let AddedComplexity = 15 in
+def : Pat<(v2f64 (vector_shuffle immAllZerosV_bc, VR128:$src,
+           MOVL_shuffle_mask)),
+          (MOVZPQILo2PQIrr VR128:$src)>, Requires<[HasSSE2]>;
+
 
 // FIXME: Temporary workaround since 2-wide shuffle is broken.
 def : Pat<(int_x86_sse2_movs_d  VR128:$src1, VR128:$src2),

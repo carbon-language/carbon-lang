@@ -3138,8 +3138,6 @@ static SDOperand LowerBuildVectorv8i16(SDOperand Op, unsigned NonZeros,
   return V;
 }
 
-/// is4WideVector - Returns true if the specific v8i16 or v16i8 vector is
-/// actually just a 4 wide vector. e.g. <a, a, y, y, d, d, x, x>
 SDOperand
 X86TargetLowering::LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
   // All zero's are handled with pxor, all one's are handled with pcmpeqd.
@@ -3562,17 +3560,35 @@ SDOperand LowerVECTOR_SHUFFLEv8i16(SDOperand V1, SDOperand V2,
   }
 }
 
-/// RewriteAs4WideShuffle - Try rewriting v8i16 and v16i8 shuffles as 4 wide
-/// ones if possible. This can be done when every pair / quad of shuffle mask
-/// elements point to elements in the right sequence. e.g.
+/// RewriteAsNarrowerShuffle - Try rewriting v8i16 and v16i8 shuffles as 4 wide
+/// ones, or rewriting v4i32 / v2f32 as 2 wide ones if possible. This can be
+/// done when every pair / quad of shuffle mask elements point to elements in
+/// the right sequence. e.g.
 /// vector_shuffle <>, <>, < 3, 4, | 10, 11, | 0, 1, | 14, 15>
 static
-SDOperand RewriteAs4WideShuffle(SDOperand V1, SDOperand V2,
+SDOperand RewriteAsNarrowerShuffle(SDOperand V1, SDOperand V2,
+                                MVT::ValueType VT,
                                 SDOperand PermMask, SelectionDAG &DAG,
                                 TargetLowering &TLI) {
   unsigned NumElems = PermMask.getNumOperands();
-  unsigned Scale = NumElems / 4;
-  SmallVector<SDOperand, 4> MaskVec;
+  unsigned NewWidth = (NumElems == 4) ? 2 : 4;
+  MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(NewWidth);
+  MVT::ValueType NewVT = MaskVT;
+  switch (VT) {
+  case MVT::v4f32: NewVT = MVT::v2f64; break;
+  case MVT::v4i32: NewVT = MVT::v2i64; break;
+  case MVT::v8i16: NewVT = MVT::v4i32; break;
+  case MVT::v16i8: NewVT = MVT::v4i32; break;
+  default: assert(false && "Unexpected!");
+  }
+
+  if (NewWidth == 2)
+    if (MVT::isInteger(VT))
+      NewVT = MVT::v2i64;
+    else
+      NewVT = MVT::v2f64;
+  unsigned Scale = NumElems / NewWidth;
+  SmallVector<SDOperand, 8> MaskVec;
   for (unsigned i = 0; i < NumElems; i += Scale) {
     unsigned StartIdx = ~0U;
     for (unsigned j = 0; j < Scale; ++j) {
@@ -3591,10 +3607,11 @@ SDOperand RewriteAs4WideShuffle(SDOperand V1, SDOperand V2,
       MaskVec.push_back(DAG.getConstant(StartIdx / Scale, MVT::i32));
   }
 
-  V1 = DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, V1);
-  V2 = DAG.getNode(ISD::BIT_CONVERT, MVT::v4i32, V2);
-  return DAG.getNode(ISD::VECTOR_SHUFFLE, MVT::v4i32, V1, V2,
-                     DAG.getNode(ISD::BUILD_VECTOR, MVT::v4i32, &MaskVec[0],4));
+  V1 = DAG.getNode(ISD::BIT_CONVERT, NewVT, V1);
+  V2 = DAG.getNode(ISD::BIT_CONVERT, NewVT, V2);
+  return DAG.getNode(ISD::VECTOR_SHUFFLE, NewVT, V1, V2,
+                     DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
+                                 &MaskVec[0], MaskVec.size()));
 }
 
 SDOperand
@@ -3626,6 +3643,35 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     return PromoteSplat(Op, DAG);
   }
 
+  // If the shuffle can be profitably rewritten as a narrower shuffle, then
+  // do it!
+  if (VT == MVT::v8i16 || VT == MVT::v16i8) {
+    SDOperand NewOp= RewriteAsNarrowerShuffle(V1, V2, VT, PermMask, DAG, *this);
+    if (NewOp.Val)
+      return DAG.getNode(ISD::BIT_CONVERT, VT, LowerVECTOR_SHUFFLE(NewOp, DAG));
+  } else if ((VT == MVT::v4i32 || (VT == MVT::v4f32 && Subtarget->hasSSE2()))) {
+    // FIXME: Figure out a cleaner way to do this.
+    // Try to make use of movq to zero out the top part.
+    if (ISD::isBuildVectorAllZeros(V2.Val)) {
+      SDOperand NewOp = RewriteAsNarrowerShuffle(V1, V2, VT, PermMask, DAG, *this);
+      if (NewOp.Val) {
+        SDOperand NewV1 = NewOp.getOperand(0);
+        SDOperand NewV2 = NewOp.getOperand(1);
+        SDOperand NewMask = NewOp.getOperand(2);
+        if (isCommutedMOVL(NewMask.Val, true, false)) {
+          NewOp = CommuteVectorShuffle(NewOp, NewV1, NewV2, NewMask, DAG);
+          NewOp = DAG.getNode(ISD::VECTOR_SHUFFLE, NewOp.getValueType(),
+                              NewV1, NewV2, getMOVLMask(2, DAG));
+          return DAG.getNode(ISD::BIT_CONVERT, VT, LowerVECTOR_SHUFFLE(NewOp, DAG));
+        }
+      }
+    } else if (ISD::isBuildVectorAllZeros(V1.Val)) {
+      SDOperand NewOp= RewriteAsNarrowerShuffle(V1, V2, VT, PermMask, DAG, *this);
+      if (NewOp.Val && X86::isMOVLMask(NewOp.getOperand(2).Val))
+        return DAG.getNode(ISD::BIT_CONVERT, VT, LowerVECTOR_SHUFFLE(NewOp, DAG));
+    }
+  }
+
   if (X86::isMOVLMask(PermMask.Val))
     return (V1IsUndef) ? V2 : Op;
 
@@ -3654,6 +3700,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
     Commuted = true;
   }
 
+  // FIXME: Figure out a cleaner way to do this.
   if (isCommutedMOVL(PermMask.Val, V2IsSplat, V2IsUndef)) {
     if (V2IsUndef) return V1;
     Op = CommuteVectorShuffle(Op, V1, V2, PermMask, DAG);
@@ -3733,13 +3780,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
                            DAG.getNode(ISD::UNDEF, V1.getValueType()),PermMask);
       return Op;
     }
-  }
-
-  // If the shuffle can be rewritten as a 4 wide shuffle, then do it!
-  if (VT == MVT::v8i16 || VT == MVT::v16i8) {
-    SDOperand NewOp = RewriteAs4WideShuffle(V1, V2, PermMask, DAG, *this);
-    if (NewOp.Val)
-      return DAG.getNode(ISD::BIT_CONVERT, VT, LowerVECTOR_SHUFFLE(NewOp, DAG));
   }
 
   // Handle v8i16 specifically since SSE can do byte extraction and insertion.

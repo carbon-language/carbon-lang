@@ -1,7 +1,8 @@
 ; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 -o %t -f
-; RUN: grep movlhps   %t | count 2
+; RUN: grep movlhps   %t | count 1
 ; RUN: grep unpcklps  %t | count 1
 ; RUN: grep punpckldq %t | count 1
+; RUN: grep movq      %t | count 1
 
 <4 x float> %test1(float %a, float %b) {
 	%tmp = insertelement <4 x float> zeroinitializer, float %a, uint 0
