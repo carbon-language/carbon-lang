@@ -34,6 +34,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
@@ -648,10 +649,10 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
 /// RemoveDuplicates - If there are duplicate directory entries in the specified
 /// search list, remove the later (dead) ones.
 static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList) {
-  std::set<const DirectoryEntry *> SeenDirs;
+  llvm::SmallPtrSet<const DirectoryEntry *, 8> SeenDirs;
   for (unsigned i = 0; i != SearchList.size(); ++i) {
     // If this isn't the first time we've seen this dir, remove it.
-    if (!SeenDirs.insert(SearchList[i].getDir()).second) {
+    if (!SeenDirs.insert(SearchList[i].getDir())) {
       if (Verbose)
         fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
                 SearchList[i].getDir()->getName());
@@ -794,6 +795,7 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
       fprintf(stderr, " %s", SearchList[i].getDir()->getName());
       if (SearchList[i].isFramework())
         fprintf(stderr, " (framework directory)");
+      // FIXME: Print (headermap)"
       fprintf(stderr, "\n");
     }
     fprintf(stderr, "End of search list.\n");
