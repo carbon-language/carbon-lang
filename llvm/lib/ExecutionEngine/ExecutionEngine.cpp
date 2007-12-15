@@ -764,7 +764,7 @@ void ExecutionEngine::LoadValueFromMemory(GenericValue &Result,
     break;
   case Type::X86_FP80TyID: {
     // This is endian dependent, but it will only work on x86 anyway.
-    // FIXME: Does not trap if loading a trapping NaN.
+    // FIXME: Will not trap if loading a signaling NaN.
     uint16_t *p = (uint16_t*)Ptr;
     union {
       uint16_t x[8];
