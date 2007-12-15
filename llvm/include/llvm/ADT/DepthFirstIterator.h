@@ -96,16 +96,16 @@ public:
   typedef df_iterator<GraphT, SetType, ExtStorage, GT> _Self;
 
   // Provide static begin and end methods as our public "constructors"
-  static inline _Self begin(GraphT G) {
+  static inline _Self begin(const GraphT& G) {
     return _Self(GT::getEntryNode(G));
   }
-  static inline _Self end(GraphT G) { return _Self(); }
+  static inline _Self end(const GraphT& G) { return _Self(); }
 
   // Static begin and end methods as our public ctors for external iterators
-  static inline _Self begin(GraphT G, SetType &S) {
+  static inline _Self begin(const GraphT& G, SetType &S) {
     return _Self(GT::getEntryNode(G), S);
   }
-  static inline _Self end(GraphT G, SetType &S) { return _Self(S); }
+  static inline _Self end(const GraphT& G, SetType &S) { return _Self(S); }
 
   inline bool operator==(const _Self& x) const {
     return VisitStack.size() == x.VisitStack.size() &&
@@ -162,12 +162,12 @@ public:
 // Provide global constructors that automatically figure out correct types...
 //
 template <class T>
-df_iterator<T> df_begin(T G) {
+df_iterator<T> df_begin(const T& G) {
   return df_iterator<T>::begin(G);
 }
 
 template <class T>
-df_iterator<T> df_end(T G) {
+df_iterator<T> df_end(const T& G) {
   return df_iterator<T>::end(G);
 }
 
@@ -179,12 +179,12 @@ struct df_ext_iterator : public df_iterator<T, SetTy, true> {
 };
 
 template <class T, class SetTy>
-df_ext_iterator<T, SetTy> df_ext_begin(T G, SetTy &S) {
+df_ext_iterator<T, SetTy> df_ext_begin(const T& G, SetTy &S) {
   return df_ext_iterator<T, SetTy>::begin(G, S);
 }
 
 template <class T, class SetTy>
-df_ext_iterator<T, SetTy> df_ext_end(T G, SetTy &S) {
+df_ext_iterator<T, SetTy> df_ext_end(const T& G, SetTy &S) {
   return df_ext_iterator<T, SetTy>::end(G, S);
 }
 
@@ -199,13 +199,15 @@ struct idf_iterator : public df_iterator<Inverse<T>, SetTy, External> {
 };
 
 template <class T>
-idf_iterator<T> idf_begin(T G) {
-  return idf_iterator<T>::begin(G);
+idf_iterator<T> idf_begin(const T& G) {
+  Inverse<T> DummyG;
+  return idf_iterator<T>::begin(DummyG);
 }
 
 template <class T>
-idf_iterator<T> idf_end(T G){
-  return idf_iterator<T>::end(G);
+idf_iterator<T> idf_end(const T& G){
+  Inverse<T> DummyG;
+  return idf_iterator<T>::end(DummyG);
 }
 
 // Provide global definitions of external inverse depth first iterators...
@@ -218,13 +220,15 @@ struct idf_ext_iterator : public idf_iterator<T, SetTy, true> {
 };
 
 template <class T, class SetTy>
-idf_ext_iterator<T, SetTy> idf_ext_begin(T G, SetTy &S) {
-  return idf_ext_iterator<T, SetTy>::begin(G, S);
+idf_ext_iterator<T, SetTy> idf_ext_begin(const T& G, SetTy &S) {
+  Inverse<T> DummyG(G);
+  return idf_ext_iterator<T, SetTy>::begin(DummyG, S);
 }
 
 template <class T, class SetTy>
-idf_ext_iterator<T, SetTy> idf_ext_end(T G, SetTy &S) {
-  return idf_ext_iterator<T, SetTy>::end(G, S);
+idf_ext_iterator<T, SetTy> idf_ext_end(const T& G, SetTy &S) {
+  Inverse<T> DummyG(G);
+  return idf_ext_iterator<T, SetTy>::end(DummyG, S);
 }
 
 } // End llvm namespace

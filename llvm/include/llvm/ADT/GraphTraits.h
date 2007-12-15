@@ -73,9 +73,9 @@ struct GraphTraits {
 //
 template <class GraphType>
 struct Inverse {
-  GraphType &Graph;
+  const GraphType &Graph;
 
-  inline Inverse(GraphType &G) : Graph(G) {}
+  inline Inverse(const GraphType &G) : Graph(G) {}
 };
 
 // Provide a partial specialization of GraphTraits so that the inverse of an inverse
