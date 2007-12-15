@@ -507,15 +507,13 @@ static void DefineBuiltinMacro(std::vector<char> &Buf, const char *Macro,
 ///
 static unsigned InitializePreprocessor(Preprocessor &PP,
                                        const std::string &InFile,
-                                       SourceManager &SourceMgr,
-                                       HeaderSearch &HeaderInfo,
-                                       const LangOptions &LangInfo,
                                        std::vector<char> &PredefineBuffer) {
   
-  FileManager &FileMgr = HeaderInfo.getFileMgr();
+  FileManager &FileMgr = PP.getFileManager();
   
   // Figure out where to get and map in the main file.
   unsigned MainFileID = 0;
+  SourceManager &SourceMgr = PP.getSourceManager();
   if (InFile != "-") {
     const FileEntry *File = FileMgr.getFile(InFile);
     if (File) MainFileID = SourceMgr.createFileID(File, SourceLocation());
@@ -879,10 +877,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
 ///
 static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
                              const std::string &InFile,
-                             SourceManager &SourceMgr,
-                             TextDiagnostics &OurDiagnosticClient,
-                             HeaderSearch &HeaderInfo,
-                             const LangOptions &LangInfo) {
+                             TextDiagnostics &OurDiagnosticClient) {
 
   ASTConsumer* Consumer = NULL;
   bool ClearSourceMgr = false;
@@ -890,7 +885,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   switch (ProgAction) {
   default:
     Consumer = CreateASTConsumer(InFile, PP.getDiagnostics(),
-                                 HeaderInfo.getFileMgr(),
+                                 PP.getFileManager(),
                                  PP.getLangOptions());
     
     if (!Consumer) {      
@@ -923,7 +918,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   }
     
   case PrintPreprocessedInput:       // -E mode.
-    DoPrintPreprocessedInput(MainFileID, PP, LangInfo);
+    DoPrintPreprocessedInput(MainFileID, PP);
     ClearSourceMgr = true;
     break;
     
@@ -955,18 +950,17 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
     fprintf(stderr, "\nSTATISTICS FOR '%s':\n", InFile.c_str());
     PP.PrintStats();
     PP.getIdentifierTable().PrintStats();
-    HeaderInfo.PrintStats();
+    PP.getHeaderSearchInfo().PrintStats();
     if (ClearSourceMgr)
-      SourceMgr.PrintStats();
+      PP.getSourceManager().PrintStats();
     fprintf(stderr, "\n");
   }
 
   // For a multi-file compilation, some things are ok with nuking the source 
   // manager tables, other require stable fileid/macroid's across multiple
   // files.
-  if (ClearSourceMgr) {
-    SourceMgr.clearIDTables();
-  }
+  if (ClearSourceMgr)
+    PP.getSourceManager().clearIDTables();
 }
 
 static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
@@ -1112,14 +1106,11 @@ int main(int argc, char **argv) {
       Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
       
       std::vector<char> PredefineBuffer;
-      unsigned MainFileID = InitializePreprocessor(PP, InFile, SourceMgr,
-                                                   HeaderInfo, LangInfo,
-                                                   PredefineBuffer);
+      unsigned MainFileID = InitializePreprocessor(PP, InFile, PredefineBuffer);
       
       if (!MainFileID) continue;
 
-      ProcessInputFile(PP, MainFileID, InFile, SourceMgr,
-                       *DiagClient, HeaderInfo, LangInfo);
+      ProcessInputFile(PP, MainFileID, InFile, *DiagClient);
       
       HeaderInfo.ClearFileInfo();
       

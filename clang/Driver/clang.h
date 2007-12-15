@@ -19,7 +19,6 @@
 
 namespace clang {
 class Preprocessor;
-struct LangOptions;
 class MinimalAction;
 class TargetInfo;
 class Diagnostic;
@@ -28,8 +27,7 @@ class IdentifierTable;
 class SourceManager;
 
 /// DoPrintPreprocessedInput - Implement -E mode.
-void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP,
-                              const LangOptions &Options);
+void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP);
 
 /// CreatePrintParserActionsAction - Return the actions implementation that
 /// implements the -parse-print-callbacks option.
