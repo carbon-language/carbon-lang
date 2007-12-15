@@ -791,8 +791,12 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
     for (unsigned i = 0, e = SearchList.size(); i != e; ++i) {
       if (i == QuotedIdx)
         fprintf(stderr, "#include <...> search starts here:\n");
-      fprintf(stderr, " %s\n", SearchList[i].getDir()->getName());
+      fprintf(stderr, " %s", SearchList[i].getDir()->getName());
+      if (SearchList[i].isFramework())
+        fprintf(stderr, " (framework directory)");
+      fprintf(stderr, "\n");
     }
+    fprintf(stderr, "End of search list.\n");
   }
 }
 
