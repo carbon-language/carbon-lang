@@ -78,6 +78,21 @@ namespace {
             && isI16IntS10Immediate(cast<ConstantSDNode>(N)));
   }
 
+  //! ConstantSDNode predicate for i16 unsigned 10-bit immediate values
+  bool
+  isI16IntU10Immediate(ConstantSDNode *CN)
+  {
+    return isU10Constant((short) CN->getValue());
+  }
+
+  //! SDNode predicate for i16 sign-extended, 10-bit immediate values
+  bool
+  isI16IntU10Immediate(SDNode *N)
+  {
+    return (N->getOpcode() == ISD::Constant
+            && isI16IntU10Immediate(cast<ConstantSDNode>(N)));
+  }
+
   //! ConstantSDNode predicate for signed 16-bit values
   /*!
     \arg CN The constant SelectionDAG node holding the value

@@ -1127,7 +1127,7 @@ def ANDHIv8i16:
 def ANDHIr16:
     RI10Form<0b10101000, (outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
       "andhi\t$rT, $rA, $val", IntegerOp,
-      [(set R16C:$rT, (and R16C:$rA, i16ImmSExt10:$val))]>;
+      [(set R16C:$rT, (and R16C:$rA, i16ImmU10:$val))]>;
 
 def ANDIv4i32:
     RI10Form<0b00101000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),

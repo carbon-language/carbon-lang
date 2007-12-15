@@ -25,7 +25,7 @@ namespace llvm {
   FunctionPass *createSPUISelDag(SPUTargetMachine &TM);
   FunctionPass *createSPUAsmPrinterPass(std::ostream &o, SPUTargetMachine &tm);
 
-  /* Utility functions/predicates/etc used all over the place: */
+  /*--== Utility functions/predicates/etc used all over the place: --==*/
   //! Predicate test for a signed 10-bit value
   /*!
     \param Value The input value to be tested
@@ -53,6 +53,33 @@ namespace llvm {
 
   inline bool isS10Constant(uint64_t Value) {
     return (Value <= ((1 << 9) - 1));
+  }
+
+  //! Predicate test for an unsigned 10-bit value
+  /*!
+    \param Value The input value to be tested
+
+    This predicate tests for an unsigned 10-bit value, returning the 10-bit value
+    as a short if true.
+   */
+  inline bool isU10Constant(short Value) {
+    return (Value == (Value & 0x3ff));
+  }
+
+  inline bool isU10Constant(int Value) {
+    return (Value == (Value & 0x3ff));
+  }
+
+  inline bool isU10Constant(uint32_t Value) {
+    return (Value == (Value & 0x3ff));
+  }
+
+  inline bool isU10Constant(int64_t Value) {
+    return (Value == (Value & 0x3ff));
+  }
+
+  inline bool isU10Constant(uint64_t Value) {
+    return (Value == (Value & 0x3ff));
   }
 }
 

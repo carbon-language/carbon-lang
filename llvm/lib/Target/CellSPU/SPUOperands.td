@@ -99,10 +99,16 @@ def i32ImmSExt10  : PatLeaf<(imm), [{
   return isI32IntS10Immediate(N);
 }]>;
 
-// i16ImmSExt10 predicate - True if the i32 immediate fits in a 10-bit sign
+// i16ImmSExt10 predicate - True if the i16 immediate fits in a 10-bit sign
 // extended field.  Used by RI10Form instructions like 'ldq'.
 def i16ImmSExt10  : PatLeaf<(imm), [{
   return isI16IntS10Immediate(N);
+}]>;
+
+// i16ImmU10 predicate - True if the i16 immediate fits into a 10-bit unsigned
+// value. Used by RI10Form instructions.
+def i16ImmU10 : PatLeaf<(imm), [{
+  return isI16IntU10Immediate(N);
 }]>;
 
 def immSExt16  : PatLeaf<(imm), [{
@@ -206,7 +212,7 @@ def fpimm18  : PatLeaf<(fpimm), [{
 }], FPimm_u18>;
 
 //===----------------------------------------------------------------------===//
-// 64-bit operands:
+// 64-bit operands (TODO):
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
