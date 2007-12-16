@@ -69,8 +69,9 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
           if (!isa<CallInst>(I)) continue;
           CallInst *CI = cast<CallInst>(I);
 
-          // If this call cannot unwind, don't convert it to an invoke.
-          if (CI->isNoUnwind())
+          // If this call cannot unwind or is an inline asm, don't
+          // convert it to an invoke.
+          if (CI->isNoUnwind() || isa<InlineAsm>(CI->getCalledValue()))
             continue;
 
           // Convert this function call into an invoke instruction.
