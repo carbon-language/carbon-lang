@@ -15,7 +15,9 @@
 #ifndef LLVM_ADT_TRIE_H
 #define LLVM_ADT_TRIE_H
 
-#include <map>
+#include "llvm/ADT/GraphTraits.h"
+#include "llvm/Support/DOTGraphTraits.h"
+
 #include <vector>
 
 namespace llvm {
@@ -24,12 +26,15 @@ namespace llvm {
 // - Labels are usually small, maybe it's better to use SmallString
 // - Should we use char* during construction?
 // - Should we templatize Empty with traits-like interface?
-// - GraphTraits interface
 
 template<class Payload>
 class Trie {
+  friend class GraphTraits<Trie<Payload> >;
+  friend class DOTGraphTraits<Trie<Payload> >;
+public:
   class Node {
     friend class Trie;
+    friend class GraphTraits<Trie<Payload> >;
 
     typedef enum {
       Same           = -3,
@@ -53,43 +58,10 @@ class Trie {
     std::string Label;
     Payload Data;
     NodeVector Children;
-  public:
-    inline explicit Node(const Payload& data, const std::string& label = ""):
-        Label(label), Data(data) { }
 
-    inline Node(const Node& n) {
-      Data = n.Data;
-      Children = n.Children;
-      Label = n.Label;
-    }
-    inline Node& operator=(const Node& n) {
-      if (&n != this) {
-        Data = n.Data;
-        Children = n.Children;
-        Label = n.Label;
-      }
-
-      return *this;
-    }
-
-    inline bool isLeaf() const { return Children.empty(); }
-
-    inline const Payload& getData() const { return Data; }
-    inline void setData(const Payload& data) { Data = data; }
-
-    inline void setLabel(const std::string& label) { Label = label; }
-    inline const std::string& getLabel() const { return Label; }
-
-#if 0
-    inline void dump() {
-      std::cerr << "Node: " << this << "\n"
-                << "Label: " << Label << "\n"
-                << "Children:\n";
-
-      for (NodeVectorIter I = Children.begin(), E = Children.end(); I != E; ++I)
-        std::cerr << (*I)->Label << "\n";
-    }
-#endif
+    // Do not implement
+    Node(const Node&);
+    Node& operator=(const Node&);
 
     inline void addEdge(Node* N) {
       if (Children.empty())
@@ -100,16 +72,6 @@ class Trie {
         // FIXME: no dups are allowed
         Children.insert(I, N);
       }
-    }
-
-    inline Node* getEdge(char Id) {
-      Node* fNode = NULL;
-      NodeVectorIter I = std::lower_bound(Children.begin(), Children.end(),
-                                          Id, NodeCmp());
-      if (I != Children.end() && (*I)->Label[0] == Id)
-        fNode = *I;
-
-      return fNode;
     }
 
     inline void setEdge(Node* N) {
@@ -141,12 +103,41 @@ class Trie {
       } else // s and Label have common (possible empty) part, return its length
         return (QueryResult)i;
     }
+
+  public:
+    inline explicit Node(const Payload& data, const std::string& label = ""):
+        Label(label), Data(data) { }
+
+    inline const Payload& data() const { return Data; }
+    inline void setData(const Payload& data) { Data = data; }
+
+    inline const std::string& label() const { return Label; }
+
+#if 0
+    inline void dump() {
+      std::cerr << "Node: " << this << "\n"
+                << "Label: " << Label << "\n"
+                << "Children:\n";
+
+      for (NodeVectorIter I = Children.begin(), E = Children.end(); I != E; ++I)
+        std::cerr << (*I)->Label << "\n";
+    }
+#endif
+
+    inline Node* getEdge(char Id) {
+      Node* fNode = NULL;
+      NodeVectorIter I = std::lower_bound(Children.begin(), Children.end(),
+                                          Id, NodeCmp());
+      if (I != Children.end() && (*I)->Label[0] == Id)
+        fNode = *I;
+
+      return fNode;
+    }
   };
 
+private:
   std::vector<Node*> Nodes;
   Payload Empty;
-
-  inline Node* getRoot() const { return Nodes[0]; }
 
   inline Node* addNode(const Payload& data, const std::string label = "") {
     Node* N = new Node(data, label);
@@ -172,6 +163,10 @@ class Trie {
     return nNode;
   }
 
+  // Do not implement
+  Trie(const Trie&);
+  Trie& operator=(const Trie&);
+
 public:
   inline explicit Trie(const Payload& empty):Empty(empty) {
     addNode(Empty);
@@ -180,6 +175,8 @@ public:
     for (unsigned i = 0, e = Nodes.size(); i != e; ++i)
       delete Nodes[i];
   }
+
+  inline Node* getRoot() const { return Nodes[0]; }
 
   bool addString(const std::string& s, const Payload& data) {
     Node* cNode = getRoot();
@@ -202,7 +199,7 @@ public:
           assert(0 && "Impossible!");
           return false;
         case Node::LabelIsPrefix:
-          s1 = s1.substr(nNode->getLabel().length());
+          s1 = s1.substr(nNode->label().length());
           cNode = nNode;
           break;
         default:
@@ -239,7 +236,7 @@ public:
           assert(0 && "Impossible!");
           return Empty;
         case Node::LabelIsPrefix:
-          s1 = s1.substr(nNode->getLabel().length());
+          s1 = s1.substr(nNode->label().length());
           cNode = nNode;
           break;
         default:
@@ -249,11 +246,69 @@ public:
         return Empty;
     }
 
-    return tNode->getData();
+    return tNode->data();
   }
 
 };
 
-}
+template<class Payload>
+struct GraphTraits<Trie<Payload> > {
+  typedef typename Trie<Payload>::Node NodeType;
+  typedef typename std::vector<NodeType*>::iterator ChildIteratorType;
+
+  static inline NodeType *getEntryNode(const Trie<Payload>& T) {
+    return T.getRoot();
+  }
+
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return N->Children.begin();
+  }
+  static inline ChildIteratorType child_end(NodeType *N) {
+    return N->Children.end();
+  }
+
+  typedef typename std::vector<NodeType*>::const_iterator nodes_iterator;
+
+  static inline nodes_iterator nodes_begin(const Trie<Payload>& G) {
+    return G.Nodes.begin();
+  }
+  static inline nodes_iterator nodes_end(const Trie<Payload>& G) {
+    return G.Nodes.end();
+  }
+
+};
+
+template<class Payload>
+struct DOTGraphTraits<Trie<Payload> > : public DefaultDOTGraphTraits {
+  typedef typename Trie<Payload>::Node NodeType;
+  typedef typename GraphTraits<Trie<Payload> >::ChildIteratorType EdgeIter;
+
+  static std::string getGraphName(const Trie<Payload>& T) {
+    return "Trie";
+  }
+
+  static std::string getNodeLabel(NodeType* Node, const Trie<Payload>& T) {
+    if (T.getRoot() == Node)
+      return "<Root>";
+    else
+      return Node->label();
+  }
+
+  static std::string getEdgeSourceLabel(NodeType* Node, EdgeIter I) {
+    NodeType* N = *I;
+    return N->label().substr(0, 1);
+  }
+
+  static std::string getNodeAttributes(const NodeType* Node,
+                                       const Trie<Payload>& T) {
+    if (Node->data() != T.Empty)
+      return "color=blue";
+
+    return "";
+  }
+
+};
+
+} // end of llvm namespace
 
 #endif // LLVM_ADT_TRIE_H
