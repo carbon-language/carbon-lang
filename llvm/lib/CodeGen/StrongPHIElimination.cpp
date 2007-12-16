@@ -311,6 +311,10 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   }
 }
 
+/// processPHIUnion - Take a set of candidate registers to be coallesced when
+/// decomposing the PHI instruction.  Use the DominanceForest to remove the ones
+/// that are known to interfere, and flag others that need to be checked for
+/// local interferences.
 void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
                                            std::set<unsigned>& PHIUnion,
                         std::vector<StrongPHIElimination::DomForestNode*>& DF,
@@ -322,6 +326,7 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
   LiveVariables& LV = getAnalysis<LiveVariables>();
   unsigned DestReg = Inst->getOperand(0).getReg();
   
+  // DF walk on the DomForest
   while (!worklist.empty()) {
     DomForestNode* DFNode = worklist.back();
     
@@ -350,7 +355,7 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
         // Add (p, c) to possible local interferences
         locals.push_back(std::make_pair(DFNode->getReg(), child->getReg()));
       }
-        
+      
       if (!visited.count(child)) {
         worklist.push_back(child);
         inserted = true;
