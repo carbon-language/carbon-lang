@@ -5302,7 +5302,7 @@ SDOperand X86TargetLowering::LowerTRAMPOLINE(SDOperand Op,
     Disp = DAG.getNode(ISD::SUB, MVT::i32, FPtr, Addr);
 
     unsigned char MOV32ri = TII->getBaseOpcodeFor(X86::MOV32ri);
-    unsigned char N86Reg  = ((X86RegisterInfo&)RegInfo).getX86RegNum(NestReg);
+    unsigned char N86Reg  = ((X86RegisterInfo*)RegInfo)->getX86RegNum(NestReg);
     OutChains[0] = DAG.getStore(Root, DAG.getConstant(MOV32ri|N86Reg, MVT::i8),
                                 Trmp, TrmpSV->getValue(), TrmpSV->getOffset());
 
