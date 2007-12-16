@@ -178,78 +178,84 @@ public:
 
   inline Node* getRoot() const { return Nodes[0]; }
 
-  bool addString(const std::string& s, const Payload& data) {
-    Node* cNode = getRoot();
-    Node* tNode = NULL;
-    std::string s1(s);
-
-    while (tNode == NULL) {
-      char Id = s1[0];
-      if (Node* nNode = cNode->getEdge(Id)) {
-        typename Node::QueryResult r = nNode->query(s1);
-
-        switch (r) {
-        case Node::Same:
-        case Node::StringIsPrefix:
-          // Currently we don't allow to have two strings in the trie one
-          // being a prefix of another. This should be fixed.
-          assert(0 && "FIXME!");
-          return false;
-        case Node::DontMatch:
-          assert(0 && "Impossible!");
-          return false;
-        case Node::LabelIsPrefix:
-          s1 = s1.substr(nNode->label().length());
-          cNode = nNode;
-          break;
-        default:
-         nNode = splitEdge(cNode, Id, r);
-         tNode = addNode(data, s1.substr(r));
-         nNode->addEdge(tNode);
-       }
-      } else {
-        tNode = addNode(data, s1);
-        cNode->addEdge(tNode);
-      }
-    }
-
-    return true;
-  }
-
-  const Payload& lookup(const std::string& s) const {
-    Node* cNode = getRoot();
-    Node* tNode = NULL;
-    std::string s1(s);
-
-    while (tNode == NULL) {
-      char Id = s1[0];
-      if (Node* nNode = cNode->getEdge(Id)) {
-        typename Node::QueryResult r = nNode->query(s1);
-
-        switch (r) {
-        case Node::Same:
-          tNode = nNode;
-          break;
-        case Node::StringIsPrefix:
-          return Empty;
-        case Node::DontMatch:
-          assert(0 && "Impossible!");
-          return Empty;
-        case Node::LabelIsPrefix:
-          s1 = s1.substr(nNode->label().length());
-          cNode = nNode;
-          break;
-        default:
-          return Empty;
-        }
-      } else
-        return Empty;
-    }
-
-    return tNode->data();
-  }
+  bool addString(const std::string& s, const Payload& data);
+  const Payload& lookup(const std::string& s) const;
 
 };
+
+// Define this out-of-line to dissuade the C++ compiler from inlining it.
+template<class Payload>
+bool Trie<Payload>::addString(const std::string& s, const Payload& data) {
+  Node* cNode = getRoot();
+  Node* tNode = NULL;
+  std::string s1(s);
+
+  while (tNode == NULL) {
+    char Id = s1[0];
+    if (Node* nNode = cNode->getEdge(Id)) {
+      typename Node::QueryResult r = nNode->query(s1);
+
+      switch (r) {
+      case Node::Same:
+      case Node::StringIsPrefix:
+        // Currently we don't allow to have two strings in the trie one
+        // being a prefix of another. This should be fixed.
+        assert(0 && "FIXME!");
+        return false;
+      case Node::DontMatch:
+        assert(0 && "Impossible!");
+        return false;
+      case Node::LabelIsPrefix:
+        s1 = s1.substr(nNode->label().length());
+        cNode = nNode;
+        break;
+      default:
+        nNode = splitEdge(cNode, Id, r);
+        tNode = addNode(data, s1.substr(r));
+        nNode->addEdge(tNode);
+      }
+    } else {
+      tNode = addNode(data, s1);
+      cNode->addEdge(tNode);
+    }
+  }
+
+  return true;
+}
+
+template<class Payload>
+const Payload& Trie<Payload>::lookup(const std::string& s) const {
+  Node* cNode = getRoot();
+  Node* tNode = NULL;
+  std::string s1(s);
+
+  while (tNode == NULL) {
+    char Id = s1[0];
+    if (Node* nNode = cNode->getEdge(Id)) {
+      typename Node::QueryResult r = nNode->query(s1);
+
+      switch (r) {
+      case Node::Same:
+        tNode = nNode;
+        break;
+      case Node::StringIsPrefix:
+        return Empty;
+      case Node::DontMatch:
+        assert(0 && "Impossible!");
+        return Empty;
+      case Node::LabelIsPrefix:
+        s1 = s1.substr(nNode->label().length());
+        cNode = nNode;
+        break;
+      default:
+        return Empty;
+      }
+    } else
+      return Empty;
+  }
+
+  return tNode->data();
+}
 
 template<class Payload>
 struct GraphTraits<Trie<Payload> > {
