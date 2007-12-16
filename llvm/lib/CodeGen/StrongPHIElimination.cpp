@@ -258,6 +258,101 @@ bool isLiveOut(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
   return false;
 }
 
+/// isKillInst - helper method that determines, from a VarInfo, if an 
+/// instruction kills a given register
+bool isKillInst(LiveVariables::VarInfo& V, MachineInstr* MI) {
+  return std::find(V.Kills.begin(), V.Kills.end(), MI) != V.Kills.end();
+}
+
+/// interferes - checks for local interferences by scanning a block.  The only
+/// trick parameter is 'mode' which tells it the relationship of the two
+/// registers. 0 - defined in the same block, 1 - first properly dominates
+/// second, 2 - second properly dominates first 
+bool interferes(LiveVariables::VarInfo& First, LiveVariables::VarInfo& Second,
+                MachineBasicBlock* scan, unsigned mode) {
+  MachineInstr* def = 0;
+  MachineInstr* kill = 0;
+  
+  bool interference = false;
+  
+  // Wallk the block, checking for interferences
+  for (MachineBasicBlock::iterator MBI = scan->begin(), MBE = scan->end();
+       MBI != MBE; ++MBI) {
+    MachineInstr* curr = MBI;
+    
+    // Same defining block...
+    if (mode == 0) {
+      if (curr == First.DefInst) {
+        // If we find our first DefInst, save it
+        if (!def) {
+          def = curr;
+        // If there's already an unkilled DefInst, then 
+        // this is an interference
+        } else if (!kill) {
+          interference = true;
+          break;
+        // If there's a DefInst followed by a KillInst, then
+        // they can't interfere
+        } else {
+          interference = false;
+          break;
+        }
+      // Symmetric with the above
+      } else if (curr == Second.DefInst ) {
+        if (!def) {
+          def = curr;
+        } else if (!kill) {
+          interference = true;
+          break;
+        } else {
+          interference = false;
+          break;
+        }
+      // Store KillInsts if they match up with the DefInst
+      } else if (isKillInst(First, curr)) {
+        if (def == First.DefInst) {
+          kill = curr;
+        } else if (isKillInst(Second, curr)) {
+          if (def == Second.DefInst) {
+            kill = curr;
+          }
+        }
+      }
+    // First properly dominates second...
+    } else if (mode == 1) {
+      if (curr == Second.DefInst) {
+        // DefInst of second without kill of first is an interference
+        if (!kill) {
+          interference = true;
+          break;
+        // DefInst after a kill is a non-interference
+        } else {
+          interference = false;
+          break;
+        }
+      // Save KillInsts of First
+      } else if (isKillInst(First, curr)) {
+        kill = curr;
+      }
+    // Symmetric with the above
+    } else if (mode == 2) {
+      if (curr == First.DefInst) {
+        if (!kill) {
+          interference = true;
+          break;
+        } else {
+          interference = false;
+          break;
+        }
+      } else if (isKillInst(Second, curr)) {
+        kill = curr;
+      }
+    }
+  }
+  
+  return interference;
+}
+
 /// processBlock - Eliminate PHIs in the given block
 void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
   LiveVariables& LV = getAnalysis<LiveVariables>();
@@ -305,6 +400,46 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     processPHIUnion(P, PHIUnion, DF, localInterferences);
     
     // FIXME: Check for local interferences
+    for (std::vector<std::pair<unsigned, unsigned> >::iterator I =
+        localInterferences.begin(), E = localInterferences.end(); I != E; ++I) {
+      std::pair<unsigned, unsigned> p = *I;
+      
+      LiveVariables::VarInfo& FirstInfo = LV.getVarInfo(p.first);
+      LiveVariables::VarInfo& SecondInfo = LV.getVarInfo(p.second);
+      
+      MachineDominatorTree& MDT = getAnalysis<MachineDominatorTree>();
+      
+      // Determine the block we need to scan and the relationship between
+      // the two registers
+      MachineBasicBlock* scan = 0;
+      unsigned mode = 0;
+      if (FirstInfo.DefInst->getParent() == SecondInfo.DefInst->getParent()) {
+        scan = FirstInfo.DefInst->getParent();
+        mode = 0; // Same block
+      } else if (MDT.dominates(FirstInfo.DefInst->getParent(),
+                             SecondInfo.DefInst->getParent())) {
+        scan = SecondInfo.DefInst->getParent();
+        mode = 1; // First dominates second
+      } else {
+        scan = FirstInfo.DefInst->getParent();
+        mode = 2; // Second dominates first
+      }
+      
+      // If there's an interference, we need to insert  copies
+      if (interferes(FirstInfo, SecondInfo, scan, mode)) {
+        // Insert copies for First
+        for (int i = P->getNumOperands() - 1; i >= 2; i-=2) {
+          if (P->getOperand(i-1).getReg() == p.first) {
+            unsigned SrcReg = p.first;
+            MachineBasicBlock* From = P->getOperand(i).getMBB();
+            
+            Waiting[From].push_back(std::make_pair(SrcReg,
+                                                   P->getOperand(0).getReg()));
+            PHIUnion.erase(SrcReg);
+          }
+        }
+      }
+    }
     
     ProcessedNames.insert(PHIUnion.begin(), PHIUnion.end());
     ++P;
