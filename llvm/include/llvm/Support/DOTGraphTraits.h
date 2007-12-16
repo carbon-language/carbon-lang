@@ -31,13 +31,13 @@ struct DefaultDOTGraphTraits {
   /// top of the graph.
   ///
   template<typename GraphType>
-  static std::string getGraphName(GraphType Graph) { return ""; }
+  static std::string getGraphName(const GraphType& Graph) { return ""; }
 
   /// getGraphProperties - Return any custom properties that should be included
   /// in the top level graph structure for dot.
   ///
   template<typename GraphType>
-  static std::string getGraphProperties(GraphType Graph) {
+  static std::string getGraphProperties(const GraphType& Graph) {
     return "";
   }
 
@@ -51,21 +51,22 @@ struct DefaultDOTGraphTraits {
   /// getNodeLabel - Given a node and a pointer to the top level graph, return
   /// the label to print in the node.
   template<typename GraphType>
-  static std::string getNodeLabel(const void *Node, GraphType Graph) {
+  static std::string getNodeLabel(const void *Node, const GraphType& Graph) {
     return "";
   }
   
   /// hasNodeAddressLabel - If this method returns true, the address of the node
   /// is added to the label of the node.
   template<typename GraphType>
-  static bool hasNodeAddressLabel(const void *Node, GraphType Graph) {
+  static bool hasNodeAddressLabel(const void *Node, const GraphType& Graph) {
     return false;
   }
 
   /// If you want to specify custom node attributes, this is the place to do so
   ///
   template<typename GraphType>
-  static std::string getNodeAttributes(const void *Node, GraphType Graph) {
+  static std::string getNodeAttributes(const void *Node,
+                                       const GraphType& Graph) {
     return "";
   }
 
@@ -106,7 +107,7 @@ struct DefaultDOTGraphTraits {
   /// it to add things to the output graph.
   ///
   template<typename GraphType, typename GraphWriter>
-  static void addCustomGraphFeatures(GraphType Graph, GraphWriter &GW) {}
+  static void addCustomGraphFeatures(const GraphType& Graph, GraphWriter &GW) {}
 };
 
 
