@@ -199,12 +199,16 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_paddd:
   case X86::BI__builtin_ia32_paddq:
   case X86::BI__builtin_ia32_paddw:
-    return Builder.CreateAdd(Ops[0], Ops[1], "padd");
+  case X86::BI__builtin_ia32_addps:
+    return Builder.CreateAdd(Ops[0], Ops[1], "add");
   case X86::BI__builtin_ia32_psubb:
   case X86::BI__builtin_ia32_psubd:
   case X86::BI__builtin_ia32_psubq:
   case X86::BI__builtin_ia32_psubw:
-    return Builder.CreateSub(Ops[0], Ops[1], "psub");
+  case X86::BI__builtin_ia32_subps:
+    return Builder.CreateSub(Ops[0], Ops[1], "sub");
+  case X86::BI__builtin_ia32_divps:
+    return Builder.CreateFDiv(Ops[0], Ops[1], "divps");
   case X86::BI__builtin_ia32_pmullw:
     return Builder.CreateMul(Ops[0], Ops[1], "pmul");
   case X86::BI__builtin_ia32_punpckhbw:
@@ -299,6 +303,147 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     return EmitVector(&Ops[0], Ops.size());
   case X86::BI__builtin_ia32_vec_ext_v2si:
     return Builder.CreateExtractElement(Ops[0], Ops[1], "result");
+  case X86::BI__builtin_ia32_cmpordss:
+  case X86::BI__builtin_ia32_cmpunordss:
+  case X86::BI__builtin_ia32_cmpeqss: 
+  case X86::BI__builtin_ia32_cmpltss: 
+  case X86::BI__builtin_ia32_cmpless:
+  case X86::BI__builtin_ia32_cmpneqss:
+  case X86::BI__builtin_ia32_cmpnltss: 
+  case X86::BI__builtin_ia32_cmpnless: {
+    int i = 0;
+    const char *name = 0;
+    switch (BuiltinID) {
+    default: assert(0 && "Unknown compare builtin!");
+    case X86::BI__builtin_ia32_cmpeqss:
+      i = 0;
+      name = "cmpeqss";
+      break;
+    case X86::BI__builtin_ia32_cmpltss:
+      i = 1;
+      name = "cmpltss";
+      break;
+    case X86::BI__builtin_ia32_cmpless:
+      i = 2;
+      name = "cmpless";
+      break;
+    case X86::BI__builtin_ia32_cmpunordss:
+      i = 3;
+      name = "cmpunordss";
+      break;
+    case X86::BI__builtin_ia32_cmpneqss:
+      i = 4;
+      name = "cmpneqss";
+      break;
+    case X86::BI__builtin_ia32_cmpnltss:
+      i = 5;
+      name = "cmpntlss";
+      break;
+    case X86::BI__builtin_ia32_cmpnless:
+      i = 6;
+      name = "cmpnless";
+      break;
+    case X86::BI__builtin_ia32_cmpordss:
+      i = 7;
+      name = "cmpordss";
+      break;
+    }
+
+    Ops.push_back(llvm::ConstantInt::get(llvm::Type::Int8Ty, i));
+    
+    llvm::Function *F = Intrinsic::getDeclaration(&CGM.getModule(),
+                                                  Intrinsic::x86_sse_cmp_ss);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);
+  }
+  case X86::BI__builtin_ia32_cmpordps:
+  case X86::BI__builtin_ia32_cmpunordps:
+  case X86::BI__builtin_ia32_cmpeqps: 
+  case X86::BI__builtin_ia32_cmpltps: 
+  case X86::BI__builtin_ia32_cmpleps:
+  case X86::BI__builtin_ia32_cmpneqps:
+  case X86::BI__builtin_ia32_cmpngtps:
+  case X86::BI__builtin_ia32_cmpnltps: 
+  case X86::BI__builtin_ia32_cmpgtps:
+  case X86::BI__builtin_ia32_cmpgeps:
+  case X86::BI__builtin_ia32_cmpngeps:
+  case X86::BI__builtin_ia32_cmpnleps: {
+    int i = 0;
+    const char *name = 0;
+    bool ShouldSwap = false;
+    switch (BuiltinID) {
+    default: assert(0 && "Unknown compare builtin!");
+    case X86::BI__builtin_ia32_cmpeqps:
+      i = 0;
+      name = "cmpeqps";
+      break;
+    case X86::BI__builtin_ia32_cmpltps:
+      i = 1;
+      name = "cmpltps";
+      break;
+    case X86::BI__builtin_ia32_cmpleps:
+      i = 2;
+      name = "cmpleps";
+      break;
+    case X86::BI__builtin_ia32_cmpunordps:
+      i = 3;
+      name = "cmpunordps";
+      break;
+    case X86::BI__builtin_ia32_cmpneqps:
+      i = 4;
+      name = "cmpneqps";
+      break;
+    case X86::BI__builtin_ia32_cmpnltps:
+      i = 5;
+      name = "cmpntlps";
+      break;
+    case X86::BI__builtin_ia32_cmpnleps:
+      i = 6;
+      name = "cmpnleps";
+      break;
+    case X86::BI__builtin_ia32_cmpordps:
+      i = 7;
+      name = "cmpordps";
+      break;
+    case X86::BI__builtin_ia32_cmpgtps:
+      i = 1;
+      name = "cmpgtps";
+      ShouldSwap = true;
+      break;
+    case X86::BI__builtin_ia32_cmpgeps:
+      i = 2;
+      name = "cmpgeps";
+      ShouldSwap = true;
+      break;
+    case X86::BI__builtin_ia32_cmpngtps:
+      i = 5;
+      name = "cmpngtps";
+      ShouldSwap = true;
+      break;
+    case X86::BI__builtin_ia32_cmpngeps:
+      i = 6;
+      name = "cmpngeps";
+      ShouldSwap = true;
+      break;
+    }
+
+    if (ShouldSwap)
+      std::swap(Ops[0], Ops[1]);
+    
+    Ops.push_back(llvm::ConstantInt::get(llvm::Type::Int8Ty, i));
+    
+    llvm::Function *F = Intrinsic::getDeclaration(&CGM.getModule(),
+                                                  Intrinsic::x86_sse_cmp_ps);
+    return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);
+  }
+  case X86::BI__builtin_ia32_movss:
+    return EmitShuffleVector(Ops[0], Ops[1], 4, 1, 2, 3, "movss");
+  case X86::BI__builtin_ia32_shufps:
+    int i = cast<ConstantInt>(Ops[2])->getZExtValue();
+
+    return EmitShuffleVector(Ops[0], Ops[1], 
+                             i & 0x3, (i & 0xc) >> 2, 
+                             ((i & 0x30) >> 4) + 4, 
+                             ((i & 0x60) >> 6) + 4, "shufps");
   }
 }
 
