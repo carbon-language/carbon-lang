@@ -73,6 +73,9 @@ public:
   /// @brief Determine if the call does not access or only reads memory.
   bool onlyReadsMemory() const;
 
+  /// @brief Determine if the call cannot unwind.
+  bool isNoUnwind() const;
+
   /// getType - Return the type of the instruction that generated this call site
   ///
   const Type *getType() const { return I->getType(); }

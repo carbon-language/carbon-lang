@@ -7972,6 +7972,19 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       }
   }
 
+  if (isa<InlineAsm>(Callee) && !CS.isNoUnwind()) {
+    // Inline asm calls cannot throw - mark them 'nounwind'.
+    const ParamAttrsList *PAL = CS.getParamAttrs();
+    uint16_t RAttributes = PAL ? PAL->getParamAttrs(0) : 0;
+    RAttributes |= ParamAttr::NoUnwind;
+
+    ParamAttrsVector modVec;
+    modVec.push_back(ParamAttrsWithIndex::get(0, RAttributes));
+    PAL = ParamAttrsList::getModified(PAL, modVec);
+    CS.setParamAttrs(PAL);
+    Changed = true;
+  }
+
   return Changed ? CS.getInstruction() : 0;
 }
 

@@ -65,6 +65,12 @@ bool CallSite::onlyReadsMemory() const {
   else
     return cast<InvokeInst>(I)->onlyReadsMemory();
 }
+bool CallSite::isNoUnwind() const {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    return CI->isNoUnwind();
+  else
+    return cast<InvokeInst>(I)->isNoUnwind();
+}
 
 
 
