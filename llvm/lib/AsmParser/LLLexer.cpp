@@ -54,7 +54,7 @@ static uint64_t HexIntToVal(const char *Buffer, const char *End) {
       Result += C-'A'+10;
     else if (C >= 'a' && C <= 'f')
       Result += C-'a'+10;
-    
+
     if (Result < OldRes) {   // Uh, oh, overflow detected!!!
       GenerateError("constant bigger than 64 bits detected!");
       return 0;
@@ -102,7 +102,7 @@ static void HexToIntPair(const char *Buffer, const char *End, uint64_t Pair[2]){
 // appropriate character.
 static void UnEscapeLexed(std::string &Str) {
   if (Str.empty()) return;
-  
+
   char *Buffer = &Str[0], *EndBuffer = Buffer+Str.size();
   char *BOut = Buffer;
   for (char *BIn = Buffer; BIn != EndBuffer; ) {
@@ -168,9 +168,9 @@ int LLLexer::getNextChar() {
     // a random nul in the file.  Disambiguate that here.
     if (CurPtr-1 != CurBuf->getBufferEnd())
       return 0;  // Just whitespace.
-        
+
     // Otherwise, return end of file.
-    --CurPtr;  // Another call to lex will return EOF again.  
+    --CurPtr;  // Another call to lex will return EOF again.
     return EOF;
   case '\n':
   case '\r':
@@ -180,24 +180,24 @@ int LLLexer::getNextChar() {
     if ((*CurPtr == '\n' || (*CurPtr == '\r')) &&
         *CurPtr != CurChar)
       ++CurPtr;  // Eat the two char newline sequence.
-      
+
     ++CurLineNo;
     return '\n';
-  }  
+  }
 }
 
 
 int LLLexer::LexToken() {
   TokStart = CurPtr;
-  
+
   int CurChar = getNextChar();
-  
+
   switch (CurChar) {
   default:
     // Handle letters: [a-zA-Z_]
     if (isalpha(CurChar) || CurChar == '_')
       return LexIdentifier();
-    
+
     return CurChar;
   case EOF: return YYEOF;
   case 0:
@@ -234,7 +234,7 @@ int LLLexer::LexToken() {
     return LexToken();
   case '0': case '1': case '2': case '3': case '4':
   case '5': case '6': case '7': case '8': case '9':
-  case '-': 
+  case '-':
     return LexDigitOrNegative();
   }
 }
@@ -254,11 +254,11 @@ int LLLexer::LexAt() {
   // Handle AtStringConstant: @\"[^\"]*\"
   if (CurPtr[0] == '"') {
     ++CurPtr;
-    
+
     while (1) {
       int CurChar = getNextChar();
-    
-      if (CurChar == EOF) { 
+
+      if (CurChar == EOF) {
         GenerateError("End of file in global variable name");
         return YYERROR;
       }
@@ -269,30 +269,31 @@ int LLLexer::LexAt() {
       }
     }
   }
-  
+
   // Handle GlobalVarName: @[-a-zA-Z$._][-a-zA-Z$._0-9]*
-  if (isalpha(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' || 
+  if (isalpha(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
       CurPtr[0] == '.' || CurPtr[0] == '_') {
     ++CurPtr;
-    while (isalnum(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' || 
+    while (isalnum(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
            CurPtr[0] == '.' || CurPtr[0] == '_')
       ++CurPtr;
 
     llvmAsmlval.StrVal = new std::string(TokStart+1, CurPtr);   // Skip @
     return GLOBALVAR;
   }
-  
+
   // Handle GlobalVarID: @[0-9]+
   if (isdigit(CurPtr[0])) {
-    for (++CurPtr; isdigit(CurPtr[0]); ++CurPtr);
-    
+    for (++CurPtr; isdigit(CurPtr[0]); ++CurPtr)
+      /*empty*/;
+
     uint64_t Val = atoull(TokStart+1, CurPtr);
     if ((unsigned)Val != Val)
       GenerateError("Invalid value number (too large)!");
     llvmAsmlval.UIntVal = unsigned(Val);
     return GLOBALVAL_ID;
   }
-  
+
   return '@';
 }
 
@@ -305,11 +306,11 @@ int LLLexer::LexPercent() {
   // Handle PctStringConstant: %\"[^\"]*\"
   if (CurPtr[0] == '"') {
     ++CurPtr;
-    
+
     while (1) {
       int CurChar = getNextChar();
-      
-      if (CurChar == EOF) { 
+
+      if (CurChar == EOF) {
         GenerateError("End of file in local variable name");
         return YYERROR;
       }
@@ -320,30 +321,31 @@ int LLLexer::LexPercent() {
       }
     }
   }
-  
+
   // Handle LocalVarName: %[-a-zA-Z$._][-a-zA-Z$._0-9]*
-  if (isalpha(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' || 
+  if (isalpha(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
       CurPtr[0] == '.' || CurPtr[0] == '_') {
     ++CurPtr;
-    while (isalnum(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' || 
+    while (isalnum(CurPtr[0]) || CurPtr[0] == '-' || CurPtr[0] == '$' ||
            CurPtr[0] == '.' || CurPtr[0] == '_')
       ++CurPtr;
-    
+
     llvmAsmlval.StrVal = new std::string(TokStart+1, CurPtr);   // Skip %
     return LOCALVAR;
   }
-  
+
   // Handle LocalVarID: %[0-9]+
   if (isdigit(CurPtr[0])) {
-    for (++CurPtr; isdigit(CurPtr[0]); ++CurPtr);
-    
+    for (++CurPtr; isdigit(CurPtr[0]); ++CurPtr)
+      /*empty*/;
+
     uint64_t Val = atoull(TokStart+1, CurPtr);
     if ((unsigned)Val != Val)
       GenerateError("Invalid value number (too large)!");
     llvmAsmlval.UIntVal = unsigned(Val);
     return LOCALVAL_ID;
   }
-  
+
   return '%';
 }
 
@@ -353,12 +355,12 @@ int LLLexer::LexPercent() {
 int LLLexer::LexQuote() {
   while (1) {
     int CurChar = getNextChar();
-    
-    if (CurChar == EOF) { 
+
+    if (CurChar == EOF) {
       GenerateError("End of file in quoted string");
       return YYERROR;
     }
-    
+
     if (CurChar != '"') continue;
 
     if (CurPtr[0] != ':') {
@@ -366,7 +368,7 @@ int LLLexer::LexQuote() {
       UnEscapeLexed(*llvmAsmlval.StrVal);
       return STRINGCONSTANT;
     }
-    
+
     ++CurPtr;
     llvmAsmlval.StrVal = new std::string(TokStart+1, CurPtr-2);
     UnEscapeLexed(*llvmAsmlval.StrVal);
@@ -395,26 +397,26 @@ int LLLexer::LexIdentifier() {
   const char *StartChar = CurPtr;
   const char *IntEnd = CurPtr[-1] == 'i' ? 0 : StartChar;
   const char *KeywordEnd = 0;
-  
+
   for (; isLabelChar(*CurPtr); ++CurPtr) {
     // If we decide this is an integer, remember the end of the sequence.
     if (!IntEnd && !isdigit(*CurPtr)) IntEnd = CurPtr;
     if (!KeywordEnd && !isalnum(*CurPtr) && *CurPtr != '_') KeywordEnd = CurPtr;
   }
-  
+
   // If we stopped due to a colon, this really is a label.
   if (*CurPtr == ':') {
     llvmAsmlval.StrVal = new std::string(StartChar-1, CurPtr++);
     return LABELSTR;
   }
-  
+
   // Otherwise, this wasn't a label.  If this was valid as an integer type,
   // return it.
   if (IntEnd == 0) IntEnd = CurPtr;
   if (IntEnd != StartChar) {
     CurPtr = IntEnd;
     uint64_t NumBits = atoull(StartChar, CurPtr);
-    if (NumBits < IntegerType::MIN_INT_BITS || 
+    if (NumBits < IntegerType::MIN_INT_BITS ||
         NumBits > IntegerType::MAX_INT_BITS) {
       GenerateError("Bitwidth for integer type out of range!");
       return YYERROR;
@@ -423,7 +425,7 @@ int LLLexer::LexIdentifier() {
     llvmAsmlval.PrimType = Ty;
     return INTTYPE;
   }
-  
+
   // Otherwise, this was a letter sequence.  See which keyword this is.
   if (KeywordEnd == 0) KeywordEnd = CurPtr;
   CurPtr = KeywordEnd;
@@ -440,7 +442,7 @@ int LLLexer::LexIdentifier() {
   KEYWORD("define",    DEFINE);
   KEYWORD("global",    GLOBAL);
   KEYWORD("constant",  CONSTANT);
-  
+
   KEYWORD("internal",  INTERNAL);
   KEYWORD("linkonce",  LINKONCE);
   KEYWORD("weak",      WEAK);
@@ -470,14 +472,14 @@ int LLLexer::LexIdentifier() {
   KEYWORD("asm", ASM_TOK);
   KEYWORD("sideeffect", SIDEEFFECT);
   KEYWORD("gc", GC);
-  
+
   KEYWORD("cc", CC_TOK);
   KEYWORD("ccc", CCC_TOK);
   KEYWORD("fastcc", FASTCC_TOK);
   KEYWORD("coldcc", COLDCC_TOK);
   KEYWORD("x86_stdcallcc", X86_STDCALLCC_TOK);
   KEYWORD("x86_fastcallcc", X86_FASTCALLCC_TOK);
-  
+
   KEYWORD("signext", SIGNEXT);
   KEYWORD("zeroext", ZEROEXT);
   KEYWORD("inreg", INREG);
@@ -489,7 +491,7 @@ int LLLexer::LexIdentifier() {
   KEYWORD("nest", NEST);
   KEYWORD("readnone", READNONE);
   KEYWORD("readonly", READONLY);
-  
+
   KEYWORD("type", TYPE);
   KEYWORD("opaque", OPAQUE);
 
@@ -539,7 +541,7 @@ int LLLexer::LexIdentifier() {
     if (JustWhitespaceNewLine(CurPtr))
       return ZEROEXT;
   }
-  
+
   // Keywords for instructions.
 #define INSTKEYWORD(STR, type, Enum, TOK) \
   if (Len == strlen(STR) && !memcmp(StartChar, STR, strlen(STR))) { \
@@ -596,8 +598,8 @@ int LLLexer::LexIdentifier() {
   INSTKEYWORD("extractelement", OtherOpVal, ExtractElement, EXTRACTELEMENT);
   INSTKEYWORD("insertelement", OtherOpVal, InsertElement, INSERTELEMENT);
   INSTKEYWORD("shufflevector", OtherOpVal, ShuffleVector, SHUFFLEVECTOR);
-#undef INSTKEYWORD 
-  
+#undef INSTKEYWORD
+
   // Check for [us]0x[0-9A-Fa-f]+ which are Hexadecimal constant generated by
   // the CFE to avoid forcing it to deal with 64-bit numbers.
   if ((TokStart[0] == 'u' || TokStart[0] == 's') &&
@@ -619,13 +621,13 @@ int LLLexer::LexIdentifier() {
       return EUINT64VAL;
     }
   }
-  
+
   // If this is "cc1234", return this as just "cc".
   if (TokStart[0] == 'c' && TokStart[1] == 'c') {
     CurPtr = TokStart+2;
     return CC_TOK;
   }
-  
+
   // If this starts with "call", return it as CALL.  This is to support old
   // broken .ll files.  FIXME: remove this with LLVM 3.0.
   if (CurPtr-TokStart > 4 && !memcmp(TokStart, "call", 4)) {
@@ -633,7 +635,7 @@ int LLLexer::LexIdentifier() {
     llvmAsmlval.OtherOpVal = Instruction::Call;
     return CALL;
   }
-  
+
   // Finally, if this isn't known, return just a single character.
   CurPtr = TokStart+1;
   return TokStart[0];
@@ -648,7 +650,7 @@ int LLLexer::LexIdentifier() {
 ///    HexPPC128Constant 0xM[0-9A-Fa-f]+
 int LLLexer::Lex0x() {
   CurPtr = TokStart + 2;
-  
+
   char Kind;
   if (CurPtr[0] >= 'K' && CurPtr[0] <= 'M') {
     Kind = *CurPtr++;
@@ -661,18 +663,18 @@ int LLLexer::Lex0x() {
     CurPtr = TokStart+1;
     return '0';
   }
-  
+
   while (isxdigit(CurPtr[0]))
     ++CurPtr;
-  
+
   if (Kind == 'J') {
     // HexFPConstant - Floating point constant represented in IEEE format as a
     // hexadecimal number for when exponential notation is not precise enough.
     // Float and double only.
-    llvmAsmlval.FPVal = new APFloat(HexToFP(TokStart+2, CurPtr)); 
+    llvmAsmlval.FPVal = new APFloat(HexToFP(TokStart+2, CurPtr));
     return FPVAL;
   }
-  
+
   uint64_t Pair[2];
   HexToIntPair(TokStart+3, CurPtr, Pair);
   switch (Kind) {
@@ -710,15 +712,16 @@ int LLLexer::LexDigitOrNegative() {
       CurPtr = End;
       return LABELSTR;
     }
-    
+
     return CurPtr[-1];
   }
-  
+
   // At this point, it is either a label, int or fp constant.
-  
+
   // Skip digits, we have at least one.
-  for (; isdigit(CurPtr[0]); ++CurPtr);
-    
+  for (; isdigit(CurPtr[0]); ++CurPtr)
+    /*empty*/;
+
   // Check to see if this really is a label afterall, e.g. "-1:".
   if (isLabelChar(CurPtr[0]) || CurPtr[0] == ':') {
     if (const char *End = isLabelTail(CurPtr)) {
@@ -727,7 +730,7 @@ int LLLexer::LexDigitOrNegative() {
       return LABELSTR;
     }
   }
-    
+
   // If the next character is a '.', then it is a fp value, otherwise its
   // integer.
   if (CurPtr[0] != '.') {
@@ -753,7 +756,7 @@ int LLLexer::LexDigitOrNegative() {
         Tmp.trunc(activeBits);
       if (Tmp.getBitWidth() > 64) {
         llvmAsmlval.APIntVal = new APInt(Tmp);
-        return EUAPINTVAL; 
+        return EUAPINTVAL;
       } else {
         llvmAsmlval.UInt64Val = Tmp.getZExtValue();
         return EUINT64VAL;
@@ -762,20 +765,20 @@ int LLLexer::LexDigitOrNegative() {
   }
 
   ++CurPtr;
-  
+
   // Skip over [0-9]*([eE][-+]?[0-9]+)?
   while (isdigit(CurPtr[0])) ++CurPtr;
-  
+
   if (CurPtr[0] == 'e' || CurPtr[0] == 'E') {
-    if (isdigit(CurPtr[1]) || 
+    if (isdigit(CurPtr[1]) ||
         ((CurPtr[1] == '-' || CurPtr[1] == '+') && isdigit(CurPtr[2]))) {
       CurPtr += 2;
       while (isdigit(CurPtr[0])) ++CurPtr;
     }
   }
-  
+
   llvmAsmlval.FPVal = new APFloat(atof(TokStart));
-  return FPVAL; 
+  return FPVAL;
 }
 
 ///    FPConstant  [-+]?[0-9]+[.][0-9]*([eE][-+]?[0-9]+)?
@@ -784,31 +787,32 @@ int LLLexer::LexPositive() {
   // label.
   if (!isdigit(CurPtr[0]))
     return CurPtr[-1];
-  
+
   // Skip digits.
-  for (++CurPtr; isdigit(CurPtr[0]); ++CurPtr);
+  for (++CurPtr; isdigit(CurPtr[0]); ++CurPtr)
+    /*empty*/;
 
   // At this point, we need a '.'.
   if (CurPtr[0] != '.') {
     CurPtr = TokStart+1;
     return TokStart[0];
   }
-  
+
   ++CurPtr;
-  
+
   // Skip over [0-9]*([eE][-+]?[0-9]+)?
   while (isdigit(CurPtr[0])) ++CurPtr;
-  
+
   if (CurPtr[0] == 'e' || CurPtr[0] == 'E') {
-    if (isdigit(CurPtr[1]) || 
+    if (isdigit(CurPtr[1]) ||
         ((CurPtr[1] == '-' || CurPtr[1] == '+') && isdigit(CurPtr[2]))) {
       CurPtr += 2;
       while (isdigit(CurPtr[0])) ++CurPtr;
     }
   }
-  
+
   llvmAsmlval.FPVal = new APFloat(atof(TokStart));
-  return FPVAL; 
+  return FPVAL;
 }
 
 
