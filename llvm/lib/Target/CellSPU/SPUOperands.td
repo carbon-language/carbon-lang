@@ -153,33 +153,25 @@ def hi16 : PatLeaf<(imm), [{
 // Transform a float, returning the high 16 bits shifted down, as if
 // the float was really an unsigned integer:
 def HI16_f32 : SDNodeXForm<fpimm, [{
-  const APFloat &apf = N->getValueAPF();
-  float fval = apf.convertToFloat();
-  unsigned val = *((unsigned *) &fval);
-  return getI32Imm(val >> 16);
+  float fval = N->getValueAPF().convertToFloat();
+  return getI32Imm(FloatToBits(fval) >> 16);
 }]>;
 
 // Transformation function on floats: get the low 16 bits as if the float was
 // an unsigned integer.
 def LO16_f32 : SDNodeXForm<fpimm, [{
-  const APFloat &apf = N->getValueAPF();
-  float fval = apf.convertToFloat();
-  unsigned val = *((unsigned *) &fval);
-  return getI32Imm(val & 0xffff);
+  float fval = N->getValueAPF().convertToFloat();
+  return getI32Imm(FloatToBits(fval) & 0xffff);
 }]>;
 
 def FPimm_sext16 : SDNodeXForm<fpimm, [{
-  const APFloat &apf = N->getValueAPF();
-  float fval = apf.convertToFloat();
-  unsigned val = *((unsigned *) &fval);
-  return getI32Imm((int) ((val << 16) >> 16));
+  float fval = N->getValueAPF().convertToFloat();
+  return getI32Imm((int) ((FloatToBits(fval) << 16) >> 16));
 }]>;
 
 def FPimm_u18 : SDNodeXForm<fpimm, [{
-  const APFloat &apf = N->getValueAPF();
-  float fval = apf.convertToFloat();
-  unsigned val = *((unsigned *) &fval);
-  return getI32Imm(val & ((1 << 19) - 1));
+  float fval = N->getValueAPF().convertToFloat();
+  return getI32Imm(FloatToBits(fval) & ((1 << 19) - 1));
 }]>;
 
 def fpimmSExt16 : PatLeaf<(fpimm), [{
@@ -190,9 +182,7 @@ def fpimmSExt16 : PatLeaf<(fpimm), [{
 // Does the SFP constant only have upp 16 bits set?
 def hi16_f32 : PatLeaf<(fpimm), [{
   if (N->getValueType(0) == MVT::f32) {
-    const APFloat &apf = N->getValueAPF();
-    float fval = apf.convertToFloat();
-    uint32_t val = *((unsigned *) &fval);
+    uint32_t val = FloatToBits(N->getValueAPF().convertToFloat());
     return ((val & 0xffff0000) == val);
   }
 
@@ -202,9 +192,7 @@ def hi16_f32 : PatLeaf<(fpimm), [{
 // Does the SFP constant fit into 18 bits?
 def fpimm18  : PatLeaf<(fpimm), [{
   if (N->getValueType(0) == MVT::f32) {
-    const APFloat &apf = N->getValueAPF();
-    float fval = apf.convertToFloat();
-    uint32_t Value = *((uint32_t *) &fval);
+    uint32_t Value = FloatToBits(N->getValueAPF().convertToFloat());
     return ((Value & ((1 << 19) - 1)) == Value);
   }
 
