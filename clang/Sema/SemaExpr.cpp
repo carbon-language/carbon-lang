@@ -503,6 +503,9 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
                          IdentifierInfo &Member) {
   Expr *BaseExpr = static_cast<Expr *>(Base);
   assert(BaseExpr && "no record expression");
+
+  // Perform default conversions.
+  DefaultFunctionArrayConversion(BaseExpr);
   
   QualType BaseType = BaseExpr->getType();
   assert(!BaseType.isNull() && "no type for member expression");
