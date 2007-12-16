@@ -145,6 +145,8 @@ class FpI_<dag outs, dag ins, FPFormat fp, list<dag> pattern>
 
 class SSI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, XS, Requires<[HasSSE1]>;
+class SSIi8<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
+      : Ii8<o, F, outs, ins, asm, pattern>, XS, Requires<[HasSSE1]>;
 class PSI<bits<8> o, Format F, dag outs, dag ins, string asm, list<dag> pattern>
       : I<o, F, outs, ins, asm, pattern>, TB, Requires<[HasSSE1]>;
 class PSIi8<bits<8> o, Format F, dag outs, dag ins, string asm,

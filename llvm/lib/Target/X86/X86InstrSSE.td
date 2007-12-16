@@ -385,10 +385,10 @@ let isTwoAddress = 1 in {
 
 // Comparison instructions
 let isTwoAddress = 1 in {
-  def CMPSSrr : SSI<0xC2, MRMSrcReg, 
+  def CMPSSrr : SSIi8<0xC2, MRMSrcReg, 
                     (outs FR32:$dst), (ins FR32:$src1, FR32:$src, SSECC:$cc),
                     "cmp${cc}ss\t{$src, $dst|$dst, $src}", []>;
-  def CMPSSrm : SSI<0xC2, MRMSrcMem, 
+  def CMPSSrm : SSIi8<0xC2, MRMSrcMem, 
                     (outs FR32:$dst), (ins FR32:$src1, f32mem:$src, SSECC:$cc),
                     "cmp${cc}ss\t{$src, $dst|$dst, $src}", []>;
 }
@@ -405,12 +405,12 @@ def UCOMISSrm: PSI<0x2E, MRMSrcMem, (outs), (ins FR32:$src1, f32mem:$src2),
 
 // Aliases to match intrinsics which expect XMM operand(s).
 let isTwoAddress = 1 in {
-  def Int_CMPSSrr : SSI<0xC2, MRMSrcReg, 
+  def Int_CMPSSrr : SSIi8<0xC2, MRMSrcReg, 
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
                         "cmp${cc}ss\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst, (int_x86_sse_cmp_ss VR128:$src1,
                                            VR128:$src, imm:$cc))]>;
-  def Int_CMPSSrm : SSI<0xC2, MRMSrcMem, 
+  def Int_CMPSSrm : SSIi8<0xC2, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1, f32mem:$src, SSECC:$cc),
                         "cmp${cc}ss\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst, (int_x86_sse_cmp_ss VR128:$src1,
