@@ -622,6 +622,8 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
   
   // Handle isysroot.
   if (Group == System) {
+    // FIXME: Portability.  This should be a sys::Path interface, this doesn't
+    // handle things like C:\ right, nor win32 \\network\device\blah.
     if (isysroot.size() != 1 || isysroot[0] != '/') // Add isysroot if present.
       MappedPath.append(isysroot.begin(), isysroot.end());
     if (Path[0] != '/')  // If in the system group, add a /.
