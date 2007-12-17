@@ -1848,27 +1848,30 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
         objc_protocol_methods = true;
       }
       
-	  int NumMethods = PDecl->getNumInstanceMethods();
-	  if(NumMethods > 0) {
+      int NumMethods = PDecl->getNumInstanceMethods();
+      if(NumMethods > 0) {
         Result += "\nstatic struct _objc_protocol_method_list "
                "_OBJC_PROTOCOL_INSTANCE_METHODS_";
         Result += PDecl->getName();
         Result += " __attribute__ ((section (\"__OBJC, __cat_inst_meth\")))= "
           "{\n\t" + utostr(NumMethods) + "\n";
         
-		// Output instance methods declared in this protocol.
-		for (ObjcProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(), 
-			 E = PDecl->instmeth_end(); I != E; ++I) {
-		  Result += "\t  ,{(SEL)\"";
-		  Result += (*I)->getSelector().getName().c_str();
-		  std::string MethodTypeString;
-		  Context->getObjcEncodingForMethodDecl((*I), MethodTypeString);
-		  Result += "\", \"";
-		  Result += MethodTypeString;
-		  Result += "\"}\n";
-		}
-		Result += "\t }\n};\n";
-	  }
+        // Output instance methods declared in this protocol.
+        for (ObjcProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(), 
+             E = PDecl->instmeth_end(); I != E; ++I) {
+          if (I == PDecl->instmeth_begin())
+            Result += "\t  ,{{(SEL)\"";
+          else
+            Result += "\t  ,{(SEL)\"";
+          Result += (*I)->getSelector().getName().c_str();
+          std::string MethodTypeString;
+          Context->getObjcEncodingForMethodDecl((*I), MethodTypeString);
+          Result += "\", \"";
+          Result += MethodTypeString;
+          Result += "\"}\n";
+        }
+        Result += "\t }\n};\n";
+      }
       
       // Output class methods declared in this protocol.
       NumMethods = PDecl->getNumClassMethods();
