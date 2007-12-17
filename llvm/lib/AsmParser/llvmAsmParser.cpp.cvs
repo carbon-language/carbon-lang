@@ -4197,7 +4197,7 @@ case 238:
     PAL = ParamAttrsList::get(Attrs);
 
   FunctionType *FT = FunctionType::get(*yyvsp[-8].TypeVal, ParamTypeList, isVarArg);
-  const PointerType *PFT = PointerType::get(FT);
+  const PointerType *PFT = PointerType::getUnqual(FT);
   delete yyvsp[-8].TypeVal;
 
   ValID ID;
@@ -4611,7 +4611,7 @@ case 278:
         ParamTypes.push_back(Ty);
       }
       Ty = FunctionType::get(yyvsp[-11].TypeVal->get(), ParamTypes, false);
-      PFTy = PointerType::get(Ty);
+      PFTy = PointerType::getUnqual(Ty);
     }
 
     delete yyvsp[-11].TypeVal;
@@ -5008,7 +5008,7 @@ case 306:
         ParamTypes.push_back(Ty);
       }
       Ty = FunctionType::get(yyvsp[-5].TypeVal->get(), ParamTypes, false);
-      PFTy = PointerType::get(Ty);
+      PFTy = PointerType::getUnqual(Ty);
     }
 
     Value *V = getVal(PFTy, yyvsp[-4].ValIDVal);   // Get the function we're calling...

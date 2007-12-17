@@ -829,7 +829,7 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   if (isa<FunctionType>(Ty))
     error("Cannot declare global vars of function type");
 
-  const PointerType *PTy = PointerType::get(Ty);
+  const PointerType *PTy = PointerType::getUnqual(Ty);
 
   std::string Name;
   if (NameStr) {
@@ -883,7 +883,8 @@ ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
       }
 
       // Put the renaming in the global rename map
-      RenameMapKey Key = makeRenameMapKey(Name, PointerType::get(Ty), ID.S);
+      RenameMapKey Key = 
+        makeRenameMapKey(Name, PointerType::getUnqual(Ty), ID.S);
       CurModule.RenameMap[Key] = NewName;
 
       // Rename it
@@ -1404,7 +1405,7 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
       break;
 
     case 'v' : {
-      const Type* PtrTy = PointerType::get(Type::Int8Ty);
+      const Type* PtrTy = PointerType::getUnqual(Type::Int8Ty);
       std::vector<const Type*> Params;
       if (Name == "llvm.va_start" || Name == "llvm.va_end") {
         if (Args.size() != 1)
@@ -1412,7 +1413,7 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
         Params.push_back(PtrTy);
         const FunctionType *FTy = 
           FunctionType::get(Type::VoidTy, Params, false);
-        const PointerType *PFTy = PointerType::get(FTy);
+        const PointerType *PFTy = PointerType::getUnqual(FTy);
         Value* Func = getVal(PFTy, ID);
         Args[0] = new BitCastInst(Args[0], PtrTy, makeNameUnique("va"), CurBB);
         return new CallInst(Func, Args.begin(), Args.end());
@@ -1423,7 +1424,7 @@ upgradeIntrinsicCall(const Type* RetTy, const ValID &ID,
         Params.push_back(PtrTy);
         const FunctionType *FTy = 
           FunctionType::get(Type::VoidTy, Params, false);
-        const PointerType *PFTy = PointerType::get(FTy);
+        const PointerType *PFTy = PointerType::getUnqual(FTy);
         Value* Func = getVal(PFTy, ID);
         std::string InstName0(makeNameUnique("va0"));
         std::string InstName1(makeNameUnique("va1"));
@@ -1592,7 +1593,7 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
 
       const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
       const Type* ArgTy = F->getFunctionType()->getReturnType();
-      const Type* ArgTyPtr = PointerType::get(ArgTy);
+      const Type* ArgTyPtr = PointerType::getUnqual(ArgTy);
       Function* NF = cast<Function>(Result->getOrInsertFunction(
         "llvm.va_start", RetTy, ArgTyPtr, (Type *)0));
 
@@ -1619,7 +1620,7 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
       //vaend bar
       const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
       const Type* ArgTy = F->getFunctionType()->getParamType(0);
-      const Type* ArgTyPtr = PointerType::get(ArgTy);
+      const Type* ArgTyPtr = PointerType::getUnqual(ArgTy);
       Function* NF = cast<Function>(Result->getOrInsertFunction(
         "llvm.va_end", RetTy, ArgTyPtr, (Type *)0));
 
@@ -1648,7 +1649,7 @@ Module* UpgradeAssembly(const std::string &infile, std::istream& in,
       
       const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
       const Type* ArgTy = F->getFunctionType()->getReturnType();
-      const Type* ArgTyPtr = PointerType::get(ArgTy);
+      const Type* ArgTyPtr = PointerType::getUnqual(ArgTy);
       Function* NF = cast<Function>(Result->getOrInsertFunction(
         "llvm.va_copy", RetTy, ArgTyPtr, ArgTyPtr, (Type *)0));
 
@@ -2126,8 +2127,9 @@ UpRTypes
     if ($1.PAT->get() == Type::LabelTy)
       error("Cannot form a pointer to a basic block");
     $$.S.makeComposite($1.S);
-    $$.PAT = new PATypeHolder(HandleUpRefs(PointerType::get($1.PAT->get()),
-                                           $$.S));
+    $$.PAT = new  
+      PATypeHolder(HandleUpRefs(PointerType::getUnqual($1.PAT->get()),
+                                $$.S));
     delete $1.PAT;
   }
   ;
@@ -2834,10 +2836,10 @@ FunctionHeaderH
     // i8*. We check here for those names and override the parameter list
     // types to ensure the prototype is correct.
     if (FunctionName == "llvm.va_start" || FunctionName == "llvm.va_end") {
-      ParamTyList.push_back(PointerType::get(Type::Int8Ty));
+      ParamTyList.push_back(PointerType::getUnqual(Type::Int8Ty));
     } else if (FunctionName == "llvm.va_copy") {
-      ParamTyList.push_back(PointerType::get(Type::Int8Ty));
-      ParamTyList.push_back(PointerType::get(Type::Int8Ty));
+      ParamTyList.push_back(PointerType::getUnqual(Type::Int8Ty));
+      ParamTyList.push_back(PointerType::getUnqual(Type::Int8Ty));
     } else if ($5) {   // If there are arguments...
       for (std::vector<std::pair<PATypeInfo,char*> >::iterator 
            I = $5->begin(), E = $5->end(); I != E; ++I) {
@@ -2852,7 +2854,7 @@ FunctionHeaderH
       ParamTyList.pop_back();
 
     const FunctionType *FT = FunctionType::get(RetTy, ParamTyList, isVarArg);
-    const PointerType *PFT = PointerType::get(FT);
+    const PointerType *PFT = PointerType::getUnqual(FT);
     delete $2.PAT;
 
     ValID ID;
@@ -3102,7 +3104,8 @@ ConstValueRef
   }
   ;
 
-// SymbolicValueRef - Reference to one of two ways of symbolically refering to // another value.
+// SymbolicValueRef - Reference to one of two ways of symbolically refering to 
+// another value.
 //
 SymbolicValueRef 
   : INTVAL {  $$ = ValID::create($1); $$.S.makeSignless(); }
@@ -3251,7 +3254,7 @@ BBTerminatorInst
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
       Ty = FunctionType::get($3.PAT->get(), ParamTypes, isVarArg);
-      PFTy = PointerType::get(Ty);
+      PFTy = PointerType::getUnqual(Ty);
       $$.S.copy($3.S);
     } else {
       FTySign = $3.S;
@@ -3656,7 +3659,7 @@ InstVal
         error("Functions cannot return aggregate types");
 
       FTy = FunctionType::get(RetTy, ParamTypes, isVarArg);
-      PFTy = PointerType::get(FTy);
+      PFTy = PointerType::getUnqual(FTy);
       $$.S.copy($3.S);
     } else {
       FTySign = $3.S;
@@ -3796,7 +3799,7 @@ MemoryInst
     Value *StoreVal = $3.V;
     Value* tmpVal = getVal(PTy, $6);
     if (ElTy != $3.V->getType()) {
-      PTy = PointerType::get(StoreVal->getType());
+      PTy = PointerType::getUnqual(StoreVal->getType());
       if (Constant *C = dyn_cast<Constant>(tmpVal))
         tmpVal = ConstantExpr::getBitCast(C, PTy);
       else
