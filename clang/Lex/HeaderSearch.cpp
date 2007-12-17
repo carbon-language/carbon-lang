@@ -100,7 +100,8 @@ const FileEntry *DirectoryLookup::LookupFile(const char *FilenameStart,
   if (isFramework())
     return DoFrameworkLookup(FilenameStart, FilenameEnd, HS);
   
-  assert(0 && "headermap unimp");
+  assert(isHeaderMap() && "Unknown directory lookup");
+  return getHeaderMap()->LookupFile(FilenameStart, FilenameEnd,HS.getFileMgr());
 }
 
 

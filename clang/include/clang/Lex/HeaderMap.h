@@ -14,7 +14,11 @@
 #ifndef LLVM_CLANG_LEX_HEADERMAP_H
 #define LLVM_CLANG_LEX_HEADERMAP_H
 
+#include <string>
+
 namespace clang {
+  class FileEntry;
+  class FileManager;
 
 /// This class represents an Apple concept known as a 'header map'.  To the
 /// #include file resolution process, it basically acts like a directory of
@@ -30,6 +34,15 @@ public:
     // FIXME: woot!
     return 0; 
   }
+  
+  /// LookupFile - Check to see if the specified relative filename is located in
+  /// this HeaderMap.  If so, open it and return its FileEntry.
+  const FileEntry *LookupFile(const char *FilenameStart,const char *FilenameEnd,
+                              FileManager &FM) const {
+    // FIXME: this needs work.
+    return 0;
+  }
+    
 };
 
 } // end namespace clang.
