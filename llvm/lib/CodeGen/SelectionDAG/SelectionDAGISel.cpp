@@ -597,7 +597,7 @@ public:
   void visitStore(StoreInst &I);
   void visitPHI(PHINode &I) { } // PHI nodes are handled specially.
   void visitCall(CallInst &I);
-  void visitInlineAsm(CallInst &I);
+  void visitInlineAsm(CallSite CS);
   const char *visitIntrinsicCall(CallInst &I, unsigned Intrinsic);
   void visitTargetIntrinsic(CallInst &I, unsigned Intrinsic);
 
@@ -1449,11 +1449,14 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
   MachineBasicBlock *Return = FuncInfo.MBBMap[I.getSuccessor(0)];
   MachineBasicBlock *LandingPad = FuncInfo.MBBMap[I.getSuccessor(1)];
 
-  LowerCallTo(I, I.getCalledValue()->getType(), I.getParamAttrs(),
-              I.getCallingConv(),
-              false,
-              getValue(I.getOperand(0)),
-              3, LandingPad);
+  if (isa<InlineAsm>(I.getCalledValue()))
+    visitInlineAsm(&I);
+  else
+    LowerCallTo(I, I.getCalledValue()->getType(), I.getParamAttrs(),
+                I.getCallingConv(),
+                false,
+                getValue(I.getOperand(0)),
+                3, LandingPad);
 
   // If the value of the invoke is used outside of its defining block, make it
   // available as a virtual register.
@@ -3044,7 +3047,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
       }
     }
   } else if (isa<InlineAsm>(I.getOperand(0))) {
-    visitInlineAsm(I);
+    visitInlineAsm(&I);
     return;
   }
 
@@ -3425,8 +3428,8 @@ GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
 
 /// visitInlineAsm - Handle a call to an InlineAsm object.
 ///
-void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
-  InlineAsm *IA = cast<InlineAsm>(I.getOperand(0));
+void SelectionDAGLowering::visitInlineAsm(CallSite CS) {
+  InlineAsm *IA = cast<InlineAsm>(CS.getCalledValue());
 
   /// ConstraintOperands - Information about all of the constraints.
   std::vector<AsmOperandInfo> ConstraintOperands;
@@ -3446,7 +3449,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
   // registers, because it will not know to avoid the earlyclobbered output reg.
   bool SawEarlyClobber = false;
   
-  unsigned OpNo = 1;   // OpNo - The operand of the CallInst.
+  unsigned ArgNo = 0;   // ArgNo - The argument of the CallInst.
   for (unsigned i = 0, e = ConstraintInfos.size(); i != e; ++i) {
     ConstraintOperands.push_back(AsmOperandInfo(ConstraintInfos[i]));
     AsmOperandInfo &OpInfo = ConstraintOperands.back();
@@ -3459,14 +3462,14 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
       if (!OpInfo.isIndirect) {
         // The return value of the call is this value.  As such, there is no
         // corresponding argument.
-        assert(I.getType() != Type::VoidTy && "Bad inline asm!");
-        OpVT = TLI.getValueType(I.getType());
+        assert(CS.getType() != Type::VoidTy && "Bad inline asm!");
+        OpVT = TLI.getValueType(CS.getType());
       } else {
-        OpInfo.CallOperandVal = I.getOperand(OpNo++);
+        OpInfo.CallOperandVal = CS.getArgument(ArgNo++);
       }
       break;
     case InlineAsm::isInput:
-      OpInfo.CallOperandVal = I.getOperand(OpNo++);
+      OpInfo.CallOperandVal = CS.getArgument(ArgNo++);
       break;
     case InlineAsm::isClobber:
       // Nothing to do.
@@ -3617,7 +3620,7 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
         // This is the result value of the call.
         assert(RetValRegs.Regs.empty() &&
                "Cannot have multiple output constraints yet!");
-        assert(I.getType() != Type::VoidTy && "Bad inline asm!");
+        assert(CS.getType() != Type::VoidTy && "Bad inline asm!");
         RetValRegs = OpInfo.AssignedRegs;
       } else {
         IndirectStoresToEmit.push_back(std::make_pair(OpInfo.AssignedRegs,
@@ -3751,13 +3754,13 @@ void SelectionDAGLowering::visitInlineAsm(CallInst &I) {
     // width/num elts.  Make sure to convert it to the right type with
     // bit_convert.
     if (MVT::isVector(Val.getValueType())) {
-      const VectorType *VTy = cast<VectorType>(I.getType());
+      const VectorType *VTy = cast<VectorType>(CS.getType());
       MVT::ValueType DesiredVT = TLI.getValueType(VTy);
       
       Val = DAG.getNode(ISD::BIT_CONVERT, DesiredVT, Val);
     }
     
-    setValue(&I, Val);
+    setValue(CS.getInstruction(), Val);
   }
   
   std::vector<std::pair<SDOperand, Value*> > StoresToEmit;
