@@ -314,6 +314,15 @@ public:
            isReallyTriviallyReMaterializable(MI);
   }
 
+  /// hasSideEffects - Returns true if the instruction has side effects that are
+  /// not captured by any operands of the instruction or other flags.
+  bool hasSideEffects(MachineInstr *MI) const {
+    const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
+    if (!(TID->Flags & M_NEVER_HAS_SIDE_EFFECTS ||
+          TID->Flags & M_MAY_HAVE_SIDE_EFFECTS)) return true;
+    if (TID->Flags & M_NEVER_HAS_SIDE_EFFECTS) return false;
+    return !isReallySideEffectFree(MI); // May have side effects
+  }
 protected:
   /// isReallyTriviallyReMaterializable - For instructions with opcodes for
   /// which the M_REMATERIALIZABLE flag is set, this function tests whether the
@@ -329,7 +338,7 @@ protected:
 
   /// isReallySideEffectFree - If the M_MAY_HAVE_SIDE_EFFECTS flag is set, this
   /// method is called to determine if the specific instance of this
-  /// instructions has side effects. This is useful in cases of instructions,
+  /// instruction has side effects. This is useful in cases of instructions,
   /// like loads, which generally always have side effects. A load from a
   /// constant pool doesn't have side effects, though. So we need to
   /// differentiate it from the general case.
