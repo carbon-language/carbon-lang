@@ -281,7 +281,15 @@ static llvm::Constant *GenerateConstantCast(const Expr *Expression,
 /// struct typed variables.
 static llvm::Constant *GenerateAggregateInit(const InitListExpr *ILE, 
                                              CodeGenModule &CGM) {
-  assert (ILE->getType()->isArrayType() || ILE->getType()->isStructureType());
+  if (ILE->getType()->isVoidType()) {
+    // FIXME: Remove this when sema of initializers is finished (and the code
+    // below).
+    CGM.WarnUnsupported(ILE, "initializer");
+    return 0;
+  }
+  
+  assert((ILE->getType()->isArrayType() || ILE->getType()->isStructureType()) &&
+         "Bad type for init list!");
   CodeGenTypes& Types = CGM.getTypes();
 
   unsigned NumInitElements = ILE->getNumInits();
@@ -309,6 +317,12 @@ static llvm::Constant *GenerateAggregateInit(const InitListExpr *ILE,
   unsigned i = 0;
   for (i = 0; i < NumInitableElts; ++i) {
     llvm::Constant *C = GenerateConstantExpr(ILE->getInit(i), CGM);
+    // FIXME: Remove this when sema of initializers is finished (and the code
+    // above).
+    if (C == 0 && ILE->getInit(i)->getType()->isVoidType()) {
+      if (ILE->getType()->isVoidType()) return 0;
+      return llvm::UndefValue::get(CType);
+    }
     assert (C && "Failed to create initialiser expression");
     Elts.push_back(C);
   }
