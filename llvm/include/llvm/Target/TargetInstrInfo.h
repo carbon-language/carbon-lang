@@ -314,9 +314,10 @@ public:
            isReallyTriviallyReMaterializable(MI);
   }
 
-  /// hasSideEffects - Returns true if the instruction has side effects that are
-  /// not captured by any operands of the instruction or other flags.
-  bool hasSideEffects(MachineInstr *MI) const {
+  /// hasUnmodelledSideEffects - Returns true if the instruction has side
+  /// effects that are not captured by any operands of the instruction or other
+  /// flags.
+  bool hasUnmodelledSideEffects(MachineInstr *MI) const {
     const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
     if (!(TID->Flags & M_NEVER_HAS_SIDE_EFFECTS ||
           TID->Flags & M_MAY_HAVE_SIDE_EFFECTS)) return true;
