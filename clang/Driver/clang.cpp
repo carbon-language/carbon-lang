@@ -616,24 +616,20 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
                     bool isFramework, FileManager &FM) {
   assert(!Path.empty() && "can't handle empty path here");
   
-  const DirectoryEntry *DE;
-  if (Group == System) {
-    if (isysroot != "/")
-      DE = FM.getDirectory(isysroot + "/" + Path);
-    else if (Path[0] == '/')
-      DE = FM.getDirectory(Path);
-    else
-      DE = FM.getDirectory("/" + Path);
-  } else
-    DE = FM.getDirectory(Path);
+  // Compute the actual path, taking into consideration -isysroot.
+  llvm::SmallString<256> MappedPath;
   
-  if (DE == 0) {
-    if (Verbose)
-      fprintf(stderr, "ignoring nonexistent directory \"%s\"\n",
-              Path.c_str());
-    return;
+  // Handle isysroot.
+  if (Group == System) {
+    if (isysroot.size() != 1 || isysroot[0] != '/') // Add isysroot if present.
+      MappedPath.append(isysroot.begin(), isysroot.end());
+    if (Path[0] != '/')  // If in the system group, add a /.
+      MappedPath.push_back('/');
   }
   
+  MappedPath.append(Path.begin(), Path.end());
+
+  // Compute the DirectoryLookup type.
   DirectoryLookup::DirType Type;
   if (Group == Quoted || Group == Angled)
     Type = DirectoryLookup::NormalHeaderDir;
@@ -642,8 +638,18 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
   else
     Type = DirectoryLookup::ExternCSystemHeaderDir;
   
-  IncludeGroup[Group].push_back(DirectoryLookup(DE, Type, isUserSupplied,
-                                                isFramework));
+  
+  // If the directory exists, add it.
+  if (const DirectoryEntry *DE = FM.getDirectory(&MappedPath[0], 
+                                                 &MappedPath[0]+
+                                                 MappedPath.size())) {
+    IncludeGroup[Group].push_back(DirectoryLookup(DE, Type, isUserSupplied,
+                                                  isFramework));
+    return;
+  }
+  
+  if (Verbose)
+    fprintf(stderr, "ignoring nonexistent directory \"%s\"\n", Path.c_str());
 }
 
 /// RemoveDuplicates - If there are duplicate directory entries in the specified
