@@ -536,6 +536,90 @@ public:
         return ConstantExpr::getAShr(LC, RC);
     return LLVMBuilder::CreateAShr(LHS, RHS, Name);
   }
+
+  //===--------------------------------------------------------------------===//
+  // Instruction creation methods: Memory Instructions
+  //===--------------------------------------------------------------------===//
+
+  template<typename InputIterator>
+  Value *CreateGEP(Value *Ptr, InputIterator IdxBegin, 
+                   InputIterator IdxEnd, const char *Name = "") {
+    
+    if (Constant *PC = dyn_cast<Constant>(Ptr)) {
+      // Every index must be constant.
+      InputIterator i;
+      for (i = IdxBegin; i < IdxEnd; ++i) 
+        if (!dyn_cast<Constant>(*i))
+          break;
+      if (i == IdxEnd)
+        return ConstantExpr::getGetElementPtr(PC, &IdxBegin[0], IdxEnd - IdxBegin);
+    }
+    return LLVMBuilder::CreateGEP(Ptr, IdxBegin, IdxEnd, Name);
+  }
+  Value *CreateGEP(Value *Ptr, Value *Idx, const char *Name = "") {
+    if (Constant *PC = dyn_cast<Constant>(Ptr))
+      if (Constant *IC = dyn_cast<Constant>(Idx))
+        return ConstantExpr::getGetElementPtr(PC, &IC, 1);
+    return LLVMBuilder::CreateGEP(Ptr, Idx, Name);
+  }
+  
+  //===--------------------------------------------------------------------===//
+  // Instruction creation methods: Cast/Conversion Operators
+  //===--------------------------------------------------------------------===//
+  
+  Value *CreateTrunc(Value *V, const Type *DestTy, const char *Name = "") {
+    return CreateCast(Instruction::Trunc, V, DestTy, Name);
+  }
+  Value *CreateZExt(Value *V, const Type *DestTy, const char *Name = "") {
+    return CreateCast(Instruction::ZExt, V, DestTy, Name);
+  }
+  Value *CreateSExt(Value *V, const Type *DestTy, const char *Name = "") {
+    return CreateCast(Instruction::SExt, V, DestTy, Name);
+  }
+  Value *CreateFPToUI(Value *V, const Type *DestTy, const char *Name = ""){
+    return CreateCast(Instruction::FPToUI, V, DestTy, Name);
+  }
+  Value *CreateFPToSI(Value *V, const Type *DestTy, const char *Name = ""){
+    return CreateCast(Instruction::FPToSI, V, DestTy, Name);
+  }
+  Value *CreateUIToFP(Value *V, const Type *DestTy, const char *Name = ""){
+    return CreateCast(Instruction::UIToFP, V, DestTy, Name);
+  }
+  Value *CreateSIToFP(Value *V, const Type *DestTy, const char *Name = ""){
+    return CreateCast(Instruction::SIToFP, V, DestTy, Name);
+  }
+  Value *CreateFPTrunc(Value *V, const Type *DestTy,
+                       const char *Name = "") {
+    return CreateCast(Instruction::FPTrunc, V, DestTy, Name);
+  }
+  Value *CreateFPExt(Value *V, const Type *DestTy, const char *Name = "") {
+    return CreateCast(Instruction::FPExt, V, DestTy, Name);
+  }
+  Value *CreatePtrToInt(Value *V, const Type *DestTy,
+                        const char *Name = "") {
+    return CreateCast(Instruction::PtrToInt, V, DestTy, Name);
+  }
+  Value *CreateIntToPtr(Value *V, const Type *DestTy,
+                        const char *Name = "") {
+    return CreateCast(Instruction::IntToPtr, V, DestTy, Name);
+  }
+  Value *CreateBitCast(Value *V, const Type *DestTy,
+                       const char *Name = "") {
+    return CreateCast(Instruction::BitCast, V, DestTy, Name);
+  }
+  
+  Value *CreateCast(Instruction::CastOps Op, Value *V, const Type *DestTy,
+                    const char *Name = "") {
+    if (Constant *VC = dyn_cast<Constant>(V))
+      return ConstantExpr::getCast(Op, VC, DestTy);
+    return LLVMBuilder::CreateCast(Op, V, DestTy, Name);
+  }
+  Value *CreateIntCast(Value *V, const Type *DestTy, bool isSigned,
+                       const char *Name = "") {
+    if (Constant *VC = dyn_cast<Constant>(V))
+      return ConstantExpr::getIntegerCast(VC, DestTy, isSigned);
+    return LLVMBuilder::CreateIntCast(V, DestTy, isSigned, Name);
+  }
   
   //===--------------------------------------------------------------------===//
   // Instruction creation methods: Compare Instructions
@@ -629,6 +713,45 @@ public:
       if (Constant *RC = dyn_cast<Constant>(RHS))
         return ConstantExpr::getCompare(P, LC, RC);
     return LLVMBuilder::CreateFCmp(P, LHS, RHS, Name);
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Instruction creation methods: Other Instructions
+  //===--------------------------------------------------------------------===//
+  
+  Value *CreateSelect(Value *C, Value *True, Value *False,
+                      const char *Name = "") {
+    if (Constant *CC = dyn_cast<Constant>(C))
+      if (Constant *TC = dyn_cast<Constant>(True))
+        if (Constant *FC = dyn_cast<Constant>(False))
+          return ConstantExpr::getSelect(CC, TC, FC);
+    return LLVMBuilder::CreateSelect(C, True, False, Name); 
+  }
+  
+  Value *CreateExtractElement(Value *Vec, Value *Idx,
+                              const char *Name = "") {
+    if (Constant *VC = dyn_cast<Constant>(Vec))
+      if (Constant *IC = dyn_cast<Constant>(Idx))
+        return ConstantExpr::getExtractElement(VC, IC);
+    return LLVMBuilder::CreateExtractElement(Vec, Idx, Name); 
+  }
+  
+  Value *CreateInsertElement(Value *Vec, Value *NewElt, Value *Idx,
+                             const char *Name = "") {
+    if (Constant *VC = dyn_cast<Constant>(Vec))
+      if (Constant *NC = dyn_cast<Constant>(NewElt))
+        if (Constant *IC = dyn_cast<Constant>(Idx))
+          return ConstantExpr::getInsertElement(VC, NC, IC);
+    return LLVMBuilder::CreateInsertElement(Vec, NewElt, Idx, Name); 
+  }
+  
+  Value *CreateShuffleVector(Value *V1, Value *V2, Value *Mask,
+                             const char *Name = "") {
+    if (Constant *V1C = dyn_cast<Constant>(V1))
+      if (Constant *V2C = dyn_cast<Constant>(V2))
+        if (Constant *MC = dyn_cast<Constant>(Mask))
+          return ConstantExpr::getShuffleVector(V1C, V2C, MC);
+    return LLVMBuilder::CreateShuffleVector(V1, V2, Mask, Name); 
   }
 };
   
