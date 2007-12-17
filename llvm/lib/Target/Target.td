@@ -205,9 +205,18 @@ class Instruction {
   bit isNotDuplicable = 0;  // Is it unsafe to duplicate this instruction?
 
   // Side effect flags - If neither of these flags is set, then the instruction
-  // *always* has side effects. Otherwise, it's one or the other.
-  bit mayHaveSideEffects = 0;  // This instruction *may* have side effects.
-  bit neverHasSideEffects = 0; // This instruction never has side effects.
+  // *always* has side effects. When set, the flags have these meanings:
+  //
+  //  neverHasSideEffects - The instruction has no side effects that are not
+  //    captured by any operands of the instruction or other flags, and when
+  //    *all* instances of the instruction of that opcode have no side effects.
+  //  mayHaveSideEffects  - Some instances of the instruction can have side
+  //    effects. The virtual method "isReallySideEffectFree" is called to
+  //    determine this. Load instructions are an example of where this is
+  //    useful. In general, loads always have side effects. However, loads from
+  //    constant pools don't. Individual back ends make this determination.
+  bit neverHasSideEffects = 0;
+  bit mayHaveSideEffects = 0;
   
   InstrItinClass Itinerary = NoItinerary;// Execution steps used for scheduling.
 

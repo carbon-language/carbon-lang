@@ -91,17 +91,23 @@ const unsigned M_NOT_DUPLICABLE        = 1 << 16;
 // ARM instructions which can set condition code if 's' bit is set.
 const unsigned M_HAS_OPTIONAL_DEF      = 1 << 17;
 
-// M_MAY_HAVE_SIDE_EFFECTS - Set if this instruction *might* have side effects,
-// e.g. load instructions. Note: This and M_NEVER_HAS_SIDE_EFFECTS are mutually
-// exclusive. You can't set both! If neither flag is set, then the instruction
-// *always* has side effects.
-const unsigned M_MAY_HAVE_SIDE_EFFECTS = 1 << 18;
+// M_NEVER_HAS_SIDE_EFFECTS - Set if this instruction has no side effects that
+// are not captured by any operands of the instruction or other flags, and when
+// *all* instances of the instruction of that opcode have no side effects.
+//
+// Note: This and M_MAY_HAVE_SIDE_EFFECTS are mutually exclusive. You can't set
+// both! If neither flag is set, then the instruction *always* has side effects.
+const unsigned M_NEVER_HAS_SIDE_EFFECTS = 1 << 18;
 
-// M_NEVER_HAS_SIDE_EFFECTS - Set if this instruction *never* has side effects,
-// e.g., xor on X86.  Note: This and M_MAY_HAVE_SIDE_EFFECTS are mutually
-// exclusive. You can't set both! If neither flag is set, then the instruction
-// *always* has side effects.
-const unsigned M_NEVER_HAS_SIDE_EFFECTS = 1 << 19;
+// M_MAY_HAVE_SIDE_EFFECTS - Set if some instances of this instruction can have
+// side effects. The virtual method "isReallySideEffectFree" is called to
+// determine this. Load instructions are an example of where this is useful. In
+// general, loads always have side effects. However, loads from constant pools
+// don't. We let the specific back end make this determination.
+//
+// Note: This and M_NEVER_HAS_SIDE_EFFECTS are mutually exclusive. You can't set
+// both! If neither flag is set, then the instruction *always* has side effects.
+const unsigned M_MAY_HAVE_SIDE_EFFECTS = 1 << 19;
 
 // Machine operand flags
 // M_LOOK_UP_PTR_REG_CLASS - Set if this operand is a pointer value and it
@@ -321,6 +327,15 @@ protected:
     return true;
   }
 
+  /// isReallySideEffectFree - If the M_MAY_HAVE_SIDE_EFFECTS flag is set, this
+  /// method is called to determine if the specific instance of this
+  /// instructions has side effects. This is useful in cases of instructions,
+  /// like loads, which generally always have side effects. A load from a
+  /// constant pool doesn't have side effects, though. So we need to
+  /// differentiate it from the general case.
+  virtual bool isReallySideEffectFree(MachineInstr *MI) const {
+    return false;
+  }
 public:
   /// getOperandConstraint - Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
