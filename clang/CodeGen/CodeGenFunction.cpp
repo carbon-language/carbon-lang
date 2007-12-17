@@ -70,12 +70,14 @@ void CodeGenFunction::GenerateCode(const FunctionDecl *FD) {
   
   llvm::BasicBlock *EntryBB = new llvm::BasicBlock("entry", CurFn);
   
-  Builder.SetInsertPoint(EntryBB);
-
   // Create a marker to make it easy to insert allocas into the entryblock
-  // later.
+  // later.  Don't create this with the builder, because we don't want it
+  // folded.
   llvm::Value *Undef = llvm::UndefValue::get(llvm::Type::Int32Ty);
-  AllocaInsertPt = Builder.CreateBitCast(Undef,llvm::Type::Int32Ty, "allocapt");
+  AllocaInsertPt = new llvm::BitCastInst(Undef, llvm::Type::Int32Ty, "allocapt",
+                                         EntryBB);
+  
+  Builder.SetInsertPoint(EntryBB);
   
   // Emit allocs for param decls.  Give the LLVM Argument nodes names.
   llvm::Function::arg_iterator AI = CurFn->arg_begin();
