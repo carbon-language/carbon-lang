@@ -75,6 +75,7 @@
 		35E98A830CBC2ED300C5CDC1 /* DenseSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DenseSet.h; sourceTree = "<group>"; };
 		35E98A840CBC2ED300C5CDC1 /* ImmutableMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImmutableMap.h; sourceTree = "<group>"; };
 		35E98A850CBC2ED300C5CDC1 /* ImmutableSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ImmutableSet.h; sourceTree = "<group>"; };
+		754221420D171DFC00DDB61B /* MachineLICM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachineLICM.cpp; sourceTree = "<group>"; };
 		84115FFE0B66D87400E1293E /* TargetMachOWriterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetMachOWriterInfo.cpp; sourceTree = "<group>"; };
 		84115FFF0B66D89B00E1293E /* PPCMachOWriterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PPCMachOWriterInfo.cpp; sourceTree = "<group>"; };
 		841160000B66D8AC00E1293E /* PPCMachOWriterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPCMachOWriterInfo.h; sourceTree = "<group>"; };
@@ -1520,6 +1521,7 @@
 		DE66ED3E08ABEC2A00323D32 /* lib/CodeGen */ = {
 			isa = PBXGroup;
 			children = (
+				754221420D171DFC00DDB61B /* MachineLICM.cpp */,
 				9FE450AB0C77AB6100C4FEA4 /* README.txt */,
 				DE66ED8308ABEC2B00323D32 /* SelectionDAG */,
 				DE66ED3F08ABEC2A00323D32 /* AsmPrinter.cpp */,
