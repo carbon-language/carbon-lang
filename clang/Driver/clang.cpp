@@ -406,7 +406,8 @@ static void InitializeDiagnostics(Diagnostic &Diags) {
 
   // Silence "format string is not a string literal" warnings if requested
   if (WarnNoFormatNonLiteral)
-    Diags.setDiagnosticMapping(diag::warn_printf_not_string_constant, diag::MAP_IGNORE);
+    Diags.setDiagnosticMapping(diag::warn_printf_not_string_constant,
+                               diag::MAP_IGNORE);
 
 }
 
