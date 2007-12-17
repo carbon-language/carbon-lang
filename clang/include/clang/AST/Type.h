@@ -220,6 +220,7 @@ public:
     FunctionNoProto, FunctionProto,
     TypeName, Tagged, 
     ObjcInterface, ObjcQualifiedInterface,
+    ObjcQualifiedId,
     TypeOfExp, TypeOfTyp // GNU typeof extension.
   };
 private:
@@ -819,7 +820,9 @@ protected:
 
 class TypedefType : public Type {
   TypedefDecl *Decl;
-  TypedefType(TypedefDecl *D, QualType can) : Type(TypeName, can), Decl(D) {
+protected:
+  TypedefType(TypeClass tc, TypedefDecl *D, QualType can) 
+    : Type(tc, can), Decl(D) {
     assert(!isa<TypedefType>(can) && "Invalid canonical type");
   }
   friend class ASTContext;  // ASTContext creates these.
@@ -950,6 +953,40 @@ public:
     return T->getTypeClass() == ObjcQualifiedInterface; 
   }
   static bool classof(const ObjcQualifiedInterfaceType *) { return true; }
+};
+
+/// ObjcQualifiedIdType - to represent id<protocol-list>
+class ObjcQualifiedIdType : public TypedefType,
+                            public llvm::FoldingSetNode {
+  // List of protocols for this protocol conforming 'id' type
+  // List is sorted on protocol name. No protocol is enterred more than once.
+  llvm::SmallVector<ObjcProtocolDecl*, 8> Protocols;
+    
+  ObjcQualifiedIdType(TypedefDecl *TD, QualType can,
+                      ObjcProtocolDecl **Protos,  unsigned NumP) : 
+  TypedefType(ObjcQualifiedId, TD, can), 
+  Protocols(Protos, Protos+NumP) { }
+  friend class ASTContext;  // ASTContext creates these.
+public:
+    
+  ObjcProtocolDecl *getProtocols(unsigned i) const {
+    return Protocols[i];
+  }
+  unsigned getNumProtocols() const {
+    return Protocols.size();
+  }
+    
+  virtual void getAsStringInternal(std::string &InnerString) const;
+    
+  void Profile(llvm::FoldingSetNodeID &ID);
+  static void Profile(llvm::FoldingSetNodeID &ID, 
+                      ObjcProtocolDecl **protocols, unsigned NumProtocols);
+    
+  static bool classof(const Type *T) { 
+    return T->getTypeClass() == ObjcQualifiedId; 
+  }
+  static bool classof(const ObjcQualifiedIdType *) { return true; }
+    
 };
   
 /// RecordType - This is a helper class that allows the use of isa/cast/dyncast

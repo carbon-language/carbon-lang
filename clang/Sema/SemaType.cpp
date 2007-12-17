@@ -113,6 +113,16 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
                reinterpret_cast<ObjcProtocolDecl**>(PPDecl),
               DS.NumProtocolQualifiers());
     }
+    else if (TypedefDecl *typeDecl = dyn_cast<TypedefDecl>(D)) {
+      if (Ctx.getObjcIdType() == Ctx.getTypedefType(typeDecl)
+          && DS.getProtocolQualifiers()) {
+          // id<protocol-list>
+        Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
+        return Ctx.getObjcQualifiedIdType(typeDecl,
+                 reinterpret_cast<ObjcProtocolDecl**>(PPDecl),
+                 DS.NumProtocolQualifiers());
+      }
+    }
     // TypeQuals handled by caller.
     return Ctx.getTypedefType(cast<TypedefDecl>(D));
   }

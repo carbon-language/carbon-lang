@@ -49,6 +49,7 @@ void ASTContext::PrintStats() const {
   
   unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
   unsigned NumObjcInterfaces = 0, NumObjcQualifiedInterfaces = 0;
+  unsigned NumObjcQualifiedIds = 0;
   
   for (unsigned i = 0, e = Types.size(); i != e; ++i) {
     Type *T = Types[i];
@@ -83,6 +84,8 @@ void ASTContext::PrintStats() const {
       ++NumObjcInterfaces;
     else if (isa<ObjcQualifiedInterfaceType>(T))
       ++NumObjcQualifiedInterfaces;
+    else if (isa<ObjcQualifiedIdType>(T))
+      ++NumObjcQualifiedIds;
     else {
       QualType(T, 0).dump();
       assert(0 && "Unknown type!");
@@ -106,6 +109,8 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "    %d interface types\n", NumObjcInterfaces);
   fprintf(stderr, "    %d protocol qualified interface types\n",
           NumObjcQualifiedInterfaces);
+  fprintf(stderr, "    %d protocol qualified id types\n",
+          NumObjcQualifiedIds);
   fprintf(stderr, "Total bytes = %d\n", int(NumBuiltin*sizeof(BuiltinType)+
     NumPointer*sizeof(PointerType)+NumArray*sizeof(ArrayType)+
     NumComplex*sizeof(ComplexType)+NumVector*sizeof(VectorType)+
@@ -677,7 +682,7 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
   QualType Canonical = Decl->getUnderlyingType().getCanonicalType();
-  Decl->TypeForDecl = new TypedefType(Decl, Canonical);
+  Decl->TypeForDecl = new TypedefType(Type::TypeName, Decl, Canonical);
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
 }
@@ -710,6 +715,29 @@ QualType ASTContext::getObjcQualifiedInterfaceType(ObjcInterfaceDecl *Decl,
     new ObjcQualifiedInterfaceType(Decl, Protocols, NumProtocols);
   Types.push_back(QType);
   ObjcQualifiedInterfaceTypes.InsertNode(QType, InsertPos);
+  return QualType(QType, 0);
+}
+
+/// getObjcQualifiedIdType - Return a 
+/// getObjcQualifiedIdType type for the given interface decl and
+/// the conforming protocol list.
+QualType ASTContext::getObjcQualifiedIdType(TypedefDecl *Decl,
+                                            ObjcProtocolDecl **Protocols, 
+                                            unsigned NumProtocols) {
+  llvm::FoldingSetNodeID ID;
+  ObjcQualifiedIdType::Profile(ID, Protocols, NumProtocols);
+  
+  void *InsertPos = 0;
+  if (ObjcQualifiedIdType *QT =
+      ObjcQualifiedIdTypes.FindNodeOrInsertPos(ID, InsertPos))
+    return QualType(QT, 0);
+  
+  // No Match;
+  QualType Canonical = Decl->getUnderlyingType().getCanonicalType();
+  ObjcQualifiedIdType *QType =
+  new ObjcQualifiedIdType(Decl, Canonical, Protocols, NumProtocols);
+  Types.push_back(QType);
+  ObjcQualifiedIdTypes.InsertNode(QType, InsertPos);
   return QualType(QType, 0);
 }
 
@@ -1043,7 +1071,13 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     }
     
     S += encoding;
-  } else if (const PointerType *PT = T->getAsPointerType()) {
+  }
+  else if (const ObjcQualifiedIdType *QIT = dyn_cast<ObjcQualifiedIdType>(T)) {
+    // Treat id<P...> same as 'id' for encoding purposes.
+    return getObjcEncodingForType(QIT->getDecl()->getUnderlyingType(), S);
+    
+  }
+  else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
     if (isObjcIdType(PointeeTy) || PointeeTy->isObjcInterfaceType()) {
       S += '@';
@@ -1220,6 +1254,13 @@ bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs,
   }
   return true;
 }
+
+// TODO: id<P1,...> vs. id<P,...>
+#if 0
+bool ASTContext::QualifiedIdTypesAreCompatible(QualType lhs, 
+                                                      QualType rhs) {
+}
+#endif
 
 bool ASTContext::vectorTypesAreCompatible(QualType lhs, QualType rhs) {
   const VectorType *lVector = lhs->getAsVectorType();

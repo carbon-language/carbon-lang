@@ -2292,13 +2292,16 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
           return true;
     }
   } else {
+    bool receiverIsQualId = 
+           dyn_cast<ObjcQualifiedIdType>(RExpr->getType()) != 0;
     // FIXME (snaroff): checking in this code from Patrick. Needs to be
     // revisited. how do we get the ClassDecl from the receiver expression?
-    while (receiverType->isPointerType()) {
-      PointerType *pointerType =
-        static_cast<PointerType*>(receiverType.getTypePtr());
-      receiverType = pointerType->getPointeeType();
-    }
+    if (!receiverIsQualId)
+      while (receiverType->isPointerType()) {
+        PointerType *pointerType =
+          static_cast<PointerType*>(receiverType.getTypePtr());
+        receiverType = pointerType->getPointeeType();
+      }
     ObjcInterfaceDecl* ClassDecl;
     if (ObjcQualifiedInterfaceType *QIT = 
         dyn_cast<ObjcQualifiedInterfaceType>(receiverType)) {
@@ -2312,6 +2315,23 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
             break;
         }
       }
+      if (!Method)
+        Diag(lbrac, diag::warn_method_not_found_in_protocol, 
+             std::string("-"), Sel.getName(),
+             SourceRange(lbrac, rbrac));
+    }
+    else if (ObjcQualifiedIdType *QIT = 
+             dyn_cast<ObjcQualifiedIdType>(receiverType)) {
+      // search protocols
+      for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
+        ObjcProtocolDecl *PDecl = QIT->getProtocols(i);
+        if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
+          break;
+      }
+      if (!Method)
+        Diag(lbrac, diag::warn_method_not_found_in_protocol, 
+             std::string("-"), Sel.getName(),
+             SourceRange(lbrac, rbrac));
     }
     else {
       assert(ObjcInterfaceType::classof(receiverType.getTypePtr()) &&

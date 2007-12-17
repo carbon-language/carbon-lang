@@ -539,6 +539,17 @@ void ObjcQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, &Protocols[0], getNumProtocols());
 }
 
+void ObjcQualifiedIdType::Profile(llvm::FoldingSetNodeID &ID,
+                                         ObjcProtocolDecl **protocols, 
+                                         unsigned NumProtocols) {
+  for (unsigned i = 0; i != NumProtocols; i++)
+    ID.AddPointer(protocols[i]);
+}
+
+void ObjcQualifiedIdType::Profile(llvm::FoldingSetNodeID &ID) {
+  Profile(ID, &Protocols[0], getNumProtocols());
+}
+
 /// LookThroughTypedefs - Return the ultimate type this typedef corresponds to
 /// potentially looking through *all* consequtive typedefs.  This returns the
 /// sum of the type qualifiers, so if you have:
@@ -769,6 +780,22 @@ void ObjcQualifiedInterfaceType::getAsStringInternal(
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   std::string ObjcQIString = getDecl()->getName();
+  ObjcQIString += '<';
+  int num = getNumProtocols();
+  for (int i = 0; i < num; i++) {
+    ObjcQIString += getProtocols(i)->getName();
+    if (i < num-1)
+      ObjcQIString += ',';
+  }
+  ObjcQIString += '>';
+  InnerString = ObjcQIString + InnerString;
+}
+
+void ObjcQualifiedIdType::getAsStringInternal(
+                                              std::string &InnerString) const {
+  if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
+    InnerString = ' ' + InnerString;
+  std::string ObjcQIString = "id";
   ObjcQIString += '<';
   int num = getNumProtocols();
   for (int i = 0; i < num; i++) {

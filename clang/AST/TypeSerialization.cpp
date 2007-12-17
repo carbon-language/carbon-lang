@@ -224,7 +224,7 @@ Type* TypedefType::CreateImpl(ASTContext& Context, Deserializer& D) {
   std::vector<Type*>& Types = 
     const_cast<std::vector<Type*>&>(Context.getTypes());
   
-  TypedefType* T = new TypedefType(NULL,QualType::ReadVal(D));
+  TypedefType* T = new TypedefType(Type::TypeName, NULL,QualType::ReadVal(D));
   Types.push_back(T);
   
   D.ReadPtr(T->Decl); // May be backpatched.
