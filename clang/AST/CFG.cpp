@@ -19,7 +19,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/GraphWriter.h"
-#include <iostream>
+#include "llvm/Support/Streams.h"
 #include <iomanip>
 #include <algorithm>
 #include <sstream>
@@ -1298,7 +1298,7 @@ void print_block(std::ostream& OS, const CFG* cfg, const CFGBlock& B,
 } // end anonymous namespace
 
 /// dump - A simple pretty printer of a CFG that outputs to stderr.
-void CFG::dump() const { print(std::cerr); }
+void CFG::dump() const { print(*llvm::cerr.stream()); }
 
 /// print - A simple pretty printer of a CFG that outputs to an ostream.
 void CFG::print(std::ostream& OS) const {
@@ -1322,7 +1322,7 @@ void CFG::print(std::ostream& OS) const {
 }  
 
 /// dump - A simply pretty printer of a CFGBlock that outputs to stderr.
-void CFGBlock::dump(const CFG* cfg) const { print(std::cerr, cfg); }
+void CFGBlock::dump(const CFG* cfg) const { print(*llvm::cerr.stream(), cfg); }
 
 /// print - A simple pretty printer of a CFGBlock that outputs to an ostream.
 ///   Generally this will only be called from CFG::print.
