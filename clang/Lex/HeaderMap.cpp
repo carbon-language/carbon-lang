@@ -20,7 +20,8 @@
 using namespace clang;
 
 enum {
-  HeaderMagicNumber = ('h' << 24) | ('m' << 16) | ('a' << 8) | 'p'
+  HeaderMagicNumber = ('h' << 24) | ('m' << 16) | ('a' << 8) | 'p',
+  HeaderVersion = 1
 };
 
 struct HMapHeader {
@@ -53,23 +54,21 @@ const HeaderMap *HeaderMap::Create(const FileEntry *FE) {
   // We know the file is at least as big as the header, check it now.
   const HMapHeader *Header = reinterpret_cast<const HMapHeader*>(FileStart);
   
-  // Sniff it to see if it's a headermap.
-  if (Header->Version != 1 || Header->Reserved != 0)
-    return 0;
-  
-  // Check the magic number.
+  // Sniff it to see if it's a headermap by checking the magic number and
+  // version.
   bool NeedsByteSwap;
-  if (Header->Magic == HeaderMagicNumber)
+  if (Header->Magic == HeaderMagicNumber && Header->Version == HeaderVersion)
     NeedsByteSwap = false;
-  else if (Header->Magic == llvm::ByteSwap_32(HeaderMagicNumber))
+  else if (Header->Magic == llvm::ByteSwap_32(HeaderMagicNumber) &&
+           Header->Version == llvm::ByteSwap_16(HeaderVersion))
     NeedsByteSwap = true;  // Mixed endianness headermap.
   else 
     return 0;  // Not a header map.
+  
+  if (Header->Reserved != 0) return 0;
 
   // Okay, everything looks good, create the header map.
-  HeaderMap *NewHM = new HeaderMap(FileBuffer.get(), NeedsByteSwap);
-  FileBuffer.reset();  // Don't deallocate the buffer on return.
-  return NewHM; 
+  return new HeaderMap(FileBuffer.take(), NeedsByteSwap);
 }
 
 HeaderMap::~HeaderMap() {
