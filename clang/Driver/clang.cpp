@@ -651,22 +651,24 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
     return;
   }
   
-  // Check to see if this is an apple-style headermap.
-  if (const FileEntry *FE = FM.getFile(&MappedPath[0], 
-                                       &MappedPath[0]+MappedPath.size())) {
-    std::string ErrorInfo;
-    const HeaderMap *HM = HS.CreateHeaderMap(FE, ErrorInfo);
-    if (HM) {
-      IncludeGroup[Group].push_back(DirectoryLookup(HM, Type, isUserSupplied,
-                                                    isFramework));
-      return;
-    }
-    
-    // If this looked like a headermap but was corrupted, emit that error,
-    // otherwise treat it as a missing directory.
-    if (!ErrorInfo.empty()) {
-      fprintf(stderr, "%s\n", ErrorInfo.c_str());
-      return;
+  // Check to see if this is an apple-style headermap (which are not allowed to
+  // be frameworks).
+  if (!isFramework) {
+    if (const FileEntry *FE = FM.getFile(&MappedPath[0], 
+                                         &MappedPath[0]+MappedPath.size())) {
+      std::string ErrorInfo;
+      const HeaderMap *HM = HS.CreateHeaderMap(FE, ErrorInfo);
+      if (HM) {
+        IncludeGroup[Group].push_back(DirectoryLookup(HM, Type,isUserSupplied));
+        return;
+      }
+      
+      // If this looked like a headermap but was corrupted, emit that error,
+      // otherwise treat it as a missing directory.
+      if (!ErrorInfo.empty()) {
+        fprintf(stderr, "%s\n", ErrorInfo.c_str());
+        return;
+      }
     }
   }
   
@@ -678,6 +680,7 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
 /// search list, remove the later (dead) ones.
 static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList) {
   llvm::SmallPtrSet<const DirectoryEntry *, 8> SeenDirs;
+  llvm::SmallPtrSet<const DirectoryEntry *, 8> SeenFrameworkDirs;
   llvm::SmallPtrSet<const HeaderMap *, 8> SeenHeaderMaps;
   for (unsigned i = 0; i != SearchList.size(); ++i) {
     if (SearchList[i].isNormalDir()) {
@@ -688,6 +691,15 @@ static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList) {
       if (Verbose)
         fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
                 SearchList[i].getDir()->getName());
+    } else if (SearchList[i].isFramework()) {
+      // If this isn't the first time we've seen this framework dir, remove it.
+      if (SeenFrameworkDirs.insert(SearchList[i].getFrameworkDir()))
+        continue;
+      
+      if (Verbose)
+        fprintf(stderr, "ignoring duplicate framework \"%s\"\n",
+                SearchList[i].getFrameworkDir()->getName());
+      
     } else {
       assert(SearchList[i].isHeaderMap() && "Not a headermap or normal dir?");
       // If this isn't the first time we've seen this headermap, remove it.

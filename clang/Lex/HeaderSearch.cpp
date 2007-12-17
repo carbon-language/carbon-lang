@@ -61,9 +61,11 @@ void HeaderSearch::PrintStats() {
 const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE, 
                                                std::string &ErrorInfo) {
   // We expect the number of headermaps to be small, and almost always empty.
-  // If it ever grows, use of a linear search should be reevaluated.
+  // If it ever grows, use of a linear search should be re-evaluated.
   if (!HeaderMaps.empty()) {
     for (unsigned i = 0, e = HeaderMaps.size(); i != e; ++i)
+      // Pointer equality comparison of FileEntries works because they are
+      // already uniqued by inode.
       if (HeaderMaps[i].first == FE) 
         return HeaderMaps[i].second;
   }
@@ -75,6 +77,26 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE,
     
   return 0;
 }
+
+//===----------------------------------------------------------------------===//
+// File lookup within a DirectoryLookup scope
+//===----------------------------------------------------------------------===//
+
+/// LookupFile - Lookup the specified file in this search path, returning it
+/// if it exists or returning null if not.
+const FileEntry *DirectoryLookup::LookupFile(const char *FilenameStart,
+                                             const char *FilenameEnd,
+                                             FileManager &FileMgr) const {
+  llvm::SmallString<1024> TmpDir;
+  
+  // Concatenate the requested file onto the directory.
+  // FIXME: Portability.  Filename concatenation should be in sys::Path.
+  TmpDir += getDir()->getName();
+  TmpDir.push_back('/');
+  TmpDir.append(FilenameStart, FilenameEnd);
+  return FileMgr.getFile(TmpDir.begin(), TmpDir.end());
+}
+
 
 
 //===----------------------------------------------------------------------===//
@@ -137,6 +159,7 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
   return FileMgr.getFile(FrameworkName.begin(), FrameworkName.end());
 }
 
+
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
 /// return null on failure.  isAngled indicates whether the file reference is
 /// for system #include's or not (i.e. using <> instead of "").  CurFileEnt, if
@@ -161,11 +184,13 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
     return FileMgr.getFile(FilenameStart, FilenameEnd);
   }
   
-  llvm::SmallString<1024> TmpDir;
-  
   // Step #0, unless disabled, check to see if the file is in the #includer's
-  // directory.  This search is not done for <> headers.
+  // directory.  This has to be based on CurFileEnt, not CurDir, because
+  // CurFileEnt could be a #include of a subdirectory (#include "foo/bar.h") and
+  // a subsequent include of "baz.h" should resolve to "whatever/foo/baz.h".
+  // This search is not done for <> headers.
   if (CurFileEnt && !isAngled && !NoCurDirSearch) {
+    llvm::SmallString<1024> TmpDir;
     // Concatenate the requested file onto the directory.
     // FIXME: Portability.  Filename concatenation should be in sys::Path.
     TmpDir += CurFileEnt->getDir()->getName();
@@ -173,12 +198,10 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
     TmpDir.append(FilenameStart, FilenameEnd);
     if (const FileEntry *FE = FileMgr.getFile(TmpDir.begin(), TmpDir.end())) {
       // Leave CurDir unset.
-      
       // This file is a system header or C++ unfriendly if the old file is.
       getFileInfo(FE).DirInfo = getFileInfo(CurFileEnt).DirInfo;
       return FE;
     }
-    TmpDir.clear();
   }
   
   CurDir = 0;
@@ -210,20 +233,15 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
     // start point value.
     CacheLookup.first = i+1;
   }
-    
+  
   // Check each directory in sequence to see if it contains this file.
   for (; i != SearchDirs.size(); ++i) {
     const FileEntry *FE = 0;
     if (!SearchDirs[i].isFramework()) {
-      // FIXME: Portability.  Adding file to dir should be in sys::Path.
-      // Concatenate the requested file onto the directory.
-      TmpDir.clear();
-      TmpDir += SearchDirs[i].getDir()->getName();
-      TmpDir.push_back('/');
-      TmpDir.append(FilenameStart, FilenameEnd);
-      FE = FileMgr.getFile(TmpDir.begin(), TmpDir.end());
+      FE = SearchDirs[i].LookupFile(FilenameStart, FilenameEnd, FileMgr);
     } else {
-      FE = DoFrameworkLookup(SearchDirs[i].getDir(), FilenameStart,FilenameEnd);
+      FE = DoFrameworkLookup(SearchDirs[i].getFrameworkDir(),
+                             FilenameStart, FilenameEnd);
     }
     
     if (FE) {

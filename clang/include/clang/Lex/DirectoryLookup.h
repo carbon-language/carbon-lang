@@ -15,14 +15,15 @@
 #define LLVM_CLANG_LEX_DIRECTORYLOOKUP_H
 
 namespace clang {
-class DirectoryEntry;
 class HeaderMap;
+class DirectoryEntry;
+class FileEntry;
+class FileManager;
 
 /// DirectoryLookup - This class represents one entry in the search list that
 /// specifies the search order for directories in #include directives.  It
-/// represents either a directory or a 'headermap'.  A headermap is just like a
-/// directory, but it remaps its contents through an indirection table instead
-/// of indexing a directory.
+/// represents either a directory, a framework, or a headermap.
+///
 class DirectoryLookup {
 public:
   enum DirType {
@@ -30,14 +31,20 @@ public:
     SystemHeaderDir,
     ExternCSystemHeaderDir
   };
+  
+  enum LookupType_t {
+    LT_NormalDir,
+    LT_Framework,
+    LT_HeaderMap
+  };
 private:
   union {  // This union is discriminated by isHeaderMap.
-    /// Dir - This is the actual directory that we're referring to.
-    ///
+    /// Dir - This is the actual directory that we're referring to for a normal
+    /// directory or a framework.
     const DirectoryEntry *Dir;
   
-    /// Map - This is the HeaderMap corresponding if the isHeaderMap field is
-    /// true.
+    /// Map - This is the HeaderMap if this is a headermap lookup.
+    ///
     const HeaderMap *Map;
   } u;
   
@@ -49,44 +56,57 @@ private:
   ///
   bool UserSupplied : 1;
   
-  /// Framework - True if this is a framework directory search-path.
-  ///
-  bool Framework : 1;
-  
-  /// IsHeaderMap - True if the HeaderMap field is valid, false if the Dir field
-  /// is valid.
-  bool IsHeaderMap : 1;
+  /// LookupType - This indicates whether this DirectoryLookup object is a
+  /// normal directory, a framework, or a headermap.
+  unsigned LookupType : 2;
 public:
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
   /// 'dir'.
   DirectoryLookup(const DirectoryEntry *dir, DirType DT, bool isUser,
                   bool isFramework)
     : DirCharacteristic(DT), UserSupplied(isUser),
-      Framework(isFramework), IsHeaderMap(false) {
+     LookupType(isFramework ? LT_Framework : LT_NormalDir) {
     u.Dir = dir; 
   }
   
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
   /// 'map'.
-  DirectoryLookup(const HeaderMap *map, DirType DT, bool isUser, bool isFWork)
-    : DirCharacteristic(DT), UserSupplied(isUser), Framework(isFWork), 
-      IsHeaderMap(true) {
+  DirectoryLookup(const HeaderMap *map, DirType DT, bool isUser)
+    : DirCharacteristic(DT), UserSupplied(isUser), LookupType(LT_HeaderMap) {
     u.Map = map; 
   }
   
+  /// LookupFile - Lookup the specified file in this search path, returning it
+  /// if it exists or returning null if not.
+  const FileEntry *LookupFile(const char *FilenameStart,
+                              const char *FilenameEnd,
+                              FileManager &FileMgr) const;
+  
   /// getDir - Return the directory that this entry refers to.
   ///
-  const DirectoryEntry *getDir() const { return !IsHeaderMap ? u.Dir : 0; }
+  const DirectoryEntry *getDir() const { return isNormalDir() ? u.Dir : 0; }
+
+  /// getFrameworkDir - Return the directory that this framework refers to.
+  ///
+  const DirectoryEntry *getFrameworkDir() const {
+    return isFramework() ? u.Dir : 0;
+  }
   
   /// getHeaderMap - Return the directory that this entry refers to.
   ///
-  const HeaderMap *getHeaderMap() const { return IsHeaderMap ? u.Map : 0; }
+  const HeaderMap *getHeaderMap() const { return isHeaderMap() ? u.Map : 0; }
 
+  LookupType_t getLookupType() const { return (LookupType_t)LookupType; }
+  
   /// isNormalDir - Return true if this is a normal directory, not a header map.
-  bool isNormalDir() const { return !IsHeaderMap; }
+  bool isNormalDir() const { return getLookupType() == LT_NormalDir; }
+  
+  /// isFramework - True if this is a framework directory.
+  ///
+  bool isFramework() const { return getLookupType() == LT_Framework; }
   
   /// isHeaderMap - Return true if this is a header map, not a normal directory.
-  bool isHeaderMap() const { return IsHeaderMap; }
+  bool isHeaderMap() const { return getLookupType() == LT_HeaderMap; }
   
   /// DirCharacteristic - The type of directory this is, one of the DirType enum
   /// values.
@@ -96,9 +116,6 @@ public:
   ///
   bool isUserSupplied() const { return UserSupplied; }
   
-  /// isFramework - True if this is a framework directory.
-  ///
-  bool isFramework() const { return Framework; }
 };
 
 }  // end namespace clang
