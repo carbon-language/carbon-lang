@@ -20,6 +20,8 @@ namespace llvm {
 namespace clang {
   class FileEntry;
   class FileManager;
+  struct HMapBucket;
+  struct HMapHeader;
 
 /// This class represents an Apple concept known as a 'header map'.  To the
 /// #include file resolution process, it basically acts like a directory of
@@ -49,6 +51,15 @@ public:
   
   /// getFileName - Return the filename of the headermap.
   const char *getFileName() const;
+  
+  /// dump - Print the contents of this headermap to stderr.
+  void dump() const;
+  
+private:
+  unsigned getEndianAdjustedWord(unsigned X) const;
+  const HMapHeader &getHeader() const;
+  HMapBucket getBucket(unsigned BucketNo) const;
+  const char *getString(unsigned StrTabIdx) const;
 };
 
 } // end namespace clang.
