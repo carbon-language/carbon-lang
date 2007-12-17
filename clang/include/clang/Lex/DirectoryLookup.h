@@ -53,16 +53,16 @@ private:
   ///
   bool Framework : 1;
   
-  /// isHeaderMap - True if the HeaderMap field is valid, false if the Dir field
+  /// IsHeaderMap - True if the HeaderMap field is valid, false if the Dir field
   /// is valid.
-  bool isHeaderMap : 1;
+  bool IsHeaderMap : 1;
 public:
   /// DirectoryLookup ctor - Note that this ctor *does not take ownership* of
   /// 'dir'.
   DirectoryLookup(const DirectoryEntry *dir, DirType DT, bool isUser,
                   bool isFramework)
     : DirCharacteristic(DT), UserSupplied(isUser),
-      Framework(isFramework), isHeaderMap(false) {
+      Framework(isFramework), IsHeaderMap(false) {
     u.Dir = dir; 
   }
   
@@ -70,17 +70,23 @@ public:
   /// 'map'.
   DirectoryLookup(const HeaderMap *map, DirType DT, bool isUser, bool isFWork)
     : DirCharacteristic(DT), UserSupplied(isUser), Framework(isFWork), 
-      isHeaderMap(true) {
+      IsHeaderMap(true) {
     u.Map = map; 
   }
   
   /// getDir - Return the directory that this entry refers to.
   ///
-  const DirectoryEntry *getDir() const { return !isHeaderMap ? u.Dir : 0; }
+  const DirectoryEntry *getDir() const { return !IsHeaderMap ? u.Dir : 0; }
   
   /// getHeaderMap - Return the directory that this entry refers to.
   ///
-  const HeaderMap *getHeaderMap() const { return isHeaderMap ? u.Map : 0; }
+  const HeaderMap *getHeaderMap() const { return IsHeaderMap ? u.Map : 0; }
+
+  /// isNormalDir - Return true if this is a normal directory, not a header map.
+  bool isNormalDir() const { return !IsHeaderMap; }
+  
+  /// isHeaderMap - Return true if this is a header map, not a normal directory.
+  bool isHeaderMap() const { return IsHeaderMap; }
   
   /// DirCharacteristic - The type of directory this is, one of the DirType enum
   /// values.

@@ -676,15 +676,30 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
 /// search list, remove the later (dead) ones.
 static void RemoveDuplicates(std::vector<DirectoryLookup> &SearchList) {
   llvm::SmallPtrSet<const DirectoryEntry *, 8> SeenDirs;
+  llvm::SmallPtrSet<const HeaderMap *, 8> SeenHeaderMaps;
   for (unsigned i = 0; i != SearchList.size(); ++i) {
-    // If this isn't the first time we've seen this dir, remove it.
-    if (!SeenDirs.insert(SearchList[i].getDir())) {
+    if (SearchList[i].isNormalDir()) {
+      // If this isn't the first time we've seen this dir, remove it.
+      if (SeenDirs.insert(SearchList[i].getDir()))
+        continue;
+      
       if (Verbose)
         fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
                 SearchList[i].getDir()->getName());
-      SearchList.erase(SearchList.begin()+i);
-      --i;
+    } else {
+      assert(SearchList[i].isHeaderMap() && "Not a headermap or normal dir?");
+      // If this isn't the first time we've seen this headermap, remove it.
+      if (SeenHeaderMaps.insert(SearchList[i].getHeaderMap()))
+        continue;
+      
+      if (Verbose)
+        fprintf(stderr, "ignoring duplicate directory \"%s\"\n",
+                SearchList[i].getDir()->getName());
     }
+    
+    // This is reached if the current entry is a duplicate.
+    SearchList.erase(SearchList.begin()+i);
+    --i;
   }
 }
 
