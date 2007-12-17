@@ -58,8 +58,7 @@ void HeaderSearch::PrintStats() {
 
 /// CreateHeaderMap - This method returns a HeaderMap for the specified
 /// FileEntry, uniquing them through the the 'HeaderMaps' datastructure.
-const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE, 
-                                               std::string &ErrorInfo) {
+const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE) {
   // We expect the number of headermaps to be small, and almost always empty.
   // If it ever grows, use of a linear search should be re-evaluated.
   if (!HeaderMaps.empty()) {
@@ -70,7 +69,7 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE,
         return HeaderMaps[i].second;
   }
   
-  if (const HeaderMap *HM = HeaderMap::Create(FE, ErrorInfo)) {
+  if (const HeaderMap *HM = HeaderMap::Create(FE)) {
     HeaderMaps.push_back(std::make_pair(FE, HM));
     return HM;
   }

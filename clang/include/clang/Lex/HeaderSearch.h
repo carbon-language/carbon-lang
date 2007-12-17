@@ -181,7 +181,7 @@ public:
   
   /// CreateHeaderMap - This method returns a HeaderMap for the specified
   /// FileEntry, uniquing them through the the 'HeaderMaps' datastructure.
-  const HeaderMap *CreateHeaderMap(const FileEntry *FE, std::string &ErrorInfo);
+  const HeaderMap *CreateHeaderMap(const FileEntry *FE);
   
   void IncrementFrameworkLookupCount() { ++NumFrameworkLookups; }
   

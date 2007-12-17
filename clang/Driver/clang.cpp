@@ -666,17 +666,9 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
   if (!isFramework) {
     if (const FileEntry *FE = FM.getFile(&MappedPath[0], 
                                          &MappedPath[0]+MappedPath.size())) {
-      std::string ErrorInfo;
-      const HeaderMap *HM = HS.CreateHeaderMap(FE, ErrorInfo);
-      if (HM) {
+      if (const HeaderMap *HM = HS.CreateHeaderMap(FE)) {
+        // It is a headermap, add it to the search path.
         IncludeGroup[Group].push_back(DirectoryLookup(HM, Type,isUserSupplied));
-        return;
-      }
-      
-      // If this looked like a headermap but was corrupted, emit that error,
-      // otherwise treat it as a missing directory.
-      if (!ErrorInfo.empty()) {
-        fprintf(stderr, "%s\n", ErrorInfo.c_str());
         return;
       }
     }

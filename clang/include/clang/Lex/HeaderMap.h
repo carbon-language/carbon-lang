@@ -30,9 +30,7 @@ class HeaderMap {
 public:
   /// HeaderMap::Create - This attempts to load the specified file as a header
   /// map.  If it doesn't look like a HeaderMap, it gives up and returns null.
-  /// If it looks like a HeaderMap but is obviously corrupted, it puts a reason
-  /// into the string error argument and returns null.
-  static const HeaderMap *Create(const FileEntry *FE, std::string &ErrorInfo);
+  static const HeaderMap *Create(const FileEntry *FE);
   
   /// LookupFile - Check to see if the specified relative filename is located in
   /// this HeaderMap.  If so, open it and return its FileEntry.
