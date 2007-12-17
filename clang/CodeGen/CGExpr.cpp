@@ -83,7 +83,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
   switch (E->getStmtClass()) {
   default: {
     WarnUnsupported(E, "l-value expression");
-    llvm::Type *Ty = llvm::PointerType::get(ConvertType(E->getType()));
+    llvm::Type *Ty = llvm::PointerType::getUnqual(ConvertType(E->getType()));
     return LValue::MakeAddr(llvm::UndefValue::get(Ty));
   }
 
@@ -220,11 +220,13 @@ void CodeGenFunction::EmitStoreThroughLValue(RValue Src, LValue Dst,
   assert(Src.isScalar() && "Can't emit an agg store with this method");
   // FIXME: Handle volatility etc.
   const llvm::Type *SrcTy = Src.getScalarVal()->getType();
-  const llvm::Type *AddrTy = 
-    cast<llvm::PointerType>(DstAddr->getType())->getElementType();
+  const llvm::PointerType *DstPtr = cast<llvm::PointerType>(DstAddr->getType());
+  const llvm::Type *AddrTy = DstPtr->getElementType();
+  unsigned AS = DstPtr->getAddressSpace();
   
   if (AddrTy != SrcTy)
-    DstAddr = Builder.CreateBitCast(DstAddr, llvm::PointerType::get(SrcTy),
+    DstAddr = Builder.CreateBitCast(DstAddr, 
+                                    llvm::PointerType::get(SrcTy, AS),
                                     "storetmp");
   Builder.CreateStore(Src.getScalarVal(), DstAddr);
 }
@@ -422,7 +424,10 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     const llvm::PointerType * BaseTy = 
       cast<llvm::PointerType>(BaseValue->getType());
     if (FieldTy != BaseTy->getElementType()) {
-      V = Builder.CreateBitCast(V, llvm::PointerType::get(FieldTy), "tmp");
+      // FIXME: Need to get address space qualification of pointer
+      V = Builder.CreateBitCast(V, 
+                                llvm::PointerType::getUnqual(FieldTy), 
+                                "tmp");
     }
   }
   return LValue::MakeAddr(V);

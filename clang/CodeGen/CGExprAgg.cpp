@@ -92,7 +92,7 @@ void AggExprEmitter::EmitAggregateCopy(llvm::Value *DestPtr,
   assert(!Ty->isComplexType() && "Shouldn't happen for complex");
   
   // Aggregate assignment turns into llvm.memcpy.
-  const llvm::Type *BP = llvm::PointerType::get(llvm::Type::Int8Ty);
+  const llvm::Type *BP = llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
   if (DestPtr->getType() != BP)
     DestPtr = Builder.CreateBitCast(DestPtr, BP, "tmp");
   if (SrcPtr->getType() != BP)

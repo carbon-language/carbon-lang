@@ -75,7 +75,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
   }
   
   // If the pointer type matches, just return it.
-  llvm::Type *PFTy = llvm::PointerType::get(Ty);
+  llvm::Type *PFTy = llvm::PointerType::getUnqual(Ty);
   if (PFTy == F->getType()) return Entry = F;
     
   // If this isn't a definition, just return it casted to the right type.
@@ -132,7 +132,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFileVarDecl(const FileVarDecl *D,
   }
   
   // If the pointer type matches, just return it.
-  llvm::Type *PTy = llvm::PointerType::get(Ty);
+  llvm::Type *PTy = llvm::PointerType::getUnqual(Ty);
   if (PTy == GV->getType()) return Entry = GV;
   
   // If this isn't a definition, just return it casted to the right type.

@@ -113,7 +113,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   case Builtin::BI__builtin_va_start:
   case Builtin::BI__builtin_va_end: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
-    const llvm::Type *DestType = llvm::PointerType::get(llvm::Type::Int8Ty);
+    const llvm::Type *DestType = 
+      llvm::PointerType::getUnqual(llvm::Type::Int8Ty);
     if (ArgValue->getType() != DestType)
       ArgValue = Builder.CreateBitCast(ArgValue, DestType, 
                                        ArgValue->getNameStart());

@@ -178,11 +178,11 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
   }
   case Type::Pointer: {
     const PointerType &P = cast<PointerType>(Ty);
-    return llvm::PointerType::get(ConvertType(P.getPointeeType())); 
+    return llvm::PointerType::getUnqual(ConvertType(P.getPointeeType())); 
   }
   case Type::Reference: {
     const ReferenceType &R = cast<ReferenceType>(Ty);
-    return llvm::PointerType::get(ConvertType(R.getReferenceeType()));
+    return llvm::PointerType::getUnqual(ConvertType(R.getReferenceeType()));
   }
     
   case Type::VariableArray: {
@@ -224,7 +224,7 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     
     // Struct return passes the struct byref.
     if (!ResultType->isFirstClassType() && ResultType != llvm::Type::VoidTy) {
-      const llvm::Type *RType = llvm::PointerType::get(ResultType);
+      const llvm::Type *RType = llvm::PointerType::getUnqual(ResultType);
       QualType RTy = Context.getPointerType(FP.getResultType());
       TypeHolderMap.insert(std::make_pair(RTy.getTypePtr(), 
                                           llvm::PATypeHolder(RType)));
@@ -355,7 +355,7 @@ void CodeGenTypes::DecodeArgumentTypes(const FunctionTypeProto &FTP,
       ArgTys.push_back(Ty);
     else {
       QualType PTy = Context.getPointerType(FTP.getArgType(i));
-      const llvm::Type *PtrTy = llvm::PointerType::get(Ty);
+      const llvm::Type *PtrTy = llvm::PointerType::getUnqual(Ty);
       TypeHolderMap.insert(std::make_pair(PTy.getTypePtr(), 
                                           llvm::PATypeHolder(PtrTy)));
 
