@@ -81,12 +81,17 @@ class HeaderSearch {
   /// name like "Carbon" to the Carbon.framework directory.
   llvm::StringMap<const DirectoryEntry *> FrameworkMap;
 
+  /// HeaderMaps - This is a mapping from FileEntry -> HeaderMap, uniquing 
+  /// headermaps.  This vector owns the headermap.
+  std::vector<std::pair<const FileEntry*, const HeaderMap*> > HeaderMaps;
+  
   // Various statistics we track for performance analysis.
   unsigned NumIncluded;
   unsigned NumMultiIncludeFileOptzn;
   unsigned NumFrameworkLookups, NumSubFrameworkLookups;
 public:
   HeaderSearch(FileManager &FM);
+  ~HeaderSearch();
 
   FileManager &getFileMgr() const { return FileMgr; }
 
@@ -165,6 +170,10 @@ public:
                                const IdentifierInfo *ControllingMacro) {
     getFileInfo(File).ControllingMacro = ControllingMacro;
   }
+  
+  /// CreateHeaderMap - This method returns a HeaderMap for the specified
+  /// FileEntry, uniquing them through the the 'HeaderMaps' datastructure.
+  const HeaderMap *CreateHeaderMap(const FileEntry *FE, std::string &ErrorInfo);
   
   void PrintStats();
 private:

@@ -613,8 +613,9 @@ static std::vector<DirectoryLookup> IncludeGroup[4];
 ///
 static void AddPath(const std::string &Path, IncludeDirGroup Group,
                     bool isCXXAware, bool isUserSupplied,
-                    bool isFramework, FileManager &FM) {
+                    bool isFramework, HeaderSearch &HS) {
   assert(!Path.empty() && "can't handle empty path here");
+  FileManager &FM = HS.getFileMgr();
   
   // Compute the actual path, taking into consideration -isysroot.
   llvm::SmallString<256> MappedPath;
@@ -648,6 +649,25 @@ static void AddPath(const std::string &Path, IncludeDirGroup Group,
     return;
   }
   
+  // Check to see if this is an apple-style headermap.
+  if (const FileEntry *FE = FM.getFile(&MappedPath[0], 
+                                       &MappedPath[0]+MappedPath.size())) {
+    std::string ErrorInfo;
+    const HeaderMap *HM = HS.CreateHeaderMap(FE, ErrorInfo);
+    if (HM) {
+      IncludeGroup[Group].push_back(DirectoryLookup(HM, Type, isUserSupplied,
+                                                    isFramework));
+      return;
+    }
+    
+    // If this looked like a headermap but was corrupted, emit that error,
+    // otherwise treat it as a missing directory.
+    if (!ErrorInfo.empty()) {
+      fprintf(stderr, "%s\n", ErrorInfo.c_str());
+      return;
+    }
+  }
+  
   if (Verbose)
     fprintf(stderr, "ignoring nonexistent directory \"%s\"\n", Path.c_str());
 }
@@ -674,23 +694,23 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
                                    const LangOptions &Lang) {
   // Handle -F... options.
   for (unsigned i = 0, e = F_dirs.size(); i != e; ++i)
-    AddPath(F_dirs[i], Angled, false, true, true, FM);
+    AddPath(F_dirs[i], Angled, false, true, true, Headers);
   
   // Handle -I... options.
   for (unsigned i = 0, e = I_dirs.size(); i != e; ++i)
-    AddPath(I_dirs[i], Angled, false, true, false, FM);
+    AddPath(I_dirs[i], Angled, false, true, false, Headers);
   
   // Handle -idirafter... options.
   for (unsigned i = 0, e = idirafter_dirs.size(); i != e; ++i)
-    AddPath(idirafter_dirs[i], After, false, true, false, FM);
+    AddPath(idirafter_dirs[i], After, false, true, false, Headers);
   
   // Handle -iquote... options.
   for (unsigned i = 0, e = iquote_dirs.size(); i != e; ++i)
-    AddPath(iquote_dirs[i], Quoted, false, true, false, FM);
+    AddPath(iquote_dirs[i], Quoted, false, true, false, Headers);
   
   // Handle -isystem... options.
   for (unsigned i = 0, e = isystem_dirs.size(); i != e; ++i)
-    AddPath(isystem_dirs[i], System, false, true, false, FM);
+    AddPath(isystem_dirs[i], System, false, true, false, Headers);
 
   // Walk the -iprefix/-iwithprefix/-iwithprefixbefore argument lists in
   // parallel, processing the values in order of occurance to get the right
@@ -719,12 +739,12 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
                   iwithprefix_vals.getPosition(iwithprefix_idx) < 
                   iwithprefixbefore_vals.getPosition(iwithprefixbefore_idx))) {
         AddPath(Prefix+iwithprefix_vals[iwithprefix_idx], 
-                System, false, false, false, FM);
+                System, false, false, false, Headers);
         ++iwithprefix_idx;
         iwithprefix_done = iwithprefix_idx == iwithprefix_vals.size();
       } else {
         AddPath(Prefix+iwithprefixbefore_vals[iwithprefixbefore_idx], 
-                Angled, false, false, false, FM);
+                Angled, false, false, false, Headers);
         ++iwithprefixbefore_idx;
         iwithprefixbefore_done = 
           iwithprefixbefore_idx == iwithprefixbefore_vals.size();
@@ -739,34 +759,35 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
   // FIXME: get these from the target?
   if (!nostdinc) {
     if (Lang.CPlusPlus) {
-      AddPath("/usr/include/c++/4.0.0", System, true, false, false, FM);
+      AddPath("/usr/include/c++/4.0.0", System, true, false, false, Headers);
       AddPath("/usr/include/c++/4.0.0/i686-apple-darwin8", System, true, false,
-              false, FM);
-      AddPath("/usr/include/c++/4.0.0/backward", System, true, false, false,FM);
+              false, Headers);
+      AddPath("/usr/include/c++/4.0.0/backward", System, true, false, false,
+              Headers);
     }
     
-    AddPath("/usr/local/include", System, false, false, false, FM);
+    AddPath("/usr/local/include", System, false, false, false, Headers);
     // leopard
     AddPath("/usr/lib/gcc/i686-apple-darwin9/4.0.1/include", System, 
-            false, false, false, FM);
+            false, false, false, Headers);
     AddPath("/usr/lib/gcc/powerpc-apple-darwin9/4.0.1/include", 
-            System, false, false, false, FM);
+            System, false, false, false, Headers);
     AddPath("/usr/lib/gcc/powerpc-apple-darwin9/"
             "4.0.1/../../../../powerpc-apple-darwin0/include", 
-            System, false, false, false, FM);
+            System, false, false, false, Headers);
 
     // tiger
     AddPath("/usr/lib/gcc/i686-apple-darwin8/4.0.1/include", System, 
-            false, false, false, FM);
+            false, false, false, Headers);
     AddPath("/usr/lib/gcc/powerpc-apple-darwin8/4.0.1/include", 
-            System, false, false, false, FM);
+            System, false, false, false, Headers);
     AddPath("/usr/lib/gcc/powerpc-apple-darwin8/"
             "4.0.1/../../../../powerpc-apple-darwin8/include", 
-            System, false, false, false, FM);
+            System, false, false, false, Headers);
 
-    AddPath("/usr/include", System, false, false, false, FM);
-    AddPath("/System/Library/Frameworks", System, true, false, true, FM);
-    AddPath("/Library/Frameworks", System, true, false, true, FM);
+    AddPath("/usr/include", System, false, false, false, Headers);
+    AddPath("/System/Library/Frameworks", System, true, false, true, Headers);
+    AddPath("/Library/Frameworks", System, true, false, true, Headers);
   }
 
   // Now that we have collected all of the include paths, merge them all

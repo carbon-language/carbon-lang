@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/HeaderSearch.h"
+#include "clang/Lex/HeaderMap.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "llvm/System/Path.h"
@@ -27,6 +28,12 @@ HeaderSearch::HeaderSearch(FileManager &FM) : FileMgr(FM), FrameworkMap(64) {
   NumFrameworkLookups = NumSubFrameworkLookups = 0;
 }
 
+HeaderSearch::~HeaderSearch() {
+  // Delete headermaps.
+  for (unsigned i = 0, e = HeaderMaps.size(); i != e; ++i)
+    delete HeaderMaps[i].second;
+}
+                           
 void HeaderSearch::PrintStats() {
   fprintf(stderr, "\n*** HeaderSearch Stats:\n");
   fprintf(stderr, "%d files tracked.\n", (int)FileInfo.size());
@@ -48,6 +55,27 @@ void HeaderSearch::PrintStats() {
   fprintf(stderr, "%d framework lookups.\n", NumFrameworkLookups);
   fprintf(stderr, "%d subframework lookups.\n", NumSubFrameworkLookups);
 }
+
+/// CreateHeaderMap - This method returns a HeaderMap for the specified
+/// FileEntry, uniquing them through the the 'HeaderMaps' datastructure.
+const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE, 
+                                               std::string &ErrorInfo) {
+  // We expect the number of headermaps to be small, and almost always empty.
+  // If it ever grows, use of a linear search should be reevaluated.
+  if (!HeaderMaps.empty()) {
+    for (unsigned i = 0, e = HeaderMaps.size(); i != e; ++i)
+      if (HeaderMaps[i].first == FE) 
+        return HeaderMaps[i].second;
+  }
+  
+  if (const HeaderMap *HM = HeaderMap::Create(FE, ErrorInfo)) {
+    HeaderMaps.push_back(std::make_pair(FE, HM));
+    return HM;
+  }
+    
+  return 0;
+}
+
 
 //===----------------------------------------------------------------------===//
 // Header File Location.
