@@ -237,8 +237,32 @@ Sema::CheckPrintfArguments(Expr *Fn,
   StringLiteral *FExpr = dyn_cast<StringLiteral>(OrigFormatExpr);
   
   if (FExpr == NULL) {
-    Diag(Args[format_idx]->getLocStart(), 
-         diag::warn_printf_not_string_constant, Fn->getSourceRange());
+    // For vprintf* functions (i.e., HasVAListArg==true), we add a
+    // special check to see if the format string is a function parameter
+    // of the function calling the printf function.  If the function
+    // has an attribute indicating it is a printf-like function, then we
+    // should suppress warnings concerning non-literals being used in a call
+    // to a vprintf function.  For example:
+    //
+    // void
+    // logmessage(char const *fmt __attribute__ (format (printf, 1, 2)), ...) {
+    //      va_list ap;
+    //      va_start(ap, fmt);
+    //      vprintf(fmt, ap);  // Do NOT emit a warning about "fmt".
+    //      ...
+    //
+    //
+    //  FIXME: We don't have full attribute support yet, so just check to see
+    //    if the argument is a DeclRefExpr that references a parameter.  We'll
+    //    add proper support for checking the attribute later.
+    if (HasVAListArg)
+      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(IgnoreParen(OrigFormatExpr)))
+          if (isa<ParmVarDecl>(DR->getDecl()))
+          return;
+    
+    Diag(Args[format_idx]->getLocStart(), diag::warn_printf_not_string_constant,
+         Fn->getSourceRange());
+          
     return;
   }
 

@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+char * global_fmt;
+
 void check_string_literal( FILE* fp, const char* s, char *buf, ... ) {
 
   char * b;
@@ -10,15 +12,16 @@ void check_string_literal( FILE* fp, const char* s, char *buf, ... ) {
   va_start(ap,buf);
 
   printf(s); // expected-warning {{format string is not a string literal}}
-  vprintf(s,ap); // expected-warning {{format string is not a string liter}}
+  vprintf(s,ap); // // no-warning
   fprintf(fp,s); // expected-warning {{format string is not a string literal}}
-  vfprintf(fp,s,ap); // expected-warning {{format string is not a string lit}}
+  vfprintf(fp,s,ap); // no-warning
   asprintf(&b,s); // expected-warning {{format string is not a string lit}}
-  vasprintf(&b,s,ap); // expected-warning {{format string is not a string lit}}
+  vasprintf(&b,s,ap); // no-warning
   sprintf(buf,s); // expected-warning {{format string is not a string literal}}
   snprintf(buf,2,s); // expected-warning {{format string is not a string lit}}
-  vsprintf(buf,s,ap); // expected-warning {{format string is not a string lit}}
-  vsnprintf(buf,2,s,ap); // expected-warning {{mat string is not a string lit}}
+  vsprintf(buf,s,ap); // no-warning
+  vsnprintf(buf,2,s,ap); // no-warning
+  vsnprintf(buf,2,global_fmt,ap); // expected-warning {{format string is not a string literal}}
 }
 
 void check_writeback_specifier()
