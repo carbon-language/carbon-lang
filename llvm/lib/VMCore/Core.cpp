@@ -150,7 +150,8 @@ LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, unsigned ElementCount){
 }
 
 LLVMTypeRef LLVMPointerType(LLVMTypeRef ElementType) {
-  return wrap(PointerType::get(unwrap(ElementType)));
+  // FIXME: Needst to handle address spaces
+  return wrap(PointerType::getUnqual(unwrap(ElementType)));
 }
 
 LLVMTypeRef LLVMVectorType(LLVMTypeRef ElementType,unsigned ElementCount){

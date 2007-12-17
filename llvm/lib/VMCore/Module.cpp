@@ -164,8 +164,8 @@ Constant *Module::getOrInsertFunction(const std::string &Name,
 
   // If the function exists but has the wrong type, return a bitcast to the
   // right type.
-  if (F->getType() != PointerType::get(Ty))
-    return ConstantExpr::getBitCast(F, PointerType::get(Ty));
+  if (F->getType() != PointerType::getUnqual(Ty))
+    return ConstantExpr::getBitCast(F, PointerType::getUnqual(Ty));
   
   // Otherwise, we just found the existing function or a prototype.
   return F;  

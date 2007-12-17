@@ -2122,8 +2122,10 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         (CI->getType()->getPrimitiveSizeInBits() == 
          TD->getIntPtrType()->getPrimitiveSizeInBits()) 
         && isa<PointerType>(CI->getOperand(0)->getType())) {
+      unsigned AS =
+        cast<PointerType>(CI->getOperand(0)->getType())->getAddressSpace();
       Value *I2 = InsertCastBefore(Instruction::BitCast, CI->getOperand(0),
-                                   PointerType::get(Type::Int8Ty), I);
+                                   PointerType::get(Type::Int8Ty, AS), I);
       I2 = InsertNewInstBefore(new GetElementPtrInst(I2, Other, "ctg2"), I);
       return new PtrToIntInst(I2, CI->getType());
     }
@@ -7740,7 +7742,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         // If Size is 2 then use Int16Ty
         // If Size is 1 then use Int8Ty
         if (Size && Size <=8 && !(Size&(Size-1)))
-          NewPtrTy = PointerType::get(IntegerType::get(Size<<3));
+          NewPtrTy = PointerType::getUnqual(IntegerType::get(Size<<3));
 
         if (NewPtrTy) {
           Value *Src = InsertCastBefore(Instruction::BitCast, CI.getOperand(2),
@@ -7774,8 +7776,9 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       // Turn PPC lvx     -> load if the pointer is known aligned.
       // Turn X86 loadups -> load if the pointer is known aligned.
       if (GetOrEnforceKnownAlignment(II->getOperand(1), TD, 16) >= 16) {
-        Value *Ptr = InsertCastBefore(Instruction::BitCast, II->getOperand(1),
-                                      PointerType::get(II->getType()), CI);
+        Value *Ptr = 
+          InsertCastBefore(Instruction::BitCast, II->getOperand(1),
+                           PointerType::getUnqual(II->getType()), CI);
         return new LoadInst(Ptr);
       }
       break;
@@ -7783,7 +7786,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     case Intrinsic::ppc_altivec_stvxl:
       // Turn stvx -> store if the pointer is known aligned.
       if (GetOrEnforceKnownAlignment(II->getOperand(2), TD, 16) >= 16) {
-        const Type *OpPtrTy = PointerType::get(II->getOperand(1)->getType());
+        const Type *OpPtrTy = 
+          PointerType::getUnqual(II->getOperand(1)->getType());
         Value *Ptr = InsertCastBefore(Instruction::BitCast, II->getOperand(2),
                                       OpPtrTy, CI);
         return new StoreInst(II->getOperand(1), Ptr);
@@ -7795,7 +7799,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     case Intrinsic::x86_sse2_storel_dq:
       // Turn X86 storeu -> store if the pointer is known aligned.
       if (GetOrEnforceKnownAlignment(II->getOperand(1), TD, 16) >= 16) {
-        const Type *OpPtrTy = PointerType::get(II->getOperand(2)->getType());
+        const Type *OpPtrTy = 
+          PointerType::getUnqual(II->getOperand(2)->getType());
         Value *Ptr = InsertCastBefore(Instruction::BitCast, II->getOperand(1),
                                       OpPtrTy, CI);
         return new StoreInst(II->getOperand(2), Ptr);
@@ -7921,7 +7926,8 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       // If the call and callee calling conventions don't match, this call must
       // be unreachable, as the call is undefined.
       new StoreInst(ConstantInt::getTrue(),
-                    UndefValue::get(PointerType::get(Type::Int1Ty)), OldCall);
+                    UndefValue::get(PointerType::getUnqual(Type::Int1Ty)), 
+                                    OldCall);
       if (!OldCall->use_empty())
         OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
       if (isa<CallInst>(OldCall))   // Not worth removing an invoke here.
@@ -7934,7 +7940,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
     // undef so that we know that this code is not reachable, despite the fact
     // that we can't modify the CFG here.
     new StoreInst(ConstantInt::getTrue(),
-                  UndefValue::get(PointerType::get(Type::Int1Ty)),
+                  UndefValue::get(PointerType::getUnqual(Type::Int1Ty)),
                   CS.getInstruction());
 
     if (!CS.getInstruction()->use_empty())
@@ -8299,8 +8305,8 @@ Instruction *InstCombiner::transformCallThroughTrampoline(CallSite CS) {
       // code sort out any function type mismatches.
       FunctionType *NewFTy =
         FunctionType::get(FTy->getReturnType(), NewTypes, FTy->isVarArg());
-      Constant *NewCallee = NestF->getType() == PointerType::get(NewFTy) ?
-        NestF : ConstantExpr::getBitCast(NestF, PointerType::get(NewFTy));
+      Constant *NewCallee = NestF->getType() == PointerType::getUnqual(NewFTy) ?
+        NestF : ConstantExpr::getBitCast(NestF, PointerType::getUnqual(NewFTy));
       const ParamAttrsList *NewPAL = ParamAttrsList::get(NewAttrs);
 
       Instruction *NewCaller;
@@ -9052,7 +9058,7 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
   if (isa<UndefValue>(Op)) {
     // Insert a new store to null because we cannot modify the CFG here.
     new StoreInst(ConstantInt::getTrue(),
-                  UndefValue::get(PointerType::get(Type::Int1Ty)), &FI);
+                  UndefValue::get(PointerType::getUnqual(Type::Int1Ty)), &FI);
     return EraseInstFromFunction(FI);
   }
   
@@ -9887,8 +9893,10 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
           return BinaryOperator::create(BO->getOpcode(), newEI0, newEI1);
         }
       } else if (isa<LoadInst>(I)) {
+        unsigned AS = 
+          cast<PointerType>(I->getOperand(0)->getType())->getAddressSpace();
         Value *Ptr = InsertCastBefore(Instruction::BitCast, I->getOperand(0),
-                                      PointerType::get(EI.getType()), EI);
+                                      PointerType::get(EI.getType(), AS), EI);
         GetElementPtrInst *GEP = 
           new GetElementPtrInst(Ptr, EI.getOperand(1), I->getName() + ".gep");
         InsertNewInstBefore(GEP, EI);

@@ -1710,7 +1710,7 @@ Constant *ConstantExpr::getSizeOf(const Type *Ty) {
   // sizeof is implemented as: (i64) gep (Ty*)null, 1
   Constant *GEPIdx = ConstantInt::get(Type::Int32Ty, 1);
   Constant *GEP =
-    getGetElementPtr(getNullValue(PointerType::get(Ty)), &GEPIdx, 1);
+    getGetElementPtr(getNullValue(PointerType::getUnqual(Ty)), &GEPIdx, 1);
   return getCast(Instruction::PtrToInt, GEP, Type::Int64Ty);
 }
 

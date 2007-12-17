@@ -783,7 +783,7 @@ void MSILWriter::printIntrinsicCall(const IntrinsicInst* Inst) {
     // Save as pointer type "void*"
     printValueLoad(Inst->getOperand(1));
     printSimpleInstruction("ldloca",Name.c_str());
-    printIndirectSave(PointerType::get(IntegerType::get(8)));
+    printIndirectSave(PointerType::getUnqual(IntegerType::get(8)));
     break;
   case Intrinsic::vaend:
     // Close argument list handle.
@@ -1002,7 +1002,8 @@ void MSILWriter::printVAArgInstruction(const VAArgInst* Inst) {
   printSimpleInstruction("call",
     "instance typedref [mscorlib]System.ArgIterator::GetNextArg()");
   printSimpleInstruction("refanyval","void*");
-  std::string Name = "ldind."+getTypePostfix(PointerType::get(IntegerType::get(8)),false);
+  std::string Name = 
+    "ldind."+getTypePostfix(PointerType::getUnqual(IntegerType::get(8)),false);
   printSimpleInstruction(Name.c_str());
 }
 
@@ -1217,7 +1218,7 @@ void MSILWriter::printLocalVariables(const Function& F) {
     const AllocaInst* AI = dyn_cast<AllocaInst>(&*I);
     if (AI && !isa<GlobalVariable>(AI)) {
       // Local variable allocation.
-      Ty = PointerType::get(AI->getAllocatedType());
+      Ty = PointerType::getUnqual(AI->getAllocatedType());
       Name = getValueName(AI);
       Out << "\t.locals (" << getTypeName(Ty) << Name << ")\n";
     } else if (I->getType()!=Type::VoidTy) {

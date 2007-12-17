@@ -170,7 +170,7 @@ static void *CreateArgv(ExecutionEngine *EE,
   char *Result = new char[(InputArgv.size()+1)*PtrSize];
 
   DOUT << "ARGV = " << (void*)Result << "\n";
-  const Type *SBytePtr = PointerType::get(Type::Int8Ty);
+  const Type *SBytePtr = PointerType::getUnqual(Type::Int8Ty);
 
   for (unsigned i = 0; i != InputArgv.size(); ++i) {
     unsigned Size = InputArgv[i].size()+1;
@@ -255,7 +255,8 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
   // Check main() type
   unsigned NumArgs = Fn->getFunctionType()->getNumParams();
   const FunctionType *FTy = Fn->getFunctionType();
-  const Type* PPInt8Ty = PointerType::get(PointerType::get(Type::Int8Ty));
+  const Type* PPInt8Ty = 
+    PointerType::getUnqual(PointerType::getUnqual(Type::Int8Ty));
   switch (NumArgs) {
   case 3:
    if (FTy->getParamType(2) != PPInt8Ty) {

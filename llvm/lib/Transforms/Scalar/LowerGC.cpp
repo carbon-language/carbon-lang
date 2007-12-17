@@ -86,7 +86,7 @@ const StructType *LowerGC::getRootRecordType(unsigned NumRoots) {
   PATypeHolder RootListH =
     MainRootRecordType ? (Type*)MainRootRecordType : (Type*)OpaqueType::get();
   ST.clear();
-  ST.push_back(PointerType::get(RootListH));         // Prev pointer
+  ST.push_back(PointerType::getUnqual(RootListH));         // Prev pointer
   ST.push_back(Type::Int32Ty);                       // NumElements in array
   ST.push_back(PairArrTy);                           // The pairs
   StructType *RootList = StructType::get(ST);
@@ -107,8 +107,8 @@ bool LowerGC::doInitialization(Module &M) {
   GCWriteInt = M.getFunction("llvm.gcwrite");
   if (!GCRootInt && !GCReadInt && !GCWriteInt) return false;
 
-  PointerType *VoidPtr = PointerType::get(Type::Int8Ty);
-  PointerType *VoidPtrPtr = PointerType::get(VoidPtr);
+  PointerType *VoidPtr = PointerType::getUnqual(Type::Int8Ty);
+  PointerType *VoidPtrPtr = PointerType::getUnqual(VoidPtr);
 
   // If the program is using read/write barriers, find the implementations of
   // them from the GC runtime library.
@@ -122,7 +122,7 @@ bool LowerGC::doInitialization(Module &M) {
   // If the program has GC roots, get or create the global root list.
   if (GCRootInt) {
     const StructType *RootListTy = getRootRecordType(0);
-    const Type *PRLTy = PointerType::get(RootListTy);
+    const Type *PRLTy = PointerType::getUnqual(RootListTy);
     M.addTypeName("llvm_gc_root_ty", RootListTy);
 
     // Get the root chain if it already exists.
@@ -163,8 +163,8 @@ bool LowerGC::runOnFunction(Function &F) {
   // Quick exit for programs that are not using GC mechanisms.
   if (!GCRootInt && !GCReadInt && !GCWriteInt) return false;
 
-  PointerType *VoidPtr    = PointerType::get(Type::Int8Ty);
-  PointerType *VoidPtrPtr = PointerType::get(VoidPtr);
+  PointerType *VoidPtr    = PointerType::getUnqual(Type::Int8Ty);
+  PointerType *VoidPtrPtr = PointerType::getUnqual(VoidPtr);
 
   // If there are read/write barriers in the program, perform a quick pass over
   // the function eliminating them.  While we are at it, remember where we see
@@ -290,7 +290,7 @@ bool LowerGC::runOnFunction(Function &F) {
 
   // Now that the record is all initialized, store the pointer into the global
   // pointer.
-  Value *C = new BitCastInst(AI, PointerType::get(MainRootRecordType), "", IP);
+  Value *C = new BitCastInst(AI, PointerType::getUnqual(MainRootRecordType), "", IP);
   new StoreInst(C, RootChain, IP);
 
   // Eliminate all the gcroot records now.

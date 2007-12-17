@@ -1383,12 +1383,13 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
     return const_cast<Constant*>(C);
 
   if (isa<UndefValue>(C)) {
-    const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(),
+    const PointerType *Ptr = cast<PointerType>(C->getType());
+    const Type *Ty = GetElementPtrInst::getIndexedType(Ptr,
                                                        (Value **)Idxs,
                                                        (Value **)Idxs+NumIdx,
                                                        true);
     assert(Ty != 0 && "Invalid indices for GEP!");
-    return UndefValue::get(PointerType::get(Ty));
+    return UndefValue::get(PointerType::get(Ty, Ptr->getAddressSpace()));
   }
 
   Constant *Idx0 = Idxs[0];
@@ -1400,12 +1401,14 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         break;
       }
     if (isNull) {
-      const Type *Ty = GetElementPtrInst::getIndexedType(C->getType(),
+      const PointerType *Ptr = cast<PointerType>(C->getType());
+      const Type *Ty = GetElementPtrInst::getIndexedType(Ptr,
                                                          (Value**)Idxs,
                                                          (Value**)Idxs+NumIdx,
                                                          true);
       assert(Ty != 0 && "Invalid indices for GEP!");
-      return ConstantPointerNull::get(PointerType::get(Ty));
+      return 
+        ConstantPointerNull::get(PointerType::get(Ty,Ptr->getAddressSpace()));
     }
   }
 

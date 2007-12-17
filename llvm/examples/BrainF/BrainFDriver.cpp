@@ -59,7 +59,7 @@ void addMainFunction(Module *mod) {
   //define i32 @main(i32 %argc, i8 **%argv)
   Function *main_func = cast<Function>(mod->
     getOrInsertFunction("main", IntegerType::Int32Ty, IntegerType::Int32Ty,
-                        PointerType::get(PointerType::get(
+                        PointerType::getUnqual(PointerType::getUnqual(
                           IntegerType::Int8Ty)), NULL));
   {
     Function::arg_iterator args = main_func->arg_begin();

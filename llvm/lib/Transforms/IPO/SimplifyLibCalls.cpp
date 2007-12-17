@@ -244,7 +244,7 @@ public:
   Constant *get_puts() {
     if (!puts_func)
       puts_func = M->getOrInsertFunction("puts", Type::Int32Ty,
-                                         PointerType::get(Type::Int8Ty),
+                                         PointerType::getUnqual(Type::Int8Ty),
                                          NULL);
     return puts_func;
   }
@@ -261,7 +261,7 @@ public:
   Constant *get_fputs(const Type* FILEptr_type) {
     if (!fputs_func)
       fputs_func = M->getOrInsertFunction("fputs", Type::Int32Ty,
-                                          PointerType::get(Type::Int8Ty),
+                                          PointerType::getUnqual(Type::Int8Ty),
                                           FILEptr_type, NULL);
     return fputs_func;
   }
@@ -270,7 +270,7 @@ public:
   Constant *get_fwrite(const Type* FILEptr_type) {
     if (!fwrite_func)
       fwrite_func = M->getOrInsertFunction("fwrite", TD->getIntPtrType(),
-                                           PointerType::get(Type::Int8Ty),
+                                           PointerType::getUnqual(Type::Int8Ty),
                                            TD->getIntPtrType(),
                                            TD->getIntPtrType(),
                                            FILEptr_type, NULL);
@@ -289,9 +289,9 @@ public:
   Constant *get_strcpy() {
     if (!strcpy_func)
       strcpy_func = M->getOrInsertFunction("strcpy",
-                                           PointerType::get(Type::Int8Ty),
-                                           PointerType::get(Type::Int8Ty),
-                                           PointerType::get(Type::Int8Ty),
+                                           PointerType::getUnqual(Type::Int8Ty),
+                                           PointerType::getUnqual(Type::Int8Ty),
+                                           PointerType::getUnqual(Type::Int8Ty),
                                            NULL);
     return strcpy_func;
   }
@@ -300,7 +300,7 @@ public:
   Constant *get_strlen() {
     if (!strlen_func)
       strlen_func = M->getOrInsertFunction("strlen", TD->getIntPtrType(),
-                                           PointerType::get(Type::Int8Ty),
+                                           PointerType::getUnqual(Type::Int8Ty),
                                            NULL);
     return strlen_func;
   }
@@ -309,8 +309,8 @@ public:
   Constant *get_memchr() {
     if (!memchr_func)
       memchr_func = M->getOrInsertFunction("memchr",
-                                           PointerType::get(Type::Int8Ty),
-                                           PointerType::get(Type::Int8Ty),
+                                           PointerType::getUnqual(Type::Int8Ty),
+                                           PointerType::getUnqual(Type::Int8Ty),
                                            Type::Int32Ty, TD->getIntPtrType(),
                                            NULL);
     return memchr_func;
@@ -319,7 +319,7 @@ public:
   /// @brief Return a Function* for the memcpy libcall
   Constant *get_memcpy() {
     if (!memcpy_func) {
-      const Type *SBP = PointerType::get(Type::Int8Ty);
+      const Type *SBP = PointerType::getUnqual(Type::Int8Ty);
       const char *N = TD->getIntPtrType() == Type::Int32Ty ?
                             "llvm.memcpy.i32" : "llvm.memcpy.i64";
       memcpy_func = M->getOrInsertFunction(N, Type::VoidTy, SBP, SBP,
@@ -471,7 +471,7 @@ public:
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
     const FunctionType *FT = F->getFunctionType();
     return FT->getNumParams() == 2 &&
-           FT->getReturnType() == PointerType::get(Type::Int8Ty) &&
+           FT->getReturnType() == PointerType::getUnqual(Type::Int8Ty) &&
            FT->getParamType(0) == FT->getReturnType() &&
            FT->getParamType(1) == FT->getReturnType();
   }
@@ -528,7 +528,7 @@ public:
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
     const FunctionType *FT = F->getFunctionType();
     return FT->getNumParams() == 2 &&
-           FT->getReturnType() == PointerType::get(Type::Int8Ty) &&
+           FT->getReturnType() == PointerType::getUnqual(Type::Int8Ty) &&
            FT->getParamType(0) == FT->getReturnType() &&
            isa<IntegerType>(FT->getParamType(1));
   }
@@ -594,7 +594,7 @@ public:
     const FunctionType *FT = F->getFunctionType();
     return FT->getReturnType() == Type::Int32Ty && FT->getNumParams() == 2 &&
            FT->getParamType(0) == FT->getParamType(1) &&
-           FT->getParamType(0) == PointerType::get(Type::Int8Ty);
+           FT->getParamType(0) == PointerType::getUnqual(Type::Int8Ty);
   }
 
   /// @brief Perform the strcmp optimization
@@ -647,7 +647,7 @@ public:
     const FunctionType *FT = F->getFunctionType();
     return FT->getReturnType() == Type::Int32Ty && FT->getNumParams() == 3 &&
            FT->getParamType(0) == FT->getParamType(1) &&
-           FT->getParamType(0) == PointerType::get(Type::Int8Ty) &&
+           FT->getParamType(0) == PointerType::getUnqual(Type::Int8Ty) &&
            isa<IntegerType>(FT->getParamType(2));
     return false;
   }
@@ -715,7 +715,7 @@ public:
     return FT->getNumParams() == 2 &&
            FT->getParamType(0) == FT->getParamType(1) &&
            FT->getReturnType() == FT->getParamType(0) &&
-           FT->getParamType(0) == PointerType::get(Type::Int8Ty);
+           FT->getParamType(0) == PointerType::getUnqual(Type::Int8Ty);
   }
 
   /// @brief Perform the strcpy optimization
@@ -770,7 +770,7 @@ struct VISIBILITY_HIDDEN StrLenOptimization : public LibCallOptimization {
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
     const FunctionType *FT = F->getFunctionType();
     return FT->getNumParams() == 1 &&
-           FT->getParamType(0) == PointerType::get(Type::Int8Ty) &&
+           FT->getParamType(0) == PointerType::getUnqual(Type::Int8Ty) &&
            isa<IntegerType>(FT->getReturnType());
   }
 
@@ -870,7 +870,7 @@ struct VISIBILITY_HIDDEN memcmpOptimization : public LibCallOptimization {
       return ReplaceCallWith(CI, Constant::getNullValue(CI->getType()));
     case 1: {
       // memcmp(S1,S2,1) -> *(ubyte*)S1 - *(ubyte*)S2
-      const Type *UCharPtr = PointerType::get(Type::Int8Ty);
+      const Type *UCharPtr = PointerType::getUnqual(Type::Int8Ty);
       CastInst *Op1Cast = CastInst::create(
           Instruction::BitCast, LHS, UCharPtr, LHS->getName(), CI);
       CastInst *Op2Cast = CastInst::create(
@@ -888,7 +888,7 @@ struct VISIBILITY_HIDDEN memcmpOptimization : public LibCallOptimization {
         // TODO: IF both are aligned, use a short load/compare.
       
         // memcmp(S1,S2,2) -> S1[0]-S2[0] | S1[1]-S2[1] iff only ==/!= 0 matters
-        const Type *UCharPtr = PointerType::get(Type::Int8Ty);
+        const Type *UCharPtr = PointerType::getUnqual(Type::Int8Ty);
         CastInst *Op1Cast = CastInst::create(
             Instruction::BitCast, LHS, UCharPtr, LHS->getName(), CI);
         CastInst *Op2Cast = CastInst::create(
@@ -976,9 +976,9 @@ struct VISIBILITY_HIDDEN LLVMMemCpyMoveOptzn : public LibCallOptimization {
 
     // Cast source and dest to the right sized primitive and then load/store
     CastInst* SrcCast = CastInst::create(Instruction::BitCast,
-        src, PointerType::get(castType), src->getName()+".cast", ci);
+        src, PointerType::getUnqual(castType), src->getName()+".cast", ci);
     CastInst* DestCast = CastInst::create(Instruction::BitCast,
-        dest, PointerType::get(castType),dest->getName()+".cast", ci);
+        dest, PointerType::getUnqual(castType),dest->getName()+".cast", ci);
     LoadInst* LI = new LoadInst(SrcCast,SrcCast->getName()+".val",ci);
     new StoreInst(LI, DestCast, ci);
     return ReplaceCallWith(ci, 0);
@@ -1085,7 +1085,7 @@ struct VISIBILITY_HIDDEN LLVMMemSetOptimization : public LibCallOptimization {
     }
 
     // Cast dest to the right sized primitive and then load/store
-    CastInst* DestCast = new BitCastInst(dest, PointerType::get(castType), 
+    CastInst* DestCast = new BitCastInst(dest, PointerType::getUnqual(castType), 
                                          dest->getName()+".cast", ci);
     new StoreInst(ConstantInt::get(castType,fill_value),DestCast, ci);
     return ReplaceCallWith(ci, 0);
@@ -1207,7 +1207,7 @@ public:
                                         Init, "str",
                                      CI->getParent()->getParent()->getParent());
       // Cast GV to be a pointer to char.
-      GV = ConstantExpr::getBitCast(GV, PointerType::get(Type::Int8Ty));
+      GV = ConstantExpr::getBitCast(GV, PointerType::getUnqual(Type::Int8Ty));
       new CallInst(SLC.get_puts(), GV, "", CI);
 
       if (CI->use_empty()) return ReplaceCallWith(CI, 0);
@@ -1268,7 +1268,7 @@ public:
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
     const FunctionType *FT = F->getFunctionType();
     return FT->getNumParams() == 2 &&  // two fixed arguments.
-           FT->getParamType(1) == PointerType::get(Type::Int8Ty) &&
+           FT->getParamType(1) == PointerType::getUnqual(Type::Int8Ty) &&
            isa<PointerType>(FT->getParamType(0)) &&
            isa<IntegerType>(FT->getReturnType());
   }
@@ -1358,7 +1358,7 @@ public:
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
     const FunctionType *FT = F->getFunctionType();
     return FT->getNumParams() == 2 &&  // two fixed arguments.
-           FT->getParamType(1) == PointerType::get(Type::Int8Ty) &&
+           FT->getParamType(1) == PointerType::getUnqual(Type::Int8Ty) &&
            FT->getParamType(0) == FT->getParamType(1) &&
            isa<IntegerType>(FT->getReturnType());
   }
@@ -1491,7 +1491,7 @@ public:
   virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
     const FunctionType *FT = F->getFunctionType();
     return FT->getNumParams() == 4 && 
-           FT->getParamType(0) == PointerType::get(Type::Int8Ty) &&
+           FT->getParamType(0) == PointerType::getUnqual(Type::Int8Ty) &&
            FT->getParamType(1) == FT->getParamType(2) &&
            isa<IntegerType>(FT->getParamType(1)) &&
            isa<PointerType>(FT->getParamType(3)) &&
@@ -1927,7 +1927,7 @@ static bool GetConstantStringInfo(Value *V, std::string &Str) {
 static Value *CastToCStr(Value *V, Instruction *IP) {
   assert(isa<PointerType>(V->getType()) && 
          "Can't cast non-pointer type to C string type");
-  const Type *SBPTy = PointerType::get(Type::Int8Ty);
+  const Type *SBPTy = PointerType::getUnqual(Type::Int8Ty);
   if (V->getType() != SBPTy)
     return new BitCastInst(V, SBPTy, V->getName(), IP);
   return V;

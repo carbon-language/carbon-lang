@@ -114,7 +114,7 @@ FunctionPass *llvm::createLowerInvokePass(const TargetLowering *TLI) {
 // doInitialization - Make sure that there is a prototype for abort in the
 // current module.
 bool LowerInvoke::doInitialization(Module &M) {
-  const Type *VoidPtrTy = PointerType::get(Type::Int8Ty);
+  const Type *VoidPtrTy = PointerType::getUnqual(Type::Int8Ty);
   AbortMessage = 0;
   if (ExpensiveEHSupport) {
     // Insert a type for the linked list of jump buffers.
@@ -126,14 +126,14 @@ bool LowerInvoke::doInitialization(Module &M) {
       std::vector<const Type*> Elements;
       Elements.push_back(JmpBufTy);
       OpaqueType *OT = OpaqueType::get();
-      Elements.push_back(PointerType::get(OT));
+      Elements.push_back(PointerType::getUnqual(OT));
       PATypeHolder JBLType(StructType::get(Elements));
       OT->refineAbstractTypeTo(JBLType.get());  // Complete the cycle.
       JBLinkTy = JBLType.get();
       M.addTypeName("llvm.sjljeh.jmpbufty", JBLinkTy);
     }
 
-    const Type *PtrJBList = PointerType::get(JBLinkTy);
+    const Type *PtrJBList = PointerType::getUnqual(JBLinkTy);
 
     // Now that we've done that, insert the jmpbuf list head global, unless it
     // already exists.
@@ -144,9 +144,10 @@ bool LowerInvoke::doInitialization(Module &M) {
                                       "llvm.sjljeh.jblist", &M);
     }
     SetJmpFn = M.getOrInsertFunction("llvm.setjmp", Type::Int32Ty,
-                                     PointerType::get(JmpBufTy), (Type *)0);
+                                     PointerType::getUnqual(JmpBufTy), 
+                                     (Type *)0);
     LongJmpFn = M.getOrInsertFunction("llvm.longjmp", Type::VoidTy,
-                                      PointerType::get(JmpBufTy),
+                                      PointerType::getUnqual(JmpBufTy),
                                       Type::Int32Ty, (Type *)0);
   }
 

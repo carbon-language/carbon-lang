@@ -577,7 +577,8 @@ CppWriter::printTypeInternal(const Type* Ty) {
       bool isForward = printTypeInternal(ET);
       std::string elemName(getCppName(ET));
       Out << "PointerType* " << typeName << " = PointerType::get("
-          << elemName << (isForward ? "_fwd" : "") << ");";
+          << elemName << (isForward ? "_fwd" : "")
+          << ", " << utostr(PT->getAddressSpace()) << ");";
       nl(Out);
       break;
     }

@@ -1262,7 +1262,7 @@ const PointerType *DISerializer::getStrPtrType() {
   // If not already defined.
   if (!StrPtrTy) {
     // Construct the pointer to signed bytes.
-    StrPtrTy = PointerType::get(Type::Int8Ty);
+    StrPtrTy = PointerType::getUnqual(Type::Int8Ty);
   }
   
   return StrPtrTy;
@@ -1277,7 +1277,7 @@ const PointerType *DISerializer::getEmptyStructPtrType() {
     const StructType *EmptyStructTy =
                                     StructType::get(std::vector<const Type*>());
     // Construct the pointer to empty structure type.
-    EmptyStructPtrTy = PointerType::get(EmptyStructTy);
+    EmptyStructPtrTy = PointerType::getUnqual(EmptyStructTy);
   }
   
   return EmptyStructPtrTy;

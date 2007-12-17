@@ -81,22 +81,23 @@ void IntrinsicLowering::AddPrototypes(Module &M) {
         break;
       case Intrinsic::memcpy_i32:
       case Intrinsic::memcpy_i64:
-        M.getOrInsertFunction("memcpy", PointerType::get(Type::Int8Ty),
-                              PointerType::get(Type::Int8Ty), 
-                              PointerType::get(Type::Int8Ty), 
+        M.getOrInsertFunction("memcpy", PointerType::getUnqual(Type::Int8Ty),
+                              PointerType::getUnqual(Type::Int8Ty), 
+                              PointerType::getUnqual(Type::Int8Ty), 
                               TD.getIntPtrType(), (Type *)0);
         break;
       case Intrinsic::memmove_i32:
       case Intrinsic::memmove_i64:
-        M.getOrInsertFunction("memmove", PointerType::get(Type::Int8Ty),
-                              PointerType::get(Type::Int8Ty), 
-                              PointerType::get(Type::Int8Ty), 
+        M.getOrInsertFunction("memmove", PointerType::getUnqual(Type::Int8Ty),
+                              PointerType::getUnqual(Type::Int8Ty), 
+                              PointerType::getUnqual(Type::Int8Ty), 
                               TD.getIntPtrType(), (Type *)0);
         break;
       case Intrinsic::memset_i32:
       case Intrinsic::memset_i64:
-        M.getOrInsertFunction("memset", PointerType::get(Type::Int8Ty),
-                              PointerType::get(Type::Int8Ty), Type::Int32Ty, 
+        M.getOrInsertFunction("memset", PointerType::getUnqual(Type::Int8Ty),
+                              PointerType::getUnqual(Type::Int8Ty), 
+                              Type::Int32Ty, 
                               TD.getIntPtrType(), (Type *)0);
         break;
       case Intrinsic::sqrt:

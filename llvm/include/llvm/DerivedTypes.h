@@ -369,8 +369,15 @@ class PointerType : public SequentialType {
   const PointerType &operator=(const PointerType &);  // Do not implement
   explicit PointerType(const Type *ElType, unsigned AddrSpace);
 public:
-  /// PointerType::get - This is the only way to construct a new pointer type.
-  static PointerType *get(const Type *ElementType, unsigned AddressSpace = 0);
+  /// PointerType::get - This constructs a pointer to an object of the specified 
+  /// type in a numbered address space.
+  static PointerType *get(const Type *ElementType, unsigned AddressSpace);
+  
+  /// PointerType::getUnqual - This constructs a pointer to an object of the  
+  /// specified type in the generic address space (address space zero).
+  static PointerType *getUnqual(const Type *ElementType) { 
+    return PointerType::get(ElementType, 0);
+  }
   
   /// @brief Return the address space of the Pointer type.
   inline unsigned getAddressSpace() const { return AddressSpace; }

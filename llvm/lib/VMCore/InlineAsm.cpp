@@ -34,7 +34,9 @@ InlineAsm *InlineAsm::get(const FunctionType *Ty, const std::string &AsmString,
 
 InlineAsm::InlineAsm(const FunctionType *Ty, const std::string &asmString,
                      const std::string &constraints, bool hasSideEffects)
-  : Value(PointerType::get(Ty), Value::InlineAsmVal), AsmString(asmString), 
+  : Value(PointerType::getUnqual(Ty), 
+          Value::InlineAsmVal), 
+    AsmString(asmString), 
     Constraints(constraints), HasSideEffects(hasSideEffects) {
 
   // Do various checks on the constraint string and type.

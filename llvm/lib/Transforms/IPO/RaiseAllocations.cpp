@@ -78,7 +78,7 @@ void RaiseAllocations::doInitialization(Module &M) {
 
     // Get the expected prototype for malloc
     const FunctionType *Malloc1Type = 
-      FunctionType::get(PointerType::get(Type::Int8Ty),
+      FunctionType::get(PointerType::getUnqual(Type::Int8Ty),
                       std::vector<const Type*>(1, Type::Int64Ty), false);
 
     // Chck to see if we got the expected malloc
@@ -86,14 +86,14 @@ void RaiseAllocations::doInitialization(Module &M) {
       // Check to see if the prototype is wrong, giving us sbyte*(uint) * malloc
       // This handles the common declaration of: 'void *malloc(unsigned);'
       const FunctionType *Malloc2Type = 
-        FunctionType::get(PointerType::get(Type::Int8Ty),
+        FunctionType::get(PointerType::getUnqual(Type::Int8Ty),
                           std::vector<const Type*>(1, Type::Int32Ty), false);
       if (TyWeHave != Malloc2Type) {
         // Check to see if the prototype is missing, giving us 
         // sbyte*(...) * malloc
         // This handles the common declaration of: 'void *malloc();'
         const FunctionType *Malloc3Type = 
-          FunctionType::get(PointerType::get(Type::Int8Ty),
+          FunctionType::get(PointerType::getUnqual(Type::Int8Ty),
                             std::vector<const Type*>(), true);
         if (TyWeHave != Malloc3Type)
           // Give up
@@ -108,7 +108,7 @@ void RaiseAllocations::doInitialization(Module &M) {
     
     // Get the expected prototype for void free(i8*)
     const FunctionType *Free1Type = FunctionType::get(Type::VoidTy,
-        std::vector<const Type*>(1, PointerType::get(Type::Int8Ty)), false);
+      std::vector<const Type*>(1, PointerType::getUnqual(Type::Int8Ty)), false);
 
     if (TyWeHave != Free1Type) {
       // Check to see if the prototype was forgotten, giving us 
@@ -219,7 +219,8 @@ bool RaiseAllocations::runOnModule(Module &M) {
           //
           Value *Source = *CS.arg_begin();
           if (!isa<PointerType>(Source->getType()))
-            Source = new IntToPtrInst(Source, PointerType::get(Type::Int8Ty), 
+            Source = new IntToPtrInst(Source,           
+                                      PointerType::getUnqual(Type::Int8Ty), 
                                       "FreePtrCast", I);
           new FreeInst(Source, I);
 

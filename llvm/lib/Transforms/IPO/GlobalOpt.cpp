@@ -1052,7 +1052,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, MallocInst *MI){
   
   for (unsigned FieldNo = 0, e = STy->getNumElements(); FieldNo != e;++FieldNo){
     const Type *FieldTy = STy->getElementType(FieldNo);
-    const Type *PFieldTy = PointerType::get(FieldTy);
+    const Type *PFieldTy = PointerType::getUnqual(FieldTy);
     
     GlobalVariable *NGV =
       new GlobalVariable(PFieldTy, false, GlobalValue::InternalLinkage,
@@ -1618,7 +1618,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
     } else {
       const Type *FTy = FunctionType::get(Type::VoidTy,
                                           std::vector<const Type*>(), false);
-      const PointerType *PFTy = PointerType::get(FTy);
+      const PointerType *PFTy = PointerType::getUnqual(FTy);
       CSVals[1] = Constant::getNullValue(PFTy);
       CSVals[0] = ConstantInt::get(Type::Int32Ty, 2147483647);
     }

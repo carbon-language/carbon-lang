@@ -1161,12 +1161,12 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     break;
   case Intrinsic::gcwrite:
     Assert1(CI.getOperand(3)->getType()
-            == PointerType::get(CI.getOperand(1)->getType()),
+            == PointerType::getUnqual(CI.getOperand(1)->getType()),
             "Call to llvm.gcwrite must be with type 'void (%ty*, %ty2*, %ty**)'.",
             &CI);
     break;
   case Intrinsic::gcread:
-    Assert1(CI.getOperand(2)->getType() == PointerType::get(CI.getType()),
+    Assert1(CI.getOperand(2)->getType() == PointerType::getUnqual(CI.getType()),
             "Call to llvm.gcread must be with type '%ty* (%ty2*, %ty**).'",
             &CI);
     break;

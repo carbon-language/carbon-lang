@@ -679,8 +679,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   // Prototype: void *getPointerToNamedFunction(const char* Name)
   Constant *resolverFunc =
     Safe->getOrInsertFunction("getPointerToNamedFunction",
-                              PointerType::get(Type::Int8Ty),
-                              PointerType::get(Type::Int8Ty), (Type *)0);
+                              PointerType::getUnqual(Type::Int8Ty),
+                              PointerType::getUnqual(Type::Int8Ty), (Type *)0);
 
   // Use the function we just added to get addresses of functions we need.
   for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F) {
@@ -739,7 +739,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
                                             "resolver", LookupBB);
           // cast the result from the resolver to correctly-typed function
           CastInst *CastedResolver = new BitCastInst(Resolver, 
-            PointerType::get(F->getFunctionType()), "resolverCast", LookupBB);
+            PointerType::getUnqual(F->getFunctionType()), "resolverCast", LookupBB);
 
           // Save the value in our cache.
           new StoreInst(CastedResolver, Cache, LookupBB);

@@ -72,8 +72,6 @@ bool CallSite::isNoUnwind() const {
     return cast<InvokeInst>(I)->isNoUnwind();
 }
 
-
-
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
@@ -672,7 +670,7 @@ static Value *getAISize(Value *Amt) {
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                Instruction *InsertBefore)
-  : UnaryInstruction(PointerType::get(Ty), iTy, getAISize(ArraySize),
+  : UnaryInstruction(PointerType::getUnqual(Ty), iTy, getAISize(ArraySize),
                      InsertBefore), Alignment(Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
@@ -682,7 +680,7 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
 AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                unsigned Align, const std::string &Name,
                                BasicBlock *InsertAtEnd)
-  : UnaryInstruction(PointerType::get(Ty), iTy, getAISize(ArraySize),
+  : UnaryInstruction(PointerType::getUnqual(Ty), iTy, getAISize(ArraySize),
                      InsertAtEnd), Alignment(Align) {
   assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
@@ -925,6 +923,10 @@ void StoreInst::setAlignment(unsigned Align) {
 //                       GetElementPtrInst Implementation
 //===----------------------------------------------------------------------===//
 
+static unsigned retrieveAddrSpace(const Value *Val) {
+  return cast<PointerType>(Val->getType())->getAddressSpace();
+}
+
 void GetElementPtrInst::init(Value *Ptr, Value* const *Idx, unsigned NumIdx) {
   NumOperands = 1+NumIdx;
   Use *OL = OperandList = new Use[NumOperands];
@@ -944,7 +946,7 @@ void GetElementPtrInst::init(Value *Ptr, Value *Idx) {
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const std::string &Name, Instruction *InBe)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx)),
-                      cast<PointerType>(Ptr->getType())->getAddressSpace()),
+                                 retrieveAddrSpace(Ptr)),
                 GetElementPtr, 0, 0, InBe) {
   init(Ptr, Idx);
   setName(Name);
@@ -953,7 +955,7 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
                                      const std::string &Name, BasicBlock *IAE)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx)),
-                      cast<PointerType>(Ptr->getType())->getAddressSpace()),
+                                 retrieveAddrSpace(Ptr)),
                 GetElementPtr, 0, 0, IAE) {
   init(Ptr, Idx);
   setName(Name);

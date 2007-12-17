@@ -263,7 +263,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
     if (AggregateArgs)
       paramTy.push_back((*I)->getType());
     else
-      paramTy.push_back(PointerType::get((*I)->getType()));
+      paramTy.push_back(PointerType::getUnqual((*I)->getType()));
   }
 
   DOUT << "Function type: " << *RetTy << " f(";
@@ -273,7 +273,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
   DOUT << ")\n";
 
   if (AggregateArgs && (inputs.size() + outputs.size() > 0)) {
-    PointerType *StructPtr = PointerType::get(StructType::get(paramTy));
+    PointerType *StructPtr = PointerType::getUnqual(StructType::get(paramTy));
     paramTy.clear();
     paramTy.push_back(StructPtr);
   }

@@ -199,8 +199,8 @@ bool LowerSetJmp::runOnModule(Module& M) {
 // This function is always successful, unless it isn't.
 bool LowerSetJmp::doInitialization(Module& M)
 {
-  const Type *SBPTy = PointerType::get(Type::Int8Ty);
-  const Type *SBPPTy = PointerType::get(SBPTy);
+  const Type *SBPTy = PointerType::getUnqual(Type::Int8Ty);
+  const Type *SBPPTy = PointerType::getUnqual(SBPTy);
 
   // N.B. See llvm/runtime/GCCLibraries/libexception/SJLJ-Exception.h for
   // a description of the following library functions.
@@ -256,7 +256,7 @@ bool LowerSetJmp::IsTransformableFunction(const std::string& Name) {
 // throwing the exception for us.
 void LowerSetJmp::TransformLongJmpCall(CallInst* Inst)
 {
-  const Type* SBPTy = PointerType::get(Type::Int8Ty);
+  const Type* SBPTy = PointerType::getUnqual(Type::Int8Ty);
 
   // Create the call to "__llvm_sjljeh_throw_longjmp". This takes the
   // same parameters as "longjmp", except that the buffer is cast to a
@@ -308,7 +308,7 @@ AllocaInst* LowerSetJmp::GetSetJmpMap(Function* Func)
   assert(Inst && "Couldn't find even ONE instruction in entry block!");
 
   // Fill in the alloca and call to initialize the SJ map.
-  const Type *SBPTy = PointerType::get(Type::Int8Ty);
+  const Type *SBPTy = PointerType::getUnqual(Type::Int8Ty);
   AllocaInst* Map = new AllocaInst(SBPTy, 0, "SJMap", Inst);
   new CallInst(InitSJMap, Map, "", Inst);
   return SJMap[Func] = Map;
@@ -378,7 +378,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
   Function* Func = ABlock->getParent();
 
   // Add this setjmp to the setjmp map.
-  const Type* SBPTy = PointerType::get(Type::Int8Ty);
+  const Type* SBPTy = PointerType::getUnqual(Type::Int8Ty);
   CastInst* BufPtr = 
     new BitCastInst(Inst->getOperand(1), SBPTy, "SBJmpBuf", Inst);
   std::vector<Value*> Args = 

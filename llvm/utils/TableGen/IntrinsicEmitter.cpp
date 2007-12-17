@@ -158,7 +158,7 @@ static void EmitTypeGenerate(std::ostream &OS, Record *ArgType,
     EmitTypeForValueType(OS, MVT::getVectorElementType(VT));
     OS << ", " << MVT::getVectorNumElements(VT) << ")";
   } else if (VT == MVT::iPTR) {
-    OS << "PointerType::get(";
+    OS << "PointerType::getUnqual(";
     EmitTypeGenerate(OS, ArgType->getValueAsDef("ElTy"), ArgNo);
     OS << ")";
   } else if (VT == MVT::isVoid) {

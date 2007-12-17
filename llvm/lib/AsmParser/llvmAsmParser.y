@@ -2280,7 +2280,7 @@ FunctionHeaderH : OptCallingConv ResultTypes GlobalName '(' ArgList ')'
     PAL = ParamAttrsList::get(Attrs);
 
   FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg);
-  const PointerType *PFT = PointerType::get(FT);
+  const PointerType *PFT = PointerType::getUnqual(FT);
   delete $2;
 
   ValID ID;
@@ -2627,7 +2627,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
         ParamTypes.push_back(Ty);
       }
       Ty = FunctionType::get($3->get(), ParamTypes, false);
-      PFTy = PointerType::get(Ty);
+      PFTy = PointerType::getUnqual(Ty);
     }
 
     delete $3;
@@ -2954,7 +2954,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         ParamTypes.push_back(Ty);
       }
       Ty = FunctionType::get($3->get(), ParamTypes, false);
-      PFTy = PointerType::get(Ty);
+      PFTy = PointerType::getUnqual(Ty);
     }
 
     Value *V = getVal(PFTy, $4);   // Get the function we're calling...

@@ -1509,7 +1509,7 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       unsigned OpNum = 0;
       Value *Val, *Ptr;
       if (getValueTypePair(Record, OpNum, NextValueNo, Val) ||
-          getValue(Record, OpNum, PointerType::get(Val->getType()), Ptr) ||
+          getValue(Record, OpNum, PointerType::getUnqual(Val->getType()), Ptr)||
           OpNum+2 != Record.size())
         return Error("Invalid STORE record");
       
