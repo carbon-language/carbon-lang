@@ -2671,7 +2671,8 @@ allocate, and free memory in LLVM.</p>
 <h5>Overview:</h5>
 
 <p>The '<tt>malloc</tt>' instruction allocates memory from the system
-heap and returns a pointer to it.</p>
+heap and returns a pointer to it. The object is always allocated in the generic 
+address space (address space zero).</p>
 
 <h5>Arguments:</h5>
 
@@ -2758,7 +2759,8 @@ after this instruction executes.</p>
 
 <p>The '<tt>alloca</tt>' instruction allocates memory on the stack frame of the
 currently executing function, to be automatically released when this function
-returns to its caller.</p>
+returns to its caller. The object is always allocated in the generic address 
+space (address space zero).</p>
 
 <h5>Arguments:</h5>
 
@@ -3972,6 +3974,10 @@ Front-ends for type-safe garbage collected languages should generate these
 intrinsics to make use of the LLVM garbage collectors.  For more details, see <a
 href="GarbageCollection.html">Accurate Garbage Collection with LLVM</a>.
 </p>
+
+<p>The garbage collection intrinsics only operate on objects in the generic 
+	address space (address space zero).</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->

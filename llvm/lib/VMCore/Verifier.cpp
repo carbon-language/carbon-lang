@@ -254,6 +254,7 @@ namespace {  // Anonymous namespace for class
     void visitUserOp1(Instruction &I);
     void visitUserOp2(Instruction &I) { visitUserOp1(I); }
     void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
+    void visitAllocationInst(AllocationInst &AI);
 
     void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
                                   unsigned Count, ...);
@@ -985,6 +986,13 @@ void Verifier::visitStoreInst(StoreInst &SI) {
   Assert2(ElTy == SI.getOperand(0)->getType(),
           "Stored value type does not match pointer operand type!", &SI, ElTy);
   visitInstruction(SI);
+}
+
+void Verifier::visitAllocationInst(AllocationInst &AI) {
+  const PointerType *Ptr = AI.getType();
+  Assert(Ptr->getAddressSpace() == 0, 
+    "Allocation instruction pointer not in the generic address space!");
+  visitInstruction(AI);
 }
 
 
