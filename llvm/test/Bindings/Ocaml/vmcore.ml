@@ -103,13 +103,24 @@ let test_types () =
   insist (i8_type == element_type ty);
   insist (Array_type == classify_type ty);
   
-  (* RUN: grep {Ty10.*float\*} < %t.ll
-   *)
-  group "pointer";
-  let ty = pointer_type float_type in
-  insist (define_type_name "Ty10" ty m);
-  insist (float_type == element_type ty);
-  insist (Pointer_type == classify_type ty);
+  begin group "pointer";
+    (* RUN: grep {UnqualPtrTy.*float\*} < %t.ll
+     *)
+    let ty = pointer_type float_type in
+    insist (define_type_name "UnqualPtrTy" ty m);
+    insist (float_type == element_type ty);
+    insist (0 == address_space ty);
+    insist (Pointer_type == classify_type ty)
+  end;
+  
+  begin group "qualified_pointer";
+    (* RUN: grep {QualPtrTy.*i8.*3.*\*} < %t.ll
+     *)
+    let ty = qualified_pointer_type i8_type 3 in
+    insist (define_type_name "QualPtrTy" ty m);
+    insist (i8_type == element_type ty);
+    insist (3 == address_space ty)
+  end;
   
   (* RUN: grep {Ty11.*\<4 x i16\>} < %t.ll
    *)

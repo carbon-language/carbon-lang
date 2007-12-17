@@ -258,8 +258,15 @@ external is_packed : lltype -> bool = "llvm_is_packed"
 external array_type : lltype -> int -> lltype = "llvm_array_type"
 
 (** [pointer_type ty] returns the pointer type referencing objects of type
-    [ty]. See the method [llvm::PointerType::get]. **)
-external pointer_type : lltype -> lltype = "LLVMPointerType"
+    [ty] in the default address space (0).
+    See the method [llvm::PointerType::getUnqual]. **)
+external pointer_type : lltype -> lltype = "llvm_pointer_type"
+
+(** [qualified_pointer_type ty as] returns the pointer type referencing objects
+    of type [ty] in address space [as].
+    See the method [llvm::PointerType::get]. **)
+external qualified_pointer_type : lltype -> int -> lltype
+                                = "llvm_qualified_pointer_type"
 
 (** [vector_type ty n] returns the array type containing [n] elements of the
     primitive type [ty]. See the method [llvm::ArrayType::get]. **)
@@ -272,6 +279,10 @@ external element_type : lltype -> lltype = "LLVMGetElementType"
 (** [element_type aty] returns the element count of the array type [aty].
     See the method [llvm::ArrayType::getNumElements]. **)
 external array_length : lltype -> int = "llvm_array_length"
+
+(** [address_space pty] returns the address space qualifier of the pointer type
+    [pty]. See the method [llvm::PointerType::getAddressSpace]. **)
+external address_space : lltype -> int = "llvm_address_space"
 
 (** [element_type ty] returns the element count of the vector type [ty].
     See the method [llvm::VectorType::getNumElements]. **)

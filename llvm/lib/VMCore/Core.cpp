@@ -145,16 +145,15 @@ int LLVMIsPackedStruct(LLVMTypeRef StructTy) {
 
 /*--.. Operations on array, pointer, and vector types (sequence types) .....--*/
 
-LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, unsigned ElementCount){
+LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, unsigned ElementCount) {
   return wrap(ArrayType::get(unwrap(ElementType), ElementCount));
 }
 
-LLVMTypeRef LLVMPointerType(LLVMTypeRef ElementType) {
-  // FIXME: Needst to handle address spaces
-  return wrap(PointerType::getUnqual(unwrap(ElementType)));
+LLVMTypeRef LLVMPointerType(LLVMTypeRef ElementType, unsigned AddressSpace) {
+  return wrap(PointerType::get(unwrap(ElementType), AddressSpace));
 }
 
-LLVMTypeRef LLVMVectorType(LLVMTypeRef ElementType,unsigned ElementCount){
+LLVMTypeRef LLVMVectorType(LLVMTypeRef ElementType, unsigned ElementCount) {
   return wrap(VectorType::get(unwrap(ElementType), ElementCount));
 }
 
@@ -164,6 +163,10 @@ LLVMTypeRef LLVMGetElementType(LLVMTypeRef Ty) {
 
 unsigned LLVMGetArrayLength(LLVMTypeRef ArrayTy) {
   return unwrap<ArrayType>(ArrayTy)->getNumElements();
+}
+
+unsigned LLVMGetPointerAddressSpace(LLVMTypeRef PointerTy) {
+  return unwrap<PointerType>(PointerTy)->getAddressSpace();
 }
 
 unsigned LLVMGetVectorSize(LLVMTypeRef VectorTy) {

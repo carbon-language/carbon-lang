@@ -163,6 +163,17 @@ CAMLprim LLVMTypeRef llvm_array_type(LLVMTypeRef ElementTy, value Count) {
   return LLVMArrayType(ElementTy, Int_val(Count));
 }
 
+/* lltype -> lltype */
+CAMLprim LLVMTypeRef llvm_pointer_type(LLVMTypeRef ElementTy) {
+  return LLVMPointerType(ElementTy, 0);
+}
+
+/* lltype -> int -> lltype */
+CAMLprim LLVMTypeRef llvm_qualified_pointer_type(LLVMTypeRef ElementTy,
+                                                 value AddressSpace) {
+  return LLVMPointerType(ElementTy, Int_val(AddressSpace));
+}
+
 /* lltype -> int -> lltype */
 CAMLprim LLVMTypeRef llvm_vector_type(LLVMTypeRef ElementTy, value Count) {
   return LLVMVectorType(ElementTy, Int_val(Count));
@@ -171,6 +182,11 @@ CAMLprim LLVMTypeRef llvm_vector_type(LLVMTypeRef ElementTy, value Count) {
 /* lltype -> int */
 CAMLprim value llvm_array_length(LLVMTypeRef ArrayTy) {
   return Val_int(LLVMGetArrayLength(ArrayTy));
+}
+
+/* lltype -> int */
+CAMLprim value llvm_address_space(LLVMTypeRef PtrTy) {
+  return Val_int(LLVMGetPointerAddressSpace(PtrTy));
 }
 
 /* lltype -> int */
@@ -399,7 +415,7 @@ CAMLprim LLVMValueRef llvm_declare_global(LLVMTypeRef Ty, value Name,
   LLVMValueRef GlobalVar;
   if ((GlobalVar = LLVMGetNamedGlobal(M, String_val(Name)))) {
     if (LLVMGetElementType(LLVMTypeOf(GlobalVar)) != Ty)
-      return LLVMConstBitCast(GlobalVar, LLVMPointerType(Ty));
+      return LLVMConstBitCast(GlobalVar, LLVMPointerType(Ty, 0));
     return GlobalVar;
   }
   return LLVMAddGlobal(M, Ty, String_val(Name));
@@ -476,7 +492,7 @@ CAMLprim LLVMValueRef llvm_declare_function(value Name, LLVMTypeRef Ty,
   LLVMValueRef Fn;
   if ((Fn = LLVMGetNamedFunction(M, String_val(Name)))) {
     if (LLVMGetElementType(LLVMTypeOf(Fn)) != Ty)
-      return LLVMConstBitCast(Fn, LLVMPointerType(Ty));
+      return LLVMConstBitCast(Fn, LLVMPointerType(Ty, 0));
     return Fn;
   }
   return LLVMAddFunction(M, String_val(Name), Ty);

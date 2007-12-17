@@ -194,11 +194,12 @@ int LLVMIsPackedStruct(LLVMTypeRef StructTy);
 
 /* Operations on array, pointer, and vector types (sequence types) */
 LLVMTypeRef LLVMArrayType(LLVMTypeRef ElementType, unsigned ElementCount);
-LLVMTypeRef LLVMPointerType(LLVMTypeRef ElementType);
+LLVMTypeRef LLVMPointerType(LLVMTypeRef ElementType, unsigned AddressSpace);
 LLVMTypeRef LLVMVectorType(LLVMTypeRef ElementType, unsigned ElementCount);
 
 LLVMTypeRef LLVMGetElementType(LLVMTypeRef Ty);
 unsigned LLVMGetArrayLength(LLVMTypeRef ArrayTy);
+unsigned LLVMGetPointerAddressSpace(LLVMTypeRef PointerTy);
 unsigned LLVMGetVectorSize(LLVMTypeRef VectorTy);
 
 /* Operations on other types */
