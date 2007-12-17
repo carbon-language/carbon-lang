@@ -109,11 +109,10 @@ bool DCE::runOnFunction(Function &F) {
       I->eraseFromParent();
 
       // Remove the instruction from the worklist if it still exists in it.
-      for (std::vector<Instruction*>::iterator WI = WorkList.begin(),
-             E = WorkList.end(); WI != E; ++WI)
+      for (std::vector<Instruction*>::iterator WI = WorkList.begin();
+           WI != WorkList.end(); ++WI)
         if (*WI == I) {
-          WorkList.erase(WI);
-          --E;
+          WI = WorkList.erase(WI);
           --WI;
         }
 
