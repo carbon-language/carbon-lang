@@ -44,11 +44,11 @@ const HeaderMap *HeaderMap::Create(const FileEntry *FE) {
   unsigned FileSize = FE->getSize();
   if (FileSize <= sizeof(HMapHeader)) return 0;
   
-  llvm::scoped_ptr<const llvm::MemoryBuffer> File( 
+  llvm::scoped_ptr<const llvm::MemoryBuffer> FileBuffer( 
     llvm::MemoryBuffer::getFile(FE->getName(), strlen(FE->getName()), 0,
                                 FE->getSize()));
-  if (File == 0) return 0;  // Unreadable file?
-  const char *FileStart = File->getBufferStart();
+  if (FileBuffer == 0) return 0;  // Unreadable file?
+  const char *FileStart = FileBuffer->getBufferStart();
 
   // We know the file is at least as big as the header, check it now.
   const HMapHeader *Header = reinterpret_cast<const HMapHeader*>(FileStart);
@@ -65,8 +65,21 @@ const HeaderMap *HeaderMap::Create(const FileEntry *FE) {
     NeedsByteSwap = true;  // Mixed endianness headermap.
   else 
     return 0;  // Not a header map.
-  
-  return 0; 
+
+  // Okay, everything looks good, create the header map.
+  HeaderMap *NewHM = new HeaderMap(FileBuffer.get(), NeedsByteSwap);
+  FileBuffer.reset();  // Don't deallocate the buffer on return.
+  return NewHM; 
+}
+
+HeaderMap::~HeaderMap() {
+  delete FileBuffer;
+}
+
+
+/// getFileName - Return the filename of the headermap.
+const char *HeaderMap::getFileName() const {
+  return FileBuffer->getBufferIdentifier();
 }
 
 /// LookupFile - Check to see if the specified relative filename is located in

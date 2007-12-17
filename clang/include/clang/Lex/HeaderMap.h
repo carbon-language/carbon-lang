@@ -14,8 +14,9 @@
 #ifndef LLVM_CLANG_LEX_HEADERMAP_H
 #define LLVM_CLANG_LEX_HEADERMAP_H
 
-#include <string>
-
+namespace llvm {
+  class MemoryBuffer;
+}
 namespace clang {
   class FileEntry;
   class FileManager;
@@ -27,7 +28,16 @@ namespace clang {
 class HeaderMap {
   HeaderMap(const HeaderMap&); // DO NOT IMPLEMENT
   void operator=(const HeaderMap&); // DO NOT IMPLEMENT
+  
+  const llvm::MemoryBuffer *FileBuffer;
+  bool NeedsBSwap;
+  
+  HeaderMap(const llvm::MemoryBuffer *File, bool BSwap)
+    : FileBuffer(File), NeedsBSwap(BSwap) {
+  }
 public:
+  ~HeaderMap();
+  
   /// HeaderMap::Create - This attempts to load the specified file as a header
   /// map.  If it doesn't look like a HeaderMap, it gives up and returns null.
   static const HeaderMap *Create(const FileEntry *FE);
@@ -38,10 +48,7 @@ public:
                               FileManager &FM) const;
   
   /// getFileName - Return the filename of the headermap.
-  const char *getFileName() const {
-    return ""; 
-  }
-    
+  const char *getFileName() const;
 };
 
 } // end namespace clang.
