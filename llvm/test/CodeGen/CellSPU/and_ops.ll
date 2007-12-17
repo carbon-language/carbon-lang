@@ -1,9 +1,9 @@
 ; RUN: llvm-as -o - %s | llc -march=cellspu > %t1.s
-; RUN: grep and    %t1.s | count 227
+; RUN: grep and    %t1.s | count 232
 ; RUN: grep andc   %t1.s | count 85
 ; RUN: grep andi   %t1.s | count 36
-; RUN: grep andhi  %t1.s | count 31
-; RUN: grep andbi  %t1.s | count 1
+; RUN: grep andhi  %t1.s | count 30
+; RUN: grep andbi  %t1.s | count 4
 
 ; AND instruction generation:
 define <4 x i32> @and_v4i32_1(<4 x i32> %arg1, <4 x i32> %arg2) {
@@ -258,13 +258,19 @@ define <16 x i8> @and_v16i8(<16 x i8> %in) {
 }
 
 define i8 @and_u8(i8 zeroext  %in) zeroext  {
-	; ANDI generated:
-        %tmp37 = and i8 %in, 37         ; <i8> [#uses=1]
+	; ANDBI generated:
+        %tmp37 = and i8 %in, 37
         ret i8 %tmp37
 }
 
-define i8 @and_i8(i8 signext  %in) signext  {
-	; ANDHI generated
-        %tmp38 = and i8 %in, 37         ; <i8> [#uses=1]
+define i8 @and_sext8(i8 signext  %in) signext  {
+	; ANDBI generated
+        %tmp38 = and i8 %in, 37
+        ret i8 %tmp38
+}
+
+define i8 @and_i8(i8 %in) {
+	; ANDBI generated
+        %tmp38 = and i8 %in, 205
         ret i8 %tmp38
 }

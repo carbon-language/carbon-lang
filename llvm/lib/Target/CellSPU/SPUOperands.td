@@ -99,15 +99,21 @@ def i32ImmSExt10  : PatLeaf<(imm), [{
   return isI32IntS10Immediate(N);
 }]>;
 
+// i32ImmUns10 predicate - True if the i32 immediate fits in a 10-bit unsigned
+// field.  Used by RI10Form instructions like 'ldq'.
+def i32ImmUns10  : PatLeaf<(imm), [{
+  return isI32IntU10Immediate(N);
+}]>;
+
 // i16ImmSExt10 predicate - True if the i16 immediate fits in a 10-bit sign
 // extended field.  Used by RI10Form instructions like 'ldq'.
 def i16ImmSExt10  : PatLeaf<(imm), [{
   return isI16IntS10Immediate(N);
 }]>;
 
-// i16ImmU10 predicate - True if the i16 immediate fits into a 10-bit unsigned
+// i16ImmUns10 predicate - True if the i16 immediate fits into a 10-bit unsigned
 // value. Used by RI10Form instructions.
-def i16ImmU10 : PatLeaf<(imm), [{
+def i16ImmUns10 : PatLeaf<(imm), [{
   return isI16IntU10Immediate(N);
 }]>;
 
@@ -261,9 +267,21 @@ def v8i16SExt10Imm: PatLeaf<(build_vector), [{
   return SPU::get_vec_i10imm(N, *CurDAG, MVT::i16).Val != 0;
 }], v8i16SExt10Imm_xform>;
 
+// v8i16Uns10Imm_xform function: convert build_vector to 16-bit unsigned
+// immediate constant load for v8i16 vectors.
+def v8i16Uns10Imm_xform: SDNodeXForm<build_vector, [{
+  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i16);
+}]>;
+
+// v8i16Uns10Imm: Predicate test for 16-bit unsigned immediate constant
+// load, works in conjunction with its transform function.
+def v8i16Uns10Imm: PatLeaf<(build_vector), [{
+  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i16).Val != 0;
+}], v8i16Uns10Imm_xform>;
+
 // v8i16SExt16Imm_xform function: convert build_vector to 16-bit sign extended
 // immediate constant load for v8i16 vectors.
-def v8i16SExt16Imm_xform: SDNodeXForm<build_vector, [{
+def v8i16Uns16Imm_xform: SDNodeXForm<build_vector, [{
   return SPU::get_vec_i16imm(N, *CurDAG, MVT::i16);
 }]>;
 
@@ -271,7 +289,7 @@ def v8i16SExt16Imm_xform: SDNodeXForm<build_vector, [{
 // load, works in conjunction with its transform function.
 def v8i16SExt16Imm: PatLeaf<(build_vector), [{
   return SPU::get_vec_i16imm(N, *CurDAG, MVT::i16).Val != 0;
-}], v8i16SExt16Imm_xform>;
+}], v8i16Uns16Imm_xform>;
 
 // v4i32SExt10Imm_xform function: convert build_vector to 10-bit sign extended
 // immediate constant load for v4i32 vectors.
@@ -284,6 +302,18 @@ def v4i32SExt10Imm_xform: SDNodeXForm<build_vector, [{
 def v4i32SExt10Imm: PatLeaf<(build_vector), [{
   return SPU::get_vec_i10imm(N, *CurDAG, MVT::i32).Val != 0;
 }], v4i32SExt10Imm_xform>;
+
+// v4i32Uns10Imm_xform function: convert build_vector to 10-bit unsigned
+// immediate constant load for v4i32 vectors.
+def v4i32Uns10Imm_xform: SDNodeXForm<build_vector, [{
+  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i32);
+}]>;
+
+// v4i32Uns10Imm: Predicate test for 10-bit unsigned immediate constant
+// load, works in conjunction with its transform function.
+def v4i32Uns10Imm: PatLeaf<(build_vector), [{
+  return SPU::get_vec_i10imm(N, *CurDAG, MVT::i32).Val != 0;
+}], v4i32Uns10Imm_xform>;
 
 // v4i32SExt16Imm_xform function: convert build_vector to 16-bit sign extended
 // immediate constant load for v4i32 vectors.
@@ -390,6 +420,10 @@ def u7imm: Operand<i16> {
   let PrintMethod = "printU7ImmOperand";
 }
 
+def u7imm_i8: Operand<i8> {
+  let PrintMethod = "printU7ImmOperand";
+}
+
 def u7imm_i32: Operand<i32> {
   let PrintMethod = "printU7ImmOperand";
 }
@@ -412,11 +446,19 @@ def u10imm: Operand<i16> {
   let PrintMethod = "printU10ImmOperand";
 }
 
+def u10imm_i8: Operand<i8> {
+  let PrintMethod = "printU10ImmOperand";
+}
+
 def u10imm_i32: Operand<i32> {
   let PrintMethod = "printU10ImmOperand";
 }
 
 def s16imm  : Operand<i16> {
+  let PrintMethod = "printS16ImmOperand";
+}
+
+def s16imm_i8: Operand<i8> {
   let PrintMethod = "printS16ImmOperand";
 }
 

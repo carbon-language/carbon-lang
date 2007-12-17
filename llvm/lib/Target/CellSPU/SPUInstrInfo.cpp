@@ -54,11 +54,11 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::ORIr64:
   case SPU::ORHIv8i16:
   case SPU::ORHIr16:
-    // case SPU::ORHI1To2:
+  case SPU::ORHI1To2:
   case SPU::ORBIv16i8:
-    //case SPU::ORBIr8:
+  case SPU::ORBIr8:
   case SPU::ORI2To4:
-    // case SPU::ORI1To4:
+  case SPU::ORI1To4:
   case SPU::AHIvec:
   case SPU::AHIr16:
   case SPU::AIvec:

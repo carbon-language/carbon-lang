@@ -328,7 +328,9 @@ void SPURegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     /* do what loadRegFromStackSlot does here... */
   } else {
     unsigned Opc = 0;
-    if (RC == SPU::R16CRegisterClass) {
+    if (RC == SPU::R8CRegisterClass) {
+      /* do brilliance here */
+    } else if (RC == SPU::R16CRegisterClass) {
       /* Opc = PPC::LWZ; */
     } else if (RC == SPU::R32CRegisterClass) {
       /* Opc = PPC::LD; */
@@ -369,10 +371,9 @@ void SPURegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     abort();
   }
 
-  /* if (DestRC == SPU::R8CRegisterClass) {
+  if (DestRC == SPU::R8CRegisterClass) {
     BuildMI(MBB, MI, TII.get(SPU::ORBIr8), DestReg).addReg(SrcReg).addImm(0);
-    } else */
-  if (DestRC == SPU::R16CRegisterClass) {
+  } else if (DestRC == SPU::R16CRegisterClass) {
     BuildMI(MBB, MI, TII.get(SPU::ORHIr16), DestReg).addReg(SrcReg).addImm(0);
   } else if (DestRC == SPU::R32CRegisterClass) {
     BuildMI(MBB, MI, TII.get(SPU::ORIr32), DestReg).addReg(SrcReg).addImm(0);

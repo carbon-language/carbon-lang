@@ -119,11 +119,13 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   // Set up the SPU's register classes:
   // NOTE: i8 register class is not registered because we cannot determine when
   // we need to zero or sign extend for custom-lowered loads and stores.
-  addRegisterClass(MVT::i16, SPU::R16CRegisterClass);
-  addRegisterClass(MVT::i32, SPU::R32CRegisterClass);
-  addRegisterClass(MVT::i64, SPU::R64CRegisterClass);
-  addRegisterClass(MVT::f32, SPU::R32FPRegisterClass);
-  addRegisterClass(MVT::f64, SPU::R64FPRegisterClass);
+  // NOTE: Ignore the previous note. For now. :-)
+  addRegisterClass(MVT::i8,   SPU::R8CRegisterClass);
+  addRegisterClass(MVT::i16,  SPU::R16CRegisterClass);
+  addRegisterClass(MVT::i32,  SPU::R32CRegisterClass);
+  addRegisterClass(MVT::i64,  SPU::R64CRegisterClass);
+  addRegisterClass(MVT::f32,  SPU::R32FPRegisterClass);
+  addRegisterClass(MVT::f64,  SPU::R64FPRegisterClass);
   addRegisterClass(MVT::i128, SPU::GPRCRegisterClass);
   
   // SPU has no sign or zero extended loads for i1, i8, i16:
@@ -925,7 +927,7 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
     }
     case MVT::i8:
       if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegMap->createVirtualRegister(&SPU::R16CRegClass);
+        unsigned VReg = RegMap->createVirtualRegister(&SPU::R8CRegClass);
         MF.addLiveIn(ArgRegs[ArgRegIdx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i8);
         ++ArgRegIdx;

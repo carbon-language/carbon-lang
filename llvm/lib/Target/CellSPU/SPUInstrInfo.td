@@ -111,6 +111,11 @@ let isLoad = 1 in {
         "lqd\t$rT, $src", LoadStore,
         [(set R16C:$rT, (load dform_addr:$src))]>;
 
+  def LQDr8:
+      RI10Form<0b00101100, (outs R8C:$rT), (ins memri10:$src),
+        "lqd\t$rT, $src", LoadStore,
+        [(set R8C:$rT, (load dform_addr:$src))]>;
+
   def LQAv16i8:
       RI16Form<0b100001100, (outs VECREG:$rT), (ins addr256k:$src),
         "lqa\t$rT, $src", LoadStore,
@@ -170,6 +175,11 @@ let isLoad = 1 in {
       RI16Form<0b100001100, (outs R16C:$rT), (ins addr256k:$src),
         "lqa\t$rT, $src", LoadStore,
         [(set R16C:$rT, (load aform_addr:$src))]>;
+
+ def LQAr8:
+      RI16Form<0b100001100, (outs R8C:$rT), (ins addr256k:$src),
+        "lqa\t$rT, $src", LoadStore,
+        [(set R8C:$rT, (load aform_addr:$src))]>;
 
   def LQXv16i8:
       RRForm<0b00100011100, (outs VECREG:$rT), (ins memrr:$src),
@@ -231,14 +241,17 @@ let isLoad = 1 in {
         "lqx\t$rT, $src", LoadStore,
         [(set R16C:$rT, (load xform_addr:$src))]>;
 
+  def LQXr8:
+      RRForm<0b00100011100, (outs R8C:$rT), (ins memrr:$src),
+        "lqx\t$rT, $src", LoadStore,
+        [(set R8C:$rT, (load xform_addr:$src))]>;
+
 /* Load quadword, PC relative: Not much use at this point in time.
    Might be of use later for relocatable code.
   def LQR : RI16Form<0b111001100, (outs VECREG:$rT), (ins s16imm:$disp),
                      "lqr\t$rT, $disp", LoadStore,
                      [(set VECREG:$rT, (load iaddr:$disp))]>;
  */
-
- // Catch-all for unaligned loads:
 }
 
 //===----------------------------------------------------------------------===//
@@ -295,6 +308,10 @@ let isStore = 1 in {
       "stqd\t$rT, $src", LoadStore,
       [(store R16C:$rT, dform_addr:$src)]>;
 
+  def STQDr8 : RI10Form<0b00100100, (outs), (ins R8C:$rT, memri10:$src),
+      "stqd\t$rT, $src", LoadStore,
+      [(store R8C:$rT, dform_addr:$src)]>;
+
   def STQAv16i8 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, addr256k:$src),
       "stqa\t$rT, $src", LoadStore,
       [(store (v16i8 VECREG:$rT), aform_addr:$src)]>;
@@ -340,6 +357,14 @@ let isStore = 1 in {
       "stqa\t$rT, $src", LoadStore,
       [(store R64FP:$rT, aform_addr:$src)]>;
 
+  def STQAr16 : RI10Form<0b00100100, (outs), (ins R16C:$rT, addr256k:$src),
+      "stqa\t$rT, $src", LoadStore,
+      [(store R16C:$rT, aform_addr:$src)]>;
+ 
+  def STQAr8 : RI10Form<0b00100100, (outs), (ins R8C:$rT, addr256k:$src),
+      "stqa\t$rT, $src", LoadStore,
+      [(store R8C:$rT, aform_addr:$src)]>;
+
   def STQXv16i8 : RI10Form<0b00100100, (outs), (ins VECREG:$rT, memrr:$src),
       "stqx\t$rT, $src", LoadStore,
       [(store (v16i8 VECREG:$rT), xform_addr:$src)]>;
@@ -368,26 +393,36 @@ let isStore = 1 in {
       "stqx\t$rT, $src", LoadStore,
       [(store GPRC:$rT, xform_addr:$src)]>;
 
-  def STQXr64 : RI10Form<0b00100100, (outs), (ins R64C:$rT, memrr:$src),
+  def STQXr64:
+    RI10Form<0b00100100, (outs), (ins R64C:$rT, memrr:$src),
       "stqx\t$rT, $src", LoadStore,
       [(store R64C:$rT, xform_addr:$src)]>;
 
-  def STQXr32 : RI10Form<0b00100100, (outs), (ins R32C:$rT, memrr:$src),
+  def STQXr32:
+    RI10Form<0b00100100, (outs), (ins R32C:$rT, memrr:$src),
       "stqx\t$rT, $src", LoadStore,
       [(store R32C:$rT, xform_addr:$src)]>;
 
   // Floating Point
-  def STQXf32 : RI10Form<0b00100100, (outs), (ins R32FP:$rT, memrr:$src),
+  def STQXf32:
+    RI10Form<0b00100100, (outs), (ins R32FP:$rT, memrr:$src),
       "stqx\t$rT, $src", LoadStore,
       [(store R32FP:$rT, xform_addr:$src)]>;
 
-  def STQXf64 : RI10Form<0b00100100, (outs), (ins R64FP:$rT, memrr:$src),
+  def STQXf64:
+    RI10Form<0b00100100, (outs), (ins R64FP:$rT, memrr:$src),
       "stqx\t$rT, $src", LoadStore,
       [(store R64FP:$rT, xform_addr:$src)]>;
 
-  def STQXr16 : RI10Form<0b00100100, (outs), (ins R16C:$rT, memrr:$src),
+  def STQXr16:
+    RI10Form<0b00100100, (outs), (ins R16C:$rT, memrr:$src),
       "stqx\t$rT, $src", LoadStore,
       [(store R16C:$rT, xform_addr:$src)]>;
+ 
+  def STQXr8:
+     RI10Form<0b00100100, (outs), (ins R8C:$rT, memrr:$src),
+       "stqx\t$rT, $src", LoadStore,
+       [(store R8C:$rT, xform_addr:$src)]>;
 
 /* Store quadword, PC relative: Not much use at this point in time. Might
    be useful for relocatable code.
@@ -447,6 +482,13 @@ def ILHr16:
   RI16Form<0b110000010, (outs R16C:$rT), (ins s16imm:$val),
     "ilh\t$rT, $val", ImmLoad,
     [(set R16C:$rT, immSExt16:$val)]>;
+
+// Cell SPU doesn't have a native 8-bit immediate load, but ILH works ("with
+// the right constant")
+def ILHr8:
+  RI16Form<0b110000010, (outs R8C:$rT), (ins s16imm_i8:$val),
+    "ilh\t$rT, $val", ImmLoad,
+    [(set R8C:$rT, immSExt8:$val)]>;
 
 // IL does sign extension!
 def ILr64:
@@ -626,25 +668,32 @@ def Ar32 : RRForm<0b00000011000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
   "a\t$rT, $rA, $rB", IntegerOp,
   [(set R32C:$rT, (add R32C:$rA, R32C:$rB))]>;
 
+def Ar8:
+    RRForm<0b00000011000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+      "a\t$rT, $rA, $rB", IntegerOp,
+      [(set R8C:$rT, (add R8C:$rA, R8C:$rB))]>;
+
 def AIvec:
     RI10Form<0b00111000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
       "ai\t$rT, $rA, $val", IntegerOp,
       [(set (v4i32 VECREG:$rT), (add (v4i32 VECREG:$rA),
                                       v4i32SExt10Imm:$val))]>;
 
-def AIr32 : RI10Form<0b00111000, (outs R32C:$rT),
-                                 (ins R32C:$rA, s10imm_i32:$val),
-  "ai\t$rT, $rA, $val", IntegerOp,
-  [(set R32C:$rT, (add R32C:$rA, i32ImmSExt10:$val))]>;
+def AIr32:
+    RI10Form<0b00111000, (outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
+      "ai\t$rT, $rA, $val", IntegerOp,
+      [(set R32C:$rT, (add R32C:$rA, i32ImmSExt10:$val))]>;
 
-def SFHvec : RRForm<0b00010010000, (outs VECREG:$rT),
-                                   (ins VECREG:$rA, VECREG:$rB),
-  "sfh\t$rT, $rA, $rB", IntegerOp,
-  [(set (v8i16 VECREG:$rT), (sub (v8i16 VECREG:$rA), (v8i16 VECREG:$rB)))]>;
+def SFHvec:
+    RRForm<0b00010010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
+      "sfh\t$rT, $rA, $rB", IntegerOp,
+      [(set (v8i16 VECREG:$rT), (sub (v8i16 VECREG:$rA),
+                                     (v8i16 VECREG:$rB)))]>;
 
-def SFHr16 : RRForm<0b00010010000, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
-  "sfh\t$rT, $rA, $rB", IntegerOp,
-  [(set R16C:$rT, (sub R16C:$rA, R16C:$rB))]>;
+def SFHr16:
+    RRForm<0b00010010000, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
+      "sfh\t$rT, $rA, $rB", IntegerOp,
+      [(set R16C:$rT, (sub R16C:$rA, R16C:$rB))]>;
 
 def SFHIvec:
     RI10Form<0b10110000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
@@ -977,6 +1026,11 @@ def XSBHr16:
       "xsbh\t$rDst, $rSrc", IntegerOp,
       [(set R16C:$rDst, (sext_inreg R16C:$rSrc, i8))]>;
 
+def XSBHr8:
+    RRForm_1<0b01101101010, (outs R16C:$rDst), (ins R8C:$rSrc),
+      "xsbh\t$rDst, $rSrc", IntegerOp,
+      [(set R16C:$rDst, (sext R8C:$rSrc))]>;
+
 // 32-bit form for XSBH: used to sign extend 8-bit quantities to 16-bit
 // quantities to 32-bit quantities via a 32-bit register (see the sext 8->32
 // pattern below). Intentionally doesn't match a pattern because we want the
@@ -1070,6 +1124,11 @@ def ANDr16:
       "and\t$rT, $rA, $rB", IntegerOp,
       [(set R16C:$rT, (and R16C:$rA, R16C:$rB))]>;
 
+def ANDr8:
+    RRForm<0b10000011000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+      "and\t$rT, $rA, $rB", IntegerOp,
+      [(set R8C:$rT, (and R8C:$rA, R8C:$rB))]>;
+
 // Hacked form of AND to zero-extend 16-bit quantities to 32-bit
 // quantities -- see 16->32 zext pattern.
 //
@@ -1112,11 +1171,21 @@ def ANDCr16:
       "andc\t$rT, $rA, $rB", IntegerOp,
       [(set R16C:$rT, (and R16C:$rA, (not R16C:$rB)))]>;
 
+def ANDCr8:
+    RRForm<0b10000011010, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+      "andc\t$rT, $rA, $rB", IntegerOp,
+      [(set R8C:$rT, (and R8C:$rA, (not R8C:$rB)))]>;
+
 def ANDBIv16i8:
     RI10Form<0b01101000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
       "andbi\t$rT, $rA, $val", IntegerOp,
       [(set (v16i8 VECREG:$rT),
             (and (v16i8 VECREG:$rA), (v16i8 v16i8U8Imm:$val)))]>;
+
+def ANDBIr8:
+    RI10Form<0b01101000, (outs R8C:$rT), (ins R8C:$rA, u10imm_i8:$val),
+      "andbi\t$rT, $rA, $val", IntegerOp,
+      [(set R8C:$rT, (and R8C:$rA, immU8:$val))]>;
 
 def ANDHIv8i16:
     RI10Form<0b10101000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
@@ -1127,7 +1196,12 @@ def ANDHIv8i16:
 def ANDHIr16:
     RI10Form<0b10101000, (outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
       "andhi\t$rT, $rA, $val", IntegerOp,
-      [(set R16C:$rT, (and R16C:$rA, i16ImmU10:$val))]>;
+      [(set R16C:$rT, (and R16C:$rA, i16ImmUns10:$val))]>;
+
+def ANDHI1To2:
+    RI10Form<0b10101000, (outs R16C:$rT), (ins R8C:$rA, s10imm:$val),
+      "andhi\t$rT, $rA, $val", IntegerOp,
+      [(set R16C:$rT, (and (zext R8C:$rA), i16ImmSExt10:$val))]>;
 
 def ANDIv4i32:
     RI10Form<0b00101000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
@@ -1139,6 +1213,13 @@ def ANDIr32:
     RI10Form<0b10101000, (outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
       "andi\t$rT, $rA, $val", IntegerOp,
       [(set R32C:$rT, (and R32C:$rA, i32ImmSExt10:$val))]>;
+
+// Hacked form of ANDI to zero-extend i8 quantities to i32. See the zext 8->32
+// pattern below.
+def ANDI1To4:
+    RI10Form<0b10101000, (outs R32C:$rT), (ins R8C:$rA, s10imm_i32:$val),
+      "andi\t$rT, $rA, $val", IntegerOp,
+      [(set R32C:$rT, (and (zext R8C:$rA), i32ImmSExt10:$val))]>;
 
 // Hacked form of ANDI to zero-extend i16 quantities to i32. See the
 // zext 16->32 pattern below.
@@ -1199,7 +1280,20 @@ def ORr16:
       "or\t$rT, $rA, $rB", IntegerOp,
       [(set R16C:$rT, (or R16C:$rA, R16C:$rB))]>;
 
+def ORr8:
+    RRForm<0b10000010000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+      "or\t$rT, $rA, $rB", IntegerOp,
+      [(set R8C:$rT, (or R8C:$rA, R8C:$rB))]>;
+
 // ORv*_*: Used in scalar->vector promotions:
+def ORv16i8_i8:
+    RRForm<0b10000010000, (outs VECREG:$rT), (ins R8C:$rA, R8C:$rB),
+      "or\t$rT, $rA, $rB", IntegerOp,
+      [/* no pattern */]>;
+
+def : Pat<(v16i8 (SPUpromote_scalar R8C:$rA)),
+	  (ORv16i8_i8 R8C:$rA, R8C:$rA)>;
+
 def ORv8i16_i16:
     RRForm<0b10000010000, (outs VECREG:$rT), (ins R16C:$rA, R16C:$rB),
       "or\t$rT, $rA, $rB", IntegerOp,
@@ -1241,6 +1335,14 @@ def : Pat<(v2f64 (SPUpromote_scalar R64FP:$rA)),
           (ORv2f64_f64 R64FP:$rA, R64FP:$rA)>;
 
 // ORi*_v*: Used to extract vector element 0 (the preferred slot)
+def ORi8_v16i8:
+    RRForm<0b10000010000, (outs R8C:$rT), (ins VECREG:$rA, VECREG:$rB),
+      "or\t$rT, $rA, $rB", IntegerOp,
+      [/* no pattern */]>;
+
+def : Pat<(SPUextract_elt0 (v16i8 VECREG:$rA)),
+	  (ORi8_v16i8 VECREG:$rA, VECREG:$rA)>;
+
 def ORi16_v8i16:
     RRForm<0b10000010000, (outs R16C:$rT), (ins VECREG:$rA, VECREG:$rB),
       "or\t$rT, $rA, $rB", IntegerOp,
@@ -1325,6 +1427,11 @@ def ORCr16:
     "orc\t$rT, $rA, $rB", IntegerOp,
     [(set R16C:$rT, (or R16C:$rA, (not R16C:$rB)))]>;
 
+def ORCr8:
+  RRForm<0b10010010000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+    "orc\t$rT, $rA, $rB", IntegerOp,
+    [(set R8C:$rT, (or R8C:$rA, (not R8C:$rB)))]>;
+
 // OR byte immediate
 def ORBIv16i8:
     RI10Form<0b01100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
@@ -1332,29 +1439,40 @@ def ORBIv16i8:
        [(set (v16i8 VECREG:$rT),
              (or (v16i8 VECREG:$rA), (v16i8 v16i8U8Imm:$val)))]>;
 
+def ORBIr8:
+    RI10Form<0b01100000, (outs R8C:$rT), (ins R8C:$rA, u10imm_i8:$val),
+       "orbi\t$rT, $rA, $val", IntegerOp,
+       [(set R8C:$rT, (or R8C:$rA, immU8:$val))]>;
+
 // OR halfword immediate
 def ORHIv8i16:
-    RI10Form<0b10100000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+    RI10Form<0b10100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
       "orhi\t$rT, $rA, $val", IntegerOp,
       [(set (v8i16 VECREG:$rT), (or (v8i16 VECREG:$rA),
-                                    v8i16SExt10Imm:$val))]>;
+                                    v8i16Uns10Imm:$val))]>;
 
 def ORHIr16:
-    RI10Form<0b10100000, (outs R16C:$rT), (ins R16C:$rA, s10imm:$val),
+    RI10Form<0b10100000, (outs R16C:$rT), (ins R16C:$rA, u10imm:$val),
       "orhi\t$rT, $rA, $val", IntegerOp,
-      [(set R16C:$rT, (or R16C:$rA, i16ImmSExt10:$val))]>;
+      [(set R16C:$rT, (or R16C:$rA, i16ImmUns10:$val))]>;
+
+// Hacked form of ORHI used to promote 8-bit registers to 16-bit
+def ORHI1To2:
+    RI10Form<0b10100000, (outs R16C:$rT), (ins R8C:$rA, s10imm:$val),
+      "orhi\t$rT, $rA, $val", IntegerOp,
+      [(set R16C:$rT, (or (anyext R8C:$rA), i16ImmSExt10:$val))]>;
 
 // Bitwise "or" with immediate
 def ORIv4i32:
-    RI10Form<0b00100000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
+    RI10Form<0b00100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
       "ori\t$rT, $rA, $val", IntegerOp,
       [(set (v4i32 VECREG:$rT), (or (v4i32 VECREG:$rA),
-                                     v4i32SExt10Imm:$val))]>;
+                                     v4i32Uns10Imm:$val))]>;
 
 def ORIr32:
-    RI10Form<0b00100000, (outs R32C:$rT), (ins R32C:$rA, s10imm_i32:$val),
+    RI10Form<0b00100000, (outs R32C:$rT), (ins R32C:$rA, u10imm_i32:$val),
       "ori\t$rT, $rA, $val", IntegerOp,
-      [(set R32C:$rT, (or R32C:$rA, i32ImmSExt10:$val))]>;
+      [(set R32C:$rT, (or R32C:$rA, i32ImmUns10:$val))]>;
 
 // Hacked forms of or immediate to copy one 32- and 64-bit FP register  
 // to another. Do not match patterns.
@@ -1381,15 +1499,24 @@ def ORI2To4:
       "ori\t$rT, $rA, $val", IntegerOp,
       [(set R32C:$rT, (or (anyext R16C:$rA), i32ImmSExt10:$val))]>;
 
+// ORI1To4: Hacked version of the ORI instruction to extend 16-bit quantities
+// to 32-bit quantities. Used exclusively to match "anyext" conversions (vide
+// infra "anyext 16->32" pattern.)
+def ORI1To4:
+    RI10Form<0b00100000, (outs R32C:$rT), (ins R8C:$rA, s10imm_i32:$val),
+      "ori\t$rT, $rA, $val", IntegerOp,
+      [(set R32C:$rT, (or (anyext R8C:$rA), i32ImmSExt10:$val))]>;
+
 // ORX: "or" across the vector: or's $rA's word slots leaving the result in
 // $rT[0], slots 1-3 are zeroed.
 //
-// Needs to match an intrinsic pattern.
+// FIXME: Needs to match an intrinsic pattern.
 def ORXv4i32:
     RRForm<0b10010010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
       "orx\t$rT, $rA, $rB", IntegerOp,
       []>;
 
+// XOR:
 def XORv16i8:
     RRForm<0b10010010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
       "xor\t$rT, $rA, $rB", IntegerOp,
@@ -1441,10 +1568,20 @@ def XORr16:
       "xor\t$rT, $rA, $rB", IntegerOp,
       [(set R16C:$rT, (xor R16C:$rA, R16C:$rB))]>;
 
+def XORr8:
+    RRForm<0b10010010000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+      "xor\t$rT, $rA, $rB", IntegerOp,
+      [(set R8C:$rT, (xor R8C:$rA, R8C:$rB))]>;
+
 def XORBIv16i8:
     RI10Form<0b01100000, (outs VECREG:$rT), (ins VECREG:$rA, u10imm:$val),
        "xorbi\t$rT, $rA, $val", IntegerOp,
        [(set (v16i8 VECREG:$rT), (xor (v16i8 VECREG:$rA), v16i8U8Imm:$val))]>;
+
+def XORBIr8:
+    RI10Form<0b01100000, (outs R8C:$rT), (ins R8C:$rA, u10imm_i8:$val),
+       "xorbi\t$rT, $rA, $val", IntegerOp,
+       [(set R8C:$rT, (xor R8C:$rA, immU8:$val))]>;
 
 def XORHIv8i16:
     RI10Form<0b10100000, (outs VECREG:$rT), (ins VECREG:$rA, s10imm:$val),
@@ -1497,6 +1634,11 @@ def NANDr16:
       "nand\t$rT, $rA, $rB", IntegerOp,
       [(set R16C:$rT, (not (and R16C:$rA, R16C:$rB)))]>;
 
+def NANDr8:
+    RRForm<0b10010010000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+      "nand\t$rT, $rA, $rB", IntegerOp,
+      [(set R8C:$rT, (not (and R8C:$rA, R8C:$rB)))]>;
+
 // NOR:
 def NORv16i8:
     RRForm<0b10010010000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
@@ -1525,6 +1667,11 @@ def NORr16:
     RRForm<0b10010010000, (outs R16C:$rT), (ins R16C:$rA, R16C:$rB),
       "nor\t$rT, $rA, $rB", IntegerOp,
       [(set R16C:$rT, (not (or R16C:$rA, R16C:$rB)))]>;
+
+def NORr8:
+    RRForm<0b10010010000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+      "nor\t$rT, $rA, $rB", IntegerOp,
+      [(set R8C:$rT, (not (or R8C:$rA, R8C:$rB)))]>;
 
 // EQV: Equivalence (1 for each same bit, otherwise 0)
 def EQVv16i8:
@@ -1593,6 +1740,18 @@ def : Pat<(xor R16C:$rA, (not R16C:$rB)),
 def : Pat<(xor (not R16C:$rA), R16C:$rB),
           (EQVr16 R16C:$rA, R16C:$rB)>;
 
+def EQVr8:
+    RRForm<0b10010010000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+      "eqv\t$rT, $rA, $rB", IntegerOp,
+      [(set R8C:$rT, (or (and R8C:$rA, R8C:$rB),
+                          (and (not R8C:$rA), (not R8C:$rB))))]>;
+
+def : Pat<(xor R8C:$rA, (not R8C:$rB)),
+          (EQVr8 R8C:$rA, R8C:$rB)>;
+
+def : Pat<(xor (not R8C:$rA), R8C:$rB),
+          (EQVr8 R8C:$rA, R8C:$rB)>;
+
 // gcc optimizes (p & q) | (~p & ~q) -> ~(p | q) | (p & q), so match that
 // pattern also:
 def : Pat<(or (vnot (or (v16i8 VECREG:$rA), (v16i8 VECREG:$rB))),
@@ -1612,6 +1771,9 @@ def : Pat<(or (not (or R32C:$rA, R32C:$rB)), (and R32C:$rA, R32C:$rB)),
 
 def : Pat<(or (not (or R16C:$rA, R16C:$rB)), (and R16C:$rA, R16C:$rB)),
           (EQVr16 R16C:$rA, R16C:$rB)>;
+
+def : Pat<(or (not (or R8C:$rA, R8C:$rB)), (and R8C:$rA, R8C:$rB)),
+          (EQVr8 R8C:$rA, R8C:$rB)>;
 
 // Select bits:
 def SELBv16i8:
@@ -1901,6 +2063,43 @@ def : Pat<(or (and (not R16C:$rC), R16C:$rA),
 def : Pat<(or (and (not R16C:$rC), R16C:$rA),
               (and R16C:$rC, R16C:$rB)),
           (SELBr16 R16C:$rA, R16C:$rB, R16C:$rC)>;
+ 
+def SELBr8:
+    RRRForm<0b1000, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB, R8C:$rC),
+      "selb\t$rT, $rA, $rB, $rC", IntegerOp,
+      []>;
+
+def : Pat<(or (and R8C:$rA, R8C:$rC),
+              (and R8C:$rB, (not R8C:$rC))),
+          (SELBr8 R8C:$rA, R8C:$rB, R8C:$rC)>;
+
+def : Pat<(or (and R8C:$rC, R8C:$rA),
+              (and R8C:$rB, (not R8C:$rC))),
+          (SELBr8 R8C:$rA, R8C:$rB, R8C:$rC)>;
+
+def : Pat<(or (and R8C:$rA, R8C:$rC),
+              (and (not R8C:$rC), R8C:$rB)),
+          (SELBr8 R8C:$rA, R8C:$rB, R8C:$rC)>;
+
+def : Pat<(or (and R8C:$rC, R8C:$rA),
+              (and (not R8C:$rC), R8C:$rB)),
+          (SELBr8 R8C:$rA, R8C:$rB, R8C:$rC)>;
+
+def : Pat<(or (and R8C:$rA, (not R8C:$rC)),
+              (and R8C:$rB, R8C:$rC)),
+          (SELBr8 R8C:$rA, R8C:$rB, R8C:$rC)>;
+
+def : Pat<(or (and R8C:$rA, (not R8C:$rC)),
+              (and R8C:$rC, R8C:$rB)),
+          (SELBr8 R8C:$rA, R8C:$rB, R8C:$rC)>;
+
+def : Pat<(or (and (not R8C:$rC), R8C:$rA),
+              (and R8C:$rB, R8C:$rC)),
+          (SELBr8 R8C:$rA, R8C:$rB, R8C:$rC)>;
+
+def : Pat<(or (and (not R8C:$rC), R8C:$rA),
+              (and R8C:$rC, R8C:$rB)),
+          (SELBr8 R8C:$rA, R8C:$rB, R8C:$rC)>;
 
 //===----------------------------------------------------------------------===//
 // Vector shuffle...
@@ -1958,10 +2157,13 @@ def SHLHr16_r32:
       [(set R16C:$rT, (shl R16C:$rA, R32C:$rB))]>;
 
 def SHLHIv8i16:
-    RI7Form<0b11111010000, (outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
+    RI7Form<0b11111010000, (outs VECREG:$rT), (ins VECREG:$rA, u7imm_i8:$val),
       "shlhi\t$rT, $rA, $val", RotateShift,
       [(set (v8i16 VECREG:$rT),
-            (SPUvec_shl_v8i16 (v8i16 VECREG:$rA), (i16 uimm7:$val)))]>;
+            (SPUvec_shl_v8i16 (v8i16 VECREG:$rA), (i8 uimm7:$val)))]>;
+
+def : Pat<(SPUvec_shl_v8i16 (v8i16 VECREG:$rA), (i16 uimm7:$val)),
+          (SHLHIv8i16 VECREG:$rA, imm:$val)>;
 
 def : Pat<(SPUvec_shl_v8i16 (v8i16 VECREG:$rA), (i32 uimm7:$val)),
           (SHLHIv8i16 VECREG:$rA, imm:$val)>;
@@ -1970,6 +2172,9 @@ def SHLHIr16:
     RI7Form<0b11111010000, (outs R16C:$rT), (ins R16C:$rA, u7imm_i32:$val),
       "shlhi\t$rT, $rA, $val", RotateShift,
       [(set R16C:$rT, (shl R16C:$rA, (i32 uimm7:$val)))]>;
+ 
+def : Pat<(shl R16C:$rA, (i8 uimm7:$val)),
+          (SHLHIr16 R16C:$rA, uimm7:$val)>;
 
 def : Pat<(shl R16C:$rA, (i16 uimm7:$val)),
           (SHLHIr16 R16C:$rA, uimm7:$val)>;
@@ -1986,10 +2191,13 @@ def SHLr32:
       [(set R32C:$rT, (shl R32C:$rA, R32C:$rB))]>;
 
 def SHLIv4i32:
-    RI7Form<0b11111010000, (outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
+    RI7Form<0b11111010000, (outs VECREG:$rT), (ins VECREG:$rA, u7imm_i8:$val),
       "shli\t$rT, $rA, $val", RotateShift,
       [(set (v4i32 VECREG:$rT),
-            (SPUvec_shl_v4i32 (v4i32 VECREG:$rA), (i16 uimm7:$val)))]>;
+            (SPUvec_shl_v4i32 (v4i32 VECREG:$rA), (i8 uimm7:$val)))]>;
+
+def: Pat<(SPUvec_shl_v4i32 (v4i32 VECREG:$rA), (i16 uimm7:$val)),
+         (SHLIv4i32 VECREG:$rA, uimm7:$val)>;
 
 def: Pat<(SPUvec_shl_v4i32 (v4i32 VECREG:$rA), (i32 uimm7:$val)),
          (SHLIv4i32 VECREG:$rA, uimm7:$val)>;
@@ -2000,6 +2208,9 @@ def SHLIr32:
       [(set R32C:$rT, (shl R32C:$rA, (i32 uimm7:$val)))]>;
 
 def : Pat<(shl R32C:$rA, (i16 uimm7:$val)),
+          (SHLIr32 R32C:$rA, uimm7:$val)>;
+
+def : Pat<(shl R32C:$rA, (i8 uimm7:$val)),
           (SHLIr32 R32C:$rA, uimm7:$val)>;
 
 // SHLQBI vec form: Note that this will shift the entire vector (the 128-bit
@@ -2044,11 +2255,27 @@ def ROTHr16_r32:
       "roth\t$rT, $rA, $rB", RotateShift,
       [(set R16C:$rT, (rotl R16C:$rA, R32C:$rB))]>;
 
+// The rotate amount is in the same bits whether we've got an 8-bit, 16-bit or
+// 32-bit register
+def ROTHr16_r8:
+    RRForm<0b00111010000, (outs R16C:$rT), (ins R16C:$rA, R8C:$rB),
+      "roth\t$rT, $rA, $rB", RotateShift,
+      [(set R16C:$rT, (rotl R16C:$rA, (i32 (zext R8C:$rB))))]>;
+
+def : Pat<(rotl R16C:$rA, (i32 (sext R8C:$rB))),
+          (ROTHr16_r8 R16C:$rA, R8C:$rB)>;
+
+def : Pat<(rotl R16C:$rA, (i32 (zext R8C:$rB))),
+          (ROTHr16_r8 R16C:$rA, R8C:$rB)>;
+
+def : Pat<(rotl R16C:$rA, (i32 (anyext R8C:$rB))),
+          (ROTHr16_r8 R16C:$rA, R8C:$rB)>;
+
 def ROTHIv8i16:
-    RI7Form<0b00111110000, (outs VECREG:$rT), (ins VECREG:$rA, u7imm:$val),
+    RI7Form<0b00111110000, (outs VECREG:$rT), (ins VECREG:$rA, u7imm_i8:$val),
       "rothi\t$rT, $rA, $val", RotateShift,
       [(set (v8i16 VECREG:$rT),
-            (SPUvec_rotl_v8i16 VECREG:$rA, (i16 uimm7:$val)))]>;
+            (SPUvec_rotl_v8i16 VECREG:$rA, (i8 uimm7:$val)))]>;
 
 def : Pat<(SPUvec_rotl_v8i16 VECREG:$rA, (i16 uimm7:$val)),
           (ROTHIv8i16 VECREG:$rA, imm:$val)>;
@@ -2066,6 +2293,11 @@ def ROTHIr16_i32:
       "rothi\t$rT, $rA, $val", RotateShift,
       [(set R16C:$rT, (rotl R16C:$rA, (i32 uimm7:$val)))]>;
 
+def ROTHIr16_i8:
+    RI7Form<0b00111110000, (outs R16C:$rT), (ins R16C:$rA, u7imm_i8:$val),
+      "rothi\t$rT, $rA, $val", RotateShift,
+      [(set R16C:$rT, (rotl R16C:$rA, (i8 uimm7:$val)))]>;
+
 def ROTv4i32:
     RRForm<0b00011010000, (outs VECREG:$rT), (ins VECREG:$rA, R32C:$rB),
       "rot\t$rT, $rA, $rB", RotateShift,
@@ -2077,6 +2309,30 @@ def ROTr32:
       "rot\t$rT, $rA, $rB", RotateShift,
       [(set R32C:$rT, (rotl R32C:$rA, R32C:$rB))]>;
 
+// The rotate amount is in the same bits whether we've got an 8-bit, 16-bit or
+// 32-bit register
+def ROTr32_r16_anyext:
+    RRForm<0b00011010000, (outs R32C:$rT), (ins R32C:$rA, R16C:$rB),
+      "rot\t$rT, $rA, $rB", RotateShift,
+      [(set R32C:$rT, (rotl R32C:$rA, (i32 (anyext R16C:$rB))))]>;
+
+def : Pat<(rotl R32C:$rA, (i32 (zext R16C:$rB))),
+          (ROTr32_r16_anyext R32C:$rA, R16C:$rB)>;
+
+def : Pat<(rotl R32C:$rA, (i32 (sext R16C:$rB))),
+          (ROTr32_r16_anyext R32C:$rA, R16C:$rB)>;
+
+def ROTr32_r8_anyext:
+    RRForm<0b00011010000, (outs R32C:$rT), (ins R32C:$rA, R8C:$rB),
+      "rot\t$rT, $rA, $rB", RotateShift,
+      [(set R32C:$rT, (rotl R32C:$rA, (i32 (anyext R8C:$rB))))]>;
+
+def : Pat<(rotl R32C:$rA, (i32 (zext R8C:$rB))),
+          (ROTr32_r8_anyext R32C:$rA, R8C:$rB)>;
+
+def : Pat<(rotl R32C:$rA, (i32 (sext R8C:$rB))),
+          (ROTr32_r8_anyext R32C:$rA, R8C:$rB)>;
+
 def ROTIv4i32:
     RI7Form<0b00011110000, (outs VECREG:$rT), (ins VECREG:$rA, u7imm_i32:$val),
       "roti\t$rT, $rA, $val", RotateShift,
@@ -2085,6 +2341,9 @@ def ROTIv4i32:
 
 def : Pat<(SPUvec_rotl_v4i32 (v4i32 VECREG:$rA), (i16 uimm7:$val)),
           (ROTIv4i32 VECREG:$rA, imm:$val)>;
+
+def : Pat<(SPUvec_rotl_v4i32 (v4i32 VECREG:$rA), (i8 uimm7:$val)),
+           (ROTIv4i32 VECREG:$rA, imm:$val)>;
 
 def ROTIr32:
     RI7Form<0b00011110000, (outs R32C:$rT), (ins R32C:$rA, u7imm_i32:$val),
@@ -2095,6 +2354,11 @@ def ROTIr32_i16:
     RI7Form<0b00111110000, (outs R32C:$rT), (ins R32C:$rA, u7imm:$val),
       "roti\t$rT, $rA, $val", RotateShift,
       [(set R32C:$rT, (rotl R32C:$rA, (i16 uimm7:$val)))]>;
+
+def ROTIr32_i8:
+    RI7Form<0b00111110000, (outs R32C:$rT), (ins R32C:$rA, u7imm_i8:$val),
+      "roti\t$rT, $rA, $val", RotateShift,
+      [(set R32C:$rT, (rotl R32C:$rA, (i8 uimm7:$val)))]>;
 
 // ROTQBY* vector forms: This rotates the entire vector, but vector registers
 // are used here for type checking (instances where ROTQBI is used actually
@@ -2155,9 +2419,9 @@ def : Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), R16C:$rB),
           (ROTHMv8i16 VECREG:$rA,
                       (SFIr32 (XSHWr16 R16C:$rB), 0))>;
 
-def : Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), /* R8C */ R16C:$rB),
+def : Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), R8C:$rB),
           (ROTHMv8i16 VECREG:$rA,
-                      (SFIr32 (XSHWr16 /* (XSBHr8 R8C */ R16C:$rB) /*)*/, 0))>;
+                      (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB) ), 0))>;
 
 // ROTHM r16 form: Rotate 16-bit quantity to right, zero fill at the left
 // Note: This instruction doesn't match a pattern because rB must be negated
@@ -2174,9 +2438,9 @@ def : Pat<(srl R16C:$rA, R16C:$rB),
           (ROTHMr16 R16C:$rA,
                     (SFIr32 (XSHWr16 R16C:$rB), 0))>;
 
-def : Pat<(srl R16C:$rA, /* R8C */ R16C:$rB),
+def : Pat<(srl R16C:$rA, R8C:$rB),
           (ROTHMr16 R16C:$rA,
-                    (SFIr32 (XSHWr16 /* (XSBHr8 R8C */ R16C:$rB) /* ) */, 0))>;
+                    (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB) ), 0))>;
 
 // ROTHMI v8i16 form: See the comment for ROTHM v8i16. The difference here is
 // that the immediate can be complemented, so that the user doesn't have to
@@ -2189,6 +2453,9 @@ def ROTHMIv8i16:
 
 def: Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), (i16 imm:$val)),
          (ROTHMIv8i16 VECREG:$rA, imm:$val)>;
+ 
+def: Pat<(SPUvec_srl_v8i16 (v8i16 VECREG:$rA), (i8 imm:$val)),
+	 (ROTHMIv8i16 VECREG:$rA, imm:$val)>;
 
 def ROTHMIr16:
     RI7Form<0b10111110000, (outs R16C:$rT), (ins R16C:$rA, rothNeg7imm:$val),
@@ -2196,6 +2463,9 @@ def ROTHMIr16:
       [(set R16C:$rT, (srl R16C:$rA, (i32 uimm7:$val)))]>;
 
 def: Pat<(srl R16C:$rA, (i16 uimm7:$val)),
+         (ROTHMIr16 R16C:$rA, uimm7:$val)>;
+
+def: Pat<(srl R16C:$rA, (i8 uimm7:$val)),
          (ROTHMIr16 R16C:$rA, uimm7:$val)>;
 
 // ROTM v4i32 form: See the ROTHM v8i16 comments.
@@ -2227,6 +2497,10 @@ def : Pat<(srl R32C:$rA, R16C:$rB),
           (ROTMr32 R32C:$rA,
                    (SFIr32 (XSHWr16 R16C:$rB), 0))>;
 
+def : Pat<(srl R32C:$rA, R8C:$rB),
+          (ROTMr32 R32C:$rA,
+                   (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB)), 0))>;
+
 // ROTMI v4i32 form: See the comment for ROTHM v8i16.
 def ROTMIv4i32:
     RI7Form<0b10011110000, (outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
@@ -2236,6 +2510,9 @@ def ROTMIv4i32:
 
 def : Pat<(SPUvec_srl_v4i32 VECREG:$rA, (i16 uimm7:$val)),
           (ROTMIv4i32 VECREG:$rA, uimm7:$val)>;
+ 
+def : Pat<(SPUvec_srl_v4i32 VECREG:$rA, (i8 uimm7:$val)),
+          (ROTMIv4i32 VECREG:$rA, uimm7:$val)>;
 
 // ROTMI r32 form: know how to complement the immediate value.
 def ROTMIr32:
@@ -2244,6 +2521,9 @@ def ROTMIr32:
       [(set R32C:$rT, (srl R32C:$rA, (i32 uimm7:$val)))]>;
 
 def : Pat<(srl R32C:$rA, (i16 imm:$val)),
+          (ROTMIr32 R32C:$rA, uimm7:$val)>;
+
+def : Pat<(srl R32C:$rA, (i8 imm:$val)),
           (ROTMIr32 R32C:$rA, uimm7:$val)>;
 
 // ROTQMBYvec: This is a vector form merely so that when used in an
@@ -2291,6 +2571,10 @@ def : Pat<(SPUvec_sra_v8i16 VECREG:$rA, R16C:$rB),
           (ROTMAHv8i16 VECREG:$rA,
                        (SFIr32 (XSHWr16 R16C:$rB), 0))>;
 
+def : Pat<(SPUvec_sra_v8i16 VECREG:$rA, R8C:$rB),
+          (ROTMAHv8i16 VECREG:$rA,
+                       (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB)), 0))>;
+
 def ROTMAHr16:
     RRForm<0b01111010000, (outs R16C:$rT), (ins R16C:$rA, R32C:$rB),
       "rotmah\t$rT, $rA, $rB", RotateShift,
@@ -2303,6 +2587,10 @@ def : Pat<(sra R16C:$rA, R16C:$rB),
           (ROTMAHr16 R16C:$rA,
                      (SFIr32 (XSHWr16 R16C:$rB), 0))>;
 
+def : Pat<(sra R16C:$rA, R8C:$rB),
+          (ROTMAHr16 R16C:$rA,
+                     (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB)), 0))>;
+
 def ROTMAHIv8i16:
     RRForm<0b01111110000, (outs VECREG:$rT), (ins VECREG:$rA, rothNeg7imm:$val),
       "rotmahi\t$rT, $rA, $val", RotateShift,
@@ -2312,12 +2600,18 @@ def ROTMAHIv8i16:
 def : Pat<(SPUvec_sra_v8i16 (v8i16 VECREG:$rA), (i16 uimm7:$val)),
           (ROTMAHIv8i16 (v8i16 VECREG:$rA), (i32 uimm7:$val))>;
 
+def : Pat<(SPUvec_sra_v8i16 (v8i16 VECREG:$rA), (i8 uimm7:$val)),
+          (ROTMAHIv8i16 (v8i16 VECREG:$rA), (i32 uimm7:$val))>;
+
 def ROTMAHIr16:
     RRForm<0b01111110000, (outs R16C:$rT), (ins R16C:$rA, rothNeg7imm_i16:$val),
       "rotmahi\t$rT, $rA, $val", RotateShift,
       [(set R16C:$rT, (sra R16C:$rA, (i16 uimm7:$val)))]>;
 
 def : Pat<(sra R16C:$rA, (i32 imm:$val)),
+          (ROTMAHIr16 R16C:$rA, uimm7:$val)>;
+
+def : Pat<(sra R16C:$rA, (i8 imm:$val)),
           (ROTMAHIr16 R16C:$rA, uimm7:$val)>;
 
 def ROTMAv4i32:
@@ -2332,6 +2626,10 @@ def : Pat<(SPUvec_sra_v4i32 VECREG:$rA, R16C:$rB),
           (ROTMAv4i32 (v4i32 VECREG:$rA),
                       (SFIr32 (XSHWr16 R16C:$rB), 0))>;
 
+def : Pat<(SPUvec_sra_v4i32 VECREG:$rA, R8C:$rB),
+          (ROTMAv4i32 (v4i32 VECREG:$rA),
+                      (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB)), 0))>;
+
 def ROTMAr32:
     RRForm<0b01011010000, (outs R32C:$rT), (ins R32C:$rA, R32C:$rB),
       "rotma\t$rT, $rA, $rB", RotateShift,
@@ -2343,6 +2641,10 @@ def : Pat<(sra R32C:$rA, R32C:$rB),
 def : Pat<(sra R32C:$rA, R16C:$rB),
           (ROTMAr32 R32C:$rA,
                     (SFIr32 (XSHWr16 R16C:$rB), 0))>;
+
+def : Pat<(sra R32C:$rA, R8C:$rB),
+          (ROTMAr32 R32C:$rA,
+                    (SFIr32 (XSHWr16 (XSBHr8 R8C:$rB)), 0))>;
 
 def ROTMAIv4i32:
     RRForm<0b01011110000, (outs VECREG:$rT), (ins VECREG:$rA, rotNeg7imm:$val),
@@ -2359,6 +2661,9 @@ def ROTMAIr32:
       [(set R32C:$rT, (sra R32C:$rA, (i32 uimm7:$val)))]>;
 
 def : Pat<(sra R32C:$rA, (i16 uimm7:$val)),
+          (ROTMAIr32 R32C:$rA, uimm7:$val)>;
+
+def : Pat<(sra R32C:$rA, (i8 uimm7:$val)),
           (ROTMAIr32 R32C:$rA, uimm7:$val)>;
 
 //===----------------------------------------------------------------------===//
@@ -2401,10 +2706,19 @@ let isTerminator = 1, isBarrier = 1 in {
 }
 
 // Comparison operators:
+def CEQBr8:
+  RRForm<0b00001011110, (outs R8C:$rT), (ins R8C:$rA, R8C:$rB),
+    "ceqb\t$rT, $rA, $rB", ByteOp,
+    [/* no pattern to match */]>;
 
 def CEQBv16i8:
   RRForm<0b00001011110, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB),
     "ceqb\t$rT, $rA, $rB", ByteOp,
+    [/* no pattern to match: intrinsic */]>;
+
+def CEQBIr8:
+  RI10Form<0b01111110, (outs R8C:$rT), (ins R8C:$rA, s7imm:$val),
+    "ceqbi\t$rT, $rA, $val", ByteOp,
     [/* no pattern to match: intrinsic */]>;
 
 def CEQBIv16i8:
@@ -3075,6 +3389,10 @@ def : Pat<(SPUFPconstant (f32 fpimm:$imm)),
 def : Pat<(v4i32 v4i32Imm:$imm),
           (IOHLvec (v4i32 (ILHUv4i32 (HI16_vec v4i32Imm:$imm))),
                    (LO16_vec v4i32Imm:$imm))>;
+ 
+// 8-bit constants
+def : Pat<(i8 imm:$imm),
+          (ILHr8 imm:$imm)>;
 
 //===----------------------------------------------------------------------===//
 // Call instruction patterns:
@@ -3095,13 +3413,33 @@ def : Pat<(SPUextract_i1_zext R32C:$rSrc),
 def : Pat<(sext_inreg R32C:$rSrc, i8),
           (XSHWr32 (XSBHr32 R32C:$rSrc))>;
 
+def : Pat<(i32 (sext R8C:$rSrc)),
+          (XSHWr16 (XSBHr8 R8C:$rSrc))>;
+
 def : Pat<(SPUextract_i8_sext VECREG:$rSrc),
           (XSHWr32 (XSBHr32 (ORi32_v4i32 (v4i32 VECREG:$rSrc),
                             (v4i32 VECREG:$rSrc))))>;
 
+// zext 8->16: Zero extend bytes to halfwords
+def : Pat<(i16 (zext R8C:$rSrc)),
+          (ANDHI1To2 R8C:$rSrc, 0xff)>;
+
+// zext 8->32 from preferred slot in load/store
 def : Pat<(SPUextract_i8_zext VECREG:$rSrc),
           (ANDIr32 (ORi32_v4i32 (v4i32 VECREG:$rSrc), (v4i32 VECREG:$rSrc)),
                    0xff)>;
+
+// zext 8->32: Zero extend bytes to words
+def : Pat<(i32 (zext R8C:$rSrc)),
+          (ANDI1To4 R8C:$rSrc, 0xff)>;
+
+// anyext 8->16: Extend 8->16 bits, irrespective of sign
+def : Pat<(i16 (anyext R8C:$rSrc)),
+          (ORHI1To2 R8C:$rSrc, 0)>;
+
+// anyext 8->32: Extend 8->32 bits, irrespective of sign
+def : Pat<(i32 (anyext R8C:$rSrc)),
+          (ORI1To4 R8C:$rSrc, 0)>;
 
 // zext 16->32: Zero extend halfwords to words (note that we have to juggle the
 // 0xffff constant since it will not fit into an immediate.)
