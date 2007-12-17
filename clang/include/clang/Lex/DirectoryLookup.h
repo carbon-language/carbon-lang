@@ -76,10 +76,13 @@ public:
     u.Map = map; 
   }
   
-  /// LookupFile - Lookup the specified file in this search path, returning it
-  /// if it exists or returning null if not.
-  const FileEntry *LookupFile(const char *FilenameStart,
-                              const char *FilenameEnd, HeaderSearch &HS) const;
+  /// getLookupType - Return the kind of directory lookup that this is: either a
+  /// normal directory, a framework path, or a HeaderMap.
+  LookupType_t getLookupType() const { return (LookupType_t)LookupType; }
+  
+  /// getName - Return the directory or filename corresponding to this lookup
+  /// object.
+  const char *getName() const;
   
   /// getDir - Return the directory that this entry refers to.
   ///
@@ -95,8 +98,6 @@ public:
   ///
   const HeaderMap *getHeaderMap() const { return isHeaderMap() ? u.Map : 0; }
 
-  LookupType_t getLookupType() const { return (LookupType_t)LookupType; }
-  
   /// isNormalDir - Return true if this is a normal directory, not a header map.
   bool isNormalDir() const { return getLookupType() == LT_NormalDir; }
   
@@ -114,6 +115,12 @@ public:
   /// isUserSupplied - True if this is a user-supplied directory.
   ///
   bool isUserSupplied() const { return UserSupplied; }
+  
+  
+  /// LookupFile - Lookup the specified file in this search path, returning it
+  /// if it exists or returning null if not.
+  const FileEntry *LookupFile(const char *FilenameStart,
+                              const char *FilenameEnd, HeaderSearch &HS) const;
   
 private:
   const FileEntry *DoFrameworkLookup(const char *FilenameStart,

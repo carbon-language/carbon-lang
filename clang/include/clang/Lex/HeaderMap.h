@@ -38,6 +38,11 @@ public:
   /// this HeaderMap.  If so, open it and return its FileEntry.
   const FileEntry *LookupFile(const char *FilenameStart,const char *FilenameEnd,
                               FileManager &FM) const;
+  
+  /// getFileName - Return the filename of the headermap.
+  const char *getFileName() const {
+    return ""; 
+  }
     
 };
 

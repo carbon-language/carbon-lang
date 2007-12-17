@@ -82,6 +82,18 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE,
 // File lookup within a DirectoryLookup scope
 //===----------------------------------------------------------------------===//
 
+/// getName - Return the directory or filename corresponding to this lookup
+/// object.
+const char *DirectoryLookup::getName() const {
+  if (isNormalDir())
+    return getDir()->getName();
+  if (isFramework())
+    return getFrameworkDir()->getName();
+  assert(isHeaderMap() && "Unknown DirectoryLookup");
+  return getHeaderMap()->getFileName();
+}
+
+
 /// LookupFile - Lookup the specified file in this search path, returning it
 /// if it exists or returning null if not.
 const FileEntry *DirectoryLookup::LookupFile(const char *FilenameStart,
