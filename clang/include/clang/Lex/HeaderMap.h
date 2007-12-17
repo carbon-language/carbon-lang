@@ -25,23 +25,19 @@ namespace clang {
 /// symlinks to files.  Its advantages are that it is dense and more efficient
 /// to create and process than a directory of symlinks.
 class HeaderMap {
+  HeaderMap(const HeaderMap&); // DO NOT IMPLEMENT
+  void operator=(const HeaderMap&); // DO NOT IMPLEMENT
 public:
   /// HeaderMap::Create - This attempts to load the specified file as a header
   /// map.  If it doesn't look like a HeaderMap, it gives up and returns null.
   /// If it looks like a HeaderMap but is obviously corrupted, it puts a reason
   /// into the string error argument and returns null.
-  static const HeaderMap *Create(const FileEntry *FE, std::string &ErrorInfo) { 
-    // FIXME: woot!
-    return 0; 
-  }
+  static const HeaderMap *Create(const FileEntry *FE, std::string &ErrorInfo);
   
   /// LookupFile - Check to see if the specified relative filename is located in
   /// this HeaderMap.  If so, open it and return its FileEntry.
   const FileEntry *LookupFile(const char *FilenameStart,const char *FilenameEnd,
-                              FileManager &FM) const {
-    // FIXME: this needs work.
-    return 0;
-  }
+                              FileManager &FM) const;
     
 };
 
