@@ -133,6 +133,14 @@ public:
                                             const char *FilenameEnd,
                                             const FileEntry *RelativeFileEnt);
   
+  /// LookupFrameworkCache - Look up the specified framework name in our
+  /// framework cache, returning the DirectoryEntry it is in if we know,
+  /// otherwise, return null.
+  const DirectoryEntry *&LookupFrameworkCache(const char *FWNameStart,
+                                              const char *FWNameEnd) {
+    return FrameworkMap.GetOrCreateValue(FWNameStart, FWNameEnd).getValue();
+  }
+  
   /// ShouldEnterIncludeFile - Mark the specified file as a target of of a
   /// #include, #include_next, or #import directive.  Return false if #including
   /// the file will have no effect or true if we should include it.
@@ -175,11 +183,10 @@ public:
   /// FileEntry, uniquing them through the the 'HeaderMaps' datastructure.
   const HeaderMap *CreateHeaderMap(const FileEntry *FE, std::string &ErrorInfo);
   
+  void IncrementFrameworkLookupCount() { ++NumFrameworkLookups; }
+  
   void PrintStats();
 private:
-  const FileEntry *DoFrameworkLookup(const DirectoryEntry *Dir,
-                                     const char *FilenameStart,
-                                     const char *FilenameEnd);
       
   /// getFileInfo - Return the PerFileInfo structure for the specified
   /// FileEntry.

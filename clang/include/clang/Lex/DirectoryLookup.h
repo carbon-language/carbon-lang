@@ -18,7 +18,7 @@ namespace clang {
 class HeaderMap;
 class DirectoryEntry;
 class FileEntry;
-class FileManager;
+class HeaderSearch;
 
 /// DirectoryLookup - This class represents one entry in the search list that
 /// specifies the search order for directories in #include directives.  It
@@ -79,8 +79,7 @@ public:
   /// LookupFile - Lookup the specified file in this search path, returning it
   /// if it exists or returning null if not.
   const FileEntry *LookupFile(const char *FilenameStart,
-                              const char *FilenameEnd,
-                              FileManager &FileMgr) const;
+                              const char *FilenameEnd, HeaderSearch &HS) const;
   
   /// getDir - Return the directory that this entry refers to.
   ///
@@ -115,6 +114,11 @@ public:
   /// isUserSupplied - True if this is a user-supplied directory.
   ///
   bool isUserSupplied() const { return UserSupplied; }
+  
+private:
+  const FileEntry *DoFrameworkLookup(const char *FilenameStart,
+                                     const char *FilenameEnd, 
+                                     HeaderSearch &HS) const;
   
 };
 

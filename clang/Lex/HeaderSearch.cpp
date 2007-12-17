@@ -86,40 +86,49 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE,
 /// if it exists or returning null if not.
 const FileEntry *DirectoryLookup::LookupFile(const char *FilenameStart,
                                              const char *FilenameEnd,
-                                             FileManager &FileMgr) const {
+                                             HeaderSearch &HS) const {
   llvm::SmallString<1024> TmpDir;
+  if (isNormalDir()) {
+    // Concatenate the requested file onto the directory.
+    // FIXME: Portability.  Filename concatenation should be in sys::Path.
+    TmpDir += getDir()->getName();
+    TmpDir.push_back('/');
+    TmpDir.append(FilenameStart, FilenameEnd);
+    return HS.getFileMgr().getFile(TmpDir.begin(), TmpDir.end());
+  }
   
-  // Concatenate the requested file onto the directory.
-  // FIXME: Portability.  Filename concatenation should be in sys::Path.
-  TmpDir += getDir()->getName();
-  TmpDir.push_back('/');
-  TmpDir.append(FilenameStart, FilenameEnd);
-  return FileMgr.getFile(TmpDir.begin(), TmpDir.end());
+  if (isFramework())
+    return DoFrameworkLookup(FilenameStart, FilenameEnd, HS);
+  
+  assert(0 && "headermap unimp");
 }
 
 
-
-//===----------------------------------------------------------------------===//
-// Header File Location.
-//===----------------------------------------------------------------------===//
-
-const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
-                                                 const char *FilenameStart,
-                                                 const char *FilenameEnd) {
+/// DoFrameworkLookup - Do a lookup of the specified file in the current
+/// DirectoryLookup, which is a framework directory.
+const FileEntry *DirectoryLookup::DoFrameworkLookup(const char *FilenameStart,
+                                                    const char *FilenameEnd,
+                                                    HeaderSearch &HS) const {
+  FileManager &FileMgr = HS.getFileMgr();
+  
   // Framework names must have a '/' in the filename.
   const char *SlashPos = std::find(FilenameStart, FilenameEnd, '/');
   if (SlashPos == FilenameEnd) return 0;
   
-  llvm::StringMapEntry<const DirectoryEntry *> &CacheLookup =
-    FrameworkMap.GetOrCreateValue(FilenameStart, SlashPos);
+  // Find out if this is the home for the specified framework, by checking
+  // HeaderSearch.  Possible answer are yes/no and unknown.
+  const DirectoryEntry *&FrameworkDirCache = 
+    HS.LookupFrameworkCache(FilenameStart, SlashPos);
   
-  // If it is some other directory, fail.
-  if (CacheLookup.getValue() && CacheLookup.getValue() != Dir)
+  // If it is known and in some other directory, fail.
+  if (FrameworkDirCache && FrameworkDirCache != getFrameworkDir())
     return 0;
-
+  
+  // Otherwise, construct the path to this framework dir.
+  
   // FrameworkName = "/System/Library/Frameworks/"
   llvm::SmallString<1024> FrameworkName;
-  FrameworkName += Dir->getName();
+  FrameworkName += getFrameworkDir()->getName();
   if (FrameworkName.empty() || FrameworkName.back() != '/')
     FrameworkName.push_back('/');
   
@@ -128,18 +137,21 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
   
   // FrameworkName = "/System/Library/Frameworks/Cocoa.framework/"
   FrameworkName += ".framework/";
- 
-  if (CacheLookup.getValue() == 0) {
-    ++NumFrameworkLookups;
+  
+  // If the cache entry is still unresolved, query to see if the cache entry is
+  // still unresolved.  If so, check its existence now.
+  if (FrameworkDirCache == 0) {
+    HS.IncrementFrameworkLookupCount();
     
     // If the framework dir doesn't exist, we fail.
+    // FIXME: It's probably more efficient to query this with FileMgr.getDir.
     if (!llvm::sys::Path(std::string(FrameworkName.begin(), 
                                      FrameworkName.end())).exists())
       return 0;
     
     // Otherwise, if it does, remember that this is the right direntry for this
     // framework.
-    CacheLookup.setValue(Dir);
+    FrameworkDirCache = getFrameworkDir();
   }
   
   // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
@@ -158,6 +170,11 @@ const FileEntry *HeaderSearch::DoFrameworkLookup(const DirectoryEntry *Dir,
                        Private+strlen(Private));
   return FileMgr.getFile(FrameworkName.begin(), FrameworkName.end());
 }
+
+
+//===----------------------------------------------------------------------===//
+// Header File Location.
+//===----------------------------------------------------------------------===//
 
 
 /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
@@ -236,24 +253,18 @@ const FileEntry *HeaderSearch::LookupFile(const char *FilenameStart,
   
   // Check each directory in sequence to see if it contains this file.
   for (; i != SearchDirs.size(); ++i) {
-    const FileEntry *FE = 0;
-    if (!SearchDirs[i].isFramework()) {
-      FE = SearchDirs[i].LookupFile(FilenameStart, FilenameEnd, FileMgr);
-    } else {
-      FE = DoFrameworkLookup(SearchDirs[i].getFrameworkDir(),
-                             FilenameStart, FilenameEnd);
-    }
+    const FileEntry *FE = 
+      SearchDirs[i].LookupFile(FilenameStart, FilenameEnd, *this);
+    if (!FE) continue;
     
-    if (FE) {
-      CurDir = &SearchDirs[i];
-      
-      // This file is a system header or C++ unfriendly if the dir is.
-      getFileInfo(FE).DirInfo = CurDir->getDirCharacteristic();
-      
-      // Remember this location for the next lookup we do.
-      CacheLookup.second = i;
-      return FE;
-    }
+    CurDir = &SearchDirs[i];
+    
+    // This file is a system header or C++ unfriendly if the dir is.
+    getFileInfo(FE).DirInfo = CurDir->getDirCharacteristic();
+    
+    // Remember this location for the next lookup we do.
+    CacheLookup.second = i;
+    return FE;
   }
   
   // Otherwise, didn't find it. Remember we didn't find this.
