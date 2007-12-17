@@ -1884,10 +1884,13 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
         Result += utostr(NumMethods);
         Result += "\n";
         
-		// Output instance methods declared in this protocol.
-		for (ObjcProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(), 
-			 E = PDecl->classmeth_end(); I != E; ++I) {
-          Result += "\t  ,{(SEL)\"";
+        // Output instance methods declared in this protocol.
+        for (ObjcProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(), 
+             E = PDecl->classmeth_end(); I != E; ++I) {
+          if (I == PDecl->classmeth_begin())
+            Result += "\t  ,{{(SEL)\"";
+          else
+            Result += "\t  ,{(SEL)\"";
           Result += (*I)->getSelector().getName().c_str();
           std::string MethodTypeString;
           Context->getObjcEncodingForMethodDecl((*I), MethodTypeString);
