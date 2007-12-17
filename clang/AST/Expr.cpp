@@ -662,10 +662,16 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       static_cast<uint32_t>(Ctx.getTypeSize(getType(), Exp->getOperatorLoc())));
     
     // Get information about the size or align.
-    if (Exp->isSizeOf())
-      Result = Ctx.getTypeSize(Exp->getArgumentType(), Exp->getOperatorLoc());
+    if (Exp->isSizeOf()) {
+      unsigned CharSize =
+        Ctx.Target.getCharWidth(Ctx.getFullLoc(Exp->getOperatorLoc()));
+      
+      Result = Ctx.getTypeSize(Exp->getArgumentType(),
+                               Exp->getOperatorLoc()) / CharSize;
+    }
     else
       Result = Ctx.getTypeAlign(Exp->getArgumentType(), Exp->getOperatorLoc());
+    
     break;
   }
   case BinaryOperatorClass: {
