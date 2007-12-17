@@ -873,7 +873,8 @@ bool BitcodeReader::ParseModule(const std::string &ModuleID) {
       // Look for intrinsic functions which need to be upgraded at some point
       for (Module::iterator FI = TheModule->begin(), FE = TheModule->end();
            FI != FE; ++FI) {
-        if (Function* NewFn = UpgradeIntrinsicFunction(FI))
+        Function* NewFn;
+        if (UpgradeIntrinsicFunction(FI, NewFn))
           UpgradedIntrinsics.push_back(std::make_pair(FI, NewFn));
       }
 

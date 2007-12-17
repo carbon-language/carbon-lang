@@ -20,8 +20,10 @@ namespace llvm {
   class BasicBlock;
 
   /// This is a more granular function that simply checks an intrinsic function 
-  /// for upgrading, and if it requires upgrading provides the new function.
-  Function* UpgradeIntrinsicFunction(Function *F);
+  /// for upgrading, and returns true if it requires upgrading. It may return
+  /// null in NewFn if the all calls to the original intrinsic function
+  /// should be transformed to non-function-call instructions.
+  bool UpgradeIntrinsicFunction(Function *F, Function *&NewFn);
 
   /// This is the complement to the above, replacing a specific call to an 
   /// intrinsic function with a call to the specified new function.

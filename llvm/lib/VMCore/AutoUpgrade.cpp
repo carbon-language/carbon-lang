@@ -21,7 +21,7 @@
 using namespace llvm;
 
 
-static Function* UpgradeIntrinsicFunction1(Function *F) {
+static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
   assert(F && "Illegal to upgrade a non-existent Function.");
 
   // Get the Function's name.
@@ -33,7 +33,7 @@ static Function* UpgradeIntrinsicFunction1(Function *F) {
   // Quickly eliminate it, if it's not a candidate.
   if (Name.length() <= 8 || Name[0] != 'l' || Name[1] != 'l' || 
       Name[2] != 'v' || Name[3] != 'm' || Name[4] != '.')
-    return 0;
+    return false;
 
   Module *M = F->getParent();
   switch (Name[5]) {
@@ -49,7 +49,8 @@ static Function* UpgradeIntrinsicFunction1(Function *F) {
       if (delim != std::string::npos) {
         //  Construct the new name as 'llvm.bswap' + '.i*'
         F->setName(Name.substr(0,10)+Name.substr(delim));
-        return F;
+        NewFn = F;
+        return true;
       }
     }
     break;
@@ -71,10 +72,11 @@ static Function* UpgradeIntrinsicFunction1(Function *F) {
       //  Now construct the new intrinsic with the correct name and type. We 
       //  leave the old function around in order to query its type, whatever it 
       //  may be, and correctly convert up to the new type.
-      return cast<Function>(M->getOrInsertFunction(Name, 
-                                                   FTy->getParamType(0),
-                                                   FTy->getParamType(0),
-                                                   (Type *)0));
+      NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                    FTy->getParamType(0),
+                                                    FTy->getParamType(0),
+                                                    (Type *)0));
+      return true;
     }
     break;
 
@@ -88,7 +90,8 @@ static Function* UpgradeIntrinsicFunction1(Function *F) {
       if (delim != std::string::npos) {
         //  Construct a new name as 'llvm.part.select' + '.i*'
         F->setName(Name.substr(0,16)+Name.substr(delim));
-        return F;
+        NewFn = F;
+        return true;
       }
       break;
     }
@@ -105,7 +108,8 @@ static Function* UpgradeIntrinsicFunction1(Function *F) {
           Name.find('.',delim+1) != std::string::npos) {
         //  Construct a new name as 'llvm.part.select' + '.i*.i*'
         F->setName(Name.substr(0,13)+Name.substr(delim));
-        return F;
+        NewFn = F;
+        return true;
       }
       break;
     }
@@ -137,12 +141,18 @@ static Function* UpgradeIntrinsicFunction1(Function *F) {
       //  Now construct the new intrinsic with the correct name and type. We 
       //  leave the old function around in order to query its type, whatever it 
       //  may be, and correctly convert up to the new type.
-      return cast<Function>(M->getOrInsertFunction(Name, 
-                                                   FTy->getReturnType(),
-                                                   FTy->getParamType(0),
-                                                   VT,
-                                                   (Type *)0));
+      NewFn = cast<Function>(M->getOrInsertFunction(Name, 
+                                                    FTy->getReturnType(),
+                                                    FTy->getParamType(0),
+                                                    VT,
+                                                    (Type *)0));
+      return true;
+    } else if (Name.compare(5,16,"x86.sse2.movl.dq",16) == 0) {
+      // Calls to this intrinsic are transformed into ShuffleVector's.
+      NewFn = 0;
+      return true;
     }
+
     break;
   }
 
@@ -150,15 +160,16 @@ static Function* UpgradeIntrinsicFunction1(Function *F) {
   //  to both detect an intrinsic which needs upgrading, and to provide the 
   //  upgraded form of the intrinsic. We should perhaps have two separate 
   //  functions for this.
-  return 0;
+  return false;
 }
 
-Function* llvm::UpgradeIntrinsicFunction(Function *F) {
-  Function *Upgraded = UpgradeIntrinsicFunction1(F);
+bool llvm::UpgradeIntrinsicFunction(Function *F, Function *&NewFn) {
+  NewFn = 0;
+  bool Upgraded = UpgradeIntrinsicFunction1(F, NewFn);
 
   // Upgrade intrinsic attributes.  This does not change the function.
-  if (Upgraded)
-    F = Upgraded;
+  if (NewFn)
+    F = NewFn;
   if (unsigned id = F->getIntrinsicID(true))
     F->setParamAttrs(Intrinsic::getParamAttrs((Intrinsic::ID)id));
   return Upgraded;
@@ -168,11 +179,44 @@ Function* llvm::UpgradeIntrinsicFunction(Function *F) {
 // upgraded intrinsic. All argument and return casting must be provided in 
 // order to seamlessly integrate with existing context.
 void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
-  assert(NewFn && "Cannot upgrade an intrinsic call without a new function.");
-
   Function *F = CI->getCalledFunction();
   assert(F && "CallInst has no function associated with it.");
-  
+
+  if (!NewFn) {
+    switch(F->getIntrinsicID()) {
+    default:  assert(0 && "Unknown function for CallInst upgrade.");
+    case Intrinsic::x86_sse2_movl_dq: {
+      std::vector<Constant*> Idxs;
+      Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
+      Idxs.push_back(Zero);
+      Idxs.push_back(Zero);
+      Idxs.push_back(Zero);
+      Idxs.push_back(Zero);
+      Value *ZeroV = ConstantVector::get(Idxs);
+
+      Idxs.clear(); 
+      Idxs.push_back(ConstantInt::get(Type::Int32Ty, 4));
+      Idxs.push_back(ConstantInt::get(Type::Int32Ty, 5));
+      Idxs.push_back(ConstantInt::get(Type::Int32Ty, 2));
+      Idxs.push_back(ConstantInt::get(Type::Int32Ty, 3));
+      Value *Mask = ConstantVector::get(Idxs);
+      ShuffleVectorInst *SI = new ShuffleVectorInst(ZeroV, CI->getOperand(1),
+                                                    Mask, "upgraded", CI);
+
+      // Handle any uses of the old CallInst.
+      if (!CI->use_empty())
+        //  Replace all uses of the old call with the new cast which has the 
+        //  correct type.
+        CI->replaceAllUsesWith(SI);
+      
+      //  Clean up the old call now that it has been completely upgraded.
+      CI->eraseFromParent();
+      break;
+    }
+    }
+    return;
+  }
+
   switch(NewFn->getIntrinsicID()) {
   default:  assert(0 && "Unknown function for CallInst upgrade.");
   case Intrinsic::x86_mmx_psll_d:
@@ -257,7 +301,8 @@ void llvm::UpgradeCallsToIntrinsic(Function* F) {
   assert(F && "Illegal attempt to upgrade a non-existent intrinsic.");
 
   // Upgrade the function and check if it is a totaly new function.
-  if (Function* NewFn = UpgradeIntrinsicFunction(F)) {
+  Function* NewFn;
+  if (UpgradeIntrinsicFunction(F, NewFn)) {
     if (NewFn != F) {
       // Replace all uses to the old function with the new one if necessary.
       for (Value::use_iterator UI = F->use_begin(), UE = F->use_end();
