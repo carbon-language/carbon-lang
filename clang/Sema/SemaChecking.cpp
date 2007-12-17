@@ -98,7 +98,7 @@ Sema::CheckFunctionCall(Expr *Fn,
       case id_fprintf:   format_idx = 1; break;
       case id_sprintf:   format_idx = 1; break;
       case id_snprintf:  format_idx = 2; break;
-      case id_asprintf:  format_idx = 1; HasVAListArg = true; break;
+      case id_asprintf:  format_idx = 1; break;
       case id_vsnprintf: format_idx = 2; HasVAListArg = true; break;
       case id_vasprintf: format_idx = 1; HasVAListArg = true; break;
       case id_vfprintf:  format_idx = 1; HasVAListArg = true; break;
