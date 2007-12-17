@@ -103,7 +103,6 @@
 		DEC8D9910A9433CD00353FCA /* Decl.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9900A9433CD00353FCA /* Decl.h */; };
 		DEC8D9A40A94346E00353FCA /* AST.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DEC8D9A30A94346E00353FCA /* AST.h */; };
 		DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED626C80AE0C065001E80A4 /* TargetInfo.cpp */; };
-		DED627030AE0C51D001E80A4 /* Targets.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED627020AE0C51D001E80A4 /* Targets.cpp */; };
 		DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */; };
 		DED676D10B6C786700AAD4A3 /* Builtins.def in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED676D00B6C786700AAD4A3 /* Builtins.def */; };
 		DED676FA0B6C797B00AAD4A3 /* Builtins.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = DED676F90B6C797B00AAD4A3 /* Builtins.h */; };
@@ -336,7 +335,6 @@
 		DEC8D9900A9433CD00353FCA /* Decl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Decl.h; path = clang/AST/Decl.h; sourceTree = "<group>"; };
 		DEC8D9A30A94346E00353FCA /* AST.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AST.h; path = clang/AST/AST.h; sourceTree = "<group>"; };
 		DED626C80AE0C065001E80A4 /* TargetInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TargetInfo.cpp; sourceTree = "<group>"; };
-		DED627020AE0C51D001E80A4 /* Targets.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Targets.cpp; path = Driver/Targets.cpp; sourceTree = "<group>"; };
 		DED62ABA0AE2EDF1001E80A4 /* Decl.cpp */ = {isa = PBXFileReference; fileEncoding = 30; indentWidth = 2; lastKnownFileType = sourcecode.cpp.cpp; name = Decl.cpp; path = AST/Decl.cpp; sourceTree = "<group>"; tabWidth = 8; usesTabs = 0; };
 		DED676D00B6C786700AAD4A3 /* Builtins.def */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; name = Builtins.def; path = clang/AST/Builtins.def; sourceTree = "<group>"; };
 		DED676F90B6C797B00AAD4A3 /* Builtins.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = Builtins.h; path = clang/AST/Builtins.h; sourceTree = "<group>"; };
@@ -589,7 +587,6 @@
 				DE5932D00AD60FF400BC794C /* PrintPreprocessedOutput.cpp */,
 				DEA977890CBE87EB00F872F9 /* RewriteTest.cpp */,
 				352981080CC58344008B5E84 /* SerializationTest.cpp */,
-				DED627020AE0C51D001E80A4 /* Targets.cpp */,
 				DEB0AEBA0C2087AB00718A22 /* TextDiagnostics.cpp */,
 				DEB0AEB80C2087A700718A22 /* TextDiagnostics.h */,
 				F0226FD00C18084500141F42 /* TextDiagnosticPrinter.cpp */,
@@ -811,7 +808,6 @@
 				DE5932D30AD60FF400BC794C /* PrintParserCallbacks.cpp in Sources */,
 				DE5932D40AD60FF400BC794C /* PrintPreprocessedOutput.cpp in Sources */,
 				DED626C90AE0C065001E80A4 /* TargetInfo.cpp in Sources */,
-				DED627030AE0C51D001E80A4 /* Targets.cpp in Sources */,
 				DED62ABB0AE2EDF1001E80A4 /* Decl.cpp in Sources */,
 				DE344B540AE5E46C00DBC861 /* HeaderSearch.cpp in Sources */,
 				DE3451580AEC176100DBC861 /* MacroExpander.cpp in Sources */,
