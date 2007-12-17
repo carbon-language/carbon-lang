@@ -144,6 +144,40 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   return true;
 }
 
+/// isReallySideEffectFree - If the M_MAY_HAVE_SIDE_EFFECTS flag is set, this
+/// method is called to determine if the specific instance of this instruction
+/// has side effects. This is useful in cases of instructions, like loads, which
+/// generally always have side effects. A load from a constant pool doesn't have
+/// side effects, though. So we need to differentiate it from the general case.
+bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case X86::MOV8rm:
+  case X86::MOV16rm:
+  case X86::MOV16_rm:
+  case X86::MOV32rm:
+  case X86::MOV32_rm:
+  case X86::MOV64rm:
+  case X86::LD_Fp64m:
+  case X86::MOVSSrm:
+  case X86::MOVSDrm:
+  case X86::MOVAPSrm:
+  case X86::MOVAPDrm:
+  case X86::MMX_MOVD64rm:
+  case X86::MMX_MOVQ64rm:
+    // Loads from constant pools have no side effects
+    return MI->getOperand(1).isRegister() && MI->getOperand(2).isImmediate() &&
+           MI->getOperand(3).isRegister() && MI->getOperand(4).isConstantPoolIndex() &&
+           MI->getOperand(1).getReg() == 0 &&
+           MI->getOperand(2).getImmedValue() == 1 &&
+           MI->getOperand(3).getReg() == 0;
+  }
+
+  // All other instances of these instructions are presumed to have side
+  // effects.
+  return false;
+}
+
 /// hasLiveCondCodeDef - True if MI has a condition code def, e.g. EFLAGS, that
 /// is not marked dead.
 static bool hasLiveCondCodeDef(MachineInstr *MI) {

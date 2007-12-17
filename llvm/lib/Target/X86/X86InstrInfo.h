@@ -240,7 +240,8 @@ public:
   unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
   unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
   bool isReallyTriviallyReMaterializable(MachineInstr *MI) const;
-  
+  bool isReallySideEffectFree(MachineInstr *MI) const;
+
   /// convertToThreeAddress - This method must be implemented by targets that
   /// set the M_CONVERTIBLE_TO_3_ADDR flag.  When this flag is set, the target
   /// may be able to convert a two-address instruction into a true

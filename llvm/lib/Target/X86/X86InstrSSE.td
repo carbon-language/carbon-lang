@@ -301,7 +301,7 @@ let Uses = [EFLAGS], usesCustomDAGSchedInserter = 1 in {
 // Move Instructions
 def MOVSSrr : SSI<0x10, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                   "movss\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1, isReMaterializable = 1 in
+let isLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MOVSSrm : SSI<0x10, MRMSrcMem, (outs FR32:$dst), (ins f32mem:$src),
                   "movss\t{$src, $dst|$dst, $src}",
                   [(set FR32:$dst, (loadf32 addr:$src))]>;
@@ -445,7 +445,7 @@ def Int_COMISSrm: PSI<0x2F, MRMSrcMem, (outs),
 // start with 'Fs'.
 
 // Alias instructions that map fld0 to pxor for sse.
-let isReMaterializable = 1 in
+let isReMaterializable = 1, neverHasSideEffects = 1 in
 def FsFLD0SS : I<0xEF, MRMInitReg, (outs FR32:$dst), (ins),
                  "pxor\t$dst, $dst", [(set FR32:$dst, fp32imm0)]>,
                Requires<[HasSSE1]>, TB, OpSize;
@@ -634,7 +634,7 @@ defm MIN : sse1_fp_binop_rm<0x5D, "min", X86fmin,
 // Move Instructions
 def MOVAPSrr : PSI<0x28, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movaps\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1, isReMaterializable = 1 in
+let isLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MOVAPSrm : PSI<0x28, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movaps\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (alignedloadv4f32 addr:$src))]>;
@@ -940,7 +940,7 @@ def STMXCSR : PSI<0xAE, MRM3m, (outs), (ins i32mem:$dst),
                   "stmxcsr\t$dst", [(int_x86_sse_stmxcsr addr:$dst)]>;
 
 // Alias instructions that map zero vector to pxor / xorp* for sse.
-let isReMaterializable = 1 in
+let isReMaterializable = 1, neverHasSideEffects = 1 in
 def V_SET0 : PSI<0x57, MRMInitReg, (outs VR128:$dst), (ins),
                  "xorps\t$dst, $dst",
                  [(set VR128:$dst, (v4i32 immAllZerosV))]>;
@@ -1003,7 +1003,7 @@ def MOVZSS2PSrm : SSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f32mem:$src),
 // Move Instructions
 def MOVSDrr : SDI<0x10, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
                   "movsd\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1, isReMaterializable = 1 in
+let isLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MOVSDrm : SDI<0x10, MRMSrcMem, (outs FR64:$dst), (ins f64mem:$src),
                   "movsd\t{$src, $dst|$dst, $src}",
                   [(set FR64:$dst, (loadf64 addr:$src))]>;
@@ -1141,7 +1141,7 @@ def Int_COMISDrm: PDI<0x2F, MRMSrcMem, (outs), (ins VR128:$src1, f128mem:$src2),
 // start with 'Fs'.
 
 // Alias instructions that map fld0 to pxor for sse.
-let isReMaterializable = 1 in
+let isReMaterializable = 1, neverHasSideEffects = 1 in
 def FsFLD0SD : I<0xEF, MRMInitReg, (outs FR64:$dst), (ins),
                  "pxor\t$dst, $dst", [(set FR64:$dst, fpimm0)]>,
                Requires<[HasSSE2]>, TB, OpSize;
@@ -1330,7 +1330,7 @@ defm MIN : sse2_fp_binop_rm<0x5D, "min", X86fmin,
 // Move Instructions
 def MOVAPDrr : PDI<0x28, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movapd\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1, isReMaterializable = 1 in
+let isLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MOVAPDrm : PDI<0x28, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movapd\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (alignedloadv2f64 addr:$src))]>;
@@ -2119,7 +2119,7 @@ def MFENCE : I<0xAE, MRM6m, (outs), (ins),
 
 
 // Alias instructions that map zero vector to pxor / xorp* for sse.
-let isReMaterializable = 1 in
+let isReMaterializable = 1, neverHasSideEffects = 1 in
   def V_SETALLONES : PDI<0x76, MRMInitReg, (outs VR128:$dst), (ins),
                          "pcmpeqd\t$dst, $dst",
                          [(set VR128:$dst, (v4i32 immAllOnesV))]>;

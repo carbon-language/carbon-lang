@@ -158,7 +158,7 @@ def MMX_FEMMS : MMXI<0x0E, RawFrm, (outs), (ins), "femms", [(int_x86_mmx_femms)]
 // Data Transfer Instructions
 def MMX_MOVD64rr : MMXI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR32:$src),
                         "movd\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1, isReMaterializable = 1 in
+let isLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MMX_MOVD64rm : MMXI<0x6E, MRMSrcMem, (outs VR64:$dst), (ins i32mem:$src),
                         "movd\t{$src, $dst|$dst, $src}", []>;
 def MMX_MOVD64mr : MMXI<0x7E, MRMDestMem, (outs), (ins i32mem:$dst, VR64:$src),
@@ -169,7 +169,7 @@ def MMX_MOVD64to64rr : MMXRI<0x6E, MRMSrcReg, (outs VR64:$dst), (ins GR64:$src),
 
 def MMX_MOVQ64rr : MMXI<0x6F, MRMSrcReg, (outs VR64:$dst), (ins VR64:$src),
                         "movq\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1, isReMaterializable = 1 in
+let isLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MMX_MOVQ64rm : MMXI<0x6F, MRMSrcMem, (outs VR64:$dst), (ins i64mem:$src),
                         "movq\t{$src, $dst|$dst, $src}",
                         [(set VR64:$dst, (load_mmx addr:$src))]>;
@@ -487,7 +487,7 @@ def MMX_MASKMOVQ : MMXI<0xF7, MRMDestMem, (outs), (ins VR64:$src, VR64:$mask),
 //===----------------------------------------------------------------------===//
 
 // Alias instructions that map zero vector to pxor.
-let isReMaterializable = 1 in {
+let isReMaterializable = 1, neverHasSideEffects = 1 in {
   def MMX_V_SET0       : MMXI<0xEF, MRMInitReg, (outs VR64:$dst), (ins),
                               "pxor\t$dst, $dst",
                               [(set VR64:$dst, (v2i32 immAllZerosV))]>;
