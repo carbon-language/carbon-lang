@@ -848,11 +848,16 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
     for (unsigned i = 0, e = SearchList.size(); i != e; ++i) {
       if (i == QuotedIdx)
         fprintf(stderr, "#include <...> search starts here:\n");
-      fprintf(stderr, " %s", SearchList[i].getDir()->getName());
-      if (SearchList[i].isFramework())
-        fprintf(stderr, " (framework directory)");
-      // FIXME: Print (headermap)"
-      fprintf(stderr, "\n");
+      if (SearchList[i].isNormalDir())
+        fprintf(stderr, " %s\n", SearchList[i].getDir()->getName());
+      else if (SearchList[i].isFramework())
+        fprintf(stderr, " %s (framework directory)\n",
+                SearchList[i].getFrameworkDir()->getName());
+      else {
+        assert(SearchList[i].isHeaderMap() && "Unknown DirectoryLookup");
+        //fprintf(stderr, " %s (headermap)\n",
+        //        SearchList[i].getHeaderMap()->getName());
+      }
     }
     fprintf(stderr, "End of search list.\n");
   }
