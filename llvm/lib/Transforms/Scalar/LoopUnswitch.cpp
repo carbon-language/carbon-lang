@@ -636,7 +636,7 @@ void LoopUnswitch::ReplaceLoopExternalDFMember(Loop *L, BasicBlock *BB,
     BasicBlock *B = *DI++;
     if (L->contains(B))
       continue;
-  
+
     DF->removeFromFrontier(DFI, B);
     LoopDF.insert(B);
   }
