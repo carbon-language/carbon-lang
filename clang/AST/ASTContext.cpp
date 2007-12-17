@@ -719,7 +719,7 @@ QualType ASTContext::getObjcQualifiedInterfaceType(ObjcInterfaceDecl *Decl,
 }
 
 /// getObjcQualifiedIdType - Return a 
-/// getObjcQualifiedIdType type for the given interface decl and
+/// getObjcQualifiedIdType type for the 'id' decl and
 /// the conforming protocol list.
 QualType ASTContext::getObjcQualifiedIdType(TypedefDecl *Decl,
                                             ObjcProtocolDecl **Protocols, 
