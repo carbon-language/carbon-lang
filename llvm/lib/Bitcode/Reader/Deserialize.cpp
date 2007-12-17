@@ -329,11 +329,18 @@ char* Deserializer::ReadCStr(char* cstr, unsigned MaxLen, bool isNullTerm) {
   return cstr;
 }
 
-void Deserializer::ReadCStr(std::vector<char>& buff, bool isNullTerm) {
+void Deserializer::ReadCStr(std::vector<char>& buff, bool isNullTerm,
+                            unsigned Idx) {
+  
   unsigned len = ReadInt();
 
-  buff.clear();  
-  buff.reserve(len);
+  // If Idx is beyond the current before size, reduce Idx to refer to the
+  // element after the last element.
+  if (Idx > buff.size())
+    Idx = buff.size();
+
+  buff.reserve(len+Idx);
+  buff.resize(Idx);      
   
   for (unsigned i = 0; i < len; ++i)
     buff.push_back((char) ReadInt());

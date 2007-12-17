@@ -156,7 +156,7 @@ public:
   }
   
   char* ReadCStr(char* cstr = NULL, unsigned MaxLen=0, bool isNullTerm=true);
-  void ReadCStr(std::vector<char>& buff, bool isNullTerm=false);
+  void ReadCStr(std::vector<char>& buff, bool isNullTerm=false, unsigned Idx=0);
 
   template <typename T>
   inline T* ReadOwnedPtr(bool AutoRegister = true) {
