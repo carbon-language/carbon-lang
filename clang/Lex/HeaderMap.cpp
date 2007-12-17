@@ -14,6 +14,7 @@
 #include "clang/Lex/HeaderMap.h"
 #include "clang/Basic/FileManager.h"
 #include "llvm/ADT/scoped_ptr.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -50,6 +51,19 @@ struct HMapHeader {
   // Strings follow the buckets, at StringsOffset.
 };
 } // end namespace clang.
+
+/// HashHMapKey - This is the 'well known' hash function required by the file
+/// format, used to look up keys in the hash table.  The hash table uses simple
+/// linear probing based on this function.
+static inline unsigned HashHMapKey(const char *S, const char *End) {
+  unsigned Result = 0;
+  
+  for (; S != End; S++)
+    Result += tolower(*S) * 13;
+  return Result;
+}
+
+
 
 //===----------------------------------------------------------------------===//
 // Verification and Construction
@@ -155,6 +169,17 @@ const char *HeaderMap::getString(unsigned StrTabIdx) const {
   return FileBuffer->getBufferStart()+StrTabIdx;
 }
 
+/// StringsEqualWithoutCase - Compare the specified two strings for case-
+/// insensitive equality, returning true if they are equal.  Both strings are
+/// known to have the same length.
+static bool StringsEqualWithoutCase(const char *S1, const char *S2,
+                                    unsigned Len) {
+  for (; Len; ++S1, ++S2, --Len)
+    if (tolower(*S1) != tolower(*S2))
+      return false;
+  return true;
+}
+
 //===----------------------------------------------------------------------===//
 // The Main Drivers
 //===----------------------------------------------------------------------===//
@@ -184,6 +209,34 @@ void HeaderMap::dump() const {
 const FileEntry *HeaderMap::LookupFile(const char *FilenameStart,
                                        const char *FilenameEnd,
                                        FileManager &FM) const {
-  // FIXME: this needs work.
-  return 0;
+  const HMapHeader &Hdr = getHeader();
+  unsigned NumBuckets = getEndianAdjustedWord(Hdr.NumBuckets);
+
+  // If the number of buckets is not a power of two, the headermap is corrupt.
+  // Don't probe infinitely.
+  if (NumBuckets & (NumBuckets-1))
+    return 0;
+  
+  // Linearly probe the hash table.
+  for (unsigned Bucket = HashHMapKey(FilenameStart, FilenameEnd);; ++Bucket) {
+    HMapBucket B = getBucket(Bucket & (NumBuckets-1));
+    if (B.Key == HMAP_EmptyBucketKey) return 0; // Hash miss.
+    
+    // See if the key matches.  If not, probe on.
+    const char *Key = getString(B.Key);
+    unsigned BucketKeyLen = strlen(Key);
+    if (BucketKeyLen != unsigned(FilenameEnd-FilenameStart))
+      continue;
+    
+    // See if the actual strings equal.
+    if (!StringsEqualWithoutCase(FilenameStart, Key, BucketKeyLen))
+      continue;
+    
+    // If so, we have a match in the hash table.  Construct the destination
+    // path.
+    llvm::SmallString<1024> DestPath;
+    DestPath += getString(B.Prefix);
+    DestPath += getString(B.Suffix);
+    return FM.getFile(DestPath.begin(), DestPath.end());
+  }
 }
