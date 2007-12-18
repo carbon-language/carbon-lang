@@ -321,7 +321,7 @@ namespace sys {
       /// shared library.
       /// @brief Determine if the path reference a dynamic library.
       bool isDynamicLibrary() const;
-
+    
       /// This function determines if the path name references an existing file
       /// or directory in the file system.
       /// @returns true if the pathname references an existing file or
@@ -330,6 +330,12 @@ namespace sys {
       /// the file system.
       bool exists() const;
 
+      /// This function determines if the path name refences an 
+      /// existing directory.
+      /// @returns true if the pathname references an existing directory.
+      /// @brief Determins if the path is a directory in the file system.
+      bool isDirectory() const;
+    
       /// This function determines if the path name references a readable file
       /// or directory in the file system. This function checks for
       /// the existence and readability (by the current program) of the file

@@ -254,6 +254,13 @@ Path::exists() const {
 }
 
 bool
+Path::isDirectory() const {
+  DWORD attr = GetFileAttributes(path.c_str());
+  return (attr != INVALID_FILE_ATTRIBUTES) &&
+         (attr & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+bool
 Path::canRead() const {
   // FIXME: take security attributes into account.
   DWORD attr = GetFileAttributes(path.c_str());

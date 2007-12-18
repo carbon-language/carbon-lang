@@ -289,6 +289,14 @@ Path::exists() const {
 }
 
 bool
+Path::isDirectory() const {
+  struct stat buf;
+  if (0 != stat(path.c_str(), &buf))
+    return false;
+  return buf.st_mode & S_IFDIR ? true : false;
+}
+
+bool
 Path::canRead() const {
   return 0 == access(path.c_str(), F_OK | R_OK );
 }
