@@ -2135,7 +2135,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   //   add (select (icmp A m) X Y) A
   // 
   // add (select X 0 (sub n A)) A ->
-  //  select X A n ->
+  //  select X A n
   {
     SelectInst *SI = dyn_cast<SelectInst>(LHS);
     Value *Other = RHS;
