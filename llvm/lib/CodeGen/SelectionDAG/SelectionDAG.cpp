@@ -3939,6 +3939,15 @@ void SDNode::dump(const SelectionDAG *G) const {
   } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {
     cerr << ":" << MVT::getValueTypeString(N->getVT());
   } else if (const LoadSDNode *LD = dyn_cast<LoadSDNode>(this)) {
+    const Value *SrcValue = LD->getSrcValue();
+    int SrcOffset = LD->getSrcValueOffset();
+    cerr << " <";
+    if (SrcValue)
+      cerr << SrcValue;
+    else
+      cerr << "null";
+    cerr << ":" << SrcOffset << ">";
+
     bool doExt = true;
     switch (LD->getExtensionType()) {
     default: doExt = false; break;
@@ -3958,24 +3967,10 @@ void SDNode::dump(const SelectionDAG *G) const {
     const char *AM = getIndexedModeName(LD->getAddressingMode());
     if (*AM)
       cerr << " " << AM;
-
-    const Value *SrcValue = LD->getSrcValue();
-    int SrcOffset = LD->getSrcValueOffset();
-    cerr << " <";
-    if (SrcValue)
-      cerr << SrcValue;
-    else
-      cerr << "null";
-    cerr << ":" << SrcOffset << ">";
+    if (LD->isVolatile())
+      cerr << " <volatile>";
+    cerr << " alignment=" << LD->getAlignment();
   } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(this)) {
-    if (ST->isTruncatingStore())
-      cerr << " <trunc "
-           << MVT::getValueTypeString(ST->getStoredVT()) << ">";
-
-    const char *AM = getIndexedModeName(ST->getAddressingMode());
-    if (*AM)
-      cerr << " " << AM;
-
     const Value *SrcValue = ST->getSrcValue();
     int SrcOffset = ST->getSrcValueOffset();
     cerr << " <";
@@ -3984,6 +3979,17 @@ void SDNode::dump(const SelectionDAG *G) const {
     else
       cerr << "null";
     cerr << ":" << SrcOffset << ">";
+
+    if (ST->isTruncatingStore())
+      cerr << " <trunc "
+           << MVT::getValueTypeString(ST->getStoredVT()) << ">";
+
+    const char *AM = getIndexedModeName(ST->getAddressingMode());
+    if (*AM)
+      cerr << " " << AM;
+    if (ST->isVolatile())
+      cerr << " <volatile>";
+    cerr << " alignment=" << ST->getAlignment();
   }
 }
 
