@@ -295,6 +295,7 @@ public:
   bool isVectorType() const; // GCC vector type.
   bool isOCUVectorType() const; // OCU vector type.
   bool isObjcInterfaceType() const; // includes conforming protocol type
+  bool isObjcQualifiedIdType() const; // id includes conforming protocol type
   
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs, and return a pointer to the best type
@@ -956,15 +957,14 @@ public:
 };
 
 /// ObjcQualifiedIdType - to represent id<protocol-list>
-class ObjcQualifiedIdType : public TypedefType,
+class ObjcQualifiedIdType : public Type,
                             public llvm::FoldingSetNode {
   // List of protocols for this protocol conforming 'id' type
   // List is sorted on protocol name. No protocol is enterred more than once.
   llvm::SmallVector<ObjcProtocolDecl*, 8> Protocols;
     
-  ObjcQualifiedIdType(TypedefDecl *TD, QualType can,
-                      ObjcProtocolDecl **Protos,  unsigned NumP) : 
-  TypedefType(ObjcQualifiedId, TD, can), 
+  ObjcQualifiedIdType(QualType can, ObjcProtocolDecl **Protos,  unsigned NumP)
+  : Type(ObjcQualifiedId, can), 
   Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
@@ -1050,6 +1050,9 @@ inline bool Type::isOCUVectorType() const {
 inline bool Type::isObjcInterfaceType() const {
   return isa<ObjcInterfaceType>(CanonicalType)
            || isa<ObjcQualifiedInterfaceType>(CanonicalType);
+}
+inline bool Type::isObjcQualifiedIdType() const {
+  return isa<ObjcQualifiedIdType>(CanonicalType);
 }
 }  // end namespace clang
 

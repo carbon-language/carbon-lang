@@ -118,7 +118,7 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
           && DS.getProtocolQualifiers()) {
           // id<protocol-list>
         Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
-        return Ctx.getObjcQualifiedIdType(typeDecl,
+        return Ctx.getObjcQualifiedIdType(typeDecl->getUnderlyingType(),
                  reinterpret_cast<ObjcProtocolDecl**>(PPDecl),
                  DS.NumProtocolQualifiers());
       }

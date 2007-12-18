@@ -433,7 +433,8 @@ bool Type::isScalarType() const {
     return false;
   }
   return isa<PointerType>(CanonicalType) || isa<ComplexType>(CanonicalType) ||
-         isa<VectorType>(CanonicalType);
+         isa<VectorType>(CanonicalType) || 
+         isa<ObjcQualifiedIdType>(CanonicalType);
 }
 
 bool Type::isAggregateType() const {

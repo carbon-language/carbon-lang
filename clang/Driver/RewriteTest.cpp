@@ -490,7 +490,7 @@ void RewriteTest::RewriteForwardProtocolDecl(ObjcForwardProtocolDecl *PDecl) {
 void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD, 
                                         std::string &ResultStr) {
   ResultStr += "\nstatic ";
-  if (isa<ObjcQualifiedIdType>(OMD->getResultType()))
+  if (OMD->getResultType()->isObjcQualifiedIdType())
     ResultStr += "id";
   else
     ResultStr += OMD->getResultType().getAsString();
@@ -551,7 +551,7 @@ void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD,
   for (int i = 0; i < OMD->getNumParams(); i++) {
     ParmVarDecl *PDecl = OMD->getParamDecl(i);
     ResultStr += ", ";
-    if (isa<ObjcQualifiedIdType>(PDecl->getType()))
+    if (PDecl->getType()->isObjcQualifiedIdType())
       ResultStr += "id";
     else
       ResultStr += PDecl->getType().getAsString();
@@ -999,7 +999,7 @@ bool RewriteTest::needToScanForQualifiers(QualType T) {
   if (T == Context->getObjcIdType())
     return true;
     
-  if (isa<ObjcQualifiedIdType>(T))
+  if (T->isObjcQualifiedIdType())
     return true;
   
   if (const PointerType *pType = T->getAsPointerType()) {
@@ -1321,7 +1321,7 @@ ObjcInterfaceDecl *RewriteTest::isSuperReceiver(Expr *recExpr) {
         if (ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(DRE->getDecl())) {
           if (!strcmp(PVD->getName(), "self")) {
             // is this id<P1..> type?
-            if (isa<ObjcQualifiedIdType>(CE->getType()))
+            if (CE->getType()->isObjcQualifiedIdType())
               return 0;
             if (const PointerType *PT = CE->getType()->getAsPointerType()) {
               if (ObjcInterfaceType *IT = 
@@ -1516,9 +1516,18 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     // Make all implicit casts explicit...ICE comes in handy:-)
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(userExpr)) {
       // Reuse the ICE type, it is exactly what the doctor ordered.
-      userExpr = new CastExpr(isa<ObjcQualifiedIdType>(ICE->getType()) 
+      userExpr = new CastExpr(ICE->getType()->isObjcQualifiedIdType()
                                 ? Context->getObjcIdType()
                                 : ICE->getType(), userExpr, SourceLocation());
+    }
+    // Make id<P...> cast into an 'id' cast.
+    else if (CastExpr *CE = dyn_cast<CastExpr>(userExpr)) {
+      if (CE->getType()->isObjcQualifiedIdType()) {
+        while ((CE = dyn_cast<CastExpr>(userExpr)))
+          userExpr = CE->getSubExpr();
+        userExpr = new CastExpr(Context->getObjcIdType(), 
+                                userExpr, SourceLocation());
+      }
     } 
     MsgExprs.push_back(userExpr);
     // We've transferred the ownership to MsgExprs. Null out the argument in
@@ -1539,12 +1548,12 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   if (ObjcMethodDecl *mDecl = Exp->getMethodDecl()) {
     // Push any user argument types.
     for (int i = 0; i < mDecl->getNumParams(); i++) {
-      QualType t = isa<ObjcQualifiedIdType>(mDecl->getParamDecl(i)->getType()) 
+      QualType t = mDecl->getParamDecl(i)->getType()->isObjcQualifiedIdType()
                      ? Context->getObjcIdType() 
                      : mDecl->getParamDecl(i)->getType();
       ArgTypes.push_back(t);
     }
-    returnType = isa<ObjcQualifiedIdType>(mDecl->getResultType()) 
+    returnType = mDecl->getResultType()->isObjcQualifiedIdType()
                    ? Context->getObjcIdType() : mDecl->getResultType();
   } else {
     returnType = Context->getObjcIdType();

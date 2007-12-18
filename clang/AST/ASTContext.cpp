@@ -258,6 +258,8 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     }
     break;
   }
+  case Type::ObjcQualifiedId: Target.getPointerInfo(Size, Align, getFullLoc(L));
+			      break;
   case Type::Pointer: Target.getPointerInfo(Size, Align, getFullLoc(L)); break;
   case Type::Reference:
     // "When applied to a reference or a reference type, the result is the size
@@ -721,7 +723,7 @@ QualType ASTContext::getObjcQualifiedInterfaceType(ObjcInterfaceDecl *Decl,
 /// getObjcQualifiedIdType - Return a 
 /// getObjcQualifiedIdType type for the 'id' decl and
 /// the conforming protocol list.
-QualType ASTContext::getObjcQualifiedIdType(TypedefDecl *Decl,
+QualType ASTContext::getObjcQualifiedIdType(QualType idType,
                                             ObjcProtocolDecl **Protocols, 
                                             unsigned NumProtocols) {
   llvm::FoldingSetNodeID ID;
@@ -733,9 +735,17 @@ QualType ASTContext::getObjcQualifiedIdType(TypedefDecl *Decl,
     return QualType(QT, 0);
   
   // No Match;
-  QualType Canonical = Decl->getUnderlyingType().getCanonicalType();
-  ObjcQualifiedIdType *QType =
-  new ObjcQualifiedIdType(Decl, Canonical, Protocols, NumProtocols);
+  QualType Canonical;
+  if (!idType->isCanonical()) {
+    Canonical = getObjcQualifiedIdType(idType.getCanonicalType(), 
+                                       Protocols, NumProtocols);
+    ObjcQualifiedIdType *NewQT = 
+      ObjcQualifiedIdTypes.FindNodeOrInsertPos(ID, InsertPos);
+    assert(NewQT == 0 && "Shouldn't be in the map!");
+  }
+  
+  ObjcQualifiedIdType *QType = 
+    new ObjcQualifiedIdType(Canonical, Protocols, NumProtocols);
   Types.push_back(QType);
   ObjcQualifiedIdTypes.InsertNode(QType, InsertPos);
   return QualType(QType, 0);
@@ -1072,9 +1082,9 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     
     S += encoding;
   }
-  else if (const ObjcQualifiedIdType *QIT = dyn_cast<ObjcQualifiedIdType>(T)) {
+  else if (T->isObjcQualifiedIdType()) {
     // Treat id<P...> same as 'id' for encoding purposes.
-    return getObjcEncodingForType(QIT->getDecl()->getUnderlyingType(), S);
+    return getObjcEncodingForType(getObjcIdType(), S);
     
   }
   else if (const PointerType *PT = T->getAsPointerType()) {
