@@ -415,7 +415,19 @@ void ContentCache::Emit(llvm::Serializer& S) const {
   S.FlushRecord();
   S.EmitPtr(this);
 
-  if (Entry) S.EmitCStr(Buffer->getBufferIdentifier());
+  if (Entry) {
+    llvm::sys::Path Fname(Buffer->getBufferIdentifier());
+
+    if (Fname.isAbsolute())
+      S.EmitCStr(Fname.c_str());
+    else {
+      // Create an absolute path.
+      // FIXME: This will potentially contain ".." and "." in the path.
+      llvm::sys::Path path = llvm::sys::Path::GetCurrentDirectory();
+      path.appendComponent(Fname.c_str());      
+      S.EmitCStr(path.c_str());
+    }
+  }
   else {
     const char* p = Buffer->getBufferStart();
     const char* e = Buffer->getBufferEnd();
