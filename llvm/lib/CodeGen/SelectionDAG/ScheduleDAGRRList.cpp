@@ -429,21 +429,9 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     DAG.ReplaceAllUsesOfValueWith(SDOperand(SU->Node, OldNumVals-1),
                                   SDOperand(LoadNode, 1));
 
-    SUnit *LoadSU = NewSUnit(LoadNode);
     SUnit *NewSU = NewSUnit(N);
-    SUnitMap[LoadNode].push_back(LoadSU);
     SUnitMap[N].push_back(NewSU);
-    const TargetInstrDescriptor *TID = &TII->get(LoadNode->getTargetOpcode());
-    for (unsigned i = 0; i != TID->numOperands; ++i) {
-      if (TID->getOperandConstraint(i, TOI::TIED_TO) != -1) {
-        LoadSU->isTwoAddress = true;
-        break;
-      }
-    }
-    if (TID->Flags & M_COMMUTABLE)
-      LoadSU->isCommutable = true;
-
-    TID = &TII->get(N->getTargetOpcode());
+    const TargetInstrDescriptor *TID = &TII->get(N->getTargetOpcode());
     for (unsigned i = 0; i != TID->numOperands; ++i) {
       if (TID->getOperandConstraint(i, TOI::TIED_TO) != -1) {
         NewSU->isTwoAddress = true;
@@ -452,12 +440,29 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     }
     if (TID->Flags & M_COMMUTABLE)
       NewSU->isCommutable = true;
-
     // FIXME: Calculate height / depth and propagate the changes?
-    LoadSU->Depth = NewSU->Depth = SU->Depth;
-    LoadSU->Height = NewSU->Height = SU->Height;
-    ComputeLatency(LoadSU);
+    NewSU->Depth = SU->Depth;
+    NewSU->Height = SU->Height;
     ComputeLatency(NewSU);
+
+    // LoadNode may already exist. This can happen when there is another
+    // load from the same location and producing the same type of value
+    // but it has different alignment or volatileness.
+    bool isNewLoad = true;
+    SUnit *LoadSU;
+    DenseMap<SDNode*, std::vector<SUnit*> >::iterator SMI =
+      SUnitMap.find(LoadNode);
+    if (SMI != SUnitMap.end()) {
+      LoadSU = SMI->second.front();
+      isNewLoad = false;
+    } else {
+      LoadSU = NewSUnit(LoadNode);
+      SUnitMap[LoadNode].push_back(LoadSU);
+
+      LoadSU->Depth = SU->Depth;
+      LoadSU->Height = SU->Height;
+      ComputeLatency(LoadSU);
+    }
 
     SUnit *ChainPred = NULL;
     SmallVector<SDep, 4> ChainSuccs;
@@ -484,12 +489,14 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     }
 
     SU->removePred(ChainPred, true, false);
-    LoadSU->addPred(ChainPred, true, false);
+    if (isNewLoad)
+      LoadSU->addPred(ChainPred, true, false);
     for (unsigned i = 0, e = LoadPreds.size(); i != e; ++i) {
       SDep *Pred = &LoadPreds[i];
       SU->removePred(Pred->Dep, Pred->isCtrl, Pred->isSpecial);
-      LoadSU->addPred(Pred->Dep, Pred->isCtrl, Pred->isSpecial,
-                      Pred->Reg, Pred->Cost);
+      if (isNewLoad)
+        LoadSU->addPred(Pred->Dep, Pred->isCtrl, Pred->isSpecial,
+                        Pred->Reg, Pred->Cost);
     }
     for (unsigned i = 0, e = NodePreds.size(); i != e; ++i) {
       SDep *Pred = &NodePreds[i];
@@ -506,12 +513,15 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     for (unsigned i = 0, e = ChainSuccs.size(); i != e; ++i) {
       SDep *Succ = &ChainSuccs[i];
       Succ->Dep->removePred(SU, Succ->isCtrl, Succ->isSpecial);
-      Succ->Dep->addPred(LoadSU, Succ->isCtrl, Succ->isSpecial,
-                         Succ->Reg, Succ->Cost);
+      if (isNewLoad)
+        Succ->Dep->addPred(LoadSU, Succ->isCtrl, Succ->isSpecial,
+                           Succ->Reg, Succ->Cost);
     } 
-    NewSU->addPred(LoadSU, false, false);
+    if (isNewLoad)
+      NewSU->addPred(LoadSU, false, false);
 
-    AvailableQueue->addNode(LoadSU);
+    if (isNewLoad)
+      AvailableQueue->addNode(LoadSU);
     AvailableQueue->addNode(NewSU);
 
     ++NumUnfolds;
@@ -519,8 +529,8 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     if (NewSU->NumSuccsLeft == 0) {
       NewSU->isAvailable = true;
       return NewSU;
-    } else
-      SU = NewSU;
+    }
+    SU = NewSU;
   }
 
   DOUT << "Duplicating SU # " << SU->NodeNum << "\n";
