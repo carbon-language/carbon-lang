@@ -2130,6 +2130,67 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       return new PtrToIntInst(I2, CI->getType());
     }
   }
+  
+  // add (select (icmp 0 (sub m A)) X Y) A ->
+  //   add (select (icmp A m) X Y) A
+  // 
+  // add (select X 0 (sub n A)) A ->
+  //  select X A n ->
+  {
+    SelectInst *SI = dyn_cast<SelectInst>(LHS);
+    Value *Other = RHS;
+    if (!SI) {
+      SI = dyn_cast<SelectInst>(RHS);
+      Other = LHS;
+    }
+    if (SI) {
+      Value *TV = SI->getTrueValue();
+      Value *FV = SI->getFalseValue();
+      Value *A;
+            
+      // Can we fold the add into the argument of the compare?
+      Value *Cond = SI->getCondition();
+      if (ICmpInst *IC = dyn_cast<ICmpInst>(Cond)) {
+        Value *ICOp0 = IC->getOperand(0);
+        Value *ICOp1 = IC->getOperand(1);
+        ConstantInt *C3, *C4;
+        
+        // Check both arguments of the compare for a matching subtract.
+        if (match(ICOp0, m_ConstantInt(C3)) && C3->getValue() == 0 &&
+            match(ICOp1, m_Sub(m_ConstantInt(C4), m_Value(A))) &&
+            A == Other) {
+          // We managed to fold the add into the RHS of the select condition.
+          Cond = new ICmpInst(IC->getPredicate(), A, C4, "asis", SI);
+        } else if (match(ICOp1, m_ConstantInt(C3)) && C3->getValue() == 0 &&
+            match(ICOp0, m_Sub(m_ConstantInt(C4), m_Value(A))) &&
+            A == Other) {
+          // We managed to fold the add into the LHS of the select condition.
+          Cond = new ICmpInst(IC->getPredicate(), C4, A, "asis", SI);
+        }
+      }
+
+      // Can we fold the add into the argument of the select?
+      // We check both true and false select arguments for a matching subtract.
+      ConstantInt *C1, *C2;
+      if (match(FV, m_ConstantInt(C1)) && C1->getValue() == 0 &&
+          match(TV, m_Sub(m_ConstantInt(C2), m_Value(A))) &&
+          A == Other) {
+        // We managed to fold the add into the true select value,
+        // picking up a simplified condition, if available.
+        return new SelectInst(Cond, C2, A, "adselsub");
+      } else if (match(TV, m_ConstantInt(C1)) && C1->getValue() == 0 && 
+                 match(FV, m_Sub(m_ConstantInt(C2), m_Value(A))) &&
+                 A == Other) {
+        // We managed to fold the add into the false select value,
+        // picking up a simplified condition, if available.
+        return new SelectInst(Cond, A, C2, "adselsub");
+      } else if (Cond != SI->getCondition()) {
+        // We only managed to fold the add into the select condition.
+        SI->setOperand(0, Cond);
+        Changed = true;
+      }
+    }
+  }
 
   return Changed ? &I : 0;
 }
