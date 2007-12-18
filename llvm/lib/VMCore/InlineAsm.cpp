@@ -212,4 +212,3 @@ bool InlineAsm::Verify(const FunctionType *Ty, const std::string &ConstStr) {
   return true;
 }
 
-DEFINING_FILE_FOR(InlineAsm)

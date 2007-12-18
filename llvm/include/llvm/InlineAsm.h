@@ -132,7 +132,4 @@ public:
 
 } // End llvm namespace
 
-// Make sure the InlineAsm.cpp file is linked when this one is #included.
-FORCE_DEFINING_FILE_TO_BE_LINKED(InlineAsm)
-
 #endif
