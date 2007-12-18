@@ -468,8 +468,10 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
     case UnaryOperator::SizeOf:
     case UnaryOperator::AlignOf:
       // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
-      if (!Exp->getSubExpr()->getType()->isConstantSizeType(Ctx, Loc))
+      if (!Exp->getSubExpr()->getType()->isConstantSizeType(Ctx)) {
+        if (Loc) *Loc = Exp->getOperatorLoc();
         return false;
+      }
       return true;
     case UnaryOperator::LNot:
     case UnaryOperator::Plus:
@@ -481,8 +483,10 @@ bool Expr::isConstantExpr(ASTContext &Ctx, SourceLocation *Loc) const {
   case SizeOfAlignOfTypeExprClass: {
     const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
     // alignof always evaluates to a constant.
-    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Ctx,Loc))
+    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Ctx)) {
+      if (Loc) *Loc = Exp->getOperatorLoc();
       return false;
+    }
     return true;
   }
   case BinaryOperatorClass: {
@@ -612,8 +616,10 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
     case UnaryOperator::SizeOf:
     case UnaryOperator::AlignOf:
       // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
-      if (!Exp->getSubExpr()->getType()->isConstantSizeType(Ctx, Loc))
+      if (!Exp->getSubExpr()->getType()->isConstantSizeType(Ctx)) {
+        if (Loc) *Loc = Exp->getOperatorLoc();
         return false;
+      }
       
       // Return the result in the right width.
       Result.zextOrTrunc(
@@ -654,8 +660,10 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
   case SizeOfAlignOfTypeExprClass: {
     const SizeOfAlignOfTypeExpr *Exp = cast<SizeOfAlignOfTypeExpr>(this);
     // alignof always evaluates to a constant.
-    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Ctx,Loc))
+    if (Exp->isSizeOf() && !Exp->getArgumentType()->isConstantSizeType(Ctx)) {
+      if (Loc) *Loc = Exp->getOperatorLoc();
       return false;
+    }
 
     // Return the result in the right width.
     Result.zextOrTrunc(
