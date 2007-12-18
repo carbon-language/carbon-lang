@@ -808,7 +808,10 @@ std::ostream &AssemblyWriter::printTypeAtLeastOneLevel(const Type *Ty) {
     if (STy->isPacked())
       Out << '>';
   } else if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
-    printType(PTy->getElementType()) << '*';
+    printType(PTy->getElementType());
+    if (unsigned AddressSpace = PTy->getAddressSpace())
+      Out << " addrspace(" << AddressSpace << ")";
+    Out << '*';
   } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)) {
     Out << '[' << ATy->getNumElements() << " x ";
     printType(ATy->getElementType()) << ']';

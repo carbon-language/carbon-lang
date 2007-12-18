@@ -114,7 +114,7 @@ let test_types () =
   end;
   
   begin group "qualified_pointer";
-    (* XXX: grep {QualPtrTy.*i8.*3.*\*} < %t.ll
+    (* RUN: grep {QualPtrTy.*i8.*3.*\*} < %t.ll
      *)
     let ty = qualified_pointer_type i8_type 3 in
     insist (define_type_name "QualPtrTy" ty m);
