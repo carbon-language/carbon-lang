@@ -183,9 +183,7 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
   assert(F && "CallInst has no function associated with it.");
 
   if (!NewFn) {
-    switch(F->getIntrinsicID()) {
-    default:  assert(0 && "Unknown function for CallInst upgrade.");
-    case Intrinsic::x86_sse2_movl_dq: {
+    if (strcmp(F->getNameStart(), "llvm.x86.sse2.movl.dq") == 0) {
       std::vector<Constant*> Idxs;
       Constant *Zero = ConstantInt::get(Type::Int32Ty, 0);
       Idxs.push_back(Zero);
@@ -211,8 +209,8 @@ void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
       
       //  Clean up the old call now that it has been completely upgraded.
       CI->eraseFromParent();
-      break;
-    }
+    } else {
+      assert(0 && "Unknown function for CallInst upgrade.");
     }
     return;
   }
