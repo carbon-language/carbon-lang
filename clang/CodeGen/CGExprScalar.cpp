@@ -129,43 +129,18 @@ public:
   Value *VisitInitListExpr(InitListExpr *E) {
     unsigned NumInitElements = E->getNumInits();
     
-    std::vector<llvm::Constant*> VectorElts;
     const llvm::VectorType *VType = 
       cast<llvm::VectorType>(ConvertType(E->getType()));
     
-    // Copy initializer elements.
-    bool AllConstElements = true;
-    unsigned i = 0;
-    for (i = 0; i < NumInitElements; ++i) {
-      if (llvm::Constant *C = dyn_cast<llvm::Constant>(Visit(E->getInit(i)))) 
-        VectorElts.push_back(C);
-      else {
-        AllConstElements = false;
-        break;
-      }
-    }
-    
     unsigned NumVectorElements = VType->getNumElements();
     const llvm::Type *ElementType = VType->getElementType();
-    if (AllConstElements) {
-      // Initialize remaining array elements.
-      for (/*Do not initialize i*/; i < NumVectorElements; ++i)
-        VectorElts.push_back(llvm::Constant::getNullValue(ElementType));
-      
-      return llvm::ConstantVector::get(VectorElts);
-    }
 
     // Emit individual vector element stores.
     llvm::Value *V = llvm::UndefValue::get(VType);
     
-    // Emit already seen constants initializers.
-    for (i = 0; i < VectorElts.size(); i++) {
-      Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
-      V = Builder.CreateInsertElement(V, VectorElts[i], Idx);
-    }
-    
-    // Emit remaining initializers
-    for (/*Do not initialize i*/; i < NumInitElements; ++i) {
+    // Emit initializers
+    unsigned i;
+    for (i = 0; i < NumInitElements; ++i) {
       Value *NewV = Visit(E->getInit(i));
       Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
       V = Builder.CreateInsertElement(V, NewV, Idx);
@@ -1102,27 +1077,6 @@ Value *CodeGenFunction::EmitShuffleVector(Value* V1, Value *V2, ...) {
 llvm::Value *CodeGenFunction::EmitVector(llvm::Value * const *Vals, 
                                          unsigned NumVals)
 {
-  bool AllConstElements = true;
-  
-  for (unsigned i = 0; i < NumVals; i++) {
-    if (!isa<llvm::Constant>(Vals[i])) {
-      AllConstElements = false;
-      break;
-    }
-  }
-  
-  assert(!(NumVals & NumVals - 1) &&
-         "Number of elements must be power of two!");
-  
-  if (AllConstElements) {
-    llvm::SmallVector<llvm::Constant*, 16> Constants;
-    
-    for (unsigned i = 0, e = NumVals; i != e; ++i)
-      Constants.push_back(cast<llvm::Constant>(Vals[i]));
-    
-    return llvm::ConstantVector::get(&Constants[0], Constants.size());
-  }
-  
   llvm::Value *Vec
   = llvm::UndefValue::get(llvm::VectorType::get(Vals[0]->getType(), NumVals));
   
