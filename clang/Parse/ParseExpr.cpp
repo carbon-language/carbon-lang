@@ -364,8 +364,8 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, unsigned MinPrec) {
     NextTokPrec = getBinOpPrecedence(Tok.getKind());
 
     // Assignment and conditional expressions are right-associative.
-    bool isRightAssoc = NextTokPrec == prec::Conditional ||
-                        NextTokPrec == prec::Assignment;
+    bool isRightAssoc = ThisPrec == prec::Conditional ||
+                        ThisPrec == prec::Assignment;
 
     // Get the precedence of the operator to the right of the RHS.  If it binds
     // more tightly with RHS than we do, evaluate it completely first.
