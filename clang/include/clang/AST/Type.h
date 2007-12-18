@@ -338,10 +338,9 @@ public:
   bool isUnsignedIntegerType() const;
 
   /// isConstantSizeType - Return true if this is not a variable sized type,
-  /// according to the rules of C99 6.7.5p3.  If Loc is non-null, it is set to
-  /// the location of the subexpression that makes it a vla type.  It is not
-  /// legal to call this on incomplete types.
-  bool isConstantSizeType(ASTContext &Ctx, SourceLocation *Loc = 0) const;
+  /// according to the rules of C99 6.7.5p3.  It is not legal to call this on
+  /// incomplete types.
+  bool isConstantSizeType(ASTContext &Ctx) const;
 private:  
   QualType getCanonicalTypeInternal() const { return CanonicalType; }
   friend class QualType;
