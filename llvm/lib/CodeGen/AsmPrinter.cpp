@@ -773,9 +773,32 @@ void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
     }
     case Instruction::Add:
     case Instruction::Sub:
+    case Instruction::And:
+    case Instruction::Or:
+    case Instruction::Xor:
       O << "(";
       EmitConstantValueOnly(CE->getOperand(0));
-      O << (Opcode==Instruction::Add ? ") + (" : ") - (");
+      O << ")";
+      switch (Opcode) {
+      case Instruction::Add:
+       O << " + ";
+       break;
+      case Instruction::Sub:
+       O << " - ";
+       break;
+      case Instruction::And:
+       O << " & ";
+       break;
+      case Instruction::Or:
+       O << " | ";
+       break;
+      case Instruction::Xor:
+       O << " ^ ";
+       break;
+      default:
+       break;
+      }
+      O << "(";
       EmitConstantValueOnly(CE->getOperand(1));
       O << ")";
       break;
