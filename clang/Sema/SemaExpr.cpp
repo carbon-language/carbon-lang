@@ -1824,6 +1824,7 @@ Action::ExprResult Sema::ActOnUnaryOp(SourceLocation OpLoc, tok::TokenKind Op,
     resultType = CheckAddressOfOperand(Input, OpLoc);
     break;
   case UnaryOperator::Deref: 
+    DefaultFunctionArrayConversion(Input);
     resultType = CheckIndirectionOperand(Input, OpLoc);
     break;
   case UnaryOperator::Plus:
