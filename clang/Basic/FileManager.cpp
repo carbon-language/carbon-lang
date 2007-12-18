@@ -65,7 +65,7 @@ const DirectoryEntry *FileManager::getDirectory(const char *NameStart,
     return 0;
   
   // It exists.  See if we have already opened a directory with the same inode.
-  // This occurs when one dir is symlinked to another, for example.
+  // This occurs when one dir is symlinked to another, for example.    
   DirectoryEntry &UDE = 
     UniqueDirs[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
   
@@ -144,7 +144,12 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   
   // It exists.  See if we have already opened a directory with the same inode.
   // This occurs when one dir is symlinked to another, for example.
-  FileEntry &UFE = UniqueFiles[std::make_pair(StatBuf.st_dev, StatBuf.st_ino)];
+  std::pair<FileEntryMap::iterator,bool> X = 
+    UniqueFiles.insert(FileEntryMap::value_type(std::make_pair(StatBuf.st_dev,
+                                                               StatBuf.st_ino),
+                                                FileEntry()));
+                          
+  FileEntry &UFE = X.first->second;
   
   NamedFileEnt.setValue(&UFE);
   if (UFE.getName())  // Already have an entry with this inode, return it.
@@ -158,6 +163,7 @@ const FileEntry *FileManager::getFile(const char *NameStart,
   UFE.ModTime = StatBuf.st_mtime;
   UFE.Dir     = DirInfo;
   UFE.UID     = NextFileUID++;
+  UFE.InoDev  = &X.first->first;
   return &UFE;
 }
 

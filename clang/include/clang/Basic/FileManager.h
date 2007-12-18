@@ -42,13 +42,16 @@ class FileEntry {
   time_t ModTime;             // Modification time of file.
   const DirectoryEntry *Dir;  // Directory file lives in.
   unsigned UID;               // A unique (small) ID for the file.
+  const std::pair<dev_t, ino_t>* InoDev; // Pointer to inode/device number pair. 
   friend class FileManager;
 public:
-  FileEntry() : Name(0) {}
+  FileEntry() : Name(0), InoDev(NULL) {}
   
   const char *getName() const { return Name; }
   off_t getSize() const { return Size; }
   unsigned getUID() const { return UID; }
+  ino_t getInode() const { return InoDev->second; }
+  dev_t getDev() const { return InoDev->first; }
   time_t getModificationTime() const { return ModTime; }
   
   /// getDir - Return the directory the file lives in.
@@ -66,7 +69,9 @@ class FileManager {
   /// UniqueDirs/UniqueFiles - Cache from ID's to existing directories/files.
   ///
   std::map<std::pair<dev_t, ino_t>, DirectoryEntry> UniqueDirs;
-  std::map<std::pair<dev_t, ino_t>, FileEntry> UniqueFiles;
+  
+  typedef std::map<std::pair<dev_t, ino_t>, FileEntry> FileEntryMap;
+  FileEntryMap UniqueFiles;
   
   /// DirEntries/FileEntries - This is a cache of directory/file entries we have
   /// looked up.  The actual Entry is owned by UniqueFiles/UniqueDirs above.
