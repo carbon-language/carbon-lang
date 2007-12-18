@@ -2151,14 +2151,12 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       if (match(FV, m_ConstantInt(C1)) && C1->getValue() == 0 &&
           match(TV, m_Sub(m_ConstantInt(C2), m_Value(A))) &&
           A == Other) {
-        // We managed to fold the add into the true select value,
-        // picking up a simplified condition, if available.
+        // We managed to fold the add into the true select value.
         return new SelectInst(SI->getCondition(), C2, A);
       } else if (match(TV, m_ConstantInt(C1)) && C1->getValue() == 0 && 
                  match(FV, m_Sub(m_ConstantInt(C2), m_Value(A))) &&
                  A == Other) {
-        // We managed to fold the add into the false select value,
-        // picking up a simplified condition, if available.
+        // We managed to fold the add into the false select value.
         return new SelectInst(SI->getCondition(), A, C2);
       }
     }
