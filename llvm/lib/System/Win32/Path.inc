@@ -222,6 +222,15 @@ Path::GetUserHomeDirectory() {
   }
   return GetRootDirectory();
 }
+
+Path
+Path::GetCurrentDirectory() {
+  char pathname[MAX_PATH];
+  GetCurrentDirectory(pathname,MAX_PATH);
+  return Path(pathname);  
+}
+
+
 // FIXME: the above set of functions don't map to Windows very well.
 
 

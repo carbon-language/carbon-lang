@@ -148,6 +148,11 @@ namespace sys {
       /// constructor must provide the same result as GetRootDirectory.
       /// @brief Construct a path to the current user's "home" directory
       static Path GetUserHomeDirectory();
+      
+      /// Construct a path to the current directory for the current process.
+      /// @returns The current working directory.
+      /// @brief Returns the current working directory.
+      static Path GetCurrentDirectory();
 
       /// Return the suffix commonly used on file names that contain a shared
       /// object, shared archive, or dynamic link library. Such files are

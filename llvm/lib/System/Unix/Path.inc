@@ -250,6 +250,16 @@ Path::GetUserHomeDirectory() {
   return GetRootDirectory();
 }
 
+Path
+Path::GetCurrentDirectory() {
+  char pathname[MAXPATHLEN];
+  if (!getcwd(pathname,MAXPATHLEN)) {
+    assert (false && "Could not query current working directory.");
+    return Path("");
+  }
+  
+  return Path(pathname);
+}
 
 std::string
 Path::getBasename() const {
