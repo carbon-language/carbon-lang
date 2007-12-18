@@ -10,8 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "TranslationUnit.h"
-#include "clang.h"
+#include "clang/AST/TranslationUnit.h"
 
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/SourceManager.h"

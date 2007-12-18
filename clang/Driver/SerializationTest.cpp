@@ -18,7 +18,7 @@
 #include "clang/AST/CFG.h"
 #include "clang.h"
 #include "ASTConsumers.h"
-#include "TranslationUnit.h"
+#include "clang/AST/TranslationUnit.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/ADT/scoped_ptr.h"
 #include "llvm/Support/Streams.h"
