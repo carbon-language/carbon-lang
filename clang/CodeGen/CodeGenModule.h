@@ -33,6 +33,7 @@ namespace clang {
   class Expr;
   class Stmt;
   class ValueDecl;
+  class VarDecl;
   class FileVarDecl;
   struct LangOptions;
   class Diagnostic;
@@ -69,8 +70,7 @@ public:
   
   llvm::Constant *GetAddrOfFunctionDecl(const FunctionDecl *D,
                                         bool isDefinition);
-  llvm::Constant *GetAddrOfFileVarDecl(const FileVarDecl *D,
-                                       bool isDefinition);
+  llvm::Constant *GetAddrOfGlobalVar(const VarDecl *D, bool isDefinition);
   
   
   /// getBuiltinLibFunction - Given a builtin id for a function like

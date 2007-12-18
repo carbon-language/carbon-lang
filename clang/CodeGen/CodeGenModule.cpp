@@ -113,8 +113,10 @@ llvm::Constant *CodeGenModule::GetAddrOfFunctionDecl(const FunctionDecl *D,
   return Entry = NewFn;
 }
 
-llvm::Constant *CodeGenModule::GetAddrOfFileVarDecl(const FileVarDecl *D,
-                                                    bool isDefinition) {
+llvm::Constant *CodeGenModule::GetAddrOfGlobalVar(const VarDecl *D,
+                                                  bool isDefinition) {
+  assert(D->hasGlobalStorage() && "Not a global variable");
+  
   // See if it is already in the map.
   llvm::Constant *&Entry = GlobalDeclMap[D];
   if (Entry) return Entry;
@@ -433,8 +435,8 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
       // The only thing that can have array type like this is a
       // DeclRefExpr(FileVarDecl)?
       const DeclRefExpr *DRE = cast<DeclRefExpr>(ICExpr->getSubExpr());
-      const FileVarDecl *FVD = cast<FileVarDecl>(DRE->getDecl());
-      llvm::Constant *C = CGM.GetAddrOfFileVarDecl(FVD, false);
+      const VarDecl *VD = cast<VarDecl>(DRE->getDecl());
+      llvm::Constant *C = CGM.GetAddrOfGlobalVar(VD, false);
       assert(isa<llvm::PointerType>(C->getType()) &&
              isa<llvm::ArrayType>(cast<llvm::PointerType>(C->getType())
                                   ->getElementType()));
@@ -486,7 +488,7 @@ void CodeGenModule::EmitGlobalVar(const FileVarDecl *D) {
   
   // Get the global, forcing it to be a direct reference.
   llvm::GlobalVariable *GV = 
-    cast<llvm::GlobalVariable>(GetAddrOfFileVarDecl(D, true));
+    cast<llvm::GlobalVariable>(GetAddrOfGlobalVar(D, true));
   
   // Convert the initializer, or use zero if appropriate.
   llvm::Constant *Init = 0;
