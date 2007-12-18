@@ -601,8 +601,7 @@ bool Sema::CheckInitializer(Expr *&Init, QualType &DeclType, bool isStatic) {
   // C99 6.7.8p3: The type of the entity to be initialized shall be an array
   // of unknown size ("[]") or an object type that is not a variable array type.
   if (const VariableArrayType *VAT = DeclType->getAsVariableArrayType()) { 
-    Expr *expr = VAT->getSizeExpr();
-    if (expr)
+    if (const Expr *expr = VAT->getSizeExpr())
       return Diag(expr->getLocStart(), diag::err_variable_object_no_init, 
                   expr->getSourceRange());
 

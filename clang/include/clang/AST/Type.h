@@ -584,7 +584,8 @@ class VariableArrayType : public ArrayType {
     : ArrayType(VariableArray, et, can, sm, tq), SizeExpr(e) {}
   friend class ASTContext;  // ASTContext creates these.
 public:
-  Expr *getSizeExpr() const { return SizeExpr; }
+  const Expr *getSizeExpr() const { return SizeExpr; }
+  Expr *getSizeExpr() { return SizeExpr; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   
