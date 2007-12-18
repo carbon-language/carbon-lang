@@ -24,6 +24,12 @@ void Sema::ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
   assert(CurFunctionDecl == 0 && "Method parsing confused");
   ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
   assert(MDecl != 0 && "Not a method declarator!");
+
+  // Allow the rest of sema to find private method decl implementations.
+  if (MDecl->isInstance())
+    AddInstanceMethodToGlobalPool(MDecl);
+  else
+    AddFactoryMethodToGlobalPool(MDecl);
   
   // Allow all of Sema to see that we are entering a method definition.
   CurMethodDecl = MDecl;
@@ -666,13 +672,15 @@ void Sema::AddFactoryMethodToGlobalPool(ObjcMethodDecl *Method) {
   }
 }
 
+// Note: For class/category implemenations, allMethods/allProperties is
+// always null.
 void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
                       DeclTy **allMethods, unsigned allNum,
                       DeclTy **allProperties, unsigned pNum) {
   Decl *ClassDecl = static_cast<Decl *>(classDecl);
 
-  // FIXME: If we don't have a ClassDecl, we have an error. I (snaroff) would
-  // prefer we always pass in a decl. If the decl has an error, isInvalidDecl()
+  // FIXME: If we don't have a ClassDecl, we have an error. We should consider
+  // always passing in a decl. If the decl has an error, isInvalidDecl()
   // should be true.
   if (!ClassDecl)
     return;
@@ -731,8 +739,8 @@ void Sema::ActOnAtEnd(SourceLocation AtEndLoc, DeclTy *classDecl,
       } else {
         clsMethods.push_back(Method);
         ClsMap[Method->getSelector()] = Method;
-        /// The following allows us to typecheck messages to "id".
-        AddInstanceMethodToGlobalPool(Method);
+        /// The following allows us to typecheck messages to "Class".
+        AddFactoryMethodToGlobalPool(Method);
       }
     }
   }

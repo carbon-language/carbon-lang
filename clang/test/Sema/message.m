@@ -36,3 +36,28 @@ static void func(Helicopter *obj) {
   // behavior isn't very desirable, however wee need it for GCC compatibility.
   NSRect r = [obj rect];
 }
+
+@interface NSObject @end
+
+extern Class NSClassFromObject(id object);
+
+@interface XX : NSObject 
+@end
+
+@implementation XX
+
++ _privateMethod {
+  return self;
+}
+
+- (void) xx {
+  [NSClassFromObject(self) _privateMethod];
+}
+@end
+
+@implementation XX (Private)
+- (void) yy {
+  [NSClassFromObject(self) _privateMethod];
+}
+@end
+

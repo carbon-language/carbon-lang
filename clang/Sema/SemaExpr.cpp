@@ -2264,23 +2264,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   if (receiverType == Context.getObjcIdType() ||
       receiverType == Context.getObjcClassType()) {
     Method = InstanceMethodPool[Sel].Method;
-    // If we didn't find an public method, look for a private one.
-    if (!Method && CurMethodDecl) {
-      NamedDecl *impCxt = CurMethodDecl->getMethodContext();
-      if (ObjcImplementationDecl *IMD = 
-          dyn_cast<ObjcImplementationDecl>(impCxt)) {
-        if (receiverType == Context.getObjcIdType())
-          Method = IMD->lookupInstanceMethod(Sel);
-        else
-          Method = IMD->lookupClassMethod(Sel);
-      } else if (ObjcCategoryImplDecl *CID = 
-                 dyn_cast<ObjcCategoryImplDecl>(impCxt)) {
-        if (receiverType == Context.getObjcIdType())
-          Method = CID->lookupInstanceMethod(Sel);
-        else
-          Method = CID->lookupClassMethod(Sel);
-      }
-    }
+	if (!Method)
+	  Method = FactoryMethodPool[Sel].Method;
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
