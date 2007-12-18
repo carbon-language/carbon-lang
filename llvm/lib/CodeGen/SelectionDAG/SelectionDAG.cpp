@@ -3958,6 +3958,15 @@ void SDNode::dump(const SelectionDAG *G) const {
     const char *AM = getIndexedModeName(LD->getAddressingMode());
     if (*AM)
       cerr << " " << AM;
+
+    const Value *SrcValue = LD->getSrcValue();
+    int SrcOffset = LD->getSrcValueOffset();
+    cerr << " <";
+    if (SrcValue)
+      cerr << SrcValue;
+    else
+      cerr << "null";
+    cerr << ":" << SrcOffset << ">";
   } else if (const StoreSDNode *ST = dyn_cast<StoreSDNode>(this)) {
     if (ST->isTruncatingStore())
       cerr << " <trunc "
@@ -3966,6 +3975,15 @@ void SDNode::dump(const SelectionDAG *G) const {
     const char *AM = getIndexedModeName(ST->getAddressingMode());
     if (*AM)
       cerr << " " << AM;
+
+    const Value *SrcValue = ST->getSrcValue();
+    int SrcOffset = ST->getSrcValueOffset();
+    cerr << " <";
+    if (SrcValue)
+      cerr << SrcValue;
+    else
+      cerr << "null";
+    cerr << ":" << SrcOffset << ">";
   }
 }
 
