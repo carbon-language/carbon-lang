@@ -441,6 +441,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS) {
         Diag(Tok, diag::ext_thread_before, "extern");
       isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_extern, Loc, PrevSpec);
       break;
+    case tok::kw___private_extern__:
+	  // FIXME: Implement private extern.
+      isInvalid = DS.SetStorageClassSpec(DeclSpec::SCS_extern, Loc, PrevSpec);
+      break;
     case tok::kw_static:
       if (DS.isThreadSpecified())
         Diag(Tok, diag::ext_thread_before, "static");
@@ -917,6 +921,7 @@ bool Parser::isDeclarationSpecifier() const {
     // storage-class-specifier
   case tok::kw_typedef:
   case tok::kw_extern:
+  case tok::kw___private_extern__:
   case tok::kw_static:
   case tok::kw_auto:
   case tok::kw_register:
