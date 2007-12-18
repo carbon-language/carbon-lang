@@ -74,11 +74,11 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
       SCCMightUnwind = true;
       SCCMightReturn = true;
     } else if (F->isDeclaration()) {
-      SCCMightUnwind |= !F->isNoUnwind();
-      SCCMightReturn |= !F->isNoReturn();
+      SCCMightUnwind |= !F->doesNotThrow();
+      SCCMightReturn |= !F->doesNotReturn();
     } else {
-      bool CheckUnwind = !SCCMightUnwind && !F->isNoUnwind();
-      bool CheckReturn = !SCCMightReturn && !F->isNoReturn();
+      bool CheckUnwind = !SCCMightUnwind && !F->doesNotThrow();
+      bool CheckReturn = !SCCMightReturn && !F->doesNotReturn();
 
       if (!CheckUnwind && !CheckReturn)
         continue;
@@ -98,7 +98,7 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
         if (CheckUnwind && !SCCMightUnwind)
           for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
             if (CallInst *CI = dyn_cast<CallInst>(I)) {
-              if (CI->isNoUnwind()) {
+              if (CI->doesNotThrow()) {
                 // This call cannot throw.
               } else if (Function *Callee = CI->getCalledFunction()) {
                 CallGraphNode *CalleeNode = CG[Callee];
@@ -155,7 +155,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
   bool MadeChange = false;
   for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator()))
-      if (II->isNoUnwind()) {
+      if (II->doesNotThrow()) {
         SmallVector<Value*, 8> Args(II->op_begin()+3, II->op_end());
         // Insert a call instruction before the invoke.
         CallInst *Call = new CallInst(II->getCalledValue(),
@@ -187,7 +187,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
 
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
       if (CallInst *CI = dyn_cast<CallInst>(I++))
-        if (CI->isNoReturn() && !isa<UnreachableInst>(I)) {
+        if (CI->doesNotReturn() && !isa<UnreachableInst>(I)) {
           // This call calls a function that cannot return.  Insert an
           // unreachable instruction after it and simplify the code.  Do this
           // by splitting the BB, adding the unreachable, then deleting the

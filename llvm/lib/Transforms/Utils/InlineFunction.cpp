@@ -70,7 +70,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
           CallInst *CI = cast<CallInst>(I);
 
           // If this call cannot unwind, don't convert it to an invoke.
-          if (CI->isNoUnwind())
+          if (CI->doesNotThrow())
             continue;
 
           // Convert this function call into an invoke instruction.

@@ -166,12 +166,12 @@ public:
   }
 
   /// @brief Determine if the function cannot return.
-  bool isNoReturn() const {
+  bool doesNotReturn() const {
     return paramHasAttr(0, ParamAttr::NoReturn);
   }
 
   /// @brief Determine if the function cannot unwind.
-  bool isNoUnwind() const {
+  bool doesNotThrow() const {
     return paramHasAttr(0, ParamAttr::NoUnwind);
   }
 

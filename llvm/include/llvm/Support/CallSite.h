@@ -74,7 +74,7 @@ public:
   bool onlyReadsMemory() const;
 
   /// @brief Determine if the call cannot unwind.
-  bool isNoUnwind() const;
+  bool doesNotThrow() const;
 
   /// getType - Return the type of the instruction that generated this call site
   ///
