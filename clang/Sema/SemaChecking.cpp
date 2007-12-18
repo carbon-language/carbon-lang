@@ -62,7 +62,7 @@ Sema::CheckFunctionCall(Expr *Fn,
            diag::err_va_start_used_in_non_variadic_function);
       return true;
     }
-      
+    // FIXME: This isn't correct for methods (results in bogus warning).
     bool SecondArgIsLastNamedArgument = false;
     if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Args[1])) {
       if (ParmVarDecl *PV = dyn_cast<ParmVarDecl>(DR->getDecl())) {

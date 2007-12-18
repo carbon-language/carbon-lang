@@ -366,7 +366,7 @@ QualType Sema::ObjcGetTypeForMethodDefinition(DeclTy *D) {
     ArgTys.push_back(ArgTy);
   }
   T = Context.getFunctionType(T, &ArgTys[0], ArgTys.size(),
-                              false);
+                              MDecl->isVariadic());
   return T;
 }
 
