@@ -103,25 +103,6 @@ namespace {
       return LI->getLoopFor(BB) != CurLoop;
     }
 
-    /// CanHoistInst - Checks that this instructions is one that can be hoisted
-    /// out of the loop. I.e., it has no side effects, isn't a control flow
-    /// instr, etc.
-    ///
-    bool CanHoistInst(MachineInstr &I) const {
-#ifndef NDEBUG
-      DEBUG({
-          DOUT << "--- Checking if we can hoist " << I << "\n";
-          if (I.getInstrDescriptor()->ImplicitUses)
-            DOUT << "  * Instruction has implicit uses.\n";
-          else if (!TII->isTriviallyReMaterializable(&I))
-            DOUT << "  * Instruction has side effects.\n";
-        });
-#endif
-      // Don't hoist if this instruction implicitly reads physical registers.
-      if (I.getInstrDescriptor()->ImplicitUses) return false;
-      return TII->isTriviallyReMaterializable(&I);
-    }
-
     /// IsLoopInvariantInst - Returns true if the instruction is loop
     /// invariant. I.e., all virtual register operands are defined outside of
     /// the loop, physical registers aren't accessed (explicitly or implicitly),
@@ -272,13 +253,46 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
 /// instruction is hoistable.
 /// 
 bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
-  if (!CanHoistInst(I)) return false;
+  DEBUG({
+      DOUT << "--- Checking if we can hoist " << I;
+      if (I.getInstrDescriptor()->ImplicitUses) {
+        DOUT << "  * Instruction has implicit uses:\n";
+
+        const TargetMachine &TM = CurMF->getTarget();
+        const MRegisterInfo *MRI = TM.getRegisterInfo();
+        const unsigned *ImpUses = I.getInstrDescriptor()->ImplicitUses;
+
+        for (; *ImpUses; ++ImpUses)
+          DOUT << "      -> " << MRI->getName(*ImpUses) << "\n";
+      }
+
+      if (I.getInstrDescriptor()->ImplicitDefs) {
+        DOUT << "  * Instruction has implicit defines:\n";
+
+        const TargetMachine &TM = CurMF->getTarget();
+        const MRegisterInfo *MRI = TM.getRegisterInfo();
+        const unsigned *ImpDefs = I.getInstrDescriptor()->ImplicitDefs;
+
+        for (; *ImpDefs; ++ImpDefs)
+          DOUT << "      -> " << MRI->getName(*ImpDefs) << "\n";
+      }
+
+      if (TII->hasUnmodelledSideEffects(&I))
+        DOUT << "  * Instruction has side effects.\n";
+    });
+
+#if 0
+  // FIXME: Don't hoist if this instruction implicitly reads physical registers.
+  if (I.getInstrDescriptor()->ImplicitUses ||
+      I.getInstrDescriptor()->ImplicitDefs)
+    return false;
+#endif
 
   // The instruction is loop invariant if all of its operands are loop-invariant
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = I.getOperand(i);
 
-    if (!MO.isRegister() || !MO.isUse())
+    if (!(MO.isRegister() && MO.getReg() && MO.isUse()))
       continue;
 
     unsigned Reg = MO.getReg();
@@ -294,6 +308,9 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
     if (CurLoop->contains(VRegDefs[Reg]->getParent()))
       return false;
   }
+
+  // Don't hoist something that has side effects.
+  if (TII->hasUnmodelledSideEffects(&I)) return false;
 
   // If we got this far, the instruction is loop invariant!
   return true;
