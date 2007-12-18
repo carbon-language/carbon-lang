@@ -1552,3 +1552,24 @@ _foo:
         andl    $65535, %eax
         ret
 
+//===---------------------------------------------------------------------===//
+
+We're missing an obvious fold of a load into imul:
+
+int test(long a, long b) { return a * b; } 
+
+LLVM produces:
+_test:
+        movl    4(%esp), %ecx
+        movl    8(%esp), %eax
+        imull   %ecx, %eax
+        ret
+
+vs:
+_test:
+        movl    8(%esp), %eax
+        imull   4(%esp), %eax
+        ret
+
+//===---------------------------------------------------------------------===//
+
