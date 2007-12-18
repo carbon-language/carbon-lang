@@ -449,9 +449,13 @@ bool Type::isAggregateType() const {
 // The only variable size types are auto arrays within a function. Structures 
 // cannot contain a VLA member. They can have a flexible array member, however
 // the structure is still constant size (C99 6.7.2.1p16).
-bool Type::isConstantSizeType(ASTContext &Ctx, SourceLocation *loc) const {
-  if (isa<VariableArrayType>(CanonicalType))
+bool Type::isConstantSizeType(ASTContext &Ctx, SourceLocation *Loc) const {
+  assert(!isIncompleteType() && "This doesn't make sense for incomplete types");
+  if (const VariableArrayType *VAT =dyn_cast<VariableArrayType>(CanonicalType)){
+    // The VAT must have a size, as it is known to be complete.
+    if (Loc) *Loc = VAT->getSizeExpr()->getLocStart();
     return false;
+  }
   return true;
 }
 
