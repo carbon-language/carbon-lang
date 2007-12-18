@@ -42,7 +42,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     if (IntrinsicID != Intrinsic::not_intrinsic) {
       SmallVector<Value*, 16> Args;
       
-      Function *F = Intrinsic::getDeclaration(&CGM.getModule(), IntrinsicID);
+      Function *F = CGM.getIntrinsic(IntrinsicID);
       const llvm::FunctionType *FTy = F->getFunctionType();
       
       for (unsigned i = 0, e = E->getNumArgs(); i != e; ++i) {
@@ -121,10 +121,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
 
     Intrinsic::ID inst = (BuiltinID == Builtin::BI__builtin_va_start) ? 
       Intrinsic::vastart : Intrinsic::vaend;
-    Value *F = Intrinsic::getDeclaration(&CGM.getModule(), inst);
-    Value *V = Builder.CreateCall(F, ArgValue);
-
-    return RValue::get(V);
+    return RValue::get(Builder.CreateCall(CGM.getIntrinsic(inst), ArgValue));
   }
   case Builtin::BI__builtin_classify_type: {
     APSInt Result(32);
@@ -156,8 +153,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
   case Builtin::BI__builtin_bswap64: {
     Value *ArgValue = EmitScalarExpr(E->getArg(0));
     const llvm::Type *ArgType = ArgValue->getType();
-    Value *F = Intrinsic::getDeclaration(&CGM.getModule(), Intrinsic::bswap,
-                                         &ArgType, 1);
+    Value *F = CGM.getIntrinsic(Intrinsic::bswap, &ArgType, 1);
     return RValue::get(Builder.CreateCall(F, ArgValue, "tmp"));
   }
   case Builtin::BI__builtin_inff: {
@@ -213,29 +209,19 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_pmullw:
     return Builder.CreateMul(Ops[0], Ops[1], "pmul");
   case X86::BI__builtin_ia32_punpckhbw:
-    return EmitShuffleVector(Ops[0], Ops[1],
-                             4, 12, 5, 13, 6, 14, 7, 15,
+    return EmitShuffleVector(Ops[0], Ops[1], 4, 12, 5, 13, 6, 14, 7, 15,
                              "punpckhbw");
   case X86::BI__builtin_ia32_punpckhwd:
-    return EmitShuffleVector(Ops[0], Ops[1],
-                             2, 6, 3, 7,
-                             "punpckhwd");
+    return EmitShuffleVector(Ops[0], Ops[1], 2, 6, 3, 7, "punpckhwd");
   case X86::BI__builtin_ia32_punpckhdq:
-    return EmitShuffleVector(Ops[0], Ops[1],
-                             1, 3,
-                             "punpckhdq");
+    return EmitShuffleVector(Ops[0], Ops[1], 1, 3, "punpckhdq");
   case X86::BI__builtin_ia32_punpcklbw:
-    return EmitShuffleVector(Ops[0], Ops[1],
-                             0, 8, 1, 9, 2, 10, 3, 11,
+    return EmitShuffleVector(Ops[0], Ops[1], 0, 8, 1, 9, 2, 10, 3, 11,
                              "punpcklbw");
   case X86::BI__builtin_ia32_punpcklwd:
-    return EmitShuffleVector(Ops[0], Ops[1],
-                             0, 4, 1, 5,
-                             "punpcklwd");
+    return EmitShuffleVector(Ops[0], Ops[1], 0, 4, 1, 5, "punpcklwd");
   case X86::BI__builtin_ia32_punpckldq:
-    return EmitShuffleVector(Ops[0], Ops[1],
-                             0, 2,
-                             "punpckldq");
+    return EmitShuffleVector(Ops[0], Ops[1], 0, 2, "punpckldq");
   case X86::BI__builtin_ia32_pslldi: 
   case X86::BI__builtin_ia32_psllqi:
   case X86::BI__builtin_ia32_psllwi: 
@@ -247,7 +233,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Ops[1] = Builder.CreateZExt(Ops[1], llvm::Type::Int64Ty, "zext");
     const llvm::Type *Ty = llvm::VectorType::get(llvm::Type::Int64Ty, 1);
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty, "bitcast");
-    
     const char *name = 0;
     Intrinsic::ID ID = Intrinsic::not_intrinsic;
     
@@ -286,13 +271,11 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       ID = Intrinsic::x86_mmx_psrl_w;
       break;
     }
-    
-    llvm::Function *F = Intrinsic::getDeclaration(&CGM.getModule(), ID);
+    llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);  
   }
   case X86::BI__builtin_ia32_pshufd: {
-    int i = cast<ConstantInt>(Ops[1])->getZExtValue();
-   
+    unsigned i = cast<ConstantInt>(Ops[1])->getZExtValue();
     return EmitShuffleVector(Ops[0], Ops[0], 
                              i & 0x3, (i & 0xc) >> 2,
                              (i & 0x30) >> 4, (i & 0xc0) >> 6,
@@ -312,7 +295,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_cmpneqss:
   case X86::BI__builtin_ia32_cmpnltss: 
   case X86::BI__builtin_ia32_cmpnless: {
-    int i = 0;
+    unsigned i = 0;
     const char *name = 0;
     switch (BuiltinID) {
     default: assert(0 && "Unknown compare builtin!");
@@ -351,9 +334,7 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     }
 
     Ops.push_back(llvm::ConstantInt::get(llvm::Type::Int8Ty, i));
-    
-    llvm::Function *F = Intrinsic::getDeclaration(&CGM.getModule(),
-                                                  Intrinsic::x86_sse_cmp_ss);
+    llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse_cmp_ss);
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);
   }
   case X86::BI__builtin_ia32_cmpordps:
@@ -368,47 +349,23 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_cmpgeps:
   case X86::BI__builtin_ia32_cmpngeps:
   case X86::BI__builtin_ia32_cmpnleps: {
-    int i = 0;
+    unsigned i = 0;
     const char *name = 0;
     bool ShouldSwap = false;
     switch (BuiltinID) {
     default: assert(0 && "Unknown compare builtin!");
-    case X86::BI__builtin_ia32_cmpeqps:
-      i = 0;
-      name = "cmpeqps";
-      break;
-    case X86::BI__builtin_ia32_cmpltps:
-      i = 1;
-      name = "cmpltps";
-      break;
-    case X86::BI__builtin_ia32_cmpleps:
-      i = 2;
-      name = "cmpleps";
-      break;
-    case X86::BI__builtin_ia32_cmpunordps:
-      i = 3;
-      name = "cmpunordps";
-      break;
-    case X86::BI__builtin_ia32_cmpneqps:
-      i = 4;
-      name = "cmpneqps";
-      break;
-    case X86::BI__builtin_ia32_cmpnltps:
-      i = 5;
-      name = "cmpntlps";
-      break;
-    case X86::BI__builtin_ia32_cmpnleps:
-      i = 6;
-      name = "cmpnleps";
-      break;
-    case X86::BI__builtin_ia32_cmpordps:
-      i = 7;
-      name = "cmpordps";
-      break;
+    case X86::BI__builtin_ia32_cmpeqps:    i = 0; name = "cmpeqps"; break;
+    case X86::BI__builtin_ia32_cmpltps:    i = 1; name = "cmpltps"; break;
+    case X86::BI__builtin_ia32_cmpleps:    i = 2; name = "cmpleps"; break;
+    case X86::BI__builtin_ia32_cmpunordps: i = 3; name = "cmpunordps"; break;
+    case X86::BI__builtin_ia32_cmpneqps:   i = 4; name = "cmpneqps"; break;
+    case X86::BI__builtin_ia32_cmpnltps:   i = 5; name = "cmpntlps"; break;
+    case X86::BI__builtin_ia32_cmpnleps:   i = 6; name = "cmpnleps"; break;
+    case X86::BI__builtin_ia32_cmpordps:   i = 7; name = "cmpordps"; break;
     case X86::BI__builtin_ia32_cmpgtps:
+      ShouldSwap = true;
       i = 1;
       name = "cmpgtps";
-      ShouldSwap = true;
       break;
     case X86::BI__builtin_ia32_cmpgeps:
       i = 2;
@@ -431,16 +388,13 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
       std::swap(Ops[0], Ops[1]);
     
     Ops.push_back(llvm::ConstantInt::get(llvm::Type::Int8Ty, i));
-    
-    llvm::Function *F = Intrinsic::getDeclaration(&CGM.getModule(),
-                                                  Intrinsic::x86_sse_cmp_ps);
+    llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse_cmp_ps);
     return Builder.CreateCall(F, &Ops[0], &Ops[0] + Ops.size(), name);
   }
   case X86::BI__builtin_ia32_movss:
     return EmitShuffleVector(Ops[0], Ops[1], 4, 1, 2, 3, "movss");
   case X86::BI__builtin_ia32_shufps:
-    int i = cast<ConstantInt>(Ops[2])->getZExtValue();
-
+    unsigned i = cast<ConstantInt>(Ops[2])->getZExtValue();
     return EmitShuffleVector(Ops[0], Ops[1], 
                              i & 0x3, (i & 0xc) >> 2, 
                              ((i & 0x30) >> 4) + 4, 

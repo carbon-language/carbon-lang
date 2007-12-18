@@ -570,6 +570,11 @@ llvm::Function *CodeGenModule::getBuiltinLibFunction(unsigned BuiltinID) {
                                            Name, &getModule());
 }
 
+llvm::Function *CodeGenModule::getIntrinsic(unsigned IID,const llvm::Type **Tys,
+                                            unsigned NumTys) {
+  return llvm::Intrinsic::getDeclaration(&getModule(),
+                                         (llvm::Intrinsic::ID)IID, Tys, NumTys);
+}
 
 llvm::Function *CodeGenModule::getMemCpyFn() {
   if (MemCpyFn) return MemCpyFn;
@@ -581,8 +586,9 @@ llvm::Function *CodeGenModule::getMemCpyFn() {
   case 32: IID = llvm::Intrinsic::memcpy_i32; break;
   case 64: IID = llvm::Intrinsic::memcpy_i64; break;
   }
-  return MemCpyFn = llvm::Intrinsic::getDeclaration(&TheModule, IID);
+  return MemCpyFn = getIntrinsic(IID);
 }
+
 
 llvm::Constant *CodeGenModule::
 GetAddrOfConstantCFString(const std::string &str) {

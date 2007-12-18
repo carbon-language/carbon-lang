@@ -80,7 +80,8 @@ public:
   llvm::Constant *GetAddrOfConstantCFString(const std::string& str);
   llvm::Constant *GetAddrOfConstantString(const std::string& str);
   llvm::Function *getMemCpyFn();
-  
+  llvm::Function *getIntrinsic(unsigned IID, const llvm::Type **Tys = 0, 
+                               unsigned NumTys = 0);
   
   void EmitFunction(const FunctionDecl *FD);
   void EmitGlobalVar(const FileVarDecl *D);
