@@ -17,6 +17,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Bitcode/SerializationFwd.h"
 #include <map>
+#include <set>
 #include <string>
 // FIXME: Enhance libsystem to support inode and other fields in stat.
 #include <sys/types.h>
@@ -42,21 +43,26 @@ class FileEntry {
   time_t ModTime;             // Modification time of file.
   const DirectoryEntry *Dir;  // Directory file lives in.
   unsigned UID;               // A unique (small) ID for the file.
-  const std::pair<dev_t, ino_t>* InoDev; // Pointer to inode/device number pair. 
+  dev_t Device;               // ID for the device containing the file.
+  ino_t Inode;                // Inode number for the file.
   friend class FileManager;
 public:
-  FileEntry() : Name(0), InoDev(NULL) {}
+  FileEntry(dev_t device, ino_t inode) : Name(0), Device(device), Inode(inode){}
   
   const char *getName() const { return Name; }
   off_t getSize() const { return Size; }
   unsigned getUID() const { return UID; }
-  ino_t getInode() const { return InoDev->second; }
-  dev_t getDev() const { return InoDev->first; }
+  ino_t getInode() const { return Inode; }
+  dev_t getDev() const { return Device; }
   time_t getModificationTime() const { return ModTime; }
   
   /// getDir - Return the directory the file lives in.
   ///
   const DirectoryEntry *getDir() const { return Dir; }
+  
+  bool operator<(const FileEntry& RHS) const {
+    return Device < RHS.Device || (Device == RHS.Device && Inode < RHS.Inode);
+  }
 };
 
  
@@ -68,10 +74,8 @@ public:
 class FileManager {
   /// UniqueDirs/UniqueFiles - Cache from ID's to existing directories/files.
   ///
-  std::map<std::pair<dev_t, ino_t>, DirectoryEntry> UniqueDirs;
-  
-  typedef std::map<std::pair<dev_t, ino_t>, FileEntry> FileEntryMap;
-  FileEntryMap UniqueFiles;
+  std::map<std::pair<dev_t, ino_t>, DirectoryEntry> UniqueDirs;  
+  std::set<FileEntry> UniqueFiles;
   
   /// DirEntries/FileEntries - This is a cache of directory/file entries we have
   /// looked up.  The actual Entry is owned by UniqueFiles/UniqueDirs above.
