@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTConsumers.h"
-#include "TranslationUnit.h"
+#include "clang/AST/TranslationUnit.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/CFG.h"

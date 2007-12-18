@@ -26,7 +26,7 @@
 #include "ASTConsumers.h"
 #include "TextDiagnosticBuffer.h"
 #include "TextDiagnosticPrinter.h"
-#include "TranslationUnit.h"
+#include "clang/AST/TranslationUnit.h"
 #include "clang/Sema/ASTStreamer.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Parse/Parser.h"
