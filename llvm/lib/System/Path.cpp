@@ -181,4 +181,3 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
 #include "Win32/Path.inc"
 #endif
 
-DEFINING_FILE_FOR(SystemPath)

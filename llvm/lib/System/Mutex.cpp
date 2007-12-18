@@ -159,4 +159,3 @@ Mutex::tryacquire()
 #endif
 #endif
 
-DEFINING_FILE_FOR(SystemMutex)

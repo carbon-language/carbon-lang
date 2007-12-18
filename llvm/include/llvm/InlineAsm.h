@@ -17,7 +17,6 @@
 #define LLVM_INLINEASM_H
 
 #include "llvm/Value.h"
-#include "llvm/System/IncludeFile.h"
 #include <vector>
 
 namespace llvm {
