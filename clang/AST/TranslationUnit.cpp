@@ -32,7 +32,8 @@ namespace {
 
 using namespace clang;
 
-bool TranslationUnit::EmitBitcodeFile(const llvm::sys::Path& Filename) const {  
+bool clang::EmitASTBitcodeFile(const TranslationUnit& TU, 
+                               const llvm::sys::Path& Filename) {  
 
   // Reserve 256K for bitstream buffer.
   std::vector<unsigned char> Buffer;
@@ -55,7 +56,7 @@ bool TranslationUnit::EmitBitcodeFile(const llvm::sys::Path& Filename) const {
     llvm::Serializer Sezr(Stream);  
     
     // Emit the translation unit.
-    Emit(Sezr);
+    TU.Emit(Sezr);
   }
   
   // Write the bits to disk. 
@@ -122,8 +123,7 @@ void TranslationUnit::Emit(llvm::Serializer& Sezr) const {
 }
 
 TranslationUnit*
-TranslationUnit::ReadBitcodeFile(const llvm::sys::Path& Filename,
-                                 FileManager& FMgr) {
+clang::ReadASTBitcodeFile(const llvm::sys::Path& Filename, FileManager& FMgr) {
   
   // Create the memory buffer that contains the contents of the file.  
   llvm::scoped_ptr<llvm::MemoryBuffer> 
@@ -158,7 +158,7 @@ TranslationUnit::ReadBitcodeFile(const llvm::sys::Path& Filename,
   // Create the deserializer.
   llvm::Deserializer Dezr(Stream);
   
-  return Create(Dezr,FMgr);
+  return TranslationUnit::Create(Dezr,FMgr);
 }
 
 TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,

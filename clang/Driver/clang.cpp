@@ -1048,7 +1048,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
     exit (1);
   }
   
-  TranslationUnit* TU = TranslationUnit::ReadBitcodeFile(Filename,FileMgr);
+  TranslationUnit* TU = ReadASTBitcodeFile(Filename,FileMgr);
   
   if (!TU) {
     fprintf(stderr, "error: file '%s' could not be deserialized\n", 

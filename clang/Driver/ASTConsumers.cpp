@@ -632,7 +632,7 @@ namespace {
       TU.AddTopLevelDecl(D);
     }
     
-    ~ASTSerializer() { TU.EmitBitcodeFile(FName); }
+    ~ASTSerializer() { EmitASTBitcodeFile(TU,FName); }
   }; 
 } // end anonymous namespace
 

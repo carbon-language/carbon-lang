@@ -46,18 +46,11 @@ public:
   ASTContext* getContext() const { return Context; }
   const LangOptions& getLangOpts() const { return LangOpts; }
   
-  /// EmitBitcodeFile - Emit the translation unit to a bitcode file.
-  bool EmitBitcodeFile(const llvm::sys::Path& Filename) const;
-  
   /// Emit - Emit the translation unit to an arbitray bitcode stream.
   void Emit(llvm::Serializer& S) const;
   
   /// Create - Reconsititute a translation unit from a bitcode stream.
   static TranslationUnit* Create(llvm::Deserializer& D, FileManager& FMgr);
-  
-  /// ReadBitcodeFile - Reconsitute a translation unit from a bitcode file.
-  static TranslationUnit* ReadBitcodeFile(const llvm::sys::Path& Filename,
-                                          FileManager& FMgr); 
   
   // Accessors
   const LangOptions& getLangOptions() const { return LangOpts; }
@@ -77,6 +70,15 @@ public:
   const_iterator end() const { return TopLevelDecls.end(); }  
 };
   
+/// EmitASTBitcodeFile - Emit a translation unit to a bitcode file.
+bool EmitASTBitcodeFile(const TranslationUnit& TU, 
+                        const llvm::sys::Path& Filename);
+                     
+/// ReadASTBitcodeFile - Reconsitute a translation unit from a bitcode file.
+TranslationUnit* ReadASTBitcodeFile(const llvm::sys::Path& Filename,
+                                    FileManager& FMgr); 
+                
+
 } // end namespace clang
 
 #endif

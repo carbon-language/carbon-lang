@@ -76,14 +76,14 @@ bool SerializationTest::Serialize(llvm::sys::Path& Filename,
   }
   
   // Serialize the translation unit.
-  return TU.EmitBitcodeFile(Filename);
+  return EmitASTBitcodeFile(TU,Filename);
 }
 
 bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
                                     llvm::sys::Path& FNameDeclPrint) {
   
   // Deserialize the translation unit.
-  TranslationUnit* NewTU = TranslationUnit::ReadBitcodeFile(Filename,FMgr);
+  TranslationUnit* NewTU = ReadASTBitcodeFile(Filename,FMgr);
 
   if (!NewTU)
     return false;
