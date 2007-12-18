@@ -785,10 +785,10 @@ public:
   void setSuperClass(ObjcInterfaceDecl * superCls) 
          { SuperClass = superCls; }
   
-  unsigned getNumInstanceMethods() const { return InstanceMethods.size(); }
-  unsigned getNumClassMethods() const { return ClassMethods.size(); }
+  int getNumInstanceMethods() const { return InstanceMethods.size(); }
+  int getNumClassMethods() const { return ClassMethods.size(); }
 
-  unsigned getImplDeclNumIvars() const { return NumIvars; }
+  int getImplDeclNumIvars() const { return NumIvars; }
   
   
   typedef llvm::SmallVector<ObjcMethodDecl*, 32>::const_iterator
