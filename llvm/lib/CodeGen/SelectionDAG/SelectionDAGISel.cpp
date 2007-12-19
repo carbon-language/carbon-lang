@@ -499,9 +499,7 @@ public:
                             unsigned Opc);
   bool isExportableFromCurrentBlock(Value *V, const BasicBlock *FromBB);
   void ExportFromCurrentBlock(Value *V);
-  void LowerCallTo(Instruction &I, const Type *CalledValueTy,
-                   const ParamAttrsList *PAL, unsigned CallingConv,
-                   bool IsTailCall, SDOperand Callee, unsigned OpIdx,
+  void LowerCallTo(CallSite CS, SDOperand Callee, bool IsTailCall,
                    MachineBasicBlock *LandingPad = NULL);
 
   // Terminator instructions.
@@ -1452,11 +1450,7 @@ void SelectionDAGLowering::visitInvoke(InvokeInst &I) {
   if (isa<InlineAsm>(I.getCalledValue()))
     visitInlineAsm(&I);
   else
-    LowerCallTo(I, I.getCalledValue()->getType(), I.getParamAttrs(),
-                I.getCallingConv(),
-                false,
-                getValue(I.getOperand(0)),
-                3, LandingPad);
+    LowerCallTo(&I, getValue(I.getOperand(0)), false, LandingPad);
 
   // If the value of the invoke is used outside of its defining block, make it
   // available as a virtual register.
@@ -2922,39 +2916,35 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
 }
 
 
-void SelectionDAGLowering::LowerCallTo(Instruction &I,
-                                       const Type *CalledValueTy,
-                                       const ParamAttrsList *Attrs,
-                                       unsigned CallingConv,
+void SelectionDAGLowering::LowerCallTo(CallSite CS, SDOperand Callee,
                                        bool IsTailCall,
-                                       SDOperand Callee, unsigned OpIdx,
                                        MachineBasicBlock *LandingPad) {
-  const PointerType *PT = cast<PointerType>(CalledValueTy);
+  const PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
   const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
   MachineModuleInfo *MMI = DAG.getMachineModuleInfo();
   unsigned BeginLabel = 0, EndLabel = 0;
-    
+
   TargetLowering::ArgListTy Args;
   TargetLowering::ArgListEntry Entry;
-  Args.reserve(I.getNumOperands());
-  for (unsigned i = OpIdx, e = I.getNumOperands(); i != e; ++i) {
-    Value *Arg = I.getOperand(i);
-    SDOperand ArgNode = getValue(Arg);
-    Entry.Node = ArgNode; Entry.Ty = Arg->getType();
+  Args.reserve(CS.arg_size());
+  for (CallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
+       i != e; ++i) {
+    SDOperand ArgNode = getValue(*i);
+    Entry.Node = ArgNode; Entry.Ty = (*i)->getType();
 
-    unsigned attrInd = i - OpIdx + 1;
-    Entry.isSExt  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::SExt);
-    Entry.isZExt  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::ZExt);
-    Entry.isInReg = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::InReg);
-    Entry.isSRet  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::StructRet);
-    Entry.isNest  = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::Nest);
-    Entry.isByVal = Attrs && Attrs->paramHasAttr(attrInd, ParamAttr::ByVal);
+    unsigned attrInd = i - CS.arg_begin() + 1;
+    Entry.isSExt  = CS.paramHasAttr(attrInd, ParamAttr::SExt);
+    Entry.isZExt  = CS.paramHasAttr(attrInd, ParamAttr::ZExt);
+    Entry.isInReg = CS.paramHasAttr(attrInd, ParamAttr::InReg);
+    Entry.isSRet  = CS.paramHasAttr(attrInd, ParamAttr::StructRet);
+    Entry.isNest  = CS.paramHasAttr(attrInd, ParamAttr::Nest);
+    Entry.isByVal = CS.paramHasAttr(attrInd, ParamAttr::ByVal);
     Args.push_back(Entry);
   }
 
   bool MarkTryRange = LandingPad ||
     // C++ requires special handling of 'nounwind' calls.
-    (Attrs && Attrs->paramHasAttr(0, ParamAttr::NoUnwind));
+    (CS.doesNotThrow());
 
   if (MarkTryRange && ExceptionHandling && MMI) {
     // Insert a label before the invoke call to mark the try range.  This can be
@@ -2963,14 +2953,14 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
                             DAG.getConstant(BeginLabel, MVT::i32)));
   }
-  
+
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(getRoot(), I.getType(), 
-                    Attrs && Attrs->paramHasAttr(0, ParamAttr::SExt),
-                    FTy->isVarArg(), CallingConv, IsTailCall, 
+    TLI.LowerCallTo(getRoot(), CS.getType(),
+                    CS.paramHasAttr(0, ParamAttr::SExt),
+                    FTy->isVarArg(), CS.getCallingConv(), IsTailCall,
                     Callee, Args, DAG);
-  if (I.getType() != Type::VoidTy)
-    setValue(&I, Result.first);
+  if (CS.getType() != Type::VoidTy)
+    setValue(CS.getInstruction(), Result.first);
   DAG.setRoot(Result.second);
 
   if (MarkTryRange && ExceptionHandling && MMI) {
@@ -2980,7 +2970,7 @@ void SelectionDAGLowering::LowerCallTo(Instruction &I,
     DAG.setRoot(DAG.getNode(ISD::LABEL, MVT::Other, getRoot(),
                             DAG.getConstant(EndLabel, MVT::i32)));
 
-    // Inform MachineModuleInfo of range.    
+    // Inform MachineModuleInfo of range.
     MMI->addInvoke(LandingPad, BeginLabel, EndLabel);
   }
 }
@@ -3061,11 +3051,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
   else
     Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
 
-  LowerCallTo(I, I.getCalledValue()->getType(), I.getParamAttrs(),
-              I.getCallingConv(),
-              I.isTailCall(),
-              Callee,
-              1);
+  LowerCallTo(&I, Callee, I.isTailCall());
 }
 
 
