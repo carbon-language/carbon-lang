@@ -1747,7 +1747,7 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   
   if (canonType->isPointerType() || canonType->isArrayType() ||
       canonType->isFunctionType()) {
-    assert(1 && "HandleVector(): Complex type construction unimplemented");
+    assert(0 && "HandleVector(): Complex type construction unimplemented");
     /* FIXME: rebuild the type from the inside out, vectorizing the inner type.
         do {
           if (PointerType *PT = dyn_cast<PointerType>(canonType))
