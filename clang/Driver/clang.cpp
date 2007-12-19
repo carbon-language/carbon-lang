@@ -530,19 +530,18 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
   FileManager &FileMgr = PP.getFileManager();
   
   // Figure out where to get and map in the main file.
-  unsigned MainFileID = 0;
   SourceManager &SourceMgr = PP.getSourceManager();
   if (InFile != "-") {
     const FileEntry *File = FileMgr.getFile(InFile);
-    if (File) MainFileID = SourceMgr.createFileID(File, SourceLocation());
-    if (MainFileID == 0) {
+    if (File) SourceMgr.createMainFileID(File, SourceLocation());
+    if (SourceMgr.getMainFileID() == 0) {
       fprintf(stderr, "Error reading '%s'!\n",InFile.c_str());
       return 0;
     }
   } else {
     llvm::MemoryBuffer *SB = llvm::MemoryBuffer::getSTDIN();
-    if (SB) MainFileID = SourceMgr.createFileIDForMemBuffer(SB);
-    if (MainFileID == 0) {
+    if (SB) SourceMgr.createMainFileIDForMemBuffer(SB);
+    if (SourceMgr.getMainFileID() == 0) {
       fprintf(stderr, "Error reading standard input!  Empty?\n");
       return 0;
     }
@@ -562,10 +561,8 @@ static unsigned InitializePreprocessor(Preprocessor &PP,
   PP.setPredefines(&PredefineBuffer[0]);
   
   // Once we've read this, we're done.
-  return MainFileID;
+  return SourceMgr.getMainFileID();
 }
- 
- 
 
 //===----------------------------------------------------------------------===//
 // Preprocessor include path information.
@@ -931,7 +928,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case SerializeAST:
       // FIXME: Allow user to tailor where the file is written.
-      return CreateASTSerializer(InFile, Diag, LangOpts);
+      return CreateASTSerializer(InFile, OutputFile, Diag, LangOpts);
       
     case RewriteTest:
       return CreateCodeRewriterTest(Diag);
@@ -1170,15 +1167,10 @@ int main(int argc, char **argv) {
       Preprocessor PP(Diags, LangInfo, *Target, SourceMgr, HeaderInfo);
       
       std::vector<char> PredefineBuffer;
-      unsigned MainFileID = InitializePreprocessor(PP, InFile, PredefineBuffer);
-      
-      if (!MainFileID)
+      if (!InitializePreprocessor(PP, InFile, PredefineBuffer))
         continue;
       
-      SourceMgr.setMainFileID(MainFileID);
-
-      ProcessInputFile(PP, InFile, *DiagClient);
-      
+      ProcessInputFile(PP, InFile, *DiagClient);      
       HeaderInfo.ClearFileInfo();
       
       if (Stats)

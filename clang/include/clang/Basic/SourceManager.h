@@ -237,9 +237,6 @@ public:
   /// getMainFileID - Returns the FileID of the main source file.
   unsigned getMainFileID() const { return MainFileID; }
   
-  /// setMainFileID - Set the FileID of the main source file.
-  void setMainFileID(unsigned ID) { MainFileID = ID; }
-  
   /// createFileID - Create a new FileID that represents the specified file
   /// being #included from the specified IncludePosition.  This returns 0 on
   /// error and translates NULL into standard input.
@@ -249,11 +246,29 @@ public:
     return createFileID(IR, IncludePos);
   }
   
+  /// createMainFileID - Create the FileID for the main source file.
+  unsigned createMainFileID(const FileEntry *SourceFile,
+                            SourceLocation IncludePos) {
+    
+    assert (MainFileID == 0 && "MainFileID already set!");
+    MainFileID = createFileID(SourceFile,IncludePos);
+    return MainFileID;
+  }
+  
   /// createFileIDForMemBuffer - Create a new FileID that represents the
   /// specified memory buffer.  This does no caching of the buffer and takes
   /// ownership of the MemoryBuffer, so only pass a MemoryBuffer to this once.
   unsigned createFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
     return createFileID(createMemBufferContentCache(Buffer), SourceLocation());
+  }
+  
+  /// createMainFileIDForMembuffer - Create the FileID for a memory buffer
+  ///  that will represent the FileID for the main source.  One example
+  ///  of when this would be used is when the main source is read from STDIN.
+  unsigned createMainFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
+    assert (MainFileID == 0 && "MainFileID already set!");
+    MainFileID = createMainFileIDForMemBuffer(Buffer);
+    return MainFileID;
   }
   
   /// getInstantiationLoc - Return a new SourceLocation that encodes the fact
