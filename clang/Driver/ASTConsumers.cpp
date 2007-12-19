@@ -614,10 +614,9 @@ namespace {
     TranslationUnit TU;
     const llvm::sys::Path FName;
   public:
-    ASTSerializer(const std::string& SourceFile,
-                  const llvm::sys::Path& F, Diagnostic &diags,
+    ASTSerializer(const llvm::sys::Path& F, Diagnostic &diags,
                   const LangOptions &LO)
-    : Diags(diags), TU(SourceFile,LO), FName(F) {}
+    : Diags(diags), TU(LO), FName(F) {}
     
     virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
       TU.setContext(&Context);
@@ -637,7 +636,7 @@ namespace {
 } // end anonymous namespace
 
 
-ASTConsumer* clang::CreateASTSerializer(const std::string& SourceFile,
+ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
                                         Diagnostic &Diags,
                                         const LangOptions &Features) {
   // FIXME: If the translation unit we are serializing came was itself
@@ -646,15 +645,15 @@ ASTConsumer* clang::CreateASTSerializer(const std::string& SourceFile,
   //        be completely replaced momentarily.
   
   // FIXME: This is a hack: "/" separator not portable.
-  std::string::size_type idx = SourceFile.rfind("/");
+  std::string::size_type idx = InFile.rfind("/");
   
-  if (idx != std::string::npos && idx == SourceFile.size()-1)
+  if (idx != std::string::npos && idx == InFile.size()-1)
     return NULL;
   
   std::string TargetPrefix( idx == std::string::npos ?
-                           SourceFile : SourceFile.substr(idx+1));
+                           InFile : InFile.substr(idx+1));
   
   llvm::sys::Path FName = llvm::sys::Path((TargetPrefix + ".ast").c_str());
   
-  return new ASTSerializer(SourceFile, FName, Diags, Features);
+  return new ASTSerializer(FName, Diags, Features);
 }

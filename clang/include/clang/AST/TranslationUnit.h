@@ -31,7 +31,6 @@ class Decl;
 class FileEntry;
   
 class TranslationUnit {
-  std::string SourceFile;
   LangOptions LangOpts;
   ASTContext* Context;
   std::vector<Decl*> TopLevelDecls;
@@ -40,15 +39,14 @@ class TranslationUnit {
   explicit TranslationUnit() : Context(NULL) {}
   
 public:
-  explicit TranslationUnit(const std::string& sourcefile, 
-                           const LangOptions& lopt)
-    : SourceFile(sourcefile), LangOpts(lopt), Context(NULL) {}
-  
-  
+  explicit TranslationUnit(const LangOptions& lopt)
+    : LangOpts(lopt), Context(NULL) {}
+
   void setContext(ASTContext* context) { Context = context; }
   ASTContext* getContext() const { return Context; }
+  
   const LangOptions& getLangOpts() const { return LangOpts; }
-  const std::string& getSourceFile() const { return SourceFile; }
+  const std::string& getSourceFile() const;
   
   /// Emit - Emit the translation unit to an arbitray bitcode stream.
   void Emit(llvm::Serializer& S) const;

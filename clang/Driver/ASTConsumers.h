@@ -26,20 +26,30 @@ class FileManager;
 struct LangOptions;
 
 ASTConsumer *CreateASTPrinter(std::ostream* OS = NULL);
+
 ASTConsumer *CreateASTDumper();
+
 ASTConsumer *CreateASTViewer();
+
 ASTConsumer *CreateCFGDumper(bool ViewGraphs = false);
+
 ASTConsumer *CreateLiveVarAnalyzer();
+
 ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
+
 ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
+
 ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Features);
+
 ASTConsumer *CreateCodeRewriterTest(Diagnostic &Diags);
-ASTConsumer *CreateSerializationTest(const std::string& SourceFile,
-                                     Diagnostic &Diags, FileManager& FMgr, 
+
+ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
+                                     FileManager& FMgr, 
                                      const LangOptions &LOpts);
   
-ASTConsumer *CreateASTSerializer(const std::string& SourceFile,
-                                 Diagnostic &Diags, const LangOptions &LOpts);
+ASTConsumer *CreateASTSerializer(const std::string& InFile, 
+                                 Diagnostic &Diags,
+                                 const LangOptions &LOpts);
 
 } // end clang namespace
 

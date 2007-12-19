@@ -894,7 +894,7 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA, unsigned MainFileID){
 /// CreateASTConsumer - Create the ASTConsumer for the corresponding program
 ///  action.  These consumers can operate on both ASTs that are freshly
 ///  parsed from source files as well as those deserialized from Bitcode.
-static ASTConsumer* CreateASTConsumer(const std::string& SourceFile,
+static ASTConsumer* CreateASTConsumer(const std::string& InFile,
                                       Diagnostic& Diag, FileManager& FileMgr, 
                                       const LangOptions& LangOpts) {
   switch (ProgAction) {
@@ -924,14 +924,14 @@ static ASTConsumer* CreateASTConsumer(const std::string& SourceFile,
       return CreateUnitValsChecker(Diag);
       
     case TestSerialization:
-      return CreateSerializationTest(SourceFile, Diag, FileMgr, LangOpts);
+      return CreateSerializationTest(Diag, FileMgr, LangOpts);
       
     case EmitLLVM:
       return CreateLLVMEmitter(Diag, LangOpts);
       
     case SerializeAST:
       // FIXME: Allow user to tailor where the file is written.
-      return CreateASTSerializer(SourceFile, Diag, LangOpts);
+      return CreateASTSerializer(InFile, Diag, LangOpts);
       
     case RewriteTest:
       return CreateCodeRewriterTest(Diag);
@@ -941,7 +941,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& SourceFile,
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
 static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
-                             const std::string &SourceFile,
+                             const std::string &InFile,
                              TextDiagnostics &OurDiagnosticClient) {
 
   ASTConsumer* Consumer = NULL;
@@ -949,7 +949,8 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   
   switch (ProgAction) {
   default:
-    Consumer = CreateASTConsumer(SourceFile, PP.getDiagnostics(),
+    Consumer = CreateASTConsumer(InFile,
+                                 PP.getDiagnostics(),
                                  PP.getFileManager(),
                                  PP.getLangOptions());
     
@@ -957,6 +958,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
       fprintf(stderr, "Unexpected program action!\n");
       return;
     }
+
     break;
       
   case DumpTokens: {                 // Token dump mode.
@@ -1012,7 +1014,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   }
   
   if (Stats) {
-    fprintf(stderr, "\nSTATISTICS FOR '%s':\n", SourceFile.c_str());
+    fprintf(stderr, "\nSTATISTICS FOR '%s':\n", InFile.c_str());
     PP.PrintStats();
     PP.getIdentifierTable().PrintStats();
     PP.getHeaderSearchInfo().PrintStats();
@@ -1054,8 +1056,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
   // Observe that we use the source file name stored in the deserialized
   // translation unit, rather than InFile.
   llvm::scoped_ptr<ASTConsumer>
-    Consumer(CreateASTConsumer(TU->getSourceFile(), Diag, FileMgr,
-                               TU->getLangOpts()));
+    Consumer(CreateASTConsumer(InFile, Diag, FileMgr, TU->getLangOpts()));
   
   if (!Consumer) {      
     fprintf(stderr, "Unsupported program action with serialized ASTs!\n");

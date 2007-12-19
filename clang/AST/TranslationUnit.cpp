@@ -99,11 +99,7 @@ void TranslationUnit::Emit(llvm::Serializer& Sezr) const {
   // Block for SourceManager, LangOptions, and Target.  Allows easy skipping
   // around to the block for the Selectors during deserialization.
   Sezr.EnterBlock();
-  
-  // Emit the name of the source file.
-  Sezr.EmitCStr(SourceFile.c_str());
-  Sezr.FlushRecord();
-  
+    
   // Emit the SourceManager.
   Sezr.Emit(Context->getSourceManager());
   
@@ -186,12 +182,6 @@ TranslationUnit* TranslationUnit::Create(llvm::Deserializer& Dezr,
   FoundBlock = Dezr.SkipToBlock(BasicMetadataBlock);
   assert (FoundBlock);
   
-  { // Read the SourceFile.
-    char* SName = Dezr.ReadCStr(NULL,0,true);
-    TU->SourceFile = SName;
-    delete [] SName;
-  }
-
   // Read the SourceManager.
   SourceManager::CreateAndRegister(Dezr,FMgr);
   
