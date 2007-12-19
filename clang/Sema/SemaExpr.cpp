@@ -2341,7 +2341,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
       // If we have an implementation in scope, check "private" methods.
       if (ObjcImplementationDecl *ImpDecl = 
             ObjcImplementations[ClassDecl->getIdentifier()])
-        Method = ImpDecl->lookupInstanceMethod(Sel);
+        Method = ImpDecl->getInstanceMethod(Sel);
 	  // If we still haven't found a method, look in the global pool. This
 	  // behavior isn't very desirable, however we need it for GCC compatibility.
 	  if (!Method)

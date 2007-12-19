@@ -855,20 +855,20 @@ Sema::DeclTy *Sema::ActOnMethodDeclaration(
   if (ObjcImplementationDecl *ImpDecl = 
         dyn_cast<ObjcImplementationDecl>(CDecl)) {
     if (MethodType == tok::minus) {
-      PrevMethod = ImpDecl->lookupInstanceMethod(Sel);
+      PrevMethod = ImpDecl->getInstanceMethod(Sel);
       ImpDecl->addInstanceMethod(ObjcMethod);
     } else {
-      PrevMethod = ImpDecl->lookupClassMethod(Sel);
+      PrevMethod = ImpDecl->getClassMethod(Sel);
       ImpDecl->addClassMethod(ObjcMethod);
     }
   } 
   else if (ObjcCategoryImplDecl *CatImpDecl = 
             dyn_cast<ObjcCategoryImplDecl>(CDecl)) {
     if (MethodType == tok::minus) {
-      PrevMethod = CatImpDecl->lookupInstanceMethod(Sel);
+      PrevMethod = CatImpDecl->getInstanceMethod(Sel);
       CatImpDecl->addInstanceMethod(ObjcMethod);
     } else {
-      PrevMethod = CatImpDecl->lookupClassMethod(Sel);
+      PrevMethod = CatImpDecl->getClassMethod(Sel);
       CatImpDecl->addClassMethod(ObjcMethod);
     }
   }

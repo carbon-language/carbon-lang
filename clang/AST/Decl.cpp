@@ -407,25 +407,25 @@ ObjcIvarDecl *ObjcInterfaceDecl::lookupInstanceVariable(
 
 /// lookupInstanceMethod - This method returns an instance method by looking in
 /// the class, its categories, and its super classes (using a linear search).
-ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
+ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector Sel) {
   ObjcInterfaceDecl* ClassDecl = this;
   ObjcMethodDecl *MethodDecl = 0;
   
   while (ClassDecl != NULL) {
-    if ((MethodDecl = ClassDecl->getInstanceMethodForSelector(Sel)))
+    if ((MethodDecl = ClassDecl->getInstanceMethod(Sel)))
       return MethodDecl;
       
     // Didn't find one yet - look through protocols.
     ObjcProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
     int numProtocols = ClassDecl->getNumIntfRefProtocols();
     for (int pIdx = 0; pIdx < numProtocols; pIdx++) {
-      if ((MethodDecl = protocols[pIdx]->getInstanceMethodForSelector(Sel)))
+      if ((MethodDecl = protocols[pIdx]->getInstanceMethod(Sel)))
         return MethodDecl;
     }
     // Didn't find one yet - now look through categories.
     ObjcCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
-      if ((MethodDecl = CatDecl->getInstanceMethodForSelector(Sel)))
+      if ((MethodDecl = CatDecl->getInstanceMethod(Sel)))
         return MethodDecl;
       CatDecl = CatDecl->getNextClassCategory();
     }
@@ -436,25 +436,25 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector &Sel) {
 
 // lookupClassMethod - This method returns a class method by looking in the
 // class, its categories, and its super classes (using a linear search).
-ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
+ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector Sel) {
   ObjcInterfaceDecl* ClassDecl = this;
   ObjcMethodDecl *MethodDecl = 0;
 
   while (ClassDecl != NULL) {
-    if ((MethodDecl = ClassDecl->getClassMethodForSelector(Sel)))
+    if ((MethodDecl = ClassDecl->getClassMethod(Sel)))
       return MethodDecl;
 
     // Didn't find one yet - look through protocols.
     ObjcProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
     int numProtocols = ClassDecl->getNumIntfRefProtocols();
     for (int pIdx = 0; pIdx < numProtocols; pIdx++) {
-      if ((MethodDecl = protocols[pIdx]->getClassMethodForSelector(Sel)))
+      if ((MethodDecl = protocols[pIdx]->getClassMethod(Sel)))
         return MethodDecl;
     }
     // Didn't find one yet - now look through categories.
     ObjcCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
-      if ((MethodDecl = CatDecl->getClassMethodForSelector(Sel)))
+      if ((MethodDecl = CatDecl->getClassMethod(Sel)))
         return MethodDecl;
       CatDecl = CatDecl->getNextClassCategory();
     }
@@ -466,7 +466,7 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector &Sel) {
 /// lookupInstanceMethod - This method returns an instance method by looking in
 /// the class implementation. Unlike interfaces, we don't look outside the
 /// implementation.
-ObjcMethodDecl *ObjcImplementationDecl::lookupInstanceMethod(Selector Sel) {
+ObjcMethodDecl *ObjcImplementationDecl::getInstanceMethod(Selector Sel) {
   for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); I != E; ++I)
     if ((*I)->getSelector() == Sel)
       return *I;
@@ -476,7 +476,7 @@ ObjcMethodDecl *ObjcImplementationDecl::lookupInstanceMethod(Selector Sel) {
 /// lookupClassMethod - This method returns a class method by looking in
 /// the class implementation. Unlike interfaces, we don't look outside the
 /// implementation.
-ObjcMethodDecl *ObjcImplementationDecl::lookupClassMethod(Selector Sel) {
+ObjcMethodDecl *ObjcImplementationDecl::getClassMethod(Selector Sel) {
   for (classmeth_iterator I = classmeth_begin(), E = classmeth_end();
        I != E; ++I)
     if ((*I)->getSelector() == Sel)
@@ -487,7 +487,7 @@ ObjcMethodDecl *ObjcImplementationDecl::lookupClassMethod(Selector Sel) {
 // lookupInstanceMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjcMethodDecl *ObjcCategoryImplDecl::lookupInstanceMethod(Selector &Sel) {
+ObjcMethodDecl *ObjcCategoryImplDecl::getInstanceMethod(Selector Sel) {
   for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); I != E; ++I)
     if ((*I)->getSelector() == Sel)
       return *I;
@@ -497,7 +497,7 @@ ObjcMethodDecl *ObjcCategoryImplDecl::lookupInstanceMethod(Selector &Sel) {
 // lookupClassMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjcMethodDecl *ObjcCategoryImplDecl::lookupClassMethod(Selector &Sel) {
+ObjcMethodDecl *ObjcCategoryImplDecl::getClassMethod(Selector Sel) {
   for (classmeth_iterator I = classmeth_begin(), E = classmeth_end();
        I != E; ++I)
     if ((*I)->getSelector() == Sel)
@@ -507,17 +507,17 @@ ObjcMethodDecl *ObjcCategoryImplDecl::lookupClassMethod(Selector &Sel) {
 
 // lookupInstanceMethod - Lookup a instance method in the protocol and protocols
 // it inherited.
-ObjcMethodDecl *ObjcProtocolDecl::lookupInstanceMethod(Selector &Sel) {
+ObjcMethodDecl *ObjcProtocolDecl::lookupInstanceMethod(Selector Sel) {
   ObjcMethodDecl *MethodDecl = NULL;
   
-  if ((MethodDecl = getInstanceMethodForSelector(Sel)))
+  if ((MethodDecl = getInstanceMethod(Sel)))
     return MethodDecl;
     
   if (getNumReferencedProtocols() > 0) {
     ObjcProtocolDecl **RefPDecl = getReferencedProtocols();
     
     for (int i = 0; i < getNumReferencedProtocols(); i++) {
-      if ((MethodDecl = RefPDecl[i]->getInstanceMethodForSelector(Sel)))
+      if ((MethodDecl = RefPDecl[i]->getInstanceMethod(Sel)))
         return MethodDecl;
     }
   }
@@ -526,17 +526,17 @@ ObjcMethodDecl *ObjcProtocolDecl::lookupInstanceMethod(Selector &Sel) {
 
 // lookupInstanceMethod - Lookup a class method in the protocol and protocols
 // it inherited.
-ObjcMethodDecl *ObjcProtocolDecl::lookupClassMethod(Selector &Sel) {
+ObjcMethodDecl *ObjcProtocolDecl::lookupClassMethod(Selector Sel) {
   ObjcMethodDecl *MethodDecl = NULL;
 
-  if ((MethodDecl = getClassMethodForSelector(Sel)))
+  if ((MethodDecl = getClassMethod(Sel)))
     return MethodDecl;
     
   if (getNumReferencedProtocols() > 0) {
     ObjcProtocolDecl **RefPDecl = getReferencedProtocols();
     
     for (int i = 0; i < getNumReferencedProtocols(); i++) {
-      if ((MethodDecl = RefPDecl[i]->getClassMethodForSelector(Sel)))
+      if ((MethodDecl = RefPDecl[i]->getClassMethod(Sel)))
         return MethodDecl;
     }
   }

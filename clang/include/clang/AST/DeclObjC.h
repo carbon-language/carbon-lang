@@ -278,7 +278,7 @@ public:
                                        ObjcInterfaceDecl *&clsDeclared);
 									   
   // Get the local instance method declared in this interface.
-  ObjcMethodDecl *getInstanceMethodForSelector(Selector &Sel) {
+  ObjcMethodDecl *getInstanceMethod(Selector &Sel) {
     for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
 	     I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -287,7 +287,7 @@ public:
 	return 0;
   }
   // Get the local class method declared in this interface.
-  ObjcMethodDecl *getClassMethodForSelector(Selector &Sel) {
+  ObjcMethodDecl *getClassMethod(Selector &Sel) {
     for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
 	     I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -295,11 +295,10 @@ public:
     }
 	return 0;
   }
-  // Lookup the instance method. First, we search locally. If a method isn't
-  // found, we look through the reference protocols. Lastly, we look categories
-  // defined for this class.
-  ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
-  ObjcMethodDecl *lookupClassMethod(Selector &Sel);
+  // Lookup a method. First, we search locally. If a method isn't
+  // found, we search referenced protocols and class categories.
+  ObjcMethodDecl *lookupInstanceMethod(Selector Sel);
+  ObjcMethodDecl *lookupClassMethod(Selector Sel);
 
   // Location information, modeled after the Stmt API. 
   SourceLocation getLocStart() const { return getLocation(); } // '@'interface
@@ -445,7 +444,7 @@ public:
   }
 
   // Get the local instance method declared in this interface.
-  ObjcMethodDecl *getInstanceMethodForSelector(Selector &Sel) {
+  ObjcMethodDecl *getInstanceMethod(Selector &Sel) {
     for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
 	     I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -454,7 +453,7 @@ public:
 	return 0;
   }
   // Get the local class method declared in this interface.
-  ObjcMethodDecl *getClassMethodForSelector(Selector &Sel) {
+  ObjcMethodDecl *getClassMethod(Selector &Sel) {
     for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
 	     I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -463,8 +462,10 @@ public:
 	return 0;
   }
   
-  ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
-  ObjcMethodDecl *lookupClassMethod(Selector &Sel);
+  // Lookup a method. First, we search locally. If a method isn't
+  // found, we search referenced protocols and class categories.
+  ObjcMethodDecl *lookupInstanceMethod(Selector Sel);
+  ObjcMethodDecl *lookupClassMethod(Selector Sel);
   
   bool isForwardDecl() const { return isForwardProtoDecl; }
   void setForwardDecl(bool val) { isForwardProtoDecl = val; }
@@ -633,7 +634,7 @@ public:
   }
 
   // Get the local instance method declared in this interface.
-  ObjcMethodDecl *getInstanceMethodForSelector(Selector &Sel) {
+  ObjcMethodDecl *getInstanceMethod(Selector &Sel) {
     for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); 
 	     I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -642,7 +643,7 @@ public:
 	return 0;
   }
   // Get the local class method declared in this interface.
-  ObjcMethodDecl *getClassMethodForSelector(Selector &Sel) {
+  ObjcMethodDecl *getClassMethod(Selector &Sel) {
     for (classmeth_iterator I = classmeth_begin(), E = classmeth_end(); 
 	     I != E; ++I) {
       if ((*I)->getSelector() == Sel)
@@ -701,8 +702,11 @@ public:
   void addClassMethod(ObjcMethodDecl *method) {
     ClassMethods.push_back(method);
   }    
-  ObjcMethodDecl *lookupInstanceMethod(Selector &Sel);
-  ObjcMethodDecl *lookupClassMethod(Selector &Sel);
+  // Get the instance method definition for this implementation.
+  ObjcMethodDecl *getInstanceMethod(Selector Sel);
+  
+  // Get the class method definition for this implementation.
+  ObjcMethodDecl *getClassMethod(Selector Sel);
 
   typedef llvm::SmallVector<ObjcMethodDecl*, 32>::const_iterator
     instmeth_iterator;
@@ -801,15 +805,11 @@ public:
   classmeth_iterator classmeth_begin() const { return ClassMethods.begin(); }
   classmeth_iterator classmeth_end() const { return ClassMethods.end(); }
   
-  /// lookupInstanceMethod - This method returns an instance method by looking
-  /// in the class implementation. Unlike interfaces, we don't look outside the
-  /// implementation.
-  ObjcMethodDecl *lookupInstanceMethod(Selector Sel);
+  // Get the instance method definition for this implementation.
+  ObjcMethodDecl *getInstanceMethod(Selector Sel);
   
-  /// lookupClassMethod - This method returns a class method by looking in
-  /// the class implementation. Unlike interfaces, we don't look outside the
-  /// implementation.
-  ObjcMethodDecl *lookupClassMethod(Selector Sel);
+  // Get the class method definition for this implementation.
+  ObjcMethodDecl *getClassMethod(Selector Sel);
   
   typedef ObjcIvarDecl * const *ivar_iterator;
   ivar_iterator ivar_begin() const { return Ivars; }
