@@ -878,9 +878,9 @@ static void InitializeIncludePaths(HeaderSearch &Headers, FileManager &FM,
 // Basic Parser driver
 //===----------------------------------------------------------------------===//
 
-static void ParseFile(Preprocessor &PP, MinimalAction *PA, unsigned MainFileID){
+static void ParseFile(Preprocessor &PP, MinimalAction *PA){
   Parser P(PP, *PA);
-  PP.EnterMainSourceFile(MainFileID);
+  PP.EnterMainSourceFile();
   
   // Parsing the specified input file.
   P.ParseTranslationUnit();
@@ -963,7 +963,7 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
   case DumpTokens: {                 // Token dump mode.
     Token Tok;
     // Start parsing the specified input file.
-    PP.EnterMainSourceFile(MainFileID);
+    PP.EnterMainSourceFile();
     do {
       PP.Lex(Tok);
       PP.DumpToken(Tok, true);
@@ -975,7 +975,7 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
   case RunPreprocessorOnly: {        // Just lex as fast as we can, no output.
     Token Tok;
     // Start parsing the specified input file.
-    PP.EnterMainSourceFile(MainFileID);
+    PP.EnterMainSourceFile();
     do {
       PP.Lex(Tok);
     } while (Tok.isNot(tok::eof));
@@ -984,18 +984,17 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
   }
     
   case PrintPreprocessedInput:       // -E mode.
-    DoPrintPreprocessedInput(MainFileID, PP);
+    DoPrintPreprocessedInput(PP);
     ClearSourceMgr = true;
     break;
     
   case ParseNoop:                    // -parse-noop
-    ParseFile(PP, new MinimalAction(PP.getIdentifierTable()), MainFileID);
+    ParseFile(PP, new MinimalAction(PP.getIdentifierTable()));
     ClearSourceMgr = true;
     break;
     
   case ParsePrintCallbacks:
-    ParseFile(PP, CreatePrintParserActionsAction(PP.getIdentifierTable()), 
-              MainFileID);
+    ParseFile(PP, CreatePrintParserActionsAction(PP.getIdentifierTable()));
     ClearSourceMgr = true;
     break;
       
@@ -1006,10 +1005,10 @@ static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
   
   if (Consumer) {
     if (VerifyDiagnostics)
-      exit(CheckASTConsumer(PP, MainFileID, Consumer));
+      exit(CheckASTConsumer(PP, Consumer));
     
     // This deletes Consumer.
-    ParseAST(PP, MainFileID, Consumer, Stats);
+    ParseAST(PP, Consumer, Stats);
   }
   
   if (Stats) {
@@ -1062,8 +1061,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
     exit (1);
   }
   
-  // FIXME: only work on consumers that do not require MainFileID.
-  Consumer->Initialize(*TU->getContext(), 0);
+  Consumer->Initialize(*TU->getContext());
   
   for (TranslationUnit::iterator I=TU->begin(), E=TU->end(); I!=E; ++I)
     Consumer->HandleTopLevelDecl(*I);

@@ -25,9 +25,10 @@ namespace {
   class ASTStreamer {
     Parser P;
   public:
-    ASTStreamer(Preprocessor &pp, ASTContext &ctxt, unsigned MainFileID)
+    ASTStreamer(Preprocessor &pp, ASTContext &ctxt)
       : P(pp, *new Sema(pp, ctxt)) {
-      pp.EnterMainSourceFile(MainFileID);
+        
+      pp.EnterMainSourceFile();
       
       // Initialize the parser.
       P.Initialize();
@@ -73,8 +74,7 @@ void ASTStreamer::PrintStats() const {
 /// ParseAST - Parse the entire file specified, notifying the ASTConsumer as
 /// the file is parsed.  This takes ownership of the ASTConsumer and
 /// ultimately deletes it.
-void clang::ParseAST(Preprocessor &PP, unsigned MainFileID, 
-                     ASTConsumer *Consumer, bool PrintStats) {
+void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer, bool PrintStats) {
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
     Decl::CollectingStats(true);
@@ -84,9 +84,9 @@ void clang::ParseAST(Preprocessor &PP, unsigned MainFileID,
   ASTContext Context(PP.getSourceManager(), PP.getTargetInfo(),
                      PP.getIdentifierTable(), PP.getSelectorTable());
   
-  ASTStreamer Streamer(PP, Context, MainFileID);
+  ASTStreamer Streamer(PP, Context);
   
-  Consumer->Initialize(Context, MainFileID);
+  Consumer->Initialize(Context);
   
   while (Decl *D = Streamer.ReadTopLevelDecl())
     Consumer->HandleTopLevelDecl(D);

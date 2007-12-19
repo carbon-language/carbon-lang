@@ -531,7 +531,7 @@ bool PrintPPOutputPPCallbacks::AvoidConcat(const Token &PrevTok,
 
 /// DoPrintPreprocessedInput - This implements -E mode.
 ///
-void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP) {
+void clang::DoPrintPreprocessedInput(Preprocessor &PP) {
   // Inform the preprocessor whether we want it to retain comments or not, due
   // to -C or -CC.
   PP.SetCommentRetentionState(EnableCommentOutput, EnableMacroCommentOutput);
@@ -550,7 +550,7 @@ void clang::DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP) {
   // After we have configured the preprocessor, enter the main file.
   
   // Start parsing the specified input file.
-  PP.EnterMainSourceFile(MainFileID);
+  PP.EnterMainSourceFile();
 
   // Consume all of the tokens that come from the predefines buffer.  Those
   // should not be emitted into the output and are guaranteed to be at the

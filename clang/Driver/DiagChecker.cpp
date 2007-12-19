@@ -82,16 +82,16 @@ static void FindDiagnostics(const std::string &Comment,
   }
 }
 
-/// FindExpectedDiags - Lex the file to finds all of the expected errors and
-/// warnings.
-static void FindExpectedDiags(Preprocessor &PP, unsigned MainFileID,
+/// FindExpectedDiags - Lex the main source file to find all of the
+//   expected errors and warnings.
+static void FindExpectedDiags(Preprocessor &PP,
                               DiagList &ExpectedErrors,
                               DiagList &ExpectedWarnings) {
   // Return comments as tokens, this is how we find expected diagnostics.
   PP.SetCommentRetentionState(true, true);
 
   // Enter the cave.
-  PP.EnterMainSourceFile(MainFileID);
+  PP.EnterMainSourceFile();
 
   // Turn off all warnings from relexing or preprocessing.
   PP.getDiagnostics().setWarnOnExtensions(false);
@@ -225,14 +225,14 @@ static bool CheckResults(Preprocessor &PP,
 
 
 /// CheckASTConsumer - Implement diagnostic checking for AST consumers.
-bool clang::CheckASTConsumer(Preprocessor &PP, unsigned MainFileID,
-                             ASTConsumer* C) {
+bool clang::CheckASTConsumer(Preprocessor &PP, ASTConsumer* C) {
+  
   // Parse the AST and run the consumer, ultimately deleting C.
-  ParseAST(PP, MainFileID, C);
+  ParseAST(PP, C);
   
   // Gather the set of expected diagnostics.
   DiagList ExpectedErrors, ExpectedWarnings;
-  FindExpectedDiags(PP, MainFileID, ExpectedErrors, ExpectedWarnings);
+  FindExpectedDiags(PP, ExpectedErrors, ExpectedWarnings);
 
   // Check that the expected diagnostics occurred.
   return CheckResults(PP, ExpectedErrors, ExpectedWarnings);

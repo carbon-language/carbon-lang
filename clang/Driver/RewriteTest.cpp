@@ -62,7 +62,7 @@ namespace {
     
     static const int OBJC_ABI_VERSION =7 ;
   public:
-    void Initialize(ASTContext &context, unsigned mainFileID) {
+    void Initialize(ASTContext &context) {
       Context = &context;
       SM = &Context->getSourceManager();
       MsgSendFunctionDecl = 0;
@@ -81,7 +81,7 @@ namespace {
       SuperStructDecl = 0;
       
       // Get the ID and start/end of the main file.
-      MainFileID = mainFileID;
+      MainFileID = SM->getMainFileID();
       const llvm::MemoryBuffer *MainBuf = SM->getBuffer(MainFileID);
       MainFileStart = MainBuf->getBufferStart();
       MainFileEnd = MainBuf->getBufferEnd();
@@ -123,7 +123,7 @@ namespace {
                       "extern Protocol *objc_getProtocol(const char *);\n"
                       "#include <objc/objc.h>\n";
 
-      Rewrite.InsertText(SourceLocation::getFileLoc(mainFileID, 0), 
+      Rewrite.InsertText(SourceLocation::getFileLoc(MainFileID, 0), 
                          s, strlen(s));
     }
 

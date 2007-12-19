@@ -26,8 +26,8 @@ public:
   virtual ~ASTConsumer();
   
   /// Initialize - This is called to initialize the consumer, providing the
-  /// ASTContext and the file ID of the primary file.
-  virtual void Initialize(ASTContext &Context, unsigned MainFileID) {}
+  /// ASTContext.
+  virtual void Initialize(ASTContext &Context) {}
   
   /// HandleTopLevelDecl - Handle the specified top-level declaration.  This is
   ///  called by HandleTopLevelDeclaration to process every top-level Decl*.

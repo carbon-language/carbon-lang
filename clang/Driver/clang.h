@@ -27,18 +27,17 @@ class IdentifierTable;
 class SourceManager;
 
 /// DoPrintPreprocessedInput - Implement -E mode.
-void DoPrintPreprocessedInput(unsigned MainFileID, Preprocessor &PP);
+void DoPrintPreprocessedInput(Preprocessor &PP);
 
 /// CreatePrintParserActionsAction - Return the actions implementation that
 /// implements the -parse-print-callbacks option.
 MinimalAction *CreatePrintParserActionsAction(IdentifierTable &);
 
 /// EmitLLVMFromASTs - Implement -emit-llvm, which generates llvm IR from C.
-void EmitLLVMFromASTs(Preprocessor &PP, unsigned MainFileID,
-                      bool PrintStats);
+void EmitLLVMFromASTs(Preprocessor &PP, bool PrintStats);
   
 /// CheckASTConsumer - Implement diagnostic checking for AST consumers.
-bool CheckASTConsumer(Preprocessor &PP, unsigned MainFileID, ASTConsumer* C);
+bool CheckASTConsumer(Preprocessor &PP, ASTConsumer* C);
 
 
 }  // end namespace clang

@@ -42,7 +42,7 @@ public:
   
   ~SerializationTest();
 
-  virtual void Initialize(ASTContext& context, unsigned) {
+  virtual void Initialize(ASTContext& context) {
     TU.setContext(&context);
   }  
 

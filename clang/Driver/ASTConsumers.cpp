@@ -356,7 +356,7 @@ namespace {
   public:
     ASTDumper() : DeclPrinter() {}
     
-    void Initialize(ASTContext &Context, unsigned MainFileID) {
+    void Initialize(ASTContext &Context) {
       SM = &Context.getSourceManager();
     }
     
@@ -400,7 +400,7 @@ namespace {
   class ASTViewer : public ASTConsumer {
     SourceManager *SM;
   public:
-    void Initialize(ASTContext &Context, unsigned MainFileID) {
+    void Initialize(ASTContext &Context) {
       SM = &Context.getSourceManager();
     }
     
@@ -482,7 +482,7 @@ namespace {
   class LivenessVisitor : public CFGVisitor {
     SourceManager *SM;
   public:
-    virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
+    virtual void Initialize(ASTContext &Context) {
       SM = &Context.getSourceManager();
     }
 
@@ -507,7 +507,7 @@ namespace {
     ASTContext *Ctx;
   public:
     DeadStoreVisitor(Diagnostic &diags) : Diags(diags) {}
-    virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
+    virtual void Initialize(ASTContext &Context) {
       Ctx = &Context;
     }
     
@@ -530,7 +530,7 @@ namespace {
     ASTContext *Ctx;
   public:
     UninitValsVisitor(Diagnostic &diags) : Diags(diags) {}
-    virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
+    virtual void Initialize(ASTContext &Context) {
       Ctx = &Context;
     }
     
@@ -565,7 +565,7 @@ namespace {
     LLVMEmitter(Diagnostic &diags, const LangOptions &LO) 
       : Diags(diags)
       , Features(LO) {}
-    virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
+    virtual void Initialize(ASTContext &Context) {
       Ctx = &Context;
       M = new llvm::Module("foo");
       M->setTargetTriple(Ctx->Target.getTargetTriple());
@@ -618,7 +618,7 @@ namespace {
                   const LangOptions &LO)
     : Diags(diags), TU(LO), FName(F) {}
     
-    virtual void Initialize(ASTContext &Context, unsigned MainFileID) {
+    virtual void Initialize(ASTContext &Context) {
       TU.setContext(&Context);
     }
     
