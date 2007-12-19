@@ -119,6 +119,7 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
 
 static llvm::cl::opt<std::string>
 OutputFile("o",
+ llvm::cl::value_desc("path"),
  llvm::cl::desc("Specify output file (for --serialize, this is a directory)"));
                           
 static llvm::cl::opt<bool>
