@@ -1,15 +1,12 @@
 ;; Maintainer:  The LLVM team, http://llvm.org/
 ;; Description: Major mode for TableGen description files (part of LLVM project)
-;; Updated:     2007-03-26
+;; Updated:     2007-12-18
 
 (require 'comint)
 (require 'custom)
 (require 'ansi-color)
 
 ;; Create mode-specific tables.
-(defvar tablegen-mode-syntax-table nil
-  "Syntax table used while in TableGen mode.")
-
 (defvar td-decorators-face 'td-decorators-face
   "Face method decorators.")
 (make-face 'td-decorators-face)
@@ -25,7 +22,7 @@
         )
     (list
      ;; Comments
-     '("\/\/" . font-lock-comment-face)
+;;     '("\/\/" . font-lock-comment-face)
      ;; Strings
      '("\"[^\"]+\"" . font-lock-string-face)
      ;; Hex constants
@@ -51,44 +48,36 @@
 ;; Shamelessly ripped from jasmin.el
 ;; URL: http://www.neilvandyke.org/jasmin-emacs/jasmin.el
 
-(if (not tablegen-mode-syntax-table)
-    (progn
-      (setq tablegen-mode-syntax-table (make-syntax-table))
-      (mapcar (function
-               (lambda (n)
-                 (modify-syntax-entry (aref n 0)
-                                      (aref n 1)
-                                      tablegen-mode-syntax-table)))
-              '(
-                ;; whitespace (` ')
-                [?\^m " "]
-                [?\f  " "]
-                [?\n  " "]
-                [?\t  " "]
-                [?\   " "]
-                ;; word constituents (`w')
-                [?\%  "w"]
-                ;;[?_  "w  "]
-                ;; comments
-                [?\;  "< "]
-                [?\n  "> "]
-                ;;[?\r  "> "]
-                ;;[?\^m "> "]
-                ;; symbol constituents (`_')
-                ;; punctuation (`.')
-                ;; open paren (`(')
-                [?\(  "("]
-                [?\[  "("]
-                [?\{  "("]
-                [?\<  "("]
-                ;; close paren (`)')
-                [?\)  ")"]
-                [?\]  ")"]
-                [?\}  ")"]
-                [?\>  ")"]
-                ;; string quote ('"')
-                [?\"  "\""]
-                ))))
+(defvar tablegen-mode-syntax-table nil
+  "Syntax table used in `tablegen-mode' buffers.")
+(when (not tablegen-mode-syntax-table)
+  (setq tablegen-mode-syntax-table (make-syntax-table))
+  ;; whitespace (` ')
+  (modify-syntax-entry ?\   " "      tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\t  " "      tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\r  " "      tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\n  " "      tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\f  " "      tablegen-mode-syntax-table)
+  ;; word constituents (`w')
+  (modify-syntax-entry ?\%  "w"      tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\_  "w"      tablegen-mode-syntax-table)
+  ;; comments
+  (modify-syntax-entry ?/   ". 124b" tablegen-mode-syntax-table)
+  (modify-syntax-entry ?*   ". 23"   tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\n  "> b"    tablegen-mode-syntax-table)
+  ;; open paren (`(')
+  (modify-syntax-entry ?\(  "("      tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\[  "("      tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\{  "("      tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\<  "("      tablegen-mode-syntax-table)
+  ;; close paren (`)')
+  (modify-syntax-entry ?\)  ")"      tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\]  ")"      tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\}  ")"      tablegen-mode-syntax-table)
+  (modify-syntax-entry ?\>  ")"      tablegen-mode-syntax-table)
+  ;; string quote ('"')
+  (modify-syntax-entry ?\"  "\""     tablegen-mode-syntax-table)
+  )
 
 ;; --------------------- Abbrev table -----------------------------
 
@@ -112,19 +101,19 @@
   Runs tablegen-mode-hook on startup."
   (interactive)
   (kill-all-local-variables)
-  (use-local-map tablegen-mode-map)         ; Provides the local keymap.
-  (setq major-mode 'tablegen-mode)          
-
+  (use-local-map tablegen-mode-map)      ; Provides the local keymap.
   (make-local-variable 'font-lock-defaults)
-  (setq major-mode 'tablegen-mode           ; This is how describe-mode
-                                            ;   finds the doc string to print.
-	mode-name "TableGen"                ; This name goes into the modeline.
-	font-lock-defaults `(tablegen-font-lock-keywords))
+  (setq major-mode 'tablegen-mode        ; This is how describe-mode
+                                         ;   finds the doc string to print.
+	mode-name             "TableGen" ; This name goes into the modeline.
+        local-abbrev-table    tablegen-mode-abbrev-table
+	font-lock-defaults    `(tablegen-font-lock-keywords)
+	require-final-newline t
+        )
 
-  (setq local-abbrev-table tablegen-mode-abbrev-table)
   (set-syntax-table tablegen-mode-syntax-table)
-  (run-hooks 'tablegen-mode-hook))          ; Finally, this permits the user to
-                                            ;   customize the mode with a hook.
+  (run-hooks 'tablegen-mode-hook))       ; Finally, this permits the user to
+                                         ;   customize the mode with a hook.
 
 ;; Associate .td files with tablegen-mode
 (setq auto-mode-alist (append '(("\\.td$" . tablegen-mode)) auto-mode-alist))
