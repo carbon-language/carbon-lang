@@ -177,6 +177,12 @@ void Preprocessor::HandlePragmaOnce(Token &OnceTok) {
   HeaderInfo.MarkFileIncludeOnce(SourceMgr.getFileEntryForLoc(FileLoc));
 }
 
+void Preprocessor::HandlePragmaMark() {
+  assert(CurLexer && "No current lexer?");
+  CurLexer->ReadToEndOfLine();
+}
+
+
 /// HandlePragmaPoison - Handle #pragma GCC poison.  PoisonTok is the 'poison'.
 ///
 void Preprocessor::HandlePragmaPoison(Token &PoisonTok) {
@@ -323,6 +329,7 @@ void Preprocessor::AddPragmaHandler(const char *Namespace,
 }
 
 namespace {
+/// PragmaOnceHandler - "#pragma once" marks the file as atomically included.
 struct PragmaOnceHandler : public PragmaHandler {
   PragmaOnceHandler(const IdentifierInfo *OnceID) : PragmaHandler(OnceID) {}
   virtual void HandlePragma(Preprocessor &PP, Token &OnceTok) {
@@ -331,6 +338,16 @@ struct PragmaOnceHandler : public PragmaHandler {
   }
 };
 
+/// PragmaMarkHandler - "#pragma mark ..." is ignored by the compiler, and the
+/// rest of the line is not lexed.
+struct PragmaMarkHandler : public PragmaHandler {
+  PragmaMarkHandler(const IdentifierInfo *MarkID) : PragmaHandler(MarkID) {}
+  virtual void HandlePragma(Preprocessor &PP, Token &MarkTok) {
+    PP.HandlePragmaMark();
+  }
+};
+
+/// PragmaPoisonHandler - "#pragma poison x" marks x as not usable.
 struct PragmaPoisonHandler : public PragmaHandler {
   PragmaPoisonHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
   virtual void HandlePragma(Preprocessor &PP, Token &PoisonTok) {
@@ -338,6 +355,8 @@ struct PragmaPoisonHandler : public PragmaHandler {
   }
 };
 
+/// PragmaSystemHeaderHandler - "#pragma system_header" marks the current file
+/// as a system header, which silences warnings in it.
 struct PragmaSystemHeaderHandler : public PragmaHandler {
   PragmaSystemHeaderHandler(const IdentifierInfo *ID) : PragmaHandler(ID) {}
   virtual void HandlePragma(Preprocessor &PP, Token &SHToken) {
@@ -358,6 +377,7 @@ struct PragmaDependencyHandler : public PragmaHandler {
 /// #pragma GCC poison/system_header/dependency and #pragma once.
 void Preprocessor::RegisterBuiltinPragmas() {
   AddPragmaHandler(0, new PragmaOnceHandler(getIdentifierInfo("once")));
+  AddPragmaHandler(0, new PragmaMarkHandler(getIdentifierInfo("mark")));
   AddPragmaHandler("GCC", new PragmaPoisonHandler(getIdentifierInfo("poison")));
   AddPragmaHandler("GCC", new PragmaSystemHeaderHandler(
                                           getIdentifierInfo("system_header")));

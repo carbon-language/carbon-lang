@@ -494,6 +494,7 @@ private:
   void HandlePragmaDirective();
 public:
   void HandlePragmaOnce(Token &OnceTok);
+  void HandlePragmaMark();
   void HandlePragmaPoison(Token &PoisonTok);
   void HandlePragmaSystemHeader(Token &SysHeaderTok);
   void HandlePragmaDependency(Token &DependencyTok);
