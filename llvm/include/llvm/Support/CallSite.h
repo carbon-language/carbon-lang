@@ -75,6 +75,7 @@ public:
 
   /// @brief Determine if the call cannot unwind.
   bool doesNotThrow() const;
+  void setDoesNotThrow(bool doesNotThrow = true);
 
   /// getType - Return the type of the instruction that generated this call site
   ///

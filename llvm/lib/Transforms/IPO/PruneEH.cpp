@@ -122,17 +122,15 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   // If the SCC doesn't unwind or doesn't throw, note this fact.
   if (!SCCMightUnwind || !SCCMightReturn)
     for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
-      const ParamAttrsList *PAL = SCC[i]->getFunction()->getParamAttrs();
-      uint16_t RAttributes = PAL ? PAL->getParamAttrs(0) : 0;
+      uint16_t NewAttributes = ParamAttr::None;
 
       if (!SCCMightUnwind)
-        RAttributes |= ParamAttr::NoUnwind;
+        NewAttributes |= ParamAttr::NoUnwind;
       if (!SCCMightReturn)
-        RAttributes |= ParamAttr::NoReturn;
+        NewAttributes |= ParamAttr::NoReturn;
 
-      ParamAttrsVector modVec;
-      modVec.push_back(ParamAttrsWithIndex::get(0, RAttributes));
-      PAL = ParamAttrsList::getModified(PAL, modVec);
+      const ParamAttrsList *PAL = SCC[i]->getFunction()->getParamAttrs();
+      PAL = ParamAttrsList::includeAttrs(PAL, 0, NewAttributes);
       SCC[i]->getFunction()->setParamAttrs(PAL);
     }
 

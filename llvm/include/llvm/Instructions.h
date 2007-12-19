@@ -948,6 +948,7 @@ public:
   bool doesNotThrow() const {
     return paramHasAttr(0, ParamAttr::NoUnwind);
   }
+  void setDoesNotThrow(bool doesNotThrow = true);
 
   /// @brief Determine if the call returns a structure.
   bool isStructReturn() const {
@@ -1752,6 +1753,7 @@ public:
   bool doesNotThrow() const {
     return paramHasAttr(0, ParamAttr::NoUnwind);
   }
+  void setDoesNotThrow(bool doesNotThrow = true);
 
   /// @brief Determine if the call returns a structure.
   bool isStructReturn() const {

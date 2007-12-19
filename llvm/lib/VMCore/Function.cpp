@@ -261,6 +261,32 @@ ParamAttrsList::getModified(const ParamAttrsList *PAL,
   return get(newVec);
 }
 
+const ParamAttrsList *
+ParamAttrsList::includeAttrs(const ParamAttrsList *PAL,
+                             uint16_t idx, uint16_t attrs) {
+  uint16_t OldAttrs = PAL ? PAL->getParamAttrs(idx) : 0;
+  uint16_t NewAttrs = OldAttrs | attrs;
+  if (NewAttrs == OldAttrs)
+    return PAL;
+
+  ParamAttrsVector modVec;
+  modVec.push_back(ParamAttrsWithIndex::get(idx, NewAttrs));
+  return getModified(PAL, modVec);
+}
+
+const ParamAttrsList *
+ParamAttrsList::excludeAttrs(const ParamAttrsList *PAL,
+                             uint16_t idx, uint16_t attrs) {
+  uint16_t OldAttrs = PAL ? PAL->getParamAttrs(idx) : 0;
+  uint16_t NewAttrs = OldAttrs & ~attrs;
+  if (NewAttrs == OldAttrs)
+    return PAL;
+
+  ParamAttrsVector modVec;
+  modVec.push_back(ParamAttrsWithIndex::get(idx, NewAttrs));
+  return getModified(PAL, modVec);
+}
+
 ParamAttrsList::~ParamAttrsList() {
   ParamAttrsLists->RemoveNode(this);
 }

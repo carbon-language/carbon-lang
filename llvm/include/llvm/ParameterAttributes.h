@@ -149,6 +149,14 @@ class ParamAttrsList : public FoldingSetNode {
     static const ParamAttrsList *getModified(const ParamAttrsList *PAL,
                                              const ParamAttrsVector &modVec);
 
+    /// @brief Add the specified attributes to those in PAL at index idx.
+    static const ParamAttrsList *includeAttrs(const ParamAttrsList *PAL,
+                                              uint16_t idx, uint16_t attrs);
+
+    /// @brief Remove the specified attributes from those in PAL at index idx.
+    static const ParamAttrsList *excludeAttrs(const ParamAttrsList *PAL,
+                                              uint16_t idx, uint16_t attrs);
+
     /// Returns whether each of the specified lists of attributes can be safely
     /// replaced with the other in a function or a function call.
     /// @brief Whether one attribute list can safely replace the other.

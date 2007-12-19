@@ -194,6 +194,10 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   bool MustClearTailCallFlags =
     isa<CallInst>(TheCall) && !cast<CallInst>(TheCall)->isTailCall();
 
+  // If the call to the callee cannot throw, set the 'nounwind' flag on any
+  // calls that we inline.
+  bool MarkNoUnwind = CS.doesNotThrow();
+
   BasicBlock *OrigBB = TheCall->getParent();
   Function *Caller = OrigBB->getParent();
 
@@ -207,7 +211,7 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   std::vector<ReturnInst*> Returns;
   ClonedCodeInfo InlinedFunctionInfo;
   Function::iterator FirstNewBlock;
-  
+
   { // Scope to destroy ValueMap after cloning.
     DenseMap<const Value*, Value*> ValueMap;
 
@@ -323,14 +327,32 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
 
   // If we are inlining tail call instruction through a call site that isn't 
   // marked 'tail', we must remove the tail marker for any calls in the inlined
-  // code.
-  if (MustClearTailCallFlags && InlinedFunctionInfo.ContainsCalls) {
+  // code.  Also, calls inlined through a 'nounwind' call site should be marked
+  // 'nounwind'.
+  if (InlinedFunctionInfo.ContainsCalls &&
+      (MustClearTailCallFlags || MarkNoUnwind)) {
     for (Function::iterator BB = FirstNewBlock, E = Caller->end();
          BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-        if (CallInst *CI = dyn_cast<CallInst>(I))
-          CI->setTailCall(false);
+        if (CallInst *CI = dyn_cast<CallInst>(I)) {
+          if (MustClearTailCallFlags)
+            CI->setTailCall(false);
+          if (MarkNoUnwind)
+            CI->setDoesNotThrow();
+        }
   }
+
+  // If we are inlining through a 'nounwind' call site then any inlined 'unwind'
+  // instructions are unreachable.
+  if (InlinedFunctionInfo.ContainsUnwinds && MarkNoUnwind)
+    for (Function::iterator BB = FirstNewBlock, E = Caller->end();
+         BB != E; ++BB) {
+      TerminatorInst *Term = BB->getTerminator();
+      if (isa<UnwindInst>(Term)) {
+        new UnreachableInst(Term);
+        BB->getInstList().erase(Term);
+      }
+    }
 
   // If we are inlining for an invoke instruction, we must make sure to rewrite
   // any inlined 'unwind' instructions into branches to the invoke exception

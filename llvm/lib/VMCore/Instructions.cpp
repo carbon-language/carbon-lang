@@ -71,6 +71,12 @@ bool CallSite::doesNotThrow() const {
   else
     return cast<InvokeInst>(I)->doesNotThrow();
 }
+void CallSite::setDoesNotThrow(bool doesNotThrow) {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    CI->setDoesNotThrow(doesNotThrow);
+  else
+    cast<InvokeInst>(I)->setDoesNotThrow(doesNotThrow);
+}
 
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
@@ -405,6 +411,15 @@ bool CallInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
   return false;
 }
 
+void CallInst::setDoesNotThrow(bool doesNotThrow) {
+  const ParamAttrsList *PAL = getParamAttrs();
+  if (doesNotThrow)
+    PAL = ParamAttrsList::includeAttrs(PAL, 0, ParamAttr::NoUnwind);
+  else
+    PAL = ParamAttrsList::excludeAttrs(PAL, 0, ParamAttr::NoUnwind);
+  setParamAttrs(PAL);
+}
+
 
 //===----------------------------------------------------------------------===//
 //                        InvokeInst Implementation
@@ -481,6 +496,15 @@ bool InvokeInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
   if (const Function *F = getCalledFunction())
     return F->paramHasAttr(i, attr);
   return false;
+}
+
+void InvokeInst::setDoesNotThrow(bool doesNotThrow) {
+  const ParamAttrsList *PAL = getParamAttrs();
+  if (doesNotThrow)
+    PAL = ParamAttrsList::includeAttrs(PAL, 0, ParamAttr::NoUnwind);
+  else
+    PAL = ParamAttrsList::excludeAttrs(PAL, 0, ParamAttr::NoUnwind);
+  setParamAttrs(PAL);
 }
 
 
