@@ -32,52 +32,20 @@ using namespace clang;
 /// CheckFunctionCall - Check a direct function call for various correctness
 /// and safety properties not strictly enforced by the C type system.
 bool
-Sema::CheckFunctionCall(Expr *Fn,
-                        SourceLocation LParenLoc, SourceLocation RParenLoc,
+Sema::CheckFunctionCall(Expr *Fn, SourceLocation RParenLoc,
                         FunctionDecl *FDecl,
                         Expr** Args, unsigned NumArgsInCall) {
                         
   // Get the IdentifierInfo* for the called function.
   IdentifierInfo *FnInfo = FDecl->getIdentifier();
   
-  if (FnInfo->getBuiltinID() == 
-      Builtin::BI__builtin___CFStringMakeConstantString) {
+  switch (FnInfo->getBuiltinID()) {
+  case Builtin::BI__builtin___CFStringMakeConstantString:
     assert(NumArgsInCall == 1 &&
            "Wrong number of arguments to builtin CFStringMakeConstantString");
     return CheckBuiltinCFStringArgument(Args[0]);
-  } else if (FnInfo->getBuiltinID() == Builtin::BI__builtin_va_start) {
-    if (NumArgsInCall > 2) {
-      Diag(Args[2]->getLocStart(), 
-           diag::err_typecheck_call_too_many_args, Fn->getSourceRange(),
-           SourceRange(Args[2]->getLocStart(),
-                       Args[NumArgsInCall - 1]->getLocEnd()));
-      return true;
-    }
-    
-    FunctionTypeProto* proto = CurFunctionDecl ? 
-      cast<FunctionTypeProto>(CurFunctionDecl->getType()) : 
-      cast<FunctionTypeProto>(ObjcGetTypeForMethodDefinition(CurMethodDecl));
-    if (!proto->isVariadic()) {
-      Diag(Fn->getLocStart(),
-           diag::err_va_start_used_in_non_variadic_function);
-      return true;
-    }
-    // FIXME: This isn't correct for methods (results in bogus warning).
-    bool SecondArgIsLastNamedArgument = false;
-    if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Args[1])) {
-      if (ParmVarDecl *PV = dyn_cast<ParmVarDecl>(DR->getDecl())) {
-        ParmVarDecl *LastNamedArg = CurFunctionDecl ?
-          CurFunctionDecl->getParamDecl(CurFunctionDecl->getNumParams() - 1) :
-          CurMethodDecl->getParamDecl(CurMethodDecl->getNumParams() - 1);
-        
-        if (PV == LastNamedArg)
-          SecondArgIsLastNamedArgument = true;
-      }
-    }
-      
-    if (!SecondArgIsLastNamedArgument)
-      Diag(Args[1]->getLocStart(), 
-           diag::warn_second_parameter_of_va_start_not_last_named_argument);
+  case Builtin::BI__builtin_va_start:
+    return SemaBuiltinVAStart(Fn, Args, NumArgsInCall);
   }
   
   // Search the KnownFunctionIDs for the identifier.
@@ -93,20 +61,20 @@ Sema::CheckFunctionCall(Expr *Fn,
     bool HasVAListArg = false;
     
     switch (i) {
-      default: assert(false && "No format string argument index.");
-      case id_printf:    format_idx = 0; break;
-      case id_fprintf:   format_idx = 1; break;
-      case id_sprintf:   format_idx = 1; break;
-      case id_snprintf:  format_idx = 2; break;
-      case id_asprintf:  format_idx = 1; break;
-      case id_vsnprintf: format_idx = 2; HasVAListArg = true; break;
-      case id_vasprintf: format_idx = 1; HasVAListArg = true; break;
-      case id_vfprintf:  format_idx = 1; HasVAListArg = true; break;
-      case id_vsprintf:  format_idx = 1; HasVAListArg = true; break;
-      case id_vprintf:   format_idx = 0; HasVAListArg = true; break;
+    default: assert(false && "No format string argument index.");
+    case id_printf:    format_idx = 0; break;
+    case id_fprintf:   format_idx = 1; break;
+    case id_sprintf:   format_idx = 1; break;
+    case id_snprintf:  format_idx = 2; break;
+    case id_asprintf:  format_idx = 1; break;
+    case id_vsnprintf: format_idx = 2; HasVAListArg = true; break;
+    case id_vasprintf: format_idx = 1; HasVAListArg = true; break;
+    case id_vfprintf:  format_idx = 1; HasVAListArg = true; break;
+    case id_vsprintf:  format_idx = 1; HasVAListArg = true; break;
+    case id_vprintf:   format_idx = 0; HasVAListArg = true; break;
     }
     
-    CheckPrintfArguments(Fn, LParenLoc, RParenLoc, HasVAListArg,
+    CheckPrintfArguments(Fn, RParenLoc, HasVAListArg,
 			 FDecl, format_idx, Args, NumArgsInCall);       
   }
   
@@ -157,6 +125,49 @@ bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
   return false;
 }
 
+bool Sema::SemaBuiltinVAStart(Expr *Fn, Expr** Args, unsigned NumArgs) {
+  if (NumArgs > 2) {
+    Diag(Args[2]->getLocStart(), 
+         diag::err_typecheck_call_too_many_args, Fn->getSourceRange(),
+         SourceRange(Args[2]->getLocStart(), Args[NumArgs-1]->getLocEnd()));
+    return true;
+  }
+  
+  FunctionTypeProto *Proto;
+  if (CurFunctionDecl)
+    Proto = cast<FunctionTypeProto>(CurFunctionDecl->getType());
+  else
+    Proto =
+      cast<FunctionTypeProto>(ObjcGetTypeForMethodDefinition(CurMethodDecl));
+  
+  if (!Proto->isVariadic()) {
+    Diag(Fn->getLocStart(), diag::err_va_start_used_in_non_variadic_function);
+    return true;
+  }
+  
+  // Verify that the second argument to the builtin is the last argument of the
+  // current function or method.
+  bool SecondArgIsLastNamedArgument = false;
+  if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Args[1])) {
+    if (ParmVarDecl *PV = dyn_cast<ParmVarDecl>(DR->getDecl())) {
+      // FIXME: This isn't correct for methods (results in bogus warning).
+      // Get the last formal in the current function.
+      ParmVarDecl *LastArg;
+      if (CurFunctionDecl)
+        LastArg = *(CurFunctionDecl->param_end()-1);
+      else
+        LastArg = *(CurMethodDecl->param_end()-1);
+      SecondArgIsLastNamedArgument = PV == LastArg;
+    }
+  }
+  
+  if (!SecondArgIsLastNamedArgument)
+    Diag(Args[1]->getLocStart(), 
+         diag::warn_second_parameter_of_va_start_not_last_named_argument);
+  return false;
+}  
+
+
 /// CheckPrintfArguments - Check calls to printf (and similar functions) for
 /// correct use of format strings.  
 ///
@@ -204,8 +215,7 @@ bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
 ///
 /// For now, we ONLY do (1), (3), (5), (6), (7), and (8).
 void
-Sema::CheckPrintfArguments(Expr *Fn, 
-                           SourceLocation LParenLoc, SourceLocation RParenLoc,
+Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
                            bool HasVAListArg, FunctionDecl *FDecl,
                            unsigned format_idx, Expr** Args, 
                            unsigned NumArgsInCall) {
