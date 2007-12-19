@@ -34,10 +34,11 @@ ASTConsumer *CreateDeadStoreChecker(Diagnostic &Diags);
 ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
 ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Features);
 ASTConsumer *CreateCodeRewriterTest(Diagnostic &Diags);
-ASTConsumer *CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr, 
+ASTConsumer *CreateSerializationTest(const std::string& SourceFile,
+                                     Diagnostic &Diags, FileManager& FMgr, 
                                      const LangOptions &LOpts);
   
-ASTConsumer *CreateASTSerializer(const std::string& InFile,
+ASTConsumer *CreateASTSerializer(const std::string& SourceFile,
                                  Diagnostic &Diags, const LangOptions &LOpts);
 
 } // end clang namespace

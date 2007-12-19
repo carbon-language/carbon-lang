@@ -17,6 +17,7 @@
 #include "llvm/Bitcode/SerializationFwd.h"
 #include "llvm/System/Path.h"
 #include <vector>
+#include <string>
 
 namespace clang {
  
@@ -30,30 +31,24 @@ class Decl;
 class FileEntry;
   
 class TranslationUnit {
-  // Information to help uniquely identify a translation unit on disk.
-  // We may also incorporate a UUID in the future.
-  uint64_t ino;
-  uint64_t dev;
-  const char* SourceFile;
-  
-  // The actual data of the translation unit.  
+  std::string SourceFile;
   LangOptions LangOpts;
   ASTContext* Context;
   std::vector<Decl*> TopLevelDecls;
 
   // The default ctor is only invoked during deserialization.
-  explicit TranslationUnit() : SourceFile(NULL), Context(NULL) {}
+  explicit TranslationUnit() : Context(NULL) {}
   
 public:
-  explicit TranslationUnit(const LangOptions& lopt)
-    : LangOpts(lopt), Context(NULL) {}
+  explicit TranslationUnit(const std::string& sourcefile, 
+                           const LangOptions& lopt)
+    : SourceFile(sourcefile), LangOpts(lopt), Context(NULL) {}
   
-  explicit TranslationUnit(const LangOptions& lopt, ASTContext& context)
-    : LangOpts(lopt), Context(&context) {}
-
+  
   void setContext(ASTContext* context) { Context = context; }
   ASTContext* getContext() const { return Context; }
   const LangOptions& getLangOpts() const { return LangOpts; }
+  const std::string& getSourceFile() const { return SourceFile; }
   
   /// Emit - Emit the translation unit to an arbitray bitcode stream.
   void Emit(llvm::Serializer& S) const;

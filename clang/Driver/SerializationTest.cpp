@@ -37,8 +37,9 @@ class SerializationTest : public ASTConsumer {
   Diagnostic &Diags;
   FileManager &FMgr;  
 public:  
-  SerializationTest(Diagnostic &d, FileManager& fmgr, const LangOptions& LOpts)
-                    : TU(LOpts), Diags(d), FMgr(fmgr) {}
+  SerializationTest(const std::string& SourceFile, Diagnostic &d,
+                    FileManager& fmgr, const LangOptions& LOpts)
+                    : TU(SourceFile, LOpts), Diags(d), FMgr(fmgr) {}
   
   ~SerializationTest();
 
@@ -49,6 +50,7 @@ public:
   virtual void HandleTopLevelDecl(Decl *D) {
     TU.AddTopLevelDecl(D);
   }
+  
 private:
   bool Serialize(llvm::sys::Path& Filename, llvm::sys::Path& FNameDeclPrint);
   bool Deserialize(llvm::sys::Path& Filename, llvm::sys::Path& FNameDeclPrint);
@@ -57,9 +59,9 @@ private:
 } // end anonymous namespace
 
 ASTConsumer*
-clang::CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr,
-                               const LangOptions &LOpts) {  
-  return new SerializationTest(Diags,FMgr,LOpts);
+clang::CreateSerializationTest(const std::string& SourceFile, Diagnostic &Diags,
+                               FileManager& FMgr, const LangOptions &LOpts) {  
+  return new SerializationTest(SourceFile,Diags,FMgr,LOpts);
 }
 
 

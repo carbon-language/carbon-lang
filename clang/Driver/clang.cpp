@@ -39,6 +39,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Config/config.h"
+#include "llvm/ADT/scoped_ptr.h"
 #include <memory>
 using namespace clang;
 
@@ -887,7 +888,7 @@ static void ParseFile(Preprocessor &PP, MinimalAction *PA, unsigned MainFileID){
 /// CreateASTConsumer - Create the ASTConsumer for the corresponding program
 ///  action.  These consumers can operate on both ASTs that are freshly
 ///  parsed from source files as well as those deserialized from Bitcode.
-static ASTConsumer* CreateASTConsumer(const std::string& InFile,
+static ASTConsumer* CreateASTConsumer(const std::string& SourceFile,
                                       Diagnostic& Diag, FileManager& FileMgr, 
                                       const LangOptions& LangOpts) {
   switch (ProgAction) {
@@ -917,14 +918,14 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       return CreateUnitValsChecker(Diag);
       
     case TestSerialization:
-      return CreateSerializationTest(Diag, FileMgr, LangOpts);
+      return CreateSerializationTest(SourceFile, Diag, FileMgr, LangOpts);
       
     case EmitLLVM:
       return CreateLLVMEmitter(Diag, LangOpts);
       
     case SerializeAST:
       // FIXME: Allow user to tailor where the file is written.
-      return CreateASTSerializer(InFile, Diag, LangOpts);
+      return CreateASTSerializer(SourceFile, Diag, LangOpts);
       
     case RewriteTest:
       return CreateCodeRewriterTest(Diag);
@@ -934,7 +935,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
 static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
-                             const std::string &InFile,
+                             const std::string &SourceFile,
                              TextDiagnostics &OurDiagnosticClient) {
 
   ASTConsumer* Consumer = NULL;
@@ -942,7 +943,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   
   switch (ProgAction) {
   default:
-    Consumer = CreateASTConsumer(InFile, PP.getDiagnostics(),
+    Consumer = CreateASTConsumer(SourceFile, PP.getDiagnostics(),
                                  PP.getFileManager(),
                                  PP.getLangOptions());
     
@@ -1005,7 +1006,7 @@ static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
   }
   
   if (Stats) {
-    fprintf(stderr, "\nSTATISTICS FOR '%s':\n", InFile.c_str());
+    fprintf(stderr, "\nSTATISTICS FOR '%s':\n", SourceFile.c_str());
     PP.PrintStats();
     PP.getIdentifierTable().PrintStats();
     PP.getHeaderSearchInfo().PrintStats();
@@ -1036,7 +1037,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
     exit (1);
   }
   
-  TranslationUnit* TU = ReadASTBitcodeFile(Filename,FileMgr);
+  llvm::scoped_ptr<TranslationUnit> TU(ReadASTBitcodeFile(Filename,FileMgr));
   
   if (!TU) {
     fprintf(stderr, "error: file '%s' could not be deserialized\n", 
@@ -1044,8 +1045,11 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
     exit (1);
   }
   
-  ASTConsumer* Consumer = CreateASTConsumer(InFile,Diag,
-                                            FileMgr,TU->getLangOpts());
+  // Observe that we use the source file name stored in the deserialized
+  // translation unit, rather than InFile.
+  llvm::scoped_ptr<ASTConsumer>
+    Consumer(CreateASTConsumer(TU->getSourceFile(), Diag, FileMgr,
+                               TU->getLangOpts()));
   
   if (!Consumer) {      
     fprintf(stderr, "Unsupported program action with serialized ASTs!\n");
@@ -1053,12 +1057,10 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
   }
   
   // FIXME: only work on consumers that do not require MainFileID.
-  Consumer->Initialize(*TU->getContext(),0);
+  Consumer->Initialize(*TU->getContext(), 0);
   
   for (TranslationUnit::iterator I=TU->begin(), E=TU->end(); I!=E; ++I)
     Consumer->HandleTopLevelDecl(*I);
-
-  delete Consumer;
 }
 
 
