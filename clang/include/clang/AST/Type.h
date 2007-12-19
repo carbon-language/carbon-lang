@@ -943,7 +943,9 @@ public:
   unsigned getNumProtocols() const {
     return Protocols.size();
   }
-    
+  ObjcProtocolDecl **getReferencedProtocols() {
+    return &Protocols[0];
+  }  
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   void Profile(llvm::FoldingSetNodeID &ID);
@@ -975,6 +977,9 @@ public:
   unsigned getNumProtocols() const {
     return Protocols.size();
   }
+  ObjcProtocolDecl **getReferencedProtocols() {
+    return &Protocols[0];
+  } 
     
   virtual void getAsStringInternal(std::string &InnerString) const;
     
@@ -1024,7 +1029,8 @@ inline bool Type::isFunctionType() const {
   return isa<FunctionType>(CanonicalType);
 }
 inline bool Type::isPointerType() const {
-  return isa<PointerType>(CanonicalType);
+  return isa<PointerType>(CanonicalType) || 
+	 isa<ObjcQualifiedIdType>(CanonicalType);
 }
 inline bool Type::isFunctionPointerType() const {
   if (const PointerType* T = getAsPointerType())

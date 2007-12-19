@@ -1103,6 +1103,8 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 ///
 Sema::AssignmentCheckResult
 Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
+
+  
   if (lhsType.getCanonicalType().getUnqualifiedType() == 
       rhsType.getCanonicalType().getUnqualifiedType())
     return Compatible; // common case, fast path...
@@ -1110,7 +1112,13 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   if (lhsType->isReferenceType() || rhsType->isReferenceType()) {
     if (Context.referenceTypesAreCompatible(lhsType, rhsType))
       return Compatible;
-  } else if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
+  }
+  else if (lhsType->isObjcQualifiedIdType() 
+           || rhsType->isObjcQualifiedIdType()) {
+    if (Context.ObjcQualifiedIdTypesAreCompatible(lhsType, rhsType))
+      return Compatible;
+  }
+  else if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
     if (lhsType->isVectorType() || rhsType->isVectorType()) {
       if (!getLangOptions().LaxVectorConversions) {
         if (lhsType.getCanonicalType() != rhsType.getCanonicalType())
