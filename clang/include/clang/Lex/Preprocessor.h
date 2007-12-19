@@ -216,7 +216,7 @@ public:
   void AddPragmaHandler(const char *Namespace, PragmaHandler *Handler);
 
   /// EnterMainSourceFile - Enter the specified FileID as the main source file,
-  /// which implicitly adds the builting defines etc.
+  /// which implicitly adds the builtin defines etc.
   void EnterMainSourceFile(unsigned CurFileID);
   
   

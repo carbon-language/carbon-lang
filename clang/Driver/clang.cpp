@@ -940,8 +940,7 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
 
 /// ProcessInputFile - Process a single input file with the specified state.
 ///
-static void ProcessInputFile(Preprocessor &PP, unsigned MainFileID,
-                             const std::string &InFile,
+static void ProcessInputFile(Preprocessor &PP, const std::string &InFile,
                              TextDiagnostics &OurDiagnosticClient) {
 
   ASTConsumer* Consumer = NULL;
@@ -1180,7 +1179,7 @@ int main(int argc, char **argv) {
       
       SourceMgr.setMainFileID(MainFileID);
 
-      ProcessInputFile(PP, MainFileID, InFile, *DiagClient);
+      ProcessInputFile(PP, InFile, *DiagClient);
       
       HeaderInfo.ClearFileInfo();
       
