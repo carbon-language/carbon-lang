@@ -880,13 +880,12 @@ LowerConstantFP(SDOperand Op, SelectionDAG &DAG) {
   assert((FP != 0) &&
 	 "LowerConstantFP: Node is not ConstantFPSDNode");
 
-  const APFloat &apf = FP->getValueAPF();
-
   if (VT == MVT::f32) {
+    float targetConst = FP->getValueAPF().convertToFloat();
     return DAG.getNode(SPUISD::SFPConstant, VT,
-		       DAG.getTargetConstantFP(apf.convertToFloat(), VT));
+		       DAG.getTargetConstantFP(targetConst, VT));
   } else if (VT == MVT::f64) {
-    uint64_t dbits = DoubleToBits(apf.convertToDouble());
+    uint64_t dbits = DoubleToBits(FP->getValueAPF().convertToDouble());
     return DAG.getNode(ISD::BIT_CONVERT, VT,
 		       LowerConstant(DAG.getConstant(dbits, MVT::i64), DAG));
   }

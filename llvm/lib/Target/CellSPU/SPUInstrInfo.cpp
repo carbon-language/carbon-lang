@@ -98,13 +98,13 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
     destReg = MI.getOperand(0).getReg();
     return true;
 #endif
-    // case SPU::ORv16i8_i8:
+  case SPU::ORv16i8_i8:
   case SPU::ORv8i16_i16:
   case SPU::ORv4i32_i32:
   case SPU::ORv2i64_i64:
   case SPU::ORv4f32_f32:
   case SPU::ORv2f64_f64:
-    // case SPU::ORi8_v16i8:
+  case SPU::ORi8_v16i8:
   case SPU::ORi16_v8i16:
   case SPU::ORi32_v4i32:
   case SPU::ORi64_v2i64:
