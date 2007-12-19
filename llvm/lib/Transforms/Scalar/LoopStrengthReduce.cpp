@@ -34,6 +34,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetLowering.h"
 #include <algorithm>
@@ -44,6 +45,12 @@ STATISTIC(NumReduced ,    "Number of GEPs strength reduced");
 STATISTIC(NumInserted,    "Number of PHIs inserted");
 STATISTIC(NumVariable,    "Number of PHIs with variable strides");
 STATISTIC(NumEliminated , "Number of strides eliminated");
+
+namespace {
+  // Hidden options for help debugging.
+  cl::opt<bool> AllowPHIIVReuse("lsr-allow-phi-iv-reuse",
+                                cl::init(true), cl::Hidden);
+}
 
 namespace {
 
@@ -980,6 +987,9 @@ static bool isZero(const SCEVHandle &V) {
 bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
                                int64_t Scale, 
                                const std::vector<BasedUser>& UsersToProcess) {
+  if (!TLI)
+    return true;
+
   for (unsigned i=0, e = UsersToProcess.size(); i!=e; ++i) {
     // If this is a load or other access, pass the type of the access in.
     const Type *AccessTy = Type::VoidTy;
@@ -987,6 +997,8 @@ bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
       AccessTy = SI->getOperand(0)->getType();
     else if (LoadInst *LI = dyn_cast<LoadInst>(UsersToProcess[i].Inst))
       AccessTy = LI->getType();
+    else if (PHINode *PN = dyn_cast<PHINode>(UsersToProcess[i].Inst))
+      AccessTy = PN->getType();
     
     TargetLowering::AddrMode AM;
     if (SCEVConstant *SC = dyn_cast<SCEVConstant>(UsersToProcess[i].Imm))
@@ -995,7 +1007,7 @@ bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
     AM.Scale = Scale;
 
     // If load[imm+r*scale] is illegal, bail out.
-    if (TLI && !TLI->isLegalAddressingMode(AM, AccessTy))
+    if (!TLI->isLegalAddressingMode(AM, AccessTy))
       return false;
   }
   return true;
@@ -1081,6 +1093,67 @@ static bool isNonConstantNegative(const SCEVHandle &Expr) {
   return SC->getValue()->getValue().isNegative();
 }
 
+/// isAddress - Returns true if the specified instruction is using the
+/// specified value as an address.
+static bool isAddressUse(Instruction *Inst, Value *OperandVal) {
+  bool isAddress = isa<LoadInst>(Inst);
+  if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
+    if (SI->getOperand(1) == OperandVal)
+      isAddress = true;
+  } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst)) {
+    // Addressing modes can also be folded into prefetches and a variety
+    // of intrinsics.
+    switch (II->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::prefetch:
+      case Intrinsic::x86_sse2_loadu_dq:
+      case Intrinsic::x86_sse2_loadu_pd:
+      case Intrinsic::x86_sse_loadu_ps:
+      case Intrinsic::x86_sse_storeu_ps:
+      case Intrinsic::x86_sse2_storeu_pd:
+      case Intrinsic::x86_sse2_storeu_dq:
+      case Intrinsic::x86_sse2_storel_dq:
+        if (II->getOperand(1) == OperandVal)
+          isAddress = true;
+        break;
+      case Intrinsic::x86_sse2_loadh_pd:
+      case Intrinsic::x86_sse2_loadl_pd:
+        if (II->getOperand(2) == OperandVal)
+          isAddress = true;
+        break;
+    }
+  }
+  return isAddress;
+}
+
+/// isAddressUsePHI - Returns if all uses of the specified PHI node are using
+/// the PHI node value as an address.
+static void isAddressUsePHI(Instruction *Inst,
+                            SmallPtrSet<Instruction*,16> &Processed,
+                            bool &Result) {
+  if (!Result || !Processed.insert(Inst))
+    return;
+
+  for (Value::use_iterator UI = Inst->use_begin(), E = Inst->use_end();
+       UI != E; ++UI) {
+    Instruction *User = cast<Instruction>(*UI);
+    if (isa<PHINode>(User) && !Processed.count(User)) {
+      bool ThisResult = true;
+      isAddressUsePHI(User, Processed, ThisResult);
+      if (!ThisResult) {
+        Result = false;
+        return;
+      }
+      continue;
+    }
+
+    if (!isAddressUse(User, cast<Value>(Inst))) {
+      Result = false;
+      return;
+    }
+  }
+}
+
 // CollectIVUsers - Transform our list of users and offsets to a bit more
 // complex table. In this new vector, each 'BasedUser' contains 'Base' the base
 // of the strided accessas well as the old information from Uses. We
@@ -1131,37 +1204,17 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
       
       // Addressing modes can be folded into loads and stores.  Be careful that
       // the store is through the expression, not of the expression though.
-      bool isAddress = isa<LoadInst>(UsersToProcess[i].Inst);
-      if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].Inst)) {
-        if (SI->getOperand(1) == UsersToProcess[i].OperandValToReplace)
-          isAddress = true;
-      } else if (IntrinsicInst *II =
-                   dyn_cast<IntrinsicInst>(UsersToProcess[i].Inst)) {
-        // Addressing modes can also be folded into prefetches and a variety
-        // of intrinsics.
-        switch (II->getIntrinsicID()) {
-        default: break;
-        case Intrinsic::prefetch:
-        case Intrinsic::x86_sse2_loadu_dq:
-        case Intrinsic::x86_sse2_loadu_pd:
-        case Intrinsic::x86_sse_loadu_ps:
-        case Intrinsic::x86_sse_storeu_ps:
-        case Intrinsic::x86_sse2_storeu_pd:
-        case Intrinsic::x86_sse2_storeu_dq:
-        case Intrinsic::x86_sse2_storel_dq:
-          if (II->getOperand(1) == UsersToProcess[i].OperandValToReplace)
-            isAddress = true;
-          break;
-        case Intrinsic::x86_sse2_loadh_pd:
-        case Intrinsic::x86_sse2_loadl_pd:
-          if (II->getOperand(2) == UsersToProcess[i].OperandValToReplace)
-            isAddress = true;
-          break;
-        }
+      bool isPtrPHI = false;
+      bool isAddress = isAddressUse(UsersToProcess[i].Inst,
+                                    UsersToProcess[i].OperandValToReplace);
+      if (isa<PHINode>(UsersToProcess[i].Inst)) {
+        SmallPtrSet<Instruction*,16> Processed;
+        isPtrPHI = true;
+        isAddressUsePHI(UsersToProcess[i].Inst, Processed, isPtrPHI);
       }
 
       // If this use isn't an address, then not all uses are addresses.
-      if (!isAddress)
+      if (!isAddress && !(AllowPHIIVReuse && isPtrPHI))
         AllUsesAreAddresses = false;
       
       MoveImmediateValues(TLI, UsersToProcess[i].Inst, UsersToProcess[i].Base,
