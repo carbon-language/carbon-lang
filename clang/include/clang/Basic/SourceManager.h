@@ -220,8 +220,11 @@ class SourceManager {
   unsigned LastLineNoFilePos;
   unsigned LastLineNoResult;
   
+  /// MainFileID - The file ID for the main source file of the translation unit.
+  unsigned MainFileID;
+  
 public:
-  SourceManager() : LastLineNoFileIDQuery(~0U) {}
+  SourceManager() : LastLineNoFileIDQuery(~0U), MainFileID(0) {}
   ~SourceManager() {}
   
   void clearIDTables() {
@@ -230,6 +233,12 @@ public:
     LastLineNoFileIDQuery = ~0U;
     LastLineNoContentCache = 0;
   }
+  
+  /// getMainFileID - Returns the FileID of the main source file.
+  unsigned getMainFileID() const { return MainFileID; }
+  
+  /// setMainFileID - Set the FileID of the main source file.
+  void setMainFileID(unsigned ID) { MainFileID = ID; }
   
   /// createFileID - Create a new FileID that represents the specified file
   /// being #included from the specified IncludePosition.  This returns 0 on

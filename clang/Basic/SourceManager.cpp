@@ -508,6 +508,7 @@ MacroIDInfo MacroIDInfo::ReadVal(llvm::Deserializer& D) {
 void SourceManager::Emit(llvm::Serializer& S) const {
   S.EnterBlock();
   S.EmitPtr(this);
+  S.EmitInt(MainFileID);
   
   // Emit: FileInfos.  Just emit the file name.
   S.EnterBlock();    
@@ -540,6 +541,9 @@ SourceManager*
 SourceManager::CreateAndRegister(llvm::Deserializer& D, FileManager& FMgr){
   SourceManager *M = new SourceManager();
   D.RegisterPtr(M);
+  
+  // Read: the FileID of the main source file of the translation unit.
+  M->MainFileID = D.ReadInt();
   
   std::vector<char> Buf;
     

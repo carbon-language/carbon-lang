@@ -1175,7 +1175,10 @@ int main(int argc, char **argv) {
       std::vector<char> PredefineBuffer;
       unsigned MainFileID = InitializePreprocessor(PP, InFile, PredefineBuffer);
       
-      if (!MainFileID) continue;
+      if (!MainFileID)
+        continue;
+      
+      SourceMgr.setMainFileID(MainFileID);
 
       ProcessInputFile(PP, MainFileID, InFile, *DiagClient);
       
