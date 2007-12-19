@@ -37,7 +37,7 @@ CAMLprim value llvm_verify_module(LLVMModuleRef M) {
     Store_field(Option, 0, String);
   }
   
-  LLVMDisposeVerifierMessage(Message);
+  LLVMDisposeMessage(Message);
   
   CAMLreturn(Option);
 }

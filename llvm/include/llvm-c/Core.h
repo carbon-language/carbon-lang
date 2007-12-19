@@ -51,7 +51,16 @@ typedef struct LLVMOpaqueTypeHandle *LLVMTypeHandleRef;
 typedef struct LLVMOpaqueValue *LLVMValueRef;
 typedef struct LLVMOpaqueBasicBlock *LLVMBasicBlockRef;
 typedef struct LLVMOpaqueBuilder *LLVMBuilderRef;
+
+/* Used to provide a module to JIT or interpreter.
+ * See the llvm::ModuleProvider class.
+ */
 typedef struct LLVMOpaqueModuleProvider *LLVMModuleProviderRef;
+
+/* Used to provide a module to JIT or interpreter.
+ * See the llvm::MemoryBuffer class.
+ */
+typedef struct LLVMOpaqueMemoryBuffer *LLVMMemoryBufferRef;
 
 typedef enum {
   LLVMVoidTypeKind,        /* type with no size */
@@ -127,6 +136,11 @@ typedef enum {
   LLVMRealUNE,            /* True if unordered or not equal */
   LLVMRealPredicateTrue   /* Always true (always folded) */
 } LLVMRealPredicate;
+
+
+/*===-- Error handling ----------------------------------------------------===*/
+
+void LLVMDisposeMessage(char *Message);
 
 
 /*===-- Modules -----------------------------------------------------------===*/
@@ -491,6 +505,7 @@ LLVMValueRef LLVMBuildShuffleVector(LLVMBuilderRef, LLVMValueRef V1,
                                     LLVMValueRef V2, LLVMValueRef Mask,
                                     const char *Name);
 
+
 /*===-- Module providers --------------------------------------------------===*/
 
 /* Encapsulates the module M in a module provider, taking ownership of the
@@ -505,28 +520,45 @@ LLVMCreateModuleProviderForExistingModule(LLVMModuleRef M);
  */
 void LLVMDisposeModuleProvider(LLVMModuleProviderRef MP);
 
+
+/*===-- Memory buffers ----------------------------------------------------===*/
+
+int LLVMCreateMemoryBufferWithContentsOfFile(const char *Path,
+                                             LLVMMemoryBufferRef *OutMemBuf,
+                                             char **OutMessage);
+int LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
+                                    char **OutMessage);
+void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf);
+
 #ifdef __cplusplus
 }
 
 namespace llvm {
   class ModuleProvider;
+  class MemoryBuffer;
   
-  /* Opaque module conversions
-   */ 
-  inline Module *unwrap(LLVMModuleRef M) {
-    return reinterpret_cast<Module*>(M);
-  }
+  #define DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ty, ref)   \
+    inline ty *unwrap(ref P) {                          \
+      return reinterpret_cast<ty*>(P);                  \
+    }                                                   \
+                                                        \
+    inline ref wrap(const ty *P) {                      \
+      return reinterpret_cast<ref>(const_cast<ty*>(P)); \
+    }
   
-  inline LLVMModuleRef wrap(Module *M) {
-    return reinterpret_cast<LLVMModuleRef>(M);
-  }
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Type,           LLVMTypeRef          )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Value,          LLVMValueRef         )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Module,         LLVMModuleRef        )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(BasicBlock,     LLVMBasicBlockRef    )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LLVMBuilder,    LLVMBuilderRef       )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(PATypeHolder,   LLVMTypeHandleRef    )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ModuleProvider, LLVMModuleProviderRef)
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(MemoryBuffer,   LLVMMemoryBufferRef  )
   
-  /* Opaque type conversions
-   */ 
-  inline Type *unwrap(LLVMTypeRef Ty) {
-    return reinterpret_cast<Type*>(Ty);
-  }
+  #undef DEFINE_SIMPLE_CONVERSION_FUNCTIONS
   
+  /* Specialized opaque type conversions.
+   */
   template<typename T>
   inline T *unwrap(LLVMTypeRef Ty) {
     return cast<T>(unwrap(Ty));
@@ -536,20 +568,12 @@ namespace llvm {
     return reinterpret_cast<Type**>(Tys);
   }
   
-  inline LLVMTypeRef wrap(const Type *Ty) {
-    return reinterpret_cast<LLVMTypeRef>(const_cast<Type*>(Ty));
-  }
-  
   inline LLVMTypeRef *wrap(const Type **Tys) {
     return reinterpret_cast<LLVMTypeRef*>(const_cast<Type**>(Tys));
   }
   
-  /* Opaque value conversions
+  /* Specialized opaque value conversions.
    */ 
-  inline Value *unwrap(LLVMValueRef Val) {
-    return reinterpret_cast<Value*>(Val);
-  }
-  
   template<typename T>
   inline T *unwrap(LLVMValueRef Val) {
     return cast<T>(unwrap(Val));
@@ -568,52 +592,8 @@ namespace llvm {
     return reinterpret_cast<T**>(Vals);
   }
   
-  inline LLVMValueRef wrap(const Value *Val) {
-    return reinterpret_cast<LLVMValueRef>(const_cast<Value*>(Val));
-  }
-  
   inline LLVMValueRef *wrap(const Value **Vals) {
     return reinterpret_cast<LLVMValueRef*>(const_cast<Value**>(Vals));
-  }
-  
-  /* Basic block conversions
-   */ 
-  inline BasicBlock *unwrap(LLVMBasicBlockRef BBRef) {
-    return reinterpret_cast<BasicBlock*>(BBRef);
-  }
-  
-  inline LLVMBasicBlockRef wrap(const BasicBlock *BB) {
-    return reinterpret_cast<LLVMBasicBlockRef>(const_cast<BasicBlock*>(BB));
-  }
-  
-  /* Opaque builder conversions.
-   */ 
-  inline LLVMBuilder *unwrap(LLVMBuilderRef B) {
-    return reinterpret_cast<LLVMBuilder*>(B);
-  }
-  
-  inline LLVMBuilderRef wrap(LLVMBuilder *B) {
-    return reinterpret_cast<LLVMBuilderRef>(B);
-  }
-  
-  /* Opaque type handle conversions.
-   */ 
-  inline PATypeHolder *unwrap(LLVMTypeHandleRef B) {
-    return reinterpret_cast<PATypeHolder*>(B);
-  }
-  
-  inline LLVMTypeHandleRef wrap(PATypeHolder *B) {
-    return reinterpret_cast<LLVMTypeHandleRef>(B);
-  }
-  
-  /* Opaque module provider conversions.
-   */ 
-  inline ModuleProvider *unwrap(LLVMModuleProviderRef P) {
-    return reinterpret_cast<ModuleProvider*>(P);
-  }
-  
-  inline LLVMModuleProviderRef wrap(ModuleProvider *P) {
-    return reinterpret_cast<LLVMModuleProviderRef>(P);
   }
 }
 

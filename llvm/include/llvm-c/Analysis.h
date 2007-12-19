@@ -34,12 +34,10 @@ typedef enum {
 
 
 /* Verifies that a module is valid, taking the specified action if not.
-   Optionally returns a human-readable description of any invalid constructs. */
+   Optionally returns a human-readable description of any invalid constructs.
+   OutMessage must be disposed with LLVMDisposeMessage. */
 int LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action,
                      char **OutMessage);
-
-/* Disposes of the message allocated by the verifier, if any. */ 
-void LLVMDisposeVerifierMessage(char *Message);
 
 /* Verifies that a single function is valid, taking the specified action. Useful
    for debugging. */

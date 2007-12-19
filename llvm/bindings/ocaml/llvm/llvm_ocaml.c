@@ -20,8 +20,33 @@
 #include "caml/custom.h"
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
+#include "caml/fail.h"
+#include "caml/callback.h"
 #include "llvm/Config/config.h"
 #include <assert.h>
+#include <stdlib.h>
+
+
+/* Can't use the recommended caml_named_value mechanism for backwards
+   compatibility reasons. This is largely equivalent. */
+static value llvm_ioerror_exn;
+
+CAMLprim value llvm_register_core_exns(value IoError) {
+  llvm_ioerror_exn = Field(IoError, 0);
+  register_global_root(&llvm_ioerror_exn);
+  return Val_unit;
+}
+
+void llvm_raise(value Prototype, char *Message) {
+  CAMLparam1(Prototype);
+  CAMLlocal1(CamlMessage);
+  
+  CamlMessage = copy_string(Message);
+  LLVMDisposeMessage(Message);
+  
+  raise_with_arg(Prototype, CamlMessage);
+  CAMLnoreturn;
+}
 
 
 /*===-- Modules -----------------------------------------------------------===*/
@@ -1071,3 +1096,39 @@ CAMLprim value llvm_dispose_module_provider(LLVMModuleProviderRef MP) {
   LLVMDisposeModuleProvider(MP);
   return Val_unit;
 }
+
+
+/*===-- Memory buffers ----------------------------------------------------===*/
+
+/* string -> llmemorybuffer
+   raises IoError msg on error */
+CAMLprim value llvm_memorybuffer_of_file(value Path) {
+  CAMLparam1(Path);
+  char *Message;
+  LLVMMemoryBufferRef MemBuf;
+  
+  if (LLVMCreateMemoryBufferWithContentsOfFile(String_val(Path),
+                                               &MemBuf, &Message))
+    llvm_raise(llvm_ioerror_exn, Message);
+  
+  CAMLreturn((value) MemBuf);
+}
+
+/* unit -> llmemorybuffer
+   raises IoError msg on error */
+CAMLprim LLVMMemoryBufferRef llvm_memorybuffer_of_stdin(value Unit) {
+  char *Message;
+  LLVMMemoryBufferRef MemBuf;
+  
+  if (LLVMCreateMemoryBufferWithSTDIN(&MemBuf, &Message))
+    llvm_raise(llvm_ioerror_exn, Message);
+  
+  return MemBuf;
+}
+
+/* llmemorybuffer -> unit */
+CAMLprim value llvm_memorybuffer_dispose(LLVMMemoryBufferRef MemBuf) {
+  LLVMDisposeMemoryBuffer(MemBuf);
+  return Val_unit;
+}
+

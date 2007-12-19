@@ -16,31 +16,46 @@
 #include "caml/alloc.h"
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
+#include <stdio.h>
+
+
+/* Can't use the recommended caml_named_value mechanism for backwards
+   compatibility reasons. This is largely equivalent. */
+static value llvm_bitreader_error_exn;
+
+CAMLprim value llvm_register_bitreader_exns(value Error) {
+  llvm_bitreader_error_exn = Field(Error, 0);
+  register_global_root(&llvm_bitreader_error_exn);
+  return Val_unit;
+}
+
+void llvm_raise(value Prototype, char *Message);
+
 
 /*===-- Modules -----------------------------------------------------------===*/
 
-/* string -> bitreader_result
+/* Llvm.llmemorybuffer -> Llvm.module */
+CAMLprim value llvm_get_module_provider(LLVMMemoryBufferRef MemBuf) {
+  CAMLparam0();
+  CAMLlocal2(Variant, MessageVal);
+  char *Message;
+  
+  LLVMModuleProviderRef MP;
+  if (LLVMGetBitcodeModuleProvider(MemBuf, &MP, &Message))
+    llvm_raise(llvm_bitreader_error_exn, Message);
+  
+  CAMLreturn((value) MemBuf);
+}
 
-   type bitreader_result =
-   | Bitreader_success of Llvm.llmodule
-   | Bitreader_failure of string
- */
-CAMLprim value llvm_read_bitcode_file(value Path) {
+/* Llvm.llmemorybuffer -> Llvm.llmodule */
+CAMLprim value llvm_parse_bitcode(LLVMMemoryBufferRef MemBuf) {
+  CAMLparam0();
+  CAMLlocal2(Variant, MessageVal);
   LLVMModuleRef M;
   char *Message;
-  CAMLparam1(Path);
-  CAMLlocal2(Variant, MessageVal);
   
-  if (LLVMReadBitcodeFromFile(String_val(Path), &M, &Message)) {
-    MessageVal = copy_string(Message);
-    LLVMDisposeBitcodeReaderMessage(Message);
-    
-    Variant = alloc(1, 1);
-    Field(Variant, 0) = MessageVal;
-  } else {
-    Variant = alloc(1, 0);
-    Field(Variant, 0) = Val_op(M);
-  }
+  if (LLVMParseBitcode(MemBuf, &M, &Message))
+    llvm_raise(llvm_bitreader_error_exn, Message);
   
-  CAMLreturn(Variant);
+  CAMLreturn((value) M);
 }

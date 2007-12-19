@@ -40,8 +40,13 @@ type llbasicblock
     class. **)
 type llbuilder
 
-(** Used to provide a module to JIT or interpreter. **)
+(** Used to provide a module to JIT or interpreter.
+    See the [llvm::ModuleProvider] class. **)
 type llmoduleprovider
+
+(** Used to efficiently handle large buffers of read-only binary data.
+    See the [llvm::MemoryBuffer] class. **)
+type llmemorybuffer
 
 (** The kind of an [lltype], the result of [classify_type ty]. See the 
     [llvm::Type::TypeID] enumeration. **)
@@ -128,6 +133,8 @@ type real_predicate =
 | Fcmp_ule
 | Fcmp_une
 | Fcmp_true
+
+exception IoError of string
 
 
 (*===-- Modules -----------------------------------------------------------===*)
@@ -1235,13 +1242,30 @@ external build_shufflevector : llvalue -> llvalue -> llvalue -> string ->
 
 (*===-- Module providers --------------------------------------------------===*)
 
-(** [create_module_provider m] encapsulates [m] in a module provider and takes
-    ownership of the module. See the constructor 
-    [llvm::ExistingModuleProvider::ExistingModuleProvider]. **)
-external create_module_provider : llmodule -> llmoduleprovider
-                                = "LLVMCreateModuleProviderForExistingModule"
+module ModuleProvider : sig
+  (** [create_module_provider m] encapsulates [m] in a module provider and takes
+      ownership of the module. See the constructor 
+      [llvm::ExistingModuleProvider::ExistingModuleProvider]. **)
+  external create : llmodule -> llmoduleprovider
+                  = "LLVMCreateModuleProviderForExistingModule"
 
-(** [dispose_module_provider mp] destroys the module provider [mp] as well as
-    the contained module. **)
-external dispose_module_provider : llmoduleprovider -> unit
-                                 = "llvm_dispose_module_provider"
+  (** [dispose_module_provider mp] destroys the module provider [mp] as well as
+      the contained module. **)
+  external dispose : llmoduleprovider -> unit = "llvm_dispose_module_provider"
+end
+  
+
+(*===-- Memory buffers ----------------------------------------------------===*)
+
+module MemoryBuffer : sig
+  (** [of_file p] is the memory buffer containing the contents of the file at 
+      path [p]. If the file could not be read, then [IoError msg] is raised. **)
+  external of_file : string -> llmemorybuffer = "llvm_memorybuffer_of_file"
+  
+  (** [stdin ()] is the memory buffer containing the contents of standard input.
+      If standard input is empty, then [IoError msg] is raised. **)
+  external of_stdin : unit -> llmemorybuffer = "llvm_memorybuffer_of_stdin"
+  
+  (** Disposes of a memory buffer. **)
+  external dispose : llmemorybuffer -> unit = "llvm_memorybuffer_dispose"
+end

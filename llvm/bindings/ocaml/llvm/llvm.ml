@@ -15,6 +15,7 @@ type llvalue
 type llbasicblock
 type llbuilder
 type llmoduleprovider
+type llmemorybuffer
 
 type type_kind =
   Void_type
@@ -83,6 +84,11 @@ type real_predicate =
 | Fcmp_ule
 | Fcmp_une
 | Fcmp_true
+
+exception IoError of string
+
+external register_exns : exn -> unit = "llvm_register_core_exns"
+let _ = register_exns (IoError "")
 
 
 (*===-- Modules -----------------------------------------------------------===*)
@@ -432,10 +438,21 @@ external build_shufflevector : llvalue -> llvalue -> llvalue -> string ->
 
 
 (*===-- Module providers --------------------------------------------------===*)
-external create_module_provider : llmodule -> llmoduleprovider
-                                = "LLVMCreateModuleProviderForExistingModule"
-external dispose_module_provider : llmoduleprovider -> unit
-                                 = "llvm_dispose_module_provider"
+
+module ModuleProvider = struct
+  external create : llmodule -> llmoduleprovider
+                  = "LLVMCreateModuleProviderForExistingModule"
+  external dispose : llmoduleprovider -> unit = "llvm_dispose_module_provider"
+end
+  
+
+(*===-- Memory buffers ----------------------------------------------------===*)
+
+module MemoryBuffer = struct
+  external of_file : string -> llmemorybuffer = "llvm_memorybuffer_of_file"
+  external of_stdin : unit -> llmemorybuffer = "llvm_memorybuffer_of_stdin"
+  external dispose : llmemorybuffer -> unit = "llvm_memorybuffer_dispose"
+end
 
 
 (*===-- Non-Externs -------------------------------------------------------===*)

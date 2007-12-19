@@ -27,10 +27,6 @@ int LLVMVerifyModule(LLVMModuleRef M, LLVMVerifierFailureAction Action,
   return Result;
 }
 
-void LLVMDisposeVerifierMessage(char *Message) {
-  free(Message);
-}
-
 int LLVMVerifyFunction(LLVMValueRef Fn, LLVMVerifierFailureAction Action) {
   return verifyFunction(*unwrap<Function>(Fn),
                         static_cast<VerifierFailureAction>(Action));

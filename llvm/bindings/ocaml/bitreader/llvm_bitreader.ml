@@ -8,10 +8,12 @@
  *===----------------------------------------------------------------------===*)
 
 
-type bitreader_result =
-| Bitreader_success of Llvm.llmodule
-| Bitreader_failure of string
+exception Error of string
 
+external register_exns : exn -> unit = "llvm_register_bitreader_exns"
+let _ = register_exns (Error "")
 
-external read_bitcode_file : string -> bitreader_result
-                           = "llvm_read_bitcode_file"
+external get_module_provider : Llvm.llmemorybuffer -> Llvm.llmoduleprovider
+                             = "llvm_get_module_provider"
+external parse_bitcode : Llvm.llmemorybuffer -> Llvm.llmodule
+                       = "llvm_parse_bitcode"

@@ -19,9 +19,18 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/TypeSymbolTable.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include <cassert>
+#include <cstdlib>
 
 using namespace llvm;
+
+
+/*===-- Error handling ----------------------------------------------------===*/
+
+void LLVMDisposeMessage(char *Message) {
+  free(Message);
+}
 
 
 /*===-- Operations on modules ---------------------------------------------===*/
@@ -1048,3 +1057,33 @@ void LLVMDisposeModuleProvider(LLVMModuleProviderRef MP) {
   delete unwrap(MP);
 }
 
+
+/*===-- Memory buffers ----------------------------------------------------===*/
+
+int LLVMCreateMemoryBufferWithContentsOfFile(const char *Path,
+                                             LLVMMemoryBufferRef *OutMemBuf,
+                                             char **OutMessage) {
+  std::string Error;
+  if (MemoryBuffer *MB = MemoryBuffer::getFile(Path, strlen(Path), &Error)) {
+    *OutMemBuf = wrap(MB);
+    return 0;
+  }
+  
+  *OutMessage = strdup(Error.c_str());
+  return 1;
+}
+
+int LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
+                                    char **OutMessage) {
+  if (MemoryBuffer *MB = MemoryBuffer::getSTDIN()) {
+    *OutMemBuf = wrap(MB);
+    return 0;
+  }
+  
+  *OutMessage = strdup("stdin is empty.");
+  return 1;
+}
+
+void LLVMDisposeMemoryBuffer(LLVMMemoryBufferRef MemBuf) {
+  delete unwrap(MemBuf);
+}

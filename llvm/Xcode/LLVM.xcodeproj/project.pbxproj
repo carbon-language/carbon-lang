@@ -98,6 +98,7 @@
 		9F68EB130C77AD2C004AA152 /* BitcodeWriterPass.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = BitcodeWriterPass.cpp; sourceTree = "<group>"; };
 		9F68EB250C77AD2C004AA152 /* ValueEnumerator.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ValueEnumerator.cpp; sourceTree = "<group>"; };
 		9F68EB260C77AD2C004AA152 /* ValueEnumerator.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ValueEnumerator.h; sourceTree = "<group>"; };
+		9F6B2CC00D0F6E56000F00FD /* bitreader.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = bitreader.ml; sourceTree = "<group>"; };
 		9F7793460C73BC2000551F9C /* CodeGenPrepare.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CodeGenPrepare.cpp; sourceTree = "<group>"; };
 		9F7793470C73BC2000551F9C /* GVN.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GVN.cpp; sourceTree = "<group>"; };
 		9F7793480C73BC2000551F9C /* GVNPRE.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GVNPRE.cpp; sourceTree = "<group>"; };
@@ -1241,6 +1242,7 @@
 			isa = PBXGroup;
 			children = (
 				9F7C2C4F0CB9496C00498408 /* analysis.ml */,
+				9F6B2CC00D0F6E56000F00FD /* bitreader.ml */,
 				9F7C2C520CB9496C00498408 /* bitwriter.ml */,
 				9F7C2C5D0CB9496C00498408 /* vmcore.ml */,
 			);

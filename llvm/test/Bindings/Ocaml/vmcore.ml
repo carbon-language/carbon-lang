@@ -805,8 +805,8 @@ let test_builder () =
 
 let test_module_provider () =
   let m = create_module "test" in
-  let mp = create_module_provider m in
-  dispose_module_provider mp
+  let mp = ModuleProvider.create m in
+  ModuleProvider.dispose mp
 
 
 (*===-- Writer ------------------------------------------------------------===*)

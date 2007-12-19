@@ -26,21 +26,18 @@ extern "C" {
 #endif
 
 
-/* Reads a module from the specified path, returning a reference to the module
-   via the OutModule parameter. Returns 0 on success. Optionally returns a
-   human-readable error message. */ 
-int LLVMReadBitcodeFromFile(const char *Path, LLVMModuleRef *OutModule,
-                            char **OutMessage);
+/* Builds a module from the bitcode in the specified memory buffer, returning a
+   reference to the module via the OutModule parameter. Returns 0 on success.
+   Optionally returns a human-readable error message via OutMessage. */ 
+int LLVMParseBitcode(LLVMMemoryBufferRef MemBuf,
+                     LLVMModuleRef *OutModule, char **OutMessage);
 
-/* Reads a module from the specified path, returning a reference to a lazy
-   module provider via the OutModule parameter. Returns 0 on success. Optionally
-   returns a human-readable error message. */ 
-int LLVMCreateModuleProviderFromFile(const char *Path,
-                                     LLVMModuleProviderRef *OutMP,
-                                     char **OutMessage);
-
-/* Disposes of the message allocated by the bitcode reader, if any. */ 
-void LLVMDisposeBitcodeReaderMessage(char *Message);
+/* Reads a module from the specified path, returning via the OutMP parameter
+   a module provider which performs lazy deserialization. Returns 0 on success.
+   Optionally returns a human-readable error message via OutMessage. */ 
+int LLVMGetBitcodeModuleProvider(LLVMMemoryBufferRef MemBuf,
+                                 LLVMModuleProviderRef *OutMP,
+                                 char **OutMessage);
 
 
 #ifdef __cplusplus
