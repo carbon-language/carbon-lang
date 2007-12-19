@@ -250,6 +250,8 @@ private:
   QualType HandleVectorTypeAttribute(QualType curType, AttributeList *rawAttr);
   void HandleOCUVectorTypeAttribute(TypedefDecl *d, AttributeList *rawAttr);
   
+  void HandleAlignedAttribute(Decl *d, AttributeList *rawAttr);
+    
   /// CheckProtocolMethodDefs - This routine checks unimpletented methods
   /// Declared in protocol, and those referenced by it.
   void CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,

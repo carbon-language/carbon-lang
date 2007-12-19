@@ -1678,7 +1678,10 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
     else
       Diag(rawAttr->getAttributeLoc(), 
            diag::err_typecheck_ocu_vector_not_typedef);
+  } else if (attrLen == 7 && !memcmp(attrName, "aligned", 7)) {
+      HandleAlignedAttribute(New, rawAttr);
   }
+  
   // FIXME: add other attributes...
 }
 
@@ -1697,7 +1700,7 @@ void Sema::HandleDeclAttributes(Decl *New, AttributeList *declspec_prefix,
 void Sema::HandleOCUVectorTypeAttribute(TypedefDecl *tDecl, 
                                         AttributeList *rawAttr) {
   QualType curType = tDecl->getUnderlyingType();
-  // check the attribute arugments.
+  // check the attribute arguments.
   if (rawAttr->getNumArgs() != 1) {
     Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
          std::string("1"));
@@ -1795,3 +1798,20 @@ QualType Sema::HandleVectorTypeAttribute(QualType curType,
   return Context.getVectorType(curType, vectorSize/typeSize);
 }
 
+void Sema::HandleAlignedAttribute(Decl *d, AttributeList *rawAttr)
+{
+  // check the attribute arguments.
+  if (rawAttr->getNumArgs() != 1) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_wrong_number_arguments,
+         std::string("1"));
+    return;
+  }
+  
+  Expr *alignmentExpr = static_cast<Expr *>(rawAttr->getArg(0));
+  llvm::APSInt alignment(32);
+  if (!alignmentExpr->isIntegerConstantExpr(alignment, Context)) {
+    Diag(rawAttr->getAttributeLoc(), diag::err_attribute_vector_size_not_int,
+         alignmentExpr->getSourceRange());
+    return;
+  }    
+}
