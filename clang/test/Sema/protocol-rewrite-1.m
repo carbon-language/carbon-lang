@@ -1,4 +1,4 @@
-// RUN: clang -rewrite-test %s
+// RUN: clang -rewrite-test %s | clang
 
 typedef struct MyWidget {
   int a;
