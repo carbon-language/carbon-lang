@@ -47,7 +47,8 @@ ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
                                      FileManager& FMgr, 
                                      const LangOptions &LOpts);
   
-ASTConsumer *CreateASTSerializer(const std::string& InFile, 
+ASTConsumer *CreateASTSerializer(const std::string& InFile,
+                                 const std::string& EmitDir,
                                  Diagnostic &Diags,
                                  const LangOptions &LOpts);
 

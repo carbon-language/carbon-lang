@@ -587,7 +587,8 @@ namespace {
       } else {
         assert(isa<TypeDecl>(D) && "Only expected type decls here");
         // don't codegen for now, eventually pass down for debug info.
-        //std::cerr << "Read top-level typedef decl: '" << D->getName() << "'\n";
+        //std::cerr << "Read top-level typedef decl: '"
+        //    << D->getName() << "'\n";
       }
     }
     
@@ -601,7 +602,8 @@ namespace {
   }; 
 } // end anonymous namespace
 
-ASTConsumer *clang::CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Features) {
+ASTConsumer *clang::CreateLLVMEmitter(Diagnostic &Diags, 
+                                      const LangOptions &Features) {
   return new LLVMEmitter(Diags, Features);
 }
 
@@ -609,51 +611,87 @@ ASTConsumer *clang::CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Feat
 // AST Serializer
 
 namespace {
-  class ASTSerializer : public ASTConsumer {
-    Diagnostic &Diags;
-    TranslationUnit TU;
-    const llvm::sys::Path FName;
-  public:
-    ASTSerializer(const llvm::sys::Path& F, Diagnostic &diags,
+
+class ASTSerializer : public ASTConsumer {
+protected:
+  Diagnostic &Diags;
+  TranslationUnit TU;
+public:
+  ASTSerializer(Diagnostic& diags, const LangOptions& LO)
+    : Diags(diags), TU(LO) {}
+  
+  virtual void Initialize(ASTContext &Context) {
+    TU.setContext(&Context);
+  }
+  
+  virtual void HandleTopLevelDecl(Decl *D) {
+    if (Diags.hasErrorOccurred())
+      return;
+    
+    TU.AddTopLevelDecl(D);
+  }
+};
+    
+class SingleFileSerializer : public ASTSerializer {
+  const llvm::sys::Path FName;
+public:
+  SingleFileSerializer(const llvm::sys::Path& F, Diagnostic &diags,
+                          const LangOptions &LO)
+  : ASTSerializer(diags,LO), FName(F) {}    
+  
+  ~SingleFileSerializer() {
+    EmitASTBitcodeFile(TU,FName);
+  }
+};
+
+class BuildSerializer : public ASTSerializer {
+  llvm::sys::Path EmitDir;  
+public:
+  BuildSerializer(const llvm::sys::Path& dir, Diagnostic &diags,
                   const LangOptions &LO)
-    : Diags(diags), TU(LO), FName(F) {}
-    
-    virtual void Initialize(ASTContext &Context) {
-      TU.setContext(&Context);
-    }
-    
-    virtual void HandleTopLevelDecl(Decl *D) {
-      // If an error occurred, stop code generation, but continue parsing and
-      // semantic analysis (to ensure all warnings and errors are emitted).
-      if (Diags.hasErrorOccurred())
-        return;
-      
-      TU.AddTopLevelDecl(D);
-    }
-    
-    ~ASTSerializer() { EmitASTBitcodeFile(TU,FName); }
-  }; 
+  : ASTSerializer(diags,LO), EmitDir(dir) {}
+  
+  ~BuildSerializer() { assert (false && "not implemented."); }
+};
+  
+  
 } // end anonymous namespace
 
 
 ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
+                                        const std::string& OutputFile,
                                         Diagnostic &Diags,
                                         const LangOptions &Features) {
-  // FIXME: If the translation unit we are serializing came was itself
-  //        deserialized from disk, we may overwrite that file.  This
-  //        is only a temporary bug, since the code in this function will
-  //        be completely replaced momentarily.
   
-  // FIXME: This is a hack: "/" separator not portable.
-  std::string::size_type idx = InFile.rfind("/");
+  if (OutputFile.size()) {
+    // The user specified an AST-emission directory.  Determine if the path
+    // is absolute.    
+    llvm::sys::Path EmitDir(OutputFile);
+    
+    if (!EmitDir.isAbsolute()) {
+      llvm::cerr << 
+        "error: Output directory for --serialize must be an absolute path.\n";
+      
+      return NULL;
+    }
+    
+    // Create the directory if it does not exist.
+    EmitDir.createDirectoryOnDisk(true);
+    if (!EmitDir.canWrite() || !EmitDir.isDirectory()) {
+      llvm::cerr <<
+        "error: Could not create output directory for --serialize.\n";
+      
+      return NULL;
+    }
+    
+    return new BuildSerializer(EmitDir, Diags, Features);
+  }
+
+  // The user did not specify an output directory for serialized ASTs.
+  // Serialize the translation to a single file whose name is the same
+  // as the input file with the ".ast" extension appended.
   
-  if (idx != std::string::npos && idx == InFile.size()-1)
-    return NULL;
-  
-  std::string TargetPrefix( idx == std::string::npos ?
-                           InFile : InFile.substr(idx+1));
-  
-  llvm::sys::Path FName = llvm::sys::Path((TargetPrefix + ".ast").c_str());
-  
-  return new ASTSerializer(FName, Diags, Features);
+  llvm::sys::Path FName(InFile.c_str());
+  FName.appendComponent("ast");
+  return new SingleFileSerializer(FName, Diags, Features);  
 }
