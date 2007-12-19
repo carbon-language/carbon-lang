@@ -27,13 +27,22 @@ class IdentifierTable;
 class SelectorTable;
 class ASTContext;
 class Decl;
+class FileEntry;
   
 class TranslationUnit {
+  // Information to help uniquely identify a translation unit on disk.
+  // We may also incorporate a UUID in the future.
+  uint64_t ino;
+  uint64_t dev;
+  const char* SourceFile;
+  
+  // The actual data of the translation unit.  
   LangOptions LangOpts;
   ASTContext* Context;
   std::vector<Decl*> TopLevelDecls;
 
-  explicit TranslationUnit() : Context(NULL) {}
+  // The default ctor is only invoked during deserialization.
+  explicit TranslationUnit() : SourceFile(NULL), Context(NULL) {}
   
 public:
   explicit TranslationUnit(const LangOptions& lopt)

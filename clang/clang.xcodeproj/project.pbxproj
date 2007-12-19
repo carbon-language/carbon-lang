@@ -16,7 +16,6 @@
 		3513BD550C9F207900FA56C6 /* UninitializedValues.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3513BD540C9F207900FA56C6 /* UninitializedValues.cpp */; };
 		35260CA50C7F75C000D66CE9 /* ExprCXX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35260CA40C7F75C000D66CE9 /* ExprCXX.cpp */; };
 		352981090CC58344008B5E84 /* SerializationTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 352981080CC58344008B5E84 /* SerializationTest.cpp */; };
-		353612DA0D075174002E3541 /* TranslationUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 353612D80D075174002E3541 /* TranslationUnit.cpp */; };
 		355CF6840C90A8D400A08AA3 /* DeadStores.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 355CF6830C90A8D400A08AA3 /* DeadStores.cpp */; };
 		356EF9B50C8F7DDF006650F5 /* LiveVariables.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */; };
 		35707EFE0CD0F5CC000B2204 /* SourceLocation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */; };
@@ -24,6 +23,8 @@
 		35839B0B0CDF845F006ED061 /* StmtSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35839B090CDF845F006ED061 /* StmtSerialization.cpp */; };
 		35839B0C0CDF845F006ED061 /* TypeSerialization.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35839B0A0CDF845F006ED061 /* TypeSerialization.cpp */; };
 		35847BE50CC7DBAF00C40FFF /* StmtIterator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */; };
+		35BB2D7D0D19951A00944DB5 /* TranslationUnit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35BB2D7C0D19951A00944DB5 /* TranslationUnit.cpp */; };
+		35BB2D7F0D19954000944DB5 /* ASTConsumer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */; };
 		35CFFE000CA1CBCB00E6F2BE /* StmtViz.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */; };
 		84AF36A10CB17A3B00C820A5 /* DeclObjC.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 84AF36A00CB17A3B00C820A5 /* DeclObjC.h */; };
 		84D9A8880C1A57E100AC7ABC /* AttributeList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */; };
@@ -234,8 +235,6 @@
 		352C19DD0CA321C80045DB98 /* CFGRecStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGRecStmtVisitor.h; path = clang/Analysis/Visitors/CFGRecStmtVisitor.h; sourceTree = "<group>"; };
 		352C19DE0CA321C80045DB98 /* CFGStmtVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGStmtVisitor.h; path = clang/Analysis/Visitors/CFGStmtVisitor.h; sourceTree = "<group>"; };
 		352C19DF0CA321C80045DB98 /* CFGVarDeclVisitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFGVarDeclVisitor.h; path = clang/Analysis/Visitors/CFGVarDeclVisitor.h; sourceTree = "<group>"; };
-		353612D80D075174002E3541 /* TranslationUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TranslationUnit.cpp; path = Driver/TranslationUnit.cpp; sourceTree = "<group>"; };
-		353612D90D075174002E3541 /* TranslationUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TranslationUnit.h; path = Driver/TranslationUnit.h; sourceTree = "<group>"; };
 		3547129D0C88881300B3E1D5 /* PrettyPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PrettyPrinter.h; path = clang/AST/PrettyPrinter.h; sourceTree = "<group>"; };
 		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
 		355CF6830C90A8D400A08AA3 /* DeadStores.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeadStores.cpp; path = Analysis/DeadStores.cpp; sourceTree = "<group>"; };
@@ -249,6 +248,9 @@
 		35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtIterator.cpp; path = AST/StmtIterator.cpp; sourceTree = "<group>"; };
 		35A2B8610CF8FFA300E6C317 /* SemaUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaUtil.h; path = Sema/SemaUtil.h; sourceTree = "<group>"; };
 		35AE0F660C9B4CA300CC1279 /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/UninitializedValues.h; sourceTree = "<group>"; };
+		35BB2D7A0D1994FA00944DB5 /* TranslationUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TranslationUnit.h; path = clang/AST/TranslationUnit.h; sourceTree = "<group>"; };
+		35BB2D7C0D19951A00944DB5 /* TranslationUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TranslationUnit.cpp; path = AST/TranslationUnit.cpp; sourceTree = "<group>"; };
+		35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumer.cpp; path = AST/ASTConsumer.cpp; sourceTree = "<group>"; };
 		35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTConsumer.h; path = clang/AST/ASTConsumer.h; sourceTree = "<group>"; };
 		35CFFDFF0CA1CBCB00E6F2BE /* StmtViz.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtViz.cpp; path = AST/StmtViz.cpp; sourceTree = "<group>"; };
 		35CFFE010CA1CBDD00E6F2BE /* StmtGraphTraits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StmtGraphTraits.h; path = clang/AST/StmtGraphTraits.h; sourceTree = "<group>"; };
@@ -576,8 +578,6 @@
 		DEAEECAE0A5AF0FA0045101B /* Driver */ = {
 			isa = PBXGroup;
 			children = (
-				353612D80D075174002E3541 /* TranslationUnit.cpp */,
-				353612D90D075174002E3541 /* TranslationUnit.h */,
 				DE5932CD0AD60FF400BC794C /* clang.cpp */,
 				DE5932CE0AD60FF400BC794C /* clang.h */,
 				DE3985780CB8ADC800223765 /* ASTConsumers.h */,
@@ -600,6 +600,7 @@
 		DEC8D98B0A9433BC00353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				35BB2D7A0D1994FA00944DB5 /* TranslationUnit.h */,
 				35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */,
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				DE75ED280B044DC90020CF81 /* ASTContext.h */,
@@ -628,6 +629,8 @@
 		DEC8D9920A9433F400353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
+				35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */,
+				35BB2D7C0D19951A00944DB5 /* TranslationUnit.cpp */,
 				DE1732FF0B068B700080B521 /* ASTContext.cpp */,
 				DED677C80B6C854100AAD4A3 /* Builtins.cpp */,
 				DEC63B190C7B940200DBF169 /* CFG.cpp */,
@@ -777,6 +780,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = 1DEB923508733DC60010E9CD /* Build configuration list for PBXProject "clang" */;
+			compatibilityVersion = "Xcode 2.4";
 			hasScannedForEncodings = 1;
 			mainGroup = 08FB7794FE84155DC02AAC07 /* clang */;
 			projectDirPath = "";
@@ -869,9 +873,10 @@
 				35839B0B0CDF845F006ED061 /* StmtSerialization.cpp in Sources */,
 				35839B0C0CDF845F006ED061 /* TypeSerialization.cpp in Sources */,
 				3580CC0C0D072E5C00C5E4F4 /* LangOptions.cpp in Sources */,
-				353612DA0D075174002E3541 /* TranslationUnit.cpp in Sources */,
 				DE704B260D0FBEBE009C7762 /* SemaDeclObjC.cpp in Sources */,
 				DE704DD20D1668A4009C7762 /* HeaderMap.cpp in Sources */,
+				35BB2D7D0D19951A00944DB5 /* TranslationUnit.cpp in Sources */,
+				35BB2D7F0D19954000944DB5 /* ASTConsumer.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
