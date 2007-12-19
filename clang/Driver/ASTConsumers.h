@@ -37,7 +37,7 @@ ASTConsumer *CreateCodeRewriterTest(Diagnostic &Diags);
 ASTConsumer *CreateSerializationTest(Diagnostic &Diags, FileManager& FMgr, 
                                      const LangOptions &LOpts);
   
-ASTConsumer *CreateASTSerializer(const llvm::sys::Path& FName,
+ASTConsumer *CreateASTSerializer(const std::string& InFile,
                                  Diagnostic &Diags, const LangOptions &LOpts);
 
 } // end clang namespace

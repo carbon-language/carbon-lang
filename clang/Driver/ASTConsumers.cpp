@@ -637,8 +637,20 @@ namespace {
 } // end anonymous namespace
 
 
-ASTConsumer *clang::CreateASTSerializer(const llvm::sys::Path& FName,
+ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
                                         Diagnostic &Diags,
                                         const LangOptions &Features) {
+    
+  // FIXME: This is a hack: "/" separator not portable.
+  std::string::size_type idx = InFile.rfind("/");
+  
+  if (idx != std::string::npos && idx == InFile.size()-1)
+    return NULL;
+  
+  std::string TargetPrefix( idx == std::string::npos ?
+                           InFile : InFile.substr(idx+1));
+  
+  llvm::sys::Path FName = llvm::sys::Path((TargetPrefix + ".ast").c_str());
+  
   return new ASTSerializer(FName, Diags, Features);
 }

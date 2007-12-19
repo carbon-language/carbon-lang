@@ -922,21 +922,9 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
     case EmitLLVM:
       return CreateLLVMEmitter(Diag, LangOpts);
       
-    case SerializeAST: {
+    case SerializeAST:
       // FIXME: Allow user to tailor where the file is written.
-      // FIXME: This is a hack: "/" separator not portable.
-      std::string::size_type idx = InFile.rfind("/");
-      
-      if (idx != std::string::npos && idx == InFile.size()-1)
-        return NULL;
-      
-      std::string TargetPrefix( idx == std::string::npos ?
-                                InFile : InFile.substr(idx+1));
-
-      llvm::sys::Path FName = llvm::sys::Path((TargetPrefix + ".ast").c_str());
-      
-      return CreateASTSerializer(FName, Diag, LangOpts);
-    }
+      return CreateASTSerializer(InFile, Diag, LangOpts);
       
     case RewriteTest:
       return CreateCodeRewriterTest(Diag);
