@@ -77,7 +77,7 @@ CAMLprim value llvm_delete_type_name(value Name, LLVMModuleRef M) {
 
 /*===-- Types -------------------------------------------------------------===*/
 
-/* lltype -> type_kind */
+/* lltype -> TypeKind.t */
 CAMLprim value llvm_classify_type(LLVMTypeRef Ty) {
   return Val_int(LLVMGetTypeKind(Ty));
 }
@@ -361,14 +361,14 @@ CAMLprim LLVMValueRef llvm_const_vector(value ElementVals) {
 
 /*--... Constant expressions ...............................................--*/
 
-/* int_predicate -> llvalue -> llvalue -> llvalue */
+/* Icmp.t -> llvalue -> llvalue -> llvalue */
 CAMLprim LLVMValueRef llvm_const_icmp(value Pred,
                                       LLVMValueRef LHSConstant,
                                       LLVMValueRef RHSConstant) {
   return LLVMConstICmp(Int_val(Pred) + LLVMIntEQ, LHSConstant, RHSConstant);
 }
 
-/* real_predicate -> llvalue -> llvalue -> llvalue */
+/* Fcmp.t -> llvalue -> llvalue -> llvalue */
 CAMLprim LLVMValueRef llvm_const_fcmp(value Pred,
                                       LLVMValueRef LHSConstant,
                                       LLVMValueRef RHSConstant) {
@@ -388,12 +388,12 @@ CAMLprim value llvm_is_declaration(LLVMValueRef Global) {
   return Val_bool(LLVMIsDeclaration(Global));
 }
 
-/* llvalue -> linkage */
+/* llvalue -> Linkage.t */
 CAMLprim value llvm_linkage(LLVMValueRef Global) {
   return Val_int(LLVMGetLinkage(Global));
 }
 
-/* linkage -> llvalue -> unit */
+/* Linkage.t -> llvalue -> unit */
 CAMLprim value llvm_set_linkage(value Linkage, LLVMValueRef Global) {
   LLVMSetLinkage(Global, Int_val(Linkage));
   return Val_unit;
@@ -410,12 +410,12 @@ CAMLprim value llvm_set_section(value Section, LLVMValueRef Global) {
   return Val_unit;
 }
 
-/* llvalue -> visibility */
+/* llvalue -> Visibility.t */
 CAMLprim value llvm_visibility(LLVMValueRef Global) {
   return Val_int(LLVMGetVisibility(Global));
 }
 
-/* visibility -> llvalue -> unit */
+/* Visibility.t -> llvalue -> unit */
 CAMLprim value llvm_set_visibility(value Viz, LLVMValueRef Global) {
   LLVMSetVisibility(Global, Int_val(Viz));
   return Val_unit;
@@ -1006,7 +1006,7 @@ CAMLprim LLVMValueRef llvm_build_bitcast(LLVMValueRef X, LLVMTypeRef Ty,
 
 /*--... Comparisons ........................................................--*/
 
-/* int_predicate -> llvalue -> llvalue -> string -> llbuilder -> llvalue */
+/* Icmp.t -> llvalue -> llvalue -> string -> llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_icmp(value Pred,
                                       LLVMValueRef LHS, LLVMValueRef RHS,
                                       value Name, value B) {
@@ -1014,7 +1014,7 @@ CAMLprim LLVMValueRef llvm_build_icmp(value Pred,
                        String_val(Name));
 }
 
-/* real_predicate -> llvalue -> llvalue -> string -> llbuilder -> llvalue */
+/* Fcmp.t -> llvalue -> llvalue -> string -> llbuilder -> llvalue */
 CAMLprim LLVMValueRef llvm_build_fcmp(value Pred,
                                       LLVMValueRef LHS, LLVMValueRef RHS,
                                       value Name, value B) {

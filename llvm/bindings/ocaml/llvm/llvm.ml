@@ -17,37 +17,43 @@ type llbuilder
 type llmoduleprovider
 type llmemorybuffer
 
-type type_kind =
-  Void_type
-| Float_type
-| Double_type
-| X86fp80_type
-| Fp128_type
-| Ppc_fp128_type
-| Label_type
-| Integer_type
-| Function_type
-| Struct_type
-| Array_type
-| Pointer_type 
-| Opaque_type
-| Vector_type
+module TypeKind = struct
+  type t =
+  | Void
+  | Float
+  | Double
+  | X86fp80
+  | Fp128
+  | Ppc_fp128
+  | Label
+  | Integer
+  | Function
+  | Struct
+  | Array
+  | Pointer
+  | Opaque
+  | Vector
+end
 
-type linkage =
-  External_linkage
-| Link_once_linkage
-| Weak_linkage
-| Appending_linkage
-| Internal_linkage
-| Dllimport_linkage
-| Dllexport_linkage
-| External_weak_linkage
-| Ghost_linkage
+module Linkage = struct
+  type t =
+  | External
+  | Link_once
+  | Weak
+  | Appending
+  | Internal
+  | Dllimport
+  | Dllexport
+  | External_weak
+  | Ghost
+end
 
-type visibility =
-  Default_visibility
-| Hidden_visibility
-| Protected_visibility
+module Visibility = struct
+  type t =
+  | Default
+  | Hidden
+  | Protected
+end
 
 let ccc = 0
 let fastcc = 8
@@ -55,35 +61,39 @@ let coldcc = 9
 let x86_stdcallcc = 64
 let x86_fastcallcc = 65
 
-type int_predicate =
-  Icmp_eq
-| Icmp_ne
-| Icmp_ugt
-| Icmp_uge
-| Icmp_ult
-| Icmp_ule
-| Icmp_sgt
-| Icmp_sge
-| Icmp_slt
-| Icmp_sle
+module Icmp = struct
+  type t =
+  | Eq
+  | Ne
+  | Ugt
+  | Uge
+  | Ult
+  | Ule
+  | Sgt
+  | Sge
+  | Slt
+  | Sle
+end
 
-type real_predicate =
-  Fcmp_false
-| Fcmp_oeq
-| Fcmp_ogt
-| Fcmp_oge
-| Fcmp_olt
-| Fcmp_ole
-| Fcmp_one
-| Fcmp_ord
-| Fcmp_uno
-| Fcmp_ueq
-| Fcmp_ugt
-| Fcmp_uge
-| Fcmp_ult
-| Fcmp_ule
-| Fcmp_une
-| Fcmp_true
+module Fcmp = struct
+  type t =
+  | False
+  | Oeq
+  | Ogt
+  | Oge
+  | Olt
+  | Ole
+  | One
+  | Ord
+  | Uno
+  | Ueq
+  | Ugt
+  | Uge
+  | Ult
+  | Ule
+  | Une
+  | True
+end
 
 exception IoError of string
 
@@ -103,7 +113,7 @@ external delete_type_name : string -> llmodule -> unit
 
 (*===-- Types -------------------------------------------------------------===*)
 
-external classify_type : lltype -> type_kind = "llvm_classify_type"
+external classify_type : lltype -> TypeKind.t = "llvm_classify_type"
 
 (*--... Operations on integer types ........................................--*)
 external _i1_type : unit -> lltype = "llvm_i1_type"
@@ -220,9 +230,9 @@ external const_frem : llvalue -> llvalue -> llvalue = "LLVMConstFRem"
 external const_and : llvalue -> llvalue -> llvalue = "LLVMConstAnd"
 external const_or : llvalue -> llvalue -> llvalue = "LLVMConstOr"
 external const_xor : llvalue -> llvalue -> llvalue = "LLVMConstXor"
-external const_icmp : int_predicate -> llvalue -> llvalue -> llvalue
+external const_icmp : Icmp.t -> llvalue -> llvalue -> llvalue
                     = "llvm_const_icmp"
-external const_fcmp : real_predicate -> llvalue -> llvalue -> llvalue
+external const_fcmp : Fcmp.t -> llvalue -> llvalue -> llvalue
                     = "llvm_const_fcmp"
 external const_shl : llvalue -> llvalue -> llvalue = "LLVMConstShl"
 external const_lshr : llvalue -> llvalue -> llvalue = "LLVMConstLShr"
@@ -251,12 +261,12 @@ external const_shufflevector : llvalue -> llvalue -> llvalue -> llvalue
 
 (*--... Operations on global variables, functions, and aliases (globals) ...--*)
 external is_declaration : llvalue -> bool = "llvm_is_declaration"
-external linkage : llvalue -> linkage = "llvm_linkage"
-external set_linkage : linkage -> llvalue -> unit = "llvm_set_linkage"
+external linkage : llvalue -> Linkage.t = "llvm_linkage"
+external set_linkage : Linkage.t -> llvalue -> unit = "llvm_set_linkage"
 external section : llvalue -> string = "llvm_section"
 external set_section : string -> llvalue -> unit = "llvm_set_section"
-external visibility : llvalue -> visibility = "llvm_visibility"
-external set_visibility : visibility -> llvalue -> unit = "llvm_set_visibility"
+external visibility : llvalue -> Visibility.t = "llvm_visibility"
+external set_visibility : Visibility.t -> llvalue -> unit = "llvm_set_visibility"
 external alignment : llvalue -> int = "llvm_alignment"
 external set_alignment : int -> llvalue -> unit = "llvm_set_alignment"
 external is_global_constant : llvalue -> bool = "llvm_is_global_constant"
@@ -415,9 +425,9 @@ external build_bitcast : llvalue -> lltype -> string -> llbuilder -> llvalue
                        = "llvm_build_bitcast"
 
 (*--... Comparisons ........................................................--*)
-external build_icmp : int_predicate -> llvalue -> llvalue -> string ->
+external build_icmp : Icmp.t -> llvalue -> llvalue -> string ->
                       llbuilder -> llvalue = "llvm_build_icmp"
-external build_fcmp : real_predicate -> llvalue -> llvalue -> string ->
+external build_fcmp : Fcmp.t -> llvalue -> llvalue -> string ->
                       llbuilder -> llvalue = "llvm_build_fcmp"
 
 (*--... Miscellaneous instructions .........................................--*)
@@ -471,28 +481,28 @@ let concat2 sep arr =
 let rec string_of_lltype ty =
   (* FIXME: stop infinite recursion! :) *)
   match classify_type ty with
-    Integer_type -> "i" ^ string_of_int (integer_bitwidth ty)
-  | Pointer_type -> (string_of_lltype (element_type ty)) ^ "*"
-  | Struct_type ->
+    TypeKind.Integer -> "i" ^ string_of_int (integer_bitwidth ty)
+  | TypeKind.Pointer -> (string_of_lltype (element_type ty)) ^ "*"
+  | TypeKind.Struct ->
       let s = "{ " ^ (concat2 ", " (
                 Array.map string_of_lltype (element_types ty)
               )) ^ " }" in
       if is_packed ty
         then "<" ^ s ^ ">"
         else s
-  | Array_type -> "["   ^ (string_of_int (array_length ty)) ^
-                  " x " ^ (string_of_lltype (element_type ty)) ^ "]"
-  | Vector_type -> "<"   ^ (string_of_int (vector_size ty)) ^
-                   " x " ^ (string_of_lltype (element_type ty)) ^ ">"
-  | Opaque_type -> "opaque"
-  | Function_type -> string_of_lltype (return_type ty) ^
-                     " (" ^ (concat2 ", " (
-                       Array.map string_of_lltype (param_types ty)
-                     )) ^ ")"
-  | Label_type -> "label"
-  | Ppc_fp128_type -> "ppc_fp128"
-  | Fp128_type -> "fp128"
-  | X86fp80_type -> "x86_fp80"
-  | Double_type -> "double"
-  | Float_type -> "float"
-  | Void_type -> "void"
+  | TypeKind.Array -> "["   ^ (string_of_int (array_length ty)) ^
+                      " x " ^ (string_of_lltype (element_type ty)) ^ "]"
+  | TypeKind.Vector -> "<"   ^ (string_of_int (vector_size ty)) ^
+                       " x " ^ (string_of_lltype (element_type ty)) ^ ">"
+  | TypeKind.Opaque -> "opaque"
+  | TypeKind.Function -> string_of_lltype (return_type ty) ^
+                         " (" ^ (concat2 ", " (
+                           Array.map string_of_lltype (param_types ty)
+                         )) ^ ")"
+  | TypeKind.Label -> "label"
+  | TypeKind.Ppc_fp128 -> "ppc_fp128"
+  | TypeKind.Fp128 -> "fp128"
+  | TypeKind.X86fp80 -> "x86_fp80"
+  | TypeKind.Double -> "double"
+  | TypeKind.Float -> "float"
+  | TypeKind.Void -> "void"

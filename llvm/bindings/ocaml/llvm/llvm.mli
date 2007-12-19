@@ -50,41 +50,47 @@ type llmemorybuffer
 
 (** The kind of an [lltype], the result of [classify_type ty]. See the 
     [llvm::Type::TypeID] enumeration. **)
-type type_kind =
-  Void_type
-| Float_type
-| Double_type
-| X86fp80_type
-| Fp128_type
-| Ppc_fp128_type
-| Label_type
-| Integer_type
-| Function_type
-| Struct_type
-| Array_type
-| Pointer_type
-| Opaque_type
-| Vector_type
+module TypeKind : sig
+  type t =
+    Void
+  | Float
+  | Double
+  | X86fp80
+  | Fp128
+  | Ppc_fp128
+  | Label
+  | Integer
+  | Function
+  | Struct
+  | Array
+  | Pointer
+  | Opaque
+  | Vector
+end
 
 (** The linkage of a global value, accessed with [linkage gv] and
     [set_linkage l gv]. See [llvm::GlobalValue::LinkageTypes]. **)
-type linkage =
-  External_linkage
-| Link_once_linkage
-| Weak_linkage
-| Appending_linkage
-| Internal_linkage
-| Dllimport_linkage
-| Dllexport_linkage
-| External_weak_linkage
-| Ghost_linkage
+module Linkage : sig
+  type t =
+    External
+  | Link_once
+  | Weak
+  | Appending
+  | Internal
+  | Dllimport
+  | Dllexport
+  | External_weak
+  | Ghost
+end
 
 (** The linker visibility of a global value, accessed with [visibility gv] and
     [set_visibility v gv]. See [llvm::GlobalValue::VisibilityTypes]. **)
-type visibility =
-  Default_visibility
-| Hidden_visibility
-| Protected_visibility
+module Visibility : sig
+  type t =
+    Default
+  | Hidden
+  | Protected
+end
 
 (* The following calling convention values may be accessed with
    [function_call_conv f] and [set_function_call_conv conv f]. Calling
@@ -102,37 +108,41 @@ val x86_fastcallcc : int  (** [x86_fastcallcc] is the familiar fastcall calling
 
 (** The predicate for an integer comparison ([icmp]) instruction.
     See the [llvm::ICmpInst::Predicate] enumeration. **)
-type int_predicate =
-  Icmp_eq
-| Icmp_ne
-| Icmp_ugt
-| Icmp_uge
-| Icmp_ult
-| Icmp_ule
-| Icmp_sgt
-| Icmp_sge
-| Icmp_slt
-| Icmp_sle
+module Icmp : sig
+  type t =
+  | Eq
+  | Ne
+  | Ugt
+  | Uge
+  | Ult
+  | Ule
+  | Sgt
+  | Sge
+  | Slt
+  | Sle
+end
 
 (** The predicate for a floating-point comparison ([fcmp]) instruction.
     See the [llvm::FCmpInst::Predicate] enumeration. **)
-type real_predicate =
-  Fcmp_false
-| Fcmp_oeq
-| Fcmp_ogt
-| Fcmp_oge
-| Fcmp_olt
-| Fcmp_ole
-| Fcmp_one
-| Fcmp_ord
-| Fcmp_uno
-| Fcmp_ueq
-| Fcmp_ugt
-| Fcmp_uge
-| Fcmp_ult
-| Fcmp_ule
-| Fcmp_une
-| Fcmp_true
+module Fcmp : sig
+  type t =
+  | False
+  | Oeq
+  | Ogt
+  | Oge
+  | Olt
+  | Ole
+  | One
+  | Ord
+  | Uno
+  | Ueq
+  | Ugt
+  | Uge
+  | Ult
+  | Ule
+  | Une
+  | True
+end
 
 exception IoError of string
 
@@ -167,7 +177,7 @@ external delete_type_name : string -> llmodule -> unit
 
 (** [classify_type ty] returns the [type_kind] corresponding to the type [ty].
     See the method [llvm::Type::getTypeID]. **)
-external classify_type : lltype -> type_kind = "llvm_classify_type"
+external classify_type : lltype -> TypeKind.t = "llvm_classify_type"
 
 (** [string_of_lltype ty] returns a string describing the type [ty]. **)
 val string_of_lltype : lltype -> string
@@ -504,13 +514,13 @@ external const_xor : llvalue -> llvalue -> llvalue = "LLVMConstXor"
 (** [const_icmp pred c1 c2] returns the constant comparison of two integer
     constants, [c1 pred c2].
     See the method [llvm::ConstantExpr::getICmp]. **)
-external const_icmp : int_predicate -> llvalue -> llvalue -> llvalue
+external const_icmp : Icmp.t -> llvalue -> llvalue -> llvalue
                     = "llvm_const_icmp"
 
 (** [const_fcmp pred c1 c2] returns the constant comparison of two floating
     point constants, [c1 pred c2].
     See the method [llvm::ConstantExpr::getFCmp]. **)
-external const_fcmp : real_predicate -> llvalue -> llvalue -> llvalue
+external const_fcmp : Fcmp.t -> llvalue -> llvalue -> llvalue
                     = "llvm_const_fcmp"
 
 (** [const_shl c1 c2] returns the constant integer [c1] left-shifted by the
@@ -631,11 +641,11 @@ external is_declaration : llvalue -> bool = "llvm_is_declaration"
 
 (** [linkage g] returns the linkage of the global value [g].
     See the method [llvm::GlobalValue::getLinkage]. **)
-external linkage : llvalue -> linkage = "llvm_linkage"
+external linkage : llvalue -> Linkage.t = "llvm_linkage"
 
 (** [set_linkage l g] sets the linkage of the global value [g] to [l].
     See the method [llvm::GlobalValue::setLinkage]. **)
-external set_linkage : linkage -> llvalue -> unit = "llvm_set_linkage"
+external set_linkage : Linkage.t -> llvalue -> unit = "llvm_set_linkage"
 
 (** [section g] returns the linker section of the global value [g].
     See the method [llvm::GlobalValue::getSection]. **)
@@ -647,11 +657,12 @@ external set_section : string -> llvalue -> unit = "llvm_set_section"
 
 (** [visibility g] returns the linker visibility of the global value [g].
     See the method [llvm::GlobalValue::getVisibility]. **)
-external visibility : llvalue -> visibility = "llvm_visibility"
+external visibility : llvalue -> Visibility.t = "llvm_visibility"
 
 (** [set_visibility v g] sets the linker visibility of the global value [g] to
     [v]. See the method [llvm::GlobalValue::setVisibility]. **)
-external set_visibility : visibility -> llvalue -> unit = "llvm_set_visibility"
+external set_visibility : Visibility.t -> llvalue -> unit
+                        = "llvm_set_visibility"
 
 (** [alignment g] returns the required alignment of the global value [g].
     See the method [llvm::GlobalValue::getAlignment]. **)
@@ -1177,14 +1188,14 @@ external build_bitcast : llvalue -> lltype -> string -> llbuilder -> llvalue
     [%name = icmp %pred %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateICmp]. **)
-external build_icmp : int_predicate -> llvalue -> llvalue -> string ->
+external build_icmp : Icmp.t -> llvalue -> llvalue -> string ->
                       llbuilder -> llvalue = "llvm_build_icmp"
 
 (** [build_fcmp pred x y name b] creates a
     [%name = fcmp %pred %x, %y]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateFCmp]. **)
-external build_fcmp : real_predicate -> llvalue -> llvalue -> string ->
+external build_fcmp : Fcmp.t -> llvalue -> llvalue -> string ->
                       llbuilder -> llvalue = "llvm_build_fcmp"
 
 (*--... Miscellaneous instructions .........................................--*)

@@ -21,10 +21,7 @@ let group name =
 
 let insist cond =
   incr case_num;
-  let msg = if cond then "    pass " else begin
-    exit_status := 10;
-    "    FAIL "
-  end in
+  if not cond then exit_status := 10;
   prerr_endline ("    " ^ (string_of_int !case_num) ^ if cond then ""
                                                               else " FAIL")
 
@@ -46,13 +43,13 @@ let test_types () =
    *)
   group "void";
   insist (define_type_name "Ty01" void_type m);
-  insist (Void_type == classify_type void_type);
+  insist (TypeKind.Void == classify_type void_type);
 
   (* RUN: grep {Ty02.*i1} < %t.ll
    *)
   group "i1";
   insist (define_type_name "Ty02" i1_type m);
-  insist (Integer_type == classify_type i1_type);
+  insist (TypeKind.Integer == classify_type i1_type);
 
   (* RUN: grep {Ty03.*i32} < %t.ll
    *)
@@ -69,20 +66,20 @@ let test_types () =
    *)
   group "float";
   insist (define_type_name "Ty05" float_type m);
-  insist (Float_type == classify_type float_type);
+  insist (TypeKind.Float == classify_type float_type);
 
   (* RUN: grep {Ty06.*double} < %t.ll
    *)
   group "double";
   insist (define_type_name "Ty06" double_type m);
-  insist (Double_type == classify_type double_type);
+  insist (TypeKind.Double == classify_type double_type);
 
   (* RUN: grep {Ty07.*i32.*i1, double} < %t.ll
    *)
   group "function";
   let ty = function_type i32_type [| i1_type; double_type |] in
   insist (define_type_name "Ty07" ty m);
-  insist (Function_type = classify_type ty);
+  insist (TypeKind.Function = classify_type ty);
   insist (not (is_var_arg ty));
   insist (i32_type == return_type ty);
   insist (double_type == (param_types ty).(1));
@@ -101,7 +98,7 @@ let test_types () =
   insist (define_type_name "Ty09" ty m);
   insist (7 = array_length ty);
   insist (i8_type == element_type ty);
-  insist (Array_type == classify_type ty);
+  insist (TypeKind.Array == classify_type ty);
   
   begin group "pointer";
     (* RUN: grep {UnqualPtrTy.*float\*} < %t.ll
@@ -110,7 +107,7 @@ let test_types () =
     insist (define_type_name "UnqualPtrTy" ty m);
     insist (float_type == element_type ty);
     insist (0 == address_space ty);
-    insist (Pointer_type == classify_type ty)
+    insist (TypeKind.Pointer == classify_type ty)
   end;
   
   begin group "qualified_pointer";
@@ -289,8 +286,8 @@ let test_constants () =
   ignore (define_global "ConstAnd" (const_and foldbomb five) m);
   ignore (define_global "ConstOr" (const_or foldbomb five) m);
   ignore (define_global "ConstXor" (const_xor foldbomb five) m);
-  ignore (define_global "ConstICmp" (const_icmp Icmp_sle foldbomb five) m);
-  ignore (define_global "ConstFCmp" (const_fcmp Fcmp_ole ffoldbomb ffive) m);
+  ignore (define_global "ConstICmp" (const_icmp Icmp.Sle foldbomb five) m);
+  ignore (define_global "ConstFCmp" (const_fcmp Fcmp.Ole ffoldbomb ffive) m);
   
   group "constant casts";
   (* RUN: grep {ConstTrunc.*trunc} < %t.ll
@@ -336,7 +333,7 @@ let test_constants () =
   ignore (define_global "ConstSizeOf" (size_of (pointer_type i8_type)) m);
   ignore (define_global "ConstGEP" (const_gep foldbomb_gv [| five |]) m);
   ignore (define_global "ConstSelect" (const_select
-    (const_icmp Icmp_sle foldbomb five)
+    (const_icmp Icmp.Sle foldbomb five)
     (const_int i8_type (-1))
     (const_int i8_type 0)) m);
   let zero = const_int i32_type 0 in
@@ -371,8 +368,8 @@ let test_global_values () =
    *)
   group "linkage";
   let g = define_global "GVal02" zero32 m ++
-          set_linkage Link_once_linkage in
-  insist (Link_once_linkage = linkage g);
+          set_linkage Linkage.Link_once in
+  insist (Linkage.Link_once = linkage g);
 
   (* RUN: grep {GVal03.*Hanalei} < %t.ll
    *)
@@ -385,8 +382,8 @@ let test_global_values () =
    *)
   group "visibility";
   let g = define_global "GVal04" zero32 m ++
-          set_visibility Hidden_visibility in
-  insist (Hidden_visibility = visibility g);
+          set_visibility Visibility.Hidden in
+  insist (Visibility.Hidden = visibility g);
   
   (* RUN: grep {GVal05.*align 128} < %t.ll
    *)
@@ -745,10 +742,10 @@ let test_builder () =
      * RUN: grep {Inst42.*fcmp.*false.*F1.*F2} < %t.ll
      * RUN: grep {Inst43.*fcmp.*true.*F2.*F1} < %t.ll
      *)
-    ignore (build_icmp Icmp_ne    p1 p2 "Inst40" atentry);
-    ignore (build_icmp Icmp_sle   p2 p1 "Inst41" atentry);
-    ignore (build_fcmp Fcmp_false f1 f2 "Inst42" atentry);
-    ignore (build_fcmp Fcmp_true  f2 f1 "Inst43" atentry)
+    ignore (build_icmp Icmp.Ne    p1 p2 "Inst40" atentry);
+    ignore (build_icmp Icmp.Sle   p2 p1 "Inst41" atentry);
+    ignore (build_fcmp Fcmp.False f1 f2 "Inst42" atentry);
+    ignore (build_fcmp Fcmp.True  f2 f1 "Inst43" atentry)
   end;
   
   group "miscellaneous"; begin
@@ -760,7 +757,7 @@ let test_builder () =
      * RUN: grep {Inst51.*shufflevector.*Vec1.*Vec2.*1.*1.*0.*0} < %t.ll
      *)
          ignore (build_call fn [| p2; p1 |] "Inst45" atentry);
-    let inst46 = build_icmp Icmp_eq p1 p2 "Inst46" atentry in
+    let inst46 = build_icmp Icmp.Eq p1 p2 "Inst46" atentry in
          ignore (build_select inst46 p1 p2 "Inst47" atentry);
          ignore (build_va_arg
                   (const_null (pointer_type (pointer_type i8_type)))
