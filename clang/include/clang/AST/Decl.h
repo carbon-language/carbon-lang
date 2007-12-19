@@ -439,6 +439,15 @@ public:
   ScopedDecl *getDeclChain() const { return DeclChain; }
   void setDeclChain(ScopedDecl *D) { DeclChain = D; }
 
+  // Iterator access to formal parameters.
+  unsigned param_size() const { return getNumParams(); }
+  typedef ParmVarDecl **param_iterator;
+  typedef ParmVarDecl * const *param_const_iterator;
+  param_iterator param_begin() { return ParamInfo; }
+  param_iterator param_end() { return ParamInfo+param_size(); }
+  param_const_iterator param_begin() const { return ParamInfo; }
+  param_const_iterator param_end() const { return ParamInfo+param_size(); }
+  
   unsigned getNumParams() const;
   const ParmVarDecl *getParamDecl(unsigned i) const {
     assert(i < getNumParams() && "Illegal param #");

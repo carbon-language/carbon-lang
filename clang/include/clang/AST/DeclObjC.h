@@ -118,6 +118,17 @@ public:
   Selector getSelector() const { return SelName; }
   QualType getResultType() const { return MethodDeclType; }
   
+  // Iterator access to formal parameters.
+  unsigned param_size() const {
+    return NumMethodParams == -1 ? 0 : NumMethodParams;
+  }
+  typedef ParmVarDecl **param_iterator;
+  typedef ParmVarDecl * const *param_const_iterator;
+  param_iterator param_begin() { return ParamInfo; }
+  param_iterator param_end() { return ParamInfo+param_size(); }
+  param_const_iterator param_begin() const { return ParamInfo; }
+  param_const_iterator param_end() const { return ParamInfo+param_size(); }
+  
   int getNumParams() const { return NumMethodParams; }
   ParmVarDecl *getParamDecl(int i) const {
     assert(i < getNumParams() && "Illegal param #");
