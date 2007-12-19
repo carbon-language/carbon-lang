@@ -1446,7 +1446,8 @@ bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
         TLI.isOperationLegal(LoOpt.getOpcode(), LoOpt.getValueType())) {
       RetVal = true;
       DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 0), LoOpt);
-    }
+    } else
+      DAG.DeleteNode(Lo.Val);
   }
 
   if (HiExists) {
@@ -1457,7 +1458,8 @@ bool DAGCombiner::SimplifyNodeWithTwoResults(SDNode *N,
         TLI.isOperationLegal(HiOpt.getOpcode(), HiOpt.getValueType())) {
       RetVal = true;
       DAG.ReplaceAllUsesOfValueWith(SDOperand(N, 1), HiOpt);
-    }
+    } else
+      DAG.DeleteNode(Hi.Val);
   }
 
   return RetVal;
