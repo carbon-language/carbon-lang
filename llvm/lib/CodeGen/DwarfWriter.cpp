@@ -3013,8 +3013,10 @@ private:
 
   /// CallSiteEntry - Structure describing an entry in the call-site table.
   struct CallSiteEntry {
+    // The 'try-range' is BeginLabel .. EndLabel.
     unsigned BeginLabel; // zero indicates the start of the function.
     unsigned EndLabel;   // zero indicates the end of the function.
+    // The landing pad starts at PadLabel.
     unsigned PadLabel;   // zero indicates that there is no landing pad.
     unsigned Action;
   };
@@ -3113,13 +3115,21 @@ private:
       SizeActions += SizeSiteActions;
     }
 
-    // Compute the call-site table.  Entries must be ordered by address.
+    // Compute the call-site table.  The entry for an invoke has a try-range
+    // containing the call, a non-zero landing pad and an appropriate action.
+    // The entry for an ordinary call has a try-range containing the call and
+    // zero for the landing pad and the action.  Calls marked 'nounwind' have
+    // no entry and must not be contained in the try-range of any entry - they
+    // form gaps in the table.  Entries must be ordered by try-range address.
     SmallVector<CallSiteEntry, 64> CallSites;
 
     RangeMapType PadMap;
+    // Invokes and nounwind calls have entries in PadMap (due to being bracketed
+    // by try-range labels when lowered).  Ordinary calls do not, so appropriate
+    // try-ranges for them need be deduced.
     for (unsigned i = 0, N = LandingPads.size(); i != N; ++i) {
       const LandingPadInfo *LandingPad = LandingPads[i];
-      for (unsigned j=0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
+      for (unsigned j = 0, E = LandingPad->BeginLabels.size(); j != E; ++j) {
         unsigned BeginLabel = LandingPad->BeginLabels[j];
         assert(!PadMap.count(BeginLabel) && "Duplicate landing pad labels!");
         PadRange P = { i, j };
@@ -3127,27 +3137,39 @@ private:
       }
     }
 
-    bool MayThrow = false;
+    // The end label of the previous invoke or nounwind try-range.
     unsigned LastLabel = 0;
+
+    // Whether there is a potentially throwing instruction (currently this means
+    // an ordinary call) between the end of the previous try-range and now.
+    bool SawPotentiallyThrowing = false;
+
+    // Whether the last callsite entry was for an invoke.
+    bool PreviousIsInvoke = false;
+
     const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+
+    // Visit all instructions in order of address.
     for (MachineFunction::const_iterator I = MF->begin(), E = MF->end();
          I != E; ++I) {
       for (MachineBasicBlock::const_iterator MI = I->begin(), E = I->end();
            MI != E; ++MI) {
         if (MI->getOpcode() != TargetInstrInfo::LABEL) {
-          MayThrow |= TII->isCall(MI->getOpcode());
+          SawPotentiallyThrowing |= TII->isCall(MI->getOpcode());
           continue;
         }
 
         unsigned BeginLabel = MI->getOperand(0).getImmedValue();
         assert(BeginLabel && "Invalid label!");
 
+        // End of the previous try-range?
         if (BeginLabel == LastLabel)
-          MayThrow = false;
+          SawPotentiallyThrowing = false;
 
+        // Beginning of a new try-range?
         RangeMapType::iterator L = PadMap.find(BeginLabel);
-
         if (L == PadMap.end())
+          // Nope, it was just some random label.
           continue;
 
         PadRange P = L->second;
@@ -3159,36 +3181,43 @@ private:
         // If some instruction between the previous try-range and this one may
         // throw, create a call-site entry with no landing pad for the region
         // between the try-ranges.
-        if (MayThrow) {
+        if (SawPotentiallyThrowing) {
           CallSiteEntry Site = {LastLabel, BeginLabel, 0, 0};
           CallSites.push_back(Site);
+          PreviousIsInvoke = false;
         }
 
         LastLabel = LandingPad->EndLabels[P.RangeIndex];
-        CallSiteEntry Site = {BeginLabel, LastLabel,
-          LandingPad->LandingPadLabel, FirstActions[P.PadIndex]};
+        assert(BeginLabel && LastLabel && "Invalid landing pad!");
 
-        assert(Site.BeginLabel && Site.EndLabel && Site.PadLabel &&
-               "Invalid landing pad!");
+        if (LandingPad->LandingPadLabel) {
+          // This try-range is for an invoke.
+          CallSiteEntry Site = {BeginLabel, LastLabel,
+            LandingPad->LandingPadLabel, FirstActions[P.PadIndex]};
 
-        // Try to merge with the previous call-site.
-        if (CallSites.size()) {
-          CallSiteEntry &Prev = CallSites[CallSites.size()-1];
-          if (Site.PadLabel == Prev.PadLabel && Site.Action == Prev.Action) {
-            // Extend the range of the previous entry.
-            Prev.EndLabel = Site.EndLabel;
-            continue;
+          // Try to merge with the previous call-site.
+          if (PreviousIsInvoke) {
+            CallSiteEntry &Prev = CallSites[CallSites.size()-1];
+            if (Site.PadLabel == Prev.PadLabel && Site.Action == Prev.Action) {
+              // Extend the range of the previous entry.
+              Prev.EndLabel = Site.EndLabel;
+              continue;
+            }
           }
-        }
 
-        // Otherwise, create a new call-site.
-        CallSites.push_back(Site);
+          // Otherwise, create a new call-site.
+          CallSites.push_back(Site);
+          PreviousIsInvoke = true;
+        } else {
+          // Create a gap.
+          PreviousIsInvoke = false;
+        }
       }
     }
     // If some instruction between the previous try-range and the end of the
     // function may throw, create a call-site entry with no landing pad for the
     // region following the try-range.
-    if (MayThrow) {
+    if (SawPotentiallyThrowing) {
       CallSiteEntry Site = {LastLabel, 0, 0, 0};
       CallSites.push_back(Site);
     }

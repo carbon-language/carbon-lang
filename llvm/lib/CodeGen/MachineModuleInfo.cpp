@@ -1747,7 +1747,7 @@ void MachineModuleInfo::TidyLandingPads() {
     LandingPad.LandingPadLabel = MappedLabel(LandingPad.LandingPadLabel);
 
     // Special case: we *should* emit LPs with null LP MBB. This indicates
-    // "rethrow" case.
+    // "nounwind" case.
     if (!LandingPad.LandingPadLabel && LandingPad.LandingPadBlock) {
       LandingPads.erase(LandingPads.begin() + i);
       continue;
@@ -1756,7 +1756,6 @@ void MachineModuleInfo::TidyLandingPads() {
     for (unsigned j=0; j != LandingPads[i].BeginLabels.size(); ) {
       unsigned BeginLabel = MappedLabel(LandingPad.BeginLabels[j]);
       unsigned EndLabel = MappedLabel(LandingPad.EndLabels[j]);
-
 
       if (!BeginLabel || !EndLabel) {
         LandingPad.BeginLabels.erase(LandingPad.BeginLabels.begin() + j);
