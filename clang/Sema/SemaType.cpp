@@ -262,6 +262,15 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
       // does not have a K&R-style identifier list), then the arguments are part
       // of the type, otherwise the argument list is ().
       const DeclaratorChunk::FunctionTypeInfo &FTI = DeclType.Fun;
+        
+      // C99 6.7.5.3p1: The return type may not be a function or array type.
+      if (T->isArrayType() || T->isFunctionType()) {
+        Diag(DeclType.Loc, diag::err_func_returning_array_function,
+             T.getAsString());
+        T = Context.IntTy;
+        D.setInvalidType(true);
+      }
+        
       if (!FTI.hasPrototype) {
         // Simple void foo(), where the incoming T is the result type.
         T = Context.getFunctionTypeNoProto(T);

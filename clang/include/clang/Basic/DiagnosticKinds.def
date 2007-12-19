@@ -644,6 +644,8 @@ DIAG(warn_implicit_function_decl, WARNING,
 DIAG(ext_implicit_function_decl, EXTENSION,
      "implicit declaration of function '%0' is invalid in C99")
 
+DIAG(err_func_returning_array_function, ERROR,
+     "function cannot return array or function type '%0'")
 DIAG(err_field_declared_as_function, ERROR,
      "field '%0' declared as a function")
 DIAG(err_field_incomplete, ERROR,
