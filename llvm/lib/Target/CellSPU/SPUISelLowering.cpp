@@ -2101,7 +2101,7 @@ static SDOperand LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
   }
 
   // Need to generate shuffle mask and extract:
-  int prefslot_begin, prefslot_end;
+  int prefslot_begin = -1, prefslot_end = -1;
   int elt_byte = EltNo * MVT::getSizeInBits(VT) / 8;
 
   switch (VT) {
@@ -2123,6 +2123,9 @@ static SDOperand LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
   }
   }
 
+  assert(prefslot_begin != -1 && prefslot_end != -1 &&
+	 "LowerEXTRACT_VECTOR_ELT: preferred slots uninitialized");
+
   for (int i = 0; i < 16; ++i) {
     // zero fill uppper part of preferred slot, don't care about the
     // other slots:
@@ -2134,7 +2137,7 @@ static SDOperand LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
 	 ? 0x80
 	 : elt_byte + (i - prefslot_begin));
 
-      ShufMask[i] = DAG.getConstant(mask_val, MVT::i16);
+      ShufMask[i] = DAG.getConstant(mask_val, MVT::i8);
     } else 
       ShufMask[i] = ShufMask[i % (prefslot_end + 1)];
   }
