@@ -1172,6 +1172,8 @@ public:
 
   const StringLiteral* getString() const { return String; }
 
+  SourceLocation getAtLoc() const { return AtLoc; }
+
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtLoc, String->getLocEnd());
   }

@@ -644,7 +644,15 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
   if (IV->isFreeIvar()) {
     Expr *Replacement = new MemberExpr(IV->getBase(), true, D, 
                                        IV->getLocation());
-    Rewrite.ReplaceStmt(IV, Replacement);
+    if (Rewrite.ReplaceStmt(IV, Replacement)) {
+      // replacement failed.
+      unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error, 
+                     "rewriter could not replace sub-expression due to macros");
+      SourceRange Range = IV->getSourceRange();
+      Diags.Report(Context->getFullLoc(IV->getLocation()), DiagID, 0, 0, &Range, 1);
+      delete IV;
+      return Replacement;
+    }
     delete IV;
     return Replacement;
   } else {
@@ -660,7 +668,15 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
           CastExpr *castExpr = new CastExpr(castT, IV->getBase(), SourceLocation());
           // Don't forget the parens to enforce the proper binding.
           ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), castExpr);
-          Rewrite.ReplaceStmt(IV->getBase(), PE);
+          if (Rewrite.ReplaceStmt(IV->getBase(), PE)) {
+            // replacement failed.
+            unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error, 
+                           "rewriter could not replace sub-expression due to macros");
+            SourceRange Range = IV->getBase()->getSourceRange();
+            Diags.Report(Context->getFullLoc(IV->getBase()->getLocStart()), DiagID, 0, 0, &Range, 1);
+            delete IV->getBase();
+            return PE;
+          }
           delete IV->getBase();
           return PE;
         }
@@ -943,7 +959,15 @@ Stmt *RewriteTest::RewriteAtSelector(ObjCSelectorExpr *Exp) {
                                        SourceLocation()));
   CallExpr *SelExp = SynthesizeCallToFunctionDecl(SelGetUidFunctionDecl,
                                                  &SelExprs[0], SelExprs.size());
-  Rewrite.ReplaceStmt(Exp, SelExp);
+  if (Rewrite.ReplaceStmt(Exp, SelExp)) {
+    // replacement failed.
+    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error, 
+                     "rewriter could not replace sub-expression due to macros");
+    SourceRange Range = Exp->getSourceRange();
+    Diags.Report(Context->getFullLoc(Exp->getAtLoc()), DiagID, 0, 0, &Range, 1);
+    delete SelExp;
+    return Exp;
+  }
   delete Exp;
   return SelExp;
 }
@@ -1269,7 +1293,15 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
                                                 &StrExpr[0], StrExpr.size());
   // cast to NSConstantString *
   CastExpr *cast = new CastExpr(Exp->getType(), call, SourceLocation());
-  Rewrite.ReplaceStmt(Exp, cast);
+  if (Rewrite.ReplaceStmt(Exp, cast)) {
+    // replacement failed.
+    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error, 
+                     "rewriter could not replace sub-expression due to macros");
+    SourceRange Range = Exp->getSourceRange();
+    Diags.Report(Context->getFullLoc(Exp->getAtLoc()), DiagID, 0, 0, &Range, 1);
+    delete cast;
+    return Exp;
+  }
   delete Exp;
   return cast;
 #else
@@ -1634,12 +1666,28 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
       new ConditionalOperator(lessThanExpr, CE, STCE, returnType);
     ParenExpr *PE = new ParenExpr(SourceLocation(), SourceLocation(), CondExpr);
     // Now do the actual rewrite.
-    Rewrite.ReplaceStmt(Exp, PE);
+    if (Rewrite.ReplaceStmt(Exp, PE)) {
+      // replacement failed.
+      unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error, 
+                       "rewriter could not replace sub-expression due to macros");
+      SourceRange Range = Exp->getSourceRange();
+      Diags.Report(Context->getFullLoc(Exp->getLocStart()), DiagID, 0, 0, &Range, 1);
+      delete PE;
+      return Exp;
+    }
     delete Exp;
     return PE;
   }
   // Now do the actual rewrite.
-  Rewrite.ReplaceStmt(Exp, CE);
+  if (Rewrite.ReplaceStmt(Exp, CE)) {
+    // replacement failed.
+    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error, 
+                     "rewriter could not replace sub-expression due to macros");
+    SourceRange Range = Exp->getSourceRange();
+    Diags.Report(Context->getFullLoc(Exp->getLocStart()), DiagID, 0, 0, &Range, 1);
+    delete CE;
+    return Exp;
+  }
   
   delete Exp;
   return CE;
@@ -1660,7 +1708,15 @@ Stmt *RewriteTest::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
   CallExpr *ProtoExp = SynthesizeCallToFunctionDecl(GetProtocolFunctionDecl,
                                                     &ProtoExprs[0], 
                                                     ProtoExprs.size());
-  Rewrite.ReplaceStmt(Exp, ProtoExp);
+  if (Rewrite.ReplaceStmt(Exp, ProtoExp)) {
+    // replacement failed.
+    unsigned DiagID = Diags.getCustomDiagID(Diagnostic::Error, 
+                     "rewriter could not replace sub-expression due to macros");
+    SourceRange Range = Exp->getSourceRange();
+    Diags.Report(Context->getFullLoc(Exp->getAtLoc()), DiagID, 0, 0, &Range, 1);
+    delete ProtoExp;
+    return Exp;
+  }
   delete Exp;
   return ProtoExp;
   
