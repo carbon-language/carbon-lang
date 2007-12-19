@@ -1108,31 +1108,31 @@ be any type with a size.</p>
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
-    <td class="left">
-      <tt>[40 x i32 ]</tt><br/>
-      <tt>[41 x i32 ]</tt><br/>
-      <tt>[40 x i8]</tt><br/>
-    </td>
-    <td class="left">
-      Array of 40 32-bit integer values.<br/>
-      Array of 41 32-bit integer values.<br/>
-      Array of 40 8-bit integer values.<br/>
-    </td>
+    <td class="left"><tt>[40 x i32]</tt></td>
+    <td class="left">Array of 40 32-bit integer values.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>[41 x i32]</tt></td>
+    <td class="left">Array of 41 32-bit integer values.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>[4 x i8]</tt></td>
+    <td class="left">Array of 4 8-bit integer values.</td>
   </tr>
 </table>
 <p>Here are some examples of multidimensional arrays:</p>
 <table class="layout">
   <tr class="layout">
-    <td class="left">
-      <tt>[3 x [4 x i32]]</tt><br/>
-      <tt>[12 x [10 x float]]</tt><br/>
-      <tt>[2 x [3 x [4 x i16]]]</tt><br/>
-    </td>
-    <td class="left">
-      3x4 array of 32-bit integer values.<br/>
-      12x10 array of single precision floating point values.<br/>
-      2x3x4 array of 16-bit integer  values.<br/>
-    </td>
+    <td class="left"><tt>[3 x [4 x i32]]</tt></td>
+    <td class="left">3x4 array of 32-bit integer values.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>[12 x [10 x float]]</tt></td>
+    <td class="left">12x10 array of single precision floating point values.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>[2 x [3 x [4 x i16]]]</tt></td>
+    <td class="left">2x3x4 array of 16-bit integer  values.</td>
   </tr>
 </table>
 
@@ -1239,7 +1239,7 @@ instruction.</p>
     <td class="left"><tt>&lt; { i32, i32, i32 } &gt;</tt></td>
     <td class="left">A triple of three <tt>i32</tt> values</td>
   </tr><tr class="layout">
-  <td class="left"><tt>&lt;&nbsp;{&nbsp;float,&nbsp;i32&nbsp;(i32)&nbsp;*&nbsp;}&nbsp;&gt;</tt></td>
+  <td class="left"><tt>&lt; { float, i32 (i32)* } &gt;</tt></td>
     <td class="left">A pair, where the first element is a <tt>float</tt> and the
       second element is a <a href="#t_pointer">pointer</a> to a
       <a href="#t_function">function</a> that takes an <tt>i32</tt>, returning
@@ -1262,20 +1262,20 @@ zero.</p>
 <h5>Examples:</h5>
 <table class="layout">
   <tr class="layout">
-    <td class="left">
-      <tt>[4x i32]*</tt><br/>
-      <tt>i32 (i32 *) *</tt><br/>
-			<tt>i32 addrspace(5)*</tt><br/>
-    </td>
-    <td class="left">
-      A <a href="#t_pointer">pointer</a> to <a href="#t_array">array</a> of
-      four <tt>i32</tt> values<br/>
-      A <a href="#t_pointer">pointer</a> to a <a
+    <td class="left"><tt>[4x i32]*</tt></td>
+    <td class="left">A <a href="#t_pointer">pointer</a> to <a
+                    href="#t_array">array</a> of four <tt>i32</tt> values.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>i32 (i32 *) *</tt></td>
+    <td class="left"> A <a href="#t_pointer">pointer</a> to a <a
       href="#t_function">function</a> that takes an <tt>i32*</tt>, returning an
-      <tt>i32</tt>.<br/>
-			A <a href="#t_pointer">pointer</a> to an <tt>i32</tt> value that resides 
-			in address space 5.<br/>
-    </td>
+      <tt>i32</tt>.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>i32 addrspace(5)*</tt></td>
+    <td class="left">A <a href="#t_pointer">pointer</a> to an <tt>i32</tt> value
+     that resides in address space #5.</td>
   </tr>
 </table>
 </div>
@@ -1307,16 +1307,16 @@ be any integer or floating point type.</p>
 
 <table class="layout">
   <tr class="layout">
-    <td class="left">
-      <tt>&lt;4 x i32&gt;</tt><br/>
-      <tt>&lt;8 x float&gt;</tt><br/>
-      <tt>&lt;2 x i64&gt;</tt><br/>
-    </td>
-    <td class="left">
-      Vector of 4 32-bit integer values.<br/>
-      Vector of 8 floating-point values.<br/>
-      Vector of 2 64-bit integer values.<br/>
-    </td>
+    <td class="left"><tt>&lt;4 x i32&gt;</tt></td>
+    <td class="left">Vector of 4 32-bit integer values.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>&lt;8 x float&gt;</tt></td>
+    <td class="left">Vector of 8 32-bit floating-point values.</td>
+  </tr>
+  <tr class="layout">
+    <td class="left"><tt>&lt;2 x i64&gt;</tt></td>
+    <td class="left">Vector of 2 64-bit integer values.</td>
   </tr>
 </table>
 </div>
@@ -1342,12 +1342,8 @@ structure type).</p>
 
 <table class="layout">
   <tr class="layout">
-    <td class="left">
-      <tt>opaque</tt>
-    </td>
-    <td class="left">
-      An opaque type.<br/>
-    </td>
+    <td class="left"><tt>opaque</tt></td>
+    <td class="left">An opaque type.</td>
   </tr>
 </table>
 </div>
