@@ -585,8 +585,6 @@ void
 SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
     				     RegScavenger *RS) const
 {
-  assert(SPAdj == 0 && "Unexpected SP adjacency == 0");
-
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();

@@ -62,13 +62,25 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::AHIvec:
   case SPU::AHIr16:
   case SPU::AIvec:
-  case SPU::AIr32:
     assert(MI.getNumOperands() == 3 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
            MI.getOperand(2).isImmediate() &&
            "invalid SPU ORI/ORHI/ORBI/AHI/AI/SFI/SFHI instruction!");
     if (MI.getOperand(2).getImmedValue() == 0) {
+      sourceReg = MI.getOperand(1).getReg();
+      destReg = MI.getOperand(0).getReg();
+      return true;
+    }
+    break;
+  case SPU::AIr32:
+    assert(MI.getNumOperands() == 3 &&
+           "wrong number of operands to AIr32");
+    if (MI.getOperand(0).isRegister() &&
+        (MI.getOperand(1).isRegister() ||
+         MI.getOperand(1).isFrameIndex()) &&
+        (MI.getOperand(2).isImmediate() &&
+         MI.getOperand(2).getImmedValue() == 0)) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;

@@ -597,7 +597,7 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     SDOperand TFI = CurDAG->getTargetFrameIndex(FI, SPUtli.getPointerTy());
 
-    DEBUG(cerr << "SPUDAGToDAGISel: Replacing FrameIndex with AI32 TFI, 0\n");
+    DEBUG(cerr << "SPUDAGToDAGISel: Replacing FrameIndex with AI32 <FI>, 0\n");
     return CurDAG->SelectNodeTo(N, SPU::AIr32, Op.getValueType(), TFI,
 				CurDAG->getTargetConstant(0, MVT::i32));
   } else if (Opc == SPUISD::LDRESULT) {

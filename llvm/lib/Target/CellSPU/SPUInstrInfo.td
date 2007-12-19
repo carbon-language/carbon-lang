@@ -3476,10 +3476,8 @@ def : Pat<(SPUdform tjumptable:$in, imm:$imm),  (ILAlsa tjumptable:$in)>;
 
 // Force load of global address to a register. These forms show up in
 // SPUISD::DFormAddr pseudo instructions:
-/*
 def : Pat<(add tglobaladdr:$in, 0), (ILAlsa tglobaladdr:$in)>;
 def : Pat<(add tconstpool:$in, 0),  (ILAlsa tglobaladdr:$in)>;
 def : Pat<(add tjumptable:$in, 0),  (ILAlsa tglobaladdr:$in)>;
- */
 // Instrinsics:
 include "CellSDKIntrinsics.td"

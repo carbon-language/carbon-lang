@@ -670,6 +670,11 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     SDOperand ptrOp;
     int offset;
 
+    if (basep.getOpcode() == ISD::FrameIndex) {
+      // FrameIndex nodes are always properly aligned. Really.
+      return SDOperand();
+    }
+
     if (basep.getOpcode() == ISD::ADD) {
       const ConstantSDNode *CN = cast<ConstantSDNode>(basep.Val->getOperand(1));
       assert(CN != NULL
@@ -694,13 +699,10 @@ LowerSTORE(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       stVecVT = MVT::v16i8;
     vecVT = MVT::getVectorType(VT, (128 / MVT::getSizeInBits(VT)));
 
-    // Realign the pointer as a D-Form address (ptrOp is the pointer,
-    // to force a register load with the address; basep is the actual
-    // dform addr offs($reg).
-    ptrOp = DAG.getNode(SPUISD::DFormAddr, PtrVT, ptrOp,
-		       DAG.getConstant(0, PtrVT));
-    basep = DAG.getNode(SPUISD::DFormAddr, PtrVT, 
-			ptrOp, DAG.getConstant((offset & ~0xf), PtrVT));
+    // Realign the pointer as a D-Form address (ptrOp is the pointer, basep is
+    // the actual dform addr offs($reg).
+    basep = DAG.getNode(SPUISD::DFormAddr, PtrVT, ptrOp,
+                        DAG.getConstant((offset & ~0xf), PtrVT));
 
     // Create the 16-byte aligned vector load
     SDOperand alignLoad =
