@@ -1,4 +1,4 @@
-// RUN: clang %s -fsyntax-only
+// RUN: clang %s -fsyntax-only -verify
 
 extern int a1[];
 
@@ -6,7 +6,7 @@ void f0();
 void f1(int [*]);
 void f2(int [const *]);
 void f3(int [volatile const*]);
-int f4(*XX)(void);
+int f4(*XX)(void); /* expected-error {{cannot return}} */
 
 char ((((*X))));
 
