@@ -110,12 +110,17 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run prototype serializtion code."),
              clEnumValN(EmitLLVM, "emit-llvm",
                         "Build ASTs then convert to LLVM, emit .ll file"),
-             clEnumValN(SerializeAST, "serialize-ast",
+             clEnumValN(SerializeAST, "serialize",
                         "Build ASTs and emit .ast file"),
              clEnumValN(RewriteTest, "rewrite-test",
                         "Playground for the code rewriter"),
              clEnumValEnd));
 
+
+static llvm::cl::opt<std::string>
+OutputFile("o",
+ llvm::cl::desc("Specify output file (for --serialize, this is a directory)"));
+                          
 static llvm::cl::opt<bool>
 VerifyDiagnostics("verify",
                   llvm::cl::desc("Verify emitted diagnostics and warnings."));
