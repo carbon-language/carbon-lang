@@ -1650,8 +1650,17 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, DeclTy *EnumDeclX,
 }
 
 void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
-  if (!strcmp(rawAttr->getAttributeName()->getName(), "vector_size") ||
-      !strcmp(rawAttr->getAttributeName()->getName(), "__vector_size__")) {
+  const char *attrName = rawAttr->getAttributeName()->getName();
+  unsigned attrLen = rawAttr->getAttributeName()->getLength();
+  
+  // Normalize the attribute name, __foo__ becomes foo.
+  if (attrLen > 4 && attrName[0] == '_' && attrName[1] == '_' &&
+      attrName[attrLen - 2] == '_' && attrName[attrLen - 1] == '-') {
+    attrName += 2;
+    attrLen -= 4;
+  }
+    
+  if (attrLen == 11 && !memcmp(attrName, "vector_size", 11)) {
     if (ValueDecl *vDecl = dyn_cast<ValueDecl>(New)) {
       QualType newType = HandleVectorTypeAttribute(vDecl->getType(), rawAttr);
       if (!newType.isNull()) // install the new vector type into the decl
@@ -1663,9 +1672,7 @@ void Sema::HandleDeclAttribute(Decl *New, AttributeList *rawAttr) {
       if (!newType.isNull()) // install the new vector type into the decl
         tDecl->setUnderlyingType(newType);
     }
-  }
-  if (!strcmp(rawAttr->getAttributeName()->getName(), "ocu_vector_type") ||
-      !strcmp(rawAttr->getAttributeName()->getName(), "__ocu_vector_type__")) {
+  } else if (attrLen == 15 && !memcmp(attrName, "ocu_vector_type", 15)) {
     if (TypedefDecl *tDecl = dyn_cast<TypedefDecl>(New))
       HandleOCUVectorTypeAttribute(tDecl, rawAttr);
     else
