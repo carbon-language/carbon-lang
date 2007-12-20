@@ -2109,8 +2109,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   }
 
   // add (cast *A to intptrtype) B -> 
-  //   cast (GEP (cast *A to sbyte*) B) -> 
-  //     intptrtype
+  //   cast (GEP (cast *A to sbyte*) B)  -->  intptrtype
   {
     CastInst *CI = dyn_cast<CastInst>(LHS);
     Value *Other = RHS;
@@ -2131,8 +2130,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     }
   }
   
-  // add (select X 0 (sub n A)) A ->
-  //  select X A n
+  // add (select X 0 (sub n A)) A  -->  select X A n
   {
     SelectInst *SI = dyn_cast<SelectInst>(LHS);
     Value *Other = RHS;
@@ -2140,25 +2138,19 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       SI = dyn_cast<SelectInst>(RHS);
       Other = LHS;
     }
-    if (SI) {
+    if (SI && SI->hasOneUse()) {
       Value *TV = SI->getTrueValue();
       Value *FV = SI->getFalseValue();
-      Value *A;
+      Value *A, *N;
 
       // Can we fold the add into the argument of the select?
       // We check both true and false select arguments for a matching subtract.
-      ConstantInt *C1, *C2;
-      if (match(FV, m_ConstantInt(C1)) && C1->getValue() == 0 &&
-          match(TV, m_Sub(m_ConstantInt(C2), m_Value(A))) &&
-          A == Other) {
-        // We managed to fold the add into the true select value.
-        return new SelectInst(SI->getCondition(), C2, A);
-      } else if (match(TV, m_ConstantInt(C1)) && C1->getValue() == 0 && 
-                 match(FV, m_Sub(m_ConstantInt(C2), m_Value(A))) &&
-                 A == Other) {
-        // We managed to fold the add into the false select value.
-        return new SelectInst(SI->getCondition(), A, C2);
-      }
+      if (match(FV, m_Zero()) && match(TV, m_Sub(m_Value(N), m_Value(A))) &&
+          A == Other)  // Fold the add into the true select value.
+        return new SelectInst(SI->getCondition(), N, A);
+      if (match(TV, m_Zero()) && match(FV, m_Sub(m_Value(N), m_Value(A))) && 
+          A == Other)  // Fold the add into the false select value.
+        return new SelectInst(SI->getCondition(), A, N);
     }
   }
 
