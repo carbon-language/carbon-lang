@@ -13,6 +13,8 @@
 
 #include "ASTConsumers.h"
 #include "clang/AST/TranslationUnit.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/CFG.h"
@@ -651,7 +653,34 @@ public:
                   const LangOptions &LO)
   : ASTSerializer(diags,LO), EmitDir(dir) {}
   
-  ~BuildSerializer() { assert (false && "not implemented."); }
+  ~BuildSerializer() {
+    SourceManager& SourceMgr = TU.getASTContext()->getSourceManager();
+    unsigned ID = SourceMgr.getMainFileID();
+    assert (ID && "MainFileID not set!");
+    const FileEntry* FE = SourceMgr.getFileEntryForID(ID);
+    assert (FE && "No FileEntry for main file.");
+    
+    // FIXME: This is not portable to Windows.
+    // FIXME: This logic should probably be moved elsewhere later.
+        
+    llvm::sys::Path ASTFile(EmitDir);
+    
+    std::vector<char> buf;
+    buf.reserve(strlen(FE->getName())+100);    
+    
+    sprintf(&buf[0], "dev_%llx", (uint64_t) FE->getDevice());
+    ASTFile.appendComponent(&buf[0]);
+    ASTFile.createDirectoryOnDisk(true);
+    if (!ASTFile.canWrite() || !ASTFile.isDirectory()) {
+      assert (false && "Could not create 'device' serialization directory.");
+      return;
+    }
+    
+    sprintf(&buf[0], "%s-%llX.ast", FE->getName(), (uint64_t) FE->getInode());
+    ASTFile.appendComponent(&buf[0]);
+    
+    EmitASTBitcodeFile(TU,ASTFile);
+  }
 };
   
   
@@ -664,6 +693,12 @@ ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
                                         const LangOptions &Features) {
   
   if (OutputFile.size()) {
+    if (InFile == "-") {
+      llvm::cerr <<
+        "error: Cannot use --serialize with -o for source read from STDIN.\n";
+      return NULL;
+    }
+    
     // The user specified an AST-emission directory.  Determine if the path
     // is absolute.    
     llvm::sys::Path EmitDir(OutputFile);
@@ -684,6 +719,8 @@ ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
       return NULL;
     }
     
+    // FIXME: We should probably only allow using BuildSerializer when
+    // the ASTs come from parsed source files, and not from .ast files.
     return new BuildSerializer(EmitDir, Diags, Features);
   }
 
@@ -692,6 +729,6 @@ ASTConsumer* clang::CreateASTSerializer(const std::string& InFile,
   // as the input file with the ".ast" extension appended.
   
   llvm::sys::Path FName(InFile.c_str());
-  FName.appendComponent("ast");
+  FName.appendSuffix("ast");
   return new SingleFileSerializer(FName, Diags, Features);  
 }
