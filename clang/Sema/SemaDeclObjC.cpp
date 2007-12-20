@@ -135,7 +135,7 @@ Sema::DeclTy *Sema::ActOnStartClassInterface(
         Diag(ClassLoc, diag::warn_undef_protocolref,
              ProtocolNames[i]->getName(),
              ClassName->getName());
-      IDecl->setIntfRefProtocols((int)i, RefPDecl);
+      IDecl->setIntfRefProtocols(i, RefPDecl);
     }
     IDecl->setLocEnd(EndProtoLoc);
   }
@@ -216,7 +216,7 @@ Sema::DeclTy *Sema::ActOnStartProtocolInterface(
         Diag(ProtocolLoc, diag::warn_undef_protocolref,
              ProtoRefNames[i]->getName(),
              ProtocolName->getName());
-      PDecl->setReferencedProtocols((int)i, RefPDecl);
+      PDecl->setReferencedProtocols(i, RefPDecl);
     }
     PDecl->setLocEnd(EndProtoLoc);
   }
@@ -300,7 +300,7 @@ Sema::DeclTy *Sema::ActOnStartCategoryInterface(
              ProtoRefNames[i]->getName(),
              CategoryName->getName());
       }
-      CDecl->setCatReferencedProtocols((int)i, RefPDecl);
+      CDecl->setCatReferencedProtocols(i, RefPDecl);
     }
     CDecl->setLocEnd(EndProtoLoc);
   }
@@ -481,7 +481,7 @@ void Sema::CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
   }
   // Check on this protocols's referenced protocols, recursively
   ObjcProtocolDecl** RefPDecl = PDecl->getReferencedProtocols();
-  for (int i = 0; i < PDecl->getNumReferencedProtocols(); i++)
+  for (unsigned i = 0; i < PDecl->getNumReferencedProtocols(); i++)
     CheckProtocolMethodDefs(RefPDecl[i], IncompleteImpl, InsMap, ClsMap);
 }
 
@@ -521,7 +521,7 @@ void Sema::ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl,
   // Check the protocol list for unimplemented methods in the @implementation
   // class.
   ObjcProtocolDecl** protocols = IDecl->getReferencedProtocols();
-  for (int i = 0; i < IDecl->getNumIntfRefProtocols(); i++)
+  for (unsigned i = 0; i < IDecl->getNumIntfRefProtocols(); i++)
     CheckProtocolMethodDefs(protocols[i], IncompleteImpl, InsMap, ClsMap);
 
   if (IncompleteImpl)
@@ -567,7 +567,7 @@ void Sema::ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
   // Check the protocol list for unimplemented methods in the @implementation
   // class.
   ObjcProtocolDecl** protocols = CatClassDecl->getReferencedProtocols();
-  for (int i = 0; i < CatClassDecl->getNumReferencedProtocols(); i++) {
+  for (unsigned i = 0; i < CatClassDecl->getNumReferencedProtocols(); i++) {
     ObjcProtocolDecl* PDecl = protocols[i];
     CheckProtocolMethodDefs(PDecl, IncompleteImpl, InsMap, ClsMap);
   }

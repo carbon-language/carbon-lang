@@ -186,7 +186,7 @@ class ObjcInterfaceDecl : public TypeDecl {
   
   /// Protocols referenced in interface header declaration
   ObjcProtocolDecl **ReferencedProtocols;  // Null if none
-  int NumReferencedProtocols;  // -1 if none
+  unsigned NumReferencedProtocols;  // 0 if none
   
   /// Ivars/NumIvars - This is a new[]'d array of pointers to Decls.
   ObjcIvarDecl **Ivars;   // Null if not defined.
@@ -217,7 +217,7 @@ public:
                     IdentifierInfo *Id, bool FD = false, 
                     bool isInternal = false)
     : TypeDecl(ObjcInterface, atLoc, Id, 0), SuperClass(0),
-      ReferencedProtocols(0), NumReferencedProtocols(-1), Ivars(0), 
+      ReferencedProtocols(0), NumReferencedProtocols(0), Ivars(0), 
       NumIvars(-1),
       InstanceMethods(0), NumInstanceMethods(-1), 
       ClassMethods(0), NumClassMethods(-1),
@@ -239,7 +239,7 @@ public:
   ObjcProtocolDecl **getReferencedProtocols() const { 
     return ReferencedProtocols; 
   }
-  int getNumIntfRefProtocols() const { return NumReferencedProtocols; }
+  unsigned getNumIntfRefProtocols() const { return NumReferencedProtocols; }
   
   int getNumInstanceVariables() const { return NumIvars; }
   
@@ -273,7 +273,7 @@ public:
   bool isForwardDecl() const { return ForwardDecl; }
   void setForwardDecl(bool val) { ForwardDecl = val; }
   
-  void setIntfRefProtocols(int idx, ObjcProtocolDecl *OID) {
+  void setIntfRefProtocols(unsigned idx, ObjcProtocolDecl *OID) {
     assert((idx < NumReferencedProtocols) && "index out of range");
     ReferencedProtocols[idx] = OID;
   }
@@ -394,7 +394,7 @@ private:
 class ObjcProtocolDecl : public NamedDecl {
   /// referenced protocols
   ObjcProtocolDecl **ReferencedProtocols;  // Null if none
-  int NumReferencedProtocols;  // -1 if none
+  unsigned NumReferencedProtocols;  // 0 if none
   
   /// protocol instance methods
   ObjcMethodDecl **InstanceMethods;  // Null if not defined
@@ -412,7 +412,7 @@ public:
   ObjcProtocolDecl(SourceLocation L, unsigned numRefProtos,
                    IdentifierInfo *Id, bool FD = false)
     : NamedDecl(ObjcProtocol, L, Id), 
-      ReferencedProtocols(0), NumReferencedProtocols(-1),
+      ReferencedProtocols(0), NumReferencedProtocols(0),
       InstanceMethods(0), NumInstanceMethods(-1), 
       ClassMethods(0), NumClassMethods(-1),
       isForwardProtoDecl(FD) {
@@ -430,7 +430,7 @@ public:
                   ObjcMethodDecl **clsMethods, unsigned numClsMembers,
                   SourceLocation AtEndLoc);
   
-  void setReferencedProtocols(int idx, ObjcProtocolDecl *OID) {
+  void setReferencedProtocols(unsigned idx, ObjcProtocolDecl *OID) {
     assert((idx < NumReferencedProtocols) && "index out of range");
     ReferencedProtocols[idx] = OID;
   }
@@ -438,7 +438,7 @@ public:
   ObjcProtocolDecl** getReferencedProtocols() const { 
     return ReferencedProtocols; 
   }
-  int getNumReferencedProtocols() const { return NumReferencedProtocols; }
+  unsigned getNumReferencedProtocols() const { return NumReferencedProtocols; }
   int getNumInstanceMethods() const { return NumInstanceMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
 
@@ -587,7 +587,7 @@ class ObjcCategoryDecl : public NamedDecl {
   
   /// referenced protocols in this category
   ObjcProtocolDecl **ReferencedProtocols;  // Null if none
-  int NumReferencedProtocols;  // -1 if none
+  unsigned NumReferencedProtocols;  // 0 if none
   
   /// category instance methods
   ObjcMethodDecl **InstanceMethods;  // Null if not defined
@@ -605,7 +605,7 @@ class ObjcCategoryDecl : public NamedDecl {
 public:
   ObjcCategoryDecl(SourceLocation L, unsigned numRefProtocol,IdentifierInfo *Id)
     : NamedDecl(ObjcCategory, L, Id),
-      ClassInterface(0), ReferencedProtocols(0), NumReferencedProtocols(-1),
+      ClassInterface(0), ReferencedProtocols(0), NumReferencedProtocols(0),
       InstanceMethods(0), NumInstanceMethods(-1),
       ClassMethods(0), NumClassMethods(-1),
       NextClassCategory(0) {
@@ -620,7 +620,7 @@ public:
   ObjcInterfaceDecl *getClassInterface() const { return ClassInterface; }
   void setClassInterface(ObjcInterfaceDecl *IDecl) { ClassInterface = IDecl; }
   
-  void setCatReferencedProtocols(int idx, ObjcProtocolDecl *OID) {
+  void setCatReferencedProtocols(unsigned idx, ObjcProtocolDecl *OID) {
     assert((idx < NumReferencedProtocols) && "index out of range");
     ReferencedProtocols[idx] = OID;
   }
@@ -628,7 +628,7 @@ public:
   ObjcProtocolDecl **getReferencedProtocols() const { 
     return ReferencedProtocols; 
   }
-  int getNumReferencedProtocols() const { return NumReferencedProtocols; }
+  unsigned getNumReferencedProtocols() const { return NumReferencedProtocols; }
   int getNumInstanceMethods() const { return NumInstanceMethods; }
   int getNumClassMethods() const { return NumClassMethods; }
 

@@ -516,7 +516,7 @@ ObjcMethodDecl *ObjcProtocolDecl::lookupInstanceMethod(Selector Sel) {
   if (getNumReferencedProtocols() > 0) {
     ObjcProtocolDecl **RefPDecl = getReferencedProtocols();
     
-    for (int i = 0; i < getNumReferencedProtocols(); i++) {
+    for (unsigned i = 0; i < getNumReferencedProtocols(); i++) {
       if ((MethodDecl = RefPDecl[i]->getInstanceMethod(Sel)))
         return MethodDecl;
     }
@@ -535,7 +535,7 @@ ObjcMethodDecl *ObjcProtocolDecl::lookupClassMethod(Selector Sel) {
   if (getNumReferencedProtocols() > 0) {
     ObjcProtocolDecl **RefPDecl = getReferencedProtocols();
     
-    for (int i = 0; i < getNumReferencedProtocols(); i++) {
+    for(unsigned i = 0; i < getNumReferencedProtocols(); i++) {
       if ((MethodDecl = RefPDecl[i]->getClassMethod(Sel)))
         return MethodDecl;
     }

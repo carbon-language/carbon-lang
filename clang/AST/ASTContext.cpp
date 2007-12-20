@@ -1273,19 +1273,21 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
   // match id<P..> with an 'id' type in all cases.
   if (const PointerType *PT = lhs->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
-    if (isObjcIdType(PointeeTy))
+    if (isObjcIdType(PointeeTy) || PointeeTy->isVoidType())
       return true;
         
   }
   else if (const PointerType *PT = rhs->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
-    if (isObjcIdType(PointeeTy))
+    if (isObjcIdType(PointeeTy) || PointeeTy->isVoidType())
       return true;
     
   }
   
   ObjcQualifiedInterfaceType *lhsQI = 0;
   ObjcQualifiedInterfaceType *rhsQI = 0;
+  ObjcInterfaceDecl *lhsID = 0;
+  ObjcInterfaceDecl *rhsID = 0;
   ObjcQualifiedIdType *lhsQID = dyn_cast<ObjcQualifiedIdType>(lhs);
   ObjcQualifiedIdType *rhsQID = dyn_cast<ObjcQualifiedIdType>(rhs);
   
@@ -1296,8 +1298,14 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
       rhsQI = 
         dyn_cast<ObjcQualifiedInterfaceType>(
           rtype.getCanonicalType().getTypePtr());
+      if (!rhsQI) {
+        ObjcInterfaceType *IT = dyn_cast<ObjcInterfaceType>(
+                                  rtype.getCanonicalType().getTypePtr());
+        if (IT)
+          rhsID = IT->getDecl();
+      }
     }
-    if (!rhsQI && !rhsQID)
+    if (!rhsQI && !rhsQID && !rhsID)
       return false;
     
     for (unsigned i =0; i < lhsQID->getNumProtocols(); i++) {
@@ -1309,9 +1317,13 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
         numRhsProtocols = rhsQI->getNumProtocols();
         rhsProtoList = rhsQI->getReferencedProtocols();
       }
-      else {
+      else if (rhsQID) {
         numRhsProtocols = rhsQID->getNumProtocols();
         rhsProtoList = rhsQID->getReferencedProtocols();
+      }
+      else {
+        numRhsProtocols = rhsID->getNumIntfRefProtocols();
+        rhsProtoList = rhsID->getReferencedProtocols();
       }
       for (unsigned j = 0; j < numRhsProtocols; j++) {
         ObjcProtocolDecl *rhsProto = rhsProtoList[j];
@@ -1331,19 +1343,31 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
       lhsQI = 
       dyn_cast<ObjcQualifiedInterfaceType>(
         ltype.getCanonicalType().getTypePtr());
+      if (!lhsQI) {
+        ObjcInterfaceType *IT = dyn_cast<ObjcInterfaceType>(
+                                  ltype.getCanonicalType().getTypePtr());
+        if (IT)
+          lhsID = IT->getDecl();
+      }
     }
-    if (!lhsQI && !lhsQID)
+    if (!lhsQI && !lhsQID && !lhsID)
       return false;
+    
     unsigned numLhsProtocols;
     ObjcProtocolDecl **lhsProtoList;
     if (lhsQI) {
       numLhsProtocols = lhsQI->getNumProtocols();
       lhsProtoList = lhsQI->getReferencedProtocols();
     }
-    else {
+    else if (lhsQID) {
       numLhsProtocols = lhsQID->getNumProtocols();
       lhsProtoList = lhsQID->getReferencedProtocols();
     }
+    else {
+      numLhsProtocols = lhsID->getNumIntfRefProtocols();
+      lhsProtoList = lhsID->getReferencedProtocols();
+    }
+    
     for (unsigned i =0; i < numLhsProtocols; i++) {
       bool match = false;
       ObjcProtocolDecl *lhsProto = lhsProtoList[i];
