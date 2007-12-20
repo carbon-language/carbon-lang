@@ -267,7 +267,7 @@ public:
   ///  of when this would be used is when the main source is read from STDIN.
   unsigned createMainFileIDForMemBuffer(const llvm::MemoryBuffer *Buffer) {
     assert (MainFileID == 0 && "MainFileID already set!");
-    MainFileID = createMainFileIDForMemBuffer(Buffer);
+    MainFileID = createFileIDForMemBuffer(Buffer);
     return MainFileID;
   }
   
