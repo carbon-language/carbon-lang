@@ -1064,9 +1064,11 @@ namespace {
     std::vector<unsigned> SethiUllmanNumbers;
 
     const TargetInstrInfo *TII;
+    const MRegisterInfo *MRI;
   public:
-    explicit BURegReductionPriorityQueue(const TargetInstrInfo *tii)
-      : TII(tii) {}
+    explicit BURegReductionPriorityQueue(const TargetInstrInfo *tii,
+                                         const MRegisterInfo *mri)
+      : TII(tii), MRI(mri) {}
 
     void initNodes(DenseMap<SDNode*, std::vector<SUnit*> > &sumap,
                    std::vector<SUnit> &sunits) {
@@ -1314,6 +1316,33 @@ static bool hasCopyToRegUse(SUnit *SU) {
   return false;
 }
 
+/// canClobberPhysRegDefs - True if SU would clobber one of SuccSU's
+/// physical register def.
+static bool canClobberPhysRegDefs(SUnit *SuccSU, SUnit *SU,
+                                  const TargetInstrInfo *TII,
+                                  const MRegisterInfo *MRI) {
+  SDNode *N = SuccSU->Node;
+  unsigned NumDefs = TII->getNumDefs(N->getTargetOpcode());
+  const unsigned *ImpDefs = TII->getImplicitDefs(N->getTargetOpcode());
+  if (!ImpDefs)
+    return false;
+  const unsigned *SUImpDefs = TII->getImplicitDefs(SU->Node->getTargetOpcode());
+  if (!SUImpDefs)
+    return false;
+  for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
+    MVT::ValueType VT = N->getValueType(i);
+    if (VT == MVT::Flag || VT == MVT::Other)
+      continue;
+    unsigned Reg = ImpDefs[i - NumDefs];
+    for (;*SUImpDefs; ++SUImpDefs) {
+      unsigned SUReg = *SUImpDefs;
+      if (MRI->regsOverlap(Reg, SUReg))
+        return true;
+    }
+  }
+  return false;
+}
+
 /// AddPseudoTwoAddrDeps - If two nodes share an operand and one of them uses
 /// it as a def&use operand. Add a pseudo control edge from it to the other
 /// node (if it won't create a cycle) so the two-address one will be scheduled
@@ -1346,18 +1375,20 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
              I != E; ++I) {
           if (I->isCtrl) continue;
           SUnit *SuccSU = I->Dep;
-          // Don't constrain nodes with implicit defs. It can create cycles
-          // plus it may increase register pressures.
-          if (SuccSU == SU || SuccSU->hasPhysRegDefs)
+          if (SuccSU == SU)
             continue;
           // Be conservative. Ignore if nodes aren't at roughly the same
           // depth and height.
           if (SuccSU->Height < SU->Height && (SU->Height - SuccSU->Height) > 1)
             continue;
-          if (SuccSU->Depth > SU->Depth && (SuccSU->Depth - SU->Depth) > 1)
-            continue;
           if (!SuccSU->Node || !SuccSU->Node->isTargetOpcode())
             continue;
+          // Don't constrain nodes with physical register defs if the
+          // predecessor can cloober them.
+          if (SuccSU->hasPhysRegDefs) {
+            if (canClobberPhysRegDefs(SuccSU, SU, TII, MRI))
+              continue;
+          }
           // Don't constraint extract_subreg / insert_subreg these may be
           // coalesced away. We don't them close to their uses.
           unsigned SuccOpc = SuccSU->Node->getTargetOpcode();
@@ -1547,8 +1578,9 @@ llvm::ScheduleDAG* llvm::createBURRListDAGScheduler(SelectionDAGISel *IS,
                                                     SelectionDAG *DAG,
                                                     MachineBasicBlock *BB) {
   const TargetInstrInfo *TII = DAG->getTarget().getInstrInfo();
+  const MRegisterInfo *MRI = DAG->getTarget().getRegisterInfo();
   return new ScheduleDAGRRList(*DAG, BB, DAG->getTarget(), true,
-                           new BURegReductionPriorityQueue<bu_ls_rr_sort>(TII));
+                      new BURegReductionPriorityQueue<bu_ls_rr_sort>(TII, MRI));
 }
 
 llvm::ScheduleDAG* llvm::createTDRRListDAGScheduler(SelectionDAGISel *IS,
