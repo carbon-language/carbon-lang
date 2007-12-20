@@ -20,7 +20,7 @@
 #include "llvm/Bitcode/Deserialize.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Path.h"
-#include "llvm/ADT/scoped_ptr.h"
+#include "llvm/ADT/OwningPtr.h"
 
 #include <stdio.h>
 
@@ -125,7 +125,7 @@ TranslationUnit*
 clang::ReadASTBitcodeFile(const llvm::sys::Path& Filename, FileManager& FMgr) {
   
   // Create the memory buffer that contains the contents of the file.  
-  llvm::scoped_ptr<llvm::MemoryBuffer> 
+  llvm::OwningPtr<llvm::MemoryBuffer> 
     MBuffer(llvm::MemoryBuffer::getFile(Filename.c_str(),
                                         strlen(Filename.c_str())));
   

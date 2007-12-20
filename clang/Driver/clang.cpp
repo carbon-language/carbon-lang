@@ -39,7 +39,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Config/config.h"
-#include "llvm/ADT/scoped_ptr.h"
+#include "llvm/ADT/OwningPtr.h"
 #include <memory>
 using namespace clang;
 
@@ -1040,7 +1040,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
     exit (1);
   }
   
-  llvm::scoped_ptr<TranslationUnit> TU(ReadASTBitcodeFile(Filename,FileMgr));
+  llvm::OwningPtr<TranslationUnit> TU(ReadASTBitcodeFile(Filename,FileMgr));
   
   if (!TU) {
     fprintf(stderr, "error: file '%s' could not be deserialized\n", 
@@ -1050,7 +1050,7 @@ static void ProcessSerializedFile(const std::string& InFile, Diagnostic& Diag,
   
   // Observe that we use the source file name stored in the deserialized
   // translation unit, rather than InFile.
-  llvm::scoped_ptr<ASTConsumer>
+  llvm::OwningPtr<ASTConsumer>
     Consumer(CreateASTConsumer(InFile, Diag, FileMgr, TU->getLangOpts()));
   
   if (!Consumer) {      

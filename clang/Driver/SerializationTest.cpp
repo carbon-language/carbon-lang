@@ -20,7 +20,7 @@
 #include "ASTConsumers.h"
 #include "clang/AST/TranslationUnit.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/ADT/scoped_ptr.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/Streams.h"
 #include <fstream>
 
@@ -71,7 +71,7 @@ bool SerializationTest::Serialize(llvm::sys::Path& Filename,
     // Pretty-print the decls to a temp file.
     std::ofstream DeclPP(FNameDeclPrint.c_str());
     assert (DeclPP && "Could not open file for printing out decls.");
-    llvm::scoped_ptr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
+    llvm::OwningPtr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
     
     for (TranslationUnit::iterator I=TU.begin(), E=TU.end(); I!=E; ++I)
       FilePrinter->HandleTopLevelDecl(*I);
@@ -94,7 +94,7 @@ bool SerializationTest::Deserialize(llvm::sys::Path& Filename,
     // Pretty-print the deserialized decls to a temp file.
     std::ofstream DeclPP(FNameDeclPrint.c_str());
     assert (DeclPP && "Could not open file for printing out decls.");
-    llvm::scoped_ptr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
+    llvm::OwningPtr<ASTConsumer> FilePrinter(CreateASTPrinter(&DeclPP));
     
     for (TranslationUnit::iterator I=NewTU->begin(), E=NewTU->end(); I!=E; ++I)
       FilePrinter->HandleTopLevelDecl(*I);
@@ -162,7 +162,7 @@ SerializationTest::~SerializationTest() {
   
   using llvm::MemoryBuffer;
   
-  llvm::scoped_ptr<MemoryBuffer>
+  llvm::OwningPtr<MemoryBuffer>
     MBufferSer(MemoryBuffer::getFile(FNameDeclBefore.c_str(),
                                      strlen(FNameDeclBefore.c_str())));
   
@@ -171,7 +171,7 @@ SerializationTest::~SerializationTest() {
     return;
   }
   
-  llvm::scoped_ptr<MemoryBuffer>
+  llvm::OwningPtr<MemoryBuffer>
     MBufferDSer(MemoryBuffer::getFile(FNameDeclAfter.c_str(),
                                       strlen(FNameDeclAfter.c_str())));
   

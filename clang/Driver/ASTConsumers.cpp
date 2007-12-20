@@ -663,23 +663,25 @@ public:
     // FIXME: This is not portable to Windows.
     // FIXME: This logic should probably be moved elsewhere later.
         
-    llvm::sys::Path ASTFile(EmitDir);
+    llvm::sys::Path FName(EmitDir);
     
     std::vector<char> buf;
     buf.reserve(strlen(FE->getName())+100);    
     
     sprintf(&buf[0], "dev_%llx", (uint64_t) FE->getDevice());
-    ASTFile.appendComponent(&buf[0]);
-    ASTFile.createDirectoryOnDisk(true);
-    if (!ASTFile.canWrite() || !ASTFile.isDirectory()) {
+    FName.appendComponent(&buf[0]);
+    FName.createDirectoryOnDisk(true);
+    if (!FName.canWrite() || !FName.isDirectory()) {
       assert (false && "Could not create 'device' serialization directory.");
       return;
     }
-    
+            
     sprintf(&buf[0], "%s-%llX.ast", FE->getName(), (uint64_t) FE->getInode());
-    ASTFile.appendComponent(&buf[0]);
+    FName.appendComponent(&buf[0]);    
+    EmitASTBitcodeFile(TU,FName);
     
-    EmitASTBitcodeFile(TU,ASTFile);
+    // Now emit the sources.
+    
   }
 };
   

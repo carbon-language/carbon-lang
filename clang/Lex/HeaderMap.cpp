@@ -13,7 +13,7 @@
 
 #include "clang/Lex/HeaderMap.h"
 #include "clang/Basic/FileManager.h"
-#include "llvm/ADT/scoped_ptr.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/MathExtras.h"
@@ -78,7 +78,7 @@ const HeaderMap *HeaderMap::Create(const FileEntry *FE) {
   unsigned FileSize = FE->getSize();
   if (FileSize <= sizeof(HMapHeader)) return 0;
   
-  llvm::scoped_ptr<const llvm::MemoryBuffer> FileBuffer( 
+  llvm::OwningPtr<const llvm::MemoryBuffer> FileBuffer( 
     llvm::MemoryBuffer::getFile(FE->getName(), strlen(FE->getName()), 0,
                                 FE->getSize()));
   if (FileBuffer == 0) return 0;  // Unreadable file?
