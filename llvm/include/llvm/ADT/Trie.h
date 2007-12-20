@@ -147,7 +147,7 @@ public:
     inline const Node*   &front() const { return Children.front(); }
     inline       Node*   &front()       { return Children.front(); }
     inline const Node*   &back()  const { return Children.back();  }
-    inline Node*         &back()        { return Children.back();  }
+    inline       Node*   &back()        { return Children.back();  }
 
   };
 
@@ -275,26 +275,21 @@ const Payload& Trie<Payload>::lookup(const std::string& s) const {
 
 template<class Payload>
 struct GraphTraits<Trie<Payload> > {
-  typedef typename Trie<Payload>::Node NodeType;
-  typedef typename Trie<Payload>::Node::iterator ChildIteratorType;
+  typedef Trie<Payload> TrieType;
+  typedef typename TrieType::Node NodeType;
+  typedef typename NodeType::iterator ChildIteratorType;
 
-  static inline NodeType *getEntryNode(const Trie<Payload>& T) {
-    return T.getRoot();
-  }
+  static inline NodeType *getEntryNode(const TrieType& T) { return T.getRoot(); }
 
-  static inline ChildIteratorType child_begin(NodeType *N) {
-    return N->begin();
-  }
-  static inline ChildIteratorType child_end(NodeType *N) {
-    return N->end();
-  }
+  static inline ChildIteratorType child_begin(NodeType *N) { return N->begin(); }
+  static inline ChildIteratorType child_end(NodeType *N) { return N->end(); }
 
   typedef typename std::vector<NodeType*>::const_iterator nodes_iterator;
 
-  static inline nodes_iterator nodes_begin(const Trie<Payload>& G) {
+  static inline nodes_iterator nodes_begin(const TrieType& G) {
     return G.Nodes.begin();
   }
-  static inline nodes_iterator nodes_end(const Trie<Payload>& G) {
+  static inline nodes_iterator nodes_end(const TrieType& G) {
     return G.Nodes.end();
   }
 
