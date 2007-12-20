@@ -680,8 +680,13 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
   if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
     if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr()))
       if (FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl()))
-        if (CheckFunctionCall(Fn, RParenLoc, FDecl, Args, NumArgsInCall))
+        if (CheckFunctionCall(Fn, RParenLoc, FDecl, Args, NumArgsInCall)) {
+          // Function rejected, delete sub-ast's.
+          delete Fn;
+          for (unsigned i = 0; i != NumArgsInCall; ++i)
+            delete Args[i];
           return true;
+        }
 
   return new CallExpr(Fn, Args, NumArgsInCall, resultType, RParenLoc);
 }

@@ -125,6 +125,8 @@ bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
   return false;
 }
 
+/// SemaBuiltinVAStart - Check the arguments to __builtin_va_start for validity.
+/// Emit an error and return true on failure, return false on success.
 bool Sema::SemaBuiltinVAStart(Expr *Fn, Expr** Args, unsigned NumArgs) {
   if (NumArgs > 2) {
     Diag(Args[2]->getLocStart(), 
@@ -133,14 +135,15 @@ bool Sema::SemaBuiltinVAStart(Expr *Fn, Expr** Args, unsigned NumArgs) {
     return true;
   }
   
-  FunctionTypeProto *Proto;
+  // Determine whether the current function is variadic or not.
+  bool isVariadic;
   if (CurFunctionDecl)
-    Proto = cast<FunctionTypeProto>(CurFunctionDecl->getType());
+    isVariadic =
+      cast<FunctionTypeProto>(CurFunctionDecl->getType())->isVariadic();
   else
-    Proto =
-      cast<FunctionTypeProto>(ObjcGetTypeForMethodDefinition(CurMethodDecl));
+    isVariadic = CurMethodDecl->isVariadic();
   
-  if (!Proto->isVariadic()) {
+  if (!isVariadic) {
     Diag(Fn->getLocStart(), diag::err_va_start_used_in_non_variadic_function);
     return true;
   }
