@@ -1029,8 +1029,7 @@ inline bool Type::isFunctionType() const {
   return isa<FunctionType>(CanonicalType);
 }
 inline bool Type::isPointerType() const {
-  return isa<PointerType>(CanonicalType) || 
-	 isa<ObjcQualifiedIdType>(CanonicalType);
+  return isa<PointerType>(CanonicalType); 
 }
 inline bool Type::isFunctionPointerType() const {
   if (const PointerType* T = getAsPointerType())

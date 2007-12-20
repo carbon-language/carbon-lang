@@ -1399,6 +1399,11 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
     promoteExprToType(rex, lType); // promote the pointer to pointer
     return Context.IntTy;
   }
+  if ((lType->isObjcQualifiedIdType() || rType->isObjcQualifiedIdType())
+      && Context.ObjcQualifiedIdTypesAreCompatible(lType, rType)) {
+    promoteExprToType(rex, lType); 
+    return Context.IntTy;
+  }
   if (lType->isPointerType() && rType->isIntegerType()) {
     if (!RHSIsNull)
       Diag(loc, diag::ext_typecheck_comparison_of_pointer_integer,

@@ -594,7 +594,9 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
 static DeclRefExpr* EvalAddr(Expr *E) {
 
   // We should only be called for evaluating pointer expressions.
-  assert (E->getType()->isPointerType() && "EvalAddr only works on pointers");
+  assert ((E->getType()->isPointerType() || 
+           E->getType()->isObjcQualifiedIdType())
+             && "EvalAddr only works on pointers");
     
   // Our "symbolic interpreter" is just a dispatch off the currently
   // viewed AST node.  We then recursively traverse the AST by calling
@@ -654,7 +656,8 @@ static DeclRefExpr* EvalAddr(Expr *E) {
       ImplicitCastExpr *IE = cast<ImplicitCastExpr>(E);
       Expr* SubExpr = IE->getSubExpr();
       
-      if (SubExpr->getType()->isPointerType())
+      if (SubExpr->getType()->isPointerType() ||
+          SubExpr->getType()->isObjcQualifiedIdType())
         return EvalAddr(SubExpr);
       else
         return EvalVal(SubExpr);
