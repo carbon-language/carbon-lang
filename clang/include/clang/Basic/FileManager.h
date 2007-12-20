@@ -53,7 +53,7 @@ public:
   off_t getSize() const { return Size; }
   unsigned getUID() const { return UID; }
   ino_t getInode() const { return Inode; }
-  dev_t getDev() const { return Device; }
+  dev_t getDevice() const { return Device; }
   time_t getModificationTime() const { return ModTime; }
   
   /// getDir - Return the directory the file lives in.
