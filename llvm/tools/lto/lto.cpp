@@ -45,8 +45,11 @@
 using namespace llvm;
 
 extern "C"
-llvm::LinkTimeOptimizer *createLLVMOptimizer()
+llvm::LinkTimeOptimizer *createLLVMOptimizer(unsigned VERSION)
 {
+  if (VERSION != LLVM_LTO_VERSION)
+    return NULL;
+
   llvm::LTO *l = new llvm::LTO();
   return l;
 }
