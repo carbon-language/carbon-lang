@@ -4785,23 +4785,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
 
   if (isa<UndefValue>(Op1))                  // X icmp undef -> undef
     return ReplaceInstUsesWith(I, UndefValue::get(Type::Int1Ty));
-    
-  // (icmp cond (sub m A) 0) ->
-  //   (icmp cond m A)
-  {
-    ConstantInt *C1, *C2;
-    Value *A;
-    // Check both arguments of the compare for a matching subtract.
-    if (match(Op0, m_ConstantInt(C1)) && C1->getValue() == 0 &&
-        match(Op1, m_Sub(m_ConstantInt(C2), m_Value(A)))) {
-      // We managed to fold the add into the RHS of the select condition.
-      return new ICmpInst(I.getPredicate(), A, C2);
-    } else if (match(Op1, m_ConstantInt(C1)) && C1->getValue() == 0 &&
-               match(Op0, m_Sub(m_ConstantInt(C2), m_Value(A)))) {
-      // We managed to fold the add into the LHS of the select condition.
-      return new ICmpInst(I.getPredicate(), C2, A);
-    }
-  }
   
   // icmp <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
   // addresses never equal each other!  We already know that Op0 != Op1.
@@ -4850,6 +4833,12 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   // See if we are doing a comparison between a constant and an instruction that
   // can be folded into the comparison.
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
+      Value *A, *B;
+    
+    // (icmp cond (sub A B) 0) -> (icmp cond A B)
+    if (CI->isNullValue() && match(Op0, m_Sub(m_Value(A), m_Value(B))))
+      return new ICmpInst(I.getPredicate(), A, B);
+    
     switch (I.getPredicate()) {
     default: break;
     case ICmpInst::ICMP_ULT:                        // A <u MIN -> FALSE
@@ -4873,6 +4862,10 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
       if (isMinValuePlusOne(CI,true))              // A <s MIN+1 -> A == MIN
         return new ICmpInst(ICmpInst::ICMP_EQ, Op0, SubOne(CI));
+      
+      // (icmp slt (sub A B) 1) -> (icmp sle A B)
+      if (CI->isOne() && match(Op0, m_Sub(m_Value(A), m_Value(B))))
+        return new ICmpInst(ICmpInst::ICMP_SLE, A, B);
       break;
 
     case ICmpInst::ICMP_UGT:
@@ -4896,6 +4889,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
       if (isMaxValueMinusOne(CI, true))           // A >s MAX-1 -> A == MAX
         return new ICmpInst(ICmpInst::ICMP_EQ, Op0, AddOne(CI));
+      
+      // (icmp sgt (sub A B) -1) -> (icmp sge A B)
+      if (CI->getValue().getSExtValue() == -1 && 
+          match(Op0, m_Sub(m_Value(A), m_Value(B))))
+        return new ICmpInst(ICmpInst::ICMP_SGE, A, B);
       break;
 
     case ICmpInst::ICMP_ULE:
