@@ -565,6 +565,7 @@ public:
   
   const Expr *getCallee() const { return SubExprs[FN]; }
   Expr *getCallee() { return SubExprs[FN]; }
+  void setCallee(Expr *F) { SubExprs[FN] = F; }
   
   /// getNumArgs - Return the number of actual arguments to this call.
   ///
