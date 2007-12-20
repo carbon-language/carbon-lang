@@ -1235,7 +1235,19 @@ bool ASTContext::objcTypesAreCompatible(QualType lhs, QualType rhs) {
 }
 
 bool ASTContext::interfaceTypesAreCompatible(QualType lhs, QualType rhs) {
-  return true; // FIXME: IMPLEMENT.
+  if (lhs == rhs)
+    return true;
+  ObjcInterfaceType *lhsIT = cast<ObjcInterfaceType>(lhs.getTypePtr());
+  ObjcInterfaceType *rhsIT = cast<ObjcInterfaceType>(rhs.getTypePtr());
+  ObjcInterfaceDecl *rhsIDecl = rhsIT->getDecl();
+  ObjcInterfaceDecl *lhsIDecl = lhsIT->getDecl();
+  // rhs is derived from lhs it is OK; else it is not OK.
+  while (rhsIDecl != NULL) {
+    if (rhsIDecl == lhsIDecl)
+      return true;
+    rhsIDecl = rhsIDecl->getSuperClass();
+  }
+  return false;
 }
 
 bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs, 

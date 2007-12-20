@@ -33,6 +33,7 @@ int main()
   /* Assigning to a 'MyClass *' variable should always generate a
      warning, unless done from an 'id'.  */
   obj_c = obj;    /* Ok */
+  obj_c = obj_cp; // // expected-warning {{incompatible pointer types assigning 'MyOtherClass *' to 'MyClass *'}}
   obj_c = obj_C;  // expected-warning {{incompatible pointer types assigning 'Class' to 'MyClass *'}}
 
   /* Assigning to an 'id<MyProtocol>' variable should generate a
@@ -48,6 +49,7 @@ int main()
      a warning, unless done from an 'id' or an 'id<MyProtocol>' (since
      MyOtherClass implements MyProtocol).  */
   obj_cp = obj;    /* Ok */
+  obj_cp = obj_c;  // expected-warning {{incompatible pointer types assigning 'MyClass *' to 'MyOtherClass *'}}
   obj_cp = obj_p;  /* Ok */
   obj_cp = obj_C;  // expected-warning {{incompatible pointer types assigning 'Class' to 'MyOtherClass *'}}
 
@@ -64,6 +66,10 @@ int main()
   /* Any comparison between 'MyClass *' and anything which is not an 'id'
      must generate a warning.  */
   if (obj_p == obj_c) foo() ; // expected-error {{invalid operands to binary expression ('id<MyProtocol>' and 'MyClass *')}}
+
+  if (obj_c == obj_cp) foo() ; // expected-warning {{comparison of distinct pointer types ('MyClass *' and 'MyOtherClass *')}} 
+  if (obj_cp == obj_c) foo() ; // expected-warning {{comparison of distinct pointer types ('MyOtherClass *' and 'MyClass *')}}
+
   if (obj_c == obj_C) foo() ;  // expected-warning {{comparison of distinct pointer types ('MyClass *' and 'Class')}}
   if (obj_C == obj_c) foo() ;  // expected-warning {{comparison of distinct pointer types ('Class' and 'MyClass *')}} 
 
