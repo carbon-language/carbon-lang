@@ -95,16 +95,18 @@ end
 (* The following calling convention values may be accessed with
    [function_call_conv f] and [set_function_call_conv conv f]. Calling
    conventions are open-ended. *)
-val ccc : int             (** [ccc] is the C calling convention. **)
-val fastcc : int          (** [fastcc] is the calling convention to allow LLVM
+module CallConv : sig
+  val c : int             (** [c] is the C calling convention. **)
+  val fast : int          (** [fast] is the calling convention to allow LLVM
                               maximum optimization opportunities. Use only with
                               internal linkage. **)
-val coldcc : int          (** [coldcc] is the calling convention for
+  val cold : int          (** [cold] is the calling convention for
                               callee-save. **)
-val x86_stdcallcc : int   (** [x86_stdcallcc] is the familiar stdcall calling
+  val x86_stdcall : int   (** [x86_stdcall] is the familiar stdcall calling
                               convention from C. **)
-val x86_fastcallcc : int  (** [x86_fastcallcc] is the familiar fastcall calling
+  val x86_fastcall : int  (** [x86_fastcall] is the familiar fastcall calling
                               convention from C. **)
+end
 
 (** The predicate for an integer comparison ([icmp]) instruction.
     See the [llvm::ICmpInst::Predicate] enumeration. **)

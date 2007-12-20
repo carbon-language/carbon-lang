@@ -55,11 +55,13 @@ module Visibility = struct
   | Protected
 end
 
-let ccc = 0
-let fastcc = 8
-let coldcc = 9
-let x86_stdcallcc = 64
-let x86_fastcallcc = 65
+module CallConv = struct
+  let c = 0
+  let fast = 8
+  let cold = 9
+  let x86_stdcall = 64
+  let x86_fastcall = 65
+end
 
 module Icmp = struct
   type t =

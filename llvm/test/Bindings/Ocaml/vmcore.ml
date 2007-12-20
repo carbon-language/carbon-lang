@@ -496,9 +496,9 @@ let test_functions () =
    *)
   group "callconv";
   let fn = define_function "Fn5" ty m in
-  insist (ccc = function_call_conv fn);
-  set_function_call_conv fastcc fn;
-  insist (fastcc = function_call_conv fn);
+  insist (CallConv.c = function_call_conv fn);
+  set_function_call_conv CallConv.fast fn;
+  insist (CallConv.fast = function_call_conv fn);
   ignore (build_unreachable (builder_at_end (entry_block fn)));
   
   begin group "collector";
