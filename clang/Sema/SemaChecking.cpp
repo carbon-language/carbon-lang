@@ -33,19 +33,26 @@ using namespace clang;
 /// and safety properties not strictly enforced by the C type system.
 bool
 Sema::CheckFunctionCall(Expr *Fn, SourceLocation RParenLoc,
-                        FunctionDecl *FDecl,
-                        Expr** Args, unsigned NumArgsInCall) {
+                        FunctionDecl *FDecl, Expr** Args, unsigned NumArgs) {
                         
   // Get the IdentifierInfo* for the called function.
   IdentifierInfo *FnInfo = FDecl->getIdentifier();
   
   switch (FnInfo->getBuiltinID()) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
-    assert(NumArgsInCall == 1 &&
-           "Wrong number of arguments to builtin CFStringMakeConstantString");
+    assert(NumArgs == 1 &&
+           "Wrong # arguments to builtin CFStringMakeConstantString");
     return CheckBuiltinCFStringArgument(Args[0]);
   case Builtin::BI__builtin_va_start:
-    return SemaBuiltinVAStart(Fn, Args, NumArgsInCall);
+    return SemaBuiltinVAStart(Fn, Args, NumArgs);
+    
+  case Builtin::BI__builtin_isgreater:
+  case Builtin::BI__builtin_isgreaterequal:
+  case Builtin::BI__builtin_isless:
+  case Builtin::BI__builtin_islessequal:
+  case Builtin::BI__builtin_islessgreater:
+  case Builtin::BI__builtin_isunordered:
+    return SemaBuiltinUnorderedCompare(Fn, Args, NumArgs, RParenLoc);
   }
   
   // Search the KnownFunctionIDs for the identifier.
@@ -75,7 +82,7 @@ Sema::CheckFunctionCall(Expr *Fn, SourceLocation RParenLoc,
     }
     
     CheckPrintfArguments(Fn, RParenLoc, HasVAListArg,
-			 FDecl, format_idx, Args, NumArgsInCall);       
+			 FDecl, format_idx, Args, NumArgs);       
   }
   
   return false;
@@ -170,6 +177,36 @@ bool Sema::SemaBuiltinVAStart(Expr *Fn, Expr** Args, unsigned NumArgs) {
   return false;
 }  
 
+/// SemaBuiltinUnorderedCompare - Handle functions like __builtin_isgreater and
+/// friends.  This is declared to take (...), so we have to check everything.
+bool Sema::SemaBuiltinUnorderedCompare(Expr *Fn, Expr** Args, unsigned NumArgs,
+                                       SourceLocation RParenLoc) {
+  if (NumArgs < 2)
+    return Diag(RParenLoc, diag::err_typecheck_call_too_few_args);
+  if (NumArgs > 2)
+    return Diag(Args[2]->getLocStart(), diag::err_typecheck_call_too_many_args,
+                SourceRange(Args[2]->getLocStart(),
+                            Args[NumArgs-1]->getLocEnd()));
+  
+  Expr *OrigArg0 = Args[0];
+  Expr *OrigArg1 = Args[1];
+  
+  // Do standard promotions between the two arguments, returning their common
+  // type.
+  QualType Res = UsualArithmeticConversions(Args[0], Args[1], false);
+  
+  // If the common type isn't a real floating type, then the arguments were
+  // invalid for this operation.
+  if (!Res->isRealFloatingType())
+    return Diag(Args[0]->getLocStart(), 
+                diag::err_typecheck_call_invalid_ordered_compare,
+                OrigArg0->getType().getAsString(),
+                OrigArg1->getType().getAsString(),
+                SourceRange(Args[0]->getLocStart(), Args[1]->getLocEnd()));
+  
+  return false;
+}
+
 
 /// CheckPrintfArguments - Check calls to printf (and similar functions) for
 /// correct use of format strings.  
@@ -221,9 +258,9 @@ void
 Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
                            bool HasVAListArg, FunctionDecl *FDecl,
                            unsigned format_idx, Expr** Args, 
-                           unsigned NumArgsInCall) {
+                           unsigned NumArgs) {
   // CHECK: printf-like function is called with no format string.  
-  if (format_idx >= NumArgsInCall) {
+  if (format_idx >= NumArgs) {
     Diag(RParenLoc, diag::warn_printf_missing_format_string, 
          Fn->getSourceRange());
     return;
@@ -314,7 +351,7 @@ Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
   //  string.  This can only be determined for non vprintf-like
   //  functions.  For those functions, this value is 1 (the sole
   //  va_arg argument).
-  unsigned numDataArgs = NumArgsInCall-(format_idx+1);
+  unsigned numDataArgs = NumArgs-(format_idx+1);
 
   // Inspect the format string.
   unsigned StrIdx = 0;

@@ -729,6 +729,8 @@ private:
   
   bool CheckBuiltinCFStringArgument(Expr* Arg);
   bool SemaBuiltinVAStart(Expr *Fn, Expr** Args, unsigned NumArgs);
+  bool SemaBuiltinUnorderedCompare(Expr *Fn, Expr** Args, unsigned NumArgs,
+                                   SourceLocation RParenLoc);
   
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
 };

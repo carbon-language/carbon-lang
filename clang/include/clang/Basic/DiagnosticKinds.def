@@ -783,6 +783,8 @@ DIAG(err_typecheck_call_too_few_args, ERROR,
      "too few arguments to function")
 DIAG(err_typecheck_call_too_many_args, ERROR,
      "too many arguments to function")
+DIAG(err_typecheck_call_invalid_ordered_compare, ERROR,
+     "ordered compare requires two args of floating point type ('%0' and '%1')")
 DIAG(err_typecheck_passing_incompatible, ERROR,
      "incompatible types passing '%0' to function expecting '%1'")
 DIAG(ext_typecheck_passing_incompatible_pointer, WARNING,

@@ -647,8 +647,8 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
         break;
       case Incompatible:
         return Diag(l, diag::err_typecheck_passing_incompatible,
-                 rhsType.getAsString(), lhsType.getAsString(),
-                 Fn->getSourceRange(), argExpr->getSourceRange());
+                    rhsType.getAsString(), lhsType.getAsString(),
+                    Fn->getSourceRange(), argExpr->getSourceRange());
       }
     }
     if (NumArgsInCall > NumArgsInProto && proto->isVariadic()) {
