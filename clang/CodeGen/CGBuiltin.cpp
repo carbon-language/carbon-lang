@@ -166,6 +166,42 @@ RValue CodeGenFunction::EmitBuiltinExpr(unsigned BuiltinID, const CallExpr *E) {
     APFloat f(APFloat::IEEEdouble, APFloat::fcInfinity, false);
     return RValue::get(ConstantFP::get(llvm::Type::DoubleTy, f));
   }
+  case Builtin::BI__builtin_isgreater:
+  case Builtin::BI__builtin_isgreaterequal:
+  case Builtin::BI__builtin_isless:
+  case Builtin::BI__builtin_islessequal:
+  case Builtin::BI__builtin_islessgreater:
+  case Builtin::BI__builtin_isunordered: {
+    // Ordered comparisons: we know the arguments to these are matching scalar
+    // floating point values.
+    Value *LHS = EmitScalarExpr(E->getArg(0));   
+    Value *RHS = EmitScalarExpr(E->getArg(1));
+    
+    switch (BuiltinID) {
+    default: assert(0 && "Unknown ordered comparison");
+    case Builtin::BI__builtin_isgreater:
+      LHS = Builder.CreateFCmpOGT(LHS, RHS, "cmp");
+      break;
+    case Builtin::BI__builtin_isgreaterequal:
+      LHS = Builder.CreateFCmpOGE(LHS, RHS, "cmp");
+      break;
+    case Builtin::BI__builtin_isless:
+      LHS = Builder.CreateFCmpOLT(LHS, RHS, "cmp");
+      break;
+    case Builtin::BI__builtin_islessequal:
+      LHS = Builder.CreateFCmpOLE(LHS, RHS, "cmp");
+      break;
+    case Builtin::BI__builtin_islessgreater:
+      LHS = Builder.CreateFCmpONE(LHS, RHS, "cmp");
+      break;
+    case Builtin::BI__builtin_isunordered:    
+      LHS = Builder.CreateFCmpUNO(LHS, RHS, "cmp");
+      break;
+    }
+    // ZExt bool to int type.
+    return RValue::get(Builder.CreateZExt(LHS, ConvertType(E->getType()),
+                                          "tmp"));
+  }
   }
   return RValue::get(0);
 }

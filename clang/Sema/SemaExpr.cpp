@@ -720,8 +720,7 @@ ActOnInitList(SourceLocation LBraceLoc, ExprTy **initlist, unsigned NumInit,
   return e;
 }
 
-bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty)
-{
+bool Sema::CheckVectorCast(SourceRange R, QualType VectorTy, QualType Ty) {
   assert(VectorTy->isVectorType() && "Not a vector type!");
   
   if (Ty->isVectorType() || Ty->isIntegerType()) {
