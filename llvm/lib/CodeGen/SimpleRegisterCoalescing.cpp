@@ -396,7 +396,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec TheCopy, bool &Again) {
     unsigned JoinVReg = SrcIsPhys ? repDstReg : repSrcReg;
     unsigned JoinPReg = SrcIsPhys ? repSrcReg : repDstReg;
     const TargetRegisterClass *RC = mf_->getSSARegMap()->getRegClass(JoinVReg);
-    unsigned Threshold = allocatableRCRegs_[RC].count();
+    unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
     if (TheCopy.isBackEdge)
       Threshold *= 2; // Favors back edge copies.
 
