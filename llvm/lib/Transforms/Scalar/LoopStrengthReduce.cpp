@@ -997,8 +997,11 @@ bool LoopStrengthReduce::ValidStride(bool HasBaseReg,
       AccessTy = SI->getOperand(0)->getType();
     else if (LoadInst *LI = dyn_cast<LoadInst>(UsersToProcess[i].Inst))
       AccessTy = LI->getType();
-    else if (PHINode *PN = dyn_cast<PHINode>(UsersToProcess[i].Inst))
-      AccessTy = PN->getType();
+    else if (isa<PHINode>(UsersToProcess[i].Inst)) {
+      if (AllowPHIIVReuse)
+        continue;
+      return false;
+    }
     
     TargetLowering::AddrMode AM;
     if (SCEVConstant *SC = dyn_cast<SCEVConstant>(UsersToProcess[i].Imm))
@@ -1126,34 +1129,6 @@ static bool isAddressUse(Instruction *Inst, Value *OperandVal) {
   return isAddress;
 }
 
-/// isAddressUsePHI - Returns if all uses of the specified PHI node are using
-/// the PHI node value as an address.
-static void isAddressUsePHI(Instruction *Inst,
-                            SmallPtrSet<Instruction*,16> &Processed,
-                            bool &Result) {
-  if (!Result || !Processed.insert(Inst))
-    return;
-
-  for (Value::use_iterator UI = Inst->use_begin(), E = Inst->use_end();
-       UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
-    if (isa<PHINode>(User) && !Processed.count(User)) {
-      bool ThisResult = true;
-      isAddressUsePHI(User, Processed, ThisResult);
-      if (!ThisResult) {
-        Result = false;
-        return;
-      }
-      continue;
-    }
-
-    if (!isAddressUse(User, cast<Value>(Inst))) {
-      Result = false;
-      return;
-    }
-  }
-}
-
 // CollectIVUsers - Transform our list of users and offsets to a bit more
 // complex table. In this new vector, each 'BasedUser' contains 'Base' the base
 // of the strided accessas well as the old information from Uses. We
@@ -1191,6 +1166,7 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
   // instructions.  If we can represent anything there, move it to the imm
   // fields of the BasedUsers.  We do this so that it increases the commonality
   // of the remaining uses.
+  unsigned NumPHI = 0;
   for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
     // If the user is not in the current loop, this means it is using the exit
     // value of the IV.  Do not put anything in the base, make sure it's all in
@@ -1204,23 +1180,28 @@ SCEVHandle LoopStrengthReduce::CollectIVUsers(const SCEVHandle &Stride,
       
       // Addressing modes can be folded into loads and stores.  Be careful that
       // the store is through the expression, not of the expression though.
-      bool isPtrPHI = false;
+      bool isPHI = false;
       bool isAddress = isAddressUse(UsersToProcess[i].Inst,
                                     UsersToProcess[i].OperandValToReplace);
       if (isa<PHINode>(UsersToProcess[i].Inst)) {
-        SmallPtrSet<Instruction*,16> Processed;
-        isPtrPHI = true;
-        isAddressUsePHI(UsersToProcess[i].Inst, Processed, isPtrPHI);
+        isPHI = true;
+        ++NumPHI;
       }
 
       // If this use isn't an address, then not all uses are addresses.
-      if (!isAddress && !(AllowPHIIVReuse && isPtrPHI))
+      if (!isAddress && !(AllowPHIIVReuse && isPHI))
         AllUsesAreAddresses = false;
       
       MoveImmediateValues(TLI, UsersToProcess[i].Inst, UsersToProcess[i].Base,
                           UsersToProcess[i].Imm, isAddress, L, SE);
     }
   }
+
+  // If one of the use if a PHI node and all other uses are addresses, still
+  // allow iv reuse. Essentially we are trading one constant multiplication
+  // for one fewer iv.
+  if (NumPHI > 1)
+    AllUsesAreAddresses = false;
 
   return CommonExprs;
 }
