@@ -1085,10 +1085,10 @@ def Int_CVTTSD2SIrm : SDI<0x2C, MRMSrcMem, (outs GR32:$dst), (ins f128mem:$src),
 
 // Comparison instructions
 let isTwoAddress = 1 in {
-  def CMPSDrr : SDI<0xC2, MRMSrcReg, 
+  def CMPSDrr : SDIi8<0xC2, MRMSrcReg, 
                     (outs FR64:$dst), (ins FR64:$src1, FR64:$src, SSECC:$cc),
                     "cmp${cc}sd\t{$src, $dst|$dst, $src}", []>;
-  def CMPSDrm : SDI<0xC2, MRMSrcMem, 
+  def CMPSDrm : SDIi8<0xC2, MRMSrcMem, 
                     (outs FR64:$dst), (ins FR64:$src1, f64mem:$src, SSECC:$cc),
                     "cmp${cc}sd\t{$src, $dst|$dst, $src}", []>;
 }
@@ -1105,12 +1105,12 @@ def UCOMISDrm: PDI<0x2E, MRMSrcMem, (outs), (ins FR64:$src1, f64mem:$src2),
 
 // Aliases to match intrinsics which expect XMM operand(s).
 let isTwoAddress = 1 in {
-  def Int_CMPSDrr : SDI<0xC2, MRMSrcReg, 
+  def Int_CMPSDrr : SDIi8<0xC2, MRMSrcReg, 
                         (outs VR128:$dst), (ins VR128:$src1, VR128:$src, SSECC:$cc),
                         "cmp${cc}sd\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst, (int_x86_sse2_cmp_sd VR128:$src1,
                                            VR128:$src, imm:$cc))]>;
-  def Int_CMPSDrm : SDI<0xC2, MRMSrcMem, 
+  def Int_CMPSDrm : SDIi8<0xC2, MRMSrcMem, 
                         (outs VR128:$dst), (ins VR128:$src1, f64mem:$src, SSECC:$cc),
                         "cmp${cc}sd\t{$src, $dst|$dst, $src}",
                         [(set VR128:$dst, (int_x86_sse2_cmp_sd VR128:$src1,
