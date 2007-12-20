@@ -249,8 +249,8 @@ void MachineLICM::HoistRegion(MachineDomTreeNode *N) {
 
 /// IsLoopInvariantInst - Returns true if the instruction is loop
 /// invariant. I.e., all virtual register operands are defined outside of the
-/// loop, physical registers aren't accessed (explicitly or implicitly), and the
-/// instruction is hoistable.
+/// loop, physical registers aren't accessed explicitly, and there are no side
+/// effects that aren't captured by the operands or other flags.
 /// 
 bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   DEBUG({
@@ -281,13 +281,6 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
         DOUT << "  * Instruction has side effects.\n";
     });
 
-#if 0
-  // FIXME: Don't hoist if this instruction implicitly reads physical registers.
-  if (I.getInstrDescriptor()->ImplicitUses ||
-      I.getInstrDescriptor()->ImplicitDefs)
-    return false;
-#endif
-
   // The instruction is loop invariant if all of its operands are loop-invariant
   for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = I.getOperand(i);
@@ -309,7 +302,7 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
       return false;
   }
 
-  // Don't hoist something that has side effects.
+  // Don't hoist something that has unmodelled side effects.
   if (TII->hasUnmodelledSideEffects(&I)) return false;
 
   // If we got this far, the instruction is loop invariant!
