@@ -635,7 +635,7 @@ bool LinuxAsmPrinter::doFinalization(Module &M) {
   DW.EndModule();
 
   // Emit ident information
-  O << "\t.ident\t\"(llvm 1.9+) STI CBEA Cell SPU backend\"\n";
+  O << "\t.ident\t\"(llvm 2.2+) STI CBEA Cell SPU backend\"\n";
 
   return AsmPrinter::doFinalization(M);
 }

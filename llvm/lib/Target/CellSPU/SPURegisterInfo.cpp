@@ -378,11 +378,13 @@ void SPURegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   } else if (DestRC == SPU::R32CRegisterClass) {
     BuildMI(MBB, MI, TII.get(SPU::ORIr32), DestReg).addReg(SrcReg).addImm(0);
   } else if (DestRC == SPU::R32FPRegisterClass) {
-    BuildMI(MBB, MI, TII.get(SPU::ORIf32), DestReg).addReg(SrcReg).addImm(0);
+    BuildMI(MBB, MI, TII.get(SPU::ORf32), DestReg).addReg(SrcReg)
+      .addReg(SrcReg);
   } else if (DestRC == SPU::R64CRegisterClass) {
     BuildMI(MBB, MI, TII.get(SPU::ORIr64), DestReg).addReg(SrcReg).addImm(0);
   } else if (DestRC == SPU::R64FPRegisterClass) {
-    BuildMI(MBB, MI, TII.get(SPU::ORIf64), DestReg).addReg(SrcReg).addImm(0);
+    BuildMI(MBB, MI, TII.get(SPU::ORf64), DestReg).addReg(SrcReg)
+      .addReg(SrcReg);
   } else if (DestRC == SPU::GPRCRegisterClass) {
     BuildMI(MBB, MI, TII.get(SPU::ORgprc), DestReg).addReg(SrcReg)
       .addReg(SrcReg);

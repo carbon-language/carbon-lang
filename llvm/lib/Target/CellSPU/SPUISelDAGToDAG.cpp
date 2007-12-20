@@ -155,7 +155,7 @@ namespace {
   }
 
   //===------------------------------------------------------------------===//
-  //! MVT::ValueType to useful stuff structure:
+  //! MVT::ValueType to "useful stuff" mapping structure:
 
   struct valtype_map_s {
     MVT::ValueType VT;
@@ -166,13 +166,13 @@ namespace {
   };
 
   const valtype_map_s valtype_map[] = {
-    { MVT::i1,   0,            3, 0,         0 },
-    { MVT::i8,   0,            3, 0,         0 },
-    { MVT::i16,  SPU::ORHIr16, 2, SPU::BRHZ, SPU::BRHNZ },
-    { MVT::i32,  SPU::ORIr32,  0, SPU::BRZ,  SPU::BRNZ },
-    { MVT::i64,  SPU::ORIr64,  0, 0,         0 },
-    { MVT::f32,  SPU::ORIf32,  0, 0,         0 },
-    { MVT::f64,  SPU::ORIf64,  0, 0,         0 }
+    { MVT::i1,  0,            3, 0,         0 },
+    { MVT::i8,  0,            3, 0,         0 },
+    { MVT::i16, SPU::ORHIr16, 2, SPU::BRHZ, SPU::BRHNZ },
+    { MVT::i32, SPU::ORIr32,  0, SPU::BRZ,  SPU::BRNZ },
+    { MVT::i64, SPU::ORIr64,  0, 0,         0 },
+    { MVT::f32, 0,            0, 0,         0 },
+    { MVT::f64, 0,            0, 0,         0 }
   };
 
   const size_t n_valtype_map = sizeof(valtype_map) / sizeof(valtype_map[0]);
@@ -605,23 +605,32 @@ SPUDAGToDAGISel::Select(SDOperand Op) {
     unsigned VT = N->getValueType(0);
     SDOperand Arg = N->getOperand(0);
     SDOperand Chain = N->getOperand(1);
-    SDOperand Zero = CurDAG->getTargetConstant(0, VT);
     SDNode *Result;
-    const valtype_map_s *vtm = getValueTypeMapEntry(VT);
-
-    if (vtm->ldresult_ins == 0) {
-      cerr << "LDRESULT for unsupported type: "
-           << MVT::getValueTypeString(VT)
-           << "\n";
-      abort();
-    } else
-      Opc = vtm->ldresult_ins;
 
     AddToISelQueue(Arg);
-    AddToISelQueue(Zero);
-    AddToISelQueue(Chain);
-    Result = CurDAG->SelectNodeTo(N, Opc, VT, MVT::Other, Arg, Zero, Chain);
+    if (!MVT::isFloatingPoint(VT)) {
+      SDOperand Zero = CurDAG->getTargetConstant(0, VT);
+      const valtype_map_s *vtm = getValueTypeMapEntry(VT);
+
+      if (vtm->ldresult_ins == 0) {
+	cerr << "LDRESULT for unsupported type: "
+	     << MVT::getValueTypeString(VT)
+	     << "\n";
+	abort();
+      } else
+	Opc = vtm->ldresult_ins;
+
+      AddToISelQueue(Zero);
+      Result = CurDAG->SelectNodeTo(N, Opc, VT, MVT::Other, Arg, Zero, Chain);
+    } else {
+      Result =
+	CurDAG->SelectNodeTo(N, (VT == MVT::f32 ? SPU::ORf32 : SPU::ORf64),
+			     MVT::Other, Arg, Arg, Chain);
+    }
+
     Chain = SDOperand(Result, 1);
+    AddToISelQueue(Chain);
+
     return Result;
   }
   

@@ -1285,6 +1285,18 @@ def ORr8:
       "or\t$rT, $rA, $rB", IntegerOp,
       [(set R8C:$rT, (or R8C:$rA, R8C:$rB))]>;
 
+// OR instruction forms that are used to copy f32 and f64 registers.
+// They do not match patterns.
+def ORf32:
+    RRForm<0b10000010000, (outs R32FP:$rT), (ins R32FP:$rA, R32FP:$rB),
+      "or\t$rT, $rA, $rB", IntegerOp,
+      [/* no pattern */]>;
+
+def ORf64:
+    RRForm<0b10000010000, (outs R64FP:$rT), (ins R64FP:$rA, R64FP:$rB),
+      "or\t$rT, $rA, $rB", IntegerOp,
+      [/* no pattern */]>;
+
 // ORv*_*: Used in scalar->vector promotions:
 def ORv16i8_i8:
     RRForm<0b10000010000, (outs VECREG:$rT), (ins R8C:$rA, R8C:$rB),
@@ -1473,18 +1485,6 @@ def ORIr32:
     RI10Form<0b00100000, (outs R32C:$rT), (ins R32C:$rA, u10imm_i32:$val),
       "ori\t$rT, $rA, $val", IntegerOp,
       [(set R32C:$rT, (or R32C:$rA, i32ImmUns10:$val))]>;
-
-// Hacked forms of or immediate to copy one 32- and 64-bit FP register  
-// to another. Do not match patterns.
-def ORIf32:
-    RI10Form_1<0b00100000, (outs R32FP:$rT), (ins R32FP:$rA, s10imm_i32:$val),
-      "ori\t$rT, $rA, $val", IntegerOp,
-      [/* no pattern */]>;
-
-def ORIf64:
-    RI10Form_1<0b00100000, (outs R64FP:$rT), (ins R64FP:$rA, s10imm_i32:$val),
-      "ori\t$rT, $rA, $val", IntegerOp,
-      [/* no pattern */]>;
 
 def ORIr64:
     RI10Form_1<0b00100000, (outs R64C:$rT), (ins R64C:$rA, s10imm_i32:$val),
@@ -2108,7 +2108,7 @@ def : Pat<(or (and (not R8C:$rC), R8C:$rA),
 def SHUFB:
     RRRForm<0b1000, (outs VECREG:$rT), (ins VECREG:$rA, VECREG:$rB, VECREG:$rC),
       "shufb\t$rT, $rA, $rB, $rC", IntegerOp,
-      [/* insert intrinsic here */]>;
+      [/* no pattern */]>;
 
 // SPUshuffle is generated in LowerVECTOR_SHUFFLE and gets replaced with SHUFB.
 // See the SPUshuffle SDNode operand above, which sets up the DAG pattern
@@ -2123,7 +2123,13 @@ def : Pat<(SPUshuffle (v8i16 VECREG:$rA), (v8i16 VECREG:$rB), VECREG:$rC),
 def : Pat<(SPUshuffle (v4i32 VECREG:$rA), (v4i32 VECREG:$rB), VECREG:$rC),
           (SHUFB VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
 
+def : Pat<(SPUshuffle (v4f32 VECREG:$rA), (v4f32 VECREG:$rB), VECREG:$rC),
+          (SHUFB VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
+
 def : Pat<(SPUshuffle (v2i64 VECREG:$rA), (v2i64 VECREG:$rB), VECREG:$rC),
+          (SHUFB VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
+
+def : Pat<(SPUshuffle (v2f64 VECREG:$rA), (v2f64 VECREG:$rB), VECREG:$rC),
           (SHUFB VECREG:$rA, VECREG:$rB, VECREG:$rC)>;
 
 //===----------------------------------------------------------------------===//
@@ -3372,6 +3378,7 @@ def : Pat<(v2f64 (bitconvert (v2i64 VECREG:$src))), (v2f64 VECREG:$src)>;
 def : Pat<(v2f64 (bitconvert (v2f64 VECREG:$src))), (v2f64 VECREG:$src)>;
 
 def : Pat<(f32 (bitconvert (i32 R32C:$src))), (f32 R32FP:$src)>;
+def : Pat<(f64 (bitconvert (i64 R64C:$src))), (f64 R64FP:$src)>;
 
 //===----------------------------------------------------------------------===//
 // Instruction patterns:

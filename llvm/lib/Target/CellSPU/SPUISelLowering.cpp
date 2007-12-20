@@ -263,10 +263,10 @@ SPUTargetLowering::SPUTargetLowering(SPUTargetMachine &TM)
   setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
   setOperationAction(ISD::UINT_TO_FP, MVT::i64, Custom);
 
-  setOperationAction(ISD::BIT_CONVERT, MVT::f32, Expand);
-  setOperationAction(ISD::BIT_CONVERT, MVT::i32, Expand);
-  setOperationAction(ISD::BIT_CONVERT, MVT::i64, Expand);
-  setOperationAction(ISD::BIT_CONVERT, MVT::f64, Expand);
+  setOperationAction(ISD::BIT_CONVERT, MVT::i32, Legal);
+  setOperationAction(ISD::BIT_CONVERT, MVT::f32, Legal);
+  setOperationAction(ISD::BIT_CONVERT, MVT::i64, Legal);
+  setOperationAction(ISD::BIT_CONVERT, MVT::f64, Legal);
 
   // We cannot sextinreg(i1).  Expand to shifts.
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1, Expand);
@@ -441,6 +441,7 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   LoadSDNode *LN = cast<LoadSDNode>(Op);
   SDOperand basep = LN->getBasePtr();
   SDOperand the_chain = LN->getChain();
+  MVT::ValueType BasepOpc = basep.Val->getOpcode();
   MVT::ValueType VT = LN->getLoadedVT();
   MVT::ValueType OpVT = Op.Val->getValueType(0);
   MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
@@ -448,6 +449,11 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
   unsigned alignment = LN->getAlignment();
   const valtype_map_s *vtm = getValueTypeMapEntry(VT);
   SDOperand Ops[8];
+
+  if (BasepOpc == ISD::FrameIndex) {
+    // Loading from a frame index is always properly aligned. Always.
+    return SDOperand();
+  }
 
   // For an extending load of an i1 variable, just call it i8 (or whatever we
   // were passed) and make it zero-extended:
@@ -467,11 +473,9 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
     // The vector type we really want to be when we load the 16-byte chunk
     MVT::ValueType vecVT, opVecVT;
     
+    vecVT = MVT::v16i8;
     if (VT != MVT::i1)
       vecVT = MVT::getVectorType(VT, (128 / MVT::getSizeInBits(VT)));
-    else
-      vecVT = MVT::v16i8;
-
     opVecVT = MVT::getVectorType(OpVT, (128 / MVT::getSizeInBits(OpVT)));
 
     if (basep.getOpcode() == ISD::ADD) {
@@ -604,8 +608,8 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
       // address scheme:
 
       SDOperand ZeroOffs = DAG.getConstant(0, PtrVT);
-      SDOperand loOp = DAG.getNode(SPUISD::Lo, VT, basep, ZeroOffs);
-      SDOperand hiOp = DAG.getNode(SPUISD::Hi, VT, basep, ZeroOffs);
+      SDOperand loOp = DAG.getNode(SPUISD::Lo, PtrVT, basep, ZeroOffs);
+      SDOperand hiOp = DAG.getNode(SPUISD::Hi, PtrVT, basep, ZeroOffs);
 
       ptrp = DAG.getNode(ISD::ADD, PtrVT, loOp, hiOp);
 

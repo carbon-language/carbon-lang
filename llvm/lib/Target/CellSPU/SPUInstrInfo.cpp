@@ -49,8 +49,6 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
     break;
   case SPU::ORIv4i32:
   case SPU::ORIr32:
-  case SPU::ORIf64:
-  case SPU::ORIf32:
   case SPU::ORIr64:
   case SPU::ORHIv8i16:
   case SPU::ORHIr16:
@@ -86,18 +84,6 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
       return true;
     }
     break;
-#if 0
-  case SPU::ORIf64:
-  case SPU::ORIf32:
-    // Special case because there's no third immediate operand to the
-    // instruction (the constant is embedded in the instruction)
-    assert(MI.getOperand(0).isRegister() &&
-	   MI.getOperand(1).isRegister() &&
-	   "ORIf32/f64: operands not registers");
-    sourceReg = MI.getOperand(1).getReg();
-    destReg = MI.getOperand(0).getReg();
-    return true;
-#endif
   case SPU::ORv16i8_i8:
   case SPU::ORv8i16_i16:
   case SPU::ORv4i32_i32:
@@ -115,6 +101,8 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
   case SPU::ORv4i32:
   case SPU::ORr32:
   case SPU::ORr64:
+  case SPU::ORf32:
+  case SPU::ORf64:
   case SPU::ORgprc:
     assert(MI.getNumOperands() == 3 &&
            MI.getOperand(0).isRegister() &&
