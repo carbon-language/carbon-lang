@@ -20,8 +20,6 @@
 #include <set>
 #include <llvm/ADT/hash_map>
 
-#define LLVM_LTO_VERSION 1
-
 namespace llvm {
 
   class Module;
@@ -150,6 +148,6 @@ namespace llvm {
 /// linker to use dlopen() interface to dynamically load LinkTimeOptimizer.
 /// extern "C" helps, because dlopen() interface uses name to find the symbol.
 extern "C"
-llvm::LinkTimeOptimizer *createLLVMOptimizer(unsigned VERSION = LLVM_LTO_VERSION);
+llvm::LinkTimeOptimizer *createLLVMOptimizer();
 
 #endif
