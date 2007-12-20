@@ -46,8 +46,23 @@ struct leaf_ty {
   bool match(ITy *V) { return isa<Class>(V); }
 };
 
+/// m_Value() - Match an arbitrary value and ignore it.
 inline leaf_ty<Value> m_Value() { return leaf_ty<Value>(); }
+/// m_ConstantInt() - Match an arbitrary ConstantInt and ignore it.
 inline leaf_ty<ConstantInt> m_ConstantInt() { return leaf_ty<ConstantInt>(); }
+
+struct zero_ty {
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (const Constant *C = dyn_cast<Constant>(V))
+      return C->isNullValue();
+    return false;
+  }
+};
+
+/// m_Zero() - Match an arbitrary zero/null constant.
+inline zero_ty m_Zero() { return zero_ty(); }
+
 
 template<typename Class>
 struct bind_ty {
@@ -64,7 +79,10 @@ struct bind_ty {
   }
 };
 
+/// m_Value - Match a value, capturing it if we match.
 inline bind_ty<Value> m_Value(Value *&V) { return V; }
+
+/// m_ConstantInt - Match a ConstantInt, capturing the value if we match.
 inline bind_ty<ConstantInt> m_ConstantInt(ConstantInt *&CI) { return CI; }
 
 //===----------------------------------------------------------------------===//
