@@ -34,8 +34,13 @@ class Trie {
 public:
   class Node {
     friend class Trie;
-    friend class GraphTraits<Trie<Payload> >;
 
+  public:
+    typedef std::vector<Node*> NodeVectorType;
+    typedef typename NodeVectorType::iterator iterator;
+    typedef typename NodeVectorType::const_iterator const_iterator;
+
+  private:
     typedef enum {
       Same           = -3,
       StringIsPrefix = -2,
@@ -43,8 +48,6 @@ public:
       DontMatch      = 0,
       HaveCommonPart
     } QueryResult;
-    typedef std::vector<Node*> NodeVector;
-    typedef typename std::vector<Node*>::iterator NodeVectorIter;
 
     struct NodeCmp {
       bool operator() (Node* N1, Node* N2) {
@@ -57,7 +60,7 @@ public:
 
     std::string Label;
     Payload Data;
-    NodeVector Children;
+    NodeVectorType Children;
 
     // Do not implement
     Node(const Node&);
@@ -67,8 +70,8 @@ public:
       if (Children.empty())
         Children.push_back(N);
       else {
-        NodeVectorIter I = std::lower_bound(Children.begin(), Children.end(),
-                                            N, NodeCmp());
+        iterator I = std::lower_bound(Children.begin(), Children.end(),
+                                      N, NodeCmp());
         // FIXME: no dups are allowed
         Children.insert(I, N);
       }
@@ -76,8 +79,8 @@ public:
 
     inline void setEdge(Node* N) {
       char Id = N->Label[0];
-      NodeVectorIter I = std::lower_bound(Children.begin(), Children.end(),
-                                          Id, NodeCmp());
+      iterator I = std::lower_bound(Children.begin(), Children.end(),
+                                     Id, NodeCmp());
       assert(I != Children.end() && "Node does not exists!");
       *I = N;
     }
@@ -119,20 +122,33 @@ public:
                 << "Label: " << Label << "\n"
                 << "Children:\n";
 
-      for (NodeVectorIter I = Children.begin(), E = Children.end(); I != E; ++I)
+      for (iterator I = Children.begin(), E = Children.end(); I != E; ++I)
         std::cerr << (*I)->Label << "\n";
     }
 #endif
 
     inline Node* getEdge(char Id) {
       Node* fNode = NULL;
-      NodeVectorIter I = std::lower_bound(Children.begin(), Children.end(),
+      iterator I = std::lower_bound(Children.begin(), Children.end(),
                                           Id, NodeCmp());
       if (I != Children.end() && (*I)->Label[0] == Id)
         fNode = *I;
 
       return fNode;
     }
+
+    inline iterator       begin()       { return Children.begin(); }
+    inline const_iterator begin() const { return Children.begin(); }
+    inline iterator       end  ()       { return Children.end();   }
+    inline const_iterator end  () const { return Children.end();   }
+
+    inline size_t         size () const { return Children.size();  }
+    inline bool           empty() const { return Children.empty(); }
+    inline const Node*   &front() const { return Children.front(); }
+    inline       Node*   &front()       { return Children.front(); }
+    inline const Node*   &back()  const { return Children.back();  }
+    inline Node*         &back()        { return Children.back();  }
+
   };
 
 private:
@@ -260,17 +276,17 @@ const Payload& Trie<Payload>::lookup(const std::string& s) const {
 template<class Payload>
 struct GraphTraits<Trie<Payload> > {
   typedef typename Trie<Payload>::Node NodeType;
-  typedef typename std::vector<NodeType*>::iterator ChildIteratorType;
+  typedef typename Trie<Payload>::Node::iterator ChildIteratorType;
 
   static inline NodeType *getEntryNode(const Trie<Payload>& T) {
     return T.getRoot();
   }
 
   static inline ChildIteratorType child_begin(NodeType *N) {
-    return N->Children.begin();
+    return N->begin();
   }
   static inline ChildIteratorType child_end(NodeType *N) {
-    return N->Children.end();
+    return N->end();
   }
 
   typedef typename std::vector<NodeType*>::const_iterator nodes_iterator;
