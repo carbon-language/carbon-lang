@@ -364,6 +364,12 @@ public:
     return getContentCacheForLoc(Loc)->Entry;
   }
   
+  /// getFileEntryForID - Returns the FileEntry record for the provided FileID.
+  const FileEntry* getFileEntryForID(unsigned id) const {
+    return getContentCache(id)->Entry;
+  }
+    
+  
   /// getDecomposedFileLoc - Decompose the specified file location into a raw
   /// FileID + Offset pair.  The first element is the FileID, the second is the
   /// offset from the start of the buffer of the location.
