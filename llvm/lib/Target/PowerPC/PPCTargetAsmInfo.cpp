@@ -28,10 +28,6 @@ PPCTargetAsmInfo::PPCTargetAsmInfo(const PPCTargetMachine &TM) {
   InlineAsmEnd = "# InlineAsm End";
   AssemblerDialect = TM.getSubtargetImpl()->getAsmFlavor();
   
-  NeedsSet = true;
-  DwarfEHFrameSection =
-  ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
-  DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
 }
 
 DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
@@ -60,7 +56,12 @@ DarwinTargetAsmInfo::DarwinTargetAsmInfo(const PPCTargetMachine &TM)
   HiddenDirective = "\t.private_extern\t";
   SupportsExceptionHandling = true;
   NeedsIndirectEncoding = true;
+  NeedsSet = true;
   BSSSection = 0;
+  
+  DwarfEHFrameSection =
+  ".section __TEXT,__eh_frame,coalesced,no_toc+strip_static_syms+live_support";
+  DwarfExceptionSection = ".section __DATA,__gcc_except_tab";
 
   DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
   DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
@@ -98,6 +99,9 @@ LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)
   WeakRefDirective = "\t.weak\t";
   BSSSection = "\t.section\t\".sbss\",\"aw\",@nobits";
 
+  // Debug Information
+  AbsoluteDebugSectionOffsets = true;
+  SupportsDebugInformation = true;
   DwarfAbbrevSection =  "\t.section\t.debug_abbrev,\"\",@progbits";
   DwarfInfoSection =    "\t.section\t.debug_info,\"\",@progbits";
   DwarfLineSection =    "\t.section\t.debug_line,\"\",@progbits";
@@ -109,4 +113,20 @@ LinuxTargetAsmInfo::LinuxTargetAsmInfo(const PPCTargetMachine &TM)
   DwarfARangesSection = "\t.section\t.debug_aranges,\"\",@progbits";
   DwarfRangesSection =  "\t.section\t.debug_ranges,\"\",@progbits";
   DwarfMacInfoSection = "\t.section\t.debug_macinfo,\"\",@progbits";
+
+  ReadOnlySection = "\t.section\t.rodata";
+  FourByteConstantSection = "\t.section\t.rodata.cst4,\"aM\",@progbits,4";
+  EightByteConstantSection = "\t.section\t.rodata.cst8,\"aM\",@progbits,8";
+  SixteenByteConstantSection = "\t.section\t.rodata.cst16,\"aM\",@progbits,16";
+  PCSymbol = ".";
+
+  // Set up DWARF directives
+  HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
+
+  // Exceptions handling
+  if (!TM.getSubtargetImpl()->isPPC64())
+    SupportsExceptionHandling = true;
+  AbsoluteEHSectionOffsets = false;
+  DwarfEHFrameSection = "\t.section\t.eh_frame,\"aw\",@progbits";
+  DwarfExceptionSection = "\t.section\t.gcc_except_table,\"a\",@progbits";
 }
