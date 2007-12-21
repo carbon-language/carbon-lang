@@ -50,8 +50,6 @@ enum Attributes {
 const uint16_t Informative = NoReturn | NoUnwind | NoAlias |
                              ReadNone | ReadOnly;
 
-/// The following attribute sets are used by the verifier:
-
 /// @brief Attributes that only apply to function parameters.
 const uint16_t ParameterOnly = ByVal | InReg | Nest | StructRet;
 
@@ -63,6 +61,10 @@ const uint16_t IntegerTypeOnly = SExt | ZExt;
 
 /// @brief Attributes that only apply to pointers.
 const uint16_t PointerTypeOnly = ByVal | Nest | NoAlias | StructRet;
+
+/// @brief Attributes that do not apply to void type function return values.
+const uint16_t VoidTypeIncompatible = IntegerTypeOnly | PointerTypeOnly |
+                                      ParameterOnly;
 
 /// @brief Attributes that are mutually incompatible.
 const uint16_t MutuallyIncompatible[3] = {

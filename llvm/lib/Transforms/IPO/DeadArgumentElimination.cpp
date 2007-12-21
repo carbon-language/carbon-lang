@@ -122,18 +122,18 @@ ModulePass *llvm::createDeadArgHackingPass() { return new DAH(); }
 bool DAE::DeleteDeadVarargs(Function &Fn) {
   assert(Fn.getFunctionType()->isVarArg() && "Function isn't varargs!");
   if (Fn.isDeclaration() || !Fn.hasInternalLinkage()) return false;
-  
+
   // Ensure that the function is only directly called.
   for (Value::use_iterator I = Fn.use_begin(), E = Fn.use_end(); I != E; ++I) {
     // If this use is anything other than a call site, give up.
     CallSite CS = CallSite::get(*I);
     Instruction *TheCall = CS.getInstruction();
     if (!TheCall) return false;   // Not a direct call site?
-   
+
     // The addr of this function is passed to the call.
     if (I.getOperandNo() != 0) return false;
   }
-  
+
   // Okay, we know we can transform this function if safe.  Scan its body
   // looking for calls to llvm.vastart.
   for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
@@ -144,24 +144,24 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
       }
     }
   }
-  
+
   // If we get here, there are no calls to llvm.vastart in the function body,
   // remove the "..." and adjust all the calls.
-  
+
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but has fewer arguments.
   const FunctionType *FTy = Fn.getFunctionType();
   std::vector<const Type*> Params(FTy->param_begin(), FTy->param_end());
   FunctionType *NFTy = FunctionType::get(FTy->getReturnType(), Params, false);
   unsigned NumArgs = Params.size();
-  
+
   // Create the new function body and insert it into the module...
   Function *NF = new Function(NFTy, Fn.getLinkage());
   NF->setCallingConv(Fn.getCallingConv());
   NF->setParamAttrs(Fn.getParamAttrs());
   Fn.getParent()->getFunctionList().insert(&Fn, NF);
   NF->takeName(&Fn);
-  
+
   // Loop over all of the callers of the function, transforming the call sites
   // to pass in a smaller number of arguments into the new function.
   //
@@ -169,40 +169,40 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   while (!Fn.use_empty()) {
     CallSite CS = CallSite::get(Fn.use_back());
     Instruction *Call = CS.getInstruction();
-    
+
     // Pass all the same arguments.
     Args.assign(CS.arg_begin(), CS.arg_begin()+NumArgs);
-    
+
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args.begin(), Args.end(), "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<InvokeInst>(New)->setParamAttrs(NF->getParamAttrs());
+      cast<InvokeInst>(New)->setParamAttrs(CS.getParamAttrs());
     } else {
       New = new CallInst(NF, Args.begin(), Args.end(), "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<CallInst>(New)->setParamAttrs(NF->getParamAttrs());
+      cast<CallInst>(New)->setParamAttrs(CS.getParamAttrs());
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }
     Args.clear();
-    
+
     if (!Call->use_empty())
       Call->replaceAllUsesWith(New);
-    
+
     New->takeName(Call);
-    
+
     // Finally, remove the old call from the program, reducing the use-count of
     // F.
     Call->eraseFromParent();
   }
-  
+
   // Since we have now created the new function, splice the body of the old
   // function right into the new function, leaving the old rotting hulk of the
   // function empty.
   NF->getBasicBlockList().splice(NF->begin(), Fn.getBasicBlockList());
-  
+
   // Loop over the argument list, transfering uses of the old arguments over to
   // the new arguments, also transfering over the names as well.  While we're at
   // it, remove the dead arguments from the DeadArguments list.
@@ -213,7 +213,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     I->replaceAllUsesWith(I2);
     I2->takeName(I);
   }
-  
+
   // Finally, nuke the old function.
   Fn.eraseFromParent();
   return true;
@@ -496,6 +496,20 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   ParamAttrsVector ParamAttrsVec;
   const ParamAttrsList *PAL = F->getParamAttrs();
 
+  // The existing function return attributes.
+  uint16_t RAttrs = PAL ? PAL->getParamAttrs(0) : 0;
+
+  // Make the function return void if the return value is dead.
+  const Type *RetTy = FTy->getReturnType();
+  if (DeadRetVal.count(F)) {
+    RetTy = Type::VoidTy;
+    RAttrs &= ~ParamAttr::VoidTypeIncompatible;
+    DeadRetVal.erase(F);
+  }
+
+  if (RAttrs)
+    ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, RAttrs));
+
   // Construct the new parameter list from non-dead arguments. Also construct
   // a new set of parameter attributes to correspond.
   unsigned index = 1;
@@ -503,26 +517,13 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
        ++I, ++index)
     if (!DeadArguments.count(I)) {
       Params.push_back(I->getType());
-      if (PAL) {
-        uint16_t Attrs = PAL->getParamAttrs(index);
-        if (Attrs != ParamAttr::None)
-          ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(),
-                                  Attrs));
-      }
+      uint16_t Attrs = PAL ? PAL->getParamAttrs(index) : 0;
+      if (Attrs)
+        ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Params.size(), Attrs));
     }
 
   // Reconstruct the ParamAttrsList based on the vector we constructed.
-  if (ParamAttrsVec.empty())
-    PAL = 0;
-  else
-    PAL = ParamAttrsList::get(ParamAttrsVec);
-
-  // Make the function return void if the return value is dead.
-  const Type *RetTy = FTy->getReturnType();
-  if (DeadRetVal.count(F)) {
-    RetTy = Type::VoidTy;
-    DeadRetVal.erase(F);
-  }
+  PAL = ParamAttrsList::get(ParamAttrsVec);
 
   // Work around LLVM bug PR56: the CWriter cannot emit varargs functions which
   // have zero fixed arguments.
@@ -550,13 +551,31 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   while (!F->use_empty()) {
     CallSite CS = CallSite::get(F->use_back());
     Instruction *Call = CS.getInstruction();
+    ParamAttrsVec.clear();
+    PAL = CS.getParamAttrs();
+
+    // The call return attributes.
+    uint16_t RAttrs = PAL ? PAL->getParamAttrs(0) : 0;
+    // Adjust in case the function was changed to return void.
+    if (NF->getReturnType() == Type::VoidTy)
+      RAttrs &= ~ParamAttr::VoidTypeIncompatible;
+    if (RAttrs)
+      ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, RAttrs));
 
     // Loop over the operands, deleting dead ones...
     CallSite::arg_iterator AI = CS.arg_begin();
+    index = 1;
     for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
-         I != E; ++I, ++AI)
-      if (!DeadArguments.count(I))      // Remove operands for dead arguments
+         I != E; ++I, ++AI, ++index)
+      if (!DeadArguments.count(I)) {    // Remove operands for dead arguments
         Args.push_back(*AI);
+        uint16_t Attrs = PAL ? PAL->getParamAttrs(index) : 0;
+        if (Attrs)
+          ParamAttrsVec.push_back(ParamAttrsWithIndex::get(Args.size(), Attrs));
+      }
+
+    // Reconstruct the ParamAttrsList based on the vector we constructed.
+    PAL = ParamAttrsList::get(ParamAttrsVec);
 
     if (ExtraArgHack)
       Args.push_back(UndefValue::get(Type::Int32Ty));
