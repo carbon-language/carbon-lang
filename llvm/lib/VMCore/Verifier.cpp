@@ -53,6 +53,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Streams.h"
@@ -243,6 +244,7 @@ namespace {  // Anonymous namespace for class
     void visitShuffleVectorInst(ShuffleVectorInst &EI);
     void visitVAArgInst(VAArgInst &VAA) { visitInstruction(VAA); }
     void visitCallInst(CallInst &CI);
+    void visitInvokeInst(InvokeInst &II);
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
     void visitLoadInst(LoadInst &LI);
     void visitStoreInst(StoreInst &SI);
@@ -256,8 +258,11 @@ namespace {  // Anonymous namespace for class
     void visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI);
     void visitAllocationInst(AllocationInst &AI);
 
+    void VerifyCallSite(CallSite CS);
     void VerifyIntrinsicPrototype(Intrinsic::ID ID, Function *F,
                                   unsigned Count, ...);
+    void VerifyParamAttrs(const FunctionType *FT, const ParamAttrsList *Attrs,
+                          const Value *V);
 
     void WriteValue(const Value *V) {
       if (!V) return;
@@ -377,6 +382,70 @@ void Verifier::visitGlobalAlias(GlobalAlias &GA) {
 void Verifier::verifyTypeSymbolTable(TypeSymbolTable &ST) {
 }
 
+// VerifyParamAttrs - Check parameter attributes against a function type.
+// The value V is printed in error messages.
+void Verifier::VerifyParamAttrs(const FunctionType *FT,
+                                const ParamAttrsList *Attrs,
+                                const Value *V) {
+  if (!Attrs)
+    return;
+
+  // Note that when calling a varargs function, the following test disallows
+  // parameter attributes for the arguments corresponding to the varargs part.
+  Assert1(Attrs->size() &&
+          Attrs->getParamIndex(Attrs->size()-1) <= FT->getNumParams(),
+          "Attributes after end of type!", V);
+
+  bool SawNest = false;
+
+  for (unsigned Idx = 0; Idx <= FT->getNumParams(); ++Idx) {
+    uint16_t Attr = Attrs->getParamAttrs(Idx);
+
+    if (!Idx) {
+      uint16_t RetI = Attr & ParamAttr::ParameterOnly;
+      Assert1(!RetI, "Attribute " + Attrs->getParamAttrsText(RetI) +
+              "does not apply to return values!", V);
+    } else {
+      uint16_t ParmI = Attr & ParamAttr::ReturnOnly;
+      Assert1(!ParmI, "Attribute " + Attrs->getParamAttrsText(ParmI) +
+              "only applies to return values!", V);
+    }
+
+    for (unsigned i = 0;
+         i < array_lengthof(ParamAttr::MutuallyIncompatible); ++i) {
+      uint16_t MutI = Attr & ParamAttr::MutuallyIncompatible[i];
+      Assert1(!(MutI & (MutI - 1)), "Attributes " +
+              Attrs->getParamAttrsText(MutI) + "are incompatible!", V);
+    }
+
+    uint16_t IType = Attr & ParamAttr::IntegerTypeOnly;
+    Assert1(!IType || FT->getParamType(Idx-1)->isInteger(),
+            "Attribute " + Attrs->getParamAttrsText(IType) +
+            "should only apply to Integer type!", V);
+
+    uint16_t PType = Attr & ParamAttr::PointerTypeOnly;
+    Assert1(!PType || isa<PointerType>(FT->getParamType(Idx-1)),
+            "Attribute " + Attrs->getParamAttrsText(PType) +
+            "should only apply to Pointer type!", V);
+
+    if (Attr & ParamAttr::ByVal) {
+      const PointerType *Ty =
+          dyn_cast<PointerType>(FT->getParamType(Idx-1));
+      Assert1(!Ty || isa<StructType>(Ty->getElementType()),
+              "Attribute byval should only apply to pointer to structs!", V);
+    }
+
+    if (Attr & ParamAttr::Nest) {
+      Assert1(!SawNest, "More than one parameter has attribute nest!", V);
+      SawNest = true;
+    }
+
+    if (Attr & ParamAttr::StructRet) {
+      Assert1(Idx == 1, "Attribute sret not on first parameter!", V);
+    }
+  }
+}
+
 // visitFunction - Verify that a function is ok.
 //
 void Verifier::visitFunction(Function &F) {
@@ -394,67 +463,8 @@ void Verifier::visitFunction(Function &F) {
   Assert1(!F.isStructReturn() || FT->getReturnType() == Type::VoidTy,
           "Invalid struct-return function!", &F);
 
-  bool SawSRet = false;
-
-  if (const ParamAttrsList *Attrs = F.getParamAttrs()) {
-    Assert1(Attrs->size() &&
-            Attrs->getParamIndex(Attrs->size()-1) <= FT->getNumParams(),
-            "Function has excess attributes!", &F);
-
-    bool SawNest = false;
-
-    for (unsigned Idx = 0; Idx <= FT->getNumParams(); ++Idx) {
-      uint16_t Attr = Attrs->getParamAttrs(Idx);
-
-      if (!Idx) {
-        uint16_t RetI = Attr & ParamAttr::ParameterOnly;
-        Assert1(!RetI, "Attribute " + Attrs->getParamAttrsText(RetI) +
-                "should not apply to functions!", &F);
-      } else {
-        uint16_t ParmI = Attr & ParamAttr::ReturnOnly;
-        Assert1(!ParmI, "Attribute " + Attrs->getParamAttrsText(ParmI) +
-                "should only be applied to function!", &F);
-
-      }
-
-      for (unsigned i = 0;
-           i < array_lengthof(ParamAttr::MutuallyIncompatible); ++i) {
-        uint16_t MutI = Attr & ParamAttr::MutuallyIncompatible[i];
-        Assert1(!(MutI & (MutI - 1)), "Attributes " +
-                Attrs->getParamAttrsText(MutI) + "are incompatible!", &F);
-      }
-
-      uint16_t IType = Attr & ParamAttr::IntegerTypeOnly;
-      Assert1(!IType || FT->getParamType(Idx-1)->isInteger(),
-              "Attribute " + Attrs->getParamAttrsText(IType) +
-              "should only apply to Integer type!", &F);
-
-      uint16_t PType = Attr & ParamAttr::PointerTypeOnly;
-      Assert1(!PType || isa<PointerType>(FT->getParamType(Idx-1)),
-              "Attribute " + Attrs->getParamAttrsText(PType) +
-              "should only apply to Pointer type!", &F);
-
-      if (Attr & ParamAttr::ByVal) {
-        const PointerType *Ty =
-            dyn_cast<PointerType>(FT->getParamType(Idx-1));
-        Assert1(!Ty || isa<StructType>(Ty->getElementType()),
-                "Attribute byval should only apply to pointer to structs!", &F);
-      }
-
-      if (Attr & ParamAttr::Nest) {
-        Assert1(!SawNest, "More than one parameter has attribute nest!", &F);
-        SawNest = true;
-      }
-
-      if (Attr & ParamAttr::StructRet) {
-        SawSRet = true;
-        Assert1(Idx == 1, "Attribute sret not on first parameter!", &F);
-      }
-    }
-  }
-
-  Assert1(SawSRet == F.isStructReturn(),
-          "StructReturn function with no sret attribute!", &F);
+  // Check function attributes.
+  VerifyParamAttrs(FT, F.getParamAttrs(), &F);
 
   // Check that this function meets the restrictions on this calling convention.
   switch (F.getCallingConv()) {
@@ -825,35 +835,48 @@ void Verifier::visitPHINode(PHINode &PN) {
   visitInstruction(PN);
 }
 
-void Verifier::visitCallInst(CallInst &CI) {
-  Assert1(isa<PointerType>(CI.getOperand(0)->getType()),
-          "Called function must be a pointer!", &CI);
-  const PointerType *FPTy = cast<PointerType>(CI.getOperand(0)->getType());
+void Verifier::VerifyCallSite(CallSite CS) {
+  Instruction *I = CS.getInstruction();
+
+  Assert1(isa<PointerType>(CS.getCalledValue()->getType()),
+          "Called function must be a pointer!", I);
+  const PointerType *FPTy = cast<PointerType>(CS.getCalledValue()->getType());
   Assert1(isa<FunctionType>(FPTy->getElementType()),
-          "Called function is not pointer to function type!", &CI);
+          "Called function is not pointer to function type!", I);
 
   const FunctionType *FTy = cast<FunctionType>(FPTy->getElementType());
 
   // Verify that the correct number of arguments are being passed
   if (FTy->isVarArg())
-    Assert1(CI.getNumOperands()-1 >= FTy->getNumParams(),
-            "Called function requires more parameters than were provided!",&CI);
+    Assert1(CS.arg_size() >= FTy->getNumParams(),
+            "Called function requires more parameters than were provided!",I);
   else
-    Assert1(CI.getNumOperands()-1 == FTy->getNumParams(),
-            "Incorrect number of arguments passed to called function!", &CI);
+    Assert1(CS.arg_size() == FTy->getNumParams(),
+            "Incorrect number of arguments passed to called function!", I);
 
   // Verify that all arguments to the call match the function type...
   for (unsigned i = 0, e = FTy->getNumParams(); i != e; ++i)
-    Assert3(CI.getOperand(i+1)->getType() == FTy->getParamType(i),
+    Assert3(CS.getArgument(i)->getType() == FTy->getParamType(i),
             "Call parameter type does not match function signature!",
-            CI.getOperand(i+1), FTy->getParamType(i), &CI);
+            CS.getArgument(i), FTy->getParamType(i), I);
+
+  // Verify call attributes.
+  VerifyParamAttrs(FTy, CS.getParamAttrs(), I);
+
+  visitInstruction(*I);
+}
+
+void Verifier::visitCallInst(CallInst &CI) {
+  VerifyCallSite(&CI);
 
   if (Function *F = CI.getCalledFunction()) {
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID())
       visitIntrinsicFunctionCall(ID, CI);
   }
-  
-  visitInstruction(CI);
+}
+
+void Verifier::visitInvokeInst(InvokeInst &II) {
+  VerifyCallSite(&II);
 }
 
 /// visitBinaryOperator - Check that both arguments to the binary operator are
