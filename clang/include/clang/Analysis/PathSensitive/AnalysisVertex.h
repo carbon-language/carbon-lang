@@ -1,4 +1,4 @@
-//=- AnalysisVertex.h - Local, Path-Sensitive Supergraph Vertices -*- C++ -*-=//
+//=- SimulVertex.h - Local, Path-Sensitive Supergraph Vertices -*- C++ -*--=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the template class AnalysisVertex which is used to
+//  This file defines the template class SimulVertex which is used to
 //  represent a vertex in the location*state supergraph of an intra-procedural,
 //  path-sensitive dataflow analysis.
 //
@@ -24,7 +24,7 @@ namespace clang {
 class ProgramEdge;
   
 template <typename StateTy>
-class AnalysisVertex {
+class SimulVertex {
   /// VertexID - A unique ID for the vertex.  This number indicates the
   ///  creation order of vertices, with lower numbers being created first.
   ///  The first created vertex has VertexID == 0.
@@ -41,12 +41,12 @@ class AnalysisVertex {
 
   /// Predecessors/Successors - Keep track of the predecessor/successor
   /// vertices.
-  typedef llvm::SmallVector<1> AdjacentVertices;
+  typedef llvm::SmallVector<1,SimulVertex*> AdjacentVertices;
   AdjacentVertices Preds;
   AdjacentVertices Succs;
 
 public:
-  explicit AnalysisVertex(unsigned ID, const ProgramEdge& loc, StateTy* state)
+  explicit SimulVertex(unsigned ID, const ProgramEdge& loc, StateTy* state)
     : VertexID(ID), Location(loc), State(state) {}
   
   // Accessors.
@@ -79,8 +79,8 @@ public:
   unsigned pred_empty() const { return Preds.empty(); }
   
   // Manipulation of successors/predecessors.
-  void addPredecessor(AnalysisVertex* V) {
-    Preds.push_back(&V);
+  void addPredecessor(SimulVertex* V) {
+    Preds.push_back(V);
     V.Succs.push_back(V);
   }  
 };
