@@ -17,17 +17,14 @@
 #define LLVM_CLANG_ANALYSIS_PS_ANALYSISVERTEX
 
 #include "llvm/ADT/SmallVector.h"
-
-namespace llvm {
-  class FoldingSetID;  
-}
+#include "llvm/ADT/FoldingSet.h"
 
 namespace clang {
  
 class ProgramEdge;
   
 template <typename StateTy>
-class SimulVertex {
+class SimulVertex : public FoldingSetNode {
   /// VertexID - A unique ID for the vertex.  This number indicates the
   ///  creation order of vertices, with lower numbers being created first.
   ///  The first created vertex has VertexID == 0.
