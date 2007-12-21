@@ -1400,7 +1400,7 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
     return Context.IntTy;
   }
   if ((lType->isObjcQualifiedIdType() || rType->isObjcQualifiedIdType())
-      && Context.ObjcQualifiedIdTypesAreCompatible(lType, rType)) {
+      && Context.ObjcQualifiedIdTypesAreCompatible(lType, rType, true)) {
     promoteExprToType(rex, lType); 
     return Context.IntTy;
   }

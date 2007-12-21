@@ -1278,10 +1278,25 @@ bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs,
   return true;
 }
 
+/// ProtocolCompatibleWithProtocol - return 'true' if 'lProto' is in the
+/// inheritance hierarchy of 'rProto'.
+static bool ProtocolCompatibleWithProtocol(ObjcProtocolDecl *lProto,
+                                           ObjcProtocolDecl *rProto) {
+  if (lProto == rProto)
+    return true;
+  ObjcProtocolDecl** RefPDecl = rProto->getReferencedProtocols();
+  for (unsigned i = 0; i < rProto->getNumReferencedProtocols(); i++)
+    if (ProtocolCompatibleWithProtocol(lProto, RefPDecl[i]))
+      return true;
+  return false;
+}
+
 /// ObjcQualifiedIdTypesAreCompatible - Compares two types, at least
-/// one of which is a protocol qualified 'id' type.
+/// one of which is a protocol qualified 'id' type. When 'compare'
+/// is true it is for comparison; when false, for assignment/initialization.
 bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs, 
-                                                   QualType rhs) {
+                                                   QualType rhs,
+                                                   bool compare) {
   // match id<P..> with an 'id' type in all cases.
   if (const PointerType *PT = lhs->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
@@ -1339,7 +1354,8 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
       }
       for (unsigned j = 0; j < numRhsProtocols; j++) {
         ObjcProtocolDecl *rhsProto = rhsProtoList[j];
-        if (lhsProto == rhsProto) {
+        if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
+            compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
           match = true;
           break;
         }
@@ -1385,7 +1401,8 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
       ObjcProtocolDecl *lhsProto = lhsProtoList[i];
       for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
         ObjcProtocolDecl *rhsProto = rhsQID->getProtocols(j);
-        if (lhsProto == rhsProto) {
+        if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
+          compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
           match = true;
           break;
         }
