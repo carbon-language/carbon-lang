@@ -1306,6 +1306,39 @@ static bool ProtocolCompatibleWithProtocol(ObjcProtocolDecl *lProto,
   return false;
 }
 
+/// ClassImplementsProtocol - Checks that 'lProto' protocol
+/// has been implemented in IDecl class, its super class or categories (if
+/// lookupCategory is true). 
+static bool ClassImplementsProtocol(ObjcProtocolDecl *lProto,
+                                    ObjcInterfaceDecl *IDecl, 
+                                    bool lookupCategory) {
+  
+  // 1st, look up the class.
+  ObjcProtocolDecl **protoList = IDecl->getReferencedProtocols();
+  for (unsigned i = 0; i < IDecl->getNumIntfRefProtocols(); i++) {
+    if (ProtocolCompatibleWithProtocol(lProto, protoList[i]))
+      return true;
+  }
+  
+  // 2nd, look up the category.
+  if (lookupCategory)
+    for (ObjcCategoryDecl *CDecl = IDecl->getCategoryList(); CDecl;
+         CDecl = CDecl->getNextClassCategory()) {
+      protoList = CDecl->getReferencedProtocols();
+      for (unsigned i = 0; i < CDecl->getNumReferencedProtocols(); i++) {
+        if (ProtocolCompatibleWithProtocol(lProto, protoList[i]))
+          return true;
+      }
+    }
+  
+  // 3rd, look up the super class(s)
+  if (IDecl->getSuperClass())
+    return 
+      ClassImplementsProtocol(lProto, IDecl->getSuperClass(), lookupCategory);
+  
+  return false;
+}
+                                           
 /// ObjcQualifiedIdTypesAreCompatible - Compares two types, at least
 /// one of which is a protocol qualified 'id' type. When 'compare'
 /// is true it is for comparison; when false, for assignment/initialization.
@@ -1350,24 +1383,29 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
     if (!rhsQI && !rhsQID && !rhsID)
       return false;
     
+    unsigned numRhsProtocols;
+    ObjcProtocolDecl **rhsProtoList;
+    if (rhsQI) {
+      numRhsProtocols = rhsQI->getNumProtocols();
+      rhsProtoList = rhsQI->getReferencedProtocols();
+    }
+    else if (rhsQID) {
+      numRhsProtocols = rhsQID->getNumProtocols();
+      rhsProtoList = rhsQID->getReferencedProtocols();
+    }
+    
     for (unsigned i =0; i < lhsQID->getNumProtocols(); i++) {
-      bool match = false;
       ObjcProtocolDecl *lhsProto = lhsQID->getProtocols(i);
-      unsigned numRhsProtocols;
-      ObjcProtocolDecl **rhsProtoList;
-      if (rhsQI) {
-        numRhsProtocols = rhsQI->getNumProtocols();
-        rhsProtoList = rhsQI->getReferencedProtocols();
+      bool match = false;
+
+      // when comparing an id<P> on lhs with a static type on rhs,
+      // see if static class implements all of id's protocols, directly or
+      // through its super class and categories.
+      if (rhsID) {
+        if (ClassImplementsProtocol(lhsProto, rhsID, true))
+          match = true;
       }
-      else if (rhsQID) {
-        numRhsProtocols = rhsQID->getNumProtocols();
-        rhsProtoList = rhsQID->getReferencedProtocols();
-      }
-      else {
-        numRhsProtocols = rhsID->getNumIntfRefProtocols();
-        rhsProtoList = rhsID->getReferencedProtocols();
-      }
-      for (unsigned j = 0; j < numRhsProtocols; j++) {
+      else for (unsigned j = 0; j < numRhsProtocols; j++) {
         ObjcProtocolDecl *rhsProto = rhsProtoList[j];
         if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
             compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
@@ -1405,14 +1443,21 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
     else if (lhsQID) {
       numLhsProtocols = lhsQID->getNumProtocols();
       lhsProtoList = lhsQID->getReferencedProtocols();
-    }
-    else {
-      numLhsProtocols = lhsID->getNumIntfRefProtocols();
-      lhsProtoList = lhsID->getReferencedProtocols();
-    }
-    
-    for (unsigned i =0; i < numLhsProtocols; i++) {
-      bool match = false;
+    }    
+    bool match = false;
+    // for static type vs. qualified 'id' type, check that class implements
+    // one of 'id's protocols.
+    if (lhsID) {
+      for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
+        ObjcProtocolDecl *rhsProto = rhsQID->getProtocols(j);
+        if (ClassImplementsProtocol(rhsProto, lhsID, compare)) {
+          match = true;
+          break;
+        }
+      }
+    }    
+    else for (unsigned i =0; i < numLhsProtocols; i++) {
+      match = false;
       ObjcProtocolDecl *lhsProto = lhsProtoList[i];
       for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
         ObjcProtocolDecl *rhsProto = rhsQID->getProtocols(j);
@@ -1422,9 +1467,9 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
           break;
         }
       }
-      if (!match)
-        return false;
-    }    
+    }
+    if (!match)
+      return false;
   }
   return true;
 }
