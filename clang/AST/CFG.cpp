@@ -340,14 +340,23 @@ CFGBlock* CFGBuilder::WalkAST(Stmt* S, bool AlwaysAddStmt = false) {
 
         // create the block evaluating the LHS
         CFGBlock* LHSBlock = createBlock(false);
-        LHSBlock->addSuccessor(ConfluenceBlock);
-        LHSBlock->setTerminator(B);        
+        LHSBlock->setTerminator(B);
         
         // create the block evaluating the RHS
         Succ = ConfluenceBlock;
         Block = NULL;
         CFGBlock* RHSBlock = Visit(B->getRHS());
-        LHSBlock->addSuccessor(RHSBlock);
+
+        // Now link the LHSBlock with RHSBlock.
+        if (B->getOpcode() == BinaryOperator::LOr) {
+          LHSBlock->addSuccessor(ConfluenceBlock);
+          LHSBlock->addSuccessor(RHSBlock);
+        }
+        else {
+          assert (B->getOpcode() == BinaryOperator::LAnd);
+          LHSBlock->addSuccessor(RHSBlock);
+          LHSBlock->addSuccessor(ConfluenceBlock);
+        }
         
         // Generate the blocks for evaluating the LHS.
         Block = LHSBlock;
