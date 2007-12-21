@@ -17,7 +17,10 @@
 #define LLVM_CLANG_ANALYSIS_PS_ANALYSISVERTEX
 
 #include "llvm/ADT/SmallVector.h"
-#include <iosfwd>
+
+namespace llvm {
+  class FoldingSetID;  
+}
 
 namespace clang {
  
@@ -46,14 +49,20 @@ class SimulVertex {
   AdjacentVertices Succs;
 
 public:
+  typedef typename StateTy StateTy;
+  
   explicit SimulVertex(unsigned ID, const ProgramEdge& loc, StateTy* state)
     : VertexID(ID), Location(loc), State(state) {}
-  
+    
   // Accessors.
   State* getState() const { return State; }
   const ProgramEdge& getLocation() const { return Location; }
   unsigned getVertexID() const { return VertexID; }
   
+  // Profiling (for FoldingSet).
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    StateTy::Profile(V.getState(),ID);
+  }
 
   // Iterators over successor and predecessor vertices.
   typedef AdjacentVertices::iterator        succ_iterator;
@@ -82,7 +91,7 @@ public:
   void addPredecessor(SimulVertex* V) {
     Preds.push_back(V);
     V.Succs.push_back(V);
-  }  
+  }
 };
   
 } // end namespace clang
