@@ -18,7 +18,7 @@
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/CFG.h"
-#include "clang/Analysis/LiveVariables.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "llvm/Support/Streams.h"
 

@@ -15,7 +15,7 @@
 #define LLVM_CLANG_LIVEVARIABLES_H
 
 #include "clang/AST/Decl.h"
-#include "clang/Analysis/ExprDeclBitVector.h"
+#include "clang/Analysis/Support/ExprDeclBitVector.h"
 #include "clang/Analysis/FlowSensitive/DataflowValues.h"
 
 namespace clang {

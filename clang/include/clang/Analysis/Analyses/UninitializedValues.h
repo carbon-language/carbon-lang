@@ -15,7 +15,7 @@
 #ifndef LLVM_CLANG_UNITVALS_H
 #define LLVM_CLANG_UNITVALS_H
 
-#include "clang/Analysis/ExprDeclBitVector.h"
+#include "clang/Analysis/Support/ExprDeclBitVector.h"
 #include "clang/Analysis/FlowSensitive/DataflowValues.h"
 
 namespace clang {

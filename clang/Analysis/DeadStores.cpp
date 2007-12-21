@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Analysis/LocalCheckers.h"
-#include "clang/Analysis/LiveVariables.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/Visitors/CFGRecStmtVisitor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/AST/ASTContext.h"

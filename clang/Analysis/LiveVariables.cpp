@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Analysis/LiveVariables.h"
+#include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/CFG.h"
