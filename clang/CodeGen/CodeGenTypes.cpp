@@ -114,12 +114,33 @@ CodeGenTypes::~CodeGenTypes() {
   CGRecordLayouts.clear();
 }
 
+/// isOpaqueTypeDefinition - Return true if LT is a llvm::OpaqueType
+/// and T is tag definition. This helper routine does not check
+/// relationship between T and LT.
+static bool isOpaqueTypeDefinition(QualType T, llvm::Type *LT) {
+  
+  if (!isa<llvm::OpaqueType>(LT))
+    return false;
+
+  const clang::Type &Ty = *T.getCanonicalType();
+  if (Ty.getTypeClass() == Type::Tagged) {
+    const TagType &TT = cast<TagType>(Ty);
+    const TagDecl *TD = TT.getDecl();
+    if (TD->isDefinition())
+      return true;
+  }
+
+  return false;
+}
+
 /// ConvertType - Convert the specified type to its LLVM form.
 const llvm::Type *CodeGenTypes::ConvertType(QualType T) {
   // See if type is already cached.
   llvm::DenseMap<Type *, llvm::PATypeHolder>::iterator
     I = TypeHolderMap.find(T.getTypePtr());
-  if (I != TypeHolderMap.end())
+  // If type is found in map and this is not a definition for a opaque
+  // place holder type then use it. Otherwise convert type T.
+  if (I != TypeHolderMap.end() && !isOpaqueTypeDefinition(T, I->second.get()))
     return I->second.get();
 
   const llvm::Type *ResultType = ConvertNewType(T);
@@ -261,7 +282,9 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     const TagDecl *TD = TT.getDecl();
     llvm::Type *&ResultType = TagDeclTypes[TD];
       
-    if (ResultType)
+    // If corresponding llvm type is not a opaque struct type
+    // then use it.
+    if (ResultType && !isOpaqueTypeDefinition(T, ResultType))
       return ResultType;
     
     if (!TD->isDefinition()) {
@@ -278,14 +301,19 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
       if (OpaqueI != RecordTypesToResolve.end())
         return OpaqueI->second;
 
-      // Create new OpaqueType now for later use.
-      // FIXME: This creates a lot of opaque types, most of them are not 
-      // needed. Reevaluate this when performance analyis finds tons of 
-      // opaque types.
-      llvm::OpaqueType *OpaqueTy =  llvm::OpaqueType::get();
+      llvm::OpaqueType *OpaqueTy = NULL;
+      if (ResultType)
+        OpaqueTy = dyn_cast<llvm::OpaqueType>(ResultType);
+      if (!OpaqueTy) {
+        // Create new OpaqueType now for later use.
+        // FIXME: This creates a lot of opaque types, most of them are not 
+        // needed. Reevaluate this when performance analyis finds tons of 
+        // opaque types.
+        OpaqueTy = llvm::OpaqueType::get();
+        TypeHolderMap.insert(std::make_pair(T.getTypePtr(), 
+                                            llvm::PATypeHolder(OpaqueTy)));
+      }
       RecordTypesToResolve[RD] = OpaqueTy;
-      TypeHolderMap.insert(std::make_pair(T.getTypePtr(), 
-                                          llvm::PATypeHolder(OpaqueTy)));
 
       // Layout fields.
       RecordOrganizer RO(*this);
