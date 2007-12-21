@@ -225,7 +225,6 @@
 		1A869A6E0BA2164C008DA07A /* LiteralSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LiteralSupport.h; sourceTree = "<group>"; };
 		1A869AA70BA21ABA008DA07A /* LiteralSupport.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LiteralSupport.cpp; sourceTree = "<group>"; };
 		1ABC36930C7A4BDC006DB0AB /* CGBuiltin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CGBuiltin.cpp; path = CodeGen/CGBuiltin.cpp; sourceTree = "<group>"; };
-		350648DE0CB7002700B044E5 /* ExprDeclBitVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExprDeclBitVector.h; path = clang/Analysis/ExprDeclBitVector.h; sourceTree = "<group>"; };
 		350648DF0CB7004E00B044E5 /* ProgramEdge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProgramEdge.h; path = clang/Analysis/ProgramEdge.h; sourceTree = "<group>"; };
 		3513185F0CD14468006B66F7 /* DeclSerialization.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeclSerialization.cpp; path = AST/DeclSerialization.cpp; sourceTree = "<group>"; };
 		3513BD540C9F207900FA56C6 /* UninitializedValues.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UninitializedValues.cpp; path = Analysis/UninitializedValues.cpp; sourceTree = "<group>"; };
@@ -238,7 +237,6 @@
 		3547129D0C88881300B3E1D5 /* PrettyPrinter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PrettyPrinter.h; path = clang/AST/PrettyPrinter.h; sourceTree = "<group>"; };
 		355CF6820C90A8B600A08AA3 /* LocalCheckers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LocalCheckers.h; path = clang/Analysis/LocalCheckers.h; sourceTree = "<group>"; };
 		355CF6830C90A8D400A08AA3 /* DeadStores.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DeadStores.cpp; path = Analysis/DeadStores.cpp; sourceTree = "<group>"; };
-		356EF9B20C8F7DBA006650F5 /* LiveVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LiveVariables.h; path = clang/Analysis/LiveVariables.h; sourceTree = "<group>"; };
 		356EF9B40C8F7DDF006650F5 /* LiveVariables.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LiveVariables.cpp; path = Analysis/LiveVariables.cpp; sourceTree = "<group>"; };
 		35707EFD0CD0F5CC000B2204 /* SourceLocation.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SourceLocation.cpp; sourceTree = "<group>"; };
 		3580CC0B0D072E5C00C5E4F4 /* LangOptions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LangOptions.cpp; sourceTree = "<group>"; };
@@ -247,7 +245,6 @@
 		35847BE30CC7DB9000C40FFF /* StmtIterator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StmtIterator.h; path = clang/AST/StmtIterator.h; sourceTree = "<group>"; };
 		35847BE40CC7DBAF00C40FFF /* StmtIterator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StmtIterator.cpp; path = AST/StmtIterator.cpp; sourceTree = "<group>"; };
 		35A2B8610CF8FFA300E6C317 /* SemaUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SemaUtil.h; path = Sema/SemaUtil.h; sourceTree = "<group>"; };
-		35AE0F660C9B4CA300CC1279 /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/UninitializedValues.h; sourceTree = "<group>"; };
 		35BB2D7A0D1994FA00944DB5 /* TranslationUnit.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TranslationUnit.h; path = clang/AST/TranslationUnit.h; sourceTree = "<group>"; };
 		35BB2D7C0D19951A00944DB5 /* TranslationUnit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TranslationUnit.cpp; path = AST/TranslationUnit.cpp; sourceTree = "<group>"; };
 		35BB2D7E0D19954000944DB5 /* ASTConsumer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTConsumer.cpp; path = AST/ASTConsumer.cpp; sourceTree = "<group>"; };
@@ -256,6 +253,9 @@
 		35CFFE010CA1CBDD00E6F2BE /* StmtGraphTraits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StmtGraphTraits.h; path = clang/AST/StmtGraphTraits.h; sourceTree = "<group>"; };
 		35D1DDD10CA9C6D50096E967 /* DataflowSolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowSolver.h; path = clang/Analysis/FlowSensitive/DataflowSolver.h; sourceTree = "<group>"; };
 		35D1DDD20CA9C6D50096E967 /* DataflowValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataflowValues.h; path = clang/Analysis/FlowSensitive/DataflowValues.h; sourceTree = "<group>"; };
+		35F9B1530D1C6ADF00DDFDAE /* ExprDeclBitVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ExprDeclBitVector.h; path = clang/Analysis/Support/ExprDeclBitVector.h; sourceTree = "<group>"; };
+		35F9B1550D1C6B2E00DDFDAE /* LiveVariables.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LiveVariables.h; path = clang/Analysis/Analyses/LiveVariables.h; sourceTree = "<group>"; };
+		35F9B1560D1C6B2E00DDFDAE /* UninitializedValues.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UninitializedValues.h; path = clang/Analysis/Analyses/UninitializedValues.h; sourceTree = "<group>"; };
 		84AF36A00CB17A3B00C820A5 /* DeclObjC.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = DeclObjC.h; path = clang/AST/DeclObjC.h; sourceTree = "<group>"; };
 		84D9A8870C1A57E100AC7ABC /* AttributeList.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AttributeList.cpp; path = Parse/AttributeList.cpp; sourceTree = "<group>"; };
 		84D9A88B0C1A581300AC7ABC /* AttributeList.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = AttributeList.h; path = clang/Parse/AttributeList.h; sourceTree = "<group>"; };
@@ -450,11 +450,10 @@
 			isa = PBXGroup;
 			children = (
 				350648DF0CB7004E00B044E5 /* ProgramEdge.h */,
-				350648DE0CB7002700B044E5 /* ExprDeclBitVector.h */,
-				356EF9B20C8F7DBA006650F5 /* LiveVariables.h */,
-				35AE0F660C9B4CA300CC1279 /* UninitializedValues.h */,
 				355CF6820C90A8B600A08AA3 /* LocalCheckers.h */,
+				35F9B1540D1C6AFC00DDFDAE /* Analyses */,
 				35D1DDCF0CA9C6BE0096E967 /* FlowSensitive */,
+				35F9B1520D1C6ACB00DDFDAE /* Support */,
 				352C19DB0CA321AC0045DB98 /* Visitors */,
 			);
 			name = Analysis;
@@ -476,6 +475,23 @@
 				35D1DDD20CA9C6D50096E967 /* DataflowValues.h */,
 			);
 			name = FlowSensitive;
+			sourceTree = "<group>";
+		};
+		35F9B1520D1C6ACB00DDFDAE /* Support */ = {
+			isa = PBXGroup;
+			children = (
+				35F9B1530D1C6ADF00DDFDAE /* ExprDeclBitVector.h */,
+			);
+			name = Support;
+			sourceTree = "<group>";
+		};
+		35F9B1540D1C6AFC00DDFDAE /* Analyses */ = {
+			isa = PBXGroup;
+			children = (
+				35F9B1550D1C6B2E00DDFDAE /* LiveVariables.h */,
+				35F9B1560D1C6B2E00DDFDAE /* UninitializedValues.h */,
+			);
+			name = Analyses;
 			sourceTree = "<group>";
 		};
 		C6859E8C029090F304C91782 /* Documentation */ = {
