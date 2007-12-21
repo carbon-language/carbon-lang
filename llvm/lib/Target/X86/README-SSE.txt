@@ -741,3 +741,18 @@ save, as a really-signed value would be undefined for pslld.
 
 
 //===---------------------------------------------------------------------===//
+
+#include <math.h>
+int t1(double d) { return signbit(d); }
+
+This currently compiles to:
+	subl	$12, %esp
+	movsd	16(%esp), %xmm0
+	movsd	%xmm0, (%esp)
+	movl	4(%esp), %eax
+	shrl	$31, %eax
+	addl	$12, %esp
+	ret
+
+We should use movmskp{s|d} instead.
+
