@@ -1769,9 +1769,9 @@ static SDOperand LowerCALL(SDOperand Op, SelectionDAG &DAG,
   // If the callee is a GlobalAddress/ExternalSymbol node (quite common, every
   // direct call is) turn it into a TargetGlobalAddress/TargetExternalSymbol
   // node so that legalize doesn't hack it.
-  //if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
-  //  Callee = DAG.getTargetGlobalAddress(G->getGlobal(), Callee.getValueType());
-  if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), Callee.getValueType());
+  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), Callee.getValueType());
   else if (SDNode *Dest = isBLACompatibleAddress(Callee, DAG))
     // If this is an absolute destination address, use the munged value.
