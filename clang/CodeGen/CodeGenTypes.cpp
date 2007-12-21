@@ -34,7 +34,7 @@ namespace {
   public:
     explicit RecordOrganizer(CodeGenTypes &Types) : 
       CGT(Types), STy(NULL), FieldNo(0), Cursor(0), ExtraBits(0),
-      CurrentFieldStart(0) {}
+      CurrentFieldStart(0), llvmSize(0) {}
     
     /// addField - Add new field.
     void addField(const FieldDecl *FD);
@@ -47,7 +47,7 @@ namespace {
 
     /// addPaddingFields - Current cursor is not suitable place to add next 
     /// field. Add required padding fields.
-    void addPaddingFields(unsigned RequiredBits);
+    void addPaddingFields(unsigned WaterMark);
 
     /// layoutStructFields - Do the actual work and lay out all fields. Create
     /// corresponding llvm struct type.  This should be invoked only after
@@ -93,7 +93,8 @@ namespace {
        When current llvm field is shared by multiple bitfields, this is
        used find starting bit offset for the bitfield from the beginning of
        llvm field. */
-     uint64_t CurrentFieldStart;
+    uint64_t CurrentFieldStart;
+    uint64_t llvmSize;
     llvm::SmallVector<const FieldDecl *, 8> FieldDecls;
     std::vector<const llvm::Type*> LLVMFields;
     llvm::SmallVector<uint64_t, 8> Offsets;
@@ -445,7 +446,8 @@ void RecordOrganizer::layoutStructFields(const ASTRecordLayout &RL) {
 
 /// addPaddingFields - Current cursor is not suitable place to add next field.
 /// Add required padding fields.
-void RecordOrganizer::addPaddingFields(unsigned RequiredBits) {
+void RecordOrganizer::addPaddingFields(unsigned WaterMark) {
+  unsigned RequiredBits = WaterMark - Cursor;
   assert ((RequiredBits % 8) == 0 && "FIXME Invalid struct layout");
   unsigned RequiredBytes = RequiredBits / 8;
   for (unsigned i = 0; i != RequiredBytes; ++i)
@@ -461,16 +463,18 @@ void RecordOrganizer::addLLVMField(const llvm::Type *Ty, uint64_t Size,
                                    unsigned End) {
 
   unsigned AlignmentInBits = CGT.getTargetData().getABITypeAlignment(Ty) * 8;
-  if (Cursor % AlignmentInBits != 0)
+  unsigned WaterMark = Cursor + (Cursor % AlignmentInBits);
+  if (Cursor != WaterMark)
     // At the moment, insert padding fields even if target specific llvm 
     // type alignment enforces implict padding fields for FD. Later on, 
     // optimize llvm fields by removing implicit padding fields and 
     // combining consequetive padding fields.
-    addPaddingFields(Cursor % AlignmentInBits);
+    addPaddingFields(WaterMark);
 
   Offsets.push_back(Cursor);
   CurrentFieldStart = Cursor;
   Cursor += Size;
+  llvmSize += Size;
   LLVMFields.push_back(Ty);
   if (FD)
     CGT.addFieldInfo(FD, FieldNo, Begin, End);
@@ -524,18 +528,12 @@ void RecordOrganizer::layoutUnionFields() {
 /// should be done only if next field (i.e. 'c' here) is not a bit-field
 /// or last record field is a bit-field.
 void RecordOrganizer::fixCursorPosition(const ASTRecordLayout &RL) {
-  uint64_t llvmSize = 0;
-  for(std::vector<const llvm::Type*>::iterator LI = LLVMFields.begin(), 
-        LE = LLVMFields.end(); LI != LE; ++LI) {
-    const llvm::Type *Ty = *LI;
-    llvmSize += CGT.getTargetData().getABITypeSizeInBits(Ty);
-  }
   Cursor = llvmSize;
   unsigned llvmSizeBytes = llvmSize/8;
   unsigned StructAlign = RL.getAlignment() / 8;
   if (llvmSizeBytes % StructAlign) {
     unsigned StructPadding = StructAlign - (llvmSizeBytes % StructAlign);
-    addPaddingFields(StructPadding*8);
+    addPaddingFields(Cursor + StructPadding*8);
   }
 }
 
@@ -600,14 +598,25 @@ void RecordOrganizer::placeBitField(const FieldDecl *FD) {
   } else  if (ExtraBits >= BitFieldSize) {
     const llvm::Type *Ty = CGT.ConvertType(FD->getType());
     uint64_t TySize = CGT.getTargetData().getABITypeSizeInBits(Ty);
-    assert ( Cursor - CurrentFieldStart + BitFieldSize <= TySize
-             && "Incomplete layout. struct {char a; int b:10; int c:18;};");
+    if (Cursor - CurrentFieldStart + BitFieldSize > TySize) {
+      // This is : struct { char a; int b:10; int c:18; };
+      // where 'b' shares first field with 'a'. However 'c' needs
+      // new llvm field.
 
+      //unsigned ExtraBitsInCurrentByte = 8 - (Cursor % 8);
+      //Cursor = Cursor + ExtraBitsInCurrentByte;
+      //ExtraBits = 0;
+      Cursor = llvmSize;
+      unsigned EndOfCurrentType = CurrentFieldStart + TySize;
+      addPaddingFields(EndOfCurrentType);
+      addLLVMField(Ty, TySize, FD, 0, BitFieldSize);
+    } else {
     // Reuse existing llvm field
     ExtraBits = ExtraBits  - BitFieldSize;
     CGT.addFieldInfo(FD, FieldNo, Cursor - CurrentFieldStart, ExtraBits);
     Cursor = Cursor + BitFieldSize;
     ++FieldNo;
+    }
   } else {
     //ExtraBits are not enough to hold entire FD.
     const llvm::Type *Ty = CGT.ConvertType(FD->getType());
