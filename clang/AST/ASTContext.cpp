@@ -1225,12 +1225,27 @@ bool ASTContext::builtinTypesAreCompatible(QualType lhs, QualType rhs) {
   return lBuiltin->getKind() == rBuiltin->getKind();
 }
 
-
+/// objcTypesAreCompatible - This routine is called when two types
+/// are of different class; one is interface type or is 
+/// a qualified interface type and the other type is of a different class.
+/// Example, II or II<P>. 
 bool ASTContext::objcTypesAreCompatible(QualType lhs, QualType rhs) {
   if (lhs->isObjcInterfaceType() && isObjcIdType(rhs))
     return true;
   else if (isObjcIdType(lhs) && rhs->isObjcInterfaceType())
     return true;
+  if (ObjcInterfaceType *lhsIT = 
+      dyn_cast<ObjcInterfaceType>(lhs.getCanonicalType().getTypePtr())) {
+    ObjcQualifiedInterfaceType *rhsQI = 
+      dyn_cast<ObjcQualifiedInterfaceType>(rhs.getCanonicalType().getTypePtr());
+    return rhsQI && (lhsIT->getDecl() == rhsQI->getDecl());
+  }
+  else if (ObjcInterfaceType *rhsIT = 
+           dyn_cast<ObjcInterfaceType>(rhs.getCanonicalType().getTypePtr())) {
+    ObjcQualifiedInterfaceType *lhsQI = 
+    dyn_cast<ObjcQualifiedInterfaceType>(lhs.getCanonicalType().getTypePtr());
+    return lhsQI && (rhsIT->getDecl() == lhsQI->getDecl());
+  }
   return false;
 }
 
