@@ -851,6 +851,7 @@ void CWriter::printConstant(Constant *CPV) {
       if (NeedsClosingParens)
         Out << "))";
       Out << ')';
+      return;
     }
     default:
       cerr << "CWriter Error: Unhandled constant expression: "
