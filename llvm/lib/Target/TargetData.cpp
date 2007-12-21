@@ -268,15 +268,14 @@ unsigned TargetData::getAlignmentInfo(AlignTypeEnum AlignType,
       return ABIInfo ? Alignments[i].ABIAlign : Alignments[i].PrefAlign;
     
     // The best match so far depends on what we're looking for.
-    if (AlignType == VECTOR_ALIGN) {
+    if (AlignType == VECTOR_ALIGN && Alignments[i].AlignType == VECTOR_ALIGN) {
       // If this is a specification for a smaller vector type, we will fall back
       // to it.  This happens because <128 x double> can be implemented in terms
       // of 64 <2 x double>.
-      if (Alignments[i].AlignType == VECTOR_ALIGN && 
-          Alignments[i].TypeBitWidth < BitWidth) {
+      if (Alignments[i].TypeBitWidth < BitWidth) {
         // Verify that we pick the biggest of the fallbacks.
         if (BestMatchIdx == -1 ||
-            Alignments[BestMatchIdx].TypeBitWidth < BitWidth)
+            Alignments[BestMatchIdx].TypeBitWidth < Alignments[i].TypeBitWidth)
           BestMatchIdx = i;
       }
     } else if (AlignType == INTEGER_ALIGN && 
