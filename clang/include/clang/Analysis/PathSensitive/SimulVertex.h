@@ -32,7 +32,7 @@ class SimulVertex : public FoldingSetNode {
   
   /// Location - The program edge representing the location in the function body
   ///  that this vertex corresponds to.
-  ProgramEdge Location;
+  const ProgramEdge& Location;
   
   /// State - The state associated with this vertex. Normally this value
   ///  is immutable, but we anticipate there will be times when algorithms
