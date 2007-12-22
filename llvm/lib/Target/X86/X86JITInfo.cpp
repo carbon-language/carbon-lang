@@ -56,7 +56,7 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 // FIXME: Disable this until we really want to use it. Also, we will
 //        need to add some workarounds for compilers, which support
 //        only subset of these directives.
-# define CFI(x) x
+# define CFI(x)
 #endif
 
 // Provide a wrapper for X86CompilationCallback2 that saves non-traditional
