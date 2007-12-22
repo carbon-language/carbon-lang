@@ -1,4 +1,4 @@
-(* RUN: %ocamlc llvm.cma llvm_analysis.cma %s -o %t
+(* RUN: %ocamlc -warn-error A llvm.cma llvm_analysis.cma %s -o %t
  * RUN: ./%t %t.bc
  *)
 

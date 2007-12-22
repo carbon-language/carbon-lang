@@ -1,4 +1,4 @@
-(* RUN: %ocamlc llvm.cma llvm_analysis.cma llvm_bitwriter.cma %s -o %t
+(* RUN: %ocamlc -warn-error A llvm.cma llvm_analysis.cma llvm_bitwriter.cma %s -o %t
  * RUN: ./%t %t.bc
  * RUN: llvm-dis < %t.bc > %t.ll
  *)
