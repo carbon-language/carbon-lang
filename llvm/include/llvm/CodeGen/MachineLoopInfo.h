@@ -70,9 +70,6 @@ inline bool LoopBase<MachineBasicBlock>::isLCSSAForm() const {
   return false;
 }
 
-EXTERN_TEMPLATE_INSTANTIATION(class LoopBase<MachineBasicBlock>);
-EXTERN_TEMPLATE_INSTANTIATION(class LoopInfoBase<MachineBasicBlock>);
-
 typedef LoopBase<MachineBasicBlock> MachineLoop;
 
 class MachineLoopInfo : public MachineFunctionPass {
