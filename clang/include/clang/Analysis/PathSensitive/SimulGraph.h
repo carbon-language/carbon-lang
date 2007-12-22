@@ -1,4 +1,4 @@
-//==-- SimulGraph.h - Local, Path-Sensitive Supergraph -*- C++ ---------*---==//
+//==-- SimulGraph.h - Local, Path-Sensitive Supergraph -*- C++ -*-----------==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -91,7 +91,8 @@ public:
   }
 
   unsigned num_roots() const { return Roots.size(); }
-  unsigned num_eops() const { return EndVertices.size(); }
+  unsigned num_eops() const { return EndVertices.size(); }  
+  unsigned getCounter() const { return VertexCounter; }
   
   // Iterators.
   typedef RootsTy::iterator roots_iterator;
