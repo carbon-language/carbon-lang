@@ -566,7 +566,8 @@ LowerLOAD(SDOperand Op, SelectionDAG &DAG, const SPUSubtarget *ST) {
 	    NewOpC = (OpVT == MVT::i1
 		      ? SPUISD::EXTRACT_I1_SEXT
 		      : SPUISD::EXTRACT_I8_SEXT);
-	  } else if (ExtType == ISD::ZEXTLOAD) {
+	  } else {
+      assert(ExtType == ISD::ZEXTLOAD);
 	    NewOpC = (OpVT == MVT::i1
 		      ? SPUISD::EXTRACT_I1_ZEXT
 		      : SPUISD::EXTRACT_I8_ZEXT);
@@ -1687,7 +1688,7 @@ static SDOperand LowerBUILD_VECTOR(SDOperand Op, SelectionDAG &DAG) {
 	for (int j = 0; j < 4; ++j) {
 	  SDOperand V;
 	  bool process_upper, process_lower;
-	  uint64_t val;
+	  uint64_t val = 0;
 
 	  process_upper = (upper_special && (i & 1) == 0);
 	  process_lower = (lower_special && (i & 1) == 1);
