@@ -21,7 +21,6 @@
 
 #define DEBUG_TYPE "strongphielim"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/BreakCriticalMachineEdge.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -101,7 +100,6 @@ namespace {
                          std::set<unsigned>& PHIUnion,
                          std::vector<StrongPHIElimination::DomForestNode*>& DF,
                          std::vector<std::pair<unsigned, unsigned> >& locals);
-    void breakCriticalEdges(MachineFunction &Fn);
     
   };
 
@@ -501,42 +499,7 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
   }
 }
 
-/// breakCriticalEdges - Break critical edges coming into blocks with PHI
-/// nodes, preserving dominator and livevariable info.
-void StrongPHIElimination::breakCriticalEdges(MachineFunction &Fn) {
-  typedef std::pair<MachineBasicBlock*, MachineBasicBlock*> MBB_pair;
-  
-  MachineDominatorTree& MDT = getAnalysis<MachineDominatorTree>();
-  LiveVariables& LV = getAnalysis<LiveVariables>();
-  
-  // Find critical edges
-  std::vector<MBB_pair> criticals;
-  for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-    if (!I->empty() &&
-        I->begin()->getOpcode() == TargetInstrInfo::PHI &&
-        I->pred_size() > 1)
-      for (MachineBasicBlock::pred_iterator PI = I->pred_begin(),
-           PE = I->pred_end(); PI != PE; ++PI)
-        if ((*PI)->succ_size() > 1)
-          criticals.push_back(std::make_pair(*PI, I));
-  
-  for (std::vector<MBB_pair>::iterator I = criticals.begin(),
-       E = criticals.end(); I != E; ++I) {
-    // Split the edge
-    MachineBasicBlock* new_bb = SplitCriticalMachineEdge(I->first, I->second);
-    
-    // Update dominators
-    MDT.splitBlock(I->first);
-    
-    // Update livevariables
-    for (unsigned var = 1024; var < Fn.getSSARegMap()->getLastVirtReg(); ++var)
-      if (isLiveOut(LV.getVarInfo(var), I->first))
-        LV.getVarInfo(var).AliveBlocks.set(new_bb->getNumber());
-  }
-}
-
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
-  breakCriticalEdges(Fn);
   computeDFS(Fn);
   
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
