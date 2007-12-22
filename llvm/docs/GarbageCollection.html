@@ -1084,37 +1084,35 @@ href="WritingAnLLVMPass.html#doInitialization_mod"><tt>doInitialization(Module
 
 <blockquote><pre
 >#include "llvm/Module.h"
-#include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 
 bool MyCollector::initializeCustomLowering(Module &amp;M) {
   return false;
 }
 
 bool MyCollector::performCustomLowering(Function &amp;F) {
-  const Module *M = F.getParent();
-  
-  Function *GCReadInt  = M-&gt;getFunction("llvm.gcread"),
-           *GCWriteInt = M-&gt;getFunction("llvm.gcwrite"),
-           *GCRootInt  = M-&gt;getFunction("llvm.gcroot");
-  
   bool MadeChange = false;
   
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-    for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E;)
-      if (CallInst *CI = dyn_cast&lt;CallInst&gt;(II++))
-        if (Function *F = CI->getCalledFunction())
-          if (F == GCWriteInt) {
+    for (BasicBlock::iterator II = BB-&gt;begin(), E = BB-&gt;end(); II != E; ++II)
+      if (IntrinsicInst *CI = dyn_cast&lt;IntrinsicInst&gt;(II))
+        if (Function *F = CI-&gt;getCalledFunction())
+          switch (F-&gt;getIntrinsicID()) {
+          case Intrinsic::gcwrite:
             // Handle llvm.gcwrite.
-            CI->eraseFromParent();
+            CI-&gt;eraseFromParent();
             MadeChange = true;
-          } else if (F == GCReadInt) {
+            break;
+          case Intrinsic::gcread:
             // Handle llvm.gcread.
-            CI->eraseFromParent();
+            CI-&gt;eraseFromParent();
             MadeChange = true;
-          } else if (F == GCRootInt) {
+            break;
+          case Intrinsic::gcroot:
             // Handle llvm.gcroot.
-            CI->eraseFromParent();
+            CI-&gt;eraseFromParent();
             MadeChange = true;
+            break;
           }
   
   return MadeChange;
