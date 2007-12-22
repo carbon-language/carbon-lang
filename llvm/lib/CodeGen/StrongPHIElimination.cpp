@@ -397,7 +397,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
     std::vector<std::pair<unsigned, unsigned> > localInterferences;
     processPHIUnion(P, PHIUnion, DF, localInterferences);
     
-    // FIXME: Check for local interferences
+    // Check for local interferences
     for (std::vector<std::pair<unsigned, unsigned> >::iterator I =
         localInterferences.begin(), E = localInterferences.end(); I != E; ++I) {
       std::pair<unsigned, unsigned> p = *I;
@@ -438,6 +438,8 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
         }
       }
     }
+    
+    // FIXME: Cache renaming information
     
     ProcessedNames.insert(PHIUnion.begin(), PHIUnion.end());
     ++P;
@@ -506,6 +508,9 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
     if (!I->empty() &&
         I->begin()->getOpcode() == TargetInstrInfo::PHI)
       processBlock(I);
+  
+  // FIXME: Insert copies
+  // FIXME: Perform renaming
   
   return false;
 }
