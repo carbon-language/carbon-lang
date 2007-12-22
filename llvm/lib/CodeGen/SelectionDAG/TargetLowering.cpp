@@ -944,6 +944,32 @@ bool TargetLowering::SimplifyDemandedBits(SDOperand Op, uint64_t DemandedMask,
     KnownZero |= ~InMask & DemandedMask;
     break;
   }
+  case ISD::FGETSIGN:
+    // All bits are zero except the low bit.
+    KnownZero = MVT::getIntVTBitMask(Op.getValueType()) ^ 1;
+    break;
+  case ISD::BIT_CONVERT:
+#if 0
+    // If this is an FP->Int bitcast and if the sign bit is the only thing that
+    // is demanded, turn this into a FGETSIGN.
+    if (DemandedMask == MVT::getIntVTSignBit(Op.getValueType()) &&
+        MVT::isFloatingPoint(Op.getOperand(0).getValueType()) &&
+        !MVT::isVector(Op.getOperand(0).getValueType())) {
+      // Only do this xform if FGETSIGN is valid or if before legalize.
+      if (!TLO.AfterLegalize ||
+          isOperationLegal(ISD::FGETSIGN, Op.getValueType())) {
+        // Make a FGETSIGN + SHL to move the sign bit into the appropriate
+        // place.  We expect the SHL to be eliminated by other optimizations.
+        SDOperand Sign = TLO.DAG.getNode(ISD::FGETSIGN, Op.getValueType(), 
+                                         Op.getOperand(0));
+        unsigned ShVal = MVT::getSizeInBits(Op.getValueType())-1;
+        SDOperand ShAmt = TLO.DAG.getConstant(ShVal, getShiftAmountTy());
+        return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SHL, Op.getValueType(),
+                                                 Sign, ShAmt));
+      }
+    }
+#endif
+    break;
   case ISD::ADD:
   case ISD::SUB:
   case ISD::INTRINSIC_WO_CHAIN:
