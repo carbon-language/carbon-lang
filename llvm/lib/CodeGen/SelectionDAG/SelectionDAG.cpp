@@ -1323,6 +1323,11 @@ void SelectionDAG::ComputeMaskedBits(SDOperand Op, uint64_t Mask,
     KnownZero |= (~InMask) & Mask;
     return;
   }
+  case ISD::FGETSIGN:
+    // All bits are zero except the low bit.
+    KnownZero = MVT::getIntVTBitMask(Op.getValueType()) ^ 1;
+    return;
+  
   case ISD::ADD: {
     // If either the LHS or the RHS are Zero, the result is zero.
     ComputeMaskedBits(Op.getOperand(1), Mask, KnownZero, KnownOne, Depth+1);
@@ -3703,6 +3708,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FDIV:   return "fdiv";
   case ISD::FREM:   return "frem";
   case ISD::FCOPYSIGN: return "fcopysign";
+  case ISD::FGETSIGN:  return "fgetsign";
 
   case ISD::SETCC:       return "setcc";
   case ISD::SELECT:      return "select";
