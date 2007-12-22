@@ -141,7 +141,7 @@ namespace {
     /// it can be simplified or if things it uses can be simplified by bit
     /// propagation.  If so, return true.
     bool SimplifyDemandedBits(SDOperand Op, uint64_t Demanded = ~0ULL) {
-      TargetLowering::TargetLoweringOpt TLO(DAG);
+      TargetLowering::TargetLoweringOpt TLO(DAG, AfterLegalize);
       uint64_t KnownZero, KnownOne;
       Demanded &= MVT::getIntVTBitMask(Op.getValueType());
       if (!TLI.SimplifyDemandedBits(Op, Demanded, KnownZero, KnownOne, TLO))

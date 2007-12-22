@@ -557,10 +557,12 @@ public:
   /// that want to combine 
   struct TargetLoweringOpt {
     SelectionDAG &DAG;
+    bool AfterLegalize;
     SDOperand Old;
     SDOperand New;
 
-    explicit TargetLoweringOpt(SelectionDAG &InDAG) : DAG(InDAG) {}
+    explicit TargetLoweringOpt(SelectionDAG &InDAG, bool afterLegalize)
+      : DAG(InDAG), AfterLegalize(afterLegalize) {}
     
     bool CombineTo(SDOperand O, SDOperand N) { 
       Old = O; 
