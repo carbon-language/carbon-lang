@@ -143,9 +143,7 @@ namespace {
   {
     MVT::ValueType vt = FPN->getValueType(0);
     if (vt == MVT::f32) {
-      const APFloat &apf = FPN->getValueAPF();
-      float fval = apf.convertToFloat();
-      int val = *((int *) &fval);
+      int val = FloatToBits(FPN->getValueAPF().convertToFloat());
       int sval = (int) ((val << 16) >> 16);
       Imm = (short) val;
       return val == sval;
