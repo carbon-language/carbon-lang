@@ -35,10 +35,6 @@ namespace {
   /// directed by the Collector. It also performs automatic root initialization
   /// and custom intrinsic lowering.
   class VISIBILITY_HIDDEN LowerIntrinsics : public FunctionPass {
-    /// GCRootInt, GCReadInt, GCWriteInt - The function prototypes for the
-    /// llvm.gc* intrinsics.
-    Function *GCRootInt, *GCReadInt, *GCWriteInt;
-    
     static bool NeedsDefaultLoweringPass(const Collector &C);
     static bool NeedsCustomLoweringPass(const Collector &C);
     static bool CouldBecomeSafePoint(Instruction *I);
@@ -138,8 +134,7 @@ FunctionPass *llvm::createGCLoweringPass() {
 char LowerIntrinsics::ID = 0;
 
 LowerIntrinsics::LowerIntrinsics()
-  : FunctionPass((intptr_t)&ID),
-    GCRootInt(0), GCReadInt(0), GCWriteInt(0) {}
+  : FunctionPass((intptr_t)&ID) {}
 
 const char *LowerIntrinsics::getPassName() const {
   return "Lower Garbage Collection Instructions";
@@ -152,10 +147,6 @@ void LowerIntrinsics::getAnalysisUsage(AnalysisUsage &AU) const {
 
 /// doInitialization - If this module uses the GC intrinsics, find them now.
 bool LowerIntrinsics::doInitialization(Module &M) {
-  GCReadInt  = M.getFunction("llvm.gcread");
-  GCWriteInt = M.getFunction("llvm.gcwrite");
-  GCRootInt  = M.getFunction("llvm.gcroot");
-  
   // FIXME: This is rather antisocial in the context of a JIT since it performs
   //        work against the entire module. But this cannot be done at
   //        runFunction time (initializeCustomLowering likely needs to change
@@ -277,25 +268,35 @@ bool LowerIntrinsics::PerformDefaultLowering(Function &F, Collector &Coll) {
   bool MadeChange = false;
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E;) {
-      if (CallInst *CI = dyn_cast<CallInst>(II++)) {
+      if (IntrinsicInst *CI = dyn_cast<IntrinsicInst>(II++)) {
         Function *F = CI->getCalledFunction();
-        if (F == GCWriteInt && LowerWr) {
-          // Replace a write barrier with a simple store.
-          Value *St = new StoreInst(CI->getOperand(1), CI->getOperand(3), CI);
-          CI->replaceAllUsesWith(St);
-          CI->eraseFromParent();
-        } else if (F == GCReadInt && LowerRd) {
-          // Replace a read barrier with a simple load.
-          Value *Ld = new LoadInst(CI->getOperand(2), "", CI);
-          Ld->takeName(CI);
-          CI->replaceAllUsesWith(Ld);
-          CI->eraseFromParent();
-        } else if (F == GCRootInt && InitRoots) {
-          // Initialize the GC root, but do not delete the intrinsic. The
-          // backend needs the intrinsic to flag the stack slot.
-          Roots.push_back(cast<AllocaInst>(
-            IntrinsicInst::StripPointerCasts(CI->getOperand(1))));
-        } else {
+        switch (F->getIntrinsicID()) {
+        case Intrinsic::gcwrite:
+          if (LowerWr) {
+            // Replace a write barrier with a simple store.
+            Value *St = new StoreInst(CI->getOperand(1), CI->getOperand(3), CI);
+            CI->replaceAllUsesWith(St);
+            CI->eraseFromParent();
+          }
+          break;
+        case Intrinsic::gcread:
+          if (LowerRd) {
+            // Replace a read barrier with a simple load.
+            Value *Ld = new LoadInst(CI->getOperand(2), "", CI);
+            Ld->takeName(CI);
+            CI->replaceAllUsesWith(Ld);
+            CI->eraseFromParent();
+          }
+          break;
+        case Intrinsic::gcroot:
+          if (InitRoots) {
+            // Initialize the GC root, but do not delete the intrinsic. The
+            // backend needs the intrinsic to flag the stack slot.
+            Roots.push_back(cast<AllocaInst>(
+              IntrinsicInst::StripPointerCasts(CI->getOperand(1))));
+          }
+          break;
+        default:
           continue;
         }
         
