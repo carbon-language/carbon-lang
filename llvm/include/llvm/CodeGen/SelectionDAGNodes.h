@@ -271,6 +271,10 @@ namespace ISD {
     // FCOPYSIGN(f32, f64) is allowed.
     FCOPYSIGN,
 
+    // INT = FGETSIGN(FP) - Return the sign bit of the specified floating point
+    // value as an integer 0/1 value.
+    FGETSIGN,
+    
     /// BUILD_VECTOR(ELT0, ELT1, ELT2, ELT3,...) - Return a vector
     /// with the specified, possibly variable, elements.  The number of elements
     /// is required to be a power of two.

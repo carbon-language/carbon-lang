@@ -155,13 +155,17 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   memset(&IndexedModeActions, 0, sizeof(IndexedModeActions));
   memset(&ConvertActions, 0, sizeof(ConvertActions));
 
-  // Set all indexed load / store to expand.
+  // Set default actions for various operations.
   for (unsigned VT = 0; VT != (unsigned)MVT::LAST_VALUETYPE; ++VT) {
+    // Default all indexed load / store to expand.
     for (unsigned IM = (unsigned)ISD::PRE_INC;
          IM != (unsigned)ISD::LAST_INDEXED_MODE; ++IM) {
       setIndexedLoadAction(IM, (MVT::ValueType)VT, Expand);
       setIndexedStoreAction(IM, (MVT::ValueType)VT, Expand);
     }
+    
+    // These operations default to expand.
+    setOperationAction(ISD::FGETSIGN, (MVT::ValueType)VT, Expand);
   }
 
   IsLittleEndian = TD->isLittleEndian();
