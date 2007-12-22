@@ -24,6 +24,7 @@
 
 // We need to undo a macro defined in Windows.h, otherwise we won't compile:
 #undef CopyFile
+#undef GetCurrentDirectory
 
 // Windows happily accepts either forward or backward slashes, though any path
 // returned by a Win32 API will have backward slashes.  As LLVM code basically
@@ -226,7 +227,7 @@ Path::GetUserHomeDirectory() {
 Path
 Path::GetCurrentDirectory() {
   char pathname[MAX_PATH];
-  GetCurrentDirectory(pathname,MAX_PATH);
+  ::GetCurrentDirectoryA(MAX_PATH,pathname);
   return Path(pathname);  
 }
 
