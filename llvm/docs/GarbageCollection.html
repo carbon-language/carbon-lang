@@ -1094,8 +1094,8 @@ bool MyCollector::performCustomLowering(Function &amp;F) {
   bool MadeChange = false;
   
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
-    for (BasicBlock::iterator II = BB-&gt;begin(), E = BB-&gt;end(); II != E; ++II)
-      if (IntrinsicInst *CI = dyn_cast&lt;IntrinsicInst&gt;(II))
+    for (BasicBlock::iterator II = BB-&gt;begin(), E = BB-&gt;end(); II != E; )
+      if (IntrinsicInst *CI = dyn_cast&lt;IntrinsicInst&gt;(II++))
         if (Function *F = CI-&gt;getCalledFunction())
           switch (F-&gt;getIntrinsicID()) {
           case Intrinsic::gcwrite:
