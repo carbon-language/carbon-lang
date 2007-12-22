@@ -170,7 +170,8 @@ bool X86TargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast,
 bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
-  setRelocationModel(Reloc::Static);
+  if (getRelocationModel() == Reloc::Default)
+    setRelocationModel(Reloc::Static);
   Subtarget.setPICStyle(PICStyle::None);
   
   // JIT cannot ensure globals are placed in the lower 4G of address.
