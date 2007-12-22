@@ -6004,6 +6004,50 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
     if (Instruction *NV = FoldOpIntoPhi(I))
       return NV;
   
+  // Fold shift2(trunc(shift1(x,c1)), c2) -> trunc(shift2(shift1(x,c1),c2))
+  if (TruncInst *TI = dyn_cast<TruncInst>(Op0)) {
+    Instruction *TrOp = dyn_cast<Instruction>(TI->getOperand(0));
+    // If 'shift2' is an ashr, we would have to get the sign bit into a funny
+    // place.  Don't try to do this transformation in this case.  Also, we
+    // require that the input operand is a shift-by-constant so that we have
+    // confidence that the shifts will get folded together.  We could do this
+    // xform in more cases, but it is unlikely to be profitable.
+    if (TrOp && I.isLogicalShift() && TrOp->isShift() && 
+        isa<ConstantInt>(TrOp->getOperand(1))) {
+      // Okay, we'll do this xform.  Make the shift of shift.
+      Constant *ShAmt = ConstantExpr::getZExt(Op1, TrOp->getType());
+      Instruction *NSh = BinaryOperator::create(I.getOpcode(), TrOp, ShAmt,
+                                                I.getName());
+      InsertNewInstBefore(NSh, I); // (shift2 (shift1 & 0x00FF), c2)
+
+      // For logical shifts, the truncation has the effect of making the high
+      // part of the register be zeros.  Emulate this by inserting an AND to
+      // clear the top bits as needed.  This 'and' will usually be zapped by
+      // other xforms later if dead.
+      unsigned SrcSize = TrOp->getType()->getPrimitiveSizeInBits();
+      unsigned DstSize = TI->getType()->getPrimitiveSizeInBits();
+      APInt MaskV(APInt::getLowBitsSet(SrcSize, DstSize));
+      
+      // The mask we constructed says what the trunc would do if occurring
+      // between the shifts.  We want to know the effect *after* the second
+      // shift.  We know that it is a logical shift by a constant, so adjust the
+      // mask as appropriate.
+      if (I.getOpcode() == Instruction::Shl)
+        MaskV <<= Op1->getZExtValue();
+      else {
+        assert(I.getOpcode() == Instruction::LShr && "Unknown logical shift");
+        MaskV = MaskV.lshr(Op1->getZExtValue());
+      }
+
+      Instruction *And = BinaryOperator::createAnd(NSh, ConstantInt::get(MaskV),
+                                                   TI->getName());
+      InsertNewInstBefore(And, I); // shift1 & 0x00FF
+
+      // Return the value truncated to the interesting size.
+      return new TruncInst(And, I.getType());
+    }
+  }
+  
   if (Op0->hasOneUse()) {
     if (BinaryOperator *Op0BO = dyn_cast<BinaryOperator>(Op0)) {
       // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
