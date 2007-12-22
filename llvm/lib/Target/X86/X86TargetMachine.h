@@ -34,6 +34,7 @@ class X86TargetMachine : public LLVMTargetMachine {
   X86JITInfo        JITInfo;
   X86TargetLowering TLInfo;
   X86ELFWriterInfo  ELFWriterInfo;
+  Reloc::Model      DefRelocModel; // Reloc model before it's overridden.
 
 protected:
   virtual const TargetAsmInfo *createTargetAsmInfo() const;

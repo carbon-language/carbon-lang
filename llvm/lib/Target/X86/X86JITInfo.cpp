@@ -437,7 +437,14 @@ void X86JITInfo::relocate(void *Function, MachineRelocation *MR,
     case X86::reloc_pcrel_word: {
       // PC relative relocation, add the relocated value to the value already in
       // memory, after we adjust it for where the PC is.
-      ResultPtr = ResultPtr-(intptr_t)RelocPos-4-MR->getConstantVal();
+      ResultPtr = ResultPtr -(intptr_t)RelocPos - 4 - MR->getConstantVal();
+      *((unsigned*)RelocPos) += (unsigned)ResultPtr;
+      break;
+    }
+    case X86::reloc_picrel_word: {
+      // PIC base relative relocation, add the relocated value to the value
+      // already in memory, after we adjust it for where the PIC base is.
+      ResultPtr = ResultPtr - ((intptr_t)Function + MR->getConstantVal());
       *((unsigned*)RelocPos) += (unsigned)ResultPtr;
       break;
     }

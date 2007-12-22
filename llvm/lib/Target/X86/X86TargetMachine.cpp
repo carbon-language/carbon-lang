@@ -118,6 +118,7 @@ X86TargetMachine::X86TargetMachine(const Module &M, const std::string &FS,
     FrameInfo(TargetFrameInfo::StackGrowsDown,
               Subtarget.getStackAlignment(), Subtarget.is64Bit() ? -8 : -4),
     InstrInfo(*this), JITInfo(*this), TLInfo(*this) {
+  DefRelocModel = getRelocationModel();
   if (getRelocationModel() == Reloc::Default)
     if (Subtarget.isTargetDarwin() || Subtarget.isTargetCygMing())
       setRelocationModel(Reloc::DynamicNoPIC);
@@ -170,7 +171,8 @@ bool X86TargetMachine::addAssemblyEmitter(FunctionPassManager &PM, bool Fast,
 bool X86TargetMachine::addCodeEmitter(FunctionPassManager &PM, bool Fast,
                                       bool DumpAsm, MachineCodeEmitter &MCE) {
   // FIXME: Move this to TargetJITInfo!
-  setRelocationModel(Reloc::Static);
+  if (DefRelocModel == Reloc::Default)
+    setRelocationModel(Reloc::Static);
   Subtarget.setPICStyle(PICStyle::None);
   
   // JIT cannot ensure globals are placed in the lower 4G of address.
