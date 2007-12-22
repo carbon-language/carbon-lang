@@ -110,10 +110,10 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   // update the PHI nodes correctly.
   if (!isa<PHINode>(BB->begin()) || Succ->getSinglePredecessor()) return true;
 
-  // If the predecessors of Succ are only BB and Succ itself, handle it.
+  // If the predecessors of Succ are only BB, handle it.
   bool IsSafe = true;
   for (pred_iterator PI = pred_begin(Succ), E = pred_end(Succ); PI != E; ++PI)
-    if (*PI != Succ && *PI != BB) {
+    if (*PI != BB) {
       IsSafe = false;
       break;
     }
