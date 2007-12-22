@@ -994,7 +994,9 @@ SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
     unsigned PC = RegMap->createVirtualRegister(X86::GR32RegisterClass);
     
     const TargetInstrInfo *TII = TM.getInstrInfo();
-    BuildMI(FirstMBB, MBBI, TII->get(X86::MovePCtoStack));
+    // Operand of MovePCtoStack is completely ignored by asm printer. It's
+    // only used in JIT code emission as displacement to pc.
+    BuildMI(FirstMBB, MBBI, TII->get(X86::MovePCtoStack)).addImm(0);
     BuildMI(FirstMBB, MBBI, TII->get(X86::POP32r), PC);
     
     // If we're using vanilla 'GOT' PIC style, we should use relative addressing

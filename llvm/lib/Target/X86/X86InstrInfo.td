@@ -356,8 +356,8 @@ let isCall = 1 in
   let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
               MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7, EFLAGS] in {
-    def CALLpcrel32 : I<0xE8, RawFrm, (outs), (ins i32imm:$dst, variable_ops),
-                        "call\t${dst:call}", []>;
+    def CALLpcrel32 : Ii32<0xE8, RawFrm, (outs), (ins i32imm:$dst,variable_ops),
+                           "call\t${dst:call}", []>;
     def CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst, variable_ops),
                         "call\t{*}$dst", [(X86call GR32:$dst)]>;
     def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst, variable_ops),
@@ -408,8 +408,8 @@ def POPFD    : I<0x9D, RawFrm, (outs), (ins), "popf", []>;
 let Defs = [ESP], Uses = [ESP, EFLAGS] in
 def PUSHFD   : I<0x9C, RawFrm, (outs), (ins), "pushf", []>;
 
-def MovePCtoStack : I<0, Pseudo, (outs), (ins piclabel:$label),
-                      "call\t$label", []>;
+def MovePCtoStack : Ii32<0xE8, RawFrm, (outs), (ins piclabel:$label),
+                         "call\t$label", []>;
 
 let isTwoAddress = 1 in                               // GR32 = bswap GR32
   def BSWAP32r : I<0xC8, AddRegFrm,
