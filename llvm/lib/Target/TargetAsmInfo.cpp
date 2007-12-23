@@ -67,7 +67,7 @@ TargetAsmInfo::TargetAsmInfo() :
   EightByteConstantSection(0),
   SixteenByteConstantSection(0),
   ReadOnlySection(0),
-  GlobalDirective(0),
+  GlobalDirective("\t.globl\t"),
   SetDirective(0),
   LCOMMDirective(0),
   COMMDirective("\t.comm\t"),

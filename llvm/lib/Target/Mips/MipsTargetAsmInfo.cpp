@@ -26,7 +26,6 @@ MipsTargetAsmInfo::MipsTargetAsmInfo(const MipsTargetMachine &TM) {
   ReadOnlySection      = "\t.rdata";
   ZeroDirective        = "\t.space\t";
   BSSSection           = "\t.section\t.bss";
-  GlobalDirective      = "\t.globl\t";
   LCOMMDirective       = "\t.lcomm\t";
 
   if (TM.getRelocationModel() == Reloc::Static)
