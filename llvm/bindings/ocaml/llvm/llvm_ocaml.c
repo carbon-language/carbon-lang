@@ -18,7 +18,6 @@
 #include "llvm-c/Core.h"
 #include "caml/alloc.h"
 #include "caml/custom.h"
-#include "caml/mlvalues.h"
 #include "caml/memory.h"
 #include "caml/fail.h"
 #include "caml/callback.h"
@@ -37,7 +36,7 @@ CAMLprim value llvm_register_core_exns(value IoError) {
   return Val_unit;
 }
 
-void llvm_raise(value Prototype, char *Message) {
+static void llvm_raise(value Prototype, char *Message) {
   CAMLparam1(Prototype);
   CAMLlocal1(CamlMessage);
   
@@ -45,6 +44,7 @@ void llvm_raise(value Prototype, char *Message) {
   LLVMDisposeMessage(Message);
   
   raise_with_arg(Prototype, CamlMessage);
+  abort(); /* NOTREACHED */
   CAMLnoreturn;
 }
 
@@ -234,7 +234,7 @@ CAMLprim LLVMTypeRef llvm_opaque_type(value Unit) {
 
 #define Typehandle_val(v)  (*(LLVMTypeHandleRef *)(Data_custom_val(v)))
 
-void llvm_finalize_handle(value TH) {
+static void llvm_finalize_handle(value TH) {
   LLVMDisposeTypeHandle(Typehandle_val(TH));
 }
 

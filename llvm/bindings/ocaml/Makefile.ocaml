@@ -41,13 +41,18 @@ OCAMLAFLAGS += $(patsubst %,-cclib %, \
                  $(filter-out -L$(LibDir),-l$(LIBRARYNAME) \
                                           $(shell $(LLVM_CONFIG) --ldflags)) \
                                           $(UsedLibs))
+ 
+ifneq ($(ENABLE_OPTIMIZED),1)
+  OCAMLDEBUGFLAG := -g
+endif
 
-Compile.CMI  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) -o)
-Compile.CMO  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) -o)
-Archive.CMA  := $(strip $(OCAMLC) -a -custom $(OCAMLAFLAGS) -o)
+Compile.CMI  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
+Compile.CMO  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
+Archive.CMA  := $(strip $(OCAMLC) -a -custom $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) \
+                                  -o)
 
-Compile.CMX  := $(strip $(OCAMLOPT) -c $(OCAMLCFLAGS) -o)
-Archive.CMXA := $(strip $(OCAMLOPT) -a $(OCAMLAFLAGS) -o)
+Compile.CMX  := $(strip $(OCAMLOPT) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
+Archive.CMXA := $(strip $(OCAMLOPT) -a $(OCAMLAFLAGS) $(OCAMLDEBUGFLAG) -o)
 
 # Source files
 OcamlSources1 := $(sort $(wildcard $(PROJ_SRC_DIR)/*.ml))
@@ -135,6 +140,9 @@ uninstall-local:: uninstall-deplibs
 build-deplibs: $(OutputLibs)
 
 $(OcamlDir)/%.a: $(LibDir)/%.a
+	$(Verb) ln -sf $< $@
+
+$(OcamlDir)/%.o: $(LibDir)/%.o
 	$(Verb) ln -sf $< $@
 
 clean-deplibs:

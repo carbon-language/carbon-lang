@@ -8,6 +8,6 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../..
-DIRS = llvm bitreader bitwriter analysis
+DIRS = llvm bitreader bitwriter analysis executionengine
 
 include $(LEVEL)/Makefile.common

@@ -14,9 +14,8 @@
 
 #include "llvm-c/BitReader.h"
 #include "caml/alloc.h"
-#include "caml/mlvalues.h"
+#include "caml/fail.h"
 #include "caml/memory.h"
-#include <stdio.h>
 
 
 /* Can't use the recommended caml_named_value mechanism for backwards
@@ -29,7 +28,17 @@ CAMLprim value llvm_register_bitreader_exns(value Error) {
   return Val_unit;
 }
 
-void llvm_raise(value Prototype, char *Message);
+static void llvm_raise(value Prototype, char *Message) {
+  CAMLparam1(Prototype);
+  CAMLlocal1(CamlMessage);
+  
+  CamlMessage = copy_string(Message);
+  LLVMDisposeMessage(Message);
+  
+  raise_with_arg(Prototype, CamlMessage);
+  abort(); /* NOTREACHED */
+  CAMLnoreturn;
+}
 
 
 /*===-- Modules -----------------------------------------------------------===*/

@@ -85,6 +85,11 @@
 		9F4B0E600D0E02580061F270 /* llvm_bitreader.mli */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = llvm_bitreader.mli; sourceTree = "<group>"; };
 		9F4B0E8C0D0E05ED0061F270 /* BitReader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BitReader.cpp; sourceTree = "<group>"; };
 		9F4B0E8D0D0E05ED0061F270 /* DeserializeAPFloat.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DeserializeAPFloat.cpp; sourceTree = "<group>"; };
+		9F502ADB0D1D8CA3007939DF /* executionengine_ocaml.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = executionengine_ocaml.c; sourceTree = "<group>"; };
+		9F502ADC0D1D8CA3007939DF /* llvm_executionengine.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = llvm_executionengine.ml; sourceTree = "<group>"; };
+		9F502ADD0D1D8CA3007939DF /* llvm_executionengine.mli */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = llvm_executionengine.mli; sourceTree = "<group>"; };
+		9F502AEC0D1D8CF8007939DF /* executionengine.ml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = executionengine.ml; sourceTree = "<group>"; };
+		9F502B090D1D8D8D007939DF /* ExecutionEngineBindings.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExecutionEngineBindings.cpp; sourceTree = "<group>"; };
 		9F5B90CB0D0CE87100CDFDEA /* StringPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StringPool.cpp; sourceTree = "<group>"; };
 		9F5B90CE0D0CE89300CDFDEA /* AlignOf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlignOf.h; sourceTree = "<group>"; };
 		9F5B90CF0D0CE89300CDFDEA /* Registry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Registry.h; sourceTree = "<group>"; };
@@ -233,6 +238,7 @@
 		9FE450E00C77ABE400C4FEA4 /* ArchiveInternals.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ArchiveInternals.h; sourceTree = "<group>"; };
 		9FE450E10C77ABE400C4FEA4 /* ArchiveReader.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ArchiveReader.cpp; sourceTree = "<group>"; };
 		9FE450E20C77ABE400C4FEA4 /* ArchiveWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ArchiveWriter.cpp; sourceTree = "<group>"; };
+		9FEB8C550D1CD1E200EE46BC /* ExecutionEngine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExecutionEngine.h; sourceTree = "<group>"; };
 		CF1ACC9709C9DE4400D3C5EB /* IntrinsicInst.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IntrinsicInst.cpp; path = ../lib/VMCore/IntrinsicInst.cpp; sourceTree = "<group>"; };
 		CF26835B09178F5500C5F253 /* TargetInstrItineraries.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TargetInstrItineraries.h; sourceTree = "<group>"; };
 		CF32AF5C0AEE6A4E00D24CD4 /* LLVMTargetMachine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LLVMTargetMachine.cpp; sourceTree = "<group>"; };
@@ -1121,6 +1127,16 @@
 			path = bitreader;
 			sourceTree = "<group>";
 		};
+		9F502ACD0D1D8CA3007939DF /* executionengine */ = {
+			isa = PBXGroup;
+			children = (
+				9F502ADB0D1D8CA3007939DF /* executionengine_ocaml.c */,
+				9F502ADC0D1D8CA3007939DF /* llvm_executionengine.ml */,
+				9F502ADD0D1D8CA3007939DF /* llvm_executionengine.mli */,
+			);
+			path = executionengine;
+			sourceTree = "<group>";
+		};
 		9F68EB030C77AD2C004AA152 /* lib/Bitcode */ = {
 			isa = PBXGroup;
 			children = (
@@ -1244,6 +1260,7 @@
 				9F7C2C4F0CB9496C00498408 /* analysis.ml */,
 				9F6B2CC00D0F6E56000F00FD /* bitreader.ml */,
 				9F7C2C520CB9496C00498408 /* bitwriter.ml */,
+				9F502AEC0D1D8CF8007939DF /* executionengine.ml */,
 				9F7C2C5D0CB9496C00498408 /* vmcore.ml */,
 			);
 			path = Ocaml;
@@ -1269,6 +1286,7 @@
 		9FD3E56F0CA0116100E54D15 /* ocaml */ = {
 			isa = PBXGroup;
 			children = (
+				9F502ACD0D1D8CA3007939DF /* executionengine */,
 				9F7C240B0CB81ECD00498408 /* analysis */,
 				9F4B0E5D0D0E02580061F270 /* bitreader */,
 				9FD3E5700CA0116100E54D15 /* bitwriter */,
@@ -1316,6 +1334,7 @@
 				9F5B90E70D0DF19100CDFDEA /* BitReader.h */,
 				9FD3E58D0CA0125F00E54D15 /* BitWriter.h */,
 				9FD3E58E0CA0125F00E54D15 /* Core.h */,
+				9FEB8C550D1CD1E200EE46BC /* ExecutionEngine.h */,
 				CF8F1B490B64F7AB00BB4199 /* LinkTimeOptimizer.h */,
 			);
 			name = "include/llvm-c";
@@ -1607,6 +1626,7 @@
 				DE66EDC508ABEC9000323D32 /* Interpreter */,
 				DE66EDD308ABEC9000323D32 /* JIT */,
 				DE66EDC408ABEC9000323D32 /* ExecutionEngine.cpp */,
+				9F502B090D1D8D8D007939DF /* ExecutionEngineBindings.cpp */,
 			);
 			name = lib/ExecutionEngine;
 			path = ../lib/ExecutionEngine;
