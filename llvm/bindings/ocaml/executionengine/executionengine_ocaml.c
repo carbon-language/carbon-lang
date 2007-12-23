@@ -72,12 +72,15 @@ static value alloc_generic_value(LLVMGenericValueRef Ref) {
 
 /* Llvm.lltype -> float -> t */
 CAMLprim value llvm_genericvalue_of_float(LLVMTypeRef Ty, value N) {
-  return alloc_generic_value(LLVMCreateGenericValueOfFloat(Ty, Double_val(N)));
+  CAMLparam1(N);
+  CAMLreturn(alloc_generic_value(
+    LLVMCreateGenericValueOfFloat(Ty, Double_val(N))));
 }
 
 /* 'a -> t */
 CAMLprim value llvm_genericvalue_of_value(value V) {
-  return alloc_generic_value(LLVMCreateGenericValueOfPointer(Op_val(V)));
+  CAMLparam1(V);
+  CAMLreturn(alloc_generic_value(LLVMCreateGenericValueOfPointer(Op_val(V))));
 }
 
 /* Llvm.lltype -> int -> t */
@@ -87,26 +90,30 @@ CAMLprim value llvm_genericvalue_of_int(LLVMTypeRef Ty, value Int) {
 
 /* Llvm.lltype -> int32 -> t */
 CAMLprim value llvm_genericvalue_of_int32(LLVMTypeRef Ty, value Int32) {
-  return alloc_generic_value(LLVMCreateGenericValueOfInt(Ty, Int32_val(Int32),
-                                                         1));
+  CAMLparam1(Int32);
+  CAMLreturn(alloc_generic_value(
+    LLVMCreateGenericValueOfInt(Ty, Int32_val(Int32), 1)));
 }
 
 /* Llvm.lltype -> nativeint -> t */
 CAMLprim value llvm_genericvalue_of_nativeint(LLVMTypeRef Ty, value NatInt) {
-  return alloc_generic_value(LLVMCreateGenericValueOfInt(Ty,
-                                                         Nativeint_val(NatInt),
-                                                         1));
+  CAMLparam1(NatInt);
+  CAMLreturn(alloc_generic_value(
+    LLVMCreateGenericValueOfInt(Ty, Nativeint_val(NatInt), 1)));
 }
 
 /* Llvm.lltype -> int64 -> t */
 CAMLprim value llvm_genericvalue_of_int64(LLVMTypeRef Ty, value Int64) {
-  return alloc_generic_value(LLVMCreateGenericValueOfInt(Ty, Int64_val(Int64),
-                                                         1));
+  CAMLparam1(Int64);
+  CAMLreturn(alloc_generic_value(
+    LLVMCreateGenericValueOfInt(Ty, Int64_val(Int64), 1)));
 }
 
 /* Llvm.lltype -> t -> float */
 CAMLprim value llvm_genericvalue_as_float(LLVMTypeRef Ty, value GenVal) {
-  return copy_double(LLVMGenericValueToFloat(Ty, Genericvalue_val(GenVal)));
+  CAMLparam1(GenVal);
+  CAMLreturn(copy_double(
+    LLVMGenericValueToFloat(Ty, Genericvalue_val(GenVal))));
 }
 
 /* t -> 'a */
@@ -123,23 +130,26 @@ CAMLprim value llvm_genericvalue_as_int(value GenVal) {
 
 /* t -> int32 */
 CAMLprim value llvm_genericvalue_as_int32(value GenVal) {
+  CAMLparam1(GenVal);
   assert(LLVMGenericValueIntWidth(Genericvalue_val(GenVal)) <= 32
          && "Generic value too wide to treat as an int32!");
-  return copy_int32(LLVMGenericValueToInt(Genericvalue_val(GenVal), 1));
+  CAMLreturn(copy_int32(LLVMGenericValueToInt(Genericvalue_val(GenVal), 1)));
 }
 
 /* t -> int64 */
 CAMLprim value llvm_genericvalue_as_int64(value GenVal) {
+  CAMLparam1(GenVal);
   assert(LLVMGenericValueIntWidth(Genericvalue_val(GenVal)) <= 64
          && "Generic value too wide to treat as an int64!");
-  return copy_int64(LLVMGenericValueToInt(Genericvalue_val(GenVal), 1));
+  CAMLreturn(copy_int64(LLVMGenericValueToInt(Genericvalue_val(GenVal), 1)));
 }
 
 /* t -> nativeint */
 CAMLprim value llvm_genericvalue_as_nativeint(value GenVal) {
+  CAMLparam1(GenVal);
   assert(LLVMGenericValueIntWidth(Genericvalue_val(GenVal)) <= 8 * sizeof(value)
          && "Generic value too wide to treat as a nativeint!");
-  return copy_nativeint(LLVMGenericValueToInt(Genericvalue_val(GenVal),1));
+  CAMLreturn(copy_nativeint(LLVMGenericValueToInt(Genericvalue_val(GenVal),1)));
 }
 
 
