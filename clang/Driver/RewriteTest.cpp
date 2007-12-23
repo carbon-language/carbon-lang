@@ -21,6 +21,7 @@
 #include "clang/Lex/Lexer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/Config/alloca.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <sstream>
 using namespace clang;
