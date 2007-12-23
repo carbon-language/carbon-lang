@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
 using namespace llvm;
@@ -39,7 +40,10 @@ namespace {
     StrongPHIElimination() : MachineFunctionPass((intptr_t)&ID) {}
 
     DenseMap<MachineBasicBlock*,
-             SmallVector<std::pair<unsigned, unsigned>, 2> > Waiting;
+             std::map<unsigned, unsigned> > Waiting;
+    
+    std::map<unsigned, std::vector<unsigned> > Stacks;
+    std::set<unsigned> UsedByAnother;
 
     bool runOnMachineFunction(MachineFunction &Fn);
     
@@ -56,7 +60,7 @@ namespace {
       preorder.clear();
       maxpreorder.clear();
       
-      waiting.clear();
+      Waiting.clear();
     }
 
   private:
@@ -89,8 +93,6 @@ namespace {
     DenseMap<MachineBasicBlock*, unsigned> preorder;
     DenseMap<MachineBasicBlock*, unsigned> maxpreorder;
     
-    DenseMap<MachineBasicBlock*, std::vector<MachineInstr*> > waiting;
-    
     
     void computeDFS(MachineFunction& MF);
     void processBlock(MachineBasicBlock* MBB);
@@ -100,7 +102,7 @@ namespace {
                          std::set<unsigned>& PHIUnion,
                          std::vector<StrongPHIElimination::DomForestNode*>& DF,
                          std::vector<std::pair<unsigned, unsigned> >& locals);
-    
+    void ScheduleCopies(MachineBasicBlock* MBB);
   };
 
   char StrongPHIElimination::ID = 0;
@@ -383,7 +385,8 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
         
         // add a copy from a_i to p in Waiting[From[a_i]]
         MachineBasicBlock* From = P->getOperand(i).getMachineBasicBlock();
-        Waiting[From].push_back(std::make_pair(SrcReg, DestReg));
+        Waiting[From].insert(std::make_pair(SrcReg, DestReg));
+        UsedByAnother.insert(SrcReg);
       } else {
         PHIUnion.insert(SrcReg);
         UnionedBlocks.insert(SrcInfo.DefInst->getParent());
@@ -431,8 +434,10 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
             unsigned SrcReg = p.first;
             MachineBasicBlock* From = P->getOperand(i).getMBB();
             
-            Waiting[From].push_back(std::make_pair(SrcReg,
-                                                   P->getOperand(0).getReg()));
+            Waiting[From].insert(std::make_pair(SrcReg,
+                                                P->getOperand(0).getReg()));
+            UsedByAnother.insert(SrcReg);
+            
             PHIUnion.erase(SrcReg);
           }
         }
@@ -481,7 +486,9 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
             unsigned SrcReg = DFNode->getReg();
             MachineBasicBlock* From = Inst->getOperand(i).getMBB();
             
-            Waiting[From].push_back(std::make_pair(SrcReg, DestReg));
+            Waiting[From].insert(std::make_pair(SrcReg, DestReg));
+            UsedByAnother.insert(SrcReg);
+            
             PHIUnion.erase(SrcReg);
           }
         }
@@ -501,15 +508,102 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
   }
 }
 
+/// ScheduleCopies - Insert copies into predecessor blocks, scheduling
+/// them properly so as to avoid the 'lost copy' and the 'virtual swap'
+/// problems.
+///
+/// Based on "Practical Improvements to the Construction and Destruction
+/// of Static Single Assignment Form" by Briggs, et al.
+void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB) {
+  std::map<unsigned, unsigned>& copy_set= Waiting[MBB];
+  
+  std::map<unsigned, unsigned> worklist;
+  std::map<unsigned, unsigned> map;
+  
+  // Setup worklist of initial copies
+  for (std::map<unsigned, unsigned>::iterator I = copy_set.begin(),
+       E = copy_set.end(); I != E; ) {
+    map.insert(std::make_pair(I->first, I->first));
+    map.insert(std::make_pair(I->second, I->second));
+         
+    if (!UsedByAnother.count(I->first)) {
+      worklist.insert(*I);
+      
+      // Avoid iterator invalidation
+      unsigned first = I->first;
+      ++I;
+      copy_set.erase(first);
+    } else {
+      ++I;
+    }
+  }
+  
+  LiveVariables& LV = getAnalysis<LiveVariables>();
+  
+  // Iterate over the worklist, inserting copies
+  while (!worklist.empty() || !copy_set.empty()) {
+    while (!worklist.empty()) {
+      std::pair<unsigned, unsigned> curr = *worklist.begin();
+      worklist.erase(curr.first);
+      
+      if (isLiveOut(LV.getVarInfo(curr.second), MBB)) {
+        // Insert copy from curr.second to a temporary
+        // Push temporary on Stacks
+      }
+      
+      // Insert copy from map[curr.first] to curr.second
+      map[curr.first] = curr.second;
+      
+      // If curr.first is a destination in copy_set...
+      for (std::map<unsigned, unsigned>::iterator I = copy_set.begin(),
+           E = copy_set.end(); I != E; )
+        if (curr.first == I->second) {
+          std::pair<unsigned, unsigned> temp = *I;
+          
+          // Avoid iterator invalidation
+          ++I;
+          copy_set.erase(temp.first);
+          worklist.insert(temp);
+          
+          break;
+        } else {
+          ++I;
+        }
+    }
+    
+    if (!copy_set.empty()) {
+      std::pair<unsigned, unsigned> curr = *copy_set.begin();
+      copy_set.erase(curr.first);
+      
+      // Insert a copy from dest to a new temporary t at the end of b
+      // map[curr.second] = t;
+      
+      worklist.insert(curr);
+    }
+  }
+}
+
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
+  // Compute DFS numbers of each block
   computeDFS(Fn);
   
+  // Determine which phi node operands need copies
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     if (!I->empty() &&
         I->begin()->getOpcode() == TargetInstrInfo::PHI)
       processBlock(I);
   
-  // FIXME: Insert copies
+  // Insert copies
+  MachineDominatorTree& MDT = getAnalysis<MachineDominatorTree>();
+  for (df_iterator<MachineDomTreeNode*> DI = df_begin(MDT.getRootNode()), 
+       DE = df_end(MDT.getRootNode()); DI != DE; ++DI) {
+    MachineBasicBlock* block = DI->getBlock();
+    
+    // FIXME: Do rewriting with Stacks
+    
+    ScheduleCopies(block);
+  }
+  
   // FIXME: Perform renaming
   
   return false;
