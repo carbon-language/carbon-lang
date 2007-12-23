@@ -21,7 +21,6 @@
 #include "clang/Lex/Lexer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Config/alloca.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <sstream>
 using namespace clang;
@@ -2058,18 +2057,20 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
        CDecl = CDecl->getNextClassCategory())
     if (CDecl->getIdentifier() == IDecl->getIdentifier())
       break;
-    
-  char *FullCategoryName = (char*)alloca(
-    strlen(ClassDecl->getName()) + strlen(IDecl->getName()) + 2);
-  sprintf(FullCategoryName, "%s_%s", ClassDecl->getName(), IDecl->getName());
   
+  std::string FullCategoryName = ClassDecl->getName();
+  FullCategoryName += '_';
+  FullCategoryName += IDecl->getName();
+    
   // Build _objc_method_list for class's instance methods if needed
   RewriteObjcMethodsMetaData(IDecl->instmeth_begin(), IDecl->instmeth_end(),
-                             true, "CATEGORY_", FullCategoryName, Result);
+                             true, "CATEGORY_", FullCategoryName.c_str(),
+                             Result);
   
   // Build _objc_method_list for class's class methods if needed
   RewriteObjcMethodsMetaData(IDecl->classmeth_begin(), IDecl->classmeth_end(),
-                             false, "CATEGORY_", FullCategoryName, Result);
+                             false, "CATEGORY_", FullCategoryName.c_str(),
+                             Result);
   
   // Protocols referenced in class declaration?
   // Null CDecl is case of a category implementation with no category interface
@@ -2077,7 +2078,7 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
     RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(),
                                  CDecl->getNumReferencedProtocols(),
                                  "CATEGORY",
-                                 FullCategoryName, Result);
+                                 FullCategoryName.c_str(), Result);
   
   /* struct _objc_category {
    char *category_name;
