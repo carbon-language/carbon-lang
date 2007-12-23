@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/DominatorInternals.h"
+#include "llvm/ADT/GraphTraits.h"
 
 namespace llvm {
 
@@ -179,6 +180,32 @@ public:
   
   virtual void print(std::ostream &OS, const Module* M= 0) const {
     DT->print(OS, M);
+  }
+};
+
+//===-------------------------------------
+/// DominatorTree GraphTraits specialization so the DominatorTree can be
+/// iterable by generic graph iterators.
+///
+template <> struct GraphTraits<MachineDomTreeNode *> {
+  typedef MachineDomTreeNode NodeType;
+  typedef NodeType::iterator  ChildIteratorType;
+  
+  static NodeType *getEntryNode(NodeType *N) {
+    return N;
+  }
+  static inline ChildIteratorType child_begin(NodeType* N) {
+    return N->begin();
+  }
+  static inline ChildIteratorType child_end(NodeType* N) {
+    return N->end();
+  }
+};
+
+template <> struct GraphTraits<MachineDominatorTree*>
+  : public GraphTraits<MachineDomTreeNode *> {
+  static NodeType *getEntryNode(MachineDominatorTree *DT) {
+    return DT->getRootNode();
   }
 };
 
