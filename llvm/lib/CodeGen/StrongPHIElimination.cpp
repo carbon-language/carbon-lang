@@ -102,7 +102,8 @@ namespace {
                          std::set<unsigned>& PHIUnion,
                          std::vector<StrongPHIElimination::DomForestNode*>& DF,
                          std::vector<std::pair<unsigned, unsigned> >& locals);
-    void ScheduleCopies(MachineBasicBlock* MBB);
+    void ScheduleCopies(MachineBasicBlock* MBB, std::set<unsigned>& pushed);
+    void InsertCopies(MachineBasicBlock* MBB);
   };
 
   char StrongPHIElimination::ID = 0;
@@ -514,7 +515,8 @@ void StrongPHIElimination::processPHIUnion(MachineInstr* Inst,
 ///
 /// Based on "Practical Improvements to the Construction and Destruction
 /// of Static Single Assignment Form" by Briggs, et al.
-void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB) {
+void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB,
+                                          std::set<unsigned>& pushed) {
   std::map<unsigned, unsigned>& copy_set= Waiting[MBB];
   
   std::map<unsigned, unsigned> worklist;
@@ -549,6 +551,7 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB) {
       if (isLiveOut(LV.getVarInfo(curr.second), MBB)) {
         // Insert copy from curr.second to a temporary
         // Push temporary on Stacks
+        // Insert temporary in pushed
       }
       
       // Insert copy from map[curr.first] to curr.second
@@ -583,6 +586,34 @@ void StrongPHIElimination::ScheduleCopies(MachineBasicBlock* MBB) {
   }
 }
 
+/// InsertCopies - insert copies into MBB and all of its successors
+void StrongPHIElimination::InsertCopies(MachineBasicBlock* MBB) {
+  std::set<unsigned> pushed;
+  
+  // Rewrite register uses from Stacks
+  for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
+      I != E; ++I)
+    for (unsigned i = 0; i < I->getNumOperands(); ++i)
+      if (I->getOperand(i).isRegister() &&
+          Stacks[I->getOperand(i).getReg()].size()) {
+        I->getOperand(i).setReg(Stacks[I->getOperand(i).getReg()].back());
+      }
+  
+  // Schedule the copies for this block
+  ScheduleCopies(MBB, pushed);
+  
+  // Recur to our successors
+  for (GraphTraits<MachineBasicBlock*>::ChildIteratorType I = 
+       GraphTraits<MachineBasicBlock*>::child_begin(MBB), E =
+       GraphTraits<MachineBasicBlock*>::child_end(MBB); I != E; ++I)
+    InsertCopies(*I);
+  
+  // As we exit this block, pop the names we pushed while processing it
+  for (std::set<unsigned>::iterator I = pushed.begin(), 
+       E = pushed.end(); I != E; ++I)
+    Stacks[*I].pop_back();
+}
+
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
   // Compute DFS numbers of each block
   computeDFS(Fn);
@@ -594,15 +625,8 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &Fn) {
       processBlock(I);
   
   // Insert copies
-  MachineDominatorTree& MDT = getAnalysis<MachineDominatorTree>();
-  for (df_iterator<MachineDomTreeNode*> DI = df_begin(MDT.getRootNode()), 
-       DE = df_end(MDT.getRootNode()); DI != DE; ++DI) {
-    MachineBasicBlock* block = DI->getBlock();
-    
-    // FIXME: Do rewriting with Stacks
-    
-    ScheduleCopies(block);
-  }
+  // FIXME: This process should probably preserve LiveVariables
+  InsertCopies(Fn.begin());
   
   // FIXME: Perform renaming
   
