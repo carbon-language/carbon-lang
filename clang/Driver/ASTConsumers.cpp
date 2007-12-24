@@ -654,10 +654,12 @@ ASTConsumer *clang::CreateBCWriter(const std::string& InFile,
       Path.eraseSuffix();
       Path.appendSuffix("bc");
       FileName = Path.toString();
-      Out = new std::ofstream(FileName.c_str());
+      Out = new std::ofstream(FileName.c_str(), 
+                              std::ios_base::binary|std::ios_base::out);
     }
   } else {
-    Out = new std::ofstream(FileName.c_str());
+    Out = new std::ofstream(FileName.c_str(), 
+                            std::ios_base::binary|std::ios_base::out);
   }
 
   return new BCWriter(Out, Diags, Features);
