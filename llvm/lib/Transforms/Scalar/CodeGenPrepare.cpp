@@ -37,6 +37,8 @@ using namespace llvm;
 namespace {
   cl::opt<bool> OptExtUses("optimize-ext-uses",
                            cl::init(true), cl::Hidden);
+  // LLCBETA option.
+  cl::opt<bool> DontHackBackedge("backedge-hack", cl::Hidden);
 }
 
 namespace {  
@@ -264,7 +266,7 @@ void CodeGenPrepare::EliminateMostlyEmptyBlock(BasicBlock *BB) {
 }
 
 
-/// SplitEdgeNicely - Split the critical edge from TI to it's specified
+/// SplitEdgeNicely - Split the critical edge from TI to its specified
 /// successor if it will improve codegen.  We only do this if the successor has
 /// phi nodes (otherwise critical edges are ok).  If there is already another
 /// predecessor of the succ that is empty (and thus has no phi nodes), use it
@@ -275,9 +277,15 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   assert(isa<PHINode>(Dest->begin()) &&
          "This should only be called if Dest has a PHI!");
   
+  // As a hack, never split backedges of loops.  Even though the copy for any
+  // PHIs inserted on the backedge would be dead for exits from the loop, we
+  // assume that the cost of *splitting* the backedge would be too high.
+  if (DontHackBackedge && Dest == TIBB)
+    return;
+  
   /// TIPHIValues - This array is lazily computed to determine the values of
   /// PHIs in Dest that TI would provide.
-  std::vector<Value*> TIPHIValues;
+  SmallVector<Value*, 32> TIPHIValues;
   
   // Check to see if Dest has any blocks that can be used as a split edge for
   // this terminator.
