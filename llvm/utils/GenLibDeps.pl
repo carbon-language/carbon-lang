@@ -62,7 +62,8 @@ foreach my $lib (@libs ) {
   while (<DEFS>) {
     next if (! / [ABCDGRST] /);
     s/^[^ ]* [ABCDGRST] //;    
-    chomp($_);
+    s/\015?\012//; # not sure if <DEFS> is in binmode and uses LF or CRLF.
+                   # this strips both LF and CRLF.
     $libdefs{$_} = $lib;
   }
   close DEFS;
@@ -74,7 +75,8 @@ foreach my $obj (@objs ) {
   while (<DEFS>) {
     next if (! / [ABCDGRST] /);
     s/^[^ ]* [ABCDGRST] //;
-    chomp($_);
+    s/\015?\012//; # not sure if <DEFS> is in binmode and uses LF or CRLF.
+                   # this strips both LF and CRLF.    
     $objdefs{$_} = $obj;
   }
   close DEFS;
