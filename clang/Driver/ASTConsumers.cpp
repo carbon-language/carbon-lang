@@ -21,6 +21,7 @@
 #include "clang/Analysis/Analyses/LiveVariables.h"
 #include "clang/Analysis/LocalCheckers.h"
 #include "llvm/Support/Streams.h"
+#include <fstream>
 
 using namespace clang;
 
@@ -554,17 +555,19 @@ ASTConsumer *clang::CreateUnitValsChecker(Diagnostic &Diags) {
 #include "llvm/Module.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 
 namespace {
-  class LLVMEmitter : public ASTConsumer {
+  class CodeGenerator : public ASTConsumer {
     Diagnostic &Diags;
-    llvm::Module *M;
     const llvm::TargetData *TD;
     ASTContext *Ctx;
     const LangOptions &Features;
+  protected:
+    llvm::Module *M;
     CodeGen::CodeGenModule *Builder;
   public:
-    LLVMEmitter(Diagnostic &diags, const LangOptions &LO) 
+    CodeGenerator(Diagnostic &diags, const LangOptions &LO)
       : Diags(diags)
       , Features(LO) {}
     virtual void Initialize(ASTContext &Context) {
@@ -593,7 +596,15 @@ namespace {
         //    << D->getName() << "'\n";
       }
     }
-    
+  };
+}
+
+namespace {
+  class LLVMEmitter : public CodeGenerator {
+  public:
+    LLVMEmitter(Diagnostic &diags, const LangOptions &LO)
+    : CodeGenerator(diags,LO) {}
+
     ~LLVMEmitter() {
       CodeGen::Terminate(Builder);
       
@@ -601,12 +612,45 @@ namespace {
       M->print(llvm::cout.stream());
       delete M;
     }
-  }; 
-} // end anonymous namespace
+  };
+}
 
 ASTConsumer *clang::CreateLLVMEmitter(Diagnostic &Diags, 
                                       const LangOptions &Features) {
   return new LLVMEmitter(Diags, Features);
+}
+
+namespace {
+  class BCWriter : public CodeGenerator {
+  public:
+    std::ostream& Out;
+
+    BCWriter(std::ostream* out, Diagnostic &diags, const LangOptions &LO)
+    : CodeGenerator(diags,LO)
+    , Out(*out) {}
+
+    ~BCWriter() {
+      CodeGen::Terminate(Builder);
+      llvm::WriteBitcodeToFile(M, Out);
+      delete M;
+    }
+  };
+}
+
+ASTConsumer *clang::CreateBCWriter(const std::string& InFile,
+                                   const std::string& OutputFile,
+                                   Diagnostic &Diags,
+                                   const LangOptions &Features) {
+  std::string FileName = OutputFile;
+  if (!OutputFile.size()) {
+    llvm::sys::Path Path(InFile);
+    Path.eraseSuffix();
+    Path.appendSuffix("bc");
+    FileName = Path.toString();
+  }
+
+  std::ofstream *Out = new std::ofstream(FileName.c_str());
+  return new BCWriter(Out, Diags, Features);
 }
 
 //===----------------------------------------------------------------------===//

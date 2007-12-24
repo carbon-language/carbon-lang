@@ -55,6 +55,7 @@ Stats("stats", llvm::cl::desc("Print performance metrics and statistics"));
 enum ProgActions {
   RewriteTest,                  // Rewriter testing stuff.
   EmitLLVM,                     // Emit a .ll file.
+  EmitBC,                       // Emit a .bc file.
   SerializeAST,                 // Emit a .ast file.
   ASTPrint,                     // Parse ASTs and print them.
   ASTDump,                      // Parse ASTs and dump them.
@@ -110,6 +111,8 @@ ProgAction(llvm::cl::desc("Choose output type:"), llvm::cl::ZeroOrMore,
                         "Run prototype serializtion code."),
              clEnumValN(EmitLLVM, "emit-llvm",
                         "Build ASTs then convert to LLVM, emit .ll file"),
+             clEnumValN(EmitBC, "emit-llvm-bc",
+                        "Build ASTs then convert to LLVM, emit .bc file"),
              clEnumValN(SerializeAST, "serialize",
                         "Build ASTs and emit .ast file"),
              clEnumValN(RewriteTest, "rewrite-test",
@@ -925,7 +928,10 @@ static ASTConsumer* CreateASTConsumer(const std::string& InFile,
       
     case EmitLLVM:
       return CreateLLVMEmitter(Diag, LangOpts);
-      
+
+    case EmitBC:
+      return CreateBCWriter(InFile, OutputFile, Diag, LangOpts);
+
     case SerializeAST:
       // FIXME: Allow user to tailor where the file is written.
       return CreateASTSerializer(InFile, OutputFile, Diag, LangOpts);

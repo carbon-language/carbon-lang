@@ -41,6 +41,11 @@ ASTConsumer *CreateUnitValsChecker(Diagnostic &Diags);
 
 ASTConsumer *CreateLLVMEmitter(Diagnostic &Diags, const LangOptions &Features);
 
+ASTConsumer *CreateBCWriter(const std::string& InFile,
+                            const std::string& OutFile,
+                            Diagnostic &Diags,
+                            const LangOptions &LOpts);
+
 ASTConsumer *CreateCodeRewriterTest(Diagnostic &Diags);
 
 ASTConsumer *CreateSerializationTest(Diagnostic &Diags,
