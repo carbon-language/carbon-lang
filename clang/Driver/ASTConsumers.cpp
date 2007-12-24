@@ -644,14 +644,14 @@ ASTConsumer *clang::CreateBCWriter(const std::string& InFile,
   std::string FileName = OutputFile;
   
   std::ostream *Out;
-  if (!OutputFile.size()) {
+  if (OutputFile == "-" || InFile == "-")
+    Out = llvm::cout.stream();
+  else if (!OutputFile.size()) {
     llvm::sys::Path Path(InFile);
     Path.eraseSuffix();
     Path.appendSuffix("bc");
     FileName = Path.toString();
     Out = new std::ofstream(FileName.c_str());
-  } else if (OutputFile == "-") {
-    Out = llvm::cout.stream();
   } else {
     Out = new std::ofstream(FileName.c_str());
   }
