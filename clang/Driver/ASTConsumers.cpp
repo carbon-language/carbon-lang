@@ -642,14 +642,20 @@ ASTConsumer *clang::CreateBCWriter(const std::string& InFile,
                                    Diagnostic &Diags,
                                    const LangOptions &Features) {
   std::string FileName = OutputFile;
+  
+  std::ostream *Out;
   if (!OutputFile.size()) {
     llvm::sys::Path Path(InFile);
     Path.eraseSuffix();
     Path.appendSuffix("bc");
     FileName = Path.toString();
+    Out = new std::ofstream(FileName.c_str());
+  } else if (OutputFile == "-") {
+    Out = llvm::cout.stream();
+  } else {
+    Out = new std::ofstream(FileName.c_str());
   }
 
-  std::ofstream *Out = new std::ofstream(FileName.c_str());
   return new BCWriter(Out, Diags, Features);
 }
 
