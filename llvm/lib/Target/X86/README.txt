@@ -1573,3 +1573,15 @@ _test:
 
 //===---------------------------------------------------------------------===//
 
+We can fold a store into "zeroing a reg".  Instead of:
+
+xorl    %eax, %eax
+movl    %eax, 124(%esp)
+
+we should get:
+
+movl    $0, 124(%esp)
+
+if the flags of the xor are dead.
+
+//===---------------------------------------------------------------------===//
