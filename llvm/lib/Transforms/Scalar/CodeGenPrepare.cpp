@@ -37,8 +37,6 @@ using namespace llvm;
 namespace {
   cl::opt<bool> OptExtUses("optimize-ext-uses",
                            cl::init(true), cl::Hidden);
-  // LLCBETA option.
-  cl::opt<bool> DontHackBackedge("backedge-hack", cl::Hidden);
 }
 
 namespace {  
@@ -280,7 +278,7 @@ static void SplitEdgeNicely(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
   // As a hack, never split backedges of loops.  Even though the copy for any
   // PHIs inserted on the backedge would be dead for exits from the loop, we
   // assume that the cost of *splitting* the backedge would be too high.
-  if (DontHackBackedge && Dest == TIBB)
+  if (Dest == TIBB)
     return;
   
   /// TIPHIValues - This array is lazily computed to determine the values of
