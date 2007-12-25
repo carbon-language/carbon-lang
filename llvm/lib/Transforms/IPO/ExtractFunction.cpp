@@ -96,6 +96,8 @@ namespace {
                                        GlobalValue::ExternalLinkage);
           New->setCallingConv(I->getCallingConv());
           New->setParamAttrs(I->getParamAttrs());
+          if (I->hasCollector())
+            New->setCollector(I->getCollector());
 
           // If it's not the named function, delete the body of the function
           I->dropAllReferences();

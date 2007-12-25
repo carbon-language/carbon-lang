@@ -424,6 +424,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
   Function *NF = new Function(NFTy, F->getLinkage(), F->getName());
   NF->setCallingConv(F->getCallingConv());
   NF->setParamAttrs(PAL);
+  if (F->hasCollector())
+    NF->setCollector(F->getCollector());
   F->getParent()->getFunctionList().insert(F, NF);
 
   // Get the alias analysis information that we need to update to reflect our

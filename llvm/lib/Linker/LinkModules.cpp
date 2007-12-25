@@ -359,6 +359,8 @@ static void CopyGVAttributes(GlobalValue *DestGV, const GlobalValue *SrcGV) {
     Function *DestF = cast<Function>(DestGV);
     DestF->setCallingConv(SrcF->getCallingConv());
     DestF->setParamAttrs(SrcF->getParamAttrs());
+    if (SrcF->hasCollector())
+      DestF->setCollector(SrcF->getCollector());
   }
 }
 

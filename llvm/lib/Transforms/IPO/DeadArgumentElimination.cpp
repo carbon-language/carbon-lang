@@ -159,6 +159,8 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
   Function *NF = new Function(NFTy, Fn.getLinkage());
   NF->setCallingConv(Fn.getCallingConv());
   NF->setParamAttrs(Fn.getParamAttrs());
+  if (Fn.hasCollector())
+    NF->setCollector(Fn.getCollector());
   Fn.getParent()->getFunctionList().insert(&Fn, NF);
   NF->takeName(&Fn);
 
@@ -541,6 +543,8 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   Function *NF = new Function(NFTy, F->getLinkage());
   NF->setCallingConv(F->getCallingConv());
   NF->setParamAttrs(PAL);
+  if (F->hasCollector())
+    NF->setCollector(F->getCollector());
   F->getParent()->getFunctionList().insert(F, NF);
   NF->takeName(F);
 

@@ -1572,6 +1572,11 @@ void CppWriter::printFunctionHead(const Function* F) {
     Out << ");";
     nl(Out);
   }
+  if (F->hasCollector()) {
+    printCppName(F);
+    Out << "->setCollector(\"" << F->getCollector() << "\");";
+    nl(Out);
+  }
   if (is_inline) {
     Out << "}";
     nl(Out);
