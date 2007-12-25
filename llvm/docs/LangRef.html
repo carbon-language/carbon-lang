@@ -3995,8 +3995,9 @@ value address) contains the meta-data to be associated with the root.</p>
 
 <p>At runtime, a call to this intrinsics stores a null pointer into the "ptrloc"
 location.  At compile-time, the code generator generates information to allow
-the runtime to find the pointer at GC safe points.
-</p>
+the runtime to find the pointer at GC safe points. The '<tt>llvm.gcroot</tt>'
+intrinsic may only be used in a function which <a href="#gc">specifies a GC
+algorithm</a>.</p>
 
 </div>
 
@@ -4031,7 +4032,9 @@ null).</p>
 
 <p>The '<tt>llvm.gcread</tt>' intrinsic has the same semantics as a load
 instruction, but may be replaced with substantially more complex code by the
-garbage collector runtime, as needed.</p>
+garbage collector runtime, as needed. The '<tt>llvm.gcread</tt>' intrinsic
+may only be used in a function which <a href="#gc">specifies a GC
+algorithm</a>.</p>
 
 </div>
 
@@ -4066,7 +4069,9 @@ null.</p>
 
 <p>The '<tt>llvm.gcwrite</tt>' intrinsic has the same semantics as a store
 instruction, but may be replaced with substantially more complex code by the
-garbage collector runtime, as needed.</p>
+garbage collector runtime, as needed. The '<tt>llvm.gcwrite</tt>' intrinsic
+may only be used in a function which <a href="#gc">specifies a GC
+algorithm</a>.</p>
 
 </div>
 
