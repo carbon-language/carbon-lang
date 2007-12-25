@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llc
 
-	%Env = type opaque*
+	%Env = type i8*
 
 define void @.main(%Env) {
 	%Root = alloca %Env

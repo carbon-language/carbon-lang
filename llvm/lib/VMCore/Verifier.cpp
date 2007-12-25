@@ -1153,12 +1153,6 @@ void Verifier::visitInstruction(Instruction &I) {
   InstsInThisBlock.insert(&I);
 }
 
-static bool HasPtrPtrType(Value *Val) {
-  if (const PointerType *PtrTy = dyn_cast<PointerType>(Val->getType()))
-    return isa<PointerType>(PtrTy->getElementType());
-  return false;
-}
-
 /// visitIntrinsicFunction - Allow intrinsics to be verified in different ways.
 ///
 void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
@@ -1173,30 +1167,43 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   switch (ID) {
   default:
     break;
-  case Intrinsic::gcroot:
-    Assert1(HasPtrPtrType(CI.getOperand(1)),
-            "llvm.gcroot parameter #1 must be a pointer to a pointer.", &CI);
-    Assert1(isa<AllocaInst>(IntrinsicInst::StripPointerCasts(CI.getOperand(1))),
-            "llvm.gcroot parameter #1 must be an alloca (or a bitcast of one).",
-            &CI);
-    Assert1(isa<Constant>(CI.getOperand(2)),
-            "llvm.gcroot parameter #2 must be a constant.", &CI);
-    break;
-  case Intrinsic::gcwrite:
-    Assert1(CI.getOperand(3)->getType()
-            == PointerType::getUnqual(CI.getOperand(1)->getType()),
-            "Call to llvm.gcwrite must be with type 'void (%ty*, %ty2*, %ty**)'.",
-            &CI);
-    break;
-  case Intrinsic::gcread:
-    Assert1(CI.getOperand(2)->getType() == PointerType::getUnqual(CI.getType()),
-            "Call to llvm.gcread must be with type '%ty* (%ty2*, %ty**).'",
-            &CI);
-    break;
+  case Intrinsic::gcroot: {
+      Type *PtrTy    = PointerType::getUnqual(Type::Int8Ty),
+           *PtrPtrTy = PointerType::getUnqual(PtrTy);
+      Assert1(CI.getOperand(1)->getType() == PtrPtrTy,
+              "Intrinsic parameter #1 is not i8**.", &CI);
+      Assert1(CI.getOperand(2)->getType() == PtrTy,
+              "Intrinsic parameter #2 is not i8*.", &CI);
+      Assert1(
+            isa<AllocaInst>(IntrinsicInst::StripPointerCasts(CI.getOperand(1))),
+            "llvm.gcroot parameter #1 must be an alloca.",
+              &CI);
+      Assert1(isa<Constant>(CI.getOperand(2)),
+              "llvm.gcroot parameter #2 must be a constant.", &CI);
+    } break;
+  case Intrinsic::gcwrite: {
+      Type *PtrTy    = PointerType::getUnqual(Type::Int8Ty),
+           *PtrPtrTy = PointerType::getUnqual(PtrTy);
+      Assert1(CI.getOperand(1)->getType() == PtrTy,
+              "Intrinsic parameter #1 is not a i8*.", &CI);
+      Assert1(CI.getOperand(2)->getType() == PtrTy,
+              "Intrinsic parameter #2 is not a i8*.", &CI);
+      Assert1(CI.getOperand(3)->getType() == PtrPtrTy,
+              "Intrinsic parameter #3 is not a i8**.", &CI);
+    } break;
+  case Intrinsic::gcread: {
+      Type *PtrTy    = PointerType::getUnqual(Type::Int8Ty),
+           *PtrPtrTy = PointerType::getUnqual(PtrTy);
+      Assert1(CI.getOperand(1)->getType() == PtrTy,
+              "Intrinsic parameter #1 is not a i8*.", &CI);
+      Assert1(CI.getOperand(2)->getType() == PtrPtrTy,
+              "Intrinsic parameter #2 is not a i8**.", &CI);
+    } break;
   case Intrinsic::init_trampoline:
     Assert1(isa<Function>(IntrinsicInst::StripPointerCasts(CI.getOperand(2))),
             "llvm.init_trampoline parameter #2 must resolve to a function.",
             &CI);
+    break;
   }
 }
 
