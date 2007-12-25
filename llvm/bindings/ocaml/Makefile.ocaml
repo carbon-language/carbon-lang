@@ -42,9 +42,10 @@ OCAMLAFLAGS += $(patsubst %,-cclib %, \
                                           $(shell $(LLVM_CONFIG) --ldflags)) \
                                           $(UsedLibs))
  
-ifneq ($(ENABLE_OPTIMIZED),1)
-  OCAMLDEBUGFLAG := -g
-endif
+# -g was introduced in 3.10.0.
+#ifneq ($(ENABLE_OPTIMIZED),1)
+#  OCAMLDEBUGFLAG := -g
+#endif
 
 Compile.CMI  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
 Compile.CMO  := $(strip $(OCAMLC) -c $(OCAMLCFLAGS) $(OCAMLDEBUGFLAG) -o)
