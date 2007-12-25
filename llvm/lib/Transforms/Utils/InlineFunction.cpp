@@ -201,6 +201,19 @@ bool llvm::InlineFunction(CallSite CS, CallGraph *CG, const TargetData *TD) {
   BasicBlock *OrigBB = TheCall->getParent();
   Function *Caller = OrigBB->getParent();
 
+  
+  // GC poses two hazards to inlining, which only occur when the callee has GC:
+  //  1. If the caller has no GC, then the callee's GC must be propagated to the
+  //     caller.
+  //  2. If the caller has a differing GC, it is invalid to inline.
+  if (CalledFunc->hasCollector()) {
+    if (!Caller->hasCollector())
+      Caller->setCollector(CalledFunc->getCollector());
+    else if (CalledFunc->getCollector() != Caller->getCollector())
+      return false;
+  }
+  
+  
   // Get an iterator to the last basic block in the function, which will have
   // the new function inlined after it.
   //
