@@ -188,6 +188,7 @@ ArchiveOperation parseCommandLine() {
     case 'd': ++NumOperations; Operation = Delete; break;
     case 'm': ++NumOperations; Operation = Move ; break;
     case 'p': ++NumOperations; Operation = Print; break;
+    case 'q': ++NumOperations; Operation = QuickAppend; break;
     case 'r': ++NumOperations; Operation = ReplaceOrInsert; break;
     case 't': ++NumOperations; Operation = DisplayTable; break;
     case 'x': ++NumOperations; Operation = Extract; break;
