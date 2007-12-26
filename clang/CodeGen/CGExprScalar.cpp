@@ -368,50 +368,27 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
   // Finally, we have the arithmetic types: real int/float.
   if (isa<llvm::IntegerType>(Src->getType())) {
     bool InputSigned = SrcType->isSignedIntegerType();
-    if (llvm::Constant *C = dyn_cast<llvm::Constant>(Src)) {
-        if (isa<llvm::IntegerType>(DstTy))
-          return llvm::ConstantExpr::getIntegerCast(C, DstTy, InputSigned);
-        else if (InputSigned)
-          return llvm::ConstantExpr::getSIToFP(C, DstTy);
-        else 
-          return llvm::ConstantExpr::getUIToFP(C, DstTy);
-    } else {
-      if (isa<llvm::IntegerType>(DstTy))
-        return Builder.CreateIntCast(Src, DstTy, InputSigned, "conv");
-      else if (InputSigned)
-        return Builder.CreateSIToFP(Src, DstTy, "conv");
-      else
-        return Builder.CreateUIToFP(Src, DstTy, "conv");
-    }
+    if (isa<llvm::IntegerType>(DstTy))
+      return Builder.CreateIntCast(Src, DstTy, InputSigned, "conv");
+    else if (InputSigned)
+      return Builder.CreateSIToFP(Src, DstTy, "conv");
+    else
+      return Builder.CreateUIToFP(Src, DstTy, "conv");
   }
   
   assert(Src->getType()->isFloatingPoint() && "Unknown real conversion");
   if (isa<llvm::IntegerType>(DstTy)) {
-    if (llvm::Constant *C = dyn_cast<llvm::Constant>(Src)) {
-      if (DstType->isSignedIntegerType())
-        return llvm::ConstantExpr::getFPToSI(C, DstTy);
-      else
-        return llvm::ConstantExpr::getFPToUI(C, DstTy);
-    } else {
-      if (DstType->isSignedIntegerType())
-        return Builder.CreateFPToSI(Src, DstTy, "conv");
-      else
-        return Builder.CreateFPToUI(Src, DstTy, "conv");
-    }
+    if (DstType->isSignedIntegerType())
+      return Builder.CreateFPToSI(Src, DstTy, "conv");
+    else
+      return Builder.CreateFPToUI(Src, DstTy, "conv");
   }
 
   assert(DstTy->isFloatingPoint() && "Unknown real conversion");
-  if (llvm::Constant *C = dyn_cast<llvm::Constant>(Src)) {
-    if (DstTy->getTypeID() < Src->getType()->getTypeID())
-      return llvm::ConstantExpr::getFPTrunc(C, DstTy);
-    else
-      return llvm::ConstantExpr::getFPExtend(C, DstTy);
-  } else {
-    if (DstTy->getTypeID() < Src->getType()->getTypeID())
-      return Builder.CreateFPTrunc(Src, DstTy, "conv");
-    else
-      return Builder.CreateFPExt(Src, DstTy, "conv");
-  }
+  if (DstTy->getTypeID() < Src->getType()->getTypeID())
+    return Builder.CreateFPTrunc(Src, DstTy, "conv");
+  else
+    return Builder.CreateFPExt(Src, DstTy, "conv");
 }
 
 /// EmitComplexToScalarConversion - Emit a conversion from the specified
