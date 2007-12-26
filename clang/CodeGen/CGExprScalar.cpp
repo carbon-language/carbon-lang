@@ -756,10 +756,7 @@ Value *ScalarExprEmitter::VisitBinSub(const BinaryOperator *E) {
   Value *RHS = Visit(E->getRHS());
   
   const QualType LHSType = E->getLHS()->getType().getCanonicalType();
-  const QualType RHSType = E->getRHS()->getType().getCanonicalType();
-  assert(LHSType == RHSType && "Can't subtract different pointer types");
-  
-  QualType LHSElementType = cast<PointerType>(LHSType)->getPointeeType();
+  const QualType LHSElementType = cast<PointerType>(LHSType)->getPointeeType();
   uint64_t ElementSize = CGF.getContext().getTypeSize(LHSElementType,
                                                       SourceLocation()) / 8;
   
