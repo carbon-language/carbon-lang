@@ -668,7 +668,7 @@ CAMLprim value llvm_incoming(LLVMValueRef PhiNode) {
 
 #define Builder_val(v)  (*(LLVMBuilderRef *)(Data_custom_val(v)))
 
-void llvm_finalize_builder(value B) {
+static void llvm_finalize_builder(value B) {
   LLVMDisposeBuilder(Builder_val(B));
 }
 
@@ -681,24 +681,29 @@ static struct custom_operations builder_ops = {
   custom_deserialize_default
 };
 
-/* llvalue -> llbuilder */
-CAMLprim value llvm_builder_before(LLVMValueRef Inst) {
-  value V;
-  LLVMBuilderRef B = LLVMCreateBuilder();
-  LLVMPositionBuilderBefore(B, Inst);
-  V = alloc_custom(&builder_ops, sizeof(LLVMBuilderRef), 0, 1);
+static value alloc_builder(LLVMBuilderRef B) {
+  value V = alloc_custom(&builder_ops, sizeof(LLVMBuilderRef), 0, 1);
   Builder_val(V) = B;
   return V;
 }
 
+/* unit-> llbuilder */
+CAMLprim value llvm_builder(value Unit) {
+  return alloc_builder(LLVMCreateBuilder());
+}
+
+/* llvalue -> llbuilder */
+CAMLprim value llvm_builder_before(LLVMValueRef Inst) {
+  LLVMBuilderRef B = LLVMCreateBuilder();
+  LLVMPositionBuilderBefore(B, Inst);
+  return alloc_builder(B);
+}
+
 /* llbasicblock -> llbuilder */
 CAMLprim value llvm_builder_at_end(LLVMBasicBlockRef BB) {
-  value V;
   LLVMBuilderRef B = LLVMCreateBuilder();
   LLVMPositionBuilderAtEnd(B, BB);
-  V = alloc_custom(&builder_ops, sizeof(LLVMBuilderRef), 0, 1);
-  Builder_val(V) = B;
-  return V;
+  return alloc_builder(B);
 }
 
 /* llvalue -> llbuilder -> unit */

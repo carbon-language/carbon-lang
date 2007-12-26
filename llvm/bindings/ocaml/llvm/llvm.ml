@@ -327,6 +327,8 @@ external incoming : llvalue -> (llvalue * llbasicblock) list = "llvm_incoming"
 
 
 (*===-- Instruction builders ----------------------------------------------===*)
+external builder: unit-> llbuilder
+                = "llvm_builder"
 external builder_before : llvalue -> llbuilder = "llvm_builder_before"
 external builder_at_end : llbasicblock -> llbuilder = "llvm_builder_at_end"
 external position_before : llvalue -> llbuilder -> unit = "llvm_position_before"

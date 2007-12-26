@@ -847,6 +847,12 @@ external incoming : llvalue -> (llvalue * llbasicblock) list = "llvm_incoming"
 
 (*===-- Instruction builders ----------------------------------------------===*)
 
+(** [builder] creates an instruction builder with no position. It is invalid to
+    use this builder until its position is set with [position_before] or
+    [position_at_end]. See the constructor for [llvm::LLVMBuilder]. **)
+external builder: unit-> llbuilder
+                = "llvm_builder"
+
 (** [builder_before ins] creates an instruction builder positioned before the
     instruction [isn]. See the constructor for [llvm::LLVMBuilder]. **)
 external builder_before : llvalue -> llbuilder = "llvm_builder_before"
