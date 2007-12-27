@@ -1,4 +1,4 @@
-// RUN: clang %s -emit-llvm | llvm-as | opt -std-compile-opts | llvm-dis | grep 'ret i32 6'
+// RUN: clang %s -emit-llvm-bc -o - | opt -std-compile-opts | llvm-dis | grep 'ret i32 6'
 
 static enum { foo, bar = 1U } z;
 
