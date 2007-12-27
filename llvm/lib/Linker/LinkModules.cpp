@@ -663,6 +663,9 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                      "': symbols have different visibilities!");
     }
     
+    if (DF && DF->hasInternalLinkage())
+      DF = NULL;
+
     if (DF && DF->getType() != SF->getType()) {
       if (DF->isDeclaration() && !SF->isDeclaration()) {
         // We have a definition of the same name but different type in the
