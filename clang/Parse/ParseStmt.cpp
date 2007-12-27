@@ -87,9 +87,9 @@ Parser::StmtResult Parser::ParseStatementOrDeclaration(bool OnlyStatement) {
   case tok::at: // May be a @try or @throw statement
     {
       AtLoc = ConsumeToken();  // consume @
-      if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_try)
+      if (Tok.isObjCAtKeyword(tok::objc_try))
         return ParseObjCTryStmt(AtLoc);
-      else if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_throw)
+      else if (Tok.isObjCAtKeyword(tok::objc_throw))
         return ParseObjCThrowStmt(AtLoc);
       ExprResult Res = ParseExpressionWithLeadingAt(AtLoc);
       if (Res.isInvalid) {
