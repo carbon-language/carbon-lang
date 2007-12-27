@@ -546,14 +546,14 @@ namespace llvm {
       return reinterpret_cast<ref>(const_cast<ty*>(P)); \
     }
   
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Type,           LLVMTypeRef          )
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Value,          LLVMValueRef         )
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Module,         LLVMModuleRef        )
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(BasicBlock,     LLVMBasicBlockRef    )
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LLVMBuilder,    LLVMBuilderRef       )
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(PATypeHolder,   LLVMTypeHandleRef    )
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ModuleProvider, LLVMModuleProviderRef)
-  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(MemoryBuffer,   LLVMMemoryBufferRef  )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Type,               LLVMTypeRef          )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Value,              LLVMValueRef         )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(Module,             LLVMModuleRef        )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(BasicBlock,         LLVMBasicBlockRef    )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(LLVMFoldingBuilder, LLVMBuilderRef       )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(PATypeHolder,       LLVMTypeHandleRef    )
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(ModuleProvider,     LLVMModuleProviderRef)
+  DEFINE_SIMPLE_CONVERSION_FUNCTIONS(MemoryBuffer,       LLVMMemoryBufferRef  )
   
   #undef DEFINE_SIMPLE_CONVERSION_FUNCTIONS
   
