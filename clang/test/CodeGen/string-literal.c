@@ -1,4 +1,4 @@
-// RUN: clang -emit-llvm -verify %s
+// RUN: clang -emit-llvm %s
 
 int main() {
   char a[10] = "abc";
