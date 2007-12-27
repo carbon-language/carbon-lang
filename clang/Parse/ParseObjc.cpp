@@ -192,7 +192,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
       return 0;
   }
   DeclTy *ClsType = Actions.ActOnStartClassInterface(
-		      atLoc, nameId, nameLoc, 
+                      atLoc, nameId, nameLoc, 
                       superClassId, superClassLoc, &ProtocolRefs[0], 
                       ProtocolRefs.size(), endProtoLoc, attrList);
             
@@ -223,7 +223,7 @@ Parser::DeclTy *Parser::ParseObjCAtInterfaceDeclaration(
 ///     @optional
 ///
 void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
-					tok::ObjCKeywordKind contextKey) {
+                                        tok::ObjCKeywordKind contextKey) {
   llvm::SmallVector<DeclTy*, 32>  allMethods;
   llvm::SmallVector<DeclTy*, 16> allProperties;
   tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword;
@@ -239,14 +239,14 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
         break;
       } else if (ocKind == tok::objc_required) { // protocols only
         ConsumeToken();
-	MethodImplKind = ocKind;
-	if (contextKey != tok::objc_protocol)
-	  Diag(AtLoc, diag::err_objc_protocol_required);
+        MethodImplKind = ocKind;
+        if (contextKey != tok::objc_protocol)
+          Diag(AtLoc, diag::err_objc_protocol_required);
       } else if (ocKind == tok::objc_optional) { // protocols only
         ConsumeToken();
-	MethodImplKind = ocKind;
-	if (contextKey != tok::objc_protocol)
-	  Diag(AtLoc, diag::err_objc_protocol_optional);
+        MethodImplKind = ocKind;
+        if (contextKey != tok::objc_protocol)
+          Diag(AtLoc, diag::err_objc_protocol_optional);
       } else if (ocKind == tok::objc_property) {
         allProperties.push_back(ParseObjCPropertyDecl(interfaceDecl, AtLoc));
         continue;
@@ -327,9 +327,9 @@ void Parser::ParseObjCPropertyAttribute (ObjcDeclSpec &DS) {
         }
         else {
           Diag(loc, diag::err_expected_ident);
-	  SkipUntil(tok::r_paren,true,true);
-	  break;
-	}
+          SkipUntil(tok::r_paren,true,true);
+          break;
+        }
       }
       else {
         Diag(loc, diag::err_objc_expected_equal);    
@@ -409,7 +409,7 @@ Parser::DeclTy *Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl,
 ///     __attribute__((deprecated))
 ///
 Parser::DeclTy *Parser::ParseObjCMethodPrototype(DeclTy *IDecl, 
-			  tok::ObjCKeywordKind MethodImplKind) {
+                          tok::ObjCKeywordKind MethodImplKind) {
   assert((Tok.is(tok::minus) || Tok.is(tok::plus)) && "expected +/-");
 
   tok::TokenKind methodType = Tok.getKind();  
@@ -501,7 +501,7 @@ bool Parser::isObjCPropertyAttribute() {
 ///
 void Parser::ParseObjcTypeQualifierList(ObjcDeclSpec &DS) {
   while (1) {
-    if (!Tok.is(tok::identifier))
+    if (Tok.isNot(tok::identifier))
       return;
     
     const IdentifierInfo *II = Tok.getIdentifierInfo();
@@ -587,7 +587,7 @@ Parser::TypeTy *Parser::ParseObjCTypeName(ObjcDeclSpec &DS) {
 Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
                                             tok::TokenKind mType,
                                             DeclTy *IDecl,
-					    tok::ObjCKeywordKind MethodImplKind)
+                                            tok::ObjCKeywordKind MethodImplKind)
 {
   // Parse the return type.
   TypeTy *ReturnType = 0;
@@ -796,8 +796,8 @@ void Parser::ParseObjCClassInstanceVariables(DeclTy *interfaceDecl,
     }
     ParseStructDeclaration(interfaceDecl, IvarDecls);
     for (unsigned i = 0; i < IvarDecls.size(); i++) {
-	AllIvarDecls.push_back(IvarDecls[i]);
-	AllVisibilities.push_back(visibility);
+      AllIvarDecls.push_back(IvarDecls[i]);
+      AllVisibilities.push_back(visibility);
     }
     IvarDecls.clear();
     
@@ -967,7 +967,7 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
     superClassLoc = ConsumeToken(); // Consume super class name
   }
   DeclTy *ImplClsType = Actions.ActOnStartClassImplementation(
-				  atLoc, nameId, nameLoc,
+                                  atLoc, nameId, nameLoc,
                                   superClassId, superClassLoc);
   
   if (Tok.is(tok::l_brace)) // we have ivars
@@ -1127,7 +1127,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     TryBody = Actions.ActOnNullStmt(Tok.getLocation());
   while (Tok.is(tok::at)) {
     SourceLocation AtCatchFinallyLoc = ConsumeToken();
-    if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_catch) {
+    if (Tok.isObjCAtKeyword(tok::objc_catch)) {
       StmtTy *FirstPart = 0;
       ConsumeToken(); // consume catch
       if (Tok.is(tok::l_paren)) {
@@ -1161,7 +1161,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       }
       catch_or_finally_seen = true;
     }
-    else if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_finally) {
+    else if (Tok.isObjCAtKeyword(tok::objc_finally)) {
        ConsumeToken(); // consume finally
       StmtResult FinallyBody = ParseCompoundStatementBody();
       if (FinallyBody.isInvalid)
@@ -1478,7 +1478,7 @@ Parser::ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc)
         Diag(Tok, diag::err_expected_colon);
         break;
       }
-	  nColons++;
+      nColons++;
       ConsumeToken(); // Eat the ':'.
       if (Tok.is(tok::r_paren))
         break;

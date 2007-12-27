@@ -374,8 +374,12 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
   // ObjC2 allows prefix attributes on class interfaces.
   if (getLang().ObjC2 && Tok.is(tok::at)) {
     SourceLocation AtLoc = ConsumeToken(); // the "@"
-    if (Tok.getIdentifierInfo()->getObjCKeywordID() == tok::objc_interface)
-      return ParseObjCAtInterfaceDeclaration(AtLoc, DS.getAttributes()); 
+    if (!Tok.isObjCAtKeyword(tok::objc_interface)) {
+      Diag(Tok, diag::err_objc_expected_property_attr);//FIXME:better diagnostic
+      SkipUntil(tok::semi); // FIXME: better skip?
+      return 0;
+    }
+    return ParseObjCAtInterfaceDeclaration(AtLoc, DS.getAttributes()); 
   }
   
   // Parse the first declarator.
