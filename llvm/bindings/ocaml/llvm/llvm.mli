@@ -162,6 +162,27 @@ external create_module : string -> llmodule = "llvm_create_module"
     [llvm::Module::~Module]. **)
 external dispose_module : llmodule -> unit = "llvm_dispose_module"
 
+(** [target_triple m] is the target specifier for the module [m], something like
+    [i686-apple-darwin8]. See the method [llvm::Module::getTargetTriple]. **)
+external target_triple: llmodule -> string
+                      = "llvm_target_triple"
+
+(** [target_triple triple m] changes the target specifier for the module [m] to
+    the string [triple]. See the method [llvm::Module::setTargetTriple]. **)
+external set_target_triple: string -> llmodule -> unit
+                          = "llvm_set_target_triple"
+
+(** [data_layout m] is the data layout specifier for the module [m], something
+    like [e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-...-a0:0:64-f80:128:128]. See the
+    method [llvm::Module::getDataLayout]. **)
+external data_layout: llmodule -> string
+                    = "llvm_data_layout"
+
+(** [set_data_layout s m] changes the data layout specifier for the module [m]
+    to the string [s]. See the method [llvm::Module::setDataLayout]. **)
+external set_data_layout: string -> llmodule -> unit
+                        = "llvm_set_data_layout"
+
 (** [define_type_name name ty m] adds a named type to the module's symbol table.
     Returns [true] if successful. If such a name already exists, then no entry
     is added and [false] is returned. See the [llvm::Module::addTypeName]

@@ -107,6 +107,14 @@ let _ = register_exns (IoError "")
 
 external create_module : string -> llmodule = "llvm_create_module"
 external dispose_module : llmodule -> unit = "llvm_dispose_module"
+external target_triple: llmodule -> string
+                      = "llvm_target_triple"
+external set_target_triple: string -> llmodule -> unit
+                          = "llvm_set_target_triple"
+external data_layout: llmodule -> string
+                    = "llvm_data_layout"
+external set_data_layout: string -> llmodule -> unit
+                        = "llvm_set_data_layout"
 external define_type_name : string -> lltype -> llmodule -> bool
                           = "llvm_add_type_name"
 external delete_type_name : string -> llmodule -> unit

@@ -43,6 +43,25 @@ void LLVMDisposeModule(LLVMModuleRef M) {
   delete unwrap(M);
 }
 
+/*--.. Data layout .........................................................--*/
+const char * LLVMGetDataLayout(LLVMModuleRef M) {
+  return unwrap(M)->getDataLayout().c_str();
+}
+
+void LLVMSetDataLayout(LLVMModuleRef M, const char *Triple) {
+  unwrap(M)->setDataLayout(Triple);
+}
+
+/*--.. Target triple .......................................................--*/
+const char * LLVMGetTarget(LLVMModuleRef M) {
+  return unwrap(M)->getTargetTriple().c_str();
+}
+
+void LLVMSetTarget(LLVMModuleRef M, const char *Triple) {
+  unwrap(M)->setTargetTriple(Triple);
+}
+
+/*--.. Type names ..........................................................--*/
 int LLVMAddTypeName(LLVMModuleRef M, const char *Name, LLVMTypeRef Ty) {
   return unwrap(M)->addTypeName(Name, unwrap(Ty));
 }

@@ -149,6 +149,14 @@ void LLVMDisposeMessage(char *Message);
 LLVMModuleRef LLVMModuleCreateWithName(const char *ModuleID);
 void LLVMDisposeModule(LLVMModuleRef M);
 
+/* Data layout */
+const char *LLVMGetDataLayout(LLVMModuleRef M);
+void LLVMSetDataLayout(LLVMModuleRef M, const char *Triple);
+
+/* Target triple */
+const char *LLVMGetTarget(LLVMModuleRef M);
+void LLVMSetTarget(LLVMModuleRef M, const char *Triple);
+
 /* Same as Module::addTypeName. */
 int LLVMAddTypeName(LLVMModuleRef M, const char *Name, LLVMTypeRef Ty);
 void LLVMDeleteTypeName(LLVMModuleRef M, const char *Name);

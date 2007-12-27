@@ -62,6 +62,28 @@ CAMLprim value llvm_dispose_module(LLVMModuleRef M) {
   return Val_unit;
 }
 
+/* llmodule -> string */
+CAMLprim value llvm_target_triple(LLVMModuleRef M) {
+  return copy_string(LLVMGetTarget(M));
+}
+
+/* string -> llmodule -> unit */
+CAMLprim value llvm_set_target_triple(value Trip, LLVMModuleRef M) {
+  LLVMSetTarget(M, String_val(Trip));
+  return Val_unit;
+}
+
+/* llmodule -> string */
+CAMLprim value llvm_data_layout(LLVMModuleRef M) {
+  return copy_string(LLVMGetDataLayout(M));
+}
+
+/* string -> llmodule -> unit */
+CAMLprim value llvm_set_data_layout(value Layout, LLVMModuleRef M) {
+  LLVMSetDataLayout(M, String_val(Layout));
+  return Val_unit;
+}
+
 /* string -> lltype -> llmodule -> bool */
 CAMLprim value llvm_add_type_name(value Name, LLVMTypeRef Ty, LLVMModuleRef M) {
   int res = LLVMAddTypeName(M, String_val(Name), Ty);

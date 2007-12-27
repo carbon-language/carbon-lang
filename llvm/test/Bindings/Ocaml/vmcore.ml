@@ -36,6 +36,25 @@ let filename = Sys.argv.(1)
 let m = create_module filename
 
 
+(*===-- Target ------------------------------------------------------------===*)
+
+let test_target () =
+  begin group "triple";
+    (* RUN: grep "i686-apple-darwin8" < %t.ll
+     *)
+    let trip = "i686-apple-darwin8" in
+    set_target_triple trip m;
+    insist (trip = target_triple m)
+  end;
+  
+  begin group "layout";
+    (* RUN: grep "bogus" < %t.ll
+     *)
+    let layout = "bogus" in
+    set_data_layout layout m;
+    insist (layout = data_layout m)
+  end
+
 (*===-- Types -------------------------------------------------------------===*)
 
 let test_types () =
@@ -823,6 +842,7 @@ let test_writer () =
 (*===-- Driver ------------------------------------------------------------===*)
 
 let _ =
+  suite "target"           test_target;
   suite "types"            test_types;
   suite "constants"        test_constants;
   suite "global values"    test_global_values;
