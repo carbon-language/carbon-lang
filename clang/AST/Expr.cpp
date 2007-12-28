@@ -88,6 +88,36 @@ CallExpr::CallExpr(Expr *fn, Expr **args, unsigned numargs, QualType t,
   RParenLoc = rparenloc;
 }
 
+/// setNumArgs - This changes the number of arguments present in this call.
+/// Any orphaned expressions are deleted by this, and any new operands are set
+/// to null.
+void CallExpr::setNumArgs(unsigned NumArgs) {
+  // No change, just return.
+  if (NumArgs == getNumArgs()) return;
+  
+  // If shrinking # arguments, just delete the extras and forgot them.
+  if (NumArgs < getNumArgs()) {
+    for (unsigned i = NumArgs, e = getNumArgs(); i != e; ++i)
+      delete getArg(i);
+    this->NumArgs = NumArgs;
+    return;
+  }
+
+  // Otherwise, we are growing the # arguments.  New an bigger argument array.
+  Expr **NewSubExprs = new Expr*[NumArgs+1];
+  // Copy over args.
+  for (unsigned i = 0; i != getNumArgs()+ARGS_START; ++i)
+    NewSubExprs[i] = SubExprs[i];
+  // Null out new args.
+  for (unsigned i = getNumArgs()+ARGS_START; i != NumArgs+ARGS_START; ++i)
+    NewSubExprs[i] = 0;
+  
+  delete[] SubExprs;
+  SubExprs = NewSubExprs;
+  this->NumArgs = NumArgs;
+}
+
+
 bool CallExpr::isBuiltinClassifyType(llvm::APSInt &Result) const {
   // The following enum mimics gcc's internal "typeclass.h" file.
   enum gcc_type_class {

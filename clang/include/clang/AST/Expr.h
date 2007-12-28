@@ -585,12 +585,27 @@ public:
     assert(Arg < NumArgs && "Arg access out of range!");
     SubExprs[Arg+ARGS_START] = ArgExpr;
   }
+  
+  /// setNumArgs - This changes the number of arguments present in this call.
+  /// Any orphaned expressions are deleted by this, and any new operands are set
+  /// to null.
+  void setNumArgs(unsigned NumArgs);
+  
+  typedef Expr **arg_iterator;
+  typedef Expr * const *arg_const_iterator;
+  arg_iterator arg_begin() { return SubExprs+ARGS_START; }
+  arg_iterator arg_end() { return SubExprs+ARGS_START+getNumArgs(); }
+  arg_const_iterator arg_begin() const { return SubExprs+ARGS_START; }
+  arg_const_iterator arg_end() const { return SubExprs+ARGS_START+getNumArgs(); }
+  
+  
   /// getNumCommas - Return the number of commas that must have been present in
   /// this function call.
   unsigned getNumCommas() const { return NumArgs ? NumArgs - 1 : 0; }
 
   bool isBuiltinClassifyType(llvm::APSInt &Result) const;
   
+  SourceLocation getRParenLoc() const { return RParenLoc; }
   SourceRange getSourceRange() const { 
     return SourceRange(getCallee()->getLocStart(), RParenLoc);
   }
