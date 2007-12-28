@@ -499,7 +499,10 @@ public:
   ///    In this case getBase() returns "A" and getIdx() returns "4".
   /// - getLHS() and getRHS() present the syntactic view. e.g. for
   ///    4[A] getLHS() returns "4".
-
+  /// Note: Because vector element access is also written A[4] we must
+  /// predicate the format conversion in getBase and getIdx only on the
+  /// the type of the RHS, as it is possible for the LHS to be a vector of
+  /// integer type
   Expr *getLHS() { return SubExprs[LHS]; }
   const Expr *getLHS() const { return SubExprs[LHS]; }
   
@@ -507,19 +510,19 @@ public:
   const Expr *getRHS() const { return SubExprs[RHS]; }
   
   Expr *getBase() { 
-    return (getLHS()->getType()->isIntegerType()) ? getRHS() : getLHS();
+    return (getRHS()->getType()->isIntegerType()) ? getLHS() : getRHS();
   }
     
   const Expr *getBase() const { 
-    return (getLHS()->getType()->isIntegerType()) ? getRHS() : getLHS();
+    return (getRHS()->getType()->isIntegerType()) ? getLHS() : getRHS();
   }
   
   Expr *getIdx() { 
-    return (getLHS()->getType()->isIntegerType()) ? getLHS() : getRHS();
+    return (getRHS()->getType()->isIntegerType()) ? getRHS() : getLHS();
   }
   
   const Expr *getIdx() const {
-    return (getLHS()->getType()->isIntegerType()) ? getLHS() : getRHS(); 
+    return (getRHS()->getType()->isIntegerType()) ? getRHS() : getLHS(); 
   }  
 
   
