@@ -1585,3 +1585,35 @@ movl    $0, 124(%esp)
 if the flags of the xor are dead.
 
 //===---------------------------------------------------------------------===//
+
+This testcase misses a read/modify/write opportunity (from PR1425):
+
+void vertical_decompose97iH1(int *b0, int *b1, int *b2, int width){
+    int i;
+    for(i=0; i<width; i++)
+        b1[i] += (1*(b0[i] + b2[i])+0)>>0;
+}
+
+We compile it down to:
+
+LBB1_2:	# bb
+	movl	(%esi,%edi,4), %ebx
+	addl	(%ecx,%edi,4), %ebx
+	addl	(%edx,%edi,4), %ebx
+	movl	%ebx, (%ecx,%edi,4)
+	incl	%edi
+	cmpl	%eax, %edi
+	jne	LBB1_2	# bb
+
+the inner loop should add to the memory location (%ecx,%edi,4), saving
+a mov.  Something like:
+
+        movl    (%esi,%edi,4), %ebx
+        addl    (%edx,%edi,4), %ebx
+        addl    %ebx, (%ecx,%edi,4)
+
+Additionally, LSR should rewrite the exit condition of the loop to use
+a stride-4 IV, would would allow all the scales in the loop to go away.
+This would result in smaller code and more efficient microops.
+
+//===---------------------------------------------------------------------===//
