@@ -4835,11 +4835,18 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
       Value *A, *B;
     
-#if 0
-    // (icmp cond (sub A B) 0) -> (icmp cond A B)
-    if (CI->isNullValue() && match(Op0, m_Sub(m_Value(A), m_Value(B))))
-      return new ICmpInst(I.getPredicate(), A, B);
-#endif
+    // (icmp cond (sub A B) 0) -> ...
+    if (CI->isNullValue() && match(Op0, m_Sub(m_Value(A), m_Value(B)))) {
+      // (icmp cond A B) if cond is signed or equality
+      if (CmpInst::isSigned(I.getPredicate()) || I.isEquality())
+        return new ICmpInst(I.getPredicate(), A, B);
+      // (icmp ne A B) if cond is ugt
+      else if (I.getPredicate() == ICmpInst::ICMP_UGT)
+        return new ICmpInst(ICmpInst::ICMP_NE, A, B);
+      // (icmp eq A B) if cond is ule
+      else if (I.getPredicate() == ICmpInst::ICMP_ULE)
+        return new ICmpInst(ICmpInst::ICMP_EQ, A, B);
+    }
     
     switch (I.getPredicate()) {
     default: break;
