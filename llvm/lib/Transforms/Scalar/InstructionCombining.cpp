@@ -4835,9 +4835,11 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Op1)) {
       Value *A, *B;
     
+#if 0
     // (icmp cond (sub A B) 0) -> (icmp cond A B)
     if (CI->isNullValue() && match(Op0, m_Sub(m_Value(A), m_Value(B))))
       return new ICmpInst(I.getPredicate(), A, B);
+#endif
     
     switch (I.getPredicate()) {
     default: break;
