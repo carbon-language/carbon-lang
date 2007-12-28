@@ -88,15 +88,7 @@ Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
 /// CheckBuiltinCFStringArgument - Checks that the argument to the builtin
 /// CFString constructor is correct
 bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
-  // FIXME: This should go in a helper.
-  while (1) {
-    if (ParenExpr *PE = dyn_cast<ParenExpr>(Arg))
-      Arg = PE->getSubExpr();
-    else if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg))
-      Arg = ICE->getSubExpr();
-    else
-      break;
-  }
+  Arg = IgnoreParenCasts(Arg);
   
   StringLiteral *Literal = dyn_cast<StringLiteral>(Arg);
 
@@ -265,16 +257,7 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
     return;
   }
   
-  Expr *OrigFormatExpr = TheCall->getArg(format_idx);
-  // FIXME: This should go in a helper.
-  while (1) {
-    if (ParenExpr *PE = dyn_cast<ParenExpr>(OrigFormatExpr))
-      OrigFormatExpr = PE->getSubExpr();
-    else if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(OrigFormatExpr))
-      OrigFormatExpr = ICE->getSubExpr();
-    else
-      break;
-  }
+  Expr *OrigFormatExpr = IgnoreParenCasts(TheCall->getArg(format_idx));
   
   // CHECK: format string is not a string literal.
   // 
@@ -284,7 +267,6 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
   // the compiler and thereby (2) can practically remove the source of
   // many format string exploits.
   StringLiteral *FExpr = dyn_cast<StringLiteral>(OrigFormatExpr);
-  
   if (FExpr == NULL) {
     // For vprintf* functions (i.e., HasVAListArg==true), we add a
     // special check to see if the format string is a function parameter
@@ -305,8 +287,8 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
     //    if the argument is a DeclRefExpr that references a parameter.  We'll
     //    add proper support for checking the attribute later.
     if (HasVAListArg)
-      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(IgnoreParen(OrigFormatExpr)))
-          if (isa<ParmVarDecl>(DR->getDecl()))
+      if (DeclRefExpr* DR = dyn_cast<DeclRefExpr>(OrigFormatExpr))
+        if (isa<ParmVarDecl>(DR->getDecl()))
           return;
     
     Diag(TheCall->getArg(format_idx)->getLocStart(), 
@@ -358,7 +340,7 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
   unsigned LastConversionIdx = 0;
   
   for (; StrIdx < StrLen; ++StrIdx) {
-
+    
     // Is the number of detected conversion conversions greater than
     // the number of matching data arguments?  If so, stop.
     if (!HasVAListArg && numConversions > numDataArgs) break;
@@ -367,10 +349,8 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
     if (Str[StrIdx] == '\0') {
       // The string returned by getStrData() is not null-terminated,
       // so the presence of a null character is likely an error.
-      SourceLocation Loc = FExpr->getLocStart();
-      Loc = PP.AdvanceToTokenCharacter(Loc, StrIdx+1);
-    
-      Diag(Loc, diag::warn_printf_format_string_contains_null_char,
+      Diag(PP.AdvanceToTokenCharacter(FExpr->getLocStart(), StrIdx+1),
+           diag::warn_printf_format_string_contains_null_char,
            Fn->getSourceRange());
       return;
     }
@@ -391,7 +371,6 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
       ++numConversions;
       
       if (!HasVAListArg && numConversions > numDataArgs) {
-        
         SourceLocation Loc = FExpr->getLocStart();
         Loc = PP.AdvanceToTokenCharacter(Loc, StrIdx+1);
 
@@ -489,7 +468,6 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
         LastConversionIdx = StrIdx;
         ++numConversions;
       }
-      
       break;
               
     default:

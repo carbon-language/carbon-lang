@@ -38,10 +38,8 @@ static inline Expr* IgnoreParenCasts(Expr* E) {
     else if (ImplicitCastExpr* P = dyn_cast<ImplicitCastExpr>(E))
       E = P->getSubExpr();
     else
-      break;
+      return E;
   }
-  
-  return E;
 }
 
 /// Utility method to determine if a CallExpr is a call to a builtin.
