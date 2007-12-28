@@ -386,116 +386,116 @@ Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg,
 
     // Seen '%'.  Now processing a format conversion.
     switch (Str[StrIdx]) {
-      // Handle dynamic precision or width specifier.     
-      case '*': {
-        ++numConversions;
+    // Handle dynamic precision or width specifier.     
+    case '*': {
+      ++numConversions;
+      
+      if (!HasVAListArg && numConversions > numDataArgs) {
         
-        if (!HasVAListArg && numConversions > numDataArgs) {
-          
-          SourceLocation Loc = FExpr->getLocStart();
-          Loc = PP.AdvanceToTokenCharacter(Loc, StrIdx+1);
+        SourceLocation Loc = FExpr->getLocStart();
+        Loc = PP.AdvanceToTokenCharacter(Loc, StrIdx+1);
 
-          if (Str[StrIdx-1] == '.')
-            Diag(Loc, diag::warn_printf_asterisk_precision_missing_arg,
-                 Fn->getSourceRange());
-          else
-            Diag(Loc, diag::warn_printf_asterisk_width_missing_arg,
-                 Fn->getSourceRange());
-          
-          // Don't do any more checking.  We'll just emit spurious errors.
-          return;
-        }
-        
-        // Perform type checking on width/precision specifier.
-        Expr *E = TheCall->getArg(format_idx+numConversions);
-        if (const BuiltinType *BT = E->getType()->getAsBuiltinType())
-          if (BT->getKind() == BuiltinType::Int)
-            break;
-
-        SourceLocation Loc =
-          PP.AdvanceToTokenCharacter(FExpr->getLocStart(), StrIdx+1);
-        
         if (Str[StrIdx-1] == '.')
-          Diag(Loc, diag::warn_printf_asterisk_precision_wrong_type,
-               E->getType().getAsString(), E->getSourceRange());
+          Diag(Loc, diag::warn_printf_asterisk_precision_missing_arg,
+               Fn->getSourceRange());
         else
-          Diag(Loc, diag::warn_printf_asterisk_width_wrong_type,
-               E->getType().getAsString(), E->getSourceRange());
+          Diag(Loc, diag::warn_printf_asterisk_width_missing_arg,
+               Fn->getSourceRange());
         
-        break;
+        // Don't do any more checking.  We'll just emit spurious errors.
+        return;
       }
-        
-      // Characters which can terminate a format conversion
-      // (e.g. "%d").  Characters that specify length modifiers or
-      // other flags are handled by the default case below.
-      //
-      // FIXME: additional checks will go into the following cases.                
-      case 'i':
-      case 'd':
-      case 'o': 
-      case 'u': 
-      case 'x':
-      case 'X':
-      case 'D':
-      case 'O':
-      case 'U':
-      case 'e':
-      case 'E':
-      case 'f':
-      case 'F':
-      case 'g':
-      case 'G':
-      case 'a':
-      case 'A':
-      case 'c':
-      case 'C':
-      case 'S':
-      case 's':
-      case 'p': 
-        ++numConversions;
-        CurrentState = state_OrdChr;
-        break;
+      
+      // Perform type checking on width/precision specifier.
+      Expr *E = TheCall->getArg(format_idx+numConversions);
+      if (const BuiltinType *BT = E->getType()->getAsBuiltinType())
+        if (BT->getKind() == BuiltinType::Int)
+          break;
 
-      // CHECK: Are we using "%n"?  Issue a warning.
-      case 'n': {
-        ++numConversions;
-        CurrentState = state_OrdChr;
+      SourceLocation Loc =
+        PP.AdvanceToTokenCharacter(FExpr->getLocStart(), StrIdx+1);
+      
+      if (Str[StrIdx-1] == '.')
+        Diag(Loc, diag::warn_printf_asterisk_precision_wrong_type,
+             E->getType().getAsString(), E->getSourceRange());
+      else
+        Diag(Loc, diag::warn_printf_asterisk_width_wrong_type,
+             E->getType().getAsString(), E->getSourceRange());
+      
+      break;
+    }
+      
+    // Characters which can terminate a format conversion
+    // (e.g. "%d").  Characters that specify length modifiers or
+    // other flags are handled by the default case below.
+    //
+    // FIXME: additional checks will go into the following cases.                
+    case 'i':
+    case 'd':
+    case 'o': 
+    case 'u': 
+    case 'x':
+    case 'X':
+    case 'D':
+    case 'O':
+    case 'U':
+    case 'e':
+    case 'E':
+    case 'f':
+    case 'F':
+    case 'g':
+    case 'G':
+    case 'a':
+    case 'A':
+    case 'c':
+    case 'C':
+    case 'S':
+    case 's':
+    case 'p': 
+      ++numConversions;
+      CurrentState = state_OrdChr;
+      break;
+
+    // CHECK: Are we using "%n"?  Issue a warning.
+    case 'n': {
+      ++numConversions;
+      CurrentState = state_OrdChr;
+      SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
+                                                      LastConversionIdx+1);
+                                   
+      Diag(Loc, diag::warn_printf_write_back, Fn->getSourceRange());
+      break;
+    }
+                  
+    // Handle "%%"
+    case '%':
+      // Sanity check: Was the first "%" character the previous one?
+      // If not, we will assume that we have a malformed format
+      // conversion, and that the current "%" character is the start
+      // of a new conversion.
+      if (StrIdx - LastConversionIdx == 1)
+        CurrentState = state_OrdChr; 
+      else {
+        // Issue a warning: invalid format conversion.
         SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
                                                         LastConversionIdx+1);
-                                     
-        Diag(Loc, diag::warn_printf_write_back, Fn->getSourceRange());
-        break;
+            
+        Diag(Loc, diag::warn_printf_invalid_conversion, 
+             std::string(Str+LastConversionIdx, Str+StrIdx),
+             Fn->getSourceRange());
+             
+        // This conversion is broken.  Advance to the next format
+        // conversion.
+        LastConversionIdx = StrIdx;
+        ++numConversions;
       }
-                    
-      // Handle "%%"
-      case '%':
-        // Sanity check: Was the first "%" character the previous one?
-        // If not, we will assume that we have a malformed format
-        // conversion, and that the current "%" character is the start
-        // of a new conversion.
-        if (StrIdx - LastConversionIdx == 1)
-          CurrentState = state_OrdChr; 
-        else {
-          // Issue a warning: invalid format conversion.
-          SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
-                                                          LastConversionIdx+1);
+      
+      break;
               
-          Diag(Loc, diag::warn_printf_invalid_conversion, 
-               std::string(Str+LastConversionIdx, Str+StrIdx),
-               Fn->getSourceRange());
-               
-          // This conversion is broken.  Advance to the next format
-          // conversion.
-          LastConversionIdx = StrIdx;
-          ++numConversions;
-        }
-        
-        break;
-                
-      default:
-        // This case catches all other characters: flags, widths, etc.
-        // We should eventually process those as well.
-        break;
+    default:
+      // This case catches all other characters: flags, widths, etc.
+      // We should eventually process those as well.
+      break;
     }
   }
 
@@ -580,112 +580,110 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
 ///   * pointer arithmetic from an address of a stack variable
 ///   * taking the address of an array element where the array is on the stack
 static DeclRefExpr* EvalAddr(Expr *E) {
-
   // We should only be called for evaluating pointer expressions.
-  assert ((E->getType()->isPointerType() || 
-           E->getType()->isObjcQualifiedIdType())
-             && "EvalAddr only works on pointers");
+  assert((E->getType()->isPointerType() || 
+          E->getType()->isObjcQualifiedIdType()) &&
+         "EvalAddr only works on pointers");
     
   // Our "symbolic interpreter" is just a dispatch off the currently
   // viewed AST node.  We then recursively traverse the AST by calling
   // EvalAddr and EvalVal appropriately.
   switch (E->getStmtClass()) {
+  case Stmt::ParenExprClass:
+    // Ignore parentheses.
+    return EvalAddr(cast<ParenExpr>(E)->getSubExpr());
 
-    case Stmt::ParenExprClass:
-      // Ignore parentheses.
-      return EvalAddr(cast<ParenExpr>(E)->getSubExpr());
-
-    case Stmt::UnaryOperatorClass: {
-      // The only unary operator that make sense to handle here
-      // is AddrOf.  All others don't make sense as pointers.
-      UnaryOperator *U = cast<UnaryOperator>(E);
-      
-      if (U->getOpcode() == UnaryOperator::AddrOf)
-        return EvalVal(U->getSubExpr());
-      else
-        return NULL;
-    }
+  case Stmt::UnaryOperatorClass: {
+    // The only unary operator that make sense to handle here
+    // is AddrOf.  All others don't make sense as pointers.
+    UnaryOperator *U = cast<UnaryOperator>(E);
     
-    case Stmt::BinaryOperatorClass: {
-      // Handle pointer arithmetic.  All other binary operators are not valid
-      // in this context.
-      BinaryOperator *B = cast<BinaryOperator>(E);
-      BinaryOperator::Opcode op = B->getOpcode();
-        
-      if (op != BinaryOperator::Add && op != BinaryOperator::Sub)
-        return NULL;
-        
-      Expr *Base = B->getLHS();
-
-      // Determine which argument is the real pointer base.  It could be
-      // the RHS argument instead of the LHS.
-      if (!Base->getType()->isPointerType()) Base = B->getRHS();
-        
-      assert (Base->getType()->isPointerType());
-      return EvalAddr(Base);
-    }
-      
-    // For conditional operators we need to see if either the LHS or RHS are
-    // valid DeclRefExpr*s.  If one of them is valid, we return it.
-    case Stmt::ConditionalOperatorClass: {
-      ConditionalOperator *C = cast<ConditionalOperator>(E);
-      
-      // Handle the GNU extension for missing LHS.
-      if (Expr *lhsExpr = C->getLHS())
-        if (DeclRefExpr* LHS = EvalAddr(lhsExpr))
-          return LHS;
-
-       return EvalAddr(C->getRHS());
-    }
-      
-    // For implicit casts, we need to handle conversions from arrays to
-    // pointer values, and implicit pointer-to-pointer conversions.
-    case Stmt::ImplicitCastExprClass: {
-      ImplicitCastExpr *IE = cast<ImplicitCastExpr>(E);
-      Expr* SubExpr = IE->getSubExpr();
-      
-      if (SubExpr->getType()->isPointerType() ||
-          SubExpr->getType()->isObjcQualifiedIdType())
-        return EvalAddr(SubExpr);
-      else
-        return EvalVal(SubExpr);
-    }
-
-    // For casts, we handle pointer-to-pointer conversions (which
-    // is essentially a no-op from our mini-interpreter's standpoint).
-    // For other casts we abort.
-    case Stmt::CastExprClass: {
-      CastExpr *C = cast<CastExpr>(E);
-      Expr *SubExpr = C->getSubExpr();
-      
-      if (SubExpr->getType()->isPointerType())
-        return EvalAddr(SubExpr);
-      else
-        return NULL;
-    }
-      
-    // C++ casts.  For dynamic casts, static casts, and const casts, we
-    // are always converting from a pointer-to-pointer, so we just blow
-    // through the cast.  In the case the dynamic cast doesn't fail
-    // (and return NULL), we take the conservative route and report cases
-    // where we return the address of a stack variable.  For Reinterpre
-    case Stmt::CXXCastExprClass: {
-      CXXCastExpr *C = cast<CXXCastExpr>(E);
-      
-      if (C->getOpcode() == CXXCastExpr::ReinterpretCast) {
-        Expr *S = C->getSubExpr();
-        if (S->getType()->isPointerType())
-          return EvalAddr(S);
-        else
-          return NULL;
-      }
-      else
-        return EvalAddr(C->getSubExpr());
-    }
-      
-    // Everything else: we simply don't reason about them.
-    default:
+    if (U->getOpcode() == UnaryOperator::AddrOf)
+      return EvalVal(U->getSubExpr());
+    else
       return NULL;
+  }
+  
+  case Stmt::BinaryOperatorClass: {
+    // Handle pointer arithmetic.  All other binary operators are not valid
+    // in this context.
+    BinaryOperator *B = cast<BinaryOperator>(E);
+    BinaryOperator::Opcode op = B->getOpcode();
+      
+    if (op != BinaryOperator::Add && op != BinaryOperator::Sub)
+      return NULL;
+      
+    Expr *Base = B->getLHS();
+
+    // Determine which argument is the real pointer base.  It could be
+    // the RHS argument instead of the LHS.
+    if (!Base->getType()->isPointerType()) Base = B->getRHS();
+      
+    assert (Base->getType()->isPointerType());
+    return EvalAddr(Base);
+  }
+    
+  // For conditional operators we need to see if either the LHS or RHS are
+  // valid DeclRefExpr*s.  If one of them is valid, we return it.
+  case Stmt::ConditionalOperatorClass: {
+    ConditionalOperator *C = cast<ConditionalOperator>(E);
+    
+    // Handle the GNU extension for missing LHS.
+    if (Expr *lhsExpr = C->getLHS())
+      if (DeclRefExpr* LHS = EvalAddr(lhsExpr))
+        return LHS;
+
+     return EvalAddr(C->getRHS());
+  }
+    
+  // For implicit casts, we need to handle conversions from arrays to
+  // pointer values, and implicit pointer-to-pointer conversions.
+  case Stmt::ImplicitCastExprClass: {
+    ImplicitCastExpr *IE = cast<ImplicitCastExpr>(E);
+    Expr* SubExpr = IE->getSubExpr();
+    
+    if (SubExpr->getType()->isPointerType() ||
+        SubExpr->getType()->isObjcQualifiedIdType())
+      return EvalAddr(SubExpr);
+    else
+      return EvalVal(SubExpr);
+  }
+
+  // For casts, we handle pointer-to-pointer conversions (which
+  // is essentially a no-op from our mini-interpreter's standpoint).
+  // For other casts we abort.
+  case Stmt::CastExprClass: {
+    CastExpr *C = cast<CastExpr>(E);
+    Expr *SubExpr = C->getSubExpr();
+    
+    if (SubExpr->getType()->isPointerType())
+      return EvalAddr(SubExpr);
+    else
+      return NULL;
+  }
+    
+  // C++ casts.  For dynamic casts, static casts, and const casts, we
+  // are always converting from a pointer-to-pointer, so we just blow
+  // through the cast.  In the case the dynamic cast doesn't fail
+  // (and return NULL), we take the conservative route and report cases
+  // where we return the address of a stack variable.  For Reinterpre
+  case Stmt::CXXCastExprClass: {
+    CXXCastExpr *C = cast<CXXCastExpr>(E);
+    
+    if (C->getOpcode() == CXXCastExpr::ReinterpretCast) {
+      Expr *S = C->getSubExpr();
+      if (S->getType()->isPointerType())
+        return EvalAddr(S);
+      else
+        return NULL;
+    }
+    else
+      return EvalAddr(C->getSubExpr());
+  }
+    
+  // Everything else: we simply don't reason about them.
+  default:
+    return NULL;
   }
 }
   
@@ -702,7 +700,6 @@ static DeclRefExpr* EvalVal(Expr *E) {
   // viewed AST node.  We then recursively traverse the AST by calling
   // EvalAddr and EvalVal appropriately.
   switch (E->getStmtClass()) {
-  
   case Stmt::DeclRefExprClass: {
     // DeclRefExpr: the base case.  When we hit a DeclRefExpr we are looking
     //  at code that refers to a variable's name.  We check if it has local
