@@ -919,12 +919,12 @@
 				GCC_THREADSAFE_STATICS = NO;
 				GCC_USE_GCC3_PFE_SUPPORT = NO;
 				HEADER_SEARCH_PATHS = (
-					"~/llvm/tools/clang/include",
-					"~/llvm/include",
+					"$(PROJECT_DIR)/include",
+					"$(PROJECT_DIR)/../../include",
 					"$(HEADER_SEARCH_PATHS)",
 				);
 				INSTALL_PATH = "$(HOME)/bin";
-				LIBRARY_SEARCH_PATHS = "~/llvm/Debug/lib";
+				LIBRARY_SEARCH_PATHS = "$(PROJECT_DIR)/../../Debug/lib";
 				OTHER_LDFLAGS = (
 					"-lLLVMSupport",
 					"-lLLVMSystem",
