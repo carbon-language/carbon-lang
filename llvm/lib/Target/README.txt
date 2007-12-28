@@ -480,6 +480,38 @@ int i;
   }
 }
 
+//===---------------------------------------------------------------------===//
 
+We should investigate an instruction sinking pass.  Consider this silly
+example in pic mode:
+
+#include <assert.h>
+void foo(int x) {
+  assert(x);
+  //...
+}
+
+we compile this to:
+_foo:
+	subl	$28, %esp
+	call	"L1$pb"
+"L1$pb":
+	popl	%eax
+	cmpl	$0, 32(%esp)
+	je	LBB1_2	# cond_true
+LBB1_1:	# return
+	# ...
+	addl	$28, %esp
+	ret
+LBB1_2:	# cond_true
+...
+
+The PIC base computation (call+popl) is only used on one path through the 
+code, but is currently always computed in the entry block.  It would be 
+better to sink the picbase computation down into the block for the 
+assertion, as it is the only one that uses it.  This happens for a lot of 
+code with early outs.
+
+In this case, whole-function-isel would also handle this.
 
 //===---------------------------------------------------------------------===//
