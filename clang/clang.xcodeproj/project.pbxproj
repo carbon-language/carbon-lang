@@ -616,7 +616,6 @@
 		DEC8D98B0A9433BC00353FCA /* AST */ = {
 			isa = PBXGroup;
 			children = (
-				35BB2D7A0D1994FA00944DB5 /* TranslationUnit.h */,
 				35BFBD2B0C9EDE1E006CB644 /* ASTConsumer.h */,
 				DEC8D9A30A94346E00353FCA /* AST.h */,
 				DE75ED280B044DC90020CF81 /* ASTContext.h */,
@@ -636,6 +635,7 @@
 				35847BE30CC7DB9000C40FFF /* StmtIterator.h */,
 				35CFFE010CA1CBDD00E6F2BE /* StmtGraphTraits.h */,
 				1A68BC120D0CADDD001A28C8 /* TargetBuiltins.h */,
+				35BB2D7A0D1994FA00944DB5 /* TranslationUnit.h */,
 				DE3464210B03040900DBC861 /* Type.h */,
 				1A68BC130D0CADDD001A28C8 /* X86Builtins.def */,
 			);
