@@ -34,6 +34,7 @@ namespace clang {
   class ScopedDecl;
   class Expr;
   class InitListExpr;
+  class CallExpr;
   class VarDecl;
   class ParmVarDecl;
   class TypedefDecl;
@@ -582,8 +583,8 @@ public:
     ExprTy **ArgExprs, unsigned NumArgs);
 private:
   // UsualUnaryConversions - promotes integers (C99 6.3.1.1p2) and converts
-  // functions and arrays to their respective pointers (C99 6.3.2.1). 
-  void UsualUnaryConversions(Expr *&expr); 
+  // functions and arrays to their respective pointers (C99 6.3.2.1).
+  Expr *UsualUnaryConversions(Expr *&expr); 
   
   // DefaultFunctionArrayConversion - converts functions and arrays
   // to their respective pointers (C99 6.3.2.1). 
@@ -592,7 +593,7 @@ private:
   // DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
   // do not have a prototype. Integer promotions are performed on each 
   // argument, and arguments that have type float are promoted to double.
-  void DefaultArgumentPromotion(Expr *&expr);
+  void DefaultArgumentPromotion(Expr *&Expr);
   
   // UsualArithmeticConversions - performs the UsualUnaryConversions on it's
   // operands and then handles various conversions that are common to binary
@@ -712,26 +713,15 @@ private:
   
   //===--------------------------------------------------------------------===//
   // Extra semantic analysis beyond the C type system
-  private:
-  
-  bool CheckFunctionCall(Expr *Fn, SourceLocation RParenLoc,
-                         FunctionDecl *FDecl,
-                         Expr** Args, unsigned NumArgsInCall);
-
-  void CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
-                            bool HasVAListArg, FunctionDecl *FDecl,
-                            unsigned format_idx, Expr** Args,
-                            unsigned NumArgsInCall);
-                            
+private:
+  bool CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall);
+  bool CheckBuiltinCFStringArgument(Expr* Arg);
+  bool SemaBuiltinVAStart(CallExpr *TheCall);
+  bool SemaBuiltinUnorderedCompare(CallExpr *TheCall);
+  void CheckPrintfArguments(CallExpr *TheCall,
+                            bool HasVAListArg, unsigned format_idx);
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);
-
-  
-  bool CheckBuiltinCFStringArgument(Expr* Arg);
-  bool SemaBuiltinVAStart(Expr *Fn, Expr** Args, unsigned NumArgs);
-  bool SemaBuiltinUnorderedCompare(Expr *Fn, Expr** Args, unsigned NumArgs,
-                                   SourceLocation RParenLoc);
-  
   void CheckFloatComparison(SourceLocation loc, Expr* lex, Expr* rex);
 };
 

@@ -24,6 +24,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
@@ -558,137 +559,136 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
 /// locations.
 Action::ExprResult Sema::
 ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
-              ExprTy **args, unsigned NumArgsInCall,
+              ExprTy **args, unsigned NumArgs,
               SourceLocation *CommaLocs, SourceLocation RParenLoc) {
   Expr *Fn = static_cast<Expr *>(fn);
   Expr **Args = reinterpret_cast<Expr**>(args);
   assert(Fn && "no function call expression");
   
-  UsualUnaryConversions(Fn);
-  QualType funcType = Fn->getType();
-
+  // Make the call expr early, before semantic checks.  This guarantees cleanup
+  // of arguments and function on error.
+  llvm::OwningPtr<CallExpr> TheCall(new CallExpr(Fn, Args, NumArgs,
+                                                 Context.BoolTy, RParenLoc));
+  
+  // Promote the function operand.
+  TheCall->setCallee(UsualUnaryConversions(Fn));
+  
   // C99 6.5.2.2p1 - "The expression that denotes the called function shall have
   // type pointer to function".
-  const PointerType *PT = funcType->getAsPointerType();
+  const PointerType *PT = Fn->getType()->getAsPointerType();
   if (PT == 0)
     return Diag(Fn->getLocStart(), diag::err_typecheck_call_not_function,
                 SourceRange(Fn->getLocStart(), RParenLoc));
-  
-  const FunctionType *funcT = PT->getPointeeType()->getAsFunctionType();
-  if (funcT == 0)
+  const FunctionType *FuncT = PT->getPointeeType()->getAsFunctionType();
+  if (FuncT == 0)
     return Diag(Fn->getLocStart(), diag::err_typecheck_call_not_function,
                 SourceRange(Fn->getLocStart(), RParenLoc));
+  
+  // We know the result type of the call, set it.
+  TheCall->setType(FuncT->getResultType());
     
-  // If a prototype isn't declared, the parser implicitly defines a func decl
-  QualType resultType = funcT->getResultType();
-    
-  if (const FunctionTypeProto *proto = dyn_cast<FunctionTypeProto>(funcT)) {
+  if (const FunctionTypeProto *Proto = dyn_cast<FunctionTypeProto>(FuncT)) {
     // C99 6.5.2.2p7 - the arguments are implicitly converted, as if by 
     // assignment, to the types of the corresponding parameter, ...
+    unsigned NumArgsInProto = Proto->getNumArgs();
+    unsigned NumArgsToCheck = NumArgs;
     
-    unsigned NumArgsInProto = proto->getNumArgs();
-    unsigned NumArgsToCheck = NumArgsInCall;
+    // If too few arguments are available, don't make the call.
+    if (NumArgs < NumArgsInProto)
+      return Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
+                  Fn->getSourceRange());
     
-    if (NumArgsInCall < NumArgsInProto)
-      Diag(RParenLoc, diag::err_typecheck_call_too_few_args,
-           Fn->getSourceRange());
-    else if (NumArgsInCall > NumArgsInProto) {
-      if (!proto->isVariadic()) {
+    // If too many are passed and not variadic, error on the extras and drop
+    // them.
+    if (NumArgs > NumArgsInProto) {
+      if (!Proto->isVariadic()) {
         Diag(Args[NumArgsInProto]->getLocStart(), 
              diag::err_typecheck_call_too_many_args, Fn->getSourceRange(),
              SourceRange(Args[NumArgsInProto]->getLocStart(),
-                         Args[NumArgsInCall-1]->getLocEnd()));
+                         Args[NumArgs-1]->getLocEnd()));
+        // This deletes the extra arguments.
+        TheCall->setNumArgs(NumArgsInProto);
       }
       NumArgsToCheck = NumArgsInProto;
     }
+    
     // Continue to check argument types (even if we have too few/many args).
-    for (unsigned i = 0; i < NumArgsToCheck; i++) {
-      Expr *argExpr = Args[i];
-      assert(argExpr && "ActOnCallExpr(): missing argument expression");
-      
-      QualType lhsType = proto->getArgType(i);
-      QualType rhsType = argExpr->getType();
+    for (unsigned i = 0; i != NumArgsToCheck; i++) {
+      Expr *Arg = Args[i];
+      QualType LHSType = Proto->getArgType(i);
+      QualType RHSType = Arg->getType();
 
       // If necessary, apply function/array conversion. C99 6.7.5.3p[7,8]. 
-      if (const ArrayType *ary = lhsType->getAsArrayType())
-        lhsType = Context.getPointerType(ary->getElementType());
-      else if (lhsType->isFunctionType())
-        lhsType = Context.getPointerType(lhsType);
+      if (const ArrayType *AT = LHSType->getAsArrayType())
+        LHSType = Context.getPointerType(AT->getElementType());
+      else if (LHSType->isFunctionType())
+        LHSType = Context.getPointerType(LHSType);
 
-      AssignmentCheckResult result = CheckSingleAssignmentConstraints(lhsType,
-                                                                      argExpr);
-      if (Args[i] != argExpr) // The expression was converted.
-        Args[i] = argExpr; // Make sure we store the converted expression.
-      SourceLocation l = argExpr->getLocStart();
-
-      // decode the result (notice that AST's are still created for extensions).
-      switch (result) {
+      // Compute implicit casts from the operand to the formal argument type.
+      AssignmentCheckResult Result =
+        CheckSingleAssignmentConstraints(LHSType, Arg);
+      TheCall->setArg(i, Arg);
+      
+      // Decode the result (notice that AST's are still created for extensions).
+      SourceLocation Loc = Arg->getLocStart();
+      switch (Result) {
       case Compatible:
         break;
       case PointerFromInt:
-        Diag(l, diag::ext_typecheck_passing_pointer_int, 
-             lhsType.getAsString(), rhsType.getAsString(),
-             Fn->getSourceRange(), argExpr->getSourceRange());
+        Diag(Loc, diag::ext_typecheck_passing_pointer_int, 
+             LHSType.getAsString(), RHSType.getAsString(),
+             Fn->getSourceRange(), Arg->getSourceRange());
         break;
       case IntFromPointer:
-        Diag(l, diag::ext_typecheck_passing_pointer_int, 
-             lhsType.getAsString(), rhsType.getAsString(),
-             Fn->getSourceRange(), argExpr->getSourceRange());
+        Diag(Loc, diag::ext_typecheck_passing_pointer_int, 
+             LHSType.getAsString(), RHSType.getAsString(),
+             Fn->getSourceRange(), Arg->getSourceRange());
         break;
       case IncompatiblePointer:
-        Diag(l, diag::ext_typecheck_passing_incompatible_pointer, 
-             rhsType.getAsString(), lhsType.getAsString(),
-             Fn->getSourceRange(), argExpr->getSourceRange());
+        Diag(Loc, diag::ext_typecheck_passing_incompatible_pointer, 
+             RHSType.getAsString(), LHSType.getAsString(),
+             Fn->getSourceRange(), Arg->getSourceRange());
         break;
       case CompatiblePointerDiscardsQualifiers:
-        Diag(l, diag::ext_typecheck_passing_discards_qualifiers,
-             rhsType.getAsString(), lhsType.getAsString(),
-             Fn->getSourceRange(), argExpr->getSourceRange());
+        Diag(Loc, diag::ext_typecheck_passing_discards_qualifiers,
+             RHSType.getAsString(), LHSType.getAsString(),
+             Fn->getSourceRange(), Arg->getSourceRange());
         break;
       case Incompatible:
-        return Diag(l, diag::err_typecheck_passing_incompatible,
-                    rhsType.getAsString(), lhsType.getAsString(),
-                    Fn->getSourceRange(), argExpr->getSourceRange());
+        return Diag(Loc, diag::err_typecheck_passing_incompatible,
+                    RHSType.getAsString(), LHSType.getAsString(),
+                    Fn->getSourceRange(), Arg->getSourceRange());
       }
     }
-    if (NumArgsInCall > NumArgsInProto && proto->isVariadic()) {
+    
+    // If this is a variadic call, handle args passed through "...".
+    if (Proto->isVariadic()) {
       // Promote the arguments (C99 6.5.2.2p7).
-      for (unsigned i = NumArgsInProto; i < NumArgsInCall; i++) {
-        Expr *argExpr = Args[i];
-        assert(argExpr && "ActOnCallExpr(): missing argument expression");
-        
-        DefaultArgumentPromotion(argExpr);
-        if (Args[i] != argExpr) // The expression was converted.
-          Args[i] = argExpr; // Make sure we store the converted expression.
+      for (unsigned i = NumArgsInProto; i != NumArgs; i++) {
+        Expr *Arg = Args[i];
+        DefaultArgumentPromotion(Arg);
+        TheCall->setArg(i, Arg);
       }
-    } else if (NumArgsInCall != NumArgsInProto && !proto->isVariadic()) {
-      // Even if the types checked, bail if the number of arguments don't match.
-      return true;
     }
-  } else if (isa<FunctionTypeNoProto>(funcT)) {
+  } else {
+    assert(isa<FunctionTypeNoProto>(FuncT) && "Unknown FunctionType!");
+    
     // Promote the arguments (C99 6.5.2.2p6).
-    for (unsigned i = 0; i < NumArgsInCall; i++) {
-      Expr *argExpr = Args[i];
-      assert(argExpr && "ActOnCallExpr(): missing argument expression");
-      
-      DefaultArgumentPromotion(argExpr);
-      if (Args[i] != argExpr) // The expression was converted.
-        Args[i] = argExpr; // Make sure we store the converted expression.
+    for (unsigned i = 0; i != NumArgs; i++) {
+      Expr *Arg = Args[i];
+      DefaultArgumentPromotion(Arg);
+      TheCall->setArg(i, Arg);
     }
   }
+
   // Do special checking on direct calls to functions.
   if (ImplicitCastExpr *IcExpr = dyn_cast<ImplicitCastExpr>(Fn))
     if (DeclRefExpr *DRExpr = dyn_cast<DeclRefExpr>(IcExpr->getSubExpr()))
       if (FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRExpr->getDecl()))
-        if (CheckFunctionCall(Fn, RParenLoc, FDecl, Args, NumArgsInCall)) {
-          // Function rejected, delete sub-ast's.
-          delete Fn;
-          for (unsigned i = 0; i != NumArgsInCall; ++i)
-            delete Args[i];
+        if (CheckFunctionCall(FDecl, TheCall.get()))
           return true;
-        }
 
-  return new CallExpr(Fn, Args, NumArgsInCall, resultType, RParenLoc);
+  return TheCall.take();
 }
 
 Action::ExprResult Sema::
@@ -892,14 +892,14 @@ Action::ExprResult Sema::ActOnConditionalOp(SourceLocation QuestionLoc,
 /// DefaultArgumentPromotion (C99 6.5.2.2p6). Used for function calls that
 /// do not have a prototype. Integer promotions are performed on each 
 /// argument, and arguments that have type float are promoted to double.
-void Sema::DefaultArgumentPromotion(Expr *&expr) {
-  QualType t = expr->getType();
-  assert(!t.isNull() && "DefaultArgumentPromotion - missing type");
+void Sema::DefaultArgumentPromotion(Expr *&Expr) {
+  QualType Ty = Expr->getType();
+  assert(!Ty.isNull() && "DefaultArgumentPromotion - missing type");
 
-  if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
-    promoteExprToType(expr, Context.IntTy);
-  if (t == Context.FloatTy)
-    promoteExprToType(expr, Context.DoubleTy);
+  if (Ty->isPromotableIntegerType()) // C99 6.3.1.1p2
+    promoteExprToType(Expr, Context.IntTy);
+  if (Ty == Context.FloatTy)
+    promoteExprToType(Expr, Context.DoubleTy);
 }
 
 /// DefaultFunctionArrayConversion (C99 6.3.2.1p3, C99 6.3.2.1p4).
@@ -922,18 +922,20 @@ void Sema::DefaultFunctionArrayConversion(Expr *&e) {
 /// sometimes surpressed. For example, the array->pointer conversion doesn't
 /// apply if the array is an argument to the sizeof or address (&) operators.
 /// In these instances, this routine should *not* be called.
-void Sema::UsualUnaryConversions(Expr *&expr) {
-  QualType t = expr->getType();
-  assert(!t.isNull() && "UsualUnaryConversions - missing type");
+Expr *Sema::UsualUnaryConversions(Expr *&Expr) {
+  QualType Ty = Expr->getType();
+  assert(!Ty.isNull() && "UsualUnaryConversions - missing type");
   
-  if (const ReferenceType *ref = t->getAsReferenceType()) {
-    promoteExprToType(expr, ref->getReferenceeType()); // C++ [expr]
-    t = expr->getType();
+  if (const ReferenceType *Ref = Ty->getAsReferenceType()) {
+    promoteExprToType(Expr, Ref->getReferenceeType()); // C++ [expr]
+    Ty = Expr->getType();
   }
-  if (t->isPromotableIntegerType()) // C99 6.3.1.1p2
-    promoteExprToType(expr, Context.IntTy);
+  if (Ty->isPromotableIntegerType()) // C99 6.3.1.1p2
+    promoteExprToType(Expr, Context.IntTy);
   else
-    DefaultFunctionArrayConversion(expr);
+    DefaultFunctionArrayConversion(Expr);
+  
+  return Expr;
 }
 
 /// UsualArithmeticConversions - Performs various conversions that are common to

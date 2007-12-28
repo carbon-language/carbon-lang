@@ -26,25 +26,23 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "SemaUtil.h"
-
 using namespace clang;
 
 /// CheckFunctionCall - Check a direct function call for various correctness
 /// and safety properties not strictly enforced by the C type system.
 bool
-Sema::CheckFunctionCall(Expr *Fn, SourceLocation RParenLoc,
-                        FunctionDecl *FDecl, Expr** Args, unsigned NumArgs) {
+Sema::CheckFunctionCall(FunctionDecl *FDecl, CallExpr *TheCall) {
                         
   // Get the IdentifierInfo* for the called function.
   IdentifierInfo *FnInfo = FDecl->getIdentifier();
   
   switch (FnInfo->getBuiltinID()) {
   case Builtin::BI__builtin___CFStringMakeConstantString:
-    assert(NumArgs == 1 &&
+    assert(TheCall->getNumArgs() == 1 &&
            "Wrong # arguments to builtin CFStringMakeConstantString");
-    return CheckBuiltinCFStringArgument(Args[0]);
+    return CheckBuiltinCFStringArgument(TheCall->getArg(0));
   case Builtin::BI__builtin_va_start:
-    return SemaBuiltinVAStart(Fn, Args, NumArgs);
+    return SemaBuiltinVAStart(TheCall);
     
   case Builtin::BI__builtin_isgreater:
   case Builtin::BI__builtin_isgreaterequal:
@@ -52,7 +50,7 @@ Sema::CheckFunctionCall(Expr *Fn, SourceLocation RParenLoc,
   case Builtin::BI__builtin_islessequal:
   case Builtin::BI__builtin_islessgreater:
   case Builtin::BI__builtin_isunordered:
-    return SemaBuiltinUnorderedCompare(Fn, Args, NumArgs, RParenLoc);
+    return SemaBuiltinUnorderedCompare(TheCall);
   }
   
   // Search the KnownFunctionIDs for the identifier.
@@ -81,8 +79,7 @@ Sema::CheckFunctionCall(Expr *Fn, SourceLocation RParenLoc,
     case id_vprintf:   format_idx = 0; HasVAListArg = true; break;
     }
     
-    CheckPrintfArguments(Fn, RParenLoc, HasVAListArg,
-			 FDecl, format_idx, Args, NumArgs);       
+    CheckPrintfArguments(TheCall, HasVAListArg, format_idx);       
   }
   
   return false;
@@ -134,11 +131,13 @@ bool Sema::CheckBuiltinCFStringArgument(Expr* Arg) {
 
 /// SemaBuiltinVAStart - Check the arguments to __builtin_va_start for validity.
 /// Emit an error and return true on failure, return false on success.
-bool Sema::SemaBuiltinVAStart(Expr *Fn, Expr** Args, unsigned NumArgs) {
-  if (NumArgs > 2) {
-    Diag(Args[2]->getLocStart(), 
+bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
+  Expr *Fn = TheCall->getCallee();
+  if (TheCall->getNumArgs() > 2) {
+    Diag(TheCall->getArg(2)->getLocStart(), 
          diag::err_typecheck_call_too_many_args, Fn->getSourceRange(),
-         SourceRange(Args[2]->getLocStart(), Args[NumArgs-1]->getLocEnd()));
+         SourceRange(TheCall->getArg(2)->getLocStart(), 
+                     (*(TheCall->arg_end()-1))->getLocEnd()));
     return true;
   }
   
@@ -158,7 +157,7 @@ bool Sema::SemaBuiltinVAStart(Expr *Fn, Expr** Args, unsigned NumArgs) {
   // Verify that the second argument to the builtin is the last argument of the
   // current function or method.
   bool SecondArgIsLastNamedArgument = false;
-  if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Args[1])) {
+  if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(TheCall->getArg(1))) {
     if (ParmVarDecl *PV = dyn_cast<ParmVarDecl>(DR->getDecl())) {
       // FIXME: This isn't correct for methods (results in bogus warning).
       // Get the last formal in the current function.
@@ -172,37 +171,37 @@ bool Sema::SemaBuiltinVAStart(Expr *Fn, Expr** Args, unsigned NumArgs) {
   }
   
   if (!SecondArgIsLastNamedArgument)
-    Diag(Args[1]->getLocStart(), 
+    Diag(TheCall->getArg(1)->getLocStart(), 
          diag::warn_second_parameter_of_va_start_not_last_named_argument);
   return false;
 }  
 
 /// SemaBuiltinUnorderedCompare - Handle functions like __builtin_isgreater and
 /// friends.  This is declared to take (...), so we have to check everything.
-bool Sema::SemaBuiltinUnorderedCompare(Expr *Fn, Expr** Args, unsigned NumArgs,
-                                       SourceLocation RParenLoc) {
-  if (NumArgs < 2)
-    return Diag(RParenLoc, diag::err_typecheck_call_too_few_args);
-  if (NumArgs > 2)
-    return Diag(Args[2]->getLocStart(), diag::err_typecheck_call_too_many_args,
-                SourceRange(Args[2]->getLocStart(),
-                            Args[NumArgs-1]->getLocEnd()));
+bool Sema::SemaBuiltinUnorderedCompare(CallExpr *TheCall) {
+  if (TheCall->getNumArgs() < 2)
+    return Diag(TheCall->getLocEnd(), diag::err_typecheck_call_too_few_args);
+  if (TheCall->getNumArgs() > 2)
+    return Diag(TheCall->getArg(2)->getLocStart(), 
+                diag::err_typecheck_call_too_many_args,
+                SourceRange(TheCall->getArg(2)->getLocStart(),
+                            (*(TheCall->arg_end()-1))->getLocEnd()));
   
-  Expr *OrigArg0 = Args[0];
-  Expr *OrigArg1 = Args[1];
+  Expr *OrigArg0 = TheCall->getArg(0);
+  Expr *OrigArg1 = TheCall->getArg(1);
   
   // Do standard promotions between the two arguments, returning their common
   // type.
-  QualType Res = UsualArithmeticConversions(Args[0], Args[1], false);
+  QualType Res = UsualArithmeticConversions(OrigArg0, OrigArg1, false);
   
   // If the common type isn't a real floating type, then the arguments were
   // invalid for this operation.
   if (!Res->isRealFloatingType())
-    return Diag(Args[0]->getLocStart(), 
+    return Diag(OrigArg0->getLocStart(), 
                 diag::err_typecheck_call_invalid_ordered_compare,
                 OrigArg0->getType().getAsString(),
                 OrigArg1->getType().getAsString(),
-                SourceRange(Args[0]->getLocStart(), Args[1]->getLocEnd()));
+                SourceRange(OrigArg0->getLocStart(), OrigArg1->getLocEnd()));
   
   return false;
 }
@@ -255,18 +254,18 @@ bool Sema::SemaBuiltinUnorderedCompare(Expr *Fn, Expr** Args, unsigned NumArgs,
 ///
 /// For now, we ONLY do (1), (3), (5), (6), (7), and (8).
 void
-Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
-                           bool HasVAListArg, FunctionDecl *FDecl,
-                           unsigned format_idx, Expr** Args, 
-                           unsigned NumArgs) {
+Sema::CheckPrintfArguments(CallExpr *TheCall, bool HasVAListArg, 
+                           unsigned format_idx) {
+  Expr *Fn = TheCall->getCallee();
+
   // CHECK: printf-like function is called with no format string.  
-  if (format_idx >= NumArgs) {
-    Diag(RParenLoc, diag::warn_printf_missing_format_string, 
+  if (format_idx >= TheCall->getNumArgs()) {
+    Diag(TheCall->getRParenLoc(), diag::warn_printf_missing_format_string, 
          Fn->getSourceRange());
     return;
   }
   
-  Expr *OrigFormatExpr = Args[format_idx];
+  Expr *OrigFormatExpr = TheCall->getArg(format_idx);
   // FIXME: This should go in a helper.
   while (1) {
     if (ParenExpr *PE = dyn_cast<ParenExpr>(OrigFormatExpr))
@@ -310,17 +309,15 @@ Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
           if (isa<ParmVarDecl>(DR->getDecl()))
           return;
     
-    Diag(Args[format_idx]->getLocStart(), diag::warn_printf_not_string_constant,
-         Fn->getSourceRange());
-          
+    Diag(TheCall->getArg(format_idx)->getLocStart(), 
+         diag::warn_printf_not_string_constant, Fn->getSourceRange());
     return;
   }
 
   // CHECK: is the format string a wide literal?
   if (FExpr->isWide()) {
-    Diag(Args[format_idx]->getLocStart(),
-         diag::warn_printf_format_string_is_wide_literal,
-         Fn->getSourceRange());
+    Diag(FExpr->getLocStart(),
+         diag::warn_printf_format_string_is_wide_literal, Fn->getSourceRange());
     return;
   }
 
@@ -331,8 +328,8 @@ Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
   const unsigned StrLen = FExpr->getByteLength();
   
   if (StrLen == 0) {
-    Diag(Args[format_idx]->getLocStart(),
-         diag::warn_printf_empty_format_string, Fn->getSourceRange());
+    Diag(FExpr->getLocStart(), diag::warn_printf_empty_format_string,
+         Fn->getSourceRange());
     return;
   }
 
@@ -351,7 +348,7 @@ Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
   //  string.  This can only be determined for non vprintf-like
   //  functions.  For those functions, this value is 1 (the sole
   //  va_arg argument).
-  unsigned numDataArgs = NumArgs-(format_idx+1);
+  unsigned numDataArgs = TheCall->getNumArgs()-(format_idx+1);
 
   // Inspect the format string.
   unsigned StrIdx = 0;
@@ -360,23 +357,21 @@ Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
   //  a '%' character that starts a new format conversion.
   unsigned LastConversionIdx = 0;
   
-  for ( ; StrIdx < StrLen ; ++StrIdx ) {
+  for (; StrIdx < StrLen; ++StrIdx) {
 
     // Is the number of detected conversion conversions greater than
     // the number of matching data arguments?  If so, stop.
     if (!HasVAListArg && numConversions > numDataArgs) break;
     
     // Handle "\0"
-    if(Str[StrIdx] == '\0' ) {
+    if (Str[StrIdx] == '\0') {
       // The string returned by getStrData() is not null-terminated,
       // so the presence of a null character is likely an error.
-    
-      SourceLocation Loc =
-      PP.AdvanceToTokenCharacter(Args[format_idx]->getLocStart(),StrIdx+1);
+      SourceLocation Loc = FExpr->getLocStart();
+      Loc = PP.AdvanceToTokenCharacter(Loc, StrIdx+1);
     
       Diag(Loc, diag::warn_printf_format_string_contains_null_char,
            Fn->getSourceRange());
-    
       return;
     }
     
@@ -391,44 +386,41 @@ Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
 
     // Seen '%'.  Now processing a format conversion.
     switch (Str[StrIdx]) {
-        // Handle dynamic precision or width specifier.     
+      // Handle dynamic precision or width specifier.     
       case '*': {
         ++numConversions;
         
         if (!HasVAListArg && numConversions > numDataArgs) {
           
-          SourceLocation Loc =
-            PP.AdvanceToTokenCharacter(Args[format_idx]->getLocStart(),
-                                       StrIdx+1);
+          SourceLocation Loc = FExpr->getLocStart();
+          Loc = PP.AdvanceToTokenCharacter(Loc, StrIdx+1);
 
           if (Str[StrIdx-1] == '.')
             Diag(Loc, diag::warn_printf_asterisk_precision_missing_arg,
                  Fn->getSourceRange());
           else
             Diag(Loc, diag::warn_printf_asterisk_width_missing_arg,
-                Fn->getSourceRange());
+                 Fn->getSourceRange());
           
           // Don't do any more checking.  We'll just emit spurious errors.
           return;
         }
         
         // Perform type checking on width/precision specifier.
-        Expr* E = Args[format_idx+numConversions];
-        QualType T = E->getType().getCanonicalType();
-        if (BuiltinType *BT = dyn_cast<BuiltinType>(T))
-            if (BT->getKind() == BuiltinType::Int)
-              break;
+        Expr *E = TheCall->getArg(format_idx+numConversions);
+        if (const BuiltinType *BT = E->getType()->getAsBuiltinType())
+          if (BT->getKind() == BuiltinType::Int)
+            break;
 
         SourceLocation Loc =
-          PP.AdvanceToTokenCharacter(Args[format_idx]->getLocStart(),
-                                     StrIdx+1);
+          PP.AdvanceToTokenCharacter(FExpr->getLocStart(), StrIdx+1);
         
         if (Str[StrIdx-1] == '.')
           Diag(Loc, diag::warn_printf_asterisk_precision_wrong_type,
-               T.getAsString(), E->getSourceRange());
+               E->getType().getAsString(), E->getSourceRange());
         else
           Diag(Loc, diag::warn_printf_asterisk_width_wrong_type,
-               T.getAsString(), E->getSourceRange());
+               E->getType().getAsString(), E->getSourceRange());
         
         break;
       }
@@ -468,9 +460,8 @@ Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
       case 'n': {
         ++numConversions;
         CurrentState = state_OrdChr;
-        SourceLocation Loc = 
-          PP.AdvanceToTokenCharacter(Args[format_idx]->getLocStart(),
-                                     LastConversionIdx+1);
+        SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
+                                                        LastConversionIdx+1);
                                      
         Diag(Loc, diag::warn_printf_write_back, Fn->getSourceRange());
         break;
@@ -486,9 +477,8 @@ Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
           CurrentState = state_OrdChr; 
         else {
           // Issue a warning: invalid format conversion.
-          SourceLocation Loc =
-            PP.AdvanceToTokenCharacter(Args[format_idx]->getLocStart(),
-                                       LastConversionIdx+1);
+          SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
+                                                          LastConversionIdx+1);
               
           Diag(Loc, diag::warn_printf_invalid_conversion, 
                std::string(Str+LastConversionIdx, Str+StrIdx),
@@ -511,9 +501,8 @@ Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
 
   if (CurrentState == state_Conversion) {
     // Issue a warning: invalid format conversion.
-    SourceLocation Loc =
-      PP.AdvanceToTokenCharacter(Args[format_idx]->getLocStart(),
-                                 LastConversionIdx+1);
+    SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
+                                                    LastConversionIdx+1);
     
     Diag(Loc, diag::warn_printf_invalid_conversion,
          std::string(Str+LastConversionIdx,
@@ -526,9 +515,8 @@ Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
     // CHECK: Does the number of format conversions exceed the number
     //        of data arguments?
     if (numConversions > numDataArgs) {
-      SourceLocation Loc =
-        PP.AdvanceToTokenCharacter(Args[format_idx]->getLocStart(),
-                                   LastConversionIdx);
+      SourceLocation Loc = PP.AdvanceToTokenCharacter(FExpr->getLocStart(),
+                                                      LastConversionIdx);
                                    
       Diag(Loc, diag::warn_printf_insufficient_data_args,
            Fn->getSourceRange());
@@ -536,7 +524,7 @@ Sema::CheckPrintfArguments(Expr *Fn, SourceLocation RParenLoc,
     // CHECK: Does the number of data arguments exceed the number of
     //        format conversions in the format string?
     else if (numConversions < numDataArgs)
-      Diag(Args[format_idx+numConversions+1]->getLocStart(),
+      Diag(TheCall->getArg(format_idx+numConversions+1)->getLocStart(),
            diag::warn_printf_too_many_data_args, Fn->getSourceRange());
   }
 }
