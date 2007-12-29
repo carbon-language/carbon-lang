@@ -4223,7 +4223,7 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   if (CombineToPreIndexedLoadStore(N) || CombineToPostIndexedLoadStore(N))
     return SDOperand(N, 0);
 
-  // FIXME: is there such a think as a truncating indexed store?
+  // FIXME: is there such a thing as a truncating indexed store?
   if (ST->isTruncatingStore() && ST->getAddressingMode() == ISD::UNINDEXED &&
       MVT::isInteger(Value.getValueType())) {
     // See if we can simplify the input to this truncstore with knowledge that
@@ -4241,6 +4241,17 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     // SimplifyDemandedBits, which only works if the value has a single use.
     if (SimplifyDemandedBits(Value, MVT::getIntVTBitMask(ST->getStoredVT())))
       return SDOperand(N, 0);
+  }
+  
+  // If this is a load followed by a store to the same location, then the store
+  // is dead/noop.
+  if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(Value)) {
+    if (Chain.Val == Ld && Ld->getBasePtr() == Ptr &&
+        ST->getAddressingMode() == ISD::UNINDEXED &&
+        ST->getStoredVT() == Ld->getLoadedVT()) {
+      // The store is dead, remove it.
+      return Chain;
+    }
   }
   
   return SDOperand();
