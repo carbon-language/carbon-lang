@@ -3672,6 +3672,10 @@ SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
   ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
   
+  // If this is fp_round(fpextend), don't fold it, allow ourselves to be folded.
+  if (N->hasOneUse() && (*N->use_begin())->getOpcode() == ISD::FP_ROUND)
+    return SDOperand();
+  
   // fold (fp_extend c1fp) -> c1fp
   if (N0CFP && VT != MVT::ppcf128)
     return DAG.getNode(ISD::FP_EXTEND, VT, N0);
