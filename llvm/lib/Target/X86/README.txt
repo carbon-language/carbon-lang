@@ -1612,8 +1612,48 @@ a mov.  Something like:
         addl    (%edx,%edi,4), %ebx
         addl    %ebx, (%ecx,%edi,4)
 
-Additionally, LSR should rewrite the exit condition of the loop to use
+Here is another interesting example:
+
+void vertical_compose97iH1(int *b0, int *b1, int *b2, int width){
+    int i;
+    for(i=0; i<width; i++)
+        b1[i] -= (1*(b0[i] + b2[i])+0)>>0;
+}
+
+We miss the r/m/w opportunity here by using 2 subs instead of an add+sub[mem]:
+
+LBB9_2:	# bb
+	movl	(%ecx,%edi,4), %ebx
+	subl	(%esi,%edi,4), %ebx
+	subl	(%edx,%edi,4), %ebx
+	movl	%ebx, (%ecx,%edi,4)
+	incl	%edi
+	cmpl	%eax, %edi
+	jne	LBB9_2	# bb
+
+Additionally, LSR should rewrite the exit condition of these loops to use
 a stride-4 IV, would would allow all the scales in the loop to go away.
 This would result in smaller code and more efficient microops.
+
+//===---------------------------------------------------------------------===//
+
+We should be smarter about conversion from fpstack to XMM regs.
+
+double foo();
+void bar(double *P) { *P = foo(); }
+
+We compile that to:
+
+_bar:
+	subl	$12, %esp
+	call	L_foo$stub
+	fstpl	(%esp)
+	movl	16(%esp), %eax
+	movsd	(%esp), %xmm0
+	movsd	%xmm0, (%eax)
+	addl	$12, %esp
+	ret
+
+for example.  The magic to/from the stack is unneeded.
 
 //===---------------------------------------------------------------------===//
