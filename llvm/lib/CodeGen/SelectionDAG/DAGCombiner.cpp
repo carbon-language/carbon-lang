@@ -4252,7 +4252,8 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   if (LoadSDNode *Ld = dyn_cast<LoadSDNode>(Value)) {
     if (Chain.Val == Ld && Ld->getBasePtr() == Ptr &&
         ST->getAddressingMode() == ISD::UNINDEXED &&
-        ST->getStoredVT() == Ld->getLoadedVT()) {
+        ST->getStoredVT() == Ld->getLoadedVT() &&
+        !ST->isVolatile()) {
       // The store is dead, remove it.
       return Chain;
     }
