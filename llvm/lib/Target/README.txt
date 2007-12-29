@@ -131,13 +131,6 @@ v4sf example(float *P) {
 
 //===---------------------------------------------------------------------===//
 
-We should constant fold vector type casts at the LLVM level, regardless of the
-cast.  Currently we cannot fold some casts because we don't have TargetData
-information in the constant folder, so we don't know the endianness of the 
-target!
-
-//===---------------------------------------------------------------------===//
-
 Add support for conditional increments, and other related patterns.  Instead
 of:
 
