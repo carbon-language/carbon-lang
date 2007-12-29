@@ -702,28 +702,6 @@ The add\sub pair is really unneeded here.
 
 //===---------------------------------------------------------------------===//
 
-We currently compile sign_extend_inreg into two shifts:
-
-long foo(long X) {
-  return (long)(signed char)X;
-}
-
-becomes:
-
-_foo:
-        movl 4(%esp), %eax
-        shll $24, %eax
-        sarl $24, %eax
-        ret
-
-This could be:
-
-_foo:
-        movsbl  4(%esp),%eax
-        ret
-
-//===---------------------------------------------------------------------===//
-
 Consider the expansion of:
 
 uint %test3(uint %X) {
