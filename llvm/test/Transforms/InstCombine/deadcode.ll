@@ -1,13 +1,14 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt -instcombine | llvm-dis | \
-; RUN:   grep {ret i32 %A}
+; RUN: llvm-as < %s | opt -instcombine | llvm-dis | grep {ret i32 %A}
 
-int %test(int %A) {
-  %X = or bool false, false
-  br bool %X, label %T, label %C
-T:
-  %B = add int %A, 1
-  br label %C
-C:
-  %C = phi int [%B, %T], [%A, %0]
-  ret int %C
+define i32 @test(i32 %A) {
+	%X = or i1 false, false		
+	br i1 %X, label %T, label %C
+
+T:		; preds = %0
+	%B = add i32 %A, 1	
+	br label %C
+
+C:		; preds = %T, %0
+	%C.upgrd.1 = phi i32 [ %B, %T ], [ %A, %0 ]
+	ret i32 %C.upgrd.1
 }
