@@ -1,10 +1,11 @@
-; RUN: llvm-upgrade < %s | llvm-as | llc -march=x86 -mattr=+sse2 | grep movsd | count 1
+; RUN: llvm-as < %s | llc -march=x86 -mattr=+sse2 | grep movsd | count 1
 
-<2 x long> %test(<2 x long>* %p) {
-	%tmp = cast <2 x long>* %p to double*
-	%tmp = load double* %tmp
-	%tmp = insertelement <2 x double> undef, double %tmp, uint 0
-	%tmp5 = insertelement <2 x double> %tmp, double 0.000000e+00, uint 1
-	%tmp = cast <2 x double> %tmp5 to <2 x long>
-	ret <2 x long> %tmp
+define <2 x i64> @test(<2 x i64>* %p) {
+	%tmp = bitcast <2 x i64>* %p to double*		
+	%tmp.upgrd.1 = load double* %tmp	
+	%tmp.upgrd.2 = insertelement <2 x double> undef, double %tmp.upgrd.1, i32 0
+	%tmp5 = insertelement <2 x double> %tmp.upgrd.2, double 0.0, i32 1
+	%tmp.upgrd.3 = bitcast <2 x double> %tmp5 to <2 x i64>
+	ret <2 x i64> %tmp.upgrd.3
 }
+
