@@ -1280,6 +1280,28 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
     // Constant fold or commute setcc.
     SDOperand O = DAG.FoldSetCC(VT, N0, N1, Cond);    
     if (O.Val) return O;
+  } else if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N1.Val)) {
+    // If the RHS of an FP comparison is a constant, simplify it away in
+    // some cases.
+    if (CFP->getValueAPF().isNaN()) {
+      // If an operand is known to be a nan, we can fold it.
+      switch (ISD::getUnorderedFlavor(Cond)) {
+      default: assert(0 && "Unknown flavor!");
+      case 0:  // Known false.
+        return DAG.getConstant(0, VT);
+      case 1:  // Known true.
+        return DAG.getConstant(1, VT);
+      case 2:  // undefind.
+        return DAG.getNode(ISD::UNDEF, VT);
+      }
+    }
+    
+    // Otherwise, we know the RHS is not a NaN.  Simplify the node to drop the
+    // constant if knowing that the operand is non-nan is enough.  We prefer to
+    // have SETO(x,x) instead of SETO(x, 0.0) because this avoids having to
+    // materialize 0.0.
+    if (Cond == ISD::SETO || Cond == ISD::SETUO)
+      return DAG.getSetCC(VT, N0, N0, Cond);
   }
 
   if (N0 == N1) {

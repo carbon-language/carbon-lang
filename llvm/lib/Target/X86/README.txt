@@ -816,23 +816,6 @@ _add_zf:
 
 //===---------------------------------------------------------------------===//
 
-This:
-#include <math.h>
-int foo(double X) { return isnan(X); }
-
-compiles to (-m64):
-
-_foo:
-        pxor %xmm1, %xmm1
-        ucomisd %xmm1, %xmm0
-        setp %al
-        movzbl %al, %eax
-        ret
-
-the pxor is not needed, we could compare the value against itself.
-
-//===---------------------------------------------------------------------===//
-
 These two functions have identical effects:
 
 unsigned int f(unsigned int i, unsigned int n) {++i; if (i == n) ++i; return i;}
