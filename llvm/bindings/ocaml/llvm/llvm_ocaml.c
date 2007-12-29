@@ -652,6 +652,19 @@ CAMLprim value llvm_value_is_block(LLVMValueRef Val) {
   return Val_bool(LLVMValueIsBasicBlock(Val));
 }
 
+/*--... Operations on call sites ...........................................--*/
+
+/* llvalue -> int */
+CAMLprim value llvm_instruction_call_conv(LLVMValueRef Inst) {
+  return Val_int(LLVMGetInstructionCallConv(Inst));
+}
+
+/* int -> llvalue -> unit */
+CAMLprim value llvm_set_instruction_call_conv(value CC, LLVMValueRef Inst) {
+  LLVMSetInstructionCallConv(Inst, Int_val(CC));
+  return Val_unit;
+}
+
 /*--... Operations on phi nodes ............................................--*/
 
 /* (llvalue * llbasicblock) -> llvalue -> unit */

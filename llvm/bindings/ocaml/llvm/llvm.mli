@@ -854,6 +854,20 @@ external value_is_block : llvalue -> bool = "llvm_value_is_block"
 (** [block_of_value v] losslessly casts [v] to an [llbasicblock]. **)
 external block_of_value : llvalue -> llbasicblock = "LLVMValueAsBasicBlock"
 
+(*--... Operations on call sites ...........................................--*)
+
+(** [inst_call_conv ci] is the calling convention for the call or invoke
+    instruction [ci], which may be one of the values from the module [CallConv].
+    See the method [CallSite:: **)
+external instruction_call_conv: llvalue -> int
+                              = "llvm_instruction_call_conv"
+
+(** [set_inst_call_conv cc ci] sets the calling convention for the call or
+    invoke instruction [ci] to the integer [cc], which can be one of the values
+    from the module [CallConv]. See the method [CallSite::]. **)
+external set_instruction_call_conv: int -> llvalue -> unit
+                                  = "llvm_set_instruction_call_conv"
+
 (*--... Operations on phi nodes ............................................--*)
 
 (** [add_incoming (v, bb) pn] adds the value [v] to the phi node [pn] for use

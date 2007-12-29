@@ -768,14 +768,19 @@ let test_builder () =
   end;
   
   group "miscellaneous"; begin
-    (* RUN: grep {Inst45.*call.*P2.*P1} < %t.ll
+    (* RUN: grep {CallInst.*call.*P2.*P1} < %t.ll
+     * RUN: grep {CallInst.*cc63} < %t.ll
      * RUN: grep {Inst47.*select.*Inst46.*P1.*P2} < %t.ll
      * RUN: grep {Inst48.*va_arg.*null.*i32} < %t.ll
      * RUN: grep {Inst49.*extractelement.*Vec1.*P2} < %t.ll
      * RUN: grep {Inst50.*insertelement.*Vec1.*P1.*P2} < %t.ll
      * RUN: grep {Inst51.*shufflevector.*Vec1.*Vec2.*1.*1.*0.*0} < %t.ll
      *)
-         ignore (build_call fn [| p2; p1 |] "Inst45" atentry);
+    let ci = build_call fn [| p2; p1 |] "CallInst" atentry in
+    insist (CallConv.c = instruction_call_conv ci);
+    set_instruction_call_conv 63 ci;
+    insist (63 = instruction_call_conv ci);
+    
     let inst46 = build_icmp Icmp.Eq p1 p2 "Inst46" atentry in
          ignore (build_select inst46 p1 p2 "Inst47" atentry);
          ignore (build_va_arg

@@ -378,6 +378,10 @@ LLVMBasicBlockRef LLVMInsertBasicBlock(LLVMBasicBlockRef InsertBeforeBB,
                                        const char *Name);
 void LLVMDeleteBasicBlock(LLVMBasicBlockRef BB);
 
+/* Operations on call sites */
+void LLVMSetInstructionCallConv(LLVMValueRef Instr, unsigned CC);
+unsigned LLVMGetInstructionCallConv(LLVMValueRef Instr);
+
 /* Operations on phi nodes */
 void LLVMAddIncoming(LLVMValueRef PhiNode, LLVMValueRef *IncomingValues,
                      LLVMBasicBlockRef *IncomingBlocks, unsigned Count);

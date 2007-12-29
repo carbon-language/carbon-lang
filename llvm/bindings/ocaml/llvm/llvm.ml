@@ -328,6 +328,12 @@ external value_of_block : llbasicblock -> llvalue = "LLVMBasicBlockAsValue"
 external value_is_block : llvalue -> bool = "llvm_value_is_block"
 external block_of_value : llvalue -> llbasicblock = "LLVMValueAsBasicBlock"
 
+(*--... Operations on call sites ...........................................--*)
+external instruction_call_conv: llvalue -> int
+                              = "llvm_instruction_call_conv"
+external set_instruction_call_conv: int -> llvalue -> unit
+                                  = "llvm_set_instruction_call_conv"
+
 (*--... Operations on phi nodes ............................................--*)
 external add_incoming : (llvalue * llbasicblock) -> llvalue -> unit
                       = "llvm_add_incoming"
