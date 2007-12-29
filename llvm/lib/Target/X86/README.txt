@@ -1636,24 +1636,3 @@ a stride-4 IV, would would allow all the scales in the loop to go away.
 This would result in smaller code and more efficient microops.
 
 //===---------------------------------------------------------------------===//
-
-We should be smarter about conversion from fpstack to XMM regs.
-
-double foo();
-void bar(double *P) { *P = foo(); }
-
-We compile that to:
-
-_bar:
-	subl	$12, %esp
-	call	L_foo$stub
-	fstpl	(%esp)
-	movl	16(%esp), %eax
-	movsd	(%esp), %xmm0
-	movsd	%xmm0, (%eax)
-	addl	$12, %esp
-	ret
-
-for example.  The magic to/from the stack is unneeded.
-
-//===---------------------------------------------------------------------===//

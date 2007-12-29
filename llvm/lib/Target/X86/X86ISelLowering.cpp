@@ -33,7 +33,6 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/SmallSet.h"
@@ -812,7 +811,6 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
   CCState CCInfo(CallingConv, isVarArg, getTargetMachine(), RVLocs);
   CCInfo.AnalyzeCallResult(TheCall, RetCC_X86);
 
-  
   SmallVector<SDOperand, 8> ResultVals;
   
   // Copy all of the result registers out of their specified physreg.
@@ -838,17 +836,50 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
     // an XMM register.
     if ((X86ScalarSSEf32 && RVLocs[0].getValVT() == MVT::f32) ||
         (X86ScalarSSEf64 && RVLocs[0].getValVT() == MVT::f64)) {
+      SDOperand StoreLoc;
+      const Value *SrcVal = 0;
+      int SrcValOffset = 0;
+      
+      // Determine where to store the value.  If the call result is directly
+      // used by a store, see if we can store directly into the location.  In
+      // this case, we'll end up producing a fst + movss[load] + movss[store] to
+      // the same location, and the two movss's will be nuked as dead.  This
+      // optimizes common things like "*D = atof(..)" to not need an
+      // intermediate stack slot.
+      if (SDOperand(TheCall, 0).hasOneUse() && 
+          SDOperand(TheCall, 1).hasOneUse()) {
+        // Ok, we have one use of the value and one use of the chain.  See if
+        // they are the same node: a store.
+        if (StoreSDNode *N = dyn_cast<StoreSDNode>(*TheCall->use_begin())) {
+          if (N->getChain().Val == TheCall && N->getValue().Val == TheCall &&
+              !N->isVolatile() && !N->isTruncatingStore() && 
+              N->getAddressingMode() == ISD::UNINDEXED) {
+            StoreLoc = N->getBasePtr();
+            SrcVal = N->getSrcValue();
+            SrcValOffset = N->getSrcValueOffset();
+          }
+        }
+      }
+
+      // If we weren't able to optimize the result, just create a temporary
+      // stack slot.
+      if (StoreLoc.Val == 0) {
+        MachineFunction &MF = DAG.getMachineFunction();
+        int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+        StoreLoc = DAG.getFrameIndex(SSFI, getPointerTy());
+      }
+      
       // FIXME: Currently the FST is flagged to the FP_GET_RESULT. This
       // shouldn't be necessary except that RFP cannot be live across
-      // multiple blocks. When stackifier is fixed, they can be uncoupled.
-      MachineFunction &MF = DAG.getMachineFunction();
-      int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
-      SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+      // multiple blocks (which could happen if a select gets lowered into
+      // multiple blocks and scheduled in between them). When stackifier is
+      // fixed, they can be uncoupled.
       SDOperand Ops[] = {
-        Chain, RetVal, StackSlot, DAG.getValueType(RVLocs[0].getValVT()), InFlag
+        Chain, RetVal, StoreLoc, DAG.getValueType(RVLocs[0].getValVT()), InFlag
       };
       Chain = DAG.getNode(X86ISD::FST, MVT::Other, Ops, 5);
-      RetVal = DAG.getLoad(RVLocs[0].getValVT(), Chain, StackSlot, NULL, 0);
+      RetVal = DAG.getLoad(RVLocs[0].getValVT(), Chain,
+                           StoreLoc, SrcVal, SrcValOffset);
       Chain = RetVal.getValue(1);
     }
     ResultVals.push_back(RetVal);
