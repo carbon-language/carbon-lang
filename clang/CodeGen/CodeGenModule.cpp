@@ -424,7 +424,42 @@ static llvm::Constant *GenerateConstantExpr(const Expr *Expression,
   case Stmt::CastExprClass:
     return GenerateConstantCast(cast<CastExpr>(Expression)->getSubExpr(), type,
                                 CGM);
-
+  case Stmt::UnaryOperatorClass: {
+    const UnaryOperator *Op = cast<UnaryOperator>(Expression);
+    llvm::Constant *SubExpr = GenerateConstantExpr(Op->getSubExpr(), CGM);
+    // FIXME: These aren't right for complex.
+    switch (Op->getOpcode()) {
+    default: break;
+    case UnaryOperator::Plus:
+    case UnaryOperator::Extension:
+      return SubExpr;
+    case UnaryOperator::Minus:
+      return llvm::ConstantExpr::getNeg(SubExpr);
+    case UnaryOperator::Not:
+      return llvm::ConstantExpr::getNot(SubExpr);
+    case UnaryOperator::LNot:
+      if (Op->getSubExpr()->getType()->isRealFloatingType()) {
+        // Compare against 0.0 for fp scalars.
+        llvm::Constant *Zero = llvm::Constant::getNullValue(SubExpr->getType());
+        SubExpr = llvm::ConstantExpr::getFCmp(llvm::FCmpInst::FCMP_UNE, SubExpr,
+                                              Zero);
+      } else {
+        assert((Op->getSubExpr()->getType()->isIntegerType() ||
+                Op->getSubExpr()->getType()->isPointerType()) &&
+               "Unknown scalar type to convert");
+        // Compare against an integer or pointer null.
+        llvm::Constant *Zero = llvm::Constant::getNullValue(SubExpr->getType());
+        SubExpr = llvm::ConstantExpr::getICmp(llvm::ICmpInst::ICMP_NE, SubExpr,
+                                              Zero);
+      }
+        
+      return llvm::ConstantExpr::getZExt(SubExpr, Types.ConvertType(type));
+    //SizeOf, AlignOf,  // [C99 6.5.3.4] Sizeof (expr, not type) operator.
+    //Real, Imag,       // "__real expr"/"__imag expr" Extension.
+    //OffsetOf          // __builtin_offsetof
+    }
+    break;
+  }
   case Stmt::ImplicitCastExprClass: {
     const ImplicitCastExpr *ICExpr = cast<ImplicitCastExpr>(Expression);
     
