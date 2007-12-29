@@ -2,18 +2,14 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by a team from the Computer Systems Research
-// Department at The Aerospace Corporation and is distributed under the
-// University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
 // This file contains a printer that converts from our internal representation
 // of machine-dependent LLVM code to Cell SPU assembly language. This printer
 // is the output mechanism used by `llc'.
-//
-// Documentation at http://developer.apple.com/documentation/DeveloperTools/
-// Reference/Assembler/ASMIntroduction/chapter_1_section_1.html
 //
 //===----------------------------------------------------------------------===//
 

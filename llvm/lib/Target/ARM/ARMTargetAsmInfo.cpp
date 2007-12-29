@@ -1,10 +1,9 @@
-
 //===-- ARMTargetAsmInfo.cpp - ARM asm properties ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by James M. Laskey and is distributed under the
-// University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //

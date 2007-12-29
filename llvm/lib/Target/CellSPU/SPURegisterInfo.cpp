@@ -1,14 +1,13 @@
-//===- SPURegisterInfo.cpp - Cell SPU Register Information ------*- C++ -*-===//
+//===- SPURegisterInfo.cpp - Cell SPU Register Information ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by a team from the Computer Systems Research
-// Department at The Aerospace Corporation and is distributed under the
-// University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the PowerPC implementation of the MRegisterInfo class.
+// This file contains the Cell implementation of the MRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 

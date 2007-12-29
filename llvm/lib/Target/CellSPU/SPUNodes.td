@@ -1,10 +1,10 @@
-//=- SPUNodes.h - Specialized SelectionDAG nodes used for CellSPU -*- C++ -*-=//
+//===- SPUNodes.td - Specialized SelectionDAG nodes used for CellSPU ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by a team from the Computer Systems Research
-// Department at The Aerospace Corporation and is distributed under the
-// University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
 //===----------------------------------------------------------------------===//
 //
 // Type profiles and SelectionDAG nodes used by CellSPU

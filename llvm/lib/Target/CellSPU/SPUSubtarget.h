@@ -1,10 +1,9 @@
-//=====-- SPUSubtarget.h - Define Subtarget for the Cell SPU -----*- C++ -*--=//
+//===-- SPUSubtarget.h - Define Subtarget for the Cell SPU ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by a team from the Computer Systems Research
-// Department at The Aerospace Corporation and is distributed under the
-// University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -12,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPCSUBTARGET_H
-#define POWERPCSUBTARGET_H
+#ifndef CELLSUBTARGET_H
+#define CELLSUBTARGET_H
 
 #include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetSubtarget.h"
