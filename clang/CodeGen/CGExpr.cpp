@@ -424,9 +424,9 @@ LValue CodeGenFunction::EmitMemberExpr(const MemberExpr *E) {
     const llvm::PointerType * BaseTy = 
       cast<llvm::PointerType>(BaseValue->getType());
     if (FieldTy != BaseTy->getElementType()) {
-      // FIXME: Need to get address space qualification of pointer
+      unsigned AS = BaseTy->getAddressSpace();
       V = Builder.CreateBitCast(V, 
-                                llvm::PointerType::getUnqual(FieldTy), 
+                                llvm::PointerType::get(FieldTy, AS), 
                                 "tmp");
     }
   }
