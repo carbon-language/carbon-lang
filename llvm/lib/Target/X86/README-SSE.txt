@@ -456,6 +456,18 @@ icc generates:
 So icc is smart enough to know that B is in memory so it doesn't load it and
 store it back to stack.
 
+This should be fixed by eliminating the llvm.x86.sse2.loadl.pd intrinsic, 
+lowering it to a load+insertelement instead.  Already match the load+shuffle 
+as movlpd, so this should be easy.  We already get optimal code for:
+
+define void @test2(<2 x double>* %r, <2 x double>* %A, double %B) {
+entry:
+	%tmp2 = load <2 x double>* %A, align 16
+	%tmp8 = insertelement <2 x double> %tmp2, double %B, i32 0
+	store <2 x double> %tmp8, <2 x double>* %r, align 16
+	ret void
+}
+
 //===---------------------------------------------------------------------===//
 
 __m128d test1( __m128d A, __m128d B) {
@@ -476,10 +488,10 @@ Don't know if unpckhpd is faster. But it is shorter.
 
 This code generates ugly code, probably due to costs being off or something:
 
-void %test(float* %P, <4 x float>* %P2 ) {
+define void @test(float* %P, <4 x float>* %P2 ) {
         %xFloat0.688 = load float* %P
-        %loadVector37.712 = load <4 x float>* %P2
-        %inFloat3.713 = insertelement <4 x float> %loadVector37.712, float 0.000000e+00, uint 3
+        %tmp = load <4 x float>* %P2
+        %inFloat3.713 = insertelement <4 x float> %tmp, float 0.0, i32 3
         store <4 x float> %inFloat3.713, <4 x float>* %P2
         ret void
 }
@@ -487,17 +499,16 @@ void %test(float* %P, <4 x float>* %P2 ) {
 Generates:
 
 _test:
-        pxor %xmm0, %xmm0
-        movd %xmm0, %eax        ;; EAX = 0!
-        movl 8(%esp), %ecx
-        movaps (%ecx), %xmm0
-        pinsrw $6, %eax, %xmm0
-        shrl $16, %eax          ;; EAX = 0 again!
-        pinsrw $7, %eax, %xmm0
-        movaps %xmm0, (%ecx)
-        ret
+	movl	8(%esp), %eax
+	movaps	(%eax), %xmm0
+	pxor	%xmm1, %xmm1
+	movaps	%xmm0, %xmm2
+	shufps	$50, %xmm1, %xmm2
+	shufps	$132, %xmm2, %xmm0
+	movaps	%xmm0, (%eax)
+	ret
 
-It would be better to generate:
+Would it be better to generate:
 
 _test:
         movl 8(%esp), %ecx
@@ -508,7 +519,7 @@ _test:
         movaps %xmm0, (%ecx)
         ret
 
-or use pxor (to make a zero vector) and shuffle (to insert it).
+?
 
 //===---------------------------------------------------------------------===//
 
@@ -573,32 +584,6 @@ swizzle:
         movlps 8(%ecx), %xmm0
         movaps %xmm0, (%eax)
         ret
-
-//===---------------------------------------------------------------------===//
-
-This code:
-
-#include <emmintrin.h>
-__m128i test(long long i) { return _mm_cvtsi64x_si128(i); }
-
-Should turn into a single 'movq %rdi, %xmm0' instruction.  Instead, we 
-get this (on x86-64):
-
-_test:
-	movd %rdi, %xmm1
-	xorps %xmm0, %xmm0
-	movsd %xmm1, %xmm0
-	ret
-
-The LLVM IR is:
-
-target triple = "x86_64-apple-darwin8"
-define <2 x i64> @test(i64 %i) {
-entry:
-	%tmp10 = insertelement <2 x i64> undef, i64 %i, i32 0	
-	%tmp11 = insertelement <2 x i64> %tmp10, i64 0, i32 1
-	ret <2 x i64> %tmp11
-}
 
 //===---------------------------------------------------------------------===//
 
@@ -668,43 +653,6 @@ This is due to the code in ExpandConstantFP in LegalizeDAG.cpp. It notices that
 x86-64 indeed has an instruction to load a 32-bit float from memory and convert
 it into a 64-bit float in a register, however it doesn't notice that this isn't
 beneficial because it prevents the load from being folded into the multiply.
-
-//===---------------------------------------------------------------------===//
-
-In this loop:
-
-bb49:		; preds = %bb49, %bb49.preheader
-	%indvar = phi i32 [ 0, %bb49.preheader ], [ %indvar.next, %bb49 ]		; <i32> [#uses=2]
-	%dp.089.0.rec = shl i32 %indvar, 3		; <i32> [#uses=2]
-	%dp.089.0 = getelementptr i32* %tmp89, i32 %dp.089.0.rec		; <i32*> [#uses=1]
-	%tmp5051 = bitcast i32* %dp.089.0 to <2 x i64>*		; <<2 x i64>*> [#uses=1]
-	store <2 x i64> zeroinitializer, <2 x i64>* %tmp5051, align 16
-	%dp.089.0.sum105 = or i32 %dp.089.0.rec, 4		; <i32> [#uses=1]
-	%tmp56 = getelementptr i32* %tmp89, i32 %dp.089.0.sum105		; <i32*> [#uses=1]
-	%tmp5657 = bitcast i32* %tmp56 to <2 x i64>*		; <<2 x i64>*> [#uses=1]
-	store <2 x i64> zeroinitializer, <2 x i64>* %tmp5657, align 16
-	%indvar.next = add i32 %indvar, 1		; <i32> [#uses=2]
-	%exitcond = icmp eq i32 %indvar.next, %tmp98		; <i1> [#uses=1]
-	br i1 %exitcond, label %bb72, label %bb49
-
-we get:
-
-LBB5_6:	# bb49.preheader
-	shlw	$2, %si
-	decw	%si
-	movzwl	%si, %eax
-	incl	%eax
-	xorl	%ecx, %ecx
-LBB5_7:	# bb49
-	xorps	%xmm0, %xmm0            # (1)
-	movaps	%xmm0, (%edx)
-	movaps	%xmm0, 16(%edx)
-	addl	$32, %edx
-	incl	%ecx
-	cmpl	%eax, %ecx
-	jne	LBB4_7	# bb47
-
-The instruction at (1) can be moved out of the main body of the loop.
 
 //===---------------------------------------------------------------------===//
 
