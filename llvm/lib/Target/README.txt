@@ -512,6 +512,10 @@ better to sink the picbase computation down into the block for the
 assertion, as it is the only one that uses it.  This happens for a lot of 
 code with early outs.
 
+Another example is loads of arguments, which are usually emitted into the 
+entry block on targets like x86.  If not used in all paths through a 
+function, they should be sunk into the ones that do.
+
 In this case, whole-function-isel would also handle this.
 
 //===---------------------------------------------------------------------===//
