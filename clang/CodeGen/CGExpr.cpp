@@ -87,6 +87,7 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return LValue::MakeAddr(llvm::UndefValue::get(Ty));
   }
 
+  case Expr::CallExprClass: return EmitCallExprLValue(cast<CallExpr>(E));
   case Expr::DeclRefExprClass: return EmitDeclRefLValue(cast<DeclRefExpr>(E));
   case Expr::ParenExprClass:return EmitLValue(cast<ParenExpr>(E)->getSubExpr());
   case Expr::PreDefinedExprClass:
@@ -453,6 +454,12 @@ RValue CodeGenFunction::EmitCallExpr(const CallExpr *E) {
         
   llvm::Value *Callee = EmitScalarExpr(E->getCallee());
   return EmitCallExpr(Callee, E);
+}
+
+LValue CodeGenFunction::EmitCallExprLValue(const CallExpr *E) {
+  // Can only get l-value for call expression returning aggregate type
+  RValue RV = EmitCallExpr(E);
+  return LValue::MakeAddr(RV.getAggregateAddr());
 }
 
 RValue CodeGenFunction::EmitCallExpr(llvm::Value *Callee, const CallExpr *E) {
