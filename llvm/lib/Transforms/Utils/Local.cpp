@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
@@ -173,8 +174,16 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
 bool llvm::isInstructionTriviallyDead(Instruction *I) {
   if (!I->use_empty() || isa<TerminatorInst>(I)) return false;
 
-  if (!I->mayWriteToMemory()) return true;
+  if (!I->mayWriteToMemory())
+    return true;
 
+  // Special case intrinsics that "may write to memory" but can be deleted when
+  // dead.
+  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
+    // Safe to delete llvm.stacksave if dead.
+    if (II->getIntrinsicID() == Intrinsic::stacksave)
+      return true;
+  
   return false;
 }
 
