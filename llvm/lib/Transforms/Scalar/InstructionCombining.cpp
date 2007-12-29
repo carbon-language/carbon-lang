@@ -9338,8 +9338,11 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
         return ReplaceInstUsesWith(LI, LIB);
   }
 
-  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op))
-    if (isa<ConstantPointerNull>(GEPI->getOperand(0))) {
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op)) {
+    const Value *GEPI0 = GEPI->getOperand(0);
+    // TODO: Consider a target hook for valid address spaces for this xform.
+    if (isa<ConstantPointerNull>(GEPI0) &&
+        cast<PointerType>(GEPI0->getType())->getAddressSpace() == 0) {
       // Insert a new store to null instruction before the load to indicate
       // that this code is not reachable.  We do this instead of inserting
       // an unreachable instruction directly because we cannot modify the
@@ -9348,10 +9351,13 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
                     Constant::getNullValue(Op->getType()), &LI);
       return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
     }
+  } 
 
   if (Constant *C = dyn_cast<Constant>(Op)) {
     // load null/undef -> undef
-    if ((C->isNullValue() || isa<UndefValue>(C))) {
+    // TODO: Consider a target hook for valid address spaces for this xform.
+    if (isa<UndefValue>(C) || (C->isNullValue() && 
+        cast<PointerType>(Op->getType())->getAddressSpace() == 0)) {
       // Insert a new store to null instruction before the load to indicate that
       // this code is not reachable.  We do this instead of inserting an
       // unreachable instruction directly because we cannot modify the CFG.

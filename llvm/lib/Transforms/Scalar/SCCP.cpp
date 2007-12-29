@@ -1015,7 +1015,9 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
   if (PtrVal.isUndefined()) return;   // The pointer is not resolved yet!
   if (PtrVal.isConstant() && !I.isVolatile()) {
     Value *Ptr = PtrVal.getConstant();
-    if (isa<ConstantPointerNull>(Ptr)) {
+    // TODO: Consider a target hook for valid address spaces for this xform.
+    if (isa<ConstantPointerNull>(Ptr) && 
+        cast<PointerType>(Ptr->getType())->getAddressSpace() == 0) {
       // load null -> null
       markConstant(IV, &I, Constant::getNullValue(I.getType()));
       return;
