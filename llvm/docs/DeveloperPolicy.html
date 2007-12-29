@@ -417,28 +417,12 @@ Changes</a></div>
 <div class="doc_text">
   <p>We believe in correct attribution of contributions to 
   their contributors.  However, we do not want the source code to be littered
-  with random attributions (this is noisy/distracting and revision control
-  keeps a perfect history of this anyway).  As such, we follow these rules:</p>
-  <ol>
-    <li>Developers who originate new files in LLVM should place their name at
-    the top of the file per the 
-    <a href="CodingStandards.html#scf_commenting">Coding Standards</a>.</li>
-    <li>There should be only one name at the top of the file and it should be
-    the person who created the file.</li>
-    <li>Placing your name in the file does not imply <a
-        href="#clp">copyright</a>: it is only used to attribute the file to
-        its original author.</li>
-    <li>Developers should be aware that after some time has passed, the name at
-    the top of a file may become meaningless as maintenance/ownership of files
-    changes.  Despite this, once set, the attribution of a file never changes.
-    Revision control keeps an accurate history of contributions.</li>
-    <li>Developers should maintain their entry in the 
-    <a href="http://llvm.org/svn/llvm-project/llvm/trunk/CREDITS.TXT">CREDITS.txt</a> 
-    file to summarize their contributions.</li>
-    <li>Commit comments should contain correct attribution of the person who
-    submitted the patch if that person is not the committer (i.e. when a 
-    developer with commit privileges commits a patch for someone else).</li>
-  </ol>
+  with random attributions "this code written by J Random Guy" (this is noisy
+  and distracting.  In practice, the revision control system keeps a perfect
+  history of who change what, and the CREDITS.txt file describes higher-level
+  contributions.</p>
+
+  <p>Overall, please do not add contributor names to the source base.</p>
 </div>
 
 
