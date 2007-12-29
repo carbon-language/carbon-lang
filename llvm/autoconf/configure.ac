@@ -1,8 +1,8 @@
 dnl === configure.ac --------------------------------------------------------===
 dnl                     The LLVM Compiler Infrastructure
 dnl
-dnl This file was developed by the LLVM research group and is distributed under
-dnl the University of Illinois Open Source License. See LICENSE.TXT for details.
+dnl This file is distributed under the University of Illinois Open Source
+dnl License. See LICENSE.TXT for details.
 dnl
 dnl===-----------------------------------------------------------------------===
 dnl This is the LLVM configuration script. It is processed by the autoconf
