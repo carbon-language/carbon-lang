@@ -839,6 +839,7 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
       SDOperand StoreLoc;
       const Value *SrcVal = 0;
       int SrcValOffset = 0;
+      MVT::ValueType RetStoreVT = RVLocs[0].getValVT();
       
       // Determine where to store the value.  If the call result is directly
       // used by a store, see if we can store directly into the location.  In
@@ -848,15 +849,34 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
       // intermediate stack slot.
       if (SDOperand(TheCall, 0).hasOneUse() && 
           SDOperand(TheCall, 1).hasOneUse()) {
+        // In addition to direct uses, we also support a FP_ROUND that uses the
+        // value, if it is directly stored somewhere.
+        SDNode *User = *TheCall->use_begin();
+        if (User->getOpcode() == ISD::FP_ROUND && User->hasOneUse())
+          User = *User->use_begin();
+        
         // Ok, we have one use of the value and one use of the chain.  See if
         // they are the same node: a store.
-        if (StoreSDNode *N = dyn_cast<StoreSDNode>(*TheCall->use_begin())) {
-          if (N->getChain().Val == TheCall && N->getValue().Val == TheCall &&
+        if (StoreSDNode *N = dyn_cast<StoreSDNode>(User)) {
+          // Verify that the value being stored is either the call or a
+          // truncation of the call.
+          SDNode *StoreVal = N->getValue().Val;
+          if (StoreVal == TheCall)
+            ; // ok.
+          else if (StoreVal->getOpcode() == ISD::FP_ROUND &&
+                   StoreVal->hasOneUse() && 
+                   StoreVal->getOperand(0).Val == TheCall)
+            ; // ok.
+          else
+            N = 0;  // not ok.
+            
+          if (N && N->getChain().Val == TheCall &&
               !N->isVolatile() && !N->isTruncatingStore() && 
               N->getAddressingMode() == ISD::UNINDEXED) {
             StoreLoc = N->getBasePtr();
             SrcVal = N->getSrcValue();
             SrcValOffset = N->getSrcValueOffset();
+            RetStoreVT = N->getValue().getValueType();
           }
         }
       }
@@ -875,12 +895,17 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
       // multiple blocks and scheduled in between them). When stackifier is
       // fixed, they can be uncoupled.
       SDOperand Ops[] = {
-        Chain, RetVal, StoreLoc, DAG.getValueType(RVLocs[0].getValVT()), InFlag
+        Chain, RetVal, StoreLoc, DAG.getValueType(RetStoreVT), InFlag
       };
       Chain = DAG.getNode(X86ISD::FST, MVT::Other, Ops, 5);
-      RetVal = DAG.getLoad(RVLocs[0].getValVT(), Chain,
+      RetVal = DAG.getLoad(RetStoreVT, Chain,
                            StoreLoc, SrcVal, SrcValOffset);
       Chain = RetVal.getValue(1);
+      
+      // If we optimized a truncate, then extend the result back to its desired
+      // type.
+      if (RVLocs[0].getValVT() != RetStoreVT)
+        RetVal = DAG.getNode(ISD::FP_EXTEND, RVLocs[0].getValVT(), RetVal);
     }
     ResultVals.push_back(RetVal);
   }

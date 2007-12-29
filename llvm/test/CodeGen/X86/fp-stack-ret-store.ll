@@ -13,3 +13,14 @@ entry:
 }
 
 declare double @foo(...)
+
+define void @bar2(float* %P) {
+entry:
+	%tmp = tail call double (...)* @foo2( )		; <double> [#uses=1]
+	%tmp1 = fptrunc double %tmp to float		; <float> [#uses=1]
+	store float %tmp1, float* %P, align 4
+	ret void
+}
+
+declare double @foo2(...)
+
