@@ -200,7 +200,8 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     Size = EltInfo.first*CAT->getSize().getZExtValue();
     Align = EltInfo.second;
     break;
-  }    
+  }
+  case Type::OCUVector:
   case Type::Vector: {
     std::pair<uint64_t, unsigned> EltInfo = 
       getTypeInfo(cast<VectorType>(T)->getElementType(), L);
