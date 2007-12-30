@@ -153,7 +153,8 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   switch (getType()) {
   default: assert(0 && "Unrecognized operand type");
   case MachineOperand::MO_Register:
-    return getReg() == Other.getReg() && isDef() == Other.isDef();
+    return getReg() == Other.getReg() && isDef() == Other.isDef() &&
+           getSubReg() == Other.getSubReg();
   case MachineOperand::MO_Immediate:
     return getImm() == Other.getImm();
   case MachineOperand::MO_MachineBasicBlock:
