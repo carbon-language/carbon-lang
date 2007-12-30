@@ -682,7 +682,7 @@ Value *ScalarExprEmitter::EmitCompoundAssign(const CompoundAssignOperator *E,
 
 
 Value *ScalarExprEmitter::EmitDiv(const BinOpInfo &Ops) {
-  if (Ops.LHS->getType()->isFloatingPoint())
+  if (Ops.LHS->getType()->isFPOrFPVector())
     return Builder.CreateFDiv(Ops.LHS, Ops.RHS, "div");
   else if (Ops.Ty->isUnsignedIntegerType())
     return Builder.CreateUDiv(Ops.LHS, Ops.RHS, "div");
