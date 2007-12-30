@@ -126,7 +126,7 @@ bool ARMRegisterInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
       PopMI->setInstrDescriptor(TII.get(ARM::tPOP_RET));
       MBB.erase(MI);
     }
-    PopMI->addRegOperand(Reg, true);
+    PopMI->addOperand(MachineOperand::CreateReg(Reg, true));
   }
   return true;
 }
@@ -1100,9 +1100,10 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       MI.setInstrDescriptor(TII.get(ARM::tLDR));
       MI.getOperand(i).ChangeToRegister(TmpReg, false, false, true);
       if (UseRR)
-        MI.addRegOperand(FrameReg, false);  // Use [reg, reg] addrmode.
-      else
-        MI.addRegOperand(0, false); // tLDR has an extra register operand.
+        // Use [reg, reg] addrmode.
+        MI.addOperand(MachineOperand::CreateReg(FrameReg, false));
+      else  // tLDR has an extra register operand.
+        MI.addOperand(MachineOperand::CreateReg(0, false));
     } else if (TII.isStore(Opcode)) {
       // FIXME! This is horrific!!! We need register scavenging.
       // Our temporary workaround has marked r3 unavailable. Of course, r3 is
@@ -1134,10 +1135,10 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         emitThumbRegPlusImmediate(MBB, II, TmpReg, FrameReg, Offset, TII);
       MI.setInstrDescriptor(TII.get(ARM::tSTR));
       MI.getOperand(i).ChangeToRegister(TmpReg, false, false, true);
-      if (UseRR)
-        MI.addRegOperand(FrameReg, false);  // Use [reg, reg] addrmode.
-      else
-        MI.addRegOperand(0, false); // tSTR has an extra register operand.
+      if (UseRR)  // Use [reg, reg] addrmode.
+        MI.addOperand(MachineOperand::CreateReg(FrameReg, false));
+      else // tSTR has an extra register operand.
+        MI.addOperand(MachineOperand::CreateReg(0, false));
 
       MachineBasicBlock::iterator NII = next(II);
       if (ValReg == ARM::R3)

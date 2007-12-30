@@ -469,8 +469,8 @@ bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
   unsigned Opc = MI->getOpcode();
   if (Opc == ARM::B || Opc == ARM::tB) {
     MI->setInstrDescriptor(get(Opc == ARM::B ? ARM::Bcc : ARM::tBcc));
-    MI->addImmOperand(Pred[0].getImmedValue());
-    MI->addRegOperand(Pred[1].getReg(), false);
+    MI->addOperand(MachineOperand::CreateImm(Pred[0].getImm()));
+    MI->addOperand(MachineOperand::CreateReg(Pred[1].getReg(), false));
     return true;
   }
 
