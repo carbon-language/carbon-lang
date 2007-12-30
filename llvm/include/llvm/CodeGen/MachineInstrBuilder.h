@@ -40,46 +40,47 @@ public:
   MachineInstrBuilder &addReg(unsigned RegNo, bool isDef = false, 
                               bool isImp = false, bool isKill = false, 
                               bool isDead = false, unsigned SubReg = 0) const {
-    MI->addRegOperand(RegNo, isDef, isImp, isKill, isDead, SubReg);
+    MI->addOperand(MachineOperand::CreateReg(RegNo, isDef, isImp, isKill,
+                                             isDead, SubReg));
     return *this;
   }
 
   /// addImm - Add a new immediate operand.
   ///
   const MachineInstrBuilder &addImm(int64_t Val) const {
-    MI->addImmOperand(Val);
+    MI->addOperand(MachineOperand::CreateImm(Val));
     return *this;
   }
 
   const MachineInstrBuilder &addMBB(MachineBasicBlock *MBB) const {
-    MI->addMachineBasicBlockOperand(MBB);
+    MI->addOperand(MachineOperand::CreateBasicBlock(MBB));
     return *this;
   }
 
   const MachineInstrBuilder &addFrameIndex(unsigned Idx) const {
-    MI->addFrameIndexOperand(Idx);
+    MI->addOperand(MachineOperand::CreateFrameIndex(Idx));
     return *this;
   }
 
   const MachineInstrBuilder &addConstantPoolIndex(unsigned Idx,
                                                   int Offset = 0) const {
-    MI->addConstantPoolIndexOperand(Idx, Offset);
+    MI->addOperand(MachineOperand::CreateConstantPoolIndex(Idx, Offset));
     return *this;
   }
 
   const MachineInstrBuilder &addJumpTableIndex(unsigned Idx) const {
-    MI->addJumpTableIndexOperand(Idx);
+    MI->addOperand(MachineOperand::CreateJumpTableIndex(Idx));
     return *this;
   }
 
   const MachineInstrBuilder &addGlobalAddress(GlobalValue *GV,
                                               int Offset = 0) const {
-    MI->addGlobalAddressOperand(GV, Offset);
+    MI->addOperand(MachineOperand::CreateGlobalAddress(GV, Offset));
     return *this;
   }
 
   const MachineInstrBuilder &addExternalSymbol(const char *FnName) const{
-    MI->addExternalSymbolOperand(FnName);
+    MI->addOperand(MachineOperand::CreateExternalSymbol(FnName, 0));
     return *this;
   }
 };
