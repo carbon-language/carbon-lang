@@ -94,47 +94,6 @@ public:
   
   ~MachineOperand() {}
   
-  static MachineOperand CreateImm(int64_t Val) {
-    MachineOperand Op;
-    Op.opType = MachineOperand::MO_Immediate;
-    Op.contents.immedVal = Val;
-    Op.auxInfo.offset = 0;
-    return Op;
-  }
-  
-  static MachineOperand CreateFrameIndex(unsigned Idx) {
-    MachineOperand Op;
-    Op.opType = MachineOperand::MO_FrameIndex;
-    Op.contents.immedVal = Idx;
-    Op.auxInfo.offset = 0;
-    return Op;
-  }
-  
-  static MachineOperand CreateReg(unsigned Reg, bool isDef, bool isImp = false,
-                                  bool isKill = false, bool isDead = false,
-                                  unsigned SubReg = 0) {
-    MachineOperand Op;
-    Op.opType = MachineOperand::MO_Register;
-    Op.IsDef = isDef;
-    Op.IsImp = isImp;
-    Op.IsKill = isKill;
-    Op.IsDead = isDead;
-    Op.contents.RegNo = Reg;
-    Op.auxInfo.subReg = SubReg;
-    return Op;
-  }
-  
-  const MachineOperand &operator=(const MachineOperand &MO) {
-    contents = MO.contents;
-    IsDef    = MO.IsDef;
-    IsImp    = MO.IsImp;
-    IsKill   = MO.IsKill;
-    IsDead   = MO.IsDead;
-    opType   = MO.opType;
-    auxInfo  = MO.auxInfo;
-    return *this;
-  }
-
   /// getType - Returns the MachineOperandType for this operand.
   ///
   MachineOperandType getType() const { return opType; }
@@ -318,6 +277,79 @@ public:
     IsKill = isKill;
     IsDead = isDead;
   }
+  
+  static MachineOperand CreateImm(int64_t Val) {
+    MachineOperand Op;
+    Op.opType = MachineOperand::MO_Immediate;
+    Op.contents.immedVal = Val;
+    Op.auxInfo.offset = 0;
+    return Op;
+  }
+  static MachineOperand CreateReg(unsigned Reg, bool isDef, bool isImp = false,
+                                  bool isKill = false, bool isDead = false,
+                                  unsigned SubReg = 0) {
+    MachineOperand Op;
+    Op.opType = MachineOperand::MO_Register;
+    Op.IsDef = isDef;
+    Op.IsImp = isImp;
+    Op.IsKill = isKill;
+    Op.IsDead = isDead;
+    Op.contents.RegNo = Reg;
+    Op.auxInfo.subReg = SubReg;
+    return Op;
+  }
+  static MachineOperand CreateBasicBlock(MachineBasicBlock *MBB) {
+    MachineOperand Op;
+    Op.opType = MachineOperand::MO_MachineBasicBlock;
+    Op.contents.MBB = MBB;
+    Op.auxInfo.offset = 0;
+    return Op;
+  }
+  static MachineOperand CreateFrameIndex(unsigned Idx) {
+    MachineOperand Op;
+    Op.opType = MachineOperand::MO_FrameIndex;
+    Op.contents.immedVal = Idx;
+    Op.auxInfo.offset = 0;
+    return Op;
+  }
+  static MachineOperand CreateConstantPoolIndex(unsigned Idx, int Offset) {
+    MachineOperand Op;
+    Op.opType = MachineOperand::MO_ConstantPoolIndex;
+    Op.contents.immedVal = Idx;
+    Op.auxInfo.offset = Offset;
+    return Op;
+  }
+  static MachineOperand CreateJumpTableIndex(unsigned Idx) {
+    MachineOperand Op;
+    Op.opType = MachineOperand::MO_JumpTableIndex;
+    Op.contents.immedVal = Idx;
+    Op.auxInfo.offset = 0;
+    return Op;
+  }
+  static MachineOperand CreateGlobalAddress(GlobalValue *GV, int Offset) {
+    MachineOperand Op;
+    Op.opType = MachineOperand::MO_GlobalAddress;
+    Op.contents.GV = GV;
+    Op.auxInfo.offset = Offset;
+    return Op;
+  }
+  static MachineOperand CreateExternalSymbol(const char *SymName, int Offset) {
+    MachineOperand Op;
+    Op.opType = MachineOperand::MO_ExternalSymbol;
+    Op.contents.SymbolName = SymName;
+    Op.auxInfo.offset = Offset;
+    return Op;
+  }
+  const MachineOperand &operator=(const MachineOperand &MO) {
+    contents = MO.contents;
+    IsDef    = MO.IsDef;
+    IsImp    = MO.IsImp;
+    IsKill   = MO.IsKill;
+    IsDead   = MO.IsDead;
+    opType   = MO.opType;
+    auxInfo  = MO.auxInfo;
+    return *this;
+  }
 
   friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop) {
     mop.print(os);
@@ -464,73 +496,65 @@ public:
   //===--------------------------------------------------------------------===//
   // Accessors to add operands when building up machine instructions.
   //
-
+  void addOperand(const MachineOperand &Op) {
+    bool isImpReg = Op.isRegister() && Op.isImplicit();
+    assert((isImpReg || !OperandsComplete()) &&
+           "Trying to add an operand to a machine instr that is already done!");
+    if (isImpReg || NumImplicitOps == 0) // This is true most of the time.
+      Operands.push_back(Op);
+    else
+      // Insert a real operand before any implicit ones.
+      Operands.insert(Operands.begin()+Operands.size()-NumImplicitOps, Op);
+  }
+  
   /// addRegOperand - Add a register operand.
   ///
   void addRegOperand(unsigned Reg, bool IsDef, bool IsImp = false,
                      bool IsKill = false, bool IsDead = false,
                      unsigned SubReg = 0) {
-    // FIXME: Make the AddNewOperand api sane.
-    AddNewOperand(IsImp) = MachineOperand::CreateReg(Reg, IsDef, IsImp, IsKill,
-                                                     IsDead, SubReg);
+    addOperand(MachineOperand::CreateReg(Reg, IsDef, IsImp, IsKill,
+                                         IsDead, SubReg));
   }
 
   /// addImmOperand - Add a zero extended constant argument to the
   /// machine instruction.
   ///
   void addImmOperand(int64_t Val) {
-    // FIXME: Make the AddNewOperand api sane.
-    AddNewOperand() = MachineOperand::CreateImm(Val);
+    addOperand(MachineOperand::CreateImm(Val));
   }
 
   void addMachineBasicBlockOperand(MachineBasicBlock *MBB) {
-    MachineOperand &Op = AddNewOperand();
-    Op.opType = MachineOperand::MO_MachineBasicBlock;
-    Op.contents.MBB = MBB;
-    Op.auxInfo.offset = 0;
+    addOperand(MachineOperand::CreateBasicBlock(MBB));
   }
 
   /// addFrameIndexOperand - Add an abstract frame index to the instruction
   ///
   void addFrameIndexOperand(unsigned Idx) {
-    // FIXME: Make the AddNewOperand api sane.
-    AddNewOperand() = MachineOperand::CreateFrameIndex(Idx);
+    addOperand(MachineOperand::CreateFrameIndex(Idx));
   }
 
   /// addConstantPoolndexOperand - Add a constant pool object index to the
   /// instruction.
   ///
   void addConstantPoolIndexOperand(unsigned Idx, int Offset) {
-    MachineOperand &Op = AddNewOperand();
-    Op.opType = MachineOperand::MO_ConstantPoolIndex;
-    Op.contents.immedVal = Idx;
-    Op.auxInfo.offset = Offset;
+    addOperand(MachineOperand::CreateConstantPoolIndex(Idx, Offset));
   }
 
   /// addJumpTableIndexOperand - Add a jump table object index to the
   /// instruction.
   ///
   void addJumpTableIndexOperand(unsigned Idx) {
-    MachineOperand &Op = AddNewOperand();
-    Op.opType = MachineOperand::MO_JumpTableIndex;
-    Op.contents.immedVal = Idx;
-    Op.auxInfo.offset = 0;
+    addOperand(MachineOperand::CreateJumpTableIndex(Idx));
   }
   
   void addGlobalAddressOperand(GlobalValue *GV, int Offset) {
-    MachineOperand &Op = AddNewOperand();
-    Op.opType = MachineOperand::MO_GlobalAddress;
-    Op.contents.GV = GV;
-    Op.auxInfo.offset = Offset;
+    addOperand(MachineOperand::CreateGlobalAddress(GV, Offset));
   }
 
   /// addExternalSymbolOperand - Add an external symbol operand to this instr
   ///
-  void addExternalSymbolOperand(const char *SymName) {
-    MachineOperand &Op = AddNewOperand();
-    Op.opType = MachineOperand::MO_ExternalSymbol;
-    Op.contents.SymbolName = SymName;
-    Op.auxInfo.offset = 0;
+  void addExternalSymbolOperand(const char *SymName, int Offset = 0) {
+    addOperand(MachineOperand::CreateExternalSymbol(SymName, Offset));
   }
 
   //===--------------------------------------------------------------------===//
@@ -549,16 +573,6 @@ public:
     Operands.erase(Operands.begin()+i);
   }
 private:
-  MachineOperand &AddNewOperand(bool IsImp = false) {
-    assert((IsImp || !OperandsComplete()) &&
-           "Trying to add an operand to a machine instr that is already done!");
-    if (IsImp || NumImplicitOps == 0) { // This is true most of the time.
-      Operands.push_back(MachineOperand());
-      return Operands.back();
-    }
-    return *Operands.insert(Operands.begin()+Operands.size()-NumImplicitOps,
-                            MachineOperand());
-  }
 
   /// addImplicitDefUseOperands - Add all implicit def and use operands to
   /// this instruction.
