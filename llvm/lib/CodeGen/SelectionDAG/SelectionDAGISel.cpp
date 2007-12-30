@@ -1164,7 +1164,6 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
 
     // Update machine-CFG edges.
     CurMBB->addSuccessor(Succ0MBB);
-
     return;
   }
 
@@ -4763,8 +4762,9 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
       MachineInstr *PHI = PHINodesToUpdate[i].first;
       assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
              "This is not a machine PHI node that we are updating!");
-      PHI->addRegOperand(PHINodesToUpdate[i].second, false);
-      PHI->addMachineBasicBlockOperand(BB);
+      PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[i].second,
+                                                false));
+      PHI->addOperand(MachineOperand::CreateMBB(BB));
     }
     return;
   }
@@ -4815,18 +4815,22 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
       // This is "default" BB. We have two jumps to it. From "header" BB and
       // from last "case" BB.
       if (PHIBB == BitTestCases[i].Default) {
-        PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
-        PHI->addMachineBasicBlockOperand(BitTestCases[i].Parent);
-        PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
-        PHI->addMachineBasicBlockOperand(BitTestCases[i].Cases.back().ThisBB);
+        PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pi].second,
+                                                  false));
+        PHI->addOperand(MachineOperand::CreateMBB(BitTestCases[i].Parent));
+        PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pi].second,
+                                                  false));
+        PHI->addOperand(MachineOperand::CreateMBB(BitTestCases[i].Cases.
+                                                  back().ThisBB));
       }
       // One of "cases" BB.
       for (unsigned j = 0, ej = BitTestCases[i].Cases.size(); j != ej; ++j) {
         MachineBasicBlock* cBB = BitTestCases[i].Cases[j].ThisBB;
         if (cBB->succ_end() !=
             std::find(cBB->succ_begin(),cBB->succ_end(), PHIBB)) {
-          PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
-          PHI->addMachineBasicBlockOperand(cBB);
+          PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pi].second,
+                                                    false));
+          PHI->addOperand(MachineOperand::CreateMBB(cBB));
         }
       }
     }
@@ -4869,13 +4873,15 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
              "This is not a machine PHI node that we are updating!");
       // "default" BB. We can go there only from header BB.
       if (PHIBB == JTCases[i].second.Default) {
-        PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
-        PHI->addMachineBasicBlockOperand(JTCases[i].first.HeaderBB);
+        PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pi].second,
+                                                  false));
+        PHI->addOperand(MachineOperand::CreateMBB(JTCases[i].first.HeaderBB));
       }
       // JT BB. Just iterate over successors here
       if (BB->succ_end() != std::find(BB->succ_begin(),BB->succ_end(), PHIBB)) {
-        PHI->addRegOperand(PHINodesToUpdate[pi].second, false);
-        PHI->addMachineBasicBlockOperand(BB);
+        PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pi].second,
+                                                  false));
+        PHI->addOperand(MachineOperand::CreateMBB(BB));
       }
     }
   }
@@ -4887,8 +4893,9 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     assert(PHI->getOpcode() == TargetInstrInfo::PHI &&
            "This is not a machine PHI node that we are updating!");
     if (BB->isSuccessor(PHI->getParent())) {
-      PHI->addRegOperand(PHINodesToUpdate[i].second, false);
-      PHI->addMachineBasicBlockOperand(BB);
+      PHI->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[i].second,
+                                                false));
+      PHI->addOperand(MachineOperand::CreateMBB(BB));
     }
   }
   
@@ -4919,8 +4926,9 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
         for (unsigned pn = 0; ; ++pn) {
           assert(pn != PHINodesToUpdate.size() && "Didn't find PHI entry!");
           if (PHINodesToUpdate[pn].first == Phi) {
-            Phi->addRegOperand(PHINodesToUpdate[pn].second, false);
-            Phi->addMachineBasicBlockOperand(SwitchCases[i].ThisBB);
+            Phi->addOperand(MachineOperand::CreateReg(PHINodesToUpdate[pn].
+                                                      second, false));
+            Phi->addOperand(MachineOperand::CreateMBB(SwitchCases[i].ThisBB));
             break;
           }
         }
