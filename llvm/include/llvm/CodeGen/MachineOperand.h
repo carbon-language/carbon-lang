@@ -46,7 +46,8 @@ private:
     MachineBasicBlock *MBB;   // For MO_MachineBasicBlock.
     const char *SymbolName;   // For MO_ExternalSymbol.
     unsigned RegNo;           // For MO_Register.
-    int64_t immedVal;         // For MO_Immediate and MO_*Index.
+    int64_t ImmVal;           // For MO_Immediate.
+    int Index;                // For MO_FrameIndex/CPI/JTI.
   } contents;
 
   /// ParentMI - This is the instruction that this operand is embedded into.
@@ -61,6 +62,10 @@ private:
   bool IsDead : 1;             // True if this is a reg def and the reg is dead
                                // immediately after the write. i.e. A register
                                // that is defined but never used.
+
+  /// SubReg - Subregister number, only valid for MO_Register.  A value of 0
+  /// indicates the MO_Register has no subReg.
+  unsigned char SubReg;
   
   /// auxInfo - auxiliary information used by the MachineOperand
   union {
@@ -68,9 +73,6 @@ private:
     /// MO_GlobalAddress, MO_ExternalSym and MO_ConstantPoolIndex
     int offset;
 
-    /// subReg - SubRegister number, only valid for MO_Register.  A value of 0
-    /// indicates the MO_Register has no subReg.
-    unsigned char subReg;
   } auxInfo;
   
   MachineOperand() : ParentMI(0) {}
@@ -89,6 +91,11 @@ public:
   ///
   MachineOperandType getType() const { return opType; }
 
+  /// getParent - Return the instruction that this operand belongs to.
+  ///
+  MachineInstr *getParent() { return ParentMI; }
+  const MachineInstr *getParent() const { return ParentMI; }
+  
   /// Accessors that tell you what kind of MachineOperand you're looking at.
   ///
   bool isRegister() const { return opType == MO_Register; }
@@ -102,13 +109,9 @@ public:
 
   int64_t getImm() const {
     assert(isImmediate() && "Wrong MachineOperand accessor");
-    return contents.immedVal;
+    return contents.ImmVal;
   }
   
-  int64_t getImmedValue() const {
-    assert(isImmediate() && "Wrong MachineOperand accessor");
-    return contents.immedVal;
-  }
   MachineBasicBlock *getMBB() const {
     assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
     return contents.MBB;
@@ -123,15 +126,15 @@ public:
   }
   int getFrameIndex() const {
     assert(isFrameIndex() && "Wrong MachineOperand accessor");
-    return (int)contents.immedVal;
+    return (int)contents.Index;
   }
   unsigned getConstantPoolIndex() const {
     assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
-    return (unsigned)contents.immedVal;
+    return (unsigned)contents.Index;
   }
   unsigned getJumpTableIndex() const {
     assert(isJumpTableIndex() && "Wrong MachineOperand accessor");
-    return (unsigned)contents.immedVal;
+    return (unsigned)contents.Index;
   }
   GlobalValue *getGlobal() const {
     assert(isGlobalAddress() && "Wrong MachineOperand accessor");
@@ -144,7 +147,7 @@ public:
   }
   unsigned getSubReg() const {
     assert(isRegister() && "Wrong MachineOperand accessor");
-    return (unsigned)auxInfo.subReg;
+    return (unsigned)SubReg;
   }
   const char *getSymbolName() const {
     assert(isExternalSymbol() && "Wrong MachineOperand accessor");
@@ -216,32 +219,27 @@ public:
     contents.RegNo = Reg;
   }
 
-  void setImmedValue(int64_t immVal) {
-    assert(isImmediate() && "Wrong MachineOperand mutator");
-    contents.immedVal = immVal;
-  }
   void setImm(int64_t immVal) {
     assert(isImmediate() && "Wrong MachineOperand mutator");
-    contents.immedVal = immVal;
+    contents.ImmVal = immVal;
   }
 
   void setOffset(int Offset) {
-    assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex() ||
-            isJumpTableIndex()) &&
+    assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
         "Wrong MachineOperand accessor");
     auxInfo.offset = Offset;
   }
   void setSubReg(unsigned subReg) {
     assert(isRegister() && "Wrong MachineOperand accessor");
-    auxInfo.subReg = (unsigned char)subReg;
+    SubReg = (unsigned char)subReg;
   }
   void setConstantPoolIndex(unsigned Idx) {
     assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
-    contents.immedVal = Idx;
+    contents.Index = Idx;
   }
   void setJumpTableIndex(unsigned Idx) {
     assert(isJumpTableIndex() && "Wrong MachineOperand accessor");
-    contents.immedVal = Idx;
+    contents.Index = Idx;
   }
   
   /// isIdenticalTo - Return true if this operand is identical to the specified
@@ -250,10 +248,10 @@ public:
   
   /// ChangeToImmediate - Replace this operand with a new immediate operand of
   /// the specified value.  If an operand is known to be an immediate already,
-  /// the setImmedValue method should be used.
+  /// the setImm method should be used.
   void ChangeToImmediate(int64_t ImmVal) {
     opType = MO_Immediate;
-    contents.immedVal = ImmVal;
+    contents.ImmVal = ImmVal;
   }
 
   /// ChangeToRegister - Replace this operand with a new register operand of
@@ -267,13 +265,13 @@ public:
     IsImp = isImp;
     IsKill = isKill;
     IsDead = isDead;
+    SubReg = 0;
   }
   
   static MachineOperand CreateImm(int64_t Val) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_Immediate;
-    Op.contents.immedVal = Val;
-    Op.auxInfo.offset = 0;
+    Op.contents.ImmVal = Val;
     return Op;
   }
   static MachineOperand CreateReg(unsigned Reg, bool isDef, bool isImp = false,
@@ -286,35 +284,32 @@ public:
     Op.IsKill = isKill;
     Op.IsDead = isDead;
     Op.contents.RegNo = Reg;
-    Op.auxInfo.subReg = SubReg;
+    Op.SubReg = SubReg;
     return Op;
   }
   static MachineOperand CreateMBB(MachineBasicBlock *MBB) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_MachineBasicBlock;
     Op.contents.MBB = MBB;
-    Op.auxInfo.offset = 0;
     return Op;
   }
   static MachineOperand CreateFI(unsigned Idx) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_FrameIndex;
-    Op.contents.immedVal = Idx;
-    Op.auxInfo.offset = 0;
+    Op.contents.Index = Idx;
     return Op;
   }
   static MachineOperand CreateCPI(unsigned Idx, int Offset) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_ConstantPoolIndex;
-    Op.contents.immedVal = Idx;
+    Op.contents.Index = Idx;
     Op.auxInfo.offset = Offset;
     return Op;
   }
   static MachineOperand CreateJTI(unsigned Idx) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_JumpTableIndex;
-    Op.contents.immedVal = Idx;
-    Op.auxInfo.offset = 0;
+    Op.contents.Index = Idx;
     return Op;
   }
   static MachineOperand CreateGA(GlobalValue *GV, int Offset) {
@@ -339,6 +334,7 @@ public:
     IsDead   = MO.IsDead;
     opType   = MO.opType;
     auxInfo  = MO.auxInfo;
+    SubReg   = MO.SubReg;
     ParentMI = MO.ParentMI;
     return *this;
   }

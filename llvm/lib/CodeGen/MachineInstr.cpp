@@ -267,17 +267,47 @@ void MachineInstr::dump() const {
   cerr << "  " << *this;
 }
 
+/// print - Print the specified machine operand.
+///
 static void print(const MachineOperand &MO, std::ostream &OS,
                   const TargetMachine *TM) {
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
     if (MO.getReg() == 0 || MRegisterInfo::isVirtualRegister(MO.getReg()))
       OS << "%reg" << MO.getReg();
-    else if (TM)
-      OS << "%" << TM->getRegisterInfo()->get(MO.getReg()).Name;
-    else
-      OS << "%mreg" << MO.getReg();
-    if (MO.isDef()) OS << "<d>";
+    else {
+      // If the instruction is embedded into a basic block, we can find the
+      // target
+      // info for the instruction.
+      if (TM == 0)
+        if (const MachineInstr *MI = MO.getParent())
+          if (const MachineBasicBlock *MBB = MI->getParent())
+            if (const MachineFunction *MF = MBB->getParent())
+              TM = &MF->getTarget();
+      
+      if (TM)
+        OS << "%" << TM->getRegisterInfo()->get(MO.getReg()).Name;
+      else
+        OS << "%mreg" << MO.getReg();
+    }
+      
+    if (MO.isDef() || MO.isKill() || MO.isDead() || MO.isImplicit()) {
+      OS << "<";
+      bool NeedComma = false;
+      if (MO.isImplicit()) {
+        OS << (MO.isDef() ? "imp-def" : "imp-use");
+        NeedComma = true;
+      } else if (MO.isDef()) {
+        OS << "def";
+        NeedComma = true;
+      }
+      if (MO.isKill() || MO.isDead()) {
+        if (NeedComma)    OS << ",";
+        if (MO.isKill()) OS << "kill";
+        if (MO.isDead()) OS << "dead";
+      }
+      OS << ">";
+    }
     break;
   case MachineOperand::MO_Immediate:
     OS << MO.getImm();
@@ -314,73 +344,24 @@ static void print(const MachineOperand &MO, std::ostream &OS,
 }
 
 void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
+  // Specialize printing if op#0 is definition
   unsigned StartOp = 0;
-
-   // Specialize printing if op#0 is definition
   if (getNumOperands() && getOperand(0).isRegister() && getOperand(0).isDef()) {
     ::print(getOperand(0), OS, TM);
-    if (getOperand(0).isDead())
-      OS << "<dead>";
     OS << " = ";
     ++StartOp;   // Don't print this operand again!
   }
 
-  if (TID)
-    OS << TID->Name;
+  OS << getInstrDescriptor()->Name;
 
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
-    const MachineOperand& mop = getOperand(i);
     if (i != StartOp)
       OS << ",";
     OS << " ";
-    ::print(mop, OS, TM);
-
-    if (mop.isRegister()) {
-      if (mop.isDef() || mop.isKill() || mop.isDead() || mop.isImplicit()) {
-        OS << "<";
-        bool NeedComma = false;
-        if (mop.isImplicit()) {
-          OS << (mop.isDef() ? "imp-def" : "imp-use");
-          NeedComma = true;
-        } else if (mop.isDef()) {
-          OS << "def";
-          NeedComma = true;
-        }
-        if (mop.isKill() || mop.isDead()) {
-          if (NeedComma)
-            OS << ",";
-          if (mop.isKill())
-            OS << "kill";
-          if (mop.isDead())
-            OS << "dead";
-        }
-        OS << ">";
-      }
-    }
+    ::print(getOperand(i), OS, TM);
   }
 
   OS << "\n";
-}
-
-void MachineInstr::print(std::ostream &os) const {
-  // If the instruction is embedded into a basic block, we can find the target
-  // info for the instruction.
-  if (const MachineBasicBlock *MBB = getParent()) {
-    const MachineFunction *MF = MBB->getParent();
-    if (MF)
-      print(os, &MF->getTarget());
-    else
-      print(os, 0);
-  }
-
-  // Otherwise, print it out in the "raw" format without symbolic register names
-  // and such.
-  os << getInstrDescriptor()->Name;
-
-  for (unsigned i = 0, N = getNumOperands(); i < N; i++)
-    os << "\t" << getOperand(i);
-
-  os << "\n";
 }
 
 void MachineOperand::print(std::ostream &OS) const {

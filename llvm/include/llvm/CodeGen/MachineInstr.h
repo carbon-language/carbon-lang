@@ -150,14 +150,9 @@ public:
   void print(std::ostream *OS, const TargetMachine *TM) const {
     if (OS) print(*OS, TM);
   }
-  void print(std::ostream &OS, const TargetMachine *TM) const;
-  void print(std::ostream &OS) const;
+  void print(std::ostream &OS, const TargetMachine *TM = 0) const;
   void print(std::ostream *OS) const { if (OS) print(*OS); }
   void dump() const;
-  friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr){
-    minstr.print(os);
-    return os;
-  }
 
   //===--------------------------------------------------------------------===//
   // Accessors to add operands when building up machine instructions.
@@ -202,7 +197,10 @@ private:
 //===----------------------------------------------------------------------===//
 // Debugging Support
 
-std::ostream& operator<<(std::ostream &OS, const MachineInstr &MI);
+inline std::ostream& operator<<(std::ostream &OS, const MachineInstr &MI) {
+  MI.print(OS);
+  return OS;
+}
 
 } // End llvm namespace
 
