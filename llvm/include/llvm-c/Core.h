@@ -45,9 +45,26 @@ extern "C" {
 
 
 /* Opaque types. */
+
+/**
+ * The top-level container for all other LLVM Intermediate Representation (IR)
+ * objects. See the llvm::Module class.
+ */
 typedef struct LLVMOpaqueModule *LLVMModuleRef;
+
+/**
+ * Each value in the LLVM IR has a type, an instance of [lltype]. See the
+ * llvm::Type class.
+ */
 typedef struct LLVMOpaqueType *LLVMTypeRef;
+
+/**
+ * When building recursive types using [refine_type], [lltype] values may become
+ * invalid; use [lltypehandle] to resolve this problem. See the
+ * llvm::AbstractTypeHolder] class. 
+ */
 typedef struct LLVMOpaqueTypeHandle *LLVMTypeHandleRef;
+
 typedef struct LLVMOpaqueValue *LLVMValueRef;
 typedef struct LLVMOpaqueBasicBlock *LLVMBasicBlockRef;
 typedef struct LLVMOpaqueBuilder *LLVMBuilderRef;
@@ -63,38 +80,40 @@ typedef struct LLVMOpaqueModuleProvider *LLVMModuleProviderRef;
 typedef struct LLVMOpaqueMemoryBuffer *LLVMMemoryBufferRef;
 
 typedef enum {
-  LLVMVoidTypeKind,        /* type with no size */
-  LLVMFloatTypeKind,       /* 32 bit floating point type */
-  LLVMDoubleTypeKind,      /* 64 bit floating point type */
-  LLVMX86_FP80TypeKind,    /* 80 bit floating point type (X87) */
-  LLVMFP128TypeKind,       /* 128 bit floating point type (112-bit mantissa) */
-  LLVMPPC_FP128TypeKind,   /* 128 bit floating point type (two 64-bits) */
-  LLVMLabelTypeKind,       /* Labels */
-  LLVMIntegerTypeKind,     /* Arbitrary bit width integers */
-  LLVMFunctionTypeKind,    /* Functions */
-  LLVMStructTypeKind,      /* Structures */
-  LLVMArrayTypeKind,       /* Arrays */
-  LLVMPointerTypeKind,     /* Pointers */
-  LLVMOpaqueTypeKind,      /* Opaque: type with unknown structure */
-  LLVMVectorTypeKind       /* SIMD 'packed' format, or other vector type */
+  LLVMVoidTypeKind,        /**< type with no size */
+  LLVMFloatTypeKind,       /**< 32 bit floating point type */
+  LLVMDoubleTypeKind,      /**< 64 bit floating point type */
+  LLVMX86_FP80TypeKind,    /**< 80 bit floating point type (X87) */
+  LLVMFP128TypeKind,       /**< 128 bit floating point type (112-bit mantissa)*/
+  LLVMPPC_FP128TypeKind,   /**< 128 bit floating point type (two 64-bits) */
+  LLVMLabelTypeKind,       /**< Labels */
+  LLVMIntegerTypeKind,     /**< Arbitrary bit width integers */
+  LLVMFunctionTypeKind,    /**< Functions */
+  LLVMStructTypeKind,      /**< Structures */
+  LLVMArrayTypeKind,       /**< Arrays */
+  LLVMPointerTypeKind,     /**< Pointers */
+  LLVMOpaqueTypeKind,      /**< Opaque: type with unknown structure */
+  LLVMVectorTypeKind       /**< SIMD 'packed' format, or other vector type */
 } LLVMTypeKind;
 
 typedef enum {
-  LLVMExternalLinkage,    /* Externally visible function */
-  LLVMLinkOnceLinkage,    /* Keep one copy of function when linking (inline) */
-  LLVMWeakLinkage,        /* Keep one copy of function when linking (weak) */
-  LLVMAppendingLinkage,   /* Special purpose, only applies to global arrays */
-  LLVMInternalLinkage,    /* Rename collisions when linking (static functions)*/
-  LLVMDLLImportLinkage,   /* Function to be imported from DLL */
-  LLVMDLLExportLinkage,   /* Function to be accessible from DLL */
-  LLVMExternalWeakLinkage,/* ExternalWeak linkage description */
-  LLVMGhostLinkage        /* Stand-in functions for streaming fns from bitcode*/
+  LLVMExternalLinkage,    /**< Externally visible function */
+  LLVMLinkOnceLinkage,    /**< Keep one copy of function when linking (inline)*/
+  LLVMWeakLinkage,        /**< Keep one copy of function when linking (weak) */
+  LLVMAppendingLinkage,   /**< Special purpose, only applies to global arrays */
+  LLVMInternalLinkage,    /**< Rename collisions when linking (static
+                               functions) */
+  LLVMDLLImportLinkage,   /**< Function to be imported from DLL */
+  LLVMDLLExportLinkage,   /**< Function to be accessible from DLL */
+  LLVMExternalWeakLinkage,/**< ExternalWeak linkage description */
+  LLVMGhostLinkage        /**< Stand-in functions for streaming fns from
+                               bitcode */
 } LLVMLinkage;
 
 typedef enum {
-  LLVMDefaultVisibility,  /* The GV is visible */
-  LLVMHiddenVisibility,   /* The GV is hidden */
-  LLVMProtectedVisibility /* The GV is protected */
+  LLVMDefaultVisibility,  /**< The GV is visible */
+  LLVMHiddenVisibility,   /**< The GV is hidden */
+  LLVMProtectedVisibility /**< The GV is protected */
 } LLVMVisibility;
 
 typedef enum {
@@ -106,35 +125,35 @@ typedef enum {
 } LLVMCallConv;
 
 typedef enum {
-  LLVMIntEQ = 32, /* equal */
-  LLVMIntNE,      /* not equal */
-  LLVMIntUGT,     /* unsigned greater than */
-  LLVMIntUGE,     /* unsigned greater or equal */
-  LLVMIntULT,     /* unsigned less than */
-  LLVMIntULE,     /* unsigned less or equal */
-  LLVMIntSGT,     /* signed greater than */
-  LLVMIntSGE,     /* signed greater or equal */
-  LLVMIntSLT,     /* signed less than */
-  LLVMIntSLE      /* signed less or equal */
+  LLVMIntEQ = 32, /**< equal */
+  LLVMIntNE,      /**< not equal */
+  LLVMIntUGT,     /**< unsigned greater than */
+  LLVMIntUGE,     /**< unsigned greater or equal */
+  LLVMIntULT,     /**< unsigned less than */
+  LLVMIntULE,     /**< unsigned less or equal */
+  LLVMIntSGT,     /**< signed greater than */
+  LLVMIntSGE,     /**< signed greater or equal */
+  LLVMIntSLT,     /**< signed less than */
+  LLVMIntSLE      /**< signed less or equal */
 } LLVMIntPredicate;
 
 typedef enum {
-  LLVMRealPredicateFalse, /* Always false (always folded) */
-  LLVMRealOEQ,            /* True if ordered and equal */
-  LLVMRealOGT,            /* True if ordered and greater than */
-  LLVMRealOGE,            /* True if ordered and greater than or equal */
-  LLVMRealOLT,            /* True if ordered and less than */
-  LLVMRealOLE,            /* True if ordered and less than or equal */
-  LLVMRealONE,            /* True if ordered and operands are unequal */
-  LLVMRealORD,            /* True if ordered (no nans) */
-  LLVMRealUNO,            /* True if unordered: isnan(X) | isnan(Y) */
-  LLVMRealUEQ,            /* True if unordered or equal */
-  LLVMRealUGT,            /* True if unordered or greater than */
-  LLVMRealUGE,            /* True if unordered, greater than, or equal */
-  LLVMRealULT,            /* True if unordered or less than */
-  LLVMRealULE,            /* True if unordered, less than, or equal */
-  LLVMRealUNE,            /* True if unordered or not equal */
-  LLVMRealPredicateTrue   /* Always true (always folded) */
+  LLVMRealPredicateFalse, /**< Always false (always folded) */
+  LLVMRealOEQ,            /**< True if ordered and equal */
+  LLVMRealOGT,            /**< True if ordered and greater than */
+  LLVMRealOGE,            /**< True if ordered and greater than or equal */
+  LLVMRealOLT,            /**< True if ordered and less than */
+  LLVMRealOLE,            /**< True if ordered and less than or equal */
+  LLVMRealONE,            /**< True if ordered and operands are unequal */
+  LLVMRealORD,            /**< True if ordered (no nans) */
+  LLVMRealUNO,            /**< True if unordered: isnan(X) | isnan(Y) */
+  LLVMRealUEQ,            /**< True if unordered or equal */
+  LLVMRealUGT,            /**< True if unordered or greater than */
+  LLVMRealUGE,            /**< True if unordered, greater than, or equal */
+  LLVMRealULT,            /**< True if unordered or less than */
+  LLVMRealULE,            /**< True if unordered, less than, or equal */
+  LLVMRealUNE,            /**< True if unordered or not equal */
+  LLVMRealPredicateTrue   /**< Always true (always folded) */
 } LLVMRealPredicate;
 
 

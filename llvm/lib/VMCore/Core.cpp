@@ -562,7 +562,8 @@ void LLVMSetAlignment(LLVMValueRef Global, unsigned Bytes) {
 
 LLVMValueRef LLVMAddGlobal(LLVMModuleRef M, LLVMTypeRef Ty, const char *Name) {
   return wrap(new GlobalVariable(unwrap(Ty), false,
-              GlobalValue::ExternalLinkage, 0, Name, unwrap(M)));
+                                 GlobalValue::ExternalLinkage, 0, Name,
+                                 unwrap(M)));
 }
 
 LLVMValueRef LLVMGetNamedGlobal(LLVMModuleRef M, const char *Name) {
