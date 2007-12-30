@@ -31,29 +31,11 @@ MachineInstr::MachineInstr()
 
 void MachineInstr::addImplicitDefUseOperands() {
   if (TID->ImplicitDefs)
-    for (const unsigned *ImpDefs = TID->ImplicitDefs; *ImpDefs; ++ImpDefs) {
-      MachineOperand Op;
-      Op.opType = MachineOperand::MO_Register;
-      Op.IsDef = true;
-      Op.IsImp = true;
-      Op.IsKill = false;
-      Op.IsDead = false;
-      Op.contents.RegNo = *ImpDefs;
-      Op.auxInfo.subReg = 0;
-      Operands.push_back(Op);
-    }
+    for (const unsigned *ImpDefs = TID->ImplicitDefs; *ImpDefs; ++ImpDefs)
+      addRegOperand(*ImpDefs, true, true);
   if (TID->ImplicitUses)
-    for (const unsigned *ImpUses = TID->ImplicitUses; *ImpUses; ++ImpUses) {
-      MachineOperand Op;
-      Op.opType = MachineOperand::MO_Register;
-      Op.IsDef = false;
-      Op.IsImp = true;
-      Op.IsKill = false;
-      Op.IsDead = false;
-      Op.contents.RegNo = *ImpUses;
-      Op.auxInfo.subReg = 0;
-      Operands.push_back(Op);
-    }
+    for (const unsigned *ImpUses = TID->ImplicitUses; *ImpUses; ++ImpUses)
+      addRegOperand(*ImpUses, false, true);
 }
 
 /// MachineInstr ctor - This constructor create a MachineInstr and add the

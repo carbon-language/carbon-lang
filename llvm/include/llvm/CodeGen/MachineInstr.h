@@ -98,10 +98,6 @@ public:
     MachineOperand Op;
     Op.opType = MachineOperand::MO_Immediate;
     Op.contents.immedVal = Val;
-    Op.IsDef = false;
-    Op.IsImp = false;
-    Op.IsKill = false;
-    Op.IsDead = false;
     Op.auxInfo.offset = 0;
     return Op;
   }
@@ -110,14 +106,24 @@ public:
     MachineOperand Op;
     Op.opType = MachineOperand::MO_FrameIndex;
     Op.contents.immedVal = Idx;
-    Op.IsDef = false;
-    Op.IsImp = false;
-    Op.IsKill = false;
-    Op.IsDead = false;
     Op.auxInfo.offset = 0;
     return Op;
   }
-
+  
+  static MachineOperand CreateReg(unsigned Reg, bool isDef, bool isImp = false,
+                                  bool isKill = false, bool isDead = false,
+                                  unsigned SubReg = 0) {
+    MachineOperand Op;
+    Op.opType = MachineOperand::MO_Register;
+    Op.IsDef = isDef;
+    Op.IsImp = isImp;
+    Op.IsKill = isKill;
+    Op.IsDead = isDead;
+    Op.contents.RegNo = Reg;
+    Op.auxInfo.subReg = SubReg;
+    return Op;
+  }
+  
   const MachineOperand &operator=(const MachineOperand &MO) {
     contents = MO.contents;
     IsDef    = MO.IsDef;
@@ -341,7 +347,6 @@ class MachineInstr {
   void operator=(const MachineInstr&); // DO NOT IMPLEMENT
 
   // Intrusive list support
-  //
   friend struct ilist_traits<MachineInstr>;
 
 public:
@@ -350,7 +355,7 @@ public:
   MachineInstr();
 
   /// MachineInstr ctor - This constructor create a MachineInstr and add the
-  /// implicit operands. It reserves space for number of operands specified by
+  /// implicit operands.  It reserves space for number of operands specified by
   /// TargetInstrDescriptor.
   explicit MachineInstr(const TargetInstrDescriptor &TID, bool NoImp = false);
 
@@ -465,24 +470,17 @@ public:
   void addRegOperand(unsigned Reg, bool IsDef, bool IsImp = false,
                      bool IsKill = false, bool IsDead = false,
                      unsigned SubReg = 0) {
-    MachineOperand &Op = AddNewOperand(IsImp);
-    Op.opType = MachineOperand::MO_Register;
-    Op.IsDef = IsDef;
-    Op.IsImp = IsImp;
-    Op.IsKill = IsKill;
-    Op.IsDead = IsDead;
-    Op.contents.RegNo = Reg;
-    Op.auxInfo.subReg = (unsigned char)SubReg;
+    // FIXME: Make the AddNewOperand api sane.
+    AddNewOperand(IsImp) = MachineOperand::CreateReg(Reg, IsDef, IsImp, IsKill,
+                                                     IsDead, SubReg);
   }
 
   /// addImmOperand - Add a zero extended constant argument to the
   /// machine instruction.
   ///
   void addImmOperand(int64_t Val) {
-    MachineOperand &Op = AddNewOperand();
-    Op.opType = MachineOperand::MO_Immediate;
-    Op.contents.immedVal = Val;
-    Op.auxInfo.offset = 0;
+    // FIXME: Make the AddNewOperand api sane.
+    AddNewOperand() = MachineOperand::CreateImm(Val);
   }
 
   void addMachineBasicBlockOperand(MachineBasicBlock *MBB) {
@@ -495,10 +493,8 @@ public:
   /// addFrameIndexOperand - Add an abstract frame index to the instruction
   ///
   void addFrameIndexOperand(unsigned Idx) {
-    MachineOperand &Op = AddNewOperand();
-    Op.opType = MachineOperand::MO_FrameIndex;
-    Op.contents.immedVal = Idx;
-    Op.auxInfo.offset = 0;
+    // FIXME: Make the AddNewOperand api sane.
+    AddNewOperand() = MachineOperand::CreateFrameIndex(Idx);
   }
 
   /// addConstantPoolndexOperand - Add a constant pool object index to the
