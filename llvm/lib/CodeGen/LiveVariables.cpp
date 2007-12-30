@@ -218,7 +218,8 @@ bool LiveVariables::addRegisterKilled(unsigned IncomingReg, MachineInstr *MI,
   // If not found, this means an alias of one of the operand is killed. Add a
   // new implicit operand if required.
   if (!Found && AddIfNotFound) {
-    MI->addRegOperand(IncomingReg, false/*IsDef*/,true/*IsImp*/,true/*IsKill*/);
+    MI->addOperand(MachineOperand::CreateReg(IncomingReg, false/*IsDef*/,
+                                             true/*IsImp*/,true/*IsKill*/));
     return true;
   }
   return Found;
@@ -250,8 +251,9 @@ bool LiveVariables::addRegisterDead(unsigned IncomingReg, MachineInstr *MI,
   // If not found, this means an alias of one of the operand is dead. Add a
   // new implicit operand.
   if (!Found && AddIfNotFound) {
-    MI->addRegOperand(IncomingReg, true/*IsDef*/,true/*IsImp*/,false/*IsKill*/,
-                      true/*IsDead*/);
+    MI->addOperand(MachineOperand::CreateReg(IncomingReg, true/*IsDef*/,
+                                             true/*IsImp*/,false/*IsKill*/,
+                                             true/*IsDead*/));
     return true;
   }
   return Found;
@@ -263,8 +265,9 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
     MachineInstr *Def = PhysRegPartDef[Reg][i];
     // First one is just a def. This means the use is reading some undef bits.
     if (i != 0)
-      Def->addRegOperand(Reg, false/*IsDef*/,true/*IsImp*/,true/*IsKill*/);
-    Def->addRegOperand(Reg, true/*IsDef*/,true/*IsImp*/);
+      Def->addOperand(MachineOperand::CreateReg(Reg, false/*IsDef*/,
+                                                true/*IsImp*/,true/*IsKill*/));
+    Def->addOperand(MachineOperand::CreateReg(Reg,true/*IsDef*/,true/*IsImp*/));
   }
   PhysRegPartDef[Reg].clear();
 
@@ -276,7 +279,8 @@ void LiveVariables::HandlePhysRegUse(unsigned Reg, MachineInstr *MI) {
       !PhysRegUsed[Reg]) {
     MachineInstr *Def = PhysRegInfo[Reg];
     if (!Def->findRegisterDefOperand(Reg))
-      Def->addRegOperand(Reg, true/*IsDef*/,true/*IsImp*/);
+      Def->addOperand(MachineOperand::CreateReg(Reg, true/*IsDef*/,
+                                                true/*IsImp*/));
   }
 
   // There is a now a proper use, forget about the last partial use.
@@ -397,8 +401,10 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
         // being re-defined. Treat it as read/mod/write.
         // EAX =
         // AX  =        EAX<imp-use,kill>, EAX<imp-def>
-        MI->addRegOperand(SuperReg, false/*IsDef*/,true/*IsImp*/,true/*IsKill*/);
-        MI->addRegOperand(SuperReg, true/*IsDef*/,true/*IsImp*/);
+        MI->addOperand(MachineOperand::CreateReg(SuperReg, false/*IsDef*/,
+                                                 true/*IsImp*/,true/*IsKill*/));
+        MI->addOperand(MachineOperand::CreateReg(SuperReg, true/*IsDef*/,
+                                                 true/*IsImp*/));
         PhysRegInfo[SuperReg] = MI;
         PhysRegUsed[SuperReg] = false;
         PhysRegPartUse[SuperReg] = NULL;
@@ -538,7 +544,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
         HandlePhysRegUse(*I, Ret);
         // Add live-out registers as implicit uses.
         if (Ret->findRegisterUseOperandIdx(*I) == -1)
-          Ret->addRegOperand(*I, false, true);
+          Ret->addOperand(MachineOperand::CreateReg(*I, false, true));
       }
     }
 

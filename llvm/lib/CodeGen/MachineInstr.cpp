@@ -32,10 +32,10 @@ MachineInstr::MachineInstr()
 void MachineInstr::addImplicitDefUseOperands() {
   if (TID->ImplicitDefs)
     for (const unsigned *ImpDefs = TID->ImplicitDefs; *ImpDefs; ++ImpDefs)
-      addRegOperand(*ImpDefs, true, true);
+      addOperand(MachineOperand::CreateReg(*ImpDefs, true, true));
   if (TID->ImplicitUses)
     for (const unsigned *ImpUses = TID->ImplicitUses; *ImpUses; ++ImpUses)
-      addRegOperand(*ImpUses, false, true);
+      addOperand(MachineOperand::CreateReg(*ImpUses, false, true));
 }
 
 /// MachineInstr ctor - This constructor create a MachineInstr and add the
@@ -249,13 +249,8 @@ void MachineInstr::copyPredicates(const MachineInstr *MI) {
   if (TID->Flags & M_PREDICABLE) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND)) {
-        const MachineOperand &MO = MI->getOperand(i);
         // Predicated operands must be last operands.
-        if (MO.isRegister())
-          addRegOperand(MO.getReg(), false);
-        else {
-          addImmOperand(MO.getImm());
-        }
+        addOperand(MI->getOperand(i));
       }
     }
   }

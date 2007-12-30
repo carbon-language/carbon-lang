@@ -379,7 +379,7 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node,
         unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
         if (MRegisterInfo::isVirtualRegister(Reg)) {
           VRBase = Reg;
-          MI->addRegOperand(Reg, true);
+          MI->addOperand(MachineOperand::CreateReg(Reg, true));
           break;
         }
       }
@@ -391,7 +391,7 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node,
       const TargetRegisterClass *RC = getInstrOperandRegClass(MRI, TII, &II, i);
       assert(RC && "Isn't a register operand!");
       VRBase = RegMap->createVirtualRegister(RC);
-      MI->addRegOperand(VRBase, true);
+      MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     }
 
     bool isNew = VRBaseMap.insert(std::make_pair(SDOperand(Node,i), VRBase));
@@ -429,7 +429,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
     bool isOptDef = (IIOpNum < TID->numOperands)
       ? (TID->OpInfo[IIOpNum].Flags & M_OPTIONAL_DEF_OPERAND) : false;
-    MI->addRegOperand(VReg, isOptDef);
+    MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef));
     
     // Verify that it is right.
     assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
@@ -456,10 +456,10 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     }
   } else if (ConstantSDNode *C =
              dyn_cast<ConstantSDNode>(Op)) {
-    MI->addImmOperand(C->getValue());
+    MI->addOperand(MachineOperand::CreateImm(C->getValue()));
   } else if (RegisterSDNode *R =
              dyn_cast<RegisterSDNode>(Op)) {
-    MI->addRegOperand(R->getReg(), false);
+    MI->addOperand(MachineOperand::CreateReg(R->getReg(), false));
   } else if (GlobalAddressSDNode *TGA =
              dyn_cast<GlobalAddressSDNode>(Op)) {
     MI->addGlobalAddressOperand(TGA->getGlobal(), TGA->getOffset());
@@ -501,7 +501,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
            Op.getValueType() != MVT::Flag &&
            "Chain and flag operands should occur at end of operand list!");
     unsigned VReg = getVR(Op, VRBaseMap);
-    MI->addRegOperand(VReg, false);
+    MI->addOperand(MachineOperand::CreateReg(VReg, false));
     
     // Verify that it is right.
     assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
@@ -588,7 +588,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     }
     
     // Add def, source, and subreg index
-    MI->addRegOperand(VRBase, true);
+    MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
     MI->addImmOperand(SubIdx);
     
@@ -643,7 +643,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
       VRBase = RegMap->createVirtualRegister(TRC); // Create the reg
     }
     
-    MI->addRegOperand(VRBase, true);
+    MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
     if (!isUndefInput)
       AddOperand(MI, Node->getOperand(1), 0, 0, VRBaseMap);
@@ -789,20 +789,20 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
         case 1:  // Use of register.
           for (; NumVals; --NumVals, ++i) {
             unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
-            MI->addRegOperand(Reg, false);
+            MI->addOperand(MachineOperand::CreateReg(Reg, false));
           }
           break;
         case 2:   // Def of register.
           for (; NumVals; --NumVals, ++i) {
             unsigned Reg = cast<RegisterSDNode>(Node->getOperand(i))->getReg();
-            MI->addRegOperand(Reg, true);
+            MI->addOperand(MachineOperand::CreateReg(Reg, true));
           }
           break;
         case 3: { // Immediate.
           for (; NumVals; --NumVals, ++i) {
             if (ConstantSDNode *CS =
                    dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
-              MI->addImmOperand(CS->getValue());
+              MI->addOperand(MachineOperand::CreateImm(CS->getValue()));
             } else if (GlobalAddressSDNode *GA = 
                   dyn_cast<GlobalAddressSDNode>(Node->getOperand(i))) {
               MI->addGlobalAddressOperand(GA->getGlobal(), GA->getOffset());
