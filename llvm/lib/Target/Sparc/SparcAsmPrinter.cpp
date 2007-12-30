@@ -155,7 +155,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     O << (int)MO.getImm();
     break;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMachineBasicBlock());
+    printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_GlobalAddress:
     O << Mang->getValueName(MO.getGlobal());
@@ -165,7 +165,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     break;
   case MachineOperand::MO_ConstantPoolIndex:
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
-      << MO.getConstantPoolIndex();
+      << MO.getIndex();
     break;
   default:
     O << "<unknown operand type>"; abort (); break;

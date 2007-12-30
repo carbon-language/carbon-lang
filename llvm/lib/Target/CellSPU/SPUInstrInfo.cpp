@@ -139,7 +139,7 @@ SPUInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const {
   case SPU::LQXr16:
     if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
         MI->getOperand(2).isFrameIndex()) {
-      FrameIndex = MI->getOperand(2).getFrameIndex();
+      FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -173,7 +173,7 @@ SPUInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
     // case SPU::STQXr8:
     if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
         MI->getOperand(2).isFrameIndex()) {
-      FrameIndex = MI->getOperand(2).getFrameIndex();
+      FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;

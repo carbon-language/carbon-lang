@@ -174,9 +174,8 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
   // Adjust the VRegPHIUseCount map to account for the removal of this PHI
   // node.
   for (unsigned i = 1; i != MPhi->getNumOperands(); i += 2)
-    --VRegPHIUseCount[BBVRegPair(
-                        MPhi->getOperand(i + 1).getMachineBasicBlock(),
-                        MPhi->getOperand(i).getReg())];
+    --VRegPHIUseCount[BBVRegPair(MPhi->getOperand(i + 1).getMBB(),
+                                 MPhi->getOperand(i).getReg())];
 
   // Now loop over all of the incoming arguments, changing them to copy into
   // the IncomingReg register in the corresponding predecessor basic block.
@@ -189,7 +188,7 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
 
     // Get the MachineBasicBlock equivalent of the BasicBlock that is the
     // source path the PHI.
-    MachineBasicBlock &opBlock = *MPhi->getOperand(i).getMachineBasicBlock();
+    MachineBasicBlock &opBlock = *MPhi->getOperand(i).getMBB();
 
     // Check to make sure we haven't already emitted the copy for this block.
     // This can happen because PHI nodes may have multiple entries for the
@@ -339,7 +338,6 @@ void PNE::analyzePHINodes(const MachineFunction& Fn) {
     for (MachineBasicBlock::const_iterator BBI = I->begin(), BBE = I->end();
          BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI)
       for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
-        ++VRegPHIUseCount[BBVRegPair(
-                            BBI->getOperand(i + 1).getMachineBasicBlock(),
-                            BBI->getOperand(i).getReg())];
+        ++VRegPHIUseCount[BBVRegPair(BBI->getOperand(i + 1).getMBB(),
+                                     BBI->getOperand(i).getReg())];
 }

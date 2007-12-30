@@ -329,7 +329,7 @@ void AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
 
-  int FrameIndex = MI.getOperand(i).getFrameIndex();
+  int FrameIndex = MI.getOperand(i).getIndex();
 
   // Add the base register of R30 (SP) or R15 (FP).
   MI.getOperand(i + 1).ChangeToRegister(FP ? Alpha::R15 : Alpha::R30, false);

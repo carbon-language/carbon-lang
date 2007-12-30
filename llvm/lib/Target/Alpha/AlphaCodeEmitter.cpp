@@ -202,13 +202,11 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                                                      Reloc, MO.getSymbolName(),
                                                      Offset, true));
     else
-    MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getConstantPoolIndex(),
-                                          Offset));
+     MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
+                                          Reloc, MO.getIndex(), Offset));
   } else if (MO.isMachineBasicBlock()) {
     MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
-                                               Alpha::reloc_bsr,
-                                               MO.getMachineBasicBlock()));
+                                               Alpha::reloc_bsr, MO.getMBB()));
   }else {
     cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
     abort();

@@ -385,7 +385,7 @@ void StrongPHIElimination::processBlock(MachineBasicBlock* MBB) {
           UnionedBlocks.count(SrcInfo.DefInst->getParent())) {
         
         // add a copy from a_i to p in Waiting[From[a_i]]
-        MachineBasicBlock* From = P->getOperand(i).getMachineBasicBlock();
+        MachineBasicBlock* From = P->getOperand(i).getMBB();
         Waiting[From].insert(std::make_pair(SrcReg, DestReg));
         UsedByAnother.insert(SrcReg);
       } else {

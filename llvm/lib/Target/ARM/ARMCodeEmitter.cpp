@@ -143,11 +143,11 @@ int Emitter::getMachineOpValue(const MachineInstr &MI, unsigned OpIndex) {
   } else if (MO.isExternalSymbol()) {
     emitExternalSymbolAddress(MO.getSymbolName(), ARM::reloc_arm_relative);
   } else if (MO.isConstantPoolIndex()) {
-    emitConstPoolAddress(MO.getConstantPoolIndex(), ARM::reloc_arm_relative);
+    emitConstPoolAddress(MO.getIndex(), ARM::reloc_arm_relative);
   } else if (MO.isJumpTableIndex()) {
-    emitJumpTableAddress(MO.getJumpTableIndex(), ARM::reloc_arm_relative);
+    emitJumpTableAddress(MO.getIndex(), ARM::reloc_arm_relative);
   } else if (MO.isMachineBasicBlock()) {
-    emitMachineBasicBlock(MO.getMachineBasicBlock());
+    emitMachineBasicBlock(MO.getMBB());
   }
 
   return rv;

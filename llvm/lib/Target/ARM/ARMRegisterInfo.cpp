@@ -148,7 +148,7 @@ static const MachineInstrBuilder &ARMInstrAddOperand(MachineInstrBuilder &MIB,
   else if (MO.isImmediate())
     MIB = MIB.addImm(MO.getImm());
   else if (MO.isFrameIndex())
-    MIB = MIB.addFrameIndex(MO.getFrameIndex());
+    MIB = MIB.addFrameIndex(MO.getIndex());
   else
     assert(0 && "Unknown operand for ARMInstrAddOperand!");
 
@@ -870,7 +870,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
   
   unsigned FrameReg = ARM::SP;
-  int FrameIndex = MI.getOperand(i).getFrameIndex();
+  int FrameIndex = MI.getOperand(i).getIndex();
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) + 
                MF.getFrameInfo()->getStackSize() + SPAdj;
 

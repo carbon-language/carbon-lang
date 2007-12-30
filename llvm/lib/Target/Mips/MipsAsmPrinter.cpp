@@ -380,7 +380,7 @@ printOperand(const MachineInstr *MI, int opNum)
       break;
 
     case MachineOperand::MO_MachineBasicBlock:
-      printBasicBlockLabel(MO.getMachineBasicBlock());
+      printBasicBlockLabel(MO.getMBB());
       return;
 
     case MachineOperand::MO_GlobalAddress:
@@ -393,13 +393,13 @@ printOperand(const MachineInstr *MI, int opNum)
 
     case MachineOperand::MO_JumpTableIndex:
       O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-      << '_' << MO.getJumpTableIndex();
+      << '_' << MO.getIndex();
       break;
 
     // FIXME: Verify correct
     case MachineOperand::MO_ConstantPoolIndex:
       O << TAI->getPrivateGlobalPrefix() << "CPI"
-        << getFunctionNumber() << "_" << MO.getConstantPoolIndex();
+        << getFunctionNumber() << "_" << MO.getIndex();
       break;
   
     default:

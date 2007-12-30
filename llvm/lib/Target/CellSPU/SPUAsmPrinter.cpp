@@ -304,16 +304,16 @@ void SPUAsmPrinter::printOp(const MachineOperand &MO) {
     return;
 
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMachineBasicBlock());
+    printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_JumpTableIndex:
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-      << '_' << MO.getJumpTableIndex();
+      << '_' << MO.getIndex();
     // FIXME: PIC relocation model
     return;
   case MachineOperand::MO_ConstantPoolIndex:
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
-      << '_' << MO.getConstantPoolIndex();
+      << '_' << MO.getIndex();
     return;
   case MachineOperand::MO_ExternalSymbol:
     // Computing the address of an external symbol, not calling it.

@@ -267,7 +267,7 @@ void SPURegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
       else if (MO.isImmediate())
         MIB.addImm(MO.getImm());
       else
-        MIB.addFrameIndex(MO.getFrameIndex());
+        MIB.addFrameIndex(MO.getIndex());
     }
     NewMIs.push_back(MIB);
   }
@@ -353,7 +353,7 @@ void SPURegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
       else if (MO.isImmediate())
         MIB.addImm(MO.getImm());
       else
-        MIB.addFrameIndex(MO.getFrameIndex());
+        MIB.addFrameIndex(MO.getIndex());
     }
     NewMIs.push_back(MIB);
   }
@@ -598,7 +598,7 @@ SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   }
 
   MachineOperand &SPOp = MI.getOperand(i);
-  int FrameIndex = SPOp.getFrameIndex();
+  int FrameIndex = SPOp.getIndex();
 
   // Now add the frame object offset to the offset from r1.
   int Offset = MFI->getObjectOffset(FrameIndex);

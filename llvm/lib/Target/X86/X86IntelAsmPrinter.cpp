@@ -135,20 +135,20 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMachineBasicBlock());
+    printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_JumpTableIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << "OFFSET ";
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-      << "_" << MO.getJumpTableIndex();
+      << "_" << MO.getIndex();
     return;
   }    
   case MachineOperand::MO_ConstantPoolIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << "OFFSET ";
     O << "[" << TAI->getPrivateGlobalPrefix() << "CPI"
-      << getFunctionNumber() << "_" << MO.getConstantPoolIndex();
+      << getFunctionNumber() << "_" << MO.getIndex();
     int Offset = MO.getOffset();
     if (Offset > 0)
       O << " + " << Offset;

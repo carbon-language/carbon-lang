@@ -232,13 +232,13 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMachineBasicBlock());
+    printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_JumpTableIndex: {
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << '$';
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() << "_"
-      << MO.getJumpTableIndex();
+      << MO.getIndex();
 
     if (TM.getRelocationModel() == Reloc::PIC_) {
       if (Subtarget->isPICStyleStub())
@@ -256,7 +256,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     bool isMemOp  = Modifier && !strcmp(Modifier, "mem");
     if (!isMemOp) O << '$';
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber() << "_"
-      << MO.getConstantPoolIndex();
+      << MO.getIndex();
 
     if (TM.getRelocationModel() == Reloc::PIC_) {
       if (Subtarget->isPICStyleStub())

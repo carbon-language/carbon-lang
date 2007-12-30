@@ -99,9 +99,9 @@ unsigned PPCInstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   case PPC::LWZ:
   case PPC::LFS:
   case PPC::LFD:
-    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
-        MI->getOperand(2).isFrameIndex()) {
-      FrameIndex = MI->getOperand(2).getFrameIndex();
+    if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
+        MI->getOperand(2).isFI()) {
+      FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -117,9 +117,9 @@ unsigned PPCInstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case PPC::STW:
   case PPC::STFS:
   case PPC::STFD:
-    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
-        MI->getOperand(2).isFrameIndex()) {
-      FrameIndex = MI->getOperand(2).getFrameIndex();
+    if (MI->getOperand(1).isImm() && !MI->getOperand(1).getImm() &&
+        MI->getOperand(2).isFI()) {
+      FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -184,11 +184,11 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   // If there is only one terminator instruction, process it.
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
     if (LastInst->getOpcode() == PPC::B) {
-      TBB = LastInst->getOperand(0).getMachineBasicBlock();
+      TBB = LastInst->getOperand(0).getMBB();
       return false;
     } else if (LastInst->getOpcode() == PPC::BCC) {
       // Block ends with fall-through condbranch.
-      TBB = LastInst->getOperand(2).getMachineBasicBlock();
+      TBB = LastInst->getOperand(2).getMBB();
       Cond.push_back(LastInst->getOperand(0));
       Cond.push_back(LastInst->getOperand(1));
       return false;
@@ -208,10 +208,10 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   // If the block ends with PPC::B and PPC:BCC, handle it.
   if (SecondLastInst->getOpcode() == PPC::BCC && 
       LastInst->getOpcode() == PPC::B) {
-    TBB =  SecondLastInst->getOperand(2).getMachineBasicBlock();
+    TBB =  SecondLastInst->getOperand(2).getMBB();
     Cond.push_back(SecondLastInst->getOperand(0));
     Cond.push_back(SecondLastInst->getOperand(1));
-    FBB = LastInst->getOperand(0).getMachineBasicBlock();
+    FBB = LastInst->getOperand(0).getMBB();
     return false;
   }
   
@@ -219,7 +219,7 @@ bool PPCInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   // executed, so remove it.
   if (SecondLastInst->getOpcode() == PPC::B && 
       LastInst->getOpcode() == PPC::B) {
-    TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
+    TBB = SecondLastInst->getOperand(0).getMBB();
     I = LastInst;
     I->eraseFromParent();
     return false;

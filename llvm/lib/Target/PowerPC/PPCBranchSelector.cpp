@@ -136,7 +136,7 @@ bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
         
         // Determine the offset from the current branch to the destination
         // block.
-        MachineBasicBlock *Dest = I->getOperand(2).getMachineBasicBlock();
+        MachineBasicBlock *Dest = I->getOperand(2).getMBB();
         
         int BranchSize;
         if (Dest->getNumber() <= MBB.getNumber()) {

@@ -195,11 +195,11 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                                        Reloc, MO.getSymbolName(), 0);
     } else if (MO.isConstantPoolIndex()) {
       R = MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getConstantPoolIndex(), 0);
+                                          Reloc, MO.getIndex(), 0);
     } else {
       assert(MO.isJumpTableIndex());
       R = MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getJumpTableIndex(), 0);
+                                          Reloc, MO.getIndex(), 0);
     }
     
     // If in PIC mode, we need to encode the negated address of the
@@ -223,8 +223,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     else // BCC instruction
       Reloc = PPC::reloc_pcrel_bcx;
     MCE.addRelocation(MachineRelocation::getBB(MCE.getCurrentPCOffset(),
-                                               Reloc,
-                                               MO.getMachineBasicBlock()));
+                                               Reloc, MO.getMBB()));
   } else {
     cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
     abort();

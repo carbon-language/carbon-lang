@@ -275,7 +275,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     break;
   }
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMachineBasicBlock());
+    printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_GlobalAddress: {
     bool isCallOp = Modifier && !strcmp(Modifier, "call");
@@ -319,11 +319,11 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   }
   case MachineOperand::MO_ConstantPoolIndex:
     O << TAI->getPrivateGlobalPrefix() << "CPI" << getFunctionNumber()
-      << '_' << MO.getConstantPoolIndex();
+      << '_' << MO.getIndex();
     break;
   case MachineOperand::MO_JumpTableIndex:
     O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-      << '_' << MO.getJumpTableIndex();
+      << '_' << MO.getIndex();
     break;
   default:
     O << "<unknown operand type>"; abort (); break;
@@ -655,7 +655,7 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNo,
       << '_' << ID << ":\n";
   } else {
     assert(!strcmp(Modifier, "cpentry") && "Unknown modifier for CPE");
-    unsigned CPI = MI->getOperand(OpNo).getConstantPoolIndex();
+    unsigned CPI = MI->getOperand(OpNo).getIndex();
 
     const MachineConstantPoolEntry &MCPE =  // Chasing pointers is fun?
       MI->getParent()->getParent()->getConstantPool()->getConstants()[CPI];
@@ -675,7 +675,7 @@ void ARMAsmPrinter::printCPInstOperand(const MachineInstr *MI, int OpNo,
 void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNo) {
   const MachineOperand &MO1 = MI->getOperand(OpNo);
   const MachineOperand &MO2 = MI->getOperand(OpNo+1); // Unique Id
-  unsigned JTI = MO1.getJumpTableIndex();
+  unsigned JTI = MO1.getIndex();
   O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
     << '_' << JTI << '_' << MO2.getImm() << ":\n";
 

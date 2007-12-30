@@ -71,7 +71,7 @@ unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) co
         MI->getOperand(3).isImmediate() && 
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getFrameIndex();
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -80,7 +80,7 @@ unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) co
     if (MI->getOperand(1).isFrameIndex() &&
         MI->getOperand(2).isImmediate() && 
         MI->getOperand(2).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getFrameIndex();
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -88,7 +88,7 @@ unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) co
     if (MI->getOperand(1).isFrameIndex() &&
         MI->getOperand(2).isImmediate() && 
         MI->getOperand(2).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getFrameIndex();
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -105,7 +105,7 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
         MI->getOperand(3).isImmediate() && 
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getFrameIndex();
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -114,7 +114,7 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
     if (MI->getOperand(1).isFrameIndex() &&
         MI->getOperand(2).isImmediate() && 
         MI->getOperand(2).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getFrameIndex();
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -122,7 +122,7 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
     if (MI->getOperand(1).isFrameIndex() &&
         MI->getOperand(2).isImmediate() && 
         MI->getOperand(2).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getFrameIndex();
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -319,12 +319,12 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   unsigned LastOpc = LastInst->getOpcode();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
     if (LastOpc == ARM::B || LastOpc == ARM::tB) {
-      TBB = LastInst->getOperand(0).getMachineBasicBlock();
+      TBB = LastInst->getOperand(0).getMBB();
       return false;
     }
     if (LastOpc == ARM::Bcc || LastOpc == ARM::tBcc) {
       // Block ends with fall-through condbranch.
-      TBB = LastInst->getOperand(0).getMachineBasicBlock();
+      TBB = LastInst->getOperand(0).getMBB();
       Cond.push_back(LastInst->getOperand(1));
       Cond.push_back(LastInst->getOperand(2));
       return false;
@@ -343,10 +343,10 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   unsigned SecondLastOpc = SecondLastInst->getOpcode();
   if ((SecondLastOpc == ARM::Bcc && LastOpc == ARM::B) ||
       (SecondLastOpc == ARM::tBcc && LastOpc == ARM::tB)) {
-    TBB =  SecondLastInst->getOperand(0).getMachineBasicBlock();
+    TBB =  SecondLastInst->getOperand(0).getMBB();
     Cond.push_back(SecondLastInst->getOperand(1));
     Cond.push_back(SecondLastInst->getOperand(2));
-    FBB = LastInst->getOperand(0).getMachineBasicBlock();
+    FBB = LastInst->getOperand(0).getMBB();
     return false;
   }
   
@@ -354,7 +354,7 @@ bool ARMInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
   // one is not executed, so remove it.
   if ((SecondLastOpc == ARM::B || SecondLastOpc==ARM::tB) &&
       (LastOpc == ARM::B || LastOpc == ARM::tB)) {
-    TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
+    TBB = SecondLastInst->getOperand(0).getMBB();
     I = LastInst;
     I->eraseFromParent();
     return false;
@@ -576,7 +576,7 @@ unsigned ARM::GetInstSize(MachineInstr *MI) {
       unsigned NumOps = TID->numOperands;
       MachineOperand JTOP =
         MI->getOperand(NumOps - ((TID->Flags & M_PREDICABLE) ? 3 : 2));
-      unsigned JTI = JTOP.getJumpTableIndex();
+      unsigned JTI = JTOP.getIndex();
       MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
       const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();
       assert(JTI < JT.size());

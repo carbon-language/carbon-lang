@@ -72,7 +72,7 @@ unsigned SparcInstrInfo::isLoadFromStackSlot(MachineInstr *MI,
       MI->getOpcode() == SP::LDDFri) {
     if (MI->getOperand(1).isFrameIndex() && MI->getOperand(2).isImmediate() &&
         MI->getOperand(2).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getFrameIndex();
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
   }
@@ -91,7 +91,7 @@ unsigned SparcInstrInfo::isStoreToStackSlot(MachineInstr *MI,
       MI->getOpcode() == SP::STDFri) {
     if (MI->getOperand(0).isFrameIndex() && MI->getOperand(1).isImmediate() &&
         MI->getOperand(1).getImm() == 0) {
-      FrameIndex = MI->getOperand(0).getFrameIndex();
+      FrameIndex = MI->getOperand(0).getIndex();
       return MI->getOperand(2).getReg();
     }
   }

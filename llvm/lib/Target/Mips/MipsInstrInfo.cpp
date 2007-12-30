@@ -74,7 +74,7 @@ isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const
         (MI->getOperand(1).isImmediate()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(1)))) 
     {
-      FrameIndex = MI->getOperand(2).getFrameIndex();
+      FrameIndex = MI->getOperand(2).getIndex();
       return MI->getOperand(0).getReg();
     }
   }
@@ -95,7 +95,7 @@ isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const
         (MI->getOperand(1).isImmediate()) &&  // the imm is zero
         (isZeroImm(MI->getOperand(1)))) 
     {
-      FrameIndex = MI->getOperand(0).getFrameIndex();
+      FrameIndex = MI->getOperand(0).getIndex();
       return MI->getOperand(2).getReg();
     }
   }
@@ -180,7 +180,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
     // Unconditional branch
     if (LastOpc == Mips::J) {
-      TBB = LastInst->getOperand(0).getMachineBasicBlock();
+      TBB = LastInst->getOperand(0).getMBB();
       return false;
     }
 
@@ -193,7 +193,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     if (LastOpc != Mips::COND_INVALID) {
       int LastNumOp = LastInst->getNumOperands();
 
-      TBB = LastInst->getOperand(LastNumOp-1).getMachineBasicBlock();
+      TBB = LastInst->getOperand(LastNumOp-1).getMBB();
       Cond.push_back(MachineOperand::CreateImm(BranchCode));
 
       for (int i=0; i<LastNumOp-1; i++) {
@@ -218,21 +218,21 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   if (SecondLastOpc != Mips::COND_INVALID && LastOpc == Mips::J) {
     int SecondNumOp = SecondLastInst->getNumOperands();
 
-    TBB = SecondLastInst->getOperand(SecondNumOp-1).getMachineBasicBlock();
+    TBB = SecondLastInst->getOperand(SecondNumOp-1).getMBB();
     Cond.push_back(MachineOperand::CreateImm(BranchCode));
 
     for (int i=0; i<SecondNumOp-1; i++) {
       Cond.push_back(SecondLastInst->getOperand(i));
     }
 
-    FBB = LastInst->getOperand(0).getMachineBasicBlock();
+    FBB = LastInst->getOperand(0).getMBB();
     return false;
   }
   
   // If the block ends with two unconditional branches, handle it. The last 
   // one is not executed, so remove it.
   if ((SecondLastOpc == Mips::J) && (LastOpc == Mips::J)) {
-    TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
+    TBB = SecondLastInst->getOperand(0).getMBB();
     I = LastInst;
     I->eraseFromParent();
     return false;

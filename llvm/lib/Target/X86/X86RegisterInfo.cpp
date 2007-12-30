@@ -781,13 +781,13 @@ static const MachineInstrBuilder &X86InstrAddOperand(MachineInstrBuilder &MIB,
   else if (MO.isImmediate())
     MIB = MIB.addImm(MO.getImm());
   else if (MO.isFrameIndex())
-    MIB = MIB.addFrameIndex(MO.getFrameIndex());
+    MIB = MIB.addFrameIndex(MO.getIndex());
   else if (MO.isGlobalAddress())
     MIB = MIB.addGlobalAddress(MO.getGlobal(), MO.getOffset());
   else if (MO.isConstantPoolIndex())
-    MIB = MIB.addConstantPoolIndex(MO.getConstantPoolIndex(), MO.getOffset());
+    MIB = MIB.addConstantPoolIndex(MO.getIndex(), MO.getOffset());
   else if (MO.isJumpTableIndex())
-    MIB = MIB.addJumpTableIndex(MO.getJumpTableIndex());
+    MIB = MIB.addJumpTableIndex(MO.getIndex());
   else if (MO.isExternalSymbol())
     MIB = MIB.addExternalSymbol(MO.getSymbolName());
   else
@@ -1611,7 +1611,7 @@ void X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
 
-  int FrameIndex = MI.getOperand(i).getFrameIndex();
+  int FrameIndex = MI.getOperand(i).getIndex();
   // This must be part of a four operand memory reference.  Replace the
   // FrameIndex with base register with EBP.  Add an offset to the offset.
   MI.getOperand(i).ChangeToRegister(hasFP(MF) ? FramePtr : StackPtr, false);

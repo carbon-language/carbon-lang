@@ -69,8 +69,10 @@ void SparcRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
       MIB.addReg(MO.getReg());
     else if (MO.isImmediate())
       MIB.addImm(MO.getImm());
-    else
-      MIB.addFrameIndex(MO.getFrameIndex());
+    else {
+      assert(MO.isFI());
+      MIB.addFrameIndex(MO.getIndex());
+    }
   }
   MIB.addReg(SrcReg, false, false, isKill);
   NewMIs.push_back(MIB);
@@ -107,12 +109,14 @@ void SparcRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   MachineInstrBuilder MIB = BuildMI(TII.get(Opc), DestReg);
   for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
     MachineOperand &MO = Addr[i];
-    if (MO.isRegister())
+    if (MO.isReg())
       MIB.addReg(MO.getReg());
-    else if (MO.isImmediate())
+    else if (MO.isImm())
       MIB.addImm(MO.getImm());
-    else
-      MIB.addFrameIndex(MO.getFrameIndex());
+    else {
+      assert(MO.isFI());
+      MIB.addFrameIndex(MO.getIndex());
+    }
   }
   NewMIs.push_back(MIB);
   return;
@@ -241,7 +245,7 @@ void SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
 
-  int FrameIndex = MI.getOperand(i).getFrameIndex();
+  int FrameIndex = MI.getOperand(i).getIndex();
 
   // Addressable stack objects are accessed using neg. offsets from %fp
   MachineFunction &MF = *MI.getParent()->getParent();

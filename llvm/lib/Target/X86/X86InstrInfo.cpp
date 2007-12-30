@@ -71,12 +71,12 @@ unsigned X86InstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   case X86::MOVAPDrm:
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
-    if (MI->getOperand(1).isFrameIndex() && MI->getOperand(2).isImmediate() &&
-        MI->getOperand(3).isRegister() && MI->getOperand(4).isImmediate() &&
+    if (MI->getOperand(1).isFI() && MI->getOperand(2).isImm() &&
+        MI->getOperand(3).isReg() && MI->getOperand(4).isImm() &&
         MI->getOperand(2).getImm() == 1 &&
         MI->getOperand(3).getReg() == 0 &&
         MI->getOperand(4).getImm() == 0) {
-      FrameIndex = MI->getOperand(1).getFrameIndex();
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -102,12 +102,12 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case X86::MMX_MOVD64mr:
   case X86::MMX_MOVQ64mr:
   case X86::MMX_MOVNTQmr:
-    if (MI->getOperand(0).isFrameIndex() && MI->getOperand(1).isImmediate() &&
-        MI->getOperand(2).isRegister() && MI->getOperand(3).isImmediate() &&
+    if (MI->getOperand(0).isFI() && MI->getOperand(1).isImm() &&
+        MI->getOperand(2).isReg() && MI->getOperand(3).isImm() &&
         MI->getOperand(1).getImm() == 1 &&
         MI->getOperand(2).getReg() == 0 &&
         MI->getOperand(3).getImm() == 0) {
-      FrameIndex = MI->getOperand(0).getFrameIndex();
+      FrameIndex = MI->getOperand(0).getIndex();
       return MI->getOperand(4).getReg();
     }
     break;
@@ -689,7 +689,7 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     // it's an unconditional, conditional, or indirect branch.
     
     if (LastInst->getOpcode() == X86::JMP) {
-      TBB = LastInst->getOperand(0).getMachineBasicBlock();
+      TBB = LastInst->getOperand(0).getMBB();
       return false;
     }
     X86::CondCode BranchCode = GetCondFromBranchOpc(LastInst->getOpcode());
@@ -697,7 +697,7 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       return true;  // Can't handle indirect branch.
 
     // Otherwise, block ends with fall-through condbranch.
-    TBB = LastInst->getOperand(0).getMachineBasicBlock();
+    TBB = LastInst->getOperand(0).getMBB();
     Cond.push_back(MachineOperand::CreateImm(BranchCode));
     return false;
   }
@@ -713,9 +713,9 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   // If the block ends with X86::JMP and a conditional branch, handle it.
   X86::CondCode BranchCode = GetCondFromBranchOpc(SecondLastInst->getOpcode());
   if (BranchCode != X86::COND_INVALID && LastInst->getOpcode() == X86::JMP) {
-    TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
+    TBB = SecondLastInst->getOperand(0).getMBB();
     Cond.push_back(MachineOperand::CreateImm(BranchCode));
-    FBB = LastInst->getOperand(0).getMachineBasicBlock();
+    FBB = LastInst->getOperand(0).getMBB();
     return false;
   }
 
@@ -723,7 +723,7 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   // executed, so remove it.
   if (SecondLastInst->getOpcode() == X86::JMP && 
       LastInst->getOpcode() == X86::JMP) {
-    TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
+    TBB = SecondLastInst->getOperand(0).getMBB();
     I = LastInst;
     I->eraseFromParent();
     return false;

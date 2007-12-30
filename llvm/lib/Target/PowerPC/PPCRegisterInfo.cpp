@@ -187,8 +187,7 @@ void PPCRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
                                      const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
   if (Addr[0].isFrameIndex()) {
-    StoreRegToStackSlot(TII, SrcReg, isKill, Addr[0].getFrameIndex(), RC,
-                        NewMIs);
+    StoreRegToStackSlot(TII, SrcReg, isKill, Addr[0].getIndex(), RC, NewMIs);
     return;
   }
 
@@ -216,7 +215,7 @@ void PPCRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     else if (MO.isImmediate())
       MIB.addImm(MO.getImm());
     else
-      MIB.addFrameIndex(MO.getFrameIndex());
+      MIB.addFrameIndex(MO.getIndex());
   }
   NewMIs.push_back(MIB);
   return;
@@ -295,9 +294,9 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 void PPCRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                       SmallVectorImpl<MachineOperand> &Addr,
                                       const TargetRegisterClass *RC,
-                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
+                                  SmallVectorImpl<MachineInstr*> &NewMIs) const{
   if (Addr[0].isFrameIndex()) {
-    LoadRegFromStackSlot(TII, DestReg, Addr[0].getFrameIndex(), RC, NewMIs);
+    LoadRegFromStackSlot(TII, DestReg, Addr[0].getIndex(), RC, NewMIs);
     return;
   }
 
@@ -326,7 +325,7 @@ void PPCRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     else if (MO.isImmediate())
       MIB.addImm(MO.getImm());
     else
-      MIB.addFrameIndex(MO.getFrameIndex());
+      MIB.addFrameIndex(MO.getIndex());
   }
   NewMIs.push_back(MIB);
   return;
@@ -766,7 +765,7 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     OffsetOperandNo = FIOperandNo-1;
       
   // Get the frame index.
-  int FrameIndex = MI.getOperand(FIOperandNo).getFrameIndex();
+  int FrameIndex = MI.getOperand(FIOperandNo).getIndex();
   
   // Get the frame pointer save index.  Users of this index are primarily
   // DYNALLOC instructions.

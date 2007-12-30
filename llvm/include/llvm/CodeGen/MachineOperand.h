@@ -122,6 +122,15 @@ public:
   bool isGlobalAddress() const { return OpKind == MO_GlobalAddress; }
   bool isExternalSymbol() const { return OpKind == MO_ExternalSymbol; }
 
+  bool isReg() const { return OpKind == MO_Register; }
+  bool isImm() const { return OpKind == MO_Immediate; }
+  bool isMBB() const { return OpKind == MO_MachineBasicBlock; }
+  bool isFI() const { return OpKind == MO_FrameIndex; }
+  bool isCPI() const { return OpKind == MO_ConstantPoolIndex; }
+  bool isJTI() const { return OpKind == MO_JumpTableIndex; }
+  bool isGlobal() const { return OpKind == MO_GlobalAddress; }
+  bool isSymbol() const { return OpKind == MO_ExternalSymbol; }
+  
   //===--------------------------------------------------------------------===//
   // Accessors for Register Operands
   //===--------------------------------------------------------------------===//
@@ -215,10 +224,6 @@ public:
     assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
     return Contents.MBB;
   }
-  MachineBasicBlock *getMachineBasicBlock() const {
-    assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
-    return Contents.MBB;
-  }
 
   int getIndex() const {
     assert((isFrameIndex() || isConstantPoolIndex() || isJumpTableIndex()) &&
@@ -226,19 +231,17 @@ public:
     return Contents.OffsetedInfo.Val.Index;
   }
   
-  int getFrameIndex() const { return getIndex(); }
-  unsigned getConstantPoolIndex() const { return getIndex(); }
-  unsigned getJumpTableIndex() const { return getIndex(); }
-
   GlobalValue *getGlobal() const {
     assert(isGlobalAddress() && "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Val.GV;
   }
+  
   int getOffset() const {
     assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
            "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Offset;
   }
+  
   const char *getSymbolName() const {
     assert(isExternalSymbol() && "Wrong MachineOperand accessor");
     return Contents.OffsetedInfo.Val.SymbolName;
@@ -265,10 +268,7 @@ public:
     Contents.OffsetedInfo.Val.Index = Idx;
   }
   
-  void setConstantPoolIndex(unsigned Idx) { setIndex(Idx); }
-  void setJumpTableIndex(unsigned Idx) { setIndex(Idx); }
-
-  void setMachineBasicBlock(MachineBasicBlock *MBB) {
+  void setMBB(MachineBasicBlock *MBB) {
     assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
     Contents.MBB = MBB;
   }
@@ -327,7 +327,7 @@ public:
   }
   static MachineOperand CreateMBB(MachineBasicBlock *MBB) {
     MachineOperand Op(MachineOperand::MO_MachineBasicBlock);
-    Op.setMachineBasicBlock(MBB);
+    Op.setMBB(MBB);
     return Op;
   }
   static MachineOperand CreateFI(unsigned Idx) {

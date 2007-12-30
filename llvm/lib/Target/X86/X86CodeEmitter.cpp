@@ -247,11 +247,11 @@ void Emitter::emitDisplacementField(const MachineOperand *RelocOp,
                       PCAdj, false, IsPIC);
   } else if (RelocOp->isConstantPoolIndex()) {
     // Must be in 64-bit mode.
-    emitConstPoolAddress(RelocOp->getConstantPoolIndex(), X86::reloc_pcrel_word,
+    emitConstPoolAddress(RelocOp->getIndex(), X86::reloc_pcrel_word,
                          RelocOp->getOffset(), PCAdj, IsPIC);
   } else if (RelocOp->isJumpTableIndex()) {
     // Must be in 64-bit mode.
-    emitJumpTableAddress(RelocOp->getJumpTableIndex(), X86::reloc_pcrel_word,
+    emitJumpTableAddress(RelocOp->getIndex(), X86::reloc_pcrel_word,
                          PCAdj, IsPIC);
   } else {
     assert(0 && "Unknown value to relocate!");
@@ -272,14 +272,14 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
     if (Is64BitMode) {
       DispForReloc = &Op3;
     } else {
-      DispVal += MCE.getConstantPoolEntryAddress(Op3.getConstantPoolIndex());
+      DispVal += MCE.getConstantPoolEntryAddress(Op3.getIndex());
       DispVal += Op3.getOffset();
     }
   } else if (Op3.isJumpTableIndex()) {
     if (Is64BitMode) {
       DispForReloc = &Op3;
     } else {
-      DispVal += MCE.getJumpTableEntryAddress(Op3.getJumpTableIndex());
+      DispVal += MCE.getJumpTableEntryAddress(Op3.getIndex());
     }
   } else {
     DispVal = Op3.getImm();
@@ -601,7 +601,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
       if (MO.isMachineBasicBlock()) {
-        emitPCRelativeBlockAddress(MO.getMachineBasicBlock());
+        emitPCRelativeBlockAddress(MO.getMBB());
       } else if (MO.isGlobalAddress()) {
         bool NeedStub = Is64BitMode ||
                         Opcode == X86::TAILJMPd ||
@@ -642,9 +642,9 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
         else if (MO1.isExternalSymbol())
           emitExternalSymbolAddress(MO1.getSymbolName(), rt, IsPIC);
         else if (MO1.isConstantPoolIndex())
-          emitConstPoolAddress(MO1.getConstantPoolIndex(), rt, IsPIC);
+          emitConstPoolAddress(MO1.getIndex(), rt, IsPIC);
         else if (MO1.isJumpTableIndex())
-          emitJumpTableAddress(MO1.getJumpTableIndex(), rt, IsPIC);
+          emitJumpTableAddress(MO1.getIndex(), rt, IsPIC);
       }
     }
     break;
@@ -711,9 +711,9 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
         else if (MO1.isExternalSymbol())
           emitExternalSymbolAddress(MO1.getSymbolName(), rt, IsPIC);
         else if (MO1.isConstantPoolIndex())
-          emitConstPoolAddress(MO1.getConstantPoolIndex(), rt, IsPIC);
+          emitConstPoolAddress(MO1.getIndex(), rt, IsPIC);
         else if (MO1.isJumpTableIndex())
-          emitJumpTableAddress(MO1.getJumpTableIndex(), rt, IsPIC);
+          emitJumpTableAddress(MO1.getIndex(), rt, IsPIC);
       }
     }
     break;
@@ -745,9 +745,9 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
         else if (MO.isExternalSymbol())
           emitExternalSymbolAddress(MO.getSymbolName(), rt, IsPIC);
         else if (MO.isConstantPoolIndex())
-          emitConstPoolAddress(MO.getConstantPoolIndex(), rt, IsPIC);
+          emitConstPoolAddress(MO.getIndex(), rt, IsPIC);
         else if (MO.isJumpTableIndex())
-          emitJumpTableAddress(MO.getJumpTableIndex(), rt, IsPIC);
+          emitJumpTableAddress(MO.getIndex(), rt, IsPIC);
       }
     }
     break;

@@ -1226,7 +1226,7 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
           ++OpNo;  // Skip over the ID number.
 
           if (Modifier[0]=='l')  // labels are target independent
-            printBasicBlockLabel(MI->getOperand(OpNo).getMachineBasicBlock(), 
+            printBasicBlockLabel(MI->getOperand(OpNo).getMBB(), 
                                  false, false);
           else {
             AsmPrinter *AP = const_cast<AsmPrinter*>(this);

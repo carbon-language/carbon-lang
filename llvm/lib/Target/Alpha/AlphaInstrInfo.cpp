@@ -58,7 +58,7 @@ AlphaInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const {
   case Alpha::LDS:
   case Alpha::LDT:
     if (MI->getOperand(1).isFrameIndex()) {
-      FrameIndex = MI->getOperand(1).getFrameIndex();
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -76,7 +76,7 @@ AlphaInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
   case Alpha::STS:
   case Alpha::STT:
     if (MI->getOperand(1).isFrameIndex()) {
-      FrameIndex = MI->getOperand(1).getFrameIndex();
+      FrameIndex = MI->getOperand(1).getIndex();
       return MI->getOperand(0).getReg();
     }
     break;
@@ -168,12 +168,12 @@ bool AlphaInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TB
   // If there is only one terminator instruction, process it.
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
     if (LastInst->getOpcode() == Alpha::BR) {
-      TBB = LastInst->getOperand(0).getMachineBasicBlock();
+      TBB = LastInst->getOperand(0).getMBB();
       return false;
     } else if (LastInst->getOpcode() == Alpha::COND_BRANCH_I ||
                LastInst->getOpcode() == Alpha::COND_BRANCH_F) {
       // Block ends with fall-through condbranch.
-      TBB = LastInst->getOperand(2).getMachineBasicBlock();
+      TBB = LastInst->getOperand(2).getMBB();
       Cond.push_back(LastInst->getOperand(0));
       Cond.push_back(LastInst->getOperand(1));
       return false;
@@ -194,10 +194,10 @@ bool AlphaInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TB
   if ((SecondLastInst->getOpcode() == Alpha::COND_BRANCH_I ||
       SecondLastInst->getOpcode() == Alpha::COND_BRANCH_F) && 
       LastInst->getOpcode() == Alpha::BR) {
-    TBB =  SecondLastInst->getOperand(2).getMachineBasicBlock();
+    TBB =  SecondLastInst->getOperand(2).getMBB();
     Cond.push_back(SecondLastInst->getOperand(0));
     Cond.push_back(SecondLastInst->getOperand(1));
-    FBB = LastInst->getOperand(0).getMachineBasicBlock();
+    FBB = LastInst->getOperand(0).getMBB();
     return false;
   }
   
@@ -205,7 +205,7 @@ bool AlphaInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TB
   // executed, so remove it.
   if (SecondLastInst->getOpcode() == Alpha::BR && 
       LastInst->getOpcode() == Alpha::BR) {
-    TBB = SecondLastInst->getOperand(0).getMachineBasicBlock();
+    TBB = SecondLastInst->getOperand(0).getMBB();
     I = LastInst;
     I->eraseFromParent();
     return false;

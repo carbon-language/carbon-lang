@@ -696,6 +696,6 @@ void LiveVariables::analyzePHINodes(const MachineFunction& Fn) {
     for (MachineBasicBlock::const_iterator BBI = I->begin(), BBE = I->end();
          BBI != BBE && BBI->getOpcode() == TargetInstrInfo::PHI; ++BBI)
       for (unsigned i = 1, e = BBI->getNumOperands(); i != e; i += 2)
-        PHIVarInfo[BBI->getOperand(i + 1).getMachineBasicBlock()->getNumber()].
+        PHIVarInfo[BBI->getOperand(i + 1).getMBB()->getNumber()].
           push_back(BBI->getOperand(i).getReg());
 }

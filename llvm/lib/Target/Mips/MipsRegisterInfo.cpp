@@ -111,7 +111,7 @@ void MipsRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     else if (MO.isImmediate())
       MIB.addImm(MO.getImm());
     else
-      MIB.addFrameIndex(MO.getFrameIndex());
+      MIB.addFrameIndex(MO.getIndex());
   }
   NewMIs.push_back(MIB);
   return;
@@ -142,7 +142,7 @@ void MipsRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     else if (MO.isImmediate())
       MIB.addImm(MO.getImm());
     else
-      MIB.addFrameIndex(MO.getFrameIndex());
+      MIB.addFrameIndex(MO.getIndex());
   }
   NewMIs.push_back(MIB);
   return;
@@ -339,7 +339,7 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
            "Instr doesn't have FrameIndex operand!");
   }
 
-  int FrameIndex = MI.getOperand(i).getFrameIndex();
+  int FrameIndex = MI.getOperand(i).getIndex();
   int stackSize  = MF.getFrameInfo()->getStackSize();
   int spOffset   = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 

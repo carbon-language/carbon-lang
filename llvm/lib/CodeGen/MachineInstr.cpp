@@ -40,12 +40,11 @@ bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
   case MachineOperand::MO_MachineBasicBlock:
     return getMBB() == Other.getMBB();
   case MachineOperand::MO_FrameIndex:
-    return getFrameIndex() == Other.getFrameIndex();
+    return getIndex() == Other.getIndex();
   case MachineOperand::MO_ConstantPoolIndex:
-    return getConstantPoolIndex() == Other.getConstantPoolIndex() &&
-           getOffset() == Other.getOffset();
+    return getIndex() == Other.getIndex() && getOffset() == Other.getOffset();
   case MachineOperand::MO_JumpTableIndex:
-    return getJumpTableIndex() == Other.getJumpTableIndex();
+    return getIndex() == Other.getIndex();
   case MachineOperand::MO_GlobalAddress:
     return getGlobal() == Other.getGlobal() && getOffset() == Other.getOffset();
   case MachineOperand::MO_ExternalSymbol:
@@ -100,19 +99,19 @@ void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
     break;
   case MachineOperand::MO_MachineBasicBlock:
     OS << "mbb<"
-       << ((Value*)getMachineBasicBlock()->getBasicBlock())->getName()
-       << "," << (void*)getMachineBasicBlock() << ">";
+       << ((Value*)getMBB()->getBasicBlock())->getName()
+       << "," << (void*)getMBB() << ">";
     break;
   case MachineOperand::MO_FrameIndex:
-    OS << "<fi#" << getFrameIndex() << ">";
+    OS << "<fi#" << getIndex() << ">";
     break;
   case MachineOperand::MO_ConstantPoolIndex:
-    OS << "<cp#" << getConstantPoolIndex();
+    OS << "<cp#" << getIndex();
     if (getOffset()) OS << "+" << getOffset();
     OS << ">";
     break;
   case MachineOperand::MO_JumpTableIndex:
-    OS << "<jt#" << getJumpTableIndex() << ">";
+    OS << "<jt#" << getIndex() << ">";
     break;
   case MachineOperand::MO_GlobalAddress:
     OS << "<ga:" << ((Value*)getGlobal())->getName();

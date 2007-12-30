@@ -467,7 +467,7 @@ void ARMConstantIslands::InitialFunctionScan(MachineFunction &Fn,
           }
 
           // Remember that this is a user of a CP entry.
-          unsigned CPI = I->getOperand(op).getConstantPoolIndex();
+          unsigned CPI = I->getOperand(op).getIndex();
           MachineInstr *CPEMI = CPEMIs[CPI];
           unsigned MaxOffs = ((1 << Bits)-1) * Scale;          
           CPUsers.push_back(CPUser(I, CPEMI, MaxOffs));
@@ -802,7 +802,7 @@ int ARMConstantIslands::LookForExistingCPEntry(CPUser& U, unsigned UserOffset)
   }
 
   // No.  Look for previously created clones of the CPE that are in range.
-  unsigned CPI = CPEMI->getOperand(1).getConstantPoolIndex();
+  unsigned CPI = CPEMI->getOperand(1).getIndex();
   std::vector<CPEntry> &CPEs = CPEntries[CPI];
   for (unsigned i = 0, e = CPEs.size(); i != e; ++i) {
     // We already tried this one
@@ -818,7 +818,7 @@ int ARMConstantIslands::LookForExistingCPEntry(CPUser& U, unsigned UserOffset)
       // Change the CPI in the instruction operand to refer to the clone.
       for (unsigned j = 0, e = UserMI->getNumOperands(); j != e; ++j)
         if (UserMI->getOperand(j).isConstantPoolIndex()) {
-          UserMI->getOperand(j).setConstantPoolIndex(CPEs[i].CPI);
+          UserMI->getOperand(j).setIndex(CPEs[i].CPI);
           break;
         }
       // Adjust the refcount of the clone...
@@ -998,7 +998,7 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   CPUser &U = CPUsers[CPUserIndex];
   MachineInstr *UserMI = U.MI;
   MachineInstr *CPEMI  = U.CPEMI;
-  unsigned CPI = CPEMI->getOperand(1).getConstantPoolIndex();
+  unsigned CPI = CPEMI->getOperand(1).getIndex();
   unsigned Size = CPEMI->getOperand(2).getImm();
   MachineBasicBlock *NewMBB;
   // Compute this only once, it's expensive.  The 4 or 8 is the value the
@@ -1057,8 +1057,8 @@ bool ARMConstantIslands::HandleConstantPoolUser(MachineFunction &Fn,
   
   // Finally, change the CPI in the instruction operand to be ID.
   for (unsigned i = 0, e = UserMI->getNumOperands(); i != e; ++i)
-    if (UserMI->getOperand(i).isConstantPoolIndex()) {
-      UserMI->getOperand(i).setConstantPoolIndex(ID);
+    if (UserMI->getOperand(i).isCPI()) {
+      UserMI->getOperand(i).setIndex(ID);
       break;
     }
       
@@ -1139,7 +1139,7 @@ bool ARMConstantIslands::BBIsInRange(MachineInstr *MI,MachineBasicBlock *DestBB,
 /// away to fit in its displacement field.
 bool ARMConstantIslands::FixUpImmediateBr(MachineFunction &Fn, ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
-  MachineBasicBlock *DestBB = MI->getOperand(0).getMachineBasicBlock();
+  MachineBasicBlock *DestBB = MI->getOperand(0).getMBB();
 
   // Check to see if the DestBB is already in-range.
   if (BBIsInRange(MI, DestBB, Br.MaxDisp))
@@ -1179,7 +1179,7 @@ ARMConstantIslands::FixUpUnconditionalBr(MachineFunction &Fn, ImmBranch &Br) {
 bool
 ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   MachineInstr *MI = Br.MI;
-  MachineBasicBlock *DestBB = MI->getOperand(0).getMachineBasicBlock();
+  MachineBasicBlock *DestBB = MI->getOperand(0).getMBB();
 
   // Add a unconditional branch to the destination and invert the branch
   // condition to jump over it:
@@ -1210,11 +1210,11 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
       // =>
       // bne L2
       // b   L1
-      MachineBasicBlock *NewDest = BMI->getOperand(0).getMachineBasicBlock();
+      MachineBasicBlock *NewDest = BMI->getOperand(0).getMBB();
       if (BBIsInRange(MI, NewDest, Br.MaxDisp)) {
         DOUT << "  Invert Bcc condition and swap its destination with " << *BMI;
-        BMI->getOperand(0).setMachineBasicBlock(DestBB);
-        MI->getOperand(0).setMachineBasicBlock(NewDest);
+        BMI->getOperand(0).setMBB(DestBB);
+        MI->getOperand(0).setMBB(NewDest);
         MI->getOperand(1).setImm(CC);
         return true;
       }

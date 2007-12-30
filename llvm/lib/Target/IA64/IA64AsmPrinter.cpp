@@ -175,12 +175,11 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
-    printBasicBlockLabel(MO.getMachineBasicBlock());
+    printBasicBlockLabel(MO.getMBB());
     return;
   case MachineOperand::MO_ConstantPoolIndex: {
     O << "@gprel(" << TAI->getPrivateGlobalPrefix()
-      << "CPI" << getFunctionNumber() << "_"
-      << MO.getConstantPoolIndex() << ")";
+      << "CPI" << getFunctionNumber() << "_" << MO.getIndex() << ")";
     return;
   }
 

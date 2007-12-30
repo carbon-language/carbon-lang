@@ -86,7 +86,7 @@ void IA64RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     else if (MO.isImmediate())
       MIB.addImm(MO.getImm());
     else
-      MIB.addFrameIndex(MO.getFrameIndex());
+      MIB.addFrameIndex(MO.getIndex());
   }
   MIB.addReg(SrcReg, false, false, isKill);
   NewMIs.push_back(MIB);
@@ -138,7 +138,7 @@ void IA64RegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     else if (MO.isImmediate())
       MIB.addImm(MO.getImm());
     else
-      MIB.addFrameIndex(MO.getFrameIndex());
+      MIB.addFrameIndex(MO.getIndex());
   }
   NewMIs.push_back(MIB);
   return;
@@ -262,7 +262,7 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
   }
 
-  int FrameIndex = MI.getOperand(i).getFrameIndex();
+  int FrameIndex = MI.getOperand(i).getIndex();
 
   // choose a base register: ( hasFP? framepointer : stack pointer )
   unsigned BaseRegister = FP ? IA64::r5 : IA64::r12;

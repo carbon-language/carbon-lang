@@ -5838,7 +5838,7 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
       AM.Base.Reg = Op.getReg();
     } else {
       AM.BaseType = X86AddressMode::FrameIndexBase;
-      AM.Base.FrameIndex = Op.getFrameIndex();
+      AM.Base.FrameIndex = Op.getIndex();
     }
     Op = MI->getOperand(1);
     if (Op.isImmediate())

@@ -172,8 +172,8 @@ bool BranchFolder::runOnMachineFunction(MachineFunction &MF) {
         for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
           MachineOperand &Op = I->getOperand(op);
           if (!Op.isJumpTableIndex()) continue;
-          unsigned NewIdx = JTMapping[Op.getJumpTableIndex()];
-          Op.setJumpTableIndex(NewIdx);
+          unsigned NewIdx = JTMapping[Op.getIndex()];
+          Op.setIndex(NewIdx);
 
           // Remember that this JT is live.
           JTIsLive[NewIdx] = true;
@@ -210,14 +210,12 @@ static unsigned HashMachineInstr(const MachineInstr *MI) {
     case MachineOperand::MO_Register:          OperandHash = Op.getReg(); break;
     case MachineOperand::MO_Immediate:         OperandHash = Op.getImm(); break;
     case MachineOperand::MO_MachineBasicBlock:
-      OperandHash = Op.getMachineBasicBlock()->getNumber();
+      OperandHash = Op.getMBB()->getNumber();
       break;
-    case MachineOperand::MO_FrameIndex: OperandHash = Op.getFrameIndex(); break;
+    case MachineOperand::MO_FrameIndex:
     case MachineOperand::MO_ConstantPoolIndex:
-      OperandHash = Op.getConstantPoolIndex();
-      break;
     case MachineOperand::MO_JumpTableIndex:
-      OperandHash = Op.getJumpTableIndex();
+      OperandHash = Op.getIndex();
       break;
     case MachineOperand::MO_GlobalAddress:
     case MachineOperand::MO_ExternalSymbol:
