@@ -82,6 +82,7 @@ private:
     unsigned char subReg;
   } auxInfo;
   
+  
   MachineOperand() {}
 
   void print(std::ostream &os) const;
@@ -505,56 +506,6 @@ public:
     else
       // Insert a real operand before any implicit ones.
       Operands.insert(Operands.begin()+Operands.size()-NumImplicitOps, Op);
-  }
-
-  /// addRegOperand - Add a register operand.
-  ///
-  void addRegOperand(unsigned Reg, bool IsDef, bool IsImp = false,
-                     bool IsKill = false, bool IsDead = false,
-                     unsigned SubReg = 0) {
-    addOperand(MachineOperand::CreateReg(Reg, IsDef, IsImp, IsKill,
-                                         IsDead, SubReg));
-  }
-
-  /// addImmOperand - Add a zero extended constant argument to the
-  /// machine instruction.
-  ///
-  void addImmOperand(int64_t Val) {
-    addOperand(MachineOperand::CreateImm(Val));
-  }
-
-  void addMachineBasicBlockOperand(MachineBasicBlock *MBB) {
-    addOperand(MachineOperand::CreateMBB(MBB));
-  }
-
-  /// addFrameIndexOperand - Add an abstract frame index to the instruction
-  ///
-  void addFrameIndexOperand(unsigned Idx) {
-    addOperand(MachineOperand::CreateFI(Idx));
-  }
-
-  /// addConstantPoolndexOperand - Add a constant pool object index to the
-  /// instruction.
-  ///
-  void addConstantPoolIndexOperand(unsigned Idx, int Offset) {
-    addOperand(MachineOperand::CreateCPI(Idx, Offset));
-  }
-
-  /// addJumpTableIndexOperand - Add a jump table object index to the
-  /// instruction.
-  ///
-  void addJumpTableIndexOperand(unsigned Idx) {
-    addOperand(MachineOperand::CreateJTI(Idx));
-  }
-  
-  void addGlobalAddressOperand(GlobalValue *GV, int Offset) {
-    addOperand(MachineOperand::CreateGA(GV, Offset));
-  }
-
-  /// addExternalSymbolOperand - Add an external symbol operand to this instr
-  ///
-  void addExternalSymbolOperand(const char *SymName, int Offset = 0) {
-    addOperand(MachineOperand::CreateES(SymName, Offset));
   }
   
   //===--------------------------------------------------------------------===//
