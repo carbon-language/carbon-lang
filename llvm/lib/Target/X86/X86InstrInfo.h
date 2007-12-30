@@ -16,6 +16,8 @@
 
 #include "llvm/Target/TargetInstrInfo.h"
 #include "X86RegisterInfo.h"
+#include "llvm/ADT/IndexedMap.h"
+#include "llvm/Target/MRegisterInfo.h"
 
 namespace llvm {
   class X86RegisterInfo;
@@ -223,6 +225,13 @@ namespace X86II {
 class X86InstrInfo : public TargetInstrInfo {
   X86TargetMachine &TM;
   const X86RegisterInfo RI;
+  mutable IndexedMap<const MachineInstr*, VirtReg2IndexFunctor> MachineInstrMap;
+
+  /// isDefinedInEntryBlock - Goes through the entry block to see if the given
+  /// virtual register is indeed defined in the entry block.
+  /// 
+  bool isDefinedInEntryBlock(const MachineBasicBlock &Entry,
+                             unsigned VReg) const;
 public:
   X86InstrInfo(X86TargetMachine &tm);
 
