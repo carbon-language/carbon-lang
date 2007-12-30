@@ -267,15 +267,16 @@ void MachineInstr::dump() const {
   cerr << "  " << *this;
 }
 
-static inline void OutputReg(std::ostream &os, unsigned RegNo,
-                             const MRegisterInfo *MRI = 0) {
-  if (!RegNo || MRegisterInfo::isPhysicalRegister(RegNo)) {
+static void OutputReg(std::ostream &os, unsigned RegNo,
+                      const MRegisterInfo *MRI = 0) {
+  if (MRegisterInfo::isPhysicalRegister(RegNo)) {
     if (MRI)
       os << "%" << MRI->get(RegNo).Name;
     else
-      os << "%mreg(" << RegNo << ")";
-  } else
+      os << "%mreg" << RegNo;
+  } else {
     os << "%reg" << RegNo;
+  }
 }
 
 static void print(const MachineOperand &MO, std::ostream &OS,
@@ -287,6 +288,7 @@ static void print(const MachineOperand &MO, std::ostream &OS,
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
     OutputReg(OS, MO.getReg(), MRI);
+    if (MO.isDef()) OS << "<d>";
     break;
   case MachineOperand::MO_Immediate:
     OS << MO.getImm();
@@ -384,11 +386,8 @@ void MachineInstr::print(std::ostream &os) const {
   // and such.
   os << getInstrDescriptor()->Name;
 
-  for (unsigned i = 0, N = getNumOperands(); i < N; i++) {
+  for (unsigned i = 0, N = getNumOperands(); i < N; i++)
     os << "\t" << getOperand(i);
-    if (getOperand(i).isRegister() && getOperand(i).isDef())
-      os << "<d>";
-  }
 
   os << "\n";
 }
@@ -397,6 +396,7 @@ void MachineOperand::print(std::ostream &OS) const {
   switch (getType()) {
   case MO_Register:
     OutputReg(OS, getReg());
+    if (isDef()) OS << "<d>";
     break;
   case MO_Immediate:
     OS << getImm();
