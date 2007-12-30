@@ -43,6 +43,9 @@ static void llvm_raise(value Prototype, char *Message) {
   
   raise_with_arg(Prototype, CamlMessage);
   abort(); /* NOTREACHED */
+#ifdef CAMLnoreturn
+  CAMLnoreturn; /* Silences warnings, but is missing in some versions. */
+#endif
 }
 
 
