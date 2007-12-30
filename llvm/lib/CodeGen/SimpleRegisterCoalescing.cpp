@@ -185,7 +185,7 @@ bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInte
   // merge, unset the isKill marker given the live range has been extended.
   int UIdx = ValLREndInst->findRegisterUseOperandIdx(IntB.reg, true);
   if (UIdx != -1)
-    ValLREndInst->getOperand(UIdx).unsetIsKill();
+    ValLREndInst->getOperand(UIdx).setIsKill(false);
   
   ++numPeep;
   return true;
@@ -1303,7 +1303,7 @@ void SimpleRegisterCoalescing::unsetRegisterKill(MachineInstr *MI, unsigned Reg)
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isRegister() && MO.isKill() && MO.getReg() &&
         mri_->regsOverlap(rep(MO.getReg()), Reg))
-      MO.unsetIsKill();
+      MO.setIsKill(false);
   }
 }
 
@@ -1327,7 +1327,7 @@ void SimpleRegisterCoalescing::unsetRegisterKills(unsigned Start, unsigned End,
       MachineOperand &MO = MI->getOperand(i);
       if (MO.isRegister() && MO.isKill() && MO.getReg() &&
           mri_->regsOverlap(rep(MO.getReg()), Reg)) {
-        MO.unsetIsKill();
+        MO.setIsKill(false);
       }
     }
 

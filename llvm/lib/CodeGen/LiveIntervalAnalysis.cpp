@@ -1213,7 +1213,7 @@ addIntervalsForSpills(const LiveInterval &li,
       assert(KillMI && "Last use disappeared?");
       int KillOp = KillMI->findRegisterUseOperandIdx(li.reg, true);
       assert(KillOp != -1 && "Last use disappeared?");
-      KillMI->getOperand(KillOp).unsetIsKill();
+      KillMI->getOperand(KillOp).setIsKill(false);
     }
     vrm.removeKillPoint(li.reg);
     bool DefIsReMat = vrm.isReMaterialized(li.reg);

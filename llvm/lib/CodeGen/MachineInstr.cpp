@@ -21,6 +21,118 @@
 #include <ostream>
 using namespace llvm;
 
+//===----------------------------------------------------------------------===//
+// MachineOperand Implementation
+//===----------------------------------------------------------------------===//
+
+/// isIdenticalTo - Return true if this operand is identical to the specified
+/// operand.
+bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
+  if (getType() != Other.getType()) return false;
+  
+  switch (getType()) {
+  default: assert(0 && "Unrecognized operand type");
+  case MachineOperand::MO_Register:
+    return getReg() == Other.getReg() && isDef() == Other.isDef() &&
+           getSubReg() == Other.getSubReg();
+  case MachineOperand::MO_Immediate:
+    return getImm() == Other.getImm();
+  case MachineOperand::MO_MachineBasicBlock:
+    return getMBB() == Other.getMBB();
+  case MachineOperand::MO_FrameIndex:
+    return getFrameIndex() == Other.getFrameIndex();
+  case MachineOperand::MO_ConstantPoolIndex:
+    return getConstantPoolIndex() == Other.getConstantPoolIndex() &&
+           getOffset() == Other.getOffset();
+  case MachineOperand::MO_JumpTableIndex:
+    return getJumpTableIndex() == Other.getJumpTableIndex();
+  case MachineOperand::MO_GlobalAddress:
+    return getGlobal() == Other.getGlobal() && getOffset() == Other.getOffset();
+  case MachineOperand::MO_ExternalSymbol:
+    return !strcmp(getSymbolName(), Other.getSymbolName()) &&
+           getOffset() == Other.getOffset();
+  }
+}
+
+/// print - Print the specified machine operand.
+///
+void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
+  switch (getType()) {
+  case MachineOperand::MO_Register:
+    if (getReg() == 0 || MRegisterInfo::isVirtualRegister(getReg())) {
+      OS << "%reg" << getReg();
+    } else {
+      // If the instruction is embedded into a basic block, we can find the
+      // target
+      // info for the instruction.
+      if (TM == 0)
+        if (const MachineInstr *MI = getParent())
+          if (const MachineBasicBlock *MBB = MI->getParent())
+            if (const MachineFunction *MF = MBB->getParent())
+              TM = &MF->getTarget();
+      
+      if (TM)
+        OS << "%" << TM->getRegisterInfo()->get(getReg()).Name;
+      else
+        OS << "%mreg" << getReg();
+    }
+      
+    if (isDef() || isKill() || isDead() || isImplicit()) {
+      OS << "<";
+      bool NeedComma = false;
+      if (isImplicit()) {
+        OS << (isDef() ? "imp-def" : "imp-use");
+        NeedComma = true;
+      } else if (isDef()) {
+        OS << "def";
+        NeedComma = true;
+      }
+      if (isKill() || isDead()) {
+        if (NeedComma)    OS << ",";
+        if (isKill()) OS << "kill";
+        if (isDead()) OS << "dead";
+      }
+      OS << ">";
+    }
+    break;
+  case MachineOperand::MO_Immediate:
+    OS << getImm();
+    break;
+  case MachineOperand::MO_MachineBasicBlock:
+    OS << "mbb<"
+       << ((Value*)getMachineBasicBlock()->getBasicBlock())->getName()
+       << "," << (void*)getMachineBasicBlock() << ">";
+    break;
+  case MachineOperand::MO_FrameIndex:
+    OS << "<fi#" << getFrameIndex() << ">";
+    break;
+  case MachineOperand::MO_ConstantPoolIndex:
+    OS << "<cp#" << getConstantPoolIndex();
+    if (getOffset()) OS << "+" << getOffset();
+    OS << ">";
+    break;
+  case MachineOperand::MO_JumpTableIndex:
+    OS << "<jt#" << getJumpTableIndex() << ">";
+    break;
+  case MachineOperand::MO_GlobalAddress:
+    OS << "<ga:" << ((Value*)getGlobal())->getName();
+    if (getOffset()) OS << "+" << getOffset();
+    OS << ">";
+    break;
+  case MachineOperand::MO_ExternalSymbol:
+    OS << "<es:" << getSymbolName();
+    if (getOffset()) OS << "+" << getOffset();
+    OS << ">";
+    break;
+  default:
+    assert(0 && "Unrecognized operand type");
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// MachineInstr Implementation
+//===----------------------------------------------------------------------===//
+
 /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
 /// TID NULL and no operands.
 MachineInstr::MachineInstr()
@@ -145,34 +257,6 @@ unsigned MachineInstr::getNumExplicitOperands() const {
   return NumOperands;
 }
 
-/// isIdenticalTo - Return true if this operand is identical to the specified
-/// operand.
-bool MachineOperand::isIdenticalTo(const MachineOperand &Other) const {
-  if (getType() != Other.getType()) return false;
-  
-  switch (getType()) {
-  default: assert(0 && "Unrecognized operand type");
-  case MachineOperand::MO_Register:
-    return getReg() == Other.getReg() && isDef() == Other.isDef() &&
-           getSubReg() == Other.getSubReg();
-  case MachineOperand::MO_Immediate:
-    return getImm() == Other.getImm();
-  case MachineOperand::MO_MachineBasicBlock:
-    return getMBB() == Other.getMBB();
-  case MachineOperand::MO_FrameIndex:
-    return getFrameIndex() == Other.getFrameIndex();
-  case MachineOperand::MO_ConstantPoolIndex:
-    return getConstantPoolIndex() == Other.getConstantPoolIndex() &&
-           getOffset() == Other.getOffset();
-  case MachineOperand::MO_JumpTableIndex:
-    return getJumpTableIndex() == Other.getJumpTableIndex();
-  case MachineOperand::MO_GlobalAddress:
-    return getGlobal() == Other.getGlobal() && getOffset() == Other.getOffset();
-  case MachineOperand::MO_ExternalSymbol:
-    return !strcmp(getSymbolName(), Other.getSymbolName()) &&
-           getOffset() == Other.getOffset();
-  }
-}
 
 /// findRegisterUseOperandIdx() - Returns the MachineOperand that is a use of
 /// the specific register or -1 if it is not found. It further tightening
@@ -267,87 +351,11 @@ void MachineInstr::dump() const {
   cerr << "  " << *this;
 }
 
-/// print - Print the specified machine operand.
-///
-static void print(const MachineOperand &MO, std::ostream &OS,
-                  const TargetMachine *TM) {
-  switch (MO.getType()) {
-  case MachineOperand::MO_Register:
-    if (MO.getReg() == 0 || MRegisterInfo::isVirtualRegister(MO.getReg()))
-      OS << "%reg" << MO.getReg();
-    else {
-      // If the instruction is embedded into a basic block, we can find the
-      // target
-      // info for the instruction.
-      if (TM == 0)
-        if (const MachineInstr *MI = MO.getParent())
-          if (const MachineBasicBlock *MBB = MI->getParent())
-            if (const MachineFunction *MF = MBB->getParent())
-              TM = &MF->getTarget();
-      
-      if (TM)
-        OS << "%" << TM->getRegisterInfo()->get(MO.getReg()).Name;
-      else
-        OS << "%mreg" << MO.getReg();
-    }
-      
-    if (MO.isDef() || MO.isKill() || MO.isDead() || MO.isImplicit()) {
-      OS << "<";
-      bool NeedComma = false;
-      if (MO.isImplicit()) {
-        OS << (MO.isDef() ? "imp-def" : "imp-use");
-        NeedComma = true;
-      } else if (MO.isDef()) {
-        OS << "def";
-        NeedComma = true;
-      }
-      if (MO.isKill() || MO.isDead()) {
-        if (NeedComma)    OS << ",";
-        if (MO.isKill()) OS << "kill";
-        if (MO.isDead()) OS << "dead";
-      }
-      OS << ">";
-    }
-    break;
-  case MachineOperand::MO_Immediate:
-    OS << MO.getImm();
-    break;
-  case MachineOperand::MO_MachineBasicBlock:
-    OS << "mbb<"
-       << ((Value*)MO.getMachineBasicBlock()->getBasicBlock())->getName()
-       << "," << (void*)MO.getMachineBasicBlock() << ">";
-    break;
-  case MachineOperand::MO_FrameIndex:
-    OS << "<fi#" << MO.getFrameIndex() << ">";
-    break;
-  case MachineOperand::MO_ConstantPoolIndex:
-    OS << "<cp#" << MO.getConstantPoolIndex();
-    if (MO.getOffset()) OS << "+" << MO.getOffset();
-    OS << ">";
-    break;
-  case MachineOperand::MO_JumpTableIndex:
-    OS << "<jt#" << MO.getJumpTableIndex() << ">";
-    break;
-  case MachineOperand::MO_GlobalAddress:
-    OS << "<ga:" << ((Value*)MO.getGlobal())->getName();
-    if (MO.getOffset()) OS << "+" << MO.getOffset();
-    OS << ">";
-    break;
-  case MachineOperand::MO_ExternalSymbol:
-    OS << "<es:" << MO.getSymbolName();
-    if (MO.getOffset()) OS << "+" << MO.getOffset();
-    OS << ">";
-    break;
-  default:
-    assert(0 && "Unrecognized operand type");
-  }
-}
-
 void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
   // Specialize printing if op#0 is definition
   unsigned StartOp = 0;
   if (getNumOperands() && getOperand(0).isRegister() && getOperand(0).isDef()) {
-    ::print(getOperand(0), OS, TM);
+    getOperand(0).print(OS, TM);
     OS << " = ";
     ++StartOp;   // Don't print this operand again!
   }
@@ -358,13 +366,9 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
     if (i != StartOp)
       OS << ",";
     OS << " ";
-    ::print(getOperand(i), OS, TM);
+    getOperand(i).print(OS, TM);
   }
 
   OS << "\n";
-}
-
-void MachineOperand::print(std::ostream &OS) const {
-  ::print(*this, OS, 0);
 }
 

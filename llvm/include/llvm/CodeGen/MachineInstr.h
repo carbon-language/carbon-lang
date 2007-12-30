@@ -21,7 +21,6 @@
 namespace llvm {
 
 class TargetInstrDescriptor;
-class TargetMachine;
 
 template <typename T> struct ilist_traits;
 template <typename T> struct ilist;

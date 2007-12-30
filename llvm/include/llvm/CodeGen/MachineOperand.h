@@ -23,7 +23,8 @@ namespace llvm {
   
 class MachineBasicBlock;
 class GlobalValue;
-  class MachineInstr;
+class MachineInstr;
+class TargetMachine;
   
 /// MachineOperand class - Representation of each machine instruction operand.
 ///
@@ -77,9 +78,6 @@ private:
   
   MachineOperand() : ParentMI(0) {}
 
-  void print(std::ostream &os) const;
-  void print(std::ostream *os) const { if (os) print(*os); }
-
 public:
   MachineOperand(const MachineOperand &M) {
     *this = M;
@@ -96,6 +94,8 @@ public:
   MachineInstr *getParent() { return ParentMI; }
   const MachineInstr *getParent() const { return ParentMI; }
   
+  void print(std::ostream &os, const TargetMachine *TM = 0) const;
+
   /// Accessors that tell you what kind of MachineOperand you're looking at.
   ///
   bool isRegister() const { return opType == MO_Register; }
@@ -107,6 +107,90 @@ public:
   bool isGlobalAddress() const { return opType == MO_GlobalAddress; }
   bool isExternalSymbol() const { return opType == MO_ExternalSymbol; }
 
+  //===--------------------------------------------------------------------===//
+  // Accessors for Register Operands
+  //===--------------------------------------------------------------------===//
+
+  /// getReg - Returns the register number.
+  unsigned getReg() const {
+    assert(isRegister() && "This is not a register operand!");
+    return contents.RegNo;
+  }
+  
+  unsigned getSubReg() const {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return (unsigned)SubReg;
+  }
+  
+  bool isUse() const { 
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return !IsDef;
+  }
+  
+  bool isDef() const {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return IsDef;
+  }
+  
+  bool isImplicit() const { 
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return IsImp;
+  }
+  
+  bool isDead() const {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return IsDead;
+  }
+  
+  bool isKill() const {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    return IsKill;
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Mutators for Register Operands
+  //===--------------------------------------------------------------------===//
+  
+  void setReg(unsigned Reg) {
+    assert(isRegister() && "This is not a register operand!");
+    contents.RegNo = Reg;
+  }
+
+  void setSubReg(unsigned subReg) {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    SubReg = (unsigned char)subReg;
+  }
+  
+  void setIsUse(bool Val = true) {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    IsDef = !Val;
+  }
+  
+  void setIsDef(bool Val = true) {
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    IsDef = Val;
+  }
+
+  void setImplicit(bool Val = true) { 
+    assert(isRegister() && "Wrong MachineOperand accessor");
+    IsImp = Val;
+  }
+
+  void setIsKill(bool Val = true) {
+    assert(isRegister() && !IsDef && "Wrong MachineOperand accessor");
+    IsKill = Val;
+  }
+  
+  void setIsDead(bool Val = true) {
+    assert(isRegister() && IsDef && "Wrong MachineOperand accessor");
+    IsDead = Val;
+  }
+
+
+  //===--------------------------------------------------------------------===//
+  // Accessors for various operand types.
+  //===--------------------------------------------------------------------===//
+  
   int64_t getImm() const {
     assert(isImmediate() && "Wrong MachineOperand accessor");
     return contents.ImmVal;
@@ -142,83 +226,18 @@ public:
   }
   int getOffset() const {
     assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
-        "Wrong MachineOperand accessor");
+           "Wrong MachineOperand accessor");
     return auxInfo.offset;
-  }
-  unsigned getSubReg() const {
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    return (unsigned)SubReg;
   }
   const char *getSymbolName() const {
     assert(isExternalSymbol() && "Wrong MachineOperand accessor");
     return contents.SymbolName;
   }
-
-  bool isUse() const { 
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    return !IsDef;
-  }
-  bool isDef() const {
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    return IsDef;
-  }
-  void setIsUse() {
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    IsDef = false;
-  }
-  void setIsDef() {
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    IsDef = true;
-  }
-
-  bool isImplicit() const { 
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    return IsImp;
-  }
-  void setImplicit() { 
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    IsImp = true;
-  }
-
-  bool isKill() const {
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    return IsKill;
-  }
-  bool isDead() const {
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    return IsDead;
-  }
-  void setIsKill() {
-    assert(isRegister() && !IsDef && "Wrong MachineOperand accessor");
-    IsKill = true;
-  }
-  void setIsDead() {
-    assert(isRegister() && IsDef && "Wrong MachineOperand accessor");
-    IsDead = true;
-  }
-  void unsetIsKill() {
-    assert(isRegister() && !IsDef && "Wrong MachineOperand accessor");
-    IsKill = false;
-  }
-  void unsetIsDead() {
-    assert(isRegister() && IsDef && "Wrong MachineOperand accessor");
-    IsDead = false;
-  }
-
-  /// getReg - Returns the register number.
-  ///
-  unsigned getReg() const {
-    assert(isRegister() && "This is not a register operand!");
-    return contents.RegNo;
-  }
-
-  /// MachineOperand mutators.
-  ///
-  void setReg(unsigned Reg) {
-    assert(isRegister() && "This is not a register operand!");
-    contents.RegNo = Reg;
-  }
-
+  
+  //===--------------------------------------------------------------------===//
+  // Mutators for various operand types.
+  //===--------------------------------------------------------------------===//
+  
   void setImm(int64_t immVal) {
     assert(isImmediate() && "Wrong MachineOperand mutator");
     contents.ImmVal = immVal;
@@ -229,18 +248,20 @@ public:
         "Wrong MachineOperand accessor");
     auxInfo.offset = Offset;
   }
-  void setSubReg(unsigned subReg) {
-    assert(isRegister() && "Wrong MachineOperand accessor");
-    SubReg = (unsigned char)subReg;
-  }
+  
   void setConstantPoolIndex(unsigned Idx) {
     assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
     contents.Index = Idx;
   }
+  
   void setJumpTableIndex(unsigned Idx) {
     assert(isJumpTableIndex() && "Wrong MachineOperand accessor");
     contents.Index = Idx;
   }
+  
+  //===--------------------------------------------------------------------===//
+  // Other methods.
+  //===--------------------------------------------------------------------===//
   
   /// isIdenticalTo - Return true if this operand is identical to the specified
   /// operand. Note: This method ignores isKill and isDead properties.
@@ -268,12 +289,17 @@ public:
     SubReg = 0;
   }
   
+  //===--------------------------------------------------------------------===//
+  // Construction methods.
+  //===--------------------------------------------------------------------===//
+  
   static MachineOperand CreateImm(int64_t Val) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_Immediate;
     Op.contents.ImmVal = Val;
     return Op;
   }
+  
   static MachineOperand CreateReg(unsigned Reg, bool isDef, bool isImp = false,
                                   bool isKill = false, bool isDead = false,
                                   unsigned SubReg = 0) {
@@ -339,15 +365,13 @@ public:
     return *this;
   }
 
-  friend std::ostream& operator<<(std::ostream& os, const MachineOperand& mop) {
-    mop.print(os);
-    return os;
-  }
-
   friend class MachineInstr;
 };
 
-std::ostream& operator<<(std::ostream &OS, const MachineOperand &MO);
+inline std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
+  MO.print(OS, 0);
+  return OS;
+}
 
 } // End llvm namespace
 

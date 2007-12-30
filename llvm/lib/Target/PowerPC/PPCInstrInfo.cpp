@@ -152,14 +152,8 @@ MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {
   bool Reg2IsKill = MI->getOperand(2).isKill();
   MI->getOperand(2).setReg(Reg1);
   MI->getOperand(1).setReg(Reg2);
-  if (Reg1IsKill)
-    MI->getOperand(2).setIsKill();
-  else
-    MI->getOperand(2).unsetIsKill();
-  if (Reg2IsKill)
-    MI->getOperand(1).setIsKill();
-  else
-    MI->getOperand(1).unsetIsKill();
+  MI->getOperand(2).setIsKill(Reg1IsKill);
+  MI->getOperand(1).setIsKill(Reg2IsKill);
   
   // Swap the mask around.
   unsigned MB = MI->getOperand(4).getImm();

@@ -608,7 +608,7 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
       VarInfo &VI = getVarInfo(Reg);
       if (MO.isDef()) {
         if (MO.isDead()) {
-          MO.unsetIsDead();
+          MO.setIsDead(false);
           addVirtualRegisterDead(Reg, NewMI);
         }
         // Update the defining instruction.
@@ -616,7 +616,7 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
           VI.DefInst = NewMI;
       }
       if (MO.isKill()) {
-        MO.unsetIsKill();
+        MO.setIsKill(false);
         addVirtualRegisterKilled(Reg, NewMI);
       }
       // If this is a kill of the value, update the VI kills list.
@@ -640,12 +640,12 @@ void LiveVariables::transferKillDeadInfo(MachineInstr *OldMI,
       unsigned Reg = MO.getReg();
       if (MO.isDef()) {
         if (MO.isDead()) {
-          MO.unsetIsDead();
+          MO.setIsDead(false);
           addRegisterDead(Reg, NewMI, RegInfo);
         }
       }
       if (MO.isKill()) {
-        MO.unsetIsKill();
+        MO.setIsKill(false);
         addRegisterKilled(Reg, NewMI, RegInfo);
       }
     }
@@ -659,7 +659,7 @@ void LiveVariables::removeVirtualRegistersKilled(MachineInstr *MI) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isRegister() && MO.isKill()) {
-      MO.unsetIsKill();
+      MO.setIsKill(false);
       unsigned Reg = MO.getReg();
       if (MRegisterInfo::isVirtualRegister(Reg)) {
         bool removed = getVarInfo(Reg).removeKill(MI);
@@ -675,7 +675,7 @@ void LiveVariables::removeVirtualRegistersDead(MachineInstr *MI) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isRegister() && MO.isDead()) {
-      MO.unsetIsDead();
+      MO.setIsDead(false);
       unsigned Reg = MO.getReg();
       if (MRegisterInfo::isVirtualRegister(Reg)) {
         bool removed = getVarInfo(Reg).removeKill(MI);

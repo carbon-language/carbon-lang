@@ -479,7 +479,7 @@ static void InvalidateKills(MachineInstr &MI, BitVector &RegKills,
 static void InvalidateKill(unsigned Reg, BitVector &RegKills,
                            std::vector<MachineOperand*> &KillOps) {
   if (RegKills[Reg]) {
-    KillOps[Reg]->unsetIsKill();
+    KillOps[Reg]->setIsKill(false);
     KillOps[Reg] = NULL;
     RegKills.reset(Reg);
   }
@@ -547,7 +547,7 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
     if (RegKills[Reg]) {
       // That can't be right. Register is killed but not re-defined and it's
       // being reused. Let's fix that.
-      KillOps[Reg]->unsetIsKill();
+      KillOps[Reg]->setIsKill(false);
       KillOps[Reg] = NULL;
       RegKills.reset(Reg);
       if (i < TID->numOperands &&

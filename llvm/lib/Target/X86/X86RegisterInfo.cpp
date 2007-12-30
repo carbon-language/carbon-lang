@@ -1302,7 +1302,7 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
       for (unsigned i = 1; i != 5; ++i) {
         MachineOperand &MO = NewMIs[0]->getOperand(i);
         if (MO.isRegister())
-          MO.unsetIsKill();
+          MO.setIsKill(false);
       }
     }
   }
