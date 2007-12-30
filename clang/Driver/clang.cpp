@@ -50,7 +50,8 @@ using namespace clang;
 static llvm::cl::opt<bool>
 Verbose("v", llvm::cl::desc("Enable verbose output"));
 static llvm::cl::opt<bool>
-Stats("stats", llvm::cl::desc("Print performance metrics and statistics"));
+Stats("print-stats", 
+      llvm::cl::desc("Print performance metrics and statistics"));
 
 enum ProgActions {
   RewriteTest,                  // Rewriter testing stuff.
