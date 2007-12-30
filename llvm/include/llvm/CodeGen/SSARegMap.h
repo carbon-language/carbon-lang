@@ -7,10 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Map register numbers to register classes that are correctly sized (typed) to
-// hold the information. Assists register allocation. Contained by
-// MachineFunction, should be deleted by register allocator when it is no
-// longer needed.
+// This file defines the SSARegMap class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,21 +15,28 @@
 #define LLVM_CODEGEN_SSAREGMAP_H
 
 #include "llvm/Target/MRegisterInfo.h"
-#include "llvm/ADT/IndexedMap.h"
+#include <vector>
 
 namespace llvm {
-
-class TargetRegisterClass;
-
+  
+/// SSARegMap - Keep track of information for each virtual register, including
+/// its register class.
 class SSARegMap {
-  IndexedMap<const TargetRegisterClass*, VirtReg2IndexFunctor> RegClassMap;
-  unsigned NextRegNum;
+  /// VRegInfo - Information we keep for each virtual register.  The entries in
+  /// this vector are actually converted to vreg numbers by adding the 
+  /// MRegisterInfo::FirstVirtualRegister delta to their index.
+  std::vector<const TargetRegisterClass*> VRegInfo;
+  
+public:
+  SSARegMap() {
+    VRegInfo.reserve(256);
+  }
 
- public:
-  SSARegMap() : NextRegNum(MRegisterInfo::FirstVirtualRegister) { }
-
-  const TargetRegisterClass* getRegClass(unsigned Reg) {
-    return RegClassMap[Reg];
+  /// getRegClass - Return the register class of the specified virtual register.
+  const TargetRegisterClass *getRegClass(unsigned Reg) {
+    Reg -= MRegisterInfo::FirstVirtualRegister;
+    assert(Reg < VRegInfo.size() && "Invalid vreg!");
+    return VRegInfo[Reg];
   }
 
   /// createVirtualRegister - Create and return a new virtual register in the
@@ -40,13 +44,14 @@ class SSARegMap {
   ///
   unsigned createVirtualRegister(const TargetRegisterClass *RegClass) {
     assert(RegClass && "Cannot create register without RegClass!");
-    RegClassMap.grow(NextRegNum);
-    RegClassMap[NextRegNum] = RegClass;
-    return NextRegNum++;
+    VRegInfo.push_back(RegClass);
+    return getLastVirtReg();
   }
 
+  /// getLastVirtReg - Return the highest currently assigned virtual register.
+  ///
   unsigned getLastVirtReg() const {
-    return NextRegNum - 1;
+    return VRegInfo.size()+MRegisterInfo::FirstVirtualRegister-1;
   }
 };
 
