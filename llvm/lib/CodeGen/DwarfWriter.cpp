@@ -3159,7 +3159,7 @@ private:
           continue;
         }
 
-        unsigned BeginLabel = MI->getOperand(0).getImmedValue();
+        unsigned BeginLabel = MI->getOperand(0).getImm();
         assert(BeginLabel && "Invalid label!");
 
         // End of the previous try-range?

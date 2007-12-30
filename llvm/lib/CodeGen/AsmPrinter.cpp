@@ -1215,14 +1215,14 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
         // Scan to find the machine operand number for the operand.
         for (; Val; --Val) {
           if (OpNo >= MI->getNumOperands()) break;
-          unsigned OpFlags = MI->getOperand(OpNo).getImmedValue();
+          unsigned OpFlags = MI->getOperand(OpNo).getImm();
           OpNo += (OpFlags >> 3) + 1;
         }
 
         if (OpNo >= MI->getNumOperands()) {
           Error = true;
         } else {
-          unsigned OpFlags = MI->getOperand(OpNo).getImmedValue();
+          unsigned OpFlags = MI->getOperand(OpNo).getImm();
           ++OpNo;  // Skip over the ID number.
 
           if (Modifier[0]=='l')  // labels are target independent
@@ -1256,11 +1256,8 @@ void AsmPrinter::printInlineAsm(const MachineInstr *MI) const {
 /// printLabel - This method prints a local label used by debug and
 /// exception handling tables.
 void AsmPrinter::printLabel(const MachineInstr *MI) const {
-  O << "\n"
-    << TAI->getPrivateGlobalPrefix()
-    << "label"
-    << MI->getOperand(0).getImmedValue()
-    << ":\n";
+  O << "\n" << TAI->getPrivateGlobalPrefix()
+    << "label" << MI->getOperand(0).getImm() << ":\n";
 }
 
 /// PrintAsmOperand - Print the specified operand of MI, an INLINEASM

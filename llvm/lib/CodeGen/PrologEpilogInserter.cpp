@@ -147,7 +147,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
           I->getOpcode() == FrameDestroyOpcode) {
         assert(I->getNumOperands() >= 1 && "Call Frame Setup/Destroy Pseudo"
                " instructions should have a single immediate argument!");
-        unsigned Size = I->getOperand(0).getImmedValue();
+        unsigned Size = I->getOperand(0).getImm();
         if (Size > MaxCallFrameSize) MaxCallFrameSize = Size;
         HasCalls = true;
         FrameSDOps.push_back(I);
@@ -516,7 +516,7 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
       // Remember how much SP has been adjustment to create the call frame.
       if (I->getOpcode() == FrameSetupOpcode ||
           I->getOpcode() == FrameDestroyOpcode) {
-        int Size = I->getOperand(0).getImmedValue();
+        int Size = I->getOperand(0).getImm();
         if ((!StackGrowsDown && I->getOpcode() == FrameSetupOpcode) ||
             (StackGrowsDown && I->getOpcode() == FrameDestroyOpcode))
           Size = -Size;
