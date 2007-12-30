@@ -14,9 +14,9 @@
 
 #include "InstrInfoEmitter.h"
 #include "CodeGenTarget.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "Record.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 // runEnums - Print out enum values for all of the instructions.
@@ -37,7 +37,7 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
   }
   
   if (Namespace.empty()) {
-    cerr << "No instructions defined!\n";
+    std::cerr << "No instructions defined!\n";
     exit(1);
   }
 
@@ -365,7 +365,7 @@ void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
     return;
   }
 
-  cerr << "Unhandled initializer: " << *Val << "\n";
+  std::cerr << "Unhandled initializer: " << *Val << "\n";
   throw "In record '" + R->getName() + "' for TSFlag emission.";
 }
 
