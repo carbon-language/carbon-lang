@@ -333,7 +333,7 @@ public:
     Op.auxInfo.offset = Offset;
     return Op;
   }
-  static MachineOperand CreateES(const char *SymName, int Offset) {
+  static MachineOperand CreateES(const char *SymName, int Offset = 0) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_ExternalSymbol;
     Op.contents.SymbolName = SymName;
@@ -506,7 +506,7 @@ public:
       // Insert a real operand before any implicit ones.
       Operands.insert(Operands.begin()+Operands.size()-NumImplicitOps, Op);
   }
-  
+
   /// addRegOperand - Add a register operand.
   ///
   void addRegOperand(unsigned Reg, bool IsDef, bool IsImp = false,
