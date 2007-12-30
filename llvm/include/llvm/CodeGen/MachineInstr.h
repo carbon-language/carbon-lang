@@ -16,9 +16,7 @@
 #ifndef LLVM_CODEGEN_MACHINEINSTR_H
 #define LLVM_CODEGEN_MACHINEINSTR_H
 
-#include "llvm/ADT/iterator"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Support/Streams.h"
 #include <vector>
 #include <cassert>
 #include <iosfwd>
@@ -81,7 +79,6 @@ private:
     /// indicates the MO_Register has no subReg.
     unsigned char subReg;
   } auxInfo;
-  
   
   MachineOperand() {}
 
