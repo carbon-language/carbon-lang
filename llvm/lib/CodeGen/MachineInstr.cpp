@@ -282,7 +282,6 @@ static void OutputReg(std::ostream &os, unsigned RegNo,
 static void print(const MachineOperand &MO, std::ostream &OS,
                   const TargetMachine *TM) {
   const MRegisterInfo *MRI = 0;
-
   if (TM) MRI = TM->getRegisterInfo();
 
   switch (MO.getType()) {
@@ -302,7 +301,9 @@ static void print(const MachineOperand &MO, std::ostream &OS,
     OS << "<fi#" << MO.getFrameIndex() << ">";
     break;
   case MachineOperand::MO_ConstantPoolIndex:
-    OS << "<cp#" << MO.getConstantPoolIndex() << ">";
+    OS << "<cp#" << MO.getConstantPoolIndex();
+    if (MO.getOffset()) OS << "+" << MO.getOffset();
+    OS << ">";
     break;
   case MachineOperand::MO_JumpTableIndex:
     OS << "<jt#" << MO.getJumpTableIndex() << ">";
@@ -393,37 +394,6 @@ void MachineInstr::print(std::ostream &os) const {
 }
 
 void MachineOperand::print(std::ostream &OS) const {
-  switch (getType()) {
-  case MO_Register:
-    OutputReg(OS, getReg());
-    if (isDef()) OS << "<d>";
-    break;
-  case MO_Immediate:
-    OS << getImm();
-    break;
-  case MO_MachineBasicBlock:
-    OS << "<mbb:"
-       << ((Value*)getMachineBasicBlock()->getBasicBlock())->getName()
-       << "@" << (void*)getMachineBasicBlock() << ">";
-    break;
-  case MO_FrameIndex:
-    OS << "<fi#" << getFrameIndex() << ">";
-    break;
-  case MO_ConstantPoolIndex:
-    OS << "<cp#" << getConstantPoolIndex() << ">";
-    break;
-  case MO_JumpTableIndex:
-    OS << "<jt#" << getJumpTableIndex() << ">";
-    break;
-  case MO_GlobalAddress:
-    OS << "<ga:" << ((Value*)getGlobal())->getName() << ">";
-    break;
-  case MO_ExternalSymbol:
-    OS << "<es:" << getSymbolName() << ">";
-    break;
-  default:
-    assert(0 && "Unrecognized operand type");
-    break;
-  }
+  ::print(*this, OS, 0);
 }
 
