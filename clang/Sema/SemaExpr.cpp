@@ -1129,7 +1129,15 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
         if (lhsType.getCanonicalType() != rhsType.getCanonicalType())
           return Incompatible;
       } else {
+        // For OCUVector, allow vector splats; float -> <n x float>
+        if (const OCUVectorType *LV = lhsType->getAsOCUVectorType()) {
+          if (LV->getElementType().getTypePtr() == rhsType.getTypePtr())
+            return Compatible;
+        }
         if (lhsType->isVectorType() && rhsType->isVectorType()) {
+          // If LHS and RHS are both integer or both floating point types, and
+          // the total vector length is the same, allow the conversion.  This is
+          // a bitcast; no bits are changed but the result type is different.
           if ((lhsType->isIntegerType() && rhsType->isIntegerType()) ||
               (lhsType->isRealFloatingType() && 
                rhsType->isRealFloatingType())) {
