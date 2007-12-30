@@ -85,8 +85,10 @@ MachineInstr::MachineInstr(const MachineInstr &MI) {
   Operands.reserve(MI.getNumOperands());
 
   // Add operands
-  for (unsigned i = 0; i != MI.getNumOperands(); ++i)
+  for (unsigned i = 0; i != MI.getNumOperands(); ++i) {
     Operands.push_back(MI.getOperand(i));
+    Operands.back().ParentMI = this;
+  }
 
   // Set parent, next, and prev to null
   parent = 0;
@@ -97,6 +99,10 @@ MachineInstr::MachineInstr(const MachineInstr &MI) {
 
 MachineInstr::~MachineInstr() {
   LeakDetector::removeGarbageObject(this);
+#ifndef NDEBUG
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+    assert(Operands[i].ParentMI == this && "ParentMI mismatch!");
+#endif
 }
 
 /// getOpcode - Returns the opcode of this MachineInstr.

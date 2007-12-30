@@ -166,11 +166,15 @@ public:
     bool isImpReg = Op.isRegister() && Op.isImplicit();
     assert((isImpReg || !OperandsComplete()) &&
            "Trying to add an operand to a machine instr that is already done!");
-    if (isImpReg || NumImplicitOps == 0) // This is true most of the time.
+    if (isImpReg || NumImplicitOps == 0) {// This is true most of the time.
       Operands.push_back(Op);
-    else
+      Operands.back().ParentMI = this;
+    } else {
       // Insert a real operand before any implicit ones.
-      Operands.insert(Operands.begin()+Operands.size()-NumImplicitOps, Op);
+      unsigned OpNo = Operands.size()-NumImplicitOps;
+      Operands.insert(Operands.begin()+OpNo, Op);
+      Operands[OpNo].ParentMI = this;
+    }
   }
   
   //===--------------------------------------------------------------------===//

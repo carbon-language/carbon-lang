@@ -23,7 +23,8 @@ namespace llvm {
   
 class MachineBasicBlock;
 class GlobalValue;
-
+  class MachineInstr;
+  
 /// MachineOperand class - Representation of each machine instruction operand.
 ///
 class MachineOperand {
@@ -48,6 +49,9 @@ private:
     int64_t immedVal;         // For MO_Immediate and MO_*Index.
   } contents;
 
+  /// ParentMI - This is the instruction that this operand is embedded into.
+  MachineInstr *ParentMI;
+  
   MachineOperandType opType:8; // Discriminate the union.
   bool IsDef : 1;              // True if this is a def, false if this is a use.
   bool IsImp : 1;              // True if this is an implicit def or use.
@@ -69,7 +73,7 @@ private:
     unsigned char subReg;
   } auxInfo;
   
-  MachineOperand() {}
+  MachineOperand() : ParentMI(0) {}
 
   void print(std::ostream &os) const;
   void print(std::ostream *os) const { if (os) print(*os); }
@@ -335,6 +339,7 @@ public:
     IsDead   = MO.IsDead;
     opType   = MO.opType;
     auxInfo  = MO.auxInfo;
+    ParentMI = MO.ParentMI;
     return *this;
   }
 
