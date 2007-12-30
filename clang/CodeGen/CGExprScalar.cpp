@@ -360,6 +360,15 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     return Builder.CreatePtrToInt(Src, DstTy, "conv");
   }
   
+  // A scalar source can be splatted to a vector of the same element type
+  if (isa<llvm::VectorType>(DstTy) && !isa<VectorType>(SrcType)) {
+    const llvm::VectorType *VT = cast<llvm::VectorType>(DstTy);
+    assert((VT->getElementType() == Src->getType()) &&
+           "Vector element type must match scalar type to splat.");
+    return CGF.EmitVector(&Src, DstType->getAsVectorType()->getNumElements(), 
+                          true);
+  }
+
   if (isa<llvm::VectorType>(Src->getType()) ||
       isa<llvm::VectorType>(DstTy)) {
     return Builder.CreateBitCast(Src, DstTy, "conv");
@@ -1049,14 +1058,15 @@ Value *CodeGenFunction::EmitShuffleVector(Value* V1, Value *V2, ...) {
 }
 
 llvm::Value *CodeGenFunction::EmitVector(llvm::Value * const *Vals, 
-                                         unsigned NumVals)
+                                         unsigned NumVals, bool isSplat)
 {
   llvm::Value *Vec
   = llvm::UndefValue::get(llvm::VectorType::get(Vals[0]->getType(), NumVals));
   
   for (unsigned i = 0, e = NumVals ; i != e; ++i) {
+    llvm::Value *Val = isSplat ? Vals[0] : Vals[i];
     llvm::Value *Idx = llvm::ConstantInt::get(llvm::Type::Int32Ty, i);
-    Vec = Builder.CreateInsertElement(Vec, Vals[i], Idx, "tmp");
+    Vec = Builder.CreateInsertElement(Vec, Val, Idx, "tmp");
   }
   
   return Vec;  

@@ -1,7 +1,6 @@
 // RUN: clang -emit-llvm %s
 
 typedef __attribute__(( ocu_vector_type(4) )) float float4;
-//typedef __attribute__(( ocu_vector_type(3) )) float float3;
 typedef __attribute__(( ocu_vector_type(2) )) float float2;
 
 
@@ -32,4 +31,17 @@ static void test4(float4 *out) {
   float c = 3.0f;
   float d = 4.0f;
   *out = ((float4) {a,b,c,d});
+}
+
+static void test5(float4 *out) {
+  float a;
+  float4 b;
+  
+  a = 1.0f;
+  b = a;
+  b = b * 5.0f;
+  b = 5.0f * b;
+  b *= a;
+  
+  *out = b;
 }

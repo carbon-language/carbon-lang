@@ -1125,15 +1125,15 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   }
   else if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
     if (lhsType->isVectorType() || rhsType->isVectorType()) {
+      // For OCUVector, allow vector splats; float -> <n x float>
+      if (const OCUVectorType *LV = lhsType->getAsOCUVectorType()) {
+        if (LV->getElementType().getTypePtr() == rhsType.getTypePtr())
+          return Compatible;
+      }
       if (!getLangOptions().LaxVectorConversions) {
         if (lhsType.getCanonicalType() != rhsType.getCanonicalType())
           return Incompatible;
       } else {
-        // For OCUVector, allow vector splats; float -> <n x float>
-        if (const OCUVectorType *LV = lhsType->getAsOCUVectorType()) {
-          if (LV->getElementType().getTypePtr() == rhsType.getTypePtr())
-            return Compatible;
-        }
         if (lhsType->isVectorType() && rhsType->isVectorType()) {
           // If LHS and RHS are both integer or both floating point types, and
           // the total vector length is the same, allow the conversion.  This is
@@ -1218,6 +1218,27 @@ inline QualType Sema::CheckVectorOperands(SourceLocation loc, Expr *&lex,
   // make sure the vector types are identical. 
   if (lhsType == rhsType)
     return lhsType;
+
+  // if the lhs is an ocu vector and the rhs is a scalar of the same type,
+  // promote the rhs to the vector type.
+  if (const OCUVectorType *V = lhsType->getAsOCUVectorType()) {
+    if (V->getElementType().getCanonicalType().getTypePtr()
+        == rhsType.getCanonicalType().getTypePtr()) {
+      promoteExprToType(rex, lhsType);
+      return lhsType;
+    }
+  }
+
+  // if the rhs is an ocu vector and the lhs is a scalar of the same type,
+  // promote the lhs to the vector type.
+  if (const OCUVectorType *V = rhsType->getAsOCUVectorType()) {
+    if (V->getElementType().getCanonicalType().getTypePtr()
+        == lhsType.getCanonicalType().getTypePtr()) {
+      promoteExprToType(lex, rhsType);
+      return rhsType;
+    }
+  }
+
   // You cannot convert between vector values of different size.
   Diag(loc, diag::err_typecheck_vector_not_convertable, 
        lex->getType().getAsString(), rex->getType().getAsString(),
