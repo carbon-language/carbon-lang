@@ -1166,7 +1166,7 @@ MachineInstr* X86RegisterInfo::foldMemoryOperand(MachineInstr *MI,
     return NULL;
 
   SmallVector<MachineOperand,4> MOs;
-  MOs.push_back(MachineOperand::CreateFrameIndex(FrameIndex));
+  MOs.push_back(MachineOperand::CreateFI(FrameIndex));
   return foldMemoryOperand(MI, Ops[0], MOs);
 }
 

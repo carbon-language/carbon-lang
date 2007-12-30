@@ -53,34 +53,34 @@ public:
   }
 
   const MachineInstrBuilder &addMBB(MachineBasicBlock *MBB) const {
-    MI->addOperand(MachineOperand::CreateBasicBlock(MBB));
+    MI->addOperand(MachineOperand::CreateMBB(MBB));
     return *this;
   }
 
   const MachineInstrBuilder &addFrameIndex(unsigned Idx) const {
-    MI->addOperand(MachineOperand::CreateFrameIndex(Idx));
+    MI->addOperand(MachineOperand::CreateFI(Idx));
     return *this;
   }
 
   const MachineInstrBuilder &addConstantPoolIndex(unsigned Idx,
                                                   int Offset = 0) const {
-    MI->addOperand(MachineOperand::CreateConstantPoolIndex(Idx, Offset));
+    MI->addOperand(MachineOperand::CreateCPI(Idx, Offset));
     return *this;
   }
 
   const MachineInstrBuilder &addJumpTableIndex(unsigned Idx) const {
-    MI->addOperand(MachineOperand::CreateJumpTableIndex(Idx));
+    MI->addOperand(MachineOperand::CreateJTI(Idx));
     return *this;
   }
 
   const MachineInstrBuilder &addGlobalAddress(GlobalValue *GV,
                                               int Offset = 0) const {
-    MI->addOperand(MachineOperand::CreateGlobalAddress(GV, Offset));
+    MI->addOperand(MachineOperand::CreateGA(GV, Offset));
     return *this;
   }
 
   const MachineInstrBuilder &addExternalSymbol(const char *FnName) const{
-    MI->addOperand(MachineOperand::CreateExternalSymbol(FnName, 0));
+    MI->addOperand(MachineOperand::CreateES(FnName, 0));
     return *this;
   }
 };

@@ -298,42 +298,42 @@ public:
     Op.auxInfo.subReg = SubReg;
     return Op;
   }
-  static MachineOperand CreateBasicBlock(MachineBasicBlock *MBB) {
+  static MachineOperand CreateMBB(MachineBasicBlock *MBB) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_MachineBasicBlock;
     Op.contents.MBB = MBB;
     Op.auxInfo.offset = 0;
     return Op;
   }
-  static MachineOperand CreateFrameIndex(unsigned Idx) {
+  static MachineOperand CreateFI(unsigned Idx) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_FrameIndex;
     Op.contents.immedVal = Idx;
     Op.auxInfo.offset = 0;
     return Op;
   }
-  static MachineOperand CreateConstantPoolIndex(unsigned Idx, int Offset) {
+  static MachineOperand CreateCPI(unsigned Idx, int Offset) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_ConstantPoolIndex;
     Op.contents.immedVal = Idx;
     Op.auxInfo.offset = Offset;
     return Op;
   }
-  static MachineOperand CreateJumpTableIndex(unsigned Idx) {
+  static MachineOperand CreateJTI(unsigned Idx) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_JumpTableIndex;
     Op.contents.immedVal = Idx;
     Op.auxInfo.offset = 0;
     return Op;
   }
-  static MachineOperand CreateGlobalAddress(GlobalValue *GV, int Offset) {
+  static MachineOperand CreateGA(GlobalValue *GV, int Offset) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_GlobalAddress;
     Op.contents.GV = GV;
     Op.auxInfo.offset = Offset;
     return Op;
   }
-  static MachineOperand CreateExternalSymbol(const char *SymName, int Offset) {
+  static MachineOperand CreateES(const char *SymName, int Offset) {
     MachineOperand Op;
     Op.opType = MachineOperand::MO_ExternalSymbol;
     Op.contents.SymbolName = SymName;
@@ -524,39 +524,39 @@ public:
   }
 
   void addMachineBasicBlockOperand(MachineBasicBlock *MBB) {
-    addOperand(MachineOperand::CreateBasicBlock(MBB));
+    addOperand(MachineOperand::CreateMBB(MBB));
   }
 
   /// addFrameIndexOperand - Add an abstract frame index to the instruction
   ///
   void addFrameIndexOperand(unsigned Idx) {
-    addOperand(MachineOperand::CreateFrameIndex(Idx));
+    addOperand(MachineOperand::CreateFI(Idx));
   }
 
   /// addConstantPoolndexOperand - Add a constant pool object index to the
   /// instruction.
   ///
   void addConstantPoolIndexOperand(unsigned Idx, int Offset) {
-    addOperand(MachineOperand::CreateConstantPoolIndex(Idx, Offset));
+    addOperand(MachineOperand::CreateCPI(Idx, Offset));
   }
 
   /// addJumpTableIndexOperand - Add a jump table object index to the
   /// instruction.
   ///
   void addJumpTableIndexOperand(unsigned Idx) {
-    addOperand(MachineOperand::CreateJumpTableIndex(Idx));
+    addOperand(MachineOperand::CreateJTI(Idx));
   }
   
   void addGlobalAddressOperand(GlobalValue *GV, int Offset) {
-    addOperand(MachineOperand::CreateGlobalAddress(GV, Offset));
+    addOperand(MachineOperand::CreateGA(GV, Offset));
   }
 
   /// addExternalSymbolOperand - Add an external symbol operand to this instr
   ///
   void addExternalSymbolOperand(const char *SymName, int Offset = 0) {
-    addOperand(MachineOperand::CreateExternalSymbol(SymName, Offset));
+    addOperand(MachineOperand::CreateES(SymName, Offset));
   }
-
+  
   //===--------------------------------------------------------------------===//
   // Accessors used to modify instructions in place.
   //
