@@ -267,26 +267,16 @@ void MachineInstr::dump() const {
   cerr << "  " << *this;
 }
 
-static void OutputReg(std::ostream &os, unsigned RegNo,
-                      const MRegisterInfo *MRI = 0) {
-  if (MRegisterInfo::isPhysicalRegister(RegNo)) {
-    if (MRI)
-      os << "%" << MRI->get(RegNo).Name;
-    else
-      os << "%mreg" << RegNo;
-  } else {
-    os << "%reg" << RegNo;
-  }
-}
-
 static void print(const MachineOperand &MO, std::ostream &OS,
                   const TargetMachine *TM) {
-  const MRegisterInfo *MRI = 0;
-  if (TM) MRI = TM->getRegisterInfo();
-
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    OutputReg(OS, MO.getReg(), MRI);
+    if (MO.getReg() == 0 || MRegisterInfo::isVirtualRegister(MO.getReg()))
+      OS << "%reg" << MO.getReg();
+    else if (TM)
+      OS << "%" << TM->getRegisterInfo()->get(MO.getReg()).Name;
+    else
+      OS << "%mreg" << MO.getReg();
     if (MO.isDef()) OS << "<d>";
     break;
   case MachineOperand::MO_Immediate:
