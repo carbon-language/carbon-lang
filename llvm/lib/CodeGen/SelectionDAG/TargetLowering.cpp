@@ -1291,7 +1291,7 @@ TargetLowering::SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
         return DAG.getConstant(0, VT);
       case 1:  // Known true.
         return DAG.getConstant(1, VT);
-      case 2:  // undefind.
+      case 2:  // Undefined.
         return DAG.getNode(ISD::UNDEF, VT);
       }
     }
