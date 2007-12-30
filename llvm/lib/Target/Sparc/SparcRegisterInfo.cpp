@@ -68,7 +68,7 @@ void SparcRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     if (MO.isRegister())
       MIB.addReg(MO.getReg());
     else if (MO.isImmediate())
-      MIB.addImm(MO.getImmedValue());
+      MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getFrameIndex());
   }
@@ -110,7 +110,7 @@ void SparcRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     if (MO.isRegister())
       MIB.addReg(MO.getReg());
     else if (MO.isImmediate())
-      MIB.addImm(MO.getImmedValue());
+      MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getFrameIndex());
   }
@@ -222,7 +222,7 @@ void SparcRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   MachineInstr &MI = *I;
-  int Size = MI.getOperand(0).getImmedValue();
+  int Size = MI.getOperand(0).getImm();
   if (MI.getOpcode() == SP::ADJCALLSTACKDOWN)
     Size = -Size;
   if (Size)
@@ -246,7 +246,7 @@ void SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // Addressable stack objects are accessed using neg. offsets from %fp
   MachineFunction &MF = *MI.getParent()->getParent();
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-               MI.getOperand(i+1).getImmedValue();
+               MI.getOperand(i+1).getImm();
 
   // Replace frame index with a frame pointer reference.
   if (Offset >= -4096 && Offset <= 4095) {

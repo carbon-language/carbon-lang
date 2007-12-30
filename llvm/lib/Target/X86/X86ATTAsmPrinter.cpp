@@ -229,7 +229,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
     if (!Modifier ||
         (strcmp(Modifier, "debug") && strcmp(Modifier, "mem")))
       O << '$';
-    O << MO.getImmedValue();
+    O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());
@@ -440,7 +440,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
 }
 
 void X86ATTAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
-  unsigned char value = MI->getOperand(Op).getImmedValue();
+  unsigned char value = MI->getOperand(Op).getImm();
   assert(value <= 7 && "Invalid ssecc argument!");
   switch (value) {
   case 0: O << "eq"; break;
@@ -467,13 +467,13 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
       DispSpec.isJumpTableIndex()) {
     printOperand(MI, Op+3, "mem", NotRIPRel);
   } else {
-    int DispVal = DispSpec.getImmedValue();
+    int DispVal = DispSpec.getImm();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
       O << DispVal;
   }
 
   if (IndexReg.getReg() || BaseReg.getReg()) {
-    unsigned ScaleVal = MI->getOperand(Op+1).getImmedValue();
+    unsigned ScaleVal = MI->getOperand(Op+1).getImm();
     unsigned BaseRegOperand = 0, IndexRegOperand = 2;
       
     // There are cases where we can end up with ESP/RSP in the indexreg slot.

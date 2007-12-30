@@ -24,7 +24,7 @@ SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
 }
 
 static bool isZeroImm(const MachineOperand &op) {
-  return op.isImmediate() && op.getImmedValue() == 0;
+  return op.isImmediate() && op.getImm() == 0;
 }
 
 /// Return true if the instruction is a register to register move and
@@ -71,7 +71,7 @@ unsigned SparcInstrInfo::isLoadFromStackSlot(MachineInstr *MI,
       MI->getOpcode() == SP::LDFri ||
       MI->getOpcode() == SP::LDDFri) {
     if (MI->getOperand(1).isFrameIndex() && MI->getOperand(2).isImmediate() &&
-        MI->getOperand(2).getImmedValue() == 0) {
+        MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getFrameIndex();
       return MI->getOperand(0).getReg();
     }
@@ -90,7 +90,7 @@ unsigned SparcInstrInfo::isStoreToStackSlot(MachineInstr *MI,
       MI->getOpcode() == SP::STFri ||
       MI->getOpcode() == SP::STDFri) {
     if (MI->getOperand(0).isFrameIndex() && MI->getOperand(1).isImmediate() &&
-        MI->getOperand(1).getImmedValue() == 0) {
+        MI->getOperand(1).getImm() == 0) {
       FrameIndex = MI->getOperand(0).getFrameIndex();
       return MI->getOperand(2).getReg();
     }

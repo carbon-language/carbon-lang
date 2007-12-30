@@ -84,7 +84,7 @@ void IA64RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     if (MO.isRegister())
       MIB.addReg(MO.getReg());
     else if (MO.isImmediate())
-      MIB.addImm(MO.getImmedValue());
+      MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getFrameIndex());
   }
@@ -136,7 +136,7 @@ void IA64RegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     if (MO.isRegister())
       MIB.addReg(MO.getReg());
     else if (MO.isImmediate())
-      MIB.addImm(MO.getImmedValue());
+      MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getFrameIndex());
   }
@@ -220,7 +220,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // 'sub SP, <amt>' and the adjcallstackdown instruction into 'add SP,
     // <amt>'
     MachineInstr *Old = I;
-    unsigned Amount = Old->getOperand(0).getImmedValue();
+    unsigned Amount = Old->getOperand(0).getImm();
     if (Amount != 0) {
       // We need to keep the stack aligned properly.  To do this, we round the
       // amount of space needed for the outgoing arguments up to the next

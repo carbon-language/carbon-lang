@@ -1188,7 +1188,7 @@ ARMConstantIslands::FixUpConditionalBr(MachineFunction &Fn, ImmBranch &Br) {
   // bge L2
   // b   L1
   // L2:
-  ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(1).getImmedValue();
+  ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(1).getImm();
   CC = ARMCC::getOppositeCondition(CC);
   unsigned CCReg = MI->getOperand(2).getReg();
 

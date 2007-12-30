@@ -255,7 +255,7 @@ static ARMCC::CondCodes getInstrPredicate(MachineInstr *MI, unsigned &PredReg) {
   }
 
   PredReg = MI->getOperand(PIdx+1).getReg();
-  return (ARMCC::CondCodes)MI->getOperand(PIdx).getImmedValue();
+  return (ARMCC::CondCodes)MI->getOperand(PIdx).getImm();
 }
 
 static inline bool isMatchingDecrement(MachineInstr *MI, unsigned Base,

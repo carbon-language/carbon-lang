@@ -62,22 +62,22 @@ namespace {
     }
 
     void printS8ImmOperand(const MachineInstr *MI, unsigned OpNo) {
-      int val=(unsigned int)MI->getOperand(OpNo).getImmedValue();
+      int val=(unsigned int)MI->getOperand(OpNo).getImm();
       if(val>=128) val=val-256; // if negative, flip sign
       O << val;
     }
     void printS14ImmOperand(const MachineInstr *MI, unsigned OpNo) {
-      int val=(unsigned int)MI->getOperand(OpNo).getImmedValue();
+      int val=(unsigned int)MI->getOperand(OpNo).getImm();
       if(val>=8192) val=val-16384; // if negative, flip sign
       O << val;
     }
     void printS22ImmOperand(const MachineInstr *MI, unsigned OpNo) {
-      int val=(unsigned int)MI->getOperand(OpNo).getImmedValue();
+      int val=(unsigned int)MI->getOperand(OpNo).getImm();
       if(val>=2097152) val=val-4194304; // if negative, flip sign
       O << val;
     }
     void printU64ImmOperand(const MachineInstr *MI, unsigned OpNo) {
-      O << (uint64_t)MI->getOperand(OpNo).getImmedValue();
+      O << (uint64_t)MI->getOperand(OpNo).getImm();
     }
     void printS64ImmOperand(const MachineInstr *MI, unsigned OpNo) {
 // XXX : nasty hack to avoid GPREL22 "relocation truncated to fit" linker
@@ -90,7 +90,7 @@ namespace {
 // If it's an immediate, print it the old fashioned way. If it's
 // not, we print it as a constant pool index. 
       if(MI->getOperand(OpNo).isImmediate()) {
-        O << (int64_t)MI->getOperand(OpNo).getImmedValue();
+        O << (int64_t)MI->getOperand(OpNo).getImm();
       } else { // this is a constant pool reference: FIXME: assert this
         printOp(MI->getOperand(OpNo));
       }
@@ -172,7 +172,7 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     return;
 
   case MachineOperand::MO_Immediate:
-    O << MO.getImmedValue();
+    O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());

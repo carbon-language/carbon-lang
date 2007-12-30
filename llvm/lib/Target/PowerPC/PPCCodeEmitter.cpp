@@ -131,7 +131,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       rv = 0x80 >> rv;
     }
   } else if (MO.isImmediate()) {
-    rv = MO.getImmedValue();
+    rv = MO.getImm();
   } else if (MO.isGlobalAddress() || MO.isExternalSymbol() ||
              MO.isConstantPoolIndex() || MO.isJumpTableIndex()) {
     unsigned Reloc = 0;

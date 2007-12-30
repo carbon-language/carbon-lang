@@ -64,7 +64,7 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
            MI.getOperand(1).isRegister() &&
            MI.getOperand(2).isImmediate() &&
            "invalid SPU ORI/ORHI/ORBI/AHI/AI/SFI/SFHI instruction!");
-    if (MI.getOperand(2).getImmedValue() == 0) {
+    if (MI.getOperand(2).getImm() == 0) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;
@@ -77,7 +77,7 @@ SPUInstrInfo::isMoveInstr(const MachineInstr& MI,
         (MI.getOperand(1).isRegister() ||
          MI.getOperand(1).isFrameIndex()) &&
         (MI.getOperand(2).isImmediate() &&
-         MI.getOperand(2).getImmedValue() == 0)) {
+         MI.getOperand(2).getImm() == 0)) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;
@@ -137,7 +137,7 @@ SPUInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const {
   case SPU::LQXr64:
   case SPU::LQXr32:
   case SPU::LQXr16:
-    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImmedValue() &&
+    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
         MI->getOperand(2).isFrameIndex()) {
       FrameIndex = MI->getOperand(2).getFrameIndex();
       return MI->getOperand(0).getReg();
@@ -171,7 +171,7 @@ SPUInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const {
   case SPU::STQXr32:
   case SPU::STQXr16:
     // case SPU::STQXr8:
-    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImmedValue() &&
+    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
         MI->getOperand(2).isFrameIndex()) {
       FrameIndex = MI->getOperand(2).getFrameIndex();
       return MI->getOperand(0).getReg();

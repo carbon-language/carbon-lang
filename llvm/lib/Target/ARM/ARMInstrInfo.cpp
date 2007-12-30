@@ -70,7 +70,7 @@ unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) co
         MI->getOperand(2).isRegister() &&
         MI->getOperand(3).isImmediate() && 
         MI->getOperand(2).getReg() == 0 &&
-        MI->getOperand(3).getImmedValue() == 0) {
+        MI->getOperand(3).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getFrameIndex();
       return MI->getOperand(0).getReg();
     }
@@ -79,7 +79,7 @@ unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) co
   case ARM::FLDS:
     if (MI->getOperand(1).isFrameIndex() &&
         MI->getOperand(2).isImmediate() && 
-        MI->getOperand(2).getImmedValue() == 0) {
+        MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getFrameIndex();
       return MI->getOperand(0).getReg();
     }
@@ -87,7 +87,7 @@ unsigned ARMInstrInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) co
   case ARM::tRestore:
     if (MI->getOperand(1).isFrameIndex() &&
         MI->getOperand(2).isImmediate() && 
-        MI->getOperand(2).getImmedValue() == 0) {
+        MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getFrameIndex();
       return MI->getOperand(0).getReg();
     }
@@ -104,7 +104,7 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
         MI->getOperand(2).isRegister() &&
         MI->getOperand(3).isImmediate() && 
         MI->getOperand(2).getReg() == 0 &&
-        MI->getOperand(3).getImmedValue() == 0) {
+        MI->getOperand(3).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getFrameIndex();
       return MI->getOperand(0).getReg();
     }
@@ -113,7 +113,7 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
   case ARM::FSTS:
     if (MI->getOperand(1).isFrameIndex() &&
         MI->getOperand(2).isImmediate() && 
-        MI->getOperand(2).getImmedValue() == 0) {
+        MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getFrameIndex();
       return MI->getOperand(0).getReg();
     }
@@ -121,7 +121,7 @@ unsigned ARMInstrInfo::isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) con
   case ARM::tSpill:
     if (MI->getOperand(1).isFrameIndex() &&
         MI->getOperand(2).isImmediate() && 
-        MI->getOperand(2).getImmedValue() == 0) {
+        MI->getOperand(2).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getFrameIndex();
       return MI->getOperand(0).getReg();
     }
@@ -461,7 +461,7 @@ ReverseBranchCondition(std::vector<MachineOperand> &Cond) const {
 
 bool ARMInstrInfo::isPredicated(const MachineInstr *MI) const {
   int PIdx = MI->findFirstPredOperandIdx();
-  return PIdx != -1 && MI->getOperand(PIdx).getImmedValue() != ARMCC::AL;
+  return PIdx != -1 && MI->getOperand(PIdx).getImm() != ARMCC::AL;
 }
 
 bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
@@ -477,7 +477,7 @@ bool ARMInstrInfo::PredicateInstruction(MachineInstr *MI,
   int PIdx = MI->findFirstPredOperandIdx();
   if (PIdx != -1) {
     MachineOperand &PMO = MI->getOperand(PIdx);
-    PMO.setImm(Pred[0].getImmedValue());
+    PMO.setImm(Pred[0].getImm());
     MI->getOperand(PIdx+1).setReg(Pred[1].getReg());
     return true;
   }
@@ -490,8 +490,8 @@ ARMInstrInfo::SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
   if (Pred1.size() > 2 || Pred2.size() > 2)
     return false;
 
-  ARMCC::CondCodes CC1 = (ARMCC::CondCodes)Pred1[0].getImmedValue();
-  ARMCC::CondCodes CC2 = (ARMCC::CondCodes)Pred2[0].getImmedValue();
+  ARMCC::CondCodes CC1 = (ARMCC::CondCodes)Pred1[0].getImm();
+  ARMCC::CondCodes CC2 = (ARMCC::CondCodes)Pred2[0].getImm();
   if (CC1 == CC2)
     return true;
 

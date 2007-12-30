@@ -109,7 +109,7 @@ void MipsRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     if (MO.isRegister())
       MIB.addReg(MO.getReg());
     else if (MO.isImmediate())
-      MIB.addImm(MO.getImmedValue());
+      MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getFrameIndex());
   }
@@ -140,7 +140,7 @@ void MipsRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     if (MO.isRegister())
       MIB.addReg(MO.getReg());
     else if (MO.isImmediate())
-      MIB.addImm(MO.getImmedValue());
+      MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getFrameIndex());
   }

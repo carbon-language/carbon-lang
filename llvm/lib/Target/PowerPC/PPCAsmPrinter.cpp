@@ -124,7 +124,7 @@ namespace {
       if (MO.isRegister()) {
         printRegister(MO, false);
       } else if (MO.isImmediate()) {
-        O << MO.getImmedValue();
+        O << MO.getImm();
       } else {
         printOp(MO);
       }
@@ -137,29 +137,29 @@ namespace {
     
     
     void printS5ImmOperand(const MachineInstr *MI, unsigned OpNo) {
-      char value = MI->getOperand(OpNo).getImmedValue();
+      char value = MI->getOperand(OpNo).getImm();
       value = (value << (32-5)) >> (32-5);
       O << (int)value;
     }
     void printU5ImmOperand(const MachineInstr *MI, unsigned OpNo) {
-      unsigned char value = MI->getOperand(OpNo).getImmedValue();
+      unsigned char value = MI->getOperand(OpNo).getImm();
       assert(value <= 31 && "Invalid u5imm argument!");
       O << (unsigned int)value;
     }
     void printU6ImmOperand(const MachineInstr *MI, unsigned OpNo) {
-      unsigned char value = MI->getOperand(OpNo).getImmedValue();
+      unsigned char value = MI->getOperand(OpNo).getImm();
       assert(value <= 63 && "Invalid u6imm argument!");
       O << (unsigned int)value;
     }
     void printS16ImmOperand(const MachineInstr *MI, unsigned OpNo) {
-      O << (short)MI->getOperand(OpNo).getImmedValue();
+      O << (short)MI->getOperand(OpNo).getImm();
     }
     void printU16ImmOperand(const MachineInstr *MI, unsigned OpNo) {
-      O << (unsigned short)MI->getOperand(OpNo).getImmedValue();
+      O << (unsigned short)MI->getOperand(OpNo).getImm();
     }
     void printS16X4ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       if (MI->getOperand(OpNo).isImmediate()) {
-        O << (short)(MI->getOperand(OpNo).getImmedValue()*4);
+        O << (short)(MI->getOperand(OpNo).getImm()*4);
       } else {
         O << "lo16(";
         printOp(MI->getOperand(OpNo));
@@ -173,7 +173,7 @@ namespace {
       // Branches can take an immediate operand.  This is used by the branch
       // selection pass to print $+8, an eight byte displacement from the PC.
       if (MI->getOperand(OpNo).isImmediate()) {
-        O << "$+" << MI->getOperand(OpNo).getImmedValue()*4;
+        O << "$+" << MI->getOperand(OpNo).getImm()*4;
       } else {
         printOp(MI->getOperand(OpNo));
       }
@@ -205,7 +205,7 @@ namespace {
       printOp(MI->getOperand(OpNo));
     }
     void printAbsAddrOperand(const MachineInstr *MI, unsigned OpNo) {
-     O << (int)MI->getOperand(OpNo).getImmedValue()*4;
+     O << (int)MI->getOperand(OpNo).getImm()*4;
     }
     void printPICLabel(const MachineInstr *MI, unsigned OpNo) {
       O << "\"L" << getFunctionNumber() << "$pb\"\n";
@@ -509,9 +509,9 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   // Check for slwi/srwi mnemonics.
   if (MI->getOpcode() == PPC::RLWINM) {
     bool FoundMnemonic = false;
-    unsigned char SH = MI->getOperand(2).getImmedValue();
-    unsigned char MB = MI->getOperand(3).getImmedValue();
-    unsigned char ME = MI->getOperand(4).getImmedValue();
+    unsigned char SH = MI->getOperand(2).getImm();
+    unsigned char MB = MI->getOperand(3).getImm();
+    unsigned char ME = MI->getOperand(4).getImm();
     if (SH <= 31 && MB == 0 && ME == (31-SH)) {
       O << "slwi "; FoundMnemonic = true;
     }
@@ -536,8 +536,8 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       return;
     }
   } else if (MI->getOpcode() == PPC::RLDICR) {
-    unsigned char SH = MI->getOperand(2).getImmedValue();
-    unsigned char ME = MI->getOperand(3).getImmedValue();
+    unsigned char SH = MI->getOperand(2).getImm();
+    unsigned char ME = MI->getOperand(3).getImm();
     // rldicr RA, RS, SH, 63-SH == sldi RA, RS, SH
     if (63-SH == ME) {
       O << "sldi ";

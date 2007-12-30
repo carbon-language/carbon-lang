@@ -152,7 +152,7 @@ void SparcAsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
     break;
 
   case MachineOperand::MO_Immediate:
-    O << (int)MO.getImmedValue();
+    O << (int)MO.getImm();
     break;
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());
@@ -188,7 +188,7 @@ void SparcAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
       MI->getOperand(opNum+1).getReg() == SP::G0)
     return;   // don't print "+%g0"
   if (MI->getOperand(opNum+1).isImmediate() &&
-      MI->getOperand(opNum+1).getImmedValue() == 0)
+      MI->getOperand(opNum+1).getImm() == 0)
     return;   // don't print "+0"
   
   O << "+";
@@ -203,7 +203,7 @@ void SparcAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
 }
 
 void SparcAsmPrinter::printCCOperand(const MachineInstr *MI, int opNum) {
-  int CC = (int)MI->getOperand(opNum).getImmedValue();
+  int CC = (int)MI->getOperand(opNum).getImm();
   O << SPARCCondCodeToString((SPCC::CondCodes)CC);
 }
 

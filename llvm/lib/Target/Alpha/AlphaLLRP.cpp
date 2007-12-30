@@ -67,11 +67,9 @@ namespace {
           case Alpha::STW:  case Alpha::STB:
           case Alpha::STT: case Alpha::STS:
            if (MI->getOperand(2).getReg() == Alpha::R30) {
-             if (prev[0] 
-                 && prev[0]->getOperand(2).getReg() == 
-                 MI->getOperand(2).getReg()
-                 && prev[0]->getOperand(1).getImmedValue() == 
-                 MI->getOperand(1).getImmedValue()) {
+             if (prev[0] && 
+                 prev[0]->getOperand(2).getReg() == MI->getOperand(2).getReg()&&
+                 prev[0]->getOperand(1).getImm() == MI->getOperand(1).getImm()){
                prev[0] = prev[1];
                prev[1] = prev[2];
                prev[2] = 0;
@@ -83,8 +81,8 @@ namespace {
              } else if (prev[1] 
                         && prev[1]->getOperand(2).getReg() == 
                         MI->getOperand(2).getReg()
-                        && prev[1]->getOperand(1).getImmedValue() == 
-                        MI->getOperand(1).getImmedValue()) {
+                        && prev[1]->getOperand(1).getImm() == 
+                        MI->getOperand(1).getImm()) {
                prev[0] = prev[2];
                prev[1] = prev[2] = 0;
                BuildMI(MBB, MI, TII->get(Alpha::BISr), Alpha::R31)
@@ -98,8 +96,8 @@ namespace {
              } else if (prev[2] 
                         && prev[2]->getOperand(2).getReg() == 
                         MI->getOperand(2).getReg()
-                        && prev[2]->getOperand(1).getImmedValue() == 
-                        MI->getOperand(1).getImmedValue()) {
+                        && prev[2]->getOperand(1).getImm() == 
+                        MI->getOperand(1).getImm()) {
                prev[0] = prev[1] = prev[2] = 0;
                BuildMI(MBB, MI, TII->get(Alpha::BISr), Alpha::R31).addReg(Alpha::R31)
                  .addReg(Alpha::R31);

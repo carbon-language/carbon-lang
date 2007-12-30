@@ -77,8 +77,8 @@ struct VISIBILITY_HIDDEN X86SharedAsmPrinter : public AsmPrinter {
 
   inline static bool isScale(const MachineOperand &MO) {
     return MO.isImmediate() &&
-          (MO.getImmedValue() == 1 || MO.getImmedValue() == 2 ||
-          MO.getImmedValue() == 4 || MO.getImmedValue() == 8);
+          (MO.getImm() == 1 || MO.getImm() == 2 ||
+           MO.getImm() == 4 || MO.getImm() == 8);
   }
 
   inline static bool isMem(const MachineInstr *MI, unsigned Op) {

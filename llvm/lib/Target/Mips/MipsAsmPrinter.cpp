@@ -374,9 +374,9 @@ printOperand(const MachineInstr *MI, int opNum)
     case MachineOperand::MO_Immediate:
       if ((MI->getOpcode() == Mips::SLTiu) || (MI->getOpcode() == Mips::ORi) || 
           (MI->getOpcode() == Mips::LUi)   || (MI->getOpcode() == Mips::ANDi))
-        O << (unsigned short int)MO.getImmedValue();
+        O << (unsigned short int)MO.getImm();
       else
-        O << (short int)MO.getImmedValue();
+        O << (short int)MO.getImm();
       break;
 
     case MachineOperand::MO_MachineBasicBlock:

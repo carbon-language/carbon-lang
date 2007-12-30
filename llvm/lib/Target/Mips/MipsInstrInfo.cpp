@@ -25,7 +25,7 @@ MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
     TM(tm), RI(*this) {}
 
 static bool isZeroImm(const MachineOperand &op) {
-  return op.isImmediate() && op.getImmedValue() == 0;
+  return op.isImmediate() && op.getImm() == 0;
 }
 
 /// Return true if the instruction is a register to register move and

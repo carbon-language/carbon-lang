@@ -214,7 +214,7 @@ void PPCRegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     if (MO.isRegister())
       MIB.addReg(MO.getReg());
     else if (MO.isImmediate())
-      MIB.addImm(MO.getImmedValue());
+      MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getFrameIndex());
   }
@@ -324,7 +324,7 @@ void PPCRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     if (MO.isRegister())
       MIB.addReg(MO.getReg());
     else if (MO.isImmediate())
-      MIB.addImm(MO.getImmedValue());
+      MIB.addImm(MO.getImm());
     else
       MIB.addFrameIndex(MO.getFrameIndex());
   }
@@ -802,9 +802,9 @@ void PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // Now add the frame object offset to the offset from r1.
   int Offset = MFI->getObjectOffset(FrameIndex);
   if (!isIXAddr)
-    Offset += MI.getOperand(OffsetOperandNo).getImmedValue();
+    Offset += MI.getOperand(OffsetOperandNo).getImm();
   else
-    Offset += MI.getOperand(OffsetOperandNo).getImmedValue() << 2;
+    Offset += MI.getOperand(OffsetOperandNo).getImm() << 2;
 
   // If we're not using a Frame Pointer that has been set to the value of the
   // SP before having the stack size subtracted from it, then add the stack size

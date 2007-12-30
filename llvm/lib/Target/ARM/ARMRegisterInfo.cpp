@@ -321,8 +321,8 @@ void ARMRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
                                     const MachineInstr *Orig) const {
   if (Orig->getOpcode() == ARM::MOVi2pieces) {
     emitLoadConstPool(MBB, I, DestReg,
-                      Orig->getOperand(1).getImmedValue(),
-                      (ARMCC::CondCodes)Orig->getOperand(2).getImmedValue(),
+                      Orig->getOperand(1).getImm(),
+                      (ARMCC::CondCodes)Orig->getOperand(2).getImm(),
                       Orig->getOperand(3).getReg(),
                       TII, false);
     return;
@@ -360,7 +360,7 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
     if (MI->getOperand(4).getReg() == ARM::CPSR)
       // If it is updating CPSR, then it cannot be foled.
       break;
-    unsigned Pred = MI->getOperand(2).getImmedValue();
+    unsigned Pred = MI->getOperand(2).getImm();
     unsigned PredReg = MI->getOperand(3).getReg();
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
@@ -392,7 +392,7 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
     break;
   }
   case ARM::FCPYS: {
-    unsigned Pred = MI->getOperand(2).getImmedValue();
+    unsigned Pred = MI->getOperand(2).getImm();
     unsigned PredReg = MI->getOperand(3).getReg();
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
@@ -406,7 +406,7 @@ MachineInstr *ARMRegisterInfo::foldMemoryOperand(MachineInstr *MI,
     break;
   }
   case ARM::FCPYD: {
-    unsigned Pred = MI->getOperand(2).getImmedValue();
+    unsigned Pred = MI->getOperand(2).getImm();
     unsigned PredReg = MI->getOperand(3).getReg();
     if (OpNum == 0) { // move -> store
       unsigned SrcReg = MI->getOperand(1).getReg();
@@ -792,7 +792,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // ADJCALLSTACKDOWN -> sub, sp, sp, amount
     // ADJCALLSTACKUP   -> add, sp, sp, amount
     MachineInstr *Old = I;
-    unsigned Amount = Old->getOperand(0).getImmedValue();
+    unsigned Amount = Old->getOperand(0).getImm();
     if (Amount != 0) {
       ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
       // We need to keep the stack aligned properly.  To do this, we round the
@@ -805,7 +805,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       unsigned Opc = Old->getOpcode();
       bool isThumb = AFI->isThumbFunction();
       ARMCC::CondCodes Pred = isThumb
-        ? ARMCC::AL : (ARMCC::CondCodes)Old->getOperand(1).getImmedValue();
+        ? ARMCC::AL : (ARMCC::CondCodes)Old->getOperand(1).getImm();
       if (Opc == ARM::ADJCALLSTACKDOWN || Opc == ARM::tADJCALLSTACKDOWN) {
         // Note: PredReg is operand 2 for ADJCALLSTACKDOWN.
         unsigned PredReg = isThumb ? 0 : Old->getOperand(2).getReg();
@@ -1160,7 +1160,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       ScratchReg = RS->scavengeRegister(&ARM::GPRRegClass, II, SPAdj);
     int PIdx = MI.findFirstPredOperandIdx();
     ARMCC::CondCodes Pred = (PIdx == -1)
-      ? ARMCC::AL : (ARMCC::CondCodes)MI.getOperand(PIdx).getImmedValue();
+      ? ARMCC::AL : (ARMCC::CondCodes)MI.getOperand(PIdx).getImm();
     unsigned PredReg = (PIdx == -1) ? 0 : MI.getOperand(PIdx+1).getReg();
     emitARMRegPlusImmediate(MBB, II, ScratchReg, FrameReg,
                             isSub ? -Offset : Offset, Pred, PredReg, TII);

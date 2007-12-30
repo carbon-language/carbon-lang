@@ -99,7 +99,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void X86IntelAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
-  unsigned char value = MI->getOperand(Op).getImmedValue();
+  unsigned char value = MI->getOperand(Op).getImm();
   assert(value <= 7 && "Invalid ssecc argument!");
   switch (value) {
   case 0: O << "eq"; break;
@@ -132,7 +132,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     return;
   }
   case MachineOperand::MO_Immediate:
-    O << MO.getImmedValue();
+    O << MO.getImm();
     return;
   case MachineOperand::MO_MachineBasicBlock:
     printBasicBlockLabel(MO.getMachineBasicBlock());
@@ -195,7 +195,7 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
   assert(isMem(MI, Op) && "Invalid memory reference!");
 
   const MachineOperand &BaseReg  = MI->getOperand(Op);
-  int ScaleVal                   = MI->getOperand(Op+1).getImmedValue();
+  int ScaleVal                   = MI->getOperand(Op+1).getImm();
   const MachineOperand &IndexReg = MI->getOperand(Op+2);
   const MachineOperand &DispSpec = MI->getOperand(Op+3);
 
@@ -220,7 +220,7 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op,
       O << " + ";
     printOp(DispSpec, "mem");
   } else {
-    int DispVal = DispSpec.getImmedValue();
+    int DispVal = DispSpec.getImm();
     if (DispVal || (!BaseReg.getReg() && !IndexReg.getReg())) {
       if (NeedPlus)
         if (DispVal > 0)

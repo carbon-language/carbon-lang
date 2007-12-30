@@ -271,7 +271,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
     if (!Modifier || strcmp(Modifier, "no_hash") != 0)
       O << "#";
 
-    O << (int)MO.getImmedValue();
+    O << (int)MO.getImm();
     break;
   }
   case MachineOperand::MO_MachineBasicBlock:
@@ -351,7 +351,7 @@ static void printSOImm(std::ostream &O, int64_t V, const TargetAsmInfo *TAI) {
 void ARMAsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isImmediate() && "Not a valid so_imm value!");
-  printSOImm(O, MO.getImmedValue(), TAI);
+  printSOImm(O, MO.getImm(), TAI);
 }
 
 /// printSOImm2PartOperand - SOImm is broken into two pieces using a mov
@@ -359,8 +359,8 @@ void ARMAsmPrinter::printSOImmOperand(const MachineInstr *MI, int OpNum) {
 void ARMAsmPrinter::printSOImm2PartOperand(const MachineInstr *MI, int OpNum) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isImmediate() && "Not a valid so_imm value!");
-  unsigned V1 = ARM_AM::getSOImmTwoPartFirst(MO.getImmedValue());
-  unsigned V2 = ARM_AM::getSOImmTwoPartSecond(MO.getImmedValue());
+  unsigned V1 = ARM_AM::getSOImmTwoPartFirst(MO.getImm());
+  unsigned V2 = ARM_AM::getSOImmTwoPartSecond(MO.getImm());
   printSOImm(O, ARM_AM::getSOImmVal(V1), TAI);
   O << "\n\torr";
   printPredicateOperand(MI, 2);
@@ -387,7 +387,7 @@ void ARMAsmPrinter::printSORegOperand(const MachineInstr *MI, int Op) {
 
   // Print the shift opc.
   O << ", "
-    << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(MO3.getImmedValue()))
+    << ARM_AM::getShiftOpcStr(ARM_AM::getSORegShOp(MO3.getImm()))
     << " ";
 
   if (MO2.getReg()) {
@@ -426,7 +426,7 @@ void ARMAsmPrinter::printAddrMode2Operand(const MachineInstr *MI, int Op) {
   
   if (unsigned ShImm = ARM_AM::getAM2Offset(MO3.getImm()))
     O << ", "
-      << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO3.getImmedValue()))
+      << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO3.getImm()))
       << " #" << ShImm;
   O << "]";
 }
@@ -449,7 +449,7 @@ void ARMAsmPrinter::printAddrMode2OffsetOperand(const MachineInstr *MI, int Op){
   
   if (unsigned ShImm = ARM_AM::getAM2Offset(MO2.getImm()))
     O << ", "
-      << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO2.getImmedValue()))
+      << ARM_AM::getShiftOpcStr(ARM_AM::getAM2ShiftOpc(MO2.getImm()))
       << " #" << ShImm;
 }
 
@@ -617,7 +617,7 @@ void ARMAsmPrinter::printThumbAddrModeSPOperand(const MachineInstr *MI,int Op) {
 }
 
 void ARMAsmPrinter::printPredicateOperand(const MachineInstr *MI, int opNum) {
-  ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(opNum).getImmedValue();
+  ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(opNum).getImm();
   if (CC != ARMCC::AL)
     O << ARMCondCodeToString(CC);
 }
@@ -631,7 +631,7 @@ void ARMAsmPrinter::printSBitModifierOperand(const MachineInstr *MI, int opNum){
 }
 
 void ARMAsmPrinter::printPCLabel(const MachineInstr *MI, int opNum) {
-  int Id = (int)MI->getOperand(opNum).getImmedValue();
+  int Id = (int)MI->getOperand(opNum).getImm();
   O << TAI->getPrivateGlobalPrefix() << "PC" << Id;
 }
 
@@ -677,7 +677,7 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNo) {
   const MachineOperand &MO2 = MI->getOperand(OpNo+1); // Unique Id
   unsigned JTI = MO1.getJumpTableIndex();
   O << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber()
-    << '_' << JTI << '_' << MO2.getImmedValue() << ":\n";
+    << '_' << JTI << '_' << MO2.getImm() << ":\n";
 
   const char *JTEntryDirective = TAI->getJumpTableDirective();
   if (!JTEntryDirective)
@@ -692,19 +692,19 @@ void ARMAsmPrinter::printJTBlockOperand(const MachineInstr *MI, int OpNo) {
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
     if (UseSet && JTSets.insert(MBB).second)
-      printPICJumpTableSetLabel(JTI, MO2.getImmedValue(), MBB);
+      printPICJumpTableSetLabel(JTI, MO2.getImm(), MBB);
 
     O << JTEntryDirective << ' ';
     if (UseSet)
       O << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
-        << '_' << JTI << '_' << MO2.getImmedValue()
+        << '_' << JTI << '_' << MO2.getImm()
         << "_set_" << MBB->getNumber();
     else if (TM.getRelocationModel() == Reloc::PIC_) {
       printBasicBlockLabel(MBB, false, false);
       // If the arch uses custom Jump Table directives, don't calc relative to JT
       if (!TAI->getJumpTableDirective()) 
         O << '-' << TAI->getPrivateGlobalPrefix() << "JTI"
-          << getFunctionNumber() << '_' << JTI << '_' << MO2.getImmedValue();
+          << getFunctionNumber() << '_' << JTI << '_' << MO2.getImm();
     } else
       printBasicBlockLabel(MBB, false, false);
     if (i != e-1)

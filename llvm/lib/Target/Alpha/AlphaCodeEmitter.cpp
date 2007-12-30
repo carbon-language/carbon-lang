@@ -151,7 +151,7 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   if (MO.isRegister()) {
     rv = getAlphaRegNumber(MO.getReg());
   } else if (MO.isImmediate()) {
-    rv = MO.getImmedValue();
+    rv = MO.getImm();
   } else if (MO.isGlobalAddress() || MO.isExternalSymbol()
              || MO.isConstantPoolIndex()) {
     DOUT << MO << " is a relocated op for " << MI << "\n";
@@ -187,7 +187,7 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     case Alpha::LDAg:
     case Alpha::LDAHg:
       Reloc = Alpha::reloc_gpdist;
-      Offset = MI.getOperand(3).getImmedValue();
+      Offset = MI.getOperand(3).getImm();
       break;
     default:
       assert(0 && "unknown relocatable instruction");
@@ -195,12 +195,12 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     }
     if (MO.isGlobalAddress())
       MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getGlobal(), Offset,
-                                          false, useGOT));
+                                                 Reloc, MO.getGlobal(), Offset,
+                                                 false, useGOT));
     else if (MO.isExternalSymbol())
       MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getSymbolName(), Offset,
-                                          true));
+                                                     Reloc, MO.getSymbolName(),
+                                                     Offset, true));
     else
     MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
                                           Reloc, MO.getConstantPoolIndex(),

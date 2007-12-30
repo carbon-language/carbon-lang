@@ -912,7 +912,7 @@ SparcTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
     break;
   }
 
-  CC = (SPCC::CondCodes)MI->getOperand(3).getImmedValue();
+  CC = (SPCC::CondCodes)MI->getOperand(3).getImm();
   
   // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
   // control-flow pattern.  The incoming instruction knows the destination vreg

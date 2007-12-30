@@ -73,9 +73,9 @@ unsigned X86InstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   case X86::MMX_MOVQ64rm:
     if (MI->getOperand(1).isFrameIndex() && MI->getOperand(2).isImmediate() &&
         MI->getOperand(3).isRegister() && MI->getOperand(4).isImmediate() &&
-        MI->getOperand(2).getImmedValue() == 1 &&
+        MI->getOperand(2).getImm() == 1 &&
         MI->getOperand(3).getReg() == 0 &&
-        MI->getOperand(4).getImmedValue() == 0) {
+        MI->getOperand(4).getImm() == 0) {
       FrameIndex = MI->getOperand(1).getFrameIndex();
       return MI->getOperand(0).getReg();
     }
@@ -104,9 +104,9 @@ unsigned X86InstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case X86::MMX_MOVNTQmr:
     if (MI->getOperand(0).isFrameIndex() && MI->getOperand(1).isImmediate() &&
         MI->getOperand(2).isRegister() && MI->getOperand(3).isImmediate() &&
-        MI->getOperand(1).getImmedValue() == 1 &&
+        MI->getOperand(1).getImm() == 1 &&
         MI->getOperand(2).getReg() == 0 &&
-        MI->getOperand(3).getImmedValue() == 0) {
+        MI->getOperand(3).getImm() == 0) {
       FrameIndex = MI->getOperand(0).getFrameIndex();
       return MI->getOperand(4).getReg();
     }
@@ -136,7 +136,7 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
     return MI->getOperand(1).isRegister() && MI->getOperand(2).isImmediate() &&
            MI->getOperand(3).isRegister() && MI->getOperand(4).isConstantPoolIndex() &&
            MI->getOperand(1).getReg() == 0 &&
-           MI->getOperand(2).getImmedValue() == 1 &&
+           MI->getOperand(2).getImm() == 1 &&
            MI->getOperand(3).getReg() == 0;
   }
   // All other instructions marked M_REMATERIALIZABLE are always trivially
@@ -194,7 +194,7 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
           MI->getOperand(2).isImmediate() &&
           MI->getOperand(3).isRegister() &&
           MI->getOperand(4).isGlobalAddress() &&
-          MI->getOperand(2).getImmedValue() == 1 &&
+          MI->getOperand(2).getImm() == 1 &&
           MI->getOperand(3).getReg() == 0)
         return true;
     }
@@ -217,7 +217,7 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
            MI->getOperand(3).isRegister() &&
            MI->getOperand(4).isConstantPoolIndex() &&
            MI->getOperand(1).getReg() == 0 &&
-           MI->getOperand(2).getImmedValue() == 1 &&
+           MI->getOperand(2).getImm() == 1 &&
            MI->getOperand(3).getReg() == 0;
   }
 
@@ -404,7 +404,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
       if (MI->getOperand(2).isImmediate())
         NewMI = addRegOffset(BuildMI(get(X86::LEA64r), Dest), Src,
-                             MI->getOperand(2).getImmedValue());
+                             MI->getOperand(2).getImm());
       break;
     case X86::ADD32ri:
     case X86::ADD32ri8:
@@ -412,7 +412,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       if (MI->getOperand(2).isImmediate()) {
         unsigned Opc = is64Bit ? X86::LEA64_32r : X86::LEA32r;
         NewMI = addRegOffset(BuildMI(get(Opc), Dest), Src,
-                             MI->getOperand(2).getImmedValue());
+                             MI->getOperand(2).getImm());
       }
       break;
     case X86::ADD16ri:
@@ -421,7 +421,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
       if (MI->getOperand(2).isImmediate())
         NewMI = addRegOffset(BuildMI(get(X86::LEA16r), Dest), Src,
-                             MI->getOperand(2).getImmedValue());
+                             MI->getOperand(2).getImm());
       break;
     case X86::SHL16ri:
       if (DisableLEA16) return 0;
@@ -429,7 +429,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::SHL64ri: {
       assert(MI->getNumOperands() >= 3 && MI->getOperand(2).isImmediate() &&
              "Unknown shl instruction!");
-      unsigned ShAmt = MI->getOperand(2).getImmedValue();
+      unsigned ShAmt = MI->getOperand(2).getImm();
       if (ShAmt == 1 || ShAmt == 2 || ShAmt == 3) {
         X86AddressMode AM;
         AM.Scale = 1 << ShAmt;
@@ -473,7 +473,7 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
     case X86::SHRD64rri8: Size = 64; Opc = X86::SHLD64rri8; break;
     case X86::SHLD64rri8: Size = 64; Opc = X86::SHRD64rri8; break;
     }
-    unsigned Amt = MI->getOperand(3).getImmedValue();
+    unsigned Amt = MI->getOperand(3).getImm();
     unsigned A = MI->getOperand(0).getReg();
     unsigned B = MI->getOperand(1).getReg();
     unsigned C = MI->getOperand(2).getReg();

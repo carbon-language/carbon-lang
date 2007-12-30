@@ -54,7 +54,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
            MI.getOperand(0).isRegister() &&
            MI.getOperand(2).isImmediate() &&
            "invalid PPC ADDI instruction!");
-    if (MI.getOperand(1).isRegister() && MI.getOperand(2).getImmedValue()==0) {
+    if (MI.getOperand(1).isRegister() && MI.getOperand(2).getImm() == 0) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;
@@ -65,7 +65,7 @@ bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
            MI.getOperand(1).isRegister() &&
            MI.getOperand(2).isImmediate() &&
            "invalid PPC ORI instruction!");
-    if (MI.getOperand(2).getImmedValue()==0) {
+    if (MI.getOperand(2).getImm() == 0) {
       sourceReg = MI.getOperand(1).getReg();
       destReg = MI.getOperand(0).getReg();
       return true;
@@ -99,7 +99,7 @@ unsigned PPCInstrInfo::isLoadFromStackSlot(MachineInstr *MI,
   case PPC::LWZ:
   case PPC::LFS:
   case PPC::LFD:
-    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImmedValue() &&
+    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
         MI->getOperand(2).isFrameIndex()) {
       FrameIndex = MI->getOperand(2).getFrameIndex();
       return MI->getOperand(0).getReg();
@@ -117,7 +117,7 @@ unsigned PPCInstrInfo::isStoreToStackSlot(MachineInstr *MI,
   case PPC::STW:
   case PPC::STFS:
   case PPC::STFD:
-    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImmedValue() &&
+    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImm() &&
         MI->getOperand(2).isFrameIndex()) {
       FrameIndex = MI->getOperand(2).getFrameIndex();
       return MI->getOperand(0).getReg();
@@ -135,7 +135,7 @@ MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {
     return TargetInstrInfo::commuteInstruction(MI);
   
   // Cannot commute if it has a non-zero rotate count.
-  if (MI->getOperand(3).getImmedValue() != 0)
+  if (MI->getOperand(3).getImm() != 0)
     return 0;
   
   // If we have a zero rotate count, we have:
@@ -162,10 +162,10 @@ MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {
     MI->getOperand(1).unsetIsKill();
   
   // Swap the mask around.
-  unsigned MB = MI->getOperand(4).getImmedValue();
-  unsigned ME = MI->getOperand(5).getImmedValue();
-  MI->getOperand(4).setImmedValue((ME+1) & 31);
-  MI->getOperand(5).setImmedValue((MB-1) & 31);
+  unsigned MB = MI->getOperand(4).getImm();
+  unsigned ME = MI->getOperand(5).getImm();
+  MI->getOperand(4).setImm((ME+1) & 31);
+  MI->getOperand(5).setImm((MB-1) & 31);
   return MI;
 }
 

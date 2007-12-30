@@ -83,7 +83,7 @@ namespace {
         assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
         O << TM.getRegisterInfo()->get(MO.getReg()).Name;
       } else if (MO.isImmediate()) {
-        O << MO.getImmedValue();
+        O << MO.getImm();
       } else {
         printOp(MO);
       }
@@ -98,7 +98,7 @@ namespace {
     void
     printS7ImmOperand(const MachineInstr *MI, unsigned OpNo)
     {
-      int value = MI->getOperand(OpNo).getImmedValue();
+      int value = MI->getOperand(OpNo).getImm();
       value = (value << (32 - 7)) >> (32 - 7);
 
       assert((value >= -(1 << 8) && value <= (1 << 7) - 1)
@@ -109,7 +109,7 @@ namespace {
     void
     printU7ImmOperand(const MachineInstr *MI, unsigned OpNo)
     {
-      unsigned int value = MI->getOperand(OpNo).getImmedValue();
+      unsigned int value = MI->getOperand(OpNo).getImm();
       assert(value < (1 << 8) && "Invalid u7 argument");
       O << value;
     }
@@ -117,7 +117,7 @@ namespace {
     void
     printMemRegImmS7(const MachineInstr *MI, unsigned OpNo)
     {
-      char value = MI->getOperand(OpNo).getImmedValue();
+      char value = MI->getOperand(OpNo).getImm();
       O << (int) value;
       O << "(";
       printOperand(MI, OpNo+1);
@@ -127,19 +127,19 @@ namespace {
     void
     printS16ImmOperand(const MachineInstr *MI, unsigned OpNo)
     {
-      O << (short) MI->getOperand(OpNo).getImmedValue();
+      O << (short) MI->getOperand(OpNo).getImm();
     }
 
     void
     printU16ImmOperand(const MachineInstr *MI, unsigned OpNo)
     {
-      O << (unsigned short)MI->getOperand(OpNo).getImmedValue();
+      O << (unsigned short)MI->getOperand(OpNo).getImm();
     }
 
     void
     printU32ImmOperand(const MachineInstr *MI, unsigned OpNo)
     {
-      O << (unsigned)MI->getOperand(OpNo).getImmedValue();
+      O << (unsigned)MI->getOperand(OpNo).getImm();
     }
     
     void
@@ -156,7 +156,7 @@ namespace {
     void
     printU18ImmOperand(const MachineInstr *MI, unsigned OpNo)
     {
-      unsigned int value = MI->getOperand(OpNo).getImmedValue();
+      unsigned int value = MI->getOperand(OpNo).getImm();
       assert(value <= (1 << 19) - 1 && "Invalid u18 argument");
       O << value;
     }
@@ -164,7 +164,7 @@ namespace {
     void
     printS10ImmOperand(const MachineInstr *MI, unsigned OpNo)
     {
-      short value = (short) (((int) MI->getOperand(OpNo).getImmedValue() << 16)
+      short value = (short) (((int) MI->getOperand(OpNo).getImm() << 16)
                              >> 16);
       assert((value >= -(1 << 9) && value <= (1 << 9) - 1)
              && "Invalid s10 argument");
@@ -174,7 +174,7 @@ namespace {
     void
     printU10ImmOperand(const MachineInstr *MI, unsigned OpNo)
     {
-      short value = (short) (((int) MI->getOperand(OpNo).getImmedValue() << 16)
+      short value = (short) (((int) MI->getOperand(OpNo).getImm() << 16)
                              >> 16);
       assert((value <= (1 << 10) - 1) && "Invalid u10 argument");
       O << value;
@@ -238,23 +238,23 @@ namespace {
 
     void printROTHNeg7Imm(const MachineInstr *MI, unsigned OpNo) {
       if (MI->getOperand(OpNo).isImmediate()) {
-        int value = (int) MI->getOperand(OpNo).getImmedValue();
+        int value = (int) MI->getOperand(OpNo).getImm();
         assert((value >= 0 && value < 16)
 	       && "Invalid negated immediate rotate 7-bit argument");
         O << -value;
       } else {
-        assert(0 && "Invalid/non-immediate rotate amount in printRotateNeg7Imm");
+        assert(0 &&"Invalid/non-immediate rotate amount in printRotateNeg7Imm");
       }
     }
 
     void printROTNeg7Imm(const MachineInstr *MI, unsigned OpNo) {
       if (MI->getOperand(OpNo).isImmediate()) {
-        int value = (int) MI->getOperand(OpNo).getImmedValue();
+        int value = (int) MI->getOperand(OpNo).getImm();
         assert((value >= 0 && value < 32)
 	       && "Invalid negated immediate rotate 7-bit argument");
         O << -value;
       } else {
-        assert(0 && "Invalid/non-immediate rotate amount in printRotateNeg7Imm");
+        assert(0 &&"Invalid/non-immediate rotate amount in printRotateNeg7Imm");
       }
     }
 

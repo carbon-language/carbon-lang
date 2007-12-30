@@ -72,7 +72,7 @@ bool TargetInstrInfo::PredicateInstruction(MachineInstr *MI,
           MO.setReg(Pred[j].getReg());
           MadeChange = true;
         } else if (MO.isImmediate()) {
-          MO.setImm(Pred[j].getImmedValue());
+          MO.setImm(Pred[j].getImm());
           MadeChange = true;
         } else if (MO.isMachineBasicBlock()) {
           MO.setMachineBasicBlock(Pred[j].getMachineBasicBlock());

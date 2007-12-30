@@ -111,7 +111,7 @@ unsigned Emitter::getBaseOpcodeFor(const TargetInstrDescriptor *TID) {
 /// machine operand.
 int Emitter::getShiftOp(const MachineOperand &MO) {
   unsigned ShiftOp = 0x0;
-  switch(ARM_AM::getAM2ShiftOpc(MO.getImmedValue())) {
+  switch(ARM_AM::getAM2ShiftOpc(MO.getImm())) {
   default: assert(0 && "Unknown shift opc!");
   case ARM_AM::asr:
     ShiftOp = 0X2;
@@ -137,7 +137,7 @@ int Emitter::getMachineOpValue(const MachineInstr &MI, unsigned OpIndex) {
     assert(MRegisterInfo::isPhysicalRegister(MO.getReg()));
     rv = ARMRegisterInfo::getRegisterNumbering(MO.getReg());
   } else if (MO.isImmediate()) {
-    rv = MO.getImmedValue();
+    rv = MO.getImm();
   } else if (MO.isGlobalAddress()) {
     emitGlobalAddressForCall(MO.getGlobal(), false);
   } else if (MO.isExternalSymbol()) {
@@ -412,7 +412,7 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
       Value |= 1 << ARMII::I_BitShift;
       // set immed_8 field
       const MachineOperand &MO = MI.getOperand(OperandIndex);
-      op = ARM_AM::getSOImmVal(MO.getImmedValue());
+      op = ARM_AM::getSOImmVal(MO.getImm());
       Value |= op;
 
       break;
@@ -441,7 +441,7 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
       // LSR - 011 if it is in register shifts encoding; 010, otherwise.
       // ROR - 111 if it is in register shifts encoding; 110, otherwise.
       // RRX - 110 and bit[11:7] clear.
-      switch(ARM_AM::getSORegShOp(MO2.getImmedValue())) {
+      switch(ARM_AM::getSORegShOp(MO2.getImm())) {
         default: assert(0 && "Unknown shift opc!");
         case ARM_AM::asr: {
           if(IsShiftByRegister)
@@ -475,7 +475,7 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
         }
       }
       // set the field related to shift operations (except rrx).
-      if(ARM_AM::getSORegShOp(MO2.getImmedValue()) != ARM_AM::rrx)
+      if(ARM_AM::getSORegShOp(MO2.getImm()) != ARM_AM::rrx)
         if(IsShiftByRegister) {
           // set the value of bit[11:8] (register Rs).
           assert(MRegisterInfo::isPhysicalRegister(MO1.getReg()));

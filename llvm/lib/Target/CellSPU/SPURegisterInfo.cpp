@@ -263,11 +263,11 @@ void SPURegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
     for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
       MachineOperand &MO = Addr[i];
       if (MO.isRegister())
-	MIB.addReg(MO.getReg());
+        MIB.addReg(MO.getReg());
       else if (MO.isImmediate())
-	MIB.addImm(MO.getImmedValue());
+        MIB.addImm(MO.getImm());
       else
-	MIB.addFrameIndex(MO.getFrameIndex());
+        MIB.addFrameIndex(MO.getFrameIndex());
     }
     NewMIs.push_back(MIB);
   }
@@ -349,11 +349,11 @@ void SPURegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
     for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
       MachineOperand &MO = Addr[i];
       if (MO.isRegister())
-	MIB.addReg(MO.getReg());
+        MIB.addReg(MO.getReg());
       else if (MO.isImmediate())
-	MIB.addImm(MO.getImmedValue());
+        MIB.addImm(MO.getImm());
       else
-	MIB.addFrameIndex(MO.getFrameIndex());
+        MIB.addFrameIndex(MO.getFrameIndex());
     }
     NewMIs.push_back(MIB);
   }
@@ -610,10 +610,9 @@ SPURegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
   MachineOperand &MO = MI.getOperand(OpNo);
 
   // Offset is biased by $lr's slot at the bottom.
-  Offset += MO.getImmedValue() + MFI->getStackSize()
-    + SPUFrameInfo::minStackSize();
+  Offset += MO.getImm() + MFI->getStackSize() + SPUFrameInfo::minStackSize();
   assert((Offset & 0xf) == 0
-         && "16-byte alignment violated in SPURegisterInfo::eliminateFrameIndex");
+         && "16-byte alignment violated in eliminateFrameIndex");
 
   // Replace the FrameIndex with base register with $sp (aka $r1)
   SPOp.ChangeToRegister(SPU::R1, false);
