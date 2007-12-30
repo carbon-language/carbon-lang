@@ -40,14 +40,14 @@ let test_genericvalue () =
   let intgv = GenericValue.of_int i32_type 3 in
   assert (3  = GenericValue.as_int intgv);
   
-  let i32gv = GenericValue.of_int32 i32_type 4l in
-  assert (4l = GenericValue.as_int32 i32gv);
+  let i32gv = GenericValue.of_int32 i32_type (Int32.of_int 4) in
+  assert ((Int32.of_int 4) = GenericValue.as_int32 i32gv);
   
-  let nigv = GenericValue.of_nativeint i32_type 5n in
-  assert (5n = GenericValue.as_nativeint nigv);
+  let nigv = GenericValue.of_nativeint i32_type (Nativeint.of_int 5) in
+  assert ((Nativeint.of_int 5) = GenericValue.as_nativeint nigv);
   
-  let i64gv = GenericValue.of_int64 i64_type 6L in
-  assert (6L = GenericValue.as_int64 i64gv)
+  let i64gv = GenericValue.of_int64 i64_type (Int64.of_int 6) in
+  assert ((Int64.of_int 6) = GenericValue.as_int64 i64gv)
 
 let test_executionengine () =
   (* create *)
