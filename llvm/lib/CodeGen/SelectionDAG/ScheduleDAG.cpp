@@ -454,26 +454,19 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
         abort();
       }
     }
-  } else if (ConstantSDNode *C =
-             dyn_cast<ConstantSDNode>(Op)) {
+  } else if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateImm(C->getValue()));
-  } else if (RegisterSDNode *R =
-             dyn_cast<RegisterSDNode>(Op)) {
+  } else if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op)) {
     MI->addOperand(MachineOperand::CreateReg(R->getReg(), false));
-  } else if (GlobalAddressSDNode *TGA =
-             dyn_cast<GlobalAddressSDNode>(Op)) {
-    MI->addGlobalAddressOperand(TGA->getGlobal(), TGA->getOffset());
-  } else if (BasicBlockSDNode *BB =
-             dyn_cast<BasicBlockSDNode>(Op)) {
-    MI->addMachineBasicBlockOperand(BB->getBasicBlock());
-  } else if (FrameIndexSDNode *FI =
-             dyn_cast<FrameIndexSDNode>(Op)) {
-    MI->addFrameIndexOperand(FI->getIndex());
-  } else if (JumpTableSDNode *JT =
-             dyn_cast<JumpTableSDNode>(Op)) {
-    MI->addJumpTableIndexOperand(JT->getIndex());
-  } else if (ConstantPoolSDNode *CP = 
-             dyn_cast<ConstantPoolSDNode>(Op)) {
+  } else if (GlobalAddressSDNode *TGA = dyn_cast<GlobalAddressSDNode>(Op)) {
+    MI->addOperand(MachineOperand::CreateGA(TGA->getGlobal(),TGA->getOffset()));
+  } else if (BasicBlockSDNode *BB = dyn_cast<BasicBlockSDNode>(Op)) {
+    MI->addOperand(MachineOperand::CreateMBB(BB->getBasicBlock()));
+  } else if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Op)) {
+    MI->addOperand(MachineOperand::CreateFI(FI->getIndex()));
+  } else if (JumpTableSDNode *JT = dyn_cast<JumpTableSDNode>(Op)) {
+    MI->addOperand(MachineOperand::CreateJTI(JT->getIndex()));
+  } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op)) {
     int Offset = CP->getOffset();
     unsigned Align = CP->getAlignment();
     const Type *Type = CP->getType();
@@ -492,10 +485,9 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
       Idx = ConstPool->getConstantPoolIndex(CP->getMachineCPVal(), Align);
     else
       Idx = ConstPool->getConstantPoolIndex(CP->getConstVal(), Align);
-    MI->addConstantPoolIndexOperand(Idx, Offset);
-  } else if (ExternalSymbolSDNode *ES = 
-             dyn_cast<ExternalSymbolSDNode>(Op)) {
-    MI->addExternalSymbolOperand(ES->getSymbol());
+    MI->addOperand(MachineOperand::CreateCPI(Idx, Offset));
+  } else if (ExternalSymbolSDNode *ES = dyn_cast<ExternalSymbolSDNode>(Op)) {
+    MI->addOperand(MachineOperand::CreateES(ES->getSymbol()));
   } else {
     assert(Op.getValueType() != MVT::Other &&
            Op.getValueType() != MVT::Flag &&
@@ -590,7 +582,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     // Add def, source, and subreg index
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
-    MI->addImmOperand(SubIdx);
+    MI->addOperand(MachineOperand::CreateImm(SubIdx));
     
   } else if (Opc == TargetInstrInfo::INSERT_SUBREG) {
     assert((Node->getNumOperands() == 2 || Node->getNumOperands() == 3) &&
@@ -647,7 +639,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     AddOperand(MI, Node->getOperand(0), 0, 0, VRBaseMap);
     if (!isUndefInput)
       AddOperand(MI, Node->getOperand(1), 0, 0, VRBaseMap);
-    MI->addImmOperand(SubIdx);
+    MI->addOperand(MachineOperand::CreateImm(SubIdx));
   } else
     assert(0 && "Node is not a subreg insert or extract");
      
@@ -774,14 +766,14 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
       // Add the asm string as an external symbol operand.
       const char *AsmStr =
         cast<ExternalSymbolSDNode>(Node->getOperand(1))->getSymbol();
-      MI->addExternalSymbolOperand(AsmStr);
+      MI->addOperand(MachineOperand::CreateES(AsmStr));
       
       // Add all of the operand registers to the instruction.
       for (unsigned i = 2; i != NumOps;) {
         unsigned Flags = cast<ConstantSDNode>(Node->getOperand(i))->getValue();
         unsigned NumVals = Flags >> 3;
         
-        MI->addImmOperand(Flags);
+        MI->addOperand(MachineOperand::CreateImm(Flags));
         ++i;  // Skip the ID value.
         
         switch (Flags & 7) {
@@ -805,11 +797,11 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
               MI->addOperand(MachineOperand::CreateImm(CS->getValue()));
             } else if (GlobalAddressSDNode *GA = 
                   dyn_cast<GlobalAddressSDNode>(Node->getOperand(i))) {
-              MI->addGlobalAddressOperand(GA->getGlobal(), GA->getOffset());
+              MI->addOperand(MachineOperand::CreateGA(GA->getGlobal(),
+                                                      GA->getOffset()));
             } else {
-              BasicBlockSDNode *BB =
-                  cast<BasicBlockSDNode>(Node->getOperand(i));
-              MI->addMachineBasicBlockOperand(BB->getBasicBlock());
+              BasicBlockSDNode *BB =cast<BasicBlockSDNode>(Node->getOperand(i));
+              MI->addOperand(MachineOperand::CreateMBB(BB->getBasicBlock()));
             }
           }
           break;
