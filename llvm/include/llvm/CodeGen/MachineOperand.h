@@ -42,41 +42,56 @@ public:
   };
 
 private:
-  union {
-    GlobalValue *GV;          // For MO_GlobalAddress.
-    MachineBasicBlock *MBB;   // For MO_MachineBasicBlock.
-    const char *SymbolName;   // For MO_ExternalSymbol.
-    unsigned RegNo;           // For MO_Register.
-    int64_t ImmVal;           // For MO_Immediate.
-    int Index;                // For MO_FrameIndex/CPI/JTI.
-  } contents;
-
-  /// ParentMI - This is the instruction that this operand is embedded into.
-  MachineInstr *ParentMI;
+  /// OpKind - Specify what kind of operand this is.  This discriminates the
+  /// union.
+  MachineOperandType OpKind : 8;
   
-  MachineOperandType opType:8; // Discriminate the union.
-  bool IsDef : 1;              // True if this is a def, false if this is a use.
-  bool IsImp : 1;              // True if this is an implicit def or use.
+  /// IsDef/IsImp/IsKill/IsDead flags - These are only valid for MO_Register
+  /// operands.
+  
+  /// IsDef - True if this is a def, false if this is a use of the register.
+  ///
+  bool IsDef : 1;
+  
+  /// IsImp - True if this is an implicit def or use, false if it is explicit.
+  ///
+  bool IsImp : 1;
 
-  bool IsKill : 1;             // True if this is a reg use and the reg is dead
-                               // immediately after the read.
-  bool IsDead : 1;             // True if this is a reg def and the reg is dead
-                               // immediately after the write. i.e. A register
-                               // that is defined but never used.
+  /// IsKill - True if this instruction is the last use of the register on this
+  /// path through the function.  This is only valid on uses of registers.
+  bool IsKill : 1;
+
+  /// IsDead - True if this register is never used by a subsequent instruction.
+  /// This is only valid on definitions of registers.
+  bool IsDead : 1;
 
   /// SubReg - Subregister number, only valid for MO_Register.  A value of 0
   /// indicates the MO_Register has no subReg.
   unsigned char SubReg;
   
-  /// auxInfo - auxiliary information used by the MachineOperand
-  union {
-    /// offset - Offset to address of global or external, only valid for
-    /// MO_GlobalAddress, MO_ExternalSym and MO_ConstantPoolIndex
-    int offset;
+  /// ParentMI - This is the instruction that this operand is embedded into. 
+  /// This is valid for all operand types, when the operand is in an instr.
+  MachineInstr *ParentMI;
 
-  } auxInfo;
+  /// Contents union - This contains the payload for the various operand types.
+  union {
+    MachineBasicBlock *MBB;   // For MO_MachineBasicBlock.
+    unsigned RegNo;           // For MO_Register.
+    int64_t ImmVal;           // For MO_Immediate.
+    
+    /// OffsetedInfo - This struct contains the offset and an object identifier.
+    /// this represent the object as with an optional offset from it.
+    struct {
+      union {
+        int Index;                // For MO_*Index - The index itself.
+        const char *SymbolName;   // For MO_ExternalSymbol.
+        GlobalValue *GV;          // For MO_GlobalAddress.
+      } Val;
+      int Offset;   // An offset from the object.
+    } OffsetedInfo;
+  } Contents;
   
-  MachineOperand() : ParentMI(0) {}
+  MachineOperand(MachineOperandType K) : OpKind(K), ParentMI(0) {}
 
 public:
   MachineOperand(const MachineOperand &M) {
@@ -87,7 +102,7 @@ public:
   
   /// getType - Returns the MachineOperandType for this operand.
   ///
-  MachineOperandType getType() const { return opType; }
+  MachineOperandType getType() const { return OpKind; }
 
   /// getParent - Return the instruction that this operand belongs to.
   ///
@@ -98,14 +113,14 @@ public:
 
   /// Accessors that tell you what kind of MachineOperand you're looking at.
   ///
-  bool isRegister() const { return opType == MO_Register; }
-  bool isImmediate() const { return opType == MO_Immediate; }
-  bool isMachineBasicBlock() const { return opType == MO_MachineBasicBlock; }
-  bool isFrameIndex() const { return opType == MO_FrameIndex; }
-  bool isConstantPoolIndex() const { return opType == MO_ConstantPoolIndex; }
-  bool isJumpTableIndex() const { return opType == MO_JumpTableIndex; }
-  bool isGlobalAddress() const { return opType == MO_GlobalAddress; }
-  bool isExternalSymbol() const { return opType == MO_ExternalSymbol; }
+  bool isRegister() const { return OpKind == MO_Register; }
+  bool isImmediate() const { return OpKind == MO_Immediate; }
+  bool isMachineBasicBlock() const { return OpKind == MO_MachineBasicBlock; }
+  bool isFrameIndex() const { return OpKind == MO_FrameIndex; }
+  bool isConstantPoolIndex() const { return OpKind == MO_ConstantPoolIndex; }
+  bool isJumpTableIndex() const { return OpKind == MO_JumpTableIndex; }
+  bool isGlobalAddress() const { return OpKind == MO_GlobalAddress; }
+  bool isExternalSymbol() const { return OpKind == MO_ExternalSymbol; }
 
   //===--------------------------------------------------------------------===//
   // Accessors for Register Operands
@@ -114,7 +129,7 @@ public:
   /// getReg - Returns the register number.
   unsigned getReg() const {
     assert(isRegister() && "This is not a register operand!");
-    return contents.RegNo;
+    return Contents.RegNo;
   }
   
   unsigned getSubReg() const {
@@ -153,7 +168,7 @@ public:
   
   void setReg(unsigned Reg) {
     assert(isRegister() && "This is not a register operand!");
-    contents.RegNo = Reg;
+    Contents.RegNo = Reg;
   }
 
   void setSubReg(unsigned subReg) {
@@ -193,45 +208,40 @@ public:
   
   int64_t getImm() const {
     assert(isImmediate() && "Wrong MachineOperand accessor");
-    return contents.ImmVal;
+    return Contents.ImmVal;
   }
   
   MachineBasicBlock *getMBB() const {
     assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
-    return contents.MBB;
+    return Contents.MBB;
   }
   MachineBasicBlock *getMachineBasicBlock() const {
     assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
-    return contents.MBB;
+    return Contents.MBB;
   }
-  void setMachineBasicBlock(MachineBasicBlock *MBB) {
-    assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
-    contents.MBB = MBB;
+
+  int getIndex() const {
+    assert((isFrameIndex() || isConstantPoolIndex() || isJumpTableIndex()) &&
+           "Wrong MachineOperand accessor");
+    return Contents.OffsetedInfo.Val.Index;
   }
-  int getFrameIndex() const {
-    assert(isFrameIndex() && "Wrong MachineOperand accessor");
-    return (int)contents.Index;
-  }
-  unsigned getConstantPoolIndex() const {
-    assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
-    return (unsigned)contents.Index;
-  }
-  unsigned getJumpTableIndex() const {
-    assert(isJumpTableIndex() && "Wrong MachineOperand accessor");
-    return (unsigned)contents.Index;
-  }
+  
+  int getFrameIndex() const { return getIndex(); }
+  unsigned getConstantPoolIndex() const { return getIndex(); }
+  unsigned getJumpTableIndex() const { return getIndex(); }
+
   GlobalValue *getGlobal() const {
     assert(isGlobalAddress() && "Wrong MachineOperand accessor");
-    return contents.GV;
+    return Contents.OffsetedInfo.Val.GV;
   }
   int getOffset() const {
     assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
            "Wrong MachineOperand accessor");
-    return auxInfo.offset;
+    return Contents.OffsetedInfo.Offset;
   }
   const char *getSymbolName() const {
     assert(isExternalSymbol() && "Wrong MachineOperand accessor");
-    return contents.SymbolName;
+    return Contents.OffsetedInfo.Val.SymbolName;
   }
   
   //===--------------------------------------------------------------------===//
@@ -240,23 +250,27 @@ public:
   
   void setImm(int64_t immVal) {
     assert(isImmediate() && "Wrong MachineOperand mutator");
-    contents.ImmVal = immVal;
+    Contents.ImmVal = immVal;
   }
 
   void setOffset(int Offset) {
     assert((isGlobalAddress() || isExternalSymbol() || isConstantPoolIndex()) &&
         "Wrong MachineOperand accessor");
-    auxInfo.offset = Offset;
+    Contents.OffsetedInfo.Offset = Offset;
   }
   
-  void setConstantPoolIndex(unsigned Idx) {
-    assert(isConstantPoolIndex() && "Wrong MachineOperand accessor");
-    contents.Index = Idx;
+  void setIndex(int Idx) {
+    assert((isFrameIndex() || isConstantPoolIndex() || isJumpTableIndex()) &&
+           "Wrong MachineOperand accessor");
+    Contents.OffsetedInfo.Val.Index = Idx;
   }
   
-  void setJumpTableIndex(unsigned Idx) {
-    assert(isJumpTableIndex() && "Wrong MachineOperand accessor");
-    contents.Index = Idx;
+  void setConstantPoolIndex(unsigned Idx) { setIndex(Idx); }
+  void setJumpTableIndex(unsigned Idx) { setIndex(Idx); }
+
+  void setMachineBasicBlock(MachineBasicBlock *MBB) {
+    assert(isMachineBasicBlock() && "Wrong MachineOperand accessor");
+    Contents.MBB = MBB;
   }
   
   //===--------------------------------------------------------------------===//
@@ -271,8 +285,8 @@ public:
   /// the specified value.  If an operand is known to be an immediate already,
   /// the setImm method should be used.
   void ChangeToImmediate(int64_t ImmVal) {
-    opType = MO_Immediate;
-    contents.ImmVal = ImmVal;
+    OpKind = MO_Immediate;
+    Contents.ImmVal = ImmVal;
   }
 
   /// ChangeToRegister - Replace this operand with a new register operand of
@@ -280,8 +294,8 @@ public:
   /// the setReg method should be used.
   void ChangeToRegister(unsigned Reg, bool isDef, bool isImp = false,
                         bool isKill = false, bool isDead = false) {
-    opType = MO_Register;
-    contents.RegNo = Reg;
+    OpKind = MO_Register;
+    Contents.RegNo = Reg;
     IsDef = isDef;
     IsImp = isImp;
     IsKill = isKill;
@@ -294,74 +308,65 @@ public:
   //===--------------------------------------------------------------------===//
   
   static MachineOperand CreateImm(int64_t Val) {
-    MachineOperand Op;
-    Op.opType = MachineOperand::MO_Immediate;
-    Op.contents.ImmVal = Val;
+    MachineOperand Op(MachineOperand::MO_Immediate);
+    Op.setImm(Val);
     return Op;
   }
   
   static MachineOperand CreateReg(unsigned Reg, bool isDef, bool isImp = false,
                                   bool isKill = false, bool isDead = false,
                                   unsigned SubReg = 0) {
-    MachineOperand Op;
-    Op.opType = MachineOperand::MO_Register;
+    MachineOperand Op(MachineOperand::MO_Register);
     Op.IsDef = isDef;
     Op.IsImp = isImp;
     Op.IsKill = isKill;
     Op.IsDead = isDead;
-    Op.contents.RegNo = Reg;
+    Op.Contents.RegNo = Reg;
     Op.SubReg = SubReg;
     return Op;
   }
   static MachineOperand CreateMBB(MachineBasicBlock *MBB) {
-    MachineOperand Op;
-    Op.opType = MachineOperand::MO_MachineBasicBlock;
-    Op.contents.MBB = MBB;
+    MachineOperand Op(MachineOperand::MO_MachineBasicBlock);
+    Op.setMachineBasicBlock(MBB);
     return Op;
   }
   static MachineOperand CreateFI(unsigned Idx) {
-    MachineOperand Op;
-    Op.opType = MachineOperand::MO_FrameIndex;
-    Op.contents.Index = Idx;
+    MachineOperand Op(MachineOperand::MO_FrameIndex);
+    Op.setIndex(Idx);
     return Op;
   }
   static MachineOperand CreateCPI(unsigned Idx, int Offset) {
-    MachineOperand Op;
-    Op.opType = MachineOperand::MO_ConstantPoolIndex;
-    Op.contents.Index = Idx;
-    Op.auxInfo.offset = Offset;
+    MachineOperand Op(MachineOperand::MO_ConstantPoolIndex);
+    Op.setIndex(Idx);
+    Op.setOffset(Offset);
     return Op;
   }
   static MachineOperand CreateJTI(unsigned Idx) {
-    MachineOperand Op;
-    Op.opType = MachineOperand::MO_JumpTableIndex;
-    Op.contents.Index = Idx;
+    MachineOperand Op(MachineOperand::MO_JumpTableIndex);
+    Op.setIndex(Idx);
     return Op;
   }
   static MachineOperand CreateGA(GlobalValue *GV, int Offset) {
-    MachineOperand Op;
-    Op.opType = MachineOperand::MO_GlobalAddress;
-    Op.contents.GV = GV;
-    Op.auxInfo.offset = Offset;
+    MachineOperand Op(MachineOperand::MO_GlobalAddress);
+    Op.Contents.OffsetedInfo.Val.GV = GV;
+    Op.setOffset(Offset);
     return Op;
   }
   static MachineOperand CreateES(const char *SymName, int Offset = 0) {
-    MachineOperand Op;
-    Op.opType = MachineOperand::MO_ExternalSymbol;
-    Op.contents.SymbolName = SymName;
-    Op.auxInfo.offset = Offset;
+    MachineOperand Op(MachineOperand::MO_ExternalSymbol);
+    Op.Contents.OffsetedInfo.Val.SymbolName = SymName;
+    Op.setOffset(Offset);
     return Op;
   }
   const MachineOperand &operator=(const MachineOperand &MO) {
-    contents = MO.contents;
+    OpKind   = MO.OpKind;
     IsDef    = MO.IsDef;
     IsImp    = MO.IsImp;
     IsKill   = MO.IsKill;
     IsDead   = MO.IsDead;
-    opType   = MO.opType;
-    auxInfo  = MO.auxInfo;
     SubReg   = MO.SubReg;
     ParentMI = MO.ParentMI;
+    Contents = MO.Contents;
     return *this;
   }
 
