@@ -23,11 +23,11 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
@@ -328,8 +328,8 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
         IA64::r126, IA64::r127 };
 
   unsigned numStackedGPRsUsed=0;
-  for(int i=0; i<96; i++) {
-    if(MF.isPhysRegUsed(RegsInOrder[i]))
+  for (int i=0; i != 96; i++) {
+    if (MF.getRegInfo().isPhysRegUsed(RegsInOrder[i]))
       numStackedGPRsUsed=i+1; // (i+1 and not ++ - consider fn(fp, fp, int)
   }
 

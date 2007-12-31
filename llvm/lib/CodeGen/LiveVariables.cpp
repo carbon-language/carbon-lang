@@ -28,6 +28,7 @@
 
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -537,8 +538,9 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
     // it as using all of the live-out values in the function.
     if (!MBB->empty() && TII.isReturn(MBB->back().getOpcode())) {
       MachineInstr *Ret = &MBB->back();
-      for (MachineFunction::liveout_iterator I = MF->liveout_begin(),
-             E = MF->liveout_end(); I != E; ++I) {
+      for (MachineRegisterInfo::liveout_iterator
+           I = MF->getRegInfo().liveout_begin(),
+           E = MF->getRegInfo().liveout_end(); I != E; ++I) {
         assert(MRegisterInfo::isPhysicalRegister(*I) &&
                "Cannot have a live-in virtual register!");
         HandlePhysRegUse(*I, Ret);

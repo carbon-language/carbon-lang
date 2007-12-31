@@ -20,8 +20,8 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
@@ -902,7 +902,7 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
 {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  SSARegMap *RegMap = MF.getSSARegMap();
+  MachineRegisterInfo &RegInfo = MF.getRegInfo();
   SmallVector<SDOperand, 8> ArgValues;
   SDOperand Root = Op.getOperand(0);
   bool isVarArg = cast<ConstantSDNode>(Op.getOperand(2))->getValue() != 0;
@@ -932,8 +932,8 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
     }
     case MVT::i8:
       if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegMap->createVirtualRegister(&SPU::R8CRegClass);
-        MF.addLiveIn(ArgRegs[ArgRegIdx], VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R8CRegClass);
+        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i8);
         ++ArgRegIdx;
       } else {
@@ -942,8 +942,8 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       break;
     case MVT::i16:
       if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegMap->createVirtualRegister(&SPU::R16CRegClass);
-        MF.addLiveIn(ArgRegs[ArgRegIdx], VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R16CRegClass);
+        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i16);
         ++ArgRegIdx;
       } else {
@@ -952,8 +952,8 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       break;
     case MVT::i32:
       if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegMap->createVirtualRegister(&SPU::R32CRegClass);
-        MF.addLiveIn(ArgRegs[ArgRegIdx], VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R32CRegClass);
+        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
         ++ArgRegIdx;
       } else {
@@ -962,8 +962,8 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       break;
     case MVT::i64:
       if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegMap->createVirtualRegister(&SPU::R64CRegClass);
-        MF.addLiveIn(ArgRegs[ArgRegIdx], VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R64CRegClass);
+        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i64);
         ++ArgRegIdx;
       } else {
@@ -972,8 +972,8 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       break;
     case MVT::f32:
       if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegMap->createVirtualRegister(&SPU::R32FPRegClass);
-        MF.addLiveIn(ArgRegs[ArgRegIdx], VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R32FPRegClass);
+        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::f32);
         ++ArgRegIdx;
       } else {
@@ -982,8 +982,8 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
       break;
     case MVT::f64:
       if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegMap->createVirtualRegister(&SPU::R64FPRegClass);
-        MF.addLiveIn(ArgRegs[ArgRegIdx], VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&SPU::R64FPRegClass);
+        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::f64);
         ++ArgRegIdx;
       } else {
@@ -996,8 +996,8 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
     case MVT::v8i16:
     case MVT::v16i8:
       if (!isVarArg && ArgRegIdx < NumArgRegs) {
-        unsigned VReg = RegMap->createVirtualRegister(&SPU::VECREGRegClass);
-        MF.addLiveIn(ArgRegs[ArgRegIdx], VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
+        RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
         ++ArgRegIdx;
       } else {
@@ -1037,8 +1037,8 @@ LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG, int &VarArgsFrameIndex)
     // result of va_next.
     SmallVector<SDOperand, 8> MemOps;
     for (; ArgRegIdx != NumArgRegs; ++ArgRegIdx) {
-      unsigned VReg = RegMap->createVirtualRegister(&SPU::GPRCRegClass);
-      MF.addLiveIn(ArgRegs[ArgRegIdx], VReg);
+      unsigned VReg = RegInfo.createVirtualRegister(&SPU::GPRCRegClass);
+      RegInfo.addLiveIn(ArgRegs[ArgRegIdx], VReg);
       SDOperand Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
       SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
       MemOps.push_back(Store);
@@ -1294,9 +1294,9 @@ LowerRET(SDOperand Op, SelectionDAG &DAG, TargetMachine &TM) {
   
   // If this is the first return lowered for this function, add the regs to the
   // liveout set for the function.
-  if (DAG.getMachineFunction().liveout_empty()) {
+  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
     for (unsigned i = 0; i != RVLocs.size(); ++i)
-      DAG.getMachineFunction().addLiveOut(RVLocs[i].getLocReg());
+      DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
   }
 
   SDOperand Chain = Op.getOperand(0);
@@ -1785,8 +1785,8 @@ static SDOperand LowerVECTOR_SHUFFLE(SDOperand Op, SelectionDAG &DAG) {
   if (EltsFromV2 == 1 && monotonic) {
     // Compute mask and shuffle
     MachineFunction &MF = DAG.getMachineFunction();
-    SSARegMap *RegMap = MF.getSSARegMap();
-    unsigned VReg = RegMap->createVirtualRegister(&SPU::R32CRegClass);
+    MachineRegisterInfo &RegInfo = MF.getRegInfo();
+    unsigned VReg = RegInfo.createVirtualRegister(&SPU::R32CRegClass);
     MVT::ValueType PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
     // Initialize temporary register to 0
     SDOperand InitTempReg =
@@ -1893,12 +1893,12 @@ static SDOperand LowerVectorMUL(SDOperand Op, SelectionDAG &DAG) {
   // the wacky side
   case MVT::v8i16: {
     MachineFunction &MF = DAG.getMachineFunction();
-    SSARegMap *RegMap = MF.getSSARegMap();
+    MachineRegisterInfo &RegInfo = MF.getRegInfo();
     SDOperand Chain = Op.getOperand(0);
     SDOperand rA = Op.getOperand(0);
     SDOperand rB = Op.getOperand(1);
-    unsigned FSMBIreg = RegMap->createVirtualRegister(&SPU::VECREGRegClass);
-    unsigned HiProdReg = RegMap->createVirtualRegister(&SPU::VECREGRegClass);
+    unsigned FSMBIreg = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
+    unsigned HiProdReg = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
 
     SDOperand FSMBOp =
       DAG.getCopyToReg(Chain, FSMBIreg,
@@ -1929,16 +1929,16 @@ static SDOperand LowerVectorMUL(SDOperand Op, SelectionDAG &DAG) {
   // intermediate products.
   case MVT::v16i8: {
     MachineFunction &MF = DAG.getMachineFunction();
-    SSARegMap *RegMap = MF.getSSARegMap();
+    MachineRegisterInfo &RegInfo = MF.getRegInfo();
     SDOperand Chain = Op.getOperand(0);
     SDOperand rA = Op.getOperand(0);
     SDOperand rB = Op.getOperand(1);
     SDOperand c8 = DAG.getConstant(8, MVT::i8);
     SDOperand c16 = DAG.getConstant(16, MVT::i8);
 
-    unsigned FSMBreg_2222 = RegMap->createVirtualRegister(&SPU::VECREGRegClass);
-    unsigned LoProd_reg = RegMap->createVirtualRegister(&SPU::VECREGRegClass);
-    unsigned HiProd_reg = RegMap->createVirtualRegister(&SPU::VECREGRegClass);
+    unsigned FSMBreg_2222 = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
+    unsigned LoProd_reg = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
+    unsigned HiProd_reg = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
 
     SDOperand LLProd =
       DAG.getNode(SPUISD::MPY, MVT::v8i16,
@@ -2024,7 +2024,7 @@ static SDOperand LowerVectorMUL(SDOperand Op, SelectionDAG &DAG) {
 
 static SDOperand LowerFDIVf32(SDOperand Op, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
-  SSARegMap *RegMap = MF.getSSARegMap();
+  MachineRegisterInfo &RegInfo = MF.getRegInfo();
 
   SDOperand A = Op.getOperand(0);
   SDOperand B = Op.getOperand(1);
@@ -2033,11 +2033,11 @@ static SDOperand LowerFDIVf32(SDOperand Op, SelectionDAG &DAG) {
   unsigned VRegBR, VRegC;
 
   if (VT == MVT::f32) {
-    VRegBR = RegMap->createVirtualRegister(&SPU::R32FPRegClass);
-    VRegC = RegMap->createVirtualRegister(&SPU::R32FPRegClass);
+    VRegBR = RegInfo.createVirtualRegister(&SPU::R32FPRegClass);
+    VRegC = RegInfo.createVirtualRegister(&SPU::R32FPRegClass);
   } else {
-    VRegBR = RegMap->createVirtualRegister(&SPU::VECREGRegClass);
-    VRegC = RegMap->createVirtualRegister(&SPU::VECREGRegClass);
+    VRegBR = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
+    VRegC = RegInfo.createVirtualRegister(&SPU::VECREGRegClass);
   }
   // TODO: make sure we're feeding FPInterp the right arguments
   // Right now: fi B, frest(B)
@@ -2065,18 +2065,6 @@ static SDOperand LowerFDIVf32(SDOperand Op, SelectionDAG &DAG) {
 			    DAG.getNode(ISD::FMUL, VT, B, 
 			    DAG.getCopyFromReg(AxBRcpl, VRegC, VT)))));
 }
-
-// Expands double-precision FDIV
-// Expects two doubles as inputs X and Y, does a floating point
-// reciprocal estimate, and three iterations of Newton-Raphson
-// to increase accuracy.
-//static SDOperand LowerFDIVf64(SDOperand Op, SelectionDAG &DAG) {
-//  MachineFunction &MF = DAG.getMachineFunction();
-//  SSARegMap *RegMap = MF.getSSARegMap();
-//
-//  SDOperand X = Op.getOperand(0);
-//  SDOperand Y = Op.getOperand(1);
-//}
 
 static SDOperand LowerEXTRACT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
   unsigned VT = Op.getValueType();
@@ -2365,9 +2353,9 @@ static SDOperand LowerCTPOP(SDOperand Op, SelectionDAG &DAG) {
 
   case MVT::i16: {
     MachineFunction &MF = DAG.getMachineFunction();
-    SSARegMap *RegMap = MF.getSSARegMap();
+    MachineRegisterInfo &RegInfo = MF.getRegInfo();
 
-    unsigned CNTB_reg = RegMap->createVirtualRegister(&SPU::R16CRegClass);
+    unsigned CNTB_reg = RegInfo.createVirtualRegister(&SPU::R16CRegClass);
 
     SDOperand N = Op.getOperand(0);
     SDOperand Elt0 = DAG.getConstant(0, MVT::i16);
@@ -2397,10 +2385,10 @@ static SDOperand LowerCTPOP(SDOperand Op, SelectionDAG &DAG) {
 
   case MVT::i32: {
     MachineFunction &MF = DAG.getMachineFunction();
-    SSARegMap *RegMap = MF.getSSARegMap();
+    MachineRegisterInfo &RegInfo = MF.getRegInfo();
 
-    unsigned CNTB_reg = RegMap->createVirtualRegister(&SPU::R32CRegClass);
-    unsigned SUM1_reg = RegMap->createVirtualRegister(&SPU::R32CRegClass);
+    unsigned CNTB_reg = RegInfo.createVirtualRegister(&SPU::R32CRegClass);
+    unsigned SUM1_reg = RegInfo.createVirtualRegister(&SPU::R32CRegClass);
 
     SDOperand N = Op.getOperand(0);
     SDOperand Elt0 = DAG.getConstant(0, MVT::i32);

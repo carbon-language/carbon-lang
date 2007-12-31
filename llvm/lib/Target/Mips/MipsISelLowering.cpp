@@ -25,8 +25,8 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/Debug.h"
 #include <queue>
@@ -139,8 +139,8 @@ static unsigned
 AddLiveIn(MachineFunction &MF, unsigned PReg, TargetRegisterClass *RC) 
 {
   assert(RC->contains(PReg) && "Not the correct regclass!");
-  unsigned VReg = MF.getSSARegMap()->createVirtualRegister(RC);
-  MF.addLiveIn(PReg, VReg);
+  unsigned VReg = MF.getRegInfo().createVirtualRegister(RC);
+  MF.getRegInfo().addLiveIn(PReg, VReg);
   return VReg;
 }
 
@@ -596,10 +596,10 @@ LowerRET(SDOperand Op, SelectionDAG &DAG)
 
   // If this is the first return lowered for this function, add 
   // the regs to the liveout set for the function.
-  if (DAG.getMachineFunction().liveout_empty()) {
+  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
     for (unsigned i = 0; i != RVLocs.size(); ++i)
       if (RVLocs[i].isRegLoc())
-        DAG.getMachineFunction().addLiveOut(RVLocs[i].getLocReg());
+        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
   }
 
   // The chain is always operand #0

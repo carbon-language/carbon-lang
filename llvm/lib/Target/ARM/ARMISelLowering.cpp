@@ -24,12 +24,13 @@
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/VectorExtras.h"
 #include "llvm/Support/MathExtras.h"
@@ -685,16 +686,16 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
                          Op.getValue(1), Sign);
     }
     Copy = DAG.getCopyToReg(Chain, ARM::R0, Op, SDOperand());
-    if (DAG.getMachineFunction().liveout_empty())
-      DAG.getMachineFunction().addLiveOut(ARM::R0);
+    if (DAG.getMachineFunction().getRegInfo().liveout_empty())
+      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R0);
     break;
   case 5:
     Copy = DAG.getCopyToReg(Chain, ARM::R1, Op.getOperand(3), SDOperand());
     Copy = DAG.getCopyToReg(Copy, ARM::R0, Op.getOperand(1), Copy.getValue(1));
     // If we haven't noted the R0+R1 are live out, do so now.
-    if (DAG.getMachineFunction().liveout_empty()) {
-      DAG.getMachineFunction().addLiveOut(ARM::R0);
-      DAG.getMachineFunction().addLiveOut(ARM::R1);
+    if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
+      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R0);
+      DAG.getMachineFunction().getRegInfo().addLiveOut(ARM::R1);
     }
     break;
   }
@@ -917,7 +918,7 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
   MVT::ValueType ObjectVT = Op.getValue(ArgNo).getValueType();
   SDOperand Root = Op.getOperand(0);
   std::vector<SDOperand> ArgValues;
-  SSARegMap *RegMap = MF.getSSARegMap();
+  MachineRegisterInfo &RegInfo = MF.getRegInfo();
 
   static const unsigned GPRArgRegs[] = {
     ARM::R0, ARM::R1, ARM::R2, ARM::R3
@@ -935,20 +936,20 @@ static SDOperand LowerFORMAL_ARGUMENT(SDOperand Op, SelectionDAG &DAG,
 
   SDOperand ArgValue;
   if (ObjGPRs == 1) {
-    unsigned VReg = RegMap->createVirtualRegister(&ARM::GPRRegClass);
-    MF.addLiveIn(GPRArgRegs[NumGPRs], VReg);
+    unsigned VReg = RegInfo.createVirtualRegister(&ARM::GPRRegClass);
+    RegInfo.addLiveIn(GPRArgRegs[NumGPRs], VReg);
     vRegs[NumGPRs] = VReg;
     ArgValue = DAG.getCopyFromReg(Root, VReg, MVT::i32);
     if (ObjectVT == MVT::f32)
       ArgValue = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, ArgValue);
   } else if (ObjGPRs == 2) {
-    unsigned VReg = RegMap->createVirtualRegister(&ARM::GPRRegClass);
-    MF.addLiveIn(GPRArgRegs[NumGPRs], VReg);
+    unsigned VReg = RegInfo.createVirtualRegister(&ARM::GPRRegClass);
+    RegInfo.addLiveIn(GPRArgRegs[NumGPRs], VReg);
     vRegs[NumGPRs] = VReg;
     ArgValue = DAG.getCopyFromReg(Root, VReg, MVT::i32);
 
-    VReg = RegMap->createVirtualRegister(&ARM::GPRRegClass);
-    MF.addLiveIn(GPRArgRegs[NumGPRs+1], VReg);
+    VReg = RegInfo.createVirtualRegister(&ARM::GPRRegClass);
+    RegInfo.addLiveIn(GPRArgRegs[NumGPRs+1], VReg);
     vRegs[NumGPRs+1] = VReg;
     SDOperand ArgValue2 = DAG.getCopyFromReg(Root, VReg, MVT::i32);
 
@@ -1002,7 +1003,7 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
     };
 
     MachineFunction &MF = DAG.getMachineFunction();
-    SSARegMap *RegMap = MF.getSSARegMap();
+    MachineRegisterInfo &RegInfo = MF.getRegInfo();
     MachineFrameInfo *MFI = MF.getFrameInfo();
     ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
     unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
@@ -1019,8 +1020,8 @@ ARMTargetLowering::LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG) {
 
       SmallVector<SDOperand, 4> MemOps;
       for (; NumGPRs < 4; ++NumGPRs) {
-        unsigned VReg = RegMap->createVirtualRegister(&ARM::GPRRegClass);
-        MF.addLiveIn(GPRArgRegs[NumGPRs], VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&ARM::GPRRegClass);
+        RegInfo.addLiveIn(GPRArgRegs[NumGPRs], VReg);
         SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::i32);
         SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
         MemOps.push_back(Store);

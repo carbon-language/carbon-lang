@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -911,19 +912,21 @@ static void HandleVRSaveUpdate(MachineInstr *MI, const TargetInstrInfo &TII) {
 
   unsigned UsedRegMask = 0;
   for (unsigned i = 0; i != 32; ++i)
-    if (MF->isPhysRegUsed(VRRegNo[i]))
+    if (MF->getRegInfo().isPhysRegUsed(VRRegNo[i]))
       UsedRegMask |= 1 << (31-i);
   
   // Live in and live out values already must be in the mask, so don't bother
   // marking them.
-  for (MachineFunction::livein_iterator I = 
-       MF->livein_begin(), E = MF->livein_end(); I != E; ++I) {
+  for (MachineRegisterInfo::livein_iterator
+       I = MF->getRegInfo().livein_begin(),
+       E = MF->getRegInfo().livein_end(); I != E; ++I) {
     unsigned RegNo = PPCRegisterInfo::getRegisterNumbering(I->first);
     if (VRRegNo[RegNo] == I->first)        // If this really is a vector reg.
       UsedRegMask &= ~(1 << (31-RegNo));   // Doesn't need to be marked.
   }
-  for (MachineFunction::liveout_iterator I = 
-       MF->liveout_begin(), E = MF->liveout_end(); I != E; ++I) {
+  for (MachineRegisterInfo::liveout_iterator
+       I = MF->getRegInfo().liveout_begin(),
+       E = MF->getRegInfo().liveout_end(); I != E; ++I) {
     unsigned RegNo = PPCRegisterInfo::getRegisterNumbering(*I);
     if (VRRegNo[RegNo] == *I)              // If this really is a vector reg.
       UsedRegMask &= ~(1 << (31-RegNo));   // Doesn't need to be marked.
@@ -1012,8 +1015,8 @@ void PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   //  Save and clear the LR state.
   PPCFunctionInfo *FI = MF.getInfo<PPCFunctionInfo>();
   unsigned LR = getRARegister();
-  FI->setUsesLR(MF.isPhysRegUsed(LR));
-  MF.setPhysRegUnused(LR);
+  FI->setUsesLR(MF.getRegInfo().isPhysRegUsed(LR));
+  MF.getRegInfo().setPhysRegUnused(LR);
 
   //  Save R31 if necessary
   int FPSI = FI->getFramePointerSaveIndex();
@@ -1023,8 +1026,8 @@ void PPCRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   const MachineFrameInfo *MFI = MF.getFrameInfo();
  
   // If the frame pointer save index hasn't been defined yet.
-  if (!FPSI &&  (NoFramePointerElim || MFI->hasVarSizedObjects()) 
-                                                  && IsELF32_ABI) {
+  if (!FPSI && (NoFramePointerElim || MFI->hasVarSizedObjects()) &&
+      IsELF32_ABI) {
     // Find out what the fix offset of the frame pointer save area.
     int FPOffset = PPCFrameInfo::getFramePointerSaveOffset(IsPPC64,
                                                            IsMachoABI);

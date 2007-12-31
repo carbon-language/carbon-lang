@@ -30,8 +30,8 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetOptions.h"
@@ -703,10 +703,10 @@ SDOperand X86TargetLowering::LowerRET(SDOperand Op, SelectionDAG &DAG) {
     
   // If this is the first return lowered for this function, add the regs to the
   // liveout set for the function.
-  if (DAG.getMachineFunction().liveout_empty()) {
+  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
     for (unsigned i = 0; i != RVLocs.size(); ++i)
       if (RVLocs[i].isRegLoc())
-        DAG.getMachineFunction().addLiveOut(RVLocs[i].getLocReg());
+        DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
   }
   SDOperand Chain = Op.getOperand(0);
   
@@ -933,8 +933,8 @@ LowerCallResult(SDOperand Chain, SDOperand InFlag, SDNode *TheCall,
 static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
                           const TargetRegisterClass *RC) {
   assert(RC->contains(PReg) && "Not the correct regclass!");
-  unsigned VReg = MF.getSSARegMap()->createVirtualRegister(RC);
-  MF.addLiveIn(PReg, VReg);
+  unsigned VReg = MF.getRegInfo().createVirtualRegister(RC);
+  MF.getRegInfo().addLiveIn(PReg, VReg);
   return VReg;
 }
 
@@ -1754,7 +1754,7 @@ SDOperand X86TargetLowering::LowerX86_TailCallTo(SDOperand Op,
                              Callee,InFlag);
     Callee = DAG.getRegister(Opc, getPointerTy());
     // Add register as live out.
-    DAG.getMachineFunction().addLiveOut(Opc);
+    DAG.getMachineFunction().getRegInfo().addLiveOut(Opc);
   }
    
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Flag);
@@ -5288,7 +5288,7 @@ SDOperand X86TargetLowering::LowerEH_RETURN(SDOperand Op, SelectionDAG &DAG)
   StoreAddr = DAG.getNode(ISD::ADD, getPointerTy(), StoreAddr, Offset);
   Chain = DAG.getStore(Chain, Handler, StoreAddr, NULL, 0);
   Chain = DAG.getCopyToReg(Chain, X86::ECX, StoreAddr);
-  MF.addLiveOut(X86::ECX);
+  MF.getRegInfo().addLiveOut(X86::ECX);
 
   return DAG.getNode(X86ISD::EH_RETURN, MVT::Other,
                      Chain, DAG.getRegister(X86::ECX, getPointerTy()));
@@ -5802,7 +5802,7 @@ X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
 
     // Load the old value of the high byte of the control word...
     unsigned OldCW =
-      F->getSSARegMap()->createVirtualRegister(X86::GR16RegisterClass);
+      F->getRegInfo().createVirtualRegister(X86::GR16RegisterClass);
     addFrameReference(BuildMI(BB, TII->get(X86::MOV16rm), OldCW), CWFrameIdx);
 
     // Set the high part to be round to zero...

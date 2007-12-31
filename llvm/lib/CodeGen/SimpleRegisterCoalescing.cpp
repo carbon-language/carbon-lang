@@ -21,10 +21,9 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/RegisterCoalescer.h"
-#include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
@@ -283,7 +282,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec TheCopy, bool &Again) {
       // If this is a extract_subreg where dst is a physical register, e.g.
       // cl = EXTRACT_SUBREG reg1024, 1
       // then create and update the actual physical register allocated to RHS.
-      const TargetRegisterClass *RC=mf_->getSSARegMap()->getRegClass(repSrcReg);
+      const TargetRegisterClass *RC=mf_->getRegInfo().getRegClass(repSrcReg);
       for (const unsigned *SRs = mri_->getSuperRegisters(repDstReg);
            unsigned SR = *SRs; ++SRs) {
         if (repDstReg == mri_->getSubReg(SR, SubIdx) &&
@@ -313,7 +312,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec TheCopy, bool &Again) {
     } else {
       unsigned SrcSize= li_->getInterval(repSrcReg).getSize() / InstrSlots::NUM;
       unsigned DstSize= li_->getInterval(repDstReg).getSize() / InstrSlots::NUM;
-      const TargetRegisterClass *RC=mf_->getSSARegMap()->getRegClass(repDstReg);
+      const TargetRegisterClass *RC=mf_->getRegInfo().getRegClass(repDstReg);
       unsigned Threshold = allocatableRCRegs_[RC].count();
       // Be conservative. If both sides are virtual registers, do not coalesce
       // if this will cause a high use density interval to target a smaller set
@@ -395,7 +394,7 @@ bool SimpleRegisterCoalescing::JoinCopy(CopyRec TheCopy, bool &Again) {
     LiveInterval &JoinVInt = SrcIsPhys ? DstInt : SrcInt;
     unsigned JoinVReg = SrcIsPhys ? repDstReg : repSrcReg;
     unsigned JoinPReg = SrcIsPhys ? repSrcReg : repDstReg;
-    const TargetRegisterClass *RC = mf_->getSSARegMap()->getRegClass(JoinVReg);
+    const TargetRegisterClass *RC = mf_->getRegInfo().getRegClass(JoinVReg);
     unsigned Threshold = allocatableRCRegs_[RC].count() * 2;
     if (TheCopy.isBackEdge)
       Threshold *= 2; // Favors back edge copies.
@@ -1239,13 +1238,13 @@ bool SimpleRegisterCoalescing::differingRegisterClasses(unsigned RegA,
   if (MRegisterInfo::isPhysicalRegister(RegA)) {
     assert(MRegisterInfo::isVirtualRegister(RegB) &&
            "Shouldn't consider two physregs!");
-    return !mf_->getSSARegMap()->getRegClass(RegB)->contains(RegA);
+    return !mf_->getRegInfo().getRegClass(RegB)->contains(RegA);
   }
 
   // Compare against the regclass for the second reg.
-  const TargetRegisterClass *RegClass = mf_->getSSARegMap()->getRegClass(RegA);
+  const TargetRegisterClass *RegClass = mf_->getRegInfo().getRegClass(RegA);
   if (MRegisterInfo::isVirtualRegister(RegB))
-    return RegClass != mf_->getSSARegMap()->getRegClass(RegB);
+    return RegClass != mf_->getRegInfo().getRegClass(RegB);
   else
     return !RegClass->contains(RegB);
 }
@@ -1254,8 +1253,8 @@ bool SimpleRegisterCoalescing::differingRegisterClasses(unsigned RegA,
 /// cycles Start and End. It also returns the use operand by reference. It
 /// returns NULL if there are no uses.
 MachineInstr *
-SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End, unsigned Reg,
-                               MachineOperand *&MOU) {
+SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
+                                          unsigned Reg, MachineOperand *&MOU) {
   int e = (End-1) / InstrSlots::NUM * InstrSlots::NUM;
   int s = Start;
   while (e >= s) {
@@ -1390,9 +1389,9 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
          E = mri_->regclass_end(); I != E; ++I)
     allocatableRCRegs_.insert(std::make_pair(*I,mri_->getAllocatableSet(fn, *I)));
 
-  SSARegMap *RegMap = mf_->getSSARegMap();
-  r2rMap_.grow(RegMap->getLastVirtReg());
-  r2rRevMap_.grow(RegMap->getLastVirtReg());
+  MachineRegisterInfo &RegInfo = mf_->getRegInfo();
+  r2rMap_.grow(RegInfo.getLastVirtReg());
+  r2rRevMap_.grow(RegInfo.getLastVirtReg());
 
   // Join (coalesce) intervals if requested.
   IndexedMap<unsigned, VirtReg2IndexFunctor> RegSubIdxMap;
@@ -1413,7 +1412,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
 
     // Transfer sub-registers info to SSARegMap now that coalescing information
     // is complete.
-    RegSubIdxMap.grow(mf_->getSSARegMap()->getLastVirtReg()+1);
+    RegSubIdxMap.grow(RegInfo.getLastVirtReg()+1);
     while (!SubRegIdxes.empty()) {
       std::pair<unsigned, unsigned> RI = SubRegIdxes.back();
       SubRegIdxes.pop_back();

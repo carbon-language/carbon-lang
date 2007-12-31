@@ -34,7 +34,7 @@ namespace llvm {
   class LiveVariables;
   class MachineLoopInfo;
   class MRegisterInfo;
-  class SSARegMap;
+  class MachineRegisterInfo;
   class TargetInstrInfo;
   class TargetRegisterClass;
   class VirtRegMap;
@@ -308,18 +308,20 @@ namespace llvm {
 
     bool alsoFoldARestore(int Id, int index, unsigned vr,
                           BitVector &RestoreMBBs,
-                          std::map<unsigned,std::vector<SRInfo> > &RestoreIdxes);
+                          std::map<unsigned,std::vector<SRInfo> >&RestoreIdxes);
     void eraseRestoreInfo(int Id, int index, unsigned vr,
                           BitVector &RestoreMBBs,
-                          std::map<unsigned,std::vector<SRInfo> > &RestoreIdxes);
+                          std::map<unsigned,std::vector<SRInfo> >&RestoreIdxes);
 
-    /// rewriteInstructionForSpills, rewriteInstructionsForSpills - Helper functions
-    /// for addIntervalsForSpills to rewrite uses / defs for the given live range.
+    /// rewriteInstructionForSpills, rewriteInstructionsForSpills - Helper
+    /// functions for addIntervalsForSpills to rewrite uses / defs for the given
+    /// live range.
     bool rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
         unsigned id, unsigned index, unsigned end, MachineInstr *MI,
         MachineInstr *OrigDefMI, MachineInstr *DefMI, unsigned Slot, int LdSlot,
         bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
-        VirtRegMap &vrm, SSARegMap *RegMap, const TargetRegisterClass* rc,
+        VirtRegMap &vrm, MachineRegisterInfo &RegMap, 
+                                     const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds,
         unsigned &NewVReg, bool &HasDef, bool &HasUse,
         const MachineLoopInfo *loopInfo,
@@ -329,7 +331,8 @@ namespace llvm {
         LiveInterval::Ranges::const_iterator &I,
         MachineInstr *OrigDefMI, MachineInstr *DefMI, unsigned Slot, int LdSlot,
         bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
-        VirtRegMap &vrm, SSARegMap *RegMap, const TargetRegisterClass* rc,
+        VirtRegMap &vrm, MachineRegisterInfo &RegMap,
+                                      const TargetRegisterClass* rc,
         SmallVector<int, 4> &ReMatIds, const MachineLoopInfo *loopInfo,
         BitVector &SpillMBBs,
         std::map<unsigned,std::vector<SRInfo> > &SpillIdxes,

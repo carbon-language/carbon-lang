@@ -25,11 +25,11 @@ namespace llvm {
   struct SUnit;
   class MachineConstantPool;
   class MachineModuleInfo;
+  class MachineRegisterInfo;
   class MachineInstr;
   class MRegisterInfo;
   class SelectionDAG;
   class SelectionDAGISel;
-  class SSARegMap;
   class TargetInstrInfo;
   class TargetInstrDescriptor;
   class TargetMachine;
@@ -243,7 +243,7 @@ namespace llvm {
     const TargetMachine &TM;              // Target processor
     const TargetInstrInfo *TII;           // Target instruction information
     const MRegisterInfo *MRI;             // Target processor register info
-    SSARegMap *RegMap;                    // Virtual/real register map
+    MachineRegisterInfo &RegInfo;         // Virtual/real register map
     MachineConstantPool *ConstPool;       // Target constant pool
     std::vector<SUnit*> Sequence;         // The schedule. Null SUnit*'s
                                           // represent noop instructions.
@@ -253,8 +253,7 @@ namespace llvm {
     SmallSet<SDNode*, 16> CommuteSet;     // Nodes the should be commuted.
 
     ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
-                const TargetMachine &tm)
-      : DAG(dag), BB(bb), TM(tm) {}
+                const TargetMachine &tm);
 
     virtual ~ScheduleDAG() {}
 

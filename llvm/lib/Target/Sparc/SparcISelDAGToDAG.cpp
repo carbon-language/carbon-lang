@@ -19,9 +19,9 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Debug.h"
 #include <queue>
@@ -298,7 +298,7 @@ void SparcTargetLowering::computeMaskedBitsForTargetNode(const SDOperand Op,
 std::vector<SDOperand>
 SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
-  SSARegMap *RegMap = MF.getSSARegMap();
+  MachineRegisterInfo &RegInfo = MF.getRegInfo();
   std::vector<SDOperand> ArgValues;
   
   static const unsigned ArgRegs[] = {
@@ -324,8 +324,8 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         if (CurArgReg < ArgRegEnd) ++CurArgReg;
         ArgValues.push_back(DAG.getNode(ISD::UNDEF, ObjectVT));
       } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
-        unsigned VReg = RegMap->createVirtualRegister(&SP::IntRegsRegClass);
-        MF.addLiveIn(*CurArgReg++, VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
+        MF.getRegInfo().addLiveIn(*CurArgReg++, VReg);
         SDOperand Arg = DAG.getCopyFromReg(Root, VReg, MVT::i32);
         if (ObjectVT != MVT::i32) {
           unsigned AssertOp = ISD::AssertSext;
@@ -362,8 +362,8 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         ArgValues.push_back(DAG.getNode(ISD::UNDEF, ObjectVT));
       } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
         // FP value is passed in an integer register.
-        unsigned VReg = RegMap->createVirtualRegister(&SP::IntRegsRegClass);
-        MF.addLiveIn(*CurArgReg++, VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
+        MF.getRegInfo().addLiveIn(*CurArgReg++, VReg);
         SDOperand Arg = DAG.getCopyFromReg(Root, VReg, MVT::i32);
 
         Arg = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Arg);
@@ -396,8 +396,8 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       } else {
         SDOperand HiVal;
         if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
-          unsigned VRegHi = RegMap->createVirtualRegister(&SP::IntRegsRegClass);
-          MF.addLiveIn(*CurArgReg++, VRegHi);
+          unsigned VRegHi = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
+          MF.getRegInfo().addLiveIn(*CurArgReg++, VRegHi);
           HiVal = DAG.getCopyFromReg(Root, VRegHi, MVT::i32);
         } else {
           int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
@@ -407,8 +407,8 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         
         SDOperand LoVal;
         if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
-          unsigned VRegLo = RegMap->createVirtualRegister(&SP::IntRegsRegClass);
-          MF.addLiveIn(*CurArgReg++, VRegLo);
+          unsigned VRegLo = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
+          MF.getRegInfo().addLiveIn(*CurArgReg++, VRegLo);
           LoVal = DAG.getCopyFromReg(Root, VRegLo, MVT::i32);
         } else {
           int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset+4);
@@ -437,8 +437,8 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     VarArgsFrameOffset = ArgOffset;
     
     for (; CurArgReg != ArgRegEnd; ++CurArgReg) {
-      unsigned VReg = RegMap->createVirtualRegister(&SP::IntRegsRegClass);
-      MF.addLiveIn(*CurArgReg, VReg);
+      unsigned VReg = RegInfo.createVirtualRegister(&SP::IntRegsRegClass);
+      MF.getRegInfo().addLiveIn(*CurArgReg, VReg);
       SDOperand Arg = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
 
       int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
@@ -461,17 +461,17 @@ SparcTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   case MVT::i8:
   case MVT::i16:
   case MVT::i32:
-    MF.addLiveOut(SP::I0);
+    MF.getRegInfo().addLiveOut(SP::I0);
     break;
   case MVT::i64:
-    MF.addLiveOut(SP::I0);
-    MF.addLiveOut(SP::I1);
+    MF.getRegInfo().addLiveOut(SP::I0);
+    MF.getRegInfo().addLiveOut(SP::I1);
     break;
   case MVT::f32:
-    MF.addLiveOut(SP::F0);
+    MF.getRegInfo().addLiveOut(SP::F0);
     break;
   case MVT::f64:
-    MF.addLiveOut(SP::D0);
+    MF.getRegInfo().addLiveOut(SP::D0);
     break;
   }
   

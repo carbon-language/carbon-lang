@@ -33,6 +33,7 @@
 #include "X86InstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -169,7 +170,7 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
 
   assert(X86::FP6 == X86::FP0+6 && "Register enums aren't sorted right!");
   for (unsigned i = 0; i <= 6; ++i)
-    if (MF.isPhysRegUsed(X86::FP0+i)) {
+    if (MF.getRegInfo().isPhysRegUsed(X86::FP0+i)) {
       FPIsUsed = true;
       break;
     }

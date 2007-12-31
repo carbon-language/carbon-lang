@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -27,6 +27,13 @@
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
+ScheduleDAG::ScheduleDAG(SelectionDAG &dag, MachineBasicBlock *bb,
+                         const TargetMachine &tm)
+  : DAG(dag), BB(bb), TM(tm), RegInfo(BB->getParent()->getRegInfo()) {
+    TII = TM.getInstrInfo();
+    MRI = TM.getRegisterInfo();
+    ConstPool = BB->getParent()->getConstantPool();
+}
 
 /// CheckForPhysRegDependency - Check if the dependency between def and use of
 /// a specified operand is a physical register dependency. If so, returns the
@@ -341,7 +348,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   const TargetRegisterClass *TRC = 0;
   // Figure out the register class to create for the destreg.
   if (VRBase)
-    TRC = RegMap->getRegClass(VRBase);
+    TRC = RegInfo.getRegClass(VRBase);
   else
     TRC = MRI->getPhysicalRegisterRegClass(Node->getValueType(ResNo), SrcReg);
     
@@ -351,7 +358,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
     VRBase = SrcReg;
   } else {
     // Create the reg, emit the copy.
-    VRBase = RegMap->createVirtualRegister(TRC);
+    VRBase = RegInfo.createVirtualRegister(TRC);
     MRI->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, TRC, TRC);
   }
 
@@ -390,7 +397,7 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node,
     if (VRBase == 0) {
       const TargetRegisterClass *RC = getInstrOperandRegClass(MRI, TII, &II, i);
       assert(RC && "Isn't a register operand!");
-      VRBase = RegMap->createVirtualRegister(RC);
+      VRBase = RegInfo.createVirtualRegister(RC);
       MI->addOperand(MachineOperand::CreateReg(VRBase, true));
     }
 
@@ -437,7 +444,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
       const TargetRegisterClass *RC =
                           getInstrOperandRegClass(MRI, TII, II, IIOpNum);
       assert(RC && "Don't have operand info for this instruction!");
-      const TargetRegisterClass *VRC = RegMap->getRegClass(VReg);
+      const TargetRegisterClass *VRC = RegInfo.getRegClass(VReg);
       if (VRC != RC) {
         cerr << "Register class of operand and regclass of use don't agree!\n";
 #ifndef NDEBUG
@@ -501,7 +508,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
       const TargetRegisterClass *RC =
                             getInstrOperandRegClass(MRI, TII, II, IIOpNum);
       assert(RC && "Don't have operand info for this instruction!");
-      assert(RegMap->getRegClass(VReg) == RC &&
+      assert(RegInfo.getRegClass(VReg) == RC &&
              "Register class of operand and regclass of use don't agree!");
     }
   }
@@ -565,18 +572,18 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
 
     // Figure out the register class to create for the destreg.
     unsigned VReg = getVR(Node->getOperand(0), VRBaseMap);
-    const TargetRegisterClass *TRC = RegMap->getRegClass(VReg);
+    const TargetRegisterClass *TRC = RegInfo.getRegClass(VReg);
     const TargetRegisterClass *SRC = getSubRegisterRegClass(TRC, SubIdx);
 
     if (VRBase) {
       // Grab the destination register
       const TargetRegisterClass *DRC = 0;
-      DRC = RegMap->getRegClass(VRBase);
+      DRC = RegInfo.getRegClass(VRBase);
       assert(SRC == DRC && 
              "Source subregister and destination must have the same class");
     } else {
       // Create the reg
-      VRBase = RegMap->createVirtualRegister(SRC);
+      VRBase = RegInfo.createVirtualRegister(SRC);
     }
     
     // Add def, source, and subreg index
@@ -626,13 +633,12 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
     // Figure out the register class to create for the destreg.
     const TargetRegisterClass *TRC = 0;
     if (VRBase) {
-      TRC = RegMap->getRegClass(VRBase);
+      TRC = RegInfo.getRegClass(VRBase);
     } else {
-      TRC = getSuperregRegisterClass(RegMap->getRegClass(SubReg), 
-                                     SubIdx, 
+      TRC = getSuperregRegisterClass(RegInfo.getRegClass(SubReg), SubIdx, 
                                      Node->getValueType(0));
       assert(TRC && "Couldn't determine register class for insert_subreg");
-      VRBase = RegMap->createVirtualRegister(TRC); // Create the reg
+      VRBase = RegInfo.createVirtualRegister(TRC); // Create the reg
     }
     
     MI->addOperand(MachineOperand::CreateReg(VRBase, true));
@@ -740,7 +746,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
         const TargetRegisterClass *TRC = 0;
         // Get the target register class
         if (MRegisterInfo::isVirtualRegister(InReg))
-          TRC = RegMap->getRegClass(InReg);
+          TRC = RegInfo.getRegClass(InReg);
         else
           TRC =
             MRI->getPhysicalRegisterRegClass(Node->getOperand(2).getValueType(),
@@ -847,7 +853,7 @@ void ScheduleDAG::EmitCrossRCCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseM
     } else {
       // Copy from physical register.
       assert(I->Reg && "Unknown physical register!");
-      unsigned VRBase = RegMap->createVirtualRegister(SU->CopyDstRC);
+      unsigned VRBase = RegInfo.createVirtualRegister(SU->CopyDstRC);
       bool isNew = VRBaseMap.insert(std::make_pair(SU, VRBase));
       assert(isNew && "Node emitted out of order - early");
       MRI->copyRegToReg(*BB, BB->end(), VRBase, I->Reg,
@@ -864,10 +870,10 @@ void ScheduleDAG::EmitSchedule() {
   // block before emitting the code for the block.
   MachineFunction &MF = DAG.getMachineFunction();
   if (&MF.front() == BB) {
-    for (MachineFunction::livein_iterator LI = MF.livein_begin(),
-         E = MF.livein_end(); LI != E; ++LI)
+    for (MachineRegisterInfo::livein_iterator LI = RegInfo.livein_begin(),
+         E = RegInfo.livein_end(); LI != E; ++LI)
       if (LI->second) {
-        const TargetRegisterClass *RC = RegMap->getRegClass(LI->second);
+        const TargetRegisterClass *RC = RegInfo.getRegClass(LI->second);
         MRI->copyRegToReg(*MF.begin(), MF.begin()->end(), LI->second,
                           LI->first, RC, RC);
       }
@@ -906,11 +912,6 @@ void ScheduleDAG::dumpSchedule() const {
 /// Run - perform scheduling.
 ///
 MachineBasicBlock *ScheduleDAG::Run() {
-  TII = TM.getInstrInfo();
-  MRI = TM.getRegisterInfo();
-  RegMap = BB->getParent()->getSSARegMap();
-  ConstPool = BB->getParent()->getConstantPool();
-
   Schedule();
   return BB;
 }

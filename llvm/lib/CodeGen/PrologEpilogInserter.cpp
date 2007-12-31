@@ -20,6 +20,8 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -48,9 +50,8 @@ namespace {
 
       // Get MachineModuleInfo so that we can track the construction of the
       // frame.
-      if (MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>()) {
+      if (MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>())
         Fn.getFrameInfo()->setMachineModuleInfo(MMI);
-      }
 
       // Allow the target machine to make some adjustments to the function
       // e.g. UsedPhysRegs before calculateCalleeSavedRegisters.
@@ -174,13 +175,13 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
   std::vector<CalleeSavedInfo> CSI;
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
-    if (Fn.isPhysRegUsed(Reg)) {
+    if (Fn.getRegInfo().isPhysRegUsed(Reg)) {
         // If the reg is modified, save it!
       CSI.push_back(CalleeSavedInfo(Reg, CSRegClasses[i]));
     } else {
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
            *AliasSet; ++AliasSet) {  // Check alias registers too.
-        if (Fn.isPhysRegUsed(*AliasSet)) {
+        if (Fn.getRegInfo().isPhysRegUsed(*AliasSet)) {
           CSI.push_back(CalleeSavedInfo(Reg, CSRegClasses[i]));
           break;
         }

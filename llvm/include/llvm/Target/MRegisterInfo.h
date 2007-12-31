@@ -33,7 +33,6 @@ class MachineMove;
 class RegScavenger;
 class SDNode;
 class SelectionDAG;
-class SSARegMap;
 class TargetRegisterClass;
 class Type;
 

@@ -16,8 +16,9 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
@@ -30,8 +31,8 @@ using namespace llvm;
 static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
                           TargetRegisterClass *RC) {
   assert(RC->contains(PReg) && "Not the correct regclass!");
-  unsigned VReg = MF.getSSARegMap()->createVirtualRegister(RC);
-  MF.addLiveIn(PReg, VReg);
+  unsigned VReg = MF.getRegInfo().createVirtualRegister(RC);
+  MF.getRegInfo().addLiveIn(PReg, VReg);
   return VReg;
 }
 
@@ -312,8 +313,8 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG) {
       ArgReg = Alpha::F0;
     }
     Copy = DAG.getCopyToReg(Copy, ArgReg, Op.getOperand(1), Copy.getValue(1));
-    if (DAG.getMachineFunction().liveout_empty())
-      DAG.getMachineFunction().addLiveOut(ArgReg);
+    if (DAG.getMachineFunction().getRegInfo().liveout_empty())
+      DAG.getMachineFunction().getRegInfo().addLiveOut(ArgReg);
     break;
   }
   }

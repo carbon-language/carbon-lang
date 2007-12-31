@@ -19,8 +19,8 @@
 #include "X86TargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetOptions.h"
 using namespace llvm;
 
@@ -316,11 +316,11 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     
     if (DisableLEA16) {
       // If 16-bit LEA is disabled, use 32-bit LEA via subregisters.
-      SSARegMap *RegMap = MFI->getParent()->getSSARegMap();
+      MachineRegisterInfo &RegInfo = MFI->getParent()->getRegInfo();
       unsigned Opc = TM.getSubtarget<X86Subtarget>().is64Bit()
         ? X86::LEA64_32r : X86::LEA32r;
-      unsigned leaInReg = RegMap->createVirtualRegister(&X86::GR32RegClass);
-      unsigned leaOutReg = RegMap->createVirtualRegister(&X86::GR32RegClass);
+      unsigned leaInReg = RegInfo.createVirtualRegister(&X86::GR32RegClass);
+      unsigned leaOutReg = RegInfo.createVirtualRegister(&X86::GR32RegClass);
             
       MachineInstr *Ins =
         BuildMI(get(X86::INSERT_SUBREG), leaInReg).addReg(Src).addImm(2);

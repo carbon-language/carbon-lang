@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -1206,14 +1207,14 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
     bool Spilled = false;
-    if (MF.isPhysRegUsed(Reg)) {
+    if (MF.getRegInfo().isPhysRegUsed(Reg)) {
       AFI->setCSRegisterIsSpilled(Reg);
       Spilled = true;
       CanEliminateFrame = false;
     } else {
       // Check alias registers too.
       for (const unsigned *Aliases = getAliasSet(Reg); *Aliases; ++Aliases) {
-        if (MF.isPhysRegUsed(*Aliases)) {
+        if (MF.getRegInfo().isPhysRegUsed(*Aliases)) {
           Spilled = true;
           CanEliminateFrame = false;
         }
@@ -1286,7 +1287,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // If LR is not spilled, but at least one of R4, R5, R6, and R7 is spilled.
     // Spill LR as well so we can fold BX_RET to the registers restore (LDM).
     if (!LRSpilled && CS1Spilled) {
-      MF.setPhysRegUsed(ARM::LR);
+      MF.getRegInfo().setPhysRegUsed(ARM::LR);
       AFI->setCSRegisterIsSpilled(ARM::LR);
       NumGPRSpills++;
       UnspilledCS1GPRs.erase(std::find(UnspilledCS1GPRs.begin(),
@@ -1298,7 +1299,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
     // Darwin ABI requires FP to point to the stack slot that contains the
     // previous FP.
     if (STI.isTargetDarwin() || hasFP(MF)) {
-      MF.setPhysRegUsed(FramePtr);
+      MF.getRegInfo().setPhysRegUsed(FramePtr);
       NumGPRSpills++;
     }
 
@@ -1312,7 +1313,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
           unsigned Reg = UnspilledCS1GPRs[i];
           // Don't spiil high register if the function is thumb
           if (!AFI->isThumbFunction() || isLowRegister(Reg) || Reg == ARM::LR) {
-            MF.setPhysRegUsed(Reg);
+            MF.getRegInfo().setPhysRegUsed(Reg);
             AFI->setCSRegisterIsSpilled(Reg);
             if (!isReservedReg(MF, Reg))
               ExtraCSSpill = true;
@@ -1322,7 +1323,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
       } else if (!UnspilledCS2GPRs.empty() &&
                  !AFI->isThumbFunction()) {
         unsigned Reg = UnspilledCS2GPRs.front();
-        MF.setPhysRegUsed(Reg);
+        MF.getRegInfo().setPhysRegUsed(Reg);
         AFI->setCSRegisterIsSpilled(Reg);
         if (!isReservedReg(MF, Reg))
           ExtraCSSpill = true;
@@ -1378,7 +1379,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
         }
         if (Extras.size() && NumExtras == 0) {
           for (unsigned i = 0, e = Extras.size(); i != e; ++i) {
-            MF.setPhysRegUsed(Extras[i]);
+            MF.getRegInfo().setPhysRegUsed(Extras[i]);
             AFI->setCSRegisterIsSpilled(Extras[i]);
           }
         } else {
@@ -1392,7 +1393,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   }
 
   if (ForceLRSpill) {
-    MF.setPhysRegUsed(ARM::LR);
+    MF.getRegInfo().setPhysRegUsed(ARM::LR);
     AFI->setCSRegisterIsSpilled(ARM::LR);
     AFI->setLRIsSpilledForFarJump(true);
   }
@@ -1446,9 +1447,9 @@ void ARMRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   if (isThumb) {
     // Check if R3 is live in. It might have to be used as a scratch register.
-    for (MachineFunction::livein_iterator I=MF.livein_begin(),E=MF.livein_end();
-         I != E; ++I) {
-      if ((*I).first == ARM::R3) {
+    for (MachineRegisterInfo::livein_iterator I =MF.getRegInfo().livein_begin(),
+         E = MF.getRegInfo().livein_end(); I != E; ++I) {
+      if (I->first == ARM::R3) {
         AFI->setR3IsLiveIn(true);
         break;
       }

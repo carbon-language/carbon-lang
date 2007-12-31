@@ -29,7 +29,7 @@ namespace llvm {
   class MachineConstantPoolValue;
   class Mangler;
   class TargetAsmInfo;
-  
+  class Type;
 
   /// AsmPrinter - This class is intended to be used as a driving class for all
   /// asm writers.

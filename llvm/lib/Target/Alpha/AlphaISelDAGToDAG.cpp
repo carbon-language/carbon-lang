@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetOptions.h"
@@ -200,10 +200,9 @@ private:
 /// GOT address into a register.
 ///
 SDOperand AlphaDAGToDAGISel::getGlobalBaseReg() {
-  MachineFunction* MF = BB->getParent();
   unsigned GP = 0;
-  for(MachineFunction::livein_iterator ii = MF->livein_begin(), 
-        ee = MF->livein_end(); ii != ee; ++ii)
+  for(MachineRegisterInfo::livein_iterator ii = RegInfo->livein_begin(), 
+        ee = RegInfo->livein_end(); ii != ee; ++ii)
     if (ii->first == Alpha::R29) {
       GP = ii->second;
       break;
@@ -216,10 +215,9 @@ SDOperand AlphaDAGToDAGISel::getGlobalBaseReg() {
 /// getRASaveReg - Grab the return address
 ///
 SDOperand AlphaDAGToDAGISel::getGlobalRetAddr() {
-  MachineFunction* MF = BB->getParent();
   unsigned RA = 0;
-  for(MachineFunction::livein_iterator ii = MF->livein_begin(), 
-        ee = MF->livein_end(); ii != ee; ++ii)
+  for(MachineRegisterInfo::livein_iterator ii = RegInfo->livein_begin(), 
+        ee = RegInfo->livein_end(); ii != ee; ++ii)
     if (ii->first == Alpha::R26) {
       RA = ii->second;
       break;

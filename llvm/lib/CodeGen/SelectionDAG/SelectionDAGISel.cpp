@@ -26,14 +26,14 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/ParameterAttributes.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -166,7 +166,7 @@ namespace llvm {
     TargetLowering &TLI;
     Function &Fn;
     MachineFunction &MF;
-    SSARegMap *RegMap;
+    MachineRegisterInfo &RegInfo;
 
     FunctionLoweringInfo(TargetLowering &TLI, Function &Fn,MachineFunction &MF);
 
@@ -189,7 +189,7 @@ namespace llvm {
 #endif
 
     unsigned MakeReg(MVT::ValueType VT) {
-      return RegMap->createVirtualRegister(TLI.getRegClassFor(VT));
+      return RegInfo.createVirtualRegister(TLI.getRegClassFor(VT));
     }
     
     /// isExportedInst - Return true if the specified value is an instruction
@@ -244,7 +244,7 @@ static bool isOnlyUsedInEntryBlock(Argument *A) {
 
 FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
                                            Function &fn, MachineFunction &mf)
-    : TLI(tli), Fn(fn), MF(mf), RegMap(MF.getSSARegMap()) {
+    : TLI(tli), Fn(fn), MF(mf), RegInfo(MF.getRegInfo()) {
 
   // Create a vreg for each argument register that is not dead and is used
   // outside of the entry block for the function.
@@ -3348,9 +3348,9 @@ GetRegistersForValue(AsmOperandInfo &OpInfo, bool HasEarlyClobber,
         ValueVT = RegVT;
 
       // Create the appropriate number of virtual registers.
-      SSARegMap *RegMap = MF.getSSARegMap();
+      MachineRegisterInfo &RegInfo = MF.getRegInfo();
       for (; NumRegs; --NumRegs)
-        Regs.push_back(RegMap->createVirtualRegister(PhysReg.second));
+        Regs.push_back(RegInfo.createVirtualRegister(PhysReg.second));
       
       OpInfo.AssignedRegs = RegsForValue(Regs, RegVT, ValueVT);
       OpInfo.MarkAllocatedRegs(isOutReg, isInReg, OutputRegs, InputRegs);
@@ -4363,7 +4363,7 @@ void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
 //===----------------------------------------------------------------------===//
 
 unsigned SelectionDAGISel::MakeReg(MVT::ValueType VT) {
-  return RegMap->createVirtualRegister(TLI.getRegClassFor(VT));
+  return RegInfo->createVirtualRegister(TLI.getRegClassFor(VT));
 }
 
 void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -4378,7 +4378,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   AA = &getAnalysis<AliasAnalysis>();
 
   MachineFunction &MF = MachineFunction::construct(&Fn, TLI.getTargetMachine());
-  RegMap = MF.getSSARegMap();
+  RegInfo = &MF.getRegInfo();
   DOUT << "\n\n\n=== " << Fn.getName() << "\n";
 
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
@@ -4395,9 +4395,9 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   // Add function live-ins to entry block live-in set.
   BasicBlock *EntryBB = &Fn.getEntryBlock();
   BB = FuncInfo.MBBMap[EntryBB];
-  if (!MF.livein_empty())
-    for (MachineFunction::livein_iterator I = MF.livein_begin(),
-           E = MF.livein_end(); I != E; ++I)
+  if (!RegInfo->livein_empty())
+    for (MachineRegisterInfo::livein_iterator I = RegInfo->livein_begin(),
+           E = RegInfo->livein_end(); I != E; ++I)
       BB->addLiveIn(I->first);
 
 #ifndef NDEBUG

@@ -19,10 +19,10 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/RegisterCoalescer.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -64,7 +64,7 @@ namespace {
     const TargetMachine* tm_;
     const MRegisterInfo* mri_;
     const TargetInstrInfo* tii_;
-    SSARegMap *regmap_;
+    MachineRegisterInfo *reginfo_;
     BitVector allocatableRegs_;
     LiveIntervals* li_;
     const MachineLoopInfo *loopInfo;
@@ -230,7 +230,7 @@ unsigned RALinScan::attemptTrivialCoalescing(LiveInterval &cur, unsigned Reg) {
   if (Reg == SrcReg)
     return Reg;
 
-  const TargetRegisterClass *RC = regmap_->getRegClass(cur.reg);
+  const TargetRegisterClass *RC = reginfo_->getRegClass(cur.reg);
   if (!RC->contains(SrcReg))
     return Reg;
 
@@ -251,7 +251,7 @@ bool RALinScan::runOnMachineFunction(MachineFunction &fn) {
   tm_ = &fn.getTarget();
   mri_ = tm_->getRegisterInfo();
   tii_ = tm_->getInstrInfo();
-  regmap_ = mf_->getSSARegMap();
+  reginfo_ = &mf_->getRegInfo();
   allocatableRegs_ = mri_->getAllocatableSet(fn);
   li_ = &getAnalysis<LiveIntervals>();
   loopInfo = &getAnalysis<MachineLoopInfo>();
@@ -296,7 +296,7 @@ void RALinScan::initIntervalSets()
 
   for (LiveIntervals::iterator i = li_->begin(), e = li_->end(); i != e; ++i) {
     if (MRegisterInfo::isPhysicalRegister(i->second.reg)) {
-      mf_->setPhysRegUsed(i->second.reg);
+      reginfo_->setPhysRegUsed(i->second.reg);
       fixed_.push_back(std::make_pair(&i->second, i->second.begin()));
     } else
       unhandled_.push(&i->second);
@@ -508,7 +508,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   std::vector<std::pair<unsigned, float> > SpillWeightsToAdd;
   unsigned StartPosition = cur->beginNumber();
-  const TargetRegisterClass *RC = regmap_->getRegClass(cur->reg);
+  const TargetRegisterClass *RC = reginfo_->getRegClass(cur->reg);
   const TargetRegisterClass *RCLeader = RelatedRegClasses.getLeaderValue(RC);
 
   // If this live interval is defined by a move instruction and its source is
@@ -540,7 +540,7 @@ void RALinScan::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     unsigned Reg = i->first->reg;
     assert(MRegisterInfo::isVirtualRegister(Reg) &&
            "Can only allocate virtual registers!");
-    const TargetRegisterClass *RegRC = regmap_->getRegClass(Reg);
+    const TargetRegisterClass *RegRC = reginfo_->getRegClass(Reg);
     // If this is not in a related reg class to the register we're allocating, 
     // don't check it.
     if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader &&
@@ -838,7 +838,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
   std::vector<unsigned> inactiveCounts(mri_->getNumRegs(), 0);
   unsigned MaxInactiveCount = 0;
   
-  const TargetRegisterClass *RC = regmap_->getRegClass(cur->reg);
+  const TargetRegisterClass *RC = reginfo_->getRegClass(cur->reg);
   const TargetRegisterClass *RCLeader = RelatedRegClasses.getLeaderValue(RC);
  
   for (IntervalPtrs::iterator i = inactive_.begin(), e = inactive_.end();
@@ -849,7 +849,7 @@ unsigned RALinScan::getFreePhysReg(LiveInterval *cur) {
 
     // If this is not in a related reg class to the register we're allocating, 
     // don't check it.
-    const TargetRegisterClass *RegRC = regmap_->getRegClass(reg);
+    const TargetRegisterClass *RegRC = reginfo_->getRegClass(reg);
     if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader) {
       reg = vrm_->getPhys(reg);
       ++inactiveCounts[reg];

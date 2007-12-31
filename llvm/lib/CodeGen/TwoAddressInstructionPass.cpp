@@ -33,7 +33,7 @@
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -192,7 +192,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
           }
 
         InstructionRearranged:
-          const TargetRegisterClass* rc = MF.getSSARegMap()->getRegClass(regA);
+          const TargetRegisterClass* rc = MF.getRegInfo().getRegClass(regA);
           MRI.copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
 
           MachineBasicBlock::iterator prevMi = prior(mi);

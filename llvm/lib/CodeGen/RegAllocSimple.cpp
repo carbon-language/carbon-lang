@@ -18,8 +18,8 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -44,7 +44,7 @@ namespace {
   private:
     MachineFunction *MF;
     const TargetMachine *TM;
-    const MRegisterInfo *RegInfo;
+    const MRegisterInfo *MRI;
 
     // StackSlotForVirtReg - Maps SSA Regs => frame index on the stack where
     // these values are spilled
@@ -119,7 +119,7 @@ int RegAllocSimple::getStackSpaceFor(unsigned VirtReg,
 }
 
 unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
-  const TargetRegisterClass* RC = MF->getSSARegMap()->getRegClass(virtualReg);
+  const TargetRegisterClass* RC = MF->getRegInfo().getRegClass(virtualReg);
   TargetRegisterClass::iterator RI = RC->allocation_order_begin(*MF);
   TargetRegisterClass::iterator RE = RC->allocation_order_end(*MF);
 
@@ -129,7 +129,7 @@ unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
     unsigned PhysReg = *(RI+regIdx);
 
     if (!RegsUsed[PhysReg]) {
-      MF->setPhysRegUsed(PhysReg);
+      MF->getRegInfo().setPhysRegUsed(PhysReg);
       return PhysReg;
     }
   }
@@ -138,25 +138,25 @@ unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
 unsigned RegAllocSimple::reloadVirtReg(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator I,
                                        unsigned VirtReg) {
-  const TargetRegisterClass* RC = MF->getSSARegMap()->getRegClass(VirtReg);
+  const TargetRegisterClass* RC = MF->getRegInfo().getRegClass(VirtReg);
   int FrameIdx = getStackSpaceFor(VirtReg, RC);
   unsigned PhysReg = getFreeReg(VirtReg);
 
   // Add move instruction(s)
   ++NumLoads;
-  RegInfo->loadRegFromStackSlot(MBB, I, PhysReg, FrameIdx, RC);
+  MRI->loadRegFromStackSlot(MBB, I, PhysReg, FrameIdx, RC);
   return PhysReg;
 }
 
 void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I,
                                   unsigned VirtReg, unsigned PhysReg) {
-  const TargetRegisterClass* RC = MF->getSSARegMap()->getRegClass(VirtReg);
+  const TargetRegisterClass* RC = MF->getRegInfo().getRegClass(VirtReg);
   int FrameIdx = getStackSpaceFor(VirtReg, RC);
 
   // Add move instruction(s)
   ++NumStores;
-  RegInfo->storeRegToStackSlot(MBB, I, PhysReg, true, FrameIdx, RC);
+  MRI->storeRegToStackSlot(MBB, I, PhysReg, true, FrameIdx, RC);
 }
 
 
@@ -166,7 +166,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     // Made to combat the incorrect allocation of r2 = add r1, r1
     std::map<unsigned, unsigned> Virt2PhysRegMap;
 
-    RegsUsed.resize(RegInfo->getNumRegs());
+    RegsUsed.resize(MRI->getNumRegs());
 
     // This is a preliminary pass that will invalidate any registers that are
     // used by the instruction (including implicit uses).
@@ -181,7 +181,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     if (Desc.ImplicitDefs) {
       for (Regs = Desc.ImplicitDefs; *Regs; ++Regs) {
         RegsUsed[*Regs] = true;
-        MF->setPhysRegUsed(*Regs);
+        MF->getRegInfo().setPhysRegUsed(*Regs);
       }
     }
 
@@ -237,7 +237,7 @@ bool RegAllocSimple::runOnMachineFunction(MachineFunction &Fn) {
   DOUT << "Machine Function\n";
   MF = &Fn;
   TM = &MF->getTarget();
-  RegInfo = TM->getRegisterInfo();
+  MRI = TM->getRegisterInfo();
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();

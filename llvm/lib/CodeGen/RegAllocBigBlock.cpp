@@ -32,8 +32,8 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -326,7 +326,7 @@ void RABigBlock::spillVirtReg(MachineBasicBlock &MBB,
   // register.  We only need to spill it into its stack slot if it has been
   // modified.
   if (isVirtRegModified(VirtReg)) {
-    const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
+    const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
     int FrameIndex = getStackSpaceFor(VirtReg, RC);
     DOUT << " to stack slot #" << FrameIndex;
     RegInfo->storeRegToStackSlot(MBB, I, PhysReg, true, FrameIndex, RC);
@@ -418,7 +418,7 @@ unsigned RABigBlock::getFreeReg(const TargetRegisterClass *RC) {
 ///
 unsigned RABigBlock::chooseReg(MachineBasicBlock &MBB, MachineInstr *I,
                          unsigned VirtReg) {
-  const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
+  const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
   // First check to see if we have a free register of the requested type...
   unsigned PhysReg = getFreeReg(RC);
 
@@ -512,7 +512,7 @@ MachineInstr *RABigBlock::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI
 
   // Otherwise, if we have free physical registers available to hold the
   // value, use them.
-  const TargetRegisterClass *RC = MF->getSSARegMap()->getRegClass(VirtReg);
+  const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
   unsigned PhysReg = getFreeReg(RC);
   int FrameIndex = getStackSpaceFor(VirtReg, RC);
 
@@ -545,7 +545,7 @@ MachineInstr *RABigBlock::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI
   RegInfo->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC);
   ++NumLoads;    // Update statistics
 
-  MF->setPhysRegUsed(PhysReg);
+  MF->getRegInfo().setPhysRegUsed(PhysReg);
   MI->getOperand(OpNum).setReg(PhysReg);  // Assign the input register
   return MI;
 }
@@ -624,16 +624,17 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // If this is the first basic block in the machine function, add live-in
   // registers as active.
   if (&MBB == &*MF->begin()) {
-    for (MachineFunction::livein_iterator I = MF->livein_begin(),
-         E = MF->livein_end(); I != E; ++I) {
+    for (MachineRegisterInfo::livein_iterator
+         I = MF->getRegInfo().livein_begin(),
+         E = MF->getRegInfo().livein_end(); I != E; ++I) {
       unsigned Reg = I->first;
-      MF->setPhysRegUsed(Reg);
+      MF->getRegInfo().setPhysRegUsed(Reg);
       PhysRegsUsed[Reg] = 0;            // It is free and reserved now
       for (const unsigned *AliasSet = RegInfo->getSubRegisters(Reg);
            *AliasSet; ++AliasSet) {
         if (PhysRegsUsed[*AliasSet] != -2) {
           PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-          MF->setPhysRegUsed(*AliasSet);
+          MF->getRegInfo().setPhysRegUsed(*AliasSet);
         }
       }
     }    
@@ -731,14 +732,14 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
         // larger registers). Ignore.
         if (isReadModWriteImplicitDef(MI, MO.getReg())) continue;
 
-        MF->setPhysRegUsed(Reg);
+        MF->getRegInfo().setPhysRegUsed(Reg);
         spillPhysReg(MBB, MI, Reg, true); // Spill any existing value in reg
         PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         for (const unsigned *AliasSet = RegInfo->getSubRegisters(Reg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
             PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-            MF->setPhysRegUsed(*AliasSet);
+            MF->getRegInfo().setPhysRegUsed(*AliasSet);
           }
         }
       }
@@ -753,12 +754,12 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
           spillPhysReg(MBB, MI, Reg, true);
           PhysRegsUsed[Reg] = 0;            // It is free and reserved now
         }
-        MF->setPhysRegUsed(Reg);
+        MF->getRegInfo().setPhysRegUsed(Reg);
         for (const unsigned *AliasSet = RegInfo->getSubRegisters(Reg);
              *AliasSet; ++AliasSet) {
           if (PhysRegsUsed[*AliasSet] != -2) {
             PhysRegsUsed[*AliasSet] = 0;  // It is free and reserved now
-            MF->setPhysRegUsed(*AliasSet);
+            MF->getRegInfo().setPhysRegUsed(*AliasSet);
           }
         }
       }
@@ -786,7 +787,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
         // If DestVirtReg already has a value, use it.
         if (!(DestPhysReg = getVirt2PhysRegMapSlot(DestVirtReg)))
           DestPhysReg = chooseReg(MBB, MI, DestVirtReg);
-        MF->setPhysRegUsed(DestPhysReg);
+        MF->getRegInfo().setPhysRegUsed(DestPhysReg);
         markVirtRegModified(DestVirtReg);
         MI->getOperand(i).setReg(DestPhysReg);  // Assign the output register
       }
@@ -868,9 +869,10 @@ bool RABigBlock::runOnMachineFunction(MachineFunction &Fn) {
 
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers
-  Virt2PhysRegMap.grow(MF->getSSARegMap()->getLastVirtReg());
-  StackSlotForVirtReg.grow(MF->getSSARegMap()->getLastVirtReg());
-  VirtRegModified.resize(MF->getSSARegMap()->getLastVirtReg() - MRegisterInfo::FirstVirtualRegister + 1,0);
+  Virt2PhysRegMap.grow(MF->getRegInfo().getLastVirtReg());
+  StackSlotForVirtReg.grow(MF->getRegInfo().getLastVirtReg());
+  VirtRegModified.resize(MF->getRegInfo().getLastVirtReg() - 
+                         MRegisterInfo::FirstVirtualRegister + 1, 0);
 
   // Loop over all of the basic blocks, eliminating virtual register references
   for (MachineFunction::iterator MBB = Fn.begin(), MBBe = Fn.end();

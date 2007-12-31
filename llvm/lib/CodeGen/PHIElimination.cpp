@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
@@ -127,8 +127,8 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
 
   // Create a new register for the incoming PHI arguments.
   MachineFunction &MF = *MBB.getParent();
-  const TargetRegisterClass *RC = MF.getSSARegMap()->getRegClass(DestReg);
-  unsigned IncomingReg = MF.getSSARegMap()->createVirtualRegister(RC);
+  const TargetRegisterClass *RC = MF.getRegInfo().getRegClass(DestReg);
+  unsigned IncomingReg = MF.getRegInfo().createVirtualRegister(RC);
 
   // Insert a register to register copy in the top of the current block (but
   // after any remaining phi nodes) which copies the new incoming register

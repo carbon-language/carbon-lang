@@ -18,7 +18,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 using namespace llvm;
@@ -148,9 +148,9 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
   
-  GP = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
-  SP = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
-  RP = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
+  GP = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i64));
+  SP = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i64));
+  RP = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i64));
   
   MachineBasicBlock& BB = MF.front();
 
@@ -182,10 +182,11 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
             // see intel ABI docs)
           case MVT::f64:
 //XXX            BuildMI(&BB, IA64::IDEF, 0, args_FP[used_FPArgs]);
-            MF.addLiveIn(args_FP[used_FPArgs]); // mark this reg as liveIn
+            MF.getRegInfo().addLiveIn(args_FP[used_FPArgs]);
+            // mark this reg as liveIn
             // floating point args go into f8..f15 as-needed, the increment
             argVreg[count] =                              // is below..:
-            MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::f64));
+            MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::f64));
             // FP args go into f8..f15 as needed: (hence the ++)
             argPreg[count] = args_FP[used_FPArgs++];
             argOpc[count] = IA64::FMOV;
@@ -201,9 +202,10 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
           case MVT::i32:
           case MVT::i64:
 //XXX            BuildMI(&BB, IA64::IDEF, 0, args_int[count]);
-            MF.addLiveIn(args_int[count]); // mark this register as liveIn
+            MF.getRegInfo().addLiveIn(args_int[count]);
+            // mark this register as liveIn
             argVreg[count] =
-            MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
+            MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i64));
             argPreg[count] = args_int[count];
             argOpc[count] = IA64::MOV;
             argt = newroot =
@@ -232,7 +234,7 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
   // Create a vreg to hold the output of (what will become)
   // the "alloc" instruction
-  VirtGPR = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
+  VirtGPR = MF.getRegInfo().createVirtualRegister(getRegClassFor(MVT::i64));
   BuildMI(&BB, TII->get(IA64::PSEUDO_ALLOC), VirtGPR);
   // we create a PSEUDO_ALLOC (pseudo)instruction for now
 /*
@@ -284,11 +286,11 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   case MVT::i16:
   case MVT::i32:
   case MVT::i64:
-    MF.addLiveOut(IA64::r8);
+    MF.getRegInfo().addLiveOut(IA64::r8);
     break;
   case MVT::f32:
   case MVT::f64:
-    MF.addLiveOut(IA64::F8);
+    MF.getRegInfo().addLiveOut(IA64::F8);
     break;
   }
 

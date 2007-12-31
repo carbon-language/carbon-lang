@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-isel"
-
 #include "Mips.h"
 #include "MipsISelLowering.h"
 #include "MipsMachineFunction.h"
@@ -28,6 +27,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Compiler.h"
@@ -127,12 +127,11 @@ InstructionSelectBasicBlock(SelectionDAG &SD)
 
 /// getGlobalBaseReg - Output the instructions required to put the
 /// GOT address into a register.
-SDOperand MipsDAGToDAGISel::getGlobalBaseReg() 
-{
+SDOperand MipsDAGToDAGISel::getGlobalBaseReg() {
   MachineFunction* MF = BB->getParent();
   unsigned GP = 0;
-  for(MachineFunction::livein_iterator ii = MF->livein_begin(), 
-        ee = MF->livein_end(); ii != ee; ++ii)
+  for(MachineRegisterInfo::livein_iterator ii = MF->getRegInfo().livein_begin(),
+        ee = MF->getRegInfo().livein_end(); ii != ee; ++ii)
     if (ii->first == Mips::GP) {
       GP = ii->second;
       break;

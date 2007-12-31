@@ -20,7 +20,7 @@
 #include "PPCHazardRecognizers.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetOptions.h"
@@ -224,11 +224,10 @@ void PPCDAGToDAGISel::InsertVRSaveCode(Function &F) {
   // In this case, there will be virtual registers of vector type type created
   // by the scheduler.  Detect them now.
   MachineFunction &Fn = MachineFunction::get(&F);
-  SSARegMap *RegMap = Fn.getSSARegMap();
   bool HasVectorVReg = false;
   for (unsigned i = MRegisterInfo::FirstVirtualRegister, 
-       e = RegMap->getLastVirtReg()+1; i != e; ++i)
-    if (RegMap->getRegClass(i) == &PPC::VRRCRegClass) {
+       e = RegInfo->getLastVirtReg()+1; i != e; ++i)
+    if (RegInfo->getRegClass(i) == &PPC::VRRCRegClass) {
       HasVectorVReg = true;
       break;
     }
@@ -246,8 +245,8 @@ void PPCDAGToDAGISel::InsertVRSaveCode(Function &F) {
 
   // Create two vregs - one to hold the VRSAVE register that is live-in to the
   // function and one for the value after having bits or'd into it.
-  unsigned InVRSAVE = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
-  unsigned UpdatedVRSAVE = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
+  unsigned InVRSAVE = RegInfo->createVirtualRegister(&PPC::GPRCRegClass);
+  unsigned UpdatedVRSAVE = RegInfo->createVirtualRegister(&PPC::GPRCRegClass);
   
   const TargetInstrInfo &TII = *TM.getInstrInfo();
   MachineBasicBlock &EntryBB = *Fn.begin();
@@ -287,14 +286,13 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
     // Insert the set of GlobalBaseReg into the first MBB of the function
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
-    SSARegMap *RegMap = BB->getParent()->getSSARegMap();
 
     if (PPCLowering.getPointerTy() == MVT::i32) {
-      GlobalBaseReg = RegMap->createVirtualRegister(PPC::GPRCRegisterClass);
+      GlobalBaseReg = RegInfo->createVirtualRegister(PPC::GPRCRegisterClass);
       BuildMI(FirstMBB, MBBI, TII.get(PPC::MovePCtoLR), PPC::LR);
       BuildMI(FirstMBB, MBBI, TII.get(PPC::MFLR), GlobalBaseReg);
     } else {
-      GlobalBaseReg = RegMap->createVirtualRegister(PPC::G8RCRegisterClass);
+      GlobalBaseReg = RegInfo->createVirtualRegister(PPC::G8RCRegisterClass);
       BuildMI(FirstMBB, MBBI, TII.get(PPC::MovePCtoLR8), PPC::LR8);
       BuildMI(FirstMBB, MBBI, TII.get(PPC::MFLR8), GlobalBaseReg);
     }

@@ -14,12 +14,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/DerivedTypes.h"
-#include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/SSARegMap.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
@@ -122,11 +122,10 @@ void ilist_traits<MachineBasicBlock>::transferNodesFromList(
 MachineFunction::MachineFunction(const Function *F,
                                  const TargetMachine &TM)
   : Annotation(MF_AID), Fn(F), Target(TM) {
-  SSARegMapping = new SSARegMap();
+  RegInfo = new MachineRegisterInfo(*TM.getRegisterInfo());
   MFInfo = 0;
   FrameInfo = new MachineFrameInfo();
   ConstantPool = new MachineConstantPool(TM.getTargetData());
-  UsedPhysRegs.resize(TM.getRegisterInfo()->getNumRegs());
   
   // Set up jump table.
   const TargetData &TD = *TM.getTargetData();
@@ -141,7 +140,7 @@ MachineFunction::MachineFunction(const Function *F,
 
 MachineFunction::~MachineFunction() {
   BasicBlocks.clear();
-  delete SSARegMapping;
+  delete RegInfo;
   delete MFInfo;
   delete FrameInfo;
   delete ConstantPool;
@@ -208,9 +207,10 @@ void MachineFunction::print(std::ostream &OS) const {
   
   const MRegisterInfo *MRI = getTarget().getRegisterInfo();
   
-  if (!livein_empty()) {
+  if (!RegInfo->livein_empty()) {
     OS << "Live Ins:";
-    for (livein_iterator I = livein_begin(), E = livein_end(); I != E; ++I) {
+    for (MachineRegisterInfo::livein_iterator
+         I = RegInfo->livein_begin(), E = RegInfo->livein_end(); I != E; ++I) {
       if (MRI)
         OS << " " << MRI->getName(I->first);
       else
@@ -221,9 +221,10 @@ void MachineFunction::print(std::ostream &OS) const {
     }
     OS << "\n";
   }
-  if (!liveout_empty()) {
+  if (!RegInfo->liveout_empty()) {
     OS << "Live Outs:";
-    for (liveout_iterator I = liveout_begin(), E = liveout_end(); I != E; ++I)
+    for (MachineRegisterInfo::liveout_iterator
+         I = RegInfo->liveout_begin(), E = RegInfo->liveout_end(); I != E; ++I)
       if (MRI)
         OS << " " << MRI->getName(*I);
       else
@@ -322,11 +323,6 @@ MachineFunction& MachineFunction::get(const Function *F)
   MachineFunction *mc = (MachineFunction*)F->getAnnotation(MF_AID);
   assert(mc && "Call construct() method first to allocate the object");
   return *mc;
-}
-
-void MachineFunction::clearSSARegMap() {
-  delete SSARegMapping;
-  SSARegMapping = 0;
 }
 
 //===----------------------------------------------------------------------===//

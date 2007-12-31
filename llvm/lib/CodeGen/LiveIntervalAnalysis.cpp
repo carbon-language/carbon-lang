@@ -23,8 +23,8 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -772,7 +772,7 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
                  MachineInstr *ReMatOrigDefMI, MachineInstr *ReMatDefMI,
                  unsigned Slot, int LdSlot,
                  bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
-                 VirtRegMap &vrm, SSARegMap *RegMap,
+                 VirtRegMap &vrm, MachineRegisterInfo &RegInfo,
                  const TargetRegisterClass* rc,
                  SmallVector<int, 4> &ReMatIds,
                  unsigned &NewVReg, bool &HasDef, bool &HasUse,
@@ -869,7 +869,7 @@ rewriteInstructionForSpills(const LiveInterval &li, bool TrySplit,
     // Create a new virtual register for the spill interval.
     bool CreatedNewVReg = false;
     if (NewVReg == 0) {
-      NewVReg = RegMap->createVirtualRegister(rc);
+      NewVReg = RegInfo.createVirtualRegister(rc);
       vrm.grow();
       CreatedNewVReg = true;
     }
@@ -971,7 +971,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
                     MachineInstr *ReMatOrigDefMI, MachineInstr *ReMatDefMI,
                     unsigned Slot, int LdSlot,
                     bool isLoad, bool isLoadSS, bool DefIsReMat, bool CanDelete,
-                    VirtRegMap &vrm, SSARegMap *RegMap,
+                    VirtRegMap &vrm, MachineRegisterInfo &RegInfo,
                     const TargetRegisterClass* rc,
                     SmallVector<int, 4> &ReMatIds,
                     const MachineLoopInfo *loopInfo,
@@ -1043,7 +1043,7 @@ rewriteInstructionsForSpills(const LiveInterval &li, bool TrySplit,
     bool CanFold = rewriteInstructionForSpills(li, TrySplit, I->valno->id,
                                 index, end, MI, ReMatOrigDefMI, ReMatDefMI,
                                 Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
-                                CanDelete, vrm, RegMap, rc, ReMatIds, NewVReg,
+                                CanDelete, vrm, RegInfo, rc, ReMatIds, NewVReg,
                                 HasDef, HasUse, loopInfo, MBBVRegsMap, NewLIs);
     if (!HasDef && !HasUse)
       continue;
@@ -1189,8 +1189,8 @@ addIntervalsForSpills(const LiveInterval &li,
   std::map<unsigned, std::vector<SRInfo> > RestoreIdxes;
   std::map<unsigned,unsigned> MBBVRegsMap;
   std::vector<LiveInterval*> NewLIs;
-  SSARegMap *RegMap = mf_->getSSARegMap();
-  const TargetRegisterClass* rc = RegMap->getRegClass(li.reg);
+  MachineRegisterInfo &RegInfo = mf_->getRegInfo();
+  const TargetRegisterClass* rc = RegInfo.getRegClass(li.reg);
 
   unsigned NumValNums = li.getNumValNums();
   SmallVector<MachineInstr*, 4> ReMatDefs;
@@ -1235,13 +1235,13 @@ addIntervalsForSpills(const LiveInterval &li,
         // Note ReMatOrigDefMI has already been deleted.
         rewriteInstructionsForSpills(li, false, I, NULL, ReMatDefMI,
                              Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
-                             false, vrm, RegMap, rc, ReMatIds, loopInfo,
+                             false, vrm, RegInfo, rc, ReMatIds, loopInfo,
                              SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
                              MBBVRegsMap, NewLIs);
       } else {
         rewriteInstructionsForSpills(li, false, I, NULL, 0,
                              Slot, 0, false, false, false,
-                             false, vrm, RegMap, rc, ReMatIds, loopInfo,
+                             false, vrm, RegInfo, rc, ReMatIds, loopInfo,
                              SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
                              MBBVRegsMap, NewLIs);
       }
@@ -1309,7 +1309,7 @@ addIntervalsForSpills(const LiveInterval &li,
       (DefIsReMat && (ReMatDefMI->getInstrDescriptor()->Flags & M_LOAD_FLAG));
     rewriteInstructionsForSpills(li, TrySplit, I, ReMatOrigDefMI, ReMatDefMI,
                                Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
-                               CanDelete, vrm, RegMap, rc, ReMatIds, loopInfo,
+                               CanDelete, vrm, RegInfo, rc, ReMatIds, loopInfo,
                                SpillMBBs, SpillIdxes, RestoreMBBs, RestoreIdxes,
                                MBBVRegsMap, NewLIs);
   }

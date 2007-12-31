@@ -12,7 +12,7 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -83,7 +83,7 @@ bool LowerSubregsInstructionPass::LowerExtract(MachineInstr *MI) {
      if (MRegisterInfo::isPhysicalRegister(DstReg)) {
        TRC = getPhysicalRegisterRegClass(MRI, DstReg);
      } else {
-       TRC = MF.getSSARegMap()->getRegClass(DstReg);
+       TRC = MF.getRegInfo().getRegClass(DstReg);
      }
      assert(TRC == getPhysicalRegisterRegClass(MRI, SrcReg) &&
              "Extract subreg and Dst must be of same register class");
@@ -155,7 +155,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
       if (MRegisterInfo::isPhysicalRegister(InsReg)) {
         TRC1 = getPhysicalRegisterRegClass(MRI, InsReg);
       } else {
-        TRC1 = MF.getSSARegMap()->getRegClass(InsReg);
+        TRC1 = MF.getRegInfo().getRegClass(InsReg);
       }
       MRI.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC1, TRC1);
 
@@ -179,7 +179,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     if (MRegisterInfo::isPhysicalRegister(DstReg)) {
       TRC0 = getPhysicalRegisterRegClass(MRI, DstReg);
     } else {
-      TRC0 = MF.getSSARegMap()->getRegClass(DstReg);
+      TRC0 = MF.getRegInfo().getRegClass(DstReg);
     }
     assert(TRC0 == getPhysicalRegisterRegClass(MRI, SrcReg) &&
             "Insert superreg and Dst must be of same register class");
@@ -204,7 +204,7 @@ bool LowerSubregsInstructionPass::LowerInsert(MachineInstr *MI) {
     if (MRegisterInfo::isPhysicalRegister(InsReg)) {
       TRC1 = getPhysicalRegisterRegClass(MRI, InsReg);
     } else {
-      TRC1 = MF.getSSARegMap()->getRegClass(InsReg);
+      TRC1 = MF.getRegInfo().getRegClass(InsReg);
     }
     MRI.copyRegToReg(*MBB, MI, DstSubReg, InsReg, TRC1, TRC1);
 

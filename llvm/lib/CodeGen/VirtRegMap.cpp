@@ -21,7 +21,7 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -69,7 +69,7 @@ VirtRegMap::VirtRegMap(MachineFunction &mf)
 }
 
 void VirtRegMap::grow() {
-  unsigned LastVirtReg = MF.getSSARegMap()->getLastVirtReg();
+  unsigned LastVirtReg = MF.getRegInfo().getLastVirtReg();
   Virt2PhysMap.grow(LastVirtReg);
   Virt2StackSlotMap.grow(LastVirtReg);
   Virt2ReMatIdMap.grow(LastVirtReg);
@@ -82,7 +82,7 @@ int VirtRegMap::assignVirt2StackSlot(unsigned virtReg) {
   assert(MRegisterInfo::isVirtualRegister(virtReg));
   assert(Virt2StackSlotMap[virtReg] == NO_STACK_SLOT &&
          "attempt to assign stack slot to already spilled register");
-  const TargetRegisterClass* RC = MF.getSSARegMap()->getRegClass(virtReg);
+  const TargetRegisterClass* RC = MF.getRegInfo().getRegClass(virtReg);
   int frameIndex = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
                                                         RC->getAlignment());
   Virt2StackSlotMap[virtReg] = frameIndex;
@@ -139,14 +139,14 @@ void VirtRegMap::print(std::ostream &OS) const {
 
   OS << "********** REGISTER MAP **********\n";
   for (unsigned i = MRegisterInfo::FirstVirtualRegister,
-         e = MF.getSSARegMap()->getLastVirtReg(); i <= e; ++i) {
+         e = MF.getRegInfo().getLastVirtReg(); i <= e; ++i) {
     if (Virt2PhysMap[i] != (unsigned)VirtRegMap::NO_PHYS_REG)
       OS << "[reg" << i << " -> " << MRI->getName(Virt2PhysMap[i]) << "]\n";
 
   }
 
   for (unsigned i = MRegisterInfo::FirstVirtualRegister,
-         e = MF.getSSARegMap()->getLastVirtReg(); i <= e; ++i)
+         e = MF.getRegInfo().getLastVirtReg(); i <= e; ++i)
     if (Virt2StackSlotMap[i] != VirtRegMap::NO_STACK_SLOT)
       OS << "[reg" << i << " -> fi#" << Virt2StackSlotMap[i] << "]\n";
   OS << '\n';
@@ -197,7 +197,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
             if (!VRM.isAssignedReg(VirtReg)) {
               int StackSlot = VRM.getStackSlot(VirtReg);
               const TargetRegisterClass* RC =
-                MF.getSSARegMap()->getRegClass(VirtReg);
+                MF.getRegInfo().getRegClass(VirtReg);
 
               if (MO.isUse() &&
                   std::find(LoadedRegs.begin(), LoadedRegs.end(), VirtReg)
@@ -214,10 +214,10 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
                 ++NumStores;
               }
             }
-            MF.setPhysRegUsed(PhysReg);
+            MF.getRegInfo().setPhysRegUsed(PhysReg);
             MI.getOperand(i).setReg(PhysReg);
           } else {
-            MF.setPhysRegUsed(MO.getReg());
+            MF.getRegInfo().setPhysRegUsed(MO.getReg());
           }
       }
 
@@ -240,17 +240,18 @@ namespace {
   /// blocks that have low register pressure (the vreg may be spilled due to
   /// register pressure in other blocks).
   class VISIBILITY_HIDDEN LocalSpiller : public Spiller {
-    SSARegMap *RegMap;
+    MachineRegisterInfo *RegInfo;
     const MRegisterInfo *MRI;
     const TargetInstrInfo *TII;
   public:
     bool runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
-      RegMap = MF.getSSARegMap();
+      RegInfo = &MF.getRegInfo(); 
       MRI = MF.getTarget().getRegisterInfo();
       TII = MF.getTarget().getInstrInfo();
       DOUT << "\n**** Local spiller rewriting function '"
            << MF.getFunction()->getName() << "':\n";
-      DOUT << "**** Machine Instrs (NOTE! Does not include spills and reloads!) ****\n";
+      DOUT << "**** Machine Instrs (NOTE! Does not include spills and reloads!)"
+              " ****\n";
       DEBUG(MF.dump());
 
       for (MachineFunction::iterator MBB = MF.begin(), E = MF.end();
@@ -672,7 +673,7 @@ namespace {
             // to undo a previous reuse.
             MachineBasicBlock *MBB = MI->getParent();
             const TargetRegisterClass *AliasRC =
-              MBB->getParent()->getSSARegMap()->getRegClass(Op.VirtReg);
+              MBB->getParent()->getRegInfo().getRegClass(Op.VirtReg);
 
             // Copy Op out of the vector and remove it, we're going to insert an
             // explicit load for it.
@@ -971,14 +972,15 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         if (!VRM.getPreSplitReg(VirtReg))
           continue; // Split interval spilled again.
         unsigned Phys = VRM.getPhys(VirtReg);
-        MF.setPhysRegUsed(Phys);
+        RegInfo->setPhysRegUsed(Phys);
         if (VRM.isReMaterialized(VirtReg)) {
           MRI->reMaterialize(MBB, &MI, Phys,
                              VRM.getReMaterializedMI(VirtReg));
           ++NumReMats;
         } else {
-          const TargetRegisterClass* RC = RegMap->getRegClass(VirtReg);
-          MRI->loadRegFromStackSlot(MBB, &MI, Phys, VRM.getStackSlot(VirtReg), RC);
+          const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
+          MRI->loadRegFromStackSlot(MBB, &MI, Phys, VRM.getStackSlot(VirtReg),
+                                    RC);
           ++NumLoads;
         }
         // This invalidates Phys.
@@ -997,7 +999,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         bool isKill = SpillRegs[i].second;
         if (!VRM.getPreSplitReg(VirtReg))
           continue; // Split interval spilled again.
-        const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
+        const TargetRegisterClass *RC = RegInfo->getRegClass(VirtReg);
         unsigned Phys = VRM.getPhys(VirtReg);
         int StackSlot = VRM.getStackSlot(VirtReg);
         MRI->storeRegToStackSlot(MBB, next(MII), Phys, isKill, StackSlot, RC);
@@ -1021,7 +1023,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       if (MRegisterInfo::isPhysicalRegister(VirtReg)) {
         // Ignore physregs for spilling, but remember that it is used by this
         // function.
-        MF.setPhysRegUsed(VirtReg);
+        RegInfo->setPhysRegUsed(VirtReg);
         continue;
       }
       
@@ -1032,7 +1034,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       if (VRM.isAssignedReg(VirtReg)) {
         // This virtual register was assigned a physreg!
         unsigned Phys = VRM.getPhys(VirtReg);
-        MF.setPhysRegUsed(Phys);
+        RegInfo->setPhysRegUsed(Phys);
         if (MO.isDef())
           ReusedOperands.markClobbered(Phys);
         unsigned RReg = SubIdx ? MRI->getSubReg(Phys, SubIdx) : Phys;
@@ -1064,7 +1066,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       // the right register file.
       if (PhysReg &&
           (SubIdx || MI.getOpcode() == TargetInstrInfo::EXTRACT_SUBREG)) {
-        const TargetRegisterClass* RC = RegMap->getRegClass(VirtReg);
+        const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
         if (!RC->contains(PhysReg))
           PhysReg = 0;
       }
@@ -1177,8 +1179,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           continue;
         }
         
-        const TargetRegisterClass* RC = RegMap->getRegClass(VirtReg);
-        MF.setPhysRegUsed(DesignatedReg);
+        const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
+        RegInfo->setPhysRegUsed(DesignatedReg);
         ReusedOperands.markClobbered(DesignatedReg);
         MRI->copyRegToReg(MBB, &MI, DesignatedReg, PhysReg, RC, RC);
 
@@ -1209,13 +1211,13 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         PhysReg = ReusedOperands.GetRegForReload(PhysReg, &MI, 
                                Spills, MaybeDeadStores, RegKills, KillOps, VRM);
       
-      MF.setPhysRegUsed(PhysReg);
+      RegInfo->setPhysRegUsed(PhysReg);
       ReusedOperands.markClobbered(PhysReg);
       if (DoReMat) {
         MRI->reMaterialize(MBB, &MI, PhysReg, VRM.getReMaterializedMI(VirtReg));
         ++NumReMats;
       } else {
-        const TargetRegisterClass* RC = RegMap->getRegClass(VirtReg);
+        const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
         MRI->loadRegFromStackSlot(MBB, &MI, PhysReg, SSorRMId, RC);
         ++NumLoads;
       }
@@ -1265,7 +1267,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           if (unsigned InReg = Spills.getSpillSlotOrReMatPhysReg(SS)) {
             DOUT << "Promoted Load To Copy: " << MI;
             if (DestReg != InReg) {
-              const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
+              const TargetRegisterClass *RC = RegInfo->getRegClass(VirtReg);
               MRI->copyRegToReg(MBB, &MI, DestReg, InReg, RC, RC);
               // Revisit the copy so we make sure to notice the effects of the
               // operation on the destreg (either needing to RA it if it's 
@@ -1310,8 +1312,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SS);
           SmallVector<MachineInstr*, 4> NewMIs;
           // We can reuse this physreg as long as we are allowed to clobber
-          // the value and there isn't an earlier def that has already clobbered the
-          // physreg.
+          // the value and there isn't an earlier def that has already clobbered
+          // the physreg.
           if (PhysReg &&
               !TII->isStoreToStackSlot(&MI, SS) && // Not profitable!
               DeadStore->findRegisterUseOperandIdx(PhysReg, true) != -1 &&
@@ -1425,7 +1427,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
 
       // The only vregs left are stack slot definitions.
       int StackSlot = VRM.getStackSlot(VirtReg);
-      const TargetRegisterClass *RC = RegMap->getRegClass(VirtReg);
+      const TargetRegisterClass *RC = RegInfo->getRegClass(VirtReg);
 
       // If this def is part of a two-address operand, make sure to execute
       // the store from the correct physical register.
@@ -1449,7 +1451,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         }
       }
 
-      MF.setPhysRegUsed(PhysReg);
+      RegInfo->setPhysRegUsed(PhysReg);
       unsigned RReg = SubIdx ? MRI->getSubReg(PhysReg, SubIdx) : PhysReg;
       ReusedOperands.markClobbered(RReg);
       MI.getOperand(i).setReg(RReg);

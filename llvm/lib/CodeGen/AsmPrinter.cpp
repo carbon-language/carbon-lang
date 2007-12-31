@@ -18,6 +18,7 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"

@@ -23,8 +23,8 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Intrinsics.h"
@@ -1265,7 +1265,7 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
   //
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  SSARegMap *RegMap = MF.getSSARegMap();
+  MachineRegisterInfo &RegInfo = MF.getRegInfo();
   SmallVector<SDOperand, 8> ArgValues;
   SDOperand Root = Op.getOperand(0);
   
@@ -1329,8 +1329,8 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       // Double word align in ELF
       if (Expand && isELF32_ABI) GPR_idx += (GPR_idx % 2);
       if (GPR_idx != Num_GPR_Regs) {
-        unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
-        MF.addLiveIn(GPR[GPR_idx], VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
+        RegInfo.addLiveIn(GPR[GPR_idx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i32);
         ++GPR_idx;
       } else {
@@ -1346,8 +1346,8 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       
     case MVT::i64:  // PPC64
       if (GPR_idx != Num_GPR_Regs) {
-        unsigned VReg = RegMap->createVirtualRegister(&PPC::G8RCRegClass);
-        MF.addLiveIn(GPR[GPR_idx], VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&PPC::G8RCRegClass);
+        RegInfo.addLiveIn(GPR[GPR_idx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, MVT::i64);
         ++GPR_idx;
       } else {
@@ -1369,10 +1369,10 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
       if (FPR_idx != Num_FPR_Regs) {
         unsigned VReg;
         if (ObjectVT == MVT::f32)
-          VReg = RegMap->createVirtualRegister(&PPC::F4RCRegClass);
+          VReg = RegInfo.createVirtualRegister(&PPC::F4RCRegClass);
         else
-          VReg = RegMap->createVirtualRegister(&PPC::F8RCRegClass);
-        MF.addLiveIn(FPR[FPR_idx], VReg);
+          VReg = RegInfo.createVirtualRegister(&PPC::F8RCRegClass);
+        RegInfo.addLiveIn(FPR[FPR_idx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
         ++FPR_idx;
       } else {
@@ -1391,8 +1391,8 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     case MVT::v16i8:
       // Note that vector arguments in registers don't reserve stack space.
       if (VR_idx != Num_VR_Regs) {
-        unsigned VReg = RegMap->createVirtualRegister(&PPC::VRRCRegClass);
-        MF.addLiveIn(VR[VR_idx], VReg);
+        unsigned VReg = RegInfo.createVirtualRegister(&PPC::VRRCRegClass);
+        RegInfo.addLiveIn(VR[VR_idx], VReg);
         ArgVal = DAG.getCopyFromReg(Root, VReg, ObjectVT);
         ++VR_idx;
       } else {
@@ -1471,11 +1471,11 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
     for (; GPR_idx != Num_GPR_Regs; ++GPR_idx) {
       unsigned VReg;
       if (isPPC64)
-        VReg = RegMap->createVirtualRegister(&PPC::G8RCRegClass);
+        VReg = RegInfo.createVirtualRegister(&PPC::G8RCRegClass);
       else
-        VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
+        VReg = RegInfo.createVirtualRegister(&PPC::GPRCRegClass);
 
-      MF.addLiveIn(GPR[GPR_idx], VReg);
+      RegInfo.addLiveIn(GPR[GPR_idx], VReg);
       SDOperand Val = DAG.getCopyFromReg(Root, VReg, PtrVT);
       SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
       MemOps.push_back(Store);
@@ -1499,9 +1499,9 @@ static SDOperand LowerFORMAL_ARGUMENTS(SDOperand Op, SelectionDAG &DAG,
 
       for (; FPR_idx != Num_FPR_Regs; ++FPR_idx) {
         unsigned VReg;
-        VReg = RegMap->createVirtualRegister(&PPC::F8RCRegClass);
+        VReg = RegInfo.createVirtualRegister(&PPC::F8RCRegClass);
 
-        MF.addLiveIn(FPR[FPR_idx], VReg);
+        RegInfo.addLiveIn(FPR[FPR_idx], VReg);
         SDOperand Val = DAG.getCopyFromReg(Root, VReg, MVT::f64);
         SDOperand Store = DAG.getStore(Val.getValue(1), Val, FIN, NULL, 0);
         MemOps.push_back(Store);
@@ -1905,9 +1905,9 @@ static SDOperand LowerRET(SDOperand Op, SelectionDAG &DAG, TargetMachine &TM) {
   
   // If this is the first return lowered for this function, add the regs to the
   // liveout set for the function.
-  if (DAG.getMachineFunction().liveout_empty()) {
+  if (DAG.getMachineFunction().getRegInfo().liveout_empty()) {
     for (unsigned i = 0; i != RVLocs.size(); ++i)
-      DAG.getMachineFunction().addLiveOut(RVLocs[i].getLocReg());
+      DAG.getMachineFunction().getRegInfo().addLiveOut(RVLocs[i].getLocReg());
   }
 
   SDOperand Chain = Op.getOperand(0);

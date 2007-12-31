@@ -23,7 +23,7 @@
 namespace llvm {
   class SelectionDAGLowering;
   class SDOperand;
-  class SSARegMap;
+  class MachineRegisterInfo;
   class MachineBasicBlock;
   class MachineFunction;
   class MachineInstr;
@@ -36,7 +36,7 @@ namespace llvm {
 class SelectionDAGISel : public FunctionPass {
 public:
   TargetLowering &TLI;
-  SSARegMap *RegMap;
+  MachineRegisterInfo *RegInfo;
   SelectionDAG *CurDAG;
   MachineBasicBlock *BB;
   AliasAnalysis *AA;

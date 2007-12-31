@@ -26,7 +26,8 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
-#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -1843,8 +1844,9 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
     if (NumBytes >= 4096 && Subtarget->isTargetCygMing()) {
       // Check, whether EAX is livein for this function
       bool isEAXAlive = false;
-      for (MachineFunction::livein_iterator II = MF.livein_begin(),
-             EE = MF.livein_end(); (II != EE) && !isEAXAlive; ++II) {
+      for (MachineRegisterInfo::livein_iterator
+           II = MF.getRegInfo().livein_begin(),
+           EE = MF.getRegInfo().livein_end(); (II != EE) && !isEAXAlive; ++II) {
         unsigned Reg = II->first;
         isEAXAlive = (Reg == X86::EAX || Reg == X86::AX ||
                       Reg == X86::AH || Reg == X86::AL);
@@ -1904,7 +1906,8 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
         Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
       } else {
         MachineLocation SPDst(MachineLocation::VirtualFP);
-        MachineLocation SPSrc(MachineLocation::VirtualFP, -StackSize+stackGrowth);
+        MachineLocation SPSrc(MachineLocation::VirtualFP,
+                              -StackSize+stackGrowth);
         Moves.push_back(MachineMove(FrameLabelId, SPDst, SPSrc));
       }
     } else {

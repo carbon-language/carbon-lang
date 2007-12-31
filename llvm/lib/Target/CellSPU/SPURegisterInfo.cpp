@@ -27,6 +27,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineLocation.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Target/TargetFrameInfo.h"
@@ -670,15 +671,15 @@ void SPURegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 #if 0
   //  Save and clear the LR state.
   SPUFunctionInfo *FI = MF.getInfo<SPUFunctionInfo>();
-  FI->setUsesLR(MF.isPhysRegUsed(LR));
+  FI->setUsesLR(MF.getRegInfo().isPhysRegUsed(LR));
 #endif
   // Mark LR and SP unused, since the prolog spills them to stack and
   // we don't want anyone else to spill them for us.
   //
   // Also, unless R2 is really used someday, don't spill it automatically.
-  MF.setPhysRegUnused(SPU::R0);
-  MF.setPhysRegUnused(SPU::R1);
-  MF.setPhysRegUnused(SPU::R2);
+  MF.getRegInfo().setPhysRegUnused(SPU::R0);
+  MF.getRegInfo().setPhysRegUnused(SPU::R1);
+  MF.getRegInfo().setPhysRegUnused(SPU::R2);
 }
 
 void SPURegisterInfo::emitPrologue(MachineFunction &MF) const

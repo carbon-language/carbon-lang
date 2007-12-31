@@ -28,7 +28,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/SSARegMap.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Compiler.h"
@@ -504,7 +504,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
         for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
           if (I->getOperand(op).isRegister() && I->getOperand(op).isDef() &&
               MRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
-              ((clas = RegMap->getRegClass(I->getOperand(0).getReg())) == 
+              ((clas = RegInfo->getRegClass(I->getOperand(0).getReg())) == 
                  X86::RFP32RegisterClass ||
                clas == X86::RFP64RegisterClass ||
                clas == X86::RFP80RegisterClass)) {
@@ -990,8 +990,8 @@ SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
     // Insert the set of GlobalBaseReg into the first MBB of the function
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
-    SSARegMap *RegMap = BB->getParent()->getSSARegMap();
-    unsigned PC = RegMap->createVirtualRegister(X86::GR32RegisterClass);
+    MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
+    unsigned PC = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
     
     const TargetInstrInfo *TII = TM.getInstrInfo();
     // Operand of MovePCtoStack is completely ignored by asm printer. It's
@@ -1003,7 +1003,7 @@ SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
     // not to pc, but to _GLOBAL_ADDRESS_TABLE_ external
     if (TM.getRelocationModel() == Reloc::PIC_ &&
         Subtarget->isPICStyleGOT()) {
-      GlobalBaseReg = RegMap->createVirtualRegister(X86::GR32RegisterClass);
+      GlobalBaseReg = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
       BuildMI(FirstMBB, MBBI, TII->get(X86::ADD32ri), GlobalBaseReg).
         addReg(PC).
         addExternalSymbol("_GLOBAL_OFFSET_TABLE_");
