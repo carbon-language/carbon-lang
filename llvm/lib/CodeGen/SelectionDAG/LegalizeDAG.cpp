@@ -858,7 +858,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
         unsigned Reg = TLI.getExceptionAddressRegister();
-        Result = DAG.getCopyFromReg(Tmp1, Reg, VT).getValue(Op.ResNo);
+        Result = DAG.getCopyFromReg(Tmp1, Reg, VT);
       }
       break;
     case TargetLowering::Custom:
@@ -868,12 +868,23 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Legal: {
       SDOperand Ops[] = { DAG.getConstant(0, VT), Tmp1 };
       Result = DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other),
-                           Ops, 2).getValue(Op.ResNo);
+                           Ops, 2);
       break;
     }
     }
     }
-    break;
+    if (Result.Val->getNumValues() == 1) break;
+
+    assert(Result.Val->getNumValues() == 2 &&
+           "Cannot return more than two values!");
+
+    // Since we produced two values, make sure to remember that we
+    // legalized both of them.
+    Tmp1 = LegalizeOp(Result);
+    Tmp2 = LegalizeOp(Result.getValue(1));
+    AddLegalizedOperand(Op.getValue(0), Tmp1);
+    AddLegalizedOperand(Op.getValue(1), Tmp2);
+    return Op.ResNo ? Tmp2 : Tmp1;
   case ISD::EHSELECTION: {
     Tmp1 = LegalizeOp(Node->getOperand(0));
     Tmp2 = LegalizeOp(Node->getOperand(1));
@@ -882,7 +893,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
         unsigned Reg = TLI.getExceptionSelectorRegister();
-        Result = DAG.getCopyFromReg(Tmp2, Reg, VT).getValue(Op.ResNo);
+        Result = DAG.getCopyFromReg(Tmp2, Reg, VT);
       }
       break;
     case TargetLowering::Custom:
@@ -892,12 +903,23 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Legal: {
       SDOperand Ops[] = { DAG.getConstant(0, VT), Tmp2 };
       Result = DAG.getNode(ISD::MERGE_VALUES, DAG.getVTList(VT, MVT::Other),
-                           Ops, 2).getValue(Op.ResNo);
+                           Ops, 2);
       break;
     }
     }
     }
-    break;
+    if (Result.Val->getNumValues() == 1) break;
+
+    assert(Result.Val->getNumValues() == 2 &&
+           "Cannot return more than two values!");
+
+    // Since we produced two values, make sure to remember that we
+    // legalized both of them.
+    Tmp1 = LegalizeOp(Result);
+    Tmp2 = LegalizeOp(Result.getValue(1));
+    AddLegalizedOperand(Op.getValue(0), Tmp1);
+    AddLegalizedOperand(Op.getValue(1), Tmp2);
+    return Op.ResNo ? Tmp2 : Tmp1;
   case ISD::EH_RETURN: {
     MVT::ValueType VT = Node->getValueType(0);
     // The only "good" option for this node is to custom lower it.
