@@ -784,6 +784,74 @@ X86InstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return 2;
 }
 
+void X86InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MI,
+                                   unsigned DestReg, unsigned SrcReg,
+                                   const TargetRegisterClass *DestRC,
+                                   const TargetRegisterClass *SrcRC) const {
+  if (DestRC != SrcRC) {
+    // Moving EFLAGS to / from another register requires a push and a pop.
+    if (SrcRC == &X86::CCRRegClass) {
+      assert(SrcReg == X86::EFLAGS);
+      if (DestRC == &X86::GR64RegClass) {
+        BuildMI(MBB, MI, get(X86::PUSHFQ));
+        BuildMI(MBB, MI, get(X86::POP64r), DestReg);
+        return;
+      } else if (DestRC == &X86::GR32RegClass) {
+        BuildMI(MBB, MI, get(X86::PUSHFD));
+        BuildMI(MBB, MI, get(X86::POP32r), DestReg);
+        return;
+      }
+    } else if (DestRC == &X86::CCRRegClass) {
+      assert(DestReg == X86::EFLAGS);
+      if (SrcRC == &X86::GR64RegClass) {
+        BuildMI(MBB, MI, get(X86::PUSH64r)).addReg(SrcReg);
+        BuildMI(MBB, MI, get(X86::POPFQ));
+        return;
+      } else if (SrcRC == &X86::GR32RegClass) {
+        BuildMI(MBB, MI, get(X86::PUSH32r)).addReg(SrcReg);
+        BuildMI(MBB, MI, get(X86::POPFD));
+        return;
+      }
+    }
+    cerr << "Not yet supported!";
+    abort();
+  }
+
+  unsigned Opc;
+  if (DestRC == &X86::GR64RegClass) {
+    Opc = X86::MOV64rr;
+  } else if (DestRC == &X86::GR32RegClass) {
+    Opc = X86::MOV32rr;
+  } else if (DestRC == &X86::GR16RegClass) {
+    Opc = X86::MOV16rr;
+  } else if (DestRC == &X86::GR8RegClass) {
+    Opc = X86::MOV8rr;
+  } else if (DestRC == &X86::GR32_RegClass) {
+    Opc = X86::MOV32_rr;
+  } else if (DestRC == &X86::GR16_RegClass) {
+    Opc = X86::MOV16_rr;
+  } else if (DestRC == &X86::RFP32RegClass) {
+    Opc = X86::MOV_Fp3232;
+  } else if (DestRC == &X86::RFP64RegClass || DestRC == &X86::RSTRegClass) {
+    Opc = X86::MOV_Fp6464;
+  } else if (DestRC == &X86::RFP80RegClass) {
+    Opc = X86::MOV_Fp8080;
+  } else if (DestRC == &X86::FR32RegClass) {
+    Opc = X86::FsMOVAPSrr;
+  } else if (DestRC == &X86::FR64RegClass) {
+    Opc = X86::FsMOVAPDrr;
+  } else if (DestRC == &X86::VR128RegClass) {
+    Opc = X86::MOVAPSrr;
+  } else if (DestRC == &X86::VR64RegClass) {
+    Opc = X86::MMX_MOVQ64rr;
+  } else {
+    assert(0 && "Unknown regclass");
+    abort();
+  }
+  BuildMI(MBB, MI, get(Opc), DestReg).addReg(SrcReg);
+}
+
 bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   

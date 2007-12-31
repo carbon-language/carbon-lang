@@ -46,6 +46,12 @@ namespace llvm {
 
     unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
     unsigned isStoreToStackSlot(MachineInstr *MI, int &FrameIndex) const;
+    
+    virtual void copyRegToReg(MachineBasicBlock &MBB,
+                              MachineBasicBlock::iterator MI,
+                              unsigned DestReg, unsigned SrcReg,
+                              const TargetRegisterClass *DestRC,
+                              const TargetRegisterClass *SrcRC) const;
   };
 }
 

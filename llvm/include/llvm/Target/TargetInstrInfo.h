@@ -458,6 +458,15 @@ public:
     return 0;
   }
   
+  /// copyRegToReg - Add a copy between a pair of registers
+  virtual void copyRegToReg(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MI,
+                            unsigned DestReg, unsigned SrcReg,
+                            const TargetRegisterClass *DestRC,
+                            const TargetRegisterClass *SrcRC) const {
+    assert(0 && "Target didn't implement TargetInstrInfo::copyRegToReg!");
+  }
+  
   /// BlockHasNoFallThrough - Return true if the specified block does not
   /// fall-through into its successor block.  This is primarily used when a
   /// branch is unanalyzable.  It is useful for things like unconditional

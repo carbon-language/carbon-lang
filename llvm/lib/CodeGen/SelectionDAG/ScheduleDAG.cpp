@@ -359,7 +359,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
   } else {
     // Create the reg, emit the copy.
     VRBase = RegInfo.createVirtualRegister(TRC);
-    MRI->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, TRC, TRC);
+    TII->copyRegToReg(*BB, BB->end(), VRBase, SrcReg, TRC, TRC);
   }
 
   if (InstanceNo > 0)
@@ -751,7 +751,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
           TRC =
             MRI->getPhysicalRegisterRegClass(Node->getOperand(2).getValueType(),
                                             InReg);
-        MRI->copyRegToReg(*BB, BB->end(), DestReg, InReg, TRC, TRC);
+        TII->copyRegToReg(*BB, BB->end(), DestReg, InReg, TRC, TRC);
       }
       break;
     }
@@ -848,7 +848,7 @@ void ScheduleDAG::EmitCrossRCCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseM
         }
       }
       assert(I->Reg && "Unknown physical register!");
-      MRI->copyRegToReg(*BB, BB->end(), Reg, VRI->second,
+      TII->copyRegToReg(*BB, BB->end(), Reg, VRI->second,
                         SU->CopyDstRC, SU->CopySrcRC);
     } else {
       // Copy from physical register.
@@ -856,7 +856,7 @@ void ScheduleDAG::EmitCrossRCCopy(SUnit *SU, DenseMap<SUnit*, unsigned> &VRBaseM
       unsigned VRBase = RegInfo.createVirtualRegister(SU->CopyDstRC);
       bool isNew = VRBaseMap.insert(std::make_pair(SU, VRBase));
       assert(isNew && "Node emitted out of order - early");
-      MRI->copyRegToReg(*BB, BB->end(), VRBase, I->Reg,
+      TII->copyRegToReg(*BB, BB->end(), VRBase, I->Reg,
                         SU->CopyDstRC, SU->CopySrcRC);
     }
     break;
@@ -874,7 +874,7 @@ void ScheduleDAG::EmitSchedule() {
          E = RegInfo.livein_end(); LI != E; ++LI)
       if (LI->second) {
         const TargetRegisterClass *RC = RegInfo.getRegClass(LI->second);
-        MRI->copyRegToReg(*MF.begin(), MF.begin()->end(), LI->second,
+        TII->copyRegToReg(*MF.begin(), MF.begin()->end(), LI->second,
                           LI->first, RC, RC);
       }
   }

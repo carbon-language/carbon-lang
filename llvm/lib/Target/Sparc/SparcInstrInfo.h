@@ -33,6 +33,7 @@ namespace SPII {
 
 class SparcInstrInfo : public TargetInstrInfo {
   const SparcRegisterInfo RI;
+  const SparcSubtarget& Subtarget;
 public:
   SparcInstrInfo(SparcSubtarget &ST);
 
@@ -66,6 +67,12 @@ public:
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                                 const std::vector<MachineOperand> &Cond) const;
+
+  virtual void copyRegToReg(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator I,
+                            unsigned DestReg, unsigned SrcReg,
+                            const TargetRegisterClass *DestRC,
+                            const TargetRegisterClass *SrcRC) const;
 };
 
 }

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "SparcInstrInfo.h"
+#include "SparcSubtarget.h"
 #include "Sparc.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -20,7 +21,7 @@ using namespace llvm;
 
 SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
   : TargetInstrInfo(SparcInsts, array_lengthof(SparcInsts)),
-    RI(ST, *this) {
+    RI(ST, *this), Subtarget(ST) {
 }
 
 static bool isZeroImm(const MachineOperand &op) {
@@ -106,4 +107,25 @@ SparcInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
   assert(Cond.empty() && !FBB && TBB && "Can only handle uncond branches!");
   BuildMI(&MBB, get(SP::BA)).addMBB(TBB);
   return 1;
+}
+
+void SparcInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I,
+                                     unsigned DestReg, unsigned SrcReg,
+                                     const TargetRegisterClass *DestRC,
+                                     const TargetRegisterClass *SrcRC) const {
+  if (DestRC != SrcRC) {
+    cerr << "Not yet supported!";
+    abort();
+  }
+
+  if (DestRC == SP::IntRegsRegisterClass)
+    BuildMI(MBB, I, get(SP::ORrr), DestReg).addReg(SP::G0).addReg(SrcReg);
+  else if (DestRC == SP::FPRegsRegisterClass)
+    BuildMI(MBB, I, get(SP::FMOVS), DestReg).addReg(SrcReg);
+  else if (DestRC == SP::DFPRegsRegisterClass)
+    BuildMI(MBB, I, get(Subtarget.isV9() ? SP::FMOVD : SP::FpMOVD),DestReg)
+      .addReg(SrcReg);
+  else
+    assert (0 && "Can't copy this register");
 }

@@ -56,3 +56,21 @@ IA64InstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *TBB,
   BuildMI(&MBB, get(IA64::BRL_NOTCALL)).addMBB(TBB);
   return 1;
 }
+
+void IA64InstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MI,
+                                   unsigned DestReg, unsigned SrcReg,
+                                   const TargetRegisterClass *DestRC,
+                                   const TargetRegisterClass *SrcRC) const {
+  if (DestRC != SrcRC) {
+    cerr << "Not yet supported!";
+    abort();
+  }
+
+  if(DestRC == IA64::PRRegisterClass ) // if a bool, we use pseudocode
+    // (SrcReg) DestReg = cmp.eq.unc(r0, r0)
+    BuildMI(MBB, MI, get(IA64::PCMPEQUNC), DestReg)
+      .addReg(IA64::r0).addReg(IA64::r0).addReg(SrcReg);
+  else // otherwise, MOV works (for both gen. regs and FP regs)
+    BuildMI(MBB, MI, get(IA64::MOV), DestReg).addReg(SrcReg);
+}

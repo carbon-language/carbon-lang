@@ -148,24 +148,6 @@ void MipsRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   return;
 }
 
-void MipsRegisterInfo::
-copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-             unsigned DestReg, unsigned SrcReg,
-             const TargetRegisterClass *DestRC,
-             const TargetRegisterClass *SrcRC) const
-{
-  if (DestRC != SrcRC) {
-    cerr << "Not yet supported!";
-    abort();
-  }
-
-  if (DestRC == Mips::CPURegsRegisterClass)
-    BuildMI(MBB, I, TII.get(Mips::ADDu), DestReg).addReg(Mips::ZERO)
-      .addReg(SrcReg);
-  else
-    assert (0 && "Can't copy this register");
-}
-
 void MipsRegisterInfo::reMaterialize(MachineBasicBlock &MBB, 
                                       MachineBasicBlock::iterator I,
                                       unsigned DestReg, 

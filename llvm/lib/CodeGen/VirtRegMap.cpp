@@ -928,7 +928,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
   DOUT << MBB.getBasicBlock()->getName() << ":\n";
 
   MachineFunction &MF = *MBB.getParent();
-
+  
   // Spills - Keep track of which spilled values are available in physregs so
   // that we can choose to reuse the physregs instead of emitting reloads.
   AvailableSpills Spills(MRI, TII);
@@ -1182,7 +1182,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
         RegInfo->setPhysRegUsed(DesignatedReg);
         ReusedOperands.markClobbered(DesignatedReg);
-        MRI->copyRegToReg(MBB, &MI, DesignatedReg, PhysReg, RC, RC);
+        TII->copyRegToReg(MBB, &MI, DesignatedReg, PhysReg, RC, RC);
 
         MachineInstr *CopyMI = prior(MII);
         UpdateKills(*CopyMI, RegKills, KillOps);
@@ -1268,7 +1268,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
             DOUT << "Promoted Load To Copy: " << MI;
             if (DestReg != InReg) {
               const TargetRegisterClass *RC = RegInfo->getRegClass(VirtReg);
-              MRI->copyRegToReg(MBB, &MI, DestReg, InReg, RC, RC);
+              TII->copyRegToReg(MBB, &MI, DestReg, InReg, RC, RC);
               // Revisit the copy so we make sure to notice the effects of the
               // operation on the destreg (either needing to RA it if it's 
               // virtual or needing to clobber any values if it's physical).

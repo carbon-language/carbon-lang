@@ -270,34 +270,6 @@ void ARMRegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   return;
 }
 
-void ARMRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator I,
-                                   unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *DestRC,
-                                   const TargetRegisterClass *SrcRC) const {
-  if (DestRC != SrcRC) {
-    cerr << "Not yet supported!";
-    abort();
-  }
-
-  if (DestRC == ARM::GPRRegisterClass) {
-    MachineFunction &MF = *MBB.getParent();
-    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-    if (AFI->isThumbFunction())
-      BuildMI(MBB, I, TII.get(ARM::tMOVr), DestReg).addReg(SrcReg);
-    else
-      AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::MOVr), DestReg)
-                                  .addReg(SrcReg)));
-  } else if (DestRC == ARM::SPRRegisterClass)
-    AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::FCPYS), DestReg)
-                   .addReg(SrcReg));
-  else if (DestRC == ARM::DPRRegisterClass)
-    AddDefaultPred(BuildMI(MBB, I, TII.get(ARM::FCPYD), DestReg)
-                   .addReg(SrcReg));
-  else
-    abort();
-}
-
 /// emitLoadConstPool - Emits a load from constpool to materialize the
 /// specified immediate.
 static void emitLoadConstPool(MachineBasicBlock &MBB,

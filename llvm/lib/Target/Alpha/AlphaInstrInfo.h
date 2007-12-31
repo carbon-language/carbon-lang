@@ -42,6 +42,11 @@ public:
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                             MachineBasicBlock *FBB,
                             const std::vector<MachineOperand> &Cond) const;
+  virtual void copyRegToReg(MachineBasicBlock &MBB,
+                            MachineBasicBlock::iterator MI,
+                            unsigned DestReg, unsigned SrcReg,
+                            const TargetRegisterClass *DestRC,
+                            const TargetRegisterClass *SrcRC) const;
   bool AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                      MachineBasicBlock *&FBB,
                      std::vector<MachineOperand> &Cond) const;

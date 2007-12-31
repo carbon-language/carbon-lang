@@ -360,43 +360,6 @@ void SPURegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   }
 }
 
-void SPURegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                   MachineBasicBlock::iterator MI,
-                                   unsigned DestReg, unsigned SrcReg,
-                                   const TargetRegisterClass *DestRC,
-                                   const TargetRegisterClass *SrcRC) const
-{
-  if (DestRC != SrcRC) {
-    cerr << "SPURegisterInfo::copyRegToReg(): DestRC != SrcRC not supported!\n";
-    abort();
-  }
-
-  if (DestRC == SPU::R8CRegisterClass) {
-    BuildMI(MBB, MI, TII.get(SPU::ORBIr8), DestReg).addReg(SrcReg).addImm(0);
-  } else if (DestRC == SPU::R16CRegisterClass) {
-    BuildMI(MBB, MI, TII.get(SPU::ORHIr16), DestReg).addReg(SrcReg).addImm(0);
-  } else if (DestRC == SPU::R32CRegisterClass) {
-    BuildMI(MBB, MI, TII.get(SPU::ORIr32), DestReg).addReg(SrcReg).addImm(0);
-  } else if (DestRC == SPU::R32FPRegisterClass) {
-    BuildMI(MBB, MI, TII.get(SPU::ORf32), DestReg).addReg(SrcReg)
-      .addReg(SrcReg);
-  } else if (DestRC == SPU::R64CRegisterClass) {
-    BuildMI(MBB, MI, TII.get(SPU::ORIr64), DestReg).addReg(SrcReg).addImm(0);
-  } else if (DestRC == SPU::R64FPRegisterClass) {
-    BuildMI(MBB, MI, TII.get(SPU::ORf64), DestReg).addReg(SrcReg)
-      .addReg(SrcReg);
-  } else if (DestRC == SPU::GPRCRegisterClass) {
-    BuildMI(MBB, MI, TII.get(SPU::ORgprc), DestReg).addReg(SrcReg)
-      .addReg(SrcReg);
-  } else if (DestRC == SPU::VECREGRegisterClass) {
-    BuildMI(MBB, MI, TII.get(SPU::ORv4i32), DestReg).addReg(SrcReg)
-      .addReg(SrcReg);
-  } else {
-    std::cerr << "Attempt to copy unknown/unsupported register class!\n";
-    abort();
-  }
-}
-
 void SPURegisterInfo::reMaterialize(MachineBasicBlock &MBB,
                                     MachineBasicBlock::iterator I,
                                     unsigned DestReg,

@@ -27,6 +27,16 @@ using namespace llvm;
 static cl::opt<bool> EnableARM3Addr("enable-arm-3-addr-conv", cl::Hidden,
                                   cl::desc("Enable ARM 2-addr to 3-addr conv"));
 
+static inline
+const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
+  return MIB.addImm((int64_t)ARMCC::AL).addReg(0);
+}
+
+static inline
+const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
+  return MIB.addReg(0);
+}
+
 ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
   : TargetInstrInfo(ARMInsts, array_lengthof(ARMInsts)),
     RI(*this, STI) {
@@ -430,6 +440,34 @@ unsigned ARMInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *T
     .addImm(Cond[0].getImm()).addReg(Cond[1].getReg());
   BuildMI(&MBB, get(BOpc)).addMBB(FBB);
   return 2;
+}
+
+void ARMInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator I,
+                                   unsigned DestReg, unsigned SrcReg,
+                                   const TargetRegisterClass *DestRC,
+                                   const TargetRegisterClass *SrcRC) const {
+  if (DestRC != SrcRC) {
+    cerr << "Not yet supported!";
+    abort();
+  }
+
+  if (DestRC == ARM::GPRRegisterClass) {
+    MachineFunction &MF = *MBB.getParent();
+    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+    if (AFI->isThumbFunction())
+      BuildMI(MBB, I, get(ARM::tMOVr), DestReg).addReg(SrcReg);
+    else
+      AddDefaultCC(AddDefaultPred(BuildMI(MBB, I, get(ARM::MOVr), DestReg)
+                                  .addReg(SrcReg)));
+  } else if (DestRC == ARM::SPRRegisterClass)
+    AddDefaultPred(BuildMI(MBB, I, get(ARM::FCPYS), DestReg)
+                   .addReg(SrcReg));
+  else if (DestRC == ARM::DPRRegisterClass)
+    AddDefaultPred(BuildMI(MBB, I, get(ARM::FCPYD), DestReg)
+                   .addReg(SrcReg));
+  else
+    abort();
 }
 
 bool ARMInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {

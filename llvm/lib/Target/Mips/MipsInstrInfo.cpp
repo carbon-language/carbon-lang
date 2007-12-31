@@ -289,6 +289,23 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return 2;
 }
 
+void MipsInstrInfo::
+copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+             unsigned DestReg, unsigned SrcReg,
+             const TargetRegisterClass *DestRC,
+             const TargetRegisterClass *SrcRC) const {
+  if (DestRC != SrcRC) {
+    cerr << "Not yet supported!";
+    abort();
+  }
+
+  if (DestRC == Mips::CPURegsRegisterClass)
+    BuildMI(MBB, I, get(Mips::ADDu), DestReg).addReg(Mips::ZERO)
+      .addReg(SrcReg);
+  else
+    assert (0 && "Can't copy this register");
+}
+
 unsigned MipsInstrInfo::
 RemoveBranch(MachineBasicBlock &MBB) const 
 {

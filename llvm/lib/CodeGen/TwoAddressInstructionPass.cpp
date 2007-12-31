@@ -80,7 +80,6 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   DOUT << "Machine Function\n";
   const TargetMachine &TM = MF.getTarget();
   const TargetInstrInfo &TII = *TM.getInstrInfo();
-  const MRegisterInfo &MRI = *TM.getRegisterInfo();
   LiveVariables &LV = getAnalysis<LiveVariables>();
 
   bool MadeChange = false;
@@ -193,7 +192,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         InstructionRearranged:
           const TargetRegisterClass* rc = MF.getRegInfo().getRegClass(regA);
-          MRI.copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
+          TII.copyRegToReg(*mbbi, mi, regA, regB, rc, rc);
 
           MachineBasicBlock::iterator prevMi = prior(mi);
           DOUT << "\t\tprepend:\t"; DEBUG(prevMi->print(*cerr.stream(), &TM));

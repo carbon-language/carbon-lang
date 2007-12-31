@@ -132,6 +132,29 @@ unsigned AlphaInstrInfo::InsertBranch(MachineBasicBlock &MBB,MachineBasicBlock *
   return 2;
 }
 
+void AlphaInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator MI,
+                                     unsigned DestReg, unsigned SrcReg,
+                                     const TargetRegisterClass *DestRC,
+                                     const TargetRegisterClass *SrcRC) const {
+  //cerr << "copyRegToReg " << DestReg << " <- " << SrcReg << "\n";
+  if (DestRC != SrcRC) {
+    cerr << "Not yet supported!";
+    abort();
+  }
+
+  if (DestRC == Alpha::GPRCRegisterClass) {
+    BuildMI(MBB, MI, get(Alpha::BISr), DestReg).addReg(SrcReg).addReg(SrcReg);
+  } else if (DestRC == Alpha::F4RCRegisterClass) {
+    BuildMI(MBB, MI, get(Alpha::CPYSS), DestReg).addReg(SrcReg).addReg(SrcReg);
+  } else if (DestRC == Alpha::F8RCRegisterClass) {
+    BuildMI(MBB, MI, get(Alpha::CPYST), DestReg).addReg(SrcReg).addReg(SrcReg);
+  } else {
+    cerr << "Attempt to copy register that is not GPR or FPR";
+    abort();
+  }
+}
+
 static unsigned AlphaRevCondCode(unsigned Opcode) {
   switch (Opcode) {
   case Alpha::BEQ: return Alpha::BNE;

@@ -277,6 +277,34 @@ PPCInstrInfo::InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return 2;
 }
 
+void PPCInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MI,
+                                   unsigned DestReg, unsigned SrcReg,
+                                   const TargetRegisterClass *DestRC,
+                                   const TargetRegisterClass *SrcRC) const {
+  if (DestRC != SrcRC) {
+    cerr << "Not yet supported!";
+    abort();
+  }
+
+  if (DestRC == PPC::GPRCRegisterClass) {
+    BuildMI(MBB, MI, get(PPC::OR), DestReg).addReg(SrcReg).addReg(SrcReg);
+  } else if (DestRC == PPC::G8RCRegisterClass) {
+    BuildMI(MBB, MI, get(PPC::OR8), DestReg).addReg(SrcReg).addReg(SrcReg);
+  } else if (DestRC == PPC::F4RCRegisterClass) {
+    BuildMI(MBB, MI, get(PPC::FMRS), DestReg).addReg(SrcReg);
+  } else if (DestRC == PPC::F8RCRegisterClass) {
+    BuildMI(MBB, MI, get(PPC::FMRD), DestReg).addReg(SrcReg);
+  } else if (DestRC == PPC::CRRCRegisterClass) {
+    BuildMI(MBB, MI, get(PPC::MCRF), DestReg).addReg(SrcReg);
+  } else if (DestRC == PPC::VRRCRegisterClass) {
+    BuildMI(MBB, MI, get(PPC::VOR), DestReg).addReg(SrcReg).addReg(SrcReg);
+  } else {
+    cerr << "Attempt to copy register that is not GPR or FPR";
+    abort();
+  }
+}
+
 bool PPCInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   

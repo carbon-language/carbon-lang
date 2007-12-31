@@ -103,6 +103,11 @@ public:
   virtual unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
                                 MachineBasicBlock *FBB,
                                 const std::vector<MachineOperand> &Cond) const;
+  void copyRegToReg(MachineBasicBlock &MBB,
+                    MachineBasicBlock::iterator MI,
+                    unsigned DestReg, unsigned SrcReg,
+                    const TargetRegisterClass *DestRC,
+                    const TargetRegisterClass *SrcRC) const;
   virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
   virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
 };
