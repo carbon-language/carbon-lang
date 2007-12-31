@@ -1079,23 +1079,28 @@ ifndef DISABLE_AUTO_DEPENDENCIES
 # Create .lo files in the ObjDir directory from the .cpp and .c files...
 #---------------------------------------------------------
 
+DEPEND_OPTIONS = -MMD -MP -MF "$(ObjDir)/$*.d.tmp" \
+         -MT "$(ObjDir)/$*.lo" -MT "$(ObjDir)/$*.o" -MT "$(ObjDir)/$*.d"
+         
+# If the build succeeded, move the dependency file over.  If it failed, put an
+# empty file there.
+DEPEND_MOVEFILE = then $(MV) -f "$(ObjDir)/$*.d.tmp" "$(ObjDir)/$*.d"; \
+                  else $(RM) "$(ObjDir)/$*.d.tmp"; exit 1; fi
+
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cpp $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cpp for $(BuildMode) build " $(PIC_FLAG)
-	$(Verb) if $(MAYBE_PIC_Compile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACXXd $< -o $@ ;\
-	  then $(MV) -f "$(ObjDir)/$*.LACXXd" "$(ObjDir)/$*.d"; \
-	  else $(RM) -f "$(ObjDir)/$*.LACXXd"; exit 1; fi
+	$(Verb) if $(MAYBE_PIC_Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
+	        $(DEPEND_MOVEFILE)
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.cc $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.cc for $(BuildMode) build" $(PIC_FLAG)
-	$(Verb) if $(MAYBE_PIC_Compile.CXX) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACXXd $< -o $@ ;\
-	then $(MV) -f "$(ObjDir)/$*.LACXXd" "$(ObjDir)/$*.d"; \
-	else $(RM) -f "$(ObjDir)/$*.LACXXd"; exit 1; fi
+	$(Verb) if $(MAYBE_PIC_Compile.CXX) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
+	        $(DEPEND_MOVEFILE)
 
 $(ObjDir)/%.lo $(ObjDir)/%.o: %.c $(ObjDir)/.dir $(BUILT_SOURCES)
 	$(Echo) "Compiling $*.c for $(BuildMode) build" $(PIC_FLAG)
-	$(Verb) if $(MAYBE_PIC_Compile.C) -MD -MT $@ -MP -MF $(ObjDir)/$*.LACd $< -o $@ ; \
-	then $(MV) -f "$(ObjDir)/$*.LACd" "$(ObjDir)/$*.d"; \
-	else $(RM) -f "$(ObjDir)/$*.LACd"; exit 1; fi
+	$(Verb) if $(MAYBE_PIC_Compile.C) $(DEPEND_OPTIONS) $< -o $(ObjDir)/$*.o ; \
+	        $(DEPEND_MOVEFILE)
 
 #---------------------------------------------------------
 # Create .bc files in the ObjDir directory from .cpp .cc and .c files...
