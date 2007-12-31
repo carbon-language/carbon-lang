@@ -719,8 +719,7 @@ comes from.</p>
 corresponds one-to-one with the LLVM function input to the instruction selector.
 In addition to a list of basic blocks, the <tt>MachineFunction</tt> contains a
 a <tt>MachineConstantPool</tt>, a <tt>MachineFrameInfo</tt>, a
-<tt>MachineFunctionInfo</tt>, a <tt>SSARegMap</tt>, and a set of live in and
-live out registers for the function.  See
+<tt>MachineFunctionInfo</tt>, and a <tt>MachineRegisterInfo</tt>.  See
 <tt>include/llvm/CodeGen/MachineFunction.h</tt> for more information.</p>
 
 </div>
@@ -1313,8 +1312,8 @@ bool RegMapping_Fer::compatible_class(MachineFunction &amp;mf,
                                       unsigned p_reg) {
   assert(MRegisterInfo::isPhysicalRegister(p_reg) &amp;&amp;
          "Target register must be physical");
-  const TargetRegisterClass *trc = mf.getSSARegMap()->getRegClass(v_reg);
-  return trc->contains(p_reg);
+  const TargetRegisterClass *trc = mf.getRegInfo().getRegClass(v_reg);
+  return trc-&gt;contains(p_reg);
 }
 </pre>
 </div>
@@ -1343,7 +1342,7 @@ register. Whereas physical registers are statically defined in a
 <tt>TargetRegisterInfo.td</tt> file and cannot be created by the
 application developer, that is not the case with virtual registers.
 In order to create new virtual registers, use the method
-<tt>SSARegMap::createVirtualRegister()</tt>. This method will return a
+<tt>MachineRegisterInfo::createVirtualRegister()</tt>. This method will return a
 virtual register with the highest code.
 </p>
 

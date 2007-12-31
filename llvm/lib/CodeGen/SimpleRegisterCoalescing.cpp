@@ -1410,8 +1410,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
       (*I)->eraseFromParent();
     }
 
-    // Transfer sub-registers info to SSARegMap now that coalescing information
-    // is complete.
+    // Transfer sub-registers info to MachineRegisterInfo now that coalescing
+    // information is complete.
     RegSubIdxMap.grow(RegInfo.getLastVirtReg()+1);
     while (!SubRegIdxes.empty()) {
       std::pair<unsigned, unsigned> RI = SubRegIdxes.back();

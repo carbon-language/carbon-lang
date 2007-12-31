@@ -606,7 +606,7 @@ void ScheduleDAG::EmitSubregNode(SDNode *Node,
       SubIdx = cast<ConstantSDNode>(Node->getOperand(2))->getValue();
     }
     
-    // TODO: Add tracking info to SSARegMap of which vregs are subregs
+    // TODO: Add tracking info to MachineRegisterInfo of which vregs are subregs
     // to allow coalescing in the allocator
           
     // If the node is only used by a CopyToReg and the dest reg is a vreg, use
