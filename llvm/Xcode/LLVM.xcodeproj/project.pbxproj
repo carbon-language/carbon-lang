@@ -136,7 +136,6 @@
 		9F7793880C73C57100551F9C /* FileWriters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FileWriters.h; sourceTree = "<group>"; };
 		9F7793890C73C57100551F9C /* MachORelocation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachORelocation.h; sourceTree = "<group>"; };
 		9F77938A0C73C57100551F9C /* RegisterScavenging.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegisterScavenging.h; sourceTree = "<group>"; };
-		9F77938B0C73C57100551F9C /* SimpleRegisterCoalescing.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SimpleRegisterCoalescing.h; sourceTree = "<group>"; };
 		9F7794140C73CB6100551F9C /* Mips.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Mips.h; sourceTree = "<group>"; };
 		9F7794150C73CB6100551F9C /* Mips.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Mips.td; sourceTree = "<group>"; };
 		9F7794160C73CB6100551F9C /* MipsAsmPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MipsAsmPrinter.cpp; sourceTree = "<group>"; };
@@ -221,7 +220,6 @@
 		9FE4509B0C77A79C00C4FEA4 /* PPCGenCallingConv.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.pascal; path = PPCGenCallingConv.inc; sourceTree = "<group>"; };
 		9FE4509C0C77A7BC00C4FEA4 /* README-MMX.txt */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = "README-MMX.txt"; sourceTree = "<group>"; };
 		9FE4509D0C77A7BC00C4FEA4 /* X86CallingConv.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = X86CallingConv.td; sourceTree = "<group>"; };
-		9FE4509E0C77A7BC00C4FEA4 /* X86CodeEmitter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = X86CodeEmitter.h; sourceTree = "<group>"; };
 		9FE4509F0C77A7BC00C4FEA4 /* X86ELFWriterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = X86ELFWriterInfo.cpp; sourceTree = "<group>"; };
 		9FE450A00C77A7BC00C4FEA4 /* X86ELFWriterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = X86ELFWriterInfo.h; sourceTree = "<group>"; };
 		9FE450A10C77A7BC00C4FEA4 /* X86GenCallingConv.inc */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.pascal; path = X86GenCallingConv.inc; sourceTree = "<group>"; };
@@ -314,7 +312,6 @@
 		CF73C0BF098A551F00627152 /* ValueSymbolTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ValueSymbolTable.cpp; path = ../lib/VMCore/ValueSymbolTable.cpp; sourceTree = SOURCE_ROOT; };
 		CF79495D09B326D4005ADFCA /* Dwarf.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Dwarf.cpp; sourceTree = "<group>"; };
 		CF7FFA1F0985081C008B0087 /* ScheduleDAGList.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ScheduleDAGList.cpp; sourceTree = "<group>"; };
-		CF7FFA200985081C008B0087 /* ScheduleDAGSimple.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ScheduleDAGSimple.cpp; sourceTree = "<group>"; };
 		CF7FFA2109850864008B0087 /* ScheduleDAG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScheduleDAG.h; sourceTree = "<group>"; };
 		CF8D62FA09C2226F006017BA /* Intrinsics.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Intrinsics.td; sourceTree = "<group>"; };
 		CF8E00490989162500DA2399 /* Dwarf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Dwarf.h; sourceTree = "<group>"; };
@@ -540,7 +537,6 @@
 		DE66EC6E08ABE86A00323D32 /* Type.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Type.cpp; path = ../lib/VMCore/Type.cpp; sourceTree = SOURCE_ROOT; };
 		DE66EC6F08ABE86A00323D32 /* Value.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Value.cpp; path = ../lib/VMCore/Value.cpp; sourceTree = SOURCE_ROOT; };
 		DE66EC7008ABE86A00323D32 /* Verifier.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Verifier.cpp; path = ../lib/VMCore/Verifier.cpp; sourceTree = SOURCE_ROOT; };
-		DE66EC8A08ABEAF000323D32 /* Lexer.l */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.lex; name = Lexer.l; path = ../lib/AsmParser/Lexer.l; sourceTree = SOURCE_ROOT; };
 		DE66EC8E08ABEAF000323D32 /* llvmAsmParser.y */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.yacc; name = llvmAsmParser.y; path = ../lib/AsmParser/llvmAsmParser.y; sourceTree = SOURCE_ROOT; };
 		DE66EC8F08ABEAF000323D32 /* Parser.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = Parser.cpp; path = ../lib/AsmParser/Parser.cpp; sourceTree = SOURCE_ROOT; };
 		DE66EC9008ABEAF000323D32 /* ParserInternals.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = ParserInternals.h; path = ../lib/AsmParser/ParserInternals.h; sourceTree = SOURCE_ROOT; };
@@ -781,7 +777,6 @@
 		DE66F1E508ABEFB400323D32 /* SimplifyCFG.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SimplifyCFG.cpp; sourceTree = "<group>"; };
 		DE66F1E608ABEFB400323D32 /* UnifyFunctionExitNodes.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = UnifyFunctionExitNodes.cpp; sourceTree = "<group>"; };
 		DE66F1E708ABEFB400323D32 /* ValueMapper.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ValueMapper.cpp; sourceTree = "<group>"; };
-		DE66F1E808ABEFB400323D32 /* ValueMapper.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ValueMapper.h; sourceTree = "<group>"; };
 		DE66F1EA08ABF03100323D32 /* AbstractTypeUser.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AbstractTypeUser.h; sourceTree = "<group>"; };
 		DE66F1EE08ABF03100323D32 /* DenseMap.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DenseMap.h; sourceTree = "<group>"; };
 		DE66F1EF08ABF03100323D32 /* DepthFirstIterator.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DepthFirstIterator.h; sourceTree = "<group>"; };
@@ -909,7 +904,6 @@
 		DE66F28C08ABF03200323D32 /* SystemUtils.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SystemUtils.h; sourceTree = "<group>"; };
 		DE66F28E08ABF03200323D32 /* Timer.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Timer.h; sourceTree = "<group>"; };
 		DE66F29008ABF03200323D32 /* type_traits.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = type_traits.h; sourceTree = "<group>"; };
-		DE66F29108ABF03200323D32 /* TypeInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TypeInfo.h; sourceTree = "<group>"; };
 		DE66F29308ABF03200323D32 /* SymbolTableListTraits.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SymbolTableListTraits.h; sourceTree = "<group>"; };
 		DE66F29508ABF03200323D32 /* DynamicLibrary.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DynamicLibrary.h; sourceTree = "<group>"; };
 		DE66F29608ABF03200323D32 /* LICENSE.TXT */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = LICENSE.TXT; sourceTree = "<group>"; };
@@ -1063,8 +1057,6 @@
 		DE81706008CFB44D0093BDEF /* CodeGenTarget.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CodeGenTarget.h; sourceTree = "<group>"; };
 		DE81706708CFB44D0093BDEF /* DAGISelEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DAGISelEmitter.cpp; sourceTree = "<group>"; };
 		DE81706808CFB44D0093BDEF /* DAGISelEmitter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DAGISelEmitter.h; sourceTree = "<group>"; };
-		DE81708408CFB44D0093BDEF /* FileLexer.l */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.lex; path = FileLexer.l; sourceTree = "<group>"; };
-		DE81708808CFB44D0093BDEF /* FileParser.y */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.yacc; path = FileParser.y; sourceTree = "<group>"; };
 		DE81708908CFB44D0093BDEF /* InstrInfoEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = InstrInfoEmitter.cpp; sourceTree = "<group>"; };
 		DE81708A08CFB44D0093BDEF /* InstrInfoEmitter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = InstrInfoEmitter.h; sourceTree = "<group>"; };
 		DE81708E08CFB44D0093BDEF /* Record.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Record.cpp; sourceTree = "<group>"; };
@@ -1486,7 +1478,6 @@
 		DE66EC8808ABEAC900323D32 /* lib/AsmParser */ = {
 			isa = PBXGroup;
 			children = (
-				DE66EC8A08ABEAF000323D32 /* Lexer.l */,
 				DE66EC8E08ABEAF000323D32 /* llvmAsmParser.y */,
 				DE66EC8F08ABEAF000323D32 /* Parser.cpp */,
 				DE66EC9008ABEAF000323D32 /* ParserInternals.h */,
@@ -1592,7 +1583,6 @@
 				CF6B5AFD095C82C300D1EA42 /* DAGCombiner.cpp */,
 				DE66ED9008ABEC2B00323D32 /* LegalizeDAG.cpp */,
 				CF7FFA1F0985081C008B0087 /* ScheduleDAGList.cpp */,
-				CF7FFA200985081C008B0087 /* ScheduleDAGSimple.cpp */,
 				DE694D9F08B51E0C0039C106 /* ScheduleDAG.cpp */,
 				DE66ED9208ABEC2B00323D32 /* SelectionDAG.cpp */,
 				DE66ED9308ABEC2B00323D32 /* SelectionDAGISel.cpp */,
@@ -1982,7 +1972,6 @@
 			children = (
 				9FE4509C0C77A7BC00C4FEA4 /* README-MMX.txt */,
 				9FE4509D0C77A7BC00C4FEA4 /* X86CallingConv.td */,
-				9FE4509E0C77A7BC00C4FEA4 /* X86CodeEmitter.h */,
 				9FE4509F0C77A7BC00C4FEA4 /* X86ELFWriterInfo.cpp */,
 				9FE450A00C77A7BC00C4FEA4 /* X86ELFWriterInfo.h */,
 				9FE450A10C77A7BC00C4FEA4 /* X86GenCallingConv.inc */,
@@ -2153,7 +2142,6 @@
 				DE66F1E508ABEFB400323D32 /* SimplifyCFG.cpp */,
 				DE66F1E608ABEFB400323D32 /* UnifyFunctionExitNodes.cpp */,
 				DE66F1E708ABEFB400323D32 /* ValueMapper.cpp */,
-				DE66F1E808ABEFB400323D32 /* ValueMapper.h */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -2345,7 +2333,6 @@
 				DE66F24608ABF03100323D32 /* SelectionDAG.h */,
 				DE66F24708ABF03100323D32 /* SelectionDAGISel.h */,
 				DE66F24808ABF03100323D32 /* SelectionDAGNodes.h */,
-				9F77938B0C73C57100551F9C /* SimpleRegisterCoalescing.h */,
 				DE66F24908ABF03100323D32 /* SSARegMap.h */,
 				DE66F24B08ABF03100323D32 /* ValueTypes.h */,
 				CFE420FC0A66F67300AB4BF6 /* ValueTypes.td */,
@@ -2431,7 +2418,6 @@
 				DE66F28C08ABF03200323D32 /* SystemUtils.h */,
 				DE66F28E08ABF03200323D32 /* Timer.h */,
 				DE66F29008ABF03200323D32 /* type_traits.h */,
-				DE66F29108ABF03200323D32 /* TypeInfo.h */,
 			);
 			path = Support;
 			sourceTree = "<group>";
@@ -2726,8 +2712,6 @@
 				DE81706008CFB44D0093BDEF /* CodeGenTarget.h */,
 				DE81706708CFB44D0093BDEF /* DAGISelEmitter.cpp */,
 				DE81706808CFB44D0093BDEF /* DAGISelEmitter.h */,
-				DE81708408CFB44D0093BDEF /* FileLexer.l */,
-				DE81708808CFB44D0093BDEF /* FileParser.y */,
 				CF9720970A9F3D4D002CEEDD /* IntrinsicEmitter.cpp */,
 				CF9720980A9F3D4D002CEEDD /* IntrinsicEmitter.h */,
 				DE81708908CFB44D0093BDEF /* InstrInfoEmitter.cpp */,
