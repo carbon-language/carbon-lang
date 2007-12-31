@@ -33,17 +33,17 @@ protected:
 public:
   ilist_traits<MachineInstr>() : parent(0) { }
 
-  static MachineInstr* getPrev(MachineInstr* N) { return N->prev; }
-  static MachineInstr* getNext(MachineInstr* N) { return N->next; }
+  static MachineInstr* getPrev(MachineInstr* N) { return N->Prev; }
+  static MachineInstr* getNext(MachineInstr* N) { return N->Next; }
 
   static const MachineInstr*
-  getPrev(const MachineInstr* N) { return N->prev; }
+  getPrev(const MachineInstr* N) { return N->Prev; }
 
   static const MachineInstr*
-  getNext(const MachineInstr* N) { return N->next; }
+  getNext(const MachineInstr* N) { return N->Next; }
 
-  static void setPrev(MachineInstr* N, MachineInstr* prev) { N->prev = prev; }
-  static void setNext(MachineInstr* N, MachineInstr* next) { N->next = next; }
+  static void setPrev(MachineInstr* N, MachineInstr* prev) { N->Prev = prev; }
+  static void setNext(MachineInstr* N, MachineInstr* next) { N->Next = next; }
 
   static MachineInstr* createSentinel();
   static void destroySentinel(MachineInstr *MI) { delete MI; }
@@ -63,7 +63,9 @@ class MachineBasicBlock {
   MachineBasicBlock *Prev, *Next;
   const BasicBlock *BB;
   int Number;
-  MachineFunction *Parent;
+  MachineFunction *xParent;
+  
+  void setParent(MachineFunction *P) { xParent = P; }
 
   /// Predecessors/Successors - Keep track of the predecessor / successor
   /// basicblocks.
@@ -79,10 +81,8 @@ class MachineBasicBlock {
   bool IsLandingPad;
 
 public:
-  explicit MachineBasicBlock(const BasicBlock *bb = 0) : Prev(0), Next(0),
-                                                         BB(bb), Number(-1),
-                                                         Parent(0),
-                                                         IsLandingPad(false) {
+  explicit MachineBasicBlock(const BasicBlock *bb = 0)
+    : Prev(0), Next(0), BB(bb), Number(-1), xParent(0), IsLandingPad(false) {
     Insts.parent = this;
   }
 
@@ -95,8 +95,8 @@ public:
 
   /// getParent - Return the MachineFunction containing this basic block.
   ///
-  const MachineFunction *getParent() const { return Parent; }
-  MachineFunction *getParent() { return Parent; }
+  const MachineFunction *getParent() const { return xParent; }
+  MachineFunction *getParent() { return xParent; }
 
   typedef ilist<MachineInstr>::iterator                       iterator;
   typedef ilist<MachineInstr>::const_iterator           const_iterator;

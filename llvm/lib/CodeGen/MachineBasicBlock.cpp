@@ -14,7 +14,6 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -36,17 +35,17 @@ std::ostream& llvm::operator<<(std::ostream &OS, const MachineBasicBlock &MBB) {
 // gets the next available unique MBB number. If it is removed from a
 // MachineFunction, it goes back to being #-1.
 void ilist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock* N) {
-  assert(N->Parent == 0 && "machine instruction already in a basic block");
-  N->Parent = Parent;
+  assert(N->getParent() == 0 && "machine instruction already in a basic block");
+  N->setParent(Parent);
   N->Number = Parent->addToMBBNumbering(N);
   LeakDetector::removeGarbageObject(N);
 }
 
 void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock* N) {
-  assert(N->Parent != 0 && "machine instruction not in a basic block");
-  N->Parent->removeFromMBBNumbering(N->Number);
+  assert(N->getParent() != 0 && "machine instruction not in a basic block");
+  N->getParent()->removeFromMBBNumbering(N->Number);
   N->Number = -1;
-  N->Parent = 0;
+  N->setParent(0);
   LeakDetector::addGarbageObject(N);
 }
 
@@ -58,24 +57,26 @@ MachineInstr* ilist_traits<MachineInstr>::createSentinel() {
 }
 
 void ilist_traits<MachineInstr>::addNodeToList(MachineInstr* N) {
-  assert(N->parent == 0 && "machine instruction already in a basic block");
-  N->parent = parent;
+  assert(N->getParent() == 0 && "machine instruction already in a basic block");
+  N->setParent(parent);
   LeakDetector::removeGarbageObject(N);
 }
 
 void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N) {
-  assert(N->parent != 0 && "machine instruction not in a basic block");
-  N->parent = 0;
+  assert(N->getParent() != 0 && "machine instruction not in a basic block");
+  N->setParent(0);
   LeakDetector::addGarbageObject(N);
 }
 
 void ilist_traits<MachineInstr>::transferNodesFromList(
-  iplist<MachineInstr, ilist_traits<MachineInstr> >& fromList,
-  ilist_iterator<MachineInstr> first,
-  ilist_iterator<MachineInstr> last) {
-  if (parent != fromList.parent)
-    for (; first != last; ++first)
-      first->parent = parent;
+      iplist<MachineInstr, ilist_traits<MachineInstr> >& fromList,
+      ilist_iterator<MachineInstr> first,
+      ilist_iterator<MachineInstr> last) {
+  // Splice within the same MBB -> no change.
+  if (parent == fromList.parent) return;
+  
+  for (; first != last; ++first)
+    first->setParent(parent);
 }
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
@@ -177,7 +178,8 @@ void MachineBasicBlock::removeSuccessor(MachineBasicBlock *succ) {
   Successors.erase(I);
 }
 
-MachineBasicBlock::succ_iterator MachineBasicBlock::removeSuccessor(succ_iterator I) {
+MachineBasicBlock::succ_iterator 
+MachineBasicBlock::removeSuccessor(succ_iterator I) {
   assert(I != Successors.end() && "Not a current successor!");
   (*I)->removePredecessor(this);
   return(Successors.erase(I));
@@ -229,8 +231,8 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
 /// CFG to be inserted.  If we have proven that MBB can only branch to DestA and
 /// DestB, remove any other MBB successors from the CFG.  DestA and DestB can
 /// be null.
-/// Besides DestA and DestB, retain other edges leading to LandingPads (currently
-/// there can be only one; we don't check or require that here).
+/// Besides DestA and DestB, retain other edges leading to LandingPads
+/// (currently there can be only one; we don't check or require that here).
 /// Note it is possible that DestA and/or DestB are LandingPads.
 bool MachineBasicBlock::CorrectExtraCFGEdges(MachineBasicBlock *DestA,
                                              MachineBasicBlock *DestB,

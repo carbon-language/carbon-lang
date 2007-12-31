@@ -136,7 +136,7 @@ void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
 /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
 /// TID NULL and no operands.
 MachineInstr::MachineInstr()
-  : TID(0), NumImplicitOps(0), parent(0) {
+  : TID(0), NumImplicitOps(0), Parent(0) {
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
 }
@@ -155,7 +155,7 @@ void MachineInstr::addImplicitDefUseOperands() {
 /// TargetInstrDescriptor or the numOperands if it is not zero. (for
 /// instructions with variable number of operands).
 MachineInstr::MachineInstr(const TargetInstrDescriptor &tid, bool NoImp)
-  : TID(&tid), NumImplicitOps(0), parent(0) {
+  : TID(&tid), NumImplicitOps(0), Parent(0) {
   if (!NoImp && TID->ImplicitDefs)
     for (const unsigned *ImpDefs = TID->ImplicitDefs; *ImpDefs; ++ImpDefs)
       NumImplicitOps++;
@@ -174,7 +174,7 @@ MachineInstr::MachineInstr(const TargetInstrDescriptor &tid, bool NoImp)
 ///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB,
                            const TargetInstrDescriptor &tid)
-  : TID(&tid), NumImplicitOps(0), parent(0) {
+  : TID(&tid), NumImplicitOps(0), Parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   if (TID->ImplicitDefs)
     for (const unsigned *ImpDefs = TID->ImplicitDefs; *ImpDefs; ++ImpDefs)
@@ -203,9 +203,9 @@ MachineInstr::MachineInstr(const MachineInstr &MI) {
   }
 
   // Set parent, next, and prev to null
-  parent = 0;
-  prev = 0;
-  next = 0;
+  Parent = 0;
+  Prev = 0;
+  Next = 0;
 }
 
 

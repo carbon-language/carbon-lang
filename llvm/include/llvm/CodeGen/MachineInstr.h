@@ -34,8 +34,8 @@ class MachineInstr {
                                         // are determined at construction time).
 
   std::vector<MachineOperand> Operands; // the operands
-  MachineInstr* prev, *next;            // links for our intrusive list
-  MachineBasicBlock* parent;            // pointer to the owning basic block
+  MachineInstr *Prev, *Next;            // Links for MBB's intrusive list.
+  MachineBasicBlock *Parent;            // Pointer to the owning basic block.
 
   // OperandComplete - Return true if it's illegal to add a new operand
   bool OperandsComplete() const;
@@ -45,7 +45,7 @@ class MachineInstr {
 
   // Intrusive list support
   friend struct ilist_traits<MachineInstr>;
-
+  void setParent(MachineBasicBlock *P) { Parent = P; }
 public:
   /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
   /// TID NULL and no operands.
@@ -64,8 +64,8 @@ public:
 
   ~MachineInstr();
 
-  const MachineBasicBlock* getParent() const { return parent; }
-  MachineBasicBlock* getParent() { return parent; }
+  const MachineBasicBlock* getParent() const { return Parent; }
+  MachineBasicBlock* getParent() { return Parent; }
   
   /// getInstrDescriptor - Returns the target instruction descriptor of this
   /// MachineInstr.
