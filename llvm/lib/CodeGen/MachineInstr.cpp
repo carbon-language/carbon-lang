@@ -42,17 +42,23 @@ void MachineOperand::AddRegOperandToRegInfo(MachineRegisterInfo *RegInfo) {
   }
   
   // Otherwise, add this operand to the head of the registers use/def list.
-  MachineOperand *&Head = RegInfo->getRegUseDefListHead(getReg());
+  MachineOperand **Head = &RegInfo->getRegUseDefListHead(getReg());
   
-  Contents.Reg.Next = Head;
+  // For SSA values, we prefer to keep the definition at the start of the list.
+  // we do this by skipping over the definition if it is at the head of the
+  // list.
+  if (*Head && (*Head)->isDef())
+    Head = &(*Head)->Contents.Reg.Next;
+  
+  Contents.Reg.Next = *Head;
   if (Contents.Reg.Next) {
     assert(getReg() == Contents.Reg.Next->getReg() &&
            "Different regs on the same list!");
     Contents.Reg.Next->Contents.Reg.Prev = &Contents.Reg.Next;
   }
   
-  Contents.Reg.Prev = &Head;
-  Head = this;
+  Contents.Reg.Prev = Head;
+  *Head = this;
 }
 
 void MachineOperand::setReg(unsigned Reg) {
