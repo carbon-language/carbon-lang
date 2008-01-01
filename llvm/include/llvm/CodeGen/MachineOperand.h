@@ -175,6 +175,13 @@ public:
     assert(isRegister() && "Wrong MachineOperand accessor");
     return IsKill;
   }
+  
+  /// getNextOperandForReg - Return the next MachineOperand in the function that
+  /// uses or defines this register.
+  MachineOperand *getNextOperandForReg() const {
+    assert(isRegister() && "This is not a register operand!");
+    return Contents.Reg.Next;
+  }
 
   //===--------------------------------------------------------------------===//
   // Mutators for Register Operands

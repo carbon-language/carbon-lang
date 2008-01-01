@@ -16,6 +16,7 @@
 
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/iterator"
 #include <vector>
 
 namespace llvm {
@@ -56,6 +57,19 @@ public:
   MachineRegisterInfo(const MRegisterInfo &MRI);
   ~MachineRegisterInfo();
   
+  //===--------------------------------------------------------------------===//
+  // Register Info
+  //===--------------------------------------------------------------------===//
+
+  /// reg_begin/reg_end - Provide iteration support to walk over all definitions
+  /// and uses of a register within the MachineFunction that corresponds to this
+  /// MachineRegisterInfo object.
+  class reg_iterator;
+  reg_iterator reg_begin(unsigned RegNo) const {
+    return reg_iterator(getRegUseDefListHead(RegNo));
+  }
+  static reg_iterator reg_end() { return reg_iterator(0); }
+  
   /// getRegUseDefListHead - Return the head pointer for the register use/def
   /// list for the specified virtual or physical register.
   MachineOperand *&getRegUseDefListHead(unsigned RegNo) {
@@ -65,6 +79,12 @@ public:
     return VRegInfo[RegNo].second;
   }
   
+  MachineOperand *getRegUseDefListHead(unsigned RegNo) const {
+    if (RegNo < MRegisterInfo::FirstVirtualRegister)
+      return PhysRegUseDefLists[RegNo];
+    RegNo -= MRegisterInfo::FirstVirtualRegister;
+    return VRegInfo[RegNo].second;
+  }
   
   //===--------------------------------------------------------------------===//
   // Virtual Register Info
@@ -141,6 +161,52 @@ public:
   bool             liveout_empty() const { return LiveOuts.empty(); }
 private:
   void HandleVRegListReallocation();
+  
+public:
+  /// reg_iterator - This class provides iterator support for machine
+  /// operands in the function that use or define a specific register.
+  class reg_iterator : public forward_iterator<MachineOperand, ptrdiff_t> {
+    typedef forward_iterator<MachineOperand, ptrdiff_t> super;
+    
+    MachineOperand *Op;
+    reg_iterator(MachineOperand *op) : Op(op) {}
+    friend class MachineRegisterInfo;
+  public:
+    typedef super::reference reference;
+    typedef super::pointer pointer;
+    
+    reg_iterator(const reg_iterator &I) : Op(I.Op) {}
+    reg_iterator() : Op(0) {}
+    
+    bool operator==(const reg_iterator &x) const {
+      return Op == x.Op;
+    }
+    bool operator!=(const reg_iterator &x) const {
+      return !operator==(x);
+    }
+    
+    /// atEnd - return true if this iterator is equal to reg_end() on the value.
+    bool atEnd() const { return Op == 0; }
+    
+    // Iterator traversal: forward iteration only
+    reg_iterator &operator++() {          // Preincrement
+      assert(Op && "Cannot increment end iterator!");
+      Op = Op->getNextOperandForReg();
+      return *this;
+    }
+    reg_iterator operator++(int) {        // Postincrement
+      reg_iterator tmp = *this; ++*this; return tmp;
+    }
+    
+    // Retrieve a reference to the current operand.
+    MachineOperand &operator*() const {
+      assert(Op && "Cannot dereference end iterator!");
+      return *Op;
+    }
+    
+    MachineOperand *operator->() const { return Op; }
+  };
+  
 };
 
 } // End llvm namespace
