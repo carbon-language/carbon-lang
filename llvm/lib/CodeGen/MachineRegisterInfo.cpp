@@ -44,3 +44,18 @@ void MachineRegisterInfo::HandleVRegListReallocation() {
     List->Contents.Reg.Prev = &VRegInfo[i].second;
   }
 }
+
+
+/// getVRegDef - Return the machine instr that defines the specified virtual
+/// register or null if none is found.  This assumes that the code is in SSA
+/// form, so there should only be one definition.
+MachineInstr *MachineRegisterInfo::getVRegDef(unsigned Reg) const {
+  assert(Reg-MRegisterInfo::FirstVirtualRegister < VRegInfo.size() &&
+         "Invalid vreg!");
+  for (reg_iterator I = reg_begin(Reg), E = reg_end(); I != E; ++I) {
+    // Since we are in SSA form, we can stop at the first definition.
+    if (I->isDef())
+      return I->getParent();
+  }
+  return 0;
+}

@@ -120,6 +120,12 @@ public:
     return VRegInfo.size()+MRegisterInfo::FirstVirtualRegister-1;
   }
   
+  /// getVRegDef - Return the machine instr that defines the specified virtual
+  /// register or null if none is found.  This assumes that the code is in SSA
+  /// form, so there should only be one definition.
+  MachineInstr *getVRegDef(unsigned Reg) const;
+  
+  
   //===--------------------------------------------------------------------===//
   // Physical Register Use Info
   //===--------------------------------------------------------------------===//
