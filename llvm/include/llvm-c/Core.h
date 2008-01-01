@@ -434,6 +434,10 @@ LLVMValueRef LLVMBuildInvoke(LLVMBuilderRef, LLVMValueRef Fn,
 LLVMValueRef LLVMBuildUnwind(LLVMBuilderRef);
 LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef);
 
+/* Add a case to the switch instruction */
+void LLVMAddCase(LLVMValueRef Switch, LLVMValueRef OnVal,
+                 LLVMBasicBlockRef Dest);
+
 /* Arithmetic */
 LLVMValueRef LLVMBuildAdd(LLVMBuilderRef, LLVMValueRef LHS, LLVMValueRef RHS,
                           const char *Name);

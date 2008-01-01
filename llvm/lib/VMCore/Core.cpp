@@ -813,6 +813,11 @@ LLVMValueRef LLVMBuildUnreachable(LLVMBuilderRef B) {
   return wrap(unwrap(B)->CreateUnreachable());
 }
 
+void LLVMAddCase(LLVMValueRef Switch, LLVMValueRef OnVal,
+                 LLVMBasicBlockRef Dest) {
+  unwrap<SwitchInst>(Switch)->addCase(unwrap<ConstantInt>(OnVal), unwrap(Dest));
+}
+
 /*--.. Arithmetic ..........................................................--*/
 
 LLVMValueRef LLVMBuildAdd(LLVMBuilderRef B, LLVMValueRef LHS, LLVMValueRef RHS,
