@@ -1,37 +1,35 @@
-; RUN: llvm-upgrade < %s | llvm-as | opt  -licm -stats |& \
+; RUN: llvm-as < %s | opt  -licm -disable-output -stats |& \
 ; RUN:    grep {memory locations promoted to register}
+@X = global i32 7		; <i32*> [#uses=4]
 
-%X = global int 7
-
-void %testfunc(int %i) {
+define void @testfunc(i32 %i) {
+; <label>:0
 	br label %Loop
 
-Loop:
-	%j = phi uint [0, %0], [%Next, %Loop]
+Loop:		; preds = %Loop, %0
+	%j = phi i32 [ 0, %0 ], [ %Next, %Loop ]		; <i32> [#uses=1]
+	%x = load i32* @X		; <i32> [#uses=1]
+	%x2 = add i32 %x, 1		; <i32> [#uses=1]
+	store i32 %x2, i32* @X
+	%Next = add i32 %j, 1		; <i32> [#uses=2]
+	%cond = icmp eq i32 %Next, 0		; <i1> [#uses=1]
+	br i1 %cond, label %Out, label %Loop
 
-	%x = load int* %X  ; Should promote this to a register inside of loop!
-	%x2 = add int %x, 1
-	store int %x2, int* %X
-
-	%Next = add uint %j, 1
-	%cond = seteq uint %Next, 0
-	br bool %cond, label %Out, label %Loop
-
-Out:
+Out:		; preds = %Loop
 	ret void
 }
 
-void %testhard(int %i) {
+define void @testhard(i32 %i) {
 	br label %Loop
-Loop:
-	%X1 = getelementptr int* %X, long 0
-	%A = load int* %X1 ; Aliases X, needs to be rewritten
-	%V = add int %A, 1
-	%X2 = getelementptr int* %X, long 0
-	store int %V, int* %X2
-	br bool false, label %Loop, label %Exit
 
-Exit:
+Loop:		; preds = %Loop, %0
+	%X1 = getelementptr i32* @X, i64 0		; <i32*> [#uses=1]
+	%A = load i32* %X1		; <i32> [#uses=1]
+	%V = add i32 %A, 1		; <i32> [#uses=1]
+	%X2 = getelementptr i32* @X, i64 0		; <i32*> [#uses=1]
+	store i32 %V, i32* %X2
+	br i1 false, label %Loop, label %Exit
+
+Exit:		; preds = %Loop
 	ret void
-
 }
