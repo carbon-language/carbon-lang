@@ -575,7 +575,7 @@ MachineInstr *X86InstrInfo::commuteInstruction(MachineInstr *MI) const {
     // Fallthrough intended.
   }
   default:
-    return TargetInstrInfo::commuteInstruction(MI);
+    return TargetInstrInfoImpl::commuteInstruction(MI);
   }
 }
 

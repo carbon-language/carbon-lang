@@ -132,7 +132,7 @@ unsigned PPCInstrInfo::isStoreToStackSlot(MachineInstr *MI,
 MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {
   // Normal instructions can be commuted the obvious way.
   if (MI->getOpcode() != PPC::RLWIMI)
-    return TargetInstrInfo::commuteInstruction(MI);
+    return TargetInstrInfoImpl::commuteInstruction(MI);
   
   // Cannot commute if it has a non-zero rotate count.
   if (MI->getOperand(3).getImm() != 0)
