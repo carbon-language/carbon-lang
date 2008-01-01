@@ -86,6 +86,25 @@ public:
                             unsigned DestReg, unsigned SrcReg,
                             const TargetRegisterClass *DestRC,
                             const TargetRegisterClass *SrcRC) const;
+  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MBBI,
+                                   unsigned SrcReg, bool isKill, int FrameIndex,
+                                   const TargetRegisterClass *RC) const;
+
+  virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
+                              SmallVectorImpl<MachineOperand> &Addr,
+                              const TargetRegisterClass *RC,
+                              SmallVectorImpl<MachineInstr*> &NewMIs) const;
+
+  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator MBBI,
+                                    unsigned DestReg, int FrameIndex,
+                                    const TargetRegisterClass *RC) const;
+
+  virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                               SmallVectorImpl<MachineOperand> &Addr,
+                               const TargetRegisterClass *RC,
+                               SmallVectorImpl<MachineInstr*> &NewMIs) const;
   virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
   virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
 

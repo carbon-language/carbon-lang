@@ -243,7 +243,8 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
     return;
 
   const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
-
+  const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
+  
   // Now that we have a stack slot for each register to be saved, insert spill
   // code into the entry block.
   MachineBasicBlock *MBB = Fn.begin();
@@ -254,13 +255,12 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
       MBB->addLiveIn(CSI[i].getReg());
 
       // Insert the spill to the stack frame.
-      RegInfo->storeRegToStackSlot(*MBB, I, CSI[i].getReg(), true,
+      TII.storeRegToStackSlot(*MBB, I, CSI[i].getReg(), true,
                                    CSI[i].getFrameIdx(), CSI[i].getRegClass());
     }
   }
 
   // Add code to restore the callee-save registers in each exiting block.
-  const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator FI = Fn.begin(), E = Fn.end(); FI != E; ++FI)
     // If last instruction is a return instruction, add an epilogue.
     if (!FI->empty() && TII.isReturn(FI->back().getOpcode())) {
@@ -282,7 +282,7 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
       // that preceed it.
       if (!RegInfo->restoreCalleeSavedRegisters(*MBB, I, CSI)) {
         for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-          RegInfo->loadRegFromStackSlot(*MBB, I, CSI[i].getReg(),
+          TII.loadRegFromStackSlot(*MBB, I, CSI[i].getReg(),
                                         CSI[i].getFrameIdx(),
                                         CSI[i].getRegClass());
           assert(I != MBB->begin() &&

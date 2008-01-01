@@ -306,6 +306,71 @@ copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     assert (0 && "Can't copy this register");
 }
 
+void MipsInstrInfo::
+storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+          unsigned SrcReg, bool isKill, int FI, 
+          const TargetRegisterClass *RC) const 
+{
+  if (RC == Mips::CPURegsRegisterClass)
+    BuildMI(MBB, I, get(Mips::SW)).addReg(SrcReg, false, false, isKill)
+          .addImm(0).addFrameIndex(FI);
+  else
+    assert(0 && "Can't store this register to stack slot");
+}
+
+void MipsInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                      bool isKill,
+                                      SmallVectorImpl<MachineOperand> &Addr,
+                                      const TargetRegisterClass *RC,
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
+  if (RC != Mips::CPURegsRegisterClass)
+    assert(0 && "Can't store this register");
+  MachineInstrBuilder MIB = BuildMI(get(Mips::SW))
+    .addReg(SrcReg, false, false, isKill);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
+    MachineOperand &MO = Addr[i];
+    if (MO.isRegister())
+      MIB.addReg(MO.getReg());
+    else if (MO.isImmediate())
+      MIB.addImm(MO.getImm());
+    else
+      MIB.addFrameIndex(MO.getIndex());
+  }
+  NewMIs.push_back(MIB);
+  return;
+}
+
+void MipsInstrInfo::
+loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                     unsigned DestReg, int FI,
+                     const TargetRegisterClass *RC) const 
+{
+  if (RC == Mips::CPURegsRegisterClass)
+    BuildMI(MBB, I, get(Mips::LW), DestReg).addImm(0).addFrameIndex(FI);
+  else
+    assert(0 && "Can't load this register from stack slot");
+}
+
+void MipsInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                                       SmallVectorImpl<MachineOperand> &Addr,
+                                       const TargetRegisterClass *RC,
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
+  if (RC != Mips::CPURegsRegisterClass)
+    assert(0 && "Can't load this register");
+  MachineInstrBuilder MIB = BuildMI(get(Mips::LW), DestReg);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
+    MachineOperand &MO = Addr[i];
+    if (MO.isRegister())
+      MIB.addReg(MO.getReg());
+    else if (MO.isImmediate())
+      MIB.addImm(MO.getImm());
+    else
+      MIB.addFrameIndex(MO.getIndex());
+  }
+  NewMIs.push_back(MIB);
+  return;
+}
+
 unsigned MipsInstrInfo::
 RemoveBranch(MachineBasicBlock &MBB) const 
 {

@@ -319,6 +319,9 @@ void RABigBlock::spillVirtReg(MachineBasicBlock &MBB,
          " the intended one.");
   DOUT << "  Spilling register " << RegInfo->getName(PhysReg)
        << " containing %reg" << VirtReg;
+  
+  const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
+  
   if (!isVirtRegModified(VirtReg))
     DOUT << " which has not been modified, so no store necessary!";
 
@@ -329,7 +332,7 @@ void RABigBlock::spillVirtReg(MachineBasicBlock &MBB,
     const TargetRegisterClass *RC = MF->getRegInfo().getRegClass(VirtReg);
     int FrameIndex = getStackSpaceFor(VirtReg, RC);
     DOUT << " to stack slot #" << FrameIndex;
-    RegInfo->storeRegToStackSlot(MBB, I, PhysReg, true, FrameIndex, RC);
+    TII->storeRegToStackSlot(MBB, I, PhysReg, true, FrameIndex, RC);
     ++NumStores;   // Update statistics
   }
 
@@ -542,7 +545,8 @@ MachineInstr *RABigBlock::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI
        << RegInfo->getName(PhysReg) << "\n";
 
   // Add move instruction(s)
-  RegInfo->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC);
+  const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
+  TII->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC);
   ++NumLoads;    // Update statistics
 
   MF->getRegInfo().setPhysRegUsed(PhysReg);

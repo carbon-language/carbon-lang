@@ -29,26 +29,6 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
   IA64RegisterInfo(const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
-  void storeRegToStackSlot(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator MI,
-                           unsigned SrcReg, bool isKill, int FrameIndex,
-                           const TargetRegisterClass *RC) const;
-
-  void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
-                      SmallVectorImpl<MachineOperand> &Addr,
-                      const TargetRegisterClass *RC,
-                      SmallVectorImpl<MachineInstr*> &NewMIs) const;
-
-  void loadRegFromStackSlot(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MI,
-                            unsigned DestReg, int FrameIndex,
-                            const TargetRegisterClass *RC) const;
-
-  void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                       SmallVectorImpl<MachineOperand> &Addr,
-                       const TargetRegisterClass *RC,
-                       SmallVectorImpl<MachineInstr*> &NewMIs) const;
-
   void copyRegToReg(MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator MI,
                     unsigned DestReg, unsigned SrcReg,

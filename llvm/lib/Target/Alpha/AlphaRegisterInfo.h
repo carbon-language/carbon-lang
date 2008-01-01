@@ -28,26 +28,6 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
   AlphaRegisterInfo(const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
-  void storeRegToStackSlot(MachineBasicBlock &MBB,
-                           MachineBasicBlock::iterator MBBI,
-                           unsigned SrcReg, bool isKill, int FrameIndex,
-                           const TargetRegisterClass *RC) const;
-
-  void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
-                      SmallVectorImpl<MachineOperand> &Addr,
-                      const TargetRegisterClass *RC,
-                      SmallVectorImpl<MachineInstr*> &NewMIs) const;
-
-  void loadRegFromStackSlot(MachineBasicBlock &MBB,
-                            MachineBasicBlock::iterator MBBI,
-                            unsigned DestReg, int FrameIndex,
-                            const TargetRegisterClass *RC) const;
-  
-  void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                       SmallVectorImpl<MachineOperand> &Addr,
-                       const TargetRegisterClass *RC,
-                       SmallVectorImpl<MachineInstr*> &NewMIs) const;
-
   MachineInstr* foldMemoryOperand(MachineInstr* MI,
                                   SmallVectorImpl<unsigned> &Ops,
                                   int FrameIndex) const;
@@ -57,11 +37,6 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
                                   MachineInstr* LoadMI) const {
     return 0;
   }
-
-  void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                    unsigned DestReg, unsigned SrcReg,
-                    const TargetRegisterClass *DestRC,
-                    const TargetRegisterClass *SrcRC) const;
 
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;

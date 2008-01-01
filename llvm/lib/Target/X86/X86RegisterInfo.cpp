@@ -836,86 +836,6 @@ static unsigned getStoreRegOpcode(const TargetRegisterClass *RC,
   return Opc;
 }
 
-void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-                                          MachineBasicBlock::iterator MI,
-                                          unsigned SrcReg, bool isKill, int FrameIdx,
-                                          const TargetRegisterClass *RC) const {
-  unsigned Opc = getStoreRegOpcode(RC, StackAlign);
-  addFrameReference(BuildMI(MBB, MI, TII.get(Opc)), FrameIdx)
-    .addReg(SrcReg, false, false, isKill);
-}
-
-void X86RegisterInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
-                                     bool isKill,
-                                     SmallVectorImpl<MachineOperand> &Addr,
-                                     const TargetRegisterClass *RC,
-                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = getStoreRegOpcode(RC, StackAlign);
-  MachineInstrBuilder MIB = BuildMI(TII.get(Opc));
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB = X86InstrAddOperand(MIB, Addr[i]);
-  MIB.addReg(SrcReg, false, false, isKill);
-  NewMIs.push_back(MIB);
-}
-
-static unsigned getLoadRegOpcode(const TargetRegisterClass *RC,
-                                 unsigned StackAlign) {
-  unsigned Opc = 0;
-  if (RC == &X86::GR64RegClass) {
-    Opc = X86::MOV64rm;
-  } else if (RC == &X86::GR32RegClass) {
-    Opc = X86::MOV32rm;
-  } else if (RC == &X86::GR16RegClass) {
-    Opc = X86::MOV16rm;
-  } else if (RC == &X86::GR8RegClass) {
-    Opc = X86::MOV8rm;
-  } else if (RC == &X86::GR32_RegClass) {
-    Opc = X86::MOV32_rm;
-  } else if (RC == &X86::GR16_RegClass) {
-    Opc = X86::MOV16_rm;
-  } else if (RC == &X86::RFP80RegClass) {
-    Opc = X86::LD_Fp80m;
-  } else if (RC == &X86::RFP64RegClass) {
-    Opc = X86::LD_Fp64m;
-  } else if (RC == &X86::RFP32RegClass) {
-    Opc = X86::LD_Fp32m;
-  } else if (RC == &X86::FR32RegClass) {
-    Opc = X86::MOVSSrm;
-  } else if (RC == &X86::FR64RegClass) {
-    Opc = X86::MOVSDrm;
-  } else if (RC == &X86::VR128RegClass) {
-    // FIXME: Use movaps once we are capable of selectively
-    // aligning functions that spill SSE registers on 16-byte boundaries.
-    Opc = StackAlign >= 16 ? X86::MOVAPSrm : X86::MOVUPSrm;
-  } else if (RC == &X86::VR64RegClass) {
-    Opc = X86::MMX_MOVQ64rm;
-  } else {
-    assert(0 && "Unknown regclass");
-    abort();
-  }
-
-  return Opc;
-}
-
-void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                           MachineBasicBlock::iterator MI,
-                                           unsigned DestReg, int FrameIdx,
-                                           const TargetRegisterClass *RC) const{
-  unsigned Opc = getLoadRegOpcode(RC, StackAlign);
-  addFrameReference(BuildMI(MBB, MI, TII.get(Opc), DestReg), FrameIdx);
-}
-
-void X86RegisterInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
-                                      SmallVectorImpl<MachineOperand> &Addr,
-                                      const TargetRegisterClass *RC,
-                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  unsigned Opc = getLoadRegOpcode(RC, StackAlign);
-  MachineInstrBuilder MIB = BuildMI(TII.get(Opc), DestReg);
-  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
-    MIB = X86InstrAddOperand(MIB, Addr[i]);
-  NewMIs.push_back(MIB);
-}
-
 const TargetRegisterClass *
 X86RegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
   if (RC == &X86::CCRRegClass)
@@ -1229,7 +1149,7 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
 
   // Emit the load instruction.
   if (UnfoldLoad) {
-    loadRegFromAddr(MF, Reg, AddrOps, RC, NewMIs);
+    TII.loadRegFromAddr(MF, Reg, AddrOps, RC, NewMIs);
     if (UnfoldStore) {
       // Address operands cannot be marked isKill.
       for (unsigned i = 1; i != 5; ++i) {
@@ -1286,12 +1206,50 @@ bool X86RegisterInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     const TargetOperandInfo &DstTOI = TID.OpInfo[0];
     const TargetRegisterClass *DstRC = (DstTOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
       ? TII.getPointerRegClass() : getRegClass(DstTOI.RegClass);
-    storeRegToAddr(MF, Reg, true, AddrOps, DstRC, NewMIs);
+    TII.storeRegToAddr(MF, Reg, true, AddrOps, DstRC, NewMIs);
   }
 
   return true;
 }
 
+static unsigned getLoadRegOpcode(const TargetRegisterClass *RC,
+                                 unsigned StackAlign) {
+  unsigned Opc = 0;
+  if (RC == &X86::GR64RegClass) {
+    Opc = X86::MOV64rm;
+  } else if (RC == &X86::GR32RegClass) {
+    Opc = X86::MOV32rm;
+  } else if (RC == &X86::GR16RegClass) {
+    Opc = X86::MOV16rm;
+  } else if (RC == &X86::GR8RegClass) {
+    Opc = X86::MOV8rm;
+  } else if (RC == &X86::GR32_RegClass) {
+    Opc = X86::MOV32_rm;
+  } else if (RC == &X86::GR16_RegClass) {
+    Opc = X86::MOV16_rm;
+  } else if (RC == &X86::RFP80RegClass) {
+    Opc = X86::LD_Fp80m;
+  } else if (RC == &X86::RFP64RegClass) {
+    Opc = X86::LD_Fp64m;
+  } else if (RC == &X86::RFP32RegClass) {
+    Opc = X86::LD_Fp32m;
+  } else if (RC == &X86::FR32RegClass) {
+    Opc = X86::MOVSSrm;
+  } else if (RC == &X86::FR64RegClass) {
+    Opc = X86::MOVSDrm;
+  } else if (RC == &X86::VR128RegClass) {
+    // FIXME: Use movaps once we are capable of selectively
+    // aligning functions that spill SSE registers on 16-byte boundaries.
+    Opc = StackAlign >= 16 ? X86::MOVAPSrm : X86::MOVUPSrm;
+  } else if (RC == &X86::VR64RegClass) {
+    Opc = X86::MMX_MOVQ64rm;
+  } else {
+    assert(0 && "Unknown regclass");
+    abort();
+  }
+
+  return Opc;
+}
 
 bool
 X86RegisterInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,

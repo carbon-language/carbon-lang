@@ -144,7 +144,8 @@ unsigned RegAllocSimple::reloadVirtReg(MachineBasicBlock &MBB,
 
   // Add move instruction(s)
   ++NumLoads;
-  MRI->loadRegFromStackSlot(MBB, I, PhysReg, FrameIdx, RC);
+  const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
+  TII->loadRegFromStackSlot(MBB, I, PhysReg, FrameIdx, RC);
   return PhysReg;
 }
 
@@ -152,11 +153,13 @@ void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I,
                                   unsigned VirtReg, unsigned PhysReg) {
   const TargetRegisterClass* RC = MF->getRegInfo().getRegClass(VirtReg);
+  const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
+  
   int FrameIdx = getStackSpaceFor(VirtReg, RC);
 
   // Add move instruction(s)
   ++NumStores;
-  MRI->storeRegToStackSlot(MBB, I, PhysReg, true, FrameIdx, RC);
+  TII->storeRegToStackSlot(MBB, I, PhysReg, true, FrameIdx, RC);
 }
 
 

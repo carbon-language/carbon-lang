@@ -470,6 +470,134 @@ void ARMInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
     abort();
 }
 
+static const MachineInstrBuilder &ARMInstrAddOperand(MachineInstrBuilder &MIB,
+                                                     MachineOperand &MO) {
+  if (MO.isRegister())
+    MIB = MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
+  else if (MO.isImmediate())
+    MIB = MIB.addImm(MO.getImm());
+  else if (MO.isFrameIndex())
+    MIB = MIB.addFrameIndex(MO.getIndex());
+  else
+    assert(0 && "Unknown operand for ARMInstrAddOperand!");
+
+  return MIB;
+}
+
+void ARMInstrInfo::
+storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                    unsigned SrcReg, bool isKill, int FI,
+                    const TargetRegisterClass *RC) const {
+  if (RC == ARM::GPRRegisterClass) {
+    MachineFunction &MF = *MBB.getParent();
+    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+    if (AFI->isThumbFunction())
+      BuildMI(MBB, I, get(ARM::tSpill)).addReg(SrcReg, false, false, isKill)
+        .addFrameIndex(FI).addImm(0);
+    else
+      AddDefaultPred(BuildMI(MBB, I, get(ARM::STR))
+                     .addReg(SrcReg, false, false, isKill)
+                     .addFrameIndex(FI).addReg(0).addImm(0));
+  } else if (RC == ARM::DPRRegisterClass) {
+    AddDefaultPred(BuildMI(MBB, I, get(ARM::FSTD))
+                   .addReg(SrcReg, false, false, isKill)
+                   .addFrameIndex(FI).addImm(0));
+  } else {
+    assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
+    AddDefaultPred(BuildMI(MBB, I, get(ARM::FSTS))
+                   .addReg(SrcReg, false, false, isKill)
+                   .addFrameIndex(FI).addImm(0));
+  }
+}
+
+void ARMInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                     bool isKill,
+                                     SmallVectorImpl<MachineOperand> &Addr,
+                                     const TargetRegisterClass *RC,
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == ARM::GPRRegisterClass) {
+    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+    if (AFI->isThumbFunction()) {
+      Opc = Addr[0].isFrameIndex() ? ARM::tSpill : ARM::tSTR;
+      MachineInstrBuilder MIB = 
+        BuildMI(get(Opc)).addReg(SrcReg, false, false, isKill);
+      for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+        MIB = ARMInstrAddOperand(MIB, Addr[i]);
+      NewMIs.push_back(MIB);
+      return;
+    }
+    Opc = ARM::STR;
+  } else if (RC == ARM::DPRRegisterClass) {
+    Opc = ARM::FSTD;
+  } else {
+    assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
+    Opc = ARM::FSTS;
+  }
+
+  MachineInstrBuilder MIB = 
+    BuildMI(get(Opc)).addReg(SrcReg, false, false, isKill);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+    MIB = ARMInstrAddOperand(MIB, Addr[i]);
+  AddDefaultPred(MIB);
+  NewMIs.push_back(MIB);
+  return;
+}
+
+void ARMInstrInfo::
+loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
+                     unsigned DestReg, int FI,
+                     const TargetRegisterClass *RC) const {
+  if (RC == ARM::GPRRegisterClass) {
+    MachineFunction &MF = *MBB.getParent();
+    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+    if (AFI->isThumbFunction())
+      BuildMI(MBB, I, get(ARM::tRestore), DestReg)
+        .addFrameIndex(FI).addImm(0);
+    else
+      AddDefaultPred(BuildMI(MBB, I, get(ARM::LDR), DestReg)
+                     .addFrameIndex(FI).addReg(0).addImm(0));
+  } else if (RC == ARM::DPRRegisterClass) {
+    AddDefaultPred(BuildMI(MBB, I, get(ARM::FLDD), DestReg)
+                   .addFrameIndex(FI).addImm(0));
+  } else {
+    assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
+    AddDefaultPred(BuildMI(MBB, I, get(ARM::FLDS), DestReg)
+                   .addFrameIndex(FI).addImm(0));
+  }
+}
+
+void ARMInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                                      SmallVectorImpl<MachineOperand> &Addr,
+                                      const TargetRegisterClass *RC,
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == ARM::GPRRegisterClass) {
+    ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+    if (AFI->isThumbFunction()) {
+      Opc = Addr[0].isFrameIndex() ? ARM::tRestore : ARM::tLDR;
+      MachineInstrBuilder MIB = BuildMI(get(Opc), DestReg);
+      for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+        MIB = ARMInstrAddOperand(MIB, Addr[i]);
+      NewMIs.push_back(MIB);
+      return;
+    }
+    Opc = ARM::LDR;
+  } else if (RC == ARM::DPRRegisterClass) {
+    Opc = ARM::FLDD;
+  } else {
+    assert(RC == ARM::SPRRegisterClass && "Unknown regclass!");
+    Opc = ARM::FLDS;
+  }
+
+  MachineInstrBuilder MIB =  BuildMI(get(Opc), DestReg);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i)
+    MIB = ARMInstrAddOperand(MIB, Addr[i]);
+  AddDefaultPred(MIB);
+  NewMIs.push_back(MIB);
+  return;
+}
+
 bool ARMInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   

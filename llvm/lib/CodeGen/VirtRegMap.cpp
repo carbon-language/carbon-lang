@@ -173,7 +173,8 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
   DOUT << "********** REWRITE MACHINE CODE **********\n";
   DOUT << "********** Function: " << MF.getFunction()->getName() << '\n';
   const TargetMachine &TM = MF.getTarget();
-  const MRegisterInfo &MRI = *TM.getRegisterInfo();
+  const TargetInstrInfo &TII = *TM.getInstrInfo();
+  
 
   // LoadedRegs - Keep track of which vregs are loaded, so that we only load
   // each vreg once (in the case where a spilled vreg is used by multiple
@@ -202,14 +203,14 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF, VirtRegMap &VRM) {
               if (MO.isUse() &&
                   std::find(LoadedRegs.begin(), LoadedRegs.end(), VirtReg)
                   == LoadedRegs.end()) {
-                MRI.loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot, RC);
+                TII.loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot, RC);
                 LoadedRegs.push_back(VirtReg);
                 ++NumLoads;
                 DOUT << '\t' << *prior(MII);
               }
 
               if (MO.isDef()) {
-                MRI.storeRegToStackSlot(MBB, next(MII), PhysReg, true,
+                TII.storeRegToStackSlot(MBB, next(MII), PhysReg, true,
                                         StackSlot, RC);
                 ++NumStores;
               }
@@ -645,6 +646,9 @@ namespace {
                              BitVector &RegKills,
                              std::vector<MachineOperand*> &KillOps,
                              VirtRegMap &VRM) {
+      const TargetInstrInfo* TII = MI->getParent()->getParent()->getTarget()
+                                   .getInstrInfo();
+      
       if (Reuses.empty()) return PhysReg;  // This is most often empty.
 
       for (unsigned ro = 0, e = Reuses.size(); ro != e; ++ro) {
@@ -693,7 +697,7 @@ namespace {
                                  VRM.getReMaterializedMI(NewOp.VirtReg));
               ++NumReMats;
             } else {
-              MRI->loadRegFromStackSlot(*MBB, MI, NewPhysReg,
+              TII->loadRegFromStackSlot(*MBB, MI, NewPhysReg,
                                         NewOp.StackSlotOrReMat, AliasRC);
               // Any stores to this stack slot are not dead anymore.
               MaybeDeadStores[NewOp.StackSlotOrReMat] = NULL;            
@@ -876,7 +880,7 @@ void LocalSpiller::SpillRegToStackSlot(MachineBasicBlock &MBB,
                                   BitVector &RegKills,
                                   std::vector<MachineOperand*> &KillOps,
                                   VirtRegMap &VRM) {
-  MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, true, StackSlot, RC);
+  TII->storeRegToStackSlot(MBB, next(MII), PhysReg, true, StackSlot, RC);
   DOUT << "Store:\t" << *next(MII);
 
   // If there is a dead store to this stack slot, nuke it now.
@@ -979,7 +983,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           ++NumReMats;
         } else {
           const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
-          MRI->loadRegFromStackSlot(MBB, &MI, Phys, VRM.getStackSlot(VirtReg),
+          TII->loadRegFromStackSlot(MBB, &MI, Phys, VRM.getStackSlot(VirtReg),
                                     RC);
           ++NumLoads;
         }
@@ -1002,7 +1006,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         const TargetRegisterClass *RC = RegInfo->getRegClass(VirtReg);
         unsigned Phys = VRM.getPhys(VirtReg);
         int StackSlot = VRM.getStackSlot(VirtReg);
-        MRI->storeRegToStackSlot(MBB, next(MII), Phys, isKill, StackSlot, RC);
+        TII->storeRegToStackSlot(MBB, next(MII), Phys, isKill, StackSlot, RC);
         MachineInstr *StoreMI = next(MII);
         DOUT << "Store:\t" << StoreMI;
         VRM.virtFolded(VirtReg, StoreMI, VirtRegMap::isMod);
@@ -1218,7 +1222,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         ++NumReMats;
       } else {
         const TargetRegisterClass* RC = RegInfo->getRegClass(VirtReg);
-        MRI->loadRegFromStackSlot(MBB, &MI, PhysReg, SSorRMId, RC);
+        TII->loadRegFromStackSlot(MBB, &MI, PhysReg, SSorRMId, RC);
         ++NumLoads;
       }
       // This invalidates PhysReg.

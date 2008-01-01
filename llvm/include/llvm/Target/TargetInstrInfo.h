@@ -27,6 +27,8 @@ class TargetMachine;
 class TargetRegisterClass;
 class LiveVariables;
 
+template<class T> class SmallVectorImpl;
+
 //---------------------------------------------------------------------------
 // Data types used to define information about a single machine instruction
 //---------------------------------------------------------------------------
@@ -465,6 +467,34 @@ public:
                             const TargetRegisterClass *DestRC,
                             const TargetRegisterClass *SrcRC) const {
     assert(0 && "Target didn't implement TargetInstrInfo::copyRegToReg!");
+  }
+  
+  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MI,
+                                   unsigned SrcReg, bool isKill, int FrameIndex,
+                                   const TargetRegisterClass *RC) const {
+    assert(0 && "Target didn't implement TargetInstrInfo::storeRegToStackSlot!");
+  }
+
+  virtual void storeRegToAddr(MachineFunction &MF, unsigned SrcReg, bool isKill,
+                              SmallVectorImpl<MachineOperand> &Addr,
+                              const TargetRegisterClass *RC,
+                              SmallVectorImpl<MachineInstr*> &NewMIs) const {
+    assert(0 && "Target didn't implement TargetInstrInfo::storeRegToAddr!");
+  }
+
+  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                    MachineBasicBlock::iterator MI,
+                                    unsigned DestReg, int FrameIndex,
+                                    const TargetRegisterClass *RC) const {
+    assert(0 && "Target didn't implement TargetInstrInfo::loadRegFromStackSlot!");
+  }
+
+  virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                               SmallVectorImpl<MachineOperand> &Addr,
+                               const TargetRegisterClass *RC,
+                               SmallVectorImpl<MachineInstr*> &NewMIs) const {
+    assert(0 && "Target didn't implement TargetInstrInfo::loadRegFromAddr!");
   }
   
   /// BlockHasNoFallThrough - Return true if the specified block does not

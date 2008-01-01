@@ -155,6 +155,101 @@ void AlphaInstrInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 }
 
+void
+AlphaInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+                                       MachineBasicBlock::iterator MI,
+                                     unsigned SrcReg, bool isKill, int FrameIdx,
+                                     const TargetRegisterClass *RC) const {
+  //cerr << "Trying to store " << getPrettyName(SrcReg) << " to "
+  //     << FrameIdx << "\n";
+  //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
+  if (RC == Alpha::F4RCRegisterClass)
+    BuildMI(MBB, MI, get(Alpha::STS))
+      .addReg(SrcReg, false, false, isKill)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else if (RC == Alpha::F8RCRegisterClass)
+    BuildMI(MBB, MI, get(Alpha::STT))
+      .addReg(SrcReg, false, false, isKill)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else if (RC == Alpha::GPRCRegisterClass)
+    BuildMI(MBB, MI, get(Alpha::STQ))
+      .addReg(SrcReg, false, false, isKill)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else
+    abort();
+}
+
+void AlphaInstrInfo::storeRegToAddr(MachineFunction &MF, unsigned SrcReg,
+                                       bool isKill,
+                                       SmallVectorImpl<MachineOperand> &Addr,
+                                       const TargetRegisterClass *RC,
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == Alpha::F4RCRegisterClass)
+    Opc = Alpha::STS;
+  else if (RC == Alpha::F8RCRegisterClass)
+    Opc = Alpha::STT;
+  else if (RC == Alpha::GPRCRegisterClass)
+    Opc = Alpha::STQ;
+  else
+    abort();
+  MachineInstrBuilder MIB = 
+    BuildMI(get(Opc)).addReg(SrcReg, false, false, isKill);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
+    MachineOperand &MO = Addr[i];
+    if (MO.isRegister())
+      MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
+    else
+      MIB.addImm(MO.getImm());
+  }
+  NewMIs.push_back(MIB);
+}
+
+void
+AlphaInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+                                        MachineBasicBlock::iterator MI,
+                                        unsigned DestReg, int FrameIdx,
+                                        const TargetRegisterClass *RC) const {
+  //cerr << "Trying to load " << getPrettyName(DestReg) << " to "
+  //     << FrameIdx << "\n";
+  if (RC == Alpha::F4RCRegisterClass)
+    BuildMI(MBB, MI, get(Alpha::LDS), DestReg)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else if (RC == Alpha::F8RCRegisterClass)
+    BuildMI(MBB, MI, get(Alpha::LDT), DestReg)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else if (RC == Alpha::GPRCRegisterClass)
+    BuildMI(MBB, MI, get(Alpha::LDQ), DestReg)
+      .addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else
+    abort();
+}
+
+void AlphaInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
+                                        SmallVectorImpl<MachineOperand> &Addr,
+                                        const TargetRegisterClass *RC,
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const {
+  unsigned Opc = 0;
+  if (RC == Alpha::F4RCRegisterClass)
+    Opc = Alpha::LDS;
+  else if (RC == Alpha::F8RCRegisterClass)
+    Opc = Alpha::LDT;
+  else if (RC == Alpha::GPRCRegisterClass)
+    Opc = Alpha::LDQ;
+  else
+    abort();
+  MachineInstrBuilder MIB = 
+    BuildMI(get(Opc), DestReg);
+  for (unsigned i = 0, e = Addr.size(); i != e; ++i) {
+    MachineOperand &MO = Addr[i];
+    if (MO.isRegister())
+      MIB.addReg(MO.getReg(), MO.isDef(), MO.isImplicit());
+    else
+      MIB.addImm(MO.getImm());
+  }
+  NewMIs.push_back(MIB);
+}
+
 static unsigned AlphaRevCondCode(unsigned Opcode) {
   switch (Opcode) {
   case Alpha::BEQ: return Alpha::BNE;

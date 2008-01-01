@@ -72,7 +72,7 @@ void RegScavenger::restoreScavengedReg() {
   if (!ScavengedReg)
     return;
 
-  RegInfo->loadRegFromStackSlot(*MBB, MBBI, ScavengedReg,
+  TII->loadRegFromStackSlot(*MBB, MBBI, ScavengedReg,
                                 ScavengingFrameIndex, ScavengedRC);
   MachineBasicBlock::iterator II = prior(MBBI);
   RegInfo->eliminateFrameIndex(II, 0, this);
@@ -276,13 +276,13 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
 
   if (ScavengedReg != 0) {
     // First restore previously scavenged register.
-    RegInfo->loadRegFromStackSlot(*MBB, I, ScavengedReg,
+    TII->loadRegFromStackSlot(*MBB, I, ScavengedReg,
                                   ScavengingFrameIndex, ScavengedRC);
     MachineBasicBlock::iterator II = prior(I);
     RegInfo->eliminateFrameIndex(II, SPAdj, this);
   }
 
-  RegInfo->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC);
+  TII->storeRegToStackSlot(*MBB, I, SReg, true, ScavengingFrameIndex, RC);
   MachineBasicBlock::iterator II = prior(I);
   RegInfo->eliminateFrameIndex(II, SPAdj, this);
   ScavengedReg = SReg;
