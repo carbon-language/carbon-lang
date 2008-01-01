@@ -20,7 +20,7 @@
 using namespace llvm;
 
 SparcInstrInfo::SparcInstrInfo(SparcSubtarget &ST)
-  : TargetInstrInfo(SparcInsts, array_lengthof(SparcInsts)),
+  : TargetInstrInfoImpl(SparcInsts, array_lengthof(SparcInsts)),
     RI(ST, *this), Subtarget(ST) {
 }
 

@@ -19,7 +19,7 @@
 using namespace llvm;
 
 AlphaInstrInfo::AlphaInstrInfo()
-  : TargetInstrInfo(AlphaInsts, array_lengthof(AlphaInsts)),
+  : TargetInstrInfoImpl(AlphaInsts, array_lengthof(AlphaInsts)),
     RI(*this) { }
 
 

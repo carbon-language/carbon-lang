@@ -19,7 +19,7 @@
 using namespace llvm;
 
 IA64InstrInfo::IA64InstrInfo()
-  : TargetInstrInfo(IA64Insts, sizeof(IA64Insts)/sizeof(IA64Insts[0])),
+  : TargetInstrInfoImpl(IA64Insts, sizeof(IA64Insts)/sizeof(IA64Insts[0])),
     RI(*this) {
 }
 

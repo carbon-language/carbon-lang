@@ -61,7 +61,7 @@ enum PPC970_Unit {
 }
   
   
-class PPCInstrInfo : public TargetInstrInfo {
+class PPCInstrInfo : public TargetInstrInfoImpl {
   PPCTargetMachine &TM;
   const PPCRegisterInfo RI;
 public:

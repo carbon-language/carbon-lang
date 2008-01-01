@@ -21,7 +21,7 @@ using namespace llvm;
 
 // TODO: Add the subtarget support on this constructor
 MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
-  : TargetInstrInfo(MipsInsts, array_lengthof(MipsInsts)),
+  : TargetInstrInfoImpl(MipsInsts, array_lengthof(MipsInsts)),
     TM(tm), RI(*this) {}
 
 static bool isZeroImm(const MachineOperand &op) {

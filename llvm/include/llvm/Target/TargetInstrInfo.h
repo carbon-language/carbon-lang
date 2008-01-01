@@ -406,7 +406,7 @@ public:
   /// return a new machine instruction.  If an instruction cannot commute, it
   /// can also return null.
   ///
-  virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
+  virtual MachineInstr *commuteInstruction(MachineInstr *MI) const = 0;
 
   /// AnalyzeBranch - Analyze the branching code at the end of MBB, returning
   /// true if it cannot be understood (e.g. it's a switch dispatch or isn't
@@ -504,7 +504,7 @@ public:
   /// instruction. It returns true if the operation was successful.
   virtual
   bool PredicateInstruction(MachineInstr *MI,
-                            const std::vector<MachineOperand> &Pred) const;
+                            const std::vector<MachineOperand> &Pred) const = 0;
 
   /// SubsumesPredicate - Returns true if the first specified predicate
   /// subsumes the second, e.g. GE subsumes GT.
@@ -529,6 +529,21 @@ public:
     abort();
     return 0; // Must return a value in order to compile with VS 2005
   }
+};
+
+/// TargetInstrInfoImpl - This is the default implementation of
+/// TargetInstrInfo, which just provides a couple of default implementations
+/// for various methods.  This separated out because it is implemented in
+/// libcodegen, not in libtarget.
+class TargetInstrInfoImpl : public TargetInstrInfo {
+protected:
+  TargetInstrInfoImpl(const TargetInstrDescriptor *desc, unsigned NumOpcodes)
+  : TargetInstrInfo(desc, NumOpcodes) {}
+public:
+  virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
+  virtual bool PredicateInstruction(MachineInstr *MI,
+                              const std::vector<MachineOperand> &Pred) const;
+  
 };
 
 } // End llvm namespace

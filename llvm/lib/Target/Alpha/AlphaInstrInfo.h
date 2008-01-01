@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-class AlphaInstrInfo : public TargetInstrInfo {
+class AlphaInstrInfo : public TargetInstrInfoImpl {
   const AlphaRegisterInfo RI;
 public:
   AlphaInstrInfo();

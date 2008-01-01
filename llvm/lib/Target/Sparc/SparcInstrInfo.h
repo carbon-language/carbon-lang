@@ -31,7 +31,7 @@ namespace SPII {
   };
 }
 
-class SparcInstrInfo : public TargetInstrInfo {
+class SparcInstrInfo : public TargetInstrInfoImpl {
   const SparcRegisterInfo RI;
   const SparcSubtarget& Subtarget;
 public:

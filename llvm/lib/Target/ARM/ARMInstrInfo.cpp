@@ -38,7 +38,7 @@ const MachineInstrBuilder &AddDefaultCC(const MachineInstrBuilder &MIB) {
 }
 
 ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
-  : TargetInstrInfo(ARMInsts, array_lengthof(ARMInsts)),
+  : TargetInstrInfoImpl(ARMInsts, array_lengthof(ARMInsts)),
     RI(*this, STI) {
 }
 

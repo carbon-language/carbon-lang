@@ -20,7 +20,7 @@
 using namespace llvm;
 
 PPCInstrInfo::PPCInstrInfo(PPCTargetMachine &tm)
-  : TargetInstrInfo(PPCInsts, array_lengthof(PPCInsts)), TM(tm),
+  : TargetInstrInfoImpl(PPCInsts, array_lengthof(PPCInsts)), TM(tm),
     RI(*TM.getSubtargetImpl(), *this) {}
 
 /// getPointerRegClass - Return the register class to use to hold pointers.

@@ -21,7 +21,7 @@
 using namespace llvm;
 
 SPUInstrInfo::SPUInstrInfo(SPUTargetMachine &tm)
-  : TargetInstrInfo(SPUInsts, sizeof(SPUInsts)/sizeof(SPUInsts[0])),
+  : TargetInstrInfoImpl(SPUInsts, sizeof(SPUInsts)/sizeof(SPUInsts[0])),
     TM(tm),
     RI(*TM.getSubtargetImpl(), *this)
 {

@@ -20,8 +20,7 @@
 
 namespace llvm {
   //! Cell SPU instruction information class
-  class SPUInstrInfo : public TargetInstrInfo
-  {
+  class SPUInstrInfo : public TargetInstrInfoImpl {
     SPUTargetMachine &TM;
     const SPURegisterInfo RI;
   public:

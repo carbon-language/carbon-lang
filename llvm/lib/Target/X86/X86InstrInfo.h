@@ -222,7 +222,7 @@ namespace X86II {
   };
 }
 
-class X86InstrInfo : public TargetInstrInfo {
+class X86InstrInfo : public TargetInstrInfoImpl {
   X86TargetMachine &TM;
   const X86RegisterInfo RI;
   mutable IndexedMap<const MachineInstr*, VirtReg2IndexFunctor> MachineInstrMap;

@@ -42,8 +42,7 @@ namespace Mips {
 
 }
 
-class MipsInstrInfo : public TargetInstrInfo 
-{
+class MipsInstrInfo : public TargetInstrInfoImpl {
   MipsTargetMachine &TM;
   const MipsRegisterInfo RI;
 public:

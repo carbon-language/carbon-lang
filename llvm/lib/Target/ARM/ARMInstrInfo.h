@@ -125,7 +125,7 @@ namespace ARMII {
   };
 }
 
-class ARMInstrInfo : public TargetInstrInfo {
+class ARMInstrInfo : public TargetInstrInfoImpl {
   const ARMRegisterInfo RI;
 public:
   ARMInstrInfo(const ARMSubtarget &STI);

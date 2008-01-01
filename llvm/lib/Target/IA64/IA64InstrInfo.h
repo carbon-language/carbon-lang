@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-class IA64InstrInfo : public TargetInstrInfo {
+class IA64InstrInfo : public TargetInstrInfoImpl {
   const IA64RegisterInfo RI;
 public:
   IA64InstrInfo();

@@ -25,7 +25,7 @@
 using namespace llvm;
 
 X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
-  : TargetInstrInfo(X86Insts, array_lengthof(X86Insts)),
+  : TargetInstrInfoImpl(X86Insts, array_lengthof(X86Insts)),
     TM(tm), RI(tm, *this) {
 }
 
