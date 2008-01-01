@@ -26,7 +26,14 @@ class MachineRegisterInfo {
   /// VRegInfo - Information we keep for each virtual register.  The entries in
   /// this vector are actually converted to vreg numbers by adding the 
   /// MRegisterInfo::FirstVirtualRegister delta to their index.
-  std::vector<const TargetRegisterClass*> VRegInfo;
+  ///
+  /// Each element in this list contains the register class of the vreg and the
+  /// start of the use/def list for the register.
+  std::vector<std::pair<const TargetRegisterClass*, MachineOperand*> > VRegInfo;
+  
+  /// PhysRegUseDefLists - This is an array of the head of the use/def list for
+  /// physical registers.
+  MachineOperand **PhysRegUseDefLists; 
   
   /// UsedPhysRegs - This is a bit vector that is computed and set by the
   /// register allocator, and must be kept up to date by passes that run after
@@ -42,8 +49,21 @@ class MachineRegisterInfo {
   /// stored in the second element.
   std::vector<std::pair<unsigned, unsigned> > LiveIns;
   std::vector<unsigned> LiveOuts;
+  
+  MachineRegisterInfo(const MachineRegisterInfo&); // DO NOT IMPLEMENT
+  void operator=(const MachineRegisterInfo&);      // DO NOT IMPLEMENT
 public:
   MachineRegisterInfo(const MRegisterInfo &MRI);
+  ~MachineRegisterInfo();
+  
+  /// getRegUseDefListHead - Return the head pointer for the register use/def
+  /// list for the specified virtual or physical register.
+  MachineOperand *&getRegUseDefListHead(unsigned RegNo) {
+    if (RegNo < MRegisterInfo::FirstVirtualRegister)
+      return PhysRegUseDefLists[RegNo];
+    RegNo -= MRegisterInfo::FirstVirtualRegister;
+    return VRegInfo[RegNo].second;
+  }
   
   
   //===--------------------------------------------------------------------===//
@@ -54,15 +74,23 @@ public:
   const TargetRegisterClass *getRegClass(unsigned Reg) {
     Reg -= MRegisterInfo::FirstVirtualRegister;
     assert(Reg < VRegInfo.size() && "Invalid vreg!");
-    return VRegInfo[Reg];
+    return VRegInfo[Reg].first;
   }
-
+  
   /// createVirtualRegister - Create and return a new virtual register in the
   /// function with the specified register class.
   ///
   unsigned createVirtualRegister(const TargetRegisterClass *RegClass) {
     assert(RegClass && "Cannot create register without RegClass!");
-    VRegInfo.push_back(RegClass);
+    // Add a reg, but keep track of whether the vector reallocated or not.
+    void *ArrayBase = &VRegInfo[0];
+    VRegInfo.push_back(std::make_pair(RegClass, (MachineOperand*)0));
+    
+    if (&VRegInfo[0] == ArrayBase)
+      return getLastVirtReg();
+
+    // Otherwise, the vector reallocated, handle this now.
+    HandleVRegListReallocation();
     return getLastVirtReg();
   }
 
@@ -111,6 +139,8 @@ public:
   liveout_iterator liveout_begin() const { return LiveOuts.begin(); }
   liveout_iterator liveout_end()   const { return LiveOuts.end(); }
   bool             liveout_empty() const { return LiveOuts.empty(); }
+private:
+  void HandleVRegListReallocation();
 };
 
 } // End llvm namespace

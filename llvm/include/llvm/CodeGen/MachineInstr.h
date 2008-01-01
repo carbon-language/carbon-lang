@@ -45,6 +45,7 @@ class MachineInstr {
 
   // Intrusive list support
   friend struct ilist_traits<MachineInstr>;
+  friend struct ilist_traits<MachineBasicBlock>;
   void setParent(MachineBasicBlock *P) { Parent = P; }
 public:
   /// MachineInstr ctor - This constructor creates a dummy MachineInstr with
@@ -154,27 +155,14 @@ public:
   void dump() const;
 
   //===--------------------------------------------------------------------===//
-  // Accessors to add operands when building up machine instructions.
-  //
-  void addOperand(const MachineOperand &Op) {
-    bool isImpReg = Op.isRegister() && Op.isImplicit();
-    assert((isImpReg || !OperandsComplete()) &&
-           "Trying to add an operand to a machine instr that is already done!");
-    if (isImpReg || NumImplicitOps == 0) {// This is true most of the time.
-      Operands.push_back(Op);
-      Operands.back().ParentMI = this;
-    } else {
-      // Insert a real operand before any implicit ones.
-      unsigned OpNo = Operands.size()-NumImplicitOps;
-      Operands.insert(Operands.begin()+OpNo, Op);
-      Operands[OpNo].ParentMI = this;
-    }
-  }
-  
-  //===--------------------------------------------------------------------===//
-  // Accessors used to modify instructions in place.
-  //
+  // Accessors used to build up machine instructions.
 
+  /// addOperand - Add the specified operand to the instruction.  If it is an
+  /// implicit operand, it is added to the end of the operand list.  If it is
+  /// an explicit operand it is added at the end of the explicit operand list
+  /// (before the first implicit operand). 
+  void addOperand(const MachineOperand &Op);
+  
   /// setInstrDescriptor - Replace the instruction descriptor (thus opcode) of
   /// the current instruction with a new one.
   ///
@@ -183,14 +171,27 @@ public:
   /// RemoveOperand - Erase an operand  from an instruction, leaving it with one
   /// fewer operand than it started with.
   ///
-  void RemoveOperand(unsigned i) {
-    Operands.erase(Operands.begin()+i);
-  }
+  void RemoveOperand(unsigned i);
+
 private:
+  /// getRegInfo - If this instruction is embedded into a MachineFunction,
+  /// return the MachineRegisterInfo object for the current function, otherwise
+  /// return null.
+  MachineRegisterInfo *getRegInfo();
 
   /// addImplicitDefUseOperands - Add all implicit def and use operands to
   /// this instruction.
   void addImplicitDefUseOperands();
+  
+  /// RemoveRegOperandsFromUseLists - Unlink all of the register operands in
+  /// this instruction from their respective use lists.  This requires that the
+  /// operands already be on their use lists.
+  void RemoveRegOperandsFromUseLists();
+  
+  /// AddRegOperandsToUseLists - Add all of the register operands in
+  /// this instruction from their respective use lists.  This requires that the
+  /// operands not be on their use lists yet.
+  void AddRegOperandsToUseLists(MachineRegisterInfo &RegInfo);
 };
 
 //===----------------------------------------------------------------------===//

@@ -25,6 +25,7 @@ class MachineBasicBlock;
 class GlobalValue;
 class MachineInstr;
 class TargetMachine;
+class MachineRegisterInfo;
   
 /// MachineOperand class - Representation of each machine instruction operand.
 ///
@@ -76,8 +77,13 @@ private:
   /// Contents union - This contains the payload for the various operand types.
   union {
     MachineBasicBlock *MBB;   // For MO_MachineBasicBlock.
-    unsigned RegNo;           // For MO_Register.
     int64_t ImmVal;           // For MO_Immediate.
+
+    struct {                  // For MO_Register.
+      unsigned RegNo;
+      MachineOperand **Prev;  // Access list for register.
+      MachineOperand *Next;
+    } Reg;
     
     /// OffsetedInfo - This struct contains the offset and an object identifier.
     /// this represent the object as with an optional offset from it.
@@ -92,7 +98,6 @@ private:
   } Contents;
   
   MachineOperand(MachineOperandType K) : OpKind(K), ParentMI(0) {}
-
 public:
   MachineOperand(const MachineOperand &M) {
     *this = M;
@@ -138,7 +143,7 @@ public:
   /// getReg - Returns the register number.
   unsigned getReg() const {
     assert(isRegister() && "This is not a register operand!");
-    return Contents.RegNo;
+    return Contents.Reg.RegNo;
   }
   
   unsigned getSubReg() const {
@@ -175,11 +180,10 @@ public:
   // Mutators for Register Operands
   //===--------------------------------------------------------------------===//
   
-  void setReg(unsigned Reg) {
-    assert(isRegister() && "This is not a register operand!");
-    Contents.RegNo = Reg;
-  }
-
+  /// Change the register this operand corresponds to.
+  ///
+  void setReg(unsigned Reg);
+  
   void setSubReg(unsigned subReg) {
     assert(isRegister() && "Wrong MachineOperand accessor");
     SubReg = (unsigned char)subReg;
@@ -284,24 +288,13 @@ public:
   /// ChangeToImmediate - Replace this operand with a new immediate operand of
   /// the specified value.  If an operand is known to be an immediate already,
   /// the setImm method should be used.
-  void ChangeToImmediate(int64_t ImmVal) {
-    OpKind = MO_Immediate;
-    Contents.ImmVal = ImmVal;
-  }
-
+  void ChangeToImmediate(int64_t ImmVal);
+  
   /// ChangeToRegister - Replace this operand with a new register operand of
   /// the specified value.  If an operand is known to be an register already,
   /// the setReg method should be used.
   void ChangeToRegister(unsigned Reg, bool isDef, bool isImp = false,
-                        bool isKill = false, bool isDead = false) {
-    OpKind = MO_Register;
-    Contents.RegNo = Reg;
-    IsDef = isDef;
-    IsImp = isImp;
-    IsKill = isKill;
-    IsDead = isDead;
-    SubReg = 0;
-  }
+                        bool isKill = false, bool isDead = false);
   
   //===--------------------------------------------------------------------===//
   // Construction methods.
@@ -321,7 +314,9 @@ public:
     Op.IsImp = isImp;
     Op.IsKill = isKill;
     Op.IsDead = isDead;
-    Op.Contents.RegNo = Reg;
+    Op.Contents.Reg.RegNo = Reg;
+    Op.Contents.Reg.Prev = 0;
+    Op.Contents.Reg.Next = 0;
     Op.SubReg = SubReg;
     return Op;
   }
@@ -371,6 +366,37 @@ public:
   }
 
   friend class MachineInstr;
+  friend class MachineRegisterInfo;
+private:
+  //===--------------------------------------------------------------------===//
+  // Methods for handling register use/def lists.
+  //===--------------------------------------------------------------------===//
+
+  /// isOnRegUseList - Return true if this operand is on a register use/def list
+  /// or false if not.  This can only be called for register operands that are
+  /// part of a machine instruction.
+  bool isOnRegUseList() const {
+    assert(isReg() && "Can only add reg operand to use lists");
+    return Contents.Reg.Prev != 0;
+  }
+  
+  /// AddRegOperandToRegInfo - Add this register operand to the specified
+  /// MachineRegisterInfo.  If it is null, then the next/prev fields should be
+  /// explicitly nulled out.
+  void AddRegOperandToRegInfo(MachineRegisterInfo *RegInfo);
+
+  void RemoveRegOperandFromRegInfo() {
+    assert(isOnRegUseList() && "Can only add reg operand to use lists");
+    // Unlink this from the doubly linked list of operands.
+    MachineOperand *NextOp = Contents.Reg.Next;
+    *Contents.Reg.Prev = NextOp; 
+    if (NextOp) {
+      assert(NextOp->getReg() == getReg() && "Corrupt reg use/def chain!");
+      NextOp->Contents.Reg.Prev = Contents.Reg.Prev;
+    }
+    Contents.Reg.Prev = 0;
+    Contents.Reg.Next = 0;
+  }
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {

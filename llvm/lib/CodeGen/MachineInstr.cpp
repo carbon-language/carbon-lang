@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Value.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/MRegisterInfo.h"
@@ -25,6 +26,96 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 // MachineOperand Implementation
 //===----------------------------------------------------------------------===//
+
+/// AddRegOperandToRegInfo - Add this register operand to the specified
+/// MachineRegisterInfo.  If it is null, then the next/prev fields should be
+/// explicitly nulled out.
+void MachineOperand::AddRegOperandToRegInfo(MachineRegisterInfo *RegInfo) {
+  assert(isReg() && "Can only add reg operand to use lists");
+  
+  // If the reginfo pointer is null, just explicitly null out or next/prev
+  // pointers, to ensure they are not garbage.
+  if (RegInfo == 0) {
+    Contents.Reg.Prev = 0;
+    Contents.Reg.Next = 0;
+    return;
+  }
+  
+  // Otherwise, add this operand to the head of the registers use/def list.
+  MachineOperand *&Head = RegInfo->getRegUseDefListHead(getReg());
+  
+  Contents.Reg.Next = Head;
+  if (Contents.Reg.Next) {
+    assert(getReg() == Contents.Reg.Next->getReg() &&
+           "Different regs on the same list!");
+    Contents.Reg.Next->Contents.Reg.Prev = &Contents.Reg.Next;
+  }
+  
+  Contents.Reg.Prev = &Head;
+  Head = this;
+}
+
+void MachineOperand::setReg(unsigned Reg) {
+  if (getReg() == Reg) return; // No change.
+  
+  // Otherwise, we have to change the register.  If this operand is embedded
+  // into a machine function, we need to update the old and new register's
+  // use/def lists.
+  if (MachineInstr *MI = getParent())
+    if (MachineBasicBlock *MBB = MI->getParent())
+      if (MachineFunction *MF = MBB->getParent()) {
+        RemoveRegOperandFromRegInfo();
+        Contents.Reg.RegNo = Reg;
+        AddRegOperandToRegInfo(&MF->getRegInfo());
+        return;
+      }
+        
+  // Otherwise, just change the register, no problem.  :)
+  Contents.Reg.RegNo = Reg;
+}
+
+/// ChangeToImmediate - Replace this operand with a new immediate operand of
+/// the specified value.  If an operand is known to be an immediate already,
+/// the setImm method should be used.
+void MachineOperand::ChangeToImmediate(int64_t ImmVal) {
+  // If this operand is currently a register operand, and if this is in a
+  // function, deregister the operand from the register's use/def list.
+  if (isReg() && getParent() && getParent()->getParent() &&
+      getParent()->getParent()->getParent())
+    RemoveRegOperandFromRegInfo();
+  
+  OpKind = MO_Immediate;
+  Contents.ImmVal = ImmVal;
+}
+
+/// ChangeToRegister - Replace this operand with a new register operand of
+/// the specified value.  If an operand is known to be an register already,
+/// the setReg method should be used.
+void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
+                                      bool isKill, bool isDead) {
+  // If this operand is already a register operand, use setReg to update the 
+  // register's use/def lists.
+  if (isReg()) {
+    setReg(Reg);
+  } else {
+    // Otherwise, change this to a register and set the reg#.
+    OpKind = MO_Register;
+    Contents.Reg.RegNo = Reg;
+
+    // If this operand is embedded in a function, add the operand to the
+    // register's use/def list.
+    if (MachineInstr *MI = getParent())
+      if (MachineBasicBlock *MBB = MI->getParent())
+        if (MachineFunction *MF = MBB->getParent())
+          AddRegOperandToRegInfo(&MF->getRegInfo());
+  }
+
+  IsDef = isDef;
+  IsImp = isImp;
+  IsKill = isKill;
+  IsDead = isDead;
+  SubReg = 0;
+}
 
 /// isIdenticalTo - Return true if this operand is identical to the specified
 /// operand.
@@ -63,8 +154,7 @@ void MachineOperand::print(std::ostream &OS, const TargetMachine *TM) const {
       OS << "%reg" << getReg();
     } else {
       // If the instruction is embedded into a basic block, we can find the
-      // target
-      // info for the instruction.
+      // target info for the instruction.
       if (TM == 0)
         if (const MachineInstr *MI = getParent())
           if (const MachineBasicBlock *MBB = MI->getParent())
@@ -212,8 +302,11 @@ MachineInstr::MachineInstr(const MachineInstr &MI) {
 MachineInstr::~MachineInstr() {
   LeakDetector::removeGarbageObject(this);
 #ifndef NDEBUG
-  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
     assert(Operands[i].ParentMI == this && "ParentMI mismatch!");
+    assert((!Operands[i].isReg() || !Operands[i].isOnRegUseList()) &&
+           "Reg operand def/use list corrupted");
+  }
 #endif
 }
 
@@ -222,6 +315,159 @@ MachineInstr::~MachineInstr() {
 int MachineInstr::getOpcode() const {
   return TID->Opcode;
 }
+
+/// getRegInfo - If this instruction is embedded into a MachineFunction,
+/// return the MachineRegisterInfo object for the current function, otherwise
+/// return null.
+MachineRegisterInfo *MachineInstr::getRegInfo() {
+  if (MachineBasicBlock *MBB = getParent())
+    if (MachineFunction *MF = MBB->getParent())
+      return &MF->getRegInfo();
+  return 0;
+}
+
+/// RemoveRegOperandsFromUseLists - Unlink all of the register operands in
+/// this instruction from their respective use lists.  This requires that the
+/// operands already be on their use lists.
+void MachineInstr::RemoveRegOperandsFromUseLists() {
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+    if (Operands[i].isReg())
+      Operands[i].RemoveRegOperandFromRegInfo();
+  }
+}
+
+/// AddRegOperandsToUseLists - Add all of the register operands in
+/// this instruction from their respective use lists.  This requires that the
+/// operands not be on their use lists yet.
+void MachineInstr::AddRegOperandsToUseLists(MachineRegisterInfo &RegInfo) {
+  for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+    if (Operands[i].isReg())
+      Operands[i].AddRegOperandToRegInfo(&RegInfo);
+  }
+}
+
+
+/// addOperand - Add the specified operand to the instruction.  If it is an
+/// implicit operand, it is added to the end of the operand list.  If it is
+/// an explicit operand it is added at the end of the explicit operand list
+/// (before the first implicit operand). 
+void MachineInstr::addOperand(const MachineOperand &Op) {
+  bool isImpReg = Op.isReg() && Op.isImplicit();
+  assert((isImpReg || !OperandsComplete()) &&
+         "Trying to add an operand to a machine instr that is already done!");
+
+  // If we are adding the operand to the end of the list, our job is simpler.
+  // This is true most of the time, so this is a reasonable optimization.
+  if (isImpReg || NumImplicitOps == 0) {
+    // We can only do this optimization if we know that the operand list won't
+    // reallocate.
+    if (Operands.empty() || Operands.size()+1 <= Operands.capacity()) {
+      Operands.push_back(Op);
+    
+      // Set the parent of the operand.
+      Operands.back().ParentMI = this;
+  
+      // If the operand is a register, update the operand's use list.
+      if (Op.isReg())
+        Operands.back().AddRegOperandToRegInfo(getRegInfo());
+      return;
+    }
+  }
+  
+  // Otherwise, we have to insert a real operand before any implicit ones.
+  unsigned OpNo = Operands.size()-NumImplicitOps;
+
+  MachineRegisterInfo *RegInfo = getRegInfo();
+
+  // If this instruction isn't embedded into a function, then we don't need to
+  // update any operand lists.
+  if (RegInfo == 0) {
+    // Simple insertion, no reginfo update needed for other register operands.
+    Operands.insert(Operands.begin()+OpNo, Op);
+    Operands[OpNo].ParentMI = this;
+
+    // Do explicitly set the reginfo for this operand though, to ensure the
+    // next/prev fields are properly nulled out.
+    if (Operands[OpNo].isReg())
+      Operands[OpNo].AddRegOperandToRegInfo(0);
+
+  } else if (Operands.size()+1 <= Operands.capacity()) {
+    // Otherwise, we have to remove register operands from their register use
+    // list, add the operand, then add the register operands back to their use
+    // list.  This also must handle the case when the operand list reallocates
+    // to somewhere else.
+  
+    // If insertion of this operand won't cause reallocation of the operand
+    // list, just remove the implicit operands, add the operand, then re-add all
+    // the rest of the operands.
+    for (unsigned i = OpNo, e = Operands.size(); i != e; ++i) {
+      assert(Operands[i].isReg() && "Should only be an implicit reg!");
+      Operands[i].RemoveRegOperandFromRegInfo();
+    }
+    
+    // Add the operand.  If it is a register, add it to the reg list.
+    Operands.insert(Operands.begin()+OpNo, Op);
+    Operands[OpNo].ParentMI = this;
+
+    if (Operands[OpNo].isReg())
+      Operands[OpNo].AddRegOperandToRegInfo(RegInfo);
+    
+    // Re-add all the implicit ops.
+    for (unsigned i = OpNo+1, e = Operands.size(); i != e; ++i) {
+      assert(Operands[i].isReg() && "Should only be an implicit reg!");
+      Operands[i].AddRegOperandToRegInfo(RegInfo);
+    }
+  } else {
+    // Otherwise, we will be reallocating the operand list.  Remove all reg
+    // operands from their list, then readd them after the operand list is
+    // reallocated.
+    RemoveRegOperandsFromUseLists();
+    
+    Operands.insert(Operands.begin()+OpNo, Op);
+    Operands[OpNo].ParentMI = this;
+  
+    // Re-add all the operands.
+    AddRegOperandsToUseLists(*RegInfo);
+  }
+}
+
+/// RemoveOperand - Erase an operand  from an instruction, leaving it with one
+/// fewer operand than it started with.
+///
+void MachineInstr::RemoveOperand(unsigned OpNo) {
+  assert(OpNo < Operands.size() && "Invalid operand number");
+  
+  // Special case removing the last one.
+  if (OpNo == Operands.size()-1) {
+    // If needed, remove from the reg def/use list.
+    if (Operands.back().isReg() && Operands.back().isOnRegUseList())
+      Operands.back().RemoveRegOperandFromRegInfo();
+    
+    Operands.pop_back();
+    return;
+  }
+
+  // Otherwise, we are removing an interior operand.  If we have reginfo to
+  // update, remove all operands that will be shifted down from their reg lists,
+  // move everything down, then re-add them.
+  MachineRegisterInfo *RegInfo = getRegInfo();
+  if (RegInfo) {
+    for (unsigned i = OpNo, e = Operands.size(); i != e; ++i) {
+      if (Operands[i].isReg())
+        Operands[i].RemoveRegOperandFromRegInfo();
+    }
+  }
+  
+  Operands.erase(Operands.begin()+OpNo);
+
+  if (RegInfo) {
+    for (unsigned i = OpNo, e = Operands.size(); i != e; ++i) {
+      if (Operands[i].isReg())
+        Operands[i].AddRegOperandToRegInfo(RegInfo);
+    }
+  }
+}
+
 
 /// removeFromParent - This method unlinks 'this' from the containing basic
 /// block, and returns it, but does not delete it.

@@ -31,13 +31,23 @@ std::ostream& llvm::operator<<(std::ostream &OS, const MachineBasicBlock &MBB) {
   return OS;
 }
 
-// MBBs start out as #-1. When a MBB is added to a MachineFunction, it
-// gets the next available unique MBB number. If it is removed from a
-// MachineFunction, it goes back to being #-1.
+/// addNodeToList (MBB) - When an MBB is added to an MF, we need to update the 
+/// parent pointer of the MBB, the MBB numbering, and any instructions in the
+/// MBB to be on the right operand list for registers.
+///
+/// MBBs start out as #-1. When a MBB is added to a MachineFunction, it
+/// gets the next available unique MBB number. If it is removed from a
+/// MachineFunction, it goes back to being #-1.
 void ilist_traits<MachineBasicBlock>::addNodeToList(MachineBasicBlock* N) {
   assert(N->getParent() == 0 && "machine instruction already in a basic block");
   N->setParent(Parent);
   N->Number = Parent->addToMBBNumbering(N);
+
+  // Make sure the instructions have their operands in the reginfo lists.
+  MachineRegisterInfo &RegInfo = Parent->getRegInfo();
+  for (MachineBasicBlock::iterator I = N->begin(), E = N->end(); I != E; ++I)
+    I->AddRegOperandsToUseLists(RegInfo);
+    
   LeakDetector::removeGarbageObject(N);
 }
 
@@ -46,6 +56,12 @@ void ilist_traits<MachineBasicBlock>::removeNodeFromList(MachineBasicBlock* N) {
   N->getParent()->removeFromMBBNumbering(N->Number);
   N->Number = -1;
   N->setParent(0);
+  
+  // Make sure the instructions have their operands removed from the reginfo
+  // lists.
+  for (MachineBasicBlock::iterator I = N->begin(), E = N->end(); I != E; ++I)
+    I->RemoveRegOperandsFromUseLists();
+  
   LeakDetector::addGarbageObject(N);
 }
 
@@ -56,27 +72,62 @@ MachineInstr* ilist_traits<MachineInstr>::createSentinel() {
   return dummy;
 }
 
+/// addNodeToList (MI) - When we add an instruction to a basic block
+/// list, we update its parent pointer and add its operands from reg use/def
+/// lists if appropriate.
 void ilist_traits<MachineInstr>::addNodeToList(MachineInstr* N) {
   assert(N->getParent() == 0 && "machine instruction already in a basic block");
   N->setParent(parent);
   LeakDetector::removeGarbageObject(N);
+  
+  // If the block is in a function, add the instruction's register operands to
+  // their corresponding use/def lists.
+  if (MachineFunction *MF = parent->getParent())
+    N->AddRegOperandsToUseLists(MF->getRegInfo());
 }
 
+/// removeNodeFromList (MI) - When we remove an instruction from a basic block
+/// list, we update its parent pointer and remove its operands from reg use/def
+/// lists if appropriate.
 void ilist_traits<MachineInstr>::removeNodeFromList(MachineInstr* N) {
   assert(N->getParent() != 0 && "machine instruction not in a basic block");
+  // If this block is in a function, remove from the use/def lists.
+  if (parent->getParent() != 0)
+    N->RemoveRegOperandsFromUseLists();
+  
   N->setParent(0);
   LeakDetector::addGarbageObject(N);
 }
 
+/// transferNodesFromList (MI) - When moving a range of instructions from one
+/// MBB list to another, we need to update the parent pointers and the use/def
+/// lists.
 void ilist_traits<MachineInstr>::transferNodesFromList(
       iplist<MachineInstr, ilist_traits<MachineInstr> >& fromList,
       ilist_iterator<MachineInstr> first,
       ilist_iterator<MachineInstr> last) {
   // Splice within the same MBB -> no change.
   if (parent == fromList.parent) return;
+
+  // If splicing between two blocks within the same function, just update the
+  // parent pointers.
+  if (parent->getParent() == fromList.parent->getParent()) {
+    for (; first != last; ++first)
+      first->setParent(parent);
+    return;
+  }
   
-  for (; first != last; ++first)
+  // Otherwise, we have to update the parent and the use/def lists.  The common
+  // case when this occurs is if we're splicing from a block in a MF to a block
+  // that is not in an MF.
+  bool HasOldMF = fromList.parent->getParent() != 0;
+  MachineFunction *NewMF = parent->getParent();
+  
+  for (; first != last; ++first) {
+    if (HasOldMF) first->RemoveRegOperandsFromUseLists();
     first->setParent(parent);
+    if (NewMF) first->AddRegOperandsToUseLists(NewMF->getRegInfo());
+  }
 }
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
