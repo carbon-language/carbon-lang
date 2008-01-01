@@ -70,6 +70,11 @@ public:
   }
   static reg_iterator reg_end() { return reg_iterator(0); }
   
+  /// replaceRegWith - Replace all instances of FromReg with ToReg in the
+  /// machine function.  This is like llvm-level X->replaceAllUsesWith(Y),
+  /// except that it also changes any definitions of the register as well.
+  void replaceRegWith(unsigned FromReg, unsigned ToReg);
+  
   /// getRegUseDefListHead - Return the head pointer for the register use/def
   /// list for the specified virtual or physical register.
   MachineOperand *&getRegUseDefListHead(unsigned RegNo) {
@@ -171,15 +176,13 @@ private:
 public:
   /// reg_iterator - This class provides iterator support for machine
   /// operands in the function that use or define a specific register.
-  class reg_iterator : public forward_iterator<MachineOperand, ptrdiff_t> {
-    typedef forward_iterator<MachineOperand, ptrdiff_t> super;
-    
+  class reg_iterator : public forward_iterator<MachineInstr, ptrdiff_t> {
     MachineOperand *Op;
     reg_iterator(MachineOperand *op) : Op(op) {}
     friend class MachineRegisterInfo;
   public:
-    typedef super::reference reference;
-    typedef super::pointer pointer;
+    typedef forward_iterator<MachineInstr, ptrdiff_t>::reference reference;
+    typedef forward_iterator<MachineInstr, ptrdiff_t>::pointer pointer;
     
     reg_iterator(const reg_iterator &I) : Op(I.Op) {}
     reg_iterator() : Op(0) {}
@@ -204,13 +207,28 @@ public:
       reg_iterator tmp = *this; ++*this; return tmp;
     }
     
-    // Retrieve a reference to the current operand.
-    MachineOperand &operator*() const {
+    MachineOperand &getOperand() const {
       assert(Op && "Cannot dereference end iterator!");
       return *Op;
     }
     
-    MachineOperand *operator->() const { return Op; }
+    /// getOperandNo - Return the operand # of this MachineOperand in its
+    /// MachineInstr.
+    unsigned getOperandNo() const {
+      assert(Op && "Cannot dereference end iterator!");
+      return Op - &Op->getParent()->getOperand(0);
+    }
+    
+    // Retrieve a reference to the current operand.
+    MachineInstr &operator*() const {
+      assert(Op && "Cannot dereference end iterator!");
+      return *Op->getParent();
+    }
+    
+    MachineInstr *operator->() const {
+      assert(Op && "Cannot dereference end iterator!");
+      return Op->getParent();
+    }
   };
   
 };

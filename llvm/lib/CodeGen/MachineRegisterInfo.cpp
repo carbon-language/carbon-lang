@@ -45,6 +45,20 @@ void MachineRegisterInfo::HandleVRegListReallocation() {
   }
 }
 
+/// replaceRegWith - Replace all instances of FromReg with ToReg in the
+/// machine function.  This is like llvm-level X->replaceAllUsesWith(Y),
+/// except that it also changes any definitions of the register as well.
+void MachineRegisterInfo::replaceRegWith(unsigned FromReg, unsigned ToReg) {
+  assert(FromReg != ToReg && "Cannot replace a reg with itself");
+
+  // TODO: This could be more efficient by bulk changing the operands.
+  for (reg_iterator I = reg_begin(FromReg), E = reg_end(); I != E; ) {
+    MachineOperand &O = I.getOperand();
+    ++I;
+    O.setReg(ToReg);
+  }
+}
+
 
 /// getVRegDef - Return the machine instr that defines the specified virtual
 /// register or null if none is found.  This assumes that the code is in SSA
@@ -54,8 +68,8 @@ MachineInstr *MachineRegisterInfo::getVRegDef(unsigned Reg) const {
          "Invalid vreg!");
   for (reg_iterator I = reg_begin(Reg), E = reg_end(); I != E; ++I) {
     // Since we are in SSA form, we can stop at the first definition.
-    if (I->isDef())
-      return I->getParent();
+    if (I.getOperand().isDef())
+      return &*I;
   }
   return 0;
 }
