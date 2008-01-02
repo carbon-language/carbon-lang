@@ -491,6 +491,16 @@ bool Parser::isObjCPropertyAttribute() {
   return false;
 } 
 
+///  objc-for-collection-in: 'in'
+///
+bool Parser::isObjCForCollectionInKW() {
+  if (Tok.is(tok::identifier)) {
+    const IdentifierInfo *II = Tok.getIdentifierInfo();
+    return II == ObjCForCollectionInKW;
+  }
+  return false;
+}
+
 /// ParseObjcTypeQualifierList - This routine parses the objective-c's type
 /// qualifier list and builds their bitmask representation in the input
 /// argument.

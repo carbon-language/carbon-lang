@@ -296,6 +296,25 @@ void StmtPrinter::VisitForStmt(ForStmt *Node) {
   }
 }
 
+void StmtPrinter::VisitObjcForCollectionStmt(ObjcForCollectionStmt *Node) {
+  Indent() << "for (";
+  if (DeclStmt *DS = dyn_cast<DeclStmt>(Node->getElement()))
+    PrintRawDecl(DS->getDecl());
+  else
+    PrintExpr(cast<Expr>(Node->getElement()));
+  OS << " in ";
+  PrintExpr(Node->getCollection());
+  OS << ") ";
+  
+  if (CompoundStmt *CS = dyn_cast<CompoundStmt>(Node->getBody())) {
+    PrintRawCompoundStmt(CS);
+    OS << "\n";
+  } else {
+    OS << "\n";
+    PrintStmt(Node->getBody());
+  }
+}
+
 void StmtPrinter::VisitGotoStmt(GotoStmt *Node) {
   Indent() << "goto " << Node->getLabel()->getName() << ";\n";
 }

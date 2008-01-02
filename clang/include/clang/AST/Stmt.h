@@ -573,6 +573,51 @@ public:
   static ForStmt* CreateImpl(llvm::Deserializer& D);
 };
 
+/// ObjcForCollectionStmt - This represents Objective-c's collection statement;
+/// represented as 'for (element 'in' collection-expression)' stmt.
+///
+class ObjcForCollectionStmt : public Stmt {
+  enum { ELEM, COLLECTION, BODY, END_EXPR };
+  Stmt* SubExprs[END_EXPR]; // SubExprs[ELEM] is an expression or declstmt.
+  SourceLocation ForCollectionLoc;
+public:
+  ObjcForCollectionStmt(Stmt *Elem, Expr *Collect, Stmt *Body, 
+                        SourceLocation FCL) 
+  : Stmt(ObjcForCollectionStmtClass) {
+    SubExprs[ELEM] = Elem;
+    SubExprs[COLLECTION] = reinterpret_cast<Stmt*>(Collect);
+    SubExprs[BODY] = Body;
+    ForCollectionLoc = FCL;
+  }
+    
+  Stmt *getElement() { return SubExprs[ELEM]; }
+  Expr *getCollection() { 
+    return reinterpret_cast<Expr*>(SubExprs[COLLECTION]); 
+  }
+  Stmt *getBody() { return SubExprs[BODY]; }
+    
+  const Stmt *getElement() const { return SubExprs[ELEM]; }
+  const Expr *getCollection() const { 
+    return reinterpret_cast<Expr*>(SubExprs[COLLECTION]);
+  }
+  const Stmt *getBody() const { return SubExprs[BODY]; }
+    
+  virtual SourceRange getSourceRange() const { 
+    return SourceRange(ForCollectionLoc, SubExprs[BODY]->getLocEnd()); 
+  }
+  static bool classof(const Stmt *T) { 
+    return T->getStmtClass() == ObjcForCollectionStmtClass; 
+  }
+  static bool classof(const ObjcForCollectionStmt *) { return true; }
+    
+  // Iterators
+  virtual child_iterator child_begin();
+  virtual child_iterator child_end();
+    
+  virtual void EmitImpl(llvm::Serializer& S) const;
+  static ObjcForCollectionStmt* CreateImpl(llvm::Deserializer& D);
+};
+  
 /// GotoStmt - This represents a direct goto.
 ///
 class GotoStmt : public Stmt {

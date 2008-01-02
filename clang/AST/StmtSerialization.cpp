@@ -94,6 +94,9 @@ Stmt* Stmt::Create(Deserializer& D) {
 
     case ForStmtClass:
       return ForStmt::CreateImpl(D);
+      
+    case ObjcForCollectionStmtClass:
+      return ObjcForCollectionStmt::CreateImpl(D);
     
     case GotoStmtClass:
       return GotoStmt::CreateImpl(D);
@@ -558,6 +561,21 @@ ForStmt* ForStmt::CreateImpl(Deserializer& D) {
   Expr* Inc = D.ReadOwnedPtr<Expr>();
   Stmt* Body = D.ReadOwnedPtr<Stmt>();
   return new ForStmt(Init,Cond,Inc,Body,ForLoc);
+}
+
+void ObjcForCollectionStmt::EmitImpl(Serializer& S) const {
+  S.Emit(ForCollectionLoc);
+  S.EmitOwnedPtr(getElement());
+  S.EmitOwnedPtr(getCollection());
+  S.EmitOwnedPtr(getBody());
+}
+
+ObjcForCollectionStmt* ObjcForCollectionStmt::CreateImpl(Deserializer& D) {
+  SourceLocation ForCollectionLoc = SourceLocation::ReadVal(D);
+  Stmt* Element = D.ReadOwnedPtr<Stmt>();
+  Expr* Collection = D.ReadOwnedPtr<Expr>();
+  Stmt* Body = D.ReadOwnedPtr<Stmt>();
+  return new ObjcForCollectionStmt(Element,Collection,Body,ForCollectionLoc);
 }
 
 void GotoStmt::EmitImpl(Serializer& S) const {

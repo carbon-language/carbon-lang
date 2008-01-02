@@ -49,8 +49,10 @@ STMT(19, ObjcAtTryStmt        , Stmt)
 STMT(20, ObjcAtCatchStmt      , Stmt)
 STMT(21, ObjcAtFinallyStmt    , Stmt)
 STMT(22, ObjcAtThrowStmt      , Stmt)
+// Obj-C2 statements
+STMT(23, ObjcForCollectionStmt, Stmt)
 
-LAST_STMT(22)
+LAST_STMT(23)
 
 FIRST_EXPR(31)
 // Expressions.

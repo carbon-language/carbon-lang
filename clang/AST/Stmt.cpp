@@ -183,6 +183,14 @@ Stmt::child_iterator DoStmt::child_end() { return &SubExprs[0]+END_EXPR; }
 Stmt::child_iterator ForStmt::child_begin() { return &SubExprs[0]; }
 Stmt::child_iterator ForStmt::child_end() { return &SubExprs[0]+END_EXPR; }
 
+// ObjcForCollectionStmt
+Stmt::child_iterator ObjcForCollectionStmt::child_begin() { 
+  return &SubExprs[0]; 
+}
+Stmt::child_iterator ObjcForCollectionStmt::child_end() { 
+  return &SubExprs[0]+END_EXPR; 
+}
+
 // GotoStmt
 Stmt::child_iterator GotoStmt::child_begin() { return child_iterator(); }
 Stmt::child_iterator GotoStmt::child_end() { return child_iterator(); }

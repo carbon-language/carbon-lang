@@ -292,6 +292,9 @@ private:
   };
   IdentifierInfo *ObjcPropertyAttrs[objc_NumAttrs];
   bool isObjCPropertyAttribute();
+  
+  IdentifierInfo *ObjCForCollectionInKW;
+  bool isObjCForCollectionInKW();
 
   TypeTy *ParseObjCTypeName(ObjcDeclSpec &DS);
   void ParseObjCMethodRequirement();

@@ -254,6 +254,7 @@ void Parser::Initialize() {
     ObjcPropertyAttrs[objc_copy] = &PP.getIdentifierTable().get("copy");
     ObjcPropertyAttrs[objc_nonatomic] = 
                                   &PP.getIdentifierTable().get("nonatomic");
+    ObjCForCollectionInKW = &PP.getIdentifierTable().get("in");
   }
 }
 
