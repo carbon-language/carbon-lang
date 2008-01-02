@@ -59,9 +59,10 @@ public:
   /// getVertex - Retrieve the vertex associated with a (Location,State) pair,
   ///  where the 'Location' is a ProgramEdge in the CFG.  If no vertex for
   ///  this pair exists, it is created.
-  VertexTy* getVertex(ProgramEdge Loc, typename VertexTy::StateTy* State) {
+  VertexTy* getVertex(const ProgramEdge& L, typename VertexTy::StateTy State) {
+    
     // Retrieve the vertex set associated with Loc.
-    VertexSet& VSet = VerticesOfEdge[Loc];
+    VertexSet& VSet = VerticesOfEdge[L];
 
     // Profile 'State' to determine if we already have an existing vertex.
     // Note: this assumes that a vertex's profile matches with its state,
@@ -71,14 +72,14 @@ public:
     void* InsertPos = 0;
     VertexTy* V = 0;
         
-    typename VertexTy::StateTy::Profile(profile,State);
+    VertexTy::StateTy::Profile(profile, State);
     
-    if (V = VSet.FindNodeOrInsertPos(profile,InsertPos))
+    if ((V = VSet.FindNodeOrInsertPos(profile,InsertPos)))
       return V;
       
     // No cache hit.  Allocate a new vertex.
     V = (VertexTy*) Allocator.Allocate<VertexTy>();
-    new (V) VertexTy(VertexCounter++,Loc,State);
+    new (V) VertexTy(VertexCounter++,L,State);
 
     // Insert the vertex into the vertex set and return it.
     VSet.InsertNode(V,InsertPos);

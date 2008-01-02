@@ -57,7 +57,7 @@ private:
   AdjacentVertices Succs;
 
 public:
-  explicit SimulVertex(unsigned ID, const ProgramEdge& loc, StateTy& state)
+  explicit SimulVertex(unsigned ID, const ProgramEdge& loc, StateTy state)
     : VertexID(ID), Location(loc), State(state) {}
     
   // Accessors.
@@ -67,7 +67,7 @@ public:
   
   // Profiling (for FoldingSet).
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    StateTy::Profile(getState(),ID);
+    StateTy::Profile(ID,getState());
   }
 
   // Iterators over successor and predecessor vertices.
