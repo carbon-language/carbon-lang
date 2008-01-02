@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
@@ -43,12 +44,14 @@ STATISTIC(NumHoisted, "Number of machine instructions hoisted out of loops");
 
 namespace {
   class VISIBILITY_HIDDEN MachineLICM : public MachineFunctionPass {
+    const TargetMachine   *TM;
     const TargetInstrInfo *TII;
     MachineFunction       *CurMF; // Current MachineFunction
 
     // Various analyses that we use...
     MachineLoopInfo      *LI;   // Current MachineLoopInfo
     MachineDominatorTree *DT;   // Machine dominator tree for the current Loop
+    MachineRegisterInfo  *RegInfo; // Machine register information
 
     // State that is updated as we process loops
     bool         Changed;       // True if a loop is changed.
@@ -125,16 +128,27 @@ namespace {
     /// MoveInstToEndOfBlock - Moves the machine instruction to the bottom of
     /// the predecessor basic block (but before the terminator instructions).
     /// 
-    void MoveInstToEndOfBlock(MachineBasicBlock *MBB, MachineInstr *MI) {
+    void MoveInstToEndOfBlock(MachineBasicBlock *ToMBB,
+                              MachineBasicBlock *FromMBB,
+                              MachineInstr *MI) {
       DEBUG({
           DOUT << "Hoisting " << *MI;
-          if (MBB->getBasicBlock())
+          if (ToMBB->getBasicBlock())
             DOUT << " to MachineBasicBlock "
-                 << MBB->getBasicBlock()->getName();
+                 << ToMBB->getBasicBlock()->getName();
           DOUT << "\n";
         });
-      MachineBasicBlock::iterator Iter = MBB->getFirstTerminator();
-      MBB->insert(Iter, MI);
+
+      MachineBasicBlock::iterator WhereIter = ToMBB->getFirstTerminator();
+      MachineBasicBlock::iterator To, From = FromMBB->begin();
+
+      while (&*From != MI)
+        ++From;
+
+      assert(From != FromMBB->end() && "Didn't find instr in BB!");
+
+      To = From;
+      ToMBB->splice(WhereIter, FromMBB, From, ++To);
       ++NumHoisted;
     }
 
@@ -170,7 +184,9 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
 
   Changed = false;
   CurMF = &MF;
-  TII = CurMF->getTarget().getInstrInfo();
+  TM = &CurMF->getTarget();
+  TII = TM->getInstrInfo();
+  RegInfo = new MachineRegisterInfo(*TM->getRegisterInfo());
 
   // Get our Loop information...
   LI = &getAnalysis<MachineLoopInfo>();
@@ -188,6 +204,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
     VisitAllLoops(CurLoop);
   }
 
+  delete RegInfo;
   return Changed;
 }
 
@@ -258,8 +275,7 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
       if (I.getInstrDescriptor()->ImplicitUses) {
         DOUT << "  * Instruction has implicit uses:\n";
 
-        const TargetMachine &TM = CurMF->getTarget();
-        const MRegisterInfo *MRI = TM.getRegisterInfo();
+        const MRegisterInfo *MRI = TM->getRegisterInfo();
         const unsigned *ImpUses = I.getInstrDescriptor()->ImplicitUses;
 
         for (; *ImpUses; ++ImpUses)
@@ -269,8 +285,7 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
       if (I.getInstrDescriptor()->ImplicitDefs) {
         DOUT << "  * Instruction has implicit defines:\n";
 
-        const TargetMachine &TM = CurMF->getTarget();
-        const MRegisterInfo *MRI = TM.getRegisterInfo();
+        const MRegisterInfo *MRI = TM->getRegisterInfo();
         const unsigned *ImpDefs = I.getInstrDescriptor()->ImplicitDefs;
 
         for (; *ImpDefs; ++ImpDefs)
@@ -294,11 +309,11 @@ bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
     if (!MRegisterInfo::isVirtualRegister(Reg))
       return false;
 
-    assert(VRegDefs[Reg] && "Machine instr not mapped for this vreg?");
+    assert(RegInfo->getVRegDef(Reg)&&"Machine instr not mapped for this vreg?");
 
     // If the loop contains the definition of an operand, then the instruction
     // isn't loop invariant.
-    if (CurLoop->contains(VRegDefs[Reg]->getParent()))
+    if (CurLoop->contains(RegInfo->getVRegDef(Reg)->getParent()))
       return false;
   }
 
@@ -337,21 +352,6 @@ void MachineLICM::Hoist(MachineInstr &MI) {
          "The predecessor doesn't feed directly into the loop header!");
 
   // Now move the instructions to the predecessor.
-  MachineInstr *NewMI = MI.clone();
-  MoveInstToEndOfBlock(MBB, NewMI);
-
-  // Update VRegDefs.
-  for (unsigned i = 0, e = NewMI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = NewMI->getOperand(i);
-
-    if (MO.isRegister() && MO.isDef() &&
-        MRegisterInfo::isVirtualRegister(MO.getReg())) {
-      VRegDefs.grow(MO.getReg());
-      VRegDefs[MO.getReg()] = NewMI;
-    }
-  }
-
-  // Hoisting was successful! Remove bothersome instruction now.
-  MI.getParent()->remove(&MI);
+  MoveInstToEndOfBlock(MBB, MI.getParent(), &MI);
   Changed = true;
 }
