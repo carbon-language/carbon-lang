@@ -64,6 +64,10 @@ protected:
   /// HasX86_64 - True if the processor supports X86-64 instructions.
   ///
   bool HasX86_64;
+  
+  /// DarwinVers - Nonzero if this is a darwin platform: the numeric
+  /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
+  unsigned char DarwinVers; // Is any darwin-ppc platform.
 
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
@@ -159,7 +163,10 @@ public:
   bool isPICStyleStub() const { return PICStyle == PICStyle::Stub; }
   bool isPICStyleRIPRel() const { return PICStyle == PICStyle::RIPRel; }
   bool isPICStyleWinPIC() const { return PICStyle == PICStyle:: WinPIC; }
-    
+  
+  /// getDarwinVers - Return the darwin version number, 8 = tiger, 9 = leopard.
+  unsigned getDarwinVers() const { return DarwinVers; }
+  
   /// True if accessing the GV requires an extra load. For Windows, dllimported
   /// symbols are indirect, loading the value at address GV rather then the
   /// value of GV itself. This means that the GlobalAddress must be in the base

@@ -221,6 +221,7 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   , PICStyle(PICStyle::None)
   , X86SSELevel(NoMMXSSE)
   , HasX86_64(false)
+  , DarwinVers(0)
   , stackAlignment(8)
   // FIXME: this is a known good value for Yonah. How about others?
   , MaxInlineSizeThreshold(128)
@@ -256,14 +257,22 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
-    if (TT.find("cygwin") != std::string::npos)
-      TargetType = isCygwin;
-    else if (TT.find("mingw") != std::string::npos)
-      TargetType = isMingw;
-    else if (TT.find("darwin") != std::string::npos)
+    unsigned Pos;
+    if ((Pos = TT.find("-darwin")) != std::string::npos) {
       TargetType = isDarwin;
-    else if (TT.find("win32") != std::string::npos)
+      
+      // Compute the darwin version number.
+      if (isdigit(TT[Pos+7]))
+        DarwinVers = atoi(&TT[Pos+7]);
+      else
+        DarwinVers = 8;  // Minimum supported darwin is Tiger.
+    } else if (TT.find("cygwin") != std::string::npos) {
+      TargetType = isCygwin;
+    } else if (TT.find("mingw") != std::string::npos) {
+      TargetType = isMingw;
+    } else if (TT.find("win32") != std::string::npos) {
       TargetType = isWindows;
+    }
   } else if (TT.empty()) {
 #if defined(__CYGWIN__)
     TargetType = isCygwin;
@@ -271,6 +280,12 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
     TargetType = isMingw;
 #elif defined(__APPLE__)
     TargetType = isDarwin;
+#if __APPLE_CC__ > 5400
+    DarwinVers = 9;  // GCC 5400+ is Leopard.
+#else
+    DarwinVers = 8;  // Minimum supported darwin is Tiger.
+#endif
+    
 #elif defined(_WIN32)
     TargetType = isWindows;
 #endif
@@ -279,11 +294,8 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS, bool is64Bit)
   // If the asm syntax hasn't been overridden on the command line, use whatever
   // the target wants.
   if (AsmFlavor == X86Subtarget::Unset) {
-    if (TargetType == isWindows) {
-      AsmFlavor = X86Subtarget::Intel;
-    } else {
-      AsmFlavor = X86Subtarget::ATT;
-    }
+    AsmFlavor = (TargetType == isWindows)
+      ? X86Subtarget::Intel : X86Subtarget::ATT;
   }
 
   if (TargetType == isDarwin && Is64Bit)

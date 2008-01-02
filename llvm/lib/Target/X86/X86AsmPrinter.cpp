@@ -193,8 +193,13 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
             O << TAI->getLCOMMDirective() << name << "," << Size;
             if (Subtarget->isTargetDarwin())
               O << "," << Align;
-          } else
+          } else {
             O << TAI->getCOMMDirective()  << name << "," << Size;
+            
+            // Leopard and above support aligned common symbols.
+            if (Subtarget->getDarwinVers() >= 9)
+              O << "," << Align;
+          }
         } else {
           if (!Subtarget->isTargetCygMing()) {
             if (I->hasInternalLinkage())
