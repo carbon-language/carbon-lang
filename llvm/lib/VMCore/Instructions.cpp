@@ -23,6 +23,10 @@
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
 
+//===----------------------------------------------------------------------===//
+//                            CallSite Class
+//===----------------------------------------------------------------------===//
+
 unsigned CallSite::getCallingConv() const {
   if (CallInst *CI = dyn_cast<CallInst>(I))
     return CI->getCallingConv();
@@ -47,11 +51,11 @@ void CallSite::setParamAttrs(const ParamAttrsList *PAL) {
   else
     cast<InvokeInst>(I)->setParamAttrs(PAL);
 }
-bool CallSite::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
+bool CallSite::paramHasAttr(uint16_t i, unsigned attr) const {
   if (CallInst *CI = dyn_cast<CallInst>(I))
-    return CI->paramHasAttr(i, attr);
+    return CI->paramHasAttr(i, (ParameterAttributes)attr);
   else
-    return cast<InvokeInst>(I)->paramHasAttr(i, attr);
+    return cast<InvokeInst>(I)->paramHasAttr(i, (ParameterAttributes)attr);
 }
 bool CallSite::doesNotAccessMemory() const {
   if (CallInst *CI = dyn_cast<CallInst>(I))
@@ -366,12 +370,38 @@ void CallInst::setParamAttrs(const ParamAttrsList *newAttrs) {
   ParamAttrs = newAttrs; 
 }
 
-bool CallInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
-  if (ParamAttrs && ParamAttrs->paramHasAttr(i, attr))
+bool CallInst::paramHasAttr(uint16_t i, unsigned attr) const {
+  if (ParamAttrs && ParamAttrs->paramHasAttr(i, (ParameterAttributes)attr))
     return true;
   if (const Function *F = getCalledFunction())
-    return F->paramHasAttr(i, attr);
+    return F->paramHasAttr(i, (ParameterAttributes)attr);
   return false;
+}
+
+/// @brief Determine if the call does not access memory.
+bool CallInst::doesNotAccessMemory() const {
+  return paramHasAttr(0, ParamAttr::ReadNone);
+}
+
+/// @brief Determine if the call does not access or only reads memory.
+bool CallInst::onlyReadsMemory() const {
+  return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+}
+
+/// @brief Determine if the call cannot return.
+bool CallInst::doesNotReturn() const {
+  return paramHasAttr(0, ParamAttr::NoReturn);
+}
+
+/// @brief Determine if the call cannot unwind.
+bool CallInst::doesNotThrow() const {
+  return paramHasAttr(0, ParamAttr::NoUnwind);
+}
+
+/// @brief Determine if the call returns a structure.
+bool CallInst::isStructReturn() const {
+  // Be friendly and also check the callee.
+  return paramHasAttr(1, ParamAttr::StructRet);
 }
 
 void CallInst::setDoesNotThrow(bool doesNotThrow) {
@@ -453,12 +483,33 @@ void InvokeInst::setParamAttrs(const ParamAttrsList *newAttrs) {
   ParamAttrs = newAttrs; 
 }
 
-bool InvokeInst::paramHasAttr(uint16_t i, ParameterAttributes attr) const {
-  if (ParamAttrs && ParamAttrs->paramHasAttr(i, attr))
+bool InvokeInst::paramHasAttr(uint16_t i, unsigned attr) const {
+  if (ParamAttrs && ParamAttrs->paramHasAttr(i, (ParameterAttributes)attr))
     return true;
   if (const Function *F = getCalledFunction())
-    return F->paramHasAttr(i, attr);
+    return F->paramHasAttr(i, (ParameterAttributes)attr);
   return false;
+}
+
+
+/// @brief Determine if the call does not access memory.
+bool InvokeInst::doesNotAccessMemory() const {
+  return paramHasAttr(0, ParamAttr::ReadNone);
+}
+
+/// @brief Determine if the call does not access or only reads memory.
+bool InvokeInst::onlyReadsMemory() const {
+  return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+}
+
+/// @brief Determine if the call cannot return.
+bool InvokeInst::doesNotReturn() const {
+  return paramHasAttr(0, ParamAttr::NoReturn);
+}
+
+/// @brief Determine if the call cannot unwind.
+bool InvokeInst::doesNotThrow() const {
+  return paramHasAttr(0, ParamAttr::NoUnwind);
 }
 
 void InvokeInst::setDoesNotThrow(bool doesNotThrow) {
@@ -468,6 +519,12 @@ void InvokeInst::setDoesNotThrow(bool doesNotThrow) {
   else
     PAL = ParamAttrsList::excludeAttrs(PAL, 0, ParamAttr::NoUnwind);
   setParamAttrs(PAL);
+}
+
+/// @brief Determine if the call returns a structure.
+bool InvokeInst::isStructReturn() const {
+  // Be friendly and also check the callee.
+  return paramHasAttr(1, ParamAttr::StructRet);
 }
 
 

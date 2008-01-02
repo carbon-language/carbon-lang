@@ -14,9 +14,9 @@
 #include "llvm/Module.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/IntrinsicInst.h"
+#include "llvm/ParameterAttributes.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/LeakDetector.h"
-#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/StringPool.h"
 #include "SymbolTableListTraitsImpl.h"
 #include "llvm/ADT/BitVector.h"
@@ -76,216 +76,57 @@ void Argument::setParent(Function *parent) {
 }
 
 //===----------------------------------------------------------------------===//
-// ParamAttrsList Implementation
+// Helper Methods in Function
 //===----------------------------------------------------------------------===//
 
-uint16_t
-ParamAttrsList::getParamAttrs(uint16_t Index) const {
-  unsigned limit = attrs.size();
-  for (unsigned i = 0; i < limit && attrs[i].index <= Index; ++i)
-    if (attrs[i].index == Index)
-      return attrs[i].attrs;
-  return ParamAttr::None;
+const FunctionType *Function::getFunctionType() const {
+  return cast<FunctionType>(getType()->getElementType());
 }
 
-std::string 
-ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
-  std::string Result;
-  if (Attrs & ParamAttr::ZExt)
-    Result += "zeroext ";
-  if (Attrs & ParamAttr::SExt)
-    Result += "signext ";
-  if (Attrs & ParamAttr::NoReturn)
-    Result += "noreturn ";
-  if (Attrs & ParamAttr::NoUnwind)
-    Result += "nounwind ";
-  if (Attrs & ParamAttr::InReg)
-    Result += "inreg ";
-  if (Attrs & ParamAttr::NoAlias)
-    Result += "noalias ";
-  if (Attrs & ParamAttr::StructRet)
-    Result += "sret ";  
-  if (Attrs & ParamAttr::ByVal)
-    Result += "byval ";
-  if (Attrs & ParamAttr::Nest)
-    Result += "nest ";
-  if (Attrs & ParamAttr::ReadNone)
-    Result += "readnone ";
-  if (Attrs & ParamAttr::ReadOnly)
-    Result += "readonly ";
-  return Result;
+bool Function::isVarArg() const {
+  return getFunctionType()->isVarArg();
 }
 
-/// onlyInformative - Returns whether only informative attributes are set.
-static inline bool onlyInformative(uint16_t attrs) {
-  return !(attrs & ~ParamAttr::Informative);
+const Type *Function::getReturnType() const {
+  return getFunctionType()->getReturnType();
 }
 
-bool
-ParamAttrsList::areCompatible(const ParamAttrsList *A, const ParamAttrsList *B){
-  if (A == B)
-    return true;
-  unsigned ASize = A ? A->size() : 0;
-  unsigned BSize = B ? B->size() : 0;
-  unsigned AIndex = 0;
-  unsigned BIndex = 0;
-
-  while (AIndex < ASize && BIndex < BSize) {
-    uint16_t AIdx = A->getParamIndex(AIndex);
-    uint16_t BIdx = B->getParamIndex(BIndex);
-    uint16_t AAttrs = A->getParamAttrsAtIndex(AIndex);
-    uint16_t BAttrs = B->getParamAttrsAtIndex(AIndex);
-
-    if (AIdx < BIdx) {
-      if (!onlyInformative(AAttrs))
-        return false;
-      ++AIndex;
-    } else if (BIdx < AIdx) {
-      if (!onlyInformative(BAttrs))
-        return false;
-      ++BIndex;
-    } else {
-      if (!onlyInformative(AAttrs ^ BAttrs))
-        return false;
-      ++AIndex;
-      ++BIndex;
-    }
-  }
-  for (; AIndex < ASize; ++AIndex)
-    if (!onlyInformative(A->getParamAttrsAtIndex(AIndex)))
-      return false;
-  for (; BIndex < BSize; ++BIndex)
-    if (!onlyInformative(B->getParamAttrsAtIndex(AIndex)))
-      return false;
-  return true;
+void Function::removeFromParent() {
+  getParent()->getFunctionList().remove(this);
 }
 
-void ParamAttrsList::Profile(FoldingSetNodeID &ID) const {
-  for (unsigned i = 0; i < attrs.size(); ++i)
-    ID.AddInteger(unsigned(attrs[i].attrs) << 16 | unsigned(attrs[i].index));
+void Function::eraseFromParent() {
+  getParent()->getFunctionList().erase(this);
 }
 
-static ManagedStatic<FoldingSet<ParamAttrsList> > ParamAttrsLists;
-
-const ParamAttrsList *
-ParamAttrsList::get(const ParamAttrsVector &attrVec) {
-  // If there are no attributes then return a null ParamAttrsList pointer.
-  if (attrVec.empty())
-    return 0;
-
-#ifndef NDEBUG
-  for (unsigned i = 0, e = attrVec.size(); i < e; ++i) {
-    assert(attrVec[i].attrs != ParamAttr::None
-           && "Pointless parameter attribute!");
-    assert((!i || attrVec[i-1].index < attrVec[i].index)
-           && "Misordered ParamAttrsList!");
-  }
-#endif
-
-  // Otherwise, build a key to look up the existing attributes.
-  ParamAttrsList key(attrVec);
-  FoldingSetNodeID ID;
-  key.Profile(ID);
-  void *InsertPos;
-  ParamAttrsList* PAL = ParamAttrsLists->FindNodeOrInsertPos(ID, InsertPos);
-
-  // If we didn't find any existing attributes of the same shape then
-  // create a new one and insert it.
-  if (!PAL) {
-    PAL = new ParamAttrsList(attrVec);
-    ParamAttrsLists->InsertNode(PAL, InsertPos);
-  }
-
-  // Return the ParamAttrsList that we found or created.
-  return PAL;
+/// @brief Determine whether the function has the given attribute.
+bool Function::paramHasAttr(uint16_t i, unsigned attr) const {
+  return ParamAttrs && ParamAttrs->paramHasAttr(i, (ParameterAttributes)attr);
 }
 
-const ParamAttrsList *
-ParamAttrsList::getModified(const ParamAttrsList *PAL,
-                            const ParamAttrsVector &modVec) {
-  if (modVec.empty())
-    return PAL;
-
-#ifndef NDEBUG
-  for (unsigned i = 0, e = modVec.size(); i < e; ++i)
-    assert((!i || modVec[i-1].index < modVec[i].index)
-           && "Misordered ParamAttrsList!");
-#endif
-
-  if (!PAL) {
-    // Strip any instances of ParamAttr::None from modVec before calling 'get'.
-    ParamAttrsVector newVec;
-    for (unsigned i = 0, e = modVec.size(); i < e; ++i)
-      if (modVec[i].attrs != ParamAttr::None)
-        newVec.push_back(modVec[i]);
-    return get(newVec);
-  }
-
-  const ParamAttrsVector &oldVec = PAL->attrs;
-
-  ParamAttrsVector newVec;
-  unsigned oldI = 0;
-  unsigned modI = 0;
-  unsigned oldE = oldVec.size();
-  unsigned modE = modVec.size();
-
-  while (oldI < oldE && modI < modE) {
-    uint16_t oldIndex = oldVec[oldI].index;
-    uint16_t modIndex = modVec[modI].index;
-
-    if (oldIndex < modIndex) {
-      newVec.push_back(oldVec[oldI]);
-      ++oldI;
-    } else if (modIndex < oldIndex) {
-      if (modVec[modI].attrs != ParamAttr::None)
-        newVec.push_back(modVec[modI]);
-      ++modI;
-    } else {
-      // Same index - overwrite or delete existing attributes.
-      if (modVec[modI].attrs != ParamAttr::None)
-        newVec.push_back(modVec[modI]);
-      ++oldI;
-      ++modI;
-    }
-  }
-
-  for (; oldI < oldE; ++oldI)
-    newVec.push_back(oldVec[oldI]);
-  for (; modI < modE; ++modI)
-    if (modVec[modI].attrs != ParamAttr::None)
-      newVec.push_back(modVec[modI]);
-
-  return get(newVec);
+/// @brief Determine if the function cannot return.
+bool Function::doesNotReturn() const {
+  return paramHasAttr(0, ParamAttr::NoReturn);
 }
 
-const ParamAttrsList *
-ParamAttrsList::includeAttrs(const ParamAttrsList *PAL,
-                             uint16_t idx, uint16_t attrs) {
-  uint16_t OldAttrs = PAL ? PAL->getParamAttrs(idx) : 0;
-  uint16_t NewAttrs = OldAttrs | attrs;
-  if (NewAttrs == OldAttrs)
-    return PAL;
-
-  ParamAttrsVector modVec;
-  modVec.push_back(ParamAttrsWithIndex::get(idx, NewAttrs));
-  return getModified(PAL, modVec);
+/// @brief Determine if the function cannot unwind.
+bool Function::doesNotThrow() const {
+  return paramHasAttr(0, ParamAttr::NoUnwind);
 }
 
-const ParamAttrsList *
-ParamAttrsList::excludeAttrs(const ParamAttrsList *PAL,
-                             uint16_t idx, uint16_t attrs) {
-  uint16_t OldAttrs = PAL ? PAL->getParamAttrs(idx) : 0;
-  uint16_t NewAttrs = OldAttrs & ~attrs;
-  if (NewAttrs == OldAttrs)
-    return PAL;
-
-  ParamAttrsVector modVec;
-  modVec.push_back(ParamAttrsWithIndex::get(idx, NewAttrs));
-  return getModified(PAL, modVec);
+/// @brief Determine if the function does not access memory.
+bool Function::doesNotAccessMemory() const {
+  return paramHasAttr(0, ParamAttr::ReadNone);
 }
 
-ParamAttrsList::~ParamAttrsList() {
-  ParamAttrsLists->RemoveNode(this);
+/// @brief Determine if the function does not access or only reads memory.
+bool Function::onlyReadsMemory() const {
+  return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
+}
+
+/// @brief Determine if the function returns a structure.
+bool Function::isStructReturn() const {
+  return paramHasAttr(1, ParamAttr::StructRet);
 }
 
 //===----------------------------------------------------------------------===//
@@ -372,26 +213,6 @@ void Function::setParamAttrs(const ParamAttrsList *attrs) {
 
   // Set the new ParamAttrsList.
   ParamAttrs = attrs; 
-}
-
-const FunctionType *Function::getFunctionType() const {
-  return cast<FunctionType>(getType()->getElementType());
-}
-
-bool Function::isVarArg() const {
-  return getFunctionType()->isVarArg();
-}
-
-const Type *Function::getReturnType() const {
-  return getFunctionType()->getReturnType();
-}
-
-void Function::removeFromParent() {
-  getParent()->getFunctionList().remove(this);
-}
-
-void Function::eraseFromParent() {
-  getParent()->getFunctionList().erase(this);
 }
 
 // dropAllReferences() - This function causes all the subinstructions to "let

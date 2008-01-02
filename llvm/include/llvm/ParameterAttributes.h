@@ -73,7 +73,7 @@ const uint16_t MutuallyIncompatible[3] = {
   ReadNone | ReadOnly
 };
 
-}
+} // end namespace ParamAttr
 
 /// This is just a pair of values to associate a set of parameter attributes
 /// with a parameter index. 

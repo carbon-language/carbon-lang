@@ -21,7 +21,6 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/Argument.h"
-#include "llvm/ParameterAttributes.h"
 #include "llvm/Support/Annotation.h"
 
 namespace llvm {
@@ -161,34 +160,22 @@ public:
   void clearCollector();
 
   /// @brief Determine whether the function has the given attribute.
-  bool paramHasAttr(uint16_t i, ParameterAttributes attr) const {
-    return ParamAttrs && ParamAttrs->paramHasAttr(i, attr);
-  }
-
+  bool paramHasAttr(uint16_t i, unsigned attr) const;
+  
   /// @brief Determine if the function cannot return.
-  bool doesNotReturn() const {
-    return paramHasAttr(0, ParamAttr::NoReturn);
-  }
+  bool doesNotReturn() const;
 
   /// @brief Determine if the function cannot unwind.
-  bool doesNotThrow() const {
-    return paramHasAttr(0, ParamAttr::NoUnwind);
-  }
+  bool doesNotThrow() const;
 
   /// @brief Determine if the function does not access memory.
-  bool doesNotAccessMemory() const {
-    return paramHasAttr(0, ParamAttr::ReadNone);
-  }
+  bool doesNotAccessMemory() const;
 
   /// @brief Determine if the function does not access or only reads memory.
-  bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
-  }
+  bool onlyReadsMemory() const;
 
   /// @brief Determine if the function returns a structure.
-  bool isStructReturn() const {
-    return paramHasAttr(1, ParamAttr::StructRet);
-  }
+  bool isStructReturn() const;
 
   /// deleteBody - This method deletes the body of the function, and converts
   /// the linkage to external.

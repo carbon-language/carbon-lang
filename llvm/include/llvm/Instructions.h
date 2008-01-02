@@ -20,7 +20,6 @@
 
 #include "llvm/InstrTypes.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/ParameterAttributes.h"
 
 namespace llvm {
 
@@ -927,34 +926,23 @@ public:
   void setParamAttrs(const ParamAttrsList *attrs);
 
   /// @brief Determine whether the call or the callee has the given attribute.
-  bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
+  bool paramHasAttr(uint16_t i, unsigned attr) const;
 
   /// @brief Determine if the call does not access memory.
-  bool doesNotAccessMemory() const {
-    return paramHasAttr(0, ParamAttr::ReadNone);
-  }
-
+  bool doesNotAccessMemory() const;
+  
   /// @brief Determine if the call does not access or only reads memory.
-  bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
-  }
-
+  bool onlyReadsMemory() const;
+  
   /// @brief Determine if the call cannot return.
-  bool doesNotReturn() const {
-    return paramHasAttr(0, ParamAttr::NoReturn);
-  }
+  bool doesNotReturn() const;
 
   /// @brief Determine if the call cannot unwind.
-  bool doesNotThrow() const {
-    return paramHasAttr(0, ParamAttr::NoUnwind);
-  }
+  bool doesNotThrow() const;
   void setDoesNotThrow(bool doesNotThrow = true);
 
   /// @brief Determine if the call returns a structure.
-  bool isStructReturn() const {
-    // Be friendly and also check the callee.
-    return paramHasAttr(1, ParamAttr::StructRet);
-  }
+  bool isStructReturn() const;
 
   /// getCalledFunction - Return the function being called by this instruction
   /// if it is a direct call.  If it is a call through a function pointer,
@@ -1732,34 +1720,23 @@ public:
   void setParamAttrs(const ParamAttrsList *attrs);
 
   /// @brief Determine whether the call or the callee has the given attribute.
-  bool paramHasAttr(uint16_t i, ParameterAttributes attr) const;
+  bool paramHasAttr(uint16_t i, unsigned attr) const;
 
   /// @brief Determine if the call does not access memory.
-  bool doesNotAccessMemory() const {
-    return paramHasAttr(0, ParamAttr::ReadNone);
-  }
+  bool doesNotAccessMemory() const;
 
   /// @brief Determine if the call does not access or only reads memory.
-  bool onlyReadsMemory() const {
-    return doesNotAccessMemory() || paramHasAttr(0, ParamAttr::ReadOnly);
-  }
+  bool onlyReadsMemory() const;
 
   /// @brief Determine if the call cannot return.
-  bool doesNotReturn() const {
-    return paramHasAttr(0, ParamAttr::NoReturn);
-  }
+  bool doesNotReturn() const;
 
   /// @brief Determine if the call cannot unwind.
-  bool doesNotThrow() const {
-    return paramHasAttr(0, ParamAttr::NoUnwind);
-  }
+  bool doesNotThrow() const;
   void setDoesNotThrow(bool doesNotThrow = true);
 
   /// @brief Determine if the call returns a structure.
-  bool isStructReturn() const {
-    // Be friendly and also check the callee.
-    return paramHasAttr(1, ParamAttr::StructRet);
-  }
+  bool isStructReturn() const;
 
   /// getCalledFunction - Return the function called, or null if this is an
   /// indirect function invocation.
