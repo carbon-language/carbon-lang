@@ -23,11 +23,13 @@
 
 namespace clang {
   
-tempalte <typename VertexTy>
+template <typename VertexTy>
 class SimulGraph {
   // Type definitions.
   typedef llvm::FoldingSet<VertexTy> VertexSet;
   typedef llvm::DenseMap<ProgramEdge,VertexSet> EdgeVertexSetMap;
+  typedef llvm::SmallVector<VertexTy*,2> RootsTy;
+  typedef llvm::SmallVector<VertexTy*,10> EndVerticesTy;
   
   /// VertexCounter - The number of vertices that have been created, although
   ///  this need not be the current number of vertices in the graph that
@@ -39,12 +41,10 @@ class SimulGraph {
   /// one, but clients are free to establish multiple subgraphs within a single
   /// SimulGraph. Moreover, these subgraphs can often merge when paths from
   /// different roots reach the same state at the same program location.
-  typedef llvm::SmallVector<2,VertexTy*> RootsTy;
   RootsTy Roots;
 
   /// EndVertices - The vertices in the simulation graph which have been
   ///  specially marked as the endpoint of an abstract simulation path.
-  llvm::SmallVector<10,VertexTy*> EndVerticesTy
   EndVerticesTy EndVertices;
     
   /// VerticesOfEdge - A mapping from edges to vertices.
@@ -67,13 +67,13 @@ public:
     // Note: this assumes that a vertex's profile matches with its state,
     //  which is the case when VertexTy == SimulVertex. (other implementations
     //  must guarantee this invariant)
-    FoldingSetNodeID profile;    
+    llvm::FoldingSetNodeID profile;    
     void* InsertPos = 0;
     VertexTy* V = 0;
         
     typename VertexTy::StateTy::Profile(profile,State);
     
-    if (V = VSet::FindNodeOrInsertPos(profile,InsertPos))
+    if (V = VSet.FindNodeOrInsertPos(profile,InsertPos))
       return V;
       
     // No cache hit.  Allocate a new vertex.
@@ -100,16 +100,16 @@ public:
   unsigned getCounter() const { return VertexCounter; }
   
   // Iterators.
-  typedef RootsTy::iterator roots_iterator;
-  typedef RootsTy::const_iterator const_roots_iterator;
+  typedef typename RootsTy::iterator roots_iterator;
+  typedef typename RootsTy::const_iterator const_roots_iterator;
   
   roots_iterator roots_begin() { return Roots.begin(); }
   roots_iterator roots_end() { return Roots.end(); }  
   const_roots_iterator roots_begin() const { return Roots.begin(); }
   const_roots_iterator roots_end() const { return Roots.end(); }
   
-  typedef EndVerticesTy::iterator eop_iterator;
-  typedef EndVerticesTy::const_iterator const_eop_iterator;
+  typedef typename EndVerticesTy::iterator eop_iterator;
+  typedef typename EndVerticesTy::const_iterator const_eop_iterator;
   
   eop_iterator eop_begin() { return EndVertices.begin(); }
   eop_iterator eop_end() { return EndVertices.end(); }

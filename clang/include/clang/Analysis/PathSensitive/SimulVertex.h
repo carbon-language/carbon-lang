@@ -16,15 +16,18 @@
 #ifndef LLVM_CLANG_ANALYSIS_PS_ANALYSISVERTEX
 #define LLVM_CLANG_ANALYSIS_PS_ANALYSISVERTEX
 
+#include "clang/Analysis/ProgramEdge.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/FoldingSet.h"
 
 namespace clang {
  
-class ProgramEdge;
-  
-template <typename StateTy>
-class SimulVertex : public FoldingSetNode {
+template <typename StateType>
+class SimulVertex : public llvm::FoldingSetNode {
+public:
+  typedef StateType StateTy;
+
+private:  
   /// VertexID - A unique ID for the vertex.  This number indicates the
   ///  creation order of vertices, with lower numbers being created first.
   ///  The first created vertex has VertexID == 0.
@@ -45,32 +48,29 @@ class SimulVertex : public FoldingSetNode {
   // FIXME: Preds and Succs only grows, not shrinks.  It would be nice
   //  if these lists were allocated from the same BumpPtrAllocator as
   //  the vertices themselves.
-  typedef llvm::SmallVector<1,SimulVertex*> AdjacentVertices;
+  typedef llvm::SmallVector<SimulVertex*,2> AdjacentVertices;
   AdjacentVertices Preds;
   AdjacentVertices Succs;
 
 public:
-  typedef typename StateTy StateTy;
-  
   explicit SimulVertex(unsigned ID, const ProgramEdge& loc, StateTy* state)
     : VertexID(ID), Location(loc), State(state) {}
     
   // Accessors.
-  State* getState() const { return State; }
+  StateTy* getState() const { return State; }
   const ProgramEdge& getLocation() const { return Location; }
   unsigned getVertexID() const { return VertexID; }
   
   // Profiling (for FoldingSet).
   void Profile(llvm::FoldingSetNodeID& ID) const {
-    StateTy::Profile(V.getState(),ID);
+    StateTy::Profile(getState(),ID);
   }
 
   // Iterators over successor and predecessor vertices.
-  typedef AdjacentVertices::iterator        succ_iterator;
-  typedef AdjacentVertices::const_iterator  const_succ_iterator;
-
-  typedef AdjacentVertices::iterator        pred_iterator;
-  typedef AdjacentVertices::const_iterator  const_pred_iterator;
+  typedef typename AdjacentVertices::iterator        succ_iterator;
+  typedef typename AdjacentVertices::const_iterator  const_succ_iterator;
+  typedef typename AdjacentVertices::iterator        pred_iterator;
+  typedef typename AdjacentVertices::const_iterator  const_pred_iterator;
   
   pred_iterator pred_begin() { return Preds.begin(); }
   pred_iterator pred_end() { return Preds.end(); }  
