@@ -379,6 +379,9 @@ Parser::DeclTy *Parser::ParseDeclarationOrFunctionDefinition() {
       SkipUntil(tok::semi); // FIXME: better skip?
       return 0;
     }
+    const char *PrevSpec = 0;
+    if (DS.SetTypeSpecType(DeclSpec::TST_unspecified, AtLoc, PrevSpec))
+      Diag(AtLoc, diag::err_invalid_decl_spec_combination, PrevSpec);
     return ParseObjCAtInterfaceDeclaration(AtLoc, DS.getAttributes()); 
   }
   
