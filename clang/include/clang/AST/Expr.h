@@ -723,18 +723,27 @@ public:
 /// CompoundLiteralExpr - [C99 6.5.2.5] 
 ///
 class CompoundLiteralExpr : public Expr {
+  /// LParenLoc - If non-null, this is the location of the left paren in a
+  /// compound literal like "(int){4}".  This can be null if this is a
+  /// synthesized compound expression.
+  SourceLocation LParenLoc;
   Expr *Init;
 public:
-  CompoundLiteralExpr(QualType ty, Expr *init) : 
-    Expr(CompoundLiteralExprClass, ty), Init(init) {}
+  CompoundLiteralExpr(SourceLocation lparenloc, QualType ty, Expr *init) : 
+    Expr(CompoundLiteralExprClass, ty), LParenLoc(lparenloc), Init(init) {}
   
   const Expr *getInitializer() const { return Init; }
   Expr *getInitializer() { return Init; }
   
+  SourceLocation getLParenLoc() const { return LParenLoc; }
+  
   virtual SourceRange getSourceRange() const {
-    if (Init)
+    // FIXME: Init should never be null.
+    if (!Init)
+      return SourceRange();
+    if (LParenLoc.isInvalid())
       return Init->getSourceRange();
-    return SourceRange();
+    return SourceRange(LParenLoc, Init->getLocEnd());
   }
 
   static bool classof(const Stmt *T) { 

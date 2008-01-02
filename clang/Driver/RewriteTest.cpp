@@ -1454,7 +1454,8 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
       InitListExpr *ILE = new InitListExpr(SourceLocation(), 
                                            &InitExprs[0], InitExprs.size(), 
                                            SourceLocation());
-      CompoundLiteralExpr *SuperRep = new CompoundLiteralExpr(superType, ILE);
+      CompoundLiteralExpr *SuperRep = new CompoundLiteralExpr(SourceLocation(),
+                                                              superType, ILE);
       // struct objc_super *
       Expr *Unop = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
                                Context->getPointerType(SuperRep->getType()), 
@@ -1506,7 +1507,8 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
       InitListExpr *ILE = new InitListExpr(SourceLocation(), 
                                            &InitExprs[0], InitExprs.size(), 
                                            SourceLocation());
-      CompoundLiteralExpr *SuperRep = new CompoundLiteralExpr(superType, ILE);
+      CompoundLiteralExpr *SuperRep = new CompoundLiteralExpr(SourceLocation(),
+                                                              superType, ILE);
       // struct objc_super *
       Expr *Unop = new UnaryOperator(SuperRep, UnaryOperator::AddrOf,
                                Context->getPointerType(SuperRep->getType()), 

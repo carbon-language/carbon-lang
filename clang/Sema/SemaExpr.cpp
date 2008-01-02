@@ -704,7 +704,7 @@ ActOnCompoundLiteral(SourceLocation LParenLoc, TypeTy *Ty,
   if (CheckInitializer(literalExpr, literalType, false))
     return 0;
 
-  return new CompoundLiteralExpr(literalType, literalExpr);
+  return new CompoundLiteralExpr(LParenLoc, literalType, literalExpr);
 }
 
 Action::ExprResult Sema::
@@ -1982,7 +1982,7 @@ Sema::ExprResult Sema::ActOnBuiltinOffsetOf(SourceLocation BuiltinLoc,
   
   // Otherwise, create a compound literal expression as the base, and
   // iteratively process the offsetof designators.
-  Expr *Res = new CompoundLiteralExpr(ArgTy, 0);
+  Expr *Res = new CompoundLiteralExpr(SourceLocation(), ArgTy, 0);
   
   // offsetof with non-identifier designators (e.g. "offsetof(x, a.b[c])") are a
   // GCC extension, diagnose them.

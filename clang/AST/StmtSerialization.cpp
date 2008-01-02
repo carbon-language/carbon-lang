@@ -387,13 +387,15 @@ CompoundAssignOperator::CreateImpl(Deserializer& D) {
 
 void CompoundLiteralExpr::EmitImpl(Serializer& S) const {
   S.Emit(getType());
+  S.Emit(getLParenLoc());
   S.EmitOwnedPtr(Init);
 }
 
 CompoundLiteralExpr* CompoundLiteralExpr::CreateImpl(Deserializer& D) {
   QualType Q = QualType::ReadVal(D);
+  SourceLocation L = SourceLocation::ReadVal(D);
   Expr* Init = D.ReadOwnedPtr<Expr>();
-  return new CompoundLiteralExpr(Q,Init);
+  return new CompoundLiteralExpr(L, Q, Init);
 }
 
 void CompoundStmt::EmitImpl(Serializer& S) const {
