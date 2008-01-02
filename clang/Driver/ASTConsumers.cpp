@@ -36,6 +36,7 @@ namespace {
     DeclPrinter(std::ostream* out) : Out(out ? *out : *llvm::cerr.stream()) {}    
     DeclPrinter() : Out(*llvm::cerr.stream()) {}
     
+    void PrintDecl(Decl *D);
     void PrintFunctionDeclStart(FunctionDecl *FD);    
     void PrintTypeDefDecl(TypedefDecl *TD);    
     void PrintObjcMethodDecl(ObjcMethodDecl *OMD);    
@@ -47,6 +48,56 @@ namespace {
     void PrintObjcCompatibleAliasDecl(ObjcCompatibleAliasDecl *AID);
   };
 } // end anonymous namespace
+
+void DeclPrinter:: PrintDecl(Decl *D) {
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    PrintFunctionDeclStart(FD);
+
+    if (FD->getBody()) {
+      Out << ' ';
+      FD->getBody()->printPretty(Out);
+      Out << '\n';
+    }
+  } else if (isa<ObjcMethodDecl>(D)) {
+    // Do nothing, methods definitions are printed in
+    // PrintObjcImplementationDecl.
+  } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+    PrintTypeDefDecl(TD);
+  } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
+    PrintObjcInterfaceDecl(OID);
+  } else if (ObjcProtocolDecl *PID = dyn_cast<ObjcProtocolDecl>(D)) {
+    PrintObjcProtocolDecl(PID);
+  } else if (ObjcForwardProtocolDecl *OFPD = 
+	     dyn_cast<ObjcForwardProtocolDecl>(D)) {
+    Out << "@protocol ";
+    for (unsigned i = 0, e = OFPD->getNumForwardDecls(); i != e; ++i) {
+      const ObjcProtocolDecl *D = OFPD->getForwardProtocolDecl(i);
+      if (i) Out << ", ";
+      Out << D->getName();
+    }
+    Out << ";\n";
+  } else if (ObjcImplementationDecl *OID = 
+	     dyn_cast<ObjcImplementationDecl>(D)) {
+    PrintObjcImplementationDecl(OID);
+  } else if (ObjcCategoryImplDecl *OID = 
+	     dyn_cast<ObjcCategoryImplDecl>(D)) {
+    PrintObjcCategoryImplDecl(OID);
+  } else if (ObjcCategoryDecl *OID = 
+	     dyn_cast<ObjcCategoryDecl>(D)) {
+    PrintObjcCategoryDecl(OID);
+  } else if (ObjcCompatibleAliasDecl *OID = 
+	     dyn_cast<ObjcCompatibleAliasDecl>(D)) {
+    PrintObjcCompatibleAliasDecl(OID);
+  } else if (isa<ObjcClassDecl>(D)) {
+    Out << "@class [printing todo]\n";
+  } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
+    Out << "Read top-level tag decl: '" << TD->getName() << "'\n";
+  } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
+    Out << "Read top-level variable decl: '" << SD->getName() << "'\n";
+  } else {
+    assert(0 && "Unknown decl type!");
+  }
+}
 
 void DeclPrinter::PrintFunctionDeclStart(FunctionDecl *FD) {
   bool HasBody = FD->getBody();
@@ -295,53 +346,7 @@ namespace {
     ASTPrinter(std::ostream* o = NULL) : DeclPrinter(o) {}
     
     virtual void HandleTopLevelDecl(Decl *D) {
-      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        PrintFunctionDeclStart(FD);
-        
-        if (FD->getBody()) {
-          Out << ' ';
-          FD->getBody()->printPretty(Out);
-          Out << '\n';
-        }
-      } else if (isa<ObjcMethodDecl>(D)) {
-	    // Do nothing, methods definitions are printed in
-		// PrintObjcImplementationDecl.
-      } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
-        PrintTypeDefDecl(TD);
-      } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
-        PrintObjcInterfaceDecl(OID);
-      } else if (ObjcProtocolDecl *PID = dyn_cast<ObjcProtocolDecl>(D)) {
-        PrintObjcProtocolDecl(PID);
-      } else if (ObjcForwardProtocolDecl *OFPD = 
-                     dyn_cast<ObjcForwardProtocolDecl>(D)) {
-        Out << "@protocol ";
-        for (unsigned i = 0, e = OFPD->getNumForwardDecls(); i != e; ++i) {
-          const ObjcProtocolDecl *D = OFPD->getForwardProtocolDecl(i);
-          if (i) Out << ", ";
-          Out << D->getName();
-        }
-        Out << ";\n";
-      } else if (ObjcImplementationDecl *OID = 
-                   dyn_cast<ObjcImplementationDecl>(D)) {
-        PrintObjcImplementationDecl(OID);
-      } else if (ObjcCategoryImplDecl *OID = 
-                 dyn_cast<ObjcCategoryImplDecl>(D)) {
-        PrintObjcCategoryImplDecl(OID);
-      } else if (ObjcCategoryDecl *OID = 
-                 dyn_cast<ObjcCategoryDecl>(D)) {
-        PrintObjcCategoryDecl(OID);
-      } else if (ObjcCompatibleAliasDecl *OID = 
-                 dyn_cast<ObjcCompatibleAliasDecl>(D)) {
-        PrintObjcCompatibleAliasDecl(OID);
-      } else if (isa<ObjcClassDecl>(D)) {
-        Out << "@class [printing todo]\n";
-      } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
-        Out << "Read top-level tag decl: '" << TD->getName() << "'\n";
-      } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
-        Out << "Read top-level variable decl: '" << SD->getName() << "'\n";
-      } else {
-        assert(0 && "Unknown decl type!");
-      }
+      PrintDecl(D);
     }
   };
 }
