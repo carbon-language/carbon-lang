@@ -44,7 +44,7 @@ private:
   /// State - The state associated with this vertex. Normally this value
   ///  is immutable, but we anticipate there will be times when algorithms
   ///  that directly manipulate the analysis graph will need to change it.
-  StateTy* State;
+  StateTy State;
 
   /// Predecessors/Successors - Keep track of the predecessor/successor
   /// vertices.
@@ -57,11 +57,11 @@ private:
   AdjacentVertices Succs;
 
 public:
-  explicit SimulVertex(unsigned ID, const ProgramEdge& loc, StateTy* state)
+  explicit SimulVertex(unsigned ID, const ProgramEdge& loc, StateTy& state)
     : VertexID(ID), Location(loc), State(state) {}
     
   // Accessors.
-  StateTy* getState() const { return State; }
+  const StateTy& getState() const { return State; }
   const ProgramEdge& getLocation() const { return Location; }
   unsigned getVertexID() const { return VertexID; }
   
