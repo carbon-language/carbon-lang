@@ -930,6 +930,9 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       } else {
         SwitchToDataSection("\t.data", I);
         O << ".comm " << name << "," << Size;
+        // Darwin 9 and above support aligned common data.
+        if (Subtarget.isDarwin9())
+          O << "," << Align;
       }
       O << "\t\t" << TAI->getCommentString() << " '" << I->getName() << "'\n";
     } else {

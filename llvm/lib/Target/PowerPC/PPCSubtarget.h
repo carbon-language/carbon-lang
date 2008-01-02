@@ -71,8 +71,11 @@ protected:
   bool HasAltivec;
   bool HasFSQRT;
   bool HasSTFIWX;
-  bool IsDarwin;
   bool HasLazyResolverStubs;
+  
+  /// DarwinVers - Nonzero if this is a darwin platform.  Otherwise, the numeric
+  /// version of the platform, e.g. 8 = 10.4 (Tiger), 9 = 10.5 (Leopard), etc.
+  unsigned char DarwinVers; // Is any darwin-ppc platform.
 public:
   /// This constructor initializes the data members to match that
   /// of the specified module.
@@ -132,10 +135,13 @@ public:
   bool hasAltivec() const { return HasAltivec; }
   bool isGigaProcessor() const { return IsGigaProcessor; }
 
-  bool isDarwin() const { return IsDarwin; }
+  /// isDarwin - True if this is any darwin platform.
+  bool isDarwin() const { return DarwinVers != 0; }
+  /// isDarwin - True if this is darwin9 (leopard, 10.5) or above.
+  bool isDarwin9() const { return DarwinVers >= 9; }
 
-  bool isMachoABI() const { return IsDarwin || IsPPC64; }
-  bool isELF32_ABI() const { return !IsDarwin && !IsPPC64; }
+  bool isMachoABI() const { return isDarwin() || IsPPC64; }
+  bool isELF32_ABI() const { return !isDarwin() && !IsPPC64; }
 
   unsigned getAsmFlavor() const {
     return AsmFlavor != Unset ? unsigned(AsmFlavor) : 0;

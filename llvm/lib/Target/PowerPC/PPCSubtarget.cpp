@@ -67,8 +67,8 @@ PPCSubtarget::PPCSubtarget(const TargetMachine &tm, const Module &M,
   , HasAltivec(false)
   , HasFSQRT(false)
   , HasSTFIWX(false)
-  , IsDarwin(false)
-  , HasLazyResolverStubs(false) {
+  , HasLazyResolverStubs(false)
+  , DarwinVers(0) {
 
   // Determine default and user specified characteristics
   std::string CPU = "generic";
@@ -100,17 +100,29 @@ PPCSubtarget::PPCSubtarget(const TargetMachine &tm, const Module &M,
   
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
-  const std::string& TT = M.getTargetTriple();
-  if (TT.length() > 5) {
-    IsDarwin = TT.find("-darwin") != std::string::npos;
+  const std::string &TT = M.getTargetTriple();
+  if (TT.length() > 7) {
+    // Determine which version of darwin this is.
+    unsigned DarwinPos = TT.find("-darwin");
+    if (DarwinPos != std::string::npos) {
+      if (isdigit(TT[DarwinPos+7]))
+        DarwinVers = atoi(&TT[DarwinPos+7]);
+      else
+        DarwinVers = 8;  // Minimum supported darwin is Tiger.
+    }
   } else if (TT.empty()) {
+    // Try to autosense the subtarget from the host compiler.
 #if defined(__APPLE__)
-    IsDarwin = true;
+#if __APPLE_CC__ > 5400
+    DarwinVers = 9;  // GCC 5400+ is Leopard.
+#else
+    DarwinVers = 8;  // Minimum supported darwin is Tiger.
+#endif
 #endif
   }
 
   // Set up darwin-specific properties.
-  if (IsDarwin) {
+  if (isDarwin()) {
     HasLazyResolverStubs = true;
     AsmFlavor = NewMnemonic;
   } else {
