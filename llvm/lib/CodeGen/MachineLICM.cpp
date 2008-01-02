@@ -56,9 +56,6 @@ namespace {
     // State that is updated as we process loops
     bool         Changed;       // True if a loop is changed.
     MachineLoop *CurLoop;       // The current loop we are working on.
-
-    // Map the def of a virtual register to the machine instruction.
-    IndexedMap<const MachineInstr*, VirtReg2IndexFunctor> VRegDefs;
   public:
     static char ID; // Pass identification, replacement for typeid
     MachineLICM() : MachineFunctionPass((intptr_t)&ID) {}
@@ -91,11 +88,6 @@ namespace {
 
       HoistRegion(DT->getNode(L->getHeader()));
     }
-
-    /// MapVirtualRegisterDefs - Create a map of which machine instruction
-    /// defines a virtual register.
-    /// 
-    void MapVirtualRegisterDefs();
 
     /// IsInSubLoop - A little predicate that returns true if the specified
     /// basic block is in a subloop of the current one, not the current one
@@ -192,8 +184,6 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   LI = &getAnalysis<MachineLoopInfo>();
   DT = &getAnalysis<MachineDominatorTree>();
 
-  MapVirtualRegisterDefs();
-
   for (MachineLoopInfo::iterator
          I = LI->begin(), E = LI->end(); I != E; ++I) {
     CurLoop = *I;
@@ -206,31 +196,6 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
 
   delete RegInfo;
   return Changed;
-}
-
-/// MapVirtualRegisterDefs - Create a map of which machine instruction defines a
-/// virtual register.
-/// 
-void MachineLICM::MapVirtualRegisterDefs() {
-  for (MachineFunction::const_iterator
-         I = CurMF->begin(), E = CurMF->end(); I != E; ++I) {
-    const MachineBasicBlock &MBB = *I;
-
-    for (MachineBasicBlock::const_iterator
-           II = MBB.begin(), IE = MBB.end(); II != IE; ++II) {
-      const MachineInstr &MI = *II;
-
-      for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
-        const MachineOperand &MO = MI.getOperand(i);
-
-        if (MO.isRegister() && MO.isDef() &&
-            MRegisterInfo::isVirtualRegister(MO.getReg())) {
-          VRegDefs.grow(MO.getReg());
-          VRegDefs[MO.getReg()] = &MI;
-        }
-      }
-    }
-  }
 }
 
 /// HoistRegion - Walk the specified region of the CFG (defined by all blocks
