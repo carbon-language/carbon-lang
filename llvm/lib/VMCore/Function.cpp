@@ -160,12 +160,9 @@ ParamAttrsList::areCompatible(const ParamAttrsList *A, const ParamAttrsList *B){
   return true;
 }
 
-void 
-ParamAttrsList::Profile(FoldingSetNodeID &ID) const {
-  for (unsigned i = 0; i < attrs.size(); ++i) {
-    uint32_t val = uint32_t(attrs[i].attrs) << 16 | attrs[i].index;
-    ID.AddInteger(val);
-  }
+void ParamAttrsList::Profile(FoldingSetNodeID &ID) const {
+  for (unsigned i = 0; i < attrs.size(); ++i)
+    ID.AddInteger(unsigned(attrs[i].attrs) << 16 | unsigned(attrs[i].index));
 }
 
 static ManagedStatic<FoldingSet<ParamAttrsList> > ParamAttrsLists;
