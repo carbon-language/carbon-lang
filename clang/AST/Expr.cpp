@@ -657,7 +657,10 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
                                               Exp->getOperatorLoc())));
 
       // Get information about the size or align.
-      if (Exp->getOpcode() == UnaryOperator::AlignOf) {
+      if (Exp->getSubExpr()->getType()->isFunctionType()) {
+        // GCC extension: sizeof(function) = 1.
+        Result = Exp->getOpcode() == UnaryOperator::AlignOf ? 4 : 1;
+      } else if (Exp->getOpcode() == UnaryOperator::AlignOf) {
         Result = Ctx.getTypeAlign(Exp->getSubExpr()->getType(),
                                   Exp->getOperatorLoc());
       } else {
@@ -700,7 +703,10 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
       static_cast<uint32_t>(Ctx.getTypeSize(getType(), Exp->getOperatorLoc())));
     
     // Get information about the size or align.
-    if (Exp->isSizeOf()) {
+    if (Exp->getArgumentType()->isFunctionType()) {
+      // GCC extension: sizeof(function) = 1.
+      Result = Exp->isSizeOf() ? 1 : 4;
+    } else if (Exp->isSizeOf()) {
       unsigned CharSize =
         Ctx.Target.getCharWidth(Ctx.getFullLoc(Exp->getOperatorLoc()));
       
