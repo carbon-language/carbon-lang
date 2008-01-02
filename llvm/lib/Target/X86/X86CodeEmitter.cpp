@@ -246,13 +246,12 @@ void Emitter::emitDisplacementField(const MachineOperand *RelocOp,
     emitGlobalAddress(RelocOp->getGlobal(), rt, RelocOp->getOffset(),
                       PCAdj, false, IsPIC);
   } else if (RelocOp->isConstantPoolIndex()) {
-    // Must be in 64-bit mode.
-    emitConstPoolAddress(RelocOp->getIndex(), X86::reloc_pcrel_word,
+    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_picrel_word;
+    emitConstPoolAddress(RelocOp->getIndex(), rt,
                          RelocOp->getOffset(), PCAdj, IsPIC);
   } else if (RelocOp->isJumpTableIndex()) {
-    // Must be in 64-bit mode.
-    emitJumpTableAddress(RelocOp->getIndex(), X86::reloc_pcrel_word,
-                         PCAdj, IsPIC);
+    unsigned rt = Is64BitMode ? X86::reloc_pcrel_word : X86::reloc_picrel_word;
+    emitJumpTableAddress(RelocOp->getIndex(), rt, PCAdj, IsPIC);
   } else {
     assert(0 && "Unknown value to relocate!");
   }
@@ -269,14 +268,14 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   if (Op3.isGlobalAddress()) {
     DispForReloc = &Op3;
   } else if (Op3.isConstantPoolIndex()) {
-    if (Is64BitMode) {
+    if (Is64BitMode || IsPIC) {
       DispForReloc = &Op3;
     } else {
       DispVal += MCE.getConstantPoolEntryAddress(Op3.getIndex());
       DispVal += Op3.getOffset();
     }
   } else if (Op3.isJumpTableIndex()) {
-    if (Is64BitMode) {
+    if (Is64BitMode || IsPIC) {
       DispForReloc = &Op3;
     } else {
       DispVal += MCE.getJumpTableEntryAddress(Op3.getIndex());
