@@ -1342,13 +1342,13 @@ Parser::ExprResult Parser::ParseObjCMessageExpression() {
   } else if (!selIdent) {
     Diag(Tok, diag::err_expected_ident); // missing selector name.
     SkipUntil(tok::semi);
-    return 0;
+    return true;
   }
   
   if (Tok.isNot(tok::r_square)) {
     Diag(Tok, diag::err_expected_rsquare);
     SkipUntil(tok::semi);
-    return 0;
+    return true;
   }
   SourceLocation RBracloc = ConsumeBracket(); // consume ']'
   
