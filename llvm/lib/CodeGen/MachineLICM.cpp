@@ -178,7 +178,7 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   CurMF = &MF;
   TM = &CurMF->getTarget();
   TII = TM->getInstrInfo();
-  RegInfo = new MachineRegisterInfo(*TM->getRegisterInfo());
+  RegInfo = &CurMF->getRegInfo();
 
   // Get our Loop information...
   LI = &getAnalysis<MachineLoopInfo>();
@@ -194,7 +194,6 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
     VisitAllLoops(CurLoop);
   }
 
-  delete RegInfo;
   return Changed;
 }
 
