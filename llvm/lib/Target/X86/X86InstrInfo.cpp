@@ -144,37 +144,6 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   return true;
 }
 
-/// isDefinedInEntryBlock - Goes through the entry block to see if the given
-/// virtual register is indeed defined in the entry block.
-/// 
-bool X86InstrInfo::isDefinedInEntryBlock(const MachineBasicBlock &Entry,
-                                         unsigned VReg) const {
-  assert(MRegisterInfo::isVirtualRegister(VReg) &&
-         "Map only holds virtual registers!");
-  MachineInstrMap.grow(VReg);
-  if (MachineInstrMap[VReg]) return true;
-
-  MachineBasicBlock::const_iterator I = Entry.begin(), E = Entry.end();
-
-  for (; I != E; ++I) {
-    const MachineInstr &MI = *I;
-    unsigned NumOps = MI.getNumOperands();
-
-    for (unsigned i = 0; i < NumOps; ++i) {
-      const MachineOperand &MO = MI.getOperand(i);
-
-      if(MO.isRegister() && MO.isDef() &&
-         MRegisterInfo::isVirtualRegister(MO.getReg()) &&
-         MO.getReg() == VReg) {
-        MachineInstrMap[VReg] = &MI;
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
 /// isReallySideEffectFree - If the M_MAY_HAVE_SIDE_EFFECTS flag is set, this
 /// method is called to determine if the specific instance of this instruction
 /// has side effects. This is useful in cases of instructions, like loads, which
@@ -189,8 +158,7 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
 
       // Loads from global addresses which aren't redefined in the function are
       // side effect free.
-      if (MRegisterInfo::isVirtualRegister(Reg) &&
-          isDefinedInEntryBlock(MI->getParent()->getParent()->front(), Reg) &&
+      if (Reg != 0 && MRegisterInfo::isVirtualRegister(Reg) &&
           MI->getOperand(2).isImmediate() &&
           MI->getOperand(3).isRegister() &&
           MI->getOperand(4).isGlobalAddress() &&

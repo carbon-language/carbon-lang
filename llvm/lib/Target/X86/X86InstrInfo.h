@@ -225,13 +225,6 @@ namespace X86II {
 class X86InstrInfo : public TargetInstrInfoImpl {
   X86TargetMachine &TM;
   const X86RegisterInfo RI;
-  mutable IndexedMap<const MachineInstr*, VirtReg2IndexFunctor> MachineInstrMap;
-
-  /// isDefinedInEntryBlock - Goes through the entry block to see if the given
-  /// virtual register is indeed defined in the entry block.
-  /// 
-  bool isDefinedInEntryBlock(const MachineBasicBlock &Entry,
-                             unsigned VReg) const;
 public:
   X86InstrInfo(X86TargetMachine &tm);
 
