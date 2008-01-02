@@ -306,43 +306,6 @@ void CallInst::init(Value *Func) {
   assert(FTy->getNumParams() == 0 && "Calling a function with bad signature");
 }
 
-#if 0
-// Leave for llvm-gcc
-CallInst::CallInst(Value *Func, Value* const *Args, unsigned NumArgs,
-                   const std::string &Name, BasicBlock *InsertAtEnd)
-  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
-                                     ->getElementType())->getReturnType(),
-                Instruction::Call, 0, 0, InsertAtEnd) {
-  init(Func, Args, NumArgs);
-  setName(Name);
-}
-CallInst::CallInst(Value *Func, Value* const *Args, unsigned NumArgs,
-                   const std::string &Name, Instruction *InsertBefore)
-    : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
-                                     ->getElementType())->getReturnType(),
-                  Instruction::Call, 0, 0, InsertBefore) {
-  init(Func, Args, NumArgs);
-  setName(Name);
-}
-
-CallInst::CallInst(Value *Func, Value *Actual1, Value *Actual2,
-                   const std::string &Name, Instruction  *InsertBefore)
-  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
-                                   ->getElementType())->getReturnType(),
-                Instruction::Call, 0, 0, InsertBefore) {
-  init(Func, Actual1, Actual2);
-  setName(Name);
-}
-
-CallInst::CallInst(Value *Func, Value *Actual1, Value *Actual2,
-                   const std::string &Name, BasicBlock  *InsertAtEnd)
-  : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
-                                   ->getElementType())->getReturnType(),
-                Instruction::Call, 0, 0, InsertAtEnd) {
-  init(Func, Actual1, Actual2);
-  setName(Name);
-}
-#endif
 CallInst::CallInst(Value *Func, Value* Actual, const std::string &Name,
                    Instruction *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
