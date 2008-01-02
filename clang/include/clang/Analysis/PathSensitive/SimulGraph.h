@@ -80,7 +80,7 @@ public:
     V = (VertexTy*) Allocator.Allocate<VertexTy>();
     new (V) VertexTy(VertexCounter++,Loc,State);
 
-    // Insert the vertex in the vertex set and return it.
+    // Insert the vertex into the vertex set and return it.
     VSet.InsertNode(V,InsertPos);
     
     return V;

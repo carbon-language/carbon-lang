@@ -22,6 +22,10 @@
 
 namespace clang {
  
+// *** NOTE ***
+//  In the future we may not use a fully templated-implementation.  We'll first
+//  see how the needed functionality develops and then refactor later.
+  
 template <typename StateType>
 class SimulVertex : public llvm::FoldingSetNode {
 public:
