@@ -301,9 +301,11 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
           // FIXME: If a source translation tool needs to see the original type,
           // then we need to consider storing both types somewhere...
           // 
-          if (const ArrayType *AT = ArgTy->getAsArrayType())
+          if (const ArrayType *AT = ArgTy->getAsArrayType()) {
+            // int x[restrict 4] ->  int *restrict
             ArgTy = Context.getPointerType(AT->getElementType());
-          else if (ArgTy->isFunctionType())
+            ArgTy = ArgTy.getQualifiedType(AT->getIndexTypeQualifier());
+          } else if (ArgTy->isFunctionType())
             ArgTy = Context.getPointerType(ArgTy);
           // Look for 'void'.  void is allowed only as a single argument to a
           // function with no other parameters (C99 6.7.5.3p10).  We record
