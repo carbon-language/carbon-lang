@@ -188,12 +188,12 @@ public:
   
   inline unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
 
-  static inline void Profile(const ImmutableMap& M, FoldingSetNodeID& ID) { 
+  static inline void Profile(FoldingSetNodeID& ID, const ImmutableMap& M) { 
     ID.AddPointer(M.Root);
   }
   
   inline void Profile(FoldingSetNodeID& ID) const {
-    return Profile(*this,ID);
+    return Profile(ID,*this);
   }  
 };
   
