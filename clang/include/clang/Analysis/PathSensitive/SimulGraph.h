@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Allocator.h"
 
 namespace clang {
   
@@ -48,6 +49,9 @@ class SimulGraph {
     
   /// VerticesOfEdge - A mapping from edges to vertices.
   EdgeVertexSetMap VerticesOfEdge;
+  
+  /// Allocator - BumpPtrAllocator to create vertices.
+  llvm::BumpPtrAllocator Allocator;
 
 public:
   SimulGraph() : VertexCounter(0) {}
@@ -72,11 +76,12 @@ public:
     if (V = VSet::FindNodeOrInsertPos(profile,InsertPos))
       return V;
       
-    // FIXME: Allocate from a BumpPtrAllocator.
-    V = new VertexTy(VertexCounter++,Loc,State);
+    // No cache hit.  Allocate a new vertex.
+    V = (VertexTy*) Allocator.Allocate<VertexTy>();
+    new (V) VertexTy(VertexCounter++,Loc,State);
 
     // Insert the vertex in the vertex set and return it.
-    VSet.InserNode(V,InsertPos);
+    VSet.InsertNode(V,InsertPos);
     
     return V;
   }
