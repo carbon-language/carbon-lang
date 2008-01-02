@@ -2695,20 +2695,20 @@ static void PrintLoopInfo(std::ostream &OS, const ScalarEvolution *SE,
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     PrintLoopInfo(OS, SE, *I);
 
-  cerr << "Loop " << L->getHeader()->getName() << ": ";
+  OS << "Loop " << L->getHeader()->getName() << ": ";
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
   L->getExitBlocks(ExitBlocks);
   if (ExitBlocks.size() != 1)
-    cerr << "<multiple exits> ";
+    OS << "<multiple exits> ";
 
   if (SE->hasLoopInvariantIterationCount(L)) {
-    cerr << *SE->getIterationCount(L) << " iterations! ";
+    OS << *SE->getIterationCount(L) << " iterations! ";
   } else {
-    cerr << "Unpredictable iteration count. ";
+    OS << "Unpredictable iteration count. ";
   }
 
-  cerr << "\n";
+  OS << "\n";
 }
 
 void ScalarEvolution::print(std::ostream &OS, const Module* ) const {
