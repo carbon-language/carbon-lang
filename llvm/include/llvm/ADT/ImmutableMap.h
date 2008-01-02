@@ -154,8 +154,47 @@ public:
   //===--------------------------------------------------===//  
   
   void verify() const { if (Root) Root->verify(); }
-  unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
   
+  //===--------------------------------------------------===//    
+  // Iterators.
+  //===--------------------------------------------------===//  
+  
+  class iterator {
+    typename TreeTy::iterator itr;
+    
+    iterator() {}
+    iterator(TreeTy* t) : itr(t) {}
+    friend class ImmutableSet<ValT,ValInfo>;
+
+  public:
+    inline value_type_ref operator*() const { return itr->getValue(); }
+    inline key_type_ref getKey() const { return itr->getValue().first; }
+    inline data_type_ref getData() const { return itr->getValue().second; }
+    
+    inline iterator& operator++() { ++itr; return *this; }
+    inline iterator  operator++(int) { iterator tmp(*this); ++itr; return tmp; }
+    inline iterator& operator--() { --itr; return *this; }
+    inline iterator  operator--(int) { iterator tmp(*this); --itr; return tmp; }
+    inline bool operator==(const iterator& RHS) const { return RHS.itr == itr; }
+    inline bool operator!=(const iterator& RHS) const { return RHS.itr != itr; }        
+  };
+  
+  iterator begin() const { return iterator(Root); }
+  iterator end() const { return iterator(); }  
+  
+  //===--------------------------------------------------===//    
+  // Utility methods.
+  //===--------------------------------------------------===//  
+  
+  inline unsigned getHeight() const { return Root ? Root->getHeight() : 0; }
+
+  static inline void Profile(const ImmutableMap& M, FoldingSetNodeID& ID) { 
+    ID.AddPointer(M.Root);
+  }
+  
+  inline void Profile(FoldingSetNodeID& ID) const {
+    return Profile(*this,ID);
+  }  
 };
   
 } // end namespace llvm
