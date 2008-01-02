@@ -341,13 +341,15 @@ EmitGCCBuiltinList(const std::vector<CodeGenIntrinsic> &Ints, std::ostream &OS){
 void IntrinsicEmitter::
 EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints, 
                              std::ostream &OS) {
-  typedef std::map<std::pair<std::string, std::string>, std::string> BIMTy;
+  typedef std::map<std::string, std::map<std::string, std::string> > BIMTy;
   BIMTy BuiltinMap;
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     if (!Ints[i].GCCBuiltinName.empty()) {
-      std::pair<std::string, std::string> Key(Ints[i].GCCBuiltinName,
-                                              Ints[i].TargetPrefix);
-      if (!BuiltinMap.insert(std::make_pair(Key, Ints[i].EnumName)).second)
+      // Get the map for this target prefix.
+      std::map<std::string, std::string> &BIM =BuiltinMap[Ints[i].TargetPrefix];
+      
+      if (!BIM.insert(std::make_pair(Ints[i].GCCBuiltinName,
+                                     Ints[i].EnumName)).second)
         throw "Intrinsic '" + Ints[i].TheDef->getName() +
               "': duplicate GCC builtin name!";
     }
@@ -358,17 +360,26 @@ EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "// in as BuiltinName, and a target prefix (e.g. 'ppc') is passed\n";
   OS << "// in as TargetPrefix.  The result is assigned to 'IntrinsicID'.\n";
   OS << "#ifdef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN\n";
-  OS << "  if (0);\n";
+  
   // Note: this could emit significantly better code if we cared.
   for (BIMTy::iterator I = BuiltinMap.begin(), E = BuiltinMap.end();I != E;++I){
-    OS << "  else if (";
-    if (!I->first.second.empty()) {
-      // Emit this as a strcmp, so it can be constant folded by the FE.
-      OS << "!strcmp(TargetPrefix, \"" << I->first.second << "\") &&\n"
-         << "           ";
-    }
-    OS << "!strcmp(BuiltinName, \"" << I->first.first << "\"))\n";
-    OS << "    IntrinsicID = Intrinsic::" << I->second << ";\n";
+    OS << "  ";
+    if (!I->first.empty())
+      OS << "if (!strcmp(TargetPrefix, \"" << I->first << "\")) ";
+    else
+      OS << "/* Target Independent Builtins */ ";
+    OS << "{\n";
+
+    OS << "    if (0);\n";
+
+    // Emit the comparisons for this target prefix.
+    std::map<std::string, std::string> &BIM = I->second;
+    for (std::map<std::string, std::string>::iterator J = BIM.begin(),
+         E = BIM.end(); J != E; ++J) {
+      OS << "    else if (!strcmp(BuiltinName, \"" << J->first << "\"))\n";
+      OS << "      IntrinsicID = Intrinsic::" << J->second << ";\n";
+    }    
+    OS << "  }\n";
   }
   OS << "  else\n";
   OS << "    IntrinsicID = Intrinsic::not_intrinsic;\n";
