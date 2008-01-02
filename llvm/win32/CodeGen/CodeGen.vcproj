@@ -393,6 +393,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\MachineRegisterInfo.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\MachOWriter.cpp"
 				>
 			</File>
