@@ -41,6 +41,10 @@ class SimulVertex : public FoldingSetNode {
 
   /// Predecessors/Successors - Keep track of the predecessor/successor
   /// vertices.
+  
+  // FIXME: Preds and Succs only grows, not shrinks.  It would be nice
+  //  if these lists were allocated from the same BumpPtrAllocator as
+  //  the vertices themselves.
   typedef llvm::SmallVector<1,SimulVertex*> AdjacentVertices;
   AdjacentVertices Preds;
   AdjacentVertices Succs;
