@@ -394,6 +394,11 @@ bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic,
          DeclType.getAsString(), rhsType.getAsString(), 
          Init->getSourceRange());
     break;
+  case FunctionVoidPointer:
+    Diag(Init->getLocStart(), diag::ext_typecheck_assign_pointer_void_func, 
+         DeclType.getAsString(), rhsType.getAsString(), 
+         Init->getSourceRange());
+    break;
   case IncompatiblePointer:
     Diag(Init->getLocStart(), diag::ext_typecheck_assign_incompatible_pointer,
          DeclType.getAsString(), rhsType.getAsString(), 

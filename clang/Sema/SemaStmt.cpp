@@ -663,6 +663,11 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
          lhsType.getAsString(), rhsType.getAsString(),
          RetValExp->getSourceRange());
     break;
+  case FunctionVoidPointer:
+    Diag(ReturnLoc, diag::ext_typecheck_return_pointer_void_func, 
+         lhsType.getAsString(), rhsType.getAsString(),
+         RetValExp->getSourceRange());
+    break;
   case IncompatiblePointer:
     Diag(ReturnLoc, diag::ext_typecheck_return_incompatible_pointer,
          lhsType.getAsString(), rhsType.getAsString(),

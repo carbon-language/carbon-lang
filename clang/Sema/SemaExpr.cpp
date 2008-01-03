@@ -644,6 +644,11 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
              LHSType.getAsString(), RHSType.getAsString(),
              Fn->getSourceRange(), Arg->getSourceRange());
         break;
+      case FunctionVoidPointer:
+        Diag(Loc, diag::ext_typecheck_passing_pointer_void_func, 
+             LHSType.getAsString(), RHSType.getAsString(),
+             Fn->getSourceRange(), Arg->getSourceRange());
+        break;
       case IncompatiblePointer:
         Diag(Loc, diag::ext_typecheck_passing_incompatible_pointer, 
              RHSType.getAsString(), LHSType.getAsString(),
@@ -1075,17 +1080,29 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   // C99 6.5.16.1p1 (constraint 4): If one operand is a pointer to an object or 
   // incomplete type and the other is a pointer to a qualified or unqualified 
   // version of void...
-  if (lhptee.getUnqualifiedType()->isVoidType() &&
-      (rhptee->isObjectType() || rhptee->isIncompleteType()))
-    ;
-  else if (rhptee.getUnqualifiedType()->isVoidType() &&
-      (lhptee->isObjectType() || lhptee->isIncompleteType()))
-    ;
+  if (lhptee->isVoidType()) {
+    if (rhptee->isObjectType() || rhptee->isIncompleteType())
+      return r;
+    
+    // As an extension, we allow cast to/from void* to function pointer.
+    if (rhptee->isFunctionType())
+      return FunctionVoidPointer;
+  }
+  
+  if (rhptee->isVoidType()) {
+    if (lhptee->isObjectType() || lhptee->isIncompleteType())
+      return r;
+
+    // As an extension, we allow cast to/from void* to function pointer.
+    if (lhptee->isFunctionType())
+      return FunctionVoidPointer;
+  }
+  
   // C99 6.5.16.1p1 (constraint 3): both operands are pointers to qualified or 
   // unqualified versions of compatible types, ...
-  else if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
-                                       rhptee.getUnqualifiedType()))
-    r = IncompatiblePointer; // this "trumps" PointerAssignDiscardsQualifiers
+  if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
+                                  rhptee.getUnqualifiedType()))
+    return IncompatiblePointer; // this "trumps" PointerAssignDiscardsQualifiers
   return r;
 }
 
@@ -1540,6 +1557,11 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
     break;
   case IntFromPointer: 
     Diag(loc, diag::ext_typecheck_assign_pointer_int, 
+         lhsType.getAsString(), rhsType.getAsString(),
+         lex->getSourceRange(), rex->getSourceRange());
+    break;
+  case FunctionVoidPointer:
+    Diag(loc, diag::ext_typecheck_assign_pointer_void_func, 
          lhsType.getAsString(), rhsType.getAsString(),
          lex->getSourceRange(), rex->getSourceRange());
     break;
@@ -2223,6 +2245,11 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
       break;
     case IncompatiblePointer:
       Diag(l, diag::ext_typecheck_sending_incompatible_pointer, 
+           rhsType.getAsString(), lhsType.getAsString(),
+           argExpr->getSourceRange());
+      break;
+    case FunctionVoidPointer:
+      Diag(l, diag::ext_typecheck_sending_pointer_void_func, 
            rhsType.getAsString(), lhsType.getAsString(),
            argExpr->getSourceRange());
       break;

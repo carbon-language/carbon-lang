@@ -612,6 +612,7 @@ private:
     Incompatible,
     PointerFromInt, 
     IntFromPointer,
+    FunctionVoidPointer,
     IncompatiblePointer,
     CompatiblePointerDiscardsQualifiers
   };
