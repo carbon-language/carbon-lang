@@ -2229,38 +2229,35 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
       Args[i] = argExpr; // Make sure we store the converted expression.
     SourceLocation l = argExpr->getLocStart();
 
-    // decode the result (notice that AST's are still created for extensions).
+    // Decode the result (notice that AST's are still created for extensions).
+    const char *Kind = "sending";
     switch (result) {
     case Compatible:
       break;
     case PointerFromInt:
-      Diag(l, diag::ext_typecheck_sending_pointer_int, 
-           lhsType.getAsString(), rhsType.getAsString(),
-           argExpr->getSourceRange());
-      break;
     case IntFromPointer:
-      Diag(l, diag::ext_typecheck_sending_pointer_int, 
-           lhsType.getAsString(), rhsType.getAsString(),
+      Diag(l, diag::ext_typecheck_convert_pointer_int, 
+           lhsType.getAsString(), rhsType.getAsString(), Kind,
            argExpr->getSourceRange());
       break;
     case IncompatiblePointer:
-      Diag(l, diag::ext_typecheck_sending_incompatible_pointer, 
-           rhsType.getAsString(), lhsType.getAsString(),
+      Diag(l, diag::ext_typecheck_convert_incompatible_pointer, 
+           lhsType.getAsString(), rhsType.getAsString(), Kind,
            argExpr->getSourceRange());
       break;
     case FunctionVoidPointer:
-      Diag(l, diag::ext_typecheck_sending_pointer_void_func, 
-           rhsType.getAsString(), lhsType.getAsString(),
+      Diag(l, diag::ext_typecheck_convert_pointer_void_func, 
+           lhsType.getAsString(), rhsType.getAsString(), Kind,
            argExpr->getSourceRange());
       break;
     case CompatiblePointerDiscardsQualifiers:
-      Diag(l, diag::ext_typecheck_sending_discards_qualifiers,
-           rhsType.getAsString(), lhsType.getAsString(),
+      Diag(l, diag::ext_typecheck_convert_discards_qualifiers,
+           lhsType.getAsString(), rhsType.getAsString(), Kind,
            argExpr->getSourceRange());
       break;
     case Incompatible:
-      Diag(l, diag::err_typecheck_sending_incompatible,
-           rhsType.getAsString(), lhsType.getAsString(),
+      Diag(l, diag::err_typecheck_convert_incompatible,
+           lhsType.getAsString(), rhsType.getAsString(), Kind,
            argExpr->getSourceRange());
       anyIncompatibleArgs = true;
     }

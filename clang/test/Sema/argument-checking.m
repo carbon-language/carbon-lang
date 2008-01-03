@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang -fsyntax-only -verify -pedantic %s
 
 struct S { int a; };
 
@@ -19,7 +19,7 @@ void test() {
   charStarFunc(1); // expected-warning {{incompatible types passing 'int' to function expecting 'char *'}}
   charFunc("abc"); // expected-warning {{incompatible types passing 'char *' to function expecting 'char'}}
 
-  [obj charStarMeth:1]; // expected-warning {{incompatible types passing 'int' to method expecting 'char *'}}
-  [obj structMeth:1]; // expected-error {{incompatible types passing 'int' to method expecting 'struct S'}}
-  [obj structMeth:sInst :1]; // expected-error {{incompatible types passing 'int' to method expecting 'struct S'}}
+  [obj charStarMeth:1]; // expected-warning {{incompatible pointer/int conversion sending 'int'}}
+  [obj structMeth:1]; // expected-error {{incompatible type sending 'int'}}
+  [obj structMeth:sInst :1]; // expected-error {{incompatible type sending 'int'}}
 }
