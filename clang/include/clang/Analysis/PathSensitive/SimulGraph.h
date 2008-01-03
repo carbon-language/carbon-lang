@@ -58,8 +58,10 @@ public:
   
   /// getVertex - Retrieve the vertex associated with a (Location,State) pair,
   ///  where the 'Location' is a ProgramEdge in the CFG.  If no vertex for
-  ///  this pair exists, it is created.
-  VertexTy* getVertex(const ProgramEdge& L, typename VertexTy::StateTy State) {
+  ///  this pair exists, it is created.  The bool returned in the pair
+  ///  is true if the vertex was freshly created.
+  std::pair<VertexTy*,bool> getVertex(const ProgramEdge& L,
+                                      typename VertexTy::StateTy State) {
     
     // Retrieve the vertex set associated with Loc.
     VertexSet& VSet = VerticesOfEdge[L];
@@ -75,7 +77,7 @@ public:
     VertexTy::StateTy::Profile(profile, State);
     
     if ((V = VSet.FindNodeOrInsertPos(profile,InsertPos)))
-      return V;
+      return std::make_pair(V,false);
       
     // No cache hit.  Allocate a new vertex.
     V = (VertexTy*) Allocator.Allocate<VertexTy>();
@@ -84,7 +86,7 @@ public:
     // Insert the vertex into the vertex set and return it.
     VSet.InsertNode(V,InsertPos);
     
-    return V;
+    return std::make_pair(V,true);
   }
   
   /// addRoot - Add a vertex to the set of roots.
