@@ -2308,7 +2308,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   Expr *RExpr = static_cast<Expr *>(receiver);
   QualType receiverType = RExpr->getType();
   QualType returnType;
-  ObjcMethodDecl *Method;
+  ObjcMethodDecl *Method = 0;
   
   if (receiverType == Context.getObjcIdType() ||
       receiverType == Context.getObjcClassType()) {
@@ -2336,7 +2336,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
           static_cast<PointerType*>(receiverType.getTypePtr());
         receiverType = pointerType->getPointeeType();
       }
-    ObjcInterfaceDecl* ClassDecl;
+    ObjcInterfaceDecl* ClassDecl = 0;
     if (ObjcQualifiedInterfaceType *QIT = 
         dyn_cast<ObjcQualifiedInterfaceType>(receiverType)) {
       ClassDecl = QIT->getDecl();
@@ -2379,9 +2379,10 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     }
     if (!Method) {
       // If we have an implementation in scope, check "private" methods.
-      if (ObjcImplementationDecl *ImpDecl = 
+      if (ClassDecl)
+        if (ObjcImplementationDecl *ImpDecl = 
             ObjcImplementations[ClassDecl->getIdentifier()])
-        Method = ImpDecl->getInstanceMethod(Sel);
+          Method = ImpDecl->getInstanceMethod(Sel);
 	  // If we still haven't found a method, look in the global pool. This
 	  // behavior isn't very desirable, however we need it for GCC compatibility.
 	  if (!Method)
