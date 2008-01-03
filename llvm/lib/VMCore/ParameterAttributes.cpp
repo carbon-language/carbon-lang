@@ -13,7 +13,6 @@
 
 #include "llvm/ParameterAttributes.h"
 #include "llvm/Support/ManagedStatic.h"
-#include <cassert>
 
 using namespace llvm;
 

@@ -19,6 +19,7 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/FoldingSet.h"
+#include <cassert>
 
 namespace llvm {
 namespace ParamAttr {
