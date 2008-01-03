@@ -64,7 +64,7 @@ class MachineRelocation {
 
   unsigned TargetReloType : 6; // The target relocation ID.
   AddressType AddrType    : 4; // The field of Target to use.
-  bool DoesntNeedFnStub   : 1; // True if we don't need a fn stub.
+  bool NeedStub           : 1; // True if this relocation requires a stub.
   bool GOTRelative        : 1; // Should this relocation be relative to the GOT?
 
 public:
@@ -79,7 +79,7 @@ public:
   ///
   static MachineRelocation getGV(intptr_t offset, unsigned RelocationType, 
                                  GlobalValue *GV, intptr_t cst = 0,
-                                 bool DoesntNeedFunctionStub = 0,
+                                 bool NeedStub = 0,
                                  bool GOTrelative = 0) {
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     MachineRelocation Result;
@@ -87,7 +87,7 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isGV;
-    Result.DoesntNeedFnStub = DoesntNeedFunctionStub;
+    Result.NeedStub = NeedStub;
     Result.GOTRelative = GOTrelative;
     Result.Target.GV = GV;
     return Result;
@@ -103,7 +103,7 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isBB;
-    Result.DoesntNeedFnStub = false;
+    Result.NeedStub = false;
     Result.GOTRelative = false;
     Result.Target.MBB = MBB;
     return Result;
@@ -121,7 +121,7 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isExtSym;
-    Result.DoesntNeedFnStub = false;
+    Result.NeedStub = false;
     Result.GOTRelative = GOTrelative;
     Result.Target.ExtSym = ES;
     return Result;
@@ -138,7 +138,7 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isConstPool;
-    Result.DoesntNeedFnStub = false;
+    Result.NeedStub = false;
     Result.GOTRelative = false;
     Result.Target.Index = CPI;
     return Result;
@@ -155,7 +155,7 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isJumpTable;
-    Result.DoesntNeedFnStub = false;
+    Result.NeedStub = false;
     Result.GOTRelative = false;
     Result.Target.Index = JTI;
     return Result;
@@ -223,13 +223,12 @@ public:
     return GOTRelative;
   }
 
-  /// doesntNeedFunctionStub - This function returns true if the JIT for this
-  /// target is capable of directly handling the relocated instruction without
-  /// using a stub function.  It is always conservatively correct for this flag
-  /// to be false, but targets can improve their compilation callback functions
-  /// to handle more general cases if they want improved performance.
-  bool doesntNeedFunctionStub() const {
-    return DoesntNeedFnStub;
+  /// doesntNeedStub - This function returns true if the JIT for this target
+  /// target is capable of directly handling the relocated GlobalValue reference
+  /// without using either a stub function or issuing an extra load to get the
+  /// GV address.
+  bool doesntNeedStub() const {
+    return !NeedStub;
   }
 
   /// getGlobalValue - If this is a global value reference, return the

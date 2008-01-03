@@ -196,7 +196,8 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     if (MO.isGlobalAddress())
       MCE.addRelocation(MachineRelocation::getGV(MCE.getCurrentPCOffset(),
                                                  Reloc, MO.getGlobal(), Offset,
-                                                 false, useGOT));
+                                                 isa<Function>(MO.getGlobal()),
+                                                 useGOT));
     else if (MO.isExternalSymbol())
       MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                                      Reloc, MO.getSymbolName(),

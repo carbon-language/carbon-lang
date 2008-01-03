@@ -444,12 +444,12 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
         ResultPtr = TheJIT->getPointerToNamedFunction(MR.getString());
 
         // If the target REALLY wants a stub for this function, emit it now.
-        if (!MR.doesntNeedFunctionStub())
+        if (!MR.doesntNeedStub())
           ResultPtr = Resolver.getExternalFunctionStub(ResultPtr);
       } else if (MR.isGlobalValue()) {
         ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
                                        BufferBegin+MR.getMachineCodeOffset(),
-                                       MR.doesntNeedFunctionStub());
+                                       MR.doesntNeedStub());
       } else if (MR.isBasicBlock()) {
         ResultPtr = (void*)getMachineBasicBlockAddress(MR.getBasicBlock());
       } else if (MR.isConstantPoolIndex()) {
