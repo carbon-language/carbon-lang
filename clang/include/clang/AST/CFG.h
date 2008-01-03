@@ -88,8 +88,8 @@ public:
   typedef std::reverse_iterator<const_iterator>        const_reverse_iterator;
   typedef std::reverse_iterator<iterator>                    reverse_iterator;
   
-  Stmt*                        front()             { return Stmts.front();   }
-  Stmt*                        back()              { return Stmts.back();    }
+  Stmt*                        front()       const { return Stmts.front();   }
+  Stmt*                        back()        const { return Stmts.back();    }
   
   iterator                     begin()             { return Stmts.begin();   }
   iterator                     end()               { return Stmts.end();     }
