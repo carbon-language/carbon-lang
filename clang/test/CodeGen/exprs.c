@@ -6,3 +6,11 @@ int zxcv(void);
 int x=sizeof(zxcv);
 int y=__alignof__(zxcv);
 
+
+void *test(int *i) {
+ short a = 1;
+ i += a;
+ i + a;
+ a + i;
+}
+

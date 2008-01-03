@@ -67,6 +67,7 @@ public:
   llvm::Module &getModule() const { return TheModule; }
   CodeGenTypes &getTypes() { return Types; }
   Diagnostic &getDiags() const { return Diags; }
+  const llvm::TargetData &getTargetData() const { return TheTargetData; }
   
   llvm::Constant *GetAddrOfFunctionDecl(const FunctionDecl *D,
                                         bool isDefinition);

@@ -713,10 +713,30 @@ Value *ScalarExprEmitter::EmitAdd(const BinOpInfo &Ops) {
     return Builder.CreateAdd(Ops.LHS, Ops.RHS, "add");
   
   // FIXME: What about a pointer to a VLA?
-  if (isa<llvm::PointerType>(Ops.LHS->getType())) // pointer + int
-    return Builder.CreateGEP(Ops.LHS, Ops.RHS, "add.ptr");
-  // int + pointer
-  return Builder.CreateGEP(Ops.RHS, Ops.LHS, "add.ptr");
+  Value *Ptr, *Idx;
+  Expr *IdxExp;
+  if (isa<llvm::PointerType>(Ops.LHS->getType())) {  // pointer + int
+    Ptr = Ops.LHS;
+    Idx = Ops.RHS;
+    IdxExp = Ops.E->getRHS();
+  } else {                                           // int + pointer
+    Ptr = Ops.RHS;
+    Idx = Ops.LHS;
+    IdxExp = Ops.E->getLHS();
+  }
+
+  unsigned Width = cast<llvm::IntegerType>(Idx->getType())->getBitWidth();
+  if (Width < CGF.LLVMPointerWidth) {
+    // Zero or sign extend the pointer value based on whether the index is
+    // signed or not.
+    const llvm::Type *IdxType = llvm::IntegerType::get(CGF.LLVMPointerWidth);
+    if (IdxExp->getType().getCanonicalType()->isSignedIntegerType())
+      Idx = Builder.CreateSExt(Idx, IdxType, "idx.ext");
+    else
+      Idx = Builder.CreateZExt(Idx, IdxType, "idx.ext");
+  }
+  
+  return Builder.CreateGEP(Ptr, Idx, "add.ptr");
 }
 
 Value *ScalarExprEmitter::EmitSub(const BinOpInfo &Ops) {
