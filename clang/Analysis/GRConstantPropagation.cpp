@@ -177,7 +177,7 @@ private:
   void VisitBlkStmt(const BlkStmtEdge& E, VertexTy* PredV);
   void VisitStmtBlk(const StmtBlkEdge& E, VertexTy* PredV);
   
-  void ProcessEOP(VertexTy* PredV);
+  void ProcessEOP(CFGBlock* Blk, VertexTy* PredV);
   void ProcessStmt(Stmt* S, VertexTy* PredV);
   void ProcessTerminator(Stmt* Terminator ,VertexTy* PredV);
 
@@ -264,7 +264,16 @@ bool GRCP::ExecuteWorkList(unsigned Steps) {
 
 void GRCP::VisitBlkBlk(const BlkBlkEdge& E, GRCP::VertexTy* PredV) {
   
-  const CFGBlock* Blk = E.Dst();
+  CFGBlock* Blk = E.Dst();
+  
+  // Check if we are entering the EXIT block.
+  if (Blk == &cfg.getExit()) {
+    assert (cfg.getExit().size() == 0 && "EXIT block cannot contain Stmts.");
+    // Process the End-Of-Path.
+    ProcessEOP(Blk, PredV);
+    return;
+  }
+  
   
   // FIXME: we will dispatch to a function that manipulates the state
   //  at the entrance to a block.
@@ -282,16 +291,7 @@ void GRCP::VisitBlkBlk(const BlkBlkEdge& E, GRCP::VertexTy* PredV) {
 }
 
 void GRCP::VisitBlkStmt(const BlkStmtEdge& E, GRCP::VertexTy* PredV) {
-
-  // Check if we are entering the EXIT block.
-  if (E.Src() == &cfg.getExit()) {
-    assert (cfg.getExit().size() == 0 && "EXIT block cannot contain Stmts.");
-    // Process the End-Of-Path.
-    ProcessEOP(PredV);
-    return;
-  }
-
-  // Normal block.  Process as usual.  
+  
   if (Stmt* S = E.Dst())
     ProcessStmt(S,PredV);
   else {
@@ -312,8 +312,11 @@ void GRCP::VisitStmtBlk(const StmtBlkEdge& E, GRCP::VertexTy* PredV) {
   }
 }
 
-void GRCP::ProcessEOP(GRCP::VertexTy* PredV) {
-  assert(false && "Not implemented.");
+void GRCP::ProcessEOP(CFGBlock* Blk, GRCP::VertexTy* PredV) {
+  // FIXME: Perform dispatch to adjust state.
+  VertexTy* V = Graph.getVertex(BlkStmtEdge(Blk,NULL), PredV->getState()).first;  
+  V->addPredecessor(PredV);
+  Graph.addEndOfPath(V);  
 }
 
 void GRCP::ProcessStmt(Stmt* S, GRCP::VertexTy* PredV) {
