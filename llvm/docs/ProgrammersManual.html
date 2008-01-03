@@ -103,6 +103,8 @@ complex example</a> </li>
 the same way</a> </li>
           <li><a href="#iterate_chains">Iterating over def-use &amp;
 use-def chains</a> </li>
+          <li><a href="#iterate_preds">Iterating over predecessors &amp;
+successors of blocks</a></li>
         </ul>
       </li>
       <li><a href="#simplechanges">Making simple changes</a>
@@ -1536,7 +1538,7 @@ the last line of the last example,</p>
 
 <div class="doc_code">
 <pre>
-Instruction* pinst = &amp;*i;
+Instruction *pinst = &amp;*i;
 </pre>
 </div>
 
@@ -1544,7 +1546,7 @@ Instruction* pinst = &amp;*i;
 
 <div class="doc_code">
 <pre>
-Instruction* pinst = i;
+Instruction *pinst = i;
 </pre>
 </div>
 
@@ -1612,8 +1614,7 @@ class OurFunctionPass : public FunctionPass {
  href="#CallInst">CallInst</a>&gt;(&amp;*i)) {
             // <i>We know we've encountered a call instruction, so we</i>
             // <i>need to determine if it's a call to the</i>
-            // <i>function pointed to by m_func or not</i>
-
+            // <i>function pointed to by m_func or not.</i>
             if (callInst-&gt;getCalledFunction() == targetFunc)
               ++callCounter;
           }
@@ -1622,7 +1623,7 @@ class OurFunctionPass : public FunctionPass {
     }
 
   private:
-    unsigned  callCounter;
+    unsigned callCounter;
 };
 </pre>
 </div>
@@ -1674,7 +1675,7 @@ of <tt>F</tt>:</p>
 
 <div class="doc_code">
 <pre>
-Function* F = ...;
+Function *F = ...;
 
 for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i)
   if (Instruction *Inst = dyn_cast&lt;Instruction&gt;(*i)) {
@@ -1694,10 +1695,10 @@ the particular <tt>Instruction</tt>):</p>
 
 <div class="doc_code">
 <pre>
-Instruction* pi = ...;
+Instruction *pi = ...;
 
 for (User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) {
-  Value* v = *i;
+  Value *v = *i;
   // <i>...</i>
 }
 </pre>
@@ -1709,6 +1710,36 @@ for (User::op_iterator i = pi-&gt;op_begin(), e = pi-&gt;op_end(); i != e; ++i) 
 -->
 
 </div>
+
+<!--_______________________________________________________________________-->
+<div class="doc_subsubsection">
+  <a name="iterate_preds">Iterating over predecessors &amp;
+successors of blocks</a>
+</div>
+
+<div class="doc_text">
+
+<p>Iterating over the predecessors and successors of a block is quite easy
+with the routines defined in <tt>"llvm/Support/CFG.h"</tt>.  Just use code like
+this to iterate over all predecessors of BB:</p>
+
+<div class="doc_code">
+<pre>
+#include "llvm/Support/CFG.h"
+BasicBlock *BB = ...;
+
+for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+  BasicBlock *Pred = *PI;
+  // <i>...</i>
+}
+</pre>
+</div>
+
+<p>Similarly, to iterate over successors use
+succ_iterator/succ_begin/succ_end.</p>
+
+</div>
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
