@@ -453,6 +453,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\TargetInstrInfoImpl.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\TwoAddressInstructionPass.cpp"
 				>
 			</File>
@@ -647,7 +651,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\CodeGen\MachineOperand.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\CodeGen\MachinePassRegistry.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\MachineRegisterInfo.h"
 				>
 			</File>
 			<File
@@ -708,10 +720,6 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\CodeGen\SimpleRegisterCoalescing.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\CodeGen\SSARegMap.h"
 				>
 			</File>
 			<File

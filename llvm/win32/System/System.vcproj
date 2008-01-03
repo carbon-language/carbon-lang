@@ -372,6 +372,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\System\Host.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\System\IncludeFile.h"
 				>
 			</File>

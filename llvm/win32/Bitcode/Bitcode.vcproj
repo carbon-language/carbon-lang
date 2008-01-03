@@ -316,6 +316,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\Bitcode\Reader\BitReader.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\Bitcode\Reader\Deserialize.cpp"
 					>
 				</File>

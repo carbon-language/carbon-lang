@@ -308,6 +308,10 @@
 				RelativePath="..\..\lib\ExecutionEngine\ExecutionEngine.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\..\lib\ExecutionEngine\ExecutionEngineBindings.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -335,11 +339,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\include\llvm\ExecutionEngine\JIT.h"
+				RelativePath="..\..\lib\ExecutionEngine\Jit\JIT.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\lib\ExecutionEngine\Jit\JIT.h"
+				RelativePath="..\..\include\llvm\ExecutionEngine\JIT.h"
 				>
 			</File>
 			<File
