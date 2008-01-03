@@ -66,8 +66,8 @@ public:
   StmtBlkEdge(const Stmt* S,const CFGBlock* B)
   : ProgramEdge(S,B,StmtBlk) {}
   
-  const Stmt*     Src() const { return reinterpret_cast<Stmt*>(RawSrc()); }
-  const CFGBlock* Dst() const { return reinterpret_cast<CFGBlock*>(RawDst()); }  
+  Stmt*     Src() const { return reinterpret_cast<Stmt*>(RawSrc()); }
+  CFGBlock* Dst() const { return reinterpret_cast<CFGBlock*>(RawDst()); }  
   
   static bool classof(const ProgramEdge* E) { return E->getKind() == StmtBlk; }
 };
@@ -77,8 +77,8 @@ public:
   BlkStmtEdge(const CFGBlock* B, const Stmt* S)
   : ProgramEdge(B,S,BlkStmt) {}
   
-  const CFGBlock* Src() const { return reinterpret_cast<CFGBlock*>(RawSrc()); }  
-  const Stmt*     Dst() const { return reinterpret_cast<Stmt*>(RawDst()); }
+  CFGBlock* Src() const { return reinterpret_cast<CFGBlock*>(RawSrc()); }  
+  Stmt*     Dst() const { return reinterpret_cast<Stmt*>(RawDst()); }
 
   static bool classof(const ProgramEdge* E) { return E->getKind() == StmtBlk; }
 };
@@ -88,8 +88,8 @@ public:
   StmtStmtEdge(const Stmt* S1, const Stmt* S2)
   : ProgramEdge(S1,S2,StmtStmt) {}
   
-  const Stmt*     Src() const { return reinterpret_cast<Stmt*>(RawSrc()); }  
-  const Stmt*     Dst() const { return reinterpret_cast<Stmt*>(RawDst()); }
+  Stmt*     Src() const { return reinterpret_cast<Stmt*>(RawSrc()); }  
+  Stmt*     Dst() const { return reinterpret_cast<Stmt*>(RawDst()); }
   
   static bool classof(const ProgramEdge* E) { return E->getKind() == StmtStmt; }
 };
@@ -100,8 +100,8 @@ public:
   BlkBlkEdge(const CFGBlock* B1, const CFGBlock* B2)
   : ProgramEdge(B1,B2,BlkBlk) {}
   
-  const CFGBlock* Src() const { return reinterpret_cast<CFGBlock*>(RawSrc()); }  
-  const CFGBlock* Dst() const { return reinterpret_cast<CFGBlock*>(RawDst()); }
+  CFGBlock* Src() const { return reinterpret_cast<CFGBlock*>(RawSrc()); }  
+  CFGBlock* Dst() const { return reinterpret_cast<CFGBlock*>(RawDst()); }
   
   static bool classof(const ProgramEdge* E) { return E->getKind() == BlkBlk; }
 };
