@@ -2254,7 +2254,7 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
            argExpr->getSourceRange());
       break;
     case CompatiblePointerDiscardsQualifiers:
-      Diag(l, diag::ext_typecheck_passing_discards_qualifiers,
+      Diag(l, diag::ext_typecheck_sending_discards_qualifiers,
            rhsType.getAsString(), lhsType.getAsString(),
            argExpr->getSourceRange());
       break;

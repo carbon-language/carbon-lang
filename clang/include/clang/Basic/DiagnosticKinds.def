@@ -759,6 +759,20 @@ DIAG(ext_typecheck_comparison_of_distinct_pointers, WARNING,
      "comparison of distinct pointer types ('%0' and '%1')")
 DIAG(err_typecheck_assign_const, ERROR,
      "read-only variable is not assignable")
+     
+     
+DIAG(err_typecheck_return_incompatible, ERROR,
+     "incompatible type returning '%1', expected '%0'")
+DIAG(ext_typecheck_return_pointer_int, EXTENSION,
+     "incompatible type returning '%1', expected '%0'")
+DIAG(ext_typecheck_return_pointer_void_func, EXTENSION,
+     "returning '%1' to from function expecting '%0' converts between void*"
+     " and function pointer")
+DIAG(ext_typecheck_return_incompatible_pointer, EXTENSION,
+     "incompatible pointer types returning '%1', expected '%0'")
+DIAG(ext_typecheck_return_discards_qualifiers, EXTENSION,
+     "returning '%1' from function expecting '%0' discards qualifiers")
+     
 DIAG(err_typecheck_assign_incompatible, ERROR,
      "incompatible types assigning '%1' to '%0'")
 DIAG(ext_typecheck_assign_pointer_int, WARNING,
@@ -769,6 +783,32 @@ DIAG(ext_typecheck_assign_discards_qualifiers, WARNING,
      "assigning '%1' to '%0' discards qualifiers")
 DIAG(ext_typecheck_assign_pointer_void_func, EXTENSION,
      "assigning '%1' to '%0' converts between void* and function pointer")
+     
+DIAG(err_typecheck_passing_incompatible, ERROR,
+     "incompatible types passing '%0' to function expecting '%1'")
+DIAG(ext_typecheck_passing_incompatible_pointer, WARNING,
+     "incompatible pointer types passing '%0' to function expecting '%1'")
+DIAG(ext_typecheck_passing_pointer_int, WARNING,
+     "incompatible types passing '%1' to function expecting '%0'")
+DIAG(ext_typecheck_passing_pointer_void_func, EXTENSION,
+     "passing '%1' to function expecting '%0' converts between void*"
+     " and function pointer")
+DIAG(ext_typecheck_passing_discards_qualifiers, WARNING,
+     "passing '%0' to '%1' discards qualifiers")
+     
+DIAG(err_typecheck_sending_incompatible, ERROR,
+     "incompatible types passing '%0' to method expecting '%1'")
+DIAG(ext_typecheck_sending_incompatible_pointer, WARNING,
+     "incompatible pointer types passing '%0' to method expecting '%1'")
+DIAG(ext_typecheck_sending_pointer_int, WARNING,
+     "incompatible types passing '%1' to method expecting '%0'")
+DIAG(ext_typecheck_sending_pointer_void_func, EXTENSION,
+     "sending '%1' to method expecting '%0' converts between void*"
+     " and function pointer")
+DIAG(ext_typecheck_sending_discards_qualifiers, WARNING,
+     "sending '%0' to '%1' discards qualifiers")
+
+     
 DIAG(err_typecheck_array_not_modifiable_lvalue, ERROR,
      "array type '%0' is not assignable")
 DIAG(err_typecheck_non_object_not_modifiable_lvalue, ERROR,
@@ -787,26 +827,6 @@ DIAG(err_typecheck_call_too_many_args, ERROR,
      "too many arguments to function")
 DIAG(err_typecheck_call_invalid_ordered_compare, ERROR,
      "ordered compare requires two args of floating point type ('%0' and '%1')")
-DIAG(err_typecheck_passing_incompatible, ERROR,
-     "incompatible types passing '%0' to function expecting '%1'")
-DIAG(ext_typecheck_passing_incompatible_pointer, WARNING,
-     "incompatible pointer types passing '%0' to function expecting '%1'")
-DIAG(ext_typecheck_passing_pointer_int, WARNING,
-     "incompatible types passing '%1' to function expecting '%0'")
-DIAG(ext_typecheck_passing_pointer_void_func, EXTENSION,
-     "passing '%1' to function expecting '%0' converts between void*"
-     " and function pointer")
-DIAG(ext_typecheck_passing_discards_qualifiers, WARNING,
-     "passing '%0' to '%1' discards qualifiers")
-DIAG(err_typecheck_sending_incompatible, ERROR,
-     "incompatible types passing '%0' to method expecting '%1'")
-DIAG(ext_typecheck_sending_incompatible_pointer, WARNING,
-     "incompatible pointer types passing '%0' to method expecting '%1'")
-DIAG(ext_typecheck_sending_pointer_int, WARNING,
-     "incompatible types passing '%1' to method expecting '%0'")
-DIAG(ext_typecheck_sending_pointer_void_func, EXTENSION,
-     "sending '%1' to method expecting '%0' converts between void*"
-     " and function pointer")
 DIAG(err_typecheck_cond_expect_scalar, ERROR,
      "used type '%0' where arithmetic or pointer type is required")
 DIAG(err_typecheck_expect_scalar_operand, ERROR,
@@ -913,17 +933,6 @@ DIAG(err_duplicate_case_prev, ERROR,
      "previous case value occurrence defined here")
 DIAG(warn_case_empty_range, WARNING,
      "empty case range specified")
-DIAG(err_typecheck_return_incompatible, ERROR,
-     "incompatible type returning '%1', expected '%0'")
-DIAG(ext_typecheck_return_pointer_int, EXTENSION,
-     "incompatible type returning '%1', expected '%0'")
-DIAG(ext_typecheck_return_pointer_void_func, EXTENSION,
-     "returning '%1' to from function expecting '%0' converts between void*"
-     " and function pointer")
-DIAG(ext_typecheck_return_incompatible_pointer, EXTENSION,
-     "incompatible pointer type returning '%1', expected '%0'")
-DIAG(ext_typecheck_return_discards_qualifiers, EXTENSION,
-     "returning '%1' from function expecting '%0' discards qualifiers")
 DIAG(err_typecheck_statement_requires_scalar, ERROR,
      "statement requires expression of scalar type ('%0' invalid)")
 DIAG(err_typecheck_statement_requires_integer, ERROR,
