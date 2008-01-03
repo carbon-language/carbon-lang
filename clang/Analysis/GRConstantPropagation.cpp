@@ -100,7 +100,7 @@ template <> struct simplify_type<ConstV> {
 namespace {
   
   
-class GRCP {
+class GREngine {
   
   //==---------------------------------==//
   //    Type definitions.
@@ -185,15 +185,15 @@ private:
   //    Disable copying.
   //==---------------------------------==//  
   
-  GRCP(const GRCP&); // Do not implement.
-  GRCP& operator=(const GRCP&);
+  GREngine(const GREngine&); // Do not implement.
+  GREngine& operator=(const GREngine&);
 
   //==--------------------------------==//
   //    Public API.
   //==--------------------------------==//    
   
 public:
-  GRCP(CFG& c);  
+  GREngine(CFG& c);  
   
   /// getGraph - Returns the simulation graph.
   const GraphTy& getGraph() const { return Graph; }
@@ -209,7 +209,7 @@ public:
 //    Public API.
 //==--------------------------------------------------------==//
 
-GRCP::GRCP(CFG& c) : cfg(c) {
+GREngine::GREngine(CFG& c) : cfg(c) {
   // Get the entry block.  Make sure that it has 1 (and only 1) successor.
   CFGBlock* Entry = &c.getEntry();
   
@@ -231,7 +231,7 @@ GRCP::GRCP(CFG& c) : cfg(c) {
 }
 
 
-bool GRCP::ExecuteWorkList(unsigned Steps) {
+bool GREngine::ExecuteWorkList(unsigned Steps) {
   while (Steps && WorkList.hasWork()) {
     --Steps;
     VertexTy* V = WorkList.Dequeue();
@@ -262,7 +262,7 @@ bool GRCP::ExecuteWorkList(unsigned Steps) {
 //    Edge processing.
 //==--------------------------------------------------------==//
 
-void GRCP::VisitBlkBlk(const BlkBlkEdge& E, GRCP::VertexTy* PredV) {
+void GREngine::VisitBlkBlk(const BlkBlkEdge& E, GREngine::VertexTy* PredV) {
   
   CFGBlock* Blk = E.Dst();
   
@@ -290,7 +290,7 @@ void GRCP::VisitBlkBlk(const BlkBlkEdge& E, GRCP::VertexTy* PredV) {
   }
 }
 
-void GRCP::VisitBlkStmt(const BlkStmtEdge& E, GRCP::VertexTy* PredV) {
+void GREngine::VisitBlkStmt(const BlkStmtEdge& E, GREngine::VertexTy* PredV) {
   
   if (Stmt* S = E.Dst())
     ProcessStmt(S,PredV);
@@ -300,7 +300,7 @@ void GRCP::VisitBlkStmt(const BlkStmtEdge& E, GRCP::VertexTy* PredV) {
   }
 }
   
-void GRCP::VisitStmtBlk(const StmtBlkEdge& E, GRCP::VertexTy* PredV) {
+void GREngine::VisitStmtBlk(const StmtBlkEdge& E, GREngine::VertexTy* PredV) {
   CFGBlock* Blk = E.Dst();
   
   if (Stmt* Terminator = Blk->getTerminator())
@@ -312,17 +312,17 @@ void GRCP::VisitStmtBlk(const StmtBlkEdge& E, GRCP::VertexTy* PredV) {
   }
 }
 
-void GRCP::ProcessEOP(CFGBlock* Blk, GRCP::VertexTy* PredV) {
+void GREngine::ProcessEOP(CFGBlock* Blk, GREngine::VertexTy* PredV) {
   // FIXME: Perform dispatch to adjust state.
   VertexTy* V = Graph.getVertex(BlkStmtEdge(Blk,NULL), PredV->getState()).first;  
   V->addPredecessor(PredV);
   Graph.addEndOfPath(V);  
 }
 
-void GRCP::ProcessStmt(Stmt* S, GRCP::VertexTy* PredV) {
+void GREngine::ProcessStmt(Stmt* S, GREngine::VertexTy* PredV) {
   assert(false && "Not implemented.");
 }
 
-void GRCP::ProcessTerminator(Stmt* Terminator,GRCP::VertexTy* PredV) {
-  assert(false && "Not implemented.");  
+void GREngine::ProcessTerminator(Stmt* Terminator,GREngine::VertexTy* PredV) {
+  assert(false && "Not implemented.");
 }
