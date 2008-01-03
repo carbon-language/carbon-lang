@@ -325,6 +325,11 @@ public:
                                   SourceLocation LParenLoc, 
                                   StmtTy *First, ExprTy *Second, ExprTy *Third,
                                   SourceLocation RParenLoc, StmtTy *Body);
+  virtual StmtResult ActOnObjcForCollectionStmt(SourceLocation ForColLoc, 
+                                  SourceLocation LParenLoc, 
+                                  StmtTy *First, ExprTy *Second,
+                                  SourceLocation RParenLoc, StmtTy *Body);
+  
   virtual StmtResult ActOnGotoStmt(SourceLocation GotoLoc,
                                    SourceLocation LabelLoc,
                                    IdentifierInfo *LabelII);

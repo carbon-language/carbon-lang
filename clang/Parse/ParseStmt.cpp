@@ -721,6 +721,8 @@ Parser::StmtResult Parser::ParseDoStatement() {
 ///       for-statement: [C99 6.8.5.3]
 ///         'for' '(' expr[opt] ';' expr[opt] ';' expr[opt] ')' statement
 ///         'for' '(' declaration expr[opt] ';' expr[opt] ')' statement
+/// [OBJC2] 'for' '(' declaration 'in' expr ')' statement
+/// [OBJC2] 'for' '(' expr 'in' expr ')' statement
 Parser::StmtResult Parser::ParseForStatement() {
   assert(Tok.is(tok::kw_for) && "Not a for stmt!");
   SourceLocation ForLoc = ConsumeToken();  // eat the 'for'.
@@ -744,6 +746,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   StmtTy *FirstPart = 0;
   ExprTy *SecondPart = 0;
   StmtTy *ThirdPart = 0;
+  bool foreach = false;
   
   // Parse the first part of the for specifier.
   if (Tok.is(tok::semi)) {  // for (;
@@ -756,6 +759,12 @@ Parser::StmtResult Parser::ParseForStatement() {
     DeclTy *aBlockVarDecl = ParseDeclaration(Declarator::ForContext);
     StmtResult stmtResult = Actions.ActOnDeclStmt(aBlockVarDecl);
     FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
+    if ((foreach = isObjCForCollectionInKW())) {
+      ConsumeToken(); // consume 'in'
+      Value = ParseExpression();
+      if (!Value.isInvalid)
+        SecondPart = Value.Val;
+    }
   } else {
     Value = ParseExpression();
 
@@ -768,43 +777,50 @@ Parser::StmtResult Parser::ParseForStatement() {
       
     if (Tok.is(tok::semi)) {
       ConsumeToken();
-    } else {
+    }
+    else if ((foreach = isObjCForCollectionInKW())) {
+      ConsumeToken(); // consume 'in'
+      Value = ParseExpression();
+      if (!Value.isInvalid)
+        SecondPart = Value.Val;
+    }
+    else {
       if (!Value.isInvalid) Diag(Tok, diag::err_expected_semi_for);
       SkipUntil(tok::semi);
     }
   }
+  if (!foreach) {
+    // Parse the second part of the for specifier.
+    if (Tok.is(tok::semi)) {  // for (...;;
+      // no second part.
+      Value = ExprResult();
+    } else {
+      Value = ParseExpression();
+      if (!Value.isInvalid)
+        SecondPart = Value.Val;
+    }
   
-  // Parse the second part of the for specifier.
-  if (Tok.is(tok::semi)) {  // for (...;;
-    // no second part.
-    Value = ExprResult();
-  } else {
-    Value = ParseExpression();
-    if (!Value.isInvalid)
-      SecondPart = Value.Val;
-  }
+    if (Tok.is(tok::semi)) {
+      ConsumeToken();
+    } else {
+      if (!Value.isInvalid) Diag(Tok, diag::err_expected_semi_for);
+      SkipUntil(tok::semi);
+    }
   
-  if (Tok.is(tok::semi)) {
-    ConsumeToken();
-  } else {
-    if (!Value.isInvalid) Diag(Tok, diag::err_expected_semi_for);
-    SkipUntil(tok::semi);
-  }
-  
-  // Parse the third part of the for specifier.
-  if (Tok.is(tok::r_paren)) {  // for (...;...;)
-    // no third part.
-    Value = ExprResult();
-  } else {
-    Value = ParseExpression();
-    if (!Value.isInvalid) {
-      // Turn the expression into a stmt.
-      StmtResult R = Actions.ActOnExprStmt(Value.Val);
-      if (!R.isInvalid)
-        ThirdPart = R.Val;
+    // Parse the third part of the for specifier.
+    if (Tok.is(tok::r_paren)) {  // for (...;...;)
+      // no third part.
+      Value = ExprResult();
+    } else {
+      Value = ParseExpression();
+      if (!Value.isInvalid) {
+        // Turn the expression into a stmt.
+        StmtResult R = Actions.ActOnExprStmt(Value.Val);
+        if (!R.isInvalid)
+          ThirdPart = R.Val;
+      }
     }
   }
-  
   // Match the ')'.
   SourceLocation RParenLoc = MatchRHSPunctuation(tok::r_paren, LParenLoc);
   
@@ -826,8 +842,12 @@ Parser::StmtResult Parser::ParseForStatement() {
   if (Body.isInvalid)
     return Body;
   
-  return Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart, SecondPart,
-                              ThirdPart, RParenLoc, Body.Val);
+  return !foreach ? Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart, 
+                                         SecondPart, ThirdPart, RParenLoc, 
+                                         Body.Val)
+                  : Actions.ActOnObjcForCollectionStmt(ForLoc, LParenLoc, 
+                                                       FirstPart, SecondPart, 
+                                                       RParenLoc, Body.Val);
 }
 
 /// ParseGotoStatement

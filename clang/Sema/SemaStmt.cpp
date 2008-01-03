@@ -530,6 +530,39 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
   return new ForStmt(First, Second, Third, Body, ForLoc);
 }
 
+Action::StmtResult 
+Sema::ActOnObjcForCollectionStmt(SourceLocation ForColLoc, 
+                                 SourceLocation LParenLoc, 
+                                 StmtTy *first, ExprTy *second,
+                                 SourceLocation RParenLoc, StmtTy *body) {
+  Stmt *First  = static_cast<Stmt*>(first);
+  Expr *Second = static_cast<Expr*>(second);
+  Stmt *Body  = static_cast<Stmt*>(body);
+  
+  if (DeclStmt *DS = dyn_cast_or_null<DeclStmt>(First)) {
+    // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
+    // identifiers for objects having storage class 'auto' or 'register'.
+    for (ScopedDecl *D = DS->getDecl(); D; D = D->getNextDeclarator()) {
+      BlockVarDecl *BVD = dyn_cast<BlockVarDecl>(D);
+      if (BVD && !BVD->hasLocalStorage())
+        BVD = 0;
+      if (BVD == 0)
+        Diag(dyn_cast<ScopedDecl>(D)->getLocation(), 
+             diag::err_non_variable_decl_in_for);
+      // FIXME: mark decl erroneous!
+    }
+  }
+  if (Second) {
+    DefaultFunctionArrayConversion(Second);
+    QualType SecondType = Second->getType();
+#if 0
+    if (!SecondType->isScalarType()) // C99 6.8.5p2
+      return Diag(ForColLoc, diag::err_typecheck_statement_requires_scalar,
+                  SecondType.getAsString(), Second->getSourceRange());
+#endif
+  }
+  return new ObjcForCollectionStmt(First, Second, Body, ForColLoc);
+}
 
 Action::StmtResult 
 Sema::ActOnGotoStmt(SourceLocation GotoLoc, SourceLocation LabelLoc,

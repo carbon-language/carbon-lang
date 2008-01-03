@@ -494,7 +494,10 @@ bool Parser::isObjCPropertyAttribute() {
 ///  objc-for-collection-in: 'in'
 ///
 bool Parser::isObjCForCollectionInKW() {
-  if (Tok.is(tok::identifier)) {
+  // FIXME: May have to do additional look-ahead to only allow for
+  // valid tokens following an 'in'; such as an identifier, unary operators,
+  // '[' etc.
+  if (getLang().ObjC2 && Tok.is(tok::identifier)) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
     return II == ObjCForCollectionInKW;
   }
