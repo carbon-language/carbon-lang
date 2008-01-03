@@ -1385,7 +1385,7 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
       return false;
     
     unsigned numRhsProtocols = 0;
-    ObjcProtocolDecl **rhsProtoList;
+    ObjcProtocolDecl **rhsProtoList = 0;
     if (rhsQI) {
       numRhsProtocols = rhsQI->getNumProtocols();
       rhsProtoList = rhsQI->getReferencedProtocols();
@@ -1436,7 +1436,7 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
       return false;
     
     unsigned numLhsProtocols = 0;
-    ObjcProtocolDecl **lhsProtoList;
+    ObjcProtocolDecl **lhsProtoList = 0;
     if (lhsQI) {
       numLhsProtocols = lhsQI->getNumProtocols();
       lhsProtoList = lhsQI->getReferencedProtocols();
