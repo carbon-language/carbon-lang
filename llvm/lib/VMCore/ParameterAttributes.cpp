@@ -106,9 +106,10 @@ ParamAttrsList::areCompatible(const ParamAttrsList *A, const ParamAttrsList *B){
   return true;
 }
 
-void ParamAttrsList::Profile(FoldingSetNodeID &ID) const {
-  for (unsigned i = 0; i < attrs.size(); ++i)
-    ID.AddInteger(unsigned(attrs[i].attrs) << 16 | unsigned(attrs[i].index));
+void ParamAttrsList::Profile(FoldingSetNodeID &ID,
+                             const ParamAttrsVector &Attrs) {
+  for (unsigned i = 0; i < Attrs.size(); ++i)
+    ID.AddInteger(unsigned(Attrs[i].attrs) << 16 | unsigned(Attrs[i].index));
 }
 
 const ParamAttrsList *
@@ -127,11 +128,10 @@ ParamAttrsList::get(const ParamAttrsVector &attrVec) {
 #endif
 
   // Otherwise, build a key to look up the existing attributes.
-  ParamAttrsList key(attrVec);
   FoldingSetNodeID ID;
-  key.Profile(ID);
+  ParamAttrsList::Profile(ID, attrVec);
   void *InsertPos;
-  ParamAttrsList* PAL = ParamAttrsLists->FindNodeOrInsertPos(ID, InsertPos);
+  ParamAttrsList *PAL = ParamAttrsLists->FindNodeOrInsertPos(ID, InsertPos);
 
   // If we didn't find any existing attributes of the same shape then
   // create a new one and insert it.

@@ -266,7 +266,10 @@ class ParamAttrsList : public FoldingSetNode {
   /// @name Implementation Details
   /// @{
   public:
-    void Profile(FoldingSetNodeID &ID) const;
+    void Profile(FoldingSetNodeID &ID) const {
+      Profile(ID, attrs);
+    }
+    static void Profile(FoldingSetNodeID &ID, const ParamAttrsVector &Attrs);
     void dump() const;
 
   /// @}
