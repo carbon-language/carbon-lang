@@ -50,16 +50,27 @@ static void runAtExitHandlers() {
 #if defined(HAVE_SYS_STAT_H)
 #include <sys/stat.h>
 #endif
-void *FunctionPointers[] = {
-  (void *)(intptr_t) stat,
-  (void *)(intptr_t) fstat,
-  (void *)(intptr_t) lstat,
-  (void *)(intptr_t) stat64,
-  (void *)(intptr_t) fstat64,
-  (void *)(intptr_t) lstat64,
-  (void *)(intptr_t) atexit,
-  (void *)(intptr_t) mknod
+
+/* stat functions are redirecting to __xstat with a version number.
+ * On x86-64 linking with libc_nonshared.a and -Wl,--export-dynamic
+ * doesn't make 'stat' available as an exported symbol, so we have to add it explicitely.*/
+class StatSymbols {
+	public:
+	StatSymbols() {
+		sys::DynamicLibrary::AddSymbol("stat", (void*)(intptr_t)stat);
+		sys::DynamicLibrary::AddSymbol("fstat", (void*)(intptr_t)fstat);
+		sys::DynamicLibrary::AddSymbol("fstatat", (void*)(intptr_t)fstatat);
+		sys::DynamicLibrary::AddSymbol("lstat", (void*)(intptr_t)lstat);
+		sys::DynamicLibrary::AddSymbol("stat64", (void*)(intptr_t)stat64);
+		sys::DynamicLibrary::AddSymbol("fstat64", (void*)(intptr_t)fstat64);
+		sys::DynamicLibrary::AddSymbol("fstatat64", (void*)(intptr_t)fstatat64);
+		sys::DynamicLibrary::AddSymbol("lstat64", (void*)(intptr_t)lstat64);
+		sys::DynamicLibrary::AddSymbol("atexit", (void*)(intptr_t)atexit);
+		sys::DynamicLibrary::AddSymbol("mknod", (void*)(intptr_t)mknod);
+		sys::DynamicLibrary::AddSymbol("mknodat", (void*)(intptr_t)mknodat);
+	}
 };
+static StatSymbols initStatSymbols;
 #endif // __linux__
 
 // jit_exit - Used to intercept the "exit" library call.
