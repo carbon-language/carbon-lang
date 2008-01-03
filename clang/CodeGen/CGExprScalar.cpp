@@ -19,7 +19,7 @@
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Support/Compiler.h"
-#include <stdarg.h>                                                                                                              
+#include <cstdarg>
 
 using namespace clang;
 using namespace CodeGen;
@@ -948,8 +948,8 @@ VisitConditionalOperator(const ConditionalOperator *E) {
   // because we need the unconverted value if this is a GNU ?: expression with
   // missing middle value.
   Value *CondVal = CGF.EmitScalarExpr(E->getCond());
-  Value *CondBoolVal = CGF.EmitScalarConversion(CondVal, E->getCond()->getType(), 
-                                                CGF.getContext().BoolTy);
+  Value *CondBoolVal =CGF.EmitScalarConversion(CondVal, E->getCond()->getType(),
+                                               CGF.getContext().BoolTy);
   Builder.CreateCondBr(CondBoolVal, LHSBlock, RHSBlock);
   
   CGF.EmitBlock(LHSBlock);
