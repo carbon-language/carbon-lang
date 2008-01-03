@@ -95,7 +95,7 @@ public:
   // Manipulation of successors/predecessors.
   void addPredecessor(SimulVertex* V) {
     Preds.push_back(V);
-    V.Succs.push_back(V);
+    V->Succs.push_back(V);
   }
 };
   
