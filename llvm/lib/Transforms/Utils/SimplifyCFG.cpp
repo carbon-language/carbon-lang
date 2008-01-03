@@ -372,6 +372,8 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
       case Instruction::AShr:
       case Instruction::ICmp:
       case Instruction::FCmp:
+        if (I->getOperand(0)->getType()->isFPOrFPVector())
+          return false;  // FP arithmetic might trap.
         break;   // These are all cheap and non-trapping instructions.
       }
 
