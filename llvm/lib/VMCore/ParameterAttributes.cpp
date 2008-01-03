@@ -15,6 +15,16 @@
 #include "llvm/Support/ManagedStatic.h"
 using namespace llvm;
 
+static ManagedStatic<FoldingSet<ParamAttrsList> > ParamAttrsLists;
+
+ParamAttrsList::ParamAttrsList(const ParamAttrsVector &attrVec) 
+  : attrs(attrVec), refCount(0) {
+}
+
+ParamAttrsList::~ParamAttrsList() {
+  ParamAttrsLists->RemoveNode(this);
+}
+
 uint16_t
 ParamAttrsList::getParamAttrs(uint16_t Index) const {
   unsigned limit = attrs.size();
@@ -100,8 +110,6 @@ void ParamAttrsList::Profile(FoldingSetNodeID &ID) const {
   for (unsigned i = 0; i < attrs.size(); ++i)
     ID.AddInteger(unsigned(attrs[i].attrs) << 16 | unsigned(attrs[i].index));
 }
-
-static ManagedStatic<FoldingSet<ParamAttrsList> > ParamAttrsLists;
 
 const ParamAttrsList *
 ParamAttrsList::get(const ParamAttrsVector &attrVec) {
@@ -218,9 +226,5 @@ ParamAttrsList::excludeAttrs(const ParamAttrsList *PAL,
   ParamAttrsVector modVec;
   modVec.push_back(ParamAttrsWithIndex::get(idx, NewAttrs));
   return getModified(PAL, modVec);
-}
-
-ParamAttrsList::~ParamAttrsList() {
-  ParamAttrsLists->RemoveNode(this);
 }
 

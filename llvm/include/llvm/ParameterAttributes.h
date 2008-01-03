@@ -122,14 +122,12 @@ class ParamAttrsList : public FoldingSetNode {
     // ParamAttrsList is uniqued, these should not be publicly available
     void operator=(const ParamAttrsList &); // Do not implement
     ParamAttrsList(const ParamAttrsList &); // Do not implement
-    ParamAttrsList();                       // Do not implement
     ~ParamAttrsList();                      // Private implementation
 
     /// Only the \p get method can invoke this when it wants to create a
     /// new instance.
     /// @brief Construct an ParamAttrsList from a ParamAttrsVector
-    explicit ParamAttrsList(const ParamAttrsVector &attrVec) 
-      : attrs(attrVec), refCount(0) {}
+    explicit ParamAttrsList(const ParamAttrsVector &attrVec);
 
   public:
     /// This method ensures the uniqueness of ParamAttrsList instances.  The
