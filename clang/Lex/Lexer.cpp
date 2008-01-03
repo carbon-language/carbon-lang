@@ -1275,7 +1275,15 @@ LexNextToken:
     }
     goto LexNextToken;   // GCC isn't tail call eliminating.
 
-  case 'L':
+  // C99 6.4.4.1: Integer Constants.
+  // C99 6.4.4.2: Floating Constants.
+  case '0': case '1': case '2': case '3': case '4':
+  case '5': case '6': case '7': case '8': case '9':
+    // Notify MIOpt that we read a non-whitespace/non-comment token.
+    MIOpt.ReadToken();
+    return LexNumericConstant(Result, CurPtr);
+    
+  case 'L':   // Identifier (Loony) or wide literal (L'x' or L"xyz").
     // Notify MIOpt that we read a non-whitespace/non-comment token.
     MIOpt.ReadToken();
     Char = getCharAndSize(CurPtr, SizeTmp);
@@ -1303,14 +1311,17 @@ LexNextToken:
     // Notify MIOpt that we read a non-whitespace/non-comment token.
     MIOpt.ReadToken();
     return LexIdentifier(Result, CurPtr);
+
+  case '$':   // $ in identifiers.
+    if (Features.DollarIdents) {
+      Diag(CurPtr-1, diag::ext_dollar_in_identifier);
+      // Notify MIOpt that we read a non-whitespace/non-comment token.
+      MIOpt.ReadToken();
+      return LexIdentifier(Result, CurPtr);
+    }
     
-  // C99 6.4.4.1: Integer Constants.
-  // C99 6.4.4.2: Floating Constants.
-  case '0': case '1': case '2': case '3': case '4':
-  case '5': case '6': case '7': case '8': case '9':
-    // Notify MIOpt that we read a non-whitespace/non-comment token.
-    MIOpt.ReadToken();
-    return LexNumericConstant(Result, CurPtr);
+    Result.setKind(tok::unknown);
+    break;
     
   // C99 6.4.4: Character Constants.
   case '\'':
@@ -1626,21 +1637,18 @@ LexNextToken:
     }
     break;
 
+  case '@':
+    // Objective C support.
+    if (CurPtr[-1] == '@' && Features.ObjC1)
+      Result.setKind(tok::at);
+    else
+      Result.setKind(tok::unknown);
+    break;
+    
   case '\\':
     // FIXME: UCN's.
     // FALL THROUGH.
   default:
-    // Objective C support.
-    if (CurPtr[-1] == '@' && Features.ObjC1) {
-      Result.setKind(tok::at);
-      break;
-    } else if (CurPtr[-1] == '$' && Features.DollarIdents) {// $ in identifiers.
-      Diag(CurPtr-1, diag::ext_dollar_in_identifier);
-      // Notify MIOpt that we read a non-whitespace/non-comment token.
-      MIOpt.ReadToken();
-      return LexIdentifier(Result, CurPtr);
-    }
-    
     Result.setKind(tok::unknown);
     break;
   }
