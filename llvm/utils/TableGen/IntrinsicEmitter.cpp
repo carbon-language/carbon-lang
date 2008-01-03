@@ -381,7 +381,5 @@ EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
     }    
     OS << "  }\n";
   }
-  OS << "  else\n";
-  OS << "    IntrinsicID = Intrinsic::not_intrinsic;\n";
   OS << "#endif\n\n";
 }
