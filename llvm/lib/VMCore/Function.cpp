@@ -325,11 +325,6 @@ const FunctionType *Intrinsic::getType(ID id, const Type **Tys,
 }
 
 const ParamAttrsList *Intrinsic::getParamAttrs(ID id) {
-  static const ParamAttrsList *IntrinsicAttributes[Intrinsic::num_intrinsics];
-
-  if (IntrinsicAttributes[id])
-    return IntrinsicAttributes[id];
-
   ParamAttrsVector Attrs;
   uint16_t Attr = ParamAttr::None;
 
@@ -341,8 +336,7 @@ const ParamAttrsList *Intrinsic::getParamAttrs(ID id) {
   Attr |= ParamAttr::NoUnwind;
 
   Attrs.push_back(ParamAttrsWithIndex::get(0, Attr));
-  IntrinsicAttributes[id] = ParamAttrsList::get(Attrs);
-  return IntrinsicAttributes[id];
+  return ParamAttrsList::get(Attrs);
 }
 
 Function *Intrinsic::getDeclaration(Module *M, ID id, const Type **Tys, 
