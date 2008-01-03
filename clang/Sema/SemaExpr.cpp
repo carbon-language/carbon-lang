@@ -1174,7 +1174,8 @@ Sema::AssignmentCheckResult
 Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // C99 6.5.16.1p1: the left operand is a pointer and the right is
   // a null pointer constant.
-  if (lhsType->isPointerType() && rExpr->isNullPointerConstant(Context)) {
+  if ((lhsType->isPointerType() || lhsType->isObjcQualifiedIdType()) 
+      && rExpr->isNullPointerConstant(Context)) {
     promoteExprToType(rExpr, lhsType);
     return Compatible;
   }
