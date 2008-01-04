@@ -33,9 +33,12 @@
   </li>
   <li><a href="#typesystem">Type System</a>
     <ol>
+      <li><a href="#t_classifications">Type Classifications</a></li>
       <li><a href="#t_primitive">Primitive Types</a>    
         <ol>
-          <li><a href="#t_classifications">Type Classifications</a></li>
+          <li><a href="#t_floating">Floating Point Types</a></li>
+          <li><a href="#t_void">Void Type</a></li>
+          <li><a href="#t_label">Label Type</a></li>
         </ol>
       </li>
       <li><a href="#t_derived">Derived Types</a>
@@ -974,58 +977,48 @@ three address code representations.</p>
 </div>
 
 <!-- ======================================================================= -->
-<div class="doc_subsection"> <a name="t_primitive">Primitive Types</a> </div>
-<div class="doc_text">
-<p>The primitive types are the fundamental building blocks of the LLVM
-system. The current set of primitive types is as follows:</p>
-
-<table class="layout">
-  <tr class="layout">
-    <td class="left">
-      <table>
-        <tbody>
-        <tr><th>Type</th><th>Description</th></tr>
-        <tr><td><tt><a name="t_void">void</a></tt></td><td>No value</td></tr>
-        <tr><td><tt>label</tt></td><td>Branch destination</td></tr>
-        </tbody>
-      </table>
-    </td>
-    <td class="right">
-      <table>
-        <tbody>
-          <tr><th>Type</th><th>Description</th></tr>
-          <tr><td><tt>float</tt></td><td>32-bit floating point value</td></tr>
-         <tr><td><tt>double</tt></td><td>64-bit floating point value</td></tr>
-        </tbody>
-      </table>
-    </td>
-  </tr>
-</table>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="t_classifications">Type
+<div class="doc_subsection"> <a name="t_classifications">Type
 Classifications</a> </div>
 <div class="doc_text">
-<p>These different primitive types fall into a few useful
+<p>The types fall into a few useful
 classifications:</p>
 
 <table border="1" cellspacing="0" cellpadding="4">
   <tbody>
     <tr><th>Classification</th><th>Types</th></tr>
     <tr>
-      <td><a name="t_integer">integer</a></td>
+      <td><a href="#t_integer">integer</a></td>
       <td><tt>i1, i2, i3, ... i8, ... i16, ... i32, ... i64, ... </tt></td>
     </tr>
     <tr>
-      <td><a name="t_floating">floating point</a></td>
-      <td><tt>float, double</tt></td>
+      <td><a href="#t_floating">floating point</a></td>
+      <td><tt>float, double, x86_fp80, fp128, ppc_fp128</tt></td>
     </tr>
     <tr>
       <td><a name="t_firstclass">first class</a></td>
-      <td><tt>i1, ..., float, double, <br/>
-          <a href="#t_pointer">pointer</a>,<a href="#t_vector">vector</a></tt>
+      <td><a href="#t_integer">integer</a>,
+          <a href="#t_floating">floating point</a>,
+          <a href="#t_pointer">pointer</a>,
+          <a href="#t_vector">vector</a>
       </td>
+    </tr>
+    <tr>
+      <td><a href="#t_primitive">primitive</a></td>
+      <td><a href="#t_label">label</a>,
+          <a href="#t_void">void</a>,
+          <a href="#t_integer">integer</a>,
+          <a href="#t_floating">floating point</a>.</td>
+    </tr>
+    <tr>
+      <td><a href="#t_derived">derived</a></td>
+      <td><a href="#t_integer">integer</a>,
+          <a href="#t_array">array</a>,
+          <a href="#t_function">function</a>,
+          <a href="#t_pointer">pointer</a>,
+          <a href="#t_struct">structure</a>,
+          <a href="#t_pstruct">packed structure</a>,
+          <a href="#t_vector">vector</a>,
+          <a href="#t_opaque">opaque</a>.
     </tr>
   </tbody>
 </table>
@@ -1036,6 +1029,57 @@ produced by instructions, passed as arguments, or used as operands to
 instructions.  This means that all structures and arrays must be
 manipulated either by pointer or by component.</p>
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection"> <a name="t_primitive">Primitive Types</a> </div>
+<div class="doc_text">
+<p>The primitive types are the fundamental building blocks of the LLVM
+system.</p>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="t_floating">Floating Point Types</a> </div>
+
+<div class="doc_text">
+      <table>
+        <tbody>
+          <tr><th>Type</th><th>Description</th></tr>
+          <tr><td><tt>float</tt></td><td>32-bit floating point value</td></tr>
+          <tr><td><tt>double</tt></td><td>64-bit floating point value</td></tr>
+          <tr><td><tt>fp128</tt></td><td>128-bit floating point value (112-bit mantissa)</td></tr>
+          <tr><td><tt>x86_fp80</tt></td><td>80-bit floating point value (X87)</td></tr>
+          <tr><td><tt>ppc_fp128</tt></td><td>128-bit floating point value (two 64-bits)</td></tr>
+        </tbody>
+      </table>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="t_void">Void Type</a> </div>
+
+<div class="doc_text">
+<h5>Overview:</h5>
+<p>The void type does not represent any value and has no size.</p>
+
+<h5>Syntax:</h5>
+
+<pre>
+  void
+</pre>
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="t_label">Label Type</a> </div>
+
+<div class="doc_text">
+<h5>Overview:</h5>
+<p>The label type represents code labels.</p>
+
+<h5>Syntax:</h5>
+
+<pre>
+  label
+</pre>
+</div>
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection"> <a name="t_derived">Derived Types</a> </div>
