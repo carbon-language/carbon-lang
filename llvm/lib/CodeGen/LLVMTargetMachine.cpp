@@ -29,6 +29,12 @@ static cl::opt<bool> PrintISelInput("print-isel-input", cl::Hidden,
 static cl::opt<bool> PrintEmittedAsm("print-emitted-asm", cl::Hidden,
     cl::desc("Dump emitter generated instructions as assembly"));
 
+// Hidden options to help debugging
+static cl::opt<bool>
+EnableSinking("enable-sinking", cl::init(false), cl::Hidden,
+              cl::desc("Perform sinking on machine code"));
+
+
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
                                        std::ostream &Out,
@@ -68,6 +74,9 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
     PM.add(createMachineFunctionPrinterPass(cerr));
 
   PM.add(createMachineLICMPass());
+  
+  if (EnableSinking)
+    PM.add(createMachineSinkingPass());
 
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());

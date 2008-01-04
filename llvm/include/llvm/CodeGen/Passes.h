@@ -157,6 +157,10 @@ namespace llvm {
   /// 
   FunctionPass *createMachineLICMPass();
 
+  /// createMachineSinkingPass - This pass performs sinking on machine
+  /// instructions.
+  FunctionPass *createMachineSinkingPass();
+  
 } // End llvm namespace
 
 #endif
