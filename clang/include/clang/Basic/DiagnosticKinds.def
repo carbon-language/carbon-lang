@@ -472,6 +472,10 @@ DIAG(warn_method_not_found, WARNING,
      "method '%0%1' not found (return type defaults to 'id')")
 DIAG(warn_method_not_found_in_protocol, WARNING,
      "method '%0%1' not found in protocol (return type defaults to 'id')")
+DIAG(err_collection_expr_type, ERROR,
+     "collection expression is not of valid object type (its type is '%0')")
+DIAG(err_selector_element_type, ERROR,
+     "selector element is not of valid object type (its type is '%0')")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis

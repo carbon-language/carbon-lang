@@ -26,6 +26,20 @@ bool Sema::isBuiltinObjcType(TypedefDecl *TD) {
          strcmp(typeName, "SEL") == 0 || strcmp(typeName, "Protocol") == 0;
 }
 
+bool Sema::isObjcObjectPointerType(QualType type) const {
+  if (!type->isPointerType() && !type->isObjcQualifiedIdType())
+    return false;
+  if (type == Context.getObjcIdType() || type == Context.getObjcClassType() ||
+      type->isObjcQualifiedIdType())
+    return true;
+  
+  while (type->isPointerType()) {
+    PointerType *pointerType = static_cast<PointerType*>(type.getTypePtr());
+    type = pointerType->getPointeeType();
+  }
+  return (type->isObjcInterfaceType() || type->isObjcQualifiedIdType());
+}
+
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
   TUScope = S;
   if (PP.getLangOptions().ObjC1) {

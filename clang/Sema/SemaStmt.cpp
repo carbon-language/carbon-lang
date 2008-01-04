@@ -538,8 +538,9 @@ Sema::ActOnObjcForCollectionStmt(SourceLocation ForColLoc,
   Stmt *First  = static_cast<Stmt*>(first);
   Expr *Second = static_cast<Expr*>(second);
   Stmt *Body  = static_cast<Stmt*>(body);
-  
+  QualType FirstType;
   if (DeclStmt *DS = dyn_cast_or_null<DeclStmt>(First)) {
+    FirstType = dyn_cast<ValueDecl>(DS->getDecl())->getType();
     // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
     // identifiers for objects having storage class 'auto' or 'register'.
     for (ScopedDecl *D = DS->getDecl(); D; D = D->getNextDeclarator()) {
@@ -547,19 +548,21 @@ Sema::ActOnObjcForCollectionStmt(SourceLocation ForColLoc,
       if (BVD && !BVD->hasLocalStorage())
         BVD = 0;
       if (BVD == 0)
-        Diag(dyn_cast<ScopedDecl>(D)->getLocation(), 
-             diag::err_non_variable_decl_in_for);
-      // FIXME: mark decl erroneous!
+        return Diag(dyn_cast<ScopedDecl>(D)->getLocation(), 
+                    diag::err_non_variable_decl_in_for);
     }
   }
+  else
+    FirstType = static_cast<Expr*>(first)->getType();
+  if (!isObjcObjectPointerType(FirstType))
+      Diag(ForColLoc, diag::err_selector_element_type,
+           FirstType.getAsString(), First->getSourceRange());
   if (Second) {
     DefaultFunctionArrayConversion(Second);
     QualType SecondType = Second->getType();
-#if 0
-    if (!SecondType->isScalarType()) // C99 6.8.5p2
-      return Diag(ForColLoc, diag::err_typecheck_statement_requires_scalar,
-                  SecondType.getAsString(), Second->getSourceRange());
-#endif
+    if (!isObjcObjectPointerType(SecondType))
+      Diag(ForColLoc, diag::err_collection_expr_type,
+           SecondType.getAsString(), Second->getSourceRange());
   }
   return new ObjcForCollectionStmt(First, Second, Body, ForColLoc);
 }

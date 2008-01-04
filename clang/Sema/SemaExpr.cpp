@@ -2350,8 +2350,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
           return true;
     }
   } else {
-    bool receiverIsQualId = 
-           dyn_cast<ObjcQualifiedIdType>(RExpr->getType()) != 0;
+    bool receiverIsQualId = dyn_cast<ObjcQualifiedIdType>(receiverType) != 0;
     // FIXME (snaroff): checking in this code from Patrick. Needs to be
     // revisited. how do we get the ClassDecl from the receiver expression?
     if (!receiverIsQualId)
