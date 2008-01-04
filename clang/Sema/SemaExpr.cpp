@@ -1111,24 +1111,21 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
         if (LV->getElementType().getTypePtr() == rhsType.getTypePtr())
           return Compatible;
       }
-      if (!getLangOptions().LaxVectorConversions) {
-        if (lhsType != rhsType)
-          return Incompatible;
-      } else {
-        if (lhsType->isVectorType() && rhsType->isVectorType()) {
-          // If LHS and RHS are both integer or both floating point types, and
-          // the total vector length is the same, allow the conversion.  This is
-          // a bitcast; no bits are changed but the result type is different.
-          if ((lhsType->isIntegerType() && rhsType->isIntegerType()) ||
-              (lhsType->isRealFloatingType() && 
-               rhsType->isRealFloatingType())) {
-            if (Context.getTypeSize(lhsType, SourceLocation()) == 
-                Context.getTypeSize(rhsType, SourceLocation()))
-              return Compatible;
-          }
+      
+      if (getLangOptions().LaxVectorConversions &&
+          lhsType->isVectorType() && rhsType->isVectorType()) {
+        // If LHS and RHS are both integer or both floating point types, and
+        // the total vector length is the same, allow the conversion.  This is
+        // a bitcast; no bits are changed but the result type is different.
+        if ((lhsType->isIntegerType() && rhsType->isIntegerType()) ||
+            (lhsType->isRealFloatingType() && 
+             rhsType->isRealFloatingType())) {
+          if (Context.getTypeSize(lhsType, SourceLocation()) == 
+              Context.getTypeSize(rhsType, SourceLocation()))
+            return Compatible;
         }
-        return Incompatible;
       }
+      return Incompatible;
     }      
     return Compatible;
   }
