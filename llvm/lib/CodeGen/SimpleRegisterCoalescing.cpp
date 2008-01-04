@@ -90,8 +90,9 @@ void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
 ///
 /// This returns true if an interval was modified.
 ///
-bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA, LiveInterval &IntB,
-                                         MachineInstr *CopyMI) {
+bool SimpleRegisterCoalescing::AdjustCopiesBackFrom(LiveInterval &IntA,
+                                                    LiveInterval &IntB,
+                                                    MachineInstr *CopyMI) {
   unsigned CopyIdx = li_->getDefIndex(li_->getInstructionIndex(CopyMI));
 
   // BValNo is a value number in B that is defined by a copy from A.  'B3' in
@@ -622,7 +623,7 @@ static bool InVector(VNInfo *Val, const SmallVector<VNInfo*, 8> &V) {
 /// value number and that the RHS is not defined by a copy from this
 /// interval.  This returns false if the intervals are not joinable, or it
 /// joins them and returns true.
-bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS) {
+bool SimpleRegisterCoalescing::SimpleJoin(LiveInterval &LHS, LiveInterval &RHS){
   assert(RHS.containsOneValue());
   
   // Some number (potentially more than one) value numbers in the current
@@ -870,7 +871,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
         continue;
       
       // Figure out the value # from the RHS.
-      LHSValsDefinedFromRHS[VNI] = RHS.getLiveRangeContaining(VNI->def-1)->valno;
+      LHSValsDefinedFromRHS[VNI]=RHS.getLiveRangeContaining(VNI->def-1)->valno;
     }
     
     // Loop over the value numbers of the RHS, seeing if any are defined from
@@ -888,7 +889,7 @@ bool SimpleRegisterCoalescing::JoinIntervals(LiveInterval &LHS,
         continue;
       
       // Figure out the value # from the LHS.
-      RHSValsDefinedFromLHS[VNI]= LHS.getLiveRangeContaining(VNI->def-1)->valno;
+      RHSValsDefinedFromLHS[VNI]=LHS.getLiveRangeContaining(VNI->def-1)->valno;
     }
     
     LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
@@ -1285,7 +1286,8 @@ SimpleRegisterCoalescing::lastRegisterUse(unsigned Start, unsigned End,
 
 /// findDefOperand - Returns the MachineOperand that is a def of the specific
 /// register. It returns NULL if the def is not found.
-MachineOperand *SimpleRegisterCoalescing::findDefOperand(MachineInstr *MI, unsigned Reg) {
+MachineOperand *SimpleRegisterCoalescing::findDefOperand(MachineInstr *MI,
+                                                         unsigned Reg) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isRegister() && MO.isDef() &&
@@ -1297,7 +1299,8 @@ MachineOperand *SimpleRegisterCoalescing::findDefOperand(MachineInstr *MI, unsig
 
 /// unsetRegisterKill - Unset IsKill property of all uses of specific register
 /// of the specific instruction.
-void SimpleRegisterCoalescing::unsetRegisterKill(MachineInstr *MI, unsigned Reg) {
+void SimpleRegisterCoalescing::unsetRegisterKill(MachineInstr *MI,
+                                                 unsigned Reg) {
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
     if (MO.isRegister() && MO.isKill() && MO.getReg() &&
@@ -1309,7 +1312,7 @@ void SimpleRegisterCoalescing::unsetRegisterKill(MachineInstr *MI, unsigned Reg)
 /// unsetRegisterKills - Unset IsKill property of all uses of specific register
 /// between cycles Start and End.
 void SimpleRegisterCoalescing::unsetRegisterKills(unsigned Start, unsigned End,
-                                       unsigned Reg) {
+                                                  unsigned Reg) {
   int e = (End-1) / InstrSlots::NUM * InstrSlots::NUM;
   int s = Start;
   while (e >= s) {
@@ -1387,7 +1390,8 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   allocatableRegs_ = mri_->getAllocatableSet(fn);
   for (MRegisterInfo::regclass_iterator I = mri_->regclass_begin(),
          E = mri_->regclass_end(); I != E; ++I)
-    allocatableRCRegs_.insert(std::make_pair(*I,mri_->getAllocatableSet(fn, *I)));
+    allocatableRCRegs_.insert(std::make_pair(*I,
+                                             mri_->getAllocatableSet(fn, *I)));
 
   MachineRegisterInfo &RegInfo = mf_->getRegInfo();
   r2rMap_.grow(RegInfo.getLastVirtReg());
@@ -1398,7 +1402,7 @@ bool SimpleRegisterCoalescing::runOnMachineFunction(MachineFunction &fn) {
   if (EnableJoining) {
     joinIntervals();
     DOUT << "********** INTERVALS POST JOINING **********\n";
-    for (LiveIntervals::iterator I = li_->begin(), E = li_->end(); I != E; ++I) {
+    for (LiveIntervals::iterator I = li_->begin(), E = li_->end(); I != E; ++I){
       I->second.print(DOUT, mri_);
       DOUT << "\n";
     }
