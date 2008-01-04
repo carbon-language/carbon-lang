@@ -61,6 +61,7 @@ namespace {
     /// FIXME: Loop preheaders?
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      MachineFunctionPass::getAnalysisUsage(AU);
       AU.setPreservesCFG();
       AU.addRequired<MachineLoopInfo>();
       AU.addRequired<MachineDominatorTree>();
