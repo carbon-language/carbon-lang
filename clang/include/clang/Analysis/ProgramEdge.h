@@ -114,7 +114,7 @@ namespace llvm { // Traits specialization for DenseMap
 template <> struct DenseMapInfo<clang::ProgramEdge> {
 
   static inline clang::ProgramEdge getEmptyKey() {
-    return clang::BlkBlkEdge(NULL,NULL);
+    return clang::BlkBlkEdge(0, 0);
   }
   
   static inline clang::ProgramEdge getTombstoneKey() {
