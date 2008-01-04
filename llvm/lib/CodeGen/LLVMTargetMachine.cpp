@@ -33,7 +33,10 @@ static cl::opt<bool> PrintEmittedAsm("print-emitted-asm", cl::Hidden,
 static cl::opt<bool>
 EnableSinking("enable-sinking", cl::init(false), cl::Hidden,
               cl::desc("Perform sinking on machine code"));
-
+static cl::opt<bool>
+PerformLICM("machine-licm",
+            cl::init(false), cl::Hidden,
+            cl::desc("Perform loop-invariant code motion on machine code"));
 
 FileModel::Model
 LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
@@ -73,7 +76,8 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  PM.add(createMachineLICMPass());
+  if (PerformLICM)
+    PM.add(createMachineLICMPass());
   
   if (EnableSinking)
     PM.add(createMachineSinkingPass());
@@ -187,7 +191,8 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
-  PM.add(createMachineLICMPass());
+  if (PerformLICM)
+    PM.add(createMachineLICMPass());
 
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());

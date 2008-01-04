@@ -28,14 +28,6 @@
 
 using namespace llvm;
 
-namespace {
-  // Hidden options to help debugging
-  cl::opt<bool>
-  PerformLICM("machine-licm",
-              cl::init(false), cl::Hidden,
-              cl::desc("Perform loop-invariant code motion on machine code"));
-}
-
 STATISTIC(NumHoisted, "Number of machine instructions hoisted out of loops");
 
 namespace {
@@ -167,8 +159,6 @@ FunctionPass *llvm::createMachineLICMPass() { return new MachineLICM(); }
 /// loop.
 ///
 bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
-  if (!PerformLICM) return false; // For debugging.
-
   DOUT << "******** Machine LICM ********\n";
 
   Changed = false;
