@@ -191,6 +191,7 @@ static LangKind GetLanguage(const std::string &Filename) {
 
   if (DotPos == std::string::npos) {
     BaseLang = langkind_c;  // Default to C if no extension.
+    return langkind_c;
   }
   
   std::string Ext = std::string(Filename.begin()+DotPos+1, Filename.end());
