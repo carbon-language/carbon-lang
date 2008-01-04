@@ -619,7 +619,8 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       if (MO.isMachineBasicBlock()) {
         emitPCRelativeBlockAddress(MO.getMBB());
       } else if (MO.isGlobalAddress()) {
-        bool NeedStub = Is64BitMode && TM.getCodeModel() == CodeModel::Large;
+        bool NeedStub = (Is64BitMode && TM.getCodeModel() == CodeModel::Large)
+          || Opcode == X86::TAILJMPd;
         emitGlobalAddress(MO.getGlobal(), X86::reloc_pcrel_word,
                           0, 0, NeedStub);
       } else if (MO.isExternalSymbol()) {
