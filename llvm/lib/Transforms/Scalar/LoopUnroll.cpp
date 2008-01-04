@@ -207,7 +207,7 @@ bool LoopUnroll::unrollLoop(Loop *L, unsigned Count, unsigned Threshold) {
        << "] Loop %" << Header->getName() << "\n";
 
   if (!BI || BI->isUnconditional()) {
-    // The loop-rorate pass can be helpful to avoid this in many cases.
+    // The loop-rotate pass can be helpful to avoid this in many cases.
     DOUT << "  Can't unroll; loop not terminated by a conditional branch.\n";
     return false;
   }
