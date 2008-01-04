@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang -fsyntax-only -verify -pedantic %s
 
 #include <objc/objc.h>
 
@@ -23,27 +23,27 @@ int main()
 
   /* These should all generate warnings.  */
   
-  obj = i; // expected-warning {{incompatible types assigning 'int' to 'id'}}
-  obj = j; // expected-warning {{incompatible pointer types assigning 'int *' to 'id'}}
+  obj = i; // expected-warning {{incompatible pointer/int conversion assigning 'int', expected 'id'}}
+  obj = j; // expected-warning {{incompatible pointer types assigning 'int *', expected 'id'}}
 
-  obj_p = i; // expected-error {{incompatible types assigning 'int' to 'id<MyProtocol>' }}
-  obj_p = j; // expected-error {{incompatible types assigning 'int *' to 'id<MyProtocol>'}}
+  obj_p = i; // expected-error {{incompatible type assigning 'int', expected 'id<MyProtocol>' }}
+  obj_p = j; // expected-error {{incompatible type assigning 'int *', expected 'id<MyProtocol>'}}
   
-  obj_c = i; // expected-warning {{incompatible types assigning 'int' to 'MyClass *'}}
-  obj_c = j; // expected-warning {{incompatible pointer types assigning 'int *' to 'MyClass *'}}
+  obj_c = i; // expected-warning {{incompatible pointer/int conversion assigning 'int', expected 'MyClass *'}}
+  obj_c = j; // expected-warning {{incompatible pointer types assigning 'int *', expected 'MyClass *'}}
 
-  obj_C = i; // expected-warning {{incompatible types assigning 'int' to 'Class'}}
-  obj_C = j; // expected-warning {{incompatible pointer types assigning 'int *' to 'Class'}}
+  obj_C = i; // expected-warning {{incompatible pointer/int conversion assigning 'int', expected 'Class'}}
+  obj_C = j; // expected-warning {{incompatible pointer types assigning 'int *', expected 'Class'}}
   
-  i = obj;   // expected-warning {{incompatible types assigning 'id' to 'int'}}
-  i = obj_p; // expected-error {{incompatible types assigning 'id<MyProtocol>' to 'int'}}
-  i = obj_c; // expected-warning {{incompatible types assigning 'MyClass *' to 'int'}}
-  i = obj_C; // expected-warning {{incompatible types assigning 'Class' to 'int'}}
+  i = obj;   // expected-warning {{incompatible pointer/int conversion assigning 'id', expected 'int'}}
+  i = obj_p; // expected-error {{incompatible type assigning 'id<MyProtocol>', expected 'int'}}
+  i = obj_c; // expected-warning {{incompatible pointer/int conversion assigning 'MyClass *', expected 'int'}}
+  i = obj_C; // expected-warning {{incompatible pointer/int conversion assigning 'Class', expected 'int'}}
   
-  j = obj;   // expected-warning {{incompatible pointer types assigning 'id' to 'int *'}}
-  j = obj_p; // expected-error {{incompatible types assigning 'id<MyProtocol>' to 'int *'}}
-  j = obj_c; // expected-warning {{incompatible pointer types assigning 'MyClass *' to 'int *'}}
-  j = obj_C; // expected-warning {{incompatible pointer types assigning 'Class' to 'int *'}}
+  j = obj;   // expected-warning {{incompatible pointer types assigning 'id', expected 'int *'}}
+  j = obj_p; // expected-error {{incompatible type assigning 'id<MyProtocol>', expected 'int *'}}
+  j = obj_c; // expected-warning {{incompatible pointer types assigning 'MyClass *', expected 'int *'}}
+  j = obj_C; // expected-warning {{incompatible pointer types assigning 'Class', expected 'int *'}}
   
   if (obj == i) foo() ; // expected-warning {{comparison between pointer and integer ('id' and 'int')}}
   if (i == obj) foo() ; // expected-warning {{comparison between pointer and integer ('int' and 'id')}}

@@ -1,4 +1,4 @@
-// RUN: clang -fsyntax-only -verify %s
+// RUN: clang -fsyntax-only -verify -pedantic %s
 
 #include <objc/Object.h>
 
@@ -9,7 +9,7 @@ extern Object* foo(void);
 
 static Derived *test(void)
 {
-   Derived *m = foo();   // expected-warning {{incompatible pointer types assigning 'Object *' to 'Derived *'}}
+   Derived *m = foo();   // expected-warning {{incompatible pointer types initializing 'Object *', expected 'Derived *'}}
 
    return m;
 }

@@ -613,34 +613,42 @@ private:
   // responsible for emitting appropriate error diagnostics.
   QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr,
                                       bool isCompAssign = false);
-  enum AssignmentCheckResult {
+  enum AssignConvertType {
     Compatible,
     Incompatible,
-    PointerFromInt, 
-    IntFromPointer,
+    PointerInt, 
     FunctionVoidPointer,
     IncompatiblePointer,
     CompatiblePointerDiscardsQualifiers
   };
-  // CheckAssignmentConstraints - Perform type checking for assignment, 
-  // argument passing, variable initialization, and function return values. 
-  // This routine is only used by the following two methods. C99 6.5.16.
-  AssignmentCheckResult CheckAssignmentConstraints(QualType lhs, QualType rhs);
+  
+  /// DiagnoseAssignmentResult - Emit a diagnostic, if required, for the
+  /// assignment conversion type specified by ConvTy.  This returns true if the
+  /// conversion was invalid or false if the conversion was accepted.
+  bool DiagnoseAssignmentResult(AssignConvertType ConvTy,
+                                SourceLocation Loc,
+                                QualType DstType, QualType SrcType,
+                                Expr *SrcExpr, const char *Flavor);
+  
+  /// CheckAssignmentConstraints - Perform type checking for assignment, 
+  /// argument passing, variable initialization, and function return values. 
+  /// This routine is only used by the following two methods. C99 6.5.16.
+  AssignConvertType CheckAssignmentConstraints(QualType lhs, QualType rhs);
   
   // CheckSingleAssignmentConstraints - Currently used by ActOnCallExpr,
   // CheckAssignmentOperands, and ActOnReturnStmt. Prior to type checking, 
   // this routine performs the default function/array converions.
-  AssignmentCheckResult CheckSingleAssignmentConstraints(QualType lhs, 
-                                                         Expr *&rExpr);
+  AssignConvertType CheckSingleAssignmentConstraints(QualType lhs, 
+                                                     Expr *&rExpr);
   // CheckCompoundAssignmentConstraints - Type check without performing any 
   // conversions. For compound assignments, the "Check...Operands" methods 
   // perform the necessary conversions. 
-  AssignmentCheckResult CheckCompoundAssignmentConstraints(QualType lhs, 
-                                                           QualType rhs);
+  AssignConvertType CheckCompoundAssignmentConstraints(QualType lhs, 
+                                                       QualType rhs);
   
   // Helper function for CheckAssignmentConstraints (C99 6.5.16.1p1)
-  AssignmentCheckResult CheckPointerTypesForAssignment(QualType lhsType, 
-                                                       QualType rhsType);
+  AssignConvertType CheckPointerTypesForAssignment(QualType lhsType, 
+                                                   QualType rhsType);
   
   /// the following "Check" methods will return a valid/converted QualType
   /// or a null QualType (indicating an error diagnostic was issued).

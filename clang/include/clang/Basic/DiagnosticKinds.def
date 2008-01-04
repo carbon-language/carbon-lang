@@ -764,6 +764,7 @@ DIAG(ext_typecheck_comparison_of_distinct_pointers, WARNING,
 DIAG(err_typecheck_assign_const, ERROR,
      "read-only variable is not assignable")
 
+// assignment related diagnostics (also for argument passing, returning, etc).
 DIAG(err_typecheck_convert_incompatible, ERROR,
      "incompatible type %2 '%1', expected '%0'")
 DIAG(ext_typecheck_convert_pointer_int, EXTENSION,
@@ -771,47 +772,9 @@ DIAG(ext_typecheck_convert_pointer_int, EXTENSION,
 DIAG(ext_typecheck_convert_pointer_void_func, EXTENSION,
      "%2 '%1' converts between void* and function pointer, expected '%0'")
 DIAG(ext_typecheck_convert_incompatible_pointer, EXTENSION,
-     "incompatible pointer types %d '%1', expected '%0'")
+     "incompatible pointer types %2 '%1', expected '%0'")
 DIAG(ext_typecheck_convert_discards_qualifiers, EXTENSION,
-     "%d '%1' discards qualifiers, expected '%0'")
-
-     
-     
-DIAG(err_typecheck_return_incompatible, ERROR,
-     "incompatible type returning '%1', expected '%0'")
-DIAG(ext_typecheck_return_pointer_int, EXTENSION,
-     "incompatible type returning '%1', expected '%0'")
-DIAG(ext_typecheck_return_pointer_void_func, EXTENSION,
-     "returning '%1' to from function expecting '%0' converts between void*"
-     " and function pointer")
-DIAG(ext_typecheck_return_incompatible_pointer, EXTENSION,
-     "incompatible pointer types returning '%1', expected '%0'")
-DIAG(ext_typecheck_return_discards_qualifiers, EXTENSION,
-     "returning '%1' from function expecting '%0' discards qualifiers")
-     
-DIAG(err_typecheck_assign_incompatible, ERROR,
-     "incompatible types assigning '%1' to '%0'")
-DIAG(ext_typecheck_assign_pointer_int, WARNING,
-     "incompatible types assigning '%1' to '%0'")
-DIAG(ext_typecheck_assign_incompatible_pointer, WARNING,
-     "incompatible pointer types assigning '%1' to '%0'")
-DIAG(ext_typecheck_assign_discards_qualifiers, WARNING,
-     "assigning '%1' to '%0' discards qualifiers")
-DIAG(ext_typecheck_assign_pointer_void_func, EXTENSION,
-     "assigning '%1' to '%0' converts between void* and function pointer")
-     
-DIAG(err_typecheck_passing_incompatible, ERROR,
-     "incompatible types passing '%0' to function expecting '%1'")
-DIAG(ext_typecheck_passing_incompatible_pointer, WARNING,
-     "incompatible pointer types passing '%0' to function expecting '%1'")
-DIAG(ext_typecheck_passing_pointer_int, WARNING,
-     "incompatible types passing '%1' to function expecting '%0'")
-DIAG(ext_typecheck_passing_pointer_void_func, EXTENSION,
-     "passing '%1' to function expecting '%0' converts between void*"
-     " and function pointer")
-DIAG(ext_typecheck_passing_discards_qualifiers, WARNING,
-     "passing '%0' to '%1' discards qualifiers")
-     
+     "%2 '%1' discards qualifiers, expected '%0'")
      
 DIAG(err_typecheck_array_not_modifiable_lvalue, ERROR,
      "array type '%0' is not assignable")

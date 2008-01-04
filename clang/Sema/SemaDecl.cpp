@@ -364,53 +364,13 @@ bool Sema::CheckSingleInitializer(Expr *&Init, bool isStatic,
     return true;
   }
   
-  AssignmentCheckResult result;
   // Get the type before calling CheckSingleAssignmentConstraints(), since
   // it can promote the expression.
-  QualType rhsType = Init->getType(); 
+  QualType InitType = Init->getType(); 
   
-  result = CheckSingleAssignmentConstraints(DeclType, Init);
-  
-  // decode the result (notice that extensions still return a type).
-  switch (result) {
-  case Compatible:
-    break;
-  case Incompatible:
-    // FIXME: tighten up this check which should allow:
-    // char s[] = "abc", which is identical to char s[] = { 'a', 'b', 'c' };
-    if (rhsType == Context.getPointerType(Context.CharTy))
-      break;
-    Diag(Init->getLocStart(), diag::err_typecheck_assign_incompatible, 
-         DeclType.getAsString(), rhsType.getAsString(), 
-         Init->getSourceRange());
-    return true;
-  case PointerFromInt:
-    Diag(Init->getLocStart(), diag::ext_typecheck_assign_pointer_int,
-         DeclType.getAsString(), rhsType.getAsString(), 
-         Init->getSourceRange());
-    break;
-  case IntFromPointer: 
-    Diag(Init->getLocStart(), diag::ext_typecheck_assign_pointer_int, 
-         DeclType.getAsString(), rhsType.getAsString(), 
-         Init->getSourceRange());
-    break;
-  case FunctionVoidPointer:
-    Diag(Init->getLocStart(), diag::ext_typecheck_assign_pointer_void_func, 
-         DeclType.getAsString(), rhsType.getAsString(), 
-         Init->getSourceRange());
-    break;
-  case IncompatiblePointer:
-    Diag(Init->getLocStart(), diag::ext_typecheck_assign_incompatible_pointer,
-         DeclType.getAsString(), rhsType.getAsString(), 
-         Init->getSourceRange());
-    break;
-  case CompatiblePointerDiscardsQualifiers:
-    Diag(Init->getLocStart(), diag::ext_typecheck_assign_discards_qualifiers,
-         DeclType.getAsString(), rhsType.getAsString(), 
-         Init->getSourceRange());
-    break;
-  }
-  return false;
+  AssignConvertType ConvTy = CheckSingleAssignmentConstraints(DeclType, Init);
+  return DiagnoseAssignmentResult(ConvTy, Init->getLocStart(), DeclType,
+                                  InitType, Init, "initializing");
 }
 
 bool Sema::CheckInitExpr(Expr *expr, InitListExpr *IList, unsigned slot,

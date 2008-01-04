@@ -615,55 +615,17 @@ ActOnCallExpr(ExprTy *fn, SourceLocation LParenLoc,
     // Continue to check argument types (even if we have too few/many args).
     for (unsigned i = 0; i != NumArgsToCheck; i++) {
       Expr *Arg = Args[i];
-      QualType LHSType = Proto->getArgType(i);
-      QualType RHSType = Arg->getType();
-
-      // If necessary, apply function/array conversion. C99 6.7.5.3p[7,8]. 
-      if (const ArrayType *AT = LHSType->getAsArrayType())
-        LHSType = Context.getPointerType(AT->getElementType());
-      else if (LHSType->isFunctionType())
-        LHSType = Context.getPointerType(LHSType);
+      QualType ProtoArgType = Proto->getArgType(i);
+      QualType ArgType = Arg->getType();
 
       // Compute implicit casts from the operand to the formal argument type.
-      AssignmentCheckResult Result =
-        CheckSingleAssignmentConstraints(LHSType, Arg);
+      AssignConvertType ConvTy =
+        CheckSingleAssignmentConstraints(ProtoArgType, Arg);
       TheCall->setArg(i, Arg);
       
-      // Decode the result (notice that AST's are still created for extensions).
-      SourceLocation Loc = Arg->getLocStart();
-      switch (Result) {
-      case Compatible:
-        break;
-      case PointerFromInt:
-        Diag(Loc, diag::ext_typecheck_passing_pointer_int, 
-             LHSType.getAsString(), RHSType.getAsString(),
-             Fn->getSourceRange(), Arg->getSourceRange());
-        break;
-      case IntFromPointer:
-        Diag(Loc, diag::ext_typecheck_passing_pointer_int, 
-             LHSType.getAsString(), RHSType.getAsString(),
-             Fn->getSourceRange(), Arg->getSourceRange());
-        break;
-      case FunctionVoidPointer:
-        Diag(Loc, diag::ext_typecheck_passing_pointer_void_func, 
-             LHSType.getAsString(), RHSType.getAsString(),
-             Fn->getSourceRange(), Arg->getSourceRange());
-        break;
-      case IncompatiblePointer:
-        Diag(Loc, diag::ext_typecheck_passing_incompatible_pointer, 
-             RHSType.getAsString(), LHSType.getAsString(),
-             Fn->getSourceRange(), Arg->getSourceRange());
-        break;
-      case CompatiblePointerDiscardsQualifiers:
-        Diag(Loc, diag::ext_typecheck_passing_discards_qualifiers,
-             RHSType.getAsString(), LHSType.getAsString(),
-             Fn->getSourceRange(), Arg->getSourceRange());
-        break;
-      case Incompatible:
-        return Diag(Loc, diag::err_typecheck_passing_incompatible,
-                    RHSType.getAsString(), LHSType.getAsString(),
-                    Fn->getSourceRange(), Arg->getSourceRange());
-      }
+      if (DiagnoseAssignmentResult(ConvTy, Arg->getLocStart(), ProtoArgType,
+                                   ArgType, Arg, "passing"))
+        return true;
     }
     
     // If this is a variadic call, handle args passed through "...".
@@ -1056,7 +1018,7 @@ QualType Sema::UsualArithmeticConversions(Expr *&lhsExpr, Expr *&rhsExpr,
 // routine is it effectively iqnores the qualifiers on the top level pointee.
 // This circumvents the usual type rules specified in 6.2.7p1 & 6.7.5.[1-3].
 // FIXME: add a couple examples in this comment.
-Sema::AssignmentCheckResult 
+Sema::AssignConvertType 
 Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   QualType lhptee, rhptee;
   
@@ -1068,21 +1030,21 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   lhptee = lhptee.getCanonicalType();
   rhptee = rhptee.getCanonicalType();
 
-  AssignmentCheckResult r = Compatible;
+  AssignConvertType ConvTy = Compatible;
   
   // C99 6.5.16.1p1: This following citation is common to constraints 
   // 3 & 4 (below). ...and the type *pointed to* by the left has all the 
   // qualifiers of the type *pointed to* by the right; 
   if ((lhptee.getQualifiers() & rhptee.getQualifiers()) != 
        rhptee.getQualifiers())
-    r = CompatiblePointerDiscardsQualifiers;
+    ConvTy = CompatiblePointerDiscardsQualifiers;
 
   // C99 6.5.16.1p1 (constraint 4): If one operand is a pointer to an object or 
   // incomplete type and the other is a pointer to a qualified or unqualified 
   // version of void...
   if (lhptee->isVoidType()) {
     if (rhptee->isObjectType() || rhptee->isIncompleteType())
-      return r;
+      return ConvTy;
     
     // As an extension, we allow cast to/from void* to function pointer.
     if (rhptee->isFunctionType())
@@ -1091,7 +1053,7 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   
   if (rhptee->isVoidType()) {
     if (lhptee->isObjectType() || lhptee->isIncompleteType())
-      return r;
+      return ConvTy;
 
     // As an extension, we allow cast to/from void* to function pointer.
     if (lhptee->isFunctionType())
@@ -1103,7 +1065,7 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
   if (!Context.typesAreCompatible(lhptee.getUnqualifiedType(), 
                                   rhptee.getUnqualifiedType()))
     return IncompatiblePointer; // this "trumps" PointerAssignDiscardsQualifiers
-  return r;
+  return ConvTy;
 }
 
 /// CheckAssignmentConstraints (C99 6.5.16) - This routine currently 
@@ -1123,7 +1085,7 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 /// C99 spec dictates. 
 /// Note: the warning above turn into errors when -pedantic-errors is enabled. 
 ///
-Sema::AssignmentCheckResult
+Sema::AssignConvertType
 Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
 
   
@@ -1169,14 +1131,14 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     return Compatible;
   } else if (lhsType->isPointerType()) {
     if (rhsType->isIntegerType())
-      return PointerFromInt;
+      return PointerInt;
       
     if (rhsType->isPointerType())
       return CheckPointerTypesForAssignment(lhsType, rhsType);
   } else if (rhsType->isPointerType()) {
     // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
     if ((lhsType->isIntegerType()) && (lhsType != Context.BoolTy))
-      return IntFromPointer;
+      return PointerInt;
 
     if (lhsType->isPointerType()) 
       return CheckPointerTypesForAssignment(lhsType, rhsType);
@@ -1187,7 +1149,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   return Incompatible;
 }
 
-Sema::AssignmentCheckResult
+Sema::AssignConvertType
 Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // C99 6.5.16.1p1: the left operand is a pointer and the right is
   // a null pointer constant.
@@ -1206,9 +1168,8 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   if (!lhsType->isReferenceType())
     DefaultFunctionArrayConversion(rExpr);
 
-  Sema::AssignmentCheckResult result;
-  
-  result = CheckAssignmentConstraints(lhsType, rExpr->getType());
+  Sema::AssignConvertType result =
+    CheckAssignmentConstraints(lhsType, rExpr->getType());
   
   // C99 6.5.16.1p2: The value of the right operand is converted to the
   // type of the assignment expression.
@@ -1217,7 +1178,7 @@ Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   return result;
 }
 
-Sema::AssignmentCheckResult
+Sema::AssignConvertType
 Sema::CheckCompoundAssignmentConstraints(QualType lhsType, QualType rhsType) {
   return CheckAssignmentConstraints(lhsType, rhsType);
 }
@@ -1501,81 +1462,47 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
 {
   QualType lhsType = lex->getType();
   QualType rhsType = compoundType.isNull() ? rex->getType() : compoundType;
-  bool hadError = false;
   Expr::isModifiableLvalueResult mlval = lex->isModifiableLvalue(); 
 
   switch (mlval) { // C99 6.5.16p2
-    case Expr::MLV_Valid: 
-      break;
-    case Expr::MLV_ConstQualified:
-      Diag(loc, diag::err_typecheck_assign_const, lex->getSourceRange());
-      hadError = true;
-      break;
-    case Expr::MLV_ArrayType: 
-      Diag(loc, diag::err_typecheck_array_not_modifiable_lvalue,
-           lhsType.getAsString(), lex->getSourceRange());
-      return QualType(); 
-    case Expr::MLV_NotObjectType: 
-      Diag(loc, diag::err_typecheck_non_object_not_modifiable_lvalue,
-           lhsType.getAsString(), lex->getSourceRange());
-      return QualType();
-    case Expr::MLV_InvalidExpression:
-      Diag(loc, diag::err_typecheck_expression_not_modifiable_lvalue,
-           lex->getSourceRange());
-      return QualType();
-    case Expr::MLV_IncompleteType:
-    case Expr::MLV_IncompleteVoidType:
-      Diag(loc, diag::err_typecheck_incomplete_type_not_modifiable_lvalue,
-           lhsType.getAsString(), lex->getSourceRange());
-      return QualType();
-    case Expr::MLV_DuplicateVectorComponents:
-      Diag(loc, diag::err_typecheck_duplicate_vector_components_not_mlvalue,
-           lex->getSourceRange());
-      return QualType();
+  case Expr::MLV_Valid: 
+    break;
+  case Expr::MLV_ConstQualified:
+    Diag(loc, diag::err_typecheck_assign_const, lex->getSourceRange());
+    return QualType();
+  case Expr::MLV_ArrayType: 
+    Diag(loc, diag::err_typecheck_array_not_modifiable_lvalue,
+         lhsType.getAsString(), lex->getSourceRange());
+    return QualType(); 
+  case Expr::MLV_NotObjectType: 
+    Diag(loc, diag::err_typecheck_non_object_not_modifiable_lvalue,
+         lhsType.getAsString(), lex->getSourceRange());
+    return QualType();
+  case Expr::MLV_InvalidExpression:
+    Diag(loc, diag::err_typecheck_expression_not_modifiable_lvalue,
+         lex->getSourceRange());
+    return QualType();
+  case Expr::MLV_IncompleteType:
+  case Expr::MLV_IncompleteVoidType:
+    Diag(loc, diag::err_typecheck_incomplete_type_not_modifiable_lvalue,
+         lhsType.getAsString(), lex->getSourceRange());
+    return QualType();
+  case Expr::MLV_DuplicateVectorComponents:
+    Diag(loc, diag::err_typecheck_duplicate_vector_components_not_mlvalue,
+         lex->getSourceRange());
+    return QualType();
   }
-  AssignmentCheckResult result;
-  
-  if (compoundType.isNull())
-    result = CheckSingleAssignmentConstraints(lhsType, rex);
-  else
-    result = CheckCompoundAssignmentConstraints(lhsType, rhsType);
 
-  // decode the result (notice that extensions still return a type).
-  switch (result) {
-  case Compatible:
-    break;
-  case Incompatible:
-    Diag(loc, diag::err_typecheck_assign_incompatible, 
-         lhsType.getAsString(), rhsType.getAsString(),
-         lex->getSourceRange(), rex->getSourceRange());
-    hadError = true;
-    break;
-  case PointerFromInt:
-    Diag(loc, diag::ext_typecheck_assign_pointer_int,
-         lhsType.getAsString(), rhsType.getAsString(),
-         lex->getSourceRange(), rex->getSourceRange());
-    break;
-  case IntFromPointer: 
-    Diag(loc, diag::ext_typecheck_assign_pointer_int, 
-         lhsType.getAsString(), rhsType.getAsString(),
-         lex->getSourceRange(), rex->getSourceRange());
-    break;
-  case FunctionVoidPointer:
-    Diag(loc, diag::ext_typecheck_assign_pointer_void_func, 
-         lhsType.getAsString(), rhsType.getAsString(),
-         lex->getSourceRange(), rex->getSourceRange());
-    break;
-  case IncompatiblePointer:
-    Diag(loc, diag::ext_typecheck_assign_incompatible_pointer,
-         lhsType.getAsString(), rhsType.getAsString(),
-         lex->getSourceRange(), rex->getSourceRange());
-    break;
-  case CompatiblePointerDiscardsQualifiers:
-    Diag(loc, diag::ext_typecheck_assign_discards_qualifiers,
-         lhsType.getAsString(), rhsType.getAsString(),
-         lex->getSourceRange(), rex->getSourceRange());
-    break;
-  }
+  AssignConvertType ConvTy;
+  if (compoundType.isNull())
+    ConvTy = CheckSingleAssignmentConstraints(lhsType, rex);
+  else
+    ConvTy = CheckCompoundAssignmentConstraints(lhsType, rhsType);
+
+  if (DiagnoseAssignmentResult(ConvTy, loc, lhsType, rhsType,
+                               rex, "assigning"))
+    return QualType();
+  
   // C99 6.5.16p3: The type of an assignment expression is the type of the
   // left operand unless the left operand has qualified type, in which case
   // it is the unqualified version of the type of the left operand. 
@@ -1583,7 +1510,7 @@ inline QualType Sema::CheckAssignmentOperands( // C99 6.5.16.1
   // is converted to the type of the assignment expression (above).
   // C++ 5.17p1: the type of the assignment expression is that of its left
   // oprdu.
-  return hadError ? QualType() : lhsType.getUnqualifiedType();
+  return lhsType.getUnqualifiedType();
 }
 
 inline QualType Sema::CheckCommaOperands( // C99 6.5.17
@@ -2097,18 +2024,14 @@ Sema::ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc, ExprTy *cond,
 
 Sema::ExprResult Sema::ActOnVAArg(SourceLocation BuiltinLoc,
                                   ExprTy *expr, TypeTy *type,
-                                  SourceLocation RPLoc)
-{
+                                  SourceLocation RPLoc) {
   Expr *E = static_cast<Expr*>(expr);
   QualType T = QualType::getFromOpaquePtr(type);
 
   InitBuiltinVaListType();
   
-  Sema::AssignmentCheckResult result;
-
-  result = CheckAssignmentConstraints(Context.getBuiltinVaListType(), 
-                                      E->getType());
-  if (result != Compatible)
+  if (CheckAssignmentConstraints(Context.getBuiltinVaListType(), E->getType())
+      != Compatible)
     return Diag(E->getLocStart(),
                 diag::err_first_argument_to_va_arg_not_of_type_va_list,
                 E->getType().getAsString(),
@@ -2206,6 +2129,39 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
   return new ObjCProtocolExpr(t, PDecl, AtLoc, RParenLoc);
 }
 
+bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
+                                    SourceLocation Loc,
+                                    QualType DstType, QualType SrcType,
+                                    Expr *SrcExpr, const char *Flavor) {
+  // Decode the result (notice that AST's are still created for extensions).
+  bool isInvalid = false;
+  unsigned DiagKind;
+  switch (ConvTy) {
+  default: assert(0 && "Unknown conversion type");
+  case Compatible: return false;
+  case PointerInt:
+    DiagKind = diag::ext_typecheck_convert_pointer_int;
+    break;
+  case IncompatiblePointer:
+    DiagKind = diag::ext_typecheck_convert_incompatible_pointer;
+    break;
+  case FunctionVoidPointer:
+    DiagKind = diag::ext_typecheck_convert_pointer_void_func;
+    break;
+  case CompatiblePointerDiscardsQualifiers:
+    DiagKind = diag::ext_typecheck_convert_discards_qualifiers;
+    break;
+  case Incompatible:
+    DiagKind = diag::err_typecheck_convert_incompatible;
+    isInvalid = true;
+    break;
+  }
+  
+  Diag(Loc, DiagKind, DstType.getAsString(), SrcType.getAsString(), Flavor,
+       SrcExpr->getSourceRange());
+  return isInvalid;
+}
+
 bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
                                      ObjcMethodDecl *Method) {
   bool anyIncompatibleArgs = false;
@@ -2223,44 +2179,14 @@ bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
     else if (lhsType->isFunctionType())
       lhsType = Context.getPointerType(lhsType);
 
-    AssignmentCheckResult result = CheckSingleAssignmentConstraints(lhsType,
-                                                                    argExpr);
+    AssignConvertType Result = CheckSingleAssignmentConstraints(lhsType,
+                                                                argExpr);
     if (Args[i] != argExpr) // The expression was converted.
       Args[i] = argExpr; // Make sure we store the converted expression.
-    SourceLocation l = argExpr->getLocStart();
-
-    // Decode the result (notice that AST's are still created for extensions).
-    const char *Kind = "sending";
-    switch (result) {
-    case Compatible:
-      break;
-    case PointerFromInt:
-    case IntFromPointer:
-      Diag(l, diag::ext_typecheck_convert_pointer_int, 
-           lhsType.getAsString(), rhsType.getAsString(), Kind,
-           argExpr->getSourceRange());
-      break;
-    case IncompatiblePointer:
-      Diag(l, diag::ext_typecheck_convert_incompatible_pointer, 
-           lhsType.getAsString(), rhsType.getAsString(), Kind,
-           argExpr->getSourceRange());
-      break;
-    case FunctionVoidPointer:
-      Diag(l, diag::ext_typecheck_convert_pointer_void_func, 
-           lhsType.getAsString(), rhsType.getAsString(), Kind,
-           argExpr->getSourceRange());
-      break;
-    case CompatiblePointerDiscardsQualifiers:
-      Diag(l, diag::ext_typecheck_convert_discards_qualifiers,
-           lhsType.getAsString(), rhsType.getAsString(), Kind,
-           argExpr->getSourceRange());
-      break;
-    case Incompatible:
-      Diag(l, diag::err_typecheck_convert_incompatible,
-           lhsType.getAsString(), rhsType.getAsString(), Kind,
-           argExpr->getSourceRange());
-      anyIncompatibleArgs = true;
-    }
+    
+    anyIncompatibleArgs |= 
+      DiagnoseAssignmentResult(Result, argExpr->getLocStart(), lhsType, rhsType,
+                               argExpr, "sending");
   }
   return anyIncompatibleArgs;
 }

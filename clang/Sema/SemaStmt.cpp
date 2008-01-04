@@ -616,10 +616,10 @@ Sema::ActOnBreakStmt(SourceLocation BreakLoc, Scope *CurScope) {
 Action::StmtResult
 Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
   Expr *RetValExp = static_cast<Expr *>(rex);
-  QualType lhsType = CurFunctionDecl ? CurFunctionDecl->getResultType() : 
-                                       CurMethodDecl->getResultType();
+  QualType FnRetType = CurFunctionDecl ? CurFunctionDecl->getResultType() : 
+                                         CurMethodDecl->getResultType();
 
-  if (lhsType->isVoidType()) {
+  if (FnRetType->isVoidType()) {
     if (RetValExp) // C99 6.8.6.4p1 (ext_ since GCC warns)
       Diag(ReturnLoc, diag::ext_return_has_expr,
            (CurFunctionDecl ? CurFunctionDecl->getIdentifier()->getName() :
@@ -639,51 +639,18 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, ExprTy *rex) {
     }
   }
   // we have a non-void function with an expression, continue checking
-  QualType rhsType = RetValExp->getType();
+  QualType RetValType = RetValExp->getType();
 
   // C99 6.8.6.4p3(136): The return statement is not an assignment. The 
   // overlap restriction of subclause 6.5.16.1 does not apply to the case of 
   // function return.  
-  AssignmentCheckResult result = CheckSingleAssignmentConstraints(lhsType, 
-                                                                  RetValExp);
-
-  // decode the result (notice that extensions still return a type).
-  switch (result) {
-  case Compatible:
-    break;
-  case Incompatible:
-    Diag(ReturnLoc, diag::err_typecheck_return_incompatible, 
-         lhsType.getAsString(), rhsType.getAsString(),
-         RetValExp->getSourceRange());
-    break;
-  case PointerFromInt:
-    Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,
-         lhsType.getAsString(), rhsType.getAsString(),
-         RetValExp->getSourceRange());
-    break;
-  case IntFromPointer:
-    Diag(ReturnLoc, diag::ext_typecheck_return_pointer_int,
-         lhsType.getAsString(), rhsType.getAsString(),
-         RetValExp->getSourceRange());
-    break;
-  case FunctionVoidPointer:
-    Diag(ReturnLoc, diag::ext_typecheck_return_pointer_void_func, 
-         lhsType.getAsString(), rhsType.getAsString(),
-         RetValExp->getSourceRange());
-    break;
-  case IncompatiblePointer:
-    Diag(ReturnLoc, diag::ext_typecheck_return_incompatible_pointer,
-         lhsType.getAsString(), rhsType.getAsString(),
-         RetValExp->getSourceRange());
-    break;
-  case CompatiblePointerDiscardsQualifiers:
-    Diag(ReturnLoc, diag::ext_typecheck_return_discards_qualifiers,
-         lhsType.getAsString(), rhsType.getAsString(),
-         RetValExp->getSourceRange());
-    break;
-  }
+  AssignConvertType ConvTy = CheckSingleAssignmentConstraints(FnRetType, 
+                                                              RetValExp);
+  if (DiagnoseAssignmentResult(ConvTy, ReturnLoc, FnRetType,
+                               RetValType, RetValExp, "returning"))
+    return true;
   
-  if (RetValExp) CheckReturnStackAddr(RetValExp, lhsType, ReturnLoc);
+  if (RetValExp) CheckReturnStackAddr(RetValExp, FnRetType, ReturnLoc);
   
   return new ReturnStmt(ReturnLoc, (Expr*)RetValExp);
 }

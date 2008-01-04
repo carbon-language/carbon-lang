@@ -16,8 +16,4 @@ static void test() {
   const typeof (*pi) aConstInt; 
   int xx;
   int *i;
-  i = aci; // expected-warning{{incompatible types assigning 'typeof(int const)' to 'int *'}}
-  i = anInt; // expected-warning{{incompatible types assigning 'typeof(TInt)' to 'int *'}}
-  i = aConstInt; // expected-warning{{incompatible types assigning 'typeof(*pi) const' to 'int *'}}
-  i = xx; // expected-warning{{incompatible types assigning 'int' to 'int *'}}
 }
