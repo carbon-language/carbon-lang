@@ -1083,20 +1083,28 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 ///
 Sema::AssignConvertType
 Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
-  if (lhsType.getCanonicalType().getUnqualifiedType() == 
-      rhsType.getCanonicalType().getUnqualifiedType())
+  // Get canonical types.  We're not formatting these types, just comparing
+  // them.
+  lhsType = lhsType.getCanonicalType();
+  rhsType = rhsType.getCanonicalType();
+  
+  if (lhsType.getUnqualifiedType() == rhsType.getUnqualifiedType())
     return Compatible; // common case, fast path...
 
   if (lhsType->isReferenceType() || rhsType->isReferenceType()) {
     if (Context.referenceTypesAreCompatible(lhsType, rhsType))
       return Compatible;
+    return Incompatible;
   }
-  else if (lhsType->isObjcQualifiedIdType() 
+  
+  if (lhsType->isObjcQualifiedIdType() 
            || rhsType->isObjcQualifiedIdType()) {
     if (Context.ObjcQualifiedIdTypesAreCompatible(lhsType, rhsType))
       return Compatible;
+    return Incompatible;
   }
-  else if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
+  
+  if (lhsType->isArithmeticType() && rhsType->isArithmeticType()) {
     if (lhsType->isVectorType() || rhsType->isVectorType()) {
       // For OCUVector, allow vector splats; float -> <n x float>
       if (const OCUVectorType *LV = lhsType->getAsOCUVectorType()) {
@@ -1104,7 +1112,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
           return Compatible;
       }
       if (!getLangOptions().LaxVectorConversions) {
-        if (lhsType.getCanonicalType() != rhsType.getCanonicalType())
+        if (lhsType != rhsType)
           return Incompatible;
       } else {
         if (lhsType->isVectorType() && rhsType->isVectorType()) {
@@ -1123,20 +1131,29 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
       }
     }      
     return Compatible;
-  } else if (lhsType->isPointerType()) {
+  }
+  
+  if (lhsType->isPointerType()) {
     if (rhsType->isIntegerType())
       return IntToPointer;
       
     if (rhsType->isPointerType())
       return CheckPointerTypesForAssignment(lhsType, rhsType);
-  } else if (rhsType->isPointerType()) {
+    return Incompatible;
+  }
+
+  if (rhsType->isPointerType()) {
     // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
     if ((lhsType->isIntegerType()) && (lhsType != Context.BoolTy))
       return PointerToInt;
 
     if (lhsType->isPointerType()) 
       return CheckPointerTypesForAssignment(lhsType, rhsType);
-  } else if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
+    return Incompatible;
+
+  }
+  
+  if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
     if (Context.tagTypesAreCompatible(lhsType, rhsType))
       return Compatible;
   }
