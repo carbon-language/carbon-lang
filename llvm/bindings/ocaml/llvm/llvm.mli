@@ -1132,7 +1132,7 @@ external build_load : llvalue -> string -> llbuilder -> llvalue
 external build_store : llvalue -> llvalue -> llbuilder -> llvalue
                      = "llvm_build_store"
 
-(** [build_store p indices name b] creates a
+(** [build_gep p indices name b] creates a
     [%name = gep %p, indices...]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateGetElementPtr]. **)
