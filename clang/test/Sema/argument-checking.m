@@ -16,10 +16,10 @@ void test() {
   id obj = [Test alloc];
   struct S sInst;
 
-  charStarFunc(1); // expected-warning {{incompatible pointer/int conversion passing 'int', expected 'char *'}}
-  charFunc("abc"); // expected-warning {{incompatible pointer/int conversion passing 'char *', expected 'char'}}
+  charStarFunc(1); // expected-warning {{incompatible integer to pointer conversion passing 'int', expected 'char *'}}
+  charFunc("abc"); // expected-warning {{incompatible pointer to integer conversion passing 'char *', expected 'char'}}
 
-  [obj charStarMeth:1]; // expected-warning {{incompatible pointer/int conversion sending 'int'}}
+  [obj charStarMeth:1]; // expected-warning {{incompatible integer to pointer conversion sending 'int'}}
   [obj structMeth:1]; // expected-error {{incompatible type sending 'int'}}
   [obj structMeth:sInst :1]; // expected-error {{incompatible type sending 'int'}}
 }

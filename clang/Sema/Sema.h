@@ -613,13 +613,39 @@ private:
   // responsible for emitting appropriate error diagnostics.
   QualType UsualArithmeticConversions(Expr *&lExpr, Expr *&rExpr,
                                       bool isCompAssign = false);
+  
+  /// AssignConvertType - All of the 'assignment' semantic checks return this
+  /// enum to indicate whether the assignment was allowed.  These checks are
+  /// done for simple assignments, as well as initialization, return from
+  /// function, argument passing, etc.  The query is phrased in terms of a
+  /// source and destination type.
   enum AssignConvertType {
+    /// Compatible - the types are compatible according to the standard.
     Compatible,
-    Incompatible,
-    PointerInt, 
+    
+    /// PointerToInt - The assignment converts a pointer to an int, which we
+    /// accept as an extension.
+    PointerToInt,
+    
+    /// IntToPointer - The assignment converts an int to a pointer, which we
+    /// accept as an extension.
+    IntToPointer,
+    
+    /// FunctionVoidPointer - The assignment is between a function pointer and
+    /// void*, which the standard doesn't allow, but we accept as an extension.
     FunctionVoidPointer,
+
+    /// IncompatiblePointer - The assignment is between two pointers types that
+    /// are not compatible, but we accept them as an extension.
     IncompatiblePointer,
-    CompatiblePointerDiscardsQualifiers
+    
+    /// CompatiblePointerDiscardsQualifiers - The assignment discards
+    /// c/v/r qualifiers, which we accept as an extension.
+    CompatiblePointerDiscardsQualifiers,
+    
+    /// Incompatible - We reject this conversion outright, it is invalid to
+    /// represent it in the AST.
+    Incompatible
   };
   
   /// DiagnoseAssignmentResult - Emit a diagnostic, if required, for the

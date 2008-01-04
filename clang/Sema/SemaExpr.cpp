@@ -1087,8 +1087,6 @@ Sema::CheckPointerTypesForAssignment(QualType lhsType, QualType rhsType) {
 ///
 Sema::AssignConvertType
 Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
-
-  
   if (lhsType.getCanonicalType().getUnqualifiedType() == 
       rhsType.getCanonicalType().getUnqualifiedType())
     return Compatible; // common case, fast path...
@@ -1131,14 +1129,14 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     return Compatible;
   } else if (lhsType->isPointerType()) {
     if (rhsType->isIntegerType())
-      return PointerInt;
+      return IntToPointer;
       
     if (rhsType->isPointerType())
       return CheckPointerTypesForAssignment(lhsType, rhsType);
   } else if (rhsType->isPointerType()) {
     // C99 6.5.16.1p1: the left operand is _Bool and the right is a pointer.
     if ((lhsType->isIntegerType()) && (lhsType != Context.BoolTy))
-      return PointerInt;
+      return PointerToInt;
 
     if (lhsType->isPointerType()) 
       return CheckPointerTypesForAssignment(lhsType, rhsType);
@@ -2139,8 +2137,11 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   switch (ConvTy) {
   default: assert(0 && "Unknown conversion type");
   case Compatible: return false;
-  case PointerInt:
+  case PointerToInt:
     DiagKind = diag::ext_typecheck_convert_pointer_int;
+    break;
+  case IntToPointer:
+    DiagKind = diag::ext_typecheck_convert_int_pointer;
     break;
   case IncompatiblePointer:
     DiagKind = diag::ext_typecheck_convert_incompatible_pointer;

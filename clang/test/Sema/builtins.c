@@ -26,7 +26,7 @@ int test6(float a, long double b) {
 void cfstring() {
   CFSTR("\242"); // expected-warning {{ CFString literal contains non-ASCII character }}
   CFSTR("\0"); // expected-warning {{ CFString literal contains NUL character }}
-  CFSTR(242); // expected-error {{ CFString literal is not a string constant }} expected-warning {{incompatible pointer/int conversion}}
+  CFSTR(242); // expected-error {{ CFString literal is not a string constant }} expected-warning {{incompatible integer to pointer conversion}}
   CFSTR("foo", "bar"); // expected-error {{ error: too many arguments to function }}
 }
 

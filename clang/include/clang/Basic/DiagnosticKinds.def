@@ -768,7 +768,9 @@ DIAG(err_typecheck_assign_const, ERROR,
 DIAG(err_typecheck_convert_incompatible, ERROR,
      "incompatible type %2 '%1', expected '%0'")
 DIAG(ext_typecheck_convert_pointer_int, EXTENSION,
-     "incompatible pointer/int conversion %2 '%1', expected '%0'")
+     "incompatible pointer to integer conversion %2 '%1', expected '%0'")
+DIAG(ext_typecheck_convert_int_pointer, EXTENSION,
+     "incompatible integer to pointer conversion %2 '%1', expected '%0'")
 DIAG(ext_typecheck_convert_pointer_void_func, EXTENSION,
      "%2 '%1' converts between void* and function pointer, expected '%0'")
 DIAG(ext_typecheck_convert_incompatible_pointer, EXTENSION,
