@@ -69,6 +69,8 @@ const PassInfo *llvm::TwoAddressInstructionPassID = X.getPassInfo();
 void TwoAddressInstructionPass::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LiveVariables>();
   AU.addPreserved<LiveVariables>();
+  AU.addPreservedID(MachineLoopInfoID);
+  AU.addPreservedID(MachineDominatorsID);
   AU.addPreservedID(PHIEliminationID);
   MachineFunctionPass::getAnalysisUsage(AU);
 }

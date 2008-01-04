@@ -51,6 +51,8 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<LiveVariables>();
+      AU.addPreservedID(MachineLoopInfoID);
+      AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 

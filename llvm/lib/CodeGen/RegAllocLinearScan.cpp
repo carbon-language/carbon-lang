@@ -104,6 +104,8 @@ namespace {
       // to coalescing and which analyses coalescing invalidates.
       AU.addRequiredTransitive<RegisterCoalescer>();
       AU.addRequired<MachineLoopInfo>();
+      AU.addPreserved<MachineLoopInfo>();
+      AU.addPreservedID(MachineDominatorsID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 

@@ -38,6 +38,14 @@ namespace llvm {
   FunctionPass *createMachineFunctionPrinterPass(std::ostream *OS,
                                                  const std::string &Banner ="");
 
+  /// MachineLoopInfo pass - This pass is a loop analysis pass.
+  /// 
+  extern const PassInfo *MachineLoopInfoID;
+
+  /// MachineDominators pass - This pass is a machine dominators analysis pass.
+  /// 
+  extern const PassInfo *MachineDominatorsID;
+
   /// PHIElimination pass - This pass eliminates machine instruction PHI nodes
   /// by inserting copy instructions.  This destroys SSA information, but is the
   /// desired input for some register allocators.  This pass is "required" by

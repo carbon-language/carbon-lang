@@ -67,6 +67,8 @@ const PassInfo *llvm::SimpleRegisterCoalescingID = X.getPassInfo();
 
 void SimpleRegisterCoalescing::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveIntervals>();
+  AU.addPreserved<MachineLoopInfo>();
+  AU.addPreservedID(MachineDominatorsID);
   AU.addPreservedID(PHIEliminationID);
   AU.addPreservedID(TwoAddressInstructionPassID);
   AU.addRequired<LiveVariables>();

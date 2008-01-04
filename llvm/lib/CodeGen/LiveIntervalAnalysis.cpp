@@ -60,6 +60,8 @@ namespace {
 void LiveIntervals::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveVariables>();
   AU.addRequired<LiveVariables>();
+  AU.addPreservedID(MachineLoopInfoID);
+  AU.addPreservedID(MachineDominatorsID);
   AU.addPreservedID(PHIEliminationID);
   AU.addRequiredID(PHIEliminationID);
   AU.addRequiredID(TwoAddressInstructionPassID);

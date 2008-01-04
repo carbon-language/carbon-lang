@@ -16,15 +16,20 @@
 
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/MachineDominators.h"
+#include "llvm/CodeGen/Passes.h"
 
 using namespace llvm;
 
 TEMPLATE_INSTANTIATION(class LoopBase<MachineBasicBlock>);
 TEMPLATE_INSTANTIATION(class LoopInfoBase<MachineBasicBlock>);
 
-char MachineLoopInfo::ID = 0;
-static RegisterPass<MachineLoopInfo>
-X("machine-loops", "Machine Natural Loop Construction", true);
+namespace {
+  char MachineLoopInfo::ID = 0;
+  RegisterPass<MachineLoopInfo>
+  X("machine-loops", "Machine Natural Loop Construction", true);
+}
+
+const PassInfo *llvm::MachineLoopInfoID = X.getPassInfo();
 
 bool MachineLoopInfo::runOnMachineFunction(MachineFunction &) {
   releaseMemory();
