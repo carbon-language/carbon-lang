@@ -39,6 +39,7 @@ class MachineRelocation {
   enum AddressType {
     isResult,         // Relocation has be transformed into its result pointer.
     isGV,             // The Target.GV field is valid.
+    isGVLazyPtr,      // Relocation of a lazily resolved GV address.
     isBB,             // Relocation of BB address.
     isExtSym,         // The Target.ExtSym field is valid.
     isConstPool,      // Relocation of constant pool address.
@@ -55,7 +56,7 @@ class MachineRelocation {
 
   union {
     void *Result;           // If this has been resolved to a resolved pointer
-    GlobalValue *GV;        // If this is a pointer to an LLVM global
+    GlobalValue *GV;        // If this is a pointer to a GV or a GV lazy ptr
     MachineBasicBlock *MBB; // If this is a pointer to a LLVM BB
     const char *ExtSym;     // If this is a pointer to a named symbol
     unsigned Index;         // Constant pool / jump table index
@@ -87,6 +88,25 @@ public:
     Result.ConstantVal = cst;
     Result.TargetReloType = RelocationType;
     Result.AddrType = isGV;
+    Result.NeedStub = NeedStub;
+    Result.GOTRelative = GOTrelative;
+    Result.Target.GV = GV;
+    return Result;
+  }
+
+  /// MachineRelocation::getGVLazyPtr - Return a relocation entry for a
+  /// lazily resolved GlobalValue address.
+  static MachineRelocation getGVLazyPtr(intptr_t offset,
+                                 unsigned RelocationType, 
+                                 GlobalValue *GV, intptr_t cst = 0,
+                                 bool NeedStub = 0,
+                                 bool GOTrelative = 0) {
+    assert((RelocationType & ~63) == 0 && "Relocation type too large!");
+    MachineRelocation Result;
+    Result.Offset = offset;
+    Result.ConstantVal = cst;
+    Result.TargetReloType = RelocationType;
+    Result.AddrType = isGVLazyPtr;
     Result.NeedStub = NeedStub;
     Result.GOTRelative = GOTrelative;
     Result.Target.GV = GV;
@@ -193,6 +213,12 @@ public:
     return AddrType == isGV;
   }
 
+  /// isGlobalValueVLazyPtr - Return true if this relocation is the address
+  /// of a lazily resolved GlobalValue.
+  bool isGlobalValueLazyPtr() const {
+    return AddrType == isGVLazyPtr;
+  }
+
   /// isBasicBlock - Return true if this relocation is a basic block reference.
   ///
   bool isBasicBlock() const {
@@ -234,7 +260,8 @@ public:
   /// getGlobalValue - If this is a global value reference, return the
   /// referenced global.
   GlobalValue *getGlobalValue() const {
-    assert(isGlobalValue() && "This is not a global value reference!");
+    assert((isGlobalValue() || isGlobalValueLazyPtr()) &&
+           "This is not a global value reference!");
     return Target.GV;
   }
 

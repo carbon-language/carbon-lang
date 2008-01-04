@@ -40,6 +40,13 @@ namespace llvm {
     ///
     virtual void replaceMachineCodeForFunction(void *Old, void *New) = 0;
 
+    /// emitGlobalValueLazyPtr - Use the specified MachineCodeEmitter object to
+    /// emit a lazy pointer which contains the address of the specified GV.
+    virtual void *emitGlobalValueLazyPtr(void *GV, MachineCodeEmitter &MCE) {
+      assert(0 && "This target doesn't implement emitGlobalValueLazyPtr!");
+      return 0;
+    }
+
     /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.  Return the address of the resultant function.

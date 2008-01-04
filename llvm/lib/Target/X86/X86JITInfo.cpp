@@ -380,6 +380,18 @@ X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   return X86CompilationCallback;
 }
 
+void *X86JITInfo::emitGlobalValueLazyPtr(void *GV, MachineCodeEmitter &MCE) {
+#ifdef __x86_64__
+  MCE.startFunctionStub(8, 8);
+  MCE.emitWordLE(((unsigned *)&GV)[0]);
+  MCE.emitWordLE(((unsigned *)&GV)[1]);
+#else
+  MCE.startFunctionStub(4, 4);
+  MCE.emitWordLE((unsigned)GV);
+#endif
+  return MCE.finishFunctionStub(0);
+}
+
 void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   // Note, we cast to intptr_t here to silence a -pedantic warning that 
   // complains about casting a function pointer to a normal pointer.
