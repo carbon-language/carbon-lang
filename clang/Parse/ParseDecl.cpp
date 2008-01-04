@@ -296,6 +296,9 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     ConsumeToken();
     return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
   }
+  // If this is an ObjC2 for-each loop, this is a successful declarator
+  // parse.  The syntax for these looks like:
+  // 'for' '(' declaration 'in' expr ')' statement
   if (D.getContext()  == Declarator::ForContext && isTokIdentifier_in()) {
     return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
   }

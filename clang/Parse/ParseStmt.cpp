@@ -746,7 +746,7 @@ Parser::StmtResult Parser::ParseForStatement() {
   StmtTy *FirstPart = 0;
   ExprTy *SecondPart = 0;
   StmtTy *ThirdPart = 0;
-  bool foreach = false;
+  bool ForEach = false;
   
   // Parse the first part of the for specifier.
   if (Tok.is(tok::semi)) {  // for (;
@@ -759,7 +759,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     DeclTy *aBlockVarDecl = ParseDeclaration(Declarator::ForContext);
     StmtResult stmtResult = Actions.ActOnDeclStmt(aBlockVarDecl);
     FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
-    if ((foreach = isTokIdentifier_in())) {
+    if ((ForEach = isTokIdentifier_in())) {
       ConsumeToken(); // consume 'in'
       Value = ParseExpression();
       if (!Value.isInvalid)
@@ -778,7 +778,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     if (Tok.is(tok::semi)) {
       ConsumeToken();
     }
-    else if ((foreach = isTokIdentifier_in())) {
+    else if ((ForEach = isTokIdentifier_in())) {
       ConsumeToken(); // consume 'in'
       Value = ParseExpression();
       if (!Value.isInvalid)
@@ -789,7 +789,7 @@ Parser::StmtResult Parser::ParseForStatement() {
       SkipUntil(tok::semi);
     }
   }
-  if (!foreach) {
+  if (!ForEach) {
     // Parse the second part of the for specifier.
     if (Tok.is(tok::semi)) {  // for (...;;
       // no second part.
@@ -842,12 +842,12 @@ Parser::StmtResult Parser::ParseForStatement() {
   if (Body.isInvalid)
     return Body;
   
-  return !foreach ? Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart, 
-                                         SecondPart, ThirdPart, RParenLoc, 
-                                         Body.Val)
-                  : Actions.ActOnObjcForCollectionStmt(ForLoc, LParenLoc, 
-                                                       FirstPart, SecondPart, 
-                                                       RParenLoc, Body.Val);
+  if (!ForEach) 
+    return Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart, 
+                                SecondPart, ThirdPart, RParenLoc, Body.Val);
+  else
+    return Actions.ActOnObjcForCollectionStmt(ForLoc, LParenLoc, FirstPart, 
+                                              SecondPart, RParenLoc, Body.Val);
 }
 
 /// ParseGotoStatement
