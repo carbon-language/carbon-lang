@@ -46,6 +46,7 @@ namespace {
       (void) llvm::createAliasDebugger();
       (void) llvm::createAndersensPass();
       (void) llvm::createArgumentPromotionPass();
+      (void) llvm::createAutoVectorizePass();
       (void) llvm::createBasicAliasAnalysisPass();
       (void) llvm::createBasicVNPass();
       (void) llvm::createBlockPlacementPass();

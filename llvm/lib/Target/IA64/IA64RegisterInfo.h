@@ -29,12 +29,6 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
   IA64RegisterInfo(const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
-  void copyRegToReg(MachineBasicBlock &MBB,
-                    MachineBasicBlock::iterator MI,
-                    unsigned DestReg, unsigned SrcReg,
-                    const TargetRegisterClass *DestRC,
-                    const TargetRegisterClass *SrcRC) const;
-
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;
 

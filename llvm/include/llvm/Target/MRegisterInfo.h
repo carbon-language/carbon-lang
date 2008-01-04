@@ -25,7 +25,6 @@
 namespace llvm {
 
 class BitVector;
-class CalleeSavedInfo;
 class MachineFunction;
 class MachineInstr;
 class MachineLocation;
@@ -469,26 +468,6 @@ public:
   // manipulation passes to move data around between registers,
   // immediates and memory.  FIXME: Move these to TargetInstrInfo.h.
   //
-
-  /// spillCalleeSavedRegisters - Issues instruction(s) to spill all callee
-  /// saved registers and returns true if it isn't possible / profitable to do
-  /// so by issuing a series of store instructions via
-  /// storeRegToStackSlot(). Returns false otherwise.
-  virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                         MachineBasicBlock::iterator MI,
-                                const std::vector<CalleeSavedInfo> &CSI) const {
-    return false;
-  }
-
-  /// restoreCalleeSavedRegisters - Issues instruction(s) to restore all callee
-  /// saved registers and returns true if it isn't possible / profitable to do
-  /// so by issuing a series of load instructions via loadRegToStackSlot().
-  /// Returns false otherwise.
-  virtual bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                           MachineBasicBlock::iterator MI,
-                                const std::vector<CalleeSavedInfo> &CSI) const {
-    return false;
-  }
 
   /// getCrossCopyRegClass - Returns a legal register class to copy a register
   /// in the specified class to or from. Returns NULL if it is possible to copy

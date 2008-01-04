@@ -15,9 +15,11 @@
 #include "X86.h"
 #include "X86GenInstrInfo.inc"
 #include "X86InstrBuilder.h"
+#include "X86MachineFunctionInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/LiveVariables.h"
@@ -960,6 +962,45 @@ void X86InstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   for (unsigned i = 0, e = Addr.size(); i != e; ++i)
     MIB = X86InstrAddOperand(MIB, Addr[i]);
   NewMIs.push_back(MIB);
+}
+
+bool X86InstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                                MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+  if (CSI.empty())
+    return false;
+
+  bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
+  unsigned SlotSize = is64Bit ? 8 : 4;
+
+  MachineFunction &MF = *MBB.getParent();
+  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
+  X86FI->setCalleeSavedFrameSize(CSI.size() * SlotSize);
+  
+  unsigned Opc = is64Bit ? X86::PUSH64r : X86::PUSH32r;
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
+    // Add the callee-saved register as live-in. It's killed at the spill.
+    MBB.addLiveIn(Reg);
+    BuildMI(MBB, MI, get(Opc)).addReg(Reg);
+  }
+  return true;
+}
+
+bool X86InstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                                 MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+  if (CSI.empty())
+    return false;
+    
+  bool is64Bit = TM.getSubtarget<X86Subtarget>().is64Bit();
+
+  unsigned Opc = is64Bit ? X86::POP64r : X86::POP32r;
+  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
+    unsigned Reg = CSI[i].getReg();
+    BuildMI(MBB, MI, get(Opc), Reg);
+  }
+  return true;
 }
 
 bool X86InstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {

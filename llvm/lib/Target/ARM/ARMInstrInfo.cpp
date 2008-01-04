@@ -18,6 +18,7 @@
 #include "ARMMachineFunctionInfo.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/LiveVariables.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetAsmInfo.h"
@@ -596,6 +597,50 @@ void ARMInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   AddDefaultPred(MIB);
   NewMIs.push_back(MIB);
   return;
+}
+
+bool ARMInstrInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                                MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+  MachineFunction &MF = *MBB.getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  if (!AFI->isThumbFunction() || CSI.empty())
+    return false;
+
+  MachineInstrBuilder MIB = BuildMI(MBB, MI, get(ARM::tPUSH));
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
+    // Add the callee-saved register as live-in. It's killed at the spill.
+    MBB.addLiveIn(Reg);
+    MIB.addReg(Reg, false/*isDef*/,false/*isImp*/,true/*isKill*/);
+  }
+  return true;
+}
+
+bool ARMInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                                 MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+  MachineFunction &MF = *MBB.getParent();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  if (!AFI->isThumbFunction() || CSI.empty())
+    return false;
+
+  bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
+  MachineInstr *PopMI = new MachineInstr(get(ARM::tPOP));
+  MBB.insert(MI, PopMI);
+  for (unsigned i = CSI.size(); i != 0; --i) {
+    unsigned Reg = CSI[i-1].getReg();
+    if (Reg == ARM::LR) {
+      // Special epilogue for vararg functions. See emitEpilogue
+      if (isVarArg)
+        continue;
+      Reg = ARM::PC;
+      PopMI->setInstrDescriptor(get(ARM::tPOP_RET));
+      MBB.erase(MI);
+    }
+    PopMI->addOperand(MachineOperand::CreateReg(Reg, true));
+  }
+  return true;
 }
 
 bool ARMInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {

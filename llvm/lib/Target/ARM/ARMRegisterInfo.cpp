@@ -88,50 +88,6 @@ ARMRegisterInfo::ARMRegisterInfo(const TargetInstrInfo &tii,
     FramePtr((STI.useThumbBacktraces() || STI.isThumb()) ? ARM::R7 : ARM::R11) {
 }
 
-bool ARMRegisterInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                                MachineBasicBlock::iterator MI,
-                                const std::vector<CalleeSavedInfo> &CSI) const {
-  MachineFunction &MF = *MBB.getParent();
-  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  if (!AFI->isThumbFunction() || CSI.empty())
-    return false;
-
-  MachineInstrBuilder MIB = BuildMI(MBB, MI, TII.get(ARM::tPUSH));
-  for (unsigned i = CSI.size(); i != 0; --i) {
-    unsigned Reg = CSI[i-1].getReg();
-    // Add the callee-saved register as live-in. It's killed at the spill.
-    MBB.addLiveIn(Reg);
-    MIB.addReg(Reg, false/*isDef*/,false/*isImp*/,true/*isKill*/);
-  }
-  return true;
-}
-
-bool ARMRegisterInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                                 MachineBasicBlock::iterator MI,
-                                const std::vector<CalleeSavedInfo> &CSI) const {
-  MachineFunction &MF = *MBB.getParent();
-  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  if (!AFI->isThumbFunction() || CSI.empty())
-    return false;
-
-  bool isVarArg = AFI->getVarArgsRegSaveSize() > 0;
-  MachineInstr *PopMI = new MachineInstr(TII.get(ARM::tPOP));
-  MBB.insert(MI, PopMI);
-  for (unsigned i = CSI.size(); i != 0; --i) {
-    unsigned Reg = CSI[i-1].getReg();
-    if (Reg == ARM::LR) {
-      // Special epilogue for vararg functions. See emitEpilogue
-      if (isVarArg)
-        continue;
-      Reg = ARM::PC;
-      PopMI->setInstrDescriptor(TII.get(ARM::tPOP_RET));
-      MBB.erase(MI);
-    }
-    PopMI->addOperand(MachineOperand::CreateReg(Reg, true));
-  }
-  return true;
-}
-
 static inline
 const MachineInstrBuilder &AddDefaultPred(const MachineInstrBuilder &MIB) {
   return MIB.addImm((int64_t)ARMCC::AL).addReg(0);

@@ -26,6 +26,7 @@ class MachineInstr;
 class TargetMachine;
 class TargetRegisterClass;
 class LiveVariables;
+class CalleeSavedInfo;
 
 template<class T> class SmallVectorImpl;
 
@@ -495,6 +496,26 @@ public:
                                const TargetRegisterClass *RC,
                                SmallVectorImpl<MachineInstr*> &NewMIs) const {
     assert(0 && "Target didn't implement TargetInstrInfo::loadRegFromAddr!");
+  }
+  
+  /// spillCalleeSavedRegisters - Issues instruction(s) to spill all callee
+  /// saved registers and returns true if it isn't possible / profitable to do
+  /// so by issuing a series of store instructions via
+  /// storeRegToStackSlot(). Returns false otherwise.
+  virtual bool spillCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                         MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+    return false;
+  }
+
+  /// restoreCalleeSavedRegisters - Issues instruction(s) to restore all callee
+  /// saved registers and returns true if it isn't possible / profitable to do
+  /// so by issuing a series of load instructions via loadRegToStackSlot().
+  /// Returns false otherwise.
+  virtual bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
+                                           MachineBasicBlock::iterator MI,
+                                const std::vector<CalleeSavedInfo> &CSI) const {
+    return false;
   }
   
   /// BlockHasNoFallThrough - Return true if the specified block does not

@@ -332,6 +332,12 @@ FunctionPass *createGVNPREPass();
 
 //===----------------------------------------------------------------------===//
 //
+// AutoVectorize - This pass performs vectorization of straight-line code
+//
+FunctionPass *createAutoVectorizePass();
+
+//===----------------------------------------------------------------------===//
+//
 // GVN - This pass performs global value numbering and redundant load 
 // elimination cotemporaneously.
 //

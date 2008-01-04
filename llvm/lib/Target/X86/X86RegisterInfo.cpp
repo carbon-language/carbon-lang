@@ -741,39 +741,6 @@ unsigned X86RegisterInfo::getX86RegNum(unsigned RegNo) {
   }
 }
 
-bool X86RegisterInfo::spillCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                                MachineBasicBlock::iterator MI,
-                                const std::vector<CalleeSavedInfo> &CSI) const {
-  if (CSI.empty())
-    return false;
-
-  MachineFunction &MF = *MBB.getParent();
-  X86MachineFunctionInfo *X86FI = MF.getInfo<X86MachineFunctionInfo>();
-  X86FI->setCalleeSavedFrameSize(CSI.size() * SlotSize);
-  unsigned Opc = Is64Bit ? X86::PUSH64r : X86::PUSH32r;
-  for (unsigned i = CSI.size(); i != 0; --i) {
-    unsigned Reg = CSI[i-1].getReg();
-    // Add the callee-saved register as live-in. It's killed at the spill.
-    MBB.addLiveIn(Reg);
-    BuildMI(MBB, MI, TII.get(Opc)).addReg(Reg);
-  }
-  return true;
-}
-
-bool X86RegisterInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
-                                                 MachineBasicBlock::iterator MI,
-                                const std::vector<CalleeSavedInfo> &CSI) const {
-  if (CSI.empty())
-    return false;
-
-  unsigned Opc = Is64Bit ? X86::POP64r : X86::POP32r;
-  for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
-    unsigned Reg = CSI[i].getReg();
-    BuildMI(MBB, MI, TII.get(Opc), Reg);
-  }
-  return true;
-}
-
 static const MachineInstrBuilder &X86InstrAddOperand(MachineInstrBuilder &MIB,
                                                      MachineOperand &MO) {
   if (MO.isRegister())
