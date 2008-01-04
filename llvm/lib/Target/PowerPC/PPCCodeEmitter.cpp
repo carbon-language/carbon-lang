@@ -189,8 +189,8 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     MachineRelocation R;
     if (MO.isGlobalAddress()) {
       R = MachineRelocation::getGV(MCE.getCurrentPCOffset(), Reloc,
-                                   MO.getGlobal(),
-                                   isa<Function>(MO.getGlobal()), 0);
+                                   MO.getGlobal(), 0,
+                                   isa<Function>(MO.getGlobal()));
     } else if (MO.isExternalSymbol()) {
       R = MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                        Reloc, MO.getSymbolName(), 0);
