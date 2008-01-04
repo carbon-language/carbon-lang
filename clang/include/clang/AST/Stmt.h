@@ -579,7 +579,7 @@ public:
 class ObjcForCollectionStmt : public Stmt {
   enum { ELEM, COLLECTION, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // SubExprs[ELEM] is an expression or declstmt.
-  SourceLocation ForCollectionLoc;
+  SourceLocation ForLoc;
 public:
   ObjcForCollectionStmt(Stmt *Elem, Expr *Collect, Stmt *Body, 
                         SourceLocation FCL) 
@@ -587,7 +587,7 @@ public:
     SubExprs[ELEM] = Elem;
     SubExprs[COLLECTION] = reinterpret_cast<Stmt*>(Collect);
     SubExprs[BODY] = Body;
-    ForCollectionLoc = FCL;
+    ForLoc = FCL;
   }
     
   Stmt *getElement() { return SubExprs[ELEM]; }
@@ -603,7 +603,7 @@ public:
   const Stmt *getBody() const { return SubExprs[BODY]; }
     
   virtual SourceRange getSourceRange() const { 
-    return SourceRange(ForCollectionLoc, SubExprs[BODY]->getLocEnd()); 
+    return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd()); 
   }
   static bool classof(const Stmt *T) { 
     return T->getStmtClass() == ObjcForCollectionStmtClass; 

@@ -296,7 +296,7 @@ ParseInitDeclaratorListAfterFirstDeclarator(Declarator &D) {
     ConsumeToken();
     return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
   }
-  if (D.getContext()  == Declarator::ForContext && isObjCForCollectionInKW()) {
+  if (D.getContext()  == Declarator::ForContext && isTokIdentifier_in()) {
     return Actions.FinalizeDeclaratorGroup(CurScope, LastDeclInGroup);
   }
   Diag(Tok, diag::err_parse_error);

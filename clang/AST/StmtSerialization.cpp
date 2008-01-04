@@ -564,18 +564,18 @@ ForStmt* ForStmt::CreateImpl(Deserializer& D) {
 }
 
 void ObjcForCollectionStmt::EmitImpl(Serializer& S) const {
-  S.Emit(ForCollectionLoc);
+  S.Emit(ForLoc);
   S.EmitOwnedPtr(getElement());
   S.EmitOwnedPtr(getCollection());
   S.EmitOwnedPtr(getBody());
 }
 
 ObjcForCollectionStmt* ObjcForCollectionStmt::CreateImpl(Deserializer& D) {
-  SourceLocation ForCollectionLoc = SourceLocation::ReadVal(D);
+  SourceLocation ForLoc = SourceLocation::ReadVal(D);
   Stmt* Element = D.ReadOwnedPtr<Stmt>();
   Expr* Collection = D.ReadOwnedPtr<Expr>();
   Stmt* Body = D.ReadOwnedPtr<Stmt>();
-  return new ObjcForCollectionStmt(Element,Collection,Body,ForCollectionLoc);
+  return new ObjcForCollectionStmt(Element,Collection,Body,ForLoc);
 }
 
 void GotoStmt::EmitImpl(Serializer& S) const {

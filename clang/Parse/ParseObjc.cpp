@@ -493,15 +493,12 @@ bool Parser::isObjCPropertyAttribute() {
 
 ///  objc-for-collection-in: 'in'
 ///
-bool Parser::isObjCForCollectionInKW() {
+bool Parser::isTokIdentifier_in() const {
   // FIXME: May have to do additional look-ahead to only allow for
   // valid tokens following an 'in'; such as an identifier, unary operators,
   // '[' etc.
-  if (getLang().ObjC2 && Tok.is(tok::identifier)) {
-    const IdentifierInfo *II = Tok.getIdentifierInfo();
-    return II == ObjCForCollectionInKW;
-  }
-  return false;
+  return (getLang().ObjC2 && Tok.is(tok::identifier) && 
+          Tok.getIdentifierInfo() == ObjCForCollectionInKW);
 }
 
 /// ParseObjcTypeQualifierList - This routine parses the objective-c's type

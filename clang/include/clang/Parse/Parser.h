@@ -294,7 +294,7 @@ private:
   bool isObjCPropertyAttribute();
   
   IdentifierInfo *ObjCForCollectionInKW;
-  bool isObjCForCollectionInKW();
+  bool isTokIdentifier_in() const;
 
   TypeTy *ParseObjCTypeName(ObjcDeclSpec &DS);
   void ParseObjCMethodRequirement();

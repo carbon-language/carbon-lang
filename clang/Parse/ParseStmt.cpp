@@ -759,7 +759,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     DeclTy *aBlockVarDecl = ParseDeclaration(Declarator::ForContext);
     StmtResult stmtResult = Actions.ActOnDeclStmt(aBlockVarDecl);
     FirstPart = stmtResult.isInvalid ? 0 : stmtResult.Val;
-    if ((foreach = isObjCForCollectionInKW())) {
+    if ((foreach = isTokIdentifier_in())) {
       ConsumeToken(); // consume 'in'
       Value = ParseExpression();
       if (!Value.isInvalid)
@@ -778,7 +778,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     if (Tok.is(tok::semi)) {
       ConsumeToken();
     }
-    else if ((foreach = isObjCForCollectionInKW())) {
+    else if ((foreach = isTokIdentifier_in())) {
       ConsumeToken(); // consume 'in'
       Value = ParseExpression();
       if (!Value.isInvalid)
