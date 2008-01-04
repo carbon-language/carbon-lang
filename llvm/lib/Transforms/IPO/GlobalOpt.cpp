@@ -640,7 +640,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
       // If we get here we could have stores, selects, or phi nodes whose values
       // are loaded.
       assert((isa<StoreInst>(*GUI) || isa<PHINode>(*GUI) ||
-              isa<SelectInst>(*GUI)) &&
+              isa<SelectInst>(*GUI) || isa<ConstantExpr>(*GUI)) &&
              "Only expect load and stores!");
     }
 
