@@ -53,10 +53,12 @@ namespace {
     /// FIXME: Loop preheaders?
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      MachineFunctionPass::getAnalysisUsage(AU);
       AU.setPreservesCFG();
       AU.addRequired<MachineLoopInfo>();
       AU.addRequired<MachineDominatorTree>();
+      AU.addPreserved<MachineLoopInfo>();
+      AU.addPreserved<MachineDominatorTree>();
+      MachineFunctionPass::getAnalysisUsage(AU);
     }
   private:
     /// VisitAllLoops - Visit all of the loops in depth first order and try to
