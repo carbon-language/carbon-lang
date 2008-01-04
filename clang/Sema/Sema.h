@@ -286,7 +286,7 @@ private:
   /// or "Protocol".
   bool isBuiltinObjcType(TypedefDecl *TD);
   
-  /// isObjcObjectPointerType - Returns tru if type is an objective-c pointer
+  /// isObjcObjectPointerType - Returns true if type is an objective-c pointer
   /// to an object type; such as "id", "Class", Intf*, id<P>, etc.
   bool isObjcObjectPointerType(QualType type) const;
 
