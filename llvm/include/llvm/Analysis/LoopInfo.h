@@ -88,7 +88,7 @@ public:
   BlockT *getHeader() const { return Blocks.front(); }
   LoopBase<BlockT> *getParentLoop() const { return ParentLoop; }
 
-  /// contains - Return true of the specified basic block is in this loop
+  /// contains - Return true if the specified basic block is in this loop
   ///
   bool contains(const BlockT *BB) const {
     return std::find(Blocks.begin(), Blocks.end(), BB) != Blocks.end();
