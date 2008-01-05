@@ -249,7 +249,7 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
   // code into the entry block.
   MachineBasicBlock *MBB = Fn.begin();
   MachineBasicBlock::iterator I = MBB->begin();
-  if (!RegInfo->spillCalleeSavedRegisters(*MBB, I, CSI)) {
+  if (!TII.spillCalleeSavedRegisters(*MBB, I, CSI)) {
     for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
       // Add the callee-saved register as live-in. It's killed at the spill.
       MBB->addLiveIn(CSI[i].getReg());
@@ -280,7 +280,7 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
       
       // Restore all registers immediately before the return and any terminators
       // that preceed it.
-      if (!RegInfo->restoreCalleeSavedRegisters(*MBB, I, CSI)) {
+      if (!TII.restoreCalleeSavedRegisters(*MBB, I, CSI)) {
         for (unsigned i = 0, e = CSI.size(); i != e; ++i) {
           TII.loadRegFromStackSlot(*MBB, I, CSI[i].getReg(),
                                         CSI[i].getFrameIdx(),
