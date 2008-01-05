@@ -20,8 +20,9 @@ using namespace llvm;
 TEMPLATE_INSTANTIATION(class DomTreeNodeBase<MachineBasicBlock>);
 TEMPLATE_INSTANTIATION(class DominatorTreeBase<MachineBasicBlock>);
 
+char MachineDominatorTree::ID = 0;
+
 namespace {
-  char MachineDominatorTree::ID = 0;
   RegisterPass<MachineDominatorTree>
   E("machinedomtree", "MachineDominator Tree Construction", true);
 }
