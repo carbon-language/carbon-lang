@@ -55,6 +55,13 @@ namespace llvm {
       return 0;
     }
 
+    /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
+    /// specific basic block.
+    virtual intptr_t getPICJumpTableEntry(intptr_t BB, intptr_t JTBase) {
+      assert(0 && "This target doesn't implement getPICJumpTableEntry!");
+      return 0;
+    }
+
     /// LazyResolverFn - This typedef is used to represent the function that
     /// unresolved call points should invoke.  This is a target specific
     /// function that knows how to walk the stack and find out which stub the

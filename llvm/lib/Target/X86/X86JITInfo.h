@@ -21,6 +21,7 @@ namespace llvm {
 
   class X86JITInfo : public TargetJITInfo {
     X86TargetMachine &TM;
+    intptr_t PICBase;
   public:
     X86JITInfo(X86TargetMachine &tm) : TM(tm) {useGOT = 0;}
 
@@ -40,6 +41,10 @@ namespace llvm {
     /// address.
     virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);
 
+    /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
+    /// specific basic block.
+    virtual intptr_t getPICJumpTableEntry(intptr_t BB, intptr_t JTBase);
+
     /// getLazyResolverFunction - Expose the lazy resolver to the JIT.
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
 
@@ -48,6 +53,11 @@ namespace llvm {
     /// referenced global symbols.
     virtual void relocate(void *Function, MachineRelocation *MR,
                           unsigned NumRelocs, unsigned char* GOTBase);
+
+    /// setPICBase / getPICBase - Getter / setter of PICBase, used to compute
+    /// PIC jumptable entry.
+    void setPICBase(intptr_t Base) { PICBase = Base; }
+    intptr_t getPICBase() const { return PICBase; }
   };
 }
 

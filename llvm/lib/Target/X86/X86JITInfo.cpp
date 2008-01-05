@@ -440,6 +440,12 @@ void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   return MCE.finishFunctionStub(0);
 }
 
+/// getPICJumpTableEntry - Returns the value of the jumptable entry for the
+/// specific basic block.
+intptr_t X86JITInfo::getPICJumpTableEntry(intptr_t BB, intptr_t Entry) {
+  return BB - PICBase;
+}
+
 /// relocate - Before the JIT can run a block of code that has been emitted,
 /// it must rewrite the code to contain the actual addresses of any
 /// referenced global symbols.

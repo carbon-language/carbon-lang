@@ -341,7 +341,7 @@ namespace {
     /// JumpTableBase - A pointer to the first entry in the jump table.
     ///
     void *JumpTableBase;
-    
+
     /// Resolver - This contains info about the currently resolved functions.
     JITResolver Resolver;
   public:
@@ -380,7 +380,7 @@ namespace {
 
     virtual intptr_t getConstantPoolEntryAddress(unsigned Entry) const;
     virtual intptr_t getJumpTableEntryAddress(unsigned Entry) const;
-    
+
     virtual intptr_t getMachineBasicBlockAddress(MachineBasicBlock *MBB) const {
       assert(MBBLocations.size() > (unsigned)MBB->getNumber() && 
              MBBLocations[MBB->getNumber()] && "MBB not emitted!");
@@ -616,8 +616,10 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
       // Store the offset of the basic block for this jump table slot in the
       // memory we allocated for the jump table in 'initJumpTableInfo'
       intptr_t Base = (intptr_t)SlotPtr;
-      for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi)
-        *SlotPtr++ = (intptr_t)getMachineBasicBlockAddress(MBBs[mi]) - Base;
+      for (unsigned mi = 0, me = MBBs.size(); mi != me; ++mi) {
+        intptr_t MBBAddr = getMachineBasicBlockAddress(MBBs[mi]);
+        *SlotPtr++ = TheJIT->getJITInfo().getPICJumpTableEntry(MBBAddr, Base);
+      }
     }
   } else {
     assert(MJTI->getEntrySize() == sizeof(void*) && "Cross JIT'ing?");

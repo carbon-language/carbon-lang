@@ -14,6 +14,7 @@
 
 #define DEBUG_TYPE "x86-emitter"
 #include "X86InstrInfo.h"
+#include "X86JITInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
 #include "X86Relocations.h"
@@ -37,19 +38,19 @@ namespace {
     const TargetData    *TD;
     TargetMachine       &TM;
     MachineCodeEmitter  &MCE;
-    intptr_t PICBase;
+    intptr_t PICBaseOffset;
     bool Is64BitMode;
     bool IsPIC;
   public:
     static char ID;
     explicit Emitter(TargetMachine &tm, MachineCodeEmitter &mce)
       : MachineFunctionPass((intptr_t)&ID), II(0), TD(0), TM(tm), 
-      MCE(mce), PICBase(0), Is64BitMode(false),
+      MCE(mce), PICBaseOffset(0), Is64BitMode(false),
       IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
     Emitter(TargetMachine &tm, MachineCodeEmitter &mce,
             const X86InstrInfo &ii, const TargetData &td, bool is64)
       : MachineFunctionPass((intptr_t)&ID), II(&ii), TD(&td), TM(tm), 
-      MCE(mce), PICBase(0), Is64BitMode(is64),
+      MCE(mce), PICBaseOffset(0), Is64BitMode(is64),
       IsPIC(TM.getRelocationModel() == Reloc::PIC_) {}
 
     bool runOnMachineFunction(MachineFunction &MF);
@@ -148,7 +149,7 @@ void Emitter::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
                                 bool isLazy /* = false */) {
   intptr_t RelocCST = 0;
   if (Reloc == X86::reloc_picrel_word)
-    RelocCST = PICBase;
+    RelocCST = PICBaseOffset;
   else if (Reloc == X86::reloc_pcrel_word)
     RelocCST = PCAdj;
   MachineRelocation MR = isLazy 
@@ -166,7 +167,7 @@ void Emitter::emitGlobalAddress(GlobalValue *GV, unsigned Reloc,
 /// be emitted to the current location in the function, and allow it to be PC
 /// relative.
 void Emitter::emitExternalSymbolAddress(const char *ES, unsigned Reloc) {
-  intptr_t RelocCST = (Reloc == X86::reloc_picrel_word) ? PICBase : 0;
+  intptr_t RelocCST = (Reloc == X86::reloc_picrel_word) ? PICBaseOffset : 0;
   MCE.addRelocation(MachineRelocation::getExtSym(MCE.getCurrentPCOffset(),
                                                  Reloc, ES, RelocCST));
   if (Reloc == X86::reloc_absolute_dword)
@@ -182,7 +183,7 @@ void Emitter::emitConstPoolAddress(unsigned CPI, unsigned Reloc,
                                    intptr_t PCAdj /* = 0 */) {
   intptr_t RelocCST = 0;
   if (Reloc == X86::reloc_picrel_word)
-    RelocCST = PICBase;
+    RelocCST = PICBaseOffset;
   else if (Reloc == X86::reloc_pcrel_word)
     RelocCST = PCAdj;
   MCE.addRelocation(MachineRelocation::getConstPool(MCE.getCurrentPCOffset(),
@@ -199,7 +200,7 @@ void Emitter::emitJumpTableAddress(unsigned JTI, unsigned Reloc,
                                    intptr_t PCAdj /* = 0 */) {
   intptr_t RelocCST = 0;
   if (Reloc == X86::reloc_picrel_word)
-    RelocCST = PICBase;
+    RelocCST = PICBaseOffset;
   else if (Reloc == X86::reloc_pcrel_word)
     RelocCST = PCAdj;
   MCE.addRelocation(MachineRelocation::getJumpTable(MCE.getCurrentPCOffset(),
@@ -615,12 +616,16 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     case X86::FP_REG_KILL:
       break;
 #endif
-    case X86::MOVPC32r:
+    case X86::MOVPC32r: {
       // This emits the "call" portion of this pseudo instruction.
       MCE.emitByte(BaseOpcode);
       emitConstant(0, sizeOfImm(Desc));
-      PICBase = MCE.getCurrentPCOffset();
+      // Remember PIC base.
+      PICBaseOffset = MCE.getCurrentPCOffset();
+      X86JITInfo *JTI = dynamic_cast<X86JITInfo*>(TM.getJITInfo());
+      JTI->setPICBase(MCE.getCurrentPCValue());
       break;
+    }
     }
     CurOp = NumOps;
     break;

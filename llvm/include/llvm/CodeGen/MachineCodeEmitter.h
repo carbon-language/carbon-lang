@@ -58,6 +58,7 @@ protected:
   /// all code emission requests will be ignored (this is the buffer overflow
   /// condition).
   unsigned char *CurBufferPtr;
+
 public:
   virtual ~MachineCodeEmitter() {}
 
