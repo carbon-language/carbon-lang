@@ -32,14 +32,14 @@ using namespace llvm;
 
 STATISTIC(EmittedInsts, "Number of machine instrs printed");
 
-static std::string computePICLabel(unsigned FnNum,
-                                   const TargetAsmInfo *TAI,
-                                   const X86Subtarget* Subtarget)  {
+static std::string getPICLabelString(unsigned FnNum,
+                                     const TargetAsmInfo *TAI,
+                                     const X86Subtarget* Subtarget) {
   std::string label;
   if (Subtarget->isTargetDarwin())
     label =  "\"L" + utostr_32(FnNum) + "$pb\"";
   else if (Subtarget->isTargetELF())
-    label = ".Lllvm$" + utostr_32(FnNum) + "$piclabel";
+    label = ".Lllvm$" + utostr_32(FnNum) + "." + "$piclabel";
   else
     assert(0 && "Don't know how to print PIC label!\n");
 
@@ -318,8 +318,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
       }
       
       if (!isCallOp && TM.getRelocationModel() == Reloc::PIC_)
-        O << "-\"" << TAI->getPrivateGlobalPrefix() << getFunctionNumber()
-          << "$pb\"";
+        O << '-' << getPICLabelString(getFunctionNumber(), TAI, Subtarget);
     } else {
       if (GV->hasDLLImportLinkage()) {
         O << "__imp_";          
@@ -420,7 +419,7 @@ void X86ATTAsmPrinter::printOperand(const MachineInstr *MI, unsigned OpNo,
         //   popl %some_register
         //   addl $_GLOBAL_ADDRESS_TABLE_ + [.-piclabel], %some_register
         O << " + [.-"
-          << computePICLabel(getFunctionNumber(), TAI, Subtarget) << "]";
+          << getPICLabelString(getFunctionNumber(), TAI, Subtarget) << "]";
 
       if (isCallOp)
         O << "@PLT";
@@ -515,11 +514,11 @@ void X86ATTAsmPrinter::printPICJumpTableSetLabel(unsigned uid,
     O << '-' << TAI->getPrivateGlobalPrefix() << "JTI" << getFunctionNumber() 
       << '_' << uid << '\n';
   else
-    O << '-' << computePICLabel(getFunctionNumber(), TAI, Subtarget) << '\n';
+    O << '-' << getPICLabelString(getFunctionNumber(), TAI, Subtarget) << '\n';
 }
 
 void X86ATTAsmPrinter::printPICLabel(const MachineInstr *MI, unsigned Op) {
-  std::string label = computePICLabel(getFunctionNumber(), TAI, Subtarget);
+  std::string label = getPICLabelString(getFunctionNumber(), TAI, Subtarget);
   O << label << "\n" << label << ":";
 }
 

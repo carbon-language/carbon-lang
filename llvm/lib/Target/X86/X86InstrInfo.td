@@ -281,6 +281,9 @@ def IMPLICIT_DEF_GR32  : I<0, Pseudo, (outs GR32:$dst), (ins),
 // Nop
 def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", []>;
 
+// PIC base
+def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins piclabel:$label),
+                    "call\t$label\n\tpop{l}\t$reg", []>;
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
@@ -407,9 +410,6 @@ let Defs = [ESP, EFLAGS], Uses = [ESP] in
 def POPFD    : I<0x9D, RawFrm, (outs), (ins), "popf", []>;
 let Defs = [ESP], Uses = [ESP, EFLAGS] in
 def PUSHFD   : I<0x9C, RawFrm, (outs), (ins), "pushf", []>;
-
-def MovePCtoStack : Ii32<0xE8, RawFrm, (outs), (ins piclabel:$label),
-                         "call\t$label", []>;
 
 let isTwoAddress = 1 in                               // GR32 = bswap GR32
   def BSWAP32r : I<0xC8, AddRegFrm,

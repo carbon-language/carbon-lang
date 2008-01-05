@@ -37,20 +37,20 @@ class X86MachineFunctionInfo : public MachineFunctionInfo {
   /// stack frame in bytes.
   unsigned CalleeSavedFrameSize;
 
-  /// BytesToPopOnReturn - amount of bytes function pops on return.
+  /// BytesToPopOnReturn - Number of bytes function pops on return.
   /// Used on windows platform for stdcall & fastcall name decoration
   unsigned BytesToPopOnReturn;
 
-  /// If the function requires additional name decoration, DecorationStyle holds
-  /// the right way to do so.
+  /// DecorationStyle - If the function requires additional name decoration,
+  /// DecorationStyle holds the right way to do so.
   NameDecorationStyle DecorationStyle;
 
-  // FrameIndex for return slot.
+  /// ReturnAddrIndex - FrameIndex for return slot.
   int ReturnAddrIndex;
 
-  // Delta the ReturnAddr stack slot is moved
-  // Used for creating an area before the register spill area on the stack
-  // the returnaddr can be savely move to this area
+  /// TailCallReturnAddrDelta - Delta the ReturnAddr stack slot is moved
+  /// Used for creating an area before the register spill area on the stack
+  /// the returnaddr can be savely move to this area
   int TailCallReturnAddrDelta;
 
 public:
@@ -59,7 +59,7 @@ public:
                              BytesToPopOnReturn(0),
                              DecorationStyle(None),
                              ReturnAddrIndex(0),
-                             TailCallReturnAddrDelta(0){}
+                             TailCallReturnAddrDelta(0) {}
   
   X86MachineFunctionInfo(MachineFunction &MF) : ForceFramePointer(false),
                                                 CalleeSavedFrameSize(0),

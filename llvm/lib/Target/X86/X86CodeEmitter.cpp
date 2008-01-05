@@ -58,7 +58,8 @@ namespace {
       return "X86 Machine Code Emitter";
     }
 
-    void emitInstruction(const MachineInstr &MI);
+    void emitInstruction(const MachineInstr &MI,
+                         const TargetInstrDescriptor *Desc);
 
   private:
     void emitPCRelativeBlockAddress(MachineBasicBlock *MBB);
@@ -112,8 +113,14 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
          MBB != E; ++MBB) {
       MCE.StartMachineBasicBlock(MBB);
       for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
-           I != E; ++I)
-        emitInstruction(*I);
+           I != E; ++I) {
+        const TargetInstrDescriptor *Desc = I->getInstrDescriptor();
+        emitInstruction(*I, Desc);
+        // MOVPC32r is basically a call plus a pop instruction.
+        if (Desc->Opcode == X86::MOVPC32r)
+          emitInstruction(*I, &II->get(X86::POP32r));
+        NumEmitted++;  // Keep track of the # of mi's emitted
+      }
     }
   } while (MCE.finishFunction(MF));
 
@@ -519,10 +526,8 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
   return REX;
 }
 
-void Emitter::emitInstruction(const MachineInstr &MI) {
-  NumEmitted++;  // Keep track of the # of mi's emitted
-
-  const TargetInstrDescriptor *Desc = MI.getInstrDescriptor();
+void Emitter::emitInstruction(const MachineInstr &MI,
+                              const TargetInstrDescriptor *Desc) {
   unsigned Opcode = Desc->Opcode;
 
   // Emit the repeat opcode prefix as needed.
@@ -587,8 +592,10 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   switch (Desc->TSFlags & X86II::FormMask) {
   default: assert(0 && "Unknown FormMask value in X86 MachineCodeEmitter!");
   case X86II::Pseudo:
-#ifndef NDEBUG
+    // Remember the current PC offset, this is the PIC relocation
+    // base address.
     switch (Opcode) {
+#ifndef NDEBUG
     default: 
       assert(0 && "psuedo instructions should be removed before code emission");
     case TargetInstrInfo::INLINEASM:
@@ -607,13 +614,20 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
     case X86::IMPLICIT_DEF_VR128:
     case X86::FP_REG_KILL:
       break;
-    }
 #endif
+    case X86::MOVPC32r:
+      // This emits the "call" portion of this pseudo instruction.
+      MCE.emitByte(BaseOpcode);
+      emitConstant(0, sizeOfImm(Desc));
+      PICBase = MCE.getCurrentPCOffset();
+      break;
+    }
     CurOp = NumOps;
     break;
 
   case X86II::RawFrm:
     MCE.emitByte(BaseOpcode);
+
     if (CurOp != NumOps) {
       const MachineOperand &MO = MI.getOperand(CurOp++);
       if (MO.isMachineBasicBlock()) {
@@ -631,11 +645,6 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
         assert(0 && "Unknown RawFrm operand!");
       }
     }
-
-    // Remember the current PC offset, this is the PIC relocation
-    // base address.
-    if (Opcode == X86::MovePCtoStack)
-      PICBase = MCE.getCurrentPCOffset();
     break;
 
   case X86II::AddRegFrm:

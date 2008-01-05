@@ -16,6 +16,7 @@
 #include "X86.h"
 #include "X86InstrBuilder.h"
 #include "X86ISelLowering.h"
+#include "X86MachineFunctionInfo.h"
 #include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
@@ -988,25 +989,24 @@ SDNode *X86DAGToDAGISel::getGlobalBaseReg() {
   assert(!Subtarget->is64Bit() && "X86-64 PIC uses RIP relative addressing");
   if (!GlobalBaseReg) {
     // Insert the set of GlobalBaseReg into the first MBB of the function
-    MachineBasicBlock &FirstMBB = BB->getParent()->front();
+    MachineFunction *MF = BB->getParent();
+    MachineBasicBlock &FirstMBB = MF->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
-    MachineRegisterInfo &RegInfo = BB->getParent()->getRegInfo();
+    MachineRegisterInfo &RegInfo = MF->getRegInfo();
     unsigned PC = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
     
     const TargetInstrInfo *TII = TM.getInstrInfo();
     // Operand of MovePCtoStack is completely ignored by asm printer. It's
     // only used in JIT code emission as displacement to pc.
-    BuildMI(FirstMBB, MBBI, TII->get(X86::MovePCtoStack)).addImm(0);
-    BuildMI(FirstMBB, MBBI, TII->get(X86::POP32r), PC);
+    BuildMI(FirstMBB, MBBI, TII->get(X86::MOVPC32r), PC).addImm(0);
     
     // If we're using vanilla 'GOT' PIC style, we should use relative addressing
     // not to pc, but to _GLOBAL_ADDRESS_TABLE_ external
     if (TM.getRelocationModel() == Reloc::PIC_ &&
         Subtarget->isPICStyleGOT()) {
       GlobalBaseReg = RegInfo.createVirtualRegister(X86::GR32RegisterClass);
-      BuildMI(FirstMBB, MBBI, TII->get(X86::ADD32ri), GlobalBaseReg).
-        addReg(PC).
-        addExternalSymbol("_GLOBAL_OFFSET_TABLE_");
+      BuildMI(FirstMBB, MBBI, TII->get(X86::ADD32ri), GlobalBaseReg)
+        .addReg(PC).addExternalSymbol("_GLOBAL_OFFSET_TABLE_");
     } else {
       GlobalBaseReg = PC;
     }
