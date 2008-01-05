@@ -282,8 +282,10 @@ def IMPLICIT_DEF_GR32  : I<0, Pseudo, (outs GR32:$dst), (ins),
 def NOOP : I<0x90, RawFrm, (outs), (ins), "nop", []>;
 
 // PIC base
+let neverHasSideEffects = 1 in {
 def MOVPC32r : Ii32<0xE8, Pseudo, (outs GR32:$reg), (ins piclabel:$label),
                     "call\t$label\n\tpop{l}\t$reg", []>;
+}
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
