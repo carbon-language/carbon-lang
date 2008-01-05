@@ -3608,17 +3608,7 @@ X86TargetLowering::LowerINSERT_VECTOR_ELT(SDOperand Op, SelectionDAG &DAG) {
       N2 = DAG.getConstant(cast<ConstantSDNode>(N2)->getValue(),getPointerTy());
     return DAG.getNode(X86ISD::PINSRW, VT, N0, N1, N2);
   }
-
-  N1 = DAG.getNode(ISD::SCALAR_TO_VECTOR, VT, N1);
-  unsigned Idx = cast<ConstantSDNode>(N2)->getValue();
-  MVT::ValueType MaskVT = MVT::getIntVectorWithNumElements(4);
-  MVT::ValueType MaskEVT = MVT::getVectorElementType(MaskVT);
-  SmallVector<SDOperand, 4> MaskVec;
-  for (unsigned i = 0; i < 4; ++i)
-    MaskVec.push_back(DAG.getConstant((i == Idx) ? i+4 : i, MaskEVT));
-  return DAG.getNode(ISD::VECTOR_SHUFFLE, VT, N0, N1,
-                     DAG.getNode(ISD::BUILD_VECTOR, MaskVT,
-                                 &MaskVec[0], MaskVec.size()));
+  return SDOperand();
 }
 
 SDOperand
