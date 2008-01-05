@@ -94,9 +94,6 @@ Stmt* Stmt::Create(Deserializer& D) {
 
     case ForStmtClass:
       return ForStmt::CreateImpl(D);
-      
-    case ObjcForCollectionStmtClass:
-      return ObjcForCollectionStmt::CreateImpl(D);
     
     case GotoStmtClass:
       return GotoStmt::CreateImpl(D);
@@ -173,6 +170,9 @@ Stmt* Stmt::Create(Deserializer& D) {
     
     case ObjCEncodeExprClass:
       return ObjCEncodeExpr::CreateImpl(D);
+      
+    case ObjcForCollectionStmtClass:
+      return ObjcForCollectionStmt::CreateImpl(D);
       
     case ObjCIvarRefExprClass:
       return ObjCIvarRefExpr::CreateImpl(D);
@@ -563,21 +563,6 @@ ForStmt* ForStmt::CreateImpl(Deserializer& D) {
   return new ForStmt(Init,Cond,Inc,Body,ForLoc);
 }
 
-void ObjcForCollectionStmt::EmitImpl(Serializer& S) const {
-  S.Emit(ForLoc);
-  S.EmitOwnedPtr(getElement());
-  S.EmitOwnedPtr(getCollection());
-  S.EmitOwnedPtr(getBody());
-}
-
-ObjcForCollectionStmt* ObjcForCollectionStmt::CreateImpl(Deserializer& D) {
-  SourceLocation ForLoc = SourceLocation::ReadVal(D);
-  Stmt* Element = D.ReadOwnedPtr<Stmt>();
-  Expr* Collection = D.ReadOwnedPtr<Expr>();
-  Stmt* Body = D.ReadOwnedPtr<Stmt>();
-  return new ObjcForCollectionStmt(Element,Collection,Body,ForLoc);
-}
-
 void GotoStmt::EmitImpl(Serializer& S) const {
   S.Emit(GotoLoc);
   S.Emit(LabelLoc);
@@ -932,6 +917,21 @@ ObjCEncodeExpr* ObjCEncodeExpr::CreateImpl(Deserializer& D) {
   QualType T = QualType::ReadVal(D);
   QualType ET = QualType::ReadVal(D);
   return new ObjCEncodeExpr(T,ET,AtLoc,RParenLoc);
+}
+
+void ObjcForCollectionStmt::EmitImpl(Serializer& S) const {
+  S.Emit(ForLoc);
+  S.EmitOwnedPtr(getElement());
+  S.EmitOwnedPtr(getCollection());
+  S.EmitOwnedPtr(getBody());
+}
+
+ObjcForCollectionStmt* ObjcForCollectionStmt::CreateImpl(Deserializer& D) {
+  SourceLocation ForLoc = SourceLocation::ReadVal(D);
+  Stmt* Element = D.ReadOwnedPtr<Stmt>();
+  Expr* Collection = D.ReadOwnedPtr<Expr>();
+  Stmt* Body = D.ReadOwnedPtr<Stmt>();
+  return new ObjcForCollectionStmt(Element,Collection,Body,ForLoc);
 }
 
 void ObjCIvarRefExpr::EmitImpl(Serializer& S) const {
