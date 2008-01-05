@@ -135,11 +135,13 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
     // Loads from constant pools are trivially rematerializable.
-    return MI->getOperand(1).isRegister() && MI->getOperand(2).isImmediate() &&
-           MI->getOperand(3).isRegister() && MI->getOperand(4).isConstantPoolIndex() &&
-           MI->getOperand(1).getReg() == 0 &&
-           MI->getOperand(2).getImm() == 1 &&
-           MI->getOperand(3).getReg() == 0;
+    if (MI->getOperand(1).isReg() && MI->getOperand(2).isImm() &&
+        MI->getOperand(3).isReg() && MI->getOperand(4).isCPI() &&
+        MI->getOperand(1).getReg() == 0 &&
+        MI->getOperand(2).getImm() == 1 &&
+        MI->getOperand(3).getReg() == 0)
+      return true;
+    return false;
   }
   // All other instructions marked M_REMATERIALIZABLE are always trivially
   // rematerializable.
@@ -168,32 +170,11 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
           MI->getOperand(3).getReg() == 0)
         return true;
     }
-    // FALLTHROUGH
-  case X86::MOV8rm:
-  case X86::MOV16rm:
-  case X86::MOV16_rm:
-  case X86::MOV32_rm:
-  case X86::MOV64rm:
-  case X86::LD_Fp64m:
-  case X86::MOVSSrm:
-  case X86::MOVSDrm:
-  case X86::MOVAPSrm:
-  case X86::MOVAPDrm:
-  case X86::MMX_MOVD64rm:
-  case X86::MMX_MOVQ64rm:
-    // Loads from constant pools have no side effects
-    return MI->getOperand(1).isRegister() &&
-           MI->getOperand(2).isImmediate() &&
-           MI->getOperand(3).isRegister() &&
-           MI->getOperand(4).isConstantPoolIndex() &&
-           MI->getOperand(1).getReg() == 0 &&
-           MI->getOperand(2).getImm() == 1 &&
-           MI->getOperand(3).getReg() == 0;
+    break;
   }
 
-  // All other instances of these instructions are presumed to have side
-  // effects.
-  return false;
+  // Anything that is rematerializable obviously has no side effects.
+  return isReallyTriviallyReMaterializable(MI);
 }
 
 /// hasLiveCondCodeDef - True if MI has a condition code def, e.g. EFLAGS, that
