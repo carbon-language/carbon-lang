@@ -106,6 +106,17 @@ std::string llvm::getEnumName(MVT::ValueType T) {
   }
 }
 
+/// getQualifiedName - Return the name of the specified record, with a
+/// namespace qualifier if the record contains one.
+///
+std::string llvm::getQualifiedName(const Record *R) {
+  std::string Namespace = R->getValueAsString("Namespace");
+  if (Namespace.empty()) return R->getName();
+  return Namespace + "::" + R->getName();
+}
+
+
+
 
 /// getTarget - Return the current instance of the Target class.
 ///

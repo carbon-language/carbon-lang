@@ -40,7 +40,10 @@ MVT::ValueType getValueType(Record *Rec);
 std::string getName(MVT::ValueType T);
 std::string getEnumName(MVT::ValueType T);
 
-
+/// getQualifiedName - Return the name of the specified record, with a
+/// namespace qualifier if the record contains one.
+std::string getQualifiedName(const Record *R);
+  
 /// CodeGenTarget - This class corresponds to the Target class in the .td files.
 ///
 class CodeGenTarget {

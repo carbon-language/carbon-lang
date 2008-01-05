@@ -113,11 +113,10 @@ bool isSubRegisterClass(const CodeGenRegisterClass &RC,
 static void addSuperReg(Record *R, Record *S,
                         std::map<Record*, std::set<Record*> > &SubRegs,
                         std::map<Record*, std::set<Record*> > &SuperRegs,
-                        std::map<Record*, std::set<Record*> > &Aliases,
-                        RegisterInfoEmitter &RIE) {
+                        std::map<Record*, std::set<Record*> > &Aliases) {
   if (R == S) {
     cerr << "Error: recursive sub-register relationship between"
-         << " register " << RIE.getQualifiedName(R)
+         << " register " << getQualifiedName(R)
          << " and its sub-registers?\n";
     abort();
   }
@@ -129,30 +128,29 @@ static void addSuperReg(Record *R, Record *S,
   if (SuperRegs.count(S))
     for (std::set<Record*>::iterator I = SuperRegs[S].begin(),
            E = SuperRegs[S].end(); I != E; ++I)
-      addSuperReg(R, *I, SubRegs, SuperRegs, Aliases, RIE);
+      addSuperReg(R, *I, SubRegs, SuperRegs, Aliases);
 }
 
 static void addSubSuperReg(Record *R, Record *S,
                            std::map<Record*, std::set<Record*> > &SubRegs,
                            std::map<Record*, std::set<Record*> > &SuperRegs,
-                           std::map<Record*, std::set<Record*> > &Aliases,
-                           RegisterInfoEmitter &RIE) {
+                           std::map<Record*, std::set<Record*> > &Aliases) {
   if (R == S) {
     cerr << "Error: recursive sub-register relationship between"
-         << " register " << RIE.getQualifiedName(R)
+         << " register " << getQualifiedName(R)
          << " and its sub-registers?\n";
     abort();
   }
 
   if (!SubRegs[R].insert(S).second)
     return;
-  addSuperReg(S, R, SubRegs, SuperRegs, Aliases, RIE);
+  addSuperReg(S, R, SubRegs, SuperRegs, Aliases);
   Aliases[R].insert(S);
   Aliases[S].insert(R);
   if (SubRegs.count(S))
     for (std::set<Record*>::iterator I = SubRegs[S].begin(),
            E = SubRegs[S].end(); I != E; ++I)
-      addSubSuperReg(R, *I, SubRegs, SuperRegs, Aliases, RIE);
+      addSubSuperReg(R, *I, SubRegs, SuperRegs, Aliases);
 }
 
 // RegisterInfoEmitter::run - Main register file description emitter.
@@ -446,7 +444,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
              << " multiple times!\n";
       RegisterImmSubRegs[R].insert(SubReg);
       addSubSuperReg(R, SubReg, RegisterSubRegs, RegisterSuperRegs,
-                     RegisterAliases, *this);
+                     RegisterAliases);
     }
   }
 

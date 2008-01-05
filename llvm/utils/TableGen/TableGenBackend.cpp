@@ -23,12 +23,3 @@ void TableGenBackend::EmitSourceFileHeader(const std::string &Desc,
        "----------------------------------===//\n\n";
 }
 
-/// getQualifiedName - Return the name of the specified record, with a
-/// namespace qualifier if the record contains one.
-///
-std::string TableGenBackend::getQualifiedName(Record *R) const {
-  std::string Namespace = R->getValueAsString("Namespace");
-  if (Namespace.empty()) return R->getName();
-  return Namespace + "::" + R->getName();
-}
-
