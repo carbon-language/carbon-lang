@@ -130,6 +130,10 @@ bool MachineSinking::ProcessBlock(MachineBasicBlock &MBB) {
 /// SinkInstruction - Determine whether it is safe to sink the specified machine
 /// instruction out of its current block into a successor.
 bool MachineSinking::SinkInstruction(MachineInstr *MI) {
+  // Don't sink things with side-effects we don't understand.
+  if (TII->hasUnmodelledSideEffects(MI))
+    return false;
+  
   // Loop over all the operands of the specified instruction.  If there is
   // anything we can't handle, bail out.
   MachineBasicBlock *ParentBlock = MI->getParent();
