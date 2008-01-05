@@ -180,6 +180,10 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI) {
     }
   }
   
+  // If there are no outputs, it must have side-effects.
+  if (SuccToSinkTo == 0)
+    return false;
+  
   // FIXME: Check that the instr doesn't have side effects etc.
   
   DEBUG(cerr << "Sink instr " << *MI);
