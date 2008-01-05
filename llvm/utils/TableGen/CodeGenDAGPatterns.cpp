@@ -12,13 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CodegenDAGPatterns.h"
+#include "CodeGenDAGPatterns.h"
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
-//#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Streams.h"
-//#include <algorithm>
 #include <set>
 using namespace llvm;
 
