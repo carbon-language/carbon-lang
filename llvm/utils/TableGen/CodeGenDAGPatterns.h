@@ -507,10 +507,9 @@ public:
   pf_iterator pf_end() const { return PatternFragments.end(); }
 
   // Patterns to match information.
-  // FIXME: make a const_iterator.
-  typedef std::vector<PatternToMatch>::iterator ptm_iterator;
-  ptm_iterator ptm_begin() { return PatternsToMatch.begin(); }
-  ptm_iterator ptm_end() { return PatternsToMatch.end(); }
+  typedef std::vector<PatternToMatch>::const_iterator ptm_iterator;
+  ptm_iterator ptm_begin() const { return PatternsToMatch.begin(); }
+  ptm_iterator ptm_end() const { return PatternsToMatch.end(); }
   
   
   

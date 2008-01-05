@@ -33,12 +33,12 @@ public:
   
   
 private:
-  void GenerateCodeForPattern(PatternToMatch &Pattern,
+  void GenerateCodeForPattern(const PatternToMatch &Pattern,
                   std::vector<std::pair<unsigned, std::string> > &GeneratedCode,
                               std::set<std::string> &GeneratedDecl,
                               std::vector<std::string> &TargetOpcodes,
                               std::vector<std::string> &TargetVTs);
-  void EmitPatterns(std::vector<std::pair<PatternToMatch*, 
+  void EmitPatterns(std::vector<std::pair<const PatternToMatch*, 
                   std::vector<std::pair<unsigned, std::string> > > > &Patterns, 
                     unsigned Indent, std::ostream &OS);
   void EmitInstructionSelector(std::ostream &OS);

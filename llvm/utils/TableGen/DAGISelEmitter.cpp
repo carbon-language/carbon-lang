@@ -139,8 +139,8 @@ struct PatternSortingPredicate {
   PatternSortingPredicate(CodegenDAGPatterns &cgp) : CGP(cgp) {}
   CodegenDAGPatterns &CGP;
 
-  bool operator()(PatternToMatch *LHS,
-                  PatternToMatch *RHS) {
+  bool operator()(const PatternToMatch *LHS,
+                  const PatternToMatch *RHS) {
     unsigned LHSSize = getPatternSize(LHS->getSrcPattern(), CGP);
     unsigned RHSSize = getPatternSize(RHS->getSrcPattern(), CGP);
     LHSSize += LHS->getAddedComplexity();
@@ -1194,7 +1194,7 @@ private:
 /// EmitCodeForPattern - Given a pattern to match, emit code to the specified
 /// stream to match the pattern, and generate the code for the match if it
 /// succeeds.  Returns true if the pattern is not guaranteed to match.
-void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
+void DAGISelEmitter::GenerateCodeForPattern(const PatternToMatch &Pattern,
                   std::vector<std::pair<unsigned, std::string> > &GeneratedCode,
                                            std::set<std::string> &GeneratedDecl,
                                         std::vector<std::string> &TargetOpcodes,
@@ -1252,7 +1252,7 @@ void DAGISelEmitter::GenerateCodeForPattern(PatternToMatch &Pattern,
 /// EraseCodeLine - Erase one code line from all of the patterns.  If removing
 /// a line causes any of them to be empty, remove them and return true when
 /// done.
-static bool EraseCodeLine(std::vector<std::pair<PatternToMatch*, 
+static bool EraseCodeLine(std::vector<std::pair<const PatternToMatch*, 
                           std::vector<std::pair<unsigned, std::string> > > >
                           &Patterns) {
   bool ErasedPatterns = false;
@@ -1269,13 +1269,13 @@ static bool EraseCodeLine(std::vector<std::pair<PatternToMatch*,
 
 /// EmitPatterns - Emit code for at least one pattern, but try to group common
 /// code together between the patterns.
-void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*, 
+void DAGISelEmitter::EmitPatterns(std::vector<std::pair<const PatternToMatch*, 
                               std::vector<std::pair<unsigned, std::string> > > >
                                   &Patterns, unsigned Indent,
                                   std::ostream &OS) {
   typedef std::pair<unsigned, std::string> CodeLine;
   typedef std::vector<CodeLine> CodeList;
-  typedef std::vector<std::pair<PatternToMatch*, CodeList> > PatternList;
+  typedef std::vector<std::pair<const PatternToMatch*, CodeList> > PatternList;
   
   if (Patterns.empty()) return;
   
@@ -1295,7 +1295,7 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*,
     
     // FIXME: Emit braces?
     if (Shared.size() == 1) {
-      PatternToMatch &Pattern = *Shared.back().first;
+      const PatternToMatch &Pattern = *Shared.back().first;
       OS << "\n" << std::string(Indent, ' ') << "// Pattern: ";
       Pattern.getSrcPattern()->print(OS);
       OS << "\n" << std::string(Indent, ' ') << "// Emits: ";
@@ -1320,7 +1320,7 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<PatternToMatch*,
     }
     
     if (Other.size() == 1) {
-      PatternToMatch &Pattern = *Other.back().first;
+      const PatternToMatch &Pattern = *Other.back().first;
       OS << "\n" << std::string(Indent, ' ') << "// Pattern: ";
       Pattern.getSrcPattern()->print(OS);
       OS << "\n" << std::string(Indent, ' ') << "// Emits: ";
@@ -1408,12 +1408,12 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   if (!InstNS.empty()) InstNS += "::";
   
   // Group the patterns by their top-level opcodes.
-  std::map<std::string, std::vector<PatternToMatch*> > PatternsByOpcode;
+  std::map<std::string, std::vector<const PatternToMatch*> > PatternsByOpcode;
   // All unique target node emission functions.
   std::map<std::string, unsigned> EmitFunctions;
   for (CodegenDAGPatterns::ptm_iterator I = CGP->ptm_begin(),
        E = CGP->ptm_end(); I != E; ++I) {
-    PatternToMatch &Pattern = *I;
+    const PatternToMatch &Pattern = *I;
 
     TreePatternNode *Node = Pattern.getSrcPattern();
     if (!Node->isLeaf()) {
@@ -1449,11 +1449,11 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   // Emit one Select_* method for each top-level opcode.  We do this instead of
   // emitting one giant switch statement to support compilers where this will
   // result in the recursive functions taking less stack space.
-  for (std::map<std::string, std::vector<PatternToMatch*> >::iterator
+  for (std::map<std::string, std::vector<const PatternToMatch*> >::iterator
          PBOI = PatternsByOpcode.begin(), E = PatternsByOpcode.end();
        PBOI != E; ++PBOI) {
     const std::string &OpName = PBOI->first;
-    std::vector<PatternToMatch*> &PatternsOfOp = PBOI->second;
+    std::vector<const PatternToMatch*> &PatternsOfOp = PBOI->second;
     assert(!PatternsOfOp.empty() && "No patterns but map has entry?");
 
     // We want to emit all of the matching code now.  However, we want to emit
@@ -1463,31 +1463,32 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
                      PatternSortingPredicate(*CGP));
 
     // Split them into groups by type.
-    std::map<MVT::ValueType, std::vector<PatternToMatch*> > PatternsByType;
+    std::map<MVT::ValueType, std::vector<const PatternToMatch*> >PatternsByType;
     for (unsigned i = 0, e = PatternsOfOp.size(); i != e; ++i) {
-      PatternToMatch *Pat = PatternsOfOp[i];
+      const PatternToMatch *Pat = PatternsOfOp[i];
       TreePatternNode *SrcPat = Pat->getSrcPattern();
       MVT::ValueType VT = SrcPat->getTypeNum(0);
-      std::map<MVT::ValueType, std::vector<PatternToMatch*> >::iterator TI = 
+      std::map<MVT::ValueType, 
+               std::vector<const PatternToMatch*> >::iterator TI = 
         PatternsByType.find(VT);
       if (TI != PatternsByType.end())
         TI->second.push_back(Pat);
       else {
-        std::vector<PatternToMatch*> PVec;
+        std::vector<const PatternToMatch*> PVec;
         PVec.push_back(Pat);
         PatternsByType.insert(std::make_pair(VT, PVec));
       }
     }
 
-    for (std::map<MVT::ValueType, std::vector<PatternToMatch*> >::iterator
+    for (std::map<MVT::ValueType, std::vector<const PatternToMatch*> >::iterator
            II = PatternsByType.begin(), EE = PatternsByType.end(); II != EE;
          ++II) {
       MVT::ValueType OpVT = II->first;
-      std::vector<PatternToMatch*> &Patterns = II->second;
+      std::vector<const PatternToMatch*> &Patterns = II->second;
       typedef std::vector<std::pair<unsigned,std::string> > CodeList;
       typedef std::vector<std::pair<unsigned,std::string> >::iterator CodeListI;
     
-      std::vector<std::pair<PatternToMatch*, CodeList> > CodeForPatterns;
+      std::vector<std::pair<const PatternToMatch*, CodeList> > CodeForPatterns;
       std::vector<std::vector<std::string> > PatternOpcodes;
       std::vector<std::vector<std::string> > PatternVTs;
       std::vector<std::set<std::string> > PatternDecls;
@@ -1757,7 +1758,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     
   // Loop over all of the case statements, emiting a call to each method we
   // emitted above.
-  for (std::map<std::string, std::vector<PatternToMatch*> >::iterator
+  for (std::map<std::string, std::vector<const PatternToMatch*> >::iterator
          PBOI = PatternsByOpcode.begin(), E = PatternsByOpcode.end();
        PBOI != E; ++PBOI) {
     const std::string &OpName = PBOI->first;
