@@ -17,6 +17,7 @@
 
 #include "X86Subtarget.h"
 #include "X86RegisterInfo.h"
+#include "X86MachineFunctionInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/CallingConvLower.h"
@@ -438,22 +439,11 @@ namespace llvm {
                                const CCValAssign &VA, SDOperand Chain,
                                SDOperand Arg);
 
-    // C and StdCall Calling Convention implementation.
-    SDOperand LowerCCCArguments(SDOperand Op, SelectionDAG &DAG,
-                                bool isStdCall = false);
-    SDOperand LowerCCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC);
-
-    // X86-64 C Calling Convention implementation.
-    SDOperand LowerX86_64CCCArguments(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerX86_64CCCCallTo(SDOperand Op, SelectionDAG &DAG,unsigned CC);
-
-    // fast calling convention (tail call) implementation for 32/64bit
-    SDOperand LowerX86_TailCallTo(SDOperand Op, 
-                                      SelectionDAG & DAG, unsigned CC);
+    // Call lowering helpers.
+    bool IsCalleePop(SDOperand Op);
+    CCAssignFn *CCAssignFnForNode(SDOperand Op) const;
+    NameDecorationStyle NameDecorationForFORMAL_ARGUMENTS(SDOperand Op);
     unsigned GetAlignedArgumentStackSize(unsigned StackSize, SelectionDAG &DAG);
-    // Fast and FastCall Calling Convention implementation.
-    SDOperand LowerFastCCArguments(SDOperand Op, SelectionDAG &DAG);
-    SDOperand LowerFastCCCallTo(SDOperand Op, SelectionDAG &DAG, unsigned CC);
 
     std::pair<SDOperand,SDOperand> FP_TO_SINTHelper(SDOperand Op, 
                                                     SelectionDAG &DAG);
