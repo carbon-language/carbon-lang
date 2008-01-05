@@ -135,11 +135,13 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
     // Loads from constant pools are trivially rematerializable.
-    return MI->getOperand(1).isRegister() && MI->getOperand(2).isImmediate() &&
-           MI->getOperand(3).isRegister() && MI->getOperand(4).isConstantPoolIndex() &&
-           MI->getOperand(1).getReg() == 0 &&
-           MI->getOperand(2).getImm() == 1 &&
-           MI->getOperand(3).getReg() == 0;
+    if (MI->getOperand(1).isReg() && MI->getOperand(2).isImm() &&
+        MI->getOperand(3).isReg() && MI->getOperand(4).isCPI() &&
+        MI->getOperand(1).getReg() == 0 &&
+        MI->getOperand(2).getImm() == 1 &&
+        MI->getOperand(3).getReg() == 0)
+      return true;
+    return false;
   }
   // All other instructions marked M_REMATERIALIZABLE are always trivially
   // rematerializable.
@@ -161,10 +163,8 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
       // Loads from global addresses which aren't redefined in the function are
       // side effect free.
       if (Reg != 0 && MRegisterInfo::isVirtualRegister(Reg) &&
-          MI->getOperand(2).isImmediate() &&
-          MI->getOperand(3).isRegister() &&
-          MI->getOperand(4).isGlobalAddress() &&
-          MI->getOperand(2).getImm() == 1 &&
+          MI->getOperand(2).isImm() && MI->getOperand(3).isReg() &&
+          MI->getOperand(4).isGlobal() && MI->getOperand(2).getImm() == 1 &&
           MI->getOperand(3).getReg() == 0)
         return true;
     }
@@ -181,14 +181,14 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
   case X86::MOVAPDrm:
   case X86::MMX_MOVD64rm:
   case X86::MMX_MOVQ64rm:
-    // Loads from constant pools have no side effects
-    return MI->getOperand(1).isRegister() &&
-           MI->getOperand(2).isImmediate() &&
-           MI->getOperand(3).isRegister() &&
-           MI->getOperand(4).isConstantPoolIndex() &&
-           MI->getOperand(1).getReg() == 0 &&
-           MI->getOperand(2).getImm() == 1 &&
-           MI->getOperand(3).getReg() == 0;
+    // Loads from constant pools are trivially rematerializable.
+    if (MI->getOperand(1).isReg() && MI->getOperand(2).isImm() &&
+        MI->getOperand(3).isReg() && MI->getOperand(4).isCPI() &&
+        MI->getOperand(1).getReg() == 0 &&
+        MI->getOperand(2).getImm() == 1 &&
+        MI->getOperand(3).getReg() == 0)
+      return true;
+    return false;
   }
 
   // All other instances of these instructions are presumed to have side
