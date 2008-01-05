@@ -193,6 +193,9 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
 
   if (PerformLICM)
     PM.add(createMachineLICMPass());
+  
+  if (EnableSinking)
+    PM.add(createMachineSinkingPass());
 
   // Perform register allocation to convert to a concrete x86 representation
   PM.add(createRegisterAllocator());
