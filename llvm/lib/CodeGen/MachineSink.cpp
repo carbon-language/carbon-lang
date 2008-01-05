@@ -134,6 +134,18 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI) {
   if (TII->hasUnmodelledSideEffects(MI))
     return false;
   
+  // FIXME: we should be able to sink loads with no other side effects if there
+  // is nothing that can change memory from here until the end of block.  This
+  // is a trivial form of alias analysis.
+  
+  // FIXME: This should include support for sinking instructions within the
+  // block they are currently in to shorten the live ranges.  We often get
+  // instructions sunk into the top of a large block, but it would be better to
+  // also sink them down before their first use in the block.  This xform has to
+  // be careful not to *increase* register pressure though, e.g. sinking
+  // "x = y + z" down if it kills y and z would increase the live ranges of y
+  // and z only the shrink the live range of x.
+  
   // Loop over all the operands of the specified instruction.  If there is
   // anything we can't handle, bail out.
   MachineBasicBlock *ParentBlock = MI->getParent();
@@ -157,6 +169,17 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI) {
     } else {
       // Virtual register uses are always safe to sink.
       if (MO.isUse()) continue;
+      
+      // FIXME: This picks a successor to sink into based on having one
+      // successor that dominates all the uses.  However, there are cases where
+      // sinking can happen but where the sink point isn't a successor.  For
+      // example:
+      //   x = computation
+      //   if () {} else {}
+      //   use x
+      // the instruction could be sunk over the whole diamond for the 
+      // if/then/else (or loop, etc), allowing it to be sunk into other blocks
+      // after that.
       
       // Virtual register defs can only be sunk if all their uses are in blocks
       // dominated by one of the successors.
@@ -188,14 +211,13 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI) {
   if (SuccToSinkTo == 0)
     return false;
   
-  // FIXME: Check that the instr doesn't have side effects etc.
-  
   DEBUG(cerr << "Sink instr " << *MI);
   DEBUG(cerr << "to block " << *SuccToSinkTo);
   
   // If the block has multiple predecessors, this would introduce computation on
   // a path that it doesn't already exist.  We could split the critical edge,
   // but for now we just punt.
+  // FIXME: Split critical edges if not backedges.
   if (SuccToSinkTo->pred_size() > 1) {
     DEBUG(cerr << " *** PUNTING: Critical edge found\n");
     return false;
