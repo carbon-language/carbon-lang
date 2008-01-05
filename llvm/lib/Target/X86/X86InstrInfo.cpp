@@ -173,8 +173,7 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
       unsigned Reg = MI->getOperand(1).getReg();
       const X86Subtarget &ST = TM.getSubtarget<X86Subtarget>();
 
-      // Loads from global addresses which aren't redefined in the function are
-      // side effect free.
+      // Loads from stubs of global addresses are side effect free.
       if (Reg != 0 && MRegisterInfo::isVirtualRegister(Reg) &&
           MI->getOperand(2).isImm() && MI->getOperand(3).isReg() &&
           MI->getOperand(4).isGlobal() &&
