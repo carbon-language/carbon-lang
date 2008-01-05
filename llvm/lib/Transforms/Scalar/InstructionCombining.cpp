@@ -4865,10 +4865,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
       if (isMinValuePlusOne(CI,true))              // A <s MIN+1 -> A == MIN
         return new ICmpInst(ICmpInst::ICMP_EQ, Op0, SubOne(CI));
-      
-      // (icmp slt (sub A B) 1) -> (icmp sle A B)
-      if (CI->isOne() && match(Op0, m_Sub(m_Value(A), m_Value(B))))
-        return new ICmpInst(ICmpInst::ICMP_SLE, A, B);
       break;
 
     case ICmpInst::ICMP_UGT:
@@ -4892,11 +4888,6 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
         return new ICmpInst(ICmpInst::ICMP_NE, Op0, Op1);
       if (isMaxValueMinusOne(CI, true))           // A >s MAX-1 -> A == MAX
         return new ICmpInst(ICmpInst::ICMP_EQ, Op0, AddOne(CI));
-      
-      // (icmp sgt (sub A B) -1) -> (icmp sge A B)
-      if (CI->getValue().getSExtValue() == -1 && 
-          match(Op0, m_Sub(m_Value(A), m_Value(B))))
-        return new ICmpInst(ICmpInst::ICMP_SGE, A, B);
       break;
 
     case ICmpInst::ICMP_ULE:
