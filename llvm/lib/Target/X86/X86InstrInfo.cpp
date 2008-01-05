@@ -141,6 +141,18 @@ bool X86InstrInfo::isReallyTriviallyReMaterializable(MachineInstr *MI) const {
         MI->getOperand(2).getImm() == 1 &&
         MI->getOperand(3).getReg() == 0)
       return true;
+      
+    // If this is a load from a fixed argument slot, we know the value is
+    // invariant across the whole function, because we don't redefine argument
+    // values.
+#if 0
+    // FIXME: This is disabled due to a remat bug. rdar://5671644
+    MachineFunction *MF = MI->getParent()->getParent();
+    if (MI->getOperand(1).isFI() && 
+        MF->getFrameInfo()->isFixedObjectIndex(MI->getOperand(1).getIndex()))
+      return true;
+#endif
+      
     return false;
   }
   // All other instructions marked M_REMATERIALIZABLE are always trivially
@@ -188,6 +200,15 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
         MI->getOperand(2).getImm() == 1 &&
         MI->getOperand(3).getReg() == 0)
       return true;
+      
+    // If this is a load from a fixed argument slot, we know the value is
+    // invariant across the whole function, because we don't redefine argument
+    // values.
+    MachineFunction *MF = MI->getParent()->getParent();
+    if (MI->getOperand(1).isFI() && 
+        MF->getFrameInfo()->isFixedObjectIndex(MI->getOperand(1).getIndex()))
+      return true;
+      
     return false;
   }
 
