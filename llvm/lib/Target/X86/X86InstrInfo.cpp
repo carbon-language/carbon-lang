@@ -171,12 +171,15 @@ bool X86InstrInfo::isReallySideEffectFree(MachineInstr *MI) const {
   case X86::MOV32rm:
     if (MI->getOperand(1).isRegister()) {
       unsigned Reg = MI->getOperand(1).getReg();
+      const X86Subtarget &ST = TM.getSubtarget<X86Subtarget>();
 
       // Loads from global addresses which aren't redefined in the function are
       // side effect free.
       if (Reg != 0 && MRegisterInfo::isVirtualRegister(Reg) &&
           MI->getOperand(2).isImm() && MI->getOperand(3).isReg() &&
-          MI->getOperand(4).isGlobal() && MI->getOperand(2).getImm() == 1 &&
+          MI->getOperand(4).isGlobal() &&
+          ST.GVRequiresExtraLoad(MI->getOperand(4).getGlobal(), TM, false) &&
+          MI->getOperand(2).getImm() == 1 &&
           MI->getOperand(3).getReg() == 0)
         return true;
     }
