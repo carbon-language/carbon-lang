@@ -33,6 +33,7 @@ public:
   
   
 private:
+  void EmitNodeTransforms(std::ostream &OS);
   void EmitPredicateFunctions(std::ostream &OS);
   
   void GenerateCodeForPattern(const PatternToMatch &Pattern,

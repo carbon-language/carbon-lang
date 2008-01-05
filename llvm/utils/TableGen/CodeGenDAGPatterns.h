@@ -451,7 +451,7 @@ class CodegenDAGPatterns {
   /// emit.
   std::vector<PatternToMatch> PatternsToMatch;
 public:
-  CodegenDAGPatterns(RecordKeeper &R, std::ostream &OS); 
+  CodegenDAGPatterns(RecordKeeper &R); 
   ~CodegenDAGPatterns();
   
   const CodeGenTarget &getTargetInfo() const { return Target; }
@@ -463,10 +463,17 @@ public:
     return SDNodes.find(R)->second;
   }
   
-  const std::pair<Record*, std::string> &getSDNodeTransform(Record *R) const {
+  // Node transformation lookups.
+  typedef std::pair<Record*, std::string> NodeXForm;
+  const NodeXForm &getSDNodeTransform(Record *R) const {
     assert(SDNodeXForms.count(R) && "Invalid transform!");
     return SDNodeXForms.find(R)->second;
   }
+  
+  typedef std::map<Record*, NodeXForm>::const_iterator nx_iterator;
+  nx_iterator nx_begin() const { return SDNodeXForms.begin(); }
+  nx_iterator nx_end() const { return SDNodeXForms.end(); }
+
   
   const ComplexPattern &getComplexPattern(Record *R) const {
     assert(ComplexPatterns.count(R) && "Unknown addressing mode!");
@@ -530,7 +537,7 @@ public:
   
 private:
   void ParseNodeInfo();
-  void ParseNodeTransforms(std::ostream &OS);
+  void ParseNodeTransforms();
   void ParseComplexPatterns();
   void ParsePatternFragments();
   void ParseDefaultOperands();

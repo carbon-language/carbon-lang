@@ -207,6 +207,39 @@ static bool PatternHasProperty(TreePatternNode *N, SDNP Property,
 }
 
 //===----------------------------------------------------------------------===//
+// Node Transformation emitter implementation.
+//
+void DAGISelEmitter::EmitNodeTransforms(std::ostream &OS) {
+  // Walk the pattern fragments, adding them to a map, which sorts them by
+  // name.
+  typedef std::map<std::string, CodegenDAGPatterns::NodeXForm> NXsByNameTy;
+  NXsByNameTy NXsByName;
+
+  for (CodegenDAGPatterns::nx_iterator I = CGP->nx_begin(), E = CGP->nx_end();
+       I != E; ++I)
+    NXsByName.insert(std::make_pair(I->first->getName(), I->second));
+  
+  OS << "\n// Node transformations.\n";
+  
+  for (NXsByNameTy::iterator I = NXsByName.begin(), E = NXsByName.end();
+       I != E; ++I) {
+    Record *SDNode = I->second.first;
+    std::string Code = I->second.second;
+    
+    if (Code.empty()) continue;  // Empty code?  Skip it.
+    
+    std::string ClassName = CGP->getSDNodeInfo(SDNode).getSDClassName();
+    const char *C2 = ClassName == "SDNode" ? "N" : "inN";
+    
+    OS << "inline SDOperand Transform_" << I->first << "(SDNode *" << C2
+       << ") {\n";
+    if (ClassName != "SDNode")
+      OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
+    OS << Code << "\n}\n";
+  }
+}
+
+//===----------------------------------------------------------------------===//
 // Predicate emitter implementation.
 //
 
@@ -2010,10 +2043,11 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "  return Dummy.getValue();\n";
   OS << "}\n";
   
-  CodegenDAGPatterns CGP(Records, OS);
+  CodegenDAGPatterns CGP(Records);
 
   this->CGP = &CGP;
   
+  EmitNodeTransforms(OS);
   EmitPredicateFunctions(OS);
   
   DOUT << "\n\nALL PATTERNS TO MATCH:\n\n";

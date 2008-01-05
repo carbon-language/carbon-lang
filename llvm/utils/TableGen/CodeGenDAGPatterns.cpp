@@ -1112,12 +1112,10 @@ void TreePattern::dump() const { print(*cerr.stream()); }
 //
 
 // FIXME: REMOVE OSTREAM ARGUMENT
-CodegenDAGPatterns::CodegenDAGPatterns(RecordKeeper &R, std::ostream &OS)
-  : Records(R) {
-    
+CodegenDAGPatterns::CodegenDAGPatterns(RecordKeeper &R) : Records(R) {
   Intrinsics = LoadIntrinsics(Records);
   ParseNodeInfo();
-  ParseNodeTransforms(OS);
+  ParseNodeTransforms();
   ParseComplexPatterns();
   ParsePatternFragments();
   ParseDefaultOperands();
@@ -1161,26 +1159,13 @@ void CodegenDAGPatterns::ParseNodeInfo() {
 
 /// ParseNodeTransforms - Parse all SDNodeXForm instances into the SDNodeXForms
 /// map, and emit them to the file as functions.
-void CodegenDAGPatterns::ParseNodeTransforms(std::ostream &OS) {
-  OS << "\n// Node transformations.\n";
+void CodegenDAGPatterns::ParseNodeTransforms() {
   std::vector<Record*> Xforms = Records.getAllDerivedDefinitions("SDNodeXForm");
   while (!Xforms.empty()) {
     Record *XFormNode = Xforms.back();
     Record *SDNode = XFormNode->getValueAsDef("Opcode");
     std::string Code = XFormNode->getValueAsCode("XFormFunction");
-    SDNodeXForms.insert(std::make_pair(XFormNode,
-                                       std::make_pair(SDNode, Code)));
-
-    if (!Code.empty()) {
-      std::string ClassName = getSDNodeInfo(SDNode).getSDClassName();
-      const char *C2 = ClassName == "SDNode" ? "N" : "inN";
-
-      OS << "inline SDOperand Transform_" << XFormNode->getName()
-         << "(SDNode *" << C2 << ") {\n";
-      if (ClassName != "SDNode")
-        OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
-      OS << Code << "\n}\n";
-    }
+    SDNodeXForms.insert(std::make_pair(XFormNode, NodeXForm(SDNode, Code)));
 
     Xforms.pop_back();
   }
