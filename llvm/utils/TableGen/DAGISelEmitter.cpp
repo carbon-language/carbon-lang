@@ -215,7 +215,7 @@ void DAGISelEmitter::EmitNodeTransforms(std::ostream &OS) {
   typedef std::map<std::string, CodegenDAGPatterns::NodeXForm> NXsByNameTy;
   NXsByNameTy NXsByName;
 
-  for (CodegenDAGPatterns::nx_iterator I = CGP->nx_begin(), E = CGP->nx_end();
+  for (CodegenDAGPatterns::nx_iterator I = CGP.nx_begin(), E = CGP.nx_end();
        I != E; ++I)
     NXsByName.insert(std::make_pair(I->first->getName(), I->second));
   
@@ -228,7 +228,7 @@ void DAGISelEmitter::EmitNodeTransforms(std::ostream &OS) {
     
     if (Code.empty()) continue;  // Empty code?  Skip it.
     
-    std::string ClassName = CGP->getSDNodeInfo(SDNode).getSDClassName();
+    std::string ClassName = CGP.getSDNodeInfo(SDNode).getSDClassName();
     const char *C2 = ClassName == "SDNode" ? "N" : "inN";
     
     OS << "inline SDOperand Transform_" << I->first << "(SDNode *" << C2
@@ -251,7 +251,7 @@ void DAGISelEmitter::EmitPredicateFunctions(std::ostream &OS) {
   typedef std::map<std::string, std::pair<Record*, TreePattern*> > PFsByNameTy;
   PFsByNameTy PFsByName;
 
-  for (CodegenDAGPatterns::pf_iterator I = CGP->pf_begin(), E = CGP->pf_end();
+  for (CodegenDAGPatterns::pf_iterator I = CGP.pf_begin(), E = CGP.pf_end();
        I != E; ++I)
     PFsByName.insert(std::make_pair(I->first->getName(), *I));
 
@@ -270,7 +270,7 @@ void DAGISelEmitter::EmitPredicateFunctions(std::ostream &OS) {
       << "(SDNode *N) {\n";
     else {
       std::string ClassName =
-        CGP->getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
+        CGP.getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
       const char *C2 = ClassName == "SDNode" ? "N" : "inN";
       
       OS << "inline bool Predicate_" << PatFragRecord->getName()
@@ -1280,7 +1280,7 @@ void DAGISelEmitter::GenerateCodeForPattern(const PatternToMatch &Pattern,
                                            std::set<std::string> &GeneratedDecl,
                                         std::vector<std::string> &TargetOpcodes,
                                           std::vector<std::string> &TargetVTs) {
-  PatternCodeEmitter Emitter(*CGP, Pattern.getPredicates(),
+  PatternCodeEmitter Emitter(CGP, Pattern.getPredicates(),
                              Pattern.getSrcPattern(), Pattern.getDstPattern(),
                              GeneratedCode, GeneratedDecl,
                              TargetOpcodes, TargetVTs);
@@ -1290,7 +1290,7 @@ void DAGISelEmitter::GenerateCodeForPattern(const PatternToMatch &Pattern,
   Emitter.EmitMatchCode(Pattern.getSrcPattern(), NULL, "N", "", FoundChain);
 
   // TP - Get *SOME* tree pattern, we don't care which.
-  TreePattern &TP = *CGP->pf_begin()->second;
+  TreePattern &TP = *CGP.pf_begin()->second;
   
   // At this point, we know that we structurally match the pattern, but the
   // types of the nodes may not match.  Figure out the fewest number of type 
@@ -1384,11 +1384,11 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<const PatternToMatch*,
       OS << "\n";
       unsigned AddedComplexity = Pattern.getAddedComplexity();
       OS << std::string(Indent, ' ') << "// Pattern complexity = "
-         << getPatternSize(Pattern.getSrcPattern(), *CGP) + AddedComplexity
+         << getPatternSize(Pattern.getSrcPattern(), CGP) + AddedComplexity
          << "  cost = "
-         << getResultPatternCost(Pattern.getDstPattern(), *CGP)
+         << getResultPatternCost(Pattern.getDstPattern(), CGP)
          << "  size = "
-         << getResultPatternSize(Pattern.getDstPattern(), *CGP) << "\n";
+         << getResultPatternSize(Pattern.getDstPattern(), CGP) << "\n";
     }
     if (FirstCodeLine.first != 1) {
       OS << std::string(Indent, ' ') << "{\n";
@@ -1409,11 +1409,11 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<const PatternToMatch*,
       OS << "\n";
       unsigned AddedComplexity = Pattern.getAddedComplexity();
       OS << std::string(Indent, ' ') << "// Pattern complexity = "
-         << getPatternSize(Pattern.getSrcPattern(), *CGP) + AddedComplexity
+         << getPatternSize(Pattern.getSrcPattern(), CGP) + AddedComplexity
          << "  cost = "
-         << getResultPatternCost(Pattern.getDstPattern(), *CGP)
+         << getResultPatternCost(Pattern.getDstPattern(), CGP)
          << "  size = "
-         << getResultPatternSize(Pattern.getDstPattern(), *CGP) << "\n";
+         << getResultPatternSize(Pattern.getDstPattern(), CGP) << "\n";
     }
     EmitPatterns(Other, Indent, OS);
     return;
@@ -1473,7 +1473,7 @@ static std::string getLegalCName(std::string OpName) {
 }
 
 void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
-  const CodeGenTarget &Target = CGP->getTargetInfo();
+  const CodeGenTarget &Target = CGP.getTargetInfo();
   
   // Get the namespace to insert instructions into.  Make sure not to pick up
   // "TargetInstrInfo" by accidentally getting the namespace off the PHI
@@ -1492,24 +1492,24 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   std::map<std::string, std::vector<const PatternToMatch*> > PatternsByOpcode;
   // All unique target node emission functions.
   std::map<std::string, unsigned> EmitFunctions;
-  for (CodegenDAGPatterns::ptm_iterator I = CGP->ptm_begin(),
-       E = CGP->ptm_end(); I != E; ++I) {
+  for (CodegenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
+       E = CGP.ptm_end(); I != E; ++I) {
     const PatternToMatch &Pattern = *I;
 
     TreePatternNode *Node = Pattern.getSrcPattern();
     if (!Node->isLeaf()) {
-      PatternsByOpcode[getOpcodeName(Node->getOperator(), *CGP)].
+      PatternsByOpcode[getOpcodeName(Node->getOperator(), CGP)].
         push_back(&Pattern);
     } else {
       const ComplexPattern *CP;
       if (dynamic_cast<IntInit*>(Node->getLeafValue())) {
-        PatternsByOpcode[getOpcodeName(CGP->getSDNodeNamed("imm"), *CGP)].
+        PatternsByOpcode[getOpcodeName(CGP.getSDNodeNamed("imm"), CGP)].
           push_back(&Pattern);
-      } else if ((CP = NodeGetComplexPattern(Node, *CGP))) {
+      } else if ((CP = NodeGetComplexPattern(Node, CGP))) {
         std::vector<Record*> OpNodes = CP->getRootNodes();
         for (unsigned j = 0, e = OpNodes.size(); j != e; j++) {
-          PatternsByOpcode[getOpcodeName(OpNodes[j], *CGP)]
-            .insert(PatternsByOpcode[getOpcodeName(OpNodes[j], *CGP)].begin(),
+          PatternsByOpcode[getOpcodeName(OpNodes[j], CGP)]
+            .insert(PatternsByOpcode[getOpcodeName(OpNodes[j], CGP)].begin(),
                     &Pattern);
         }
       } else {
@@ -1541,7 +1541,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     // the matches in order of minimal cost.  Sort the patterns so the least
     // cost one is at the start.
     std::stable_sort(PatternsOfOp.begin(), PatternsOfOp.end(),
-                     PatternSortingPredicate(*CGP));
+                     PatternSortingPredicate(CGP));
 
     // Split them into groups by type.
     std::map<MVT::ValueType, std::vector<const PatternToMatch*> >PatternsByType;
@@ -1907,9 +1907,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
 }
 
 void DAGISelEmitter::run(std::ostream &OS) {
-  CodeGenTarget Target;
-  EmitSourceFileHeader("DAG Instruction Selector for the " + Target.getName() +
-                       " target", OS);
+  EmitSourceFileHeader("DAG Instruction Selector for the " +
+                       CGP.getTargetInfo().getName() + " target", OS);
   
   OS << "// *** NOTE: This file is #included into the middle of the target\n"
      << "// *** instruction selector class.  These functions are really "
@@ -2042,10 +2041,6 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   OS << "  ISelSelected = NULL;\n";
   OS << "  return Dummy.getValue();\n";
   OS << "}\n";
-  
-  CodegenDAGPatterns CGP(Records);
-
-  this->CGP = &CGP;
   
   EmitNodeTransforms(OS);
   EmitPredicateFunctions(OS);

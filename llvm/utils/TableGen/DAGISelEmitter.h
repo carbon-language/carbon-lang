@@ -24,9 +24,9 @@ namespace llvm {
 ///
 class DAGISelEmitter : public TableGenBackend {
   RecordKeeper &Records;
-  CodegenDAGPatterns *CGP; 
+  CodegenDAGPatterns CGP;
 public:
-  DAGISelEmitter(RecordKeeper &R) : Records(R) {}
+  DAGISelEmitter(RecordKeeper &R) : Records(R), CGP(R) {}
 
   // run - Output the isel, returning true on failure.
   void run(std::ostream &OS);
