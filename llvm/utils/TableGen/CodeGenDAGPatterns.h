@@ -532,7 +532,7 @@ private:
   void ParseNodeInfo();
   void ParseNodeTransforms(std::ostream &OS);
   void ParseComplexPatterns();
-  void ParsePatternFragments(std::ostream &OS);
+  void ParsePatternFragments();
   void ParseDefaultOperands();
   void ParseInstructions();
   void ParsePatterns();

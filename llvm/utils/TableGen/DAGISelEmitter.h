@@ -33,6 +33,8 @@ public:
   
   
 private:
+  void EmitPredicateFunctions(std::ostream &OS);
+  
   void GenerateCodeForPattern(const PatternToMatch &Pattern,
                   std::vector<std::pair<unsigned, std::string> > &GeneratedCode,
                               std::set<std::string> &GeneratedDecl,
@@ -41,6 +43,7 @@ private:
   void EmitPatterns(std::vector<std::pair<const PatternToMatch*, 
                   std::vector<std::pair<unsigned, std::string> > > > &Patterns, 
                     unsigned Indent, std::ostream &OS);
+  
   void EmitInstructionSelector(std::ostream &OS);
 };
 

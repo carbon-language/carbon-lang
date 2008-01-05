@@ -21,9 +21,8 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-// DAGISelEmitter implementation
+// DAGISelEmitter Helper methods
 //
-
 
 /// NodeIsComplexPattern - return true if N is a leaf node and a subclass of
 /// ComplexPattern.
@@ -207,6 +206,55 @@ static bool PatternHasProperty(TreePatternNode *N, SDNP Property,
   return false;
 }
 
+//===----------------------------------------------------------------------===//
+// Predicate emitter implementation.
+//
+
+void DAGISelEmitter::EmitPredicateFunctions(std::ostream &OS) {
+  OS << "\n// Predicate functions.\n";
+
+  // Walk the pattern fragments, adding them to a map, which sorts them by
+  // name.
+  typedef std::map<std::string, std::pair<Record*, TreePattern*> > PFsByNameTy;
+  PFsByNameTy PFsByName;
+
+  for (CodegenDAGPatterns::pf_iterator I = CGP->pf_begin(), E = CGP->pf_end();
+       I != E; ++I)
+    PFsByName.insert(std::make_pair(I->first->getName(), *I));
+
+  
+  for (PFsByNameTy::iterator I = PFsByName.begin(), E = PFsByName.end();
+       I != E; ++I) {
+    Record *PatFragRecord = I->second.first;// Record that derives from PatFrag.
+    TreePattern *P = I->second.second;
+    
+    // If there is a code init for this fragment, emit the predicate code.
+    std::string Code = PatFragRecord->getValueAsCode("Predicate");
+    if (Code.empty()) continue;
+    
+    if (P->getOnlyTree()->isLeaf())
+      OS << "inline bool Predicate_" << PatFragRecord->getName()
+      << "(SDNode *N) {\n";
+    else {
+      std::string ClassName =
+        CGP->getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
+      const char *C2 = ClassName == "SDNode" ? "N" : "inN";
+      
+      OS << "inline bool Predicate_" << PatFragRecord->getName()
+         << "(SDNode *" << C2 << ") {\n";
+      if (ClassName != "SDNode")
+        OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
+    }
+    OS << Code << "\n}\n";
+  }
+  
+  OS << "\n\n";
+}
+
+
+//===----------------------------------------------------------------------===//
+// PatternCodeEmitter implementation.
+//
 class PatternCodeEmitter {
 private:
   CodegenDAGPatterns &CGP;
@@ -1965,6 +2013,8 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   CodegenDAGPatterns CGP(Records, OS);
 
   this->CGP = &CGP;
+  
+  EmitPredicateFunctions(OS);
   
   DOUT << "\n\nALL PATTERNS TO MATCH:\n\n";
   for (CodegenDAGPatterns::ptm_iterator I = CGP.ptm_begin(), E = CGP.ptm_end();

@@ -1119,7 +1119,7 @@ CodegenDAGPatterns::CodegenDAGPatterns(RecordKeeper &R, std::ostream &OS)
   ParseNodeInfo();
   ParseNodeTransforms(OS);
   ParseComplexPatterns();
-  ParsePatternFragments(OS);
+  ParsePatternFragments();
   ParseDefaultOperands();
   ParseInstructions();
   ParsePatterns();
@@ -1200,23 +1200,20 @@ void CodegenDAGPatterns::ParseComplexPatterns() {
 /// inline fragments together as necessary, so that there are no references left
 /// inside a pattern fragment to a pattern fragment.
 ///
-/// This also emits all of the predicate functions to the output file.
-///
-void CodegenDAGPatterns::ParsePatternFragments(std::ostream &OS) {
+void CodegenDAGPatterns::ParsePatternFragments() {
   std::vector<Record*> Fragments = Records.getAllDerivedDefinitions("PatFrag");
   
-  // First step, parse all of the fragments and emit predicate functions.
-  OS << "\n// Predicate functions.\n";
+  // First step, parse all of the fragments.
   for (unsigned i = 0, e = Fragments.size(); i != e; ++i) {
     DagInit *Tree = Fragments[i]->getValueAsDag("Fragment");
     TreePattern *P = new TreePattern(Fragments[i], Tree, true, *this);
     PatternFragments[Fragments[i]] = P;
     
-    // Validate the argument list, converting it to map, to discard duplicates.
+    // Validate the argument list, converting it to set, to discard duplicates.
     std::vector<std::string> &Args = P->getArgList();
-    std::set<std::string> OperandsMap(Args.begin(), Args.end());
+    std::set<std::string> OperandsSet(Args.begin(), Args.end());
     
-    if (OperandsMap.count(""))
+    if (OperandsSet.count(""))
       P->error("Cannot have unnamed 'node' values in pattern fragment!");
     
     // Parse the operands list.
@@ -1239,37 +1236,22 @@ void CodegenDAGPatterns::ParsePatternFragments(std::ostream &OS) {
         P->error("Operands list should all be 'node' values.");
       if (OpsList->getArgName(j).empty())
         P->error("Operands list should have names for each operand!");
-      if (!OperandsMap.count(OpsList->getArgName(j)))
+      if (!OperandsSet.count(OpsList->getArgName(j)))
         P->error("'" + OpsList->getArgName(j) +
                  "' does not occur in pattern or was multiply specified!");
-      OperandsMap.erase(OpsList->getArgName(j));
+      OperandsSet.erase(OpsList->getArgName(j));
       Args.push_back(OpsList->getArgName(j));
     }
     
-    if (!OperandsMap.empty())
+    if (!OperandsSet.empty())
       P->error("Operands list does not contain an entry for operand '" +
-               *OperandsMap.begin() + "'!");
+               *OperandsSet.begin() + "'!");
 
-    // If there is a code init for this fragment, emit the predicate code and
-    // keep track of the fact that this fragment uses it.
+    // If there is a code init for this fragment, keep track of the fact that
+    // this fragment uses it.
     std::string Code = Fragments[i]->getValueAsCode("Predicate");
-    if (!Code.empty()) {
-      if (P->getOnlyTree()->isLeaf())
-        OS << "inline bool Predicate_" << Fragments[i]->getName()
-           << "(SDNode *N) {\n";
-      else {
-        std::string ClassName =
-          getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
-        const char *C2 = ClassName == "SDNode" ? "N" : "inN";
-      
-        OS << "inline bool Predicate_" << Fragments[i]->getName()
-           << "(SDNode *" << C2 << ") {\n";
-        if (ClassName != "SDNode")
-          OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
-      }
-      OS << Code << "\n}\n";
+    if (!Code.empty())
       P->getOnlyTree()->setPredicateFn("Predicate_"+Fragments[i]->getName());
-    }
     
     // If there is a node transformation corresponding to this, keep track of
     // it.
@@ -1278,8 +1260,6 @@ void CodegenDAGPatterns::ParsePatternFragments(std::ostream &OS) {
       P->getOnlyTree()->setTransformFn(Transform);
   }
   
-  OS << "\n\n";
-
   // Now that we've parsed all of the tree fragments, do a closure on them so
   // that there are not references to PatFrags left inside of them.
   for (std::map<Record*, TreePattern*>::iterator I = PatternFragments.begin(),
