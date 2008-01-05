@@ -1243,9 +1243,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Legal:
       break;
     case TargetLowering::Custom:
-      Tmp3 = TLI.LowerOperation(Result, DAG);
-      if (Tmp3.Val) {
-        Result = Tmp3;
+      Tmp4 = TLI.LowerOperation(Result, DAG);
+      if (Tmp4.Val) {
+        Result = Tmp4;
         break;
       }
       // FALLTHROUGH
