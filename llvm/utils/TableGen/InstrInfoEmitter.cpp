@@ -138,6 +138,40 @@ void InstrInfoEmitter::EmitOperandInfo(std::ostream &OS,
 }
 
 //===----------------------------------------------------------------------===//
+// Instruction Analysis
+//===----------------------------------------------------------------------===//
+
+void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst, 
+                                        bool &isStore, bool &isLoad, 
+                                        bool &NeverHasSideEffects) {
+  isStore             = Inst.isStore;
+  isLoad              = Inst.isLoad;
+  NeverHasSideEffects = Inst.neverHasSideEffects;
+  
+  const TreePattern *Pattern = CDP.getInstruction(Inst.TheDef).getPattern();
+  if (Pattern == 0) return;  // No pattern.
+
+  // FIXME: Change this to use pattern info.
+  if (dynamic_cast<ListInit*>(Inst.TheDef->getValueInit("Pattern"))) {
+    ListInit *LI = Inst.TheDef->getValueAsListInit("Pattern");
+    if (LI && LI->getSize() > 0) {
+      DagInit *Dag = (DagInit *)LI->getElement(0);
+      DefInit *OpDef = dynamic_cast<DefInit*>(Dag->getOperator());
+      if (OpDef) {
+        Record *Operator = OpDef->getDef();
+        if (Operator->isSubClassOf("SDNode")) {
+          const std::string Opcode = Operator->getValueAsString("Opcode");
+          if (Opcode == "ISD::STORE" || Opcode == "ISD::TRUNCSTORE")
+            isStore = true;
+        }
+      }
+    }
+  }
+  
+}
+
+
+//===----------------------------------------------------------------------===//
 // Main Output.
 //===----------------------------------------------------------------------===//
 
@@ -196,42 +230,26 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                          std::map<std::vector<Record*>, unsigned> &EmittedLists,
                                   const OperandInfoMapTy &OpInfo,
                                   std::ostream &OS) {
-  int MinOperands;
+  // Determine properties of the instruction from its pattern.
+  bool isStore, isLoad, NeverHasSideEffects;
+  InferFromPattern(Inst, isStore, isLoad, NeverHasSideEffects);
+  
+  if (NeverHasSideEffects && Inst.mayHaveSideEffects) {
+    std::cerr << "error: Instruction '" << Inst.getName()
+      << "' is marked with 'mayHaveSideEffects', but it can never have them!\n";
+    exit(1);
+  }
+  
+  int MinOperands = 0;
   if (!Inst.OperandList.empty())
     // Each logical operand can be multiple MI operands.
     MinOperands = Inst.OperandList.back().MIOperandNo +
                   Inst.OperandList.back().MINumOperands;
-  else
-    MinOperands = 0;
   
   OS << "  { ";
   OS << Num << ",\t" << MinOperands << ",\t"
-     << Inst.NumDefs << ",\t\"";
-
-  if (Inst.Name.empty())
-    OS << Inst.TheDef->getName();
-  else
-    OS << Inst.Name;
-  
+     << Inst.NumDefs << ",\t\"" << Inst.getName();
   OS << "\",\t" << getItinClassNumber(Inst.TheDef) << ", 0";
-
-  // Try to determine (from the pattern), if the instruction is a store.
-  bool isStore = false;
-  if (dynamic_cast<ListInit*>(Inst.TheDef->getValueInit("Pattern"))) {
-    ListInit *LI = Inst.TheDef->getValueAsListInit("Pattern");
-    if (LI && LI->getSize() > 0) {
-      DagInit *Dag = (DagInit *)LI->getElement(0);
-      DefInit *OpDef = dynamic_cast<DefInit*>(Dag->getOperator());
-      if (OpDef) {
-        Record *Operator = OpDef->getDef();
-        if (Operator->isSubClassOf("SDNode")) {
-          const std::string Opcode = Operator->getValueAsString("Opcode");
-          if (Opcode == "ISD::STORE" || Opcode == "ISD::TRUNCSTORE")
-            isStore = true;
-        }
-      }
-    }
-  }
 
   // Emit all of the target indepedent flags...
   if (Inst.isReturn)     OS << "|M_RET_FLAG";
@@ -240,21 +258,21 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isBarrier)    OS << "|M_BARRIER_FLAG";
   if (Inst.hasDelaySlot) OS << "|M_DELAY_SLOT_FLAG";
   if (Inst.isCall)       OS << "|M_CALL_FLAG";
-  if (Inst.isLoad)       OS << "|M_LOAD_FLAG";
-  if (Inst.isStore || isStore) OS << "|M_STORE_FLAG";
+  if (isLoad)            OS << "|M_LOAD_FLAG";
+  if (isStore)           OS << "|M_STORE_FLAG";
   if (Inst.isImplicitDef)OS << "|M_IMPLICIT_DEF_FLAG";
   if (Inst.isPredicable) OS << "|M_PREDICABLE";
   if (Inst.isConvertibleToThreeAddress) OS << "|M_CONVERTIBLE_TO_3_ADDR";
   if (Inst.isCommutable) OS << "|M_COMMUTABLE";
   if (Inst.isTerminator) OS << "|M_TERMINATOR_FLAG";
   if (Inst.isReMaterializable) OS << "|M_REMATERIALIZIBLE";
-  if (Inst.isNotDuplicable) OS << "|M_NOT_DUPLICABLE";
-  if (Inst.hasOptionalDef) OS << "|M_HAS_OPTIONAL_DEF";
+  if (Inst.isNotDuplicable)    OS << "|M_NOT_DUPLICABLE";
+  if (Inst.hasOptionalDef)     OS << "|M_HAS_OPTIONAL_DEF";
   if (Inst.usesCustomDAGSchedInserter)
     OS << "|M_USES_CUSTOM_DAG_SCHED_INSERTION";
   if (Inst.hasVariableNumberOfOperands) OS << "|M_VARIABLE_OPS";
-  if (Inst.mayHaveSideEffects) OS << "|M_MAY_HAVE_SIDE_EFFECTS";
-  if (Inst.neverHasSideEffects) OS << "|M_NEVER_HAS_SIDE_EFFECTS";
+  if (Inst.mayHaveSideEffects)          OS << "|M_MAY_HAVE_SIDE_EFFECTS";
+  if (NeverHasSideEffects)              OS << "|M_NEVER_HAS_SIDE_EFFECTS";
   OS << ", 0";
 
   // Emit all of the target-specific flags...

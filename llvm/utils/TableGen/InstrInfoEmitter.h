@@ -41,6 +41,10 @@ public:
 private:
   typedef std::map<std::vector<std::string>, unsigned> OperandInfoMapTy;
   
+  // Instruction analysis.
+  void InferFromPattern(const CodeGenInstruction &Inst, 
+                        bool &isStore, bool &isLoad, bool &NeverHasSideEffects);
+  
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo, 
                   std::map<std::vector<Record*>, unsigned> &EL,
