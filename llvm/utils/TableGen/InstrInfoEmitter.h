@@ -16,6 +16,7 @@
 #define INSTRINFO_EMITTER_H
 
 #include "TableGenBackend.h"
+#include "CodeGenDAGPatterns.h"
 #include <vector>
 #include <map>
 
@@ -28,11 +29,11 @@ class CodeGenInstruction;
 
 class InstrInfoEmitter : public TableGenBackend {
   RecordKeeper &Records;
-  bool IsItineraries;
+  CodeGenDAGPatterns CDP;
   std::map<std::string, unsigned> ItinClassMap;
   
 public:
-  InstrInfoEmitter(RecordKeeper &R) : Records(R), IsItineraries(false) {}
+  InstrInfoEmitter(RecordKeeper &R) : Records(R), CDP(R) { }
 
   // run - Output the instruction set description, returning true on failure.
   void run(std::ostream &OS);
@@ -46,7 +47,7 @@ private:
                   std::map<std::vector<std::string>, unsigned> &OpInfo,
                   std::ostream &OS);
   void GatherItinClasses();
-  unsigned ItinClassNumber(std::string ItinName);
+  unsigned getItinClassNumber(const Record *InstRec);
   void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
                         std::ostream &OS);
   std::vector<std::string> GetOperandInfo(const CodeGenInstruction &Inst);

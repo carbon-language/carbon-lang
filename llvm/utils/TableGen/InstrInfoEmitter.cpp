@@ -175,10 +175,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   else
     OS << Inst.Name;
   
-  unsigned ItinClass = !IsItineraries ? 0 :
-            ItinClassNumber(Inst.TheDef->getValueAsDef("Itinerary")->getName());
-  
-  OS << "\",\t" << ItinClass << ", 0";
+  OS << "\",\t" << getItinClassNumber(Inst.TheDef) << ", 0";
 
   // Try to determine (from the pattern), if the instruction is a store.
   bool isStore = false;
@@ -258,28 +255,23 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
 }
 
-struct LessRecord {
+struct RecordNameComparator {
   bool operator()(const Record *Rec1, const Record *Rec2) const {
     return Rec1->getName() < Rec2->getName();
   }
 };
+
 void InstrInfoEmitter::GatherItinClasses() {
   std::vector<Record*> DefList =
                           Records.getAllDerivedDefinitions("InstrItinClass");
-  IsItineraries = !DefList.empty();
-  
-  if (!IsItineraries) return;
-  
-  std::sort(DefList.begin(), DefList.end(), LessRecord());
+  std::sort(DefList.begin(), DefList.end(), RecordNameComparator());
 
-  for (unsigned i = 0, N = DefList.size(); i < N; i++) {
-    Record *Def = DefList[i];
-    ItinClassMap[Def->getName()] = i;
-  }
+  for (unsigned i = 0, N = DefList.size(); i < N; i++)
+    ItinClassMap[DefList[i]->getName()] = i;
 }  
   
-unsigned InstrInfoEmitter::ItinClassNumber(std::string ItinName) {
-  return ItinClassMap[ItinName];
+unsigned InstrInfoEmitter::getItinClassNumber(const Record *InstRec) {
+  return ItinClassMap[InstRec->getValueAsDef("Itinerary")->getName()];
 }
 
 void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
