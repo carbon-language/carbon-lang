@@ -1661,7 +1661,7 @@ void CodeGenDAGPatterns::ParseInstructions() {
   for (std::map<Record*, DAGInstruction>::iterator II = Instructions.begin(),
        E = Instructions.end(); II != E; ++II) {
     DAGInstruction &TheInst = II->second;
-    TreePattern *I = TheInst.getPattern();
+    const TreePattern *I = TheInst.getPattern();
     if (I == 0) continue;  // No pattern.
 
     // FIXME: Assume only the first tree is the pattern. The others are clobber

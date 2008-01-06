@@ -374,7 +374,7 @@ public:
       ImpResults(impresults), ImpOperands(impoperands),
       ResultPattern(0) {}
 
-  TreePattern *getPattern() const { return Pattern; }
+  const TreePattern *getPattern() const { return Pattern; }
   unsigned getNumResults() const { return Results.size(); }
   unsigned getNumOperands() const { return Operands.size(); }
   unsigned getNumImpResults() const { return ImpResults.size(); }

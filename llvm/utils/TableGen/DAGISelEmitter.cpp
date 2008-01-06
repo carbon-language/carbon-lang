@@ -827,7 +827,7 @@ public:
       const CodeGenTarget &CGT = CGP.getTargetInfo();
       CodeGenInstruction &II = CGT.getInstruction(Op->getName());
       const DAGInstruction &Inst = CGP.getInstruction(Op);
-      TreePattern *InstPat = Inst.getPattern();
+      const TreePattern *InstPat = Inst.getPattern();
       // FIXME: Assume actual pattern comes before "implicit".
       TreePatternNode *InstPatNode =
         isRoot ? (InstPat ? InstPat->getTree(0) : Pattern)
