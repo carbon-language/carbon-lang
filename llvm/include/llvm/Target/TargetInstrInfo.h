@@ -49,7 +49,13 @@ const unsigned M_RET_FLAG              = 1 << 2;
 const unsigned M_BARRIER_FLAG          = 1 << 3;
 const unsigned M_DELAY_SLOT_FLAG       = 1 << 4;
 const unsigned M_LOAD_FLAG             = 1 << 5;
+  
+/// M_STORE_FLAG - This flag is set to any instruction that could possibly
+/// modify memory.  Instructions with this flag set are not necessarily simple
+/// store instructions, they may store a modified value based on their operands,
+/// or may not actually modify anything, for example.
 const unsigned M_STORE_FLAG            = 1 << 6;
+  
 const unsigned M_INDIRECT_FLAG         = 1 << 7;
 const unsigned M_IMPLICIT_DEF_FLAG     = 1 << 8;
 
@@ -276,6 +282,11 @@ public:
   bool isLoad(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_LOAD_FLAG;
   }
+
+  /// isStore - Return true if this instruction could possibly modify memory.
+  /// Instructions with this flag set are not necessarily simple store
+  /// instructions, they may store a modified value based on their operands, or
+  /// may not actually modify anything, for example.
   bool isStore(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_STORE_FLAG;
   }
@@ -322,9 +333,8 @@ public:
   /// flags.
   bool hasUnmodelledSideEffects(MachineInstr *MI) const {
     const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
-    if (!(TID->Flags & M_NEVER_HAS_SIDE_EFFECTS ||
-          TID->Flags & M_MAY_HAVE_SIDE_EFFECTS)) return true;
     if (TID->Flags & M_NEVER_HAS_SIDE_EFFECTS) return false;
+    if (!(TID->Flags & M_MAY_HAVE_SIDE_EFFECTS)) return true;
     return !isReallySideEffectFree(MI); // May have side effects
   }
 protected:
