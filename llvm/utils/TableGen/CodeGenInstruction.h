@@ -32,7 +32,11 @@ namespace llvm {
     /// AsmString - The format string used to emit a .s file for the
     /// instruction.
     std::string AsmString;
-
+    
+    /// getName - Return the contents of the instruction Name field if set,
+    /// otherwise return the name of the def.
+    std::string getName() const;
+    
     /// OperandInfo - The information we keep track of for each operand in the
     /// operand list for a tablegen instruction.
     struct OperandInfo {
