@@ -20,7 +20,8 @@
 include $(LEVEL)/Makefile.config
 
 # CFLAGS needs to be set before Makefile.rules is included.
-CFLAGS += -I"$(shell $(OCAMLC) -where)"
+CXX.Flags += -I"$(shell $(OCAMLC) -where)"
+C.Flags += -I"$(shell $(OCAMLC) -where)"
 
 include $(LEVEL)/Makefile.common
 

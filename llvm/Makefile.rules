@@ -210,9 +210,9 @@ endif
 
 ifdef ENABLE_PROFILING
   BuildMode := Profile
-  CXX.Flags := $(OPTIMIZE_OPTION) -pg -g
-  C.Flags   := $(OPTIMIZE_OPTION) -pg -g
-  LD.Flags  := $(OPTIMIZE_OPTION) -pg -g
+  CXX.Flags += $(OPTIMIZE_OPTION) -pg -g
+  C.Flags   += $(OPTIMIZE_OPTION) -pg -g
+  LD.Flags  += $(OPTIMIZE_OPTION) -pg -g
   KEEP_SYMBOLS := 1
 else
   ifeq ($(ENABLE_OPTIMIZED),1)
@@ -229,14 +229,14 @@ else
       EXTRA_OPTIONS += -fstrict-aliasing
     endif
 
-    CXX.Flags := $(OPTIMIZE_OPTION) $(OmitFramePointer)
-    C.Flags   := $(OPTIMIZE_OPTION) $(OmitFramePointer)
-    LD.Flags  := $(OPTIMIZE_OPTION)
+    CXX.Flags += $(OPTIMIZE_OPTION) $(OmitFramePointer)
+    C.Flags   += $(OPTIMIZE_OPTION) $(OmitFramePointer)
+    LD.Flags  += $(OPTIMIZE_OPTION)
   else
     BuildMode := Debug
-    CXX.Flags := -g
-    C.Flags   := -g
-    LD.Flags  := -g
+    CXX.Flags += -g
+    C.Flags   += -g
+    LD.Flags  += -g
     KEEP_SYMBOLS := 1
   endif
 endif
