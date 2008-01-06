@@ -892,7 +892,7 @@ def STRB : AI2<0x1, (outs), (ins GPR:$src, addrmode2:$addr), StFrm,
                [(truncstorei8 GPR:$src, addrmode2:$addr)]>;
 
 // Store doubleword
-let isStore = 1 in
+let mayStore = 1 in
 def STRD : AI3<0xF, (outs), (ins GPR:$src, addrmode3:$addr), StFrm,
                "str", "d $src, $addr",
                []>, Requires<[IsARM, HasV5T]>;
@@ -945,7 +945,7 @@ def LDM : AXI4<0x0, (outs),
                LdFrm, "ldm${p}${addr:submode} $addr, $dst1",
                []>;
 
-let isStore = 1 in
+let mayStore = 1 in
 def STM : AXI4<0x0, (outs),
                (ins addrmode4:$addr, pred:$p, reglist:$src1, variable_ops),
                StFrm, "stm${p}${addr:submode} $addr, $src1",

@@ -353,7 +353,7 @@ static unsigned EstimateRuntime(MachineBasicBlock::iterator I,
     const TargetInstrDescriptor &TID = TII->get(I->getOpcode());
     if (TID.Flags & M_CALL_FLAG)
       Time += 10;
-    else if (TID.Flags & (M_LOAD_FLAG|M_STORE_FLAG))
+    else if (TID.Flags & (M_LOAD_FLAG|M_MAY_STORE_FLAG))
       Time += 2;
     else
       ++Time;

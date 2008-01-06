@@ -513,7 +513,7 @@ def STDU : DSForm_1<62, 1, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     isPPC64;
 
-let isStore = 1 in
+let mayStore = 1 in
 def STDUX : XForm_8<31, 181, (outs), (ins G8RC:$rS, memrr:$dst),
                    "stdux $rS, $dst", LdStSTD,
                    []>, isPPC64;

@@ -122,7 +122,7 @@ def FLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
                   []>;
 } // isLoad
 
-let isStore = 1 in {
+let mayStore = 1 in {
 def FSTMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,
                            variable_ops),
                  "fstm${addr:submode}d${p} ${addr:base}, $src1",
@@ -132,7 +132,7 @@ def FSTMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,
                            variable_ops),
                  "fstm${addr:submode}s${p} ${addr:base}, $src1",
                  []>;
-} // isStore
+} // mayStore
 
 // FLDMX, FSTMX - mixing S/D registers for pre-armv6 cores
 

@@ -189,7 +189,7 @@ def SDNPHasChain    : SDNodeProperty;   // R/W chain operand and result
 def SDNPOutFlag     : SDNodeProperty;   // Write a flag result
 def SDNPInFlag      : SDNodeProperty;   // Read a flag operand
 def SDNPOptInFlag   : SDNodeProperty;   // Optionally read a flag operand
-def SDNPMayStore    : SDNodeProperty;   // May write to memory, sets 'isStore'.
+def SDNPMayStore    : SDNodeProperty;   // May write to memory, sets 'mayStore'.
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.

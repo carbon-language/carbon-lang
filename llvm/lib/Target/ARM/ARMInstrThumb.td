@@ -294,7 +294,7 @@ def tSTRspi : TIs<(outs), (ins GPR:$src, t_addrmode_sp:$addr),
                    "str $src, $addr",
                    [(store GPR:$src, t_addrmode_sp:$addr)]>;
 
-let isStore = 1 in {
+let mayStore = 1 in {
 // Special instruction for spill. It cannot clobber condition register
 // when it's expanded by eliminateCallFramePseudoInstr().
 def tSpill : TIs<(outs), (ins GPR:$src, t_addrmode_sp:$addr),
@@ -311,7 +311,7 @@ let isLoad = 1 in
 def tPOP : TI<(outs reglist:$dst1, variable_ops), (ins),
                "pop $dst1", []>;
 
-let isStore = 1 in
+let mayStore = 1 in
 def tPUSH : TI<(outs), (ins reglist:$src1, variable_ops),
                 "push $src1", []>;
 

@@ -50,11 +50,11 @@ const unsigned M_BARRIER_FLAG          = 1 << 3;
 const unsigned M_DELAY_SLOT_FLAG       = 1 << 4;
 const unsigned M_LOAD_FLAG             = 1 << 5;
   
-/// M_STORE_FLAG - This flag is set to any instruction that could possibly
+/// M_MAY_STORE_FLAG - This flag is set to any instruction that could possibly
 /// modify memory.  Instructions with this flag set are not necessarily simple
 /// store instructions, they may store a modified value based on their operands,
 /// or may not actually modify anything, for example.
-const unsigned M_STORE_FLAG            = 1 << 6;
+const unsigned M_MAY_STORE_FLAG        = 1 << 6;
   
 const unsigned M_INDIRECT_FLAG         = 1 << 7;
 const unsigned M_IMPLICIT_DEF_FLAG     = 1 << 8;
@@ -283,12 +283,12 @@ public:
     return get(Opcode).Flags & M_LOAD_FLAG;
   }
 
-  /// isStore - Return true if this instruction could possibly modify memory.
+  /// mayStore - Return true if this instruction could possibly modify memory.
   /// Instructions with this flag set are not necessarily simple store
   /// instructions, they may store a modified value based on their operands, or
   /// may not actually modify anything, for example.
-  bool isStore(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_STORE_FLAG;
+  bool mayStore(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_MAY_STORE_FLAG;
   }
   
   /// hasDelaySlot - Returns true if the specified instruction has a delay slot

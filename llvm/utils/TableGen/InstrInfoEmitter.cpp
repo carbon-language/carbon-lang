@@ -143,13 +143,13 @@ void InstrInfoEmitter::EmitOperandInfo(std::ostream &OS,
 
 class InstAnalyzer {
   const CodeGenDAGPatterns &CDP;
-  bool &isStore;
+  bool &mayStore;
   bool &isLoad;
   bool &NeverHasSideEffects;
 public:
   InstAnalyzer(const CodeGenDAGPatterns &cdp,
-               bool &isstore, bool &isload, bool &nhse)
-    : CDP(cdp), isStore(isstore), isLoad(isload), NeverHasSideEffects(nhse) {
+               bool &maystore, bool &isload, bool &nhse)
+    : CDP(cdp), mayStore(maystore), isLoad(isload), NeverHasSideEffects(nhse) {
   }
   
   void Analyze(Record *InstRecord) {
@@ -176,11 +176,11 @@ private:
       
       // If node writes to memory, it obviously stores to memory.
       if (OpInfo.hasProperty(SDNPMayStore)) {
-        isStore = true;
+        mayStore = true;
       } else if (const CodeGenIntrinsic *IntInfo = N->getIntrinsicInfo(CDP)) {
         // If this is an intrinsic, analyze it.
         if (IntInfo->ModRef >= CodeGenIntrinsic::WriteArgMem)
-          isStore = true;  // Intrinsics that can write to memory are 'isStore'.
+          mayStore = true;// Intrinsics that can write to memory are 'mayStore'.
       }
     }
 
@@ -191,21 +191,22 @@ private:
 };
 
 void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst, 
-                                        bool &isStore, bool &isLoad, 
+                                        bool &mayStore, bool &isLoad, 
                                         bool &NeverHasSideEffects) {
-  isStore = isLoad = NeverHasSideEffects = false;
+  mayStore = isLoad = NeverHasSideEffects = false;
   
-  InstAnalyzer(CDP, isStore, isLoad, NeverHasSideEffects).Analyze(Inst.TheDef);
+  InstAnalyzer(CDP, mayStore, isLoad, NeverHasSideEffects).Analyze(Inst.TheDef);
 
-  // InstAnalyzer only correctly analyzes isStore so far.
-  if (Inst.isStore) {  // If the .td file explicitly sets isStore, use it.
+  // InstAnalyzer only correctly analyzes mayStore so far.
+  if (Inst.mayStore) {  // If the .td file explicitly sets mayStore, use it.
     // If we decided that this is a store from the pattern, then the .td file
     // entry is redundant.
-    if (isStore)
-      fprintf(stderr, "Warning: isStore flag explicitly set on instruction '%s'"
+    if (mayStore)
+      fprintf(stderr, 
+              "Warning: mayStore flag explicitly set on instruction '%s'"
               " but flag already inferred from pattern.\n", 
               Inst.getName().c_str());
-    isStore = true;
+    mayStore = true;
   }
 
   // These two override everything.
@@ -280,8 +281,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                                   const OperandInfoMapTy &OpInfo,
                                   std::ostream &OS) {
   // Determine properties of the instruction from its pattern.
-  bool isStore, isLoad, NeverHasSideEffects;
-  InferFromPattern(Inst, isStore, isLoad, NeverHasSideEffects);
+  bool mayStore, isLoad, NeverHasSideEffects;
+  InferFromPattern(Inst, mayStore, isLoad, NeverHasSideEffects);
   
   if (NeverHasSideEffects && Inst.mayHaveSideEffects) {
     std::cerr << "error: Instruction '" << Inst.getName()
@@ -308,7 +309,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.hasDelaySlot) OS << "|M_DELAY_SLOT_FLAG";
   if (Inst.isCall)       OS << "|M_CALL_FLAG";
   if (isLoad)            OS << "|M_LOAD_FLAG";
-  if (isStore)           OS << "|M_STORE_FLAG";
+  if (mayStore)          OS << "|M_MAY_STORE_FLAG";
   if (Inst.isImplicitDef)OS << "|M_IMPLICIT_DEF_FLAG";
   if (Inst.isPredicable) OS << "|M_PREDICABLE";
   if (Inst.isConvertibleToThreeAddress) OS << "|M_CONVERTIBLE_TO_3_ADDR";

@@ -541,7 +541,7 @@ def CADDIMM22 : AForm<0x03, 0x0b, (outs GR:$dst), (ins GR:$src1, s22imm:$imm, PR
 def SUBIMM8 : AForm<0x03, 0x0b, (outs GR:$dst), (ins s8imm:$imm, GR:$src2),
   "sub $dst = $imm, $src2">, isA;
 
-let isStore = 1 in {
+let mayStore = 1 in {
   def ST1 : AForm<0x03, 0x0b, (outs), (ins GR:$dstPtr, GR:$value),
     "st1 [$dstPtr] = $value">, isM;
   def ST2 : AForm<0x03, 0x0b, (outs), (ins GR:$dstPtr, GR:$value),

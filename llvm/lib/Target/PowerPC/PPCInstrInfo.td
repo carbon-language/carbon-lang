@@ -638,7 +638,7 @@ def STWX  : XForm_8<31, 151, (outs), (ins GPRC:$rS, memrr:$dst),
                    [(store GPRC:$rS, xaddr:$dst)]>,
                    PPC970_DGroup_Cracked;
                    
-let isStore = 1 in {
+let mayStore = 1 in {
 def STWUX : XForm_8<31, 183, (outs), (ins GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stwux $rS, $rA, $rB", LdStGeneral,
                    []>;
