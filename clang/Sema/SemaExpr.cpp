@@ -1634,10 +1634,9 @@ QualType Sema::CheckIndirectionOperand(Expr *op, SourceLocation OpLoc) {
     QualType ptype = PT->getPointeeType();
     // C99 6.5.3.2p4. "if it points to an object,...".
     if (ptype->isIncompleteType()) { // An incomplete type is not an object
-      // GCC compat: special case 'void *' (treat as warning).
+      // GCC compat: special case 'void *' (treat as extension, not error).
       if (ptype->isVoidType()) {
-        Diag(OpLoc, diag::ext_typecheck_deref_ptr_to_void, 
-             qType.getAsString(), op->getSourceRange());
+        Diag(OpLoc, diag::ext_typecheck_deref_ptr_to_void,op->getSourceRange());
       } else {
         Diag(OpLoc, diag::err_typecheck_deref_incomplete_type, 
              ptype.getAsString(), op->getSourceRange());
