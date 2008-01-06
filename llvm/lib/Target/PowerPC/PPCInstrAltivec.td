@@ -229,7 +229,7 @@ def LVSR : XForm_1<31,  38, (outs VRRC:$vD), (ins memrr:$src),
                    [(set VRRC:$vD, (int_ppc_altivec_lvsr xoaddr:$src))]>,
                    PPC970_Unit_LSU;
 
-let isStore = 1, PPC970_Unit = 2 in {   // Stores.
+let PPC970_Unit = 2 in {   // Stores.
 def STVEBX: XForm_8<31, 135, (outs), (ins VRRC:$rS, memrr:$dst),
                    "stvebx $rS, $dst", LdStGeneral,
                    [(int_ppc_altivec_stvebx VRRC:$rS, xoaddr:$dst)]>;

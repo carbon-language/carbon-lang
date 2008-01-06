@@ -564,7 +564,7 @@ def LFDX   : XForm_25<31, 599, (outs F8RC:$frD), (ins memrr:$src),
 //
 
 // Unindexed (r+i) Stores.
-let isStore = 1, PPC970_Unit = 2 in {
+let PPC970_Unit = 2 in {
 def STB  : DForm_1<38, (outs), (ins GPRC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
                    [(truncstorei8 GPRC:$rS, iaddr:$src)]>;
@@ -583,7 +583,7 @@ def STFD : DForm_1<54, (outs), (ins F8RC:$rS, memri:$dst),
 }
 
 // Unindexed (r+i) Stores with Update (preinc).
-let isStore = 1, PPC970_Unit = 2 in {
+let PPC970_Unit = 2 in {
 def STBU  : DForm_1<39, (outs ptr_rc:$ea_res), (ins GPRC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
                     "stbu $rS, $ptroff($ptrreg)", LdStGeneral,
@@ -621,7 +621,7 @@ def STFDU : DForm_1<37, (outs ptr_rc:$ea_res), (ins F8RC:$rS,
 
 // Indexed (r+r) Stores.
 //
-let isStore = 1, PPC970_Unit = 2 in {
+let PPC970_Unit = 2 in {
 def STBX  : XForm_8<31, 215, (outs), (ins GPRC:$rS, memrr:$dst),
                    "stbx $rS, $dst", LdStGeneral,
                    [(truncstorei8 GPRC:$rS, xaddr:$dst)]>, 
@@ -634,6 +634,8 @@ def STWX  : XForm_8<31, 151, (outs), (ins GPRC:$rS, memrr:$dst),
                    "stwx $rS, $dst", LdStGeneral,
                    [(store GPRC:$rS, xaddr:$dst)]>,
                    PPC970_DGroup_Cracked;
+                   
+let isStore = 1 in {
 def STWUX : XForm_8<31, 183, (outs), (ins GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stwux $rS, $rA, $rB", LdStGeneral,
                    []>;
@@ -649,6 +651,7 @@ def STWBRX: XForm_8<31, 662, (outs), (ins GPRC:$rS, memrr:$dst),
 def STFIWX: XForm_28<31, 983, (outs), (ins F8RC:$frS, memrr:$dst),
                      "stfiwx $frS, $dst", LdStUX,
                      [(PPCstfiwx F8RC:$frS, xoaddr:$dst)]>;
+}
 def STFSX : XForm_28<31, 663, (outs), (ins F4RC:$frS, memrr:$dst),
                      "stfsx $frS, $dst", LdStUX,
                      [(store F4RC:$frS, xaddr:$dst)]>;

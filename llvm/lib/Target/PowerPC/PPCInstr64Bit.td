@@ -448,7 +448,7 @@ def LDU  : DSForm_1<58, 1, (outs G8RC:$rD, ptr_rc:$ea_result), (ins memrix:$addr
 
 }
 
-let isStore = 1, PPC970_Unit = 2 in {
+let PPC970_Unit = 2 in {
 // Truncating stores.                       
 def STB8 : DForm_1<38, (outs), (ins G8RC:$rS, memri:$src),
                    "stb $rS, $src", LdStGeneral,
@@ -481,7 +481,7 @@ def STDX  : XForm_8<31, 149, (outs), (ins G8RC:$rS, memrr:$dst),
                    PPC970_DGroup_Cracked;
 }
 
-let isStore = 1, PPC970_Unit = 2 in {
+let PPC970_Unit = 2 in {
 
 def STBU8 : DForm_1<38, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                              symbolLo:$ptroff, ptr_rc:$ptrreg),
