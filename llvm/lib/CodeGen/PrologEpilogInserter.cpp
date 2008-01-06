@@ -242,7 +242,6 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
   if (CSI.empty())
     return;
 
-  const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
   const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
   
   // Now that we have a stack slot for each register to be saved, insert spill
