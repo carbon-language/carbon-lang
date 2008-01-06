@@ -19,8 +19,8 @@
 #include <iostream>
 using namespace llvm;
 
-void InstrInfoEmitter::printDefList(const std::vector<Record*> &Uses,
-                                    unsigned Num, std::ostream &OS) const {
+static void PrintDefList(const std::vector<Record*> &Uses,
+                         unsigned Num, std::ostream &OS) {
   OS << "static const unsigned ImplicitList" << Num << "[] = { ";
   for (unsigned i = 0, e = Uses.size(); i != e; ++i)
     OS << getQualifiedName(Uses[i]) << ", ";
@@ -163,12 +163,12 @@ void InstrInfoEmitter::run(std::ostream &OS) {
     std::vector<Record*> Uses = Inst->getValueAsListOfDefs("Uses");
     if (!Uses.empty()) {
       unsigned &IL = EmittedLists[Uses];
-      if (!IL) printDefList(Uses, IL = ++ListNumber, OS);
+      if (!IL) PrintDefList(Uses, IL = ++ListNumber, OS);
     }
     std::vector<Record*> Defs = Inst->getValueAsListOfDefs("Defs");
     if (!Defs.empty()) {
       unsigned &IL = EmittedLists[Defs];
-      if (!IL) printDefList(Defs, IL = ++ListNumber, OS);
+      if (!IL) PrintDefList(Defs, IL = ++ListNumber, OS);
     }
   }
 

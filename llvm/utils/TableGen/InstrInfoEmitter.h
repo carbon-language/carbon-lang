@@ -41,22 +41,21 @@ public:
 private:
   typedef std::map<std::vector<std::string>, unsigned> OperandInfoMapTy;
   
-  void printDefList(const std::vector<Record*> &Uses, unsigned Num,
-                    std::ostream &OS) const;
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo, 
                   std::map<std::vector<Record*>, unsigned> &EL,
                   const OperandInfoMapTy &OpInfo,
                   std::ostream &OS);
+  void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
+                        std::ostream &OS);
 
+  // Itinerary information.
   void GatherItinClasses();
   unsigned getItinClassNumber(const Record *InstRec);
   
+  // Operand information.
   void EmitOperandInfo(std::ostream &OS, OperandInfoMapTy &OperandInfoIDs);
   std::vector<std::string> GetOperandInfo(const CodeGenInstruction &Inst);
-  
-  void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
-                        std::ostream &OS);
 };
 
 } // End llvm namespace
