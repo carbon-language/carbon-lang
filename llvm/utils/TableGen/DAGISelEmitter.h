@@ -24,7 +24,7 @@ namespace llvm {
 ///
 class DAGISelEmitter : public TableGenBackend {
   RecordKeeper &Records;
-  CodegenDAGPatterns CGP;
+  CodeGenDAGPatterns CGP;
 public:
   DAGISelEmitter(RecordKeeper &R) : Records(R), CGP(R) {}
 

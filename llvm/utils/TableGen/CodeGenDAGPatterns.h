@@ -1,4 +1,4 @@
-//===- CodegenDAGPatterns.h - Read DAG patterns from .td file ---*- C++ -*-===//
+//===- CodeGenDAGPatterns.h - Read DAG patterns from .td file ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the CodegenDAGPatterns class, which is used to read and
+// This file declares the CodeGenDAGPatterns class, which is used to read and
 // represent the patterns present in a .td file for instructions.
 //
 //===----------------------------------------------------------------------===//
@@ -27,7 +27,7 @@ namespace llvm {
   class SDNodeInfo;
   class TreePattern;
   class TreePatternNode;
-  class CodegenDAGPatterns;
+  class CodeGenDAGPatterns;
   class ComplexPattern;
 
 /// MVT::DAGISelGenValueType - These are some extended forms of MVT::ValueType
@@ -264,7 +264,7 @@ public:   // Higher level manipulation routines.
   
   /// canPatternMatch - If it is impossible for this pattern to match on this
   /// target, fill in Reason and return false.  Otherwise, return true.
-  bool canPatternMatch(std::string &Reason, CodegenDAGPatterns &CDP);
+  bool canPatternMatch(std::string &Reason, CodeGenDAGPatterns &CDP);
 };
 
 
@@ -287,7 +287,7 @@ class TreePattern {
   
   /// CDP - the top-level object coordinating this madness.
   ///
-  CodegenDAGPatterns &CDP;
+  CodeGenDAGPatterns &CDP;
 
   /// isInputPattern - True if this is an input pattern, something to match.
   /// False if this is an output pattern, something to emit.
@@ -297,11 +297,11 @@ public:
   /// TreePattern constructor - Parse the specified DagInits into the
   /// current record.
   TreePattern(Record *TheRec, ListInit *RawPat, bool isInput,
-              CodegenDAGPatterns &ise);
+              CodeGenDAGPatterns &ise);
   TreePattern(Record *TheRec, DagInit *Pat, bool isInput,
-              CodegenDAGPatterns &ise);
+              CodeGenDAGPatterns &ise);
   TreePattern(Record *TheRec, TreePatternNode *Pat, bool isInput,
-              CodegenDAGPatterns &ise);
+              CodeGenDAGPatterns &ise);
       
   /// getTrees - Return the tree patterns which corresponds to this pattern.
   ///
@@ -325,7 +325,7 @@ public:
   }
   std::vector<std::string> &getArgList() { return Args; }
   
-  CodegenDAGPatterns &getDAGPatterns() const { return CDP; }
+  CodeGenDAGPatterns &getDAGPatterns() const { return CDP; }
 
   /// InlinePatternFragments - If this pattern refers to any pattern
   /// fragments, inline them into place, giving us a pattern without any
@@ -406,7 +406,7 @@ public:
   TreePatternNode *getResultPattern() const { return ResultPattern; }
 };
   
-/// PatternToMatch - Used by CodegenDAGPatterns to keep tab of patterns
+/// PatternToMatch - Used by CodeGenDAGPatterns to keep tab of patterns
 /// processed to produce isel.
 struct PatternToMatch {
   PatternToMatch(ListInit *preds,
@@ -430,7 +430,7 @@ struct PatternToMatch {
 };
 
   
-class CodegenDAGPatterns {
+class CodeGenDAGPatterns {
   RecordKeeper &Records;
   CodeGenTarget Target;
   std::vector<CodeGenIntrinsic> Intrinsics;
@@ -451,8 +451,8 @@ class CodegenDAGPatterns {
   /// emit.
   std::vector<PatternToMatch> PatternsToMatch;
 public:
-  CodegenDAGPatterns(RecordKeeper &R); 
-  ~CodegenDAGPatterns();
+  CodeGenDAGPatterns(RecordKeeper &R); 
+  ~CodeGenDAGPatterns();
   
   const CodeGenTarget &getTargetInfo() const { return Target; }
   

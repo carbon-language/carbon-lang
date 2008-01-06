@@ -1,4 +1,4 @@
-//===- CodegenDAGPatterns.cpp - Read DAG patterns from .td file -----------===//
+//===- CodeGenDAGPatterns.cpp - Read DAG patterns from .td file -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the CodegenDAGPatterns class, which is used to read and
+// This file implements the CodeGenDAGPatterns class, which is used to read and
 // represent the patterns present in a .td file for instructions.
 //
 //===----------------------------------------------------------------------===//
@@ -638,7 +638,7 @@ static std::vector<unsigned char> getImplicitType(Record *R, bool NotRegisters,
 /// change, false otherwise.  If a type contradiction is found, throw an
 /// exception.
 bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
-  CodegenDAGPatterns &CDP = TP.getDAGPatterns();
+  CodeGenDAGPatterns &CDP = TP.getDAGPatterns();
   if (isLeaf()) {
     if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue())) {
       // If it's a regclass or something else known, include the type.
@@ -862,7 +862,7 @@ static bool OnlyOnRHSOfCommutative(TreePatternNode *N) {
 /// that can never possibly work), and to prevent the pattern permuter from
 /// generating stuff that is useless.
 bool TreePatternNode::canPatternMatch(std::string &Reason, 
-                                      CodegenDAGPatterns &CDP){
+                                      CodeGenDAGPatterns &CDP){
   if (isLeaf()) return true;
 
   for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
@@ -899,20 +899,20 @@ bool TreePatternNode::canPatternMatch(std::string &Reason,
 //
 
 TreePattern::TreePattern(Record *TheRec, ListInit *RawPat, bool isInput,
-                         CodegenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp){
+                         CodeGenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp){
    isInputPattern = isInput;
    for (unsigned i = 0, e = RawPat->getSize(); i != e; ++i)
      Trees.push_back(ParseTreePattern((DagInit*)RawPat->getElement(i)));
 }
 
 TreePattern::TreePattern(Record *TheRec, DagInit *Pat, bool isInput,
-                         CodegenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp){
+                         CodeGenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp){
   isInputPattern = isInput;
   Trees.push_back(ParseTreePattern(Pat));
 }
 
 TreePattern::TreePattern(Record *TheRec, TreePatternNode *Pat, bool isInput,
-                         CodegenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp){
+                         CodeGenDAGPatterns &cdp) : TheRecord(TheRec), CDP(cdp){
   isInputPattern = isInput;
   Trees.push_back(Pat);
 }
@@ -1106,11 +1106,11 @@ void TreePattern::print(std::ostream &OS) const {
 void TreePattern::dump() const { print(*cerr.stream()); }
 
 //===----------------------------------------------------------------------===//
-// CodegenDAGPatterns implementation
+// CodeGenDAGPatterns implementation
 //
 
 // FIXME: REMOVE OSTREAM ARGUMENT
-CodegenDAGPatterns::CodegenDAGPatterns(RecordKeeper &R) : Records(R) {
+CodeGenDAGPatterns::CodeGenDAGPatterns(RecordKeeper &R) : Records(R) {
   Intrinsics = LoadIntrinsics(Records);
   ParseNodeInfo();
   ParseNodeTransforms();
@@ -1125,14 +1125,14 @@ CodegenDAGPatterns::CodegenDAGPatterns(RecordKeeper &R) : Records(R) {
   GenerateVariants();
 }
 
-CodegenDAGPatterns::~CodegenDAGPatterns() {
+CodeGenDAGPatterns::~CodeGenDAGPatterns() {
   for (std::map<Record*, TreePattern*>::iterator I = PatternFragments.begin(),
        E = PatternFragments.end(); I != E; ++I)
     delete I->second;
 }
 
 
-Record *CodegenDAGPatterns::getSDNodeNamed(const std::string &Name) const {
+Record *CodeGenDAGPatterns::getSDNodeNamed(const std::string &Name) const {
   Record *N = Records.getDef(Name);
   if (!N || !N->isSubClassOf("SDNode")) {
     cerr << "Error getting SDNode '" << Name << "'!\n";
@@ -1142,7 +1142,7 @@ Record *CodegenDAGPatterns::getSDNodeNamed(const std::string &Name) const {
 }
 
 // Parse all of the SDNode definitions for the target, populating SDNodes.
-void CodegenDAGPatterns::ParseNodeInfo() {
+void CodeGenDAGPatterns::ParseNodeInfo() {
   std::vector<Record*> Nodes = Records.getAllDerivedDefinitions("SDNode");
   while (!Nodes.empty()) {
     SDNodes.insert(std::make_pair(Nodes.back(), Nodes.back()));
@@ -1157,7 +1157,7 @@ void CodegenDAGPatterns::ParseNodeInfo() {
 
 /// ParseNodeTransforms - Parse all SDNodeXForm instances into the SDNodeXForms
 /// map, and emit them to the file as functions.
-void CodegenDAGPatterns::ParseNodeTransforms() {
+void CodeGenDAGPatterns::ParseNodeTransforms() {
   std::vector<Record*> Xforms = Records.getAllDerivedDefinitions("SDNodeXForm");
   while (!Xforms.empty()) {
     Record *XFormNode = Xforms.back();
@@ -1169,7 +1169,7 @@ void CodegenDAGPatterns::ParseNodeTransforms() {
   }
 }
 
-void CodegenDAGPatterns::ParseComplexPatterns() {
+void CodeGenDAGPatterns::ParseComplexPatterns() {
   std::vector<Record*> AMs = Records.getAllDerivedDefinitions("ComplexPattern");
   while (!AMs.empty()) {
     ComplexPatterns.insert(std::make_pair(AMs.back(), AMs.back()));
@@ -1183,7 +1183,7 @@ void CodegenDAGPatterns::ParseComplexPatterns() {
 /// inline fragments together as necessary, so that there are no references left
 /// inside a pattern fragment to a pattern fragment.
 ///
-void CodegenDAGPatterns::ParsePatternFragments() {
+void CodeGenDAGPatterns::ParsePatternFragments() {
   std::vector<Record*> Fragments = Records.getAllDerivedDefinitions("PatFrag");
   
   // First step, parse all of the fragments.
@@ -1266,7 +1266,7 @@ void CodegenDAGPatterns::ParsePatternFragments() {
   }
 }
 
-void CodegenDAGPatterns::ParseDefaultOperands() {
+void CodeGenDAGPatterns::ParseDefaultOperands() {
   std::vector<Record*> DefaultOps[2];
   DefaultOps[0] = Records.getAllDerivedDefinitions("PredicateOperand");
   DefaultOps[1] = Records.getAllDerivedDefinitions("OptionalDefOperand");
@@ -1373,7 +1373,7 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
 /// FindPatternInputsAndOutputs - Scan the specified TreePatternNode (which is
 /// part of "I", the instruction), computing the set of inputs and outputs of
 /// the pattern.  Report errors if we see anything naughty.
-void CodegenDAGPatterns::
+void CodeGenDAGPatterns::
 FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
                             std::map<std::string, TreePatternNode*> &InstInputs,
                             std::map<std::string, TreePatternNode*>&InstResults,
@@ -1458,7 +1458,7 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
 /// ParseInstructions - Parse all of the instructions, inlining and resolving
 /// any fragments involved.  This populates the Instructions list with fully
 /// resolved instructions.
-void CodegenDAGPatterns::ParseInstructions() {
+void CodeGenDAGPatterns::ParseInstructions() {
   std::vector<Record*> Instrs = Records.getAllDerivedDefinitions("Instruction");
   
   for (unsigned i = 0, e = Instrs.size(); i != e; ++i) {
@@ -1688,7 +1688,7 @@ void CodegenDAGPatterns::ParseInstructions() {
   }
 }
 
-void CodegenDAGPatterns::ParsePatterns() {
+void CodeGenDAGPatterns::ParsePatterns() {
   std::vector<Record*> Patterns = Records.getAllDerivedDefinitions("Pattern");
 
   for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
@@ -1798,7 +1798,7 @@ void CodegenDAGPatterns::ParsePatterns() {
 static void CombineChildVariants(TreePatternNode *Orig, 
                const std::vector<std::vector<TreePatternNode*> > &ChildVariants,
                                  std::vector<TreePatternNode*> &OutVariants,
-                                 CodegenDAGPatterns &CDP) {
+                                 CodeGenDAGPatterns &CDP) {
   // Make sure that each operand has at least one variant to choose from.
   for (unsigned i = 0, e = ChildVariants.size(); i != e; ++i)
     if (ChildVariants[i].empty())
@@ -1863,7 +1863,7 @@ static void CombineChildVariants(TreePatternNode *Orig,
                                  const std::vector<TreePatternNode*> &LHS,
                                  const std::vector<TreePatternNode*> &RHS,
                                  std::vector<TreePatternNode*> &OutVariants,
-                                 CodegenDAGPatterns &CDP) {
+                                 CodeGenDAGPatterns &CDP) {
   std::vector<std::vector<TreePatternNode*> > ChildVariants;
   ChildVariants.push_back(LHS);
   ChildVariants.push_back(RHS);
@@ -1899,7 +1899,7 @@ static void GatherChildrenOfAssociativeOpcode(TreePatternNode *N,
 ///
 static void GenerateVariantsOf(TreePatternNode *N,
                                std::vector<TreePatternNode*> &OutVariants,
-                               CodegenDAGPatterns &CDP) {
+                               CodeGenDAGPatterns &CDP) {
   // We cannot permute leaves.
   if (N->isLeaf()) {
     OutVariants.push_back(N);
@@ -1995,7 +1995,7 @@ static void GenerateVariantsOf(TreePatternNode *N,
 
 // GenerateVariants - Generate variants.  For example, commutative patterns can
 // match multiple ways.  Add them to PatternsToMatch as well.
-void CodegenDAGPatterns::GenerateVariants() {
+void CodeGenDAGPatterns::GenerateVariants() {
   DOUT << "Generating instruction variants.\n";
   
   // Loop over all of the patterns we've collected, checking to see if we can

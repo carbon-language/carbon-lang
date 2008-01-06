@@ -36,7 +36,7 @@ static bool NodeIsComplexPattern(TreePatternNode *N) {
 /// NodeGetComplexPattern - return the pointer to the ComplexPattern if N
 /// is a leaf node and a subclass of ComplexPattern, else it returns NULL.
 static const ComplexPattern *NodeGetComplexPattern(TreePatternNode *N,
-                                                   CodegenDAGPatterns &CGP) {
+                                                   CodeGenDAGPatterns &CGP) {
   if (N->isLeaf() &&
       dynamic_cast<DefInit*>(N->getLeafValue()) &&
       static_cast<DefInit*>(N->getLeafValue())->getDef()->
@@ -50,7 +50,7 @@ static const ComplexPattern *NodeGetComplexPattern(TreePatternNode *N,
 /// getPatternSize - Return the 'size' of this pattern.  We want to match large
 /// patterns before small ones.  This is used to determine the size of a
 /// pattern.
-static unsigned getPatternSize(TreePatternNode *P, CodegenDAGPatterns &CGP) {
+static unsigned getPatternSize(TreePatternNode *P, CodeGenDAGPatterns &CGP) {
   assert((MVT::isExtIntegerInVTs(P->getExtTypes()) || 
           MVT::isExtFloatingPointInVTs(P->getExtTypes()) ||
           P->getExtTypeNum(0) == MVT::isVoid ||
@@ -99,7 +99,7 @@ static unsigned getPatternSize(TreePatternNode *P, CodegenDAGPatterns &CGP) {
 /// This is a temporary hack.  We should really include the instruction
 /// latencies in this calculation.
 static unsigned getResultPatternCost(TreePatternNode *P,
-                                     CodegenDAGPatterns &CGP) {
+                                     CodeGenDAGPatterns &CGP) {
   if (P->isLeaf()) return 0;
   
   unsigned Cost = 0;
@@ -118,7 +118,7 @@ static unsigned getResultPatternCost(TreePatternNode *P,
 /// getResultPatternCodeSize - Compute the code size of instructions for this
 /// pattern.
 static unsigned getResultPatternSize(TreePatternNode *P, 
-                                     CodegenDAGPatterns &CGP) {
+                                     CodeGenDAGPatterns &CGP) {
   if (P->isLeaf()) return 0;
 
   unsigned Cost = 0;
@@ -135,8 +135,8 @@ static unsigned getResultPatternSize(TreePatternNode *P,
 // In particular, we want to match maximal patterns first and lowest cost within
 // a particular complexity first.
 struct PatternSortingPredicate {
-  PatternSortingPredicate(CodegenDAGPatterns &cgp) : CGP(cgp) {}
-  CodegenDAGPatterns &CGP;
+  PatternSortingPredicate(CodeGenDAGPatterns &cgp) : CGP(cgp) {}
+  CodeGenDAGPatterns &CGP;
 
   bool operator()(const PatternToMatch *LHS,
                   const PatternToMatch *RHS) {
@@ -179,7 +179,7 @@ static void RemoveAllTypes(TreePatternNode *N) {
 /// NodeHasProperty - return true if TreePatternNode has the specified
 /// property.
 static bool NodeHasProperty(TreePatternNode *N, SDNP Property,
-                            CodegenDAGPatterns &CGP) {
+                            CodeGenDAGPatterns &CGP) {
   if (N->isLeaf()) {
     const ComplexPattern *CP = NodeGetComplexPattern(N, CGP);
     if (CP)
@@ -193,7 +193,7 @@ static bool NodeHasProperty(TreePatternNode *N, SDNP Property,
 }
 
 static bool PatternHasProperty(TreePatternNode *N, SDNP Property,
-                               CodegenDAGPatterns &CGP) {
+                               CodeGenDAGPatterns &CGP) {
   if (NodeHasProperty(N, Property, CGP))
     return true;
 
@@ -212,10 +212,10 @@ static bool PatternHasProperty(TreePatternNode *N, SDNP Property,
 void DAGISelEmitter::EmitNodeTransforms(std::ostream &OS) {
   // Walk the pattern fragments, adding them to a map, which sorts them by
   // name.
-  typedef std::map<std::string, CodegenDAGPatterns::NodeXForm> NXsByNameTy;
+  typedef std::map<std::string, CodeGenDAGPatterns::NodeXForm> NXsByNameTy;
   NXsByNameTy NXsByName;
 
-  for (CodegenDAGPatterns::nx_iterator I = CGP.nx_begin(), E = CGP.nx_end();
+  for (CodeGenDAGPatterns::nx_iterator I = CGP.nx_begin(), E = CGP.nx_end();
        I != E; ++I)
     NXsByName.insert(std::make_pair(I->first->getName(), I->second));
   
@@ -251,7 +251,7 @@ void DAGISelEmitter::EmitPredicateFunctions(std::ostream &OS) {
   typedef std::map<std::string, std::pair<Record*, TreePattern*> > PFsByNameTy;
   PFsByNameTy PFsByName;
 
-  for (CodegenDAGPatterns::pf_iterator I = CGP.pf_begin(), E = CGP.pf_end();
+  for (CodeGenDAGPatterns::pf_iterator I = CGP.pf_begin(), E = CGP.pf_end();
        I != E; ++I)
     PFsByName.insert(std::make_pair(I->first->getName(), *I));
 
@@ -290,7 +290,7 @@ void DAGISelEmitter::EmitPredicateFunctions(std::ostream &OS) {
 //
 class PatternCodeEmitter {
 private:
-  CodegenDAGPatterns &CGP;
+  CodeGenDAGPatterns &CGP;
 
   // Predicates.
   ListInit *Predicates;
@@ -354,7 +354,7 @@ private:
     VTNo++;
   }
 public:
-  PatternCodeEmitter(CodegenDAGPatterns &cgp, ListInit *preds,
+  PatternCodeEmitter(CodeGenDAGPatterns &cgp, ListInit *preds,
                      TreePatternNode *pattern, TreePatternNode *instr,
                      std::vector<std::pair<unsigned, std::string> > &gc,
                      std::set<std::string> &gd,
@@ -1461,7 +1461,7 @@ void DAGISelEmitter::EmitPatterns(std::vector<std::pair<const PatternToMatch*,
     OS << std::string(Indent-2, ' ') << "}\n";
 }
 
-static std::string getOpcodeName(Record *Op, CodegenDAGPatterns &CGP) {
+static std::string getOpcodeName(Record *Op, CodeGenDAGPatterns &CGP) {
   return CGP.getSDNodeInfo(Op).getEnumName();
 }
 
@@ -1492,7 +1492,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   std::map<std::string, std::vector<const PatternToMatch*> > PatternsByOpcode;
   // All unique target node emission functions.
   std::map<std::string, unsigned> EmitFunctions;
-  for (CodegenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
+  for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(),
        E = CGP.ptm_end(); I != E; ++I) {
     const PatternToMatch &Pattern = *I;
 
@@ -2046,7 +2046,7 @@ OS << "  unsigned NumKilled = ISelKilled.size();\n";
   EmitPredicateFunctions(OS);
   
   DOUT << "\n\nALL PATTERNS TO MATCH:\n\n";
-  for (CodegenDAGPatterns::ptm_iterator I = CGP.ptm_begin(), E = CGP.ptm_end();
+  for (CodeGenDAGPatterns::ptm_iterator I = CGP.ptm_begin(), E = CGP.ptm_end();
        I != E; ++I) {
     DOUT << "PATTERN: ";   DEBUG(I->getSrcPattern()->dump());
     DOUT << "\nRESULT:  "; DEBUG(I->getDstPattern()->dump());
