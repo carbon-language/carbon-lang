@@ -2843,6 +2843,16 @@ marked as <tt>volatile</tt>, then the optimizer is not allowed to modify
 the number or order of execution of this <tt>load</tt> with other
 volatile <tt>load</tt> and <tt><a href="#i_store">store</a></tt>
 instructions. </p>
+<p>
+The optional "align" argument specifies the alignment of the operation
+(that is, the alignment of the memory address). A value of 0 or an
+omitted "align" argument means that the operation has the preferential
+alignment for the target. It is the responsibility of the code emitter
+to ensure that the alignment information is correct. Overestimating
+the alignment results in an undefined behavior. Underestimating the
+alignment may produce less efficient code. An alignment of 1 is always
+safe.
+</p>
 <h5>Semantics:</h5>
 <p>The location of memory pointed to is loaded.</p>
 <h5>Examples:</h5>
@@ -2870,6 +2880,16 @@ operand. If the <tt>store</tt> is marked as <tt>volatile</tt>, then the
 optimizer is not allowed to modify the number or order of execution of
 this <tt>store</tt> with other volatile <tt>load</tt> and <tt><a
  href="#i_store">store</a></tt> instructions.</p>
+<p>
+The optional "align" argument specifies the alignment of the operation
+(that is, the alignment of the memory address). A value of 0 or an
+omitted "align" argument means that the operation has the preferential
+alignment for the target. It is the responsibility of the code emitter
+to ensure that the alignment information is correct. Overestimating
+the alignment results in an undefined behavior. Underestimating the
+alignment may produce less efficient code. An alignment of 1 is always
+safe.
+</p>
 <h5>Semantics:</h5>
 <p>The contents of memory are updated to contain '<tt>&lt;value&gt;</tt>'
 at the location specified by the '<tt>&lt;pointer&gt;</tt>' operand.</p>
