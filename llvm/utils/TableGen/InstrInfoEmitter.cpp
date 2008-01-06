@@ -176,8 +176,15 @@ private:
       // Get information about the SDNode for the operator.
       const SDNodeInfo &OpInfo = CDP.getSDNodeInfo(N->getOperator());
       
-      if (OpInfo.getEnumName() == "ISD::STORE")
+      // If this is a store node, it obviously stores to memory.
+      if (OpInfo.getEnumName() == "ISD::STORE") {
         isStore = true;
+        
+      } else if (const CodeGenIntrinsic *IntInfo = N->getIntrinsicInfo(CDP)) {
+        // If this is an intrinsic, analyze it.
+        if (IntInfo->ModRef >= CodeGenIntrinsic::WriteArgMem)
+          isStore = true;  // Intrinsics that can write to memory are 'isStore'.
+      }
     }
 
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)

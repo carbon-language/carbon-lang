@@ -633,6 +633,22 @@ static std::vector<unsigned char> getImplicitType(Record *R, bool NotRegisters,
   return Other;
 }
 
+
+/// getIntrinsicInfo - If this node corresponds to an intrinsic, return the
+/// CodeGenIntrinsic information for it, otherwise return a null pointer.
+const CodeGenIntrinsic *TreePatternNode::
+getIntrinsicInfo(const CodeGenDAGPatterns &CDP) const {
+  if (getOperator() != CDP.get_intrinsic_void_sdnode() &&
+      getOperator() != CDP.get_intrinsic_w_chain_sdnode() &&
+      getOperator() != CDP.get_intrinsic_wo_chain_sdnode())
+    return 0;
+    
+  unsigned IID = 
+    dynamic_cast<IntInit*>(getChild(0)->getLeafValue())->getValue();
+  return &CDP.getIntrinsicInfo(IID);
+}
+
+
 /// ApplyTypeConstraints - Apply all of the type constraints relevent to
 /// this node and its children in the tree.  This returns true if it makes a
 /// change, false otherwise.  If a type contradiction is found, throw an
@@ -699,27 +715,22 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       MadeChange = getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     MadeChange |= UpdateNodeType(MVT::isVoid, TP);
     return MadeChange;
-  } else if (getOperator() == CDP.get_intrinsic_void_sdnode() ||
-             getOperator() == CDP.get_intrinsic_w_chain_sdnode() ||
-             getOperator() == CDP.get_intrinsic_wo_chain_sdnode()) {
-    unsigned IID = 
-    dynamic_cast<IntInit*>(getChild(0)->getLeafValue())->getValue();
-    const CodeGenIntrinsic &Int = CDP.getIntrinsicInfo(IID);
+  } else if (const CodeGenIntrinsic *Int = getIntrinsicInfo(CDP)) {
     bool MadeChange = false;
     
     // Apply the result type to the node.
-    MadeChange = UpdateNodeType(Int.ArgVTs[0], TP);
+    MadeChange = UpdateNodeType(Int->ArgVTs[0], TP);
     
-    if (getNumChildren() != Int.ArgVTs.size())
-      TP.error("Intrinsic '" + Int.Name + "' expects " +
-               utostr(Int.ArgVTs.size()-1) + " operands, not " +
+    if (getNumChildren() != Int->ArgVTs.size())
+      TP.error("Intrinsic '" + Int->Name + "' expects " +
+               utostr(Int->ArgVTs.size()-1) + " operands, not " +
                utostr(getNumChildren()-1) + " operands!");
 
     // Apply type info to the intrinsic ID.
     MadeChange |= getChild(0)->UpdateNodeType(MVT::iPTR, TP);
     
     for (unsigned i = 1, e = getNumChildren(); i != e; ++i) {
-      MVT::ValueType OpVT = Int.ArgVTs[i];
+      MVT::ValueType OpVT = Int->ArgVTs[i];
       MadeChange |= getChild(i)->UpdateNodeType(OpVT, TP);
       MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     }

@@ -203,13 +203,16 @@ public:
   void setChild(unsigned i, TreePatternNode *N) {
     Children[i] = N;
   }
-  
-  
+
   const std::string &getPredicateFn() const { return PredicateFn; }
   void setPredicateFn(const std::string &Fn) { PredicateFn = Fn; }
 
   Record *getTransformFn() const { return TransformFn; }
   void setTransformFn(Record *Fn) { TransformFn = Fn; }
+  
+  /// getIntrinsicInfo - If this node corresponds to an intrinsic, return the
+  /// CodeGenIntrinsic information for it, otherwise return a null pointer.
+  const CodeGenIntrinsic *getIntrinsicInfo(const CodeGenDAGPatterns &CDP) const;
   
   void print(std::ostream &OS) const;
   void dump() const;
