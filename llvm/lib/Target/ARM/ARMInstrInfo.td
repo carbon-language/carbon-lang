@@ -713,7 +713,7 @@ def PICLDSB : AXI3<0x0, (outs GPR:$dst), (ins addrmodepc:$addr, pred:$p),
                   Pseudo, "${addr:label}:\n\tldr${p}sb $dst, $addr",
                   [(set GPR:$dst, (sextloadi8 addrmodepc:$addr))]>;
 }
-let isStore = 1, AddedComplexity = 10 in {
+let AddedComplexity = 10 in {
 def PICSTR  : AXI2<0x0, (outs), (ins GPR:$src, addrmodepc:$addr, pred:$p),
                Pseudo, "${addr:label}:\n\tstr$p $src, $addr",
                [(store GPR:$src, addrmodepc:$addr)]>;
@@ -878,7 +878,6 @@ def LDRSB_POST: AI3po<0xD, (outs GPR:$dst, GPR:$base_wb),
 } // isLoad
 
 // Store
-let isStore = 1 in {
 def STR  : AI2<0x0, (outs), (ins GPR:$src, addrmode2:$addr), StFrm,
                "str", " $src, $addr",
                [(store GPR:$src, addrmode2:$addr)]>;
@@ -893,6 +892,7 @@ def STRB : AI2<0x1, (outs), (ins GPR:$src, addrmode2:$addr), StFrm,
                [(truncstorei8 GPR:$src, addrmode2:$addr)]>;
 
 // Store doubleword
+let isStore = 1 in
 def STRD : AI3<0xF, (outs), (ins GPR:$src, addrmode3:$addr), StFrm,
                "str", "d $src, $addr",
                []>, Requires<[IsARM, HasV5T]>;
@@ -933,7 +933,6 @@ def STRB_POST: AI2po<0x1, (outs GPR:$base_wb),
                      "str", "b $src, [$base], $offset", "$base = $base_wb",
                     [(set GPR:$base_wb, (post_truncsti8 GPR:$src,
                                          GPR:$base, am2offset:$offset))]>;
-} // isStore
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.

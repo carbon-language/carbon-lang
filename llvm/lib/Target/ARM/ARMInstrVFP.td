@@ -98,7 +98,6 @@ def FLDS  : ASI5<(outs SPR:$dst), (ins addrmode5:$addr),
                  [(set SPR:$dst, (load addrmode5:$addr))]>;
 } // isLoad
 
-let isStore = 1 in {
 def FSTD  : ADI5<(outs), (ins DPR:$src, addrmode5:$addr),
                  "fstd", " $src, $addr",
                  [(store DPR:$src, addrmode5:$addr)]>;
@@ -106,7 +105,6 @@ def FSTD  : ADI5<(outs), (ins DPR:$src, addrmode5:$addr),
 def FSTS  : ASI5<(outs), (ins SPR:$src, addrmode5:$addr),
                  "fsts", " $src, $addr",
                  [(store SPR:$src, addrmode5:$addr)]>;
-} // isStore
 
 //===----------------------------------------------------------------------===//
 //  Load / store multiple Instructions.
