@@ -94,7 +94,7 @@ namespace llvm {
     bool isIndirectBranch;
     bool isBarrier;
     bool isCall;
-    bool isLoad;
+    bool isSimpleLoad;
     bool mayStore;
     bool isImplicitDef;
     bool isPredicable;

@@ -618,7 +618,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
   const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
   if ((TID->Flags & M_IMPLICIT_DEF_FLAG) ||
       tii_->isTriviallyReMaterializable(MI)) {
-    isLoad = TID->Flags & M_LOAD_FLAG;
+    isLoad = TID->isSimpleLoad();
     return true;
   }
 
@@ -1226,7 +1226,7 @@ addIntervalsForSpills(const LiveInterval &li,
     int LdSlot = 0;
     bool isLoadSS = DefIsReMat && tii_->isLoadFromStackSlot(ReMatDefMI, LdSlot);
     bool isLoad = isLoadSS ||
-      (DefIsReMat && (ReMatDefMI->getInstrDescriptor()->Flags & M_LOAD_FLAG));
+      (DefIsReMat && (ReMatDefMI->getInstrDescriptor()->isSimpleLoad()));
     bool IsFirstRange = true;
     for (LiveInterval::Ranges::const_iterator
            I = li.ranges.begin(), E = li.ranges.end(); I != E; ++I) {
@@ -1308,7 +1308,7 @@ addIntervalsForSpills(const LiveInterval &li,
     int LdSlot = 0;
     bool isLoadSS = DefIsReMat && tii_->isLoadFromStackSlot(ReMatDefMI, LdSlot);
     bool isLoad = isLoadSS ||
-      (DefIsReMat && (ReMatDefMI->getInstrDescriptor()->Flags & M_LOAD_FLAG));
+      (DefIsReMat && ReMatDefMI->getInstrDescriptor()->isSimpleLoad());
     rewriteInstructionsForSpills(li, TrySplit, I, ReMatOrigDefMI, ReMatDefMI,
                                Slot, LdSlot, isLoad, isLoadSS, DefIsReMat,
                                CanDelete, vrm, RegInfo, rc, ReMatIds, loopInfo,
@@ -1423,8 +1423,7 @@ addIntervalsForSpills(const LiveInterval &li,
           int LdSlot = 0;
           bool isLoadSS = tii_->isLoadFromStackSlot(ReMatDefMI, LdSlot);
           // If the rematerializable def is a load, also try to fold it.
-          if (isLoadSS ||
-              (ReMatDefMI->getInstrDescriptor()->Flags & M_LOAD_FLAG))
+          if (isLoadSS || ReMatDefMI->getInstrDescriptor()->isSimpleLoad())
             Folded = tryFoldMemoryOperand(MI, vrm, ReMatDefMI, index,
                                           Ops, isLoadSS, LdSlot, VReg);
         }

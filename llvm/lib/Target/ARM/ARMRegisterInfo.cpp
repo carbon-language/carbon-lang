@@ -690,7 +690,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   unsigned Opcode = MI.getOpcode();
-  const TargetInstrDescriptor &Desc = TII.get(Opcode);
+  const TargetInstrDescriptor &Desc = *MI.getInstrDescriptor();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   bool isSub = false;
 
@@ -885,7 +885,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   assert(Offset && "This code isn't needed if offset already handled!");
 
   if (isThumb) {
-    if (TII.isLoad(Opcode)) {
+    if (Desc.isSimpleLoad()) {
       // Use the destination register to materialize sp + offset.
       unsigned TmpReg = MI.getOperand(0).getReg();
       bool UseRR = false;

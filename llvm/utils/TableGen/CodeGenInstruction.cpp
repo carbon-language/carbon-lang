@@ -84,7 +84,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isIndirectBranch = R->getValueAsBit("isIndirectBranch");
   isBarrier    = R->getValueAsBit("isBarrier");
   isCall       = R->getValueAsBit("isCall");
-  isLoad       = R->getValueAsBit("isLoad");
+  isSimpleLoad = R->getValueAsBit("isSimpleLoad");
   mayStore     = R->getValueAsBit("mayStore");
   isImplicitDef= R->getValueAsBit("isImplicitDef");
   bool isTwoAddress = R->getValueAsBit("isTwoAddress");

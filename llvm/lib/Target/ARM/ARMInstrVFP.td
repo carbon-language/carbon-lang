@@ -88,7 +88,7 @@ def arm_fmdrr  : SDNode<"ARMISD::FMDRR", SDT_FMDRR>;
 //  Load / store Instructions.
 //
 
-let isLoad = 1 in {
+let isSimpleLoad = 1 in {
 def FLDD  : ADI5<(outs DPR:$dst), (ins addrmode5:$addr),
                  "fldd", " $dst, $addr",
                  [(set DPR:$dst, (load addrmode5:$addr))]>;
@@ -96,7 +96,7 @@ def FLDD  : ADI5<(outs DPR:$dst), (ins addrmode5:$addr),
 def FLDS  : ASI5<(outs SPR:$dst), (ins addrmode5:$addr),
                  "flds", " $dst, $addr",
                  [(set SPR:$dst, (load addrmode5:$addr))]>;
-} // isLoad
+} // isSimpleLoad
 
 def FSTD  : ADI5<(outs), (ins DPR:$src, addrmode5:$addr),
                  "fstd", " $src, $addr",
@@ -110,7 +110,7 @@ def FSTS  : ASI5<(outs), (ins SPR:$src, addrmode5:$addr),
 //  Load / store multiple Instructions.
 //
 
-let isLoad = 1 in {
+let isSimpleLoad = 1 in {
 def FLDMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
                            variable_ops),
                   "fldm${addr:submode}d${p} ${addr:base}, $dst1",
@@ -120,7 +120,7 @@ def FLDMS : AXSI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$dst1,
                            variable_ops),
                   "fldm${addr:submode}s${p} ${addr:base}, $dst1",
                   []>;
-} // isLoad
+} // isSimpleLoad
 
 let mayStore = 1 in {
 def FSTMD : AXDI5<(outs), (ins addrmode5:$addr, pred:$p, reglist:$src1,

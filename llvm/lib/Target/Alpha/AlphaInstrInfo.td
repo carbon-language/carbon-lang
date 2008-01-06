@@ -152,7 +152,7 @@ def IDEF_F64 : PseudoInstAlpha<(outs F8RC:$RA), (ins), ";#idef $RA",
 
 def WTF : PseudoInstAlpha<(outs), (ins variable_ops), "#wtf", [], s_pseudo>;
 
-let isLoad = 1, hasCtrlDep = 1, Defs = [R30], Uses = [R30] in {
+let hasCtrlDep = 1, Defs = [R30], Uses = [R30] in {
 def ADJUSTSTACKUP : PseudoInstAlpha<(outs), (ins s64imm:$amt),
                 "; ADJUP $amt", 
                 [(callseq_start imm:$amt)], s_pseudo>;

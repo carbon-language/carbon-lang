@@ -188,7 +188,7 @@ let isReturn = 1, isTerminator = 1 in {
 }
 
 // FIXME: remove when we have a way to marking a MI with these properties.
-let isLoad = 1, isReturn = 1, isTerminator = 1 in
+let isSimpleLoad = 1, isReturn = 1, isTerminator = 1 in
 def tPOP_RET : TI<(outs reglist:$dst1, variable_ops), (ins),
                    "pop $dst1", []>;
 
@@ -237,7 +237,7 @@ let isBranch = 1, isTerminator = 1 in
 //  Load Store Instructions.
 //
 
-let isLoad = 1 in {
+let isSimpleLoad = 1 in {
 def tLDR : TI4<(outs GPR:$dst), (ins t_addrmode_s4:$addr),
                "ldr $dst, $addr",
                [(set GPR:$dst, (load t_addrmode_s4:$addr))]>;
@@ -276,7 +276,7 @@ def tLDRpci : TIs<(outs GPR:$dst), (ins i32imm:$addr),
 let isReMaterializable = 1 in
 def tLDRcp  : TIs<(outs GPR:$dst), (ins i32imm:$addr),
                   "ldr $dst, $addr", []>;
-} // isLoad
+} // isSimpleLoad
 
 def tSTR : TI4<(outs), (ins GPR:$src, t_addrmode_s4:$addr),
                "str $src, $addr",
@@ -307,7 +307,7 @@ def tSpill : TIs<(outs), (ins GPR:$src, t_addrmode_sp:$addr),
 
 // TODO: A7-44: LDMIA - load multiple
 
-let isLoad = 1 in
+let isSimpleLoad = 1 in
 def tPOP : TI<(outs reglist:$dst1, variable_ops), (ins),
                "pop $dst1", []>;
 

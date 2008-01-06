@@ -48,7 +48,11 @@ const unsigned M_CALL_FLAG             = 1 << 1;
 const unsigned M_RET_FLAG              = 1 << 2;
 const unsigned M_BARRIER_FLAG          = 1 << 3;
 const unsigned M_DELAY_SLOT_FLAG       = 1 << 4;
-const unsigned M_LOAD_FLAG             = 1 << 5;
+  
+/// M_SIMPLE_LOAD_FLAG - This flag is set for instructions that are simple loads
+/// from memory.  This should only be set on instructions that load a value from
+/// memory and return it in their only virtual register definition.
+const unsigned M_SIMPLE_LOAD_FLAG      = 1 << 5;
   
 /// M_MAY_STORE_FLAG - This flag is set to any instruction that could possibly
 /// modify memory.  Instructions with this flag set are not necessarily simple
@@ -184,6 +188,17 @@ public:
   /// findTiedToSrcOperand - Returns the operand that is tied to the specified
   /// dest operand. Returns -1 if there isn't one.
   int findTiedToSrcOperand(unsigned OpNum) const;
+  
+  
+  /// isSimpleLoad - Return true for instructions that are simple loads from
+  /// memory.  This should only be set on instructions that load a value from
+  /// memory and return it in their only virtual register definition.
+  /// Instructions that return a value loaded from memory and then modified in
+  /// some way should not return true for this.
+  bool isSimpleLoad() const {
+    return Flags & M_SIMPLE_LOAD_FLAG;
+  }
+  
 };
 
 
@@ -278,9 +293,6 @@ public:
   
   bool isCall(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_CALL_FLAG;
-  }
-  bool isLoad(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_LOAD_FLAG;
   }
 
   /// mayStore - Return true if this instruction could possibly modify memory.

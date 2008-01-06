@@ -210,7 +210,7 @@ void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst,
   }
 
   // These two override everything.
-  isLoad              = Inst.isLoad;
+  isLoad              = Inst.isSimpleLoad;
   NeverHasSideEffects = Inst.neverHasSideEffects;
 
 #if 0
@@ -308,7 +308,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isBarrier)    OS << "|M_BARRIER_FLAG";
   if (Inst.hasDelaySlot) OS << "|M_DELAY_SLOT_FLAG";
   if (Inst.isCall)       OS << "|M_CALL_FLAG";
-  if (isLoad)            OS << "|M_LOAD_FLAG";
+  if (isLoad)            OS << "|M_SIMPLE_LOAD_FLAG";
   if (mayStore)          OS << "|M_MAY_STORE_FLAG";
   if (Inst.isImplicitDef)OS << "|M_IMPLICIT_DEF_FLAG";
   if (Inst.isPredicable) OS << "|M_PREDICABLE";

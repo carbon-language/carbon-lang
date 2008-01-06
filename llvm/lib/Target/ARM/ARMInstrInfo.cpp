@@ -202,7 +202,7 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   unsigned AddrMode = (TSFlags & ARMII::AddrModeMask);
   const TargetInstrDescriptor *TID = MI->getInstrDescriptor();
   unsigned NumOps = TID->numOperands;
-  bool isLoad = (TID->Flags & M_LOAD_FLAG) != 0;
+  bool isLoad = TID->isSimpleLoad();
   const MachineOperand &WB = isLoad ? MI->getOperand(1) : MI->getOperand(0);
   const MachineOperand &Base = MI->getOperand(2);
   const MachineOperand &Offset = MI->getOperand(NumOps-3);

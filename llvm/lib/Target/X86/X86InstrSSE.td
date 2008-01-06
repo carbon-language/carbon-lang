@@ -301,7 +301,7 @@ let Uses = [EFLAGS], usesCustomDAGSchedInserter = 1 in {
 // Move Instructions
 def MOVSSrr : SSI<0x10, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                   "movss\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MOVSSrm : SSI<0x10, MRMSrcMem, (outs FR32:$dst), (ins f32mem:$src),
                   "movss\t{$src, $dst|$dst, $src}",
                   [(set FR32:$dst, (loadf32 addr:$src))]>;
@@ -457,7 +457,7 @@ def FsMOVAPSrr : PSI<0x28, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
 
 // Alias instruction to load FR32 from f128mem using movaps. Upper bits are
 // disregarded.
-let isLoad = 1 in
+let isSimpleLoad = 1 in
 def FsMOVAPSrm : PSI<0x28, MRMSrcMem, (outs FR32:$dst), (ins f128mem:$src),
                      "movaps\t{$src, $dst|$dst, $src}",
                      [(set FR32:$dst, (alignedloadfsf32 addr:$src))]>;
@@ -634,7 +634,7 @@ defm MIN : sse1_fp_binop_rm<0x5D, "min", X86fmin,
 // Move Instructions
 def MOVAPSrr : PSI<0x28, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movaps\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MOVAPSrm : PSI<0x28, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movaps\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (alignedloadv4f32 addr:$src))]>;
@@ -645,7 +645,7 @@ def MOVAPSmr : PSI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
 
 def MOVUPSrr : PSI<0x10, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movups\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1 in
+let isSimpleLoad = 1 in
 def MOVUPSrm : PSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movups\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (loadv4f32 addr:$src))]>;
@@ -654,7 +654,7 @@ def MOVUPSmr : PSI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    [(store (v4f32 VR128:$src), addr:$dst)]>;
 
 // Intrinsic forms of MOVUPS load and store
-let isLoad = 1 in
+let isSimpleLoad = 1 in
 def MOVUPSrm_Int : PSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                        "movups\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse_loadu_ps addr:$src))]>;
@@ -1003,7 +1003,7 @@ def MOVZSS2PSrm : SSI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f32mem:$src),
 // Move Instructions
 def MOVSDrr : SDI<0x10, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
                   "movsd\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MOVSDrm : SDI<0x10, MRMSrcMem, (outs FR64:$dst), (ins f64mem:$src),
                   "movsd\t{$src, $dst|$dst, $src}",
                   [(set FR64:$dst, (loadf64 addr:$src))]>;
@@ -1153,7 +1153,7 @@ def FsMOVAPDrr : PDI<0x28, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
 
 // Alias instruction to load FR64 from f128mem using movapd. Upper bits are
 // disregarded.
-let isLoad = 1 in
+let isSimpleLoad = 1 in
 def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
                      "movapd\t{$src, $dst|$dst, $src}",
                      [(set FR64:$dst, (alignedloadfsf64 addr:$src))]>;
@@ -1330,7 +1330,7 @@ defm MIN : sse2_fp_binop_rm<0x5D, "min", X86fmin,
 // Move Instructions
 def MOVAPDrr : PDI<0x28, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movapd\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
+let isSimpleLoad = 1, isReMaterializable = 1, mayHaveSideEffects = 1 in
 def MOVAPDrm : PDI<0x28, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movapd\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (alignedloadv2f64 addr:$src))]>;
@@ -1341,7 +1341,7 @@ def MOVAPDmr : PDI<0x29, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
 
 def MOVUPDrr : PDI<0x10, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movupd\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1 in
+let isSimpleLoad = 1 in
 def MOVUPDrm : PDI<0x10, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
                    "movupd\t{$src, $dst|$dst, $src}",
                    [(set VR128:$dst, (loadv2f64 addr:$src))]>;
@@ -1704,14 +1704,14 @@ let isTwoAddress = 1 in {
 // Move Instructions
 def MOVDQArr : PDI<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    "movdqa\t{$src, $dst|$dst, $src}", []>;
-let isLoad = 1 in
+let isSimpleLoad = 1 in
 def MOVDQArm : PDI<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "movdqa\t{$src, $dst|$dst, $src}",
                    [/*(set VR128:$dst, (alignedloadv2i64 addr:$src))*/]>;
 def MOVDQAmr : PDI<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                    "movdqa\t{$src, $dst|$dst, $src}",
                    [/*(alignedstore (v2i64 VR128:$src), addr:$dst)*/]>;
-let isLoad = 1 in
+let isSimpleLoad = 1 in
 def MOVDQUrm :   I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                    "movdqu\t{$src, $dst|$dst, $src}",
                    [/*(set VR128:$dst, (loadv2i64 addr:$src))*/]>,
@@ -1722,7 +1722,7 @@ def MOVDQUmr :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                  XS, Requires<[HasSSE2]>;
 
 // Intrinsic forms of MOVDQU load and store
-let isLoad = 1 in
+let isSimpleLoad = 1 in
 def MOVDQUrm_Int :   I<0x6F, MRMSrcMem, (outs VR128:$dst), (ins i128mem:$src),
                        "movdqu\t{$src, $dst|$dst, $src}",
                        [(set VR128:$dst, (int_x86_sse2_loadu_dq addr:$src))]>,
