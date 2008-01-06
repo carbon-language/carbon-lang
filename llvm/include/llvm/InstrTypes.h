@@ -398,8 +398,14 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
+  /// @brief Check whether it is valid to call getCastOpcode for these types.
+  static bool isCastable(
+    const Type *SrcTy, ///< The Type from which the value should be cast.
+    const Type *DestTy ///< The Type to which the value should be cast.
+  );
+
   /// Returns the opcode necessary to cast Val into Ty using usual casting
-  /// rules. 
+  /// rules.
   /// @brief Infer the opcode for cast operand and type
   static Instruction::CastOps getCastOpcode(
     const Value *Val, ///< The value to cast

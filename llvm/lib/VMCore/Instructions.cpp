@@ -1895,12 +1895,70 @@ CastInst *CastInst::createFPCast(Value *C, const Type *Ty,
   return create(opcode, C, Ty, Name, InsertAtEnd);
 }
 
+// Check whether it is valid to call getCastOpcode for these types.
+// This routine must be kept in sync with getCastOpcode.
+bool CastInst::isCastable(const Type *SrcTy, const Type *DestTy) {
+  if (!SrcTy->isFirstClassType() || !DestTy->isFirstClassType())
+    return false;
+
+  if (SrcTy == DestTy)
+    return true;
+
+  // Get the bit sizes, we'll need these
+  unsigned SrcBits = SrcTy->getPrimitiveSizeInBits();   // 0 for ptr/vector
+  unsigned DestBits = DestTy->getPrimitiveSizeInBits(); // 0 for ptr/vector
+
+  // Run through the possibilities ...
+  if (DestTy->isInteger()) {                      // Casting to integral
+    if (SrcTy->isInteger()) {                     // Casting from integral
+        return true;
+    } else if (SrcTy->isFloatingPoint()) {        // Casting from floating pt
+      return true;
+    } else if (const VectorType *PTy = dyn_cast<VectorType>(SrcTy)) {
+                                                  // Casting from vector
+      return DestBits == PTy->getBitWidth();
+    } else {                                      // Casting from something else
+      return isa<PointerType>(SrcTy);
+    }
+  } else if (DestTy->isFloatingPoint()) {         // Casting to floating pt
+    if (SrcTy->isInteger()) {                     // Casting from integral
+      return true;
+    } else if (SrcTy->isFloatingPoint()) {        // Casting from floating pt
+      return true;
+    } else if (const VectorType *PTy = dyn_cast<VectorType>(SrcTy)) {
+                                                  // Casting from vector
+      return DestBits == PTy->getBitWidth();
+    } else {                                      // Casting from something else
+      return false;
+    }
+  } else if (const VectorType *DestPTy = dyn_cast<VectorType>(DestTy)) {
+                                                   // Casting to vector
+    if (const VectorType *SrcPTy = dyn_cast<VectorType>(SrcTy)) {
+                                                   // Casting from vector
+      return DestPTy->getBitWidth() == SrcPTy->getBitWidth();
+    } else {                                       // Casting from something else
+      return DestPTy->getBitWidth() == SrcBits;
+    }
+  } else if (isa<PointerType>(DestTy)) {           // Casting to pointer
+    if (isa<PointerType>(SrcTy)) {                 // Casting from pointer
+      return true;
+    } else if (SrcTy->isInteger()) {               // Casting from integral
+      return true;
+    } else {                                       // Casting from something else
+      return false;
+    }
+  } else {                                         // Casting to something else
+    return false;
+  }
+}
+
 // Provide a way to get a "cast" where the cast opcode is inferred from the 
 // types and size of the operand. This, basically, is a parallel of the 
 // logic in the castIsValid function below.  This axiom should hold:
 //   castIsValid( getCastOpcode(Val, Ty), Val, Ty)
 // should not assert in castIsValid. In other words, this produces a "correct"
 // casting opcode for the arguments passed to it.
+// This routine must be kept in sync with isCastable.
 Instruction::CastOps
 CastInst::getCastOpcode(
   const Value *Src, bool SrcIsSigned, const Type *DestTy, bool DestIsSigned) {
@@ -1908,6 +1966,9 @@ CastInst::getCastOpcode(
   const Type *SrcTy = Src->getType();
   unsigned SrcBits = SrcTy->getPrimitiveSizeInBits();   // 0 for ptr/vector
   unsigned DestBits = DestTy->getPrimitiveSizeInBits(); // 0 for ptr/vector
+
+  assert(SrcTy->isFirstClassType() && DestTy->isFirstClassType() &&
+         "Only first class types are castable!");
 
   // Run through the possibilities ...
   if (DestTy->isInteger()) {                       // Casting to integral
@@ -2050,7 +2111,7 @@ CastInst::castIsValid(Instruction::CastOps op, Value *S, const Type *DstTy) {
     if (isa<PointerType>(SrcTy) != isa<PointerType>(DstTy))
       return false;
 
-    // Now we know we're not dealing with a pointer/non-poiner mismatch. In all
+    // Now we know we're not dealing with a pointer/non-pointer mismatch. In all
     // these cases, the cast is okay if the source and destination bit widths
     // are identical.
     return SrcBitSize == DstBitSize;

@@ -8082,11 +8082,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   const FunctionType *FT = Callee->getFunctionType();
   const Type *OldRetTy = Caller->getType();
 
-  const ParamAttrsList* CallerPAL = 0;
-  if (CallInst *CallerCI = dyn_cast<CallInst>(Caller))
-    CallerPAL = CallerCI->getParamAttrs();
-  else if (InvokeInst *CallerII = dyn_cast<InvokeInst>(Caller))
-    CallerPAL = CallerII->getParamAttrs();
+  const ParamAttrsList* CallerPAL = CS.getParamAttrs();
 
   // If the parameter attributes are not compatible, don't do the xform.  We
   // don't want to lose an sret attribute or something.
@@ -8099,6 +8095,12 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         // Conversion is ok if changing from pointer to int of same size.
         !(isa<PointerType>(FT->getReturnType()) &&
           TD->getIntPtrType() == OldRetTy))
+      return false;   // Cannot transform this return value.
+
+    if (!Caller->use_empty() &&
+        !CastInst::isCastable(FT->getReturnType(), OldRetTy) &&
+        // void -> non-void is handled specially
+        FT->getReturnType() != Type::VoidTy)
       return false;   // Cannot transform this return value.
 
     // If the callsite is an invoke instruction, and the return value is used by
@@ -8122,9 +8124,13 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   for (unsigned i = 0, e = NumCommonArgs; i != e; ++i, ++AI) {
     const Type *ParamTy = FT->getParamType(i);
     const Type *ActTy = (*AI)->getType();
+
+    if (!CastInst::isCastable(ActTy, ParamTy))
+      return false;
+
     ConstantInt *c = dyn_cast<ConstantInt>(*AI);
-    //Some conversions are safe even if we do not have a body.
-    //Either we can cast directly, or we can upconvert the argument
+    // Some conversions are safe even if we do not have a body.
+    // Either we can cast directly, or we can upconvert the argument
     bool isConvertible = ActTy == ParamTy ||
       (isa<PointerType>(ParamTy) && isa<PointerType>(ActTy)) ||
       (ParamTy->isInteger() && ActTy->isInteger() &&
@@ -8132,40 +8138,6 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       (c && ParamTy->getPrimitiveSizeInBits() >= ActTy->getPrimitiveSizeInBits()
        && c->getValue().isStrictlyPositive());
     if (Callee->isDeclaration() && !isConvertible) return false;
-
-    // Most other conversions can be done if we have a body, even if these
-    // lose information, e.g. int->short.
-    // Some conversions cannot be done at all, e.g. float to pointer.
-    // Logic here parallels CastInst::getCastOpcode (the design there
-    // requires legality checks like this be done before calling it).
-    if (ParamTy->isInteger()) {
-      if (const VectorType *VActTy = dyn_cast<VectorType>(ActTy)) {
-        if (VActTy->getBitWidth() != ParamTy->getPrimitiveSizeInBits())
-          return false;
-      }
-      if (!ActTy->isInteger() && !ActTy->isFloatingPoint() &&
-          !isa<PointerType>(ActTy))
-        return false;
-    } else if (ParamTy->isFloatingPoint()) {
-      if (const VectorType *VActTy = dyn_cast<VectorType>(ActTy)) {
-        if (VActTy->getBitWidth() != ParamTy->getPrimitiveSizeInBits())
-          return false;
-      }
-      if (!ActTy->isInteger() && !ActTy->isFloatingPoint())
-        return false;
-    } else if (const VectorType *VParamTy = dyn_cast<VectorType>(ParamTy)) {
-      if (const VectorType *VActTy = dyn_cast<VectorType>(ActTy)) {
-        if (VActTy->getBitWidth() != VParamTy->getBitWidth())
-          return false;
-      }
-      if (VParamTy->getBitWidth() != ActTy->getPrimitiveSizeInBits())      
-        return false;
-    } else if (isa<PointerType>(ParamTy)) {
-      if (!ActTy->isInteger() && !isa<PointerType>(ActTy))
-        return false;
-    } else {
-      return false;
-    }
   }
 
   if (FT->getNumParams() < NumActualArgs && !FT->isVarArg() &&
@@ -8238,12 +8210,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   // Insert a cast of the return type as necessary.
   Value *NV = NC;
-  if (Caller->getType() != NV->getType() && !Caller->use_empty()) {
+  if (OldRetTy != NV->getType() && !Caller->use_empty()) {
     if (NV->getType() != Type::VoidTy) {
-      const Type *CallerTy = Caller->getType();
       Instruction::CastOps opcode = CastInst::getCastOpcode(NC, false, 
-                                                            CallerTy, false);
-      NV = NC = CastInst::create(opcode, NC, CallerTy, "tmp");
+                                                            OldRetTy, false);
+      NV = NC = CastInst::create(opcode, NC, OldRetTy, "tmp");
 
       // If this is an invoke instruction, we should insert it after the first
       // non-phi, instruction in the normal successor block.
