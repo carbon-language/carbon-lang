@@ -26,6 +26,7 @@
 #include "CodeEmitterGen.h"
 #include "RegisterInfoEmitter.h"
 #include "InstrInfoEmitter.h"
+#include "InstrEnumEmitter.h"
 #include "AsmWriterEmitter.h"
 #include "DAGISelEmitter.h"
 #include "SubtargetEmitter.h"
@@ -158,7 +159,7 @@ int main(int argc, char **argv) {
       break;
 
     case GenInstrEnums:
-      InstrInfoEmitter(Records).runEnums(*Out);
+      InstrEnumEmitter(Records).run(*Out);
       break;
     case GenInstrs:
       InstrInfoEmitter(Records).run(*Out);

@@ -37,8 +37,6 @@ public:
   // run - Output the instruction set description, returning true on failure.
   void run(std::ostream &OS);
 
-  // runEnums - Print out enum values for all of the instructions.
-  void runEnums(std::ostream &OS);
 private:
   void printDefList(const std::vector<Record*> &Uses, unsigned Num,
                     std::ostream &OS) const;
