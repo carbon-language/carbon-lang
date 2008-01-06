@@ -8074,6 +8074,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     return false;
   Function *Callee = cast<Function>(CE->getOperand(0));
   Instruction *Caller = CS.getInstruction();
+  const ParamAttrsList* CallerPAL = CS.getParamAttrs();
 
   // Okay, this is a cast from a function to a different type.  Unless doing so
   // would cause a type conversion of one of our arguments, change this call to
@@ -8081,13 +8082,6 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   //
   const FunctionType *FT = Callee->getFunctionType();
   const Type *OldRetTy = Caller->getType();
-
-  const ParamAttrsList* CallerPAL = CS.getParamAttrs();
-
-  // If the parameter attributes are not compatible, don't do the xform.  We
-  // don't want to lose an sret attribute or something.
-  if (!ParamAttrsList::areCompatible(CallerPAL, Callee->getParamAttrs()))
-    return false;
 
   // Check to see if we are changing the return type...
   if (OldRetTy != FT->getReturnType()) {
@@ -8102,6 +8096,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         // void -> non-void is handled specially
         FT->getReturnType() != Type::VoidTy)
       return false;   // Cannot transform this return value.
+
+    if (!Caller->use_empty() && CallerPAL &&
+        ParamAttr::incompatibleWithType(FT->getReturnType(),
+                                        CallerPAL->getParamAttrs(0)))
+      return false;   // Attribute not compatible with transformed value.
 
     // If the callsite is an invoke instruction, and the return value is used by
     // a PHI node in a successor, we cannot change the return type of the call
@@ -8126,7 +8125,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     const Type *ActTy = (*AI)->getType();
 
     if (!CastInst::isCastable(ActTy, ParamTy))
-      return false;
+      return false;   // Cannot transform this parameter value.
+
+    if (CallerPAL &&
+        ParamAttr::incompatibleWithType(ParamTy, CallerPAL->getParamAttrs(i+1)))
+      return false;   // Attribute not compatible with transformed value.
 
     ConstantInt *c = dyn_cast<ConstantInt>(*AI);
     // Some conversions are safe even if we do not have a body.
@@ -8144,10 +8147,32 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       Callee->isDeclaration())
     return false;   // Do not delete arguments unless we have a function body...
 
+  if (FT->getNumParams() < NumActualArgs && FT->isVarArg())
+    // In this case we have more arguments than the new function type, but we
+    // won't be dropping them.  Some of them may have attributes.  If so, we
+    // cannot perform the transform because attributes are not allowed after
+    // the end of the function type.
+    if (CallerPAL && CallerPAL->size() &&
+        CallerPAL->getParamIndex(CallerPAL->size()-1) > FT->getNumParams())
+      return false;
+
   // Okay, we decided that this is a safe thing to do: go ahead and start
   // inserting cast instructions as necessary...
   std::vector<Value*> Args;
   Args.reserve(NumActualArgs);
+  ParamAttrsVector attrVec;
+  attrVec.reserve(NumCommonArgs);
+
+  // Get any return attributes.
+  uint16_t RAttrs = CallerPAL ? CallerPAL->getParamAttrs(0) : 0;
+
+  // If the return value is not being used, the type may not be compatible
+  // with the existing attributes.  Wipe out any problematic attributes.
+  RAttrs &= ~ParamAttr::incompatibleWithType(FT->getReturnType(), RAttrs);
+
+  // Add the new return attributes.
+  if (RAttrs)
+    attrVec.push_back(ParamAttrsWithIndex::get(0, RAttrs));
 
   AI = CS.arg_begin();
   for (unsigned i = 0; i != NumCommonArgs; ++i, ++AI) {
@@ -8160,6 +8185,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       CastInst *NewCast = CastInst::create(opcode, *AI, ParamTy, "tmp");
       Args.push_back(InsertNewInstBefore(NewCast, *Caller));
     }
+
+    // Add any parameter attributes.
+    uint16_t PAttrs = CallerPAL ? CallerPAL->getParamAttrs(i + 1) : 0;
+    if (PAttrs)
+      attrVec.push_back(ParamAttrsWithIndex::get(i + 1, PAttrs));
   }
 
   // If the function takes more arguments than the call was taking, add them
@@ -8187,17 +8217,22 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
           Args.push_back(*AI);
         }
       }
+
+      // No need to add parameter attributes - we already checked that there
+      // aren't any.
     }
 
   if (FT->getReturnType() == Type::VoidTy)
     Caller->setName("");   // Void type should not have a name.
+
+  const ParamAttrsList* NewCallerPAL = ParamAttrsList::get(attrVec);
 
   Instruction *NC;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
     NC = new InvokeInst(Callee, II->getNormalDest(), II->getUnwindDest(),
                         Args.begin(), Args.end(), Caller->getName(), Caller);
     cast<InvokeInst>(NC)->setCallingConv(II->getCallingConv());
-    cast<InvokeInst>(NC)->setParamAttrs(CallerPAL);
+    cast<InvokeInst>(NC)->setParamAttrs(NewCallerPAL);
   } else {
     NC = new CallInst(Callee, Args.begin(), Args.end(),
                       Caller->getName(), Caller);
@@ -8205,7 +8240,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (CI->isTailCall())
       cast<CallInst>(NC)->setTailCall();
     cast<CallInst>(NC)->setCallingConv(CI->getCallingConv());
-    cast<CallInst>(NC)->setParamAttrs(CallerPAL);
+    cast<CallInst>(NC)->setParamAttrs(NewCallerPAL);
   }
 
   // Insert a cast of the return type as necessary.

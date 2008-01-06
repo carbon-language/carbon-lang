@@ -7,11 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the ParamAttrsList class.
+// This file implements the ParamAttrsList class and ParamAttr utilities.
 //
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ParameterAttributes.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Support/ManagedStatic.h"
 
 using namespace llvm;
@@ -61,50 +62,6 @@ ParamAttrsList::getParamAttrsText(uint16_t Attrs) {
   if (Attrs & ParamAttr::ReadOnly)
     Result += "readonly ";
   return Result;
-}
-
-/// onlyInformative - Returns whether only informative attributes are set.
-static inline bool onlyInformative(uint16_t attrs) {
-  return !(attrs & ~ParamAttr::Informative);
-}
-
-bool
-ParamAttrsList::areCompatible(const ParamAttrsList *A, const ParamAttrsList *B){
-  if (A == B)
-    return true;
-  unsigned ASize = A ? A->size() : 0;
-  unsigned BSize = B ? B->size() : 0;
-  unsigned AIndex = 0;
-  unsigned BIndex = 0;
-
-  while (AIndex < ASize && BIndex < BSize) {
-    uint16_t AIdx = A->getParamIndex(AIndex);
-    uint16_t BIdx = B->getParamIndex(BIndex);
-    uint16_t AAttrs = A->getParamAttrsAtIndex(AIndex);
-    uint16_t BAttrs = B->getParamAttrsAtIndex(AIndex);
-
-    if (AIdx < BIdx) {
-      if (!onlyInformative(AAttrs))
-        return false;
-      ++AIndex;
-    } else if (BIdx < AIdx) {
-      if (!onlyInformative(BAttrs))
-        return false;
-      ++BIndex;
-    } else {
-      if (!onlyInformative(AAttrs ^ BAttrs))
-        return false;
-      ++AIndex;
-      ++BIndex;
-    }
-  }
-  for (; AIndex < ASize; ++AIndex)
-    if (!onlyInformative(A->getParamAttrsAtIndex(AIndex)))
-      return false;
-  for (; BIndex < BSize; ++BIndex)
-    if (!onlyInformative(B->getParamAttrsAtIndex(AIndex)))
-      return false;
-  return true;
 }
 
 void ParamAttrsList::Profile(FoldingSetNodeID &ID,
@@ -229,3 +186,19 @@ ParamAttrsList::excludeAttrs(const ParamAttrsList *PAL,
   return getModified(PAL, modVec);
 }
 
+uint16_t ParamAttr::incompatibleWithType (const Type *Ty, uint16_t attrs) {
+  uint16_t Incompatible = None;
+
+  if (!Ty->isInteger())
+    Incompatible |= IntegerTypeOnly;
+
+  if (!isa<PointerType>(Ty))
+    Incompatible |= PointerTypeOnly;
+  else if (attrs & ParamAttr::ByVal) {
+    const PointerType *PTy = cast<PointerType>(Ty);
+    if (!isa<StructType>(PTy->getElementType()))
+      Incompatible |= ParamAttr::ByVal;
+  }
+
+  return attrs & Incompatible;
+}

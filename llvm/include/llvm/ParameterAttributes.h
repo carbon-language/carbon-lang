@@ -22,6 +22,8 @@
 #include <cassert>
 
 namespace llvm {
+class Type;
+
 namespace ParamAttr {
 
 /// Function parameters and results can have attributes to indicate how they 
@@ -44,13 +46,6 @@ enum Attributes {
   ReadOnly   = 1 << 10  ///< Function only reads from memory
 };
 
-/// These attributes can safely be dropped from a function or a function call:
-/// doing so may reduce the number of optimizations performed, but it will not
-/// change a correct program into an incorrect one.
-/// @brief Attributes that do not change the calling convention.
-const uint16_t Informative = NoReturn | NoUnwind | NoAlias |
-                             ReadNone | ReadOnly;
-
 /// @brief Attributes that only apply to function parameters.
 const uint16_t ParameterOnly = ByVal | InReg | Nest | StructRet;
 
@@ -63,16 +58,15 @@ const uint16_t IntegerTypeOnly = SExt | ZExt;
 /// @brief Attributes that only apply to pointers.
 const uint16_t PointerTypeOnly = ByVal | Nest | NoAlias | StructRet;
 
-/// @brief Attributes that do not apply to void type function return values.
-const uint16_t VoidTypeIncompatible = IntegerTypeOnly | PointerTypeOnly |
-                                      ParameterOnly;
-
 /// @brief Attributes that are mutually incompatible.
 const uint16_t MutuallyIncompatible[3] = {
   ByVal | InReg | Nest  | StructRet,
   ZExt  | SExt,
   ReadNone | ReadOnly
 };
+
+/// @brief Which of the given attributes do not apply to the type.
+uint16_t incompatibleWithType (const Type *Ty, uint16_t attrs);
 
 } // end namespace ParamAttr
 
@@ -157,11 +151,6 @@ class ParamAttrsList : public FoldingSetNode {
     /// @brief Remove the specified attributes from those in PAL at index idx.
     static const ParamAttrsList *excludeAttrs(const ParamAttrsList *PAL,
                                               uint16_t idx, uint16_t attrs);
-
-    /// Returns whether each of the specified lists of attributes can be safely
-    /// replaced with the other in a function or a function call.
-    /// @brief Whether one attribute list can safely replace the other.
-    static bool areCompatible(const ParamAttrsList *A, const ParamAttrsList *B);
 
   /// @}
   /// @name Accessors

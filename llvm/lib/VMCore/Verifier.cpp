@@ -418,22 +418,10 @@ void Verifier::VerifyParamAttrs(const FunctionType *FT,
               Attrs->getParamAttrsText(MutI) + "are incompatible!", V);
     }
 
-    uint16_t IType = Attr & ParamAttr::IntegerTypeOnly;
-    Assert1(!IType || FT->getParamType(Idx-1)->isInteger(),
-            "Attribute " + Attrs->getParamAttrsText(IType) +
-            "should only apply to Integer type!", V);
-
-    uint16_t PType = Attr & ParamAttr::PointerTypeOnly;
-    Assert1(!PType || isa<PointerType>(FT->getParamType(Idx-1)),
-            "Attribute " + Attrs->getParamAttrsText(PType) +
-            "should only apply to Pointer type!", V);
-
-    if (Attr & ParamAttr::ByVal) {
-      const PointerType *Ty =
-          dyn_cast<PointerType>(FT->getParamType(Idx-1));
-      Assert1(!Ty || isa<StructType>(Ty->getElementType()),
-              "Attribute byval should only apply to pointer to structs!", V);
-    }
+    uint16_t IType = ParamAttr::incompatibleWithType(FT->getParamType(Idx-1),
+                                                     Attr);
+    Assert1(!IType, "Wrong type for attribute " +
+            Attrs->getParamAttrsText(IType), V);
 
     if (Attr & ParamAttr::Nest) {
       Assert1(!SawNest, "More than one parameter has attribute nest!", V);
