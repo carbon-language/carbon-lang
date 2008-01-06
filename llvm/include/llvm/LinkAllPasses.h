@@ -114,7 +114,6 @@ namespace {
       (void) llvm::createPredicateSimplifierPass();
       (void) llvm::createCodeGenPreparePass();
       (void) llvm::createGVNPass();
-      (void) llvm::createValueInfoPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();
