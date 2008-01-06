@@ -39,18 +39,24 @@ public:
   void run(std::ostream &OS);
 
 private:
+  typedef std::map<std::vector<std::string>, unsigned> OperandInfoMapTy;
+  
   void printDefList(const std::vector<Record*> &Uses, unsigned Num,
                     std::ostream &OS) const;
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                   Record *InstrInfo, 
                   std::map<std::vector<Record*>, unsigned> &EL,
-                  std::map<std::vector<std::string>, unsigned> &OpInfo,
+                  const OperandInfoMapTy &OpInfo,
                   std::ostream &OS);
+
   void GatherItinClasses();
   unsigned getItinClassNumber(const Record *InstRec);
+  
+  void EmitOperandInfo(std::ostream &OS, OperandInfoMapTy &OperandInfoIDs);
+  std::vector<std::string> GetOperandInfo(const CodeGenInstruction &Inst);
+  
   void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
                         std::ostream &OS);
-  std::vector<std::string> GetOperandInfo(const CodeGenInstruction &Inst);
 };
 
 } // End llvm namespace

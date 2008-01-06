@@ -27,6 +27,33 @@ void InstrInfoEmitter::printDefList(const std::vector<Record*> &Uses,
   OS << "0 };\n";
 }
 
+//===----------------------------------------------------------------------===//
+// Instruction Itinerary Information.
+//===----------------------------------------------------------------------===//
+
+struct RecordNameComparator {
+  bool operator()(const Record *Rec1, const Record *Rec2) const {
+    return Rec1->getName() < Rec2->getName();
+  }
+};
+
+void InstrInfoEmitter::GatherItinClasses() {
+  std::vector<Record*> DefList =
+  Records.getAllDerivedDefinitions("InstrItinClass");
+  std::sort(DefList.begin(), DefList.end(), RecordNameComparator());
+  
+  for (unsigned i = 0, N = DefList.size(); i < N; i++)
+    ItinClassMap[DefList[i]->getName()] = i;
+}  
+
+unsigned InstrInfoEmitter::getItinClassNumber(const Record *InstRec) {
+  return ItinClassMap[InstRec->getValueAsDef("Itinerary")->getName()];
+}
+
+//===----------------------------------------------------------------------===//
+// Operand Info Emission.
+//===----------------------------------------------------------------------===//
+
 std::vector<std::string>
 InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
   std::vector<std::string> Result;
@@ -88,6 +115,31 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
   return Result;
 }
 
+void InstrInfoEmitter::EmitOperandInfo(std::ostream &OS, 
+                                       OperandInfoMapTy &OperandInfoIDs) {
+  // ID #0 is for no operand info.
+  unsigned OperandListNum = 0;
+  OperandInfoIDs[std::vector<std::string>()] = ++OperandListNum;
+  
+  OS << "\n";
+  const CodeGenTarget &Target = CDP.getTargetInfo();
+  for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
+       E = Target.inst_end(); II != E; ++II) {
+    std::vector<std::string> OperandInfo = GetOperandInfo(II->second);
+    unsigned &N = OperandInfoIDs[OperandInfo];
+    if (N != 0) continue;
+    
+    N = ++OperandListNum;
+    OS << "static const TargetOperandInfo OperandInfo" << N << "[] = { ";
+    for (unsigned i = 0, e = OperandInfo.size(); i != e; ++i)
+      OS << "{ " << OperandInfo[i] << " }, ";
+    OS << "};\n";
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// Main Output.
+//===----------------------------------------------------------------------===//
 
 // run - Emit the main instruction description records for the target...
 void InstrInfoEmitter::run(std::ostream &OS) {
@@ -120,24 +172,10 @@ void InstrInfoEmitter::run(std::ostream &OS) {
     }
   }
 
-  std::map<std::vector<std::string>, unsigned> OperandInfosEmitted;
-  unsigned OperandListNum = 0;
-  OperandInfosEmitted[std::vector<std::string>()] = ++OperandListNum;
+  OperandInfoMapTy OperandInfoIDs;
   
   // Emit all of the operand info records.
-  OS << "\n";
-  for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
-       E = Target.inst_end(); II != E; ++II) {
-    std::vector<std::string> OperandInfo = GetOperandInfo(II->second);
-    unsigned &N = OperandInfosEmitted[OperandInfo];
-    if (N == 0) {
-      N = ++OperandListNum;
-      OS << "static const TargetOperandInfo OperandInfo" << N << "[] = { ";
-      for (unsigned i = 0, e = OperandInfo.size(); i != e; ++i)
-        OS << "{ " << OperandInfo[i] << " }, ";
-      OS << "};\n";
-    }
-  }
+  EmitOperandInfo(OS, OperandInfoIDs);
   
   // Emit all of the TargetInstrDescriptor records in their ENUM ordering.
   //
@@ -148,7 +186,7 @@ void InstrInfoEmitter::run(std::ostream &OS) {
 
   for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i)
     emitRecord(*NumberedInstructions[i], i, InstrInfo, EmittedLists,
-               OperandInfosEmitted, OS);
+               OperandInfoIDs, OS);
   OS << "};\n";
   OS << "} // End llvm namespace \n";
 }
@@ -156,7 +194,7 @@ void InstrInfoEmitter::run(std::ostream &OS) {
 void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                                   Record *InstrInfo,
                          std::map<std::vector<Record*>, unsigned> &EmittedLists,
-                           std::map<std::vector<std::string>, unsigned> &OpInfo,
+                                  const OperandInfoMapTy &OpInfo,
                                   std::ostream &OS) {
   int MinOperands;
   if (!Inst.OperandList.empty())
@@ -250,29 +288,11 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (OperandInfo.empty())
     OS << "0";
   else
-    OS << "OperandInfo" << OpInfo[OperandInfo];
+    OS << "OperandInfo" << OpInfo.find(OperandInfo)->second;
   
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
 }
 
-struct RecordNameComparator {
-  bool operator()(const Record *Rec1, const Record *Rec2) const {
-    return Rec1->getName() < Rec2->getName();
-  }
-};
-
-void InstrInfoEmitter::GatherItinClasses() {
-  std::vector<Record*> DefList =
-                          Records.getAllDerivedDefinitions("InstrItinClass");
-  std::sort(DefList.begin(), DefList.end(), RecordNameComparator());
-
-  for (unsigned i = 0, N = DefList.size(); i < N; i++)
-    ItinClassMap[DefList[i]->getName()] = i;
-}  
-  
-unsigned InstrInfoEmitter::getItinClassNumber(const Record *InstRec) {
-  return ItinClassMap[InstRec->getValueAsDef("Itinerary")->getName()];
-}
 
 void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,
                                         IntInit *ShiftInt, std::ostream &OS) {
