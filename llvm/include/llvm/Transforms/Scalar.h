@@ -339,12 +339,6 @@ FunctionPass *createGVNPass();
 
 //===----------------------------------------------------------------------===//
 //
-// ValueInfo - This pass performs  FIXME
-//
-FunctionPass *createValueInfoPass();
-
-//===----------------------------------------------------------------------===//
-//
 // CodeGenPrepare - This pass prepares a function for instruction selection.
 //
 FunctionPass *createCodeGenPreparePass(const TargetLowering *TLI = 0);
