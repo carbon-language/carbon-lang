@@ -141,6 +141,51 @@ void InstrInfoEmitter::EmitOperandInfo(std::ostream &OS,
 // Instruction Analysis
 //===----------------------------------------------------------------------===//
 
+class InstAnalyzer {
+  const CodeGenDAGPatterns &CDP;
+  bool &isStore;
+  bool &isLoad;
+  bool &NeverHasSideEffects;
+public:
+  InstAnalyzer(const CodeGenDAGPatterns &cdp,
+               bool &isstore, bool &isload, bool &nhse)
+    : CDP(cdp), isStore(isstore), isLoad(isload), NeverHasSideEffects(nhse) {
+  }
+  
+  void Analyze(Record *InstRecord) {
+    const TreePattern *Pattern = CDP.getInstruction(InstRecord).getPattern();
+    if (Pattern == 0) return;  // No pattern.
+    
+    // Assume there is no side-effect unless we see one.
+    // FIXME: Enable this.
+    //NeverHasSideEffects = true;
+
+    
+    // FIXME: Assume only the first tree is the pattern. The others are clobber
+    // nodes.
+    AnalyzeNode(Pattern->getTree(0));
+  }
+  
+private:
+  void AnalyzeNode(const TreePatternNode *N) {
+    if (N->isLeaf()) {
+      return;
+    }
+
+    if (N->getOperator()->getName() != "set") {
+      // Get information about the SDNode for the operator.
+      const SDNodeInfo &OpInfo = CDP.getSDNodeInfo(N->getOperator());
+      
+      if (OpInfo.getEnumName() == "ISD::STORE")
+        isStore = true;
+    }
+
+    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
+      AnalyzeNode(N->getChild(i));
+  }
+  
+};
+
 void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst, 
                                         bool &isStore, bool &isLoad, 
                                         bool &NeverHasSideEffects) {
@@ -148,26 +193,11 @@ void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst,
   isLoad              = Inst.isLoad;
   NeverHasSideEffects = Inst.neverHasSideEffects;
   
-  const TreePattern *Pattern = CDP.getInstruction(Inst.TheDef).getPattern();
-  if (Pattern == 0) return;  // No pattern.
-
-  // FIXME: Change this to use pattern info.
-  if (dynamic_cast<ListInit*>(Inst.TheDef->getValueInit("Pattern"))) {
-    ListInit *LI = Inst.TheDef->getValueAsListInit("Pattern");
-    if (LI && LI->getSize() > 0) {
-      DagInit *Dag = (DagInit *)LI->getElement(0);
-      DefInit *OpDef = dynamic_cast<DefInit*>(Dag->getOperator());
-      if (OpDef) {
-        Record *Operator = OpDef->getDef();
-        if (Operator->isSubClassOf("SDNode")) {
-          const std::string Opcode = Operator->getValueAsString("Opcode");
-          if (Opcode == "ISD::STORE" || Opcode == "ISD::TRUNCSTORE")
-            isStore = true;
-        }
-      }
-    }
-  }
+  InstAnalyzer(CDP, isStore, isLoad, NeverHasSideEffects).Analyze(Inst.TheDef);
   
+  // If the .td file explicitly says there is no side effect, believe it.
+  if (Inst.neverHasSideEffects)
+    NeverHasSideEffects = true;
 }
 
 

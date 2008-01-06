@@ -29,7 +29,7 @@ class CodeGenInstruction;
 
 class InstrInfoEmitter : public TableGenBackend {
   RecordKeeper &Records;
-  CodeGenDAGPatterns CDP;
+  const CodeGenDAGPatterns CDP;
   std::map<std::string, unsigned> ItinClassMap;
   
 public:
