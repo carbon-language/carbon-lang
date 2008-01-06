@@ -765,23 +765,32 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
          condT.getAsString());
     return QualType();
   }
-  // now check the two expressions.
-  if (lexT->isArithmeticType() && rexT->isArithmeticType()) { // C99 6.5.15p3,5
+  
+  // Now check the two expressions.
+  
+  // If both operands have arithmetic type, do the usual arithmetic conversions
+  // to find a common type: C99 6.5.15p3,5.
+  if (lexT->isArithmeticType() && rexT->isArithmeticType()) {
     UsualArithmeticConversions(lex, rex);
     return lex->getType();
   }
+  
+  // If both operands are the same structure or union type, the result is that
+  // type.
   if (const RecordType *LHSRT = lexT->getAsRecordType()) {    // C99 6.5.15p3
-    if (const RecordType *RHSRT = rexT->getAsRecordType()) {
+    if (const RecordType *RHSRT = rexT->getAsRecordType())
       if (LHSRT->getDecl() == RHSRT->getDecl())
-        return lexT;
-      
-      Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
-           lexT.getAsString(), rexT.getAsString(),
-           lex->getSourceRange(), rex->getSourceRange());
-      return QualType();
-    }
+        // "If both the operands have structure or union type, the result has 
+        // that type."  This implies that CV qualifiers are dropped.
+        return lexT.getUnqualifiedType();
   }
-  // C99 6.5.15p3
+  
+  // C99 6.5.15p5: "If both operands have void type, the result has void type."
+  if (lexT->isVoidType() && rexT->isVoidType())
+    return lexT.getUnqualifiedType();
+  
+  // C99 6.5.15p6 - "if one operand is a null pointer constant, the result has
+  // the type of the other operand."
   if (lexT->isPointerType() && rex->isNullPointerConstant(Context)) {
     promoteExprToType(rex, lexT); // promote the null to a pointer.
     return lexT;
@@ -820,9 +829,7 @@ inline QualType Sema::CheckConditionalOperands( // C99 6.5.15
     }
   }
   
-  if (lexT->isVoidType() && rexT->isVoidType()) // C99 6.5.15p3
-    return lexT;
-    
+  // Otherwise, the operands are not compatible.
   Diag(questionLoc, diag::err_typecheck_cond_incompatible_operands,
        lexT.getAsString(), rexT.getAsString(),
        lex->getSourceRange(), rex->getSourceRange());
