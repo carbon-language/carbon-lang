@@ -213,7 +213,6 @@ class LoadM<bits<6> op, string instr_asm, PatFrag OpNode>:
       !strconcat(instr_asm, " $dst, $addr"),
       [(set CPURegs:$dst, (OpNode addr:$addr))], IILoad>;
 
-let isStore = 1 in
 class StoreM<bits<6> op, string instr_asm, PatFrag OpNode>:
   FI< op,
       (outs),

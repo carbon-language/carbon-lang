@@ -513,14 +513,10 @@ def STDU : DSForm_1<62, 1, (outs ptr_rc:$ea_res), (ins G8RC:$rS,
                     RegConstraint<"$ptrreg = $ea_res">, NoEncode<"$ea_res">,
                     isPPC64;
 
-}
-
-let isStore = 1, PPC970_Unit = 2 in {
-
+let isStore = 1 in
 def STDUX : XForm_8<31, 181, (outs), (ins G8RC:$rS, memrr:$dst),
                    "stdux $rS, $dst", LdStSTD,
                    []>, isPPC64;
-                   
 
 // STD_32/STDX_32 - Just like STD/STDX, but uses a '32-bit' input register.
 def STD_32  : DSForm_1<62, 0, (outs), (ins GPRC:$rT, memrix:$dst),

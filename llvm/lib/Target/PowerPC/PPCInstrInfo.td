@@ -52,7 +52,8 @@ def SDT_PPCstbrx : SDTypeProfile<0, 4, [
 def PPCfcfid  : SDNode<"PPCISD::FCFID" , SDTFPUnaryOp, []>;
 def PPCfctidz : SDNode<"PPCISD::FCTIDZ", SDTFPUnaryOp, []>;
 def PPCfctiwz : SDNode<"PPCISD::FCTIWZ", SDTFPUnaryOp, []>;
-def PPCstfiwx : SDNode<"PPCISD::STFIWX", SDT_PPCstfiwx, [SDNPHasChain]>;
+def PPCstfiwx : SDNode<"PPCISD::STFIWX", SDT_PPCstfiwx,
+                       [SDNPHasChain, SDNPMayStore]>;
 
 // This sequence is used for long double->int conversions.  It changes the
 // bits in the FPSCR which is not modelled.  
@@ -88,7 +89,8 @@ def PPCsra        : SDNode<"PPCISD::SRA"       , SDT_PPCShiftOp>;
 def PPCshl        : SDNode<"PPCISD::SHL"       , SDT_PPCShiftOp>;
 
 def PPCextsw_32   : SDNode<"PPCISD::EXTSW_32"  , SDTIntUnaryOp>;
-def PPCstd_32     : SDNode<"PPCISD::STD_32"    , SDTStore, [SDNPHasChain]>;
+def PPCstd_32     : SDNode<"PPCISD::STD_32"    , SDTStore,
+                           [SDNPHasChain, SDNPMayStore]>;
 
 // These are target-independent nodes, but have target-specific formats.
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeqStart,
@@ -119,7 +121,8 @@ def PPCcondbranch : SDNode<"PPCISD::COND_BRANCH", SDT_PPCcondbr,
                            [SDNPHasChain, SDNPOptInFlag]>;
 
 def PPClbrx       : SDNode<"PPCISD::LBRX", SDT_PPClbrx, [SDNPHasChain]>;
-def PPCstbrx      : SDNode<"PPCISD::STBRX", SDT_PPCstbrx, [SDNPHasChain]>;
+def PPCstbrx      : SDNode<"PPCISD::STBRX", SDT_PPCstbrx,
+                           [SDNPHasChain, SDNPMayStore]>;
 
 // Instructions to support dynamic alloca.
 def SDTDynOp  : SDTypeProfile<1, 2, []>;
@@ -639,6 +642,7 @@ let isStore = 1 in {
 def STWUX : XForm_8<31, 183, (outs), (ins GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stwux $rS, $rA, $rB", LdStGeneral,
                    []>;
+}
 def STHBRX: XForm_8<31, 918, (outs), (ins GPRC:$rS, memrr:$dst),
                    "sthbrx $rS, $dst", LdStGeneral,
                    [(PPCstbrx GPRC:$rS, xoaddr:$dst, srcvalue:$dummy, i16)]>, 
@@ -651,7 +655,7 @@ def STWBRX: XForm_8<31, 662, (outs), (ins GPRC:$rS, memrr:$dst),
 def STFIWX: XForm_28<31, 983, (outs), (ins F8RC:$frS, memrr:$dst),
                      "stfiwx $frS, $dst", LdStUX,
                      [(PPCstfiwx F8RC:$frS, xoaddr:$dst)]>;
-}
+                     
 def STFSX : XForm_28<31, 663, (outs), (ins F4RC:$frS, memrr:$dst),
                      "stfsx $frS, $dst", LdStUX,
                      [(store F4RC:$frS, xaddr:$dst)]>;

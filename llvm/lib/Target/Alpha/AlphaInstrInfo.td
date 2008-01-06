@@ -412,78 +412,78 @@ def JSR_COROUTINE : MbrForm< 0x1A, 0x03, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP),
 
 
 let OutOperandList = (ops GPRC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
-def LDQ   : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)",
+def LDQ   : MForm<0x29, 1, "ldq $RA,$DISP($RB)",
                  [(set GPRC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))], s_ild>;
-def LDQr  : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)\t\t!gprellow",
+def LDQr  : MForm<0x29, 1, "ldq $RA,$DISP($RB)\t\t!gprellow",
                  [(set GPRC:$RA, (load (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_ild>;
-def LDL   : MForm<0x28, 0, 1, "ldl $RA,$DISP($RB)",
+def LDL   : MForm<0x28, 1, "ldl $RA,$DISP($RB)",
                  [(set GPRC:$RA, (sextloadi32 (add GPRC:$RB, immSExt16:$DISP)))], s_ild>;
-def LDLr  : MForm<0x28, 0, 1, "ldl $RA,$DISP($RB)\t\t!gprellow",
+def LDLr  : MForm<0x28, 1, "ldl $RA,$DISP($RB)\t\t!gprellow",
                  [(set GPRC:$RA, (sextloadi32 (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_ild>;
-def LDBU  : MForm<0x0A, 0, 1, "ldbu $RA,$DISP($RB)",
+def LDBU  : MForm<0x0A, 1, "ldbu $RA,$DISP($RB)",
                  [(set GPRC:$RA, (zextloadi8 (add GPRC:$RB, immSExt16:$DISP)))], s_ild>;
-def LDBUr : MForm<0x0A, 0, 1, "ldbu $RA,$DISP($RB)\t\t!gprellow",
+def LDBUr : MForm<0x0A, 1, "ldbu $RA,$DISP($RB)\t\t!gprellow",
                  [(set GPRC:$RA, (zextloadi8 (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_ild>;
-def LDWU  : MForm<0x0C, 0, 1, "ldwu $RA,$DISP($RB)",
+def LDWU  : MForm<0x0C, 1, "ldwu $RA,$DISP($RB)",
                  [(set GPRC:$RA, (zextloadi16 (add GPRC:$RB, immSExt16:$DISP)))], s_ild>;
-def LDWUr : MForm<0x0C, 0, 1, "ldwu $RA,$DISP($RB)\t\t!gprellow",
+def LDWUr : MForm<0x0C, 1, "ldwu $RA,$DISP($RB)\t\t!gprellow",
                  [(set GPRC:$RA, (zextloadi16 (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_ild>;
 }
 
 
 let OutOperandList = (ops), InOperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB) in {
-def STB   : MForm<0x0E, 1, 0, "stb $RA,$DISP($RB)",
+def STB   : MForm<0x0E, 0, "stb $RA,$DISP($RB)",
 		 [(truncstorei8 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
-def STBr  : MForm<0x0E, 1, 0, "stb $RA,$DISP($RB)\t\t!gprellow",
+def STBr  : MForm<0x0E, 0, "stb $RA,$DISP($RB)\t\t!gprellow",
 		 [(truncstorei8 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
-def STW   : MForm<0x0D, 1, 0, "stw $RA,$DISP($RB)",
+def STW   : MForm<0x0D, 0, "stw $RA,$DISP($RB)",
 		 [(truncstorei16 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
-def STWr  : MForm<0x0D, 1, 0, "stw $RA,$DISP($RB)\t\t!gprellow",
+def STWr  : MForm<0x0D, 0, "stw $RA,$DISP($RB)\t\t!gprellow",
 		 [(truncstorei16 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
-def STL   : MForm<0x2C, 1, 0, "stl $RA,$DISP($RB)",
+def STL   : MForm<0x2C, 0, "stl $RA,$DISP($RB)",
 		 [(truncstorei32 GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
-def STLr  : MForm<0x2C, 1, 0, "stl $RA,$DISP($RB)\t\t!gprellow",
+def STLr  : MForm<0x2C, 0, "stl $RA,$DISP($RB)\t\t!gprellow",
 		 [(truncstorei32 GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
-def STQ   : MForm<0x2D, 1, 0, "stq $RA,$DISP($RB)",
+def STQ   : MForm<0x2D, 0, "stq $RA,$DISP($RB)",
 		 [(store GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_ist>;
-def STQr  : MForm<0x2D, 1, 0, "stq $RA,$DISP($RB)\t\t!gprellow",
+def STQr  : MForm<0x2D, 0, "stq $RA,$DISP($RB)\t\t!gprellow",
 		 [(store GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_ist>;
 }
 
 //Load address
 let OutOperandList = (ops GPRC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
-def LDA   : MForm<0x08, 0, 0, "lda $RA,$DISP($RB)",
+def LDA   : MForm<0x08, 0, "lda $RA,$DISP($RB)",
                  [(set GPRC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_lda>;
-def LDAr  : MForm<0x08, 0, 0, "lda $RA,$DISP($RB)\t\t!gprellow",
+def LDAr  : MForm<0x08, 0, "lda $RA,$DISP($RB)\t\t!gprellow",
                  [(set GPRC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_lda>;  //Load address
-def LDAH  : MForm<0x09, 0, 0, "ldah $RA,$DISP($RB)",
+def LDAH  : MForm<0x09, 0, "ldah $RA,$DISP($RB)",
                  [], s_lda>;  //Load address high
-def LDAHr : MForm<0x09, 0, 0, "ldah $RA,$DISP($RB)\t\t!gprelhigh",
+def LDAHr : MForm<0x09, 0, "ldah $RA,$DISP($RB)\t\t!gprelhigh",
                  [(set GPRC:$RA, (Alpha_gprelhi tglobaladdr:$DISP, GPRC:$RB))], s_lda>;  //Load address high
 }
 
 let OutOperandList = (ops), InOperandList = (ops F4RC:$RA, s64imm:$DISP, GPRC:$RB) in {
-def STS  : MForm<0x26, 1, 0, "sts $RA,$DISP($RB)",
+def STS  : MForm<0x26, 0, "sts $RA,$DISP($RB)",
 		[(store F4RC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_fst>;
-def STSr : MForm<0x26, 1, 0, "sts $RA,$DISP($RB)\t\t!gprellow",
+def STSr : MForm<0x26, 0, "sts $RA,$DISP($RB)\t\t!gprellow",
 		[(store F4RC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_fst>;
 }
 let OutOperandList = (ops F4RC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
-def LDS  : MForm<0x22, 0, 1, "lds $RA,$DISP($RB)",
+def LDS  : MForm<0x22, 1, "lds $RA,$DISP($RB)",
 		[(set F4RC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))], s_fld>;
-def LDSr : MForm<0x22, 0, 1, "lds $RA,$DISP($RB)\t\t!gprellow",
+def LDSr : MForm<0x22, 1, "lds $RA,$DISP($RB)\t\t!gprellow",
 		[(set F4RC:$RA, (load (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_fld>;
 }
 let OutOperandList = (ops), InOperandList = (ops F8RC:$RA, s64imm:$DISP, GPRC:$RB) in {
-def STT  : MForm<0x27, 1, 0, "stt $RA,$DISP($RB)",
+def STT  : MForm<0x27, 0, "stt $RA,$DISP($RB)",
 		[(store F8RC:$RA, (add GPRC:$RB, immSExt16:$DISP))], s_fst>;
-def STTr : MForm<0x27, 1, 0, "stt $RA,$DISP($RB)\t\t!gprellow",
+def STTr : MForm<0x27, 0, "stt $RA,$DISP($RB)\t\t!gprellow",
 		[(store F8RC:$RA, (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB))], s_fst>;
 }
 let OutOperandList = (ops F8RC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in {
-def LDT  : MForm<0x23, 0, 1, "ldt $RA,$DISP($RB)",
+def LDT  : MForm<0x23, 1, "ldt $RA,$DISP($RB)",
 		[(set F8RC:$RA, (load (add GPRC:$RB, immSExt16:$DISP)))], s_fld>;
-def LDTr : MForm<0x23, 0, 1, "ldt $RA,$DISP($RB)\t\t!gprellow",
+def LDTr : MForm<0x23, 1, "ldt $RA,$DISP($RB)\t\t!gprellow",
 		[(set F8RC:$RA, (load (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))], s_fld>;
 }
 
@@ -557,13 +557,13 @@ def : Pat<(truncstorei8 GPRC:$DATA, GPRC:$addr),
 
 //load address, rellocated gpdist form
 let OutOperandList = (ops GPRC:$RA), InOperandList = (ops s16imm:$DISP, GPRC:$RB, s16imm:$NUM) in {
-def LDAg  : MForm<0x08, 0, 1, "lda $RA,0($RB)\t\t!gpdisp!$NUM", [], s_lda>;  //Load address
-def LDAHg : MForm<0x09, 0, 1, "ldah $RA,0($RB)\t\t!gpdisp!$NUM", [], s_lda>;  //Load address
+def LDAg  : MForm<0x08, 1, "lda $RA,0($RB)\t\t!gpdisp!$NUM", [], s_lda>;  //Load address
+def LDAHg : MForm<0x09, 1, "ldah $RA,0($RB)\t\t!gpdisp!$NUM", [], s_lda>;  //Load address
 }
 
 //Load quad, rellocated literal form
 let OutOperandList = (ops GPRC:$RA), InOperandList = (ops s64imm:$DISP, GPRC:$RB) in 
-def LDQl : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)\t\t!literal",
+def LDQl : MForm<0x29, 1, "ldq $RA,$DISP($RB)\t\t!literal",
                  [(set GPRC:$RA, (Alpha_rellit tglobaladdr:$DISP, GPRC:$RB))], s_ild>;
 def : Pat<(Alpha_rellit texternalsym:$ext, GPRC:$RB),
           (LDQl texternalsym:$ext, GPRC:$RB)>;

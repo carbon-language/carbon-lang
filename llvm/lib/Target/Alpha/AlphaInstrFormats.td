@@ -38,10 +38,9 @@ class InstAlpha<bits<6> op, string asmstr, InstrItinClass itin> : Instruction {
 
 
 //3.3.1
-class MForm<bits<6> opcode, bit store, bit load, string asmstr, list<dag> pattern, InstrItinClass itin> 
+class MForm<bits<6> opcode, bit load, string asmstr, list<dag> pattern, InstrItinClass itin> 
         : InstAlpha<opcode, asmstr, itin> {
   let Pattern = pattern;
-  let isStore = store;
   let isLoad = load;
   let Defs = [R28]; //We may use this for frame index calculations, so reserve it here
 

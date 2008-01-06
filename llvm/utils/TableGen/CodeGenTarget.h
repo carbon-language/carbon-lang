@@ -30,8 +30,15 @@ struct CodeGenRegister;
 class CodeGenTarget;
 
 // SelectionDAG node properties.
-enum SDNP { SDNPCommutative, SDNPAssociative, SDNPHasChain,
-            SDNPOutFlag, SDNPInFlag, SDNPOptInFlag  };
+enum SDNP {
+  SDNPCommutative, 
+  SDNPAssociative, 
+  SDNPHasChain,
+  SDNPOutFlag,
+  SDNPInFlag,
+  SDNPOptInFlag,
+  SDNPMayStore
+};
 
 /// getValueType - Return the MVT::ValueType that the specified TableGen record
 /// corresponds to.

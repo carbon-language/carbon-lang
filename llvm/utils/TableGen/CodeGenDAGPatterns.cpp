@@ -317,6 +317,8 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
       Properties |= 1 << SDNPInFlag;
     } else if (PropList[i]->getName() == "SDNPOptInFlag") {
       Properties |= 1 << SDNPOptInFlag;
+    } else if (PropList[i]->getName() == "SDNPMayStore") {
+      Properties |= 1 << SDNPMayStore;
     } else {
       cerr << "Unknown SD Node property '" << PropList[i]->getName()
            << "' on node '" << R->getName() << "'!\n";

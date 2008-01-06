@@ -157,9 +157,7 @@ public:
     if (Pattern == 0) return;  // No pattern.
     
     // Assume there is no side-effect unless we see one.
-    // FIXME: Enable this.
-    //NeverHasSideEffects = true;
-
+    NeverHasSideEffects = true;
     
     // FIXME: Assume only the first tree is the pattern. The others are clobber
     // nodes.
@@ -176,10 +174,9 @@ private:
       // Get information about the SDNode for the operator.
       const SDNodeInfo &OpInfo = CDP.getSDNodeInfo(N->getOperator());
       
-      // If this is a store node, it obviously stores to memory.
-      if (OpInfo.getEnumName() == "ISD::STORE") {
+      // If node writes to memory, it obviously stores to memory.
+      if (OpInfo.hasProperty(SDNPMayStore)) {
         isStore = true;
-        
       } else if (const CodeGenIntrinsic *IntInfo = N->getIntrinsicInfo(CDP)) {
         // If this is an intrinsic, analyze it.
         if (IntInfo->ModRef >= CodeGenIntrinsic::WriteArgMem)
@@ -196,15 +193,30 @@ private:
 void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst, 
                                         bool &isStore, bool &isLoad, 
                                         bool &NeverHasSideEffects) {
-  isStore             = Inst.isStore;
-  isLoad              = Inst.isLoad;
-  NeverHasSideEffects = Inst.neverHasSideEffects;
+  isStore = isLoad = NeverHasSideEffects = false;
   
   InstAnalyzer(CDP, isStore, isLoad, NeverHasSideEffects).Analyze(Inst.TheDef);
-  
+
+  // InstAnalyzer only correctly analyzes isStore so far.
+  if (Inst.isStore) {  // If the .td file explicitly sets isStore, use it.
+    // If we decided that this is a store from the pattern, then the .td file
+    // entry is redundant.
+    if (isStore)
+      fprintf(stderr, "Warning: isStore flag explicitly set on instruction '%s'"
+              " but flag already inferred from pattern.\n", 
+              Inst.getName().c_str());
+    isStore = true;
+  }
+
+  // These two override everything.
+  isLoad              = Inst.isLoad;
+  NeverHasSideEffects = Inst.neverHasSideEffects;
+
+#if 0
   // If the .td file explicitly says there is no side effect, believe it.
   if (Inst.neverHasSideEffects)
     NeverHasSideEffects = true;
+#endif
 }
 
 
