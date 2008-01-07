@@ -444,7 +444,7 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
   if (Desc->TSFlags & X86II::REX_W)
     REX |= 1 << 3;
 
-  unsigned NumOps = Desc->numOperands;
+  unsigned NumOps = Desc->getNumOperands();
   if (NumOps) {
     bool isTwoAddr = NumOps > 1 &&
       Desc->getOperandConstraint(1, TOI::TIED_TO) != -1;
@@ -584,7 +584,7 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     MCE.emitByte(0x0F);
 
   // If this is a two-address instruction, skip one of the register operands.
-  unsigned NumOps = Desc->numOperands;
+  unsigned NumOps = Desc->getNumOperands();
   unsigned CurOp = 0;
   if (NumOps > 1 && Desc->getOperandConstraint(1, TOI::TIED_TO) != -1)
     CurOp++;

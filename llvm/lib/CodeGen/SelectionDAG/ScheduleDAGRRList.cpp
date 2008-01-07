@@ -148,7 +148,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
     if (!SU || !SU->Node) continue;
     if (SU->isCommutable) {
       unsigned Opc = SU->Node->getTargetOpcode();
-      unsigned NumRes = TII->getNumDefs(Opc);
+      unsigned NumRes = TII->get(Opc).getNumDefs();
       unsigned NumOps = CountOperands(SU->Node);
       for (unsigned j = 0; j != NumOps; ++j) {
         if (TII->getOperandConstraint(Opc, j+NumRes, TOI::TIED_TO) == -1)
@@ -431,7 +431,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
     SUnit *NewSU = NewSUnit(N);
     SUnitMap[N].push_back(NewSU);
     const TargetInstrDescriptor *TID = &TII->get(N->getTargetOpcode());
-    for (unsigned i = 0; i != TID->numOperands; ++i) {
+    for (unsigned i = 0; i != TID->getNumOperands(); ++i) {
       if (TID->getOperandConstraint(i, TOI::TIED_TO) != -1) {
         NewSU->isTwoAddress = true;
         break;
@@ -623,8 +623,8 @@ static MVT::ValueType getPhysicalRegisterVT(SDNode *N, unsigned Reg,
                                             const TargetInstrInfo *TII) {
   const TargetInstrDescriptor &TID = TII->get(N->getTargetOpcode());
   assert(TID.ImplicitDefs && "Physical reg def must be in implicit def list!");
-  unsigned NumRes = TID.numDefs;
-  for (const unsigned *ImpDef = TID.ImplicitDefs; *ImpDef; ++ImpDef) {
+  unsigned NumRes = TID.getNumDefs();
+  for (const unsigned *ImpDef = TID.getImplicitDefs(); *ImpDef; ++ImpDef) {
     if (Reg == *ImpDef)
       break;
     ++NumRes;
@@ -1287,7 +1287,7 @@ template<class SF>
 bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
   if (SU->isTwoAddress) {
     unsigned Opc = SU->Node->getTargetOpcode();
-    unsigned NumRes = TII->getNumDefs(Opc);
+    unsigned NumRes = TII->get(Opc).getNumDefs();
     unsigned NumOps = ScheduleDAG::CountOperands(SU->Node);
     for (unsigned i = 0; i != NumOps; ++i) {
       if (TII->getOperandConstraint(Opc, i+NumRes, TOI::TIED_TO) != -1) {
@@ -1321,11 +1321,12 @@ static bool canClobberPhysRegDefs(SUnit *SuccSU, SUnit *SU,
                                   const TargetInstrInfo *TII,
                                   const MRegisterInfo *MRI) {
   SDNode *N = SuccSU->Node;
-  unsigned NumDefs = TII->getNumDefs(N->getTargetOpcode());
-  const unsigned *ImpDefs = TII->getImplicitDefs(N->getTargetOpcode());
+  unsigned NumDefs = TII->get(N->getTargetOpcode()).getNumDefs();
+  const unsigned *ImpDefs = TII->get(N->getTargetOpcode()).getImplicitDefs();
   if (!ImpDefs)
     return false;
-  const unsigned *SUImpDefs = TII->getImplicitDefs(SU->Node->getTargetOpcode());
+  const unsigned *SUImpDefs =
+    TII->get(SU->Node->getTargetOpcode()).getImplicitDefs();
   if (!SUImpDefs)
     return false;
   for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
@@ -1361,7 +1362,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       continue;
 
     unsigned Opc = Node->getTargetOpcode();
-    unsigned NumRes = TII->getNumDefs(Opc);
+    unsigned NumRes = TII->get(Opc).getNumDefs();
     unsigned NumOps = ScheduleDAG::CountOperands(Node);
     for (unsigned j = 0; j != NumOps; ++j) {
       if (TII->getOperandConstraint(Opc, j+NumRes, TOI::TIED_TO) != -1) {

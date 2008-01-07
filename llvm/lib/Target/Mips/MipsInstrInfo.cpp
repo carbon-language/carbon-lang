@@ -261,7 +261,7 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
       unsigned Opc = GetCondBranchFromCond((Mips::CondCode)Cond[0].getImm());
       const TargetInstrDescriptor &TID = get(Opc);
 
-      if (TID.numOperands == 3)
+      if (TID.getNumOperands() == 3)
         BuildMI(&MBB, TID).addReg(Cond[1].getReg())
                           .addReg(Cond[2].getReg())
                           .addMBB(TBB);
@@ -277,7 +277,7 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   unsigned Opc = GetCondBranchFromCond((Mips::CondCode)Cond[0].getImm());
   const TargetInstrDescriptor &TID = get(Opc);
 
-  if (TID.numOperands == 3)
+  if (TID.getNumOperands() == 3)
     BuildMI(&MBB, TID).addReg(Cond[1].getReg())
                       .addReg(Cond[2].getReg())
                       .addMBB(TBB);

@@ -262,7 +262,7 @@ void PEI::saveCalleeSavedRegisters(MachineFunction &Fn) {
   // Add code to restore the callee-save registers in each exiting block.
   for (MachineFunction::iterator FI = Fn.begin(), E = Fn.end(); FI != E; ++FI)
     // If last instruction is a return instruction, add an epilogue.
-    if (!FI->empty() && TII.isReturn(FI->back().getOpcode())) {
+    if (!FI->empty() && FI->back().getDesc()->isReturn()) {
       MBB = FI;
       I = MBB->end(); --I;
 
@@ -483,10 +483,9 @@ void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
   Fn.getTarget().getRegisterInfo()->emitPrologue(Fn);
 
   // Add epilogue to restore the callee-save registers in each exiting block
-  const TargetInstrInfo &TII = *Fn.getTarget().getInstrInfo();
   for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I) {
     // If last instruction is a return instruction, add an epilogue
-    if (!I->empty() && TII.isReturn(I->back().getOpcode()))
+    if (!I->empty() && I->back().getDesc()->isReturn())
       Fn.getTarget().getRegisterInfo()->emitEpilogue(Fn, *I);
   }
 }

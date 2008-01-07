@@ -262,7 +262,7 @@ void PPCDAGToDAGISel::InsertVRSaveCode(Function &F) {
   
   // Find all return blocks, outputting a restore in each epilog.
   for (MachineFunction::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
-    if (!BB->empty() && TII.isReturn(BB->back().getOpcode())) {
+    if (!BB->empty() && BB->back().getDesc()->isReturn()) {
       IP = BB->end(); --IP;
       
       // Skip over all terminator instructions, which are part of the return

@@ -169,8 +169,8 @@ public:
 class TargetInstrDescriptor {
 public:
   unsigned short  Opcode;        // The opcode.
-  unsigned short  numOperands;   // Num of args (may be more if variable_ops).
-  unsigned short  numDefs;       // Num of args that are definitions.
+  unsigned short  NumOperands;   // Num of args (may be more if variable_ops).
+  unsigned short  NumDefs;       // Num of args that are definitions.
   const char *    Name;          // Assembly language mnemonic for the opcode.
   unsigned        SchedClass;    // enum  identifying instr sched class
   unsigned        Flags;         // flags identifying machine instr class
@@ -183,9 +183,9 @@ public:
   /// it is set. Returns -1 if it is not set.
   int getOperandConstraint(unsigned OpNum,
                            TOI::OperandConstraint Constraint) const {
-    assert((OpNum < numOperands || (Flags & M_VARIABLE_OPS)) &&
+    assert((OpNum < NumOperands || hasVariableOperands()) &&
            "Invalid operand # of TargetInstrInfo");
-    if (OpNum < numOperands &&
+    if (OpNum < NumOperands &&
         (OpInfo[OpNum].Constraints & (1 << Constraint))) {
       unsigned Pos = 16 + Constraint * 4;
       return (int)(OpInfo[OpNum].Constraints >> Pos) & 0xf;
@@ -197,16 +197,48 @@ public:
   /// dest operand. Returns -1 if there isn't one.
   int findTiedToSrcOperand(unsigned OpNum) const;
   
+  const char *getName() const {
+    return Name;
+  }
+  
+  unsigned getNumOperands() const {
+    return NumOperands;
+  }
+  
+  unsigned getNumDefs() const {
+    return NumDefs;
+  }
+  
+  bool hasVariableOperands() const {
+    return Flags & M_VARIABLE_OPS;
+  }
+  
+  bool hasOptionalDef() const {
+    return Flags & M_HAS_OPTIONAL_DEF;
+  }
+  
+  const unsigned *getImplicitUses() const {
+    return ImplicitUses;
+  }
+  
+  const unsigned *getImplicitDefs() const {
+    return ImplicitDefs;
+  }
+  
+  bool isReturn() const {
+    return Flags & M_RET_FLAG;
+  }
+  
   bool isCall() const {
     return Flags & M_CALL_FLAG;
   }
   
-  bool isBranch() const {
-    return Flags & M_BRANCH_FLAG;
-  }
-  
   bool isTerminator() const {
     return Flags & M_TERMINATOR_FLAG;
+  }
+  
+  bool isBranch() const {
+    return Flags & M_BRANCH_FLAG;
   }
   
   bool isIndirectBranch() const {
@@ -221,7 +253,16 @@ public:
     return Flags & M_NOT_DUPLICABLE;
   }
   
+  bool isCommutableInstr() const {
+    return Flags & M_COMMUTABLE;
+  }
   
+  /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
+  /// custom insertion support when the DAG scheduler is inserting it into a
+  /// machine basic block.
+  bool usesCustomDAGSchedInsertionHook() const {
+    return Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION;
+  }
   
   /// isSimpleLoad - Return true for instructions that are simple loads from
   /// memory.  This should only be set on instructions that load a value from
@@ -291,54 +332,6 @@ public:
   const TargetInstrDescriptor& get(unsigned Opcode) const {
     assert(Opcode < NumOpcodes);
     return desc[Opcode];
-  }
-
-  const char *getName(unsigned Opcode) const {
-    return get(Opcode).Name;
-  }
-
-  int getNumOperands(unsigned Opcode) const {
-    return get(Opcode).numOperands;
-  }
-
-  int getNumDefs(unsigned Opcode) const {
-    return get(Opcode).numDefs;
-  }
-
-  const unsigned *getImplicitUses(unsigned Opcode) const {
-    return get(Opcode).ImplicitUses;
-  }
-
-  const unsigned *getImplicitDefs(unsigned Opcode) const {
-    return get(Opcode).ImplicitDefs;
-  }
-
-
-  //
-  // Query instruction class flags according to the machine-independent
-  // flags listed above.
-  //
-  bool isReturn(unsigned Opcode) const {
-    return get(Opcode).Flags & M_RET_FLAG;
-  }
-
-  bool isCommutableInstr(unsigned Opcode) const {
-    return get(Opcode).Flags & M_COMMUTABLE;
-  }
-  
-  /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
-  /// custom insertion support when the DAG scheduler is inserting it into a
-  /// machine basic block.
-  bool usesCustomDAGSchedInsertionHook(unsigned Opcode) const {
-    return get(Opcode).Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION;
-  }
-
-  bool hasVariableOperands(unsigned Opcode) const {
-    return get(Opcode).Flags & M_VARIABLE_OPS;
-  }
-
-  bool hasOptionalDef(unsigned Opcode) const {
-    return get(Opcode).Flags & M_HAS_OPTIONAL_DEF;
   }
 
   /// isTriviallyReMaterializable - Return true if the instruction is trivially

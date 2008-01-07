@@ -538,10 +538,9 @@ static void RemoveVRSaveCode(MachineInstr *MI) {
   bool RemovedAllMTVRSAVEs = true;
   // See if we can find and remove the MTVRSAVE instruction from all of the
   // epilog blocks.
-  const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
   for (MachineFunction::iterator I = MF->begin(), E = MF->end(); I != E; ++I) {
     // If last instruction is a return instruction, add an epilogue
-    if (!I->empty() && TII.isReturn(I->back().getOpcode())) {
+    if (!I->empty() && I->back().getDesc()->isReturn()) {
       bool FoundIt = false;
       for (MBBI = I->end(); MBBI != I->begin(); ) {
         --MBBI;

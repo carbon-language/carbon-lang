@@ -431,7 +431,6 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
 
 bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
-  const TargetInstrInfo &TII = *MF->getTarget().getInstrInfo();
   RegInfo = MF->getTarget().getRegisterInfo();
   assert(RegInfo && "Target doesn't have register information?");
 
@@ -536,7 +535,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
 
     // Finally, if the last instruction in the block is a return, make sure to mark
     // it as using all of the live-out values in the function.
-    if (!MBB->empty() && TII.isReturn(MBB->back().getOpcode())) {
+    if (!MBB->empty() && MBB->back().getDesc()->isReturn()) {
       MachineInstr *Ret = &MBB->back();
       for (MachineRegisterInfo::liveout_iterator
            I = MF->getRegInfo().liveout_begin(),

@@ -552,7 +552,7 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
       KillOps[Reg]->setIsKill(false);
       KillOps[Reg] = NULL;
       RegKills.reset(Reg);
-      if (i < TID->numOperands &&
+      if (i < TID->getNumOperands() &&
           TID->getOperandConstraint(i, TOI::TIED_TO) == -1)
         // Unless it's a two-address operand, this is the new kill.
         MO.setIsKill();

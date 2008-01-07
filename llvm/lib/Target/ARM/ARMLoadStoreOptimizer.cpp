@@ -600,7 +600,7 @@ bool ARMLoadStoreOpt::LoadStoreMultipleOpti(MachineBasicBlock &MBB) {
       unsigned PredReg = 0;
       ARMCC::CondCodes Pred = getInstrPredicate(MBBI, PredReg);
       const TargetInstrDescriptor *TID = MBBI->getDesc();
-      unsigned OffField = MBBI->getOperand(TID->numOperands-3).getImm();
+      unsigned OffField = MBBI->getOperand(TID->getNumOperands()-3).getImm();
       int Offset = isAM2
         ? ARM_AM::getAM2Offset(OffField) : ARM_AM::getAM5Offset(OffField) * 4;
       if (isAM2) {

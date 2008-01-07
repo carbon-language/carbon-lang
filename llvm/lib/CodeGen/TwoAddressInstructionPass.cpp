@@ -96,7 +96,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
       const TargetInstrDescriptor *TID = mi->getDesc();
 
       bool FirstTied = true;
-      for (unsigned si = 1, e = TID->numOperands; si < e; ++si) {
+      for (unsigned si = 1, e = TID->getNumOperands(); si < e; ++si) {
         int ti = TID->getOperandConstraint(si, TOI::TIED_TO);
         if (ti == -1)
           continue;
@@ -176,7 +176,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
               // FIXME: This assumes there are no more operands which are tied
               // to another register.
 #ifndef NDEBUG
-              for (unsigned i = si+1, e = TID->numOperands; i < e; ++i)
+              for (unsigned i = si+1, e = TID->getNumOperands(); i < e; ++i)
                 assert(TID->getOperandConstraint(i, TOI::TIED_TO) == -1);
 #endif
 

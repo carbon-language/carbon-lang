@@ -63,7 +63,7 @@ bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
     return true;
   case ARM::MOVr:
   case ARM::tMOVr:
-    assert(MI.getDesc()->numOperands >= 2 &&
+    assert(MI.getDesc()->getNumOperands() >= 2 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
            "Invalid ARM MOV instruction");
@@ -201,7 +201,7 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   MachineInstr *MemMI = NULL;
   unsigned AddrMode = (TSFlags & ARMII::AddrModeMask);
   const TargetInstrDescriptor *TID = MI->getDesc();
-  unsigned NumOps = TID->numOperands;
+  unsigned NumOps = TID->getNumOperands();
   bool isLoad = TID->isSimpleLoad();
   const MachineOperand &WB = isLoad ? MI->getOperand(1) : MI->getOperand(0);
   const MachineOperand &Base = MI->getOperand(2);
@@ -897,7 +897,7 @@ unsigned ARM::GetInstSize(MachineInstr *MI) {
     case ARM::tBR_JTr: {
       // These are jumptable branches, i.e. a branch followed by an inlined
       // jumptable. The size is 4 + 4 * number of entries.
-      unsigned NumOps = TID->numOperands;
+      unsigned NumOps = TID->getNumOperands();
       MachineOperand JTOP =
         MI->getOperand(NumOps - (TID->isPredicable() ? 3 : 2));
       unsigned JTI = JTOP.getIndex();

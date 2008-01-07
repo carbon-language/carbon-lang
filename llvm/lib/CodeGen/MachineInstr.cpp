@@ -252,13 +252,13 @@ void MachineInstr::addImplicitDefUseOperands() {
 /// instructions with variable number of operands).
 MachineInstr::MachineInstr(const TargetInstrDescriptor &tid, bool NoImp)
   : TID(&tid), NumImplicitOps(0), Parent(0) {
-  if (!NoImp && TID->ImplicitDefs)
-    for (const unsigned *ImpDefs = TID->ImplicitDefs; *ImpDefs; ++ImpDefs)
+  if (!NoImp && TID->getImplicitDefs())
+    for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
       NumImplicitOps++;
-  if (!NoImp && TID->ImplicitUses)
-    for (const unsigned *ImpUses = TID->ImplicitUses; *ImpUses; ++ImpUses)
+  if (!NoImp && TID->getImplicitUses())
+    for (const unsigned *ImpUses = TID->getImplicitUses(); *ImpUses; ++ImpUses)
       NumImplicitOps++;
-  Operands.reserve(NumImplicitOps + TID->numOperands);
+  Operands.reserve(NumImplicitOps + TID->getNumOperands());
   if (!NoImp)
     addImplicitDefUseOperands();
   // Make sure that we get added to a machine basicblock
@@ -273,12 +273,12 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB,
   : TID(&tid), NumImplicitOps(0), Parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   if (TID->ImplicitDefs)
-    for (const unsigned *ImpDefs = TID->ImplicitDefs; *ImpDefs; ++ImpDefs)
+    for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
       NumImplicitOps++;
   if (TID->ImplicitUses)
-    for (const unsigned *ImpUses = TID->ImplicitUses; *ImpUses; ++ImpUses)
+    for (const unsigned *ImpUses = TID->getImplicitUses(); *ImpUses; ++ImpUses)
       NumImplicitOps++;
-  Operands.reserve(NumImplicitOps + TID->numOperands);
+  Operands.reserve(NumImplicitOps + TID->getNumOperands());
   addImplicitDefUseOperands();
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
@@ -487,8 +487,8 @@ MachineInstr *MachineInstr::removeFromParent() {
 /// OperandComplete - Return true if it's illegal to add a new operand
 ///
 bool MachineInstr::OperandsComplete() const {
-  unsigned short NumOperands = TID->numOperands;
-  if ((TID->Flags & M_VARIABLE_OPS) == 0 &&
+  unsigned short NumOperands = TID->getNumOperands();
+  if (TID->hasVariableOperands() == 0 &&
       getNumOperands()-NumImplicitOps >= NumOperands)
     return true;  // Broken: we have all the operands of this instruction!
   return false;
@@ -497,8 +497,8 @@ bool MachineInstr::OperandsComplete() const {
 /// getNumExplicitOperands - Returns the number of non-implicit operands.
 ///
 unsigned MachineInstr::getNumExplicitOperands() const {
-  unsigned NumOperands = TID->numOperands;
-  if ((TID->Flags & M_VARIABLE_OPS) == 0)
+  unsigned NumOperands = TID->getNumOperands();
+  if (TID->hasVariableOperands() == 0)
     return NumOperands;
 
   for (unsigned e = getNumOperands(); NumOperands != e; ++NumOperands) {

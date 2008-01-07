@@ -19,7 +19,7 @@ using namespace llvm;
 /// findTiedToSrcOperand - Returns the operand that is tied to the specified
 /// dest operand. Returns -1 if there isn't one.
 int TargetInstrDescriptor::findTiedToSrcOperand(unsigned OpNum) const {
-  for (unsigned i = 0, e = numOperands; i != e; ++i) {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     if (i == OpNum)
       continue;
     if (getOperandConstraint(i, TOI::TIED_TO) == (int)OpNum)

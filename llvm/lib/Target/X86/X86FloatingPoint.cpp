@@ -597,7 +597,7 @@ void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
 ///
 void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
-  unsigned NumOps = MI->getDesc()->numOperands;
+  unsigned NumOps = MI->getDesc()->getNumOperands();
   assert((NumOps == 5 || NumOps == 1) &&
          "Can only handle fst* & ftst instructions!");
 
@@ -657,7 +657,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
 ///
 void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
-  unsigned NumOps = MI->getDesc()->numOperands;
+  unsigned NumOps = MI->getDesc()->getNumOperands();
   assert(NumOps >= 2 && "FPRW instructions must have 2 ops!!");
 
   // Is this the last use of the source register?
@@ -766,7 +766,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   ASSERT_SORTED(ForwardSTiTable); ASSERT_SORTED(ReverseSTiTable);
   MachineInstr *MI = I;
 
-  unsigned NumOperands = MI->getDesc()->numOperands;
+  unsigned NumOperands = MI->getDesc()->getNumOperands();
   assert(NumOperands == 3 && "Illegal TwoArgFP instruction!");
   unsigned Dest = getFPReg(MI->getOperand(0));
   unsigned Op0 = getFPReg(MI->getOperand(NumOperands-2));
@@ -864,7 +864,7 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   ASSERT_SORTED(ForwardSTiTable); ASSERT_SORTED(ReverseSTiTable);
   MachineInstr *MI = I;
 
-  unsigned NumOperands = MI->getDesc()->numOperands;
+  unsigned NumOperands = MI->getDesc()->getNumOperands();
   assert(NumOperands == 2 && "Illegal FUCOM* instruction!");
   unsigned Op0 = getFPReg(MI->getOperand(NumOperands-2));
   unsigned Op1 = getFPReg(MI->getOperand(NumOperands-1));

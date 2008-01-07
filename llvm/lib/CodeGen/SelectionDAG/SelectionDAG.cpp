@@ -3602,7 +3602,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
       if (G) {
         if (const TargetInstrInfo *TII = G->getTarget().getInstrInfo())
           if (getOpcode()-ISD::BUILTIN_OP_END < TII->getNumOpcodes())
-            return TII->getName(getOpcode()-ISD::BUILTIN_OP_END);
+            return TII->get(getOpcode()-ISD::BUILTIN_OP_END).getName();
 
         TargetLowering &TLI = G->getTargetLoweringInfo();
         const char *Name =

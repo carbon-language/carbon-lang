@@ -1640,7 +1640,7 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode,
     MIB.addImm(1).addReg(0).addImm(0);
   
   // Loop over the rest of the ri operands, converting them over.
-  unsigned NumOps = TII.getNumOperands(MI->getOpcode())-2;
+  unsigned NumOps = MI->getDesc()->getNumOperands()-2;
   for (unsigned i = 0; i != NumOps; ++i) {
     MachineOperand &MO = MI->getOperand(i+2);
     MIB = X86InstrAddOperand(MIB, MO);
@@ -1692,7 +1692,7 @@ X86InstrInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
                                    SmallVector<MachineOperand,4> &MOs) const {
   const DenseMap<unsigned*, unsigned> *OpcodeTablePtr = NULL;
   bool isTwoAddrFold = false;
-  unsigned NumOps = getNumOperands(MI->getOpcode());
+  unsigned NumOps = MI->getDesc()->getNumOperands();
   bool isTwoAddr = NumOps > 1 &&
     MI->getDesc()->getOperandConstraint(1, TOI::TIED_TO) != -1;
 
@@ -1798,7 +1798,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineInstr *MI,
     return NULL;
 
   SmallVector<MachineOperand,4> MOs;
-  unsigned NumOps = getNumOperands(LoadMI->getOpcode());
+  unsigned NumOps = LoadMI->getDesc()->getNumOperands();
   for (unsigned i = NumOps - 4; i != NumOps; ++i)
     MOs.push_back(LoadMI->getOperand(i));
   return foldMemoryOperand(MI, Ops[0], MOs);
@@ -1826,9 +1826,9 @@ bool X86InstrInfo::canFoldMemoryOperand(MachineInstr *MI,
 
   unsigned OpNum = Ops[0];
   unsigned Opc = MI->getOpcode();
-  unsigned NumOps = getNumOperands(Opc);
+  unsigned NumOps = MI->getDesc()->getNumOperands();
   bool isTwoAddr = NumOps > 1 &&
-    getOperandConstraint(Opc, 1, TOI::TIED_TO) != -1;
+    MI->getDesc()->getOperandConstraint(1, TOI::TIED_TO) != -1;
 
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
@@ -2011,7 +2011,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   // Emit the data processing instruction.
   std::vector<MVT::ValueType> VTs;
   const TargetRegisterClass *DstRC = 0;
-  if (TID.numDefs > 0) {
+  if (TID.getNumDefs() > 0) {
     const TargetOperandInfo &DstTOI = TID.OpInfo[0];
     DstRC = DstTOI.isLookupPtrRegClass()
       ? getPointerRegClass() : RI.getRegClass(DstTOI.RegClass);
@@ -2019,7 +2019,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   }
   for (unsigned i = 0, e = N->getNumValues(); i != e; ++i) {
     MVT::ValueType VT = N->getValueType(i);
-    if (VT != MVT::Other && i >= TID.numDefs)
+    if (VT != MVT::Other && i >= (unsigned)TID.getNumDefs())
       VTs.push_back(VT);
   }
   if (Load)

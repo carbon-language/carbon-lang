@@ -52,8 +52,8 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *Use, unsigned Op,
   unsigned ResNo = Use->getOperand(2).ResNo;
   if (Def->isTargetOpcode()) {
     const TargetInstrDescriptor &II = TII->get(Def->getTargetOpcode());
-    if (ResNo >= II.numDefs &&
-        II.ImplicitDefs[ResNo - II.numDefs] == Reg) {
+    if (ResNo >= II.getNumDefs() &&
+        II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg) {
       PhysReg = Reg;
       const TargetRegisterClass *RC =
         MRI->getPhysicalRegisterRegClass(Def->getValueType(ResNo), Reg);
@@ -149,7 +149,7 @@ void ScheduleDAG::BuildSchedUnits() {
     if (MainNode->isTargetOpcode()) {
       unsigned Opc = MainNode->getTargetOpcode();
       const TargetInstrDescriptor &TID = TII->get(Opc);
-      for (unsigned i = 0; i != TID.numOperands; ++i) {
+      for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
         if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
           SU->isTwoAddress = true;
           break;
@@ -166,8 +166,8 @@ void ScheduleDAG::BuildSchedUnits() {
     for (unsigned n = 0, e = SU->FlaggedNodes.size(); n != e; ++n) {
       SDNode *N = SU->FlaggedNodes[n];
       if (N->isTargetOpcode() &&
-          TII->getImplicitDefs(N->getTargetOpcode()) &&
-          CountResults(N) > (unsigned)TII->getNumDefs(N->getTargetOpcode()))
+          TII->get(N->getTargetOpcode()).getImplicitDefs() &&
+          CountResults(N) > TII->get(N->getTargetOpcode()).getNumDefs())
         SU->hasPhysRegDefs = true;
       
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
@@ -293,7 +293,7 @@ static const TargetRegisterClass *getInstrOperandRegClass(
         const TargetInstrInfo *TII,
         const TargetInstrDescriptor *II,
         unsigned Op) {
-  if (Op >= II->numOperands) {
+  if (Op >= II->getNumOperands()) {
     assert((II->Flags & M_VARIABLE_OPS)&& "Invalid operand # of instruction");
     return NULL;
   }
@@ -373,7 +373,7 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node,
                                          MachineInstr *MI,
                                          const TargetInstrDescriptor &II,
                                      DenseMap<SDOperand, unsigned> &VRBaseMap) {
-  for (unsigned i = 0; i < II.numDefs; ++i) {
+  for (unsigned i = 0; i < II.getNumDefs(); ++i) {
     // If the specific node value is only used by a CopyToReg and the dest reg
     // is a vreg, use the CopyToReg'd destination register instead of creating
     // a new vreg.
@@ -435,7 +435,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     // Get/emit the operand.
     unsigned VReg = getVR(Op, VRBaseMap);
     const TargetInstrDescriptor *TID = MI->getDesc();
-    bool isOptDef = (IIOpNum < TID->numOperands)
+    bool isOptDef = (IIOpNum < TID->getNumOperands())
       ? (TID->OpInfo[IIOpNum].isOptionalDef()) : false;
     MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef));
     
@@ -674,10 +674,11 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
     unsigned NumResults = CountResults(Node);
     unsigned NodeOperands = CountOperands(Node);
     unsigned NumMIOperands = NodeOperands + NumResults;
-    bool     HasPhysRegOuts = (NumResults > II.numDefs) && II.ImplicitDefs;
+    bool HasPhysRegOuts = (NumResults > II.getNumDefs()) &&
+                          II.getImplicitDefs() != 0;
 #ifndef NDEBUG
-    assert((unsigned(II.numOperands) == NumMIOperands ||
-            HasPhysRegOuts || (II.Flags & M_VARIABLE_OPS)) &&
+    assert((II.getNumOperands() == NumMIOperands ||
+            HasPhysRegOuts || II.hasVariableOperands()) &&
            "#operands for dag node doesn't match .td file!"); 
 #endif
 
@@ -692,7 +693,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
     // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.
     for (unsigned i = 0; i != NodeOperands; ++i)
-      AddOperand(MI, Node->getOperand(i), i+II.numDefs, &II, VRBaseMap);
+      AddOperand(MI, Node->getOperand(i), i+II.getNumDefs(), &II, VRBaseMap);
 
     // Commute node if it has been determined to be profitable.
     if (CommuteSet.count(Node)) {
@@ -719,8 +720,8 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
 
     // Additional results must be an physical register def.
     if (HasPhysRegOuts) {
-      for (unsigned i = II.numDefs; i < NumResults; ++i) {
-        unsigned Reg = II.ImplicitDefs[i - II.numDefs];
+      for (unsigned i = II.getNumDefs(); i < NumResults; ++i) {
+        unsigned Reg = II.getImplicitDefs()[i - II.getNumDefs()];
         if (Node->hasAnyUseOfValue(i))
           EmitCopyFromReg(Node, i, InstanceNo, Reg, VRBaseMap);
       }
