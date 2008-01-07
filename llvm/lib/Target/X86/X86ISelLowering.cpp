@@ -1478,10 +1478,9 @@ SDOperand X86TargetLowering::LowerCALL(SDOperand Op, SelectionDAG &DAG) {
 
   // Add argument registers to the end of the list so that they are known live
   // into the call.
-  if (IsTailCall)
-    for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
-      Ops.push_back(DAG.getRegister(RegsToPass[i].first,
-                                    RegsToPass[i].second.getValueType()));
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first,
+                                  RegsToPass[i].second.getValueType()));
   
   if (InFlag.Val)
     Ops.push_back(InFlag);
