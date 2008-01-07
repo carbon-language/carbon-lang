@@ -207,7 +207,8 @@ void ScheduleDAG::ComputeLatency(SUnit *SU) {
   } else {
     SU->Latency = 0;
     if (SU->Node->isTargetOpcode()) {
-      unsigned SchedClass = TII->getSchedClass(SU->Node->getTargetOpcode());
+      unsigned SchedClass =
+        TII->get(SU->Node->getTargetOpcode()).getSchedClass();
       InstrStage *S = InstrItins.begin(SchedClass);
       InstrStage *E = InstrItins.end(SchedClass);
       for (; S != E; ++S)
@@ -216,7 +217,7 @@ void ScheduleDAG::ComputeLatency(SUnit *SU) {
     for (unsigned i = 0, e = SU->FlaggedNodes.size(); i != e; ++i) {
       SDNode *FNode = SU->FlaggedNodes[i];
       if (FNode->isTargetOpcode()) {
-        unsigned SchedClass = TII->getSchedClass(FNode->getTargetOpcode());
+        unsigned SchedClass =TII->get(FNode->getTargetOpcode()).getSchedClass();
         InstrStage *S = InstrItins.begin(SchedClass);
         InstrStage *E = InstrItins.end(SchedClass);
         for (; S != E; ++S)

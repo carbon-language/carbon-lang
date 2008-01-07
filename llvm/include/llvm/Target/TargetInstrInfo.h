@@ -37,7 +37,6 @@ template<class T> class SmallVectorImpl;
 //===----------------------------------------------------------------------===//
 
 typedef short MachineOpCode;
-typedef unsigned InstrSchedClass;
 
 //===----------------------------------------------------------------------===//
 // struct TargetInstrDescriptor:
@@ -175,11 +174,11 @@ public:
 
 class TargetInstrDescriptor {
 public:
-  MachineOpCode   Opcode;        // The opcode.
+  unsigned short  Opcode;        // The opcode.
   unsigned short  numOperands;   // Num of args (may be more if variable_ops).
   unsigned short  numDefs;       // Num of args that are definitions.
   const char *    Name;          // Assembly language mnemonic for the opcode.
-  InstrSchedClass schedClass;    // enum  identifying instr sched class
+  unsigned        SchedClass;    // enum  identifying instr sched class
   unsigned        Flags;         // flags identifying machine instr class
   unsigned        TSFlags;       // Target Specific Flag values
   const unsigned *ImplicitUses;  // Registers implicitly read by this instr
@@ -259,6 +258,10 @@ public:
   bool hasDelaySlot() const {
     return Flags & M_DELAY_SLOT_FLAG;
   }
+  
+  unsigned getSchedClass() const {
+    return SchedClass;
+  }
 };
 
 
@@ -291,32 +294,28 @@ public:
   /// get - Return the machine instruction descriptor that corresponds to the
   /// specified instruction opcode.
   ///
-  const TargetInstrDescriptor& get(MachineOpCode Opcode) const {
-    assert((unsigned)Opcode < NumOpcodes);
+  const TargetInstrDescriptor& get(unsigned Opcode) const {
+    assert(Opcode < NumOpcodes);
     return desc[Opcode];
   }
 
-  const char *getName(MachineOpCode Opcode) const {
+  const char *getName(unsigned Opcode) const {
     return get(Opcode).Name;
   }
 
-  int getNumOperands(MachineOpCode Opcode) const {
+  int getNumOperands(unsigned Opcode) const {
     return get(Opcode).numOperands;
   }
 
-  int getNumDefs(MachineOpCode Opcode) const {
+  int getNumDefs(unsigned Opcode) const {
     return get(Opcode).numDefs;
   }
 
-  InstrSchedClass getSchedClass(MachineOpCode Opcode) const {
-    return get(Opcode).schedClass;
-  }
-
-  const unsigned *getImplicitUses(MachineOpCode Opcode) const {
+  const unsigned *getImplicitUses(unsigned Opcode) const {
     return get(Opcode).ImplicitUses;
   }
 
-  const unsigned *getImplicitDefs(MachineOpCode Opcode) const {
+  const unsigned *getImplicitDefs(unsigned Opcode) const {
     return get(Opcode).ImplicitDefs;
   }
 
@@ -325,26 +324,26 @@ public:
   // Query instruction class flags according to the machine-independent
   // flags listed above.
   //
-  bool isReturn(MachineOpCode Opcode) const {
+  bool isReturn(unsigned Opcode) const {
     return get(Opcode).Flags & M_RET_FLAG;
   }
 
-  bool isCommutableInstr(MachineOpCode Opcode) const {
+  bool isCommutableInstr(unsigned Opcode) const {
     return get(Opcode).Flags & M_COMMUTABLE;
   }
   
   /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
   /// custom insertion support when the DAG scheduler is inserting it into a
   /// machine basic block.
-  bool usesCustomDAGSchedInsertionHook(MachineOpCode Opcode) const {
+  bool usesCustomDAGSchedInsertionHook(unsigned Opcode) const {
     return get(Opcode).Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION;
   }
 
-  bool hasVariableOperands(MachineOpCode Opcode) const {
+  bool hasVariableOperands(unsigned Opcode) const {
     return get(Opcode).Flags & M_VARIABLE_OPS;
   }
 
-  bool hasOptionalDef(MachineOpCode Opcode) const {
+  bool hasOptionalDef(unsigned Opcode) const {
     return get(Opcode).Flags & M_HAS_OPTIONAL_DEF;
   }
 
@@ -390,7 +389,7 @@ protected:
 public:
   /// getOperandConstraint - Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
-  int getOperandConstraint(MachineOpCode Opcode, unsigned OpNum,
+  int getOperandConstraint(unsigned Opcode, unsigned OpNum,
                            TOI::OperandConstraint Constraint) const {
     return get(Opcode).getOperandConstraint(OpNum, Constraint);
   }
