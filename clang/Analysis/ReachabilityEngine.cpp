@@ -130,7 +130,11 @@ void ReachabilityEngineImpl::ProcessBlkBlk(const BlkBlkEdge& E,
   if (Blk == &cfg.getExit()) {
     assert (cfg.getExit().size() == 0 && "EXIT block cannot contain Stmts.");
     // Process the End-Of-Path.
-    ProcessEOP(Blk, Pred);
+    void* State = ProcessEOP(Blk, Pred->State);
+    bool IsNew;
+    ExplodedNodeImpl* V = G->getNodeImpl(BlkStmtEdge(Blk,NULL),State,&IsNew);
+    V->addUntypedPredecessor(Pred);
+    if (IsNew) G->addEndOfPath(V);
     return;
   }
   

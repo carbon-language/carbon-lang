@@ -102,7 +102,7 @@ protected:
   void ProcessBlkStmt(const BlkStmtEdge& E, ExplodedNodeImpl* Pred);
   void ProcessStmtBlk(const StmtBlkEdge& E, ExplodedNodeImpl* Pred);
 
-  virtual void ProcessEOP(CFGBlock* Blk, ExplodedNodeImpl* Pred);
+  virtual void* ProcessEOP(CFGBlock* Blk, void* State);
   virtual void ProcessStmt(Stmt* S, ExplodedNodeImpl* Pred);
   virtual void ProcessTerminator(Stmt* Terminator, ExplodedNodeImpl* Pred);
 
@@ -136,16 +136,10 @@ protected:
     return (void*) getCheckerState()->getInitialState();        
   }
   
-  virtual void ProcessEOP(CFGBlock* Blk, ExplodedNodeImpl* Pred) {
-    assert (false && "Not implemented yet.");
+  virtual void* ProcessEOP(CFGBlock* Blk, void* State) {
     // FIXME: Perform dispatch to adjust state.
-//    ExplodedNodeImpl* V = G->getNodeImpl(BlkStmtEdge(Blk,NULL),
-//                                         Pred->State).first;
-    
-//    V->addPredecessor(Pred);
-//    Graph.addEndOfPath(V);  
+    return State;
   }
-    
   
   virtual void ProcessStmt(Stmt* S, ExplodedNodeImpl* Pred) {
     CurrentBlkExpr = S;    
@@ -170,14 +164,12 @@ public:
   ReachabilityEngine(CFG& cfg, reng::WorkList* wlist) 
     : ReachabilityEngineImpl(cfg,wlist) {}
   
-  /// getGraph - Returns the exploded graph.  Ownership of the graph remains
-  ///  with the ReachabilityEngine object.
-  GraphTy* getGraph() const { return static_cast<GraphTy*>(G.get()); }
+  /// getGraph - Returns the exploded graph.
+  GraphTy& getGraph() { return *static_cast<GraphTy*>(G.get()); }
   
-  /// getCheckerState - Returns the internal checker state.  Ownership is not
-  ///  transferred to the caller.
-  CheckerTy* getCheckerState() const {
-    return static_cast<GraphTy*>(G.get())->getCheckerState();
+  /// getCheckerState - Returns the internal checker state.
+  CheckerTy& getCheckerState() {
+    return *static_cast<GraphTy*>(G.get())->getCheckerState();
   }  
   
   /// takeGraph - Returns the exploded graph.  Ownership of the graph is
