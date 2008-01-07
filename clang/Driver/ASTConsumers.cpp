@@ -39,13 +39,13 @@ namespace {
     void PrintDecl(Decl *D);
     void PrintFunctionDeclStart(FunctionDecl *FD);    
     void PrintTypeDefDecl(TypedefDecl *TD);    
-    void PrintObjcMethodDecl(ObjcMethodDecl *OMD);    
-    void PrintObjcImplementationDecl(ObjcImplementationDecl *OID);
-    void PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID);
-    void PrintObjcProtocolDecl(ObjcProtocolDecl *PID);  
-    void PrintObjcCategoryImplDecl(ObjcCategoryImplDecl *PID);    
-    void PrintObjcCategoryDecl(ObjcCategoryDecl *PID);    
-    void PrintObjcCompatibleAliasDecl(ObjcCompatibleAliasDecl *AID);
+    void PrintObjCMethodDecl(ObjCMethodDecl *OMD);    
+    void PrintObjCImplementationDecl(ObjCImplementationDecl *OID);
+    void PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID);
+    void PrintObjCProtocolDecl(ObjCProtocolDecl *PID);  
+    void PrintObjCCategoryImplDecl(ObjCCategoryImplDecl *PID);    
+    void PrintObjCCategoryDecl(ObjCCategoryDecl *PID);    
+    void PrintObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *AID);
   };
 } // end anonymous namespace
 
@@ -58,37 +58,37 @@ void DeclPrinter:: PrintDecl(Decl *D) {
       FD->getBody()->printPretty(Out);
       Out << '\n';
     }
-  } else if (isa<ObjcMethodDecl>(D)) {
+  } else if (isa<ObjCMethodDecl>(D)) {
     // Do nothing, methods definitions are printed in
-    // PrintObjcImplementationDecl.
+    // PrintObjCImplementationDecl.
   } else if (TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
     PrintTypeDefDecl(TD);
-  } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
-    PrintObjcInterfaceDecl(OID);
-  } else if (ObjcProtocolDecl *PID = dyn_cast<ObjcProtocolDecl>(D)) {
-    PrintObjcProtocolDecl(PID);
-  } else if (ObjcForwardProtocolDecl *OFPD = 
-	     dyn_cast<ObjcForwardProtocolDecl>(D)) {
+  } else if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(D)) {
+    PrintObjCInterfaceDecl(OID);
+  } else if (ObjCProtocolDecl *PID = dyn_cast<ObjCProtocolDecl>(D)) {
+    PrintObjCProtocolDecl(PID);
+  } else if (ObjCForwardProtocolDecl *OFPD = 
+	     dyn_cast<ObjCForwardProtocolDecl>(D)) {
     Out << "@protocol ";
     for (unsigned i = 0, e = OFPD->getNumForwardDecls(); i != e; ++i) {
-      const ObjcProtocolDecl *D = OFPD->getForwardProtocolDecl(i);
+      const ObjCProtocolDecl *D = OFPD->getForwardProtocolDecl(i);
       if (i) Out << ", ";
       Out << D->getName();
     }
     Out << ";\n";
-  } else if (ObjcImplementationDecl *OID = 
-	     dyn_cast<ObjcImplementationDecl>(D)) {
-    PrintObjcImplementationDecl(OID);
-  } else if (ObjcCategoryImplDecl *OID = 
-	     dyn_cast<ObjcCategoryImplDecl>(D)) {
-    PrintObjcCategoryImplDecl(OID);
-  } else if (ObjcCategoryDecl *OID = 
-	     dyn_cast<ObjcCategoryDecl>(D)) {
-    PrintObjcCategoryDecl(OID);
-  } else if (ObjcCompatibleAliasDecl *OID = 
-	     dyn_cast<ObjcCompatibleAliasDecl>(D)) {
-    PrintObjcCompatibleAliasDecl(OID);
-  } else if (isa<ObjcClassDecl>(D)) {
+  } else if (ObjCImplementationDecl *OID = 
+	     dyn_cast<ObjCImplementationDecl>(D)) {
+    PrintObjCImplementationDecl(OID);
+  } else if (ObjCCategoryImplDecl *OID = 
+	     dyn_cast<ObjCCategoryImplDecl>(D)) {
+    PrintObjCCategoryImplDecl(OID);
+  } else if (ObjCCategoryDecl *OID = 
+	     dyn_cast<ObjCCategoryDecl>(D)) {
+    PrintObjCCategoryDecl(OID);
+  } else if (ObjCCompatibleAliasDecl *OID = 
+	     dyn_cast<ObjCCompatibleAliasDecl>(D)) {
+    PrintObjCCompatibleAliasDecl(OID);
+  } else if (isa<ObjCClassDecl>(D)) {
     Out << "@class [printing todo]\n";
   } else if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
     Out << "Read top-level tag decl: '" << TD->getName() << "'\n";
@@ -152,7 +152,7 @@ void DeclPrinter::PrintTypeDefDecl(TypedefDecl *TD) {
   Out << "typedef " << S << ";\n";
 }
 
-void DeclPrinter::PrintObjcMethodDecl(ObjcMethodDecl *OMD) {
+void DeclPrinter::PrintObjCMethodDecl(ObjCMethodDecl *OMD) {
   if (OMD->isInstance())
     Out << "\n- ";
   else 
@@ -169,19 +169,19 @@ void DeclPrinter::PrintObjcMethodDecl(ObjcMethodDecl *OMD) {
   }
 }
 
-void DeclPrinter::PrintObjcImplementationDecl(ObjcImplementationDecl *OID) {
+void DeclPrinter::PrintObjCImplementationDecl(ObjCImplementationDecl *OID) {
   std::string I = OID->getName();
-  ObjcInterfaceDecl *SID = OID->getSuperClass();
+  ObjCInterfaceDecl *SID = OID->getSuperClass();
 
   if (SID)
     Out << "@implementation " << I << " : " << SID->getName();
   else
     Out << "@implementation " << I;
   
-  for (ObjcImplementationDecl::instmeth_iterator I = OID->instmeth_begin(),
+  for (ObjCImplementationDecl::instmeth_iterator I = OID->instmeth_begin(),
        E = OID->instmeth_end(); I != E; ++I) {
-    ObjcMethodDecl *OMD = *I;
-    PrintObjcMethodDecl(OMD);
+    ObjCMethodDecl *OMD = *I;
+    PrintObjCMethodDecl(OMD);
     if (OMD->getBody()) {
       Out << ' ';
       OMD->getBody()->printPretty(Out);
@@ -189,10 +189,10 @@ void DeclPrinter::PrintObjcImplementationDecl(ObjcImplementationDecl *OID) {
     }
   }
   
-  for (ObjcImplementationDecl::classmeth_iterator I = OID->classmeth_begin(),
+  for (ObjCImplementationDecl::classmeth_iterator I = OID->classmeth_begin(),
        E = OID->classmeth_end(); I != E; ++I) {
-    ObjcMethodDecl *OMD = *I;
-    PrintObjcMethodDecl(OMD);
+    ObjCMethodDecl *OMD = *I;
+    PrintObjCMethodDecl(OMD);
     if (OMD->getBody()) {
       Out << ' ';
       OMD->getBody()->printPretty(Out);
@@ -204,9 +204,9 @@ void DeclPrinter::PrintObjcImplementationDecl(ObjcImplementationDecl *OID) {
 }
 
 
-void DeclPrinter::PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
+void DeclPrinter::PrintObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
   std::string I = OID->getName();
-  ObjcInterfaceDecl *SID = OID->getSuperClass();
+  ObjCInterfaceDecl *SID = OID->getSuperClass();
 
   if (SID)
     Out << "@interface " << I << " : " << SID->getName();
@@ -217,7 +217,7 @@ void DeclPrinter::PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
   int count = OID->getNumIntfRefProtocols();
 
   if (count > 0) {
-    ObjcProtocolDecl **refProtocols = OID->getReferencedProtocols();
+    ObjCProtocolDecl **refProtocols = OID->getReferencedProtocols();
     for (int i = 0; i < count; i++)
       Out << (i == 0 ? '<' : ',') << refProtocols[i]->getName();
   }
@@ -229,7 +229,7 @@ void DeclPrinter::PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
   
   if (OID->getNumInstanceVariables() > 0) {
     Out << '{';
-    for (ObjcInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
+    for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
          E = OID->ivar_end(); I != E; ++I) {
       Out << '\t' << (*I)->getType().getAsString()
           << ' '  << (*I)->getName() << ";\n";      
@@ -240,55 +240,55 @@ void DeclPrinter::PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
   int NumProperties = OID->getNumPropertyDecl();
   if (NumProperties > 0) {
     for (int i = 0; i < NumProperties; i++) {
-      ObjcPropertyDecl *PDecl = OID->getPropertyDecl()[i];
+      ObjCPropertyDecl *PDecl = OID->getPropertyDecl()[i];
       Out << "@property";
-      if (PDecl->getPropertyAttributes() != ObjcPropertyDecl::OBJC_PR_noattr) {
+      if (PDecl->getPropertyAttributes() != ObjCPropertyDecl::OBJC_PR_noattr) {
         bool first = true;
         Out << " (";
-        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_readonly)
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readonly)
         {
           Out << (first ? ' ' : ',') << "readonly";
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_getter)
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_getter)
         {
           Out << (first ? ' ' : ',') << "getter = "
               << PDecl->getGetterName()->getName();
           first = false;
         }
-        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_setter)
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter)
         {
           Out << (first ? ' ' : ',') << "setter = "
               << PDecl->getSetterName()->getName();
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_assign)
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_assign)
         {
           Out << (first ? ' ' : ',') << "assign";
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_readwrite)
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_readwrite)
         {
           Out << (first ? ' ' : ',') << "readwrite";
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_retain)
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_retain)
         {
           Out << (first ? ' ' : ',') << "retain";
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_copy)
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_copy)
         {
           Out << (first ? ' ' : ',') << "copy";
           first = false;
         }
         
-        if (PDecl->getPropertyAttributes() & ObjcPropertyDecl::OBJC_PR_nonatomic)
+        if (PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_nonatomic)
         {
           Out << (first ? ' ' : ',') << "nonatomic";
           first = false;
@@ -296,7 +296,7 @@ void DeclPrinter::PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
         Out << " )";
       }
       
-      ObjcIvarDecl **IDecl = PDecl->getPropertyDecls();
+      ObjCIvarDecl **IDecl = PDecl->getPropertyDecls();
       
       Out << ' ' << IDecl[0]->getType().getAsString()
           << ' ' << IDecl[0]->getName();
@@ -312,12 +312,12 @@ void DeclPrinter::PrintObjcInterfaceDecl(ObjcInterfaceDecl *OID) {
   // FIXME: implement the rest...
 }
 
-void DeclPrinter::PrintObjcProtocolDecl(ObjcProtocolDecl *PID) {
+void DeclPrinter::PrintObjCProtocolDecl(ObjCProtocolDecl *PID) {
   Out << "@protocol " << PID->getName() << '\n';
   // FIXME: implement the rest...
 }
 
-void DeclPrinter::PrintObjcCategoryImplDecl(ObjcCategoryImplDecl *PID) {
+void DeclPrinter::PrintObjCCategoryImplDecl(ObjCCategoryImplDecl *PID) {
   Out << "@implementation "
       << PID->getClassInterface()->getName()
       << '(' << PID->getName() << ");\n";  
@@ -325,14 +325,14 @@ void DeclPrinter::PrintObjcCategoryImplDecl(ObjcCategoryImplDecl *PID) {
   // FIXME: implement the rest...
 }
 
-void DeclPrinter::PrintObjcCategoryDecl(ObjcCategoryDecl *PID) {
+void DeclPrinter::PrintObjCCategoryDecl(ObjCCategoryDecl *PID) {
   Out << "@interface " 
       << PID->getClassInterface()->getName()
       << '(' << PID->getName() << ");\n";
   // FIXME: implement the rest...
 }
 
-void DeclPrinter::PrintObjcCompatibleAliasDecl(ObjcCompatibleAliasDecl *AID) {
+void DeclPrinter::PrintObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *AID) {
   Out << "@compatibility_alias " << AID->getName() 
       << ' ' << AID->getClassInterface()->getName() << ";\n";  
 }
@@ -382,15 +382,15 @@ namespace {
         PrintTypeDefDecl(TD);
       } else if (ScopedDecl *SD = dyn_cast<ScopedDecl>(D)) {
         Out << "Read top-level variable decl: '" << SD->getName() << "'\n";
-      } else if (ObjcInterfaceDecl *OID = dyn_cast<ObjcInterfaceDecl>(D)) {
+      } else if (ObjCInterfaceDecl *OID = dyn_cast<ObjCInterfaceDecl>(D)) {
         Out << "Read objc interface '" << OID->getName() << "'\n";
-      } else if (ObjcProtocolDecl *OPD = dyn_cast<ObjcProtocolDecl>(D)) {
+      } else if (ObjCProtocolDecl *OPD = dyn_cast<ObjCProtocolDecl>(D)) {
         Out << "Read objc protocol '" << OPD->getName() << "'\n";
-      } else if (ObjcCategoryDecl *OCD = dyn_cast<ObjcCategoryDecl>(D)) {
+      } else if (ObjCCategoryDecl *OCD = dyn_cast<ObjCCategoryDecl>(D)) {
         Out << "Read objc category '" << OCD->getName() << "'\n";
-      } else if (isa<ObjcForwardProtocolDecl>(D)) {
+      } else if (isa<ObjCForwardProtocolDecl>(D)) {
         Out << "Read objc fwd protocol decl\n";
-      } else if (isa<ObjcClassDecl>(D)) {
+      } else if (isa<ObjCClassDecl>(D)) {
         Out << "Read objc fwd class decl\n";
       } else {
         assert(0 && "Unknown decl type!");

@@ -104,22 +104,22 @@ static QualType ConvertDeclSpecToType(const DeclSpec &DS, ASTContext &Ctx) {
            "Can't handle qualifiers on typedef names yet!");
     // FIXME: Adding a TST_objcInterface clause doesn't seem ideal, so
     // we have this "hack" for now... 
-    if (ObjcInterfaceDecl *ObjcIntDecl = dyn_cast<ObjcInterfaceDecl>(D)) {
+    if (ObjCInterfaceDecl *ObjCIntDecl = dyn_cast<ObjCInterfaceDecl>(D)) {
       if (DS.getProtocolQualifiers() == 0)
-        return Ctx.getObjcInterfaceType(ObjcIntDecl);
+        return Ctx.getObjCInterfaceType(ObjCIntDecl);
       
       Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
-      return Ctx.getObjcQualifiedInterfaceType(ObjcIntDecl,
-               reinterpret_cast<ObjcProtocolDecl**>(PPDecl),
+      return Ctx.getObjCQualifiedInterfaceType(ObjCIntDecl,
+               reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
               DS.NumProtocolQualifiers());
     }
     else if (TypedefDecl *typeDecl = dyn_cast<TypedefDecl>(D)) {
-      if (Ctx.getObjcIdType() == Ctx.getTypedefType(typeDecl)
+      if (Ctx.getObjCIdType() == Ctx.getTypedefType(typeDecl)
           && DS.getProtocolQualifiers()) {
           // id<protocol-list>
         Action::DeclTy **PPDecl = &(*DS.getProtocolQualifiers())[0];
-        return Ctx.getObjcQualifiedIdType(typeDecl->getUnderlyingType(),
-                 reinterpret_cast<ObjcProtocolDecl**>(PPDecl),
+        return Ctx.getObjCQualifiedIdType(typeDecl->getUnderlyingType(),
+                 reinterpret_cast<ObjCProtocolDecl**>(PPDecl),
                  DS.NumProtocolQualifiers());
       }
     }
@@ -346,22 +346,22 @@ QualType Sema::GetTypeForDeclarator(Declarator &D, Scope *S) {
   return T;
 }
 
-/// ObjcGetTypeForMethodDefinition - Builds the type for a method definition
+/// ObjCGetTypeForMethodDefinition - Builds the type for a method definition
 /// declarator
-QualType Sema::ObjcGetTypeForMethodDefinition(DeclTy *D) {
-  ObjcMethodDecl *MDecl = dyn_cast<ObjcMethodDecl>(static_cast<Decl *>(D));
+QualType Sema::ObjCGetTypeForMethodDefinition(DeclTy *D) {
+  ObjCMethodDecl *MDecl = dyn_cast<ObjCMethodDecl>(static_cast<Decl *>(D));
   QualType T = MDecl->getResultType();
   llvm::SmallVector<QualType, 16> ArgTys;
   
   // Add the first two invisible argument types for self and _cmd.
   if (MDecl->isInstance()) {
-    QualType selfTy = Context.getObjcInterfaceType(MDecl->getClassInterface());
+    QualType selfTy = Context.getObjCInterfaceType(MDecl->getClassInterface());
     selfTy = Context.getPointerType(selfTy);
     ArgTys.push_back(selfTy);
   }
   else
-    ArgTys.push_back(Context.getObjcIdType());
-  ArgTys.push_back(Context.getObjcSelType());
+    ArgTys.push_back(Context.getObjCIdType());
+  ArgTys.push_back(Context.getObjCSelType());
       
   for (int i = 0; i <  MDecl->getNumParams(); i++) {
     ParmVarDecl *PDecl = MDecl->getParamDecl(i);

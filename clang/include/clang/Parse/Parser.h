@@ -19,7 +19,7 @@
 
 namespace clang {
   class DeclSpec;
-  class ObjcDeclSpec;
+  class ObjCDeclSpec;
   class Declarator;
   class AttributeList;
   class Scope;
@@ -270,7 +270,7 @@ private:
 				  tok::ObjCKeywordKind contextKey);
   DeclTy *ParseObjCAtProtocolDeclaration(SourceLocation atLoc);
   
-  DeclTy *ObjcImpDecl;
+  DeclTy *ObjCImpDecl;
 
   DeclTy *ParseObjCAtImplementationDeclaration(SourceLocation atLoc);
   DeclTy *ParseObjCAtEndDeclaration(SourceLocation atLoc);
@@ -284,26 +284,26 @@ private:
     objc_in=0, objc_out, objc_inout, objc_oneway, objc_bycopy, objc_byref,
     objc_NumQuals
   };
-  IdentifierInfo *ObjcTypeQuals[objc_NumQuals];
+  IdentifierInfo *ObjCTypeQuals[objc_NumQuals];
   // Definitions for ObjC2's @property attributes.
   enum ObjCPropertyAttr {
     objc_readonly=0, objc_getter, objc_setter, objc_assign, 
     objc_readwrite, objc_retain, objc_copy, objc_nonatomic, objc_NumAttrs
   };
-  IdentifierInfo *ObjcPropertyAttrs[objc_NumAttrs];
+  IdentifierInfo *ObjCPropertyAttrs[objc_NumAttrs];
   bool isObjCPropertyAttribute();
   
   IdentifierInfo *ObjCForCollectionInKW;
   bool isTokIdentifier_in() const;
 
-  TypeTy *ParseObjCTypeName(ObjcDeclSpec &DS);
+  TypeTy *ParseObjCTypeName(ObjCDeclSpec &DS);
   void ParseObjCMethodRequirement();
   DeclTy *ParseObjCMethodPrototype(DeclTy *classOrCat,
    	    tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
   DeclTy *ParseObjCMethodDecl(SourceLocation mLoc, tok::TokenKind mType,
                               DeclTy *classDecl,
             tok::ObjCKeywordKind MethodImplKind = tok::objc_not_keyword);
-  void ParseObjCPropertyAttribute(ObjcDeclSpec &DS);
+  void ParseObjCPropertyAttribute(ObjCDeclSpec &DS);
   DeclTy *ParseObjCPropertyDecl(DeclTy *interfaceDecl, SourceLocation AtLoc);
   
   DeclTy *ParseObjCMethodDefinition();
@@ -407,7 +407,7 @@ private:
   void ParseDeclarationSpecifiers(DeclSpec &DS);
   void ParseSpecifierQualifierList(DeclSpec &DS);
   
-  void ParseObjcTypeQualifierList(ObjcDeclSpec &DS);
+  void ParseObjCTypeQualifierList(ObjCDeclSpec &DS);
 
   bool ParseTag(DeclTy *&Decl, unsigned TagType, SourceLocation StartLoc);
   void ParseEnumSpecifier(DeclSpec &DS);

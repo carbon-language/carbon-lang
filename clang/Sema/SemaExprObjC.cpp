@@ -48,19 +48,19 @@ Sema::ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
   if (CheckBuiltinCFStringArgument(S))
     return true;
   
-  if (Context.getObjcConstantStringInterface().isNull()) {
+  if (Context.getObjCConstantStringInterface().isNull()) {
     // Initialize the constant string interface lazily. This assumes
     // the NSConstantString interface is seen in this translation unit.
     IdentifierInfo *NSIdent = &Context.Idents.get("NSConstantString");
     ScopedDecl *IFace = LookupScopedDecl(NSIdent, Decl::IDNS_Ordinary, 
                                          SourceLocation(), TUScope);
-    ObjcInterfaceDecl *strIFace = dyn_cast_or_null<ObjcInterfaceDecl>(IFace);
+    ObjCInterfaceDecl *strIFace = dyn_cast_or_null<ObjCInterfaceDecl>(IFace);
     if (!strIFace)
       return Diag(S->getLocStart(), diag::err_undef_interface,
                   NSIdent->getName());
-    Context.setObjcConstantStringInterface(strIFace);
+    Context.setObjCConstantStringInterface(strIFace);
   }
-  QualType t = Context.getObjcConstantStringInterface();
+  QualType t = Context.getObjCConstantStringInterface();
   t = Context.getPointerType(t);
   return new ObjCStringLiteral(S, t, AtLoc);
 }
@@ -81,7 +81,7 @@ Sema::ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
                                                    SourceLocation SelLoc,
                                                    SourceLocation LParenLoc,
                                                    SourceLocation RParenLoc) {
-  QualType t = Context.getObjcSelType();
+  QualType t = Context.getObjCSelType();
   return new ObjCSelectorExpr(t, Sel, AtLoc, RParenLoc);
 }
 
@@ -90,13 +90,13 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
                                                    SourceLocation ProtoLoc,
                                                    SourceLocation LParenLoc,
                                                    SourceLocation RParenLoc) {
-  ObjcProtocolDecl* PDecl = ObjcProtocols[ProtocolId];
+  ObjCProtocolDecl* PDecl = ObjCProtocols[ProtocolId];
   if (!PDecl) {
     Diag(ProtoLoc, diag::err_undeclared_protocol, ProtocolId->getName());
     return true;
   }
   
-  QualType t = Context.getObjcProtoType();
+  QualType t = Context.getObjCProtoType();
   if (t.isNull())
     return true;
   t = Context.getPointerType(t);
@@ -104,7 +104,7 @@ Sema::ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
 }
 
 bool Sema::CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
-                                     ObjcMethodDecl *Method) {
+                                     ObjCMethodDecl *Method) {
   bool anyIncompatibleArgs = false;
   
   for (unsigned i = 0; i < NumArgs; i++) {
@@ -143,7 +143,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   assert(receiverName && "missing receiver class name");
 
   Expr **ArgExprs = reinterpret_cast<Expr **>(Args);
-  ObjcInterfaceDecl* ClassDecl = 0;
+  ObjCInterfaceDecl* ClassDecl = 0;
   if (!strcmp(receiverName->getName(), "super") && CurMethodDecl) {
     ClassDecl = CurMethodDecl->getClassInterface()->getSuperClass();
     if (ClassDecl && CurMethodDecl->isInstance()) {
@@ -151,7 +151,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
       // represent super without creating a special expression node.
       IdentifierInfo &II = Context.Idents.get("self");
       ExprResult ReceiverExpr = ActOnIdentifierExpr(S, lbrac, II, false);
-      QualType superTy = Context.getObjcInterfaceType(ClassDecl);
+      QualType superTy = Context.getObjCInterfaceType(ClassDecl);
       superTy = Context.getPointerType(superTy);
       ReceiverExpr = ActOnCastExpr(SourceLocation(), superTy.getAsOpaquePtr(),
                                    SourceLocation(), ReceiverExpr.Val);
@@ -165,7 +165,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
     ClassDecl = getObjCInterfaceDecl(receiverName);
   
   // FIXME: can ClassDecl ever be null?
-  ObjcMethodDecl *Method = ClassDecl->lookupClassMethod(Sel);
+  ObjCMethodDecl *Method = ClassDecl->lookupClassMethod(Sel);
   QualType returnType;
   
   // Before we give up, check if the selector is an instance method.
@@ -174,7 +174,7 @@ Sema::ExprResult Sema::ActOnClassMessage(
   if (!Method) {
     Diag(lbrac, diag::warn_method_not_found, std::string("+"), Sel.getName(),
          SourceRange(lbrac, rbrac));
-    returnType = Context.getObjcIdType();
+    returnType = Context.getObjCIdType();
   } else {
     returnType = Method->getResultType();
     if (Sel.getNumArgs()) {
@@ -199,17 +199,17 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
   Expr *RExpr = static_cast<Expr *>(receiver);
   QualType receiverType = RExpr->getType();
   QualType returnType;
-  ObjcMethodDecl *Method = 0;
+  ObjCMethodDecl *Method = 0;
   
-  if (receiverType == Context.getObjcIdType() ||
-      receiverType == Context.getObjcClassType()) {
+  if (receiverType == Context.getObjCIdType() ||
+      receiverType == Context.getObjCClassType()) {
     Method = InstanceMethodPool[Sel].Method;
 	if (!Method)
 	  Method = FactoryMethodPool[Sel].Method;
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
-      returnType = Context.getObjcIdType();
+      returnType = Context.getObjCIdType();
     } else {
       returnType = Method->getResultType();
       if (Sel.getNumArgs())
@@ -217,7 +217,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
           return true;
     }
   } else {
-    bool receiverIsQualId = isa<ObjcQualifiedIdType>(receiverType);
+    bool receiverIsQualId = isa<ObjCQualifiedIdType>(receiverType);
     // FIXME (snaroff): checking in this code from Patrick. Needs to be
     // revisited. how do we get the ClassDecl from the receiver expression?
     if (!receiverIsQualId)
@@ -226,15 +226,15 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
           static_cast<PointerType*>(receiverType.getTypePtr());
         receiverType = pointerType->getPointeeType();
       }
-    ObjcInterfaceDecl* ClassDecl = 0;
-    if (ObjcQualifiedInterfaceType *QIT = 
-        dyn_cast<ObjcQualifiedInterfaceType>(receiverType)) {
+    ObjCInterfaceDecl* ClassDecl = 0;
+    if (ObjCQualifiedInterfaceType *QIT = 
+        dyn_cast<ObjCQualifiedInterfaceType>(receiverType)) {
       ClassDecl = QIT->getDecl();
       Method = ClassDecl->lookupInstanceMethod(Sel);
       if (!Method) {
         // search protocols
         for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
-          ObjcProtocolDecl *PDecl = QIT->getProtocols(i);
+          ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
           if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
             break;
         }
@@ -244,11 +244,11 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
              std::string("-"), Sel.getName(),
              SourceRange(lbrac, rbrac));
     }
-    else if (ObjcQualifiedIdType *QIT = 
-             dyn_cast<ObjcQualifiedIdType>(receiverType)) {
+    else if (ObjCQualifiedIdType *QIT = 
+             dyn_cast<ObjCQualifiedIdType>(receiverType)) {
       // search protocols
       for (unsigned i = 0; i < QIT->getNumProtocols(); i++) {
-        ObjcProtocolDecl *PDecl = QIT->getProtocols(i);
+        ObjCProtocolDecl *PDecl = QIT->getProtocols(i);
         if (PDecl && (Method = PDecl->lookupInstanceMethod(Sel)))
           break;
       }
@@ -258,9 +258,9 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
              SourceRange(lbrac, rbrac));
     }
     else {
-      assert(ObjcInterfaceType::classof(receiverType.getTypePtr()) &&
+      assert(ObjCInterfaceType::classof(receiverType.getTypePtr()) &&
              "bad receiver type");
-      ClassDecl = static_cast<ObjcInterfaceType*>(
+      ClassDecl = static_cast<ObjCInterfaceType*>(
                     receiverType.getTypePtr())->getDecl();
       // FIXME: consider using InstanceMethodPool, since it will be faster
       // than the following method (which can do *many* linear searches). The
@@ -270,8 +270,8 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     if (!Method) {
       // If we have an implementation in scope, check "private" methods.
       if (ClassDecl)
-        if (ObjcImplementationDecl *ImpDecl = 
-            ObjcImplementations[ClassDecl->getIdentifier()])
+        if (ObjCImplementationDecl *ImpDecl = 
+            ObjCImplementations[ClassDecl->getIdentifier()])
           Method = ImpDecl->getInstanceMethod(Sel);
 	  // If we still haven't found a method, look in the global pool. This
 	  // behavior isn't very desirable, however we need it for GCC
@@ -282,7 +282,7 @@ Sema::ExprResult Sema::ActOnInstanceMessage(
     if (!Method) {
       Diag(lbrac, diag::warn_method_not_found, std::string("-"), Sel.getName(),
            SourceRange(lbrac, rbrac));
-      returnType = Context.getObjcIdType();
+      returnType = Context.getObjCIdType();
     } else {
       returnType = Method->getResultType();
       if (Sel.getNumArgs())

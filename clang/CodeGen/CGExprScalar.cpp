@@ -1001,7 +1001,7 @@ Value *ScalarExprEmitter::VisitVAArgExpr(VAArgExpr *VE) {
 Value *ScalarExprEmitter::VisitObjCEncodeExpr(const ObjCEncodeExpr *E) {
   std::string str;
   
-  CGF.getContext().getObjcEncodingForType(E->getEncodedType(), str);
+  CGF.getContext().getObjCEncodingForType(E->getEncodedType(), str);
   
   llvm::Constant *C = llvm::ConstantArray::get(str);
   C = new llvm::GlobalVariable(C->getType(), true, 

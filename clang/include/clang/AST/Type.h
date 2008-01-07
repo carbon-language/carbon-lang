@@ -33,9 +33,9 @@ namespace clang {
   class RecordDecl;
   class EnumDecl;
   class FieldDecl;
-  class ObjcInterfaceDecl;
-  class ObjcProtocolDecl;
-  class ObjcMethodDecl;
+  class ObjCInterfaceDecl;
+  class ObjCProtocolDecl;
+  class ObjCMethodDecl;
   class Expr;
   class SourceLocation;
   class PointerType;
@@ -50,7 +50,7 @@ namespace clang {
   class FunctionType;
   class OCUVectorType;
   class BuiltinType;
-  class ObjcQualifiedInterfaceType;
+  class ObjCQualifiedInterfaceType;
   class StmtIteratorBase;
   
 /// QualType - For efficiency, we don't store CVR-qualified types as nodes on
@@ -219,8 +219,8 @@ public:
     Vector, OCUVector,
     FunctionNoProto, FunctionProto,
     TypeName, Tagged, 
-    ObjcInterface, ObjcQualifiedInterface,
-    ObjcQualifiedId,
+    ObjCInterface, ObjCQualifiedInterface,
+    ObjCQualifiedId,
     TypeOfExp, TypeOfTyp // GNU typeof extension.
   };
 private:
@@ -294,8 +294,8 @@ public:
   bool isUnionType() const;  
   bool isVectorType() const; // GCC vector type.
   bool isOCUVectorType() const; // OCU vector type.
-  bool isObjcInterfaceType() const; // includes conforming protocol type
-  bool isObjcQualifiedIdType() const; // id includes conforming protocol type
+  bool isObjCInterfaceType() const; // includes conforming protocol type
+  bool isObjCQualifiedIdType() const; // id includes conforming protocol type
   
   // Type Checking Functions: Check to see if this type is structurally the
   // specified type, ignoring typedefs, and return a pointer to the best type
@@ -901,83 +901,83 @@ protected:
   friend class Type;
 };
 
-class ObjcInterfaceType : public Type {
-  ObjcInterfaceDecl *Decl;
+class ObjCInterfaceType : public Type {
+  ObjCInterfaceDecl *Decl;
 protected:
-  ObjcInterfaceType(TypeClass tc, ObjcInterfaceDecl *D) : 
+  ObjCInterfaceType(TypeClass tc, ObjCInterfaceDecl *D) : 
     Type(tc, QualType()), Decl(D) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
   
-  ObjcInterfaceDecl *getDecl() const { return Decl; }
+  ObjCInterfaceDecl *getDecl() const { return Decl; }
   
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   static bool classof(const Type *T) { 
-    return T->getTypeClass() == ObjcInterface; 
+    return T->getTypeClass() == ObjCInterface; 
   }
-  static bool classof(const ObjcInterfaceType *) { return true; }
+  static bool classof(const ObjCInterfaceType *) { return true; }
 };
 
-/// ObjcQualifiedInterfaceType - This class represents interface types 
+/// ObjCQualifiedInterfaceType - This class represents interface types 
 /// conforming to a list of protocols; such as, INTF<Proto1, Proto2, Proto1>.
 /// Duplicate protocols are removed and protocol list is canonicalized to be in
 /// alphabetical order.
-class ObjcQualifiedInterfaceType : public ObjcInterfaceType, 
+class ObjCQualifiedInterfaceType : public ObjCInterfaceType, 
                                    public llvm::FoldingSetNode {
                                      
   // List of protocols for this protocol conforming object type
   // List is sorted on protocol name. No protocol is enterred more than once.
-  llvm::SmallVector<ObjcProtocolDecl*, 8> Protocols;
+  llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
 
-  ObjcQualifiedInterfaceType(ObjcInterfaceDecl *D,
-                             ObjcProtocolDecl **Protos,  unsigned NumP) : 
-    ObjcInterfaceType(ObjcQualifiedInterface, D), 
+  ObjCQualifiedInterfaceType(ObjCInterfaceDecl *D,
+                             ObjCProtocolDecl **Protos,  unsigned NumP) : 
+    ObjCInterfaceType(ObjCQualifiedInterface, D), 
     Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
   
-  ObjcProtocolDecl *getProtocols(unsigned i) const {
+  ObjCProtocolDecl *getProtocols(unsigned i) const {
     return Protocols[i];
   }
   unsigned getNumProtocols() const {
     return Protocols.size();
   }
-  ObjcProtocolDecl **getReferencedProtocols() {
+  ObjCProtocolDecl **getReferencedProtocols() {
     return &Protocols[0];
   }  
   virtual void getAsStringInternal(std::string &InnerString) const;
   
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, 
-                      ObjcProtocolDecl **protocols, unsigned NumProtocols);
+                      ObjCProtocolDecl **protocols, unsigned NumProtocols);
  
   static bool classof(const Type *T) { 
-    return T->getTypeClass() == ObjcQualifiedInterface; 
+    return T->getTypeClass() == ObjCQualifiedInterface; 
   }
-  static bool classof(const ObjcQualifiedInterfaceType *) { return true; }
+  static bool classof(const ObjCQualifiedInterfaceType *) { return true; }
 };
 
-/// ObjcQualifiedIdType - to represent id<protocol-list>
-class ObjcQualifiedIdType : public Type,
+/// ObjCQualifiedIdType - to represent id<protocol-list>
+class ObjCQualifiedIdType : public Type,
                             public llvm::FoldingSetNode {
   // List of protocols for this protocol conforming 'id' type
   // List is sorted on protocol name. No protocol is enterred more than once.
-  llvm::SmallVector<ObjcProtocolDecl*, 8> Protocols;
+  llvm::SmallVector<ObjCProtocolDecl*, 8> Protocols;
     
-  ObjcQualifiedIdType(QualType can, ObjcProtocolDecl **Protos,  unsigned NumP)
-  : Type(ObjcQualifiedId, can), 
+  ObjCQualifiedIdType(QualType can, ObjCProtocolDecl **Protos,  unsigned NumP)
+  : Type(ObjCQualifiedId, can), 
   Protocols(Protos, Protos+NumP) { }
   friend class ASTContext;  // ASTContext creates these.
 public:
     
-  ObjcProtocolDecl *getProtocols(unsigned i) const {
+  ObjCProtocolDecl *getProtocols(unsigned i) const {
     return Protocols[i];
   }
   unsigned getNumProtocols() const {
     return Protocols.size();
   }
-  ObjcProtocolDecl **getReferencedProtocols() {
+  ObjCProtocolDecl **getReferencedProtocols() {
     return &Protocols[0];
   } 
     
@@ -985,12 +985,12 @@ public:
     
   void Profile(llvm::FoldingSetNodeID &ID);
   static void Profile(llvm::FoldingSetNodeID &ID, 
-                      ObjcProtocolDecl **protocols, unsigned NumProtocols);
+                      ObjCProtocolDecl **protocols, unsigned NumProtocols);
     
   static bool classof(const Type *T) { 
-    return T->getTypeClass() == ObjcQualifiedId; 
+    return T->getTypeClass() == ObjCQualifiedId; 
   }
-  static bool classof(const ObjcQualifiedIdType *) { return true; }
+  static bool classof(const ObjCQualifiedIdType *) { return true; }
     
 };
   
@@ -1052,12 +1052,12 @@ inline bool Type::isVectorType() const {
 inline bool Type::isOCUVectorType() const {
   return isa<OCUVectorType>(CanonicalType);
 }
-inline bool Type::isObjcInterfaceType() const {
-  return isa<ObjcInterfaceType>(CanonicalType)
-           || isa<ObjcQualifiedInterfaceType>(CanonicalType);
+inline bool Type::isObjCInterfaceType() const {
+  return isa<ObjCInterfaceType>(CanonicalType)
+           || isa<ObjCQualifiedInterfaceType>(CanonicalType);
 }
-inline bool Type::isObjcQualifiedIdType() const {
-  return isa<ObjcQualifiedIdType>(CanonicalType);
+inline bool Type::isObjCQualifiedIdType() const {
+  return isa<ObjCQualifiedIdType>(CanonicalType);
 }
 }  // end namespace clang
 

@@ -846,7 +846,7 @@ Parser::StmtResult Parser::ParseForStatement() {
     return Actions.ActOnForStmt(ForLoc, LParenLoc, FirstPart, 
                                 SecondPart, ThirdPart, RParenLoc, Body.Val);
   else
-    return Actions.ActOnObjcForCollectionStmt(ForLoc, LParenLoc, FirstPart, 
+    return Actions.ActOnObjCForCollectionStmt(ForLoc, LParenLoc, FirstPart, 
                                               SecondPart, RParenLoc, Body.Val);
 }
 

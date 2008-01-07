@@ -280,12 +280,12 @@ private:
   }
 };
 
-/// ObjcDeclSpec - This class captures information about 
+/// ObjCDeclSpec - This class captures information about 
 /// "declaration specifiers" specific to objective-c
-class ObjcDeclSpec {
+class ObjCDeclSpec {
 public:
-  /// ObjcDeclQualifier - Qualifier used on types in method declarations
-  enum ObjcDeclQualifier {
+  /// ObjCDeclQualifier - Qualifier used on types in method declarations
+  enum ObjCDeclQualifier {
     DQ_None = 0x0,
     DQ_In = 0x1,
     DQ_Inout = 0x2,
@@ -296,7 +296,7 @@ public:
   };
   
   /// PropertyAttributeKind - list of property attributes.
-  enum ObjcPropertyAttributeKind { DQ_PR_noattr = 0x0, 
+  enum ObjCPropertyAttributeKind { DQ_PR_noattr = 0x0, 
     DQ_PR_readonly = 0x01, 
     DQ_PR_getter = 0x02, 
     DQ_PR_assign = 0x04, 
@@ -308,17 +308,17 @@ public:
   };
   
   
-  ObjcDeclSpec() : objcDeclQualifier(DQ_None), PropertyAttributes(DQ_PR_noattr) 
+  ObjCDeclSpec() : objcDeclQualifier(DQ_None), PropertyAttributes(DQ_PR_noattr) 
   {}
-  ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
-  void setObjcDeclQualifier(ObjcDeclQualifier DQVal) 
-    { objcDeclQualifier = (ObjcDeclQualifier) (objcDeclQualifier | DQVal); }
+  ObjCDeclQualifier getObjCDeclQualifier() const { return objcDeclQualifier; }
+  void setObjCDeclQualifier(ObjCDeclQualifier DQVal) 
+    { objcDeclQualifier = (ObjCDeclQualifier) (objcDeclQualifier | DQVal); }
   
-  const ObjcPropertyAttributeKind getPropertyAttributes() const 
+  const ObjCPropertyAttributeKind getPropertyAttributes() const 
     { return PropertyAttributes; }
-  void setPropertyAttributes(ObjcPropertyAttributeKind PRVal) { 
+  void setPropertyAttributes(ObjCPropertyAttributeKind PRVal) { 
     PropertyAttributes = 
-      (ObjcPropertyAttributeKind) (PropertyAttributes | PRVal);
+      (ObjCPropertyAttributeKind) (PropertyAttributes | PRVal);
   }
   
   const IdentifierInfo *getGetterName() const { return GetterName; }
@@ -332,9 +332,9 @@ private:
   // FIXME: These two are unrelated and mutially exclusive. So perhaps 
   // we can put them in a union to reflect their mutual exclusiveness
   // (space saving is negligible).
-  ObjcDeclQualifier objcDeclQualifier : 6;
+  ObjCDeclQualifier objcDeclQualifier : 6;
   
-  ObjcPropertyAttributeKind PropertyAttributes : 8;
+  ObjCPropertyAttributeKind PropertyAttributes : 8;
   IdentifierInfo *GetterName;    // getter name of NULL if no getter
   IdentifierInfo *SetterName;    // setter name of NULL if no setter
 };

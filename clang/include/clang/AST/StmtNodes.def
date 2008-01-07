@@ -45,12 +45,12 @@ STMT(17, SwitchCase      , Stmt)
 STMT(18, AsmStmt         , Stmt)
 
 // Obj-C statements
-STMT(19, ObjcAtTryStmt        , Stmt)
-STMT(20, ObjcAtCatchStmt      , Stmt)
-STMT(21, ObjcAtFinallyStmt    , Stmt)
-STMT(22, ObjcAtThrowStmt      , Stmt)
+STMT(19, ObjCAtTryStmt        , Stmt)
+STMT(20, ObjCAtCatchStmt      , Stmt)
+STMT(21, ObjCAtFinallyStmt    , Stmt)
+STMT(22, ObjCAtThrowStmt      , Stmt)
 // Obj-C2 statements
-STMT(23, ObjcForCollectionStmt, Stmt)
+STMT(23, ObjCForCollectionStmt, Stmt)
 
 LAST_STMT(23)
 

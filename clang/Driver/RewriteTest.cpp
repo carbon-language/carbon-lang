@@ -35,11 +35,11 @@ namespace {
     unsigned MainFileID;
     const char *MainFileStart, *MainFileEnd;
     SourceLocation LastIncLoc;
-    llvm::SmallVector<ObjcImplementationDecl *, 8> ClassImplementation;
-    llvm::SmallVector<ObjcCategoryImplDecl *, 8> CategoryImplementation;
-    llvm::SmallPtrSet<ObjcInterfaceDecl*, 8> ObjcSynthesizedStructs;
-    llvm::SmallPtrSet<ObjcInterfaceDecl*, 8> ObjcForwardDecls;
-    llvm::DenseMap<ObjcMethodDecl*, std::string> MethodInternalNames;
+    llvm::SmallVector<ObjCImplementationDecl *, 8> ClassImplementation;
+    llvm::SmallVector<ObjCCategoryImplDecl *, 8> CategoryImplementation;
+    llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCSynthesizedStructs;
+    llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCForwardDecls;
+    llvm::DenseMap<ObjCMethodDecl*, std::string> MethodInternalNames;
     
     FunctionDecl *MsgSendFunctionDecl;
     FunctionDecl *MsgSendSuperFunctionDecl;
@@ -57,7 +57,7 @@ namespace {
     RecordDecl *NSStringRecord;
     
     // Needed for super.
-    ObjcMethodDecl *CurMethodDecl;
+    ObjCMethodDecl *CurMethodDecl;
     RecordDecl *SuperStructDecl;
     
     static const int OBJC_ABI_VERSION =7 ;
@@ -137,19 +137,19 @@ namespace {
     void RewritePrologue(SourceLocation Loc);
     void RewriteInclude(SourceLocation Loc);
     void RewriteTabs();
-    void RewriteForwardClassDecl(ObjcClassDecl *Dcl);
-    void RewriteInterfaceDecl(ObjcInterfaceDecl *Dcl);
+    void RewriteForwardClassDecl(ObjCClassDecl *Dcl);
+    void RewriteInterfaceDecl(ObjCInterfaceDecl *Dcl);
     void RewriteImplementationDecl(NamedDecl *Dcl);
-    void RewriteObjcMethodDecl(ObjcMethodDecl *MDecl, std::string &ResultStr);
-    void RewriteCategoryDecl(ObjcCategoryDecl *Dcl);
-    void RewriteProtocolDecl(ObjcProtocolDecl *Dcl);
-    void RewriteForwardProtocolDecl(ObjcForwardProtocolDecl *Dcl);
-    void RewriteMethodDeclaration(ObjcMethodDecl *Method);
-    void RewriteProperties(int nProperties, ObjcPropertyDecl **Properties);
+    void RewriteObjCMethodDecl(ObjCMethodDecl *MDecl, std::string &ResultStr);
+    void RewriteCategoryDecl(ObjCCategoryDecl *Dcl);
+    void RewriteProtocolDecl(ObjCProtocolDecl *Dcl);
+    void RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *Dcl);
+    void RewriteMethodDeclaration(ObjCMethodDecl *Method);
+    void RewriteProperties(int nProperties, ObjCPropertyDecl **Properties);
     void RewriteFunctionDecl(FunctionDecl *FD);
-    void RewriteObjcQualifiedInterfaceTypes(Decl *Dcl);
+    void RewriteObjCQualifiedInterfaceTypes(Decl *Dcl);
     bool needToScanForQualifiers(QualType T);
-    ObjcInterfaceDecl *isSuperReceiver(Expr *recExpr);
+    ObjCInterfaceDecl *isSuperReceiver(Expr *recExpr);
     QualType getSuperStructType();
     
     // Expression Rewriting.
@@ -160,10 +160,10 @@ namespace {
     Stmt *RewriteMessageExpr(ObjCMessageExpr *Exp);
     Stmt *RewriteObjCStringLiteral(ObjCStringLiteral *Exp);
     Stmt *RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp);
-    Stmt *RewriteObjcTryStmt(ObjcAtTryStmt *S);
-    Stmt *RewriteObjcCatchStmt(ObjcAtCatchStmt *S);
-    Stmt *RewriteObjcFinallyStmt(ObjcAtFinallyStmt *S);
-    Stmt *RewriteObjcThrowStmt(ObjcAtThrowStmt *S);
+    Stmt *RewriteObjCTryStmt(ObjCAtTryStmt *S);
+    Stmt *RewriteObjCCatchStmt(ObjCAtCatchStmt *S);
+    Stmt *RewriteObjCFinallyStmt(ObjCAtFinallyStmt *S);
+    Stmt *RewriteObjCThrowStmt(ObjCAtThrowStmt *S);
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
     void SynthMsgSendFunctionDecl();
@@ -178,29 +178,29 @@ namespace {
     void SynthGetProtocolFunctionDecl();
       
     // Metadata emission.
-    void RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
+    void RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                   std::string &Result);
     
-    void RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *CDecl,
+    void RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *CDecl,
                                      std::string &Result);
     
-    typedef ObjcCategoryImplDecl::instmeth_iterator instmeth_iterator;
-    void RewriteObjcMethodsMetaData(instmeth_iterator MethodBegin,
+    typedef ObjCCategoryImplDecl::instmeth_iterator instmeth_iterator;
+    void RewriteObjCMethodsMetaData(instmeth_iterator MethodBegin,
                                     instmeth_iterator MethodEnd,
                                     bool IsInstanceMethod,
                                     const char *prefix,
                                     const char *ClassName,
                                     std::string &Result);
     
-    void RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
+    void RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
                                       int NumProtocols,
                                       const char *prefix,
                                       const char *ClassName,
                                       std::string &Result);
-    void SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
+    void SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
                                       std::string &Result);
-    void SynthesizeIvarOffsetComputation(ObjcImplementationDecl *IDecl, 
-                                         ObjcIvarDecl *ivar, 
+    void SynthesizeIvarOffsetComputation(ObjCImplementationDecl *IDecl, 
+                                         ObjCIvarDecl *ivar, 
                                          std::string &Result);
     void RewriteImplementations(std::string &Result);
   };
@@ -233,14 +233,14 @@ void RewriteTest::HandleTopLevelDecl(Decl *D) {
       ConstantStringClassReference = FVD;
       return;
     }
-  } else if (ObjcInterfaceDecl *MD = dyn_cast<ObjcInterfaceDecl>(D)) {
+  } else if (ObjCInterfaceDecl *MD = dyn_cast<ObjCInterfaceDecl>(D)) {
     RewriteInterfaceDecl(MD);
-  } else if (ObjcCategoryDecl *CD = dyn_cast<ObjcCategoryDecl>(D)) {
+  } else if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(D)) {
     RewriteCategoryDecl(CD);
-  } else if (ObjcProtocolDecl *PD = dyn_cast<ObjcProtocolDecl>(D)) {
+  } else if (ObjCProtocolDecl *PD = dyn_cast<ObjCProtocolDecl>(D)) {
     RewriteProtocolDecl(PD);
-  } else if (ObjcForwardProtocolDecl *FP = 
-             dyn_cast<ObjcForwardProtocolDecl>(D)){
+  } else if (ObjCForwardProtocolDecl *FP = 
+             dyn_cast<ObjCForwardProtocolDecl>(D)){
     RewriteForwardProtocolDecl(FP);
   }
   // If we have a decl in the main file, see if we should rewrite it.
@@ -259,7 +259,7 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
     if (Stmt *Body = FD->getBody())
       FD->setBody(RewriteFunctionBodyOrGlobalInitializer(Body));
 	  
-  if (ObjcMethodDecl *MD = dyn_cast<ObjcMethodDecl>(D)) {
+  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
     if (Stmt *Body = MD->getBody()) {
       //Body->dump();
       CurMethodDecl = MD;
@@ -267,14 +267,14 @@ void RewriteTest::HandleDeclInMainFile(Decl *D) {
       CurMethodDecl = 0;
     }
   }
-  if (ObjcImplementationDecl *CI = dyn_cast<ObjcImplementationDecl>(D))
+  if (ObjCImplementationDecl *CI = dyn_cast<ObjCImplementationDecl>(D))
     ClassImplementation.push_back(CI);
-  else if (ObjcCategoryImplDecl *CI = dyn_cast<ObjcCategoryImplDecl>(D))
+  else if (ObjCCategoryImplDecl *CI = dyn_cast<ObjCCategoryImplDecl>(D))
     CategoryImplementation.push_back(CI);
-  else if (ObjcClassDecl *CD = dyn_cast<ObjcClassDecl>(D))
+  else if (ObjCClassDecl *CD = dyn_cast<ObjCClassDecl>(D))
     RewriteForwardClassDecl(CD);
   else if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
-    RewriteObjcQualifiedInterfaceTypes(VD);
+    RewriteObjCQualifiedInterfaceTypes(VD);
     if (VD->getInit())
       RewriteFunctionBodyOrGlobalInitializer(VD->getInit());
   }
@@ -364,9 +364,9 @@ void RewriteTest::RewriteTabs() {
 }
 
 
-void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
+void RewriteTest::RewriteForwardClassDecl(ObjCClassDecl *ClassDecl) {
   int numDecls = ClassDecl->getNumForwardDecls();
-  ObjcInterfaceDecl **ForwardDecls = ClassDecl->getForwardDecls();
+  ObjCInterfaceDecl **ForwardDecls = ClassDecl->getForwardDecls();
   
   // Get the start location and compute the semi location.
   SourceLocation startLoc = ClassDecl->getLocation();
@@ -381,7 +381,7 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
   typedefString.append(startBuf, semiPtr-startBuf+1);
   typedefString += "\n";
   for (int i = 0; i < numDecls; i++) {
-    ObjcInterfaceDecl *ForwardDecl = ForwardDecls[i];
+    ObjCInterfaceDecl *ForwardDecl = ForwardDecls[i];
     typedefString += "#ifndef _REWRITER_typedef_";
     typedefString += ForwardDecl->getName();
     typedefString += "\n";
@@ -398,7 +398,7 @@ void RewriteTest::RewriteForwardClassDecl(ObjcClassDecl *ClassDecl) {
                       typedefString.c_str(), typedefString.size());
 }
 
-void RewriteTest::RewriteMethodDeclaration(ObjcMethodDecl *Method) {
+void RewriteTest::RewriteMethodDeclaration(ObjCMethodDecl *Method) {
   SourceLocation LocStart = Method->getLocStart();
   SourceLocation LocEnd = Method->getLocEnd();
     
@@ -410,10 +410,10 @@ void RewriteTest::RewriteMethodDeclaration(ObjcMethodDecl *Method) {
   }
 }
 
-void RewriteTest::RewriteProperties(int nProperties, ObjcPropertyDecl **Properties) 
+void RewriteTest::RewriteProperties(int nProperties, ObjCPropertyDecl **Properties) 
 {
   for (int i = 0; i < nProperties; i++) {
-    ObjcPropertyDecl *Property = Properties[i];
+    ObjCPropertyDecl *Property = Properties[i];
     SourceLocation Loc = Property->getLocation();
     
     Rewrite.ReplaceText(Loc, 0, "// ", 3);
@@ -422,16 +422,16 @@ void RewriteTest::RewriteProperties(int nProperties, ObjcPropertyDecl **Properti
   }
 }
 
-void RewriteTest::RewriteCategoryDecl(ObjcCategoryDecl *CatDecl) {
+void RewriteTest::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
   SourceLocation LocStart = CatDecl->getLocStart();
   
   // FIXME: handle category headers that are declared across multiple lines.
   Rewrite.ReplaceText(LocStart, 0, "// ", 3);
   
-  for (ObjcCategoryDecl::instmeth_iterator I = CatDecl->instmeth_begin(), 
+  for (ObjCCategoryDecl::instmeth_iterator I = CatDecl->instmeth_begin(), 
        E = CatDecl->instmeth_end(); I != E; ++I)
     RewriteMethodDeclaration(*I);
-  for (ObjcCategoryDecl::classmeth_iterator I = CatDecl->classmeth_begin(), 
+  for (ObjCCategoryDecl::classmeth_iterator I = CatDecl->classmeth_begin(), 
        E = CatDecl->classmeth_end(); I != E; ++I)
     RewriteMethodDeclaration(*I);
 
@@ -439,7 +439,7 @@ void RewriteTest::RewriteCategoryDecl(ObjcCategoryDecl *CatDecl) {
   Rewrite.ReplaceText(CatDecl->getAtEndLoc(), 0, "// ", 3);
 }
 
-void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
+void RewriteTest::RewriteProtocolDecl(ObjCProtocolDecl *PDecl) {
   std::pair<const char*, const char*> MainBuf = SM->getBufferData(MainFileID);
   
   SourceLocation LocStart = PDecl->getLocStart();
@@ -447,10 +447,10 @@ void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
   // FIXME: handle protocol headers that are declared across multiple lines.
   Rewrite.ReplaceText(LocStart, 0, "// ", 3);
   
-  for (ObjcProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(), 
+  for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(), 
        E = PDecl->instmeth_end(); I != E; ++I)
     RewriteMethodDeclaration(*I);
-  for (ObjcProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(), 
+  for (ObjCProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(), 
        E = PDecl->classmeth_end(); I != E; ++I)
     RewriteMethodDeclaration(*I);
 
@@ -479,7 +479,7 @@ void RewriteTest::RewriteProtocolDecl(ObjcProtocolDecl *PDecl) {
   }
 }
 
-void RewriteTest::RewriteForwardProtocolDecl(ObjcForwardProtocolDecl *PDecl) {
+void RewriteTest::RewriteForwardProtocolDecl(ObjCForwardProtocolDecl *PDecl) {
   SourceLocation LocStart = PDecl->getLocation();
   if (LocStart.isInvalid())
     assert(false && "Invalid SourceLocation");
@@ -487,10 +487,10 @@ void RewriteTest::RewriteForwardProtocolDecl(ObjcForwardProtocolDecl *PDecl) {
   Rewrite.ReplaceText(LocStart, 0, "// ", 3);
 }
 
-void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD, 
+void RewriteTest::RewriteObjCMethodDecl(ObjCMethodDecl *OMD, 
                                         std::string &ResultStr) {
   ResultStr += "\nstatic ";
-  if (OMD->getResultType()->isObjcQualifiedIdType())
+  if (OMD->getResultType()->isObjCQualifiedIdType())
     ResultStr += "id";
   else
     ResultStr += OMD->getResultType().getAsString();
@@ -508,8 +508,8 @@ void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD,
   NameStr += "_";
   
   NamedDecl *MethodContext = OMD->getMethodContext();
-  if (ObjcCategoryImplDecl *CID = 
-      dyn_cast<ObjcCategoryImplDecl>(MethodContext)) {
+  if (ObjCCategoryImplDecl *CID = 
+      dyn_cast<ObjCCategoryImplDecl>(MethodContext)) {
     NameStr += CID->getName();
     NameStr += "_";
   }
@@ -534,24 +534,24 @@ void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD,
   
   // invisible arguments
   if (OMD->isInstance()) {
-    QualType selfTy = Context->getObjcInterfaceType(OMD->getClassInterface());
+    QualType selfTy = Context->getObjCInterfaceType(OMD->getClassInterface());
     selfTy = Context->getPointerType(selfTy);
-    if (ObjcSynthesizedStructs.count(OMD->getClassInterface()))
+    if (ObjCSynthesizedStructs.count(OMD->getClassInterface()))
       ResultStr += "struct ";
     ResultStr += selfTy.getAsString();
   }
   else
-    ResultStr += Context->getObjcIdType().getAsString();
+    ResultStr += Context->getObjCIdType().getAsString();
   
   ResultStr += " self, ";
-  ResultStr += Context->getObjcSelType().getAsString();
+  ResultStr += Context->getObjCSelType().getAsString();
   ResultStr += " _cmd";
   
   // Method arguments.
   for (int i = 0; i < OMD->getNumParams(); i++) {
     ParmVarDecl *PDecl = OMD->getParamDecl(i);
     ResultStr += ", ";
-    if (PDecl->getType()->isObjcQualifiedIdType())
+    if (PDecl->getType()->isObjCQualifiedIdType())
       ResultStr += "id";
     else
       ResultStr += PDecl->getType().getAsString();
@@ -562,20 +562,20 @@ void RewriteTest::RewriteObjcMethodDecl(ObjcMethodDecl *OMD,
   
 }
 void RewriteTest::RewriteImplementationDecl(NamedDecl *OID) {
-  ObjcImplementationDecl *IMD = dyn_cast<ObjcImplementationDecl>(OID);
-  ObjcCategoryImplDecl *CID = dyn_cast<ObjcCategoryImplDecl>(OID);
+  ObjCImplementationDecl *IMD = dyn_cast<ObjCImplementationDecl>(OID);
+  ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(OID);
   
   if (IMD)
     Rewrite.InsertText(IMD->getLocStart(), "// ", 3);
   else
     Rewrite.InsertText(CID->getLocStart(), "// ", 3);
   
-  for (ObjcCategoryImplDecl::instmeth_iterator
+  for (ObjCCategoryImplDecl::instmeth_iterator
        I = IMD ? IMD->instmeth_begin() : CID->instmeth_begin(),
        E = IMD ? IMD->instmeth_end() : CID->instmeth_end(); I != E; ++I) {
     std::string ResultStr;
-    ObjcMethodDecl *OMD = *I;
-    RewriteObjcMethodDecl(OMD, ResultStr);
+    ObjCMethodDecl *OMD = *I;
+    RewriteObjCMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
     SourceLocation LocEnd = OMD->getBody()->getLocStart();
     
@@ -585,12 +585,12 @@ void RewriteTest::RewriteImplementationDecl(NamedDecl *OID) {
                         ResultStr.c_str(), ResultStr.size());
   }
   
-  for (ObjcCategoryImplDecl::classmeth_iterator
+  for (ObjCCategoryImplDecl::classmeth_iterator
        I = IMD ? IMD->classmeth_begin() : CID->classmeth_begin(),
        E = IMD ? IMD->classmeth_end() : CID->classmeth_end(); I != E; ++I) {
     std::string ResultStr;
-    ObjcMethodDecl *OMD = *I;
-    RewriteObjcMethodDecl(OMD, ResultStr);
+    ObjCMethodDecl *OMD = *I;
+    RewriteObjCMethodDecl(OMD, ResultStr);
     SourceLocation LocStart = OMD->getLocStart();
     SourceLocation LocEnd = OMD->getBody()->getLocStart();
     
@@ -605,9 +605,9 @@ void RewriteTest::RewriteImplementationDecl(NamedDecl *OID) {
    Rewrite.InsertText(CID->getLocEnd(), "// ", 3); 
 }
 
-void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
+void RewriteTest::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   std::string ResultStr;
-  if (!ObjcForwardDecls.count(ClassDecl)) {
+  if (!ObjCForwardDecls.count(ClassDecl)) {
     // we haven't seen a forward decl - generate a typedef.
     ResultStr = "#ifndef _REWRITER_typedef_";
     ResultStr += ClassDecl->getName();
@@ -622,16 +622,16 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
     ResultStr += ";\n#endif\n";
     
     // Mark this typedef as having been generated.
-    ObjcForwardDecls.insert(ClassDecl);
+    ObjCForwardDecls.insert(ClassDecl);
   }
-  SynthesizeObjcInternalStruct(ClassDecl, ResultStr);
+  SynthesizeObjCInternalStruct(ClassDecl, ResultStr);
     
   RewriteProperties(ClassDecl->getNumPropertyDecl(),
                     ClassDecl->getPropertyDecl());
-  for (ObjcInterfaceDecl::instmeth_iterator I = ClassDecl->instmeth_begin(), 
+  for (ObjCInterfaceDecl::instmeth_iterator I = ClassDecl->instmeth_begin(), 
        E = ClassDecl->instmeth_end(); I != E; ++I)
     RewriteMethodDeclaration(*I);
-  for (ObjcInterfaceDecl::classmeth_iterator I = ClassDecl->classmeth_begin(), 
+  for (ObjCInterfaceDecl::classmeth_iterator I = ClassDecl->classmeth_begin(), 
        E = ClassDecl->classmeth_end(); I != E; ++I)
     RewriteMethodDeclaration(*I);
 
@@ -640,7 +640,7 @@ void RewriteTest::RewriteInterfaceDecl(ObjcInterfaceDecl *ClassDecl) {
 }
 
 Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
-  ObjcIvarDecl *D = IV->getDecl();
+  ObjCIvarDecl *D = IV->getDecl();
   if (IV->isFreeIvar()) {
     Expr *Replacement = new MemberExpr(IV->getBase(), true, D, 
                                        IV->getLocation());
@@ -656,7 +656,7 @@ Stmt *RewriteTest::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
   } else {
     if (CurMethodDecl) {
       if (const PointerType *pType = IV->getBase()->getType()->getAsPointerType()) {
-        ObjcInterfaceType *intT = dyn_cast<ObjcInterfaceType>(pType->getPointeeType());
+        ObjCInterfaceType *intT = dyn_cast<ObjCInterfaceType>(pType->getPointeeType());
         if (CurMethodDecl->getClassInterface() == intT->getDecl()) {
           IdentifierInfo *II = intT->getDecl()->getIdentifier();
           RecordDecl *RD = new RecordDecl(Decl::Struct, SourceLocation(),
@@ -729,11 +729,11 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
     return RewriteMessageExpr(MessExpr);
   }
   
-  if (ObjcAtTryStmt *StmtTry = dyn_cast<ObjcAtTryStmt>(S))
-    return RewriteObjcTryStmt(StmtTry);
+  if (ObjCAtTryStmt *StmtTry = dyn_cast<ObjCAtTryStmt>(S))
+    return RewriteObjCTryStmt(StmtTry);
 
-  if (ObjcAtThrowStmt *StmtThrow = dyn_cast<ObjcAtThrowStmt>(S))
-    return RewriteObjcThrowStmt(StmtThrow);
+  if (ObjCAtThrowStmt *StmtThrow = dyn_cast<ObjCAtThrowStmt>(S))
+    return RewriteObjCThrowStmt(StmtThrow);
   
   if (ObjCProtocolExpr *ProtocolExp = dyn_cast<ObjCProtocolExpr>(S))
     return RewriteObjCProtocolExpr(ProtocolExp);
@@ -755,7 +755,7 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   return S;
 }
  
-Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
+Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   // Get the start location and compute the semi location.
   SourceLocation startLoc = S->getLocStart();
   const char *startBuf = SM->getCharacterData(startLoc);
@@ -792,7 +792,7 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
   
   bool sawIdTypedCatch = false;
   Stmt *lastCatchBody = 0;
-  ObjcAtCatchStmt *catchList = S->getCatchStmts();
+  ObjCAtCatchStmt *catchList = S->getCatchStmts();
   while (catchList) {
     Stmt *catchStmt = catchList->getCatchParamStmt();
 
@@ -809,15 +809,15 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
 
     if (DeclStmt *declStmt = dyn_cast<DeclStmt>(catchStmt)) {
       QualType t = dyn_cast<ValueDecl>(declStmt->getDecl())->getType();
-      if (t == Context->getObjcIdType()) {
+      if (t == Context->getObjCIdType()) {
         buf += "1) { ";
         Rewrite.ReplaceText(startLoc, lParenLoc-startBuf+1, 
                             buf.c_str(), buf.size());
         sawIdTypedCatch = true;
       } else if (const PointerType *pType = t->getAsPointerType()) { 
-        ObjcInterfaceType *cls; // Should be a pointer to a class.
+        ObjCInterfaceType *cls; // Should be a pointer to a class.
         
-        cls = dyn_cast<ObjcInterfaceType>(pType->getPointeeType().getTypePtr());
+        cls = dyn_cast<ObjCInterfaceType>(pType->getPointeeType().getTypePtr());
         if (cls) {
           buf += "objc_exception_match((struct objc_class *)objc_getClass(\"";
           buf += cls->getDecl()->getName();
@@ -858,7 +858,7 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
     // Set lastCurlyLoc
     lastCurlyLoc = lastCatchBody->getLocEnd();
   }
-  if (ObjcAtFinallyStmt *finalStmt = S->getFinallyStmt()) {
+  if (ObjCAtFinallyStmt *finalStmt = S->getFinallyStmt()) {
     startLoc = finalStmt->getLocStart();
     startBuf = SM->getCharacterData(startLoc);
     assert((*startBuf == '@') && "bogus @finally start");
@@ -891,18 +891,18 @@ Stmt *RewriteTest::RewriteObjcTryStmt(ObjcAtTryStmt *S) {
   return 0;
 }
 
-Stmt *RewriteTest::RewriteObjcCatchStmt(ObjcAtCatchStmt *S) {
+Stmt *RewriteTest::RewriteObjCCatchStmt(ObjCAtCatchStmt *S) {
   return 0;
 }
 
-Stmt *RewriteTest::RewriteObjcFinallyStmt(ObjcAtFinallyStmt *S) {
+Stmt *RewriteTest::RewriteObjCFinallyStmt(ObjCAtFinallyStmt *S) {
   return 0;
 }
 
 // This can't be done with Rewrite.ReplaceStmt(S, ThrowExpr), since 
 // the throw expression is typically a message expression that's already 
 // been rewritten! (which implies the SourceLocation's are invalid).
-Stmt *RewriteTest::RewriteObjcThrowStmt(ObjcAtThrowStmt *S) {
+Stmt *RewriteTest::RewriteObjCThrowStmt(ObjCAtThrowStmt *S) {
   // Get the start location and compute the semi location.
   SourceLocation startLoc = S->getLocStart();
   const char *startBuf = SM->getCharacterData(startLoc);
@@ -925,7 +925,7 @@ Stmt *RewriteTest::RewriteAtEncode(ObjCEncodeExpr *Exp) {
   // Create a new string expression.
   QualType StrType = Context->getPointerType(Context->CharTy);
   std::string StrEncoding;
-  Context->getObjcEncodingForType(Exp->getEncodedType(), StrEncoding);
+  Context->getObjCEncodingForType(Exp->getEncodedType(), StrEncoding);
   Expr *Replacement = new StringLiteral(StrEncoding.c_str(),
                                         StrEncoding.length(), false, StrType, 
                                         SourceLocation(), SourceLocation());
@@ -1012,21 +1012,21 @@ static void scanToNextArgument(const char *&argRef) {
 
 bool RewriteTest::needToScanForQualifiers(QualType T) {
   
-  if (T == Context->getObjcIdType())
+  if (T == Context->getObjCIdType())
     return true;
     
-  if (T->isObjcQualifiedIdType())
+  if (T->isObjCQualifiedIdType())
     return true;
   
   if (const PointerType *pType = T->getAsPointerType()) {
     Type *pointeeType = pType->getPointeeType().getTypePtr();
-    if (isa<ObjcQualifiedInterfaceType>(pointeeType))
+    if (isa<ObjCQualifiedInterfaceType>(pointeeType))
       return true; // we have "Class <Protocol> *".
   }
   return false;
 }
 
-void RewriteTest::RewriteObjcQualifiedInterfaceTypes(Decl *Dcl) {
+void RewriteTest::RewriteObjCQualifiedInterfaceTypes(Decl *Dcl) {
   SourceLocation Loc;
   QualType Type;
   const FunctionTypeProto *proto = 0;
@@ -1104,7 +1104,7 @@ void RewriteTest::SynthSelGetUidFunctionDecl() {
   llvm::SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getPointerType(
     Context->CharTy.getQualifiedType(QualType::Const)));
-  QualType getFuncType = Context->getFunctionType(Context->getObjcSelType(),
+  QualType getFuncType = Context->getFunctionType(Context->getObjCSelType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/);
   SelGetUidFunctionDecl = new FunctionDecl(SourceLocation(), 
@@ -1118,7 +1118,7 @@ void RewriteTest::SynthGetProtocolFunctionDecl() {
   llvm::SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getPointerType(
     Context->CharTy.getQualifiedType(QualType::Const)));
-  QualType getFuncType = Context->getFunctionType(Context->getObjcProtoType(),
+  QualType getFuncType = Context->getFunctionType(Context->getObjCProtoType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   false /*isVariadic*/);
   GetProtocolFunctionDecl = new FunctionDecl(SourceLocation(), 
@@ -1132,20 +1132,20 @@ void RewriteTest::RewriteFunctionDecl(FunctionDecl *FD) {
     SelGetUidFunctionDecl = FD;
     return;
   }
-  RewriteObjcQualifiedInterfaceTypes(FD);
+  RewriteObjCQualifiedInterfaceTypes(FD);
 }
 
 // SynthMsgSendFunctionDecl - id objc_msgSend(id self, SEL op, ...);
 void RewriteTest::SynthMsgSendFunctionDecl() {
   IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSend");
   llvm::SmallVector<QualType, 16> ArgTys;
-  QualType argT = Context->getObjcIdType();
+  QualType argT = Context->getObjCIdType();
   assert(!argT.isNull() && "Can't find 'id' type");
   ArgTys.push_back(argT);
-  argT = Context->getObjcSelType();
+  argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->getObjcIdType(),
+  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
   MsgSendFunctionDecl = new FunctionDecl(SourceLocation(), 
@@ -1162,10 +1162,10 @@ void RewriteTest::SynthMsgSendSuperFunctionDecl() {
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
   assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
   ArgTys.push_back(argT);
-  argT = Context->getObjcSelType();
+  argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->getObjcIdType(),
+  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
   MsgSendSuperFunctionDecl = new FunctionDecl(SourceLocation(), 
@@ -1177,13 +1177,13 @@ void RewriteTest::SynthMsgSendSuperFunctionDecl() {
 void RewriteTest::SynthMsgSendStretFunctionDecl() {
   IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSend_stret");
   llvm::SmallVector<QualType, 16> ArgTys;
-  QualType argT = Context->getObjcIdType();
+  QualType argT = Context->getObjCIdType();
   assert(!argT.isNull() && "Can't find 'id' type");
   ArgTys.push_back(argT);
-  argT = Context->getObjcSelType();
+  argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->getObjcIdType(),
+  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
   MsgSendStretFunctionDecl = new FunctionDecl(SourceLocation(), 
@@ -1202,10 +1202,10 @@ void RewriteTest::SynthMsgSendSuperStretFunctionDecl() {
   QualType argT = Context->getPointerType(Context->getTagDeclType(RD));
   assert(!argT.isNull() && "Can't build 'struct objc_super *' type");
   ArgTys.push_back(argT);
-  argT = Context->getObjcSelType();
+  argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->getObjcIdType(),
+  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
   MsgSendSuperStretFunctionDecl = new FunctionDecl(SourceLocation(), 
@@ -1217,13 +1217,13 @@ void RewriteTest::SynthMsgSendSuperStretFunctionDecl() {
 void RewriteTest::SynthMsgSendFpretFunctionDecl() {
   IdentifierInfo *msgSendIdent = &Context->Idents.get("objc_msgSend_fpret");
   llvm::SmallVector<QualType, 16> ArgTys;
-  QualType argT = Context->getObjcIdType();
+  QualType argT = Context->getObjCIdType();
   assert(!argT.isNull() && "Can't find 'id' type");
   ArgTys.push_back(argT);
-  argT = Context->getObjcSelType();
+  argT = Context->getObjCSelType();
   assert(!argT.isNull() && "Can't find 'SEL' type");
   ArgTys.push_back(argT);
-  QualType msgSendType = Context->getFunctionType(Context->getObjcIdType(),
+  QualType msgSendType = Context->getFunctionType(Context->getObjCIdType(),
                                                   &ArgTys[0], ArgTys.size(),
                                                   true /*isVariadic*/);
   MsgSendFpretFunctionDecl = new FunctionDecl(SourceLocation(), 
@@ -1237,7 +1237,7 @@ void RewriteTest::SynthGetClassFunctionDecl() {
   llvm::SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getPointerType(
                      Context->CharTy.getQualifiedType(QualType::Const)));
-  QualType getClassType = Context->getFunctionType(Context->getObjcIdType(),
+  QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/);
   GetClassFunctionDecl = new FunctionDecl(SourceLocation(), 
@@ -1251,7 +1251,7 @@ void RewriteTest::SynthGetMetaClassFunctionDecl() {
   llvm::SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getPointerType(
                      Context->CharTy.getQualifiedType(QualType::Const)));
-  QualType getClassType = Context->getFunctionType(Context->getObjcIdType(),
+  QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/);
   GetMetaClassFunctionDecl = new FunctionDecl(SourceLocation(), 
@@ -1265,7 +1265,7 @@ void RewriteTest::SynthCFStringFunctionDecl() {
   llvm::SmallVector<QualType, 16> ArgTys;
   ArgTys.push_back(Context->getPointerType(
                      Context->CharTy.getQualifiedType(QualType::Const)));
-  QualType getClassType = Context->getFunctionType(Context->getObjcIdType(),
+  QualType getClassType = Context->getFunctionType(Context->getObjCIdType(),
                                                    &ArgTys[0], ArgTys.size(),
                                                    false /*isVariadic*/);
   CFStringFunctionDecl = new FunctionDecl(SourceLocation(), 
@@ -1305,7 +1305,7 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
   QualType expType = Context->getPointerType(ClsRef->getType());
   UnaryOperator *Unop = new UnaryOperator(ClsRef, UnaryOperator::AddrOf,
                                           expType, SourceLocation());
-  CastExpr *cast = new CastExpr(Context->getObjcClassType(), Unop, 
+  CastExpr *cast = new CastExpr(Context->getObjCClassType(), Unop, 
                                 SourceLocation());
   InitExprs.push_back(cast); // set the 'isa'.
   InitExprs.push_back(Exp->getString()); // set "char *bytes".
@@ -1335,7 +1335,7 @@ Stmt *RewriteTest::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
 #endif
 }
 
-ObjcInterfaceDecl *RewriteTest::isSuperReceiver(Expr *recExpr) {
+ObjCInterfaceDecl *RewriteTest::isSuperReceiver(Expr *recExpr) {
   // check if we are sending a message to 'super'
   if (CurMethodDecl && CurMethodDecl->isInstance()) {
     if (CastExpr *CE = dyn_cast<CastExpr>(recExpr)) {
@@ -1343,11 +1343,11 @@ ObjcInterfaceDecl *RewriteTest::isSuperReceiver(Expr *recExpr) {
         if (ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(DRE->getDecl())) {
           if (!strcmp(PVD->getName(), "self")) {
             // is this id<P1..> type?
-            if (CE->getType()->isObjcQualifiedIdType())
+            if (CE->getType()->isObjCQualifiedIdType())
               return 0;
             if (const PointerType *PT = CE->getType()->getAsPointerType()) {
-              if (ObjcInterfaceType *IT = 
-                    dyn_cast<ObjcInterfaceType>(PT->getPointeeType())) {
+              if (ObjCInterfaceType *IT = 
+                    dyn_cast<ObjCInterfaceType>(PT->getPointeeType())) {
                 if (IT->getDecl() == 
                     CurMethodDecl->getClassInterface()->getSuperClass())
                   return IT->getDecl();
@@ -1369,9 +1369,9 @@ QualType RewriteTest::getSuperStructType() {
     QualType FieldTypes[2];
   
     // struct objc_object *receiver;
-    FieldTypes[0] = Context->getObjcIdType();  
+    FieldTypes[0] = Context->getObjCIdType();  
     // struct objc_class *super;
-    FieldTypes[1] = Context->getObjcClassType();  
+    FieldTypes[1] = Context->getObjCClassType();  
     // Create fields
     FieldDecl *FieldDecls[2];
   
@@ -1405,7 +1405,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   FunctionDecl *MsgSendFlavor = MsgSendFunctionDecl;
   // May need to use objc_msgSend_stret() as well.
   FunctionDecl *MsgSendStretFlavor = 0;
-  if (ObjcMethodDecl *mDecl = Exp->getMethodDecl()) {
+  if (ObjCMethodDecl *mDecl = Exp->getMethodDecl()) {
     QualType resultType = mDecl->getResultType();
     if (resultType.getCanonicalType()->isStructureType() 
         || resultType.getCanonicalType()->isUnionType())
@@ -1426,14 +1426,14 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
         MsgSendStretFlavor = MsgSendSuperStretFunctionDecl;
       assert(MsgSendFlavor && "MsgSendFlavor is NULL!");
       
-      ObjcInterfaceDecl *SuperDecl = 
+      ObjCInterfaceDecl *SuperDecl = 
         CurMethodDecl->getClassInterface()->getSuperClass();
 
       llvm::SmallVector<Expr*, 4> InitExprs;
       
       // set the receiver to self, the first argument to all methods.
       InitExprs.push_back(new DeclRefExpr(CurMethodDecl->getSelfDecl(), 
-                                          Context->getObjcIdType(),
+                                          Context->getObjCIdType(),
                                           SourceLocation())); 
       llvm::SmallVector<Expr*, 8> ClsExprs;
       QualType argType = Context->getPointerType(Context->CharTy);
@@ -1446,7 +1446,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
                                                    ClsExprs.size());
       // To turn off a warning, type-cast to 'id'
       InitExprs.push_back(
-        new CastExpr(Context->getObjcIdType(), 
+        new CastExpr(Context->getObjCIdType(), 
         Cls, SourceLocation())); // set 'super class', using objc_getClass().
       // struct objc_super
       QualType superType = getSuperStructType();
@@ -1476,7 +1476,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   } else { // instance message.
     Expr *recExpr = Exp->getReceiver();
 
-    if (ObjcInterfaceDecl *SuperDecl = isSuperReceiver(recExpr)) {
+    if (ObjCInterfaceDecl *SuperDecl = isSuperReceiver(recExpr)) {
       MsgSendFlavor = MsgSendSuperFunctionDecl;
       if (MsgSendStretFlavor)
         MsgSendStretFlavor = MsgSendSuperStretFunctionDecl;
@@ -1485,7 +1485,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
       llvm::SmallVector<Expr*, 4> InitExprs;
       
       InitExprs.push_back(
-        new CastExpr(Context->getObjcIdType(), 
+        new CastExpr(Context->getObjCIdType(), 
                      recExpr, SourceLocation())); // set the 'receiver'.
       
       llvm::SmallVector<Expr*, 8> ClsExprs;
@@ -1499,7 +1499,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
                                                    ClsExprs.size());
       // To turn off a warning, type-cast to 'id'
       InitExprs.push_back(
-        new CastExpr(Context->getObjcIdType(), 
+        new CastExpr(Context->getObjCIdType(), 
         Cls, SourceLocation())); // set 'super class', using objc_getClass().
       // struct objc_super
       QualType superType = getSuperStructType();
@@ -1519,7 +1519,7 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
       // Foo<Proto> *.
       while (CastExpr *CE = dyn_cast<CastExpr>(recExpr))
         recExpr = CE->getSubExpr();
-      recExpr = new CastExpr(Context->getObjcIdType(), recExpr, SourceLocation());
+      recExpr = new CastExpr(Context->getObjCIdType(), recExpr, SourceLocation());
       MsgExprs.push_back(recExpr);
     }
   }
@@ -1540,16 +1540,16 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
     // Make all implicit casts explicit...ICE comes in handy:-)
     if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(userExpr)) {
       // Reuse the ICE type, it is exactly what the doctor ordered.
-      userExpr = new CastExpr(ICE->getType()->isObjcQualifiedIdType()
-                                ? Context->getObjcIdType()
+      userExpr = new CastExpr(ICE->getType()->isObjCQualifiedIdType()
+                                ? Context->getObjCIdType()
                                 : ICE->getType(), userExpr, SourceLocation());
     }
     // Make id<P...> cast into an 'id' cast.
     else if (CastExpr *CE = dyn_cast<CastExpr>(userExpr)) {
-      if (CE->getType()->isObjcQualifiedIdType()) {
+      if (CE->getType()->isObjCQualifiedIdType()) {
         while ((CE = dyn_cast<CastExpr>(userExpr)))
           userExpr = CE->getSubExpr();
-        userExpr = new CastExpr(Context->getObjcIdType(), 
+        userExpr = new CastExpr(Context->getObjCIdType(), 
                                 userExpr, SourceLocation());
       }
     } 
@@ -1567,20 +1567,20 @@ Stmt *RewriteTest::RewriteMessageExpr(ObjCMessageExpr *Exp) {
   if (MsgSendFlavor == MsgSendSuperFunctionDecl)
     ArgTypes.push_back(Context->getPointerType(getSuperStructType()));
   else
-    ArgTypes.push_back(Context->getObjcIdType());
-  ArgTypes.push_back(Context->getObjcSelType());
-  if (ObjcMethodDecl *mDecl = Exp->getMethodDecl()) {
+    ArgTypes.push_back(Context->getObjCIdType());
+  ArgTypes.push_back(Context->getObjCSelType());
+  if (ObjCMethodDecl *mDecl = Exp->getMethodDecl()) {
     // Push any user argument types.
     for (int i = 0; i < mDecl->getNumParams(); i++) {
-      QualType t = mDecl->getParamDecl(i)->getType()->isObjcQualifiedIdType()
-                     ? Context->getObjcIdType() 
+      QualType t = mDecl->getParamDecl(i)->getType()->isObjCQualifiedIdType()
+                     ? Context->getObjCIdType() 
                      : mDecl->getParamDecl(i)->getType();
       ArgTypes.push_back(t);
     }
-    returnType = mDecl->getResultType()->isObjcQualifiedIdType()
-                   ? Context->getObjcIdType() : mDecl->getResultType();
+    returnType = mDecl->getResultType()->isObjCQualifiedIdType()
+                   ? Context->getObjCIdType() : mDecl->getResultType();
   } else {
-    returnType = Context->getObjcIdType();
+    returnType = Context->getObjCIdType();
   }
   // Get the type, we will need to reference it in a couple spots.
   QualType msgSendType = MsgSendFlavor->getType();
@@ -1708,16 +1708,16 @@ Stmt *RewriteTest::RewriteObjCProtocolExpr(ObjCProtocolExpr *Exp) {
   
 }
 
-/// SynthesizeObjcInternalStruct - Rewrite one internal struct corresponding to
+/// SynthesizeObjCInternalStruct - Rewrite one internal struct corresponding to
 /// an objective-c class with ivars.
-void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
+void RewriteTest::SynthesizeObjCInternalStruct(ObjCInterfaceDecl *CDecl,
                                                std::string &Result) {
-  assert(CDecl && "Class missing in SynthesizeObjcInternalStruct");
-  assert(CDecl->getName() && "Name missing in SynthesizeObjcInternalStruct");
+  assert(CDecl && "Class missing in SynthesizeObjCInternalStruct");
+  assert(CDecl->getName() && "Name missing in SynthesizeObjCInternalStruct");
   // Do not synthesize more than once.
-  if (ObjcSynthesizedStructs.count(CDecl))
+  if (ObjCSynthesizedStructs.count(CDecl))
     return;
-  ObjcInterfaceDecl *RCDecl = CDecl->getSuperClass();
+  ObjCInterfaceDecl *RCDecl = CDecl->getSuperClass();
   int NumIvars = CDecl->getNumInstanceVariables();
   SourceLocation LocStart = CDecl->getLocStart();
   SourceLocation LocEnd = CDecl->getLocEnd();
@@ -1726,7 +1726,7 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   const char *endBuf = SM->getCharacterData(LocEnd);
   // If no ivars and no root or if its root, directly or indirectly,
   // have no ivars (thus not synthesized) then no need to synthesize this class.
-  if (NumIvars <= 0 && (!RCDecl || !ObjcSynthesizedStructs.count(RCDecl))) {
+  if (NumIvars <= 0 && (!RCDecl || !ObjCSynthesizedStructs.count(RCDecl))) {
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM);
     Rewrite.ReplaceText(LocStart, endBuf-startBuf, 
                         Result.c_str(), Result.size());
@@ -1734,19 +1734,19 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
   }
   
   // FIXME: This has potential of causing problem. If 
-  // SynthesizeObjcInternalStruct is ever called recursively.
+  // SynthesizeObjCInternalStruct is ever called recursively.
   Result += "\nstruct ";
   Result += CDecl->getName();
   
   if (NumIvars > 0) {
     const char *cursor = strchr(startBuf, '{');
     assert((cursor && endBuf) 
-           && "SynthesizeObjcInternalStruct - malformed @interface");
+           && "SynthesizeObjCInternalStruct - malformed @interface");
     
     // rewrite the original header *without* disturbing the '{'
     Rewrite.ReplaceText(LocStart, cursor-startBuf-1, 
                         Result.c_str(), Result.size());
-    if (RCDecl && ObjcSynthesizedStructs.count(RCDecl)) {
+    if (RCDecl && ObjCSynthesizedStructs.count(RCDecl)) {
       Result = "\n    struct ";
       Result += RCDecl->getName();
 	  // Note: We don't name the field decl. This simplifies the "codegen" for
@@ -1806,13 +1806,13 @@ void RewriteTest::SynthesizeObjcInternalStruct(ObjcInterfaceDecl *CDecl,
                         Result.c_str(), Result.size());
   }
   // Mark this struct as having been generated.
-  if (!ObjcSynthesizedStructs.insert(CDecl))
-  assert(false && "struct already synthesize- SynthesizeObjcInternalStruct");
+  if (!ObjCSynthesizedStructs.insert(CDecl))
+  assert(false && "struct already synthesize- SynthesizeObjCInternalStruct");
 }
 
-// RewriteObjcMethodsMetaData - Rewrite methods metadata for instance or
+// RewriteObjCMethodsMetaData - Rewrite methods metadata for instance or
 /// class methods.
-void RewriteTest::RewriteObjcMethodsMetaData(instmeth_iterator MethodBegin,
+void RewriteTest::RewriteObjCMethodsMetaData(instmeth_iterator MethodBegin,
                                              instmeth_iterator MethodEnd,
                                              bool IsInstanceMethod,
                                              const char *prefix,
@@ -1861,7 +1861,7 @@ void RewriteTest::RewriteObjcMethodsMetaData(instmeth_iterator MethodBegin,
   Result += "\t,{{(SEL)\"";
   Result += (*MethodBegin)->getSelector().getName().c_str();
   std::string MethodTypeString;
-  Context->getObjcEncodingForMethodDecl(*MethodBegin, MethodTypeString);
+  Context->getObjCEncodingForMethodDecl(*MethodBegin, MethodTypeString);
   Result += "\", \"";
   Result += MethodTypeString;
   Result += "\", ";
@@ -1871,7 +1871,7 @@ void RewriteTest::RewriteObjcMethodsMetaData(instmeth_iterator MethodBegin,
     Result += "\t  ,{(SEL)\"";
     Result += (*MethodBegin)->getSelector().getName().c_str();
     std::string MethodTypeString;
-    Context->getObjcEncodingForMethodDecl(*MethodBegin, MethodTypeString);
+    Context->getObjCEncodingForMethodDecl(*MethodBegin, MethodTypeString);
     Result += "\", \"";
     Result += MethodTypeString;
     Result += "\", ";
@@ -1881,8 +1881,8 @@ void RewriteTest::RewriteObjcMethodsMetaData(instmeth_iterator MethodBegin,
   Result += "\t }\n};\n";
 }
 
-/// RewriteObjcProtocolsMetaData - Rewrite protocols meta-data.
-void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
+/// RewriteObjCProtocolsMetaData - Rewrite protocols meta-data.
+void RewriteTest::RewriteObjCProtocolsMetaData(ObjCProtocolDecl **Protocols,
                                                int NumProtocols,
                                                const char *prefix,
                                                const char *ClassName,
@@ -1890,7 +1890,7 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
   static bool objc_protocol_methods = false;
   if (NumProtocols > 0) {
     for (int i = 0; i < NumProtocols; i++) {
-      ObjcProtocolDecl *PDecl = Protocols[i];
+      ObjCProtocolDecl *PDecl = Protocols[i];
       // Output struct protocol_methods holder of method selector and type.
       if (!objc_protocol_methods &&
           (PDecl->getNumInstanceMethods() > 0 
@@ -1925,7 +1925,7 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
           "{\n\t" + utostr(NumMethods) + "\n";
         
         // Output instance methods declared in this protocol.
-        for (ObjcProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(), 
+        for (ObjCProtocolDecl::instmeth_iterator I = PDecl->instmeth_begin(), 
              E = PDecl->instmeth_end(); I != E; ++I) {
           if (I == PDecl->instmeth_begin())
             Result += "\t  ,{{(SEL)\"";
@@ -1933,7 +1933,7 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
             Result += "\t  ,{(SEL)\"";
           Result += (*I)->getSelector().getName().c_str();
           std::string MethodTypeString;
-          Context->getObjcEncodingForMethodDecl((*I), MethodTypeString);
+          Context->getObjCEncodingForMethodDecl((*I), MethodTypeString);
           Result += "\", \"";
           Result += MethodTypeString;
           Result += "\"}\n";
@@ -1953,7 +1953,7 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
         Result += "\n";
         
         // Output instance methods declared in this protocol.
-        for (ObjcProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(), 
+        for (ObjCProtocolDecl::classmeth_iterator I = PDecl->classmeth_begin(), 
              E = PDecl->classmeth_end(); I != E; ++I) {
           if (I == PDecl->classmeth_begin())
             Result += "\t  ,{{(SEL)\"";
@@ -1961,7 +1961,7 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
             Result += "\t  ,{(SEL)\"";
           Result += (*I)->getSelector().getName().c_str();
           std::string MethodTypeString;
-          Context->getObjcEncodingForMethodDecl((*I), MethodTypeString);
+          Context->getObjCEncodingForMethodDecl((*I), MethodTypeString);
           Result += "\", \"";
           Result += MethodTypeString;
           Result += "\"}\n";
@@ -2039,7 +2039,7 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
     Result += " \n";
     
     for (int i = 1; i < NumProtocols; i++) {
-      ObjcProtocolDecl *PDecl = Protocols[i];
+      ObjCProtocolDecl *PDecl = Protocols[i];
       Result += "\t ,&_OBJC_PROTOCOL_";
       Result += PDecl->getName();
       Result += "\n";
@@ -2048,13 +2048,13 @@ void RewriteTest::RewriteObjcProtocolsMetaData(ObjcProtocolDecl **Protocols,
   }  
 }
 
-/// RewriteObjcCategoryImplDecl - Rewrite metadata for each category 
+/// RewriteObjCCategoryImplDecl - Rewrite metadata for each category 
 /// implementation.
-void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
+void RewriteTest::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
                                               std::string &Result) {
-  ObjcInterfaceDecl *ClassDecl = IDecl->getClassInterface();
+  ObjCInterfaceDecl *ClassDecl = IDecl->getClassInterface();
   // Find category declaration for this implementation.
-  ObjcCategoryDecl *CDecl;
+  ObjCCategoryDecl *CDecl;
   for (CDecl = ClassDecl->getCategoryList(); CDecl; 
        CDecl = CDecl->getNextClassCategory())
     if (CDecl->getIdentifier() == IDecl->getIdentifier())
@@ -2065,19 +2065,19 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
   FullCategoryName += IDecl->getName();
     
   // Build _objc_method_list for class's instance methods if needed
-  RewriteObjcMethodsMetaData(IDecl->instmeth_begin(), IDecl->instmeth_end(),
+  RewriteObjCMethodsMetaData(IDecl->instmeth_begin(), IDecl->instmeth_end(),
                              true, "CATEGORY_", FullCategoryName.c_str(),
                              Result);
   
   // Build _objc_method_list for class's class methods if needed
-  RewriteObjcMethodsMetaData(IDecl->classmeth_begin(), IDecl->classmeth_end(),
+  RewriteObjCMethodsMetaData(IDecl->classmeth_begin(), IDecl->classmeth_end(),
                              false, "CATEGORY_", FullCategoryName.c_str(),
                              Result);
   
   // Protocols referenced in class declaration?
   // Null CDecl is case of a category implementation with no category interface
   if (CDecl)
-    RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(),
+    RewriteObjCProtocolsMetaData(CDecl->getReferencedProtocols(),
                                  CDecl->getNumReferencedProtocols(),
                                  "CATEGORY",
                                  FullCategoryName.c_str(), Result);
@@ -2145,8 +2145,8 @@ void RewriteTest::RewriteObjcCategoryImplDecl(ObjcCategoryImplDecl *IDecl,
 
 /// SynthesizeIvarOffsetComputation - This rutine synthesizes computation of
 /// ivar offset.
-void RewriteTest::SynthesizeIvarOffsetComputation(ObjcImplementationDecl *IDecl, 
-                                                  ObjcIvarDecl *ivar, 
+void RewriteTest::SynthesizeIvarOffsetComputation(ObjCImplementationDecl *IDecl, 
+                                                  ObjCIvarDecl *ivar, 
                                                   std::string &Result) {
   Result += "offsetof(struct ";
   Result += IDecl->getName();
@@ -2159,15 +2159,15 @@ void RewriteTest::SynthesizeIvarOffsetComputation(ObjcImplementationDecl *IDecl,
 // Meta Data Emission
 //===----------------------------------------------------------------------===//
 
-void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
+void RewriteTest::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                            std::string &Result) {
-  ObjcInterfaceDecl *CDecl = IDecl->getClassInterface();
+  ObjCInterfaceDecl *CDecl = IDecl->getClassInterface();
   
   // Explictly declared @interface's are already synthesized.
   if (CDecl->ImplicitInterfaceDecl()) {
     // FIXME: Implementation of a class with no @interface (legacy) doese not 
     // produce correct synthesis as yet.
-    SynthesizeObjcInternalStruct(CDecl, Result);
+    SynthesizeObjCInternalStruct(CDecl, Result);
   }
   
   // Build _objc_ivar_list metadata for classes ivars if needed
@@ -2207,7 +2207,7 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
     Result += utostr(NumIvars);
     Result += "\n";
     
-    ObjcInterfaceDecl::ivar_iterator IVI, IVE;
+    ObjCInterfaceDecl::ivar_iterator IVI, IVE;
     if (IDecl->getImplDeclNumIvars() > 0) {
       IVI = IDecl->ivar_begin();
       IVE = IDecl->ivar_end();
@@ -2219,7 +2219,7 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
     Result += (*IVI)->getName();
     Result += "\", \"";
     std::string StrEncoding;
-    Context->getObjcEncodingForType((*IVI)->getType(), StrEncoding);
+    Context->getObjCEncodingForType((*IVI)->getType(), StrEncoding);
     Result += StrEncoding;
     Result += "\", ";
     SynthesizeIvarOffsetComputation(IDecl, *IVI, Result);
@@ -2229,7 +2229,7 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
       Result += (*IVI)->getName();
       Result += "\", \"";
       std::string StrEncoding;
-      Context->getObjcEncodingForType((*IVI)->getType(), StrEncoding);
+      Context->getObjCEncodingForType((*IVI)->getType(), StrEncoding);
       Result += StrEncoding;
       Result += "\", ";
       SynthesizeIvarOffsetComputation(IDecl, (*IVI), Result);
@@ -2240,15 +2240,15 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
   }
   
   // Build _objc_method_list for class's instance methods if needed
-  RewriteObjcMethodsMetaData(IDecl->instmeth_begin(), IDecl->instmeth_end(), 
+  RewriteObjCMethodsMetaData(IDecl->instmeth_begin(), IDecl->instmeth_end(), 
                              true, "", IDecl->getName(), Result);
   
   // Build _objc_method_list for class's class methods if needed
-  RewriteObjcMethodsMetaData(IDecl->classmeth_begin(), IDecl->classmeth_end(),
+  RewriteObjCMethodsMetaData(IDecl->classmeth_begin(), IDecl->classmeth_end(),
                              false, "", IDecl->getName(), Result);
     
   // Protocols referenced in class declaration?
-  RewriteObjcProtocolsMetaData(CDecl->getReferencedProtocols(), 
+  RewriteObjCProtocolsMetaData(CDecl->getReferencedProtocols(), 
                                CDecl->getNumIntfRefProtocols(),
                                "CLASS", CDecl->getName(), Result);
     
@@ -2289,8 +2289,8 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
   }
   
   // Meta-class metadata generation.
-  ObjcInterfaceDecl *RootClass = 0;
-  ObjcInterfaceDecl *SuperClass = CDecl->getSuperClass();
+  ObjCInterfaceDecl *RootClass = 0;
+  ObjCInterfaceDecl *SuperClass = CDecl->getSuperClass();
   while (SuperClass) {
     RootClass = SuperClass;
     SuperClass = SuperClass->getSuperClass();
@@ -2316,7 +2316,7 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
     Result += CDecl->getName();
     Result += "\"";
   }
-  // Set 'ivars' field for root class to 0. Objc1 runtime does not use it.
+  // Set 'ivars' field for root class to 0. ObjC1 runtime does not use it.
   // 'info' field is initialized to CLS_META(2) for metaclass
   Result += ", 0,2, sizeof(struct _objc_class), 0";
   if (IDecl->getNumClassMethods() > 0) {
@@ -2355,7 +2355,7 @@ void RewriteTest::RewriteObjcClassMetaData(ObjcImplementationDecl *IDecl,
   }
   // 'info' field is initialized to CLS_CLASS(1) for class
   Result += ", 0,1";
-  if (!ObjcSynthesizedStructs.count(CDecl))
+  if (!ObjCSynthesizedStructs.count(CDecl))
     Result += ",0";
   else {
     // class has size. Must synthesize its size.
@@ -2408,11 +2408,11 @@ void RewriteTest::RewriteImplementations(std::string &Result) {
     
   // For each implemented class, write out all its meta data.
   for (int i = 0; i < ClsDefCount; i++)
-    RewriteObjcClassMetaData(ClassImplementation[i], Result);
+    RewriteObjCClassMetaData(ClassImplementation[i], Result);
   
   // For each implemented category, write out all its meta data.
   for (int i = 0; i < CatDefCount; i++)
-    RewriteObjcCategoryImplDecl(CategoryImplementation[i], Result);
+    RewriteObjCCategoryImplDecl(CategoryImplementation[i], Result);
   
   // Write objc_symtab metadata
   /*

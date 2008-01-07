@@ -22,7 +22,7 @@ Parser::Parser(Preprocessor &pp, Action &actions)
   CurScope = 0;
   NumCachedScopes = 0;
   ParenCount = BracketCount = BraceCount = 0;
-  ObjcImpDecl = 0;
+  ObjCImpDecl = 0;
 }
 
 ///  Out-of-line virtual destructor to provide home for Action class.
@@ -234,25 +234,25 @@ void Parser::Initialize() {
     Diag(Tok, diag::ext_empty_source_file);
   
   // Initialization for Objective-C context sensitive keywords recognition.
-  // Referenced in Parser::ParseObjcTypeQualifierList.
+  // Referenced in Parser::ParseObjCTypeQualifierList.
   if (getLang().ObjC1) {
-    ObjcTypeQuals[objc_in] = &PP.getIdentifierTable().get("in");
-    ObjcTypeQuals[objc_out] = &PP.getIdentifierTable().get("out");
-    ObjcTypeQuals[objc_inout] = &PP.getIdentifierTable().get("inout");
-    ObjcTypeQuals[objc_oneway] = &PP.getIdentifierTable().get("oneway");
-    ObjcTypeQuals[objc_bycopy] = &PP.getIdentifierTable().get("bycopy");
-    ObjcTypeQuals[objc_byref] = &PP.getIdentifierTable().get("byref");
+    ObjCTypeQuals[objc_in] = &PP.getIdentifierTable().get("in");
+    ObjCTypeQuals[objc_out] = &PP.getIdentifierTable().get("out");
+    ObjCTypeQuals[objc_inout] = &PP.getIdentifierTable().get("inout");
+    ObjCTypeQuals[objc_oneway] = &PP.getIdentifierTable().get("oneway");
+    ObjCTypeQuals[objc_bycopy] = &PP.getIdentifierTable().get("bycopy");
+    ObjCTypeQuals[objc_byref] = &PP.getIdentifierTable().get("byref");
   }
   if (getLang().ObjC2) {
-    ObjcPropertyAttrs[objc_readonly] = &PP.getIdentifierTable().get("readonly");
-    ObjcPropertyAttrs[objc_getter] = &PP.getIdentifierTable().get("getter");
-    ObjcPropertyAttrs[objc_setter] = &PP.getIdentifierTable().get("setter");
-    ObjcPropertyAttrs[objc_assign] = &PP.getIdentifierTable().get("assign");
-    ObjcPropertyAttrs[objc_readwrite] = 
+    ObjCPropertyAttrs[objc_readonly] = &PP.getIdentifierTable().get("readonly");
+    ObjCPropertyAttrs[objc_getter] = &PP.getIdentifierTable().get("getter");
+    ObjCPropertyAttrs[objc_setter] = &PP.getIdentifierTable().get("setter");
+    ObjCPropertyAttrs[objc_assign] = &PP.getIdentifierTable().get("assign");
+    ObjCPropertyAttrs[objc_readwrite] = 
                                   &PP.getIdentifierTable().get("readwrite");
-    ObjcPropertyAttrs[objc_retain] = &PP.getIdentifierTable().get("retain");
-    ObjcPropertyAttrs[objc_copy] = &PP.getIdentifierTable().get("copy");
-    ObjcPropertyAttrs[objc_nonatomic] = 
+    ObjCPropertyAttrs[objc_retain] = &PP.getIdentifierTable().get("retain");
+    ObjCPropertyAttrs[objc_copy] = &PP.getIdentifierTable().get("copy");
+    ObjCPropertyAttrs[objc_nonatomic] = 
                                   &PP.getIdentifierTable().get("nonatomic");
     ObjCForCollectionInKW = &PP.getIdentifierTable().get("in");
   }

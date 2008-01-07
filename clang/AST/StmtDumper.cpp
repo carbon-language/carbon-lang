@@ -284,8 +284,8 @@ void StmtDumper::VisitDeclRefExpr(DeclRefExpr *Node) {
     case Decl::Union: fprintf(F,"Union"); break;
     case Decl::Class: fprintf(F,"Class"); break;
     case Decl::Enum: fprintf(F,"Enum"); break;
-    case Decl::ObjcInterface: fprintf(F,"ObjcInterface"); break;
-    case Decl::ObjcClass: fprintf(F,"ObjcClass"); break;
+    case Decl::ObjCInterface: fprintf(F,"ObjCInterface"); break;
+    case Decl::ObjCClass: fprintf(F,"ObjCClass"); break;
     default: fprintf(F,"Decl"); break;
   }
   

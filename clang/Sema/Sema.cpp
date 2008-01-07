@@ -20,24 +20,24 @@
 
 using namespace clang;
 
-bool Sema::isBuiltinObjcType(TypedefDecl *TD) {
+bool Sema::isBuiltinObjCType(TypedefDecl *TD) {
   const char *typeName = TD->getIdentifier()->getName();
   return strcmp(typeName, "id") == 0 || strcmp(typeName, "Class") == 0 ||
          strcmp(typeName, "SEL") == 0 || strcmp(typeName, "Protocol") == 0;
 }
 
-bool Sema::isObjcObjectPointerType(QualType type) const {
-  if (!type->isPointerType() && !type->isObjcQualifiedIdType())
+bool Sema::isObjCObjectPointerType(QualType type) const {
+  if (!type->isPointerType() && !type->isObjCQualifiedIdType())
     return false;
-  if (type == Context.getObjcIdType() || type == Context.getObjcClassType() ||
-      type->isObjcQualifiedIdType())
+  if (type == Context.getObjCIdType() || type == Context.getObjCClassType() ||
+      type->isObjCQualifiedIdType())
     return true;
   
   if (type->isPointerType()) {
     PointerType *pointerType = static_cast<PointerType*>(type.getTypePtr());
     type = pointerType->getPointeeType();
   }
-  return (type->isObjcInterfaceType() || type->isObjcQualifiedIdType());
+  return (type->isObjCInterfaceType() || type->isObjCQualifiedIdType());
 }
 
 void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
@@ -46,17 +46,17 @@ void Sema::ActOnTranslationUnitScope(SourceLocation Loc, Scope *S) {
     TypedefType *t;
     
     // Add the built-in ObjC types.
-    t = dyn_cast<TypedefType>(Context.getObjcIdType().getTypePtr());
+    t = dyn_cast<TypedefType>(Context.getObjCIdType().getTypePtr());
     t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
     TUScope->AddDecl(t->getDecl());
-    t = dyn_cast<TypedefType>(Context.getObjcClassType().getTypePtr());
+    t = dyn_cast<TypedefType>(Context.getObjCClassType().getTypePtr());
     t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
     TUScope->AddDecl(t->getDecl());
-    ObjcInterfaceType *it = dyn_cast<ObjcInterfaceType>(Context.getObjcProtoType());
-    ObjcInterfaceDecl *IDecl = it->getDecl();
+    ObjCInterfaceType *it = dyn_cast<ObjCInterfaceType>(Context.getObjCProtoType());
+    ObjCInterfaceDecl *IDecl = it->getDecl();
     IDecl->getIdentifier()->setFETokenInfo(IDecl);
     TUScope->AddDecl(IDecl);
-    t = dyn_cast<TypedefType>(Context.getObjcSelType().getTypePtr());
+    t = dyn_cast<TypedefType>(Context.getObjCSelType().getTypePtr());
     t->getDecl()->getIdentifier()->setFETokenInfo(t->getDecl());
     TUScope->AddDecl(t->getDecl());
   }
@@ -88,24 +88,24 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt)
     TypedefDecl *ClassTypedef = new TypedefDecl(SourceLocation(),
                                                 &Context.Idents.get("Class"),
                                                 ClassT, 0);
-    Context.setObjcClassType(ClassTypedef);
+    Context.setObjCClassType(ClassTypedef);
     
     // Synthesize "@class Protocol;
-    ObjcInterfaceDecl *ProtocolDecl = new ObjcInterfaceDecl(SourceLocation(), 0, 
+    ObjCInterfaceDecl *ProtocolDecl = new ObjCInterfaceDecl(SourceLocation(), 0, 
                                         &Context.Idents.get("Protocol"), true);
-    Context.setObjcProtoType(Context.getObjcInterfaceType(ProtocolDecl));
+    Context.setObjCProtoType(Context.getObjCInterfaceType(ProtocolDecl));
     
     // Synthesize "typedef struct objc_object { Class isa; } *id;"
     RecordDecl *ObjectTag = new RecordDecl(Decl::Struct, SourceLocation(), 
                                           &IT.get("objc_object"), 0);
     FieldDecl *IsaDecl = new FieldDecl(SourceLocation(), 0, 
-                                       Context.getObjcClassType());
+                                       Context.getObjCClassType());
     ObjectTag->defineBody(&IsaDecl, 1);
     QualType ObjT = Context.getPointerType(Context.getTagDeclType(ObjectTag));
     TypedefDecl *IdTypedef = new TypedefDecl(SourceLocation(),
                                              &Context.Idents.get("id"),
                                              ObjT, 0);
-    Context.setObjcIdType(IdTypedef);
+    Context.setObjCIdType(IdTypedef);
     
     // Synthesize "typedef struct objc_selector *SEL;"
     RecordDecl *SelTag = new RecordDecl(Decl::Struct, SourceLocation(), 
@@ -114,7 +114,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt)
     TypedefDecl *SelTypedef = new TypedefDecl(SourceLocation(),
                                               &Context.Idents.get("SEL"),
                                               SelT, 0);
-    Context.setObjcSelType(SelTypedef);
+    Context.setObjCSelType(SelTypedef);
     
   }
   TUScope = 0;

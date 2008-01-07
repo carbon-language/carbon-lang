@@ -156,23 +156,23 @@ Stmt* Stmt::Create(Deserializer& D) {
     //    Objective C
     //==--------------------------------------==//
     
-    case ObjcAtCatchStmtClass:
-      return ObjcAtCatchStmt::CreateImpl(D);
+    case ObjCAtCatchStmtClass:
+      return ObjCAtCatchStmt::CreateImpl(D);
       
-    case ObjcAtFinallyStmtClass:
-      return ObjcAtFinallyStmt::CreateImpl(D);
+    case ObjCAtFinallyStmtClass:
+      return ObjCAtFinallyStmt::CreateImpl(D);
       
-    case ObjcAtThrowStmtClass:
-      return ObjcAtThrowStmt::CreateImpl(D);
+    case ObjCAtThrowStmtClass:
+      return ObjCAtThrowStmt::CreateImpl(D);
       
-    case ObjcAtTryStmtClass:
-      return ObjcAtTryStmt::CreateImpl(D);
+    case ObjCAtTryStmtClass:
+      return ObjCAtTryStmt::CreateImpl(D);
     
     case ObjCEncodeExprClass:
       return ObjCEncodeExpr::CreateImpl(D);
       
-    case ObjcForCollectionStmtClass:
-      return ObjcForCollectionStmt::CreateImpl(D);
+    case ObjCForCollectionStmtClass:
+      return ObjCForCollectionStmt::CreateImpl(D);
       
     case ObjCIvarRefExprClass:
       return ObjCIvarRefExpr::CreateImpl(D);
@@ -851,18 +851,18 @@ WhileStmt* WhileStmt::CreateImpl(Deserializer& D) {
 //   Objective C Serialization
 //===----------------------------------------------------------------------===//
 
-void ObjcAtCatchStmt::EmitImpl(Serializer& S) const {
+void ObjCAtCatchStmt::EmitImpl(Serializer& S) const {
   S.Emit(AtCatchLoc);
   S.Emit(RParenLoc);
   S.EmitPtr(NextAtCatchStmt);
   S.BatchEmitOwnedPtrs((unsigned) END_EXPR,&SubExprs[0]);
 }
 
-ObjcAtCatchStmt* ObjcAtCatchStmt::CreateImpl(Deserializer& D) {
+ObjCAtCatchStmt* ObjCAtCatchStmt::CreateImpl(Deserializer& D) {
   SourceLocation AtCatchLoc = SourceLocation::ReadVal(D);
   SourceLocation RParenLoc = SourceLocation::ReadVal(D);
   
-  ObjcAtCatchStmt* stmt = new ObjcAtCatchStmt(AtCatchLoc,RParenLoc);
+  ObjCAtCatchStmt* stmt = new ObjCAtCatchStmt(AtCatchLoc,RParenLoc);
   
   D.ReadPtr(stmt->NextAtCatchStmt); // Allows backpatching.
   D.BatchReadOwnedPtrs((unsigned) END_EXPR, &stmt->SubExprs[0]);
@@ -870,36 +870,36 @@ ObjcAtCatchStmt* ObjcAtCatchStmt::CreateImpl(Deserializer& D) {
   return stmt;
 }
 
-void ObjcAtFinallyStmt::EmitImpl(Serializer& S) const {
+void ObjCAtFinallyStmt::EmitImpl(Serializer& S) const {
   S.Emit(AtFinallyLoc);
   S.EmitOwnedPtr(AtFinallyStmt);
 }
 
-ObjcAtFinallyStmt* ObjcAtFinallyStmt::CreateImpl(Deserializer& D) {
+ObjCAtFinallyStmt* ObjCAtFinallyStmt::CreateImpl(Deserializer& D) {
   SourceLocation Loc = SourceLocation::ReadVal(D);
   Stmt* AtFinallyStmt = D.ReadOwnedPtr<Stmt>();
-  return new ObjcAtFinallyStmt(Loc,AtFinallyStmt);  
+  return new ObjCAtFinallyStmt(Loc,AtFinallyStmt);  
 }
 
-void ObjcAtThrowStmt::EmitImpl(Serializer& S) const {
+void ObjCAtThrowStmt::EmitImpl(Serializer& S) const {
   S.Emit(AtThrowLoc);
   S.EmitOwnedPtr(Throw);
 }
 
-ObjcAtThrowStmt* ObjcAtThrowStmt::CreateImpl(Deserializer& D) {
+ObjCAtThrowStmt* ObjCAtThrowStmt::CreateImpl(Deserializer& D) {
   SourceLocation L = SourceLocation::ReadVal(D);
   Stmt* Throw = D.ReadOwnedPtr<Stmt>();
-  return new ObjcAtThrowStmt(L,Throw);  
+  return new ObjCAtThrowStmt(L,Throw);  
 }
   
-void ObjcAtTryStmt::EmitImpl(Serializer& S) const {
+void ObjCAtTryStmt::EmitImpl(Serializer& S) const {
   S.Emit(AtTryLoc);
   S.BatchEmitOwnedPtrs((unsigned) END_EXPR, &SubStmts[0]);
 }
 
-ObjcAtTryStmt* ObjcAtTryStmt::CreateImpl(Deserializer& D) {
+ObjCAtTryStmt* ObjCAtTryStmt::CreateImpl(Deserializer& D) {
   SourceLocation L = SourceLocation::ReadVal(D);
-  ObjcAtTryStmt* stmt = new ObjcAtTryStmt(L,NULL,NULL,NULL);
+  ObjCAtTryStmt* stmt = new ObjCAtTryStmt(L,NULL,NULL,NULL);
   D.BatchReadOwnedPtrs((unsigned) END_EXPR, &stmt->SubStmts[0]);
   return stmt;
 }
@@ -919,18 +919,18 @@ ObjCEncodeExpr* ObjCEncodeExpr::CreateImpl(Deserializer& D) {
   return new ObjCEncodeExpr(T,ET,AtLoc,RParenLoc);
 }
 
-void ObjcForCollectionStmt::EmitImpl(Serializer& S) const {
+void ObjCForCollectionStmt::EmitImpl(Serializer& S) const {
   S.Emit(ForLoc);
   S.BatchEmitOwnedPtrs(getElement(),getCollection(),getBody());
 }
 
-ObjcForCollectionStmt* ObjcForCollectionStmt::CreateImpl(Deserializer& D) {
+ObjCForCollectionStmt* ObjCForCollectionStmt::CreateImpl(Deserializer& D) {
   SourceLocation ForLoc = SourceLocation::ReadVal(D);
   Stmt* Element;
   Expr* Collection;
   Stmt* Body;
   D.BatchReadOwnedPtrs(Element,Collection,Body);  
-  return new ObjcForCollectionStmt(Element,Collection,Body,ForLoc);
+  return new ObjCForCollectionStmt(Element,Collection,Body,ForLoc);
 }
 
 void ObjCIvarRefExpr::EmitImpl(Serializer& S) const {

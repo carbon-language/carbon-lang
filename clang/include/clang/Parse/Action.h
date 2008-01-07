@@ -21,7 +21,7 @@
 namespace clang {
   // Semantic.
   class DeclSpec;
-  class ObjcDeclSpec;
+  class ObjCDeclSpec;
   class Declarator;
   class AttributeList;
   // Parse.
@@ -131,7 +131,7 @@ public:
     return ActOnDeclarator(FnBodyScope, D, 0);
   }
 
-  virtual void ObjcActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
+  virtual void ObjCActOnStartOfMethodDef(Scope *FnBodyScope, DeclTy *D) {
     return;
   }
   
@@ -265,7 +265,7 @@ public:
                                   SourceLocation RParenLoc, StmtTy *Body) {
     return 0;
   }
-  virtual StmtResult ActOnObjcForCollectionStmt(SourceLocation ForColLoc, 
+  virtual StmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc, 
                                   SourceLocation LParenLoc, 
                                   StmtTy *First, ExprTy *Second,
                                   SourceLocation RParenLoc, StmtTy *Body) {
@@ -307,24 +307,24 @@ public:
   }
   
   // Objective-c statements
-  virtual StmtResult ActOnObjcAtCatchStmt(SourceLocation AtLoc, 
+  virtual StmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc, 
                                           SourceLocation RParen, StmtTy *Parm, 
                                           StmtTy *Body, StmtTy *CatchList) {
     return 0;
   }
   
-  virtual StmtResult ActOnObjcAtFinallyStmt(SourceLocation AtLoc, 
+  virtual StmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc, 
                                             StmtTy *Body) {
     return 0;
   }
   
-  virtual StmtResult ActOnObjcAtTryStmt(SourceLocation AtLoc, 
+  virtual StmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc, 
                                         StmtTy *Try, 
                                         StmtTy *Catch, StmtTy *Finally) {
     return 0;
   }
   
-  virtual StmtResult ActOnObjcAtThrowStmt(SourceLocation AtLoc, 
+  virtual StmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc, 
                                           StmtTy *Throw) {
     return 0;
   }
@@ -572,10 +572,10 @@ public:
     SourceLocation EndLoc,     // location of the ; or {.
     tok::TokenKind MethodType, // tok::minus for instance, tok::plus for class.
     DeclTy *ClassDecl,         // class this methods belongs to.
-    ObjcDeclSpec &ReturnQT,    // for return type's in inout etc.
+    ObjCDeclSpec &ReturnQT,    // for return type's in inout etc.
     TypeTy *ReturnType,        // the method return type.
     Selector Sel,              // a unique name for the method.
-    ObjcDeclSpec *ArgQT,       // for arguments' in inout etc.
+    ObjCDeclSpec *ArgQT,       // for arguments' in inout etc.
     TypeTy **ArgTypes,         // non-zero when Sel.getNumArgs() > 0
     IdentifierInfo **ArgNames, // non-zero when Sel.getNumArgs() > 0
     AttributeList *AttrList,   // optional
@@ -597,9 +597,9 @@ public:
     unsigned pNum = 0) {
     return;
   }
-  // ActOnAddObjcProperties - called to build one property AST
-  virtual DeclTy *ActOnAddObjcProperties (SourceLocation AtLoc,
-    DeclTy **allProperties, unsigned NumProperties, ObjcDeclSpec &DS) {
+  // ActOnAddObjCProperties - called to build one property AST
+  virtual DeclTy *ActOnAddObjCProperties (SourceLocation AtLoc,
+    DeclTy **allProperties, unsigned NumProperties, ObjCDeclSpec &DS) {
     return 0;
   }
                                      

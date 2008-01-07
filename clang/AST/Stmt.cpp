@@ -183,11 +183,11 @@ Stmt::child_iterator DoStmt::child_end() { return &SubExprs[0]+END_EXPR; }
 Stmt::child_iterator ForStmt::child_begin() { return &SubExprs[0]; }
 Stmt::child_iterator ForStmt::child_end() { return &SubExprs[0]+END_EXPR; }
 
-// ObjcForCollectionStmt
-Stmt::child_iterator ObjcForCollectionStmt::child_begin() { 
+// ObjCForCollectionStmt
+Stmt::child_iterator ObjCForCollectionStmt::child_begin() { 
   return &SubExprs[0]; 
 }
-Stmt::child_iterator ObjcForCollectionStmt::child_end() { 
+Stmt::child_iterator ObjCForCollectionStmt::child_end() { 
   return &SubExprs[0]+END_EXPR; 
 }
 
@@ -225,27 +225,27 @@ Stmt::child_iterator ReturnStmt::child_end() {
 Stmt::child_iterator AsmStmt::child_begin() { return child_iterator(); }
 Stmt::child_iterator AsmStmt::child_end() { return child_iterator(); }
 
-// ObjcAtCatchStmt
-Stmt::child_iterator ObjcAtCatchStmt::child_begin() { return &SubExprs[0]; }
-Stmt::child_iterator ObjcAtCatchStmt::child_end() { 
+// ObjCAtCatchStmt
+Stmt::child_iterator ObjCAtCatchStmt::child_begin() { return &SubExprs[0]; }
+Stmt::child_iterator ObjCAtCatchStmt::child_end() { 
   return &SubExprs[0]+END_EXPR; 
 }
 
-// ObjcAtFinallyStmt
-Stmt::child_iterator ObjcAtFinallyStmt::child_begin() { return &AtFinallyStmt; }
-Stmt::child_iterator ObjcAtFinallyStmt::child_end() { return &AtFinallyStmt+1; }
+// ObjCAtFinallyStmt
+Stmt::child_iterator ObjCAtFinallyStmt::child_begin() { return &AtFinallyStmt; }
+Stmt::child_iterator ObjCAtFinallyStmt::child_end() { return &AtFinallyStmt+1; }
 
-// ObjcAtTryStmt
-Stmt::child_iterator ObjcAtTryStmt::child_begin() { return &SubStmts[0]; }
-Stmt::child_iterator ObjcAtTryStmt::child_end()   { 
+// ObjCAtTryStmt
+Stmt::child_iterator ObjCAtTryStmt::child_begin() { return &SubStmts[0]; }
+Stmt::child_iterator ObjCAtTryStmt::child_end()   { 
   return &SubStmts[0]+END_EXPR; 
 }
 
-// ObjcAtThrowStmt
-Stmt::child_iterator ObjcAtThrowStmt::child_begin() {
+// ObjCAtThrowStmt
+Stmt::child_iterator ObjCAtThrowStmt::child_begin() {
   return &Throw;
 }
 
-Stmt::child_iterator ObjcAtThrowStmt::child_end() {
+Stmt::child_iterator ObjCAtThrowStmt::child_end() {
   return &Throw+1;
 }

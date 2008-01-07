@@ -48,13 +48,13 @@ namespace clang {
   class SwitchStmt;
   class OCUVectorType;
   class TypedefDecl;
-  class ObjcInterfaceDecl;
-  class ObjcProtocolDecl;
-  class ObjcImplementationDecl;
-  class ObjcCategoryImplDecl;
-  class ObjcCategoryDecl;
-  class ObjcIvarDecl;
-  class ObjcMethodDecl;
+  class ObjCInterfaceDecl;
+  class ObjCProtocolDecl;
+  class ObjCImplementationDecl;
+  class ObjCCategoryImplDecl;
+  class ObjCCategoryDecl;
+  class ObjCIvarDecl;
+  class ObjCMethodDecl;
 
 /// Sema - This implements semantic analysis and AST building for C.
 class Sema : public Action {
@@ -68,7 +68,7 @@ class Sema : public Action {
 
   /// CurMethodDecl - If inside of a method body, this contains a pointer to
   /// the method decl for the method being parsed.
-  ObjcMethodDecl *CurMethodDecl;
+  ObjCMethodDecl *CurMethodDecl;
   
   /// LabelMap - This is a mapping from label identifiers to the LabelStmt for
   /// it (which acts like the label decl in some ways).  Forward referenced
@@ -82,14 +82,14 @@ class Sema : public Action {
   /// This is only necessary for issuing pretty diagnostics.
   llvm::SmallVector<TypedefDecl*, 24> OCUVectorDecls;
 
-  /// ObjcImplementations - Keep track of all of the classes with
+  /// ObjCImplementations - Keep track of all of the classes with
   /// @implementation's, so that we can emit errors on duplicates.
-  llvm::DenseMap<IdentifierInfo*, ObjcImplementationDecl*> ObjcImplementations;
+  llvm::DenseMap<IdentifierInfo*, ObjCImplementationDecl*> ObjCImplementations;
   
-  /// ObjcProtocols - Keep track of all protocol declarations declared
+  /// ObjCProtocols - Keep track of all protocol declarations declared
   /// with @protocol keyword, so that we can emit errors on duplicates and
   /// find the declarations when needed.
-  llvm::DenseMap<IdentifierInfo*, ObjcProtocolDecl*> ObjcProtocols;
+  llvm::DenseMap<IdentifierInfo*, ObjCProtocolDecl*> ObjCProtocols;
   
   // Enum values used by KnownFunctionIDs (see below).
   enum {
@@ -118,15 +118,15 @@ class Sema : public Action {
   Scope *TUScope;
   
   /// ObjCMethodList - a linked list of methods with different signatures.
-  struct ObjcMethodList {
-    ObjcMethodDecl *Method;
-    ObjcMethodList *Next;
+  struct ObjCMethodList {
+    ObjCMethodDecl *Method;
+    ObjCMethodList *Next;
     
-    ObjcMethodList() {
+    ObjCMethodList() {
       Method = 0; 
       Next = 0;
     }
-    ObjcMethodList(ObjcMethodDecl *M, ObjcMethodList *C) {
+    ObjCMethodList(ObjCMethodDecl *M, ObjCMethodList *C) {
       Method = M;
       Next = C;
     }
@@ -135,8 +135,8 @@ class Sema : public Action {
   /// messages to "id". We need to maintain a list, since selectors can have
   /// differing signatures across classes. In Cocoa, this happens to be 
   /// extremely uncommon (only 1% of selectors are "overloaded").
-  llvm::DenseMap<Selector, ObjcMethodList> InstanceMethodPool;
-  llvm::DenseMap<Selector, ObjcMethodList> FactoryMethodPool;
+  llvm::DenseMap<Selector, ObjCMethodList> InstanceMethodPool;
+  llvm::DenseMap<Selector, ObjCMethodList> FactoryMethodPool;
 public:
   Sema(Preprocessor &pp, ASTContext &ctxt);
   
@@ -173,7 +173,7 @@ public:
   //
   QualType GetTypeForDeclarator(Declarator &D, Scope *S);
   
-  QualType ObjcGetTypeForMethodDefinition(DeclTy *D);
+  QualType ObjCGetTypeForMethodDefinition(DeclTy *D);
 
   
   virtual TypeResult ActOnTypeName(Scope *S, Declarator &D);
@@ -189,7 +189,7 @@ private:
   virtual DeclTy *FinalizeDeclaratorGroup(Scope *S, DeclTy *Group);
 
   virtual DeclTy *ActOnStartOfFunctionDef(Scope *S, Declarator &D);
-  virtual void ObjcActOnStartOfMethodDef(Scope *S, DeclTy *D);
+  virtual void ObjCActOnStartOfMethodDef(Scope *S, DeclTy *D);
   
   virtual DeclTy *ActOnFinishFunctionBody(DeclTy *Decl, StmtTy *Body);
   
@@ -233,7 +233,7 @@ private:
   ScopedDecl *LookupScopedDecl(IdentifierInfo *II, unsigned NSI, 
                                SourceLocation IdLoc, Scope *S);
   ScopedDecl *LookupInterfaceDecl(IdentifierInfo *II);
-  ObjcInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
+  ObjCInterfaceDecl *getObjCInterfaceDecl(IdentifierInfo *Id);
   ScopedDecl *LazilyCreateBuiltin(IdentifierInfo *II, unsigned ID, Scope *S);
   ScopedDecl *ImplicitlyDefineFunction(SourceLocation Loc, IdentifierInfo &II,
                                  Scope *S);
@@ -257,47 +257,47 @@ private:
     
   /// CheckProtocolMethodDefs - This routine checks unimpletented methods
   /// Declared in protocol, and those referenced by it.
-  void CheckProtocolMethodDefs(ObjcProtocolDecl *PDecl,
+  void CheckProtocolMethodDefs(ObjCProtocolDecl *PDecl,
                                bool& IncompleteImpl,
                                const llvm::DenseSet<Selector> &InsMap,
                                const llvm::DenseSet<Selector> &ClsMap);
   
   /// CheckImplementationIvars - This routine checks if the instance variables
   /// listed in the implelementation match those listed in the interface. 
-  void CheckImplementationIvars(ObjcImplementationDecl *ImpDecl,
-                                ObjcIvarDecl **Fields, unsigned nIvars,
+  void CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
+                                ObjCIvarDecl **Fields, unsigned nIvars,
 				SourceLocation Loc);
   
   /// ImplMethodsVsClassMethods - This is main routine to warn if any method
   /// remains unimplemented in the @implementation class.
-  void ImplMethodsVsClassMethods(ObjcImplementationDecl* IMPDecl, 
-                                 ObjcInterfaceDecl* IDecl);
+  void ImplMethodsVsClassMethods(ObjCImplementationDecl* IMPDecl, 
+                                 ObjCInterfaceDecl* IDecl);
   
   /// ImplCategoryMethodsVsIntfMethods - Checks that methods declared in the
   /// category interface is implemented in the category @implementation.
-  void ImplCategoryMethodsVsIntfMethods(ObjcCategoryImplDecl *CatImplDecl,
-                                        ObjcCategoryDecl *CatClassDecl);
+  void ImplCategoryMethodsVsIntfMethods(ObjCCategoryImplDecl *CatImplDecl,
+                                        ObjCCategoryDecl *CatClassDecl);
   /// MatchTwoMethodDeclarations - Checks if two methods' type match and returns
   /// true, or false, accordingly.
-  bool MatchTwoMethodDeclarations(const ObjcMethodDecl *Method, 
-                                  const ObjcMethodDecl *PrevMethod); 
+  bool MatchTwoMethodDeclarations(const ObjCMethodDecl *Method, 
+                                  const ObjCMethodDecl *PrevMethod); 
 
-  /// isBuiltinObjcType - Returns true of the type is "id", "SEL", "Class"
+  /// isBuiltinObjCType - Returns true of the type is "id", "SEL", "Class"
   /// or "Protocol".
-  bool isBuiltinObjcType(TypedefDecl *TD);
+  bool isBuiltinObjCType(TypedefDecl *TD);
   
-  /// isObjcObjectPointerType - Returns true if type is an objective-c pointer
+  /// isObjCObjectPointerType - Returns true if type is an objective-c pointer
   /// to an object type; such as "id", "Class", Intf*, id<P>, etc.
-  bool isObjcObjectPointerType(QualType type) const;
+  bool isObjCObjectPointerType(QualType type) const;
 
   /// AddInstanceMethodToGlobalPool - All instance methods in a translation
   /// unit are added to a global pool. This allows us to efficiently associate
   /// a selector with a method declaraation for purposes of typechecking
   /// messages sent to "id" (where the class of the object is unknown).
-  void AddInstanceMethodToGlobalPool(ObjcMethodDecl *Method);
+  void AddInstanceMethodToGlobalPool(ObjCMethodDecl *Method);
   
   /// AddFactoryMethodToGlobalPool - Same as above, but for factory methods.
-  void AddFactoryMethodToGlobalPool(ObjcMethodDecl *Method);
+  void AddFactoryMethodToGlobalPool(ObjCMethodDecl *Method);
   //===--------------------------------------------------------------------===//
   // Statement Parsing Callbacks: SemaStmt.cpp.
 public:
@@ -331,7 +331,7 @@ public:
                                   SourceLocation LParenLoc, 
                                   StmtTy *First, ExprTy *Second, ExprTy *Third,
                                   SourceLocation RParenLoc, StmtTy *Body);
-  virtual StmtResult ActOnObjcForCollectionStmt(SourceLocation ForColLoc, 
+  virtual StmtResult ActOnObjCForCollectionStmt(SourceLocation ForColLoc, 
                                   SourceLocation LParenLoc, 
                                   StmtTy *First, ExprTy *Second,
                                   SourceLocation RParenLoc, StmtTy *Body);
@@ -361,18 +361,18 @@ public:
                                   ExprTy **Clobbers,
                                   SourceLocation RParenLoc);
   
-  virtual StmtResult ActOnObjcAtCatchStmt(SourceLocation AtLoc, 
+  virtual StmtResult ActOnObjCAtCatchStmt(SourceLocation AtLoc, 
                                           SourceLocation RParen, StmtTy *Parm, 
                                           StmtTy *Body, StmtTy *CatchList);
   
-  virtual StmtResult ActOnObjcAtFinallyStmt(SourceLocation AtLoc, 
+  virtual StmtResult ActOnObjCAtFinallyStmt(SourceLocation AtLoc, 
                                             StmtTy *Body);
   
-  virtual StmtResult ActOnObjcAtTryStmt(SourceLocation AtLoc, 
+  virtual StmtResult ActOnObjCAtTryStmt(SourceLocation AtLoc, 
                                         StmtTy *Try, 
                                         StmtTy *Catch, StmtTy *Finally);
   
-  virtual StmtResult ActOnObjcAtThrowStmt(SourceLocation AtLoc, 
+  virtual StmtResult ActOnObjCAtThrowStmt(SourceLocation AtLoc, 
                                           StmtTy *Throw);
   
   //===--------------------------------------------------------------------===//
@@ -559,20 +559,20 @@ public:
                       DeclTy **allMethods = 0, unsigned allNum = 0,
                       DeclTy **allProperties = 0, unsigned pNum = 0);
   
-  virtual DeclTy *ActOnAddObjcProperties(SourceLocation AtLoc, 
+  virtual DeclTy *ActOnAddObjCProperties(SourceLocation AtLoc, 
                                          DeclTy **allProperties,
                                          unsigned NumProperties,
-                                         ObjcDeclSpec &DS);
+                                         ObjCDeclSpec &DS);
   
   virtual DeclTy *ActOnMethodDeclaration(
     SourceLocation BeginLoc, // location of the + or -.
     SourceLocation EndLoc,   // location of the ; or {.
     tok::TokenKind MethodType, 
-    DeclTy *ClassDecl, ObjcDeclSpec &ReturnQT, TypeTy *ReturnType, 
+    DeclTy *ClassDecl, ObjCDeclSpec &ReturnQT, TypeTy *ReturnType, 
     Selector Sel,
     // optional arguments. The number of types/arguments is obtained
     // from the Sel.getNumArgs().
-    ObjcDeclSpec *ArgQT, TypeTy **ArgTypes, IdentifierInfo **ArgNames,
+    ObjCDeclSpec *ArgQT, TypeTy **ArgTypes, IdentifierInfo **ArgNames,
     AttributeList *AttrList, tok::ObjCKeywordKind MethodImplKind,
     bool isVariadic = false);
 
@@ -746,7 +746,7 @@ private:
   
   // returns true if there were any incompatible arguments.                           
   bool CheckMessageArgumentTypes(Expr **Args, unsigned NumArgs,
-                                 ObjcMethodDecl *Method);
+                                 ObjCMethodDecl *Method);
                     
   /// ConvertIntegerToTypeWarnOnOverflow - Convert the specified APInt to have
   /// the specified width and sign.  If an overflow occurs, detect it and emit

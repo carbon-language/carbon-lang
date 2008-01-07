@@ -1,4 +1,4 @@
-//===--- ParseObjc.cpp - Objective C Parsing ------------------------------===//
+//===--- ParseObjC.cpp - Objective C Parsing ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -298,20 +298,20 @@ void Parser::ParseObjCInterfaceDeclList(DeclTy *interfaceDecl,
 ///     copy
 ///     nonatomic
 ///
-void Parser::ParseObjCPropertyAttribute (ObjcDeclSpec &DS) {
+void Parser::ParseObjCPropertyAttribute (ObjCDeclSpec &DS) {
   SourceLocation loc = ConsumeParen(); // consume '('
   while (isObjCPropertyAttribute()) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
     // getter/setter require extra treatment.
-    if (II == ObjcPropertyAttrs[objc_getter] || 
-        II == ObjcPropertyAttrs[objc_setter]) {
+    if (II == ObjCPropertyAttrs[objc_getter] || 
+        II == ObjCPropertyAttrs[objc_setter]) {
       // skip getter/setter part.
       SourceLocation loc = ConsumeToken();
       if (Tok.is(tok::equal)) {
         loc = ConsumeToken();
         if (Tok.is(tok::identifier)) {
-          if (II == ObjcPropertyAttrs[objc_setter]) {
-            DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_setter);
+          if (II == ObjCPropertyAttrs[objc_setter]) {
+            DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_setter);
             DS.setSetterName(Tok.getIdentifierInfo());
             loc = ConsumeToken();  // consume method name
             if (Tok.isNot(tok::colon)) {
@@ -321,7 +321,7 @@ void Parser::ParseObjCPropertyAttribute (ObjcDeclSpec &DS) {
             }
           }
           else {
-            DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_getter);
+            DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_getter);
             DS.setGetterName(Tok.getIdentifierInfo());
           }
         }
@@ -338,18 +338,18 @@ void Parser::ParseObjCPropertyAttribute (ObjcDeclSpec &DS) {
       }
     }
     
-    else if (II == ObjcPropertyAttrs[objc_readonly])
-      DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_readonly);
-    else if (II == ObjcPropertyAttrs[objc_assign])
-      DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_assign);
-    else if (II == ObjcPropertyAttrs[objc_readwrite])
-        DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_readwrite);
-    else if (II == ObjcPropertyAttrs[objc_retain])
-      DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_retain);
-    else if (II == ObjcPropertyAttrs[objc_copy])
-      DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_copy);
-    else if (II == ObjcPropertyAttrs[objc_nonatomic])
-      DS.setPropertyAttributes(ObjcDeclSpec::DQ_PR_nonatomic);
+    else if (II == ObjCPropertyAttrs[objc_readonly])
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readonly);
+    else if (II == ObjCPropertyAttrs[objc_assign])
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_assign);
+    else if (II == ObjCPropertyAttrs[objc_readwrite])
+        DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_readwrite);
+    else if (II == ObjCPropertyAttrs[objc_retain])
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_retain);
+    else if (II == ObjCPropertyAttrs[objc_copy])
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_copy);
+    else if (II == ObjCPropertyAttrs[objc_nonatomic])
+      DS.setPropertyAttributes(ObjCDeclSpec::DQ_PR_nonatomic);
     
     ConsumeToken(); // consume last attribute token
     if (Tok.is(tok::comma)) {
@@ -378,7 +378,7 @@ Parser::DeclTy *Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl,
                                               SourceLocation AtLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_property) &&
          "ParseObjCPropertyDecl(): Expected @property");
-  ObjcDeclSpec DS;
+  ObjCDeclSpec DS;
   ConsumeToken(); // the "property" identifier
   // Parse property attribute list, if any. 
   if (Tok.is(tok::l_paren)) {
@@ -394,7 +394,7 @@ Parser::DeclTy *Parser::ParseObjCPropertyDecl(DeclTy *interfaceDecl,
     Diag(Tok, diag::err_expected_semi_decl_list);
     SkipUntil(tok::r_brace, true, true);
   }
-  return Actions.ActOnAddObjcProperties(AtLoc, 
+  return Actions.ActOnAddObjCProperties(AtLoc, 
            &PropertyDecls[0], PropertyDecls.size(), DS);
 }
 
@@ -486,7 +486,7 @@ bool Parser::isObjCPropertyAttribute() {
   if (Tok.is(tok::identifier)) {
     const IdentifierInfo *II = Tok.getIdentifierInfo();
     for (unsigned i = 0; i < objc_NumAttrs; ++i)
-      if (II == ObjcPropertyAttrs[i]) return true;
+      if (II == ObjCPropertyAttrs[i]) return true;
   }
   return false;
 } 
@@ -501,7 +501,7 @@ bool Parser::isTokIdentifier_in() const {
           Tok.getIdentifierInfo() == ObjCForCollectionInKW);
 }
 
-/// ParseObjcTypeQualifierList - This routine parses the objective-c's type
+/// ParseObjCTypeQualifierList - This routine parses the objective-c's type
 /// qualifier list and builds their bitmask representation in the input
 /// argument.
 ///
@@ -509,27 +509,27 @@ bool Parser::isTokIdentifier_in() const {
 ///     objc-type-qualifier
 ///     objc-type-qualifiers objc-type-qualifier
 ///
-void Parser::ParseObjcTypeQualifierList(ObjcDeclSpec &DS) {
+void Parser::ParseObjCTypeQualifierList(ObjCDeclSpec &DS) {
   while (1) {
     if (Tok.isNot(tok::identifier))
       return;
     
     const IdentifierInfo *II = Tok.getIdentifierInfo();
     for (unsigned i = 0; i != objc_NumQuals; ++i) {
-      if (II != ObjcTypeQuals[i])
+      if (II != ObjCTypeQuals[i])
         continue;
       
-      ObjcDeclSpec::ObjcDeclQualifier Qual;
+      ObjCDeclSpec::ObjCDeclQualifier Qual;
       switch (i) {
       default: assert(0 && "Unknown decl qualifier");
-      case objc_in:     Qual = ObjcDeclSpec::DQ_In; break;
-      case objc_out:    Qual = ObjcDeclSpec::DQ_Out; break;
-      case objc_inout:  Qual = ObjcDeclSpec::DQ_Inout; break;
-      case objc_oneway: Qual = ObjcDeclSpec::DQ_Oneway; break;
-      case objc_bycopy: Qual = ObjcDeclSpec::DQ_Bycopy; break;
-      case objc_byref:  Qual = ObjcDeclSpec::DQ_Byref; break;
+      case objc_in:     Qual = ObjCDeclSpec::DQ_In; break;
+      case objc_out:    Qual = ObjCDeclSpec::DQ_Out; break;
+      case objc_inout:  Qual = ObjCDeclSpec::DQ_Inout; break;
+      case objc_oneway: Qual = ObjCDeclSpec::DQ_Oneway; break;
+      case objc_bycopy: Qual = ObjCDeclSpec::DQ_Bycopy; break;
+      case objc_byref:  Qual = ObjCDeclSpec::DQ_Byref; break;
       }
-      DS.setObjcDeclQualifier(Qual);
+      DS.setObjCDeclQualifier(Qual);
       ConsumeToken();
       II = 0;
       break;
@@ -544,14 +544,14 @@ void Parser::ParseObjcTypeQualifierList(ObjcDeclSpec &DS) {
 ///     '(' objc-type-qualifiers[opt] type-name ')'
 ///     '(' objc-type-qualifiers[opt] ')'
 ///
-Parser::TypeTy *Parser::ParseObjCTypeName(ObjcDeclSpec &DS) {
+Parser::TypeTy *Parser::ParseObjCTypeName(ObjCDeclSpec &DS) {
   assert(Tok.is(tok::l_paren) && "expected (");
   
   SourceLocation LParenLoc = ConsumeParen(), RParenLoc;
   TypeTy *Ty = 0;
   
   // Parse type qualifiers, in, inout, etc.
-  ParseObjcTypeQualifierList(DS);
+  ParseObjCTypeQualifierList(DS);
 
   if (isTypeSpecifierQualifier()) {
     Ty = ParseTypeName();
@@ -601,7 +601,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 {
   // Parse the return type.
   TypeTy *ReturnType = 0;
-  ObjcDeclSpec DSRet;
+  ObjCDeclSpec DSRet;
   if (Tok.is(tok::l_paren))
     ReturnType = ParseObjCTypeName(DSRet);
   SourceLocation selLoc;
@@ -626,7 +626,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
 
   llvm::SmallVector<IdentifierInfo *, 12> KeyIdents;
   llvm::SmallVector<Action::TypeTy *, 12> KeyTypes;
-  llvm::SmallVector<ObjcDeclSpec, 12> ArgTypeQuals;
+  llvm::SmallVector<ObjCDeclSpec, 12> ArgTypeQuals;
   llvm::SmallVector<IdentifierInfo *, 12> ArgNames;
   
   Action::TypeTy *TypeInfo;
@@ -639,7 +639,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDecl(SourceLocation mLoc,
       break;
     }
     ConsumeToken(); // Eat the ':'.
-    ObjcDeclSpec DSType;
+    ObjCDeclSpec DSType;
     if (Tok.is(tok::l_paren))  { // Parse the argument type.
       TypeInfo = ParseObjCTypeName(DSType);
     }
@@ -960,7 +960,7 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
     DeclTy *ImplCatType = Actions.ActOnStartCategoryImplementation(
                                     atLoc, nameId, nameLoc, categoryId, 
                                     categoryLoc);
-    ObjcImpDecl = ImplCatType;
+    ObjCImpDecl = ImplCatType;
     return 0;
   }
   // We have a class implementation
@@ -982,7 +982,7 @@ Parser::DeclTy *Parser::ParseObjCAtImplementationDeclaration(
   
   if (Tok.is(tok::l_brace)) // we have ivars
     ParseObjCClassInstanceVariables(ImplClsType/*FIXME*/, atLoc);
-  ObjcImpDecl = ImplClsType;
+  ObjCImpDecl = ImplClsType;
   
   return 0;
 }
@@ -991,14 +991,14 @@ Parser::DeclTy *Parser::ParseObjCAtEndDeclaration(SourceLocation atLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_end) &&
          "ParseObjCAtEndDeclaration(): Expected @end");
   ConsumeToken(); // the "end" identifier
-  if (ObjcImpDecl) {
+  if (ObjCImpDecl) {
     // Checking is not necessary except that a parse error might have caused
-    // @implementation not to have been parsed to completion and ObjcImpDecl 
+    // @implementation not to have been parsed to completion and ObjCImpDecl 
     // could be 0.
-    Actions.ActOnAtEnd(atLoc, ObjcImpDecl);
+    Actions.ActOnAtEnd(atLoc, ObjCImpDecl);
   }
 
-  return ObjcImpDecl;
+  return ObjCImpDecl;
 }
 
 ///   compatibility-alias-decl:
@@ -1109,7 +1109,7 @@ Parser::StmtResult Parser::ParseObjCThrowStmt(SourceLocation atLoc) {
     }
   }
   ConsumeToken(); // consume ';'
-  return Actions.ActOnObjcAtThrowStmt(atLoc, Res.Val);
+  return Actions.ActOnObjCAtThrowStmt(atLoc, Res.Val);
 }
 
 ///  objc-try-catch-statement:
@@ -1160,7 +1160,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
         StmtResult CatchBody = ParseCompoundStatementBody();
         if (CatchBody.isInvalid)
           CatchBody = Actions.ActOnNullStmt(Tok.getLocation());
-        CatchStmts = Actions.ActOnObjcAtCatchStmt(AtCatchFinallyLoc, RParenLoc, 
+        CatchStmts = Actions.ActOnObjCAtCatchStmt(AtCatchFinallyLoc, RParenLoc, 
           FirstPart, CatchBody.Val, CatchStmts.Val);
         ExitScope();
       }
@@ -1176,7 +1176,7 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
       StmtResult FinallyBody = ParseCompoundStatementBody();
       if (FinallyBody.isInvalid)
         FinallyBody = Actions.ActOnNullStmt(Tok.getLocation());
-      FinallyStmt = Actions.ActOnObjcAtFinallyStmt(AtCatchFinallyLoc, 
+      FinallyStmt = Actions.ActOnObjCAtFinallyStmt(AtCatchFinallyLoc, 
                                                    FinallyBody.Val);
       catch_or_finally_seen = true;
       break;
@@ -1186,14 +1186,14 @@ Parser::StmtResult Parser::ParseObjCTryStmt(SourceLocation atLoc) {
     Diag(atLoc, diag::err_missing_catch_finally);
     return true;
   }
-  return Actions.ActOnObjcAtTryStmt(atLoc, TryBody.Val, CatchStmts.Val, 
+  return Actions.ActOnObjCAtTryStmt(atLoc, TryBody.Val, CatchStmts.Val, 
                                     FinallyStmt.Val);
 }
 
 ///   objc-method-def: objc-method-proto ';'[opt] '{' body '}'
 ///
 Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
-  DeclTy *MDecl = ParseObjCMethodPrototype(ObjcImpDecl);
+  DeclTy *MDecl = ParseObjCMethodPrototype(ObjCImpDecl);
   // parse optional ';'
   if (Tok.is(tok::semi))
     ConsumeToken();
@@ -1216,7 +1216,7 @@ Parser::DeclTy *Parser::ParseObjCMethodDefinition() {
   
   // Tell the actions module that we have entered a method definition with the
   // specified Declarator for the method.
-  Actions.ObjcActOnStartOfMethodDef(CurScope, MDecl);
+  Actions.ObjCActOnStartOfMethodDef(CurScope, MDecl);
   
   StmtResult FnBody = ParseCompoundStatementBody();
   

@@ -985,7 +985,7 @@ unsigned OCUVectorElementExpr::getEncodedElementAccess() const {
 
 // constructor for instance messages.
 ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
-                QualType retType, ObjcMethodDecl *mproto,
+                QualType retType, ObjCMethodDecl *mproto,
                 SourceLocation LBrac, SourceLocation RBrac,
                 Expr **ArgExprs, unsigned nargs)
   : Expr(ObjCMessageExprClass, retType), SelName(selInfo), 
@@ -1004,7 +1004,7 @@ ObjCMessageExpr::ObjCMessageExpr(Expr *receiver, Selector selInfo,
 // constructor for class messages. 
 // FIXME: clsName should be typed to ObjCInterfaceType
 ObjCMessageExpr::ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
-                QualType retType, ObjcMethodDecl *mproto,
+                QualType retType, ObjCMethodDecl *mproto,
                 SourceLocation LBrac, SourceLocation RBrac,
                 Expr **ArgExprs, unsigned nargs)
   : Expr(ObjCMessageExprClass, retType), SelName(selInfo), 

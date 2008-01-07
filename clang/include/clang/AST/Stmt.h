@@ -573,17 +573,17 @@ public:
   static ForStmt* CreateImpl(llvm::Deserializer& D);
 };
 
-/// ObjcForCollectionStmt - This represents Objective-c's collection statement;
+/// ObjCForCollectionStmt - This represents Objective-c's collection statement;
 /// represented as 'for (element 'in' collection-expression)' stmt.
 ///
-class ObjcForCollectionStmt : public Stmt {
+class ObjCForCollectionStmt : public Stmt {
   enum { ELEM, COLLECTION, BODY, END_EXPR };
   Stmt* SubExprs[END_EXPR]; // SubExprs[ELEM] is an expression or declstmt.
   SourceLocation ForLoc;
 public:
-  ObjcForCollectionStmt(Stmt *Elem, Expr *Collect, Stmt *Body, 
+  ObjCForCollectionStmt(Stmt *Elem, Expr *Collect, Stmt *Body, 
                         SourceLocation FCL) 
-  : Stmt(ObjcForCollectionStmtClass) {
+  : Stmt(ObjCForCollectionStmtClass) {
     SubExprs[ELEM] = Elem;
     SubExprs[COLLECTION] = reinterpret_cast<Stmt*>(Collect);
     SubExprs[BODY] = Body;
@@ -606,16 +606,16 @@ public:
     return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd()); 
   }
   static bool classof(const Stmt *T) { 
-    return T->getStmtClass() == ObjcForCollectionStmtClass; 
+    return T->getStmtClass() == ObjCForCollectionStmtClass; 
   }
-  static bool classof(const ObjcForCollectionStmt *) { return true; }
+  static bool classof(const ObjCForCollectionStmt *) { return true; }
     
   // Iterators
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
     
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjcForCollectionStmt* CreateImpl(llvm::Deserializer& D);
+  static ObjCForCollectionStmt* CreateImpl(llvm::Deserializer& D);
 };
   
 /// GotoStmt - This represents a direct goto.
@@ -819,30 +819,30 @@ public:
   static AsmStmt* CreateImpl(llvm::Deserializer& D);
 };
   
-/// ObjcAtCatchStmt - This represents objective-c's @catch statement.
-class ObjcAtCatchStmt : public Stmt {
+/// ObjCAtCatchStmt - This represents objective-c's @catch statement.
+class ObjCAtCatchStmt : public Stmt {
 private:
   // Points to next @catch statement, or null
-  ObjcAtCatchStmt *NextAtCatchStmt;
+  ObjCAtCatchStmt *NextAtCatchStmt;
   enum { SELECTOR, BODY, END_EXPR };
   Stmt *SubExprs[END_EXPR];
   SourceLocation AtCatchLoc, RParenLoc;
 
   // Used by deserialization.
-  ObjcAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc)
-  : Stmt(ObjcAtCatchStmtClass), AtCatchLoc(atCatchLoc), RParenLoc(rparenloc) {}
+  ObjCAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc)
+  : Stmt(ObjCAtCatchStmtClass), AtCatchLoc(atCatchLoc), RParenLoc(rparenloc) {}
 
 public:
-  ObjcAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
+  ObjCAtCatchStmt(SourceLocation atCatchLoc, SourceLocation rparenloc,
                   Stmt *catchVarStmtDecl, Stmt *atCatchStmt, Stmt *atCatchList)
-  : Stmt(ObjcAtCatchStmtClass) {
+  : Stmt(ObjCAtCatchStmtClass) {
       SubExprs[SELECTOR] = catchVarStmtDecl;
       SubExprs[BODY] = atCatchStmt;
       if (!atCatchList)
         NextAtCatchStmt = NULL;
       else {
-        ObjcAtCatchStmt *AtCatchList = 
-          static_cast<ObjcAtCatchStmt*>(atCatchList);
+        ObjCAtCatchStmt *AtCatchList = 
+          static_cast<ObjCAtCatchStmt*>(atCatchList);
         while (AtCatchList->NextAtCatchStmt)
           AtCatchList = AtCatchList->NextAtCatchStmt;
         AtCatchList->NextAtCatchStmt = this;
@@ -853,8 +853,8 @@ public:
   
   const Stmt *getCatchBody() const { return SubExprs[BODY]; }
   Stmt *getCatchBody() { return SubExprs[BODY]; }
-  const ObjcAtCatchStmt *getNextCatchStmt() const { return NextAtCatchStmt; }
-  ObjcAtCatchStmt *getNextCatchStmt() { return NextAtCatchStmt; }
+  const ObjCAtCatchStmt *getNextCatchStmt() const { return NextAtCatchStmt; }
+  ObjCAtCatchStmt *getNextCatchStmt() { return NextAtCatchStmt; }
   const Stmt *getCatchParamStmt() const { return SubExprs[SELECTOR]; }
   Stmt *getCatchParamStmt() { return SubExprs[SELECTOR]; }
   
@@ -865,24 +865,24 @@ public:
   }
    
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ObjcAtCatchStmtClass;
+    return T->getStmtClass() == ObjCAtCatchStmtClass;
   }
-  static bool classof(const ObjcAtCatchStmt *) { return true; }
+  static bool classof(const ObjCAtCatchStmt *) { return true; }
   
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjcAtCatchStmt* CreateImpl(llvm::Deserializer& D);
+  static ObjCAtCatchStmt* CreateImpl(llvm::Deserializer& D);
 };
   
-/// ObjcAtFinallyStmt - This represent objective-c's @finally Statement 
-class ObjcAtFinallyStmt : public Stmt {
+/// ObjCAtFinallyStmt - This represent objective-c's @finally Statement 
+class ObjCAtFinallyStmt : public Stmt {
   Stmt *AtFinallyStmt;
   SourceLocation AtFinallyLoc;    
 public:
-  ObjcAtFinallyStmt(SourceLocation atFinallyLoc, Stmt *atFinallyStmt)
-  : Stmt(ObjcAtFinallyStmtClass), 
+  ObjCAtFinallyStmt(SourceLocation atFinallyLoc, Stmt *atFinallyStmt)
+  : Stmt(ObjCAtFinallyStmtClass), 
     AtFinallyStmt(atFinallyStmt), AtFinallyLoc(atFinallyLoc) {}
   
   const Stmt *getFinallyBody () const { return AtFinallyStmt; }
@@ -893,30 +893,30 @@ public:
   }
   
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ObjcAtFinallyStmtClass;
+    return T->getStmtClass() == ObjCAtFinallyStmtClass;
   }
-  static bool classof(const ObjcAtFinallyStmt *) { return true; }
+  static bool classof(const ObjCAtFinallyStmt *) { return true; }
   
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjcAtFinallyStmt* CreateImpl(llvm::Deserializer& D);    
+  static ObjCAtFinallyStmt* CreateImpl(llvm::Deserializer& D);    
 };
   
-/// ObjcAtTryStmt - This represent objective-c's over-all 
+/// ObjCAtTryStmt - This represent objective-c's over-all 
 /// @try ... @catch ... @finally statement.
-class ObjcAtTryStmt : public Stmt {
+class ObjCAtTryStmt : public Stmt {
 private:
   enum { TRY, CATCH, FINALLY, END_EXPR };
   Stmt* SubStmts[END_EXPR]; 
   
   SourceLocation AtTryLoc;      
 public:
-  ObjcAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt, 
+  ObjCAtTryStmt(SourceLocation atTryLoc, Stmt *atTryStmt, 
                 Stmt *atCatchStmt, 
                 Stmt *atFinallyStmt)
-  : Stmt(ObjcAtTryStmtClass) {
+  : Stmt(ObjCAtTryStmtClass) {
       SubStmts[TRY] = atTryStmt;
       SubStmts[CATCH] = atCatchStmt;
       SubStmts[FINALLY] = atFinallyStmt;
@@ -925,41 +925,41 @@ public:
     
   const Stmt *getTryBody() const { return SubStmts[TRY]; }
   Stmt *getTryBody() { return SubStmts[TRY]; }
-  const ObjcAtCatchStmt *getCatchStmts() const { 
-    return dyn_cast_or_null<ObjcAtCatchStmt>(SubStmts[CATCH]); 
+  const ObjCAtCatchStmt *getCatchStmts() const { 
+    return dyn_cast_or_null<ObjCAtCatchStmt>(SubStmts[CATCH]); 
   }
-  ObjcAtCatchStmt *getCatchStmts() { 
-    return dyn_cast_or_null<ObjcAtCatchStmt>(SubStmts[CATCH]); 
+  ObjCAtCatchStmt *getCatchStmts() { 
+    return dyn_cast_or_null<ObjCAtCatchStmt>(SubStmts[CATCH]); 
   }
-  const ObjcAtFinallyStmt *getFinallyStmt() const { 
-    return dyn_cast_or_null<ObjcAtFinallyStmt>(SubStmts[FINALLY]); 
+  const ObjCAtFinallyStmt *getFinallyStmt() const { 
+    return dyn_cast_or_null<ObjCAtFinallyStmt>(SubStmts[FINALLY]); 
   }
-  ObjcAtFinallyStmt *getFinallyStmt() { 
-    return dyn_cast_or_null<ObjcAtFinallyStmt>(SubStmts[FINALLY]); 
+  ObjCAtFinallyStmt *getFinallyStmt() { 
+    return dyn_cast_or_null<ObjCAtFinallyStmt>(SubStmts[FINALLY]); 
   }
   virtual SourceRange getSourceRange() const { 
     return SourceRange(AtTryLoc, SubStmts[TRY]->getLocEnd()); 
   }
     
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ObjcAtTryStmtClass;
+    return T->getStmtClass() == ObjCAtTryStmtClass;
   }
-  static bool classof(const ObjcAtTryStmt *) { return true; }
+  static bool classof(const ObjCAtTryStmt *) { return true; }
     
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjcAtTryStmt* CreateImpl(llvm::Deserializer& D);     
+  static ObjCAtTryStmt* CreateImpl(llvm::Deserializer& D);     
 };
 
-/// ObjcAtThrowStmt - This represents objective-c's @throw statement.
-class ObjcAtThrowStmt : public Stmt {
+/// ObjCAtThrowStmt - This represents objective-c's @throw statement.
+class ObjCAtThrowStmt : public Stmt {
   Stmt *Throw;
   SourceLocation AtThrowLoc;
 public:
-  ObjcAtThrowStmt(SourceLocation atThrowLoc, Stmt *throwExpr)
-  : Stmt(ObjcAtThrowStmtClass), Throw(throwExpr) {
+  ObjCAtThrowStmt(SourceLocation atThrowLoc, Stmt *throwExpr)
+  : Stmt(ObjCAtThrowStmtClass), Throw(throwExpr) {
     AtThrowLoc = atThrowLoc;
   }
   
@@ -970,15 +970,15 @@ public:
   }
   
   static bool classof(const Stmt *T) {
-    return T->getStmtClass() == ObjcAtThrowStmtClass;
+    return T->getStmtClass() == ObjCAtThrowStmtClass;
   }
-  static bool classof(const ObjcAtThrowStmt *) { return true; }
+  static bool classof(const ObjCAtThrowStmt *) { return true; }
   
   virtual child_iterator child_begin();
   virtual child_iterator child_end();
   
   virtual void EmitImpl(llvm::Serializer& S) const;
-  static ObjcAtThrowStmt* CreateImpl(llvm::Deserializer& D); 
+  static ObjCAtThrowStmt* CreateImpl(llvm::Deserializer& D); 
 };
 
 }  // end namespace clang

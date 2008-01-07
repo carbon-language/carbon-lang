@@ -531,7 +531,7 @@ Sema::ActOnForStmt(SourceLocation ForLoc, SourceLocation LParenLoc,
 }
 
 Action::StmtResult 
-Sema::ActOnObjcForCollectionStmt(SourceLocation ForColLoc, 
+Sema::ActOnObjCForCollectionStmt(SourceLocation ForColLoc, 
                                  SourceLocation LParenLoc, 
                                  StmtTy *first, ExprTy *second,
                                  SourceLocation RParenLoc, StmtTy *body) {
@@ -552,17 +552,17 @@ Sema::ActOnObjcForCollectionStmt(SourceLocation ForColLoc,
   }
   else
     FirstType = static_cast<Expr*>(first)->getType();
-  if (!isObjcObjectPointerType(FirstType))
+  if (!isObjCObjectPointerType(FirstType))
       Diag(ForColLoc, diag::err_selector_element_type,
            FirstType.getAsString(), First->getSourceRange());
   if (Second) {
     DefaultFunctionArrayConversion(Second);
     QualType SecondType = Second->getType();
-    if (!isObjcObjectPointerType(SecondType))
+    if (!isObjCObjectPointerType(SecondType))
       Diag(ForColLoc, diag::err_collection_expr_type,
            SecondType.getAsString(), Second->getSourceRange());
   }
-  return new ObjcForCollectionStmt(First, Second, Body, ForColLoc);
+  return new ObjCForCollectionStmt(First, Second, Body, ForColLoc);
 }
 
 Action::StmtResult 
@@ -764,34 +764,34 @@ Sema::StmtResult Sema::ActOnAsmStmt(SourceLocation AsmLoc,
 }
 
 Action::StmtResult
-Sema::ActOnObjcAtCatchStmt(SourceLocation AtLoc, 
+Sema::ActOnObjCAtCatchStmt(SourceLocation AtLoc, 
                            SourceLocation RParen, StmtTy *Parm, 
                            StmtTy *Body, StmtTy *CatchList) {
-  ObjcAtCatchStmt *CS = new ObjcAtCatchStmt(AtLoc, RParen, 
+  ObjCAtCatchStmt *CS = new ObjCAtCatchStmt(AtLoc, RParen, 
     static_cast<Stmt*>(Parm), static_cast<Stmt*>(Body), 
     static_cast<Stmt*>(CatchList));
   return CatchList ? CatchList : CS;
 }
 
 Action::StmtResult
-Sema::ActOnObjcAtFinallyStmt(SourceLocation AtLoc, StmtTy *Body) {
-  ObjcAtFinallyStmt *FS = new ObjcAtFinallyStmt(AtLoc, 
+Sema::ActOnObjCAtFinallyStmt(SourceLocation AtLoc, StmtTy *Body) {
+  ObjCAtFinallyStmt *FS = new ObjCAtFinallyStmt(AtLoc, 
                                                 static_cast<Stmt*>(Body));
   return FS;
 }
 
 Action::StmtResult
-Sema::ActOnObjcAtTryStmt(SourceLocation AtLoc, 
+Sema::ActOnObjCAtTryStmt(SourceLocation AtLoc, 
                          StmtTy *Try, StmtTy *Catch, StmtTy *Finally) {
-  ObjcAtTryStmt *TS = new ObjcAtTryStmt(AtLoc, static_cast<Stmt*>(Try), 
+  ObjCAtTryStmt *TS = new ObjCAtTryStmt(AtLoc, static_cast<Stmt*>(Try), 
                                         static_cast<Stmt*>(Catch), 
                                         static_cast<Stmt*>(Finally));
   return TS;
 }
 
 Action::StmtResult
-Sema::ActOnObjcAtThrowStmt(SourceLocation AtLoc, StmtTy *Throw) {
-  ObjcAtThrowStmt *TS = new ObjcAtThrowStmt(AtLoc, static_cast<Stmt*>(Throw));
+Sema::ActOnObjCAtThrowStmt(SourceLocation AtLoc, StmtTy *Throw) {
+  ObjCAtThrowStmt *TS = new ObjCAtThrowStmt(AtLoc, static_cast<Stmt*>(Throw));
   return TS;
 }
 

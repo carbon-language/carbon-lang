@@ -434,7 +434,7 @@ bool Type::isScalarType() const {
   }
   return isa<PointerType>(CanonicalType) || isa<ComplexType>(CanonicalType) ||
          isa<VectorType>(CanonicalType) || 
-         isa<ObjcQualifiedIdType>(CanonicalType);
+         isa<ObjCQualifiedIdType>(CanonicalType);
 }
 
 bool Type::isAggregateType() const {
@@ -529,25 +529,25 @@ void FunctionTypeProto::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, getResultType(), arg_type_begin(), NumArgs, isVariadic());
 }
 
-void ObjcQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
-                                         ObjcProtocolDecl **protocols, 
+void ObjCQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID,
+                                         ObjCProtocolDecl **protocols, 
                                          unsigned NumProtocols) {
   for (unsigned i = 0; i != NumProtocols; i++)
     ID.AddPointer(protocols[i]);
 }
 
-void ObjcQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID) {
+void ObjCQualifiedInterfaceType::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, &Protocols[0], getNumProtocols());
 }
 
-void ObjcQualifiedIdType::Profile(llvm::FoldingSetNodeID &ID,
-                                         ObjcProtocolDecl **protocols, 
+void ObjCQualifiedIdType::Profile(llvm::FoldingSetNodeID &ID,
+                                         ObjCProtocolDecl **protocols, 
                                          unsigned NumProtocols) {
   for (unsigned i = 0; i != NumProtocols; i++)
     ID.AddPointer(protocols[i]);
 }
 
-void ObjcQualifiedIdType::Profile(llvm::FoldingSetNodeID &ID) {
+void ObjCQualifiedIdType::Profile(llvm::FoldingSetNodeID &ID) {
   Profile(ID, &Protocols[0], getNumProtocols());
 }
 
@@ -770,42 +770,42 @@ void TypedefType::getAsStringInternal(std::string &InnerString) const {
   InnerString = getDecl()->getIdentifier()->getName() + InnerString;
 }
 
-void ObjcInterfaceType::getAsStringInternal(std::string &InnerString) const {
+void ObjCInterfaceType::getAsStringInternal(std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
   InnerString = getDecl()->getIdentifier()->getName() + InnerString;
 }
 
-void ObjcQualifiedInterfaceType::getAsStringInternal(
+void ObjCQualifiedInterfaceType::getAsStringInternal(
                                   std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
-  std::string ObjcQIString = getDecl()->getName();
-  ObjcQIString += '<';
+  std::string ObjCQIString = getDecl()->getName();
+  ObjCQIString += '<';
   int num = getNumProtocols();
   for (int i = 0; i < num; i++) {
-    ObjcQIString += getProtocols(i)->getName();
+    ObjCQIString += getProtocols(i)->getName();
     if (i < num-1)
-      ObjcQIString += ',';
+      ObjCQIString += ',';
   }
-  ObjcQIString += '>';
-  InnerString = ObjcQIString + InnerString;
+  ObjCQIString += '>';
+  InnerString = ObjCQIString + InnerString;
 }
 
-void ObjcQualifiedIdType::getAsStringInternal(
+void ObjCQualifiedIdType::getAsStringInternal(
                                               std::string &InnerString) const {
   if (!InnerString.empty())    // Prefix the basic type, e.g. 'typedefname X'.
     InnerString = ' ' + InnerString;
-  std::string ObjcQIString = "id";
-  ObjcQIString += '<';
+  std::string ObjCQIString = "id";
+  ObjCQIString += '<';
   int num = getNumProtocols();
   for (int i = 0; i < num; i++) {
-    ObjcQIString += getProtocols(i)->getName();
+    ObjCQIString += getProtocols(i)->getName();
     if (i < num-1)
-      ObjcQIString += ',';
+      ObjCQIString += ',';
   }
-  ObjcQIString += '>';
-  InnerString = ObjcQIString + InnerString;
+  ObjCQIString += '>';
+  InnerString = ObjCQIString + InnerString;
 }
 
 void TagType::getAsStringInternal(std::string &InnerString) const {

@@ -43,16 +43,16 @@ public:
     // Decl
     //   NamedDecl
            Field,
-             ObjcIvar,
-           ObjcCategory,
-           ObjcCategoryImpl,
-           ObjcImplementation,
-           ObjcProtocol,
+             ObjCIvar,
+           ObjCCategory,
+           ObjCCategoryImpl,
+           ObjCImplementation,
+           ObjCProtocol,
            PropertyDecl,
     //     ScopedDecl
              CompatibleAlias,
     //       TypeDecl
-               ObjcInterface,
+               ObjCInterface,
                Typedef,
     //         TagDecl
                  Enum,
@@ -67,16 +67,16 @@ public:
                  BlockVar,
                  FileVar,
                  ParmVar,
-         ObjcMethod,
-         ObjcClass,
-         ObjcForwardProtocol,
+         ObjCMethod,
+         ObjCClass,
+         ObjCForwardProtocol,
   
     // For each non-leaf class, we now define a mapping to the first/last member
     // of the class, to allow efficient classof.
     NamedFirst  = Field,         NamedLast  = ParmVar,
-    FieldFirst  = Field,         FieldLast  = ObjcIvar,
+    FieldFirst  = Field,         FieldLast  = ObjCIvar,
     ScopedFirst = CompatibleAlias, ScopedLast = ParmVar,
-    TypeFirst   = ObjcInterface, TypeLast   = Class,
+    TypeFirst   = ObjCInterface, TypeLast   = Class,
     TagFirst    = Enum         , TagLast    = Class,
     RecordFirst = Struct       , RecordLast = Class,
     ValueFirst  = EnumConstant , ValueLast  = ParmVar,
@@ -92,10 +92,10 @@ public:
     IDNS_Ordinary
   };
   
-  /// ObjcDeclQualifier - Qualifier used on types in method declarations
+  /// ObjCDeclQualifier - Qualifier used on types in method declarations
   /// for remote messaging. They are meant for the arguments though and
-  /// applied to the Decls (ObjcMethodDecl and ParmVarDecl).
-  enum ObjcDeclQualifier {
+  /// applied to the Decls (ObjCMethodDecl and ParmVarDecl).
+  enum ObjCDeclQualifier {
     OBJC_TQ_None = 0x0,
     OBJC_TQ_In = 0x1,
     OBJC_TQ_Inout = 0x2,
@@ -143,7 +143,7 @@ public:
     case FileVar:
     case ParmVar:
     case EnumConstant:
-    case ObjcInterface:
+    case ObjCInterface:
     case CompatibleAlias:
       return IDNS_Ordinary;
     case Struct:
@@ -180,7 +180,7 @@ protected:
 };
 
 /// NamedDecl - This represents a decl with an identifier for a name.  Many
-/// decls have names, but not ObjcMethodDecl, @class, etc.
+/// decls have names, but not ObjCMethodDecl, @class, etc.
 class NamedDecl : public Decl {
   /// Identifier - The identifier for this declaration (e.g. the name for the
   /// variable, the tag for a struct).
@@ -396,8 +396,8 @@ public:
     : VarDecl(ParmVar, L, Id, T, S, PrevDecl, A), 
     objcDeclQualifier(OBJC_TQ_None) {}
   
-  ObjcDeclQualifier getObjcDeclQualifier() const { return objcDeclQualifier; }
-  void setObjcDeclQualifier(ObjcDeclQualifier QTVal) 
+  ObjCDeclQualifier getObjCDeclQualifier() const { return objcDeclQualifier; }
+  void setObjCDeclQualifier(ObjCDeclQualifier QTVal) 
   { objcDeclQualifier = QTVal; }
     
   // Implement isa/cast/dyncast/etc.
@@ -407,7 +407,7 @@ public:
 private:
   /// FIXME: Also can be paced into the bitfields in Decl.
   /// in, inout, etc.
-  ObjcDeclQualifier objcDeclQualifier : 6;
+  ObjCDeclQualifier objcDeclQualifier : 6;
   
 protected:
   /// EmitImpl - Serialize this ParmVarDecl. Called by Decl::Emit.

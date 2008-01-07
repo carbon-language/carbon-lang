@@ -48,8 +48,8 @@ void ASTContext::PrintStats() const {
   unsigned NumFunctionNP = 0, NumTypeName = 0, NumTagged = 0, NumReference = 0;
   
   unsigned NumTagStruct = 0, NumTagUnion = 0, NumTagEnum = 0, NumTagClass = 0;
-  unsigned NumObjcInterfaces = 0, NumObjcQualifiedInterfaces = 0;
-  unsigned NumObjcQualifiedIds = 0;
+  unsigned NumObjCInterfaces = 0, NumObjCQualifiedInterfaces = 0;
+  unsigned NumObjCQualifiedIds = 0;
   
   for (unsigned i = 0, e = Types.size(); i != e; ++i) {
     Type *T = Types[i];
@@ -80,12 +80,12 @@ void ASTContext::PrintStats() const {
       case Decl::Class:  ++NumTagClass; break; 
       case Decl::Enum:   ++NumTagEnum; break;
       }
-    } else if (isa<ObjcInterfaceType>(T))
-      ++NumObjcInterfaces;
-    else if (isa<ObjcQualifiedInterfaceType>(T))
-      ++NumObjcQualifiedInterfaces;
-    else if (isa<ObjcQualifiedIdType>(T))
-      ++NumObjcQualifiedIds;
+    } else if (isa<ObjCInterfaceType>(T))
+      ++NumObjCInterfaces;
+    else if (isa<ObjCQualifiedInterfaceType>(T))
+      ++NumObjCQualifiedInterfaces;
+    else if (isa<ObjCQualifiedIdType>(T))
+      ++NumObjCQualifiedIds;
     else {
       QualType(T, 0).dump();
       assert(0 && "Unknown type!");
@@ -106,11 +106,11 @@ void ASTContext::PrintStats() const {
   fprintf(stderr, "      %d union types\n", NumTagUnion);
   fprintf(stderr, "      %d class types\n", NumTagClass);
   fprintf(stderr, "      %d enum types\n", NumTagEnum);
-  fprintf(stderr, "    %d interface types\n", NumObjcInterfaces);
+  fprintf(stderr, "    %d interface types\n", NumObjCInterfaces);
   fprintf(stderr, "    %d protocol qualified interface types\n",
-          NumObjcQualifiedInterfaces);
+          NumObjCQualifiedInterfaces);
   fprintf(stderr, "    %d protocol qualified id types\n",
-          NumObjcQualifiedIds);
+          NumObjCQualifiedIds);
   fprintf(stderr, "Total bytes = %d\n", int(NumBuiltin*sizeof(BuiltinType)+
     NumPointer*sizeof(PointerType)+NumArray*sizeof(ArrayType)+
     NumComplex*sizeof(ComplexType)+NumVector*sizeof(VectorType)+
@@ -162,12 +162,12 @@ void ASTContext::InitBuiltinTypes() {
   LongDoubleComplexTy = getComplexType(LongDoubleTy);
   
   BuiltinVaListType = QualType();
-  ObjcIdType = QualType();
+  ObjCIdType = QualType();
   IdStructType = 0;
-  ObjcClassType = QualType();
+  ObjCClassType = QualType();
   ClassStructType = 0;
   
-  ObjcConstantStringType = QualType();
+  ObjCConstantStringType = QualType();
   
   // void * type
   VoidPtrTy = getPointerType(VoidTy);
@@ -256,7 +256,7 @@ ASTContext::getTypeInfo(QualType T, SourceLocation L) {
     }
     break;
   }
-  case Type::ObjcQualifiedId:
+  case Type::ObjCQualifiedId:
     Target.getPointerInfo(Size, Align, getFullLoc(L));
     break;
   case Type::Pointer:
@@ -691,65 +691,65 @@ QualType ASTContext::getTypedefType(TypedefDecl *Decl) {
   return QualType(Decl->TypeForDecl, 0);
 }
 
-/// getObjcInterfaceType - Return the unique reference to the type for the
+/// getObjCInterfaceType - Return the unique reference to the type for the
 /// specified ObjC interface decl.
-QualType ASTContext::getObjcInterfaceType(ObjcInterfaceDecl *Decl) {
+QualType ASTContext::getObjCInterfaceType(ObjCInterfaceDecl *Decl) {
   if (Decl->TypeForDecl) return QualType(Decl->TypeForDecl, 0);
   
-  Decl->TypeForDecl = new ObjcInterfaceType(Type::ObjcInterface, Decl);
+  Decl->TypeForDecl = new ObjCInterfaceType(Type::ObjCInterface, Decl);
   Types.push_back(Decl->TypeForDecl);
   return QualType(Decl->TypeForDecl, 0);
 }
 
-/// getObjcQualifiedInterfaceType - Return a 
-/// ObjcQualifiedInterfaceType type for the given interface decl and
+/// getObjCQualifiedInterfaceType - Return a 
+/// ObjCQualifiedInterfaceType type for the given interface decl and
 /// the conforming protocol list.
-QualType ASTContext::getObjcQualifiedInterfaceType(ObjcInterfaceDecl *Decl,
-                       ObjcProtocolDecl **Protocols, unsigned NumProtocols) {
+QualType ASTContext::getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
+                       ObjCProtocolDecl **Protocols, unsigned NumProtocols) {
   llvm::FoldingSetNodeID ID;
-  ObjcQualifiedInterfaceType::Profile(ID, Protocols, NumProtocols);
+  ObjCQualifiedInterfaceType::Profile(ID, Protocols, NumProtocols);
   
   void *InsertPos = 0;
-  if (ObjcQualifiedInterfaceType *QT =
-      ObjcQualifiedInterfaceTypes.FindNodeOrInsertPos(ID, InsertPos))
+  if (ObjCQualifiedInterfaceType *QT =
+      ObjCQualifiedInterfaceTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(QT, 0);
   
   // No Match;
-  ObjcQualifiedInterfaceType *QType =
-    new ObjcQualifiedInterfaceType(Decl, Protocols, NumProtocols);
+  ObjCQualifiedInterfaceType *QType =
+    new ObjCQualifiedInterfaceType(Decl, Protocols, NumProtocols);
   Types.push_back(QType);
-  ObjcQualifiedInterfaceTypes.InsertNode(QType, InsertPos);
+  ObjCQualifiedInterfaceTypes.InsertNode(QType, InsertPos);
   return QualType(QType, 0);
 }
 
-/// getObjcQualifiedIdType - Return a 
-/// getObjcQualifiedIdType type for the 'id' decl and
+/// getObjCQualifiedIdType - Return a 
+/// getObjCQualifiedIdType type for the 'id' decl and
 /// the conforming protocol list.
-QualType ASTContext::getObjcQualifiedIdType(QualType idType,
-                                            ObjcProtocolDecl **Protocols, 
+QualType ASTContext::getObjCQualifiedIdType(QualType idType,
+                                            ObjCProtocolDecl **Protocols, 
                                             unsigned NumProtocols) {
   llvm::FoldingSetNodeID ID;
-  ObjcQualifiedIdType::Profile(ID, Protocols, NumProtocols);
+  ObjCQualifiedIdType::Profile(ID, Protocols, NumProtocols);
   
   void *InsertPos = 0;
-  if (ObjcQualifiedIdType *QT =
-      ObjcQualifiedIdTypes.FindNodeOrInsertPos(ID, InsertPos))
+  if (ObjCQualifiedIdType *QT =
+      ObjCQualifiedIdTypes.FindNodeOrInsertPos(ID, InsertPos))
     return QualType(QT, 0);
   
   // No Match;
   QualType Canonical;
   if (!idType->isCanonical()) {
-    Canonical = getObjcQualifiedIdType(idType.getCanonicalType(), 
+    Canonical = getObjCQualifiedIdType(idType.getCanonicalType(), 
                                        Protocols, NumProtocols);
-    ObjcQualifiedIdType *NewQT = 
-      ObjcQualifiedIdTypes.FindNodeOrInsertPos(ID, InsertPos);
+    ObjCQualifiedIdType *NewQT = 
+      ObjCQualifiedIdTypes.FindNodeOrInsertPos(ID, InsertPos);
     assert(NewQT == 0 && "Shouldn't be in the map!");
   }
   
-  ObjcQualifiedIdType *QType = 
-    new ObjcQualifiedIdType(Canonical, Protocols, NumProtocols);
+  ObjCQualifiedIdType *QType = 
+    new ObjCQualifiedIdType(Canonical, Protocols, NumProtocols);
   Types.push_back(QType);
-  ObjcQualifiedIdTypes.InsertNode(QType, InsertPos);
+  ObjCQualifiedIdTypes.InsertNode(QType, InsertPos);
   return QualType(QType, 0);
 }
 
@@ -961,9 +961,9 @@ static bool isTypeTypedefedAsBOOL(QualType T) {
   return false;
 }
 
-/// getObjcEncodingTypeSize returns size of type for objective-c encoding
+/// getObjCEncodingTypeSize returns size of type for objective-c encoding
 /// purpose.
-int ASTContext::getObjcEncodingTypeSize(QualType type) {
+int ASTContext::getObjCEncodingTypeSize(QualType type) {
   SourceLocation Loc;
   uint64_t sz = getTypeSize(type, Loc);
   
@@ -976,15 +976,15 @@ int ASTContext::getObjcEncodingTypeSize(QualType type) {
   return sz / getTypeSize(CharTy, Loc);
 }
 
-/// getObjcEncodingForMethodDecl - Return the encoded type for this method
+/// getObjCEncodingForMethodDecl - Return the encoded type for this method
 /// declaration.
-void ASTContext::getObjcEncodingForMethodDecl(ObjcMethodDecl *Decl, 
+void ASTContext::getObjCEncodingForMethodDecl(ObjCMethodDecl *Decl, 
                                               std::string& S)
 {
   // Encode type qualifer, 'in', 'inout', etc. for the return type.
-  getObjcEncodingForTypeQualifier(Decl->getObjcDeclQualifier(), S);
+  getObjCEncodingForTypeQualifier(Decl->getObjCDeclQualifier(), S);
   // Encode result type.
-  getObjcEncodingForType(Decl->getResultType(), S);
+  getObjCEncodingForType(Decl->getResultType(), S);
   // Compute size of all parameters.
   // Start with computing size of a pointer in number of bytes.
   // FIXME: There might(should) be a better way of doing this computation!
@@ -996,8 +996,8 @@ void ASTContext::getObjcEncodingForMethodDecl(ObjcMethodDecl *Decl,
   int NumOfParams = Decl->getNumParams();
   for (int i = 0; i < NumOfParams; i++) {
     QualType PType = Decl->getParamDecl(i)->getType();
-    int sz = getObjcEncodingTypeSize (PType);
-    assert (sz > 0 && "getObjcEncodingForMethodDecl - Incomplete param type");
+    int sz = getObjCEncodingTypeSize (PType);
+    assert (sz > 0 && "getObjCEncodingForMethodDecl - Incomplete param type");
     ParmOffset += sz;
   }
   S += llvm::utostr(ParmOffset);
@@ -1010,15 +1010,15 @@ void ASTContext::getObjcEncodingForMethodDecl(ObjcMethodDecl *Decl,
     QualType PType = Decl->getParamDecl(i)->getType();
     // Process argument qualifiers for user supplied arguments; such as,
     // 'in', 'inout', etc.
-    getObjcEncodingForTypeQualifier(
-      Decl->getParamDecl(i)->getObjcDeclQualifier(), S);
-    getObjcEncodingForType(PType, S);
+    getObjCEncodingForTypeQualifier(
+      Decl->getParamDecl(i)->getObjCDeclQualifier(), S);
+    getObjCEncodingForType(PType, S);
     S += llvm::utostr(ParmOffset);
-    ParmOffset += getObjcEncodingTypeSize(PType);
+    ParmOffset += getObjCEncodingTypeSize(PType);
   }
 }
 
-void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
+void ASTContext::getObjCEncodingForType(QualType T, std::string& S) const
 {
   // FIXME: This currently doesn't encode:
   // @ An object (whether statically typed or typed id)
@@ -1084,20 +1084,20 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     
     S += encoding;
   }
-  else if (T->isObjcQualifiedIdType()) {
+  else if (T->isObjCQualifiedIdType()) {
     // Treat id<P...> same as 'id' for encoding purposes.
-    return getObjcEncodingForType(getObjcIdType(), S);
+    return getObjCEncodingForType(getObjCIdType(), S);
     
   }
   else if (const PointerType *PT = T->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
-    if (isObjcIdType(PointeeTy) || PointeeTy->isObjcInterfaceType()) {
+    if (isObjCIdType(PointeeTy) || PointeeTy->isObjCInterfaceType()) {
       S += '@';
       return;
-    } else if (isObjcClassType(PointeeTy)) {
+    } else if (isObjCClassType(PointeeTy)) {
       S += '#';
       return;
-    } else if (isObjcSelType(PointeeTy)) {
+    } else if (isObjCSelType(PointeeTy)) {
       S += ':';
       return;
     }
@@ -1112,7 +1112,7 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     }
     
     S += '^';
-    getObjcEncodingForType(PT->getPointeeType(), S);
+    getObjCEncodingForType(PT->getPointeeType(), S);
   } else if (const ArrayType *AT = T->getAsArrayType()) {
     S += '[';
     
@@ -1121,7 +1121,7 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     else
       assert(0 && "Unhandled array type!");
     
-    getObjcEncodingForType(AT->getElementType(), S);
+    getObjCEncodingForType(AT->getElementType(), S);
     S += ']';
   } else if (T->getAsFunctionType()) {
     S += '?';
@@ -1132,7 +1132,7 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
     S += '=';
     for (int i = 0; i < RDecl->getNumMembers(); i++) {
       FieldDecl *field = RDecl->getMember(i);
-      getObjcEncodingForType(field->getType(), S);
+      getObjCEncodingForType(field->getType(), S);
     }
     S += '}';
   } else if (T->isEnumeralType()) {
@@ -1141,7 +1141,7 @@ void ASTContext::getObjcEncodingForType(QualType T, std::string& S) const
 	assert(0 && "@encode for type not implemented!");
 }
 
-void ASTContext::getObjcEncodingForTypeQualifier(Decl::ObjcDeclQualifier QT, 
+void ASTContext::getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT, 
                                                  std::string& S) const {
   if (QT & Decl::OBJC_TQ_In)
     S += 'n';
@@ -1164,11 +1164,11 @@ void ASTContext::setBuiltinVaListType(QualType T)
   BuiltinVaListType = T;
 }
 
-void ASTContext::setObjcIdType(TypedefDecl *TD)
+void ASTContext::setObjCIdType(TypedefDecl *TD)
 {
-  assert(ObjcIdType.isNull() && "'id' type already set!");
+  assert(ObjCIdType.isNull() && "'id' type already set!");
     
-  ObjcIdType = getTypedefType(TD);
+  ObjCIdType = getTypedefType(TD);
 
   // typedef struct objc_object *id;
   const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
@@ -1178,11 +1178,11 @@ void ASTContext::setObjcIdType(TypedefDecl *TD)
   IdStructType = rec;
 }
 
-void ASTContext::setObjcSelType(TypedefDecl *TD)
+void ASTContext::setObjCSelType(TypedefDecl *TD)
 {
-  assert(ObjcSelType.isNull() && "'SEL' type already set!");
+  assert(ObjCSelType.isNull() && "'SEL' type already set!");
     
-  ObjcSelType = getTypedefType(TD);
+  ObjCSelType = getTypedefType(TD);
 
   // typedef struct objc_selector *SEL;
   const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
@@ -1192,17 +1192,17 @@ void ASTContext::setObjcSelType(TypedefDecl *TD)
   SelStructType = rec;
 }
 
-void ASTContext::setObjcProtoType(QualType QT)
+void ASTContext::setObjCProtoType(QualType QT)
 {
-  assert(ObjcProtoType.isNull() && "'Protocol' type already set!");
-  ObjcProtoType = QT;
+  assert(ObjCProtoType.isNull() && "'Protocol' type already set!");
+  ObjCProtoType = QT;
 }
 
-void ASTContext::setObjcClassType(TypedefDecl *TD)
+void ASTContext::setObjCClassType(TypedefDecl *TD)
 {
-  assert(ObjcClassType.isNull() && "'Class' type already set!");
+  assert(ObjCClassType.isNull() && "'Class' type already set!");
     
-  ObjcClassType = getTypedefType(TD);
+  ObjCClassType = getTypedefType(TD);
 
   // typedef struct objc_class *Class;
   const PointerType *ptr = TD->getUnderlyingType()->getAsPointerType();
@@ -1212,11 +1212,11 @@ void ASTContext::setObjcClassType(TypedefDecl *TD)
   ClassStructType = rec;
 }
 
-void ASTContext::setObjcConstantStringInterface(ObjcInterfaceDecl *Decl) {
-  assert(ObjcConstantStringType.isNull() && 
+void ASTContext::setObjCConstantStringInterface(ObjCInterfaceDecl *Decl) {
+  assert(ObjCConstantStringType.isNull() && 
          "'NSConstantString' type already set!");
   
-  ObjcConstantStringType = getObjcInterfaceType(Decl);
+  ObjCConstantStringType = getObjCInterfaceType(Decl);
 }
 
 bool ASTContext::builtinTypesAreCompatible(QualType lhs, QualType rhs) {
@@ -1231,20 +1231,20 @@ bool ASTContext::builtinTypesAreCompatible(QualType lhs, QualType rhs) {
 /// a qualified interface type and the other type is of a different class.
 /// Example, II or II<P>. 
 bool ASTContext::objcTypesAreCompatible(QualType lhs, QualType rhs) {
-  if (lhs->isObjcInterfaceType() && isObjcIdType(rhs))
+  if (lhs->isObjCInterfaceType() && isObjCIdType(rhs))
     return true;
-  else if (isObjcIdType(lhs) && rhs->isObjcInterfaceType())
+  else if (isObjCIdType(lhs) && rhs->isObjCInterfaceType())
     return true;
-  if (ObjcInterfaceType *lhsIT = 
-      dyn_cast<ObjcInterfaceType>(lhs.getCanonicalType().getTypePtr())) {
-    ObjcQualifiedInterfaceType *rhsQI = 
-      dyn_cast<ObjcQualifiedInterfaceType>(rhs.getCanonicalType().getTypePtr());
+  if (ObjCInterfaceType *lhsIT = 
+      dyn_cast<ObjCInterfaceType>(lhs.getCanonicalType().getTypePtr())) {
+    ObjCQualifiedInterfaceType *rhsQI = 
+      dyn_cast<ObjCQualifiedInterfaceType>(rhs.getCanonicalType().getTypePtr());
     return rhsQI && (lhsIT->getDecl() == rhsQI->getDecl());
   }
-  else if (ObjcInterfaceType *rhsIT = 
-           dyn_cast<ObjcInterfaceType>(rhs.getCanonicalType().getTypePtr())) {
-    ObjcQualifiedInterfaceType *lhsQI = 
-    dyn_cast<ObjcQualifiedInterfaceType>(lhs.getCanonicalType().getTypePtr());
+  else if (ObjCInterfaceType *rhsIT = 
+           dyn_cast<ObjCInterfaceType>(rhs.getCanonicalType().getTypePtr())) {
+    ObjCQualifiedInterfaceType *lhsQI = 
+    dyn_cast<ObjCQualifiedInterfaceType>(lhs.getCanonicalType().getTypePtr());
     return lhsQI && (rhsIT->getDecl() == lhsQI->getDecl());
   }
   return false;
@@ -1253,10 +1253,10 @@ bool ASTContext::objcTypesAreCompatible(QualType lhs, QualType rhs) {
 bool ASTContext::interfaceTypesAreCompatible(QualType lhs, QualType rhs) {
   if (lhs == rhs)
     return true;
-  ObjcInterfaceType *lhsIT = cast<ObjcInterfaceType>(lhs.getTypePtr());
-  ObjcInterfaceType *rhsIT = cast<ObjcInterfaceType>(rhs.getTypePtr());
-  ObjcInterfaceDecl *rhsIDecl = rhsIT->getDecl();
-  ObjcInterfaceDecl *lhsIDecl = lhsIT->getDecl();
+  ObjCInterfaceType *lhsIT = cast<ObjCInterfaceType>(lhs.getTypePtr());
+  ObjCInterfaceType *rhsIT = cast<ObjCInterfaceType>(rhs.getTypePtr());
+  ObjCInterfaceDecl *rhsIDecl = rhsIT->getDecl();
+  ObjCInterfaceDecl *lhsIDecl = lhsIT->getDecl();
   // rhs is derived from lhs it is OK; else it is not OK.
   while (rhsIDecl != NULL) {
     if (rhsIDecl == lhsIDecl)
@@ -1268,21 +1268,21 @@ bool ASTContext::interfaceTypesAreCompatible(QualType lhs, QualType rhs) {
 
 bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs, 
                                                       QualType rhs) {
-  ObjcQualifiedInterfaceType *lhsQI = 
-    dyn_cast<ObjcQualifiedInterfaceType>(lhs.getCanonicalType().getTypePtr());
+  ObjCQualifiedInterfaceType *lhsQI = 
+    dyn_cast<ObjCQualifiedInterfaceType>(lhs.getCanonicalType().getTypePtr());
   assert(lhsQI && "QualifiedInterfaceTypesAreCompatible - bad lhs type");
-  ObjcQualifiedInterfaceType *rhsQI = 
-    dyn_cast<ObjcQualifiedInterfaceType>(rhs.getCanonicalType().getTypePtr());
+  ObjCQualifiedInterfaceType *rhsQI = 
+    dyn_cast<ObjCQualifiedInterfaceType>(rhs.getCanonicalType().getTypePtr());
   assert(rhsQI && "QualifiedInterfaceTypesAreCompatible - bad rhs type");
-  if (!interfaceTypesAreCompatible(getObjcInterfaceType(lhsQI->getDecl()), 
-                                   getObjcInterfaceType(rhsQI->getDecl())))
+  if (!interfaceTypesAreCompatible(getObjCInterfaceType(lhsQI->getDecl()), 
+                                   getObjCInterfaceType(rhsQI->getDecl())))
     return false;
   /* All protocols in lhs must have a presense in rhs. */
   for (unsigned i =0; i < lhsQI->getNumProtocols(); i++) {
     bool match = false;
-    ObjcProtocolDecl *lhsProto = lhsQI->getProtocols(i);
+    ObjCProtocolDecl *lhsProto = lhsQI->getProtocols(i);
     for (unsigned j = 0; j < rhsQI->getNumProtocols(); j++) {
-      ObjcProtocolDecl *rhsProto = rhsQI->getProtocols(j);
+      ObjCProtocolDecl *rhsProto = rhsQI->getProtocols(j);
       if (lhsProto == rhsProto) {
         match = true;
         break;
@@ -1296,11 +1296,11 @@ bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs,
 
 /// ProtocolCompatibleWithProtocol - return 'true' if 'lProto' is in the
 /// inheritance hierarchy of 'rProto'.
-static bool ProtocolCompatibleWithProtocol(ObjcProtocolDecl *lProto,
-                                           ObjcProtocolDecl *rProto) {
+static bool ProtocolCompatibleWithProtocol(ObjCProtocolDecl *lProto,
+                                           ObjCProtocolDecl *rProto) {
   if (lProto == rProto)
     return true;
-  ObjcProtocolDecl** RefPDecl = rProto->getReferencedProtocols();
+  ObjCProtocolDecl** RefPDecl = rProto->getReferencedProtocols();
   for (unsigned i = 0; i < rProto->getNumReferencedProtocols(); i++)
     if (ProtocolCompatibleWithProtocol(lProto, RefPDecl[i]))
       return true;
@@ -1310,12 +1310,12 @@ static bool ProtocolCompatibleWithProtocol(ObjcProtocolDecl *lProto,
 /// ClassImplementsProtocol - Checks that 'lProto' protocol
 /// has been implemented in IDecl class, its super class or categories (if
 /// lookupCategory is true). 
-static bool ClassImplementsProtocol(ObjcProtocolDecl *lProto,
-                                    ObjcInterfaceDecl *IDecl, 
+static bool ClassImplementsProtocol(ObjCProtocolDecl *lProto,
+                                    ObjCInterfaceDecl *IDecl, 
                                     bool lookupCategory) {
   
   // 1st, look up the class.
-  ObjcProtocolDecl **protoList = IDecl->getReferencedProtocols();
+  ObjCProtocolDecl **protoList = IDecl->getReferencedProtocols();
   for (unsigned i = 0; i < IDecl->getNumIntfRefProtocols(); i++) {
     if (ProtocolCompatibleWithProtocol(lProto, protoList[i]))
       return true;
@@ -1323,7 +1323,7 @@ static bool ClassImplementsProtocol(ObjcProtocolDecl *lProto,
   
   // 2nd, look up the category.
   if (lookupCategory)
-    for (ObjcCategoryDecl *CDecl = IDecl->getCategoryList(); CDecl;
+    for (ObjCCategoryDecl *CDecl = IDecl->getCategoryList(); CDecl;
          CDecl = CDecl->getNextClassCategory()) {
       protoList = CDecl->getReferencedProtocols();
       for (unsigned i = 0; i < CDecl->getNumReferencedProtocols(); i++) {
@@ -1340,42 +1340,42 @@ static bool ClassImplementsProtocol(ObjcProtocolDecl *lProto,
   return false;
 }
                                            
-/// ObjcQualifiedIdTypesAreCompatible - Compares two types, at least
+/// ObjCQualifiedIdTypesAreCompatible - Compares two types, at least
 /// one of which is a protocol qualified 'id' type. When 'compare'
 /// is true it is for comparison; when false, for assignment/initialization.
-bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs, 
+bool ASTContext::ObjCQualifiedIdTypesAreCompatible(QualType lhs, 
                                                    QualType rhs,
                                                    bool compare) {
   // match id<P..> with an 'id' type in all cases.
   if (const PointerType *PT = lhs->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
-    if (isObjcIdType(PointeeTy) || PointeeTy->isVoidType())
+    if (isObjCIdType(PointeeTy) || PointeeTy->isVoidType())
       return true;
         
   }
   else if (const PointerType *PT = rhs->getAsPointerType()) {
     QualType PointeeTy = PT->getPointeeType();
-    if (isObjcIdType(PointeeTy) || PointeeTy->isVoidType())
+    if (isObjCIdType(PointeeTy) || PointeeTy->isVoidType())
       return true;
     
   }
   
-  ObjcQualifiedInterfaceType *lhsQI = 0;
-  ObjcQualifiedInterfaceType *rhsQI = 0;
-  ObjcInterfaceDecl *lhsID = 0;
-  ObjcInterfaceDecl *rhsID = 0;
-  ObjcQualifiedIdType *lhsQID = dyn_cast<ObjcQualifiedIdType>(lhs);
-  ObjcQualifiedIdType *rhsQID = dyn_cast<ObjcQualifiedIdType>(rhs);
+  ObjCQualifiedInterfaceType *lhsQI = 0;
+  ObjCQualifiedInterfaceType *rhsQI = 0;
+  ObjCInterfaceDecl *lhsID = 0;
+  ObjCInterfaceDecl *rhsID = 0;
+  ObjCQualifiedIdType *lhsQID = dyn_cast<ObjCQualifiedIdType>(lhs);
+  ObjCQualifiedIdType *rhsQID = dyn_cast<ObjCQualifiedIdType>(rhs);
   
   if (lhsQID) {
     if (!rhsQID && rhs->getTypeClass() == Type::Pointer) {
       QualType rtype = 
         cast<PointerType>(rhs.getCanonicalType())->getPointeeType();
       rhsQI = 
-        dyn_cast<ObjcQualifiedInterfaceType>(
+        dyn_cast<ObjCQualifiedInterfaceType>(
           rtype.getCanonicalType().getTypePtr());
       if (!rhsQI) {
-        ObjcInterfaceType *IT = dyn_cast<ObjcInterfaceType>(
+        ObjCInterfaceType *IT = dyn_cast<ObjCInterfaceType>(
                                   rtype.getCanonicalType().getTypePtr());
         if (IT)
           rhsID = IT->getDecl();
@@ -1385,7 +1385,7 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
       return false;
     
     unsigned numRhsProtocols = 0;
-    ObjcProtocolDecl **rhsProtoList = 0;
+    ObjCProtocolDecl **rhsProtoList = 0;
     if (rhsQI) {
       numRhsProtocols = rhsQI->getNumProtocols();
       rhsProtoList = rhsQI->getReferencedProtocols();
@@ -1396,7 +1396,7 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
     }
     
     for (unsigned i =0; i < lhsQID->getNumProtocols(); i++) {
-      ObjcProtocolDecl *lhsProto = lhsQID->getProtocols(i);
+      ObjCProtocolDecl *lhsProto = lhsQID->getProtocols(i);
       bool match = false;
 
       // when comparing an id<P> on lhs with a static type on rhs,
@@ -1407,7 +1407,7 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
           match = true;
       }
       else for (unsigned j = 0; j < numRhsProtocols; j++) {
-        ObjcProtocolDecl *rhsProto = rhsProtoList[j];
+        ObjCProtocolDecl *rhsProto = rhsProtoList[j];
         if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
             compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
           match = true;
@@ -1423,10 +1423,10 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
       QualType ltype = 
       cast<PointerType>(lhs.getCanonicalType())->getPointeeType();
       lhsQI = 
-      dyn_cast<ObjcQualifiedInterfaceType>(
+      dyn_cast<ObjCQualifiedInterfaceType>(
         ltype.getCanonicalType().getTypePtr());
       if (!lhsQI) {
-        ObjcInterfaceType *IT = dyn_cast<ObjcInterfaceType>(
+        ObjCInterfaceType *IT = dyn_cast<ObjCInterfaceType>(
                                   ltype.getCanonicalType().getTypePtr());
         if (IT)
           lhsID = IT->getDecl();
@@ -1436,7 +1436,7 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
       return false;
     
     unsigned numLhsProtocols = 0;
-    ObjcProtocolDecl **lhsProtoList = 0;
+    ObjCProtocolDecl **lhsProtoList = 0;
     if (lhsQI) {
       numLhsProtocols = lhsQI->getNumProtocols();
       lhsProtoList = lhsQI->getReferencedProtocols();
@@ -1450,7 +1450,7 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
     // one of 'id's protocols.
     if (lhsID) {
       for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
-        ObjcProtocolDecl *rhsProto = rhsQID->getProtocols(j);
+        ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
         if (ClassImplementsProtocol(rhsProto, lhsID, compare)) {
           match = true;
           break;
@@ -1459,9 +1459,9 @@ bool ASTContext::ObjcQualifiedIdTypesAreCompatible(QualType lhs,
     }    
     else for (unsigned i =0; i < numLhsProtocols; i++) {
       match = false;
-      ObjcProtocolDecl *lhsProto = lhsProtoList[i];
+      ObjCProtocolDecl *lhsProto = lhsProtoList[i];
       for (unsigned j = 0; j < rhsQID->getNumProtocols(); j++) {
-        ObjcProtocolDecl *rhsProto = rhsQID->getProtocols(j);
+        ObjCProtocolDecl *rhsProto = rhsQID->getProtocols(j);
         if (ProtocolCompatibleWithProtocol(lhsProto, rhsProto) ||
           compare && ProtocolCompatibleWithProtocol(rhsProto, lhsProto)) {
           match = true;
@@ -1501,8 +1501,8 @@ bool ASTContext::tagTypesAreCompatible(QualType lhs, QualType rhs) {
       return true;
   }
   // "Class" and "id" are compatible built-in structure types.
-  if (isObjcIdType(lhs) && isObjcClassType(rhs) ||
-      isObjcClassType(lhs) && isObjcIdType(rhs))
+  if (isObjCIdType(lhs) && isObjCClassType(rhs) ||
+      isObjCClassType(lhs) && isObjCIdType(rhs))
     return true;
   return false;
 }
@@ -1616,7 +1616,7 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
     // For Objective-C, it is possible for two types to be compatible
     // when their classes don't match (when dealing with "id"). If either type
     // is an interface, we defer to objcTypesAreCompatible(). 
-    if (lcanon->isObjcInterfaceType() || rcanon->isObjcInterfaceType())
+    if (lcanon->isObjCInterfaceType() || rcanon->isObjCInterfaceType())
       return objcTypesAreCompatible(lcanon, rcanon);
     return false;
   }
@@ -1633,12 +1633,12 @@ bool ASTContext::typesAreCompatible(QualType lhs, QualType rhs) {
       return tagTypesAreCompatible(lcanon, rcanon);
     case Type::Builtin:
       return builtinTypesAreCompatible(lcanon, rcanon); 
-    case Type::ObjcInterface:
+    case Type::ObjCInterface:
       return interfaceTypesAreCompatible(lcanon, rcanon); 
     case Type::Vector:
     case Type::OCUVector:
       return vectorTypesAreCompatible(lcanon, rcanon);
-    case Type::ObjcQualifiedInterface:
+    case Type::ObjCQualifiedInterface:
       return QualifiedInterfaceTypesAreCompatible(lcanon, rcanon);
     default:
       assert(0 && "unexpected type");

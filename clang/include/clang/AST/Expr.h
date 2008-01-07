@@ -1283,15 +1283,15 @@ public:
   
 /// ObjCProtocolExpr used for protocol in Objective-C.
 class ObjCProtocolExpr : public Expr {    
-  ObjcProtocolDecl *Protocol;    
+  ObjCProtocolDecl *Protocol;    
   SourceLocation AtLoc, RParenLoc;
 public:
-  ObjCProtocolExpr(QualType T, ObjcProtocolDecl *protocol,
+  ObjCProtocolExpr(QualType T, ObjCProtocolDecl *protocol,
                    SourceLocation at, SourceLocation rp)
   : Expr(ObjCProtocolExprClass, T), Protocol(protocol), 
   AtLoc(at), RParenLoc(rp) {}
     
-  ObjcProtocolDecl *getProtocol() const { return Protocol; }
+  ObjCProtocolDecl *getProtocol() const { return Protocol; }
     
   SourceLocation getAtLoc() const { return AtLoc; }
   SourceLocation getRParenLoc() const { return RParenLoc; }
@@ -1309,20 +1309,20 @@ public:
 
 /// ObjCIvarRefExpr - A reference to an ObjC instance variable.
 class ObjCIvarRefExpr : public Expr {
-  class ObjcIvarDecl *D; 
+  class ObjCIvarDecl *D; 
   SourceLocation Loc;
   Expr *Base;
   bool IsArrow:1;      // True if this is "X->F", false if this is "X.F".
   bool IsFreeIvar:1;   // True if ivar reference has no base (self assumed).
   
 public:
-  ObjCIvarRefExpr(ObjcIvarDecl *d, QualType t, SourceLocation l, Expr *base=0, 
+  ObjCIvarRefExpr(ObjCIvarDecl *d, QualType t, SourceLocation l, Expr *base=0, 
                   bool arrow = false, bool freeIvar = false) : 
     Expr(ObjCIvarRefExprClass, t), D(d), Loc(l), Base(base), IsArrow(arrow),
     IsFreeIvar(freeIvar) {}
   
-  ObjcIvarDecl *getDecl() { return D; }
-  const ObjcIvarDecl *getDecl() const { return D; }
+  ObjCIvarDecl *getDecl() { return D; }
+  const ObjCIvarDecl *getDecl() const { return D; }
   virtual SourceRange getSourceRange() const { return SourceRange(Loc); }
   Expr *const getBase() const { return Base; }
   const bool isArrow() const { return IsArrow; }
@@ -1356,7 +1356,7 @@ class ObjCMessageExpr : public Expr {
   // A method prototype for this message (optional). 
   // FIXME: Since method decls contain the selector, and most messages have a
   // prototype, consider devising a scheme for unifying SelName/MethodProto.
-  ObjcMethodDecl *MethodProto;
+  ObjCMethodDecl *MethodProto;
   
   IdentifierInfo *ClassName; // optional - 0 for instance messages.
   
@@ -1365,12 +1365,12 @@ public:
   // constructor for class messages. 
   // FIXME: clsName should be typed to ObjCInterfaceType
   ObjCMessageExpr(IdentifierInfo *clsName, Selector selInfo,
-                  QualType retType, ObjcMethodDecl *methDecl,
+                  QualType retType, ObjCMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs, unsigned NumArgs);
   // constructor for instance messages.
   ObjCMessageExpr(Expr *receiver, Selector selInfo,
-                  QualType retType, ObjcMethodDecl *methDecl,
+                  QualType retType, ObjCMethodDecl *methDecl,
                   SourceLocation LBrac, SourceLocation RBrac,
                   Expr **ArgExprs, unsigned NumArgs);
   ~ObjCMessageExpr() {
@@ -1383,8 +1383,8 @@ public:
   const Selector &getSelector() const { return SelName; }
   Selector &getSelector() { return SelName; }
 
-  const ObjcMethodDecl *getMethodDecl() const { return MethodProto; }
-  ObjcMethodDecl *getMethodDecl() { return MethodProto; }
+  const ObjCMethodDecl *getMethodDecl() const { return MethodProto; }
+  ObjCMethodDecl *getMethodDecl() { return MethodProto; }
   
   const IdentifierInfo *getClassName() const { return ClassName; }
   IdentifierInfo *getClassName() { return ClassName; }

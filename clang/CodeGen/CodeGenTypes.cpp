@@ -265,15 +265,15 @@ const llvm::Type *CodeGenTypes::ConvertNewType(QualType T) {
     return llvm::FunctionType::get(ResultType, ArgTys, isVarArg);
   }
 
-  case Type::ObjcInterface:
+  case Type::ObjCInterface:
     assert(0 && "FIXME: add missing functionality here");
     break;
       
-  case Type::ObjcQualifiedInterface:
+  case Type::ObjCQualifiedInterface:
     assert(0 && "FIXME: add missing functionality here");
     break;
 
-  case Type::ObjcQualifiedId:
+  case Type::ObjCQualifiedId:
     assert(0 && "FIXME: add missing functionality here");
     break;
 

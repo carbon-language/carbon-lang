@@ -296,7 +296,7 @@ void StmtPrinter::VisitForStmt(ForStmt *Node) {
   }
 }
 
-void StmtPrinter::VisitObjcForCollectionStmt(ObjcForCollectionStmt *Node) {
+void StmtPrinter::VisitObjCForCollectionStmt(ObjCForCollectionStmt *Node) {
   Indent() << "for (";
   if (DeclStmt *DS = dyn_cast<DeclStmt>(Node->getElement()))
     PrintRawDecl(DS->getDecl());
@@ -406,18 +406,18 @@ void StmtPrinter::VisitAsmStmt(AsmStmt *Node) {
   OS << ");\n";
 }
 
-void StmtPrinter::VisitObjcAtTryStmt(ObjcAtTryStmt *Node) {
+void StmtPrinter::VisitObjCAtTryStmt(ObjCAtTryStmt *Node) {
   Indent() << "@try";
   if (CompoundStmt *TS = dyn_cast<CompoundStmt>(Node->getTryBody())) {
     PrintRawCompoundStmt(TS);
     OS << "\n";
   }
   
-  for (ObjcAtCatchStmt *catchStmt = 
-         static_cast<ObjcAtCatchStmt *>(Node->getCatchStmts());
+  for (ObjCAtCatchStmt *catchStmt = 
+         static_cast<ObjCAtCatchStmt *>(Node->getCatchStmts());
        catchStmt; 
        catchStmt = 
-         static_cast<ObjcAtCatchStmt *>(catchStmt->getNextCatchStmt())) {
+         static_cast<ObjCAtCatchStmt *>(catchStmt->getNextCatchStmt())) {
     Indent() << "@catch(";
     if (catchStmt->getCatchParamStmt()) {
       if (DeclStmt *DS = dyn_cast<DeclStmt>(catchStmt->getCatchParamStmt()))
@@ -431,7 +431,7 @@ void StmtPrinter::VisitObjcAtTryStmt(ObjcAtTryStmt *Node) {
       } 
   }
   
-  if (ObjcAtFinallyStmt *FS =static_cast<ObjcAtFinallyStmt *>(
+  if (ObjCAtFinallyStmt *FS =static_cast<ObjCAtFinallyStmt *>(
           Node->getFinallyStmt())) {
     Indent() << "@finally";
     PrintRawCompoundStmt(dyn_cast<CompoundStmt>(FS->getFinallyBody()));
@@ -439,14 +439,14 @@ void StmtPrinter::VisitObjcAtTryStmt(ObjcAtTryStmt *Node) {
   }  
 }
 
-void StmtPrinter::VisitObjcAtFinallyStmt(ObjcAtFinallyStmt *Node) {
+void StmtPrinter::VisitObjCAtFinallyStmt(ObjCAtFinallyStmt *Node) {
 }
 
-void StmtPrinter::VisitObjcAtCatchStmt (ObjcAtCatchStmt *Node) {
+void StmtPrinter::VisitObjCAtCatchStmt (ObjCAtCatchStmt *Node) {
   Indent() << "@catch (...) { /* todo */ } \n";
 }
 
-void StmtPrinter::VisitObjcAtThrowStmt (ObjcAtThrowStmt *Node) {
+void StmtPrinter::VisitObjCAtThrowStmt (ObjCAtThrowStmt *Node) {
   Indent() << "@throw";
   if (Node->getThrowExpr()) {
     OS << " ";

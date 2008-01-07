@@ -41,8 +41,8 @@ class ASTContext {
   llvm::FoldingSet<VectorType> VectorTypes;
   llvm::FoldingSet<FunctionTypeNoProto> FunctionTypeNoProtos;
   llvm::FoldingSet<FunctionTypeProto> FunctionTypeProtos;
-  llvm::FoldingSet<ObjcQualifiedInterfaceType> ObjcQualifiedInterfaceTypes;
-  llvm::FoldingSet<ObjcQualifiedIdType> ObjcQualifiedIdTypes;
+  llvm::FoldingSet<ObjCQualifiedInterfaceType> ObjCQualifiedInterfaceTypes;
+  llvm::FoldingSet<ObjCQualifiedIdType> ObjCQualifiedIdTypes;
   /// ASTRecordLayouts - A cache mapping from RecordDecls to ASTRecordLayouts.
   ///  This is lazily created.  This is intentionally not serialized.
   llvm::DenseMap<const RecordDecl*, const ASTRecordLayout*> ASTRecordLayouts;
@@ -52,23 +52,23 @@ class ASTContext {
   /// a builtin that takes a valist is encountered.
   QualType BuiltinVaListType;
   
-  /// ObjcIdType - a psuedo built-in typedef type (set by Sema).
-  QualType ObjcIdType;
+  /// ObjCIdType - a psuedo built-in typedef type (set by Sema).
+  QualType ObjCIdType;
   const RecordType *IdStructType;
   
-  /// ObjcSelType - another psuedo built-in typedef type (set by Sema).
-  QualType ObjcSelType;
+  /// ObjCSelType - another psuedo built-in typedef type (set by Sema).
+  QualType ObjCSelType;
   const RecordType *SelStructType;
   
-  /// ObjcProtoType - another psuedo built-in typedef type (set by Sema).
-  QualType ObjcProtoType;
+  /// ObjCProtoType - another psuedo built-in typedef type (set by Sema).
+  QualType ObjCProtoType;
   const RecordType *ProtoStructType;
 
-  /// ObjcClassType - another psuedo built-in typedef type (set by Sema).
-  QualType ObjcClassType;
+  /// ObjCClassType - another psuedo built-in typedef type (set by Sema).
+  QualType ObjCClassType;
   const RecordType *ClassStructType;
   
-  QualType ObjcConstantStringType;
+  QualType ObjCConstantStringType;
   RecordDecl *CFConstantStringTypeDecl;
 
   SourceManager &SourceMgr;
@@ -162,18 +162,18 @@ public:
   /// getTypedefType - Return the unique reference to the type for the
   /// specified typename decl.
   QualType getTypedefType(TypedefDecl *Decl);
-  QualType getObjcInterfaceType(ObjcInterfaceDecl *Decl);
+  QualType getObjCInterfaceType(ObjCInterfaceDecl *Decl);
   
-  /// getObjcQualifiedInterfaceType - Return a 
-  /// ObjcQualifiedInterfaceType type for the given interface decl and
+  /// getObjCQualifiedInterfaceType - Return a 
+  /// ObjCQualifiedInterfaceType type for the given interface decl and
   /// the conforming protocol list.
-  QualType getObjcQualifiedInterfaceType(ObjcInterfaceDecl *Decl,
-             ObjcProtocolDecl **ProtocolList, unsigned NumProtocols);
+  QualType getObjCQualifiedInterfaceType(ObjCInterfaceDecl *Decl,
+             ObjCProtocolDecl **ProtocolList, unsigned NumProtocols);
   
-  /// getObjcQualifiedIdType - Return an ObjcQualifiedIdType for a 
+  /// getObjCQualifiedIdType - Return an ObjCQualifiedIdType for a 
   /// given 'id' and conforming protocol list.
-  QualType getObjcQualifiedIdType(QualType idType,
-                                  ObjcProtocolDecl **ProtocolList, 
+  QualType getObjCQualifiedIdType(QualType idType,
+                                  ObjCProtocolDecl **ProtocolList, 
                                   unsigned NumProtocols);
                                   
 
@@ -198,39 +198,39 @@ public:
   QualType getCFConstantStringType(); 
   
   // This setter/getter represents the ObjC type for an NSConstantString.
-  void setObjcConstantStringInterface(ObjcInterfaceDecl *Decl);
-  QualType getObjcConstantStringInterface() const { 
-    return ObjcConstantStringType; 
+  void setObjCConstantStringInterface(ObjCInterfaceDecl *Decl);
+  QualType getObjCConstantStringInterface() const { 
+    return ObjCConstantStringType; 
   }
 
   // Return the ObjC type encoding for a given type.
-  void getObjcEncodingForType(QualType t, std::string &S) const;
+  void getObjCEncodingForType(QualType t, std::string &S) const;
   
   // Put the string version of type qualifiers into S.
-  void getObjcEncodingForTypeQualifier(Decl::ObjcDeclQualifier QT, 
+  void getObjCEncodingForTypeQualifier(Decl::ObjCDeclQualifier QT, 
                                        std::string &S) const;
   
-  /// getObjcEncodingForMethodDecl - Return the encoded type for this method
+  /// getObjCEncodingForMethodDecl - Return the encoded type for this method
   /// declaration.
-  void getObjcEncodingForMethodDecl(ObjcMethodDecl *Decl, std::string &S);
+  void getObjCEncodingForMethodDecl(ObjCMethodDecl *Decl, std::string &S);
   
-  /// getObjcEncodingTypeSize returns size of type for objective-c encoding
+  /// getObjCEncodingTypeSize returns size of type for objective-c encoding
   /// purpose.
-  int getObjcEncodingTypeSize(QualType t);
+  int getObjCEncodingTypeSize(QualType t);
     
   // This setter/getter repreents the ObjC 'id' type. It is setup lazily, by
   // Sema.
-  void setObjcIdType(TypedefDecl *Decl);
-  QualType getObjcIdType() const { return ObjcIdType; }
+  void setObjCIdType(TypedefDecl *Decl);
+  QualType getObjCIdType() const { return ObjCIdType; }
   
-  void setObjcSelType(TypedefDecl *Decl);
-  QualType getObjcSelType() const { return ObjcSelType; }
+  void setObjCSelType(TypedefDecl *Decl);
+  QualType getObjCSelType() const { return ObjCSelType; }
   
-  void setObjcProtoType(QualType QT);
-  QualType getObjcProtoType() const { return ObjcProtoType; }
+  void setObjCProtoType(QualType QT);
+  QualType getObjCProtoType() const { return ObjCProtoType; }
   
-  void setObjcClassType(TypedefDecl *Decl);
-  QualType getObjcClassType() const { return ObjcClassType; }
+  void setObjCClassType(TypedefDecl *Decl);
+  QualType getObjCClassType() const { return ObjCClassType; }
   
   void setBuiltinVaListType(QualType T);
   QualType getBuiltinVaListType() const { return BuiltinVaListType; }
@@ -295,20 +295,20 @@ public:
   bool vectorTypesAreCompatible(QualType, QualType);
   
   bool QualifiedInterfaceTypesAreCompatible(QualType, QualType);
-  bool ObjcQualifiedIdTypesAreCompatible(QualType, QualType, bool = false);
+  bool ObjCQualifiedIdTypesAreCompatible(QualType, QualType, bool = false);
   bool objcTypesAreCompatible(QualType, QualType);
-  bool isObjcIdType(QualType T) const {
+  bool isObjCIdType(QualType T) const {
     if (!IdStructType) // ObjC isn't enabled
       return false;
     return T->getAsStructureType() == IdStructType;
   }
-  bool isObjcClassType(QualType T) const {
+  bool isObjCClassType(QualType T) const {
     if (!ClassStructType) // ObjC isn't enabled
       return false;
     return T->getAsStructureType() == ClassStructType;
   }
-  bool isObjcSelType(QualType T) const {
-    assert(SelStructType && "isObjcSelType used before 'SEL' type is built");
+  bool isObjCSelType(QualType T) const {
+    assert(SelStructType && "isObjCSelType used before 'SEL' type is built");
     return T->getAsStructureType() == SelStructType;
   }
 

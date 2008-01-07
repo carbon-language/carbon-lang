@@ -33,10 +33,10 @@ Sema::DeclTy *Sema::isTypeName(const IdentifierInfo &II, Scope *S) const {
     IIDecl = cast<ScopedDecl>(IIDecl)->getNext();
   if (!IIDecl)
     return 0;
-  if (isa<TypedefDecl>(IIDecl) || isa<ObjcInterfaceDecl>(IIDecl))
+  if (isa<TypedefDecl>(IIDecl) || isa<ObjCInterfaceDecl>(IIDecl))
     return IIDecl;
-  if (ObjcCompatibleAliasDecl *ADecl = 
-      dyn_cast<ObjcCompatibleAliasDecl>(IIDecl))
+  if (ObjCCompatibleAliasDecl *ADecl = 
+      dyn_cast<ObjCCompatibleAliasDecl>(IIDecl))
     return ADecl->getClassInterface(); 
   return 0;
 }
@@ -98,17 +98,17 @@ ScopedDecl *Sema::LookupInterfaceDecl(IdentifierInfo *ClassName) {
     if (IDecl->getIdentifierNamespace() == Decl::IDNS_Ordinary)
       break;
   
-  if (ObjcCompatibleAliasDecl *ADecl =
-      dyn_cast_or_null<ObjcCompatibleAliasDecl>(IDecl))
+  if (ObjCCompatibleAliasDecl *ADecl =
+      dyn_cast_or_null<ObjCCompatibleAliasDecl>(IDecl))
     return ADecl->getClassInterface();
   return IDecl;
 }
 
-/// getObjcInterfaceDecl - Look up a for a class declaration in the scope.
+/// getObjCInterfaceDecl - Look up a for a class declaration in the scope.
 /// return 0 if one not found.
-ObjcInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
+ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *Id) {
   ScopedDecl *IdDecl = LookupInterfaceDecl(Id);
-  return cast_or_null<ObjcInterfaceDecl>(IdDecl);
+  return cast_or_null<ObjCInterfaceDecl>(IdDecl);
 }
 
 /// LookupScopedDecl - Look up the inner-most declaration in the specified
@@ -208,7 +208,7 @@ TypedefDecl *Sema::MergeTypeDefDecl(TypedefDecl *New, ScopedDecl *OldD) {
   
   // Allow multiple definitions for ObjC built-in typedefs.
   // FIXME: Verify the underlying types are equivalent!
-  if (getLangOptions().ObjC1 && isBuiltinObjcType(New))
+  if (getLangOptions().ObjC1 && isBuiltinObjCType(New))
     return Old;
     
   // TODO: CHECK FOR CONFLICTS, multiple decls with same name in one scope.
@@ -697,7 +697,7 @@ Sema::ActOnDeclarator(Scope *S, Declarator &D, DeclTy *lastDecl) {
     }
     New = NewFD;
   } else {
-    if (R.getTypePtr()->isObjcInterfaceType()) {
+    if (R.getTypePtr()->isObjCInterfaceType()) {
       Diag(D.getIdentifierLoc(), diag::err_statically_allocated_object,
            D.getIdentifier()->getName());
       InvalidDecl = true;
@@ -983,7 +983,7 @@ Sema::DeclTy *Sema::ActOnFinishFunctionBody(DeclTy *D, StmtTy *Body) {
     FD->setBody((Stmt*)Body);
     assert(FD == CurFunctionDecl && "Function parsing confused");
     CurFunctionDecl = 0;
-  } else if (ObjcMethodDecl *MD = dyn_cast<ObjcMethodDecl>(dcl)) {
+  } else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(dcl)) {
     MD->setBody((Stmt*)Body);
     CurMethodDecl = 0;
   }  
@@ -1204,14 +1204,14 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
   
   if (isa<RecordDecl>(static_cast<Decl *>(TagDecl)))
     NewFD = new FieldDecl(Loc, II, T, BitWidth);
-  else if (isa<ObjcInterfaceDecl>(static_cast<Decl *>(TagDecl)) ||
-           isa<ObjcImplementationDecl>(static_cast<Decl *>(TagDecl)) ||
-           isa<ObjcCategoryDecl>(static_cast<Decl *>(TagDecl)) ||
+  else if (isa<ObjCInterfaceDecl>(static_cast<Decl *>(TagDecl)) ||
+           isa<ObjCImplementationDecl>(static_cast<Decl *>(TagDecl)) ||
+           isa<ObjCCategoryDecl>(static_cast<Decl *>(TagDecl)) ||
            // FIXME: ivars are currently used to model properties, and
            // properties can appear within a protocol.
-           // See corresponding FIXME in DeclObjC.h:ObjcPropertyDecl.
-           isa<ObjcProtocolDecl>(static_cast<Decl *>(TagDecl)))
-    NewFD = new ObjcIvarDecl(Loc, II, T);
+           // See corresponding FIXME in DeclObjC.h:ObjCPropertyDecl.
+           isa<ObjCProtocolDecl>(static_cast<Decl *>(TagDecl)))
+    NewFD = new ObjCIvarDecl(Loc, II, T);
   else
     assert(0 && "Sema::ActOnField(): Unknown TagDecl");
     
@@ -1222,13 +1222,13 @@ Sema::DeclTy *Sema::ActOnField(Scope *S, DeclTy *TagDecl,
 
 /// TranslateIvarVisibility - Translate visibility from a token ID to an 
 ///  AST enum value.
-static ObjcIvarDecl::AccessControl
+static ObjCIvarDecl::AccessControl
 TranslateIvarVisibility(tok::ObjCKeywordKind ivarVisibility) {
   switch (ivarVisibility) {
-    case tok::objc_private: return ObjcIvarDecl::Private;
-    case tok::objc_public: return ObjcIvarDecl::Public;
-    case tok::objc_protected: return ObjcIvarDecl::Protected;
-    case tok::objc_package: return ObjcIvarDecl::Package;
+    case tok::objc_private: return ObjCIvarDecl::Private;
+    case tok::objc_public: return ObjCIvarDecl::Public;
+    case tok::objc_protected: return ObjCIvarDecl::Protected;
+    case tok::objc_package: return ObjCIvarDecl::Package;
     default: assert(false && "Unknown visitibility kind");
   }
 }
@@ -1271,7 +1271,7 @@ void Sema::ActOnFields(Scope* S,
     
     // If we have visibility info, make sure the AST is set accordingly.
     if (visibility)
-      cast<ObjcIvarDecl>(FD)->setAccessControl(
+      cast<ObjCIvarDecl>(FD)->setAccessControl(
                                 TranslateIvarVisibility(visibility[i]));
       
     // C99 6.7.2.1p2 - A field may not be a function type.
@@ -1337,7 +1337,7 @@ void Sema::ActOnFields(Scope* S,
       }
     }
     /// A field cannot be an Objective-c object
-    if (FDTy->isObjcInterfaceType()) {
+    if (FDTy->isObjCInterfaceType()) {
       Diag(FD->getLocation(), diag::err_statically_allocated_object,
            FD->getName());
       FD->setInvalidDecl();
@@ -1371,16 +1371,16 @@ void Sema::ActOnFields(Scope* S,
   if (Record)
     Record->defineBody(&RecFields[0], RecFields.size());
   else {
-    ObjcIvarDecl **ClsFields = 
-                    reinterpret_cast<ObjcIvarDecl**>(&RecFields[0]);
-    if (isa<ObjcInterfaceDecl>(static_cast<Decl*>(RecDecl)))
-      cast<ObjcInterfaceDecl>(static_cast<Decl*>(RecDecl))->
+    ObjCIvarDecl **ClsFields = 
+                    reinterpret_cast<ObjCIvarDecl**>(&RecFields[0]);
+    if (isa<ObjCInterfaceDecl>(static_cast<Decl*>(RecDecl)))
+      cast<ObjCInterfaceDecl>(static_cast<Decl*>(RecDecl))->
         addInstanceVariablesToClass(ClsFields, RecFields.size(), RBrac);
-    else if (isa<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl))) {
-      ObjcImplementationDecl* IMPDecl = 
-        cast<ObjcImplementationDecl>(static_cast<Decl*>(RecDecl));
-      assert(IMPDecl && "ActOnFields - missing ObjcImplementationDecl");
-      IMPDecl->ObjcAddInstanceVariablesToClassImpl(ClsFields, RecFields.size());
+    else if (isa<ObjCImplementationDecl>(static_cast<Decl*>(RecDecl))) {
+      ObjCImplementationDecl* IMPDecl = 
+        cast<ObjCImplementationDecl>(static_cast<Decl*>(RecDecl));
+      assert(IMPDecl && "ActOnFields - missing ObjCImplementationDecl");
+      IMPDecl->ObjCAddInstanceVariablesToClassImpl(ClsFields, RecFields.size());
       CheckImplementationIvars(IMPDecl, ClsFields, RecFields.size(), RBrac);
     }
   }

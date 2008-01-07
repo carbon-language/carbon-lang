@@ -560,7 +560,7 @@ Sema::CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
 static DeclRefExpr* EvalAddr(Expr *E) {
   // We should only be called for evaluating pointer expressions.
   assert((E->getType()->isPointerType() || 
-          E->getType()->isObjcQualifiedIdType()) &&
+          E->getType()->isObjCQualifiedIdType()) &&
          "EvalAddr only works on pointers");
     
   // Our "symbolic interpreter" is just a dispatch off the currently
@@ -621,7 +621,7 @@ static DeclRefExpr* EvalAddr(Expr *E) {
     Expr* SubExpr = IE->getSubExpr();
     
     if (SubExpr->getType()->isPointerType() ||
-        SubExpr->getType()->isObjcQualifiedIdType())
+        SubExpr->getType()->isObjCQualifiedIdType())
       return EvalAddr(SubExpr);
     else
       return EvalVal(SubExpr);

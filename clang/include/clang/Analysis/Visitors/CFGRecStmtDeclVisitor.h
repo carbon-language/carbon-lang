@@ -63,7 +63,7 @@ public:
         DISPATCH_CASE(Union,RecordDecl)     // FIXME: Refine.
         DISPATCH_CASE(Class,RecordDecl)     // FIXME: Refine. 
         DISPATCH_CASE(Enum,EnumDecl)
-        DISPATCH_CASE(ObjcInterface,ObjcInterfaceDecl)
+        DISPATCH_CASE(ObjCInterface,ObjCInterfaceDecl)
       default:
         assert(false && "Subtype of ScopedDecl not handled.");
     }
@@ -78,11 +78,11 @@ public:
   DEFAULT_DISPATCH(TypedefDecl)
   DEFAULT_DISPATCH(RecordDecl)
   DEFAULT_DISPATCH(EnumDecl)
-  DEFAULT_DISPATCH(ObjcInterfaceDecl)
-  DEFAULT_DISPATCH(ObjcClassDecl)
-  DEFAULT_DISPATCH(ObjcMethodDecl)
-  DEFAULT_DISPATCH(ObjcProtocolDecl)
-  DEFAULT_DISPATCH(ObjcCategoryDecl)
+  DEFAULT_DISPATCH(ObjCInterfaceDecl)
+  DEFAULT_DISPATCH(ObjCClassDecl)
+  DEFAULT_DISPATCH(ObjCMethodDecl)
+  DEFAULT_DISPATCH(ObjCProtocolDecl)
+  DEFAULT_DISPATCH(ObjCCategoryDecl)
 };
 
 } // end namespace clang

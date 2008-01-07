@@ -33,10 +33,10 @@ static unsigned nProtocolDecls = 0;
 static unsigned nForwardProtocolDecls = 0;
 static unsigned nCategoryDecls = 0;
 static unsigned nIvarDecls = 0;
-static unsigned nObjcImplementationDecls = 0;
-static unsigned nObjcCategoryImpl = 0;
-static unsigned nObjcCompatibleAlias = 0;
-static unsigned nObjcPropertyDecl = 0;
+static unsigned nObjCImplementationDecls = 0;
+static unsigned nObjCCategoryImpl = 0;
+static unsigned nObjCCompatibleAlias = 0;
+static unsigned nObjCPropertyDecl = 0;
 
 static bool StatSwitch = false;
 
@@ -55,16 +55,16 @@ const char *Decl::getDeclKindName() const {
     return "ParmVar";
   case EnumConstant:
     return "EnumConstant";
-  case ObjcInterface:
-    return "ObjcInterface";
-  case ObjcClass:
-    return "ObjcClass";
-  case ObjcMethod:
-    return "ObjcMethod";
-  case ObjcProtocol:
-    return "ObjcProtocol";
-  case ObjcForwardProtocol:
-    return "ObjcForwardProtocol"; 
+  case ObjCInterface:
+    return "ObjCInterface";
+  case ObjCClass:
+    return "ObjCClass";
+  case ObjCMethod:
+    return "ObjCMethod";
+  case ObjCProtocol:
+    return "ObjCProtocol";
+  case ObjCForwardProtocol:
+    return "ObjCForwardProtocol"; 
   case Struct:
     return "Struct";
   case Union:
@@ -114,49 +114,49 @@ void Decl::PrintStats() {
 	  nTypedef, (int)sizeof(TypedefDecl),int(nTypedef*sizeof(TypedefDecl)));
   // Objective-C decls...
   fprintf(stderr, "    %d interface decls, %d each (%d bytes)\n", 
-	  nInterfaceDecls, (int)sizeof(ObjcInterfaceDecl),
-	  int(nInterfaceDecls*sizeof(ObjcInterfaceDecl)));
+	  nInterfaceDecls, (int)sizeof(ObjCInterfaceDecl),
+	  int(nInterfaceDecls*sizeof(ObjCInterfaceDecl)));
   fprintf(stderr, "    %d instance variable decls, %d each (%d bytes)\n", 
-	  nIvarDecls, (int)sizeof(ObjcIvarDecl),
-	  int(nIvarDecls*sizeof(ObjcIvarDecl)));
+	  nIvarDecls, (int)sizeof(ObjCIvarDecl),
+	  int(nIvarDecls*sizeof(ObjCIvarDecl)));
   fprintf(stderr, "    %d class decls, %d each (%d bytes)\n", 
-	  nClassDecls, (int)sizeof(ObjcClassDecl),
-	  int(nClassDecls*sizeof(ObjcClassDecl)));
+	  nClassDecls, (int)sizeof(ObjCClassDecl),
+	  int(nClassDecls*sizeof(ObjCClassDecl)));
   fprintf(stderr, "    %d method decls, %d each (%d bytes)\n", 
-	  nMethodDecls, (int)sizeof(ObjcMethodDecl),
-	  int(nMethodDecls*sizeof(ObjcMethodDecl)));
+	  nMethodDecls, (int)sizeof(ObjCMethodDecl),
+	  int(nMethodDecls*sizeof(ObjCMethodDecl)));
   fprintf(stderr, "    %d protocol decls, %d each (%d bytes)\n", 
-	  nProtocolDecls, (int)sizeof(ObjcProtocolDecl),
-	  int(nProtocolDecls*sizeof(ObjcProtocolDecl)));
+	  nProtocolDecls, (int)sizeof(ObjCProtocolDecl),
+	  int(nProtocolDecls*sizeof(ObjCProtocolDecl)));
   fprintf(stderr, "    %d forward protocol decls, %d each (%d bytes)\n", 
-	  nForwardProtocolDecls, (int)sizeof(ObjcForwardProtocolDecl),
-	  int(nForwardProtocolDecls*sizeof(ObjcForwardProtocolDecl)));
+	  nForwardProtocolDecls, (int)sizeof(ObjCForwardProtocolDecl),
+	  int(nForwardProtocolDecls*sizeof(ObjCForwardProtocolDecl)));
   fprintf(stderr, "    %d category decls, %d each (%d bytes)\n", 
-	  nCategoryDecls, (int)sizeof(ObjcCategoryDecl),
-	  int(nCategoryDecls*sizeof(ObjcCategoryDecl)));
+	  nCategoryDecls, (int)sizeof(ObjCCategoryDecl),
+	  int(nCategoryDecls*sizeof(ObjCCategoryDecl)));
 
   fprintf(stderr, "    %d class implementation decls, %d each (%d bytes)\n", 
-	  nObjcImplementationDecls, (int)sizeof(ObjcImplementationDecl),
-	  int(nObjcImplementationDecls*sizeof(ObjcImplementationDecl)));
+	  nObjCImplementationDecls, (int)sizeof(ObjCImplementationDecl),
+	  int(nObjCImplementationDecls*sizeof(ObjCImplementationDecl)));
 
   fprintf(stderr, "    %d class implementation decls, %d each (%d bytes)\n", 
-	  nObjcCategoryImpl, (int)sizeof(ObjcCategoryImplDecl),
-	  int(nObjcCategoryImpl*sizeof(ObjcCategoryImplDecl)));
+	  nObjCCategoryImpl, (int)sizeof(ObjCCategoryImplDecl),
+	  int(nObjCCategoryImpl*sizeof(ObjCCategoryImplDecl)));
 
   fprintf(stderr, "    %d compatibility alias decls, %d each (%d bytes)\n", 
-	  nObjcCompatibleAlias, (int)sizeof(ObjcCompatibleAliasDecl),
-	  int(nObjcCompatibleAlias*sizeof(ObjcCompatibleAliasDecl)));
+	  nObjCCompatibleAlias, (int)sizeof(ObjCCompatibleAliasDecl),
+	  int(nObjCCompatibleAlias*sizeof(ObjCCompatibleAliasDecl)));
   
   fprintf(stderr, "    %d property decls, %d each (%d bytes)\n", 
-	  nObjcPropertyDecl, (int)sizeof(ObjcPropertyDecl),
-	  int(nObjcPropertyDecl*sizeof(ObjcPropertyDecl)));
+	  nObjCPropertyDecl, (int)sizeof(ObjCPropertyDecl),
+	  int(nObjCPropertyDecl*sizeof(ObjCPropertyDecl)));
   
   fprintf(stderr, "Total bytes = %d\n", 
 	  int(nFuncs*sizeof(FunctionDecl)+nBlockVars*sizeof(BlockVarDecl)+
 	      nFileVars*sizeof(FileVarDecl)+nParmVars*sizeof(ParmVarDecl)+
 	      nFieldDecls*sizeof(FieldDecl)+nSUC*sizeof(RecordDecl)+
 	      nEnumDecls*sizeof(EnumDecl)+nEnumConst*sizeof(EnumConstantDecl)+
-	      nTypedef*sizeof(TypedefDecl)) /* FIXME: add Objc decls */);
+	      nTypedef*sizeof(TypedefDecl)) /* FIXME: add ObjC decls */);
 }
 
 void Decl::addDeclKind(const Kind k) {
@@ -190,38 +190,38 @@ void Decl::addDeclKind(const Kind k) {
     case Enum:
       nEnumDecls++;
       break;
-    case ObjcInterface:
+    case ObjCInterface:
       nInterfaceDecls++;
       break;
-    case ObjcClass:
+    case ObjCClass:
       nClassDecls++;
       break;
-    case ObjcMethod:
+    case ObjCMethod:
       nMethodDecls++;
       break;
-    case ObjcProtocol:
+    case ObjCProtocol:
       nProtocolDecls++;
       break;
-    case ObjcForwardProtocol:
+    case ObjCForwardProtocol:
       nForwardProtocolDecls++;
       break;
-    case ObjcCategory:
+    case ObjCCategory:
      nCategoryDecls++;
      break;
-    case ObjcIvar:
+    case ObjCIvar:
       nIvarDecls++;
       break;
-    case ObjcImplementation: 
-      nObjcImplementationDecls++;
+    case ObjCImplementation: 
+      nObjCImplementationDecls++;
       break;
-    case ObjcCategoryImpl:
-      nObjcCategoryImpl++;
+    case ObjCCategoryImpl:
+      nObjCCategoryImpl++;
       break;
     case CompatibleAlias:
-      nObjcCompatibleAlias++;
+      nObjCCompatibleAlias++;
       break;
     case PropertyDecl:
-      nObjcPropertyDecl++;
+      nObjCPropertyDecl++;
       break;
   }
 }
@@ -283,7 +283,7 @@ FieldDecl* RecordDecl::getMember(IdentifierInfo *name) {
   return 0;
 }
 
-void ObjcMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,
+void ObjCMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,
                                      unsigned NumParams) {
   assert(ParamInfo == 0 && "Already has param info!");
 
@@ -295,103 +295,103 @@ void ObjcMethodDecl::setMethodParams(ParmVarDecl **NewParamInfo,
   }
 }
 
-ObjcMethodDecl::~ObjcMethodDecl() {
+ObjCMethodDecl::~ObjCMethodDecl() {
   delete[] ParamInfo;
 }
 
-/// ObjcAddInstanceVariablesToClass - Inserts instance variables
-/// into ObjcInterfaceDecl's fields.
+/// ObjCAddInstanceVariablesToClass - Inserts instance variables
+/// into ObjCInterfaceDecl's fields.
 ///
-void ObjcInterfaceDecl::addInstanceVariablesToClass(ObjcIvarDecl **ivars,
+void ObjCInterfaceDecl::addInstanceVariablesToClass(ObjCIvarDecl **ivars,
                                                     unsigned numIvars,
                                                     SourceLocation RBrac) {
   NumIvars = numIvars;
   if (numIvars) {
-    Ivars = new ObjcIvarDecl*[numIvars];
-    memcpy(Ivars, ivars, numIvars*sizeof(ObjcIvarDecl*));
+    Ivars = new ObjCIvarDecl*[numIvars];
+    memcpy(Ivars, ivars, numIvars*sizeof(ObjCIvarDecl*));
   }
   setLocEnd(RBrac);
 }
 
-/// ObjcAddInstanceVariablesToClassImpl - Checks for correctness of Instance 
+/// ObjCAddInstanceVariablesToClassImpl - Checks for correctness of Instance 
 /// Variables (Ivars) relative to what declared in @implementation;s class. 
-/// Ivars into ObjcImplementationDecl's fields.
+/// Ivars into ObjCImplementationDecl's fields.
 ///
-void ObjcImplementationDecl::ObjcAddInstanceVariablesToClassImpl(
-                               ObjcIvarDecl **ivars, unsigned numIvars) {
+void ObjCImplementationDecl::ObjCAddInstanceVariablesToClassImpl(
+                               ObjCIvarDecl **ivars, unsigned numIvars) {
   NumIvars = numIvars;
   if (numIvars) {
-    Ivars = new ObjcIvarDecl*[numIvars];
-    memcpy(Ivars, ivars, numIvars*sizeof(ObjcIvarDecl*));
+    Ivars = new ObjCIvarDecl*[numIvars];
+    memcpy(Ivars, ivars, numIvars*sizeof(ObjCIvarDecl*));
   }
 }
 
 /// addMethods - Insert instance and methods declarations into
-/// ObjcInterfaceDecl's InsMethods and ClsMethods fields.
+/// ObjCInterfaceDecl's InsMethods and ClsMethods fields.
 ///
-void ObjcInterfaceDecl::addMethods(ObjcMethodDecl **insMethods, 
+void ObjCInterfaceDecl::addMethods(ObjCMethodDecl **insMethods, 
                                    unsigned numInsMembers,
-                                   ObjcMethodDecl **clsMethods,
+                                   ObjCMethodDecl **clsMethods,
                                    unsigned numClsMembers,
                                    SourceLocation endLoc) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
-    InstanceMethods = new ObjcMethodDecl*[numInsMembers];
-    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+    InstanceMethods = new ObjCMethodDecl*[numInsMembers];
+    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjCMethodDecl*));
   }
   NumClassMethods = numClsMembers;
   if (numClsMembers) {
-    ClassMethods = new ObjcMethodDecl*[numClsMembers];
-    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+    ClassMethods = new ObjCMethodDecl*[numClsMembers];
+    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjCMethodDecl*));
   }
   AtEndLoc = endLoc;
 }
 
 /// addMethods - Insert instance and methods declarations into
-/// ObjcProtocolDecl's ProtoInsMethods and ProtoClsMethods fields.
+/// ObjCProtocolDecl's ProtoInsMethods and ProtoClsMethods fields.
 ///
-void ObjcProtocolDecl::addMethods(ObjcMethodDecl **insMethods, 
+void ObjCProtocolDecl::addMethods(ObjCMethodDecl **insMethods, 
                                   unsigned numInsMembers,
-                                  ObjcMethodDecl **clsMethods,
+                                  ObjCMethodDecl **clsMethods,
                                   unsigned numClsMembers,
                                   SourceLocation endLoc) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
-    InstanceMethods = new ObjcMethodDecl*[numInsMembers];
-    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+    InstanceMethods = new ObjCMethodDecl*[numInsMembers];
+    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjCMethodDecl*));
   }
   NumClassMethods = numClsMembers;
   if (numClsMembers) {
-    ClassMethods = new ObjcMethodDecl*[numClsMembers];
-    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+    ClassMethods = new ObjCMethodDecl*[numClsMembers];
+    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjCMethodDecl*));
   }
   AtEndLoc = endLoc;
 }
 
 /// addMethods - Insert instance and methods declarations into
-/// ObjcCategoryDecl's CatInsMethods and CatClsMethods fields.
+/// ObjCCategoryDecl's CatInsMethods and CatClsMethods fields.
 ///
-void ObjcCategoryDecl::addMethods(ObjcMethodDecl **insMethods, 
+void ObjCCategoryDecl::addMethods(ObjCMethodDecl **insMethods, 
                                   unsigned numInsMembers,
-                                  ObjcMethodDecl **clsMethods,
+                                  ObjCMethodDecl **clsMethods,
                                   unsigned numClsMembers,
                                   SourceLocation endLoc) {
   NumInstanceMethods = numInsMembers;
   if (numInsMembers) {
-    InstanceMethods = new ObjcMethodDecl*[numInsMembers];
-    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjcMethodDecl*));
+    InstanceMethods = new ObjCMethodDecl*[numInsMembers];
+    memcpy(InstanceMethods, insMethods, numInsMembers*sizeof(ObjCMethodDecl*));
   }
   NumClassMethods = numClsMembers;
   if (numClsMembers) {
-    ClassMethods = new ObjcMethodDecl*[numClsMembers];
-    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjcMethodDecl*));
+    ClassMethods = new ObjCMethodDecl*[numClsMembers];
+    memcpy(ClassMethods, clsMethods, numClsMembers*sizeof(ObjCMethodDecl*));
   }
   AtEndLoc = endLoc;
 }
 
-ObjcIvarDecl *ObjcInterfaceDecl::lookupInstanceVariable(
-  IdentifierInfo *ID, ObjcInterfaceDecl *&clsDeclared) {
-  ObjcInterfaceDecl* ClassDecl = this;
+ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(
+  IdentifierInfo *ID, ObjCInterfaceDecl *&clsDeclared) {
+  ObjCInterfaceDecl* ClassDecl = this;
   while (ClassDecl != NULL) {
     for (ivar_iterator I = ClassDecl->ivar_begin(), E = ClassDecl->ivar_end();
          I != E; ++I) {
@@ -407,23 +407,23 @@ ObjcIvarDecl *ObjcInterfaceDecl::lookupInstanceVariable(
 
 /// lookupInstanceMethod - This method returns an instance method by looking in
 /// the class, its categories, and its super classes (using a linear search).
-ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector Sel) {
-  ObjcInterfaceDecl* ClassDecl = this;
-  ObjcMethodDecl *MethodDecl = 0;
+ObjCMethodDecl *ObjCInterfaceDecl::lookupInstanceMethod(Selector Sel) {
+  ObjCInterfaceDecl* ClassDecl = this;
+  ObjCMethodDecl *MethodDecl = 0;
   
   while (ClassDecl != NULL) {
     if ((MethodDecl = ClassDecl->getInstanceMethod(Sel)))
       return MethodDecl;
       
     // Didn't find one yet - look through protocols.
-    ObjcProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
+    ObjCProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
     int numProtocols = ClassDecl->getNumIntfRefProtocols();
     for (int pIdx = 0; pIdx < numProtocols; pIdx++) {
       if ((MethodDecl = protocols[pIdx]->getInstanceMethod(Sel)))
         return MethodDecl;
     }
     // Didn't find one yet - now look through categories.
-    ObjcCategoryDecl *CatDecl = ClassDecl->getCategoryList();
+    ObjCCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
       if ((MethodDecl = CatDecl->getInstanceMethod(Sel)))
         return MethodDecl;
@@ -436,23 +436,23 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupInstanceMethod(Selector Sel) {
 
 // lookupClassMethod - This method returns a class method by looking in the
 // class, its categories, and its super classes (using a linear search).
-ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector Sel) {
-  ObjcInterfaceDecl* ClassDecl = this;
-  ObjcMethodDecl *MethodDecl = 0;
+ObjCMethodDecl *ObjCInterfaceDecl::lookupClassMethod(Selector Sel) {
+  ObjCInterfaceDecl* ClassDecl = this;
+  ObjCMethodDecl *MethodDecl = 0;
 
   while (ClassDecl != NULL) {
     if ((MethodDecl = ClassDecl->getClassMethod(Sel)))
       return MethodDecl;
 
     // Didn't find one yet - look through protocols.
-    ObjcProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
+    ObjCProtocolDecl **protocols = ClassDecl->getReferencedProtocols();
     int numProtocols = ClassDecl->getNumIntfRefProtocols();
     for (int pIdx = 0; pIdx < numProtocols; pIdx++) {
       if ((MethodDecl = protocols[pIdx]->getClassMethod(Sel)))
         return MethodDecl;
     }
     // Didn't find one yet - now look through categories.
-    ObjcCategoryDecl *CatDecl = ClassDecl->getCategoryList();
+    ObjCCategoryDecl *CatDecl = ClassDecl->getCategoryList();
     while (CatDecl) {
       if ((MethodDecl = CatDecl->getClassMethod(Sel)))
         return MethodDecl;
@@ -466,7 +466,7 @@ ObjcMethodDecl *ObjcInterfaceDecl::lookupClassMethod(Selector Sel) {
 /// lookupInstanceMethod - This method returns an instance method by looking in
 /// the class implementation. Unlike interfaces, we don't look outside the
 /// implementation.
-ObjcMethodDecl *ObjcImplementationDecl::getInstanceMethod(Selector Sel) {
+ObjCMethodDecl *ObjCImplementationDecl::getInstanceMethod(Selector Sel) {
   for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); I != E; ++I)
     if ((*I)->getSelector() == Sel)
       return *I;
@@ -476,7 +476,7 @@ ObjcMethodDecl *ObjcImplementationDecl::getInstanceMethod(Selector Sel) {
 /// lookupClassMethod - This method returns a class method by looking in
 /// the class implementation. Unlike interfaces, we don't look outside the
 /// implementation.
-ObjcMethodDecl *ObjcImplementationDecl::getClassMethod(Selector Sel) {
+ObjCMethodDecl *ObjCImplementationDecl::getClassMethod(Selector Sel) {
   for (classmeth_iterator I = classmeth_begin(), E = classmeth_end();
        I != E; ++I)
     if ((*I)->getSelector() == Sel)
@@ -487,7 +487,7 @@ ObjcMethodDecl *ObjcImplementationDecl::getClassMethod(Selector Sel) {
 // lookupInstanceMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjcMethodDecl *ObjcCategoryImplDecl::getInstanceMethod(Selector Sel) {
+ObjCMethodDecl *ObjCCategoryImplDecl::getInstanceMethod(Selector Sel) {
   for (instmeth_iterator I = instmeth_begin(), E = instmeth_end(); I != E; ++I)
     if ((*I)->getSelector() == Sel)
       return *I;
@@ -497,7 +497,7 @@ ObjcMethodDecl *ObjcCategoryImplDecl::getInstanceMethod(Selector Sel) {
 // lookupClassMethod - This method returns an instance method by looking in
 // the class implementation. Unlike interfaces, we don't look outside the
 // implementation.
-ObjcMethodDecl *ObjcCategoryImplDecl::getClassMethod(Selector Sel) {
+ObjCMethodDecl *ObjCCategoryImplDecl::getClassMethod(Selector Sel) {
   for (classmeth_iterator I = classmeth_begin(), E = classmeth_end();
        I != E; ++I)
     if ((*I)->getSelector() == Sel)
@@ -507,14 +507,14 @@ ObjcMethodDecl *ObjcCategoryImplDecl::getClassMethod(Selector Sel) {
 
 // lookupInstanceMethod - Lookup a instance method in the protocol and protocols
 // it inherited.
-ObjcMethodDecl *ObjcProtocolDecl::lookupInstanceMethod(Selector Sel) {
-  ObjcMethodDecl *MethodDecl = NULL;
+ObjCMethodDecl *ObjCProtocolDecl::lookupInstanceMethod(Selector Sel) {
+  ObjCMethodDecl *MethodDecl = NULL;
   
   if ((MethodDecl = getInstanceMethod(Sel)))
     return MethodDecl;
     
   if (getNumReferencedProtocols() > 0) {
-    ObjcProtocolDecl **RefPDecl = getReferencedProtocols();
+    ObjCProtocolDecl **RefPDecl = getReferencedProtocols();
     
     for (unsigned i = 0; i < getNumReferencedProtocols(); i++) {
       if ((MethodDecl = RefPDecl[i]->getInstanceMethod(Sel)))
@@ -526,14 +526,14 @@ ObjcMethodDecl *ObjcProtocolDecl::lookupInstanceMethod(Selector Sel) {
 
 // lookupInstanceMethod - Lookup a class method in the protocol and protocols
 // it inherited.
-ObjcMethodDecl *ObjcProtocolDecl::lookupClassMethod(Selector Sel) {
-  ObjcMethodDecl *MethodDecl = NULL;
+ObjCMethodDecl *ObjCProtocolDecl::lookupClassMethod(Selector Sel) {
+  ObjCMethodDecl *MethodDecl = NULL;
 
   if ((MethodDecl = getClassMethod(Sel)))
     return MethodDecl;
     
   if (getNumReferencedProtocols() > 0) {
-    ObjcProtocolDecl **RefPDecl = getReferencedProtocols();
+    ObjCProtocolDecl **RefPDecl = getReferencedProtocols();
     
     for(unsigned i = 0; i < getNumReferencedProtocols(); i++) {
       if ((MethodDecl = RefPDecl[i]->getClassMethod(Sel)))
@@ -543,16 +543,16 @@ ObjcMethodDecl *ObjcProtocolDecl::lookupClassMethod(Selector Sel) {
   return NULL;
 }
 
-ObjcInterfaceDecl *const ObjcMethodDecl::getClassInterface() const {
-  if (ObjcInterfaceDecl *ID = dyn_cast<ObjcInterfaceDecl>(MethodContext))
+ObjCInterfaceDecl *const ObjCMethodDecl::getClassInterface() const {
+  if (ObjCInterfaceDecl *ID = dyn_cast<ObjCInterfaceDecl>(MethodContext))
     return ID;
-  if (ObjcCategoryDecl *CD = dyn_cast<ObjcCategoryDecl>(MethodContext))
+  if (ObjCCategoryDecl *CD = dyn_cast<ObjCCategoryDecl>(MethodContext))
     return CD->getClassInterface();
-  if (ObjcImplementationDecl *IMD = 
-      dyn_cast<ObjcImplementationDecl>(MethodContext))
+  if (ObjCImplementationDecl *IMD = 
+      dyn_cast<ObjCImplementationDecl>(MethodContext))
     return IMD->getClassInterface();
-  if (ObjcCategoryImplDecl *CID = 
-      dyn_cast<ObjcCategoryImplDecl>(MethodContext))
+  if (ObjCCategoryImplDecl *CID = 
+      dyn_cast<ObjCCategoryImplDecl>(MethodContext))
     return CID->getClassInterface();
   assert(false && "unknown method context");
   return 0;

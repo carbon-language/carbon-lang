@@ -81,9 +81,9 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
       D = ImplicitlyDefineFunction(Loc, II, S);
     else {
       if (CurMethodDecl) {
-        ObjcInterfaceDecl *IFace = CurMethodDecl->getClassInterface();
-        ObjcInterfaceDecl *clsDeclared;
-        if (ObjcIvarDecl *IV = IFace->lookupInstanceVariable(&II, clsDeclared)) {
+        ObjCInterfaceDecl *IFace = CurMethodDecl->getClassInterface();
+        ObjCInterfaceDecl *clsDeclared;
+        if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&II, clsDeclared)) {
           IdentifierInfo &II = Context.Idents.get("self");
           ExprResult SelfExpr = ActOnIdentifierExpr(S, Loc, II, false);
           return new ObjCIvarRefExpr(IV, IV->getType(), Loc, 
@@ -103,7 +103,7 @@ Sema::ExprResult Sema::ActOnIdentifierExpr(Scope *S, SourceLocation Loc,
   }
   if (isa<TypedefDecl>(D))
     return Diag(Loc, diag::err_unexpected_typedef, II.getName());
-  if (isa<ObjcInterfaceDecl>(D))
+  if (isa<ObjCInterfaceDecl>(D))
     return Diag(Loc, diag::err_unexpected_interface, II.getName());
 
   assert(0 && "Invalid decl");
@@ -535,14 +535,14 @@ ActOnMemberReferenceExpr(ExprTy *Base, SourceLocation OpLoc,
     if (ret.isNull())
       return true;
     return new OCUVectorElementExpr(ret, BaseExpr, Member, MemberLoc);
-  } else if (BaseType->isObjcInterfaceType()) {
-    ObjcInterfaceDecl *IFace;
-    if (isa<ObjcInterfaceType>(BaseType.getCanonicalType()))
-      IFace = dyn_cast<ObjcInterfaceType>(BaseType)->getDecl();
+  } else if (BaseType->isObjCInterfaceType()) {
+    ObjCInterfaceDecl *IFace;
+    if (isa<ObjCInterfaceType>(BaseType.getCanonicalType()))
+      IFace = dyn_cast<ObjCInterfaceType>(BaseType)->getDecl();
     else
-      IFace = dyn_cast<ObjcQualifiedInterfaceType>(BaseType)->getDecl();
-    ObjcInterfaceDecl *clsDeclared;
-    if (ObjcIvarDecl *IV = IFace->lookupInstanceVariable(&Member, clsDeclared))
+      IFace = dyn_cast<ObjCQualifiedInterfaceType>(BaseType)->getDecl();
+    ObjCInterfaceDecl *clsDeclared;
+    if (ObjCIvarDecl *IV = IFace->lookupInstanceVariable(&Member, clsDeclared))
       return new ObjCIvarRefExpr(IV, IV->getType(), MemberLoc, BaseExpr, 
                                  OpKind==tok::arrow);
   }
@@ -1109,9 +1109,9 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     return Incompatible;
   }
   
-  if (lhsType->isObjcQualifiedIdType() 
-           || rhsType->isObjcQualifiedIdType()) {
-    if (Context.ObjcQualifiedIdTypesAreCompatible(lhsType, rhsType))
+  if (lhsType->isObjCQualifiedIdType() 
+           || rhsType->isObjCQualifiedIdType()) {
+    if (Context.ObjCQualifiedIdTypesAreCompatible(lhsType, rhsType))
       return Compatible;
     return Incompatible;
   }
@@ -1172,7 +1172,7 @@ Sema::AssignConvertType
 Sema::CheckSingleAssignmentConstraints(QualType lhsType, Expr *&rExpr) {
   // C99 6.5.16.1p1: the left operand is a pointer and the right is
   // a null pointer constant.
-  if ((lhsType->isPointerType() || lhsType->isObjcQualifiedIdType()) 
+  if ((lhsType->isPointerType() || lhsType->isObjCQualifiedIdType()) 
       && rExpr->isNullPointerConstant(Context)) {
     promoteExprToType(rExpr, lhsType);
     return Compatible;
@@ -1428,8 +1428,8 @@ inline QualType Sema::CheckCompareOperands( // C99 6.5.8
     promoteExprToType(rex, lType); // promote the pointer to pointer
     return Context.IntTy;
   }
-  if ((lType->isObjcQualifiedIdType() || rType->isObjcQualifiedIdType())
-      && Context.ObjcQualifiedIdTypesAreCompatible(lType, rType, true)) {
+  if ((lType->isObjCQualifiedIdType() || rType->isObjCQualifiedIdType())
+      && Context.ObjCQualifiedIdTypesAreCompatible(lType, rType, true)) {
     promoteExprToType(rex, lType); 
     return Context.IntTy;
   }
