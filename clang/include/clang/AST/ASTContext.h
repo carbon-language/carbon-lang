@@ -294,8 +294,6 @@ public:
   bool builtinTypesAreCompatible(QualType, QualType);
   bool vectorTypesAreCompatible(QualType, QualType);
   
-  /// Objective-C specific type checking.
-  bool interfaceTypesAreCompatible(QualType, QualType);
   bool QualifiedInterfaceTypesAreCompatible(QualType, QualType);
   bool ObjcQualifiedIdTypesAreCompatible(QualType, QualType, bool = false);
   bool objcTypesAreCompatible(QualType, QualType);
@@ -320,6 +318,9 @@ private:
   
   void InitBuiltinTypes();
   void InitBuiltinType(QualType &R, BuiltinType::Kind K);
+
+  /// helper function for Objective-C specific type checking.
+  bool interfaceTypesAreCompatible(QualType, QualType);
   
   //===--------------------------------------------------------------------===//
   //                    Serialization
