@@ -73,7 +73,7 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
   const TargetInstrDescriptor &TID = TII.get(Opcode);
   
   isLoad  = TID.isSimpleLoad();
-  isStore = TID.Flags & M_MAY_STORE_FLAG;
+  isStore = TID.mayStore();
   
   unsigned TSFlags = TID.TSFlags;
   
