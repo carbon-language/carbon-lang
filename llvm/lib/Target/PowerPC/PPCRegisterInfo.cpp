@@ -540,7 +540,7 @@ static void RemoveVRSaveCode(MachineInstr *MI) {
   // epilog blocks.
   for (MachineFunction::iterator I = MF->begin(), E = MF->end(); I != E; ++I) {
     // If last instruction is a return instruction, add an epilogue
-    if (!I->empty() && I->back().getDesc()->isReturn()) {
+    if (!I->empty() && I->back().getDesc().isReturn()) {
       bool FoundIt = false;
       for (MBBI = I->end(); MBBI != I->begin(); ) {
         --MBBI;

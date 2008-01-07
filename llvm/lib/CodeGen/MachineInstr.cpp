@@ -248,9 +248,9 @@ void MachineInstr::addImplicitDefUseOperands() {
 
 /// MachineInstr ctor - This constructor create a MachineInstr and add the
 /// implicit operands. It reserves space for number of operands specified by
-/// TargetInstrDescriptor or the numOperands if it is not zero. (for
+/// TargetInstrDesc or the numOperands if it is not zero. (for
 /// instructions with variable number of operands).
-MachineInstr::MachineInstr(const TargetInstrDescriptor &tid, bool NoImp)
+MachineInstr::MachineInstr(const TargetInstrDesc &tid, bool NoImp)
   : TID(&tid), NumImplicitOps(0), Parent(0) {
   if (!NoImp && TID->getImplicitDefs())
     for (const unsigned *ImpDefs = TID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
@@ -269,7 +269,7 @@ MachineInstr::MachineInstr(const TargetInstrDescriptor &tid, bool NoImp)
 /// MachineInstr is created and added to the end of the specified basic block.
 ///
 MachineInstr::MachineInstr(MachineBasicBlock *MBB,
-                           const TargetInstrDescriptor &tid)
+                           const TargetInstrDesc &tid)
   : TID(&tid), NumImplicitOps(0), Parent(0) {
   assert(MBB && "Cannot use inserting ctor with null basic block!");
   if (TID->ImplicitDefs)
@@ -288,7 +288,7 @@ MachineInstr::MachineInstr(MachineBasicBlock *MBB,
 /// MachineInstr ctor - Copies MachineInstr arg exactly
 ///
 MachineInstr::MachineInstr(const MachineInstr &MI) {
-  TID = MI.getDesc();
+  TID = &MI.getDesc();
   NumImplicitOps = MI.NumImplicitOps;
   Operands.reserve(MI.getNumOperands());
 
@@ -537,10 +537,10 @@ MachineOperand *MachineInstr::findRegisterDefOperand(unsigned Reg) {
 /// operand list that is used to represent the predicate. It returns -1 if
 /// none is found.
 int MachineInstr::findFirstPredOperandIdx() const {
-  const TargetInstrDescriptor *TID = getDesc();
-  if (TID->isPredicable()) {
+  const TargetInstrDesc &TID = getDesc();
+  if (TID.isPredicable()) {
     for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-      if (TID->OpInfo[i].isPredicate())
+      if (TID.OpInfo[i].isPredicate())
         return i;
   }
 
@@ -550,14 +550,14 @@ int MachineInstr::findFirstPredOperandIdx() const {
 /// isRegReDefinedByTwoAddr - Returns true if the Reg re-definition is due
 /// to two addr elimination.
 bool MachineInstr::isRegReDefinedByTwoAddr(unsigned Reg) const {
-  const TargetInstrDescriptor *TID = getDesc();
+  const TargetInstrDesc &TID = getDesc();
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO1 = getOperand(i);
     if (MO1.isRegister() && MO1.isDef() && MO1.getReg() == Reg) {
       for (unsigned j = i+1; j < e; ++j) {
         const MachineOperand &MO2 = getOperand(j);
         if (MO2.isRegister() && MO2.isUse() && MO2.getReg() == Reg &&
-            TID->getOperandConstraint(j, TOI::TIED_TO) == (int)i)
+            TID.getOperandConstraint(j, TOI::TIED_TO) == (int)i)
           return true;
       }
     }
@@ -587,10 +587,10 @@ void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {
 
 /// copyPredicates - Copies predicate operand(s) from MI.
 void MachineInstr::copyPredicates(const MachineInstr *MI) {
-  const TargetInstrDescriptor *TID = MI->getDesc();
-  if (TID->isPredicable()) {
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (TID.isPredicable()) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      if (TID->OpInfo[i].isPredicate()) {
+      if (TID.OpInfo[i].isPredicate()) {
         // Predicated operands must be last operands.
         addOperand(MI->getOperand(i));
       }
@@ -611,7 +611,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
     ++StartOp;   // Don't print this operand again!
   }
 
-  OS << getDesc()->Name;
+  OS << getDesc().getName();
 
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
     if (i != StartOp)

@@ -70,7 +70,7 @@ PPCHazardRecognizer970::GetInstrType(unsigned Opcode,
   }
   Opcode -= ISD::BUILTIN_OP_END;
   
-  const TargetInstrDescriptor &TID = TII.get(Opcode);
+  const TargetInstrDesc &TID = TII.get(Opcode);
   
   isLoad  = TID.isSimpleLoad();
   isStore = TID.mayStore();

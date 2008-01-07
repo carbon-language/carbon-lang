@@ -93,11 +93,11 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
        mbbi != mbbe; ++mbbi) {
     for (MachineBasicBlock::iterator mi = mbbi->begin(), me = mbbi->end();
          mi != me; ++mi) {
-      const TargetInstrDescriptor *TID = mi->getDesc();
+      const TargetInstrDesc &TID = mi->getDesc();
 
       bool FirstTied = true;
-      for (unsigned si = 1, e = TID->getNumOperands(); si < e; ++si) {
-        int ti = TID->getOperandConstraint(si, TOI::TIED_TO);
+      for (unsigned si = 1, e = TID.getNumOperands(); si < e; ++si) {
+        int ti = TID.getOperandConstraint(si, TOI::TIED_TO);
         if (ti == -1)
           continue;
 
@@ -144,7 +144,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             // so, swap the B and C operands.  This makes the live ranges of A
             // and C joinable.
             // FIXME: This code also works for A := B op C instructions.
-            if (TID->isCommutable() && mi->getNumOperands() >= 3) {
+            if (TID.isCommutable() && mi->getNumOperands() >= 3) {
               assert(mi->getOperand(3-si).isRegister() &&
                      "Not a proper commutative instruction!");
               unsigned regC = mi->getOperand(3-si).getReg();
@@ -172,12 +172,12 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
             // If this instruction is potentially convertible to a true
             // three-address instruction,
-            if (TID->isConvertibleTo3Addr()) {
+            if (TID.isConvertibleTo3Addr()) {
               // FIXME: This assumes there are no more operands which are tied
               // to another register.
 #ifndef NDEBUG
-              for (unsigned i = si+1, e = TID->getNumOperands(); i < e; ++i)
-                assert(TID->getOperandConstraint(i, TOI::TIED_TO) == -1);
+              for (unsigned i = si+1, e = TID.getNumOperands(); i < e; ++i)
+                assert(TID.getOperandConstraint(i, TOI::TIED_TO) == -1);
 #endif
 
               if (MachineInstr *New = TII.convertToThreeAddress(mbbi, mi, LV)) {

@@ -31,7 +31,7 @@ namespace llvm {
   class SelectionDAG;
   class SelectionDAGISel;
   class TargetInstrInfo;
-  class TargetInstrDescriptor;
+  class TargetInstrDesc;
   class TargetMachine;
   class TargetRegisterClass;
 
@@ -335,7 +335,7 @@ namespace llvm {
                          DenseMap<SDOperand, unsigned> &VRBaseMap);
     
     void CreateVirtualRegisters(SDNode *Node, MachineInstr *MI,
-                                const TargetInstrDescriptor &II,
+                                const TargetInstrDesc &II,
                                 DenseMap<SDOperand, unsigned> &VRBaseMap);
 
     void EmitSchedule();
@@ -353,7 +353,7 @@ namespace llvm {
                         DenseMap<SDOperand, unsigned> &VRBaseMap);
   
     void AddOperand(MachineInstr *MI, SDOperand Op, unsigned IIOpNum,
-                    const TargetInstrDescriptor *II,
+                    const TargetInstrDesc *II,
                     DenseMap<SDOperand, unsigned> &VRBaseMap);
   };
 

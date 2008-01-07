@@ -63,7 +63,7 @@ bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
     return true;
   case ARM::MOVr:
   case ARM::tMOVr:
-    assert(MI.getDesc()->getNumOperands() >= 2 &&
+    assert(MI.getDesc().getNumOperands() >= 2 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
            "Invalid ARM MOV instruction");
@@ -180,7 +180,7 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     return NULL;
 
   MachineInstr *MI = MBBI;
-  unsigned TSFlags = MI->getDesc()->TSFlags;
+  unsigned TSFlags = MI->getDesc().TSFlags;
   bool isPre = false;
   switch ((TSFlags & ARMII::IndexModeMask) >> ARMII::IndexModeShift) {
   default: return NULL;
@@ -200,9 +200,9 @@ ARMInstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
   MachineInstr *UpdateMI = NULL;
   MachineInstr *MemMI = NULL;
   unsigned AddrMode = (TSFlags & ARMII::AddrModeMask);
-  const TargetInstrDescriptor *TID = MI->getDesc();
-  unsigned NumOps = TID->getNumOperands();
-  bool isLoad = TID->isSimpleLoad();
+  const TargetInstrDesc &TID = MI->getDesc();
+  unsigned NumOps = TID.getNumOperands();
+  bool isLoad = TID.isSimpleLoad();
   const MachineOperand &WB = isLoad ? MI->getOperand(1) : MI->getOperand(0);
   const MachineOperand &Base = MI->getOperand(2);
   const MachineOperand &Offset = MI->getOperand(NumOps-3);
@@ -837,8 +837,8 @@ ARMInstrInfo::SubsumesPredicate(const std::vector<MachineOperand> &Pred1,
 
 bool ARMInstrInfo::DefinesPredicate(MachineInstr *MI,
                                     std::vector<MachineOperand> &Pred) const {
-  const TargetInstrDescriptor *TID = MI->getDesc();
-  if (!TID->getImplicitDefs() && !TID->hasOptionalDef())
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (!TID.getImplicitDefs() && !TID.hasOptionalDef())
     return false;
 
   bool Found = false;
@@ -870,8 +870,8 @@ unsigned ARM::GetInstSize(MachineInstr *MI) {
   const TargetAsmInfo *TAI = MF->getTarget().getTargetAsmInfo();
 
   // Basic size info comes from the TSFlags field.
-  const TargetInstrDescriptor *TID = MI->getDesc();
-  unsigned TSFlags = TID->TSFlags;
+  const TargetInstrDesc &TID = MI->getDesc();
+  unsigned TSFlags = TID.TSFlags;
   
   switch ((TSFlags & ARMII::SizeMask) >> ARMII::SizeShift) {
   default:
@@ -897,9 +897,9 @@ unsigned ARM::GetInstSize(MachineInstr *MI) {
     case ARM::tBR_JTr: {
       // These are jumptable branches, i.e. a branch followed by an inlined
       // jumptable. The size is 4 + 4 * number of entries.
-      unsigned NumOps = TID->getNumOperands();
+      unsigned NumOps = TID.getNumOperands();
       MachineOperand JTOP =
-        MI->getOperand(NumOps - (TID->isPredicable() ? 3 : 2));
+        MI->getOperand(NumOps - (TID.isPredicable() ? 3 : 2));
       unsigned JTI = JTOP.getIndex();
       MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
       const std::vector<MachineJumpTableEntry> &JT = MJTI->getJumpTables();

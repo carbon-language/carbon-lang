@@ -175,7 +175,7 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   // If there is only one terminator instruction, process it.
   unsigned LastOpc = LastInst->getOpcode();
   if (I == MBB.begin() || !isUnpredicatedTerminator(--I)) {
-    if (!LastInst->getDesc()->isBranch())
+    if (!LastInst->getDesc().isBranch())
       return true;
 
     // Unconditional branch
@@ -259,7 +259,7 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
     } else {
       // Conditional branch.
       unsigned Opc = GetCondBranchFromCond((Mips::CondCode)Cond[0].getImm());
-      const TargetInstrDescriptor &TID = get(Opc);
+      const TargetInstrDesc &TID = get(Opc);
 
       if (TID.getNumOperands() == 3)
         BuildMI(&MBB, TID).addReg(Cond[1].getReg())
@@ -275,15 +275,13 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   
   // Two-way Conditional branch.
   unsigned Opc = GetCondBranchFromCond((Mips::CondCode)Cond[0].getImm());
-  const TargetInstrDescriptor &TID = get(Opc);
+  const TargetInstrDesc &TID = get(Opc);
 
   if (TID.getNumOperands() == 3)
-    BuildMI(&MBB, TID).addReg(Cond[1].getReg())
-                      .addReg(Cond[2].getReg())
+    BuildMI(&MBB, TID).addReg(Cond[1].getReg()).addReg(Cond[2].getReg())
                       .addMBB(TBB);
   else
-    BuildMI(&MBB, TID).addReg(Cond[1].getReg())
-                      .addMBB(TBB);
+    BuildMI(&MBB, TID).addReg(Cond[1].getReg()).addMBB(TBB);
 
   BuildMI(&MBB, get(Mips::J)).addMBB(FBB);
   return 2;

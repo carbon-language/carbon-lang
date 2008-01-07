@@ -24,7 +24,6 @@ class TargetAsmInfo;
 class TargetData;
 class TargetSubtarget;
 class TargetInstrInfo;
-class TargetInstrDescriptor;
 class TargetJITInfo;
 class TargetLowering;
 class TargetFrameInfo;

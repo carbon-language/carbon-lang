@@ -349,10 +349,10 @@ static unsigned EstimateRuntime(MachineBasicBlock::iterator I,
                                 MachineBasicBlock::iterator E) {
   unsigned Time = 0;
   for (; I != E; ++I) {
-    const TargetInstrDescriptor *TID = I->getDesc();
-    if (TID->isCall())
+    const TargetInstrDesc &TID = I->getDesc();
+    if (TID.isCall())
       Time += 10;
-    else if (TID->isSimpleLoad() || TID->mayStore())
+    else if (TID.isSimpleLoad() || TID.mayStore())
       Time += 2;
     else
       ++Time;
@@ -778,7 +778,7 @@ static bool IsBetterFallthrough(MachineBasicBlock *MBB1,
 
   MachineInstr *MBB1I = --MBB1->end();
   MachineInstr *MBB2I = --MBB2->end();
-  return MBB2I->getDesc()->isCall() && !MBB1I->getDesc()->isCall();
+  return MBB2I->getDesc().isCall() && !MBB1I->getDesc().isCall();
 }
 
 /// OptimizeBlock - Analyze and optimize control flow related to the specified
@@ -958,7 +958,7 @@ void BranchFolder::OptimizeBlock(MachineBasicBlock *MBB) {
     // If this branch is the only thing in its block, see if we can forward
     // other blocks across it.
     if (CurTBB && CurCond.empty() && CurFBB == 0 && 
-        MBB->begin()->getDesc()->isBranch() && CurTBB != MBB) {
+        MBB->begin()->getDesc().isBranch() && CurTBB != MBB) {
       // This block may contain just an unconditional branch.  Because there can
       // be 'non-branch terminators' in the block, try removing the branch and
       // then seeing if the block is empty.

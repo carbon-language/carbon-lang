@@ -18,7 +18,7 @@ using namespace llvm;
 
 /// findTiedToSrcOperand - Returns the operand that is tied to the specified
 /// dest operand. Returns -1 if there isn't one.
-int TargetInstrDescriptor::findTiedToSrcOperand(unsigned OpNum) const {
+int TargetInstrDesc::findTiedToSrcOperand(unsigned OpNum) const {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     if (i == OpNum)
       continue;
@@ -29,22 +29,22 @@ int TargetInstrDescriptor::findTiedToSrcOperand(unsigned OpNum) const {
 }
 
 
-TargetInstrInfo::TargetInstrInfo(const TargetInstrDescriptor* Desc,
+TargetInstrInfo::TargetInstrInfo(const TargetInstrDesc* Desc,
                                  unsigned numOpcodes)
-  : desc(Desc), NumOpcodes(numOpcodes) {
+  : Descriptors(Desc), NumOpcodes(numOpcodes) {
 }
 
 TargetInstrInfo::~TargetInstrInfo() {
 }
 
 bool TargetInstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
-  const TargetInstrDescriptor *TID = MI->getDesc();
-  if (!TID->isTerminator()) return false;
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (!TID.isTerminator()) return false;
   
   // Conditional branch is a special case.
-  if (TID->isBranch() && !TID->isBarrier())
+  if (TID.isBranch() && !TID.isBarrier())
     return true;
-  if (!TID->isPredicable())
+  if (!TID.isPredicable())
     return true;
   return !isPredicated(MI);
 }

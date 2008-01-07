@@ -35,23 +35,24 @@ MachineInstr *TargetInstrInfoImpl::commuteInstruction(MachineInstr *MI) const {
 bool TargetInstrInfoImpl::PredicateInstruction(MachineInstr *MI,
                                                const std::vector<MachineOperand> &Pred) const {
   bool MadeChange = false;
-  const TargetInstrDescriptor *TID = MI->getDesc();
-  if (TID->isPredicable()) {
-    for (unsigned j = 0, i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      if (TID->OpInfo[i].isPredicate()) {
-        MachineOperand &MO = MI->getOperand(i);
-        if (MO.isReg()) {
-          MO.setReg(Pred[j].getReg());
-          MadeChange = true;
-        } else if (MO.isImm()) {
-          MO.setImm(Pred[j].getImm());
-          MadeChange = true;
-        } else if (MO.isMBB()) {
-          MO.setMBB(Pred[j].getMBB());
-          MadeChange = true;
-        }
-        ++j;
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (!TID.isPredicable())
+    return false;
+  
+  for (unsigned j = 0, i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    if (TID.OpInfo[i].isPredicate()) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (MO.isReg()) {
+        MO.setReg(Pred[j].getReg());
+        MadeChange = true;
+      } else if (MO.isImm()) {
+        MO.setImm(Pred[j].getImm());
+        MadeChange = true;
+      } else if (MO.isMBB()) {
+        MO.setMBB(Pred[j].getMBB());
+        MadeChange = true;
       }
+      ++j;
     }
   }
   return MadeChange;

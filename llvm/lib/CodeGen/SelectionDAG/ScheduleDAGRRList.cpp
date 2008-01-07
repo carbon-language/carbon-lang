@@ -148,7 +148,7 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
     if (!SU || !SU->Node) continue;
     if (SU->isCommutable) {
       unsigned Opc = SU->Node->getTargetOpcode();
-      const TargetInstrDescriptor &TID = TII->get(Opc);
+      const TargetInstrDesc &TID = TII->get(Opc);
       unsigned NumRes = TID.getNumDefs();
       unsigned NumOps = CountOperands(SU->Node);
       for (unsigned j = 0; j != NumOps; ++j) {
@@ -431,7 +431,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
 
     SUnit *NewSU = NewSUnit(N);
     SUnitMap[N].push_back(NewSU);
-    const TargetInstrDescriptor &TID = TII->get(N->getTargetOpcode());
+    const TargetInstrDesc &TID = TII->get(N->getTargetOpcode());
     for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
       if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
         NewSU->isTwoAddress = true;
@@ -622,7 +622,7 @@ void ScheduleDAGRRList::InsertCCCopiesAndMoveSuccs(SUnit *SU, unsigned Reg,
 /// FIXME: Move to SelectionDAG?
 static MVT::ValueType getPhysicalRegisterVT(SDNode *N, unsigned Reg,
                                             const TargetInstrInfo *TII) {
-  const TargetInstrDescriptor &TID = TII->get(N->getTargetOpcode());
+  const TargetInstrDesc &TID = TII->get(N->getTargetOpcode());
   assert(TID.ImplicitDefs && "Physical reg def must be in implicit def list!");
   unsigned NumRes = TID.getNumDefs();
   for (const unsigned *ImpDef = TID.getImplicitDefs(); *ImpDef; ++ImpDef) {
@@ -665,7 +665,7 @@ bool ScheduleDAGRRList::DelayForLiveRegsBottomUp(SUnit *SU,
     SDNode *Node = (i == 0) ? SU->Node : SU->FlaggedNodes[i-1];
     if (!Node || !Node->isTargetOpcode())
       continue;
-    const TargetInstrDescriptor &TID = TII->get(Node->getTargetOpcode());
+    const TargetInstrDesc &TID = TII->get(Node->getTargetOpcode());
     if (!TID.ImplicitDefs)
       continue;
     for (const unsigned *Reg = TID.ImplicitDefs; *Reg; ++Reg) {
@@ -1288,7 +1288,7 @@ template<class SF>
 bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
   if (SU->isTwoAddress) {
     unsigned Opc = SU->Node->getTargetOpcode();
-    const TargetInstrDescriptor &TID = TII->get(Opc);
+    const TargetInstrDesc &TID = TII->get(Opc);
     unsigned NumRes = TID.getNumDefs();
     unsigned NumOps = ScheduleDAG::CountOperands(SU->Node);
     for (unsigned i = 0; i != NumOps; ++i) {
@@ -1364,7 +1364,7 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       continue;
 
     unsigned Opc = Node->getTargetOpcode();
-    const TargetInstrDescriptor &TID = TII->get(Opc);
+    const TargetInstrDesc &TID = TII->get(Opc);
     unsigned NumRes = TID.getNumDefs();
     unsigned NumOps = ScheduleDAG::CountOperands(Node);
     for (unsigned j = 0; j != NumOps; ++j) {

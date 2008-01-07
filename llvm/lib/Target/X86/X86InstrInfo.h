@@ -364,7 +364,7 @@ public:
   // getBaseOpcodeFor - This function returns the "base" X86 opcode for the
   // specified machine instruction.
   //
-  unsigned char getBaseOpcodeFor(const TargetInstrDescriptor *TID) const {
+  unsigned char getBaseOpcodeFor(const TargetInstrDesc *TID) const {
     return TID->TSFlags >> X86II::OpcodeShift;
   }
   unsigned char getBaseOpcodeFor(unsigned Opcode) const {

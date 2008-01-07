@@ -55,7 +55,7 @@ namespace {
 
     void emitInstruction(const MachineInstr &MI);
     int getMachineOpValue(const MachineInstr &MI, unsigned OpIndex);
-    unsigned getBaseOpcodeFor(const TargetInstrDescriptor *TID);
+    unsigned getBaseOpcodeFor(const TargetInstrDesc &TID);
     unsigned getBinaryCodeForInstr(const MachineInstr &MI);
 
     void emitGlobalAddressForCall(GlobalValue *GV, bool DoesntNeedStub);
@@ -103,8 +103,8 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 /// getBaseOpcodeFor - Return the opcode value
-unsigned Emitter::getBaseOpcodeFor(const TargetInstrDescriptor *TID) {
-  return (TID->TSFlags & ARMII::OpcodeMask) >> ARMII::OpcodeShift;
+unsigned Emitter::getBaseOpcodeFor(const TargetInstrDesc &TID) {
+  return (TID.TSFlags & ARMII::OpcodeMask) >> ARMII::OpcodeShift;
 }
 
 /// getShiftOp - Verify which is the shift opcode (bit[6:5]) of the
@@ -201,15 +201,15 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
 }
 
 unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
-  const TargetInstrDescriptor *Desc = MI.getDesc();
-  unsigned opcode = Desc->Opcode;
+  const TargetInstrDesc &Desc = MI.getDesc();
+  unsigned opcode = Desc.Opcode;
   // initial instruction mask
   unsigned Value = 0xE0000000;
   unsigned op;
 
-  switch (Desc->TSFlags & ARMII::AddrModeMask) {
+  switch (Desc.TSFlags & ARMII::AddrModeMask) {
   case ARMII::AddrModeNone: {
-    switch(Desc->TSFlags & ARMII::FormMask) {
+    switch(Desc.TSFlags & ARMII::FormMask) {
     default: {
       assert(0 && "Unknown instruction subtype!");
       // treat special instruction CLZ
@@ -241,7 +241,7 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
       unsigned char BaseOpcode = getBaseOpcodeFor(Desc);
       Value |= BaseOpcode << 4;
 
-      unsigned Format = (Desc->TSFlags & ARMII::FormMask);
+      unsigned Format = (Desc.TSFlags & ARMII::FormMask);
       if (Format == ARMII::MulSMUL)
         Value |= 1 << 22;
 
@@ -342,7 +342,7 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
 
     // treat 3 special instructions: MOVsra_flag, MOVsrl_flag and
     // MOVrx.
-    unsigned Format = (Desc->TSFlags & ARMII::FormMask);
+    unsigned Format = Desc.TSFlags & ARMII::FormMask;
     if (Format == ARMII::DPRdMisc) {
       Value |= getMachineOpValue(MI,0) << ARMII::RegRdShift;
       Value |= getMachineOpValue(MI,1);
@@ -499,7 +499,7 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
     // bit 26 is always 1
     Value |= 1 << 26;
 
-    unsigned Index = (Desc->TSFlags & ARMII::IndexModeMask);
+    unsigned Index = Desc.TSFlags & ARMII::IndexModeMask;
     // if the instruction uses offset addressing or pre-indexed addressing,
     // set bit P(24) to 1
     if (Index == ARMII::IndexModePre || Index == 0)
@@ -508,7 +508,7 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
     if (Index == ARMII::IndexModePre)
       Value |= 1 << 21;
 
-    unsigned Format = (Desc->TSFlags & ARMII::FormMask);
+    unsigned Format = Desc.TSFlags & ARMII::FormMask;
     // If it is a load instruction (except LDRD), set bit L(20) to 1
     if (Format == ARMII::LdFrm)
       Value |= 1 << ARMII::L_BitShift;
@@ -555,14 +555,13 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
     break;
   }
   case ARMII::AddrMode3: {
-
-    unsigned Index = (Desc->TSFlags & ARMII::IndexModeMask);
+    unsigned Index = Desc.TSFlags & ARMII::IndexModeMask;
     // if the instruction uses offset addressing or pre-indexed addressing,
     // set bit P(24) to 1
     if (Index == ARMII::IndexModePre || Index == 0)
       Value |= 1 << ARMII::IndexShift;
 
-    unsigned Format = (Desc->TSFlags & ARMII::FormMask);
+    unsigned Format = Desc.TSFlags & ARMII::FormMask;
     // If it is a load instruction (except LDRD), set bit L(20) to 1
     if (Format == ARMII::LdFrm && opcode != ARM::LDRD)
       Value |= 1 << ARMII::L_BitShift;
@@ -607,7 +606,7 @@ unsigned Emitter::getBinaryCodeForInstr(const MachineInstr &MI) {
     // bit 27 is always 1
     Value |= 1 << 27;
 
-    unsigned Format = (Desc->TSFlags & ARMII::FormMask);
+    unsigned Format = Desc.TSFlags & ARMII::FormMask;
     // if it is a load instr, set bit L(20) to 1
     if (Format == ARMII::LdFrm)
       Value |= 1 << ARMII::L_BitShift;

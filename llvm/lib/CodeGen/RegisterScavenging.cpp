@@ -92,10 +92,11 @@ void RegScavenger::forward() {
   }
 
   MachineInstr *MI = MBBI;
+  const TargetInstrDesc &TID = MI->getDesc();
 
   // Reaching a terminator instruction. Restore a scavenged register (which
   // must be life out.
-  if (MI->getDesc()->isTerminator())
+  if (TID.isTerminator())
     restoreScavengedReg();
 
   // Process uses first.
@@ -122,7 +123,6 @@ void RegScavenger::forward() {
   setUnused(ChangedRegs);
 
   // Process defs.
-  const TargetInstrDescriptor *TID = MI->getDesc();
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isRegister() || !MO.isDef())
@@ -134,7 +134,7 @@ void RegScavenger::forward() {
       continue;
     }
     // Skip two-address destination operand.
-    if (TID->findTiedToSrcOperand(i) != -1) {
+    if (TID.findTiedToSrcOperand(i) != -1) {
       assert(isUsed(Reg) && "Using an undefined register!");
       continue;
     }
@@ -152,13 +152,13 @@ void RegScavenger::backward() {
 
   MachineInstr *MI = MBBI;
   // Process defs first.
-  const TargetInstrDescriptor *TID = MI->getDesc();
+  const TargetInstrDesc &TID = MI->getDesc();
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (!MO.isRegister() || !MO.isDef())
       continue;
     // Skip two-address destination operand.
-    if (TID->findTiedToSrcOperand(i) != -1)
+    if (TID.findTiedToSrcOperand(i) != -1)
       continue;
     unsigned Reg = MO.getReg();
     assert(isUsed(Reg));

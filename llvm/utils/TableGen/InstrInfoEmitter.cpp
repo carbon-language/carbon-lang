@@ -261,9 +261,9 @@ void InstrInfoEmitter::run(std::ostream &OS) {
   // Emit all of the operand info records.
   EmitOperandInfo(OS, OperandInfoIDs);
   
-  // Emit all of the TargetInstrDescriptor records in their ENUM ordering.
+  // Emit all of the TargetInstrDesc records in their ENUM ordering.
   //
-  OS << "\nstatic const TargetInstrDescriptor " << TargetName
+  OS << "\nstatic const TargetInstrDesc " << TargetName
      << "Insts[] = {\n";
   std::vector<const CodeGenInstruction*> NumberedInstructions;
   Target.getInstructionsByEnumValue(NumberedInstructions);

@@ -1243,13 +1243,13 @@ X86::CondCode X86::GetOppositeBranchCondition(X86::CondCode CC) {
 }
 
 bool X86InstrInfo::isUnpredicatedTerminator(const MachineInstr *MI) const {
-  const TargetInstrDescriptor *TID = MI->getDesc();
-  if (!TID->isTerminator()) return false;
+  const TargetInstrDesc &TID = MI->getDesc();
+  if (!TID.isTerminator()) return false;
   
   // Conditional branch is a special case.
-  if (TID->isBranch() && !TID->isBarrier())
+  if (TID.isBranch() && !TID.isBarrier())
     return true;
-  if (!TID->isPredicable())
+  if (!TID.isPredicable())
     return true;
   return !isPredicated(MI);
 }
@@ -1276,7 +1276,7 @@ bool X86InstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   
   // If there is only one terminator instruction, process it.
   if (I == MBB.begin() || !isBrAnalysisUnpredicatedTerminator(--I, *this)) {
-    if (!LastInst->getDesc()->isBranch())
+    if (!LastInst->getDesc().isBranch())
       return true;
     
     // If the block ends with a branch there are 3 possibilities:
@@ -1640,7 +1640,7 @@ static MachineInstr *FuseTwoAddrInst(unsigned Opcode,
     MIB.addImm(1).addReg(0).addImm(0);
   
   // Loop over the rest of the ri operands, converting them over.
-  unsigned NumOps = MI->getDesc()->getNumOperands()-2;
+  unsigned NumOps = MI->getDesc().getNumOperands()-2;
   for (unsigned i = 0; i != NumOps; ++i) {
     MachineOperand &MO = MI->getOperand(i+2);
     MIB = X86InstrAddOperand(MIB, MO);
@@ -1692,9 +1692,9 @@ X86InstrInfo::foldMemoryOperand(MachineInstr *MI, unsigned i,
                                    SmallVector<MachineOperand,4> &MOs) const {
   const DenseMap<unsigned*, unsigned> *OpcodeTablePtr = NULL;
   bool isTwoAddrFold = false;
-  unsigned NumOps = MI->getDesc()->getNumOperands();
+  unsigned NumOps = MI->getDesc().getNumOperands();
   bool isTwoAddr = NumOps > 1 &&
-    MI->getDesc()->getOperandConstraint(1, TOI::TIED_TO) != -1;
+    MI->getDesc().getOperandConstraint(1, TOI::TIED_TO) != -1;
 
   MachineInstr *NewMI = NULL;
   // Folding a memory location into the two-address part of a two-address
@@ -1798,7 +1798,7 @@ MachineInstr* X86InstrInfo::foldMemoryOperand(MachineInstr *MI,
     return NULL;
 
   SmallVector<MachineOperand,4> MOs;
-  unsigned NumOps = LoadMI->getDesc()->getNumOperands();
+  unsigned NumOps = LoadMI->getDesc().getNumOperands();
   for (unsigned i = NumOps - 4; i != NumOps; ++i)
     MOs.push_back(LoadMI->getOperand(i));
   return foldMemoryOperand(MI, Ops[0], MOs);
@@ -1826,9 +1826,9 @@ bool X86InstrInfo::canFoldMemoryOperand(MachineInstr *MI,
 
   unsigned OpNum = Ops[0];
   unsigned Opc = MI->getOpcode();
-  unsigned NumOps = MI->getDesc()->getNumOperands();
+  unsigned NumOps = MI->getDesc().getNumOperands();
   bool isTwoAddr = NumOps > 1 &&
-    MI->getDesc()->getOperandConstraint(1, TOI::TIED_TO) != -1;
+    MI->getDesc().getOperandConstraint(1, TOI::TIED_TO) != -1;
 
   // Folding a memory location into the two-address part of a two-address
   // instruction is different than folding it other places.  It requires
@@ -1880,7 +1880,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
     return false;
   UnfoldStore &= FoldedStore;
 
-  const TargetInstrDescriptor &TID = get(Opc);
+  const TargetInstrDesc &TID = get(Opc);
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
   const TargetRegisterClass *RC = TOI.isLookupPtrRegClass()
     ? getPointerRegClass() : RI.getRegClass(TOI.RegClass);
@@ -1979,7 +1979,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   unsigned Index = I->second.second & 0xf;
   bool FoldedLoad = I->second.second & (1 << 4);
   bool FoldedStore = I->second.second & (1 << 5);
-  const TargetInstrDescriptor &TID = get(Opc);
+  const TargetInstrDesc &TID = get(Opc);
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
   const TargetRegisterClass *RC = TOI.isLookupPtrRegClass()
     ? getPointerRegClass() : RI.getRegClass(TOI.RegClass);

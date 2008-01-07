@@ -537,7 +537,7 @@ static bool InvalidateRegDef(MachineBasicBlock::iterator I,
 /// over.
 static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
                         std::vector<MachineOperand*> &KillOps) {
-  const TargetInstrDescriptor *TID = MI.getDesc();
+  const TargetInstrDesc &TID = MI.getDesc();
   for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI.getOperand(i);
     if (!MO.isRegister() || !MO.isUse())
@@ -552,8 +552,8 @@ static void UpdateKills(MachineInstr &MI, BitVector &RegKills,
       KillOps[Reg]->setIsKill(false);
       KillOps[Reg] = NULL;
       RegKills.reset(Reg);
-      if (i < TID->getNumOperands() &&
-          TID->getOperandConstraint(i, TOI::TIED_TO) == -1)
+      if (i < TID.getNumOperands() &&
+          TID.getOperandConstraint(i, TOI::TIED_TO) == -1)
         // Unless it's a two-address operand, this is the new kill.
         MO.setIsKill();
     }
@@ -966,7 +966,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       NextMII = next(MII);
 
     MachineInstr &MI = *MII;
-    const TargetInstrDescriptor *TID = MI.getDesc();
+    const TargetInstrDesc &TID = MI.getDesc();
 
     // Insert restores here if asked to.
     if (VRM.isRestorePt(&MI)) {
@@ -1082,7 +1082,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
         // aren't allowed to modify the reused register.  If none of these cases
         // apply, reuse it.
         bool CanReuse = true;
-        int ti = TID->getOperandConstraint(i, TOI::TIED_TO);
+        int ti = TID.getOperandConstraint(i, TOI::TIED_TO);
         if (ti != -1 &&
             MI.getOperand(ti).isRegister() && 
             MI.getOperand(ti).getReg() == VirtReg) {
@@ -1234,7 +1234,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       Spills.addAvailable(SSorRMId, &MI, PhysReg);
       // Assumes this is the last use. IsKill will be unset if reg is reused
       // unless it's a two-address operand.
-      if (TID->getOperandConstraint(i, TOI::TIED_TO) == -1)
+      if (TID.getOperandConstraint(i, TOI::TIED_TO) == -1)
         MI.getOperand(i).setIsKill();
       unsigned RReg = SubIdx ? MRI->getSubReg(PhysReg, SubIdx) : PhysReg;
       MI.getOperand(i).setReg(RReg);
@@ -1436,7 +1436,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
       // If this def is part of a two-address operand, make sure to execute
       // the store from the correct physical register.
       unsigned PhysReg;
-      int TiedOp = MI.getDesc()->findTiedToSrcOperand(i);
+      int TiedOp = MI.getDesc().findTiedToSrcOperand(i);
       if (TiedOp != -1) {
         PhysReg = MI.getOperand(TiedOp).getReg();
         if (SubIdx) {

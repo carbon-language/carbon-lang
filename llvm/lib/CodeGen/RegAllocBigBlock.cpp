@@ -649,7 +649,7 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
   while (MII != MBB.end()) {
     MachineInstr *MI = MII++;
     MBBCurTime++;
-    const TargetInstrDescriptor &TID = TII.get(MI->getOpcode());
+    const TargetInstrDesc &TID = MI->getDesc();
     DEBUG(DOUT << "\nTime=" << MBBCurTime << " Starting RegAlloc of: " << *MI;
           DOUT << "  Regs have values: ";
           for (unsigned i = 0; i != RegInfo->getNumRegs(); ++i)
@@ -750,8 +750,8 @@ void RABigBlock::AllocateBasicBlock(MachineBasicBlock &MBB) {
     }
 
     // Loop over the implicit defs, spilling them as well.
-    if (TID.ImplicitDefs) {
-      for (const unsigned *ImplicitDefs = TID.ImplicitDefs;
+    if (TID.getImplicitDefs()) {
+      for (const unsigned *ImplicitDefs = TID.getImplicitDefs();
            *ImplicitDefs; ++ImplicitDefs) {
         unsigned Reg = *ImplicitDefs;
         if (PhysRegsUsed[Reg] != -2) {

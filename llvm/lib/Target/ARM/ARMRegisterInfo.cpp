@@ -581,7 +581,7 @@ void ARMRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   unsigned Opcode = MI.getOpcode();
-  const TargetInstrDescriptor &Desc = *MI.getDesc();
+  const TargetInstrDesc &Desc = MI.getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
   bool isSub = false;
 
@@ -1036,7 +1036,7 @@ ARMRegisterInfo::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
           for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
             if (I->getOperand(i).isFrameIndex()) {
               unsigned Opcode = I->getOpcode();
-              const TargetInstrDescriptor &Desc = TII.get(Opcode);
+              const TargetInstrDesc &Desc = TII.get(Opcode);
               unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
               if (AddrMode == ARMII::AddrMode3) {
                 Limit = (1 << 8) - 1;

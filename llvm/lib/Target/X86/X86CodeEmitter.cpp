@@ -60,7 +60,7 @@ namespace {
     }
 
     void emitInstruction(const MachineInstr &MI,
-                         const TargetInstrDescriptor *Desc);
+                         const TargetInstrDesc *Desc);
 
   private:
     void emitPCRelativeBlockAddress(MachineBasicBlock *MBB);
@@ -115,10 +115,10 @@ bool Emitter::runOnMachineFunction(MachineFunction &MF) {
       MCE.StartMachineBasicBlock(MBB);
       for (MachineBasicBlock::const_iterator I = MBB->begin(), E = MBB->end();
            I != E; ++I) {
-        const TargetInstrDescriptor *Desc = I->getDesc();
-        emitInstruction(*I, Desc);
+        const TargetInstrDesc &Desc = I->getDesc();
+        emitInstruction(*I, &Desc);
         // MOVPC32r is basically a call plus a pop instruction.
-        if (Desc->Opcode == X86::MOVPC32r)
+        if (Desc.getOpcode() == X86::MOVPC32r)
           emitInstruction(*I, &II->get(X86::POP32r));
         NumEmitted++;  // Keep track of the # of mi's emitted
       }
@@ -394,7 +394,7 @@ void Emitter::emitMemModRMByte(const MachineInstr &MI,
   }
 }
 
-static unsigned sizeOfImm(const TargetInstrDescriptor *Desc) {
+static unsigned sizeOfImm(const TargetInstrDesc *Desc) {
   switch (Desc->TSFlags & X86II::ImmMask) {
   case X86II::Imm8:   return 1;
   case X86II::Imm16:  return 2;
@@ -436,18 +436,18 @@ inline static bool isX86_64NonExtLowByteReg(unsigned reg) {
 /// size, and 3) use of X86-64 extended registers.
 unsigned Emitter::determineREX(const MachineInstr &MI) {
   unsigned REX = 0;
-  const TargetInstrDescriptor *Desc = MI.getDesc();
+  const TargetInstrDesc &Desc = MI.getDesc();
 
   // Pseudo instructions do not need REX prefix byte.
-  if ((Desc->TSFlags & X86II::FormMask) == X86II::Pseudo)
+  if ((Desc.TSFlags & X86II::FormMask) == X86II::Pseudo)
     return 0;
-  if (Desc->TSFlags & X86II::REX_W)
+  if (Desc.TSFlags & X86II::REX_W)
     REX |= 1 << 3;
 
-  unsigned NumOps = Desc->getNumOperands();
+  unsigned NumOps = Desc.getNumOperands();
   if (NumOps) {
     bool isTwoAddr = NumOps > 1 &&
-      Desc->getOperandConstraint(1, TOI::TIED_TO) != -1;
+      Desc.getOperandConstraint(1, TOI::TIED_TO) != -1;
 
     // If it accesses SPL, BPL, SIL, or DIL, then it requires a 0x40 REX prefix.
     unsigned i = isTwoAddr ? 1 : 0;
@@ -460,7 +460,7 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
       }
     }
 
-    switch (Desc->TSFlags & X86II::FormMask) {
+    switch (Desc.TSFlags & X86II::FormMask) {
     case X86II::MRMInitReg:
       if (isX86_64ExtendedReg(MI.getOperand(0)))
         REX |= (1 << 0) | (1 << 2);
@@ -528,7 +528,7 @@ unsigned Emitter::determineREX(const MachineInstr &MI) {
 }
 
 void Emitter::emitInstruction(const MachineInstr &MI,
-                              const TargetInstrDescriptor *Desc) {
+                              const TargetInstrDesc *Desc) {
   unsigned Opcode = Desc->Opcode;
 
   // Emit the repeat opcode prefix as needed.

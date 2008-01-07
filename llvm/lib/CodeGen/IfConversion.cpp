@@ -460,7 +460,7 @@ MachineBasicBlock::iterator firstNonBranchInst(MachineBasicBlock *BB,
   MachineBasicBlock::iterator I = BB->end();
   while (I != BB->begin()) {
     --I;
-    if (!I->getDesc()->isBranch())
+    if (!I->getDesc().isBranch())
       break;
   }
   return I;
@@ -548,12 +548,12 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
   bool SeenCondBr = false;
   for (MachineBasicBlock::iterator I = BBI.BB->begin(), E = BBI.BB->end();
        I != E; ++I) {
-    const TargetInstrDescriptor *TID = I->getDesc();
-    if (TID->isNotDuplicable())
+    const TargetInstrDesc &TID = I->getDesc();
+    if (TID.isNotDuplicable())
       BBI.CannotBeCopied = true;
 
     bool isPredicated = TII->isPredicated(I);
-    bool isCondBr = BBI.IsBrAnalyzable && TID->isConditionalBranch();
+    bool isCondBr = BBI.IsBrAnalyzable && TID.isConditionalBranch();
 
     if (!isCondBr) {
       if (!isPredicated)
@@ -590,7 +590,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
     if (TII->DefinesPredicate(I, PredDefs))
       BBI.ClobbersPred = true;
 
-    if (!TID->isPredicable()) {
+    if (!TID.isPredicable()) {
       BBI.IsUnpredicable = true;
       return;
     }
@@ -1132,10 +1132,10 @@ void IfConverter::CopyAndPredicateBlock(BBInfo &ToBBI, BBInfo &FromBBI,
                                         bool IgnoreBr) {
   for (MachineBasicBlock::iterator I = FromBBI.BB->begin(),
          E = FromBBI.BB->end(); I != E; ++I) {
-    const TargetInstrDescriptor *TID = I->getDesc();
+    const TargetInstrDesc &TID = I->getDesc();
     bool isPredicated = TII->isPredicated(I);
     // Do not copy the end of the block branches.
-    if (IgnoreBr && !isPredicated && TID->isBranch())
+    if (IgnoreBr && !isPredicated && TID.isBranch())
       break;
 
     MachineInstr *MI = I->clone();

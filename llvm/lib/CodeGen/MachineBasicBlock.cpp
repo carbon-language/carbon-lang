@@ -132,9 +132,9 @@ void ilist_traits<MachineInstr>::transferNodesFromList(
 
 MachineBasicBlock::iterator MachineBasicBlock::getFirstTerminator() {
   iterator I = end();
-  while (I != begin() && (--I)->getDesc()->isTerminator())
+  while (I != begin() && (--I)->getDesc().isTerminator())
     ; /*noop */
-  if (I != end() && !I->getDesc()->isTerminator()) ++I;
+  if (I != end() && !I->getDesc().isTerminator()) ++I;
   return I;
 }
 
@@ -261,7 +261,7 @@ void MachineBasicBlock::ReplaceUsesOfBlockWith(MachineBasicBlock *Old,
   MachineBasicBlock::iterator I = end();
   while (I != begin()) {
     --I;
-    if (!I->getDesc()->isTerminator()) break;
+    if (!I->getDesc().isTerminator()) break;
 
     // Scan the operands of this machine instruction, replacing any uses of Old
     // with New.

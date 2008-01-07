@@ -20,7 +20,7 @@
 
 namespace llvm {
 
-class TargetInstrDescriptor;
+class TargetInstrDesc;
 
 template <typename T> struct ilist_traits;
 template <typename T> struct ilist;
@@ -29,7 +29,7 @@ template <typename T> struct ilist;
 /// MachineInstr - Representation of each machine instruction.
 ///
 class MachineInstr {
-  const TargetInstrDescriptor *TID;     // Instruction descriptor.
+  const TargetInstrDesc *TID;           // Instruction descriptor.
   unsigned short NumImplicitOps;        // Number of implicit operands (which
                                         // are determined at construction time).
 
@@ -54,14 +54,14 @@ public:
 
   /// MachineInstr ctor - This constructor create a MachineInstr and add the
   /// implicit operands.  It reserves space for number of operands specified by
-  /// TargetInstrDescriptor.
-  explicit MachineInstr(const TargetInstrDescriptor &TID, bool NoImp = false);
+  /// TargetInstrDesc.
+  explicit MachineInstr(const TargetInstrDesc &TID, bool NoImp = false);
 
   /// MachineInstr ctor - Work exactly the same as the ctor above, except that
   /// the MachineInstr is created and added to the end of the specified basic
   /// block.
   ///
-  MachineInstr(MachineBasicBlock *MBB, const TargetInstrDescriptor &TID);
+  MachineInstr(MachineBasicBlock *MBB, const TargetInstrDesc &TID);
 
   ~MachineInstr();
 
@@ -70,7 +70,7 @@ public:
   
   /// getDesc - Returns the target instruction descriptor of this
   /// MachineInstr.
-  const TargetInstrDescriptor *getDesc() const { return TID; }
+  const TargetInstrDesc &getDesc() const { return *TID; }
 
   /// getOpcode - Returns the opcode of this MachineInstr.
   ///
@@ -166,7 +166,7 @@ public:
   /// setInstrDescriptor - Replace the instruction descriptor (thus opcode) of
   /// the current instruction with a new one.
   ///
-  void setInstrDescriptor(const TargetInstrDescriptor &tid) { TID = &tid; }
+  void setInstrDescriptor(const TargetInstrDesc &tid) { TID = &tid; }
 
   /// RemoveOperand - Erase an operand  from an instruction, leaving it with one
   /// fewer operand than it started with.

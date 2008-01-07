@@ -22,7 +22,7 @@
 
 namespace llvm {
 
-class TargetInstrDescriptor;
+class TargetInstrDesc;
 
 class MachineInstrBuilder {
   MachineInstr *MI;
@@ -88,14 +88,14 @@ public:
 /// BuildMI - Builder interface.  Specify how to create the initial instruction
 /// itself.
 ///
-inline MachineInstrBuilder BuildMI(const TargetInstrDescriptor &TID) {
+inline MachineInstrBuilder BuildMI(const TargetInstrDesc &TID) {
   return MachineInstrBuilder(new MachineInstr(TID));
 }
 
 /// BuildMI - This version of the builder sets up the first operand as a
 /// destination virtual register.
 ///
-inline MachineInstrBuilder  BuildMI(const TargetInstrDescriptor &TID,
+inline MachineInstrBuilder  BuildMI(const TargetInstrDesc &TID,
                                     unsigned DestReg) {
   return MachineInstrBuilder(new MachineInstr(TID)).addReg(DestReg, true);
 }
@@ -106,7 +106,7 @@ inline MachineInstrBuilder  BuildMI(const TargetInstrDescriptor &TID,
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
-                                   const TargetInstrDescriptor &TID,
+                                   const TargetInstrDesc &TID,
                                    unsigned DestReg) {
   MachineInstr *MI = new MachineInstr(TID);
   BB.insert(I, MI);
@@ -119,7 +119,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
-                                   const TargetInstrDescriptor &TID) {
+                                   const TargetInstrDesc &TID) {
   MachineInstr *MI = new MachineInstr(TID);
   BB.insert(I, MI);
   return MachineInstrBuilder(MI);
@@ -130,7 +130,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
 /// destination register.
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
-                                   const TargetInstrDescriptor &TID) {
+                                   const TargetInstrDesc &TID) {
   return BuildMI(*BB, BB->end(), TID);
 }
 
@@ -139,7 +139,7 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
 /// operand as a destination virtual register. 
 ///
 inline MachineInstrBuilder BuildMI(MachineBasicBlock *BB,
-                                   const TargetInstrDescriptor &TID,
+                                   const TargetInstrDesc &TID,
                                    unsigned DestReg) {
   return BuildMI(*BB, BB->end(), TID, DestReg);
 }

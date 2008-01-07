@@ -51,7 +51,7 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *Use, unsigned Op,
 
   unsigned ResNo = Use->getOperand(2).ResNo;
   if (Def->isTargetOpcode()) {
-    const TargetInstrDescriptor &II = TII->get(Def->getTargetOpcode());
+    const TargetInstrDesc &II = TII->get(Def->getTargetOpcode());
     if (ResNo >= II.getNumDefs() &&
         II.ImplicitDefs[ResNo - II.getNumDefs()] == Reg) {
       PhysReg = Reg;
@@ -148,7 +148,7 @@ void ScheduleDAG::BuildSchedUnits() {
     
     if (MainNode->isTargetOpcode()) {
       unsigned Opc = MainNode->getTargetOpcode();
-      const TargetInstrDescriptor &TID = TII->get(Opc);
+      const TargetInstrDesc &TID = TII->get(Opc);
       for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
         if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
           SU->isTwoAddress = true;
@@ -291,15 +291,15 @@ unsigned ScheduleDAG::CountOperands(SDNode *Node) {
 static const TargetRegisterClass *getInstrOperandRegClass(
         const MRegisterInfo *MRI, 
         const TargetInstrInfo *TII,
-        const TargetInstrDescriptor *II,
+        const TargetInstrDesc &II,
         unsigned Op) {
-  if (Op >= II->getNumOperands()) {
-    assert(II->isVariadic() && "Invalid operand # of instruction");
+  if (Op >= II.getNumOperands()) {
+    assert(II.isVariadic() && "Invalid operand # of instruction");
     return NULL;
   }
-  if (II->OpInfo[Op].isLookupPtrRegClass())
+  if (II.OpInfo[Op].isLookupPtrRegClass())
     return TII->getPointerRegClass();
-  return MRI->getRegClass(II->OpInfo[Op].RegClass);
+  return MRI->getRegClass(II.OpInfo[Op].RegClass);
 }
 
 void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
@@ -371,7 +371,7 @@ void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
 
 void ScheduleDAG::CreateVirtualRegisters(SDNode *Node,
                                          MachineInstr *MI,
-                                         const TargetInstrDescriptor &II,
+                                         const TargetInstrDesc &II,
                                      DenseMap<SDOperand, unsigned> &VRBaseMap) {
   for (unsigned i = 0; i < II.getNumDefs(); ++i) {
     // If the specific node value is only used by a CopyToReg and the dest reg
@@ -396,7 +396,7 @@ void ScheduleDAG::CreateVirtualRegisters(SDNode *Node,
     // Create the result registers for this node and add the result regs to
     // the machine instruction.
     if (VRBase == 0) {
-      const TargetRegisterClass *RC = getInstrOperandRegClass(MRI, TII, &II, i);
+      const TargetRegisterClass *RC = getInstrOperandRegClass(MRI, TII, II, i);
       assert(RC && "Isn't a register operand!");
       VRBase = RegInfo.createVirtualRegister(RC);
       MI->addOperand(MachineOperand::CreateReg(VRBase, true));
@@ -422,7 +422,7 @@ static unsigned getVR(SDOperand Op, DenseMap<SDOperand, unsigned> &VRBaseMap) {
 /// assertions only.
 void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
                              unsigned IIOpNum,
-                             const TargetInstrDescriptor *II,
+                             const TargetInstrDesc *II,
                              DenseMap<SDOperand, unsigned> &VRBaseMap) {
   if (Op.isTargetOpcode()) {
     // Note that this case is redundant with the final else block, but we
@@ -434,16 +434,16 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     
     // Get/emit the operand.
     unsigned VReg = getVR(Op, VRBaseMap);
-    const TargetInstrDescriptor *TID = MI->getDesc();
-    bool isOptDef = (IIOpNum < TID->getNumOperands())
-      ? (TID->OpInfo[IIOpNum].isOptionalDef()) : false;
+    const TargetInstrDesc &TID = MI->getDesc();
+    bool isOptDef = (IIOpNum < TID.getNumOperands())
+      ? (TID.OpInfo[IIOpNum].isOptionalDef()) : false;
     MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef));
     
     // Verify that it is right.
     assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
     if (II) {
       const TargetRegisterClass *RC =
-                          getInstrOperandRegClass(MRI, TII, II, IIOpNum);
+                          getInstrOperandRegClass(MRI, TII, *II, IIOpNum);
       assert(RC && "Don't have operand info for this instruction!");
       const TargetRegisterClass *VRC = RegInfo.getRegClass(VReg);
       if (VRC != RC) {
@@ -507,7 +507,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
     if (II) {
       const TargetRegisterClass *RC =
-                            getInstrOperandRegClass(MRI, TII, II, IIOpNum);
+                            getInstrOperandRegClass(MRI, TII, *II, IIOpNum);
       assert(RC && "Don't have operand info for this instruction!");
       assert(RegInfo.getRegClass(VReg) == RC &&
              "Register class of operand and regclass of use don't agree!");
@@ -669,7 +669,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
       return;
     }
     
-    const TargetInstrDescriptor &II = TII->get(Opc);
+    const TargetInstrDesc &II = TII->get(Opc);
 
     unsigned NumResults = CountResults(Node);
     unsigned NodeOperands = CountOperands(Node);

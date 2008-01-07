@@ -82,10 +82,10 @@ public:
 // Machine Instruction Flags and Description
 //===----------------------------------------------------------------------===//
 
-/// TargetInstrDescriptor flags - These should be considered private to the
-/// implementation of the TargetInstrDescriptor class.  Clients should use the
-/// predicate methods on TargetInstrDescriptor, not use these directly.  These
-/// all correspond to bitfields in the TargetInstrDescriptor::Flags field.
+/// TargetInstrDesc flags - These should be considered private to the
+/// implementation of the TargetInstrDesc class.  Clients should use the
+/// predicate methods on TargetInstrDesc, not use these directly.  These
+/// all correspond to bitfields in the TargetInstrDesc::Flags field.
 namespace TID {
   enum {
     Variadic = 0,
@@ -111,12 +111,12 @@ namespace TID {
   };
 }
 
-/// TargetInstrDescriptor - Describe properties that are true of each
+/// TargetInstrDesc - Describe properties that are true of each
 /// instruction in the target description file.  This captures information about
 /// side effects, register use and many other things.  There is one instance of
 /// this struct for each target instruction class, and the MachineInstr class
 /// points to this struct directly to describe itself.
-class TargetInstrDescriptor {
+class TargetInstrDesc {
 public:
   unsigned short  Opcode;        // The opcode number.
   unsigned short  NumOperands;   // Num of args (may be more if variable_ops)
@@ -146,6 +146,11 @@ public:
   /// findTiedToSrcOperand - Returns the operand that is tied to the specified
   /// dest operand. Returns -1 if there isn't one.
   int findTiedToSrcOperand(unsigned OpNum) const;
+  
+  /// getOpcode - Return the opcode number for this descriptor.
+  unsigned getOpcode() const {
+    return Opcode;
+  }
   
   /// getName - Return the name of the record in the .td file for this
   /// instruction, for example "ADD8ri".
@@ -421,14 +426,13 @@ public:
 /// TargetInstrInfo - Interface to description of machine instructions
 ///
 class TargetInstrInfo {
-  const TargetInstrDescriptor* desc;    // raw array to allow static init'n
-  unsigned NumOpcodes;                  // number of entries in the desc array
-  unsigned numRealOpCodes;              // number of non-dummy op codes
+  const TargetInstrDesc *Descriptors; // Raw array to allow static init'n
+  unsigned NumOpcodes;                // Number of entries in the desc array
 
   TargetInstrInfo(const TargetInstrInfo &);  // DO NOT IMPLEMENT
   void operator=(const TargetInstrInfo &);   // DO NOT IMPLEMENT
 public:
-  TargetInstrInfo(const TargetInstrDescriptor *desc, unsigned NumOpcodes);
+  TargetInstrInfo(const TargetInstrDesc *desc, unsigned NumOpcodes);
   virtual ~TargetInstrInfo();
 
   // Invariant opcodes: All instruction sets have these as their low opcodes.
@@ -445,16 +449,16 @@ public:
   /// get - Return the machine instruction descriptor that corresponds to the
   /// specified instruction opcode.
   ///
-  const TargetInstrDescriptor& get(unsigned Opcode) const {
-    assert(Opcode < NumOpcodes);
-    return desc[Opcode];
+  const TargetInstrDesc &get(unsigned Opcode) const {
+    assert(Opcode < NumOpcodes && "Invalid opcode!");
+    return Descriptors[Opcode];
   }
 
   /// isTriviallyReMaterializable - Return true if the instruction is trivially
   /// rematerializable, meaning it has no side effects and requires no operands
   /// that aren't always available.
   bool isTriviallyReMaterializable(MachineInstr *MI) const {
-    return MI->getDesc()->isRematerializable() &&
+    return MI->getDesc().isRematerializable() &&
            isReallyTriviallyReMaterializable(MI);
   }
 
@@ -462,9 +466,9 @@ public:
   /// effects that are not captured by any operands of the instruction or other
   /// flags.
   bool hasUnmodelledSideEffects(MachineInstr *MI) const {
-    const TargetInstrDescriptor *TID = MI->getDesc();
-    if (TID->hasNoSideEffects()) return false;
-    if (!TID->hasConditionalSideEffects()) return true;
+    const TargetInstrDesc &TID = MI->getDesc();
+    if (TID.hasNoSideEffects()) return false;
+    if (!TID.hasConditionalSideEffects()) return true;
     return !isReallySideEffectFree(MI); // May have side effects
   }
 protected:
@@ -773,7 +777,7 @@ public:
 /// libcodegen, not in libtarget.
 class TargetInstrInfoImpl : public TargetInstrInfo {
 protected:
-  TargetInstrInfoImpl(const TargetInstrDescriptor *desc, unsigned NumOpcodes)
+  TargetInstrInfoImpl(const TargetInstrDesc *desc, unsigned NumOpcodes)
   : TargetInstrInfo(desc, NumOpcodes) {}
 public:
   virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;

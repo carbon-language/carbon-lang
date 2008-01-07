@@ -729,7 +729,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     MachineBasicBlock::iterator PI = prior(MBBI);
     unsigned Opc = PI->getOpcode();
     if (Opc != X86::POP32r && Opc != X86::POP64r &&
-        !PI->getDesc()->isTerminator())
+        !PI->getDesc().isTerminator())
       break;
     --MBBI;
   }

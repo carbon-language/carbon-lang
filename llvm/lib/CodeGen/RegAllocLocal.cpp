@@ -563,7 +563,7 @@ void RALocal::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // Otherwise, sequentially allocate each instruction in the MBB.
   while (MII != MBB.end()) {
     MachineInstr *MI = MII++;
-    const TargetInstrDescriptor &TID = TII.get(MI->getOpcode());
+    const TargetInstrDesc &TID = MI->getDesc();
     DEBUG(DOUT << "\nStarting RegAlloc of: " << *MI;
           DOUT << "  Regs have values: ";
           for (unsigned i = 0; i != MRI->getNumRegs(); ++i)
