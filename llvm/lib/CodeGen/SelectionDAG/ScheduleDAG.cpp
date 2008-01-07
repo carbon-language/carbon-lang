@@ -294,7 +294,7 @@ static const TargetRegisterClass *getInstrOperandRegClass(
         const TargetInstrDescriptor *II,
         unsigned Op) {
   if (Op >= II->getNumOperands()) {
-    assert((II->Flags & M_VARIABLE_OPS)&& "Invalid operand # of instruction");
+    assert(II->isVariadic() && "Invalid operand # of instruction");
     return NULL;
   }
   if (II->OpInfo[Op].isLookupPtrRegClass())
@@ -678,7 +678,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
                           II.getImplicitDefs() != 0;
 #ifndef NDEBUG
     assert((II.getNumOperands() == NumMIOperands ||
-            HasPhysRegOuts || II.hasVariableOperands()) &&
+            HasPhysRegOuts || II.isVariadic()) &&
            "#operands for dag node doesn't match .td file!"); 
 #endif
 

@@ -99,7 +99,7 @@ namespace llvm {
     bool isReMaterializable;
     bool hasDelaySlot;
     bool usesCustomDAGSchedInserter;
-    bool hasVariableNumberOfOperands;
+    bool isVariadic;
     bool hasCtrlDep;
     bool isNotDuplicable;
     bool hasOptionalDef;

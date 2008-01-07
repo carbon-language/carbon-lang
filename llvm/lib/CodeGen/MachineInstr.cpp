@@ -488,8 +488,7 @@ MachineInstr *MachineInstr::removeFromParent() {
 ///
 bool MachineInstr::OperandsComplete() const {
   unsigned short NumOperands = TID->getNumOperands();
-  if (TID->hasVariableOperands() == 0 &&
-      getNumOperands()-NumImplicitOps >= NumOperands)
+  if (!TID->isVariadic() && getNumOperands()-NumImplicitOps >= NumOperands)
     return true;  // Broken: we have all the operands of this instruction!
   return false;
 }
@@ -498,7 +497,7 @@ bool MachineInstr::OperandsComplete() const {
 ///
 unsigned MachineInstr::getNumExplicitOperands() const {
   unsigned NumOperands = TID->getNumOperands();
-  if (TID->hasVariableOperands() == 0)
+  if (!TID->isVariadic())
     return NumOperands;
 
   for (unsigned e = getNumOperands(); NumOperands != e; ++NumOperands) {

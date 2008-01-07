@@ -799,6 +799,5 @@ void Emitter::emitInstruction(const MachineInstr &MI,
     break;
   }
 
-  assert((Desc->Flags & M_VARIABLE_OPS) != 0 ||
-         CurOp == NumOps && "Unknown encoding!");
+  assert((Desc->isVariadic() || CurOp == NumOps) && "Unknown encoding!");
 }

@@ -320,9 +320,9 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.hasOptionalDef)     OS << "|M_HAS_OPTIONAL_DEF";
   if (Inst.usesCustomDAGSchedInserter)
     OS << "|M_USES_CUSTOM_DAG_SCHED_INSERTION";
-  if (Inst.hasVariableNumberOfOperands) OS << "|M_VARIABLE_OPS";
-  if (Inst.mayHaveSideEffects)          OS << "|M_MAY_HAVE_SIDE_EFFECTS";
-  if (NeverHasSideEffects)              OS << "|M_NEVER_HAS_SIDE_EFFECTS";
+  if (Inst.isVariadic)         OS << "|M_VARIADIC";
+  if (Inst.mayHaveSideEffects) OS << "|M_MAY_HAVE_SIDE_EFFECTS";
+  if (NeverHasSideEffects)     OS << "|M_NEVER_HAS_SIDE_EFFECTS";
   OS << ", 0";
 
   // Emit all of the target-specific flags...

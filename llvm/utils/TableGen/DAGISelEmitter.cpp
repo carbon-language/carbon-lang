@@ -835,7 +835,7 @@ public:
       if (InstPatNode && InstPatNode->getOperator()->getName() == "set") {
         InstPatNode = InstPatNode->getChild(InstPatNode->getNumChildren()-1);
       }
-      bool HasVarOps     = isRoot && II.hasVariableNumberOfOperands;
+      bool HasVarOps     = isRoot && II.isVariadic;
       // FIXME: fix how we deal with physical register operands.
       bool HasImpInputs  = isRoot && Inst.getNumImpOperands() > 0;
       bool HasImpResults = isRoot && DstRegs.size() > 0;

@@ -99,7 +99,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   mayHaveSideEffects = R->getValueAsBit("mayHaveSideEffects");
   neverHasSideEffects = R->getValueAsBit("neverHasSideEffects");
   hasOptionalDef = false;
-  hasVariableNumberOfOperands = false;
+  isVariadic = false;
 
   if (mayHaveSideEffects && neverHasSideEffects)
     throw R->getName() +
@@ -159,7 +159,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
       else if (Rec->isSubClassOf("OptionalDefOperand"))
         hasOptionalDef = true;
     } else if (Rec->getName() == "variable_ops") {
-      hasVariableNumberOfOperands = true;
+      isVariadic = true;
       continue;
     } else if (!Rec->isSubClassOf("RegisterClass") && 
                Rec->getName() != "ptr_rc")

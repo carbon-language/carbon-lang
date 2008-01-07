@@ -125,9 +125,7 @@ const unsigned M_TERMINATOR_FLAG       = 1 << 11;
 // block.
 const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 12;
 
-// M_VARIABLE_OPS - Set if this instruction can have a variable number of extra
-// operands in addition to the minimum number operands specified.
-const unsigned M_VARIABLE_OPS          = 1 << 13;
+const unsigned M_VARIADIC          = 1 << 13;
 
 // M_PREDICABLE - Set if this instruction has a predicate operand that
 // controls execution. It may be set to 'always'.
@@ -141,8 +139,6 @@ const unsigned M_REMATERIALIZIBLE      = 1 << 15;
 // (e.g. instructions with unique labels attached).
 const unsigned M_NOT_DUPLICABLE        = 1 << 16;
 
-// M_HAS_OPTIONAL_DEF - Set if this instruction has an optional definition, e.g.
-// ARM instructions which can set condition code if 's' bit is set.
 const unsigned M_HAS_OPTIONAL_DEF      = 1 << 17;
 
 // M_NEVER_HAS_SIDE_EFFECTS - Set if this instruction has no side effects that
@@ -182,7 +178,7 @@ public:
   /// it is set. Returns -1 if it is not set.
   int getOperandConstraint(unsigned OpNum,
                            TOI::OperandConstraint Constraint) const {
-    assert((OpNum < NumOperands || hasVariableOperands()) &&
+    assert((OpNum < NumOperands || isVariadic()) &&
            "Invalid operand # of TargetInstrInfo");
     if (OpNum < NumOperands &&
         (OpInfo[OpNum].Constraints & (1 << Constraint))) {
@@ -202,18 +198,32 @@ public:
     return Name;
   }
   
+  /// getNumOperands - Return the number of declared MachineOperands for this
+  /// MachineInstruction.  Note that variadic (isVariadic() returns true)
+  /// instructions may have additional operands at the end of the list, and note
+  /// that the machine instruction may include implicit register def/uses as
+  /// well.
   unsigned getNumOperands() const {
     return NumOperands;
   }
   
+  /// getNumDefs - Return the number of MachineOperands that are register
+  /// definitions.  Register definitions always occur at the start of the 
+  /// machine operand list.  This is the number of "outs" in the .td file.
   unsigned getNumDefs() const {
     return NumDefs;
   }
   
-  bool hasVariableOperands() const {
-    return Flags & M_VARIABLE_OPS;
+  /// isVariadic - Return true if this instruction can have a variable number of
+  /// operands.  In this case, the variable operands will be after the normal
+  /// operands but before the implicit definitions and uses (if any are
+  /// present).
+  bool isVariadic() const {
+    return Flags & M_VARIADIC;
   }
   
+  /// hasOptionalDef - Set if this instruction has an optional definition, e.g.
+  /// ARM instructions which can set condition code if 's' bit is set.
   bool hasOptionalDef() const {
     return Flags & M_HAS_OPTIONAL_DEF;
   }
