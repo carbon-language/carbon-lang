@@ -27,19 +27,11 @@
 
 #define DEBUG_TYPE "shadowstackgc"
 #include "llvm/CodeGen/Collectors.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/Collector.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Module.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Support/LLVMBuilder.h"
-#include "llvm/Analysis/Verifier.h"
-#include <cstdlib>
 
 using namespace llvm;
 

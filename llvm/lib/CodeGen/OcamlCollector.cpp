@@ -13,18 +13,12 @@
 //===----------------------------------------------------------------------===//
                         
 #include "llvm/CodeGen/Collectors.h"
-#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/Collector.h"
-#include "llvm/CodeGen/CollectorMetadata.h"
-#include "llvm/Function.h"
 #include "llvm/Module.h"
-#include "llvm/PassManager.h"
-#include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetAsmInfo.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetMachine.h"
-#include <ctype.h>
 
 using namespace llvm;
 
