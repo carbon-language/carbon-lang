@@ -17,6 +17,7 @@
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/Collector.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Support/CommandLine.h"
@@ -28,6 +29,8 @@ static cl::opt<bool> PrintISelInput("print-isel-input", cl::Hidden,
     cl::desc("Print LLVM IR input to isel pass"));
 static cl::opt<bool> PrintEmittedAsm("print-emitted-asm", cl::Hidden,
     cl::desc("Dump emitter generated instructions as assembly"));
+static cl::opt<bool> PrintGCInfo("print-gc", cl::Hidden,
+    cl::desc("Dump garbage collector data"));
 
 // Hidden options to help debugging
 static cl::opt<bool>
@@ -52,8 +55,7 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
       PM.add(new PrintFunctionPass("\n\n*** Code after LSR *** \n", &cerr));
   }
   
-  // FIXME: Implement efficient support for garbage collection intrinsics.
-  PM.add(createLowerGCPass());
+  PM.add(createGCLoweringPass());
 
   if (!ExceptionHandling)
     PM.add(createLowerInvokePass(getTargetLowering()));
@@ -108,6 +110,13 @@ LLVMTargetMachine::addPassesToEmitFile(FunctionPassManager &PM,
   if (!Fast)
     PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
 
+  PM.add(createGCMachineCodeAnalysisPass());
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(cerr));
+  
+  if (PrintGCInfo)
+    PM.add(createCollectorMetadataPrinter(*cerr));
+  
   // Fold redundant debug labels.
   PM.add(createDebugLabelFoldingPass());
   
@@ -142,6 +151,8 @@ bool LLVMTargetMachine::addPassesToEmitFileFinish(FunctionPassManager &PM,
                                                   bool Fast) {
   if (MCE)
     addSimpleCodeEmitter(PM, Fast, PrintEmittedAsm, *MCE);
+    
+  PM.add(createCollectorMetadataDeleter());
 
   // Delete machine code for this function
   PM.add(createMachineCodeDeleter());
@@ -167,8 +178,7 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
       PM.add(new PrintFunctionPass("\n\n*** Code after LSR *** \n", &cerr));
   }
   
-  // FIXME: Implement efficient support for garbage collection intrinsics.
-  PM.add(createLowerGCPass());
+  PM.add(createGCLoweringPass());
   
   // FIXME: Implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass(getTargetLowering()));
@@ -226,10 +236,19 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
   if (!Fast)
     PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
 
+  PM.add(createGCMachineCodeAnalysisPass());
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(cerr));
+  
+  if (PrintGCInfo)
+    PM.add(createCollectorMetadataPrinter(*cerr));
+  
   if (addPreEmitPass(PM, Fast) && PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(cerr));
 
   addCodeEmitter(PM, Fast, PrintEmittedAsm, MCE);
+  
+  PM.add(createCollectorMetadataDeleter());
   
   // Delete machine code for this function
   PM.add(createMachineCodeDeleter());
