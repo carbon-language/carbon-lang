@@ -309,8 +309,8 @@ namespace ISD {
     VECTOR_SHUFFLE,
     
     /// SCALAR_TO_VECTOR(VAL) - This represents the operation of loading a
-    /// scalar value into the low element of the resultant vector type.  The top
-    /// elements of the vector are undefined.
+    /// scalar value into element 0 of the resultant vector type.  The top
+    /// elements 1 to N-1 of the N-element vector are undefined.
     SCALAR_TO_VECTOR,
     
     // EXTRACT_SUBREG - This node is used to extract a sub-register value. 
