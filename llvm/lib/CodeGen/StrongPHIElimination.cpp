@@ -268,7 +268,7 @@ static bool isKillInst(LiveVariables::VarInfo& V, MachineInstr* MI) {
 /// trick parameter is 'mode' which tells it the relationship of the two
 /// registers. 0 - defined in the same block, 1 - first properly dominates
 /// second, 2 - second properly dominates first 
-bool interferes(LiveVariables::VarInfo& First, LiveVariables::VarInfo& Second,
+static bool interferes(LiveVariables::VarInfo& First, LiveVariables::VarInfo& Second,
                 MachineBasicBlock* scan, unsigned mode) {
   MachineInstr* def = 0;
   MachineInstr* kill = 0;
