@@ -148,10 +148,11 @@ void ScheduleDAGRRList::CommuteNodesToReducePressure() {
     if (!SU || !SU->Node) continue;
     if (SU->isCommutable) {
       unsigned Opc = SU->Node->getTargetOpcode();
-      unsigned NumRes = TII->get(Opc).getNumDefs();
+      const TargetInstrDescriptor &TID = TII->get(Opc);
+      unsigned NumRes = TID.getNumDefs();
       unsigned NumOps = CountOperands(SU->Node);
       for (unsigned j = 0; j != NumOps; ++j) {
-        if (TII->getOperandConstraint(Opc, j+NumRes, TOI::TIED_TO) == -1)
+        if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) == -1)
           continue;
 
         SDNode *OpN = SU->Node->getOperand(j).Val;
@@ -430,14 +431,14 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
 
     SUnit *NewSU = NewSUnit(N);
     SUnitMap[N].push_back(NewSU);
-    const TargetInstrDescriptor *TID = &TII->get(N->getTargetOpcode());
-    for (unsigned i = 0; i != TID->getNumOperands(); ++i) {
-      if (TID->getOperandConstraint(i, TOI::TIED_TO) != -1) {
+    const TargetInstrDescriptor &TID = TII->get(N->getTargetOpcode());
+    for (unsigned i = 0; i != TID.getNumOperands(); ++i) {
+      if (TID.getOperandConstraint(i, TOI::TIED_TO) != -1) {
         NewSU->isTwoAddress = true;
         break;
       }
     }
-    if (TID->isCommutable())
+    if (TID.isCommutable())
       NewSU->isCommutable = true;
     // FIXME: Calculate height / depth and propagate the changes?
     NewSU->Depth = SU->Depth;
@@ -1287,10 +1288,11 @@ template<class SF>
 bool BURegReductionPriorityQueue<SF>::canClobber(SUnit *SU, SUnit *Op) {
   if (SU->isTwoAddress) {
     unsigned Opc = SU->Node->getTargetOpcode();
-    unsigned NumRes = TII->get(Opc).getNumDefs();
+    const TargetInstrDescriptor &TID = TII->get(Opc);
+    unsigned NumRes = TID.getNumDefs();
     unsigned NumOps = ScheduleDAG::CountOperands(SU->Node);
     for (unsigned i = 0; i != NumOps; ++i) {
-      if (TII->getOperandConstraint(Opc, i+NumRes, TOI::TIED_TO) != -1) {
+      if (TID.getOperandConstraint(i+NumRes, TOI::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(i).Val;
         if ((*SUnitMap).find(DU) != (*SUnitMap).end() &&
             Op == (*SUnitMap)[DU][SU->InstanceNo])
@@ -1362,10 +1364,11 @@ void BURegReductionPriorityQueue<SF>::AddPseudoTwoAddrDeps() {
       continue;
 
     unsigned Opc = Node->getTargetOpcode();
-    unsigned NumRes = TII->get(Opc).getNumDefs();
+    const TargetInstrDescriptor &TID = TII->get(Opc);
+    unsigned NumRes = TID.getNumDefs();
     unsigned NumOps = ScheduleDAG::CountOperands(Node);
     for (unsigned j = 0; j != NumOps; ++j) {
-      if (TII->getOperandConstraint(Opc, j+NumRes, TOI::TIED_TO) != -1) {
+      if (TID.getOperandConstraint(j+NumRes, TOI::TIED_TO) != -1) {
         SDNode *DU = SU->Node->getOperand(j).Val;
         if ((*SUnitMap).find(DU) == (*SUnitMap).end())
           continue;
