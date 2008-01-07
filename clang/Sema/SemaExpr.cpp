@@ -1101,7 +1101,7 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
   rhsType = rhsType.getCanonicalType();
   
   if (lhsType.getUnqualifiedType() == rhsType.getUnqualifiedType())
-    return Compatible; // common case, fast path...
+    return Compatible; // Common case: fast path an exact match.
 
   if (lhsType->isReferenceType() || rhsType->isReferenceType()) {
     if (Context.referenceTypesAreCompatible(lhsType, rhsType))
@@ -1159,7 +1159,6 @@ Sema::CheckAssignmentConstraints(QualType lhsType, QualType rhsType) {
     if (lhsType->isPointerType()) 
       return CheckPointerTypesForAssignment(lhsType, rhsType);
     return Incompatible;
-
   }
   
   if (isa<TagType>(lhsType) && isa<TagType>(rhsType)) {
