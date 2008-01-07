@@ -114,10 +114,6 @@ const unsigned M_CONVERTIBLE_TO_3_ADDR = 1 << 9;
 // Z), which produces the same result if Y and Z are exchanged.
 const unsigned M_COMMUTABLE            = 1 << 10;
 
-// M_TERMINATOR_FLAG - Is this instruction part of the terminator for a basic
-// block?  Typically this is things like return and branch instructions.
-// Various passes use this to insert code into the bottom of a basic block, but
-// before control flow occurs.
 const unsigned M_TERMINATOR_FLAG       = 1 << 11;
 
 // M_USES_CUSTOM_DAG_SCHED_INSERTION - Set if this instruction requires custom
@@ -228,10 +224,29 @@ public:
     return Flags & M_HAS_OPTIONAL_DEF;
   }
   
+  /// getImplicitUses - Return a list of machine operands that are potentially
+  /// read by any instance of this machine instruction.  For example, on X86,
+  /// the "adc" instruction adds two register operands and adds the carry bit in
+  /// from the flags register.  In this case, the instruction is marked as
+  /// implicitly reading the flags.  Likewise, the variable shift instruction on
+  /// X86 is marked as implicitly reading the 'CL' register, which it always
+  /// does.
+  ///
+  /// This method returns null if the instruction has no implicit uses.
   const unsigned *getImplicitUses() const {
     return ImplicitUses;
   }
   
+  /// getImplicitDefs - Return a list of machine operands that are potentially
+  /// written by any instance of this machine instruction.  For example, on X86,
+  /// many instructions implicitly set the flags register.  In this case, they
+  /// are marked as setting the FLAGS.  Likewise, many instructions always
+  /// deposit their result in a physical register.  For example, the X86 divide
+  /// instruction always deposits the quotient and remainder in the EAX/EDX
+  /// registers.  For that instruction, this will return a list containing the
+  /// EAX/EDX/EFLAGS registers.
+  ///
+  /// This method returns null if the instruction has no implicit uses.
   const unsigned *getImplicitDefs() const {
     return ImplicitDefs;
   }
@@ -244,16 +259,58 @@ public:
     return Flags & M_CALL_FLAG;
   }
   
+  /// isImplicitDef - Return true if this is an "IMPLICIT_DEF" instruction,
+  /// which defines a register to an unspecified value.  These basically
+  /// correspond to x = undef.
+  bool isImplicitDef() const {
+    return Flags & M_IMPLICIT_DEF_FLAG;
+  }
+  
+  /// isBarrier - Returns true if the specified instruction stops control flow
+  /// from executing the instruction immediately following it.  Examples include
+  /// unconditional branches and return instructions.
+  bool isBarrier() const {
+    return Flags & M_BARRIER_FLAG;
+  }
+  
+  /// isTerminator - Returns true if this instruction part of the terminator for
+  /// a basic block.  Typically this is things like return and branch
+  /// instructions.
+  ///
+  /// Various passes use this to insert code into the bottom of a basic block,
+  /// but before control flow occurs.
   bool isTerminator() const {
     return Flags & M_TERMINATOR_FLAG;
   }
   
+  /// isBranch - Returns true if this is a conditional, unconditional, or
+  /// indirect branch.  Predicates below can be used to discriminate between
+  /// these cases, and the TargetInstrInfo::AnalyzeBranch method can be used to
+  /// get more information.
   bool isBranch() const {
     return Flags & M_BRANCH_FLAG;
   }
-  
+
+  /// isIndirectBranch - Return true if this is an indirect branch, such as a
+  /// branch through a register.
   bool isIndirectBranch() const {
     return Flags & M_INDIRECT_FLAG;
+  }
+  
+  /// isConditionalBranch - Return true if this is a branch which may fall
+  /// through to the next instruction or may transfer control flow to some other
+  /// block.  The TargetInstrInfo::AnalyzeBranch method can be used to get more
+  /// information about this branch.
+  bool isConditionalBranch() const {
+    return isBranch() & !isBarrier() & !isIndirectBranch();
+  }
+  
+  /// isUnconditionalBranch - Return true if this is a branch which always
+  /// transfers control flow to some other block.  The
+  /// TargetInstrInfo::AnalyzeBranch method can be used to get more information
+  /// about this branch.
+  bool isUnconditionalBranch() const {
+    return isBranch() & isBarrier() & !isIndirectBranch();
   }
   
   bool isPredicable() const {
@@ -266,6 +323,12 @@ public:
   
   bool isCommutableInstr() const {
     return Flags & M_COMMUTABLE;
+  }
+  
+  /// hasDelaySlot - Returns true if the specified instruction has a delay slot
+  /// which must be filled by the code generator.
+  bool hasDelaySlot() const {
+    return Flags & M_DELAY_SLOT_FLAG;
   }
   
   /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
@@ -290,19 +353,6 @@ public:
   /// may not actually modify anything, for example.
   bool mayStore() const {
     return Flags & M_MAY_STORE_FLAG;
-  }
-  
-  /// isBarrier - Returns true if the specified instruction stops control flow
-  /// from executing the instruction immediately following it.  Examples include
-  /// unconditional branches and return instructions.
-  bool isBarrier() const {
-    return Flags & M_BARRIER_FLAG;
-  }
-  
-  /// hasDelaySlot - Returns true if the specified instruction has a delay slot
-  /// which must be filled by the code generator.
-  bool hasDelaySlot() const {
-    return Flags & M_DELAY_SLOT_FLAG;
   }
   
   unsigned getSchedClass() const {
