@@ -186,19 +186,21 @@ ParamAttrsList::excludeAttrs(const ParamAttrsList *PAL,
   return getModified(PAL, modVec);
 }
 
-uint16_t ParamAttr::incompatibleWithType (const Type *Ty, uint16_t attrs) {
+uint16_t ParamAttr::typeIncompatible (const Type *Ty) {
   uint16_t Incompatible = None;
 
   if (!Ty->isInteger())
-    Incompatible |= IntegerTypeOnly;
+    // Attributes that only apply to integers.
+    Incompatible |= SExt | ZExt;
 
-  if (!isa<PointerType>(Ty))
-    Incompatible |= PointerTypeOnly;
-  else if (attrs & ParamAttr::ByVal) {
-    const PointerType *PTy = cast<PointerType>(Ty);
+  if (const PointerType *PTy = dyn_cast<PointerType>(Ty)) {
     if (!isa<StructType>(PTy->getElementType()))
+      // Attributes that only apply to pointers to structs.
       Incompatible |= ParamAttr::ByVal;
+  } else {
+    // Attributes that only apply to pointers.
+    Incompatible |= ByVal | Nest | NoAlias | StructRet;
   }
 
-  return attrs & Incompatible;
+  return Incompatible;
 }

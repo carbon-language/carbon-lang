@@ -505,7 +505,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   const Type *RetTy = FTy->getReturnType();
   if (DeadRetVal.count(F)) {
     RetTy = Type::VoidTy;
-    RAttrs &= ~ParamAttr::incompatibleWithType(RetTy, RAttrs);
+    RAttrs &= ~ParamAttr::typeIncompatible(RetTy);
     DeadRetVal.erase(F);
   }
 
@@ -561,7 +561,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
     // The call return attributes.
     uint16_t RAttrs = PAL ? PAL->getParamAttrs(0) : 0;
     // Adjust in case the function was changed to return void.
-    RAttrs &= ~ParamAttr::incompatibleWithType(NF->getReturnType(), RAttrs);
+    RAttrs &= ~ParamAttr::typeIncompatible(NF->getReturnType());
     if (RAttrs)
       ParamAttrsVec.push_back(ParamAttrsWithIndex::get(0, RAttrs));
 

@@ -52,12 +52,6 @@ const uint16_t ParameterOnly = ByVal | InReg | Nest | StructRet;
 /// @brief Attributes that only apply to function return values.
 const uint16_t ReturnOnly = NoReturn | NoUnwind | ReadNone | ReadOnly;
 
-/// @brief Attributes that only apply to integers.
-const uint16_t IntegerTypeOnly = SExt | ZExt;
-
-/// @brief Attributes that only apply to pointers.
-const uint16_t PointerTypeOnly = ByVal | Nest | NoAlias | StructRet;
-
 /// @brief Attributes that are mutually incompatible.
 const uint16_t MutuallyIncompatible[3] = {
   ByVal | InReg | Nest  | StructRet,
@@ -65,8 +59,8 @@ const uint16_t MutuallyIncompatible[3] = {
   ReadNone | ReadOnly
 };
 
-/// @brief Which of the given attributes do not apply to the type.
-uint16_t incompatibleWithType (const Type *Ty, uint16_t attrs);
+/// @brief Which attributes cannot be applied to a type.
+uint16_t typeIncompatible (const Type *Ty);
 
 } // end namespace ParamAttr
 

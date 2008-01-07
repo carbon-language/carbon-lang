@@ -8097,10 +8097,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
         FT->getReturnType() != Type::VoidTy)
       return false;   // Cannot transform this return value.
 
-    if (!Caller->use_empty() && CallerPAL &&
-        ParamAttr::incompatibleWithType(FT->getReturnType(),
-                                        CallerPAL->getParamAttrs(0)))
-      return false;   // Attribute not compatible with transformed value.
+    if (CallerPAL && !Caller->use_empty()) {
+      uint16_t RAttrs = CallerPAL->getParamAttrs(0);
+      if (RAttrs & ParamAttr::typeIncompatible(FT->getReturnType()))
+        return false;   // Attribute not compatible with transformed value.
+    }
 
     // If the callsite is an invoke instruction, and the return value is used by
     // a PHI node in a successor, we cannot change the return type of the call
@@ -8127,9 +8128,11 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (!CastInst::isCastable(ActTy, ParamTy))
       return false;   // Cannot transform this parameter value.
 
-    if (CallerPAL &&
-        ParamAttr::incompatibleWithType(ParamTy, CallerPAL->getParamAttrs(i+1)))
-      return false;   // Attribute not compatible with transformed value.
+    if (CallerPAL) {
+      uint16_t PAttrs = CallerPAL->getParamAttrs(i + 1);
+      if (PAttrs & ParamAttr::typeIncompatible(ParamTy))
+        return false;   // Attribute not compatible with transformed value.
+    }
 
     ConstantInt *c = dyn_cast<ConstantInt>(*AI);
     // Some conversions are safe even if we do not have a body.
@@ -8168,7 +8171,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   // If the return value is not being used, the type may not be compatible
   // with the existing attributes.  Wipe out any problematic attributes.
-  RAttrs &= ~ParamAttr::incompatibleWithType(FT->getReturnType(), RAttrs);
+  RAttrs &= ~ParamAttr::typeIncompatible(FT->getReturnType());
 
   // Add the new return attributes.
   if (RAttrs)

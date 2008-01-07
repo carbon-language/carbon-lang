@@ -418,10 +418,10 @@ void Verifier::VerifyParamAttrs(const FunctionType *FT,
               Attrs->getParamAttrsText(MutI) + "are incompatible!", V);
     }
 
-    uint16_t IType = ParamAttr::incompatibleWithType(FT->getParamType(Idx-1),
-                                                     Attr);
-    Assert1(!IType, "Wrong type for attribute " +
-            Attrs->getParamAttrsText(IType), V);
+    uint16_t TypeI =
+      Attr & ParamAttr::typeIncompatible(FT->getParamType(Idx-1));
+    Assert1(!TypeI, "Wrong type for attribute " +
+            Attrs->getParamAttrsText(TypeI), V);
 
     if (Attr & ParamAttr::Nest) {
       Assert1(!SawNest, "More than one parameter has attribute nest!", V);
