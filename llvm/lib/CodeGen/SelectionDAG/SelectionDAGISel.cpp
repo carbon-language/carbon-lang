@@ -26,6 +26,7 @@
 #include "llvm/Intrinsics.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/ParameterAttributes.h"
+#include "llvm/CodeGen/Collector.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -426,12 +427,16 @@ public:
   /// FuncInfo - Information about the function as a whole.
   ///
   FunctionLoweringInfo &FuncInfo;
+  
+  /// GCI - Garbage collection metadata for the function.
+  CollectorMetadata *GCI;
 
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
                        AliasAnalysis &aa,
-                       FunctionLoweringInfo &funcinfo)
+                       FunctionLoweringInfo &funcinfo,
+                       CollectorMetadata *gci)
     : TLI(tli), DAG(dag), TD(DAG.getTarget().getTargetData()), AA(aa),
-      FuncInfo(funcinfo) {
+      FuncInfo(funcinfo), GCI(gci) {
   }
 
   /// getRoot - Return the current virtual root of the Selection DAG.
@@ -2907,6 +2912,22 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(Tmp.getValue(1));
     return 0;
   }
+
+  case Intrinsic::gcroot:
+    if (GCI) {
+      Value *Alloca = I.getOperand(1);
+      Constant *TypeMap = cast<Constant>(I.getOperand(2));
+      
+      FrameIndexSDNode *FI = cast<FrameIndexSDNode>(getValue(Alloca).Val);
+      GCI->addStackRoot(FI->getIndex(), TypeMap);
+    }
+    return 0;
+
+  case Intrinsic::gcread:
+  case Intrinsic::gcwrite:
+    assert(0 && "Collector failed to lower gcread/gcwrite intrinsics!");
+    return 0;
+
   case Intrinsic::flt_rounds: {
     setValue(&I, DAG.getNode(ISD::FLT_ROUNDS, MVT::i32));
     return 0;
@@ -4368,6 +4389,7 @@ unsigned SelectionDAGISel::MakeReg(MVT::ValueType VT) {
 
 void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<AliasAnalysis>();
+  AU.addRequired<CollectorModuleMetadata>();
   AU.setPreservesAll();
 }
 
@@ -4378,6 +4400,10 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   AA = &getAnalysis<AliasAnalysis>();
 
   MachineFunction &MF = MachineFunction::construct(&Fn, TLI.getTargetMachine());
+  if (MF.getFunction()->hasCollector())
+    GCI = &getAnalysis<CollectorModuleMetadata>().get(*MF.getFunction());
+  else
+    GCI = 0;
   RegInfo = &MF.getRegInfo();
   DOUT << "\n\n\n=== " << Fn.getName() << "\n";
 
@@ -4515,7 +4541,7 @@ static void CheckDAGForTailCallsAndFixThem(SelectionDAG &DAG,
 void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
        std::vector<std::pair<MachineInstr*, unsigned> > &PHINodesToUpdate,
                                          FunctionLoweringInfo &FuncInfo) {
-  SelectionDAGLowering SDL(DAG, TLI, *AA, FuncInfo);
+  SelectionDAGLowering SDL(DAG, TLI, *AA, FuncInfo, GCI);
 
   std::vector<SDOperand> UnorderedChains;
 
@@ -4774,7 +4800,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     if (!BitTestCases[i].Emitted) {
       SelectionDAG HSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
       CurDAG = &HSDAG;
-      SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo);
+      SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
       BB = BitTestCases[i].Parent;
       HSDL.setCurrentBasicBlock(BB);
@@ -4787,7 +4813,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     for (unsigned j = 0, ej = BitTestCases[i].Cases.size(); j != ej; ++j) {
       SelectionDAG BSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
       CurDAG = &BSDAG;
-      SelectionDAGLowering BSDL(BSDAG, TLI, *AA, FuncInfo);
+      SelectionDAGLowering BSDL(BSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
       BB = BitTestCases[i].Cases[j].ThisBB;
       BSDL.setCurrentBasicBlock(BB);
@@ -4844,7 +4870,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     if (!JTCases[i].first.Emitted) {
       SelectionDAG HSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
       CurDAG = &HSDAG;
-      SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo);
+      SelectionDAGLowering HSDL(HSDAG, TLI, *AA, FuncInfo, GCI);
       // Set the current basic block to the mbb we wish to insert the code into
       BB = JTCases[i].first.HeaderBB;
       HSDL.setCurrentBasicBlock(BB);
@@ -4856,7 +4882,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
     
     SelectionDAG JSDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
     CurDAG = &JSDAG;
-    SelectionDAGLowering JSDL(JSDAG, TLI, *AA, FuncInfo);
+    SelectionDAGLowering JSDL(JSDAG, TLI, *AA, FuncInfo, GCI);
     // Set the current basic block to the mbb we wish to insert the code into
     BB = JTCases[i].second.MBB;
     JSDL.setCurrentBasicBlock(BB);
@@ -4904,7 +4930,7 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   for (unsigned i = 0, e = SwitchCases.size(); i != e; ++i) {
     SelectionDAG SDAG(TLI, MF, getAnalysisToUpdate<MachineModuleInfo>());
     CurDAG = &SDAG;
-    SelectionDAGLowering SDL(SDAG, TLI, *AA, FuncInfo);
+    SelectionDAGLowering SDL(SDAG, TLI, *AA, FuncInfo, GCI);
     
     // Set the current basic block to the mbb we wish to insert the code into
     BB = SwitchCases[i].ThisBB;

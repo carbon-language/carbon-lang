@@ -24,6 +24,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/CodeGen/Passes.h"
 
 namespace {
   // TargetMachine for the MSIL 
@@ -1647,12 +1648,13 @@ bool MSILTarget::addPassesToEmitWholeFile(PassManager &PM, std::ostream &o,
 {
   if (FileType != TargetMachine::AssemblyFile) return true;
   MSILWriter* Writer = new MSILWriter(o);
-  PM.add(createLowerGCPass());
+  PM.add(createGCLoweringPass());
   PM.add(createLowerAllocationsPass(true));
   // FIXME: Handle switch trougth native IL instruction "switch"
   PM.add(createLowerSwitchPass());
   PM.add(createCFGSimplificationPass());
   PM.add(new MSILModule(Writer->UsedTypes,Writer->TD));
   PM.add(Writer);
+  PM.add(createCollectorMetadataDeleter());
   return false;
 }

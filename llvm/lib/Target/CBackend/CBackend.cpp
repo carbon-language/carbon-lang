@@ -28,6 +28,7 @@
 #include "llvm/Analysis/ConstantsScanner.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Target/TargetMachineRegistry.h"
@@ -2946,11 +2947,12 @@ bool CTargetMachine::addPassesToEmitWholeFile(PassManager &PM,
                                               bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
-  PM.add(createLowerGCPass());
+  PM.add(createGCLoweringPass());
   PM.add(createLowerAllocationsPass(true));
   PM.add(createLowerInvokePass());
   PM.add(createCFGSimplificationPass());   // clean up after lower invoke.
   PM.add(new CBackendNameAllUsedStructsAndMergeFunctions());
   PM.add(new CWriter(o));
+  PM.add(createCollectorMetadataDeleter());
   return false;
 }

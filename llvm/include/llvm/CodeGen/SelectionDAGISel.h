@@ -30,6 +30,7 @@ namespace llvm {
   class TargetLowering;
   class FunctionLoweringInfo;
   class HazardRecognizer;
+  class CollectorMetadata;
  
 /// SelectionDAGISel - This is the common base class used for SelectionDAG-based
 /// pattern-matching instruction selectors.
@@ -42,10 +43,11 @@ public:
   AliasAnalysis *AA;
   std::vector<SDNode*> TopOrder;
   unsigned DAGSize;
+  CollectorMetadata *GCI;
   static char ID;
 
   explicit SelectionDAGISel(TargetLowering &tli) : 
-    FunctionPass((intptr_t)&ID), TLI(tli), DAGSize(0) {}
+    FunctionPass((intptr_t)&ID), TLI(tli), DAGSize(0), GCI(0) {}
   
   TargetLowering &getTargetLowering() { return TLI; }
 

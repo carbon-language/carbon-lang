@@ -16,6 +16,8 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
+#include "llvm/CodeGen/Collector.h"
+#include "llvm/CodeGen/CollectorMetadata.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
@@ -94,8 +96,19 @@ void AsmPrinter::SwitchToDataSection(const char *NewSection,
 }
 
 
+void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
+  MachineFunctionPass::getAnalysisUsage(AU);
+  AU.addRequired<CollectorModuleMetadata>();
+}
+
 bool AsmPrinter::doInitialization(Module &M) {
   Mang = new Mangler(M, TAI->getGlobalPrefix());
+  
+  CollectorModuleMetadata *CMM = getAnalysisToUpdate<CollectorModuleMetadata>();
+  assert(CMM && "AsmPrinter didn't require CollectorModuleMetadata?");
+  for (CollectorModuleMetadata::iterator I = CMM->begin(),
+                                         E = CMM->end(); I != E; ++I)
+    (*I)->beginAssembly(O, *this, *TAI);
   
   if (!M.getModuleInlineAsm().empty())
     O << TAI->getCommentString() << " Start of file scope inline assembly\n"
@@ -157,6 +170,12 @@ bool AsmPrinter::doFinalization(Module &M) {
           O << "\t.globl\t" << Target << "\n";
     }
   }
+
+  CollectorModuleMetadata *CMM = getAnalysisToUpdate<CollectorModuleMetadata>();
+  assert(CMM && "AsmPrinter didn't require CollectorModuleMetadata?");
+  for (CollectorModuleMetadata::iterator I = CMM->end(),
+                                         E = CMM->begin(); I != E; )
+    (*--I)->finishAssembly(O, *this, *TAI);
 
   delete Mang; Mang = 0;
   return false;

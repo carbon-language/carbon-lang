@@ -118,6 +118,10 @@ namespace llvm {
     std::string getCurrentFunctionEHName(const MachineFunction *MF);
 
   protected:
+    /// getAnalysisUsage - Record analysis usage.
+    /// 
+    void getAnalysisUsage(AnalysisUsage &AU) const;
+    
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly
     /// call this implementation.

@@ -187,3 +187,8 @@ revisited. The check is there to work around a misuse of directives in inline
 assembly.
 
 //===---------------------------------------------------------------------===//
+
+It would be good to detect collector/target compatibility instead of silently
+doing the wrong thing.
+
+//===---------------------------------------------------------------------===//
