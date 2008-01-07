@@ -26,26 +26,24 @@
 #include "llvm/ADT/STLExtras.h"
 using namespace llvm;
 
-namespace {
-  // Hidden options for help debugging.
-  cl::opt<int> IfCvtFnStart("ifcvt-fn-start", cl::init(-1), cl::Hidden);
-  cl::opt<int> IfCvtFnStop("ifcvt-fn-stop", cl::init(-1), cl::Hidden);
-  cl::opt<int> IfCvtLimit("ifcvt-limit", cl::init(-1), cl::Hidden);
-  cl::opt<bool> DisableSimple("disable-ifcvt-simple", 
-                              cl::init(false), cl::Hidden);
-  cl::opt<bool> DisableSimpleF("disable-ifcvt-simple-false", 
-                               cl::init(false), cl::Hidden);
-  cl::opt<bool> DisableTriangle("disable-ifcvt-triangle", 
-                                cl::init(false), cl::Hidden);
-  cl::opt<bool> DisableTriangleR("disable-ifcvt-triangle-rev", 
-                                 cl::init(false), cl::Hidden);
-  cl::opt<bool> DisableTriangleF("disable-ifcvt-triangle-false", 
-                                 cl::init(false), cl::Hidden);
-  cl::opt<bool> DisableTriangleFR("disable-ifcvt-triangle-false-rev", 
-                                  cl::init(false), cl::Hidden);
-  cl::opt<bool> DisableDiamond("disable-ifcvt-diamond", 
-                               cl::init(false), cl::Hidden);
-}
+// Hidden options for help debugging.
+static cl::opt<int> IfCvtFnStart("ifcvt-fn-start", cl::init(-1), cl::Hidden);
+static cl::opt<int> IfCvtFnStop("ifcvt-fn-stop", cl::init(-1), cl::Hidden);
+static cl::opt<int> IfCvtLimit("ifcvt-limit", cl::init(-1), cl::Hidden);
+static cl::opt<bool> DisableSimple("disable-ifcvt-simple", 
+                                   cl::init(false), cl::Hidden);
+static cl::opt<bool> DisableSimpleF("disable-ifcvt-simple-false", 
+                                    cl::init(false), cl::Hidden);
+static cl::opt<bool> DisableTriangle("disable-ifcvt-triangle", 
+                                     cl::init(false), cl::Hidden);
+static cl::opt<bool> DisableTriangleR("disable-ifcvt-triangle-rev", 
+                                      cl::init(false), cl::Hidden);
+static cl::opt<bool> DisableTriangleF("disable-ifcvt-triangle-false", 
+                                      cl::init(false), cl::Hidden);
+static cl::opt<bool> DisableTriangleFR("disable-ifcvt-triangle-false-rev", 
+                                       cl::init(false), cl::Hidden);
+static cl::opt<bool> DisableDiamond("disable-ifcvt-diamond", 
+                                    cl::init(false), cl::Hidden);
 
 STATISTIC(NumSimple,       "Number of simple if-conversions performed");
 STATISTIC(NumSimpleFalse,  "Number of simple (F) if-conversions performed");
@@ -555,7 +553,7 @@ void IfConverter::ScanInstructions(BBInfo &BBI) {
       BBI.CannotBeCopied = true;
 
     bool isPredicated = TII->isPredicated(I);
-    bool isCondBr = BBI.IsBrAnalyzable && TID->isBranch() && !TID->isBarrier();
+    bool isCondBr = BBI.IsBrAnalyzable && TID->isConditionalBranch();
 
     if (!isCondBr) {
       if (!isPredicated)

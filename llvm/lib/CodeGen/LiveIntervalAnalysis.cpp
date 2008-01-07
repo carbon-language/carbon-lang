@@ -616,8 +616,7 @@ bool LiveIntervals::isReMaterializable(const LiveInterval &li,
 
   isLoad = false;
   const TargetInstrDescriptor *TID = MI->getDesc();
-  if ((TID->Flags & M_IMPLICIT_DEF_FLAG) ||
-      tii_->isTriviallyReMaterializable(MI)) {
+  if (TID->isImplicitDef() || tii_->isTriviallyReMaterializable(MI)) {
     isLoad = TID->isSimpleLoad();
     return true;
   }
@@ -682,7 +681,7 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
   unsigned MRInfo = 0;
   const TargetInstrDescriptor *TID = MI->getDesc();
   // If it is an implicit def instruction, just delete it.
-  if (TID->Flags & M_IMPLICIT_DEF_FLAG) {
+  if (TID->isImplicitDef()) {
     RemoveMachineInstrFromMaps(MI);
     vrm.RemoveMachineInstrFromMaps(MI);
     MI->eraseFromParent();
