@@ -94,17 +94,17 @@ InstrInfoEmitter::GetOperandInfo(const CodeGenInstruction &Inst) {
         
       // Ptr value whose register class is resolved via callback.
       if (OpR->getName() == "ptr_rc")
-        Res += "|M_LOOK_UP_PTR_REG_CLASS";
+        Res += "|TOI::LookupPtrRegClass";
 
       // Predicate operands.  Check to see if the original unexpanded operand
       // was of type PredicateOperand.
       if (Inst.OperandList[i].Rec->isSubClassOf("PredicateOperand"))
-        Res += "|M_PREDICATE_OPERAND";
+        Res += "|TOI::Predicate";
         
       // Optional def operands.  Check to see if the original unexpanded operand
       // was of type OptionalDefOperand.
       if (Inst.OperandList[i].Rec->isSubClassOf("OptionalDefOperand"))
-        Res += "|M_OPTIONAL_DEF_OPERAND";
+        Res += "|TOI::OptionalDef";
 
       // Fill in constraint info.
       Res += ", " + Inst.OperandList[i].Constraints[j];

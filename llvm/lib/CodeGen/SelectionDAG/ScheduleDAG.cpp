@@ -296,9 +296,9 @@ static const TargetRegisterClass *getInstrOperandRegClass(
     assert((II->Flags & M_VARIABLE_OPS)&& "Invalid operand # of instruction");
     return NULL;
   }
-  const TargetOperandInfo &toi = II->OpInfo[Op];
-  return (toi.Flags & M_LOOK_UP_PTR_REG_CLASS)
-         ? TII->getPointerRegClass() : MRI->getRegClass(toi.RegClass);
+  if (II->OpInfo[Op].isLookupPtrRegClass())
+    return TII->getPointerRegClass();
+  return MRI->getRegClass(II->OpInfo[Op].RegClass);
 }
 
 void ScheduleDAG::EmitCopyFromReg(SDNode *Node, unsigned ResNo,
@@ -435,7 +435,7 @@ void ScheduleDAG::AddOperand(MachineInstr *MI, SDOperand Op,
     unsigned VReg = getVR(Op, VRBaseMap);
     const TargetInstrDescriptor *TID = MI->getDesc();
     bool isOptDef = (IIOpNum < TID->numOperands)
-      ? (TID->OpInfo[IIOpNum].Flags & M_OPTIONAL_DEF_OPERAND) : false;
+      ? (TID->OpInfo[IIOpNum].isOptionalDef()) : false;
     MI->addOperand(MachineOperand::CreateReg(VReg, isOptDef));
     
     // Verify that it is right.

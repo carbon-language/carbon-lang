@@ -38,7 +38,7 @@ bool TargetInstrInfoImpl::PredicateInstruction(MachineInstr *MI,
   const TargetInstrDescriptor *TID = MI->getDesc();
   if (TID->isPredicable()) {
     for (unsigned j = 0, i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND)) {
+      if (TID->OpInfo[i].isPredicate()) {
         MachineOperand &MO = MI->getOperand(i);
         if (MO.isReg()) {
           MO.setReg(Pred[j].getReg());

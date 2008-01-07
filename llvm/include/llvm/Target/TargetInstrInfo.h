@@ -32,14 +32,14 @@ class SelectionDAG;
 
 template<class T> class SmallVectorImpl;
 
-//---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 // Data types used to define information about a single machine instruction
-//---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 
 typedef short MachineOpCode;
 typedef unsigned InstrSchedClass;
 
-//---------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 // struct TargetInstrDescriptor:
 //  Predefined information about each machine instruction.
 //  Designed to initialized statically.
@@ -124,23 +124,24 @@ const unsigned M_NEVER_HAS_SIDE_EFFECTS = 1 << 18;
 // both! If neither flag is set, then the instruction *always* has side effects.
 const unsigned M_MAY_HAVE_SIDE_EFFECTS = 1 << 19;
 
+  
+//===----------------------------------------------------------------------===//
 // Machine operand flags
-// M_LOOK_UP_PTR_REG_CLASS - Set if this operand is a pointer value and it
-// requires a callback to look up its register class.
-const unsigned M_LOOK_UP_PTR_REG_CLASS = 1 << 0;
-
-/// M_PREDICATE_OPERAND - Set if this is one of the operands that made up of the
-/// predicate operand that controls an M_PREDICATED instruction.
-const unsigned M_PREDICATE_OPERAND = 1 << 1;
-
-/// M_OPTIONAL_DEF_OPERAND - Set if this operand is a optional def.
-///
-const unsigned M_OPTIONAL_DEF_OPERAND = 1 << 2;
-
+//===----------------------------------------------------------------------===//
+  
 namespace TOI {
   // Operand constraints: only "tied_to" for now.
   enum OperandConstraint {
     TIED_TO = 0  // Must be allocated the same register as.
+  };
+  
+  /// OperandFlags - These are flags set on operands, but should be considered
+  /// private, all access should go through the TargetOperandInfo accessors.
+  /// See the accessors for a description of what these are.
+  enum OperandFlags {
+    LookupPtrRegClass = 1 << 0,
+    Predicate         = 1 << 1,
+    OptionalDef       = 1 << 2
   };
 }
 
@@ -157,6 +158,18 @@ public:
   /// bits are used to specify the value of constraints (4 bits each).
   unsigned int Constraints;
   /// Currently no other information.
+  
+  /// isLookupPtrRegClass - Set if this operand is a pointer value and it
+  /// requires a callback to look up its register class.
+  bool isLookupPtrRegClass() const { return Flags & TOI::LookupPtrRegClass; }
+  
+  /// isPredicate - Set if this is one of the operands that made up of
+  /// the predicate operand that controls an M_PREDICATED instruction.
+  bool isPredicate() const { return Flags & TOI::Predicate; }
+  
+  /// isOptionalDef - Set if this operand is a optional def.
+  ///
+  bool isOptionalDef() const { return Flags & TOI::OptionalDef; }
 };
 
 

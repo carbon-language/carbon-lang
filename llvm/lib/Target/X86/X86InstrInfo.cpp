@@ -1882,7 +1882,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
 
   const TargetInstrDescriptor &TID = get(Opc);
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
-  const TargetRegisterClass *RC = (TOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
+  const TargetRegisterClass *RC = TOI.isLookupPtrRegClass()
     ? getPointerRegClass() : RI.getRegClass(TOI.RegClass);
   SmallVector<MachineOperand,4> AddrOps;
   SmallVector<MachineOperand,2> BeforeOps;
@@ -1957,7 +1957,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
   // Emit the store instruction.
   if (UnfoldStore) {
     const TargetOperandInfo &DstTOI = TID.OpInfo[0];
-    const TargetRegisterClass *DstRC = (DstTOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
+    const TargetRegisterClass *DstRC = DstTOI.isLookupPtrRegClass()
       ? getPointerRegClass() : RI.getRegClass(DstTOI.RegClass);
     storeRegToAddr(MF, Reg, true, AddrOps, DstRC, NewMIs);
   }
@@ -1981,7 +1981,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   bool FoldedStore = I->second.second & (1 << 5);
   const TargetInstrDescriptor &TID = get(Opc);
   const TargetOperandInfo &TOI = TID.OpInfo[Index];
-  const TargetRegisterClass *RC = (TOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
+  const TargetRegisterClass *RC = TOI.isLookupPtrRegClass()
     ? getPointerRegClass() : RI.getRegClass(TOI.RegClass);
   std::vector<SDOperand> AddrOps;
   std::vector<SDOperand> BeforeOps;
@@ -2013,7 +2013,7 @@ X86InstrInfo::unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
   const TargetRegisterClass *DstRC = 0;
   if (TID.numDefs > 0) {
     const TargetOperandInfo &DstTOI = TID.OpInfo[0];
-    DstRC = (DstTOI.Flags & M_LOOK_UP_PTR_REG_CLASS)
+    DstRC = DstTOI.isLookupPtrRegClass()
       ? getPointerRegClass() : RI.getRegClass(DstTOI.RegClass);
     VTs.push_back(*DstRC->vt_begin());
   }

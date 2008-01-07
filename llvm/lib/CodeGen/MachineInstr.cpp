@@ -541,7 +541,7 @@ int MachineInstr::findFirstPredOperandIdx() const {
   const TargetInstrDescriptor *TID = getDesc();
   if (TID->isPredicable()) {
     for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-      if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND))
+      if (TID->OpInfo[i].isPredicate())
         return i;
   }
 
@@ -591,7 +591,7 @@ void MachineInstr::copyPredicates(const MachineInstr *MI) {
   const TargetInstrDescriptor *TID = MI->getDesc();
   if (TID->isPredicable()) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-      if ((TID->OpInfo[i].Flags & M_PREDICATE_OPERAND)) {
+      if (TID->OpInfo[i].isPredicate()) {
         // Predicated operands must be last operands.
         addOperand(MI->getOperand(i));
       }
