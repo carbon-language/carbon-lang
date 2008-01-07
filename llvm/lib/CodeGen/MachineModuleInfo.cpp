@@ -1875,9 +1875,6 @@ bool DebugLabelFolder::runOnMachineFunction(MachineFunction &MF) {
   // Get machine module info.
   MachineModuleInfo *MMI = getAnalysisToUpdate<MachineModuleInfo>();
   if (!MMI) return false;
-  // Get target instruction info.
-  const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
-  if (!TII) return false;
   
   // Track if change is made.
   bool MadeChange = false;

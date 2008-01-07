@@ -16,7 +16,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetInstrDesc.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/Streams.h"
