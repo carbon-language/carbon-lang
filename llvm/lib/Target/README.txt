@@ -519,3 +519,8 @@ function, they should be sunk into the ones that do.
 In this case, whole-function-isel would also handle this.
 
 //===---------------------------------------------------------------------===//
+
+Investigate lowering of sparse switch statements into perfect hash tables:
+http://burtleburtle.net/bob/hash/perfect.html
+
+//===---------------------------------------------------------------------===//
