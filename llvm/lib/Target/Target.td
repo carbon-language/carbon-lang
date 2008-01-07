@@ -190,7 +190,8 @@ class Instruction {
   bit isBarrier    = 0;     // Can control flow fall through this instruction?
   bit isCall       = 0;     // Is this instruction a call instruction?
   bit isSimpleLoad = 0;     // Is this just a load instruction?
-  bit mayStore     = 0;     // Can this instruction modify memory?
+  bit mayLoad      = 0;     // Is it possible for this inst to read memory?
+  bit mayStore     = 0;     // Is it possible for this inst to write memory?
   bit isImplicitDef = 0;    // Is this instruction an implicit def instruction?
   bit isTwoAddress = 0;     // Is this a two address instruction?
   bit isConvertibleToThreeAddress = 0;  // Can this 2-addr instruction promote?
