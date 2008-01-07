@@ -36,6 +36,7 @@ namespace {
 
       (void) llvm::createSimpleRegisterCoalescer();
       
+      (void) llvm::createOcamlCollector();
       (void) llvm::createShadowStackCollector();
       
       (void) llvm::createBURRListDAGScheduler(NULL, NULL, NULL);
