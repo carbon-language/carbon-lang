@@ -50,6 +50,7 @@ namespace {
     const TargetMachine *TM;
     MachineFunction *MF;
     const MRegisterInfo *MRI;
+    const TargetInstrInfo *TII;
     LiveVariables *LV;
 
     // StackSlotForVirtReg - Maps virtual regs to the frame index where these
@@ -478,7 +479,7 @@ MachineInstr *RALocal::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
     // If we can fold this spill into this instruction, do so now.
     SmallVector<unsigned, 2> Ops;
     Ops.push_back(OpNum);
-    if (MachineInstr* FMI = MRI->foldMemoryOperand(MI, Ops, FrameIndex)) {
+    if (MachineInstr* FMI = TII->foldMemoryOperand(MI, Ops, FrameIndex)) {
       ++NumFolded;
       // Since we changed the address of MI, make sure to update live variables
       // to know that the new instruction has the properties of the old one.
@@ -801,6 +802,7 @@ bool RALocal::runOnMachineFunction(MachineFunction &Fn) {
   MF = &Fn;
   TM = &Fn.getTarget();
   MRI = TM->getRegisterInfo();
+  TII = TM->getInstrInfo();
   LV = &getAnalysis<LiveVariables>();
 
   PhysRegsUsed.assign(MRI->getNumRegs(), -1);

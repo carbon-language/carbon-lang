@@ -793,7 +793,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
           DeadStore->findRegisterUseOperandIdx(PhysReg, true) == -1)
         continue;
       UnfoldPR = PhysReg;
-      UnfoldedOpc = MRI->getOpcodeAfterMemoryUnfold(MI.getOpcode(),
+      UnfoldedOpc = TII->getOpcodeAfterMemoryUnfold(MI.getOpcode(),
                                                     false, true);
     }
   }
@@ -831,7 +831,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
     // unfolded. This allows us to perform the store unfolding
     // optimization.
     SmallVector<MachineInstr*, 4> NewMIs;
-    if (MRI->unfoldMemoryOperand(MF, &MI, UnfoldVR, false, false, NewMIs)) {
+    if (TII->unfoldMemoryOperand(MF, &MI, UnfoldVR, false, false, NewMIs)) {
       assert(NewMIs.size() == 1);
       MachineInstr *NewMI = NewMIs.back();
       NewMIs.clear();
@@ -839,7 +839,7 @@ bool LocalSpiller::PrepForUnfoldOpti(MachineBasicBlock &MBB,
       assert(Idx != -1);
       SmallVector<unsigned, 2> Ops;
       Ops.push_back(Idx);
-      MachineInstr *FoldedMI = MRI->foldMemoryOperand(NewMI, Ops, SS);
+      MachineInstr *FoldedMI = TII->foldMemoryOperand(NewMI, Ops, SS);
       if (FoldedMI) {
         if (!VRM.hasPhys(UnfoldVR))
           VRM.assignVirt2Phys(UnfoldVR, UnfoldPR);
@@ -1294,7 +1294,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           unsigned PhysReg = Spills.getSpillSlotOrReMatPhysReg(SS);
           SmallVector<MachineInstr*, 4> NewMIs;
           if (PhysReg &&
-              MRI->unfoldMemoryOperand(MF, &MI, PhysReg, false, false, NewMIs)) {
+              TII->unfoldMemoryOperand(MF, &MI, PhysReg, false, false, NewMIs)) {
             MBB.insert(MII, NewMIs[0]);
             VRM.RemoveMachineInstrFromMaps(&MI);
             MBB.erase(&MI);
@@ -1321,7 +1321,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, VirtRegMap &VRM) {
           if (PhysReg &&
               !TII->isStoreToStackSlot(&MI, SS) && // Not profitable!
               DeadStore->findRegisterUseOperandIdx(PhysReg, true) != -1 &&
-              MRI->unfoldMemoryOperand(MF, &MI, PhysReg, false, true, NewMIs)) {
+              TII->unfoldMemoryOperand(MF, &MI, PhysReg, false, true, NewMIs)) {
             MBB.insert(MII, NewMIs[0]);
             NewStore = NewMIs[1];
             MBB.insert(MII, NewStore);

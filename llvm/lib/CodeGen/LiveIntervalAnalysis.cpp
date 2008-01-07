@@ -709,8 +709,8 @@ bool LiveIntervals::tryFoldMemoryOperand(MachineInstr* &MI,
     FoldOps.push_back(OpIdx);
   }
 
-  MachineInstr *fmi = isSS ? mri_->foldMemoryOperand(MI, FoldOps, Slot)
-                           : mri_->foldMemoryOperand(MI, FoldOps, DefMI);
+  MachineInstr *fmi = isSS ? tii_->foldMemoryOperand(MI, FoldOps, Slot)
+                           : tii_->foldMemoryOperand(MI, FoldOps, DefMI);
   if (fmi) {
     // Attempt to fold the memory reference into the instruction. If
     // we can do this, we don't need to insert spill code.
@@ -746,7 +746,7 @@ bool LiveIntervals::canFoldMemoryOperand(MachineInstr *MI,
     FoldOps.push_back(OpIdx);
   }
 
-  return mri_->canFoldMemoryOperand(MI, FoldOps);
+  return tii_->canFoldMemoryOperand(MI, FoldOps);
 }
 
 bool LiveIntervals::intervalIsInOneMBB(const LiveInterval &li) const {

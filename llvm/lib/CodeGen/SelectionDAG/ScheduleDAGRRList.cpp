@@ -413,7 +413,7 @@ SUnit *ScheduleDAGRRList::CopyAndMoveSuccessors(SUnit *SU) {
 
   if (TryUnfold) {
     SmallVector<SDNode*, 4> NewNodes;
-    if (!MRI->unfoldMemoryOperand(DAG, N, NewNodes))
+    if (!TII->unfoldMemoryOperand(DAG, N, NewNodes))
       return NULL;
 
     DOUT << "Unfolding SU # " << SU->NodeNum << "\n";

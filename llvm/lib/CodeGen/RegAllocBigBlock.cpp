@@ -505,6 +505,7 @@ unsigned RABigBlock::chooseReg(MachineBasicBlock &MBB, MachineInstr *I,
 MachineInstr *RABigBlock::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                                      unsigned OpNum) {
   unsigned VirtReg = MI->getOperand(OpNum).getReg();
+  const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
 
   // If the virtual register is already available in a physical register,
   // just update the instruction and return.
@@ -525,7 +526,7 @@ MachineInstr *RABigBlock::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI
     // try to fold the spill into the instruction
     SmallVector<unsigned, 2> Ops;
     Ops.push_back(OpNum);
-    if(MachineInstr* FMI = RegInfo->foldMemoryOperand(MI, Ops, FrameIndex)) {
+    if(MachineInstr* FMI = TII->foldMemoryOperand(MI, Ops, FrameIndex)) {
       ++NumFolded;
       // Since we changed the address of MI, make sure to update live variables
       // to know that the new instruction has the properties of the old one.
@@ -545,7 +546,6 @@ MachineInstr *RABigBlock::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI
        << RegInfo->getName(PhysReg) << "\n";
 
   // Add move instruction(s)
-  const TargetInstrInfo* TII = MBB.getParent()->getTarget().getInstrInfo();
   TII->loadRegFromStackSlot(MBB, MI, PhysReg, FrameIndex, RC);
   ++NumLoads;    // Update statistics
 
