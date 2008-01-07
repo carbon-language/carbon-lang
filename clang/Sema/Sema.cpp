@@ -33,7 +33,7 @@ bool Sema::isObjcObjectPointerType(QualType type) const {
       type->isObjcQualifiedIdType())
     return true;
   
-  while (type->isPointerType()) {
+  if (type->isPointerType()) {
     PointerType *pointerType = static_cast<PointerType*>(type.getTypePtr());
     type = pointerType->getPointeeType();
   }
