@@ -101,7 +101,8 @@ int LLVMCreateInterpreter(LLVMExecutionEngineRef *OutInterp,
                           LLVMModuleProviderRef MP,
                           char **OutError) {
   std::string Error;
-  if (ExecutionEngine *Interp = ExecutionEngine::create(unwrap(MP), &Error)) {
+  if (ExecutionEngine *Interp =
+      ExecutionEngine::create(unwrap(MP), false, &Error)) {
     *OutInterp = wrap(Interp);
     return 0;
   }
