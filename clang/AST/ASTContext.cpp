@@ -1250,7 +1250,13 @@ bool ASTContext::objcTypesAreCompatible(QualType lhs, QualType rhs) {
   return false;
 }
 
+/// Check that 'lhs' and 'rhs' are compatible interface types. Both types
+/// must be canonical types.
 bool ASTContext::interfaceTypesAreCompatible(QualType lhs, QualType rhs) {
+  assert (lhs->isCanonical() &&
+          "interfaceTypesAreCompatible strip typedefs of lhs");
+  assert (rhs->isCanonical() &&
+          "interfaceTypesAreCompatible strip typedefs of rhs");
   if (lhs == rhs)
     return true;
   ObjCInterfaceType *lhsIT = cast<ObjCInterfaceType>(lhs.getTypePtr());
@@ -1274,8 +1280,9 @@ bool ASTContext::QualifiedInterfaceTypesAreCompatible(QualType lhs,
   ObjCQualifiedInterfaceType *rhsQI = 
     dyn_cast<ObjCQualifiedInterfaceType>(rhs.getCanonicalType().getTypePtr());
   assert(rhsQI && "QualifiedInterfaceTypesAreCompatible - bad rhs type");
-  if (!interfaceTypesAreCompatible(getObjCInterfaceType(lhsQI->getDecl()), 
-                                   getObjCInterfaceType(rhsQI->getDecl())))
+  if (!interfaceTypesAreCompatible(
+         getObjCInterfaceType(lhsQI->getDecl()).getCanonicalType(), 
+         getObjCInterfaceType(rhsQI->getDecl()).getCanonicalType()))
     return false;
   /* All protocols in lhs must have a presense in rhs. */
   for (unsigned i =0; i < lhsQI->getNumProtocols(); i++) {
