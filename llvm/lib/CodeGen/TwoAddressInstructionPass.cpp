@@ -172,7 +172,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
             // If this instruction is potentially convertible to a true
             // three-address instruction,
-            if (TID->Flags & M_CONVERTIBLE_TO_3_ADDR) {
+            if (TID->isConvertibleTo3Addr()) {
               // FIXME: This assumes there are no more operands which are tied
               // to another register.
 #ifndef NDEBUG

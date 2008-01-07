@@ -710,7 +710,7 @@ void ScheduleDAG::EmitNode(SDNode *Node, unsigned InstanceNo,
     }
 
     // Now that we have emitted all operands, emit this instruction itself.
-    if ((II.Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION) == 0) {
+    if (!II.usesCustomDAGSchedInsertionHook()) {
       BB->insert(BB->end(), MI);
     } else {
       // Insert this instruction into the end of the basic block, potentially

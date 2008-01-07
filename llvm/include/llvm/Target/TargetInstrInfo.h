@@ -71,7 +71,7 @@ public:
   bool isLookupPtrRegClass() const { return Flags & TOI::LookupPtrRegClass; }
   
   /// isPredicate - Set if this is one of the operands that made up of
-  /// the predicate operand that controls an M_PREDICATED instruction.
+  /// the predicate operand that controls an isPredicable() instruction.
   bool isPredicate() const { return Flags & TOI::Predicate; }
   
   /// isOptionalDef - Set if this operand is a optional def.
@@ -89,70 +89,20 @@ const unsigned M_CALL_FLAG             = 1 << 1;
 const unsigned M_RET_FLAG              = 1 << 2;
 const unsigned M_BARRIER_FLAG          = 1 << 3;
 const unsigned M_DELAY_SLOT_FLAG       = 1 << 4;
-
-/// M_SIMPLE_LOAD_FLAG - This flag is set for instructions that are simple loads
-/// from memory.  This should only be set on instructions that load a value from
-/// memory and return it in their only virtual register definition.
 const unsigned M_SIMPLE_LOAD_FLAG      = 1 << 5;
-
-/// M_MAY_STORE_FLAG - This flag is set to any instruction that could possibly
-/// modify memory.  Instructions with this flag set are not necessarily simple
-/// store instructions, they may store a modified value based on their operands,
-/// or may not actually modify anything, for example.
 const unsigned M_MAY_STORE_FLAG        = 1 << 6;
-
 const unsigned M_INDIRECT_FLAG         = 1 << 7;
 const unsigned M_IMPLICIT_DEF_FLAG     = 1 << 8;
-
-// M_CONVERTIBLE_TO_3_ADDR - This is a 2-address instruction which can be
-// changed into a 3-address instruction if the first two operands cannot be
-// assigned to the same register.  The target must implement the
-// TargetInstrInfo::convertToThreeAddress method for this instruction.
 const unsigned M_CONVERTIBLE_TO_3_ADDR = 1 << 9;
-
-// This M_COMMUTABLE - is a 2- or 3-address instruction (of the form X = op Y,
-// Z), which produces the same result if Y and Z are exchanged.
 const unsigned M_COMMUTABLE            = 1 << 10;
-
 const unsigned M_TERMINATOR_FLAG       = 1 << 11;
-
-// M_USES_CUSTOM_DAG_SCHED_INSERTION - Set if this instruction requires custom
-// insertion support when the DAG scheduler is inserting it into a machine basic
-// block.
 const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 12;
-
-const unsigned M_VARIADIC          = 1 << 13;
-
-// M_PREDICABLE - Set if this instruction has a predicate operand that
-// controls execution. It may be set to 'always'.
+const unsigned M_VARIADIC              = 1 << 13;
 const unsigned M_PREDICABLE            = 1 << 14;
-
-// M_REMATERIALIZIBLE - Set if this instruction can be trivally re-materialized
-// at any time, e.g. constant generation, load from constant pool.
 const unsigned M_REMATERIALIZIBLE      = 1 << 15;
-
-// M_NOT_DUPLICABLE - Set if this instruction cannot be safely duplicated.
-// (e.g. instructions with unique labels attached).
 const unsigned M_NOT_DUPLICABLE        = 1 << 16;
-
 const unsigned M_HAS_OPTIONAL_DEF      = 1 << 17;
-
-// M_NEVER_HAS_SIDE_EFFECTS - Set if this instruction has no side effects that
-// are not captured by any operands of the instruction or other flags, and when
-// *all* instances of the instruction of that opcode have no side effects.
-//
-// Note: This and M_MAY_HAVE_SIDE_EFFECTS are mutually exclusive. You can't set
-// both! If neither flag is set, then the instruction *always* has side effects.
 const unsigned M_NEVER_HAS_SIDE_EFFECTS = 1 << 18;
-
-// M_MAY_HAVE_SIDE_EFFECTS - Set if some instances of this instruction can have
-// side effects. The virtual method "isReallySideEffectFree" is called to
-// determine this. Load instructions are an example of where this is useful. In
-// general, loads always have side effects. However, loads from constant pools
-// don't. We let the specific back end make this determination.
-//
-// Note: This and M_NEVER_HAS_SIDE_EFFECTS are mutually exclusive. You can't set
-// both! If neither flag is set, then the instruction *always* has side effects.
 const unsigned M_MAY_HAVE_SIDE_EFFECTS = 1 << 19;
 
 
@@ -250,6 +200,15 @@ public:
   const unsigned *getImplicitDefs() const {
     return ImplicitDefs;
   }
+
+  /// getSchedClass - Return the scheduling class for this instruction.  The
+  /// scheduling class is an index into the InstrItineraryData table.  This
+  /// returns zero if there is no known scheduling information for the
+  /// instruction.
+  ///
+  unsigned getSchedClass() const {
+    return SchedClass;
+  }
   
   bool isReturn() const {
     return Flags & M_RET_FLAG;
@@ -313,29 +272,25 @@ public:
     return isBranch() & isBarrier() & !isIndirectBranch();
   }
   
+  // isPredicable - Return true if this instruction has a predicate operand that
+  // controls execution.  It may be set to 'always', or may be set to other
+  /// values.   There are various methods in TargetInstrInfo that can be used to
+  /// control and modify the predicate in this instruction.
   bool isPredicable() const {
     return Flags & M_PREDICABLE;
   }
   
+  /// isNotDuplicable - Return true if this instruction cannot be safely
+  /// duplicated.  For example, if the instruction has a unique labels attached
+  /// to it, duplicating it would cause multiple definition errors.
   bool isNotDuplicable() const {
     return Flags & M_NOT_DUPLICABLE;
-  }
-  
-  bool isCommutableInstr() const {
-    return Flags & M_COMMUTABLE;
   }
   
   /// hasDelaySlot - Returns true if the specified instruction has a delay slot
   /// which must be filled by the code generator.
   bool hasDelaySlot() const {
     return Flags & M_DELAY_SLOT_FLAG;
-  }
-  
-  /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
-  /// custom insertion support when the DAG scheduler is inserting it into a
-  /// machine basic block.
-  bool usesCustomDAGSchedInsertionHook() const {
-    return Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION;
   }
   
   /// isSimpleLoad - Return true for instructions that are simple loads from
@@ -347,6 +302,10 @@ public:
     return Flags & M_SIMPLE_LOAD_FLAG;
   }
   
+  //===--------------------------------------------------------------------===//
+  // Side Effect Analysis
+  //===--------------------------------------------------------------------===//
+  
   /// mayStore - Return true if this instruction could possibly modify memory.
   /// Instructions with this flag set are not necessarily simple store
   /// instructions, they may store a modified value based on their operands, or
@@ -355,8 +314,95 @@ public:
     return Flags & M_MAY_STORE_FLAG;
   }
   
-  unsigned getSchedClass() const {
-    return SchedClass;
+  // TODO: mayLoad.
+  
+  /// hasNoSideEffects - Return true if all instances of this instruction are
+  /// guaranteed to have no side effects other than:
+  ///   1. The register operands that are def/used by the MachineInstr.
+  ///   2. Registers that are implicitly def/used by the MachineInstr.
+  ///   3. Memory Accesses captured by mayLoad() or mayStore().
+  ///
+  /// Examples of other side effects would be calling a function, modifying
+  /// 'invisible' machine state like a control register, etc.
+  ///
+  /// If some instances of this instruction are side-effect free but others are
+  /// not, the hasConditionalSideEffects() property should return true, not this
+  /// one.
+  ///
+  /// Note that you should not call this method directly, instead, call the
+  /// TargetInstrInfo::hasUnmodelledSideEffects method, which handles analysis
+  /// of the machine instruction.
+  bool hasNoSideEffects() const {
+    return Flags & M_NEVER_HAS_SIDE_EFFECTS;
+  }
+  
+  /// hasConditionalSideEffects - Return true if some instances of this
+  /// instruction are guaranteed to have no side effects other than those listed
+  /// for hasNoSideEffects().  To determine whether a specific machineinstr has
+  /// side effects, the TargetInstrInfo::isReallySideEffectFree virtual method
+  /// is invoked to decide.
+  ///
+  /// Note that you should not call this method directly, instead, call the
+  /// TargetInstrInfo::hasUnmodelledSideEffects method, which handles analysis
+  /// of the machine instruction.
+  bool hasConditionalSideEffects() const {
+    return Flags & M_MAY_HAVE_SIDE_EFFECTS;
+  }
+  
+  //===--------------------------------------------------------------------===//
+  // Flags that indicate whether an instruction can be modified by a method.
+  //===--------------------------------------------------------------------===//
+  
+  /// isCommutableInstr - Return true if this may be a 2- or 3-address
+  /// instruction (of the form "X = op Y, Z, ..."), which produces the same
+  /// result if Y and Z are exchanged.  If this flag is set, then the 
+  /// TargetInstrInfo::commuteInstruction method may be used to hack on the
+  /// instruction.
+  ///
+  /// Note that this flag may be set on instructions that are only commutable
+  /// sometimes.  In these cases, the call to commuteInstruction will fail.
+  /// Also note that some instructions require non-trivial modification to
+  /// commute them.
+  bool isCommutableInstr() const {
+    return Flags & M_COMMUTABLE;
+  }
+  
+  /// isConvertibleTo3Addr - Return true if this is a 2-address instruction
+  /// which can be changed into a 3-address instruction if needed.  Doing this
+  /// transformation can be profitable in the register allocator, because it
+  /// means that the instruction can use a 2-address form if possible, but
+  /// degrade into a less efficient form if the source and dest register cannot
+  /// be assigned to the same register.  For example, this allows the x86
+  /// backend to turn a "shl reg, 3" instruction into an LEA instruction, which
+  /// is the same speed as the shift but has bigger code size.
+  ///
+  /// If this returns true, then the target must implement the
+  /// TargetInstrInfo::convertToThreeAddress method for this instruction, which
+  /// is allowed to fail if the transformation isn't valid for this specific
+  /// instruction (e.g. shl reg, 4 on x86).
+  ///
+  bool isConvertibleTo3Addr() const {
+    return Flags & M_CONVERTIBLE_TO_3_ADDR;
+  }
+  
+  /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
+  /// custom insertion support when the DAG scheduler is inserting it into a
+  /// machine basic block.  If this is true for the instruction, it basically
+  /// means that it is a pseudo instruction used at SelectionDAG time that is 
+  /// expanded out into magic code by the target when MachineInstrs are formed.
+  ///
+  /// If this is true, the TargetLoweringInfo::InsertAtEndOfBasicBlock method
+  /// is used to insert this into the MachineBasicBlock.
+  bool usesCustomDAGSchedInsertionHook() const {
+    return Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION;
+  }
+  
+  /// isRematerializable - Returns true if this instruction is a candidate for
+  /// remat.  This flag is deprecated, please don't use it anymore.  If this
+  /// flag is set, the isReallyTriviallyReMaterializable() method is called to
+  /// verify the instruction is really rematable.
+  bool isRematerializable() const {
+    return Flags & M_REMATERIALIZIBLE;
   }
 };
 
@@ -399,7 +445,7 @@ public:
   /// rematerializable, meaning it has no side effects and requires no operands
   /// that aren't always available.
   bool isTriviallyReMaterializable(MachineInstr *MI) const {
-    return (MI->getDesc()->Flags & M_REMATERIALIZIBLE) &&
+    return MI->getDesc()->isRematerializable() &&
            isReallyTriviallyReMaterializable(MI);
   }
 
@@ -408,8 +454,8 @@ public:
   /// flags.
   bool hasUnmodelledSideEffects(MachineInstr *MI) const {
     const TargetInstrDescriptor *TID = MI->getDesc();
-    if (TID->Flags & M_NEVER_HAS_SIDE_EFFECTS) return false;
-    if (!(TID->Flags & M_MAY_HAVE_SIDE_EFFECTS)) return true;
+    if (TID->hasNoSideEffects()) return false;
+    if (!TID->hasConditionalSideEffects()) return true;
     return !isReallySideEffectFree(MI); // May have side effects
   }
 protected:
