@@ -231,7 +231,7 @@ StrongPHIElimination::computeDomForest(std::set<unsigned>& regs) {
 
 /// isLiveIn - helper method that determines, from a VarInfo, if a register
 /// is live into a block
-bool isLiveIn(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
+static bool isLiveIn(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
   if (V.AliveBlocks.test(MBB->getNumber()))
     return true;
   
@@ -244,7 +244,7 @@ bool isLiveIn(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
 
 /// isLiveOut - help method that determines, from a VarInfo, if a register is
 /// live out of a block.
-bool isLiveOut(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
+static bool isLiveOut(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
   if (MBB == V.DefInst->getParent() ||
       V.UsedBlocks.test(MBB->getNumber())) {
     for (std::vector<MachineInstr*>::iterator I = V.Kills.begin(), 
@@ -260,7 +260,7 @@ bool isLiveOut(LiveVariables::VarInfo& V, MachineBasicBlock* MBB) {
 
 /// isKillInst - helper method that determines, from a VarInfo, if an 
 /// instruction kills a given register
-bool isKillInst(LiveVariables::VarInfo& V, MachineInstr* MI) {
+static bool isKillInst(LiveVariables::VarInfo& V, MachineInstr* MI) {
   return std::find(V.Kills.begin(), V.Kills.end(), MI) != V.Kills.end();
 }
 
