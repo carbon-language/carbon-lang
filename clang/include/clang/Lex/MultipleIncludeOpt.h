@@ -29,12 +29,23 @@ class MultipleIncludeOpt {
   /// to false, that way any tokens before the first #ifdef or after the last
   /// #endif can be easily detected.
   bool ReadAnyTokens;
+
+  /// ReadAnyTokens - This is set to false when a file is first opened and true
+  /// any time a token is returned to the client or a (non-multiple-include)
+  /// directive is parsed.  When the final #endif is parsed this is reset back
+  /// to false, that way any tokens before the first #ifdef or after the last
+  /// #endif can be easily detected.
+  bool DidMacroExpansion;
   
   /// TheMacro - The controlling macro for a file, if valid.
   ///
   const IdentifierInfo *TheMacro;
 public:
-  MultipleIncludeOpt() : ReadAnyTokens(false), TheMacro(0) {}
+  MultipleIncludeOpt() {
+    ReadAnyTokens = false;
+    DidMacroExpansion = false;
+    TheMacro = 0;
+  }
   
   /// Invalidate - Permenantly mark this file as not being suitable for the
   /// include-file optimization.
@@ -53,16 +64,28 @@ public:
   // If a token is read, remember that we have seen a side-effect in this file.
   void ReadToken() { ReadAnyTokens = true; }
   
+  /// ExpandedMacro - When a macro is expanded with this lexer as the current
+  /// buffer, this method is called to disable the MIOpt if needed.
+  void ExpandedMacro() { DidMacroExpansion = true; }
+  
   /// EnterTopLevelIFNDEF - When entering a top-level #ifndef directive (or the
   /// "#if !defined" equivalent) without any preceding tokens, this method is
   /// called.
+  ///
+  /// Note, we don't care about the input value of 'ReadAnyTokens'.  The caller
+  /// ensures that this is only called if there are no tokens read before the
+  /// #ifndef.  The caller is required to do this, because reading the #if line
+  /// obviously reads in in tokens.
   void EnterTopLevelIFNDEF(const IdentifierInfo *M) {
-    // Note, we don't care about the input value of 'ReadAnyTokens'.  The caller
-    // ensures that this is only called if there are no tokens read before the
-    // #ifndef.
-    
     // If the macro is already set, this is after the top-level #endif.
     if (TheMacro)
+      return Invalidate();
+    
+    // If we have already expanded a macro by the end of the #ifndef line, then
+    // there is a macro expansion *in* the #ifndef line.  This means that the
+    // condition could evaluate differently when subsequently #included.  Reject
+    // this.
+    if (DidMacroExpansion)
       return Invalidate();
     
     // Remember that we're in the #if and that we have the macro.
