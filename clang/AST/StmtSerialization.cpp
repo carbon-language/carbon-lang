@@ -921,16 +921,15 @@ ObjCEncodeExpr* ObjCEncodeExpr::CreateImpl(Deserializer& D) {
 
 void ObjcForCollectionStmt::EmitImpl(Serializer& S) const {
   S.Emit(ForLoc);
-  S.EmitOwnedPtr(getElement());
-  S.EmitOwnedPtr(getCollection());
-  S.EmitOwnedPtr(getBody());
+  S.BatchEmitOwnedPtrs(getElement(),getCollection(),getBody());
 }
 
 ObjcForCollectionStmt* ObjcForCollectionStmt::CreateImpl(Deserializer& D) {
   SourceLocation ForLoc = SourceLocation::ReadVal(D);
-  Stmt* Element = D.ReadOwnedPtr<Stmt>();
-  Expr* Collection = D.ReadOwnedPtr<Expr>();
-  Stmt* Body = D.ReadOwnedPtr<Stmt>();
+  Stmt* Element;
+  Expr* Collection;
+  Stmt* Body;
+  D.BatchReadOwnedPtrs(Element,Collection,Body);  
   return new ObjcForCollectionStmt(Element,Collection,Body,ForLoc);
 }
 
