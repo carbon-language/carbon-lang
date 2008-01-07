@@ -164,6 +164,7 @@ namespace {
     Stmt *RewriteObjCCatchStmt(ObjCAtCatchStmt *S);
     Stmt *RewriteObjCFinallyStmt(ObjCAtFinallyStmt *S);
     Stmt *RewriteObjCThrowStmt(ObjCAtThrowStmt *S);
+    Stmt *RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S);
     CallExpr *SynthesizeCallToFunctionDecl(FunctionDecl *FD, 
                                            Expr **args, unsigned nargs);
     void SynthMsgSendFunctionDecl();
@@ -737,6 +738,11 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   
   if (ObjCProtocolExpr *ProtocolExp = dyn_cast<ObjCProtocolExpr>(S))
     return RewriteObjCProtocolExpr(ProtocolExp);
+  
+  if (ObjCForCollectionStmt *StmtForCollection = 
+        dyn_cast<ObjCForCollectionStmt>(S))
+    return RewriteObjCForCollectionStmt(StmtForCollection);
+  
 #if 0
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(S)) {
     CastExpr *Replacement = new CastExpr(ICE->getType(), ICE->getSubExpr(), SourceLocation());
@@ -754,7 +760,40 @@ Stmt *RewriteTest::RewriteFunctionBodyOrGlobalInitializer(Stmt *S) {
   // Return this stmt unmodified.
   return S;
 }
+
+
+/// RewriteObjCTryStmt - Rewriter for ObjC2's feareach statement.
+///  It rewrites:
+/// for ( type elem in collection) { stmts; }
  
+/// Into:
+/// {
+///   type elem;
+///   __objcFastEnumerationState enumState = { 0 };
+///   id items[16];
+///   unsigned long limit = [collection countByEnumeratingWithState:&enumState 
+///                                     objects:items count:16];
+/// if (limit) {
+///   unsigned long startMutations = *enumState.mutationsPtr;
+///   do {
+///        unsigned long counter = 0;
+///        do {
+///             if (startMutations != *enumState.mutationsPtr) 
+///               objc_enumerationMutation(collection);
+///             elem = enumState.itemsPtr[counter++];
+///             stmts;
+///        } while (counter < limit);
+///   } while (limit = [collection countByEnumeratingWithState:&enumState 
+///                                objects:items count:16]);
+///  }
+///  else
+///       elem = nil;
+///  }
+///
+Stmt *RewriteTest::RewriteObjCForCollectionStmt(ObjCForCollectionStmt *S) {
+  return S;
+}
+
 Stmt *RewriteTest::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
   // Get the start location and compute the semi location.
   SourceLocation startLoc = S->getLocStart();
