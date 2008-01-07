@@ -105,6 +105,17 @@ public:
                                SmallVectorImpl<MachineOperand> &Addr,
                                const TargetRegisterClass *RC,
                                SmallVectorImpl<MachineInstr*> &NewMIs) const;
+  
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &Ops,
+                                          int FrameIndex) const;
+
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &Ops,
+                                          MachineInstr* LoadMI) const {
+    return 0;
+  }
+  
   virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
   virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
 

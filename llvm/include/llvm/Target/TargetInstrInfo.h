@@ -27,6 +27,8 @@ class TargetMachine;
 class TargetRegisterClass;
 class LiveVariables;
 class CalleeSavedInfo;
+class SDNode;
+class SelectionDAG;
 
 template<class T> class SmallVectorImpl;
 
@@ -538,6 +540,58 @@ public:
                                            MachineBasicBlock::iterator MI,
                                 const std::vector<CalleeSavedInfo> &CSI) const {
     return false;
+  }
+  
+  /// foldMemoryOperand - Attempt to fold a load or store of the specified stack
+  /// slot into the specified machine instruction for the specified operand(s).
+  /// If this is possible, a new instruction is returned with the specified
+  /// operand folded, otherwise NULL is returned. The client is responsible for
+  /// removing the old instruction and adding the new one in the instruction
+  /// stream.
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &Ops,
+                                          int FrameIndex) const {
+    return 0;
+  }
+
+  /// foldMemoryOperand - Same as the previous version except it allows folding
+  /// of any load and store from / to any address, not just from a specific
+  /// stack slot.
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &Ops,
+                                          MachineInstr* LoadMI) const {
+    return 0;
+  }
+
+  /// canFoldMemoryOperand - Returns true if the specified load / store is
+  /// folding is possible.
+  virtual
+  bool canFoldMemoryOperand(MachineInstr *MI,
+                            SmallVectorImpl<unsigned> &Ops) const{
+    return false;
+  }
+
+  /// unfoldMemoryOperand - Separate a single instruction which folded a load or
+  /// a store or a load and a store into two or more instruction. If this is
+  /// possible, returns true as well as the new instructions by reference.
+  virtual bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
+                                unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
+                                  SmallVectorImpl<MachineInstr*> &NewMIs) const{
+    return false;
+  }
+
+  virtual bool unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
+                                   SmallVectorImpl<SDNode*> &NewNodes) const {
+    return false;
+  }
+
+  /// getOpcodeAfterMemoryUnfold - Returns the opcode of the would be new
+  /// instruction after load / store are unfolded from an instruction of the
+  /// specified opcode. It returns zero if the specified unfolding is not
+  /// possible.
+  virtual unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
+                                      bool UnfoldLoad, bool UnfoldStore) const {
+    return 0;
   }
   
   /// BlockHasNoFallThrough - Return true if the specified block does not

@@ -74,7 +74,19 @@ namespace llvm {
     virtual void loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
 				                         SmallVectorImpl<MachineOperand> &Addr,
 				                         const TargetRegisterClass *RC,
-				                         SmallVectorImpl<MachineInstr*> &NewMIs) const;
+                                 SmallVectorImpl<MachineInstr*> &NewMIs) const;
+    
+    //! Fold spills into load/store instructions
+    virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                            SmallVectorImpl<unsigned> &Ops,
+                                            int FrameIndex) const;
+
+    //! Fold any load/store to an operand
+    virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                            SmallVectorImpl<unsigned> &Ops,
+                                            MachineInstr* LoadMI) const {
+      return 0;
+    }
   };
 }
 

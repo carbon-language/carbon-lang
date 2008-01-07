@@ -190,6 +190,20 @@ public:
   virtual bool restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
                                  const std::vector<CalleeSavedInfo> &CSI) const;
+  
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &Ops,
+                                          int FrameIndex) const;
+
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &Ops,
+                                          MachineInstr* LoadMI) const {
+    return 0;
+  }
+
+  virtual bool canFoldMemoryOperand(MachineInstr *MI,
+                                    SmallVectorImpl<unsigned> &Ops) const;
+  
   virtual bool BlockHasNoFallThrough(MachineBasicBlock &MBB) const;
   virtual bool ReverseBranchCondition(std::vector<MachineOperand> &Cond) const;
 

@@ -40,19 +40,6 @@ public:
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;
 
-  MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                  SmallVectorImpl<unsigned> &Ops,
-                                  int FrameIndex) const;
-
-  MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                  SmallVectorImpl<unsigned> &Ops,
-                                  MachineInstr* LoadMI) const {
-    return 0;
-  }
-
-  bool canFoldMemoryOperand(MachineInstr *MI,
-                            SmallVectorImpl<unsigned> &Ops) const;
-
   const unsigned *getCalleeSavedRegs(const MachineFunction *MF = 0) const;
 
   const TargetRegisterClass* const*
@@ -90,6 +77,8 @@ public:
   unsigned getEHHandlerRegister() const;
 
   int getDwarfRegNum(unsigned RegNum, bool isEH) const;
+  
+  bool isLowRegister(unsigned Reg) const;
 };
 
 } // end namespace llvm

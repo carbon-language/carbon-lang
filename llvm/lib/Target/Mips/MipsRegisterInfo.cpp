@@ -93,37 +93,6 @@ void MipsRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
     MBB.insert(I, MI);
 }
 
-MachineInstr *MipsRegisterInfo::
-foldMemoryOperand(MachineInstr* MI,
-                  SmallVectorImpl<unsigned> &Ops, int FI) const 
-{
-  if (Ops.size() != 1) return NULL;
-
-  MachineInstr *NewMI = NULL;
-
-  switch (MI->getOpcode()) 
-  {
-    case Mips::ADDu:
-      if ((MI->getOperand(0).isRegister()) &&
-        (MI->getOperand(1).isRegister()) && 
-        (MI->getOperand(1).getReg() == Mips::ZERO) &&
-        (MI->getOperand(2).isRegister())) 
-      {
-        if (Ops[0] == 0)    // COPY -> STORE
-          NewMI = BuildMI(TII.get(Mips::SW)).addFrameIndex(FI)
-                  .addImm(0).addReg(MI->getOperand(2).getReg());
-        else                   // COPY -> LOAD
-          NewMI = BuildMI(TII.get(Mips::LW), MI->getOperand(0)
-                  .getReg()).addImm(0).addFrameIndex(FI);
-      }
-      break;
-  }
-
-  if (NewMI)
-    NewMI->copyKillDeadInfo(MI);
-  return NewMI;
-}
-
 //===----------------------------------------------------------------------===//
 //
 // Callee Saved Registers methods 

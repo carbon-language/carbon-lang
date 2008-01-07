@@ -58,43 +58,6 @@ AlphaRegisterInfo::AlphaRegisterInfo(const TargetInstrInfo &tii)
 {
 }
 
-MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,
-                                                 SmallVectorImpl<unsigned> &Ops,
-                                                 int FrameIndex) const {
-   if (Ops.size() != 1) return NULL;
-
-   // Make sure this is a reg-reg copy.
-   unsigned Opc = MI->getOpcode();
-
-   MachineInstr *NewMI = NULL;
-   switch(Opc) {
-   default:
-     break;
-   case Alpha::BISr:
-   case Alpha::CPYSS:
-   case Alpha::CPYST:
-     if (MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
-       if (Ops[0] == 0) {  // move -> store
-         unsigned InReg = MI->getOperand(1).getReg();
-         Opc = (Opc == Alpha::BISr) ? Alpha::STQ : 
-           ((Opc == Alpha::CPYSS) ? Alpha::STS : Alpha::STT);
-         NewMI = BuildMI(TII.get(Opc)).addReg(InReg).addFrameIndex(FrameIndex)
-           .addReg(Alpha::F31);
-       } else {           // load -> move
-         unsigned OutReg = MI->getOperand(0).getReg();
-         Opc = (Opc == Alpha::BISr) ? Alpha::LDQ : 
-           ((Opc == Alpha::CPYSS) ? Alpha::LDS : Alpha::LDT);
-         NewMI = BuildMI(TII.get(Opc), OutReg).addFrameIndex(FrameIndex)
-           .addReg(Alpha::F31);
-       }
-     }
-     break;
-   }
-  if (NewMI)
-    NewMI->copyKillDeadInfo(MI);
-  return 0;
-}
-
 void AlphaRegisterInfo::reMaterialize(MachineBasicBlock &MBB,
                                       MachineBasicBlock::iterator I,
                                       unsigned DestReg,

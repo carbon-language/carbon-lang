@@ -643,6 +643,119 @@ bool ARMInstrInfo::restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
   return true;
 }
 
+MachineInstr *ARMInstrInfo::foldMemoryOperand(MachineInstr *MI,
+                                                 SmallVectorImpl<unsigned> &Ops,
+                                                 int FI) const {
+  if (Ops.size() != 1) return NULL;
+
+  unsigned OpNum = Ops[0];
+  unsigned Opc = MI->getOpcode();
+  MachineInstr *NewMI = NULL;
+  switch (Opc) {
+  default: break;
+  case ARM::MOVr: {
+    if (MI->getOperand(4).getReg() == ARM::CPSR)
+      // If it is updating CPSR, then it cannot be foled.
+      break;
+    unsigned Pred = MI->getOperand(2).getImm();
+    unsigned PredReg = MI->getOperand(3).getReg();
+    if (OpNum == 0) { // move -> store
+      unsigned SrcReg = MI->getOperand(1).getReg();
+      NewMI = BuildMI(get(ARM::STR)).addReg(SrcReg).addFrameIndex(FI)
+        .addReg(0).addImm(0).addImm(Pred).addReg(PredReg);
+    } else {          // move -> load
+      unsigned DstReg = MI->getOperand(0).getReg();
+      NewMI = BuildMI(get(ARM::LDR), DstReg).addFrameIndex(FI).addReg(0)
+        .addImm(0).addImm(Pred).addReg(PredReg);
+    }
+    break;
+  }
+  case ARM::tMOVr: {
+    if (OpNum == 0) { // move -> store
+      unsigned SrcReg = MI->getOperand(1).getReg();
+      if (RI.isPhysicalRegister(SrcReg) && !RI.isLowRegister(SrcReg))
+        // tSpill cannot take a high register operand.
+        break;
+      NewMI = BuildMI(get(ARM::tSpill)).addReg(SrcReg).addFrameIndex(FI)
+        .addImm(0);
+    } else {          // move -> load
+      unsigned DstReg = MI->getOperand(0).getReg();
+      if (RI.isPhysicalRegister(DstReg) && !RI.isLowRegister(DstReg))
+        // tRestore cannot target a high register operand.
+        break;
+      NewMI = BuildMI(get(ARM::tRestore), DstReg).addFrameIndex(FI)
+        .addImm(0);
+    }
+    break;
+  }
+  case ARM::FCPYS: {
+    unsigned Pred = MI->getOperand(2).getImm();
+    unsigned PredReg = MI->getOperand(3).getReg();
+    if (OpNum == 0) { // move -> store
+      unsigned SrcReg = MI->getOperand(1).getReg();
+      NewMI = BuildMI(get(ARM::FSTS)).addReg(SrcReg).addFrameIndex(FI)
+        .addImm(0).addImm(Pred).addReg(PredReg);
+    } else {          // move -> load
+      unsigned DstReg = MI->getOperand(0).getReg();
+      NewMI = BuildMI(get(ARM::FLDS), DstReg).addFrameIndex(FI)
+        .addImm(0).addImm(Pred).addReg(PredReg);
+    }
+    break;
+  }
+  case ARM::FCPYD: {
+    unsigned Pred = MI->getOperand(2).getImm();
+    unsigned PredReg = MI->getOperand(3).getReg();
+    if (OpNum == 0) { // move -> store
+      unsigned SrcReg = MI->getOperand(1).getReg();
+      NewMI = BuildMI(get(ARM::FSTD)).addReg(SrcReg).addFrameIndex(FI)
+        .addImm(0).addImm(Pred).addReg(PredReg);
+    } else {          // move -> load
+      unsigned DstReg = MI->getOperand(0).getReg();
+      NewMI = BuildMI(get(ARM::FLDD), DstReg).addFrameIndex(FI)
+        .addImm(0).addImm(Pred).addReg(PredReg);
+    }
+    break;
+  }
+  }
+
+  if (NewMI)
+    NewMI->copyKillDeadInfo(MI);
+  return NewMI;
+}
+
+bool ARMInstrInfo::canFoldMemoryOperand(MachineInstr *MI,
+                                         SmallVectorImpl<unsigned> &Ops) const {
+  if (Ops.size() != 1) return false;
+
+  unsigned OpNum = Ops[0];
+  unsigned Opc = MI->getOpcode();
+  switch (Opc) {
+  default: break;
+  case ARM::MOVr:
+    // If it is updating CPSR, then it cannot be foled.
+    return MI->getOperand(4).getReg() != ARM::CPSR;
+  case ARM::tMOVr: {
+    if (OpNum == 0) { // move -> store
+      unsigned SrcReg = MI->getOperand(1).getReg();
+      if (RI.isPhysicalRegister(SrcReg) && !RI.isLowRegister(SrcReg))
+        // tSpill cannot take a high register operand.
+        return false;
+    } else {          // move -> load
+      unsigned DstReg = MI->getOperand(0).getReg();
+      if (RI.isPhysicalRegister(DstReg) && !RI.isLowRegister(DstReg))
+        // tRestore cannot target a high register operand.
+        return false;
+    }
+    return true;
+  }
+  case ARM::FCPYS:
+  case ARM::FCPYD:
+    return true;
+  }
+
+  return false;
+}
+
 bool ARMInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;
   

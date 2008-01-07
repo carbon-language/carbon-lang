@@ -221,3 +221,41 @@ void SparcInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   NewMIs.push_back(MIB);
   return;
 }
+
+MachineInstr *SparcInstrInfo::foldMemoryOperand(MachineInstr* MI,
+                                                 SmallVectorImpl<unsigned> &Ops,
+                                                 int FI) const {
+  if (Ops.size() != 1) return NULL;
+
+  unsigned OpNum = Ops[0];
+  bool isFloat = false;
+  MachineInstr *NewMI = NULL;
+  switch (MI->getOpcode()) {
+  case SP::ORrr:
+    if (MI->getOperand(1).isRegister() && MI->getOperand(1).getReg() == SP::G0&&
+        MI->getOperand(0).isRegister() && MI->getOperand(2).isRegister()) {
+      if (OpNum == 0)    // COPY -> STORE
+        NewMI = BuildMI(get(SP::STri)).addFrameIndex(FI).addImm(0)
+                                   .addReg(MI->getOperand(2).getReg());
+      else               // COPY -> LOAD
+        NewMI = BuildMI(get(SP::LDri), MI->getOperand(0).getReg())
+                      .addFrameIndex(FI).addImm(0);
+    }
+    break;
+  case SP::FMOVS:
+    isFloat = true;
+    // FALLTHROUGH
+  case SP::FMOVD:
+    if (OpNum == 0)  // COPY -> STORE
+      NewMI = BuildMI(get(isFloat ? SP::STFri : SP::STDFri))
+               .addFrameIndex(FI).addImm(0).addReg(MI->getOperand(1).getReg());
+    else             // COPY -> LOAD
+      NewMI = BuildMI(get(isFloat ? SP::LDFri : SP::LDDFri),
+                     MI->getOperand(0).getReg()).addFrameIndex(FI).addImm(0);
+    break;
+  }
+
+  if (NewMI)
+    NewMI->copyKillDeadInfo(MI);
+  return NewMI;
+}

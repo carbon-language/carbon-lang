@@ -66,18 +66,6 @@ private:
   ///
   unsigned FramePtr;
 
-  /// RegOp2MemOpTable2Addr, RegOp2MemOpTable0, RegOp2MemOpTable1,
-  /// RegOp2MemOpTable2 - Load / store folding opcode maps.
-  ///
-  DenseMap<unsigned*, unsigned> RegOp2MemOpTable2Addr;
-  DenseMap<unsigned*, unsigned> RegOp2MemOpTable0;
-  DenseMap<unsigned*, unsigned> RegOp2MemOpTable1;
-  DenseMap<unsigned*, unsigned> RegOp2MemOpTable2;
-
-  /// MemOp2RegOpTable - Load / store unfolding opcode map.
-  ///
-  DenseMap<unsigned*, std::pair<unsigned, unsigned> > MemOp2RegOpTable;
-
 public:
   X86RegisterInfo(X86TargetMachine &tm, const TargetInstrInfo &tii);
 
@@ -98,44 +86,6 @@ public:
 
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;
-
-  /// foldMemoryOperand - If this target supports it, fold a load or store of
-  /// the specified stack slot into the specified machine instruction for the
-  /// specified operand(s).  If this is possible, the target should perform the
-  /// folding and return true, otherwise it should return false.  If it folds
-  /// the instruction, it is likely that the MachineInstruction the iterator
-  /// references has been changed.
-  MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                  SmallVectorImpl<unsigned> &Ops,
-                                  int FrameIndex) const;
-
-  /// foldMemoryOperand - Same as the previous version except it allows folding
-  /// of any load and store from / to any address, not just from a specific
-  /// stack slot.
-  MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                  SmallVectorImpl<unsigned> &Ops,
-                                  MachineInstr* LoadMI) const;
-
-  /// canFoldMemoryOperand - Returns true if the specified load / store is
-  /// folding is possible.
-  bool canFoldMemoryOperand(MachineInstr*, SmallVectorImpl<unsigned> &) const;
-
-  /// unfoldMemoryOperand - Separate a single instruction which folded a load or
-  /// a store or a load and a store into two or more instruction. If this is
-  /// possible, returns true as well as the new instructions by reference.
-  bool unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
-                           unsigned Reg, bool UnfoldLoad, bool UnfoldStore,
-                           SmallVectorImpl<MachineInstr*> &NewMIs) const;
-
-  bool unfoldMemoryOperand(SelectionDAG &DAG, SDNode *N,
-                           SmallVectorImpl<SDNode*> &NewNodes) const;
-
-  /// getOpcodeAfterMemoryUnfold - Returns the opcode of the would be new
-  /// instruction after load / store are unfolded from an instruction of the
-  /// specified opcode. It returns zero if the specified unfolding is not
-  /// possible.
-  unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
-                                      bool UnfoldLoad, bool UnfoldStore) const;
 
   /// getCalleeSavedRegs - Return a null-terminated list of all of the
   /// callee-save registers on this target.
@@ -177,11 +127,6 @@ public:
   // Exception handling queries.
   unsigned getEHExceptionRegister() const;
   unsigned getEHHandlerRegister() const;
-
-private:
-  MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                  unsigned OpNum,
-                                  SmallVector<MachineOperand,4> &MOs) const;
 };
 
 // getX86SubSuperRegister - X86 utility function. It returns the sub or super

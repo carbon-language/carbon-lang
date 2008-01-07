@@ -42,16 +42,6 @@ namespace llvm {
 
     void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
 		       unsigned DestReg, const MachineInstr *Orig) const;
-
-    //! Fold spills into load/store instructions
-    virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                            SmallVectorImpl<unsigned> &Ops,
-                                            int FrameIndex) const;
-
-    //! Fold any load/store to an operand
-    virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                            SmallVectorImpl<unsigned> &Ops,
-                                            MachineInstr* LoadMI) const;
     
     //! Return the array of callee-saved registers
     virtual const unsigned* getCalleeSavedRegs(const MachineFunction *MF) const;

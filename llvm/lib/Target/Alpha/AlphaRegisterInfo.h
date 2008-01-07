@@ -28,16 +28,6 @@ struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
   AlphaRegisterInfo(const TargetInstrInfo &tii);
 
   /// Code Generation virtual methods...
-  MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                  SmallVectorImpl<unsigned> &Ops,
-                                  int FrameIndex) const;
-
-  MachineInstr* foldMemoryOperand(MachineInstr* MI,
-                                  SmallVectorImpl<unsigned> &Ops,
-                                  MachineInstr* LoadMI) const {
-    return 0;
-  }
-
   void reMaterialize(MachineBasicBlock &MBB, MachineBasicBlock::iterator MI,
                      unsigned DestReg, const MachineInstr *Orig) const;
 

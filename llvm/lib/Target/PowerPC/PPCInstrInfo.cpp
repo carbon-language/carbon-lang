@@ -534,6 +534,85 @@ void PPCInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
   return;
 }
 
+/// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
+/// copy instructions, turning them into load/store instructions.
+MachineInstr *PPCInstrInfo::foldMemoryOperand(MachineInstr *MI,
+                                              SmallVectorImpl<unsigned> &Ops,
+                                              int FrameIndex) const {
+  if (Ops.size() != 1) return NULL;
+
+  // Make sure this is a reg-reg copy.  Note that we can't handle MCRF, because
+  // it takes more than one instruction to store it.
+  unsigned Opc = MI->getOpcode();
+  unsigned OpNum = Ops[0];
+
+  MachineInstr *NewMI = NULL;
+  if ((Opc == PPC::OR &&
+       MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
+    if (OpNum == 0) {  // move -> store
+      unsigned InReg = MI->getOperand(1).getReg();
+      NewMI = addFrameReference(BuildMI(get(PPC::STW)).addReg(InReg),
+                                FrameIndex);
+    } else {           // move -> load
+      unsigned OutReg = MI->getOperand(0).getReg();
+      NewMI = addFrameReference(BuildMI(get(PPC::LWZ), OutReg),
+                                FrameIndex);
+    }
+  } else if ((Opc == PPC::OR8 &&
+              MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
+    if (OpNum == 0) {  // move -> store
+      unsigned InReg = MI->getOperand(1).getReg();
+      NewMI = addFrameReference(BuildMI(get(PPC::STD)).addReg(InReg),
+                                FrameIndex);
+    } else {           // move -> load
+      unsigned OutReg = MI->getOperand(0).getReg();
+      NewMI = addFrameReference(BuildMI(get(PPC::LD), OutReg), FrameIndex);
+    }
+  } else if (Opc == PPC::FMRD) {
+    if (OpNum == 0) {  // move -> store
+      unsigned InReg = MI->getOperand(1).getReg();
+      NewMI = addFrameReference(BuildMI(get(PPC::STFD)).addReg(InReg),
+                                FrameIndex);
+    } else {           // move -> load
+      unsigned OutReg = MI->getOperand(0).getReg();
+      NewMI = addFrameReference(BuildMI(get(PPC::LFD), OutReg), FrameIndex);
+    }
+  } else if (Opc == PPC::FMRS) {
+    if (OpNum == 0) {  // move -> store
+      unsigned InReg = MI->getOperand(1).getReg();
+      NewMI = addFrameReference(BuildMI(get(PPC::STFS)).addReg(InReg),
+                                FrameIndex);
+    } else {           // move -> load
+      unsigned OutReg = MI->getOperand(0).getReg();
+      NewMI = addFrameReference(BuildMI(get(PPC::LFS), OutReg), FrameIndex);
+    }
+  }
+
+  if (NewMI)
+    NewMI->copyKillDeadInfo(MI);
+  return NewMI;
+}
+
+bool PPCInstrInfo::canFoldMemoryOperand(MachineInstr *MI,
+                                         SmallVectorImpl<unsigned> &Ops) const {
+  if (Ops.size() != 1) return false;
+
+  // Make sure this is a reg-reg copy.  Note that we can't handle MCRF, because
+  // it takes more than one instruction to store it.
+  unsigned Opc = MI->getOpcode();
+
+  if ((Opc == PPC::OR &&
+       MI->getOperand(1).getReg() == MI->getOperand(2).getReg()))
+    return true;
+  else if ((Opc == PPC::OR8 &&
+              MI->getOperand(1).getReg() == MI->getOperand(2).getReg()))
+    return true;
+  else if (Opc == PPC::FMRD || Opc == PPC::FMRS)
+    return true;
+
+  return false;
+}
+
 
 bool PPCInstrInfo::BlockHasNoFallThrough(MachineBasicBlock &MBB) const {
   if (MBB.empty()) return false;

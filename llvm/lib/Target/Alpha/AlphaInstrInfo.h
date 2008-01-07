@@ -66,6 +66,17 @@ public:
                                SmallVectorImpl<MachineOperand> &Addr,
                                const TargetRegisterClass *RC,
                                SmallVectorImpl<MachineInstr*> &NewMIs) const;
+  
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &Ops,
+                                          int FrameIndex) const;
+
+  virtual MachineInstr* foldMemoryOperand(MachineInstr* MI,
+                                          SmallVectorImpl<unsigned> &Ops,
+                                          MachineInstr* LoadMI) const {
+    return 0;
+  }
+  
   bool AnalyzeBranch(MachineBasicBlock &MBB,MachineBasicBlock *&TBB,
                      MachineBasicBlock *&FBB,
                      std::vector<MachineOperand> &Cond) const;
