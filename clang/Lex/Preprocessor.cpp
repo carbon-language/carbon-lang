@@ -430,7 +430,7 @@ static void InitializePredefinedMacros(Preprocessor &PP,
 
 
 /// EnterMainSourceFile - Enter the specified FileID as the main source file,
-/// which implicitly adds the builting defines etc.
+/// which implicitly adds the builtin defines etc.
 void Preprocessor::EnterMainSourceFile() {
   
   unsigned MainFileID = SourceMgr.getMainFileID();
