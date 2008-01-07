@@ -367,7 +367,7 @@ public:
   unsigned char getBaseOpcodeFor(const TargetInstrDescriptor *TID) const {
     return TID->TSFlags >> X86II::OpcodeShift;
   }
-  unsigned char getBaseOpcodeFor(MachineOpCode Opcode) const {
+  unsigned char getBaseOpcodeFor(unsigned Opcode) const {
     return getBaseOpcodeFor(&get(Opcode));
   }
 

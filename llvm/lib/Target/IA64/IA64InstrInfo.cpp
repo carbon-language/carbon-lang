@@ -27,7 +27,7 @@ IA64InstrInfo::IA64InstrInfo()
 bool IA64InstrInfo::isMoveInstr(const MachineInstr& MI,
                                unsigned& sourceReg,
                                unsigned& destReg) const {
-  MachineOpCode oc = MI.getOpcode();
+  unsigned oc = MI.getOpcode();
   if (oc == IA64::MOV || oc == IA64::FMOV) {
   // TODO: this doesn't detect predicate moves
      assert(MI.getNumOperands() >= 2 &&

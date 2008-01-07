@@ -636,7 +636,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
 bool X86InstrInfo::isMoveInstr(const MachineInstr& MI,
                                unsigned& sourceReg,
                                unsigned& destReg) const {
-  MachineOpCode oc = MI.getOpcode();
+  unsigned oc = MI.getOpcode();
   if (oc == X86::MOV8rr || oc == X86::MOV16rr ||
       oc == X86::MOV32rr || oc == X86::MOV64rr ||
       oc == X86::MOV16to16_ || oc == X86::MOV32to32_ ||

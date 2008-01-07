@@ -26,7 +26,7 @@ AlphaInstrInfo::AlphaInstrInfo()
 bool AlphaInstrInfo::isMoveInstr(const MachineInstr& MI,
                                  unsigned& sourceReg,
                                  unsigned& destReg) const {
-  MachineOpCode oc = MI.getOpcode();
+  unsigned oc = MI.getOpcode();
   if (oc == Alpha::BISr   || 
       oc == Alpha::CPYSS  || 
       oc == Alpha::CPYST  ||

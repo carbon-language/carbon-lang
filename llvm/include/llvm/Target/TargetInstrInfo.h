@@ -33,12 +33,6 @@ class SelectionDAG;
 template<class T> class SmallVectorImpl;
 
 //===----------------------------------------------------------------------===//
-// Data types used to define information about a single machine instruction
-//===----------------------------------------------------------------------===//
-
-typedef short MachineOpCode;
-
-//===----------------------------------------------------------------------===//
 // struct TargetInstrDescriptor:
 //  Predefined information about each machine instruction.
 //  Designed to initialized statically.

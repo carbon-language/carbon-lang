@@ -225,7 +225,7 @@ SPUInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                      unsigned SrcReg, bool isKill, int FrameIdx,
                                      const TargetRegisterClass *RC) const
 {
-  MachineOpCode opc;
+  unsigned opc;
   if (RC == SPU::GPRCRegisterClass) {
     opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
       ? SPU::STQDr128
@@ -308,7 +308,7 @@ SPUInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         unsigned DestReg, int FrameIdx,
                                         const TargetRegisterClass *RC) const
 {
-  MachineOpCode opc;
+  unsigned opc;
   if (RC == SPU::GPRCRegisterClass) {
     opc = (FrameIdx < SPUFrameInfo::maxFrameOffset())
       ? SPU::LQDr128

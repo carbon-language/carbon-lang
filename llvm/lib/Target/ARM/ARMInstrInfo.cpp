@@ -52,7 +52,7 @@ const TargetRegisterClass *ARMInstrInfo::getPointerRegClass() const {
 ///
 bool ARMInstrInfo::isMoveInstr(const MachineInstr &MI,
                                unsigned &SrcReg, unsigned &DstReg) const {
-  MachineOpCode oc = MI.getOpcode();
+  unsigned oc = MI.getOpcode();
   switch (oc) {
   default:
     return false;
