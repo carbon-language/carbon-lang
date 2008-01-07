@@ -57,12 +57,7 @@ namespace CallingConv {
     /// X86_FastCall - 'fast' analog of X86_StdCall. Passes first two arguments
     /// in ECX:EDX registers, others - via stack. Callee is responsible for
     /// stack cleaning.
-    X86_FastCall = 65,
-
-    /// X86_Ocaml - This is a weird ABI used by Objective Caml. Formally, it
-    /// supports only one to six integer/address arguments, all in-reg. It also
-    /// supports tail call emission.
-    X86_Ocaml = 66
+    X86_FastCall = 65
   };
 } // End CallingConv namespace
 
