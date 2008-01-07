@@ -18,7 +18,6 @@ class I<dag OOL, dag IOL, string asmstr, InstrItinClass itin>
         : Instruction {
   field bits<32> Inst;
 
-  let Name = "";
   let Namespace = "SPU";
   let OutOperandList = OOL;
   let InOperandList = IOL;

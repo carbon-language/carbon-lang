@@ -17,7 +17,6 @@ class I<bits<6> opcode, dag OOL, dag IOL, string asmstr, InstrItinClass itin>
 
   bit PPC64 = 0;  // Default value, override with isPPC64
 
-  let Name = "";
   let Namespace = "PPC";
   let Inst{0-5} = opcode;
   let OutOperandList = OOL;
