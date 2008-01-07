@@ -156,7 +156,6 @@ class Predicate; // Forward def
 // the Target/TargetInstrInfo.h file.
 //
 class Instruction {
-  string Name = "";         // The opcode string for this instruction
   string Namespace = "";
 
   dag OutOperandList;       // An dag containing the MI def operand list.
