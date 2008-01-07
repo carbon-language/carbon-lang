@@ -476,6 +476,8 @@ DIAG(err_collection_expr_type, ERROR,
      "collection expression is not of valid object type (its type is '%0')")
 DIAG(err_selector_element_type, ERROR,
      "selector element is not of valid object type (its type is '%0')")
+DIAG(err_toomany_element_decls, ERROR,
+     "Only one element declaration is allowed")
 
 //===----------------------------------------------------------------------===//
 // Semantic Analysis

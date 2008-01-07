@@ -543,9 +543,12 @@ Sema::ActOnObjcForCollectionStmt(SourceLocation ForColLoc,
     FirstType = cast<ValueDecl>(DS->getDecl())->getType();
     // C99 6.8.5p3: The declaration part of a 'for' statement shall only declare
     // identifiers for objects having storage class 'auto' or 'register'.
-    BlockVarDecl *BVD = cast<BlockVarDecl>(DS->getDecl());
+    ScopedDecl *D = DS->getDecl();
+    BlockVarDecl *BVD = cast<BlockVarDecl>(D);
     if (!BVD->hasLocalStorage())
       return Diag(BVD->getLocation(), diag::err_non_variable_decl_in_for);
+    if (D->getNextDeclarator())
+      return Diag(D->getLocation(), diag::err_toomany_element_decls);
   }
   else
     FirstType = static_cast<Expr*>(first)->getType();
