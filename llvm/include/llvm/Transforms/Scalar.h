@@ -296,13 +296,6 @@ extern const PassInfo *LowerInvokePassID;
 
 //===----------------------------------------------------------------------===//
 //
-// LowerGCPass - This function returns an instance of the "lowergc" pass, which
-// lowers garbage collection intrinsics to normal LLVM code.
-//
-FunctionPass *createLowerGCPass();
-
-//===----------------------------------------------------------------------===//
-//
 // BlockPlacement - This pass reorders basic blocks in order to increase the
 // number of fall-through conditional branches.
 //

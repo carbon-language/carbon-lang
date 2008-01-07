@@ -97,24 +97,26 @@ void llvm_gc_write(void *V, void *ObjPtr, void **FieldPtr) { *FieldPtr = V; }
  * FIXME: This should be in a code-generator specific library, but for now this
  * will work for all code generators.
  */
-typedef struct GCRoot {
-  void **RootPtr;
-  void *Meta;
-} GCRoot;
+struct FrameMap {
+  int32_t NumRoots; // Number of roots in stack frame.
+  int32_t NumMeta;  // Number of metadata descriptors. May be < NumRoots.
+  void *Meta[];     // May be absent for roots without metadata.
+};
 
-typedef struct GCRoots {
-  struct GCRoots *Next;
-  unsigned NumRoots;
-  GCRoot RootRecords[];
-} GCRoots;
-GCRoots *llvm_gc_root_chain;
+struct StackEntry {
+  ShadowStackEntry *Next; // Caller's stack entry.
+  const FrameMap *Map;    // Pointer to constant FrameMap.
+  void *Roots[];          // Stack roots (in-place array).
+};
+StackEntry *llvm_gc_root_chain;
 
 void llvm_cg_walk_gcroots(void (*FP)(void **Root, void *Meta)) {
-  GCRoots *R = llvm_gc_root_chain;
-  for (; R; R = R->Next) {
+  for (StackEntry *R; R; R = R->Next) {
     unsigned i, e;
-    for (i = 0, e = R->NumRoots; i != e; ++i)
-      FP(R->RootRecords[i].RootPtr, R->RootRecords[i].Meta);
+    for (i = 0, e = R->NumMeta; i != e; ++i)
+      FP(&R->Roots[i], R->Map->Meta[i]);
+    for (e = R->NumRoots; i != e; ++i)
+      FP(&R->Roots[i], NULL);
   }
 }
 /* END FIXME! */

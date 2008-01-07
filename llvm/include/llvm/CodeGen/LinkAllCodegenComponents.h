@@ -17,6 +17,7 @@
 
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
+#include "llvm/CodeGen/Collectors.h"
 
 namespace {
   struct ForceCodegenLinking {
@@ -34,6 +35,8 @@ namespace {
       (void) llvm::createLinearScanRegisterAllocator();
 
       (void) llvm::createSimpleRegisterCoalescer();
+      
+      (void) llvm::createShadowStackCollector();
       
       (void) llvm::createBURRListDAGScheduler(NULL, NULL, NULL);
       (void) llvm::createTDRRListDAGScheduler(NULL, NULL, NULL);
