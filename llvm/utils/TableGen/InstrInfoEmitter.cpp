@@ -205,7 +205,7 @@ void InstrInfoEmitter::InferFromPattern(const CodeGenInstruction &Inst,
       fprintf(stderr, 
               "Warning: mayStore flag explicitly set on instruction '%s'"
               " but flag already inferred from pattern.\n", 
-              Inst.getName().c_str());
+              Inst.TheDef->getName().c_str());
     mayStore = true;
   }
 
@@ -285,7 +285,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   InferFromPattern(Inst, mayStore, isLoad, NeverHasSideEffects);
   
   if (NeverHasSideEffects && Inst.mayHaveSideEffects) {
-    std::cerr << "error: Instruction '" << Inst.getName()
+    std::cerr << "error: Instruction '" << Inst.TheDef->getName()
       << "' is marked with 'mayHaveSideEffects', but it can never have them!\n";
     exit(1);
   }
@@ -298,7 +298,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   
   OS << "  { ";
   OS << Num << ",\t" << MinOperands << ",\t"
-     << Inst.NumDefs << ",\t\"" << Inst.getName();
+     << Inst.NumDefs << ",\t\"" << Inst.TheDef->getName();
   OS << "\",\t" << getItinClassNumber(Inst.TheDef) << ", 0";
 
   // Emit all of the target indepedent flags...

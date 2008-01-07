@@ -76,7 +76,6 @@ static void ParseConstraints(const std::string &CStr, CodeGenInstruction *I) {
 
 CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   : TheDef(R), AsmString(AsmStr) {
-  Name      = R->getValueAsString("Name");
   Namespace = R->getValueAsString("Namespace");
 
   isReturn     = R->getValueAsBit("isReturn");
@@ -213,14 +212,6 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     OperandList[Op.first].DoNotEncode[Op.second] = true;
   }
 }
-
-/// getName - Return the contents of the instruction Name field if set,
-/// otherwise return the name of the def.
-std::string CodeGenInstruction::getName() const {
-  if (!Name.empty()) return Name;
-  return TheDef->getName();
-}
-
 
 /// getOperandNamed - Return the index of the operand with the specified
 /// non-empty name.  If the instruction does not have an operand with the
